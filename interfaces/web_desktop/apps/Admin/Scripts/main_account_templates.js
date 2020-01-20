@@ -180,6 +180,31 @@ Sections.accounts_templates = function( cmd, extra )
 		
 	}
 	
+	function lookandfeel( callback, id )
+	{
+		
+		if( callback && id )
+		{
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				console.log( { e:e, d:d } );
+				
+				if( e == 'ok' )
+				{
+					return callback( true, '/system.library/module/?module=system&command=usersetupwallpaperget&setupId='+id+'&authid='+Application.authId+'&random='+(Math.random()*999999+Math.random()*909999) );
+				}
+				
+				return callback( true, '/system.library/module/?module=system&command=thumbnail&width=568&height=320&mode=resize&authid='+Application.authId+'&path=Home:Wallpaper/Freedom.jpg' );
+			}
+			m.execute( 'usersetupwallpaperexists', { setupId: id, authid: Application.authId } );
+			
+			return true;
+		}
+		
+		return false;
+	}
+	
 	function edit( id )
 	{
 		
@@ -434,12 +459,31 @@ Sections.accounts_templates = function( cmd, extra )
 						
 						loadingInfo.applications = dat;
 						
-						initDetails( loadingInfo, [ 'application', 'dock', 'startup' ], true );
+						//initDetails( loadingInfo, [ 'application', 'dock', 'startup' ], true );
 						
 						// Go to next in line ...
 						loadingList[ ++loadingSlot ](  );
 						
 					} );
+					
+				},
+				
+				// 1 | Load look and feel
+				
+				function(  )
+				{
+					
+					lookandfeel( function ( res, dat )
+					{
+						
+						loadingInfo.looknfeel = dat;
+						
+						initDetails( loadingInfo, [ 'application', 'dock', 'startup', 'looknfeel', true ] );
+						
+						// Go to next in line ...
+						loadingList[ ++loadingSlot ](  );
+						
+					}, id );
 					
 				},
 				
@@ -469,6 +513,7 @@ Sections.accounts_templates = function( cmd, extra )
 		var soft = ( data.software ? data.software : {} );
 		var star = ( data.startups ? data.startups : {} );
 		var apps = ( info.applications ? info.applications : {} );
+		var look = ( info.looknfeel ? info.looknfeel : {} );
 		
 		console.log( info );
 		
@@ -488,6 +533,68 @@ Sections.accounts_templates = function( cmd, extra )
 			languages += '<option value="' + a + '"' + ( data.language && data.language == a ? ' selected="selected"' : '' ) + '>' + availLangs[ a ] + '</option>';
 		}
 		
+		var theme = {
+			
+			dark : function ()
+			{
+				
+				// TODO: look for a solution so there is no need for two different ways to handle one thing before and after template file load ...
+				
+				/*var b = document.createElement( 'button' );
+				b.className = 'IconButton IconSmall IconToggle ButtonSmall fa-toggle-off';
+				b.onclick = function(  )
+				{
+					
+					if( this.classList.contains( 'fa-toggle-off' ) )
+					{
+						this.classList.remove( 'fa-toggle-off' );
+						this.classList.add( 'fa-toggle-on' );
+					}
+					else
+					{
+						this.classList.remove( 'fa-toggle-on' );
+						this.classList.add( 'fa-toggle-off' );
+					}
+					
+				};
+				return b;*/
+				
+				return '<button class="IconButton IconSmall IconToggle ButtonSmall fa-toggle-off" id="theme_dark_button"></button>';
+				
+			},
+			
+			controls : function ()
+			{
+				
+				return '<select class="InputHeight FullWidth"><option value="mac">Mac style</option><option value="windows">Windows style</option></select>';
+				
+			},
+			
+			workspace_count : function ()
+			{
+				
+				return '<input type="number" class="FullWidth" value="1">';
+				
+			},
+			
+			wallpaper_button : function ()
+			{
+				
+				return '<button class="ButtonAlt IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>';
+				
+			},
+			
+			wallpaper_preview : function ()
+			{
+				
+				// Set default wallpaper as fallback ...
+				
+				//return ( look ? '<div style="width:100%;height:100%;background: url(\''+look+'\') center center / cover no-repeat;"><button class="IconButton IconSmall ButtonSmall Negative FloatRight fa-remove"></button></div>' : '' );
+				
+			}
+			
+		}
+		
 		// Get the user details template
 		var d = new File( 'Progdir:Templates/account_template_details.html' );
 		
@@ -496,7 +603,13 @@ Sections.accounts_templates = function( cmd, extra )
 			template_title: ( details.Name ? details.Name : i18n( 'i18n_new_template' ) ),
 			template_name: ( details.Name ? details.Name : '' ),
 			template_description: '',
-			template_language: languages
+			template_language: languages,
+			
+			theme_dark: theme.dark(),
+			theme_controls: theme.controls(),
+			workspace_count: theme.workspace_count(),
+			wallpaper_button: theme.wallpaper_button()/*,
+			wallpaper_preview: theme.wallpaper_preview()*/
 		};
 		
 		// Add translations
@@ -2267,6 +2380,136 @@ Sections.accounts_templates = function( cmd, extra )
 						
 					},
 					
+					// Theme -------------------------------------------------------------------------------------------
+					
+					theme : function (  )
+					{
+						
+						if( ge( 'theme_dark_button' ) )
+						{
+							var b = ge( 'theme_dark_button' );
+							b.onclick = function(  )
+							{
+								
+								if( this.classList.contains( 'fa-toggle-off' ) )
+								{
+									this.classList.remove( 'fa-toggle-off' );
+									this.classList.add( 'fa-toggle-on' );
+								}
+								else
+								{
+									this.classList.remove( 'fa-toggle-on' );
+									this.classList.add( 'fa-toggle-off' );
+								}
+								
+							};
+						}
+						
+						if( ge( 'wallpaper_button_inner' ) )
+						{
+							var b = ge( 'wallpaper_button_inner' );
+							b.onclick = function(  )
+							{
+								
+								/*var d = new Filedialog( 
+								{
+									triggerFunction: function( item )
+									{
+										if ( item )
+										{
+											// Load the image
+											var image = new Image();
+											image.onload = function()
+											{
+												console.log( 'loaded image ... ', item );
+												// Resizes the image
+												var canvas = ge( 'AdminAvatar' );
+												var context = canvas.getContext( '2d' );
+												context.drawImage( image, 0, 0, 256, 256 );
+												
+											}
+											image.src = getImageUrl( item[ 0 ].Path );
+										}
+									},
+									path: "Mountlist:",
+									type: "load",
+									title: i18n( 'i18n_fileselectoravatar' ),
+									filename: ""
+								} );*/
+								
+								var flags = {
+									type: 'load',
+									path: 'Home:',
+									suffix: [ 'jpg', 'jpeg', 'png', 'gif' ],
+									triggerFunction: function( item )
+									{
+										if( item && item.length && item[ 0 ].Path )
+										{
+											//refreshSetupWallpaper();
+											
+											// Load the image
+											var image = new Image();
+											image.onload = function()
+											{
+												console.log( 'loaded image ... ', item );
+												// Resizes the image
+												var canvas = ge( 'AdminWallpaper' );
+												var context = canvas.getContext( '2d' );
+												context.drawImage( image, 0, 0, 256, 256 );
+												
+											}
+											image.src = getImageUrl( item[ 0 ].Path );
+											
+										}
+									}
+								};
+								// Execute
+								( new Filedialog( flags ) );
+								
+							};
+						}
+						
+						if( ge( 'AdminWallpaper' ) && ge( 'AdminWallpaperPreview' ) )
+						{
+							// Set the url to get this wallpaper instead and cache it in the browser ...
+							
+							if( look )
+							{
+								// Only update the wallaper if it exists..
+								var avSrc = new Image();
+								avSrc.src = look;
+								avSrc.onload = function()
+								{
+									var ctx = ge( 'AdminWallpaper' ).getContext( '2d' );
+									ctx.drawImage( avSrc, 0, 0, 256, 256 );
+								}
+							}
+							
+							function wallpaperdelete()
+							{
+								var del = document.createElement( 'button' );
+								del.className = 'IconButton IconSmall ButtonSmall Negative FloatRight fa-remove';
+								del.onclick = function( e )
+								{
+									Confirm( 'Are you sure?', 'This will delete the wallpaper from this template.', function( r )
+									{
+										if( r.data == true )
+										{
+											ge( 'AdminWallpaperPreview' ).innerHTML = '<canvas id="AdminWallpaper" width="256" height="256"></canvas>';
+											
+											wallpaperdelete();
+										}
+									} );
+								}
+								ge( 'AdminWallpaperPreview' ).appendChild( del );
+							}
+							
+							wallpaperdelete();
+							
+						}
+						
+					},
+					
 					// Permissions -------------------------------------------------------------------------------------
 					
 					permissions : function ( show )
@@ -2313,6 +2556,7 @@ Sections.accounts_templates = function( cmd, extra )
 				func.applications();
 				func.dock();
 				func.startup();
+				func.theme();
 				func.permissions( show );
 				
 				
