@@ -633,7 +633,6 @@ function ExecuteApplication( app, args, callback )
 		// Clean blocker
 		RemoveFromExecutionQueue( appName );
 	}
-	m.forceHTTP = true;
 	m.execute( 'friendapplication', eo );
 	// console.log( 'Test3: Executing application: ' + app );
 }
