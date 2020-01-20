@@ -985,6 +985,9 @@ Sections.accounts_users = function( cmd, extra )
 																	
 																	// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
 																	
+																	// Refresh Storage ...
+																	console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																	Sections.user_disk_cancel( userInfo.ID );
 																}
 																f.execute( 'group/addusers', args );
 															}
