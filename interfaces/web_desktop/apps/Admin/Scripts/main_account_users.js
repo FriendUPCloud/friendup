@@ -552,7 +552,8 @@ Sections.accounts_users = function( cmd, extra )
 								if( bg2 ) bg2.onclick = function( e )
 								{
 									//cancelUser(  );
-									editMode( true );
+									//editMode( true );
+									Sections.accounts_users( 'edit', userInfo.ID );
 								}
 								var bg3  = ge( 'UserBackBtn' );
 								if( bg3 ) bg3.onclick = function( e )
