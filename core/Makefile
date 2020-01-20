@@ -44,6 +44,10 @@ else
 CFLAGS					+=	-O2
 endif
 
+ifeq ($(PERF_MEAS),1)
+CFLAGS					+=	-D__PERF_MEAS
+endif
+
 ifeq ($(PROFILE),1)
 CFLAGS 					+=	-pg -DPROFILE=1
 endif

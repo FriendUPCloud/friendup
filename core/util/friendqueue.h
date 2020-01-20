@@ -29,7 +29,7 @@ typedef struct FQEntry
 	unsigned char	*fq_Data;		// 
 	int				fq_Size;		// this should be removed
 	int				fq_Priority;	// message priority
-#ifdef __DEBUG
+#ifdef __PERF_MEAS
 	double			fq_stime;		// time used to check how much time take to sent it
 #endif
 }FQEntry;
@@ -77,7 +77,7 @@ typedef struct FQueue
  * @param q poitner to data which will be placed in FriendQueue
  */
 
-#ifdef __DEBUG
+#ifdef __PERF_MEAS
 #define FQPushFIFO( qroot, q ) if( (qroot)->fq_First == NULL ){ (qroot)->fq_First = q; (qroot)->fq_Last = q; }else{ (qroot)->fq_Last->node.mln_Succ = (MinNode *)q; (qroot)->fq_Last = q; q->fq_stime = GetCurrentTimestampD(); } 
 #else
 #define FQPushFIFO( qroot, q ) if( (qroot)->fq_First == NULL ){ (qroot)->fq_First = q; (qroot)->fq_Last = q; }else{ (qroot)->fq_Last->node.mln_Succ = (MinNode *)q; (qroot)->fq_Last = q; } 

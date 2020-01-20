@@ -402,7 +402,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 		return response;
 	}*/
 	
-#ifdef __DEBUG
+#ifdef __PERF_MEAS
 	double stime = GetCurrentTimestampD();
 #endif
 
@@ -410,8 +410,8 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 	// Continue parsing the request
 	int result = HttpParsePartialRequest( request, data, length );
 
-#ifdef __DEBUG
-	DEBUG("PERFCHECK: HttpParsePartialRequest time: %f\n", (GetCurrentTimestampD()-stime) );
+#ifdef __PERF_MEAS
+	Log( FLOG_INFO, "PERFCHECK: HttpParsePartialRequest time: %f\n", (GetCurrentTimestampD()-stime) );
 #endif
 	
 	partialRequest:
@@ -461,7 +461,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 	// Request parsed without errors!
 	else if( result == 1 && request->uri->path != NULL )
 	{
-#ifdef __DEBUG
+#ifdef __PERF_MEAS
 		stime = GetCurrentTimestampD();
 #endif
 		
@@ -2035,8 +2035,8 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 		PathFree( path );
 		Log( FLOG_DEBUG, "HTTP parsed, returning response\n");
 		
-#ifdef __DEBUG
-	DEBUG("PERFCHECK: Call time: %f\n", ((GetCurrentTimestampD()-stime)) );
+#ifdef __PERF_MEAS
+	Log( FLOG_INFO, "PERFCHECK: Call time: %f\n", ((GetCurrentTimestampD()-stime)) );
 #endif
 
 		return response;
