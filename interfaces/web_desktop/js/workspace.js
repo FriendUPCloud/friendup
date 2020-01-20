@@ -34,6 +34,7 @@ Workspace = {
 	themeOverride: false,
 	systemInfo: false,
 	websocketsOffline: true,
+	workspaceIsDisconnected: false,
 	lastfileSystemChangeMessage: false,
 	serverIsThere: false,
 	runLevels: [
@@ -778,7 +779,11 @@ Workspace = {
 		this.reloginAttempts = true;
 		
 		// See if we are alive!
+		// Cancel relogin context
+		CancelCajaxOnId( 'relogin' );
+		
 		var m = new Module( 'system' );
+		m.cancelId = 'relogin';
 		m.onExecuted = function( e, d )
 		{
 			//console.log( 'Test2: Got back: ', e, d );
@@ -1555,4 +1560,14 @@ Workspace = {
 		Workspace.logoutURL = logoutURL;
 	}
 };
+
+window.onoffline = function()
+{
+	Workspace.workspaceIsDisconnected = true;
+}
+window.ononline = function()
+{
+	Workspace.workspaceIsDisconnected = false;
+}
+
 

@@ -42,6 +42,24 @@
 	box-sizing: border-box;
 }
 
+/* Busy busy */
+
+.IconWindow .Content .DirectoryRefresh
+{
+	position: absolute;
+	box-sizing: border-box;
+	background: #444444;
+	border-radius: 5px;
+	padding: 20px;
+	font-size: 1.1em;
+	color: white;
+	width: 300px;
+	height: fit-content;
+	top: 20%;
+	left: calc(50% - 150px);
+	z-index: 2;
+}
+
 /* File browser */
 
 .FileBrowser
