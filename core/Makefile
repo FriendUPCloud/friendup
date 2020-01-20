@@ -6,8 +6,11 @@ CC			=	gcc
 CPP			=	g++
 OUTPUT			=	bin/FriendCore
 
+#`mysql_config --libs`
+#MYSQLLIBSREQ		=	-lmysqlclient -lpthread -lz -lm -lrt -latomic -lssl -lcrypto -ldl
+MYSQLLIBSREQ		=	-lmysqlclient -lpthread -lz -lm -lrt -latomic 
 CFLAGS			=	$(GLOBAL_CFLAGS) -I../libs/ -I../$(LIBWS_INCLUDE_DIR) -I. $(shell mysql_config --cflags) -I../$(LIBXML2_INCLUDE_DIR) -I$(SAMBA_INCLUDE_DIR)  -I../$(LIBSSH2_INCLUDE_DIR)
-LFLAGS			=	../$(LIBWS_LIB_DIR)/libwebsockets.a -Lsystem/bin/ -lm -lssh -lrt -lmagic -lxml2 `mysql_config --libs` -lgd -lpng -lz -ljpeg -luv
+LFLAGS			=	../$(LIBWS_LIB_DIR)/libwebsockets.a -Lsystem/bin/ -lm -lrt -lmagic -lxml2 $(MYSQLLIBSREQ) -lgd -lpng -lz -ljpeg -luv
 DFLAGS			=	-M $(CFLAGS)  
 FPATH			=	$(shell pwd)
 
@@ -190,6 +193,7 @@ phpserv: system/servicesdyn/service_php.c ../core/obj/thread_linux.o ../core/obj
 
 $(OUTPUT): $(OBJ_FILES)
 	@echo "\033[34mLinking ...\033[0m"
+	#@echo "\n\n\n\n %(LFLAGS) \n\n\n\"
 	$(CC) -o $(OUTPUT) $(OBJ_FILES) $(LFLAGS)
 
 obj/%.o: %.c *.h %.d
