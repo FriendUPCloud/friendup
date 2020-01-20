@@ -706,6 +706,7 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 	if( Workspace.conf && Workspace.conf.authId )
 		j.addVar( 'authid', Workspace.conf.authId );
 	else j.addVar( 'sessionid', Workspace.sessionId );
+	if( typeof( this.notify ) != 'undefined' ) j.addVar( 'notify', this.notify );
 	j.addVar( 'args', JSON.stringify( args ) );
 	// Since FC doesn't have full JSON support yet, let's do this too
 	if( args && ( typeof( args ) == 'object' || typeof( args ) == 'array' ) )

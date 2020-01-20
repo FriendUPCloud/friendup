@@ -707,6 +707,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						function mkdirhere()
 						{
 							infocontent.innerHTML = i18n( 'i18n_creating_directory' ) + ' ' + toPath;
+							door.notify = 'false';
 							door.dosAction( 'makedir', { path: toPath }, function( result )
 							{
 								//var result = 'ok<!--separate-->'; // temp!
