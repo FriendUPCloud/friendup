@@ -462,6 +462,7 @@ Sections.accounts_users = function( cmd, extra )
 									if( res ) res.onclick = function( e )
 									{
 										toggleChangePass();
+										editmode();
 									}
 								}
 							},
@@ -522,7 +523,7 @@ Sections.accounts_users = function( cmd, extra )
 									{
 										for( var a = 0; a < inps.length; a++ )
 										{
-											if( inps[ a ].id && [ 'usFullname', 'usUsername', 'usEmail', 'passToggle', 'usLanguage', 'usSetup' ].indexOf( inps[ a ].id ) >= 0 )
+											if( inps[ a ].id && [ 'usFullname', 'usUsername', 'usEmail', 'usLanguage', 'usSetup' ].indexOf( inps[ a ].id ) >= 0 )
 											{
 												( function( i ) {
 													i.onclick = function( e )
