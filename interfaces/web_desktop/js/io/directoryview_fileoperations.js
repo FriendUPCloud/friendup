@@ -563,7 +563,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 								var d = Workspace.getDoorByPath( result[z].Path );
 								if( o.processedDirectories[ result[z].Path ] )
 								{
-									console.log( '[fileoperations] Found a duplicate folder...' );
+									//console.log( '[fileoperations] Found a duplicate folder...' );
 									continue;
 								}
 								o.processedDirectories[ result[z].Path ] = true;
@@ -576,7 +576,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 							{
 								if( o.processedFiles[ result[z].Path ] )
 								{
-									console.log( '[fileoperations] Found a duplicate file...' );
+									//console.log( '[fileoperations] Found a duplicate file...' );
 									continue;
 								}
 								o.processedFiles[ result[z].Path ] = true;
@@ -658,21 +658,23 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						// Do the copy - we have files here only...
 						ic.delCache( toPath );
 						infocontent.innerHTML = 'Copying ' + fl.fileInfo.Path + '...';
-						door.dosAction( 'copy', { from: fl.fileInfo.Path, to: toPath }, function( result )
-						{
-							if( result.substr( 0, 3 ) != 'ok<' )
+						( function( nb ){
+							door.dosAction( 'copy', { from: fl.fileInfo.Path, to: toPath }, function( result )
 							{
-								Notify( {
-									title: i18n( 'i18n_filecopy_error' ),
-									text: i18n( 'i18n_could_not_copy_files' ) + '<br>' + fl.fileInfo.Path + ' to ' + toPath
-								} );
-								fob.stop = true;
-								CancelCajaxOnId( series );
-								return;
-							}							
-							if( fob.stop ) return;
-							fileCopyObject.nextStep( result, initNextBatch );
-						} );
+								if( result.substr( 0, 3 ) != 'ok<' )
+								{
+									Notify( {
+										title: i18n( 'i18n_filecopy_error' ),
+										text: i18n( 'i18n_could_not_copy_files' ) + '<br>' + fl.fileInfo.Path + ' to ' + toPath
+									} );
+									fob.stop = true;
+									CancelCajaxOnId( series );
+									return;
+								}						
+								if( fob.stop ) return;
+								fileCopyObject.nextStep( result, nb );
+							} );
+						} )( initNextBatch );
 					}
 				},
 				createDirectories: function( reduceBar )
@@ -775,6 +777,10 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 							nf.push( f[b] );
 						fileCopyObject.files = nf;
 						fileCopyObject.copyFiles();
+					}
+					else if( initNewRun )
+					{
+						// Never!
 					}
 
 					// Timed refresh (don't refresh a zillion times!

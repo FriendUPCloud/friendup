@@ -1521,7 +1521,7 @@ SubSubDomains =
 
 	initSubSubDomains: function()
 	{
-		if ( this.initialized )
+		if( this.initialized )
 			return;
 
 		var self = this;
