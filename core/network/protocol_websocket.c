@@ -165,6 +165,7 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 				if( wscdata->wsc_Wsi != NULL )
 				{
 					lws_callback_on_writable( wscdata->wsc_Wsi );
+					lws_cancel_service_pt( wscdata->wsc_Wsi );
 				}
 				FRIEND_MUTEX_UNLOCK( &(wscdata->wsc_Mutex) );
 			}
@@ -204,6 +205,7 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 			if( wscdata->wsc_Wsi != NULL )
 			{
 				lws_callback_on_writable( wscdata->wsc_Wsi );
+				lws_cancel_service_pt( wscdata->wsc_Wsi );
 			}
 			FRIEND_MUTEX_UNLOCK( &(wscdata->wsc_Mutex) );
 		}
@@ -319,6 +321,7 @@ int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen
 							if( wsi->wusc_Data != NULL && wsi->wusc_Data->wsc_Wsi != NULL )
 							{
 								lws_callback_on_writable( wsi->wusc_Data->wsc_Wsi );
+								lws_cancel_service_pt( wsi->wusc_Data->wsc_Wsi );
 							}
 							FRIEND_MUTEX_UNLOCK( &(wsi->wusc_Data->wsc_Mutex) );
 						}
@@ -371,6 +374,7 @@ int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen
 						if( wsi->wusc_Data != NULL && wsi->wusc_Data->wsc_Wsi != NULL )
 						{
 							lws_callback_on_writable( wsi->wusc_Data->wsc_Wsi );
+							lws_cancel_service_pt( wsi->wusc_Data->wsc_Wsi );
 						}
 						FRIEND_MUTEX_UNLOCK( &(wsi->wusc_Data->wsc_Mutex) );
 					}
