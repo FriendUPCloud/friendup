@@ -462,7 +462,7 @@ Sections.accounts_users = function( cmd, extra )
 									if( res ) res.onclick = function( e )
 									{
 										toggleChangePass();
-										editmode();
+										editMode();
 									}
 								}
 							},
