@@ -33,7 +33,7 @@ extern SystemBase *SLIB;
 #define USE_PTHREAD_PING 1
 
 // enabled for development/IDE
-#define ENABLE_WEBSOCKETS_THREADS 1
+//#define ENABLE_WEBSOCKETS_THREADS 1
 //#define USE_PTHREAD 1
 
 //pthread_mutex_t WSThreadMutex;

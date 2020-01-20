@@ -37,6 +37,10 @@ ifeq ($(USE_SSH_THREADS_LIB),1)
 LFLAGS					+=      -lssh_threads
 endif
 
+ifeq ($(ENABLE_SSH),1)
+LFLAGS					+=	-lssh
+endif
+
 ifeq ($(USE_SANITIZER),1)
 LFLAGS					+=	-lasan
 endif
