@@ -1466,7 +1466,7 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
 		struct timeval timeout;
 		fd_set fds;
 #define MINIMUMRETRY 30000
-		int retryCount = expectedLength > 0 ? MINIMUMRETRY : 2000; // User do be 3000
+		int retryCount = expectedLength > 0 ? MINIMUMRETRY : 3000; // User do be 3000
 		if( expectedLength > 0 && length > expectedLength ) length = expectedLength;
 		int startTime = time( NULL );
 
@@ -1511,7 +1511,7 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
 						// We are downloading a big file
 
 						// TODO: This usleep is the old code (before usleep(1))
-						usleep( read_retries < 100 ? 0 : ( retryCount << 1 ) );
+						usleep( read_retries < 200 ? 1 : ( retryCount << 1 ) );
 
 						/*int blocked = sock->s_Blocked;
 							FD_ZERO( &fds );
@@ -1555,7 +1555,7 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
 
 					if( err > 0 )
 					{
-						usleep( 5000 ); // Was 50000
+						usleep( 50000 );
 						FERROR("[SocketRead] want write\n");
 						continue; // more data to read...
 					}
