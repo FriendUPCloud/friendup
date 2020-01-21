@@ -218,7 +218,7 @@ Sections.accounts_users = function( cmd, extra )
 						{
 							themeData = { colorSchemeText: 'light', buttonSchemeText: 'windows' };
 						}
-						
+						console.log( 'themeData ',  [ themeData, workspaceSettings ] );
 						return themeData;
 					},
 					
@@ -1332,7 +1332,7 @@ Sections.accounts_users = function( cmd, extra )
 							{
 								// Theme ---------------------------------------------------
 								
-								if( ge( 'theme_name' ) && settings.Theme )
+								/*if( ge( 'theme_name' ) && settings.Theme )
 								{
 									ge( 'theme_name' ).innerHTML = settings.Theme;
 								}
@@ -1366,6 +1366,283 @@ Sections.accounts_users = function( cmd, extra )
 									st.backgroundSize = 'cover';
 									st.backgroundPosition = 'center';
 									st.backgroundRepeat = 'no-repeat';
+								}*/
+								
+								
+								var currTheme = ( settings.Theme ? settings.Theme : 'friendup12' );
+								
+								themeConfig = {  };
+								
+								if( ge( 'theme_style_select' ) )
+								{
+									var s = ge( 'theme_style_select' );
+									
+									if( themeData.buttonSchemeText )
+									{
+										var opt = { 'mac' : 'Mac style', 'windows' : 'Windows style' };
+										
+										var str = '';
+										
+										for( var k in opt )
+										{
+											str += '<option value="' + k + '"' + ( themeData.buttonSchemeText == k ? ' selected="selected"' : '' ) + '>' + opt[k] + '</option>';
+										}
+										
+										s.innerHTML = str;
+									}
+									
+									s.current = s.value;
+									
+									themeConfig.buttonSchemeText = s.current;
+									
+									s.onchange = function(  )
+									{
+										
+										themeConfig.buttonSchemeText = this.value;
+										
+										var m = new Module( 'system' );
+										m.s = this;
+										m.onExecuted = function( e, d )
+										{
+											
+											console.log( { e:e, d:d } );
+											
+											if( e != 'ok' )
+											{
+												themeConfig.buttonSchemeText = this.s.current;
+											}
+											else
+											{
+												themeConfig.buttonSchemeText = this.s.value;
+											}
+											
+										}
+										m.execute( 'setsetting', { 
+											setting : 'themedata_' + currTheme.toLowerCase(), 
+											data    : themeConfig, 
+											userid  : userInfo.ID, 
+											authid  : Application.authId 
+										} );
+										
+									};
+								}
+								
+								if( ge( 'theme_dark_button' ) )
+								{
+									var b = ge( 'theme_dark_button' );
+									
+									if( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' )
+									{
+										b.classList.remove( 'fa-toggle-off' );
+										b.classList.add( 'fa-toggle-on' );
+										
+										themeConfig.colorSchemeText = 'charcoal';
+									}
+									else
+									{
+										b.classList.remove( 'fa-toggle-on' );
+										b.classList.add( 'fa-toggle-off' );
+										
+										themeConfig.colorSchemeText = 'light';
+									}
+									
+									b.onclick = function(  )
+									{
+										
+										if( this.classList.contains( 'fa-toggle-off' ) )
+										{
+											themeConfig.colorSchemeText = 'charcoal';
+										}
+										else
+										{
+											themeConfig.colorSchemeText = 'light';
+										}
+										
+										var m = new Module( 'system' );
+										m.b = this;
+										m.onExecuted = function( e, d )
+										{
+											
+											console.log( { e:e, d:d } );
+											
+											if( this.b.classList.contains( 'fa-toggle-off' ) )
+											{
+												
+												if( e == 'ok' )
+												{
+													this.b.classList.remove( 'fa-toggle-off' );
+													this.b.classList.add( 'fa-toggle-on' );
+												}
+												else
+												{
+													themeConfig.colorSchemeText = 'light';
+												}
+												
+											}
+											else
+											{
+												
+												if( e == 'ok' )
+												{
+													this.b.classList.remove( 'fa-toggle-on' );
+													this.b.classList.add( 'fa-toggle-off' );
+												}
+												else
+												{
+													themeConfig.colorSchemeText = 'charcoal';
+												}
+												
+											}
+											
+										}
+										m.execute( 'setsetting', { 
+											setting : 'themedata_' + currTheme.toLowerCase(), 
+											data    : themeConfig, 
+											userid  : userInfo.ID, 
+											authid  : Application.authId 
+										} );
+										
+									};
+								}
+								
+								if( ge( 'workspace_count_input' ) )
+								{
+									var i = ge( 'workspace_count_input' );
+									i.value = ( workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1' );
+									i.current = i.value;
+									i.onchange = function(  )
+									{
+										if( this.value >= 1 )
+										{
+											var m = new Module( 'system' );
+											m.i = this;
+											m.onExecuted = function( e, d )
+											{
+											
+												if( e != 'ok' )
+												{
+													this.i.value = this.i.current;
+												}
+												else
+												{
+													this.i.current = this.i.value;
+												}
+												
+												console.log( { e:e, d:d } );
+											
+											}
+											m.execute( 'setsetting', { 
+												setting : 'workspacecount', 
+												data    : this.value, 
+												userid  : userInfo.ID, 
+												authid  : Application.authId 
+											} );
+										}
+										else
+										{
+											this.value = this.current;
+										}
+										
+									};
+								}
+								
+								if( ge( 'wallpaper_button_inner' ) )
+								{
+									var b = ge( 'wallpaper_button_inner' );
+									b.onclick = function(  )
+									{
+										
+										var flags = {
+											type: 'load',
+											path: 'Home:',
+											suffix: [ 'jpg', 'jpeg', 'png', 'gif' ],
+											triggerFunction: function( item )
+											{
+												if( item && item.length && item[ 0 ].Path )
+												{
+													
+													var m = new Module( 'system' );
+													m.onExecuted = function( e, d )
+													{
+														
+														console.log( { e:e, d:d } );
+														
+														if( e == 'ok' )
+														{
+															// Load the image
+															var image = new Image();
+															image.onload = function()
+															{
+																console.log( 'loaded image ... ', item );
+																// Resizes the image
+																var canvas = ge( 'AdminWallpaper' );
+																var context = canvas.getContext( '2d' );
+																context.drawImage( image, 0, 0, 256, 256 );
+														
+															}
+															image.src = getImageUrl( item[ 0 ].Path );
+														}
+													
+													}
+													m.execute( 'setsetting', { 
+														setting : 'wallpaperdoors', 
+														data    : item[ 0 ].Path, 
+														userid  : userInfo.ID, 
+														authid  : Application.authId
+													} );
+													
+												}
+											}
+										};
+										// Execute
+										( new Filedialog( flags ) );
+								
+									};
+								}
+						
+								if( ge( 'AdminWallpaper' ) && ge( 'AdminWallpaperPreview' ) )
+								{
+									// Set the url to get this wallpaper instead and cache it in the browser ...
+									
+									if( workspaceSettings.wallpaperdoors )
+									{
+										var img = ( workspaceSettings.wallpaperdoors ? '/system.library/module/?module=system&command=thumbnail&width=568&height=320&mode=resize&authid='+Application.authId+'&path='+workspaceSettings.wallpaperdoors : '' );
+										
+										// Only update the wallaper if it exists..
+										var avSrc = new Image();
+										avSrc.src = ( workspaceSettings.wallpaperdoors ? img : '/webclient/gfx/theme/default_login_screen.jpg' );
+										avSrc.onload = function()
+										{
+											var ctx = ge( 'AdminWallpaper' ).getContext( '2d' );
+											ctx.drawImage( avSrc, 0, 0, 256, 256 );
+										}
+									}
+									
+									function wallpaperdelete()
+									{
+										if( !ge( 'AdminWallpaperDeleteBtn' ) )
+										{
+											var del = document.createElement( 'button' );
+											del.id = 'AdminWallpaperDeleteBtn';
+											del.className = 'IconButton IconSmall ButtonSmall Negative FloatRight fa-remove';
+											del.onclick = function( e )
+											{
+												Confirm( 'Are you sure?', 'This will delete the wallpaper from this template.', function( r )
+												{
+													if( r.data == true )
+													{
+														ge( 'AdminWallpaperPreview' ).innerHTML = '<canvas id="AdminWallpaper" width="256" height="256"></canvas>';
+											
+														wallpaperdelete();
+													}
+												} );
+											}
+											ge( 'AdminWallpaperPreview' ).appendChild( del );
+										}
+									}
+									
+									//wallpaperdelete();
+							
 								}
 								
 							},
@@ -1445,6 +1722,63 @@ Sections.accounts_users = function( cmd, extra )
 					{
 						func.init();
 						
+						
+						// TODO: Hm .... this can't ble like this, settings come to late in the loop ... 
+						
+						var theme = {
+							
+							dark : function ()
+							{
+								
+								return '<button class="IconButton IconSmall IconToggle ButtonSmall fa-toggle-' + ( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? 'on' : 'off' ) + '" id="theme_dark_button"></button>';
+								
+							},
+			
+							controls : function ()
+							{
+								
+								var opt = { 'mac' : 'Mac style', 'windows' : 'Windows style' };
+								
+								var str = '<select class="InputHeight FullWidth" id="theme_style_select">';
+								
+								for( var k in opt )
+								{
+									str += '<option value="' + k + '"' + ( themeData.buttonSchemeText == k ? ' selected="selected"' : '' ) + '>' + opt[k] + '</option>';
+								}
+								
+								str += '</select>';
+								
+								return str;
+				
+							},
+			
+							workspace_count : function ()
+							{
+								
+								return '<input type="number" class="FullWidth" id="workspace_count_input" value="' + ( workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1' ) + '">';
+								
+							},
+			
+							wallpaper_button : function ()
+							{
+				
+								return '<button class="ButtonAlt IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>';
+				
+							},
+			
+							wallpaper_preview : function ()
+							{
+				
+								// Set default wallpaper as fallback ...
+				
+								//return ( look ? '<div style="width:100%;height:100%;background: url(\''+look+'\') center center / cover no-repeat;"><button class="IconButton IconSmall ButtonSmall Negative FloatRight fa-remove"></button></div>' : '' );
+				
+							}
+			
+						};
+						
+						
+						
 						// Get the user details template
 						var d = new File( 'Progdir:Templates/account_users_details.html' );
 						console.log( 'userInfo ', userInfo );
@@ -1459,12 +1793,19 @@ Sections.accounts_users = function( cmd, extra )
 							user_setup           : ( setup ? setup : '' ),
 							user_locked_toggle   : ( ulocked   ? 'fa-toggle-on' : 'fa-toggle-off' ),
 							user_disabled_toggle : ( udisabled ? 'fa-toggle-on' : 'fa-toggle-off' ),
-							theme_name           : ( settings.Theme ? settings.Theme : '' ),
-							theme_dark           : ( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ) ),
-							theme_style          : ( themeData.buttonSchemeText == 'windows' ? 'Windows' : 'Mac' ),
-							wallpaper_name       : ( workspaceSettings.wallpaperdoors ? workspaceSettings.wallpaperdoors.split( '/' )[workspaceSettings.wallpaperdoors.split( '/' ).length-1] : i18n( 'i18n_default' ) ),
-							workspace_count      : ( workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1' ),
-							system_disk_state    : ( workspaceSettings.hiddensystem ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ) ),
+							
+							//theme_name           : ( settings.Theme ? settings.Theme : '' ),
+							//theme_dark           : ( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ) ),
+							//theme_style          : ( themeData.buttonSchemeText == 'windows' ? 'Windows' : 'Mac' ),
+							//wallpaper_name       : ( workspaceSettings.wallpaperdoors ? workspaceSettings.wallpaperdoors.split( '/' )[workspaceSettings.wallpaperdoors.split( '/' ).length-1] : i18n( 'i18n_default' ) ),
+							//workspace_count      : ( workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1' ),
+							//system_disk_state    : ( workspaceSettings.hiddensystem ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ) ),
+							
+							theme_dark           : theme.dark(),
+							theme_controls       : theme.controls(),
+							workspace_count      : theme.workspace_count(),
+							wallpaper_button     : theme.wallpaper_button(),
+							
 							storage              : ( mlst ? mlst : '' ),
 							workgroups           : ( wstr ? wstr : '' ),
 							roles                : ( rstr ? rstr : '' ),
