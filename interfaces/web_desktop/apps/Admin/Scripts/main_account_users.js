@@ -1561,11 +1561,13 @@ Sections.accounts_users = function( cmd, extra )
 												if( item && item.length && item[ 0 ].Path )
 												{
 													
+													console.log( 'loaded image ... ', item );
+													
 													var m = new Module( 'system' );
 													m.onExecuted = function( e, d )
 													{
 														
-														console.log( { e:e, d:d } );
+														console.log( 'userwallpaperset ', { e:e, d:d } );
 														
 														if( e == 'ok' )
 														{
@@ -1573,7 +1575,6 @@ Sections.accounts_users = function( cmd, extra )
 															var image = new Image();
 															image.onload = function()
 															{
-																console.log( 'loaded image ... ', item );
 																// Resizes the image
 																var canvas = ge( 'AdminWallpaper' );
 																var context = canvas.getContext( '2d' );
@@ -1584,11 +1585,18 @@ Sections.accounts_users = function( cmd, extra )
 														}
 													
 													}
-													m.execute( 'setsetting', { 
-														setting : 'wallpaperdoors', 
-														data    : item[ 0 ].Path, 
+													
+													//m.execute( 'setsetting', { 
+													//	setting : 'wallpaperdoors', 
+													//	data    : item[ 0 ].Path, 
+													//	userid  : userInfo.ID, 
+													//	authid  : Application.authId
+													//} );
+													
+													m.execute( 'userwallpaperset', { 
+														path    : item[ 0 ].Path, 
 														userid  : userInfo.ID, 
-														authid  : Application.authId
+														authid  : Application.authId 
 													} );
 													
 												}
