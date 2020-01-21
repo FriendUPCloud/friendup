@@ -2772,8 +2772,8 @@ html .File a
 
 html body .File.Selected:before
 {
-	background: rgba(41,128,185,0.3);
-	border-radius: 5px;
+	background: rgba(185,185,185,0.2);
+	border-radius: 2px;
 	content: " ";
 	display: block;
 	width: 120%;
@@ -3607,8 +3607,9 @@ html .MouseMove,
 html .TitleBar:hover .Left:after,
 html .TitleBar:active .Left:after,
 html .View > .Title:active, html .View:active > .Title,
-html .View:active, html .View[moving=moving], html .View[moving=moving] *,
-html .View > .MoveOverlay, html .Screen > .MoveOverlay
+html .View[moving=moving], html .View[moving=moving] *,
+html .View > .MoveOverlay, html .Screen > .MoveOverlay,
+html .Screen > .ScreenOverlay
 {
 	cursor: move;
 }

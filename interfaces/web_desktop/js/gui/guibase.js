@@ -2133,14 +2133,7 @@ function DrawRegionSelector( e )
 	{
 		var d = document.createElement( 'div' );
 		d.id = 'RegionSelector';
-		
 		window.regionWindow.appendChild( d );
-		if( document.body.attachEvent )
-		{
-			d.style.border = '1px solid #000000';
-			d.style.background = '#555555';
-			d.style.filter = 'alpha(opacity=50)';
-		}
 	}
 	
 	// Extra offset in content window
@@ -2162,8 +2155,8 @@ function DrawRegionSelector( e )
 		// Some implications per theme accounted for
 		if( rwc.contains( 'Content' ) )
 		{
-			var top = GetThemeInfo( 'ViewTitle' );
-			if( top ) ey -= parseInt( top.height );
+			var top = window.regionWindow.windowObject;
+			if( top ) ey -= window.regionWindow.windowObject._window.parentNode.titleBar.offsetHeight;
 			var bor = GetThemeInfo( 'ScreenContentMargins' );
 			if( bor ) ey += parseInt( bor.top );
 		}
@@ -2458,6 +2451,12 @@ movableMouseUp = function( e )
 		// Hide start menu
 		if( Workspace.toggleStartMenu )
 			Workspace.toggleStartMenu( false );
+	}
+	
+	for( var a in movableWindows )
+	{
+		var m = movableWindows[a];
+		m.removeAttribute( 'moving' );
 	}
 	
 	ExposeScreens(); 
