@@ -1466,7 +1466,7 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
 		struct timeval timeout;
 		fd_set fds;
 #define MINIMUMRETRY 30000
-		int retryCount = expectedLength > 0 ? MINIMUMRETRY : 100; // User do be 3000
+		int retryCount = expectedLength > 0 ? MINIMUMRETRY : 2000; // User do be 3000
 		if( expectedLength > 0 && length > expectedLength ) length = expectedLength;
 		int startTime = time( NULL );
 
@@ -1508,11 +1508,10 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
 					// NB: We used to retry 10000 times!
 					if( read == 0 && read_retries++ < retryCount )
 					{
-						usleep( 0 );
 						// We are downloading a big file
 
 						// TODO: This usleep is the old code (before usleep(1))
-						//usleep( read_retries < 100 ? 0 : ( retryCount << 1 ) );
+						usleep( read_retries < 100 ? 0 : ( retryCount << 1 ) );
 
 						/*int blocked = sock->s_Blocked;
 							FD_ZERO( &fds );
@@ -1542,31 +1541,31 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
 					// The operation did not complete. Call again.
 				case SSL_ERROR_WANT_WRITE:
 					//if( pthread_mutex_lock( &sock->mutex ) == 0 )
-				{
-					FERROR( "[SocketRead] Want write.\n" );
-					FD_ZERO( &fds );
-					FD_SET( sock->fd, &fds );
+					{
+						FERROR( "[SocketRead] Want write.\n" );
+						FD_ZERO( &fds );
+						FD_SET( sock->fd, &fds );
 
-					//pthread_mutex_unlock( &sock->mutex );
-				}
-				timeout.tv_sec = sock->s_Timeouts;
-				timeout.tv_usec = sock->s_Timeoutu;
+						//pthread_mutex_unlock( &sock->mutex );
+					}
+					timeout.tv_sec = sock->s_Timeouts;
+					timeout.tv_usec = sock->s_Timeoutu;
 
-				err = select( sock->fd + 1, NULL, &fds, NULL, &timeout );
+					err = select( sock->fd + 1, NULL, &fds, NULL, &timeout );
 
-				if( err > 0 )
-				{
-					usleep( 50000 );
-					FERROR("[SocketRead] want write\n");
-					continue; // more data to read...
-				}
-				else if( err == 0 )
-				{
-					FERROR("[SocketRead] want write TIMEOUT....\n");
+					if( err > 0 )
+					{
+						usleep( 5000 ); // Was 50000
+						FERROR("[SocketRead] want write\n");
+						continue; // more data to read...
+					}
+					else if( err == 0 )
+					{
+						FERROR("[SocketRead] want write TIMEOUT....\n");
+						return read;
+					}
+					FERROR("[SocketRead] want write everything read....\n");
 					return read;
-				}
-				FERROR("[SocketRead] want write everything read....\n");
-				return read;
 				case SSL_ERROR_SYSCALL:
 
 					//DEBUG("SSLERR : err : %d res: %d\n", err, res );
