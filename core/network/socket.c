@@ -1466,7 +1466,7 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
 		struct timeval timeout;
 		fd_set fds;
 #define MINIMUMRETRY 30000
-		int retryCount = expectedLength > 0 ? MINIMUMRETRY : 3000;
+		int retryCount = expectedLength > 0 ? MINIMUMRETRY : 1500;
 		if( expectedLength > 0 && length > expectedLength ) length = expectedLength;
 		int startTime = time( NULL );
 
