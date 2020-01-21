@@ -2770,6 +2770,25 @@ html .File a
 	color: #212729;
 }
 
+html body .File.Selected:before
+{
+	background: rgba(41,128,185,0.3);
+	border-radius: 5px;
+	content: " ";
+	display: block;
+	width: 120%;
+	position: absolute;
+	top: 0;
+	left: -10%;
+	height: 100%;
+}
+
+html body .ScreenContent > .Scroller > div > .File.Selected:before,
+html body #MousePointer .File.Selected:before
+{
+	display: none;
+}
+
 html .File .Icon *
 {
 	background-size: 56px;

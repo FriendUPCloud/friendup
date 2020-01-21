@@ -156,6 +156,19 @@ html body.Dark .File a
 	color: #e0e0e0;
 }
 
+html body.Dark  .File.Selected:before
+{
+	background: rgba(255,255,255,0.1);
+	border-radius: 5px;
+	content: " ";
+	display: block;
+	width: 120%;
+	position: absolute;
+	top: 0;
+	left: -10%;
+	height: 100%;
+}
+
 html body.Dark .File .Icon > *:after
 {
 	color: #233240;
