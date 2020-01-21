@@ -288,7 +288,7 @@ Socket* SocketNew( void *sb, FBOOL ssl, unsigned short port, int type )
 
 			SSL_CTX_set_mode( sock->s_Ctx, SSL_MODE_ENABLE_PARTIAL_WRITE | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER | SSL_MODE_AUTO_RETRY );
 			SSL_CTX_set_session_cache_mode( sock->s_Ctx, SSL_SESS_CACHE_BOTH ); // for now
-			SSL_CTX_set_options( sock->s_Ctx, SSL_OP_NO_SSLv3 | SSL_OP_NO_SSLv2 | SSL_OP_NO_TICKET | SSL_OP_ALL | SSL_OP_NO_COMPRESSION );
+			SSL_CTX_set_options( sock->s_Ctx, SSL_OP_NO_SSLv3 | SSL_OP_NO_SSLv2 | SSL_OP_NO_TICKET | SSL_OP_ALL );
 			SSL_CTX_set_session_id_context( sock->s_Ctx, (void *)&ssl_session_ctx_id, sizeof(ssl_session_ctx_id) );
 			SSL_CTX_set_cipher_list( sock->s_Ctx, "HIGH:!aNULL:!MD5:!RC4" );
 		}
@@ -1508,9 +1508,10 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
 					// NB: We used to retry 10000 times!
 					if( read == 0 && read_retries++ < retryCount )
 					{
+						usleep( 1 );
 						// We are downloading a big file
 
-						usleep( read_retries < 100 ? 0 : ( retryCount << 1 ) );
+						//usleep( read_retries < 100 ? 0 : ( retryCount << 1 ) );
 
 						/*int blocked = sock->s_Blocked;
 							FD_ZERO( &fds );
