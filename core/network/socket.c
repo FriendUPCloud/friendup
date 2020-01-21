@@ -1511,7 +1511,7 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
 						// We are downloading a big file
 
 						// TODO: This usleep is the old code (before usleep(1))
-						usleep( read_retries < 200 ? 1 : ( retryCount << 1 ) );
+						usleep( read_retries < 100 ? 0 : ( read_retries < 200 ? 1 : ( retryCount << 1 ) ) );
 
 						/*int blocked = sock->s_Blocked;
 							FD_ZERO( &fds );
