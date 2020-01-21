@@ -1466,7 +1466,7 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
 		struct timeval timeout;
 		fd_set fds;
 #define MINIMUMRETRY 30000
-		int retryCount = expectedLength > 0 ? MINIMUMRETRY : 0; // User do be 3000
+		int retryCount = expectedLength > 0 ? MINIMUMRETRY : 100; // User do be 3000
 		if( expectedLength > 0 && length > expectedLength ) length = expectedLength;
 		int startTime = time( NULL );
 
@@ -1508,7 +1508,7 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
 					// NB: We used to retry 10000 times!
 					if( read == 0 && read_retries++ < retryCount )
 					{
-						usleep( 1 );
+						usleep( 0 );
 						// We are downloading a big file
 
 						// TODO: This usleep is the old code (before usleep(1))
