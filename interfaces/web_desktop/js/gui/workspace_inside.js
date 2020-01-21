@@ -4006,7 +4006,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				m.execute( 'device/list' );
 			}
-			mo.forceHTTP = true;
 			mo.forceSend = true;
 			mo.execute( 'workspaceshortcuts' );
 		}
@@ -8103,7 +8102,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		var m = new Module('system');
 		
-		m.forceHTTP = true;
 		m.forceSend = true;
 		m.cancelId = 'checkserverconnection';
 		
@@ -8150,7 +8148,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		Workspace.serverHTTPCheckModule = m;
 		
-		m.forceHTTP = true;
 		m.forceSend = true;
 		m.execute( 'getsetting', { setting: 'infowindow' } );
 		return setTimeout( 'Workspace.checkServerConnectionResponse();', 1000 );
@@ -8714,7 +8711,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if( appToken != null )	// old applications which do not have appToken will skip this part
 			{
 				var l = new Library( 'system.library' );
-				l.forceHTTP = true;
 				l.forceSend = true;
 				l.onExecuted = function( e, d )
 				{
@@ -9459,7 +9455,6 @@ function ShowEula( accept, cbk )
 		//call device refresh to make sure user get his devices...
 		var dl = new FriendLibrary( 'system.library' );
 		dl.addVar( 'visible', true );
-		dl.forceHTTP = true;
 		dl.forceSend = true;
 		dl.onExecuted = function(e,d)
 		{
