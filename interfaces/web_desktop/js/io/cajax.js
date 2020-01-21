@@ -218,8 +218,10 @@ cAjax = function()
 						var t = JSON.parse( jax.rawData );
 						// Deprecate from 1.0 beta 2 "no user!"
 						var res = t ? t.response.toLowerCase() : '';
-						if( t && ( res == 'user not found' || res == 'user session not found' ) )
+						if( t && ( res == 'user not found' || res.toLowerCase() == 'user session not found' ) )
 						{
+							if( window.Workspace && res.toLowerCase() == 'user session not found' ) 
+								Workspace.flushSession();
 							if( window.Workspace )
 							{
 								// Drop these (don't retry!) because of remote fs disconnect
@@ -253,8 +255,11 @@ cAjax = function()
 						
 						var res = r ? r.response.toLowerCase() : '';
 						
-						if( res == 'user not found' || res == 'user session not found' )
+						if( res == 'user not found' || res.toLowerCase() == 'user session not found' )
 						{
+							if( window.Workspace && res.toLowerCase() == 'user session not found' ) 
+								Workspace.flushSession();
+							
 							if( window.Workspace && Workspace.postInitialized && Workspace.sessionId )
 							{
 								// Add to queue
@@ -848,8 +853,10 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		{
 			var t = JSON.parse( self.returnData );
 			// Deprecate from 1.0 beta 2 "no user!"
-			if( t && ( t.response == 'user not found' || t.response == 'user session not found' ) )
+			if( t && ( t.response.toLowerCase() == 'user not found' || t.response.toLowerCase() == 'user session not found' ) )
 			{
+				if( window.Workspace && t.response.toLowerCase() == 'user session not found' ) 
+					Workspace.flushSession();
 				if( Workspace )
 				{
 					// Add to queue
@@ -878,8 +885,10 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		try
 		{
 			var r = JSON.parse( self.returnData );
-			if( r.response == 'user session not found' )
+			if( r.response.toLowerCase() == 'user session not found' )
 			{
+				if( window.Workspace )
+					Workspace.flushSession();
 				AddToCajaxQueue( self );
 				return Workspace.relogin();
 			}

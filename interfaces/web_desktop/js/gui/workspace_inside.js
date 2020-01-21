@@ -8061,6 +8061,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		ExecuteApplication( 'Account', args );
 	},
+	flushSession: function()
+	{
+		Workspace.sessionId = '';
+	},
 	//try to run a call and if does not get back display offline message....
 	checkServerConnectionHTTP: function()
 	{	
