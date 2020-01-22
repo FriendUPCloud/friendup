@@ -2783,8 +2783,17 @@ html body .File.Selected:before
 	height: 100%;
 }
 
+html body .View .Content[listmode=imageview] .File.Selected:before
+{
+    width: 90%;
+    top: 7%;
+    left: 5%;
+    height: 84%;
+}
+
 html body .ScreenContent > .Scroller > div > .File.Selected:before,
-html body #MousePointer .File.Selected:before
+html body #MousePointer .File.Selected:before,
+html .View .Content[listmode=compact] .File.Selected:before
 {
 	display: none;
 }

@@ -246,6 +246,11 @@ select
 	transform: rotate3d(0deg);
 }
 
+html #MousePointer .File.Selected .Title
+{
+	background-color: transparent;
+}
+
 .MousePointer
 {
 	cursor: hand;
