@@ -4016,6 +4016,7 @@ var View = function( args )
 
 			var msg = {}; if( packet ) for( var a in packet ) msg[a] = packet[a];
 			msg.command = 'setbodycontent';
+			msg.cachedAppData = _applicationBasics;
 			msg.dosDrivers = Friend.dosDrivers;
 			msg.parentSandboxId = parentIframeId;
 			msg.locale = Workspace.locale;

@@ -809,6 +809,7 @@ Screen = function ( flags, initObject )
 			var msg = {}; if( packet ) for( var a in packet ) msg[a] = packet[a];
 			msg.command = 'setbodycontent';
 			msg.locale = Workspace.locale;
+			msg,cachedAppData = _applicationBasics;
 			msg.dosDrivers = Friend.dosDrivers;
 			// Authid is important, should not be left out if it is available
 			if( !msg.authId )

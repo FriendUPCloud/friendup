@@ -578,7 +578,8 @@ function ExecuteApplication( app, args, callback )
 					filePath: sdomain + filepath,
 					domain:   sdomain,
 					registerCallback: cid,
-					clipboard: Friend.clipboard
+					clipboard: Friend.clipboard,
+					cachedAppData: _applicationBasics
 				};
 				if( conf.State ) o.state = conf.State;
 
@@ -1297,6 +1298,7 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 						}
 					} );
 
+					// Send initiator to app
 					var msg = {
 						command:          'initappframe',
 						base:             '/',
@@ -1316,6 +1318,7 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 						viewId:           false,
 						registerCallback: cid,
 						clipboard:        Friend.clipboard,
+						cachedAppData:    _applicationBasics,
 						args:			  args
 					};
 
@@ -1665,3 +1668,4 @@ SubSubDomains =
 		return false;
  	}
 }
+

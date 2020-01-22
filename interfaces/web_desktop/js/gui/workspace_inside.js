@@ -3008,6 +3008,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									clearInterval( Workspace.insideInterval );
 									Workspace.insideInterval = null;
 								
+									loadApplicationBasics();
+								
 									// Set right classes
 									document.body.classList.add( 'Inside' );
 									document.body.classList.add( 'Loaded' );
@@ -8076,8 +8078,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			return;
 		}
 		
-		console.log( 'Fop fop fop' );
-		
 		// No home disk? Try to refresh the desktop
 		// Limit two times..
 		if( Workspace.icons.length <= 1 && Workspace.refreshDesktopIconsRetries < 2 )
@@ -9873,4 +9873,32 @@ function mobileDebug( str, clear )
 	}, 15000 );
 }
 
+// Cache the app themes --------------------------------------------------------
+// TODO: Test loading different themes
 
+_applicationBasics = {};
+function loadApplicationBasics()
+{
+	// Preload basic scripts
+	var c = new File( '/system.library/module/?module=system&command=theme&args=%7B%22theme%22%3A%22friendup12%22%7D&sessionid=' + Workspace.sessionId );
+	c.onLoad = function( data )
+	{
+		_applicationBasics.css = data;
+	}
+	c.load();
+	var js = '/webclient/' + [ 'js/oo.js',
+	'js/api/friendappapi.js',
+	'js/utils/engine.js',
+	'js/utils/tool.js',
+	'js/utils/json.js',
+	'js/io/cajax.js',
+	'js/io/appConnection.js',
+	'js/io/coreSocket.js',
+	'js/gui/treeview.js' ].join( ';/webclient/' );
+	var j = new File( js );
+	j.onLoad = function( data )
+	{
+		_applicationBasics.js = data; //btoa( escape( data ) );
+	}
+	j.load();
+};
