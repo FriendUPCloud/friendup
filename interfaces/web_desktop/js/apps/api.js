@@ -5909,6 +5909,30 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		var loadedResources = 0;
 		var totalLoadingResources = 0;
 		
+		// No cached app data
+		if( !packet.cachedAppData )
+		{
+			var tpath = '/themes/friendup12/theme.css';
+			if( packet && packet.theme )
+			{
+				tpath = '/themes/' + packet.theme + '/theme.css';
+			}
+			if( !document.themeCss )
+			{
+				totalLoadingResources++;
+			
+				var s = document.createElement( 'link' );
+				document.themeCss = s;
+				s.rel = 'stylesheet';
+				s.href = tpath.split( '.css' ).join( '_compiled.css' );
+				s.onload = function()
+				{
+					doneLoading();
+				}
+				document.getElementsByTagName('head')[0].appendChild( s );
+			}
+		}
+		
 		// Load advanced theme config
 		if( packet.themeData )
 		{
@@ -6197,8 +6221,101 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		elez.push( js[ a ] );
 	}
 	
+	// No cached data
+	if( !packet.cachedAppData )
+	{
+		if( packet && packet.theme )
+			AddCSSByUrl( '/themes/' + packet.theme + '/scrollbars.css' );
+		else AddCSSByUrl( '/themes/friendup12/scrollbars.css' );*/
+		
+		// Only in specific circumstances ------------------------------------------
+		if( Application.sessionId )
+		{
+			Application.sendMessage( {
+				type: 'file',
+				command: 'getapidefaultscripts',
+				data: '/webclient/' + elez.join( ';webclient/' ),
+				callback: addCallback( function( msg )
+				{
+					window.eval( msg.data ? msg.data : msg );
+					//eval( msg.data );
+					if( typeof( Workspace ) == 'undefined' )
+					{
+						if( typeof( InitWindowEvents ) != 'undefined' ) InitWindowEvents();
+						if( typeof( InitGuibaseEvents ) != 'undefined' ) InitGuibaseEvents();
+					}
+					onLoaded();
+				} )
+			} );
+		}
+		// Slow way for new session
+		else
+		{
+			var js = [
+				[
+					'js/oo.js',
+					'js/api/friendappapi.js',
+					'js/utils/engine.js',
+					'js/utils/tool.js',
+					'js/utils/json.js',
+					'js/io/cajax.js',
+					'js/io/appConnection.js',
+					'js/io/coreSocket.js',
+					'js/gui/treeview.js'
+				]
+			];
+
+			var elez = [];
+			for ( var a = 0; a < js.length; a++ )
+			{
+				var s = document.createElement( 'script' );
+				// Set src with some rules whether it's an app or a Workspace component
+				var path = js[ a ].join( ';/webclient/' );
+				s.src = '/webclient/' + path;
+				s.async = false;
+				elez.push( s );
+
+				// When last javascript loads, parse css, setup translations and say:
+				// We are now registered..
+				if( a == js.length-1 )
+				{
+					function fl()
+					{
+						if( this ) this.isLoaded = true;
+						var allLoaded = true;
+						for( var b = 0; b < elez.length; b++ )
+						{
+							if( !elez[b].isLoaded ) allLoaded = false;
+						}
+						if( allLoaded )
+						{
+							if( typeof( Workspace ) == 'undefined' )
+							{
+								if( typeof( InitWindowEvents ) != 'undefined' ) InitWindowEvents();
+								if( typeof( InitGuibaseEvents ) != 'undefined' ) InitGuibaseEvents();
+							}
+							onLoaded();
+						}
+						else
+						{
+							setTimeout( fl, 50 );
+						}
+					}
+					s.onload = fl;
+				}
+				else
+				{
+					s.onload = function()
+					{
+						this.isLoaded = true;
+					}
+				}
+				head.appendChild( s );
+			}
+		}
+	}
 	// Used cached data
-	if( packet.cachedAppData )
+	else if( packet.cachedAppData )
 	{	
 		var style = document.createElement( 'style' );
 		style.innerHTML = packet.cachedAppData.css;
@@ -6210,91 +6327,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		// We are loaded
 		onLoaded();
-	}
-	// Only in specific circumstances ------------------------------------------
-	else if( Application.sessionId )
-	{
-		Application.sendMessage( {
-			type: 'file',
-			command: 'getapidefaultscripts',
-			data: '/webclient/' + elez.join( ';webclient/' ),
-			callback: addCallback( function( msg )
-			{
-				window.eval( msg.data ? msg.data : msg );
-				//eval( msg.data );
-				if( typeof( Workspace ) == 'undefined' )
-				{
-					if( typeof( InitWindowEvents ) != 'undefined' ) InitWindowEvents();
-					if( typeof( InitGuibaseEvents ) != 'undefined' ) InitGuibaseEvents();
-				}
-				onLoaded();
-			} )
-		} );
-	}
-	// Slow way for new session
-	else
-	{
-		var js = [
-			[
-				'js/oo.js',
-				'js/api/friendappapi.js',
-				'js/utils/engine.js',
-				'js/utils/tool.js',
-				'js/utils/json.js',
-				'js/io/cajax.js',
-				'js/io/appConnection.js',
-				'js/io/coreSocket.js',
-				'js/gui/treeview.js'
-			]
-		];
-
-		var elez = [];
-		for ( var a = 0; a < js.length; a++ )
-		{
-			var s = document.createElement( 'script' );
-			// Set src with some rules whether it's an app or a Workspace component
-			var path = js[ a ].join( ';/webclient/' );
-			s.src = '/webclient/' + path;
-			s.async = false;
-			elez.push( s );
-
-			// When last javascript loads, parse css, setup translations and say:
-			// We are now registered..
-			if( a == js.length-1 )
-			{
-				function fl()
-				{
-					if( this ) this.isLoaded = true;
-					var allLoaded = true;
-					for( var b = 0; b < elez.length; b++ )
-					{
-						if( !elez[b].isLoaded ) allLoaded = false;
-					}
-					if( allLoaded )
-					{
-						if( typeof( Workspace ) == 'undefined' )
-						{
-							if( typeof( InitWindowEvents ) != 'undefined' ) InitWindowEvents();
-							if( typeof( InitGuibaseEvents ) != 'undefined' ) InitGuibaseEvents();
-						}
-						onLoaded();
-					}
-					else
-					{
-						setTimeout( fl, 50 );
-					}
-				}
-				s.onload = fl;
-			}
-			else
-			{
-				s.onload = function()
-				{
-					this.isLoaded = true;
-				}
-			}
-			head.appendChild( s );
-		}
 	}
 }
 
