@@ -38,6 +38,10 @@ if( isset( $args->mode ) )
 	$mode = $args->mode;
 }
 
+// TODO: Do we need rolepermissions here ???
+
+$userid = ( $level == 'Admin' && isset( $args->userid ) ? $args->userid : $User->ID );
+
 // Sanitized username
 $uname = str_replace( array( '..', '/', ' ' ), '_', $User->Name );
 $wname = $Config->FCUpload;
@@ -83,7 +87,7 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 	// Look in the database
 	$thumb = new dbIO( 'FThumbnail' );
 	$thumb->Path = $door->ID . ':' . $width . '_' . $height . '_' . $dirnfile; // Use fs ID instead of fs name
-	$thumb->UserID = $User->ID;
+	$thumb->UserID = $userid;
 	if( $thumb->Load() )
 	{
 		// Check if it exists!
