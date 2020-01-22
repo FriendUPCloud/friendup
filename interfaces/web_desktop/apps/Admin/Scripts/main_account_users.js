@@ -1632,6 +1632,8 @@ Sections.accounts_users = function( cmd, extra )
 									{
 										var img = ( workspaceSettings.wallpaperdoors ? '/system.library/module/?module=system&command=thumbnail&width=568&height=320&mode=resize&userid='+userInfo.ID+'&authid='+Application.authId+'&path='+workspaceSettings.wallpaperdoors : '' );
 										
+										console.log( img );
+										
 										// Only update the wallaper if it exists..
 										var avSrc = new Image();
 										avSrc.src = ( workspaceSettings.wallpaperdoors ? img : '/webclient/gfx/theme/default_login_screen.jpg' );
