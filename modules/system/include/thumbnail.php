@@ -78,11 +78,18 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		mkdir( '/tmp/Friendup' );
 	if( !file_exists( '/tmp/Friendup' ) )
 	{
+		if( isset( $args->debug ) )
+		{
+			die( '[0] ' . $userid . ' -- ' . '/tmp/Friendup' );
+		}
+		
 		FriendHeader( 'Content-Type: image/svg+xml' );
 		die( file_get_contents( 'resources/iconthemes/friendup15/File_Broken.svg' ) );
 	}
 
 	$door = new Door( $pure );
+	
+	// TODO: Check for changes overwritten with the same filename, thumbs could show the wrong image if it has the same name ...
 	
 	// Look in the database
 	$thumb = new dbIO( 'FThumbnail' );
@@ -109,7 +116,8 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		}
 	}
 	else
-	{	
+	{
+				
 		$d = new File( $p );
 
 		$source = null;
@@ -122,7 +130,26 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
 		$tmp = curl_exec( $ch );
 		curl_close( $ch );
-	
+		
+		if( !$tmp || strstr( $tmp, 'fail<!--separate-->' ) )
+		{
+			$newname = explode( '/', $dirnfile );
+			
+			// TODO: Find correct FilesystemID and FolderID for UserID's other then the logged in user.
+			
+			$fl = new dbIO( 'FSFile' );
+			$fl->Filename = array_pop( $newname );
+			//$fl->FilesystemID = $door->ID;
+			$fl->UserID = $userid;
+			if( $fl->Load() && $fl->DiskFilename )
+			{				
+				if( file_exists( 'storage/' . $fl->DiskFilename ) )
+				{
+					$tmp = file_get_contents( 'storage/' . $fl->DiskFilename );
+				}
+			}
+		}
+		
 		// Temp file
 		$smp = $fname;
 		while( file_exists( '/tmp/Friendup/' . $smp ) )
