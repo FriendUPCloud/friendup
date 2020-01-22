@@ -168,7 +168,7 @@ WebsocketReq *WebsocketReqAddChunk( WebsocketReq *req, int chunk, char *data, in
 			char *dst = Base64Decode( (const unsigned char *)req->wr_Message, req->wr_MessageSize, &len );
 			if( dst != NULL )
 			{
-				DEBUG("[WebsocketReqAddChunk] data delivered %d data decoded %d strlen of msg %d total size %d\n", req->wr_MessageSize, len, (int)strlen( req->wr_Message ), req->wr_TotalSize );
+				//DEBUG("[WebsocketReqAddChunk] data delivered %d data decoded %d strlen of msg %d total size %d\n", req->wr_MessageSize, len, (int)strlen( req->wr_Message ), req->wr_TotalSize );
 				
 				FFree( req->wr_Message );
 				req->wr_Message = dst;
