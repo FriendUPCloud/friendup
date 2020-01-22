@@ -6226,7 +6226,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		if( packet && packet.theme )
 			AddCSSByUrl( '/themes/' + packet.theme + '/scrollbars.css' );
-		else AddCSSByUrl( '/themes/friendup12/scrollbars.css' );*/
+		else AddCSSByUrl( '/themes/friendup12/scrollbars.css' );
 		
 		// Only in specific circumstances ------------------------------------------
 		if( Application.sessionId )
