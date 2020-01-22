@@ -719,6 +719,7 @@ html > body > div button, html > body > div .Button
 	transition: background-color 0.25s;
 	color: #2a2a2a;
 	padding: 5px 10px;
+	font-size: 0.9em;
 }
 
 html body button.IconButton:not(:hover), 
@@ -3562,6 +3563,7 @@ input[type=datetime-local], input[type=password], html body textarea, html selec
 	border-radius: 2px;
 	border: 1px solid #e3e7e8;
 	background: #e8e8e8;
+	font-size: 0.9em;
 }
 
 html select, html select:hover
@@ -3572,6 +3574,7 @@ html select, html select:hover
 	background: #e3e7e8;
 	vertical-align: top;
 	padding: 4px 2px !important;
+	font-size: 0.9em;
 }
 
 /* Mouse pointers ----------------------------------------------------------- */
