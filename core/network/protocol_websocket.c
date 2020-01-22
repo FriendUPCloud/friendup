@@ -433,6 +433,7 @@ void WSThread( void *d )
 	int error = 0;
 	BufString *queryrawbs = data->queryrawbs;
 	WSCData *fcd = data->fcd;
+
 	if( fcd->wsc_Wsi == NULL )
 	{
 		releaseWSData( data );
@@ -1683,7 +1684,7 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 										}
 									} // end of going through json
 									
-
+#ifndef INPUT_QUEUE
 #if (ENABLE_WEBSOCKETS_THREADS == 1) || ( USE_PTHREAD == 1 )
 									// threads
 									pthread_t thread;
@@ -1718,12 +1719,14 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 									{
 										releaseWSData( wstdata );
 									}
-#endif
+#endif	// USE_WORKERS
 
 
-#else
+#endif // (ENABLE_WEBSOCKETS_THREADS == 1) || ( USE_PTHREAD == 1 )
+#else // INPUT_QUEUE
+DEBUG("\n\n\n\n\n\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n\n\n\n\n");
 									wstdata->http = http;
-									wstdata->wsi = wsi;
+									//wstdata->wsi = wsi;
 									wstdata->fcd = fcd;
 									wstdata->queryrawbs = queryrawbs;
 									WSThread( wstdata );
