@@ -107,45 +107,50 @@ if( $d->Load() )
 	
 	// 3. Check if file exists if not create it ...
 	$fl = new dbIO( 'FSFile' );
-	$fl->Filename = $d->Filename;
+	$fl->Filename = ( 'default_wallpaper_' . $f2->FilesystemID . '_' . $f2->UserID . '.jpg' );
 	$fl->FolderID = $f2->ID;
 	$fl->FilesystemID = $o->ID;
 	$fl->UserID = $userid;
-	if( !$fl->Load() )
+	if( $fl->Load() )
 	{
-		$ext     = explode( '.', $d->Filename );
-		$newname = ( $ext[0] ? $ext[0] : false );
-		$ext     = ( $ext[1] ? $ext[1] : false );
-		
-		if( !$newname || !$ext )
+		if( file_exists( 'storage/' . $fl->DiskFilename ) )
 		{
-			die( 'fail<!--separate-->{"message":"Missing correct filename example.jpg ...","response":-1}' );
+			unlink( 'storage/' . $fl->DiskFilename );
 		}
-		
-		while( file_exists( 'storage/' . $newname . '.' . $ext ) )
-		{
-			$newname = ( $newname . rand( 0, 999999 ) );
-		}
-		
-		if( $f = fopen( 'storage/' . $newname . '.' . $ext, 'w+' ) )
-		{
-			fwrite( $f, $d->GetContent() );
-			fclose( $f );
-		}
-		
-		$fl->DiskFilename = ( $newname . '.' . $ext );
-		$fl->Filesize = $d->_filesize;
-		$fl->DateCreated = date( 'Y-m-d H:i:s' );
-		$fl->DateModified = $fl->DateCreated;
-		
-		if( !file_exists( 'storage/' . $fl->DiskFilename ) )
-		{
-			die( 'fail<!--separate-->{"message":"Failed to save file ...","response":-1}' );
-		}
-		
-		$fl->Save();
-		
 	}
+	
+	$ext     = explode( '.', $d->Filename );
+	$newname = ( $ext[0] ? $ext[0] : false );
+	$ext     = ( $ext[1] ? $ext[1] : false );
+	
+	if( !$newname || !$ext )
+	{
+		die( 'fail<!--separate-->{"message":"Missing correct filename example.jpg ...","response":-1}' );
+	}
+	
+	while( file_exists( 'storage/' . $newname . '.' . $ext ) )
+	{
+		$newname = ( $newname . rand( 0, 999999 ) );
+	}
+	
+	if( $f = fopen( 'storage/' . $newname . '.' . $ext, 'w+' ) )
+	{
+		fwrite( $f, $d->GetContent() );
+		fclose( $f );
+	}
+	
+	$fl->DiskFilename = ( $newname . '.' . $ext );
+	$fl->Filesize = $d->_filesize;
+	$fl->DateCreated = date( 'Y-m-d H:i:s' );
+	$fl->DateModified = $fl->DateCreated;
+	
+	if( !file_exists( 'storage/' . $fl->DiskFilename ) )
+	{
+		die( 'fail<!--separate-->{"message":"Failed to save file ...","response":-1}' );
+	}
+	
+	$fl->Save();
+
 	
 	// 5. Fill Wallpaper app with settings and set default wallpaper
 	$wp = new dbIO( 'FSetting' );
