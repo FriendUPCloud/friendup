@@ -1329,6 +1329,9 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 											DEBUG( "No message!\n" );
 										}
 										
+#ifdef INPUT_QUEUE
+										wsreq->wr_Message = NULL; // memory was released by ParseAndCall
+#endif
 										WebsocketReqDelete( wsreq );
 									}
 								}
