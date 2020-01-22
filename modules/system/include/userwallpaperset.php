@@ -10,6 +10,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
+global $SqlDatabase, $User;
+
 if( isset( $args->args->userid ) && !isset( $args->userid ) )
 {
 	$args->userid = $args->args->userid;
@@ -66,9 +68,126 @@ else
 	}
 }
 
+// Get varargs
+$file = false;
+
+if( isset( $args->args->path ) )
+{
+	$file = $args->args->path;
+}
+
+if( !$file || !$userid ) die( '404' );
+
 // TODO: Create code to copy file from Admin's Home: folder to the user's folder and set the users wallpaper if the admin has access ...
 
-die( print_r( $args,1 ) . ' -- ' );
+$d = new File( $file );
+if( $d->Load() )
+{
+	
+	// 1. Check if the user has a Home drive and has logged in ...
+	$o = new dbIO( 'Filesystem' );
+	$o->UserID = $userid;
+	$o->Name = 'Home';
+	if( !$o->Load() )
+	{
+		die( 'fail<!--separate-->{"message":"User haven\'t logged in yet, Home drive is missing...","response":-1}' );
+	}
+	
+	// 2. Check if the user has Wallpaper folder if not create it ...
+	$f2 = new dbIO( 'FSFolder' );
+	$f2->FilesystemID = $o->ID;
+	$f2->UserID = $userid;
+	$f2->Name = 'Wallpaper';
+	if( !$f2->Load() )
+	{
+		$f2->DateCreated = date( 'Y-m-d H:i:s' );
+		$f2->DateModified = $f2->DateCreated;
+		$f2->Save();
+	}
+	
+	// 3. Check if file exists if not create it ...
+	$fl = new dbIO( 'FSFile' );
+	$fl->Filename = $d->Filename;
+	$fl->FolderID = $f2->ID;
+	$fl->FilesystemID = $o->ID;
+	$fl->UserID = $userid;
+	if( !$fl->Load() )
+	{
+		$ext     = explode( '.', $d->Filename );
+		$newname = ( $ext[0] ? $ext[0] : false );
+		$ext     = ( $ext[1] ? $ext[1] : false );
+		
+		if( !$newname || !$ext )
+		{
+			die( 'fail<!--separate-->{"message":"Missing correct filename example.jpg ...","response":-1}' );
+		}
+		
+		while( file_exists( 'storage/' . $newname . '.' . $ext ) )
+		{
+			$newname = ( $newname . rand( 0, 999999 ) );
+		}
+		
+		if( $f = fopen( 'storage/' . $newname . '.' . $ext, 'w+' ) )
+		{
+			fwrite( $f, $d->GetContent() );
+			fclose( $f );
+		}
+		
+		$fl->DiskFilename = ( $newname . '.' . $ext );
+		$fl->Filesize = $d->_filesize;
+		$fl->DateCreated = date( 'Y-m-d H:i:s' );
+		$fl->DateModified = $fl->DateCreated;
+		
+		if( !file_exists( 'storage/' . $fl->DiskFilename ) )
+		{
+			die( 'fail<!--separate-->{"message":"Failed to save file ...","response":-1}' );
+		}
+		
+		$fl->Save();
+		
+	}
+	
+	// 5. Fill Wallpaper app with settings and set default wallpaper
+	$wp = new dbIO( 'FSetting' );
+	$wp->UserID = $userid;
+	$wp->Type = 'system';
+	$wp->Key = 'imagesdoors';
+	if( $wp->Load() && $wp->Data )
+	{
+		$data = substr( $wp->Data, 1, -1 );
+		
+		if( $data && !strstr( $data, '"Home:' . $f2->Name . '/' . $fl->Filename . '"' ) )
+		{	
+			if( $json = json_decode( $data, true ) )
+			{
+				$json[] = ( 'Home:' . $f2->Name . '/' . $fl->Filename );
+				
+				if( $data = json_encode( $json ) )
+				{
+					$wp->Data = stripslashes( '"' . $data . '"' );
+					$wp->Save();
+				}
+			}
+		}
+	}
+	
+	// 6. Update settings to replace wallpaper for the user ...
+	$wp = new dbIO( 'FSetting' );
+	$wp->UserID = $userid;
+	$wp->Type = 'system';
+	$wp->Key = 'wallpaperdoors';
+	$wp->Load();
+	$wp->Data = ( '"Home:' . $f2->Name . '/' . $fl->Filename . '"' );
+	$wp->Save();
+	
+	if( $wp->ID > 0 )
+	{
+		die( 'ok<!--separate-->{"message":"Saved users wallpaper.","response":1}' );
+	}
+	
+}
+
+die( 'fail<!--separate-->{"message":"Failed to update the users wallpaper.","response":-1}' );
 
 
 ?>

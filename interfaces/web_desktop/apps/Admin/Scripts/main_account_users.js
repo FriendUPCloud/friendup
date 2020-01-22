@@ -1569,8 +1569,17 @@ Sections.accounts_users = function( cmd, extra )
 														
 														console.log( 'userwallpaperset ', { e:e, d:d } );
 														
+														var data = false;
+														
+														try
+														{
+															data = JSON.parse( d );
+														}
+														catch( e ) {  }
+														
 														if( e == 'ok' )
 														{
+															
 															// Load the image
 															var image = new Image();
 															image.onload = function()
@@ -1579,20 +1588,27 @@ Sections.accounts_users = function( cmd, extra )
 																var canvas = ge( 'AdminWallpaper' );
 																var context = canvas.getContext( '2d' );
 																context.drawImage( image, 0, 0, 256, 256 );
-														
+																
+																if( data )
+																{
+																	Notify( { title: 'success', text: data.message } );
+																}
+																
 															}
 															image.src = getImageUrl( item[ 0 ].Path );
+															
+														}
+														else
+														{
+															
+															if( data )
+															{
+																Notify( { title: 'failed', text: data.message } );
+															}
+															
 														}
 													
 													}
-													
-													//m.execute( 'setsetting', { 
-													//	setting : 'wallpaperdoors', 
-													//	data    : item[ 0 ].Path, 
-													//	userid  : userInfo.ID, 
-													//	authid  : Application.authId
-													//} );
-													
 													m.execute( 'userwallpaperset', { 
 														path    : item[ 0 ].Path, 
 														userid  : userInfo.ID, 
@@ -1614,7 +1630,7 @@ Sections.accounts_users = function( cmd, extra )
 									
 									if( workspaceSettings.wallpaperdoors )
 									{
-										var img = ( workspaceSettings.wallpaperdoors ? '/system.library/module/?module=system&command=thumbnail&width=568&height=320&mode=resize&authid='+Application.authId+'&path='+workspaceSettings.wallpaperdoors : '' );
+										var img = ( workspaceSettings.wallpaperdoors ? '/system.library/module/?module=system&command=thumbnail&width=568&height=320&mode=resize&userid='+userInfo.ID+'&authid='+Application.authId+'&path='+workspaceSettings.wallpaperdoors : '' );
 										
 										// Only update the wallaper if it exists..
 										var avSrc = new Image();
