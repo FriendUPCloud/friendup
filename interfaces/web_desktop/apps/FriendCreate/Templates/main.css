@@ -1,3 +1,9 @@
+@font-face
+{
+	font-family: JetBrains;
+	src: url(/webclient/fonts/JetBrainsMono-Regular.ttf);
+}
+
 #Print
 {
 	visibility: hidden;
@@ -78,6 +84,11 @@ html body #Toolbar button.IconButton:not(:hover), html body #Toolbar .Button.Ico
 	top: 60px;
 	width: calc(100% - 280px);
 	height: calc(100% - 100px);
+}
+
+#CodeArea.JetBrains .Page .ace_scroller
+{
+	font-family: JetBrains;
 }
 
 #CodeArea .Page
