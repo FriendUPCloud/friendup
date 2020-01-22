@@ -450,11 +450,12 @@ void WSThread( void *d )
 	if( fcd->wsc_Wsi == NULL || fcd->wsc_UserSession == NULL )
 	{
 		FERROR("Error session is NULL\n");
-		releaseWSData( data );
 
 		FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
 		fcd->wsc_InUseCounter--;
 		FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
+		
+		releaseWSData( data );
 		
 #ifdef USE_PTHREAD
 		pthread_exit( 0 );
@@ -484,7 +485,6 @@ void WSThread( void *d )
 		if( respcode == -666 )
 		{
 			INFO("Logout function called.");
-			releaseWSData( data );
 			
 			HttpFree( response );
 			
@@ -493,6 +493,8 @@ void WSThread( void *d )
 			FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
 			fcd->wsc_InUseCounter--;
 			FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
+			
+			releaseWSData( data );
 
 #ifdef USE_PTHREAD
 			pthread_exit(0);
@@ -705,11 +707,11 @@ void WSThread( void *d )
 		Log( FLOG_INFO, "WS no response end LOCKTEST\n");
 	}
 	
-	releaseWSData( data );
-	
 	FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
 	fcd->wsc_InUseCounter--;
 	FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
+	
+	releaseWSData( data );
 	
 	Log( FLOG_INFO, "WS END mutexes unlocked\n");
 	
@@ -1177,7 +1179,7 @@ void ParseAndCallThread( void *d )
 	{
 		FFree( im->im_Msg );
 	}
-	//pthread_exit( 0 );
+	pthread_exit( 0 );
 }
 #endif
 
@@ -1724,7 +1726,6 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 
 #endif // (ENABLE_WEBSOCKETS_THREADS == 1) || ( USE_PTHREAD == 1 )
 #else // INPUT_QUEUE
-DEBUG("\n\n\n\n\n\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n\n\n\n\n");
 									wstdata->http = http;
 									//wstdata->wsi = wsi;
 									wstdata->fcd = fcd;
