@@ -3126,8 +3126,13 @@ function PollTaskbar( curr )
 								}
 							}
 						}
+						
+						// Need some help? Only show help if parent element is aligned left or right
+						CreateHelpBubble( d, d.window.titleString, false, { positions: [ 'Left', 'Right' ] } );
+						
 						t.appendChild( d );
 						d.origWidth = d.offsetWidth + 20;
+						
 			
 						// Check if we opened a window with a task image
 						if( d.applicationId )
@@ -4082,7 +4087,7 @@ function FindImageColorProduct( img )
 /* This is bubbles for showing localized help on Workspace scoped elements.   */
 /* TODO: Support API scoped elements...                                       */
 
-function CreateHelpBubble( element, text, uniqueid )
+function CreateHelpBubble( element, text, uniqueid, rules )
 {
 	if( isMobile || isTablet ) return;
 	if( !element || !text ) return;
@@ -4125,32 +4130,43 @@ function CreateHelpBubble( element, text, uniqueid )
 			// Check parent
 			var positionClass = '';
 			var p = e.target ? e.target.parentNode : false;
-			if( p && p.getAttribute( 'position' ) )
+			
+			// Also check parent
+			if( p )
 			{
-				switch( p.getAttribute( 'position' ) )
+				for( var a = 0; a < 2; a++ )
 				{
-					case 'right_center':
-					case 'right_top':
-					case 'right_bottom':
-						positionClass = 'Right';
-						break;
-					case 'left_center':
-					case 'left_top':
-					case 'left_bottom':
-						positionClass = 'Left';
-						break;
-					case 'bottom_left':
-					case 'bottom_center':
-					case 'bottom_right':
-						positionClass = 'Bottom';
-						break;
-					case 'top_left':
-					case 'top_center':
-					case 'top_right':
-						positionClass = 'Top';
-						break;
-					default:
-						break;
+					var found = false;
+					if( p.getAttribute( 'position' ) )
+					{
+						switch( p.getAttribute( 'position' ) )
+						{
+							case 'right_center':
+							case 'right_top':
+							case 'right_bottom':
+								positionClass = 'Right';
+								break;
+							case 'left_center':
+							case 'left_top':
+							case 'left_bottom':
+								positionClass = 'Left';
+								break;
+							case 'bottom_left':
+							case 'bottom_center':
+							case 'bottom_right':
+								positionClass = 'Bottom';
+								break;
+							case 'top_left':
+							case 'top_center':
+							case 'top_right':
+								positionClass = 'Top';
+								break;
+							default:
+								break;
+						}
+					}
+					if( !!positionClass ) break;
+					p = p.parentNode;
 				}
 			}
 			
@@ -4208,12 +4224,31 @@ function CreateHelpBubble( element, text, uniqueid )
 			
 			// Remove all position classes and add right one
 			var pcl = [ 'Left', 'Top', 'Right', 'Bottom' ];
+			if( rules && rules.positions )
+				pcl = rules.positions;
 			for( var z = 0; z < pcl.length; z++ )
 				if( pcl[ a ] != positionClass )
 					v.dom.classList.remove( pcl[ a ] );
-			v.dom.classList.add( positionClass );
+			if( v.dom.className.length && positionClass )
+				v.dom.classList.add( positionClass );
+			else if( positionClass ) v.dom.className = positionClass;
 			
-			v.show();
+			var show = true;
+			if( pcl )
+			{
+				var f = false;
+				for( var a in pcl )
+				{
+					if( positionClass == pcl[ a ] )
+					{
+						f = true;
+						break;
+					}
+				}
+				show = f;
+			}
+			if( show )
+				v.show();
 			element.helpBubble.widget = v;
 		},
 		outListener: function( e )
