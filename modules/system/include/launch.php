@@ -91,18 +91,13 @@ if( $app->ID )
 		}
 	}
 	
-	// Preload api
-	$apibase = file_get_contents( 'resources/webclient/js/apps/api.js' );
-	$apibase = base64_encode( $apibase );
-	$apibase = 'data:text/javascript;base64,' . $apibase;
-	
 	// TODO: Permissions?
 	$str = '<!DOCTYPE html>
 <html>
 	<head>
 		<title>' . $conf->Name . '</title>
 		<base href="' . $path . '"/>
-		<script src="' . $apibase . '"></script>' . $scripts . '
+		<script src="/webclient/js/apps/api.js"></script>' . $scripts . '
 		<script>
 			' . $scrp . '
 			Application.checkAppPermission = function( key )
