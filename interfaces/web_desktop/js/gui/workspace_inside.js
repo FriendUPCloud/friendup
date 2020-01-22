@@ -8175,13 +8175,18 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		a1.onExecuted = function( a1r, a1d )
 		{
 			if( !a1r || a1r == 'fail' ) return;
-			var response = JSON.parse( a1d );
-			if( response.response == 1 )
+			try
 			{
-				Workspace.refreshTheme( response.themeName, true, response.themeConfig );
-				Workspace.reloadDocks();
-				Workspace.refreshDesktop( cb, true );
+				var response = JSON.parse( a1d );
+				if( response.response == 1 )
+				{
+					Workspace.refreshTheme( response.themeName, true, response.themeConfig );
+					Workspace.reloadDocks();
+					Workspace.refreshDesktop( cb, true );
+				}
 			}
+			catch( e )
+			{}
 		}
 		a1.execute( 'upgradesettings' );
 	},
@@ -9686,7 +9691,12 @@ Workspace.receivePush = function( jsonMsg, ready )
 		//check if extras are base 64 encoded... and translate them to the extra attribute which shall be JSON
 		if( msg.extrasencoded && msg.extrasencoded.toLowerCase() == 'yes' )
 		{
-			if( msg.extras ) msg.extra = JSON.parse( atob( msg.extras ).split(String.fromCharCode(92)).join("") );
+			try
+			{
+				if( msg.extras ) msg.extra = JSON.parse( atob( msg.extras ).split(String.fromCharCode(92)).join("") );
+			}
+			catch( e )
+			{}
 		}
 	
 		for( var a = 0; a < Workspace.applications.length; a++ )
