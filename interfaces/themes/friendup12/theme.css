@@ -3577,6 +3577,11 @@ html select, html select:hover
 	font-size: 0.9em;
 }
 
+html button:before, html button.IconSmall:before
+{
+	font-size: 1.1em;
+}
+
 /* Mouse pointers ----------------------------------------------------------- */
 
 body
@@ -3647,87 +3652,8 @@ html .MouseDefault
 html body.Busy, html body.Busy *
 {
 	cursor: progress;
-	/*animation: busyPointer 1000ms infinite;
-	-webkit-animation: busyPointer 1000ms infinite;*/
 }
-@keyframes busyPointer
-{
-	0%     { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0001.png) 0 0, auto; }
-	2.85%  { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0002.png) 0 0, auto; }
-	5.70%  { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0003.png) 0 0, auto; }
-	8.55%  { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0004.png) 0 0, auto; }
-	11.40% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0005.png) 0 0, auto; }
-	14.25% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0006.png) 0 0, auto; }
-	17.10% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0007.png) 0 0, auto; }
-	19.95% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0008.png) 0 0, auto; }
-	22.80% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0009.png) 0 0, auto; }
-	25.65% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0010.png) 0 0, auto; }
-	28.50% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0011.png) 0 0, auto; }
-	31.35% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0012.png) 0 0, auto; }
-	34.20% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0013.png) 0 0, auto; }
-	37.05% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0014.png) 0 0, auto; }
-	39.90% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0015.png) 0 0, auto; }
-	42.75% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0016.png) 0 0, auto; }
-	45.60% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0017.png) 0 0, auto; }
-	48.45% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0018.png) 0 0, auto; }
-	51.30% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0019.png) 0 0, auto; }
-	54.15% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0020.png) 0 0, auto; }
-	57.00% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0021.png) 0 0, auto; }
-	59.85% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0022.png) 0 0, auto; }
-	62.70% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0023.png) 0 0, auto; }
-	65.55% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0024.png) 0 0, auto; }
-	68.40% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0025.png) 0 0, auto; }
-	71.25% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0026.png) 0 0, auto; }
-	74.10% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0027.png) 0 0, auto; }
-	76.95% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0028.png) 0 0, auto; }
-	79.80% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0029.png) 0 0, auto; }
-	82.65% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0030.png) 0 0, auto; }
-	85.50% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0031.png) 0 0, auto; }
-	88.35% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0032.png) 0 0, auto; }
-	91.20% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0033.png) 0 0, auto; }
-	94.05% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0034.png) 0 0, auto; }
-	96.90% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0035.png) 0 0, auto; }
-	100%   { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0035.png) 0 0, auto; }
-}
-@-webkit-keyframes busyPointer
-{
-	0%     { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0001.png) 0 0, auto; }
-	2.85%  { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0002.png) 0 0, auto; }
-	5.70%  { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0003.png) 0 0, auto; }
-	8.55%  { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0004.png) 0 0, auto; }
-	11.40% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0005.png) 0 0, auto; }
-	14.25% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0006.png) 0 0, auto; }
-	17.10% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0007.png) 0 0, auto; }
-	19.95% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0008.png) 0 0, auto; }
-	22.80% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0009.png) 0 0, auto; }
-	25.65% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0010.png) 0 0, auto; }
-	28.50% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0011.png) 0 0, auto; }
-	31.35% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0012.png) 0 0, auto; }
-	34.20% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0013.png) 0 0, auto; }
-	37.05% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0014.png) 0 0, auto; }
-	39.90% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0015.png) 0 0, auto; }
-	42.75% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0016.png) 0 0, auto; }
-	45.60% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0017.png) 0 0, auto; }
-	48.45% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0018.png) 0 0, auto; }
-	51.30% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0019.png) 0 0, auto; }
-	54.15% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0020.png) 0 0, auto; }
-	57.00% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0021.png) 0 0, auto; }
-	59.85% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0022.png) 0 0, auto; }
-	62.70% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0023.png) 0 0, auto; }
-	65.55% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0024.png) 0 0, auto; }
-	68.40% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0025.png) 0 0, auto; }
-	71.25% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0026.png) 0 0, auto; }
-	74.10% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0027.png) 0 0, auto; }
-	76.95% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0028.png) 0 0, auto; }
-	79.80% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0029.png) 0 0, auto; }
-	82.65% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0030.png) 0 0, auto; }
-	85.50% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0031.png) 0 0, auto; }
-	88.35% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0032.png) 0 0, auto; }
-	91.20% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0033.png) 0 0, auto; }
-	94.05% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0034.png) 0 0, auto; }
-	96.90% { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0035.png) 0 0, auto; }
-	100%   { cursor: url(/themes/friendup12/gfx/icons/Custom/busyanim/busy0035.png) 0 0, auto; }
-}
+
 
 /* Deepest field */
 

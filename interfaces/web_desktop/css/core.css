@@ -1156,7 +1156,7 @@ table.Calendar td:hover { background: #333333; color: #ffffff; }
 #WorkspaceMenu .Menu li.Submenu:after
 {
 	font-family: FontAwesome;
-	content: "\f061";
+	content: "\f0da";
 	display: block;
 	float: right;
 	color: black;
