@@ -37,72 +37,87 @@ function initGui()
 }
 
 // Side bar being refreshed
-function refreshSidebar()
+function refreshSidebar( show )
 {
+	console.log( 'to show whole list use: refreshSidebar( true );' );
+	
 	var isAdmin = Application.getUserLevel() == 'admin' ? true : false;
 
 	Application.mods = {
 		'Server': {
 			'Status': {
 				icon: 'fa-info-circle',
-				showing: isAdmin
+				showing: isAdmin,
+				display: ( show ? true : false )
 			},
 			'Configuration': {
 				icon: 'fa-gear',
-				showing: isAdmin
+				showing: isAdmin,
+				display: ( show ? true : false )
 			},
 			'Certificates': {
 				icon: 'fa-certificate',
-				showing: isAdmin
+				showing: isAdmin,
+				display: ( show ? true : false )
 			},
 			'Printers': {
 				icon: 'fa-print',
-				showing: isAdmin
+				showing: isAdmin,
+				display: ( show ? true : false )
 			},
 			'Backup': {
 				icon: 'fa-cloud-download',
-				showing: isAdmin
+				showing: isAdmin,
+				display: ( show ? true : false )
 			},
 			'Logs': {
 				icon: 'fa-list-alt',
-				showing: isAdmin
+				showing: isAdmin,
+				display: ( show ? true : false )
 			}
 		},
 		'Services': {
 			'Status': {
 				icon: 'fa-info-circle',
-				showing: isAdmin
+				showing: isAdmin,
+				display: ( show ? true : false )
 			}
 		},
 		'Applications': {
 			'Applications': {
 				icon: 'fa-info-circle',
-				showing: isAdmin
+				showing: isAdmin,
+				display: ( show ? true : false )
 			}
 		},
 		'Accounts': {
 			'Status': {
 				icon: 'fa-info-circle',
-				condition: isAdmin
+				condition: isAdmin,
+				display: ( show ? true : false )
 			},
 			'Users': {
 				icon: 'fa-user-circle-o',
 				showing: isAdmin,
+				display: true,
 				permissions: [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ]
 			},
 			'Workgroups': {
 				icon: 'fa-users',
 				showing: isAdmin,
+				display: ( show ? true : false ),
 				permissions: [ 'PERM_WORKGROUP_GLOBAL', 'PERM_WORKGROUP_WORKGROUP' ]
 			},
 			'Roles': {
 				icon: 'fa-user-secret',
 				showing: isAdmin,
+				display: ( show ? true : false ),
 				permissions: [ 'PERM_ROLE_GLOBAL', 'PERM_ROLE_WORKGROUP' ]
 			},
 			'Templates': {
 				icon: 'fa-file-text',
 				showing: isAdmin,
+				display: true,
 				permissions: [ 'PERM_TEMPLATE_GLOBAL', 'PERM_TEMPLATE_WORKGROUP' ]
 			}
 		}
@@ -151,6 +166,8 @@ function refreshSidebar()
 			atag.innerHTML = b;
 			ptag.className = 'HRow BackgroundNegativeAlt PaddingLeft PaddingSmallTop PaddingRight PaddingSmallBottom';
 			ptag.appendChild( atag );
+			
+			if( !ch.display ) continue;
 			
 			// If we have no showing check permissions
 			if( !ch.showing )

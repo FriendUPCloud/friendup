@@ -90,6 +90,11 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 	$thumb->UserID = $userid;
 	if( $thumb->Load() )
 	{
+		if( isset( $args->debug ) )
+		{
+			die( '[1] ' . $thumb->UserID . ' -- ' . $thumb->Path . ' -- ' . $thumb->Filepath );
+		}
+		
 		// Check if it exists!
 		if( file_exists( $thumb->Filepath ) )
 		{
@@ -132,6 +137,11 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		}
 		else
 		{
+			if( isset( $args->debug ) )
+			{
+				die( '[2] ' . $thumb->UserID . ' -- ' . $thumb->Path . ' -- ' . '/tmp/Friendup/' . $smp );
+			}
+			
 			_file_broken();
 		}
 	
@@ -157,6 +167,11 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 	
 		if( !$source )
 		{
+			if( isset( $args->debug ) )
+			{
+				die( '[3] ' . $thumb->UserID . ' -- ' . $thumb->Path . ' -- ' . '/tmp/Friendup/' . $smp );
+			}
+			
 			_file_broken();
 		}
 		
@@ -215,6 +230,12 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		}
 	}
 }
+
+if( isset( $args->debug ) )
+{
+	die( '[4] ' . $thumb->UserID . ' -- ' . $thumb->Path . ' -- ' . $thumb->Filepath . ' -- ' . $ext );
+}
+
 // TODO: Support more icons
 _file_broken();
 
