@@ -240,6 +240,12 @@ select
 	pointer-events: none;
 }
 
+#MousePointer > div
+{
+	filter: drop-shadow(0px 2px 6px rgba(0,0,0,0.4));
+	transform: rotate3d(0deg);
+}
+
 .MousePointer
 {
 	cursor: hand;

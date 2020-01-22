@@ -690,9 +690,9 @@ var mousePointer =
 					el.oldStyle.top = el.style.top;
 					el.oldStyle.left = el.style.left;
 					el.oldStyle.position = el.style.position;
-					el.style.top = 'auto';
-					el.style.left = 'auto';
-					el.style.position = 'relative';
+					el.style.top = el.offsetTop + 'px';
+					el.style.left = el.offsetLeft + 'px';
+					el.style.position = 'absolute';
 					el.oldParent = el.parentNode;
 					if( typeof ele.window.icons[a+1] != 'undefined' )
 						el.sibling = ele.window.icons[a+1].domNode;
@@ -703,6 +703,22 @@ var mousePointer =
 					this.dom.appendChild( el );
 					this.elements.push( el );
 				}
+			}
+			// Align with top left corner
+			var maxx = 99999;
+			var maxy = 99999;
+			var elements = this.elements;
+			for( var a = 0; a < elements.length; a++ )
+			{
+				if( parseInt( elements[ a ].style.left ) < maxx )
+					maxx = parseInt( elements[ a ].style.left );
+				if( parseInt( elements[ a ].style.top ) < maxy )
+					maxy = parseInt( elements[ a ].style.top );
+			}
+			for( var a = 0; a < elements.length; a++ )
+			{
+				elements[ a ].style.left = parseInt( elements[ a ].style.left ) - maxx + 'px';
+				elements[ a ].style.top = parseInt( elements[ a ].style.top ) - maxy + 'px';
 			}
 		}
 		// Pickup single
