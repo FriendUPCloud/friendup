@@ -817,6 +817,7 @@ typedef struct InputMsg
 	WSCData		*im_FCD;
 	char		*im_Msg;
 	size_t		im_Len;
+	pthread_t	im_Thread;
 }InputMsg;
 
 void ParseAndCallThread( void *d );
@@ -1019,15 +1020,16 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				if( imsg != NULL )
 				{
 					// threads
-					pthread_t thread;
-					memset( &thread, 0, sizeof( pthread_t ) );
+					//pthread_t thread;
+					memset( &(imsg->im_Thread), 0, sizeof( pthread_t ) );
 					
 					imsg->im_FCD = fcd;
 					imsg->im_Msg = in;
 					imsg->im_Len = len;
 
+					//WorkerManagerRun( SLIB->sl_WorkerManager, ParseAndCallThread, imsg, NULL, "ProtocolWebsocket.c: line 1220" );
 					// Multithread mode
-					if( pthread_create( &thread, NULL,  (void *(*)(void *))ParseAndCallThread, ( void *)imsg ) != 0 )
+					if( pthread_create( &(imsg->im_Thread), NULL,  (void *(*)(void *))ParseAndCallThread, ( void *)imsg ) != 0 )
 					{
 					}
 				}
@@ -1172,12 +1174,31 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 #ifdef INPUT_QUEUE
 void ParseAndCallThread( void *d )
 {
-	pthread_detach( pthread_self() );
+	//pthread_detach( pthread_self() );
 	InputMsg *im = (InputMsg *)d;
+	
+	//if( FRIEND_MUTEX_LOCK( &(im->im_FCD->wsc_Mutex) ) == 0 )
+	//{
+	//	im->im_FCD->wsc_InUseCounter++;
+	//	FRIEND_MUTEX_UNLOCK( &(im->im_FCD->wsc_Mutex) );
+	//}
+	
 	ParseAndCall( im->im_FCD, im->im_Msg, im->im_Len );
-	if( im->im_Msg != NULL )
+	
+	//if( FRIEND_MUTEX_LOCK( &(im->im_FCD->wsc_Mutex) ) == 0 )
+	//{
+	//	im->im_FCD->wsc_InUseCounter--;
+	//	FRIEND_MUTEX_UNLOCK( &(im->im_FCD->wsc_Mutex) );
+	//}
+	
+	// do not use with worker!!!
+	if( im != NULL )
 	{
-		FFree( im->im_Msg );
+		if( im->im_Msg != NULL )
+		{
+			FFree( im->im_Msg );
+		}
+		FFree( im );
 	}
 	pthread_exit( 0 );
 }
