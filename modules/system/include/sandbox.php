@@ -104,20 +104,14 @@ if( isset( $args->conf ) )
 		{
 			if( isset( $file->Folder ) && file_exists( 'resources/' . $file->Folder ) && !is_dir( 'resources/' . $file->Folder ) )
 			{
-				$enc = file_get_contents( 'resources/' . $file->Folder . $file->Init );
-				$enc = base64_encode( $enc );
-				$s .= "\t\t" . '<script src="data:text/javascript;base64,' . $enc . '"></script>' . "\n";
+				$s .= "\t\t" . '<script src="/' . $file->Folder . $file->Init . '"></script>' . "\n";
 			}
 		}
 	}
 	
-	
-	$apibase = base64_encode( file_get_contents( 'resources/webclient/js/apps/api.js' ) );
-	
 	// Includes!
 	if( isset( $args->url ) )
 	{
-		
 		if( file_exists( $flz = ( 'resources' . urldecode( $args->url ) ) ) )
 		{
 			if( $ud = file_get_contents( $flz ) )
@@ -125,7 +119,7 @@ if( isset( $args->conf ) )
 				// We have our own
 				if( strstr( strtolower( $ud ), '<body' ) )
 				{
-					$f = preg_replace( '/(\s{0,})\<\/head[^>]*?\>/i', '$1<script src="data:text/javascript;base64,' . $apibase . '"></script>' . "\n" . '$1</head>', $ud );
+					$f = preg_replace( '/(\s{0,})\<\/head[^>]*?\>/i', '$1<script src="/webclient/js/apps/api.js"></script>' . "\n" . '$1</head>', $ud );
 				}
 				else if( file_exists( 'resources/webclient/sandboxed.html' ) )
 				{
@@ -141,7 +135,7 @@ if( isset( $args->conf ) )
 				// We have our own
 				if( strstr( strtolower( $ud ), '<body' ) )
 				{
-					$f = preg_replace( '/(\s{0,})\<\/head[^>]*?\>/i', '$1<script src="data:text/javascript;base64,' . $apibase . '"></script>' . "\n" . '$1</head>', $ud );
+					$f = preg_replace( '/(\s{0,})\<\/head[^>]*?\>/i', '$1<script src="/webclient/js/apps/api.js"></script>' . "\n" . '$1</head>', $ud );
 				}
 				else if( file_exists( 'resources/webclient/sandboxed.html' ) )
 				{
@@ -165,7 +159,7 @@ if( isset( $args->conf ) )
 			if( $ud )
 			{
 				if( strstr( strtolower( $ud ), '<body' ) )
-					$f = preg_replace( '/(\s{0,})\<\/head[^>]*?\>/i', '$1<script src="data:text/javascript;base64,' . $apibase . '"></script>' . "\n" . '$1</head>', $ud );
+					$f = preg_replace( '/(\s{0,})\<\/head[^>]*?\>/i', '$1<script src="/webclient/js/apps/api.js"></script>' . "\n" . '$1</head>', $ud );
 				else if( file_exists( 'resources/webclient/sandboxed.html' ) )
 				{
 					$f = file_get_contents( 'resources/webclient/sandboxed.html' );
@@ -187,8 +181,6 @@ if( isset( $args->conf ) )
 				$options->$key = $value;
 			}
 		}
-		
-		$f = str_replace( '"/webclient/js/apps/api.js"', '"data:text/javascript;base64,' . $apibase. '"', $f );
 		
 		// Virtual base url 
 		if( $options->path && $options->sessionid )
@@ -221,7 +213,6 @@ if( isset( $args->conf ) )
 		if( file_exists( 'resources/webclient/sandboxed.html' ) )
 		{
 			$f = file_get_contents( 'resources/webclient/sandboxed.html' );
-			$f = str_replace( '"/webclient/js/apps/api.js"', '"data:text/javascript;base64,' . $apibase. '"', $f );
 		}
 		else die( '404' );
 	}
