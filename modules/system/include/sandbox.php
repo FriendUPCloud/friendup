@@ -188,7 +188,7 @@ if( isset( $args->conf ) )
 			}
 		}
 		
-		$f = str_replace( '"/webclient/js/apps/api.js"', '"data:text/javascript;base64,' . $apibase. '"', $f );
+		$f = str_replace( 'src="/webclient/js/apps/api.js"', 'src="data:text/javascript;base64,' . $apibase. '"', $f );
 		
 		// Virtual base url 
 		if( $options->path && $options->sessionid )
