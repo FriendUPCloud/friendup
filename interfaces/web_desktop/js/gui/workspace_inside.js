@@ -9880,6 +9880,13 @@ _applicationBasics = {};
 function loadApplicationBasics()
 {
 	// Preload basic scripts
+	var a = new File( '/webclient/js/apps/api.js' );
+	a.onLoad = function( data )
+	{
+		_applicationBasics.apiV1 = URL.createObjectURL(new Blob([data],{type:'text/html'}));
+	}
+	a.load();
+	// Preload basic scripts
 	var c = new File( '/system.library/module/?module=system&command=theme&args=%7B%22theme%22%3A%22friendup12%22%7D&sessionid=' + Workspace.sessionId );
 	c.onLoad = function( data )
 	{

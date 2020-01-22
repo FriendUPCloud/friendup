@@ -373,10 +373,18 @@ function ExecuteApplication( app, args, callback )
 						Workspace.sessionId : ( Workspace.conf && Workspace.conf.authid ? Workspace.conf.authId : '');
 					var svalu = sid ? Workspace.sessionId :( Workspace.conf && Workspace.conf.authid ? Workspace.conf.authId : '');
 					var stype = sid ? 'sessionid' : 'authid';
-					//console.log( 'Launching with stype: ' + stype + ' and svalu: ' + svalu + ' and session ' + Workspace.sessionId );
-					ifr.src = sdomain + '/system.library/module?module=system&' +
+					
+					// Quicker ajax implementation
+					var j = new cAjax();
+					j.open( 'POST', '/system.library/module?module=system&' +
 						stype + '=' + svalu + '&command=launch&app=' +
-						app + '&friendup=' + Doors.runLevels[0].domain;
+						app + '&friendup=' + escape( Doors.runLevels[0].domain ), true );
+					j.onload = function()
+					{	
+						ws = this.rawData.split( 'src="/webclient/js/apps/api.js"' ).join( 'src="' + _applicationBasics.apiV1 + '"' );
+						ifr.src = URL.createObjectURL(new Blob([ws],{type:'text/html'}));
+					}
+					j.send();
 				}
 			}
 			else
@@ -1140,9 +1148,22 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 				if( stype == 'authid')
 					extra = '&theme=borderless';
 
-				ifr.src = dom + '/system.library/module/?module=system&command=sandbox' +
+				// Quicker ajax implementation
+				var j = new cAjax();
+				j.open( 'POST', '/system.library/module/?module=system&command=sandbox' +
 					'&' + stype + '=' + svalu +
-					'&conf=' + conf + '&' + ( args ? ( 'args=' + args ) : '' ) + extra;
+					'&conf=' + conf + '&' + ( args ? ( 'args=' + args ) : '' ) + extra, true );
+				j.onload = function()
+				{	
+					ws = this.rawData.split( 'src="/webclient/js/apps/api.js"' ).join( 'src="' + _applicationBasics.apiV1 + '"' );
+					ifr.src = URL.createObjectURL(new Blob([ws],{type:'text/html'}));
+				}
+				j.send();
+
+				/*ifr.src = dom + '/system.library/module/?module=system&command=sandbox' +
+					'&' + stype + '=' + svalu +
+					'&conf=' + conf + '&' + ( args ? ( 'args=' + args ) : '' ) + extra;*/
+				
 				ifr.conf = confObject;
 			}
 			// Just give a dumb sandbox
