@@ -86,10 +86,12 @@ html body #Toolbar button.IconButton:not(:hover), html body #Toolbar .Button.Ico
 	height: calc(100% - 100px);
 }
 
-#CodeArea.JetBrains .Page .ace_scroller
+/*#CodeArea.JetBrains .Page .ace_scroller,
+#CodeArea.JetBrains .ace_folding-enabled > .ace_gutter-cell
 {
 	font-family: JetBrains;
-}
+	font-size: 0.9em;
+}*/
 
 #CodeArea .Page
 {

@@ -844,7 +844,7 @@ Screen = function ( flags, initObject )
 		// Position content
 		ifr.style.position = 'absolute';
 		ifr.style.border = 'none';
-		ifr.style.height = document.body.offsetHeight - this._titleBar.offsetHeight + 'px';
+		ifr.style.height = this._titleBar ? ( 'calc(100% - ' + ( this._titleBar.offsetHeight + 'px' ) + ')' ) : '100%';
 		ifr.style.width = '100%';
 		ifr.style.left = '0';
 		ifr.style.top = this._titleBar.offsetHeight + 'px';
