@@ -111,6 +111,21 @@ WebsocketReq *WebsocketReqManagerPutChunk( WebsocketReqManager *wrm, char *id, i
 				FRIEND_MUTEX_LOCK( &(wrm->wrm_Mutex) );
 				// chunks were connected to one message
 				// message is removed from Waiting messages
+				
+				// we must be sure we are working on current list (lock)
+				
+				prevreq = NULL;
+				req = wrm->wrm_WRWaiting;
+				while( req != NULL )
+				{
+					if( strcmp( id, req->wr_ID ) == 0 )
+					{
+						break;
+					}
+					prevreq = req;
+					req = (WebsocketReq *)req->node.mln_Succ;
+				}
+				
 				if( oreq == wrm->wrm_WRWaiting )
 				{
 					wrm->wrm_WRWaiting = (WebsocketReq *)oreq->node.mln_Succ;
