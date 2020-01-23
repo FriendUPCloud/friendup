@@ -876,6 +876,8 @@ function _ActivateWindowOnly( div )
 		return;
 	}
 	
+	console.trace();
+	
 	// Don't select other fields
 	FocusOnNothing();
 	

@@ -584,6 +584,7 @@ Application.run = function( msg, iface )
 	this.newLine = true;
 	this.initCKE();
 	
+	// The Notes application defaults to the notes folder for all content ------
 	this.browserPath = 'Home:Notes/';
 	
 	this.sessionObject.currentZoom = '100%';
@@ -593,7 +594,7 @@ Application.run = function( msg, iface )
 		Application.checkWidth();
 	} );
 	
-	// Remember content on scroll!
+	// Remember content on scroll! ---------------------------------------------
 	document.body.onScroll = function( e )
 	{
 		if( Application.contentTimeout )
@@ -609,6 +610,7 @@ Application.run = function( msg, iface )
 		}, 250 );
 	}
 	
+	// Create the filebrowser pane (or side bar on desktop) --------------------
 	var FileBrowser = new Friend.FileBrowser( 
 		ge( 'LeftBar' ), 
 		{ 
@@ -622,7 +624,7 @@ Application.run = function( msg, iface )
 	FileBrowser.render();
 	this.fileBrowser = FileBrowser;
 	
-	// Make an "add new folder" button
+	// Make an "add new folder" button -----------------------------------------
 	this.fld = document.createElement( 'div' );
 	if( isMobile )
 	{
@@ -665,6 +667,7 @@ Application.run = function( msg, iface )
 	}
 	ge( 'LeftBar' ).parentNode.appendChild( this.fld );
 	
+	// Update the view mode
 	Application.updateViewMode();
 }
 
