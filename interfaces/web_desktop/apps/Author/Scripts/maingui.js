@@ -1658,7 +1658,7 @@ Application.receiveMessage = function( msg )
 				break;
 			}
 			break;
-		case 'design_standard':
+		case 'design_default':
 		case 'design_atmospheric':
 		case 'design_dark':
 			var f = new File( 'Progdir:Css/' + msg.command + '.css' );
