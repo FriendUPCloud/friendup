@@ -43,9 +43,9 @@ if( $level == 'Admin' )
 		//	'launch Dingo'				   
 		//);
 		
-		$obj->language = 'en';
+		$obj->language = ( isset( $args->args->Languages ) ? $args->args->Languages : 'en' );
 		
-		$obj->theme = 'Friendup';
+		$obj->theme = ( isset( $args->args->Themes ) ? $args->args->Themes : 'Friendup12' );
 		
 		//$obj->folders = array(
 		//	'Wallpaper',

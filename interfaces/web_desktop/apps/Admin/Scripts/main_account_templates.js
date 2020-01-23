@@ -33,7 +33,7 @@ Sections.accounts_templates = function( cmd, extra )
 		
 		case 'create':
 			
-			//create();
+			create();
 			
 			break;
 		
@@ -63,7 +63,7 @@ Sections.accounts_templates = function( cmd, extra )
 		
 		case 'refresh':
 			
-			initMain();
+			refresh( extra );
 			
 			break;
 		
@@ -205,6 +205,18 @@ Sections.accounts_templates = function( cmd, extra )
 		return false;
 	}
 	
+	function refresh( id )
+	{
+		
+		initMain();
+		
+		if( id )
+		{
+			edit( id );
+		}
+		
+	}
+	
 	function edit( id )
 	{
 		
@@ -241,12 +253,19 @@ Sections.accounts_templates = function( cmd, extra )
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			if( e == 'ok' )
+			console.log( { e:e, d:d } );
+			
+			if( e == 'ok' && d )
 			{
-				//refresh();
+				refresh( d );
 			}
 		}
-		m.execute( 'usersetupadd', { Name: 'Default', authid: Application.authId } );
+		m.execute( 'usersetupadd', { 
+			Name        : ( ge( 'TempName'        ) ? ge( 'TempName'        ).value : 'Default' ), 
+			Description : ( ge( 'TempDescription' ) ? ge( 'TempDescription' ).value : ''        ),
+			Languages   : ( ge( 'TempLanguages'   ) ? ge( 'TempLanguages'   ).value : 'en'      ),
+			authid      : Application.authId 
+		} );
 		
 	}
 	
@@ -261,7 +280,7 @@ Sections.accounts_templates = function( cmd, extra )
 			
 			
 			
-			return;
+			/*return;
 			
 			var args = {};
 			
@@ -309,19 +328,32 @@ Sections.accounts_templates = function( cmd, extra )
 					}
 				}
 			
+			}*/
+			
+			var args = { id: id, Preinstall: true, Themes: 'Friendup12' };
+			
+			var vals = [ 'Name', 'Description', 'Languages', 'Applications', 'Startup' /*, 'Themes'*/ ];
+			
+			for( var i in vals )
+			{
+				if( vals[i] && ge( 'Temp' + vals[i] ) )
+				{
+					args[ vals[i] ] = ge( 'Temp' + vals[i] ).value;
+				}
 			}
-		
-			args.id = id.value;
 			
+			console.log( args );
 			
+			//return;
 			
 			var m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{
 				if( e == 'ok' )
 				{
-					//EditSetup( id.value );
-					//RefreshSetup();
+					
+					console.log( { e:e, d:d } );
+					
 				}
 				
 			}
@@ -631,9 +663,18 @@ Sections.accounts_templates = function( cmd, extra )
 			{
 				// Save template ...
 				
-				console.log( '// save template' );
-				
-				update( details.ID ? details.ID : 0 );
+				if( details.ID )
+				{
+					console.log( '// save template' );
+					
+					update( details.ID );
+				}
+				else
+				{
+					console.log( '// create template' );
+					
+					create();
+				}
 			}
 			var bg2  = ge( 'TempCancelBtn' );
 			if( bg2 ) bg2.onclick = function( e )
@@ -656,6 +697,8 @@ Sections.accounts_templates = function( cmd, extra )
 			
 			function onLoad ( data )
 			{
+			
+			
 						
 				var func = {
 					
@@ -697,6 +740,97 @@ Sections.accounts_templates = function( cmd, extra )
 			
 					}( star ),
 					
+					updateids : function ( mode, key, value )
+					{
+						
+						switch( mode )
+						{
+							
+							case 'applications':
+								
+								if( key )
+								{
+									this.appids[ key ] = value;
+								}
+								
+								if( ge( 'TempApplications' ) )
+								{
+									if( this.appids )
+									{
+										var arr = [];
+										
+										for( var a in this.appids )
+										{
+											if( this.appids[a] && this.appids[a][0] )
+											{
+												arr.push( this.appids[a][0] + '_' + this.appids[a][1] );
+											}
+										}
+										
+										ge( 'TempApplications' ).setAttribute( 'value', ( arr ? arr.join( ',' ) : '' ) );
+									}
+								}
+								
+								break;
+							
+							case 'dock':
+								
+								if( key )
+								{
+									this.appids[ key ] = value;
+								}
+								
+								if( ge( 'TempApplications' ) )
+								{
+									if( this.appids )
+									{
+										var arr = [];
+										
+										for( var a in this.appids )
+										{
+											if( this.appids[a] && this.appids[a][0] )
+											{
+												arr.push( this.appids[a][0] + '_' + this.appids[a][1] );
+											}
+										}
+										
+										ge( 'TempApplications' ).setAttribute( 'value', ( arr ? arr.join( ',' ) : '' ) );
+									}
+								}
+								
+								break;
+								
+							case 'startup':
+								
+								if( key )
+								{
+									this.startids[ key ] = value;
+								}
+								
+								if( ge( 'TempStartup' ) )
+								{
+									if( this.startids )
+									{
+										var arr = [];
+										
+										for( var a in this.startids )
+										{
+											if( this.startids[a] )
+											{
+												arr.push( this.startids[a] );
+											}
+										}
+										
+										ge( 'TempStartup' ).setAttribute( 'value', ( arr ? arr.join( ',' ) : '' ) );
+									}
+								}
+								
+								break;
+								
+						}
+						
+					},
+					
 					mode : { applications : 'list', dock : 'list', startup : 'list' },
 					
 					// Applications ------------------------------------------------------------------------------------
@@ -716,7 +850,9 @@ Sections.accounts_templates = function( cmd, extra )
 							head : function (  )
 							{
 								
-								var o = ge( 'ApplicationGui' ); o.innerHTML = '';
+								var o = ge( 'ApplicationGui' ); o.innerHTML = '<input type="hidden" id="TempApplications">';
+								
+								this.func.updateids( 'applications' );
 								
 								var divs = appendChild( [ 
 									{ 
@@ -902,7 +1038,9 @@ Sections.accounts_templates = function( cmd, extra )
 																		b.onclick = function(  )
 																		{
 																			
-																			ids[ name ] = ( ids[ name ] ? [ 0, ids[ name ][ 1 ] ] : [ 0, 0 ] );
+																			//ids[ name ] = ( ids[ name ] ? [ 0, ids[ name ][ 1 ] ] : [ 0, 0 ] );
+																			
+																			func.updateids( 'applications', name, ( ids[ name ] ? [ 0, ids[ name ][ 1 ] ] : [ 0, 0 ] ) );
 																			
 																			var pnt = this.parentNode.parentNode;
 																			
@@ -1058,14 +1196,18 @@ Sections.accounts_templates = function( cmd, extra )
 																		{
 																			if( this.classList.contains( 'fa-toggle-off' ) )
 																			{
-																				ids[ name ] = ( ids[ name ] ? [ name, ids[ name ][ 1 ] ] : [ name, 0 ] );
+																				//ids[ name ] = ( ids[ name ] ? [ name, ids[ name ][ 1 ] ] : [ name, 0 ] );
+																				
+																				func.updateids( 'applications', name, ( ids[ name ] ? [ name, ids[ name ][ 1 ] ] : [ name, 0 ] ) );
 																				
 																				this.classList.remove( 'fa-toggle-off' );
 																				this.classList.add( 'fa-toggle-on' );
 																			}
 																			else
 																			{
-																				ids[ name ] = ( ids[ name ] ? [ 0, ids[ name ][ 1 ] ] : [ 0, 0 ] );
+																				//ids[ name ] = ( ids[ name ] ? [ 0, ids[ name ][ 1 ] ] : [ 0, 0 ] );
+																				
+																				func.updateids( 'applications', name, ( ids[ name ] ? [ 0, ids[ name ][ 1 ] ] : [ 0, 0 ] ) );
 																				
 																				this.classList.remove( 'fa-toggle-on' );
 																				this.classList.add( 'fa-toggle-off' );
@@ -1240,6 +1382,8 @@ Sections.accounts_templates = function( cmd, extra )
 							{
 								var o = ge( 'DockGui' ); o.innerHTML = '';
 								
+								this.func.updateids( 'dock' );
+								
 								var divs = appendChild( [ 
 									{ 
 										'element' : function() 
@@ -1332,8 +1476,10 @@ Sections.accounts_templates = function( cmd, extra )
 											{
 												for( var a in this.ids )
 												{
-													if( this.ids[a] && this.ids[a][0] == apps[k].Name && this.ids[a][1] )
+													if( this.ids[a] && this.ids[a][0] == apps[k].Name && this.ids[a][1] == 1 )
 													{
+														console.log( "this.ids[a] && " + this.ids[a][0] + " == " + apps[k].Name + " && " + this.ids[a][1] );
+														
 														found = true;
 													}
 												}
@@ -1458,14 +1604,16 @@ Sections.accounts_templates = function( cmd, extra )
 															'child' : 
 															[ 
 																{ 
-																	'element' : function( ids, name ) 
+																	'element' : function( ids, name, func ) 
 																	{
 																		var b = document.createElement( 'button' );
 																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
 																		b.onclick = function(  )
 																		{
 																			
-																			ids[ name ] = [ name, 0 ];
+																			//ids[ name ] = [ name, 0 ];
+																			
+																			func.updateids( 'dock', name, [ name, 0 ] );
 																			
 																			var pnt = this.parentNode.parentNode;
 																			
@@ -1476,7 +1624,7 @@ Sections.accounts_templates = function( cmd, extra )
 																			
 																		};
 																		return b;
-																	}( this.ids, apps[k].Name ) 
+																	}( this.ids, apps[k].Name, this.func ) 
 																}
 															]
 														}
@@ -1527,7 +1675,7 @@ Sections.accounts_templates = function( cmd, extra )
 													{
 														found = true;
 														
-														if( this.ids[a][1] )
+														if( this.ids[a][1] == 1 )
 														{
 															toggle = true;
 														}
@@ -1614,7 +1762,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'child' : 
 															[ 
 																{ 
-																	'element' : function( ids, name ) 
+																	'element' : function( ids, name, func ) 
 																	{
 																		var b = document.createElement( 'button' );
 																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( toggle ? 'on' : 'off' );
@@ -1622,21 +1770,25 @@ Sections.accounts_templates = function( cmd, extra )
 																		{
 																			if( this.classList.contains( 'fa-toggle-off' ) )
 																			{
-																				ids[ name ] = [ name, 1 ];
+																				//ids[ name ] = [ name, 1 ];
+																				
+																				func.updateids( 'dock', name, [ name, 1 ] );
 																				
 																				this.classList.remove( 'fa-toggle-off' );
 																				this.classList.add( 'fa-toggle-on' );
 																			}
 																			else
 																			{
-																				ids[ name ] = [ name, 0 ];
+																				//ids[ name ] = [ name, 0 ];
+																				
+																				func.updateids( 'dock', name, [ name, 0 ] );
 																				
 																				this.classList.remove( 'fa-toggle-on' );
 																				this.classList.add( 'fa-toggle-off' );
 																			}
 																		};
 																		return b;
-																	}( this.ids, apps[k].Name ) 
+																	}( this.ids, apps[k].Name, this.func ) 
 																}
 															]
 														}
@@ -1813,7 +1965,9 @@ Sections.accounts_templates = function( cmd, extra )
 							
 							head : function ( hidecol )
 							{
-								var o = ge( 'StartupGui' ); o.innerHTML = '';
+								var o = ge( 'StartupGui' ); o.innerHTML = '<input type="hidden" id="TempStartup">';
+								
+								this.func.updateids( 'startup' );
 								
 								var divs = appendChild( [ 
 									{ 
@@ -1917,7 +2071,9 @@ Sections.accounts_templates = function( cmd, extra )
 													}
 													else if( a == apps[k].Name && this.ids[ apps[k].Name ] )
 													{
-														this.ids[ apps[k].Name ] = false;
+														//this.ids[ apps[k].Name ] = false;
+														
+														this.func.updateids( 'startup', apps[k].Name, false );
 													}
 												}
 											}
@@ -2041,14 +2197,16 @@ Sections.accounts_templates = function( cmd, extra )
 															'child' : 
 															[ 
 																{ 
-																	'element' : function( ids, name ) 
+																	'element' : function( ids, name, func ) 
 																	{
 																		var b = document.createElement( 'button' );
 																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
 																		b.onclick = function(  )
 																		{
 																			
-																			ids[ name ] = false;
+																			//ids[ name ] = false;
+																			
+																			func.updateids( 'startup', name, false );
 																			
 																			var pnt = this.parentNode.parentNode;
 																			
@@ -2059,7 +2217,7 @@ Sections.accounts_templates = function( cmd, extra )
 																			
 																		};
 																		return b;
-																	}( this.ids, apps[k].Name ) 
+																	}( this.ids, apps[k].Name, this.func ) 
 																}
 															]
 														}
@@ -2197,7 +2355,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'child' : 
 															[ 
 																{ 
-																	'element' : function( ids, name ) 
+																	'element' : function( ids, name, func ) 
 																	{
 																		var b = document.createElement( 'button' );
 																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( toggle ? 'on' : 'off' );
@@ -2205,21 +2363,25 @@ Sections.accounts_templates = function( cmd, extra )
 																		{
 																			if( this.classList.contains( 'fa-toggle-off' ) )
 																			{
-																				ids[ name ] = ( 'launch ' + name );
+																				//ids[ name ] = ( 'launch ' + name );
+																				
+																				func.updateids( 'startup', name, ( 'launch ' + name ) );
 																				
 																				this.classList.remove( 'fa-toggle-off' );
 																				this.classList.add( 'fa-toggle-on' );
 																			}
 																			else
 																			{
-																				ids[ name ] = false;
+																				//ids[ name ] = false;
+																				
+																				func.updateids( 'startup', name, false );
 																				
 																				this.classList.remove( 'fa-toggle-on' );
 																				this.classList.add( 'fa-toggle-off' );
 																			}
 																		};
 																		return b;
-																	}( this.ids, apps[k].Name ) 
+																	}( this.ids, apps[k].Name, this.func ) 
 																}
 															]
 														}
