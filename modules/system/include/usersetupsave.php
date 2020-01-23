@@ -92,9 +92,18 @@ if( $level == 'Admin' && $args->args->id > 0 )
 				$obj->startups = [];
 			}
 			
-			$obj->preinstall = $args->args->Preinstall;
-			$obj->language = $args->args->Languages;
-			$obj->theme = $args->args->Themes;
+			if( $args->args->Preinstall )
+			{
+				$obj->preinstall = $args->args->Preinstall;
+			}
+			if( $args->args->Languages )
+			{
+				$obj->language = $args->args->Languages;
+			}
+			if( $args->args->Themes )
+			{
+				$obj->theme = $args->args->Themes;
+			}
 			
 			if ( $data = json_encode( $obj ) )
 			{
