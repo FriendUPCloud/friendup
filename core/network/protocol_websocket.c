@@ -1027,9 +1027,9 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					imsg->im_Msg = in;
 					imsg->im_Len = len;
 
-					//WorkerManagerRun( SLIB->sl_WorkerManager, ParseAndCallThread, imsg, NULL, "ProtocolWebsocket.c: line 1220" );
+					WorkerManagerRun( SLIB->sl_WorkerManager, ParseAndCallThread, imsg, NULL, "ProtocolWebsocket.c: line 1030" );
 					// Multithread mode
-					if( pthread_create( &(imsg->im_Thread), NULL,  (void *(*)(void *))ParseAndCallThread, ( void *)imsg ) != 0 )
+					//if( pthread_create( &(imsg->im_Thread), NULL,  (void *(*)(void *))ParseAndCallThread, ( void *)imsg ) != 0 )
 					{
 					}
 				}
@@ -1191,7 +1191,6 @@ void ParseAndCallThread( void *d )
 	//	FRIEND_MUTEX_UNLOCK( &(im->im_FCD->wsc_Mutex) );
 	//}
 	
-	// do not use with worker!!!
 	if( im != NULL )
 	{
 		if( im->im_Msg != NULL )
@@ -1200,7 +1199,8 @@ void ParseAndCallThread( void *d )
 		}
 		FFree( im );
 	}
-	pthread_exit( 0 );
+	// do not use with worker!!!
+	//pthread_exit( 0 );
 }
 #endif
 
