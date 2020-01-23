@@ -19,6 +19,11 @@ menu_insert_image                 : Sett inn bilde
 menu_convert_images_inline        : Til innline bilder
 menu_vr_features                  : Gjem/skjul VR funksjoner
 
+menu_design                       : Design
+menu_design_default               : Standard design
+menu_design_atmospheric           : Atmosfære
+menu_design_dark                  : Mørkt
+
 i18n_root_directory               : Notater
 
 i18n_list                         : Liste
