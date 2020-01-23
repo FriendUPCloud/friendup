@@ -406,8 +406,6 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 				
 				fcb.style.display = 'block';
 				fcb.style.margin = 'auto';
-				
-				debugger;
 			}
 
 			// Preliminary progress bar
