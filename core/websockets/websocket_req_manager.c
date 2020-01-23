@@ -150,7 +150,7 @@ WebsocketReq *WebsocketReqManagerPutChunk( WebsocketReqManager *wrm, char *id, i
 				*/
 				FRIEND_MUTEX_UNLOCK( &(wrm->wrm_Mutex) );
 				
-				DEBUG("[WebsocketReqPutData] Request message %s  \n\n%d\n", req->wr_Message, req->wr_MessageSize );
+				//DEBUG("[WebsocketReqPutData] Request message %s  \n\n%d\n", req->wr_Message, req->wr_MessageSize );
 				
 				return oreq;
 			}
