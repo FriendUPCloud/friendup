@@ -105,6 +105,16 @@ if( $level == 'Admin' && $args->args->id > 0 )
 				$obj->theme = $args->args->Themes;
 			}
 			
+			if( $args->args->ThemeConfig )
+			{
+				$obj->themeconfig = $args->args->ThemeConfig;
+			}
+			
+			if( $args->args->WorkspaceCount )
+			{
+				$obj->workspacecount = $args->args->WorkspaceCount;
+			}
+			
 			if ( $data = json_encode( $obj ) )
 			{
 				$s = new dbIO( 'FSetting' );

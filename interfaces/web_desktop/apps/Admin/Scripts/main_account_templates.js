@@ -277,62 +277,10 @@ Sections.accounts_templates = function( cmd, extra )
 		if ( id )
 		{
 			// Setup input values
-			
-			
-			
-			/*return;
-			
-			var args = {};
-			
-			var vals = [ 'Name', 'Preinstall', 'Applications', 'Disks', 'Startup', 'Languages', 'Themes' ];
-			
-			for( var a = 0; a < vals.length; a++ )
-			{
-				if( ge( 'pSetup' + vals[a] ) )
-				{
-					if( ge( 'pSetup' + vals[a] ).tagName == 'INPUT' )
-					{
-						args[vals[a]] = ( ge( 'pSetup' + vals[a] ).type == 'checkbox' ? ( ge( 'pSetup' + vals[a] ).checked ? '1' : '0' ) : ge( 'pSetup' + vals[a] ).value );
-					}
-					else if( ge( 'pSetup' + vals[a] ).tagName == 'SELECT' )
-					{
-						args[vals[a]] = ge( 'pSetup' + vals[a] ).value;
-					}
-					else if( ge( 'pSetup' + vals[a] ).tagName == 'DIV' )
-					{
-						var ele = ge( 'pSetup' + vals[a] ).getElementsByTagName( '*' );
-					
-						if( ele.length > 0 )
-						{
-							var value = false;
 						
-							for( var v = 0; v < ele.length; v++ )
-							{
-								if( ele[v].getAttribute( 'value' ) && ele[v].getAttribute( 'value' ) != '' )
-								{
-									var inp = ele[v].getElementsByTagName( 'input' );
-								
-									value = ( value ? ( value + ', ' + ele[v].getAttribute( 'value' ) + ( inp[0] && inp[0].type == 'checkbox' ? ( inp[0].checked ? '_1' : '_0' ) : '' ) ) : ( ele[v].getAttribute( 'value' ) + ( inp[0] && inp[0].type == 'checkbox' ? ( inp[0].checked ? '_1' : '_0' ) : '' ) ) );
-								}
-							}
-						
-							if( value )
-							{
-								args[vals[a]] = value;
-							}
-						}
-					}
-					else
-					{
-						//args[vals[a]] = ge( 'pSetup' + vals[a] ).value;
-					}
-				}
-			
-			}*/
-			
 			var args = { id: id, Preinstall: true, Themes: 'Friendup12' };
 			
-			var vals = [ 'Name', 'Description', 'Languages', 'Applications', 'Startup' /*, 'Themes'*/ ];
+			var vals = [ 'Name', 'Description', 'Languages', 'Applications', 'Startup' ];
 			
 			for( var i in vals )
 			{
@@ -342,9 +290,15 @@ Sections.accounts_templates = function( cmd, extra )
 				}
 			}
 			
+			// Look And Feel settings ...
+			
+			args[ 'ThemeConfig' ] = { colorSchemeText: ge( 'theme_dark_button' ).value, buttonSchemeText: ge( 'theme_style_select' ).value };
+			
+			args[ 'WorkspaceCount' ] = ge( 'workspace_count_input' ).value;
+			
 			console.log( args );
 			
-			//return;
+			
 			
 			var m = new Module( 'system' );
 			m.onExecuted = function( e, d )
@@ -355,6 +309,8 @@ Sections.accounts_templates = function( cmd, extra )
 					console.log( { e:e, d:d } );
 					
 				}
+				
+				// handle saving of template if there is any new ....
 				
 			}
 			m.execute( 'usersetupsave', args );
@@ -541,11 +497,16 @@ Sections.accounts_templates = function( cmd, extra )
 	{
 		
 		var details = ( info.details ? info.details : {} );
-		var data = ( details.Data ? details.Data : {} );
+		
+		var data = ( details.Data  ? details.Data  : {} );
 		var soft = ( data.software ? data.software : {} );
 		var star = ( data.startups ? data.startups : {} );
+		
+		var themeData      = ( data.themeconfig    ? data.themeconfig    : {} );
+		var workspacecount = ( data.workspacecount ? data.workspacecount : {} );
+		
 		var apps = ( info.applications ? info.applications : {} );
-		var look = ( info.looknfeel ? info.looknfeel : {} );
+		var look = ( info.looknfeel    ? info.looknfeel    : {} );
 		
 		console.log( info );
 		
@@ -591,21 +552,32 @@ Sections.accounts_templates = function( cmd, extra )
 				};
 				return b;*/
 				
-				return '<button class="IconButton IconSmall IconToggle ButtonSmall fa-toggle-off" id="theme_dark_button"></button>';
+				return '<button class="IconButton IconSmall IconToggle ButtonSmall fa-toggle-' + ( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? 'on' : 'off' ) + '" id="theme_dark_button" value="' + ( themeData.colorSchemeText ? themeData.colorSchemeText : 'light' ) + '"></button>';
 				
 			},
 			
 			controls : function ()
 			{
 				
-				return '<select class="InputHeight FullWidth"><option value="mac">Mac style</option><option value="windows">Windows style</option></select>';
+				var opt = { 'mac' : 'Mac style', 'windows' : 'Windows style' };
+					
+				var str = '<select class="InputHeight FullWidth" id="theme_style_select">';
+				
+				for( var k in opt )
+				{
+					str += '<option value="' + k + '"' + ( themeData.buttonSchemeText == k ? ' selected="selected"' : '' ) + '>' + opt[k] + '</option>';
+				}
+				
+				str += '</select>';
+				
+				return str;
 				
 			},
 			
 			workspace_count : function ()
 			{
 				
-				return '<input type="number" class="FullWidth" value="1">';
+				return '<input type="number" class="FullWidth" id="workspace_count_input" value="' + ( workspacecount > 0 ? workspacecount : '1' ) + '">';
 				
 			},
 			
@@ -1478,8 +1450,6 @@ Sections.accounts_templates = function( cmd, extra )
 												{
 													if( this.ids[a] && this.ids[a][0] == apps[k].Name && this.ids[a][1] == 1 )
 													{
-														console.log( "this.ids[a] && " + this.ids[a][0] + " == " + apps[k].Name + " && " + this.ids[a][1] );
-														
 														found = true;
 													}
 												}
@@ -2504,7 +2474,7 @@ Sections.accounts_templates = function( cmd, extra )
 										
 									};
 								}
-						
+								
 								var btn = ge( 'StartupEditBack' );
 								if( btn )
 								{
@@ -2557,11 +2527,33 @@ Sections.accounts_templates = function( cmd, extra )
 								{
 									this.classList.remove( 'fa-toggle-off' );
 									this.classList.add( 'fa-toggle-on' );
+									
+									this.setAttribute( 'value', 'charcoal' );
 								}
 								else
 								{
 									this.classList.remove( 'fa-toggle-on' );
 									this.classList.add( 'fa-toggle-off' );
+									
+									this.setAttribute( 'value', 'light' );
+								}
+								
+							};
+						}
+						
+						if( ge( 'workspace_count_input' ) )
+						{
+							var i = ge( 'workspace_count_input' );
+							i.current = i.value;
+							i.onchange = function(  )
+							{
+								if( this.value >= 1 )
+								{
+									this.current = this.value;
+								}
+								else
+								{
+									this.value = this.current;
 								}
 								
 							};
@@ -2904,9 +2896,10 @@ Sections.accounts_templates = function( cmd, extra )
 									{
 										var d = document.createElement( 'div' );
 										d.className = 'HRow';
+										d.tempid = temp[k].ID;
 										d.onclick = function()
 										{
-											edit( temp[k].ID );
+											edit( this.tempid );
 										};
 										return d;
 									}(),
@@ -2944,9 +2937,10 @@ Sections.accounts_templates = function( cmd, extra )
 													{
 														var s = document.createElement( 'span' );
 														s.className = 'IconSmall FloatRight PaddingSmall fa-minus-circle';
+														s.tempid = temp[k].ID;
 														s.onclick = function ( e ) 
 														{ 
-															remove( temp[k].ID );
+															remove( this.tempid );
 															e.stopPropagation();
 															e.preventDefault(); 
 														};
