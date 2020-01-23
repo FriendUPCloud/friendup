@@ -157,7 +157,7 @@ WebsocketReq *WebsocketReqAddChunk( WebsocketReq *req, int chunk, char *data, in
 			
 			memcpy( &(req->wr_Message[ pos ]), data, maxToCopy );
 			
-			INFO("[WebsocketReqAddChunk] chunk added %d/%d datasize %d message size %d stored data in position %d last char %c\n", chunk, req->wr_Total, datasize, req->wr_MessageSize, pos, req->wr_Message[ (chunk * req->wr_ChunkSize)-1 ] );
+			//INFO("[WebsocketReqAddChunk] chunk added %d/%d datasize %d message size %d stored data in position %d last char %c\n", chunk, req->wr_Total, datasize, req->wr_MessageSize, pos, req->wr_Message[ (chunk * req->wr_ChunkSize)-1 ] );
 		}
 		req->wr_MessageSize += maxToCopy;
 		
