@@ -1517,8 +1517,11 @@ function _WindowToFront( div, flags )
 	}
 
 	// 4. now apply the one we want to front to the front
-	div.viewContainer.style.zIndex = sortedInd;
-	div.style.zIndex = sortedInd;
+	if( div.viewContainer )
+	{
+		div.viewContainer.style.zIndex = sortedInd;
+		div.style.zIndex = sortedInd;
+	}
 	
 	// 5. Check if we are snapped
 	if( !flags.sourceElements )
