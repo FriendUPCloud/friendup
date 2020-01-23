@@ -97,7 +97,7 @@ WebsocketReq *WebsocketReqManagerPutChunk( WebsocketReqManager *wrm, char *id, i
 				prevreq = req;
 				req = (WebsocketReq *)req->node.mln_Succ;
 			}
-			FRIEND_MUTEX_UNLOCK( &(wrm->wrm_Mutex) );
+			//FRIEND_MUTEX_UNLOCK( &(wrm->wrm_Mutex) );
 		}
 		DEBUG("[WebsocketReqPutData] req pointer %p chunk %d/%d , datasize %d\n", req, chunk, total, datasize );
 		
