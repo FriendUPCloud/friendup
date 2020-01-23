@@ -108,12 +108,12 @@ WebsocketReq *WebsocketReqManagerPutChunk( WebsocketReqManager *wrm, char *id, i
 			DEBUG("[WebsocketReqPutData] pointer to last chunk %p\n", oreq );
 			if( oreq != NULL )
 			{
-				FRIEND_MUTEX_LOCK( &(wrm->wrm_Mutex) );
+				//FRIEND_MUTEX_LOCK( &(wrm->wrm_Mutex) );
 				// chunks were connected to one message
 				// message is removed from Waiting messages
 				
 				// we must be sure we are working on current list (lock)
-				
+				/*
 				prevreq = NULL;
 				req = wrm->wrm_WRWaiting;
 				while( req != NULL )
@@ -125,6 +125,7 @@ WebsocketReq *WebsocketReqManagerPutChunk( WebsocketReqManager *wrm, char *id, i
 					prevreq = req;
 					req = (WebsocketReq *)req->node.mln_Succ;
 				}
+				*/
 				
 				if( oreq == wrm->wrm_WRWaiting )
 				{
@@ -154,12 +155,16 @@ WebsocketReq *WebsocketReqManagerPutChunk( WebsocketReqManager *wrm, char *id, i
 				
 				return oreq;
 			}
+			else
+			{
+				FRIEND_MUTEX_UNLOCK( &(wrm->wrm_Mutex) );
+			}
 		}
 		else // request was not send to FC before, we must create it
 		{
 			WebsocketReq *nreq = WebsocketReqNew( id, chunk, total, data, datasize );
 			
-			FRIEND_MUTEX_LOCK( &(wrm->wrm_Mutex) );
+			//FRIEND_MUTEX_LOCK( &(wrm->wrm_Mutex) );
 			
 			// We must remove old WebsocketReqests
 			time_t currTime = time( NULL );
