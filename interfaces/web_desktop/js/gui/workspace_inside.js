@@ -9897,11 +9897,21 @@ function loadApplicationBasics()
 		_applicationBasics.apiV1 = URL.createObjectURL(new Blob([data],{type:'text/html'}));
 	}
 	a.load();
+	var sb = new File( '/themes/friendup12/scrollbars.css' );
+	sb.onLoad = function( data )
+	{
+		if( _applicationBasics.css )
+			_applicationBasics.css += data;
+		else _applicationBasics.css = data;
+	}
+	sb.load();
 	// Preload basic scripts
 	var c = new File( '/system.library/module/?module=system&command=theme&args=%7B%22theme%22%3A%22friendup12%22%7D&sessionid=' + Workspace.sessionId );
 	c.onLoad = function( data )
 	{
-		_applicationBasics.css = data;
+		if( _applicationBasics.css )
+			_applicationBasics.css += data;
+		else _applicationBasics.css = data;
 	}
 	c.load();
 	var js = '/webclient/' + [ 'js/oo.js',
