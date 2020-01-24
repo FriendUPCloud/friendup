@@ -877,7 +877,8 @@ function _ActivateWindowOnly( div )
 	}
 	
 	// Don't select other fields
-	FocusOnNothing();
+	if( !div.classList.contains( 'Active' ) )
+		FocusOnNothing();
 	
 	// Special case
 	var delayedDeactivation = true;
@@ -3970,7 +3971,7 @@ var View = function( args )
 		var view = this;
 		this.iframe = ifr;
 		
-		ifr.onfocus = function()
+		ifr.onfocus = function( e )
 		{
 			if( !ifr.view.parentNode.classList.contains( 'Active' ) )
 			{

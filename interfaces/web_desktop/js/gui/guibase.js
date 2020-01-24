@@ -3963,7 +3963,7 @@ function ClearMenuItemStyling( par )
 function FocusOnNothing()
 {
 	if( !window.currentMovable ) return;
-	
+	console.trace();
 	if( !isMobile )
 		_DeactivateWindows();
 	
@@ -3972,11 +3972,15 @@ function FocusOnNothing()
 	for( var a in movableWindows )
 	{
 		if( movableWindows[a].windowObject )
+		{
 			movableWindows[a].windowObject.sendMessage( { command: 'blur' } );
+		}
 	}
 	var eles = document.getElementsByTagName( '*' );
 	for( var a = 0; a < eles.length; a++ )
+	{
 		eles[a].blur();
+	}
 	// Why not focus on window!?
 	window.focus();
 }
