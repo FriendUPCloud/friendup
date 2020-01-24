@@ -22,6 +22,53 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	var ignoreFiles = false;
 	var rememberPath = false;
 	
+	// Sanitize paths
+	var lastChar;
+	if( path )
+	{
+		lastChar = path.substr( -1, 1 );
+		if( lastChar != ':' && lastChar != '/' )
+		{
+			if( path.indexOf( '/' ) > 0 )
+			{
+				path = path.split( '/' );
+				object.filename = path.pop();
+				path = path.join( '/' ) + '/';
+				path = path.replace( '//', '/' );
+			}
+			else if( path.indexOf( ':' ) > 0 )
+			{
+				path = path.split( ':' );
+				object.filename = path.pop();
+				path = path.join( ':' ) + ':';
+				path = path.replace( '::', ':' );
+			}
+		}
+	}
+	if( object.path )
+	{
+		lastChar = object.path.substr( -1, 1 );
+		if( lastChar != ':' && lastChar != '/' )
+		{
+			if( object.path.indexOf( '/' ) > 0 )
+			{
+				object.path = object.path.split( '/' );
+				object.filename = object.path.pop();
+				object.path = object.path.join( '/' ) + '/';
+				object.path = object.path.replace( '//', '/' );
+			}
+			else if( object.path.indexOf( ':' ) > 0 )
+			{
+				object.path = object.path.split( ':' );
+				object.filename = object.path.pop();
+				object.path = object.path.join( ':' ) + ':';
+				object.path = object.path.replace( '::', ':' );
+			}
+		}
+	}
+	// End path sanitation
+	
+	
 	if( path && ( ( !window.isMobile && path.toLowerCase() == 'mountlist:' ) || path.indexOf( ':' ) < 0 ) )
 	{
 		path = defaultPath;
@@ -39,6 +86,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	
 	if( !window.isMobile && object && object.path && object.path == 'Mountlist:' )
 		object.path = false;
+	
 	
 	// Check if the path exists
 	if( path != 'Mountlist:' )
