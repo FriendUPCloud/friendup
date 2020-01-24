@@ -629,7 +629,13 @@ var WorkspaceInside = {
 			{
 				if( e.type == 'open' )
 				{
-					Workspace.websocketState = 'open';
+					// TODO: Fix this!! Whenthe state is open, ws should 
+					//       immediately be able to handle requests, now its
+					//       a slight delay
+					setTimeout( function()
+					{
+						Workspace.websocketState = 'open';
+					}, 150 );
 				}
 				else if( e.type == 'connecting' )
 				{
@@ -1748,6 +1754,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									index: 0,
 									func: function()
 									{
+										if( Workspace.getWebSocketsState() != 'open' )
+										{
+											return setTimeout( function(){ l.func() }, 500 );
+										}
 										if( !ScreenOverlay.done && l.index < seq.length )
 										{
 											// Register for Friend DOS
@@ -1775,6 +1785,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 														if( ScreenOverlay.debug )
 															slot = ScreenOverlay.addStatus( i18n( 'i18n_processing' ), cmd );											
 														ScreenOverlay.addDebug( 'Executing ' + cmd );
+
 														Workspace.shell.execute( cmd, function( res )
 														{
 															if( ScreenOverlay.debug )
