@@ -165,6 +165,7 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 				if( wscdata->wsc_Wsi != NULL )
 				{
 					lws_callback_on_writable( wscdata->wsc_Wsi );
+					lws_cancel_service_pt( wscdata->wsc_Wsi );
 				}
 				FRIEND_MUTEX_UNLOCK( &(wscdata->wsc_Mutex) );
 			}
@@ -204,6 +205,7 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 			if( wscdata->wsc_Wsi != NULL )
 			{
 				lws_callback_on_writable( wscdata->wsc_Wsi );
+				lws_cancel_service_pt( wscdata->wsc_Wsi );
 			}
 			FRIEND_MUTEX_UNLOCK( &(wscdata->wsc_Mutex) );
 		}
@@ -319,6 +321,7 @@ int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen
 							if( wsi->wusc_Data != NULL && wsi->wusc_Data->wsc_Wsi != NULL )
 							{
 								lws_callback_on_writable( wsi->wusc_Data->wsc_Wsi );
+								lws_cancel_service_pt( wsi->wusc_Data->wsc_Wsi );
 							}
 							FRIEND_MUTEX_UNLOCK( &(wsi->wusc_Data->wsc_Mutex) );
 						}
@@ -371,6 +374,7 @@ int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen
 						if( wsi->wusc_Data != NULL && wsi->wusc_Data->wsc_Wsi != NULL )
 						{
 							lws_callback_on_writable( wsi->wusc_Data->wsc_Wsi );
+							lws_cancel_service_pt( wsi->wusc_Data->wsc_Wsi );
 						}
 						FRIEND_MUTEX_UNLOCK( &(wsi->wusc_Data->wsc_Mutex) );
 					}
@@ -802,7 +806,23 @@ static inline int jsoneqin(const char *json, const jsmntok_t *tok, const char *s
 			} \
 		}
 
+
+#define INPUT_QUEUE
+
+#ifdef INPUT_QUEUE
+
+typedef struct InputMsg
+{
+	WSCData		*im_FCD;
+	char		*im_Msg;
+	size_t		im_Len;
+}InputMsg;
+
+void ParseAndCallThread( void *d );
 int ParseAndCall( WSCData *fcd, char *in, size_t len );
+#else
+int ParseAndCall( WSCData *fcd, char *in, size_t len );
+#endif
 
 /**
  * Main FriendCore websocket callback
@@ -993,17 +1013,37 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				*/
 				DEBUG1("[WS] Callback receive: %s\n", in );
 				
+#ifdef INPUT_QUEUE
+				InputMsg *imsg = FCalloc( 1, sizeof( InputMsg ) );
+				if( imsg != NULL )
+				{
+					// threads
+					pthread_t thread;
+					memset( &thread, 0, sizeof( pthread_t ) );
+					
+					imsg->im_FCD = fcd;
+					imsg->im_Msg = in;
+					imsg->im_Len = len;
+
+					// Multithread mode
+					if( pthread_create( &thread, NULL,  (void *(*)(void *))ParseAndCallThread, ( void *)imsg ) != 0 )
+					{
+					}
+				}
+#else
 				ParseAndCall( fcd, in, len );
+#endif
 				
 				DEBUG("Webcall finished!\n");
 			}
 			
+#ifndef INPUT_QUEUE
 			if( len > 0 )
 			{
 				char *c = (char *)in;
 				c[ 0 ] = 0;
 			}
-			
+#endif
 		break;
 		
 		case LWS_CALLBACK_SERVER_WRITEABLE:
@@ -1115,10 +1155,12 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 	
 	DECREASE_WS_THREADS();
 	
+#ifndef INPUT_QUEUE	// do not deallocate memory if command is going to thread
 	if( in != NULL )
 	{
 		FFree( in );
 	}
+#endif
 
 	return returnError;
 }
@@ -1126,6 +1168,19 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 //
 //
 //
+#ifdef INPUT_QUEUE
+void ParseAndCallThread( void *d )
+{
+	pthread_detach( pthread_self() );
+	InputMsg *im = (InputMsg *)d;
+	ParseAndCall( im->im_FCD, im->im_Msg, im->im_Len );
+	if( im->im_Msg != NULL )
+	{
+		FFree( im->im_Msg );
+	}
+	//pthread_exit( 0 );
+}
+#endif
 
 int ParseAndCall( WSCData *fcd, char *in, size_t len )
 {
@@ -1945,5 +2000,6 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 	}
 	
 	FFree( t );
+	
 	return 0;
 }

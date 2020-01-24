@@ -2770,6 +2770,25 @@ html .File a
 	color: #212729;
 }
 
+html body .File.Selected:before
+{
+	background: rgba(185,185,185,0.2);
+	border-radius: 2px;
+	content: " ";
+	display: block;
+	width: 120%;
+	position: absolute;
+	top: 0;
+	left: -10%;
+	height: 100%;
+}
+
+html body .ScreenContent > .Scroller > div > .File.Selected:before,
+html body #MousePointer .File.Selected:before
+{
+	display: none;
+}
+
 html .File .Icon *
 {
 	background-size: 56px;
@@ -3588,8 +3607,9 @@ html .MouseMove,
 html .TitleBar:hover .Left:after,
 html .TitleBar:active .Left:after,
 html .View > .Title:active, html .View:active > .Title,
-html .View:active, html .View[moving=moving], html .View[moving=moving] *,
-html .View > .MoveOverlay, html .Screen > .MoveOverlay
+html .View[moving=moving], html .View[moving=moving] *,
+html .View > .MoveOverlay, html .Screen > .MoveOverlay,
+html .Screen > .ScreenOverlay
 {
 	cursor: move;
 }

@@ -233,6 +233,19 @@ html body.Synthwave .File a
 	color: #bdbcff;
 }
 
+html body.Synthwave .File.Selected:before
+{
+	background: rgba(255,255,255,0.1);
+	border-radius: 2px;
+	content: " ";
+	display: block;
+	width: 120%;
+	position: absolute;
+	top: 0;
+	left: -10%;
+	height: 100%;
+}
+
 html body.Synthwave .File .Icon > *:after
 {
 	color: #461c64;

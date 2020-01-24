@@ -4245,10 +4245,10 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 			
 			win.refresh = function( callback )
 			{
-				if( dv.cancelId )
+				/*if( dv.cancelId )
 				{
 					CancelCajaxOnId( dv.cancelId );
-				}
+				}*/
 				// Refresh 2
 				// Run previous callback
 				if( callback )
@@ -4275,16 +4275,9 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 					w.setFlag( 'title', _nameFix( wt ) );
 					var fi = self.fileInfo;
 					
-					// Give directoryview 4 secs to list
-					var timeo = setTimeout( function()
-					{
-						win.innerHTML = '<div class="DirectoryRefresh">' + i18n( 'i18n_directory_too_long' ) + '<br><button type="button" class="Button IconSmall fa-refresh" onclick="currentMovable.content.refresh()">' + i18n( 'i18n_refresh_when_online' ) + '</button></div>';
-					}, 4000 );
-					
 					// TODO: Figure out something..
 					dr.getIcons( fi, function( icons, something, response )
 					{
-						clearTimeout( timeo );
 						if( icons )
 						{
 							// Assign door to each icon

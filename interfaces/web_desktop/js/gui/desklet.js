@@ -339,6 +339,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		
 		if( position != 'fixed' )
 		{
+			Workspace.mainDock.dom.style.transition = 'none';
 			switch( pos )
 			{
 				case 'left_center':
@@ -391,6 +392,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				this.dom.classList.remove( 'Bottom' );
 				this.dom.classList.add( positionClass );
 			}
+			Workspace.mainDock.dom.style.transition = '';
 		}
 		// Fixed!
 		else

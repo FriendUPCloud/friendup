@@ -4006,7 +4006,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				m.execute( 'device/list' );
 			}
-			mo.forceHTTP = true;
 			mo.forceSend = true;
 			mo.execute( 'workspaceshortcuts' );
 		}
@@ -8061,6 +8060,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		ExecuteApplication( 'Account', args );
 	},
+	flushSession: function()
+	{
+		Workspace.sessionId = '';
+	},
 	//try to run a call and if does not get back display offline message....
 	checkServerConnectionHTTP: function()
 	{	
@@ -8099,7 +8102,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		var m = new Module('system');
 		
-		m.forceHTTP = true;
 		m.forceSend = true;
 		m.cancelId = 'checkserverconnection';
 		
@@ -8146,7 +8148,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		Workspace.serverHTTPCheckModule = m;
 		
-		m.forceHTTP = true;
 		m.forceSend = true;
 		m.execute( 'getsetting', { setting: 'infowindow' } );
 		return setTimeout( 'Workspace.checkServerConnectionResponse();', 1000 );
@@ -8175,13 +8176,18 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		a1.onExecuted = function( a1r, a1d )
 		{
 			if( !a1r || a1r == 'fail' ) return;
-			var response = JSON.parse( a1d );
-			if( response.response == 1 )
+			try
 			{
-				Workspace.refreshTheme( response.themeName, true, response.themeConfig );
-				Workspace.reloadDocks();
-				Workspace.refreshDesktop( cb, true );
+				var response = JSON.parse( a1d );
+				if( response.response == 1 )
+				{
+					Workspace.refreshTheme( response.themeName, true, response.themeConfig );
+					Workspace.reloadDocks();
+					Workspace.refreshDesktop( cb, true );
+				}
 			}
+			catch( e )
+			{}
 		}
 		a1.execute( 'upgradesettings' );
 	},
@@ -8705,7 +8711,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if( appToken != null )	// old applications which do not have appToken will skip this part
 			{
 				var l = new Library( 'system.library' );
-				l.forceHTTP = true;
 				l.forceSend = true;
 				l.onExecuted = function( e, d )
 				{
@@ -9450,7 +9455,6 @@ function ShowEula( accept, cbk )
 		//call device refresh to make sure user get his devices...
 		var dl = new FriendLibrary( 'system.library' );
 		dl.addVar( 'visible', true );
-		dl.forceHTTP = true;
 		dl.forceSend = true;
 		dl.onExecuted = function(e,d)
 		{
@@ -9686,7 +9690,12 @@ Workspace.receivePush = function( jsonMsg, ready )
 		//check if extras are base 64 encoded... and translate them to the extra attribute which shall be JSON
 		if( msg.extrasencoded && msg.extrasencoded.toLowerCase() == 'yes' )
 		{
-			if( msg.extras ) msg.extra = JSON.parse( atob( msg.extras ).split(String.fromCharCode(92)).join("") );
+			try
+			{
+				if( msg.extras ) msg.extra = JSON.parse( atob( msg.extras ).split(String.fromCharCode(92)).join("") );
+			}
+			catch( e )
+			{}
 		}
 	
 		for( var a = 0; a < Workspace.applications.length; a++ )

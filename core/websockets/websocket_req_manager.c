@@ -115,7 +115,7 @@ WebsocketReq *WebsocketReqManagerPutChunk( WebsocketReqManager *wrm, char *id, i
 				{
 					wrm->wrm_WRWaiting = (WebsocketReq *)oreq->node.mln_Succ;
 				}
-				else
+				else if( prevreq != NULL )	// avoid crash if prevreq = NULL
 				{
 					prevreq->node.mln_Succ = oreq->node.mln_Succ;
 				}
