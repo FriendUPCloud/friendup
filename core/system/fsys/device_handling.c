@@ -240,7 +240,7 @@ int RescanDOSDrivers( DeviceManager *dm )
 // internal function to lock
 //
 
-inline int MountLock( DeviceManager *dm, User *usr )
+inline static int MountLock( DeviceManager *dm, User *usr )
 {
 	if( usr != NULL )
 	{
@@ -250,7 +250,7 @@ inline int MountLock( DeviceManager *dm, User *usr )
 	return FRIEND_MUTEX_LOCK( &(dm->dm_Mutex) );
 }
 
-inline int MountUnlock( DeviceManager *dm, User *usr )
+inline static int MountUnlock( DeviceManager *dm, User *usr )
 {
 	if( usr != NULL )
 	{
@@ -797,7 +797,7 @@ AND f.Name = '%s'",
 			{
 				// Check again in lock if device is already mounted
 				
-				File *fentry = usrgrp->ug_MountedDevs;
+				File *fentry = usr->u_MountedDevs;
 				while( fentry != NULL )
 				{
 					if( id == fentry->f_ID || strcmp( name, fentry->f_Name ) == 0 )
