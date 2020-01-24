@@ -218,7 +218,7 @@ Sections.accounts_users = function( cmd, extra )
 						{
 							themeData = { colorSchemeText: 'light', buttonSchemeText: 'windows' };
 						}
-						
+						console.log( 'themeData ',  [ themeData, workspaceSettings ] );
 						return themeData;
 					},
 					
@@ -462,6 +462,7 @@ Sections.accounts_users = function( cmd, extra )
 									if( res ) res.onclick = function( e )
 									{
 										toggleChangePass();
+										editMode();
 									}
 								}
 							},
@@ -517,12 +518,12 @@ Sections.accounts_users = function( cmd, extra )
 								
 								if( ge( 'UserBasicDetails' ) )
 								{
-									var inps = ge( 'UserBasicDetails' ).getElementsByTagName( 'input' );
+									var inps = ge( 'UserBasicDetails' ).getElementsByTagName( '*' );
 									if( inps.length > 0 )
 									{
 										for( var a = 0; a < inps.length; a++ )
 										{
-											if( inps[ a ].id && [ 'usFullname', 'usUsername', 'usEmail' ].indexOf( inps[ a ].id ) >= 0 )
+											if( inps[ a ].id && [ 'usFullname', 'usUsername', 'usEmail', 'usLanguage', 'usSetup' ].indexOf( inps[ a ].id ) >= 0 )
 											{
 												( function( i ) {
 													i.onclick = function( e )
@@ -550,7 +551,9 @@ Sections.accounts_users = function( cmd, extra )
 								var bg2  = ge( 'UserCancelBtn' );
 								if( bg2 ) bg2.onclick = function( e )
 								{
-									cancelUser(  );
+									//cancelUser(  );
+									//editMode( true );
+									Sections.accounts_users( 'edit', userInfo.ID );
 								}
 								var bg3  = ge( 'UserBackBtn' );
 								if( bg3 ) bg3.onclick = function( e )
@@ -647,6 +650,12 @@ Sections.accounts_users = function( cmd, extra )
 																	{
 																		pnt.innerHTML = '';
 																	}
+																	
+																	// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+																	
+																	// Refresh Storage ...
+																	console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																	Sections.user_disk_cancel( userInfo.ID );
 																}
 																f.execute( 'group/removeusers', args );
 															}
@@ -974,7 +983,12 @@ Sections.accounts_users = function( cmd, extra )
 																	
 																	this.btn.classList.remove( 'fa-toggle-off' );
 																	this.btn.classList.add( 'fa-toggle-on' );
-																
+																	
+																	// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+																	
+																	// Refresh Storage ...
+																	console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																	Sections.user_disk_cancel( userInfo.ID );
 																}
 																f.execute( 'group/addusers', args );
 															}
@@ -996,6 +1010,13 @@ Sections.accounts_users = function( cmd, extra )
 																	
 																	this.btn.classList.remove( 'fa-toggle-on' );
 																	this.btn.classList.add( 'fa-toggle-off' );
+																	
+																	// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+																	
+																	// Refresh Storage ...
+																	console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																	Sections.user_disk_cancel( userInfo.ID );
+																	
 																}
 																f.execute( 'group/removeusers', args );
 															}
@@ -1228,6 +1249,13 @@ Sections.accounts_users = function( cmd, extra )
 																		{
 																			pnt.innerHTML = '';
 																		}
+																		
+																		// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+																		
+																		// Refresh Storage ...
+																		console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																		Sections.user_disk_cancel( userInfo.ID );
+																		
 																	}
 																	f.execute( 'group/removeusers', args );
 																}
@@ -1254,7 +1282,15 @@ Sections.accounts_users = function( cmd, extra )
 												this.wge.classList.add( 'Open' );
 											} 
 											
+											
+											
+											// Refresh Storage ...
+											console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+											Sections.user_disk_cancel( userInfo.ID );
+											
 										}
+										
+										
 										
 										
 									/*}*/
@@ -1296,7 +1332,7 @@ Sections.accounts_users = function( cmd, extra )
 							{
 								// Theme ---------------------------------------------------
 								
-								if( ge( 'theme_name' ) && settings.Theme )
+								/*if( ge( 'theme_name' ) && settings.Theme )
 								{
 									ge( 'theme_name' ).innerHTML = settings.Theme;
 								}
@@ -1330,6 +1366,309 @@ Sections.accounts_users = function( cmd, extra )
 									st.backgroundSize = 'cover';
 									st.backgroundPosition = 'center';
 									st.backgroundRepeat = 'no-repeat';
+								}*/
+								
+								
+								var currTheme = ( settings.Theme ? settings.Theme : 'friendup12' );
+								
+								themeConfig = {  };
+								
+								if( ge( 'theme_style_select' ) )
+								{
+									var s = ge( 'theme_style_select' );
+									
+									if( themeData.buttonSchemeText )
+									{
+										var opt = { 'mac' : 'Mac style', 'windows' : 'Windows style' };
+										
+										var str = '';
+										
+										for( var k in opt )
+										{
+											str += '<option value="' + k + '"' + ( themeData.buttonSchemeText == k ? ' selected="selected"' : '' ) + '>' + opt[k] + '</option>';
+										}
+										
+										s.innerHTML = str;
+									}
+									
+									s.current = s.value;
+									
+									themeConfig.buttonSchemeText = s.current;
+									
+									s.onchange = function(  )
+									{
+										
+										themeConfig.buttonSchemeText = this.value;
+										
+										var m = new Module( 'system' );
+										m.s = this;
+										m.onExecuted = function( e, d )
+										{
+											
+											console.log( { e:e, d:d } );
+											
+											if( e != 'ok' )
+											{
+												themeConfig.buttonSchemeText = this.s.current;
+											}
+											else
+											{
+												themeConfig.buttonSchemeText = this.s.value;
+											}
+											
+										}
+										m.execute( 'setsetting', { 
+											setting : 'themedata_' + currTheme.toLowerCase(), 
+											data    : themeConfig, 
+											userid  : userInfo.ID, 
+											authid  : Application.authId 
+										} );
+										
+									};
+								}
+								
+								if( ge( 'theme_dark_button' ) )
+								{
+									var b = ge( 'theme_dark_button' );
+									
+									if( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' )
+									{
+										b.classList.remove( 'fa-toggle-off' );
+										b.classList.add( 'fa-toggle-on' );
+										
+										themeConfig.colorSchemeText = 'charcoal';
+									}
+									else
+									{
+										b.classList.remove( 'fa-toggle-on' );
+										b.classList.add( 'fa-toggle-off' );
+										
+										themeConfig.colorSchemeText = 'light';
+									}
+									
+									b.onclick = function(  )
+									{
+										
+										if( this.classList.contains( 'fa-toggle-off' ) )
+										{
+											themeConfig.colorSchemeText = 'charcoal';
+										}
+										else
+										{
+											themeConfig.colorSchemeText = 'light';
+										}
+										
+										var m = new Module( 'system' );
+										m.b = this;
+										m.onExecuted = function( e, d )
+										{
+											
+											console.log( { e:e, d:d } );
+											
+											if( this.b.classList.contains( 'fa-toggle-off' ) )
+											{
+												
+												if( e == 'ok' )
+												{
+													this.b.classList.remove( 'fa-toggle-off' );
+													this.b.classList.add( 'fa-toggle-on' );
+												}
+												else
+												{
+													themeConfig.colorSchemeText = 'light';
+												}
+												
+											}
+											else
+											{
+												
+												if( e == 'ok' )
+												{
+													this.b.classList.remove( 'fa-toggle-on' );
+													this.b.classList.add( 'fa-toggle-off' );
+												}
+												else
+												{
+													themeConfig.colorSchemeText = 'charcoal';
+												}
+												
+											}
+											
+										}
+										m.execute( 'setsetting', { 
+											setting : 'themedata_' + currTheme.toLowerCase(), 
+											data    : themeConfig, 
+											userid  : userInfo.ID, 
+											authid  : Application.authId 
+										} );
+										
+									};
+								}
+								
+								if( ge( 'workspace_count_input' ) )
+								{
+									var i = ge( 'workspace_count_input' );
+									i.value = ( workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1' );
+									i.current = i.value;
+									i.onchange = function(  )
+									{
+										if( this.value >= 1 )
+										{
+											var m = new Module( 'system' );
+											m.i = this;
+											m.onExecuted = function( e, d )
+											{
+											
+												if( e != 'ok' )
+												{
+													this.i.value = this.i.current;
+												}
+												else
+												{
+													this.i.current = this.i.value;
+												}
+												
+												console.log( { e:e, d:d } );
+											
+											}
+											m.execute( 'setsetting', { 
+												setting : 'workspacecount', 
+												data    : this.value, 
+												userid  : userInfo.ID, 
+												authid  : Application.authId 
+											} );
+										}
+										else
+										{
+											this.value = this.current;
+										}
+										
+									};
+								}
+								
+								if( ge( 'wallpaper_button_inner' ) )
+								{
+									var b = ge( 'wallpaper_button_inner' );
+									b.onclick = function(  )
+									{
+										
+										var flags = {
+											type: 'load',
+											path: 'Home:',
+											suffix: [ 'jpg', 'jpeg', 'png', 'gif' ],
+											triggerFunction: function( item )
+											{
+												if( item && item.length && item[ 0 ].Path )
+												{
+													
+													console.log( 'loaded image ... ', item );
+													
+													var m = new Module( 'system' );
+													m.onExecuted = function( e, d )
+													{
+														
+														console.log( 'userwallpaperset ', { e:e, d:d } );
+														
+														var data = false;
+														
+														try
+														{
+															data = JSON.parse( d );
+														}
+														catch( e ) {  }
+														
+														if( e == 'ok' )
+														{
+															
+															// Load the image
+															var image = new Image();
+															image.onload = function()
+															{
+																// Resizes the image
+																var canvas = ge( 'AdminWallpaper' );
+																var context = canvas.getContext( '2d' );
+																context.drawImage( image, 0, 0, 256, 256 );
+																
+																if( data )
+																{
+																	Notify( { title: 'success', text: data.message } );
+																}
+																
+															}
+															image.src = getImageUrl( item[ 0 ].Path );
+															
+														}
+														else
+														{
+															
+															if( data )
+															{
+																Notify( { title: 'failed', text: data.message } );
+															}
+															
+														}
+													
+													}
+													m.execute( 'userwallpaperset', { 
+														path    : item[ 0 ].Path, 
+														userid  : userInfo.ID, 
+														authid  : Application.authId 
+													} );
+													
+												}
+											}
+										};
+										// Execute
+										( new Filedialog( flags ) );
+								
+									};
+								}
+						
+								if( ge( 'AdminWallpaper' ) && ge( 'AdminWallpaperPreview' ) )
+								{
+									// Set the url to get this wallpaper instead and cache it in the browser ...
+									
+									if( workspaceSettings.wallpaperdoors )
+									{
+										var img = ( workspaceSettings.wallpaperdoors ? '/system.library/module/?module=system&command=thumbnail&width=568&height=320&mode=resize&userid='+userInfo.ID+'&authid='+Application.authId+'&path='+workspaceSettings.wallpaperdoors : '' );
+										
+										console.log( img );
+										
+										// Only update the wallaper if it exists..
+										var avSrc = new Image();
+										avSrc.src = ( workspaceSettings.wallpaperdoors ? img : '/webclient/gfx/theme/default_login_screen.jpg' );
+										avSrc.onload = function()
+										{
+											var ctx = ge( 'AdminWallpaper' ).getContext( '2d' );
+											ctx.drawImage( avSrc, 0, 0, 256, 256 );
+										}
+									}
+									
+									function wallpaperdelete()
+									{
+										if( !ge( 'AdminWallpaperDeleteBtn' ) )
+										{
+											var del = document.createElement( 'button' );
+											del.id = 'AdminWallpaperDeleteBtn';
+											del.className = 'IconButton IconSmall ButtonSmall Negative FloatRight fa-remove';
+											del.onclick = function( e )
+											{
+												Confirm( 'Are you sure?', 'This will delete the wallpaper from this template.', function( r )
+												{
+													if( r.data == true )
+													{
+														ge( 'AdminWallpaperPreview' ).innerHTML = '<canvas id="AdminWallpaper" width="256" height="256"></canvas>';
+											
+														wallpaperdelete();
+													}
+												} );
+											}
+											ge( 'AdminWallpaperPreview' ).appendChild( del );
+										}
+									}
+									
+									//wallpaperdelete();
+							
 								}
 								
 							},
@@ -1409,6 +1748,63 @@ Sections.accounts_users = function( cmd, extra )
 					{
 						func.init();
 						
+						
+						// TODO: Hm .... this can't ble like this, settings come to late in the loop ... 
+						
+						var theme = {
+							
+							dark : function ()
+							{
+								
+								return '<button class="IconButton IconSmall IconToggle ButtonSmall fa-toggle-' + ( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? 'on' : 'off' ) + '" id="theme_dark_button"></button>';
+								
+							},
+			
+							controls : function ()
+							{
+								
+								var opt = { 'mac' : 'Mac style', 'windows' : 'Windows style' };
+								
+								var str = '<select class="InputHeight FullWidth" id="theme_style_select">';
+								
+								for( var k in opt )
+								{
+									str += '<option value="' + k + '"' + ( themeData.buttonSchemeText == k ? ' selected="selected"' : '' ) + '>' + opt[k] + '</option>';
+								}
+								
+								str += '</select>';
+								
+								return str;
+				
+							},
+			
+							workspace_count : function ()
+							{
+								
+								return '<input type="number" class="FullWidth" id="workspace_count_input" value="' + ( workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1' ) + '">';
+								
+							},
+			
+							wallpaper_button : function ()
+							{
+				
+								return '<button class="ButtonAlt IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>';
+				
+							},
+			
+							wallpaper_preview : function ()
+							{
+				
+								// Set default wallpaper as fallback ...
+				
+								//return ( look ? '<div style="width:100%;height:100%;background: url(\''+look+'\') center center / cover no-repeat;"><button class="IconButton IconSmall ButtonSmall Negative FloatRight fa-remove"></button></div>' : '' );
+				
+							}
+			
+						};
+						
+						
+						
 						// Get the user details template
 						var d = new File( 'Progdir:Templates/account_users_details.html' );
 						console.log( 'userInfo ', userInfo );
@@ -1423,12 +1819,19 @@ Sections.accounts_users = function( cmd, extra )
 							user_setup           : ( setup ? setup : '' ),
 							user_locked_toggle   : ( ulocked   ? 'fa-toggle-on' : 'fa-toggle-off' ),
 							user_disabled_toggle : ( udisabled ? 'fa-toggle-on' : 'fa-toggle-off' ),
-							theme_name           : ( settings.Theme ? settings.Theme : '' ),
-							theme_dark           : ( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ) ),
-							theme_style          : ( themeData.buttonSchemeText == 'windows' ? 'Windows' : 'Mac' ),
-							wallpaper_name       : ( workspaceSettings.wallpaperdoors ? workspaceSettings.wallpaperdoors.split( '/' )[workspaceSettings.wallpaperdoors.split( '/' ).length-1] : i18n( 'i18n_default' ) ),
-							workspace_count      : ( workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1' ),
-							system_disk_state    : ( workspaceSettings.hiddensystem ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ) ),
+							
+							//theme_name           : ( settings.Theme ? settings.Theme : '' ),
+							//theme_dark           : ( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ) ),
+							//theme_style          : ( themeData.buttonSchemeText == 'windows' ? 'Windows' : 'Mac' ),
+							//wallpaper_name       : ( workspaceSettings.wallpaperdoors ? workspaceSettings.wallpaperdoors.split( '/' )[workspaceSettings.wallpaperdoors.split( '/' ).length-1] : i18n( 'i18n_default' ) ),
+							//workspace_count      : ( workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1' ),
+							//system_disk_state    : ( workspaceSettings.hiddensystem ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ) ),
+							
+							theme_dark           : theme.dark(),
+							theme_controls       : theme.controls(),
+							workspace_count      : theme.workspace_count(),
+							wallpaper_button     : theme.wallpaper_button(),
+							
 							storage              : ( mlst ? mlst : '' ),
 							workgroups           : ( wstr ? wstr : '' ),
 							roles                : ( rstr ? rstr : '' ),
@@ -2733,13 +3136,13 @@ Sections.accounts_users = function( cmd, extra )
 		
 	}
 	
-	function editMode()
+	function editMode( close )
 	{
 		console.log( 'editMode() ' );
 		
 		if( ge( 'UserEditContainer' ) )
 		{
-			ge( 'UserEditContainer' ).className = 'Open';
+			ge( 'UserEditContainer' ).className = ( close ? 'Closed' : 'Open' );
 		}
 	}
 	
@@ -4264,13 +4667,13 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 					str += '</div>';
 					
 					str += '<div class="HRow PaddingTop">';
-					str += '<button class="IconSmall FloatRight MarginLeft" onclick="Sections.user_disk_save(' + storage.user + ',\'' + storage.id + '\')">Save</button>';
+					str += '<button class="IconSmall FloatRight MarginLeft" onclick="Sections.user_disk_save(' + userid + ',\'' + storage.id + '\')">Save</button>';
 					str += '<button class="IconSmall FloatRight MarginLeft" onclick="Sections.user_disk_cancel(' + userid + ')">Cancel</button>';
 					
 					if( storage.id )
 					{
-						str += '<button class="IconSmall Danger FloatRight MarginLeft" onclick="Sections.user_disk_remove(\'' + storage.name + '\',' + storage.id + ',' + storage.user + ')">Remove disk</button>';
-						str += '<button class="IconSmall FloatLeft MarginRight" onclick="Sections.user_disk_mount(\'' + storage.name + '\',' + storage.user + ',this)">' + ( storage.mont > 0 ? 'Unmount disk' : 'Mount disk' ) + '</button>';
+						str += '<button class="IconSmall Danger FloatRight MarginLeft" onclick="Sections.user_disk_remove(\'' + storage.name + '\',' + storage.id + ',' + userid + ')">Remove disk</button>';
+						str += '<button class="IconSmall FloatLeft MarginRight" onclick="Sections.user_disk_mount(\'' + storage.name + '\',' + userid + ',this)">' + ( storage.mont > 0 ? 'Unmount disk' : 'Mount disk' ) + '</button>';
 					}
 					
 					str += '</div>';
@@ -5055,22 +5458,40 @@ function saveUser( uid, cb )
 				}
 			}
 			
+			function applySetup( callback )
+			{
+				var m = new Module( 'system' );
+				m.onExecuted = function( e, d )
+				{
+					console.log( 'applySetup() ', { e:e, d:d, args: { id: ( ge( 'usSetup' ).value ? ge( 'usSetup' ).value : '0' ), userid: uid } } );
+					
+					if( callback ) return callback( true );
+					
+				}
+				m.execute( 'usersetupapply', { id: ( ge( 'usSetup' ).value ? ge( 'usSetup' ).value : '0' ), userid: uid } );
+			}
+			
 			updateLanguages( function(  )
 			{
 				
-				saveAvatar( function (  )
-				{
+				applySetup( function (  ) 
+				{ 
 					
-					Notify( { title: i18n( 'i18n_user_updated' ), text: i18n( 'i18n_user_updated_succ' ) } );
+					saveAvatar( function (  )
+					{
 					
-					if( cb )
-					{
-						return cb( uid );
-					}
-					else
-					{
-						Sections.accounts_users( 'edit', uid );
-					}
+						Notify( { title: i18n( 'i18n_user_updated' ), text: i18n( 'i18n_user_updated_succ' ) } );
+					
+						if( cb )
+						{
+							return cb( uid );
+						}
+						else
+						{
+							Sections.accounts_users( 'edit', uid );
+						}
+					
+					} );
 					
 				} );
 				

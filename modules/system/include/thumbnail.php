@@ -38,6 +38,10 @@ if( isset( $args->mode ) )
 	$mode = $args->mode;
 }
 
+// TODO: Do we need rolepermissions here ???
+
+$userid = ( $level == 'Admin' && isset( $args->userid ) ? $args->userid : $User->ID );
+
 // Sanitized username
 $uname = str_replace( array( '..', '/', ' ' ), '_', $User->Name );
 $wname = $Config->FCUpload;
@@ -74,18 +78,30 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		mkdir( '/tmp/Friendup' );
 	if( !file_exists( '/tmp/Friendup' ) )
 	{
+		if( isset( $args->debug ) )
+		{
+			die( '[0] ' . $userid . ' -- ' . '/tmp/Friendup' );
+		}
+		
 		FriendHeader( 'Content-Type: image/svg+xml' );
 		die( file_get_contents( 'resources/iconthemes/friendup15/File_Broken.svg' ) );
 	}
 
 	$door = new Door( $pure );
 	
+	// TODO: Check for changes overwritten with the same filename, thumbs could show the wrong image if it has the same name ...
+	
 	// Look in the database
 	$thumb = new dbIO( 'FThumbnail' );
 	$thumb->Path = $door->ID . ':' . $width . '_' . $height . '_' . $dirnfile; // Use fs ID instead of fs name
-	$thumb->UserID = $User->ID;
+	$thumb->UserID = $userid;
 	if( $thumb->Load() )
 	{
+		if( isset( $args->debug ) )
+		{
+			die( '[1] ' . $thumb->UserID . ' -- ' . $thumb->Path . ' -- ' . $thumb->Filepath );
+		}
+		
 		// Check if it exists!
 		if( file_exists( $thumb->Filepath ) )
 		{
@@ -100,7 +116,8 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		}
 	}
 	else
-	{	
+	{
+				
 		$d = new File( $p );
 
 		$source = null;
@@ -113,7 +130,26 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
 		$tmp = curl_exec( $ch );
 		curl_close( $ch );
-	
+		
+		if( !$tmp || strstr( $tmp, 'fail<!--separate-->' ) )
+		{
+			$newname = explode( '/', $dirnfile );
+			
+			// TODO: Find correct FilesystemID and FolderID for UserID's other then the logged in user.
+			
+			$fl = new dbIO( 'FSFile' );
+			$fl->Filename = array_pop( $newname );
+			//$fl->FilesystemID = $door->ID;
+			$fl->UserID = $userid;
+			if( $fl->Load() && $fl->DiskFilename )
+			{				
+				if( file_exists( 'storage/' . $fl->DiskFilename ) )
+				{
+					$tmp = file_get_contents( 'storage/' . $fl->DiskFilename );
+				}
+			}
+		}
+		
 		// Temp file
 		$smp = $fname;
 		while( file_exists( '/tmp/Friendup/' . $smp ) )
@@ -128,6 +164,11 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		}
 		else
 		{
+			if( isset( $args->debug ) )
+			{
+				die( '[2] ' . $thumb->UserID . ' -- ' . $thumb->Path . ' -- ' . '/tmp/Friendup/' . $smp );
+			}
+			
 			_file_broken();
 		}
 	
@@ -153,6 +194,11 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 	
 		if( !$source )
 		{
+			if( isset( $args->debug ) )
+			{
+				die( '[3] ' . $thumb->UserID . ' -- ' . $thumb->Path . ' -- ' . '/tmp/Friendup/' . $smp );
+			}
+			
 			_file_broken();
 		}
 		
@@ -211,6 +257,12 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		}
 	}
 }
+
+if( isset( $args->debug ) )
+{
+	die( '[4] ' . $thumb->UserID . ' -- ' . $thumb->Path . ' -- ' . $thumb->Filepath . ' -- ' . $ext );
+}
+
 // TODO: Support more icons
 _file_broken();
 

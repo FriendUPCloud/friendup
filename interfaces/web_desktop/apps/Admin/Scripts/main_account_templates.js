@@ -33,7 +33,7 @@ Sections.accounts_templates = function( cmd, extra )
 		
 		case 'create':
 			
-			//create();
+			create();
 			
 			break;
 		
@@ -63,7 +63,7 @@ Sections.accounts_templates = function( cmd, extra )
 		
 		case 'refresh':
 			
-			initMain();
+			refresh( extra );
 			
 			break;
 		
@@ -180,6 +180,43 @@ Sections.accounts_templates = function( cmd, extra )
 		
 	}
 	
+	function lookandfeel( callback, id )
+	{
+		
+		if( callback && id )
+		{
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				console.log( { e:e, d:d } );
+				
+				if( e == 'ok' )
+				{
+					return callback( true, '/system.library/module/?module=system&command=usersetupwallpaperget&setupId='+id+'&authid='+Application.authId+'&random='+(Math.random()*999999+Math.random()*909999) );
+				}
+				
+				return callback( true, '/system.library/module/?module=system&command=thumbnail&width=568&height=320&mode=resize&authid='+Application.authId+'&path=Home:Wallpaper/Freedom.jpg' );
+			}
+			m.execute( 'usersetupwallpaperexists', { setupId: id, authid: Application.authId } );
+			
+			return true;
+		}
+		
+		return false;
+	}
+	
+	function refresh( id )
+	{
+		
+		initMain();
+		
+		if( id )
+		{
+			edit( id );
+		}
+		
+	}
+	
 	function edit( id )
 	{
 		
@@ -216,12 +253,19 @@ Sections.accounts_templates = function( cmd, extra )
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			if( e == 'ok' )
+			console.log( { e:e, d:d } );
+			
+			if( e == 'ok' && d )
 			{
-				//refresh();
+				refresh( d );
 			}
 		}
-		m.execute( 'usersetupadd', { Name: 'Default', authid: Application.authId } );
+		m.execute( 'usersetupadd', { 
+			Name        : ( ge( 'TempName'        ) ? ge( 'TempName'        ).value : 'Default' ), 
+			Description : ( ge( 'TempDescription' ) ? ge( 'TempDescription' ).value : ''        ),
+			Languages   : ( ge( 'TempLanguages'   ) ? ge( 'TempLanguages'   ).value : 'en'      ),
+			authid      : Application.authId 
+		} );
 		
 	}
 	
@@ -233,60 +277,26 @@ Sections.accounts_templates = function( cmd, extra )
 		if ( id )
 		{
 			// Setup input values
+						
+			var args = { id: id, Preinstall: true, Themes: 'Friendup12' };
 			
+			var vals = [ 'Name', 'Description', 'Languages', 'Applications', 'Startup' ];
 			
-			
-			return;
-			
-			var args = {};
-			
-			var vals = [ 'Name', 'Preinstall', 'Applications', 'Disks', 'Startup', 'Languages', 'Themes' ];
-			
-			for( var a = 0; a < vals.length; a++ )
+			for( var i in vals )
 			{
-				if( ge( 'pSetup' + vals[a] ) )
+				if( vals[i] && ge( 'Temp' + vals[i] ) )
 				{
-					if( ge( 'pSetup' + vals[a] ).tagName == 'INPUT' )
-					{
-						args[vals[a]] = ( ge( 'pSetup' + vals[a] ).type == 'checkbox' ? ( ge( 'pSetup' + vals[a] ).checked ? '1' : '0' ) : ge( 'pSetup' + vals[a] ).value );
-					}
-					else if( ge( 'pSetup' + vals[a] ).tagName == 'SELECT' )
-					{
-						args[vals[a]] = ge( 'pSetup' + vals[a] ).value;
-					}
-					else if( ge( 'pSetup' + vals[a] ).tagName == 'DIV' )
-					{
-						var ele = ge( 'pSetup' + vals[a] ).getElementsByTagName( '*' );
-					
-						if( ele.length > 0 )
-						{
-							var value = false;
-						
-							for( var v = 0; v < ele.length; v++ )
-							{
-								if( ele[v].getAttribute( 'value' ) && ele[v].getAttribute( 'value' ) != '' )
-								{
-									var inp = ele[v].getElementsByTagName( 'input' );
-								
-									value = ( value ? ( value + ', ' + ele[v].getAttribute( 'value' ) + ( inp[0] && inp[0].type == 'checkbox' ? ( inp[0].checked ? '_1' : '_0' ) : '' ) ) : ( ele[v].getAttribute( 'value' ) + ( inp[0] && inp[0].type == 'checkbox' ? ( inp[0].checked ? '_1' : '_0' ) : '' ) ) );
-								}
-							}
-						
-							if( value )
-							{
-								args[vals[a]] = value;
-							}
-						}
-					}
-					else
-					{
-						//args[vals[a]] = ge( 'pSetup' + vals[a] ).value;
-					}
+					args[ vals[i] ] = ge( 'Temp' + vals[i] ).value;
 				}
-			
 			}
-		
-			args.id = id.value;
+			
+			// Look And Feel settings ...
+			
+			args[ 'ThemeConfig' ] = { colorSchemeText: ge( 'theme_dark_button' ).value, buttonSchemeText: ge( 'theme_style_select' ).value };
+			
+			args[ 'WorkspaceCount' ] = ge( 'workspace_count_input' ).value;
+			
+			console.log( args );
 			
 			
 			
@@ -295,9 +305,12 @@ Sections.accounts_templates = function( cmd, extra )
 			{
 				if( e == 'ok' )
 				{
-					//EditSetup( id.value );
-					//RefreshSetup();
+					
+					console.log( { e:e, d:d } );
+					
 				}
+				
+				// handle saving of template if there is any new ....
 				
 			}
 			m.execute( 'usersetupsave', args );
@@ -400,7 +413,7 @@ Sections.accounts_templates = function( cmd, extra )
 						
 						loadingInfo.details = dat;
 						
-						initDetails( loadingInfo, [  ], true );
+						//initDetails( loadingInfo, [  ], true );
 						
 						// Go to next in line ...
 						loadingList[ ++loadingSlot ](  );
@@ -434,12 +447,31 @@ Sections.accounts_templates = function( cmd, extra )
 						
 						loadingInfo.applications = dat;
 						
-						initDetails( loadingInfo, [ 'application', 'dock' ] );
+						//initDetails( loadingInfo, [ 'application', 'dock', 'startup' ], true );
 						
 						// Go to next in line ...
 						loadingList[ ++loadingSlot ](  );
 						
 					} );
+					
+				},
+				
+				// 1 | Load look and feel
+				
+				function(  )
+				{
+					
+					lookandfeel( function ( res, dat )
+					{
+						
+						loadingInfo.looknfeel = dat;
+						
+						initDetails( loadingInfo, [ 'application', 'dock', 'startup', 'looknfeel', true ] );
+						
+						// Go to next in line ...
+						loadingList[ ++loadingSlot ](  );
+						
+					}, id );
 					
 				},
 				
@@ -465,9 +497,16 @@ Sections.accounts_templates = function( cmd, extra )
 	{
 		
 		var details = ( info.details ? info.details : {} );
-		var data = ( details.Data ? details.Data : {} );
+		
+		var data = ( details.Data  ? details.Data  : {} );
 		var soft = ( data.software ? data.software : {} );
+		var star = ( data.startups ? data.startups : {} );
+		
+		var themeData      = ( data.themeconfig    ? data.themeconfig    : {} );
+		var workspacecount = ( data.workspacecount ? data.workspacecount : {} );
+		
 		var apps = ( info.applications ? info.applications : {} );
+		var look = ( info.looknfeel    ? info.looknfeel    : {} );
 		
 		console.log( info );
 		
@@ -487,6 +526,79 @@ Sections.accounts_templates = function( cmd, extra )
 			languages += '<option value="' + a + '"' + ( data.language && data.language == a ? ' selected="selected"' : '' ) + '>' + availLangs[ a ] + '</option>';
 		}
 		
+		var theme = {
+			
+			dark : function ()
+			{
+				
+				// TODO: look for a solution so there is no need for two different ways to handle one thing before and after template file load ...
+				
+				/*var b = document.createElement( 'button' );
+				b.className = 'IconButton IconSmall IconToggle ButtonSmall fa-toggle-off';
+				b.onclick = function(  )
+				{
+					
+					if( this.classList.contains( 'fa-toggle-off' ) )
+					{
+						this.classList.remove( 'fa-toggle-off' );
+						this.classList.add( 'fa-toggle-on' );
+					}
+					else
+					{
+						this.classList.remove( 'fa-toggle-on' );
+						this.classList.add( 'fa-toggle-off' );
+					}
+					
+				};
+				return b;*/
+				
+				return '<button class="IconButton IconSmall IconToggle ButtonSmall fa-toggle-' + ( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? 'on' : 'off' ) + '" id="theme_dark_button" value="' + ( themeData.colorSchemeText ? themeData.colorSchemeText : 'light' ) + '"></button>';
+				
+			},
+			
+			controls : function ()
+			{
+				
+				var opt = { 'mac' : 'Mac style', 'windows' : 'Windows style' };
+					
+				var str = '<select class="InputHeight FullWidth" id="theme_style_select">';
+				
+				for( var k in opt )
+				{
+					str += '<option value="' + k + '"' + ( themeData.buttonSchemeText == k ? ' selected="selected"' : '' ) + '>' + opt[k] + '</option>';
+				}
+				
+				str += '</select>';
+				
+				return str;
+				
+			},
+			
+			workspace_count : function ()
+			{
+				
+				return '<input type="number" class="FullWidth" id="workspace_count_input" value="' + ( workspacecount > 0 ? workspacecount : '1' ) + '">';
+				
+			},
+			
+			wallpaper_button : function ()
+			{
+				
+				return '<button class="ButtonAlt IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>';
+				
+			},
+			
+			wallpaper_preview : function ()
+			{
+				
+				// Set default wallpaper as fallback ...
+				
+				//return ( look ? '<div style="width:100%;height:100%;background: url(\''+look+'\') center center / cover no-repeat;"><button class="IconButton IconSmall ButtonSmall Negative FloatRight fa-remove"></button></div>' : '' );
+				
+			}
+			
+		}
+		
 		// Get the user details template
 		var d = new File( 'Progdir:Templates/account_template_details.html' );
 		
@@ -495,7 +607,13 @@ Sections.accounts_templates = function( cmd, extra )
 			template_title: ( details.Name ? details.Name : i18n( 'i18n_new_template' ) ),
 			template_name: ( details.Name ? details.Name : '' ),
 			template_description: '',
-			template_language: languages
+			template_language: languages,
+			
+			theme_dark: theme.dark(),
+			theme_controls: theme.controls(),
+			workspace_count: theme.workspace_count(),
+			wallpaper_button: theme.wallpaper_button()/*,
+			wallpaper_preview: theme.wallpaper_preview()*/
 		};
 		
 		// Add translations
@@ -507,7 +625,8 @@ Sections.accounts_templates = function( cmd, extra )
 			if( !details.ID )
 			{
 				ge( 'AdminApplicationContainer' ).style.display = 'none';
-				ge( 'AdminDockContainer' ).style.display = 'none';
+				ge( 'AdminDockContainer'        ).style.display = 'none';
+				ge( 'AdminStartupContainer'     ).style.display = 'none';
 				ge( 'AdminLooknfeelContainer'   ).style.display = 'none';
 			}
 			
@@ -516,9 +635,18 @@ Sections.accounts_templates = function( cmd, extra )
 			{
 				// Save template ...
 				
-				console.log( '// save template' );
-				
-				update( details.ID ? details.ID : 0 );
+				if( details.ID )
+				{
+					console.log( '// save template' );
+					
+					update( details.ID );
+				}
+				else
+				{
+					console.log( '// create template' );
+					
+					create();
+				}
 			}
 			var bg2  = ge( 'TempCancelBtn' );
 			if( bg2 ) bg2.onclick = function( e )
@@ -541,6 +669,8 @@ Sections.accounts_templates = function( cmd, extra )
 			
 			function onLoad ( data )
 			{
+			
+			
 						
 				var func = {
 					
@@ -563,7 +693,119 @@ Sections.accounts_templates = function( cmd, extra )
 						
 					}( soft ),
 					
-					mode : { applications : 'list', dock : 'list' },
+					startids : function ( star )
+					{
+						var ids = {};
+			
+						if( star )
+						{
+							for( var a in star )
+							{
+								if( star[a] )
+								{
+									ids[ star[a].split( ' ' )[1] ] = star[a];
+								}
+							}
+						}
+						
+						return ids;
+			
+					}( star ),
+					
+					updateids : function ( mode, key, value )
+					{
+						
+						switch( mode )
+						{
+							
+							case 'applications':
+								
+								if( key )
+								{
+									this.appids[ key ] = value;
+								}
+								
+								if( ge( 'TempApplications' ) )
+								{
+									if( this.appids )
+									{
+										var arr = [];
+										
+										for( var a in this.appids )
+										{
+											if( this.appids[a] && this.appids[a][0] )
+											{
+												arr.push( this.appids[a][0] + '_' + this.appids[a][1] );
+											}
+										}
+										
+										ge( 'TempApplications' ).setAttribute( 'value', ( arr ? arr.join( ',' ) : '' ) );
+									}
+								}
+								
+								break;
+							
+							case 'dock':
+								
+								if( key )
+								{
+									this.appids[ key ] = value;
+								}
+								
+								if( ge( 'TempApplications' ) )
+								{
+									if( this.appids )
+									{
+										var arr = [];
+										
+										for( var a in this.appids )
+										{
+											if( this.appids[a] && this.appids[a][0] )
+											{
+												arr.push( this.appids[a][0] + '_' + this.appids[a][1] );
+											}
+										}
+										
+										ge( 'TempApplications' ).setAttribute( 'value', ( arr ? arr.join( ',' ) : '' ) );
+									}
+								}
+								
+								break;
+								
+							case 'startup':
+								
+								if( key )
+								{
+									this.startids[ key ] = value;
+								}
+								
+								if( ge( 'TempStartup' ) )
+								{
+									if( this.startids )
+									{
+										var arr = [];
+										
+										for( var a in this.startids )
+										{
+											if( this.startids[a] )
+											{
+												arr.push( this.startids[a] );
+											}
+										}
+										
+										ge( 'TempStartup' ).setAttribute( 'value', ( arr ? arr.join( ',' ) : '' ) );
+									}
+								}
+								
+								break;
+								
+						}
+						
+					},
+					
+					mode : { applications : 'list', dock : 'list', startup : 'list' },
+					
+					// Applications ------------------------------------------------------------------------------------
 					
 					applications : function ( func )
 					{
@@ -580,7 +822,9 @@ Sections.accounts_templates = function( cmd, extra )
 							head : function (  )
 							{
 								
-								var o = ge( 'ApplicationGui' ); o.innerHTML = '';
+								var o = ge( 'ApplicationGui' ); o.innerHTML = '<input type="hidden" id="TempApplications">';
+								
+								this.func.updateids( 'applications' );
 								
 								var divs = appendChild( [ 
 									{ 
@@ -766,7 +1010,9 @@ Sections.accounts_templates = function( cmd, extra )
 																		b.onclick = function(  )
 																		{
 																			
-																			ids[ name ] = ( ids[ name ] ? [ 0, ids[ name ][ 1 ] ] : [ 0, 0 ] );
+																			//ids[ name ] = ( ids[ name ] ? [ 0, ids[ name ][ 1 ] ] : [ 0, 0 ] );
+																			
+																			func.updateids( 'applications', name, ( ids[ name ] ? [ 0, ids[ name ][ 1 ] ] : [ 0, 0 ] ) );
 																			
 																			var pnt = this.parentNode.parentNode;
 																			
@@ -778,6 +1024,7 @@ Sections.accounts_templates = function( cmd, extra )
 																			if( func )
 																			{
 																				func.dock( 'refresh' );
+																				func.startup( 'refresh' );
 																			}
 																			
 																		};
@@ -921,14 +1168,18 @@ Sections.accounts_templates = function( cmd, extra )
 																		{
 																			if( this.classList.contains( 'fa-toggle-off' ) )
 																			{
-																				ids[ name ] = ( ids[ name ] ? [ name, ids[ name ][ 1 ] ] : [ name, 0 ] );
+																				//ids[ name ] = ( ids[ name ] ? [ name, ids[ name ][ 1 ] ] : [ name, 0 ] );
+																				
+																				func.updateids( 'applications', name, ( ids[ name ] ? [ name, ids[ name ][ 1 ] ] : [ name, 0 ] ) );
 																				
 																				this.classList.remove( 'fa-toggle-off' );
 																				this.classList.add( 'fa-toggle-on' );
 																			}
 																			else
 																			{
-																				ids[ name ] = ( ids[ name ] ? [ 0, ids[ name ][ 1 ] ] : [ 0, 0 ] );
+																				//ids[ name ] = ( ids[ name ] ? [ 0, ids[ name ][ 1 ] ] : [ 0, 0 ] );
+																				
+																				func.updateids( 'applications', name, ( ids[ name ] ? [ 0, ids[ name ][ 1 ] ] : [ 0, 0 ] ) );
 																				
 																				this.classList.remove( 'fa-toggle-on' );
 																				this.classList.add( 'fa-toggle-off' );
@@ -937,6 +1188,7 @@ Sections.accounts_templates = function( cmd, extra )
 																			if( func )
 																			{
 																				func.dock( 'refresh' );
+																				func.startup( 'refresh' );
 																			}
 																			
 																		};
@@ -1084,7 +1336,7 @@ Sections.accounts_templates = function( cmd, extra )
 						
 					},
 					
-					
+					// Dock --------------------------------------------------------------------------------------------
 					
 					dock : function ( func )
 					{
@@ -1101,6 +1353,8 @@ Sections.accounts_templates = function( cmd, extra )
 							head : function ( hidecol )
 							{
 								var o = ge( 'DockGui' ); o.innerHTML = '';
+								
+								this.func.updateids( 'dock' );
 								
 								var divs = appendChild( [ 
 									{ 
@@ -1194,7 +1448,7 @@ Sections.accounts_templates = function( cmd, extra )
 											{
 												for( var a in this.ids )
 												{
-													if( this.ids[a] && this.ids[a][0] == apps[k].Name && this.ids[a][1] )
+													if( this.ids[a] && this.ids[a][0] == apps[k].Name && this.ids[a][1] == 1 )
 													{
 														found = true;
 													}
@@ -1320,14 +1574,16 @@ Sections.accounts_templates = function( cmd, extra )
 															'child' : 
 															[ 
 																{ 
-																	'element' : function( ids, name ) 
+																	'element' : function( ids, name, func ) 
 																	{
 																		var b = document.createElement( 'button' );
 																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
 																		b.onclick = function(  )
 																		{
 																			
-																			ids[ name ] = [ name, 0 ];
+																			//ids[ name ] = [ name, 0 ];
+																			
+																			func.updateids( 'dock', name, [ name, 0 ] );
 																			
 																			var pnt = this.parentNode.parentNode;
 																			
@@ -1338,7 +1594,7 @@ Sections.accounts_templates = function( cmd, extra )
 																			
 																		};
 																		return b;
-																	}( this.ids, apps[k].Name ) 
+																	}( this.ids, apps[k].Name, this.func ) 
 																}
 															]
 														}
@@ -1389,7 +1645,7 @@ Sections.accounts_templates = function( cmd, extra )
 													{
 														found = true;
 														
-														if( this.ids[a][1] )
+														if( this.ids[a][1] == 1 )
 														{
 															toggle = true;
 														}
@@ -1476,7 +1732,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'child' : 
 															[ 
 																{ 
-																	'element' : function( ids, name ) 
+																	'element' : function( ids, name, func ) 
 																	{
 																		var b = document.createElement( 'button' );
 																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( toggle ? 'on' : 'off' );
@@ -1484,21 +1740,25 @@ Sections.accounts_templates = function( cmd, extra )
 																		{
 																			if( this.classList.contains( 'fa-toggle-off' ) )
 																			{
-																				ids[ name ] = [ name, 1 ];
+																				//ids[ name ] = [ name, 1 ];
+																				
+																				func.updateids( 'dock', name, [ name, 1 ] );
 																				
 																				this.classList.remove( 'fa-toggle-off' );
 																				this.classList.add( 'fa-toggle-on' );
 																			}
 																			else
 																			{
-																				ids[ name ] = [ name, 0 ];
+																				//ids[ name ] = [ name, 0 ];
+																				
+																				func.updateids( 'dock', name, [ name, 0 ] );
 																				
 																				this.classList.remove( 'fa-toggle-on' );
 																				this.classList.add( 'fa-toggle-off' );
 																			}
 																		};
 																		return b;
-																	}( this.ids, apps[k].Name ) 
+																	}( this.ids, apps[k].Name, this.func ) 
 																}
 															]
 														}
@@ -1659,7 +1919,752 @@ Sections.accounts_templates = function( cmd, extra )
 						
 					},
 					
+					// Startup -----------------------------------------------------------------------------------------
 					
+					startup : function ( func )
+					{
+						
+						// Editing Startup
+						
+						var init =
+						{
+							
+							func : this,
+							
+							ids  : this.startids,
+							
+							head : function ( hidecol )
+							{
+								var o = ge( 'StartupGui' ); o.innerHTML = '<input type="hidden" id="TempStartup">';
+								
+								this.func.updateids( 'startup' );
+								
+								var divs = appendChild( [ 
+									{ 
+										'element' : function() 
+										{
+											var d = document.createElement( 'div' );
+											d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+											return d;
+										}(),
+										'child' : 
+										[ 
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmall HContent40 FloatLeft';
+													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+													return d;
+												}() 
+											}, 
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmall HContent25 FloatLeft Relative';
+													d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
+													return d;
+												}()
+											},
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
+													d.innerHTML = '<strong>' + i18n( 'i18n_order' ) + '</strong>';
+													return d;
+												}()
+											},
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmall HContent10 FloatLeft Relative';
+													return d;
+												}()
+											}
+										]
+									},
+									{
+										'element' : function() 
+										{
+											var d = document.createElement( 'div' );
+											d.className = 'HRow Box Padding';
+											d.id = 'StartupInner';
+											return d;
+										}()
+									}
+								] );
+						
+								if( divs )
+								{
+									for( var i in divs )
+									{
+										if( divs[i] && o )
+										{
+											o.appendChild( divs[i] );
+										}
+									}
+								}
+								
+							},
+							
+							list : function (  )
+							{
+								console.log( this.ids );
+								
+								this.func.mode[ 'startup' ] = 'list';
+								
+								if( apps )
+								{
+									this.head();
+									
+									var o = ge( 'StartupInner' ); o.innerHTML = '';
+									
+									for( var k in apps )
+									{
+										if( apps[k] && apps[k].Name )
+										{
+											var found = false;
+											
+											if( this.func.appids )
+											{
+												for( var a in this.func.appids )
+												{
+													if( this.func.appids[a] && this.func.appids[a][0] == apps[k].Name )
+													{
+														if( this.ids[ apps[k].Name ] )
+														{
+															found = true;
+														}
+													}
+													else if( a == apps[k].Name && this.ids[ apps[k].Name ] )
+													{
+														//this.ids[ apps[k].Name ] = false;
+														
+														this.func.updateids( 'startup', apps[k].Name, false );
+													}
+												}
+											}
+											
+											if( !found ) continue;
+											
+											var divs = appendChild( [
+												{ 
+													'element' : function() 
+													{
+														var d = document.createElement( 'div' );
+														d.className = 'HRow';
+														return d;
+													}(),
+													'child' : 
+													[ 
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																return d;;
+															}(),
+															 'child' : 
+															[ 
+																{ 
+																	'element' : function() 
+																	{
+																		var d = document.createElement( 'div' );
+																		d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
+																		d.style.backgroundSize = 'contain';
+																		d.style.width = '24px';
+																		d.style.height = '24px';
+																		return d;
+																	}(), 
+																	 'child' : 
+																	[ 
+																		{
+																			'element' : function() 
+																			{
+																				var d = document.createElement( 'div' );
+																				if( apps[k].Preview )
+																				{
+																					d.style.backgroundImage = 'url(\'' + apps[k].Preview + '\')';
+																					d.style.backgroundSize = 'contain';
+																					d.style.width = '24px';
+																					d.style.height = '24px';
+																				}
+																				return d;
+																			}()
+																		}
+																	]
+																}
+															] 
+														},
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
+																d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																return d;
+															}() 
+														},
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent25 FloatLeft Ellipsis';
+																d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																return d;
+															}() 
+														}, 
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Ellipsis';
+																return d;
+															}(),
+															'child' : 
+															[ 
+																{ 
+																	'element' : function( order, _this ) 
+																	{
+																		var b = document.createElement( 'button' );
+																		b.className = 'IconButton IconSmall IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-down';
+																		b.onclick = function(  )
+																		{
+																			
+																			_this.sortdown( order );
+																			
+																		};
+																		return b;
+																	}( k, this ) 
+																},
+																{ 
+																	'element' : function( order, _this ) 
+																	{
+																		var b = document.createElement( 'button' );
+																		b.className = 'IconButton IconSmall IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-up';
+																		b.onclick = function()
+																		{
+																			
+																			_this.sortup( order );
+																			
+																		};
+																		return b;
+																	}( k, this ) 
+																}
+															] 
+														}, 
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																return d;
+																
+															}(),
+															'child' : 
+															[ 
+																{ 
+																	'element' : function( ids, name, func ) 
+																	{
+																		var b = document.createElement( 'button' );
+																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																		b.onclick = function(  )
+																		{
+																			
+																			//ids[ name ] = false;
+																			
+																			func.updateids( 'startup', name, false );
+																			
+																			var pnt = this.parentNode.parentNode;
+																			
+																			if( pnt )
+																			{
+																				pnt.innerHTML = '';
+																			}
+																			
+																		};
+																		return b;
+																	}( this.ids, apps[k].Name, this.func ) 
+																}
+															]
+														}
+													]
+												}
+											] );
+											
+											if( divs )
+											{
+												for( var i in divs )
+												{
+													if( divs[i] && o )
+													{
+														o.appendChild( divs[i] );
+													}
+												}
+											}
+										}
+									
+									}
+									
+								}
+									
+							},
+							
+							edit : function (  )
+							{
+								
+								this.func.mode[ 'startup' ] = 'edit';
+								
+								if( apps )
+								{
+									this.head( true );
+									
+									var o = ge( 'StartupInner' ); o.innerHTML = '';
+									
+									for( var k in apps )
+									{
+										if( apps[k] && apps[k].Name )
+										{
+											var found = false; var toggle = false;
+											
+											if( this.func.appids )
+											{
+												for( var a in this.func.appids )
+												{
+													if( this.func.appids[a] && this.func.appids[a][0] == apps[k].Name )
+													{
+														found = true;
+														
+														if( this.ids[ apps[k].Name ] )
+														{
+															toggle = true;
+														}
+													}
+												}
+											}
+											
+											if( !found ) continue;
+											
+											var divs = appendChild( [
+												{ 
+													'element' : function() 
+													{
+														var d = document.createElement( 'div' );
+														d.className = 'HRow';
+														return d;
+													}(),
+													'child' : 
+													[ 
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																return d;;
+															}(),
+															 'child' : 
+															[ 
+																{ 
+																	'element' : function() 
+																	{
+																		var d = document.createElement( 'div' );
+																		d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
+																		d.style.backgroundSize = 'contain';
+																		d.style.width = '24px';
+																		d.style.height = '24px';
+																		return d;
+																	}(), 
+																	 'child' : 
+																	[ 
+																		{
+																			'element' : function() 
+																			{
+																				var d = document.createElement( 'div' );
+																				if( apps[k].Preview )
+																				{
+																					d.style.backgroundImage = 'url(\'' + apps[k].Preview + '\')';
+																					d.style.backgroundSize = 'contain';
+																					d.style.width = '24px';
+																					d.style.height = '24px';
+																				}
+																				return d;
+																			}()
+																		}
+																	]
+																}
+															] 
+														},
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
+																d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																return d;
+															}() 
+														}, 
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent50 FloatLeft Ellipsis';
+																d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																return d;
+															}() 
+														},
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																return d;
+															}(),
+															'child' : 
+															[ 
+																{ 
+																	'element' : function( ids, name, func ) 
+																	{
+																		var b = document.createElement( 'button' );
+																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( toggle ? 'on' : 'off' );
+																		b.onclick = function(  )
+																		{
+																			if( this.classList.contains( 'fa-toggle-off' ) )
+																			{
+																				//ids[ name ] = ( 'launch ' + name );
+																				
+																				func.updateids( 'startup', name, ( 'launch ' + name ) );
+																				
+																				this.classList.remove( 'fa-toggle-off' );
+																				this.classList.add( 'fa-toggle-on' );
+																			}
+																			else
+																			{
+																				//ids[ name ] = false;
+																				
+																				func.updateids( 'startup', name, false );
+																				
+																				this.classList.remove( 'fa-toggle-on' );
+																				this.classList.add( 'fa-toggle-off' );
+																			}
+																		};
+																		return b;
+																	}( this.ids, apps[k].Name, this.func ) 
+																}
+															]
+														}
+													]
+												}
+											] );
+											
+											if( divs )
+											{
+												for( var i in divs )
+												{
+													if( divs[i] && o )
+													{
+														o.appendChild( divs[i] );
+													}
+												}
+											}
+										}
+									
+									}
+									
+								}
+								
+							},
+							
+							refresh : function (  )
+							{
+								
+								switch( this.func.mode[ 'startup' ] )
+								{
+									
+									case 'list':
+										
+										this.list();
+										
+										break;
+										
+									case 'edit':
+										
+										this.edit();
+										
+										break;
+										
+								}
+								
+							},
+							
+							sortup : function ( order )
+							{
+								
+								console.log( 'TODO: sortup: ' + order );
+								
+								console.log( 'change between two ids in sorting ...' );
+								
+							},
+							
+							sortdown : function ( order )
+							{
+								
+								console.log( 'TODO: sortdown: ' + order );
+								
+								console.log( 'change between two ids in sorting ...' );
+								
+							}
+							
+						};
+						
+						switch( func )
+						{
+							
+							case 'head':
+								
+								init.head();
+								
+								break;
+								
+							case 'list':
+								
+								init.list();
+								
+								break;
+								
+							case 'edit':
+								
+								init.edit();
+								
+								break;
+								
+							case 'refresh':
+								
+								init.refresh();
+								
+								break;
+							
+							default:
+								
+								var etn = ge( 'StartupEdit' );
+								if( etn )
+								{
+									etn.onclick = function( e )
+									{
+								
+										init.edit();
+								
+										// Hide add / edit button ...
+								
+										if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+										{
+											etn.classList.remove( 'Open' );
+											etn.classList.add( 'Closed' );
+										}
+								
+										// Show back button ...
+								
+										if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+										{
+											btn.classList.remove( 'Closed' );
+											btn.classList.add( 'Open' );
+										}
+										
+									};
+								}
+								
+								var btn = ge( 'StartupEditBack' );
+								if( btn )
+								{
+									btn.onclick = function( e )
+									{
+								
+										init.list();
+								
+										// Hide back button ...
+										
+										if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+										{
+											btn.classList.remove( 'Open' );
+											btn.classList.add( 'Closed' );
+										}
+						
+										// Show add / edit button ...
+								
+										if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+										{
+											etn.classList.remove( 'Closed' );
+											etn.classList.add( 'Open' );
+										}
+										
+									};
+								}
+							
+								// Show listed startup ... 
+						
+								init.list();
+								
+								break;
+								
+						}
+						
+					},
+					
+					// Theme -------------------------------------------------------------------------------------------
+					
+					theme : function (  )
+					{
+						
+						if( ge( 'theme_dark_button' ) )
+						{
+							var b = ge( 'theme_dark_button' );
+							b.onclick = function(  )
+							{
+								
+								if( this.classList.contains( 'fa-toggle-off' ) )
+								{
+									this.classList.remove( 'fa-toggle-off' );
+									this.classList.add( 'fa-toggle-on' );
+									
+									this.setAttribute( 'value', 'charcoal' );
+								}
+								else
+								{
+									this.classList.remove( 'fa-toggle-on' );
+									this.classList.add( 'fa-toggle-off' );
+									
+									this.setAttribute( 'value', 'light' );
+								}
+								
+							};
+						}
+						
+						if( ge( 'workspace_count_input' ) )
+						{
+							var i = ge( 'workspace_count_input' );
+							i.current = i.value;
+							i.onchange = function(  )
+							{
+								if( this.value >= 1 )
+								{
+									this.current = this.value;
+								}
+								else
+								{
+									this.value = this.current;
+								}
+								
+							};
+						}
+						
+						if( ge( 'wallpaper_button_inner' ) )
+						{
+							var b = ge( 'wallpaper_button_inner' );
+							b.onclick = function(  )
+							{
+								
+								/*var d = new Filedialog( 
+								{
+									triggerFunction: function( item )
+									{
+										if ( item )
+										{
+											// Load the image
+											var image = new Image();
+											image.onload = function()
+											{
+												console.log( 'loaded image ... ', item );
+												// Resizes the image
+												var canvas = ge( 'AdminAvatar' );
+												var context = canvas.getContext( '2d' );
+												context.drawImage( image, 0, 0, 256, 256 );
+												
+											}
+											image.src = getImageUrl( item[ 0 ].Path );
+										}
+									},
+									path: "Mountlist:",
+									type: "load",
+									title: i18n( 'i18n_fileselectoravatar' ),
+									filename: ""
+								} );*/
+								
+								var flags = {
+									type: 'load',
+									path: 'Home:',
+									suffix: [ 'jpg', 'jpeg', 'png', 'gif' ],
+									triggerFunction: function( item )
+									{
+										if( item && item.length && item[ 0 ].Path )
+										{
+											//refreshSetupWallpaper();
+											
+											// Load the image
+											var image = new Image();
+											image.onload = function()
+											{
+												console.log( 'loaded image ... ', item );
+												// Resizes the image
+												var canvas = ge( 'AdminWallpaper' );
+												var context = canvas.getContext( '2d' );
+												context.drawImage( image, 0, 0, 256, 256 );
+												
+											}
+											image.src = getImageUrl( item[ 0 ].Path );
+											
+										}
+									}
+								};
+								// Execute
+								( new Filedialog( flags ) );
+								
+							};
+						}
+						
+						if( ge( 'AdminWallpaper' ) && ge( 'AdminWallpaperPreview' ) )
+						{
+							// Set the url to get this wallpaper instead and cache it in the browser ...
+							
+							if( look )
+							{
+								// Only update the wallaper if it exists..
+								var avSrc = new Image();
+								avSrc.src = look;
+								avSrc.onload = function()
+								{
+									var ctx = ge( 'AdminWallpaper' ).getContext( '2d' );
+									ctx.drawImage( avSrc, 0, 0, 256, 256 );
+								}
+							}
+							
+							function wallpaperdelete()
+							{
+								var del = document.createElement( 'button' );
+								del.className = 'IconButton IconSmall ButtonSmall Negative FloatRight fa-remove';
+								del.onclick = function( e )
+								{
+									Confirm( 'Are you sure?', 'This will delete the wallpaper from this template.', function( r )
+									{
+										if( r.data == true )
+										{
+											ge( 'AdminWallpaperPreview' ).innerHTML = '<canvas id="AdminWallpaper" width="256" height="256"></canvas>';
+											
+											wallpaperdelete();
+										}
+									} );
+								}
+								ge( 'AdminWallpaperPreview' ).appendChild( del );
+							}
+							
+							wallpaperdelete();
+							
+						}
+						
+					},
+					
+					// Permissions -------------------------------------------------------------------------------------
 					
 					permissions : function ( show )
 					{
@@ -1681,6 +2686,14 @@ Sections.accounts_templates = function( cmd, extra )
 							}
 						}
 						
+						if( !show || show.indexOf( 'startup' ) >= 0 )
+						{
+							if( Application.checkAppPermission( 'PERM_APPLICATION_GLOBAL' ) || Application.checkAppPermission( 'PERM_APPLICATION_WORKGROUP' ) )
+							{
+								if( ge( 'AdminStartupContainer' ) ) ge( 'AdminStartupContainer' ).className = 'Open';
+							}
+						}
+						
 						if( !show || show.indexOf( 'looknfeel' ) >= 0 )
 						{
 							if( Application.checkAppPermission( 'PERM_LOOKNFEEL_GLOBAL' ) || Application.checkAppPermission( 'PERM_LOOKNFEEL_WORKGROUP' ) )
@@ -1696,6 +2709,8 @@ Sections.accounts_templates = function( cmd, extra )
 				
 				func.applications();
 				func.dock();
+				func.startup();
+				func.theme();
 				func.permissions( show );
 				
 				
@@ -1881,9 +2896,10 @@ Sections.accounts_templates = function( cmd, extra )
 									{
 										var d = document.createElement( 'div' );
 										d.className = 'HRow';
+										d.tempid = temp[k].ID;
 										d.onclick = function()
 										{
-											edit( temp[k].ID );
+											edit( this.tempid );
 										};
 										return d;
 									}(),
@@ -1921,9 +2937,10 @@ Sections.accounts_templates = function( cmd, extra )
 													{
 														var s = document.createElement( 'span' );
 														s.className = 'IconSmall FloatRight PaddingSmall fa-minus-circle';
+														s.tempid = temp[k].ID;
 														s.onclick = function ( e ) 
 														{ 
-															remove( temp[k].ID );
+															remove( this.tempid );
 															e.stopPropagation();
 															e.preventDefault(); 
 														};
