@@ -197,7 +197,7 @@ FriendConnection.prototype.onWsMessage = function( msg )
 {
 	var self = this;
 
-	console.log("Message came: ", msg );
+	//console.log("Message came: ", msg );
 	
 	if ( 'response' === msg.type )
 	{
