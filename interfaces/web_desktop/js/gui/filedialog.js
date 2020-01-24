@@ -354,12 +354,19 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 					// Check if the suffix matches
 					if( !dialog.checkSuffix( p ) )
 					{
+						var filename = '';
+						if( p.indexOf( '/' ) > 0 )
+							filename = ( p.split( '/' ) ).pop();
+						else if( p.indexOf( ':' ) > 0 )
+							filename = ( p.split( ':' ) ).pop();
+						else filename = p;
+							
 						var suf = typeof( w.dialog.suffix ) == 'string' ? w.dialog.suffix : w.dialog.suffix[0];
 						var fix = w.dialog.saveinput.value.split( '.' );
 						fix.pop();
 						fix.push( suf );
 						fix = fix.join( '.' );
-						w.dialog.saveinput.value = fix;
+						w.dialog.saveinput.value = filename + '.' + fix;
 						w.dialog.saveinput.focus();
 						w.dialog.saveinput.select();
 						return;
@@ -628,12 +635,13 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 									// Check if the suffix matches
 									if( !dialog.checkSuffix( this.value ) )
 									{
+										val = this.value;
 										var suf = typeof( dialog.suffix ) == 'string' ? dialog.suffix : dialog.suffix[0];
 										var fix = dialog.saveinput.value.split( '.' );
 										fix.pop();
 										fix.push( suf );
 										fix = fix.join( '.' );
-										this.value = fix;
+										this.value = val + '.' + fix;
 										this.focus();
 										this.select();
 										return;
