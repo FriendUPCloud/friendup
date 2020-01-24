@@ -3963,7 +3963,7 @@ function ClearMenuItemStyling( par )
 function FocusOnNothing()
 {
 	if( !window.currentMovable ) return;
-	console.trace();
+	
 	if( !isMobile )
 		_DeactivateWindows();
 	
