@@ -31,7 +31,11 @@ function AddToCajaxQueue( ele )
 	if( ele.onQueue ) ele.onQueue();
 	
 	// Queued objects get eternal life
-	if( ele.life ) clearTimeout( ele.life );
+	if( ele.life )
+	{
+		clearTimeout( ele.life );
+		ele.life = null;
+	}
 	
 	ele.queued = true;
 	
@@ -40,7 +44,7 @@ function AddToCajaxQueue( ele )
 	{
 		if( ele.onload )
 		{
-			ele.onload( false );
+			ele.onload( null, null );
 		}
 		return ele.destroy();
 	}
@@ -50,9 +54,9 @@ function AddToCajaxQueue( ele )
 	{
 		return false;
 	}
+	// Duplicate check
 	for( var a = 0; a < Friend.cajax.length; a++ )
 	{
-		// Already there
 		if( Friend.cajax[a] == ele )
 		{
 			return false;
@@ -103,7 +107,7 @@ function CancelCajaxOnId( id )
 		else 
 		{
 			// Tell it it failed
-			Friend.cajax[ a ].destroySilent();
+			Friend.cajax[ a ].destroy();
 		}
 	}
 	Friend.cajax = o;
@@ -120,7 +124,6 @@ cAjax = function()
 	// cajax only survives for so long..
 	self.life = setTimeout( function()
 	{
-		//console.log( '[cajax] Defunct ajax object destroying self after five seconds.' );
 		self.destroy();
 	}, 5000 );
 	
@@ -215,8 +218,10 @@ cAjax = function()
 						var t = JSON.parse( jax.rawData );
 						// Deprecate from 1.0 beta 2 "no user!"
 						var res = t ? t.response.toLowerCase() : '';
-						if( t && ( res == 'user not found' || res == 'user session not found' ) )
+						if( t && ( res == 'user not found' || res.toLowerCase() == 'user session not found' ) )
 						{
+							if( window.Workspace && res.toLowerCase() == 'user session not found' ) 
+								Workspace.flushSession();
 							if( window.Workspace )
 							{
 								// Drop these (don't retry!) because of remote fs disconnect
@@ -235,7 +240,7 @@ cAjax = function()
 					{
 						if( !jax.rawData )
 						{
-							console.log( '[cAjax] Can not understand server response: ', jax.rawData );
+							//console.log( '[cAjax] Can not understand server response: ', jax.rawData );
 							jax.destroy();
 							return;
 						}
@@ -250,8 +255,11 @@ cAjax = function()
 						
 						var res = r ? r.response.toLowerCase() : '';
 						
-						if( res == 'user not found' || res == 'user session not found' )
+						if( res == 'user not found' || res.toLowerCase() == 'user session not found' )
 						{
+							if( window.Workspace && res.toLowerCase() == 'user session not found' ) 
+								Workspace.flushSession();
+							
 							if( window.Workspace && Workspace.postInitialized && Workspace.sessionId )
 							{
 								// Add to queue
@@ -300,7 +308,10 @@ cAjax = function()
 		else if( this.readyState == 4 && ( this.status == 500 || this.status == 0 || this.status == 404 ) )
 		{
 			// tell our caller...
-			if( jax.onload ) jax.onload( 'fail', false );
+			if( jax.onload ) 
+			{
+				jax.onload( 'fail', false );
+			}
 			jax.destroy();
 		}
 		else
@@ -311,45 +322,61 @@ cAjax = function()
 }
 
 // Clean up object
+// Never use this one outside the destroy() function!!!
 cAjax.prototype.destroySilent = function()
 {
-	// No more activity here!
-	this.decreaseProcessCount();
+	var self = this;
 	
-	if( this.opened )
-		this.close();
+	// No more activity here!
+	self.decreaseProcessCount();
+	
+	if( self.opened )
+		self.close();
 
-	if( this.life ) clearTimeout( this.life );
-	this.life = null;
+	if( self.life ) clearTimeout( self.life );
+	self.life = null;
 
-	this.vars = null;
-	this.mode = null;
-	this.url = null;
-	this.hasReturnCode = null;
-	this.lastOptions = null;
-	this.proxy = null;
-	if( this.worker )
-		this.worker.terminate();
-	this.worker = null;
-	this.data = null;
-	this.rawData = null;
-	this.varcount = null;
-	this.wsRequestID = null;
-	this.wsData = null;
-	this.connectionId = null;
-	this.hasReturnCode = null;
-	this.method = null;
-	this.onload = null;
-	this.openFunc = null;
+	self.vars = null;
+	self.mode = null;
+	self.url = null;
+	self.hasReturnCode = null;
+	self.lastOptions = null;
+	self.proxy = null;
+	if( self.worker )
+		self.worker.terminate();
+	self.worker = null;
+	self.data = null;
+	self.rawData = null;
+	self.varcount = null;
+	self.wsRequestID = null;
+	self.wsData = null;
+	self.connectionId = null;
+	self.hasReturnCode = null;
+	self.returnCode = null;
+	self.returnData = null;
+	self.method = null;
+	self.onload = null;
+	self.openFunc = null;
+	
 	
 	// finally
 	delete this;
 }
 cAjax.prototype.destroy = function()
 {
-	// Clean out possible queue and replenish
-	RemoveFromCajaxQueue( this );
+	this.destroy = function(){};
+	
+	// Terminate with onload
+	if( this.onload )
+	{
+		//console.log( 'Should never happen.' );
+		this.onload( null, null );
+	}
 
+	// Clean out possible queue and replenish
+	RemoveFromCajaxQueue( this )
+	
+	// Clean up
 	this.destroySilent();
 }
 
@@ -369,7 +396,6 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	// Try websockets!!
 	if( 
 		!this.forceHTTP &&
-		!this.forceSend &&
 		this.proxy.responseType != 'arraybuffer' &&
 		window.Workspace &&
 		Workspace.conn && 
@@ -377,8 +403,9 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		!Workspace.websocketsOffline && 
 		Workspace.websocketState == 'open' &&
 		typeof( url ) == 'string' && 
-		url.indexOf( 'system.library' ) >= 0 && 
-		url.indexOf( '/file' ) < 0
+		url.indexOf( 'system.library' ) >= 0 &&
+		url.indexOf( '/file/read' ) < 0 &&
+		url.indexOf( '/file/write' ) < 0
 	)
 	{
 		this.mode = 'websocket';
@@ -478,7 +505,25 @@ cAjax.prototype.responseText = function()
 // Send ajax query
 cAjax.prototype.send = function( data, callback )
 {
+	// Make sure we don't f this up!
+	if( this.onload && !this.onloadAfter )
+	{
+		this.onloadAfter = this.onload;
+		this.onload = function( e, d )
+		{
+			this.onload = null;
+			this.onloadAfter( e, d );
+			this.onloadAfter = null;
+		}
+	}
+
 	var self = this;
+	
+	if( self.life )
+	{
+		clearTimeout( self.life );
+		self.life = false;
+	}
 	
 	if( self.queued )
 	{
@@ -627,7 +672,11 @@ cAjax.prototype.send = function( data, callback )
 				}
 				catch( err )
 				{
-					self.onload( false, false );
+					if( self.onload )
+					{
+						self.onload( false, false );
+						self.destroy();
+					}
 				}
 			}
 			else if( this.varcount > 0 )
@@ -641,7 +690,11 @@ cAjax.prototype.send = function( data, callback )
 				}
 				catch( err )
 				{
-					self.onload( false, false );
+					if( self.onload )
+					{
+						self.onload( false, false );
+						self.destroy();
+					}
 				}
 				// // console.log( 'Test2: Here u: ' + out.join( '&' ) );
 			}
@@ -719,7 +772,14 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 {	
 	var self = this;
 	
-	// console.log( 'Test3: Handling websocket response: ', wsdata );
+	if( self.life )
+		clearTimeout( self.life );
+	self.life = setTimeout( function()
+	{
+		//console.log( '[cajax] Defunct ajax object destroying self after five seconds. 2' );
+		self.destroy();
+		self.life = false;
+	}, 5000 );
 	
 	// The data just failed - which means the websocket went away!
 	if( typeof( wsdata ) == 'undefined' )
@@ -737,14 +797,17 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 	if( typeof( wsdata ) == 'object' && wsdata.response )
 	{
 		self.rawData = 'fail';
-		self.proxy.responseText = self.rawData;
+		if( self.proxy )
+			self.proxy.responseText = self.rawData;
+		//else console.log( 'No more proxy 1..', wsdata, self.onload );
 		self.returnCode = 'fail';
 		self.destroy();
-		//// console.log( 'Test3: Failed', wsdata );
 		return false;
 	}
 	
-	self.proxy.responseText = wsdata;
+	if( self.proxy )
+		self.proxy.responseText = wsdata;
+	//else console.log( 'No more proxy..', wsdata, self.onload );
 	self.rawData = wsdata;
 	self.wsData = wsdata;
 	
@@ -789,8 +852,10 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		{
 			var t = JSON.parse( self.returnData );
 			// Deprecate from 1.0 beta 2 "no user!"
-			if( t && ( t.response == 'user not found' || t.response == 'user session not found' ) )
+			if( t && ( t.response.toLowerCase() == 'user not found' || t.response.toLowerCase() == 'user session not found' ) )
 			{
+				if( window.Workspace && t.response.toLowerCase() == 'user session not found' ) 
+					Workspace.flushSession();
 				if( Workspace )
 				{
 					// Add to queue
@@ -819,15 +884,17 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		try
 		{
 			var r = JSON.parse( self.returnData );
-			if( r.response == 'user session not found' )
+			if( r.response.toLowerCase() == 'user session not found' )
 			{
+				if( window.Workspace )
+					Workspace.flushSession();
 				AddToCajaxQueue( self );
 				return Workspace.relogin();
 			}
 		}
 		catch( e )
 		{
-			// console.log( 'Test3: Impossible server response: ', self.returnData, self.returnData );
+			//console.log( 'Test3: Impossible server response: ', self.returnData, self.returnData, wsdata );
 		}
 	}
 
@@ -847,6 +914,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 	{
 		//console.log( 'got ws data... but nowhere to send it' );
 	}
+	
 	self.destroy();
 }
 

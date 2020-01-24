@@ -4245,10 +4245,10 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 			
 			win.refresh = function( callback )
 			{
-				if( dv.cancelId )
+				/*if( dv.cancelId )
 				{
 					CancelCajaxOnId( dv.cancelId );
-				}
+				}*/
 				// Refresh 2
 				// Run previous callback
 				if( callback )

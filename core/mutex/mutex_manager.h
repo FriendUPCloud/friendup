@@ -112,7 +112,6 @@ inline void MutexManagerRelease( MutexManager *mm __attribute__((unused)), void 
 #define FRIEND_MUTEX_TRYLOCK( mutPointer ) \
 	pthread_mutex_trylock( mutPointer )
 #endif
-
 /*
 #ifndef FRIEND_MUTEX_LOCK
 #define FRIEND_MUTEX_LOCK( mutPointer ) \

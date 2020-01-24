@@ -180,7 +180,7 @@ function ExecuteApplication( app, args, callback )
 	// 1. Ask about application.................................................
 	var m = new Module( 'system' );
 	m.onExecuted = function( r, d )
-	{
+	{	
 		// Get data from Friend Core
 		var conf = false;
 		try
@@ -633,7 +633,6 @@ function ExecuteApplication( app, args, callback )
 		// Clean blocker
 		RemoveFromExecutionQueue( appName );
 	}
-	m.forceHTTP = true;
 	m.execute( 'friendapplication', eo );
 	// console.log( 'Test3: Executing application: ' + app );
 }
@@ -1521,7 +1520,7 @@ SubSubDomains =
 
 	initSubSubDomains: function()
 	{
-		if ( this.initialized )
+		if( this.initialized )
 			return;
 
 		var self = this;

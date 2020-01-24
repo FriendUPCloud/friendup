@@ -34,6 +34,7 @@ Workspace = {
 	themeOverride: false,
 	systemInfo: false,
 	websocketsOffline: true,
+	workspaceIsDisconnected: false,
 	lastfileSystemChangeMessage: false,
 	serverIsThere: false,
 	runLevels: [
@@ -778,7 +779,11 @@ Workspace = {
 		this.reloginAttempts = true;
 		
 		// See if we are alive!
+		// Cancel relogin context
+		CancelCajaxOnId( 'relogin' );
+		
 		var m = new Module( 'system' );
+		m.cancelId = 'relogin';
 		m.onExecuted = function( e, d )
 		{
 			//console.log( 'Test2: Got back: ', e, d );
@@ -1411,7 +1416,15 @@ Workspace = {
 					// New translations
 					i18n_translations = [];
 					
-					var decoded = JSON.parse( d );
+					var decoded = false;
+					try
+					{
+						decoded = JSON.parse( d );
+					}
+					catch( e )
+					{
+						//console.log( 'This: ', d );
+					}
 
 					// Add it!
 					i18nClearLocale();
@@ -1495,7 +1508,15 @@ Workspace = {
 						{
 							if( e == 'ok' )
 							{
-								var s = JSON.parse( d );
+								var s = {};
+								try
+								{
+									s = JSON.parse( d );
+								}
+								catch( e )
+								{ 
+									s = {}; 
+								};
 								if( s.Theme && s.Theme.length )
 								{
 									_this.refreshTheme( s.Theme.toLowerCase(), false );
@@ -1555,4 +1576,14 @@ Workspace = {
 		Workspace.logoutURL = logoutURL;
 	}
 };
+
+window.onoffline = function()
+{
+	Workspace.workspaceIsDisconnected = true;
+}
+window.ononline = function()
+{
+	Workspace.workspaceIsDisconnected = false;
+}
+
 
