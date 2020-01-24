@@ -890,7 +890,6 @@ function _ActivateWindowOnly( div )
 	for( var a in movableWindows )
 	{
 		var m = movableWindows[a];
-		m.removeAttribute( 'moving' );
 
 		// No div selected or not the div we're looking for - do inactive!
 		if( !div || m != div )
@@ -2401,7 +2400,7 @@ var View = function( args )
 		// Register mouse over and out
 		if( !window.isMobile )
 		{
-			div.addEventListener( 'mouseover', function()
+			div.addEventListener( 'mouseover', function( e )
 			{
 				// Keep track of the previous
 				if( typeof( Friend.currentWindowHover ) != 'undefined' && Friend.currentWindowHover )
@@ -2409,12 +2408,15 @@ var View = function( args )
 				Friend.currentWindowHover = div;
 			
 				// Focus on desktop if we're not over a window.
-				if( Friend.previousWindowHover != div )
+				if( Friend.previousWindowHover && Friend.previousWindowHover != div )
 				{
 					// Check first if are focused on an input field
 					// If we are, don't focus on nothing!
 					if( !Friend.GUI.checkWindowState( 'input-focus' ) )
 					{
+						// TODO: If this is an input element, do not lose focus
+						// unless needed. E.g. changing window.
+						//var currentFocus = document.activeElement;
 						window.focus();
 					}
 				}
@@ -2493,6 +2495,8 @@ var View = function( args )
 			title.onmousedown = function( e, mode )
 			{
 				if ( !e ) e = window.event;
+				
+				div.setAttribute( 'moving', 'moving' );
 
 				// Use correct button
 				if( e.button != 0 && !mode ) return cancelBubble( e );
@@ -2610,7 +2614,6 @@ var View = function( args )
 						return;
 					}
 					_ActivateWindow( this, false, e );
-					this.setAttribute( 'moving', 'moving' );
 				}
 			}
 		}
@@ -2623,10 +2626,6 @@ var View = function( args )
 			if( isMobile && !self.parentNode.classList.contains( 'OnWorkspace' ) )
 				return;
 			
-			if( !isMobile )
-			{
-				this.setAttribute( 'moving', 'moving' );
-			}
 			else if( e && !div.classList.contains( 'Active' ) )
 			{
 				this.clickOffset = {
