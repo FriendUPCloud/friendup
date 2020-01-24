@@ -255,9 +255,31 @@ Sections.accounts_templates = function( cmd, extra )
 		{
 			console.log( { e:e, d:d } );
 			
+			try
+			{
+				data = JSON.parse( d );
+			}
+			catch( e ) {  }
+			
 			if( e == 'ok' && d )
 			{
+				
+				if( data && data.message )
+				{
+					Notify( { title: 'success', text: data.message } );
+				}
+				
 				refresh( d );
+				
+			}
+			else
+			{
+				
+				if( data && data.message )
+				{
+					Notify( { title: 'failed', text: data.message } );
+				}
+				
 			}
 		}
 		m.execute( 'usersetupadd', { 
@@ -278,7 +300,7 @@ Sections.accounts_templates = function( cmd, extra )
 		{
 			// Setup input values
 						
-			var args = { id: id, Preinstall: true, Themes: 'Friendup12' };
+			var args = { id: id, Preinstall: true, Themes: 'Friendup12', authid: Application.authId };
 			
 			var vals = [ 'Name', 'Description', 'Languages', 'Applications', 'Startup' ];
 			
@@ -303,14 +325,79 @@ Sections.accounts_templates = function( cmd, extra )
 			var m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{
+				console.log( { e:e, d:d } );
+				
+				var data = false;
+														
+				try
+				{
+					data = JSON.parse( d );
+				}
+				catch( e ) {  }
+				
 				if( e == 'ok' )
 				{
 					
-					console.log( { e:e, d:d } );
+					if( data && data.message )
+					{
+						Notify( { title: 'success', text: data.message } );
+					}
+					
+					// Wallpaper settings if we have a new wallpaper ...
+					
+					if( ge( 'wallpaper_button_inner' ) && ge( 'wallpaper_button_inner' ).value )
+					{
+							
+						var m = new Module( 'system' );
+						m.onExecuted = function( ee, dd )
+						{
+							console.log( { e:ee, d:dd } );
+							
+							var dat = false;
+														
+							try
+							{
+								dat = JSON.parse( dd );
+							}
+							catch( e ) {  }
+							
+							if( ee == 'ok' )
+							{
+							
+								if( dat && dat.message )
+								{
+									Notify( { title: 'success', text: dat.message } );
+								}
+							
+							}
+							else
+							{
+								
+								if( dat && dat.message )
+								{
+									Notify( { title: 'failed', text: dat.message } );
+								}
+								
+							}
+						}
+						m.execute( 'usersetupwallpaperset', { 
+							setupId : id, 
+							path    : ge( 'wallpaper_button_inner' ).value, 
+							authid  : Application.authId 
+						} );
+						
+					}
 					
 				}
-				
-				// handle saving of template if there is any new ....
+				else
+				{
+					
+					if( data && data.message )
+					{
+						Notify( { title: 'failed', text: data.message } );
+					}
+					
+				}
 				
 			}
 			m.execute( 'usersetupsave', args );
@@ -413,8 +500,6 @@ Sections.accounts_templates = function( cmd, extra )
 						
 						loadingInfo.details = dat;
 						
-						//initDetails( loadingInfo, [  ], true );
-						
 						// Go to next in line ...
 						loadingList[ ++loadingSlot ](  );
 						
@@ -447,8 +532,6 @@ Sections.accounts_templates = function( cmd, extra )
 						
 						loadingInfo.applications = dat;
 						
-						//initDetails( loadingInfo, [ 'application', 'dock', 'startup' ], true );
-						
 						// Go to next in line ...
 						loadingList[ ++loadingSlot ](  );
 						
@@ -466,8 +549,6 @@ Sections.accounts_templates = function( cmd, extra )
 						
 						loadingInfo.looknfeel = dat;
 						
-						initDetails( loadingInfo, [ 'application', 'dock', 'startup', 'looknfeel', true ] );
-						
 						// Go to next in line ...
 						loadingList[ ++loadingSlot ](  );
 						
@@ -479,6 +560,8 @@ Sections.accounts_templates = function( cmd, extra )
 				function(  )
 				{
 					console.log( '//  | init' );
+					
+					initDetails( loadingInfo, [ 'application', 'dock', 'startup', 'looknfeel', true ] );
 				}
 				
 			];
@@ -591,10 +674,6 @@ Sections.accounts_templates = function( cmd, extra )
 			wallpaper_preview : function ()
 			{
 				
-				// Set default wallpaper as fallback ...
-				
-				//return ( look ? '<div style="width:100%;height:100%;background: url(\''+look+'\') center center / cover no-repeat;"><button class="IconButton IconSmall ButtonSmall Negative FloatRight fa-remove"></button></div>' : '' );
-				
 			}
 			
 		}
@@ -612,8 +691,7 @@ Sections.accounts_templates = function( cmd, extra )
 			theme_dark: theme.dark(),
 			theme_controls: theme.controls(),
 			workspace_count: theme.workspace_count(),
-			wallpaper_button: theme.wallpaper_button()/*,
-			wallpaper_preview: theme.wallpaper_preview()*/
+			wallpaper_button: theme.wallpaper_button()
 		};
 		
 		// Add translations
@@ -2564,33 +2642,7 @@ Sections.accounts_templates = function( cmd, extra )
 							var b = ge( 'wallpaper_button_inner' );
 							b.onclick = function(  )
 							{
-								
-								/*var d = new Filedialog( 
-								{
-									triggerFunction: function( item )
-									{
-										if ( item )
-										{
-											// Load the image
-											var image = new Image();
-											image.onload = function()
-											{
-												console.log( 'loaded image ... ', item );
-												// Resizes the image
-												var canvas = ge( 'AdminAvatar' );
-												var context = canvas.getContext( '2d' );
-												context.drawImage( image, 0, 0, 256, 256 );
-												
-											}
-											image.src = getImageUrl( item[ 0 ].Path );
-										}
-									},
-									path: "Mountlist:",
-									type: "load",
-									title: i18n( 'i18n_fileselectoravatar' ),
-									filename: ""
-								} );*/
-								
+																
 								var flags = {
 									type: 'load',
 									path: 'Home:',
@@ -2613,6 +2665,11 @@ Sections.accounts_templates = function( cmd, extra )
 												
 											}
 											image.src = getImageUrl( item[ 0 ].Path );
+											
+											if( ge( 'wallpaper_button_inner' ) )
+											{
+												ge( 'wallpaper_button_inner' ).setAttribute( 'value', item[ 0 ].Path );
+											}
 											
 										}
 									}
@@ -2658,7 +2715,7 @@ Sections.accounts_templates = function( cmd, extra )
 								ge( 'AdminWallpaperPreview' ).appendChild( del );
 							}
 							
-							wallpaperdelete();
+							//wallpaperdelete();
 							
 						}
 						
