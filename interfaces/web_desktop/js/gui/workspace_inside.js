@@ -3759,11 +3759,22 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								var num = StrPad( path.substr( 0, ind ), 10, '0' );
 								path = path.substr( ind + 1, path.length - ( ind + 1 ) );
 								
+
+								// Link to a repository?
+								var iconFile = '';
+								if( path.substr( -11, 11 ) == ':repository' )
+								{
+									path = path.substr( 0, path.length - 11 );
+									iconFile = '/system.library/module/?module=system&command=repoappimage&i=' + GetFilename( path ) + '&sessionid=' + Workspace.sessionId;
+								}
+								
 								var fn = GetFilename( path );
+								
 								newIcons.push( {
 									Title: fn,
 									Filename: path,
 									Path: path,
+									IconFile: iconFile,
 									Type: path.substr( path.length - 1, 1 ) == '/' ? 'Directory' : 'File',
 									SortPriority: num,
 									Handler: 'built-in',

@@ -16,6 +16,20 @@ if( $rows = $SqlDatabase->FetchObjects( '
 {
 	foreach( $rows as $row )
 	{
+		if( $row->ValueString{0} == ':' )
+		{
+			$rs = substr( $row->ValueString, 1, strlen( $row->ValueString ) );
+			if( !file_exists( 'resources/webclient/apps/' . $rs ) )
+			{
+				if( file_exists( 'repository/' . $rs ) )
+				{
+					if( file_exists( 'repository/' . $rs . '/icon.png' ) )
+					{
+						$row->ValueString .= ':repository';
+					}
+				}
+			}
+		}
 		$out[] = 'DesktopShortcut:' . (int)$row->ValueNumber . ':' . $row->ValueString;
 	}
 }
