@@ -2610,6 +2610,12 @@ html .File.Selected .Title
 	max-height: 200px !important;
 }
 
+html .File.Selected .Title, 
+html #Screens .Content:not([listmode=compact]) .File.Selected .Title
+{
+	background-color: transparent;
+}
+
 
 @media (max-width: 320px)
 {
@@ -2789,7 +2795,7 @@ html body .View .Content[listmode=imageview] .File.Selected:before
     width: 90%;
     top: 7%;
     left: 5%;
-    height: 84%;
+    height: 90%;
 }
 
 html body .ScreenContent > .Scroller > div > .File.Selected:before,
