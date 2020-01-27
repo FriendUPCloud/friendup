@@ -852,18 +852,13 @@ html body[mobile] .Dialog .VContentBottom.BackgroundToolbar button
 	color: white;
 }
 
-html body[mobile] .Dialog .BackgroundDefault
-{
-	background-color: transparent;
-}
-
 html body[mobile] .Dialog > .ScrollArea
 {
 	font-size: 120%;
 	padding: 20px;
 	height: 40%;
 	top: 30%;
-	background: rgba(0,0,0,0.5);
+	background: rgba(0,0,0,0.85);
 	border-radius: 5px;
 	left: 10px;
 	right: 10px;

@@ -234,11 +234,6 @@ html body[mobile].Dark .Dialog > .DialogButtons
 	background-color: rgba(0,0,0,0.6);
 }
 
-html body[mobile].Dark .Dialog .BackgroundDefault
-{
-	background-color: transparent;
-}
-
 html body.Dark .PadBorder {
 	border-color : #233240;
 }

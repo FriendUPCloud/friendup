@@ -258,11 +258,6 @@ html body[mobile].Charcoal .Dialog > .DialogButtons
 	background-color: rgba(0,0,0,0.6);
 }
 
-html body[mobile].Charcoal .Dialog .BackgroundDefault
-{
-	background-color: transparent;
-}
-
 html body.Charcoal .PadBorder {
 	border-color : #303030;
 }
