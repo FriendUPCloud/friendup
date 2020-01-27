@@ -1966,12 +1966,14 @@ html body.WindowMenu .Widget
 .Widget .MenuItems.Open
 {
 	opacity: 1;
+	max-height: -moz-fit-content;
 	max-height: fit-content;
 }
 
 .Widget .MenuItems.Closing
 {
 	opacity: 0;
+	max-height: -moz-fit-content;
 	max-height: fit-content;
 }
 
