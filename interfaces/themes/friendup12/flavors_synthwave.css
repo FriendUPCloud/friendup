@@ -233,6 +233,17 @@ html body.Synthwave .File a
 	color: #bdbcff;
 }
 
+html body.Synthwave[mobile] .File.Selected .Title,
+html body.Synthwave[mobile] #Screens .File.Selected .Title
+{
+	color: white;
+}
+
+html body.Synthwave[mobile] .File.Selected:before
+{
+	background-color: rgba(0,0,0,1);
+}
+
 html body.Synthwave .File.Selected:before
 {
 	background: rgba(255,255,255,0.1);

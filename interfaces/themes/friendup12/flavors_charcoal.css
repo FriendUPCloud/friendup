@@ -181,6 +181,17 @@ html body.Charcoal .File a
 	color: #e0e0e0;
 }
 
+html body.Charcoal[mobile] .File.Selected .Title,
+html body.Charcoal[mobile] #Screens .File.Selected .Title
+{
+	color: white;
+}
+
+html body.Charcoal[mobile] .File.Selected:before
+{
+	background-color: rgba(20,20,20,1);
+}
+
 html body.Charcoal .File.Selected:before
 {
 	background: rgba(255,255,255,0.1);
