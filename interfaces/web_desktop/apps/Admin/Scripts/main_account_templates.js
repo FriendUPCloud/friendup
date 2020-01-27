@@ -205,20 +205,40 @@ Sections.accounts_templates = function( cmd, extra )
 		return false;
 	}
 	
-	function refresh( id )
+	function refresh( id, _this )
 	{
 		
 		initMain();
 		
 		if( id )
 		{
-			edit( id );
+			edit( id, _this );
 		}
 		
 	}
 	
-	function edit( id )
+	function edit( id, _this )
 	{
+		
+		if( _this )
+		{
+			// TODO: remove all other Selected in the list first ...
+			
+			var pnt = _this.parentNode;
+			
+			if( pnt )
+			{
+				for( var i in pnt )
+				{
+					if( pnt[i] && pnt[i].className )
+					{
+						pnt[i].classList.remove( 'Selected' );
+					}
+				}
+			}
+			
+			_this.classList.add( 'Selected' );
+		}
 		
 		loading( id );
 		
@@ -234,6 +254,21 @@ Sections.accounts_templates = function( cmd, extra )
 			ge( 'TemplateDetails' ).innerHTML = '';
 		}
 		
+		if( ge( 'TemplateList' ) )
+		{
+			var ele = ge( 'TemplateList' ).getElementsByTagName( 'div' );
+			
+			if( ele )
+			{
+				for( var i in ele )
+				{
+					if( ele[i] && ele[i].className )
+					{
+						ele[i].classList.remove( 'Selected' );
+					}
+				}
+			}
+		}
 	}
 	
 	function filter( filter, server )
@@ -409,15 +444,52 @@ Sections.accounts_templates = function( cmd, extra )
 	
 	function remove( id )
 	{
-		console.log( 'remove( '+id+' )' );
-			
-		Confirm( i18n( 'i18n_deleting_template' ), i18n( 'i18n_deleting_template_verify' ), function( result )
+		if( id )
 		{
 			
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				
+				console.log( { e:e, d:d } );
+				
+				var mm = new Module( 'system' );
+				mm.onExecuted = function( ee, dd )
+				{
+					
+					var data = false;
+													
+					try
+					{
+						data = JSON.parse( dd );
+					}
+					catch( e ) {  }
+					
+					if( ee == 'ok' )
+					{
+					
+						if( data && data.response )
+						{
+							Notify( { title: 'success', text: data.response } );
+						}
+					}
+					else
+					{
+						if( data && data.response )
+						{
+							Notify( { title: 'failed', text: data.response } );
+						}
+					}
+					
+					refresh(); cancel();
+					
+				}
+				mm.execute( 'usersetupdelete', { id: id, authid: Application.authId } );
+				
+			}
+			m.execute( 'usersetupwallpaperdelete', { setupId: id, authid: Application.authId } );
 			
-			
-		} );
-		
+		}
 	}
 	
 	// helper functions --------------------------------------------------------------------------------------------- //
@@ -464,6 +536,40 @@ Sections.accounts_templates = function( cmd, extra )
 		}
 		
 		return false;
+	}
+	
+	function removeBtn( _this, args, callback )
+	{
+		
+		if( _this )
+		{
+			_this.classList.remove( 'IconButton' );
+			_this.classList.remove( 'IconToggle' );
+			_this.classList.remove( 'ButtonSmall' );
+			_this.classList.remove( 'ColorStGrayLight' );
+			_this.classList.remove( 'fa-minus-circle' );
+			_this.classList.add( 'ButtonAlt' );
+			_this.classList.add( 'BackgroundRed' );
+			_this.innerHTML = i18n( 'i18n_delete' );
+			_this.args = args;
+			_this.callback = callback;
+			_this.onclick = function(  )
+			{
+				
+				if( this.callback )
+				{
+					callback( this.args ? this.args : false );
+				}
+				
+			};
+		}
+		
+		//Confirm( i18n( 'i18n_deleting_template' ), i18n( 'i18n_deleting_template_verify' ), function( result )
+		//{
+			
+			
+			
+		//} );
 	}
 	
 	function sortApps( name )
@@ -702,6 +808,8 @@ Sections.accounts_templates = function( cmd, extra )
 			
 			if( !details.ID )
 			{
+				ge( 'TempDeleteBtn' ).style.display = 'none';
+				
 				ge( 'AdminApplicationContainer' ).style.display = 'none';
 				ge( 'AdminDockContainer'        ).style.display = 'none';
 				ge( 'AdminStartupContainer'     ).style.display = 'none';
@@ -737,7 +845,26 @@ Sections.accounts_templates = function( cmd, extra )
 				cancel(  );
 			}
 			
-			
+			var bg4  = ge( 'TempDeleteBtn' );
+			if( bg4 ) bg4.onclick = function( e )
+			{
+				
+				// Delete template ...
+				
+				if( details.ID )
+				{
+					console.log( '// delete template' );
+					
+					Confirm( i18n( 'i18n_deleting_template' ), i18n( 'i18n_deleting_template_verify' ), function( result )
+					{
+					
+						remove( details.ID );
+					
+					} );
+					
+				}
+				
+			}
 			
 			
 			
@@ -931,7 +1058,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent50 FloatLeft Relative';
+													d.className = 'PaddingSmall HContent45 FloatLeft Relative';
 													d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
 													d.onclick = function(  )
 													{
@@ -944,7 +1071,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent10 FloatLeft Relative';
+													d.className = 'PaddingSmall HContent15 FloatLeft Relative';
 													return d;
 												}()
 											}
@@ -1066,7 +1193,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent50 FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
 																d.innerHTML = '<span>' + apps[k].Category + '</span>';
 																return d;
 															}() 
@@ -1075,7 +1202,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
 																return d;
 															}(),
 															'child' : 
@@ -1088,22 +1215,27 @@ Sections.accounts_templates = function( cmd, extra )
 																		b.onclick = function(  )
 																		{
 																			
-																			//ids[ name ] = ( ids[ name ] ? [ 0, ids[ name ][ 1 ] ] : [ 0, 0 ] );
-																			
-																			func.updateids( 'applications', name, ( ids[ name ] ? [ 0, ids[ name ][ 1 ] ] : [ 0, 0 ] ) );
-																			
 																			var pnt = this.parentNode.parentNode;
 																			
-																			if( pnt )
+																			removeBtn( this, { ids: ids, name: name, func: func, pnt: pnt }, function ( args )
 																			{
-																				pnt.innerHTML = '';
-																			}
-																			
-																			if( func )
-																			{
-																				func.dock( 'refresh' );
-																				func.startup( 'refresh' );
-																			}
+																				
+																				//ids[ name ] = ( ids[ name ] ? [ 0, ids[ name ][ 1 ] ] : [ 0, 0 ] );
+																				
+																				args.func.updateids( 'applications', args.name, ( args.ids[ args.name ] ? [ 0, args.ids[ args.name ][ 1 ] ] : [ 0, 0 ] ) );
+																				
+																				if( args.pnt )
+																				{
+																					args.pnt.innerHTML = '';
+																				}
+																				
+																				if( args.func )
+																				{
+																					args.func.dock( 'refresh' );
+																					args.func.startup( 'refresh' );
+																				}
+																				
+																			} );
 																			
 																		};
 																		return b;
@@ -1223,7 +1355,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent50 FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
 																d.innerHTML = '<span>' + apps[k].Category + '</span>';
 																return d;
 															}() 
@@ -1232,7 +1364,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
 																return d;
 															}(),
 															'child' : 
@@ -1466,7 +1598,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
+													d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
 													d.innerHTML = '<strong>' + i18n( 'i18n_order' ) + '</strong>';
 													return d;
 												}()
@@ -1475,7 +1607,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent10 FloatLeft Relative';
+													d.className = 'PaddingSmall HContent15 FloatLeft Relative';
 													return d;
 												}()
 											}
@@ -1606,7 +1738,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Ellipsis';
 																return d;
 															}(),
 															'child' : 
@@ -1645,7 +1777,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
 																return d;
 																
 															}(),
@@ -1659,16 +1791,21 @@ Sections.accounts_templates = function( cmd, extra )
 																		b.onclick = function(  )
 																		{
 																			
-																			//ids[ name ] = [ name, 0 ];
-																			
-																			func.updateids( 'dock', name, [ name, 0 ] );
-																			
 																			var pnt = this.parentNode.parentNode;
 																			
-																			if( pnt )
+																			removeBtn( this, { ids: ids, name: name, func: func, pnt: pnt }, function ( args )
 																			{
-																				pnt.innerHTML = '';
-																			}
+																				
+																				//ids[ name ] = [ name, 0 ];
+																				
+																				args.func.updateids( 'dock', args.name, [ args.name, 0 ] );
+																				
+																				if( args.pnt )
+																				{
+																					args.pnt.innerHTML = '';
+																				}
+																				
+																			} );
 																			
 																		};
 																		return b;
@@ -1795,7 +1932,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent50 FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
 																d.innerHTML = '<span>' + apps[k].Category + '</span>';
 																return d;
 															}() 
@@ -1804,7 +1941,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
 																return d;
 															}(),
 															'child' : 
@@ -2049,7 +2186,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
+													d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
 													d.innerHTML = '<strong>' + i18n( 'i18n_order' ) + '</strong>';
 													return d;
 												}()
@@ -2058,7 +2195,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent10 FloatLeft Relative';
+													d.className = 'PaddingSmall HContent15 FloatLeft Relative';
 													return d;
 												}()
 											}
@@ -2199,7 +2336,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Ellipsis';
 																return d;
 															}(),
 															'child' : 
@@ -2238,7 +2375,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
 																return d;
 																
 															}(),
@@ -2252,16 +2389,21 @@ Sections.accounts_templates = function( cmd, extra )
 																		b.onclick = function(  )
 																		{
 																			
-																			//ids[ name ] = false;
-																			
-																			func.updateids( 'startup', name, false );
-																			
 																			var pnt = this.parentNode.parentNode;
 																			
-																			if( pnt )
+																			removeBtn( this, { ids: ids, name: name, func: func, pnt: pnt }, function ( args )
 																			{
-																				pnt.innerHTML = '';
-																			}
+																				
+																				//ids[ name ] = false;
+																				
+																				args.func.updateids( 'startup', args.name, false );
+																				
+																				if( args.pnt )
+																				{
+																					args.pnt.innerHTML = '';
+																				}
+																				
+																			} );
 																			
 																		};
 																		return b;
@@ -2388,7 +2530,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent50 FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
 																d.innerHTML = '<span>' + apps[k].Category + '</span>';
 																return d;
 															}() 
@@ -2397,7 +2539,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
 																return d;
 															}(),
 															'child' : 
@@ -2830,7 +2972,7 @@ Sections.accounts_templates = function( cmd, extra )
 						'element' : function() 
 						{
 							var d = document.createElement( 'div' );
-							d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingTop PaddingRight';
+							d.className = 'HRow Padding';
 							return d;
 						}(),
 						'child' : 
@@ -2910,7 +3052,7 @@ Sections.accounts_templates = function( cmd, extra )
 												{
 													var b = document.createElement( 'button' );
 													b.className = 'IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle';
-													b.onclick = function () { edit(); /*details()*/ };
+													b.onclick = function () { edit(); };
 													return b;
 												}()
 											}
@@ -2956,7 +3098,7 @@ Sections.accounts_templates = function( cmd, extra )
 										d.tempid = temp[k].ID;
 										d.onclick = function()
 										{
-											edit( this.tempid );
+											edit( this.tempid, this );
 										};
 										return d;
 									}(),
@@ -2967,7 +3109,7 @@ Sections.accounts_templates = function( cmd, extra )
 											{
 												var d = document.createElement( 'div' );
 												d.className = 'TextCenter HContent10 FloatLeft PaddingSmall Ellipsis';
-												d.innerHTML = '<span class="IconSmall fa-users"></span>';
+												d.innerHTML = '<span class="IconSmall fa-file-text-o"></span>';
 												return d;
 											}()
 										},
@@ -2986,7 +3128,7 @@ Sections.accounts_templates = function( cmd, extra )
 												var d = document.createElement( 'div' );
 												d.className = 'HContent10 FloatLeft PaddingSmall Ellipsis';
 												return d;
-											}(),
+											}()/*,
 											'child' : 
 											[
 												{
@@ -2997,14 +3139,14 @@ Sections.accounts_templates = function( cmd, extra )
 														s.tempid = temp[k].ID;
 														s.onclick = function ( e ) 
 														{ 
-															remove( this.tempid );
+															removeBtn(  );
 															e.stopPropagation();
 															e.preventDefault(); 
 														};
 														return s;
 													}()
 												}
-											]
+											]*/
 										}
 									]
 								}
