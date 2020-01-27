@@ -2610,6 +2610,17 @@ html .File.Selected .Title
 	max-height: 200px !important;
 }
 
+html body[mobile] .File.Selected .Title
+{
+	height: fit-content;
+	color: black;
+}
+
+html body[mobile] .File.Selected:before
+{
+	background-color: rgba(185,185,185,1);
+}
+
 html .File.Selected .Title, 
 html #Screens .Content:not([listmode=compact]) .File.Selected .Title
 {
