@@ -3286,7 +3286,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	{
 		iconInner.classList.add( 'Shared' );
 	}
-	if( fileInfo.MetaType == 'Shortcut' )
+	if( fileInfo.MetaType == 'Shortcut' && !fileInfo.IconFile )
 	{
 		file.classList.add( 'Shortcut' );
 		if( fileInfo.Filename.substr( 0, 1 ) == ':' )
