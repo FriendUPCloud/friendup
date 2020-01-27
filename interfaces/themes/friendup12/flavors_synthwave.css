@@ -239,7 +239,7 @@ html body.Synthwave[mobile] #Screens .File.Selected .Title
 	color: white;
 }
 
-html body.Synthwave .File.Selected:before
+html body.Synthwave div .File.Selected:before
 {
 	background-color: rgba(0,0,0,1);
 }
