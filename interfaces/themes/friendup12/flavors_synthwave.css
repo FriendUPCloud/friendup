@@ -233,8 +233,8 @@ html body.Synthwave .File a
 	color: #bdbcff;
 }
 
-html body.Synthwave[mobile] .File.Selected .Title,
-html body.Synthwave[mobile] #Screens .File.Selected .Title
+html body.Synthwave .File.Selected .Title,
+html body.Synthwave #Screens .File.Selected .Title
 {
 	color: white;
 }
@@ -309,11 +309,6 @@ html body[mobile].Synthwave .Dialog > .DialogHeader,
 html body[mobile].Synthwave .Dialog > .DialogButtons
 {
 	background-color: rgba(0,0,0,0.6);
-}
-
-html body[mobile].Synthwave .Dialog .BackgroundDefault
-{
-	background-color: transparent;
 }
 
 html body.Synthwave .PadBorder {

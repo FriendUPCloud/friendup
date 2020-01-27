@@ -4188,12 +4188,27 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if( Workspace.newDir )
 				return Workspace.newDir.activate();
 			
-			var d = new View( {
-				id: 'makedir',
-				width: 325,
-				height: 100,
-				title: i18n( 'i18n_make_a_new_container' )
-			} );
+			var d;
+			
+			if( !window.isMobile )
+			{
+				d = new View( {
+					id: 'makedir',
+					width: 325,
+					height: 100,
+					title: i18n( 'i18n_make_a_new_container' )
+				} );
+			}
+			else
+			{
+				d = new Widget( {
+					width: 'full',
+					height: 'full',
+					above: true,
+					animate: true,
+					transparent: true
+				} );
+			}
 			
 			Workspace.newDir = d;
 			d.onClose = function()
@@ -4201,29 +4216,60 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				Workspace.newDir = null;
 			}
 
-			d.setContent( '\
-			<div class="ContentFull">\
-				<div class="VContentTop BorderBottom" style="bottom: 50px;">\
-					<div class="Padding">\
-						<div class="HRow">\
-							<div class="HContent25 FloatLeft">\
-								<p class="Layout InputHeight"><strong>' + i18n( 'i18n_name' ) + ':</strong></p>\
-							</div>\
-							<div class="HContent75 FloatLeft">\
-								<p class="Layout InputHeight"><input class="FullWidth MakeDirName" type="text" value="' + i18n( 'i18n_new_container' ) + '"/></p>\
+			if( window.isMobile )
+			{
+				d.setContent( '\
+				<div class="Dialog">\
+					<div class="VContentTop BackgroundDefault Padding ScrollArea">\
+						<div>\
+							<p><strong>' + i18n( 'i18n_name' ) + ':</strong></p>\
+						</div>\
+						<div class="Padding">\
+							<div class="HRow">\
+								<div class="HContent100 FloatLeft">\
+									<p class="Layout InputHeight"><input class="FullWidth MakeDirName" type="text" value="' + i18n( 'i18n_new_container' ) + '"/></p>\
+								</div>\
 							</div>\
 						</div>\
 					</div>\
-				</div>\
-				<div class="VContentBottom Padding" style="height: 50px">\
-					<button type="button" class="Button fa-folder IconSmall NetContainerButton">\
-						' + i18n( 'i18n_create_container' ) + '\
-					</button>\
-				</div>\
-			</div>' );
+					<div class="VContentBottom BorderTop ColorToolbar BackgroundToolbar TextRight Padding" style="height: 50px">\
+						<button type="button" class="Button fa-remove IconSmall CancelButton">\
+							' + i18n( 'i18n_cancel' ) + '\
+						</button>\
+						<button type="button" class="Button fa-folder IconSmall NetContainerButton">\
+							' + i18n( 'i18n_create_container' ) + '\
+						</button>\
+					</div>\
+				</div>' );
+			}
+			else
+			{
+				d.setContent( '\
+				<div class="ContentFull">\
+					<div class="VContentTop BorderBottom" style="bottom: 50px;">\
+						<div class="Padding">\
+							<div class="HRow">\
+								<div class="HContent25 FloatLeft">\
+									<p class="Layout InputHeight"><strong>' + i18n( 'i18n_name' ) + ':</strong></p>\
+								</div>\
+								<div class="HContent75 FloatLeft">\
+									<p class="Layout InputHeight"><input class="FullWidth MakeDirName" type="text" value="' + i18n( 'i18n_new_container' ) + '"/></p>\
+								</div>\
+							</div>\
+						</div>\
+					</div>\
+					<div class="VContentBottom Padding" style="height: 50px">\
+						<button type="button" class="Button fa-folder IconSmall NetContainerButton">\
+							' + i18n( 'i18n_create_container' ) + '\
+						</button>\
+					</div>\
+				</div>' );
+			}
 
 			var inputField  = d.getByClass( 'MakeDirName' )[0];
 			var inputButton = d.getByClass( 'NetContainerButton' )[0];
+			var can = d.getByClass( 'CancelButton' )[0];
+			if( can ) can.onclick = function(){ d.close(); }
 
 			var fi = directoryWindow.content.fileInfo;
 			var dr;
@@ -4326,37 +4372,93 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				
 				
 
-				var w = new View( {
-					title: i18n( 'rename_file' ),
-					width: 320,
-					height: 100,
-					resize: false
-				} );
+				var w;
+				if( window.isMobile )
+				{
+					w = new Widget( {
+						width: 'full',
+						height: 'full',
+						above: true,
+						animate: true,
+						transparent: true
+					} );
+				}
+				else
+				{
+					w = new View( {
+						title: i18n( 'rename_file' ),
+						width: 320,
+						height: 100,
+						resize: false
+					} );
+				}
 
 				Workspace.renameWindow = w;
 
-				w.setContent( '\
-					<div class="ContentFull LayoutButtonbarBottom">\
-						<div class="VContentTop Padding">\
-							<div class="HRow MarginBottom">\
-								<div class="HContent30 FloatLeft"><p class="InputHeight"><strong>' + i18n( 'new_name' ) + ':</strong></p></div>\
-								<div class="HContent70 FloatLeft"><input type="text" class="InputHeight FullWidth" value="' + nam + '"></div>\
+				if( window.isMobile )
+				{
+					w.setContent( '\
+						<div class="Dialog">\
+							<div class="VContentTop BackgroundDefault Padding ScrollArea">\
+								<div><p><strong>' + i18n( 'new_name' ) + ':</strong></p></div>\
+								<div class="HRow">\
+									<div class="HContent100 FloatLeft"><input type="text" class="InputHeight FullWidth" value="' + nam + '"></div>\
+								</div>\
+							</div>\
+							<div class="Padding VContentBottom BorderTop ColorToolbar BackgroundToolbar TextRight" style="height: 50px">\
+								<button type="button" class="Button IconSmall fa-remove">\
+									' + i18n( 'i18n_cancel' ) + '\
+								</button>\
+								<button type="button" class="Button IconSmall fa-edit">\
+									' + i18n( 'rename_file' ) + '\
+								</button>\
 							</div>\
 						</div>\
-						<div class="VContentBottom Padding BackgroundDefault BorderTop">\
-							<button type="button" class="Button IconSmall fa-edit">\
-								' + i18n( 'rename_file' ) + '\
-							</button>\
+					' );
+				}
+				else
+				{
+					w.setContent( '\
+						<div class="ContentFull LayoutButtonbarBottom">\
+							<div class="VContentTop Padding">\
+								<div class="HRow MarginBottom">\
+									<div class="HContent30 FloatLeft"><p class="InputHeight"><strong>' + i18n( 'new_name' ) + ':</strong></p></div>\
+									<div class="HContent70 FloatLeft"><input type="text" class="InputHeight FullWidth" value="' + nam + '"></div>\
+								</div>\
+							</div>\
+							<div class="VContentBottom Padding BackgroundDefault BorderTop">\
+								<button type="button" class="Button IconSmall fa-edit">\
+									' + i18n( 'rename_file' ) + '\
+								</button>\
+							</div>\
 						</div>\
-					</div>\
-				' );
+					' );
+				}
 
-				var inp = w.getElementsByTagName( 'input' )[0];
-				var btn = w.getElementsByTagName( 'button' )[0];
+				var dom = window.isMobile ? w.dom : w;
+				var inp = dom.getElementsByTagName( 'input' )[0];
+				var btn = dom.getElementsByTagName( 'button' );
+				var clb = null;
+				if( !window.isMobile )
+				{
+					btn = btn[0];
+				}
+				else
+				{
+					clb = btn[0];
+					btn = btn[1];
+				}
 
 				btn.onclick = function()
 				{
-					Workspace.executeRename( w.getElementsByTagName( 'input' )[0].value, icon, rwin );
+					Workspace.executeRename( dom.getElementsByTagName( 'input' )[0].value, icon, rwin );
+				}
+				if( clb )
+				{
+					clb.onclick = function()
+					{
+						w.close();
+					}
 				}
 				inp.select();
 				inp.focus();
@@ -7314,9 +7416,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					p.onclick = function( event )
 					{
 						if( !v.shown ) return;
+						var self = this;
 						if( this.cmd && typeof( this.cmd ) == 'function' )
 						{
-							this.cmd( event );
+							// Give a small timeout to allow for mouseup
+							setTimeout( function()
+							{
+								self.cmd( event );
+							}, 50 );
 						}
 						menuout.classList.add( 'Closing' );
 						menuout.classList.remove( 'Open' );
