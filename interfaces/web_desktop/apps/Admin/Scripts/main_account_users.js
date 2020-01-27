@@ -556,9 +556,16 @@ Sections.accounts_users = function( cmd, extra )
 									Sections.accounts_users( 'edit', userInfo.ID );
 								}
 								var bg3  = ge( 'UserBackBtn' );
-								if( bg3 ) bg3.onclick = function( e )
+								if( !isMobile ) 
 								{
-									cancelUser(  );
+									bg3.style.display = 'none';
+								}
+								else
+								{
+									if( bg3 ) bg3.onclick = function( e )
+									{
+										cancelUser(  );
+									}
 								}
 								
 								if( ge( 'UserEditContainer' ) )
@@ -2326,6 +2333,7 @@ Sections.accounts_users = function( cmd, extra )
 			li.innerHTML = i18n( 'i18n_new_user' );
 			li.onclick = function( e )
 			{
+				
 				// Language
 				var availLangs = {
 					'en' : 'English',
@@ -2436,9 +2444,16 @@ Sections.accounts_users = function( cmd, extra )
 							cancelUser(  );
 						}
 						var bg3  = ge( 'UserBackBtn' );
-						if( bg3 ) bg3.onclick = function( e )
+						if( !isMobile ) 
 						{
-							cancelUser(  );
+							bg3.style.display = 'none';
+						}
+						else
+						{
+							if( bg3 ) bg3.onclick = function( e )
+							{
+								cancelUser(  );
+							}
 						}
 						
 						if( ge( 'UserEditContainer' ) )
@@ -2780,7 +2795,7 @@ Sections.accounts_users = function( cmd, extra )
 					this.className = this.className.split( 'hide' ).join( '' ).split( 'show' ).join( '' ) + 'show';
 				}
 				
-				//SubMenu( this.parentNode.parentNode );
+				SubMenu( this.parentNode.parentNode );
 			}
 			sm.appendChild( li );
 			
@@ -2802,7 +2817,7 @@ Sections.accounts_users = function( cmd, extra )
 					this.className = this.className.split( 'hide' ).join( '' ).split( 'show' ).join( '' ) + 'hide';
 				}
 				
-				//SubMenu( this.parentNode.parentNode );
+				SubMenu( this.parentNode.parentNode );
 			}
 			sm.appendChild( li );
 			
