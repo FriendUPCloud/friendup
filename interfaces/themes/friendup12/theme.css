@@ -2616,7 +2616,7 @@ html body[mobile] .File.Selected .Title
 	color: black;
 }
 
-html body[mobile] .File.Selected:before
+html body .File.Selected:before
 {
 	background-color: rgba(220,220,220,1);
 }

@@ -162,7 +162,7 @@ html body.Dark[mobile] #Screens .File.Selected .Title
 	color: white;
 }
 
-html body.Dark[mobile] .File.Selected:before
+html body.Dark .File.Selected:before
 {
 	background-color: rgba(0,0,0,1);
 }
