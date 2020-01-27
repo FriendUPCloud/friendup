@@ -7314,9 +7314,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					p.onclick = function( event )
 					{
 						if( !v.shown ) return;
+						var self = this;
 						if( this.cmd && typeof( this.cmd ) == 'function' )
 						{
-							this.cmd( event );
+							// Give a small timeout to allow for mouseup
+							setTimeout( function()
+							{
+								self.cmd( event );
+							}, 50 );
 						}
 						menuout.classList.add( 'Closing' );
 						menuout.classList.remove( 'Open' );
