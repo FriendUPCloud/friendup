@@ -1799,6 +1799,8 @@ function CloseView( win, delayed )
 							if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
 							{
 								_ActivateWindow( Friend.GUI.view.viewHistory[ a ] );
+								if( Friend.GUI.view.viewHistory[ a ].refresh )
+									Friend.GUI.view.viewHistory[ a ].refresh();
 								nextActive = true;
 							}
 							break;
@@ -1815,6 +1817,8 @@ function CloseView( win, delayed )
 							if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
 							{
 								_ActivateWindow( Friend.GUI.view.viewHistory[ a ] );
+								if( Friend.GUI.view.viewHistory[ a ].refresh )
+									Friend.GUI.view.viewHistory[ a ].refresh();
 								nextActive = true;
 							}
 							break;
