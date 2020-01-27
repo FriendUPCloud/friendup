@@ -740,7 +740,7 @@ body:not([sharedapp]) #Screens .View.Active.Opened .Thumbnail,
 body:not([sharedapp]) #Screens .View.Active.Redrawing .Thumbnail
 {
 	background-image: none !important;
-	background-color: #202020;
+	background-color: transparent;
 }
 
 body #Screens .View:not(.Active)
