@@ -84,6 +84,11 @@ $d = new File( $file );
 if( $d->Load() )
 {
 	
+	// Make sure the user exists!
+	$theUser = new dbIO( 'FUser' );
+	$theUser->load( $userid );
+	if( !$theUser->ID ) die( 'failure ...' );
+	
 	// 1. Check if the user has a Home drive and has logged in ...
 	$o = new dbIO( 'Filesystem' );
 	$o->UserID = $userid;
@@ -111,11 +116,11 @@ if( $d->Load() )
 	$fl->FolderID = $f2->ID;
 	$fl->FilesystemID = $o->ID;
 	$fl->UserID = $userid;
-	if( $fl->Load() )
+	if( $fl->Load() && $fl->DiskFilename )
 	{
-		if( file_exists( 'storage/' . $fl->DiskFilename ) )
+		if( file_exists( $Config->FCUpload . $fl->DiskFilename ) )
 		{
-			unlink( 'storage/' . $fl->DiskFilename );
+			unlink( $Config->FCUpload . $fl->DiskFilename );
 		}
 	}
 	
@@ -123,28 +128,35 @@ if( $d->Load() )
 	$newname = ( $ext[0] ? $ext[0] : false );
 	$ext     = ( $ext[1] ? $ext[1] : false );
 	
-	if( !$newname || !$ext )
+	if( !$newname || !$ext || !$theUser->Name )
 	{
-		die( 'fail<!--separate-->{"message":"Missing correct filename example.jpg ...","response":-1}' );
+		die( 'fail<!--separate-->{"message":"Missing correct filename example.jpg or path ...","response":-1}' );
 	}
 	
-	while( file_exists( 'storage/' . $newname . '.' . $ext ) )
+	// Find disk filename
+	$uname = str_replace( array( '..', '/', ' ' ), '_', $theUser->Name );
+	if( !file_exists( $Config->FCUpload . $uname ) )
+	{
+		mkdir( $Config->FCUpload . $uname );
+	}
+	
+	while( file_exists( $Config->FCUpload . $uname . '/' . $newname . '.' . $ext ) )
 	{
 		$newname = ( $newname . rand( 0, 999999 ) );
 	}
 	
-	if( $f = fopen( 'storage/' . $newname . '.' . $ext, 'w+' ) )
+	if( $f = fopen( $Config->FCUpload . $uname . '/' . $newname . '.' . $ext, 'w+' ) )
 	{
 		fwrite( $f, $d->GetContent() );
 		fclose( $f );
 	}
 	
-	$fl->DiskFilename = ( $newname . '.' . $ext );
+	$fl->DiskFilename = ( $uname . '/' . $newname . '.' . $ext );
 	$fl->Filesize = $d->_filesize;
 	$fl->DateCreated = date( 'Y-m-d H:i:s' );
 	$fl->DateModified = $fl->DateCreated;
 	
-	if( !file_exists( 'storage/' . $fl->DiskFilename ) )
+	if( !file_exists( $Config->FCUpload . $fl->DiskFilename ) )
 	{
 		die( 'fail<!--separate-->{"message":"Failed to save file ...","response":-1}' );
 	}
