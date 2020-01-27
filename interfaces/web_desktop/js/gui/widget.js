@@ -345,6 +345,29 @@ Widget.prototype.hide = function( callback )
 	else doHide();
 }
 
+// Get elements by class
+Widget.prototype.getByClass = function ( classn )
+{
+	var el = this.dom.getElementsByTagName ( '*' );
+	var out = [];
+	for( var a = 0; a < el.length; a++ )
+	{
+		if( el[a].className )
+		{
+			var cls = el[a].className.split ( ' ' );
+			for( var b = 0; b < cls.length; b++ )
+			{
+				if ( cls[b] == classn )
+				{
+					out.push(el[a]);
+					break;
+				}
+			}
+		}
+	}
+	return out;
+}
+
 Widget.prototype.setContent = function( cont, callback )
 {
 	this.dom.innerHTML = cont;
