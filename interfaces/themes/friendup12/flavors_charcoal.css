@@ -181,8 +181,8 @@ html body.Charcoal .File a
 	color: #e0e0e0;
 }
 
-html body.Charcoal[mobile] .File.Selected .Title,
-html body.Charcoal[mobile] #Screens .File.Selected .Title
+html body.Charcoal .File.Selected .Title,
+html body.Charcoal #Screens .File.Selected .Title
 {
 	color: white;
 }
