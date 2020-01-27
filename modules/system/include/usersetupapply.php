@@ -232,6 +232,32 @@ if( $args->args->id > 0 )
 						$them->Save();
 					}
 					
+					if( $ug->Data->themeconfig && $ug->Data->theme )
+					{
+						// 3. Check and update look and feel config!
+						
+						$them = new dbIO( 'FSetting' );
+						$them->UserID = $uid;
+						$them->Type = 'system';
+						$them->Key = 'themedata_' . strtolower( $ug->Data->theme );
+						$them->Load();
+						$them->Data = json_encode( $ug->Data->themeconfig );
+						$them->Save(); 
+					}
+					
+					if( $ug->Data->workspacecount )
+					{
+						// 3. Check and update look and feel workspace numbers!
+						
+						$them = new dbIO( 'FSetting' );
+						$them->UserID = $uid;
+						$them->Type = 'system';
+						$them->Key = 'workspacecount';
+						$them->Load();
+						$them->Data = $ug->Data->workspacecount;
+						$them->Save(); 
+					}
+					
 					// Software ----------------------------------------------------------------------------------------
 					
 					if( !isset( $ug->Data->software ) )

@@ -5464,7 +5464,7 @@ function saveUser( uid, cb )
 					
 							if( callback ) callback( true );
 						};
-						ma.execute( 'setsetting', { userid: uid, setting: 'avatar', data: base64 } );
+						ma.execute( 'setsetting', { userid: uid, setting: 'avatar', data: base64, authid: Application.authId } );
 					}
 					else
 					{
@@ -5478,12 +5478,12 @@ function saveUser( uid, cb )
 				var m = new Module( 'system' );
 				m.onExecuted = function( e, d )
 				{
-					console.log( 'applySetup() ', { e:e, d:d, args: { id: ( ge( 'usSetup' ).value ? ge( 'usSetup' ).value : '0' ), userid: uid } } );
+					console.log( 'applySetup() ', { e:e, d:d, args: { id: ( ge( 'usSetup' ).value ? ge( 'usSetup' ).value : '0' ), userid: uid, authid: Application.authId } } );
 					
 					if( callback ) return callback( true );
 					
 				}
-				m.execute( 'usersetupapply', { id: ( ge( 'usSetup' ).value ? ge( 'usSetup' ).value : '0' ), userid: uid } );
+				m.execute( 'usersetupapply', { id: ( ge( 'usSetup' ).value ? ge( 'usSetup' ).value : '0' ), userid: uid, authid: Application.authId } );
 			}
 			
 			updateLanguages( function(  )
