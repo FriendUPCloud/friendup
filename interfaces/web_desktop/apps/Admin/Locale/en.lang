@@ -5,6 +5,7 @@ i18n_user_fullname                     : Full name
 i18n_user_username                     : Username
 i18n_user_email                        : E-mail
 i18n_user_password                     : Password
+i18n_delete_user                       : Delete user
 
 i18n_reset_password                    : Reset password
 

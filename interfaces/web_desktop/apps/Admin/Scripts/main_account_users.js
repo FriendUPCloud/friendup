@@ -568,9 +568,30 @@ Sections.accounts_users = function( cmd, extra )
 									}
 								}
 								
-								if( ge( 'UserEditContainer' ) )
+								var bg4  = ge( 'UserDeleteBtn' );
+								if( bg4 ) bg4.onclick = function( e )
 								{
-									ge( 'UserEditContainer' ).className = 'Closed';
+				
+									// Delete user ...
+							
+									if( userInfo.ID )
+									{
+										console.log( '// delete user' );
+					
+										removeBtn( this, { id: userInfo.ID, button_text: 'i18n_delete_user', }, function ( args )
+										{
+									
+											removeUser( args.id );
+									
+										} );
+								
+									}
+				
+								}
+								
+								if( ge( 'UserEditButtons' ) )
+								{
+									ge( 'UserEditButtons' ).className = 'Closed';
 								}
 							},
 							
@@ -2456,9 +2477,14 @@ Sections.accounts_users = function( cmd, extra )
 							}
 						}
 						
-						if( ge( 'UserEditContainer' ) )
+						if( ge( 'UserDeleteBtn' ) )
 						{
-							//ge( 'UserEditContainer' ).className = 'Closed';
+							ge( 'UserDeleteBtn' ).className = 'Closed';
+						}
+						
+						if( ge( 'UserEditButtons' ) )
+						{
+							//ge( 'UserEditButtons' ).className = 'Closed';
 						}
 						
 						if( ge( 'UserBasicDetails' ) )
@@ -3151,13 +3177,42 @@ Sections.accounts_users = function( cmd, extra )
 		
 	}
 	
+	function removeBtn( _this, args, callback )
+	{
+		
+		if( _this )
+		{
+			_this.classList.remove( 'IconButton' );
+			_this.classList.remove( 'IconToggle' );
+			_this.classList.remove( 'ButtonSmall' );
+			_this.classList.remove( 'ColorStGrayLight' );
+			_this.classList.remove( 'fa-minus-circle' );
+			_this.classList.remove( 'fa-trash' );
+			_this.classList.add( 'ButtonAlt' );
+			_this.classList.add( 'BackgroundRed' );
+			_this.innerHTML = ( args.button_text ? i18n( args.button_text ) : i18n( 'i18n_delete' ) );
+			_this.args = args;
+			_this.callback = callback;
+			_this.onclick = function(  )
+			{
+				
+				if( this.callback )
+				{
+					callback( this.args ? this.args : false );
+				}
+				
+			};
+		}
+		
+	}
+	
 	function editMode( close )
 	{
 		console.log( 'editMode() ' );
 		
-		if( ge( 'UserEditContainer' ) )
+		if( ge( 'UserEditButtons' ) )
 		{
-			ge( 'UserEditContainer' ).className = ( close ? 'Closed' : 'Open' );
+			ge( 'UserEditButtons' ).className = ( close ? 'Closed' : 'Open' );
 		}
 	}
 	
@@ -5519,6 +5574,60 @@ function saveUser( uid, cb )
 		}
 	}
 	f.execute( 'user/update', args );
+}
+
+function removeUser( id )
+{
+	if( id )
+	{
+		
+		var args = { id: id };
+		
+		args.args = JSON.stringify( {
+			'type'    : 'delete', 
+			'context' : 'application', 
+			'authid'  : Application.authId, 
+			'data'    : { 
+				'permission' : [ 
+					'PERM_USER_GLOBAL', 
+					'PERM_USER_WORKGROUP' 
+				]
+			}, 
+			'object'   : 'user', 
+			'objectid' : id 
+		} );
+		
+		var f = new Library( 'system.library' );
+		
+		f.onExecuted = function( e, d )
+		{
+			console.log( { e:e, d:d, args:args } );
+			
+			if( e == 'ok' )
+			{
+			    Notify( { title: i18n( 'i18n_user_delete' ), text: i18n( 'i18n_user_delete_succ' ) } );
+			    
+			    // Refresh users list ...
+			    
+			    // TODO: Find a way to remove the user in question from the list ...
+			    
+			    if( ge( 'UserListID_' + id ) )
+			    {
+			    	ge( 'UserListID_' + id ).parentNode.removeChild( ge( 'UserListID_' + id ) );
+			    }
+			    
+			    cancelUser(  );
+			}
+			else
+			{
+				Notify( { title: i18n( 'i18n_user_delete_fail' ), text: i18n( 'i18n_user_delete_failed' ) } );
+			}
+			
+		}
+
+		f.execute( 'user/delete', args );
+		
+	}
 }
 
 function cancelUser(  )
