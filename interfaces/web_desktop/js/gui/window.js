@@ -1798,9 +1798,10 @@ function CloseView( win, delayed )
 							// Only activate non minimized views
 							if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
 							{
-								_ActivateWindow( Friend.GUI.view.viewHistory[ a ] );
-								if( Friend.GUI.view.viewHistory[ a ].content )
-									Friend.GUI.view.viewHistory[ a ].content.refresh();
+								var vh = Friend.GUI.view.viewHistory[ a ];
+								_ActivateWindow( vh );
+								if( vh.content && vh.content.refresh )
+									vh.content.refresh();
 								nextActive = true;
 							}
 							break;
@@ -1816,9 +1817,10 @@ function CloseView( win, delayed )
 							// Only activate non minimized views
 							if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
 							{
-								_ActivateWindow( Friend.GUI.view.viewHistory[ a ] );
-								if( Friend.GUI.view.viewHistory[ a ].content )
-									Friend.GUI.view.viewHistory[ a ].content.refresh();
+								var vh = Friend.GUI.view.viewHistory[ a ];
+								_ActivateWindow( vh );
+								if( vh.content && vh.content.refresh )
+									vh.content.refresh();
 								nextActive = true;
 							}
 							break;
