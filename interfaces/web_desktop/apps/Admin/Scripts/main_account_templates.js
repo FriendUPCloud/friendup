@@ -548,9 +548,10 @@ Sections.accounts_templates = function( cmd, extra )
 			_this.classList.remove( 'ButtonSmall' );
 			_this.classList.remove( 'ColorStGrayLight' );
 			_this.classList.remove( 'fa-minus-circle' );
+			_this.classList.remove( 'fa-trash' );
 			_this.classList.add( 'ButtonAlt' );
 			_this.classList.add( 'BackgroundRed' );
-			_this.innerHTML = i18n( 'i18n_delete' );
+			_this.innerHTML = ( args.button_text ? i18n( args.button_text ) : i18n( 'i18n_delete' ) );
 			_this.args = args;
 			_this.callback = callback;
 			_this.onclick = function(  )
@@ -570,6 +571,16 @@ Sections.accounts_templates = function( cmd, extra )
 			
 			
 		//} );
+	}
+	
+	function editMode( close )
+	{
+		console.log( 'editMode() ', ge( 'TempEditButtons' ) );
+		
+		if( ge( 'TempEditButtons' ) )
+		{
+			ge( 'TempEditButtons' ).className = ( close ? 'Closed' : 'Open' );
+		}
 	}
 	
 	function sortApps( name )
@@ -815,6 +826,30 @@ Sections.accounts_templates = function( cmd, extra )
 				ge( 'AdminStartupContainer'     ).style.display = 'none';
 				ge( 'AdminLooknfeelContainer'   ).style.display = 'none';
 			}
+			else
+			{
+				ge( 'TempEditButtons' ).className = 'Closed';
+				
+				if( ge( 'TempBasicDetails' ) )
+				{
+					var inps = ge( 'TempBasicDetails' ).getElementsByTagName( '*' );
+					if( inps.length > 0 )
+					{
+						for( var a = 0; a < inps.length; a++ )
+						{
+							if( inps[ a ].id && [ 'TempName', 'TempDescription', 'TempLanguages' ].indexOf( inps[ a ].id ) >= 0 )
+							{
+								( function( i ) {
+									i.onclick = function( e )
+									{
+										editMode();
+									}
+								} )( inps[ a ] );
+							}
+						}
+					}
+				}
+			}
 			
 			var bg1  = ge( 'TempSaveBtn' );
 			if( bg1 ) bg1.onclick = function( e )
@@ -837,7 +872,14 @@ Sections.accounts_templates = function( cmd, extra )
 			var bg2  = ge( 'TempCancelBtn' );
 			if( bg2 ) bg2.onclick = function( e )
 			{
-				cancel(  );
+				if( details.ID )
+				{
+					edit( details.ID );
+				}
+				else
+				{
+					cancel(  );
+				}
 			}
 			var bg3  = ge( 'TempBackBtn' );
 			if( bg3 ) bg3.onclick = function( e )
@@ -855,12 +897,19 @@ Sections.accounts_templates = function( cmd, extra )
 				{
 					console.log( '// delete template' );
 					
-					Confirm( i18n( 'i18n_deleting_template' ), i18n( 'i18n_deleting_template_verify' ), function( result )
+					removeBtn( this, { id: details.ID, button_text: 'i18n_delete_template', }, function ( args )
 					{
-					
-						remove( details.ID );
-					
+						
+						remove( args.id );
+						
 					} );
+					
+					//Confirm( i18n( 'i18n_deleting_template' ), i18n( 'i18n_deleting_template_verify' ), function( result )
+					//{
+					
+						
+					
+					//} );
 					
 				}
 				
