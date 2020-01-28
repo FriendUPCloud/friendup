@@ -194,7 +194,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 	}
 	
-	function edit( id, _this )
+	/*function edit( id, _this )
 	{
 		
 		var pnt = _this.parentNode;
@@ -231,6 +231,72 @@ Sections.accounts_workgroups = function( cmd, extra )
 			pnt.appendChild( b );
 		}
 		
+	}*/
+	
+	function refresh( id, _this )
+	{
+		
+		initMain();
+		
+		if( id )
+		{
+			edit( id, _this );
+		}
+		
+	}
+	
+	function edit( id, _this )
+	{
+		
+		if( _this )
+		{
+			// TODO: remove all other Selected in the list first ...
+			
+			var pnt = _this.parentNode;
+			
+			if( pnt )
+			{
+				for( var i in pnt )
+				{
+					if( pnt[i] && pnt[i].className )
+					{
+						pnt[i].classList.remove( 'Selected' );
+					}
+				}
+			}
+			
+			_this.classList.add( 'Selected' );
+		}
+		
+		loading( id );
+		
+	}
+	
+	function cancel()
+	{
+		
+		console.log( 'cancel(  ) ' );
+
+		if( ge( 'WorkgroupDetails' ) )
+		{
+			ge( 'WorkgroupDetails' ).innerHTML = '';
+		}
+		
+		if( ge( 'WorkgroupList' ) )
+		{
+			var ele = ge( 'WorkgroupList' ).getElementsByTagName( 'div' );
+			
+			if( ele )
+			{
+				for( var i in ele )
+				{
+					if( ele[i] && ele[i].className )
+					{
+						ele[i].classList.remove( 'Selected' );
+					}
+				}
+			}
+		}
 	}
 	
 	// write -------------------------------------------------------------------------------------------------------- //
@@ -256,50 +322,122 @@ Sections.accounts_workgroups = function( cmd, extra )
 		{
 			console.log( { e:e, d:d, args: args } );
 			
-			if( e == 'fail' ) Notify( { title: i18n( 'i18n_workgroup_create' ), text: d } );
+			data = {};
 			
-			Sections.accounts_workgroups( 'refresh' ); 
+			try
+			{
+				data = JSON.parse( d );
+			}
+			catch( e ) {  }
+			
+			if( e == 'ok' && d )
+			{
+				
+				if( data && data.message )
+				{
+					Notify( { title: i18n( 'i18n_workgroup_create' ), text: data.message } );
+				}
+				
+				refresh( data.id );
+				
+			}
+			else
+			{
+				
+				if( data && data.message )
+				{
+					Notify( { title: i18n( 'i18n_workgroup_create' ), text: data.message } );
+				}
+				else
+				{
+					Notify( { title: i18n( 'i18n_workgroup_create' ), text: d } );
+				}
+				
+			}
+			
 		}
 		f.execute( 'group/create', {
-			groupname: 'Unnamed workgroup', 
-			authid: Application.authId,
-			args: args
+			groupname : ( ge( 'WorkgroupName'   ) ? ge( 'WorkgroupName'   ).value : 'Unnamed workgroup' ), 
+			parentid  : ( ge( 'WorkgroupParent' ) ? ge( 'WorkgroupParent' ).value : 0                   ),
+			authid    : Application.authId,
+			args      : args
 		} );
 		
 	}
 	
-	function update( id, input )
+	function update( id )
 	{
-		// Specific for Pawel's code ... He just wants to forward json ...
-				
-		var args = JSON.stringify( {
-			'type'    : 'write', 
-			'context' : 'application', 
-			'authid'  : Application.authId, 
-			'data'    : { 
-				'permission' : [ 
-					'PERM_WORKGROUP_GLOBAL', 
-					'PERM_WORKGROUP_WORKGROUP' 
-				]
-			}, 
-			'object'   : 'workgroup', 
-			'objectid' : id
-		} );
 		
-		var f = new Library( 'system.library' );
-		f.onExecuted = function( e, d )
+		// TODO: Add more stuff to update for a workgroup ...
+		
+		if( id )
 		{
-			console.log( { e:e, d:d, args: args } );
 			
-			Sections.accounts_workgroups( 'refresh' ); 
-		}
-		f.execute( 'group/update', {
-			id: id, 
-			groupname: input, 
-			authid: Application.authId,
-			args: args
-		} );
+			// Specific for Pawel's code ... He just wants to forward json ...
+			
+			var args = JSON.stringify( {
+				'type'    : 'write', 
+				'context' : 'application', 
+				'authid'  : Application.authId, 
+				'data'    : { 
+					'permission' : [ 
+						'PERM_WORKGROUP_GLOBAL', 
+						'PERM_WORKGROUP_WORKGROUP' 
+					]
+				}, 
+				'object'   : 'workgroup', 
+				'objectid' : id
+			} );
 		
+			var f = new Library( 'system.library' );
+			f.onExecuted = function( e, d )
+			{
+				console.log( { e:e, d:d, args: args } );
+				
+				data = {};
+				
+				try
+				{
+					data = JSON.parse( d );
+				}
+				catch( e ) {  }
+				
+				if( e == 'ok' && d )
+				{
+					
+					if( data && data.message )
+					{
+						Notify( { title: i18n( 'i18n_workgroup_update' ), text: data.message } );
+					}
+					
+					//refresh( data.id );
+					
+				}
+				else
+				{
+					
+					if( data && data.message )
+					{
+						Notify( { title: i18n( 'i18n_workgroup_update' ), text: data.message } );
+					}
+					else
+					{
+						Notify( { title: i18n( 'i18n_workgroup_update' ), text: d } );
+					}
+				
+				}
+				
+				//Sections.accounts_workgroups( 'refresh' ); 
+			}
+			f.execute( 'group/update', {
+				id        : id, 
+				groupname : ge( 'WorkgroupName'   ).value, 
+				parentid  : ge( 'WorkgroupParent' ).value,
+				authid    : Application.authId,
+				args      : args
+			} );
+			
+		}
 	}
 	
 	function updateRole( rid, groupid, _this )
@@ -332,118 +470,237 @@ Sections.accounts_workgroups = function( cmd, extra )
 	function remove( id )
 	{
 		
-		Confirm( i18n( 'i18n_deleting_workgroup' ), i18n( 'i18n_deleting_workgroup_verify' ), function( result )
+		/*Confirm( i18n( 'i18n_deleting_workgroup' ), i18n( 'i18n_deleting_workgroup_verify' ), function( result )
 		{
 			// Confirmed!
 			if( result && result.data && result.data == true )
-			{
-				// Specific for Pawel's code ... He just wants to forward json ...
+			{*/
 				
-				var args = JSON.stringify( {
-					'type'    : 'delete', 
-					'context' : 'application', 
-					'authid'  : Application.authId, 
-					'data'    : { 
-						'permission' : [ 
-							'PERM_WORKGROUP_GLOBAL', 
-							'PERM_WORKGROUP_WORKGROUP' 
-						]
-					}, 
-					'object'   : 'workgroup', 
-					'objectid' : id
-				} );
-				
-				var f = new Library( 'system.library' );
-				f.onExecuted = function( e, d )
+				if( id )
 				{
-					console.log( { e:e, d:d, args: args } );
 					
-					Sections.accounts_workgroups( 'refresh' ); 
+					// Specific for Pawel's code ... He just wants to forward json ...
+					
+					var args = JSON.stringify( {
+						'type'    : 'delete', 
+						'context' : 'application', 
+						'authid'  : Application.authId, 
+						'data'    : { 
+							'permission' : [ 
+								'PERM_WORKGROUP_GLOBAL', 
+								'PERM_WORKGROUP_WORKGROUP' 
+							]
+						}, 
+						'object'   : 'workgroup', 
+						'objectid' : id
+					} );
+					
+					var f = new Library( 'system.library' );
+					f.onExecuted = function( e, d )
+					{
+						console.log( { e:e, d:d, args: args } );
+					
+						//Sections.accounts_workgroups( 'refresh' ); 
+					
+						refresh(); cancel();
+					}
+					f.execute( 'group/delete', { id: id, authid: Application.authId, args: args } );
+					
 				}
-				f.execute( 'group/delete', { id: id, authid: Application.authId, args: args } );		
-			}
-		} );
+				
+			/*}
+		} );*/
 		
 	}
 	
+	// helper functions --------------------------------------------------------------------------------------------- //
 	
+	function removeBtn( _this, args, callback )
+	{
+		
+		if( _this )
+		{
+			_this.classList.remove( 'IconButton' );
+			_this.classList.remove( 'IconToggle' );
+			_this.classList.remove( 'ButtonSmall' );
+			_this.classList.remove( 'ColorStGrayLight' );
+			_this.classList.remove( 'fa-minus-circle' );
+			_this.classList.remove( 'fa-trash' );
+			_this.classList.add( 'ButtonAlt' );
+			_this.classList.add( 'BackgroundRed' );
+			_this.innerHTML = ( args.button_text ? i18n( args.button_text ) : i18n( 'i18n_delete' ) );
+			_this.args = args;
+			_this.callback = callback;
+			_this.onclick = function(  )
+			{
+				
+				if( this.callback )
+				{
+					callback( this.args ? this.args : false );
+				}
+				
+			};
+		}
+		
+	}
+	
+	function editMode( close )
+	{
+		console.log( 'editMode() ', ge( 'GroupEditButtons' ) );
+		
+		if( ge( 'GroupEditButtons' ) )
+		{
+			ge( 'GroupEditButtons' ).className = ( close ? 'Closed' : 'Open' );
+		}
+	}
 	
 	// init --------------------------------------------------------------------------------------------------------- //
 	
-	function loading()
+	function loading( id )
 	{
-		var info = {};
+		console.log( 'loading( '+id+' )' );
 		
-		// Go through all data gathering until stop
-		var loadingSlot = 0;
+		if( id )
+		{
+			var info = { ID: ( id ? id : 0 ) };
+			
+			// Go through all data gathering until stop
+			var loadingSlot = 0;
 		
-		var loadingList = [
+			var loadingList = [
 			
-			// Load workgroupinfo
+				// Load workgroupinfo
 			
-			function()
-			{
-								
-				list( function( e, d )
+				function()
 				{
-					
-					info.workgroup = null;
-					
-					if( e && d )
+								
+					list( function( e, d )
 					{
-						info.workgroup = d;
 					
+						info.workgroup = null;
+					
+						if( e && d )
+						{
+							info.workgroup = d;
+					
+							loadingList[ ++loadingSlot ]( info );
+						}
+						else return;
+					
+					}, id );
+				
+				},
+				
+				// Load workgroups
+				
+				function()
+				{
+								
+					list( function( e, d )
+					{
+					
+						info.workgroups = null;
+					
+						if( e && d )
+						{
+							info.workgroups = d;
+							
+							loadingList[ ++loadingSlot ]( info );
+						}
+						else return;
+					
+					} );
+				
+				},
+				
+				// Get workgroup's roles
+			
+				function( info )
+				{
+					var u = new Module( 'system' );
+					u.onExecuted = function( e, d )
+					{
+						info.roles = null;
+						console.log( { e:e, d:d } );
+						if( e == 'ok' )
+						{
+							try
+							{
+								info.roles = JSON.parse( d );
+							}
+							catch( e ){ }
+						}
 						loadingList[ ++loadingSlot ]( info );
 					}
-					else return;
-					
-				}, extra );
-				
-			},
+					u.execute( 'userroleget', { groupid: info.workgroup.groupid, authid: Application.authId } );
+				},
 			
-			// Get workgroup's roles
-			
-			function( info )
-			{
-				var u = new Module( 'system' );
-				u.onExecuted = function( e, d )
+				function( info )
 				{
-					info.roles = null;
-					console.log( { e:e, d:d } );
-					if( e == 'ok' )
-					{
-						try
-						{
-							info.roles = JSON.parse( d );
-						}
-						catch( e ){ }
-					}
-					loadingList[ ++loadingSlot ]( info );
-				}
-				u.execute( 'userroleget', { groupid: info.workgroup.groupid, authid: Application.authId } );
-			},
-			
-			function( info )
-			{
-				if( typeof info.workgroup == 'undefined' && typeof info.roles == 'undefined' ) return;
+					if( typeof info.workgroup == 'undefined' && typeof info.roles == 'undefined' ) return;
 				
-				initDetails( info );
-			}
+					initDetails( info );
+				}
 			
-		];
+			];
 		
-		loadingList[ 0 ]();
+			loadingList[ 0 ]();
 		
-		return;
+			return;
+		}
+		else
+		{
+			var info = {};
+			
+			list( function( e, d )
+			{
+			
+				info.workgroups = null;
+			
+				if( e && d )
+				{
+					info.workgroups = d;
+					
+					initDetails( info );
+				}
+				else return;
+			
+			} );
+			
+		}
 	}
 	
 	// Show the form
 	function initDetails( info )
 	{
-		var workgroup = info.workgroup;
-		var roles = info.roles;
+		var workgroup  = ( info.workgroup  ? info.workgroup  : {} );
+		var workgroups = ( info.workgroups ? info.workgroups : [] );
+		var roles      = ( info.roles      ? info.roles      : [] );
 		
+		console.log( 'initDetails() ', info );
+		
+		// Workgroups
+		var pstr = '';
+		
+		if( workgroups && workgroups.length )
+		{
+			pstr += '<option value="0">none</option>';
 			
+			for( var w in workgroups )
+			{
+				if( workgroups[w] && workgroups[w].ID && workgroups[w].name )
+				{
+					if( workgroup && ( workgroups[w].ID == workgroup.groupid || workgroups[w].parentid == workgroup.groupid ) )
+					{
+						continue;
+					}
+					
+					pstr += '<option value="' + workgroups[w].ID + '"' + ( workgroup && workgroup.parentid == workgroups[w].ID ? ' selected="selected"' : '' ) + '>' + workgroups[w].name + '</option>';
+				}
+			}
+			
+		}
+		
 		// Roles
 		var rstr = '';
 		
@@ -466,10 +723,12 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 		// Add all data for the template
 		d.replacements = {
-			id: workgroup.groupid,
-			workgroup_name: workgroup.name,
-			workgroup_description: ( workgroup.description ? workgroup.description : '' ),
-			roles: rstr
+			id                    : ( workgroup.groupid     ? workgroup.groupid     : ''                           ),
+			workgroup_title       : ( workgroup.name        ? workgroup.name        : i18n( 'i18n_new_workgroup' ) ),
+			workgroup_name        : ( workgroup.name        ? workgroup.name        : ''                           ),
+			workgroup_parent      : pstr,
+			workgroup_description : ( workgroup.description ? workgroup.description : ''                           ),
+			roles                 : rstr
 		};
 		
 		// Add translations
@@ -477,6 +736,102 @@ Sections.accounts_workgroups = function( cmd, extra )
 		d.onLoad = function( data )
 		{
 			ge( 'WorkgroupDetails' ).innerHTML = data;
+			
+			if( !info.ID )
+			{
+				ge( 'GroupDeleteBtn' ).style.display = 'none';
+				
+				
+			}
+			else
+			{
+				ge( 'GroupEditButtons' ).className = 'Closed';
+				
+				if( ge( 'WorkgroupBasicDetails' ) )
+				{
+					var inps = ge( 'WorkgroupBasicDetails' ).getElementsByTagName( '*' );
+					if( inps.length > 0 )
+					{
+						for( var a = 0; a < inps.length; a++ )
+						{
+							if( inps[ a ].id && [ 'WorkgroupName', 'WorkgroupParent', 'WorkgroupDescription' ].indexOf( inps[ a ].id ) >= 0 )
+							{
+								( function( i ) {
+									i.onclick = function( e )
+									{
+										editMode();
+									}
+								} )( inps[ a ] );
+							}
+						}
+					}
+				}
+			}
+			
+			var bg1  = ge( 'GroupSaveBtn' );
+			if( bg1 ) bg1.onclick = function( e )
+			{
+				// Save workgroup ...
+				
+				if( info.ID )
+				{
+					console.log( '// save workgroup' );
+					
+					update( info.ID );
+				}
+				else
+				{
+					console.log( '// create workgroup' );
+					
+					create();
+				}
+			}
+			var bg2  = ge( 'GroupCancelBtn' );
+			if( bg2 ) bg2.onclick = function( e )
+			{
+				if( info.ID )
+				{
+					edit( info.ID );
+				}
+				else
+				{
+					cancel(  );
+				}
+			}
+			var bg3  = ge( 'GroupBackBtn' );
+			if( bg3 ) bg3.onclick = function( e )
+			{
+				cancel(  );
+			}
+			
+			var bg4  = ge( 'GroupDeleteBtn' );
+			if( bg4 ) bg4.onclick = function( e )
+			{
+				
+				// Delete workgroup ...
+				
+				if( info.ID )
+				{
+					console.log( '// delete workgroup' );
+					
+					removeBtn( this, { id: info.ID, button_text: 'i18n_delete_workgroup', }, function ( args )
+					{
+						
+						remove( args.id );
+						
+					} );
+					
+				}
+				
+			}
+			
+			
+			
+			
+			
+			
+			
+			
 			
 			// Responsive framework
 			Friend.responsive.pageActive = ge( 'WorkgroupDetails' );
@@ -552,10 +907,11 @@ Sections.accounts_workgroups = function( cmd, extra )
 			
 				var d = document.createElement( 'div' );
 				d.className = 'PaddingSmall HContent' + '10' + ' TextCenter FloatLeft Ellipsis';
-				d.innerHTML = '<strong>(+)</strong>';
+				d.innerHTML = '<button class="IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle"></button>';
 				d.onclick = function()
 				{
-					Sections.accounts_workgroups( 'create' );
+					//Sections.accounts_workgroups( 'create' );
+					edit(  );
 				};
 				headRow.appendChild( d );
 			
@@ -566,7 +922,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 				{
 					r.onclick = function()
 					{
-						Sections.accounts_workgroups( 'details', uid );
+						//Sections.accounts_workgroups( 'details', uid );
+						edit( uid );
 					}
 				}
 			

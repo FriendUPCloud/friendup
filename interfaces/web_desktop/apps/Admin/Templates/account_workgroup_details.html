@@ -1,37 +1,70 @@
 
 	<h2>
-		{i18n_workgroup_profile}
+		{i18n_workgroup_details}
 	</h2>
 	
 	<h1 class="ImageHeading">
-		{workgroup_name}
+		{workgroup_title}
 	</h1>
-	<div class="Box Padding">
+	<div class="Box Padding" id="WorkgroupBasicDetails">
+	
 		<div class="HRow MarginBottom">
 			<div class="HContent30 FloatLeft Ellipsis">
-				<strong>{i18n_workgroup_name}</strong>
+				<strong>{i18n_workgroup_name}:</strong>
 			</div>
 			<div class="HContent70 FloatLeft Ellipsis">
 				<input id="WorkgroupName" type="text" class="FullWidth" value="{workgroup_name}"/>
 			</div>
 		</div>
+		
 		<div class="HRow MarginBottom">
 			<div class="HContent30 FloatLeft Ellipsis">
-				<strong>{i18n_workgroup_description}</strong>
+				<strong>{i18n_workgroup_parent}:</strong>
 			</div>
 			<div class="HContent70 FloatLeft Ellipsis">
-				<textarea class="FullWidth">{workgroup_description}</textarea>
+				<select class="InputHeight FullWidth" id="WorkgroupParent">
+					{workgroup_parent}
+				</select>
 			</div>
 		</div>
-		<div class="HRow">
-			<button class="IconButton IconSmall ButtonSmall FloatRight fa-edit" onclick="Sections.accounts_workgroups('edit',{id:{id},_this:this})"></button>
+		
+		<div class="HRow MarginBottom">
+			<div class="HContent30 FloatLeft Ellipsis">
+				<strong>{i18n_workgroup_description}:</strong>
+			</div>
+			<div class="HContent70 FloatLeft Ellipsis">
+				<textarea id="WorkgroupDescription" class="FullWidth">{workgroup_description}</textarea>
+			</div>
 		</div>
+		
+		<!--<div class="HRow">
+			<button class="IconButton IconSmall ButtonSmall FloatRight fa-edit" onclick="Sections.accounts_workgroups('edit',{id:{id},_this:this})"></button>
+		</div>-->
+		
+		<div id="GroupEditContainer">
+			<div class="HRow">
+				<button class="IconButton IconSmall IconToggle ButtonSmall FloatLeft fa-trash" id="GroupDeleteBtn"></button>
+				<div id="GroupEditButtons">
+					<button class="ButtonAlt IconSmall FloatRight MarginLeft" id="GroupSaveBtn">
+						{i18n_save}
+					</button>
+					<button class="ButtonAlt IconSmall FloatRight MarginLeft" id="GroupCancelBtn">
+						{i18n_cancel}
+					</button>
+				</div>
+			</div>
+		</div>
+		
 	</div>
 
-	<h2 class="MarginTop">
-		{i18n_roles}
-	</h2>
-	<div class="Box Padding">
-		{roles}
+
+
+	<div id="AdminRolesContainer" class="Closed">
+		<h2 class="MarginTop">
+			{i18n_roles}
+		</h2>
+		<div class="Box Padding">
+			{roles}
+		</div>
 	</div>
 	

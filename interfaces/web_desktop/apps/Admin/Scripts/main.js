@@ -106,7 +106,7 @@ function refreshSidebar( show )
 			'Workgroups': {
 				icon: 'fa-users',
 				showing: isAdmin,
-				display: ( show ? true : false ),
+				display: true,
 				permissions: [ 'PERM_WORKGROUP_GLOBAL', 'PERM_WORKGROUP_WORKGROUP' ]
 			},
 			'Roles': {
