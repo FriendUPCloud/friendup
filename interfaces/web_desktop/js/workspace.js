@@ -1517,7 +1517,7 @@ Workspace = {
 								{ 
 									s = {}; 
 								};
-								if( s.Theme && s.Theme.length )
+								if( s && s.Theme && s.Theme.length )
 								{
 									_this.refreshTheme( s.Theme.toLowerCase(), false );
 								}
