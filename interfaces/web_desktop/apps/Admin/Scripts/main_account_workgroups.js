@@ -809,6 +809,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 						}
 					}
 				}
+				
+				ge( 'AdminUsersContainer' ).className = 'Open';
 			}
 			
 			var bg1  = ge( 'GroupSaveBtn' );
@@ -867,8 +869,6 @@ Sections.accounts_workgroups = function( cmd, extra )
 				}
 				
 			}
-			
-			
 			
 			
 			
