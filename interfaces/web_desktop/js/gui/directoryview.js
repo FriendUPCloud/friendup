@@ -5470,7 +5470,9 @@ function GetIconClassByExtension( extension, fileInfo )
 
 
 // -----------------------------------------------------------------------------
-if ( window.addEventListener )
-	window.addEventListener ( 'keydown', CheckDoorsKeys );
-else window.attachEvent ( 'onkeydown', CheckDoorsKeys );
-
+if( !window.isMobile )
+{
+	if ( window.addEventListener )
+		window.addEventListener ( 'keydown', CheckDoorsKeys );
+	else window.attachEvent ( 'onkeydown', CheckDoorsKeys );
+}
