@@ -554,6 +554,8 @@ Widget.prototype.autosize = function()
 // Close the widget!
 Widget.prototype.close = function()
 {
+	if( this.onClose )
+		this.onClose();
 	if( this.dom )
 	{
 		// Clean out relation to view window
