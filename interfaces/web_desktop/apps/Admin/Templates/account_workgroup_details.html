@@ -57,7 +57,22 @@
 		
 	</div>
 
-
+	<div id="AdminUsersContainer" class="Open">
+		<div class="HRow MarginTop BackgroundNegativeAlt Negative Padding">
+			<div class="PaddingSmall HContent50 FloatLeft">
+				<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed" id="UsersEditBack"></button>
+				<h3 class="NoMargin FloatLeft">
+					<strong>{i18n_users}</strong>
+				</h3>
+			</div>
+			<div class="PaddingSmall HContent50 FloatLeft Relative">
+				<button class="IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle Open" id="UsersEdit"></button>
+			</div>
+		</div>
+		<div id="UsersGui">
+			{users}
+		</div>
+	</div>
 
 	<div id="AdminRolesContainer" class="Closed">
 		<h2 class="MarginTop">

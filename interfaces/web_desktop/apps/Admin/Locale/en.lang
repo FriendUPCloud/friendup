@@ -149,6 +149,7 @@ i18n_workgroups                        : Workgroups
 i18n_workgroup_profile                 : Workgroup profile
 i18n_workgroup_name                    : Name
 i18n_workgroup_description             : Description
+i18n_delete_workgroup                  : Delete workgroup
 
 #Storage related
 
@@ -193,6 +194,7 @@ i18n_login_info                      : Login info
 i18n_your_notes                      : Your notes
 i18n_username                        : Username
 i18n_password                        : Password
+i18n_status                          : Status
 i18n_host_port                       : Server port
 i18n_host_ip                         : Server address or IP
 i18n_hostname                        : Server address

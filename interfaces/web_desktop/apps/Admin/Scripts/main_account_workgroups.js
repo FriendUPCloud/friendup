@@ -194,45 +194,6 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 	}
 	
-	/*function edit( id, _this )
-	{
-		
-		var pnt = _this.parentNode;
-		
-		var edit = pnt.innerHTML;
-		
-		var buttons = [ 
-			{ 'name' : 'Save',   'icon' : '', 'func' : function()
-				{ 
-					Sections.accounts_workgroups( 'update', { id: id, value: ge( 'WorkgroupName' ).value } ) 
-				} 
-			}, 
-			{ 'name' : 'Delete', 'icon' : '', 'func' : function()
-				{ 
-					Sections.accounts_workgroups( 'remove', id ) 
-				} 
-			}, 
-			{ 'name' : 'Cancel', 'icon' : '', 'func' : function()
-				{ 
-					pnt.innerHTML = edit 
-				} 
-			}
-		];
-		
-		pnt.innerHTML = '';
-		
-		for( var i in buttons )
-		{
-			var b = document.createElement( 'button' );
-			b.className = 'IconSmall FloatRight';
-			b.innerHTML = buttons[i].name;
-			b.onclick = buttons[i].func;
-		
-			pnt.appendChild( b );
-		}
-		
-	}*/
-	
 	function refresh( id, _this )
 	{
 		
@@ -388,11 +349,20 @@ Sections.accounts_workgroups = function( cmd, extra )
 				'object'   : 'workgroup', 
 				'objectid' : id
 			} );
-		
+			
+			// TODO: WHEN USERS START USING THIS REMEMBER TO UPDATE CODE TO SUPPORT ADDING AND REMOVING MEMBERS OF A WORKGROUP INSTEAD OF SENDING A LIST OF MEMBER ID'S BECAUSE A USER WITH ROLE PERMISSION MIGHT NOT HAVE ACCESS TO LIST ALL MEMBERS IN A WORKGROUP AND THE LIST WILL THEN BE WRONGLY OVERWRITTEN IN THE DATABASE !!!!
+			
 			var f = new Library( 'system.library' );
 			f.onExecuted = function( e, d )
 			{
-				console.log( { e:e, d:d, args: args } );
+				console.log( { e:e, d:d, args: {
+					id        : ( id                                                                     ), 
+					groupname : ( ge( 'WorkgroupName'   ).value                                          ), 
+					parentid  : ( ge( 'WorkgroupParent' ).value                                          ),
+					users     : ( ge( 'WorkgroupUsers'  ).value ? ge( 'WorkgroupUsers' ).value : 'false' ),
+					authid    : ( Application.authId                                                     ),
+					args      : ( args                                                                   )
+				} } );
 				
 				data = {};
 				
@@ -430,11 +400,12 @@ Sections.accounts_workgroups = function( cmd, extra )
 				//Sections.accounts_workgroups( 'refresh' ); 
 			}
 			f.execute( 'group/update', {
-				id        : id, 
-				groupname : ge( 'WorkgroupName'   ).value, 
-				parentid  : ge( 'WorkgroupParent' ).value,
-				authid    : Application.authId,
-				args      : args
+				id        : ( id                                                                     ), 
+				groupname : ( ge( 'WorkgroupName'   ).value                                          ), 
+				parentid  : ( ge( 'WorkgroupParent' ).value                                          ),
+				users     : ( ge( 'WorkgroupUsers'  ).value ? ge( 'WorkgroupUsers' ).value : 'false' ),
+				authid    : ( Application.authId                                                     ),
+				args      : ( args                                                                   )
 			} );
 			
 		}
@@ -515,6 +486,50 @@ Sections.accounts_workgroups = function( cmd, extra )
 	
 	// helper functions --------------------------------------------------------------------------------------------- //
 	
+	function appendChild( child )
+	{
+		if( child )
+		{
+			var out = [];
+			
+			for( var k in child )
+			{
+				if( child[k] )
+				{
+					if( child[k]['element'] )
+					{
+						var div = child[k]['element'];
+						
+						if( child[k]['child'] )
+						{
+							var elem = appendChild( child[k]['child'] );
+							
+							if( elem )
+							{
+								for( var i in elem )
+								{
+									if( elem[i] )
+									{
+										div.appendChild( elem[i] );
+									}
+								}
+							}
+						}
+						
+						out.push( div );
+					}
+				}
+			}
+			
+			if( out )
+			{
+				return out;
+			}
+		}
+		
+		return false;
+	}
+	
 	function removeBtn( _this, args, callback )
 	{
 		
@@ -591,7 +606,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				
 				},
 				
-				// Load workgroups
+				// Get all workgroups
 				
 				function()
 				{
@@ -611,6 +626,32 @@ Sections.accounts_workgroups = function( cmd, extra )
 					
 					} );
 				
+				},
+				
+				// Get all users
+				
+				function()
+				{
+					
+					var m = new Module( 'system' );
+					m.onExecuted = function( e, d )
+					{
+						info.users = null;
+						console.log( { e:e, d:d } );
+						if( e == 'ok' )
+						{
+							try
+							{
+								info.users = JSON.parse( d );
+							}
+							catch( e ){ }
+							
+							console.log( 'info.users ', info.users );
+						}
+						loadingList[ ++loadingSlot ]( info );
+					}
+					m.execute( 'listusers', { authid: Application.authId } );
+					
 				},
 				
 				// Get workgroup's roles
@@ -637,8 +678,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 			
 				function( info )
 				{
-					if( typeof info.workgroup == 'undefined' && typeof info.roles == 'undefined' ) return;
-				
+					if( typeof info.workgroup == 'undefined' ) return;
+					
 					initDetails( info );
 				}
 			
@@ -676,6 +717,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 		var workgroup  = ( info.workgroup  ? info.workgroup  : {} );
 		var workgroups = ( info.workgroups ? info.workgroups : [] );
 		var roles      = ( info.roles      ? info.roles      : [] );
+		var users      = ( workgroup.users ? workgroup.users : [] );
+		var list       = ( info.users      ? info.users      : [] );
 		
 		console.log( 'initDetails() ', info );
 		
@@ -829,6 +872,607 @@ Sections.accounts_workgroups = function( cmd, extra )
 			
 			
 			
+			
+			
+			function onLoad ( data )
+			{
+					
+				var func = {
+					
+					userids : function ( users )
+					{
+						var ids = {};
+						
+						if( users )
+						{
+							for( var a in users )
+							{
+								if( users[a] && users[a].id )
+								{
+									ids[ users[a].id ] = true;
+								}
+							}
+						}
+						
+						return ids;
+						
+					}( users ),
+					
+					updateids : function ( mode, key, value )
+					{
+						
+						switch( mode )
+						{
+							
+							case 'users':
+								
+								if( key )
+								{
+									this.userids[ key ] = value;
+								}
+								
+								if( ge( 'WorkgroupUsers' ) )
+								{
+									if( this.userids )
+									{
+										var arr = [];
+										
+										for( var a in this.userids )
+										{
+											if( this.userids[a] )
+											{
+												arr.push( a );
+											}
+										}
+										
+										ge( 'WorkgroupUsers' ).setAttribute( 'value', ( arr ? arr.join( ',' ) : '' ) );
+									}
+								}
+								
+								break;
+								
+						}
+						
+					},
+					
+					mode : { users : 'list' },
+					
+					// Users --------------------------------------------------------------------------------------------
+					
+					users : function ( func )
+					{
+						
+						// Editing Users
+						
+						var init =
+						{
+							
+							func : this,
+							
+							ids  : this.userids,
+							
+							head : function ( hidecol )
+							{
+								var o = ge( 'UsersGui' ); o.innerHTML = '<input type="hidden" id="WorkgroupUsers">';
+								
+								this.func.updateids( 'users' );
+								
+								console.log( 'userids: ', this.ids );
+								
+								var divs = appendChild( [ 
+									{ 
+										'element' : function() 
+										{
+											var d = document.createElement( 'div' );
+											d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+											return d;
+										}(),
+										'child' : 
+										[ 
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmall HContent40 FloatLeft'  + ( hidecol ? ' Closed' : '' );
+													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+													return d;
+												}() 
+											}, 
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmall HContent25 FloatLeft Relative'  + ( hidecol ? ' Closed' : '' );
+													d.innerHTML = '<strong>' + i18n( 'i18n_username' ) + '</strong>';
+													return d;
+												}()
+											},
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
+													d.innerHTML = '<strong>' + i18n( 'i18n_status' ) + '</strong>';
+													return d;
+												}()
+											},
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmall HContent15 FloatLeft Relative';
+													return d;
+												}()
+											}
+										]
+									},
+									{
+										'element' : function() 
+										{
+											var d = document.createElement( 'div' );
+											d.className = 'HRow Box Padding';
+											d.id = 'UsersInner';
+											return d;
+										}()
+									}
+								] );
+						
+								if( divs )
+								{
+									for( var i in divs )
+									{
+										if( divs[i] && o )
+										{
+											o.appendChild( divs[i] );
+										}
+									}
+								}
+								
+							},
+							
+							list : function (  )
+							{
+								
+								this.func.mode[ 'users' ] = 'list';
+								
+								if( list )
+								{
+									this.head();
+									
+									var o = ge( 'UsersInner' ); o.innerHTML = '';
+									
+									for( var k in list )
+									{
+										if( list[k] && list[k].ID )
+										{
+											var found = false;
+											
+											if( this.ids && this.ids[ list[k].ID ] )
+											{
+												found = true;
+											}
+											
+											if( !found ) continue;
+											
+											var divs = appendChild( [
+												{ 
+													'element' : function() 
+													{
+														var d = document.createElement( 'div' );
+														d.className = 'HRow';
+														return d;
+													}(),
+													'child' : 
+													[ 
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																return d;
+															}(),
+															 'child' : 
+															[ 
+																{ 
+																	'element' : function() 
+																	{
+																		var d = document.createElement( 'div' );
+																		d.className = 'IconSmall fa-user-circle-o avatar';
+																		//d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
+																		//d.style.backgroundSize = 'contain';
+																		//d.style.width = '24px';
+																		//d.style.height = '24px';
+																		return d;
+																	}(), 
+																	 'child' : 
+																	[ 
+																		{
+																			'element' : function() 
+																			{
+																				var d = document.createElement( 'div' );
+																				if( list[k].Avatar )
+																				{
+																					d.style.backgroundImage = 'url(\'' + list[k].Avatar + '\')';
+																					d.style.backgroundSize = 'contain';
+																					d.style.width = '24px';
+																					d.style.height = '24px';
+																				}
+																				return d;
+																			}()
+																		}
+																	]
+																}
+															] 
+														},
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
+																d.innerHTML = '<strong>' + ( list[k].FullName ? list[k].FullName : 'n/a' ) + '</strong>';
+																return d;
+															}() 
+														},
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent25 FloatLeft Ellipsis';
+																d.innerHTML = '<span>' + ( list[k].Name ? list[k].Name : '' ) + '</span>';
+																return d;
+															}() 
+														}, 
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Ellipsis';
+																//d.innerHTML = '<span>' + ( list[k].Status ? list[k].Status : '' ) + '</span>';
+																return d;
+															}() 
+														}, 
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+																return d;
+																
+															}(),
+															'child' : 
+															[ 
+																{ 
+																	'element' : function( ids, id, func ) 
+																	{
+																		var b = document.createElement( 'button' );
+																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																		b.onclick = function(  )
+																		{
+																			
+																			var pnt = this.parentNode.parentNode;
+																			
+																			removeBtn( this, { ids: ids, id: id, func: func, pnt: pnt }, function ( args )
+																			{
+																				
+																				args.func.updateids( 'users', args.id, false );
+																				
+																				if( args.pnt )
+																				{
+																					args.pnt.innerHTML = '';
+																				}
+																				
+																			} );
+																			
+																		};
+																		return b;
+																	}( this.ids, list[k].ID, this.func ) 
+																}
+															]
+														}
+													]
+												}
+											] );
+											
+											if( divs )
+											{
+												for( var i in divs )
+												{
+													if( divs[i] && o )
+													{
+														o.appendChild( divs[i] );
+													}
+												}
+											}
+										}
+									
+									}
+									
+								}
+									
+							},
+							
+							edit : function (  )
+							{
+								
+								this.func.mode[ 'users' ] = 'edit';
+								
+								if( list )
+								{
+									this.head( true );
+									
+									var o = ge( 'UsersInner' ); o.innerHTML = '';
+									
+									for( var k in list )
+									{
+										if( list[k] && list[k].ID )
+										{
+											var toggle = false;
+											
+											if( this.ids && this.ids[ list[k].ID ] )
+											{
+												toggle = true;
+											}
+											
+											var divs = appendChild( [
+												{ 
+													'element' : function() 
+													{
+														var d = document.createElement( 'div' );
+														d.className = 'HRow';
+														return d;
+													}(),
+													'child' : 
+													[ 
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																return d;;
+															}(),
+															 'child' : 
+															[ 
+																{ 
+																	'element' : function() 
+																	{
+																		var d = document.createElement( 'div' );
+																		d.className = 'IconSmall fa-user-circle-o avatar';
+																		//d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
+																		//d.style.backgroundSize = 'contain';
+																		//d.style.width = '24px';
+																		//d.style.height = '24px';
+																		return d;
+																	}(), 
+																	 'child' : 
+																	[ 
+																		{
+																			'element' : function() 
+																			{
+																				var d = document.createElement( 'div' );
+																				if( list[k].Avatar )
+																				{
+																					d.style.backgroundImage = 'url(\'' + list[k].Avatar + '\')';
+																					d.style.backgroundSize = 'contain';
+																					d.style.width = '24px';
+																					d.style.height = '24px';
+																				}
+																				return d;
+																			}()
+																		}
+																	]
+																}
+															] 
+														},
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
+																d.innerHTML = '<strong>' + ( list[k].FullName ? list[k].FullName : 'n/a' ) + '</strong>';
+																return d;
+															}() 
+														}, 
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
+																//d.innerHTML = '<span>' + list[k].Name + '</span>';
+																return d;
+															}() 
+														},
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+																return d;
+															}(),
+															'child' : 
+															[ 
+																{ 
+																	'element' : function( ids, id, func ) 
+																	{
+																		var b = document.createElement( 'button' );
+																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( toggle ? 'on' : 'off' );
+																		b.onclick = function(  )
+																		{
+																			if( this.classList.contains( 'fa-toggle-off' ) )
+																			{
+																				func.updateids( 'users', id, true );
+																				
+																				this.classList.remove( 'fa-toggle-off' );
+																				this.classList.add( 'fa-toggle-on' );
+																			}
+																			else
+																			{
+																				func.updateids( 'users', id, false );
+																				
+																				this.classList.remove( 'fa-toggle-on' );
+																				this.classList.add( 'fa-toggle-off' );
+																			}
+																		};
+																		return b;
+																	}( this.ids, list[k].ID, this.func ) 
+																}
+															]
+														}
+													]
+												}
+											] );
+											
+											if( divs )
+											{
+												for( var i in divs )
+												{
+													if( divs[i] && o )
+													{
+														o.appendChild( divs[i] );
+													}
+												}
+											}
+										}
+									
+									}
+									
+								}
+								
+							},
+							
+							refresh : function (  )
+							{
+								
+								switch( this.func.mode[ 'users' ] )
+								{
+									
+									case 'list':
+										
+										this.list();
+										
+										break;
+										
+									case 'edit':
+										
+										this.edit();
+										
+										break;
+										
+								}
+								
+							}
+							
+						};
+						
+						switch( func )
+						{
+							
+							case 'head':
+								
+								init.head();
+								
+								break;
+								
+							case 'list':
+								
+								init.list();
+								
+								break;
+								
+							case 'edit':
+								
+								init.edit();
+								
+								break;
+								
+							case 'refresh':
+								
+								init.refresh();
+								
+								break;
+							
+							default:
+								
+								var etn = ge( 'UsersEdit' );
+								if( etn )
+								{
+									etn.onclick = function( e )
+									{
+								
+										init.edit();
+								
+										// Hide add / edit button ...
+								
+										if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+										{
+											etn.classList.remove( 'Open' );
+											etn.classList.add( 'Closed' );
+										}
+								
+										// Show back button ...
+								
+										if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+										{
+											btn.classList.remove( 'Closed' );
+											btn.classList.add( 'Open' );
+										}
+										
+									};
+								}
+						
+								var btn = ge( 'UsersEditBack' );
+								if( btn )
+								{
+									btn.onclick = function( e )
+									{
+								
+										init.list();
+								
+										// Hide back button ...
+										
+										if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+										{
+											btn.classList.remove( 'Open' );
+											btn.classList.add( 'Closed' );
+										}
+						
+										// Show add / edit button ...
+								
+										if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+										{
+											etn.classList.remove( 'Closed' );
+											etn.classList.add( 'Open' );
+										}
+										
+									};
+								}
+							
+								// Show listed dock ... 
+						
+								init.list();
+								
+								break;
+								
+						}
+						
+					}
+					
+					//
+					
+				};
+			
+			
+				
+				func.users();
+				
+				
+			
+			
+			}
+			
+			
+			// Run onload functions ....
+			
+			onLoad();
 			
 			
 			
