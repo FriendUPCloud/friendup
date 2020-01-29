@@ -46,6 +46,8 @@ var globalConfig = {};
 globalConfig.language = 'en-US'; // Defaults to US english
 Friend.globalConfig = globalConfig;
 
+// Fix scope if this file is not on a specific addy
+
 // Create application object with standard functions ---------------------------
 
 Friend.application = {
