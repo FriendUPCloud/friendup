@@ -806,7 +806,7 @@ FriendWebSocket.prototype.handleChunk = function( chunk )
 		*/
 		
 		// well, then, try b64 decode
-		var notB64 = atob( whole );
+		var notB64 = window.Base64alt ? Base64alt.decode( whole ) : atob( whole );
 		var parsed = friendUP.tool.objectify( notB64 );
 		return parsed;
 	}
