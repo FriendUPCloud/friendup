@@ -10012,7 +10012,7 @@ function loadApplicationBasics()
 	var a = new File( '/webclient/js/apps/api.js' );
 	a.onLoad = function( data )
 	{
-		_applicationBasics.apiV1 = URL.createObjectURL(new Blob([data],{type:'text/html'}));
+		_applicationBasics.apiV1 = URL.createObjectURL( new Blob( [ data ], { type: 'text/javascript' } ) );
 	}
 	a.load();
 	var sb = new File( '/themes/friendup12/scrollbars.css' );
@@ -10044,7 +10044,7 @@ function loadApplicationBasics()
 	var j = new File( js );
 	j.onLoad = function( data )
 	{
-		_applicationBasics.js = data; //btoa( escape( data ) );
+		_applicationBasics.js = data;
 	}
 	j.load();
 };
