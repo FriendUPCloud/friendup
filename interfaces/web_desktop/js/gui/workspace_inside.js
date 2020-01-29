@@ -755,7 +755,6 @@ var WorkspaceInside = {
 							Workspace.appFilesystemEvents[ 'filesystem-change' ] = outEvents;
 						}
 					}
-					console.log('Refresh window by path: ' + p );
 				
 					Workspace.refreshWindowByPath( p );
 					
