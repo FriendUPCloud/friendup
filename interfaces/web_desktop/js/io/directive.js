@@ -1154,20 +1154,21 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 					'&' + stype + '=' + svalu +
 					'&conf=' + conf + '&' + ( args ? ( 'args=' + args ) : '' ) + extra, true );
 				j.onload = function()
-				{	
+				{
 					ws = this.rawData.split( 'src="/webclient/js/apps/api.js"' ).join( 'src="' + _applicationBasics.apiV1 + '"' );
-					ifr.src = URL.createObjectURL(new Blob([ws],{type:'text/html'}));
+					ifr.onload = ifronload;
+					ifr.src = URL.createObjectURL( new Blob([ ws ],{ type: 'text/html' } ) );
 				}
 				j.send();
 
-				/*ifr.src = dom + '/system.library/module/?module=system&command=sandbox' +
-					'&' + stype + '=' + svalu +
-					'&conf=' + conf + '&' + ( args ? ( 'args=' + args ) : '' ) + extra;*/
-				
 				ifr.conf = confObject;
 			}
 			// Just give a dumb sandbox
-			else ifr.src = '/webclient/sandboxed.html?' + ( args ? ( 'args=' + args ) : '' );
+			else 
+			{
+				ifr.src = '/webclient/sandboxed.html?' + ( args ? ( 'args=' + args ) : '' );
+				ifr.onload = ifronload;
+			}
 
 			// Register name and ID
 			ifr.applicationName = app;
@@ -1286,7 +1287,7 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 			}
 
 			// Register application
-			ifr.onload = function()
+			var ifronload = function()
 			{
 				try
 				{

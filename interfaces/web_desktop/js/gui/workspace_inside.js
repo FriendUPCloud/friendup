@@ -755,7 +755,6 @@ var WorkspaceInside = {
 							Workspace.appFilesystemEvents[ 'filesystem-change' ] = outEvents;
 						}
 					}
-					console.log('Refresh window by path: ' + p );
 				
 					Workspace.refreshWindowByPath( p );
 					
@@ -1078,7 +1077,7 @@ var WorkspaceInside = {
 							}
 							exists.push( svn );
 							if( found ) svn += ' ' + (num+1) + '.';
-							sessions.push( '<p class="Relative FullWidth Ellipsis IconSmall fa-close MousePointer" onclick="Workspace.terminateSession(\'' +
+							sessions.push( '<p class="Relative FullWidth Ellipsis IconSmall fa-close MousePointer" onmousedown="Workspace.terminateSession(\'' +
 								sessionList[b].sessionid + '\', \'' + sessionList[b].deviceidentity + '\');">&nbsp;' + svn + '</p>' );
 						}
 					}
@@ -10012,7 +10011,7 @@ function loadApplicationBasics()
 	var a = new File( '/webclient/js/apps/api.js' );
 	a.onLoad = function( data )
 	{
-		_applicationBasics.apiV1 = URL.createObjectURL(new Blob([data],{type:'text/html'}));
+		_applicationBasics.apiV1 = URL.createObjectURL( new Blob( [ data ], { type: 'text/javascript' } ) );
 	}
 	a.load();
 	var sb = new File( '/themes/friendup12/scrollbars.css' );
@@ -10044,7 +10043,7 @@ function loadApplicationBasics()
 	var j = new File( js );
 	j.onLoad = function( data )
 	{
-		_applicationBasics.js = data; //btoa( escape( data ) );
+		_applicationBasics.js = data;
 	}
 	j.load();
 };

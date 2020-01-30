@@ -448,10 +448,15 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		this.url = url;
 		this.proxy.hasReturnCode = hasReturnCode;
 		this.openFunc = function(){ 
-			//console.log( '[cajax] Opening: ' + self.url );
 			if( window.Workspace )
 				self.addVar( 'sessionid', Workspace.sessionId );
-			self.proxy.open( self.method, self.url, syncing ); 
+			var u = self.url;
+			if( u.substr( 0, 1 ) == '/' )
+			{
+				var urlbase = document.location.origin;
+				u = urlbase + u;
+			}
+			self.proxy.open( self.method, u, syncing ); 
 		};
 	}
 }
