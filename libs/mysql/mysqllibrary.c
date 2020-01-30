@@ -728,7 +728,7 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 					if( dptr[2] != 0 )
 					{
 						if( tp->tm_year < 1901 ) tp->tm_year += 1900;
-						if( tp->tm_mon < 1 ) tp->tm_mon = 1;
+						if( tp->tm_mon < 0 ) tp->tm_mon = 0;	// this probably never happen
 						if( tp->tm_mday < 1 ) tp->tm_mday = 1;
 
 						sprintf( date, "%04d-%02d-%02d %02d:%02d:%02d", tp->tm_year, tp->tm_mon+1, tp->tm_mday, tp->tm_hour, tp->tm_min, tp->tm_sec );
@@ -759,7 +759,7 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 					if( dptr[2] != 0 )
 					{
 						if( tp->tm_year < 1901 ) tp->tm_year += 1900;
-						if( tp->tm_mon < 1 ) tp->tm_mon = 1;
+						if( tp->tm_mon < 0 ) tp->tm_mon = 0;
 						if( tp->tm_mday < 1 ) tp->tm_mday = 1;
 
 						sprintf( date, "%04d-%02d-%02d", tp->tm_year, tp->tm_mon+1, tp->tm_mday );
