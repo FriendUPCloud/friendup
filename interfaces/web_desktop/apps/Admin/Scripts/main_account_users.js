@@ -4931,6 +4931,8 @@ Sections.user_disk_mount = function( devname, userid, _this )
 					var u = new Module( 'system' );
 					u.onExecuted = function( ee, dd )
 					{
+						console.log( 'mountlist ', { e:ee, d:dd } );
+						
 						var ul = null;
 						try
 						{
@@ -4971,6 +4973,8 @@ Sections.user_disk_mount = function( devname, userid, _this )
 					var u = new Module( 'system' );
 					u.onExecuted = function( ee, dd )
 					{
+						console.log( 'mountlist ', { e:ee, d:dd } );
+						
 						var ul = null;
 						try
 						{
