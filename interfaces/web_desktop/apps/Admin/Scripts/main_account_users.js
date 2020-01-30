@@ -4465,6 +4465,10 @@ Sections.user_disk_cancel = function( userid )
 		}
 		
 		ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid );
+		
+		console.log( 'Application.sendMessage( { type: \'system\', command: \'refreshdoors\' } );' );
+		
+		Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 	}
 	u.execute( 'mountlist', { userid: userid, authid: Application.authId } );
 	
@@ -4920,6 +4924,8 @@ Sections.user_disk_mount = function( devname, userid, _this )
 				{
 					Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 					
+					console.log( 'Application.sendMessage( { type: \'system\', command: \'refreshdoors\' } );' );
+					
 					Notify( { title: i18n( 'i18n_unmounting' ) + ' ' + devname + ':', text: i18n( 'i18n_successfully_unmounted' ) } );
 					
 					var u = new Module( 'system' );
@@ -4957,6 +4963,8 @@ Sections.user_disk_mount = function( devname, userid, _this )
 				if( e == 'ok' )
 				{
 					Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
+					
+					console.log( 'Application.sendMessage( { type: \'system\', command: \'refreshdoors\' } );' );
 					
 					Notify( { title: i18n( 'i18n_mounting' ) + ' ' + devname + ':', text: i18n( 'i18n_successfully_mounted' ) } );
 					

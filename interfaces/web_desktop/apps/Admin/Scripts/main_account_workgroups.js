@@ -1607,7 +1607,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 							setROnclick( r, userList[ a ].ID );
 							r.className = 'HRow ';
 			
-							var icon = '<span class="IconSmall fa-user"></span>';
+							var icon = '<span class="IconSmall fa-users"></span>';
 							userList[ a ][ 'edit' ] = icon;
 				
 							for( var z in types )
