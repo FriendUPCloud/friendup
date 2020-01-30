@@ -288,7 +288,7 @@ Socket* SocketNew( void *sb, FBOOL ssl, unsigned short port, int type )
 
 			SSL_CTX_set_mode( sock->s_Ctx, SSL_MODE_ENABLE_PARTIAL_WRITE | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER | SSL_MODE_AUTO_RETRY );
 			SSL_CTX_set_session_cache_mode( sock->s_Ctx, SSL_SESS_CACHE_BOTH ); // for now
-			SSL_CTX_set_options( sock->s_Ctx, SSL_OP_NO_SSLv3 | SSL_OP_NO_SSLv2 | SSL_OP_NO_TICKET | SSL_OP_ALL | SSL_OP_NO_COMPRESSION );
+			SSL_CTX_set_options( sock->s_Ctx, SSL_OP_NO_SSLv3 | SSL_OP_NO_SSLv2 | SSL_OP_NO_TICKET | SSL_OP_ALL );
 			SSL_CTX_set_session_id_context( sock->s_Ctx, (void *)&ssl_session_ctx_id, sizeof(ssl_session_ctx_id) );
 			SSL_CTX_set_cipher_list( sock->s_Ctx, "HIGH:!aNULL:!MD5:!RC4" );
 		}
@@ -1466,7 +1466,7 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
 		struct timeval timeout;
 		fd_set fds;
 #define MINIMUMRETRY 30000
-		int retryCount = expectedLength > 0 ? MINIMUMRETRY : 3000;
+		int retryCount = expectedLength > 0 ? MINIMUMRETRY : 3000; // User do be 3000
 		if( expectedLength > 0 && length > expectedLength ) length = expectedLength;
 		int startTime = time( NULL );
 
@@ -1510,7 +1510,8 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
 					{
 						// We are downloading a big file
 
-						usleep( read_retries < 100 ? 0 : ( retryCount << 1 ) );
+						// TODO: This usleep is the old code (before usleep(1))
+						usleep( read_retries < 100 ? 0 : ( read_retries < 200 ? 1 : ( retryCount << 1 ) ) );
 
 						/*int blocked = sock->s_Blocked;
 							FD_ZERO( &fds );
@@ -1540,31 +1541,31 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
 					// The operation did not complete. Call again.
 				case SSL_ERROR_WANT_WRITE:
 					//if( pthread_mutex_lock( &sock->mutex ) == 0 )
-				{
-					FERROR( "[SocketRead] Want write.\n" );
-					FD_ZERO( &fds );
-					FD_SET( sock->fd, &fds );
+					{
+						FERROR( "[SocketRead] Want write.\n" );
+						FD_ZERO( &fds );
+						FD_SET( sock->fd, &fds );
 
-					//pthread_mutex_unlock( &sock->mutex );
-				}
-				timeout.tv_sec = sock->s_Timeouts;
-				timeout.tv_usec = sock->s_Timeoutu;
+						//pthread_mutex_unlock( &sock->mutex );
+					}
+					timeout.tv_sec = sock->s_Timeouts;
+					timeout.tv_usec = sock->s_Timeoutu;
 
-				err = select( sock->fd + 1, NULL, &fds, NULL, &timeout );
+					err = select( sock->fd + 1, NULL, &fds, NULL, &timeout );
 
-				if( err > 0 )
-				{
-					usleep( 50000 );
-					FERROR("[SocketRead] want write\n");
-					continue; // more data to read...
-				}
-				else if( err == 0 )
-				{
-					FERROR("[SocketRead] want write TIMEOUT....\n");
+					if( err > 0 )
+					{
+						usleep( 50000 );
+						FERROR("[SocketRead] want write\n");
+						continue; // more data to read...
+					}
+					else if( err == 0 )
+					{
+						FERROR("[SocketRead] want write TIMEOUT....\n");
+						return read;
+					}
+					FERROR("[SocketRead] want write everything read....\n");
 					return read;
-				}
-				FERROR("[SocketRead] want write everything read....\n");
-				return read;
 				case SSL_ERROR_SYSCALL:
 
 					//DEBUG("SSLERR : err : %d res: %d\n", err, res );

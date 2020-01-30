@@ -46,6 +46,8 @@ var globalConfig = {};
 globalConfig.language = 'en-US'; // Defaults to US english
 Friend.globalConfig = globalConfig;
 
+// Fix scope if this file is not on a specific addy
+
 // Create application object with standard functions ---------------------------
 
 Friend.application = {
@@ -5448,7 +5450,35 @@ function Library( libraryName )
 
 // Resource functions ----------------------------------------------------------
 
-// Add Css by url
+// Add CSS by data
+function AddCSSByData( name, data, callback )
+{
+	if( !window.cssStyles ) window.cssStyles = [];
+	// Clear previous
+	if( typeof( window.cssStyles[ name ] ) != 'undefined' )
+	{
+		// Remove existing and clean up
+		var pn = window.cssStyles[ name ].parentNode;
+		if( pn ) pn.removeChild( window.cssStyles[ name ] );
+		var o = [];
+		for( var a in window.cssStyles )
+		{
+			if( a != name )
+			{
+				o[a] = window.cssStyles[a];
+			}
+		}
+		window.cssStyles = o;
+	}
+	// Add and register
+	var s = document.createElement( 'style' );
+	s.innerHTML = data;
+	if( callback ) callback();
+	document.body.appendChild( s );
+	window.cssStyles[ name ] = s;
+}
+
+// Add CSS by url
 function AddCSSByUrl( csspath, callback )
 {
 	if( !window.cssStyles ) window.cssStyles = [];
@@ -5657,7 +5687,8 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 	{
 		var b = document.createElement( 'base' );
 		//console.log( packet );
-		b.href = packet.appPath ? ( '/' + encodeURIComponent( packet.appPath.split( '/' ).join( '|' ) ) + '/' ) : packet.base;
+		var test = packet.appPath ? ( '/' + encodeURIComponent( packet.appPath.split( '/' ).join( '|' ) ) + '/' ) : packet.base;
+		b.href = !!test ? test : '';
 		b.href += ( packet.authId && packet.authId.length ? ( 'aid' + packet.authId ) : ( 'sid' + packet.sessionId ) ) + '/';
 		document.getElementsByTagName( 'head' )[0].appendChild( b );
 		Application.baseDir = b.href;
@@ -5877,29 +5908,31 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			return setTimeout( onLoaded, 50 );
 		}
 
-		var tpath = '/themes/friendup12/theme.css';
-		if( packet && packet.theme )
-		{
-			tpath = '/themes/' + packet.theme + '/theme.css';
-		}
-
 		var loadedResources = 0;
 		var totalLoadingResources = 0;
-
-		// Let's save some time
-		if( !document.themeCss )
+		
+		// No cached app data
+		if( !packet.cachedAppData )
 		{
-			totalLoadingResources++;
-			
-			var s = document.createElement( 'link' );
-			document.themeCss = s;
-			s.rel = 'stylesheet';
-			s.href = tpath.split( '.css' ).join( '_compiled.css' );
-			s.onload = function()
+			var tpath = '/themes/friendup12/theme.css';
+			if( packet && packet.theme )
 			{
-				doneLoading();
+				tpath = '/themes/' + packet.theme + '/theme.css';
 			}
-			document.getElementsByTagName('head')[0].appendChild( s );
+			if( !document.themeCss )
+			{
+				totalLoadingResources++;
+			
+				var s = document.createElement( 'link' );
+				document.themeCss = s;
+				s.rel = 'stylesheet';
+				s.href = tpath.split( '.css' ).join( '_compiled.css' );
+				s.onload = function()
+				{
+					doneLoading();
+				}
+				document.getElementsByTagName('head')[0].appendChild( s );
+			}
 		}
 		
 		// Load advanced theme config
@@ -6116,7 +6149,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				else
 				{
-					console.log( 'What' );
+					//console.log( 'What' );
 				}
 				
 				function runNow()
@@ -6153,14 +6186,23 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Done with this ------------------------------------------------------
 	}
 
+	// Setup application id from message
+	Application.applicationId = packet.applicationId;
+	Application.userId        = packet.userId;
+	Application.username      = packet.username;
+	Application.workspaceMode = packet.workspaceMode;
+	Application.authId        = packet.authId;
+	Application.sessionId     = packet.sessionId != undefined ? packet.sessionId : false;
+	Application.theme         = packet.theme;
+	Application.origin        = eventOrigin;
+
+	// Autogenerate this
+	Application.sendMessage   = setupMessageFunction( packet, eventOrigin ? eventOrigin : packet.origin );
+	
 	// Make sure we don't show gui until the scrollbars have changed
 	// The scrollbars takes some milliseconds to load and init..
 	// TODO: Figure out why we can't load scrollbars immediately
 	var head = document.getElementsByTagName( 'head' )[0];
-
-	if( packet && packet.theme )
-		AddCSSByUrl( '/themes/' + packet.theme + '/scrollbars.css' );
-	else AddCSSByUrl( '/themes/friendup12/scrollbars.css' );
 
 	var js = [
 		'js/oo.js',
@@ -6180,103 +6222,113 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Set src with some rules whether it's an app or a Workspace component
 		elez.push( js[ a ] );
 	}
-
-	// Setup application id from message
-	Application.applicationId = packet.applicationId;
-	Application.userId        = packet.userId;
-	Application.username      = packet.username;
-	Application.workspaceMode = packet.workspaceMode;
-	Application.authId        = packet.authId;
-	Application.sessionId     = packet.sessionId != undefined ? packet.sessionId : false;
-	Application.theme         = packet.theme;
-	Application.origin        = eventOrigin;
-
-	// Autogenerate this
-	Application.sendMessage   = setupMessageFunction( packet, eventOrigin ? eventOrigin : packet.origin );
 	
-	if( Application.sessionId )
+	// No cached data
+	if( !packet.cachedAppData )
 	{
-		Application.sendMessage( {
-			type: 'file',
-			command: 'getapidefaultscripts',
-			data: '/webclient/' + elez.join( ';webclient/' ),
-			callback: addCallback( function( msg )
-			{
-				window.eval( msg.data ? msg.data : msg );
-				//eval( msg.data );
-				if( typeof( Workspace ) == 'undefined' )
-				{
-					if( typeof( InitWindowEvents ) != 'undefined' ) InitWindowEvents();
-					if( typeof( InitGuibaseEvents ) != 'undefined' ) InitGuibaseEvents();
-				}
-				onLoaded();
-			} )
-		} );
-	}
-	// Slow way for now session
-	else
-	{
-		var js = [
-			[
-				'js/utils/engine.js',
-				'js/io/cajax.js',
-				'js/utils/tool.js',
-				'js/utils/json.js',
-				'js/gui/treeview.js',
-				'js/io/appConnection.js',
-				'js/io/coreSocket.js',
-				'js/oo.js',
-				'js/api/friendappapi.js'
-			]
-		];
-
-		var elez = [];
-		for ( var a = 0; a < js.length; a++ )
+		if( packet && packet.theme )
+			AddCSSByUrl( '/themes/' + packet.theme + '/scrollbars.css' );
+		else AddCSSByUrl( '/themes/friendup12/scrollbars.css' );
+		
+		// Only in specific circumstances ------------------------------------------
+		if( Application.sessionId )
 		{
-			var s = document.createElement( 'script' );
-			// Set src with some rules whether it's an app or a Workspace component
-			var path = js[ a ].join( ';/webclient/' );
-			s.src = '/webclient/' + path;
-			s.async = false;
-			elez.push( s );
-
-			// When last javascript loads, parse css, setup translations and say:
-			// We are now registered..
-			if( a == js.length-1 )
-			{
-				function fl()
+			Application.sendMessage( {
+				type: 'file',
+				command: 'getapidefaultscripts',
+				data: '/webclient/' + elez.join( ';webclient/' ),
+				callback: addCallback( function( msg )
 				{
-					if( this ) this.isLoaded = true;
-					var allLoaded = true;
-					for( var b = 0; b < elez.length; b++ )
+					window.eval( msg.data ? msg.data : msg );
+					//eval( msg.data );
+					if( typeof( Workspace ) == 'undefined' )
 					{
-						if( !elez[b].isLoaded ) allLoaded = false;
+						if( typeof( InitWindowEvents ) != 'undefined' ) InitWindowEvents();
+						if( typeof( InitGuibaseEvents ) != 'undefined' ) InitGuibaseEvents();
 					}
-					if( allLoaded )
-					{
-						if( typeof( Workspace ) == 'undefined' )
-						{
-							if( typeof( InitWindowEvents ) != 'undefined' ) InitWindowEvents();
-							if( typeof( InitGuibaseEvents ) != 'undefined' ) InitGuibaseEvents();
-						}
-						onLoaded();
-					}
-					else
-					{
-						setTimeout( fl, 50 );
-					}
-				}
-				s.onload = fl;
-			}
-			else
-			{
-				s.onload = function()
-				{
-					this.isLoaded = true;
-				}
-			}
-			head.appendChild( s );
+					onLoaded();
+				} )
+			} );
 		}
+		// Slow way for new session
+		else
+		{
+			var js = [
+				[
+					'js/oo.js',
+					'js/api/friendappapi.js',
+					'js/utils/engine.js',
+					'js/utils/tool.js',
+					'js/utils/json.js',
+					'js/io/cajax.js',
+					'js/io/appConnection.js',
+					'js/io/coreSocket.js',
+					'js/gui/treeview.js'
+				]
+			];
+
+			var elez = [];
+			for ( var a = 0; a < js.length; a++ )
+			{
+				var s = document.createElement( 'script' );
+				// Set src with some rules whether it's an app or a Workspace component
+				var path = js[ a ].join( ';/webclient/' );
+				s.src = '/webclient/' + path;
+				s.async = false;
+				elez.push( s );
+
+				// When last javascript loads, parse css, setup translations and say:
+				// We are now registered..
+				if( a == js.length-1 )
+				{
+					function fl()
+					{
+						if( this ) this.isLoaded = true;
+						var allLoaded = true;
+						for( var b = 0; b < elez.length; b++ )
+						{
+							if( !elez[b].isLoaded ) allLoaded = false;
+						}
+						if( allLoaded )
+						{
+							if( typeof( Workspace ) == 'undefined' )
+							{
+								if( typeof( InitWindowEvents ) != 'undefined' ) InitWindowEvents();
+								if( typeof( InitGuibaseEvents ) != 'undefined' ) InitGuibaseEvents();
+							}
+							onLoaded();
+						}
+						else
+						{
+							setTimeout( fl, 50 );
+						}
+					}
+					s.onload = fl;
+				}
+				else
+				{
+					s.onload = function()
+					{
+						this.isLoaded = true;
+					}
+				}
+				head.appendChild( s );
+			}
+		}
+	}
+	// Used cached data
+	else if( packet.cachedAppData )
+	{	
+		var style = document.createElement( 'style' );
+		style.innerHTML = packet.cachedAppData.css;
+		head.appendChild( style );
+		
+		var js = document.createElement( 'script' );
+		js.innerHTML = packet.cachedAppData.js;
+		head.appendChild( js );
+		
+		// We are loaded
+		onLoaded();
 	}
 }
 

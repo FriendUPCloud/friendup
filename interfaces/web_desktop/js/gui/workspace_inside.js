@@ -587,13 +587,24 @@ var WorkspaceInside = {
 				}
 				// After such an error, always try reconnect
 				if( Workspace.httpCheckConnectionInterval )
-				{
 					clearInterval( Workspace.httpCheckConnectionInterval );
-				}
-				Workspace.httpCheckConnectionInterval = setInterval( 'Workspace.checkServerConnectionHTTP()', 3000 );
+				Workspace.httpCheckConnectionInterval = setInterval( 'Workspace.checkServerConnectionHTTP()', 10000 );
 			}
 			else if( e.type == 'ping' )
 			{
+				// Ignite queue on ping
+				var time = ( new Date() ).getTime() - _cajax_http_last_time;
+				if( time > 10000 && window.Friend )
+				{
+					// Ignite queue
+					_cajax_http_connections = 0;
+					if( Friend.cajax.length > 0 )
+					{
+						Friend.cajax[0].forceSend = true;
+						Friend.cajax[0].send();
+					}
+				}
+				
 				//if we get a ping we have a websocket.... no need to do the http server check
 				clearInterval( Workspace.httpCheckConnectionInterval );
 				Workspace.httpCheckConnectionInterval = false;
@@ -618,7 +629,13 @@ var WorkspaceInside = {
 			{
 				if( e.type == 'open' )
 				{
-					Workspace.websocketState = 'open';
+					// TODO: Fix this!! Whenthe state is open, ws should 
+					//       immediately be able to handle requests, now its
+					//       a slight delay
+					setTimeout( function()
+					{
+						Workspace.websocketState = 'open';
+					}, 150 );
 				}
 				else if( e.type == 'connecting' )
 				{
@@ -673,8 +690,18 @@ var WorkspaceInside = {
 			{
 				if( msg.path || msg.devname )
 				{
+					var p = '';
+					// check if path contain device
+					if( msg.path.indexOf( ':' ) > 0 )
+					{
+						p = msg.path;
+					}
+					else
+					{
+						p = msg.devname + ':' + msg.path;
+					}
 					// Filename stripped!
-					var p = msg.devname + ':' + msg.path;
+					
 					if( p.indexOf( '/' ) > 0 )
 					{
 						p = p.split( '/' );
@@ -1050,7 +1077,7 @@ var WorkspaceInside = {
 							}
 							exists.push( svn );
 							if( found ) svn += ' ' + (num+1) + '.';
-							sessions.push( '<p class="Relative FullWidth Ellipsis IconSmall fa-close MousePointer" onclick="Workspace.terminateSession(\'' +
+							sessions.push( '<p class="Relative FullWidth Ellipsis IconSmall fa-close MousePointer" onmousedown="Workspace.terminateSession(\'' +
 								sessionList[b].sessionid + '\', \'' + sessionList[b].deviceidentity + '\');">&nbsp;' + svn + '</p>' );
 						}
 					}
@@ -1726,6 +1753,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									index: 0,
 									func: function()
 									{
+										if( Workspace.getWebSocketsState() != 'open' )
+										{
+											return setTimeout( function(){ l.func() }, 500 );
+										}
 										if( !ScreenOverlay.done && l.index < seq.length )
 										{
 											// Register for Friend DOS
@@ -1753,6 +1784,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 														if( ScreenOverlay.debug )
 															slot = ScreenOverlay.addStatus( i18n( 'i18n_processing' ), cmd );											
 														ScreenOverlay.addDebug( 'Executing ' + cmd );
+
 														Workspace.shell.execute( cmd, function( res )
 														{
 															if( ScreenOverlay.debug )
@@ -2986,6 +3018,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									clearInterval( Workspace.insideInterval );
 									Workspace.insideInterval = null;
 								
+									loadApplicationBasics();
+								
 									// Set right classes
 									document.body.classList.add( 'Inside' );
 									document.body.classList.add( 'Loaded' );
@@ -3724,11 +3758,22 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								var num = StrPad( path.substr( 0, ind ), 10, '0' );
 								path = path.substr( ind + 1, path.length - ( ind + 1 ) );
 								
+
+								// Link to a repository?
+								var iconFile = '';
+								if( path.substr( -11, 11 ) == ':repository' )
+								{
+									path = path.substr( 0, path.length - 11 );
+									iconFile = '/system.library/module/?module=system&command=repoappimage&i=' + GetFilename( path ) + '&sessionid=' + Workspace.sessionId;
+								}
+								
 								var fn = GetFilename( path );
+								
 								newIcons.push( {
 									Title: fn,
 									Filename: path,
 									Path: path,
+									IconFile: iconFile,
 									Type: path.substr( path.length - 1, 1 ) == '/' ? 'Directory' : 'File',
 									SortPriority: num,
 									Handler: 'built-in',
@@ -3984,7 +4029,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				m.execute( 'device/list' );
 			}
-			mo.forceHTTP = true;
 			mo.forceSend = true;
 			mo.execute( 'workspaceshortcuts' );
 		}
@@ -4154,12 +4198,27 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if( Workspace.newDir )
 				return Workspace.newDir.activate();
 			
-			var d = new View( {
-				id: 'makedir',
-				width: 325,
-				height: 100,
-				title: i18n( 'i18n_make_a_new_container' )
-			} );
+			var d;
+			
+			if( !window.isMobile )
+			{
+				d = new View( {
+					id: 'makedir',
+					width: 325,
+					height: 100,
+					title: i18n( 'i18n_make_a_new_container' )
+				} );
+			}
+			else
+			{
+				d = new Widget( {
+					width: 'full',
+					height: 'full',
+					above: true,
+					animate: true,
+					transparent: true
+				} );
+			}
 			
 			Workspace.newDir = d;
 			d.onClose = function()
@@ -4167,29 +4226,60 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				Workspace.newDir = null;
 			}
 
-			d.setContent( '\
-			<div class="ContentFull">\
-				<div class="VContentTop BorderBottom" style="bottom: 50px;">\
-					<div class="Padding">\
-						<div class="HRow">\
-							<div class="HContent25 FloatLeft">\
-								<p class="Layout InputHeight"><strong>' + i18n( 'i18n_name' ) + ':</strong></p>\
-							</div>\
-							<div class="HContent75 FloatLeft">\
-								<p class="Layout InputHeight"><input class="FullWidth MakeDirName" type="text" value="' + i18n( 'i18n_new_container' ) + '"/></p>\
+			if( window.isMobile )
+			{
+				d.setContent( '\
+				<div class="Dialog">\
+					<div class="VContentTop BackgroundDefault Padding ScrollArea">\
+						<div>\
+							<p><strong>' + i18n( 'i18n_name' ) + ':</strong></p>\
+						</div>\
+						<div class="Padding">\
+							<div class="HRow">\
+								<div class="HContent100 FloatLeft">\
+									<p class="Layout InputHeight"><input class="FullWidth MakeDirName" type="text" value="' + i18n( 'i18n_new_container' ) + '"/></p>\
+								</div>\
 							</div>\
 						</div>\
 					</div>\
-				</div>\
-				<div class="VContentBottom Padding" style="height: 50px">\
-					<button type="button" class="Button fa-folder IconSmall NetContainerButton">\
-						' + i18n( 'i18n_create_container' ) + '\
-					</button>\
-				</div>\
-			</div>' );
+					<div class="VContentBottom BorderTop ColorToolbar BackgroundToolbar TextRight Padding" style="height: 50px">\
+						<button type="button" class="Button fa-remove IconSmall CancelButton">\
+							' + i18n( 'i18n_cancel' ) + '\
+						</button>\
+						<button type="button" class="Button fa-folder IconSmall NetContainerButton">\
+							' + i18n( 'i18n_create_container' ) + '\
+						</button>\
+					</div>\
+				</div>' );
+			}
+			else
+			{
+				d.setContent( '\
+				<div class="ContentFull">\
+					<div class="VContentTop BorderBottom" style="bottom: 50px;">\
+						<div class="Padding">\
+							<div class="HRow">\
+								<div class="HContent25 FloatLeft">\
+									<p class="Layout InputHeight"><strong>' + i18n( 'i18n_name' ) + ':</strong></p>\
+								</div>\
+								<div class="HContent75 FloatLeft">\
+									<p class="Layout InputHeight"><input class="FullWidth MakeDirName" type="text" value="' + i18n( 'i18n_new_container' ) + '"/></p>\
+								</div>\
+							</div>\
+						</div>\
+					</div>\
+					<div class="VContentBottom Padding" style="height: 50px">\
+						<button type="button" class="Button fa-folder IconSmall NetContainerButton">\
+							' + i18n( 'i18n_create_container' ) + '\
+						</button>\
+					</div>\
+				</div>' );
+			}
 
 			var inputField  = d.getByClass( 'MakeDirName' )[0];
 			var inputButton = d.getByClass( 'NetContainerButton' )[0];
+			var can = d.getByClass( 'CancelButton' )[0];
+			if( can ) can.onclick = function(){ d.close(); }
 
 			var fi = directoryWindow.content.fileInfo;
 			var dr;
@@ -4292,37 +4382,93 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				
 				
 
-				var w = new View( {
-					title: i18n( 'rename_file' ),
-					width: 320,
-					height: 100,
-					resize: false
-				} );
+				var w;
+				if( window.isMobile )
+				{
+					w = new Widget( {
+						width: 'full',
+						height: 'full',
+						above: true,
+						animate: true,
+						transparent: true
+					} );
+				}
+				else
+				{
+					w = new View( {
+						title: i18n( 'rename_file' ),
+						width: 320,
+						height: 100,
+						resize: false
+					} );
+				}
 
 				Workspace.renameWindow = w;
 
-				w.setContent( '\
-					<div class="ContentFull LayoutButtonbarBottom">\
-						<div class="VContentTop Padding">\
-							<div class="HRow MarginBottom">\
-								<div class="HContent30 FloatLeft"><p class="InputHeight"><strong>' + i18n( 'new_name' ) + ':</strong></p></div>\
-								<div class="HContent70 FloatLeft"><input type="text" class="InputHeight FullWidth" value="' + nam + '"></div>\
+				if( window.isMobile )
+				{
+					w.setContent( '\
+						<div class="Dialog">\
+							<div class="VContentTop BackgroundDefault Padding ScrollArea">\
+								<div><p><strong>' + i18n( 'new_name' ) + ':</strong></p></div>\
+								<div class="HRow">\
+									<div class="HContent100 FloatLeft"><input type="text" class="InputHeight FullWidth" value="' + nam + '"></div>\
+								</div>\
+							</div>\
+							<div class="Padding VContentBottom BorderTop ColorToolbar BackgroundToolbar TextRight" style="height: 50px">\
+								<button type="button" class="Button IconSmall fa-remove">\
+									' + i18n( 'i18n_cancel' ) + '\
+								</button>\
+								<button type="button" class="Button IconSmall fa-edit">\
+									' + i18n( 'rename_file' ) + '\
+								</button>\
 							</div>\
 						</div>\
-						<div class="VContentBottom Padding BackgroundDefault BorderTop">\
-							<button type="button" class="Button IconSmall fa-edit">\
-								' + i18n( 'rename_file' ) + '\
-							</button>\
+					' );
+				}
+				else
+				{
+					w.setContent( '\
+						<div class="ContentFull LayoutButtonbarBottom">\
+							<div class="VContentTop Padding">\
+								<div class="HRow MarginBottom">\
+									<div class="HContent30 FloatLeft"><p class="InputHeight"><strong>' + i18n( 'new_name' ) + ':</strong></p></div>\
+									<div class="HContent70 FloatLeft"><input type="text" class="InputHeight FullWidth" value="' + nam + '"></div>\
+								</div>\
+							</div>\
+							<div class="VContentBottom Padding BackgroundDefault BorderTop">\
+								<button type="button" class="Button IconSmall fa-edit">\
+									' + i18n( 'rename_file' ) + '\
+								</button>\
+							</div>\
 						</div>\
-					</div>\
-				' );
+					' );
+				}
 
-				var inp = w.getElementsByTagName( 'input' )[0];
-				var btn = w.getElementsByTagName( 'button' )[0];
+				var dom = window.isMobile ? w.dom : w;
+				var inp = dom.getElementsByTagName( 'input' )[0];
+				var btn = dom.getElementsByTagName( 'button' );
+				var clb = null;
+				if( !window.isMobile )
+				{
+					btn = btn[0];
+				}
+				else
+				{
+					clb = btn[0];
+					btn = btn[1];
+				}
 
 				btn.onclick = function()
 				{
-					Workspace.executeRename( w.getElementsByTagName( 'input' )[0].value, icon, rwin );
+					Workspace.executeRename( dom.getElementsByTagName( 'input' )[0].value, icon, rwin );
+				}
+				if( clb )
+				{
+					clb.onclick = function()
+					{
+						w.close();
+					}
 				}
 				inp.select();
 				inp.focus();
@@ -4720,8 +4866,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 
 			// Human filesize
-			var fbtype = 'b';
-			var ustype = 'b';
+			var fbtype = '';
+			var ustype = '';
 
 			icon.UsedSpace = parseInt( icon.UsedSpace );
 			icon.Filesize = parseInt( icon.Filesize );
@@ -4731,18 +4877,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 			if( icon.UsedSpace )
 			{
-				if( icon.UsedSpace > 1024 ){ icon.UsedSpace /= 1024.0; ustype = 'kb'; }
-				if( icon.UsedSpace > 1024 ){ icon.UsedSpace /= 1024.0; ustype = 'mb'; }
-				if( icon.UsedSpace > 1024 ){ icon.UsedSpace /= 1024.0; ustype = 'gb'; }
-				if( icon.UsedSpace > 1024 ){ icon.UsedSpace /= 1024.0; ustype = 'tb'; }
-				icon.UsedSpace = Math.round( icon.UsedSpace, 1 );
+				icon.UsedSpace = Friend.Utilities.humanFileSize( icon.UsedSpace );
 			}
-
-			if( icon.Filesize > 1024 ){ icon.Filesize /= 1024.0; fbtype = 'kb'; }
-			if( icon.Filesize > 1024 ){ icon.Filesize /= 1024.0; fbtype = 'mb'; }
-			if( icon.Filesize > 1024 ){ icon.Filesize /= 1024.0; fbtype = 'gb'; }
-			if( icon.Filesize > 1024 ){ icon.Filesize /= 1024.0; fbtype = 'tb'; }
-			icon.Filesize = Math.round( icon.Filesize, 1 );
+			icon.Filesize = Friend.Utilities.humanFileSize( icon.Filesize );
+			
 
 			// Load template
 			var filt = ( icon.Type == 'Door' ? 'iconinfo_volume.html' : 'iconinfo.html' );
@@ -5831,7 +5969,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 						
 							Notify( { title: i18n( 'i18n_upload_completed' ), text: i18n( 'i18n_upload_completed_description' ) } );
-
+							if( typeof Workspace.uploadWindow.close == 'function' ) Workspace.uploadWindow.close();
 							Workspace.refreshWindowByPath( uppath );
 						}
 						else
@@ -5893,9 +6031,28 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 				}
 			}
+			ge( 'uploadFileField' ).addEventListener('change', Workspace.uploadFileChanged );
 			ge( 'fileUpload' ).sessionid.value = Workspace.sessionId;
 		}
 		f.load();
+	},
+	uploadFileChanged: function(e)
+	{
+		var listString = '';
+		var uploadSize = 0;
+		
+		if( !e.target.files ) return; // should not happen...
+		for( i = 0; i < e.target.files.length; i++ )
+		{
+			listString += ( listString != '' ? ', ' : '' ) + e.target.files[i].name;
+			uploadSize += parseInt( e.target.files[i].size );
+		}
+		ge('uploadFileFileDisplay').innerHTML = i18n('i18n_selected_files') + ': ' + listString + ' (' + i18n('i18n_in_total') + ' ' + Friend.Utilities.humanFileSize( uploadSize ) + ')';
+
+		var oh = Workspace.uploadWindow.getFlag('height');
+		oh += parseInt( ge('uploadFileFileDisplay').clientHeight ) + 12;
+
+		Workspace.uploadWindow.setFlag('min-height',oh);
 	},
 	findUploadPath: function()
 	{
@@ -7269,9 +7426,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					p.onclick = function( event )
 					{
 						if( !v.shown ) return;
+						var self = this;
 						if( this.cmd && typeof( this.cmd ) == 'function' )
 						{
-							this.cmd( event );
+							// Give a small timeout to allow for mouseup
+							setTimeout( function()
+							{
+								self.cmd( event );
+							}, 50 );
 						}
 						menuout.classList.add( 'Closing' );
 						menuout.classList.remove( 'Open' );
@@ -8028,6 +8190,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		ExecuteApplication( 'Account', args );
 	},
+	flushSession: function()
+	{
+		Workspace.sessionId = '';
+	},
 	//try to run a call and if does not get back display offline message....
 	checkServerConnectionHTTP: function()
 	{	
@@ -8058,9 +8224,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			Workspace.serverHTTPCheckModule = null;
 		}
 		
+		CancelCajaxOnId( 'checkserverconnection' );
+		
 		var inactiveTimeout = false;
+		
 		var m = new Module('system');
-		m.forceHTTP = true;
+		
+		m.forceSend = true;
+		m.cancelId = 'checkserverconnection';
+		
 		m.onExecuted = function( e, d )
 		{
 			if( inactiveTimeout )
@@ -8073,7 +8245,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				if( js.code && ( parseInt( js.code ) == 11 || parseInt( js.code ) == 3 ) )
 				{
 					//console.log( 'The session has gone away! Relogin using login().' );
-					Workspace.flushSession();
+					//Workspace.flushSession();
 					Workspace.relogin(); // Try login using local storage
 				}
 			}
@@ -8088,6 +8260,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				console.log( '[getsetting] Got "fail" response.' );
 				//console.trace();
 			}
+			
 			Workspace.serverIsThere = true;
 			Workspace.workspaceIsDisconnected = false;
 			
@@ -8103,7 +8276,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		Workspace.serverHTTPCheckModule = m;
 		
-		m.forceHTTP = true;
+		m.forceSend = true;
 		m.execute( 'getsetting', { setting: 'infowindow' } );
 		return setTimeout( 'Workspace.checkServerConnectionResponse();', 1000 );
 	},
@@ -8131,13 +8304,18 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		a1.onExecuted = function( a1r, a1d )
 		{
 			if( !a1r || a1r == 'fail' ) return;
-			var response = JSON.parse( a1d );
-			if( response.response == 1 )
+			try
 			{
-				Workspace.refreshTheme( response.themeName, true, response.themeConfig );
-				Workspace.reloadDocks();
-				Workspace.refreshDesktop( cb, true );
+				var response = JSON.parse( a1d );
+				if( response.response == 1 )
+				{
+					Workspace.refreshTheme( response.themeName, true, response.themeConfig );
+					Workspace.reloadDocks();
+					Workspace.refreshDesktop( cb, true );
+				}
 			}
+			catch( e )
+			{}
 		}
 		a1.execute( 'upgradesettings' );
 	},
@@ -8471,22 +8649,29 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	updateViewState: function( newState )
 	{
 		var self = this;
-		if( !Workspace.sessionId )
-		{ 
-			if( this.updateViewStateTM )
-				clearTimeout( this.updateViewStateTM );
-			this.updateViewStateTM = setTimeout( function(){ 
-				Workspace.updateViewState( newState );
-				self.updateViewStateTM = null;
-			}, 250 );
-			return; 
-		}
 
 		// Don't update if not changed
 		if( this.currentViewState == newState )
 		{
 			this.sleepTimeout();
 			return;
+		}
+		
+		if( window.Module && !Workspace.sessionId )
+		{
+			if( this.updateViewStateTM )
+				return;
+			this.updateViewStateTM = setTimeout( function(){ 
+				Workspace.updateViewState( newState );
+				self.updateViewStateTM = null;
+			}, 250 );
+			if( Workspace.loginCall )
+			{
+				Workspace.loginCall.destroy();
+				Workspace.loginCall = null;
+			}
+			Workspace.relogin();
+			return; 
 		}
 		
 		//mobileDebug( 'Starting update view state.' + newState, true );
@@ -8654,7 +8839,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if( appToken != null )	// old applications which do not have appToken will skip this part
 			{
 				var l = new Library( 'system.library' );
-				l.forceHTTP = true;
+				l.forceSend = true;
 				l.onExecuted = function( e, d )
 				{
 					if( e != 'ok' )
@@ -9245,7 +9430,7 @@ function InitWorkspaceNetwork()
 	// After such an error, always try reconnect
 	if( Workspace.httpCheckConnectionInterval )
 		clearInterval( Workspace.httpCheckConnectionInterval );
-	Workspace.httpCheckConnectionInterval = setInterval( 'Workspace.checkServerConnectionHTTP()', 15000 );
+	Workspace.httpCheckConnectionInterval = setInterval( 'Workspace.checkServerConnectionHTTP()', 10000 );
 
 	wsp.checkFriendNetwork();
 	
@@ -9398,7 +9583,7 @@ function ShowEula( accept, cbk )
 		//call device refresh to make sure user get his devices...
 		var dl = new FriendLibrary( 'system.library' );
 		dl.addVar( 'visible', true );
-		dl.forceHTTP = true;
+		dl.forceSend = true;
 		dl.onExecuted = function(e,d)
 		{
 			//console.log( 'First login. Device list refreshed.', e, d );
@@ -9633,7 +9818,12 @@ Workspace.receivePush = function( jsonMsg, ready )
 		//check if extras are base 64 encoded... and translate them to the extra attribute which shall be JSON
 		if( msg.extrasencoded && msg.extrasencoded.toLowerCase() == 'yes' )
 		{
-			if( msg.extras ) msg.extra = JSON.parse( atob( msg.extras ).split(String.fromCharCode(92)).join("") );
+			try
+			{
+				if( msg.extras ) msg.extra = JSON.parse( atob( msg.extras ).split(String.fromCharCode(92)).join("") );
+			}
+			catch( e )
+			{}
 		}
 	
 		for( var a = 0; a < Workspace.applications.length; a++ )
@@ -9811,4 +10001,49 @@ function mobileDebug( str, clear )
 	}, 15000 );
 }
 
+// Cache the app themes --------------------------------------------------------
+// TODO: Test loading different themes
 
+_applicationBasics = {};
+function loadApplicationBasics()
+{
+	// Preload basic scripts
+	var a = new File( '/webclient/js/apps/api.js' );
+	a.onLoad = function( data )
+	{
+		_applicationBasics.apiV1 = URL.createObjectURL( new Blob( [ data ], { type: 'text/javascript' } ) );
+	}
+	a.load();
+	var sb = new File( '/themes/friendup12/scrollbars.css' );
+	sb.onLoad = function( data )
+	{
+		if( _applicationBasics.css )
+			_applicationBasics.css += data;
+		else _applicationBasics.css = data;
+	}
+	sb.load();
+	// Preload basic scripts
+	var c = new File( '/system.library/module/?module=system&command=theme&args=%7B%22theme%22%3A%22friendup12%22%7D&sessionid=' + Workspace.sessionId );
+	c.onLoad = function( data )
+	{
+		if( _applicationBasics.css )
+			_applicationBasics.css += data;
+		else _applicationBasics.css = data;
+	}
+	c.load();
+	var js = '/webclient/' + [ 'js/oo.js',
+	'js/api/friendappapi.js',
+	'js/utils/engine.js',
+	'js/utils/tool.js',
+	'js/utils/json.js',
+	'js/io/cajax.js',
+	'js/io/appConnection.js',
+	'js/io/coreSocket.js',
+	'js/gui/treeview.js' ].join( ';/webclient/' );
+	var j = new File( js );
+	j.onLoad = function( data )
+	{
+		_applicationBasics.js = data;
+	}
+	j.load();
+};

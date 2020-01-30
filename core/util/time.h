@@ -27,4 +27,6 @@
 
 uint64_t GetCurrentTimestamp();
 
+double GetCurrentTimestampD();
+
 #endif // __UTIL_TIME_H__

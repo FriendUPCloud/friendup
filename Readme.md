@@ -1,5 +1,5 @@
-Friend Unifying Platform version 1.2-RC2
-========================================
+Friend Unifying Platform version 1.2.0
+======================================
 
 *NB*: For extended functionality and related Friend projects such as the Android app refer [here](https://github.com/FriendSoftwareLabs).
 
@@ -202,28 +202,30 @@ List of dependencies
 
 This is the list of dependencies Friend Core needs to function.
 
-- bash
-- libssh2-1-dev
-- libssh-dev
-- libssl-dev
-- libaio-dev
-- mysql-server
-- php5-cli
-- php5-gd
-- php5-imap
-- php5-mysql
-- php5-curl
-- libmysqlclient-dev
-- build-essential
-- libmatheval-dev
-- libmagic-dev
-- libgd-dev
-- libwebsockets-dev
-- rsync
-- valgrind-dbg
-- libxml2-dev
-- php5-readline
-- cmake
-- ssh
-- make
+-    bash
+-    libssh2-1-dev
+-    libssh-dev
+-    libssl-dev
+-    libaio-dev
+-    mysql-server
+-    php7-cli
+-    php7-gd
+-    php7-imap
+-    php7-mysql
+-    php7-curl
+-    libmysqlclient-dev
+-    build-essential
+-    libmatheval-dev
+-    libmagic-dev
+-    libgd-dev
+-    libuv
+-    rsync
+-    valgrind-dbg
+-    libxml2-dev
+-    php7-readline
+-    cmake
+-    ssh
+-    make
+-    libsmbclient-dev
+
 

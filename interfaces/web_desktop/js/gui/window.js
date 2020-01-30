@@ -877,7 +877,8 @@ function _ActivateWindowOnly( div )
 	}
 	
 	// Don't select other fields
-	FocusOnNothing();
+	if( !div.classList.contains( 'Active' ) )
+		FocusOnNothing();
 	
 	// Special case
 	var delayedDeactivation = true;
@@ -890,7 +891,6 @@ function _ActivateWindowOnly( div )
 	for( var a in movableWindows )
 	{
 		var m = movableWindows[a];
-		m.removeAttribute( 'moving' );
 
 		// No div selected or not the div we're looking for - do inactive!
 		if( !div || m != div )
@@ -1094,11 +1094,11 @@ function _ActivateWindow( div, nopoll, e )
 		{
 			if( fr[ a ].oldSandbox )
 			{
-				fr[ a ].setAttribute( 'sandbox', fr[ a ].oldSandbox );
+				if( typeof friendApp == 'undefined' ) fr[ a ].setAttribute( 'sandbox', fr[ a ].oldSandbox );
 			}
 			else
 			{
-				fr[ a ].setAttribute( 'sandbox', DEFAULT_SANDBOX_ATTRIBUTES );
+				if( typeof friendApp == 'undefined' ) fr[ a ].setAttribute( 'sandbox', DEFAULT_SANDBOX_ATTRIBUTES );
 			}
 		}
 	}
@@ -1518,8 +1518,11 @@ function _WindowToFront( div, flags )
 	}
 
 	// 4. now apply the one we want to front to the front
-	div.viewContainer.style.zIndex = sortedInd;
-	div.style.zIndex = sortedInd;
+	if( div.viewContainer )
+	{
+		div.viewContainer.style.zIndex = sortedInd;
+		div.style.zIndex = sortedInd;
+	}
 	
 	// 5. Check if we are snapped
 	if( !flags.sourceElements )
@@ -1795,7 +1798,10 @@ function CloseView( win, delayed )
 							// Only activate non minimized views
 							if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
 							{
-								_ActivateWindow( Friend.GUI.view.viewHistory[ a ] );
+								var vh = Friend.GUI.view.viewHistory[ a ];
+								_ActivateWindow( vh );
+								if( vh.content && vh.content.refresh )
+									vh.content.refresh();
 								nextActive = true;
 							}
 							break;
@@ -1811,7 +1817,10 @@ function CloseView( win, delayed )
 							// Only activate non minimized views
 							if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
 							{
-								_ActivateWindow( Friend.GUI.view.viewHistory[ a ] );
+								var vh = Friend.GUI.view.viewHistory[ a ];
+								_ActivateWindow( vh );
+								if( vh.content && vh.content.refresh )
+									vh.content.refresh();
 								nextActive = true;
 							}
 							break;
@@ -2401,7 +2410,7 @@ var View = function( args )
 		// Register mouse over and out
 		if( !window.isMobile )
 		{
-			div.addEventListener( 'mouseover', function()
+			div.addEventListener( 'mouseover', function( e )
 			{
 				// Keep track of the previous
 				if( typeof( Friend.currentWindowHover ) != 'undefined' && Friend.currentWindowHover )
@@ -2409,12 +2418,15 @@ var View = function( args )
 				Friend.currentWindowHover = div;
 			
 				// Focus on desktop if we're not over a window.
-				if( Friend.previousWindowHover != div )
+				if( Friend.previousWindowHover && Friend.previousWindowHover != div )
 				{
 					// Check first if are focused on an input field
 					// If we are, don't focus on nothing!
 					if( !Friend.GUI.checkWindowState( 'input-focus' ) )
 					{
+						// TODO: If this is an input element, do not lose focus
+						// unless needed. E.g. changing window.
+						//var currentFocus = document.activeElement;
 						window.focus();
 					}
 				}
@@ -2493,6 +2505,8 @@ var View = function( args )
 			title.onmousedown = function( e, mode )
 			{
 				if ( !e ) e = window.event;
+				
+				div.setAttribute( 'moving', 'moving' );
 
 				// Use correct button
 				if( e.button != 0 && !mode ) return cancelBubble( e );
@@ -2610,7 +2624,6 @@ var View = function( args )
 						return;
 					}
 					_ActivateWindow( this, false, e );
-					this.setAttribute( 'moving', 'moving' );
 				}
 			}
 		}
@@ -2623,10 +2636,6 @@ var View = function( args )
 			if( isMobile && !self.parentNode.classList.contains( 'OnWorkspace' ) )
 				return;
 			
-			if( !isMobile )
-			{
-				this.setAttribute( 'moving', 'moving' );
-			}
 			else if( e && !div.classList.contains( 'Active' ) )
 			{
 				this.clickOffset = {
@@ -3968,7 +3977,7 @@ var View = function( args )
 		var view = this;
 		this.iframe = ifr;
 		
-		ifr.onfocus = function()
+		ifr.onfocus = function( e )
 		{
 			if( !ifr.view.parentNode.classList.contains( 'Active' ) )
 			{
@@ -4017,6 +4026,7 @@ var View = function( args )
 
 			var msg = {}; if( packet ) for( var a in packet ) msg[a] = packet[a];
 			msg.command = 'setbodycontent';
+			msg.cachedAppData = _applicationBasics;
 			msg.dosDrivers = Friend.dosDrivers;
 			msg.parentSandboxId = parentIframeId;
 			msg.locale = Workspace.locale;
@@ -4086,7 +4096,7 @@ var View = function( args )
 		iframe.authId = self.authId;
 		iframe.applicationName = self.applicationName;
 		iframe.applicationDisplayName = self.applicationDisplayName;
-		iframe.sandbox = DEFAULT_SANDBOX_ATTRIBUTES; // allow same origin is probably not a good idea, but a bunch other stuff breaks, so for now..
+		if( typeof friendApp == 'undefined' ) iframe.sandbox = DEFAULT_SANDBOX_ATTRIBUTES; // allow same origin is probably not a good idea, but a bunch other stuff breaks, so for now..
 		iframe.referrerPolicy = 'origin';
 
 		self._window.applicationId = conf.applicationId; // needed for View.close to work
@@ -4289,7 +4299,7 @@ var View = function( args )
 		}
 		friendU = Trim( friendU );
 		
-		if( friendU.length || friendU != targetU || !targetU )
+		if( typeof friendApp == 'undefined'  && ( friendU.length || friendU != targetU || !targetU ) )
 			ifr.sandbox = DEFAULT_SANDBOX_ATTRIBUTES;
 
 		// Allow sandbox flags
@@ -4306,7 +4316,7 @@ var View = function( args )
 				}
 			}
 			if( !found ) sbx.push( 'allow-popups' );
-			ifr.sandbox = sbx.join( ' ' );
+			if( typeof friendApp == 'undefined' )  ifr.sandbox = sbx.join( ' ' );
 		}
 
 		ifr.onload = function( e )
@@ -5759,24 +5769,31 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 
 	var curr = window.currentMovable;
 
-	var v = new View( {
-		title: title,
-		width: 400,
-		resize: false,
-		height: d.offsetHeight + 75,
-		id: 'confirm_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
-	} );
+	var v;
+	if( !window.isMobile )
+	{
+		v = new View( {
+			title: title,
+			width: 400,
+			resize: false,
+			height: d.offsetHeight + 75,
+			id: 'confirm_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
+		} );
+	}
+	else
+	{
+		v = new Widget( {
+			width: 'full',
+			height: 'full',
+			above: true,
+			animate: true,
+			transparent: true,
+			id: 'confirm_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
+		} );
+	}
 
 	v.onClose = function()
 	{
-		if( curr && isMobile )
-		{
-			setTimeout( function()
-			{
-				_ActivateWindow( curr );
-				_WindowToFront( curr );
-			}, 550 );
-		}
 	}
 
 	v.setSticky();
@@ -5836,9 +5853,12 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 						v.close();
 				}
 			}
-		}		
-		_ActivateWindow( v._window.parentNode );
-		_WindowToFront( v._window.parentNode );
+		}
+		if( !window.isMobile )
+		{	
+			_ActivateWindow( v._window.parentNode );
+			_WindowToFront( v._window.parentNode );
+		}
 	}
 	f.load();
 }
@@ -5865,24 +5885,31 @@ function Alert( title, string, cancelstring, callback )
 	var themeTitle = GetThemeInfo( 'ViewTitle' ).height;
 	var themeBottom = GetThemeInfo( 'ViewBottom' ).height;
 	
-	var v = new View( {
-		title: title,
-		width: 400,
-		resize: false,
-		height: minContentHeight + parseInt( themeTitle ) + parseInt( themeBottom ),
-		id: 'alert_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
-	} );
+	var v;
+	if( !window.isMobile )
+	{
+		v = new View( {
+			title: title,
+			width: 400,
+			resize: false,
+			height: minContentHeight + parseInt( themeTitle ) + parseInt( themeBottom ),
+			id: 'alert_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
+		} );
+	}
+	else
+	{
+		v = new Widget( {
+			width: 'full',
+			height: 'full',
+			above: true,
+			animate: true,
+			transparent: true,
+			id: 'alert_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
+		} );
+	}
 	
 	v.onClose = function()
 	{
-		if( curr && isMobile )
-		{
-			setTimeout( function()
-			{
-				_ActivateWindow( curr );
-				_WindowToFront( curr );
-			}, 550 );
-		}
 	}
 	
 	v.setSticky();
@@ -5905,8 +5932,11 @@ function Alert( title, string, cancelstring, callback )
 			if( callback ) callback();
 		}
 		
-		_ActivateWindow( v._window.parentNode );
-		_WindowToFront( v._window.parentNode );
+		if( !window.isMobile )
+		{
+			_ActivateWindow( v._window.parentNode );
+			_WindowToFront( v._window.parentNode );
+		}
 	}
 	f.load();
 }

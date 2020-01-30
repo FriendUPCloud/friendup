@@ -162,7 +162,8 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	
 	DEBUG( "[PHPmod] run app: %s\n", command );
 	
-#define PHP_READ_SIZE 8192	
+//#define PHP_READ_SIZE 8192	
+#define PHP_READ_SIZE 65536
 	
 	char *buf = FMalloc( PHP_READ_SIZE+16 );
 	

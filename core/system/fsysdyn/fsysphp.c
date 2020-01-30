@@ -736,12 +736,18 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 	{
 		char tmpfilename[ 712 ];
 		int lockf = -1;
+		struct timeval  tv;
+		gettimeofday(&tv, NULL);
+
+		double timeInMill = 
+         (tv.tv_sec) * 1000 + (tv.tv_usec) / 1000 ; // convert tv_sec & tv_usec to millisecond
 
 		// Make sure we can make the tmp file unique with lock!
 		int retries = 100;
 		do
 		{
-			snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/%s_read_%d%d%d%d", s->f_SessionIDPTR, rand()%9999, rand()%9999, rand()%9999, rand()%9999 );
+			//snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/%s_read_%d%d%d%d", s->f_SessionIDPTR, rand()%9999, rand()%9999, rand()%9999, rand()%9999 );
+			snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/%s_read_%f%d%d", s->f_SessionIDPTR, timeInMill, rand()%9999, rand()%9999 );
 			//DEBUG( "[fsysphp] Trying to lock %s\n", tmpfilename );
 			if( ( lockf = open( tmpfilename, O_CREAT|O_EXCL|O_RDWR ) ) >= 0 )
 			{

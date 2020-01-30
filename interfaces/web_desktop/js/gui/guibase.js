@@ -10,7 +10,7 @@
 
 /* Some important flags for GUI elements ------------------------------------ */
 
-var DEFAULT_SANDBOX_ATTRIBUTES = 'allow-same-origin allow-forms allow-scripts allow-popups';
+var DEFAULT_SANDBOX_ATTRIBUTES = 'allow-same-origin allow-forms allow-scripts allow-popups allow-popups-to-escape-sandbox';
 var FUI_MOUSEDOWN_RESIZE  =  2;
 var FUI_MOUSEDOWN_WINDOW  =  1;
 var FUI_MOUSEDOWN_SCREEN  =  3;
@@ -690,9 +690,9 @@ var mousePointer =
 					el.oldStyle.top = el.style.top;
 					el.oldStyle.left = el.style.left;
 					el.oldStyle.position = el.style.position;
-					el.style.top = 'auto';
-					el.style.left = 'auto';
-					el.style.position = 'relative';
+					el.style.top = el.offsetTop + 'px';
+					el.style.left = el.offsetLeft + 'px';
+					el.style.position = 'absolute';
 					el.oldParent = el.parentNode;
 					if( typeof ele.window.icons[a+1] != 'undefined' )
 						el.sibling = ele.window.icons[a+1].domNode;
@@ -703,6 +703,22 @@ var mousePointer =
 					this.dom.appendChild( el );
 					this.elements.push( el );
 				}
+			}
+			// Align with top left corner
+			var maxx = 99999;
+			var maxy = 99999;
+			var elements = this.elements;
+			for( var a = 0; a < elements.length; a++ )
+			{
+				if( parseInt( elements[ a ].style.left ) < maxx )
+					maxx = parseInt( elements[ a ].style.left );
+				if( parseInt( elements[ a ].style.top ) < maxy )
+					maxy = parseInt( elements[ a ].style.top );
+			}
+			for( var a = 0; a < elements.length; a++ )
+			{
+				elements[ a ].style.left = parseInt( elements[ a ].style.left ) - maxx + 'px';
+				elements[ a ].style.top = parseInt( elements[ a ].style.top ) - maxy + 'px';
 			}
 		}
 		// Pickup single
@@ -2133,14 +2149,7 @@ function DrawRegionSelector( e )
 	{
 		var d = document.createElement( 'div' );
 		d.id = 'RegionSelector';
-		
 		window.regionWindow.appendChild( d );
-		if( document.body.attachEvent )
-		{
-			d.style.border = '1px solid #000000';
-			d.style.background = '#555555';
-			d.style.filter = 'alpha(opacity=50)';
-		}
 	}
 	
 	// Extra offset in content window
@@ -2162,8 +2171,8 @@ function DrawRegionSelector( e )
 		// Some implications per theme accounted for
 		if( rwc.contains( 'Content' ) )
 		{
-			var top = GetThemeInfo( 'ViewTitle' );
-			if( top ) ey -= parseInt( top.height );
+			var top = window.regionWindow.windowObject;
+			if( top ) ey -= window.regionWindow.windowObject._window.parentNode.titleBar.offsetHeight;
 			var bor = GetThemeInfo( 'ScreenContentMargins' );
 			if( bor ) ey += parseInt( bor.top );
 		}
@@ -2458,6 +2467,12 @@ movableMouseUp = function( e )
 		// Hide start menu
 		if( Workspace.toggleStartMenu )
 			Workspace.toggleStartMenu( false );
+	}
+	
+	for( var a in movableWindows )
+	{
+		var m = movableWindows[a];
+		m.removeAttribute( 'moving' );
 	}
 	
 	ExposeScreens(); 
@@ -3127,8 +3142,13 @@ function PollTaskbar( curr )
 								}
 							}
 						}
+						
+						// Need some help? Only show help if parent element is aligned left or right
+						CreateHelpBubble( d, d.window.titleString, false, { positions: [ 'Left', 'Right' ] } );
+						
 						t.appendChild( d );
 						d.origWidth = d.offsetWidth + 20;
+						
 			
 						// Check if we opened a window with a task image
 						if( d.applicationId )
@@ -3952,11 +3972,15 @@ function FocusOnNothing()
 	for( var a in movableWindows )
 	{
 		if( movableWindows[a].windowObject )
+		{
 			movableWindows[a].windowObject.sendMessage( { command: 'blur' } );
+		}
 	}
 	var eles = document.getElementsByTagName( '*' );
 	for( var a = 0; a < eles.length; a++ )
+	{
 		eles[a].blur();
+	}
 	// Why not focus on window!?
 	window.focus();
 }
@@ -4083,7 +4107,7 @@ function FindImageColorProduct( img )
 /* This is bubbles for showing localized help on Workspace scoped elements.   */
 /* TODO: Support API scoped elements...                                       */
 
-function CreateHelpBubble( element, text, uniqueid )
+function CreateHelpBubble( element, text, uniqueid, rules )
 {
 	if( isMobile || isTablet ) return;
 	if( !element || !text ) return;
@@ -4126,32 +4150,43 @@ function CreateHelpBubble( element, text, uniqueid )
 			// Check parent
 			var positionClass = '';
 			var p = e.target ? e.target.parentNode : false;
-			if( p && p.getAttribute( 'position' ) )
+			
+			// Also check parent
+			if( p )
 			{
-				switch( p.getAttribute( 'position' ) )
+				for( var a = 0; a < 2; a++ )
 				{
-					case 'right_center':
-					case 'right_top':
-					case 'right_bottom':
-						positionClass = 'Right';
-						break;
-					case 'left_center':
-					case 'left_top':
-					case 'left_bottom':
-						positionClass = 'Left';
-						break;
-					case 'bottom_left':
-					case 'bottom_center':
-					case 'bottom_right':
-						positionClass = 'Bottom';
-						break;
-					case 'top_left':
-					case 'top_center':
-					case 'top_right':
-						positionClass = 'Top';
-						break;
-					default:
-						break;
+					var found = false;
+					if( p.getAttribute( 'position' ) )
+					{
+						switch( p.getAttribute( 'position' ) )
+						{
+							case 'right_center':
+							case 'right_top':
+							case 'right_bottom':
+								positionClass = 'Right';
+								break;
+							case 'left_center':
+							case 'left_top':
+							case 'left_bottom':
+								positionClass = 'Left';
+								break;
+							case 'bottom_left':
+							case 'bottom_center':
+							case 'bottom_right':
+								positionClass = 'Bottom';
+								break;
+							case 'top_left':
+							case 'top_center':
+							case 'top_right':
+								positionClass = 'Top';
+								break;
+							default:
+								break;
+						}
+					}
+					if( !!positionClass ) break;
+					p = p.parentNode;
 				}
 			}
 			
@@ -4209,12 +4244,31 @@ function CreateHelpBubble( element, text, uniqueid )
 			
 			// Remove all position classes and add right one
 			var pcl = [ 'Left', 'Top', 'Right', 'Bottom' ];
+			if( rules && rules.positions )
+				pcl = rules.positions;
 			for( var z = 0; z < pcl.length; z++ )
 				if( pcl[ a ] != positionClass )
 					v.dom.classList.remove( pcl[ a ] );
-			v.dom.classList.add( positionClass );
+			if( v.dom.className.length && positionClass )
+				v.dom.classList.add( positionClass );
+			else if( positionClass ) v.dom.className = positionClass;
 			
-			v.show();
+			var show = true;
+			if( pcl )
+			{
+				var f = false;
+				for( var a in pcl )
+				{
+					if( positionClass == pcl[ a ] )
+					{
+						f = true;
+						break;
+					}
+				}
+				show = f;
+			}
+			if( show )
+				v.show();
 			element.helpBubble.widget = v;
 		},
 		outListener: function( e )

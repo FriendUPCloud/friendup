@@ -61,6 +61,8 @@ clients must be made or how a client should react.
 
 extern struct SystemBase *SLIB;
 
+#ifdef ENABLE_SSH
+
 void printTrace( void )
 {
   void *array[10];
@@ -256,7 +258,7 @@ static int auth_password( ssh_session session, const char *uname, const char *pa
 				if( sqllib != NULL )
 				{
 					char *err = NULL;
-					UserDeviceMount( sb, sqllib, s->sshs_Usr, 1, TRUE, &err );
+					UserDeviceMount( sb, sqllib, s->sshs_Usr, 1, TRUE, &err, TRUE );
 					if( err != NULL )
 					{
 						FFree( err );
@@ -870,4 +872,6 @@ int SSHThread( FThread *ptr )
 	ptr->t_Launched = FALSE;
     return 0;
 }
+
+#endif // #ifdef ENABLE_SSH
 

@@ -181,6 +181,30 @@ html body.Charcoal .File a
 	color: #e0e0e0;
 }
 
+html body.Charcoal .File.Selected .Title,
+html body.Charcoal #Screens .File.Selected .Title
+{
+	color: white;
+}
+
+html body.Charcoal div .File.Selected:before
+{
+	background-color: rgba(20,20,20,1);
+}
+
+html body.Charcoal .File.Selected:before
+{
+	background: rgba(255,255,255,0.1);
+	border-radius: 2px;
+	content: " ";
+	display: block;
+	width: 120%;
+	position: absolute;
+	top: 0;
+	left: -10%;
+	height: 100%;
+}
+
 html body.Charcoal .File .Icon > *:after
 {
 	color: #303030;
@@ -225,6 +249,13 @@ html body.Charcoal .BoxBlue
 {
 	background-color: #2b2b2b;
 	color: #e0e0e0;
+}
+
+html body[mobile].Charcoal .Dialog,
+html body[mobile].Charcoal .Dialog > .DialogHeader, 
+html body[mobile].Charcoal .Dialog > .DialogButtons
+{
+	background-color: rgba(0,0,0,0.6);
 }
 
 html body.Charcoal .PadBorder {
