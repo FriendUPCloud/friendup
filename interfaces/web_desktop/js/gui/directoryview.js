@@ -466,7 +466,6 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				{
 					var fin = dw.pathHistoryRewind();
 					dw.window.fileInfo = fin;
-					console.log( 'Rewinding: ', fin );
 					
 					if( !isMobile && winobj.fileBrowser )
 					{
@@ -487,7 +486,6 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				{
 					var fin = dw.pathHistoryForward();
 					dw.window.fileInfo = fin;
-					console.log( 'Forwarding: ', fin );
 					
 					if( !isMobile && winobj.fileBrowser )
 					{
@@ -3288,7 +3286,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	{
 		iconInner.classList.add( 'Shared' );
 	}
-	if( fileInfo.MetaType == 'Shortcut' )
+	if( fileInfo.MetaType == 'Shortcut' && !fileInfo.IconFile )
 	{
 		file.classList.add( 'Shortcut' );
 		if( fileInfo.Filename.substr( 0, 1 ) == ':' )
@@ -3965,6 +3963,8 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 		
 		we.refresh = function( callback )
 		{
+			this.directoryview.window.setAttribute( 'listmode', this.directoryview.listMode );
+			
 			// Refresh 1
 			// Run previous callback
 			if( callback )
@@ -4245,6 +4245,8 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 			
 			win.refresh = function( callback )
 			{
+				this.directoryview.window.setAttribute( 'listmode', this.directoryview.listMode );
+				
 				/*if( dv.cancelId )
 				{
 					CancelCajaxOnId( dv.cancelId );
@@ -4349,6 +4351,8 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 		{
 			win.refresh = function ( callback )
 			{	
+				this.directoryview.window.setAttribute( 'listmode', this.directoryview.listMode );
+				
 				// Refresh 3
 				// Run previous callback
 				if( callback )
@@ -5466,7 +5470,9 @@ function GetIconClassByExtension( extension, fileInfo )
 
 
 // -----------------------------------------------------------------------------
-if ( window.addEventListener )
-	window.addEventListener ( 'keydown', CheckDoorsKeys );
-else window.attachEvent ( 'onkeydown', CheckDoorsKeys );
-
+if( !window.isMobile )
+{
+	if ( window.addEventListener )
+		window.addEventListener ( 'keydown', CheckDoorsKeys );
+	else window.attachEvent ( 'onkeydown', CheckDoorsKeys );
+}

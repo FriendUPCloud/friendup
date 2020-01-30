@@ -1,5 +1,5 @@
-Friend Unifying Platform version 1.2-RC2
-========================================
+Friend Unifying Platform version 1.2.0
+======================================
 
 *NB*: For extended functionality and related Friend projects such as the Android app refer [here](https://github.com/FriendSoftwareLabs).
 

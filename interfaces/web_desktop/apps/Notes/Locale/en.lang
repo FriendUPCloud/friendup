@@ -18,6 +18,11 @@ menu_insert_image                 : Insert image
 menu_convert_images_inline        : Images to inline
 menu_vr_features                  : Toggle VR features
 
+menu_design                       : Design
+menu_design_default               : Standard design
+menu_design_atmospheric           : Atmospheric
+menu_design_dark                  : Dark
+
 i18n_root_directory               : Notes
 
 i18n_list                         : List

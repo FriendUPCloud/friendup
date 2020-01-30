@@ -48,16 +48,30 @@ Workspace.deleteFile = function()
 				if( d == true )
 				{
 					// Open a window
-					var v = new View( {
-						title: i18n( 'i18n_deleting_files' ),
-						width: 320,
-						height: 100
-					} );
+					var v;
+					if( window.isMobile )
+					{
+						v = new Widget( {
+							width: 'full',
+							height: 'full',
+							above: true,
+							animate: true,
+							transparent: true
+						} );
+					}
+					else
+					{
+						v = new View( {
+							title: i18n( 'i18n_deleting_files' ),
+							width: 320,
+							height: 100
+						} );
+					}
 					
 					// Build the UI
 					var cont = document.createElement( 'div' );
 					cont.className = 'ContentFull Frame';
-					cont.style.top = '10px';
+					cont.style.top = window.isMobile ? '90px' : '10px';
 					cont.style.left = '10px';
 					cont.style.width = 'calc(100% - 20px)';
 					cont.style.height = '30px';
@@ -87,16 +101,42 @@ Workspace.deleteFile = function()
 					var btn = document.createElement( 'button' );
 					btn.innerHTML = i18n( 'i18n_cancel' );
 					btn.className = 'Button IconSmall fa-remove NoMargins';
-					btn.style.position = 'absolute';
-					btn.style.left = '10px';
-					btn.style.top = '55px';
+					if( window.isMobile ) btn.className += ' FloatRight';
+					btn.style.position = window.isMobile ? '' : 'absolute';
+					btn.style.left = window.isMobile ? '' : '10px';
+					btn.style.top = window.isMobile ? '' : '55px';
 					btn.onclick = function()
 					{
 						stop = true;
 					}
 					
-					v.content.appendChild( cont );
-					v.content.appendChild( btn );
+					// Mobile dialog
+					if( window.isMobile )
+					{
+						var dia = document.createElement( 'div' );
+						dia.className = 'Dialog';
+						var diaCont = document.createElement( 'div' );
+						diaCont.className = 'VContentTop BackgroundDefault Padding ScrollArea';
+						diaCont.style.bottom = '50px';
+						diaCont.innerHTML = '<p>' + i18n( 'i18n_deleting_files' ) + '</p>';
+						
+						var butCont = document.createElement( 'div' );
+						butCont.className = 'Padding VContentBottom BorderTop ColorToolbar BackgroundToolbar TextRight';
+						butCont.style.height = '50px';
+						
+						butCont.appendChild( btn );
+						diaCont.appendChild( cont );
+						
+						dia.appendChild( diaCont );
+						dia.appendChild( butCont );
+						
+						v.dom.appendChild( dia );
+					}
+					else
+					{
+						v.content.appendChild( cont );
+						v.content.appendChild( btn );
+					}
 					
 					var refreshTimeo = {};
 					

@@ -735,13 +735,13 @@ body:not([sharedapp]) #Screens .View.Active .Thumbnail
 	background-color: transparent;
 	transition: background 0.3s;
 }
-body:not([sharedapp]) #Screens .View.Active.Opening .Thumbnail,
+/*body:not([sharedapp]) #Screens .View.Active.Opening .Thumbnail,
 body:not([sharedapp]) #Screens .View.Active.Opened .Thumbnail,
 body:not([sharedapp]) #Screens .View.Active.Redrawing .Thumbnail
 {
 	background-image: none !important;
-	background-color: #202020;
-}
+	background-color: transparent;
+}*/
 
 body #Screens .View:not(.Active)
 {

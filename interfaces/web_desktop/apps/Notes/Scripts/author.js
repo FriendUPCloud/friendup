@@ -72,6 +72,23 @@ Application.run = function( msg, iface )
 					command: 'makeinlineimages'
 				}
 			]
+		},
+		{
+			name: i18n( 'menu_design' ),
+			items: [
+				{
+					name: i18n( 'menu_design_default' ),
+					command: 'design_default'
+				},
+				{
+					name: i18n( 'menu_design_atmospheric' ),
+					command: 'design_atmospheric'
+				},
+				{
+					name: i18n( 'menu_design_dark' ),
+					command: 'design_dark'
+				}
+			]
 		}/*,
 		{
 			name: i18n( 'menu_preferences' ),
@@ -527,6 +544,11 @@ Application.receiveMessage = function( msg )
 					Application.insertImage( items[a].Path );
 				}
 			}, 'Mountlist:', 'load' );
+			break;
+		case 'design_default':
+		case 'design_atmospheric':
+		case 'design_dark':
+			this.mainView.sendMessage( msg );
 			break;
 	}
 }

@@ -629,7 +629,13 @@ var WorkspaceInside = {
 			{
 				if( e.type == 'open' )
 				{
-					Workspace.websocketState = 'open';
+					// TODO: Fix this!! Whenthe state is open, ws should 
+					//       immediately be able to handle requests, now its
+					//       a slight delay
+					setTimeout( function()
+					{
+						Workspace.websocketState = 'open';
+					}, 150 );
 				}
 				else if( e.type == 'connecting' )
 				{
@@ -749,7 +755,6 @@ var WorkspaceInside = {
 							Workspace.appFilesystemEvents[ 'filesystem-change' ] = outEvents;
 						}
 					}
-					console.log('Refresh window by path: ' + p );
 				
 					Workspace.refreshWindowByPath( p );
 					
@@ -1748,6 +1753,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									index: 0,
 									func: function()
 									{
+										if( Workspace.getWebSocketsState() != 'open' )
+										{
+											return setTimeout( function(){ l.func() }, 500 );
+										}
 										if( !ScreenOverlay.done && l.index < seq.length )
 										{
 											// Register for Friend DOS
@@ -1775,6 +1784,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 														if( ScreenOverlay.debug )
 															slot = ScreenOverlay.addStatus( i18n( 'i18n_processing' ), cmd );											
 														ScreenOverlay.addDebug( 'Executing ' + cmd );
+
 														Workspace.shell.execute( cmd, function( res )
 														{
 															if( ScreenOverlay.debug )
@@ -3008,6 +3018,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									clearInterval( Workspace.insideInterval );
 									Workspace.insideInterval = null;
 								
+									loadApplicationBasics();
+								
 									// Set right classes
 									document.body.classList.add( 'Inside' );
 									document.body.classList.add( 'Loaded' );
@@ -3746,11 +3758,22 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								var num = StrPad( path.substr( 0, ind ), 10, '0' );
 								path = path.substr( ind + 1, path.length - ( ind + 1 ) );
 								
+
+								// Link to a repository?
+								var iconFile = '';
+								if( path.substr( -11, 11 ) == ':repository' )
+								{
+									path = path.substr( 0, path.length - 11 );
+									iconFile = '/system.library/module/?module=system&command=repoappimage&i=' + GetFilename( path ) + '&sessionid=' + Workspace.sessionId;
+								}
+								
 								var fn = GetFilename( path );
+								
 								newIcons.push( {
 									Title: fn,
 									Filename: path,
 									Path: path,
+									IconFile: iconFile,
 									Type: path.substr( path.length - 1, 1 ) == '/' ? 'Directory' : 'File',
 									SortPriority: num,
 									Handler: 'built-in',
@@ -4175,12 +4198,27 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if( Workspace.newDir )
 				return Workspace.newDir.activate();
 			
-			var d = new View( {
-				id: 'makedir',
-				width: 325,
-				height: 100,
-				title: i18n( 'i18n_make_a_new_container' )
-			} );
+			var d;
+			
+			if( !window.isMobile )
+			{
+				d = new View( {
+					id: 'makedir',
+					width: 325,
+					height: 100,
+					title: i18n( 'i18n_make_a_new_container' )
+				} );
+			}
+			else
+			{
+				d = new Widget( {
+					width: 'full',
+					height: 'full',
+					above: true,
+					animate: true,
+					transparent: true
+				} );
+			}
 			
 			Workspace.newDir = d;
 			d.onClose = function()
@@ -4188,29 +4226,60 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				Workspace.newDir = null;
 			}
 
-			d.setContent( '\
-			<div class="ContentFull">\
-				<div class="VContentTop BorderBottom" style="bottom: 50px;">\
-					<div class="Padding">\
-						<div class="HRow">\
-							<div class="HContent25 FloatLeft">\
-								<p class="Layout InputHeight"><strong>' + i18n( 'i18n_name' ) + ':</strong></p>\
-							</div>\
-							<div class="HContent75 FloatLeft">\
-								<p class="Layout InputHeight"><input class="FullWidth MakeDirName" type="text" value="' + i18n( 'i18n_new_container' ) + '"/></p>\
+			if( window.isMobile )
+			{
+				d.setContent( '\
+				<div class="Dialog">\
+					<div class="VContentTop BackgroundDefault Padding ScrollArea">\
+						<div>\
+							<p><strong>' + i18n( 'i18n_name' ) + ':</strong></p>\
+						</div>\
+						<div class="Padding">\
+							<div class="HRow">\
+								<div class="HContent100 FloatLeft">\
+									<p class="Layout InputHeight"><input class="FullWidth MakeDirName" type="text" value="' + i18n( 'i18n_new_container' ) + '"/></p>\
+								</div>\
 							</div>\
 						</div>\
 					</div>\
-				</div>\
-				<div class="VContentBottom Padding" style="height: 50px">\
-					<button type="button" class="Button fa-folder IconSmall NetContainerButton">\
-						' + i18n( 'i18n_create_container' ) + '\
-					</button>\
-				</div>\
-			</div>' );
+					<div class="VContentBottom BorderTop ColorToolbar BackgroundToolbar TextRight Padding" style="height: 50px">\
+						<button type="button" class="Button fa-remove IconSmall CancelButton">\
+							' + i18n( 'i18n_cancel' ) + '\
+						</button>\
+						<button type="button" class="Button fa-folder IconSmall NetContainerButton">\
+							' + i18n( 'i18n_create_container' ) + '\
+						</button>\
+					</div>\
+				</div>' );
+			}
+			else
+			{
+				d.setContent( '\
+				<div class="ContentFull">\
+					<div class="VContentTop BorderBottom" style="bottom: 50px;">\
+						<div class="Padding">\
+							<div class="HRow">\
+								<div class="HContent25 FloatLeft">\
+									<p class="Layout InputHeight"><strong>' + i18n( 'i18n_name' ) + ':</strong></p>\
+								</div>\
+								<div class="HContent75 FloatLeft">\
+									<p class="Layout InputHeight"><input class="FullWidth MakeDirName" type="text" value="' + i18n( 'i18n_new_container' ) + '"/></p>\
+								</div>\
+							</div>\
+						</div>\
+					</div>\
+					<div class="VContentBottom Padding" style="height: 50px">\
+						<button type="button" class="Button fa-folder IconSmall NetContainerButton">\
+							' + i18n( 'i18n_create_container' ) + '\
+						</button>\
+					</div>\
+				</div>' );
+			}
 
 			var inputField  = d.getByClass( 'MakeDirName' )[0];
 			var inputButton = d.getByClass( 'NetContainerButton' )[0];
+			var can = d.getByClass( 'CancelButton' )[0];
+			if( can ) can.onclick = function(){ d.close(); }
 
 			var fi = directoryWindow.content.fileInfo;
 			var dr;
@@ -4313,37 +4382,93 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				
 				
 
-				var w = new View( {
-					title: i18n( 'rename_file' ),
-					width: 320,
-					height: 100,
-					resize: false
-				} );
+				var w;
+				if( window.isMobile )
+				{
+					w = new Widget( {
+						width: 'full',
+						height: 'full',
+						above: true,
+						animate: true,
+						transparent: true
+					} );
+				}
+				else
+				{
+					w = new View( {
+						title: i18n( 'rename_file' ),
+						width: 320,
+						height: 100,
+						resize: false
+					} );
+				}
 
 				Workspace.renameWindow = w;
 
-				w.setContent( '\
-					<div class="ContentFull LayoutButtonbarBottom">\
-						<div class="VContentTop Padding">\
-							<div class="HRow MarginBottom">\
-								<div class="HContent30 FloatLeft"><p class="InputHeight"><strong>' + i18n( 'new_name' ) + ':</strong></p></div>\
-								<div class="HContent70 FloatLeft"><input type="text" class="InputHeight FullWidth" value="' + nam + '"></div>\
+				if( window.isMobile )
+				{
+					w.setContent( '\
+						<div class="Dialog">\
+							<div class="VContentTop BackgroundDefault Padding ScrollArea">\
+								<div><p><strong>' + i18n( 'new_name' ) + ':</strong></p></div>\
+								<div class="HRow">\
+									<div class="HContent100 FloatLeft"><input type="text" class="InputHeight FullWidth" value="' + nam + '"></div>\
+								</div>\
+							</div>\
+							<div class="Padding VContentBottom BorderTop ColorToolbar BackgroundToolbar TextRight" style="height: 50px">\
+								<button type="button" class="Button IconSmall fa-remove">\
+									' + i18n( 'i18n_cancel' ) + '\
+								</button>\
+								<button type="button" class="Button IconSmall fa-edit">\
+									' + i18n( 'rename_file' ) + '\
+								</button>\
 							</div>\
 						</div>\
-						<div class="VContentBottom Padding BackgroundDefault BorderTop">\
-							<button type="button" class="Button IconSmall fa-edit">\
-								' + i18n( 'rename_file' ) + '\
-							</button>\
+					' );
+				}
+				else
+				{
+					w.setContent( '\
+						<div class="ContentFull LayoutButtonbarBottom">\
+							<div class="VContentTop Padding">\
+								<div class="HRow MarginBottom">\
+									<div class="HContent30 FloatLeft"><p class="InputHeight"><strong>' + i18n( 'new_name' ) + ':</strong></p></div>\
+									<div class="HContent70 FloatLeft"><input type="text" class="InputHeight FullWidth" value="' + nam + '"></div>\
+								</div>\
+							</div>\
+							<div class="VContentBottom Padding BackgroundDefault BorderTop">\
+								<button type="button" class="Button IconSmall fa-edit">\
+									' + i18n( 'rename_file' ) + '\
+								</button>\
+							</div>\
 						</div>\
-					</div>\
-				' );
+					' );
+				}
 
-				var inp = w.getElementsByTagName( 'input' )[0];
-				var btn = w.getElementsByTagName( 'button' )[0];
+				var dom = window.isMobile ? w.dom : w;
+				var inp = dom.getElementsByTagName( 'input' )[0];
+				var btn = dom.getElementsByTagName( 'button' );
+				var clb = null;
+				if( !window.isMobile )
+				{
+					btn = btn[0];
+				}
+				else
+				{
+					clb = btn[0];
+					btn = btn[1];
+				}
 
 				btn.onclick = function()
 				{
-					Workspace.executeRename( w.getElementsByTagName( 'input' )[0].value, icon, rwin );
+					Workspace.executeRename( dom.getElementsByTagName( 'input' )[0].value, icon, rwin );
+				}
+				if( clb )
+				{
+					clb.onclick = function()
+					{
+						w.close();
+					}
 				}
 				inp.select();
 				inp.focus();
@@ -7301,9 +7426,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					p.onclick = function( event )
 					{
 						if( !v.shown ) return;
+						var self = this;
 						if( this.cmd && typeof( this.cmd ) == 'function' )
 						{
-							this.cmd( event );
+							// Give a small timeout to allow for mouseup
+							setTimeout( function()
+							{
+								self.cmd( event );
+							}, 50 );
 						}
 						menuout.classList.add( 'Closing' );
 						menuout.classList.remove( 'Open' );
@@ -8075,8 +8205,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				Workspace.onReady( false, true );
 			return;
 		}
-		
-		console.log( 'Fop fop fop' );
 		
 		// No home disk? Try to refresh the desktop
 		// Limit two times..
@@ -9873,4 +10001,49 @@ function mobileDebug( str, clear )
 	}, 15000 );
 }
 
+// Cache the app themes --------------------------------------------------------
+// TODO: Test loading different themes
 
+_applicationBasics = {};
+function loadApplicationBasics()
+{
+	// Preload basic scripts
+	var a = new File( '/webclient/js/apps/api.js' );
+	a.onLoad = function( data )
+	{
+		_applicationBasics.apiV1 = URL.createObjectURL( new Blob( [ data ], { type: 'text/javascript' } ) );
+	}
+	a.load();
+	var sb = new File( '/themes/friendup12/scrollbars.css' );
+	sb.onLoad = function( data )
+	{
+		if( _applicationBasics.css )
+			_applicationBasics.css += data;
+		else _applicationBasics.css = data;
+	}
+	sb.load();
+	// Preload basic scripts
+	var c = new File( '/system.library/module/?module=system&command=theme&args=%7B%22theme%22%3A%22friendup12%22%7D&sessionid=' + Workspace.sessionId );
+	c.onLoad = function( data )
+	{
+		if( _applicationBasics.css )
+			_applicationBasics.css += data;
+		else _applicationBasics.css = data;
+	}
+	c.load();
+	var js = '/webclient/' + [ 'js/oo.js',
+	'js/api/friendappapi.js',
+	'js/utils/engine.js',
+	'js/utils/tool.js',
+	'js/utils/json.js',
+	'js/io/cajax.js',
+	'js/io/appConnection.js',
+	'js/io/coreSocket.js',
+	'js/gui/treeview.js' ].join( ';/webclient/' );
+	var j = new File( js );
+	j.onLoad = function( data )
+	{
+		_applicationBasics.js = data;
+	}
+	j.load();
+};
