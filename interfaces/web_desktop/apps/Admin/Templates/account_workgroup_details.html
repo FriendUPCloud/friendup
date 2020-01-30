@@ -1,11 +1,24 @@
 
-	<h2>
-		{i18n_workgroup_details}
-	</h2>
+	<div class="HRow PaddingBottom">
+		<div class="HContent50 FloatLeft">
+			<!--<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left" id="GroupBackBtn"></button>-->
+			<h3 class="NoMargin FloatLeft">
+				<strong>{i18n_workgroup_details}</strong>
+			</h3>
+		</div>
+	</div>
 	
-	<h1 class="ImageHeading">
-		{workgroup_title}
-	</h1>
+	<div class="HRow BackgroundNegativeAlt Negative Padding">
+		<div class="HContent30 FloatLeft Ellipsis">
+			<div class="BackgroundPositiveAlt NegativeAlt PaddingSmall FloatLeft IconMedium fa-users"></div>
+		</div>
+		<div class="HContent70 FloatLeft Ellipsis">
+			<h2 class="ImageHeading NoMargin">
+				<strong>{workgroup_title}</strong>
+			</h2>
+		</div>
+	</div>
+	
 	<div class="Box Padding" id="WorkgroupBasicDetails">
 	
 		<div class="HRow MarginBottom">
@@ -43,7 +56,7 @@
 		
 		<div id="GroupEditContainer">
 			<div class="HRow">
-				<button class="IconButton IconSmall IconToggle ButtonSmall FloatLeft fa-trash" id="GroupDeleteBtn"></button>
+				<button class="IconButton IconSmall IconToggle ButtonSmall FloatLeft NegativeAlt fa-trash" id="GroupDeleteBtn"></button>
 				<div id="GroupEditButtons">
 					<button class="ButtonAlt IconSmall FloatRight MarginLeft" id="GroupSaveBtn">
 						{i18n_save}

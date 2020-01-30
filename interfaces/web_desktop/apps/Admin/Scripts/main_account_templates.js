@@ -3021,7 +3021,7 @@ Sections.accounts_templates = function( cmd, extra )
 						'element' : function() 
 						{
 							var d = document.createElement( 'div' );
-							d.className = 'HRow Padding';
+							d.className = 'HRow PaddingBottom';
 							return d;
 						}(),
 						'child' : 
@@ -3030,8 +3030,8 @@ Sections.accounts_templates = function( cmd, extra )
 								'element' : function() 
 								{
 									var d = document.createElement( 'div' );
-									d.className = 'HContent40 FloatLeft';
-									d.innerHTML = '<h3><strong>' + i18n( 'i18n_templates' ) + '</strong></h3>';
+									d.className = 'HContent50 FloatLeft';
+									d.innerHTML = '<h3 class="NoMargin FloatLeft"><strong>' + i18n( 'i18n_templates' ) + '</strong></h3>';
 									return d;
 								}() 
 							}, 
@@ -3039,7 +3039,7 @@ Sections.accounts_templates = function( cmd, extra )
 								'element' : function() 
 								{
 									var d = document.createElement( 'div' );
-									d.className = 'HContent60 FloatLeft Relative';
+									d.className = 'HContent50 FloatLeft Relative';
 									return d;
 								}(), 
 								'child' : 
@@ -3048,6 +3048,7 @@ Sections.accounts_templates = function( cmd, extra )
 										'element' : function() 
 										{
 											var d = document.createElement( 'input' );
+											d.type = 'text';
 											d.className = 'FullWidth';
 											d.placeholder = 'Search templates...';
 											d.onkeyup = function ( e ) { filter( this.value, true ); console.log( 'do search ...' ); };
@@ -3071,7 +3072,7 @@ Sections.accounts_templates = function( cmd, extra )
 								'element' : function() 
 								{
 									var d = document.createElement( 'div' );
-									d.className = 'HRow BackgroundNegativeAlt Negative PaddingTop PaddingLeft PaddingBottom';
+									d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingTop PaddingBottom PaddingRight';
 									return d;
 								}(),
 								'child' : 
@@ -3080,7 +3081,7 @@ Sections.accounts_templates = function( cmd, extra )
 										'element' : function() 
 										{
 											var d = document.createElement( 'div' );
-											d.className = 'PaddingSmallRight HContent90 FloatLeft Ellipsis';
+											d.className = 'PaddingSmall HContent90 FloatLeft Ellipsis';
 											d.innerHTML = '<strong>Name</strong>';
 											return d;
 										}()
@@ -3089,7 +3090,7 @@ Sections.accounts_templates = function( cmd, extra )
 										'element' : function() 
 										{
 											var d = document.createElement( 'div' );
-											d.className = 'PaddingSmall HContent10 TextCenter FloatLeft Ellipsis';
+											d.className = 'HContent10 TextCenter FloatLeft Ellipsis';
 											d.onclick = function () {  };
 											return d;
 											
@@ -3130,7 +3131,7 @@ Sections.accounts_templates = function( cmd, extra )
 				{
 					
 					var list = document.createElement( 'div' );
-					list.className = 'List';
+					list.className = 'List PaddingSmallTop PaddingSmallBottom';
 					
 					for( var k in temp )
 					{
@@ -3158,7 +3159,7 @@ Sections.accounts_templates = function( cmd, extra )
 											{
 												var d = document.createElement( 'div' );
 												d.className = 'TextCenter HContent10 FloatLeft PaddingSmall Ellipsis';
-												d.innerHTML = '<span class="IconSmall fa-file-text-o"></span>';
+												d.innerHTML = '<span class="IconSmall NegativeAlt fa-file-text-o"></span>';
 												return d;
 											}()
 										},

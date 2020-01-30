@@ -1077,7 +1077,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																	'element' : function() 
 																	{
 																		var d = document.createElement( 'div' );
-																		d.className = 'IconSmall fa-user-circle-o avatar';
+																		d.className = 'IconSmall NegativeAlt fa-user-circle-o avatar';
 																		//d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																		//d.style.backgroundSize = 'contain';
 																		//d.style.width = '24px';
@@ -1236,7 +1236,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																	'element' : function() 
 																	{
 																		var d = document.createElement( 'div' );
-																		d.className = 'IconSmall fa-user-circle-o avatar';
+																		d.className = 'IconSmall NegativeAlt fa-user-circle-o avatar';
 																		//d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																		//d.style.backgroundSize = 'contain';
 																		//d.style.width = '24px';
@@ -1517,7 +1517,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				// Types of listed fields
 				var types = {
 					edit: '10',
-					name: '80'
+					name: '90'
 				};
 			
 			
@@ -1525,15 +1525,24 @@ Sections.accounts_workgroups = function( cmd, extra )
 				var levels = [ 'User' ];
 			
 			
-				var h2 = document.createElement( 'h2' );
-				h2.innerHTML = i18n( 'i18n_workgroups' );
-				o.appendChild( h2 );
-			
+				//var h2 = document.createElement( 'h3' );
+				//h2.innerHTML = i18n( 'i18n_workgroups' );
+				//o.appendChild( h2 );
+				
+				var h3 = document.createElement( 'div' );
+				h3.className  = 'HRow PaddingBottom';
+				h3.innerHTML  = '<div class="HContent50 FloatLeft"><h3 class="NoMargin FloatLeft"><strong>' + i18n( 'i18n_workgroups' ) + '</strong></h3></div>';
+				h3.innerHTML += '<div class="HContent50 FloatLeft Relative"><input type="text" class="FullWidth" placeholder="Search workgroups"></div>';
+				o.appendChild( h3 );
+				
+				
+				
+				
 				// List headers
 				var header = document.createElement( 'div' );
 				header.className = 'List';
 				var headRow = document.createElement( 'div' );
-				headRow.className = 'HRow BackgroundNegativeAlt Negative PaddingTop PaddingBottom';
+				headRow.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingTop PaddingBottom PaddingRight';
 				for( var z in types )
 				{
 					var borders = '';
@@ -1543,14 +1552,18 @@ Sections.accounts_workgroups = function( cmd, extra )
 					if( a < userList.length - a )
 						borders += ' BorderBottom';
 					var d = document.createElement( 'div' );
-					d.className = 'PaddingSmallLeft PaddingSmallRight HContent' + ( types[ z ] ? types[ z ] : '-' ) + ' FloatLeft Ellipsis' + borders;
-					if( z == 'edit' ) z = '&nbsp;';
+					d.className = 'PaddingSmall HContent' + ( types[ z ] ? types[ z ] : '-' ) + ' FloatLeft Ellipsis' + borders;
+					if( z == 'edit' )
+					{
+						continue;
+						z = '&nbsp;';
+					}
 					d.innerHTML = '<strong' + ( z != '&nbsp;' ? '' : '' ) + '>' + ( z != '&nbsp;' ? i18n( 'i18n_header_' + z ) : '&nbsp;' ) + '</strong>';
 					headRow.appendChild( d );
 				}
 			
 				var d = document.createElement( 'div' );
-				d.className = 'PaddingSmall HContent' + '10' + ' TextCenter FloatLeft Ellipsis';
+				d.className = 'HContent' + '10' + ' TextCenter FloatLeft Ellipsis';
 				d.innerHTML = '<button class="IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle"></button>';
 				d.onclick = function()
 				{
@@ -1572,7 +1585,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				}
 			
 				var list = document.createElement( 'div' );
-				list.className = 'List';
+				list.className = 'List PaddingSmallTop PaddingSmallBottom';
 				var sw = 2;
 				for( var b = 0; b < levels.length; b++ )
 				{
@@ -1607,7 +1620,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 							setROnclick( r, userList[ a ].ID );
 							r.className = 'HRow ';
 			
-							var icon = '<span class="IconSmall fa-users"></span>';
+							var icon = '<span class="IconSmall NegativeAlt fa-users"></span>';
 							userList[ a ][ 'edit' ] = icon;
 				
 							for( var z in types )

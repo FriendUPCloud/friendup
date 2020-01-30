@@ -1723,7 +1723,8 @@ Sections.accounts_users = function( cmd, extra )
 								{
 									if( Application.checkAppPermission( 'PERM_ROLE_GLOBAL' ) || Application.checkAppPermission( 'PERM_ROLE_WORKGROUP' ) )
 									{
-										if( ge( 'AdminRoleContainer' ) ) ge( 'AdminRoleContainer' ).className = 'Open';
+										console.log( 'Hiding "AdminRoleContainer" for now until development there is complete ...' );
+										//if( ge( 'AdminRoleContainer' ) ) ge( 'AdminRoleContainer' ).className = 'Open';
 									}
 								}
 								
@@ -1739,7 +1740,8 @@ Sections.accounts_users = function( cmd, extra )
 								{
 									if( Application.checkAppPermission( 'PERM_APPLICATION_GLOBAL' ) || Application.checkAppPermission( 'PERM_APPLICATION_WORKGROUP' ) )
 									{
-										if( ge( 'AdminApplicationContainer' ) ) ge( 'AdminApplicationContainer' ).className = 'Open';
+										console.log( 'Hiding "AdminApplicationContainer" for now until development there is complete ...' );
+										//if( ge( 'AdminApplicationContainer' ) ) ge( 'AdminApplicationContainer' ).className = 'Open';
 									}
 								}
 								
@@ -2968,7 +2970,7 @@ Sections.accounts_users = function( cmd, extra )
 					'status="' + userList[ a ].Status + '" '       + 
 					'logintime="' + userList[ a ].LoginTime + '" ' + 
 					'timestamp="' + timestamp + '" '               +
-					'class="IconSmall fa-user-circle-o avatar" '   + 
+					'class="IconSmall NegativeAlt fa-user-circle-o avatar" '   + 
 					'style="position: relative;" '                 +
 					'><div style="' + bg + '"></div></span>';
 					

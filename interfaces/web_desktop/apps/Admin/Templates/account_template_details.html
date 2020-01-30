@@ -1,11 +1,31 @@
 
-	<h2>
+	<!--<h2>
 		{i18n_template_details}
 	</h2>
 	
 	<h1 class="ImageHeading">
 		{template_title}
-	</h1>
+	</h1>-->
+	
+	<div class="HRow PaddingBottom">
+		<div class="HContent50 FloatLeft">
+			<!--<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left" id="TempBackBtn"></button>-->
+			<h3 class="NoMargin FloatLeft">
+				<strong>{i18n_template_details}</strong>
+			</h3>
+		</div>
+	</div>
+	
+	<div class="HRow BackgroundNegativeAlt Negative Padding">
+		<div class="HContent30 FloatLeft Ellipsis">
+			<div class="BackgroundPositiveAlt NegativeAlt PaddingSmall FloatLeft IconMedium fa-file-text-o"></div>
+		</div>
+		<div class="HContent70 FloatLeft Ellipsis">
+			<h2 class="ImageHeading NoMargin">
+				<strong>{template_title}</strong>
+			</h2>
+		</div>
+	</div>
 	
 	<div class="Box Padding" id="TempBasicDetails">
 		
@@ -40,7 +60,7 @@
 		
 		<div id="TempEditContainer">
 			<div class="HRow">
-				<button class="IconButton IconSmall IconToggle ButtonSmall FloatLeft fa-trash" id="TempDeleteBtn"></button>
+				<button class="IconButton IconSmall IconToggle ButtonSmall FloatLeft NegativeAlt fa-trash" id="TempDeleteBtn"></button>
 				<div id="TempEditButtons">
 					<button class="ButtonAlt IconSmall FloatRight MarginLeft" id="TempSaveBtn">
 						{i18n_save}
