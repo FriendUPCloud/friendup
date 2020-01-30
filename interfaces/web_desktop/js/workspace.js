@@ -806,10 +806,12 @@ Workspace = {
 				{
 					var js = JSON.parse( d );
 					// Session authentication failed
-					if( parseInt( d.code ) == 3 || parseInt( d.code ) == 11 )
+					if( parseInt( js.code ) == 3 || parseInt( js.code ) == 11 )
 					{
 						// console.log( 'Test2: Flush session' );
 						Workspace.flushSession();
+						Workspace.reloginInProgress = false;
+						return executeCleanRelogin();
 					}
 				}
 				catch( n )

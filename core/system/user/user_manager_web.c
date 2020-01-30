@@ -56,10 +56,13 @@ inline static int killUserSession( SystemBase *l, UserSession *ses )
 	// wait till queue will be empty
 	while( TRUE )
 	{
-		if( ses->us_WSConnections ->wusc_Data->wsc_MsgQueue.fq_First == NULL )
+		FRIEND_MUTEX_LOCK( &(ses->us_Mutex) );
+		if( ses->us_WSConnections->wusc_Data->wsc_MsgQueue.fq_First == NULL )
 		{
+			FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
 			break;
 		}
+		FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
 		usleep( 1000 );
 	}
 	
