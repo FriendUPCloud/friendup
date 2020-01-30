@@ -272,7 +272,7 @@ FriendConnection.prototype.onWsMessage = function( msg )
 FriendConnection.prototype.onWsState = function( e )
 {
 	var self = this;
-	console.log( 'onWsState', e );
+	//console.log( 'onWsState', e );
 	if ( self.onstate )
 		self.onstate( e );
 }
