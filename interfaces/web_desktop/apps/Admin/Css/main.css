@@ -237,6 +237,14 @@
 	color: green;
 }
 
+#Admin .IconToggle.fa-toggle-off:hover, 
+#Admin .IconToggle.fa-toggle-on:hover
+{
+	background: transparent;
+	padding: 5px 5px;
+	border: 1px solid rgba(0,0,0,0) !important;
+}
+
 #Admin div button, html > body > div .Button
 {
 
@@ -390,7 +398,7 @@
     height: 100%;
     max-height: 100%;
     zoom: 0.5;
-}
+} 
 
 #Admin .Disabled
 {
