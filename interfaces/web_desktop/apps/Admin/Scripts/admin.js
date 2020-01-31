@@ -8,8 +8,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-var v = false;
-
 Application.run = function( msg )
 {
 	this.sendMessage( { type: 'system', command: 'setsingleinstance', value: true } );
