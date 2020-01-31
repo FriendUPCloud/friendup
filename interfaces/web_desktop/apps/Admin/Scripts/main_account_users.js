@@ -228,20 +228,29 @@ Sections.accounts_users = function( cmd, extra )
 						var wstr = '';
 						if( wgroups.length )
 						{
-							for( var b = 0; b < wgroups.length; b++ )
+							var wids = {};
+							
+							for( var a in wgroups )
 							{
-								if( !wgroups[b].Name ) continue;
-								
-								//wstr += '<div class="HRow">';
-								//wstr += '<div class="HContent100"><strong>' + wgroups[b].Name + '</strong></div>';
-								//wstr += '</div>';
-								
-								wstr += '<div class="HRow">';
-								wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis"><strong>' + wgroups[b].Name + '</strong></div>';
-								wstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
-								wstr += '		<button wid="' + wgroups[b].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
-								wstr += '	</div>';
-								wstr += '</div>';
+								if( wgroups[a] && wgroups[a].ID && wgroups[a].Name )
+								{
+									wids[ wgroups[a].ID ] = wgroups[a];
+								}
+							}
+							
+							if( wids )
+							{
+								for( var b in wids )
+								{
+									if( !wids[b] || !wids[b].Name ) continue;
+									
+									wstr += '<div class="HRow">';
+									wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis"><strong>' + wids[b].Name + '</strong></div>';
+									wstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
+									wstr += '		<button wid="' + wids[b].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+									wstr += '	</div>';
+									wstr += '</div>';
+								}
 							}
 						}
 					
