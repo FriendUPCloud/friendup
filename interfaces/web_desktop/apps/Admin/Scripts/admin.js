@@ -8,8 +8,12 @@
 *                                                                              *
 *****************************************************************************©*/
 
+var v = false;
+
 Application.run = function( msg )
 {
+	this.sendMessage( { type: 'system', command: 'setsingleinstance', value: true } );
+	
 	var v = new View( {
 		title: 'Friend Admin',
 		width: 1280,
@@ -27,6 +31,7 @@ Application.run = function( msg )
 	{
 		Application.quit();
 	}
+	
 }
 
 
