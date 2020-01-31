@@ -783,8 +783,8 @@ Sections.accounts_templates = function( cmd, extra )
 			
 			wallpaper_button : function ()
 			{
-				
-				return '<button class="ButtonAlt IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>';
+				// TODO: Fix first login first so we can set wallpapers on users not logged in yet.
+				return ''/*'<button class="ButtonAlt IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>'*/;
 				
 			},
 			
@@ -3051,6 +3051,7 @@ Sections.accounts_templates = function( cmd, extra )
 											d.type = 'text';
 											d.className = 'FullWidth';
 											d.placeholder = 'Search templates...';
+											d.onclick = function (  ){ alert( 'TODO ...' ); };
 											d.onkeyup = function ( e ) { filter( this.value, true ); console.log( 'do search ...' ); };
 											return d;
 										}() 
