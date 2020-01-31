@@ -3726,6 +3726,15 @@ movableMouseDown = function ( e )
 		
 		return cancelBubble( 2 );
 	}
+	else if ( isMobile && ( clickonDesktop || clickOnView ) )
+	{
+		// TODO: Perhaps scroll shouldn't deselect
+		if( clickOnView )
+		{
+			clearRegionIcons( { force: true } );
+		}
+		
+	}
 }
 
 // Go into standard Workspace user mode (f.ex. clicking on wallpaper)
