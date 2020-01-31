@@ -224,7 +224,7 @@ Sections.accounts_templates = function( cmd, extra )
 		{
 			// TODO: remove all other Selected in the list first ...
 			
-			var pnt = _this.parentNode;
+			var pnt = _this.parentNode.getElementsByTagName( 'div' );
 			
 			if( pnt )
 			{

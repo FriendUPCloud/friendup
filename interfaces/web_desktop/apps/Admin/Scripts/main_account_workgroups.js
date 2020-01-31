@@ -213,7 +213,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 		{
 			// TODO: remove all other Selected in the list first ...
 			
-			var pnt = _this.parentNode;
+			var pnt = _this.parentNode.getElementsByTagName( 'div' );
 			
 			if( pnt )
 			{
@@ -1580,7 +1580,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					r.onclick = function()
 					{
 						//Sections.accounts_workgroups( 'details', uid );
-						edit( uid );
+						edit( uid, this );
 					}
 				}
 			
