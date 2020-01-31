@@ -1532,7 +1532,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				var h3 = document.createElement( 'div' );
 				h3.className  = 'HRow PaddingBottom';
 				h3.innerHTML  = '<div class="HContent50 FloatLeft"><h3 class="NoMargin FloatLeft"><strong>' + i18n( 'i18n_workgroups' ) + '</strong></h3></div>';
-				h3.innerHTML += '<div class="HContent50 FloatLeft Relative"><input type="text" class="FullWidth" placeholder="Search workgroups"></div>';
+				h3.innerHTML += '<div class="HContent50 FloatLeft Relative"><input type="text" class="FullWidth" placeholder="Search workgroups" onclick="alert(\'TODO ...\');"></div>';
 				o.appendChild( h3 );
 				
 				

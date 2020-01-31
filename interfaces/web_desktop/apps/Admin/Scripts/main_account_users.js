@@ -1817,8 +1817,8 @@ Sections.accounts_users = function( cmd, extra )
 			
 							wallpaper_button : function ()
 							{
-				
-								return '<button class="ButtonAlt IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>';
+								// TODO: Fix first login first so we can set wallpapers on users not logged in yet.
+								return ''/*'<button class="ButtonAlt IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>'*/;
 				
 							},
 			
