@@ -877,7 +877,8 @@ function _ActivateWindowOnly( div )
 	}
 	
 	// Don't select other fields
-	FocusOnNothing();
+	if( !div.classList.contains( 'Active' ) )
+		FocusOnNothing();
 	
 	// Special case
 	var delayedDeactivation = true;
@@ -890,7 +891,6 @@ function _ActivateWindowOnly( div )
 	for( var a in movableWindows )
 	{
 		var m = movableWindows[a];
-		m.removeAttribute( 'moving' );
 
 		// No div selected or not the div we're looking for - do inactive!
 		if( !div || m != div )
@@ -1518,8 +1518,11 @@ function _WindowToFront( div, flags )
 	}
 
 	// 4. now apply the one we want to front to the front
-	div.viewContainer.style.zIndex = sortedInd;
-	div.style.zIndex = sortedInd;
+	if( div.viewContainer )
+	{
+		div.viewContainer.style.zIndex = sortedInd;
+		div.style.zIndex = sortedInd;
+	}
 	
 	// 5. Check if we are snapped
 	if( !flags.sourceElements )
@@ -1795,7 +1798,10 @@ function CloseView( win, delayed )
 							// Only activate non minimized views
 							if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
 							{
-								_ActivateWindow( Friend.GUI.view.viewHistory[ a ] );
+								var vh = Friend.GUI.view.viewHistory[ a ];
+								_ActivateWindow( vh );
+								if( vh.content && vh.content.refresh )
+									vh.content.refresh();
 								nextActive = true;
 							}
 							break;
@@ -1811,7 +1817,10 @@ function CloseView( win, delayed )
 							// Only activate non minimized views
 							if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
 							{
-								_ActivateWindow( Friend.GUI.view.viewHistory[ a ] );
+								var vh = Friend.GUI.view.viewHistory[ a ];
+								_ActivateWindow( vh );
+								if( vh.content && vh.content.refresh )
+									vh.content.refresh();
 								nextActive = true;
 							}
 							break;
@@ -2496,6 +2505,8 @@ var View = function( args )
 			title.onmousedown = function( e, mode )
 			{
 				if ( !e ) e = window.event;
+				
+				div.setAttribute( 'moving', 'moving' );
 
 				// Use correct button
 				if( e.button != 0 && !mode ) return cancelBubble( e );
@@ -2613,7 +2624,6 @@ var View = function( args )
 						return;
 					}
 					_ActivateWindow( this, false, e );
-					this.setAttribute( 'moving', 'moving' );
 				}
 			}
 		}
@@ -2626,10 +2636,6 @@ var View = function( args )
 			if( isMobile && !self.parentNode.classList.contains( 'OnWorkspace' ) )
 				return;
 			
-			if( !isMobile )
-			{
-				this.setAttribute( 'moving', 'moving' );
-			}
 			else if( e && !div.classList.contains( 'Active' ) )
 			{
 				this.clickOffset = {
@@ -3971,7 +3977,7 @@ var View = function( args )
 		var view = this;
 		this.iframe = ifr;
 		
-		ifr.onfocus = function()
+		ifr.onfocus = function( e )
 		{
 			if( !ifr.view.parentNode.classList.contains( 'Active' ) )
 			{
@@ -4020,6 +4026,7 @@ var View = function( args )
 
 			var msg = {}; if( packet ) for( var a in packet ) msg[a] = packet[a];
 			msg.command = 'setbodycontent';
+			msg.cachedAppData = _applicationBasics;
 			msg.dosDrivers = Friend.dosDrivers;
 			msg.parentSandboxId = parentIframeId;
 			msg.locale = Workspace.locale;

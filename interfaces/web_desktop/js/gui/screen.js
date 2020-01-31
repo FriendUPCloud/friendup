@@ -809,6 +809,7 @@ Screen = function ( flags, initObject )
 			var msg = {}; if( packet ) for( var a in packet ) msg[a] = packet[a];
 			msg.command = 'setbodycontent';
 			msg.locale = Workspace.locale;
+			msg,cachedAppData = _applicationBasics;
 			msg.dosDrivers = Friend.dosDrivers;
 			// Authid is important, should not be left out if it is available
 			if( !msg.authId )
@@ -844,7 +845,7 @@ Screen = function ( flags, initObject )
 		// Position content
 		ifr.style.position = 'absolute';
 		ifr.style.border = 'none';
-		ifr.style.height = document.body.offsetHeight - this._titleBar.offsetHeight + 'px';
+		ifr.style.height = this._titleBar ? ( 'calc(100% - ' + ( this._titleBar.offsetHeight + 'px' ) + ')' ) : '100%';
 		ifr.style.width = '100%';
 		ifr.style.left = '0';
 		ifr.style.top = this._titleBar.offsetHeight + 'px';

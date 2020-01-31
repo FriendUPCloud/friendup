@@ -233,6 +233,30 @@ html body.Synthwave .File a
 	color: #bdbcff;
 }
 
+html body.Synthwave .File.Selected .Title,
+html body.Synthwave #Screens .File.Selected .Title
+{
+	color: white;
+}
+
+html body.Synthwave div .File.Selected:before
+{
+	background-color: rgba(0,0,0,1);
+}
+
+html body.Synthwave .File.Selected:before
+{
+	background: rgba(255,255,255,0.1);
+	border-radius: 2px;
+	content: " ";
+	display: block;
+	width: 120%;
+	position: absolute;
+	top: 0;
+	left: -10%;
+	height: 100%;
+}
+
 html body.Synthwave .File .Icon > *:after
 {
 	color: #461c64;
@@ -285,11 +309,6 @@ html body[mobile].Synthwave .Dialog > .DialogHeader,
 html body[mobile].Synthwave .Dialog > .DialogButtons
 {
 	background-color: rgba(0,0,0,0.6);
-}
-
-html body[mobile].Synthwave .Dialog .BackgroundDefault
-{
-	background-color: transparent;
 }
 
 html body.Synthwave .PadBorder {

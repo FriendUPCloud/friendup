@@ -295,13 +295,26 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 	
 
 	// Open window
-	dview.fileoperations[ copySessionId ].view = new View( {
-		title:  ctrl ? i18n( 'i18n_copying_files' ) : i18n('i18n_moving_files'),
-		width:  400,
-		height: 145,
-		'max-height': 145,
-		id:     'fileops_' + copySessionId
-	} );
+	if( window.isMobile )
+	{
+		dview.fileoperations[ copySessionId ].view = new Widget( {
+			width: 'full',
+			height: 'full',
+			above: true,
+			animate: true,
+			transparent: true
+		} );
+	}
+	else
+	{
+		dview.fileoperations[ copySessionId ].view = new View( {
+			title:  ctrl ? i18n( 'i18n_copying_files' ) : i18n('i18n_moving_files'),
+			width:  400,
+			height: 145,
+			'max-height': 145,
+			id:     'fileops_' + copySessionId
+		} );
+	}
 
 	dview.fileoperations[ copySessionId ].view.myid = copySessionId;
 	dview.fileoperations[ copySessionId ].view.master = dview;
@@ -324,7 +337,9 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 		w.setContent( data );
 
 		// Setup progress bar and register interactive elements
-		var eled = this.master.fileoperations[ this.myid ].view.getWindowElement().getElementsByTagName( '*' );
+		var vie = this.master.fileoperations[ this.myid ].view
+		var dom = window.isMobile ? vie.dom : vie.getWindowElement();
+		var eled = dom.getElementsByTagName( '*' );
 		var groove = false, bar = false, frame = false, progressbar = false;
 		var fcb = infocontent = false;
 		for( var a = 0; a < eled.length; a++ )
@@ -379,6 +394,19 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 			bar.style.height = '30px';
 			bar.style.top = '0';
 			bar.style.left = '0';
+			
+			if( window.isMobile )
+			{
+				// Modify parent
+				progressbar.parentNode.className += ' Dialog';
+				progressbar.parentNode.style.background = 'rgba(0,0,0,0.6)';
+				progressbar.style.position = 'absolute';
+				progressbar.style.top = '40%';
+				progressbar.style.width = '100%';
+				
+				fcb.style.display = 'block';
+				fcb.style.margin = 'auto';
+			}
 
 			// Preliminary progress bar
 			bar.total = eles.length;
@@ -563,7 +591,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 								var d = Workspace.getDoorByPath( result[z].Path );
 								if( o.processedDirectories[ result[z].Path ] )
 								{
-									console.log( '[fileoperations] Found a duplicate folder...' );
+									//console.log( '[fileoperations] Found a duplicate folder...' );
 									continue;
 								}
 								o.processedDirectories[ result[z].Path ] = true;
@@ -576,7 +604,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 							{
 								if( o.processedFiles[ result[z].Path ] )
 								{
-									console.log( '[fileoperations] Found a duplicate file...' );
+									//console.log( '[fileoperations] Found a duplicate file...' );
 									continue;
 								}
 								o.processedFiles[ result[z].Path ] = true;
@@ -658,21 +686,23 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						// Do the copy - we have files here only...
 						ic.delCache( toPath );
 						infocontent.innerHTML = 'Copying ' + fl.fileInfo.Path + '...';
-						door.dosAction( 'copy', { from: fl.fileInfo.Path, to: toPath }, function( result )
-						{
-							if( result.substr( 0, 3 ) != 'ok<' )
+						( function( nb ){
+							door.dosAction( 'copy', { from: fl.fileInfo.Path, to: toPath }, function( result )
 							{
-								Notify( {
-									title: i18n( 'i18n_filecopy_error' ),
-									text: i18n( 'i18n_could_not_copy_files' ) + '<br>' + fl.fileInfo.Path + ' to ' + toPath
-								} );
-								fob.stop = true;
-								CancelCajaxOnId( series );
-								return;
-							}							
-							if( fob.stop ) return;
-							fileCopyObject.nextStep( result, initNextBatch );
-						} );
+								if( result.substr( 0, 3 ) != 'ok<' )
+								{
+									Notify( {
+										title: i18n( 'i18n_filecopy_error' ),
+										text: i18n( 'i18n_could_not_copy_files' ) + '<br>' + fl.fileInfo.Path + ' to ' + toPath
+									} );
+									fob.stop = true;
+									CancelCajaxOnId( series );
+									return;
+								}						
+								if( fob.stop ) return;
+								fileCopyObject.nextStep( result, nb );
+							} );
+						} )( initNextBatch );
 					}
 				},
 				createDirectories: function( reduceBar )
@@ -707,6 +737,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						function mkdirhere()
 						{
 							infocontent.innerHTML = i18n( 'i18n_creating_directory' ) + ' ' + toPath;
+							door.notify = 'false';
 							door.dosAction( 'makedir', { path: toPath }, function( result )
 							{
 								//var result = 'ok<!--separate-->'; // temp!
@@ -774,6 +805,10 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 							nf.push( f[b] );
 						fileCopyObject.files = nf;
 						fileCopyObject.copyFiles();
+					}
+					else if( initNewRun )
+					{
+						// Never!
 					}
 
 					// Timed refresh (don't refresh a zillion times!

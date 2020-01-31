@@ -156,6 +156,30 @@ html body.Dark .File a
 	color: #e0e0e0;
 }
 
+html body.Dark .File.Selected .Title,
+html body.Dark #Screens .File.Selected .Title
+{
+	color: white;
+}
+
+html body.Dark div .File.Selected:before
+{
+	background-color: rgba(0,0,0,1);
+}
+
+html body.Dark  .File.Selected:before
+{
+	background: rgba(255,255,255,0.1);
+	border-radius: 2px;
+	content: " ";
+	display: block;
+	width: 120%;
+	position: absolute;
+	top: 0;
+	left: -10%;
+	height: 100%;
+}
+
 html body.Dark .File .Icon > *:after
 {
 	color: #233240;
@@ -208,11 +232,6 @@ html body[mobile].Dark .Dialog > .DialogHeader,
 html body[mobile].Dark .Dialog > .DialogButtons
 {
 	background-color: rgba(0,0,0,0.6);
-}
-
-html body[mobile].Dark .Dialog .BackgroundDefault
-{
-	background-color: transparent;
 }
 
 html body.Dark .PadBorder {

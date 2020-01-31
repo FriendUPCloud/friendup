@@ -1416,7 +1416,15 @@ Workspace = {
 					// New translations
 					i18n_translations = [];
 					
-					var decoded = JSON.parse( d );
+					var decoded = false;
+					try
+					{
+						decoded = JSON.parse( d );
+					}
+					catch( e )
+					{
+						//console.log( 'This: ', d );
+					}
 
 					// Add it!
 					i18nClearLocale();
@@ -1500,8 +1508,16 @@ Workspace = {
 						{
 							if( e == 'ok' )
 							{
-								var s = JSON.parse( d );
-								if( s.Theme && s.Theme.length )
+								var s = {};
+								try
+								{
+									s = JSON.parse( d );
+								}
+								catch( e )
+								{ 
+									s = {}; 
+								};
+								if( s && s.Theme && s.Theme.length )
 								{
 									_this.refreshTheme( s.Theme.toLowerCase(), false );
 								}

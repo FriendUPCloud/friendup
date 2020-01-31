@@ -8,7 +8,7 @@
 		<link rel="stylesheet" href="/webclient/css/extraLoginCSS.css"/>
 		<div id="LoginElement" style="visibility: hidden">
 			<div class="VContentTop">
-				<div class="Logo" style="cursor: pointer" onclick="document.location.reload()">
+				<div class="Logo">
 					Friend OS
 				</div>
 				<h1>
@@ -32,9 +32,9 @@
 								<input type="password" id="Password" class="FullWidth" onkeydown="Application.checkKeys(event)"  tabindex="2" />
 							</p>
 						</div>
-						<div class="HRow MarginTop HideForPass">
+						<div class="HRow MarginTop">
 							<p>
-								<a id="forgotPassword" onclick="javascript:Application.forgotPassword()" tabindex="-1000">Forgot password</a>
+								<a id="forgotPassword" style="cursor:pointer;" onclick="Application.forgotPassword()" tabindex="-1000">Forgot password</a>
 							</p>
 						</div>
 						<div class="HRow MarginTop">

@@ -402,6 +402,11 @@
 	cursor: pointer !important;
 }
 
+#Admin .BackgroundRed
+{
+	background-color: #C0392B;
+}
+
 #Admin .BackgroundGrey
 {
 	background-color: #e3e7e8;

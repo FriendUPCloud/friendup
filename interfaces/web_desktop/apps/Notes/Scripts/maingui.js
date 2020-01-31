@@ -13,6 +13,8 @@ var Config = {
 
 Application.lastSaved = 0;
 
+// Some events -----------------------------------------------------------------
+
 // Don't scroll out of view
 document.body.addEventListener( 'scroll', function()
 {
@@ -28,6 +30,8 @@ window.addEventListener( 'scroll', function()
 
 var currentViewMode = 'default';
 
+// Special styling for mobile --------------------------------------------------
+
 if( isMobile )
 {
 	ge( 'LeftBar' ).style.transform = 'translate3d(-100%,0,0)';
@@ -40,6 +44,9 @@ if( isMobile )
 	ge( 'RightBar' ).style.width = '100%';
 	ge( 'RightBar' ).style.transition = 'transform 0.25s';
 }
+
+// Callbacks for the Friend directory view object ------------------------------
+
 var filebrowserCallbacks = {
 	// Check a file on file extension
 	checkFile( path, extension )
@@ -92,6 +99,8 @@ var filebrowserCallbacks = {
 	}
 };
 
+// Checks the file type of a file ----------------------------------------------
+
 Application.checkFileType = function( p )
 {
 	if( p.indexOf( '/' ) > 0 )
@@ -111,6 +120,8 @@ Application.checkFileType = function( p )
 	}
 }
 
+// On mobile, we handle the back button here -----------------------------------
+
 Application.handleBack = function()
 {
 	if( !isMobile ) return;
@@ -128,6 +139,8 @@ Application.handleBack = function()
 	}
 	this.updateViewMode();
 }
+
+// On mobile, we only show one content pane at a time. This decides which ------
 
 Application.updateViewMode = function()
 {
@@ -177,6 +190,8 @@ Application.updateViewMode = function()
 			break;
 	}
 }
+
+// Refresh the list of files ---------------------------------------------------
 
 Application.refreshFilePane = function( method, force, callback )
 {
@@ -558,6 +573,8 @@ Application.refreshFilePane = function( method, force, callback )
 	} );
 }
 
+// We're ready to run! ---------------------------------------------------------
+
 Application.run = function( msg, iface )
 {
 	var self = this;
@@ -567,6 +584,7 @@ Application.run = function( msg, iface )
 	this.newLine = true;
 	this.initCKE();
 	
+	// The Notes application defaults to the notes folder for all content ------
 	this.browserPath = 'Home:Notes/';
 	
 	this.sessionObject.currentZoom = '100%';
@@ -576,7 +594,7 @@ Application.run = function( msg, iface )
 		Application.checkWidth();
 	} );
 	
-	// Remember content on scroll!
+	// Remember content on scroll! ---------------------------------------------
 	document.body.onScroll = function( e )
 	{
 		if( Application.contentTimeout )
@@ -592,6 +610,7 @@ Application.run = function( msg, iface )
 		}, 250 );
 	}
 	
+	// Create the filebrowser pane (or side bar on desktop) --------------------
 	var FileBrowser = new Friend.FileBrowser( 
 		ge( 'LeftBar' ), 
 		{ 
@@ -605,7 +624,7 @@ Application.run = function( msg, iface )
 	FileBrowser.render();
 	this.fileBrowser = FileBrowser;
 	
-	// Make an "add new folder" button
+	// Make an "add new folder" button -----------------------------------------
 	this.fld = document.createElement( 'div' );
 	if( isMobile )
 	{
@@ -648,8 +667,11 @@ Application.run = function( msg, iface )
 	}
 	ge( 'LeftBar' ).parentNode.appendChild( this.fld );
 	
+	// Update the view mode
 	Application.updateViewMode();
 }
+
+// Check the current window width ----------------------------------------------
 
 Application.checkWidth = function()
 {
@@ -663,6 +685,8 @@ Application.checkWidth = function()
 		editorCommand( 'dynamicWidth' );
 	}
 }
+
+// Initialize the CKE editor ---------------------------------------------------
 
 Application.initCKE = function()
 {
@@ -808,12 +832,16 @@ Application.initCKE = function()
 	//CKEDITOR.config.extraAllowedContent = 'img[src,alt,width,height];h1;h2;h3;h4;h5;h6;p';
 }
 
+// Reset the editor toolbar ----------------------------------------------------
+
 Application.resetToolbar = function()
 {
 	// ..
 
 	SelectOption( ge( 'ToolFormat' ), 0 );
 }
+
+// Listens to mouse events -----------------------------------------------------
 
 function MyMouseListener( e )
 {
@@ -879,34 +907,6 @@ function MyMouseListener( e )
 			fs = fs.parentNode;
 		}
 		
-		/*if( fs.parentNode && fs.style.fontFamily )
-		{
-			// TODO: Dynamically load font list!
-			var fonts = [ 'default',
-					'Ubuntu, Arial, sans-serif',
-					'Ubuntu Mono, Courier New, Courier, monospace',
-					'Assistant' ];
-			var current = Trim( fs.style.fontFamily.toLowerCase().split( '\'' ).join( '' ) );
-			var found = false;
-			for( var a = 0; a < fonts.length; a++ )
-			{
-				if( fonts[a] == current )
-				{
-					SelectOption( ge( 'FontSelector' ), fonts[a] );
-					found = true;
-					break;
-				}
-			}
-			if( !found )
-			{
-				SelectOption( ge( 'FontSelector' ), 0 );
-			}
-		}
-		else
-		{
-			SelectOption( ge( 'FontSelector' ), 0 );
-		}*/
-		
 		// Check for lineheight
 		var fs = e.target;
 		while( fs.parentNode && !fs.style.lineHeight )
@@ -969,11 +969,12 @@ function MyMouseListener( e )
 	}, 250 );
 }
 
+// Speech-to-text: Parse text based on incoming voice commands -----------------
+
 Application.parseText = function( str )
 {
 	// TODO: Language settings.
-	
-	
+		
 	// Some quick ones
 	if( str.toLowerCase() == 'comma' )
 	{
@@ -1053,11 +1054,16 @@ function CleanSpeecher( textHere )
 	Application.newLine = false;
 }
 
-// Open a file
+// Done Speech-to-text ---------------------------------------------------------
+
+// Open a file -----------------------------------------------------------------
+
 Application.open = function()
 {
 	this.sendMessage( { command: 'openfile' } );
 }
+
+// Initialize the editor toolbar -----------------------------------------------
 
 Application.initializeToolbar = function()
 {
@@ -1139,6 +1145,8 @@ Application.initializeToolbar = function()
 	}
 }
 
+// Initialize the editor body events -------------------------------------------
+
 Application.initializeBody = function()
 {
 	AddEvent( 'onmouseup', MyMouseListener );
@@ -1157,6 +1165,8 @@ function MyKeyListener( e )
 	}
 	if( _repag ) return;
 }
+
+// Set the current active document ---------------------------------------------
 
 Application.setCurrentDocument = function( pth )
 {
@@ -1190,6 +1200,8 @@ Application.setCurrentDocument = function( pth )
 		filename: this.fileName
 	} );
 }
+
+// Load a file -----------------------------------------------------------------
 
 Application.loadFile = function( path, cbk )
 {
@@ -1272,6 +1284,8 @@ Application.loadFile = function( path, cbk )
 	}
 }
 
+// Set a status message --------------------------------------------------------
+
 Application.statusMessage = function( msg )
 {
 	var s = ge( 'Status' );
@@ -1299,6 +1313,8 @@ Application.statusMessage = function( msg )
 		}, 250 );
 	}, 1000 );
 }
+
+// Save a file -----------------------------------------------------------------
 
 Application.saveFile = function( path, content )
 {
@@ -1329,6 +1345,8 @@ Application.saveFile = function( path, content )
 		scrollTop: Application.editor.element.scrollTop
 	} );
 }
+
+// Create a new document -------------------------------------------------------
 
 Application.newDocument = function( args )
 {
@@ -1435,7 +1453,8 @@ Application.newDocument = function( args )
 	}
 }
 
-// Do a meta search on all connected systems
+// Do a meta search on all connected systems -----------------------------------
+
 function metaSearch( keywords )
 {
 	var m = new Module( 'system' );
@@ -1446,7 +1465,8 @@ function metaSearch( keywords )
 	m.execute( 'metasearch', { keywords: keywords } );
 }
 
-// Apply style from style information
+// Apply style from style information ------------------------------------------
+
 var styleElement = null;
 function ApplyStyle( styleObject, depth )
 {
@@ -1532,28 +1552,35 @@ function ApplyStyle( styleObject, depth )
 	styleElement.innerHTML = style;
 }
 
+// Receive a Friend or root Application object message -------------------------
+
 Application.receiveMessage = function( msg )
 {
 	if( !msg.command ) return;
 	
 	switch( msg.command )
 	{
+		// Received a request to update view mode
 		case 'updateViewMode':
 			currentViewMode = msg.mode;
 			Application.updateViewMode();
 			break;
+		// Back button pressed
 		case 'mobilebackbutton':
 			Application.handleBack();
 			break;
+		// To apply a style
 		case 'applystyle':
 			if( msg.style )
 			{
 				ApplyStyle( msg.style );
 			}
 			break;
+		// Let's print!
 		case 'print_iframe':
 			window.print();
 			break;
+		// Make images into base64 images instead of links
 		case 'makeinlineimages':
 			/*var eles = ge( 'Editor' ).getElementsByTagName( 'img' );
 			for( var a = 0; a < eles.length; a++ )
@@ -1561,12 +1588,14 @@ Application.receiveMessage = function( msg )
 				console.log( eles[a] );
 			}*/
 			break;
+		// Insert an image with path
 		case 'insertimage':
 			const i = '<img src="' + getImageUrl( msg.path ) + '" width="100%" height="auto"/>';
 			const viewFragment = Application.editor.data.processor.toView( i );
 			const modelFragment = Application.editor.data.toModel( viewFragment );
 			Application.editor.model.insertContent( modelFragment );
 			break;
+		// Load some files
 		case 'loadfiles':
 			for( var a = 0; a < msg.files.length; a++ )
 			{
@@ -1574,9 +1603,11 @@ Application.receiveMessage = function( msg )
 				break;
 			}
 			break;
+		// Save a file
 		case 'savefile':
 			this.saveFile( msg.path, '<!doctype html><html><head><title></title></head><body>' + Application.editor.getData() + '</body></html>' );
 			break;
+		// Create a new document
 		case 'newdocument':
 			var o = {
 				content: msg.content ? msg.content : '', 
@@ -1586,6 +1617,7 @@ Application.receiveMessage = function( msg )
 			};
 			this.newDocument( o );
 			break;
+		// Receives a drop event with icons
 		case 'drop':
 			for( var a = 0; a < msg.data.length; a++ )
 			{
@@ -1597,10 +1629,25 @@ Application.receiveMessage = function( msg )
 				break;
 			}
 			break;
+		// Set a new look and feel of the document for editing purposes
+		case 'design_default':
+		case 'design_atmospheric':
+		case 'design_dark':
+			var f = new File( 'Progdir:Css/' + msg.command + '.css' );
+			f.onLoad = function( data )
+			{
+				if( data && data.length && data.substr( 0, 4 ) != 'fail' )
+				{
+					ge( 'DesignCss' ).innerHTML = data;
+				}
+			}
+			f.load();
+			break;
 	}
 }
 
-// Set some styles
+// Set some styles -------------------------------------------------------------
+
 function editorCommand( command, value )
 {
 	var editor = Application.editor;
@@ -1706,98 +1753,10 @@ function editorCommand( command, value )
 	}
 }
 
-var documentStyles = [
-	{
-		name: 'Headings',
-		children: [
-			{
-				name: 'Heading 1',
-				rule: 'h1',
-				data: ''
-			},
-			{
-				name: 'Heading 2',
-				rule: 'h2',
-				data: ''
-			},
-			{
-				name: 'Heading 3',
-				rule: 'h3',
-				data: ''
-			},
-			{
-				name: 'Heading 4',
-				rule: 'h4',
-				data: ''
-			},
-			{
-				name: 'Heading 5',
-				rule: 'h5',
-				data: ''
-			},
-			{
-				name: 'Heading 6',
-				rule: 'h6',
-				data: ''
-			}
-		]
-	},
-	{
-		name: 'Standard format',
-		rule: 'html body',
-		data: ''
-	},
-	{
-		name: 'Paragraph',
-		rule: 'p',
-		data: ''
-	}
-];
-var styleView = null;
-function editStyles()
-{
-	if( styleView ) return;
-	var v = new View( {
-		title: i18n( 'i18n_edit_styles' ),
-		width: 600,
-		height: 500
-	} );
-	v.onClose = function()
-	{
-		styleView = null;
-	};
-	var f = new File( 'Progdir:Templates/style_editor.html' );
-	f.i18n();
-	f.onLoad = function( data )
-	{
-		v.setContent( data, function()
-		{
-			v.sendMessage( {
-				command: 'renderstyles',
-				styles: JSON.stringify( documentStyles )
-			} );
-		} );
-	}
-	f.load();
-};
+// Insert an image -------------------------------------------------------------
 
-// 
 function imageWindow( currentImage )
 {
-	/*var v = new View( {
-		title: currentImage ? i18n('edit_image') : i18n('insert_image'),
-		width: 500,
-		height: 400,
-		'min-width' : 400,
-		'min-height' : 300
-	} );
-	var f = new File( 'Progdir:Templates/image.html' );
-	f.onLoad = function( data )
-	{
-		v.setContent( data );
-	}
-	f.load();*/
-	
 	Application.sendMessage( { command: 'insertimage' } );
 }
 

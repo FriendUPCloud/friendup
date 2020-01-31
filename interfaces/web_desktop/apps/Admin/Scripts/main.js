@@ -100,12 +100,13 @@ function refreshSidebar( show )
 				icon: 'fa-user-circle-o',
 				showing: isAdmin,
 				display: true,
-				permissions: [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ]
+				permissions: [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ],
+				init: true
 			},
 			'Workgroups': {
 				icon: 'fa-users',
 				showing: isAdmin,
-				display: ( show ? true : false ),
+				display: true,
 				permissions: [ 'PERM_WORKGROUP_GLOBAL', 'PERM_WORKGROUP_WORKGROUP' ]
 			},
 			'Roles': {
@@ -197,7 +198,7 @@ function refreshSidebar( show )
 				//atag.classList.add( 'PaddingRight', ch.icon );
 				atag.className = 'IconSmall ' + ch.icon + ' Negative PaddingLeft PaddingRight';
 				atag.innerHTML = '&nbsp;&nbsp;&nbsp;' + atag.innerHTML;
-				( function( module, sect, ele )
+				( function( module, sect, ch, ele )
 				{
 					ele.onclick = function()
 					{
@@ -225,7 +226,13 @@ function refreshSidebar( show )
 							setGUISection( module, sect );
 						} );
 					}
-				} )( a, b, atag );
+					
+					if( ch.init )
+					{
+						ele.onclick();
+					}
+					
+				} )( a, b, ch, atag );
 			}
 			headings[ a ].elements.appendChild( ptag );
 			heading_children++;

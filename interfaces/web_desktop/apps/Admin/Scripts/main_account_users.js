@@ -556,14 +556,42 @@ Sections.accounts_users = function( cmd, extra )
 									Sections.accounts_users( 'edit', userInfo.ID );
 								}
 								var bg3  = ge( 'UserBackBtn' );
-								if( bg3 ) bg3.onclick = function( e )
+								if( !isMobile ) 
 								{
-									cancelUser(  );
+									bg3.style.display = 'none';
+								}
+								else
+								{
+									if( bg3 ) bg3.onclick = function( e )
+									{
+										cancelUser(  );
+									}
 								}
 								
-								if( ge( 'UserEditContainer' ) )
+								var bg4  = ge( 'UserDeleteBtn' );
+								if( bg4 ) bg4.onclick = function( e )
 								{
-									ge( 'UserEditContainer' ).className = 'Closed';
+				
+									// Delete user ...
+							
+									if( userInfo.ID )
+									{
+										console.log( '// delete user' );
+					
+										removeBtn( this, { id: userInfo.ID, button_text: 'i18n_delete_user', }, function ( args )
+										{
+									
+											removeUser( args.id );
+									
+										} );
+								
+									}
+				
+								}
+								
+								if( ge( 'UserEditButtons' ) )
+								{
+									ge( 'UserEditButtons' ).className = 'Closed';
 								}
 							},
 							
@@ -1695,7 +1723,8 @@ Sections.accounts_users = function( cmd, extra )
 								{
 									if( Application.checkAppPermission( 'PERM_ROLE_GLOBAL' ) || Application.checkAppPermission( 'PERM_ROLE_WORKGROUP' ) )
 									{
-										if( ge( 'AdminRoleContainer' ) ) ge( 'AdminRoleContainer' ).className = 'Open';
+										console.log( 'Hiding "AdminRoleContainer" for now until development there is complete ...' );
+										//if( ge( 'AdminRoleContainer' ) ) ge( 'AdminRoleContainer' ).className = 'Open';
 									}
 								}
 								
@@ -1711,7 +1740,8 @@ Sections.accounts_users = function( cmd, extra )
 								{
 									if( Application.checkAppPermission( 'PERM_APPLICATION_GLOBAL' ) || Application.checkAppPermission( 'PERM_APPLICATION_WORKGROUP' ) )
 									{
-										if( ge( 'AdminApplicationContainer' ) ) ge( 'AdminApplicationContainer' ).className = 'Open';
+										console.log( 'Hiding "AdminApplicationContainer" for now until development there is complete ...' );
+										//if( ge( 'AdminApplicationContainer' ) ) ge( 'AdminApplicationContainer' ).className = 'Open';
 									}
 								}
 								
@@ -2326,6 +2356,7 @@ Sections.accounts_users = function( cmd, extra )
 			li.innerHTML = i18n( 'i18n_new_user' );
 			li.onclick = function( e )
 			{
+				
 				// Language
 				var availLangs = {
 					'en' : 'English',
@@ -2436,14 +2467,26 @@ Sections.accounts_users = function( cmd, extra )
 							cancelUser(  );
 						}
 						var bg3  = ge( 'UserBackBtn' );
-						if( bg3 ) bg3.onclick = function( e )
+						if( !isMobile ) 
 						{
-							cancelUser(  );
+							bg3.style.display = 'none';
+						}
+						else
+						{
+							if( bg3 ) bg3.onclick = function( e )
+							{
+								cancelUser(  );
+							}
 						}
 						
-						if( ge( 'UserEditContainer' ) )
+						if( ge( 'UserDeleteBtn' ) )
 						{
-							//ge( 'UserEditContainer' ).className = 'Closed';
+							ge( 'UserDeleteBtn' ).className = 'Closed';
+						}
+						
+						if( ge( 'UserEditButtons' ) )
+						{
+							//ge( 'UserEditButtons' ).className = 'Closed';
 						}
 						
 						if( ge( 'UserBasicDetails' ) )
@@ -2780,7 +2823,7 @@ Sections.accounts_users = function( cmd, extra )
 					this.className = this.className.split( 'hide' ).join( '' ).split( 'show' ).join( '' ) + 'show';
 				}
 				
-				//SubMenu( this.parentNode.parentNode );
+				SubMenu( this.parentNode.parentNode );
 			}
 			sm.appendChild( li );
 			
@@ -2802,7 +2845,7 @@ Sections.accounts_users = function( cmd, extra )
 					this.className = this.className.split( 'hide' ).join( '' ).split( 'show' ).join( '' ) + 'hide';
 				}
 				
-				//SubMenu( this.parentNode.parentNode );
+				SubMenu( this.parentNode.parentNode );
 			}
 			sm.appendChild( li );
 			
@@ -2927,7 +2970,7 @@ Sections.accounts_users = function( cmd, extra )
 					'status="' + userList[ a ].Status + '" '       + 
 					'logintime="' + userList[ a ].LoginTime + '" ' + 
 					'timestamp="' + timestamp + '" '               +
-					'class="IconSmall fa-user-circle-o avatar" '   + 
+					'class="IconSmall NegativeAlt fa-user-circle-o avatar" '   + 
 					'style="position: relative;" '                 +
 					'><div style="' + bg + '"></div></span>';
 					
@@ -3136,13 +3179,42 @@ Sections.accounts_users = function( cmd, extra )
 		
 	}
 	
+	function removeBtn( _this, args, callback )
+	{
+		
+		if( _this )
+		{
+			_this.classList.remove( 'IconButton' );
+			_this.classList.remove( 'IconToggle' );
+			_this.classList.remove( 'ButtonSmall' );
+			_this.classList.remove( 'ColorStGrayLight' );
+			_this.classList.remove( 'fa-minus-circle' );
+			_this.classList.remove( 'fa-trash' );
+			_this.classList.add( 'ButtonAlt' );
+			_this.classList.add( 'BackgroundRed' );
+			_this.innerHTML = ( args.button_text ? i18n( args.button_text ) : i18n( 'i18n_delete' ) );
+			_this.args = args;
+			_this.callback = callback;
+			_this.onclick = function(  )
+			{
+				
+				if( this.callback )
+				{
+					callback( this.args ? this.args : false );
+				}
+				
+			};
+		}
+		
+	}
+	
 	function editMode( close )
 	{
 		console.log( 'editMode() ' );
 		
-		if( ge( 'UserEditContainer' ) )
+		if( ge( 'UserEditButtons' ) )
 		{
-			ge( 'UserEditContainer' ).className = ( close ? 'Closed' : 'Open' );
+			ge( 'UserEditButtons' ).className = ( close ? 'Closed' : 'Open' );
 		}
 	}
 	
@@ -4395,6 +4467,10 @@ Sections.user_disk_cancel = function( userid )
 		}
 		
 		ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid );
+		
+		console.log( 'Application.sendMessage( { type: \'system\', command: \'refreshdoors\' } );' );
+		
+		Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 	}
 	u.execute( 'mountlist', { userid: userid, authid: Application.authId } );
 	
@@ -4850,11 +4926,15 @@ Sections.user_disk_mount = function( devname, userid, _this )
 				{
 					Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 					
+					console.log( 'Application.sendMessage( { type: \'system\', command: \'refreshdoors\' } );' );
+					
 					Notify( { title: i18n( 'i18n_unmounting' ) + ' ' + devname + ':', text: i18n( 'i18n_successfully_unmounted' ) } );
 					
 					var u = new Module( 'system' );
 					u.onExecuted = function( ee, dd )
 					{
+						console.log( 'mountlist ', { e:ee, d:dd } );
+						
 						var ul = null;
 						try
 						{
@@ -4888,11 +4968,15 @@ Sections.user_disk_mount = function( devname, userid, _this )
 				{
 					Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 					
+					console.log( 'Application.sendMessage( { type: \'system\', command: \'refreshdoors\' } );' );
+					
 					Notify( { title: i18n( 'i18n_mounting' ) + ' ' + devname + ':', text: i18n( 'i18n_successfully_mounted' ) } );
 					
 					var u = new Module( 'system' );
 					u.onExecuted = function( ee, dd )
 					{
+						console.log( 'mountlist ', { e:ee, d:dd } );
+						
 						var ul = null;
 						try
 						{
@@ -5449,7 +5533,7 @@ function saveUser( uid, cb )
 					
 							if( callback ) callback( true );
 						};
-						ma.execute( 'setsetting', { userid: uid, setting: 'avatar', data: base64 } );
+						ma.execute( 'setsetting', { userid: uid, setting: 'avatar', data: base64, authid: Application.authId } );
 					}
 					else
 					{
@@ -5463,12 +5547,12 @@ function saveUser( uid, cb )
 				var m = new Module( 'system' );
 				m.onExecuted = function( e, d )
 				{
-					console.log( 'applySetup() ', { e:e, d:d, args: { id: ( ge( 'usSetup' ).value ? ge( 'usSetup' ).value : '0' ), userid: uid } } );
+					console.log( 'applySetup() ', { e:e, d:d, args: { id: ( ge( 'usSetup' ).value ? ge( 'usSetup' ).value : '0' ), userid: uid, authid: Application.authId } } );
 					
 					if( callback ) return callback( true );
 					
 				}
-				m.execute( 'usersetupapply', { id: ( ge( 'usSetup' ).value ? ge( 'usSetup' ).value : '0' ), userid: uid } );
+				m.execute( 'usersetupapply', { id: ( ge( 'usSetup' ).value ? ge( 'usSetup' ).value : '0' ), userid: uid, authid: Application.authId } );
 			}
 			
 			updateLanguages( function(  )
@@ -5504,6 +5588,60 @@ function saveUser( uid, cb )
 		}
 	}
 	f.execute( 'user/update', args );
+}
+
+function removeUser( id )
+{
+	if( id )
+	{
+		
+		var args = { id: id };
+		
+		args.args = JSON.stringify( {
+			'type'    : 'delete', 
+			'context' : 'application', 
+			'authid'  : Application.authId, 
+			'data'    : { 
+				'permission' : [ 
+					'PERM_USER_GLOBAL', 
+					'PERM_USER_WORKGROUP' 
+				]
+			}, 
+			'object'   : 'user', 
+			'objectid' : id 
+		} );
+		
+		var f = new Library( 'system.library' );
+		
+		f.onExecuted = function( e, d )
+		{
+			console.log( { e:e, d:d, args:args } );
+			
+			if( e == 'ok' )
+			{
+			    Notify( { title: i18n( 'i18n_user_delete' ), text: i18n( 'i18n_user_delete_succ' ) } );
+			    
+			    // Refresh users list ...
+			    
+			    // TODO: Find a way to remove the user in question from the list ...
+			    
+			    if( ge( 'UserListID_' + id ) )
+			    {
+			    	ge( 'UserListID_' + id ).parentNode.removeChild( ge( 'UserListID_' + id ) );
+			    }
+			    
+			    cancelUser(  );
+			}
+			else
+			{
+				Notify( { title: i18n( 'i18n_user_delete_fail' ), text: i18n( 'i18n_user_delete_failed' ) } );
+			}
+			
+		}
+
+		f.execute( 'user/delete', args );
+		
+	}
 }
 
 function cancelUser(  )

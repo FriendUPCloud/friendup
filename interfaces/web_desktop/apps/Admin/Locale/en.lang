@@ -5,6 +5,7 @@ i18n_user_fullname                     : Full name
 i18n_user_username                     : Username
 i18n_user_email                        : E-mail
 i18n_user_password                     : Password
+i18n_delete_user                       : Delete user
 
 i18n_reset_password                    : Reset password
 
@@ -13,6 +14,13 @@ i18n_confirm_password                  : Confirm password
 
 i18n_language                          : Language
 i18n_setup                             : Template
+
+i18n_templates                         : Templates
+i18n_template_details                  : Template details
+i18n_new_template                      : New template
+i18n_template_name                     : Template name
+i18n_template_description              : Description
+i18n_template_language                 : Default language
 
 i18n_account_locked                    : Account locked
 i18n_account_disabled                  : Account disabled
@@ -93,6 +101,7 @@ i18n_deleting_permission_verify        : Please confirm that you want to delete 
 
 i18n_save                              : Save
 i18n_delete                            : Delete
+i18n_delete_template                   : Delete template
 i18n_cancel                            : Cancel
 
 i18n_printers                          : Printers
@@ -140,6 +149,7 @@ i18n_workgroups                        : Workgroups
 i18n_workgroup_profile                 : Workgroup profile
 i18n_workgroup_name                    : Name
 i18n_workgroup_description             : Description
+i18n_delete_workgroup                  : Delete workgroup
 
 #Storage related
 
@@ -184,10 +194,14 @@ i18n_login_info                      : Login info
 i18n_your_notes                      : Your notes
 i18n_username                        : Username
 i18n_password                        : Password
+i18n_status                          : Status
 i18n_host_port                       : Server port
 i18n_host_ip                         : Server address or IP
 i18n_hostname                        : Server address
-i18n_workgroup_name                  : Your workgroup
+i18n_workgroup_details               : Workgroup details
+i18n_new_workgroup                   : New workgroup
+i18n_workgroup_name                  : Workgroup name
+i18n_workgroup_parent                : Workgroup parent
 i18n_choose_workgroup                : Choose workgroup
 i18n_workgroup                       : Workgroup
 i18n_device_name                     : Disk name

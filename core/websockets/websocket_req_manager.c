@@ -97,7 +97,7 @@ WebsocketReq *WebsocketReqManagerPutChunk( WebsocketReqManager *wrm, char *id, i
 				prevreq = req;
 				req = (WebsocketReq *)req->node.mln_Succ;
 			}
-			FRIEND_MUTEX_UNLOCK( &(wrm->wrm_Mutex) );
+			//FRIEND_MUTEX_UNLOCK( &(wrm->wrm_Mutex) );
 		}
 		DEBUG("[WebsocketReqPutData] req pointer %p chunk %d/%d , datasize %d\n", req, chunk, total, datasize );
 		
@@ -108,14 +108,30 @@ WebsocketReq *WebsocketReqManagerPutChunk( WebsocketReqManager *wrm, char *id, i
 			DEBUG("[WebsocketReqPutData] pointer to last chunk %p\n", oreq );
 			if( oreq != NULL )
 			{
-				FRIEND_MUTEX_LOCK( &(wrm->wrm_Mutex) );
+				//FRIEND_MUTEX_LOCK( &(wrm->wrm_Mutex) );
 				// chunks were connected to one message
 				// message is removed from Waiting messages
+				
+				// we must be sure we are working on current list (lock)
+				/*
+				prevreq = NULL;
+				req = wrm->wrm_WRWaiting;
+				while( req != NULL )
+				{
+					if( strcmp( id, req->wr_ID ) == 0 )
+					{
+						break;
+					}
+					prevreq = req;
+					req = (WebsocketReq *)req->node.mln_Succ;
+				}
+				*/
+				
 				if( oreq == wrm->wrm_WRWaiting )
 				{
 					wrm->wrm_WRWaiting = (WebsocketReq *)oreq->node.mln_Succ;
 				}
-				else
+				else if( prevreq != NULL )	// avoid crash if prevreq = NULL
 				{
 					prevreq->node.mln_Succ = oreq->node.mln_Succ;
 				}
@@ -135,16 +151,20 @@ WebsocketReq *WebsocketReqManagerPutChunk( WebsocketReqManager *wrm, char *id, i
 				*/
 				FRIEND_MUTEX_UNLOCK( &(wrm->wrm_Mutex) );
 				
-				DEBUG("[WebsocketReqPutData] Request message %s  \n\n%d\n", req->wr_Message, req->wr_MessageSize );
+				//DEBUG("[WebsocketReqPutData] Request message %s  \n\n%d\n", req->wr_Message, req->wr_MessageSize );
 				
 				return oreq;
+			}
+			else
+			{
+				FRIEND_MUTEX_UNLOCK( &(wrm->wrm_Mutex) );
 			}
 		}
 		else // request was not send to FC before, we must create it
 		{
 			WebsocketReq *nreq = WebsocketReqNew( id, chunk, total, data, datasize );
 			
-			FRIEND_MUTEX_LOCK( &(wrm->wrm_Mutex) );
+			//FRIEND_MUTEX_LOCK( &(wrm->wrm_Mutex) );
 			
 			// We must remove old WebsocketReqests
 			time_t currTime = time( NULL );

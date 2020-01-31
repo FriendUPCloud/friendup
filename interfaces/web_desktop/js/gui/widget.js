@@ -345,6 +345,29 @@ Widget.prototype.hide = function( callback )
 	else doHide();
 }
 
+// Get elements by class
+Widget.prototype.getByClass = function ( classn )
+{
+	var el = this.dom.getElementsByTagName ( '*' );
+	var out = [];
+	for( var a = 0; a < el.length; a++ )
+	{
+		if( el[a].className )
+		{
+			var cls = el[a].className.split ( ' ' );
+			for( var b = 0; b < cls.length; b++ )
+			{
+				if ( cls[b] == classn )
+				{
+					out.push(el[a]);
+					break;
+				}
+			}
+		}
+	}
+	return out;
+}
+
 Widget.prototype.setContent = function( cont, callback )
 {
 	this.dom.innerHTML = cont;
@@ -463,6 +486,7 @@ Widget.prototype.setContentIframed = function( content, domain, packet, callback
 	
 		var msg = {}; if( packet ) for( var a in packet ) msg[a] = packet[a];
 		msg.command = 'setbodycontent';
+		msg.cachedAppData = _applicationBasics;
 		msg.dosDrivers = Friend.dosDrivers;
 		msg.parentSandboxId = parentIframeId;
 		msg.locale = Workspace.locale;
@@ -530,6 +554,8 @@ Widget.prototype.autosize = function()
 // Close the widget!
 Widget.prototype.close = function()
 {
+	if( this.onClose )
+		this.onClose();
 	if( this.dom )
 	{
 		// Clean out relation to view window

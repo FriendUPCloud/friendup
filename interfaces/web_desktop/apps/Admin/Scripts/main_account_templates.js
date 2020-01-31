@@ -205,20 +205,40 @@ Sections.accounts_templates = function( cmd, extra )
 		return false;
 	}
 	
-	function refresh( id )
+	function refresh( id, _this )
 	{
 		
 		initMain();
 		
 		if( id )
 		{
-			edit( id );
+			edit( id, _this );
 		}
 		
 	}
 	
-	function edit( id )
+	function edit( id, _this )
 	{
+		
+		if( _this )
+		{
+			// TODO: remove all other Selected in the list first ...
+			
+			var pnt = _this.parentNode;
+			
+			if( pnt )
+			{
+				for( var i in pnt )
+				{
+					if( pnt[i] && pnt[i].className )
+					{
+						pnt[i].classList.remove( 'Selected' );
+					}
+				}
+			}
+			
+			_this.classList.add( 'Selected' );
+		}
 		
 		loading( id );
 		
@@ -234,6 +254,21 @@ Sections.accounts_templates = function( cmd, extra )
 			ge( 'TemplateDetails' ).innerHTML = '';
 		}
 		
+		if( ge( 'TemplateList' ) )
+		{
+			var ele = ge( 'TemplateList' ).getElementsByTagName( 'div' );
+			
+			if( ele )
+			{
+				for( var i in ele )
+				{
+					if( ele[i] && ele[i].className )
+					{
+						ele[i].classList.remove( 'Selected' );
+					}
+				}
+			}
+		}
 	}
 	
 	function filter( filter, server )
@@ -255,9 +290,31 @@ Sections.accounts_templates = function( cmd, extra )
 		{
 			console.log( { e:e, d:d } );
 			
+			try
+			{
+				data = JSON.parse( d );
+			}
+			catch( e ) {  }
+			
 			if( e == 'ok' && d )
 			{
+				
+				if( data && data.message )
+				{
+					Notify( { title: 'success', text: data.message } );
+				}
+				
 				refresh( d );
+				
+			}
+			else
+			{
+				
+				if( data && data.message )
+				{
+					Notify( { title: 'failed', text: data.message } );
+				}
+				
 			}
 		}
 		m.execute( 'usersetupadd', { 
@@ -277,62 +334,10 @@ Sections.accounts_templates = function( cmd, extra )
 		if ( id )
 		{
 			// Setup input values
-			
-			
-			
-			/*return;
-			
-			var args = {};
-			
-			var vals = [ 'Name', 'Preinstall', 'Applications', 'Disks', 'Startup', 'Languages', 'Themes' ];
-			
-			for( var a = 0; a < vals.length; a++ )
-			{
-				if( ge( 'pSetup' + vals[a] ) )
-				{
-					if( ge( 'pSetup' + vals[a] ).tagName == 'INPUT' )
-					{
-						args[vals[a]] = ( ge( 'pSetup' + vals[a] ).type == 'checkbox' ? ( ge( 'pSetup' + vals[a] ).checked ? '1' : '0' ) : ge( 'pSetup' + vals[a] ).value );
-					}
-					else if( ge( 'pSetup' + vals[a] ).tagName == 'SELECT' )
-					{
-						args[vals[a]] = ge( 'pSetup' + vals[a] ).value;
-					}
-					else if( ge( 'pSetup' + vals[a] ).tagName == 'DIV' )
-					{
-						var ele = ge( 'pSetup' + vals[a] ).getElementsByTagName( '*' );
-					
-						if( ele.length > 0 )
-						{
-							var value = false;
 						
-							for( var v = 0; v < ele.length; v++ )
-							{
-								if( ele[v].getAttribute( 'value' ) && ele[v].getAttribute( 'value' ) != '' )
-								{
-									var inp = ele[v].getElementsByTagName( 'input' );
-								
-									value = ( value ? ( value + ', ' + ele[v].getAttribute( 'value' ) + ( inp[0] && inp[0].type == 'checkbox' ? ( inp[0].checked ? '_1' : '_0' ) : '' ) ) : ( ele[v].getAttribute( 'value' ) + ( inp[0] && inp[0].type == 'checkbox' ? ( inp[0].checked ? '_1' : '_0' ) : '' ) ) );
-								}
-							}
-						
-							if( value )
-							{
-								args[vals[a]] = value;
-							}
-						}
-					}
-					else
-					{
-						//args[vals[a]] = ge( 'pSetup' + vals[a] ).value;
-					}
-				}
+			var args = { id: id, Preinstall: true, Themes: 'Friendup12', authid: Application.authId };
 			
-			}*/
-			
-			var args = { id: id, Preinstall: true, Themes: 'Friendup12' };
-			
-			var vals = [ 'Name', 'Description', 'Languages', 'Applications', 'Startup' /*, 'Themes'*/ ];
+			var vals = [ 'Name', 'Description', 'Languages', 'Applications', 'Startup' ];
 			
 			for( var i in vals )
 			{
@@ -342,17 +347,90 @@ Sections.accounts_templates = function( cmd, extra )
 				}
 			}
 			
+			// Look And Feel settings ...
+			
+			args[ 'ThemeConfig' ] = { colorSchemeText: ge( 'theme_dark_button' ).value, buttonSchemeText: ge( 'theme_style_select' ).value };
+			
+			args[ 'WorkspaceCount' ] = ge( 'workspace_count_input' ).value;
+			
 			console.log( args );
 			
-			//return;
+			
 			
 			var m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{
+				console.log( { e:e, d:d } );
+				
+				var data = false;
+														
+				try
+				{
+					data = JSON.parse( d );
+				}
+				catch( e ) {  }
+				
 				if( e == 'ok' )
 				{
 					
-					console.log( { e:e, d:d } );
+					if( data && data.message )
+					{
+						Notify( { title: 'success', text: data.message } );
+					}
+					
+					// Wallpaper settings if we have a new wallpaper ...
+					
+					if( ge( 'wallpaper_button_inner' ) && ge( 'wallpaper_button_inner' ).value )
+					{
+							
+						var m = new Module( 'system' );
+						m.onExecuted = function( ee, dd )
+						{
+							console.log( { e:ee, d:dd } );
+							
+							var dat = false;
+														
+							try
+							{
+								dat = JSON.parse( dd );
+							}
+							catch( e ) {  }
+							
+							if( ee == 'ok' )
+							{
+							
+								if( dat && dat.message )
+								{
+									Notify( { title: 'success', text: dat.message } );
+								}
+							
+							}
+							else
+							{
+								
+								if( dat && dat.message )
+								{
+									Notify( { title: 'failed', text: dat.message } );
+								}
+								
+							}
+						}
+						m.execute( 'usersetupwallpaperset', { 
+							setupId : id, 
+							path    : ge( 'wallpaper_button_inner' ).value, 
+							authid  : Application.authId 
+						} );
+						
+					}
+					
+				}
+				else
+				{
+					
+					if( data && data.message )
+					{
+						Notify( { title: 'failed', text: data.message } );
+					}
 					
 				}
 				
@@ -366,15 +444,52 @@ Sections.accounts_templates = function( cmd, extra )
 	
 	function remove( id )
 	{
-		console.log( 'remove( '+id+' )' );
-			
-		Confirm( i18n( 'i18n_deleting_template' ), i18n( 'i18n_deleting_template_verify' ), function( result )
+		if( id )
 		{
 			
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				
+				console.log( { e:e, d:d } );
+				
+				var mm = new Module( 'system' );
+				mm.onExecuted = function( ee, dd )
+				{
+					
+					var data = false;
+													
+					try
+					{
+						data = JSON.parse( dd );
+					}
+					catch( e ) {  }
+					
+					if( ee == 'ok' )
+					{
+					
+						if( data && data.response )
+						{
+							Notify( { title: 'success', text: data.response } );
+						}
+					}
+					else
+					{
+						if( data && data.response )
+						{
+							Notify( { title: 'failed', text: data.response } );
+						}
+					}
+					
+					refresh(); cancel();
+					
+				}
+				mm.execute( 'usersetupdelete', { id: id, authid: Application.authId } );
+				
+			}
+			m.execute( 'usersetupwallpaperdelete', { setupId: id, authid: Application.authId } );
 			
-			
-		} );
-		
+		}
 	}
 	
 	// helper functions --------------------------------------------------------------------------------------------- //
@@ -423,6 +538,51 @@ Sections.accounts_templates = function( cmd, extra )
 		return false;
 	}
 	
+	function removeBtn( _this, args, callback )
+	{
+		
+		if( _this )
+		{
+			_this.classList.remove( 'IconButton' );
+			_this.classList.remove( 'IconToggle' );
+			_this.classList.remove( 'ButtonSmall' );
+			_this.classList.remove( 'ColorStGrayLight' );
+			_this.classList.remove( 'fa-minus-circle' );
+			_this.classList.remove( 'fa-trash' );
+			_this.classList.add( 'ButtonAlt' );
+			_this.classList.add( 'BackgroundRed' );
+			_this.innerHTML = ( args.button_text ? i18n( args.button_text ) : i18n( 'i18n_delete' ) );
+			_this.args = args;
+			_this.callback = callback;
+			_this.onclick = function(  )
+			{
+				
+				if( this.callback )
+				{
+					callback( this.args ? this.args : false );
+				}
+				
+			};
+		}
+		
+		//Confirm( i18n( 'i18n_deleting_template' ), i18n( 'i18n_deleting_template_verify' ), function( result )
+		//{
+			
+			
+			
+		//} );
+	}
+	
+	function editMode( close )
+	{
+		console.log( 'editMode() ', ge( 'TempEditButtons' ) );
+		
+		if( ge( 'TempEditButtons' ) )
+		{
+			ge( 'TempEditButtons' ).className = ( close ? 'Closed' : 'Open' );
+		}
+	}
+	
 	function sortApps( name )
 	{
 		
@@ -457,8 +617,6 @@ Sections.accounts_templates = function( cmd, extra )
 						
 						loadingInfo.details = dat;
 						
-						//initDetails( loadingInfo, [  ], true );
-						
 						// Go to next in line ...
 						loadingList[ ++loadingSlot ](  );
 						
@@ -491,8 +649,6 @@ Sections.accounts_templates = function( cmd, extra )
 						
 						loadingInfo.applications = dat;
 						
-						//initDetails( loadingInfo, [ 'application', 'dock', 'startup' ], true );
-						
 						// Go to next in line ...
 						loadingList[ ++loadingSlot ](  );
 						
@@ -510,8 +666,6 @@ Sections.accounts_templates = function( cmd, extra )
 						
 						loadingInfo.looknfeel = dat;
 						
-						initDetails( loadingInfo, [ 'application', 'dock', 'startup', 'looknfeel', true ] );
-						
 						// Go to next in line ...
 						loadingList[ ++loadingSlot ](  );
 						
@@ -523,6 +677,8 @@ Sections.accounts_templates = function( cmd, extra )
 				function(  )
 				{
 					console.log( '//  | init' );
+					
+					initDetails( loadingInfo, [ 'application', 'dock', 'startup', 'looknfeel', true ] );
 				}
 				
 			];
@@ -541,11 +697,16 @@ Sections.accounts_templates = function( cmd, extra )
 	{
 		
 		var details = ( info.details ? info.details : {} );
-		var data = ( details.Data ? details.Data : {} );
+		
+		var data = ( details.Data  ? details.Data  : {} );
 		var soft = ( data.software ? data.software : {} );
 		var star = ( data.startups ? data.startups : {} );
+		
+		var themeData      = ( data.themeconfig    ? data.themeconfig    : {} );
+		var workspacecount = ( data.workspacecount ? data.workspacecount : {} );
+		
 		var apps = ( info.applications ? info.applications : {} );
-		var look = ( info.looknfeel ? info.looknfeel : {} );
+		var look = ( info.looknfeel    ? info.looknfeel    : {} );
 		
 		console.log( info );
 		
@@ -591,21 +752,32 @@ Sections.accounts_templates = function( cmd, extra )
 				};
 				return b;*/
 				
-				return '<button class="IconButton IconSmall IconToggle ButtonSmall fa-toggle-off" id="theme_dark_button"></button>';
+				return '<button class="IconButton IconSmall IconToggle ButtonSmall fa-toggle-' + ( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? 'on' : 'off' ) + '" id="theme_dark_button" value="' + ( themeData.colorSchemeText ? themeData.colorSchemeText : 'light' ) + '"></button>';
 				
 			},
 			
 			controls : function ()
 			{
 				
-				return '<select class="InputHeight FullWidth"><option value="mac">Mac style</option><option value="windows">Windows style</option></select>';
+				var opt = { 'mac' : 'Mac style', 'windows' : 'Windows style' };
+					
+				var str = '<select class="InputHeight FullWidth" id="theme_style_select">';
+				
+				for( var k in opt )
+				{
+					str += '<option value="' + k + '"' + ( themeData.buttonSchemeText == k ? ' selected="selected"' : '' ) + '>' + opt[k] + '</option>';
+				}
+				
+				str += '</select>';
+				
+				return str;
 				
 			},
 			
 			workspace_count : function ()
 			{
 				
-				return '<input type="number" class="FullWidth" value="1">';
+				return '<input type="number" class="FullWidth" id="workspace_count_input" value="' + ( workspacecount > 0 ? workspacecount : '1' ) + '">';
 				
 			},
 			
@@ -618,10 +790,6 @@ Sections.accounts_templates = function( cmd, extra )
 			
 			wallpaper_preview : function ()
 			{
-				
-				// Set default wallpaper as fallback ...
-				
-				//return ( look ? '<div style="width:100%;height:100%;background: url(\''+look+'\') center center / cover no-repeat;"><button class="IconButton IconSmall ButtonSmall Negative FloatRight fa-remove"></button></div>' : '' );
 				
 			}
 			
@@ -640,8 +808,7 @@ Sections.accounts_templates = function( cmd, extra )
 			theme_dark: theme.dark(),
 			theme_controls: theme.controls(),
 			workspace_count: theme.workspace_count(),
-			wallpaper_button: theme.wallpaper_button()/*,
-			wallpaper_preview: theme.wallpaper_preview()*/
+			wallpaper_button: theme.wallpaper_button()
 		};
 		
 		// Add translations
@@ -652,10 +819,36 @@ Sections.accounts_templates = function( cmd, extra )
 			
 			if( !details.ID )
 			{
+				ge( 'TempDeleteBtn' ).style.display = 'none';
+				
 				ge( 'AdminApplicationContainer' ).style.display = 'none';
 				ge( 'AdminDockContainer'        ).style.display = 'none';
 				ge( 'AdminStartupContainer'     ).style.display = 'none';
 				ge( 'AdminLooknfeelContainer'   ).style.display = 'none';
+			}
+			else
+			{
+				ge( 'TempEditButtons' ).className = 'Closed';
+				
+				if( ge( 'TempBasicDetails' ) )
+				{
+					var inps = ge( 'TempBasicDetails' ).getElementsByTagName( '*' );
+					if( inps.length > 0 )
+					{
+						for( var a = 0; a < inps.length; a++ )
+						{
+							if( inps[ a ].id && [ 'TempName', 'TempDescription', 'TempLanguages' ].indexOf( inps[ a ].id ) >= 0 )
+							{
+								( function( i ) {
+									i.onclick = function( e )
+									{
+										editMode();
+									}
+								} )( inps[ a ] );
+							}
+						}
+					}
+				}
 			}
 			
 			var bg1  = ge( 'TempSaveBtn' );
@@ -679,7 +872,14 @@ Sections.accounts_templates = function( cmd, extra )
 			var bg2  = ge( 'TempCancelBtn' );
 			if( bg2 ) bg2.onclick = function( e )
 			{
-				cancel(  );
+				if( details.ID )
+				{
+					edit( details.ID );
+				}
+				else
+				{
+					cancel(  );
+				}
 			}
 			var bg3  = ge( 'TempBackBtn' );
 			if( bg3 ) bg3.onclick = function( e )
@@ -687,7 +887,33 @@ Sections.accounts_templates = function( cmd, extra )
 				cancel(  );
 			}
 			
-			
+			var bg4  = ge( 'TempDeleteBtn' );
+			if( bg4 ) bg4.onclick = function( e )
+			{
+				
+				// Delete template ...
+				
+				if( details.ID )
+				{
+					console.log( '// delete template' );
+					
+					removeBtn( this, { id: details.ID, button_text: 'i18n_delete_template', }, function ( args )
+					{
+						
+						remove( args.id );
+						
+					} );
+					
+					//Confirm( i18n( 'i18n_deleting_template' ), i18n( 'i18n_deleting_template_verify' ), function( result )
+					//{
+					
+						
+					
+					//} );
+					
+				}
+				
+			}
 			
 			
 			
@@ -881,7 +1107,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent50 FloatLeft Relative';
+													d.className = 'PaddingSmall HContent45 FloatLeft Relative';
 													d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
 													d.onclick = function(  )
 													{
@@ -894,7 +1120,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent10 FloatLeft Relative';
+													d.className = 'PaddingSmall HContent15 FloatLeft Relative';
 													return d;
 												}()
 											}
@@ -1016,7 +1242,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent50 FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
 																d.innerHTML = '<span>' + apps[k].Category + '</span>';
 																return d;
 															}() 
@@ -1025,7 +1251,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
 																return d;
 															}(),
 															'child' : 
@@ -1038,22 +1264,27 @@ Sections.accounts_templates = function( cmd, extra )
 																		b.onclick = function(  )
 																		{
 																			
-																			//ids[ name ] = ( ids[ name ] ? [ 0, ids[ name ][ 1 ] ] : [ 0, 0 ] );
-																			
-																			func.updateids( 'applications', name, ( ids[ name ] ? [ 0, ids[ name ][ 1 ] ] : [ 0, 0 ] ) );
-																			
 																			var pnt = this.parentNode.parentNode;
 																			
-																			if( pnt )
+																			removeBtn( this, { ids: ids, name: name, func: func, pnt: pnt }, function ( args )
 																			{
-																				pnt.innerHTML = '';
-																			}
-																			
-																			if( func )
-																			{
-																				func.dock( 'refresh' );
-																				func.startup( 'refresh' );
-																			}
+																				
+																				//ids[ name ] = ( ids[ name ] ? [ 0, ids[ name ][ 1 ] ] : [ 0, 0 ] );
+																				
+																				args.func.updateids( 'applications', args.name, ( args.ids[ args.name ] ? [ 0, args.ids[ args.name ][ 1 ] ] : [ 0, 0 ] ) );
+																				
+																				if( args.pnt )
+																				{
+																					args.pnt.innerHTML = '';
+																				}
+																				
+																				if( args.func )
+																				{
+																					args.func.dock( 'refresh' );
+																					args.func.startup( 'refresh' );
+																				}
+																				
+																			} );
 																			
 																		};
 																		return b;
@@ -1173,7 +1404,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent50 FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
 																d.innerHTML = '<span>' + apps[k].Category + '</span>';
 																return d;
 															}() 
@@ -1182,7 +1413,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
 																return d;
 															}(),
 															'child' : 
@@ -1416,7 +1647,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
+													d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
 													d.innerHTML = '<strong>' + i18n( 'i18n_order' ) + '</strong>';
 													return d;
 												}()
@@ -1425,7 +1656,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent10 FloatLeft Relative';
+													d.className = 'PaddingSmall HContent15 FloatLeft Relative';
 													return d;
 												}()
 											}
@@ -1478,8 +1709,6 @@ Sections.accounts_templates = function( cmd, extra )
 												{
 													if( this.ids[a] && this.ids[a][0] == apps[k].Name && this.ids[a][1] == 1 )
 													{
-														console.log( "this.ids[a] && " + this.ids[a][0] + " == " + apps[k].Name + " && " + this.ids[a][1] );
-														
 														found = true;
 													}
 												}
@@ -1558,7 +1787,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Ellipsis';
 																return d;
 															}(),
 															'child' : 
@@ -1597,7 +1826,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
 																return d;
 																
 															}(),
@@ -1611,16 +1840,21 @@ Sections.accounts_templates = function( cmd, extra )
 																		b.onclick = function(  )
 																		{
 																			
-																			//ids[ name ] = [ name, 0 ];
-																			
-																			func.updateids( 'dock', name, [ name, 0 ] );
-																			
 																			var pnt = this.parentNode.parentNode;
 																			
-																			if( pnt )
+																			removeBtn( this, { ids: ids, name: name, func: func, pnt: pnt }, function ( args )
 																			{
-																				pnt.innerHTML = '';
-																			}
+																				
+																				//ids[ name ] = [ name, 0 ];
+																				
+																				args.func.updateids( 'dock', args.name, [ args.name, 0 ] );
+																				
+																				if( args.pnt )
+																				{
+																					args.pnt.innerHTML = '';
+																				}
+																				
+																			} );
 																			
 																		};
 																		return b;
@@ -1747,7 +1981,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent50 FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
 																d.innerHTML = '<span>' + apps[k].Category + '</span>';
 																return d;
 															}() 
@@ -1756,7 +1990,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
 																return d;
 															}(),
 															'child' : 
@@ -2001,7 +2235,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
+													d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
 													d.innerHTML = '<strong>' + i18n( 'i18n_order' ) + '</strong>';
 													return d;
 												}()
@@ -2010,7 +2244,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent10 FloatLeft Relative';
+													d.className = 'PaddingSmall HContent15 FloatLeft Relative';
 													return d;
 												}()
 											}
@@ -2151,7 +2385,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Ellipsis';
 																return d;
 															}(),
 															'child' : 
@@ -2190,7 +2424,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
 																return d;
 																
 															}(),
@@ -2204,16 +2438,21 @@ Sections.accounts_templates = function( cmd, extra )
 																		b.onclick = function(  )
 																		{
 																			
-																			//ids[ name ] = false;
-																			
-																			func.updateids( 'startup', name, false );
-																			
 																			var pnt = this.parentNode.parentNode;
 																			
-																			if( pnt )
+																			removeBtn( this, { ids: ids, name: name, func: func, pnt: pnt }, function ( args )
 																			{
-																				pnt.innerHTML = '';
-																			}
+																				
+																				//ids[ name ] = false;
+																				
+																				args.func.updateids( 'startup', args.name, false );
+																				
+																				if( args.pnt )
+																				{
+																					args.pnt.innerHTML = '';
+																				}
+																				
+																			} );
 																			
 																		};
 																		return b;
@@ -2340,7 +2579,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent50 FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
 																d.innerHTML = '<span>' + apps[k].Category + '</span>';
 																return d;
 															}() 
@@ -2349,7 +2588,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
 																return d;
 															}(),
 															'child' : 
@@ -2504,7 +2743,7 @@ Sections.accounts_templates = function( cmd, extra )
 										
 									};
 								}
-						
+								
 								var btn = ge( 'StartupEditBack' );
 								if( btn )
 								{
@@ -2557,11 +2796,33 @@ Sections.accounts_templates = function( cmd, extra )
 								{
 									this.classList.remove( 'fa-toggle-off' );
 									this.classList.add( 'fa-toggle-on' );
+									
+									this.setAttribute( 'value', 'charcoal' );
 								}
 								else
 								{
 									this.classList.remove( 'fa-toggle-on' );
 									this.classList.add( 'fa-toggle-off' );
+									
+									this.setAttribute( 'value', 'light' );
+								}
+								
+							};
+						}
+						
+						if( ge( 'workspace_count_input' ) )
+						{
+							var i = ge( 'workspace_count_input' );
+							i.current = i.value;
+							i.onchange = function(  )
+							{
+								if( this.value >= 1 )
+								{
+									this.current = this.value;
+								}
+								else
+								{
+									this.value = this.current;
 								}
 								
 							};
@@ -2572,33 +2833,7 @@ Sections.accounts_templates = function( cmd, extra )
 							var b = ge( 'wallpaper_button_inner' );
 							b.onclick = function(  )
 							{
-								
-								/*var d = new Filedialog( 
-								{
-									triggerFunction: function( item )
-									{
-										if ( item )
-										{
-											// Load the image
-											var image = new Image();
-											image.onload = function()
-											{
-												console.log( 'loaded image ... ', item );
-												// Resizes the image
-												var canvas = ge( 'AdminAvatar' );
-												var context = canvas.getContext( '2d' );
-												context.drawImage( image, 0, 0, 256, 256 );
-												
-											}
-											image.src = getImageUrl( item[ 0 ].Path );
-										}
-									},
-									path: "Mountlist:",
-									type: "load",
-									title: i18n( 'i18n_fileselectoravatar' ),
-									filename: ""
-								} );*/
-								
+																
 								var flags = {
 									type: 'load',
 									path: 'Home:',
@@ -2621,6 +2856,11 @@ Sections.accounts_templates = function( cmd, extra )
 												
 											}
 											image.src = getImageUrl( item[ 0 ].Path );
+											
+											if( ge( 'wallpaper_button_inner' ) )
+											{
+												ge( 'wallpaper_button_inner' ).setAttribute( 'value', item[ 0 ].Path );
+											}
 											
 										}
 									}
@@ -2666,7 +2906,7 @@ Sections.accounts_templates = function( cmd, extra )
 								ge( 'AdminWallpaperPreview' ).appendChild( del );
 							}
 							
-							wallpaperdelete();
+							//wallpaperdelete();
 							
 						}
 						
@@ -2781,7 +3021,7 @@ Sections.accounts_templates = function( cmd, extra )
 						'element' : function() 
 						{
 							var d = document.createElement( 'div' );
-							d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingTop PaddingRight';
+							d.className = 'HRow PaddingBottom';
 							return d;
 						}(),
 						'child' : 
@@ -2790,8 +3030,8 @@ Sections.accounts_templates = function( cmd, extra )
 								'element' : function() 
 								{
 									var d = document.createElement( 'div' );
-									d.className = 'HContent40 FloatLeft';
-									d.innerHTML = '<h3><strong>' + i18n( 'i18n_templates' ) + '</strong></h3>';
+									d.className = 'HContent50 FloatLeft';
+									d.innerHTML = '<h3 class="NoMargin FloatLeft"><strong>' + i18n( 'i18n_templates' ) + '</strong></h3>';
 									return d;
 								}() 
 							}, 
@@ -2799,7 +3039,7 @@ Sections.accounts_templates = function( cmd, extra )
 								'element' : function() 
 								{
 									var d = document.createElement( 'div' );
-									d.className = 'HContent60 FloatLeft Relative';
+									d.className = 'HContent50 FloatLeft Relative';
 									return d;
 								}(), 
 								'child' : 
@@ -2808,6 +3048,7 @@ Sections.accounts_templates = function( cmd, extra )
 										'element' : function() 
 										{
 											var d = document.createElement( 'input' );
+											d.type = 'text';
 											d.className = 'FullWidth';
 											d.placeholder = 'Search templates...';
 											d.onkeyup = function ( e ) { filter( this.value, true ); console.log( 'do search ...' ); };
@@ -2831,7 +3072,7 @@ Sections.accounts_templates = function( cmd, extra )
 								'element' : function() 
 								{
 									var d = document.createElement( 'div' );
-									d.className = 'HRow BackgroundNegativeAlt Negative PaddingTop PaddingLeft PaddingBottom';
+									d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingTop PaddingBottom PaddingRight';
 									return d;
 								}(),
 								'child' : 
@@ -2840,7 +3081,7 @@ Sections.accounts_templates = function( cmd, extra )
 										'element' : function() 
 										{
 											var d = document.createElement( 'div' );
-											d.className = 'PaddingSmallRight HContent90 FloatLeft Ellipsis';
+											d.className = 'PaddingSmall HContent90 FloatLeft Ellipsis';
 											d.innerHTML = '<strong>Name</strong>';
 											return d;
 										}()
@@ -2849,7 +3090,7 @@ Sections.accounts_templates = function( cmd, extra )
 										'element' : function() 
 										{
 											var d = document.createElement( 'div' );
-											d.className = 'PaddingSmall HContent10 TextCenter FloatLeft Ellipsis';
+											d.className = 'HContent10 TextCenter FloatLeft Ellipsis';
 											d.onclick = function () {  };
 											return d;
 											
@@ -2861,7 +3102,7 @@ Sections.accounts_templates = function( cmd, extra )
 												{
 													var b = document.createElement( 'button' );
 													b.className = 'IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle';
-													b.onclick = function () { edit(); /*details()*/ };
+													b.onclick = function () { edit(); };
 													return b;
 												}()
 											}
@@ -2890,7 +3131,7 @@ Sections.accounts_templates = function( cmd, extra )
 				{
 					
 					var list = document.createElement( 'div' );
-					list.className = 'List';
+					list.className = 'List PaddingSmallTop PaddingSmallBottom';
 					
 					for( var k in temp )
 					{
@@ -2904,9 +3145,10 @@ Sections.accounts_templates = function( cmd, extra )
 									{
 										var d = document.createElement( 'div' );
 										d.className = 'HRow';
+										d.tempid = temp[k].ID;
 										d.onclick = function()
 										{
-											edit( temp[k].ID );
+											edit( this.tempid, this );
 										};
 										return d;
 									}(),
@@ -2917,7 +3159,7 @@ Sections.accounts_templates = function( cmd, extra )
 											{
 												var d = document.createElement( 'div' );
 												d.className = 'TextCenter HContent10 FloatLeft PaddingSmall Ellipsis';
-												d.innerHTML = '<span class="IconSmall fa-users"></span>';
+												d.innerHTML = '<span class="IconSmall NegativeAlt fa-file-text-o"></span>';
 												return d;
 											}()
 										},
@@ -2936,7 +3178,7 @@ Sections.accounts_templates = function( cmd, extra )
 												var d = document.createElement( 'div' );
 												d.className = 'HContent10 FloatLeft PaddingSmall Ellipsis';
 												return d;
-											}(),
+											}()/*,
 											'child' : 
 											[
 												{
@@ -2944,16 +3186,17 @@ Sections.accounts_templates = function( cmd, extra )
 													{
 														var s = document.createElement( 'span' );
 														s.className = 'IconSmall FloatRight PaddingSmall fa-minus-circle';
+														s.tempid = temp[k].ID;
 														s.onclick = function ( e ) 
 														{ 
-															remove( temp[k].ID );
+															removeBtn(  );
 															e.stopPropagation();
 															e.preventDefault(); 
 														};
 														return s;
 													}()
 												}
-											]
+											]*/
 										}
 									]
 								}

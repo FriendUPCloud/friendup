@@ -479,8 +479,10 @@ void FriendCoreManagerDelete( FriendCoreManager *fcm )
 		DEBUG("[FriendCoreManager] Close SSH Server\n");
 		if( fcm->fcm_SSHServer != NULL )
 		{
+#ifdef ENABLE_SSH
 			SSHServerDelete( fcm->fcm_SSHServer );
 			fcm->fcm_SSHServer = NULL;
+#endif
 		}
 		
 		DEBUG("[FriendCoreManager] Close FriendCoreInfo\n");

@@ -61,6 +61,8 @@ clients must be made or how a client should react.
 
 extern struct SystemBase *SLIB;
 
+#ifdef ENABLE_SSH
+
 void printTrace( void )
 {
   void *array[10];
@@ -870,4 +872,6 @@ int SSHThread( FThread *ptr )
 	ptr->t_Launched = FALSE;
     return 0;
 }
+
+#endif // #ifdef ENABLE_SSH
 
