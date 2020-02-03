@@ -610,10 +610,11 @@ AND f.Name = '%s'",
 			}
 			while( fentry != NULL )
 			{
+				DEBUG("Going through all user drives. Name %s UserID %lu\n", fentry->f_Name, usr->u_ID );
 				if( id == fentry->f_ID )
 				{
 					*mfile = fentry;
-					DEBUG("Device is already mounted\n");
+					DEBUG("Device is already mounted. Name: %s ID %lu\n", fentry->f_Name, fentry->f_ID );
 					sameDevError = 1;
 					break;
 				}
@@ -632,7 +633,7 @@ AND f.Name = '%s'",
 					if( id == fentry->f_ID || strcmp( name, fentry->f_Name ) == 0 )
 					{
 						*mfile = fentry;
-						DEBUG("Device is already mounted\n");
+						DEBUG("Device is already mounted2. Name: %s\n", fentry->f_Name );
 						sameDevError = 1;
 						break;
 					}
