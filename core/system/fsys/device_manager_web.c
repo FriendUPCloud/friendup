@@ -949,7 +949,19 @@ AND LOWER(f.Name) = LOWER('%s')",
 			
 					if( activeUser->u_IsAdmin || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
 					{
-						User *locusr = UMGetUserByID( l->sl_UM, userID );
+						DEBUG("Permissions accepted or user is admin\n");
+						User *locusr = NULL;
+						
+						if( userID == loggedSession->us_User->u_ID )
+						{
+							DEBUG("Seems changes will be applyed to current user\n");
+							locusr = loggedSession->us_User;
+						}
+						else
+						{
+							locusr = UMGetUserByID( l->sl_UM, userID );
+						}
+						
 						// user is not in memory, we can remove his entries in DB only
 						if( locusr == NULL )
 						{
@@ -962,7 +974,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 							activeUser = locusr;
 							userID = activeUser->u_ID;
 						}
-						deviceUnmounted = TRUE;
+						//deviceUnmounted = TRUE;
 						mountError = 0;
 					}
 					else
@@ -975,6 +987,8 @@ AND LOWER(f.Name) = LOWER('%s')",
 					//	FFree( args );
 					//}
 				}
+				
+				DEBUG("Device unmounted: %d\n", deviceUnmounted );
 				
 				if( deviceUnmounted == FALSE )
 				{
@@ -1055,6 +1069,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 						{TAG_DONE, TAG_DONE }
 					};
 				
+					DEBUG("[DeviceMWebRequest] Unmount will be called\n");
 					mountError = UnMountFS( l->sl_DeviceManager, (struct TagItem *)&tags, activeUser, loggedSession );
 					DEBUG("[DeviceMWebRequest] Unmounting device error %d\n", mountError );
 				}
