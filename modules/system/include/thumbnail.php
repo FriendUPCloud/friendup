@@ -15,6 +15,9 @@ global $SqlDatabase, $Logger, $User, $Config;
 require_once( 'php/classes/file.php' );
 require_once( 'php/classes/door.php' );
 
+error_reporting(E_ALL & ~E_NOTICE);
+ini_set('display_errors', 1);
+
 // Default thumbnail size
 $width = 56;
 $height = 48;
@@ -91,6 +94,8 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 	
 	// TODO: Check for changes overwritten with the same filename, thumbs could show the wrong image if it has the same name ...
 	
+	$found = false;
+	
 	// Look in the database
 	$thumb = new dbIO( 'FThumbnail' );
 	$thumb->Path = $door->ID . ':' . $width . '_' . $height . '_' . $dirnfile; // Use fs ID instead of fs name
@@ -99,23 +104,27 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 	{
 		if( isset( $args->debug ) )
 		{
-			die( '[1] ' . $thumb->UserID . ' -- ' . $thumb->Path . ' -- ' . $thumb->Filepath );
+			die( '[1] ' . $thumb->UserID . ' -- ' . $thumb->Path . ' -- ' . $thumb->Filepath . ' -- ' . ( isset( $thumb->Filesize ) ? $thumb->Filesize . ' == ' . ( file_exists( $thumb->Filepath ) ? filesize( $thumb->Filepath ) : '0' ) : '' ) );
 		}
 		
 		// Check if it exists!
-		if( file_exists( $thumb->Filepath ) )
+		if( ( file_exists( $thumb->Filepath ) && ( !isset( $thumb->Filesize ) || !$thumb->Filesize ) ) || ( file_exists( $thumb->Filepath ) && isset( $thumb->Filesize ) && $thumb->Filesize == filesize( $thumb->Filepath ) ) )
 		{
+			$found = true;
+			
 			FriendHeader( 'Content-Type: image/png' );
 			die( file_get_contents( $thumb->Filepath ) );
 		}
 		// Clean up..
 		else
 		{
+			$found = true;
+			
 			$thumb->delete();
 			_file_broken();
 		}
 	}
-	else
+	if( !$found )
 	{
 				
 		$d = new File( $p );
@@ -187,7 +196,7 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 				$source = imagecreatefromgif( '/tmp/Friendup/' . $smp );
 				break;
 		}
-	
+		
 		// Clean up
 		if( file_exists( '/tmp/Friendup/' . $smp ) )
 			unlink( '/tmp/Friendup/' . $smp );
@@ -246,14 +255,20 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		$thumb->Filepath = $wname . 'thumbnails/' . $fname;
 		$thumb->DateCreated = date( 'Y-m-d H:i:s' );
 		$thumb->DateTouched = $thumb->DateCreated;
-		$thumb->Save();
-		if( $thumb->ID > 0 )
+		
+		// Save
+		imagepng( $dest, $wname . 'thumbnails/' . $fname, 9 );
+		
+		if( file_exists( $wname . 'thumbnails/' . $fname ) )
 		{
-			// Save
-			imagepng( $dest, $wname . 'thumbnails/' . $fname, 9 );
-	
-			FriendHeader( 'Content-Type: image/png' );
-			die( file_get_contents( $wname . 'thumbnails/' . $fname ) );
+			$thumb->Filesize = filesize( $wname . 'thumbnails/' . $fname );
+			$thumb->Save();
+			
+			if( $thumb->ID > 0 )
+			{
+				FriendHeader( 'Content-Type: image/png' );
+				die( file_get_contents( $wname . 'thumbnails/' . $fname ) );
+			}
 		}
 	}
 }
