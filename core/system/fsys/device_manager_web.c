@@ -913,7 +913,6 @@ AND LOWER(f.Name) = LOWER('%s')",
 					// user is not in memory, we can remove his entries in DB only
 					if( locusr == NULL )
 					{
-
 						deviceUnmounted = TRUE;
 						mountError = 0;
 					}
@@ -924,6 +923,8 @@ AND LOWER(f.Name) = LOWER('%s')",
 						userID = activeUser->u_ID;
 					}
 				}
+				
+				DEBUG("[DeviceMWebRequest] device unmounted: %d\n", deviceUnmounted );
 				
 				if( deviceUnmounted == FALSE )
 				{
@@ -958,6 +959,8 @@ AND LOWER(f.Name) = LOWER('%s')",
 							}
 						}
 					}
+					
+					DEBUG("[DeviceMWebRequest] ldevname: %s\n", ldevname );
 				
 					// check also device attached to groups
 					if( ldevname == NULL )
@@ -1001,6 +1004,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 						{FSys_Mount_Type, (FULONG)type },
 						{TAG_DONE, TAG_DONE }
 					};
+					DEBUG("[DeviceMWebRequest] call UnMountFS\n");
 				
 					mountError = UnMountFS( l->sl_DeviceManager, (struct TagItem *)&tags, activeUser, loggedSession );
 					DEBUG("[DeviceMWebRequest] Unmounting device error %d\n", mountError );
