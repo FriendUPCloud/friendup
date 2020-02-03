@@ -108,7 +108,7 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		}
 		
 		// Check if it exists!
-		if( file_exists( $thumb->Filepath ) && ( isset( $thumb->Filesize ) && $thumb->Filesize == filesize( $thumb->Filepath ) ) )
+		if( ( file_exists( $thumb->Filepath ) && ( !isset( $thumb->Filesize ) || !$thumb->Filesize ) ) || ( file_exists( $thumb->Filepath ) && isset( $thumb->Filesize ) && $thumb->Filesize == filesize( $thumb->Filepath ) ) )
 		{
 			$found = true;
 			
