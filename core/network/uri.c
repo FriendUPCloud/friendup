@@ -597,7 +597,7 @@ Uri* UriParse( char* str )
 	// Get query --------------------------------------------------------------
 	char* query = UriGetQuery( next, remainingLen, &next );
 	remainingLen = strLen - ( next - str );
-	if( query )
+	if( query != NULL )
 	{
 		uri->query = UriParseQuery( query );
 		uri->queryRaw = query;

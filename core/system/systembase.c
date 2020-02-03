@@ -2083,6 +2083,7 @@ usr->u_ID , usr->u_ID, usr->u_ID
 				{
 					//Log( FLOG_INFO, "UserDeviceMount. Device unmounted: %s UserID: %lu 
 					
+					/*
 					sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "\
 UPDATE `Filesystem` f SET `Mounted` = '0' \
 WHERE \
@@ -2098,15 +2099,23 @@ ug.UserID = '%ld' \
 AND LOWER(f.Name) = LOWER('%s')", 
 						usr->u_ID, usr->u_ID, (char *)row[ 0 ] 
 					);
-					void *resx = sqllib->Query( sqllib, temptext );
-					if( resx != NULL )
-					{
-						sqllib->FreeResult( sqllib, resx );
-					}
+					*/
+					sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "UPDATE `Filesystem` SET Mounted=0 WHERE ID=%lu", id );
+					
+					sqllib->QueryWithoutResults( sqllib, temptext );
+				}
+				else
+				{
+					sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "UPDATE `Filesystem` SET Mounted=0 WHERE ID=%lu", id );
+					
+					sqllib->QueryWithoutResults( sqllib, temptext );
 				}
 			}
-			else if( device )
+			else if( device != NULL )
 			{
+				sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "UPDATE `Filesystem` SET Mounted=1 WHERE ID=%lu", id );
+					
+				sqllib->QueryWithoutResults( sqllib, temptext );
 				device->f_Mounted = TRUE;
 			}
 			else
