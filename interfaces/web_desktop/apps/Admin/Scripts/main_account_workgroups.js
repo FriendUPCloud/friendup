@@ -359,7 +359,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					id        : ( id                                                                     ), 
 					groupname : ( ge( 'WorkgroupName'   ).value                                          ), 
 					parentid  : ( ge( 'WorkgroupParent' ).value                                          ),
-					users     : ( ge( 'WorkgroupUsers'  ).value ? ge( 'WorkgroupUsers' ).value : 'false' ),
+					/*users     : ( ge( 'WorkgroupUsers'  ).value ? ge( 'WorkgroupUsers' ).value : 'false' ),*/
 					authid    : ( Application.authId                                                     ),
 					args      : ( args                                                                   )
 				} } );
@@ -403,11 +403,93 @@ Sections.accounts_workgroups = function( cmd, extra )
 				id        : ( id                                                                     ), 
 				groupname : ( ge( 'WorkgroupName'   ).value                                          ), 
 				parentid  : ( ge( 'WorkgroupParent' ).value                                          ),
-				users     : ( ge( 'WorkgroupUsers'  ).value ? ge( 'WorkgroupUsers' ).value : 'false' ),
+				/*users     : ( ge( 'WorkgroupUsers'  ).value ? ge( 'WorkgroupUsers' ).value : 'false' ),*/
 				authid    : ( Application.authId                                                     ),
 				args      : ( args                                                                   )
 			} );
 			
+		}
+	}
+	
+	function addUser( uid, wid, callback, vars )
+	{
+		if( uid && wid )
+		{
+			var args = { 
+				id     : wid, 
+				users  : uid, 
+				authid : Application.authId,
+				args   : JSON.stringify( {
+				'type'    : 'write', 
+				'context' : 'application', 
+				'authid'  : Application.authId, 
+				'data'    : { 
+					'permission' : [ 
+						'PERM_WORKGROUP_GLOBAL', 
+						'PERM_WORKGROUP_WORKGROUP' 
+					]
+				}, 
+				'object'   : 'workgroup', 
+				'objectid' : wid 
+				} )
+			};
+		
+			var f = new Library( 'system.library' );
+			f.onExecuted = function( e, d )
+			{
+				console.log( { e:e, d:d } );
+			
+				if( e == 'ok' )
+				{
+					if( callback ) callback( true, d, vars );
+				}
+				else
+				{
+					if( callback ) callback( false, d, vars );
+				}
+			}
+			f.execute( 'group/addusers', args );
+		}
+	}
+	
+	function removeUser( uid, wid, callback, vars )
+	{
+		if( uid && wid )
+		{
+			var args = { 
+				id     : wid, 
+				users  : uid, 
+				authid : Application.authId,
+				args   : JSON.stringify( {
+				'type'    : 'write', 
+				'context' : 'application', 
+				'authid'  : Application.authId, 
+				'data'    : { 
+					'permission' : [ 
+						'PERM_WORKGROUP_GLOBAL', 
+						'PERM_WORKGROUP_WORKGROUP' 
+					]
+				}, 
+				'object'   : 'workgroup', 
+				'objectid' : wid 
+				} )
+			};
+			
+			var f = new Library( 'system.library' );
+			f.onExecuted = function( e, d )
+			{
+				console.log( { e:e, d:d } );
+			
+				if( e == 'ok' )
+				{
+					if( callback ) callback( true, d, vars );
+				}
+				else
+				{
+					if( callback ) callback( false, d, vars );
+				}
+			}
+			f.execute( 'group/removeusers', args );
 		}
 	}
 	
@@ -1154,12 +1236,26 @@ Sections.accounts_workgroups = function( cmd, extra )
 																			removeBtn( this, { ids: ids, id: id, func: func, pnt: pnt }, function ( args )
 																			{
 																				
-																				args.func.updateids( 'users', args.id, false );
+																				console.log( 'removeUser( '+args.id+', '+info.ID+', callback, vars )' );
 																				
-																				if( args.pnt )
+																				removeUser( args.id, info.ID, function( e, d, vars )
 																				{
-																					args.pnt.innerHTML = '';
-																				}
+																					
+																					if( e && vars )
+																					{
+																						vars.func.updateids( 'users', vars.uid, false );
+																						
+																						if( vars.pnt )
+																						{
+																							vars.pnt.innerHTML = '';
+																						}
+																					}
+																					else
+																					{
+																						console.log( { e:e, d:d, vars: vars } );
+																					}
+																					
+																				}, { uid: args.id, func: func, pnt: pnt } );
 																				
 																			} );
 																			
@@ -1299,17 +1395,49 @@ Sections.accounts_workgroups = function( cmd, extra )
 																		{
 																			if( this.classList.contains( 'fa-toggle-off' ) )
 																			{
-																				func.updateids( 'users', id, true );
 																				
-																				this.classList.remove( 'fa-toggle-off' );
-																				this.classList.add( 'fa-toggle-on' );
+																				console.log( 'addUser( '+id+', '+info.ID+', callback, vars )' );
+																				
+																				addUser( id, info.ID, function( e, d, vars )
+																				{
+																					
+																					if( e && vars )
+																					{
+																						vars.func.updateids( 'users', vars.uid, true );
+																						
+																						vars._this.classList.remove( 'fa-toggle-off' );
+																						vars._this.classList.add( 'fa-toggle-on' );
+																					}
+																					else
+																					{
+																						console.log( { e:e, d:d, vars: vars } );
+																					}
+																					
+																				}, { uid: id, func: func, _this: this } );
+																				
 																			}
 																			else
 																			{
-																				func.updateids( 'users', id, false );
 																				
-																				this.classList.remove( 'fa-toggle-on' );
-																				this.classList.add( 'fa-toggle-off' );
+																				console.log( 'removeUser( '+id+', '+info.ID+', callback, vars )' );
+																				
+																				removeUser( id, info.ID, function( e, d, vars )
+																				{
+																					
+																					if( e && vars )
+																					{
+																						vars.func.updateids( 'users', vars.uid, false );
+																						
+																						vars._this.classList.remove( 'fa-toggle-on' );
+																						vars._this.classList.add( 'fa-toggle-off' );
+																					}
+																					else
+																					{
+																						console.log( { e:e, d:d, vars: vars } );
+																					}
+																					
+																				}, { uid: id, func: func, _this: this } );
+																				
 																			}
 																		};
 																		return b;
