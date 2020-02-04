@@ -422,6 +422,88 @@ File *UserRemDeviceByName( User *usr, const char *name, int *error )
 }
 
 /**
+ * Remove device by name
+ *
+ * @param usr pointer to User from which device will be removed
+ * @param grid ID of the group which drive will be detached from user
+ * @param error pointer to int variable where error number will be stured
+ * @return pointer to File structure which will be removed from User structure
+ */
+File *UserRemDeviceByGroupID( User *usr, FULONG grid, int *error )
+{
+	if( usr != NULL )
+	{
+		File *remdev = NULL;
+		File *lastone = NULL;
+		
+		if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
+		{
+			File *lf = usr->u_MountedDevs;
+			
+			while( lf != NULL )
+			{
+				DEBUG( "[UserRemDeviceByName] Checking fs in list %lu == %lu...\n",  lf->f_UserGroupID, grid );
+				if( lf->f_UserGroupID == grid )
+				{
+					DEBUG( "[UserRemDeviceByName] Found one (%lu == %lu)\n",  lf->f_UserGroupID, grid );
+					remdev = lf;
+					break;
+				}
+				lastone = lf;
+				lf = (File *)lf->node.mln_Succ;
+			}
+			FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
+		}
+		
+		if( remdev != NULL )
+		{
+			if( remdev->f_Operations <= 0 )
+			{
+				DEBUG("[UserRemDeviceByName] Remove device from list\n");
+				
+				if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
+				{
+					usr->u_MountedDevsNr--;
+			
+					if( usr->u_MountedDevs == remdev )		// checking if its our first entry
+					{
+						File *next = (File*)remdev->node.mln_Succ;
+						usr->u_MountedDevs = (File *)next;
+						if( next != NULL )
+						{
+							next->node.mln_Pred = NULL;
+						}
+					}
+					else
+					{
+						File *next = (File *)remdev->node.mln_Succ;
+						//next->node.mln_Pred = (struct MinNode *)prev;
+						if( lastone != NULL )
+						{
+							lastone->node.mln_Succ = (struct MinNode *)next;
+						}
+					}
+					FRIEND_MUTEX_UNLOCK(&usr->u_Mutex);
+				}
+				return remdev;
+			}
+			else
+			{
+				DEBUG("[UserRemDeviceByName] Cannot unmount device, operation in progress\n");
+				*error = FSys_Error_OpsInProgress;
+				return remdev;
+			}
+		}
+	}
+	else
+	{
+		DEBUG("[UserRemDeviceByName] User or File paramter is equal to NULL\n");
+		return NULL;
+	}
+	return NULL;
+}
+
+/**
  * Regenerate sessionid for user
  *
  * @param usr pointer to User which will have new sessionid

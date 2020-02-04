@@ -237,6 +237,28 @@ int RescanDOSDrivers( DeviceManager *dm )
 }
 
 /**
+ * 
+ * Mount group device
+ * 
+ * @param dm pointer to DeviceManager
+ * @param usr pointer to User structure to which drive will be attached
+ * @param groupID ID of group to which user belong
+ * @return error number
+ * 
+ **/
+
+int MountGroupFS( DeviceManager *dm, User *usr, FULONG groupID )
+{
+	SystemBase *l = (SystemBase *)dm->dm_SB;
+	// New way of finding type of device
+	SQLLibrary *sqllib = l->LibrarySQLGet( l );
+	if( sqllib != NULL )
+	{
+	}
+	
+}
+
+/**
  * Mount door in FC
  *
  * @param dm pointer to DeviceManager

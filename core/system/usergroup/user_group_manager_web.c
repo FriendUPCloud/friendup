@@ -1453,6 +1453,23 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 								UGMAddUserToGroupDB( l->sl_UGM, groupID, rmEntry->i_Data );
 							}
 						}
+						
+						// if user is in memory we must mount group drives for him + send notification
+						if( isInMemory == TRUE )
+						{
+							File *dstFile = NULL;
+							if( MountFS( dm, tl, &dstFile, usr, mountError, calledByAdmin, notify ) != 0 )
+							{
+								INFO( "[MountFS] -- Could not mount device for user %s. Drive was %s.\n", tmpUser->u_Name ? tmpUser->u_Name : "--nousername--", name ? name : "--noname--" );
+							}
+							
+							// Tell user!
+							if( notify == TRUE )
+							{
+								UserNotifyFSEvent2( dm, tmpUser, "refresh", "Mountlist:" );
+							}
+							//int UserAddDevice( User *usr, File *file )
+						}
 
 						FFree( rmEntry );
 					} // while ugroups
@@ -1646,6 +1663,32 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							if( exist == TRUE )
 							{
 								UGMRemoveUserFromGroupDB( l->sl_UGM, groupID, rmEntry->i_Data );
+							}
+						}
+						
+						// remove drive from user from memory
+						
+						if( isInMemory == TRUE )
+						{
+							int error = 0;
+							// wait till drive is removed/detached
+							do
+							{
+								error = 0; // set error to 0 and check if OPS is in progress
+								
+								File *remDrive = UserRemDeviceByGroupID( usr, groupID, &error );
+								if( remDrive != NULL )
+								{
+									FHandler *fsys = (FHandler *)remDrive->f_FSys;
+									fsys->Release( fsys, remDrive );	// release drive data
+								}
+								usleep( 500 );
+							}while( error == FSys_Error_OpsInProgress );
+							
+							// if device was detached from not current user
+							//if( usr != loggedSession->us_User )
+							{
+								UserNotifyFSEvent2( l->sl_DeviceManager, usr, "refresh", "Mountlist:" );
 							}
 						}
 						
