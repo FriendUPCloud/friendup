@@ -254,6 +254,8 @@ int MountGroupFS( DeviceManager *dm, User *usr, FULONG groupID )
 	SQLLibrary *sqllib = l->LibrarySQLGet( l );
 	if( sqllib != NULL )
 	{
+		
+		l->LibrarySQLDrop( l, sqllib );
 	}
 	
 }
