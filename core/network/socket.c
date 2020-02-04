@@ -47,6 +47,8 @@
 
 //#define USE_SOCKET_REAPER
 
+void SocketFree( Socket *sock );
+
 #define SOCKET_STATE_MAX_ACCEPTED_TIME_s 5 //socket has N seconds to send the first byte
 
 static int ssl_session_ctx_id = 1;

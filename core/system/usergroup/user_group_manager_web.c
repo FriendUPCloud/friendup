@@ -1457,10 +1457,11 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						// if user is in memory we must mount group drives for him + send notification
 						if( isInMemory == TRUE )
 						{
+							/*
 							File *dstFile = NULL;
 							if( MountFS( dm, tl, &dstFile, usr, mountError, calledByAdmin, notify ) != 0 )
 							{
-								INFO( "[MountFS] -- Could not mount device for user %s. Drive was %s.\n", tmpUser->u_Name ? tmpUser->u_Name : "--nousername--", name ? name : "--noname--" );
+								//INFO( "[MountFS] -- Could not mount device for user %s. Drive was %s.\n", tmpUser->u_Name ? tmpUser->u_Name : "--nousername--", name ? name : "--noname--" );
 							}
 							
 							// Tell user!
@@ -1469,6 +1470,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 								UserNotifyFSEvent2( dm, tmpUser, "refresh", "Mountlist:" );
 							}
 							//int UserAddDevice( User *usr, File *file )
+							*/
 						}
 
 						FFree( rmEntry );

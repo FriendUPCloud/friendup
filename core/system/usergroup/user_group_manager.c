@@ -508,9 +508,7 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 		FERROR("Cannot get mysql.library slot\n");
 		return -10;
 	}
-	
-	DEBUG("\n\n\n\n\n");
-	
+
 	// checking  how many groups were passed
 	
 	int pos = 0;
