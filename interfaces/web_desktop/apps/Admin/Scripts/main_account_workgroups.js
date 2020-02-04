@@ -623,6 +623,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			_this.classList.remove( 'ColorStGrayLight' );
 			_this.classList.remove( 'fa-minus-circle' );
 			_this.classList.remove( 'fa-trash' );
+			_this.classList.remove( 'NegativeAlt' );
 			_this.classList.add( 'ButtonAlt' );
 			_this.classList.add( 'BackgroundRed' );
 			_this.innerHTML = ( args.button_text ? i18n( args.button_text ) : i18n( 'i18n_delete' ) );

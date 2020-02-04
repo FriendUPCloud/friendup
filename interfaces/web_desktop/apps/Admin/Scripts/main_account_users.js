@@ -1585,6 +1585,17 @@ Sections.accounts_users = function( cmd, extra )
 								
 								if( ge( 'wallpaper_button_inner' ) )
 								{
+									
+									// TODO: Temporary ... remove when first login is fixed ...
+									
+									if( ge( 'UserAvatar_' + userInfo.ID ) && ge( 'WallpaperContainer' ) && ge( 'UserAvatar_' + userInfo.ID ).getAttribute( 'timestamp' ) > 0 )
+									{
+										ge( 'WallpaperContainer' ).classList.remove( 'Closed' );
+										ge( 'WallpaperContainer' ).classList.add( 'Open' );
+									}
+									
+									
+									
 									var b = ge( 'wallpaper_button_inner' );
 									b.onclick = function(  )
 									{
@@ -1827,8 +1838,8 @@ Sections.accounts_users = function( cmd, extra )
 							wallpaper_button : function ()
 							{
 								// TODO: Fix first login first so we can set wallpapers on users not logged in yet.
-								return ''/*'<button class="ButtonAlt IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>'*/;
-				
+								
+								return '<button class="ButtonAlt IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>';
 							},
 			
 							wallpaper_preview : function ()
@@ -3199,6 +3210,7 @@ Sections.accounts_users = function( cmd, extra )
 			_this.classList.remove( 'ColorStGrayLight' );
 			_this.classList.remove( 'fa-minus-circle' );
 			_this.classList.remove( 'fa-trash' );
+			_this.classList.remove( 'NegativeAlt' );
 			_this.classList.add( 'ButtonAlt' );
 			_this.classList.add( 'BackgroundRed' );
 			_this.innerHTML = ( args.button_text ? i18n( args.button_text ) : i18n( 'i18n_delete' ) );
