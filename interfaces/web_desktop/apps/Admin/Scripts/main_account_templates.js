@@ -288,13 +288,16 @@ Sections.accounts_templates = function( cmd, extra )
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( { e:e, d:d } );
+			
+			var data = {};
 			
 			try
 			{
 				data = JSON.parse( d );
 			}
 			catch( e ) {  }
+			
+			console.log( { e:e, d:(data?data:d) } );
 			
 			if( e == 'ok' && d )
 			{
@@ -306,6 +309,15 @@ Sections.accounts_templates = function( cmd, extra )
 				
 				refresh( d );
 				
+			}
+			else if( data && data.response )
+			{
+				Notify( { title: i18n( 'i18n_template_create' ), text: i18n( 'i18n_' + data.response ) } );
+				
+				if( ge( 'TempName' ) )
+				{
+					ge( 'TempName' ).focus();
+				}
 			}
 			else
 			{
@@ -360,15 +372,16 @@ Sections.accounts_templates = function( cmd, extra )
 			var m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{
-				console.log( { e:e, d:d } );
 				
-				var data = false;
-														
+				var data = {};
+											
 				try
 				{
 					data = JSON.parse( d );
 				}
 				catch( e ) {  }
+				
+				console.log( { e:e, d:(data?data:d) } );
 				
 				if( e == 'ok' )
 				{
@@ -423,6 +436,15 @@ Sections.accounts_templates = function( cmd, extra )
 						
 					}*/
 					
+				}
+				else if( data && data.response )
+				{
+					Notify( { title: i18n( 'i18n_template_update' ), text: i18n( 'i18n_' + data.response ) } );
+					
+					if( ge( 'TempName' ) )
+					{
+						ge( 'TempName' ).focus();
+					}
 				}
 				else
 				{

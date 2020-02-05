@@ -11,6 +11,16 @@
 
 if( $level == 'Admin' && $args->args->id > 0 )
 {
+	if( isset( $args->args->Name ) )
+	{
+		$c = new dbIO( 'FUserGroup' );
+		$c->Name = $args->args->Name;
+		if( $c->Load() && $c->ID != $args->args->id )
+		{
+			die( 'fail<!--separate-->{"response":"Template with that name already exist"}'  );
+		}
+	}
+	
 	// Get the fusergroup object
 	$o = new dbIO( 'FUserGroup' );
 	$o->ID = $args->args->id;

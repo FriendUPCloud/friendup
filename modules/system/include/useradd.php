@@ -58,8 +58,12 @@ if( $level == 'Admin' )
 	{
 		// Create the new user
 		$u = new dbIO( 'FUser' );
+		$u->Name = ( isset( $args->args->username ) ? $args->args->username : 'Unnamed user' );
+		if( isset( $args->args->username ) && $u->Load() )
+		{
+			die( 'fail<!--separate-->{"response":"User already exist","code":"19"}'  );
+		}
 		$u->Password = md5( rand(0,999) + microtime() );
-		$u->Name = 'Unnamed user';
 		$u->FullName = 'Unnamed user';
 		$u->Save();
 
