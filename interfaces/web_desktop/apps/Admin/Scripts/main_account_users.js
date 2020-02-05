@@ -3527,7 +3527,22 @@ Sections.accounts_users = function( cmd, extra )
 function refreshUserList( userInfo )
 {
 	console.log( 'func.init(  ) ', userInfo );
-				
+	
+	if( !ge( 'UserListID_'+userInfo.ID ) && ge( 'ListUsersInner' ) )
+	{
+		var str = '';
+		
+		str += '<div class="HRow Active" id="UserListID_' + userInfo.ID + '">';
+		str += '	<div class="TextCenter HContent10 FloatLeft PaddingSmall Ellipsis edit"></div>';
+		str += '	<div class=" HContent30 FloatLeft PaddingSmall Ellipsis fullname"></div>';
+		str += '	<div class=" HContent25 FloatLeft PaddingSmall Ellipsis name"></div>';
+		str += '	<div class=" HContent15 FloatLeft PaddingSmall Ellipsis status"></div>';
+		str += '	<div class=" HContent20 FloatLeft PaddingSmall Ellipsis logintime"></div>';
+		str += '</div>';
+		
+		ge( 'ListUsersInner' ).innerHTML = ( str + ge( 'ListUsersInner' ).innerHTML );
+	}
+	
 	if( ge( 'UserListID_'+userInfo.ID ) )
 	{
 		
@@ -5391,17 +5406,17 @@ function addUser( callback, username )
 		}
 		catch( e ) {  }
 		
-		console.log( 'addUser() ', { e:e, d:d } );
+		console.log( 'addUser() ', { e:e, d:d, args: args } );
 		
 		if( e == 'ok' && d )
 		{
 			if( callback )
 			{
-				callback( d );
+				callback( true, d );
 			}
 			else
 			{
-				saveUser( d );
+				saveUser( true, d );
 			}
 			
 			return;
