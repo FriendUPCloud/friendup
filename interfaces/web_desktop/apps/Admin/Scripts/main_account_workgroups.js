@@ -281,15 +281,15 @@ Sections.accounts_workgroups = function( cmd, extra )
 		var f = new Library( 'system.library' );
 		f.onExecuted = function( e, d )
 		{
-			console.log( { e:e, d:d, args: args } );
-			
-			data = {};
+			var data = {};
 			
 			try
 			{
 				data = JSON.parse( d );
 			}
 			catch( e ) {  }
+			
+			console.log( 'create() ', { e:e, d:(data?data:d), args: args } );
 			
 			if( e == 'ok' && d )
 			{
@@ -301,6 +301,15 @@ Sections.accounts_workgroups = function( cmd, extra )
 				
 				refresh( data.id );
 				
+			}
+			else if( data && data.code == '69' && data.response )
+			{
+				Notify( { title: i18n( 'i18n_workgroup_create' ), text: i18n( 'i18n_' + data.response ) } );
+				
+				if( ge( 'WorkgroupName' ) )
+				{
+					ge( 'WorkgroupName' ).focus();
+				}
 			}
 			else
 			{
@@ -355,7 +364,15 @@ Sections.accounts_workgroups = function( cmd, extra )
 			var f = new Library( 'system.library' );
 			f.onExecuted = function( e, d )
 			{
-				console.log( { e:e, d:d, args: {
+				var data = {};
+				
+				try
+				{
+					data = JSON.parse( d );
+				}
+				catch( e ) {  }
+				
+				console.log( { e:e, d:(data?data:d), args: {
 					id        : ( id                                                                     ), 
 					groupname : ( ge( 'WorkgroupName'   ).value                                          ), 
 					parentid  : ( ge( 'WorkgroupParent' ).value                                          ),
@@ -363,14 +380,6 @@ Sections.accounts_workgroups = function( cmd, extra )
 					authid    : ( Application.authId                                                     ),
 					args      : ( args                                                                   )
 				} } );
-				
-				data = {};
-				
-				try
-				{
-					data = JSON.parse( d );
-				}
-				catch( e ) {  }
 				
 				if( e == 'ok' && d )
 				{
@@ -382,6 +391,15 @@ Sections.accounts_workgroups = function( cmd, extra )
 					
 					//refresh( data.id );
 					
+				}
+				else if( data && data.code == '69' && data.response )
+				{
+					Notify( { title: i18n( 'i18n_workgroup_update' ), text: i18n( 'i18n_' + data.response ) } );
+				
+					if( ge( 'WorkgroupName' ) )
+					{
+						ge( 'WorkgroupName' ).focus();
+					}
 				}
 				else
 				{
@@ -1627,7 +1645,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			// Get the user list
 			list( function( e, d )
 			{
-				console.log( { e:e, d:d } );
+				console.log( 'initMain() ', { e:e, d:d } );
 				
 				//if( e != 'ok' ) return;
 				var userList = null;
