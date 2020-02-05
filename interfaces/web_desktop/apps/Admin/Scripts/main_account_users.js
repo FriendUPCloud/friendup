@@ -4384,7 +4384,9 @@ Sections.user_disk_save = function( userid, did )
 			}
 		}
 		
-		var data = { userid: userid, Name: elems[ 'Name' ].value };
+		
+		
+		var data = { Name: elems[ 'Name' ].value };
 		
 		if( elems[ 'Server'           ] ) data.Server           = elems[ 'Server'           ].value;
 		if( elems[ 'ShortDescription' ] ) data.ShortDescription = elems[ 'ShortDescription' ].value;
@@ -4434,6 +4436,14 @@ Sections.user_disk_save = function( userid, did )
 			}
 		}
 		
+		// TODO: Make sure we save for the selected user and not the loggedin user ...
+		
+		if( Application.userId != userid )
+		{
+			data.userid = userid;
+			data.authid = Application.authId;
+		}
+		
 		console.log( data );
 		
 		//return;
@@ -4441,6 +4451,8 @@ Sections.user_disk_save = function( userid, did )
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, dat )
 		{
+			console.log( 'Sections.user_disk_save ', { e:e, d:dat, args:data } );
+			
 			if( e != 'ok' ) 
 			{
 				Notify( { title: i18n( 'i18n_disk_error' ), text: i18n( 'i18n_failed_to_edit' ) } );
@@ -4450,7 +4462,7 @@ Sections.user_disk_save = function( userid, did )
 			{
 				Notify( { title: i18n( 'i18n_disk_success' ), text: i18n( 'i18n_disk_edited' ) } );
 			}
-			remountDrive( data.Name, data.userid, function()
+			remountDrive( ( elems[ 'Name' ] && elems[ 'Name' ].current ? elems[ 'Name' ].current : data.Name ), data.Name, data.userid, function()
 			{
 				
 				var u = new Module( 'system' );
@@ -4475,9 +4487,7 @@ Sections.user_disk_save = function( userid, did )
 			} );
 		}
 		
-		// TODO: Make sure we save for the selected user and not the loggedin user ...
 		
-		data.authid = Application.authId;
 		
 		// Edit?
 		if( did > 0 )
@@ -5150,7 +5160,8 @@ function StorageForm( storage, callback )
 							{
 								if( elems[ fields[ a ] ] && typeof( data[ fields[ a ] ] ) != 'undefined' )
 								{
-									elems[ fields[ a ] ].value = data[ fields[ a ] ];
+									elems[ fields[ a ] ].value   = data[ fields[ a ] ];
+									elems[ fields[ a ] ].current = data[ fields[ a ] ];
 								}
 							}
 							// Do we have conf?
@@ -5304,32 +5315,40 @@ function mountDrive( devname, userid, callback )
 {
 	if( devname )
 	{
+		var vars = { devname: devname };
+		
 		// Specific for Pawel's code ... He just wants to forward json ...
 		
-		var args = JSON.stringify( {
-			'type'    : 'write', 
-			'context' : 'application', 
-			'authid'  : Application.authId, 
-			'data'    : { 
-				'permission' : [ 
-					'PERM_STORAGE_GLOBAL', 
-					'PERM_STORAGE_WORKGROUP' 
-				]
-			}, 
-			'object'   : 'user', 
-			'objectid' : userid 
-		} );
+		if( userid && Application.userId != userid )
+		{
+			vars.userid = userid;
+			vars.authid = Application.authId;
+			
+			vars.args = JSON.stringify( {
+				'type'    : 'write', 
+				'context' : 'application', 
+				'authid'  : Application.authId, 
+				'data'    : { 
+					'permission' : [ 
+						'PERM_STORAGE_GLOBAL', 
+						'PERM_STORAGE_WORKGROUP' 
+					]
+				}, 
+				'object'   : 'user', 
+				'objectid' : userid 
+			} );
+		}
 		
 		var f = new Library( 'system.library' );
 		
 		f.onExecuted = function( e, d )
 		{
-			console.log( 'mountDrive ( device/mount ) ', { devname: devname, userid: userid, authid: Application.authId, args: args, e:e, d:d } );
+			console.log( 'mountDrive ( device/mount ) ', { vars: vars, e:e, d:d } );
 			
 			if( callback ) callback( e, d );
 		}
 		
-		f.execute( 'device/mount', { devname: devname, userid: userid, authid: Application.authId, args: args } );
+		f.execute( 'device/mount', vars );
 	}
 }
 
@@ -5337,43 +5356,51 @@ function unmountDrive( devname, userid, callback )
 {
 	if( devname )
 	{
+		var vars = { devname: devname };
+		
 		// Specific for Pawel's code ... He just wants to forward json ...
 		
-		var args = JSON.stringify( {
-			'type'    : 'write', 
-			'context' : 'application', 
-			'authid'  : Application.authId, 
-			'data'    : { 
-				'permission' : [ 
-					'PERM_STORAGE_GLOBAL', 
-					'PERM_STORAGE_WORKGROUP' 
-				]
-			}, 
-			'object'   : 'user', 
-			'objectid' : userid 
-		} );
+		if( userid && Application.userId != userid )
+		{
+			vars.userid = userid;
+			vars.authid = Application.authId;
+			
+			vars.args = JSON.stringify( {
+				'type'    : 'write', 
+				'context' : 'application', 
+				'authid'  : Application.authId, 
+				'data'    : { 
+					'permission' : [ 
+						'PERM_STORAGE_GLOBAL', 
+						'PERM_STORAGE_WORKGROUP' 
+					]
+				}, 
+				'object'   : 'user', 
+				'objectid' : userid 
+			} );
+		}
 		
 		var f = new Library( 'system.library' );
 		
 		f.onExecuted = function( e, d )
 		{
-			console.log( 'unmountDrive ( device/unmount ) ', { devname: devname, userid: userid, authid: Application.authId, args: args, e:e, d:d } );
+			console.log( 'unmountDrive ( device/unmount ) ', { vars: vars, e:e, d:d } );
 			
 			if( callback ) callback( e, d );
 		}
 		
-		f.execute( 'device/unmount', { devname: devname, userid: userid, authid: Application.authId, args: args } );
+		f.execute( 'device/unmount', vars );
 	}
 }
 
-function remountDrive( devname, userid, callback )
+function remountDrive( oldname, newname, userid, callback )
 {
-	if( devname )
+	if( oldname && newname )
 	{
-		unmountDrive( devname, userid, function( e, d )
+		unmountDrive( oldname, userid, function( e, d )
 		{
 			
-			mountDrive( devname, userid, function( e, d )
+			mountDrive( newname, userid, function( e, d )
 			{
 				
 				if( callback ) callback( e, d );
