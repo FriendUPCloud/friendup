@@ -288,13 +288,16 @@ Sections.accounts_templates = function( cmd, extra )
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( { e:e, d:d } );
+			
+			var data = {};
 			
 			try
 			{
 				data = JSON.parse( d );
 			}
 			catch( e ) {  }
+			
+			console.log( { e:e, d:(data?data:d) } );
 			
 			if( e == 'ok' && d )
 			{
@@ -306,6 +309,15 @@ Sections.accounts_templates = function( cmd, extra )
 				
 				refresh( d );
 				
+			}
+			else if( data && data.response )
+			{
+				Notify( { title: i18n( 'i18n_template_create' ), text: i18n( 'i18n_' + data.response ) } );
+				
+				if( ge( 'TempName' ) )
+				{
+					ge( 'TempName' ).focus();
+				}
 			}
 			else
 			{
@@ -337,7 +349,7 @@ Sections.accounts_templates = function( cmd, extra )
 						
 			var args = { id: id, Preinstall: true, Themes: 'Friendup12', authid: Application.authId };
 			
-			var vals = [ 'Name', 'Description', 'Languages', 'Applications', 'Startup' ];
+			var vals = [ 'Name', 'Description', 'Languages'/*, 'Applications', 'Startup'*/ ];
 			
 			for( var i in vals )
 			{
@@ -347,11 +359,11 @@ Sections.accounts_templates = function( cmd, extra )
 				}
 			}
 			
-			// Look And Feel settings ...
+			/*// Look And Feel settings ...
 			
 			args[ 'ThemeConfig' ] = { colorSchemeText: ge( 'theme_dark_button' ).value, buttonSchemeText: ge( 'theme_style_select' ).value };
 			
-			args[ 'WorkspaceCount' ] = ge( 'workspace_count_input' ).value;
+			args[ 'WorkspaceCount' ] = ge( 'workspace_count_input' ).value;*/
 			
 			console.log( args );
 			
@@ -360,15 +372,16 @@ Sections.accounts_templates = function( cmd, extra )
 			var m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{
-				console.log( { e:e, d:d } );
 				
-				var data = false;
-														
+				var data = {};
+											
 				try
 				{
 					data = JSON.parse( d );
 				}
 				catch( e ) {  }
+				
+				console.log( { e:e, d:(data?data:d) } );
 				
 				if( e == 'ok' )
 				{
@@ -378,7 +391,7 @@ Sections.accounts_templates = function( cmd, extra )
 						Notify( { title: 'success', text: data.message } );
 					}
 					
-					// Wallpaper settings if we have a new wallpaper ...
+					/*// Wallpaper settings if we have a new wallpaper ...
 					
 					if( ge( 'wallpaper_button_inner' ) && ge( 'wallpaper_button_inner' ).value )
 					{
@@ -421,8 +434,17 @@ Sections.accounts_templates = function( cmd, extra )
 							authid  : Application.authId 
 						} );
 						
-					}
+					}*/
 					
+				}
+				else if( data && data.response )
+				{
+					Notify( { title: i18n( 'i18n_template_update' ), text: i18n( 'i18n_' + data.response ) } );
+					
+					if( ge( 'TempName' ) )
+					{
+						ge( 'TempName' ).focus();
+					}
 				}
 				else
 				{
@@ -436,6 +458,191 @@ Sections.accounts_templates = function( cmd, extra )
 				
 			}
 			m.execute( 'usersetupsave', args );
+		}
+		
+	}
+		
+	function updateApplications( tid, callback, vars )
+	{
+		
+		if( tid && ge( 'TempApplications' ) && ge( 'TempStartup' ) )
+		{
+			
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				console.log( { e:e, d:d } );
+				
+				var data = false;
+													
+				try
+				{
+					data = JSON.parse( d );
+				}
+				catch( e ) {  }
+				
+				if( e == 'ok' )
+				{
+					
+					if( data && data.message )
+					{
+						//Notify( { title: 'success', text: data.message } );
+					}
+					
+					if( callback ) callback( true, data, vars );
+					
+				}
+				else
+				{
+					
+					if( data && data.message )
+					{
+						Notify( { title: 'failed', text: data.message } );
+					}
+					
+					if( callback ) callback( false, data, vars );
+					
+				}
+				
+			}
+			m.execute( 'usersetupsave', { 
+				id           : tid, 
+				Preinstall   : true, 
+				Themes       : 'Friendup12', 
+				Applications : ge( 'TempApplications' ).value, 
+				Startup      : ge( 'TempStartup' ).value, 
+				authid       : Application.authId 
+			} );
+			
+		}
+		else
+		{
+			
+			if( callback ) callback( false, false, vars );
+			
+		}
+		
+	}
+	
+	function updateLookAndFeel( tid, callback, vars )
+	{
+		
+		if( tid && ge( 'theme_dark_button' ) && ge( 'theme_style_select' ) && ge( 'workspace_count_input' ) )
+		{
+			// Look And Feel settings ...
+			
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				console.log( { e:e, d:d } );
+				
+				var data = false;
+													
+				try
+				{
+					data = JSON.parse( d );
+				}
+				catch( e ) {  }
+				
+				if( e == 'ok' )
+				{
+					
+					if( data && data.message )
+					{
+						//Notify( { title: 'success', text: data.message } );
+					}
+					
+					if( callback ) callback( true, data, vars );
+					
+				}
+				else
+				{
+					
+					if( data && data.message )
+					{
+						Notify( { title: 'failed', text: data.message } );
+					}
+					
+					if( callback ) callback( false, data, vars );
+					
+				}
+				
+			}
+			m.execute( 'usersetupsave', { 
+				id             : tid, 
+				Preinstall     : true, 
+				Themes         : 'Friendup12', 
+				ThemeConfig    : { colorSchemeText: ge( 'theme_dark_button' ).value, buttonSchemeText: ge( 'theme_style_select' ).value }, 
+				WorkspaceCount : ge( 'workspace_count_input' ).value, 
+				authid         : Application.authId 
+			} );
+			
+		}
+		else
+		{
+			
+			if( callback ) callback( false, false, vars );
+			
+		}
+		
+	}
+	
+	function updateWallpaper( tid, callback, vars )
+	{
+		
+		// Wallpaper settings if we have a new wallpaper ...
+		
+		if( tid && ge( 'wallpaper_button_inner' ) && ge( 'wallpaper_button_inner' ).value )
+		{
+			
+			var m = new Module( 'system' );
+			m.onExecuted = function( ee, dd )
+			{
+				console.log( { e:ee, d:dd } );
+				
+				var dat = false;
+									
+				try
+				{
+					dat = JSON.parse( dd );
+				}
+				catch( e ) {  }
+				
+				if( ee == 'ok' )
+				{
+				
+					if( dat && dat.message )
+					{
+						Notify( { title: 'success', text: dat.message } );
+					}
+					
+					if( callback ) callback( true, dat, vars );
+					
+				}
+				else
+				{
+					
+					if( dat && dat.message )
+					{
+						Notify( { title: 'failed', text: dat.message } );
+					}
+					
+					if( callback ) callback( false, dat, vars );
+					
+				}
+			}
+			m.execute( 'usersetupwallpaperset', { 
+				setupId : tid, 
+				path    : ge( 'wallpaper_button_inner' ).value, 
+				authid  : Application.authId 
+			} );
+			
+		}
+		else
+		{
+			
+			if( callback ) callback( false, false, vars );
+			
 		}
 		
 	}
@@ -549,6 +756,7 @@ Sections.accounts_templates = function( cmd, extra )
 			_this.classList.remove( 'ColorStGrayLight' );
 			_this.classList.remove( 'fa-minus-circle' );
 			_this.classList.remove( 'fa-trash' );
+			_this.classList.remove( 'NegativeAlt' );
 			_this.classList.add( 'ButtonAlt' );
 			_this.classList.add( 'BackgroundRed' );
 			_this.innerHTML = ( args.button_text ? i18n( args.button_text ) : i18n( 'i18n_delete' ) );
@@ -784,7 +992,7 @@ Sections.accounts_templates = function( cmd, extra )
 			wallpaper_button : function ()
 			{
 				// TODO: Fix first login first so we can set wallpapers on users not logged in yet.
-				return ''/*'<button class="ButtonAlt IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>'*/;
+				return '<button class="ButtonAlt IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>';
 				
 			},
 			
@@ -1273,16 +1481,32 @@ Sections.accounts_templates = function( cmd, extra )
 																				
 																				args.func.updateids( 'applications', args.name, ( args.ids[ args.name ] ? [ 0, args.ids[ args.name ][ 1 ] ] : [ 0, 0 ] ) );
 																				
-																				if( args.pnt )
-																				{
-																					args.pnt.innerHTML = '';
-																				}
+																				console.log( 'updateApplications( '+details.ID+', callback, vars )' );
 																				
-																				if( args.func )
+																				updateApplications( details.ID, function( e, d, vars )
 																				{
-																					args.func.dock( 'refresh' );
-																					args.func.startup( 'refresh' );
-																				}
+																					
+																					if( e && vars )
+																					{
+																						
+																						if( vars.pnt )
+																						{
+																							vars.pnt.innerHTML = '';
+																						}
+																			
+																						if( vars.func )
+																						{
+																							vars.func.dock( 'refresh' );
+																							vars.func.startup( 'refresh' );
+																						}
+																						
+																					}
+																					else
+																					{
+																						console.log( { e:e, d:d, vars: vars } );
+																					}
+																					
+																				}, { pnt: args.pnt, func: args.func } );
 																				
 																			} );
 																			
@@ -1431,8 +1655,31 @@ Sections.accounts_templates = function( cmd, extra )
 																				
 																				func.updateids( 'applications', name, ( ids[ name ] ? [ name, ids[ name ][ 1 ] ] : [ name, 0 ] ) );
 																				
-																				this.classList.remove( 'fa-toggle-off' );
-																				this.classList.add( 'fa-toggle-on' );
+																				console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																				
+																				updateApplications( details.ID, function( e, d, vars )
+																				{
+																					
+																					if( e && vars )
+																					{
+																						
+																						vars._this.classList.remove( 'fa-toggle-off' );
+																						vars._this.classList.add( 'fa-toggle-on' );
+																						
+																						if( vars.func )
+																						{
+																							vars.func.dock( 'refresh' );
+																							vars.func.startup( 'refresh' );
+																						}
+																						
+																					}
+																					else
+																					{
+																						console.log( { e:e, d:d, vars: vars } );
+																					}
+																					
+																				}, { _this: this, func: func } );
+																				
 																			}
 																			else
 																			{
@@ -1440,14 +1687,31 @@ Sections.accounts_templates = function( cmd, extra )
 																				
 																				func.updateids( 'applications', name, ( ids[ name ] ? [ 0, ids[ name ][ 1 ] ] : [ 0, 0 ] ) );
 																				
-																				this.classList.remove( 'fa-toggle-on' );
-																				this.classList.add( 'fa-toggle-off' );
-																			}
-																			
-																			if( func )
-																			{
-																				func.dock( 'refresh' );
-																				func.startup( 'refresh' );
+																				console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																				
+																				updateApplications( details.ID, function( e, d, vars )
+																				{
+																					
+																					if( e && vars )
+																					{
+																						
+																						vars._this.classList.remove( 'fa-toggle-on' );
+																						vars._this.classList.add( 'fa-toggle-off' );
+																						
+																						if( vars.func )
+																						{
+																							vars.func.dock( 'refresh' );
+																							vars.func.startup( 'refresh' );
+																						}
+																						
+																					}
+																					else
+																					{
+																						console.log( { e:e, d:d, vars: vars } );
+																					}
+																					
+																				}, { _this: this, func: func } );
+																				
 																			}
 																			
 																		};
@@ -1849,10 +2113,26 @@ Sections.accounts_templates = function( cmd, extra )
 																				
 																				args.func.updateids( 'dock', args.name, [ args.name, 0 ] );
 																				
-																				if( args.pnt )
+																				console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																				
+																				updateApplications( details.ID, function( e, d, vars )
 																				{
-																					args.pnt.innerHTML = '';
-																				}
+																				
+																					if( e && vars )
+																					{
+																					
+																						if( vars.pnt )
+																						{
+																							vars.pnt.innerHTML = '';
+																						}
+																					
+																					}
+																					else
+																					{
+																						console.log( { e:e, d:d, vars: vars } );
+																					}
+																				
+																				}, { pnt: args.pnt } );
 																				
 																			} );
 																			
@@ -2008,8 +2288,25 @@ Sections.accounts_templates = function( cmd, extra )
 																				
 																				func.updateids( 'dock', name, [ name, 1 ] );
 																				
-																				this.classList.remove( 'fa-toggle-off' );
-																				this.classList.add( 'fa-toggle-on' );
+																				console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																				
+																				updateApplications( details.ID, function( e, d, vars )
+																				{
+																				
+																					if( e && vars )
+																					{
+																						
+																						vars._this.classList.remove( 'fa-toggle-off' );
+																						vars._this.classList.add( 'fa-toggle-on' );
+																						
+																					}
+																					else
+																					{
+																						console.log( { e:e, d:d, vars: vars } );
+																					}
+																				
+																				}, { _this: this } );
+																				
 																			}
 																			else
 																			{
@@ -2017,8 +2314,25 @@ Sections.accounts_templates = function( cmd, extra )
 																				
 																				func.updateids( 'dock', name, [ name, 0 ] );
 																				
-																				this.classList.remove( 'fa-toggle-on' );
-																				this.classList.add( 'fa-toggle-off' );
+																				console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																				
+																				updateApplications( details.ID, function( e, d, vars )
+																				{
+																					
+																					if( e && vars )
+																					{
+																						
+																						vars._this.classList.remove( 'fa-toggle-on' );
+																						vars._this.classList.add( 'fa-toggle-off' );
+																						
+																					}
+																					else
+																					{
+																						console.log( { e:e, d:d, vars: vars } );
+																					}
+																					
+																				}, { _this: this } );
+																				
 																			}
 																		};
 																		return b;
@@ -2447,10 +2761,26 @@ Sections.accounts_templates = function( cmd, extra )
 																				
 																				args.func.updateids( 'startup', args.name, false );
 																				
-																				if( args.pnt )
+																				console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																				
+																				updateApplications( details.ID, function( e, d, vars )
 																				{
-																					args.pnt.innerHTML = '';
-																				}
+																				
+																					if( e && vars )
+																					{
+																					
+																						if( vars.pnt )
+																						{
+																							vars.pnt.innerHTML = '';
+																						}
+																					
+																					}
+																					else
+																					{
+																						console.log( { e:e, d:d, vars: vars } );
+																					}
+																				
+																				}, { pnt: args.pnt } );
 																				
 																			} );
 																			
@@ -2606,8 +2936,25 @@ Sections.accounts_templates = function( cmd, extra )
 																				
 																				func.updateids( 'startup', name, ( 'launch ' + name ) );
 																				
-																				this.classList.remove( 'fa-toggle-off' );
-																				this.classList.add( 'fa-toggle-on' );
+																				console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																				
+																				updateApplications( details.ID, function( e, d, vars )
+																				{
+																				
+																					if( e && vars )
+																					{
+																					
+																						vars._this.classList.remove( 'fa-toggle-off' );
+																						vars._this.classList.add( 'fa-toggle-on' );
+																					
+																					}
+																					else
+																					{
+																						console.log( { e:e, d:d, vars: vars } );
+																					}
+																				
+																				}, { _this: this } );
+																				
 																			}
 																			else
 																			{
@@ -2615,8 +2962,25 @@ Sections.accounts_templates = function( cmd, extra )
 																				
 																				func.updateids( 'startup', name, false );
 																				
-																				this.classList.remove( 'fa-toggle-on' );
-																				this.classList.add( 'fa-toggle-off' );
+																				console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																				
+																				updateApplications( details.ID, function( e, d, vars )
+																				{
+																					
+																					if( e && vars )
+																					{
+																						
+																						vars._this.classList.remove( 'fa-toggle-on' );
+																						vars._this.classList.add( 'fa-toggle-off' );
+																						
+																					}
+																					else
+																					{
+																						console.log( { e:e, d:d, vars: vars } );
+																					}
+																					
+																				}, { _this: this } );
+																				
 																			}
 																		};
 																		return b;
@@ -2794,20 +3158,81 @@ Sections.accounts_templates = function( cmd, extra )
 								
 								if( this.classList.contains( 'fa-toggle-off' ) )
 								{
-									this.classList.remove( 'fa-toggle-off' );
-									this.classList.add( 'fa-toggle-on' );
 									
 									this.setAttribute( 'value', 'charcoal' );
+									
+									console.log( 'updateLookAndFeel( '+details.ID+', callback, vars )' );
+									
+									updateLookAndFeel( details.ID, function( e, d, vars )
+									{
+										
+										if( e && vars )
+										{
+											
+											vars._this.classList.remove( 'fa-toggle-off' );
+											vars._this.classList.add( 'fa-toggle-on' );
+											
+										}
+										else
+										{
+											console.log( { e:e, d:d, vars: vars } );
+										}
+										
+									}, { _this: this } );
+									
 								}
 								else
 								{
-									this.classList.remove( 'fa-toggle-on' );
-									this.classList.add( 'fa-toggle-off' );
 									
 									this.setAttribute( 'value', 'light' );
+									
+									console.log( 'updateLookAndFeel( '+details.ID+', callback, vars )' );
+									
+									updateLookAndFeel( details.ID, function( e, d, vars )
+									{
+										
+										if( e && vars )
+										{
+											
+											vars._this.classList.remove( 'fa-toggle-on' );
+											vars._this.classList.add( 'fa-toggle-off' );
+											
+										}
+										else
+										{
+											console.log( { e:e, d:d, vars: vars } );
+										}
+										
+									}, { _this: this } );
 								}
 								
 							};
+						}
+						
+						if( ge( 'theme_style_select' ) )
+						{
+							var s = ge( 'theme_style_select' );
+							s.onchange = function(  )
+							{
+								
+								console.log( 'updateLookAndFeel( '+details.ID+', callback, vars )' );
+								
+								updateLookAndFeel( details.ID, function( e, d, vars )
+								{
+									
+									if( e && vars )
+									{
+										
+									}
+									else
+									{
+										console.log( { e:e, d:d, vars: vars } );
+									}
+									
+								} );
+								
+							};	
+							
 						}
 						
 						if( ge( 'workspace_count_input' ) )
@@ -2818,7 +3243,28 @@ Sections.accounts_templates = function( cmd, extra )
 							{
 								if( this.value >= 1 )
 								{
-									this.current = this.value;
+									
+									console.log( 'updateLookAndFeel( '+details.ID+', callback, vars )' );
+									
+									updateLookAndFeel( details.ID, function( e, d, vars )
+									{
+										
+										if( e && vars )
+										{
+											
+											vars._this.current = vars._this.value;
+											
+										}
+										else
+										{
+											vars._this.value = vars._this.current;
+											
+											console.log( { e:e, d:d, vars: vars } );
+											
+										}
+										
+									}, { _this: this } );
+									
 								}
 								else
 								{
@@ -2833,7 +3279,11 @@ Sections.accounts_templates = function( cmd, extra )
 							var b = ge( 'wallpaper_button_inner' );
 							b.onclick = function(  )
 							{
-																
+								
+								alert( '"First Login" plan needs to be ready before this feature is used ...' );
+								
+								return;
+														
 								var flags = {
 									type: 'load',
 									path: 'Home:',
@@ -2861,6 +3311,22 @@ Sections.accounts_templates = function( cmd, extra )
 											{
 												ge( 'wallpaper_button_inner' ).setAttribute( 'value', item[ 0 ].Path );
 											}
+											
+											console.log( 'updateWallpaper( '+details.ID+', callback )' );
+											
+											updateWallpaper( details.ID, function( e, d, vars )
+											{
+												
+												if( e && vars )
+												{
+													
+												}
+												else
+												{
+													console.log( { e:e, d:d, vars: vars } );
+												}
+										
+											} );
 											
 										}
 									}

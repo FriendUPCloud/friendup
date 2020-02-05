@@ -431,30 +431,33 @@ Sections.accounts_users = function( cmd, extra )
 							user : function (  )
 							{
 								
-								if( ge( 'usName'     ) && userInfo.FullName )
+								if( userInfo.ID )
 								{
-									ge( 'usName'     ).innerHTML = userInfo.FullName;
-								}
-								if( ge( 'usFullname' ) && userInfo.FullName )
-								{
-									ge( 'usFullname' ).innerHTML = userInfo.FullName;
-								}
-								if( ge( 'usUsername' ) && userInfo.Name )
-								{
-									ge( 'usUsername' ).innerHTML = userInfo.Name;
-								}
-								if( ge( 'usEmail'    ) && userInfo.Email )
-								{
-									ge( 'usEmail'    ).innerHTML = userInfo.Email;
-								}
-								
-								if( ge( 'usLocked'   ) && ulocked )
-								{
-									ge( 'usLocked'   ).className = ge( 'usLocked'   ).className.split( 'fa-toggle-on' ).join( '' ).split( 'fa-toggle-off' ).join( '' ) + 'fa-toggle-on';
-								}
-								if( ge( 'usDisabled' ) && udisabled )
-								{
-									ge( 'usDisabled' ).className = ge( 'usDisabled' ).className.split( 'fa-toggle-on' ).join( '' ).split( 'fa-toggle-off' ).join( '' ) + 'fa-toggle-on';
+									if( ge( 'usName'     ) )
+									{
+										ge( 'usName'     ).innerHTML = ( userInfo.FullName ? userInfo.FullName : 'n/a' );
+									}
+									if( ge( 'usFullname' ) )
+									{
+										ge( 'usFullname' ).innerHTML = ( userInfo.FullName ? userInfo.FullName : 'n/a' );
+									}
+									if( ge( 'usUsername' ) )
+									{
+										ge( 'usUsername' ).innerHTML = ( userInfo.Name ? userInfo.Name : 'n/a' );
+									}
+									if( ge( 'usEmail'    ) && userInfo.Email )
+									{
+										ge( 'usEmail'    ).innerHTML = userInfo.Email;
+									}
+									
+									if( ge( 'usLocked'   ) && ulocked )
+									{
+										ge( 'usLocked'   ).className = ge( 'usLocked'   ).className.split( 'fa-toggle-on' ).join( '' ).split( 'fa-toggle-off' ).join( '' ) + 'fa-toggle-on';
+									}
+									if( ge( 'usDisabled' ) && udisabled )
+									{
+										ge( 'usDisabled' ).className = ge( 'usDisabled' ).className.split( 'fa-toggle-on' ).join( '' ).split( 'fa-toggle-off' ).join( '' ) + 'fa-toggle-on';
+									}
 								}
 							},
 							
@@ -1585,6 +1588,17 @@ Sections.accounts_users = function( cmd, extra )
 								
 								if( ge( 'wallpaper_button_inner' ) )
 								{
+									
+									// TODO: Temporary ... remove when first login is fixed ...
+									
+									if( ge( 'UserAvatar_' + userInfo.ID ) && ge( 'WallpaperContainer' ) && ge( 'UserAvatar_' + userInfo.ID ).getAttribute( 'timestamp' ) > 0 )
+									{
+										ge( 'WallpaperContainer' ).classList.remove( 'Closed' );
+										ge( 'WallpaperContainer' ).classList.add( 'Open' );
+									}
+									
+									
+									
 									var b = ge( 'wallpaper_button_inner' );
 									b.onclick = function(  )
 									{
@@ -1827,8 +1841,8 @@ Sections.accounts_users = function( cmd, extra )
 							wallpaper_button : function ()
 							{
 								// TODO: Fix first login first so we can set wallpapers on users not logged in yet.
-								return ''/*'<button class="ButtonAlt IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>'*/;
-				
+								
+								return '<button class="ButtonAlt IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>';
 							},
 			
 							wallpaper_preview : function ()
@@ -1850,9 +1864,9 @@ Sections.accounts_users = function( cmd, extra )
 						// Add all data for the template
 						d.replacements = {
 							userid               : ( userInfo.ID ? userInfo.ID : '' ),
-							user_name            : ( userInfo.FullName ? userInfo.FullName : '' ),
-							user_fullname        : ( userInfo.FullName ? userInfo.FullName : '' ),
-							user_username        : ( userInfo.Name ? userInfo.Name : '' ),
+							user_name            : ( userInfo.FullName ? userInfo.FullName : ( userInfo.ID ? 'n/a' : '' ) ),
+							user_fullname        : ( userInfo.FullName ? userInfo.FullName : ( userInfo.ID ? 'n/a' : '' ) ),
+							user_username        : ( userInfo.Name ? userInfo.Name : ( userInfo.ID ? 'n/a' : '' ) ),
 							user_email           : ( userInfo.Email ? userInfo.Email : '' ),
 							user_language        : ( languages ? languages : '' ),
 							user_setup           : ( setup ? setup : '' ),
@@ -2954,7 +2968,7 @@ Sections.accounts_users = function( cmd, extra )
 				
 				if( !ge( 'UserListID_'+userList[a].ID ) )
 				{
-					//console.log( 'userList[a] ', userList[a] );
+					
 					
 					sw = sw == 2 ? 1 : 2;
 					var r = document.createElement( 'div' );
@@ -2963,6 +2977,10 @@ Sections.accounts_users = function( cmd, extra )
 					r.id = ( 'UserListID_'+userList[a].ID );
 					
 					var timestamp = ( userList[ a ][ 'LoginTime' ] ? userList[ a ][ 'LoginTime' ] : 0 );
+					
+					userList[ a ][ 'Name' ]     = ( userList[ a ][ 'Name' ]     ? userList[ a ][ 'Name' ]     : 'n/a' );
+					userList[ a ][ 'FullName' ] = ( userList[ a ][ 'FullName' ] ? userList[ a ][ 'FullName' ] : 'n/a' );
+					userList[ a ][ 'Level' ]    = ( userList[ a ][ 'Level' ]    ? userList[ a ][ 'Level' ]    : 'n/a' );
 					
 					userList[ a ][ 'Status' ] = status[ ( userList[a][ 'Status' ] ? userList[a][ 'Status' ] : 0 ) ];
 					
@@ -3199,6 +3217,7 @@ Sections.accounts_users = function( cmd, extra )
 			_this.classList.remove( 'ColorStGrayLight' );
 			_this.classList.remove( 'fa-minus-circle' );
 			_this.classList.remove( 'fa-trash' );
+			_this.classList.remove( 'NegativeAlt' );
 			_this.classList.add( 'ButtonAlt' );
 			_this.classList.add( 'BackgroundRed' );
 			_this.innerHTML = ( args.button_text ? i18n( args.button_text ) : i18n( 'i18n_delete' ) );
@@ -3508,7 +3527,22 @@ Sections.accounts_users = function( cmd, extra )
 function refreshUserList( userInfo )
 {
 	console.log( 'func.init(  ) ', userInfo );
-				
+	
+	if( !ge( 'UserListID_'+userInfo.ID ) && ge( 'ListUsersInner' ) )
+	{
+		var str = '';
+		
+		str += '<div class="HRow Active" id="UserListID_' + userInfo.ID + '">';
+		str += '	<div class="TextCenter HContent10 FloatLeft PaddingSmall Ellipsis edit"></div>';
+		str += '	<div class=" HContent30 FloatLeft PaddingSmall Ellipsis fullname"></div>';
+		str += '	<div class=" HContent25 FloatLeft PaddingSmall Ellipsis name"></div>';
+		str += '	<div class=" HContent15 FloatLeft PaddingSmall Ellipsis status"></div>';
+		str += '	<div class=" HContent20 FloatLeft PaddingSmall Ellipsis logintime"></div>';
+		str += '</div>';
+		
+		ge( 'ListUsersInner' ).innerHTML = ( str + ge( 'ListUsersInner' ).innerHTML );
+	}
+	
 	if( ge( 'UserListID_'+userInfo.ID ) )
 	{
 		
@@ -3533,6 +3567,10 @@ function refreshUserList( userInfo )
 			var timestamp = ( userInfo[ 'LoginTime' ] ? userInfo[ 'LoginTime' ] : 0 );
 			var logintime = ( userInfo[ 'LoginTime' ] != 0 && userInfo[ 'LoginTime' ] != null ? CustomDateTime( userInfo[ 'LoginTime' ] ) : login[ 0 ] );
 			var status    = status[ ( userInfo[ 'Status' ] ? userInfo[ 'Status' ] : 0 ) ];
+			
+			userInfo[ 'Name' ]     = ( userInfo[ 'Name' ]     ? userInfo[ 'Name' ]     : 'n/a' );
+			userInfo[ 'FullName' ] = ( userInfo[ 'FullName' ] ? userInfo[ 'FullName' ] : 'n/a' );
+			userInfo[ 'Level' ]    = ( userInfo[ 'Level' ]    ? userInfo[ 'Level' ]    : 'n/a' );
 			
 			r.className = r.className.split( 'Active' ).join( status ).split( 'Disabled' ).join( status ).split( 'Locked' ).join( status );
 			
@@ -5347,30 +5385,48 @@ function remountDrive( devname, userid, callback )
 }
 
 // Add new user
-function addUser( callback )
+function addUser( callback, username )
 {
+	var args = {
+		authid: Application.authId
+	};
+	
+	if( username )
+	{
+		args[ 'username' ] = username;
+	}
+	
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
-		console.log( 'addUser() ', { e:e, d:d } );
+		
+		try
+		{
+			d = JSON.parse( d );
+		}
+		catch( e ) {  }
+		
+		console.log( 'addUser() ', { e:e, d:d, args: args } );
 		
 		if( e == 'ok' && d )
 		{
 			if( callback )
 			{
-				callback( d );
+				callback( true, d );
 			}
 			else
 			{
-				saveUser( d );
+				saveUser( true, d );
 			}
 			
 			return;
 		}
-		
-		if( callback ) callback( false );
+		else
+		{
+			if( callback ) callback( false, d );
+		}
 	}
-	m.execute( 'useradd', { authid: Application.authId } );
+	m.execute( 'useradd', args );
 }
 
 // Save a user
@@ -5425,15 +5481,29 @@ function saveUser( uid, cb )
 	
 	if( !uid )
 	{
-		addUser( function( uid )
+		addUser( function( res, dat )
 		{
-			
-			if( uid && uid > 0 )
+			if( res )
 			{
-				saveUser( uid, cb );
+				if( dat && dat > 0 )
+				{
+					saveUser( dat, cb );
+				}
+			}
+			else
+			{
+				if( dat && dat.code == 19 && dat.response )
+				{
+					Notify( { title: i18n( 'i18n_user_create_fail' ), text: i18n( 'i18n_' + dat.response ) } );
+					
+					if( ge( 'usUsername' ) )
+					{
+						ge( 'usUsername' ).focus();
+					}
+				}
 			}
 			
-		} );
+		}, args[ 'username' ] );
 		
 		return;
 	}
@@ -5461,6 +5531,13 @@ function saveUser( uid, cb )
 	var f = new Library( 'system.library' );
 	f.onExecuted = function( e, d )
 	{
+		
+		try
+		{
+			d = JSON.parse( d );
+		}
+		catch( e ) {  }
+		
 		console.log( { e:e, d:d, args: args } );
 		
 		if( !uid ) return;
@@ -5590,6 +5667,15 @@ function saveUser( uid, cb )
 				
 			} );
 			
+		}
+		else if( d && d.code == 19 && d.response )
+		{
+			Notify( { title: i18n( 'i18n_user_update_fail' ), text: i18n( 'i18n_' + d.response ) } );
+			
+			if( ge( 'usUsername' ) )
+			{
+				ge( 'usUsername' ).focus();
+			}
 		}
 		else
 		{

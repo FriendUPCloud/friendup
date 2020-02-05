@@ -22,6 +22,10 @@ i18n_template_name                     : Template name
 i18n_template_description              : Description
 i18n_template_language                 : Default language
 
+i18n_template_create                       : Template create
+i18n_template_update                       : Template update
+i18n_Template with that name already exist : Template with that name already exist
+
 i18n_account_locked                    : Account locked
 i18n_account_disabled                  : Account disabled
 
@@ -132,8 +136,10 @@ i18n_header_LoginTime                  : Last Login
 i18n_user_updated                      : User updated
 i18n_user_updated_succ                 : The user was successfully updated.
 
+i18n_user_create_fail                  : User create failed
 i18n_user_update_fail                  : User update failed
 i18n_user_update_failed                : Failed to update the user.
+i18n_User already exist                : User already exists
 
 i18n_new_user                          : New user
 i18n_show_disabled_users               : Show disabled users
@@ -150,6 +156,9 @@ i18n_workgroup_profile                 : Workgroup profile
 i18n_workgroup_name                    : Name
 i18n_workgroup_description             : Description
 i18n_delete_workgroup                  : Delete workgroup
+
+i18n_workgroup_create                  : Workgroup create
+i18n_User Group already exist          : User Group already exist
 
 #Storage related
 
