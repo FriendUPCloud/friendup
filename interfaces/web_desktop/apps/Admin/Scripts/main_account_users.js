@@ -206,7 +206,7 @@ Sections.accounts_users = function( cmd, extra )
 								}
 							}
 						}
-					
+						
 						return setup;
 					},
 					
@@ -546,8 +546,17 @@ Sections.accounts_users = function( cmd, extra )
 											}
 										}
 									}
+									
+									if( ge( 'usLanguage' ) )
+									{
+										ge( 'usLanguage' ).current = ge( 'usLanguage' ).value;
+									}
+									if( ge( 'usSetup' ) )
+									{
+										ge( 'usSetup' ).current = ge( 'usSetup' ).value;
+									}
 								}
-					
+								
 								var bg1  = ge( 'UserSaveBtn' );
 								if( bg1 ) bg1.onclick = function( e )
 								{
@@ -2530,7 +2539,17 @@ Sections.accounts_users = function( cmd, extra )
 											}
 										} )( inps[ a ] );
 									}
+									
 								}
+							}
+							
+							if( ge( 'usLanguage' ) )
+							{
+								ge( 'usLanguage' ).current = ge( 'usLanguage' ).value;
+							}
+							if( ge( 'usSetup' ) )
+							{
+								ge( 'usSetup' ).current = ge( 'usSetup' ).value;
 							}
 						}
 						
@@ -4947,7 +4966,18 @@ Sections.user_disk_refresh = function( mountlist, userid )
 			//console.log( storage );
 			
 			mlst += '<div class="HContent33 FloatLeft DiskContainer"' + ( mountlist[b].Mounted <= 0 ? ' style="opacity:0.6"' : '' ) + '>';
-			mlst += '<div class="PaddingSmall Ellipsis" onclick="Sections.user_disk_update(' + storage.user + ',' + storage.id + ',\'' + storage.name + '\',' + userid + ')">';
+			
+			// If "SQLWorkgroupDrive" handle the edit in Workgroups ...
+			
+			if( storage.type == 'SQLWorkgroupDrive' )
+			{
+				mlst += '<div class="PaddingSmall Ellipsis">';
+			}
+			else
+			{
+				mlst += '<div class="PaddingSmall Ellipsis" onclick="Sections.user_disk_update(' + storage.user + ',' + storage.id + ',\'' + storage.name + '\',' + userid + ')">';
+			}
+			
 			mlst += '<div class="Col1 FloatLeft" id="Storage_' + storage.id + '">';
 			mlst += '<div class="disk"><div class="label" style="background-image: url(\'' + storage.icon + '\')"></div></div>';
 			//mlst += '<canvas class="Rounded" name="' + mountlist[b].Name + '" id="Storage_Graph_' + mountlist[b].ID + '" size="' + mountlist[b].Config.DiskSize + '" used="' + mountlist[b].StoredBytes + '"></canvas>';
@@ -5590,46 +5620,53 @@ function saveUser( uid, cb, newuser )
 			
 			// Save language setting
 			
-			function updateLanguages( callback )
+			function updateLanguages( ignore, callback )
 			{
-				/*Confirm( i18n( 'i18n_update_language_warning' ), i18n( 'i18n_update_language_desc' ), function( resp )
+				if( !ignore )
 				{
-					if( resp.data )
-					{*/
-						// Find right language for speech
-						var langs = speechSynthesis.getVoices();
-						
-						var voice = false;
-						for( var v = 0; v < langs.length; v++ )
-						{
-							console.log( langs[v].lang.substr( 0, 2 ) );
-							if( langs[v].lang.substr( 0, 2 ) == ge( 'usLanguage' ).value )
-							{
-								voice = {
-									spokenLanguage: langs[v].lang,
-									spokenAlternate: langs[v].lang // TODO: Pick an alternative voice - call it spokenVoice
-								};
-							}
-						}
-						
-						var mt = new Module( 'system' );
-						mt.onExecuted = function( ee, dd )
-						{	
-							var mo = new Module( 'system' );
-							mo.onExecuted = function()
-							{
-								if( callback ) return callback( true );
-							}
-							mo.execute( 'setsetting', { userid: uid, setting: 'locale', data: ge( 'usLanguage' ).value, authid: Application.authId } );
-						}
-						mt.execute( 'setsetting', { userid: uid, setting: 'language', data: voice, authid: Application.authId } );
-					/*}
-					else
+					/*Confirm( i18n( 'i18n_update_language_warning' ), i18n( 'i18n_update_language_desc' ), function( resp )
 					{
-						if( callback ) return callback( true );
-					}
+						if( resp.data )
+						{*/
+							// Find right language for speech
+							var langs = speechSynthesis.getVoices();
+						
+							var voice = false;
+							for( var v = 0; v < langs.length; v++ )
+							{
+								console.log( langs[v].lang.substr( 0, 2 ) );
+								if( langs[v].lang.substr( 0, 2 ) == ge( 'usLanguage' ).value )
+								{
+									voice = {
+										spokenLanguage: langs[v].lang,
+										spokenAlternate: langs[v].lang // TODO: Pick an alternative voice - call it spokenVoice
+									};
+								}
+							}
+						
+							var mt = new Module( 'system' );
+							mt.onExecuted = function( ee, dd )
+							{	
+								var mo = new Module( 'system' );
+								mo.onExecuted = function()
+								{
+									if( callback ) return callback( true );
+								}
+								mo.execute( 'setsetting', { userid: uid, setting: 'locale', data: ge( 'usLanguage' ).value, authid: Application.authId } );
+							}
+							mt.execute( 'setsetting', { userid: uid, setting: 'language', data: voice, authid: Application.authId } );
+						/*}
+						else
+						{
+							if( callback ) return callback( true );
+						}
 					
-				} );*/
+					} );*/
+				}
+				else
+				{
+					if( callback ) return callback( false );
+				}
 			}
 			
 			// Save avatar image
@@ -5671,33 +5708,58 @@ function saveUser( uid, cb, newuser )
 				}
 			}
 			
-			function applySetup( callback )
+			function applySetup( init, callback )
 			{
-				var m = new Module( 'system' );
-				m.onExecuted = function( e, d )
+				if( init )
 				{
-					console.log( 'applySetup() ', { e:e, d:d, args: { id: ( ge( 'usSetup' ).value ? ge( 'usSetup' ).value : '0' ), userid: uid, authid: Application.authId } } );
+					var m = new Module( 'system' );
+					m.onExecuted = function( e, d )
+					{
+						console.log( 'applySetup() ', { e:e, d:d, args: { id: ( ge( 'usSetup' ).value ? ge( 'usSetup' ).value : '0' ), userid: uid, authid: Application.authId } } );
 					
-					if( callback ) return callback( true );
+						if( callback ) return callback( true );
 					
+					}
+					m.execute( 'usersetupapply', { id: ( ge( 'usSetup' ).value ? ge( 'usSetup' ).value : '0' ), userid: uid, authid: Application.authId } );
 				}
-				m.execute( 'usersetupapply', { id: ( ge( 'usSetup' ).value ? ge( 'usSetup' ).value : '0' ), userid: uid, authid: Application.authId } );
+				else
+				{
+					if( callback ) return callback( false );
+				}
 			}
 			
-			// 1: Fist language update ...
 			
-			updateLanguages( function(  )
+				
+			// 1: First Wallpaper update ...
+				
+			saveAvatar( function (  )
 			{
 				
-				// 2: Second Wallpaper update ...
+				// 2: Second Template update ...
 				
-				saveAvatar( function (  )
+				var init = false; var ignore = false;
+				
+				if( newuser || ( ge( 'usSetup' ) && ge( 'usSetup' ).value != ge( 'usSetup' ).current ) )
 				{
+					init = true; ignore = true;
 					
-					// 3: Third Template update ...
+					console.log( 'applySetup( '+init+' ) ' + ( (newuser?'true':'false')+' || '+' ( '+ge( 'usSetup' ).value+' != '+ge( 'usSetup' ).current+' )' ) );
+				}
+				
+				applySetup( init, function (  ) 
+				{ 
 					
-					applySetup( function (  ) 
-					{ 
+					// 3: Third language update ...
+					
+					if( ge( 'usLanguage' ) && ge( 'usLanguage' ).value != ge( 'usLanguage' ).current )
+					{
+						ignore = false;
+						
+						console.log( 'updateLanguages( '+ignore+' ) || ( '+ge( 'usLanguage' ).value+' != '+ge( 'usLanguage' ).current+' )' );
+					}
+					
+					updateLanguages( ignore, function(  )
+					{
 						
 						if( newuser )
 						{
@@ -5707,7 +5769,7 @@ function saveUser( uid, cb, newuser )
 						{
 							Notify( { title: i18n( 'i18n_user_updated' ), text: i18n( 'i18n_user_updated_succ' ) } );
 						}
-						
+					
 						if( cb )
 						{
 							return cb( uid );
