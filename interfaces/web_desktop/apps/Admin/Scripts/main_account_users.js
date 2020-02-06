@@ -5684,14 +5684,20 @@ function saveUser( uid, cb, newuser )
 				m.execute( 'usersetupapply', { id: ( ge( 'usSetup' ).value ? ge( 'usSetup' ).value : '0' ), userid: uid, authid: Application.authId } );
 			}
 			
+			// 1: Fist language update ...
+			
 			updateLanguages( function(  )
 			{
 				
-				applySetup( function (  ) 
-				{ 
+				// 2: Second Wallpaper update ...
+				
+				saveAvatar( function (  )
+				{
 					
-					saveAvatar( function (  )
-					{
+					// 3: Third Template update ...
+					
+					applySetup( function (  ) 
+					{ 
 						
 						if( newuser )
 						{

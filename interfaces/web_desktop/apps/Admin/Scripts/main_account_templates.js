@@ -3282,9 +3282,9 @@ Sections.accounts_templates = function( cmd, extra )
 							b.onclick = function(  )
 							{
 								
-								alert( '"First Login" plan needs to be ready before this feature is used ...' );
+								//alert( '"First Login" plan needs to be ready before this feature is used ...' );
 								
-								return;
+								//return;
 														
 								var flags = {
 									type: 'load',
