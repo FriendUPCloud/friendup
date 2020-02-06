@@ -3553,15 +3553,40 @@ function refreshUserList( userInfo )
 	{
 		var str = '';
 		
-		str += '<div class="HRow Active" id="UserListID_' + userInfo.ID + '">';
-		str += '	<div class="TextCenter HContent10 FloatLeft PaddingSmall Ellipsis edit"></div>';
-		str += '	<div class=" HContent30 FloatLeft PaddingSmall Ellipsis fullname"></div>';
-		str += '	<div class=" HContent25 FloatLeft PaddingSmall Ellipsis name"></div>';
-		str += '	<div class=" HContent15 FloatLeft PaddingSmall Ellipsis status"></div>';
-		str += '	<div class=" HContent20 FloatLeft PaddingSmall Ellipsis logintime"></div>';
-		str += '</div>';
+		str += '<div class="TextCenter HContent10 FloatLeft PaddingSmall Ellipsis edit"></div>';
+		str += '<div class=" HContent30 FloatLeft PaddingSmall Ellipsis fullname"></div>';
+		str += '<div class=" HContent25 FloatLeft PaddingSmall Ellipsis name"></div>';
+		str += '<div class=" HContent15 FloatLeft PaddingSmall Ellipsis status"></div>';
+		str += '<div class=" HContent20 FloatLeft PaddingSmall Ellipsis logintime"></div>';
 		
-		ge( 'ListUsersInner' ).innerHTML = ( str + ge( 'ListUsersInner' ).innerHTML );
+		var div = document.createElement( 'div' );
+		div.id = 'UserListID_' + userInfo.ID;
+		div.className = 'HRow Active';
+		div.innerHTML = str;
+		div.onclick = function()
+		{
+			if( ge( 'ListUsersInner' ) )
+			{
+				var list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
+		
+				if( list.length > 0 )
+				{
+					for( var a = 0; a < list.length; a++ )
+					{
+						if( list[a] && list[a].className && list[a].className.indexOf( ' Selected' ) >= 0 )
+						{
+							list[a].className = ( list[a].className.split( ' Selected' ).join( '' ) );
+						}
+					}
+				}
+			}
+			
+			this.className = ( this.className.split( ' Selected' ).join( '' ) + ' Selected' );
+			
+			Sections.accounts_users( 'edit', userInfo.ID );
+		}
+		
+		ge( 'ListUsersInner' ).appendChild( div );
 	}
 	
 	if( ge( 'UserListID_'+userInfo.ID ) )
