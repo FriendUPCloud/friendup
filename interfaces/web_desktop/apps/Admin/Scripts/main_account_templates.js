@@ -1012,7 +1012,7 @@ Sections.accounts_templates = function( cmd, extra )
 		d.replacements = {
 			template_title: ( details.Name ? details.Name : i18n( 'i18n_new_template' ) ),
 			template_name: ( details.Name ? details.Name : '' ),
-			template_description: '',
+			template_description: ( details.Description ? details.Description : '' ),
 			template_language: languages,
 			
 			theme_dark: theme.dark(),

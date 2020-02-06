@@ -26,6 +26,11 @@ if( $level == 'Admin' && $args->args->id > 0 )
 	$o->ID = $args->args->id;
 	if( $o->Load() )
 	{
+		if( isset( $args->args->Description ) )
+		{
+			$o->Description = $args->args->Description;
+		}
+		
 		if( isset( $args->args->Name ) )
 		{
 			$o->Name = $args->args->Name;
