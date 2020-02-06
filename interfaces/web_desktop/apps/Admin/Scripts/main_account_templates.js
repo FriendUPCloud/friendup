@@ -436,6 +436,8 @@ Sections.accounts_templates = function( cmd, extra )
 						
 					}*/
 					
+					editMode( true );
+					
 				}
 				else if( data && data.response )
 				{
