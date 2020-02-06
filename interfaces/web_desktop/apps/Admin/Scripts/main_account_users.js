@@ -554,6 +554,8 @@ Sections.accounts_users = function( cmd, extra )
 									if( ge( 'usUsername' ).value )
 									{
 										saveUser( userInfo.ID );
+										
+										editMode( true );
 									}
 									else
 									{
@@ -1591,11 +1593,11 @@ Sections.accounts_users = function( cmd, extra )
 									
 									// TODO: Temporary ... remove when first login is fixed ...
 									
-									if( ge( 'UserAvatar_' + userInfo.ID ) && ge( 'WallpaperContainer' ) && ge( 'UserAvatar_' + userInfo.ID ).getAttribute( 'timestamp' ) > 0 )
-									{
-										ge( 'WallpaperContainer' ).classList.remove( 'Closed' );
-										ge( 'WallpaperContainer' ).classList.add( 'Open' );
-									}
+									//if( ge( 'UserAvatar_' + userInfo.ID ) && ge( 'WallpaperContainer' ) && ge( 'UserAvatar_' + userInfo.ID ).getAttribute( 'timestamp' ) > 0 )
+									//{
+									//	ge( 'WallpaperContainer' ).classList.remove( 'Closed' );
+									//	ge( 'WallpaperContainer' ).classList.add( 'Open' );
+									//}
 									
 									
 									
@@ -5437,13 +5439,27 @@ function addUser( callback, username )
 		
 		if( e == 'ok' && d )
 		{
-			if( callback )
+			
+			if( d && d > 0 )
 			{
-				callback( true, d );
-			}
-			else
-			{
-				saveUser( true, d );
+				firstLogin( d, function( ok )
+				{ 
+				
+					if( ok )
+					{
+					
+						if( callback )
+						{
+							callback( true, d );
+						}
+						else
+						{
+							saveUser( d, false, true );
+						}
+					
+					}
+				
+				} );
 			}
 			
 			return;
@@ -5457,7 +5473,7 @@ function addUser( callback, username )
 }
 
 // Save a user
-function saveUser( uid, cb )
+function saveUser( uid, cb, newuser )
 {	
 	var args = { authid: Application.authId };
 	
@@ -5514,7 +5530,7 @@ function saveUser( uid, cb )
 			{
 				if( dat && dat > 0 )
 				{
-					saveUser( dat, cb );
+					saveUser( dat, cb, true );
 				}
 			}
 			else
@@ -5676,10 +5692,15 @@ function saveUser( uid, cb )
 					
 					saveAvatar( function (  )
 					{
-					
-						Notify( { title: i18n( 'i18n_user_updated' ), text: i18n( 'i18n_user_updated_succ' ) } );
 						
-						editMode( true );
+						if( newuser )
+						{
+							Notify( { title: i18n( 'i18n_user_create' ), text: i18n( 'i18n_user_create_succ' ) } );
+						}
+						else
+						{
+							Notify( { title: i18n( 'i18n_user_updated' ), text: i18n( 'i18n_user_updated_succ' ) } );
+						}
 						
 						if( cb )
 						{
@@ -5712,6 +5733,26 @@ function saveUser( uid, cb )
 		}
 	}
 	f.execute( 'user/update', args );
+}
+
+function firstLogin( userid, callback )
+{
+	if( userid > 0 )
+	{
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			console.log( 'firstLogin( '+userid+', callback ) ', { e:e, d:d } );
+			
+			if( e == 'ok' )
+			{
+				if( callback ) return callback( true );	
+			}
+			
+			if( callback ) return callback( false );
+		}
+		m.execute( 'firstlogin', { userid: userid, authid: Application.authId } );
+	}
 }
 
 function removeUser( id )

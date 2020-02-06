@@ -19,8 +19,10 @@
 *                                                                              *
 *****************************************************************************©*/
 
+$userid = ( isset( $args->args->userid ) ? $args->args->userid : $User->ID );
+
 // 0. Check if mountlist is installed and user have access!
-if( !( $row = $SqlDatabase->FetchObject( 'SELECT * FROM FApplication WHERE Name = "Mountlist" AND UserID=\'' . $User->ID . '\'' ) ) )
+if( !( $row = $SqlDatabase->FetchObject( 'SELECT * FROM FApplication WHERE Name = "Mountlist" AND UserID=\'' . $userid . '\'' ) ) )
 {
 	if( !function_exists( 'findInSearchPaths' ) )
 	{
@@ -51,7 +53,7 @@ if( !( $row = $SqlDatabase->FetchObject( 'SELECT * FROM FApplication WHERE Name 
 
 			// Store application!
 			$a = new dbIO( 'FApplication' );
-			$a->UserID = $User->ID;
+			$a->UserID = $userid;
 			$a->Name = 'Mountlist';
 			if( !$a->Load() )
 			{
@@ -97,7 +99,7 @@ if( !( $row = $SqlDatabase->FetchObject( 'SELECT * FROM FApplication WHERE Name 
 }
 
 // 1. Check dock!
-if( !( $row = $SqlDatabase->FetchObject( 'SELECT * FROM DockItem WHERE UserID=\'' . $User->ID . '\'' ) ) )
+if( !( $row = $SqlDatabase->FetchObject( 'SELECT * FROM DockItem WHERE UserID=\'' . $userid . '\'' ) ) )
 {
 	// 2. Setup standard dock items
 	$dockItems = array(
@@ -116,7 +118,7 @@ if( !( $row = $SqlDatabase->FetchObject( 'SELECT * FROM DockItem WHERE UserID=\'
 		$d = new dbIO( 'DockItem' );
 		$d->Application = $r[0];
 		$d->ShortDescription = $r[1];
-		$d->UserID = $User->ID;
+		$d->UserID = $userid;
 		$d->SortOrder = $i++;
 		$d->Parent = 0;
 		$d->Save();
@@ -124,13 +126,13 @@ if( !( $row = $SqlDatabase->FetchObject( 'SELECT * FROM DockItem WHERE UserID=\'
 }
 
 // 2. Check if we never logged in before..
-if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE UserID=\'' . $User->ID . '\'' ) ) )
+if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE UserID=\'' . $userid . '\'' ) ) )
 {
 	$Logger->log( 'Creating home dir' );
 	
 	// 3. Setup a standard disk
 	$o = new dbIO( 'Filesystem' );
-	$o->UserID = $User->ID;
+	$o->UserID = $userid;
 	$o->Name = 'Home';
 	$o->Load();
 	$o->Type = 'SQLDrive';
@@ -160,7 +162,7 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 		// 4. Wallpaper images directory
 		$f2 = new dbIO( 'FSFolder' );
 		$f2->FilesystemID = $o->ID;
-		$f2->UserID = $User->ID;
+		$f2->UserID = $userid;
 		$f2->Name = 'Wallpaper';
 		if( !$f2->Load() )
 		{
@@ -172,7 +174,7 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 		// 5. Some example documents
 		$f = new dbIO( 'FSFolder' );
 		$f->FilesystemID = $o->ID;
-		$f->UserID = $User->ID;
+		$f->UserID = $userid;
 		$f->Name = 'Documents';
 		if( !$f->Load() )
 		{
@@ -183,7 +185,7 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 
 		$fdownloadfolder = new dbIO( 'FSFolder' );
 		$fdownloadfolder->FilesystemID = $o->ID;
-		$fdownloadfolder->UserID = $User->ID;
+		$fdownloadfolder->UserID = $userid;
 		$fdownloadfolder->Name = 'Downloads';
 		if( !$fdownloadfolder->Load() )
 		{
@@ -194,7 +196,7 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 
 		$f1 = new dbIO( 'FSFolder' );
 		$f1->FilesystemID = $o->ID;
-		$f1->UserID = $User->ID;
+		$f1->UserID = $userid;
 		$f1->Name = 'Code examples';
 		if( !$f1->Load() )
 		{
@@ -236,7 +238,7 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 			$fl->Filename = $file . '.jpg';
 			$fl->FolderID = $f2->ID;
 			$fl->FilesystemID = $o->ID;
-			$fl->UserID = $User->ID;
+			$fl->UserID = $userid;
 			if( !$fl->Load() )
 			{
 				$newname = $file;
@@ -269,7 +271,7 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 			$fl->Filename = $file . '.' . $ext;
 			$fl->FolderID = $f1->ID;
 			$fl->FilesystemID = $o->ID;
-			$fl->UserID = $User->ID;
+			$fl->UserID = $userid;
 			if( !$fl->Load() )
 			{
 				$newname = $file;
@@ -287,7 +289,7 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 
 		// 8. Fill Wallpaper app with settings and set default wallpaper
 		$wp = new dbIO( 'FSetting' );
-		$wp->UserID = $User->ID;
+		$wp->UserID = $userid;
 		$wp->Type = 'system';
 		$wp->Key = 'imagesdoors';
 		if( !$wp->Load() )
@@ -297,7 +299,7 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 		}
 
 		$wp = new dbIO( 'FSetting' );
-		$wp->UserID = $User->ID;
+		$wp->UserID = $userid;
 		$wp->Type = 'system';
 		$wp->Key = 'wallpaperdoors';
 		if( !$wp->Load() )
