@@ -5678,7 +5678,9 @@ function saveUser( uid, cb )
 					{
 					
 						Notify( { title: i18n( 'i18n_user_updated' ), text: i18n( 'i18n_user_updated_succ' ) } );
-					
+						
+						editMode( true );
+						
 						if( cb )
 						{
 							return cb( uid );
@@ -5687,7 +5689,7 @@ function saveUser( uid, cb )
 						{
 							Sections.accounts_users( 'edit', uid );
 						}
-					
+						
 					} );
 					
 				} );
