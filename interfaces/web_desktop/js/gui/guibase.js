@@ -3144,7 +3144,7 @@ function PollTaskbar( curr )
 						}
 						
 						// Need some help? Only show help if parent element is aligned left or right
-						CreateHelpBubble( d, d.window.titleString, false, { positions: [ 'Left', 'Right' ] } );
+						CreateHelpBubble( d, d.window.titleString, false, { getOffsetTop: function(){ return t.scrollTop; }, positions: [ 'Left', 'Right' ] } );
 						
 						t.appendChild( d );
 						d.origWidth = d.offsetWidth + 20;
@@ -4229,6 +4229,27 @@ function CreateHelpBubble( element, text, uniqueid, rules )
 				else if( positionClass == 'Top' )
 				{
 					mt = GetElementTop( element.parentNode ) + GetElementHeight( element.parentNode ) + 25;
+				}
+			}
+			
+			// Nudge
+			if( rules )
+			{
+				if( !!rules.offsetTop )
+				{
+					mt -= rules.offsetTop;
+				}
+				if( !!rules.offsetLeft )
+				{
+					mx -= rules.offsetLeft;
+				}
+				if( !!rules.getOffsetTop )
+				{
+					mt -= rules.getOffsetTop();
+				}
+				if( !!rules.getOffsetLeft )
+				{
+					mx -= rules.getOffsetLeft();
 				}
 			}
 			
