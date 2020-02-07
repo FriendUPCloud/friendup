@@ -3438,14 +3438,34 @@ Sections.accounts_users = function( cmd, extra )
 					
 					if( span )
 					{
+						var param = [
+							( " " + span.getAttribute( 'fullname' ).toLowerCase() + " " ), 
+							( " " + span.getAttribute( 'name' ).toLowerCase() + " " )
+						];
+						
 						if( !filter || filter == ''  
-						/*|| span.getAttribute( 'fullname' ).toLowerCase().substr( 0, filter.length ) == filter.toLowerCase()
-						|| span.getAttribute( 'name' ).toLowerCase().substr( 0, filter.length ) == filter.toLowerCase()*/
+						//|| span.getAttribute( 'fullname' ).toLowerCase().substr( 0, filter.length ) == filter.toLowerCase()
+						//|| span.getAttribute( 'name' ).toLowerCase().substr( 0, filter.length ) == filter.toLowerCase()
 						|| span.getAttribute( 'fullname' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
 						|| span.getAttribute( 'name' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+						//|| param[0].indexOf( " " + filter.toLowerCase() + " " ) >= 0 
+						//|| param[1].indexOf( " " + filter.toLowerCase() + " " ) >= 0 
 						)
 						{
 							list[a].style.display = '';
+							
+							var div = list[a].getElementsByTagName( 'div' );
+							
+							if( div.length )
+							{
+								for( var i in div )
+								{
+									if( div[i] && div[i].className && ( div[i].className.indexOf( 'fullname' ) >= 0 || div[i].className.indexOf( 'name' ) >= 0 ) )
+									{
+										// TODO: Make text searched for ...
+									}
+								}
+							}
 						}
 						else
 						{
@@ -5837,16 +5857,32 @@ function firstLogin( userid, callback )
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( 'firstLogin( '+userid+', callback ) ', { e:e, d:d } );
+			console.log( 'firstLogin( '+userid+', callback ) ', { e:e, d:d, args: { userid: userid, authid: Application.authId } } );
 			
 			if( e == 'ok' )
 			{
+				if( d && d.indexOf( '<!--separate-->' ) >= 0 )
+				{
+					var data = d.split( '<!--separate-->' );
+					
+					if( data[1] )
+					{
+						try
+						{
+							data[1] = JSON.parse( data[1] );
+							
+							console.log( data );
+						}
+						catch( e ) {  }
+					}
+				}
+				
 				if( callback ) return callback( true );	
 			}
 			
 			if( callback ) return callback( false );
 		}
-		m.execute( 'firstlogin', { userid: userid, authid: Application.authId } );
+		m.execute( 'firstlogin', { userid: userid, force: true, authid: Application.authId } );
 	}
 }
 
