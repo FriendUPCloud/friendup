@@ -1456,7 +1456,12 @@ Sections.accounts_users = function( cmd, extra )
 										m.onExecuted = function( e, d )
 										{
 											
-											console.log( { e:e, d:d } );
+											console.log( { e:e, d:d, args: { 
+												setting : 'themedata_' + currTheme.toLowerCase(), 
+												data    : themeConfig, 
+												userid  : userInfo.ID, 
+												authid  : Application.authId 
+											} } );
 											
 											if( e != 'ok' )
 											{
@@ -1514,7 +1519,12 @@ Sections.accounts_users = function( cmd, extra )
 										m.onExecuted = function( e, d )
 										{
 											
-											console.log( { e:e, d:d } );
+											console.log( { e:e, d:d, args: { 
+												setting : 'themedata_' + currTheme.toLowerCase(), 
+												data    : themeConfig, 
+												userid  : userInfo.ID, 
+												authid  : Application.authId 
+											} } );
 											
 											if( this.b.classList.contains( 'fa-toggle-off' ) )
 											{
@@ -1569,7 +1579,14 @@ Sections.accounts_users = function( cmd, extra )
 											m.i = this;
 											m.onExecuted = function( e, d )
 											{
-											
+												
+												console.log( { e:e, d:d, args: { 
+													setting : 'workspacecount', 
+													data    : this.i.value, 
+													userid  : userInfo.ID, 
+													authid  : Application.authId 
+												} } );
+												
 												if( e != 'ok' )
 												{
 													this.i.value = this.i.current;
@@ -1579,8 +1596,6 @@ Sections.accounts_users = function( cmd, extra )
 													this.i.current = this.i.value;
 												}
 												
-												console.log( { e:e, d:d } );
-											
 											}
 											m.execute( 'setsetting', { 
 												setting : 'workspacecount', 
@@ -1629,7 +1644,11 @@ Sections.accounts_users = function( cmd, extra )
 													m.onExecuted = function( e, d )
 													{
 														
-														console.log( 'userwallpaperset ', { e:e, d:d } );
+														console.log( 'userwallpaperset ', { e:e, d:d, args: { 
+															path    : item[ 0 ].Path, 
+															userid  : userInfo.ID, 
+															authid  : Application.authId 
+														} } );
 														
 														var data = false;
 														
