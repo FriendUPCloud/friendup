@@ -40,12 +40,16 @@ function InstallApp( $user_id, $app_name )
 	}
 }
 
+$debug = ( isset( $debug ) ? $debug : [] );
+
+$userid = ( isset( $args->args->userid ) ? $args->args->userid : $User->ID );
+
 // Check workgroup specific expansion
 // Load user's workgroups
 if( $wgroups = $SqlDatabase->FetchObjects( '
 	SELECT ug.Name FROM FUserGroup ug, FUserToGroup ugu, FUser u
 	WHERE
-		ug.Type = \'Workgroup\' AND u.ID = \'' . $User->ID . '\' AND 
+		ug.Type = \'Workgroup\' AND u.ID = \'' . $userid . '\' AND 
 		ugu.UserID = u.ID AND ug.ID = ugu.UserGroupID
 ' ) )
 {
@@ -57,7 +61,7 @@ if( $wgroups = $SqlDatabase->FetchObjects( '
 		$s = new dbIO( 'FSetting' );
 		$s->Type = 'system';
 		$s->Key = 'firstlogin_' . $wkey;
-		$s->UserID = $User->ID;
+		$s->UserID = $userid;
 		if( !$s->Load() )
 		{
 			// Load custom script for this workgroup
@@ -79,6 +83,8 @@ if( $wgroups = $SqlDatabase->FetchObjects( '
 			$postLogin->FriendUser = $User->Name;
 			require( 'cfg/postlogin_' . $wkey . '.php' );
 		}
+		
+		$debug[] = $s->Key;
 	}
 }
 
@@ -86,7 +92,7 @@ if( $wgroups = $SqlDatabase->FetchObjects( '
 if( isset( $Config ) && isset( $Config->preventwizard ) && $Config->preventwizard == 1 )
 {
 	$s = new dbIO( 'FSetting' );
-	$s->UserID = $User->ID;
+	$s->UserID = $userid;
 	$s->Type = 'system';
 	$s->Key = 'wizardrun';
 	$s->Load();
@@ -98,8 +104,8 @@ if( isset( $Config ) && isset( $Config->preventwizard ) && $Config->preventwizar
 $s = new dbIO( 'FSetting' );
 $s->Type = 'system';
 $s->Key = 'firstlogin';
-$s->UserID = $User->ID;
-if( !$s->Load() )
+$s->UserID = $userid;
+if( !$s->Load() || ( isset( $args->args->force ) && $args->args->force ) )
 {
 	// Check for expansion
 	if( file_exists( 'cfg/firstlogin.php' ) )
@@ -113,5 +119,9 @@ if( !$s->Load() )
 	}
 	// Now we had first login!
 	$s->Save();
+}
+else
+{
+	$debug[] = $s->Key;
 }
 

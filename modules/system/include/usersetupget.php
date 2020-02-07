@@ -13,7 +13,7 @@
 if( $level == 'Admin' && $args->args->id )
 {
 	if( $row = $SqlDatabase->FetchObject( '
-		SELECT g.ID, g.Name, s.Data 
+		SELECT g.ID, g.Name, g.Description, s.Data 
 		FROM `FUserGroup` g, `FSetting` s 
 		WHERE g.ID = \'' . $args->args->id . '\' AND g.Type = \'Setup\'
 		AND s.UserID = g.ID AND s.Type = \'setup\' AND s.Key = \'usergroup\' 

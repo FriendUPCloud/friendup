@@ -206,7 +206,7 @@ Sections.accounts_users = function( cmd, extra )
 								}
 							}
 						}
-					
+						
 						return setup;
 					},
 					
@@ -546,14 +546,25 @@ Sections.accounts_users = function( cmd, extra )
 											}
 										}
 									}
+									
+									if( ge( 'usLanguage' ) )
+									{
+										ge( 'usLanguage' ).current = ge( 'usLanguage' ).value;
+									}
+									if( ge( 'usSetup' ) )
+									{
+										ge( 'usSetup' ).current = ge( 'usSetup' ).value;
+									}
 								}
-					
+								
 								var bg1  = ge( 'UserSaveBtn' );
 								if( bg1 ) bg1.onclick = function( e )
 								{
 									if( ge( 'usUsername' ).value )
 									{
 										saveUser( userInfo.ID );
+										
+										editMode( true );
 									}
 									else
 									{
@@ -1445,7 +1456,12 @@ Sections.accounts_users = function( cmd, extra )
 										m.onExecuted = function( e, d )
 										{
 											
-											console.log( { e:e, d:d } );
+											console.log( { e:e, d:d, args: { 
+												setting : 'themedata_' + currTheme.toLowerCase(), 
+												data    : themeConfig, 
+												userid  : userInfo.ID, 
+												authid  : Application.authId 
+											} } );
 											
 											if( e != 'ok' )
 											{
@@ -1503,7 +1519,12 @@ Sections.accounts_users = function( cmd, extra )
 										m.onExecuted = function( e, d )
 										{
 											
-											console.log( { e:e, d:d } );
+											console.log( { e:e, d:d, args: { 
+												setting : 'themedata_' + currTheme.toLowerCase(), 
+												data    : themeConfig, 
+												userid  : userInfo.ID, 
+												authid  : Application.authId 
+											} } );
 											
 											if( this.b.classList.contains( 'fa-toggle-off' ) )
 											{
@@ -1558,7 +1579,14 @@ Sections.accounts_users = function( cmd, extra )
 											m.i = this;
 											m.onExecuted = function( e, d )
 											{
-											
+												
+												console.log( { e:e, d:d, args: { 
+													setting : 'workspacecount', 
+													data    : this.i.value, 
+													userid  : userInfo.ID, 
+													authid  : Application.authId 
+												} } );
+												
 												if( e != 'ok' )
 												{
 													this.i.value = this.i.current;
@@ -1568,8 +1596,6 @@ Sections.accounts_users = function( cmd, extra )
 													this.i.current = this.i.value;
 												}
 												
-												console.log( { e:e, d:d } );
-											
 											}
 											m.execute( 'setsetting', { 
 												setting : 'workspacecount', 
@@ -1591,11 +1617,11 @@ Sections.accounts_users = function( cmd, extra )
 									
 									// TODO: Temporary ... remove when first login is fixed ...
 									
-									if( ge( 'UserAvatar_' + userInfo.ID ) && ge( 'WallpaperContainer' ) && ge( 'UserAvatar_' + userInfo.ID ).getAttribute( 'timestamp' ) > 0 )
-									{
-										ge( 'WallpaperContainer' ).classList.remove( 'Closed' );
-										ge( 'WallpaperContainer' ).classList.add( 'Open' );
-									}
+									//if( ge( 'UserAvatar_' + userInfo.ID ) && ge( 'WallpaperContainer' ) && ge( 'UserAvatar_' + userInfo.ID ).getAttribute( 'timestamp' ) > 0 )
+									//{
+									//	ge( 'WallpaperContainer' ).classList.remove( 'Closed' );
+									//	ge( 'WallpaperContainer' ).classList.add( 'Open' );
+									//}
 									
 									
 									
@@ -1618,7 +1644,11 @@ Sections.accounts_users = function( cmd, extra )
 													m.onExecuted = function( e, d )
 													{
 														
-														console.log( 'userwallpaperset ', { e:e, d:d } );
+														console.log( 'userwallpaperset ', { e:e, d:d, args: { 
+															path    : item[ 0 ].Path, 
+															userid  : userInfo.ID, 
+															authid  : Application.authId 
+														} } );
 														
 														var data = false;
 														
@@ -2528,7 +2558,17 @@ Sections.accounts_users = function( cmd, extra )
 											}
 										} )( inps[ a ] );
 									}
+									
 								}
+							}
+							
+							if( ge( 'usLanguage' ) )
+							{
+								ge( 'usLanguage' ).current = ge( 'usLanguage' ).value;
+							}
+							if( ge( 'usSetup' ) )
+							{
+								ge( 'usSetup' ).current = ge( 'usSetup' ).value;
 							}
 						}
 						
@@ -3417,12 +3457,34 @@ Sections.accounts_users = function( cmd, extra )
 					
 					if( span )
 					{
+						var param = [
+							( " " + span.getAttribute( 'fullname' ).toLowerCase() + " " ), 
+							( " " + span.getAttribute( 'name' ).toLowerCase() + " " )
+						];
+						
 						if( !filter || filter == ''  
-						|| span.getAttribute( 'fullname' ).toLowerCase().substr( 0, filter.length ) == filter.toLowerCase()
-						|| span.getAttribute( 'name' ).toLowerCase().substr( 0, filter.length ) == filter.toLowerCase()
+						//|| span.getAttribute( 'fullname' ).toLowerCase().substr( 0, filter.length ) == filter.toLowerCase()
+						//|| span.getAttribute( 'name' ).toLowerCase().substr( 0, filter.length ) == filter.toLowerCase()
+						|| span.getAttribute( 'fullname' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+						|| span.getAttribute( 'name' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+						//|| param[0].indexOf( " " + filter.toLowerCase() + " " ) >= 0 
+						//|| param[1].indexOf( " " + filter.toLowerCase() + " " ) >= 0 
 						)
 						{
 							list[a].style.display = '';
+							
+							var div = list[a].getElementsByTagName( 'div' );
+							
+							if( div.length )
+							{
+								for( var i in div )
+								{
+									if( div[i] && div[i].className && ( div[i].className.indexOf( 'fullname' ) >= 0 || div[i].className.indexOf( 'name' ) >= 0 ) )
+									{
+										// TODO: Make text searched for ...
+									}
+								}
+							}
 						}
 						else
 						{
@@ -3532,15 +3594,40 @@ function refreshUserList( userInfo )
 	{
 		var str = '';
 		
-		str += '<div class="HRow Active" id="UserListID_' + userInfo.ID + '">';
-		str += '	<div class="TextCenter HContent10 FloatLeft PaddingSmall Ellipsis edit"></div>';
-		str += '	<div class=" HContent30 FloatLeft PaddingSmall Ellipsis fullname"></div>';
-		str += '	<div class=" HContent25 FloatLeft PaddingSmall Ellipsis name"></div>';
-		str += '	<div class=" HContent15 FloatLeft PaddingSmall Ellipsis status"></div>';
-		str += '	<div class=" HContent20 FloatLeft PaddingSmall Ellipsis logintime"></div>';
-		str += '</div>';
+		str += '<div class="TextCenter HContent10 FloatLeft PaddingSmall Ellipsis edit"></div>';
+		str += '<div class=" HContent30 FloatLeft PaddingSmall Ellipsis fullname"></div>';
+		str += '<div class=" HContent25 FloatLeft PaddingSmall Ellipsis name"></div>';
+		str += '<div class=" HContent15 FloatLeft PaddingSmall Ellipsis status"></div>';
+		str += '<div class=" HContent20 FloatLeft PaddingSmall Ellipsis logintime"></div>';
 		
-		ge( 'ListUsersInner' ).innerHTML = ( str + ge( 'ListUsersInner' ).innerHTML );
+		var div = document.createElement( 'div' );
+		div.id = 'UserListID_' + userInfo.ID;
+		div.className = 'HRow Active';
+		div.innerHTML = str;
+		div.onclick = function()
+		{
+			if( ge( 'ListUsersInner' ) )
+			{
+				var list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
+		
+				if( list.length > 0 )
+				{
+					for( var a = 0; a < list.length; a++ )
+					{
+						if( list[a] && list[a].className && list[a].className.indexOf( ' Selected' ) >= 0 )
+						{
+							list[a].className = ( list[a].className.split( ' Selected' ).join( '' ) );
+						}
+					}
+				}
+			}
+			
+			this.className = ( this.className.split( ' Selected' ).join( '' ) + ' Selected' );
+			
+			Sections.accounts_users( 'edit', userInfo.ID );
+		}
+		
+		ge( 'ListUsersInner' ).appendChild( div );
 	}
 	
 	if( ge( 'UserListID_'+userInfo.ID ) )
@@ -4384,7 +4471,9 @@ Sections.user_disk_save = function( userid, did )
 			}
 		}
 		
-		var data = { userid: userid, Name: elems[ 'Name' ].value };
+		
+		
+		var data = { Name: elems[ 'Name' ].value };
 		
 		if( elems[ 'Server'           ] ) data.Server           = elems[ 'Server'           ].value;
 		if( elems[ 'ShortDescription' ] ) data.ShortDescription = elems[ 'ShortDescription' ].value;
@@ -4434,6 +4523,14 @@ Sections.user_disk_save = function( userid, did )
 			}
 		}
 		
+		// TODO: Make sure we save for the selected user and not the loggedin user ...
+		
+		if( Application.userId != userid )
+		{
+			data.userid = userid;
+			data.authid = Application.authId;
+		}
+		
 		console.log( data );
 		
 		//return;
@@ -4441,6 +4538,8 @@ Sections.user_disk_save = function( userid, did )
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, dat )
 		{
+			console.log( 'Sections.user_disk_save ', { e:e, d:dat, args:data } );
+			
 			if( e != 'ok' ) 
 			{
 				Notify( { title: i18n( 'i18n_disk_error' ), text: i18n( 'i18n_failed_to_edit' ) } );
@@ -4450,7 +4549,7 @@ Sections.user_disk_save = function( userid, did )
 			{
 				Notify( { title: i18n( 'i18n_disk_success' ), text: i18n( 'i18n_disk_edited' ) } );
 			}
-			remountDrive( data.Name, data.userid, function()
+			remountDrive( ( elems[ 'Name' ] && elems[ 'Name' ].current ? elems[ 'Name' ].current : data.Name ), data.Name, data.userid, function()
 			{
 				
 				var u = new Module( 'system' );
@@ -4475,9 +4574,7 @@ Sections.user_disk_save = function( userid, did )
 			} );
 		}
 		
-		// TODO: Make sure we save for the selected user and not the loggedin user ...
 		
-		data.authid = Application.authId;
 		
 		// Edit?
 		if( did > 0 )
@@ -4935,7 +5032,18 @@ Sections.user_disk_refresh = function( mountlist, userid )
 			//console.log( storage );
 			
 			mlst += '<div class="HContent33 FloatLeft DiskContainer"' + ( mountlist[b].Mounted <= 0 ? ' style="opacity:0.6"' : '' ) + '>';
-			mlst += '<div class="PaddingSmall Ellipsis" onclick="Sections.user_disk_update(' + storage.user + ',' + storage.id + ',\'' + storage.name + '\',' + userid + ')">';
+			
+			// If "SQLWorkgroupDrive" handle the edit in Workgroups ...
+			
+			if( storage.type == 'SQLWorkgroupDrive' )
+			{
+				mlst += '<div class="PaddingSmall Ellipsis">';
+			}
+			else
+			{
+				mlst += '<div class="PaddingSmall Ellipsis" onclick="Sections.user_disk_update(' + storage.user + ',' + storage.id + ',\'' + storage.name + '\',' + userid + ')">';
+			}
+			
 			mlst += '<div class="Col1 FloatLeft" id="Storage_' + storage.id + '">';
 			mlst += '<div class="disk"><div class="label" style="background-image: url(\'' + storage.icon + '\')"></div></div>';
 			//mlst += '<canvas class="Rounded" name="' + mountlist[b].Name + '" id="Storage_Graph_' + mountlist[b].ID + '" size="' + mountlist[b].Config.DiskSize + '" used="' + mountlist[b].StoredBytes + '"></canvas>';
@@ -5150,7 +5258,8 @@ function StorageForm( storage, callback )
 							{
 								if( elems[ fields[ a ] ] && typeof( data[ fields[ a ] ] ) != 'undefined' )
 								{
-									elems[ fields[ a ] ].value = data[ fields[ a ] ];
+									elems[ fields[ a ] ].value   = data[ fields[ a ] ];
+									elems[ fields[ a ] ].current = data[ fields[ a ] ];
 								}
 							}
 							// Do we have conf?
@@ -5304,32 +5413,40 @@ function mountDrive( devname, userid, callback )
 {
 	if( devname )
 	{
+		var vars = { devname: devname };
+		
 		// Specific for Pawel's code ... He just wants to forward json ...
 		
-		var args = JSON.stringify( {
-			'type'    : 'write', 
-			'context' : 'application', 
-			'authid'  : Application.authId, 
-			'data'    : { 
-				'permission' : [ 
-					'PERM_STORAGE_GLOBAL', 
-					'PERM_STORAGE_WORKGROUP' 
-				]
-			}, 
-			'object'   : 'user', 
-			'objectid' : userid 
-		} );
+		if( userid && Application.userId != userid )
+		{
+			vars.userid = userid;
+			vars.authid = Application.authId;
+			
+			vars.args = JSON.stringify( {
+				'type'    : 'write', 
+				'context' : 'application', 
+				'authid'  : Application.authId, 
+				'data'    : { 
+					'permission' : [ 
+						'PERM_STORAGE_GLOBAL', 
+						'PERM_STORAGE_WORKGROUP' 
+					]
+				}, 
+				'object'   : 'user', 
+				'objectid' : userid 
+			} );
+		}
 		
 		var f = new Library( 'system.library' );
 		
 		f.onExecuted = function( e, d )
 		{
-			console.log( 'mountDrive ( device/mount ) ', { devname: devname, userid: userid, authid: Application.authId, args: args, e:e, d:d } );
+			console.log( 'mountDrive ( device/mount ) ', { vars: vars, e:e, d:d } );
 			
 			if( callback ) callback( e, d );
 		}
 		
-		f.execute( 'device/mount', { devname: devname, userid: userid, authid: Application.authId, args: args } );
+		f.execute( 'device/mount', vars );
 	}
 }
 
@@ -5337,43 +5454,51 @@ function unmountDrive( devname, userid, callback )
 {
 	if( devname )
 	{
+		var vars = { devname: devname };
+		
 		// Specific for Pawel's code ... He just wants to forward json ...
 		
-		var args = JSON.stringify( {
-			'type'    : 'write', 
-			'context' : 'application', 
-			'authid'  : Application.authId, 
-			'data'    : { 
-				'permission' : [ 
-					'PERM_STORAGE_GLOBAL', 
-					'PERM_STORAGE_WORKGROUP' 
-				]
-			}, 
-			'object'   : 'user', 
-			'objectid' : userid 
-		} );
+		if( userid && Application.userId != userid )
+		{
+			vars.userid = userid;
+			vars.authid = Application.authId;
+			
+			vars.args = JSON.stringify( {
+				'type'    : 'write', 
+				'context' : 'application', 
+				'authid'  : Application.authId, 
+				'data'    : { 
+					'permission' : [ 
+						'PERM_STORAGE_GLOBAL', 
+						'PERM_STORAGE_WORKGROUP' 
+					]
+				}, 
+				'object'   : 'user', 
+				'objectid' : userid 
+			} );
+		}
 		
 		var f = new Library( 'system.library' );
 		
 		f.onExecuted = function( e, d )
 		{
-			console.log( 'unmountDrive ( device/unmount ) ', { devname: devname, userid: userid, authid: Application.authId, args: args, e:e, d:d } );
+			console.log( 'unmountDrive ( device/unmount ) ', { vars: vars, e:e, d:d } );
 			
 			if( callback ) callback( e, d );
 		}
 		
-		f.execute( 'device/unmount', { devname: devname, userid: userid, authid: Application.authId, args: args } );
+		f.execute( 'device/unmount', vars );
 	}
 }
 
-function remountDrive( devname, userid, callback )
+function remountDrive( oldname, newname, userid, callback )
 {
-	if( devname )
+	if( oldname && newname )
 	{
-		unmountDrive( devname, userid, function( e, d )
+		unmountDrive( oldname, userid, function( e, d )
 		{
 			
-			mountDrive( devname, userid, function( e, d )
+			mountDrive( newname, userid, function( e, d )
 			{
 				
 				if( callback ) callback( e, d );
@@ -5410,13 +5535,27 @@ function addUser( callback, username )
 		
 		if( e == 'ok' && d )
 		{
-			if( callback )
+			
+			if( d && d > 0 )
 			{
-				callback( true, d );
-			}
-			else
-			{
-				saveUser( true, d );
+				firstLogin( d, function( ok )
+				{ 
+				
+					if( ok )
+					{
+					
+						if( callback )
+						{
+							callback( true, d );
+						}
+						else
+						{
+							saveUser( d, false, true );
+						}
+					
+					}
+				
+				} );
 			}
 			
 			return;
@@ -5430,7 +5569,7 @@ function addUser( callback, username )
 }
 
 // Save a user
-function saveUser( uid, cb )
+function saveUser( uid, cb, newuser )
 {	
 	var args = { authid: Application.authId };
 	
@@ -5487,7 +5626,7 @@ function saveUser( uid, cb )
 			{
 				if( dat && dat > 0 )
 				{
-					saveUser( dat, cb );
+					saveUser( dat, cb, true );
 				}
 			}
 			else
@@ -5547,46 +5686,53 @@ function saveUser( uid, cb )
 			
 			// Save language setting
 			
-			function updateLanguages( callback )
+			function updateLanguages( ignore, callback )
 			{
-				/*Confirm( i18n( 'i18n_update_language_warning' ), i18n( 'i18n_update_language_desc' ), function( resp )
+				if( !ignore )
 				{
-					if( resp.data )
-					{*/
-						// Find right language for speech
-						var langs = speechSynthesis.getVoices();
-						
-						var voice = false;
-						for( var v = 0; v < langs.length; v++ )
-						{
-							console.log( langs[v].lang.substr( 0, 2 ) );
-							if( langs[v].lang.substr( 0, 2 ) == ge( 'usLanguage' ).value )
-							{
-								voice = {
-									spokenLanguage: langs[v].lang,
-									spokenAlternate: langs[v].lang // TODO: Pick an alternative voice - call it spokenVoice
-								};
-							}
-						}
-						
-						var mt = new Module( 'system' );
-						mt.onExecuted = function( ee, dd )
-						{	
-							var mo = new Module( 'system' );
-							mo.onExecuted = function()
-							{
-								if( callback ) return callback( true );
-							}
-							mo.execute( 'setsetting', { userid: uid, setting: 'locale', data: ge( 'usLanguage' ).value, authid: Application.authId } );
-						}
-						mt.execute( 'setsetting', { userid: uid, setting: 'language', data: voice, authid: Application.authId } );
-					/*}
-					else
+					/*Confirm( i18n( 'i18n_update_language_warning' ), i18n( 'i18n_update_language_desc' ), function( resp )
 					{
-						if( callback ) return callback( true );
-					}
+						if( resp.data )
+						{*/
+							// Find right language for speech
+							var langs = speechSynthesis.getVoices();
+						
+							var voice = false;
+							for( var v = 0; v < langs.length; v++ )
+							{
+								console.log( langs[v].lang.substr( 0, 2 ) );
+								if( langs[v].lang.substr( 0, 2 ) == ge( 'usLanguage' ).value )
+								{
+									voice = {
+										spokenLanguage: langs[v].lang,
+										spokenAlternate: langs[v].lang // TODO: Pick an alternative voice - call it spokenVoice
+									};
+								}
+							}
+						
+							var mt = new Module( 'system' );
+							mt.onExecuted = function( ee, dd )
+							{	
+								var mo = new Module( 'system' );
+								mo.onExecuted = function()
+								{
+									if( callback ) return callback( true );
+								}
+								mo.execute( 'setsetting', { userid: uid, setting: 'locale', data: ge( 'usLanguage' ).value, authid: Application.authId } );
+							}
+							mt.execute( 'setsetting', { userid: uid, setting: 'language', data: voice, authid: Application.authId } );
+						/*}
+						else
+						{
+							if( callback ) return callback( true );
+						}
 					
-				} );*/
+					} );*/
+				}
+				else
+				{
+					if( callback ) return callback( false );
+				}
 			}
 			
 			// Save avatar image
@@ -5628,29 +5774,67 @@ function saveUser( uid, cb )
 				}
 			}
 			
-			function applySetup( callback )
+			function applySetup( init, callback )
 			{
-				var m = new Module( 'system' );
-				m.onExecuted = function( e, d )
+				if( init )
 				{
-					console.log( 'applySetup() ', { e:e, d:d, args: { id: ( ge( 'usSetup' ).value ? ge( 'usSetup' ).value : '0' ), userid: uid, authid: Application.authId } } );
+					var m = new Module( 'system' );
+					m.onExecuted = function( e, d )
+					{
+						console.log( 'applySetup() ', { e:e, d:d, args: { id: ( ge( 'usSetup' ).value ? ge( 'usSetup' ).value : '0' ), userid: uid, authid: Application.authId } } );
 					
-					if( callback ) return callback( true );
+						if( callback ) return callback( true );
 					
+					}
+					m.execute( 'usersetupapply', { id: ( ge( 'usSetup' ).value ? ge( 'usSetup' ).value : '0' ), userid: uid, authid: Application.authId } );
 				}
-				m.execute( 'usersetupapply', { id: ( ge( 'usSetup' ).value ? ge( 'usSetup' ).value : '0' ), userid: uid, authid: Application.authId } );
+				else
+				{
+					if( callback ) return callback( false );
+				}
 			}
 			
-			updateLanguages( function(  )
+			
+				
+			// 1: First Wallpaper update ...
+				
+			saveAvatar( function (  )
 			{
 				
-				applySetup( function (  ) 
+				// 2: Second Template update ...
+				
+				var init = false; var ignore = false;
+				
+				if( newuser || ( ge( 'usSetup' ) && ge( 'usSetup' ).value != ge( 'usSetup' ).current ) )
+				{
+					init = true; ignore = true;
+					
+					console.log( 'applySetup( '+init+' ) ' + ( (newuser?'true':'false')+' || '+' ( '+ge( 'usSetup' ).value+' != '+ge( 'usSetup' ).current+' )' ) );
+				}
+				
+				applySetup( init, function (  ) 
 				{ 
 					
-					saveAvatar( function (  )
-					{
+					// 3: Third language update ...
 					
-						Notify( { title: i18n( 'i18n_user_updated' ), text: i18n( 'i18n_user_updated_succ' ) } );
+					if( ge( 'usLanguage' ) && ge( 'usLanguage' ).value != ge( 'usLanguage' ).current )
+					{
+						ignore = false;
+						
+						console.log( 'updateLanguages( '+ignore+' ) || ( '+ge( 'usLanguage' ).value+' != '+ge( 'usLanguage' ).current+' )' );
+					}
+					
+					updateLanguages( ignore, function(  )
+					{
+						
+						if( newuser )
+						{
+							Notify( { title: i18n( 'i18n_user_create' ), text: i18n( 'i18n_user_create_succ' ) } );
+						}
+						else
+						{
+							Notify( { title: i18n( 'i18n_user_updated' ), text: i18n( 'i18n_user_updated_succ' ) } );
+						}
 					
 						if( cb )
 						{
@@ -5660,7 +5844,7 @@ function saveUser( uid, cb )
 						{
 							Sections.accounts_users( 'edit', uid );
 						}
-					
+						
 					} );
 					
 				} );
@@ -5683,6 +5867,42 @@ function saveUser( uid, cb )
 		}
 	}
 	f.execute( 'user/update', args );
+}
+
+function firstLogin( userid, callback )
+{
+	if( userid > 0 )
+	{
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			console.log( 'firstLogin( '+userid+', callback ) ', { e:e, d:d, args: { userid: userid, authid: Application.authId } } );
+			
+			if( e == 'ok' )
+			{
+				if( d && d.indexOf( '<!--separate-->' ) >= 0 )
+				{
+					var data = d.split( '<!--separate-->' );
+					
+					if( data[1] )
+					{
+						try
+						{
+							data[1] = JSON.parse( data[1] );
+							
+							console.log( data );
+						}
+						catch( e ) {  }
+					}
+				}
+				
+				if( callback ) return callback( true );	
+			}
+			
+			if( callback ) return callback( false );
+		}
+		m.execute( 'firstlogin', { userid: userid, force: true, authid: Application.authId } );
+	}
 }
 
 function removeUser( id )

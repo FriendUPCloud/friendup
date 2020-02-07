@@ -1875,6 +1875,22 @@ if( isset( $args->command ) )
 			die( 'ok<!--separate-->{"slept_for": "'. $sleeptime .'" seconds", "randomstuff":"'.$randomstring.'" }' );
 			break;
 		
+		// Init firstlogin for a new user via this module call 
+		case 'firstlogin':
+			
+			if( isset( $args->args->userid ) && $args->args->userid )
+			{
+				$debug = [];
+				
+				$userid = ( isset( $args->args->userid ) ? $args->args->userid : $User->ID );
+				
+				require( 'modules/system/include/firstlogin.php' );
+				
+				die( 'ok<!--separate-->' . $userid . '<!--separate-->' . json_encode( $debug ) );
+			}
+			
+			break;
+		
 		// NATIVE version commands ---------------------------------------------
 
 		// These functions are insecure. Commented out, we do not need them
