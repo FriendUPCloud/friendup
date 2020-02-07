@@ -1880,9 +1880,13 @@ if( isset( $args->command ) )
 			
 			if( isset( $args->args->userid ) && $args->args->userid )
 			{
+				$debug = [];
+				
+				$userid = ( isset( $args->args->userid ) ? $args->args->userid : $User->ID );
+				
 				require( 'modules/system/include/firstlogin.php' );
 				
-				die( 'ok' );
+				die( 'ok<!--separate-->' . $userid . '<!--separate-->' . json_encode( $debug ) );
 			}
 			
 			break;

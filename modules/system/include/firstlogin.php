@@ -40,6 +40,8 @@ function InstallApp( $user_id, $app_name )
 	}
 }
 
+$debug = ( isset( $debug ) ? $debug : [] );
+
 $userid = ( isset( $args->args->userid ) ? $args->args->userid : $User->ID );
 
 // Check workgroup specific expansion
@@ -81,6 +83,8 @@ if( $wgroups = $SqlDatabase->FetchObjects( '
 			$postLogin->FriendUser = $User->Name;
 			require( 'cfg/postlogin_' . $wkey . '.php' );
 		}
+		
+		$debug[] = $s->Key;
 	}
 }
 
@@ -101,7 +105,7 @@ $s = new dbIO( 'FSetting' );
 $s->Type = 'system';
 $s->Key = 'firstlogin';
 $s->UserID = $userid;
-if( !$s->Load() )
+if( !$s->Load() || ( isset( $args->args->force ) && $args->args->force ) )
 {
 	// Check for expansion
 	if( file_exists( 'cfg/firstlogin.php' ) )
@@ -115,5 +119,9 @@ if( !$s->Load() )
 	}
 	// Now we had first login!
 	$s->Save();
+}
+else
+{
+	$debug[] = $s->Key;
 }
 
