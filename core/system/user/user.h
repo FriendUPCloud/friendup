@@ -258,6 +258,12 @@ void UserDeleteGroupLinkAll( UserGroupLink *ugl );
 void UserRemoveFromGroups( User *u );
 
 //
+//
+//
+
+FBOOL UserIsInGroup( User *usr, FULONG gid );
+
+//
 // SQL structure
 //
 

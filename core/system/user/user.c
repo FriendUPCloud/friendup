@@ -655,3 +655,30 @@ void UserRemoveFromGroups( User *u )
 	}
 	DEBUG("[UserRemoveFromGroups] remove end\n");
 }
+
+/**
+ * Check if user is in group
+ *
+ * @param usr User
+ * @param gid group id 
+ * @return TRUE if user is in group, otherwise FALSE
+ */
+FBOOL UserIsInGroup( User *usr, FULONG gid )
+{
+	if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
+	{
+		UserGroupLink *ugl = usr->u_UserGroupLinks;
+		while( ugl != NULL )
+		{
+			if( ugl->ugl_GroupID == gid )
+			{
+				FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
+				return TRUE;
+			}
+			
+			ugl = (UserGroupLink *)ugl->node.mln_Succ;
+		}
+		FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
+	}
+	return FALSE;
+}

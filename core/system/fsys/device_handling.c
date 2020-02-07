@@ -342,70 +342,79 @@ AND f.Name = '%s' and (f.Owner='0' OR f.Owner IS NULL)",
 			sqllib->FreeResult( sqllib, res );
 			
 			//
-		// do not allow to mount same drive
-		//
+			// do not allow to mount same drive
+			//
 		
-		int sameDevError = 0;
-		File *fentry = NULL;
+			int sameDevError = 0;
+			File *fentry = NULL;
 		
-		if( MountLock( dm, usr ) == 0 )
-		{
-			if( usr != NULL )
+			if( MountLock( dm, usr ) == 0 )
 			{
-				fentry = usr->u_MountedDevs;
-			}
-			while( fentry != NULL )
-			{
-				DEBUG("Going through all user drives. Name %s UserID %lu\n", fentry->f_Name, usr->u_ID );
-				if( id == fentry->f_ID )
+				if( usr != NULL )
 				{
-					DEBUG("Device is already mounted. Name: %s ID %lu\n", fentry->f_Name, fentry->f_ID );
-					sameDevError = 1;
-					break;
+					fentry = usr->u_MountedDevs;
 				}
-				fentry = (File *) fentry->node.mln_Succ;
+				while( fentry != NULL )
+				{
+					DEBUG("Going through all user drives. Name %s UserID %lu\n", fentry->f_Name, usr->u_ID );
+					if( id == fentry->f_ID )
+					{
+						DEBUG("Device is already mounted. Name: %s ID %lu\n", fentry->f_Name, fentry->f_ID );
+						sameDevError = 1;
+						break;
+					}
+					fentry = (File *) fentry->node.mln_Succ;
+				}
+				MountUnlock( dm, usr );
 			}
-			MountUnlock( dm, usr );
-		}
 		
-		if( sameDevError == 0 )
-		{
-			struct TagItem tags[] = {
-			{FSys_Mount_Path, (FULONG)path},
-			{FSys_Mount_Type, (FULONG)type},
-			{FSys_Mount_Name, (FULONG)name},
-			{FSys_Mount_Owner,(FULONG)usr},
-			{FSys_Mount_SysBase,(FULONG)l},
-			{FSys_Mount_Config,(FULONG)config},
-			{FSys_Mount_ID, (FULONG)id},
-			{TAG_DONE, TAG_DONE}
-		};
-		
-		DEBUG( "[MountFS] Filesystem to mount now.\n" );
-		
-		//
-		// Mount
-		// 
-		FHandler *filesys = NULL;
-		//
-		// Find installed filesystems by type
-		//
-		
-		DOSDriver *ddrive = (DOSDriver *)l->sl_DOSDrivers;
-		while( ddrive != NULL )
-		{
-			if( strcmp( type, ddrive->dd_Name ) == 0 )
+			if( sameDevError == 0 )
 			{
-				filesys = ddrive->dd_Handler;
-				filedd = ddrive;
-				break;
-			}
-			ddrive = (DOSDriver *)ddrive->node.mln_Succ;
-		}
+				struct TagItem tags[] = {
+					{FSys_Mount_Path, (FULONG)path},
+					{FSys_Mount_Type, (FULONG)type},
+					{FSys_Mount_Name, (FULONG)name},
+					{FSys_Mount_Owner,(FULONG)usr},
+					{FSys_Mount_SysBase,(FULONG)l},
+					{FSys_Mount_Config,(FULONG)config},
+					{FSys_Mount_ID, (FULONG)id},
+					{TAG_DONE, TAG_DONE}
+				};
 		
-		int mountError = 0;
-		File *retFile = filesys->Mount( filesys, tags, usr, &mountError );
-		}
+				DEBUG( "[MountFS] Filesystem to mount now.\n" );
+		
+				//
+				// Mount
+				// 
+				FHandler *filesys = NULL;
+				//
+				// Find installed filesystems by type
+				//
+		
+				DOSDriver *ddrive = (DOSDriver *)l->sl_DOSDrivers;
+				while( ddrive != NULL )
+				{
+					if( strcmp( type, ddrive->dd_Name ) == 0 )
+					{
+						filesys = ddrive->dd_Handler;
+						break;
+					}
+					ddrive = (DOSDriver *)ddrive->node.mln_Succ;
+				}
+		
+				char *mountError = NULL;
+				File *retFile = filesys->Mount( filesys, tags, usr, &mountError );
+				if( retFile != NULL )
+				{
+					UserAddDevice( usr, retFile );
+				}
+		
+				if( mountError != NULL )
+				{
+					FFree( mountError );
+				}
+			} // sameDevError == 0
+		} // res != NULL
 		
 		l->LibrarySQLDrop( l, sqllib );
 	}
