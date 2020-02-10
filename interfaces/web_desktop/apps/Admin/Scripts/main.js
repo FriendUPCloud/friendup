@@ -648,3 +648,47 @@ function initTest()
 	
 }
 
+/* --- Global Files Event -------------------------------------------------------- */
+
+// Check Global Keys
+function checkKeys( e )
+{
+	if ( !e ) e = window.event;
+	var targ = e.srcElement ? e.srcElement : e.target;
+	var keycode = e.which ? e.which : e.keyCode;
+	if( Application.closeAllEditModes )
+	{
+		Application.closeAllEditModes( { keycode : keycode } );
+	}
+}
+
+// Check Global Cliks
+function checkClicks( e )
+{
+	if ( !e ) e = window.event;
+	var targ = ( e.srcElement ? e.srcElement : e.target );
+	if( Application.closeAllEditModes )
+	{
+		Application.closeAllEditModes( { targ : targ } );
+	}
+	//if( ge( 'EditMode' ) )
+	//{
+	//	if( targ.id != 'EditMode' && targ.tagName != 'HTML' && targ.tagName != 'BODY' )
+	//	{
+	//		closeEditMode();
+	//	}
+	//}
+}
+
+// Assign Global Listeners
+if ( window.addEventListener )
+{
+	window.addEventListener ( 'keydown', checkKeys );
+	window.addEventListener ( 'mousedown', checkClicks );
+}
+else 
+{
+	window.attachEvent ( 'onkeydown', checkKeys );
+	window.attachEvent ( 'onmousedown', checkClicks );
+}
+

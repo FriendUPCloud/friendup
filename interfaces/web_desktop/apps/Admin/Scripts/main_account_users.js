@@ -3246,11 +3246,76 @@ Sections.accounts_users = function( cmd, extra )
 		
 	}
 	
+	Application.closeAllEditModes = function( act )
+	{
+		
+		if( act )
+		{
+			if( act.keycode )
+			{
+				
+				switch ( act.keycode )
+				{
+					// Esc
+					case 27:
+					
+						if( ge( 'UserDeleteBtn' ) && ge( 'UserDeleteBtn' ).savedState )
+						{
+							if( typeof ge( 'UserDeleteBtn' ).savedState.className != 'undefined' )
+							{
+								ge( 'UserDeleteBtn' ).className = ge( 'UserDeleteBtn' ).savedState.className;
+							}
+							if( typeof ge( 'UserDeleteBtn' ).savedState.innerHTML != 'undefined' )
+							{
+								ge( 'UserDeleteBtn' ).innerHTML = ge( 'UserDeleteBtn' ).savedState.innerHTML;
+							}
+							if( typeof ge( 'UserDeleteBtn' ).savedState.onclick != 'undefined' )
+							{
+								ge( 'UserDeleteBtn' ).onclick = ge( 'UserDeleteBtn' ).savedState.onclick;
+							}
+						}
+					
+						break;
+					default: break;
+				}
+				
+			}
+			
+			if( act.targ )
+			{
+			
+				if( ge( 'UserDeleteBtn' ) && ge( 'UserDeleteBtn' ).savedState )
+				{
+				
+					if( act.targ.id != 'UserDeleteBtn' && act.targ.tagName != 'HTML' && act.targ.tagName != 'BODY' )
+					{
+						
+						if( typeof ge( 'UserDeleteBtn' ).savedState.className != 'undefined' )
+						{
+							ge( 'UserDeleteBtn' ).className = ge( 'UserDeleteBtn' ).savedState.className;
+						}
+						if( typeof ge( 'UserDeleteBtn' ).savedState.innerHTML != 'undefined' )
+						{
+							ge( 'UserDeleteBtn' ).innerHTML = ge( 'UserDeleteBtn' ).savedState.innerHTML;
+						}
+						if( typeof ge( 'UserDeleteBtn' ).savedState.onclick != 'undefined' )
+						{
+							ge( 'UserDeleteBtn' ).onclick = ge( 'UserDeleteBtn' ).savedState.onclick;
+						}
+					
+					}
+				}
+			}
+		}
+		
+	}
+	
 	function removeBtn( _this, args, callback )
 	{
 		
 		if( _this )
 		{
+			_this.savedState = { className: _this.className, innerHTML: _this.innerHTML, onclick: ( _this.onclick ? _this.onclick : function () {} ) }
 			_this.classList.remove( 'IconButton' );
 			_this.classList.remove( 'IconToggle' );
 			_this.classList.remove( 'ButtonSmall' );

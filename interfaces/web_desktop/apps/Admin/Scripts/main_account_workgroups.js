@@ -635,6 +635,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 		if( _this )
 		{
+			closeEdit();
+			
+			_this.savedState = { 
+				className: _this.className, 
+				innerHTML: _this.innerHTML, 
+				onclick: ( _this.onclick ? _this.onclick : function () {} ) 
+			}
 			_this.classList.remove( 'IconButton' );
 			_this.classList.remove( 'IconToggle' );
 			_this.classList.remove( 'ButtonSmall' );
@@ -644,6 +651,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			_this.classList.remove( 'NegativeAlt' );
 			_this.classList.add( 'ButtonAlt' );
 			_this.classList.add( 'BackgroundRed' );
+			_this.id = ( _this.id ? _this.id : 'EditMode' );
 			_this.innerHTML = ( args.button_text ? i18n( args.button_text ) : i18n( 'i18n_delete' ) );
 			_this.args = args;
 			_this.callback = callback;
@@ -668,6 +676,109 @@ Sections.accounts_workgroups = function( cmd, extra )
 		{
 			ge( 'GroupEditButtons' ).className = ( close ? 'Closed' : 'Open' );
 		}
+	}
+	
+	function closeEdit()
+	{
+		if( ge( 'EditMode' ) )
+		{
+			if( ge( 'EditMode' ) && ge( 'EditMode' ).savedState )
+			{
+				if( typeof ge( 'EditMode' ).savedState.className != 'undefined' )
+				{
+					ge( 'EditMode' ).className = ge( 'EditMode' ).savedState.className;
+				}
+				if( typeof ge( 'EditMode' ).savedState.innerHTML != 'undefined' )
+				{
+					ge( 'EditMode' ).innerHTML = ge( 'EditMode' ).savedState.innerHTML;
+				}
+				if( typeof ge( 'EditMode' ).savedState.onclick != 'undefined' )
+				{
+					ge( 'EditMode' ).onclick = ge( 'EditMode' ).savedState.onclick;
+				}
+				ge( 'EditMode' ).removeAttribute( 'id' );
+			}
+		}
+	}
+	
+	Application.closeAllEditModes = function( act )
+	{
+		
+		if( act )
+		{
+			if( act.keycode )
+			{
+				
+				switch ( act.keycode )
+				{
+					// Esc
+					case 27:
+					
+						if( ge( 'GroupDeleteBtn' ) && ge( 'GroupDeleteBtn' ).savedState )
+						{
+							
+							if( typeof ge( 'GroupDeleteBtn' ).savedState.className != 'undefined' )
+							{
+								ge( 'GroupDeleteBtn' ).className = ge( 'GroupDeleteBtn' ).savedState.className;
+							}
+							if( typeof ge( 'GroupDeleteBtn' ).savedState.innerHTML != 'undefined' )
+							{
+								ge( 'GroupDeleteBtn' ).innerHTML = ge( 'GroupDeleteBtn' ).savedState.innerHTML;
+							}
+							if( typeof ge( 'GroupDeleteBtn' ).savedState.onclick != 'undefined' )
+							{
+								ge( 'GroupDeleteBtn' ).onclick = ge( 'GroupDeleteBtn' ).savedState.onclick;
+							}
+							
+						}
+						
+						closeEdit();
+						
+						break;
+					default: break;
+				}
+				
+			}
+			
+			if( act.targ )
+			{
+			
+				if( ge( 'GroupDeleteBtn' ) && ge( 'GroupDeleteBtn' ).savedState )
+				{
+				
+					if( act.targ.id != 'GroupDeleteBtn' && act.targ.tagName != 'HTML' && act.targ.tagName != 'BODY' )
+					{
+						
+						if( typeof ge( 'GroupDeleteBtn' ).savedState.className != 'undefined' )
+						{
+							ge( 'GroupDeleteBtn' ).className = ge( 'GroupDeleteBtn' ).savedState.className;
+						}
+						if( typeof ge( 'GroupDeleteBtn' ).savedState.innerHTML != 'undefined' )
+						{
+							ge( 'GroupDeleteBtn' ).innerHTML = ge( 'GroupDeleteBtn' ).savedState.innerHTML;
+						}
+						if( typeof ge( 'GroupDeleteBtn' ).savedState.onclick != 'undefined' )
+						{
+							ge( 'GroupDeleteBtn' ).onclick = ge( 'GroupDeleteBtn' ).savedState.onclick;
+						}
+						
+					}
+					
+				}
+				
+				if( ge( 'EditMode' ) && ge( 'EditMode' ).savedState )
+				{
+					
+					if( act.targ.id != 'EditMode' && act.targ.tagName != 'HTML' && act.targ.tagName != 'BODY' )
+					{
+						closeEdit();
+					}
+					
+				}
+				
+			}
+		}
+		
 	}
 	
 	// init --------------------------------------------------------------------------------------------------------- //
