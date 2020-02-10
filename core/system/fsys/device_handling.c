@@ -339,7 +339,7 @@ AND f.Name = '%s' and (f.Owner='0' OR f.Owner IS NULL)",
 		DEBUG("SQL : '%s'\n", temptext );
 	
 		void *res = sqllib->Query( sqllib, temptext );
-		DEBUG("[MountSharedDrive] sql executed, res : %x\n", (FULONG)res );
+		DEBUG("[MountSharedDrive] sql executed, res : %p\n", res );
 		
 		// get fields from query
 		if( res != NULL )
@@ -387,7 +387,7 @@ AND f.Name = '%s' and (f.Owner='0' OR f.Owner IS NULL)",
 					while( fentry != NULL )
 					{
 						DEBUG("Going through all user drives. Name %s UserID %lu\n", fentry->f_Name, usr->u_ID );
-						if( id == fentry->f_ID )
+						if( strcmp( name, fentry->f_Name ) == 0 ) //id == fentry->f_ID )
 						{
 							DEBUG("Device is already mounted. Name: %s ID %lu\n", fentry->f_Name, fentry->f_ID );
 							sameDevError = 1;
@@ -410,12 +410,16 @@ AND f.Name = '%s' and (f.Owner='0' OR f.Owner IS NULL)",
 						{FSys_Mount_SysBase,(FULONG)l},
 						{FSys_Mount_Config,(FULONG)config},
 						{FSys_Mount_ID, (FULONG)id},
-						{ FSys_Mount_Module, (FULONG)"files" },
 						{TAG_DONE, TAG_DONE}
 					};
 					
 					// workgroup
 					// command=dosaction&action=mount&type=SQLWorkgroupDrive&devname=AdminNotMounted&path=&module=files&sessionid=42b34dddd6f5757077b675f91cb86239c2aba954';
+					// command=dosaction&action=mount&type=SQLWorkgroupDrive&devname=AdminNotMounted&path=&module=files&sessionid=42b34dddd6f5757077b675f91cb86239c2aba954'
+					
+					// command=dosaction&action=mount&type=SQLWorkgroupDrive&devname=AdminNotMounted&path=&module=files&sessionid=42b34dddd6f5757077b675f91cb86239c2aba954' - normal working call'
+					// command=dosaction&action=mount&type=SQLWorkgroupDrive&devname=AdminNotMounted&path=&module=files&sessionid=42b34dddd6f5757077b675f91cb86239c2aba954
+					
 					// home
 					// command=dosaction&action=mount&type=SQLDrive&devname=Home&path=&module=files&sessionid=42b34dddd6f5757077b675f91cb86239c2aba954';'
 					
@@ -464,6 +468,7 @@ AND f.Name = '%s' and (f.Owner='0' OR f.Owner IS NULL)",
 					DEBUG("[MountSharedDrive] before mount call\n");
 					char *mountError = NULL;
 					File *retFile = filesys->Mount( filesys, tags, usr, &mountError );
+					DEBUG("[MountSharedDrive] mount device : %p\n", retFile );
 					if( retFile != NULL )
 					{
 						UserAddDevice( usr, retFile );

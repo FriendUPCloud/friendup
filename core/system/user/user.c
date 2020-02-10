@@ -421,6 +421,11 @@ File *UserRemDeviceByName( User *usr, const char *name, int *error )
 	return NULL;
 }
 
+typedef struct RemDrive{
+	File *tbr;
+	MinNode node;
+}RemDrive;
+
 /**
  * Remove device by name
  *
@@ -433,7 +438,9 @@ File *UserRemDeviceByGroupID( User *usr, FULONG grid, int *error )
 {
 	if( usr != NULL )
 	{
-		File *remdev = NULL;
+		RemDrive *tbrroot = NULL;
+		
+		//File *remdev = NULL;
 		File *lastone = NULL;
 		
 		if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
@@ -446,8 +453,19 @@ File *UserRemDeviceByGroupID( User *usr, FULONG grid, int *error )
 				if( lf->f_UserGroupID == grid )
 				{
 					DEBUG( "[UserRemDeviceByName] Found one (%lu == %lu)\n",  lf->f_UserGroupID, grid );
-					remdev = lf;
-					break;
+					
+					RemDrive *loc = FCalloc( 1, sizeof(RemDrive) );
+					loc->tbr = lf;
+					if( tbrroot == NULL )
+					{
+						tbrroot = loc;
+					}
+					else
+					{
+						loc->node.mln_Succ = (MinNode *)tbrroot;
+						tbrroot = loc;
+					}
+					//break;
 				}
 				lastone = lf;
 				lf = (File *)lf->node.mln_Succ;
@@ -455,45 +473,64 @@ File *UserRemDeviceByGroupID( User *usr, FULONG grid, int *error )
 			FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
 		}
 		
-		if( remdev != NULL )
+		while( tbrroot != NULL )
 		{
-			if( remdev->f_Operations <= 0 )
-			{
-				DEBUG("[UserRemDeviceByName] Remove device from list\n");
-				
-				if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
-				{
-					usr->u_MountedDevsNr--;
+			File *remdev = tbrroot->tbr;
+			RemDrive *freedrive = tbrroot;
 			
-					if( usr->u_MountedDevs == remdev )		// checking if its our first entry
+			do{
+				*error = 0;
+				
+				if( remdev->f_Operations <= 0 )
+				{
+					DEBUG("[UserRemDeviceByName] Remove device from list\n");
+				
+					if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
 					{
-						File *next = (File*)remdev->node.mln_Succ;
-						usr->u_MountedDevs = (File *)next;
-						if( next != NULL )
+						usr->u_MountedDevsNr--;
+			
+						if( usr->u_MountedDevs == remdev )		// checking if its our first entry
 						{
-							next->node.mln_Pred = NULL;
+							File *next = (File*)remdev->node.mln_Succ;
+							usr->u_MountedDevs = (File *)next;
+							if( next != NULL )
+							{
+								next->node.mln_Pred = NULL;
+							}
 						}
+						else
+						{
+							File *next = (File *)remdev->node.mln_Succ;
+							//next->node.mln_Pred = (struct MinNode *)prev;
+							if( lastone != NULL )
+							{
+								lastone->node.mln_Succ = (struct MinNode *)next;
+							}
+						}
+						FRIEND_MUTEX_UNLOCK(&usr->u_Mutex);
 					}
-					else
+					
+					if( remdev != NULL )
 					{
-						File *next = (File *)remdev->node.mln_Succ;
-						//next->node.mln_Pred = (struct MinNode *)prev;
-						if( lastone != NULL )
-						{
-							lastone->node.mln_Succ = (struct MinNode *)next;
-						}
+						FHandler *fsys = (FHandler *)remdev->f_FSys;
+						fsys->Release( fsys, remdev );	// release drive data
 					}
-					FRIEND_MUTEX_UNLOCK(&usr->u_Mutex);
+					usleep( 500 );
 				}
-				return remdev;
-			}
-			else
+				else
+				{
+					DEBUG("[UserRemDeviceByName] Cannot unmount device, operation in progress\n");
+					*error = FSys_Error_OpsInProgress;
+				}
+
+			}while( *error == FSys_Error_OpsInProgress );
+			
+			tbrroot = (RemDrive *)tbrroot->node.mln_Succ;
+			if( freedrive != NULL )
 			{
-				DEBUG("[UserRemDeviceByName] Cannot unmount device, operation in progress\n");
-				*error = FSys_Error_OpsInProgress;
-				return remdev;
+				FFree( freedrive );
 			}
-		}
+		} // while tbrroot
 	}
 	else
 	{

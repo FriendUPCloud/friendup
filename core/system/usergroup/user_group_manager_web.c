@@ -1107,6 +1107,9 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 										{
 											int error = 0;
 											// wait till drive is removed/detached
+											
+											File *remDrive = UserRemDeviceByGroupID( usr, groupID, &error );
+											/*
 											do
 											{
 												error = 0; // set error to 0 and check if OPS is in progress
@@ -1119,6 +1122,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 												}
 												usleep( 500 );
 											}while( error == FSys_Error_OpsInProgress );
+											*/
 											
 											UserGroupRemoveUser( fg, usr );
 										}
