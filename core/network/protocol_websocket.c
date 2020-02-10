@@ -449,13 +449,15 @@ void WSThread( void *d )
 	
 	if( fcd->wsc_Wsi == NULL || fcd->wsc_UserSession == NULL )
 	{
-		FERROR("Error session is NULL\n");
+		FERROR("Error session is NULL : wsi: %p usersession: %p\n", fcd->wsc_Wsi == NULL, fcd->wsc_UserSession );
 
 		FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
 		fcd->wsc_InUseCounter--;
 		FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
 		
 		releaseWSData( data );
+		
+		 lws_close_reason( fcd->wsc_Wsi, LWS_CLOSE_STATUS_GOINGAWAY , NULL, 0 );
 		
 #ifdef USE_PTHREAD
 		pthread_exit( 0 );
