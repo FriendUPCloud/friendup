@@ -2070,7 +2070,7 @@ Sections.accounts_templates = function( cmd, extra )
 																			
 																		};
 																		return b;
-																	}( k, this ) 
+																	}( apps[k].Name, this ) 
 																},
 																{ 
 																	'element' : function( order, _this ) 
@@ -2084,7 +2084,7 @@ Sections.accounts_templates = function( cmd, extra )
 																			
 																		};
 																		return b;
-																	}( k, this ) 
+																	}( apps[k].Name, this ) 
 																}
 															] 
 														}, 
@@ -2389,18 +2389,128 @@ Sections.accounts_templates = function( cmd, extra )
 							sortup : function ( order )
 							{
 								
-								console.log( 'TODO: sortup: ' + order );
+								console.log( 'TODO: sortup: ' + order + ' ', this.ids );
 								
-								console.log( 'change between two ids in sorting ...' );
+								console.log( 'soft: ', soft );
+								
+								var num = 0; var array = []; var found = 0;
+								
+								if( order && this.ids )
+								{
+									for( var a in this.ids )
+									{
+										if( this.ids[a] && this.ids[a][0] && this.ids[a][1] == 1 )
+										{
+											
+											// 
+											
+											console.log( { a:a, num:num } );
+											
+											if( order == a && this.ids[ order ] )
+											{
+												found = num;
+											}
+											
+											array.push( a );
+											
+											num++;
+										}
+									}
+									
+									console.log( { array: array, found: found, past: array[ found-1 ] } );
+									
+									if( array && found )
+									{
+										
+										// 
+										
+										if( array[ found ] && array[ found-1 ] )
+										{
+											
+											if( this.ids[ array[ found ] ] && this.ids[ array[ found-1 ] ] )
+											{
+												var current = this.ids[ array[ found   ] ];
+												var past    = this.ids[ array[ found-1 ] ];
+												
+												if( current && past )
+												{
+													
+													// 
+													
+													this.ids[ array[ found   ] ] = past;
+													this.ids[ array[ found-1 ] ] = current;
+													
+												}
+											}
+										}
+									}
+									
+									this.refresh();
+								}
 								
 							},
 							
 							sortdown : function ( order )
 							{
 								
-								console.log( 'TODO: sortdown: ' + order );
+								console.log( 'TODO: sortdown: ' + order + ' ', this.ids );
 								
-								console.log( 'change between two ids in sorting ...' );
+								console.log( 'soft: ', soft );
+								
+								var num = 0; var array = []; var found = 0;
+								
+								if( order && this.ids )
+								{
+									for( var a in this.ids )
+									{
+										if( this.ids[a] && this.ids[a][0] && this.ids[a][1] == 1 )
+										{
+											
+											// 
+											
+											console.log( { a:a, num:num } );
+											
+											if( order == a && this.ids[ order ] )
+											{
+												found = num;
+											}
+											
+											array.push( a );
+											
+											num++;
+										}
+									}
+									
+									console.log( { array: array, found: found, next: array[ found+1 ] } );
+									
+									if( array && found )
+									{
+										
+										// 
+										
+										if( array[ found ] && array[ found+1 ] )
+										{
+											
+											if( this.ids[ array[ found ] ] && this.ids[ array[ found+1 ] ] )
+											{
+												var current = this.ids[ array[ found   ] ];
+												var next    = this.ids[ array[ found+1 ] ];
+												
+												if( current && next )
+												{
+													
+													// 
+													
+													this.ids[ array[ found   ] ] = next;
+													this.ids[ array[ found+1 ] ] = current;
+													
+												}
+											}
+										}
+									}
+									
+									this.refresh();
+								}
 								
 							}
 							
