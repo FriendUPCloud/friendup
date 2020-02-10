@@ -615,9 +615,9 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 					// Generate sessionid
 					if( uses->us_SessionID == NULL || !strlen( uses->us_SessionID ) )
 					{
-						DEBUG("\n\n\n============================================================\n \
-											user name %s current timestamp %ld login time %ld logout time %lu\n\
-											============================================================\n", tmpusr->u_Name, timestamp, uses->us_LoggedTime , sb->sl_RemoveSessionsAfterTime);
+						DEBUG("============================================================\n \
+							user name %s current timestamp %ld login time %ld logout time %lu\n\
+								============================================================\n", tmpusr->u_Name, timestamp, uses->us_LoggedTime , sb->sl_RemoveSessionsAfterTime);
 						
 						char *hashBase = MakeString( 255 );
 						sprintf( hashBase, "%ld%s%d", timestamp, tmpusr->u_FullName, ( rand() % 999 ) + ( rand() % 999 ) + ( rand() % 999 ) );

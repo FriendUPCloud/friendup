@@ -576,7 +576,7 @@ int NotificationManagerNotificationSentSetStatusDB( NotificationManager *nm, FUL
 
 int NotificationManagerAddExternalConnection( NotificationManager *nm, void *con )
 {
-	DEBUG("\n\n\n\n\n\n[NotificationManagerAddExternalConnection] Add connection!\n");
+	DEBUG("[NotificationManagerAddExternalConnection] Add connection!\n");
 	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	
 	{
 		ExternalServerConnection *esc = FCalloc( 1, sizeof(ExternalServerConnection) );
