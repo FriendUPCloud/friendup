@@ -736,8 +736,8 @@ Workspace = {
 		
 		var self = this;
 		
-		function executeCleanRelogin()
-		{	
+		function killConn()
+		{
 			if( Workspace.conn )
 			{
 				try
@@ -750,6 +750,11 @@ Workspace = {
 				}
 				delete Workspace.conn;
 			}
+		}
+		
+		function executeCleanRelogin()
+		{	
+			killConn();
 			
 			if( Workspace.loginUsername && Workspace.loginPassword )
 			{
@@ -816,6 +821,8 @@ Workspace = {
 				}
 				catch( n )
 				{
+					killConn();
+					console.log( 'Error running relogin.', n );
 				}
 			}
 			if( Workspace.serverIsThere )
