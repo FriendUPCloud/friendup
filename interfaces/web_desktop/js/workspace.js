@@ -832,6 +832,7 @@ Workspace = {
 			}
 			else
 			{
+				killConn();
 				// // console.log( 'Test2: Wait a second before you can log in again.' );
 				// Wait a second before trying again
 				setTimeout( function()
