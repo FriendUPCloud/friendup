@@ -277,6 +277,9 @@ int MountSharedDrive( DeviceManager *dm, User *usr, FULONG groupID )
 	SystemBase *l = (SystemBase *)dm->dm_SB;
 	// New way of finding type of device
 	SQLLibrary *sqllib = l->LibrarySQLGet( l );
+	
+	DEBUG("[MountSharedDrive] mount\n");
+	
 	if( sqllib != NULL )
 	{
 		char *path = NULL;
@@ -284,17 +287,24 @@ int MountSharedDrive( DeviceManager *dm, User *usr, FULONG groupID )
 		char *config = NULL;
 		char *ctype = NULL, *type = NULL;
 		char *execute = NULL;
-		char **row;
 		FULONG id, storedBytes;
 		int j = 0;
 		char temptext[ 612 ]; memset( temptext, 0, sizeof(temptext) );
 		
 		// get drive details
 		// drive which have type 'Workgroup' and is attached to the user
-		
-		sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
+
+		/*
+		 (system/fsys/device_handling.c:316) 140366686701312 SQL : 'SELECT `Type`,`Path`,`Config`,f.`ID`,`Execute`,`StoredBytes`,`Name` FROM `Filesystem` f WHERE (f.UserID = '4' OR f.GroupID IN (SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g WHERE g.ID = ug.UserGroupID AND g.Type = 'Workgroup' AND ug.UserID = '4' ug.GroupID=4 ) ) AND f.Name = 'H�E�L���' and (f.Owner='0' OR f.Owner IS NULL)'
+  (mysqllibrary.c:1070) 140366686701312 Cannot run query: 'SELECT `Type`,`Path`,`Config`,f.`ID`,`Execute`,`StoredBytes`,`Name` FROM `Filesystem` f WHERE (f.UserID = '4' OR f.GroupID IN (SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g WHERE g.ID = ug.UserGroupID AND g.Type = 'Workgroup' AND ug.UserID = '4' ug.GroupID=4 ) ) AND f.Name = 'H�E�L���' and (f.Owner='0' OR f.Owner IS NULL)'
+  (mysqllibrary.c:1072) 140366686701312 You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'ug.GroupID=4 ) ) AND f.Name = 'H?E?L???' and (f.Owner='0' OR f.Owner IS NULL)' at line 1
+  (system/fsys/device_handling.c:319) 140366686701312 [MountSharedDrive] sql executed
+
+		 */
+		/*
+				sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
 "SELECT \
-`Type`,`Path`,`Config`,f.`ID`,`Execute`,`StoredBytes` \
+`Type`,`Path`,`Config`,f.`ID`,`Execute`,`StoredBytes`,`Name` \
 FROM `Filesystem` f \
 WHERE \
 (\
@@ -309,16 +319,36 @@ ug.UserID = '%lu' ug.GroupID=%lu \
 AND f.Name = '%s' and (f.Owner='0' OR f.Owner IS NULL)",
 			usr->u_ID , usr->u_ID, groupID
 			);
-		
+		 */
+	
+/*
+		sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
+"SELECT Type,Path,Config,ID,Execute,StoredBytes,Name FROM Filesystem WHERE GroupID IN (SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g WHERE g.ID = ug.UserGroupID AND g.Type='Workgroup' AND ug.UserID = '%lu' AND ug.UserGroupID=%lu ) and (f.Owner='0' OR f.Owner IS NULL)",
+			usr->u_ID, groupID
+			);
+*/
+/*
+		sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
+"SELECT Type,Path,Config,ID,Execute,StoredBytes,Name FROM Filesystem WHERE GroupID IN (SELECT ug.UserGroupID FROM FUserToGroup ug inner join FUserGroup g on g.ID=ug.UserGroupID WHERE g.Type='Workgroup' AND ug.UserID=%lu AND ug.UserGroupID=%lu ) and (Owner=0 OR Owner IS NULL)", usr->u_ID, groupID
+			);
+	*/
+
+		sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
+"SELECT Type,Path,Config,ID,Execute,StoredBytes,Name FROM Filesystem WHERE Type='SQLWorkgroupDrive' AND GroupID =%lu and (Owner=0 OR Owner IS NULL)", groupID );
+
 		DEBUG("SQL : '%s'\n", temptext );
 	
 		void *res = sqllib->Query( sqllib, temptext );
+		DEBUG("[MountSharedDrive] sql executed, res : %x\n", (FULONG)res );
 		
 		// get fields from query
 		if( res != NULL )
 		{
+			char **row;
+			
 			while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
 			{
+				DEBUG("Inside while\n");
 				if( type != NULL ){FFree( type );}
 				if( row[ 0 ] != NULL ) type = StringDuplicate( row[ 0 ] );
 
@@ -333,91 +363,138 @@ AND f.Name = '%s' and (f.Owner='0' OR f.Owner IS NULL)",
 				if( row[ 4 ] != NULL ) execute = StringDuplicate( row[ 4 ] );
 			
 				if( row[ 5 ] != NULL ){ char *end; storedBytes = strtoul( (char *)row[ 5 ],  &end, 0 ); }
+				
+				if( row[ 6 ] != NULL ) name = StringDuplicate( row[ 6 ] );
 
 				if( usr != NULL )
 				{
 					DEBUG("[MountFS] User name %s - found row type %s server %s path %s port %s\n", usr->u_Name, row[0], row[1], row[2], row[3] );
 				}
-			}
-			sqllib->FreeResult( sqllib, res );
 			
-			//
-			// do not allow to mount same drive
-			//
+				//
+				// do not allow to mount same drive
+				//
 		
-			int sameDevError = 0;
-			File *fentry = NULL;
+				int sameDevError = 0;
+				File *fentry = NULL;
 		
-			if( MountLock( dm, usr ) == 0 )
-			{
-				if( usr != NULL )
+				if( MountLock( dm, usr ) == 0 )
 				{
-					fentry = usr->u_MountedDevs;
-				}
-				while( fentry != NULL )
-				{
-					DEBUG("Going through all user drives. Name %s UserID %lu\n", fentry->f_Name, usr->u_ID );
-					if( id == fentry->f_ID )
+					if( usr != NULL )
 					{
-						DEBUG("Device is already mounted. Name: %s ID %lu\n", fentry->f_Name, fentry->f_ID );
-						sameDevError = 1;
-						break;
+						fentry = usr->u_MountedDevs;
 					}
-					fentry = (File *) fentry->node.mln_Succ;
-				}
-				MountUnlock( dm, usr );
-			}
-		
-			if( sameDevError == 0 )
-			{
-				struct TagItem tags[] = {
-					{FSys_Mount_Path, (FULONG)path},
-					{FSys_Mount_Type, (FULONG)type},
-					{FSys_Mount_Name, (FULONG)name},
-					{FSys_Mount_Owner,(FULONG)usr},
-					{FSys_Mount_SysBase,(FULONG)l},
-					{FSys_Mount_Config,(FULONG)config},
-					{FSys_Mount_ID, (FULONG)id},
-					{TAG_DONE, TAG_DONE}
-				};
-		
-				DEBUG( "[MountFS] Filesystem to mount now.\n" );
-		
-				//
-				// Mount
-				// 
-				FHandler *filesys = NULL;
-				//
-				// Find installed filesystems by type
-				//
-		
-				DOSDriver *ddrive = (DOSDriver *)l->sl_DOSDrivers;
-				while( ddrive != NULL )
-				{
-					if( strcmp( type, ddrive->dd_Name ) == 0 )
+					while( fentry != NULL )
 					{
-						filesys = ddrive->dd_Handler;
-						break;
+						DEBUG("Going through all user drives. Name %s UserID %lu\n", fentry->f_Name, usr->u_ID );
+						if( id == fentry->f_ID )
+						{
+							DEBUG("Device is already mounted. Name: %s ID %lu\n", fentry->f_Name, fentry->f_ID );
+							sameDevError = 1;
+							break;
+						}
+						fentry = (File *) fentry->node.mln_Succ;
 					}
-					ddrive = (DOSDriver *)ddrive->node.mln_Succ;
+					MountUnlock( dm, usr );
 				}
+			
+				DEBUG("[MountSharedDrive] mount shared, same dev error %d device name: %s\n", sameDevError, name );
 		
-				char *mountError = NULL;
-				File *retFile = filesys->Mount( filesys, tags, usr, &mountError );
-				if( retFile != NULL )
+				if( sameDevError == 0 )
 				{
-					UserAddDevice( usr, retFile );
-				}
+					struct TagItem tags[] = {
+						{FSys_Mount_Path, (FULONG)path},
+						{FSys_Mount_Type, (FULONG)type},
+						{FSys_Mount_Name, (FULONG)name},
+						{FSys_Mount_Owner,(FULONG)usr},
+						{FSys_Mount_SysBase,(FULONG)l},
+						{FSys_Mount_Config,(FULONG)config},
+						{FSys_Mount_ID, (FULONG)id},
+						{ FSys_Mount_Module, (FULONG)"files" },
+						{TAG_DONE, TAG_DONE}
+					};
+					
+					// workgroup
+					// command=dosaction&action=mount&type=SQLWorkgroupDrive&devname=AdminNotMounted&path=&module=files&sessionid=42b34dddd6f5757077b675f91cb86239c2aba954';
+					// home
+					// command=dosaction&action=mount&type=SQLDrive&devname=Home&path=&module=files&sessionid=42b34dddd6f5757077b675f91cb86239c2aba954';'
+					
+					/*
+								{FSys_Mount_Path, (FULONG)path},
+			{FSys_Mount_Server, (FULONG)server},
+			{FSys_Mount_Port, (FULONG)port},
+			{FSys_Mount_Type, (FULONG)type},
+			{FSys_Mount_Name, (FULONG)name},
+			{FSys_Mount_Owner,(FULONG)usr},
+			{FSys_Mount_LoginUser,(FULONG)uname},
+			{FSys_Mount_LoginPass,(FULONG)passwd},
+			{FSys_Mount_SysBase,(FULONG)l},
+			{FSys_Mount_Config,(FULONG)config},
+			{FSys_Mount_Visible,(FULONG)visible},
+			{FSys_Mount_UserName,(FULONG)pname},
+			//{FSys_Mount_Execute,(FULONG)execute},
+			{FSys_Mount_UserGroup, (FULONG)usrgrp},
+			{FSys_Mount_ID, (FULONG)id},
+			{FSys_Mount_AdminRights,(FULONG)calledByAdmin},
+			{TAG_DONE, TAG_DONE}
+					 */
 		
-				if( mountError != NULL )
-				{
-					FFree( mountError );
-				}
-			} // sameDevError == 0
+					DEBUG( "[MountFS] Filesystem to mount now.\n" );
+		
+					//
+					// Mount
+					// 
+					FHandler *filesys = NULL;
+					//
+					// Find installed filesystems by type
+					//
+		
+					DEBUG("[MountSharedDrive] find filesystem\n");
+					DOSDriver *ddrive = (DOSDriver *)l->sl_DOSDrivers;
+					while( ddrive != NULL )
+					{
+						if( strcmp( type, ddrive->dd_Name ) == 0 )
+						{
+							filesys = ddrive->dd_Handler;
+							break;
+						}
+						ddrive = (DOSDriver *)ddrive->node.mln_Succ;
+					}
+		
+					DEBUG("[MountSharedDrive] before mount call\n");
+					char *mountError = NULL;
+					File *retFile = filesys->Mount( filesys, tags, usr, &mountError );
+					if( retFile != NULL )
+					{
+						UserAddDevice( usr, retFile );
+					}
+		
+					if( mountError != NULL )
+					{
+						FFree( mountError );
+					}
+				} // sameDevError == 0
+			}	// while
+			DEBUG("After while\n");
+			sqllib->FreeResult( sqllib, res );
 		} // res != NULL
+		else
+		{
+			DEBUG("Result = NULL\n");
+		}
 		
+		DEBUG("Before dropping sql\n");
 		l->LibrarySQLDrop( l, sqllib );
+		
+		if( path != NULL ){ FFree( path ); }
+		if( name != NULL ){ FFree( name ); }
+		if( config != NULL ){ FFree( config ); }
+		if( ctype != NULL ){ FFree( ctype ); }
+		if( type != NULL ){ FFree( type ); }
+		if( execute != NULL ){ FFree( execute ); }
 	}
+	DEBUG("Return with error %d\n", error );
+	
 	return error;
 }
 

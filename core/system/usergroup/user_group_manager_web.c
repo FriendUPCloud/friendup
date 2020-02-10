@@ -1079,9 +1079,9 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 						} // users == false (remove all users)
 						else
 						{
-							sqlLib = l->LibrarySQLGet( l );
-							if( sqlLib != NULL )
-							{
+							//sqlLib = l->LibrarySQLGet( l );
+							//if( sqlLib != NULL )
+							//{
 								DEBUG("[Group/Update] going through diff list\n");
 								// going through diff list and add or remove user from group
 								UsrGrEntry *el = diffListRoot;
@@ -1121,32 +1121,39 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 											}while( error == FSys_Error_OpsInProgress );
 											
 											UserGroupRemoveUser( fg, usr );
-							
-											// if device was detached from not current user
-											//if( usr != loggedSession->us_User )
-
-											UserNotifyFSEvent2( l->sl_DeviceManager, usr, "refresh", "Mountlist:" );
 										}
 									}
 									
 									// update database
-									
+									//sqlLib = l->LibrarySQLGet( l );
+									//if( sqlLib != NULL )
+									//{
 									if( el->ugid == 0 ) // user is not in group we must add him
 									{
-										
+										UGMAddUserToGroupDB( l->sl_UGM, groupID, el->uid );
 									}
 									// user is in group, we can remove him
 									else
 									{
-										
+										UGMRemoveUserFromGroupDB( l->sl_UGM, groupID, el->uid );
+									}
+									//l->LibrarySQLDrop( l, sqlLib );
+									//}
+									
+									if( usr != NULL )
+									{
+										// if device was detached from not current user
+										//if( usr != loggedSession->us_User )
+
+										UserNotifyFSEvent2( l->sl_DeviceManager, usr, "refresh", "Mountlist:" );
 									}
 								
 									el = (UsrGrEntry *)el->node.mln_Succ;
 								
 									FFree( remel );	// remove entry from list
 								}
-								l->LibrarySQLDrop( l, sqlLib );
-							}
+								//l->LibrarySQLDrop( l, sqlLib );
+							//}
 						}
 						
 						/*
