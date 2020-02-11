@@ -931,7 +931,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						SQLLibrary *sqlLib = l->LibrarySQLGet( l );
 						if( sqlLib != NULL )
 						{
-							int querySize = 512 + strlen( users );
+							int userslen = strlen( users );
+							int querySize = 512 + (2*userslen);
 							char *tmpQuery = FMalloc( querySize );
 							// get difference between lists
 							// DB   1,2,3,4   ARG  2,3,5   DIFFERENCE  1,4,5
