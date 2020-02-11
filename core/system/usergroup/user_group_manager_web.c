@@ -931,7 +931,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						SQLLibrary *sqlLib = l->LibrarySQLGet( l );
 						if( sqlLib != NULL )
 						{
-							char tmpQuery[ 512 ];
+							int querySize = 512 + strlen( users );
+							char *tmpQuery = FMalloc( querySize );
 							// get difference between lists
 							// DB   1,2,3,4   ARG  2,3,5   DIFFERENCE  1,4,5
 							// if row[1] == NULL then user is not table, must be added
@@ -941,7 +942,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 //left outer join FUserToGroup utg on u.ID=utg.UserID and utg.UserGroupID=%lu 
 //where u.ID in (%s)", groupID, users );
 
-snprintf( tmpQuery, sizeof(tmpQuery), "select u.ID, utg.UserGroupID from FUser u \
+snprintf( tmpQuery, querySize, "select u.ID, utg.UserGroupID from FUser u \
 left outer join FUserToGroup utg on u.ID=utg.UserID and utg.UserGroupID=%lu \
 where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToGroup where UserGroupID=%lu Group by UserID) AND ID in (%s) UNION SELECT UserID FROM FUserToGroup WHERE UserID NOT IN (SELECT ID FROM FUser where ID in (%s)) AND UserGroupID=%lu Group by UserID)", groupID, groupID, users, users, groupID );
 
@@ -1006,6 +1007,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 							sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
 							*/
 							l->LibrarySQLDrop( l, sqlLib );
+							FFree( tmpQuery );
 						}
 						
 						// group was created, its time to add users to it
