@@ -824,12 +824,72 @@ Sections.accounts_templates = function( cmd, extra )
 		}
 	}
 	
-	function sortApps( name )
+	function sortApps( sortby )
 	{
 		
 		//
 		
-		alert( 'TODO ... sortApps( '+name+' )' );
+		var _this = ge( 'ApplicationInner' );
+		
+		if( _this )
+		{
+			var orderby = ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' );
+			
+			var list = _this.getElementsByTagName( 'div' );
+			
+			if( list.length > 0 )
+			{
+				var output = [];
+				
+				var callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
+				
+				for( var a = 0; a < list.length; a++ )
+				{
+					if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+					
+					var span = list[a].getElementsByTagName( 'span' )[0];
+					
+					if( span && span.getAttribute( sortby.toLowerCase() ) )
+					{
+						var obj = { 
+							sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
+							content : list[a]
+						};
+					
+						output.push( obj );
+					}
+				}
+				
+				if( output.length > 0 )
+				{
+					// Sort ASC default
+					
+					output.sort( callback );
+					
+					// Sort DESC
+					
+					if( orderby == 'DESC' ) 
+					{ 
+						output.reverse();  
+					}
+					
+					_this.innerHTML = '';
+					
+					_this.setAttribute( 'orderby', orderby );
+					
+					for( var key in output )
+					{
+						if( output[key] && output[key].content )
+						{
+							// Add row
+							_this.appendChild( output[key].content );
+						}
+					}
+				}
+			}
+		}
+		
+		console.log( output );
 	}
 	
 	Application.closeAllEditModes = function( act )
@@ -1618,11 +1678,14 @@ Sections.accounts_templates = function( cmd, extra )
 																	{ 
 																		'element' : function() 
 																		{
-																			var d = document.createElement( 'div' );
+																			var d = document.createElement( 'span' );
+																			d.setAttribute( 'Name', apps[k].Name );
+																			d.setAttribute( 'Category', apps[k].Category );
 																			d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																			d.style.backgroundSize = 'contain';
 																			d.style.width = '24px';
 																			d.style.height = '24px';
+																			d.style.display = 'block';
 																			return d;
 																		}(), 
 																		 'child' : 
@@ -1741,6 +1804,10 @@ Sections.accounts_templates = function( cmd, extra )
 											}
 									
 										}
+										
+										// Sort default by Name ASC
+										sortApps( 'Name' );
+										
 									}
 									
 								}
@@ -2671,7 +2738,7 @@ Sections.accounts_templates = function( cmd, extra )
 									console.log( this.ids );
 									
 									this.refresh();
-									this.func.applications( 'refresh' );
+									//this.func.applications( 'refresh' );
 									
 									if( callback ) return callback( true );
 								}
@@ -2740,7 +2807,7 @@ Sections.accounts_templates = function( cmd, extra )
 									console.log( this.ids );
 									
 									this.refresh();
-									this.func.applications( 'refresh' );
+									//this.func.applications( 'refresh' );
 									
 									if( callback ) return callback( true );
 								}
