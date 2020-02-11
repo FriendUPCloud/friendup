@@ -5603,6 +5603,9 @@ function addUser( callback, username )
 			
 			if( d && d > 0 )
 			{
+				
+				// TODO: Look at this because it makes problems for a template setup ...
+				
 				firstLogin( d, function( ok )
 				{ 
 				
