@@ -200,7 +200,6 @@ void WebsocketClientLoop( void *data )
 	{
 		
 	}
-	DEBUG("\n\n\n\nClient connect %d\n\n\n\n", err );
  */
 
 /**

@@ -376,7 +376,7 @@ int DoorNotificationCommunicateChanges( void *lsb, UserSession *ses __attribute_
 	if( sqllib != NULL )
 	{
 		char *pathNoDevice = path;
-		int i;
+		unsigned int i;
 		for( i=2; i < strlen( path ) ; i++ )
 		{
 			if( path[ i ] == ':' )

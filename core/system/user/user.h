@@ -231,6 +231,12 @@ File *UserRemDeviceByName( User *usr, const char *name, int *error );
 //
 //
 
+File *UserRemDeviceByGroupID( User *usr, FULONG grid, int *error );
+
+//
+//
+//
+
 int UserRegenerateSessionID( User *usr, char *newsess );
 
 //
@@ -250,6 +256,12 @@ void UserDeleteGroupLinkAll( UserGroupLink *ugl );
 //
 
 void UserRemoveFromGroups( User *u );
+
+//
+//
+//
+
+FBOOL UserIsInGroup( User *usr, FULONG gid );
 
 //
 // SQL structure
