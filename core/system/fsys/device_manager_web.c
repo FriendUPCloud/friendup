@@ -932,7 +932,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 					char *authid = NULL;
 					char *args = NULL;
 					
-					DEBUG("UserID parameter found: %d\n", userID );
+					DEBUG("UserID parameter found: %lu\n", userID );
 					
 					el = HttpGetPOSTParameter( request, "authid" );
 					if( el != NULL )
@@ -975,6 +975,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 							userID = activeUser->u_ID;
 						}
 						//deviceUnmounted = TRUE;
+
 						mountError = 0;
 					}
 					else
@@ -988,7 +989,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 					//}
 				}
 				
-				DEBUG("Device unmounted: %d\n", deviceUnmounted );
+				DEBUG("[DeviceMWebRequest] device unmounted: %d\n", deviceUnmounted );
 				
 				if( deviceUnmounted == FALSE )
 				{
@@ -1025,6 +1026,8 @@ AND LOWER(f.Name) = LOWER('%s')",
 							}
 						}
 					}
+					
+					DEBUG("[DeviceMWebRequest] ldevname: %s\n", ldevname );
 				
 					// check also device attached to groups
 					if( ldevname == NULL )
@@ -1068,6 +1071,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 						{FSys_Mount_Type, (FULONG)type },
 						{TAG_DONE, TAG_DONE }
 					};
+					DEBUG("[DeviceMWebRequest] call UnMountFS\n");
 				
 					DEBUG("[DeviceMWebRequest] Unmount will be called\n");
 					mountError = UnMountFS( l->sl_DeviceManager, (struct TagItem *)&tags, activeUser, loggedSession );

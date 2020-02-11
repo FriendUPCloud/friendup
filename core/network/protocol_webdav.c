@@ -925,7 +925,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 					}
 				}
 				char *err = NULL;
-				sb->UserDeviceMount( sb, sqll, usr, 0, TRUE, &err );
+				sb->UserDeviceMount( sb, sqll, usr, 0, TRUE, &err, TRUE );
 				if( err != NULL )
 				{
 					FERROR("UserDeviceMount returned: %s\n", err );
@@ -960,7 +960,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		else
 		{
 			char *err = NULL;
-			sb->UserDeviceMount( sb, sqll, usr, 0, TRUE, &err );
+			sb->UserDeviceMount( sb, sqll, usr, 0, TRUE, &err, TRUE );
 			if( err != NULL )
 			{
 				FERROR("UserDeviceMount returned: %s\n", err );

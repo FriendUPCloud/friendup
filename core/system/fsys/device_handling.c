@@ -236,6 +236,273 @@ int RescanDOSDrivers( DeviceManager *dm )
 	return 0;
 }
 
+//
+// internal function to lock
+//
+
+inline static int MountLock( DeviceManager *dm, User *usr )
+{
+	if( usr != NULL )
+	{
+		return FRIEND_MUTEX_LOCK( &(usr->u_Mutex) );
+	}
+
+	return FRIEND_MUTEX_LOCK( &(dm->dm_Mutex) );
+}
+
+inline static int MountUnlock( DeviceManager *dm, User *usr )
+{
+	if( usr != NULL )
+	{
+		return FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
+	}
+
+	return FRIEND_MUTEX_UNLOCK( &(dm->dm_Mutex) );
+}
+
+/**
+ * 
+ * Mount group device
+ * 
+ * @param dm pointer to DeviceManager
+ * @param usr pointer to User structure to which drive will be attached
+ * @param groupID ID of group to which user belong
+ * @return error number
+ * 
+ **/
+
+int MountSharedDrive( DeviceManager *dm, User *usr, FULONG groupID )
+{
+	int error = 0;
+	SystemBase *l = (SystemBase *)dm->dm_SB;
+	// New way of finding type of device
+	SQLLibrary *sqllib = l->LibrarySQLGet( l );
+	
+	DEBUG("[MountSharedDrive] mount\n");
+	
+	if( sqllib != NULL )
+	{
+		char *path = NULL;
+		char *name = NULL;
+		char *config = NULL;
+		char *ctype = NULL, *type = NULL;
+		char *execute = NULL;
+		FULONG id, storedBytes;
+		int j = 0;
+		char temptext[ 612 ]; memset( temptext, 0, sizeof(temptext) );
+		
+		// get drive details
+		// drive which have type 'Workgroup' and is attached to the user
+
+		/*
+		 (system/fsys/device_handling.c:316) 140366686701312 SQL : 'SELECT `Type`,`Path`,`Config`,f.`ID`,`Execute`,`StoredBytes`,`Name` FROM `Filesystem` f WHERE (f.UserID = '4' OR f.GroupID IN (SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g WHERE g.ID = ug.UserGroupID AND g.Type = 'Workgroup' AND ug.UserID = '4' ug.GroupID=4 ) ) AND f.Name = 'H�E�L���' and (f.Owner='0' OR f.Owner IS NULL)'
+  (mysqllibrary.c:1070) 140366686701312 Cannot run query: 'SELECT `Type`,`Path`,`Config`,f.`ID`,`Execute`,`StoredBytes`,`Name` FROM `Filesystem` f WHERE (f.UserID = '4' OR f.GroupID IN (SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g WHERE g.ID = ug.UserGroupID AND g.Type = 'Workgroup' AND ug.UserID = '4' ug.GroupID=4 ) ) AND f.Name = 'H�E�L���' and (f.Owner='0' OR f.Owner IS NULL)'
+  (mysqllibrary.c:1072) 140366686701312 You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'ug.GroupID=4 ) ) AND f.Name = 'H?E?L???' and (f.Owner='0' OR f.Owner IS NULL)' at line 1
+  (system/fsys/device_handling.c:319) 140366686701312 [MountSharedDrive] sql executed
+
+		 */
+		/*
+				sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
+"SELECT \
+`Type`,`Path`,`Config`,f.`ID`,`Execute`,`StoredBytes`,`Name` \
+FROM `Filesystem` f \
+WHERE \
+(\
+f.UserID = '%ld' OR \
+f.GroupID IN (\
+SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g \
+WHERE \
+g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND \
+ug.UserID = '%lu' ug.GroupID=%lu \
+) \
+) \
+AND f.Name = '%s' and (f.Owner='0' OR f.Owner IS NULL)",
+			usr->u_ID , usr->u_ID, groupID
+			);
+		 */
+	
+/*
+		sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
+"SELECT Type,Path,Config,ID,Execute,StoredBytes,Name FROM Filesystem WHERE GroupID IN (SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g WHERE g.ID = ug.UserGroupID AND g.Type='Workgroup' AND ug.UserID = '%lu' AND ug.UserGroupID=%lu ) and (f.Owner='0' OR f.Owner IS NULL)",
+			usr->u_ID, groupID
+			);
+*/
+/*
+		sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
+"SELECT Type,Path,Config,ID,Execute,StoredBytes,Name FROM Filesystem WHERE GroupID IN (SELECT ug.UserGroupID FROM FUserToGroup ug inner join FUserGroup g on g.ID=ug.UserGroupID WHERE g.Type='Workgroup' AND ug.UserID=%lu AND ug.UserGroupID=%lu ) and (Owner=0 OR Owner IS NULL)", usr->u_ID, groupID
+			);
+	*/
+
+		sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
+"SELECT Type,Path,Config,ID,Execute,StoredBytes,Name FROM Filesystem WHERE Type='SQLWorkgroupDrive' AND GroupID =%lu and (Owner=0 OR Owner IS NULL)", groupID );
+
+		DEBUG("SQL : '%s'\n", temptext );
+	
+		void *res = sqllib->Query( sqllib, temptext );
+		DEBUG("[MountSharedDrive] sql executed, res : %p\n", res );
+		
+		// get fields from query
+		if( res != NULL )
+		{
+			char **row;
+			
+			while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
+			{
+				DEBUG("Inside while\n");
+				if( type != NULL ){FFree( type );}
+				if( row[ 0 ] != NULL ) type = StringDuplicate( row[ 0 ] );
+
+				if( path != NULL ){FFree( path );}
+				if( row[ 1 ] != NULL ) path = StringDuplicate( row[  1 ] );
+			
+				if( config != NULL ){FFree( config );}
+				if( row[ 2 ] != NULL ) config = StringDuplicate( row[ 2 ] );
+			
+				if( row[ 3 ] != NULL ){ char *end; id = strtoul( (char *)row[ 3 ],  &end, 0 ); }
+			
+				if( row[ 4 ] != NULL ) execute = StringDuplicate( row[ 4 ] );
+			
+				if( row[ 5 ] != NULL ){ char *end; storedBytes = strtoul( (char *)row[ 5 ],  &end, 0 ); }
+				
+				if( row[ 6 ] != NULL ) name = StringDuplicate( row[ 6 ] );
+
+				if( usr != NULL )
+				{
+					DEBUG("[MountFS] User name %s - found row type %s server %s path %s port %s\n", usr->u_Name, row[0], row[1], row[2], row[3] );
+				}
+			
+				//
+				// do not allow to mount same drive
+				//
+		
+				int sameDevError = 0;
+				File *fentry = NULL;
+		
+				if( MountLock( dm, usr ) == 0 )
+				{
+					if( usr != NULL )
+					{
+						fentry = usr->u_MountedDevs;
+					}
+					while( fentry != NULL )
+					{
+						DEBUG("Going through all user drives. Name %s UserID %lu\n", fentry->f_Name, usr->u_ID );
+						if( strcmp( name, fentry->f_Name ) == 0 ) //id == fentry->f_ID )
+						{
+							DEBUG("Device is already mounted. Name: %s ID %lu\n", fentry->f_Name, fentry->f_ID );
+							sameDevError = 1;
+							break;
+						}
+						fentry = (File *) fentry->node.mln_Succ;
+					}
+					MountUnlock( dm, usr );
+				}
+			
+				DEBUG("[MountSharedDrive] mount shared, same dev error %d device name: %s\n", sameDevError, name );
+		
+				if( sameDevError == 0 )
+				{
+					struct TagItem tags[] = {
+						{FSys_Mount_Path, (FULONG)path},
+						{FSys_Mount_Type, (FULONG)type},
+						{FSys_Mount_Name, (FULONG)name},
+						{FSys_Mount_Owner,(FULONG)usr},
+						{FSys_Mount_SysBase,(FULONG)l},
+						{FSys_Mount_Config,(FULONG)config},
+						{FSys_Mount_ID, (FULONG)id},
+						{TAG_DONE, TAG_DONE}
+					};
+					
+					// workgroup
+					// command=dosaction&action=mount&type=SQLWorkgroupDrive&devname=AdminNotMounted&path=&module=files&sessionid=42b34dddd6f5757077b675f91cb86239c2aba954';
+					// command=dosaction&action=mount&type=SQLWorkgroupDrive&devname=AdminNotMounted&path=&module=files&sessionid=42b34dddd6f5757077b675f91cb86239c2aba954'
+					
+					// command=dosaction&action=mount&type=SQLWorkgroupDrive&devname=AdminNotMounted&path=&module=files&sessionid=42b34dddd6f5757077b675f91cb86239c2aba954' - normal working call'
+					// command=dosaction&action=mount&type=SQLWorkgroupDrive&devname=AdminNotMounted&path=&module=files&sessionid=42b34dddd6f5757077b675f91cb86239c2aba954
+					
+					// home
+					// command=dosaction&action=mount&type=SQLDrive&devname=Home&path=&module=files&sessionid=42b34dddd6f5757077b675f91cb86239c2aba954';'
+					
+					/*
+								{FSys_Mount_Path, (FULONG)path},
+			{FSys_Mount_Server, (FULONG)server},
+			{FSys_Mount_Port, (FULONG)port},
+			{FSys_Mount_Type, (FULONG)type},
+			{FSys_Mount_Name, (FULONG)name},
+			{FSys_Mount_Owner,(FULONG)usr},
+			{FSys_Mount_LoginUser,(FULONG)uname},
+			{FSys_Mount_LoginPass,(FULONG)passwd},
+			{FSys_Mount_SysBase,(FULONG)l},
+			{FSys_Mount_Config,(FULONG)config},
+			{FSys_Mount_Visible,(FULONG)visible},
+			{FSys_Mount_UserName,(FULONG)pname},
+			//{FSys_Mount_Execute,(FULONG)execute},
+			{FSys_Mount_UserGroup, (FULONG)usrgrp},
+			{FSys_Mount_ID, (FULONG)id},
+			{FSys_Mount_AdminRights,(FULONG)calledByAdmin},
+			{TAG_DONE, TAG_DONE}
+					 */
+		
+					DEBUG( "[MountFS] Filesystem to mount now.\n" );
+		
+					//
+					// Mount
+					// 
+					FHandler *filesys = NULL;
+					//
+					// Find installed filesystems by type
+					//
+		
+					DEBUG("[MountSharedDrive] find filesystem\n");
+					DOSDriver *ddrive = (DOSDriver *)l->sl_DOSDrivers;
+					while( ddrive != NULL )
+					{
+						if( strcmp( type, ddrive->dd_Name ) == 0 )
+						{
+							filesys = ddrive->dd_Handler;
+							break;
+						}
+						ddrive = (DOSDriver *)ddrive->node.mln_Succ;
+					}
+		
+					DEBUG("[MountSharedDrive] before mount call\n");
+					char *mountError = NULL;
+					File *retFile = filesys->Mount( filesys, tags, usr, &mountError );
+					DEBUG("[MountSharedDrive] mount device : %p\n", retFile );
+					if( retFile != NULL )
+					{
+						UserAddDevice( usr, retFile );
+					}
+		
+					if( mountError != NULL )
+					{
+						FFree( mountError );
+					}
+				} // sameDevError == 0
+			}	// while
+			DEBUG("After while\n");
+			sqllib->FreeResult( sqllib, res );
+		} // res != NULL
+		else
+		{
+			DEBUG("Result = NULL\n");
+		}
+		
+		DEBUG("Before dropping sql\n");
+		l->LibrarySQLDrop( l, sqllib );
+		
+		if( path != NULL ){ FFree( path ); }
+		if( name != NULL ){ FFree( name ); }
+		if( config != NULL ){ FFree( config ); }
+		if( ctype != NULL ){ FFree( ctype ); }
+		if( type != NULL ){ FFree( type ); }
+		if( execute != NULL ){ FFree( execute ); }
+	}
+	DEBUG("Return with error %d\n", error );
+	
+	return error;
+}
+
 /**
  * Mount door in FC
  *
@@ -577,40 +844,46 @@ AND f.Name = '%s'",
 		
 		int sameDevError = 0;
 		File *fentry = NULL;
-		if( usr != NULL )
+		
+		if( MountLock( dm, usr ) == 0 )
 		{
-			fentry = usr->u_MountedDevs;
-		}
-		while( fentry != NULL )
-		{
-			if( id == fentry->f_ID )
+			if( usr != NULL )
 			{
-				*mfile = fentry;
-				DEBUG("Device is already mounted\n");
-				sameDevError = 1;
-				break;
+				fentry = usr->u_MountedDevs;
 			}
-			fentry = (File *) fentry->node.mln_Succ;
-		}
-		
-		//
-		// checking if drive is available for group
-		//
-		
-		if( sameDevError == 0 && usrgrp != NULL )
-		{
-			File *fentry = usrgrp->ug_MountedDevs;
 			while( fentry != NULL )
 			{
+				DEBUG("Going through all user drives. Name %s UserID %lu\n", fentry->f_Name, usr->u_ID );
 				if( id == fentry->f_ID )
 				{
 					*mfile = fentry;
-					DEBUG("Device is already mounted\n");
+					DEBUG("Device is already mounted. Name: %s ID %lu\n", fentry->f_Name, fentry->f_ID );
 					sameDevError = 1;
 					break;
 				}
 				fentry = (File *) fentry->node.mln_Succ;
 			}
+		
+			//
+			// checking if drive is available for group
+			//
+		
+			if( sameDevError == 0 && usrgrp != NULL )
+			{
+				File *fentry = usrgrp->ug_MountedDevs;
+				while( fentry != NULL )
+				{
+					if( id == fentry->f_ID || strcmp( name, fentry->f_Name ) == 0 )
+					{
+						*mfile = fentry;
+						DEBUG("Device is already mounted2. Name: %s\n", fentry->f_Name );
+						sameDevError = 1;
+						break;
+					}
+					fentry = (File *) fentry->node.mln_Succ;
+				}
+			}
+			MountUnlock( dm, usr );
 		}
 		
 		if( sameDevError == 1 )
@@ -638,45 +911,49 @@ AND f.Name = '%s'",
 
 		File *f = NULL;
 	
-		FRIEND_MUTEX_LOCK( &dm->dm_Mutex );
-		// super user feauture	
-		if( id > 0 && usr != NULL && usr->u_MountedDevs != NULL )
+		if( MountLock( dm, usr ) == 0 )
 		{
-			DEBUG("[MountFS] %s - Starting to check mounted devs!\n", usr->u_Name );
-		
-			LIST_FOR_EACH( usr->u_MountedDevs, f, File * )
+			// super user feauture	
+			if( id > 0 && usr != NULL && usr->u_MountedDevs != NULL )
 			{
-				//DEBUG( "%p is the pointer, %p\n", f, f->f_Name );
-				// Only return success here if the found device is already mounted
-				if( f->f_Name && strcmp( name, f->f_Name ) == 0 && f->f_Mounted )
+				DEBUG("[MountFS] %s - Starting to check mounted devs!\n", usr->u_Name );
+		
+				LIST_FOR_EACH( usr->u_MountedDevs, f, File * )
 				{
-					INFO("[MountFS] %s - Root device was on the list, mounted (%s)\n", usr->u_Name, name );
-					f->f_Mounted = mount;
-					// Renew the session
-					//if( f->f_SessionID ){ FFree( f->f_SessionID );}
-					// Using sentinel if that's the case
-					//if( usingSentinel ){ f->f_SessionID = StringDuplicate( sent->s_User->u_MainSessionID  );}
-					// Just use the session id
-					//else{ f->f_SessionID = StringDuplicate( sessionid );}
+					//DEBUG( "%p is the pointer, %p\n", f, f->f_Name );
+					// Only return success here if the found device is already mounted
+					if( f->f_Name && strcmp( name, f->f_Name ) == 0 && f->f_Mounted )
+					{
+						INFO("[MountFS] %s - Root device was on the list, mounted (%s)\n", usr->u_Name, name );
+						f->f_Mounted = mount;
+						// Renew the session
+						//if( f->f_SessionID ){ FFree( f->f_SessionID );}
+						// Using sentinel if that's the case
+						//if( usingSentinel ){ f->f_SessionID = StringDuplicate( sent->s_User->u_MainSessionID  );}
+						// Just use the session id
+						//else{ f->f_SessionID = StringDuplicate( sessionid );}
 					
-					if( usingSentinel ){ f->f_SessionIDPTR = sent->s_User->u_MainSessionID; }
-					else{ f->f_SessionIDPTR = sessionid;}
+						if( usingSentinel ){ f->f_SessionIDPTR = sent->s_User->u_MainSessionID; }
+						else{ f->f_SessionIDPTR = sessionid;}
 					
-					f->f_ID = id;
-					if( f->f_FSysName != NULL ){ FFree( f->f_FSysName );}
-					f->f_FSysName = StringDuplicate( type );
+						f->f_ID = id;
+						if( f->f_FSysName != NULL ){ FFree( f->f_FSysName );}
+						f->f_FSysName = StringDuplicate( type );
 					
-					// Set structure to caller
-					if( mfile ){ *mfile = f; }
+						// Set structure to caller
+						if( mfile ){ *mfile = f; }
 
-					l->sl_Error = FSys_Error_DeviceAlreadyMounted;
+						l->sl_Error = FSys_Error_DeviceAlreadyMounted;
 					
-					FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
-					goto merror;
+						//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
+						MountUnlock( dm, usr );
+						goto merror;
+					}
 				}
 			}
+			//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
+			MountUnlock( dm, usr );
 		}
-		FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 		//
 		// If FHandler not found return NULL
 	
@@ -734,6 +1011,10 @@ AND f.Name = '%s'",
 		}
 		
 		DEBUG( "[MountFS] Filesystem to mount now.\n" );
+		
+		//
+		// Mount
+		// 
 	
 		retFile = filesys->Mount( filesys, tags, mountUser, mountError );
 		
@@ -754,9 +1035,30 @@ AND f.Name = '%s'",
 		}
 		
 		//if( FRIEND_MUTEX_LOCK( &dm->dm_Mutex ) == 0 )
+		if( MountLock( dm, usr ) == 0 )
 		{
 			if( retFile != NULL )
 			{
+				// Check again in lock if device is already mounted
+				
+				File *fentry = usr->u_MountedDevs;
+				while( fentry != NULL )
+				{
+					if( id == fentry->f_ID || strcmp( name, fentry->f_Name ) == 0 )
+					{
+						break;
+					}
+					fentry = (File *) fentry->node.mln_Succ;
+				}
+				if( fentry != NULL )
+				{
+					filesys->Release( filesys, retFile );
+					l->sl_Error = FSys_Error_DeviceAlreadyMounted;
+					FERROR("[MountFS] %s - Device is already mounted, name %s type %s\n", usr->u_Name, name, type );
+					MountUnlock( dm, usr );
+					goto merror;
+				}
+				
 				retFile->f_UserID = dbUserID;
 				retFile->f_SessionIDPTR = usr->u_MainSessionID;
 				retFile->f_UserGroupID = userGroupID;
@@ -877,9 +1179,10 @@ AND f.Name = '%s'",
 			{
 				l->sl_Error = FSys_Error_CustomError;
 				FERROR("[MountFS] %s - Device not mounted name %s type %s\n", usr->u_Name, name, type );
-				
+				MountUnlock( dm, usr );
 				goto merror;
 			}
+			MountUnlock( dm, usr );
 		}
 		
 		//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );

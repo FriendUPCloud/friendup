@@ -320,9 +320,9 @@ typedef struct SystemBase
 
 	int								(*InitSystem)( struct SystemBase *l );
 
-	int								(*MountFS)( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **mountError, FBOOL calledByAdmin );
+	int								(*MountFS)( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **mountError, FBOOL calledByAdmin, FBOOL notify );
 
-	int								(*UnMountFS)( DeviceManager *dm, struct TagItem *tl, UserSession *usr );
+	int								(*UnMountFS)( DeviceManager *dm, struct TagItem *tl, User *usr, UserSession *loggedSession );
 
 // "Global" functions
 
@@ -346,7 +346,7 @@ typedef struct SystemBase
 
 	void							(*LibraryImageDrop)( struct SystemBase *sb, ImageLibrary *pl );
 	
-	int								(*UserDeviceMount)( struct SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail, char **mountError );
+	int								(*UserDeviceMount)( struct SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
 	
 	int								(*UserDeviceUnMount)( struct SystemBase *l, SQLLibrary *sqllib, User *usr );
 	
