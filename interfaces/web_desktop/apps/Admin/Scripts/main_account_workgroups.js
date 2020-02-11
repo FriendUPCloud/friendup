@@ -327,10 +327,11 @@ Sections.accounts_workgroups = function( cmd, extra )
 			
 		}
 		f.execute( 'group/create', {
-			groupname : ( ge( 'WorkgroupName'   ) ? ge( 'WorkgroupName'   ).value : 'Unnamed workgroup' ), 
-			parentid  : ( ge( 'WorkgroupParent' ) ? ge( 'WorkgroupParent' ).value : 0                   ),
-			authid    : Application.authId,
-			args      : args
+			groupname   : ( ge( 'WorkgroupName'        ) ? ge( 'WorkgroupName'   ).value : 'Unnamed workgroup' ), 
+			description : ( ge( 'WorkgroupDescription' ) ? ge( 'WorkgroupDescription' ).value : ''             ),
+			parentid    : ( ge( 'WorkgroupParent'      ) ? ge( 'WorkgroupParent' ).value : 0                   ),
+			authid      : Application.authId,
+			args        : args
 		} );
 		
 	}
@@ -373,12 +374,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 				catch( e ) {  }
 				
 				console.log( { e:e, d:(data?data:d), args: {
-					id        : ( id                                                                     ), 
-					groupname : ( ge( 'WorkgroupName'   ).value                                          ), 
-					parentid  : ( ge( 'WorkgroupParent' ).value                                          ),
+					id          : ( id                                                                     ), 
+					groupname   : ( ge( 'WorkgroupName'   ).value                                          ), 
+					parentid    : ( ge( 'WorkgroupParent' ).value                                          ), 
+					description : ( ge( 'WorkgroupDescription' ).value                                     ), 
 					/*users     : ( ge( 'WorkgroupUsers'  ).value ? ge( 'WorkgroupUsers' ).value : 'false' ),*/
-					authid    : ( Application.authId                                                     ),
-					args      : ( args                                                                   )
+					authid      : ( Application.authId                                                     ), 
+					args        : ( args                                                                   ) 
 				} } );
 				
 				if( e == 'ok' && d )
@@ -391,6 +393,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					
 					//refresh( data.id );
 					
+					editMode( true );
 				}
 				else if( data && data.code == '69' && data.response )
 				{
@@ -418,12 +421,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 				//Sections.accounts_workgroups( 'refresh' ); 
 			}
 			f.execute( 'group/update', {
-				id        : ( id                                                                     ), 
-				groupname : ( ge( 'WorkgroupName'   ).value                                          ), 
-				parentid  : ( ge( 'WorkgroupParent' ).value                                          ),
+				id          : ( id                                                                     ), 
+				groupname   : ( ge( 'WorkgroupName'   ).value                                          ), 
+				description : ( ge( 'WorkgroupDescription' ).value                                     ),
+				parentid    : ( ge( 'WorkgroupParent' ).value                                          ),
 				/*users     : ( ge( 'WorkgroupUsers'  ).value ? ge( 'WorkgroupUsers' ).value : 'false' ),*/
-				authid    : ( Application.authId                                                     ),
-				args      : ( args                                                                   )
+				authid    : ( Application.authId                                                       ),
+				args      : ( args                                                                     )
 			} );
 			
 		}
