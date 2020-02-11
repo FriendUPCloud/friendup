@@ -487,6 +487,21 @@ File *UserRemDeviceByGroupID( User *usr, FULONG grid, int *error )
 				
 					if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
 					{
+						File *lf = usr->u_MountedDevs;
+			
+						// go through list, becaouse we need "lastone"
+						while( lf != NULL )
+						{
+							DEBUG( "[UserRemDeviceByName] Checking fs in list %lu == %lu...\n",  lf->f_UserGroupID, grid );
+							if( lf->f_UserGroupID == grid )
+							{
+								break;
+							}
+							lastone = lf;
+							lf = (File *)lf->node.mln_Succ;
+						}
+						
+						// remove drive from list
 						usr->u_MountedDevsNr--;
 			
 						if( usr->u_MountedDevs == remdev )		// checking if its our first entry
