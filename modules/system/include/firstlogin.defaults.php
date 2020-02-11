@@ -24,7 +24,8 @@ $debug = ( isset( $debug ) ? $debug : [] );
 $userid = ( isset( $args->args->userid ) ? $args->args->userid : $User->ID );
 
 // 0. Check if mountlist is installed and user have access!
-if( !( $row = $SqlDatabase->FetchObject( $q = 'SELECT * FROM FApplication WHERE Name = "Mountlist" AND UserID=\'' . $userid . '\'' ) ) )
+if( ( !isset( $args->args->exclude ) || isset( $args->args->exclude ) && !in_array( 'mountlist', $args->args->exclude ) ) 
+&& !( $row = $SqlDatabase->FetchObject( $q = 'SELECT * FROM FApplication WHERE Name = "Mountlist" AND UserID=\'' . $userid . '\'' ) ) )
 {
 	if( !function_exists( 'findInSearchPaths' ) )
 	{
@@ -102,10 +103,11 @@ if( !( $row = $SqlDatabase->FetchObject( $q = 'SELECT * FROM FApplication WHERE 
 	}
 }
 
-$debug[] = $q;
+if( isset( $q ) ) $debug[] = $q;
 
 // 1. Check dock!
-if( !( $row = $SqlDatabase->FetchObject( $q = 'SELECT * FROM DockItem WHERE UserID=\'' . $userid . '\'' ) ) )
+if( ( !isset( $args->args->exclude ) || isset( $args->args->exclude ) && !in_array( 'dock', $args->args->exclude ) ) 
+&& !( $row = $SqlDatabase->FetchObject( $q = 'SELECT * FROM DockItem WHERE UserID=\'' . $userid . '\'' ) ) )
 {
 	// 2. Setup standard dock items
 	$dockItems = array(
@@ -133,7 +135,7 @@ if( !( $row = $SqlDatabase->FetchObject( $q = 'SELECT * FROM DockItem WHERE User
 	}
 }
 
-$debug[] = $q;
+if( isset( $q ) ) $debug[] = $q;
 
 // 2. Check if we never logged in before..
 if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE UserID=\'' . $userid . '\'' ) ) )
@@ -154,19 +156,22 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 	{
 		$debug[] = $o->Name;
 		
-		// 3b. Mount the thing
-		$u = $Config->SSLEnable ? 'https://' : 'http://';
-		$u .= ( $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost ) . ':' . $Config->FCPort;
-		$c = curl_init();
-		curl_setopt( $c, CURLOPT_URL, $u . '/system.library/device/mount/?devname=Home&sessionid=' . $User->SessionID );
-		curl_setopt( $c, CURLOPT_RETURNTRANSFER, 1 );
-		if( $Config->SSLEnable )
+		if( !isset( $args->args->exclude ) || isset( $args->args->exclude ) && !in_array( 'mount', $args->args->exclude ) )
 		{
-			curl_setopt( $c, CURLOPT_SSL_VERIFYPEER, false );
-			curl_setopt( $c, CURLOPT_SSL_VERIFYHOST, false );
+			// 3b. Mount the thing
+			$u = $Config->SSLEnable ? 'https://' : 'http://';
+			$u .= ( $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost ) . ':' . $Config->FCPort;
+			$c = curl_init();
+			curl_setopt( $c, CURLOPT_URL, $u . '/system.library/device/mount/?devname=Home&sessionid=' . $User->SessionID );
+			curl_setopt( $c, CURLOPT_RETURNTRANSFER, 1 );
+			if( $Config->SSLEnable )
+			{
+				curl_setopt( $c, CURLOPT_SSL_VERIFYPEER, false );
+				curl_setopt( $c, CURLOPT_SSL_VERIFYHOST, false );
+			}
+			$ud = curl_exec( $c );
+			curl_close( $c );
 		}
-		$ud = curl_exec( $c );
-		curl_close( $c );
 
 
 		// 4. Wallpaper images directory
@@ -336,6 +341,6 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 	}
 }
 
-$debug[] = $q;
+if( isset( $q ) ) $debug[] = $q;
 
 ?>

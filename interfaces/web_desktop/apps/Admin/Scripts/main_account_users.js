@@ -5969,7 +5969,7 @@ function firstLogin( userid, callback )
 			
 			if( callback ) return callback( false );
 		}
-		m.execute( 'firstlogin', { userid: userid, force: true, authid: Application.authId } );
+		m.execute( 'firstlogin', { userid: userid, force: true, exclude: [ 'mountlist', 'dock', 'mount' ], authid: Application.authId } );
 	}
 }
 
