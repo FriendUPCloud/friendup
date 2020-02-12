@@ -92,7 +92,7 @@ char *FilterPHPVar( char *line )
 			continue;
 		}
 		// Kill unwanted stuff
-		if( line[ i ] == '`' )
+		if( line[ i ] == '`' || line[ i ] == '\'' )
 		{
 			line[ i ] = ' ';
 		}
