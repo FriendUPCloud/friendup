@@ -785,6 +785,11 @@ void ProcessSinkMessage( void *locd )
 								}
 							}
 						}
+						
+						//
+						// information about user groups
+						//
+						
 						else if( strncmp( data + t[6].start, "group", msize ) == 0 )
 						{
 							char *reqid = NULL;
@@ -808,6 +813,27 @@ void ProcessSinkMessage( void *locd )
 								{
 									DEBUG("Reqid == NULL\n");
 								}
+							}
+						}
+						
+						//
+						// information about presence rooms
+						//
+						
+						if( strncmp( data + t[6].start, "room", msize) == 0) 
+						{
+							char *reqid = NULL;
+							
+							DEBUG("External service incoming: room notification\n");
+							
+							if( strncmp( data + t[13].start, "requestid", t[13].end - t[13].start) == 0) 
+							{
+								reqid = StringDuplicateN( data + t[14].start, t[14].end - t[14].start );
+							}
+							
+							if( NotificationManagerAddIncomingRequestES( SLIB->sl_NotificationManager, reqid, StringDuplicate( data ) ) != 0 )
+							{
+								FERROR("Notification from external service could not be added to queue!\n");
 							}
 						}
 					}
