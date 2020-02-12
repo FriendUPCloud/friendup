@@ -785,16 +785,18 @@ OR
  * @param nm pointer to NotificationManager
  * @param req Http request
  * @param sername server name to which message will be sent. NULL means that message will be send to all connections.
- * @param path path value
- * @param to to value
- * @param thing thing value
+ * @param type type of message
+ * @param group message group
+ * @param action action
  * @param params additional parameters
  * @return response
  */
 
-char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http *req, char *sername, const char *path, const char *to, const char *thing, const char *params )
+char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http *req, char *sername, const char *type, const char *group, const char *action, const char *params )
 {
-	char *retMessage = NULL;
+	//char *retMessage = NULL;
+	BufString *retMsg = BufStringNew();
+	
 	if( req != NULL && req->h_RequestSource == HTTP_SOURCE_EXTERNAL_SERVER )
 	{
 		INFO( "Request comes from external server\n");
@@ -815,31 +817,28 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 	 */
 	
 	int msglen = 512 + strlen( params );
-	if( path != NULL )
+	if( type != NULL )
 	{
-		msglen += strlen( path );
+		msglen += strlen( type );
 	}
-	if( to != NULL )
+	if( group != NULL )
 	{
-		msglen += strlen( to );
+		msglen += strlen( group );
 	}
-	if( thing != NULL )
+	if( action != NULL )
 	{
-		msglen += strlen( thing );
+		msglen += strlen( action );
 	}
 
 	char *dstMsg = FMalloc( msglen );
+	int ret = 0;
 	
 	if( dstMsg != NULL )
 	{
+		int sentMessageTo = 0;	// number of receipients
 		int dstsize = 0;
 		char *reqID = FCalloc( 128, sizeof(char) );
-		snprintf( reqID, 128, "EXTSER_%lu%d_ID", time(NULL), rand()%999999 );
-		
-		dstsize = snprintf( dstMsg, msglen, "{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"data\":%s}}}", path, to, thing, params );
-		
-		Log( FLOG_INFO, "[NotificationManagerSendEventToConnections] Send message: '%s'\n", dstMsg );
-		
+
 		ExternalServerConnection *con = nm->nm_ESConnections;
 		if( sername == NULL ) // send to all servers
 		{
@@ -848,9 +847,16 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 			{
 				DataQWSIM *en = (DataQWSIM *)con->esc_Connection;
 				
+				snprintf( reqID, 128, "EXTSER_%lu%d_ID", time(NULL), rand()%999999 );
+				dstsize = snprintf( dstMsg, msglen, "{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"requestid\":%s,\"data\":%s}}}", type, group, action, reqID, params );
+		
+				Log( FLOG_INFO, "[NotificationManagerSendRequestToConnections] Send message: '%s'\n", dstMsg );
+				
 				DEBUG("Msg sent to: %s\n", en->d_ServerName );
 				ret += WriteMessageToServers( con->esc_Connection, (unsigned char *)dstMsg, dstsize );
 				con = (ExternalServerConnection *)con->node.mln_Succ;
+				
+				sentMessageTo++;
 			}
 		}
 		else
@@ -858,8 +864,15 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 			DEBUG("Server name != NULL\n");
 			while( con != NULL )
 			{
+				snprintf( reqID, 128, "EXTSER_%lu%d_ID", time(NULL), rand()%999999 );
+				dstsize = snprintf( dstMsg, msglen, "{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"requestid\":%s,\"data\":%s}}}", type, group, action, reqID, params );
+		
+				Log( FLOG_INFO, "[NotificationManagerSendRequestToConnections] Send message: '%s'\n", dstMsg );
+				
 				ret += WriteMessageToServers( con->esc_Connection, (unsigned char *)dstMsg, dstsize );
 				con = (ExternalServerConnection *)con->node.mln_Succ;
+				
+				sentMessageTo++;
 			}
 		}
 		FFree( dstMsg );
@@ -890,11 +903,13 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 					// if same return response
 					if( strcmp( locentry->fq_RequestID, reqID ) == 0 )
 					{
+						DEBUG("Found entry by requestid : %s\n", reqID );
 						foundEntry = locentry;
 					}
 					// if msg is older then 30 seconds remove it
 					else if( (time(NULL) - locentry->fq_Timestamp) > 30  )	// message is older then 30 seconds
 					{
+						DEBUG("Delete old message\n");
 						if( locentry->fq_Data != NULL )
 						{
 							FFree( locentry->fq_Data );
@@ -908,6 +923,7 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 					// otherwise leave message
 					else
 					{
+						DEBUG("Leave message in queue\n");
 						locentry->node.mln_Succ = (MinNode *)qenroot;
 						qenroot = locentry;
 					}
@@ -923,25 +939,84 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 			// if entry was found we can come back with response
 			if( foundEntry != NULL )
 			{
-				retMessage = (char *)foundEntry->fq_Data;
+				if( retMsg->bs_Size > 0 )
+				{
+					BufStringAddSize( retMsg, ",", 1 );
+				}
+				BufStringAdd( retMsg, (char *)foundEntry->fq_Data );
+				
 				if( foundEntry->fq_RequestID != NULL )
 				{
 					FFree( foundEntry->fq_RequestID );
 				}
+				if( foundEntry->fq_Data != NULL )
+				{
+					FFree( foundEntry->fq_Data );
+				}
 				FFree( foundEntry );
-				break;
+				
+				// if message was send to more then one servers we are waiting for reply
+				sentMessageTo--;
+				
+				if( sentMessageTo <= 0 )
+				{
+					DEBUG("[Notify Service] All responses recevied, quit loop\n");
+					break;
+				}
 			}
 			
-			usleep( 500 );
+			usleep( 50000 );
 			if( secs++ >30 )	// around 15 seconds
-			{ 
+			{
+				const char *timeoutResp = "{\"result\":0,\"error\",\"Timeout\"}";
+				BufStringAdd( retMsg, timeoutResp );
 				FERROR("Timeout\n");
 				break; 
 			} 
 		} // while TRUE
-		DEBUG("[Notify Service] ret message: %s\n", retMessage );
+		DEBUG("[Notify Service] ret message: %s\n", retMsg->bs_Buffer );
 	}
+	
+	// assign response to return string and delete bufstring
+	char *retMessage = retMsg->bs_Buffer;
+	retMsg->bs_Buffer = NULL;
+	BufStringDelete( retMsg );
+	
 	return retMessage;
+}
+
+/**
+ * Add incoming message from external service to response queue
+ * 
+ * @param nm pointer to NotificationManager
+ * @param reqid - request ID (remember to pass parameter in allocated memory)
+ * @param message - message (remember to pass parameter in allocated memory)
+ * @return 0 when success, otherwise error number
+ */
+int NotificationManagerAddIncomingRequestES( NotificationManager *nm, char *reqid, char *message )
+{
+	// allocate memory for new entry
+	FQEntry *newEntry = FCalloc( 1, sizeof( FQEntry ) );
+	
+	DEBUG("[NotificationManagerAddIncomingRequestES]\n");
+	
+	if( newEntry != NULL )
+	{
+		newEntry->fq_Data = (unsigned char *)message;
+		newEntry->fq_Timestamp = time(NULL);
+		newEntry->fq_RequestID = reqid;
+		
+		if( FRIEND_MUTEX_LOCK( &(nm->nm_ExtServiceMutex)) == 0 )
+		{
+			newEntry->node.mln_Succ = (MinNode *)nm->nm_ExtServiceMessage.fq_First;
+			nm->nm_ExtServiceMessage.fq_First = newEntry;
+			FRIEND_MUTEX_UNLOCK( &(nm->nm_ExtServiceMutex));
+			
+			DEBUG("[NotificationManagerAddIncomingRequestES] new entry added to list\n");
+			return 0;
+		}
+	}
+	return 1;
 }
 
 /**

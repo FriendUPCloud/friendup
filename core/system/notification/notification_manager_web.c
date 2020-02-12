@@ -183,6 +183,9 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 	*
 	* @param sessionid - (required) session id of logged user
 	* @param params - (required) paramaters
+	* @param type - (required) message type
+	* @param group - (required) group of message
+	* @param action - (required) action
 	* @param servername - name of the server to which message will be send or put NULL if to all
 	* @return { result: 0 } when success, otherwise error with code
 	*/
@@ -200,6 +203,9 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		
 		char *params = NULL;
 		char *servername = NULL;
+		char *type = NULL;
+		char *group = NULL;
+		char *action = NULL;
 		
 		DEBUG( "[NMWebRequest] msgtoextservice!!\n" );
 		
@@ -212,12 +218,66 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 			DEBUG( "[NMWebRequest] params %s!!\n", params );
 		}
 		
+		el = HttpGetPOSTParameter( request, "type" );
+		if( el != NULL )
+		{
+			type = UrlDecodeToMem( (char *)el->data );
+			DEBUG( "[NMWebRequest] type %s!!\n", type );
+		}
 		
-		char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http *req, char *sername, const char *path, const char *to, const char *thing, params );
+		el = HttpGetPOSTParameter( request, "group" );
+		if( el != NULL )
+		{
+			group = UrlDecodeToMem( (char *)el->data );
+			DEBUG( "[NMWebRequest] group %s!!\n", group );
+		}
+		
+		el = HttpGetPOSTParameter( request, "action" );
+		if( el != NULL )
+		{
+			action = UrlDecodeToMem( (char *)el->data );
+			DEBUG( "[NMWebRequest] action %s!!\n", action );
+		}
+		
+		el = HttpGetPOSTParameter( request, "servername" );
+		if( el != NULL )
+		{
+			servername = UrlDecodeToMem( (char *)el->data );
+			DEBUG( "[NMWebRequest] servername %s!!\n", servername );
+		}
+		
+		if( params != NULL && type != NULL && group != NULL && action != NULL )
+		{
+			char *serresp = NotificationManagerSendRequestToConnections( l->sl_NotificationManager, request, servername, type, group, action, params );
+			if( serresp != NULL )
+			{
+				HttpSetContent( response, serresp, strlen( serresp ) );
+			}
+		} // missing parameters
+		else
+		{
+			char buffer[ 256 ];
+			char buffer1[ 256 ];
+			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "username, channelid, app, title, message" );
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+			HttpAddTextContent( response, buffer );
+		}
 		
 		if( params != NULL )
 		{
 			FFree( params );
+		}
+		if( type != NULL )
+		{
+			FFree( type );
+		}
+		if( action != NULL )
+		{
+			FFree( action );
+		}
+		if( group != NULL )
+		{
+			FFree( group );
 		}
 		*result = 200;
 	}
