@@ -881,101 +881,110 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 		// wait for response
 		//
 		
-		int secs = 0;
-		while( TRUE )
+		if( sentMessageTo > 0 )
 		{
-			// response
-			FQEntry *foundEntry = NULL;
-			
-			DEBUG("[Notify Service] check queue\n");
-			
-			if( FRIEND_MUTEX_LOCK( &(nm->nm_ExtServiceMutex)) == 0 )
+			int secs = 0;
+			while( TRUE )
 			{
-				FQEntry *qe = nm->nm_ExtServiceMessage.fq_First;
-				// we will build new linked list
-				FQEntry *qenroot = NULL;
-				while( qe != NULL )
+				// response
+				FQEntry *foundEntry = NULL;
+			
+				DEBUG("[Notify Service] check queue\n");
+			
+				if( FRIEND_MUTEX_LOCK( &(nm->nm_ExtServiceMutex)) == 0 )
 				{
-					FQEntry *locentry = qe;
-					qe = (FQEntry *)qe->node.mln_Succ;
+					FQEntry *qe = nm->nm_ExtServiceMessage.fq_First;
+					// we will build new linked list
+					FQEntry *qenroot = NULL;
+					while( qe != NULL )
+					{
+						FQEntry *locentry = qe;
+						qe = (FQEntry *)qe->node.mln_Succ;
 					
-					// check if its same reqid
-					// if same return response
-					if( strcmp( locentry->fq_RequestID, reqID ) == 0 )
-					{
-						DEBUG("Found entry by requestid : %s\n", reqID );
-						foundEntry = locentry;
-					}
-					// if msg is older then 30 seconds remove it
-					else if( (time(NULL) - locentry->fq_Timestamp) > 30  )	// message is older then 30 seconds
-					{
-						DEBUG("Delete old message\n");
-						if( locentry->fq_Data != NULL )
+						// check if its same reqid
+						// if same return response
+						if( strcmp( locentry->fq_RequestID, reqID ) == 0 )
 						{
-							FFree( locentry->fq_Data );
+							DEBUG("Found entry by requestid : %s\n", reqID );
+							foundEntry = locentry;
 						}
-						if( locentry->fq_RequestID != NULL )
+						// if msg is older then 30 seconds remove it
+						else if( (time(NULL) - locentry->fq_Timestamp) > 30  )	// message is older then 30 seconds
 						{
-							FFree( locentry->fq_RequestID );
+							DEBUG("Delete old message\n");
+							if( locentry->fq_Data != NULL )
+							{
+								FFree( locentry->fq_Data );
+							}
+							if( locentry->fq_RequestID != NULL )
+							{
+								FFree( locentry->fq_RequestID );
+							}
+							FFree( locentry );
 						}
-						FFree( locentry );
+						// otherwise leave message
+						else
+						{
+							DEBUG("Leave message in queue\n");
+							locentry->node.mln_Succ = (MinNode *)qenroot;
+							qenroot = locentry;
+						}
 					}
-					// otherwise leave message
-					else
+					// assign new list to root
+					nm->nm_ExtServiceMessage.fq_First = qenroot;
+				
+					FRIEND_MUTEX_UNLOCK( &(nm->nm_ExtServiceMutex));
+				}
+			
+				DEBUG("[Notify Service] found entry %p\n", foundEntry );
+			
+				// if entry was found we can come back with response
+				if( foundEntry != NULL )
+				{
+					if( retMsg->bs_Size > 0 )
 					{
-						DEBUG("Leave message in queue\n");
-						locentry->node.mln_Succ = (MinNode *)qenroot;
-						qenroot = locentry;
+						BufStringAddSize( retMsg, ",", 1 );
+					}
+					BufStringAdd( retMsg, (char *)foundEntry->fq_Data );
+				
+					if( foundEntry->fq_RequestID != NULL )
+					{
+						FFree( foundEntry->fq_RequestID );
+					}
+					if( foundEntry->fq_Data != NULL )
+					{
+						FFree( foundEntry->fq_Data );
+					}
+					FFree( foundEntry );
+				
+					// if message was send to more then one servers we are waiting for reply
+					sentMessageTo--;
+				
+					if( sentMessageTo <= 0 )
+					{
+						DEBUG("[Notify Service] All responses recevied, quit loop\n");
+						break;
 					}
 				}
-				// assign new list to root
-				nm->nm_ExtServiceMessage.fq_First = qenroot;
-				
-				FRIEND_MUTEX_UNLOCK( &(nm->nm_ExtServiceMutex));
-			}
 			
-			DEBUG("[Notify Service] found entry %p\n", foundEntry );
-			
-			// if entry was found we can come back with response
-			if( foundEntry != NULL )
-			{
-				if( retMsg->bs_Size > 0 )
+				sleep( 1 );
+				//usleep( 50000 );
+				if( secs++ >30 )	// around 15 seconds
 				{
-					BufStringAddSize( retMsg, ",", 1 );
-				}
-				BufStringAdd( retMsg, (char *)foundEntry->fq_Data );
-				
-				if( foundEntry->fq_RequestID != NULL )
-				{
-					FFree( foundEntry->fq_RequestID );
-				}
-				if( foundEntry->fq_Data != NULL )
-				{
-					FFree( foundEntry->fq_Data );
-				}
-				FFree( foundEntry );
-				
-				// if message was send to more then one servers we are waiting for reply
-				sentMessageTo--;
-				
-				if( sentMessageTo <= 0 )
-				{
-					DEBUG("[Notify Service] All responses recevied, quit loop\n");
-					break;
-				}
-			}
-			
-			sleep( 1 );
-			//usleep( 50000 );
-			if( secs++ >30 )	// around 15 seconds
-			{
-				const char *timeoutResp = "{\"result\":0,\"error\",\"Timeout\"}";
-				BufStringAdd( retMsg, timeoutResp );
-				FERROR("Timeout\n");
-				break; 
-			} 
-		} // while TRUE
-		DEBUG("[Notify Service] ret message: %s\n", retMsg->bs_Buffer );
+					const char *timeoutResp = "{\"result\":-1,\"error\",\"Timeout\"}";
+					BufStringAdd( retMsg, timeoutResp );
+					FERROR("Timeout\n");
+					break; 
+				} 
+			} // while TRUE
+			DEBUG("[Notify Service] ret message: %s\n", retMsg->bs_Buffer );
+		}
+		else // message was not send
+		{
+			const char *timeoutResp = "{\"result\":-2,\"error\",\"No Connection\"}";
+			BufStringAdd( retMsg, timeoutResp );
+			FERROR("No connection\n");
+		}
 	}
 	
 	// assign response to return string and delete bufstring
