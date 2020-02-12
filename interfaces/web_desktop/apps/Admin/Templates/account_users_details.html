@@ -200,7 +200,7 @@
 		</div>
 	</div>
 	
-	<div id="AdminApplicationContainer" class="Closed">
+	<!--<div id="AdminApplicationContainer" class="Closed">
 		<div class="HRow MarginTop BackgroundNegativeAlt Negative Padding">
 			<div class="HContent50 FloatLeft">
 				<h3 class="NoMargin">
@@ -213,6 +213,40 @@
 		</div>
 		<div class="Box Padding" id="ApplicationGui">
 			{applications}
+		</div>
+	</div>-->
+	
+	<div id="AdminApplicationContainer" class="Closed">
+		<div class="HRow MarginTop BackgroundNegativeAlt Negative Padding">
+			<div class="PaddingSmall HContent50 FloatLeft">
+				<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed" id="ApplicationEditBack"></button>
+				<h3 class="NoMargin FloatLeft">
+					<strong>{i18n_applications}</strong>
+				</h3>
+			</div>
+			<div class="PaddingSmall HContent50 FloatLeft Relative">
+				<button class="IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle Open" id="ApplicationEdit"></button>
+			</div>
+		</div>
+		<div id="ApplicationGui">
+			{applications}
+		</div>
+	</div>
+	
+	<div id="AdminDockContainer" class="Closed">
+		<div class="HRow MarginTop BackgroundNegativeAlt Negative Padding">
+			<div class="PaddingSmall HContent50 FloatLeft">
+				<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed" id="DockEditBack"></button>
+				<h3 class="NoMargin FloatLeft">
+					<strong>{i18n_dock}</strong>
+				</h3>
+			</div>
+			<div class="PaddingSmall HContent50 FloatLeft Relative">
+				<button class="IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle Open" id="DockEdit"></button>
+			</div>
+		</div>
+		<div id="DockGui">
+			{dock}
 		</div>
 	</div>
 	
