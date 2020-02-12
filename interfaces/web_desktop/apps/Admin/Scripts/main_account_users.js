@@ -132,6 +132,7 @@ Sections.accounts_users = function( cmd, extra )
 				var wgroups           = typeof( userInfo.Workgroup ) == 'object' ? userInfo.Workgroup : ( userInfo.Workgroup ? [ userInfo.Workgroup ] : [] );
 				var uroles            = ( info.roles ? info.roles : {} );
 				var mountlist         = ( info.mountlist ? info.mountlist : {} );
+				var soft              = ( info.software ? info.software : {} );
 				var apps              = ( info.applications ? info.applications : {} );
 				
 				console.log( 'initUsersDetails( info ) ', info );		
@@ -406,7 +407,7 @@ Sections.accounts_users = function( cmd, extra )
 					var wstr      = func.workgroups();
 					var rstr      = func.roles();
 					var mlst      = func.storage();
-					var apl       = func.applications();
+					//var apl       = func.applications();
 					var themeData = func.themes();
 					
 					
@@ -1074,63 +1075,6 @@ Sections.accounts_users = function( cmd, extra )
 															
 														}
 														
-														return;
-														
-														/*var enabled = false;
-														if( this.classList.contains( 'fa-toggle-off' ) )
-														{
-															this.classList.remove( 'fa-toggle-off' );
-															this.classList.add( 'fa-toggle-on' );
-															enabled = true;
-														}
-														else
-														{
-															this.classList.remove( 'fa-toggle-on' );
-															this.classList.add( 'fa-toggle-off' );
-														}
-														
-														var args = { id: userInfo.ID, authid: Application.authId };
-														
-														args.workgroups = [];
-														
-														if( workBtns.length > 0 )
-														{
-															for( var c = 0; c < workBtns.length; c++ )
-															{
-																if( workBtns[c].classList.contains( 'fa-toggle-on' ) )
-																{
-																	args.workgroups.push( workBtns[c].getAttribute( 'wid' ) );
-																}
-																
-															}
-														}
-														args.workgroups = args.workgroups.join( ',' );
-														
-														args.args = JSON.stringify( {
-															'type'    : 'write', 
-															'context' : 'application', 
-															'authid'  : Application.authId, 
-															'data'    : { 
-																'permission' : [ 
-																	'PERM_WORKGROUP_GLOBAL', 
-																	'PERM_WORKGROUP_WORKGROUP' 
-																]
-															}, 
-															'object'   : 'user', 
-															'objectid' : userInfo.ID 
-														} );
-														
-														// TODO: Change this method to only remove and add the user to workgroups that is new ... Check if there is rolepermissions ...
-														
-														// Reload user gui now
-														var f = new Library( 'system.library' );
-														f.onExecuted = function( e, d )
-														{
-															// Do nothing
-															
-															console.log( { e:e, d:d } );
-														}
-														f.execute( 'user/updategroups', args );*/
 													}
 												} )( workBtns[ a ] );
 											}
@@ -1369,7 +1313,7 @@ Sections.accounts_users = function( cmd, extra )
 								
 							},
 							
-							applications : function (  )
+							/*applications : function (  )
 							{
 								
 								if( ge( 'ApplicationGui' ) && apl )
@@ -1377,6 +1321,1541 @@ Sections.accounts_users = function( cmd, extra )
 									ge( 'ApplicationGui' ).innerHTML = apl;
 								}
 								
+							},*/
+							
+							
+							
+							appids : function ( soft )
+							{
+								var ids = {};
+						
+								if( soft )
+								{
+									console.log( 'soft ', soft );
+							
+									var i = 0;
+							
+									for( var a in soft )
+									{
+										if( soft[a] && soft[a].ID && soft[a].Name )
+										{
+											ids[ i++ ] = soft[a];
+										}
+									}
+								}
+						
+								return ids;
+						
+							}( soft ),
+							
+							updateids : function ( mode, key, value )
+							{
+					
+								switch( mode )
+								{
+						
+									case 'applications':
+									case 'dock':
+										
+										if( this.appids )
+										{
+											var arr = []; var i = 0; var found = false;
+								
+											for( var a in this.appids )
+											{
+												if( this.appids[a] && this.appids[a].Name )
+												{
+													if( key && this.appids[a].Name.toLowerCase() == key.toLowerCase() )
+													{
+														if( value[0] )
+														{
+															var obj = { Name: value[0], DockStatus: value[1] };
+														}
+														
+														this.appids[a] = ( value ? obj : false ); found = true;
+													}
+										
+													if( this.appids[a] && this.appids[a].Name )
+													{
+														arr.push( this.appids[a].Name + '_' + this.appids[a].DockStatus );
+													}
+												}
+									
+												i++;
+											}
+											
+											if( key && value && !found )
+											{
+												if( value[0] )
+												{
+													arr.push( value[0] + '_' + value[1] );
+													
+													var obj = { Name: value[0], DockStatus: value[1] };
+													
+													this.appids[ i++ ] = obj; 
+												}
+											}
+								
+											console.log( 'applications ', this.appids );
+								
+											if( ge( 'TempApplications' ) )
+											{
+												ge( 'TempApplications' ).setAttribute( 'value', ( arr ? arr.join( ',' ) : '' ) );
+											}
+										}
+										else if( key && value )
+										{
+											if( value[0] )
+											{
+												var obj = { Name: value[0], DockStatus: value[1] };
+												
+												this.appids[0] = obj;
+											}
+								
+											if( ge( 'TempApplications' ) && value[0] )
+											{
+												ge( 'TempApplications' ).setAttribute( 'value', value[0] + '_' + value[1] );
+											}
+										}
+							
+										break;
+							
+								}
+					
+							},
+							
+							mode : { applications : 'list', dock : 'list' },
+							
+							// Applications ------------------------------------------------------------------------------------
+							
+							applications : function ( func )
+							{
+						
+								// Editing applications
+						
+								var init =
+								{
+							
+									func : this,
+							
+									ids  : this.appids,
+									
+									head : function (  )
+									{
+								
+										var o = ge( 'ApplicationGui' ); o.innerHTML = '<input type="hidden" id="TempApplications">';
+								
+										this.func.updateids( 'applications' );
+								
+										var divs = appendChild( [ 
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+													return d;
+												}(),
+												'child' : 
+												[ 
+													{ 
+														'element' : function( _this ) 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmall HContent40 FloatLeft';
+															d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+															d.ele = this;
+															d.onclick = function(  )
+															{
+																_this.sortapps( 'Name' );
+															};
+															return d;
+														}( this ) 
+													}, 
+													{ 
+														'element' : function( _this ) 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmall HContent45 FloatLeft Relative';
+															d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
+															d.ele = this;
+															d.onclick = function(  )
+															{
+																_this.sortapps( 'Category' );
+															};
+															return d;
+														}( this )
+													},
+													{ 
+														'element' : function() 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmall HContent15 FloatLeft Relative';
+															return d;
+														}()
+													}
+												]
+											},
+											{
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'HRow Box Padding';
+													d.id = 'ApplicationInner';
+													return d;
+												}()
+											}
+										] );
+						
+										if( divs )
+										{
+											for( var i in divs )
+											{
+												if( divs[i] && o )
+												{
+													o.appendChild( divs[i] );
+												}
+											}
+										}
+								
+									},
+									
+									list : function (  )
+									{
+								
+										this.func.mode[ 'applications' ] = 'list';
+										
+										if( apps )
+										{
+											this.head();
+									
+											var o = ge( 'ApplicationInner' ); o.innerHTML = '';
+									
+											if( this.ids )
+											{
+												for( var a in this.ids )
+												{
+													if( this.ids[a] && this.ids[a].Name )
+													{
+														var found = false;
+												
+														for( var k in apps )
+														{
+															if( this.ids[a] && this.ids[a].Name == apps[k].Name )
+															{
+																found = true;
+																
+																break;
+															}
+														}
+														
+														if( !found ) continue;
+											
+														var divs = appendChild( [
+															{ 
+																'element' : function() 
+																{
+																	var d = document.createElement( 'div' );
+																	d.className = 'HRow';
+																	return d;
+																}(),
+																'child' : 
+																[ 
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																			return d;
+																		}(),
+																		 'child' : 
+																		[ 
+																			{ 
+																				'element' : function() 
+																				{
+																					var d = document.createElement( 'span' );
+																					d.setAttribute( 'Name', apps[k].Name );
+																					d.setAttribute( 'Category', apps[k].Category );
+																					d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
+																					d.style.backgroundSize = 'contain';
+																					d.style.width = '24px';
+																					d.style.height = '24px';
+																					d.style.display = 'block';
+																					return d;
+																				}(), 
+																				 'child' : 
+																				[ 
+																					{
+																						'element' : function() 
+																						{
+																							var d = document.createElement( 'div' );
+																							if( apps[k].Preview )
+																							{
+																								d.style.backgroundImage = 'url(\'' + apps[k].Preview + '\')';
+																								d.style.backgroundSize = 'contain';
+																								d.style.width = '24px';
+																								d.style.height = '24px';
+																							}
+																							return d;
+																						}()
+																					}
+																				]
+																			}
+																		]
+																	},
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
+																			d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																			return d;
+																		}() 
+																	},
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
+																			d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																			return d;
+																		}() 
+																	}, 
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+																			return d;
+																		}(),
+																		'child' : 
+																		[ 
+																			{ 
+																				'element' : function( ids, name, func ) 
+																				{
+																					var b = document.createElement( 'button' );
+																					b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																					b.onclick = function(  )
+																					{
+																			
+																						var pnt = this.parentNode.parentNode;
+																			
+																						removeBtn( this, { ids: ids, name: name, func: func, pnt: pnt }, function ( args )
+																						{
+																				
+																							args.func.updateids( 'applications', args.name, false );
+																					
+																							console.log( 'updateApplications( '+userInfo.ID+', callback, vars )' );
+																				
+																							updateApplications( userInfo.ID, function( e, d, vars )
+																							{
+																					
+																								if( e && vars )
+																								{
+																						
+																									if( vars.pnt )
+																									{
+																										vars.pnt.innerHTML = '';
+																									}
+																			
+																									if( vars.func )
+																									{
+																										vars.func.dock( 'refresh' );
+																									}
+																						
+																								}
+																								else
+																								{
+																									console.log( { e:e, d:d, vars: vars } );
+																								}
+																					
+																							}, { pnt: args.pnt, func: args.func } );
+																				
+																						} );
+																			
+																					};
+																					return b;
+																				}( this.ids, apps[k].Name, this.func ) 
+																			}
+																		]
+																	}
+																]
+															}
+														] );
+											
+														if( divs )
+														{
+															for( var i in divs )
+															{
+																if( divs[i] && o )
+																{
+																	o.appendChild( divs[i] );
+																}
+															}
+														}
+													}
+									
+												}
+										
+												// Sort default by Name ASC
+												this.sortapps( 'Name' );
+										
+											}
+									
+										}
+									
+									},
+							
+									edit : function (  )
+									{
+								
+										this.func.mode[ 'applications' ] = 'edit';
+								
+										if( apps )
+										{
+											this.head();
+									
+											var o = ge( 'ApplicationInner' ); o.innerHTML = '';
+									
+											for( var k in apps )
+											{
+												if( apps[k] && apps[k].Name )
+												{
+													var found = false;
+													
+													if( this.ids )
+													{
+														for( var a in this.ids )
+														{
+															if( this.ids[a] && this.ids[a].Name == apps[k].Name )
+															{
+																found = true;
+															}
+														}
+													}
+											
+													var divs = appendChild( [
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'HRow';
+																return d;
+															}(),
+															'child' : 
+															[ 
+																{ 
+																	'element' : function() 
+																	{
+																		var d = document.createElement( 'div' );
+																		d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																		return d;;
+																	}(),
+																	 'child' : 
+																	[ 
+																		{ 
+																			'element' : function() 
+																			{
+																				var d = document.createElement( 'div' );
+																				d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
+																				d.style.backgroundSize = 'contain';
+																				d.style.width = '24px';
+																				d.style.height = '24px';
+																				return d;
+																			}(), 
+																			 'child' : 
+																			[ 
+																				{
+																					'element' : function() 
+																					{
+																						var d = document.createElement( 'div' );
+																						if( apps[k].Preview )
+																						{
+																							d.style.backgroundImage = 'url(\'' + apps[k].Preview + '\')';
+																							d.style.backgroundSize = 'contain';
+																							d.style.width = '24px';
+																							d.style.height = '24px';
+																						}
+																						return d;
+																					}()
+																				}
+																			]
+																		}
+																	]
+																},
+																{ 
+																	'element' : function() 
+																	{
+																		var d = document.createElement( 'div' );
+																		d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
+																		d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																		return d;
+																	}() 
+																}, 
+																{ 
+																	'element' : function() 
+																	{
+																		var d = document.createElement( 'div' );
+																		d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
+																		d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																		return d;
+																	}() 
+																},
+																{ 
+																	'element' : function() 
+																	{
+																		var d = document.createElement( 'div' );
+																		d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+																		return d;
+																	}(),
+																	'child' : 
+																	[ 
+																		{ 
+																			'element' : function( ids, name, func ) 
+																			{
+																				var b = document.createElement( 'button' );
+																				b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' );
+																				b.onclick = function(  )
+																				{
+																					if( this.classList.contains( 'fa-toggle-off' ) )
+																					{
+																						
+																						func.updateids( 'applications', name, [ name, '0' ] );
+																						
+																						console.log( 'updateApplications( '+userInfo.ID+', callback, vars )' );
+																				
+																						updateApplications( userInfo.ID, function( e, d, vars )
+																						{
+																					
+																							if( e && vars )
+																							{
+																						
+																								vars._this.classList.remove( 'fa-toggle-off' );
+																								vars._this.classList.add( 'fa-toggle-on' );
+																						
+																								if( vars.func )
+																								{
+																									vars.func.dock( 'refresh' );
+																								}
+																						
+																							}
+																							else
+																							{
+																								console.log( { e:e, d:d, vars: vars } );
+																							}
+																					
+																						}, { _this: this, func: func } );
+																				
+																					}
+																					else
+																					{
+																						
+																						func.updateids( 'applications', name, false );
+																						
+																						console.log( 'updateApplications( '+userInfo.ID+', callback, vars )' );
+																						
+																						updateApplications( userInfo.ID, function( e, d, vars )
+																						{
+																					
+																							if( e && vars )
+																							{
+																						
+																								vars._this.classList.remove( 'fa-toggle-on' );
+																								vars._this.classList.add( 'fa-toggle-off' );
+																						
+																								if( vars.func )
+																								{
+																									vars.func.dock( 'refresh' );
+																								}
+																						
+																							}
+																							else
+																							{
+																								console.log( { e:e, d:d, vars: vars } );
+																							}
+																					
+																						}, { _this: this, func: func } );
+																				
+																					}
+																			
+																				};
+																				return b;
+																			}( this.ids, apps[k].Name, this.func ) 
+																		}
+																	]
+																}
+															]
+														}
+													] );
+											
+													if( divs )
+													{
+														for( var i in divs )
+														{
+															if( divs[i] && o )
+															{
+																o.appendChild( divs[i] );
+															}
+														}
+													}
+												}
+									
+											}
+									
+										}
+								
+									},
+									
+									sortapps : function ( sortby )
+									{
+		
+										//
+		
+										var _this = ge( 'ApplicationInner' );
+		
+										if( _this )
+										{
+											var orderby = ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' );
+			
+											var list = _this.getElementsByTagName( 'div' );
+			
+											if( list.length > 0 )
+											{
+												var output = [];
+				
+												var callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
+				
+												for( var a = 0; a < list.length; a++ )
+												{
+													if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+					
+													var span = list[a].getElementsByTagName( 'span' )[0];
+					
+													if( span && span.getAttribute( sortby.toLowerCase() ) )
+													{
+														var obj = { 
+															sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
+															content : list[a]
+														};
+					
+														output.push( obj );
+													}
+												}
+				
+												if( output.length > 0 )
+												{
+													// Sort ASC default
+					
+													output.sort( callback );
+					
+													// Sort DESC
+					
+													if( orderby == 'DESC' ) 
+													{ 
+														output.reverse();  
+													}
+					
+													_this.innerHTML = '';
+					
+													_this.setAttribute( 'orderby', orderby );
+					
+													for( var key in output )
+													{
+														if( output[key] && output[key].content )
+														{
+															// Add row
+															_this.appendChild( output[key].content );
+														}
+													}
+												}
+											}
+										}
+		
+										console.log( output );
+									},
+									
+									refresh : function (  )
+									{
+								
+										switch( this.func.mode[ 'applications' ] )
+										{
+									
+											case 'list':
+										
+												this.list();
+										
+												break;
+										
+											case 'edit':
+										
+												this.edit();
+										
+												break;
+										
+										}
+								
+									}
+							
+								};
+								
+								switch( func )
+								{
+							
+									case 'head':
+								
+										init.head();
+								
+										break;
+								
+									case 'list':
+								
+										init.list();
+								
+										break;
+								
+									case 'edit':
+								
+										init.edit();
+								
+										break;
+								
+									case 'refresh':
+								
+										init.refresh();
+								
+										break;
+									
+									default:
+								
+										var etn = ge( 'ApplicationEdit' );
+										if( etn )
+										{
+											etn.onclick = function( e )
+											{
+								
+												init.edit();
+								
+												// Hide add / edit button ...
+								
+												if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+												{
+													etn.classList.remove( 'Open' );
+													etn.classList.add( 'Closed' );
+												}
+								
+												// Show back button ...
+								
+												if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+												{
+													btn.classList.remove( 'Closed' );
+													btn.classList.add( 'Open' );
+												}
+								
+											};
+										}
+						
+										var btn = ge( 'ApplicationEditBack' );
+										if( btn )
+										{
+											btn.onclick = function( e )
+											{
+								
+												init.list();
+								
+												// Hide back button ...
+								
+												if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+												{
+													btn.classList.remove( 'Open' );
+													btn.classList.add( 'Closed' );
+												}
+						
+												// Show add / edit button ...
+								
+												if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+												{
+													etn.classList.remove( 'Closed' );
+													etn.classList.add( 'Open' );
+												}
+								
+											};
+										}
+						
+										// Show listed applications ... 
+										
+										init.list();
+								
+										break;
+								
+								}
+						
+							},
+							
+							// Dock --------------------------------------------------------------------------------------------
+							
+							dock : function ( func )
+							{
+						
+								// Editing Dock
+						
+								var init =
+								{
+							
+									func : this,
+							
+									ids  : this.appids,
+							
+									head : function ( hidecol )
+									{
+										var o = ge( 'DockGui' ); o.innerHTML = '';
+								
+										this.func.updateids( 'dock' );
+								
+										var divs = appendChild( [ 
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+													return d;
+												}(),
+												'child' : 
+												[ 
+													{ 
+														'element' : function() 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmall HContent40 FloatLeft';
+															d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+															return d;
+														}() 
+													}, 
+													{ 
+														'element' : function() 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmall HContent25 FloatLeft Relative';
+															d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
+															return d;
+														}()
+													},
+													{ 
+														'element' : function() 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
+															d.innerHTML = '<strong>' + i18n( 'i18n_order' ) + '</strong>';
+															return d;
+														}()
+													},
+													{ 
+														'element' : function() 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmall HContent15 FloatLeft Relative';
+															return d;
+														}()
+													}
+												]
+											},
+											{
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'HRow Box Padding';
+													d.id = 'DockInner';
+													return d;
+												}()
+											}
+										] );
+						
+										if( divs )
+										{
+											for( var i in divs )
+											{
+												if( divs[i] && o )
+												{
+													o.appendChild( divs[i] );
+												}
+											}
+										}
+								
+									},
+							
+									list : function (  )
+									{
+								
+										this.func.mode[ 'dock' ] = 'list';
+								
+										if( apps )
+										{
+											this.head();
+									
+											var o = ge( 'DockInner' ); o.innerHTML = '';
+									
+											if( this.ids )
+											{
+												for( var a in this.ids )
+												{
+													if( this.ids[a] && this.ids[a].Name )
+													{
+														var found = false;
+											
+														for( var k in apps )
+														{
+															if( this.ids[a] && this.ids[a].Name == apps[k].Name && this.ids[a].DockStatus > 0 )
+															{
+																found = true;
+														
+																break;
+															}
+														}
+												
+														if( !found ) continue;
+											
+														var divs = appendChild( [
+															{ 
+																'element' : function() 
+																{
+																	var d = document.createElement( 'div' );
+																	d.className = 'HRow';
+																	return d;
+																}(),
+																'child' : 
+																[ 
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																			return d;;
+																		}(),
+																		 'child' : 
+																		[ 
+																			{ 
+																				'element' : function() 
+																				{
+																					var d = document.createElement( 'div' );
+																					d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
+																					d.style.backgroundSize = 'contain';
+																					d.style.width = '24px';
+																					d.style.height = '24px';
+																					return d;
+																				}(), 
+																				 'child' : 
+																				[ 
+																					{
+																						'element' : function() 
+																						{
+																							var d = document.createElement( 'div' );
+																							if( apps[k].Preview )
+																							{
+																								d.style.backgroundImage = 'url(\'' + apps[k].Preview + '\')';
+																								d.style.backgroundSize = 'contain';
+																								d.style.width = '24px';
+																								d.style.height = '24px';
+																							}
+																							return d;
+																						}()
+																					}
+																				]
+																			}
+																		] 
+																	},
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
+																			d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																			return d;
+																		}() 
+																	},
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'PaddingSmall HContent25 FloatLeft Ellipsis';
+																			d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																			return d;
+																		}() 
+																	}, 
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Ellipsis';
+																			return d;
+																		}(),
+																		'child' : 
+																		[ 
+																			{ 
+																				'element' : function( order, _this ) 
+																				{
+																					var b = document.createElement( 'button' );
+																					b.className = 'IconButton IconSmall IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-down';
+																					b.onclick = function(  )
+																					{
+																			
+																						_this.sortdown( order, function()
+																						{
+																					
+																							updateApplications( userInfo.ID );
+																					
+																						} );
+																			
+																					};
+																					return b;
+																				}( a, this ) 
+																			},
+																			{ 
+																				'element' : function( order, _this ) 
+																				{
+																					var b = document.createElement( 'button' );
+																					b.className = 'IconButton IconSmall IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-up';
+																					b.onclick = function()
+																					{
+																			
+																						_this.sortup( order, function()
+																						{
+																					
+																							updateApplications( userInfo.ID );
+																					
+																						} );
+																			
+																					};
+																					return b;
+																				}( a, this ) 
+																			}
+																		] 
+																	}, 
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+																			return d;
+																
+																		}(),
+																		'child' : 
+																		[ 
+																			{ 
+																				'element' : function( ids, name, func ) 
+																				{
+																					var b = document.createElement( 'button' );
+																					b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																					b.onclick = function(  )
+																					{
+																			
+																						var pnt = this.parentNode.parentNode;
+																			
+																						removeBtn( this, { ids: ids, name: name, func: func, pnt: pnt }, function ( args )
+																						{
+																							
+																							args.func.updateids( 'dock', args.name, [ args.name, '0' ] );
+																				
+																							console.log( 'updateApplications( '+userInfo.ID+', callback, vars )' );
+																				
+																							updateApplications( userInfo.ID, function( e, d, vars )
+																							{
+																				
+																								if( e && vars )
+																								{
+																					
+																									if( vars.pnt )
+																									{
+																										vars.pnt.innerHTML = '';
+																									}
+																					
+																								}
+																								else
+																								{
+																									console.log( { e:e, d:d, vars: vars } );
+																								}
+																				
+																							}, { pnt: args.pnt } );
+																				
+																						} );
+																			
+																					};
+																					return b;
+																				}( this.ids, apps[k].Name, this.func ) 
+																			}
+																		]
+																	}
+																]
+															}
+														] );
+											
+														if( divs )
+														{
+															for( var i in divs )
+															{
+																if( divs[i] && o )
+																{
+																	o.appendChild( divs[i] );
+																}
+															}
+														}
+													}
+									
+												}
+											}
+									
+										}
+									
+									},
+							
+									edit : function (  )
+									{
+								
+										this.func.mode[ 'dock' ] = 'edit';
+								
+										if( apps )
+										{
+											this.head( true );
+									
+											var o = ge( 'DockInner' ); o.innerHTML = '';
+									
+											if( this.ids )
+											{
+												for( var a in this.ids )
+												{
+													if( this.ids[a] && this.ids[a].Name )
+													{
+														var found = false; var toggle = false;
+												
+														for( var k in apps )
+														{
+															if( this.ids[a] && this.ids[a].Name == apps[k].Name )
+															{
+																found = true;
+																
+																if( this.ids[a].DockStatus > 0 )
+																{
+																	toggle = true;
+																}
+													
+																break;
+															}
+														}
+											
+														if( !found ) continue;
+											
+														var divs = appendChild( [
+															{ 
+																'element' : function() 
+																{
+																	var d = document.createElement( 'div' );
+																	d.className = 'HRow';
+																	return d;
+																}(),
+																'child' : 
+																[ 
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																			return d;;
+																		}(),
+																		 'child' : 
+																		[ 
+																			{ 
+																				'element' : function() 
+																				{
+																					var d = document.createElement( 'div' );
+																					d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
+																					d.style.backgroundSize = 'contain';
+																					d.style.width = '24px';
+																					d.style.height = '24px';
+																					return d;
+																				}(), 
+																				 'child' : 
+																				[ 
+																					{
+																						'element' : function() 
+																						{
+																							var d = document.createElement( 'div' );
+																							if( apps[k].Preview )
+																							{
+																								d.style.backgroundImage = 'url(\'' + apps[k].Preview + '\')';
+																								d.style.backgroundSize = 'contain';
+																								d.style.width = '24px';
+																								d.style.height = '24px';
+																							}
+																							return d;
+																						}()
+																					}
+																				]
+																			}
+																		] 
+																	},
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
+																			d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																			return d;
+																		}() 
+																	}, 
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
+																			d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																			return d;
+																		}() 
+																	},
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'div' );
+																			d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+																			return d;
+																		}(),
+																		'child' : 
+																		[ 
+																			{ 
+																				'element' : function( ids, name, func ) 
+																				{
+																					var b = document.createElement( 'button' );
+																					b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( toggle ? 'on' : 'off' );
+																					b.onclick = function(  )
+																					{
+																						if( this.classList.contains( 'fa-toggle-off' ) )
+																						{
+																							
+																							func.updateids( 'dock', name, [ name, '1' ] );
+																				
+																							console.log( 'updateApplications( '+userInfo.ID+', callback, vars )' );
+																				
+																							updateApplications( userInfo.ID, function( e, d, vars )
+																							{
+																				
+																								if( e && vars )
+																								{
+																						
+																									vars._this.classList.remove( 'fa-toggle-off' );
+																									vars._this.classList.add( 'fa-toggle-on' );
+																						
+																								}
+																								else
+																								{
+																									console.log( { e:e, d:d, vars: vars } );
+																								}
+																				
+																							}, { _this: this } );
+																				
+																						}
+																						else
+																						{
+																							
+																							func.updateids( 'dock', name, [ name, '0' ] );
+																				
+																							console.log( 'updateApplications( '+userInfo.ID+', callback, vars )' );
+																				
+																							updateApplications( userInfo.ID, function( e, d, vars )
+																							{
+																					
+																								if( e && vars )
+																								{
+																						
+																									vars._this.classList.remove( 'fa-toggle-on' );
+																									vars._this.classList.add( 'fa-toggle-off' );
+																						
+																								}
+																								else
+																								{
+																									console.log( { e:e, d:d, vars: vars } );
+																								}
+																					
+																							}, { _this: this } );
+																				
+																						}
+																					};
+																					return b;
+																				}( this.ids, apps[k].Name, this.func ) 
+																			}
+																		]
+																	}
+																]
+															}
+														] );
+											
+														if( divs )
+														{
+															for( var i in divs )
+															{
+																if( divs[i] && o )
+																{
+																	o.appendChild( divs[i] );
+																}
+															}
+														}
+													}
+									
+												}
+											}
+									
+										}
+								
+									},
+							
+									refresh : function (  )
+									{
+								
+										switch( this.func.mode[ 'dock' ] )
+										{
+									
+											case 'list':
+										
+												this.list();
+										
+												break;
+										
+											case 'edit':
+										
+												this.edit();
+										
+												break;
+										
+										}
+								
+									},
+							
+									// TODO: Check this function, top doesn't sort properly after one click ...
+							
+									sortup : function ( order, callback )
+									{
+								
+										console.log( 'TODO: sortup: ' + order + ' ', this.ids );
+								
+										console.log( 'soft: ', soft );
+								
+										var num = 0; var array = []; var found = null;
+								
+										if( this.ids && typeof order !== "undefined" )
+										{
+											for( var a in this.ids )
+											{
+												if( this.ids[a] && this.ids[a].Name && this.ids[a].DockStatus > 0 )
+												{
+											
+													// 
+											
+													console.log( { a:a, num:num } );
+											
+													if( order == a && typeof this.ids[ order ] !== "undefined" )
+													{
+														found = num;
+													}
+											
+													array.push( a );
+											
+													num++;
+												}
+											}
+									
+											console.log( { array: array, found: found, past: array[ found-1 ] } );
+									
+											if( array && typeof found !== "undefined" )
+											{
+										
+												// 
+										
+												if( typeof array[ found ] !== "undefined" && typeof array[ found-1 ] !== "undefined" )
+												{
+											
+													if( typeof this.ids[ array[ found ] ] !== "undefined" && typeof this.ids[ array[ found-1 ] ] !== "undefined" )
+													{
+														var current = this.ids[ array[ found   ] ];
+														var past    = this.ids[ array[ found-1 ] ];
+												
+														if( current && past )
+														{
+													
+															// 
+													
+															this.ids[ array[ found   ] ] = past;
+															this.ids[ array[ found-1 ] ] = current;
+													
+														}
+													}
+												}
+											}
+									
+											console.log( this.ids );
+									
+											this.refresh();
+									
+											if( callback ) return callback( true );
+										}
+								
+									},
+							
+									sortdown : function ( order, callback )
+									{
+								
+										console.log( 'TODO: sortdown: ' + order + ' ', this.ids );
+								
+										console.log( 'soft: ', soft );
+								
+										var num = 0; var array = []; var found = null;
+								
+										if( this.ids && typeof order !== "undefined" )
+										{
+											for( var a in this.ids )
+											{
+												if( this.ids[a] && this.ids[a].Name && this.ids[a].DockStatus > 0 )
+												{
+											
+													// 
+											
+													console.log( { a:a, num:num } );
+											
+													if( order == a && typeof this.ids[ order ] !== "undefined" )
+													{
+														found = num;
+													}
+											
+													array.push( a );
+											
+													num++;
+												}
+											}
+									
+											console.log( { array: array, found: found, past: array[ found+1 ] } );
+									
+											if( array && typeof found !== "undefined" )
+											{
+										
+												// 
+										
+												if( typeof array[ found ] !== "undefined" && typeof array[ found+1 ] !== "undefined" )
+												{
+											
+													if( typeof this.ids[ array[ found ] ] !== "undefined" && typeof this.ids[ array[ found+1 ] ] !== "undefined" )
+													{
+														var current = this.ids[ array[ found   ] ];
+														var past    = this.ids[ array[ found+1 ] ];
+												
+														if( current && past )
+														{
+													
+															// 
+													
+															this.ids[ array[ found   ] ] = past;
+															this.ids[ array[ found+1 ] ] = current;
+													
+														}
+													}
+												}
+											}
+									
+											console.log( this.ids );
+											
+											this.refresh();
+									
+											if( callback ) return callback( true );
+										}
+								
+									}
+							
+								};
+						
+								switch( func )
+								{
+							
+									case 'head':
+								
+										init.head();
+								
+										break;
+								
+									case 'list':
+								
+										init.list();
+								
+										break;
+								
+									case 'edit':
+								
+										init.edit();
+								
+										break;
+								
+									case 'refresh':
+								
+										init.refresh();
+								
+										break;
+							
+									default:
+								
+										var etn = ge( 'DockEdit' );
+										if( etn )
+										{
+											etn.onclick = function( e )
+											{
+								
+												init.edit();
+								
+												// Hide add / edit button ...
+								
+												if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+												{
+													etn.classList.remove( 'Open' );
+													etn.classList.add( 'Closed' );
+												}
+								
+												// Show back button ...
+								
+												if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+												{
+													btn.classList.remove( 'Closed' );
+													btn.classList.add( 'Open' );
+												}
+										
+											};
+										}
+						
+										var btn = ge( 'DockEditBack' );
+										if( btn )
+										{
+											btn.onclick = function( e )
+											{
+								
+												init.list();
+								
+												// Hide back button ...
+										
+												if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+												{
+													btn.classList.remove( 'Open' );
+													btn.classList.add( 'Closed' );
+												}
+						
+												// Show add / edit button ...
+								
+												if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+												{
+													etn.classList.remove( 'Closed' );
+													etn.classList.add( 'Open' );
+												}
+										
+											};
+										}
+							
+										// Show listed dock ... 
+						
+										init.list();
+								
+										break;
+								
+								}
+						
 							},
 							
 							theme : function (  )
@@ -1793,8 +3272,8 @@ Sections.accounts_users = function( cmd, extra )
 								{
 									if( Application.checkAppPermission( 'PERM_APPLICATION_GLOBAL' ) || Application.checkAppPermission( 'PERM_APPLICATION_WORKGROUP' ) )
 									{
-										console.log( 'Hiding "AdminApplicationContainer" for now until development there is complete ...' );
-										//if( ge( 'AdminApplicationContainer' ) ) ge( 'AdminApplicationContainer' ).className = 'Open';
+										if( ge( 'AdminApplicationContainer' ) ) ge( 'AdminApplicationContainer' ).className = 'Open';
+										if( ge( 'AdminDockContainer' ) ) ge( 'AdminDockContainer' ).className = 'Open';
 									}
 								}
 								
@@ -1820,6 +3299,7 @@ Sections.accounts_users = function( cmd, extra )
 						func.roles();
 						func.storage();
 						func.applications();
+						func.dock();
 						func.theme();
 						func.permissions( show );
 						
@@ -1918,7 +3398,7 @@ Sections.accounts_users = function( cmd, extra )
 							storage              : ( mlst ? mlst : '' ),
 							workgroups           : ( wstr ? wstr : '' ),
 							roles                : ( rstr ? rstr : '' ),
-							applications         : ( apl ? apl : '' )
+							applications         : ''/*( apl ? apl : '' )*/
 						};
 						
 						// Add translations
@@ -2155,28 +3635,54 @@ Sections.accounts_users = function( cmd, extra )
 				// 6 | Get user applications
 				function(  )
 				{
-					var u = new Module( 'system' );
-					u.onExecuted = function( e, d )
+					applications( function ( res, dat )
 					{
-						var apps = null;
 					
-						try
-						{
-							apps = JSON.parse( d );
-						}
-						catch( e )
-						{
-							apps = null;
-						}
-						console.log( 'listuserapplications ', { e:e, d:apps } );
-						if( e != 'ok' ) apps = '404';
-						loadingInfo.applications = apps;
+						console.log( { e:res, d:dat } );
 						
-						console.log( '// 6 | Get user applications' );
+						if( dat )
+						{
+							for( var k in dat )
+							{
+								if( dat[k] && dat[k].Name )
+								{
+									dat[k].Preview = ( !dat[k].Preview ? '/webclient/apps/'+dat[k].Name+'/icon.png' : '/system.library/module/?module=system&command=getapplicationpreview&application='+dat[k].Name+'&authid='+Application.authId );
+								}
+							}
+						}
+						
+						loadingInfo.software = dat;
+						
+					}, extra );
+					
+					// Go to next in line ...
+					loadingList[ ++loadingSlot ](  );
+				},
+				
+				// 6 | Get all applications
+				function(  )
+				{
+					applications( function ( res, dat )
+					{
+					
+						console.log( { e:res, d:dat } );
+						
+						if( dat )
+						{
+							for( var k in dat )
+							{
+								if( dat[k] && dat[k].Name )
+								{
+									dat[k].Preview = ( !dat[k].Preview ? '/webclient/apps/'+dat[k].Name+'/icon.png' : '/system.library/module/?module=system&command=getapplicationpreview&application='+dat[k].Name+'&authid='+Application.authId );
+								}
+							}
+						}
+						
+						loadingInfo.applications = dat;
 						
 						initUsersDetails( loadingInfo, [ 'application', 'looknfeel' ] );
-					}
-					u.execute( 'listuserapplications', { userid: extra, authid: Application.authId } );
+						
+					} );
 					
 					// Go to next in line ...
 					loadingList[ ++loadingSlot ](  );
@@ -3246,6 +4752,130 @@ Sections.accounts_users = function( cmd, extra )
 		
 	}
 	
+	function applications( callback, id )
+	{
+		
+		if( callback )
+		{
+			if( id )
+			{
+				var m = new Module( 'system' );
+				m.onExecuted = function( e, d )
+				{
+					console.log( 'listuserapplications ', { e:e, d:d } );
+					
+					if( e == 'ok' && d )
+					{
+						try
+						{
+							var json = JSON.parse( d );
+					
+							if( json )
+							{
+								return callback( true, json );
+							}
+						} 
+						catch( e ){ } 
+					}
+				
+					return callback( false, false );
+				}
+				m.execute( 'listuserapplications', { userid: id, authid: Application.authId } );
+			}
+			else
+			{
+				var m = new Module( 'system' );
+				m.onExecuted = function( e, d )
+				{
+					if( e == 'ok' && d )
+					{
+						try
+						{
+							var json = JSON.parse( d );
+					
+							if( json )
+							{
+								return callback( true, json );
+							}
+						} 
+						catch( e ){ } 
+					}
+				
+					return callback( false, false );
+				}
+				m.execute( 'software', { mode: 'showall', authid: Application.authId } );
+			}
+			
+			return true;
+		}
+		
+		return false;
+		
+	}
+	
+	function updateApplications( id, callback, vars )
+	{
+		
+		if( id && ge( 'TempApplications' ) )
+		{
+			// TODO: Save it ...
+			
+			/*var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				console.log( { e:e, d:d } );
+				
+				var data = false;
+													
+				try
+				{
+					data = JSON.parse( d );
+				}
+				catch( e ) {  }
+				
+				if( e == 'ok' )
+				{
+					
+					if( data && data.message )
+					{
+						//Notify( { title: 'success', text: data.message } );
+					}
+					*/
+					if( callback ) callback( true, true/*data*/, vars );
+					
+				/*}
+				else
+				{
+					
+					if( data && data.message )
+					{
+						Notify( { title: 'failed', text: data.message } );
+					}
+					
+					if( callback ) callback( false, data, vars );
+					
+				}
+				
+			}
+			m.execute( 'usersetupsave', { 
+				id           : tid, 
+				Preinstall   : true, 
+				Themes       : 'Friendup12', 
+				Applications : ge( 'TempApplications' ).value, 
+				Startup      : ge( 'TempStartup' ).value, 
+				authid       : Application.authId 
+			} );*/
+			
+		}
+		else
+		{
+			
+			if( callback ) callback( false, false, vars );
+			
+		}
+		
+	}
+	
 	Application.closeAllEditModes = function( act )
 	{
 		
@@ -3308,6 +4938,52 @@ Sections.accounts_users = function( cmd, extra )
 			}
 		}
 		
+	}
+	
+	// helper functions --------------------------------------------------------------------------------------------- //
+	
+	function appendChild( child )
+	{
+		if( child )
+		{
+			var out = [];
+			
+			for( var k in child )
+			{
+				if( child[k] )
+				{
+					if( child[k]['element'] )
+					{
+						var div = child[k]['element'];
+						
+						if( child[k]['child'] )
+						{
+							var elem = appendChild( child[k]['child'] );
+							
+							if( elem )
+							{
+								for( var i in elem )
+								{
+									if( elem[i] )
+									{
+										div.appendChild( elem[i] );
+									}
+								}
+							}
+						}
+						
+						out.push( div );
+					}
+				}
+			}
+			
+			if( out )
+			{
+				return out;
+			}
+		}
+		
+		return false;
 	}
 	
 	function removeBtn( _this, args, callback )
