@@ -900,10 +900,11 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 					{
 						FQEntry *locentry = qe;
 						qe = (FQEntry *)qe->node.mln_Succ;
+						DEBUG("Going through entries\n");
 					
 						// check if its same reqid
 						// if same return response
-						if( strcmp( locentry->fq_RequestID, reqID ) == 0 )
+						if( locentry->fq_RequestID != NULL && strcmp( locentry->fq_RequestID, reqID ) == 0 )
 						{
 							DEBUG("Found entry by requestid : %s\n", reqID );
 							foundEntry = locentry;
