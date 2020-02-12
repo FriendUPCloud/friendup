@@ -8252,6 +8252,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			catch( b )
 			{
 				console.log( 'I do not understand the result. Server may be down.', e, d, b );
+				if( Workspace.serverIsThere && e == null && d == null )
+					Workspace.relogin();
 			}
 			
 			//console.log( 'Response from connection checker: ', e, d );
