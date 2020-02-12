@@ -823,8 +823,8 @@ void ProcessSinkMessage( void *locd )
 						if( strncmp( data + t[6].start, "room", msize) == 0) 
 						{
 							char *reqid = NULL;
-							
-							DEBUG("External service incoming: room notification\n");
+							//{"type":"service","data":{"type":"room","data":{"type":"create","requestid":"EXTSER_1581518992698024_ID","data":{"ownerUserId":"df0499e006056004359160d3041d95b0","name":"blabla"}}}}
+							DEBUG("External service incoming: room notification\npos 13: %s\n14: %s\n", data + t[13].start, data + t[14].start );
 							
 							if( strncmp( data + t[13].start, "requestid", t[13].end - t[13].start) == 0) 
 							{
