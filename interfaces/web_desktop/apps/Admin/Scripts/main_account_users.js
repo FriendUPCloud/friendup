@@ -3272,8 +3272,9 @@ Sections.accounts_users = function( cmd, extra )
 								{
 									if( Application.checkAppPermission( 'PERM_APPLICATION_GLOBAL' ) || Application.checkAppPermission( 'PERM_APPLICATION_WORKGROUP' ) )
 									{
-										if( ge( 'AdminApplicationContainer' ) ) ge( 'AdminApplicationContainer' ).className = 'Open';
-										if( ge( 'AdminDockContainer' ) ) ge( 'AdminDockContainer' ).className = 'Open';
+										// TODO: Implement Save support in a PHP module first ...
+										//if( ge( 'AdminApplicationContainer' ) ) ge( 'AdminApplicationContainer' ).className = 'Open';
+										//if( ge( 'AdminDockContainer' ) ) ge( 'AdminDockContainer' ).className = 'Open';
 									}
 								}
 								
