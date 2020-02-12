@@ -27,8 +27,10 @@ typedef struct FQEntry
 {
 	MinNode			node;
 	unsigned char	*fq_Data;		// 
-	int				fq_Size;		// this should be removed
+	char			*fq_RequestID;	// request ID
+	int				fq_Size;		// size of message
 	int				fq_Priority;	// message priority
+	time_t			fq_Timestamp;	// message timestamp
 #ifdef __PERF_MEAS
 	double			fq_stime;		// time used to check how much time take to sent it
 #endif

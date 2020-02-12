@@ -90,6 +90,12 @@ NotificationManager *NotificationManagerNew( void *sb )
 			}
 			
 			//
+			// external service
+			
+			pthread_mutex_init( &(nm->nm_ExtServiceMutex), NULL );
+			FQInit( &(nm->nm_ExtServiceMessage) );
+			
+			//
 			// run android send thread
 			
 			pthread_mutex_init( &(nm->nm_AndroidSendMutex), NULL );
@@ -227,6 +233,14 @@ void NotificationManagerDelete( NotificationManager *nm )
 		FQDeInit( &(nm->nm_IOSSendMessages) );
 		
 		DEBUG("[NotificationManagerDelete] all threads deleted\n");
+		
+		//
+		// delete external services
+		
+		pthread_mutex_destroy( &(nm->nm_ExtServiceMutex) );
+		FQDeInit( &(nm->nm_ExtServiceMessage) );
+		
+		DEBUG("[NotificationManagerDelete] external services queue removed\n");
 		
 		if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	// add node to database and to list
 		{
@@ -763,6 +777,171 @@ OR
 		FFree( dstMsg );
 	}
 	return ret;
+}
+
+/**
+ * Send message to external servers
+ * 
+ * @param nm pointer to NotificationManager
+ * @param req Http request
+ * @param sername server name to which message will be sent. NULL means that message will be send to all connections.
+ * @param path path value
+ * @param to to value
+ * @param thing thing value
+ * @param params additional parameters
+ * @return response
+ */
+
+char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http *req, char *sername, const char *path, const char *to, const char *thing, const char *params )
+{
+	char *retMessage = NULL;
+	if( req != NULL && req->h_RequestSource == HTTP_SOURCE_EXTERNAL_SERVER )
+	{
+		INFO( "Request comes from external server\n");
+		return NULL;
+	}
+	
+	/*
+{
+   type : 'path',
+   data : {
+       type : 'to',
+       data : {
+            type : 'thing'
+            requestId : 'id-string'
+            data : {
+                  request parameters
+	}}}}
+	 */
+	
+	int msglen = 512 + strlen( params );
+	if( path != NULL )
+	{
+		msglen += strlen( path );
+	}
+	if( to != NULL )
+	{
+		msglen += strlen( to );
+	}
+	if( thing != NULL )
+	{
+		msglen += strlen( thing );
+	}
+
+	char *dstMsg = FMalloc( msglen );
+	
+	if( dstMsg != NULL )
+	{
+		int dstsize = 0;
+		char *reqID = FCalloc( 128, sizeof(char) );
+		snprintf( reqID, 128, "EXTSER_%lu%d_ID", time(NULL), rand()%999999 );
+		
+		dstsize = snprintf( dstMsg, msglen, "{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"data\":%s}}}", path, to, thing, params );
+		
+		Log( FLOG_INFO, "[NotificationManagerSendEventToConnections] Send message: '%s'\n", dstMsg );
+		
+		ExternalServerConnection *con = nm->nm_ESConnections;
+		if( sername == NULL ) // send to all servers
+		{
+			DEBUG("Server name = NULL\n");
+			while( con != NULL )
+			{
+				DataQWSIM *en = (DataQWSIM *)con->esc_Connection;
+				
+				DEBUG("Msg sent to: %s\n", en->d_ServerName );
+				ret += WriteMessageToServers( con->esc_Connection, (unsigned char *)dstMsg, dstsize );
+				con = (ExternalServerConnection *)con->node.mln_Succ;
+			}
+		}
+		else
+		{
+			DEBUG("Server name != NULL\n");
+			while( con != NULL )
+			{
+				ret += WriteMessageToServers( con->esc_Connection, (unsigned char *)dstMsg, dstsize );
+				con = (ExternalServerConnection *)con->node.mln_Succ;
+			}
+		}
+		FFree( dstMsg );
+		
+		//
+		// wait for response
+		//
+		
+		int secs = 0;
+		while( TRUE )
+		{
+			// response
+			FQEntry *foundEntry = NULL;
+			
+			DEBUG("[Notify Service] check queue\n");
+			
+			if( FRIEND_MUTEX_LOCK( &(nm->nm_ExtServiceMutex)) == 0 )
+			{
+				FQEntry *qe = nm->nm_ExtServiceMessage.fq_First;
+				// we will build new linked list
+				FQEntry *qenroot = NULL;
+				while( qe != NULL )
+				{
+					FQEntry *locentry = qe;
+					qe = (FQEntry *)qe->node.mln_Succ;
+					
+					// check if its same reqid
+					// if same return response
+					if( strcmp( locentry->fq_RequestID, reqID ) == 0 )
+					{
+						foundEntry = locentry;
+					}
+					// if msg is older then 30 seconds remove it
+					else if( (time(NULL) - locentry->fq_Timestamp) > 30  )	// message is older then 30 seconds
+					{
+						if( locentry->fq_Data != NULL )
+						{
+							FFree( locentry->fq_Data );
+						}
+						if( locentry->fq_RequestID != NULL )
+						{
+							FFree( locentry->fq_RequestID );
+						}
+						FFree( locentry );
+					}
+					// otherwise leave message
+					else
+					{
+						locentry->node.mln_Succ = (MinNode *)qenroot;
+						qenroot = locentry;
+					}
+				}
+				// assign new list to root
+				nm->nm_ExtServiceMessage.fq_First = qenroot;
+				
+				FRIEND_MUTEX_UNLOCK( &(nm->nm_ExtServiceMutex));
+			}
+			
+			DEBUG("[Notify Service] found entry %p\n", foundEntry );
+			
+			// if entry was found we can come back with response
+			if( foundEntry != NULL )
+			{
+				retMessage = (char *)foundEntry->fq_Data;
+				if( foundEntry->fq_RequestID != NULL )
+				{
+					FFree( foundEntry->fq_RequestID );
+				}
+				FFree( foundEntry );
+				break;
+			}
+			
+			usleep( 500 );
+			if( secs++ >30 )	// around 15 seconds
+			{ 
+				FERROR("Timeout\n");
+				break; 
+			} 
+		} // while TRUE
+		DEBUG("[Notify Service] ret message: %s\n", retMessage );
+	}
+	return retMessage;
 }
 
 /**
