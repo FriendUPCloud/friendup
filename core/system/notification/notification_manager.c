@@ -965,7 +965,8 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 				}
 			}
 			
-			usleep( 50000 );
+			sleep( 1 );
+			//usleep( 50000 );
 			if( secs++ >30 )	// around 15 seconds
 			{
 				const char *timeoutResp = "{\"result\":0,\"error\",\"Timeout\"}";
