@@ -1619,7 +1619,7 @@ html #Tray
 
 html #Tray > div
 {
-	margin: -2px 10px 10px 0;
+	margin: -2px 0px 10px 0;
 }
 
 html #WorkspaceMenu

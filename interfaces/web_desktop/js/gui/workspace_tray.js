@@ -42,6 +42,22 @@ function CloseTrayBubble( ev )
 	PollTray();
 }
 
+function PollTrayPosition()
+{
+	// Position
+	var tray = ge( 'Tray' );
+	if( !tray ) return;
+	var dsc = ge( 'DoorsScreen' );
+	var work = dsc.querySelector( '.VirtualWorkspaces' );
+	var extr = dsc.querySelector( '.Extra' );
+	var righ = dsc.querySelector( '.Right' );
+	if( righ ) righ = righ.querySelector( '.ScreenList' );
+	var widh = work ? work.offsetWidth : 0;
+	widh += extr ? extr.offsetWidth : 0;
+	widh += righ ? righ.offsetWidth : 0;
+	tray.style.right = widh + 'px';
+}
+
 // Poll the tray for elements - handles all object types
 function PollTray()
 {
@@ -56,6 +72,8 @@ function PollTray()
 	{
 		return;
 	}
+	
+	PollTrayPosition();
 	
 	// Checks for tasks
 	if( tray.tasks )
@@ -262,7 +280,7 @@ function PollTray()
 						
 						notties[ a ].seen = true; // They are seen!
 				
-						d.style.bottom = h + 'px';
+						d.style.top = 27 + h + 'px';
 						
 						// Remove notification
 						( function( not, dd ){
@@ -290,7 +308,7 @@ function PollTray()
 						
 						h += GetElementHeight( d ) + 8;
 
-						if( GetElementTop( d ) < 150 )
+						if( GetElementTop( d ) + d.offsetHeight > window.innerHeight - 80 )
 						{
 							break;
 						}						
@@ -322,7 +340,7 @@ function PollTray()
 							}
 						}
 						
-						remAll.style.bottom = h + 'px';
+						remAll.style.top = 27 + h + 'px';
 					}
 				}
 				// No notifications?

@@ -162,6 +162,10 @@ Workspace = {
 		// Make links to screen on this object
 		this.screen = wbscreen;
 		this.screenDiv = wbscreen.div;
+		
+		var tray = document.createElement( 'div' );
+		tray.id = 'Tray';
+		this.screenDiv.appendChild( tray );
 
 		// Init the deepest field
 		if( !isMobile )
