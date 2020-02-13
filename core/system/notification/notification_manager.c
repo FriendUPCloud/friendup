@@ -784,6 +784,7 @@ OR
  * 
  * @param nm pointer to NotificationManager
  * @param req Http request
+ * @param us user session
  * @param sername server name to which message will be sent. NULL means that message will be send to all connections.
  * @param type type of message
  * @param group message group
@@ -792,7 +793,7 @@ OR
  * @return response
  */
 
-char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http *req, char *sername, const char *type, const char *group, const char *action, const char *params )
+char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http *req, UserSession *us, char *sername, const char *type, const char *group, const char *action, const char *params )
 {
 	//char *retMessage = NULL;
 	BufString *retMsg = BufStringNew();
@@ -848,7 +849,7 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 				DataQWSIM *en = (DataQWSIM *)con->esc_Connection;
 				
 				snprintf( reqID, 128, "EXTSER_%lu%d_ID", time(NULL), rand()%999999 );
-				dstsize = snprintf( dstMsg, msglen, "{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"requestId\":\"%s\",\"data\":%s}}}", type, group, action, reqID, params );
+				dstsize = snprintf( dstMsg, msglen, "{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"requestId\":\"%s\",\"data\":{%s,\"originUserId\":%s}}}}", type, group, action, reqID, params, us->us_User->u_UUID );
 		
 				Log( FLOG_INFO, "[NotificationManagerSendRequestToConnections] Send message: '%s'\n", dstMsg );
 				
@@ -865,7 +866,7 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 			while( con != NULL )
 			{
 				snprintf( reqID, 128, "EXTSER_%lu%d_ID", time(NULL), rand()%999999 );
-				dstsize = snprintf( dstMsg, msglen, "{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"requestId\":\"%s\",\"data\":%s}}}", type, group, action, reqID, params );
+				dstsize = snprintf( dstMsg, msglen, "{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"requestId\":\"%s\",\"data\":{%s,\"originUserId\":%s}}}}", type, group, action, reqID, params, us->us_User->u_UUID );
 		
 				Log( FLOG_INFO, "[NotificationManagerSendRequestToConnections] Send message: '%s'\n", dstMsg );
 				
