@@ -2538,6 +2538,10 @@ function CheckScreenTitle( screen, force )
 	var testObject = screen ? screen : window.currentScreen;
 	if( !testObject && !force ) return;
 	
+	// Orphan node!
+	if( window.currentMovable && !( window.currentMovable.parentNode && window.currentMovable.parentNode.parentNode ) )
+		window.currentMovable = null;
+	
 	// If nothing changed, don't change
 	if( prevScreen && prevWindow && !force )
 	{
