@@ -848,7 +848,7 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 				DataQWSIM *en = (DataQWSIM *)con->esc_Connection;
 				
 				snprintf( reqID, 128, "EXTSER_%lu%d_ID", time(NULL), rand()%999999 );
-				dstsize = snprintf( dstMsg, msglen, "{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"requestid\":\"%s\",\"data\":%s}}}", type, group, action, reqID, params );
+				dstsize = snprintf( dstMsg, msglen, "{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"requestId\":\"%s\",\"data\":%s}}}", type, group, action, reqID, params );
 		
 				Log( FLOG_INFO, "[NotificationManagerSendRequestToConnections] Send message: '%s'\n", dstMsg );
 				
@@ -865,7 +865,7 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 			while( con != NULL )
 			{
 				snprintf( reqID, 128, "EXTSER_%lu%d_ID", time(NULL), rand()%999999 );
-				dstsize = snprintf( dstMsg, msglen, "{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"requestid\":\"%s\",\"data\":%s}}}", type, group, action, reqID, params );
+				dstsize = snprintf( dstMsg, msglen, "{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"requestId\":\"%s\",\"data\":%s}}}", type, group, action, reqID, params );
 		
 				Log( FLOG_INFO, "[NotificationManagerSendRequestToConnections] Send message: '%s'\n", dstMsg );
 				
