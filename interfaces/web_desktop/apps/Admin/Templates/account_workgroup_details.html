@@ -8,9 +8,11 @@
 		</div>
 	</div>
 	
-	<div class="HRow BackgroundNegativeAlt Negative Padding">
+	<!--<div class="HRow BackgroundNegativeAlt Negative Padding">-->
+	<div class="HRow BackgroundNegative Negative Padding">
 		<div class="HContent30 FloatLeft Ellipsis">
-			<div class="BackgroundPositiveAlt NegativeAlt PaddingSmall FloatLeft IconMedium fa-users"></div>
+			<!--<div class="BackgroundPositiveAlt NegativeAlt PaddingSmall FloatLeft IconMedium fa-users"></div>-->
+			<div class="BackgroundPositive Positive PaddingSmall FloatLeft IconMedium fa-users"></div>
 		</div>
 		<div class="HContent70 FloatLeft Ellipsis">
 			<h2 class="ImageHeading NoMargin">
@@ -50,18 +52,17 @@
 			</div>
 		</div>
 		
-		<!--<div class="HRow">
-			<button class="IconButton IconSmall ButtonSmall FloatRight fa-edit" onclick="Sections.accounts_workgroups('edit',{id:{id},_this:this})"></button>
-		</div>-->
-		
 		<div id="GroupEditContainer">
 			<div class="HRow">
-				<button class="IconButton IconSmall IconToggle ButtonSmall FloatLeft NegativeAlt fa-trash" id="GroupDeleteBtn"></button>
+				<!--<button class="IconButton IconSmall IconToggle ButtonSmall FloatLeft NegativeAlt fa-trash" id="GroupDeleteBtn"></button>-->
+				<button class="IconButton IconSmall IconToggle ButtonSmall FloatLeft Positive fa-trash" id="GroupDeleteBtn"></button>
 				<div id="GroupEditButtons">
-					<button class="ButtonAlt IconSmall FloatRight MarginLeft" id="GroupSaveBtn">
+					<!--<button class="ButtonAlt IconSmall FloatRight MarginLeft" id="GroupSaveBtn">-->
+					<button class="Button IconSmall FloatRight MarginLeft" id="GroupSaveBtn">
 						{i18n_save}
 					</button>
-					<button class="ButtonAlt IconSmall FloatRight MarginLeft" id="GroupCancelBtn">
+					<!--<button class="ButtonAlt IconSmall FloatRight MarginLeft" id="GroupCancelBtn">-->
+					<button class="Button IconSmall FloatRight MarginLeft" id="GroupCancelBtn">
 						{i18n_cancel}
 					</button>
 				</div>
@@ -71,7 +72,8 @@
 	</div>
 
 	<div id="AdminUsersContainer" class="Closed">
-		<div class="HRow MarginTop BackgroundNegativeAlt Negative Padding">
+		<!--<div class="HRow MarginTop BackgroundNegativeAlt Negative Padding">-->
+		<div class="HRow MarginTop BackgroundNegative Negative Padding">
 			<div class="PaddingSmall HContent50 FloatLeft">
 				<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed" id="UsersEditBack"></button>
 				<h3 class="NoMargin FloatLeft">

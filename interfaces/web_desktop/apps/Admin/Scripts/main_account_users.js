@@ -1507,7 +1507,8 @@ Sections.accounts_users = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+													//d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+													d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
 													return d;
 												}(),
 												'child' : 
@@ -2174,7 +2175,8 @@ Sections.accounts_users = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+													//d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+													d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
 													return d;
 												}(),
 												'child' : 
@@ -3423,7 +3425,8 @@ Sections.accounts_users = function( cmd, extra )
 							{
 								// TODO: Fix first login first so we can set wallpapers on users not logged in yet.
 								
-								return '<button class="ButtonAlt IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>';
+								//return '<button class="ButtonAlt IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>';
+								return '<button class="Button IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>';
 							},
 			
 							wallpaper_preview : function ()
@@ -3871,8 +3874,9 @@ Sections.accounts_users = function( cmd, extra )
 			// Add the main heading
 			( function( ol ) {
 				var tr = document.createElement( 'div' );
-				tr.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingTop PaddingRight';
-			
+				//tr.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingTop PaddingRight';
+				tr.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingRight';
+				
 				var extr = '';
 				if( clearFilter )
 				{
@@ -3953,7 +3957,8 @@ Sections.accounts_users = function( cmd, extra )
 		var header = document.createElement( 'div' );
 		header.className = 'List';
 		var headRow = document.createElement( 'div' );
-		headRow.className = 'HRow BackgroundNegativeAlt Negative PaddingTop PaddingBottom';
+		//headRow.className = 'HRow BackgroundNegativeAlt Negative PaddingTop PaddingBottom';
+		headRow.className = 'HRow BackgroundNegative Negative PaddingTop PaddingBottom';
 		for( var z in types )
 		{
 			var borders = '';
@@ -4618,7 +4623,8 @@ Sections.accounts_users = function( cmd, extra )
 					'status="' + userList[ a ].Status + '" '       + 
 					'logintime="' + userList[ a ].LoginTime + '" ' + 
 					'timestamp="' + timestamp + '" '               +
-					'class="IconSmall NegativeAlt fa-user-circle-o avatar" '   + 
+					//'class="IconSmall NegativeAlt fa-user-circle-o avatar" '   + 
+					'class="IconSmall Positive fa-user-circle-o avatar" '   + 
 					'style="position: relative;" '                 +
 					'><div style="' + bg + '"></div></span>';
 					
@@ -5116,8 +5122,10 @@ Sections.accounts_users = function( cmd, extra )
 			_this.classList.remove( 'ColorStGrayLight' );
 			_this.classList.remove( 'fa-minus-circle' );
 			_this.classList.remove( 'fa-trash' );
-			_this.classList.remove( 'NegativeAlt' );
-			_this.classList.add( 'ButtonAlt' );
+			//_this.classList.remove( 'NegativeAlt' );
+			_this.classList.remove( 'Negative' );
+			//_this.classList.add( 'ButtonAlt' );
+			_this.classList.add( 'Button' );
 			_this.classList.add( 'BackgroundRed' );
 			_this.innerHTML = ( args.button_text ? i18n( args.button_text ) : i18n( 'i18n_delete' ) );
 			_this.args = args;

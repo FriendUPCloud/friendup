@@ -765,8 +765,10 @@ Sections.accounts_templates = function( cmd, extra )
 			_this.classList.remove( 'ColorStGrayLight' );
 			_this.classList.remove( 'fa-minus-circle' );
 			_this.classList.remove( 'fa-trash' );
-			_this.classList.remove( 'NegativeAlt' );
-			_this.classList.add( 'ButtonAlt' );
+			//_this.classList.remove( 'NegativeAlt' );
+			_this.classList.remove( 'Negative' );
+			//_this.classList.add( 'ButtonAlt' );
+			_this.classList.add( 'Button' );
 			_this.classList.add( 'BackgroundRed' );
 			_this.id = ( _this.id ? _this.id : 'EditMode' );
 			_this.innerHTML = ( args.button_text ? i18n( args.button_text ) : i18n( 'i18n_delete' ) );
@@ -1165,7 +1167,8 @@ Sections.accounts_templates = function( cmd, extra )
 			wallpaper_button : function ()
 			{
 				// TODO: Fix first login first so we can set wallpapers on users not logged in yet.
-				return '<button class="ButtonAlt IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>';
+				//return '<button class="ButtonAlt IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>';
+				return '<button class="Button IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>';
 				
 			},
 			
@@ -1560,7 +1563,8 @@ Sections.accounts_templates = function( cmd, extra )
 										'element' : function() 
 										{
 											var d = document.createElement( 'div' );
-											d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+											//d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+											d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
 											return d;
 										}(),
 										'child' : 
@@ -2160,7 +2164,8 @@ Sections.accounts_templates = function( cmd, extra )
 										'element' : function() 
 										{
 											var d = document.createElement( 'div' );
-											d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+											//d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+											d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
 											return d;
 										}(),
 										'child' : 
@@ -2934,7 +2939,8 @@ Sections.accounts_templates = function( cmd, extra )
 										'element' : function() 
 										{
 											var d = document.createElement( 'div' );
-											d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+											//d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+											d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
 											return d;
 										}(),
 										'child' : 
@@ -4102,7 +4108,8 @@ Sections.accounts_templates = function( cmd, extra )
 								'element' : function() 
 								{
 									var d = document.createElement( 'div' );
-									d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingTop PaddingBottom PaddingRight';
+									//d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingTop PaddingBottom PaddingRight';
+									d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingBottom PaddingRight';
 									return d;
 								}(),
 								'child' : 
@@ -4189,7 +4196,8 @@ Sections.accounts_templates = function( cmd, extra )
 											{
 												var d = document.createElement( 'div' );
 												d.className = 'TextCenter HContent10 FloatLeft PaddingSmall Ellipsis';
-												d.innerHTML = '<span class="IconSmall NegativeAlt fa-file-text-o"></span>';
+												//d.innerHTML = '<span class="IconSmall NegativeAlt fa-file-text-o"></span>';
+												d.innerHTML = '<span class="IconSmall Positive fa-file-text-o"></span>';
 												return d;
 											}()
 										},
