@@ -257,6 +257,7 @@ Workspace = {
 				}
 				if( !ex.widget.shown )
 					ex.widget.showWidget();
+				else ex.widget.hide();
 				return cancelBubble( e );
 			}
 			ex.onclick = Workspace.calendarClickEvent;
