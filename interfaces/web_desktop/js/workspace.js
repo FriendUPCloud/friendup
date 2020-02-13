@@ -336,7 +336,6 @@ Workspace = {
 
 		// Create default desklet
 		var mainDesklet = CreateDesklet( this.screenDiv, 64, 480, 'right' );
-		mainDesklet.dom.style.zIndex = 2147483641;
 
 		// Add desklet to dock
 		this.mainDock = mainDesklet;

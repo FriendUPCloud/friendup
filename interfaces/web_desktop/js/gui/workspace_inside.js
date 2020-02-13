@@ -2650,6 +2650,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					
 					Workspace.docksReloading = null;
 					
+					ConstrainWindows();
+					
 					// Make sure taskbar is polled
 					if( !isMobile )
 					{
@@ -3135,6 +3137,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 					// Add new one
 					h.appendChild( styles );
+					
+					// Constrain all windows
+					ConstrainWindows();
 				}
 
 				// Update running applications

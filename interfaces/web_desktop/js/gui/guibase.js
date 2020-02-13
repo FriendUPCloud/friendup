@@ -2749,7 +2749,6 @@ function PollTaskbar( curr )
 					ge( 'Statusbar' ).className = 'Docklist';
 				
 					var dlet = dlets[ 0 ];
-					dlet.style.zIndex = 2147483641;
 					var d = document.createElement( 'div' );
 					d.id = 'DockWindowList';
 					d.className = 'WindowList';
