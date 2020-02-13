@@ -833,7 +833,7 @@ void ProcessSinkMessage( void *locd )
 							
 							DEBUG("External service incoming: room notification\npos 9: %s\npos 13: %s\n14: %s\n", data + t[9].start, data + t[13].start, data + t[14].start );
 							
-							if( strncmp( data + t[8].start, "requestId", t[9].end - t[9].start) == 0) 
+							if( strncmp( data + t[9].start, "requestId", t[9].end - t[9].start) == 0) 
 							{
 								reqid = StringDuplicateN( data + t[10].start, t[10].end - t[10].start );
 							}
