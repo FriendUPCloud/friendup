@@ -613,6 +613,13 @@ function GetViewDisplayMargins( div )
 	return margins;
 }
 
+function ConstrainWindows()
+{
+	if( !window.movableWindows ) return;
+	for( var a in movableWindows )
+		ConstrainWindow( movableWindows[ a ] );
+}
+
 // Constrain position (optionally providing left and top)
 function ConstrainWindow( div, l, t, depth, caller )
 {

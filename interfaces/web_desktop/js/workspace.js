@@ -162,6 +162,10 @@ Workspace = {
 		// Make links to screen on this object
 		this.screen = wbscreen;
 		this.screenDiv = wbscreen.div;
+		
+		var tray = document.createElement( 'div' );
+		tray.id = 'Tray';
+		this.screenDiv.appendChild( tray );
 
 		// Init the deepest field
 		if( !isMobile )
@@ -253,6 +257,7 @@ Workspace = {
 				}
 				if( !ex.widget.shown )
 					ex.widget.showWidget();
+				else ex.widget.hide();
 				return cancelBubble( e );
 			}
 			ex.onclick = Workspace.calendarClickEvent;
@@ -332,7 +337,6 @@ Workspace = {
 
 		// Create default desklet
 		var mainDesklet = CreateDesklet( this.screenDiv, 64, 480, 'right' );
-		mainDesklet.dom.style.zIndex = 2147483641;
 
 		// Add desklet to dock
 		this.mainDock = mainDesklet;
@@ -736,8 +740,8 @@ Workspace = {
 		
 		var self = this;
 		
-		function executeCleanRelogin()
-		{	
+		function killConn()
+		{
 			if( Workspace.conn )
 			{
 				try
@@ -750,6 +754,11 @@ Workspace = {
 				}
 				delete Workspace.conn;
 			}
+		}
+		
+		function executeCleanRelogin()
+		{	
+			killConn();
 			
 			if( Workspace.loginUsername && Workspace.loginPassword )
 			{
@@ -816,6 +825,8 @@ Workspace = {
 				}
 				catch( n )
 				{
+					killConn();
+					console.log( 'Error running relogin.', n );
 				}
 			}
 			if( Workspace.serverIsThere )
@@ -825,6 +836,7 @@ Workspace = {
 			}
 			else
 			{
+				killConn();
 				// // console.log( 'Test2: Wait a second before you can log in again.' );
 				// Wait a second before trying again
 				setTimeout( function()

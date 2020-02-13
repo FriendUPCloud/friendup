@@ -54,11 +54,11 @@ if( $wgroups = $SqlDatabase->FetchObjects( '
 	{
 		$wkey = strtolower( str_replace( ' ', '_', $wgroup->Name ) );
 		// Is the script already run?
-		$s = new dbIO( 'FSetting' );
-		$s->Type = 'system';
-		$s->Key = 'firstlogin_' . $wkey;
-		$s->UserID = $User->ID;
-		if( !$s->Load() )
+		$cr = new dbIO( 'FSetting' );
+		$cr->Type = 'system';
+		$cr->Key = 'firstlogin_' . $wkey;
+		$cr->UserID = $User->ID;
+		if( !$cr->Load() )
 		{
 			// Load custom script for this workgroup
 			if( file_exists( 'cfg/firstlogin_' . $wkey . '.php' ) )
@@ -66,7 +66,7 @@ if( $wgroups = $SqlDatabase->FetchObjects( '
 				$Logger->log( 'Found workgroup ' . $wkey . ' firstlogin script.' );
 				require( 'cfg/firstlogin_' . $wkey . '.php' );
 				// The script has run, register it
-				$s->Save();
+				$cr->Save();
 			}
 		}
 		
@@ -85,21 +85,21 @@ if( $wgroups = $SqlDatabase->FetchObjects( '
 // Prevent wizard for user
 if( isset( $Config ) && isset( $Config->preventwizard ) && $Config->preventwizard == 1 )
 {
-	$s = new dbIO( 'FSetting' );
-	$s->UserID = $User->ID;
-	$s->Type = 'system';
-	$s->Key = 'wizardrun';
-	$s->Load();
-	$s->Data = '1';
-	$s->Save();
+	$cr = new dbIO( 'FSetting' );
+	$cr->UserID = $User->ID;
+	$cr->Type = 'system';
+	$cr->Key = 'wizardrun';
+	$cr->Load();
+	$cr->Data = '1';
+	$cr->Save();
 }
 
 // Check that it really is first login
-$s = new dbIO( 'FSetting' );
-$s->Type = 'system';
-$s->Key = 'firstlogin';
-$s->UserID = $User->ID;
-if( !$s->Load() )
+$cr = new dbIO( 'FSetting' );
+$cr->Type = 'system';
+$cr->Key = 'firstlogin';
+$cr->UserID = $User->ID;
+if( !$cr->Load() )
 {
 	// Check for expansion
 	if( file_exists( 'cfg/firstlogin.php' ) )
@@ -112,6 +112,6 @@ if( !$s->Load() )
 		require( 'firstlogin.defaults.php' );
 	}
 	// Now we had first login!
-	$s->Save();
+	$cr->Save();
 }
 

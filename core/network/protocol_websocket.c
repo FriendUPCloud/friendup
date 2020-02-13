@@ -449,13 +449,15 @@ void WSThread( void *d )
 	
 	if( fcd->wsc_Wsi == NULL || fcd->wsc_UserSession == NULL )
 	{
-		FERROR("Error session is NULL\n");
+		FERROR("Error session is NULL : wsi: %p usersession: %p\n", fcd->wsc_Wsi == NULL, fcd->wsc_UserSession );
 
 		FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
 		fcd->wsc_InUseCounter--;
 		FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
 		
 		releaseWSData( data );
+		
+		 lws_close_reason( fcd->wsc_Wsi, LWS_CLOSE_STATUS_GOINGAWAY , NULL, 0 );
 		
 #ifdef USE_PTHREAD
 		pthread_exit( 0 );
@@ -934,6 +936,8 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				
 				FQDeInitFree( &(fcd->wsc_MsgQueue) );
 				pthread_mutex_destroy( &(fcd->wsc_Mutex) );
+				
+				lws_close_reason( wsi, LWS_CLOSE_STATUS_GOINGAWAY , NULL, 0 );
 			}
 			Log( FLOG_DEBUG, "[WS] Callback session closed\n");
 
@@ -1023,6 +1027,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					//pthread_t thread;
 					memset( &(imsg->im_Thread), 0, sizeof( pthread_t ) );
 					
+					DEBUG("Pass fcd to thread: %p\n", fcd );
 					imsg->im_FCD = fcd;
 					imsg->im_Msg = in;
 					imsg->im_Len = len;
@@ -1183,6 +1188,7 @@ void ParseAndCallThread( void *d )
 	//	FRIEND_MUTEX_UNLOCK( &(im->im_FCD->wsc_Mutex) );
 	//}
 	
+	DEBUG("[ParseAndCallThread] FCD %p\n", im->im_FCD );
 	ParseAndCall( im->im_FCD, im->im_Msg, im->im_Len );
 	
 	//if( FRIEND_MUTEX_LOCK( &(im->im_FCD->wsc_Mutex) ) == 0 )

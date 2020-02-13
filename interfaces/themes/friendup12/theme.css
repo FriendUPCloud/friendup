@@ -1617,9 +1617,11 @@ html #Tray
 	bottom: 6px;
 }
 
-html #Tray > div
+html div #Tray > div
 {
-	margin: -2px 10px 10px 0;
+	margin: -2px 0px 10px 0;
+	color: #455155;
+	text-shadow: none;
 }
 
 html #WorkspaceMenu
