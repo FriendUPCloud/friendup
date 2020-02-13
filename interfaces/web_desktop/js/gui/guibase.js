@@ -2803,18 +2803,6 @@ function PollTaskbar( curr )
 			else
 			{
 				var right = '0';
-				if( ge( 'Tray' ) )
-				{
-					if( Workspace.mainDock && Workspace.mainDock.conf.size )
-					{
-						var rems = [ 'Size80', 'Size59', 'Size32', 'Size16' ];
-						for( var a = 0; a < rems.length; a++ )
-							ge( 'Tray' ).classList.remove( rems[a] );
-						ge( 'Tray' ).classList.add( 'Size' + Workspace.mainDock.conf.size );
-					}
-					dlength += ge( 'Tray' ).offsetWidth;
-					right = ge( 'Tray' ).offsetWidth;
-				}
 				baseElement.style.width = 'calc(100% - ' + dlength + 'px)';
 				baseElement.style.right = right + 'px';
 				baseElement.style.height = '100%';
