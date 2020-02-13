@@ -817,7 +817,7 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 	}}}}
 	 */
 	
-	int msglen = 512 + strlen( params );
+	int msglen = 728 + strlen( params );
 	if( type != NULL )
 	{
 		msglen += strlen( type );
