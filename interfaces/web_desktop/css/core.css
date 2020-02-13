@@ -2209,6 +2209,11 @@ body #DeepestField
     z-index: 999;
 }
 
+[mobile] #Tray
+{
+	display: none;
+}
+
 html #Tray.Size16
 {
 	height: 16px;
