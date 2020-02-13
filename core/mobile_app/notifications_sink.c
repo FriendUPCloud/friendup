@@ -824,11 +824,18 @@ void ProcessSinkMessage( void *locd )
 						{
 							char *reqid = NULL;
 							//{"type":"service","data":{"type":"room","data":{"type":"create","requestid":"EXTSER_1581518992698024_ID","data":{"ownerUserId":"df0499e006056004359160d3041d95b0","name":"blabla"}}}}
-							DEBUG("External service incoming: room notification\npos 13: %s\n14: %s\n", data + t[13].start, data + t[14].start );
 							
-							if( strncmp( data + t[13].start, "requestid", t[13].end - t[13].start) == 0) 
+							
+							//{"type":"service","data":{"type":"room","data":{"requestId":"bladdibla","response":null,"error":"ERR_NO_OWNER"}}}
+							//pos 13: error":"ERR_NO_OWNER"}}}
+							//14: ERR_NO_OWNER"}}}
+
+							
+							DEBUG("External service incoming: room notification\npos 8: %s\npos 13: %s\n14: %s\n", data + t[8].start, data + t[13].start, data + t[14].start );
+							
+							if( strncmp( data + t[8].start, "requestId", t[8].end - t[8].start) == 0) 
 							{
-								reqid = StringDuplicateN( data + t[14].start, t[14].end - t[14].start );
+								reqid = StringDuplicateN( data + t[9].start, t[9].end - t[9].start );
 							}
 							
 							if( NotificationManagerAddIncomingRequestES( SLIB->sl_NotificationManager, reqid, StringDuplicate( data ) ) != 0 )
