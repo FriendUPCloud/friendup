@@ -427,6 +427,11 @@ html body.Synthwave .Screen > .TitleBar
 	color: #bdbcff;
 }
 
+html body.Synthwave div #Tray > div
+{
+	color: white;
+}
+
 html body.Synthwave #WorkspaceMenu > ul > li,
 html body.Synthwave #WorkspaceMenu .Menu,
 html body.Synthwave #WorkspaceMenu .Menu:hover,

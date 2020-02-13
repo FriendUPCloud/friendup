@@ -338,6 +338,11 @@ html body.Dark .Screen > .TitleBar
 	color: #e0e0e0;
 }
 
+html body.Dark div #Tray > div
+{
+	color: white;
+}
+
 html body.Dark #WorkspaceMenu > ul > li,
 html body.Dark #WorkspaceMenu .Menu,
 html body.Dark #WorkspaceMenu .Menu:hover,

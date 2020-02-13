@@ -2441,24 +2441,29 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 
 .TrayElement.Tasks:before
 {
-	background-image: url(/graphics/tasks.png);
+	font-family: fontawesome;
+	content: "\f022";
+	font-size: 135%;
+	text-align: center;
+	line-height: 24px;
 }
 
 .TrayElement.Notification:before
 {
 	font-family: fontawesome;
 	content: "\f0f3";
-	width: 15px;
-	height: 15px;
-	top: 8px;
-	left: 9px;
-	line-height: 15px;
-	border-radius: 100%;
+	font-size: 105%;
+	text-align: center;
+	line-height: 24px;
 }
 
 .TrayElement.Disks:before
 {
-	background-image: url(/graphics/disks.png);
+	font-family: fontawesome;
+	content: "\f07c";
+	font-size: 135%;
+	text-align: center;
+	line-height: 24px;
 }
 
 .TrayElement:hover .BubbleInfo.List > div 
