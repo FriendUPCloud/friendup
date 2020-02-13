@@ -43,8 +43,7 @@ Widget.prototype.init = function( flags, target )
 	
 	this.dom.onmousedown = function( e )
 	{
-		//if( 
-		//return cancelBubble( e );
+		return cancelBubble( e );
 	}
 	
 	this.target.appendChild( this.dom );
