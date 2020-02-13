@@ -2927,7 +2927,7 @@ body:not([mobile]).ShowTasks #TaskSwitcher .Current .Close
 
 #DoorsScreen .Left > .VirtualWorkspaces > div.Active
 {
-	background: rgba(0,0,0,0.8);
+	background: transparent;
 	color: white;
 }
 
