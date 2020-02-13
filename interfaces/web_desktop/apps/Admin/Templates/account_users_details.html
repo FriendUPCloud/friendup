@@ -93,6 +93,20 @@
 		</div>
 		
 		<div class="HRow MarginBottom">
+			<div class="HContent30 FloatLeft">
+				<strong>{i18n_level}</strong>
+			</div>
+			<div class="HContent70 FloatLeft">
+				<select class="InputHeight FullWidth" id="usLevel">
+					<option value="User">{i18n_level_user}</option>
+					<option value="Admin">{i18n_level_admin}</option>
+					<option value="Guest">{i18n_level_guest}</option>
+					<option value="API">{i18n_level_api}</option>
+				</select>
+			</div>
+		</div>
+		
+		<div class="HRow MarginBottom">
 			<div class="HContent30 FloatLeft Ellipsis">
 				<strong>{i18n_language}</strong>
 			</div>
@@ -102,6 +116,7 @@
 				</select>
 			</div>
 		</div>
+		
 		<div class="HRow MarginBottom" id="AdminSetupContainer">
 			<div class="HContent30 FloatLeft Ellipsis">
 				<strong>{i18n_setup}</strong>
