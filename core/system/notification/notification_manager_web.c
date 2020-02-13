@@ -248,7 +248,7 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		
 		if( params != NULL && type != NULL && group != NULL && action != NULL )
 		{
-			char *serresp = NotificationManagerSendRequestToConnections( l->sl_NotificationManager, request, servername, type, group, action, params );
+			char *serresp = NotificationManagerSendRequestToConnections( l->sl_NotificationManager, request, loggedSession, servername, type, group, action, params );
 			if( serresp != NULL )
 			{
 				HttpSetContent( response, serresp, strlen( serresp ) );
