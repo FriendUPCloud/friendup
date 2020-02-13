@@ -1009,7 +1009,7 @@ int NotificationManagerAddIncomingRequestES( NotificationManager *nm, char *reqi
 	// allocate memory for new entry
 	FQEntry *newEntry = FCalloc( 1, sizeof( FQEntry ) );
 	
-	DEBUG("[NotificationManagerAddIncomingRequestES]\n");
+	DEBUG("[NotificationManagerAddIncomingRequestES] requestid : %s message: %s\n", reqid, message );
 	
 	if( newEntry != NULL )
 	{
