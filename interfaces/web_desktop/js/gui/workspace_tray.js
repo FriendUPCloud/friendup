@@ -325,6 +325,7 @@ function PollTray()
 						}						
 					}
 					
+					// Clear button
 					if( notties.length > 1 )
 					{
 						var remAll = document.createElement( 'div' );
@@ -337,6 +338,7 @@ function PollTray()
 						tray.notificationPopup.appendChild( remAll );
 						remAll.onmousedown = function( e )
 						{
+							tray.notificationPopup.innerHTML = '';
 							Workspace.notificationEvents = [];
 							PollTray();
 							cancelBubble( e );

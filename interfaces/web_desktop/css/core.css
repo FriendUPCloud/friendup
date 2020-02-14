@@ -2282,9 +2282,10 @@ html #Tray.Size16
 	background: rgba(0,0,0,0.6);
 	border-radius: 100%;
 	padding: 2px;
-	line-height: 10px;
-	border: 1px solid rgba(0,0,0,0.8);
-	min-width: 8px;
+	border: 1px solid rgba(0,0,0,0.7);
+	line-height: 8px;
+	width: 8px;
+	height: 8px;
 	text-align: center;
 }
 
