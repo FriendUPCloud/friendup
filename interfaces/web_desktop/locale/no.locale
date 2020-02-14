@@ -469,6 +469,7 @@ Running tasks : Kjørende prosesser
 i18n_read_only                          : Kun lese
 i18n_task_running                       : oppgave kjører
 i18n_tasks_running                      : oppgaver kjører
+i18n_manage_tasks                       : Oppgavedetaljer
 i18n_visible                            : Visible
 i18n_network_activity                   : Network activity
 i18n_today                              : I dag

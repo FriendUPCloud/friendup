@@ -88,7 +88,10 @@ function PollTray()
 		tray.tasks.poll = function()
 		{
 			var taskn = Workspace.applications.length;
-			this.innerHTML = '<div class="BubbleInfo"><div>' + taskn + ' ' + ( taskn == 1 ? i18n( 'i18n_task_running' ) : i18n( 'i18n_tasks_running' ) ) + '.</div></div>';
+			var edit = '';
+			if( taskn > 0 )
+				edit = '<p class="BorderTop PaddingTop"><button onmousedown="Workspace.Tasklist()" type="button" class="Button IconSmall IconButton fa-bar-chart"> ' + i18n( 'i18n_manage_tasks' ) + '</button></p>';
+			this.innerHTML = '<div class="BubbleInfo"><div><p class="Layout">' + taskn + ' ' + ( taskn == 1 ? i18n( 'i18n_task_running' ) : i18n( 'i18n_tasks_running' ) ) + '.</p>' + edit + '</div></div>';
 		}
 		tray.appendChild( tray.tasks );
 		

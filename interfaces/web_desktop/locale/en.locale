@@ -473,6 +473,7 @@ Running tasks : Running tasks
 i18n_read_only                          : Read only
 i18n_task_running                       : task running
 i18n_tasks_running                      : tasks running
+i18n_manage_tasks                       : Manage tasks
 i18n_visible                            : Visible
 i18n_network_activity                   : Network activity
 i18n_today                              : Today
