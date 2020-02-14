@@ -2283,6 +2283,9 @@ html #Tray.Size16
 	border-radius: 100%;
 	padding: 2px;
 	line-height: 10px;
+	border: 1px solid rgba(0,0,0,0.8);
+	min-width: 8px;
+	text-align: center;
 }
 
 .BubbleInfo, .PopInfo
