@@ -308,7 +308,7 @@ function PollTray()
 						
 						h += GetElementHeight( d ) + 8;
 
-						if( GetElementTop( d ) + d.offsetHeight > window.innerHeight - 80 )
+						if( GetElementTop( d ) + d.offsetHeight > window.innerHeight - 160 )
 						{
 							break;
 						}						
