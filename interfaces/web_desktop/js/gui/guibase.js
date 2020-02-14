@@ -2538,6 +2538,10 @@ function CheckScreenTitle( screen, force )
 	var testObject = screen ? screen : window.currentScreen;
 	if( !testObject && !force ) return;
 	
+	// Orphan node!
+	if( window.currentMovable && !( window.currentMovable.parentNode && window.currentMovable.parentNode.parentNode ) )
+		window.currentMovable = null;
+	
 	// If nothing changed, don't change
 	if( prevScreen && prevWindow && !force )
 	{
@@ -2749,7 +2753,6 @@ function PollTaskbar( curr )
 					ge( 'Statusbar' ).className = 'Docklist';
 				
 					var dlet = dlets[ 0 ];
-					dlet.style.zIndex = 2147483641;
 					var d = document.createElement( 'div' );
 					d.id = 'DockWindowList';
 					d.className = 'WindowList';
@@ -2804,18 +2807,6 @@ function PollTaskbar( curr )
 			else
 			{
 				var right = '0';
-				if( ge( 'Tray' ) )
-				{
-					if( Workspace.mainDock && Workspace.mainDock.conf.size )
-					{
-						var rems = [ 'Size80', 'Size59', 'Size32', 'Size16' ];
-						for( var a = 0; a < rems.length; a++ )
-							ge( 'Tray' ).classList.remove( rems[a] );
-						ge( 'Tray' ).classList.add( 'Size' + Workspace.mainDock.conf.size );
-					}
-					dlength += ge( 'Tray' ).offsetWidth;
-					right = ge( 'Tray' ).offsetWidth;
-				}
 				baseElement.style.width = 'calc(100% - ' + dlength + 'px)';
 				baseElement.style.right = right + 'px';
 				baseElement.style.height = '100%';
@@ -3144,7 +3135,7 @@ function PollTaskbar( curr )
 						}
 						
 						// Need some help? Only show help if parent element is aligned left or right
-						CreateHelpBubble( d, d.window.titleString, false, { positions: [ 'Left', 'Right' ] } );
+						CreateHelpBubble( d, d.window.titleString, false, { getOffsetTop: function(){ return t.scrollTop; }, positions: [ 'Left', 'Right' ] } );
 						
 						t.appendChild( d );
 						d.origWidth = d.offsetWidth + 20;
@@ -3726,6 +3717,15 @@ movableMouseDown = function ( e )
 		
 		return cancelBubble( 2 );
 	}
+	else if ( isMobile && ( clickonDesktop || clickOnView ) )
+	{
+		// TODO: Perhaps scroll shouldn't deselect
+		if( clickOnView )
+		{
+			clearRegionIcons( { force: true } );
+		}
+		
+	}
 }
 
 // Go into standard Workspace user mode (f.ex. clicking on wallpaper)
@@ -4220,6 +4220,27 @@ function CreateHelpBubble( element, text, uniqueid, rules )
 				else if( positionClass == 'Top' )
 				{
 					mt = GetElementTop( element.parentNode ) + GetElementHeight( element.parentNode ) + 25;
+				}
+			}
+			
+			// Nudge
+			if( rules )
+			{
+				if( !!rules.offsetTop )
+				{
+					mt -= rules.offsetTop;
+				}
+				if( !!rules.offsetLeft )
+				{
+					mx -= rules.offsetLeft;
+				}
+				if( !!rules.getOffsetTop )
+				{
+					mt -= rules.getOffsetTop();
+				}
+				if( !!rules.getOffsetLeft )
+				{
+					mx -= rules.getOffsetLeft();
 				}
 			}
 			

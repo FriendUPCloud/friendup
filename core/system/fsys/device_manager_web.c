@@ -608,19 +608,39 @@ f.Name ASC";
 			// this functionality allow admins to mount other users drives
 			//
 			
-			if( userID > 0 && usr->u_IsAdmin == TRUE )
+			if( userID > 0 )
 			{
-				DEBUG("UserID = %lu user is admin: %d\n", userID, usr->u_IsAdmin );
-				User *locusr = UMGetUserByID( l->sl_UM, userID );
-				if( locusr != NULL )
+				char *authid = NULL;
+				char *args = NULL;
+				el = HttpGetPOSTParameter( request, "authid" );
+				if( el != NULL )
 				{
-					usr = locusr;
-					
+					authid = el->data;
 				}
-				else
+				el = HttpGetPOSTParameter( request, "args" );
+				if( el != NULL )
 				{
-					foundUserInMemory = FALSE;
+					args = el->data;
+					//args = UrlDecodeToMem( el->data );
 				}
+				
+				if( usr->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
+				{
+					DEBUG("UserID = %lu user is admin: %d\n", userID, usr->u_IsAdmin );
+					User *locusr = UMGetUserByID( l->sl_UM, userID );
+					if( locusr != NULL )
+					{
+						usr = locusr;
+					}
+					else
+					{
+						foundUserInMemory = FALSE;
+					}
+				} // isAdmin or permissions granted
+				//if( args != NULL )
+				//{
+				//	FFree( args );
+				//}
 			}
 			else
 			{
@@ -845,7 +865,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 		}
 		
 		HashmapElement *el = HttpGetPOSTParameter( request, "userid" );
-		if( el != NULL && loggedSession->us_User->u_IsAdmin == TRUE )
+		if( el != NULL )
 		{
 			char *next;
 			userID = (FLONG)strtol(( char *)el->data, &next, 0);
@@ -866,6 +886,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 			
 			if( devname != NULL && ( ldevname = FCalloc( strlen( devname ) + 50, sizeof(char) ) ) != NULL )
 			{
+				DEBUG("Devname found\n");
 				UrlDecode( ldevname, devname );
 				strcpy( devname, ldevname );
 				
@@ -900,6 +921,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 		{
 			if( loggedSession != NULL )
 			{
+				DEBUG("loggedSession found\n");
 				mountError = -1;
 				char *ldevname = NULL;
 				User *activeUser = loggedSession->us_User;
@@ -907,28 +929,74 @@ AND LOWER(f.Name) = LOWER('%s')",
 				
 				if( userID > 0 )
 				{
+					char *authid = NULL;
+					char *args = NULL;
+					
+					DEBUG("UserID parameter found: %lu\n", userID );
+					
+					el = HttpGetPOSTParameter( request, "authid" );
+					if( el != NULL )
+					{
+						authid = el->data;
+					}
+					el = HttpGetPOSTParameter( request, "args" );
+					if( el != NULL )
+					{
+						args = el->data;
+						//args = UrlDecodeToMem( el->data );
+					}
 					DEBUG("UserID %lu\n", userID );
 			
-					User *locusr = UMGetUserByID( l->sl_UM, userID );
-					// user is not in memory, we can remove his entries in DB only
-					if( locusr == NULL )
+					if( activeUser->u_IsAdmin || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
 					{
+						DEBUG("Permissions accepted or user is admin\n");
+						User *locusr = NULL;
+						
+						if( userID == loggedSession->us_User->u_ID )
+						{
+							DEBUG("Seems changes will be applyed to current user\n");
+							locusr = loggedSession->us_User;
+						}
+						else
+						{
+							locusr = UMGetUserByID( l->sl_UM, userID );
+						}
+						
+						// user is not in memory, we can remove his entries in DB only
+						if( locusr == NULL )
+						{
+							deviceUnmounted = TRUE;
+							mountError = 0;
+						}
+						else
+						{
+							Log( FLOG_INFO, "Admin1 ID[%lu] is mounting drive to user ID[%lu]\n", activeUser->u_ID, locusr->u_ID );
+							activeUser = locusr;
+							userID = activeUser->u_ID;
+						}
+						//deviceUnmounted = TRUE;
 
-						deviceUnmounted = TRUE;
 						mountError = 0;
 					}
 					else
 					{
-						Log( FLOG_INFO, "Admin1 ID[%lu] is mounting drive to user ID[%lu]\n", activeUser->u_ID, locusr->u_ID );
-						activeUser = locusr;
+						Log( FLOG_INFO, "Admin1 ID[%lu] is mounting drive to user ID[%lu]\n", activeUser->u_ID, activeUser->u_ID );
 						userID = activeUser->u_ID;
 					}
+					//if( args != NULL )
+					//{
+					//	FFree( args );
+					//}
 				}
+				
+				DEBUG("[DeviceMWebRequest] device unmounted: %d\n", deviceUnmounted );
 				
 				if( deviceUnmounted == FALSE )
 				{
 					char *type = NULL;
 					int fid = 0;
+					
+					DEBUG("Device unmounted = FALSE\n");
 				
 					File *f = NULL;
 					LIST_FOR_EACH( activeUser->u_MountedDevs, f, File * )
@@ -958,6 +1026,8 @@ AND LOWER(f.Name) = LOWER('%s')",
 							}
 						}
 					}
+					
+					DEBUG("[DeviceMWebRequest] ldevname: %s\n", ldevname );
 				
 					// check also device attached to groups
 					if( ldevname == NULL )
@@ -1001,7 +1071,9 @@ AND LOWER(f.Name) = LOWER('%s')",
 						{FSys_Mount_Type, (FULONG)type },
 						{TAG_DONE, TAG_DONE }
 					};
+					DEBUG("[DeviceMWebRequest] call UnMountFS\n");
 				
+					DEBUG("[DeviceMWebRequest] Unmount will be called\n");
 					mountError = UnMountFS( l->sl_DeviceManager, (struct TagItem *)&tags, activeUser, loggedSession );
 					DEBUG("[DeviceMWebRequest] Unmounting device error %d\n", mountError );
 				}

@@ -129,6 +129,14 @@ bool json_get_element_int(json_t *json, const char *needle, int *target_int);
  */
 char* json_escape_string(const char *string_to_escape);
 
+/**
+ * Returns a string that is JSON-unescaped.
+ *
+ * @param string_to_unescape string that should be unescaped
+  * @return pointer to NULL-terminated string or NULL in case of failure
+ */
+char* json_unescape_string( char *string_to_unescape);
+
 #ifdef __cplusplus
 }
 #endif

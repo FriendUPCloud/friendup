@@ -34,6 +34,7 @@
 	$ColorText:              #333333;
 	$ColorButton:            #f0f0f0;
 	$ColorBgButton:          #455155;
+	$ColorBgButtonAlt:       #34495E;
 	$ColorButtonHover:       #f0f0f0;
 	$ColorBgButtonHover:     #556368;
 	$ColorSelect:            #333333;
@@ -67,8 +68,11 @@
 	$ColorDialogHeader:      #f0f0f0;
 	$ColorPositive:          #333333;
 	$ColorNegative:          #f0f0f0;
+	$ColorNegativeAlt:       #34495E;
 	$ColorBgPositive:        #cfcfcf;
+	$ColorBgPositiveAlt:     #f0f0f0;
 	$ColorBgNegative:        #3f3f3f;
+	$ColorBgNegativeAlt:     #34495E;
 	$ColorBgHighlight:       #818181;
 	$ColorHighlight:         #e0e0e0;
 	$ColorSelect:            #f0f0f0;
@@ -303,21 +307,28 @@ html body #DoorsScreen .Left > .VirtualWorkspaces
 
 html #DoorsScreen .Left > .VirtualWorkspaces > div
 {
-	height: 18px;
-	margin: 4px 5px 0 0 !important;
+	height: 16px;
+	margin: 5px 6px 0 0 !important;
 	border-radius: 3px;
-	line-height: 16px;
+	line-height: 14px;
+	overflow: hidden;
+	border: 1px solid rgba(69, 81, 85, 0.4);
+}
+
+html #DoorsScreen .Left > .VirtualWorkspaces > div.Active
+{
+	background: #455155;
 }
 
 html #DoorsScreen .Left > .VirtualWorkspaces > div:first-child
 {
-	margin-left: 10px !important;
+	margin-left: 6px !important;
 }
 
 html #DoorsScreen .Left > .VirtualWorkspaces > div > span
 {
 	font-weight: normal;
-	font-size: 0.9em;
+	font-size: 0.8em;
 }
 
 html #DoorsScreen .Left > .VirtualWorkspaces > div.Active > span
@@ -1617,9 +1628,11 @@ html #Tray
 	bottom: 6px;
 }
 
-html #Tray > div
+html div #Tray > div
 {
-	margin: -2px 10px 10px 0;
+	margin: -2px 0px 10px 0;
+	color: #455155;
+	text-shadow: none;
 }
 
 html #WorkspaceMenu

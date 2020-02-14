@@ -497,7 +497,7 @@ void NotificationIOSSendingThread( FThread *data )
 						FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
 						// send message
 						
-						DEBUG("SENDING IOS\n\n\n");
+						DEBUG("SENDING IOS\n");
 						
 						if( nm->nm_APNSSandBox )
 						{

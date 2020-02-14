@@ -102,6 +102,7 @@ updateUsers();
 
 var Calendar = {
 	events: [],
+	date: ( new Date() ),
 	weekScrollTop: 0,
 	listMode: 'month',
 	exStyles: null, // extra styles

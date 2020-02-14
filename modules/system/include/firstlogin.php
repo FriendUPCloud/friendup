@@ -40,12 +40,16 @@ function InstallApp( $user_id, $app_name )
 	}
 }
 
+$debug = ( isset( $debug ) ? $debug : [] );
+
+$userid = ( isset( $args->args->userid ) ? $args->args->userid : $User->ID );
+
 // Check workgroup specific expansion
 // Load user's workgroups
 if( $wgroups = $SqlDatabase->FetchObjects( '
 	SELECT ug.Name FROM FUserGroup ug, FUserToGroup ugu, FUser u
 	WHERE
-		ug.Type = \'Workgroup\' AND u.ID = \'' . $User->ID . '\' AND 
+		ug.Type = \'Workgroup\' AND u.ID = \'' . $userid . '\' AND 
 		ugu.UserID = u.ID AND ug.ID = ugu.UserGroupID
 ' ) )
 {
@@ -54,11 +58,11 @@ if( $wgroups = $SqlDatabase->FetchObjects( '
 	{
 		$wkey = strtolower( str_replace( ' ', '_', $wgroup->Name ) );
 		// Is the script already run?
-		$s = new dbIO( 'FSetting' );
-		$s->Type = 'system';
-		$s->Key = 'firstlogin_' . $wkey;
-		$s->UserID = $User->ID;
-		if( !$s->Load() )
+		$cr = new dbIO( 'FSetting' );
+		$cr->Type = 'system';
+		$cr->Key = 'firstlogin_' . $wkey;
+		$cr->UserID = $userid;
+		if( !$cr->Load() )
 		{
 			// Load custom script for this workgroup
 			if( file_exists( 'cfg/firstlogin_' . $wkey . '.php' ) )
@@ -66,7 +70,7 @@ if( $wgroups = $SqlDatabase->FetchObjects( '
 				$Logger->log( 'Found workgroup ' . $wkey . ' firstlogin script.' );
 				require( 'cfg/firstlogin_' . $wkey . '.php' );
 				// The script has run, register it
-				$s->Save();
+				$cr->Save();
 			}
 		}
 		
@@ -79,27 +83,29 @@ if( $wgroups = $SqlDatabase->FetchObjects( '
 			$postLogin->FriendUser = $User->Name;
 			require( 'cfg/postlogin_' . $wkey . '.php' );
 		}
+		
+		$debug[] = $cr->Key;
 	}
 }
 
 // Prevent wizard for user
 if( isset( $Config ) && isset( $Config->preventwizard ) && $Config->preventwizard == 1 )
 {
-	$s = new dbIO( 'FSetting' );
-	$s->UserID = $User->ID;
-	$s->Type = 'system';
-	$s->Key = 'wizardrun';
-	$s->Load();
-	$s->Data = '1';
-	$s->Save();
+	$cr = new dbIO( 'FSetting' );
+	$cr->UserID = $userid;
+	$cr->Type = 'system';
+	$cr->Key = 'wizardrun';
+	$cr->Load();
+	$cr->Data = '1';
+	$cr->Save();
 }
 
 // Check that it really is first login
-$s = new dbIO( 'FSetting' );
-$s->Type = 'system';
-$s->Key = 'firstlogin';
-$s->UserID = $User->ID;
-if( !$s->Load() )
+$cr = new dbIO( 'FSetting' );
+$cr->Type = 'system';
+$cr->Key = 'firstlogin';
+$cr->UserID = $userid;
+if( !$cr->Load() || ( isset( $args->args->force ) && $args->args->force ) )
 {
 	// Check for expansion
 	if( file_exists( 'cfg/firstlogin.php' ) )
@@ -112,6 +118,10 @@ if( !$s->Load() )
 		require( 'firstlogin.defaults.php' );
 	}
 	// Now we had first login!
-	$s->Save();
+	$cr->Save();
+}
+else
+{
+	$debug[] = $cr->Key;
 }
 

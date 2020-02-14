@@ -253,7 +253,7 @@ Calendar.prototype.drawMonthname = function()
 	}
 	
 	var spans = this.monthName.getElementsByTagName( 'span' );
-	spans[0].onclick = function()
+	spans[0].onclick = function( e )
 	{
 		var d = new Date();
 		
@@ -267,9 +267,11 @@ Calendar.prototype.drawMonthname = function()
 		self.setDate( d );
 		self.render();
 		self.drawMonthname();
+		
+		return cancelBubble( e );
 	}
 	// Now
-	spans[1].onclick = function()
+	spans[1].onclick = function( e )
 	{
 		var d = new Date();
 		self.setDate( d );

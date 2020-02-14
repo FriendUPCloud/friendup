@@ -11,18 +11,50 @@
 
 if( $level == 'Admin' && $args->args->id > 0 )
 {
+	if( isset( $args->args->Name ) )
+	{
+		$c = new dbIO( 'FUserGroup' );
+		$c->Name = $args->args->Name;
+		if( $c->Load() && $c->ID != $args->args->id )
+		{
+			die( 'fail<!--separate-->{"response":"Template with that name already exist"}'  );
+		}
+	}
+	
 	// Get the fusergroup object
 	$o = new dbIO( 'FUserGroup' );
 	$o->ID = $args->args->id;
 	if( $o->Load() )
 	{
-		$o->Name = $args->args->Name;
-		$o->Save();
+		if( isset( $args->args->Description ) )
+		{
+			$o->Description = $args->args->Description;
+		}
+		
+		if( isset( $args->args->Name ) )
+		{
+			$o->Name = $args->args->Name;
+			$o->Save();
+		}
 		
 		// Insert settings
 		if( $o->ID > 0 )
 		{
 			$obj = new stdClass();
+			
+			$s = new dbIO( 'FSetting' );
+			$s->UserID = $args->args->id;
+			$s->Type = 'setup';
+			$s->Key = 'usergroup';
+			$s->Load();
+			
+			if( $s->Data )
+			{
+				if( $json = json_decode( $s->Data ) )
+				{
+					$obj = $json;
+				}
+			}
 			
 			/*$obj->apps = array(
 				array( 'Dock', 'A simple dock desklet' ),
@@ -62,49 +94,68 @@ if( $level == 'Admin' && $args->args->id > 0 )
 			
 			$obj->default = 'wp_coffee';*/
 			
-			if ( $args->args->Applications )
+			if ( isset( $args->args->Applications ) )
 			{
 				$obj->software = array();
 				
-				$arr = explode( ',', $args->args->Applications );
-				
-				foreach( $arr as $a )
+				if( $args->args->Applications )
 				{
-					$o = explode( '_', $a );
+					$arr = explode( ',', $args->args->Applications );
+				
+					foreach( $arr as $a )
+					{
+						$o = explode( '_', $a );
 					
-					$obj->software[] = array( trim( $o[0] ), trim( $o[1] ) );
+						$obj->software[] = array( trim( $o[0] ), trim( $o[1] ) );
+					}
 				}
 			}
 			
-			if ( $args->args->Startup )
+			if ( isset( $args->args->Startup ) )
 			{
 				$obj->startups = array();
 				
-				$arr = explode( ',', $args->args->Startup );
-				
-				foreach( $arr as $a )
+				if( $args->args->Startup )
 				{
-					$obj->startups[] = trim( $a );
+					$arr = explode( ',', $args->args->Startup );
+					
+					foreach( $arr as $a )
+					{
+						$obj->startups[] = trim( $a );
+					}
 				}
 			}
-			else
+			
+			if( isset( $args->args->Preinstall ) )
 			{
-				$obj->startups = [];
+				$obj->preinstall = $args->args->Preinstall;
+			}
+			if( isset( $args->args->Languages ) )
+			{
+				$obj->language = $args->args->Languages;
+			}
+			if( isset( $args->args->Themes ) )
+			{
+				$obj->theme = $args->args->Themes;
 			}
 			
-			$obj->preinstall = $args->args->Preinstall;
-			$obj->language = $args->args->Languages;
-			$obj->theme = $args->args->Themes;
+			if( isset( $args->args->ThemeConfig ) )
+			{
+				$obj->themeconfig = $args->args->ThemeConfig;
+			}
+			
+			if( isset( $args->args->WorkspaceCount ) )
+			{
+				$obj->workspacecount = $args->args->WorkspaceCount;
+			}
 			
 			if ( $data = json_encode( $obj ) )
 			{
-				$s = new dbIO( 'FSetting' );
-				$s->UserID = $args->args->id;
-				$s->Type = 'setup';
-				$s->Key = 'usergroup';
-				$s->Load();
-				$s->Data = $data;
-				$s->Save();
+				if( $data )
+				{
+					$s->Data = $data;
+					$s->Save();
+				}
 				
 				//die( print_r( print_r( $args->args,1 ) . ' -- ' ) . ' [] ' . $data . ' || ' . $args->args->id . ' [] ' . $s->ID );
 				

@@ -338,16 +338,20 @@ char* UriGetQuery( char* str, unsigned int strLen, char** next )
 	}
 	str++;
 
+	char* out = NULL;
 	unsigned int len = strEnd - str;
-	char* out = FCalloc( len + 1, sizeof(char) );
-	if( out != NULL )
+	if( len > 0 )
 	{
-		memcpy( out, str, len );
-		out[len] = 0;
-	}
-	else
-	{
-		FERROR("Cannot allocate memory in UriGetQuery\n");
+		out = FCalloc( len + 1, sizeof(char) );
+		if( out != NULL )
+		{
+			memcpy( out, str, len );
+			out[len] = 0;
+		}
+		else
+		{
+			FERROR("Cannot allocate memory in UriGetQuery\n");
+		}
 	}
 	*next = strEnd;
 	return out;
@@ -583,7 +587,7 @@ Uri* UriParse( char* str )
 	// Get path ---------------------------------------------------------------
 	char* pathRaw = UriGetPath( next, remainingLen, &next );
 	remainingLen = strLen - ( next - str );
-	if( pathRaw )
+	if( pathRaw != NULL )
 	{
 		uri->path = PathNew( pathRaw );
 		free( pathRaw );
@@ -597,7 +601,7 @@ Uri* UriParse( char* str )
 	// Get query --------------------------------------------------------------
 	char* query = UriGetQuery( next, remainingLen, &next );
 	remainingLen = strLen - ( next - str );
-	if( query )
+	if( query != NULL )
 	{
 		uri->query = UriParseQuery( query );
 		uri->queryRaw = query;
