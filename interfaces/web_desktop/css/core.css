@@ -2374,7 +2374,7 @@ html body .PopInfo + .BubbleInfo
 
 .TrayElement.Blink:before
 {
-	animation: blinking 1s infinite;
+	/*animation: blinking 1s infinite;*/
 }
 
 @keyframes blinking
