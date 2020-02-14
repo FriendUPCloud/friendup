@@ -451,7 +451,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 						if( strncmp( result->ls_Data, "ok", 2 ) != 0 )
 						{
 							DEBUG( "[fsysphp] Failed to mount device %s..\n", name );
-							DEBUG( "[fsysphp] Output was: %s\n", result->ls_Data );
+							//DEBUG( "[fsysphp] Output was: %s\n", result->ls_Data );
 							if( sd->module ) FFree( sd->module );
 							//if( dev->f_SessionID ) FFree( dev->f_SessionID );
 							if( sd->type ) FFree( sd->type );
@@ -528,6 +528,7 @@ int Release( struct FHandler *s, void *f )
 			if( sd->module ){ FFree( sd->module ); }
 			if( sd->type ){ FFree( sd->type ); }
 			FFree( lf->f_SpecialData );
+			lf->f_SpecialData = NULL;
 		}
 	}
 	return 0;

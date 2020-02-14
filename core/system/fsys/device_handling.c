@@ -278,7 +278,7 @@ int MountSharedDrive( DeviceManager *dm, User *usr, FULONG groupID )
 	// New way of finding type of device
 	SQLLibrary *sqllib = l->LibrarySQLGet( l );
 	
-	DEBUG("[MountSharedDrive] mount\n");
+	DEBUG("[MountSharedDrive] mount--------------------------------------\n");
 	
 	if( sqllib != NULL )
 	{
@@ -334,7 +334,7 @@ AND f.Name = '%s' and (f.Owner='0' OR f.Owner IS NULL)",
 	*/
 
 		sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
-"SELECT Type,Path,Config,ID,Execute,StoredBytes,Name FROM Filesystem WHERE Type='SQLWorkgroupDrive' AND GroupID =%lu and (Owner=0 OR Owner IS NULL)", groupID );
+"SELECT Type,Path,Config,ID,Execute,StoredBytes,Name FROM Filesystem WHERE Type='SQLWorkgroupDrive' AND GroupID=%lu and (Owner=0 OR Owner IS NULL)", groupID );
 
 		DEBUG("SQL : '%s'\n", temptext );
 	
@@ -365,7 +365,7 @@ AND f.Name = '%s' and (f.Owner='0' OR f.Owner IS NULL)",
 				if( row[ 5 ] != NULL ){ char *end; storedBytes = strtoul( (char *)row[ 5 ],  &end, 0 ); }
 				
 				if( row[ 6 ] != NULL ) name = StringDuplicate( row[ 6 ] );
-
+				
 				if( usr != NULL )
 				{
 					DEBUG("[MountFS] User name %s - found row type %s server %s path %s port %s\n", usr->u_Name, row[0], row[1], row[2], row[3] );
@@ -471,6 +471,8 @@ AND f.Name = '%s' and (f.Owner='0' OR f.Owner IS NULL)",
 					DEBUG("[MountSharedDrive] mount device : %p\n", retFile );
 					if( retFile != NULL )
 					{
+						retFile->f_ID = id;
+						retFile->f_UserGroupID = groupID;
 						UserAddDevice( usr, retFile );
 					}
 		
@@ -499,6 +501,8 @@ AND f.Name = '%s' and (f.Owner='0' OR f.Owner IS NULL)",
 		if( execute != NULL ){ FFree( execute ); }
 	}
 	DEBUG("Return with error %d\n", error );
+	
+	DEBUG("[MountSharedDrive] mount END--------------------------------------\n");
 	
 	return error;
 }
