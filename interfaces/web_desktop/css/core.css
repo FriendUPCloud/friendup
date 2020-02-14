@@ -2372,6 +2372,8 @@ html body .PopInfo + .BubbleInfo
 	border-bottom-width: 0;
 }
 
+#Tray .Hidden { display: none; }
+
 .TrayElement.Blink:before
 {
 	/*animation: blinking 1s infinite;*/
