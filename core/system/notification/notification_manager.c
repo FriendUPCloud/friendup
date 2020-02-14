@@ -876,6 +876,7 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 				sentMessageTo++;
 			}
 		}
+		FFree( reqID );
 		FFree( dstMsg );
 		
 		//
