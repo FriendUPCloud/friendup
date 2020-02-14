@@ -778,8 +778,6 @@ var WorkspaceInside = {
 		{
 			var messageRead = trash = false;
 			
-			console.log( 'Here we go: ', nmsg );
-			
 			//console.log( 'Handling notifications: ', nmsg );
 			
 			if( isMobile )
