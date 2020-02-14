@@ -468,7 +468,7 @@ void WSThread( void *d )
 		
 		releaseWSData( data );
 		
-		 lws_close_reason( fcd->wsc_Wsi, LWS_CLOSE_STATUS_GOINGAWAY , NULL, 0 );
+		 //lws_close_reason( fcd->wsc_Wsi, LWS_CLOSE_STATUS_GOINGAWAY , NULL, 0 );
 		
 #ifdef USE_PTHREAD
 		pthread_exit( 0 );
