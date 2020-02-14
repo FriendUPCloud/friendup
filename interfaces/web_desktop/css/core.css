@@ -2319,14 +2319,14 @@ html #Tray.Size16
 {
 	pointer-events: none;
 	position: absolute;
-	top: 8px;
+	top: 6px;
 	left: 19px;
-	font-size: 70%;
+	font-size: 65%;
 	color: white;
-	background: #A01507;
+	background: #C92918;
 	border-radius: 100%;
 	padding: 2px;
-	border: 1px solid #720B00;
+	border: 0;
 	line-height: 8px;
 	width: 8px;
 	height: 8px;
