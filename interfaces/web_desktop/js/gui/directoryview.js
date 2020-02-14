@@ -1669,17 +1669,17 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		sc = document.createElement ( 'div' );
 		sc.style.position = 'relative';
 		sc.className = 'Scroller';
+		obj.appendChild( sc );
 
 		// TODO: We will not use overflow-x unless we turn off autosorting of icons
 		if( icons.length )
 		{
-			if( icons[0].Type != 'Door' && icons[0].Type != 'Dormant' )
+			if( icons[0].Type != 'Door' && icons[0].Type != 'Dormant' && sc.parentNode.parentNode != ge( 'DoorsScreen' ) )
 			{
 				sc.style.overflowX = 'hidden';
 			}
 		}
 
-		obj.appendChild ( sc );
 		this.scroller = sc;
 	}
 	
