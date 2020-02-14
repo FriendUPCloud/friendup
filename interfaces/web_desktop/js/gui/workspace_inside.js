@@ -8207,6 +8207,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	//try to run a call and if does not get back display offline message....
 	checkServerConnectionHTTP: function()
 	{	
+		var self = this;
 		// Too early
 		if( !Workspace.postInitialized || !Workspace.sessionId || Workspace.reloginInProgress ) return;
 		if( window.ScreenOverlay && ScreenOverlay.visibility )
@@ -8243,6 +8244,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		m.forceSend = true;
 		m.cancelId = 'checkserverconnection';
 		
+		// This one is executed when we get a response from the server
 		m.onExecuted = function( e, d )
 		{
 			if( inactiveTimeout )
@@ -8254,16 +8256,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				var js = JSON.parse( d );
 				if( js.code && ( parseInt( js.code ) == 11 || parseInt( js.code ) == 3 ) )
 				{
-					//console.log( 'The session has gone away! Relogin using login().' );
-					//Workspace.flushSession();
 					Workspace.relogin(); // Try login using local storage
 				}
 			}
 			catch( b )
 			{
-				console.log( 'I do not understand the result. Server may be down.', e, d, b );
-				if( Workspace.serverIsThere && e == null && d == null )
+				if( e == null && d == null )
+				{
 					Workspace.relogin();
+				}
 			}
 			
 			//console.log( 'Response from connection checker: ', e, d );

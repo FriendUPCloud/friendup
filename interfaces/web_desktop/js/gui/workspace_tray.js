@@ -143,7 +143,18 @@ function PollTray()
 		{
 			tray.notifications.innerHTML = '';
 			tray.notificationPopup = null;
+			tray.notifications.num = null;
 		}
+		// Add numbers bubble
+		if( !tray.notifications.num && nots.length > 1 )
+		{
+			tray.notifications.num = document.createElement( 'span' );
+			tray.notifications.num.className = 'NumberOfNotifications';
+			tray.notifications.appendChild( tray.notifications.num );
+		}
+		if( tray.notifications.num )
+			tray.notifications.num.innerHTML = Workspace.notificationEvents.length;
+		// Done numbers bubble
 		
 		for( var a = 0; a < nots.length; a++ )
 		{
@@ -308,12 +319,13 @@ function PollTray()
 						
 						h += GetElementHeight( d ) + 8;
 
-						if( GetElementTop( d ) + d.offsetHeight > window.innerHeight - 80 )
+						if( GetElementTop( d ) + d.offsetHeight > window.innerHeight - 160 )
 						{
 							break;
 						}						
 					}
 					
+					// Clear button
 					if( notties.length > 1 )
 					{
 						var remAll = document.createElement( 'div' );
@@ -326,6 +338,7 @@ function PollTray()
 						tray.notificationPopup.appendChild( remAll );
 						remAll.onmousedown = function( e )
 						{
+							tray.notificationPopup.innerHTML = '';
 							Workspace.notificationEvents = [];
 							PollTray();
 							cancelBubble( e );
@@ -342,6 +355,7 @@ function PollTray()
 						
 						remAll.style.top = 27 + h + 'px';
 					}
+					
 				}
 				// No notifications?
 				else 
@@ -363,6 +377,10 @@ function PollTray()
 	{
 		tray.notifications.className = 'Hidden';
 		tray.notifications.onclick = null;
+		
+		if( tray.notifications.num && tray.notifications.num.parentNode )
+			tray.notifications.removeChild( tray.notifications.num );
+		else tray.notifications.num = null;
 	}
 }
 
