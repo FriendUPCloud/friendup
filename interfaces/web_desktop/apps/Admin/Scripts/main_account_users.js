@@ -4624,7 +4624,7 @@ Sections.accounts_users = function( cmd, extra )
 					'logintime="' + userList[ a ].LoginTime + '" ' + 
 					'timestamp="' + timestamp + '" '               +
 					//'class="IconSmall NegativeAlt fa-user-circle-o avatar" '   + 
-					'class="IconSmall Positive fa-user-circle-o avatar" '   + 
+					'class="IconSmall fa-user-circle-o avatar" '   + 
 					'style="position: relative;" '                 +
 					'><div style="' + bg + '"></div></span>';
 					
