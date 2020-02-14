@@ -2281,11 +2281,11 @@ html #Tray.Size16
 	color: white;
 	background: #C92918;
 	border-radius: 100%;
-	padding: 2px;
+	padding: 0;
 	border: 0;
-	line-height: 8px;
-	width: 8px;
-	height: 8px;
+	line-height: 11px;
+	width: 11px;
+	height: 11px;
 	text-align: center;
 }
 
