@@ -2509,8 +2509,8 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 .TrayElement.Tasks:before
 {
 	font-family: fontawesome;
-	content: "\f022";
-	font-size: 135%;
+	content: "\f0ae";
+	font-size: 125%;
 	text-align: center;
 	line-height: 24px;
 }
