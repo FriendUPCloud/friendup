@@ -402,6 +402,23 @@ function AddNotificationEvent( evt )
 		( Math.random() * 999 ) 
 	).toString();
 	evt.uniqueId = uniqueId;
+	// Double check duplicates
+	if( evt.notificationId )
+		evt.externNotificationId = evt.notificationId;
+	if( evt.notificationId )
+	{
+		for( var b = 0; b < Workspace.notificationEvents.length; b++ )
+		{
+			if( !Workspace.notificationEvents[ b ].externNotificationId )
+				continue;
+			if( Workspace.notificationEvents[ b ].externNotificationId == evt.externNotificationId )
+			{
+				// Duplicate!
+				console.log( 'Duplicate notification id.' );
+				return;
+			}
+		}
+	}
 	Workspace.notificationEvents.push( evt );
 	console.log( 'Added notification event.', evt );
 	return uniqueId;
@@ -520,7 +537,7 @@ function Notify( message, callback, clickcallback )
 		showCallback: callback,
 		clickCallback: clickcallback
 	};
-	var notificationId = AddNotificationEvent( nev );
+	var notificationId = AddNotificationEvent( nev, message.notificationId );
 
 	// On mobile, we always show the notification on the Workspace screen
 	if( isMobile )
