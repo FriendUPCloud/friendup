@@ -230,7 +230,18 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen, int type )
 {
 	int retval = 0;
-	if( wsi->wusc_Data == NULL || wsi->wusc_Data->wsc_Wsi == NULL )
+	/*
+	#5  0x00005580b006eae1 in addr2line (program_name=0x7ffe00631eeb "/home/friend/friendup/build/FriendCore", addr=0x5580b006e912 <crash_handler+240>, target_stream=0x7f2acc0bcd60)
+    at main.c:270
+#6  0x00005580b006e993 in crash_handler (sig=11) at main.c:227
+#7  <signal handler called>
+#8  0x00005580b008b2ad in WebsocketWrite (wsi=0x0, 
+    msgptr=0x7f2acc0cd7e0 "{\"type\":\"msg\",\"data\":{\"type\":\"response\",\"requestid\":\"fconn-req-0j1tp7nh-38o7rtzu-nzlw23eh\",\"data\":\"ok\"}}", msglen=104, type=0)
+    at network/protocol_websocket.c:233
+#9  0x00005580b008c437 in WSThread (d=0x7f2acc0bad20) at network/protocol_websocket.c:616
+
+	 */
+	if( wsi == NULL || wsi->wusc_Data == NULL || wsi->wusc_Data->wsc_Wsi == NULL )
 	{
 		return 0;
 	}
@@ -912,8 +923,10 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					Log( FLOG_DEBUG, "PROTOCOL_WS: Check in use %d wsiptr %p fcws ptr %p\n", fcd->wsc_InUseCounter, wsi, fcd );
 					if( fcd->wsc_InUseCounter <= 0 )
 					{
+						Log( FLOG_INFO, "Closeing WS connection properly\n");
 						break;
 					}
+					/*
 					if( val++ > 15 )
 					{
 						int i;
@@ -924,6 +937,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 						Log( FLOG_INFO, "Closeing WS connection\n");
 						break;
 					}
+					*/
 					sleep( 1 );
 					pthread_yield();
 				}
