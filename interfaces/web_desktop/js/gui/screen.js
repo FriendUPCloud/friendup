@@ -105,10 +105,7 @@ Screen = function ( flags, initObject )
 			"<div class=\"Box\" id=\"Statusbar\">" +
 			"	<div id=\"Taskbar\">" +
 			"	</div>" + 
-			"	<div id=\"StatusBox\">" +
-			"	</div>" +
-			//"   <div id=\"Tray\"><div class=\"Microphone IconSmall fa-microphone-slash\"></div>" +
-			"   <div id=\"Tray\"></div>" +
+			"	<div id=\"StatusBox\">" +			
 			"   </div>" +
 			"</div>";
 	}
