@@ -2271,6 +2271,20 @@ html #Tray.Size16
 
 /* Some info from the tray */
 
+#Tray .NumberOfNotifications
+{
+	pointer-events: none;
+	position: absolute;
+	top: 8px;
+	left: 0px;
+	font-size: 70%;
+	color: white;
+	background: rgba(0,0,0,0.6);
+	border-radius: 100%;
+	padding: 2px;
+	line-height: 10px;
+}
+
 .BubbleInfo, .PopInfo
 {
 	position: absolute;
