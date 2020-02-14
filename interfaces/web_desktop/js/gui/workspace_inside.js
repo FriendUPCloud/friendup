@@ -3618,7 +3618,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Check dormant
 		if( DormantMaster )
 		{
-			found = DormantMaster.getDoors();
+			var disks = DormantMaster.getDoors();
+			var found = [];
+			for( var a in disks )
+			{
+				if( disks[ a ].Filename != 'System:' ) found.push( disks[ a ] );
+			}
+			if( found.length <= 0 ) found = false;
 		}
 		var dom = false;
 
@@ -3667,6 +3673,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		var str = ''; var sw = 2;
 		for( var a = 0; a < found.length; a++ )
 		{
+			if( found[a].Filename == 'System:' ) continue;
 			sw = sw == 1 ? 2 : 1;
 			var dd = document.createElement( 'div' );
 			dd.className = 'sw' + sw;
