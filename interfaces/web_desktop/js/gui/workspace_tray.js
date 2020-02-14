@@ -395,6 +395,7 @@ function PollMobileTray()
 // Add notification event for safe keeping
 function AddNotificationEvent( evt )
 {
+	console.trace();
 	var uniqueId = CryptoJS.SHA1( 
 		'evt' + 
 		( new Date() ).getTime() + 
