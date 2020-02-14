@@ -652,8 +652,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 			_this.classList.remove( 'ColorStGrayLight' );
 			_this.classList.remove( 'fa-minus-circle' );
 			_this.classList.remove( 'fa-trash' );
-			_this.classList.remove( 'NegativeAlt' );
-			_this.classList.add( 'ButtonAlt' );
+			//_this.classList.remove( 'NegativeAlt' );
+			_this.classList.remove( 'Negative' );
+			//_this.classList.add( 'ButtonAlt' );
+			_this.classList.add( 'Button' );
 			_this.classList.add( 'BackgroundRed' );
 			_this.id = ( _this.id ? _this.id : 'EditMode' );
 			_this.innerHTML = ( args.button_text ? i18n( args.button_text ) : i18n( 'i18n_delete' ) );
@@ -1180,7 +1182,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 										'element' : function() 
 										{
 											var d = document.createElement( 'div' );
-											d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+											//d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+											d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
 											return d;
 										}(),
 										'child' : 
@@ -1293,7 +1296,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 																	'element' : function() 
 																	{
 																		var d = document.createElement( 'div' );
-																		d.className = 'IconSmall NegativeAlt fa-user-circle-o avatar';
+																		//d.className = 'IconSmall NegativeAlt fa-user-circle-o avatar';
+																		d.className = 'IconSmall Positive fa-user-circle-o avatar';
 																		//d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																		//d.style.backgroundSize = 'contain';
 																		//d.style.width = '24px';
@@ -1466,7 +1470,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 																	'element' : function() 
 																	{
 																		var d = document.createElement( 'div' );
-																		d.className = 'IconSmall NegativeAlt fa-user-circle-o avatar';
+																		//d.className = 'IconSmall NegativeAlt fa-user-circle-o avatar';
+																		d.className = 'IconSmall Positive fa-user-circle-o avatar';
 																		//d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																		//d.style.backgroundSize = 'contain';
 																		//d.style.width = '24px';
@@ -1804,7 +1809,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 				var header = document.createElement( 'div' );
 				header.className = 'List';
 				var headRow = document.createElement( 'div' );
-				headRow.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingTop PaddingBottom PaddingRight';
+				//headRow.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingTop PaddingBottom PaddingRight';
+				headRow.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingBottom PaddingRight';
 				for( var z in types )
 				{
 					var borders = '';
@@ -1882,7 +1888,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 							setROnclick( r, userList[ a ].ID );
 							r.className = 'HRow ';
 			
-							var icon = '<span class="IconSmall NegativeAlt fa-users"></span>';
+							//var icon = '<span class="IconSmall NegativeAlt fa-users"></span>';
+							var icon = '<span class="IconSmall Positive fa-users"></span>';
 							userList[ a ][ 'edit' ] = icon;
 				
 							for( var z in types )

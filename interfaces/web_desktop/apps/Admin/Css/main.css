@@ -199,7 +199,7 @@
 	font-size: 128px;
   	vertical-align: middle;
   	line-height: 128px;
-  	color: #34495E;
+  	/*color: #34495E;*/
 }
 
 #Admin #UserDetails #AdminAvatarArea 
@@ -309,7 +309,7 @@
 
 #Admin #StorageGui .name 
 {
-	color: #20374D;
+	/*color: #20374D;*/
 	font-size: 12px;
 	font-weight: 600;
 	line-height: 15px;
@@ -318,7 +318,7 @@
 #Admin #StorageGui .type, 
 #Admin #StorageGui .bytes
 {
-	color: #20374D;
+	/*color: #20374D;*/
 	font-size: 10px;
 	line-height: 13px;
 }
@@ -413,6 +413,7 @@
 #Admin .BackgroundRed
 {
 	background-color: #C0392B;
+	color: #f0f0f0;
 }
 
 #Admin .BackgroundGrey

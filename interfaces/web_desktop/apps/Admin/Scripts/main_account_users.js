@@ -170,6 +170,11 @@ Sections.accounts_users = function( cmd, extra )
 						};
 					},
 					
+					level : function (  )
+					{					
+						return ( userInfo.Level ? userInfo.Level : false );
+					},
+					
 					language : function (  )
 					{
 						// Language
@@ -402,6 +407,7 @@ Sections.accounts_users = function( cmd, extra )
 					var udisabled = user.udisabled; 
 					var ulocked   = user.ulocked; 
 					
+					var level     = func.level();
 					var languages = func.language();
 					var setup     = func.setup();
 					var wstr      = func.workgroups();
@@ -480,6 +486,24 @@ Sections.accounts_users = function( cmd, extra )
 								}
 							},
 							
+							level : function (  )
+							{
+								
+								if( ge( 'usLevel' ) && level )
+								{
+									var opt = ge( 'usLevel' ).getElementsByTagName( 'option' );
+									
+									if( opt.length > 0 )
+									{
+										for( var a = 0; a < opt.length; a++ )
+										{
+											if( opt[a].value == level ) opt[a].selected = 'selected';
+										}
+									}
+								}
+								
+							},
+							
 							language : function (  )
 							{
 								
@@ -536,7 +560,7 @@ Sections.accounts_users = function( cmd, extra )
 									{
 										for( var a = 0; a < inps.length; a++ )
 										{
-											if( inps[ a ].id && [ 'usFullname', 'usUsername', 'usEmail', 'usLanguage', 'usSetup' ].indexOf( inps[ a ].id ) >= 0 )
+											if( inps[ a ].id && [ 'usFullname', 'usUsername', 'usEmail', 'usLevel', 'usLanguage', 'usSetup' ].indexOf( inps[ a ].id ) >= 0 )
 											{
 												( function( i ) {
 													i.onclick = function( e )
@@ -548,6 +572,10 @@ Sections.accounts_users = function( cmd, extra )
 										}
 									}
 									
+									if( ge( 'usLevel' ) )
+									{
+										ge( 'usLevel' ).current = ge( 'usLevel' ).value;
+									}
 									if( ge( 'usLanguage' ) )
 									{
 										ge( 'usLanguage' ).current = ge( 'usLanguage' ).value;
@@ -1327,21 +1355,48 @@ Sections.accounts_users = function( cmd, extra )
 							
 							appids : function ( soft )
 							{
-								var ids = {};
-						
+								var output = []; var ids = {};
+								
 								if( soft )
 								{
 									console.log( 'soft ', soft );
 							
 									var i = 0;
-							
+									
 									for( var a in soft )
 									{
 										if( soft[a] && soft[a].ID && soft[a].Name )
 										{
-											ids[ i++ ] = soft[a];
+											if( soft[a].DockStatus >= 0 )
+											{
+												soft[a].DockStatus = parseInt( soft[a].DockStatus );
+											}
+											else
+											{
+												soft[a].DockStatus = 0;
+											}
+											
+											output.push( soft[a] );
 										}
 									}
+									
+									// Sort ASC default
+									
+									output.sort( function ( a, b ) { return ( a.DockStatus > b.DockStatus ) ? 1 : -1; } );
+									
+									if( output )
+									{
+										for( var b in output )
+										{
+											if( output[b].DockStatus > 0 )
+											{
+												console.log( '['+output[b].DockStatus+'] DockStatus ', output[b] );
+											}
+											
+											ids[ i++ ] = output[b];
+										}
+									}
+									
 								}
 						
 								return ids;
@@ -1452,7 +1507,8 @@ Sections.accounts_users = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+													//d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+													d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
 													return d;
 												}(),
 												'child' : 
@@ -1643,9 +1699,9 @@ Sections.accounts_users = function( cmd, extra )
 																						{
 																				
 																							args.func.updateids( 'applications', args.name, false );
-																					
+																							
 																							console.log( 'updateApplications( '+userInfo.ID+', callback, vars )' );
-																				
+																							
 																							updateApplications( userInfo.ID, function( e, d, vars )
 																							{
 																					
@@ -1822,7 +1878,9 @@ Sections.accounts_users = function( cmd, extra )
 																						func.updateids( 'applications', name, [ name, '0' ] );
 																						
 																						console.log( 'updateApplications( '+userInfo.ID+', callback, vars )' );
-																				
+																						
+																						
+																						
 																						updateApplications( userInfo.ID, function( e, d, vars )
 																						{
 																					
@@ -1852,6 +1910,8 @@ Sections.accounts_users = function( cmd, extra )
 																						func.updateids( 'applications', name, false );
 																						
 																						console.log( 'updateApplications( '+userInfo.ID+', callback, vars )' );
+																						
+																						
 																						
 																						updateApplications( userInfo.ID, function( e, d, vars )
 																						{
@@ -2115,7 +2175,8 @@ Sections.accounts_users = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+													//d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+													d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
 													return d;
 												}(),
 												'child' : 
@@ -2191,7 +2252,7 @@ Sections.accounts_users = function( cmd, extra )
 											this.head();
 									
 											var o = ge( 'DockInner' ); o.innerHTML = '';
-									
+											
 											if( this.ids )
 											{
 												for( var a in this.ids )
@@ -2205,7 +2266,7 @@ Sections.accounts_users = function( cmd, extra )
 															if( this.ids[a] && this.ids[a].Name == apps[k].Name && this.ids[a].DockStatus > 0 )
 															{
 																found = true;
-														
+																
 																break;
 															}
 														}
@@ -2300,6 +2361,8 @@ Sections.accounts_users = function( cmd, extra )
 																						{
 																					
 																							updateApplications( userInfo.ID );
+																							
+																							// TODO: Update two dockitems only ...
 																					
 																						} );
 																			
@@ -2319,6 +2382,8 @@ Sections.accounts_users = function( cmd, extra )
 																						{
 																					
 																							updateApplications( userInfo.ID );
+																							
+																							// TODO: update only two dockitems only ...
 																					
 																						} );
 																			
@@ -2354,7 +2419,9 @@ Sections.accounts_users = function( cmd, extra )
 																							args.func.updateids( 'dock', args.name, [ args.name, '0' ] );
 																				
 																							console.log( 'updateApplications( '+userInfo.ID+', callback, vars )' );
-																				
+																							
+																							removeDockItem( args.name, userInfo.ID, function(){} );
+																							
 																							updateApplications( userInfo.ID, function( e, d, vars )
 																							{
 																				
@@ -2530,7 +2597,9 @@ Sections.accounts_users = function( cmd, extra )
 																							func.updateids( 'dock', name, [ name, '1' ] );
 																				
 																							console.log( 'updateApplications( '+userInfo.ID+', callback, vars )' );
-																				
+																							
+																							addDockItem( name, userInfo.ID, function(){} );
+																							
 																							updateApplications( userInfo.ID, function( e, d, vars )
 																							{
 																				
@@ -2555,7 +2624,9 @@ Sections.accounts_users = function( cmd, extra )
 																							func.updateids( 'dock', name, [ name, '0' ] );
 																				
 																							console.log( 'updateApplications( '+userInfo.ID+', callback, vars )' );
-																				
+																							
+																							removeDockItem( name, userInfo.ID, function(){} );
+																							
 																							updateApplications( userInfo.ID, function( e, d, vars )
 																							{
 																					
@@ -3292,6 +3363,7 @@ Sections.accounts_users = function( cmd, extra )
 						func.init();
 						func.user();
 						func.password();
+						func.level();
 						func.language();
 						func.setup();
 						func.avatar();
@@ -3353,7 +3425,8 @@ Sections.accounts_users = function( cmd, extra )
 							{
 								// TODO: Fix first login first so we can set wallpapers on users not logged in yet.
 								
-								return '<button class="ButtonAlt IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>';
+								//return '<button class="ButtonAlt IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>';
+								return '<button class="Button IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>';
 							},
 			
 							wallpaper_preview : function ()
@@ -3801,8 +3874,9 @@ Sections.accounts_users = function( cmd, extra )
 			// Add the main heading
 			( function( ol ) {
 				var tr = document.createElement( 'div' );
-				tr.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingTop PaddingRight';
-			
+				//tr.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingTop PaddingRight';
+				tr.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingRight';
+				
 				var extr = '';
 				if( clearFilter )
 				{
@@ -3883,7 +3957,8 @@ Sections.accounts_users = function( cmd, extra )
 		var header = document.createElement( 'div' );
 		header.className = 'List';
 		var headRow = document.createElement( 'div' );
-		headRow.className = 'HRow BackgroundNegativeAlt Negative PaddingTop PaddingBottom';
+		//headRow.className = 'HRow BackgroundNegativeAlt Negative PaddingTop PaddingBottom';
+		headRow.className = 'HRow BackgroundNegative Negative PaddingTop PaddingBottom';
 		for( var z in types )
 		{
 			var borders = '';
@@ -4069,6 +4144,10 @@ Sections.accounts_users = function( cmd, extra )
 								}
 							}
 							
+							if( ge( 'usLevel' ) )
+							{
+								ge( 'usLevel' ).current = ge( 'usLevel' ).value;
+							}
 							if( ge( 'usLanguage' ) )
 							{
 								ge( 'usLanguage' ).current = ge( 'usLanguage' ).value;
@@ -4544,7 +4623,8 @@ Sections.accounts_users = function( cmd, extra )
 					'status="' + userList[ a ].Status + '" '       + 
 					'logintime="' + userList[ a ].LoginTime + '" ' + 
 					'timestamp="' + timestamp + '" '               +
-					'class="IconSmall NegativeAlt fa-user-circle-o avatar" '   + 
+					//'class="IconSmall NegativeAlt fa-user-circle-o avatar" '   + 
+					'class="IconSmall Positive fa-user-circle-o avatar" '   + 
 					'style="position: relative;" '                 +
 					'><div style="' + bg + '"></div></span>';
 					
@@ -4877,6 +4957,49 @@ Sections.accounts_users = function( cmd, extra )
 		
 	}
 	
+	function addDockItem( appName, userId, callback )
+	{
+		console.log( 'addDockItem( appName, userId, callback ) ', { appName:appName, userId:userId, callback:callback } );
+		
+		var m = new Module( 'dock' );
+		m.onExecuted = function( e, d )
+		{
+			console.log( { e:e, d:d } );
+		}
+		//m.execute( 'additems', { userID: userId, dockitems: [
+		//	application: appName, 
+		//	type: '',
+		//	displayname: '', 
+		//	shortdescription: '' 
+		//] } );
+	}
+	
+	function removeDockItem( appName, userId, callback )
+	{
+		console.log( 'removeDockItem( appName, userId, callback ) ', { appName:appName, userId:userId, callback:callback } );
+		
+		var m = new Module( 'dock' );
+		m.onExecuted = function( e, d )
+		{
+			console.log( { e:e, d:d } );
+		}
+		//m.execute( 'removefromdock', { userID: userId, name: appName } );
+	}
+	
+	function sortDockItem( direction, itemId, userId, callback )
+	{
+		console.log( 'sortDockItem( direction, itemId, userId, callback ) ', { direction:direction, itemId:itemId, userId:userId, callback:callback } );
+		
+		// TODO: Update the current sorting to support sortinging another users dock ...
+		
+		var m = new Module( 'dock' );
+		m.onExecuted = function( e, d )
+		{
+			console.log( { e:e, d:d } );
+		}
+		//m.execute( 'sortorder', { userID: userId, itemId: itemId, direction: direction } );
+	}
+	
 	Application.closeAllEditModes = function( act )
 	{
 		
@@ -4999,8 +5122,10 @@ Sections.accounts_users = function( cmd, extra )
 			_this.classList.remove( 'ColorStGrayLight' );
 			_this.classList.remove( 'fa-minus-circle' );
 			_this.classList.remove( 'fa-trash' );
-			_this.classList.remove( 'NegativeAlt' );
-			_this.classList.add( 'ButtonAlt' );
+			//_this.classList.remove( 'NegativeAlt' );
+			_this.classList.remove( 'Negative' );
+			//_this.classList.add( 'ButtonAlt' );
+			_this.classList.add( 'Button' );
 			_this.classList.add( 'BackgroundRed' );
 			_this.innerHTML = ( args.button_text ? i18n( args.button_text ) : i18n( 'i18n_delete' ) );
 			_this.args = args;
@@ -7323,6 +7448,7 @@ function saveUser( uid, cb, newuser )
 		usEmail    : 'email',
 		usUsername : 'username',
 		usPassword : 'password',
+		usLevel    : 'level',
 		usSetup    : 'setup'
 	};
 	

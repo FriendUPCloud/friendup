@@ -2247,11 +2247,15 @@ body #DeepestField
 {
     position: absolute;
     right: 0;
-    bottom: 0;
     min-width: 0px;
     max-width: 300px;
     height: 32px;
     z-index: 999;
+}
+
+[mobile] #Tray
+{
+	display: none;
 }
 
 html #Tray.Size16
@@ -2335,7 +2339,7 @@ html body .PopInfo + .BubbleInfo
 {
 	position: absolute;
 	right: 0px;
-	bottom: 8px;
+	top: 35px;
 	min-width: 100px;
 	max-height: 0px;
 	border-radius: 5px;
@@ -2346,7 +2350,8 @@ html body .PopInfo + .BubbleInfo
 	font-size: 95%;
 	transition: max-height,padding 0.25s,0.25s;
 	overflow: hidden;
-	line-height: 20px
+	line-height: 20px;
+	border-bottom-width: 0;
 }
 
 .TrayElement.Blink:before
@@ -2411,7 +2416,7 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 	content: " ";
 	display: block;
 	position: absolute;
-	bottom: 7px;
+	top: 30px;
 	width: 0px;
 	height: 0px;
 	right: 15px;
@@ -2485,17 +2490,29 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 
 .TrayElement.Tasks:before
 {
-	background-image: url(/graphics/tasks.png);
+	font-family: fontawesome;
+	content: "\f022";
+	font-size: 135%;
+	text-align: center;
+	line-height: 24px;
 }
 
 .TrayElement.Notification:before
 {
-	background-image: url(/graphics/notifications.png);
+	font-family: fontawesome;
+	content: "\f0f3";
+	font-size: 105%;
+	text-align: center;
+	line-height: 24px;
 }
 
 .TrayElement.Disks:before
 {
-	background-image: url(/graphics/disks.png);
+	font-family: fontawesome;
+	content: "\f07c";
+	font-size: 135%;
+	text-align: center;
+	line-height: 24px;
 }
 
 .TrayElement:hover .BubbleInfo.List > div 
@@ -2954,7 +2971,7 @@ body:not([mobile]).ShowTasks #TaskSwitcher .Current .Close
 
 #DoorsScreen .Left > .VirtualWorkspaces > div.Active
 {
-	background: rgba(0,0,0,0.8);
+	background: transparent;
 	color: white;
 }
 
@@ -3693,17 +3710,6 @@ html body[viewlist=dockedlist] #Statusbar
 	left: auto;
 }
 
-html body[viewlist=dockedlist] #Statusbar #Tray
-{
-	white-space: nowrap;
-	position: relative;
-}
-
-html body[viewlist=dockedlist] #Statusbar #Tray > div
-{
-	display: inline-block;
-}
-
 html body[viewlist=docked] #Statusbar
 {
 	height: 0;
@@ -3864,6 +3870,19 @@ html #DockWindowList .Task.Directory
 	margin: 0 0 5px 0;
 	max-width: 100%;
 	box-sizing: border-box;
+}
+
+html #Tray
+{
+	white-space: nowrap;
+	position: relative;
+	position: absolute;
+	top: 0;
+}
+
+html #Tray > div
+{
+	display: inline-block;
 }
 
 .DockMenu
