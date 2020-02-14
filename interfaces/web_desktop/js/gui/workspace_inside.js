@@ -8918,7 +8918,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				sw = sw == 1 ? 2 : 1;
 				var d = document.createElement( 'div' );
-				d.className = 'ListTask HRow PaddingSmall sw' + sw;
+				d.className = 'ListTask HRow Padding sw' + sw;
 				d.setAttribute( 'TaskID', adders[ a ].id )
 				d.innerHTML = '<div class="HContent80 FloatLeft">' + adders[ a ].applicationName + '</div>' +
 					'<div class="HContent20 FloatLeft TextRight">' +
