@@ -765,8 +765,10 @@ Sections.accounts_templates = function( cmd, extra )
 			_this.classList.remove( 'ColorStGrayLight' );
 			_this.classList.remove( 'fa-minus-circle' );
 			_this.classList.remove( 'fa-trash' );
-			_this.classList.remove( 'NegativeAlt' );
-			_this.classList.add( 'ButtonAlt' );
+			//_this.classList.remove( 'NegativeAlt' );
+			_this.classList.remove( 'Negative' );
+			//_this.classList.add( 'ButtonAlt' );
+			_this.classList.add( 'Button' );
 			_this.classList.add( 'BackgroundRed' );
 			_this.id = ( _this.id ? _this.id : 'EditMode' );
 			_this.innerHTML = ( args.button_text ? i18n( args.button_text ) : i18n( 'i18n_delete' ) );
@@ -824,12 +826,72 @@ Sections.accounts_templates = function( cmd, extra )
 		}
 	}
 	
-	function sortApps( name )
+	function sortApps( sortby )
 	{
 		
 		//
 		
-		alert( 'TODO ... sortApps( '+name+' )' );
+		var _this = ge( 'ApplicationInner' );
+		
+		if( _this )
+		{
+			var orderby = ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' );
+			
+			var list = _this.getElementsByTagName( 'div' );
+			
+			if( list.length > 0 )
+			{
+				var output = [];
+				
+				var callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
+				
+				for( var a = 0; a < list.length; a++ )
+				{
+					if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+					
+					var span = list[a].getElementsByTagName( 'span' )[0];
+					
+					if( span && span.getAttribute( sortby.toLowerCase() ) )
+					{
+						var obj = { 
+							sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
+							content : list[a]
+						};
+					
+						output.push( obj );
+					}
+				}
+				
+				if( output.length > 0 )
+				{
+					// Sort ASC default
+					
+					output.sort( callback );
+					
+					// Sort DESC
+					
+					if( orderby == 'DESC' ) 
+					{ 
+						output.reverse();  
+					}
+					
+					_this.innerHTML = '';
+					
+					_this.setAttribute( 'orderby', orderby );
+					
+					for( var key in output )
+					{
+						if( output[key] && output[key].content )
+						{
+							// Add row
+							_this.appendChild( output[key].content );
+						}
+					}
+				}
+			}
+		}
+		
+		console.log( output );
 	}
 	
 	Application.closeAllEditModes = function( act )
@@ -1105,7 +1167,8 @@ Sections.accounts_templates = function( cmd, extra )
 			wallpaper_button : function ()
 			{
 				// TODO: Fix first login first so we can set wallpapers on users not logged in yet.
-				return '<button class="ButtonAlt IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>';
+				//return '<button class="ButtonAlt IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>';
+				return '<button class="Button IconSmall" id="wallpaper_button_inner">Choose wallpaper</button>';
 				
 			},
 			
@@ -1500,7 +1563,8 @@ Sections.accounts_templates = function( cmd, extra )
 										'element' : function() 
 										{
 											var d = document.createElement( 'div' );
-											d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+											//d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+											d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
 											return d;
 										}(),
 										'child' : 
@@ -1618,11 +1682,14 @@ Sections.accounts_templates = function( cmd, extra )
 																	{ 
 																		'element' : function() 
 																		{
-																			var d = document.createElement( 'div' );
+																			var d = document.createElement( 'span' );
+																			d.setAttribute( 'Name', apps[k].Name );
+																			d.setAttribute( 'Category', apps[k].Category );
 																			d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																			d.style.backgroundSize = 'contain';
 																			d.style.width = '24px';
 																			d.style.height = '24px';
+																			d.style.display = 'block';
 																			return d;
 																		}(), 
 																		 'child' : 
@@ -1741,6 +1808,10 @@ Sections.accounts_templates = function( cmd, extra )
 											}
 									
 										}
+										
+										// Sort default by Name ASC
+										sortApps( 'Name' );
+										
 									}
 									
 								}
@@ -2093,7 +2164,8 @@ Sections.accounts_templates = function( cmd, extra )
 										'element' : function() 
 										{
 											var d = document.createElement( 'div' );
-											d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+											//d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+											d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
 											return d;
 										}(),
 										'child' : 
@@ -2671,7 +2743,7 @@ Sections.accounts_templates = function( cmd, extra )
 									console.log( this.ids );
 									
 									this.refresh();
-									this.func.applications( 'refresh' );
+									//this.func.applications( 'refresh' );
 									
 									if( callback ) return callback( true );
 								}
@@ -2740,7 +2812,7 @@ Sections.accounts_templates = function( cmd, extra )
 									console.log( this.ids );
 									
 									this.refresh();
-									this.func.applications( 'refresh' );
+									//this.func.applications( 'refresh' );
 									
 									if( callback ) return callback( true );
 								}
@@ -2867,7 +2939,8 @@ Sections.accounts_templates = function( cmd, extra )
 										'element' : function() 
 										{
 											var d = document.createElement( 'div' );
-											d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+											//d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+											d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
 											return d;
 										}(),
 										'child' : 
@@ -4035,7 +4108,8 @@ Sections.accounts_templates = function( cmd, extra )
 								'element' : function() 
 								{
 									var d = document.createElement( 'div' );
-									d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingTop PaddingBottom PaddingRight';
+									//d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingTop PaddingBottom PaddingRight';
+									d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingBottom PaddingRight';
 									return d;
 								}(),
 								'child' : 
@@ -4122,7 +4196,8 @@ Sections.accounts_templates = function( cmd, extra )
 											{
 												var d = document.createElement( 'div' );
 												d.className = 'TextCenter HContent10 FloatLeft PaddingSmall Ellipsis';
-												d.innerHTML = '<span class="IconSmall NegativeAlt fa-file-text-o"></span>';
+												//d.innerHTML = '<span class="IconSmall NegativeAlt fa-file-text-o"></span>';
+												d.innerHTML = '<span class="IconSmall fa-file-text-o"></span>';
 												return d;
 											}()
 										},

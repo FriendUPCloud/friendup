@@ -366,6 +366,11 @@ html body.Charcoal .Screen > .TitleBar
 	color: #e0e0e0;
 }
 
+html body.Charcoal div #Tray > div
+{
+	color: white;
+}
+
 html body.Charcoal #WorkspaceMenu > ul > li,
 html body.Charcoal #WorkspaceMenu .Menu,
 html body.Charcoal #WorkspaceMenu .Menu:hover,

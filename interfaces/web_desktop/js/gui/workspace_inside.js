@@ -401,6 +401,7 @@ var WorkspaceInside = {
 							}
 						}
 						ge( 'DoorsScreen' ).screenObject.contentDiv.style.left = '-' + 100 * this.ind + '%';
+						
 						_DeactivateWindows();
 						// Activate next window on next screen
 						for( var c in movableWindows )
@@ -423,6 +424,8 @@ var WorkspaceInside = {
 				ge( 'DoorsScreen' ).getElementsByClassName( 'Left' )[0].appendChild( d );
 				
 				Workspace.checkWorkspaceWallpapers();
+				
+				PollTrayPosition();
 			}
 		}
 		// Refresh our dynamic classes now..
@@ -486,6 +489,7 @@ var WorkspaceInside = {
 			{
 				work.style.right = GetElementWidth( extr ) + GetElementWidth( swit ) - 2 + 'px';
 			}
+			PollTrayPosition();
 		}
 	},
 	getWebSocketsState: function()
@@ -1214,6 +1218,7 @@ var WorkspaceInside = {
 				}
 				if( wid )
 					wid.autosize();
+				PollTrayPosition();
 			}
 		}
 		// FRANCOIS: get unique device IDs...
@@ -2645,6 +2650,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					
 					Workspace.docksReloading = null;
 					
+					ConstrainWindows();
+					
 					// Make sure taskbar is polled
 					if( !isMobile )
 					{
@@ -3130,6 +3137,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 					// Add new one
 					h.appendChild( styles );
+					
+					// Constrain all windows
+					ConstrainWindows();
 				}
 
 				// Update running applications
@@ -8252,6 +8262,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			catch( b )
 			{
 				console.log( 'I do not understand the result. Server may be down.', e, d, b );
+				if( Workspace.serverIsThere && e == null && d == null )
+					Workspace.relogin();
 			}
 			
 			//console.log( 'Response from connection checker: ', e, d );

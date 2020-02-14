@@ -165,7 +165,8 @@ function refreshSidebar( show )
 			var ptag = document.createElement( 'div' );
 			var atag = document.createElement( 'a' );
 			atag.innerHTML = b;
-			ptag.className = 'HRow BackgroundNegativeAlt PaddingLeft PaddingSmallTop PaddingRight PaddingSmallBottom';
+			//ptag.className = 'HRow BackgroundNegativeAlt PaddingLeft PaddingSmallTop PaddingRight PaddingSmallBottom';
+			ptag.className = 'HRow BackgroundNegative PaddingLeft PaddingSmallTop PaddingRight PaddingSmallBottom';
 			ptag.appendChild( atag );
 			
 			if( !ch.display ) continue;
