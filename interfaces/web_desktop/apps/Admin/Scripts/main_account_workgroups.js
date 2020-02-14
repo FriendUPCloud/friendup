@@ -1297,7 +1297,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																	{
 																		var d = document.createElement( 'div' );
 																		//d.className = 'IconSmall NegativeAlt fa-user-circle-o avatar';
-																		d.className = 'IconSmall Positive fa-user-circle-o avatar';
+																		d.className = 'IconSmall fa-user-circle-o avatar';
 																		//d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																		//d.style.backgroundSize = 'contain';
 																		//d.style.width = '24px';
@@ -1471,7 +1471,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																	{
 																		var d = document.createElement( 'div' );
 																		//d.className = 'IconSmall NegativeAlt fa-user-circle-o avatar';
-																		d.className = 'IconSmall Positive fa-user-circle-o avatar';
+																		d.className = 'IconSmall fa-user-circle-o avatar';
 																		//d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																		//d.style.backgroundSize = 'contain';
 																		//d.style.width = '24px';
@@ -1889,7 +1889,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 							r.className = 'HRow ';
 			
 							//var icon = '<span class="IconSmall NegativeAlt fa-users"></span>';
-							var icon = '<span class="IconSmall Positive fa-users"></span>';
+							var icon = '<span class="IconSmall fa-users"></span>';
 							userList[ a ][ 'edit' ] = icon;
 				
 							for( var z in types )

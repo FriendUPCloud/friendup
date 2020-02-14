@@ -4197,7 +4197,7 @@ Sections.accounts_templates = function( cmd, extra )
 												var d = document.createElement( 'div' );
 												d.className = 'TextCenter HContent10 FloatLeft PaddingSmall Ellipsis';
 												//d.innerHTML = '<span class="IconSmall NegativeAlt fa-file-text-o"></span>';
-												d.innerHTML = '<span class="IconSmall Positive fa-file-text-o"></span>';
+												d.innerHTML = '<span class="IconSmall fa-file-text-o"></span>';
 												return d;
 											}()
 										},

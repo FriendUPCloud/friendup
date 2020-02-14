@@ -241,13 +241,8 @@
 #Admin .IconToggle.fa-toggle-on:hover
 {
 	background: transparent;
-	padding: 5px 5px;
-	border: 1px solid rgba(0,0,0,0) !important;
-}
-
-#Admin div button, html > body > div .Button
-{
-
+	/*padding: 5px 5px;
+	border: 1px solid rgba(0,0,0,0) !important;*/
 }
 
 /* Server printers ---------------------------------------------------------- */
@@ -419,5 +414,10 @@
 #Admin .BackgroundGrey
 {
 	background-color: #e3e7e8;
+}
+
+html body button.IconButton:not(:hover), html body .Button.IconButton:not(:hover)
+{
+	border: 0 !important;
 }
 
