@@ -2323,10 +2323,10 @@ html #Tray.Size16
 	left: 19px;
 	font-size: 70%;
 	color: white;
-	background: rgba(0,0,0,0.6);
+	background: #A01507;
 	border-radius: 100%;
 	padding: 2px;
-	border: 1px solid rgba(0,0,0,0.7);
+	border: 1px solid #720B00;
 	line-height: 8px;
 	width: 8px;
 	height: 8px;
