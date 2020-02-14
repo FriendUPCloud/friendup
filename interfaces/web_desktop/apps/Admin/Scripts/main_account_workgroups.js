@@ -298,25 +298,51 @@ Sections.accounts_workgroups = function( cmd, extra )
 				{
 					Notify( { title: i18n( 'i18n_workgroup_create' ), text: data.message } );
 				}
+				else if ( data && data.response )
+				{
+					Notify( { title: i18n( 'i18n_workgroup_create' ), text: data.response } );
+				}
 				
 				refresh( data.id );
 				
 			}
+			
+			// Allready exists ...
+			
 			else if( data && data.code == '69' && data.response )
 			{
-				Notify( { title: i18n( 'i18n_workgroup_create' ), text: i18n( 'i18n_' + data.response ) } );
+				Notify( { title: i18n( 'i18n_workgroup_create' ), text: i18n( 'i18n_' + data.response ).replace( 'i18n_', '' ) } );
 				
 				if( ge( 'WorkgroupName' ) )
 				{
 					ge( 'WorkgroupName' ).focus();
 				}
 			}
+			
+			// Missing ...
+			
+			else if( data && data.code == '14' && data.response )
+			{
+				Notify( { title: i18n( 'i18n_workgroup_create' ), text: i18n( 'i18n_' + data.response ).replace( 'i18n_', '' ) } );
+				
+				if( ge( 'WorkgroupName' ) )
+				{
+					ge( 'WorkgroupName' ).focus();
+				}
+			}
+			
+			// Other ...
+			
 			else
 			{
 				
 				if( data && data.message )
 				{
 					Notify( { title: i18n( 'i18n_workgroup_create' ), text: data.message } );
+				}
+				else if( data && data.response )
+				{
+					Notify( { title: i18n( 'i18n_workgroup_create' ), text: data.response } );
 				}
 				else
 				{
@@ -390,26 +416,50 @@ Sections.accounts_workgroups = function( cmd, extra )
 					{
 						Notify( { title: i18n( 'i18n_workgroup_update' ), text: data.message } );
 					}
+					else if ( data && data.response )
+					{
+						Notify( { title: i18n( 'i18n_workgroup_update' ), text: data.response } );
+					}
 					
 					//refresh( data.id );
 					
 					editMode( true );
 				}
+				
 				else if( data && data.code == '69' && data.response )
 				{
-					Notify( { title: i18n( 'i18n_workgroup_update' ), text: i18n( 'i18n_' + data.response ) } );
+					Notify( { title: i18n( 'i18n_workgroup_update' ), text: i18n( 'i18n_' + data.response ).replace( 'i18n_', '' ) } );
 				
 					if( ge( 'WorkgroupName' ) )
 					{
 						ge( 'WorkgroupName' ).focus();
 					}
 				}
+				
+				// Missing ...
+				
+				else if( data && data.code == '14' && data.response )
+				{
+					Notify( { title: i18n( 'i18n_workgroup_update' ), text: i18n( 'i18n_' + data.response ).replace( 'i18n_', '' ) } );
+				
+					if( ge( 'WorkgroupName' ) )
+					{
+						ge( 'WorkgroupName' ).focus();
+					}
+				}
+			
+				// Other ...
+				
 				else
 				{
 					
 					if( data && data.message )
 					{
 						Notify( { title: i18n( 'i18n_workgroup_update' ), text: data.message } );
+					}
+					else if ( data && data.response )
+					{
+						Notify( { title: i18n( 'i18n_workgroup_update' ), text: data.response } );
 					}
 					else
 					{
