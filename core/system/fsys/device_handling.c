@@ -473,6 +473,18 @@ AND f.Name = '%s' and (f.Owner='0' OR f.Owner IS NULL)",
 					{
 						retFile->f_ID = id;
 						retFile->f_UserGroupID = groupID;
+						
+						retFile->f_UserID = usr->u_ID;
+						retFile->f_SessionIDPTR = usr->u_MainSessionID;
+						retFile->f_Mounted = 1;
+						retFile->f_Config = StringDuplicate( config );
+						retFile->f_Visible = 1;
+						retFile->f_Execute = StringDuplicate( execute );
+						retFile->f_FSysName = StringDuplicate( type );
+						retFile->f_BytesStored = storedBytes;
+
+						retFile->f_Activity.fsa_FilesystemID = retFile->f_ID;
+	
 						UserAddDevice( usr, retFile );
 					}
 		
