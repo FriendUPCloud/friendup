@@ -1915,6 +1915,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 				
 				itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"userids\":[", groupID );
 				BufStringAddSize( retString, tmp, itmp );
+				BufStringAddSize( retExtString, tmp, itmp );
 				
 				// get required information for external servers
 			
