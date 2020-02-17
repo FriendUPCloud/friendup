@@ -1091,6 +1091,20 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 								while( el != NULL )
 								{
 									UsrGrEntry *remel = el;
+									
+									// update database
+									//sqlLib = l->LibrarySQLGet( l );
+									//if( sqlLib != NULL )
+									//{
+									if( el->ugid == 0 ) // user is not in group we must add him
+									{
+										UGMAddUserToGroupDB( l->sl_UGM, groupID, el->uid );
+									}
+									// user is in group, we can remove him
+									else
+									{
+										UGMRemoveUserFromGroupDB( l->sl_UGM, groupID, el->uid );
+									}
 								
 									User *usr = UMGetUserByID( l->sl_UM, (FULONG)el->uid );
 									// do realtime update only to users which are in memory
@@ -1131,19 +1145,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 										}
 									}
 									
-									// update database
-									//sqlLib = l->LibrarySQLGet( l );
-									//if( sqlLib != NULL )
-									//{
-									if( el->ugid == 0 ) // user is not in group we must add him
-									{
-										UGMAddUserToGroupDB( l->sl_UGM, groupID, el->uid );
-									}
-									// user is in group, we can remove him
-									else
-									{
-										UGMRemoveUserFromGroupDB( l->sl_UGM, groupID, el->uid );
-									}
+									
 									//l->LibrarySQLDrop( l, sqlLib );
 									//}
 									
