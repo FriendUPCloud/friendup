@@ -1639,22 +1639,25 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 						// if user is in memory we must mount group drives for him + send notification
 						if( isInMemory == TRUE )
 						{
-							SQLLibrary *sqlLib = l->LibrarySQLGet( l );
-							if( sqlLib != NULL )
+							//SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+							//if( sqlLib != NULL )
 							{
 								File *dstFile = NULL;
 								char *errorStr = NULL;
 
+								MountSharedDrive( l->sl_DeviceManager, usr, groupID );
+								/*
 								if( UserGroupDeviceMount( l->sl_DeviceManager, sqlLib, ug, usr, &errorStr ) != 0 )
 								{
 									//INFO( "[MountFS] -- Could not mount device for user %s. Drive was %s.\n", tmpUser->u_Name ? tmpUser->u_Name : "--nousername--", name ? name : "--noname--" );
 								}
+								*/
 							
 								// Tell user!
 								UserNotifyFSEvent2( l->sl_DeviceManager, usr, "refresh", "Mountlist:" );
 
 								//int UserAddDevice( User *usr, File *file )
-								l->LibrarySQLDrop( l, sqlLib );
+								//l->LibrarySQLDrop( l, sqlLib );
 							}
 						}
 
