@@ -79,7 +79,7 @@ int UserGroupMountWorkgroupDrives( DeviceManager *dm, User *usr, FULONG groupID 
 //
 //
 
-//int UserGroupMountWorkgroupDrives( DeviceManager *dm, SQLLibrary *sqllib, UserGroup *usrgrp, User *usr, char **mountError );
+int UserGroupDeviceMount( DeviceManager *dm, SQLLibrary *sqllib, UserGroup *usrgrp, User *usr, char **mountError );
 
 //
 //
