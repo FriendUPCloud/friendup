@@ -5028,7 +5028,12 @@ Sections.accounts_users = function( cmd, extra )
 								ge( 'UserDeleteBtn' ).onclick = ge( 'UserDeleteBtn' ).savedState.onclick;
 							}
 						}
-					
+						
+						if( ge( 'AdminUsersBtn' ) )
+						{
+							SubMenu( ge( 'AdminUsersBtn' ), true );
+						}
+						
 						break;
 					default: break;
 				}
@@ -5059,6 +5064,35 @@ Sections.accounts_users = function( cmd, extra )
 					
 					}
 				}
+				
+				if( ge( 'AdminUsersBtn' ) )
+				{
+					found = false;
+					
+					var pnt = ge( 'AdminUsersBtn' ).parentNode;
+					
+					if( pnt )
+					{
+						var ele = pnt.getElementsByTagName( '*' );
+						
+						if( ele.length > 0 )
+						{
+							for( var a = 0; a < ele.length; a++ )
+							{
+								if( ele[a] && ele[a] == act.targ )
+								{
+									found = true;
+								}
+							}
+						}
+					}
+					
+					if( !found && ( act.targ.id != 'AdminUsersBtn' || act.targ.id != 'AdminUsersSubMenu' ) && act.targ.tagName != 'HTML' && act.targ.tagName != 'BODY' )
+					{
+						SubMenu( ge( 'AdminUsersBtn' ), true );
+					}
+				}
+				
 			}
 		}
 		
@@ -5720,13 +5754,13 @@ function getLastLoginlist( callback, users )
 }
 
 
-function SubMenu( _this )
+function SubMenu( _this, close )
 {
-	if( _this.parentNode.className.indexOf( ' InActive' ) >= 0 )
+	if( !close && _this.parentNode.className.indexOf( ' InActive' ) >= 0 )
 	{
 		_this.parentNode.className = _this.parentNode.className.split( ' InActive' ).join( '' ).split( ' Active' ).join( '' ) + ' Active';
 	}
-	else
+	else if( _this.parentNode.className.indexOf( ' Active' ) >= 0 )
 	{
 		_this.parentNode.className = _this.parentNode.className.split( ' InActive' ).join( '' ).split( ' Active' ).join( '' ) + ' InActive';
 	}

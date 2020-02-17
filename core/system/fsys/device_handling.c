@@ -271,14 +271,14 @@ inline static int MountUnlock( DeviceManager *dm, User *usr )
  * 
  **/
 
-int MountSharedDrive( DeviceManager *dm, User *usr, FULONG groupID )
+int UserGroupMountWorkgroupDrives( DeviceManager *dm, User *usr, FULONG groupID )
 {
 	int error = 0;
 	SystemBase *l = (SystemBase *)dm->dm_SB;
 	// New way of finding type of device
 	SQLLibrary *sqllib = l->LibrarySQLGet( l );
 	
-	DEBUG("[MountSharedDrive] mount--------------------------------------\n");
+	DEBUG("[UserGroupMountWorkgroupDrives] mount--------------------------------------\n");
 	
 	if( sqllib != NULL )
 	{
@@ -368,7 +368,7 @@ AND f.Name = '%s' and (f.Owner='0' OR f.Owner IS NULL)",
 				
 				if( usr != NULL )
 				{
-					DEBUG("[MountFS] User name %s - found row type %s server %s path %s port %s\n", usr->u_Name, row[0], row[1], row[2], row[3] );
+					DEBUG("[UserGroupMountWorkgroupDrives] User name %s - found row type %s server %s path %s port %s\n", usr->u_Name, row[0], row[1], row[2], row[3] );
 				}
 			
 				//
@@ -386,10 +386,10 @@ AND f.Name = '%s' and (f.Owner='0' OR f.Owner IS NULL)",
 					}
 					while( fentry != NULL )
 					{
-						DEBUG("Going through all user drives. Name %s UserID %lu\n", fentry->f_Name, usr->u_ID );
+						DEBUG("[UserGroupMountWorkgroupDrives] Going through all user drives. Name %s UserID %lu\n", fentry->f_Name, usr->u_ID );
 						if( strcmp( name, fentry->f_Name ) == 0 ) //id == fentry->f_ID )
 						{
-							DEBUG("Device is already mounted. Name: %s ID %lu\n", fentry->f_Name, fentry->f_ID );
+							DEBUG("[UserGroupMountWorkgroupDrives] Device is already mounted. Name: %s ID %lu\n", fentry->f_Name, fentry->f_ID );
 							sameDevError = 1;
 							break;
 						}
@@ -398,7 +398,7 @@ AND f.Name = '%s' and (f.Owner='0' OR f.Owner IS NULL)",
 					MountUnlock( dm, usr );
 				}
 			
-				DEBUG("[MountSharedDrive] mount shared, same dev error %d device name: %s\n", sameDevError, name );
+				DEBUG("[UserGroupMountWorkgroupDrives] mount shared, same dev error %d device name: %s\n", sameDevError, name );
 		
 				if( sameDevError == 0 )
 				{
@@ -453,7 +453,7 @@ AND f.Name = '%s' and (f.Owner='0' OR f.Owner IS NULL)",
 					// Find installed filesystems by type
 					//
 		
-					DEBUG("[MountSharedDrive] find filesystem\n");
+					DEBUG("[UserGroupMountWorkgroupDrives] find filesystem\n");
 					DOSDriver *ddrive = (DOSDriver *)l->sl_DOSDrivers;
 					while( ddrive != NULL )
 					{
@@ -465,10 +465,10 @@ AND f.Name = '%s' and (f.Owner='0' OR f.Owner IS NULL)",
 						ddrive = (DOSDriver *)ddrive->node.mln_Succ;
 					}
 		
-					DEBUG("[MountSharedDrive] before mount call\n");
+					DEBUG("[UserGroupMountWorkgroupDrives] before mount call\n");
 					char *mountError = NULL;
 					File *retFile = filesys->Mount( filesys, tags, usr, &mountError );
-					DEBUG("[MountSharedDrive] mount device : %p\n", retFile );
+					DEBUG("[UserGroupMountWorkgroupDrives] mount device : %p\n", retFile );
 					if( retFile != NULL )
 					{
 						retFile->f_ID = id;
@@ -494,15 +494,15 @@ AND f.Name = '%s' and (f.Owner='0' OR f.Owner IS NULL)",
 					}
 				} // sameDevError == 0
 			}	// while
-			DEBUG("After while\n");
+			DEBUG("[UserGroupMountWorkgroupDrives]After while\n");
 			sqllib->FreeResult( sqllib, res );
 		} // res != NULL
 		else
 		{
-			DEBUG("Result = NULL\n");
+			DEBUG("[UserGroupMountWorkgroupDrives] Result = NULL\n");
 		}
 		
-		DEBUG("Before dropping sql\n");
+		DEBUG("[UserGroupMountWorkgroupDrives] Before dropping sql\n");
 		l->LibrarySQLDrop( l, sqllib );
 		
 		if( path != NULL ){ FFree( path ); }
@@ -512,9 +512,9 @@ AND f.Name = '%s' and (f.Owner='0' OR f.Owner IS NULL)",
 		if( type != NULL ){ FFree( type ); }
 		if( execute != NULL ){ FFree( execute ); }
 	}
-	DEBUG("Return with error %d\n", error );
+	DEBUG("[UserGroupMountWorkgroupDrives] Return with error %d\n", error );
 	
-	DEBUG("[MountSharedDrive] mount END--------------------------------------\n");
+	DEBUG("[UserGroupMountWorkgroupDrives] mount END--------------------------------------\n");
 	
 	return error;
 }

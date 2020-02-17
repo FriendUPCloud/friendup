@@ -73,13 +73,13 @@ int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, cha
 //
 //
 
-int MountSharedDrive( DeviceManager *dm, User *usr, FULONG groupID );
+int UserGroupMountWorkgroupDrives( DeviceManager *dm, User *usr, FULONG groupID );
 
 //
 //
 //
 
-int UserGroupDeviceMount( DeviceManager *dm, SQLLibrary *sqllib, UserGroup *usrgrp, User *usr, char **mountError );
+//int UserGroupMountWorkgroupDrives( DeviceManager *dm, SQLLibrary *sqllib, UserGroup *usrgrp, User *usr, char **mountError );
 
 //
 //
