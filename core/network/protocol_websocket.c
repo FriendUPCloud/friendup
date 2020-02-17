@@ -460,7 +460,7 @@ void WSThread( void *d )
 	
 	if( fcd->wsc_Wsi == NULL || fcd->wsc_UserSession == NULL )
 	{
-		FERROR("Error session is NULL : wsi: %p usersession: %p\n", fcd->wsc_Wsi == NULL, fcd->wsc_UserSession );
+		FERROR("Error session is NULL : wsi: %p usersession: %p\n", fcd->wsc_Wsi, fcd->wsc_UserSession );
 
 		FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
 		fcd->wsc_InUseCounter--;
@@ -533,7 +533,14 @@ void WSThread( void *d )
 		}
 		else
 		{
-			Log( FLOG_INFO, "[WS] C. SysWebRequest took %f seconds, err: %d response: '%s'\n" , secs, response->errorCode, response->content );
+			if( response != NULL )
+			{
+				Log( FLOG_INFO, "[WS] C. SysWebRequest took %f seconds, err: %d response: '%s'\n" , secs, response->errorCode, response->content );
+			}
+			else
+			{
+				Log( FLOG_INFO, "[WS] C. SysWebRequest took %f seconds\n" , secs );
+			}
 		}
 		
 		if( response != NULL )
