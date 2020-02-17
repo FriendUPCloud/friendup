@@ -1807,10 +1807,13 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 				// get required information for external servers
 			
 				generateConnectedUsersIDByID( l, groupID, retString, retServiceString, usersSQL );
+				
+				BufStringAddSize( retString, "]", 1 );
+				BufStringAddSize( retServiceString, "]", 1 );
 			} // groupID > 0
 			
-			BufStringAddSize( retString, "]", 2 );
-			BufStringAddSize( retServiceString, "]", 2 );
+			BufStringAddSize( retString, "}", 1 );
+			BufStringAddSize( retServiceString, "}", 1 );
 			
 			// send notification to external service
 			NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "addusers", retServiceString->bs_Buffer );
@@ -1901,7 +1904,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			BufStringAddSize( retString, "ok<!--separate-->{", 18 );
 			
 			BufString *retExtString = BufStringNew();
-			BufStringAddSize( retExtString, "[", 1 );
+			BufStringAddSize( retExtString, "{", 1 );
 			
 			if( groupID > 0 )
 			{
@@ -2024,10 +2027,13 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 						FFree( rmEntry );
 					}
 				}
+				
+				BufStringAddSize( retString, "]", 1 );
+				BufStringAddSize( retExtString, "]", 1 );
 			}
 			
-			BufStringAddSize( retString, "]", 2 );
-			BufStringAddSize( retExtString, "]", 2 );
+			BufStringAddSize( retString, "}", 1 );
+			BufStringAddSize( retExtString, "}", 1 );
 			
 			// send notification to external service
 			NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "removeusers", retExtString->bs_Buffer );
