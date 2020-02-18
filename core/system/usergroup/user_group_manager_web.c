@@ -291,6 +291,145 @@ int generateConnectedUsersID( SystemBase *l, FULONG groupID, BufString *retStrin
 }
 
 /**
+ * Generate json table with userid's
+ *
+ * @param l pointer to SystemBase
+ * @param groupID ID of group
+ * @param retString BufString to which results will be stored
+ * @param extServiceString pointer to BufString where results to external service will be stored
+ * @param userIDs user id's
+ * @return 0 when success, otherwise error number
+ */
+int generateConnectedUsersIDByID( SystemBase *l, FULONG groupID, BufString *retString, BufString *extServiceString, char *userIDs )
+{
+	SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+	if( sqlLib != NULL )
+	{
+		int tmpQuerySize = 712;
+		char *tmpQuery;
+		char tmp[ 712 ];
+		int itmp = 0;
+		
+		if( userIDs != NULL )
+		{
+			tmpQuerySize += strlen( userIDs );
+		}
+		
+		tmpQuery = FMalloc( tmpQuerySize );
+		
+		if( groupID == 0 )	// we want only users
+		{
+			snprintf( tmpQuery, tmpQuerySize, "SELECT UniqueID,Status,ID,ModifyTime FROM FUser WHERE ID in(%s)", userIDs );
+		}
+		else
+		{
+			snprintf( tmpQuery, tmpQuerySize, "SELECT u.UniqueID,u.Status,u.ID,u.ModifyTime FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserGroupID=%lu and u.ID in(%s)", groupID, userIDs );
+		}
+		
+		void *result = sqlLib->Query(  sqlLib, tmpQuery );
+		if( result != NULL )
+		{
+			int pos = 0;
+			int spos = 0;
+			char **row;
+			
+			if( extServiceString != NULL )
+			{
+				while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
+				{
+					FBOOL isDisabled = FALSE;
+					if( strncmp( (char *)row[ 1 ], "1", 1 ) == 0 )
+					{
+						isDisabled = TRUE;
+					}
+					
+					if( retString != NULL )
+					{
+						if( isDisabled )
+						{
+							if( pos == 0 )
+							{
+								itmp = snprintf( tmp, sizeof(tmp), "{\"id\":\"%s\",\"uuid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%s}", (char *)row[ 2 ], (char *)row[ 0 ], (char *)row[ 3 ] );
+							}
+							else
+							{
+								itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":\"%s\",\"uuid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%s}", (char *)row[ 2 ], (char *)row[ 0 ], (char *)row[ 3 ] );
+							}
+						}
+						else
+						{
+							if( pos == 0 )
+							{
+								itmp = snprintf( tmp, sizeof(tmp), "{\"id\":\"%s\",\"uuid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 2 ], (char *)row[ 0 ], (char *)row[ 3 ] );
+							}
+							else
+							{
+								itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":\"%s\",\"uuid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 2 ], (char *)row[ 0 ], (char *)row[ 3 ] );
+							}
+						}
+						BufStringAddSize( retString, tmp, itmp );	// send response to caller HTTP/WS
+					}
+					
+					if( isDisabled == FALSE )
+					{
+						// add response to external service
+						if( spos == 0 )
+						{
+							itmp = snprintf( tmp, sizeof(tmp), "\"%s\"", (char *)row[ 0 ] );
+						}
+						else
+						{
+							itmp = snprintf( tmp, sizeof(tmp), ",\"%s\"", (char *)row[ 0 ] );
+						}
+					
+						BufStringAddSize( extServiceString, tmp, itmp ); // external service do not need information about ID, it needs UUID which is stored in userid
+						spos++;
+					}
+					pos++;
+				}
+			}
+			else if( retString != NULL )// if message should be send only to HTTP/WS
+			{
+				while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
+				{
+					// if Status == disabled
+					if( strncmp( (char *)row[ 1 ], "1", 1 ) == 0 )
+					{
+						if( pos == 0 )
+						{
+							itmp = snprintf( tmp, sizeof(tmp), "{\"id\":\"%s\",\"uuid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%s}", (char *)row[ 2 ], (char *)row[ 0 ], (char *)row[ 3 ] );
+						}
+						else
+						{
+							itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":\"%s\",\"uuid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%s}", (char *)row[ 2 ], (char *)row[ 0 ], (char *)row[ 3 ] );
+						}
+					}
+					else
+					{
+						if( pos == 0 )
+						{
+							itmp = snprintf( tmp, sizeof(tmp), "{\"id\":\"%s\",\"uuid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 2 ], (char *)row[ 0 ], (char *)row[ 3 ] );
+						}
+						else
+						{
+							itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":\"%s\",\"uuid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 2 ], (char *)row[ 0 ], (char *)row[ 3 ] );
+						}
+					}
+					BufStringAddSize( retString, tmp, itmp );
+					pos++;
+				}
+			}
+			
+			sqlLib->FreeResult( sqlLib, result );
+		}
+		
+		FFree( tmpQuery );
+		l->LibrarySQLDrop( l, sqlLib );
+	}
+	return 0;
+}
+
+/**
  * Http web call processor
  * Function which process all incoming Http requests
  *
@@ -1115,7 +1254,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 										if( el->ugid == 0 ) // user is not in group we must add him
 										{
 											UserGroupAddUser( fg, usr );
-											MountSharedDrive( l->sl_DeviceManager, usr, groupID );
+											UserGroupMountWorkgroupDrives( l->sl_DeviceManager, usr, groupID );
 											
 											UserNotifyFSEvent2( l->sl_DeviceManager, usr, "refresh", "Mountlist:" );
 										}
@@ -1639,25 +1778,25 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 						// if user is in memory we must mount group drives for him + send notification
 						if( isInMemory == TRUE )
 						{
-							//SQLLibrary *sqlLib = l->LibrarySQLGet( l );
-							//if( sqlLib != NULL )
+							SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+							if( sqlLib != NULL )
 							{
 								File *dstFile = NULL;
 								char *errorStr = NULL;
 
-								MountSharedDrive( l->sl_DeviceManager, usr, groupID );
-								/*
+								UserGroupMountWorkgroupDrives( l->sl_DeviceManager, usr, groupID );
+								
 								if( UserGroupDeviceMount( l->sl_DeviceManager, sqlLib, ug, usr, &errorStr ) != 0 )
 								{
 									//INFO( "[MountFS] -- Could not mount device for user %s. Drive was %s.\n", tmpUser->u_Name ? tmpUser->u_Name : "--nousername--", name ? name : "--noname--" );
 								}
-								*/
+								
 							
 								// Tell user!
 								UserNotifyFSEvent2( l->sl_DeviceManager, usr, "refresh", "Mountlist:" );
 
 								//int UserAddDevice( User *usr, File *file )
-								//l->LibrarySQLDrop( l, sqlLib );
+								l->LibrarySQLDrop( l, sqlLib );
 							}
 						}
 
@@ -1667,11 +1806,14 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 				
 				// get required information for external servers
 			
-				generateConnectedUsersID( l, groupID, retString, retServiceString );
+				generateConnectedUsersIDByID( l, groupID, retString, retServiceString, usersSQL );
+				
+				BufStringAddSize( retString, "]", 1 );
+				BufStringAddSize( retServiceString, "]", 1 );
 			} // groupID > 0
 			
-			BufStringAddSize( retString, "]}", 2 );
-			BufStringAddSize( retServiceString, "]}", 2 );
+			BufStringAddSize( retString, "}", 1 );
+			BufStringAddSize( retServiceString, "}", 1 );
 			
 			// send notification to external service
 			NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "addusers", retServiceString->bs_Buffer );
@@ -1762,7 +1904,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			BufStringAddSize( retString, "ok<!--separate-->{", 18 );
 			
 			BufString *retExtString = BufStringNew();
-			BufStringAddSize( retExtString, "[", 1 );
+			BufStringAddSize( retExtString, "{", 1 );
 			
 			if( groupID > 0 )
 			{
@@ -1773,6 +1915,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 				
 				itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"userids\":[", groupID );
 				BufStringAddSize( retString, tmp, itmp );
+				BufStringAddSize( retExtString, tmp, itmp );
 				
 				// get required information for external servers
 			
@@ -1885,10 +2028,13 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 						FFree( rmEntry );
 					}
 				}
+				
+				BufStringAddSize( retString, "]", 1 );
+				BufStringAddSize( retExtString, "]", 1 );
 			}
 			
-			BufStringAddSize( retString, "]}", 2 );
-			BufStringAddSize( retExtString, "]}", 2 );
+			BufStringAddSize( retString, "}", 1 );
+			BufStringAddSize( retExtString, "}", 1 );
 			
 			// send notification to external service
 			NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "removeusers", retExtString->bs_Buffer );
@@ -2044,7 +2190,8 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 						BufStringAddSize( retString, tmp, itmp );
 						// return user objects
 						//generateConnectedUsers( l, groupID, NULL, retString );
-						generateConnectedUsersID( l, groupID, NULL, retString );
+						//generateConnectedUsersID( l, groupID, NULL, retString );
+						generateConnectedUsersIDByID( l, groupID, retString, retString, usersSQL );
 						BufStringAddSize( retString, "]}", 2 );
 						
 						NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "setusers", retString->bs_Buffer );
