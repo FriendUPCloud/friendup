@@ -1,10 +1,14 @@
 
+
+/*#Admin .IconSmall:before
+{
+	font-size: 1.4em;
+}
+
 #Admin
 {
-	/*background-color: #20374D;*/
 	background-color: #34495E;
 	font-weight: normal;
-	/*font-size: 20px;*/
 }
 
 #Admin .collapse > .List
@@ -17,9 +21,15 @@
 	background-color: transparent;
 }
 
+#Admin .Active > button
+{
+	background-color: #343c4b !important;
+	color: #f0f0f0 !important;
+	border: 0 !important;
+}
+
 #Admin input
 {
-	/*font-size: 20px;*/
 	padding: 5px;
 	border-radius: 0;
 	background: transparent;
@@ -29,38 +39,15 @@
 
 #Admin textarea
 {
-	/*font-size: 20px;*/
 	padding: 5px;
 	border-radius: 0;
 	background: transparent;
 	border: 1px solid #979797;
-}
+}*/
 
-#Admin #GuiSidebar
-{
-	padding: 20px;
-	box-sizing: border-box;
-}
+/* Gui Content ------------------------------------------------------------------ */
 
-#Admin #GuiSidebar, #Admin #GuiSidebar a
-{
-	color: #FFFFFF;
-	font-weight: normal;
-	/*font-size: 20px;*/
-}
-
-#Admin #GuiSidebar, #Admin #GuiSidebar a.IconSmall:before
-{
-	padding-right: 10px;
-}
-
-#Admin #GuiSidebar h2
-{
-	font-weight: bold;
-	/*font-size: 18px;*/
-}
-
-#Admin #GuiContent
+/*#Admin #GuiContent
 {
 	background-color: #ECF0F1;
 	color: #34495E;
@@ -87,19 +74,355 @@
 	color: #FFFFFF;
 }
 
-#Admin #GuiContent .FullContent > div.List + div.List > .HRow
+#Admin #GuiContent .FullContent > div.List + div.List > .HRow,
+#Admin #GuiContent .FullContent > div > div.List > .HRow
 {
 	background-color: #FFFFFF;
 	color: #34495E;
 }
 
+#Admin #GuiContent .FullContent > div > div.List > .HRow.Selected
+{
+	background-color: #34495E;
+    color: #FFFFFF;
+}
+
 #Admin #GuiContent div
 {
 	border: 0;
+}*/
+
+/* Gui UserList ------------------------------------------------------------------ */
+
+#Admin #UserList .submenu_wrapper
+{
+	display: none;
+}
+
+#Admin .Closed
+{
+	display: none;
+}
+
+#Admin #UserList .submenu_wrapper
+{
+	display: none;
+	
+	position: absolute;
+	z-index: 1;
+	right: 20px;
+	background: white;
+	text-align: left;
+	border: 1px solid #343c4b;
+	margin-top: 7px;
+	margin-right: 4px;
+}
+
+#Admin #UserList .submenu_wrapper ul
+{
+	margin: 4px;
+	margin-left: 8px;
+	margin-right: 8px;
+	list-style: none;
+	padding: 0;
+}
+
+#Admin #UserList .submenu_wrapper ul > li
+{
+	cursor: pointer;
+	padding: 6px;
+	border-bottom: 1px solid #343c4b;
+}
+
+#Admin #UserList .submenu_wrapper ul > li:last-child
+{
+	border: 0;
+}
+
+#Admin #UserList .Active .submenu_wrapper
+{
+	display: block;
+}
+
+#Admin #GuiContent #UserList .HRow.Disabled
+{
+	/* Concrete Grey */
+	color: #95A5A6;
+}
+
+#Admin #GuiContent #UserList .HRow.Locked
+{
+	/* Pomegranate Red */
+	color: #C0392B;
+}
+
+#Admin #GuiContent #UserList .HRow span
+{
+	/*border-radius: 100%;*/
+}
+
+/* Gui UserDetails ------------------------------------------------------------------ */
+
+#Admin #UserDetails #PassError span 
+{
+    display: block;
+    font-weight: bold;
+    padding: 6px;
+    border: 3px solid #F00;
+    background: #FFF;
+    margin: 6px 0;
+}
+
+#Admin #UserDetails .AvatarRect 
+{
+	max-width: 320px;
+	margin-left: auto;
+	margin-right: 0;
+}
+
+#Admin #UserDetails .AvatarRect > div
+{
+	position: relative;
+	min-height: 138px;
+	box-sizing: border-box;
+}
+
+#Admin #UserDetails .AvatarRect > div button
+{
+	position: absolute;
+	left: 10px;
+	bottom: 0;
+}
+
+#Admin #UserDetails #AdminAvatarArea.IconSmall:before
+{
+	font-size: 128px;
+  	vertical-align: middle;
+  	line-height: 128px;
+  	/*color: #34495E;*/
+}
+
+#Admin #UserDetails #AdminAvatarArea 
+{
+    position: relative;
+    display: block;
+    margin-bottom: 10px;
+    width: 128px;
+    height: 128px;
+    border-radius: 100%;
+    overflow: hidden;
+}
+
+#Admin #UserDetails #AdminAvatarArea #AdminAvatar 
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+    width: 256px;
+    height: 256px;
+    zoom: 0.5;
+}
+
+
+
+#Admin .IconToggle.fa-toggle-off
+{
+	/* Concrete Grey */
+	color: #95A5A6;
+}
+
+#Admin .IconToggle.fa-toggle-on
+{
+	/* Concrete Grey */
+	color: green;
+}
+
+#Admin .IconToggle.fa-toggle-off:hover, 
+#Admin .IconToggle.fa-toggle-on:hover
+{
+	background: transparent;
+	/*padding: 5px 5px;
+	border: 1px solid rgba(0,0,0,0) !important;*/
 }
 
 /* Server printers ---------------------------------------------------------- */
 
 
 
+/* Storage ------------------------------------------------------------------ */
+
+#Admin #StorageGui #DiskSizeContainer
+{
+	display: none;
+}
+
+#Admin #StorageGui .HRow > .DiskContainer
+{
+	min-width: 148px !important;
+	cursor: pointer;
+}
+
+#Admin #StorageGui .Col1
+{
+	width: 40px;
+	height: 36px;
+	overflow: hidden;
+	padding-top: 5px;
+	padding-bottom: 5px;
+}
+
+#Admin #StorageGui .Col2
+{
+	width: calc(100% - 40px);
+	padding-left: 11px;
+	padding-right: 5px;
+	box-sizing: border-box;
+}
+
+#Admin #StorageGui .disk
+{
+	position: relative;
+	width: 100%;
+    height: 100%;
+    background-image: url(/iconthemes/friendup15/Disk.svg);
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+#Admin #StorageGui .disk > .label
+{
+	position: absolute;
+    right: calc(50% - 20px);
+    top: calc(50% - 20px);
+    width: 100%;
+    height: 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 40%;
+}
+
+#Admin #StorageGui .name 
+{
+	/*color: #20374D;*/
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 15px;
+}
+
+#Admin #StorageGui .type, 
+#Admin #StorageGui .bytes
+{
+	/*color: #20374D;*/
+	font-size: 10px;
+	line-height: 13px;
+}
+
+#Admin #StorageGui .rectangle 
+{
+	position: relative;
+	height: 6px;
+	width: 100%;
+	border: 0.5px solid #979797;
+	background-color: #D8D8D8;
+	box-sizing: border-box;
+}
+
+#Admin #StorageGui .rectangle > div 
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 4px;
+	box-sizing: border-box;
+	background-color: #3498DB;
+}
+
+
+/* Gui Sidebar ------------------------------------------------------------------ */
+
+/*#Admin #GuiSidebar
+{
+	padding: 20px;
+	box-sizing: border-box;
+}
+
+#Admin #GuiSidebar, #Admin #GuiSidebar a
+{
+	color: #FFFFFF;
+	font-weight: normal;
+}
+
+#Admin #GuiSidebar a.IconSmall
+{
+	position: relative;
+	padding-left: 30px;
+}
+
+#Admin #GuiSidebar a.IconSmall:before
+{
+	position: absolute;
+	left: 0;
+}
+
+#Admin #GuiSidebar, #Admin #GuiSidebar a.IconSmall:before
+{
+	padding-right: 10px;
+}
+
+#Admin #GuiSidebar h2
+{
+	font-weight: bold;
+}*/
+
+/* Custom Gui ------------------------------------------------------------------ */
+
+#Admin #AdminWallpaperPreview
+{
+    position: relative;
+    overflow: hidden;
+}
+
+#Admin #AdminWallpaper 
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    max-height: 100%;
+    zoom: 0.5;
+} 
+
+#Admin .Disabled
+{
+	opacity: 1 !important;
+}
+
+#Admin .Disabled, #Admin .Disabled *
+{
+	cursor: pointer !important;
+}
+
+#Admin .BackgroundRed
+{
+	background-color: #C0392B;
+	color: #f0f0f0;
+}
+
+#Admin .BackgroundGrey
+{
+	background-color: #e3e7e8;
+}
+
+html body button.IconButton:not(:hover), html body .Button.IconButton:not(:hover)
+{
+	border: 1px solid rgba(0,0,0,0) !important;
+}
+
+html body button.IconButton, html body .Button.IconButton
+{
+	border: 1px solid rgba(0,0,0,0);
+}
 

@@ -62,6 +62,6 @@ Sections.server_logs = function( cmd, extra )
 			}
 			
 		}
-		m.execute( 'getlogs' );
+		m.execute( 'getlogs', { authid: Application.authId } );
 	}
 }

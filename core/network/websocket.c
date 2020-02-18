@@ -623,7 +623,7 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
 	
 	if( actUserSess == NULL )
 	{
-		Log( FLOG_ERROR,"Cannot find user in session with sessionid %s\n", sessionid );
+		Log( FLOG_ERROR,"[WS] Cannot find user in session with sessionid %s\n", sessionid );
 		return -1;
 	}
 	
@@ -665,13 +665,13 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
 	
 	if( nwsc != NULL )
 	{
-		Log(FLOG_DEBUG, "WebsocketClient new %p pointer to next %p\n", nwsc, nwsc->node.mln_Succ );
+		Log(FLOG_DEBUG, "[WS] WebsocketClient new %p pointer to next %p\n", nwsc, nwsc->node.mln_Succ );
 		DEBUG("[WS] AddWSCon new connection created\n");
 		
 		User *actUser = actUserSess->us_User;
 		if( actUser != NULL )
 		{
-			Log( FLOG_INFO,"WebSocket connection set for user %s  sessionid %s\n", actUser->u_Name, actUserSess->us_SessionID );
+			Log( FLOG_INFO,"[WS] WebSocket connection set for user %s  sessionid %s\n", actUser->u_Name, actUserSess->us_SessionID );
 
 			INFO("[WS] ADD WEBSOCKET CONNECTION TO USER %s\n\n",  actUser->u_Name );
 		}
@@ -711,7 +711,7 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
 	}
 	else
 	{
-		Log( FLOG_ERROR,"Cannot allocate memory for WebsocketClient\n");
+		Log( FLOG_ERROR,"[WS] Cannot allocate memory for WebsocketClient\n");
 		return 2;
 	}
 	return 0;
@@ -741,14 +741,14 @@ int DetachWebsocketFromSession( WSCData *data )
 	// disabled for a moment, only logout should trigger that
 	//AppSessionRemByWebSocket( l->sl_AppSessionManager->sl_AppSessions, data->wsc_WebsocketsServerClient );
 	
-	Log( FLOG_DEBUG, "Lock DetachWebsocketFromSession\n");
+	Log( FLOG_DEBUG, "[WS] Lock DetachWebsocketFromSession\n");
 	if( FRIEND_MUTEX_LOCK( &(data->wsc_Mutex) ) == 0 )
 	{
 		wscl->wusc_Data = NULL;
 		data->wsc_WebsocketsServerClient = NULL;
 		FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
 	}
-	Log( FLOG_DEBUG, "UnLock DetachWebsocketFromSession\n");
+	Log( FLOG_DEBUG, "[WS] UnLock DetachWebsocketFromSession\n");
 	/*
 	//
 	UserSession *us = NULL;

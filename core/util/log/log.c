@@ -234,7 +234,7 @@ void Log( int lev, char* fmt, ...)
 
 					if( slg.ff_MaxSize != 0 )
 					{
-						snprintf( slg.ff_DestinationPath, slg.ff_DestinationPathLength, "%s%s-%d-%02d-%02d-%02d.log", slg.ff_Path, slg.ff_Fname, slg.ff_LogNumber, slg.ff_FD.fd_Year, slg.ff_FD.fd_Mon, slg.ff_FD.fd_Day );
+						snprintf( slg.ff_DestinationPath, slg.ff_DestinationPathLength, "%s%s-%02d-%02d-%02d-%d.log", slg.ff_Path, slg.ff_Fname, slg.ff_FD.fd_Year, slg.ff_FD.fd_Mon, slg.ff_FD.fd_Day, slg.ff_LogNumber );
                         //snprintf( fname, sizeof(fname), "%s-%d-%02d-%02d-%02d.log", slg.ff_Fname, slg.ff_LogNumber, slg.ff_FD.fd_Year, slg.ff_FD.fd_Mon, slg.ff_FD.fd_Day );
 					}
 					else

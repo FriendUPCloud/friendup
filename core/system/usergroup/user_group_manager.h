@@ -138,6 +138,18 @@ int UGMReturnAllAndMembers( UserGroupManager *um, BufString *bs, char *type );
 //
 //
 
+FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const char *type, FULONG parentID, int status );
+
+//
+//
+//
+
+void UGMGetGroups( UserGroupManager *um, FULONG uid, BufString *bs, const char *type, FULONG parentID, int status, FBOOL fParentID );
+
+//
+//
+//
+
 int UGMGetUserGroupsDB( UserGroupManager *um, FULONG userID, BufString *bs );
 
 

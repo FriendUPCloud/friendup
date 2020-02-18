@@ -306,9 +306,9 @@ int UserAddDevice( User *usr, File *file )
 		
 			while( lfile != NULL )
 			{
-				if( file->f_ID == lfile->f_ID )
+				if( strcmp( file->f_Name, lfile->f_Name ) == 0 )
 				{
-					DEBUG("Device is already in the list\n");
+					DEBUG("Device is already in the list %lu name: %s\n", file->f_ID, file->f_Name );
 					FRIEND_MUTEX_UNLOCK(&usr->u_Mutex);
 					return 2;
 				}
@@ -412,6 +412,192 @@ File *UserRemDeviceByName( User *usr, const char *name, int *error )
 				return remdev;
 			}
 		}
+	}
+	else
+	{
+		DEBUG("[UserRemDeviceByName] User or File paramter is equal to NULL\n");
+		return NULL;
+	}
+	return NULL;
+}
+
+typedef struct RemDrive{
+	File *tbr;
+	MinNode node;
+}RemDrive;
+
+/**
+ * Remove device by name
+ *
+ * @param usr pointer to User from which device will be removed
+ * @param grid ID of the group which drive will be detached from user
+ * @param error pointer to int variable where error number will be stured
+ * @return pointer to File structure which will be removed from User structure
+ */
+File *UserRemDeviceByGroupID( User *usr, FULONG grid, int *error )
+{
+	if( usr != NULL )
+	{
+		
+		if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
+		{
+			File *lf = usr->u_MountedDevs;
+			File *newRoot = NULL;
+			
+			while( lf != NULL )
+			{
+				File *leaveDrive = NULL;
+				DEBUG( "[UserRemDeviceByName] Checking fs in list %lu == %lu...\n",  lf->f_UserGroupID, grid );
+				if( lf->f_UserGroupID == grid )
+				{
+					DEBUG( "[UserRemDeviceByName] Found one (%lu == %lu) fname: %s\n",  lf->f_UserGroupID, grid, lf->f_Name );
+					
+					do{
+						*error = 0;
+				
+						if( lf->f_Operations <= 0 )
+						{
+							FHandler *fsys = (FHandler *)lf->f_FSys;
+							fsys->Release( fsys, lf );	// release drive data
+							usleep( 500 );
+						}
+						else
+						{
+							DEBUG("[UserRemDeviceByName] Cannot unmount device, operation in progress\n");
+							*error = FSys_Error_OpsInProgress;
+						}
+		
+					}while( *error == FSys_Error_OpsInProgress );
+				}
+				else
+				{
+					leaveDrive = lf;
+				}
+				lf = (File *)lf->node.mln_Succ;
+				
+				if( leaveDrive != NULL )
+				{
+					leaveDrive->node.mln_Succ = (MinNode *)newRoot;
+					newRoot = leaveDrive;
+				}
+			}
+			
+			usr->u_MountedDevs = newRoot;
+			
+			FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
+		}
+		
+		/*
+		RemDrive *tbrroot = NULL;
+		
+		File *remdev = NULL;
+		File *lastone = NULL;
+		
+		
+		if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
+		{
+			File *lf = usr->u_MountedDevs;
+			
+			while( lf != NULL )
+			{
+				DEBUG( "[UserRemDeviceByName] Checking fs in list %lu == %lu...\n",  lf->f_UserGroupID, grid );
+				if( lf->f_UserGroupID == grid )
+				{
+					DEBUG( "[UserRemDeviceByName] Found one (%lu == %lu) fname: %s\n",  lf->f_UserGroupID, grid, lf->f_Name );
+					
+					RemDrive *loc = FCalloc( 1, sizeof(RemDrive) );
+					loc->tbr = lf;
+					if( tbrroot == NULL )
+					{
+						tbrroot = loc;
+					}
+					else
+					{
+						loc->node.mln_Succ = (MinNode *)tbrroot;
+						tbrroot = loc;
+					}
+					//break;
+				}
+				lf = (File *)lf->node.mln_Succ;
+			}
+			FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
+		}
+		
+		while( tbrroot != NULL )
+		{
+			File *remdev = tbrroot->tbr;
+			RemDrive *freedrive = tbrroot;
+			
+			do{
+				*error = 0;
+				
+				if( remdev->f_Operations <= 0 )
+				{
+					DEBUG("[UserRemDeviceByName] Remove device from list\n");
+				
+					if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
+					{
+						File *lf = usr->u_MountedDevs;
+						lastone = lf;
+			
+						// go through list, becaouse we need "lastone"
+						while( lf != NULL )
+						{
+							DEBUG( "[UserRemDeviceByName] Checking fs in list %lu == %lu...\n",  lf->f_UserGroupID, grid );
+							if( lf->f_UserGroupID == grid )
+							{
+								break;
+							}
+							lastone = lf;
+							lf = (File *)lf->node.mln_Succ;
+						}
+						
+						// remove drive from list
+						usr->u_MountedDevsNr--;
+			
+						if( usr->u_MountedDevs == remdev )		// checking if its our first entry
+						{
+							File *next = (File*)remdev->node.mln_Succ;
+							usr->u_MountedDevs = (File *)next;
+							if( next != NULL )
+							{
+								next->node.mln_Pred = NULL;
+							}
+						}
+						else
+						{
+							File *next = (File *)remdev->node.mln_Succ;
+							//next->node.mln_Pred = (struct MinNode *)prev;
+							if( lastone != NULL )
+							{
+								lastone->node.mln_Succ = (struct MinNode *)next;
+							}
+						}
+						FRIEND_MUTEX_UNLOCK(&usr->u_Mutex);
+					}
+					
+					if( remdev != NULL )
+					{
+						FHandler *fsys = (FHandler *)remdev->f_FSys;
+						fsys->Release( fsys, remdev );	// release drive data
+					}
+					usleep( 500 );
+				}
+				else
+				{
+					DEBUG("[UserRemDeviceByName] Cannot unmount device, operation in progress\n");
+					*error = FSys_Error_OpsInProgress;
+				}
+
+			}while( *error == FSys_Error_OpsInProgress );
+			
+			tbrroot = (RemDrive *)tbrroot->node.mln_Succ;
+			if( freedrive != NULL )
+			{
+				FFree( freedrive );
+			}
+		} // while tbrroot
+		*/
 	}
 	else
 	{
@@ -572,4 +758,31 @@ void UserRemoveFromGroups( User *u )
 		FRIEND_MUTEX_UNLOCK( &u->u_Mutex );
 	}
 	DEBUG("[UserRemoveFromGroups] remove end\n");
+}
+
+/**
+ * Check if user is in group
+ *
+ * @param usr User
+ * @param gid group id 
+ * @return TRUE if user is in group, otherwise FALSE
+ */
+FBOOL UserIsInGroup( User *usr, FULONG gid )
+{
+	if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
+	{
+		UserGroupLink *ugl = usr->u_UserGroupLinks;
+		while( ugl != NULL )
+		{
+			if( ugl->ugl_GroupID == gid )
+			{
+				FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
+				return TRUE;
+			}
+			
+			ugl = (UserGroupLink *)ugl->node.mln_Succ;
+		}
+		FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
+	}
+	return FALSE;
 }

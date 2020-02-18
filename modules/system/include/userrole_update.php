@@ -12,9 +12,39 @@
 
 global $SqlDatabase, $Logger, $User;
 
-// Must be admin
-if( $level != 'Admin' )
+if( isset( $args->args->authid ) && !isset( $args->authid ) )
+{
+	$args->authid = $args->args->authid;
+}
+
+if( !isset( $args->authid ) )
+{
+	// Must be admin
+	if( $level != 'Admin' )
 	die( '404' );
+}
+else
+{
+	require_once( 'php/include/permissions.php' );
+
+	if( $perm = Permissions( 'write', 'application', ( 'AUTHID'.$args->authid ), [ 'PERM_ROLE_GLOBAL', 'PERM_ROLE_WORKGROUP' ] ) )
+	{
+		if( is_object( $perm ) )
+		{
+			// Permission denied.
+		
+			if( $perm->response == -1 )
+			{
+				//
+			
+				die( 'fail<!--separate-->{"message":"'.$perm->message.'",'.($perm->reason?'"reason":"'.$perm->reason.'",':'').'"response":'.$perm->response.'}' );
+			}
+		
+		}
+	}
+}
+
+
 
 // Need one or the other
 if( !isset( $args->args->name ) && !isset( $args->args->id ) )
@@ -66,7 +96,7 @@ if( $d->ID > 0 )
 						$p->Permission = $perm->name;
 						$p->Key        = $perm->key;
 						$p->RoleID     = $d->ID;
-						$p->Data       = $perm->data;
+						$p->Data       = ( $perm->data && !is_string( $perm->data ) ? json_encode( $perm->data ) : ( !$perm->data ? '0' : $perm->data ) );
 						if( $p->Load() )
 						{
 							$p->Delete();
@@ -78,7 +108,7 @@ if( $d->ID > 0 )
 						$p->Permission = $perm->name;
 						$p->Key        = $perm->key;
 						$p->RoleID     = $d->ID;
-						$p->Data       = $perm->data;
+						$p->Data       = ( $perm->data && !is_string( $perm->data ) ? json_encode( $perm->data ) : ( !$perm->data ? '0' : $perm->data ) );
 						$p->Load();
 						$p->Save();
 					}

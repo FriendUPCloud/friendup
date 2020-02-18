@@ -15,6 +15,14 @@ if( $level == 'Admin' )
 	$o = new dbIO( 'FUserGroup' );
 	$o->Type = 'Setup';
 	$o->Name = ( $args->args->Name ? $args->args->Name : 'Unnamed setup' );
+	if( isset( $args->args->Description ) )
+	{
+		$o->Description = $args->args->Description;
+	}
+	if( isset( $args->args->Name ) && $o->Load() )
+	{
+		die( 'fail<!--separate-->{"response":"Template with that name already exist"}'  );
+	}
 	$o->Save();
 	
 	// Insert settings
@@ -43,9 +51,9 @@ if( $level == 'Admin' )
 		//	'launch Dingo'				   
 		//);
 		
-		$obj->language = 'en';
+		$obj->language = ( isset( $args->args->Languages ) ? $args->args->Languages : 'en' );
 		
-		$obj->theme = 'Friendup';
+		$obj->theme = ( isset( $args->args->Themes ) ? $args->args->Themes : 'Friendup12' );
 		
 		//$obj->folders = array(
 		//	'Wallpaper',

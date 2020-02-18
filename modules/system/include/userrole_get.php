@@ -12,9 +12,48 @@
 
 global $SqlDatabase, $Logger, $User;
 
-// Must be admin
-if( $level != 'Admin' )
-	die( '404' );
+if( isset( $args->args->authid ) && !isset( $args->authid ) )
+{
+	$args->authid = $args->args->authid;
+}
+
+if( !isset( $args->authid ) )
+{
+	// Must be admin
+	if( $level != 'Admin' ) die( '404' );
+}
+else
+{
+	require_once( 'php/include/permissions.php' );
+	
+	if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), [ 'PERM_ROLE_GLOBAL', 'PERM_ROLE_WORKGROUP' ] ) )
+	{
+		if( is_object( $perm ) )
+		{
+			// Permission denied.
+		
+			if( $perm->response == -1 )
+			{
+				die( 'fail<!--separate-->{"message":"'.$perm->message.'",'.($perm->reason?'"reason":"'.$perm->reason.'",':'').'"response":'.$perm->response.'}' );
+			}
+		
+			// Permission granted. GLOBAL or WORKGROUP specific ...
+		
+			if( $perm->response == 1 && isset( $perm->data->users ) && isset( $args->args->userid ) )
+			{
+			
+				// If user has GLOBAL or WORKGROUP access to this user
+			
+				if( $perm->data->users == '*' || strstr( ','.$perm->data->users.',', ','.$args->args->userid.',' ) )
+				{
+					//
+				}
+			
+			}
+		}
+	}
+}
+
 
 // What it says!
 function getPermissionsForRole( $role )
@@ -23,18 +62,27 @@ function getPermissionsForRole( $role )
 	
 	if( $perms = $SqlDatabase->FetchObjects( '
 		SELECT 
-			p.ID, p.Permission, p.Key, p.Data
+			p.ID, 
+			p.Permission, 
+			p.Key, 
+			p.Data, 
+			g.Type AS GroupType, 
+			g.Name AS GroupName 
 		FROM 
 			FUserRolePermission p 
+				LEFT JOIN FUserGroup g ON 
+				(
+					g.ID = p.Data 
+				)
 		WHERE 
-			p.RoleID = ' . $role->ID . ' 
+			p.RoleID = ' . $role->ID . '
 		ORDER BY 
 			p.ID 
 	' ) )
 	{
 		// Create clean permission objects without database crap
 		$permissions = array();
-		$keys = array( 'ID', 'Permission', 'Key', 'Data' );
+		$keys = array( 'ID', 'Permission', 'Key', 'Data', 'GroupType', 'GroupName' );
 		foreach( $perms as $perm )
 		{
 			$co = new stdClass();

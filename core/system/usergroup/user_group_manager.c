@@ -866,6 +866,208 @@ FBOOL UGMUserToGroupISConnectedDB( UserGroupManager *um, FULONG ugroupid, FULONG
 }
 
 /**
+ * Get groups from DB where user is assigned or not
+ *
+ * @param um pointer to UserGroupManager
+ * @param uid User ID
+ * @param bs pointer to BufString where data will be stored
+ * @return TRUE when entry exist, otherwise FALSE
+ */
+FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const char *type, FULONG parentID, int status )
+{
+	SystemBase *sb = (SystemBase *)um->ugm_SB;
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	FBOOL ret = FALSE;
+	
+	if( sqlLib != NULL )
+	{
+		int arg = 0;
+		BufString *sqlbs = BufStringNew();
+		
+		BufStringAdd( sqlbs, "SELECT g.ID,g.UserID,g.ParentID,g.Name,g.Type.g.Status FROM FGroup g inner join FUserToGroup utg on g.ID=utg.UserGroupID" );
+		
+		if( uid > 0 || type != NULL || parentID > 0 || status > 0 )
+		{
+			BufStringAdd( sqlbs, " WHERE" );
+		}
+		
+		if( uid > 0 )
+		{
+			char tmp[ 256 ];
+			int tmpi = 0;
+			tmpi = snprintf( tmp, sizeof(tmp), " utg.UserID=%lu", uid );
+			
+			BufStringAddSize( sqlbs, tmp, tmpi );
+			arg++;
+		}
+		
+		if( type != NULL )
+		{
+			char tmp[ 512 ];
+			int tmpi = 0;
+			
+			if( arg > 0 )
+			{
+				tmpi = snprintf( tmp, sizeof(tmp), " AND g.Type='%s'", type );
+			}
+			else
+			{
+				tmpi = snprintf( tmp, sizeof(tmp), " g.Type='%s'", type );
+			}
+			
+			BufStringAddSize( sqlbs, tmp, tmpi );
+			arg++;
+		}
+		
+		if( parentID > 0 )
+		{
+			char tmp[ 256 ];
+			int tmpi = 0;
+			
+			if( arg > 0 )
+			{
+				tmpi = snprintf( tmp, sizeof(tmp), " AND g.ParentID=%lu", parentID );
+			}
+			else
+			{
+				tmpi = snprintf( tmp, sizeof(tmp), " g.ParentID=%lu", parentID );
+			}
+			
+			BufStringAddSize( sqlbs, tmp, tmpi );
+			arg++;
+		}
+		
+		if( status > 0 )
+		{
+			char tmp[ 256 ];
+			int tmpi = 0;
+			
+			if( arg > 0 )
+			{
+				tmpi = snprintf( tmp, sizeof(tmp), " AND g.Status=%d", status );
+			}
+			else
+			{
+				tmpi = snprintf( tmp, sizeof(tmp), " g.Status=%d", status );
+			}
+			
+			BufStringAddSize( sqlbs, tmp, tmpi );
+			arg++;
+		}
+		
+		//snprintf( tmpQuery, sizeof(tmpQuery), "SELECT * FROM FUserToGroup WHERE `UserID`=%lu AND `UserGroupID`=%lu", uid, ugroupid );
+		
+		void *result = sqlLib->Query( sqlLib, sqlbs->bs_Buffer );
+		if( result != NULL )
+		{
+			int rownr = 0;
+			char **row;
+			// g.ID,g.UserID,g.ParentID,g.Name,g.Type.g.Status
+
+			while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
+			{
+				char tmp[ 512 ];
+				int tmpi = 0;
+				
+				if( rownr == 0 )
+				{
+					tmpi = snprintf( tmp, sizeof(tmp), "{\"id\":%s,\"userid\":%s,\"parentid\":%s,\"name\":\"%s\",\"type\":\"%s\",\"status\":%s}", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ], row[ 5 ] );
+				}
+				else
+				{
+					tmpi = snprintf( tmp, sizeof(tmp), ",{\"id\":%s,\"userid\":%s,\"parentid\":%s,\"name\":\"%s\",\"type\":\"%s\",\"status\":%s}", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ], row[ 5 ] );
+				}
+				rownr++;
+			}
+			sqlLib->FreeResult( sqlLib, result );
+		}
+		else
+		{
+			ret = FALSE;
+		}
+		
+		sb->LibrarySQLDrop( sb, sqlLib );
+		
+		BufStringDelete( sqlbs );
+	}
+	else
+	{
+		FERROR("UGMAddUserToGroup DBConnection fail!\n");
+		return FALSE;
+	}
+	return ret;
+}
+
+/**
+ * Get groups from FC memory where user is assigned or not
+ *
+ * @param um pointer to UserGroupManager
+ * @param uid User ID
+ * @param bs pointer to BufString where data will be stored
+ * @param type type of group (filter)
+ * @param parentID parentID (filter)
+ * @param status group status (filter)
+ * @param fParentID if parentID was passed as argument
+ */
+void UGMGetGroups( UserGroupManager *um, FULONG uid, BufString *bs, const char *type, FULONG parentID, int status, FBOOL fParentID )
+{
+	SystemBase *l = (SystemBase *)um->ugm_SB;
+	
+	if( FRIEND_MUTEX_LOCK( &(l->sl_UGM->ugm_Mutex) ) == 0 )
+	{
+		UserGroup *lg = l->sl_UGM->ugm_UserGroups;
+		int pos = 0;
+		
+		while( lg != NULL )
+		{
+			// if values are set then we want to filter all messages by using them
+			FBOOL addToList = TRUE;
+			if( fParentID == TRUE )	// user want filtering
+			{
+				if( lg->ug_ParentID != parentID )
+				{
+					addToList = FALSE;
+				}
+			}
+		
+			if( status >= 0 )
+			{
+				if( status != lg->ug_Status )
+				{
+					addToList = FALSE;
+				}
+			}
+			
+			if( type != NULL )
+			{
+				if( strcmp( type, lg->ug_Type ) != 0 )
+				{
+					addToList = FALSE;
+				}
+			}
+			
+			if( addToList == TRUE )
+			{
+				char tmp[ 512 ];
+				int tmpsize = 0;
+				if( pos == 0 )
+				{
+					tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"ID\":%lu,\"parentid\":%lu,\"level\":\"%s\",\"status\":%d}", lg->ug_Name, lg->ug_ID, lg->ug_ParentID, lg->ug_Type, lg->ug_Status );
+				}
+				else
+				{
+					tmpsize = snprintf( tmp, sizeof(tmp), ",{\"name\":\"%s\",\"ID\":%lu,\"parentid\":%lu,\"level\":\"%s\",\"status\":%d}", lg->ug_Name, lg->ug_ID, lg->ug_ParentID, lg->ug_Type, lg->ug_Status );
+				}
+				BufStringAddSize( bs, tmp, tmpsize );
+				pos++;
+			}
+			lg = (UserGroup *)lg->node.mln_Succ;
+		}
+		FRIEND_MUTEX_UNLOCK( &(l->sl_UGM->ugm_Mutex) );
+	}
+}
+
+/**
  * Check if User is connected to Group in DB
  *
  * @param um pointer to UserGroupManager

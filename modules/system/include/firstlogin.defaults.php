@@ -19,8 +19,13 @@
 *                                                                              *
 *****************************************************************************©*/
 
+$debug = ( isset( $debug ) ? $debug : [] );
+
+$userid = ( isset( $args->args->userid ) ? $args->args->userid : $User->ID );
+
 // 0. Check if mountlist is installed and user have access!
-if( !( $row = $SqlDatabase->FetchObject( 'SELECT * FROM FApplication WHERE Name = "Mountlist" AND UserID=\'' . $User->ID . '\'' ) ) )
+if( ( !isset( $args->args->exclude ) || isset( $args->args->exclude ) && !in_array( 'mountlist', $args->args->exclude ) ) 
+&& !( $row = $SqlDatabase->FetchObject( $q = 'SELECT * FROM FApplication WHERE Name = "Mountlist" AND UserID=\'' . $userid . '\'' ) ) )
 {
 	if( !function_exists( 'findInSearchPaths' ) )
 	{
@@ -45,13 +50,15 @@ if( !( $row = $SqlDatabase->FetchObject( 'SELECT * FROM FApplication WHERE Name 
 	{
 		if( file_exists( $path . '/Config.conf' ) )
 		{
+			$debug[] = $path;
+			
 			$f = file_get_contents( $path . '/Config.conf' );
 			// Path is dynamic!
 			$f = preg_replace( '/\"Path[^,]*?\,/i', '"Path": "' . $path . '/",', $f );
 
 			// Store application!
 			$a = new dbIO( 'FApplication' );
-			$a->UserID = $User->ID;
+			$a->UserID = $userid;
 			$a->Name = 'Mountlist';
 			if( !$a->Load() )
 			{
@@ -96,8 +103,11 @@ if( !( $row = $SqlDatabase->FetchObject( 'SELECT * FROM FApplication WHERE Name 
 	}
 }
 
+if( isset( $q ) ) $debug[] = $q;
+
 // 1. Check dock!
-if( !( $row = $SqlDatabase->FetchObject( 'SELECT * FROM DockItem WHERE UserID=\'' . $User->ID . '\'' ) ) )
+if( ( !isset( $args->args->exclude ) || isset( $args->args->exclude ) && !in_array( 'dock', $args->args->exclude ) ) 
+&& !( $row = $SqlDatabase->FetchObject( $q = 'SELECT * FROM DockItem WHERE UserID=\'' . $userid . '\'' ) ) )
 {
 	// 2. Setup standard dock items
 	$dockItems = array(
@@ -116,21 +126,25 @@ if( !( $row = $SqlDatabase->FetchObject( 'SELECT * FROM DockItem WHERE UserID=\'
 		$d = new dbIO( 'DockItem' );
 		$d->Application = $r[0];
 		$d->ShortDescription = $r[1];
-		$d->UserID = $User->ID;
+		$d->UserID = $userid;
 		$d->SortOrder = $i++;
 		$d->Parent = 0;
 		$d->Save();
+		
+		$debug[] = $d->Application;
 	}
 }
 
+if( isset( $q ) ) $debug[] = $q;
+
 // 2. Check if we never logged in before..
-if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE UserID=\'' . $User->ID . '\'' ) ) )
+if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE UserID=\'' . $userid . '\'' ) ) )
 {
 	$Logger->log( 'Creating home dir' );
 	
 	// 3. Setup a standard disk
 	$o = new dbIO( 'Filesystem' );
-	$o->UserID = $User->ID;
+	$o->UserID = $userid;
 	$o->Name = 'Home';
 	$o->Load();
 	$o->Type = 'SQLDrive';
@@ -140,27 +154,30 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 	
 	if( $o->Save() )
 	{
-
-	
-		// 3b. Mount the thing
-		$u = $Config->SSLEnable ? 'https://' : 'http://';
-		$u .= ( $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost ) . ':' . $Config->FCPort;
-		$c = curl_init();
-		curl_setopt( $c, CURLOPT_URL, $u . '/system.library/device/mount/?devname=Home&sessionid=' . $User->SessionID );
-		curl_setopt( $c, CURLOPT_RETURNTRANSFER, 1 );
-		if( $Config->SSLEnable )
+		$debug[] = $o->Name;
+		
+		if( !isset( $args->args->exclude ) || isset( $args->args->exclude ) && !in_array( 'mount', $args->args->exclude ) )
 		{
-			curl_setopt( $c, CURLOPT_SSL_VERIFYPEER, false );
-			curl_setopt( $c, CURLOPT_SSL_VERIFYHOST, false );
+			// 3b. Mount the thing
+			$u = $Config->SSLEnable ? 'https://' : 'http://';
+			$u .= ( $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost ) . ':' . $Config->FCPort;
+			$c = curl_init();
+			curl_setopt( $c, CURLOPT_URL, $u . '/system.library/device/mount/?devname=Home&sessionid=' . $User->SessionID );
+			curl_setopt( $c, CURLOPT_RETURNTRANSFER, 1 );
+			if( $Config->SSLEnable )
+			{
+				curl_setopt( $c, CURLOPT_SSL_VERIFYPEER, false );
+				curl_setopt( $c, CURLOPT_SSL_VERIFYHOST, false );
+			}
+			$ud = curl_exec( $c );
+			curl_close( $c );
 		}
-		$ud = curl_exec( $c );
-		curl_close( $c );
 
 
 		// 4. Wallpaper images directory
 		$f2 = new dbIO( 'FSFolder' );
 		$f2->FilesystemID = $o->ID;
-		$f2->UserID = $User->ID;
+		$f2->UserID = $userid;
 		$f2->Name = 'Wallpaper';
 		if( !$f2->Load() )
 		{
@@ -168,11 +185,13 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 			$f2->DateModified = $f2->DateCreated;
 			$f2->Save();
 		}
-
+		
+		$debug[] = $f2->Name;
+		
 		// 5. Some example documents
 		$f = new dbIO( 'FSFolder' );
 		$f->FilesystemID = $o->ID;
-		$f->UserID = $User->ID;
+		$f->UserID = $userid;
 		$f->Name = 'Documents';
 		if( !$f->Load() )
 		{
@@ -180,10 +199,12 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 			$f->DateModified = $f->DateCreated;
 			$f->Save();
 		}
-
+		
+		$debug[] = $f->Name;
+		
 		$fdownloadfolder = new dbIO( 'FSFolder' );
 		$fdownloadfolder->FilesystemID = $o->ID;
-		$fdownloadfolder->UserID = $User->ID;
+		$fdownloadfolder->UserID = $userid;
 		$fdownloadfolder->Name = 'Downloads';
 		if( !$fdownloadfolder->Load() )
 		{
@@ -191,10 +212,12 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 			$fdownloadfolder->DateModified = $f->DateCreated;
 			$fdownloadfolder->Save();
 		}
-
+		
+		$debug[] = $fdownloadfolder->Name;
+		
 		$f1 = new dbIO( 'FSFolder' );
 		$f1->FilesystemID = $o->ID;
-		$f1->UserID = $User->ID;
+		$f1->UserID = $userid;
 		$f1->Name = 'Code examples';
 		if( !$f1->Load() )
 		{
@@ -202,7 +225,9 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 			$f1->DateModified = $f1->DateCreated;
 			$f1->Save();
 		}
-
+		
+		$debug[] = $f1->Name;
+		
 		// 6. Copy some wallpapers
 		$prefix = "resources/webclient/theme/wallpaper/";
 		$files = array(
@@ -236,7 +261,7 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 			$fl->Filename = $file . '.jpg';
 			$fl->FolderID = $f2->ID;
 			$fl->FilesystemID = $o->ID;
-			$fl->UserID = $User->ID;
+			$fl->UserID = $userid;
 			if( !$fl->Load() )
 			{
 				$newname = $file;
@@ -253,6 +278,8 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 				$wallpaperstring .= $wallpaperseperator . '"Home:Wallpaper/' . $file . '.jpg"';
 				$wallpaperseperator = ',';
 			}
+			
+			$debug[] = $fl->Filename;
 		}
 
 		// 7. Copy some other files
@@ -269,7 +296,7 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 			$fl->Filename = $file . '.' . $ext;
 			$fl->FolderID = $f1->ID;
 			$fl->FilesystemID = $o->ID;
-			$fl->UserID = $User->ID;
+			$fl->UserID = $userid;
 			if( !$fl->Load() )
 			{
 				$newname = $file;
@@ -283,11 +310,13 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 				$fl->DateModified = $fl->DateCreated;
 				$fl->Save();
 			}
+			
+			$debug[] = $fl->Filename;
 		}
 
 		// 8. Fill Wallpaper app with settings and set default wallpaper
 		$wp = new dbIO( 'FSetting' );
-		$wp->UserID = $User->ID;
+		$wp->UserID = $userid;
 		$wp->Type = 'system';
 		$wp->Key = 'imagesdoors';
 		if( !$wp->Load() )
@@ -295,9 +324,11 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 			$wp->Data = '['. $wallpaperstring .']';
 			$wp->Save();
 		}
-
+		
+		$debug[] = $wp->Data;
+		
 		$wp = new dbIO( 'FSetting' );
-		$wp->UserID = $User->ID;
+		$wp->UserID = $userid;
 		$wp->Type = 'system';
 		$wp->Key = 'wallpaperdoors';
 		if( !$wp->Load() )
@@ -305,7 +336,11 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 			$wp->Data = '"Home:Wallpaper/Freedom.jpg"';
 			$wp->Save();
 		}
+		
+		$debug[] = $wp->Data;
 	}
 }
+
+if( isset( $q ) ) $debug[] = $q;
 
 ?>
