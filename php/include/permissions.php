@@ -532,9 +532,10 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 								// TODO: Connect user or users to groups or group ...
 								
 								if( $usr = $SqlDatabase->FetchObjects( '
-									SELECT u.ID, u.UniqueID, u.Name, u.FullName 
+									SELECT u.ID, u.UniqueID, u.Name, u.FullName, u.Status 
 									FROM `FUser` u 
 									WHERE u.ID IN (' . implode( ',', $users ) . ') 
+									AND u.Status != 1 
 									ORDER BY u.ID ASC 
 								' ) )
 								{
@@ -550,6 +551,7 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 												$us->uuid     = $u->UniqueID;
 												$us->name     = $u->Name;
 												$us->fullname = $u->FullName;
+												$us->status   = $u->Status;
 											}
 										}
 										else
@@ -558,6 +560,7 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 											$us->uuid     = $u->UniqueID;
 											$us->name     = $u->Name;
 											$us->fullname = $u->FullName;
+											$us->status   = $u->Status;
 										}
 										
 										if( $us )

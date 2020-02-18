@@ -457,6 +457,21 @@ Sections.accounts_users = function( cmd, extra )
 										ge( 'usEmail'    ).innerHTML = userInfo.Email;
 									}
 									
+									if( ge( 'usLocked'   ) )
+									{
+										ge( 'usLocked'   ).onclick = function()
+										{
+											updateUserStatus( userInfo.ID, 2 );
+										};
+									}
+									if( ge( 'usDisabled' ) )
+									{
+										ge( 'usDisabled' ).onclick = function()
+										{
+											updateUserStatus( userInfo.ID, 1 );
+										};
+									}
+									
 									if( ge( 'usLocked'   ) && ulocked )
 									{
 										ge( 'usLocked'   ).className = ge( 'usLocked'   ).className.split( 'fa-toggle-on' ).join( '' ).split( 'fa-toggle-off' ).join( '' ) + 'fa-toggle-on';
@@ -809,12 +824,12 @@ Sections.accounts_users = function( cmd, extra )
 										//this.oldML = ge( 'WorkgroupGui' ).innerHTML;
 							
 										var str = '';
-							
+										
 										if( groups && groups == '404' )
 										{
 											str += '<div class="HRow"><div class="HContent100">' + i18n( 'i18n_workgroups_access_denied' ) + '</div></div>';
 										}
-										else if( groups )
+										else if( userInfo.Status != 1 && groups )
 										{
 											
 											
@@ -4894,6 +4909,29 @@ Sections.accounts_users = function( cmd, extra )
 		
 	}
 	
+	function updateUserStatus( userid, status )
+	{
+		
+		if( userid )
+		{
+			
+			Sections.user_status_update( userid, status, function()
+			{
+				
+				// Refresh whole users list ...
+				
+				Sections.accounts_users(  );
+				
+				// Go to edit mode for the new user ...
+				
+				Sections.accounts_users( 'edit', userid );
+				
+			} );
+			
+		}
+		
+	}
+	
 	function updateApplications( id, callback, vars )
 	{
 		
@@ -6157,7 +6195,7 @@ var RequestQueue = {
 
 
 
-Sections.user_status_update = function( userid, status )
+Sections.user_status_update = function( userid, status, callback )
 {
 	
 	if( userid && status )
@@ -6201,6 +6239,8 @@ Sections.user_status_update = function( userid, status )
 						Toggle( ge( 'usDisabled' ), false, ( on ? true : false ) );
 						Toggle( ge( 'usLocked'   ), false, false );
 					}
+					
+					if( callback ) return callback();
 				}
 				f.execute( 'user/updatestatus', { id: userid, status: ( on ? 1 : 0 ), authid: Application.authId, args: args } );
 				
@@ -6239,6 +6279,8 @@ Sections.user_status_update = function( userid, status )
 						Toggle( ge( 'usLocked'   ), false, ( on ? true : false ) );
 						Toggle( ge( 'usDisabled' ), false, false );
 					}
+					
+					if( callback ) return callback();
 				}
 				f.execute( 'user/updatestatus', { id: userid, status: ( on ? 2 : 0 ), authid: Application.authId, args: args } );
 				

@@ -236,6 +236,12 @@ if( 1==1/* || $rolePermission || $level == 'Admin' || $uid == $User->ID*/ )
 				break;
 		}
 		
+		// If User Status is Disabled the user cannot be in any workgroups ...
+		if( $userinfo->Status == 1 )
+		{
+			$userinfo->Workgroup = '';
+		}
+		
 		$gds = false;
 
 		if( $sts = $SqlDatabase->FetchObjects( '
