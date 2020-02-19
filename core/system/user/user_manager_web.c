@@ -57,7 +57,7 @@ inline static int killUserSession( SystemBase *l, UserSession *ses )
 	while( TRUE )
 	{
 		FRIEND_MUTEX_LOCK( &(ses->us_Mutex) );
-		if( ses->us_WSConnections->wusc_Data->wsc_MsgQueue.fq_First == NULL )
+		if( ses->us_WSConnections == NULL || ses->us_WSConnections->wusc_Data == NULL || ses->us_WSConnections->wusc_Data->wsc_MsgQueue.fq_First == NULL )
 		{
 			FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
 			break;
