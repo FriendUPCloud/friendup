@@ -134,6 +134,7 @@ Sections.accounts_users = function( cmd, extra )
 				var mountlist         = ( info.mountlist ? info.mountlist : {} );
 				var soft              = ( info.software ? info.software : {} );
 				var apps              = ( info.applications ? info.applications : {} );
+				var dock              = ( info.dock ? info.dock : {} );
 				
 				console.log( 'initUsersDetails( info ) ', info );		
 				
@@ -1375,39 +1376,21 @@ Sections.accounts_users = function( cmd, extra )
 								if( soft )
 								{
 									console.log( 'soft ', soft );
-							
+									
 									var i = 0;
 									
 									for( var a in soft )
 									{
 										if( soft[a] && soft[a].ID && soft[a].Name )
 										{
-											if( soft[a].DockStatus >= 0 )
-											{
-												soft[a].DockStatus = parseInt( soft[a].DockStatus );
-											}
-											else
-											{
-												soft[a].DockStatus = 0;
-											}
-											
 											output.push( soft[a] );
 										}
 									}
-									
-									// Sort ASC default
-									
-									output.sort( function ( a, b ) { return ( a.DockStatus > b.DockStatus ) ? 1 : -1; } );
 									
 									if( output )
 									{
 										for( var b in output )
 										{
-											if( output[b].DockStatus > 0 )
-											{
-												console.log( '['+output[b].DockStatus+'] DockStatus ', output[b] );
-											}
-											
 											ids[ i++ ] = output[b];
 										}
 									}
@@ -1418,19 +1401,59 @@ Sections.accounts_users = function( cmd, extra )
 						
 							}( soft ),
 							
+							dockids : function ( dock )
+							{
+								var output = []; var ids = {};
+								
+								if( dock )
+								{
+									console.log( 'dock ', dock );
+									
+									var i = 0;
+									
+									for( var a in dock )
+									{
+										if( dock[a] && dock[a].Id && dock[a].Name )
+										{
+											// Force int to be able to sort ...
+											dock[a].SortOrder = parseInt( dock[a].SortOrder );
+											
+											output.push( dock[a] );
+										}
+									}
+									
+									// Sort ASC default
+									
+									output.sort( function ( a, b ) { return ( a.SortOrder > b.SortOrder ) ? 1 : -1; } );
+									
+									if( output )
+									{
+										for( var b in output )
+										{
+											console.log( '['+output[b].SortOrder+'] DockItem ', output[b] );
+											
+											ids[ i++ ] = output[b];
+										}
+									}
+									
+								}
+						
+								return ids;
+						
+							}( dock ),
+							
 							updateids : function ( mode, key, value )
 							{
 					
 								switch( mode )
 								{
-						
+									
 									case 'applications':
-									case 'dock':
 										
 										if( this.appids )
 										{
 											var arr = []; var i = 0; var found = false;
-								
+											
 											for( var a in this.appids )
 											{
 												if( this.appids[a] && this.appids[a].Name )
@@ -1488,6 +1511,49 @@ Sections.accounts_users = function( cmd, extra )
 											}
 										}
 							
+										break;
+										
+									case 'dock':
+										
+										if( this.dockids )
+										{
+											var arr = []; var i = 0; var found = false;
+											
+											for( var a in this.dockids )
+											{
+												if( this.dockids[a] && this.dockids[a].Name )
+												{
+													if( key && this.dockids[a].Name.toLowerCase() == key.toLowerCase() )
+													{
+														if( value )
+														{
+															value.SortOrder = a;
+														}
+														
+														this.dockids[a] = ( value ? value : false ); found = true;
+													}
+												}
+												
+												i++;
+											}
+											
+											if( key && value && !found )
+											{
+												value.SortOrder = i;
+												
+												this.dockids[ i++ ] = value; 
+											}
+											
+											console.log( 'dock ', this.dockids );
+											
+										}
+										else if( key && value )
+										{
+											value.SortOrder = 0;
+											
+											this.dockids[0] = value;
+										}
+										
 										break;
 							
 								}
@@ -2177,14 +2243,14 @@ Sections.accounts_users = function( cmd, extra )
 							
 									func : this,
 							
-									ids  : this.appids,
-							
+									ids  : this.dockids,
+									
 									head : function ( hidecol )
 									{
 										var o = ge( 'DockGui' ); o.innerHTML = '';
 								
 										this.func.updateids( 'dock' );
-								
+										
 										var divs = appendChild( [ 
 											{ 
 												'element' : function() 
@@ -2261,7 +2327,7 @@ Sections.accounts_users = function( cmd, extra )
 									{
 								
 										this.func.mode[ 'dock' ] = 'list';
-								
+										
 										if( apps )
 										{
 											this.head();
@@ -2278,14 +2344,14 @@ Sections.accounts_users = function( cmd, extra )
 											
 														for( var k in apps )
 														{
-															if( this.ids[a] && this.ids[a].Name == apps[k].Name && this.ids[a].DockStatus > 0 )
+															if( this.ids[a] && this.ids[a].Name == apps[k].Name )
 															{
 																found = true;
 																
 																break;
 															}
 														}
-												
+														
 														if( !found ) continue;
 											
 														var divs = appendChild( [
@@ -2365,46 +2431,56 @@ Sections.accounts_users = function( cmd, extra )
 																		'child' : 
 																		[ 
 																			{ 
-																				'element' : function( order, _this ) 
+																				'element' : function( order, itemId, _this ) 
 																				{
 																					var b = document.createElement( 'button' );
 																					b.className = 'IconButton IconSmall IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-down';
 																					b.onclick = function(  )
 																					{
 																			
-																						_this.sortdown( order, function()
+																						_this.sortdown( order, function( e, vars )
 																						{
-																					
-																							updateApplications( userInfo.ID );
 																							
-																							// TODO: Update two dockitems only ...
-																					
-																						} );
+																							console.log( { e:e, vars:vars } );
+																							
+																							if( e && vars && vars.itemId )
+																							{
+																								// TODO: Update two dockitems only ...
+																								
+																								sortDockItem( 'down', vars.itemId, userInfo.ID );
+																							}
+																							
+																						}, { itemId: itemId } );
 																			
 																					};
 																					return b;
-																				}( a, this ) 
+																				}( a, this.ids[a].Id, this ) 
 																			},
 																			{ 
-																				'element' : function( order, _this ) 
+																				'element' : function( order, itemId, _this ) 
 																				{
 																					var b = document.createElement( 'button' );
 																					b.className = 'IconButton IconSmall IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-up';
 																					b.onclick = function()
 																					{
 																			
-																						_this.sortup( order, function()
+																						_this.sortup( order, function( e, vars )
 																						{
-																					
-																							updateApplications( userInfo.ID );
 																							
-																							// TODO: update only two dockitems only ...
-																					
-																						} );
+																							console.log( { e:e, vars:vars } );
+																							
+																							if( e && vars && vars.itemId )
+																							{
+																								// TODO: Update two dockitems only ...
+																								
+																								sortDockItem( 'up', vars.itemId, userInfo.ID );
+																							}
+																							
+																						}, { itemId: itemId } );
 																			
 																					};
 																					return b;
-																				}( a, this ) 
+																				}( a, this.ids[a].Id, this ) 
 																			}
 																		] 
 																	}, 
@@ -2419,7 +2495,7 @@ Sections.accounts_users = function( cmd, extra )
 																		'child' : 
 																		[ 
 																			{ 
-																				'element' : function( ids, name, func ) 
+																				'element' : function( name, itemId, func ) 
 																				{
 																					var b = document.createElement( 'button' );
 																					b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
@@ -2428,39 +2504,31 @@ Sections.accounts_users = function( cmd, extra )
 																			
 																						var pnt = this.parentNode.parentNode;
 																			
-																						removeBtn( this, { ids: ids, name: name, func: func, pnt: pnt }, function ( args )
+																						removeBtn( this, { name: name, itemId: itemId, func: func, pnt: pnt }, function ( args )
 																						{
 																							
-																							args.func.updateids( 'dock', args.name, [ args.name, '0' ] );
-																				
-																							console.log( 'updateApplications( '+userInfo.ID+', callback, vars )' );
-																							
-																							removeDockItem( args.name, userInfo.ID, function(){} );
-																							
-																							updateApplications( userInfo.ID, function( e, d, vars )
+																							removeDockItem( args.name, userInfo.ID, function( e, d, vars )
 																							{
-																				
+																								
 																								if( e && vars )
 																								{
-																					
+																									
+																									vars.func.updateids( 'dock', vars.name, false );
+																									
 																									if( vars.pnt )
 																									{
 																										vars.pnt.innerHTML = '';
 																									}
 																					
 																								}
-																								else
-																								{
-																									console.log( { e:e, d:d, vars: vars } );
-																								}
-																				
-																							}, { pnt: args.pnt } );
+																								
+																							}, { pnt: args.pnt, name: args.name, itemId: args.itemId, func: args.func } );
 																				
 																						} );
 																			
 																					};
 																					return b;
-																				}( this.ids, apps[k].Name, this.func ) 
+																				}( apps[k].Name, this.ids[a].Id, this.func ) 
 																			}
 																		]
 																	}
@@ -2498,29 +2566,37 @@ Sections.accounts_users = function( cmd, extra )
 									
 											var o = ge( 'DockInner' ); o.innerHTML = '';
 									
-											if( this.ids )
+											if( this.func.appids )
 											{
-												for( var a in this.ids )
+												for( var a in this.func.appids )
 												{
-													if( this.ids[a] && this.ids[a].Name )
+													if( this.func.appids[a] && this.func.appids[a].Name )
 													{
 														var found = false; var toggle = false;
 												
 														for( var k in apps )
 														{
-															if( this.ids[a] && this.ids[a].Name == apps[k].Name )
+															if( this.func.appids[a] && this.func.appids[a].Name == apps[k].Name )
 															{
 																found = true;
 																
-																if( this.ids[a].DockStatus > 0 )
+																if( this.ids )
 																{
-																	toggle = true;
+																	for( var i in this.ids )
+																	{	
+																		if( this.ids[i] && this.ids[i].Name == apps[k].Name )
+																		{
+																			toggle = true;
+																			
+																			break;
+																		}
+																	}
 																}
 													
 																break;
 															}
 														}
-											
+														
 														if( !found ) continue;
 											
 														var divs = appendChild( [
@@ -2600,7 +2676,7 @@ Sections.accounts_users = function( cmd, extra )
 																		'child' : 
 																		[ 
 																			{ 
-																				'element' : function( ids, name, func ) 
+																				'element' : function( name, func ) 
 																				{
 																					var b = document.createElement( 'button' );
 																					b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( toggle ? 'on' : 'off' );
@@ -2609,60 +2685,43 @@ Sections.accounts_users = function( cmd, extra )
 																						if( this.classList.contains( 'fa-toggle-off' ) )
 																						{
 																							
-																							func.updateids( 'dock', name, [ name, '1' ] );
-																				
-																							console.log( 'updateApplications( '+userInfo.ID+', callback, vars )' );
-																							
-																							addDockItem( name, userInfo.ID, function(){} );
-																							
-																							updateApplications( userInfo.ID, function( e, d, vars )
+																							addDockItem( name, userInfo.ID, function( e, d, vars )
 																							{
-																				
-																								if( e && vars )
+																								
+																								if( e && d && vars )
 																								{
-																						
+																									
+																									vars.func.updateids( 'dock', vars.name, { Id: d, Name: vars.name } );
+																									
 																									vars._this.classList.remove( 'fa-toggle-off' );
 																									vars._this.classList.add( 'fa-toggle-on' );
 																						
 																								}
-																								else
-																								{
-																									console.log( { e:e, d:d, vars: vars } );
-																								}
-																				
-																							}, { _this: this } );
+																								
+																							}, { _this: this, func: func, name: name } );
 																				
 																						}
 																						else
 																						{
 																							
-																							func.updateids( 'dock', name, [ name, '0' ] );
-																				
-																							console.log( 'updateApplications( '+userInfo.ID+', callback, vars )' );
-																							
-																							removeDockItem( name, userInfo.ID, function(){} );
-																							
-																							updateApplications( userInfo.ID, function( e, d, vars )
+																							removeDockItem( name, userInfo.ID, function( e, d, vars )
 																							{
-																					
+																								
 																								if( e && vars )
 																								{
-																						
+																									vars.func.updateids( 'dock', vars.name, false );
+																									
 																									vars._this.classList.remove( 'fa-toggle-on' );
 																									vars._this.classList.add( 'fa-toggle-off' );
-																						
+																									
 																								}
-																								else
-																								{
-																									console.log( { e:e, d:d, vars: vars } );
-																								}
-																					
-																							}, { _this: this } );
+																								
+																							}, { _this: this, func: func, name: name } );
 																				
 																						}
 																					};
 																					return b;
-																				}( this.ids, apps[k].Name, this.func ) 
+																				}( apps[k].Name, this.func ) 
 																			}
 																		]
 																	}
@@ -2713,24 +2772,26 @@ Sections.accounts_users = function( cmd, extra )
 							
 									// TODO: Check this function, top doesn't sort properly after one click ...
 							
-									sortup : function ( order, callback )
+									sortup : function ( order, callback, vars )
 									{
 								
 										console.log( 'TODO: sortup: ' + order + ' ', this.ids );
-								
-										console.log( 'soft: ', soft );
+										
+										console.log( 'dock: ', dock );
 								
 										var num = 0; var array = []; var found = null;
-								
+										
+										var current = false; var past = false;
+										
 										if( this.ids && typeof order !== "undefined" )
 										{
 											for( var a in this.ids )
 											{
-												if( this.ids[a] && this.ids[a].Name && this.ids[a].DockStatus > 0 )
+												if( this.ids[a] && this.ids[a].Name )
 												{
 											
 													// 
-											
+													
 													console.log( { a:a, num:num } );
 											
 													if( order == a && typeof this.ids[ order ] !== "undefined" )
@@ -2773,28 +2834,37 @@ Sections.accounts_users = function( cmd, extra )
 											}
 									
 											console.log( this.ids );
-									
-											this.refresh();
-									
-											if( callback ) return callback( true );
+											
+											if( current && past )
+											{
+												this.refresh();
+												
+												if( callback ) return callback( true, vars );
+											}
+											else
+											{
+												if( callback ) return callback( false, false );
+											}
 										}
 								
 									},
 							
-									sortdown : function ( order, callback )
+									sortdown : function ( order, callback, vars )
 									{
 								
 										console.log( 'TODO: sortdown: ' + order + ' ', this.ids );
 								
-										console.log( 'soft: ', soft );
+										console.log( 'dock: ', dock );
 								
 										var num = 0; var array = []; var found = null;
-								
+										
+										var current = false; var past = false;
+										
 										if( this.ids && typeof order !== "undefined" )
 										{
 											for( var a in this.ids )
 											{
-												if( this.ids[a] && this.ids[a].Name && this.ids[a].DockStatus > 0 )
+												if( this.ids[a] && this.ids[a].Name )
 												{
 											
 													// 
@@ -2826,7 +2896,7 @@ Sections.accounts_users = function( cmd, extra )
 													{
 														var current = this.ids[ array[ found   ] ];
 														var past    = this.ids[ array[ found+1 ] ];
-												
+														
 														if( current && past )
 														{
 													
@@ -2842,9 +2912,16 @@ Sections.accounts_users = function( cmd, extra )
 									
 											console.log( this.ids );
 											
-											this.refresh();
+											if( current && past )
+											{
+												this.refresh();
 									
-											if( callback ) return callback( true );
+												if( callback ) return callback( true, vars );
+											}
+											else
+											{
+												if( callback ) return callback( false, false );
+											}
 										}
 								
 									}
@@ -3359,8 +3436,16 @@ Sections.accounts_users = function( cmd, extra )
 									if( Application.checkAppPermission( 'PERM_APPLICATION_GLOBAL' ) || Application.checkAppPermission( 'PERM_APPLICATION_WORKGROUP' ) )
 									{
 										// TODO: Implement Save support in a PHP module first ...
-										//if( ge( 'AdminApplicationContainer' ) ) ge( 'AdminApplicationContainer' ).className = 'Open';
-										//if( ge( 'AdminDockContainer' ) ) ge( 'AdminDockContainer' ).className = 'Open';
+										if( ge( 'AdminApplicationContainer' ) ) ge( 'AdminApplicationContainer' ).className = 'Open';
+									}
+								}
+								
+								if( !show || show.indexOf( 'dock' ) >= 0 )
+								{
+									if( Application.checkAppPermission( 'PERM_APPLICATION_GLOBAL' ) || Application.checkAppPermission( 'PERM_APPLICATION_WORKGROUP' ) )
+									{
+										// TODO: Implement Save support in a PHP module first ...
+										if( ge( 'AdminDockContainer' ) ) ge( 'AdminDockContainer' ).className = 'Open';
 									}
 								}
 								
@@ -3769,9 +3854,38 @@ Sections.accounts_users = function( cmd, extra )
 						
 						loadingInfo.applications = dat;
 						
-						initUsersDetails( loadingInfo, [ 'application', 'looknfeel' ] );
+						initUsersDetails( loadingInfo, [ /*'application', */'looknfeel' ] );
 						
 					} );
+					
+					// Go to next in line ...
+					loadingList[ ++loadingSlot ](  );
+				},
+				
+				// 6 | Get user dock
+				function(  )
+				{
+					getDockItems( function ( res, dat )
+					{
+						
+						console.log( 'getDockItems( function ( res, dat ) ', { e:res, d:dat } );
+						
+						if( dat )
+						{
+							for( var k in dat )
+							{
+								if( dat[k] && dat[k].Name )
+								{
+									dat[k].Preview = ( !dat[k].Preview ? '/webclient/apps/'+dat[k].Name+'/icon.png' : '/system.library/module/?module=system&command=getapplicationpreview&application='+dat[k].Name+'&authid='+Application.authId );
+								}
+							}
+						}
+						
+						loadingInfo.dock = dat;
+						
+						initUsersDetails( loadingInfo, [ 'dock' ] );
+						
+					}, extra );
 					
 					// Go to next in line ...
 					loadingList[ ++loadingSlot ](  );
@@ -4909,6 +5023,21 @@ Sections.accounts_users = function( cmd, extra )
 		
 	}
 	
+	function mitraApps( callback, id )
+	{
+		if( callback )
+		{
+			var m = new Module( 'mitra' );
+			m.onExecuted = function( e, d )
+			{
+				console.log( 'mitraApps( callback, id ) ', { e:e, d:d } );
+				
+				if( callback ) return callback( { e:e, d:d } );
+			}
+			m.execute( 'listusers' );
+		}
+	}
+	
 	function updateUserStatus( userid, status )
 	{
 		
@@ -4934,6 +5063,8 @@ Sections.accounts_users = function( cmd, extra )
 	
 	function updateApplications( id, callback, vars )
 	{
+		
+		// TODO: Change this to be instant based on User and app information ...
 		
 		if( id && ge( 'TempApplications' ) )
 		{
@@ -4995,7 +5126,36 @@ Sections.accounts_users = function( cmd, extra )
 		
 	}
 	
-	function addDockItem( appName, userId, callback )
+	function getDockItems( callback, userId )
+	{
+		console.log( 'getDockItems( userId, callback ) ', { callback:callback, userId:userId } );
+		
+		var m = new Module( 'dock' );
+		m.onExecuted = function( e, d )
+		{
+			console.log( 'getDockItems ', { e:e, d:d } );
+			
+			var data = false;
+												
+			try
+			{
+				data = JSON.parse( d );
+			}
+			catch( e ) {  }
+			
+			if( e == 'ok' && data )
+			{
+				if( callback ) callback( true, data );
+			}
+			else
+			{
+				if( callback ) callback( false, false );
+			}
+		}
+		m.execute( 'items', { userID: userId } );
+	}
+	
+	function addDockItem( appName, userId, callback, vars )
 	{
 		console.log( 'addDockItem( appName, userId, callback ) ', { appName:appName, userId:userId, callback:callback } );
 		
@@ -5003,16 +5163,26 @@ Sections.accounts_users = function( cmd, extra )
 		m.onExecuted = function( e, d )
 		{
 			console.log( { e:e, d:d } );
+			
+			if( e == 'ok' )
+			{
+				if( callback ) callback( true, d, vars );
+			}
+			else
+			{
+				if( callback ) callback( false, d, vars );
+			}
 		}
-		//m.execute( 'additems', { userID: userId, dockitems: [
-		//	application: appName, 
-		//	type: '',
-		//	displayname: '', 
-		//	shortdescription: '' 
-		//] } );
+		m.execute( 'additem', { 
+			userID: userId, 
+			application: appName, 
+			type: '', 
+			displayname: '', 
+			shortdescription: '' 
+		} );
 	}
 	
-	function removeDockItem( appName, userId, callback )
+	function removeDockItem( appName, userId, callback, vars )
 	{
 		console.log( 'removeDockItem( appName, userId, callback ) ', { appName:appName, userId:userId, callback:callback } );
 		
@@ -5020,8 +5190,17 @@ Sections.accounts_users = function( cmd, extra )
 		m.onExecuted = function( e, d )
 		{
 			console.log( { e:e, d:d } );
+			
+			if( e == 'ok' )
+			{
+				if( callback ) callback( true, d, vars );
+			}
+			else
+			{
+				if( callback ) callback( false, d, vars );
+			}
 		}
-		//m.execute( 'removefromdock', { userID: userId, name: appName } );
+		m.execute( 'removefromdock', { userID: userId, name: appName, type: '' } );
 	}
 	
 	function sortDockItem( direction, itemId, userId, callback )
@@ -5034,8 +5213,17 @@ Sections.accounts_users = function( cmd, extra )
 		m.onExecuted = function( e, d )
 		{
 			console.log( { e:e, d:d } );
+			
+			if( e == 'ok' )
+			{
+				if( callback ) callback( true, vars );
+			}
+			else
+			{
+				if( callback ) callback( false, vars );
+			}
 		}
-		//m.execute( 'sortorder', { userID: userId, itemId: itemId, direction: direction } );
+		m.execute( 'sortorder', { userID: userId, itemId: itemId, direction: direction } );
 	}
 	
 	Application.closeAllEditModes = function( act )
@@ -5510,6 +5698,12 @@ Sections.accounts_users = function( cmd, extra )
 			
 		}
 		
+		mitraApps( function( ret )
+		{
+		
+			// TODO: save a list of all users or create a specific call by id to get one user together with user details, this is just to see if the apps list so we can add it to the users dock ...
+			
+		} );
 		
 	}
 	else
