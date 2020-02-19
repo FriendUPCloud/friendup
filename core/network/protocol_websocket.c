@@ -533,11 +533,11 @@ void WSThread( void *d )
 		}
 		else
 		{
-			if( response != NULL )
-			{
-				Log( FLOG_INFO, "[WS] C. SysWebRequest took %f seconds, err: %d response: '%s'\n" , secs, response->errorCode, response->content );
-			}
-			else
+			//if( response != NULL )
+			//{
+				//Log( FLOG_INFO, "[WS] C. SysWebRequest took %f seconds, err: %d response: '%s'\n" , secs, response->errorCode, response->content );
+			//}
+			//else
 			{
 				Log( FLOG_INFO, "[WS] C. SysWebRequest took %f seconds\n" , secs );
 			}
