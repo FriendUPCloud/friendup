@@ -73,7 +73,7 @@ char* UriGetScheme( char* str, unsigned int strLen, char** next )
 		}
 	}
 	unsigned int len = ptrEnd - str;
-	char* out = FCalloc( len + 1,sizeof(char) );
+	char* out = FCalloc( len + 32,sizeof(char) );
 	if( out != NULL )
 	{
 		memcpy( out, str, len );
@@ -381,6 +381,13 @@ Hashmap* UriParseQuery( char* query )
 		return NULL;
 	}
 	
+	int queryLen = strlen( query );
+	if( queryLen <= 0 )
+	{
+		FERROR("Lenght of query is <= 0\n");
+		return NULL;
+	}
+	
 	if( query[0] == '?' ) query++;
 	
 	char* keyPtr = query;
@@ -421,7 +428,11 @@ Hashmap* UriParseQuery( char* query )
 			{
 				DEBUG("POSTJSON1 - %s -\n", c );
 			}
-			//i++;
+			
+			if( i <= queryLen )
+			{
+				break;
+			}
 		}
 		else
 		// getting json ( data inside braces [] )
