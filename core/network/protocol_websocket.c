@@ -1203,20 +1203,20 @@ void ParseAndCallThread( void *d )
 	pthread_detach( pthread_self() );
 	InputMsg *im = (InputMsg *)d;
 	
-	//if( FRIEND_MUTEX_LOCK( &(im->im_FCD->wsc_Mutex) ) == 0 )
-	//{
-	//	im->im_FCD->wsc_InUseCounter++;
-	//	FRIEND_MUTEX_UNLOCK( &(im->im_FCD->wsc_Mutex) );
-	//}
+	if( FRIEND_MUTEX_LOCK( &(im->im_FCD->wsc_Mutex) ) == 0 )
+	{
+		im->im_FCD->wsc_InUseCounter++;
+		FRIEND_MUTEX_UNLOCK( &(im->im_FCD->wsc_Mutex) );
+	}
 	
 	DEBUG("[ParseAndCallThread] FCD %p\n", im->im_FCD );
 	ParseAndCall( im->im_FCD, im->im_Msg, im->im_Len );
 	
-	//if( FRIEND_MUTEX_LOCK( &(im->im_FCD->wsc_Mutex) ) == 0 )
-	//{
-	//	im->im_FCD->wsc_InUseCounter--;
-	//	FRIEND_MUTEX_UNLOCK( &(im->im_FCD->wsc_Mutex) );
-	//}
+	if( FRIEND_MUTEX_LOCK( &(im->im_FCD->wsc_Mutex) ) == 0 )
+	{
+		im->im_FCD->wsc_InUseCounter--;
+		FRIEND_MUTEX_UNLOCK( &(im->im_FCD->wsc_Mutex) );
+	}
 	
 	if( im != NULL )
 	{
