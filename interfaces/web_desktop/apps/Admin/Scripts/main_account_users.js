@@ -3419,7 +3419,7 @@ Sections.accounts_users = function( cmd, extra )
 									if( Application.checkAppPermission( 'PERM_ROLE_GLOBAL' ) || Application.checkAppPermission( 'PERM_ROLE_WORKGROUP' ) )
 									{
 										console.log( 'Hiding "AdminRoleContainer" for now until development there is complete ...' );
-										//if( ge( 'AdminRoleContainer' ) ) ge( 'AdminRoleContainer' ).className = 'Open';
+										if( ge( 'AdminRoleContainer' ) ) ge( 'AdminRoleContainer' ).className = 'Open';
 									}
 								}
 								
