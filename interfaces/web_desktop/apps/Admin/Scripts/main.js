@@ -112,7 +112,7 @@ function refreshSidebar( show )
 			'Roles': {
 				icon: 'fa-user-secret',
 				showing: isAdmin,
-				display: ( show ? true : false ),
+				display: true,
 				permissions: [ 'PERM_ROLE_GLOBAL', 'PERM_ROLE_WORKGROUP' ]
 			},
 			'Templates': {
