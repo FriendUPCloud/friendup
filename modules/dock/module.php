@@ -82,12 +82,17 @@ if( isset( $args->command ) )
 	switch( $args->command )
 	{
 		case 'items':
+			if( $args->args->userID && $args->args->userID != $User->ID )
+			{
+				if( $level != 'Admin' ) die('fail<!--separate-->not authorized to sort dockitems');
+			}
+			$userid = ( $args->args->userID ? intval( $args->args->userID ) : $User->ID );
 			// Load root items if nothing else is requested
 			if( $rows = $SqlDatabase->FetchObjects( '
 				SELECT d.* FROM
 					DockItem d
 				WHERE
-					d.UserID=\'' . $User->ID . '\' AND d.Parent=0 AND d.Type != \'Dock\'
+					d.UserID=\'' . $userid . '\' AND d.Parent=0 AND d.Type != \'Dock\'
 				ORDER BY 
 					d.SortOrder ASC
 			' ) )
@@ -123,6 +128,7 @@ if( isset( $args->command ) )
 						}
 					}
 					$o->Image = '';
+					$o->SortOrder = $row->SortOrder;
 					
 					// Get config
 					$eles[] = $o;
@@ -140,12 +146,12 @@ if( isset( $args->command ) )
 			$s = filter_var( $args->args->name, FILTER_SANITIZE_STRING );
 			if( $args->args->fuzzy )
 			{
-				$q = ( 'DELETE FROM DockItem WHERE UserID=\'' . $userid . '\' AND `Application` LIKE "' . $s . ' %" AND `Type`="executable"' );
+				$q = ( 'DELETE FROM DockItem WHERE UserID=\'' . $userid . '\' AND `Application` LIKE "' . $s . ' %" AND `Type`="' . ( isset( $args->args->type ) ? '' : 'executable' ) . '"' );
 				//$Logger->log('cleaning a dock here... ' . $q);
 			}
 			else
 			{
-				$q = ( 'DELETE FROM DockItem WHERE UserID=\'' . $userid . '\' AND `Application`="' . $s . '" AND `Type`="executable" LIMIT 1' );
+				$q = ( 'DELETE FROM DockItem WHERE UserID=\'' . $userid . '\' AND `Application`="' . $s . '" AND `Type`="' . ( isset( $args->args->type ) ? '' : 'executable' ) . '" LIMIT 1' );
 			}
 			if( $SqlDatabase->Query( $q ) )
 			{
@@ -174,7 +180,12 @@ if( isset( $args->command ) )
 			}
 			die( 'fail' );
 		case 'sortorder':
-			if( $out = $SqlDatabase->FetchObjects( 'SELECT * FROM DockItem WHERE UserID=\'' . $User->ID . '\' ORDER BY SortOrder ASC' ) )
+			if( $args->args->userID && $args->args->userID != $User->ID )
+			{
+				if( $level != 'Admin' ) die('fail<!--separate-->not authorized to sort dockitems');
+			}
+			$userid = ( $args->args->userID ? intval( $args->args->userID ) : $User->ID );
+			if( $out = $SqlDatabase->FetchObjects( 'SELECT * FROM DockItem WHERE UserID=\'' . $userid . '\' ORDER BY SortOrder ASC' ) )
 			{
 				$i = 0;
 				$len = count( $out );
@@ -203,7 +214,7 @@ if( isset( $args->command ) )
 				$i = 0;
 				foreach( $out as $o )
 				{
-					$SqlDatabase->Query( 'UPDATE DockItem SET SortOrder = \'' . $i . '\' WHERE ID=\'' . $o->ID . '\' AND UserID=\'' . $User->ID . '\'' );
+					$SqlDatabase->Query( 'UPDATE DockItem SET SortOrder = \'' . $i . '\' WHERE ID=\'' . $o->ID . '\' AND UserID=\'' . $userid . '\'' );
 					$i++;
 				}
 				die( 'ok' );
@@ -301,11 +312,16 @@ if( isset( $args->command ) )
 				';
 				$SqlDatabase->Query( $addquery );
 			}
-			
+			die('ok');
 			break;
 			
 		case 'additem':
-			$max = $SqlDatabase->FetchRow( 'SELECT MAX(SortOrder) MX FROM DockItem WHERE UserID = \'' . $User->ID . '\' AND Parent = 0' );
+			if( $args->args->userID && $args->args->userID != $User->ID )
+			{
+				if( $level != 'Admin' ) die('fail<!--separate-->not authorized to add dockitems');
+			}
+			$userid = ( $args->args->userID ? intval( $args->args->userID ) : $User->ID );
+			$max = $SqlDatabase->FetchRow( 'SELECT MAX(SortOrder) MX FROM DockItem WHERE UserID = \'' . $userid . '\' AND Parent = 0' );
 			if( isset( $args->args->application ) )
 			{
 				$exe = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->application );
@@ -323,7 +339,7 @@ if( isset( $args->command ) )
 				
 				// No duplicate!
 				$l = new dbIO( 'DockItem' );
-				$l->UserID = $User->ID;
+				$l->UserID = $userid;
 				$l->Application = $exe;
 				if( $l->load() ) die( 'fail<!--separate-->{"response":"0","message":"Application is already added."}' );
 				
@@ -332,7 +348,7 @@ if( isset( $args->command ) )
 						( UserID, `Type`, Application, DisplayName, ShortDescription, Icon, Parent, SortOrder, Workspace ) 
 					VALUES 
 						( 
-							\'' . $User->ID . '\', 
+							\'' . $userid . '\', 
 							\'' . $type . '\', 
 							\'' . $exe . '\', 
 							\'' . $dname . '\',
@@ -347,11 +363,11 @@ if( isset( $args->command ) )
 			else
 			{
 				$SqlDatabase->Query( '
-					INSERT INTO DockItem ( UserID, DockID, Parent, SortOrder, Workspace ) VALUES ( \'' . $User->ID . '\', 0, 0, \'' . ( intval($max['MX']) + 1 ) . '\', \'1\' )
+					INSERT INTO DockItem ( UserID, DockID, Parent, SortOrder, Workspace ) VALUES ( \'' . $userid . '\', 0, 0, \'' . ( intval($max['MX']) + 1 ) . '\', \'1\' )
 				' );
 			}
 			//get ID and give it back to the user...
-			$maxquery = 'SELECT ID FROM DockItem WHERE UserID = \'' . $User->ID . '\' AND Parent = 0 AND DockID = 0 AND SortOrder = \'' . ( intval( $max[ 'MX' ] ) + 1 ) . '\'';
+			$maxquery = 'SELECT ID FROM DockItem WHERE UserID = \'' . $userid . '\' AND Parent = 0 AND DockID = 0 AND SortOrder = \'' . ( intval( $max[ 'MX' ] ) + 1 ) . '\'';
 			$newid = $SqlDatabase->FetchRow( $maxquery );
 			//$Logger->log( 'Dock item saved' . print_r( $newid, 1 ) . ' :: ' . $maxquery );
 			die( 'ok<!--separate-->' .  $newid[ 'ID' ] );

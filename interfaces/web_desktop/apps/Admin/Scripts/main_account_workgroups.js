@@ -1321,7 +1321,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 												found = true;
 											}
 											
-											if( !found ) continue;
+											if( !found || list[k].Status == 1 ) continue;
 											
 											var divs = appendChild( [
 												{ 
@@ -1496,6 +1496,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 											{
 												toggle = true;
 											}
+											
+											if( list[k].Status == 1 ) continue;
 											
 											var divs = appendChild( [
 												{ 

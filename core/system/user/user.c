@@ -306,9 +306,9 @@ int UserAddDevice( User *usr, File *file )
 		
 			while( lfile != NULL )
 			{
-				if( file->f_ID == lfile->f_ID )
+				if( strcmp( file->f_Name, lfile->f_Name ) == 0 )
 				{
-					DEBUG("Device is already in the list\n");
+					DEBUG("Device is already in the list %lu name: %s\n", file->f_ID, file->f_Name );
 					FRIEND_MUTEX_UNLOCK(&usr->u_Mutex);
 					return 2;
 				}
@@ -438,10 +438,61 @@ File *UserRemDeviceByGroupID( User *usr, FULONG grid, int *error )
 {
 	if( usr != NULL )
 	{
+		
+		if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
+		{
+			File *lf = usr->u_MountedDevs;
+			File *newRoot = NULL;
+			
+			while( lf != NULL )
+			{
+				File *leaveDrive = NULL;
+				DEBUG( "[UserRemDeviceByName] Checking fs in list %lu == %lu...\n",  lf->f_UserGroupID, grid );
+				if( lf->f_UserGroupID == grid )
+				{
+					DEBUG( "[UserRemDeviceByName] Found one (%lu == %lu) fname: %s\n",  lf->f_UserGroupID, grid, lf->f_Name );
+					
+					do{
+						*error = 0;
+				
+						if( lf->f_Operations <= 0 )
+						{
+							FHandler *fsys = (FHandler *)lf->f_FSys;
+							fsys->Release( fsys, lf );	// release drive data
+							usleep( 500 );
+						}
+						else
+						{
+							DEBUG("[UserRemDeviceByName] Cannot unmount device, operation in progress\n");
+							*error = FSys_Error_OpsInProgress;
+						}
+		
+					}while( *error == FSys_Error_OpsInProgress );
+				}
+				else
+				{
+					leaveDrive = lf;
+				}
+				lf = (File *)lf->node.mln_Succ;
+				
+				if( leaveDrive != NULL )
+				{
+					leaveDrive->node.mln_Succ = (MinNode *)newRoot;
+					newRoot = leaveDrive;
+				}
+			}
+			
+			usr->u_MountedDevs = newRoot;
+			
+			FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
+		}
+		
+		/*
 		RemDrive *tbrroot = NULL;
 		
-		//File *remdev = NULL;
+		File *remdev = NULL;
 		File *lastone = NULL;
+		
 		
 		if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
 		{
@@ -452,7 +503,7 @@ File *UserRemDeviceByGroupID( User *usr, FULONG grid, int *error )
 				DEBUG( "[UserRemDeviceByName] Checking fs in list %lu == %lu...\n",  lf->f_UserGroupID, grid );
 				if( lf->f_UserGroupID == grid )
 				{
-					DEBUG( "[UserRemDeviceByName] Found one (%lu == %lu)\n",  lf->f_UserGroupID, grid );
+					DEBUG( "[UserRemDeviceByName] Found one (%lu == %lu) fname: %s\n",  lf->f_UserGroupID, grid, lf->f_Name );
 					
 					RemDrive *loc = FCalloc( 1, sizeof(RemDrive) );
 					loc->tbr = lf;
@@ -467,7 +518,6 @@ File *UserRemDeviceByGroupID( User *usr, FULONG grid, int *error )
 					}
 					//break;
 				}
-				lastone = lf;
 				lf = (File *)lf->node.mln_Succ;
 			}
 			FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
@@ -488,6 +538,7 @@ File *UserRemDeviceByGroupID( User *usr, FULONG grid, int *error )
 					if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
 					{
 						File *lf = usr->u_MountedDevs;
+						lastone = lf;
 			
 						// go through list, becaouse we need "lastone"
 						while( lf != NULL )
@@ -546,6 +597,7 @@ File *UserRemDeviceByGroupID( User *usr, FULONG grid, int *error )
 				FFree( freedrive );
 			}
 		} // while tbrroot
+		*/
 	}
 	else
 	{
