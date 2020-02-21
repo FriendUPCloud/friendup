@@ -136,7 +136,7 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 			$found = true;
 			
 			$thumb->delete();
-			_file_broken();
+			//_file_broken();
 		}
 	}
 	if( !$found )
