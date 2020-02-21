@@ -133,7 +133,7 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		// Clean up..
 		else
 		{
-			$found = true;
+			$found = false;
 			
 			$thumb->delete();
 			//_file_broken();
