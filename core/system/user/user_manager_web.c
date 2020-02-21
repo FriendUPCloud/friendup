@@ -2245,8 +2245,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						UserSession *ls = (UserSession *)usle->us;
 						if( ls != NULL )
 						{
-							DEBUG("Going through all usersessions: %p, compare %s vs %s\n", ls->us_SessionID, usersession, ls->us_SessionID );
-
 							DEBUG("Found same session, sending msg\n");
 							char tmp[ 512 ];
 							int tmpsize = 0;
