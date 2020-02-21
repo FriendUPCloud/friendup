@@ -2202,6 +2202,14 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	/// @endcond
 	else if( strcmp( urlpath[ 1 ], "servermessage" ) == 0 )
 	{
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
+			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{TAG_DONE, TAG_DONE}
+		};
+		
+		response = HttpNewSimple( HTTP_200_OK,  tags );
+		
 		HashmapElement *el = NULL;
 		char *msg = NULL;
 
