@@ -160,11 +160,8 @@ then
 			option=0
 		fi
 	done < "${input}"
-<<<<<<< HEAD
-=======
 
 	echo "Delimeter : ->${delim}<-"
->>>>>>> 7aa3a78973d706f95b5f9c37bc0d20770b72f2b7
 
 	option=0
 
