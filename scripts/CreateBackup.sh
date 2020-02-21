@@ -163,7 +163,7 @@ OLDIFS=${IFS}
 if [ -f "$input" ]
 then
 	declare -a comarray
-	delim=','
+	delim=","
 
 	while IFS=, read -r -a farray
 	do
@@ -172,8 +172,9 @@ then
 		else
 			locvar=${farray[0]}
 			delim=${locvar:0:1}
+			option=0
 		fi
-	fi
+	done < "${input}"
 
 	option=0
 
@@ -183,7 +184,7 @@ then
 
 		if [ "${farray[0]}" = "delimeter" ]; then
 			option=3
-		if [ "${farray[0]}" = "databases" ]; then
+		elif [ "${farray[0]}" = "databases" ]; then
 			option=1
 		elif [ "${farray[0]}" = "directories" ]; then
 			option=2
