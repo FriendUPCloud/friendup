@@ -90,6 +90,12 @@ NotificationManager *NotificationManagerNew( void *sb )
 			}
 			
 			//
+			// external service
+			
+			pthread_mutex_init( &(nm->nm_ExtServiceMutex), NULL );
+			FQInit( &(nm->nm_ExtServiceMessage) );
+			
+			//
 			// run android send thread
 			
 			pthread_mutex_init( &(nm->nm_AndroidSendMutex), NULL );
@@ -227,6 +233,14 @@ void NotificationManagerDelete( NotificationManager *nm )
 		FQDeInit( &(nm->nm_IOSSendMessages) );
 		
 		DEBUG("[NotificationManagerDelete] all threads deleted\n");
+		
+		//
+		// delete external services
+		
+		pthread_mutex_destroy( &(nm->nm_ExtServiceMutex) );
+		FQDeInit( &(nm->nm_ExtServiceMessage) );
+		
+		DEBUG("[NotificationManagerDelete] external services queue removed\n");
 		
 		if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	// add node to database and to list
 		{
@@ -763,6 +777,258 @@ OR
 		FFree( dstMsg );
 	}
 	return ret;
+}
+
+/**
+ * Send message to external servers
+ * 
+ * @param nm pointer to NotificationManager
+ * @param req Http request
+ * @param us user session
+ * @param sername server name to which message will be sent. NULL means that message will be send to all connections.
+ * @param type type of message
+ * @param group message group
+ * @param action action
+ * @param params additional parameters
+ * @return response
+ */
+
+char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http *req, UserSession *us, char *sername, const char *type, const char *group, const char *action, const char *params )
+{
+	//char *retMessage = NULL;
+	BufString *retMsg = BufStringNew();
+	
+	if( req != NULL && req->h_RequestSource == HTTP_SOURCE_EXTERNAL_SERVER )
+	{
+		INFO( "Request comes from external server\n");
+		return NULL;
+	}
+	
+	/*
+{
+   type : 'path',
+   data : {
+       type : 'to',
+       data : {
+            type : 'thing'
+            requestId : 'id-string'
+            data : {
+                  request parameters
+	}}}}
+	 */
+	
+	int msglen = 728 + strlen( params );
+	if( type != NULL )
+	{
+		msglen += strlen( type );
+	}
+	if( group != NULL )
+	{
+		msglen += strlen( group );
+	}
+	if( action != NULL )
+	{
+		msglen += strlen( action );
+	}
+
+	char *dstMsg = FMalloc( msglen );
+	int ret = 0;
+	
+	if( dstMsg != NULL )
+	{
+		int sentMessageTo = 0;	// number of receipients
+		int dstsize = 0;
+		char *reqID = FCalloc( 128, sizeof(char) );
+
+		ExternalServerConnection *con = nm->nm_ESConnections;
+		if( sername == NULL ) // send to all servers
+		{
+			DEBUG("Server name = NULL\n");
+			while( con != NULL )
+			{
+				DataQWSIM *en = (DataQWSIM *)con->esc_Connection;
+				
+				snprintf( reqID, 128, "EXTSER_%lu%d_ID", time(NULL), rand()%999999 );
+				dstsize = snprintf( dstMsg, msglen, "{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"requestId\":\"%s\",\"data\":{%s,\"originUserId\":\"%s\"}}}}", type, group, action, reqID, params, us->us_User->u_UUID );
+		
+				Log( FLOG_INFO, "[NotificationManagerSendRequestToConnections] Send message: '%s'\n", dstMsg );
+				
+				DEBUG("Msg sent to: %s\n", en->d_ServerName );
+				ret += WriteMessageToServers( con->esc_Connection, (unsigned char *)dstMsg, dstsize );
+				con = (ExternalServerConnection *)con->node.mln_Succ;
+				
+				sentMessageTo++;
+			}
+		}
+		else
+		{
+			DEBUG("Server name != NULL\n");
+			while( con != NULL )
+			{
+				snprintf( reqID, 128, "EXTSER_%lu%d_ID", time(NULL), rand()%999999 );
+				dstsize = snprintf( dstMsg, msglen, "{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"requestId\":\"%s\",\"data\":{%s,\"originUserId\":\"%s\"}}}}", type, group, action, reqID, params, us->us_User->u_UUID );
+		
+				Log( FLOG_INFO, "[NotificationManagerSendRequestToConnections] Send message: '%s'\n", dstMsg );
+				
+				ret += WriteMessageToServers( con->esc_Connection, (unsigned char *)dstMsg, dstsize );
+				con = (ExternalServerConnection *)con->node.mln_Succ;
+				
+				sentMessageTo++;
+			}
+		}
+		FFree( dstMsg );
+		
+		//
+		// wait for response
+		//
+		
+		if( sentMessageTo > 0 )
+		{
+			int secs = 0;
+			while( TRUE )
+			{
+				// response
+				FQEntry *foundEntry = NULL;
+			
+				DEBUG("[Notify Service] check queue\n");
+			
+				if( FRIEND_MUTEX_LOCK( &(nm->nm_ExtServiceMutex)) == 0 )
+				{
+					FQEntry *qe = nm->nm_ExtServiceMessage.fq_First;
+					// we will build new linked list
+					FQEntry *qenroot = NULL;
+					while( qe != NULL )
+					{
+						FQEntry *locentry = qe;
+						qe = (FQEntry *)qe->node.mln_Succ;
+						DEBUG("Going through entries\n");
+					
+						// check if its same reqid
+						// if same return response
+						if( locentry->fq_RequestID != NULL && strcmp( locentry->fq_RequestID, reqID ) == 0 )
+						{
+							DEBUG("Found entry by requestid : %s\n", reqID );
+							foundEntry = locentry;
+						}
+						// if msg is older then 30 seconds remove it
+						else if( (time(NULL) - locentry->fq_Timestamp) > 30  )	// message is older then 30 seconds
+						{
+							DEBUG("Delete old message\n");
+							if( locentry->fq_Data != NULL )
+							{
+								FFree( locentry->fq_Data );
+							}
+							if( locentry->fq_RequestID != NULL )
+							{
+								FFree( locentry->fq_RequestID );
+							}
+							FFree( locentry );
+						}
+						// otherwise leave message
+						else
+						{
+							DEBUG("Leave message in queue\n");
+							locentry->node.mln_Succ = (MinNode *)qenroot;
+							qenroot = locentry;
+						}
+					}
+					// assign new list to root
+					nm->nm_ExtServiceMessage.fq_First = qenroot;
+				
+					FRIEND_MUTEX_UNLOCK( &(nm->nm_ExtServiceMutex));
+				}
+			
+				DEBUG("[Notify Service] found entry %p\n", foundEntry );
+			
+				// if entry was found we can come back with response
+				if( foundEntry != NULL )
+				{
+					if( retMsg->bs_Size > 0 )
+					{
+						BufStringAddSize( retMsg, ",", 1 );
+					}
+					BufStringAdd( retMsg, (char *)foundEntry->fq_Data );
+				
+					if( foundEntry->fq_RequestID != NULL )
+					{
+						FFree( foundEntry->fq_RequestID );
+					}
+					if( foundEntry->fq_Data != NULL )
+					{
+						FFree( foundEntry->fq_Data );
+					}
+					FFree( foundEntry );
+				
+					// if message was send to more then one servers we are waiting for reply
+					sentMessageTo--;
+				
+					if( sentMessageTo <= 0 )
+					{
+						DEBUG("[Notify Service] All responses recevied, quit loop\n");
+						break;
+					}
+				}
+			
+				sleep( 1 );
+				//usleep( 50000 );
+				if( secs++ >30 )	// around 15 seconds
+				{
+					const char *timeoutResp = "{\"result\":-1,\"error\",\"Timeout\"}";
+					BufStringAdd( retMsg, timeoutResp );
+					FERROR("Timeout\n");
+					break; 
+				} 
+			} // while TRUE
+			DEBUG("[Notify Service] ret message: %s\n", retMsg->bs_Buffer );
+		}
+		else // message was not send
+		{
+			const char *timeoutResp = "{\"result\":-2,\"error\",\"No Connection\"}";
+			BufStringAdd( retMsg, timeoutResp );
+			FERROR("No connection\n");
+		}
+	}
+	
+	// assign response to return string and delete bufstring
+	char *retMessage = retMsg->bs_Buffer;
+	retMsg->bs_Buffer = NULL;
+	BufStringDelete( retMsg );
+	
+	return retMessage;
+}
+
+/**
+ * Add incoming message from external service to response queue
+ * 
+ * @param nm pointer to NotificationManager
+ * @param reqid - request ID (remember to pass parameter in allocated memory)
+ * @param message - message (remember to pass parameter in allocated memory)
+ * @return 0 when success, otherwise error number
+ */
+int NotificationManagerAddIncomingRequestES( NotificationManager *nm, char *reqid, char *message )
+{
+	// allocate memory for new entry
+	FQEntry *newEntry = FCalloc( 1, sizeof( FQEntry ) );
+	
+	DEBUG("[NotificationManagerAddIncomingRequestES] requestid : %s message: %s\n", reqid, message );
+	
+	if( newEntry != NULL )
+	{
+		newEntry->fq_Data = (unsigned char *)message;
+		newEntry->fq_Timestamp = time(NULL);
+		newEntry->fq_RequestID = reqid;
+		
+		if( FRIEND_MUTEX_LOCK( &(nm->nm_ExtServiceMutex)) == 0 )
+		{
+			newEntry->node.mln_Succ = (MinNode *)nm->nm_ExtServiceMessage.fq_First;
+			nm->nm_ExtServiceMessage.fq_First = newEntry;
+			FRIEND_MUTEX_UNLOCK( &(nm->nm_ExtServiceMutex));
+			
+			DEBUG("[NotificationManagerAddIncomingRequestES] new entry added to list\n");
+			return 0;
+		}
+	}
+	return 1;
 }
 
 /**

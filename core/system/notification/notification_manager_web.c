@@ -91,7 +91,7 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	*
-	* <HR><H2>system.library/notification/notify-server</H2>Create user. Function require admin rights.
+	* <HR><H2>system.library/notification/notify-server</H2>Send information to external connection
 	*
 	* @param sessionid - (required) session id of logged user
 	* @param msg - (required) message
@@ -176,6 +176,111 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		*result = 200;
 	}
 	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/notification/msgtoextservice</H2>Notify external connections
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param params - (required) paramaters
+	* @param type - (required) message type
+	* @param group - (required) group of message
+	* @param action - (required) action
+	* @param servername - name of the server to which message will be send or put NULL if to all
+	* @return { result: 0 } when success, otherwise error with code
+	*/
+	/// @endcond
+	
+	else if( strcmp( urlpath[ 1 ], "msgtoextservice" ) == 0 )
+	{
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{TAG_DONE, TAG_DONE}
+		};
+		
+		response = HttpNewSimple( HTTP_200_OK,  tags );
+		
+		char *params = NULL;
+		char *servername = NULL;
+		char *type = NULL;
+		char *group = NULL;
+		char *action = NULL;
+		
+		DEBUG( "[NMWebRequest] msgtoextservice!!\n" );
+		
+		HashmapElement *el = NULL;
+		
+		el = HttpGetPOSTParameter( request, "params" );
+		if( el != NULL )
+		{
+			params = UrlDecodeToMem( (char *)el->data );
+			DEBUG( "[NMWebRequest] params %s!!\n", params );
+		}
+		
+		el = HttpGetPOSTParameter( request, "type" );
+		if( el != NULL )
+		{
+			type = UrlDecodeToMem( (char *)el->data );
+			DEBUG( "[NMWebRequest] type %s!!\n", type );
+		}
+		
+		el = HttpGetPOSTParameter( request, "group" );
+		if( el != NULL )
+		{
+			group = UrlDecodeToMem( (char *)el->data );
+			DEBUG( "[NMWebRequest] group %s!!\n", group );
+		}
+		
+		el = HttpGetPOSTParameter( request, "action" );
+		if( el != NULL )
+		{
+			action = UrlDecodeToMem( (char *)el->data );
+			DEBUG( "[NMWebRequest] action %s!!\n", action );
+		}
+		
+		el = HttpGetPOSTParameter( request, "servername" );
+		if( el != NULL )
+		{
+			servername = UrlDecodeToMem( (char *)el->data );
+			DEBUG( "[NMWebRequest] servername %s!!\n", servername );
+		}
+		
+		if( params != NULL && type != NULL && group != NULL && action != NULL )
+		{
+			char *serresp = NotificationManagerSendRequestToConnections( l->sl_NotificationManager, request, loggedSession, servername, type, group, action, params );
+			if( serresp != NULL )
+			{
+				HttpSetContent( response, serresp, strlen( serresp ) );
+			}
+		} // missing parameters
+		else
+		{
+			char buffer[ 256 ];
+			char buffer1[ 256 ];
+			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "username, channelid, app, title, message" );
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+			HttpAddTextContent( response, buffer );
+		}
+		
+		if( params != NULL )
+		{
+			FFree( params );
+		}
+		if( type != NULL )
+		{
+			FFree( type );
+		}
+		if( action != NULL )
+		{
+			FFree( action );
+		}
+		if( group != NULL )
+		{
+			FFree( group );
+		}
+		*result = 200;
+	}
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	*

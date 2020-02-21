@@ -78,6 +78,9 @@ typedef struct NotificationManager
 	int							nm_AndroidSendInUse;
 	HttpClient					*nm_AndroidSendHttpClient;
 	
+	FQueue						nm_ExtServiceMessage;
+	pthread_mutex_t				nm_ExtServiceMutex;
+	
 	char						*nm_APNSCert;
 	time_t						nm_APNSNotificationTimeout;
 	FBOOL						nm_APNSSandBox;
@@ -137,6 +140,10 @@ int NotificationManagerRemoveExternalConnection( NotificationManager *nm, void *
 int NotificationManagerSendInformationToConnections( NotificationManager *nm, char *sername, char *msg, int len );
 
 int NotificationManagerSendEventToConnections( NotificationManager *nm, Http *req, char *sername, const char *reqid, const char *sertype, const char *func, const char *action, char *msg );
+
+char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http *req, UserSession *ses, char *sername, const char *type, const char *group, const char *action, const char *params );
+
+int NotificationManagerAddIncomingRequestES( NotificationManager *nm, char *reqid, char *message );
 
 void NotificationIOSSendingThread( FThread *data );
 
