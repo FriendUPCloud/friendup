@@ -131,21 +131,6 @@ mkdir -p "${current_backup_dir}/db"
 
 mysqldump -u $login -p$password --databases $dbname > ${current_backup_dir}/db/frienddb_backup.sql
 
-# disable automatic FriendChat/Presence database backup
-#if [ -z "$friendchat_db" ]
-#then
-#	echo "FriendChatDB backup will be skipped"
-#else
-#	mysqldump -u $login -p$password --databases $friendchat_db > ${current_backup_dir}/db/friendchatdb_backup.sql
-#fi
-
-#if [ -z "$presence_db" ]
-#then
-#	echo "PresenceDB backup will be skipped"
-#else
-#	mysqldump -u $login -p$password --databases $presence_db > ${current_backup_dir}/db/presencedb_backup.sql
-#fi
-
 cfg_section_Backup
 
 #
@@ -163,12 +148,30 @@ OLDIFS=${IFS}
 if [ -f "$input" ]
 then
 	declare -a comarray
+	delim=","
 
 	while IFS=, read -r -a farray
 	do
+		if [ "${farray[0]}" = "delimeter" ]; then
+			option=3
+		elif [ $option = 3 ]; then
+			locvar=${farray[0]}
+			delim=${locvar:0:1}
+			option=0
+		fi
+	done < "${input}"
+
+	echo "Delimeter : ->${delim}<-"
+
+	option=0
+
+	while IFS="${delim}" read -r -a farray
+	do
 		#echo "Line : ${farray[0]}  option ${option}"
 
-		if [ "${farray[0]}" = "databases" ]; then
+		if [ "${farray[0]}" = "delimeter" ]; then
+			option=3
+		elif [ "${farray[0]}" = "databases" ]; then
 			option=1
 		elif [ "${farray[0]}" = "directories" ]; then
 			option=2
@@ -182,6 +185,7 @@ then
 					if [ $option = 1 ]; then
 						#database name, login, password, dbname
 						#comarray+=("mysqldump -u ${farray[1]} -p${farray[2]} --databases ${farray[3]} > ${current_backup_dir}/db/${farray[0]}.sql")
+						echo "mysqldump -u ${farray[1]} -p${farray[2]} --databases ${farray[3]} > ${current_backup_dir}/db/${farray[0]}.sql"
 						mysqldump -u ${farray[1]} -p${farray[2]} --databases ${farray[3]} > ${current_backup_dir}/db/${farray[0]}.sql
 					elif [ $option = 2 ]; then
 						#echo "Line: ${farray[0]}"
