@@ -90,7 +90,7 @@ function PollTray()
 			var taskn = Workspace.applications.length;
 			var edit = '';
 			if( taskn > 0 )
-				edit = '<p class="BorderTop PaddingTop"><button onmousedown="Workspace.Tasklist()" type="button" class="Button IconSmall IconButton fa-bar-chart"> ' + i18n( 'i18n_manage_tasks' ) + '</button></p>';
+				edit = '<p class="BorderTop PaddingTop"><button onmousedown="Workspace.Tasklist()" type="button" class="Button IconSmall fa-bar-chart"> ' + i18n( 'i18n_manage_tasks' ) + '</button></p>';
 			this.innerHTML = '<div class="BubbleInfo"><div><p class="Layout">' + taskn + ' ' + ( taskn == 1 ? i18n( 'i18n_task_running' ) : i18n( 'i18n_tasks_running' ) ) + '.</p>' + edit + '</div></div>';
 		}
 		tray.appendChild( tray.tasks );
@@ -402,8 +402,24 @@ function AddNotificationEvent( evt )
 		( Math.random() * 999 ) 
 	).toString();
 	evt.uniqueId = uniqueId;
+	// Double check duplicates
+	if( evt.notificationId )
+		evt.externNotificationId = evt.notificationId;
+	if( evt.notificationId )
+	{
+		for( var b = 0; b < Workspace.notificationEvents.length; b++ )
+		{
+			if( !Workspace.notificationEvents[ b ].externNotificationId )
+				continue;
+			if( Workspace.notificationEvents[ b ].externNotificationId == evt.externNotificationId )
+			{
+				// Duplicate!
+				console.log( 'Duplicate notification id.' );
+				return;
+			}
+		}
+	}
 	Workspace.notificationEvents.push( evt );
-	console.log( 'Added notification event.', evt );
 	return uniqueId;
 }
 
@@ -520,7 +536,7 @@ function Notify( message, callback, clickcallback )
 		showCallback: callback,
 		clickCallback: clickcallback
 	};
-	var notificationId = AddNotificationEvent( nev );
+	var notificationId = AddNotificationEvent( nev, message.notificationId );
 
 	// On mobile, we always show the notification on the Workspace screen
 	if( isMobile )

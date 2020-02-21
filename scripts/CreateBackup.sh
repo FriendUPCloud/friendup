@@ -163,11 +163,26 @@ OLDIFS=${IFS}
 if [ -f "$input" ]
 then
 	declare -a comarray
+	delim=','
 
 	while IFS=, read -r -a farray
 	do
+		if [ "${farray[0]}" = "delimeter" ]; then
+			option=3
+		else
+			locvar=${farray[0]}
+			delim=${locvar:0:1}
+		fi
+	fi
+
+	option=0
+
+	while IFS=${delim} read -r -a farray
+	do
 		#echo "Line : ${farray[0]}  option ${option}"
 
+		if [ "${farray[0]}" = "delimeter" ]; then
+			option=3
 		if [ "${farray[0]}" = "databases" ]; then
 			option=1
 		elif [ "${farray[0]}" = "directories" ]; then

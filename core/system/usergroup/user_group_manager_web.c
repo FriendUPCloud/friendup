@@ -1115,37 +1115,6 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 								sqlLib->FreeResult( sqlLib, result );
 							}
 							
-							
-							
-							/*
-							DEBUG("Remove users from group\n");
-							
-							snprintf( tmpQuery, sizeof(tmpQuery), "SELECT UserID FROM FUserToGroup WHERE UserGroupID=%lu", groupID );
-							result = sqlLib->Query(  sqlLib, tmpQuery );
-							if( result != NULL )
-							{
-								int pos = 0;
-								char **row;
-								while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
-								{
-									char *end;
-									FULONG userid = strtol( (char *)row[0], &end, 0 );
-									// add only this users which are in FC memory now, rest will be removed in SQL call
-									User *usr = UMGetUserByID( l->sl_UM, userid );
-									if( usr != NULL )
-									{
-										UserGroupRemoveUser( fg, usr );
-									}
-							
-									pos++;
-								}
-								sqlLib->FreeResult( sqlLib, result );
-							}
-							
-							// remove connections between users and group
-							snprintf( tmpQuery, sizeof(tmpQuery), "delete FROM FUserToGroup WHERE UserGroupID=%lu", groupID );
-							sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
-							*/
 							l->LibrarySQLDrop( l, sqlLib );
 							FFree( tmpQuery );
 						}
@@ -1186,38 +1155,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 							// remove connections between users and group
 							snprintf( tmpQuery, sizeof(tmpQuery), "delete FROM FUserToGroup WHERE UserGroupID=%lu", groupID );
 							sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
-							/*
-							IntListEl *el = ILEParseString( users );
-					
-							DEBUG("Assigning users to group\n");
-					
-							while( el != NULL )
-							{
-								IntListEl *rmEntry = el;
-								el = (IntListEl *)el->node.mln_Succ;
-						
-								// check if user is in memory, if it is update it
-								User *usr = UMGetUserByID( l->sl_UM, (FULONG)rmEntry->i_Data );
-								if( usr != NULL )
-								{
-									DEBUG("[Group/Update] user will be refreshed %s\n", usr->u_Name );
-									char *mountError = 0;
-									UserGroupAddUser( fg, usr );
-									RefreshUserDrives( l->sl_DeviceManager, usr, NULL, &mountError );
-									if( mountError != NULL )
-									{
-										FERROR("Error while mounting drives!");
-										FFree( mountError );
-									}
-									UserNotifyFSEvent2( l->sl_DeviceManager, usr, "refresh", "Mountlist:" );
-									
-									DEBUG("[Group/Update] User was assigned to groups and refreshed\n");
-								}
 
-								UGMAddUserToGroupDB( l->sl_UGM, groupID, rmEntry->i_Data );
-								FFree( rmEntry );
-							}
-							*/
 						} // users == false (remove all users)
 						else
 						{
@@ -1265,20 +1203,6 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 											// wait till drive is removed/detached
 											
 											File *remDrive = UserRemDeviceByGroupID( usr, groupID, &error );
-											/*
-											do
-											{
-												error = 0; // set error to 0 and check if OPS is in progress
-								
-												File *remDrive = UserRemDeviceByGroupID( usr, groupID, &error );
-												if( remDrive != NULL )
-												{
-													FHandler *fsys = (FHandler *)remDrive->f_FSys;
-													fsys->Release( fsys, remDrive );	// release drive data
-												}
-												usleep( 500 );
-											}while( error == FSys_Error_OpsInProgress );
-											*/
 											
 											UserGroupRemoveUser( fg, usr );
 										}
@@ -2188,17 +2112,12 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 						BufString *retString = BufStringNew();
 						itmp = snprintf( tmp, sizeof(tmp), "{\"groupid\":%lu,\"parentid\":%lu,\"userids\":[", fg->ug_ID, fg->ug_ParentID );
 						BufStringAddSize( retString, tmp, itmp );
-						// return user objects
-						//generateConnectedUsers( l, groupID, NULL, retString );
-						//generateConnectedUsersID( l, groupID, NULL, retString );
+
 						generateConnectedUsersIDByID( l, groupID, retString, retString, usersSQL );
 						BufStringAddSize( retString, "]}", 2 );
 						
 						NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "setusers", retString->bs_Buffer );
 						BufStringDelete( retString );
-						//char msg[ 512 ];
-						//snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\",\"type\":\"%s\"}", fg->ug_ID, fg->ug_Name, fg->ug_Type );
-						//NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "setusers", msg );
 					}
 					char buffer[ 256 ];
 					snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"sucess\",\"id\":%lu }", fg->ug_ID );
@@ -2206,7 +2125,6 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 				}
 				else	// group do not exist in memory
 				{
-				
 					char buffer[ 256 ];
 					char buffer1[ 256 ];
 					snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "UGMUserGroupUpdate", 1 );

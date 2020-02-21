@@ -2319,17 +2319,17 @@ html #Tray.Size16
 {
 	pointer-events: none;
 	position: absolute;
-	top: 8px;
+	top: 6px;
 	left: 19px;
-	font-size: 70%;
+	font-size: 65%;
 	color: white;
-	background: rgba(0,0,0,0.6);
+	background: #C92918;
 	border-radius: 100%;
-	padding: 2px;
-	border: 1px solid rgba(0,0,0,0.7);
-	line-height: 8px;
-	width: 8px;
-	height: 8px;
+	padding: 0;
+	border: 0;
+	line-height: 11px;
+	width: 11px;
+	height: 11px;
 	text-align: center;
 }
 
@@ -2372,9 +2372,11 @@ html body .PopInfo + .BubbleInfo
 	border-bottom-width: 0;
 }
 
+#Tray .Hidden { display: none; }
+
 .TrayElement.Blink:before
 {
-	animation: blinking 1s infinite;
+	/*animation: blinking 1s infinite;*/
 }
 
 @keyframes blinking
