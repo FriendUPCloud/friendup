@@ -2194,6 +2194,109 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	*
+	* <HR><H2>system.library/user/servermessage</H2>Send message to all User sessions
+	*
+	* @param message - (required) message which will be delivered
+	* @return fail or ok response
+	*/
+	/// @endcond
+	else if( strcmp( urlpath[ 1 ], "servermessage" ) == 0 )
+	{
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
+			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{TAG_DONE, TAG_DONE}
+		};
+		
+		response = HttpNewSimple( HTTP_200_OK,  tags );
+		
+		HashmapElement *el = NULL;
+		char *msg = NULL;
+
+		el = HttpGetPOSTParameter( request, "message" );
+		if( el == NULL ) el = HashmapGet( request->query, "message" );
+		//el =  HashmapGet( (*request)->parsedPostContent, "message" );
+		if( el != NULL )
+		{
+			msg = UrlDecodeToMem( ( char *)el->data );
+		}
+		
+		BufString *bs = BufStringNew();
+		
+		// we are going through users and their sessions
+		// if session is active then its returned
+		
+		time_t  timestamp = time( NULL );
+		
+		int msgsndsize = 0; 
+		int pos = 0;
+		int msgsize = 1024;
+		
+		if( msg != NULL )
+		{
+			msgsize += strlen( msg )+1024;
+
+			BufStringAdd( bs, "{\"userlist\":[");
+			
+			int msgsize = strlen( msg )+1024;
+			char *sndbuffer = FCalloc( msgsize, sizeof(char) );
+			
+			User *usr = (User *)loggedSession->us_User;
+			if( usr != NULL )
+			{
+				if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
+				{
+					UserSessListEntry *usle = (UserSessListEntry *)usr->u_SessionsList;
+					int msgsndsize = 0;
+					while( usle != NULL )
+					{
+						UserSession *ls = (UserSession *)usle->us;
+						if( ls != NULL )
+						{
+							DEBUG("Found same session, sending msg\n");
+							char tmp[ 512 ];
+							int tmpsize = 0;
+						
+							tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\", \"deviceidentity\":\"%s\"}", usr->u_Name, ls->us_DeviceIdentity );
+						
+							int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":{\"username\":\"%s\",\"message\":\"%s\"}}}", 
+							loggedSession->us_User->u_Name , msg );
+						
+							msgsndsize = WebSocketSendMessageInt( ls, sndbuffer, lenmsg );
+						}
+						usle = (UserSessListEntry *)usle->node.mln_Succ;
+					}
+					FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
+				}
+				
+				if( msgsndsize > 0 )
+				{
+					BufStringAdd( bs, usr->u_Name );
+				}
+			}
+			BufStringAdd( bs, "]}");
+		}
+		else	//message is empty
+		{
+			
+		}
+		
+		HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
+		bs->bs_Buffer = NULL;
+		
+		BufStringDelete( bs );
+		
+		if( msg != NULL )
+		{
+			FFree( msg );
+		}
+		
+		*result = 200;
+	}
+	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
 	* <HR><H2>system.library/user/updatekey</H2>Update key. Function reload key assigned to user from database
 	* @todo this function should not be here probably
 	*

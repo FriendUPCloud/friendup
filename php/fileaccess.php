@@ -124,6 +124,8 @@ function handleFileCallback( $user, $filepath, $requestjson, $authid = false, $w
 				break;
 			}
 			
+			//faLog( '#saveUserFile will be called ' . $user . ' :: ' . $filepath . ' :: ' . print_r( $json, 1 ) );
+			
 			// Ok, go ahead and save the file
 			saveUserFile( $user, $filepath, $json, $windowid, $authid );
 			break;
@@ -139,7 +141,7 @@ function tellApplication( $command, $user, $windowid, $authid )
 	if( !$Config ) faConnectDB( $user );
 	
 	
-	$messagestring = '/system.library/admin/servermessage?message=' . rawurlencode( addslashes( '{"msgtype":"applicationmessage","targetapp":"' .  $windowid . '","applicationcommand":"'. $command .'"}' ) );
+	$messagestring = '/system.library/user/servermessage?message=' . rawurlencode( addslashes( '{"msgtype":"applicationmessage","targetapp":"' .  $windowid . '","applicationcommand":"'. $command .'"}' ) );
 
 	$url = ( $Config->SSLEnable ? 'https://' : 'http://' ) .
 		( $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost ) . ':' . $Config->FCPort . $messagestring;
