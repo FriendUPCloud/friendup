@@ -2180,7 +2180,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			
 			BufStringDelete( bs );
 		}
-		
 		else	//is admin
 		{
 			Log( FLOG_ERROR,"User '%s' dont have admin rights\n", loggedSession->us_User->u_Name );

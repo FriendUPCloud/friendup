@@ -1360,11 +1360,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		
 		if( l->sl_UM!= NULL )
 		{
-			if( UMUserIsAdmin( l->sl_UM, *request, loggedSession->us_User ) == TRUE )
-			{
-				response =  ServiceManagerWebRequest( l, &(urlpath[1]), *request );
-				called = TRUE;
-			}
+			response =  ServiceManagerWebRequest( l, &(urlpath[1]), *request, loggedSession );
+			called = TRUE;
 		}
 		
 		if( called == FALSE )

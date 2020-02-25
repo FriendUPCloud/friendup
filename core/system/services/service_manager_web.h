@@ -28,6 +28,6 @@
 // Web calls handler, void *SystemBase
 //
 
-Http *ServiceManagerWebRequest( void *sb, char **urlpath, Http *request  );
+Http *ServiceManagerWebRequest( void *lsb, char **urlpath, Http* request, UserSession *loggedSession );
 
 #endif //__SERVICE_SERVICE_MANAGER_H__
