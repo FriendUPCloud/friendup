@@ -728,7 +728,7 @@ Http *ServiceManagerWebRequest( void *lsb, char **urlpath, Http* request, UserSe
 		
 		char *params = NULL;
 		char *servername = NULL;
-		char *type = NULL;
+		int type = 0;
 		char *path = NULL;
 		
 		DEBUG( "[NMWebRequest] request!!\n" );
@@ -745,8 +745,8 @@ Http *ServiceManagerWebRequest( void *lsb, char **urlpath, Http* request, UserSe
 		el = HttpGetPOSTParameter( request, "type" );
 		if( el != NULL )
 		{
-			type = UrlDecodeToMem( (char *)el->data );
-			DEBUG( "[NMWebRequest] type %s!!\n", type );
+			type = atoi( (char *)el->data );
+			DEBUG( "[NMWebRequest] type %d!!\n", type );
 		}
 		
 		el = HttpGetPOSTParameter( request, "path" );
@@ -763,9 +763,9 @@ Http *ServiceManagerWebRequest( void *lsb, char **urlpath, Http* request, UserSe
 			DEBUG( "[NMWebRequest] servername %s!!\n", servername );
 		}
 		
-		if( params != NULL && type != NULL && path != NULL )
+		if( params != NULL && path != NULL )
 		{
-			char *serresp = NotificationManagerSendRequestToConnections( l->sl_NotificationManager, request, loggedSession, servername, 0, path, params ); // 0 - type request, 1 - event
+			char *serresp = NotificationManagerSendRequestToConnections( l->sl_NotificationManager, request, loggedSession, servername, type, path, params ); // 0 - type request, 1 - event
 			if( serresp != NULL )
 			{
 				HttpSetContent( response, serresp, strlen( serresp ) );
@@ -784,10 +784,7 @@ Http *ServiceManagerWebRequest( void *lsb, char **urlpath, Http* request, UserSe
 		{
 			FFree( params );
 		}
-		if( type != NULL )
-		{
-			FFree( type );
-		}
+
 		if( path != NULL )
 		{
 			FFree( path );
