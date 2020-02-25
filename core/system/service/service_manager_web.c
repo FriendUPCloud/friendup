@@ -38,7 +38,7 @@ Http *SMWebRequest( void *lsb, char **urlpath, Http* request, UserSession *logge
 {
 	SystemBase *l = (SystemBase *)lsb;
 	
-	DEBUG("ServiceManagerWebRequest\n");
+	DEBUG("ServiceManagerWebRequest: %s\n", urlpath[ 1 ] );
 	
 	struct TagItem tags[] = {
 		{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
