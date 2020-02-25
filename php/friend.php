@@ -278,7 +278,7 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	$car = array( 'Hostname', 'Username', 'Password', 'DbName',
 	              'FCHost', 'FCPort', 'FCUpload', 'FCPort', 
 	              'SSLEnable', 'FCOnLocalhost', 'Domains', 'friendnetwork', 
-	              'WorkspaceShortcuts', 'preventWizard'
+	              'WorkspaceShortcuts', 'preventWizard', 'ProxyEnable'
 	);
 
 	// Shortcuts
@@ -298,7 +298,7 @@ if( file_exists( 'cfg/cfg.ini' ) )
 		'host', 'login', 'password', 'dbname', 
 		'fchost', 'fcport', 'fcupload', 'port', 
 		'SSLEnable', 'fconlocalhost', 'domains','friendnetwork',
-		'workspaceshortcuts', 'preventwizard'
+		'workspaceshortcuts', 'preventwizard', 'ProxyEnable'
 	) as $k=>$type )
 	{
 		$val = '';
@@ -340,6 +340,7 @@ if( file_exists( 'cfg/cfg.ini' ) )
 			case 'fconlocalhost':
 				$val = isset( $dataCore[ $type ] ) ? $dataCore[ $type ] : '';
 				break;
+			case 'proxyenable':
 			case 'sslenable':	
 				$val = isset( $dataCore[ $type ] ) ? $dataCore[ $type ] : '';
 				// Check in deprecated location
@@ -348,7 +349,6 @@ if( file_exists( 'cfg/cfg.ini' ) )
 					$val = isset( $datCore2[ $type ] ) ? $datCore2[ $type ] : '';
 				}
 				break;
-				
 			case 'domains':
 				$val = isset( $security[ $type ] ) ? $security[ $type ] : '';
 				break;	
