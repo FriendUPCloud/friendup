@@ -23,7 +23,7 @@ if( $argv[1] )
 
 	if( !isset( $tmp[1] ) ) { friend404(); } // dies...
 	
-	//faLog('complete request: ' .  print_r( $tmp,1  ) );
+	faLog('complete request: ' .  print_r( $tmp,1  ) );
 	
 	ob_clean();
 	switch( strtolower( $tmp[2] ) ) 
@@ -74,15 +74,27 @@ die( '<pre>' . print_r( $argv,1  ) );
 */	
 function handleFileCallback( $user, $filepath, $requestjson, $authid = false, $windowid = false )
 {	
+	
+	faLog('handleFileCallback' .  $user . ' :: ' .  $filepath . ':: ' . print_r( $requestjson, 1) );
+	
 	if( $requestjson == false )
 	{
 		die( '{"error":0}');
 	}
+	
+	if( substr($requestjson, 0, 23) == 'friendrequestparameters' )
+	{
+		faLog('have to read request from file...');
+		$requestjson = file_get_contents( end( explode( '=' , $requestjson ) ) );
+	}
+
 	if( substr($requestjson, 0, 11) == '?post_json=' )
 	{
 		$requestjson = substr( $requestjson, 11 );
 	}
-
+	
+	faLog('request json is' . $requestjson );
+	
 	try
 	{
 		$json = json_decode($requestjson);
