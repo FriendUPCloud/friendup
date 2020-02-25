@@ -10,16 +10,68 @@
 *                                                                              *
 *****************************************************************************©*/
 
-require_once( 'php/include/permissions.php' );
+
 
 // Get user by ID
 if( isset( $args->args->id ) )
 	$uid = $args->args->id;
 else $uid = $User->ID;
 
-$rolePermission = CheckPermission( 'user', $uid, 'edit' );
+$workgroups = false;
 
-if( $rolePermission || $level == 'Admin' || $uid == $User->ID )
+if( isset( $args->args->authid ) && !isset( $args->authid ) )
+{
+	$args->authid = $args->args->authid;
+}
+
+if( !isset( $args->authid ) )
+{
+	if( $level != 'Admin' && $uid != $User->ID )
+	{
+		die( 'fail<!--separate-->{"response":"user info get failed"}'  );
+	}
+
+}
+else
+{
+	require_once( 'php/include/permissions.php' );
+	
+	//$rolePermission = CheckPermission( 'user', $uid, 'edit' );
+
+	if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ], 'user', $uid ) )
+	{
+		if( is_object( $perm ) )
+		{
+			// Permission denied.
+		
+			if( $perm->response == -1 )
+			{
+				//
+			
+				//die( 'fail<!--separate-->{"message":"'.$perm->message.'",'.($perm->reason?'"reason":"'.$perm->reason.'",':'').'"response":'.$perm->response.'}' );
+			}
+		
+			// Permission granted. GLOBAL or WORKGROUP specific ...
+		
+			if( $perm->response == 1 && isset( $perm->data->workgroups ) )
+			{
+			
+				// If user has GLOBAL or WORKGROUP access to these workgroups
+			
+				if( $perm->data->workgroups && $perm->data->workgroups != '*' )
+				{
+					// TODO: Look at this, It's commented out because of FriendChat / Presence.
+					//$workgroups = $perm->data->workgroups;
+				}
+			
+			}
+		}
+	}
+}
+
+
+
+if( 1==1/* || $rolePermission || $level == 'Admin' || $uid == $User->ID*/ )
 {
 	// Create FKeys table for storing encrypted keys connected to user
 	$t = new dbTable( 'FKeys' );
@@ -128,7 +180,7 @@ if( $rolePermission || $level == 'Admin' || $uid == $User->ID )
 								ug.UserID = \'' . $uid . '\'
 							AND g.ID = ug.UserGroupID
 						)
-					WHERE g.Type = "Workgroup" 
+					WHERE g.Type = "Workgroup"' . ( $workgroups ? 'AND ( g.ParentID IN (' . $workgroups . ') OR g.ID IN (' . $workgroups . ') ) ' : '' ) . ' 
 					ORDER BY g.Name ASC 
 				' ) )
 				{

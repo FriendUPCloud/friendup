@@ -120,7 +120,7 @@ Sections.server_printers = function( cmd, extra )
 					
 					return callback( false, false );
 				}
-				m.execute( 'list', { id: id } );
+				m.execute( 'list', { id: id, authid: Application.authId } );
 			}
 			else
 			{
@@ -166,7 +166,7 @@ Sections.server_printers = function( cmd, extra )
 					
 					return callback( false, false );
 				}
-				m.execute( 'list' );
+				m.execute( 'list', { authid: Application.authId } );
 			}
 			
 			return true;
@@ -237,7 +237,7 @@ Sections.server_printers = function( cmd, extra )
 				Sections.server_printers( 'details', d );
 			}
 		}
-		m.execute( 'create', { data: { name: 'Unnamed printer' } } );
+		m.execute( 'create', { data: { name: 'Unnamed printer' }, authid: Application.authId } );
 		
 	}
 	
@@ -261,7 +261,7 @@ Sections.server_printers = function( cmd, extra )
 			
 				Sections.server_printers( 'refresh' );
 			}
-			m.execute( 'update', { id: id, data: data } );
+			m.execute( 'update', { id: id, data: data, authid: Application.authId } );
 		}
 		
 	}
@@ -284,7 +284,7 @@ Sections.server_printers = function( cmd, extra )
 					Sections.server_printers( 'refresh' );
 					Sections.server_printers( 'cancel' );
 				}
-				m.execute( 'remove', { id: id } );	
+				m.execute( 'remove', { id: id, authid: Application.authId } );	
 			}
 			
 		} );

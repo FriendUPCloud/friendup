@@ -401,6 +401,7 @@ var WorkspaceInside = {
 							}
 						}
 						ge( 'DoorsScreen' ).screenObject.contentDiv.style.left = '-' + 100 * this.ind + '%';
+						
 						_DeactivateWindows();
 						// Activate next window on next screen
 						for( var c in movableWindows )
@@ -423,6 +424,8 @@ var WorkspaceInside = {
 				ge( 'DoorsScreen' ).getElementsByClassName( 'Left' )[0].appendChild( d );
 				
 				Workspace.checkWorkspaceWallpapers();
+				
+				PollTrayPosition();
 			}
 		}
 		// Refresh our dynamic classes now..
@@ -486,6 +489,7 @@ var WorkspaceInside = {
 			{
 				work.style.right = GetElementWidth( extr ) + GetElementWidth( swit ) - 2 + 'px';
 			}
+			PollTrayPosition();
 		}
 	},
 	getWebSocketsState: function()
@@ -1214,6 +1218,7 @@ var WorkspaceInside = {
 				}
 				if( wid )
 					wid.autosize();
+				PollTrayPosition();
 			}
 		}
 		// FRANCOIS: get unique device IDs...
@@ -2645,6 +2650,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					
 					Workspace.docksReloading = null;
 					
+					ConstrainWindows();
+					
 					// Make sure taskbar is polled
 					if( !isMobile )
 					{
@@ -3130,6 +3137,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 					// Add new one
 					h.appendChild( styles );
+					
+					// Constrain all windows
+					ConstrainWindows();
 				}
 
 				// Update running applications
@@ -3608,7 +3618,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Check dormant
 		if( DormantMaster )
 		{
-			found = DormantMaster.getDoors();
+			var disks = DormantMaster.getDoors();
+			var found = [];
+			for( var a in disks )
+			{
+				if( disks[ a ].Filename != 'System:' ) found.push( disks[ a ] );
+			}
+			if( found.length <= 0 ) found = false;
 		}
 		var dom = false;
 
@@ -3657,6 +3673,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		var str = ''; var sw = 2;
 		for( var a = 0; a < found.length; a++ )
 		{
+			if( found[a].Filename == 'System:' ) continue;
 			sw = sw == 1 ? 2 : 1;
 			var dd = document.createElement( 'div' );
 			dd.className = 'sw' + sw;
@@ -8197,6 +8214,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	//try to run a call and if does not get back display offline message....
 	checkServerConnectionHTTP: function()
 	{	
+		var self = this;
 		// Too early
 		if( !Workspace.postInitialized || !Workspace.sessionId || Workspace.reloginInProgress ) return;
 		if( window.ScreenOverlay && ScreenOverlay.visibility )
@@ -8233,6 +8251,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		m.forceSend = true;
 		m.cancelId = 'checkserverconnection';
 		
+		// This one is executed when we get a response from the server
 		m.onExecuted = function( e, d )
 		{
 			if( inactiveTimeout )
@@ -8244,16 +8263,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				var js = JSON.parse( d );
 				if( js.code && ( parseInt( js.code ) == 11 || parseInt( js.code ) == 3 ) )
 				{
-					//console.log( 'The session has gone away! Relogin using login().' );
-					//Workspace.flushSession();
 					Workspace.relogin(); // Try login using local storage
 				}
 			}
 			catch( b )
 			{
-				console.log( 'I do not understand the result. Server may be down.', e, d, b );
-				if( Workspace.serverIsThere && e == null && d == null )
+				if( e == null && d == null )
+				{
 					Workspace.relogin();
+				}
 			}
 			
 			//console.log( 'Response from connection checker: ', e, d );
@@ -8853,6 +8871,110 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 		}
 		return true;
+	},
+	Tasklist: function( e )
+	{
+		if( this.taskw )
+		{
+			refreshTaskList();
+			return this.taskw.activate();
+		}
+		this.taskw = new View( {
+			title: i18n( 'i18n_manage_tasks' ),
+			width: 400,
+			height: 500
+		} );
+		this.taskw.onClose = function()
+		{
+			if( Workspace.taskw )
+			{
+				if( Workspace.taskw.int )
+				{
+					clearInterval( Workspace.taskw.int );
+					Workspace.taskw.int = null;
+				}
+			}
+			Workspace.taskw = null;
+		}
+		function refreshTaskList()
+		{
+			var listArea = ge( 'TasklistTasks' );
+			if( !listArea ) return;
+			var current = listArea.getElementsByClassName( 'ListTask' );
+			// Add new
+			var adders = [];
+			for( var a in Workspace.applications )
+			{
+				var tid = Workspace.applications[ a ].id;
+				found = false;
+				for( var b = 0; b < current.length; b++ )
+				{
+					if( current[ b ].getAttribute( 'TaskID' ) == tid )
+					{
+						found = true;
+						break;
+					}
+				}
+				if( !found )
+				{
+					adders.push( Workspace.applications[ a ] );
+				}
+			}
+			var sw = 2;
+			for( var a = 0; a < adders.length; a++ )
+			{
+				sw = sw == 1 ? 2 : 1;
+				var d = document.createElement( 'div' );
+				d.className = 'ListTask HRow Padding sw' + sw;
+				d.setAttribute( 'TaskID', adders[ a ].id )
+				d.innerHTML = '<div class="HContent80 FloatLeft">' + adders[ a ].applicationName + '</div>' +
+					'<div class="HContent20 FloatLeft TextRight">' +
+						'<span class="MousePointer IconSmall fa-remove" onclick="Workspace.killByTaskId(\'' + adders[a].id + '\')"> </span>' +
+					'</div></div>';
+				if( listArea.childNodes.length )
+					listArea.insertBefore( d, listArea.firstChild );
+				else listArea.appendChild( d );
+			}
+			// Remove non existent
+			var removers = [];
+			current = listArea.getElementsByClassName( 'ListTask' );
+			for( var a = 0; a < current.length; a++ )
+			{
+				var found = false;
+				for( var b in Workspace.applications )
+				{
+					if( current[ a ].getAttribute( 'TaskID' ) == Workspace.applications[ b ].id )
+					{
+						found = true;
+						break;
+					}
+				}
+				if( !found )
+				{
+					removers.push( current[ a ] );
+				}
+			}
+			for( var a = 0; a < removers.length; a++ )
+			{
+				listArea.removeChild( removers[ a ] );
+			}
+		}
+		this.taskw.int = setInterval( function()
+		{
+			refreshTaskList();
+		}, 500 );
+		this.taskw.setContent( '<div class="ContentFull ScrollArea List" id="TasklistTasks"></div>' );
+	},
+	killByTaskId: function( id )
+	{
+		var self = this;
+		for( var a in Workspace.applications )
+			if( Workspace.applications[ a ].id == id )
+				Workspace.applications[ a ].quit();
+		setTimeout( function()
+		{
+			self.Tasklist();
+		}, 250 );
 	}
 };
 

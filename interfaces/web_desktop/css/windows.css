@@ -985,26 +985,24 @@ _:-ms-fullscreen, :root .View.Active > .Title { border-top-width: 1px; } /* IE11
 	-webkit-box-shadow: inset 0px 0px 2px 2px #2F6699;
 }
 
-html .Screen > .TitleBar .Info,
-html .Screen #WorkspaceMenu
+html body:not([mobile]) .Screen > .TitleBar .Info,
+html body:not([mobile]) .Screen #WorkspaceMenu
 {
 	transition: opacity 0.07s;
 	opacity: 1;
 }
 
-html .Screen.ChangingScreenTitle > .TitleBar .Info,
-html .Screen.ChangingScreenTitle #WorkspaceMenu
+html body:not([mobile]) .Screen.ChangingScreenTitle > .TitleBar .Info,
+html body:not([mobile]) .Screen.ChangingScreenTitle #WorkspaceMenu
 {
 	opacity: 0;
 }
 
-html .Screen > .TitleBar.ChangingScreenTitle 
-
 html .Screen > .TitleBar.Busy:after
 {
-	background-image: url(/themes/friendup12/gfx/busy.png);
+	/*background-image: url(/themes/friendup12/gfx/busy.png);
 	clip-path: ellipse(12px 12px at 12px 12px);
-	-webkit-clip-path: ellipse(12px 12px at 12px 12px);
+	-webkit-clip-path: ellipse(12px 12px at 12px 12px);*/
 }
 
 html .Screen > .TitleBar > .Left .Time,

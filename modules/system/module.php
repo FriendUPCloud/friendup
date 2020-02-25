@@ -245,15 +245,15 @@ if( isset( $args->command ) )
 				'getbookmarks', 'listapplicationdocs', 'finddocumentation', 'userinfoget',
 				'userinfoset',  'useradd', 'checkuserbyname', 'userbetamail', 'listbetausers', 'listconnectedusers',
 				'usersetup', 'usersetupadd', 'usersetupapply', 'usersetupsave', 'usersetupdelete',
-				'usersetupget', 'workgroups', 'workgroupadd', 'workgroupupdate', 'workgroupdelete',
-				'workgroupget', 'setsetting', 'getsetting', 'listlibraries', 'listmodules',
+				'usersetupget', 'userwallpaperset', 'workgroups', 'workgroupadd', 'workgroupupdate', 'workgroupdelete',
+				'workgroupget', 'setsetting', 'getsetting', 'getavatar', 'listlibraries', 'listmodules',
 				'listuserapplications', 'getmimetypes',  'setmimetype', 'setmimetypes', 'deletemimetypes',
 				'deletecalendarevent', 'getcalendarevents', 'addcalendarevent',
 				'listappcategories', 'systempath', 'listthemes', 'settheme', /* DEPRECATED - look for comment below 'userdelete',*/'userunblock',
 				'usersettings', 'listsystemsettings', 'savestate', 'getsystemsetting',
 				'saveserversetting', 'deleteserversetting', 'launch', 'friendversion', 'getserverkey', 
 				'userroleget', 'checkpermission', 'userroleadd', 'userroleupdate', 'userroledelete',
-				'getsystempermissions' 
+				'getsystempermissions', 'permissions'
 			);
 			sort( $commands );
 			die( 'ok<!--separate-->{"Commands": ' . json_encode( $commands ) . '}' );
@@ -696,54 +696,7 @@ if( isset( $args->command ) )
 			die( '404' );
 			break;
 		case 'types':
-			$out = [];
-			$mode = 'default';
-			if( $args->args->mode )
-				$mode = $args->args->mode;
-			if( $dir = opendir( 'devices/DOSDrivers' ) )
-			{
-				while( $f = readdir( $dir ) )
-				{
-					if( $f{0} == '.' ) continue;
-
-					if( !file_exists( $fn = 'devices/DOSDrivers/' . $f . '/sysinfo.json' ) )
-						continue;
-					$o = file_get_contents( $fn );
-					if( !( $o = json_decode( $o ) ) ) continue;
-
-					// If we're listing all, don't check level (can't add admin file systems anyway)
-					if( $mode != 'all' )
-					{
-						// Admin filesystems can only be added by admin..
-						if( $o->group == 'Admin' && $level != 'Admin' )
-							continue;
-					}
-
-					// Find default label
-					if( file_exists( 'devices/DOSDrivers/' . $f . '/icon.svg' ) )
-					{
-						$o->iconLabel = base64_encode( file_get_contents( 'devices/DOSDrivers/' . $f . '/icon.svg' ) );
-					}
-					
-					if( isset( $o->icon ) && file_exists( 'devices/DOSDrivers/' . $f . '/' . $o->icon ) )
-					{
-						$o->hasIcon = 'true';
-					}
-					else
-					{
-						$o->hasIcon = 'false';
-					}
-
-					$out[] = $o;
-				}
-				closedir( $dir );
-			}
-			if( count( $out ) > 0 )
-			{
-				die( 'ok<!--separate-->' . json_encode( $out ) );
-			}
-			die( 'fail<!--separate-->{"response":"types failed"}' );
-			//die( 'ok<!--separate-->[{"type":"treeroot","literal":"Treeroot"},{"type":"local","literal":"Local filesystem"},{"type":"corvo","literal":"MySQL Based Filesystem"},{"type":"website","literal":"Mount websites as doors"}]' );
+			include( 'modules/system/include/types.php' );
 			break;
 		case 'keys':
 			$out = [];
@@ -864,45 +817,7 @@ if( isset( $args->command ) )
 			break;
 		// Get a list of mounted and unmounted devices
 		case 'mountlist':
-			// 
-			$userid = $User->ID;
-			if( $level == 'Admin' && isset( $args->args->userid ) )
-			{
-				$userid = $args->args->userid;
-			}
-			if( $rows = $SqlDatabase->FetchObjects( '
-				SELECT f.* FROM Filesystem f
-				WHERE
-					(
-						f.UserID=\'' . mysqli_real_escape_string( $SqlDatabase->_link, $userid ) . '\' OR
-						f.GroupID IN (
-							SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
-							WHERE
-								g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-								ug.UserID = \'' . $userid . '\'
-						)
-					)
-					' . ( isset( $args->args->type ) ? '
-					AND f.Type = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->type ) . '\'
-					' : '' ) . ( isset( $args->args->mounted ) ? '
-					AND f.Mounted = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->mounted ) . '\'
-					' : '' ) . '
-				ORDER BY
-					f.Name ASC
-			' ) )
-			{
-				// Let's censor some data..
-				foreach( $rows as $k=>$v )
-				{
-					$rows[$k]->Username = '';
-					$rows[$k]->Password = '';
-				}
-				die( 'ok<!--separate-->' . json_encode( $rows ) );
-			}
-			else
-			{
-				die( 'fail<!--separate-->no filesystems available<!--separate-->' . mysql_error() );
-			}
+			require( 'modules/system/include/mountlist.php' );
 			break;
 
 		case 'mountlist_list':
@@ -948,87 +863,7 @@ if( isset( $args->command ) )
 			break;
 
 		case 'deletedoor':
-			//admins can delete others users mounts...
-			if( $level == 'Admin' && isset( $args->args->userid ) )
-				$userid = intval( $args->args->userid );
-			else
-				$userid = $User->ID;
-
-			$q = false;
-			if( isset( $args->args->id ) )
-			{
-				$q = '
-					SELECT * FROM Filesystem
-					WHERE
-						UserID=\'' . $userid . '\' AND ID=\'' . intval( $args->args->id ) . '\'
-					LIMIT 1
-				';
-			}
-			else if( isset( $args->args->devname ) )
-			{
-				$q = '
-					SELECT * FROM Filesystem
-					WHERE
-						UserID=\'' . $userid . '\' AND `Name`="' . 
-							mysqli_real_escape_string( $SqlDatabase->_link, trim( $args->args->devname ) ) . '"
-					LIMIT 1
-				';
-			}
-			if( $q )
-			{
-				if( $row = $SqlDatabase->FetchObject( $q ) )
-				{
-					if( !$User->SessionID )
-					{
-						die( 'fail<!--separate-->{"response":"deletedoor failed"}'  ); // print_r( $User, 1 )  ???
-					}
-
-					// Delete encryption keys if they exist
-					if( $row->ID > 0 )
-					{
-						$k = new DbIO( 'FKeys' );
-						$k->RowType         = 'Filesystem';
-						$k->RowID           = $row->ID;
-						$k->UserID          = $userid;
-						$k->IsDeleted 		= 0;
-						if( $k->Load() ) $k->Delete();
-					}
-
-					include_once( 'php/classes/door.php' );
-
-					if( $userid == $User->ID )
-					{
-						$door = new Door( $row->Name . ':' );
-						$door->dosQuery( '/system.library/device/unmount?devname=' . $row->Name );
-					}
-
-					$q = false;
-					if( isset( $args->args->id ) )
-					{
-						$q = '
-							DELETE FROM 
-								`Filesystem`
-							WHERE UserID=\'' . $userid . '\' AND ID=\'' . intval( $args->args->id, 10 ) . '\'
-						';
-					}
-					else if( isset( $args->args->devname ) )
-					{
-						$q = '
-							DELETE FROM 
-								`Filesystem`
-							WHERE UserID=\'' . $userid . '\' AND `Name`="' . 
-									mysqli_real_escape_string( $SqlDatabase->_link, trim( $args->args->devname ) ) . '"
-						';
-					}
-
-					if( $q )
-					{
-						$SqlDatabase->Query( $q );
-						die( 'ok<!--separate-->{"message":"Successfully deleted disk.","response":1}' );
-					}
-				}
-				die( 'fail<!--separate-->{"message":"Could not find disk.","response":-1,"q":"' . addslashes( $q ) . '"}' );
-			}
+			require( 'modules/system/include/deletedoor.php' );
 			break;
 		case 'fileinfo':
 			require( 'modules/system/include/fileinfo.php' );
@@ -1038,130 +873,7 @@ if( isset( $args->command ) )
 			require( 'modules/system/include/filesystem.php' );
 			break;
 		case 'addfilesystem':
-			$obj = $args->args;
-
-			$userid = $User->ID;
-			if( $level == 'Admin' && $args->args->userid )
-			{
-				$userid = $args->args->userid;
-			}
-
-			// some checks for correctness of request before we do stuff...
-			if( !isset( $obj->Type ) ) die('fail<!--separate-->{"response":"add file system failed"}' );
-			if( !file_exists( $fn = 'devices/DOSDrivers/' . $obj->Type . '/sysinfo.json' ) )
-				die( 'fail<!--seperate-->could not read config for chosen file system' );
-
-			$o = file_get_contents( $fn );
-			if( !( $o = json_decode( $o ) ) )
-				die( 'fail<!--seperate-->could not read config for chosen file system' );
-
-			// Admin filesystems can only be added by admin..
-			if( $o->group == 'Admin' && $level != 'Admin' )
-				die( 'fail<!--separate-->unauthorised access attempt!' );
-
-			// we are allows to get here.
-			if( isset( $obj->Name ) && strlen( $obj->Name ) > 0 )
-			{
-				// Support workgroups (that we are member of)!
-				$groupID = '';
-				if( isset( $args->args->Workgroup ) )
-				{
-					if( $group = $SqlDatabase->FetchObject( '
-						SELECT ug.* FROM FUserGroup ug
-							WHERE ug.Name = "' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->Workgroup ) . '"
-							AND ug.Type = "Workgroup"
-					' ) )
-					{
-						$groupID = $group->ID;
-					}
-				}
-
-				// TODO: Add support for storing EncryptedKey with PublicKey connected to user
-
-				// Set optional or extra args
-				$config = new stdClass();
-				foreach( $obj as $k=>$v )
-				{
-					if( substr( $k, 0, 5 ) == 'conf.' )
-					{
-						$key = end( explode( '.', $k ) );
-						$config->$key = $v;
-					}
-				}
-
-				$fs = new DbIO( 'Filesystem' );
-
-				$fs->Name = $obj->Name;
-				$fs->UserID = ( $level == 'Admin' && $obj->UserID ? $obj->UserID : $userid );
-				$fs->GroupID = $groupID;
-				if( !$fs->Load() )
-				{
-					$keys = array( 'Server', 'Name', 'Path', 'Type', 'ShortDescription', 'Username', 'Password', 'Mounted', 'PrivateKey', 'KeysID' );
-					foreach( $keys as $kkey )
-						if( !isset( $obj->$kkey ) )
-							$obj->$kkey = '';
-
-					// Commented out to use DbIO instead to get the ID after saving
-
-					//$SqlDatabase->query( '
-					//INSERT INTO Filesystem
-					//( `Name`, `UserID`, `GroupID`, `Server`, `Port`, `Path`, `Type`, `ShortDescription`, `Username`, `Password`, `Mounted`, `Config` )
-					//VALUES
-					//(
-					//	"' . mysqli_real_escape_string( $SqlDatabase->_link, $obj->Name ) . '",
-					//	"' . ( $level == 'Admin' && $obj->UserID ? $obj->UserID : $User->ID) . '",
-					//	"' . $groupID . '",
-					//	"' . mysqli_real_escape_string( $SqlDatabase->_link, $obj->Server ) . '",
-					//	"' . intval( $obj->Port, 10 ) . '",
-					//	"' . mysqli_real_escape_string( $SqlDatabase->_link, $obj->Path ) . '",
-					//	"' . mysqli_real_escape_string( $SqlDatabase->_link, $obj->Type ) . '",
-					//	"' . mysqli_real_escape_string( $SqlDatabase->_link, $obj->ShortDescription ) . '",
-					//	"' . mysqli_real_escape_string( $SqlDatabase->_link, $obj->Username ) . '",
-					//	"' . mysqli_real_escape_string( $SqlDatabase->_link, $obj->Password ) . '",
-					//	"' . mysqli_real_escape_string( $SqlDatabase->_link, isset( $obj->Mounted ) ? $obj->Mounted : '' ) . '",
-					//	"' . mysqli_real_escape_string( $SqlDatabase->_link, json_encode( $config ) ) . '"
-					//)
-					//' );
-
-					$f = new DbIO( 'Filesystem' );
-					$f->Name             = mysqli_real_escape_string( $SqlDatabase->_link, $obj->Name );
-					$f->UserID           = ( $level == 'Admin' && $obj->UserID ? $obj->UserID : $userid );
-					$f->GroupID          = $groupID;
-					$f->KeysID           = $obj->KeysID;
-					$f->Server           = mysqli_real_escape_string( $SqlDatabase->_link, $obj->Server );
-					$f->Port             = intval( $obj->Port, 10 );
-					$f->Path             = mysqli_real_escape_string( $SqlDatabase->_link, $obj->Path );
-					$f->Type             = mysqli_real_escape_string( $SqlDatabase->_link, $obj->Type );
-					$f->ShortDescription = mysqli_real_escape_string( $SqlDatabase->_link, $obj->ShortDescription );
-					$f->Username         = mysqli_real_escape_string( $SqlDatabase->_link, $obj->Username );
-					$f->Password         = mysqli_real_escape_string( $SqlDatabase->_link, $obj->Password );
-					$f->Mounted          = mysqli_real_escape_string( $SqlDatabase->_link, isset( $obj->Mounted ) ? $obj->Mounted : '' );
-					$f->Config           = mysqli_real_escape_string( $SqlDatabase->_link, json_encode( $config ) );
-					$f->Save();
-
-					if( $f->ID > 0 && isset( $obj->EncryptedKey ) )
-					{
-						// Don't use this ...
-						/*$k = new DbIO( 'FKeys' );
-						$k->RowType         = 'Filesystem';
-						$k->RowID           = $f->ID;
-						$k->UserID          = ( $level == 'Admin' && $obj->UserID ? $obj->UserID : $userid );
-						$k->IsDeleted 		= 0;
-						if( !$k->Load() )
-						{
-							$k->DateCreated = date( 'Y-m-d H:i:s' );
-						}
-						$k->Type 			= $obj->Name;
-						$k->Data            = $obj->EncryptedKey;
-						$k->PublicKey       = $obj->PublicKey;
-						$k->DateModified    = date( 'Y-m-d H:i:s' );
-						$k->Save();*/
-					}
-
-					die( 'ok' );
-				}
-				die( 'fail<!--separate-->{"response":"add file system failed"}'  );
-			}
+			require( 'modules/system/include/addfilesystem.php' );			
 			die( 'fail<!--separate-->{"response":"add file system failed"}'  );
 		// Disable a file system (don't really delete..)
 		case 'deletefilesystem':
@@ -1781,31 +1493,8 @@ if( isset( $args->command ) )
 		// Add a new user
 		// TODO: Permissions! ONly admin can do this!
 		case 'useradd':
-			if( $level == 'Admin' )
-			{
-				// Make sure we have the "User" type group
-				$g = new dbIO( 'FUserGroup' );
-				$g->Name = 'User';
-				$g->Load();
-				$g->Save();
-
-				if( $g->ID > 0 )
-				{
-					// Create the new user
-					$u = new dbIO( 'FUser' );
-					$u->Password = md5( rand(0,999) + microtime() );
-					$u->Name = 'Unnamed user';
-					$u->FullName = 'Unnamed user';
-					$u->Save();
-
-					if( $u->ID > 0 )
-					{
-						$SqlDatabase->query( 'INSERT INTO FUserToGroup ( UserID, UserGroupID ) VALUES ( \'' . $u->ID . '\', \'' . $g->ID . '\' )' );
-						die( 'ok<!--separate-->' . $u->ID );
-					}
-				}
-			}
-			die( 'fail<!--separate-->{"response":"user add failed"}'  );
+			require( 'modules/system/include/useradd.php' );
+			break;
 		//
 		case 'checkuserbyname':
 			if( $level == 'Admin' || $args->args->id == $User->ID )
@@ -1884,6 +1573,10 @@ if( isset( $args->command ) )
 		case 'usersetupget':
 			require( 'modules/system/include/usersetupget.php' );
 			break;
+		// Wallpaper
+		case 'userwallpaperset':
+			require( 'modules/system/include/userwallpaperset.php' );
+			break;
 		// List workgroups
 		case 'workgroups':
 			require( 'modules/system/include/workgroups.php' );
@@ -1910,6 +1603,9 @@ if( isset( $args->command ) )
 			break;
 		case 'getsetting':
 			require( 'modules/system/include/getsetting.php' );
+			break;
+		case 'getavatar':
+			require( 'modules/system/include/getavatar.php' );
 			break;
 		case 'listlibraries':
 			require( 'modules/system/include/listlibraries.php' );
@@ -2003,68 +1699,8 @@ if( isset( $args->command ) )
 			}
 			die( 'fail<!--separate-->{"response":"userunblock failed"}'  );
 		case 'usersettings':
-			// Settings object
-			$s = new stdClass();
-
-			// The first login test!
-			// NB: This is run on every user login
-			include( 'modules/system/include/firstlogin.php' );
-
-			// Theme information
-			$o = new dbIO( 'FSetting' );
-			$o->UserID = $level == 'Admin' && isset( $args->args->userid ) ? $args->args->userid : $User->ID;
-			$o->Type = 'system';
-			$o->Key = 'theme';
-			$o->Load();
-			
-			// Check if theme exists before setting it ...
-			if( $o->ID > 0 && !file_exists( 'resources/themes/' . strtolower( $o->Data ) . '/theme.css' ) )
-			{
-				$s->Theme = 'friendup';
-			}
-			else
-			{
-				$s->Theme = $o->ID > 0 ? $o->Data : 'friendup'; // default theme set to friendup
-			}
-			
-			// Get all mimetypes!
-			$types = [];
-			if( $rows = $SqlDatabase->FetchObjects( '
-				SELECT * FROM FSetting s
-				WHERE
-					s.UserID = \'' . $o->UserID . '\'
-					AND
-					s.Type = \'mimetypes\'
-				ORDER BY s.Data ASC
-			' ) )
-			{
-				foreach( $rows as $row )
-				{
-					$found = false;
-					if( count( $types ) )
-					{
-						foreach( $types as $type )
-						{
-							if( $type->executable == $row->Data )
-							{
-								$type->types[] = $row->Key;
-								$found = true;
-							}
-						}
-					}
-					if( !$found )
-					{
-						$o = new stdClass();
-						$o->executable = $row->Data;
-						$o->types = array( $row->Key );
-						$types[] = $o;
-					}
-				}
-			}
-			$s->Mimetypes = $types;
-
-			die( 'ok<!--separate-->' . json_encode( $s ) );
-
+			require( 'modules/system/include/usersettings.php' );
+			break;
 
 		case 'listsystemsettings':
 			if( $level != 'Admin' ) die('fail<!--separate-->{"response":"unauthorized access to system settings"}' );
@@ -2218,7 +1854,12 @@ if( isset( $args->command ) )
 			die( 'fail<!--separate-->{"response":"getserverkey fatal error"}' );
 			
 			break;
-
+		
+		// System permissions handling go here
+		case 'permissions':
+			require( 'modules/system/permissions/index.php' );
+			break;
+		
 		case 'sleepabit':
 			/* just sleep a bit and return given sleeptime + random stuff to the client */
 			/* used for FriendCore debug work only...  */
@@ -2233,8 +1874,22 @@ if( isset( $args->command ) )
 			
 			die( 'ok<!--separate-->{"slept_for": "'. $sleeptime .'" seconds", "randomstuff":"'.$randomstring.'" }' );
 			break;
+		
+		// Init firstlogin for a new user via this module call 
+		case 'firstlogin':
 			
-
+			if( isset( $args->args->userid ) && $args->args->userid )
+			{
+				$debug = [];
+				
+				$userid = ( isset( $args->args->userid ) ? $args->args->userid : $User->ID );
+				
+				require( 'modules/system/include/firstlogin.php' );
+				
+				die( 'ok<!--separate-->' . $userid . '<!--separate-->' . json_encode( $debug ) );
+			}
+			
+			break;
 		
 		// NATIVE version commands ---------------------------------------------
 

@@ -41,7 +41,58 @@ if( !file_exists( $wname . 'thumbnails' ) )
 $settings = new stdClass();
 $settings->Date = date( 'Y-m-d H:i:s' );
 
-$userid = $level == 'Admin' && isset( $args->args->userid ) ? $args->args->userid : $User->ID;
+
+if( isset( $args->args->authid ) && !isset( $args->authid ) )
+{
+	$args->authid = $args->args->authid;
+}
+
+if( !isset( $args->authid ) )
+{
+	$userid = ( $level == 'Admin' && isset( $args->args->userid ) ? $args->args->userid : $User->ID );
+}
+else
+{
+	require_once( 'php/include/permissions.php' );
+	
+	$userid = ( !isset( $args->args->userid ) ? $User->ID : 0 );
+	
+	// Only check permissions if userid is defined ...
+	if( isset( $args->args->userid ) )
+	{
+		if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), [ 'PERM_LOOKNFEEL_GLOBAL', 'PERM_LOOKNFEEL_WORKGROUP' ], 'user', ( isset( $args->args->userid ) ? $args->args->userid : $User->ID ) ) )
+		{
+			if( is_object( $perm ) )
+			{
+				// Permission denied.
+		
+				if( $perm->response == -1 )
+				{
+					//
+			
+					//die( 'fail<!--separate-->{"message":"'.$perm->message.'",'.($perm->reason?'"reason":"'.$perm->reason.'",':'').'"response":'.$perm->response.'}' );
+				}
+		
+				// Permission granted. GLOBAL or WORKGROUP specific ...
+		
+				if( $perm->response == 1 && isset( $perm->data->users ) && isset( $args->args->userid ) )
+				{
+			
+					// If user has GLOBAL or WORKGROUP access to this user
+			
+					if( $perm->data->users == '*' || strstr( ','.$perm->data->users.',', ','.$args->args->userid.',' ) )
+					{
+						$userid = intval( $args->args->userid );
+					}
+			
+				}
+		
+			}
+		}
+	}
+}
+
+
 
 if( isset( $args->args->settings ) )
 {
@@ -83,7 +134,7 @@ else if ( isset( $args->args->setting ) )
 	$s->Type = 'system';
 	$s->Key = $args->args->setting;
 	$s->UserID = $userid;
-	if( $s->Load() )
+	if( !isset( $args->args->fullname ) && $s->Load() )
 	{
 		if( !isset( $args->args->mode ) || $args->args->mode != 'reset' )
 		{
@@ -155,7 +206,7 @@ else if ( isset( $args->args->setting ) )
 		
 		// Draw letters
 		$color = imagecolorallocate( $img, 255, 255, 255 );
-		$initials = explode( ' ', $User->FullName );
+		$initials = explode( ' ', ( isset( $args->args->fullname ) ? trim( $args->args->fullname ) : $User->FullName ) );
 		$initials = strtoupper( count( $initials ) > 1 ? $initials[0]{0} . $initials[1]{0} : substr( $initials[0], 0, 2 ) );
 		$dims = getsetting_calculateTextBox( $initials, $font, 88, 0 );
 		imagettftext( $img, 88, 0, 128 - ( $dims[ 'width' ] >> 1 ) - $dims[ 'left' ], 128 + ( $dims[ 'height' ] >> 1 ) + ( $dims[ 'height' ] - $dims[ 'top' ] ), $color, $font, $initials );
@@ -163,16 +214,34 @@ else if ( isset( $args->args->setting ) )
 		imagepng( $img );
 		$png = ob_get_clean();
 		$s->Data = 'data:image/png;base64,' . base64_encode( $png );
-		$s->Save();
+		if( !isset( $args->args->read ) || !$args->args->read )
+		{
+			$s->Save();
+		}
+		
+		// Save image blob as filename hash on user
+		if( $s->ID > 0 && $s->Key == 'avatar' && $s->Data && $s->UserID > 0 )
+		{
+			$u = new dbIO( 'FUser' );
+			$u->ID = $s->UserID;
+			if( $u->Load() )
+			{
+				$u->Image = md5( $s->Data );
+				$u->Save();
+			}
+		}
 		
 		// Save avatar color for later use
 		$c = new dbIO( 'FSetting' );
 		$c->UserID = $s->UserID;
 		$c->Key = 'avatar_color';
 		$c->Type = 'system';
-		$c->Load();
-		$c->Data = $hex;
-		$c->Save();
+		if( !isset( $args->args->read ) || !$args->args->read )
+		{
+			$c->Load();
+			$c->Data = $hex;
+			$c->Save();
+		}
 		
 		$settings->avatar = $s->Data;
 		die( 'ok<!--separate-->' . json_encode( $settings ) );

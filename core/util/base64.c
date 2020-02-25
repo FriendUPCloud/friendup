@@ -141,7 +141,7 @@ char *MarkAndBase64EncodeString( const char *chr )
 //
 
 /* Unstable code! Please test! */
-char *Base64Decode( const unsigned char* data, int length, int *finalLength )
+char *Base64Decode( const unsigned char* data, unsigned int length, int *finalLength )
 {
 	//if( decoding_table == NULL ) build_decoding_table();
 	if( length <= 0 )

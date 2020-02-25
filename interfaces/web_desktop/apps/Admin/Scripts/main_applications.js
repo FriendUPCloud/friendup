@@ -135,9 +135,9 @@ Applications = {
 				{
 				}
 			}
-			m.execute( 'software', { mode: 'global_permissions' } );
+			m.execute( 'software', { mode: 'global_permissions', authid: Application.authId } );
 		}
-		h.execute( 'getmetadata', { search: 'application_', valueStrings: [ 'Visible', 'Featured' ] } );
+		h.execute( 'getmetadata', { search: 'application_', valueStrings: [ 'Visible', 'Featured' ], authid: Application.authId } );
 	},
 	showApp: function( extra )
 	{
@@ -230,7 +230,8 @@ Applications = {
 							n.execute( 'setmetadata', {
 								key: 'application_' + extra.name,
 								valueString: strval, 
-								valueNumber: on ? '1' : '2'
+								valueNumber: on ? '1' : '2', 
+								authid: Application.authId
 							} );
 						}
 					}
@@ -239,9 +240,9 @@ Applications = {
 				}
 				f.load();
 			}
-			h.execute( 'getmetadata', { search: 'application_', valueStrings: [ 'Visible', 'Featured' ] } );
+			h.execute( 'getmetadata', { search: 'application_', valueStrings: [ 'Visible', 'Featured' ], authid: Application.authId } );
 		}
-		m.execute( 'applicationdetails', { mode: 'data', application: extra.name } );
+		m.execute( 'applicationdetails', { mode: 'data', application: extra.name, authid: Application.authId } );
 	}
 };
 

@@ -50,6 +50,8 @@ function buildURL( $hash, $conf )
 	$proto = $conf->SSLEnable ? 'https://' : 'http://';
 	$host = $conf->FCHost;
 	$port = $conf->FCPort ? ( ':' . $conf->FCPort ) : '';
+	if( $conf->ProxyEnable == 1 )
+		$port = '';
 	$url = $proto . $host . $port . '/' . $hash;
 	return $url;
 }

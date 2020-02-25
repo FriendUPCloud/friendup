@@ -5956,6 +5956,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				var src = scripts[a].getAttribute( 'src' )
 				if( src )
 				{
+					
 					totalLoadingResources++;
 					var d = document.createElement( 'script' );
 					d.src = src;
@@ -5964,6 +5965,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					document.body.appendChild( d );
 					wait = true;
 					removes.push( scripts[a] );
+
 				}
 			}
 			// Clear friendscripts

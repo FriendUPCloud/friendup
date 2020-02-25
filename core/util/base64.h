@@ -52,6 +52,6 @@ char *MarkAndBase64EncodeString( const char *chr );
 //
 //
 
-char* Base64Decode( const unsigned char* data, int length, int *finalLength );
+char* Base64Decode( const unsigned char* data, unsigned int length, int *finalLength );
 
 #endif

@@ -6,6 +6,19 @@ i18n_user_username                     : Brukernavn
 i18n_user_email                        : E-post
 i18n_user_password                     : Passord
 
+i18n_reset_password                    : Reset passord
+
+i18n_new_password                      : Nytt passord
+i18n_confirm_password                  : Bekreft passord
+
+i18n_language                          : Språk
+i18n_setup                             : Mal
+
+i18n_account_locked                    : Konto låst
+i18n_account_disabled                  : Konto deaktivert
+
+i18n_browse                            : Utforsk
+
 i18n_looknfeel                         : Utseende
 i18n_theme                             : Tema
 i18n_wallpaper                         : Bakgrunn
@@ -28,7 +41,7 @@ i18n_default                           : Standard
 
 i18n_name                              : Navn
 i18n_category                          : Kategori
-i18n_dock                              : I dock
+i18n_dock                              : Dock
 
 i18n_user_mountlist_empty              : Disklisten er tom.
 
@@ -66,7 +79,7 @@ i18n_find_applications                 : Finn programmer
 i18n_PERM_USER_GLOBAL                  : Endre brukere globalt
 i18n_PERM_USER_WORKGROUP               : Endre brukere per arbeidsgruppe
 i18n_PERM_WORKGROUP_GLOBAL             : Endre arbeidsgrupper globalt
-i18n_PERM_WORKGROUP_WORKGROUP          : Endre under-arbeidsgrupper
+i18n_PERM_WORKGROUP_WORKGROUP          : Endre arbeidsgrupper
 i18n_PERM_TEMPLATE_GLOBAL              : Endre maler globalt
 i18n_PERM_TEMPLATE_WORKGROUP           : Endre maler under arbeidsgruppe
 
@@ -101,6 +114,8 @@ i18n_find_users                        : Finn brukere...
 i18n_header_FullName                   : Navn
 i18n_header_Name                       : Brukernavn
 i18n_header_Level                      : Nivå
+i18n_header_Status                     : Status
+i18n_header_LoginTime                  : Sist Innlogging
 
 i18n_user_updated                      : Bruker oppdatert
 i18n_user_updated_succ                 : Brukeren ble oppdatert i databasen.
@@ -109,6 +124,8 @@ i18n_user_update_fail                  : Feil ved oppdatering
 i18n_user_update_failed                : Kunne ikke oppdatere brukeren.
 
 #Workgroup related
+
+i18n_header_name                       : Navn
 
 i18n_workgroups                        : Arbeidsgrupper
 i18n_workgroup_profile                 : Arbeidsgruppe

@@ -158,7 +158,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 			}
 			
 			DEBUG("Sessptr !NULL\n");
-			
+			/*
 			if( sessptr != NULL )
 			{
 				//  |  till sessionid  |  sessionid  |  after sessionid
@@ -169,9 +169,23 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 				memcpy( allArgsNew, allArgs, add );
 				
 				//fprintf( log, "First add: %d - %c\n", add, allArgsNew[ add - 1 ] );
-				if( loggedSession != NULL && loggedSession->us_User != NULL )
+				if( loggedSession != NULL && loggedSession->us_User != NULL && loggedSession->us_User->u_MainSessionID )
 				{
-					strcat( dst, loggedSession->us_User->u_MainSessionID );
+					strcat( dst, loggedSession->us_User->u_MainSessionID );		// last crash pointed that issue was here
+					//
+					//> /lib/x86_64-linux-gnu/libc.so.6(+0xb9a17) [0x7f6683b2aa17]
+					//> ./FriendCore(GetArgsAndReplaceSession+0x3e5) [0x557f4ffd30dd]
+					//> ./FriendCore(SysWebRequest+0x2266) [0x557f4ffd5acf] 
+					//
+//  1990ca:       48 8b 50 50             mov    0x50(%rax),%rdx
+//  1990ce:       48 8b 45 b8             mov    -0x48(%rbp),%rax
+//  1990d2:       48 89 d6                mov    %rdx,%rsi
+//  1990d5:       48 89 c7                mov    %rax,%rdi
+//  1990d8:       e8 23 b2 fa ff          callq  144300 <strcat@plt>
+//  1990dd:       48 8b 85 60 ff ff ff    mov    -0xa0(%rbp),%rax <-crash
+//  1990e4:       48 8b 40 78             mov    0x78(%rax),%rax
+//  1990e8:       48 8b 40 50             mov    0x50(%rax),%rax
+
 					dst += strlen( loggedSession->us_User->u_MainSessionID );
 				}
 				//add += 40; // len of sessionid
@@ -195,6 +209,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 				}
 			}
 			else
+				*/
 			{
 				memcpy( allArgsNew, allArgs, fullsize );
 			}

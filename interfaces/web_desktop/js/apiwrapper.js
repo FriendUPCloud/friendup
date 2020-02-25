@@ -4152,6 +4152,11 @@ if( window.addEventListener )
 
 			// TODO: This can probably be moved somwhere everything else related to message is ...
 
+			if( args.username )
+			{
+				Workspace.loginUsername = args.username;
+			}
+
 			if( args.sessionid )
 			{
 				Workspace.loginSessionId( args.sessionid, args.callbac, args.event );

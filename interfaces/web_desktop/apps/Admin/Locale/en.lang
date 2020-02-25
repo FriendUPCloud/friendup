@@ -5,11 +5,37 @@ i18n_user_fullname                     : Full name
 i18n_user_username                     : Username
 i18n_user_email                        : E-mail
 i18n_user_password                     : Password
+i18n_delete_user                       : Delete user
+
+i18n_reset_password                    : Reset password
+
+i18n_new_password                      : New password
+i18n_confirm_password                  : Confirm password
+
+i18n_level                             : Level
+i18n_language                          : Language
+i18n_setup                             : Template
+
+i18n_templates                         : Templates
+i18n_template_details                  : Template details
+i18n_new_template                      : New template
+i18n_template_name                     : Template name
+i18n_template_description              : Description
+i18n_template_language                 : Default language
+
+i18n_template_create                       : Template create
+i18n_template_update                       : Template update
+i18n_Template with that name already exist : Template with that name already exist
+
+i18n_account_locked                    : Account locked
+i18n_account_disabled                  : Account disabled
+
+i18n_browse                            : Browse
 
 i18n_looknfeel                         : Look and feel
 i18n_theme                             : Theme
 i18n_wallpaper                         : Wallpaper
-i18n_window_style                      : Window style
+i18n_window_controls                   : Window controls
 i18n_darktheme                         : Dark theme
 i18n_system_disk                       : System disk
 i18n_workspaces                        : Workspaces
@@ -28,7 +54,9 @@ i18n_default                           : Default
 
 i18n_name                              : Name
 i18n_category                          : Category
-i18n_dock                              : In dock
+i18n_order                             : Order
+i18n_dock                              : Dock
+i18n_startup                           : Startup
 
 i18n_user_mountlist_empty              : User mountlist empty.
 
@@ -67,7 +95,7 @@ i18n_find_applications                 : Find apps
 i18n_PERM_USER_GLOBAL                  : Edit users globally
 i18n_PERM_USER_WORKGROUP               : Edit users per workgroup
 i18n_PERM_WORKGROUP_GLOBAL             : Edit workgroups globally
-i18n_PERM_WORKGROUP_WORKGROUP          : Edit sub-workgroups
+i18n_PERM_WORKGROUP_WORKGROUP          : Edit workgroups
 i18n_PERM_TEMPLATE_GLOBAL              : Edit templates globally
 i18n_PERM_TEMPLATE_WORKGROUP           : Edit templates below a workgroup
 
@@ -78,6 +106,7 @@ i18n_deleting_permission_verify        : Please confirm that you want to delete 
 
 i18n_save                              : Save
 i18n_delete                            : Delete
+i18n_delete_template                   : Delete template
 i18n_cancel                            : Cancel
 
 i18n_printers                          : Printers
@@ -102,18 +131,119 @@ i18n_find_users                        : Find users...
 i18n_header_FullName                   : Name
 i18n_header_Name                       : Username
 i18n_header_Level                      : Level
+i18n_header_Status                     : Status
+i18n_header_LoginTime                  : Last Login
 
 i18n_user_updated                      : User updated
 i18n_user_updated_succ                 : The user was successfully updated.
 
+i18n_user_delete                       : User deleted
+i18n_user_delete_succ                  : The user was successfully deleted.
+i18n_user_delete_fail                  : User delete failed
+i18n_user_delete_failed                : Failed to delete user.
+
+i18n_user_create                       : User created
+i18n_user_create_succ                  : The user was successfully created.
+
+i18n_user_create_fail                  : User create failed
 i18n_user_update_fail                  : User update failed
 i18n_user_update_failed                : Failed to update the user.
+i18n_User already exist                : User already exists
+
+i18n_new_user                          : New user
+i18n_show_disabled_users               : Show disabled users
+i18n_hide_disabled_users               : Hide disabled users
+i18n_show_locked_users                 : Show locked users
+i18n_hide_locked_users                 : Hide locked users
+
+i18n_level_admin                       : Administrator
+i18n_level_user                        : Normal user
+i18n_level_guest                       : Guest user
+i18n_level_api                         : API user
 
 #Workgroup related
+
+i18n_header_name                       : Name
 
 i18n_workgroups                        : Workgroups
 i18n_workgroup_profile                 : Workgroup profile
 i18n_workgroup_name                    : Name
 i18n_workgroup_description             : Description
+i18n_delete_workgroup                  : Delete workgroup
 
+i18n_workgroup_create                  : Workgroup create
+i18n_User Group already exist          : User Group already exist
+
+#Storage related
+
+i18n_name                         : Name
+i18n_type                         : Type
+i18n_size                         : Size
+
+i18n_SQLDrive                     : SQL drive
+i18n_Server filesystem            : Server filesystem
+i18n_Local                        : Server filesystem
+i18n_FriendStore                  : Friend Store
+i18n_Samba	                      : Samba filesystem
+i18n_DropboxDrive                 : Dropbox drive
+i18n_GoogleDrive                  : Google drive
+i18n_Wordpress                    : WordPress drive
+i18n_SQLWorkgroupDrive            : MySQL Based Filesystem for workgroups
+i18n_Treeroot                     : Treeroot drive
+i18n_ArenaCM                      : Arena CM drive
+i18n_Website                      : Website drive
+i18n_Assign                       : Assign drive
+i18n_INRam                        : INRam Drive
+i18n_FriendStoreDrive             : FriendStore Drive
+i18n_Remote                       : Remote Drive
+i18n_Node                         : Node network
+i18n_SFTP                         : SFTP
+i18n_CorvoDrive                   : Corvo Disk
+i18n_QuickNG                      : Sybase QuickNG DOS Driver
+i18n_NodeDrive                    : Node network
+i18n_SQLRODrive                   : SQL Read only disk
+i18n_IMAP                         : IMAP Disk
+i18n_IPFSDrive                    : IPFS disk
+
+i18n_disk_error                      : Disk error
+i18n_failed_to_edit                  : Failed to edit disk volume.
+i18n_disk_success                    : Disk edited
+i18n_disk_edited                     : Disk was edited successfully.
+
+i18n_connection_details              : Connection details
+i18n_notes                           : Notes
+i18n_directory                       : Remote directory
+i18n_login_info                      : Login info
+i18n_your_notes                      : Your notes
+i18n_username                        : Username
+i18n_password                        : Password
+i18n_status                          : Status
+i18n_host_port                       : Server port
+i18n_host_ip                         : Server address or IP
+i18n_hostname                        : Server address
+i18n_workgroup_details               : Workgroup details
+i18n_new_workgroup                   : New workgroup
+i18n_workgroup_name                  : Workgroup name
+i18n_workgroup_parent                : Workgroup parent
+i18n_choose_workgroup                : Choose workgroup
+i18n_workgroup                       : Workgroup
+i18n_device_name                     : Disk name
+i18n_placeholder_connection          : Mydisk
+
+i18n_add_storage                     : Add storage
+i18n_update_disk                     : Update disk
+i18n_mount_disk                      : Mount disk
+i18n_unmount_disk                    : Unmount disk
+
+i18n_this_will_remove                : This will remove the disk from the system.
+i18n_are_you_sure                    : Are you sure?
+
+i18n_mounting                        : Mounting
+i18n_unmounting                      : Unmounting
+i18n_successfully_mounted            : Your device was successfully mounted.
+i18n_successfully_unmounted          : Your device was successfully unmounted.
+i18n_fail_mount                      : Failed to mount device
+i18n_fail_mount_more                 : Could not mount device.
+i18n_fail_unmount                    : Failed to unmount device
+i18n_fail_unmount_more               : Could not unmount device.
 

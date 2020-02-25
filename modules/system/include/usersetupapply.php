@@ -44,6 +44,9 @@ if( !function_exists( 'findInSearchPaths' ) )
 	}
 }
 
+error_reporting(E_ALL & ~E_NOTICE);
+ini_set('display_errors', 1);
+
 if( $args->args->id > 0 )
 {
 	if( $ug = $SqlDatabase->FetchObject( '
@@ -123,11 +126,28 @@ if( $args->args->id > 0 )
 						$fnam = $wallpaper->ValueString;
 						$fnam = explode( '/', $fnam );
 						$fnam = end( $fnam );
+						$ext  = explode( '.', $fnam );
+						$fnam = $ext[0];
+						$ext  = $ext[1];
 						
 						$f = new dbIO( 'Filesystem' );
 						$f->UserID = $uid;
-						$f->Name = 'Home';
-						if( $f->Load() )
+						$f->Name   = 'Home';
+						$f->Type   = 'SQLDrive';
+						$f->Server = 'localhost';
+						if( !$f->Load() )
+						{
+							$f->ShortDescription = 'My data volume';
+							$f->Mounted = '1';
+							
+							// TODO: Enable this when we have figured out a better way to handle firstlogin.defaults.php if Home: is created it fucks up the first login procedure ...
+							
+							//$f->Save();
+							
+							$f->ID = 0;
+						}
+						
+						if( $f->ID > 0 && $fnam && $ext && $theUser->Name )
 						{
 							// Make sure we have wallpaper folder
 							$fl = new dbIO( 'FSFolder' );
@@ -137,68 +157,90 @@ if( $args->args->id > 0 )
 							$fl->FolderID = 0;
 							if( !$fl->Load() )
 							{
+								$fl->DateCreated = date( 'Y-m-d H:i:s' );
+								$fl->DateModified = $fl->DateCreated;
+								
 								$fl->Save();
 							}
 							
 							$fi = new dbIO( 'FSFile' );
+							$fi->Filename = ( 'default_wallpaper_' . $fl->FilesystemID . '_' . $fl->UserID . '.jpg' );
+							$fi->FolderID = $fl->ID;
 							$fi->FilesystemID = $f->ID;
 							$fi->UserID = $uid;
-							$fi->FolderID = $fl->ID;
-							$fi->Filename = $fnam;
-							$num = 1;
-							// Unique file
-							while( $fi->Load() )
+							if( $fi->Load() && $fi->DiskFilename )
 							{
-								$fnam = ( $num++ ) . $fnam;
+								if( file_exists( $Config->FCUpload . $fi->DiskFilename ) )
+								{
+									unlink( $Config->FCUpload . $fi->DiskFilename );
+								}
 							}
-							$fi->Filesize = filesize( $wallpaper->ValueString );
-							$fi->DateCreated = date( 'Y-m-d H:i:s' );
-							$fi->DateModified = $fi->DateCreated;
-							$fi->Save();
 							
-							if( $fi->ID )
+							// Find disk filename
+							$uname = str_replace( array( '..', '/', ' ' ), '_', $theUser->Name );
+							if( !file_exists( $Config->FCUpload . $uname ) )
 							{
-								// Find disk filename
-								$uname = str_replace( array( '..', '/', ' ' ), '_', $theUser->Name );
-								if( !file_exists( $Config->FCUpload . $uname ) )
-								{
-									mkdir( $Config->FCUpload . $uname );
-								}
+								mkdir( $Config->FCUpload . $uname );
+							}
 							
-								// Unique name
-								$temp = $fnam;
-								$num = 1;
-								while( file_exists( $Config->FCUpload . $uname . '/' . $temp ) )
-								{
-									$temp = ( $num++ ) . $fnam;
-								}
-							
-								// Write the wallpaper file
-								if( $fp = fopen( $Config->FCUpload . $uname . '/' . $temp, 'w+' ) )
-								{
-									fwrite( $fp, $wallpaperContent );
-									fclose( $fp );
-									$fi->DiskFilename = $uname . '/' . $temp;
-									$fi->Save();
-							
-									// Set the wallpaper in config
-									$s = new dbIO( 'FSetting' );
-									$s->UserID = $uid;
-									$s->Type = 'system';
-									$s->Key = 'wallpaperdoors';
-									$s->Load();
-									$s->Data = '"Home:Wallpaper/' . $fi->Filename . '"';
-									$s->Save();
-								}
-								else
-								{
-									$fi->Delete();
-								}
-							}	
-							else
+							while( file_exists( $Config->FCUpload . $uname . '/' . $fnam . '.' . $ext ) )
 							{
-							}						
-							// All done!
+								$fnam = ( $fnam . rand( 0, 999999 ) );
+							}
+							
+							if( $fp = fopen( $Config->FCUpload . $uname . '/' . $fnam . '.' . $ext, 'w+' ) )
+							{
+								fwrite( $fp, $wallpaperContent );
+								fclose( $fp );
+								
+								
+								
+								$fi->DiskFilename = ( $uname . '/' . $fnam . '.' . $ext );
+								$fi->Filesize = filesize( $wallpaper->ValueString );
+								$fi->DateCreated = date( 'Y-m-d H:i:s' );
+								$fi->DateModified = $fi->DateCreated;
+								$fi->Save();
+								
+								
+								
+								// Set the wallpaper in config
+								$s = new dbIO( 'FSetting' );
+								$s->UserID = $uid;
+								$s->Type = 'system';
+								$s->Key = 'wallpaperdoors';
+								$s->Load();
+								$s->Data = '"Home:Wallpaper/' . $fi->Filename . '"';
+								$s->Save();
+								
+								
+								
+								// Fill Wallpaper app with settings and set default wallpaper
+								$wp = new dbIO( 'FSetting' );
+								$wp->UserID = $uid;
+								$wp->Type = 'system';
+								$wp->Key = 'imagesdoors';
+								if( $wp->Load() && $wp->Data )
+								{
+									$data = substr( $wp->Data, 1, -1 );
+	
+									if( $data && !strstr( $data, '"Home:Wallpaper/' . $fi->Filename . '"' ) )
+									{
+										if( $json = json_decode( $data, true ) )
+										{
+											$json[] = ( 'Home:Wallpaper/' . $fi->Filename );
+			
+											if( $data = json_encode( $json ) )
+											{
+												$wp->Data = stripslashes( '"' . $data . '"' );
+												$wp->Save();
+											}
+										}
+									}
+								}
+								
+							}
+							
+							
 						}
 					}
 					
@@ -230,6 +272,32 @@ if( $args->args->id > 0 )
 						$them->Load();
 						$them->Data = $ug->Data->theme;
 						$them->Save();
+					}
+					
+					if( $ug->Data->themeconfig && $ug->Data->theme )
+					{
+						// 3. Check and update look and feel config!
+						
+						$them = new dbIO( 'FSetting' );
+						$them->UserID = $uid;
+						$them->Type = 'system';
+						$them->Key = 'themedata_' . strtolower( $ug->Data->theme );
+						$them->Load();
+						$them->Data = json_encode( $ug->Data->themeconfig );
+						$them->Save(); 
+					}
+					
+					if( $ug->Data->workspacecount )
+					{
+						// 3. Check and update look and feel workspace numbers!
+						
+						$them = new dbIO( 'FSetting' );
+						$them->UserID = $uid;
+						$them->Type = 'system';
+						$them->Key = 'workspacecount';
+						$them->Load();
+						$them->Data = $ug->Data->workspacecount;
+						$them->Save(); 
 					}
 					
 					// Software ----------------------------------------------------------------------------------------
