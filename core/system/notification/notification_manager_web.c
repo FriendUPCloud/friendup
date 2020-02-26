@@ -91,7 +91,7 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	*
-	* <HR><H2>system.library/notification/notify-server</H2>Create user. Function require admin rights.
+	* <HR><H2>system.library/notification/notify-server</H2>Send information to external connection
 	*
 	* @param sessionid - (required) session id of logged user
 	* @param msg - (required) message
