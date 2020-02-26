@@ -820,7 +820,7 @@ inline static int GenerateServiceMessage( char *dstMsg, char *reqID, char *path,
 		strcat( dstMsg, &params[ afterBracePos ] );
 		strcat( dstMsg, "}");
 		
-		dstsize += 18+uuidLen+2+strlen(&params[ afterBracePos ])+1;
+		dstsize += 17+uuidLen+2+strlen(&params[ afterBracePos ])+1;
 	}
 	else
 	{
@@ -828,7 +828,7 @@ inline static int GenerateServiceMessage( char *dstMsg, char *reqID, char *path,
 		strcat( dstMsg, us->us_User->u_UUID );
 		strcat( dstMsg, "}}");
 		
-		dstsize += 18+uuidLen+2;
+		dstsize += 17+uuidLen+2;
 	}
 	
 	return dstsize;
