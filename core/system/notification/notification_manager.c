@@ -779,6 +779,61 @@ OR
 	return ret;
 }
 
+//
+// internal funciton
+//
+
+inline int GenerateServiceMessage( char *dstMsg, char *reqID, char *path, char *params, UserSession *us )
+{
+	int dstsize = 0;
+	
+	if( reqID != NULL )
+	{
+		snprintf( reqID, 128, "EXTSER_%lu%d_ID", time(NULL), rand()%999999 );
+		dstsize = sprintf( dstMsg, "{\"path\":\"service/%s\",\"requestId\":\"%s\",\"data\":", path, reqID );
+	}
+	else
+	{
+		dstsize = sprintf( dstMsg, "{\"path\":\"service/%s\",\"data\":", path );
+	}
+	
+	int perLen = strlen( params );
+	int afterBracePos = 0;
+	int i;
+	
+	// lets figure out where first brace is
+	for( i=0 ; i < perLen ; i++ )
+	{
+		if( params[ i ] == '{' )
+		{
+			afterBracePos = i;
+			break;
+		}
+	}
+	
+	int uuidLen = strlen( us->us_User->u_UUID );
+	if( perLen > 4 ) // params is not only {}
+	{
+		strcat( dstMsg, "{\"originUserId\":\"" );
+		strcat( dstMsg, us->us_User->u_UUID );
+		strcat( dstMsg, "\",");
+		strcat( dstMsg, &params[ afterBracePos ] );
+		strcat( dstMsg, "}");
+		
+		dstsize += 18+uuidLen+2+strlen(&params[ afterBracePos ])+1;
+	}
+	else
+	{
+		strcat( dstMsg, "{\"originUserId\":\"" );
+		strcat( dstMsg, us->us_User->u_UUID );
+		strcat( dstMsg, "}}");
+		
+		dstsize += 18+uuidLen+2;
+	}
+	
+	return dstsize;
+}
+
 /**
  * Send message to external servers
  * 
@@ -846,7 +901,7 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 			while( con != NULL )
 			{
 				DataQWSIM *en = (DataQWSIM *)con->esc_Connection;
-				
+				/*
 				if( reqID != NULL )
 				{
 					snprintf( reqID, 128, "EXTSER_%lu%d_ID", time(NULL), rand()%999999 );
@@ -856,6 +911,10 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 				{
 					dstsize = snprintf( dstMsg, msglen, "{\"path\":\"service/%s\",\"data\":{%s,\"originUserId\":\"%s\"}}", path, params, us->us_User->u_UUID );
 				}
+				*/
+				
+				dstsize = GenerateServiceMessage( dstMsg, reqID, path, params, us );
+				
 				Log( FLOG_INFO, "[NotificationManagerSendRequestToConnections] Send message: '%s'\n", dstMsg );
 				
 				DEBUG("Msg sent to: %s\n", en->d_ServerName );
@@ -870,6 +929,7 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 			DEBUG("Server name != NULL\n");
 			while( con != NULL )
 			{
+				/*
 				if( reqID != NULL )
 				{
 					snprintf( reqID, 128, "EXTSER_%lu%d_ID", time(NULL), rand()%999999 );
@@ -879,6 +939,9 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 				{
 					dstsize = snprintf( dstMsg, msglen, "{\"path\":\"service/%s\",\"data\":{%s,\"originUserId\":\"%s\"}}", path, params, us->us_User->u_UUID );
 				}
+				*/
+				
+				dstsize = GenerateServiceMessage( dstMsg, reqID, path, params, us );
 				Log( FLOG_INFO, "[NotificationManagerSendRequestToConnections] Send message: '%s'\n", dstMsg );
 				
 				ret += WriteMessageToServers( con->esc_Connection, (unsigned char *)dstMsg, dstsize );
