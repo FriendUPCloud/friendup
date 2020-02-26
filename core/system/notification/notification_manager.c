@@ -790,11 +790,11 @@ inline static int GenerateServiceMessage( char *dstMsg, char *reqID, char *path,
 	if( reqID != NULL )
 	{
 		snprintf( reqID, 128, "EXTSER_%lu%d_ID", time(NULL), rand()%999999 );
-		dstsize = sprintf( dstMsg, "{\"path\":\"service/%s\",\"requestId\":\"%s\",\"data\":", path, reqID );
+		dstsize = sprintf( dstMsg, "{\"path\":\"service%s\",\"requestId\":\"%s\",\"data\":", path, reqID );
 	}
 	else
 	{
-		dstsize = sprintf( dstMsg, "{\"path\":\"service/%s\",\"data\":", path );
+		dstsize = sprintf( dstMsg, "{\"path\":\"service%s\",\"data\":", path );
 	}
 	
 	int perLen = strlen( params );
