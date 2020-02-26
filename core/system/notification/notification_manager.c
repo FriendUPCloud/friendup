@@ -806,7 +806,7 @@ inline static int GenerateServiceMessage( char *dstMsg, char *reqID, char *path,
 	{
 		if( params[ i ] == '{' )
 		{
-			afterBracePos = i;
+			afterBracePos = i+1;
 			break;
 		}
 	}
