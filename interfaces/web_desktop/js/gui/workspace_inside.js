@@ -8755,7 +8755,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 			}
 			// IMPORTANT:
-			// Sleep in 15 minutes
+			// Sleep in 5 minutes
 			if( this.sleepingTimeout )
 				clearTimeout( this.sleepingTimeout );
 			Workspace.sleeping = false;
@@ -8784,7 +8784,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	sleepTimeout: function()
 	{
 		// IMPORTANT: Only for desktops!
-		// Sleep in 15 minutes
+		// Sleep in 5 minutes
 		if( !window.friendApp )
 		{
 			if( this.sleepingTimeout )
