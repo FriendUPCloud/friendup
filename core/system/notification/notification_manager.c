@@ -950,10 +950,7 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 				sentMessageTo++;
 			}
 		}
-		if( reqID != NULL )
-		{
-			FFree( reqID );
-		}
+		
 		FFree( dstMsg );
 		
 		//
@@ -1072,6 +1069,11 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 		{
 			const char *timeoutResp = "{\"result\":0}";
 			BufStringAdd( retMsg, timeoutResp );
+		}
+		
+		if( reqID != NULL )
+		{
+			FFree( reqID );
 		}
 	}
 	
