@@ -8673,6 +8673,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Don't update if not changed
 		if( this.currentViewState == newState )
 		{
+			// Starts sleep timeout again (five minutes without activity sleep)
 			this.sleepTimeout();
 			return;
 		}
