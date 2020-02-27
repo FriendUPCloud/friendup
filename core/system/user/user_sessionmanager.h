@@ -194,4 +194,10 @@ User *UserGetByID( UserSessionManager *usm, FULONG id );
 
 void USMCloseUnusedWebSockets( UserSessionManager *usm );
 
+//
+//
+//
+
+int USMGetSessionsDeleteDB( UserSessionManager *smgr, const char *sessionid );
+
 #endif //__SYSTEM_USER_USER_SESSIONMANAGER_H__
