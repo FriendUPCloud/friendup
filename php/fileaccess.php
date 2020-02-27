@@ -63,9 +63,7 @@ if( $argv[1] )
 	
 }
 
-//faLog( print_r( $argv,1  ) );
-die( '<pre>' . print_r( $argv,1  ) );	
-
+die('500 - unable to process your request');
 
 
 /* TODO: SECURITY HOLE! WE CIRCUMVENT ALL SECURITY HERE */
@@ -75,7 +73,7 @@ die( '<pre>' . print_r( $argv,1  ) );
 function handleFileCallback( $user, $filepath, $requestjson, $authid = false, $windowid = false )
 {	
 	
-	faLog('handleFileCallback' .  $user . ' :: ' .  $filepath . ':: ' . print_r( $requestjson, 1) );
+	//faLog('handleFileCallback' .  $user . ' :: ' .  $filepath . ':: ' . print_r( $requestjson, 1) );
 	
 	if( $requestjson == false )
 	{
@@ -84,7 +82,6 @@ function handleFileCallback( $user, $filepath, $requestjson, $authid = false, $w
 	
 	if( substr($requestjson, 0, 23) == 'friendrequestparameters' )
 	{
-		faLog('have to read request from file...');
 		$requestjson = file_get_contents( end( explode( '=' , $requestjson ) ) );
 	}
 
@@ -93,7 +90,7 @@ function handleFileCallback( $user, $filepath, $requestjson, $authid = false, $w
 		$requestjson = substr( $requestjson, 11 );
 	}
 	
-	faLog('request json is' . $requestjson );
+	//faLog('request json is' . $requestjson );
 	
 	try
 	{
@@ -181,7 +178,6 @@ function getUserFile( $username, $filePath )
 	
 	if( $filePath == 'newpresentation' )
 	{	
-		faLog( 'New file returned.' );
 		$o = new stdClass();
 		$o->content = file_get_contents( 'modules/onlyoffice/data/new.pptx' );
 		$o->type = 'newfile';
@@ -189,7 +185,6 @@ function getUserFile( $username, $filePath )
 	}
 	else if( $filePath == 'newdocument' )
 	{
-		faLog( 'New file returned.' );
 		$o = new stdClass();
 		$o->content = file_get_contents( 'modules/onlyoffice/data/new.docx' );
 		$o->type = 'newfile';
@@ -197,7 +192,6 @@ function getUserFile( $username, $filePath )
 	}
 	else if( $filePath == 'newsheet' )
 	{
-		faLog( 'New file returned.' );
 		$o = new stdClass();
 		$o->content = file_get_contents( 'modules/onlyoffice/data/new.xlsx' );
 		$o->type = 'newfile';
@@ -361,7 +355,7 @@ function saveUserFile( $username, $filePath, $json, $windowid = false, $authid =
 			$result = $file->Save( $fc );
 			if( $result )
 			{
-				faLog( 'File saved :) ' . $filePath . '!' . $result );
+				//faLog( 'File saved :) ' . $filePath . '!' . $result );
 				if( !$Config ) faConnectDB( $username );		
 				if( $windowid )
 				{
