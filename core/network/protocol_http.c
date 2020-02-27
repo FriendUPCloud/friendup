@@ -690,6 +690,9 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 
 								// Make the commandline string with the safe, escaped arguments, and check for buffer overflows.
 								int cx = snprintf( command, MAX_LEN_PHP_INT_COMMAND-1, "php \"php/login.php\" \"%s\" \"%s\" \"%s\"; 2>&1", uri->path->raw, uri->queryRaw, request->content ); // SLIB->sl_ModuleNames
+								
+								DEBUG("Loginprompt: call command: %s\n", command );
+								
 								//if( !( cx >= 0 ) )
 								//{
 								//	FERROR( "[ProtocolHttp] snprintf\n" );;

@@ -15,8 +15,8 @@
  *  @date created 2016
  */
 
-#ifndef __SERVICE_SERVICE_MANAGER_WEB_H__
-#define __SERVICE_SERVICE_MANAGER_WEB_H__
+#ifndef __SERVICES_SERVICES_MANAGER_WEB_H__
+#define __SERVICES_SERVICES_MANAGER_WEB_H__
 
 #include <system/services/service.h>
 #include <network/socket.h>
@@ -30,4 +30,4 @@
 
 Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserSession *loggedSession );
 
-#endif //__SERVICE_SERVICE_MANAGER_H__
+#endif //__SERVICES_SERVICES_MANAGER_H__

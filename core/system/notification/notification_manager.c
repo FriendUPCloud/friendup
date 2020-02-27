@@ -844,10 +844,10 @@ inline static int GenerateServiceMessage( char *dstMsg, char *reqID, char *path,
  * @param type type of message (request or event)
  * @param path command path
  * @param params additional parameters
- * @return response
+ * @return response as BufString
  */
 
-char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http *req, UserSession *us, char *sername, int type, const char *path, const char *params )
+BufString *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http *req, UserSession *us, char *sername, int type, const char *path, const char *params )
 {
 	//char *retMessage = NULL;
 	BufString *retMsg = BufStringNew();
@@ -1077,12 +1077,11 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 		}
 	}
 	
-	// assign response to return string and delete bufstring
-	char *retMessage = retMsg->bs_Buffer;
-	retMsg->bs_Buffer = NULL;
-	BufStringDelete( retMsg );
+	DEBUG("Message returned by service: %s\n", retMsg->bs_Buffer );
 	
-	return retMessage;
+	//DEBUG("Pointer to msg : %p\n", retMessage );
+	
+	return retMsg;
 }
 
 /**
