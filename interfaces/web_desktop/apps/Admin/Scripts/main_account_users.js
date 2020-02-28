@@ -888,7 +888,7 @@ Sections.accounts_users = function( cmd, extra )
 																}
 															}
 														}
-															
+														
 														str += '<div class="HRow">\
 															<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
 																<span class="IconSmall NegativeAlt ' + ( groups[a].groups[aa].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>\
@@ -4186,7 +4186,8 @@ Sections.accounts_users = function( cmd, extra )
 						ge( 'UserDetails'               ).innerHTML = data;
 						//initStorageGraphs();
 						
-						ge( 'AdminWorkgroupContainer'   ).style.display = 'none';
+						//ge( 'AdminWorkgroupContainer'   ).style.display = 'none';
+						ge( 'WorkgroupEdit' ).style.display = 'none';
 						
 						ge( 'AdminStatusContainer'      ).style.display = 'none';
 					
@@ -4332,243 +4333,327 @@ Sections.accounts_users = function( cmd, extra )
 							}
 						}
 						
-						// Commented out for now ... we are only using edit user functionality after save of basic user info ...
-						
-						/*// Workgroups ...
-						
-						// Specific for Pawel's code ... He just wants to forward json ...
-						
-						var args = JSON.stringify( {
-							'type'    : 'read', 
-							'context' : 'application', 
-							'authid'  : Application.authId, 
-							'data'    : { 
-								'permission' : [ 
-									'PERM_WORKGROUP_GLOBAL', 
-									'PERM_WORKGROUP_WORKGROUP' 
-								]
-							}, 
-							'listdetails' : 'workgroup' 
-						} );
-						
-						var f = new Library( 'system.library' );
-						f.onExecuted = function( e, d )
+						// Workgroups ...
+												
+						var u = new Module( 'system' );
+						u.onExecuted = function( e, d )
 						{
-							//console.log( { e:e , d:d, args: args } );
-				
-							if( e == 'ok' && d )
+							
+							var userInfo = null;
+							
+							try
 							{
-								try
-								{
-									var groups = false;
-									
-									var data = JSON.parse( d );
-							
-									// Workaround for now .... until rolepermissions is correctly implemented in C ...
-							
-									//console.log( '[1] ', data );
-							
-									if( data && data.data && data.data.details && data.data.details.groups )
-									{
-										data = data.data.details;
-									}
-									
-									// Editing workgroups
-									
-									if( data.groups )
-									{
-										var unsorted = {};
-										
-										for( var i in data.groups )
-										{
-											if( data.groups[i] && data.groups[i].ID )
-											{
-												data.groups[i].groups = [];
-												
-												unsorted[data.groups[i].ID] = data.groups[i];
-											}
-										}
-										
-										groups = {};
-										
-										for( var k in unsorted )
-										{
-											if( unsorted[k] && unsorted[k].ID )
-											{
-												if( unsorted[k].parentid > 0 && unsorted[ unsorted[k].parentid ] )
-												{
-													if( !groups[ unsorted[k].parentid ] )
-													{
-														groups[ unsorted[k].parentid ] = unsorted[ unsorted[k].parentid ];
-													}
-												
-													if( groups[ unsorted[k].parentid ] )
-													{
-														groups[ unsorted[k].parentid ].groups.push( unsorted[k] );
-													}
-												}
-												else if( !groups[ unsorted[k].ID ] )
-												{
-													groups[ unsorted[k].ID ] = unsorted[k];
-												}
-											}	
-										}
-										
-										console.log( groups );
-									}
-									
-									var wge = ge( 'WorkgroupEdit' );
-									wge.wids = {};
-									if( wge ) wge.onclick = function( e )
-									{
-										
-										//console.log( 'wids ', this.wids );
-										
-										// Show
-										if( !this.activated )
-										{
-											this.activated = true;
-											//this.oldML = ge( 'WorkgroupGui' ).innerHTML;
-					
-											var str = '';
-					
-											if( groups )
-											{
-												
-												for( var a in groups )
-												{
-														
-													str += '<div class="HRow">\
-														<div class="PaddingSmall HContent60 FloatLeft Ellipsis">' + groups[a].name + '</div>\
-														<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
-															<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( this.wids[ groups[a].ID ] ? 'on' : 'off' ) + '"> </button>\
-														</div>\
-													</div>';
-													
-													if( groups[a].groups )
-													{
-														for( var k in groups[a].groups )
-														{
-															if( groups[a].groups[k] && groups[a].groups[k].ID )
-															{
-																str += '<div class="HRow PaddingLeft">\
-																	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">' + groups[a].groups[k].name + '</div>\
-																	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
-																		<button wid="' + groups[a].groups[k].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( this.wids[ groups[a].groups[k].ID ] ? 'on' : 'off' ) + '"> </button>\
-																	</div>\
-																</div>';
-															}
-														}
-													}
-												}
-												
-											}
-											ge( 'WorkgroupGui' ).innerHTML = str;
-					
-											var workBtns = ge( 'WorkgroupGui' ).getElementsByTagName( 'button' );
-					
-											if( workBtns )
-											{
-												for( var a = 0; a < workBtns.length; a++ )
-												{
-													// Toggle user relation to workgroup
-													( function( b ) {
-														b.onclick = function( e )
-														{
-															
-															
-															if( this.classList.contains( 'fa-toggle-off' ) )
-															{
-																// Toggle on ...
-													
-																this.classList.remove( 'fa-toggle-off' );
-																this.classList.add( 'fa-toggle-on' );
-																		
-															}
-															else
-															{
-																// Toggle off ...
-													
-																this.classList.remove( 'fa-toggle-on' );
-																this.classList.add( 'fa-toggle-off' );
-																
-															}
-												
-															return;
-														}
-													} )( workBtns[ a ] );
-												}
-											}
-					
-										}
-										// Hide
-										else
-										{
-											this.wids = {};
-											
-											if( ge( 'WorkgroupGui' ) && ge( 'WorkgroupGui' ).innerHTML )
-											{
-												var workBtns = ge( 'WorkgroupGui' ).getElementsByTagName( 'button' );
-										
-												if( workBtns )
-												{
-													for( var a = 0; a < workBtns.length; a++ )
-													{
-														if( workBtns[a] && workBtns[a].classList.contains( 'fa-toggle-on' ) && workBtns[a].getAttribute( 'wid' ) )
-														{
-															this.wids[ workBtns[a].getAttribute( 'wid' ) ] = true;
-														}
-													}
-												}
-											}
-											
-											var wstr = '';
-											
-											if( groups )
-											{
-												for( var b in groups )
-												{
-													if( groups[b].name && this.wids[ groups[b].ID ] )
-													{
-														wstr += '<div class="HRow">';
-														wstr += '<div class="HContent100"><strong>' + groups[b].name + '</strong></div>';
-														wstr += '</div>';
-													}
-													
-													if( groups[b].groups )
-													{
-														for( var k in groups[b].groups )
-														{
-															if( groups[b].groups[k] && groups[b].groups[k].ID )
-															{
-																if( groups[b].groups[k].name && this.wids[ groups[b].groups[k].ID ] )
-																{
-																	wstr += '<div class="HRow">';
-																	wstr += '<div class="HContent100"><strong>' + groups[b].groups[k].name + '</strong></div>';
-																	wstr += '</div>';
-																}
-															}
-														}
-													}
-												}
-											}
-											
-											this.activated = false;
-											ge( 'WorkgroupGui' ).innerHTML = wstr;
-										}
-									}
-						
-									if( Application.checkAppPermission( 'PERM_WORKGROUP_GLOBAL' ) || Application.checkAppPermission( 'PERM_WORKGROUP_WORKGROUP' ) )
-									{
-										if( ge( 'AdminWorkgroupContainer' ) ) ge( 'AdminWorkgroupContainer' ).className = 'Open';
-									}
-									
-								} 
-								catch( e ){ } 
+								userInfo = JSON.parse( d );
+							}
+							catch( e )
+							{
+								userInfo = null;
 							}
 							
+							console.log( 'userinfo ', { e:e, d:d } );
+							
+							var workgroups = userInfo.Workgroup;
+							
+							console.log( 'workgroups: ', userInfo );
+							
+							groups = {};
+						
+							if( workgroups )
+							{
+								var unsorted = {};
+					
+								for( var i in workgroups )
+								{
+									if( workgroups[i] && workgroups[i].ID )
+									{
+										workgroups[i].groups = [];
+							
+										unsorted[workgroups[i].ID] = workgroups[i];
+									}
+								}
+							
+								
+							
+								for( var k in unsorted )
+								{
+									if( unsorted[k] && unsorted[k].ID )
+									{
+										if( unsorted[k].ParentID > 0 && unsorted[ unsorted[k].ParentID ] )
+										{
+											if( !groups[ unsorted[k].ParentID ] )
+											{
+												groups[ unsorted[k].ParentID ] = unsorted[ unsorted[k].ParentID ];
+											}
+										
+											if( groups[ unsorted[k].ParentID ] )
+											{
+												groups[ unsorted[k].ParentID ].groups.push( unsorted[k] );
+											}
+										}
+										else if( !groups[ unsorted[k].ID ] )
+										{
+											groups[ unsorted[k].ID ] = unsorted[k];
+										}
+									}	
+								}
+							
+								console.log( groups );
+							}
+							
+							var str = '';
+							
+							if( groups )
+							{
+							
+								for( var a in groups )
+								{
+									var found = false;
+									
+									str += '<div>';
+								
+									str += '<div class="HRow">\
+										<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
+											<span class="IconSmall NegativeAlt ' + ( groups[a].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;' + groups[a].Name + '</span>\
+										</div>\
+										<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
+											<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
+										</div>\
+									</div>';
+								
+									if( groups[a].groups.length > 0 )
+									{
+										str += '<div class="Closed">';
+									
+										for( var aa in groups[a].groups )
+										{
+											var found = false;
+											
+											str += '<div class="HRow">\
+												<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
+													<span class="IconSmall NegativeAlt ' + ( groups[a].groups[aa].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>\
+												</div>\
+												<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
+													<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
+												</div>\
+											</div>';
+										
+											if( groups[a].groups[aa].groups.length > 0 )
+											{
+												str += '<div class="Closed">';
+											
+												for( var aaa in groups[a].groups[aa].groups )
+												{
+													var found = false;
+													
+													str += '<div class="HRow">\
+														<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
+															<span class="IconSmall NegativeAlt">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>\
+														</div>\
+														<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
+															<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
+														</div>\
+													</div>';
+												
+												}
+											
+												str += '</div>';
+											}
+											
+										}
+									
+										str += '</div>';
+									}
+								
+									str += '</div>';
+								
+								}
+								
+								if( ge( 'AdminWorkgroupContainer' ) ) 
+								{ 
+									ge( 'AdminWorkgroupContainer' ).className = 'Open';
+								}
+								
+							}
+							
+							ge( 'WorkgroupGui' ).innerHTML = '<input type="hidden" id="usWorkgroups">' + str;
+							
+							// Toggle arrow function, put into function that can be reused some time ...
+									
+							var workArr = ge( 'WorkgroupGui' ).getElementsByTagName( 'span' );
+							
+							if( workArr )
+							{
+								for( var a = 0; a < workArr.length; a++ )
+								{
+									
+									if( workArr[ a ].classList.contains( 'fa-caret-right' ) || workArr[ a ].classList.contains( 'fa-caret-down' ) )
+									{
+										
+										( function( b ) {
+											b.onclick = function( e )
+											{
+												var pnt = this.parentNode.parentNode.parentNode;
+												
+												if( this.classList.contains( 'fa-caret-right' ) )
+												{
+													// Toggle open ...
+													
+													//console.log( '// Toggle open ...' );
+													
+													this.classList.remove( 'fa-caret-right' );
+													this.classList.add( 'fa-caret-down' );
+													
+													var divs = pnt.getElementsByTagName( 'div' );
+													
+													if( divs )
+													{
+														for( var c = 0; c < divs.length; c++ )
+														{
+															if( divs[c].classList.contains( 'Closed' ) || divs[c].classList.contains( 'Open' ) )
+															{
+																divs[c].classList.remove( 'Closed' );
+																divs[c].classList.add( 'Open' );
+																
+																break;
+															}
+														}
+													}
+												}
+												else
+												{
+													// Toggle close ...
+													
+													//console.log( '// Toggle close ...' );
+													
+													this.classList.remove( 'fa-caret-down' );
+													this.classList.add( 'fa-caret-right' );
+													
+													var divs = pnt.getElementsByTagName( 'div' );
+													
+													if( divs )
+													{
+														for( var c = 0; c < divs.length; c++ )
+														{
+															if( divs[c].classList.contains( 'Closed' ) || divs[c].classList.contains( 'Open' ) )
+															{
+																divs[c].classList.remove( 'Open' );
+																divs[c].classList.add( 'Closed' );
+																
+																break;
+															}
+														}
+													}
+												}
+												
+											}
+										} )( workArr[ a ] );
+										
+									}
+									
+								}
+							}
+							
+							var workBtns = ge( 'WorkgroupGui' ).getElementsByTagName( 'button' );
+							
+							if( workBtns )
+							{
+								for( var a = 0; a < workBtns.length; a++ )
+								{
+									// Toggle user relation to workgroup
+									( function( b ) {
+										b.onclick = function( e )
+										{
+											
+											if( ge( 'usWorkgroups' ) )
+											{
+												
+												var wids = [];
+													
+												if( ge( 'usWorkgroups' ).value )
+												{
+													wids = ge( 'usWorkgroups' ).value.split( ',' );
+												}
+												
+												if( this.classList.contains( 'fa-toggle-off' ) )
+												{
+													// Toggle on ...
+													
+													console.log( '// Toggle on ', wids );
+													
+													if( this.getAttribute( 'wid' ) )
+													{
+														
+														wids.push( this.getAttribute( 'wid' ) );
+														
+														if( wids )
+														{
+															ge( 'usWorkgroups' ).setAttribute( 'value', wids.join( ',' ) );
+														}
+														else
+														{
+															ge( 'usWorkgroups' ).removeAttribute( 'value' );	
+														}
+														
+														this.classList.remove( 'fa-toggle-off' );
+														this.classList.add( 'fa-toggle-on' );
+														
+													}
+													
+												}
+												else
+												{
+													// Toggle off ...
+												
+													console.log( '// Toggle off ', wids );
+													
+													if( this.getAttribute( 'wid' ) )
+													{
+														var nwid = [];
+														
+														if( wids )
+														{
+															for( var a in wids )
+															{
+																if( wids[a] )
+																{
+																	if( wids[a] != this.getAttribute( 'wid' ) )
+																	{
+																		nwid.push( wids[a] );
+																	}
+																}
+															}
+															
+															wids = nwid;
+														}
+														
+														if( wids )
+														{
+															ge( 'usWorkgroups' ).setAttribute( 'value', wids.join( ',' ) );
+														}
+														else
+														{
+															ge( 'usWorkgroups' ).removeAttribute( 'value' );	
+														}
+														
+														this.classList.remove( 'fa-toggle-on' );
+														this.classList.add( 'fa-toggle-off' );
+														
+													}
+																								
+												}
+											}
+											
+										}
+									} )( workBtns[ a ] );
+								}
+							}
+							
+							
+							
 						}
-						f.execute( 'group/list', { authid: Application.authId, args: args } );*/
+						u.execute( 'userinfoget', { mode: 'all', authid: Application.authId } );
+						
+						
 						
 						
 						// Responsive framework
@@ -7656,6 +7741,25 @@ function addUser( callback, username )
 	if( username )
 	{
 		args[ 'username' ] = username;
+	}
+	
+	if( ge( 'usWorkgroups' ) )
+	{
+		//
+		
+		
+		
+		if( ge( 'usWorkgroups' ).value )
+		{
+			args.workgroups = ge( 'usWorkgroups' ).value;
+		}
+		else if( !Application.checkAppPermission( 'PERM_USER_GLOBAL' ) )
+		{
+			Notify( { title: i18n( 'i18n_user_workgroup_missing' ), text: i18n( 'i18n_Adding a User to a Workgroup is required.' ) } );
+			
+			return;
+		}
+		
 	}
 	
 	var m = new Module( 'system' );
