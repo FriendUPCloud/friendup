@@ -1577,6 +1577,10 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				{
 					us = USMGetSessionBySessionIDFromDB( l->sl_USM, locsessionid );
 				}
+				else // check if session is in DB, if not store it
+				{
+					USMSessionSaveDB( l->sl_USM, us );
+				}
 				
 				if( us != NULL )
 				{
