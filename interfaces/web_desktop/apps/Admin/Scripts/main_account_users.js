@@ -4360,12 +4360,39 @@ Sections.accounts_users = function( cmd, extra )
 						
 							if( workgroups )
 							{
+								
+								var adminlevel = Application.checkAppPermission( 'PERM_USER_GLOBAL' );
+								var userlevel  = Application.checkAppPermission( 'PERM_USER_WORKGROUP' );
+								
+								var wgroups = false;
+								
+								if( !adminlevel && userlevel )
+								{
+									var wgroups = {};
+									
+									console.log( 'userlevel ', userlevel );
+									
+									for( var a in userlevel )
+									{
+										if( userlevel[a] && userlevel[a].GroupID )
+										{
+											wgroups[ userlevel[a].GroupID ] = userlevel[a]
+										}
+									}
+									
+								}
+								
 								var unsorted = {};
 					
 								for( var i in workgroups )
 								{
 									if( workgroups[i] && workgroups[i].ID )
 									{
+										if( wgroups && !wgroups[workgroups[i].ID] )
+										{
+											continue;
+										}
+										
 										workgroups[i].groups = [];
 							
 										unsorted[workgroups[i].ID] = workgroups[i];
@@ -7898,7 +7925,7 @@ function saveUser( uid, cb, newuser )
 	
 	// Specific for Pawel's code ... He just wants to forward json ...
 	
-	args.args = JSON.stringify( {
+	/*args.args = JSON.stringify( {
 		'type'    : 'write', 
 		'context' : 'application', 
 		'authid'  : Application.authId, 
@@ -7910,6 +7937,18 @@ function saveUser( uid, cb, newuser )
 		}, 
 		'object'   : 'user', 
 		'objectid' : uid 
+	} );*/
+	
+	args.args = JSON.stringify( {
+		'type'    : 'write', 
+		'context' : 'application', 
+		'authid'  : Application.authId, 
+		'data'    : { 
+			'permission' : [ 
+				'PERM_USER_GLOBAL', 
+				'PERM_USER_WORKGROUP' 
+			]
+		}
 	} );
 	
 	var f = new Library( 'system.library' );
