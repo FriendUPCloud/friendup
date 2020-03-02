@@ -682,9 +682,39 @@ int USMUserSessionRemove( UserSessionManager *smgr, UserSession *remsess )
 	
 	if( sessionRemoved == TRUE )
 	{
+		USMGetSessionsDeleteDB( smgr, remsess->us_SessionID );
 		UserSessionDelete( remsess );
 	}
 
+	return 0;
+}
+
+/**
+ * Delete user session in database
+ *
+ * @param smgr pointer to UserSessionManager
+ * @param sessionid user sessionid
+ * @return 0 when success otherwise error number
+ */
+int USMGetSessionsDeleteDB( UserSessionManager *smgr, const char *sessionid )
+{
+	SystemBase *sb = (SystemBase *)smgr->usm_SB;
+	char tmpQuery[ 1024 ];
+	
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	if( sqlLib == NULL )
+	{
+		FERROR("Cannot get user, mysql.library was not open\n");
+		return -1;
+	}
+
+	sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "DELETE from FUserSession WHERE SessionID='%s'", sessionid );
+
+	sqlLib->QueryWithoutResults( sqlLib, tmpQuery );
+
+	sb->LibrarySQLDrop( sb, sqlLib );
+
+	DEBUG("[USMGetSessionsDeleteDB] end\n");
 	return 0;
 }
 
