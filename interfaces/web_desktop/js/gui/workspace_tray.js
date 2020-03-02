@@ -228,7 +228,15 @@ function PollTray()
 		
 		// On click to see all notifications!
 		tray.notifications.onclick = function( e )
-		{
+		{	
+			if( ge( 'Tray' ).notificationPopup && !ge( 'Tray' ).classList.contains( 'Blink' ) )
+			{
+				ge( 'Tray' ).notificationPopup.parentNode.removeChild( ge( 'Tray' ).notificationPopup );
+				ge( 'Tray' ).notificationPopup = null;
+				PollTray();
+				return;
+			}
+			
 			if( tray.notifications.timeout )
 			{
 				clearTimeout( tray.notifications.timeout );

@@ -3578,7 +3578,13 @@ movableMouseDown = function ( e )
 	window.focus();
 	
 	// Close tray bubble
-	CloseTrayBubble();
+	if( ge( 'Tray' ) && ge( 'Tray' ).notificationPopup )
+	{
+		if( e.target && e.target != ge( 'Tray' ).notificationPopup.parentNode )
+		{
+			CloseTrayBubble();
+		}
+	}
 	
 	// Menu trigger
 	var rc = 0;
