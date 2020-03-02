@@ -466,7 +466,7 @@ function Notify( message, callback, clickcallback )
 	
 	// Not active?
 	if( Workspace.currentViewState != 'active' )
-	{
+	{	
 		// Use native app
 		if( window.friendApp )
 		{
@@ -475,6 +475,16 @@ function Notify( message, callback, clickcallback )
 		if( window.Notification )
 		{
 			mobileDebug( 'Showing desktop notification.' );
+			
+			// Add to history
+			AddNotificationEvent( {
+				title: message.title,
+				text: message.text,
+				seen: false,
+				time: ( new Date() ).getTime(),
+				showCallback: callback,
+				clickCallback: clickcallback
+			}, message.notificationId );
 			
 			// Desktop notifications
 			function showNotification()
