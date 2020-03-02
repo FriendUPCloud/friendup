@@ -118,7 +118,10 @@ if( !$cr->Load() || ( isset( $args->args->force ) && $args->args->force ) )
 		require( 'firstlogin.defaults.php' );
 	}
 	// Now we had first login!
-	$cr->Save();
+	if( !isset( $args->args->force ) || !$args->args->force )
+	{
+		$cr->Save();
+	}
 }
 else
 {
