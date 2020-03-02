@@ -530,6 +530,8 @@ function Notify( message, callback, clickcallback )
 					}
 				} );
 			}
+			
+			PollTray();
 			return;
 		}
 	}
