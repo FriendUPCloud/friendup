@@ -7925,7 +7925,7 @@ function saveUser( uid, cb, newuser )
 	
 	// Specific for Pawel's code ... He just wants to forward json ...
 	
-	/*args.args = JSON.stringify( {
+	args.args = JSON.stringify( {
 		'type'    : 'write', 
 		'context' : 'application', 
 		'authid'  : Application.authId, 
@@ -7937,9 +7937,9 @@ function saveUser( uid, cb, newuser )
 		}, 
 		'object'   : 'user', 
 		'objectid' : uid 
-	} );*/
+	} );
 	
-	args.args = JSON.stringify( {
+	/*args.args = JSON.stringify( {
 		'type'    : 'write', 
 		'context' : 'application', 
 		'authid'  : Application.authId, 
@@ -7949,7 +7949,7 @@ function saveUser( uid, cb, newuser )
 				'PERM_USER_WORKGROUP' 
 			]
 		}
-	} );
+	} );*/
 	
 	var f = new Library( 'system.library' );
 	f.onExecuted = function( e, d )

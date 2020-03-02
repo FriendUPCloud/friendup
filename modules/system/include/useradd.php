@@ -196,11 +196,11 @@ if( $level == 'Admin' )
 					foreach( $wgr as $gid )
 					{
 						
-						/*$args = [ 
+						$args = [ 
 							'sessionid' => $args->sessionid, 
 							'id'        => intval( $gid   ), 
 							'users'     => intval( $u->ID ),
-							'args'      => '{
+							'args'      => urlencode( '{
 								"type"    : "write", 
 								"context" : "application", 
 								"authid"  : "' . $args->authid . '", 
@@ -212,14 +212,14 @@ if( $level == 'Admin' )
 								}, 
 								"object"   : "workgroup", 
 								"objectid" : "' . $gid . '" 
-							}'
-						];*/
+							}' )
+						];
 						
-						$args = [ 
+						/*$args = [ 
 							'sessionid' => $args->sessionid, 
 							'id'        => intval( $gid   ), 
 							'users'     => intval( $u->ID ),
-							'args'      => '{
+							'args'      => urlencode( '{
 								"type"    : "write", 
 								"context" : "application", 
 								"authid"  : "' . $args->authid . '", 
@@ -229,8 +229,8 @@ if( $level == 'Admin' )
 										"PERM_USER_WORKGROUP" 
 									]
 								}
-							}'
-						];
+							}' )
+						];*/
 						
 						if( $res = fc_query( '/system.library/group/addusers', $args ) )
 						{
