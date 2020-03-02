@@ -3919,6 +3919,8 @@ function InitGuibaseEvents()
 		// On blur, activate current movable (don't put it to front)
 		window.addEventListener( 'blur', function( e )
 		{
+			// Refresh the tray
+			PollTray();
 			
 			var viewObject = null;
 			if( document.activeElement )
