@@ -4012,10 +4012,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						hasNew = true;
 
 					// Something changed!
-					if( hasNew )
+					if( hasNew || forceRefresh )
 					{
 						t.icons = newIcons;
-						t.redrawIcons( forceRefresh );
+						t.redrawIcons();
 						if( checks.length )
 						{
 							for( var a = 0; a < checks.length; a++ )
@@ -4032,7 +4032,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					else
 					{
-						if( forceRefresh ) t.redrawIcons( 1 );
+						if( forceRefresh ) t.redrawIcons();
 					}
 					
 					// Do the callback thing
@@ -4043,6 +4043,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 					// Check for new events
 					t.checkDesktopEvents();
+					
+					console.log( 'All: ' + ( forceRefresh ? 'force' : 'not' ), newIcons );
 				}
 				m.execute( 'device/list' );
 			}
