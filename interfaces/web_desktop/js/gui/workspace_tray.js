@@ -228,7 +228,15 @@ function PollTray()
 		
 		// On click to see all notifications!
 		tray.notifications.onclick = function( e )
-		{
+		{	
+			if( ge( 'Tray' ).notificationPopup && !ge( 'Tray' ).classList.contains( 'Blink' ) )
+			{
+				ge( 'Tray' ).notificationPopup.parentNode.removeChild( ge( 'Tray' ).notificationPopup );
+				ge( 'Tray' ).notificationPopup = null;
+				PollTray();
+				return;
+			}
+			
 			if( tray.notifications.timeout )
 			{
 				clearTimeout( tray.notifications.timeout );
@@ -466,7 +474,7 @@ function Notify( message, callback, clickcallback )
 	
 	// Not active?
 	if( Workspace.currentViewState != 'active' )
-	{
+	{	
 		// Use native app
 		if( window.friendApp )
 		{
@@ -475,6 +483,16 @@ function Notify( message, callback, clickcallback )
 		if( window.Notification )
 		{
 			mobileDebug( 'Showing desktop notification.' );
+			
+			// Add to history
+			AddNotificationEvent( {
+				title: message.title,
+				text: message.text,
+				seen: false,
+				time: ( new Date() ).getTime(),
+				showCallback: callback,
+				clickCallback: clickcallback
+			}, message.notificationId );
 			
 			// Desktop notifications
 			function showNotification()
@@ -520,6 +538,8 @@ function Notify( message, callback, clickcallback )
 					}
 				} );
 			}
+			
+			PollTray();
 			return;
 		}
 	}

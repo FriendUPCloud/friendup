@@ -2538,6 +2538,9 @@ var View = function( args )
 				{
 					div.unsnap();
 				}
+				
+				// Make sure the tray is updated
+				PollTray();
 			
 				return cancelBubble( e );
 			}

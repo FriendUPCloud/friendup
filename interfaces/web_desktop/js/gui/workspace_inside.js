@@ -4012,10 +4012,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						hasNew = true;
 
 					// Something changed!
-					if( hasNew )
+					if( hasNew || forceRefresh )
 					{
 						t.icons = newIcons;
-						t.redrawIcons( forceRefresh );
+						t.redrawIcons();
 						if( checks.length )
 						{
 							for( var a = 0; a < checks.length; a++ )
@@ -4032,7 +4032,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					else
 					{
-						if( forceRefresh ) t.redrawIcons( 1 );
+						if( forceRefresh ) t.redrawIcons();
 					}
 					
 					// Do the callback thing
@@ -4043,6 +4043,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 					// Check for new events
 					t.checkDesktopEvents();
+					
+					console.log( 'All: ' + ( forceRefresh ? 'force' : 'not' ), newIcons );
 				}
 				m.execute( 'device/list' );
 			}
@@ -8673,6 +8675,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Don't update if not changed
 		if( this.currentViewState == newState )
 		{
+			// Starts sleep timeout again (five minutes without activity sleep)
 			this.sleepTimeout();
 			return;
 		}
@@ -8755,7 +8758,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 			}
 			// IMPORTANT:
-			// Sleep in 15 minutes
+			// Sleep in 5 minutes
 			if( this.sleepingTimeout )
 				clearTimeout( this.sleepingTimeout );
 			Workspace.sleeping = false;
@@ -8784,7 +8787,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	sleepTimeout: function()
 	{
 		// IMPORTANT: Only for desktops!
-		// Sleep in 15 minutes
+		// Sleep in 5 minutes
 		if( !window.friendApp )
 		{
 			if( this.sleepingTimeout )
