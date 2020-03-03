@@ -2953,7 +2953,7 @@ function PollTaskbar( curr )
 									}
 								}, 5 );
 							} )( d, pn );
-							// Check directoryvuew
+							// Check directoryview
 							if( pn.content.directoryview )
 								d.classList.add( 'Directory' );
 							break;
@@ -2964,7 +2964,7 @@ function PollTaskbar( curr )
 					if( !d )
 					{
 						// New view!
-						d = document.createElement ( 'div' );
+						d = document.createElement( 'div' );
 						d.viewId = pn.viewId;
 						d.view = pn;
 						d.className = pn.parentNode.getAttribute( 'minimized' ) == 'minimized' ? 'Task Hidden MousePointer' : 'Task MousePointer';
