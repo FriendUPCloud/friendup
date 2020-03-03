@@ -541,6 +541,8 @@ static inline int MountFSNoSubMount( DeviceManager *dm, struct TagItem *tl, File
 	FLONG storedBytesLeft = 0;
 	FLONG readedBytesLeft = 0;
 	FULONG dbUserID = 0;
+	File *retFile = NULL;
+	FHandler *filesys = NULL;
 	struct tm activityTime;
 	memset( &activityTime, 0, sizeof( struct tm ) );
 	
@@ -551,9 +553,7 @@ static inline int MountFSNoSubMount( DeviceManager *dm, struct TagItem *tl, File
 	
 	//if( FRIEND_MUTEX_LOCK( &dm->dm_Mutex ) == 0 )
 	{
-		FHandler *filesys = NULL;
 		DOSDriver *filedd = NULL;
-		File *retFile = NULL;
 		struct TagItem *ltl = tl;
 		FULONG visible = 0;
 		char *sessionid = NULL;
@@ -1058,9 +1058,9 @@ AND f.Name = '%s'",
 					}
 					fentry = (File *) fentry->node.mln_Succ;
 				}
+				
 				if( fentry != NULL )
 				{
-					filesys->Release( filesys, retFile );
 					l->sl_Error = FSys_Error_DeviceAlreadyMounted;
 					FERROR("[MountFS] %s - Device is already mounted, name %s type %s\n", usr->u_Name, name, type );
 					MountUnlock( dm, usr );
@@ -1165,6 +1165,13 @@ AND f.Name = '%s'",
 	return 0;
 	
 merror:
+	// release device if error appear
+	if( retFile != NULL && filesys != NULL )
+	{
+		filesys->Release( filesys, retFile );
+ 		*mfile = NULL;	// do not return anything
+	}
+
 	if( type != NULL ) FFree( type );
 	if( port != NULL ) FFree( port );
 	if( server != NULL ) FFree( server );
@@ -1834,7 +1841,11 @@ AND f.Name = '%s'",
 							File *dstFile = NULL;
 							if( MountFSNoSubMount( dm, tl, &dstFile, tmpUser, mountError, calledByAdmin, notify ) != 0 )
 							{
-								INFO( "[MountFS] -- Could not mount device for user %s. Drive was %s.\n", tmpUser->u_Name ? tmpUser->u_Name : "--nousername--", name ? name : "--noname--" );
+								Log( FLOG_INFO, "[MountFS] -- Could not mount device for user %s. Drive was %s. Pointer to dstFile: %p\n", tmpUser->u_Name ? tmpUser->u_Name : "--nousername--", name ? name : "--noname--", dstFile );
+								if( dstFile != NULL )
+								{
+									filesys->Release( filesys, dstFile );
+								}
 							}
 							
 							// Tell user!

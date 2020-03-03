@@ -875,6 +875,11 @@ error_point:
 		FFree( spm->data );
 	}
 	FFree( spm );
+#else	
+	if( data )
+	{
+		FFree( data );
+	}
 #endif
 	
 	return;
