@@ -866,21 +866,22 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 	INCREASE_WS_THREADS();
 	
 	char *in = NULL;
-	
-	if( tin != NULL && len > 0 )
-	{
-		DEBUG("Len: %lu\n", len );
-		if( ( in = FMalloc( len+128 ) ) != NULL )	// 16 should be ok
-		{
-			memcpy( in, tin, len );
-		}
-	}
 
 	//TK-1220 - sometimes there is junk at the end of the string.
 	//The string is not guaranteed to be null terminated where it supposed to.
 	char *c = in;
 	if ( reason == LWS_CALLBACK_RECEIVE && len>0)
 	{
+		// no need to allocate memory for other functions then RECEIVE
+		if( tin != NULL && len > 0 )
+		{
+			DEBUG("Len: %lu\n", len );
+			if( ( in = FMalloc( len+128 ) ) != NULL )	// 16 should be ok
+			{
+				memcpy( in, tin, len );
+			}
+		}
+		
 		DEBUG("reason==receive and len>0\n");
 		// No in!
 		if( in == NULL )
