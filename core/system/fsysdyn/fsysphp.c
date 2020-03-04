@@ -1826,13 +1826,15 @@ BufString *Dir( File *s, const char *path )
 							result = PHPCall( command );
 						}
 						
-						bs =BufStringNewSize( result->ls_Size );
-						if( bs != NULL )
+						if( result != NULL )
 						{
-							BufStringAddSize( bs, result->ls_Data, result->ls_Size );
+							bs =BufStringNewSize( result->ls_Size );
+							if( bs != NULL )
+							{
+								BufStringAddSize( bs, result->ls_Data, result->ls_Size );
+							}
+							ListStringDelete( result );
 						}
-						ListStringDelete( result );
-						
 						//DEBUG("\n\n\n\nAnswer %s\n\n\n\n\n", bs->bs_Buffer );
 					}
 					
