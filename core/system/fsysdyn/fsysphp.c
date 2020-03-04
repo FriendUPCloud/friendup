@@ -1420,7 +1420,14 @@ FLONG Delete( struct File *s, const char *path )
 							result = NULL;
 						}
 						result = PHPCall( command );
-						DEBUG("Delete res 1: %s\n", result->ls_Data );
+						if( result != NULL )
+						{
+							DEBUG("Delete res 1: %s\n", result->ls_Data );
+						}
+						else
+						{
+							DEBUG("Delete res 1: 0 \n");
+						}
 					}
 
 					ListStringDelete( result );
