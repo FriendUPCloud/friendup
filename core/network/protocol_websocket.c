@@ -879,6 +879,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 			if( ( in = FMalloc( len+128 ) ) != NULL )	// 16 should be ok
 			{
 				memcpy( in, tin, len );
+				c[len ] = '\0';
 			}
 		}
 		
@@ -897,7 +898,6 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 			return 0;
 		}
 		DEBUG("set end to 0\n");
-		c[len ] = '\0';
 	}
 
 	DEBUG("before switch\n");
