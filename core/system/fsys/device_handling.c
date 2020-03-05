@@ -865,7 +865,7 @@ AND f.Name = '%s'",
 				DEBUG("Going through all user drives. Name %s UserID %lu\n", fentry->f_Name, usr->u_ID );
 				if( id == fentry->f_ID )
 				{
-					//*mfile = fentry;
+					*mfile = fentry;
 					DEBUG("Device is already mounted. Name: %s ID %lu\n", fentry->f_Name, fentry->f_ID );
 					sameDevError = 1;
 					break;
