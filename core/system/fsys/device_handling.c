@@ -1169,6 +1169,8 @@ merror:
 	if( retFile != NULL && filesys != NULL )
 	{
 		filesys->Release( filesys, retFile );
+		FileDelete( retFile );
+
  		*mfile = NULL;	// do not return anything
 	}
 
@@ -1214,6 +1216,8 @@ int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, cha
 	FLONG storedBytesLeft = 0;
 	FLONG readedBytesLeft = 0;
 	FULONG dbUserID = 0;
+	FHandler *filesys = NULL;
+	File *retFile = NULL;
 	struct tm activityTime;
 	memset( &activityTime, 0, sizeof( struct tm ) );
 	
@@ -1224,9 +1228,7 @@ int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, cha
 	
 	//if( FRIEND_MUTEX_LOCK( &dm->dm_Mutex ) == 0 )
 	{
-		FHandler *filesys = NULL;
 		DOSDriver *filedd = NULL;
-		File *retFile = NULL;
 		struct TagItem *ltl = tl;
 		FULONG visible = 0;
 		char *sessionid = NULL;
@@ -1733,7 +1735,6 @@ AND f.Name = '%s'",
 				}
 				if( fentry != NULL )
 				{
-					filesys->Release( filesys, retFile );
 					l->sl_Error = FSys_Error_DeviceAlreadyMounted;
 					FERROR("[MountFS] %s - Device is already mounted, name %s type %s\n", usr->u_Name, name, type );
 					MountUnlock( dm, usr );
@@ -1893,6 +1894,14 @@ AND f.Name = '%s'",
 	return 0;
 	
 merror:
+
+	if( filesys != NULL && retFile != NULL )
+	{
+		filesys->Release( filesys, retFile );
+		FileDelete( retFile );
+		*mfile = NULL;	// do not return anything
+	}
+
 	if( type != NULL ) FFree( type );
 	if( port != NULL ) FFree( port );
 	if( server != NULL ) FFree( server );
