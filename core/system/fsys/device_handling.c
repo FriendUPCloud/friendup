@@ -865,7 +865,7 @@ AND f.Name = '%s'",
 				DEBUG("Going through all user drives. Name %s UserID %lu\n", fentry->f_Name, usr->u_ID );
 				if( id == fentry->f_ID )
 				{
-					*mfile = fentry;
+					//*mfile = fentry;
 					DEBUG("Device is already mounted. Name: %s ID %lu\n", fentry->f_Name, fentry->f_ID );
 					sameDevError = 1;
 					break;
@@ -952,7 +952,7 @@ AND f.Name = '%s'",
 						// Set structure to caller
 						if( mfile ){ *mfile = f; }
 
-						l->sl_Error = FSys_Error_DeviceAlreadyMounted;
+						error = l->sl_Error = FSys_Error_DeviceAlreadyMounted;
 					
 						//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 						MountUnlock( dm, usr );
@@ -1847,7 +1847,7 @@ AND f.Name = '%s'",
 								Log( FLOG_INFO, "[MountFS] -- Could not mount device for user %s. Drive was %s. Pointer to dstFile: %p\n", tmpUser->u_Name ? tmpUser->u_Name : "--nousername--", name ? name : "--noname--", dstFile );
 								if( dstFile != NULL )
 								{
-									filesys->Release( filesys, dstFile );
+									//filesys->Release( filesys, dstFile );
 								}
 							}
 							
