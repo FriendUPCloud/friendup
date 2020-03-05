@@ -112,7 +112,7 @@ function refreshSidebar( show )
 			'Roles': {
 				icon: 'fa-user-secret',
 				showing: isAdmin,
-				display: ( show ? true : false ),
+				display: true,
 				permissions: [ 'PERM_ROLE_GLOBAL', 'PERM_ROLE_WORKGROUP' ]
 			},
 			'Templates': {
@@ -357,17 +357,22 @@ function Toggle( _this, callback, on )
 {
 	if( callback )
 	{
+		console.log( _this.className );
 		if( _this.className.indexOf( 'fa-toggle-off' ) >= 0 )
 		{
 			_this.className = _this.className.split( ' fa-toggle-off' ).join( '' ) + ' fa-toggle-on';
 		
 			callback( true );
+			
+			return;
 		}
 		else if( _this.className.indexOf( 'fa-toggle-on' ) >= 0 )
 		{
 			_this.className = _this.className.split( ' fa-toggle-on' ).join( '' ) + ' fa-toggle-off';
 		
 			callback( false );
+			
+			return;
 		}
 	}
 	

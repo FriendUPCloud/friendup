@@ -410,7 +410,8 @@ var WorkspaceInside = {
 							
 							if( movableWindows[c].windowObject.workspace == this.ind )
 							{
-								if( movableWindows[c].getAttribute( 'minimized' ) != 'minimized' )
+								var pn = movableWindows[c].parentNode;
+								if( pn.getAttribute( 'minimized' ) != 'minimized' )
 								{
 									_ActivateWindow( movableWindows[c] );
 									break;
@@ -4012,10 +4013,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						hasNew = true;
 
 					// Something changed!
-					if( hasNew )
+					if( hasNew || forceRefresh )
 					{
 						t.icons = newIcons;
-						t.redrawIcons( forceRefresh );
+						t.redrawIcons();
 						if( checks.length )
 						{
 							for( var a = 0; a < checks.length; a++ )
@@ -4032,7 +4033,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					else
 					{
-						if( forceRefresh ) t.redrawIcons( 1 );
+						if( forceRefresh ) t.redrawIcons();
 					}
 					
 					// Do the callback thing
@@ -4043,6 +4044,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 					// Check for new events
 					t.checkDesktopEvents();
+					
+					console.log( 'All: ' + ( forceRefresh ? 'force' : 'not' ), newIcons );
 				}
 				m.execute( 'device/list' );
 			}
@@ -9578,7 +9581,7 @@ function AboutFriendUP()
 {
 	if( !Workspace.sessionId ) return;
 	var v = new View( {
-		title: i18n( 'about_system' ) + ' v1.2.0',
+		title: i18n( 'about_system' ) + ' v1.2.3',
 		width: 540,
 		height: 560,
 		id: 'about_friendup'
