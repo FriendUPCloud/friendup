@@ -526,6 +526,7 @@ AND f.Name = '%s' and (f.Owner='0' OR f.Owner IS NULL)",
 static inline int MountFSNoSubMount( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **mountError, FBOOL calledByAdmin, FBOOL notify )
 {
 	SystemBase *l = (SystemBase *)dm->dm_SB;
+	int error = 0;
 	char *path = NULL;
 	char *name = NULL;
 	char *server = NULL;
@@ -841,7 +842,7 @@ AND f.Name = '%s'",
 			{
 				FERROR("[ERROR]: %s - No type passed\n", usr->u_Name );
 			}
-			l->sl_Error = FSys_Error_NOFSType;
+			error = l->sl_Error = FSys_Error_NOFSType;
 			
 			goto merror;
 		}
@@ -896,7 +897,7 @@ AND f.Name = '%s'",
 		
 		if( sameDevError == 1 )
 		{
-			l->sl_Error = FSys_Error_DeviceAlreadyMounted;
+			error = l->sl_Error = FSys_Error_DeviceAlreadyMounted;
 			
 			goto merror;
 		}
@@ -968,7 +969,7 @@ AND f.Name = '%s'",
 		if( filesys == NULL )
 		{
 			FERROR("[ERROR]: %s - Cannot find FSys fdor device: %s\n", usr->u_Name, name );
-			l->sl_Error = FSys_Error_NOFSAvaiable;
+			error = l->sl_Error = FSys_Error_NOFSAvaiable;
 			goto merror;
 		}
 		
@@ -978,7 +979,7 @@ AND f.Name = '%s'",
 		if( id <= 0 )
 		{
 			FERROR("[ERROR]: %s - Wrong ID of disk was found in Filesystem table!: %ld\n", name, id );
-			l->sl_Error = FSys_Error_WrongID;
+			error = l->sl_Error = FSys_Error_WrongID;
 			goto merror;
 		}
 	
@@ -1061,8 +1062,8 @@ AND f.Name = '%s'",
 				
 				if( fentry != NULL )
 				{
-					l->sl_Error = FSys_Error_DeviceAlreadyMounted;
-					FERROR("[MountFS] %s - Device is already mounted, name %s type %s\n", usr->u_Name, name, type );
+					error = l->sl_Error = FSys_Error_DeviceAlreadyMounted;
+					FERROR("[MountSubFS] %s - Device is already mounted, name %s type %s\n", usr->u_Name, name, type );
 					MountUnlock( dm, usr );
 					goto merror;
 				}
@@ -1134,7 +1135,7 @@ AND f.Name = '%s'",
 			}
 			else
 			{
-				l->sl_Error = FSys_Error_CustomError;
+				error = l->sl_Error = FSys_Error_CustomError;
 				FERROR("[MountFS] %s - Device not mounted name %s type %s\n", usr->u_Name, name, type );
 				MountUnlock( dm, usr );
 				goto merror;
@@ -1183,7 +1184,7 @@ merror:
 	if( config != NULL ) FFree( config );
 	if( execute != NULL ) FFree( execute );
 
-	return l->sl_Error;
+	return error;
 }
 
 /**
@@ -1201,6 +1202,7 @@ merror:
 int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **mountError, FBOOL calledByAdmin, FBOOL notify )
 {
 	SystemBase *l = (SystemBase *)dm->dm_SB;
+	int error = 0;
 	char *path = NULL;
 	char *name = NULL;
 	char *server = NULL;
@@ -1571,7 +1573,7 @@ AND f.Name = '%s'",
 		
 		if( sameDevError == 1 )
 		{
-			l->sl_Error = FSys_Error_DeviceAlreadyMounted;
+			error = l->sl_Error = FSys_Error_DeviceAlreadyMounted;
 			
 			goto merror;
 		}
@@ -1626,7 +1628,7 @@ AND f.Name = '%s'",
 						// Set structure to caller
 						if( mfile ){ *mfile = f; }
 
-						l->sl_Error = FSys_Error_DeviceAlreadyMounted;
+						error = l->sl_Error = FSys_Error_DeviceAlreadyMounted;
 					
 						//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 						MountUnlock( dm, usr );
@@ -1643,7 +1645,7 @@ AND f.Name = '%s'",
 		if( filesys == NULL )
 		{
 			FERROR("[ERROR]: %s - Cannot find FSys fdor device: %s\n", usr->u_Name, name );
-			l->sl_Error = FSys_Error_NOFSAvaiable;
+			error = l->sl_Error = FSys_Error_NOFSAvaiable;
 			goto merror;
 		}
 		
@@ -1653,7 +1655,7 @@ AND f.Name = '%s'",
 		if( id <= 0 )
 		{
 			FERROR("[ERROR]: %s - Wrong ID of disk was found in Filesystem table!: %ld\n", name, id );
-			l->sl_Error = FSys_Error_WrongID;
+			error = l->sl_Error = FSys_Error_WrongID;
 			goto merror;
 		}
 	
@@ -1735,7 +1737,7 @@ AND f.Name = '%s'",
 				}
 				if( fentry != NULL )
 				{
-					l->sl_Error = FSys_Error_DeviceAlreadyMounted;
+					error = l->sl_Error = FSys_Error_DeviceAlreadyMounted;
 					FERROR("[MountFS] %s - Device is already mounted, name %s type %s\n", usr->u_Name, name, type );
 					MountUnlock( dm, usr );
 					goto merror;
@@ -1863,7 +1865,7 @@ AND f.Name = '%s'",
 			}
 			else
 			{
-				l->sl_Error = FSys_Error_CustomError;
+				error = l->sl_Error = FSys_Error_CustomError;
 				FERROR("[MountFS] %s - Device not mounted name %s type %s\n", usr->u_Name, name, type );
 				MountUnlock( dm, usr );
 				goto merror;
@@ -1911,7 +1913,7 @@ merror:
 	if( config != NULL ) FFree( config );
 	if( execute != NULL ) FFree( execute );
 
-	return l->sl_Error;
+	return error;
 }
 
 /**

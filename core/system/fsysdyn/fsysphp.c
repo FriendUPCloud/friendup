@@ -490,7 +490,10 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 						}
 				
 						// Free up buffer
-						if( result ) ListStringDelete( result );
+						if( result )
+						{
+							ListStringDelete( result );
+						}
 						return NULL;
 					}		
 					if( result ) ListStringDelete( result );
@@ -1772,6 +1775,11 @@ BufString *Dir( File *s, const char *path )
 	DEBUG("[PHPFS] Dir\n");
 	if( s != NULL )
 	{
+		if( s->f_SpecialData == NULL )
+		{
+			return NULL;
+		}
+		
 		char *comm = NULL;
 		if( ( comm = FCalloc( strlen( path ) + strlen( s->f_Name ) + 8, sizeof(char) ) ) != NULL )
 		{
