@@ -490,7 +490,10 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 						}
 				
 						// Free up buffer
-						if( result ) ListStringDelete( result );
+						if( result )
+						{
+							ListStringDelete( result );
+						}
 						return NULL;
 					}		
 					if( result ) ListStringDelete( result );
@@ -1420,7 +1423,14 @@ FLONG Delete( struct File *s, const char *path )
 							result = NULL;
 						}
 						result = PHPCall( command );
-						DEBUG("Delete res 1: %s\n", result->ls_Data );
+						if( result != NULL )
+						{
+							DEBUG("Delete res 1: %s\n", result->ls_Data );
+						}
+						else
+						{
+							DEBUG("Delete res 1: 0 \n");
+						}
 					}
 
 					ListStringDelete( result );
@@ -1765,6 +1775,11 @@ BufString *Dir( File *s, const char *path )
 	DEBUG("[PHPFS] Dir\n");
 	if( s != NULL )
 	{
+		if( s->f_SpecialData == NULL )
+		{
+			return NULL;
+		}
+		
 		char *comm = NULL;
 		if( ( comm = FCalloc( strlen( path ) + strlen( s->f_Name ) + 8, sizeof(char) ) ) != NULL )
 		{
@@ -1819,13 +1834,15 @@ BufString *Dir( File *s, const char *path )
 							result = PHPCall( command );
 						}
 						
-						bs =BufStringNewSize( result->ls_Size );
-						if( bs != NULL )
+						if( result != NULL )
 						{
-							BufStringAddSize( bs, result->ls_Data, result->ls_Size );
+							bs =BufStringNewSize( result->ls_Size );
+							if( bs != NULL )
+							{
+								BufStringAddSize( bs, result->ls_Data, result->ls_Size );
+							}
+							ListStringDelete( result );
 						}
-						ListStringDelete( result );
-						
 						//DEBUG("\n\n\n\nAnswer %s\n\n\n\n\n", bs->bs_Buffer );
 					}
 					
