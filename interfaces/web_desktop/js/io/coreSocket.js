@@ -343,7 +343,7 @@ FriendWebSocket.prototype.handleSocketMessage = function( e )
 			e.data );
 		return;
 	}
-	console.log( msg );
+	//console.log( msg );
 	// Handle server notices with session timeout / death
 	if( msg.data && msg.data.type == 'server-notice' )
 	{
