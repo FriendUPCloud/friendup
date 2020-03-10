@@ -1245,7 +1245,7 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 					var o = {
 						command: 'quit',
 						filePath: '/webclient/jsx/',
-						domain:   sdomain
+						domain:   typeof( sdomain ) != 'undefined' ? sdomain : ''
 					};
 					this.contentWindow.postMessage( JSON.stringify( o ), '*' );
 				}
