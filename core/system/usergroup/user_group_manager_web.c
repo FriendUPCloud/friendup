@@ -559,7 +559,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			}
 			
 			el = HttpGetPOSTParameter( request, "parentid" );
-			if( el != NULL )
+			if( el != NULL && el->data != NULL && strlen( el->data ) > 0 )
 			{
 				char *end;
 				parentID = strtol( (char *)el->data, &end, 0 );
