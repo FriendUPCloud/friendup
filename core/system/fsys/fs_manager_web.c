@@ -2677,6 +2677,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							if( error == 0 )
 							{
 								snprintf( answer, sizeof(answer),  "ok<!--separate-->{ \"Result\": \"Entry removed\"}" );
+								HttpAddTextContent( response, answer );
 							}
 							else
 							{
@@ -2695,7 +2696,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 							HttpAddTextContent( response, dictmsgbuf );
 						}
-						HttpAddTextContent( response, answer );
 						
 						l->LibrarySQLDrop( l, sqllib );
 					}

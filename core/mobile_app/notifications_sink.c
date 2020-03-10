@@ -112,7 +112,7 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 	//DEBUG("notifications websocket callback, reason %d, len %zu, wsi %p lenasint %d\n", reason, len, wsi, (int) len);
 	DEBUG("notifications websocket callback, reason %d, len %ld, wsi %p lenasint %d is bigger then 0: %d\n", reason, len, wsi, (int) len,  (len > 0)  );
 	char *buf = NULL;
-	if( in != NULL && (len > 0) )
+	if( reason == LWS_CALLBACK_RECEIVE && in != NULL && (len > 0) )
 	{
 		int s = (int)len;
 		// copy received bufffer
@@ -875,6 +875,11 @@ error_point:
 		FFree( spm->data );
 	}
 	FFree( spm );
+#else	
+	if( data )
+	{
+		FFree( data );
+	}
 #endif
 	
 	return;

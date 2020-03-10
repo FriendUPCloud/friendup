@@ -539,6 +539,8 @@ void *FriendCoreAcceptPhase2( void *d )
 		{
 			int srl;
 			
+			SSL_CTX_set_session_cache_mode( fc->fci_Sockets->s_Ctx, SSL_SESS_CACHE_CLIENT | SSL_SESS_CACHE_NO_INTERNAL_STORE);
+			
 			incoming->s_Ssl = SSL_new( fc->fci_Sockets->s_Ctx );
 
 			if( incoming->s_Ssl == NULL )

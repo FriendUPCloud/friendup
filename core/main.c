@@ -35,6 +35,9 @@
 #include <config/properties.h>
 #include <util/base64.h>
 
+// memory check
+#include <mcheck.h>
+
 char CRASH_LOG_FILENAME[ 92 ];
 
 //
@@ -88,8 +91,61 @@ void InterruptSignalHandler(int signum)
  * @return 0 when success, otherwise error number
  * @sa SystemInit, FriendCoreManagerNew, SetFriendCoreManager, FriendCoreManagerRun
  */
-int main( int argc __attribute__((unused)), char *argv[])
+int main( int argc, char *argv[])
 {
+	int i;
+	int mcheckOption = 0;
+	
+	for( i=0 ; i < argc ; i++ )
+	{
+		if( strcmp( argv[i], "--mcheck" ) == 0 )
+		{
+			mcheckOption = 1;
+		}
+		else if( strcmp( argv[i], "--mcheck_pedantic" ) == 0 )
+		{
+			mcheckOption = 2;
+		}
+		else if( strcmp( argv[i], "--mcheck_check_all" ) == 0 )
+		{
+			mcheckOption = 3;
+		}
+		else if( strcmp( argv[i], "--mcheck_trace" ) == 0 )
+		{
+			mtrace();
+		}
+	}
+	
+	switch( mcheckOption )
+	{
+		case 1:
+			if( mcheck( NULL ) == 0 )
+			{
+				DEBUG("MCHECK: initialized!\n");
+			}
+			else
+			{
+				DEBUG("MCHECK: NOT initialized!\n");
+			}
+			break;
+		case 2:
+			if( mcheck_pedantic( NULL ) == 0 )
+			{
+				DEBUG("MCHECK_PEDANTIC: initialized!\n");
+			}
+			else
+			{
+				DEBUG("MCHECK_PEDANTIC: NOT initialized!\n");
+			}
+			break;
+		case 3:
+			mcheck_check_all( );
+			
+			DEBUG("MCHECK_ALL: initialized!\n");
+			
+			break;
+	}
+	
 	_program_name = argv[0];
 	// Catch ctrl-c to gracefully shut down
 	signal( SIGINT, InterruptSignalHandler );

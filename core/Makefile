@@ -10,7 +10,7 @@ OUTPUT			=	bin/FriendCore
 #MYSQLLIBSREQ		=	-lmysqlclient -lpthread -lz -lm -lrt -latomic -lssl -lcrypto -ldl
 MYSQLLIBSREQ		=	-lmysqlclient -lpthread -lz -lm -lrt -latomic 
 CFLAGS			=	$(GLOBAL_CFLAGS) -I../libs/ -I../$(LIBWS_INCLUDE_DIR) -I. $(shell mysql_config --cflags) -I../$(LIBXML2_INCLUDE_DIR) -I$(SAMBA_INCLUDE_DIR)  -I../$(LIBSSH2_INCLUDE_DIR)
-LFLAGS			=	../$(LIBWS_LIB_DIR)/libwebsockets.a -Lsystem/bin/ -lm -lrt -lmagic -lxml2 $(MYSQLLIBSREQ) -lgd -lpng -lz -ljpeg -luv
+LFLAGS			=	
 DFLAGS			=	-M $(CFLAGS)  
 FPATH			=	$(shell pwd)
 
@@ -21,6 +21,17 @@ SERVICES		=	apacheserv mysqlserv nodejsserv phpserv
 
 SERVICEFLAGS		=	--std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -Ofast -funroll-loops -I. -Wno-unused  -shared -fPIC
 MATHLIB			=
+
+# we have to include Sanitizer lib before others
+ifeq ($(USE_SANITIZER),1)
+LFLAGS					+=	-lasan
+endif
+
+LFLAGS					+=	../$(LIBWS_LIB_DIR)/libwebsockets.a -Lsystem/bin/ -lm -lrt -lmagic -lxml2 $(MYSQLLIBSREQ) -lgd -lpng -lz -ljpeg -luv
+
+ifeq ($(USE_MEMCHECK),1)
+LFLAGS					+=	-lmcheck
+endif
 
 ifeq ($(OPENSSL_INTERNAL),1)
 CFLAGS					+=	-I../libs-ext/openssl/include/
@@ -39,10 +50,6 @@ endif
 
 ifeq ($(ENABLE_SSH),1)
 LFLAGS					+=	-lssh
-endif
-
-ifeq ($(USE_SANITIZER),1)
-LFLAGS					+=	-lasan
 endif
 
 ifeq ($(DEBUG),1)
