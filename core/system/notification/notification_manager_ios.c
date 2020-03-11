@@ -200,7 +200,7 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 	nm->nm_APNSNotificationTimeout = time(NULL) + 86400; // default expiration date set to 1 day
     
 	SSLeay_add_ssl_algorithms();
-	SSL_load_error_strings();
+	//SSL_load_error_strings();
 	
 	//ctx = SSL_CTX_new( TLS_client_method() );
 	ctx = SSL_CTX_new(TLSv1_2_method());
@@ -389,7 +389,7 @@ void NotificationIOSSendingThread( FThread *data )
 	in_port_t sinPort;
 	
 	SSLeay_add_ssl_algorithms();
-	SSL_load_error_strings();
+	//SSL_load_error_strings();
 	
 	//ctx = SSL_CTX_new( TLS_client_method() );
 	ctx = SSL_CTX_new(TLSv1_2_method());

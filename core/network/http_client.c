@@ -148,10 +148,10 @@ BufString *HttpClientCall( HttpClient *c, char *host, int port, FBOOL secured )
 			certbio = BIO_new( biofile );
 			outbio  = BIO_new_fp( stdout, BIO_NOCLOSE );
 			
-			SSL_library_init();
+			//SSL_library_init();
 			
-			OpenSSL_add_all_algorithms();  /* Load cryptos, et.al. */
-			SSL_load_error_strings();   /* Bring in and register error messages */
+			//OpenSSL_add_all_algorithms();  /* Load cryptos, et.al. */
+			//SSL_load_error_strings();   /* Bring in and register error messages */
 			method = TLSv1_2_client_method();  /* Create new client-method instance */
 
 			if ( (ctx = SSL_CTX_new(method)) == NULL)
