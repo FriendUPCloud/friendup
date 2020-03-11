@@ -140,9 +140,6 @@ FriendCoreInstance *FriendCoreNew( void *sb, int id, FBOOL ssl, int port, int ma
 {
 	LOG( FLOG_INFO, "[FriendCoreNew] Starting friend core\n" );
 	
-	// Static locks callbacks
-	SSL_library_init();
-	
 	// Watch our threads
 	// TODO: make an array and use one for each friend core! (if multiple)
 	pthread_mutex_init( &maxthreadmut, NULL );
