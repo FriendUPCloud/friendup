@@ -231,7 +231,7 @@ class File
 		curl_close( $c );
 		
 		
-		$Logger->log( 'Got a results... ' . $r );
+		//$Logger->log( 'Got a results... ' . $r );
 		
 		if( $r != false )
 		{
