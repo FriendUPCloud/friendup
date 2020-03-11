@@ -36,14 +36,9 @@ The below script has been tested on Ubuntu 16. You might need to install MySQL o
 git clone https://github.com/FriendSoftwareLabs/friendup
 apt install make cmake dialog
 cd friendup/
-./install.sh
 ```
-We recommend setting up a dedicated user for your FriendUP installation. You will need the MySQL root password to allow the install script to create the database and user.
 
-Note: the installer will not work if you launch it with anything else than bash. Example:
-```
-sh install.sh   << Will *not* work...
-```
+After this, you currently need to manually compile and install.
 
 Dependencies
 ------------
