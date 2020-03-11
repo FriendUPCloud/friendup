@@ -519,7 +519,7 @@ void WSThread( void *d )
 		double secs = (double)(stop.tv_usec - start.tv_usec) / 1000000 + (double)(stop.tv_sec - start.tv_sec);
 		FBOOL fileReadCall = FALSE;
 		
-		if( pathParts[1] != NULL && pathParts[2] != NULL )
+		if( response != NULL && pathParts[1] != NULL && pathParts[2] != NULL )
 		{
 			if( strcmp( pathParts[1], "file" ) == 0 && strcmp( pathParts[2], "read" ) == 0 )
 			{
@@ -533,14 +533,7 @@ void WSThread( void *d )
 		}
 		else
 		{
-			//if( response != NULL )
-			//{
-				//Log( FLOG_INFO, "[WS] C. SysWebRequest took %f seconds, err: %d response: '%s'\n" , secs, response->errorCode, response->content );
-			//}
-			//else
-			{
-				Log( FLOG_INFO, "[WS] C. SysWebRequest took %f seconds\n" , secs );
-			}
+			Log( FLOG_INFO, "[WS] C. SysWebRequest took %f seconds\n" , secs );
 		}
 		
 		if( response != NULL )

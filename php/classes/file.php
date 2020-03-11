@@ -14,6 +14,7 @@ class File
 {
 	var $_content = '';
 	var $_filesize = '';
+	var $_fileinfo = '';
 
 	function File( $path )
 	{
@@ -31,11 +32,19 @@ class File
 		return $this->_content;
 	}
 	
-	function GetUrl( $path = false, $userInfo = false )
+	function GetUrl( $path = false, $userInfo = false, $isinforequest = false  )
 	{
 		global $Config, $User, $Logger;
 		
-		if( $path ) $this->path = urldecode( $path );
+		
+		$filepath = '';
+		
+		if( $path && $isinforequest == false )
+			$filepath = $this->path = urldecode( $path );
+		else if ( $path )
+			$filepath = urldecode( $path );
+		else
+			$filepath = $this->path;
 		
 		if( isset( $GLOBALS[ 'args' ]->sessionid ) )
 			$sessionId = $GLOBALS[ 'args' ]->sessionid;
@@ -44,7 +53,7 @@ class File
 			$authId = $GLOBALS[ 'args' ]->authid;
 		else $authId = false;
 		
-		$ex = '/system.library/file/read/?mode=rb&path=' . jsUrlEncode( $this->path );
+		$ex = '/system.library/file/read/?mode=rb&path=' . jsUrlEncode( $filepath );
 		$url = ( $Config->SSLEnable ? 'https://' : 'http://' ) .
 			( $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost ) . ':' . $Config->FCPort . $ex;
 		if( $userInfo )
@@ -98,11 +107,36 @@ class File
 		return false;
 	}
 	
+	function GetFileInfo()
+	{
+		global $Config, $User, $Logger;
+		
+		$url = $this->GetUrl( $this->path . '.info', false, true );
+
+		$c = curl_init();
+		
+		curl_setopt( $c, CURLOPT_SSL_VERIFYPEER, false               );
+		curl_setopt( $c, CURLOPT_SSL_VERIFYHOST, false               );
+		curl_setopt( $c, CURLOPT_URL,            $url                );
+		curl_setopt( $c, CURLOPT_RETURNTRANSFER, true                );
+		$r = curl_exec( $c );
+		curl_close( $c );
+		
+		if( $r != false )
+		{
+			$this->_fileinfo = $r;
+			
+			return $this->_fileinfo;
+		}
+		else
+			return false;
+	}
+	
 	// Threaded
 	function SaveAndUnlink( $filePath )
 	{
 		global $Config;
-		$f = popen( 'php5 php/include/filePut.php ' . 
+		$f = popen( 'php php/include/filePut.php ' . 
 			jsUrlEncode( $filePath ) . ' ' . 
 			jsUrlEncode( $this->path ) . ' ' . 
 			jsUrlEncode( $GLOBALS[ 'args' ]->sessionid ) . ' ' . 
@@ -197,7 +231,7 @@ class File
 		curl_close( $c );
 		
 		
-		$Logger->log( 'Got a results... ' . $r );
+		//$Logger->log( 'Got a results... ' . $r );
 		
 		if( $r != false )
 		{
