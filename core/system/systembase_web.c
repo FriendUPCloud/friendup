@@ -459,6 +459,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			//
 			// check if request came from WebSockets
 			//
+			
 			DEBUG("Authid received\n");
 			
 			if( (*request)->h_RequestSource == HTTP_SOURCE_WS )
@@ -544,10 +545,18 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		
 		{
 			UserSession *curusrsess = l->sl_USM->usm_Sessions;
+			char *deviceid = NULL;
+			
+			HashmapElement *el = HashmapGet( (*request)->parsedPostContent, "deviceid" );
+			if( el != NULL )
+			{
+				deviceid = UrlDecodeToMem( ( char *)el->data );
+			}
 			
 			DEBUG("Checking remote sessions\n");
 				
-			if( strcmp( sessionid, "remote" ) == 0 )
+ 			if( deviceid != NULL && strcmp( deviceid, "remote" ) == 0 )
+			//if( strcmp( sessionid, "remote" ) == 0 )
 			{
 				HashmapElement *uname = GetHEReq( *request, "username" );
 				HashmapElement *passwd = GetHEReq( *request, "password" );
@@ -566,7 +575,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				{
 					while( curusrsess != NULL )
 					{
-						User *curusr =curusrsess->us_User;
+						User *curusr = curusrsess->us_User;
 						
 						if( curusr != NULL )
 						{
@@ -647,6 +656,11 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				}
 				FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
 				DEBUG("CHECK1END\n");
+			}
+			
+			if( deviceid != NULL )
+			{
+				FFree( deviceid );
 			}
 		}
 		

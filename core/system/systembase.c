@@ -58,6 +58,7 @@
 #include <security/server_checker.h>
 #include <network/websocket_client.h>
 #include <network/protocol_websocket.h>
+#include <util/session_id.h>
 
 #define LIB_NAME "system.library"
 #define LIB_VERSION 		1
@@ -1587,9 +1588,11 @@ int SystemInitExternal( SystemBase *l )
 			
 			if( foundRemoteSession == FALSE )
 			{
+				char *newSessionId = SessionIDGenerate();
 				DEBUG("[SystemBase] Remote session will be created for Sentinel\n");
 				
-				UserSession *ses = UserSessionNew( "remote", "remote" );
+				UserSession *ses = UserSessionNew( newSessionId, "remote" );
+				//UserSession *ses = UserSessionNew( "remote", "remote" );
 				if( ses != NULL )
 				{
 					ses->us_UserID = l->sl_Sentinel->s_User->u_ID;
@@ -1619,6 +1622,7 @@ int SystemInitExternal( SystemBase *l )
 					//}
 					//
 				}
+				FFree( newSessionId );
 			}
 			
 			//
