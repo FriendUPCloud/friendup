@@ -11,7 +11,7 @@
 // Start!
 Application.run = function( msg )
 { 
-	initGui(); initTest();
+	initGui();/* initTest();*/
 	
 	this.WindowSize = {
 		width  : document.body.clientWidth,
