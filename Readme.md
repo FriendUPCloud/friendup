@@ -43,13 +43,16 @@ After this, you currently need to manually compile and install.
 Dependencies
 ------------
 
-The Friend installer relies on the following packages to work, and must be present on the machine before starting an installation :
+Before compiling, check the dependencies equivalent to these packages (e.g. Ubuntu)
 
-- bash
-- sudo
-- gcc
-
-If you encounter an error during the dependencies installation process, please refer to the end of this file for a complete list of the necessary dependencies, and install them manually. Then restart the installer.
+```
+sudo apt install -y libsmbclient-dev libssh2-1-dev libssh-dev libssl-dev \
+libaio-dev mysql-server php7.2-cli php7.2-gd php7.2-imap \
+php7.2-mysql php7.2-curl libmysqlclient-dev build-essential \
+libmatheval-dev libmagic-dev libgd-dev libwebsockets-dev \
+rsync valgrind-dbg libxml2-dev php7.2-readline \
+cmake ssh make libssh-dev php7.2-zip libsqlite3-dev apache2
+```
 
 Running the serving kernel manually
 -----------------------------------
