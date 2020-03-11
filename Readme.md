@@ -1,4 +1,4 @@
-Friend Unifying Platform version 1.2.0
+Friend Unifying Platform version 1.2.3
 ======================================
 
 *NB*: For extended functionality and related Friend projects such as the Android app refer [here](https://github.com/FriendSoftwareLabs).

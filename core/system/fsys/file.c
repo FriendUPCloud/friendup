@@ -51,6 +51,7 @@ File *FileNew()
 
 void FileDelete( File *f )
 {
+	DEBUG("Delete file called\n");
 	if( f!= NULL )
 	{
 		if( f->f_Name != NULL )

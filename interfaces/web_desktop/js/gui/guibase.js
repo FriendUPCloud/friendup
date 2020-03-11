@@ -3578,7 +3578,13 @@ movableMouseDown = function ( e )
 	window.focus();
 	
 	// Close tray bubble
-	CloseTrayBubble();
+	if( ge( 'Tray' ) && ge( 'Tray' ).notificationPopup )
+	{
+		if( e.target && e.target != ge( 'Tray' ).notificationPopup.parentNode )
+		{
+			CloseTrayBubble();
+		}
+	}
 	
 	// Menu trigger
 	var rc = 0;
@@ -3913,6 +3919,8 @@ function InitGuibaseEvents()
 		// On blur, activate current movable (don't put it to front)
 		window.addEventListener( 'blur', function( e )
 		{
+			// Refresh the tray
+			PollTray();
 			
 			var viewObject = null;
 			if( document.activeElement )
