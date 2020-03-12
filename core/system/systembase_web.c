@@ -672,10 +672,12 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			HashmapElement *sesreq = GetHEReq( *request, "sessionid" );
 			if( sesreq != NULL )
 			{
+				DEBUG("sessionid found!\n");
 				if( sesreq->hme_Data != NULL )
 				{
+					DEBUG("sessionid value found!\n");
 					// getting last call for session
-					HashmapElementLong *hel = HashmapLongGet( l->l_badSessionLoginHM, "sessionid" );
+					HashmapElementLong *hel = HashmapLongGet( l->l_badSessionLoginHM, sesreq->hme_Data );
 					if( hel != NULL )
 					{
 						time_t timeNow = time( NULL );
@@ -692,15 +694,21 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							
 							// count delay value
 							float delValue = ((float)hel->hel_Data) * 1.1f;
+							
+							DEBUG("SECURITY WARNING! Same call was made %d times, delay will be set to: %f\n", hel->hel_Data, delValue );
+							
 							if( hel->hel_Data > 5 )
 							{
-								sleep( ((int)delValue)-4 );
+								int slValue = ((int)delValue)-4;
+								DEBUG("Sleep value: %d\n", slValue );
+								sleep( slValue );
 							}
 						}
 					}
 					else
 					{
-						HashmapLongPut( l->l_badSessionLoginHM, sesreq->hme_Data, 1 );
+						DEBUG("create new entry: %s!\n", sesreq->hme_Data );
+						HashmapLongPut( l->l_badSessionLoginHM, StringDuplicate( sesreq->hme_Data ), 1 );
 					}
 				}
 			}
