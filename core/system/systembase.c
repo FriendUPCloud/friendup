@@ -124,6 +124,11 @@ SystemBase *SystemInit( void )
 		FFree( tempString );
 		return NULL;
 	}
+	
+	// hashmap with bad calls
+	
+	l->l_badSessionLoginHM = HashmapLongNew();
+	
 	// uptime
 	l->l_UptimeStart = time( NULL );
 	
@@ -1359,20 +1364,25 @@ void SystemClose( SystemBase *l )
 		{
 			if( l->l_ServerKeys[i] != NULL )
 			{
-				free( l->l_ServerKeys[i] );
+				FFree( l->l_ServerKeys[i] );
 			}
 			if( l->l_ServerKeyValues[i] != NULL )
 			{
-				free( l->l_ServerKeyValues[i] );
+				FFree( l->l_ServerKeyValues[i] );
 			}
 		}
-		free( l->l_ServerKeys );
-		free( l->l_ServerKeyValues );
+		FFree( l->l_ServerKeys );
+		FFree( l->l_ServerKeyValues );
 	}
 	
 	xmlCleanupParser();
 	
 	Log( FLOG_INFO,  "[SystemBase] Systembase closed.\n");
+	
+	if( l->l_badSessionLoginHM != NULL )
+	{
+		HashmapLongFree( l->l_badSessionLoginHM );
+	}
 	
 	FriendCoreLockRelease();
 }

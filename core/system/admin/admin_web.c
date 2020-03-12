@@ -120,9 +120,9 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		int pos = 0;
 		
 		HashmapElement *el = GetHEReq( *request, "details" );
-		if( el != NULL && el->data )
+		if( el != NULL && el->hme_Data )
 		{
-			if( strcmp( (char *)el->data, "true" ) == 0 )
+			if( strcmp( (char *)el->hme_Data, "true" ) == 0 )
 			{
 				MsgItem tags[] = {
 					{ ID_FCRE, (FULONG)0, (FULONG)MSG_GROUP_START },
@@ -139,9 +139,9 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		}
 		
 		el = GetHEReq( *request, "id" );
-		if( el != NULL && el->data )
+		if( el != NULL && el->hme_Data )
 		{
-			FCID = UrlDecodeToMem( (char *)el->data );
+			FCID = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		
 		if( UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE && temp != NULL )
@@ -408,13 +408,13 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		el =  HashmapGet( (*request)->parsedPostContent, "remotehost" );
 		if( el != NULL )
 		{
-			host = UrlDecodeToMem( ( char *)el->data );
+			host = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
 		el =  HashmapGet( (*request)->parsedPostContent, "remotesessionid" );
 		if( el != NULL )
 		{
-			remsession = UrlDecodeToMem( ( char *)el->data );
+			remsession = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
 		if( host != NULL )
@@ -519,7 +519,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		//el =  HashmapGet( (*request)->parsedPostContent, "message" );
 		if( el != NULL )
 		{
-			msg = UrlDecodeToMem( ( char *)el->data );
+			msg = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
 		el = HttpGetPOSTParameter( (*request), "usersession" );
@@ -527,7 +527,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		//el =  HashmapGet( (*request)->parsedPostContent, "usersession" );
 		if( el != NULL )
 		{
-			usersession = UrlDecodeToMem( ( char *)el->data );
+			usersession = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
 		BufString *bs = BufStringNew();

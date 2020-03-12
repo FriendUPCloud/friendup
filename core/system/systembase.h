@@ -30,6 +30,7 @@
 
 #include <util/hooks.h>
 #include <util/hashmap.h>
+#include <util/hashmap_long.h>
 #include <util/tagitem.h>
 #include <util/base64.h>
 #include "auth/authmodule.h"
@@ -390,6 +391,8 @@ typedef struct SystemBase
 	int								l_ServerKeysNum;
 	
 	WebsocketAPNSConnector			*l_APNSConnection;
+	
+	HashmapLong						*l_badSessionLoginHM;
 } SystemBase;
 
 
@@ -557,7 +560,7 @@ static inline HashmapElement *GetHEReq( Http *request, char *param )
 {
 	HashmapElement *tst = HashmapGet( request->parsedPostContent, param );
 	if( tst == NULL ) tst = HashmapGet( request->query, param );
-	if( tst && tst->data == NULL ) return NULL;
+	if( tst && tst->hme_Data == NULL ) return NULL;
 	return tst;
 }
 

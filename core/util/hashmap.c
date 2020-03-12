@@ -36,16 +36,16 @@ Hashmap* HashmapNew()
 		return NULL;
 	}
 
-	m->data = (HashmapElement*) FCalloc( INITIAL_SIZE, sizeof( HashmapElement ) );
+	m->hm_Data = (HashmapElement*) FCalloc( INITIAL_SIZE, sizeof( HashmapElement ) );
 	
-	if( !m->data )
+	if( !m->hm_Data )
 	{
 		FFree( m );
 		return NULL;
 	}
 
-	m->table_size = INITIAL_SIZE;
-	m->size = 0;
+	m->hm_TableSize = INITIAL_SIZE;
+	m->hm_Size = 0;
 
 	return m;
 }
@@ -154,7 +154,7 @@ static unsigned long crc32_tab[] = {
 // Return a 32-bit CRC of the contents of the buffer.
 //
    
-unsigned long lcrc32( const unsigned char *s, unsigned int len )
+static unsigned long lcrc32( const unsigned char *s, unsigned int len )
 {
 	unsigned int i;
 	unsigned long crc32val;
@@ -188,7 +188,7 @@ unsigned int HashmapHashInt( Hashmap* in, const char* key )
 	// Knuth's Multiplicative Method
 	hash = (SHIFT_RIGHT(hash, 3)) * 2654435761;
 
-	return hash % in->table_size;
+	return hash % in->hm_TableSize;
 }
 
 //
@@ -199,7 +199,7 @@ unsigned int HashmapHashInt( Hashmap* in, const char* key )
 int HashmapHash( Hashmap* in, const char* key )
 {
 	// If full, return immediately
-	if( in->size >= ( in->table_size >> 1 ) )
+	if( in->hm_Size >= ( in->hm_TableSize >> 1 ) )
 	{
 		FERROR("Hashmap is full!\n");
 		return MAP_FULL;
@@ -211,17 +211,17 @@ int HashmapHash( Hashmap* in, const char* key )
 	/* Linear probing */
 	for( unsigned int i = 0; i < MAX_CHAIN_LENGTH; i++ )
 	{
-		if( in->data[curr].inUse == 0 )
+		if( in->hm_Data[curr].hme_InUse == 0 )
 		{
 			return curr;
 		}
 
-		if( in->data[curr].inUse == TRUE && ( strcmp( in->data[curr].key, key ) == 0 ) )
+		if( in->hm_Data[curr].hme_InUse == TRUE && ( strcmp( in->hm_Data[curr].hme_Key, key ) == 0 ) )
 		{
 			return curr;
 		}
 
-		curr = ( curr + 1 ) % in->table_size;
+		curr = ( curr + 1 ) % in->hm_TableSize;
 	}
 
 	return MAP_FULL;
@@ -239,32 +239,32 @@ int HashmapRehash( Hashmap* in )
 
 	/* Setup the new elements */
 	Hashmap *m = (Hashmap *) in;
-	HashmapElement* temp = (HashmapElement *) FCalloc( (2 * m->table_size), sizeof( HashmapElement ) );
+	HashmapElement* temp = (HashmapElement *) FCalloc( (2 * m->hm_TableSize), sizeof( HashmapElement ) );
 	if( temp  == NULL )
 	{
 		return MAP_OMEM;
 	}
 
 	// Update the array 
-	curr = m->data;
-	m->data = temp;
+	curr = m->hm_Data;
+	m->hm_Data = temp;
 
 	// Update the size 
-	oldSize = m->table_size;
-	m->table_size = 2 * m->table_size;
-	m->size = 0;
+	oldSize = m->hm_TableSize;
+	m->hm_TableSize = 2 * m->hm_TableSize;
+	m->hm_Size = 0;
 
 	/* Rehash the elements */
 	for( i = 0; i < oldSize; i++ )
 	{
         int status;
 
-        if (curr[i].inUse == 0)
+        if (curr[i].hme_InUse == 0)
 		{
             continue;
 		}
             
-		status = HashmapPut( m, curr[i].key, curr[i].data );
+		status = HashmapPut( m, curr[i].hme_Key, curr[i].hme_Data );
 		if( status != MAP_OK )
 		{
 			FFree(curr);
@@ -302,21 +302,21 @@ int HashmapPut( Hashmap* in, char* key, void* value )
 	}
 
 	// Set the data
-	if( in->data[index].data )
+	if( in->hm_Data[index].hme_Data )
 	{
-		FFree( in->data[index].data );
-		in->data[index].data = NULL;
+		FFree( in->hm_Data[index].hme_Data );
+		in->hm_Data[index].hme_Data = NULL;
 	}
-	in->data[index].data = value;
-	if( in->data[index].key )
+	in->hm_Data[index].hme_Data = value;
+	if( in->hm_Data[index].hme_Key )
 	{
-		FFree( in->data[index].key );
-		in->data[index].key = NULL;
+		FFree( in->hm_Data[index].hme_Key );
+		in->hm_Data[index].hme_Key = NULL;
 	}
 	
-	in->data[index].key = key;
-	in->data[index].inUse = TRUE;
-	in->size++; 
+	in->hm_Data[index].hme_Key = key;
+	in->hm_Data[index].hme_InUse = TRUE;
+	in->hm_Size++; 
 
 	return MAP_OK;
 }
@@ -339,11 +339,11 @@ HashmapElement* HashmapGet( Hashmap* in, char* key )
 	// Linear probing, if necessary
 	for( unsigned int i = 0; i < MAX_CHAIN_LENGTH; i++ )
 	{
-		if( in->data[curr].inUse && strcmp( in->data[curr].key, key ) == 0 )
+		if( in->hm_Data[curr].hme_InUse && strcmp( in->hm_Data[curr].hme_Key, key ) == 0 )
 		{
-			return &in->data[curr];
+			return &in->hm_Data[curr];
 		}
-		curr = (curr + 1) % in->table_size;
+		curr = (curr + 1) % in->hm_TableSize;
 	}
 
 	// Not found
@@ -368,11 +368,11 @@ void* HashmapGetData( Hashmap* in, const char* key )
 	// Linear probing, if necessary
 	for( unsigned int i = 0; i < MAX_CHAIN_LENGTH; i++ )
 	{
-		if( in->data[curr].inUse && strcmp( in->data[curr].key, key ) == 0 )
+		if( in->hm_Data[curr].hme_InUse && strcmp( in->hm_Data[curr].hme_Key, key ) == 0 )
 		{
-			return (in->data[curr].data);
+			return (in->hm_Data[curr].hme_Data);
 		}
-		curr = (curr + 1) % in->table_size;
+		curr = (curr + 1) % in->hm_TableSize;
 	}
 	
 	// Not found
@@ -393,12 +393,12 @@ HashmapElement* HashmapIterate( Hashmap* in, unsigned int* iterator )
 	}
 
 	unsigned int i = (*iterator);
-	for( ; i < in->table_size; i++ )
+	for( ; i < in->hm_TableSize; i++ )
 	{
-		if( in->data[i].inUse != 0 )
+		if( in->hm_Data[i].hme_InUse != 0 )
 		{
 			(*iterator) = i + 1;
-			return &in->data[i];
+			return &in->hm_Data[i];
 		}
 	}
 	(*iterator) = i;
@@ -421,18 +421,18 @@ void HashmapFree( Hashmap* in )
 	
 	//FERROR("remove hashmap===============\n");
 	
-	for( ; i < in->table_size; i++ )
+	for( ; i < in->hm_TableSize; i++ )
 	{
-		e = in->data[i];
-		if( e.inUse == TRUE )
+		e = in->hm_Data[i];
+		if( e.hme_InUse == TRUE )
 		{
-			if( e.data != NULL ) FFree( e.data );
-			if( e.key  != NULL ) FFree( e.key );
+			if( e.hme_Data != NULL ) FFree( e.hme_Data );
+			if( e.hme_Key  != NULL ) FFree( e.hme_Key );
 		}
 	}
-	if( in->data != NULL )
+	if( in->hm_Data != NULL )
 	{
-		FFree( in->data );
+		FFree( in->hm_Data );
 	}
 	FFree( in );
 }
@@ -445,7 +445,7 @@ int HashmapLength( Hashmap* in )
 {
 	if( in != NULL )
 	{
-		return in->size;
+		return in->hm_Size;
 	}
 	return 0;
 }
@@ -464,9 +464,9 @@ Hashmap *HashmapClone( Hashmap *in )
 		// Linear probing, if necessary
 		for( i = 0; i < INITIAL_SIZE; i++ )
 		{
-			hn->data[ i ].inUse = in->data[ i ].inUse;
-			hn->data[ i ].key = StringDuplicate( in->data[ i ].key );
-			hn->data[ i ].data = StringDuplicate( in->data[ i ].key );
+			hn->hm_Data[ i ].hme_InUse = in->hm_Data[ i ].hme_InUse;
+			hn->hm_Data[ i ].hme_Key = StringDuplicate( in->hm_Data[ i ].hme_Key );
+			hn->hm_Data[ i ].hme_Data = StringDuplicate( in->hm_Data[ i ].hme_Data );
 		}
 	}
 	return hn;
@@ -508,30 +508,30 @@ int HashmapRemove( Hashmap *in, char* key  )
 	// Linear probing, if necessary
 	for(i = 0; i<MAX_CHAIN_LENGTH; i++)
 	{
-		int locInUse = m->data[curr].inUse;
+		int locInUse = m->hm_Data[curr].hme_InUse;
 		if( locInUse == 1 )
 		{
-			if( m->data[curr].key != NULL )
+			if( m->hm_Data[curr].hme_Key != NULL )
 			{
-				if(  strcmp( m->data[curr].key, key ) == 0 )
+				if(  strcmp( m->hm_Data[curr].hme_Key, key ) == 0 )
 				{
 					// Blank out the fields
-					m->data[curr].inUse = 0;
-					if(	m->data[curr].data != NULL )
+					m->hm_Data[curr].hme_InUse = 0;
+					if(	m->hm_Data[curr].hme_Data != NULL )
 					{
-						m->data[curr].data = NULL;
+						m->hm_Data[curr].hme_Data = NULL;
 					}
 				
-					FFree( m->data[curr].key );
-					m->data[curr].key = NULL;
+					FFree( m->hm_Data[curr].hme_Key );
+					m->hm_Data[curr].hme_Key = NULL;
 
 					// Reduce the size
-					m->size--;
+					m->hm_Size--;
 					return MAP_OK;
 				}
 			}
 		}
-		curr = (curr + 1) % m->table_size;
+		curr = (curr + 1) % m->hm_TableSize;
 	}
 
 	// Data not found 
