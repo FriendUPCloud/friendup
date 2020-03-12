@@ -42,7 +42,7 @@ var UsersSettings = function ( setting, set )
 	{
 		if( setting && typeof set != "undefined" )
 		{
-			console.log( 'UsersSettings: ' + setting + ' = ' + set );
+			//console.log( 'UsersSettings: ' + setting + ' = ' + set );
 			
 			switch( setting )
 			{
@@ -225,7 +225,7 @@ Sections.accounts_users = function( cmd, extra )
 						{
 							themeData = { colorSchemeText: 'light', buttonSchemeText: 'windows' };
 						}
-						console.log( 'themeData ',  [ themeData, workspaceSettings ] );
+						//console.log( 'themeData ',  [ themeData, workspaceSettings ] );
 						return themeData;
 					},
 					
@@ -458,29 +458,39 @@ Sections.accounts_users = function( cmd, extra )
 										ge( 'usEmail'    ).innerHTML = userInfo.Email;
 									}
 									
-									if( ge( 'usLocked'   ) )
+									if( Application.userId != userInfo.ID )
 									{
-										ge( 'usLocked'   ).onclick = function()
+										
+										if( ge( 'usLocked'   ) )
 										{
-											updateUserStatus( userInfo.ID, 2 );
-										};
+											ge( 'usLocked'   ).onclick = function()
+											{
+												updateUserStatus( userInfo.ID, 2 );
+											};
+										}
+										if( ge( 'usDisabled' ) )
+										{
+											ge( 'usDisabled' ).onclick = function()
+											{
+												updateUserStatus( userInfo.ID, 1 );
+											};
+										}
+									
+										if( ge( 'usLocked'   ) && ulocked )
+										{
+											ge( 'usLocked'   ).className = ge( 'usLocked'   ).className.split( 'fa-toggle-on' ).join( '' ).split( 'fa-toggle-off' ).join( '' ) + 'fa-toggle-on';
+										}
+										if( ge( 'usDisabled' ) && udisabled )
+										{
+											ge( 'usDisabled' ).className = ge( 'usDisabled' ).className.split( 'fa-toggle-on' ).join( '' ).split( 'fa-toggle-off' ).join( '' ) + 'fa-toggle-on';
+										}
+										
 									}
-									if( ge( 'usDisabled' ) )
+									else
 									{
-										ge( 'usDisabled' ).onclick = function()
-										{
-											updateUserStatus( userInfo.ID, 1 );
-										};
+										if( ge( 'AdminStatusContainer' ) ) ge( 'AdminStatusContainer' ).style.display = 'none';
 									}
 									
-									if( ge( 'usLocked'   ) && ulocked )
-									{
-										ge( 'usLocked'   ).className = ge( 'usLocked'   ).className.split( 'fa-toggle-on' ).join( '' ).split( 'fa-toggle-off' ).join( '' ) + 'fa-toggle-on';
-									}
-									if( ge( 'usDisabled' ) && udisabled )
-									{
-										ge( 'usDisabled' ).className = ge( 'usDisabled' ).className.split( 'fa-toggle-on' ).join( '' ).split( 'fa-toggle-off' ).join( '' ) + 'fa-toggle-on';
-									}
 								}
 							},
 							
@@ -515,6 +525,15 @@ Sections.accounts_users = function( cmd, extra )
 										{
 											if( opt[a].value == level ) opt[a].selected = 'selected';
 										}
+									}
+								}
+								
+								if( ge( 'AdminLevelContainer' ) && Application.checkAppPermission( 'PERM_USER_GLOBAL' ) )
+								{
+									if( ge( 'AdminLevelContainer' ).classList.contains( 'Closed' ) )
+									{
+										ge( 'AdminLevelContainer' ).classList.remove( 'Closed' );
+										ge( 'AdminLevelContainer' ).classList.add( 'Open' );
 									}
 								}
 								
@@ -553,8 +572,11 @@ Sections.accounts_users = function( cmd, extra )
 									avSrc.src = userInfo.avatar;
 									avSrc.onload = function()
 									{
-										var ctx = ge( 'AdminAvatar' ).getContext( '2d' );
-										ctx.drawImage( avSrc, 0, 0, 256, 256 );
+										if( ge( 'AdminAvatar' ) )
+										{
+											var ctx = ge( 'AdminAvatar' ).getContext( '2d' );
+											ctx.drawImage( avSrc, 0, 0, 256, 256 );
+										}
 									}
 								} 
 								
@@ -626,7 +648,7 @@ Sections.accounts_users = function( cmd, extra )
 								var bg3  = ge( 'UserBackBtn' );
 								if( !isMobile ) 
 								{
-									bg3.style.display = 'none';
+									if( bg3 ) bg3.style.display = 'none';
 								}
 								else
 								{
@@ -644,7 +666,7 @@ Sections.accounts_users = function( cmd, extra )
 							
 									if( userInfo.ID )
 									{
-										console.log( '// delete user' );
+										//console.log( '// delete user' );
 					
 										removeBtn( this, { id: userInfo.ID, button_text: 'i18n_delete_user', }, function ( args )
 										{
@@ -667,10 +689,13 @@ Sections.accounts_users = function( cmd, extra )
 							{
 								
 								// Editing workgroups
-					
+								
 								var wge = ge( 'WorkgroupEdit' );
-								wge.wids = {};
-								wge.wgroups = false/*wgroups*/;
+								if( wge )
+								{
+									wge.wids = {};
+									wge.wgroups = false/*wgroups*/;
+								}
 								
 								// TODO: List the groups sorting here since that is constant, so there is no difference between first render and switch between edit and list enabled.
 								
@@ -724,7 +749,7 @@ Sections.accounts_users = function( cmd, extra )
 														{
 															// Toggle off ...
 														
-															console.log( '// Toggle off ', args );
+															//console.log( '// Toggle off ', args );
 														
 															if( args && args.id && args.users )
 															{
@@ -733,7 +758,7 @@ Sections.accounts_users = function( cmd, extra )
 																f.wids = wids;
 																f.onExecuted = function( e, d )
 																{
-																	console.log( { e:e, d:d } );
+																	//console.log( { e:e, d:d } );
 																
 																	this.btn.classList.remove( 'fa-toggle-on' );
 																	this.btn.classList.add( 'fa-toggle-off' );
@@ -750,7 +775,7 @@ Sections.accounts_users = function( cmd, extra )
 																	// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
 																	
 																	// Refresh Storage ...
-																	console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																	//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
 																	Sections.user_disk_cancel( userInfo.ID );
 																}
 																f.execute( 'group/removeusers', args );
@@ -770,7 +795,7 @@ Sections.accounts_users = function( cmd, extra )
 								
 								if( wge ) wge.onclick = function( e )
 								{
-									console.log( 'info.workgroups: ', info.workgroups );
+									//console.log( 'info.workgroups: ', info.workgroups );
 									
 									groups = {};
 									
@@ -813,7 +838,7 @@ Sections.accounts_users = function( cmd, extra )
 											}	
 										}
 										
-										console.log( groups );
+										//console.log( groups );
 									}
 									
 									
@@ -1067,7 +1092,7 @@ Sections.accounts_users = function( cmd, extra )
 														{
 															// Toggle on ...
 															
-															console.log( '// Toggle on ', args );
+															//console.log( '// Toggle on ', args );
 															
 															if( args && args.id && args.users )
 															{
@@ -1075,7 +1100,7 @@ Sections.accounts_users = function( cmd, extra )
 																f.btn = this;
 																f.onExecuted = function( e, d )
 																{
-																	console.log( { e:e, d:d } );
+																	//console.log( { e:e, d:d } );
 																	
 																	this.btn.classList.remove( 'fa-toggle-off' );
 																	this.btn.classList.add( 'fa-toggle-on' );
@@ -1083,7 +1108,7 @@ Sections.accounts_users = function( cmd, extra )
 																	// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
 																	
 																	// Refresh Storage ...
-																	console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																	//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
 																	Sections.user_disk_cancel( userInfo.ID );
 																}
 																f.execute( 'group/addusers', args );
@@ -1094,7 +1119,7 @@ Sections.accounts_users = function( cmd, extra )
 														{
 															// Toggle off ...
 															
-															console.log( '// Toggle off ', args );
+															//console.log( '// Toggle off ', args );
 															
 															if( args && args.id && args.users )
 															{
@@ -1102,7 +1127,7 @@ Sections.accounts_users = function( cmd, extra )
 																f.btn = this;
 																f.onExecuted = function( e, d )
 																{
-																	console.log( { e:e, d:d } );
+																	//console.log( { e:e, d:d } );
 																	
 																	this.btn.classList.remove( 'fa-toggle-on' );
 																	this.btn.classList.add( 'fa-toggle-off' );
@@ -1110,7 +1135,7 @@ Sections.accounts_users = function( cmd, extra )
 																	// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
 																	
 																	// Refresh Storage ...
-																	console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																	//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
 																	Sections.user_disk_cancel( userInfo.ID );
 																	
 																}
@@ -1227,7 +1252,7 @@ Sections.accounts_users = function( cmd, extra )
 												}
 											}
 										
-											console.log( this.wge.wids );
+											//console.log( this.wge.wids );
 										
 											this.wge.activated = false;
 											ge( 'WorkgroupGui' ).innerHTML = wstr;
@@ -1266,7 +1291,7 @@ Sections.accounts_users = function( cmd, extra )
 															{
 																// Toggle off ...
 															
-																console.log( '// Toggle off ', args );
+																//console.log( '// Toggle off ', args );
 															
 																if( args && args.id && args.users )
 																{
@@ -1275,7 +1300,7 @@ Sections.accounts_users = function( cmd, extra )
 																	f.wids = wids;
 																	f.onExecuted = function( e, d )
 																	{
-																		console.log( { e:e, d:d } );
+																		//console.log( { e:e, d:d } );
 																	
 																		this.btn.classList.remove( 'fa-toggle-on' );
 																		this.btn.classList.add( 'fa-toggle-off' );
@@ -1292,7 +1317,7 @@ Sections.accounts_users = function( cmd, extra )
 																		// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
 																		
 																		// Refresh Storage ...
-																		console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+																		//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
 																		Sections.user_disk_cancel( userInfo.ID );
 																		
 																	}
@@ -1324,7 +1349,7 @@ Sections.accounts_users = function( cmd, extra )
 											
 											
 											// Refresh Storage ...
-											console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+											//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
 											Sections.user_disk_cancel( userInfo.ID );
 											
 										}
@@ -1375,7 +1400,7 @@ Sections.accounts_users = function( cmd, extra )
 								
 								if( soft )
 								{
-									console.log( 'soft ', soft );
+									//console.log( 'soft ', soft );
 									
 									var i = 0;
 									
@@ -1407,7 +1432,7 @@ Sections.accounts_users = function( cmd, extra )
 								
 								if( dock )
 								{
-									console.log( 'dock ', dock );
+									//console.log( 'dock ', dock );
 									
 									var i = 0;
 									
@@ -1430,7 +1455,7 @@ Sections.accounts_users = function( cmd, extra )
 									{
 										for( var b in output )
 										{
-											console.log( '['+output[b].SortOrder+'] DockItem ', output[b] );
+											//console.log( '['+output[b].SortOrder+'] DockItem ', output[b] );
 											
 											ids[ i++ ] = output[b];
 										}
@@ -1489,7 +1514,7 @@ Sections.accounts_users = function( cmd, extra )
 												}
 											}
 								
-											console.log( 'applications ', this.appids );
+											//console.log( 'applications ', this.appids );
 								
 											if( ge( 'TempApplications' ) )
 											{
@@ -1544,7 +1569,7 @@ Sections.accounts_users = function( cmd, extra )
 												this.dockids[ i++ ] = value; 
 											}
 											
-											console.log( 'dock ', this.dockids );
+											//console.log( 'dock ', this.dockids );
 											
 										}
 										else if( key && value )
@@ -1579,7 +1604,7 @@ Sections.accounts_users = function( cmd, extra )
 									head : function (  )
 									{
 								
-										var o = ge( 'ApplicationGui' ); o.innerHTML = '<input type="hidden" id="TempApplications">';
+										var o = ge( 'ApplicationGui' ); if( o ) o.innerHTML = '<input type="hidden" id="TempApplications">';
 								
 										this.func.updateids( 'applications' );
 								
@@ -1665,7 +1690,7 @@ Sections.accounts_users = function( cmd, extra )
 										{
 											this.head();
 									
-											var o = ge( 'ApplicationInner' ); o.innerHTML = '';
+											var o = ge( 'ApplicationInner' ); if( o ) o.innerHTML = '';
 									
 											if( this.ids )
 											{
@@ -1781,7 +1806,7 @@ Sections.accounts_users = function( cmd, extra )
 																				
 																							args.func.updateids( 'applications', args.name, false );
 																							
-																							console.log( 'updateApplications( '+userInfo.ID+', callback, vars )' );
+																							//console.log( 'updateApplications( '+userInfo.ID+', callback, vars )' );
 																							
 																							updateApplications( userInfo.ID, function( e, d, vars )
 																							{
@@ -1851,7 +1876,7 @@ Sections.accounts_users = function( cmd, extra )
 										{
 											this.head();
 									
-											var o = ge( 'ApplicationInner' ); o.innerHTML = '';
+											var o = ge( 'ApplicationInner' ); if( o ) o.innerHTML = '';
 									
 											for( var k in apps )
 											{
@@ -1958,7 +1983,7 @@ Sections.accounts_users = function( cmd, extra )
 																						
 																						func.updateids( 'applications', name, [ name, '0' ] );
 																						
-																						console.log( 'updateApplications( '+userInfo.ID+', callback, vars )' );
+																						//console.log( 'updateApplications( '+userInfo.ID+', callback, vars )' );
 																						
 																						
 																						
@@ -1990,7 +2015,7 @@ Sections.accounts_users = function( cmd, extra )
 																						
 																						func.updateids( 'applications', name, false );
 																						
-																						console.log( 'updateApplications( '+userInfo.ID+', callback, vars )' );
+																						//console.log( 'updateApplications( '+userInfo.ID+', callback, vars )' );
 																						
 																						
 																						
@@ -2111,7 +2136,7 @@ Sections.accounts_users = function( cmd, extra )
 											}
 										}
 		
-										console.log( output );
+										//console.log( output );
 									},
 									
 									refresh : function (  )
@@ -2247,7 +2272,7 @@ Sections.accounts_users = function( cmd, extra )
 									
 									head : function ( hidecol )
 									{
-										var o = ge( 'DockGui' ); o.innerHTML = '';
+										var o = ge( 'DockGui' ); if( o ) o.innerHTML = '';
 								
 										this.func.updateids( 'dock' );
 										
@@ -2332,7 +2357,7 @@ Sections.accounts_users = function( cmd, extra )
 										{
 											this.head();
 									
-											var o = ge( 'DockInner' ); o.innerHTML = '';
+											var o = ge( 'DockInner' ); if( o ) o.innerHTML = '';
 											
 											if( this.ids )
 											{
@@ -2441,7 +2466,7 @@ Sections.accounts_users = function( cmd, extra )
 																						_this.sortdown( order, function( e, vars )
 																						{
 																							
-																							console.log( { e:e, vars:vars } );
+																							//console.log( { e:e, vars:vars } );
 																							
 																							if( e && vars && vars.itemId )
 																							{
@@ -2467,7 +2492,7 @@ Sections.accounts_users = function( cmd, extra )
 																						_this.sortup( order, function( e, vars )
 																						{
 																							
-																							console.log( { e:e, vars:vars } );
+																							//console.log( { e:e, vars:vars } );
 																							
 																							if( e && vars && vars.itemId )
 																							{
@@ -2564,7 +2589,7 @@ Sections.accounts_users = function( cmd, extra )
 										{
 											this.head( true );
 									
-											var o = ge( 'DockInner' ); o.innerHTML = '';
+											var o = ge( 'DockInner' ); if( o ) o.innerHTML = '';
 									
 											if( this.func.appids )
 											{
@@ -2775,9 +2800,9 @@ Sections.accounts_users = function( cmd, extra )
 									sortup : function ( order, callback, vars )
 									{
 								
-										console.log( 'TODO: sortup: ' + order + ' ', this.ids );
+										//console.log( 'TODO: sortup: ' + order + ' ', this.ids );
 										
-										console.log( 'dock: ', dock );
+										//console.log( 'dock: ', dock );
 								
 										var num = 0; var array = []; var found = null;
 										
@@ -2792,7 +2817,7 @@ Sections.accounts_users = function( cmd, extra )
 											
 													// 
 													
-													console.log( { a:a, num:num } );
+													//console.log( { a:a, num:num } );
 											
 													if( order == a && typeof this.ids[ order ] !== "undefined" )
 													{
@@ -2805,7 +2830,7 @@ Sections.accounts_users = function( cmd, extra )
 												}
 											}
 									
-											console.log( { array: array, found: found, past: array[ found-1 ] } );
+											//console.log( { array: array, found: found, past: array[ found-1 ] } );
 									
 											if( array && typeof found !== "undefined" )
 											{
@@ -2833,7 +2858,7 @@ Sections.accounts_users = function( cmd, extra )
 												}
 											}
 									
-											console.log( this.ids );
+											//console.log( this.ids );
 											
 											if( current && past )
 											{
@@ -2852,9 +2877,9 @@ Sections.accounts_users = function( cmd, extra )
 									sortdown : function ( order, callback, vars )
 									{
 								
-										console.log( 'TODO: sortdown: ' + order + ' ', this.ids );
+										//console.log( 'TODO: sortdown: ' + order + ' ', this.ids );
 								
-										console.log( 'dock: ', dock );
+										//console.log( 'dock: ', dock );
 								
 										var num = 0; var array = []; var found = null;
 										
@@ -2869,7 +2894,7 @@ Sections.accounts_users = function( cmd, extra )
 											
 													// 
 											
-													console.log( { a:a, num:num } );
+													//console.log( { a:a, num:num } );
 											
 													if( order == a && typeof this.ids[ order ] !== "undefined" )
 													{
@@ -2882,7 +2907,7 @@ Sections.accounts_users = function( cmd, extra )
 												}
 											}
 									
-											console.log( { array: array, found: found, past: array[ found+1 ] } );
+											//console.log( { array: array, found: found, past: array[ found+1 ] } );
 									
 											if( array && typeof found !== "undefined" )
 											{
@@ -2910,7 +2935,7 @@ Sections.accounts_users = function( cmd, extra )
 												}
 											}
 									
-											console.log( this.ids );
+											//console.log( this.ids );
 											
 											if( current && past )
 											{
@@ -3098,12 +3123,12 @@ Sections.accounts_users = function( cmd, extra )
 										m.onExecuted = function( e, d )
 										{
 											
-											console.log( { e:e, d:d, args: { 
+											/*console.log( { e:e, d:d, args: { 
 												setting : 'themedata_' + currTheme.toLowerCase(), 
 												data    : themeConfig, 
 												userid  : userInfo.ID, 
 												authid  : Application.authId 
-											} } );
+											} } );*/
 											
 											if( e != 'ok' )
 											{
@@ -3161,12 +3186,12 @@ Sections.accounts_users = function( cmd, extra )
 										m.onExecuted = function( e, d )
 										{
 											
-											console.log( { e:e, d:d, args: { 
+											/*console.log( { e:e, d:d, args: { 
 												setting : 'themedata_' + currTheme.toLowerCase(), 
 												data    : themeConfig, 
 												userid  : userInfo.ID, 
 												authid  : Application.authId 
-											} } );
+											} } );*/
 											
 											if( this.b.classList.contains( 'fa-toggle-off' ) )
 											{
@@ -3222,12 +3247,12 @@ Sections.accounts_users = function( cmd, extra )
 											m.onExecuted = function( e, d )
 											{
 												
-												console.log( { e:e, d:d, args: { 
+												/*console.log( { e:e, d:d, args: { 
 													setting : 'workspacecount', 
 													data    : this.i.value, 
 													userid  : userInfo.ID, 
 													authid  : Application.authId 
-												} } );
+												} } );*/
 												
 												if( e != 'ok' )
 												{
@@ -3280,17 +3305,17 @@ Sections.accounts_users = function( cmd, extra )
 												if( item && item.length && item[ 0 ].Path )
 												{
 													
-													console.log( 'loaded image ... ', item );
+													//console.log( 'loaded image ... ', item );
 													
 													var m = new Module( 'system' );
 													m.onExecuted = function( e, d )
 													{
 														
-														console.log( 'userwallpaperset ', { e:e, d:d, args: { 
+														/*console.log( 'userwallpaperset ', { e:e, d:d, args: { 
 															path    : item[ 0 ].Path, 
 															userid  : userInfo.ID, 
 															authid  : Application.authId 
-														} } );
+														} } );*/
 														
 														var data = false;
 														
@@ -3355,7 +3380,7 @@ Sections.accounts_users = function( cmd, extra )
 									{
 										var img = ( workspaceSettings.wallpaperdoors ? '/system.library/module/?module=system&command=thumbnail&width=568&height=320&mode=resize&userid='+userInfo.ID+'&authid='+Application.authId+'&path='+workspaceSettings.wallpaperdoors : '' );
 										
-										console.log( img );
+										//console.log( img );
 										
 										// Only update the wallaper if it exists..
 										var avSrc = new Image();
@@ -3406,6 +3431,8 @@ Sections.accounts_users = function( cmd, extra )
 							{
 								// Check Permissions
 								
+								console.log( '// Check Permissions ', show );
+								
 								if( !show || show.indexOf( 'workgroup' ) >= 0 )
 								{
 									if( Application.checkAppPermission( 'PERM_WORKGROUP_GLOBAL' ) || Application.checkAppPermission( 'PERM_WORKGROUP_WORKGROUP' ) )
@@ -3418,7 +3445,6 @@ Sections.accounts_users = function( cmd, extra )
 								{
 									if( Application.checkAppPermission( 'PERM_ROLE_GLOBAL' ) || Application.checkAppPermission( 'PERM_ROLE_WORKGROUP' ) )
 									{
-										console.log( 'Hiding "AdminRoleContainer" for now until development there is complete ...' );
 										if( ge( 'AdminRoleContainer' ) ) ge( 'AdminRoleContainer' ).className = 'Open';
 									}
 								}
@@ -3544,7 +3570,7 @@ Sections.accounts_users = function( cmd, extra )
 						
 						// Get the user details template
 						var d = new File( 'Progdir:Templates/account_users_details.html' );
-						console.log( 'userInfo ', userInfo );
+						//console.log( 'userInfo ', userInfo );
 						// Add all data for the template
 						d.replacements = {
 							userid               : ( userInfo.ID ? userInfo.ID : '' ),
@@ -3635,7 +3661,7 @@ Sections.accounts_users = function( cmd, extra )
 						{
 							return;
 						}
-						console.log( 'userinfoget ', { e:e, d:userInfo } );
+						//console.log( 'userinfoget ', { e:e, d:userInfo } );
 						if( e != 'ok' ) userInfo = '404';
 						
 						// TODO: Run avatar cached here ...
@@ -3670,7 +3696,7 @@ Sections.accounts_users = function( cmd, extra )
 						{
 							wgroups = null;
 						}
-						console.log( 'workgroups ', { e:e, d:d } );
+						//console.log( 'workgroups ', { e:e, d:d } );
 						if( e != 'ok' ) wgroups = '404';
 						loadingInfo.workgroups = wgroups;
 						
@@ -3691,7 +3717,7 @@ Sections.accounts_users = function( cmd, extra )
 					u.onExecuted = function( e, d )
 					{
 						var uroles = null;
-						console.log( { e:e, d:d } );
+						//console.log( { e:e, d:d } );
 						if( e == 'ok' )
 						{
 							try
@@ -3704,7 +3730,7 @@ Sections.accounts_users = function( cmd, extra )
 							}
 							loadingInfo.roles = uroles;
 						}
-						console.log( 'userroleget ', { e:e, d:uroles } );
+						//console.log( 'userroleget ', { e:e, d:uroles } );
 						if( e != 'ok' ) loadingInfo.roles = '404';
 						
 						console.log( '// 4 | Get user\'s roles' );
@@ -3769,7 +3795,7 @@ Sections.accounts_users = function( cmd, extra )
 							
 							
 							
-							console.log( '[2] mountlist ', { e:e, d:(rows?rows:d) } );
+							//console.log( '[2] mountlist ', { e:e, d:(rows?rows:d) } );
 							if( e != 'ok' ) rows = '404';
 							loadingInfo.mountlist = rows;
 							
@@ -3812,7 +3838,7 @@ Sections.accounts_users = function( cmd, extra )
 					applications( function ( res, dat )
 					{
 					
-						console.log( { e:res, d:dat } );
+						//console.log( { e:res, d:dat } );
 						
 						if( dat )
 						{
@@ -3839,7 +3865,7 @@ Sections.accounts_users = function( cmd, extra )
 					applications( function ( res, dat )
 					{
 					
-						console.log( { e:res, d:dat } );
+						//console.log( { e:res, d:dat } );
 						
 						if( dat )
 						{
@@ -3854,6 +3880,8 @@ Sections.accounts_users = function( cmd, extra )
 						
 						loadingInfo.applications = dat;
 						
+						console.log( '// 6 | Get all applications' );
+						
 						initUsersDetails( loadingInfo, [ /*'application', */'looknfeel' ] );
 						
 					} );
@@ -3862,13 +3890,13 @@ Sections.accounts_users = function( cmd, extra )
 					loadingList[ ++loadingSlot ](  );
 				},
 				
-				// 6 | Get user dock
+				// 7 | Get user dock
 				function(  )
 				{
 					getDockItems( function ( res, dat )
 					{
 						
-						console.log( 'getDockItems( function ( res, dat ) ', { e:res, d:dat } );
+						//console.log( 'getDockItems( function ( res, dat ) ', { e:res, d:dat } );
 						
 						if( dat )
 						{
@@ -3883,6 +3911,8 @@ Sections.accounts_users = function( cmd, extra )
 						
 						loadingInfo.dock = dat;
 						
+						console.log( '// 7 | Get user dock' );
+						
 						initUsersDetails( loadingInfo, [ 'dock' ] );
 						
 					}, extra );
@@ -3891,7 +3921,7 @@ Sections.accounts_users = function( cmd, extra )
 					loadingList[ ++loadingSlot ](  );
 				},
 				
-				// 1 | Load user settings
+				// 8 | Load user settings
 				function(  )
 				{
 					var u = new Module( 'system' );
@@ -3907,11 +3937,11 @@ Sections.accounts_users = function( cmd, extra )
 						{
 							settings = null;
 						}
-						console.log( 'usersettings ', { e:e, d:settings } );
+						//console.log( 'usersettings ', { e:e, d:settings } );
 						if( e != 'ok' ) settings = '404';
 						loadingInfo.settings = settings;
 						
-						console.log( '// 1 | Load user settings' );
+						console.log( '// 8 | Load user settings' );
 						
 						initUsersDetails( loadingInfo, [  ] );
 						
@@ -3921,7 +3951,7 @@ Sections.accounts_users = function( cmd, extra )
 					u.execute( 'usersettings', { userid: extra, authid: Application.authId } );
 				},
 				
-				// 2 | Get more user settings
+				// 9 | Get more user settings
 				function(  )
 				{
 					if( loadingInfo.settings && loadingInfo.settings.Theme )
@@ -3941,12 +3971,12 @@ Sections.accounts_users = function( cmd, extra )
 								workspacesettings = null;
 							}
 						
-							console.log( 'getsetting ', { e:e, d:workspacesettings } );
+							//console.log( 'getsetting ', { e:e, d:workspacesettings } );
 						
 							if( e != 'ok' ) workspacesettings = '404';
 							loadingInfo.workspaceSettings = workspacesettings;
 							
-							console.log( '// 2 | Get more user setting' );
+							console.log( '// 9 | Get more user setting' );
 							
 							initUsersDetails( loadingInfo, [  ]/*, true*/ );
 						}
@@ -3966,9 +3996,9 @@ Sections.accounts_users = function( cmd, extra )
 				// 7 | init
 				function(  )
 				{
-					console.log( '// 7 | init' );
+					console.log( '// 10 | init' );
 					
-					//initUsersDetails( loadingInfo );
+					initUsersDetails( loadingInfo, [ 'workgroup', 'role', 'storage', 'dock', /*'application', */'looknfeel' ] );
 				}
 				
 			];
@@ -3995,7 +4025,7 @@ Sections.accounts_users = function( cmd, extra )
 		
 		if( !ge( 'ListUsersInner' ) )
 		{
-			o.innerHTML = '';
+			if( o ) o.innerHTML = '';
 		}
 		
 		if( !ge( 'ListUsersInner' ) )
@@ -4234,7 +4264,7 @@ Sections.accounts_users = function( cmd, extra )
 						var bg3  = ge( 'UserBackBtn' );
 						if( !isMobile ) 
 						{
-							bg3.style.display = 'none';
+							if( bg3 ) bg3.style.display = 'none';
 						}
 						else
 						{
@@ -4278,6 +4308,16 @@ Sections.accounts_users = function( cmd, extra )
 							{
 								ge( 'usLevel' ).current = ge( 'usLevel' ).value;
 							}
+							
+							if( ge( 'AdminLevelContainer' ) && Application.checkAppPermission( 'PERM_USER_GLOBAL' ) )
+							{
+								if( ge( 'AdminLevelContainer' ).classList.contains( 'Closed' ) )
+								{
+									ge( 'AdminLevelContainer' ).classList.remove( 'Closed' );
+									ge( 'AdminLevelContainer' ).classList.add( 'Open' );
+								}
+							}
+							
 							if( ge( 'usLanguage' ) )
 							{
 								ge( 'usLanguage' ).current = ge( 'usLanguage' ).value;
@@ -4312,8 +4352,8 @@ Sections.accounts_users = function( cmd, extra )
 									}
 									catch( e ) {  }
 									
-									console.log( 'canvas: ', ( canvas ? canvas.length : 0 ) );
-									console.log( 'avatar: ', ( avatar ? avatar.length : 0 ) );
+									//console.log( 'canvas: ', ( canvas ? canvas.length : 0 ) );
+									//console.log( 'avatar: ', ( avatar ? avatar.length : 0 ) );
 									
 									if( ge( 'AdminAvatar' ) && avatar && ( ( canvas && canvas.length <= 15000 ) || !canvas ) )
 									{
@@ -4322,8 +4362,11 @@ Sections.accounts_users = function( cmd, extra )
 										avSrc.src = avatar;
 										avSrc.onload = function()
 										{
-											var ctx = ge( 'AdminAvatar' ).getContext( '2d' );
-											ctx.drawImage( avSrc, 0, 0, 256, 256 );
+											if( ge( 'AdminAvatar' ) )
+											{
+												var ctx = ge( 'AdminAvatar' ).getContext( '2d' );
+												ctx.drawImage( avSrc, 0, 0, 256, 256 );
+											}
 										}
 									}
 								
@@ -4334,49 +4377,142 @@ Sections.accounts_users = function( cmd, extra )
 						}
 						
 						// Workgroups ...
-												
-						var u = new Module( 'system' );
-						u.onExecuted = function( e, d )
+						
+						
+						function GetUserWorkgroups( callback )
 						{
 							
-							var userInfo = null;
-							
-							try
+							if( Application.checkAppPermission( 'PERM_WORKGROUP_GLOBAL' ) || Application.checkAppPermission( 'PERM_WORKGROUP_WORKGROUP' ) )
 							{
-								userInfo = JSON.parse( d );
+								
+								// Specific for Pawel's code ... He just wants to forward json ...
+								
+								var args = JSON.stringify( {
+									'type'    : 'read', 
+									'context' : 'application', 
+									'authid'  : Application.authId, 
+									'data'    : { 
+										'permission' : [ 
+											'PERM_WORKGROUP_GLOBAL', 
+											'PERM_WORKGROUP_WORKGROUP' 
+										]
+									}, 
+									'listdetails' : 'workgroup' 
+								} );
+								
+								var f = new Library( 'system.library' );
+								f.onExecuted = function( e, d )
+								{
+									
+									var wgroups = null; var workgroups = null;
+									
+									try
+									{
+										wgroups = JSON.parse( d );
+									}
+									catch( e )
+									{
+										wgroups = null;
+									}
+									
+									console.log( 'workgroups ', { e:e , d:(wgroups?wgroups:d), args: args } );
+									
+									if( wgroups.groups )
+									{
+										workgroups = wgroups.groups;
+									}
+									else if( wgroups.data && wgroups.data.details && wgroups.data.details.groups )
+									{
+										workgroups = wgroups.data.details.groups;
+									}
+									
+									if( wgroups && workgroups )
+									{
+										var out = [];
+										
+										for( var a in workgroups )
+										{
+											if( workgroups[a] && workgroups[a].ID )
+											{
+												out.push( { ID: workgroups[a].ID, Name: workgroups[a].name, ParentID: workgroups[a].parentid } );
+											}
+										}
+										
+										if( callback ) return callback( out );
+									}
+									
+									if( callback ) return callback( [] );
+									
+								}
+								f.execute( 'group/list', { authid: Application.authId, args: args } );
+								
 							}
-							catch( e )
+							else
 							{
-								userInfo = null;
+								
+								var u = new Module( 'system' );
+								u.onExecuted = function( e, d )
+								{
+							
+									var userInfo = null;
+							
+									try
+									{
+										userInfo = JSON.parse( d );
+									}
+									catch( e )
+									{
+										userInfo = null;
+									}
+									
+									var workgroups = userInfo.Workgroup;
+									
+									console.log( 'userinfo ', { e:e, d:(userInfo?userInfo:d) } );
+									
+									if( userInfo && workgroups )
+									{
+										if( callback ) return callback( workgroups );
+									}
+									
+									if( callback ) return callback( [] );
+									
+								}
+								u.execute( 'userinfoget', { mode: 'all', authid: Application.authId } );
+								
 							}
 							
-							console.log( 'userinfo ', { e:e, d:d } );
+						}
+						
+						
+						
+						GetUserWorkgroups( function( workgroups )
+						{
 							
-							var workgroups = userInfo.Workgroup;
-							
-							console.log( 'workgroups: ', userInfo );
+							console.log( 'workgroups: ', workgroups );
 							
 							groups = {};
 						
 							if( workgroups )
 							{
 								
-								var adminlevel = Application.checkAppPermission( 'PERM_USER_GLOBAL' );
-								var userlevel  = Application.checkAppPermission( 'PERM_USER_WORKGROUP' );
+								var adminlevel = Application.checkAppPermission( 'PERM_WORKGROUP_GLOBAL' ) || Application.checkAppPermission( 'PERM_USER_GLOBAL' );
+								var userlevel  = Application.checkAppPermission( 'PERM_WORKGROUP_WORKGROUP' ) || Application.checkAppPermission( 'PERM_USER_WORKGROUP' );
 								
 								var wgroups = false;
+								
+								console.log( 'userlevel ', { adminlevel: adminlevel, userlevel: userlevel } );
 								
 								if( !adminlevel && userlevel )
 								{
 									var wgroups = {};
 									
-									console.log( 'userlevel ', userlevel );
+									//console.log( 'userlevel ', userlevel );
 									
 									for( var a in userlevel )
 									{
 										if( userlevel[a] && userlevel[a].GroupID )
 										{
-											wgroups[ userlevel[a].GroupID ] = userlevel[a]
+											wgroups[ userlevel[a].GroupID ] = userlevel[a];
 										}
 									}
 									
@@ -4424,7 +4560,7 @@ Sections.accounts_users = function( cmd, extra )
 									}	
 								}
 							
-								console.log( groups );
+								//console.log( groups );
 							}
 							
 							var str = '';
@@ -4605,7 +4741,7 @@ Sections.accounts_users = function( cmd, extra )
 												{
 													// Toggle on ...
 													
-													console.log( '// Toggle on ', wids );
+													//console.log( '// Toggle on ', wids );
 													
 													if( this.getAttribute( 'wid' ) )
 													{
@@ -4631,7 +4767,7 @@ Sections.accounts_users = function( cmd, extra )
 												{
 													// Toggle off ...
 												
-													console.log( '// Toggle off ', wids );
+													//console.log( '// Toggle off ', wids );
 													
 													if( this.getAttribute( 'wid' ) )
 													{
@@ -4676,9 +4812,7 @@ Sections.accounts_users = function( cmd, extra )
 							}
 							
 							
-							
-						}
-						u.execute( 'userinfoget', { mode: 'all', authid: Application.authId } );
+						} );
 						
 						
 						
@@ -5017,7 +5151,7 @@ Sections.accounts_users = function( cmd, extra )
 				
 				if( divh > 0 && UsersSettings( 'divh' ) != divh )
 				{
-					console.log( 'first div height: ' + divh );
+					//console.log( 'first div height: ' + divh );
 					
 					UsersSettings( 'divh', divh );
 					
@@ -5084,7 +5218,7 @@ Sections.accounts_users = function( cmd, extra )
 				var m = new Module( 'system' );
 				m.onExecuted = function( e, d )
 				{
-					console.log( 'listuserapplications ', { e:e, d:d } );
+					//console.log( 'listuserapplications ', { e:e, d:d } );
 					
 					if( e == 'ok' && d )
 					{
@@ -5240,12 +5374,12 @@ Sections.accounts_users = function( cmd, extra )
 	
 	function getDockItems( callback, userId )
 	{
-		console.log( 'getDockItems( userId, callback ) ', { callback:callback, userId:userId } );
+		//console.log( 'getDockItems( userId, callback ) ', { callback:callback, userId:userId } );
 		
 		var m = new Module( 'dock' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( 'getDockItems ', { e:e, d:d } );
+			//console.log( 'getDockItems ', { e:e, d:d } );
 			
 			var data = false;
 												
@@ -5269,12 +5403,12 @@ Sections.accounts_users = function( cmd, extra )
 	
 	function addDockItem( appName, userId, callback, vars )
 	{
-		console.log( 'addDockItem( appName, userId, callback ) ', { appName:appName, userId:userId, callback:callback } );
+		//console.log( 'addDockItem( appName, userId, callback ) ', { appName:appName, userId:userId, callback:callback } );
 		
 		var m = new Module( 'dock' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( { e:e, d:d } );
+			//console.log( { e:e, d:d } );
 			
 			if( e == 'ok' )
 			{
@@ -5296,12 +5430,12 @@ Sections.accounts_users = function( cmd, extra )
 	
 	function removeDockItem( appName, userId, callback, vars )
 	{
-		console.log( 'removeDockItem( appName, userId, callback ) ', { appName:appName, userId:userId, callback:callback } );
+		//console.log( 'removeDockItem( appName, userId, callback ) ', { appName:appName, userId:userId, callback:callback } );
 		
 		var m = new Module( 'dock' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( { e:e, d:d } );
+			//console.log( { e:e, d:d } );
 			
 			if( e == 'ok' )
 			{
@@ -5317,14 +5451,14 @@ Sections.accounts_users = function( cmd, extra )
 	
 	function sortDockItem( direction, itemId, userId, callback )
 	{
-		console.log( 'sortDockItem( direction, itemId, userId, callback ) ', { direction:direction, itemId:itemId, userId:userId, callback:callback } );
+		//console.log( 'sortDockItem( direction, itemId, userId, callback ) ', { direction:direction, itemId:itemId, userId:userId, callback:callback } );
 		
 		// TODO: Update the current sorting to support sortinging another users dock ...
 		
 		var m = new Module( 'dock' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( { e:e, d:d } );
+			//console.log( { e:e, d:d } );
 			
 			if( e == 'ok' )
 			{
@@ -5371,6 +5505,8 @@ Sections.accounts_users = function( cmd, extra )
 						{
 							SubMenu( ge( 'AdminUsersBtn' ), true );
 						}
+						
+						closeEdit();
 						
 						break;
 					default: break;
@@ -5431,6 +5567,16 @@ Sections.accounts_users = function( cmd, extra )
 					}
 				}
 				
+				if( ge( 'EditMode' ) && ge( 'EditMode' ).savedState )
+				{
+					
+					if( act.targ.id != 'EditMode' && act.targ.tagName != 'HTML' && act.targ.tagName != 'BODY' )
+					{
+						closeEdit();
+					}
+					
+				}
+				
 			}
 		}
 		
@@ -5487,7 +5633,13 @@ Sections.accounts_users = function( cmd, extra )
 		
 		if( _this )
 		{
-			_this.savedState = { className: _this.className, innerHTML: _this.innerHTML, onclick: ( _this.onclick ? _this.onclick : function () {} ) }
+			closeEdit();
+			
+			_this.savedState = { 
+				className: _this.className, 
+				innerHTML: _this.innerHTML, 
+				onclick: ( _this.onclick ? _this.onclick : function () {} ) 
+			}
 			_this.classList.remove( 'IconButton' );
 			_this.classList.remove( 'IconToggle' );
 			_this.classList.remove( 'ButtonSmall' );
@@ -5499,6 +5651,7 @@ Sections.accounts_users = function( cmd, extra )
 			//_this.classList.add( 'ButtonAlt' );
 			_this.classList.add( 'Button' );
 			_this.classList.add( 'BackgroundRed' );
+			_this.id = ( _this.id ? _this.id : 'EditMode' );
 			_this.innerHTML = ( args.button_text ? i18n( args.button_text ) : i18n( 'i18n_delete' ) );
 			_this.args = args;
 			_this.callback = callback;
@@ -5517,11 +5670,34 @@ Sections.accounts_users = function( cmd, extra )
 	
 	function editMode( close )
 	{
-		console.log( 'editMode() ' );
+		//console.log( 'editMode() ' );
 		
 		if( ge( 'UserEditButtons' ) )
 		{
 			ge( 'UserEditButtons' ).className = ( close ? 'Closed' : 'Open' );
+		}
+	}
+	
+	function closeEdit()
+	{
+		if( ge( 'EditMode' ) )
+		{
+			if( ge( 'EditMode' ) && ge( 'EditMode' ).savedState )
+			{
+				if( typeof ge( 'EditMode' ).savedState.className != 'undefined' )
+				{
+					ge( 'EditMode' ).className = ge( 'EditMode' ).savedState.className;
+				}
+				if( typeof ge( 'EditMode' ).savedState.innerHTML != 'undefined' )
+				{
+					ge( 'EditMode' ).innerHTML = ge( 'EditMode' ).savedState.innerHTML;
+				}
+				if( typeof ge( 'EditMode' ).savedState.onclick != 'undefined' )
+				{
+					ge( 'EditMode' ).onclick = ge( 'EditMode' ).savedState.onclick;
+				}
+				ge( 'EditMode' ).removeAttribute( 'id' );
+			}
 		}
 	}
 	
@@ -5544,7 +5720,7 @@ Sections.accounts_users = function( cmd, extra )
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( 'getSetupList', { e:e, d:d } );
+			//console.log( 'getSetupList', { e:e, d:d } );
 			if( e != 'ok' )
 			{
 				if( callback ) return callback( false );
@@ -5622,7 +5798,7 @@ Sections.accounts_users = function( cmd, extra )
 					var image = new Image();
 					image.onload = function()
 					{
-						console.log( 'loaded image ... ', item );
+						//console.log( 'loaded image ... ', item );
 						// Resizes the image
 						var canvas = ge( 'AdminAvatar' );
 						var context = canvas.getContext( '2d' );
@@ -5821,7 +5997,7 @@ Sections.accounts_users = function( cmd, extra )
 	else
 	{
 		var o = ge( 'UserList' );
-		o.innerHTML = '';
+		if( o ) o.innerHTML = '';
 		
 		var h3 = document.createElement( 'h3' );
 		h3.innerHTML = '<strong>{i18n_permission_denied}</strong>';
@@ -5833,7 +6009,7 @@ Sections.accounts_users = function( cmd, extra )
 
 function refreshUserList( userInfo )
 {
-	console.log( 'func.init(  ) ', userInfo );
+	//console.log( 'func.init(  ) ', userInfo );
 	
 	if( !ge( 'UserListID_'+userInfo.ID ) && ge( 'ListUsersInner' ) )
 	{
@@ -5880,7 +6056,7 @@ function refreshUserList( userInfo )
 		
 		// TODO: Make support for updating the users list and setting it selected when there is change, also when there is a new user created, update the list with the new data ...
 		
-		console.log( ge( 'UserListID_'+userInfo.ID ) );
+		//console.log( ge( 'UserListID_'+userInfo.ID ) );
 		
 		//return;
 		
@@ -6041,7 +6217,7 @@ function getUserlist( callback, obj )
 		try
 		{
 			userList = JSON.parse( d );
-			console.log( { e:e, d:(userList?userList:d), args:args } );
+			//console.log( { e:e, d:(userList?userList:d), args:args } );
 		}
 		catch( e )
 		{
@@ -6079,7 +6255,7 @@ function getLastLoginlist( callback, users )
 			try
 			{
 				loginTime = JSON.parse( d );
-				console.log( { e:e, d:(loginTime?loginTime:d), args:args } );
+				//console.log( { e:e, d:(loginTime?loginTime:d), args:args } );
 			}
 			catch( e )
 			{
@@ -6402,7 +6578,7 @@ function Init()
 					
 					// Just loop it ...
 					
-					console.log( 'looping ... ' );
+					//console.log( 'looping ... ' );
 					
 					Init();
 				}
@@ -6538,7 +6714,7 @@ Sections.user_status_update = function( userid, status, callback )
 				var f = new Library( 'system.library' );
 				f.onExecuted = function( e, d )
 				{
-					console.log( 'Sections.user_status_update( '+userid+', '+status+' ) ', { e:e, d:d, args: args } );
+					//console.log( 'Sections.user_status_update( '+userid+', '+status+' ) ', { e:e, d:d, args: args } );
 					
 					if( e == 'ok' )
 					{
@@ -6578,7 +6754,7 @@ Sections.user_status_update = function( userid, status, callback )
 				var f = new Library( 'system.library' );
 				f.onExecuted = function( e, d )
 				{
-					console.log( 'Sections.user_status_update( '+userid+', '+status+' ) ', { e:e, d:d, args: args } );
+					//console.log( 'Sections.user_status_update( '+userid+', '+status+' ) ', { e:e, d:d, args: args } );
 					
 					if( e == 'ok' )
 					{
@@ -6643,7 +6819,7 @@ Sections.userrole_update = function( rid, userid, _this )
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( { e:e, d:d } );
+			//console.log( { e:e, d:d } );
 		}
 		m.execute( 'userroleupdate', { id: rid, userid: userid, data: data, authid: Application.authId } );
 	}
@@ -6780,14 +6956,14 @@ Sections.user_disk_save = function( userid, did )
 			data.authid = Application.authId;
 		}
 		
-		console.log( data );
+		//console.log( data );
 		
 		//return;
 		
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, dat )
 		{
-			console.log( 'Sections.user_disk_save ', { e:e, d:dat, args:data } );
+			//console.log( 'Sections.user_disk_save ', { e:e, d:dat, args:data } );
 			
 			if( e != 'ok' ) 
 			{
@@ -6861,7 +7037,7 @@ Sections.user_disk_cancel = function( userid )
 		
 		ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid );
 		
-		console.log( 'Application.sendMessage( { type: \'system\', command: \'refreshdoors\' } );' );
+		//console.log( 'Application.sendMessage( { type: \'system\', command: \'refreshdoors\' } );' );
 		
 		Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 	}
@@ -6888,7 +7064,7 @@ Sections.user_disk_remove = function( devname, did, userid )
 					var m = new Module( 'system' );
 					m.onExecuted = function( e, d )
 					{
-						console.log( 'deletedoor', { id:did, e:e, d:d } );
+						//console.log( 'deletedoor', { id:did, e:e, d:d } );
 						
 						if( e == 'ok' )
 						{
@@ -6946,7 +7122,7 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 		var n = new Module( 'system' );
 		n.onExecuted = function( ee, dat )
 		{
-			console.log( { e:ee, d:dat } );
+			//console.log( { e:ee, d:dat } );
 			
 			try
 			{
@@ -6962,7 +7138,7 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 			var m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{
-				console.log( 'user_disk_update ', { e:e, d:d } );
+				//console.log( 'user_disk_update ', { e:e, d:d } );
 				
 				var storage = { id : '', name : '', type : '', size : 512, user : user };
 			
@@ -7075,7 +7251,7 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 					str += '<div class="HContent70 FloatLeft Ellipsis">';
 					str += '<select class="FullWidth" id="Type" onchange="LoadDOSDriverGUI(this)"' + ( storage.id ? ' disabled="disabled"' : '' ) + '>';
 					
-					console.log( 'StorageForm ', storage );
+					//console.log( 'StorageForm ', storage );
 					
 					if( da )
 					{
@@ -7194,7 +7370,7 @@ Sections.user_disk_refresh = function( mountlist, userid )
 			mountlist = sorted;
 		}
 		
-		console.log( 'mountlist ', { mountlist: mountlist, userid: userid } );
+		//console.log( 'mountlist ', { mountlist: mountlist, userid: userid } );
 		
 		mlst += '<div class="HRow">';
 		for( var b in mountlist )
@@ -7215,7 +7391,7 @@ Sections.user_disk_refresh = function( mountlist, userid )
 			{
 				// Skip if user doesn't have access to this disk ...
 				//continue;
-				console.log( '['+mountlist[b].ID+']['+mountlist[b].Type+'] '+mountlist[b].Name+' has another owner id:'+mountlist[b].UserID );
+				//console.log( '['+mountlist[b].ID+']['+mountlist[b].Type+'] '+mountlist[b].Name+' has another owner id:'+mountlist[b].UserID );
 				//return '<div class="HRow"><div class="HContent100">' + i18n( 'i18n_user_disks_access_denied' ) + '</div></div>';
 			}
 			
@@ -7324,20 +7500,20 @@ Sections.user_disk_mount = function( devname, userid, _this )
 		{
 			unmountDrive( devname, userid, function( e, d )
 			{
-				console.log( 'unmountDrive( '+devname+', '+userid+' ) ', { e:e, d:d } );
+				//console.log( 'unmountDrive( '+devname+', '+userid+' ) ', { e:e, d:d } );
 				
 				if( e == 'ok' )
 				{
 					Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 					
-					console.log( 'Application.sendMessage( { type: \'system\', command: \'refreshdoors\' } );' );
+					//console.log( 'Application.sendMessage( { type: \'system\', command: \'refreshdoors\' } );' );
 					
 					Notify( { title: i18n( 'i18n_unmounting' ) + ' ' + devname + ':', text: i18n( 'i18n_successfully_unmounted' ) } );
 					
 					var u = new Module( 'system' );
 					u.onExecuted = function( ee, dd )
 					{
-						console.log( 'mountlist ', { e:ee, d:dd } );
+						//console.log( 'mountlist ', { e:ee, d:dd } );
 						
 						var ul = null;
 						try
@@ -7366,20 +7542,20 @@ Sections.user_disk_mount = function( devname, userid, _this )
 		{
 			mountDrive( devname, userid, function( e, d )
 			{
-				console.log( 'mountDrive( '+devname+', '+userid+' ) ', { e:e, d:d } );
+				//console.log( 'mountDrive( '+devname+', '+userid+' ) ', { e:e, d:d } );
 				
 				if( e == 'ok' )
 				{
 					Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 					
-					console.log( 'Application.sendMessage( { type: \'system\', command: \'refreshdoors\' } );' );
+					//console.log( 'Application.sendMessage( { type: \'system\', command: \'refreshdoors\' } );' );
 					
 					Notify( { title: i18n( 'i18n_mounting' ) + ' ' + devname + ':', text: i18n( 'i18n_successfully_mounted' ) } );
 					
 					var u = new Module( 'system' );
 					u.onExecuted = function( ee, dd )
 					{
-						console.log( 'mountlist ', { e:ee, d:dd } );
+						//console.log( 'mountlist ', { e:ee, d:dd } );
 						
 						var ul = null;
 						try
@@ -7422,7 +7598,7 @@ function StorageForm( storage, callback )
 		{
 			// return info that this is loaded.
 			
-			console.log( { e:e, d:d } );
+			//console.log( { e:e, d:d } );
 			
 			if( callback ) callback( storage );
 			
@@ -7690,7 +7866,7 @@ function mountDrive( devname, userid, callback )
 		
 		f.onExecuted = function( e, d )
 		{
-			console.log( 'mountDrive ( device/mount ) ', { vars: vars, e:e, d:d } );
+			//console.log( 'mountDrive ( device/mount ) ', { vars: vars, e:e, d:d } );
 			
 			if( callback ) callback( e, d );
 		}
@@ -7731,7 +7907,7 @@ function unmountDrive( devname, userid, callback )
 		
 		f.onExecuted = function( e, d )
 		{
-			console.log( 'unmountDrive ( device/unmount ) ', { vars: vars, e:e, d:d } );
+			//console.log( 'unmountDrive ( device/unmount ) ', { vars: vars, e:e, d:d } );
 			
 			if( callback ) callback( e, d );
 		}
@@ -7799,7 +7975,7 @@ function addUser( callback, username )
 		}
 		catch( e ) {  }
 		
-		console.log( 'addUser() ', { e:e, d:d, args: args } );
+		//console.log( 'addUser() ', { e:e, d:d, args: args } );
 		
 		if( e == 'ok' && d )
 		{
@@ -7849,9 +8025,15 @@ function saveUser( uid, cb, newuser )
 		usEmail    : 'email',
 		usUsername : 'username',
 		usPassword : 'password',
-		usLevel    : 'level',
 		usSetup    : 'setup'
 	};
+	
+	// TODO: Make sure that if you don't have GLOBAL or Level Admin, you cannot set a User or yourself to Level Admin ..
+	
+	if( Application.checkAppPermission( 'PERM_USER_GLOBAL' ) )
+	{
+		mapping[ 'usLevel' ] = 'level';
+	}
 	
 	for( var a in mapping )
 	{
@@ -7961,7 +8143,7 @@ function saveUser( uid, cb, newuser )
 		}
 		catch( e ) {  }
 		
-		console.log( { e:e, d:d, args: args } );
+		//console.log( { e:e, d:d, args: args } );
 		
 		if( !uid ) return;
 		
@@ -7984,7 +8166,7 @@ function saveUser( uid, cb, newuser )
 							var voice = false;
 							for( var v = 0; v < langs.length; v++ )
 							{
-								console.log( langs[v].lang.substr( 0, 2 ) );
+								//console.log( langs[v].lang.substr( 0, 2 ) );
 								if( langs[v].lang.substr( 0, 2 ) == ge( 'usLanguage' ).value )
 								{
 									voice = {
@@ -8065,7 +8247,7 @@ function saveUser( uid, cb, newuser )
 					var m = new Module( 'system' );
 					m.onExecuted = function( e, d )
 					{
-						console.log( 'applySetup() ', { e:e, d:d, args: { id: ( ge( 'usSetup' ).value ? ge( 'usSetup' ).value : '0' ), userid: uid, authid: Application.authId } } );
+						//console.log( 'applySetup() ', { e:e, d:d, args: { id: ( ge( 'usSetup' ).value ? ge( 'usSetup' ).value : '0' ), userid: uid, authid: Application.authId } } );
 					
 						if( callback ) return callback( true );
 					
@@ -8093,7 +8275,7 @@ function saveUser( uid, cb, newuser )
 				{
 					init = true; ignore = true;
 					
-					console.log( 'applySetup( '+init+' ) ' + ( (newuser?'true':'false')+' || '+' ( '+ge( 'usSetup' ).value+' != '+ge( 'usSetup' ).current+' )' ) );
+					//console.log( 'applySetup( '+init+' ) ' + ( (newuser?'true':'false')+' || '+' ( '+ge( 'usSetup' ).value+' != '+ge( 'usSetup' ).current+' )' ) );
 				}
 				
 				applySetup( init, function (  ) 
@@ -8105,7 +8287,7 @@ function saveUser( uid, cb, newuser )
 					{
 						ignore = false;
 						
-						console.log( 'updateLanguages( '+ignore+' ) || ( '+ge( 'usLanguage' ).value+' != '+ge( 'usLanguage' ).current+' )' );
+						//console.log( 'updateLanguages( '+ignore+' ) || ( '+ge( 'usLanguage' ).value+' != '+ge( 'usLanguage' ).current+' )' );
 					}
 					
 					updateLanguages( ignore, function(  )
@@ -8160,7 +8342,7 @@ function firstLogin( userid, callback )
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( 'firstLogin( '+userid+', callback ) ', { e:e, d:d, args: { userid: userid, authid: Application.authId } } );
+			//console.log( 'firstLogin( '+userid+', callback ) ', { e:e, d:d, args: { userid: userid, authid: Application.authId } } );
 			
 			if( e == 'ok' )
 			{
@@ -8174,7 +8356,7 @@ function firstLogin( userid, callback )
 						{
 							data[1] = JSON.parse( data[1] );
 							
-							console.log( data );
+							//console.log( data );
 						}
 						catch( e ) {  }
 					}
@@ -8214,7 +8396,7 @@ function removeUser( id )
 		
 		f.onExecuted = function( e, d )
 		{
-			console.log( { e:e, d:d, args:args } );
+			//console.log( { e:e, d:d, args:args } );
 			
 			if( e == 'ok' )
 			{
@@ -8245,7 +8427,7 @@ function removeUser( id )
 
 function cancelUser(  )
 {
-	console.log( 'cancelUser(  ) ' );
+	//console.log( 'cancelUser(  ) ' );
 	
 	if( ge( 'UserDetails' ) )
 	{
