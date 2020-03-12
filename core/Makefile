@@ -374,6 +374,10 @@ obj/%.o: system/permission/%.c system/permission/*.h system/permission/%.d
 obj/%.o: system/roles/%.c system/roles/*.h system/roles/%.d
 	@echo "\033[34mCompile ...\033[0m"
 	$(CC) $(CFLAGS) -c -o $@ $<
+
+obj/%.o: system/security/%.c system/security/*.h system/security/%.d
+	@echo "\033[34mCompile ...\033[0m"
+	$(CC) $(CFLAGS) -c -o $@ $<
 	
 # build/install
 

@@ -104,7 +104,7 @@ void SecurityManagerCheckSession( SecurityManager *sm, Http *request )
 					// count delay value
 					float delValue = ((float)hel->hel_Data) * 1.1f;
 					
-					DEBUG("SECURITY WARNING! Same call was made %d times, delay will be set to: %f\n", hel->hel_Data, delValue );
+					DEBUG("SECURITY WARNING! Same call was made %ld times, delay will be set to: %f\n", hel->hel_Data, delValue );
 					
 					if( hel->hel_Data > 5 )
 					{
@@ -116,7 +116,7 @@ void SecurityManagerCheckSession( SecurityManager *sm, Http *request )
 			}
 			else
 			{
-				DEBUG("create new entry: %s!\n", sesreq->hme_Data );
+				DEBUG("create new entry: %s!\n", (char *)sesreq->hme_Data );
 				if( FRIEND_MUTEX_LOCK( &(sm->sm_Mutex) ) == 0 )
 				{
 					HashmapLongPut( sm->sm_BadSessionLoginHM, StringDuplicate( sesreq->hme_Data ), 1 );
