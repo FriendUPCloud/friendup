@@ -669,6 +669,10 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			//
 			// Check all calls coming from sessions which do not longer exists
 			//
+			
+			SecurityManagerCheckSession( l->sl_SecurityManager, *request );
+			
+			/*
 			HashmapElement *sesreq = GetHEReq( *request, "sessionid" );
 			if( sesreq != NULL )
 			{
@@ -712,6 +716,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					}
 				}
 			}
+			*/
 		
 			if( response != NULL )
 			{

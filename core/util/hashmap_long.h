@@ -106,6 +106,12 @@ void HashmapLongFree( HashmapLong* in );
 
 int HashmapLongLength( HashmapLong* in );
 
+//
+//
+//
+
+void HashmapDeleteOldEntries( HashmapLong* in, int timeout );
+
 #endif
 
 // #ifdef __UTIL_HASHMAP_LONG_H__

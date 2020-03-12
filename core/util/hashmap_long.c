@@ -530,3 +530,30 @@ int HashmapLongRemove( HashmapLong *in, char* key  )
 	return MAP_MISSING;
 }
 
+//
+// Hashmap, delete old entries
+//
+
+void HashmapDeleteOldEntries( HashmapLong* in, int timeout )
+{
+	time_t timeNow = time( NULL );
+	
+	if( HashmapLongLength( in ) <= 0 )
+	{
+		return;
+	}
+
+	int i = 0;
+	for( i ; i < in->hl_TableSize; i++ )
+	{
+		if( in->hl_Data[i].hel_InUse != 0 )
+		{
+			if( (timeNow - in->hl_Data[i].hel_LastUpdate ) > timeout )
+			{
+				in->hl_Data[i].hel_InUse = 0;
+				in->hl_Size--;
+			}
+		}
+	}
+}
+

@@ -71,6 +71,7 @@
 #include <system/mobile/mobile_manager.h>
 #include <system/calendar/calendar_manager.h>
 #include <system/notification/notification_manager.h>
+#include <system/security/security_manager.h>
 
 #include <interface/socket_interface.h>
 #include <interface/string_interface.h>
@@ -247,6 +248,7 @@ typedef struct SystemBase
 	NotificationManager				*sl_NotificationManager;	// Notification Manager
 	PermissionManager				*sl_PermissionManager;		// Permission Manager
 	RoleManager						*sl_RoleManager;	// Role Manager
+	SecurityManager					*sl_SecurityManager;	// Security Manager
 
 	pthread_mutex_t 				sl_ResourceMutex;	// resource mutex
 	pthread_mutex_t					sl_InternalMutex;		// internal slib mutex
@@ -391,8 +393,6 @@ typedef struct SystemBase
 	int								l_ServerKeysNum;
 	
 	WebsocketAPNSConnector			*l_APNSConnection;
-	
-	HashmapLong						*l_badSessionLoginHM;
 } SystemBase;
 
 
