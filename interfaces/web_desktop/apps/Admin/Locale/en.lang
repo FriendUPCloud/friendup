@@ -94,15 +94,78 @@ i18n_find_applications                 : Find apps
 
 #permissions related
 
-i18n_PERM_USER_GLOBAL                  : Edit users globally
-i18n_PERM_USER_WORKGROUP               : Edit users per workgroup
-i18n_PERM_WORKGROUP_GLOBAL             : Edit workgroups globally
-i18n_PERM_WORKGROUP_WORKGROUP          : Edit workgroups
-i18n_PERM_TEMPLATE_GLOBAL              : Edit templates globally
-i18n_PERM_TEMPLATE_WORKGROUP           : Edit templates below a workgroup
+i18n_PERM_USER_CREATE_GLOBAL              : Create users globally
+i18n_PERM_USER_READ_GLOBAL                : View users globally
+i18n_PERM_USER_UPDATE_GLOBAL              : Edit users globally
+i18n_PERM_USER_DELETE_GLOBAL              : Delete users globally
 
-i18n_deleting_permission               : Deleting permission
-i18n_deleting_permission_verify        : Please confirm that you want to delete this permission.
+i18n_PERM_USER_CREATE_IN_WORKGROUP        : Create users in workgroup
+i18n_PERM_USER_READ_IN_WORKGROUP          : View users in workgroup
+i18n_PERM_USER_UPDATE_IN_WORKGROUP        : Edit users in workgroup
+i18n_PERM_USER_DELETE_IN_WORKGROUP        : Delete users in workgroup
+
+i18n_PERM_WORKGROUP_CREATE_GLOBAL         : Create workgroups globally
+i18n_PERM_WORKGROUP_READ_GLOBAL           : View workgroups globally
+i18n_PERM_WORKGROUP_UPDATE_GLOBAL         : Edit workgroups globally
+i18n_PERM_WORKGROUP_DELETE_GLOBAL         : Delete workgroups globally
+
+i18n_PERM_WORKGROUP_CREATE_IN_WORKGROUP   : Create workgroups in workgroup
+i18n_PERM_WORKGROUP_READ_IN_WORKGROUP     : View workgroups in workgroup
+i18n_PERM_WORKGROUP_UPDATE_IN_WORKGROUP   : Edit workgroups in workgroup
+i18n_PERM_WORKGROUP_DELETE_IN_WORKGROUP   : Delete workgroups in workgroup
+
+i18n_PERM_ROLE_CREATE_GLOBAL              : Create roles globally
+i18n_PERM_ROLE_READ_GLOBAL                : View roles globally
+i18n_PERM_ROLE_UPDATE_GLOBAL              : Edit roles globally
+i18n_PERM_ROLE_DELETE_GLOBAL              : Delete roles globally
+
+i18n_PERM_ROLE_CREATE_IN_WORKGROUP        : Create roles in workgroup
+i18n_PERM_ROLE_READ_IN_WORKGROUP          : View roles in workgroup
+i18n_PERM_ROLE_UPDATE_IN_WORKGROUP        : Edit roles in workgroup
+i18n_PERM_ROLE_DELETE_IN_WORKGROUP        : Delete roles in workgroup
+
+i18n_PERM_STORAGE_CREATE_GLOBAL           : Create storage globally
+i18n_PERM_STORAGE_READ_GLOBAL             : View storage globally
+i18n_PERM_STORAGE_UPDATE_GLOBAL           : Edit storage globally
+i18n_PERM_STORAGE_DELETE_GLOBAL           : Delete storage globally
+
+i18n_PERM_STORAGE_CREATE_IN_WORKGROUP     : Create storage in workgroup
+i18n_PERM_STORAGE_READ_IN_WORKGROUP       : View storage in workgroup
+i18n_PERM_STORAGE_UPDATE_IN_WORKGROUP     : Edit storage in workgroup
+i18n_PERM_STORAGE_DELETE_IN_WORKGROUP     : Delete storage in workgroup
+
+i18n_PERM_APPLICATION_CREATE_GLOBAL       : Create applications globally
+i18n_PERM_APPLICATION_READ_GLOBAL         : View applications globally
+i18n_PERM_APPLICATION_UPDATE_GLOBAL       : Edit applications globally
+i18n_PERM_APPLICATION_DELETE_GLOBAL       : Delete applications globally
+
+i18n_PERM_APPLICATION_CREATE_IN_WORKGROUP : Create applications in workgroup
+i18n_PERM_APPLICATION_READ_IN_WORKGROUP   : View applications in workgroup
+i18n_PERM_APPLICATION_UPDATE_IN_WORKGROUP : Edit applications in workgroup
+i18n_PERM_APPLICATION_DELETE_IN_WORKGROUP : Delete applications in workgroup
+
+i18n_PERM_LOOKNFEEL_CREATE_GLOBAL         : Create look and feel globally
+i18n_PERM_LOOKNFEEL_READ_GLOBAL           : View look and feel globally
+i18n_PERM_LOOKNFEEL_UPDATE_GLOBAL         : Edit look and feel globally
+i18n_PERM_LOOKNFEEL_DELETE_GLOBAL         : Delete look and feel globally
+
+i18n_PERM_LOOKNFEEL_CREATE_IN_WORKGROUP   : Create look and feel in workgroup
+i18n_PERM_LOOKNFEEL_READ_IN_WORKGROUP     : View look and feel in workgroup
+i18n_PERM_LOOKNFEEL_UPDATE_IN_WORKGROUP   : Edit look and feel in workgroup
+i18n_PERM_LOOKNFEEL_DELETE_IN_WORKGROUP   : Delete look and feel in workgroup
+
+i18n_PERM_TEMPLATE_CREATE_GLOBAL          : Create templates globally
+i18n_PERM_TEMPLATE_READ_GLOBAL            : View templates globally
+i18n_PERM_TEMPLATE_UPDATE_GLOBAL          : Edit templates globally
+i18n_PERM_TEMPLATE_DELETE_GLOBAL          : Delete templates globally
+
+i18n_PERM_TEMPLATE_CREATE_IN_WORKGROUP    : Create templates in workgroup
+i18n_PERM_TEMPLATE_READ_IN_WORKGROUP      : View templates in workgroup
+i18n_PERM_TEMPLATE_UPDATE_IN_WORKGROUP    : Edit templates in workgroup
+i18n_PERM_TEMPLATE_DELETE_IN_WORKGROUP    : Delete templates in workgroup
+
+i18n_deleting_permission                  : Deleting permission
+i18n_deleting_permission_verify           : Please confirm that you want to delete this permission.
 
 #printers related
 
