@@ -144,11 +144,13 @@ function handleFileCallback( $user, $filepath, $requestjson, $authid = false, $w
 
 function tellApplication( $command, $user, $windowid, $authid )
 {
+
+	faLog( 'tellApplication' . $command . ' :: ' . $user);
+
 	global $SqlDatabase, $Config, $User;
 	
 	if( !$windowid ) return false;
 	if( !$Config ) faConnectDB( $user );
-	
 	
 	$messagestring = '/system.library/user/servermessage?message=' . rawurlencode( addslashes( '{"msgtype":"applicationmessage","targetapp":"' .  $windowid . '","applicationcommand":"'. $command .'"}' ) );
 
@@ -225,6 +227,7 @@ function getUserFile( $username, $filePath )
 */
 function getOriginalFilePath( $inpath )
 {
+	$inpath = urldecode($inpath);
 	//check that we dont write to a hidden version lockfile - correct the path if we do get this...
 	$filename =  strpos($inpath, '/') > 1 ? end( explode('/', $inpath) ) : end( explode(':', $inpath) );
 	if( strpos($filename, '._') == 0 )
@@ -344,6 +347,39 @@ function saveUserFile( $username, $filePath, $json, $windowid = false, $authid =
 		curl_close( $c );
 		
 		$file = getUserFile( $username, $filePath );
+		
+		//check that we have a user tha tis still editing the docsument... check the info file.
+		if( $file )
+		{
+			$fileinfo = $file->GetFileInfo();
+			faLog( 'Fileinfo here is ' . $fileinfo );
+			if( $fileinfo )
+			{
+				$infojson = '';
+				try
+				{
+					$infojson = json_decode( $fileinfo );
+				}
+				catch(Exception $e)
+				{
+					die('{"error":1}');
+				}
+				
+				if( $infojson && is_array($infojson->active_lock_user ) )
+				{
+					
+					if( !in_array($username, $infojson->active_lock_user) )
+					{
+						faLog( 'Elvis has left the building. Find a new one ' . $username . ' : ' .  $infojson->active_lock_user[0] );
+						
+						$username = $infojson->active_lock_user[0];
+						faConnectDB( $username );
+
+						$file = getUserFile( $username, $filePath );
+					}
+				}
+			}
+		}
 		
 		if( !$fc )
 		{
