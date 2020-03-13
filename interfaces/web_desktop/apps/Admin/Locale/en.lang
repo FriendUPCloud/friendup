@@ -16,6 +16,8 @@ i18n_level                             : Level
 i18n_language                          : Language
 i18n_setup                             : Template
 
+i18n_fileselectoravatar                : Please choose a PNG image
+
 i18n_templates                         : Templates
 i18n_template_details                  : Template details
 i18n_new_template                      : New template
