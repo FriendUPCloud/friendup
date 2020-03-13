@@ -56,6 +56,7 @@
 #include <system/mobile/mobile_web.h>
 #include <system/usergroup/user_group_manager_web.h>
 #include <system/notification/notification_manager_web.h>
+#include <strings.h>
 
 #define LIB_NAME "system.library"
 #define LIB_VERSION 		1
@@ -581,7 +582,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						{
 							DEBUG("CHECK remote user: %s pass %s  provided pass %s \n", curusr->u_Name, curusr->u_Password, (char *)lpass );
 						
-							if( strcmp( curusr->u_Name, (char *)uname->data ) == 0  )
+							if( strcasecmp( curusr->u_Name, (char *)uname->data ) == 0 )
 							{
 								FBOOL isUserSentinel = FALSE;
 							
