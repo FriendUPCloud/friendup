@@ -119,6 +119,8 @@ void SecurityManagerCheckSession( SecurityManager *sm, Http *request )
 				DEBUG("create new entry: %s!\n", (char *)sesreq->hme_Data );
 				if( FRIEND_MUTEX_LOCK( &(sm->sm_Mutex) ) == 0 )
 				{
+					//DEBUG("\n\n\n\n\n\n\n\n\n\n\n\n");
+					
 					HashmapLongPut( sm->sm_BadSessionLoginHM, StringDuplicate( sesreq->hme_Data ), 1 );
 					FRIEND_MUTEX_UNLOCK( &(sm->sm_Mutex) );
 				}

@@ -211,7 +211,7 @@ int HashmapLongHash( HashmapLong* in, const char* key )
 	/* Linear probing */
 	for( unsigned int i = 0; i < MAX_CHAIN_LENGTH; i++ )
 	{
-		if( in->hl_Data[curr].hel_InUse == 0 )
+		if( in->hl_Data[curr].hel_InUse == FALSE )
 		{
 			return curr;
 		}
@@ -257,22 +257,22 @@ int HashmapLongRehash( HashmapLong* in )
 	/* Rehash the elements */
 	for( i = 0; i < oldSize; i++ )
 	{
-        int status;
+		int status;
 
-        if (curr[i].hel_InUse == 0)
+		if( curr[i].hel_InUse == FALSE )
 		{
-            continue;
+			continue;
 		}
             
 		status = HashmapLongPut( m, curr[i].hel_Key, curr[i].hel_Data );
 		if( status != MAP_OK )
 		{
-			FFree(curr);
+			FFree( curr );
 			return status;
 		}
 	}
 
-	FFree(curr);
+	FFree( curr );
 
 	return MAP_OK;
 }
@@ -302,17 +302,17 @@ int HashmapLongPut( HashmapLong* in, char* key, FLONG value )
 
 	// Set the data
 
-	in->hl_Data[index].hel_LastUpdate = time( NULL ); // set timestamp
+	in->hl_Data[ index ].hel_LastUpdate = time( NULL ); // set timestamp
 	
-	in->hl_Data[index].hel_Data = value;
-	if( in->hl_Data[index].hel_Key )
+	in->hl_Data[ index ].hel_Data = value;
+	if( in->hl_Data[ index ].hel_Key != NULL )
 	{
-		FFree( in->hl_Data[index].hel_Key );
-		in->hl_Data[index].hel_Key = NULL;
+		FFree( in->hl_Data[ index ].hel_Key );
+		in->hl_Data[ index ].hel_Key = NULL;
 	}
 	
-	in->hl_Data[index].hel_Key = key;
-	in->hl_Data[index].hel_InUse = TRUE;
+	in->hl_Data[ index ].hel_Key = key;
+	in->hl_Data[ index ].hel_InUse = TRUE;
 	in->hl_Size++; 
 
 	return MAP_OK;
@@ -507,10 +507,10 @@ int HashmapLongRemove( HashmapLong *in, char* key  )
 		{
 			if( m->hl_Data[curr].hel_Key != NULL )
 			{
-				if(  strcmp( m->hl_Data[curr].hel_Key, key ) == 0 )
+				if( strcmp( m->hl_Data[curr].hel_Key, key ) == 0 )
 				{
 					// Blank out the fields
-					m->hl_Data[curr].hel_InUse = 0;
+					m->hl_Data[curr].hel_InUse = FALSE;
 
 					m->hl_Data[curr].hel_Data = -1;
 				
@@ -550,8 +550,9 @@ void HashmapDeleteOldEntries( HashmapLong* in, int timeout )
 		{
 			if( (timeNow - in->hl_Data[i].hel_LastUpdate ) > timeout )
 			{
-				in->hl_Data[i].hel_InUse = 0;
+				in->hl_Data[i].hel_InUse = FALSE;
 				in->hl_Size--;
+				FFree( in->hl_Data[i].hel_Key );
 			}
 		}
 	}
