@@ -413,15 +413,15 @@ void HashmapLongFree( HashmapLong* in )
 	{
 		return;
 	}
-	HashmapElementLong e;
 	unsigned int i = 0;
+	
+	DEBUG("HashmapLongFree. Size %d\n", in->hl_TableSize );
 	
 	for( ; i < in->hl_TableSize; i++ )
 	{
-		e = in->hl_Data[i];
-		if( e.hel_InUse == TRUE )
+		if( in->hl_Data[i].hel_InUse == TRUE )
 		{
-			if( e.hel_Key  != NULL ) FFree( e.hel_Key );
+			if( in->hl_Data[i].hel_Key  != NULL ) FFree( in->hl_Data[i].hel_Key );
 		}
 	}
 	if( in->hl_Data != NULL )
@@ -544,7 +544,7 @@ void HashmapDeleteOldEntries( HashmapLong* in, int timeout )
 	}
 
 	int i = 0;
-	for( i ; i < in->hl_TableSize; i++ )
+	for( ; i < in->hl_TableSize; i++ )
 	{
 		if( in->hl_Data[i].hel_InUse != 0 )
 		{

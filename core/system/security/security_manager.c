@@ -36,6 +36,8 @@ SecurityManager *SecurityManagerNew( void *sb )
 		sm->sm_SB = sb;
 		sm->sm_SessionTimeout = 60*60;	// 60 seconds, 60 minutes = 1h
 		
+		sm->sm_BadSessionLoginHM = HashmapLongNew();
+		
 		pthread_mutex_init( &(sm->sm_Mutex), NULL );
 		
 		return sm;
@@ -50,6 +52,7 @@ SecurityManager *SecurityManagerNew( void *sb )
  */
 void SecurityManagerDelete( SecurityManager *sm )
 {
+	DEBUG("[SecurityManagerDelete] security manager ptr: %p\n", sm );
 	if( sm != NULL )
 	{
 		HashmapLongFree( sm->sm_BadSessionLoginHM );
