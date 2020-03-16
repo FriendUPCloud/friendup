@@ -193,6 +193,7 @@ inline static void NotifyExtServices( SystemBase *l, Http *request, User *usr, c
 	BufStringAddSize( bs, "]}", 2 );
 	//DEBUG("NotifyExtServices3: %s\n", bs->bs_Buffer );
 	
+	DEBUG("NotifyExtServices - send information to 3rd party services\n");
 	NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", action, bs->bs_Buffer );
 	
 	BufStringDelete( bs );
@@ -923,6 +924,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							UGMGetUserGroupsDB( l->sl_UGM, usr->u_ID, bs );
 							BufStringAddSize( bs, "]}", 2 );
 							
+							DEBUG("Updatestatus - send information to 3rd party services\n");
 							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
 							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "update", msg );
 							
