@@ -2989,6 +2989,13 @@ body:not([mobile]).ShowTasks #TaskSwitcher .Current .Close
 	transition: background,color 0.25s;
 }
 
+#DoorsScreen .Left > .VirtualWorkspaces > div.Workspace.WithIcon
+{
+	text-align: center;
+	font-size: 0.9em;
+	line-height: 16px;
+}
+
 #DoorsScreen .Left > .VirtualWorkspaces > div.Active
 {
 	background: transparent;

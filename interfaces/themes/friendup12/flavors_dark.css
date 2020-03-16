@@ -353,7 +353,7 @@ html body.Dark .Screen > .TitleBar > .Left *
 
 body.Dark #DoorsScreen .Left > .VirtualWorkspaces > div.Active 
 {
-	border: 1px solid #455155;
+	border: 0;
 }
 
 [mobile].Dark .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name,

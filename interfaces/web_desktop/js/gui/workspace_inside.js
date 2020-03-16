@@ -378,7 +378,15 @@ var WorkspaceInside = {
 					var w = document.createElement( 'div' );
 					w.className = 'Workspace';
 					if( a == globalConfig.workspaceCurrent ) w.className += ' Active';
-					w.innerHTML = '<span>' + ( a + 1 ) + '</span>';
+					if( globalConfig.workspace_labels && globalConfig.workspace_labels[ a ] )
+					{
+						w.innerHTML = '<span class="' + globalConfig.workspace_labels[ a ] + '"></span>';
+						w.className += ' WithIcon';
+					}
+					else
+					{
+						w.innerHTML = '<span>' + ( a + 1 ) + '</span>';
+					}
 					w.ind = a;
 					w.onmousedown = function( e )
 					{
@@ -1718,6 +1726,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						//console.log = function(){};
 					}
 					
+					if( dat.workspace_labels )
+					{
+						globalConfig.workspace_labels = dat.workspace_labels;
+					}
+					else
+					{
+						globalConfig.workspace_labels = [];
+					}
+					
 					// Make sure iOS has the correct information
 					if( window.friendApp && window.webkit && window.friendApp.setBackgroundColor )
 					{
@@ -1854,7 +1871,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			'menumode', 'startupsequence', 'navigationmode', 'windowlist', 
 			'focusmode', 'hiddensystem', 'workspacecount', 
 			'scrolldesktopicons', 'wizardrun', 'themedata_' + Workspace.theme,
-			'workspacemode'
+			'workspacemode', 'workspace_labels'
 		] } );
 	},
 	// Called on onunload

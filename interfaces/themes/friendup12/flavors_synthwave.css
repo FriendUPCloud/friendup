@@ -442,7 +442,7 @@ html body.Synthwave .Screen > .TitleBar > .Left *
 
 body.Synthwave #DoorsScreen .Left > .VirtualWorkspaces > div.Active 
 {
-	border: 1px solid #505050;
+	border: 0;
 }
 
 .Synthwave .FileBrowser div.Name.Active
