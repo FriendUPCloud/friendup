@@ -925,8 +925,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							BufStringAddSize( bs, "]}", 2 );
 							
 							DEBUG("Updatestatus - send information to 3rd party services\n");
-							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
-							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "update", msg );
 							
 							BufStringDelete( bs );
 						}
