@@ -200,4 +200,16 @@ void USMCloseUnusedWebSockets( UserSessionManager *usm );
 
 int USMGetSessionsDeleteDB( UserSessionManager *smgr, const char *sessionid );
 
+//
+// Generate temporary session
+//
+
+char *USMCreateTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, FULONG userID, int type );
+
+//
+// Destroy temporary session
+//
+
+void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, char *sessionID );
+
 #endif //__SYSTEM_USER_USER_SESSIONMANAGER_H__

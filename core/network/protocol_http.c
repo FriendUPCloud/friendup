@@ -845,9 +845,9 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 							char *fs_Type = NULL;
 							char *fs_Path = NULL;
 							char *usrSessionID = NULL;
+							FBOOL sessionIDGenerated = FALSE;
 							
 							sqllib->SNPrintF( sqllib, query, sizeof(query), "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,u.SessionID from FFileShared fs inner join Filesystem f on fs.Devname=f.Name AND fs.UserID=f.UserID inner join FUser u on fs.UserID=u.ID where `Hash`='%s'", path->parts[ 1 ] );
-							//sqllib->SNPrintF( sqllib, query, sizeof(query), " `Hash` = '%s'", path->parts[ 1 ] );
 							
 							void *res = sqllib->Query( sqllib, query );
 							if( res != NULL )
@@ -882,6 +882,53 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 									}
 								}
 								sqllib->FreeResult( sqllib, res );
+							}
+							else	// if res == NULL
+							{
+								DEBUG("First call releated to shared files did not return any results\n");
+								sqllib->SNPrintF( sqllib, query, sizeof(query), "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,u.SessionID from FFileShared fs inner join Filesystem f on fs.FSID=f.ID AND fs.UserID=f.UserID inner join FUser u on fs.UserID=u.ID where `Hash`='%s'", path->parts[ 1 ] );
+							
+								res = sqllib->Query( sqllib, query );
+								if( res != NULL )
+								{
+									char **row;
+									if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+									{
+										if( row[ 0 ] != NULL )
+										{
+											fs_Name = StringDuplicate( row[ 0 ] );
+										}
+										if( row[ 1 ] != NULL )
+										{
+											fs_DeviceName = StringDuplicate( row[ 1 ] );
+										}
+										if( row[ 2 ] != NULL )
+										{
+											fs_Path = StringDuplicate( row[ 2 ] );
+										}
+										if( row[ 3 ] != NULL )
+										{
+											char *end;
+											fs_IDUser = strtoul( row[ 3 ], &end, 0 );
+										}
+										if( row[ 4 ] != NULL )
+										{
+											fs_Type = StringDuplicate( row[ 4 ] );
+										}
+										if( row[ 5 ] != NULL )
+										{
+											usrSessionID = StringDuplicate( row[ 5 ] );
+										}
+									}
+									sqllib->FreeResult( sqllib, res );
+								}
+							}
+							
+							// session was not found. Lets generate temporary one
+							if( usrSessionID == NULL )
+							{
+								sessionIDGenerated = TRUE;
+								usrSessionID = USMCreateTemporarySession( SLIB->sl_USM, sqllib, fs_IDUser, 0 );
 							}
 
 							//if( ( fs = sqllib->Load( sqllib, FileSharedTDesc, query, &entries ) ) != NULL )
@@ -1048,15 +1095,8 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 										if( tuser != NULL )
 										{
 											char *sess = USMUserGetFirstActiveSessionID( SLIB->sl_USM, tuser );
-											/*
-											if( sess && rootDev->f_SessionID )
-											{
-												FFree( rootDev->f_SessionID );
-												rootDev->f_SessionID = StringDuplicate( tuser->u_MainSessionID );
-												DEBUG("[ProtocolHttp] Session %s tusr ptr %p\n", sess, tuser );
-											}
-											*/
-											if( sess )
+
+											if( sess != NULL )
 											{
 												rootDev->f_SessionIDPTR = tuser->u_MainSessionID;
 												DEBUG("[ProtocolHttp] Session %s tusr ptr %p\n", sess, tuser );
@@ -1203,6 +1243,13 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 							if( fs_Name != NULL ) FFree( fs_Name );
 							if( fs_Type != NULL ) FFree( fs_Type );
 							if( fs_Path != NULL ) FFree( fs_Path );
+							
+							// if temporary session was generated, we must remove it
+							if( sessionIDGenerated == TRUE )
+							{
+								USMDestroyTemporarySession( SLIB->sl_USM, sqllib, usrSessionID );
+							}
+							
 							if( usrSessionID != NULL ) FFree( usrSessionID );
 						}
 					}
