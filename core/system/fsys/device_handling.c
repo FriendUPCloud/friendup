@@ -2589,22 +2589,35 @@ ug.UserID = '%ld' \
  *
  * @param dm pointer to DeviceManager
  * @param sqllib pointer to sql.library
+ * @param fsysid filesystem id
  * @param uid user ID to which device is assigned
  * @param devname device name
  * @param mountError pointer to place where error string will be stored
  * @return when device exist and its avaiable then pointer to it is returned
  */
 
-File *GetUserDeviceByUserID( DeviceManager *dm, SQLLibrary *sqllib, FULONG uid, const char *devname, char **mountError )
+File *GetUserDeviceByFSysUserIDDevName( DeviceManager *dm, SQLLibrary *sqllib, FULONG fsysid, FULONG uid, const char *devname, char **mountError )
 {
 	SystemBase *l = (SystemBase *)dm->dm_SB;
 	File *device = NULL;
 	char temptext[ 512 ];
 	
-	sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "\
+	DEBUG("[GetUserDeviceByFSysUserIDDevName] start\n");
+	// if fsysid is provided we should try to find device by it
+	if( fsysid > 0 )
+	{
+		sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "\
 SELECT `Name`, `Type`, `Server`, `Port`, `Path`, `Mounted`, `UserID`, `ID` \
 FROM `Filesystem` \
-WHERE `UserID` = '%ld' AND `Name` = '%s'", uid, devname );
+WHERE `ID`='%ld'", fsysid );
+	}
+	else
+	{
+		sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "\
+SELECT `Name`, `Type`, `Server`, `Port`, `Path`, `Mounted`, `UserID`, `ID` \
+FROM `Filesystem` \
+WHERE `UserID`='%ld' AND `Name`='%s'", uid, devname );
+	}
 
 	void *res = sqllib->Query( sqllib, temptext );
 	if( res == NULL )
@@ -2679,7 +2692,7 @@ WHERE `UserID` = '%ld' AND `Name` = '%s'", uid, devname );
 		}
 	}	// going through all rows
 
-	sqllib->FreeResult( sqllib, res );
+	//sqllib->FreeResult( sqllib, res );
 	
 	DEBUG( "[GetUserDeviceByUserID] Successfully freed.\n" );
 	

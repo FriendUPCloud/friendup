@@ -840,6 +840,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 						if( sqllib != NULL )
 						{
 							FULONG fs_IDUser = 0;
+							FULONG fsysID = 0;
 							char *fs_DeviceName = NULL;
 							char *fs_Name = NULL;
 							char *fs_Type = NULL;
@@ -847,7 +848,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 							char *usrSessionID = NULL;
 							FBOOL sessionIDGenerated = FALSE;
 							
-							sqllib->SNPrintF( sqllib, query, sizeof(query), "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,u.SessionID from FFileShared fs inner join Filesystem f on fs.Devname=f.Name AND fs.UserID=f.UserID inner join FUser u on fs.UserID=u.ID where `Hash`='%s'", path->parts[ 1 ] );
+							sqllib->SNPrintF( sqllib, query, sizeof(query), "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,u.SessionID,f.ID from FFileShared fs inner join Filesystem f on fs.Devname=f.Name AND fs.UserID=f.UserID inner join FUser u on fs.UserID=u.ID where `Hash`='%s'", path->parts[ 1 ] );
 							
 							void *res = sqllib->Query( sqllib, query );
 							if( res != NULL )
@@ -880,6 +881,11 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 									{
 										usrSessionID = StringDuplicate( row[ 5 ] );
 									}
+									if( row[ 6 ] != NULL )
+									{
+										char *end;
+										fsysID = strtoul( row[ 6 ], &end, 0 );
+									}
 								}
 								sqllib->FreeResult( sqllib, res );
 							}
@@ -887,7 +893,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 							if( usrSessionID == NULL )// if res == NULL
 							{
 								DEBUG("First call releated to shared files did not return any results\n");
-								sqllib->SNPrintF( sqllib, query, sizeof(query), "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,u.SessionID from FFileShared fs inner join Filesystem f on fs.FSID=f.ID inner join FUser u on fs.UserID=u.ID where `Hash`='%s'", path->parts[ 1 ] );
+								sqllib->SNPrintF( sqllib, query, sizeof(query), "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,u.SessionID,f.ID from FFileShared fs inner join Filesystem f on fs.FSID=f.ID inner join FUser u on fs.UserID=u.ID where `Hash`='%s'", path->parts[ 1 ] );
 							
 								res = sqllib->Query( sqllib, query );
 								if( res != NULL )
@@ -920,6 +926,11 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 										{
 											usrSessionID = StringDuplicate( row[ 5 ] );
 										}
+										if( row[ 6 ] != NULL )
+										{
+											char *end;
+											fsysID = strtoul( row[ 6 ], &end, 0 );
+										}
 									}
 									sqllib->FreeResult( sqllib, res );
 								}
@@ -949,7 +960,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 								User *u = UMGetUserByID( SLIB->sl_UM, fs_IDUser );
 								if( u != NULL )
 								{
-									rootDev = GetUserDeviceByUserID( SLIB->sl_DeviceManager, sqllib, fs_IDUser, fs_DeviceName, &error );
+									rootDev = GetUserDeviceByFSysUserIDDevName( SLIB->sl_DeviceManager, sqllib, fsysID, fs_IDUser, fs_DeviceName, &error );
 								} // if user is not in memory (and his drives), we must mount drives only
 								else
 								{
@@ -961,6 +972,9 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 										{FSys_Mount_User_SessionID, (FULONG)usrSessionID },
 										{TAG_DONE, TAG_DONE}
 									};
+									
+									DEBUG("MountFSNoUser\n");
+									
 									int err = MountFSNoUser( SLIB->sl_DeviceManager, (struct TagItem *)&tags, &(rootDev), &error );
 									if( err != 0 )
 									{
