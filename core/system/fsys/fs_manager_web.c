@@ -2259,6 +2259,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								tmpfs->fs_IDUser = loggedSession->us_User->u_ID;
 								// we also store filesystemID
 								tmpfs->fs_FSID = actDev->f_ID;
+								
+								DEBUG("\n\n\n\n\n tmpfs->fs_FSID : %lu\n\n\n\n\n", tmpfs->fs_FSID );
 						
 								tmpfs->fs_DeviceName = StringDuplicate( devname );
 						
