@@ -876,14 +876,15 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 									{
 										fs_Type = StringDuplicate( row[ 4 ] );
 									}
-									if( row[ 5 ] != NULL )
+									if( row[ 5 ] != NULL && strlen( row[ 5 ] ) > 0 )
 									{
 										usrSessionID = StringDuplicate( row[ 5 ] );
 									}
 								}
 								sqllib->FreeResult( sqllib, res );
 							}
-							else	// if res == NULL
+							
+							if( usrSessionID == NULL )// if res == NULL
 							{
 								DEBUG("First call releated to shared files did not return any results\n");
 								sqllib->SNPrintF( sqllib, query, sizeof(query), "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,u.SessionID from FFileShared fs inner join Filesystem f on fs.FSID=f.ID AND fs.UserID=f.UserID inner join FUser u on fs.UserID=u.ID where `Hash`='%s'", path->parts[ 1 ] );
@@ -915,7 +916,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 										{
 											fs_Type = StringDuplicate( row[ 4 ] );
 										}
-										if( row[ 5 ] != NULL )
+										if( row[ 5 ] != NULL && strlen( row[ 5 ] ) > 0 )
 										{
 											usrSessionID = StringDuplicate( row[ 5 ] );
 										}

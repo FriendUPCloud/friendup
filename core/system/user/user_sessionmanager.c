@@ -1217,7 +1217,8 @@ char *USMCreateTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, F
 	{
 		char temp[ 1024 ];
 	 
-		snprintf( temp, sizeof(temp), "INSERT INTO `FUserSession` ('SessionID','UserID','DeviceIdentity','LoggedTime') VALUES('%s',%lu,'tempsession',%lu)", sessionID, userID, time(NULL) );
+		//INSERT INTO `FUserSession` ( `UserID`, `DeviceIdentity`, `SessionID`, `LoggedTime`) VALUES (0, 'tempsession','93623b68df9e390bc89eff7875d6b8407257d60d',0 )
+		snprintf( temp, sizeof(temp), "INSERT INTO `FUserSession` (`UserID`,`DeviceIdentity`,`SessionID`,`LoggedTime`) VALUES (%lu,'tempsession','%s',%lu)", userID, sessionID, time(NULL) );
 
 		DEBUG("USMCreateTemporarySession launched SQL: %s\n", temp );
 	
