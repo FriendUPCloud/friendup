@@ -2692,7 +2692,7 @@ WHERE `UserID`='%ld' AND `Name`='%s'", uid, devname );
 		}
 	}	// going through all rows
 
-	//sqllib->FreeResult( sqllib, res );
+	sqllib->FreeResult( sqllib, res );
 	
 	DEBUG( "[GetUserDeviceByUserID] Successfully freed.\n" );
 	
