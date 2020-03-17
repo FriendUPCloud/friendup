@@ -23,7 +23,7 @@
 #include <system/systembase.h>
 #include <system/user/user_manager.h>
 #include <system/fsys/door_notification.h>
-#include <system/util/session_id.h>
+#include <util/session_id.h>
 
 /**
  * Create new User Session Manager
