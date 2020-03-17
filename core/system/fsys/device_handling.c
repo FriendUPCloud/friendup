@@ -2616,7 +2616,7 @@ WHERE `ID`='%ld'", fsysid );
 		sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "\
 SELECT `Name`, `Type`, `Server`, `Port`, `Path`, `Mounted`, `UserID`, `ID` \
 FROM `Filesystem` \
-WHERE `UserID`='%ld' AND `Name`='%s'", uid, devname );
+WHERE (`UserID`=%ld OR `GroupID` in( select GroupID from FUserToGroup where UserID=%ld ) ) AND `Name`='%s'", uid, uid, devname );
 	}
 
 	void *res = sqllib->Query( sqllib, temptext );
