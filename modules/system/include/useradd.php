@@ -11,7 +11,7 @@
 *****************************************************************************©*/
 
 // Helper functions ...
-
+// TODO: Should be a global Friend module function.... so be it for now.
 function fc_query( $command = '', $args = false, $method = 'POST', $headers = false )
 {
 	global $Config;	
@@ -88,13 +88,13 @@ function fc_query( $command = '', $args = false, $method = 'POST', $headers = fa
 		if( is_object( $args ) )
 		{
 			$args = array(
-				'args' => urlencode( json_encode( $args ) )
+				'args' => json_encode( $args )
 			);
 		}
 		else if( is_string( $args ) )
 		{
 			$args = array(
-				'args' => urlencode( $args )
+				'args' => $args
 			);
 		}
 	
@@ -151,8 +151,6 @@ if( isset( $args->authid ) )
 	}
 }
 
-
-
 if( $level == 'Admin' )
 {
 	// Make sure we have the "User" type group
@@ -160,7 +158,7 @@ if( $level == 'Admin' )
 	$g->Name = 'User';
 	$g->Load();
 	$g->Save();
-
+	
 	if( $g->ID > 0 )
 	{
 		// Create the new user
@@ -176,11 +174,8 @@ if( $level == 'Admin' )
 
 		if( $u->ID > 0 )
 		{
-			
 			$SqlDatabase->query( 'INSERT INTO FUserToGroup ( UserID, UserGroupID ) VALUES ( \'' . $u->ID . '\', \'' . $g->ID . '\' )' );
-			
-			
-			
+				
 			// TODO: Should be a check if the user that is creating this new user has access to add users to defined workgroup(s) before saving ... 
 			
 			// TODO: It's required to add user with a workgroup if the user adding is not Admin and have rolepermissions ...
@@ -195,44 +190,28 @@ if( $level == 'Admin' )
 				{
 					foreach( $wgr as $gid )
 					{
+						$nestedArgs = new stdClass();
+						$nestedArgs->type = 'write';
+						$nestedArgs->context = 'application';
+						$nestedArgs->authid = $args->authid;
+						$nestedArgs->data = new stdClass();
+						$nestedArgs->data->permission = Array( 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' );
+						$nestedArgs->object = 'workgroup';
+						$nestedArgs->objectid = $gid;
 						
-						$args = [ 
-							'sessionid' => $args->sessionid, 
+						$nestedArgs = json_encode( $nestedArgs );
+						
+						$w_args = [
+							'sessionid' => $args->sessionid,
 							'id'        => intval( $gid   ), 
 							'users'     => intval( $u->ID ),
-							'args'      => urlencode( '{
-								"type"    : "write", 
-								"context" : "application", 
-								"authid"  : "' . $args->authid . '", 
-								"data"    : { 
-									"permission" : [ 
-										"PERM_USER_GLOBAL", 
-										"PERM_USER_WORKGROUP" 
-									]
-								}, 
-								"object"   : "workgroup", 
-								"objectid" : "' . $gid . '" 
-							}' )
+							'args'      => $nestedArgs
 						];
 						
-						/*$args = [ 
-							'sessionid' => $args->sessionid, 
-							'id'        => intval( $gid   ), 
-							'users'     => intval( $u->ID ),
-							'args'      => urlencode( '{
-								"type"    : "write", 
-								"context" : "application", 
-								"authid"  : "' . $args->authid . '", 
-								"data"    : { 
-									"permission" : [ 
-										"PERM_USER_GLOBAL", 
-										"PERM_USER_WORKGROUP" 
-									]
-								}
-							}' )
-						];*/
+						// If you wanna know what's going on.
+						//$Logger->log( 'Added nested arguments: ' . print_r( $w_args, 1 ) );
 						
-						if( $res = fc_query( '/system.library/group/addusers', $args ) )
+						if( $res = fc_query( '/system.library/group/addusers', $w_args ) )
 						{
 							$resp = explode( '<!--separate-->', $res );
 							
@@ -240,8 +219,9 @@ if( $level == 'Admin' )
 							{
 							
 								// 
-								
-								die( 'fail<!--separate-->' . ( $resp[1] ? $resp[1] : '' ) . ' [] debug: ' . print_r( $perm,1 ) . ' [] args: ' . print_r( $args,1 )  );
+								$err = 'fail<!--separate-->' . ( $resp[1] ? $resp[1] : '' ) . ' [] debug: ' . print_r( $perm,1 ) . ' [] args: ' . print_r( $w_args,1 ); 
+								$Logger->log( $err );
+								die( $err );
 							}
 						
 						}

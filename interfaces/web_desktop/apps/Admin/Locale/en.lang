@@ -169,6 +169,8 @@ i18n_deleting_permission_verify           : Please confirm that you want to dele
 
 #printers related
 
+i18n_file                              : File
+i18n_about                             : About
 i18n_save                              : Save
 i18n_delete                            : Delete
 i18n_delete_template                   : Delete template

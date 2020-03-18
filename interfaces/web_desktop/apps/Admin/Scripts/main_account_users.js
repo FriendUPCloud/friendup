@@ -8072,12 +8072,14 @@ function saveUser( uid, cb, newuser )
 		
 	}
 	
+	// If there's no uid, it means that this is a new user - add it.
 	if( !uid )
 	{
 		addUser( function( res, dat )
 		{
 			if( res )
 			{
+				// The user was added, now save the rest of the information
 				if( dat && dat > 0 )
 				{
 					saveUser( dat, cb, true );
@@ -8085,6 +8087,7 @@ function saveUser( uid, cb, newuser )
 			}
 			else
 			{
+				// Seems we failed to create user
 				if( dat && dat.code == 19 && dat.response )
 				{
 					Notify( { title: i18n( 'i18n_user_create_fail' ), text: i18n( 'i18n_' + dat.response ) } );
@@ -8098,6 +8101,7 @@ function saveUser( uid, cb, newuser )
 			
 		}, args[ 'username' ] );
 		
+		// No going beyond this point
 		return;
 	}
 	else
