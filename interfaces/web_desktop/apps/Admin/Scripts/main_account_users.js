@@ -3264,12 +3264,14 @@ Sections.accounts_users = function( cmd, extra )
 												}
 												
 											}
-											m.execute( 'setsetting', { 
+											
+											var setData = { 
 												setting : 'workspacecount', 
 												data    : this.value, 
 												userid  : userInfo.ID, 
 												authid  : Application.authId 
-											} );
+											}
+											m.execute( 'setsetting', setData );
 										}
 										else
 										{
