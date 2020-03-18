@@ -377,6 +377,40 @@ var WorkspaceInside = {
 				{
 					var w = document.createElement( 'div' );
 					w.className = 'Workspace';
+					w.setAttribute( 'position', 'top_center' );
+					( function( num ){
+						CreateHelpBubble( w, false, false, { getText: function()
+						{
+							// Create a text representing the content in the virtual workspace
+							var apps = {};
+							var str = '';
+							for( var a in movableWindows )
+							{
+								if( movableWindows[ a ].windowObject.workspace == num )
+								{
+									if( movableWindows[ a ].windowObject.applicationName )
+									{
+										if( !apps[ movableWindows[ a ].windowObject.applicationName ] || !apps[ movableWindows[ a ].windowObject.applicationName ].count )
+										{
+											apps[ movableWindows[ a ].windowObject.applicationName ] = {
+												count: 0,
+												string: movableWindows[ a ].titleString
+											};
+										}
+										apps[ movableWindows[ a ].windowObject.applicationName ].count++;
+									}
+									else
+									{
+										str += movableWindows[ a ].titleString + "\n";
+									}
+								}
+							}
+							var o = '';
+							for( var a in apps )
+								o += ( apps[ a ].string + ( apps[ a ].count > 1 ? ( ' (' + apps[ a ].count + ')' ) : '' ) ) + "\n";
+							return o + str;
+						} } );
+					} )( a );
 					if( a == globalConfig.workspaceCurrent ) w.className += ' Active';
 					if( globalConfig.workspace_labels && globalConfig.workspace_labels[ a ] )
 					{
