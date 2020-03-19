@@ -2014,26 +2014,26 @@ Application.checkDocumentSession = function( sasID = null )
 		if( el != NULL )
 		{
 			char *end;
-			userID = strtoull( el->data,  &end, 0 );
+			userID = strtoull( el->hme_Data,  &end, 0 );
 		}
 		
 		el = HashmapGet( request->parsedPostContent, "appid" );
 		if( el != NULL )
 		{
 			char *end;
-			appID = strtoull( el->data,  &end, 0 );
+			appID = strtoull( el->hme_Data,  &end, 0 );
 		}
 		
 		el = HashmapGet( request->parsedPostContent, "permissions" );
 		if( el != NULL )
 		{
-			permissions = UrlDecodeToMem( ( char *)el->data );
+			permissions = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
 		el = HashmapGet( request->parsedPostContent, "data" );
 		if( el != NULL )
 		{
-			data = UrlDecodeToMem( ( char *)el->data );
+			data = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
 		//INSERT INTO `FUserApplication` (`ID`, `UserID`, `ApplicationID`, `Permissions`, `AuthID`, `Data`) VALUES (NULL, '2', '3', 'permission', 'generatedid', '{}')
@@ -2116,7 +2116,7 @@ Application.checkDocumentSession = function( sasID = null )
 		HashmapElement *el = HashmapGet( request->parsedPostContent, "qauthid" );
 		if( el != NULL )
 		{
-			qauthid = UrlDecodeToMem( ( char *)el->data );
+			qauthid = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
 		if( qauthid != NULL )
