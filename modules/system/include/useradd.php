@@ -50,13 +50,13 @@ if( $level == 'Admin' )
 	$userid = false;
 	$args = [ 
 		'sessionid' => $args->sessionid, 
-		'username'  => ( isset( $args->args->username ) ? $args->args->username : 'Unnamed user' );, 
+		'username'  => ( isset( $args->args->username ) ? $args->args->username : 'Unnamed user' ), 
 		'password'  => md5( rand(0,999) + microtime() ),
 		'fullname'  => 'Unnamed user',
 		'level'		=> 'User'
 	];
 
-	$res = fc_query( '/system.library/user/create', $args )
+	$res = fc_query( '/system.library/user/create', $args );
 	$resp = explode( '<!--separate-->', $res );
 	if( $resp[0] == 'ok' && isset( $resp[1] )  )
 	{
@@ -136,9 +136,7 @@ if( $level == 'Admin' )
 			}
 		}
 	}
-
 	die( 'ok<!--separate-->' . $userid );
-}
 }
 die( 'fail<!--separate-->{"response":"user add failed"}'  );
 
