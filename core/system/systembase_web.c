@@ -56,6 +56,7 @@
 #include <system/mobile/mobile_web.h>
 #include <system/usergroup/user_group_manager_web.h>
 #include <system/notification/notification_manager_web.h>
+#include <strings.h>
 
 #define LIB_NAME "system.library"
 #define LIB_VERSION 		1
@@ -465,6 +466,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			//
 			// check if request came from WebSockets
 			//
+			
 			DEBUG("Authid received\n");
 			
 			if( (*request)->h_RequestSource == HTTP_SOURCE_WS )
@@ -550,10 +552,18 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		
 		{
 			UserSession *curusrsess = l->sl_USM->usm_Sessions;
+			char *deviceid = NULL;
+			
+			HashmapElement *el = HashmapGet( (*request)->parsedPostContent, "deviceid" );
+			if( el != NULL )
+			{
+				deviceid = UrlDecodeToMem( ( char *)el->hme_Data );
+			}
 			
 			DEBUG("Checking remote sessions\n");
 				
-			if( strcmp( sessionid, "remote" ) == 0 )
+ 			if( deviceid != NULL && strcmp( deviceid, "remote" ) == 0 )
+			//if( strcmp( sessionid, "remote" ) == 0 )
 			{
 				HashmapElement *uname = GetHEReq( *request, "username" );
 				HashmapElement *passwd = GetHEReq( *request, "password" );
@@ -572,13 +582,13 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				{
 					while( curusrsess != NULL )
 					{
-						User *curusr =curusrsess->us_User;
+						User *curusr = curusrsess->us_User;
 						
 						if( curusr != NULL )
 						{
 							DEBUG("CHECK remote user: %s pass %s  provided pass %s uname param: %s\n", curusr->u_Name, curusr->u_Password, (char *)lpass, (char *)uname->hme_Data );
 						
-							if( strcmp( curusr->u_Name, (char *)uname->hme_Data ) == 0  )
+							if( strcasecmp( curusr->u_Name, (char *)uname->hme_Data ) == 0 )
 							{
 								FBOOL isUserSentinel = FALSE;
 							
@@ -653,6 +663,11 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				}
 				FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
 				DEBUG("CHECK1END\n");
+			}
+			
+			if( deviceid != NULL )
+			{
+				FFree( deviceid );
 			}
 		}
 		
