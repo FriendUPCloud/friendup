@@ -206,13 +206,13 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		HashmapElement *el = HashmapGet( request->parsedPostContent, "sasid" );
 		if( el != NULL )
 		{
-			assid = UrlDecodeToMem( ( char *)el->data );
+			assid = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
 		el = HttpGetPOSTParameter( request, "usersonly" );
 		if( el != NULL )
 		{
-			if( ( (char *)el->data ) != NULL && strcmp("true", (char *)el->data ) == 0 )
+			if( ( (char *)el->hme_Data ) != NULL && strcmp("true", (char *)el->hme_Data ) == 0 )
 			{
 				usersOnly = TRUE;
 			}
@@ -345,25 +345,25 @@ Application.checkDocumentSession = function( sasID = null )
 		HashmapElement *el =  HashmapGet( request->parsedPostContent, "authid" );
 		if( el != NULL )
 		{
-			authid = UrlDecodeToMem( ( char *)el->data );
+			authid = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
 		el =  HashmapGet( request->parsedPostContent, "sasid" );
 		if( el != NULL )
 		{
-			sasid = UrlDecodeToMem( ( char *)el->data );
+			sasid = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
 		el =  HashmapGet( request->parsedPostContent, "type" );
 		if( el != NULL )
 		{
-			if( el->data != NULL )
+			if( el->hme_Data != NULL )
 			{
-				if( strcmp( ( ( char *)el->data), "close") == 0 )
+				if( strcmp( ( ( char *)el->hme_Data), "close") == 0 )
 				{
 					type = SAS_TYPE_CLOSED;
 				}
-				else if( strcmp( ( ( char *)el->data), "open") == 0 )
+				else if( strcmp( ( ( char *)el->hme_Data), "open") == 0 )
 				{
 					type = SAS_TYPE_OPEN;
 				}
@@ -491,7 +491,7 @@ Application.checkDocumentSession = function( sasID = null )
 		HashmapElement *el =  HashmapGet( request->parsedPostContent, "sasid" );
 		if( el != NULL )
 		{
-			assid = UrlDecodeToMem( ( char *)el->data );
+			assid = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
 		if( assid == NULL )
@@ -639,13 +639,13 @@ Application.checkDocumentSession = function( sasID = null )
 		HashmapElement *el =  HashmapGet( request->parsedPostContent, "authid" );
 		if( el != NULL )
 		{
-			authid = UrlDecodeToMem( ( char *)el->data );
+			authid = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
 		el = HashmapGet( request->parsedPostContent, "sasid" );
 		if( el != NULL )
 		{
-			assid = UrlDecodeToMem( ( char *)el->data );
+			assid = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
 		// Comes in without required authid or assid!
@@ -824,7 +824,7 @@ Application.checkDocumentSession = function( sasID = null )
 		el = HashmapGet( request->parsedPostContent, "sasid" );
 		if( el != NULL )
 		{
-			assid = UrlDecodeToMem( ( char *)el->data );
+			assid = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
 		// Comes in without required authid or assid!
@@ -931,7 +931,7 @@ Application.checkDocumentSession = function( sasID = null )
 		HashmapElement *el =  HashmapGet( request->parsedPostContent, "sasid" );
 		if( el != NULL )
 		{
-			assid = UrlDecodeToMem( ( char *)el->data );
+			assid = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
 		AppSession *as = NULL;
@@ -996,7 +996,7 @@ Application.checkDocumentSession = function( sasID = null )
 		el =  HashmapGet( request->parsedPostContent, "message" );
 		if( el != NULL )
 		{
-			msg = UrlDecodeToMem( ( char *)el->data );
+			msg = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
 		// Get sessionid
@@ -1004,14 +1004,14 @@ Application.checkDocumentSession = function( sasID = null )
 		el = HashmapGet( request->parsedPostContent, "sessid" );
 		if( el != NULL )
 		{
-			sessid = UrlDecodeToMem( ( char *)el->data );
+			sessid = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
 		// Get list of usernames
 		el = HashmapGet( request->parsedPostContent, "users" );
 		if( el != NULL )
 		{
-			userlist = UrlDecodeToMem( ( char *)el->data );
+			userlist = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
 		if( userlist != NULL || sessid != NULL )
@@ -1111,13 +1111,13 @@ Application.checkDocumentSession = function( sasID = null )
 		HashmapElement *el =  HashmapGet( request->parsedPostContent, "sasid" );
 		if( el != NULL )
 		{
-			assid = UrlDecodeToMem( ( char *)el->data );
+			assid = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
 		el =  HashmapGet( request->parsedPostContent, "users" );
 		if( el != NULL )
 		{
-			userlist = UrlDecodeToMem( ( char *)el->data );
+			userlist = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
 		if( assid != NULL && userlist != NULL )
@@ -1193,13 +1193,13 @@ Application.checkDocumentSession = function( sasID = null )
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
 		HashmapElement *el = HashmapGet( request->parsedPostContent, "sasid" );
-		if( el != NULL ) assid = UrlDecodeToMem( ( char *)el->data );
+		if( el != NULL ) assid = UrlDecodeToMem( ( char *)el->hme_Data );
 		
 		el = HashmapGet( request->parsedPostContent, "msg" );
-		if( el != NULL ) msg = UrlDecodeToMem( ( char *)el->data );
+		if( el != NULL ) msg = UrlDecodeToMem( ( char *)el->hme_Data );
 		
 		el = HashmapGet( request->parsedPostContent, "usernames" );
-		if( el != NULL ) usernames = UrlDecodeToMem( ( char *)el->data );
+		if( el != NULL ) usernames = UrlDecodeToMem( ( char *)el->hme_Data );
 		
 		char buffer[ 1024 ];
 		
@@ -1296,10 +1296,10 @@ Application.checkDocumentSession = function( sasID = null )
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
 		HashmapElement *el =  HashmapGet( request->parsedPostContent, "sasid" );
-		if( el != NULL ) assid = UrlDecodeToMem( ( char *)el->data );
+		if( el != NULL ) assid = UrlDecodeToMem( ( char *)el->hme_Data );
 		
 		el =  HashmapGet( request->parsedPostContent, "msg" );
-		if( el != NULL ) msg = UrlDecodeToMem( ( char *)el->data );
+		if( el != NULL ) msg = UrlDecodeToMem( ( char *)el->hme_Data );
 		
 		char buffer[ 1024 ];
 		
@@ -1403,13 +1403,13 @@ Application.checkDocumentSession = function( sasID = null )
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
 		HashmapElement *el =  HashmapGet( request->parsedPostContent, "sasid" );
-		if( el != NULL ) assid = UrlDecodeToMem( ( char *)el->data );
+		if( el != NULL ) assid = UrlDecodeToMem( ( char *)el->hme_Data );
 		
 		el =  HashmapGet( request->parsedPostContent, "deviceid" );
-		if( el != NULL ) devid = UrlDecodeToMem( ( char *)el->data );
+		if( el != NULL ) devid = UrlDecodeToMem( ( char *)el->hme_Data );
 		
 		el =  HashmapGet( request->parsedPostContent, "username" );
-		if( el != NULL ) username = UrlDecodeToMem( ( char *)el->data );
+		if( el != NULL ) username = UrlDecodeToMem( ( char *)el->hme_Data );
 		
 		if( assid != NULL && devid != NULL && username != NULL )
 		{
@@ -1537,10 +1537,10 @@ Application.checkDocumentSession = function( sasID = null )
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
 		HashmapElement *el =  HashmapGet( request->parsedPostContent, "sasid" );
-		if( el != NULL ) assid = UrlDecodeToMem( ( char *)el->data );
+		if( el != NULL ) assid = UrlDecodeToMem( ( char *)el->hme_Data );
 		
 		el =  HashmapGet( request->parsedPostContent, "deviceid" );
-		if( el != NULL ) devid = UrlDecodeToMem( ( char *)el->data );
+		if( el != NULL ) devid = UrlDecodeToMem( ( char *)el->hme_Data );
 		
 		if( assid != NULL && devid != NULL )
 		{
@@ -1684,20 +1684,20 @@ Application.checkDocumentSession = function( sasID = null )
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
 		HashmapElement *el = HashmapGet( request->parsedPostContent, "sasid" );
-		if( el != NULL ) assid = ( char *)el->data;
+		if( el != NULL ) assid = ( char *)el->hme_Data;
 		
 		el = HashmapGet( request->parsedPostContent, "var" );
-		if( el != NULL ) var = UrlDecodeToMem( ( char *)el->data );
+		if( el != NULL ) var = UrlDecodeToMem( ( char *)el->hme_Data );
 		
 		el = HashmapGet( request->parsedPostContent, "varid" );
-		if( el != NULL ) varid = ( char *)el->data;
+		if( el != NULL ) varid = ( char *)el->hme_Data;
 		
 		el = HashmapGet( request->parsedPostContent, "mode" );
 		if( el != NULL )
 		{
-			if( el->data != NULL )
+			if( el->hme_Data != NULL )
 			{
-				if( strcmp( (char *)el->data, "private" ) == 0 )
+				if( strcmp( (char *)el->hme_Data, "private" ) == 0 )
 				{
 					priv = TRUE;
 				}
@@ -1841,10 +1841,10 @@ Application.checkDocumentSession = function( sasID = null )
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
 		HashmapElement *el = HashmapGet( request->parsedPostContent, "sasid" );
-		if( el != NULL ) assid = ( char *)el->data;
+		if( el != NULL ) assid = ( char *)el->hme_Data;
 		
 		el = HashmapGet( request->parsedPostContent, "varid" );
-		if( el != NULL ) varid = ( char *)el->data;
+		if( el != NULL ) varid = ( char *)el->hme_Data;
 		
 		char buffer[ 1024 ];
 		
@@ -1960,7 +1960,7 @@ Application.checkDocumentSession = function( sasID = null )
 		HashmapElement *el =  HashmapGet( request->uri->query, "url" );
 		if( el != NULL )
 		{
-			url = UrlDecodeToMem( ( char *)el->data );
+			url = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
 		if( url != NULL )

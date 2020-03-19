@@ -154,7 +154,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 	// Make sure we have a valid disk path!
 	if( el != NULL )
 	{
-		path = (char *)el->data;
+		path = (char *)el->hme_Data;
 	}
 	
 	// Must have valid path
@@ -178,14 +178,14 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 	{
 		HashmapElement *el = HttpGetPOSTParameter( request, "files" );
 		if( el == NULL ) el = HashmapGet( request->query, "files" );
-		if( el != NULL ) path = ( char *)el->data;
+		if( el != NULL ) path = ( char *)el->hme_Data;
 	}
 	*/
 	
 	// Target (for upload f.ex.) Home:MyPath/myfile.zip
 	el = HttpGetPOSTParameter( request, "target" );
 	if( el == NULL ) el = HashmapGet( request->query, "target" );
-	if( el != NULL ) targetPath = ( char *)el->data;
+	if( el != NULL ) targetPath = ( char *)el->hme_Data;
 	
 	// Urldecode target
 	if( targetPath )
@@ -207,7 +207,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 		
 		if( el != NULL )
 		{
-			path = (char *)el->data;
+			path = (char *)el->hme_Data;
 		}
 	}
 	
@@ -371,7 +371,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( el == NULL ) el = HashmapGet( request->query, "details" );
 					if( el != NULL )
 					{
-						if( strcmp( (char *)el->data, "true" ) == 0 )
+						if( strcmp( (char *)el->hme_Data, "true" ) == 0 )
 						{
 							details = TRUE;
 						}
@@ -595,7 +595,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( el == NULL ) el = HashmapGet( request->query, "args" );
 					if( el != NULL ) 
 					{
-						args = (char *)el->data;
+						args = (char *)el->hme_Data;
 					}
 					
 					response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
@@ -666,9 +666,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						if( el == NULL ) el = HashmapGet( request->query, "details" );
 						if( el != NULL ) 
 						{
-							if( (char *)el->data != NULL )
+							if( (char *)el->hme_Data != NULL )
 							{
-								if( strcmp( (char *)el->data, "true" ) == 0 )
+								if( strcmp( (char *)el->hme_Data, "true" ) == 0 )
 								{
 									details = TRUE;
 								}
@@ -738,7 +738,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( el == NULL ) el = HashmapGet( request->query, "newname" );
 					if( el != NULL )
 					{
-						nname = UrlDecodeToMem( (char *)el->data );
+						nname = UrlDecodeToMem( (char *)el->hme_Data );
 					}
 					
 					FBOOL notify = TRUE;
@@ -746,9 +746,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( el == NULL ) el = HashmapGet( request->query, "notify" );
 					if( el != NULL )
 					{
-						if( el->data != NULL )
+						if( el->hme_Data != NULL )
 						{
-							if( strcmp( (char *)el->data, "false" ) == 0 )
+							if( strcmp( (char *)el->hme_Data, "false" ) == 0 )
 							{
 								notify = FALSE;
 							}
@@ -871,9 +871,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( el == NULL ) el = HashmapGet( request->query, "notify" );
 					if( el != NULL )
 					{
-						if( el->data != NULL )
+						if( el->hme_Data != NULL )
 						{
-							if( strcmp( (char *)el->data, "false" ) == 0 )
+							if( strcmp( (char *)el->hme_Data, "false" ) == 0 )
 							{
 								notify = FALSE;
 							}
@@ -986,9 +986,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( el == NULL ) el = HashmapGet( request->query, "notify" );
 					if( el != NULL )
 					{
-						if( el->data != NULL )
+						if( el->hme_Data != NULL )
 						{
-							if( strcmp( (char *)el->data, "false" ) == 0 )
+							if( strcmp( (char *)el->hme_Data, "false" ) == 0 )
 							{
 								notify = FALSE;
 							}
@@ -1171,21 +1171,21 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( el == NULL ) el = HashmapGet( request->query, "mode" );
 					if( el != NULL )
 					{
-						mode = (char *)el->data;
+						mode = (char *)el->hme_Data;
 					}
 					
 					el = HttpGetPOSTParameter( request, "offset" );
 					if( el == NULL ) el = HashmapGet( request->query, "offset" );
 					if( el != NULL )
 					{
-						offset = (char *)el->data;
+						offset = (char *)el->hme_Data;
 					}
 					
 					el = HttpGetPOSTParameter( request, "bytes" );
 					if( el == NULL ) el = HashmapGet( request->query, "bytes" );
 					if( el != NULL )
 					{
-						bytes = (char *)el->data;
+						bytes = (char *)el->hme_Data;
 					}
 					
 					el = HttpGetPOSTParameter( request, "download" );
@@ -1193,7 +1193,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( el != NULL )
 					{
 						int val = 0;
-						val = atoi( el->data );
+						val = atoi( el->hme_Data );
 						if( val == 1 )
 						{
 							downloadMode = TRUE;
@@ -1576,14 +1576,14 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( el == NULL ) el = HashmapGet( request->query, "mode" );
 					if( el != NULL )
 					{
-						mode = (char *)el->data;
+						mode = (char *)el->hme_Data;
 					}
 					
 					el =  HashmapGet( request->parsedPostContent, "data" );
 					if( el == NULL ) el = HashmapGet( request->query, "data" );
-					if( el != NULL && el->data != NULL )
+					if( el != NULL && el->hme_Data != NULL )
 					{
-						fdata = (char *)UrlDecodeToMem( el->data );
+						fdata = (char *)UrlDecodeToMem( el->hme_Data );
 					}
 					
 					el =  HashmapGet( request->parsedPostContent, "size" );
@@ -1591,7 +1591,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( el != NULL )
 					{
 						char *next;
-						dataSize = (int)strtol((char *)el->data, &next, 0);
+						dataSize = (int)strtol((char *)el->hme_Data, &next, 0);
 					}
 					
 					if( dataSize <= 0 && fdata != NULL )
@@ -1603,7 +1603,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					el = HashmapGet( request->parsedPostContent, "encoding" );
 					//int flength = 0;
 					if( !el ) el = HashmapGet( request->query, "encoding" );
-					if( el && strcmp( el->data, "url" ) == 0 && fdata != NULL )
+					if( el && strcmp( el->hme_Data, "url" ) == 0 && fdata != NULL )
 					{
 						char *destf = UrlDecodeToMem( fdata );
 						FFree( fdata );
@@ -1617,9 +1617,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( el == NULL ) el = HashmapGet( request->query, "notify" );
 					if( el != NULL )
 					{
-						if( el->data != NULL )
+						if( el->hme_Data != NULL )
 						{
-							if( strcmp( (char *)el->data, "false" ) == 0 )
+							if( strcmp( (char *)el->hme_Data, "false" ) == 0 )
 							{
 								notify = FALSE;
 							}
@@ -1744,7 +1744,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( el == NULL ) el = HashmapGet( request->query, "to" );
 					if( el != NULL )
 					{
-						topath = (char *)el->data;
+						topath = (char *)el->hme_Data;
 						
 						char *tpath;
 						if( ( tpath = FCalloc( strlen( topath ) + 10 + 256, sizeof(char) ) ) != NULL )
@@ -1989,9 +1989,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( el == NULL ) el = HashmapGet( request->query, "notify" );
 					if( el != NULL )
 					{
-						if( el->data != NULL )
+						if( el->hme_Data != NULL )
 						{
-							if( strcmp( (char *)el->data, "false" ) == 0 )
+							if( strcmp( (char *)el->hme_Data, "false" ) == 0 )
 							{
 								notify = FALSE;
 							}
@@ -2389,7 +2389,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( el == NULL ) el = HashmapGet( request->query, "mode" );
 					if( el != NULL )
 					{
-						perm = (char *)el->data;
+						perm = (char *)el->hme_Data;
 					}
 					
 					FBOOL access = FSManagerCheckAccess( l->sl_FSM, origDecodedPath, actDev->f_ID, loggedSession->us_User, perm );
@@ -2470,21 +2470,21 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( el == NULL ) el = HashmapGet( request->query, "user" );
 					if( el != NULL )
 					{
-						useracc = UrlDecodeToMem( (char *)el->data );
+						useracc = UrlDecodeToMem( (char *)el->hme_Data );
 					}
 					
 					el = HttpGetPOSTParameter( request, "group" );
 					if( el == NULL ) el = HashmapGet( request->query, "group" );
 					if( el != NULL )
 					{
-						groupacc = UrlDecodeToMem( (char *)el->data );
+						groupacc = UrlDecodeToMem( (char *)el->hme_Data );
 					}
 					
 					el = HttpGetPOSTParameter( request, "others" );
 					if( el == NULL ) el = HashmapGet( request->query, "others" );
 					if( el != NULL )
 					{
-						othersacc = UrlDecodeToMem( (char *)el->data );
+						othersacc = UrlDecodeToMem( (char *)el->hme_Data );
 					}
 					char *filepath = origDecodedPath;
 					unsigned int i;
@@ -2582,7 +2582,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						if( el != NULL )
 						{
 							char *end;
-							id = strtoull( (char *)el->data,  &end, 0 );
+							id = strtoull( (char *)el->hme_Data,  &end, 0 );
 						}
 						
 						DEBUG( "[FSMWebRequest] notification start on path: %s\n", origDecodedPath );
@@ -2666,7 +2666,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						if( el != NULL )
 						{
 							char *end;
-							id = strtoull( (char *)el->data,  &end, 0 );
+							id = strtoull( (char *)el->hme_Data,  &end, 0 );
 						}
 						
 						int error = 0;
@@ -2766,7 +2766,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( el == NULL ) el = HashmapGet( request->query, "archiver" );
 					if( el != NULL )
 					{
-						archiver = UrlDecodeToMem(( char *)el->data);
+						archiver = UrlDecodeToMem(( char *)el->hme_Data);
 					}
 					
 					// Files to archive
@@ -2774,7 +2774,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( el == NULL ) el = HashmapGet( request->query, "files" );
 					if( el != NULL )
 					{
-						files = UrlDecodeToMem( (char *)el->data );
+						files = UrlDecodeToMem( (char *)el->hme_Data );
 					}
 					
 					// source directory
@@ -2782,7 +2782,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( el == NULL ) el = HashmapGet( request->query, "source" );
 					if( el != NULL )
 					{
-						source = UrlDecodeToMem( (char *)el->data );
+						source = UrlDecodeToMem( (char *)el->hme_Data );
 					}
 					
 					// Where archive should be stored
@@ -2790,7 +2790,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( el == NULL ) el = HashmapGet( request->query, "destination" );
 					if( el != NULL )
 					{
-						archpath = UrlDecodeToMem( (char *)el->data );
+						archpath = UrlDecodeToMem( (char *)el->hme_Data );
 					}
 					
 					FBOOL notify = TRUE;
@@ -2798,9 +2798,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( el == NULL ) el = HashmapGet( request->query, "notify" );
 					if( el != NULL )
 					{
-						if( el->data != NULL )
+						if( el->hme_Data != NULL )
 						{
-							if( strcmp( (char *)el->data, "false" ) == 0 )
+							if( strcmp( (char *)el->hme_Data, "false" ) == 0 )
 							{
 								notify = FALSE;
 							}
@@ -3004,7 +3004,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( el == NULL ) el = HashmapGet( request->query, "archiver" );
 					if( el != NULL )
 					{
-						archiver = (char *)el->data;
+						archiver = (char *)el->hme_Data;
 					}
 					
 					FBOOL notify = TRUE;
@@ -3012,9 +3012,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( el == NULL ) el = HashmapGet( request->query, "notify" );
 					if( el != NULL )
 					{
-						if( el->data != NULL )
+						if( el->hme_Data != NULL )
 						{
-							if( strcmp( (char *)el->data, "false" ) == 0 )
+							if( strcmp( (char *)el->hme_Data, "false" ) == 0 )
 							{
 								notify = FALSE;
 							}
@@ -3228,7 +3228,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						if( el == NULL ) el = HashmapGet( request->query, "key" );
 						if( el != NULL )
 						{
-							key = UrlDecodeToMem( (char *)el->data );
+							key = UrlDecodeToMem( (char *)el->hme_Data );
 						}
 						
 						if( key != NULL )
@@ -3293,14 +3293,14 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( el == NULL ) el = HashmapGet( request->query, "key" );
 					if( el != NULL )
 					{
-						key = (char *) UrlDecodeToMem( el->data );
+						key = (char *) UrlDecodeToMem( el->hme_Data );
 					}
 					
 					el = HttpGetPOSTParameter( request, "value" );
 					if( el == NULL ) el = HashmapGet( request->query, "value" );
 					if( el != NULL )
 					{
-						value = UrlDecodeToMem( (char *)el->data );
+						value = UrlDecodeToMem( (char *)el->hme_Data );
 					}
 					
 					if( key != NULL && value != NULL )
