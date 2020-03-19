@@ -191,7 +191,8 @@ inline static void NotifyExtServices( SystemBase *l, Http *request, User *usr, c
 	}
 
 	BufStringAddSize( bs, "]}", 2 );
-	//DEBUG("NotifyExtServices3: %s\n", bs->bs_Buffer );
+	
+	DEBUG("NotifyExtServices3: %s\n", bs->bs_Buffer );
 	
 	NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", action, bs->bs_Buffer );
 	
