@@ -10,7 +10,7 @@
 *                                                                              *
 *****************************************************************************©*/
 
-
+global $Logger;
 $prevlevel = $level;
 
 if( isset( $args->args->authid ) && !isset( $args->authid ) )
@@ -55,7 +55,7 @@ if( $level == 'Admin' )
 		'fullname'  => 'Unnamed user',
 		'level'		=> 'User'
 	];
-
+	
 	$res = fc_query( '/system.library/user/create', $args );
 	$resp = explode( '<!--separate-->', $res );
 	if( $resp[0] == 'ok' && isset( $resp[1] )  )
