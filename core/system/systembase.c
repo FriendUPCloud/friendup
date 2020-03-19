@@ -58,6 +58,7 @@
 #include <security/server_checker.h>
 #include <network/websocket_client.h>
 #include <network/protocol_websocket.h>
+#include <util/session_id.h>
 
 #define LIB_NAME "system.library"
 #define LIB_VERSION 		1
@@ -124,6 +125,7 @@ SystemBase *SystemInit( void )
 		FFree( tempString );
 		return NULL;
 	}
+	
 	// uptime
 	l->l_UptimeStart = time( NULL );
 	
@@ -788,6 +790,12 @@ SystemBase *SystemInit( void )
 		return NULL;	
 	}
 	
+	l->sl_SecurityManager = SecurityManagerNew( l );
+	if( l->sl_SecurityManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize SecurityManager\n");
+	}
+	
 	l->sl_UM = UMNew( l );
 	if( l->sl_UM == NULL )
 	{
@@ -1000,6 +1008,8 @@ SystemBase *SystemInit( void )
 	
 	EventAdd( l->sl_EventManager, "RemoveOldLogs", RemoveOldLogs, l, time( NULL )+HOUR12, HOUR12, -1 );
 	
+	EventAdd( l->sl_EventManager, "SecurityManagerRemoteOldBadSessionCalls", SecurityManagerRemoteOldBadSessionCalls, l->sl_SecurityManager, time( NULL )+MINS60, MINS60, -1 );
+	
 	//@BG-678 
 	//EventAdd( l->sl_EventManager, USMCloseUnusedWebSockets, l->sl_USM, time( NULL )+MINS5, MINS5, -1 );
 	
@@ -1190,6 +1200,10 @@ void SystemClose( SystemBase *l )
 	{
 		RMDelete( l->sl_RoleManager );
 	}
+	if( l->sl_SecurityManager != NULL )
+	{
+		SecurityManagerDelete( l->sl_SecurityManager );
+	}
 	
 	// Remove sentinel from active memory
 	if( l->sl_Sentinel != NULL )
@@ -1359,15 +1373,15 @@ void SystemClose( SystemBase *l )
 		{
 			if( l->l_ServerKeys[i] != NULL )
 			{
-				free( l->l_ServerKeys[i] );
+				FFree( l->l_ServerKeys[i] );
 			}
 			if( l->l_ServerKeyValues[i] != NULL )
 			{
-				free( l->l_ServerKeyValues[i] );
+				FFree( l->l_ServerKeyValues[i] );
 			}
 		}
-		free( l->l_ServerKeys );
-		free( l->l_ServerKeyValues );
+		FFree( l->l_ServerKeys );
+		FFree( l->l_ServerKeyValues );
 	}
 	
 	xmlCleanupParser();
@@ -1587,9 +1601,11 @@ int SystemInitExternal( SystemBase *l )
 			
 			if( foundRemoteSession == FALSE )
 			{
+				char *newSessionId = SessionIDGenerate();
 				DEBUG("[SystemBase] Remote session will be created for Sentinel\n");
 				
-				UserSession *ses = UserSessionNew( "remote", "remote" );
+				UserSession *ses = UserSessionNew( newSessionId, "remote" );
+				//UserSession *ses = UserSessionNew( "remote", "remote" );
 				if( ses != NULL )
 				{
 					ses->us_UserID = l->sl_Sentinel->s_User->u_ID;
@@ -1619,6 +1635,7 @@ int SystemInitExternal( SystemBase *l )
 					//}
 					//
 				}
+				FFree( newSessionId );
 			}
 			
 			//

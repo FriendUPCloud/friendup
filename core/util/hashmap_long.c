@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "util/hashmap.h"
+#include "hashmap_long.h"
 #include <util/log/log.h>
 #include <core/types.h>
 
@@ -26,26 +26,26 @@
 // Return an empty hashmap, or NULL on failure.
 //
 
-Hashmap* HashmapNew() 
+HashmapLong* HashmapLongNew() 
 {
-	Hashmap* m = (Hashmap*) FCalloc( 1, sizeof( Hashmap ) );
+	HashmapLong* m = (HashmapLong*) FCalloc( 1, sizeof( HashmapLong ) );
 	
 	if( !m )
 	{
-		FERROR("Cannot allocate memory for Hashmap\n");
+		FERROR("Cannot allocate memory for HashmapLong\n");
 		return NULL;
 	}
 
-	m->hm_Data = (HashmapElement*) FCalloc( INITIAL_SIZE, sizeof( HashmapElement ) );
+	m->hl_Data = (HashmapElementLong*) FCalloc( INITIAL_SIZE, sizeof( HashmapElementLong ) );
 	
-	if( !m->hm_Data )
+	if( !m->hl_Data )
 	{
 		FFree( m );
 		return NULL;
 	}
 
-	m->hm_TableSize = INITIAL_SIZE;
-	m->hm_Size = 0;
+	m->hl_TableSize = INITIAL_SIZE;
+	m->hl_Size = 0;
 
 	return m;
 }
@@ -154,7 +154,7 @@ static unsigned long crc32_tab[] = {
 // Return a 32-bit CRC of the contents of the buffer.
 //
    
-static unsigned long lcrc32( const unsigned char *s, unsigned int len )
+unsigned long lcrc32( const unsigned char *s, unsigned int len )
 {
 	unsigned int i;
 	unsigned long crc32val;
@@ -171,7 +171,7 @@ static unsigned long lcrc32( const unsigned char *s, unsigned int len )
 // Hash a string
 //
 
-unsigned int HashmapHashInt( Hashmap* in, const char* key )
+unsigned int HashmapLongHashInt( HashmapLong* in, const char* key )
 {
     unsigned long hash = lcrc32( (unsigned char*) key, strlen( key ) );
 
@@ -188,7 +188,7 @@ unsigned int HashmapHashInt( Hashmap* in, const char* key )
 	// Knuth's Multiplicative Method
 	hash = (SHIFT_RIGHT(hash, 3)) * 2654435761;
 
-	return hash % in->hm_TableSize;
+	return hash % in->hl_TableSize;
 }
 
 //
@@ -196,32 +196,32 @@ unsigned int HashmapHashInt( Hashmap* in, const char* key )
  // to store the point to the item, or MAP_FULL.
  //
  
-int HashmapHash( Hashmap* in, const char* key )
+int HashmapLongHash( HashmapLong* in, const char* key )
 {
 	// If full, return immediately
-	if( in->hm_Size >= ( in->hm_TableSize >> 1 ) )
+	if( in->hl_Size >= ( in->hl_TableSize >> 1 ) )
 	{
-		FERROR("Hashmap is full!\n");
+		FERROR("HashmapLong is full!\n");
 		return MAP_FULL;
 	}
 
 	// Find the best index
-	unsigned int curr = HashmapHashInt( in, key );
+	unsigned int curr = HashmapLongHashInt( in, key );
 
 	/* Linear probing */
 	for( unsigned int i = 0; i < MAX_CHAIN_LENGTH; i++ )
 	{
-		if( in->hm_Data[curr].hme_InUse == 0 )
+		if( in->hl_Data[curr].hel_InUse == FALSE )
 		{
 			return curr;
 		}
 
-		if( in->hm_Data[curr].hme_InUse == TRUE && ( strcmp( in->hm_Data[curr].hme_Key, key ) == 0 ) )
+		if( in->hl_Data[curr].hel_InUse == TRUE && ( strcmp( in->hl_Data[curr].hel_Key, key ) == 0 ) )
 		{
 			return curr;
 		}
 
-		curr = ( curr + 1 ) % in->hm_TableSize;
+		curr = ( curr + 1 ) % in->hl_TableSize;
 	}
 
 	return MAP_FULL;
@@ -231,48 +231,48 @@ int HashmapHash( Hashmap* in, const char* key )
 // Doubles the size of the hashmap, and rehashes all the elements
 //
 
-int HashmapRehash( Hashmap* in )
+int HashmapLongRehash( HashmapLong* in )
 {
 	int i;
 	int oldSize;
-	HashmapElement* curr;
+	HashmapElementLong* curr;
 
 	/* Setup the new elements */
-	Hashmap *m = (Hashmap *) in;
-	HashmapElement* temp = (HashmapElement *) FCalloc( (2 * m->hm_TableSize), sizeof( HashmapElement ) );
+	HashmapLong *m = (HashmapLong *) in;
+	HashmapElementLong* temp = (HashmapElementLong *) FCalloc( (2 * m->hl_TableSize), sizeof( HashmapElementLong ) );
 	if( temp  == NULL )
 	{
 		return MAP_OMEM;
 	}
 
 	// Update the array 
-	curr = m->hm_Data;
-	m->hm_Data = temp;
+	curr = m->hl_Data;
+	m->hl_Data = temp;
 
 	// Update the size 
-	oldSize = m->hm_TableSize;
-	m->hm_TableSize = 2 * m->hm_TableSize;
-	m->hm_Size = 0;
+	oldSize = m->hl_TableSize;
+	m->hl_TableSize = 2 * m->hl_TableSize;
+	m->hl_Size = 0;
 
 	/* Rehash the elements */
 	for( i = 0; i < oldSize; i++ )
 	{
-        int status;
+		int status;
 
-        if (curr[i].hme_InUse == 0)
+		if( curr[i].hel_InUse == FALSE )
 		{
-            continue;
+			continue;
 		}
             
-		status = HashmapPut( m, curr[i].hme_Key, curr[i].hme_Data );
+		status = HashmapLongPut( m, curr[i].hel_Key, curr[i].hel_Data );
 		if( status != MAP_OK )
 		{
-			FFree(curr);
+			FFree( curr );
 			return status;
 		}
 	}
 
-	FFree(curr);
+	FFree( curr );
 
 	return MAP_OK;
 }
@@ -282,41 +282,38 @@ int HashmapRehash( Hashmap* in )
 // No data is copied!
 // 'key' MUST BE PERMANENTLY ALLOCATED AND NOT FREED AFTER CALLING THIS FUNCTION
 
-int HashmapPut( Hashmap* in, char* key, void* value )
+int HashmapLongPut( HashmapLong* in, char* key, FLONG value )
 {
 	if( in == NULL )
 	{
 		return MAP_OMEM;
 	}
 	// Find a place to put our value
-	int index = HashmapHash( in, key );
+	int index = HashmapLongHash( in, key );
 	while( index == MAP_FULL )
 	{
-		if( HashmapRehash( in ) == MAP_OMEM )
+		if( HashmapLongRehash( in ) == MAP_OMEM )
 		{
 			FFree( key );
-			FFree( value );
 			return MAP_OMEM;
 		}
-		index = HashmapHash( in, key );
+		index = HashmapLongHash( in, key );
 	}
 
 	// Set the data
-	if( in->hm_Data[index].hme_Data )
+
+	in->hl_Data[ index ].hel_LastUpdate = time( NULL ); // set timestamp
+	
+	in->hl_Data[ index ].hel_Data = value;
+	if( in->hl_Data[ index ].hel_Key != NULL )
 	{
-		FFree( in->hm_Data[index].hme_Data );
-		in->hm_Data[index].hme_Data = NULL;
-	}
-	in->hm_Data[index].hme_Data = value;
-	if( in->hm_Data[index].hme_Key )
-	{
-		FFree( in->hm_Data[index].hme_Key );
-		in->hm_Data[index].hme_Key = NULL;
+		FFree( in->hl_Data[ index ].hel_Key );
+		in->hl_Data[ index ].hel_Key = NULL;
 	}
 	
-	in->hm_Data[index].hme_Key = key;
-	in->hm_Data[index].hme_InUse = TRUE;
-	in->hm_Size++; 
+	in->hl_Data[ index ].hel_Key = key;
+	in->hl_Data[ index ].hel_InUse = TRUE;
+	in->hl_Size++; 
 
 	return MAP_OK;
 }
@@ -325,7 +322,7 @@ int HashmapPut( Hashmap* in, char* key, void* value )
 // Get your pointer out of the hashmap with a key
 //
 
-HashmapElement* HashmapGet( Hashmap* in, char* key )
+HashmapElementLong* HashmapLongGet( HashmapLong* in, char* key )
 {
 	// We need data!
 	if( in == NULL || key == NULL )
@@ -334,16 +331,16 @@ HashmapElement* HashmapGet( Hashmap* in, char* key )
 	}
 	
 	// Find data location
-	unsigned int curr = HashmapHashInt( in, key );
+	unsigned int curr = HashmapLongHashInt( in, key );
 
 	// Linear probing, if necessary
 	for( unsigned int i = 0; i < MAX_CHAIN_LENGTH; i++ )
 	{
-		if( in->hm_Data[curr].hme_InUse && strcmp( in->hm_Data[curr].hme_Key, key ) == 0 )
+		if( in->hl_Data[curr].hel_InUse && strcmp( in->hl_Data[curr].hel_Key, key ) == 0 )
 		{
-			return &in->hm_Data[curr];
+			return &in->hl_Data[curr];
 		}
-		curr = (curr + 1) % in->hm_TableSize;
+		curr = (curr + 1) % in->hl_TableSize;
 	}
 
 	// Not found
@@ -354,29 +351,29 @@ HashmapElement* HashmapGet( Hashmap* in, char* key )
 // Get pointer to data from Hashmap
 //
 
-void* HashmapGetData( Hashmap* in, const char* key )
+FLONG HashmapLongGetData( HashmapLong* in, const char* key )
 {
 	// We need data!
 	if( in == NULL || key == NULL )
 	{
-		return NULL;
+		return -1;
 	}
 	
 	// Find data location
-	unsigned int curr = HashmapHashInt( in, key );
+	unsigned int curr = HashmapLongHashInt( in, key );
 	
 	// Linear probing, if necessary
 	for( unsigned int i = 0; i < MAX_CHAIN_LENGTH; i++ )
 	{
-		if( in->hm_Data[curr].hme_InUse && strcmp( in->hm_Data[curr].hme_Key, key ) == 0 )
+		if( in->hl_Data[curr].hel_InUse && strcmp( in->hl_Data[curr].hel_Key, key ) == 0 )
 		{
-			return (in->hm_Data[curr].hme_Data);
+			return (in->hl_Data[curr].hel_Data);
 		}
-		curr = (curr + 1) % in->hm_TableSize;
+		curr = (curr + 1) % in->hl_TableSize;
 	}
 	
 	// Not found
-	return NULL;
+	return -1;
 }
 
 //
@@ -385,20 +382,20 @@ void* HashmapGetData( Hashmap* in, const char* key )
 // Any modifications to the hashmap will invalidate the iterator!
 //
 
-HashmapElement* HashmapIterate( Hashmap* in, unsigned int* iterator )
+HashmapElementLong* HashmapLongIterate( HashmapLong* in, unsigned int* iterator )
 {
-	if( HashmapLength( in ) <= 0 )
+	if( HashmapLongLength( in ) <= 0 )
 	{
 		return NULL;
 	}
 
 	unsigned int i = (*iterator);
-	for( ; i < in->hm_TableSize; i++ )
+	for( ; i < in->hl_TableSize; i++ )
 	{
-		if( in->hm_Data[i].hme_InUse != 0 )
+		if( in->hl_Data[i].hel_InUse != 0 )
 		{
 			(*iterator) = i + 1;
-			return &in->hm_Data[i];
+			return &in->hl_Data[i];
 		}
 	}
 	(*iterator) = i;
@@ -410,29 +407,26 @@ HashmapElement* HashmapIterate( Hashmap* in, unsigned int* iterator )
 // Deallocate the hashmap
 //
 
-void HashmapFree( Hashmap* in )
+void HashmapLongFree( HashmapLong* in )
 {
 	if( in == NULL )
 	{
 		return;
 	}
-	HashmapElement e;
 	unsigned int i = 0;
 	
-	//FERROR("remove hashmap===============\n");
+	DEBUG("HashmapLongFree. Size %d\n", in->hl_TableSize );
 	
-	for( ; i < in->hm_TableSize; i++ )
+	for( ; i < in->hl_TableSize; i++ )
 	{
-		e = in->hm_Data[i];
-		if( e.hme_InUse == TRUE )
+		if( in->hl_Data[i].hel_InUse == TRUE )
 		{
-			if( e.hme_Data != NULL ) FFree( e.hme_Data );
-			if( e.hme_Key  != NULL ) FFree( e.hme_Key );
+			if( in->hl_Data[i].hel_Key  != NULL ) FFree( in->hl_Data[i].hel_Key );
 		}
 	}
-	if( in->hm_Data != NULL )
+	if( in->hl_Data != NULL )
 	{
-		FFree( in->hm_Data );
+		FFree( in->hl_Data );
 	}
 	FFree( in );
 }
@@ -441,11 +435,11 @@ void HashmapFree( Hashmap* in )
 // Return the length of the hashmap
 //
 
-int HashmapLength( Hashmap* in )
+int HashmapLongLength( HashmapLong* in )
 {
 	if( in != NULL )
 	{
-		return in->hm_Size;
+		return in->hl_Size;
 	}
 	return 0;
 }
@@ -454,9 +448,9 @@ int HashmapLength( Hashmap* in )
 // Hashmap clone
 //
 
-Hashmap *HashmapClone( Hashmap *in )
+HashmapLong *HashmapLongClone( HashmapLong *in )
 {
-	Hashmap *hn = HashmapNew();
+	HashmapLong *hn = HashmapLongNew();
 	if( hn != NULL )
 	{
 		unsigned int i;
@@ -464,9 +458,9 @@ Hashmap *HashmapClone( Hashmap *in )
 		// Linear probing, if necessary
 		for( i = 0; i < INITIAL_SIZE; i++ )
 		{
-			hn->hm_Data[ i ].hme_InUse = in->hm_Data[ i ].hme_InUse;
-			hn->hm_Data[ i ].hme_Key = StringDuplicate( in->hm_Data[ i ].hme_Key );
-			hn->hm_Data[ i ].hme_Data = StringDuplicate( in->hm_Data[ i ].hme_Data );
+			hn->hl_Data[ i ].hel_InUse = in->hl_Data[ i ].hel_InUse;
+			hn->hl_Data[ i ].hel_Key = StringDuplicate( in->hl_Data[ i ].hel_Key );
+			hn->hl_Data[ i ].hel_Data = in->hl_Data[ i ].hel_Data;
 		}
 	}
 	return hn;
@@ -476,7 +470,7 @@ Hashmap *HashmapClone( Hashmap *in )
 // Hashmap add
 //
 
-int HashmapAdd( Hashmap *src, Hashmap *hm )
+int HashmapLongAdd( HashmapLong *src, HashmapLong *hm )
 {
 	if( src == NULL || hm == NULL )
 	{
@@ -490,50 +484,77 @@ int HashmapAdd( Hashmap *src, Hashmap *hm )
 // Remove an element with that key from the map
 //
 
-int HashmapRemove( Hashmap *in, char* key  )
+int HashmapLongRemove( HashmapLong *in, char* key  )
 {
 	int i;
 	int curr;
-	Hashmap* m;
+	HashmapLong* m;
 	if( in == NULL )
 	{
 		return MAP_MISSING;
 	}
 	
-	m = (Hashmap *) in;
+	m = (HashmapLong *) in;
 
 	// Find key 
-	curr = HashmapHashInt( m, key );
+	curr = HashmapLongHashInt( m, key );
 
 	// Linear probing, if necessary
 	for(i = 0; i<MAX_CHAIN_LENGTH; i++)
 	{
-		int locInUse = m->hm_Data[curr].hme_InUse;
+		int locInUse = m->hl_Data[curr].hel_InUse;
 		if( locInUse == 1 )
 		{
-			if( m->hm_Data[curr].hme_Key != NULL )
+			if( m->hl_Data[curr].hel_Key != NULL )
 			{
-				if(  strcmp( m->hm_Data[curr].hme_Key, key ) == 0 )
+				if( strcmp( m->hl_Data[curr].hel_Key, key ) == 0 )
 				{
 					// Blank out the fields
-					m->hm_Data[curr].hme_InUse = 0;
-					if(	m->hm_Data[curr].hme_Data != NULL )
-					{
-						m->hm_Data[curr].hme_Data = NULL;
-					}
+					m->hl_Data[curr].hel_InUse = FALSE;
+
+					m->hl_Data[curr].hel_Data = -1;
 				
-					FFree( m->hm_Data[curr].hme_Key );
-					m->hm_Data[curr].hme_Key = NULL;
+					FFree( m->hl_Data[curr].hel_Key );
+					m->hl_Data[curr].hel_Key = NULL;
 
 					// Reduce the size
-					m->hm_Size--;
+					m->hl_Size--;
 					return MAP_OK;
 				}
 			}
 		}
-		curr = (curr + 1) % m->hm_TableSize;
+		curr = (curr + 1) % m->hl_TableSize;
 	}
 
 	// Data not found 
 	return MAP_MISSING;
 }
+
+//
+// Hashmap, delete old entries
+//
+
+void HashmapDeleteOldEntries( HashmapLong* in, int timeout )
+{
+	time_t timeNow = time( NULL );
+	
+	if( HashmapLongLength( in ) <= 0 )
+	{
+		return;
+	}
+
+	int i = 0;
+	for( ; i < in->hl_TableSize; i++ )
+	{
+		if( in->hl_Data[i].hel_InUse != 0 )
+		{
+			if( (timeNow - in->hl_Data[i].hel_LastUpdate ) > timeout )
+			{
+				in->hl_Data[i].hel_InUse = FALSE;
+				in->hl_Size--;
+				FFree( in->hl_Data[i].hel_Key );
+			}
+		}
+	}
+}
+

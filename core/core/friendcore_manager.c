@@ -219,6 +219,9 @@ int FriendCoreManagerInit( FriendCoreManager *fcm )
 {
 	if( fcm != NULL )
 	{
+		// Static locks callbacks
+		SSL_library_init();
+		
 		if( fcm->fcm_SSLEnabled == 1 )
 		{
 			// if http works on SSL, WS must work on SSL too

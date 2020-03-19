@@ -19,9 +19,9 @@
 
 typedef struct List
 {
-	void* data;
-	struct List *next;
-	struct List *last;
+	void			*l_Data;
+	struct List		*next;
+	struct List		*last;
 } List;
 
 //

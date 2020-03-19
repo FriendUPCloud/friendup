@@ -294,13 +294,13 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			HashmapElement *el = HttpGetPOSTParameter( request, "dstsessionid" );
 			if( el != NULL )
 			{
-				sessionid = UrlDecodeToMem( (char *)el->data );
+				sessionid = UrlDecodeToMem( (char *)el->hme_Data );
 			}
 			
 			el = HttpGetPOSTParameter( request, "name" );
 			if( el != NULL )
 			{
-				name = UrlDecodeToMem( (char *)el->data );
+				name = UrlDecodeToMem( (char *)el->hme_Data );
 			}
 			
 			if( name != NULL )
@@ -391,25 +391,25 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			HashmapElement *el = HttpGetPOSTParameter( request, "dstsessionid" );
 			if( el != NULL )
 			{
-				sessionid = UrlDecodeToMem( (char *)el->data );
+				sessionid = UrlDecodeToMem( (char *)el->hme_Data );
 			}
 			
 			el = HttpGetPOSTParameter( request, "msg" );
 			if( el != NULL )
 			{
-				msg = UrlDecodeToMem( (char *)el->data );
+				msg = UrlDecodeToMem( (char *)el->hme_Data );
 			}
 			
 			el = HttpGetPOSTParameter( request, "appname" );
 			if( el != NULL )
 			{
-				appname = UrlDecodeToMem( (char *)el->data );
+				appname = UrlDecodeToMem( (char *)el->hme_Data );
 			}
 			
 			el = HttpGetPOSTParameter( request, "dstauthid" );
 			if( el != NULL )
 			{
-				authid = UrlDecodeToMem( (char *)el->data );
+				authid = UrlDecodeToMem( (char *)el->hme_Data );
 			}
 			
 			User *u = loggedSession->us_User;
@@ -574,14 +574,14 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			el = HttpGetPOSTParameter( request, "username" );
 			if( el != NULL )
 			{
-				usrname = UrlDecodeToMem( (char *)el->data );
+				usrname = UrlDecodeToMem( (char *)el->hme_Data );
 				DEBUG( "[UMWebRequest] Update usrname %s!!\n", usrname );
 			}
 			
 			el = HttpGetPOSTParameter( request, "password" );
 			if( el != NULL )
 			{
-				usrpass = UrlDecodeToMem( (char *)el->data );
+				usrpass = UrlDecodeToMem( (char *)el->hme_Data );
 				DEBUG( "[UMWebRequest] Update usrpass %s!!\n", usrpass );
 			}
 			
@@ -600,21 +600,21 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					el = HttpGetPOSTParameter( request, "fullname" );
 					if( el != NULL )
 					{
-						fullname = UrlDecodeToMem( (char *)el->data );
+						fullname = UrlDecodeToMem( (char *)el->hme_Data );
 						DEBUG( "[UMWebRequest] Update fullname %s!!\n", fullname );
 					}
 					
 					el = HttpGetPOSTParameter( request, "email" );
 					if( el != NULL )
 					{
-						email = UrlDecodeToMem( (char *)el->data );
+						email = UrlDecodeToMem( (char *)el->hme_Data );
 						DEBUG( "[UMWebRequest] Update email %s!!\n", email );
 					}
 					
 					el = HttpGetPOSTParameter( request, "level" );
 					if( el != NULL )
 					{
-						level = UrlDecodeToMem( (char *)el->data );
+						level = UrlDecodeToMem( (char *)el->hme_Data );
 					}
 					
 					User *locusr = UserNew();
@@ -722,7 +722,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		if( el != NULL )
 		{
 			char *next;
-			id = strtol ( (char *)el->data, &next, 0 );
+			id = strtol ( (char *)el->hme_Data, &next, 0 );
 		}
 		
 		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
@@ -827,12 +827,12 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		el = HttpGetPOSTParameter( request, "authid" );
 		if( el != NULL )
 		{
-			authid = el->data;
+			authid = el->hme_Data;
 		}
 		el = HttpGetPOSTParameter( request, "args" );
 		if( el != NULL )
 		{
-			args = el->data;
+			args = el->hme_Data;
 			//args = UrlDecodeToMem( el->data );
 		}
 		
@@ -842,14 +842,14 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		if( el != NULL )
 		{
 			char *next;
-			id = strtol ( (char *)el->data, &next, 0 );
+			id = strtol ( (char *)el->hme_Data, &next, 0 );
 		}
 		
 		el = HttpGetPOSTParameter( request, "status" );
 		if( el != NULL )
 		{
 			char *next;
-			status = (FLONG)strtol ( (char *)el->data, &next, 0 );
+			status = (FLONG)strtol ( (char *)el->hme_Data, &next, 0 );
 		}
 		
 		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
@@ -1007,13 +1007,13 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		HashmapElement *el = HttpGetPOSTParameter( request, "username" );
 		if( el != NULL )
 		{
-			usrname = UrlDecodeToMem( (char *)el->data );
+			usrname = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		
 		el = HttpGetPOSTParameter( request, "password" );
 		if( el != NULL )
 		{
-			usrpass = UrlDecodeToMem( (char *)el->data );
+			usrpass = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		
 		if( usrname != NULL && usrpass != NULL )
@@ -1160,7 +1160,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		if( el != NULL )
 		{
 			char *next;
-			id = strtol ( (char *)el->data, &next, 0 );
+			id = strtol ( (char *)el->hme_Data, &next, 0 );
 			DEBUG( "[UMWebRequest] Update id %ld!!\n", id );
 		}
 		
@@ -1168,7 +1168,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		if( el != NULL )
 		{
 			char *next;
-			status = (FLONG)strtol ( (char *)el->data, &next, 0 );
+			status = (FLONG)strtol ( (char *)el->hme_Data, &next, 0 );
 		}
 		
 		User *logusr = NULL;
@@ -1179,12 +1179,12 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			el = HttpGetPOSTParameter( request, "authid" );
 			if( el != NULL )
 			{
-				authid = el->data;
+				authid = el->hme_Data;
 			}
 			el = HttpGetPOSTParameter( request, "args" );
 			if( el != NULL )
 			{
-				args = el->data;//UrlDecodeToMem( el->data );
+				args = el->hme_Data;//UrlDecodeToMem( el->data );
 			}
 			
 			if( loggedSession->us_User->u_IsAdmin || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
@@ -1232,7 +1232,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				el = HttpGetPOSTParameter( request, "username" );
 				if( el != NULL )
 				{
-					usrname = UrlDecodeToMem( (char *)el->data );
+					usrname = UrlDecodeToMem( (char *)el->hme_Data );
 					DEBUG( "[UMWebRequest] Update usrname %s!!\n", usrname );
 				
 					if( haveAccess == TRUE )
@@ -1268,7 +1268,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					el = HttpGetPOSTParameter( request, "password" );
 					if( el != NULL )
 					{
-						usrpass = UrlDecodeToMem( (char *)el->data );
+						usrpass = UrlDecodeToMem( (char *)el->hme_Data );
 						DEBUG( "[UMWebRequest] Update usrpass %s!!\n", usrpass );
 						if( usrpass != NULL && logusr->u_Password != NULL )
 						{
@@ -1280,7 +1280,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					el = HttpGetPOSTParameter( request, "fullname" );
 					if( el != NULL )
 					{
-						fullname = UrlDecodeToMem( (char *)el->data );
+						fullname = UrlDecodeToMem( (char *)el->hme_Data );
 						DEBUG( "[UMWebRequest] Update fullname %s!!\n", fullname );
 						if( logusr->u_FullName != NULL )
 						{
@@ -1292,7 +1292,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					el = HttpGetPOSTParameter( request, "email" );
 					if( el != NULL )
 					{
-						email = UrlDecodeToMem( (char *)el->data );
+						email = UrlDecodeToMem( (char *)el->hme_Data );
 						DEBUG( "[UMWebRequest] Update email %s!!\n", email );
 						if( logusr->u_Email != NULL )
 						{
@@ -1304,13 +1304,13 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					el = HttpGetPOSTParameter( request, "level" );
 					if( el != NULL )
 					{
-						level = UrlDecodeToMem( (char *)el->data );
+						level = UrlDecodeToMem( (char *)el->hme_Data );
 					}
 				
 					el = HttpGetPOSTParameter( request, "workgroups" );
 					if( el != NULL )
 					{
-						workgroups = UrlDecodeToMem( (char *)el->data );
+						workgroups = UrlDecodeToMem( (char *)el->hme_Data );
 						DEBUG("Workgroups found!: %s\n", workgroups );
 					}
 			
@@ -1437,7 +1437,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		if( el != NULL )
 		{
 			char *next;
-			id = strtol ( (char *)el->data, &next, 0 );
+			id = strtol ( (char *)el->hme_Data, &next, 0 );
 			DEBUG( "[UMWebRequest] Update id %ld!!\n", id );
 		}
 		
@@ -1448,13 +1448,13 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			el = HttpGetPOSTParameter( request, "authid" );
 			if( el != NULL )
 			{
-				authid = el->data;
+				authid = el->hme_Data;
 			}
 			el = HttpGetPOSTParameter( request, "args" );
 			if( el != NULL )
 			{
-				args = el->data;
-				//args = UrlDecodeToMem( el->data );
+				args = el->hme_Data;
+				//args = UrlDecodeToMem( el->hme_Data );
 			}
 				
 			if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
@@ -1510,7 +1510,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				el = HttpGetPOSTParameter( request, "workgroups" );
 				if( el != NULL )
 				{
-					workgroups = UrlDecodeToMem( (char *)el->data );
+					workgroups = UrlDecodeToMem( (char *)el->hme_Data );
 					DEBUG("Workgroups found!: %s\n", workgroups );
 				}
 			
@@ -1618,7 +1618,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			}
 			else
 			{
-				sessid = (char *)el->data;
+				sessid = (char *)el->hme_Data;
 			}
 		}
 		else
@@ -1739,7 +1739,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		HashmapElement *el = HttpGetPOSTParameter( request, "username" );
 		if( el != NULL )
 		{
-			usrname = UrlDecodeToMem( (char *)el->data );
+			usrname = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		
 		User *logusr = NULL;
@@ -1887,19 +1887,19 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		HashmapElement *el = HttpGetPOSTParameter( request, "sessid" );
 		if( el != NULL )
 		{
-			sessionid = UrlDecodeToMem( (char *)el->data );
+			sessionid = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		
 		el = HttpGetPOSTParameter( request, "deviceid" );
 		if( el != NULL )
 		{
-			deviceid = UrlDecodeToMem( (char *)el->data );
+			deviceid = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		
 		el = HttpGetPOSTParameter( request, "username" );
 		if( el != NULL )
 		{
-			usrname = UrlDecodeToMem( (char *)el->data );
+			usrname = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		
 		if( sessionid != NULL )
@@ -1987,7 +1987,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			HashmapElement *el = HttpGetPOSTParameter( request, "usersonly" );
 			if( el != NULL )
 			{
-				if( ( (char *)el->data ) != NULL && strcmp("true", (char *)el->data ) == 0 )
+				if( ( (char *)el->hme_Data ) != NULL && strcmp("true", (char *)el->hme_Data ) == 0 )
 				{
 					usersOnly = TRUE;
 				}
@@ -2097,7 +2097,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			HashmapElement *el = HttpGetPOSTParameter( request, "usersonly" );
 			if( el != NULL )
 			{
-				if( ( (char *)el->data ) != NULL && strcmp("true", (char *)el->data ) == 0 )
+				if( ( (char *)el->hme_Data ) != NULL && strcmp("true", (char *)el->hme_Data ) == 0 )
 				{
 					usersOnly = TRUE;
 				}
@@ -2218,7 +2218,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		//el =  HashmapGet( (*request)->parsedPostContent, "message" );
 		if( el != NULL )
 		{
-			msg = UrlDecodeToMem( ( char *)el->data );
+			msg = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
 		BufString *bs = BufStringNew();
@@ -2324,7 +2324,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		if( el != NULL )
 		{
 			char *end;
-			keyid = strtol( (char *)el->data, &end, 0 );
+			keyid = strtol( (char *)el->hme_Data, &end, 0 );
 		}
 		
 		if( keyid > 0 )

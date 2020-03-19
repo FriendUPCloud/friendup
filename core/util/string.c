@@ -544,7 +544,7 @@ char** StringSplit( char* str, char delimiter, unsigned int* length )
 		// Copy sub string and append to list
 		char* ns = StringDuplicateN( sptr, ptr - sptr );
 		List* nl = ListNew();
-		nl->data = ns;
+		nl->l_Data = ns;
 		lptr->next = nl;
 		lptr = nl;
 
@@ -560,7 +560,7 @@ char** StringSplit( char* str, char delimiter, unsigned int* length )
 	{
 		char* ns = StringDuplicate( sptr );
 		List* nl = ListNew();
-		nl->data = ns;
+		nl->l_Data = ns;
 		lptr->next = nl;
 		lptr = nl;
 		c++;
@@ -578,12 +578,12 @@ char** StringSplit( char* str, char delimiter, unsigned int* length )
 	free( l );
 	while( lptr->next )
 	{
-		a[i++] = lptr->data;
+		a[i++] = lptr->l_Data;
 		l = lptr;
 		lptr = lptr->next;
 		free( l );
 	}
-	a[i++] = lptr->data;
+	a[i++] = lptr->l_Data;
 	free( lptr );
 	*length = c;
 
