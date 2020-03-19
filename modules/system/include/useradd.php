@@ -31,112 +31,103 @@ if( isset( $args->authid ) )
 			if( $perm->response == -1 )
 			{
 				//
+				
 				//die( 'fail<!--separate-->' . json_encode( $perm ) );
 			}
 			
 			// Permission granted.
+			
 			if( $perm->response == 1 )
 			{
+				
 				$level = 'Admin';
+				
 			}
 		}
 	}
 }
 
-
-
 if( $level == 'Admin' )
 {
-	$userid = false;
-	$args = [ 
-		'sessionid' => $args->sessionid, 
-		'username'  => ( isset( $args->args->username ) ? $args->args->username : 'Unnamed user' ), 
-		'password'  => md5( rand(0,999) + microtime() ),
-		'fullname'  => 'Unnamed user',
-		'level'		=> 'User'
-	];
+	// Make sure we have the "User" type group
+	$g = new dbIO( 'FUserGroup' );
+	$g->Name = 'User';
+	$g->Load();
+	$g->Save();
 	
-	$res = fc_query( '/system.library/user/create', $args );
-	$resp = explode( '<!--separate-->', $res );
-	if( $resp[0] == 'ok' && isset( $resp[1] )  )
+	if( $g->ID > 0 )
 	{
-		try
+		// Create the new user
+		$u = new dbIO( 'FUser' );
+		$u->Name = ( isset( $args->args->username ) ? $args->args->username : 'Unnamed user' );
+		if( isset( $args->args->username ) && $u->Load() )
 		{
-			$rs = json_decode( $resp[1] );
-			if( $rs->create == 'success' && isset( $rs->id ) ) $userid = $rs->id;
+			die( 'fail<!--separate-->{"response":"User already exist","code":"19"}'  );
 		}
-		catch(Exception $e )
+		$u->Password = md5( rand(0,999) + microtime() );
+		$u->FullName = 'Unnamed user';
+		$u->Save();
+
+		if( $u->ID > 0 )
 		{
-			die('fail<!--separate-->USER_CREATION_FAILED');
-		}
-	}
-	
-	// TODO: Should be a check if the user that is creating this new user has access to add users to defined workgroup(s) before saving ... 
-	// TODO: It's required to add user with a workgroup if the user adding is not Admin and have rolepermissions ...
-	if( $userid && ( $prevlevel == 'User' || isset( $args->args->workgroups ) ) )
-	{
-		if( !isset( $args->args->workgroups ) || !$args->args->workgroups )
-		{
-			die( 'fail<!--separate-->{"response":"Adding a User to a Workgroup is required.","code":"20"}'  );
-		}
-		else if( $wgr = explode( ',', $args->args->workgroups ) )
-		{
-			foreach( $wgr as $gid )
+			$SqlDatabase->query( 'INSERT INTO FUserToGroup ( UserID, UserGroupID ) VALUES ( \'' . $u->ID . '\', \'' . $g->ID . '\' )' );
+				
+			// TODO: Should be a check if the user that is creating this new user has access to add users to defined workgroup(s) before saving ... 
+			
+			// TODO: It's required to add user with a workgroup if the user adding is not Admin and have rolepermissions ...
+			
+			if( $prevlevel == 'User' || isset( $args->args->workgroups ) )
 			{
-				
-				$args = [ 
-					'sessionid' => $args->sessionid, 
-					'id'        => intval( $gid   ), 
-					'users'     => intval( $userid ),
-					'args'      => urlencode( '{
-						"type"    : "write", 
-						"context" : "application", 
-						"authid"  : "' . $args->authid . '", 
-						"data"    : { 
-							"permission" : [ 
-								"PERM_USER_GLOBAL", 
-								"PERM_USER_WORKGROUP" 
-							]
-						}, 
-						"object"   : "workgroup", 
-						"objectid" : "' . $gid . '" 
-					}' )
-				];
-				
-				/*$args = [ 
-					'sessionid' => $args->sessionid, 
-					'id'        => intval( $gid   ), 
-					'users'     => intval( $u->ID ),
-					'args'      => urlencode( '{
-						"type"    : "write", 
-						"context" : "application", 
-						"authid"  : "' . $args->authid . '", 
-						"data"    : { 
-							"permission" : [ 
-								"PERM_USER_GLOBAL", 
-								"PERM_USER_WORKGROUP" 
-							]
-						}
-					}' )
-				];*/
-				
-				if( $res = fc_query( '/system.library/group/addusers', $args ) )
+				if( !isset( $args->args->workgroups ) || !$args->args->workgroups )
 				{
-					$resp = explode( '<!--separate-->', $res );
-					
-					if( $resp[0] == 'fail' )
+					die( 'fail<!--separate-->{"response":"Adding a User to a Workgroup is required.","code":"20"}'  );
+				}
+				else if( $wgr = explode( ',', $args->args->workgroups ) )
+				{
+					foreach( $wgr as $gid )
 					{
-					
-						// 
+						$nestedArgs = new stdClass();
+						$nestedArgs->type = 'write';
+						$nestedArgs->context = 'application';
+						$nestedArgs->authid = $args->authid;
+						$nestedArgs->data = new stdClass();
+						$nestedArgs->data->permission = Array( 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' );
+						$nestedArgs->object = 'workgroup';
+						$nestedArgs->objectid = $gid;
 						
-						die( 'fail<!--separate-->' . ( $resp[1] ? $resp[1] : '' ) . ' [] debug: ' . print_r( $perm,1 ) . ' [] args: ' . print_r( $args,1 )  );
+						$nestedArgs = json_encode( $nestedArgs );
+						
+						$w_args = [
+							'sessionid' => $args->sessionid,
+							'id'        => intval( $gid   ), 
+							'users'     => intval( $u->ID ),
+							'args'      => $nestedArgs
+						];
+						
+						// If you wanna know what's going on.
+						//$Logger->log( 'Added nested arguments: ' . print_r( $w_args, 1 ) );
+						
+						if( $res = fc_query( '/system.library/group/addusers', $w_args ) )
+						{
+							$resp = explode( '<!--separate-->', $res );
+							
+							if( $resp[0] == 'fail' )
+							{
+							
+								// 
+								$err = 'fail<!--separate-->' . ( $resp[1] ? $resp[1] : '' ) . ' [] debug: ' . print_r( $perm,1 ) . ' [] args: ' . print_r( $w_args,1 ); 
+								$Logger->log( $err );
+								die( $err );
+							}
+						
+						}
 					}
-				
 				}
 			}
+			
+			die( 'ok<!--separate-->' . $u->ID );
 		}
 	}
-	die( 'ok<!--separate-->' . $userid );
 }
 die( 'fail<!--separate-->{"response":"user add failed"}'  );
 
