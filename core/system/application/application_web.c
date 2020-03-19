@@ -921,8 +921,8 @@ Application.checkDocumentSession = function( sasID = null )
 		char *sessid = NULL;
 		
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{ TAG_DONE, TAG_DONE}
 		};
 		
@@ -1287,8 +1287,8 @@ Application.checkDocumentSession = function( sasID = null )
 		char *msg = NULL;
 		
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		FERROR("app/sendowner called\n");
@@ -1388,8 +1388,8 @@ Application.checkDocumentSession = function( sasID = null )
 	else if( strcmp( urlpath[ 0 ], "takeover" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -1523,8 +1523,8 @@ Application.checkDocumentSession = function( sasID = null )
 	else if( strcmp( urlpath[ 0 ], "switchsession" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -1675,7 +1675,7 @@ Application.checkDocumentSession = function( sasID = null )
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -1832,7 +1832,7 @@ Application.checkDocumentSession = function( sasID = null )
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -1950,8 +1950,8 @@ Application.checkDocumentSession = function( sasID = null )
 		char *url = NULL;
 		
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -1973,11 +1973,196 @@ Application.checkDocumentSession = function( sasID = null )
 			FFree( url );
 		}
 	}
+	
+	//
+	//
+	// STUFF RELEATED TO APPLICATIONS
+	//
+	//
+	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	* 
+	* <HR><H2>system.library/app/regapp</H2>Register Application Session
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param userid - (required ) user id which registered app
+	* @param appid - (required) application id which session will be created
+	* @param permissions - (required) application permissions
+	* @param data - additional session data
+
+	* @return { "response":"success" } otherwise information about error
+	*/
+	/// @endcond
+	else if( strcmp( urlpath[ 0 ], "regapp" ) == 0 )
+	{
+		char *qauthid = NULL;
+		char *permissions = NULL;
+		char *data = NULL;
+		FULONG userID = 0;
+		FULONG appID = 0;
+		
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE}
+		};
+		
+		response = HttpNewSimple( HTTP_200_OK,  tags );
+		
+		HashmapElement *el = HashmapGet( request->parsedPostContent, "userid" );
+		if( el != NULL )
+		{
+			char *end;
+			userID = strtoull( el->data,  &end, 0 );
+		}
+		
+		el = HashmapGet( request->parsedPostContent, "appid" );
+		if( el != NULL )
+		{
+			char *end;
+			appID = strtoull( el->data,  &end, 0 );
+		}
+		
+		el = HashmapGet( request->parsedPostContent, "permissions" );
+		if( el != NULL )
+		{
+			permissions = UrlDecodeToMem( ( char *)el->data );
+		}
+		
+		el = HashmapGet( request->parsedPostContent, "data" );
+		if( el != NULL )
+		{
+			data = UrlDecodeToMem( ( char *)el->data );
+		}
+		
+		//INSERT INTO `FUserApplication` (`ID`, `UserID`, `ApplicationID`, `Permissions`, `AuthID`, `Data`) VALUES (NULL, '2', '3', 'permission', 'generatedid', '{}')
+		
+		if( userID > 0 && appID > 0 && permissions != NULL )
+		{
+			char tmp[ 1024 ];
+			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+			if( sqllib != NULL )
+			{
+				UserApplication *fuapp = UserAppNew( userID, appID, permissions );
+				if( fuapp != NULL )
+				{
+					int err = sqllib->Save( sqllib, UserApplicationDesc, fuapp );
+					if( err == 0 )
+					{
+						snprintf( tmp, sizeof(tmp), "{\"result\":\"success\",\"id\":%lu,\"authid\":\"%s\"}", fuapp->ua_ID, fuapp->ua_AuthID );
+					}
+					UserAppDelete( fuapp );
+				}
+				else
+				{
+					strcpy( tmp, "{\"response\":\"fail\"}" );
+				}
+				HttpAddTextContent( response, tmp );
+			}
+			else
+			{
+				char dictmsgbuf[ 256 ];
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] , DICT_SQL_LIBRARY_NOT_FOUND );
+			}
+		}
+		else
+		{
+			char dictmsgbuf[ 256 ];
+			char dictmsgbuf1[ 196 ];
+			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "userid, appid, permissions" );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+			HttpAddTextContent( response, dictmsgbuf );
+
+			FERROR("sasid or users is missing!\n");
+		}
+		
+		if( qauthid != NULL )
+		{
+			FFree( qauthid );
+		}
+		if( permissions != NULL )
+		{
+			FFree( permissions );
+		}
+		if( data != NULL )
+		{
+			FFree( data );
+		}
+	}
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	* 
+	* <HR><H2>system.library/app/quit</H2>Remove Application Session by authid
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param qauthid - (required ) authentication id which will be removed
+
+	* @return { "response":"success" } otherwise information about error
+	*/
+	/// @endcond
+	else if( strcmp( urlpath[ 0 ], "quit" ) == 0 )
+	{
+		char *qauthid = NULL;
+		
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE}
+		};
+		
+		response = HttpNewSimple( HTTP_200_OK,  tags );
+		
+		HashmapElement *el = HashmapGet( request->parsedPostContent, "qauthid" );
+		if( el != NULL )
+		{
+			qauthid = UrlDecodeToMem( ( char *)el->data );
+		}
+		
+		if( qauthid != NULL )
+		{
+			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+			if( sqllib != NULL )
+			{
+				char q[ 1024 ];
+				sqllib->SNPrintF( sqllib, q, sizeof(q), "DELETE FROM `FUserApplication` WHERE AuthID='%s'", qauthid );
+
+				sqllib->QueryWithoutResults( sqllib, q );
+			
+				l->LibrarySQLDrop( l, sqllib );
+				
+				int size = sprintf( q, "{\"response\":\"success\"}" );
+				HttpAddTextContent( response, q );
+			}
+			else
+			{
+				char dictmsgbuf[ 256 ];
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] , DICT_SQL_LIBRARY_NOT_FOUND );
+			}
+		}
+		else
+		{
+			char dictmsgbuf[ 256 ];
+			char dictmsgbuf1[ 196 ];
+			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "qauthid" );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+			HttpAddTextContent( response, dictmsgbuf );
+
+			FERROR("sasid or users is missing!\n");
+		}
+		
+		if( qauthid != NULL )
+		{
+			FFree( qauthid );
+		}
+	}
+	
+	
 	else
 	{
 		struct TagItem tags[] = {
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_404_NOT_FOUND,  tags );
