@@ -30,6 +30,7 @@
 
 #include <util/hooks.h>
 #include <util/hashmap.h>
+#include <util/hashmap_long.h>
 #include <util/tagitem.h>
 #include <util/base64.h>
 #include "auth/authmodule.h"
@@ -70,6 +71,7 @@
 #include <system/mobile/mobile_manager.h>
 #include <system/calendar/calendar_manager.h>
 #include <system/notification/notification_manager.h>
+#include <system/security/security_manager.h>
 
 #include <interface/socket_interface.h>
 #include <interface/string_interface.h>
@@ -246,6 +248,7 @@ typedef struct SystemBase
 	NotificationManager				*sl_NotificationManager;	// Notification Manager
 	PermissionManager				*sl_PermissionManager;		// Permission Manager
 	RoleManager						*sl_RoleManager;	// Role Manager
+	SecurityManager					*sl_SecurityManager;	// Security Manager
 
 	pthread_mutex_t 				sl_ResourceMutex;	// resource mutex
 	pthread_mutex_t					sl_InternalMutex;		// internal slib mutex
@@ -557,7 +560,7 @@ static inline HashmapElement *GetHEReq( Http *request, char *param )
 {
 	HashmapElement *tst = HashmapGet( request->parsedPostContent, param );
 	if( tst == NULL ) tst = HashmapGet( request->query, param );
-	if( tst && tst->data == NULL ) return NULL;
+	if( tst && tst->hme_Data == NULL ) return NULL;
 	return tst;
 }
 

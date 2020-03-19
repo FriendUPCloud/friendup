@@ -119,7 +119,7 @@ Http *USAWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		el = HttpGetPOSTParameter( request, "username" );
 		if( el != NULL )
 		{
-			usrname = UrlDecodeToMem( (char *)el->data );
+			usrname = UrlDecodeToMem( (char *)el->hme_Data );
 			DEBUG( "[USAWebRequest] Update usrname %s!!\n", usrname );
 		}
 		

@@ -183,7 +183,7 @@ int FSRemoteLogin( SpecialData *sd )
 				//int len = t[ i ].end-t[ i ].start;
 				i1 = i + 1;
 				
-				if ( jsoneq( d, &t[i], "response" ) == 0) 
+				if( jsoneq( d, &t[i], "response" ) == 0 ) 
 				{
 					//int len = t[ i1 ].end-t[ i1 ].start;
 				
@@ -194,13 +194,16 @@ int FSRemoteLogin( SpecialData *sd )
 				}
 				//sessionid
 
-				if (jsoneq( d, &t[i], "sessionid") == 0) 
+				if( jsoneq( d, &t[i], "sessionid") == 0 ) 
 				{
 					int len = t[ i1 ].end-t[ i1 ].start;
 					char authidc[ 512 ];
+					char *tmpses = StringDuplicateN( d + t[i1].start, len );
+					
 					memset( authidc, 0, 512 );
 					
-					int locs = sprintf( authidc, "sessionid=%s", "remote" );
+					int locs = sprintf( authidc, "sessionid=%s", tmpses );
+					//int locs = sprintf( authidc, "sessionid=%s", "remote" );
 					if( sd->id != NULL )
 					{
 						FFree( sd->id );
@@ -215,6 +218,7 @@ int FSRemoteLogin( SpecialData *sd )
 					{
 						error = 0;
 					}
+					FFree( tmpses );
 					break;
 				}
 			}

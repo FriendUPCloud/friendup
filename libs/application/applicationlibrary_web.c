@@ -137,7 +137,7 @@ Http* AppWebRequest( struct ApplicationLibrary *l, char **urlpath, Http* request
 		HashmapElement *el =  HashmapGet( request->uri->query, "url" );
 		if( el != NULL )
 		{
-			url = UrlDecodeToMem( ( char *)el->data );
+			url = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
 		if( url != NULL )

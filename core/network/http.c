@@ -1494,7 +1494,7 @@ List *HttpGetHeaderList( Http* http, const char* name )
 	HashmapElement* e = HashmapGet( http->headers, (char*)name );
 	if( e )
 	{
-		return e->data;
+		return e->hme_Data;
 	}
 	else
 	{
@@ -1516,12 +1516,12 @@ char *HttpGetHeader( Http* http, const char* name, unsigned int index )
 	HashmapElement* e = HashmapGet( http->headers, (char*)name );
 	if( e )
 	{
-		List* l = e->data;
-		char* f = l->data;
+		List* l = e->hme_Data;
+		char* f = l->l_Data;
 		for( unsigned int i = 0; i < index; i++ )
 		{
 			l = l->next;
-			f = l->data;
+			f = l->l_Data;
 		}
 		return f;
 	}
@@ -1559,7 +1559,7 @@ unsigned int HttpNumHeader( Http* http, const char* name )
 	HashmapElement* e = HashmapGet( http->headers, (char*)name );
 	if( e )
 	{
-		List* l = e->data;
+		List* l = e->hme_Data;
 		unsigned int num = 0;
 		do
 		{
@@ -1598,11 +1598,11 @@ FBOOL HttpHeaderContains( Http* http, const char* name, const char* value, FBOOL
 		char valueLowcase[ size ];
 		for( ; i < size; i++ ) valueLowcase[ i ] = HttpAlphaToLow( value[ i ] );
 		
-		List* l = e->data;
+		List* l = e->hme_Data;
 		do
 		{
 			i = 0;
-			char* data = (char*) l->data;
+			char* data = (char*) l->l_Data;
 			while( data[i] && i < size )
 			{
 				if(
@@ -1747,25 +1747,25 @@ void HttpFreeRequest( Http* http )
 	{
 		while( ( e = HashmapIterate( http->headers, &iterator ) ) != NULL )
 		{
-			if( e->data != NULL )
+			if( e->hme_Data != NULL )
 			{
-				List* l = (List*)e->data;
+				List* l = (List*)e->hme_Data;
 				List* n = NULL;
 				do
 				{
-					if( l->data )
+					if( l->l_Data )
 					{
-						FFree( l->data );
-						l->data = NULL;
+						FFree( l->l_Data );
+						l->l_Data = NULL;
 					}
 					n = l->next;
 					FFree( l );
 					l = n;
 				} while( l );
-				e->data = NULL;
+				e->hme_Data = NULL;
 			}
-			FFree( e->key );
-			e->key = NULL;
+			FFree( e->hme_Key );
+			e->hme_Key = NULL;
 		}
 	
 		HashmapFree( http->headers );
