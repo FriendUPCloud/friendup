@@ -543,9 +543,9 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	* @param password - (required) password
 	* @param fullname  - full user name
 	* @param email - user email
-	* @param level - groups to which user will be assigned, separated by comma
+	* @param level - (required) groups to which user will be assigned, separated by comma
 	* @param workgroups - groups to which user will be assigned. Groups are passed as string, ID's separated by comma
-	* @return { create: sucess } when success, otherwise error with code
+	* @return ok<!--separate-->{ "create": "sucess","id":"ID","uuid":"UUID" } when success, otherwise error with code
 	*/
 	/// @endcond
 	
@@ -607,7 +607,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				DEBUG("Workgroups found!: %s\n", workgroups );
 			}
 			
-			if( usrname != NULL && usrpass != NULL )
+			if( usrname != NULL && usrpass != NULL && level != NULL )
 			{
 				User *tusr = UMUserGetByNameDB( l->sl_UM, usrname );
 				
@@ -654,7 +654,9 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						
 						if( error == 0 )
 						{
-							HttpAddTextContent( response, "ok<!--separate-->{ \"create\": \"sucess\" }" );
+							char buffer[ 1024 ];
+							snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"create\": \"sucess\",\"id\":\"%lu\",\"uuid\":\"%s\" }", locusr->u_ID, locusr->u_UUID );
+							HttpAddTextContent( response, buffer );
 						}
 						else
 						{
@@ -683,7 +685,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			{
 				char buffer[ 256 ];
 				char buffer1[ 256 ];
-				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "username, password" );
+				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "username, password, level" );
 				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
