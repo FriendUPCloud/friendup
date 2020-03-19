@@ -543,6 +543,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	* @param fullname  - full user name
 	* @param email - user email
 	* @param level - groups to which user will be assigned, separated by comma
+	* @param workgroups - groups to which user will be assigned. Groups are passed as string, ID's separated by comma
 	* @return { create: sucess } when success, otherwise error with code
 	*/
 	/// @endcond
@@ -562,14 +563,27 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		char *fullname = NULL;
 		char *email = NULL;
 		char *level = NULL;
-		//FULONG id = 0;
+		char *workgroups = NULL;
 		FBOOL userCreated = FALSE;
 		
 		DEBUG( "[UMWebRequest] Create user!!\n" );
 		
 		HashmapElement *el = NULL;
+		char *args = NULL;
+		char *authid = NULL;
+			
+		el = HttpGetPOSTParameter( request, "authid" );
+		if( el != NULL )
+		{
+			authid = el->hme_Data;
+		}
+		el = HttpGetPOSTParameter( request, "args" );
+		if( el != NULL )
+		{
+			args = el->hme_Data;//UrlDecodeToMem( el->data );
+		}
 		
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
+		if( loggedSession->us_User->u_IsAdmin || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
 		{
 			el = HttpGetPOSTParameter( request, "username" );
 			if( el != NULL )
@@ -583,6 +597,13 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			{
 				usrpass = UrlDecodeToMem( (char *)el->hme_Data );
 				DEBUG( "[UMWebRequest] Update usrpass %s!!\n", usrpass );
+			}
+			
+			el = HttpGetPOSTParameter( request, "workgroups" );
+			if( el != NULL )
+			{
+				workgroups = UrlDecodeToMem( (char *)el->hme_Data );
+				DEBUG("Workgroups found!: %s\n", workgroups );
 			}
 			
 			if( usrname != NULL && usrpass != NULL )
@@ -643,7 +664,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							HttpAddTextContent( response, buffer );
 						}
 						
-						UGMAssignGroupToUserByStringDB( l->sl_UGM, locusr, level, NULL );
+						UGMAssignGroupToUserByStringDB( l->sl_UGM, locusr, level, workgroups );
 						
 						NotifyExtServices( l, request, locusr, "create" );
 						
@@ -670,6 +691,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		if( level != NULL )
 		{
 			FFree( level );
+		}
+		
+		if( workgroups != NULL )
+		{
+			FFree( workgroups );
 		}
 		
 		if( userCreated == TRUE )
@@ -713,7 +739,9 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
-
+		
+		char *args = NULL;
+		char *authid = NULL;
 		FULONG id = 0;
 		
 		DEBUG( "[UMWebRequest] Delete user!!\n" );
@@ -725,7 +753,18 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			id = strtol ( (char *)el->hme_Data, &next, 0 );
 		}
 		
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
+		el = HttpGetPOSTParameter( request, "authid" );
+		if( el != NULL )
+		{
+			authid = el->hme_Data;
+		}
+		el = HttpGetPOSTParameter( request, "args" );
+		if( el != NULL )
+		{
+			args = el->hme_Data;//UrlDecodeToMem( el->data );
+		}
+		
+		if( loggedSession->us_User->u_IsAdmin || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
 		{
 			if( id > 0 )
 			{
