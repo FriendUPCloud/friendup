@@ -98,7 +98,7 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 		
 		if( el != NULL )
 		{
-			path = (char *)el->data;
+			path = (char *)el->hme_Data;
 		}
 		
 		if( path == NULL )
@@ -165,7 +165,7 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 				if( el == NULL ) el = HashmapGet( request->query, "mode" );
 				if( el != NULL )
 				{
-					mode = (char *)el->data;
+					mode = (char *)el->hme_Data;
 				}
 				
 				if( mode != NULL )//&& mode[0] == 'r' )
@@ -319,7 +319,7 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 			if( el != NULL )
 			{
 				char *eptr;
-				pointer = (FULONG)strtoul( (char *)el->data, &eptr, 0 );
+				pointer = (FULONG)strtoul( (char *)el->hme_Data, &eptr, 0 );
 			}
 			
 			response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( "text/html", 9 ),
@@ -376,7 +376,7 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 		if( el != NULL )
 		{
 			char *eptr;
-			pointer = (FULONG)strtoul( (char *)el->data, &eptr, 0 );
+			pointer = (FULONG)strtoul( (char *)el->hme_Data, &eptr, 0 );
 		}
 		
 		el  = HashmapGet( request->parsedPostContent, "size" );
@@ -384,7 +384,7 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 		if( el != NULL )
 		{
 			char *eptr;
-			size = (FULONG)strtoul( (char *)el->data, &eptr, 0 );
+			size = (FULONG)strtoul( (char *)el->hme_Data, &eptr, 0 );
 		}
 		
 		response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( "text/html", 9 ),
@@ -505,7 +505,7 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 		if( el != NULL )
 		{
 			char *eptr;
-			pointer = (FULONG)strtoul( (char *)el->data, &eptr, 0 );
+			pointer = (FULONG)strtoul( (char *)el->hme_Data, &eptr, 0 );
 		}
 		
 		el  = HashmapGet( request->parsedPostContent, "size" );
@@ -513,14 +513,14 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 		if( el != NULL )
 		{
 			char *eptr;
-			size = (FULONG)strtoul( (char *)el->data, &eptr, 0 );
+			size = (FULONG)strtoul( (char *)el->hme_Data, &eptr, 0 );
 		}
 		
 		el  = HashmapGet( request->parsedPostContent, "data" );
 		if( el == NULL ) el = HashmapGet( request->query, "data" );
 		if( el != NULL )
 		{
-			data = (char *)el->data;
+			data = (char *)el->hme_Data;
 		}
 		
 		response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( "text/html", 9 ),
@@ -596,7 +596,7 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 		if( el == NULL ) el = HashmapGet( request->query, "username" );
 		if( el != NULL )
 		{
-			username = (char *)el->data;
+			username = (char *)el->hme_Data;
 		}
 	}
 	

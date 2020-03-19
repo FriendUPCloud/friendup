@@ -2054,11 +2054,11 @@ int FriendCoreRun( FriendCoreInstance* fc )
 		HashmapElement* e = NULL;
 		while( ( e = HashmapIterate( fc->fci_Libraries, &iterator ) ) != NULL )
 		{
-			DEBUG( "[FriendCore] Closing library at address %lld\n", ( long long int )e->data );
-			LibraryClose( (Library*)e->data );
-			e->data = NULL;
-			FFree( e->key );
-			e->key = NULL;
+			DEBUG( "[FriendCore] Closing library at address %lld\n", ( long long int )e->hme_Data );
+			LibraryClose( (Library*)e->hme_Data );
+			e->hme_Data = NULL;
+			FFree( e->hme_Key );
+			e->hme_Key = NULL;
 		}
 		HashmapFree( fc->fci_Libraries );
 		fc->fci_Libraries = NULL;
@@ -2118,7 +2118,7 @@ Library* FriendCoreGetLibrary( FriendCoreInstance* fc, char* libname, FULONG ver
 	}
 	else
 	{
-		lib = (Library*)e->data;
+		lib = (Library*)e->hme_Data;
 		if( lib->l_Version < version )
 		{
 			lib = NULL;

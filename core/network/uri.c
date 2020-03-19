@@ -741,13 +741,13 @@ void UriFree( Uri* uri )
 		HashmapElement* e = NULL;
 		while( ( e = HashmapIterate( uri->query, &iterator ) ) != NULL )
 		{
-			if( e->data != NULL )
+			if( e->hme_Data != NULL )
 			{
-				FFree( e->data );
-				e->data = NULL;
+				FFree( e->hme_Data );
+				e->hme_Data = NULL;
 			}
-			FFree( e->key );
-			e->key = NULL;
+			FFree( e->hme_Key );
+			e->hme_Key = NULL;
 		}
 		HashmapFree( uri->query );
 		uri->query = NULL;
