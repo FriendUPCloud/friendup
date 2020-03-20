@@ -88,7 +88,7 @@ void ApplicationManagerRemoveApplicationSessionByUserID( ApplicationManager *asm
 			char temp[ 1024 ];
 
 			// we remove old entries older then 24 hours
-			snprintf( temp, sizeof(temp), "DELETE from FUserApplication ua left outer join FUserSession us on ua.UserID=us.UserID where ua.UserID=%lu us.SessionID is null", id );
+			snprintf( temp, sizeof(temp), "DELETE from FUserApplication ua left outer join FUserSession us on ua.UserID=us.UserID where ua.UserID=%lu AND us.SessionID is null", id );
 		
 			sqllib->QueryWithoutResults( sqllib, temp );
 		
@@ -96,3 +96,33 @@ void ApplicationManagerRemoveApplicationSessionByUserID( ApplicationManager *asm
 		}
 	}
 }
+
+/**
+ * Remove Application Session
+ *
+ * @param asm pointer to application session manager
+ */
+
+void ApplicationManagerRemoveDetachedApplicationSession( ApplicationManager *asm )
+{
+	if( asm != NULL )
+	{
+		SystemBase *sb = (SystemBase *)asm->am_SB;
+
+		SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
+		if( sqllib != NULL )
+		{
+			DEBUG("[ApplicationManagerRemoveApplicationSessionByUserID] start\n");
+			char temp[ 1024 ];
+
+			// we remove old entries older then 24 hours
+			snprintf( temp, sizeof(temp), "DELETE from FUserApplication ua left outer join FUserSession us on ua.UserID=us.UserID where us.SessionID is null" );
+		
+			sqllib->QueryWithoutResults( sqllib, temp );
+		
+			sb->LibrarySQLDrop( sb, sqllib );
+		}
+	}
+}
+
+

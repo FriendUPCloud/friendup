@@ -1877,6 +1877,12 @@ void CommServicePING( CommService* s )
 			pthread_create( &t, NULL, &InternalPINGThread, con );
 			pthread_detach( t );
 		}
+		
+		if( fcm->fcm_Shutdown == TRUE )
+		{
+			break;
+		}
+		
 		con = (FConnection *)con->node.mln_Succ;
 	}
 	

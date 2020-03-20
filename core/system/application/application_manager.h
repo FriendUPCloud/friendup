@@ -50,4 +50,10 @@ void ApplicationManagerDelete( ApplicationManager *asmm );
 
 void ApplicationManagerRemoveApplicationSessionByUserID( ApplicationManager *am, FUQUAD id );
 
+//
+//
+//
+
+void ApplicationManagerRemoveDetachedApplicationSession( ApplicationManager *am );
+
 #endif // __SYSTEM_APPLICATION_APPLICATION_MANAGER_H__
