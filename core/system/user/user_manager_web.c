@@ -607,6 +607,12 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				DEBUG("Workgroups found!: %s\n", workgroups );
 			}
 			
+			el = HttpGetPOSTParameter( request, "level" );
+			if( el != NULL )
+			{
+				level = UrlDecodeToMem( (char *)el->hme_Data );
+			}
+			
 			if( usrname != NULL && usrpass != NULL && level != NULL )
 			{
 				User *tusr = UMUserGetByNameDB( l->sl_UM, usrname );
@@ -631,12 +637,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					{
 						email = UrlDecodeToMem( (char *)el->hme_Data );
 						DEBUG( "[UMWebRequest] Update email %s!!\n", email );
-					}
-					
-					el = HttpGetPOSTParameter( request, "level" );
-					if( el != NULL )
-					{
-						level = UrlDecodeToMem( (char *)el->hme_Data );
 					}
 					
 					User *locusr = UserNew();
