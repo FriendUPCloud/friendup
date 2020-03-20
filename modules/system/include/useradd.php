@@ -22,7 +22,7 @@ if( isset( $args->authid ) )
 {
 	require_once( 'php/include/permissions.php' );
 	
-	if( $perm = Permissions( 'write', 'application', ( 'AUTHID'.$args->authid ), [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ] ) )
+	if( $perm = Permissions( 'write', 'application', ( 'AUTHID' . $args->authid ), [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ] ) )
 	{
 		if( is_object( $perm ) )
 		{
@@ -50,6 +50,7 @@ if( isset( $args->authid ) )
 if( $level == 'Admin' )
 {
 	// Make sure we have the "User" type group
+	// TODO: This should not strictly be necessary when adding a user..
 	$g = new dbIO( 'FUserGroup' );
 	$g->Name = 'User';
 	$g->Load();
@@ -57,20 +58,46 @@ if( $level == 'Admin' )
 	
 	if( $g->ID > 0 )
 	{
+		$Logger->log( "\n-\n" );
+		
+		$Logger->log( print_r( $args, 1  ) );
+		
+		/*$stdClass = new stdClass();
+		$stdClass->username = $args->args->username;
+		$stdClass->password = $args->args->password;
+		$stdClass->level    = $args->args->level;*/
+		
+		$uargs = Array(
+			'sessionid' => $args->sessionid,
+			// Requirements!
+			'username' => $args->args->username,
+			'password' => $args->args->password,
+			'level'    => $args->args->level
+		);
+		
+		$Logger->log( 'Creating: ' . print_r( $uargs, 1 ) );
+		
+		$res = fc_query( '/system.library/user/create', $uargs );
+		$Logger->log( 'Result from create: ' . $res );
+		
+		// Unexpected error!
+		if( !$res ) die( 'fail<!--separate-->{"response":"100","message":"Failed to create user."}' );
+		
+		list( $code, $message ) = explode( '<!--separate-->', $res );
+		
+		$message = json_parse( $message );
+		
+		// Just pass the error code
+		if( $code != 'ok' )
+			die( $res );
+		
 		// Create the new user
 		$u = new dbIO( 'FUser' );
-		$u->Name = ( isset( $args->args->username ) ? $args->args->username : 'Unnamed user' );
-		if( isset( $args->args->username ) && $u->Load() )
-		{
-			die( 'fail<!--separate-->{"response":"User already exist","code":"19"}'  );
-		}
-		$u->Password = md5( rand(0,999) + microtime() );
-		$u->FullName = 'Unnamed user';
-		$u->Save();
+		$u->Load( $message->id );
 
 		if( $u->ID > 0 )
 		{
-			$SqlDatabase->query( 'INSERT INTO FUserToGroup ( UserID, UserGroupID ) VALUES ( \'' . $u->ID . '\', \'' . $g->ID . '\' )' );
+			//$SqlDatabase->query( 'INSERT INTO FUserToGroup ( UserID, UserGroupID ) VALUES ( \'' . $u->ID . '\', \'' . $g->ID . '\' )' );
 				
 			// TODO: Should be a check if the user that is creating this new user has access to add users to defined workgroup(s) before saving ... 
 			

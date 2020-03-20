@@ -7943,17 +7943,19 @@ function addUser( callback, username )
 		authid: Application.authId
 	};
 	
-	if( username )
+	if( !username )
 	{
-		args[ 'username' ] = username;
+		return Alert( i18n( 'i18n_you_forgot_username' ), i18n( 'i18n_you_forgot_username_desc' ) );
 	}
+	
+	args[ 'username' ] = username;
+	// Temporary password
+	args[ 'password' ] = ( Math.random() % 999 ) + '_' + ( Math.random() % 999 ) + '_' + ( Math.random() % 999 );
+	args[ 'level' ] = ge( 'usLevel' ).value;
 	
 	if( ge( 'usWorkgroups' ) )
 	{
-		//
-		
-		
-		
+		//	
 		if( ge( 'usWorkgroups' ).value )
 		{
 			args.workgroups = ge( 'usWorkgroups' ).value;

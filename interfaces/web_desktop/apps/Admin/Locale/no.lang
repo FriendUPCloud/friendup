@@ -134,3 +134,7 @@ i18n_workgroup_profile                 : Arbeidsgruppe
 i18n_workgroup_name                    : Navn
 i18n_workgroup_description             : Beskrivelse
 
+
+i18n_you_forgot_username             : Du glemte brukernavn
+i18n_you_forgot_username_desc        : Du må skrive inn et brukernavn for å lagre
+
