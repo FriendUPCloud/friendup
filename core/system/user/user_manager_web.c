@@ -655,7 +655,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						if( error == 0 )
 						{
 							char buffer[ 1024 ];
-							snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"create\": \"sucess\",\"id\":\"%lu\",\"uuid\":\"%s\" }", locusr->u_ID, locusr->u_UUID );
+							snprintf( buffer, sizeof(buffer), "ok<!--separate-->{\"create\":\"sucess\",\"id\":\"%lu\",\"uuid\":\"%s\"}", locusr->u_ID, locusr->u_UUID );
 							HttpAddTextContent( response, buffer );
 						}
 						else
