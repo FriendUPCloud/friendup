@@ -1017,7 +1017,7 @@ function receiveEvent( event, queued )
 						var owner = ( arq.isHost ? '' : 'owner' );
 						// Send to others
 						var msg = {
-							path : 'system.library/app/send' + owner + '/',
+							path : 'system.library/sas/send' + owner + '/',
 							data : {
 								sasid : dataPacket.sasid,
 								msg: dataPacket.eventData
@@ -7645,7 +7645,7 @@ AssidRequest.prototype.share = function( handler, callback )
 	{
 		sas.applicationState = 'pending';
 		var reg = {
-			path : 'system.library/app/register/',
+			path : 'system.library/sas/register/',
 			data : {
 				authid : Application.authId,
 			},
@@ -7738,7 +7738,7 @@ AssidRequest.prototype.shareEvents = function( args, handler, callback )
 
 		Friend.conn.on( args.sasid, handler );
 		var accept = {
-			path : 'system.library/app/accept/',
+			path : 'system.library/sas/accept/',
 			data : {
 				authid : Application.authId,
 				sasid : args.sasid
@@ -7768,7 +7768,7 @@ AssidRequest.prototype.unshare = function( callback )
 	{
 		Friend.conn.off( this.applicationId );
 		var unReg = {
-			path : 'system.library/app/unregister',
+			path : 'system.library/sas/unregister',
 			data : {
 				sasid: this.applicationId
 			},
@@ -7806,7 +7806,7 @@ AssidRequest.prototype.sendInvite = function( userlist, inviteMessage, callback 
 	}
 
 	var inv = {
-		path : 'system.library/app/share',
+		path : 'system.library/sas/share',
 		data : {
 			sasid : sas.applicationId,
 			authid : Application.authId,
@@ -7834,7 +7834,7 @@ AssidRequest.prototype.eventDispatcher = function( e )
 	// Send the event through the network!
 	var hostEndpoint = 'send/'; // broadcast to all clients
 	var clientEndpoint = 'sendowner/'; // send to session owner
-	var path = 'system.library/app/';
+	var path = 'system.library/sas/';
 	if ( this.isHost )
 		path += hostEndpoint;
 	else path += clientEndpoint;
@@ -7858,7 +7858,7 @@ AssidRequest.prototype.sendEvent = function( e )
 	//console.log( 'sendEVent', e );
 	var hostEndpoint = 'send/'; // broadcast to all clients
 	var clientEndpoint = 'sendowner/'; // send to session owner
-	var path = 'system.library/app/';
+	var path = 'system.library/sas/';
 	if ( this.isHost )
 		path += hostEndpoint;
 	else path += clientEndpoint;
@@ -8298,14 +8298,14 @@ GuiDesklet = function()
 
 	// Private - if you are calling these, you are doing it wrong
 
-	ns.SAS.prototype.regPath = 'system.library/app/register';
-	ns.SAS.prototype.acceptPath = 'system.library/app/accept';
-	ns.SAS.prototype.invitePath = 'system.library/app/share';
-	ns.SAS.prototype.removePath = 'system.library/app/unshare';
-	ns.SAS.prototype.closePath = 'system.library/app/unregister';
-	ns.SAS.prototype.toClientsPath = 'system.library/app/send';
-	ns.SAS.prototype.toHostPath = 'system.library/app/sendowner';
-	ns.SAS.prototype.userlistPath = 'system.library/app/userlist';
+	ns.SAS.prototype.regPath = 'system.library/sas/register';
+	ns.SAS.prototype.acceptPath = 'system.library/sas/accept';
+	ns.SAS.prototype.invitePath = 'system.library/sas/share';
+	ns.SAS.prototype.removePath = 'system.library/sas/unshare';
+	ns.SAS.prototype.closePath = 'system.library/sas/unregister';
+	ns.SAS.prototype.toClientsPath = 'system.library/sas/send';
+	ns.SAS.prototype.toHostPath = 'system.library/sas/sendowner';
+	ns.SAS.prototype.userlistPath = 'system.library/sas/userlist';
 
 	ns.SAS.prototype.init =function() {
 		var self = this;

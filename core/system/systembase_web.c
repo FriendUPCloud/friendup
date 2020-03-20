@@ -56,6 +56,8 @@
 #include <system/mobile/mobile_web.h>
 #include <system/usergroup/user_group_manager_web.h>
 #include <system/notification/notification_manager_web.h>
+#include <system/sas/sas_manager.h>
+#include <system/sas/sas_web.h>
 #include <strings.h>
 
 #define LIB_NAME "system.library"
@@ -491,10 +493,10 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					
 					if( authid != NULL )
 					{
-						AppSession *as = AppSessionManagerGetSession( l->sl_AppSessionManager, asval );
+						SASSession *as = SASManagerGetSession( l->sl_SASManager, asval );
 						if( as != NULL )
 						{
-							SASUList *alist = as->as_UserSessionList;
+							SASUList *alist = as->sas_UserSessionList;
 							while( alist != NULL )
 							{
 								//DEBUG("Authid check %s user %s\n", alist->authid, alist->usersession->us_User->u_Name );
@@ -1480,6 +1482,16 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 
 			goto error;
 		}
+	}
+	
+	//
+	// handle sas calls
+	//
+	
+	else if( strcmp(  urlpath[ 0 ], "sas" ) == 0 )
+	{
+		DEBUG("SAS Systemlibptr %p applibptr %p - logged user here: %s\n", l, l->alib, loggedSession->us_User->u_Name );
+		response = SASWebRequest( l, &(urlpath[ 1 ]), *request, loggedSession );
 	}
 	
 	//

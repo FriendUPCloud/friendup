@@ -9,27 +9,45 @@
 *****************************************************************************©*/
 /** @file
  * 
- *  Application Web
+ *  Application Session Manager
+ *
+ * All functions related to Remote User structure
  *
  *  @author PS (Pawel Stefanski)
  *  @date created 2016
  */
 
-#ifndef __SYSTEM_APPLICATION_APPLICATIONWEB_H__
-#define __SYSTEM_APPLICATION_APPLICATIONWEB_H__
+#ifndef __SYSTEM_APPLICATION_APPLICATION_MANAGER_H__
+#define __SYSTEM_APPLICATION_APPLICATION_MANAGER_H__
 
-#include <core/types.h>
-#include <core/library.h>
-#include <mysql.h>
-#include <util/hooks.h>
-#include <util/list.h>
-#include <system/fsys/file.h>
-#include <network/socket.h>
-#include <network/http.h>
 #include <system/application/application.h>
-#include <z/zlibrary.h>
-#include <system/systembase.h>
 
-Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserSession *loggedUser );
+//
+// application manager structure
+//
 
-#endif // __SYSTEM_APPLICATION_APPLICATIONWEB_H__
+typedef struct ApplicationManager
+{
+	pthread_mutex_t					am_Mutex;
+	void							*am_SB;
+}ApplicationManager;
+
+//
+// functions
+//
+
+ApplicationManager *ApplicationManagerNew( void *sb );
+
+//
+//
+//
+
+void ApplicationManagerDelete( ApplicationManager *asmm );
+
+//
+//
+//
+
+void ApplicationManagerRemoveApplicationSessionByUserID( ApplicationManager *am, FUQUAD id );
+
+#endif // __SYSTEM_APPLICATION_APPLICATION_MANAGER_H__

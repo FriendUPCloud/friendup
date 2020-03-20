@@ -51,7 +51,6 @@
 #include <system/cache/cache_manager.h>
 #include <libwebsockets.h>
 #include <system/invar/invar_manager.h>
-#include <system/application/app_session_manager.h>
 #include <system/user/user_session.h>
 #include <system/user/user_sessionmanager.h>
 #include <system/roles/role_manager.h>
@@ -72,6 +71,8 @@
 #include <system/calendar/calendar_manager.h>
 #include <system/notification/notification_manager.h>
 #include <system/security/security_manager.h>
+#include <system/sas/sas_manager.h>
+#include <system/application/application_manager.h>
 
 #include <interface/socket_interface.h>
 #include <interface/string_interface.h>
@@ -228,7 +229,7 @@ typedef struct SystemBase
 
 	DeviceManager					*sl_DeviceManager;	// DeviceManager
 	WorkerManager					*sl_WorkerManager; ///< Worker Manager
-	AppSessionManager				*sl_AppSessionManager;		// application sessions
+	ApplicationManager				*sl_ApplicationManager;		// application
 	UserSessionManager				*sl_USM;			// user session manager
 	UserManager						*sl_UM;		// user manager
 	UserGroupManager				*sl_UGM;	// user group manager
@@ -249,6 +250,7 @@ typedef struct SystemBase
 	PermissionManager				*sl_PermissionManager;		// Permission Manager
 	RoleManager						*sl_RoleManager;	// Role Manager
 	SecurityManager					*sl_SecurityManager;	// Security Manager
+	SASManager						*sl_SASManager;			// SAS Manager
 
 	pthread_mutex_t 				sl_ResourceMutex;	// resource mutex
 	pthread_mutex_t					sl_InternalMutex;		// internal slib mutex
