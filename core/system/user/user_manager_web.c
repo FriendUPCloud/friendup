@@ -700,7 +700,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		{
 			FFree( workgroups );
 		}
-		
+		/*
 		if( userCreated == TRUE )
 		{
 			if( usrname != NULL )
@@ -720,6 +720,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				FFree( email );
 			}
 		}
+		*/
 		*result = 200;
 	}
 	
