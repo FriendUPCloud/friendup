@@ -245,7 +245,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
 		HashmapElement *el = HttpGetPOSTParameter( request, "devname" );
-		if( el != NULL ) devname = (char *)el->data;
+		if( el != NULL ) devname = (char *)el->hme_Data;
 		
 		int success = -1;
 		char *resultstring = NULL;
@@ -469,7 +469,7 @@ f.Name ASC";
 		if( el != NULL )
 		{
 			char *ldevname = NULL;
-			devname = (char *)el->data;
+			devname = (char *)el->hme_Data;
 			
 			if( devname != NULL && ( ldevname = FCalloc( strlen( devname ) + 50, sizeof(char) ) ) != NULL )
 			{
@@ -498,7 +498,7 @@ f.Name ASC";
 		el = HttpGetPOSTParameter( request, "path" );
 		if( el != NULL )
 		{
-			path = (char *)el->data;
+			path = (char *)el->hme_Data;
 			if( path != NULL )
 			{
 				char *lpath = NULL;
@@ -515,16 +515,16 @@ f.Name ASC";
 		el = HttpGetPOSTParameter( request, "enc" );
 		if( el != NULL )
 		{
-			if( (char *)el->data != NULL )
+			if( (char *)el->hme_Data != NULL )
 			{
-				enc = (char *)el->data;
+				enc = (char *)el->hme_Data;
 			}
 		}
 		
 		el = HttpGetPOSTParameter( request, "type" );
 		if( el != NULL )
 		{
-			type = (char *)el->data;
+			type = (char *)el->hme_Data;
 		}
 		
 		int mountError = 0;
@@ -546,21 +546,21 @@ f.Name ASC";
 			char *port = NULL;
 			
 			el = HttpGetPOSTParameter( request, "execute" );
-			if( el != NULL ) execute = ( char *)el->data;
+			if( el != NULL ) execute = ( char *)el->hme_Data;
 			
 			el = HttpGetPOSTParameter( request, "visible" );
-			if( el != NULL ) visible = ( char *)el->data;
+			if( el != NULL ) visible = ( char *)el->hme_Data;
 			
 			el = HttpGetPOSTParameter( request, "Server" );
 			if( el != NULL )
 			{
-				host = (char *)el->data;
+				host = (char *)el->hme_Data;
 			}
 			
 			el = HttpGetPOSTParameter( request, "Port" );
 			if( el != NULL )
 			{
-				port = (char *)el->data;
+				port = (char *)el->hme_Data;
 			}
 			
 			//
@@ -571,21 +571,21 @@ f.Name ASC";
 			el = HttpGetPOSTParameter( request, "module" );
 			if( el != NULL )
 			{
-				module = (char *)el->data;
+				module = (char *)el->hme_Data;
 			}
 			
 			el = HttpGetPOSTParameter( request, "userid" );
 			if( el != NULL )
 			{
 				char *next;
-				userID = (FLONG)strtol(( char *)el->data, &next, 0);
+				userID = (FLONG)strtol(( char *)el->hme_Data, &next, 0);
 			}
 			
 			el = HttpGetPOSTParameter( request, "usergroupid" );
 			if( el != NULL )
 			{
 				char *next;
-				FULONG locid = (FLONG)strtol(( char *)el->data, &next, 0);
+				FULONG locid = (FLONG)strtol(( char *)el->hme_Data, &next, 0);
 				if( locid > 0 )
 				{
 					UserGroup *lg = l->sl_UGM->ugm_UserGroups;
@@ -615,12 +615,12 @@ f.Name ASC";
 				el = HttpGetPOSTParameter( request, "authid" );
 				if( el != NULL )
 				{
-					authid = el->data;
+					authid = el->hme_Data;
 				}
 				el = HttpGetPOSTParameter( request, "args" );
 				if( el != NULL )
 				{
-					args = el->data;
+					args = el->hme_Data;
 					//args = UrlDecodeToMem( el->data );
 				}
 				
@@ -868,7 +868,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 		if( el != NULL )
 		{
 			char *next;
-			userID = (FLONG)strtol(( char *)el->data, &next, 0);
+			userID = (FLONG)strtol(( char *)el->hme_Data, &next, 0);
 		}
 		else
 		{
@@ -882,7 +882,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 		if( el != NULL )
 		{
 			char *ldevname = NULL;
-			devname = (char *)el->data;
+			devname = (char *)el->hme_Data;
 			
 			if( devname != NULL && ( ldevname = FCalloc( strlen( devname ) + 50, sizeof(char) ) ) != NULL )
 			{
@@ -937,13 +937,13 @@ AND LOWER(f.Name) = LOWER('%s')",
 					el = HttpGetPOSTParameter( request, "authid" );
 					if( el != NULL )
 					{
-						authid = el->data;
+						authid = el->hme_Data;
 					}
 					el = HttpGetPOSTParameter( request, "args" );
 					if( el != NULL )
 					{
-						args = el->data;
-						//args = UrlDecodeToMem( el->data );
+						args = el->hme_Data;
+						//args = UrlDecodeToMem( el->hme_Data );
 					}
 					DEBUG("UserID %lu\n", userID );
 			
@@ -1173,7 +1173,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 		if( el != NULL )
 		{
 			char *ldevname = NULL;
-			devname = (char *)el->data;
+			devname = (char *)el->hme_Data;
 			
 			if( devname != NULL && ( ldevname = FCalloc( strlen( devname ) + 50, sizeof(char) ) ) != NULL )
 			{
@@ -1317,19 +1317,19 @@ AND LOWER(f.Name) = LOWER('%s')",
 		HashmapElement *el = HttpGetPOSTParameter( request, "devname" );
 		if( el != NULL )
 		{
-			devname = (char *)el->data;
+			devname = (char *)el->hme_Data;
 		}
 		
 		el = HttpGetPOSTParameter( request, "username" );
 		if( el != NULL )
 		{
-			username = (char *)el->data;
+			username = (char *)el->hme_Data;
 		}
 		
 		el = HttpGetPOSTParameter( request, "usergroup" );
 		if( el != NULL )
 		{
-			usergroupname = (char *)el->data;
+			usergroupname = (char *)el->hme_Data;
 		}
 		
 		if( devname == NULL || username == NULL )
@@ -1947,25 +1947,25 @@ AND LOWER(f.Name) = LOWER('%s')",
 		HashmapElement *el = HttpGetPOSTParameter( request, "devname" );
 		if( el != NULL )
 		{
-			devname = UrlDecodeToMem(( char *)el->data );
+			devname = UrlDecodeToMem(( char *)el->hme_Data );
 		}
 		
 		el = HttpGetPOSTParameter( request, "config" );
 		if( el != NULL )
 		{
-			config = UrlDecodeToMem(( char *)el->data );
+			config = UrlDecodeToMem(( char *)el->hme_Data );
 		}
 		
 		el = HttpGetPOSTParameter( request, "descryption" );
 		if( el != NULL )
 		{
-			descrypt = UrlDecodeToMem(( char *)el->data );
+			descrypt = UrlDecodeToMem(( char *)el->hme_Data );
 		}
 		
 		el = HttpGetPOSTParameter( request, "id" );
 		{
 			char *next;
-			id = (FLONG)strtol(( char *)el->data, &next, 0);
+			id = (FLONG)strtol(( char *)el->hme_Data, &next, 0);
 		}
 		
 		if( id >= 0 )

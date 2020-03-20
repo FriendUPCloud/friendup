@@ -592,12 +592,12 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 							HashmapElement *tst = GetHEReq( request, "sessionid" );
 							if( tst != NULL )
 							{
-								if( tst->data != NULL )
+								if( tst->hme_Data != NULL )
 								{
 									session = SLIB->sl_USM->usm_Sessions;
 									while( session != NULL )
 									{
-										if(  strcmp( session->us_SessionID, (char *)tst->data ) == 0 )
+										if(  strcmp( session->us_SessionID, (char *)tst->hme_Data ) == 0 )
 										{
 											break;
 										}
@@ -1217,12 +1217,12 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 						HashmapElement *tst = GetHEReq( request, "sessionid" );
 						if( tst != NULL )
 						{
-							if( tst->data != NULL )
+							if( tst->hme_Data != NULL )
 							{
 								session = SLIB->sl_USM->usm_Sessions;
 								while( session != NULL )
 								{
-									if(  strcmp( session->us_SessionID, (char *)tst->data ) == 0 )
+									if(  strcmp( session->us_SessionID, (char *)tst->hme_Data ) == 0 )
 									{
 										break;
 									}

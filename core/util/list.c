@@ -44,7 +44,7 @@ void FreeList( List* list )
 	{
 		l = list;
 		list = list->next;
-		free( l );
+		FFree( l );
 	}
 }
 
@@ -60,9 +60,9 @@ void AddToList( List *list, void *data )
 	}
 	
 	// First data
-	if( list->data == NULL )
+	if( list->l_Data == NULL )
 	{
-		list->data = data;
+		list->l_Data = data;
 		list->next = NULL;
 	}
 	// More data
@@ -85,7 +85,7 @@ void AddToList( List *list, void *data )
 		}
 	
 		// add data and set terminator
-		tmp->next->data = data;
+		tmp->next->l_Data = data;
 		//tmp->next->next = NULL;
 	}
 }
@@ -104,7 +104,7 @@ List* ListNew()
 		FERROR("Cannot allocate memory in ListNew\n");
 		return NULL;
 	}
-	l->data = NULL;
+	l->l_Data = NULL;
 	l->last = l;
 	return l;
 }
@@ -119,15 +119,15 @@ List* ListNew()
 
 List* ListAdd( List** list, void* data )
 {
-	if( !(*list)->data )
+	if( !(*list)->l_Data )
 	{
-		(*list)->data = data;
+		(*list)->l_Data = data;
 		return (*list);
 	}
 	List *l = ListNew();
 	l->next = (*list);
 	(*list) = l;
-	l->data = data;
+	l->l_Data = data;
 	return l;
 }
 
@@ -144,7 +144,7 @@ void ListFree( List* list )
 	{
 		l = list;
 		list = list->next;
-		free( l );
+		FFree( l );
 	}
 }
 
@@ -161,10 +161,10 @@ void ListFreeWithData( List* list )
 	{
 		l = list;
 		list = list->next;
-		if( l->data != NULL )
+		if( l->l_Data != NULL )
 		{
-			free( l->data );
+			FFree( l->l_Data );
 		}
-		free( l );
+		FFree( l );
 	}
 }

@@ -111,7 +111,7 @@ Http *INVARManagerWebRequest( void *m, char **urlpath, Http* request )
 			HashmapElement *gid = GetHEReq( request, "gid" );
 			if( gid != NULL )
 			{
-				FULONG lgid = (FULONG)strtoul( gid->data, &eptr, 0 );
+				FULONG lgid = (FULONG)strtoul( gid->hme_Data, &eptr, 0 );
 				INVARGroup *ng = INVARManagerGetGroupByPtr( nm, lgid );
 				if( ng != NULL )
 				{
@@ -135,12 +135,12 @@ Http *INVARManagerWebRequest( void *m, char **urlpath, Http* request )
 				}
 				else
 				{
-					Log( FLOG_ERROR, "Group with ID %s not found\n", gid->data );
+					Log( FLOG_ERROR, "Group with ID %s not found\n", gid->hme_Data );
 				}
 			}
 			else
 			{
- 				Log( FLOG_ERROR, "Wrong GID '%s' provided\n", gid->data );
+ 				Log( FLOG_ERROR, "Wrong GID '%s' provided\n", gid->hme_Data );
 			}
 		}
 		else
@@ -171,10 +171,10 @@ Http *INVARManagerWebRequest( void *m, char **urlpath, Http* request )
 		
 		if( name != NULL && data != NULL && gid != NULL )
 		{
-			INVAREntry *ne = INVAREntryNew( 0, name->data, data->data );
+			INVAREntry *ne = INVAREntryNew( 0, name->hme_Data, data->hme_Data );
 			if( ne != NULL )
 			{
-				FULONG lgid = (FULONG)strtoul( gid->data, &eptr, 0 );
+				FULONG lgid = (FULONG)strtoul( gid->hme_Data, &eptr, 0 );
 				DEBUG("Get group with ID %lu\n", (unsigned long )lgid );
 			
 				if( INVARManagerAddEntry( nm, lgid, ne ) == 0 )
@@ -218,8 +218,8 @@ Http *INVARManagerWebRequest( void *m, char **urlpath, Http* request )
 		
 		if( eid != NULL && gid != NULL )
 		{
-			FULONG lgid = (FULONG)strtoul( gid->data, &eptr, 0 );
-			FULONG leid = (FULONG)strtoul( eid->data, &eptr, 0 );
+			FULONG lgid = (FULONG)strtoul( gid->hme_Data, &eptr, 0 );
+			FULONG leid = (FULONG)strtoul( eid->hme_Data, &eptr, 0 );
 			
 			INVARManagerDeleteEntry( nm, lgid, leid );
 			
@@ -249,7 +249,7 @@ Http *INVARManagerWebRequest( void *m, char **urlpath, Http* request )
 		
 		if( eid != NULL && data != NULL )
 		{
-			FULONG leid = (FULONG)strtoul( eid->data, &eptr, 0 );
+			FULONG leid = (FULONG)strtoul( eid->hme_Data, &eptr, 0 );
 			
 			INVAREntry *ne = INVARManagerGetEntryByPtr( nm, leid );
 			if( ne != NULL )
@@ -258,7 +258,7 @@ Http *INVARManagerWebRequest( void *m, char **urlpath, Http* request )
 				{
 					FFree( ne->ne_Data );
 				}
-				ne->ne_Data = StringDuplicate( data->data );
+				ne->ne_Data = StringDuplicate( data->hme_Data );
 				
 				char tmp[ 1024 ];
 				INVAREntryJSONPTR( ne, tmp, 1024 );
@@ -290,7 +290,7 @@ Http *INVARManagerWebRequest( void *m, char **urlpath, Http* request )
 		
 		if( eid != NULL )
 		{
-			FULONG leid = (FULONG)strtoul( eid->data, &eptr, 0 );
+			FULONG leid = (FULONG)strtoul( eid->hme_Data, &eptr, 0 );
 			
 			INVAREntry *ne = INVARManagerGetEntryByPtr( nm, leid );
 			if( ne != NULL )
@@ -326,7 +326,7 @@ Http *INVARManagerWebRequest( void *m, char **urlpath, Http* request )
 		
 		if( name != NULL  )
 		{
-			INVARGroup *ng = INVARGroupNew( 0, name->data );
+			INVARGroup *ng = INVARGroupNew( 0, name->hme_Data );
 			if( ng != NULL )
 			{
 

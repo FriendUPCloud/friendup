@@ -21,8 +21,8 @@ if( $s->ID > 0 )
 	$vc->UserID = $User->ID;
 	$vc->Type = 'system';
 	$vc->Key = 'workspacecount';
-	$vc->load();
-	$vc->Data = 0;
+	if( !$vc->load() )
+		$vc->Data = 0;
 	$vc->save();
 	
 	// Navigation mode

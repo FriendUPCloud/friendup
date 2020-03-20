@@ -758,7 +758,7 @@ int UGMGetUserGroupsDB( UserGroupManager *um, FULONG userID, BufString *bs )
 	
 	if( sqlLib != NULL )
 	{
-		DEBUG("Remove users from group\n");
+		DEBUG("Get groups assigned to user\n");
 		char tmpQuery[ 512 ];
 		snprintf( tmpQuery, sizeof(tmpQuery), "SELECT UserGroupID FROM FUserToGroup WHERE UserID=%lu group by UserGroupID", userID );
 		void *result = sqlLib->Query(  sqlLib, tmpQuery );

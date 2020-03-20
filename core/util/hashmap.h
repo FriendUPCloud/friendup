@@ -13,23 +13,27 @@
  
 #include <core/types.h>
 
+#ifndef MAP_ENUMS
+#define MAP_ENUMS
+
 #define MAP_MISSING -3 // No such element
 #define MAP_FULL -2    // Hashmap is full
 #define MAP_OMEM -1    // Out of Memory
 #define MAP_OK 0       // OK
+#endif
 
 //
- // TODO:
- //     Case-insensitive keys
+// TODO:
+//     Case-insensitive keys
 
 //
 // We need to keep keys and values
 //
 
 typedef struct HashmapElement{
-	char* key;
-	FBOOL inUse;
-	void* data;
+	char* hme_Key;
+	FBOOL hme_InUse;
+	void* hme_Data;
 } HashmapElement;
 
 //
@@ -37,9 +41,9 @@ typedef struct HashmapElement{
 //
 
 typedef struct Hashmap{
-	unsigned int table_size;
-	unsigned int size;
-	HashmapElement *data;
+	unsigned int hm_TableSize;
+	unsigned int hm_Size;
+	HashmapElement *hm_Data;
 } Hashmap;
 
 //

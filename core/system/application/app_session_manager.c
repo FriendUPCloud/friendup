@@ -344,7 +344,7 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 	List *l = delList;
 	while( l != NULL )
 	{
-		AppSession *astorem = (AppSession *)l->data;
+		AppSession *astorem = (AppSession *)l->l_Data;
 		l = l->next;
 		
 		AppSessionManagerRemSession( asm, astorem );
