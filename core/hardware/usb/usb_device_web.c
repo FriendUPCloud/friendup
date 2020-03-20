@@ -194,7 +194,7 @@ Http* USBManagerWebRequest( void *lb, char **urlpath, Http* request, UserSession
 		if (el != NULL)
 		{
 			char *next;
-			id = (FLONG)strtol((char *)el->data, &next, 0);
+			id = (FLONG)strtol((char *)el->hme_Data, &next, 0);
 		}
 		
 		if (id > 0)
@@ -265,7 +265,7 @@ Http* USBManagerWebRequest( void *lb, char **urlpath, Http* request, UserSession
 		HashmapElement *el = HttpGetPOSTParameter(request, "port");
 		if (el != NULL)
 		{
-			port = (char *)el->data;
+			port = (char *)el->hme_Data;
 		}
 		
 		char buffer[512];

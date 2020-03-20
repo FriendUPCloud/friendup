@@ -85,28 +85,28 @@ Http *SMWebRequest( void *lsb, char **urlpath, Http* request, UserSession *logge
 		el = HttpGetPOSTParameter( request, "params" );
 		if( el != NULL )
 		{
-			params = UrlDecodeToMem( (char *)el->data );
+			params = UrlDecodeToMem( (char *)el->hme_Data );
 			DEBUG( "[NMWebRequest] params %s!!\n", params );
 		}
 		
 		el = HttpGetPOSTParameter( request, "type" );
 		if( el != NULL )
 		{
-			type = atoi( (char *)el->data );
+			type = atoi( (char *)el->hme_Data );
 			DEBUG( "[NMWebRequest] type %d!!\n", type );
 		}
 		
 		el = HttpGetPOSTParameter( request, "path" );
 		if( el != NULL )
 		{
-			path = UrlDecodeToMem( (char *)el->data );
+			path = UrlDecodeToMem( (char *)el->hme_Data );
 			DEBUG( "[NMWebRequest] group %s!!\n", path );
 		}
 		
 		el = HttpGetPOSTParameter( request, "servername" );
 		if( el != NULL )
 		{
-			servername = UrlDecodeToMem( (char *)el->data );
+			servername = UrlDecodeToMem( (char *)el->hme_Data );
 			DEBUG( "[NMWebRequest] servername %s!!\n", servername );
 		}
 		

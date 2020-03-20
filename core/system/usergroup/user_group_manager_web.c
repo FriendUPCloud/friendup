@@ -529,13 +529,13 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		el = HttpGetPOSTParameter( request, "authid" );
 		if( el != NULL )
 		{
-			authid = el->data;
+			authid = el->hme_Data;
 		}
 		el = HttpGetPOSTParameter( request, "args" );
 		if( el != NULL )
 		{
-			args = el->data;
-			//args = UrlDecodeToMem( el->data );
+			args = el->hme_Data;
+			//args = UrlDecodeToMem( el->hme_Data );
 		}
 		
 		if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
@@ -543,14 +543,14 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			el = HttpGetPOSTParameter( request, "groupname" );
 			if( el != NULL )
 			{
-				groupname = UrlDecodeToMem( (char *)el->data );
+				groupname = UrlDecodeToMem( (char *)el->hme_Data );
 				DEBUG( "[UMGWebRequest] Update groupname %s!!\n", groupname );
 			}
 			
 			el = HttpGetPOSTParameter( request, "type" );
 			if( el != NULL )
 			{
-				type = UrlDecodeToMem( (char *)el->data );
+				type = UrlDecodeToMem( (char *)el->hme_Data );
 				DEBUG( "[UMWebRequest] Update type %s!!\n", type );
 			}
 			else
@@ -559,15 +559,15 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			}
 			
 			el = HttpGetPOSTParameter( request, "parentid" );
-			if( el != NULL && el->data != NULL && strlen( el->data ) > 0 )
+			if( el != NULL && el->hme_Data != NULL && strlen( el->hme_Data ) > 0 )
 			{
 				char *end;
-				parentID = strtol( (char *)el->data, &end, 0 );
+				parentID = strtol( (char *)el->hme_Data, &end, 0 );
 			}
 			el = HttpGetPOSTParameter( request, "users" );
 			if( el != NULL )
 			{
-				users = UrlDecodeToMem( (char *)el->data );
+				users = UrlDecodeToMem( (char *)el->hme_Data );
 				DEBUG( "[UMWebRequest] create group, users %s!!\n", users );
 			}
 			
@@ -805,7 +805,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		if( el != NULL )
 		{
 			char *next;
-			id = strtol ( (char *)el->data, &next, 0 );
+			id = strtol ( (char *)el->hme_Data, &next, 0 );
 		}
 		
 		if( id > 0 )
@@ -815,13 +815,13 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			el = HttpGetPOSTParameter( request, "authid" );
 			if( el != NULL )
 			{
-				authid = el->data;
+				authid = el->hme_Data;
 			}
 			el = HttpGetPOSTParameter( request, "args" );
 			if( el != NULL )
 			{
-				args = el->data;
-				//args = UrlDecodeToMem( el->data );
+				args = el->hme_Data;
+				//args = UrlDecodeToMem( el->hme_Data );
 			}
 				
 			if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
@@ -961,13 +961,13 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		el = HttpGetPOSTParameter( request, "authid" );
 		if( el != NULL )
 		{
-			authid = el->data;
+			authid = el->hme_Data;
 		}
 		el = HttpGetPOSTParameter( request, "args" );
 		if( el != NULL )
 		{
-			args = el->data;
-			//args = UrlDecodeToMem( el->data );
+			args = el->hme_Data;
+			//args = UrlDecodeToMem( el->hme_Data );
 		}
 		
 		if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
@@ -975,14 +975,14 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			el = HttpGetPOSTParameter( request, "groupname" );
 			if( el != NULL )
 			{
-				groupname = UrlDecodeToMem( (char *)el->data );
+				groupname = UrlDecodeToMem( (char *)el->hme_Data );
 				DEBUG( "[Group/Update] Update groupname %s!!\n", groupname );
 			}
 			
 			el = HttpGetPOSTParameter( request, "type" );
 			if( el != NULL )
 			{
-				type = UrlDecodeToMem( (char *)el->data );
+				type = UrlDecodeToMem( (char *)el->hme_Data );
 				DEBUG( "[Group/Update] Update type %s!!\n", type );
 			}
 			
@@ -990,27 +990,27 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			if( el != NULL )
 			{
 				char *end;
-				groupID = strtol( (char *)el->data, &end, 0 );
+				groupID = strtol( (char *)el->hme_Data, &end, 0 );
 			}
 			
 			el = HttpGetPOSTParameter( request, "parentid" );
 			if( el != NULL )
 			{
 				char *end;
-				parentID = strtol( (char *)el->data, &end, 0 );
+				parentID = strtol( (char *)el->hme_Data, &end, 0 );
 				fParentID = TRUE;
 			}
 			
 			el = HttpGetPOSTParameter( request, "status" );
 			if( el != NULL )
 			{
-				status = atoi( (char *)el->data );
+				status = atoi( (char *)el->hme_Data );
 			}
 			
 			el = HttpGetPOSTParameter( request, "users" );
 			if( el != NULL )
 			{
-				users = UrlDecodeToMem( (char *)el->data );
+				users = UrlDecodeToMem( (char *)el->hme_Data );
 				usersSQL = StringDuplicate( users );
 				DEBUG( "[Group/Update] update group, users %s!!\n", users );
 			}
@@ -1331,20 +1331,20 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		if( el != NULL )
 		{
 			char *end;
-			parentID = strtol( (char *)el->data, &end, 0 );
+			parentID = strtol( (char *)el->hme_Data, &end, 0 );
 			fParentID = TRUE;
 		}
 		
 		el = HttpGetPOSTParameter( request, "status" );
 		if( el != NULL )
 		{
-			status = atoi( (char *)el->data );
+			status = atoi( (char *)el->hme_Data );
 		}
 		
 		el = HttpGetPOSTParameter( request, "type" );
 		if( el != NULL )
 		{
-			type = UrlDecodeToMem( (char *)el->data );
+			type = UrlDecodeToMem( (char *)el->hme_Data );
 			DEBUG( "type %s!!\n", type );
 		}
 		else
@@ -1376,14 +1376,14 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			el = HttpGetPOSTParameter( request, "authid" );
 			if( el != NULL )
 			{
-				authid = el->data;
+				authid = el->hme_Data;
 				len += strlen( authid );
 			}
 			el = HttpGetPOSTParameter( request, "args" );
 			if( el != NULL )
 			{
-				args = el->data;
-				//args = UrlDecodeToMem( el->data );
+				args = el->hme_Data;
+				//args = UrlDecodeToMem( el->hme_Data );
 				len += strlen( args );
 			}
 			
@@ -1454,20 +1454,20 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		if( el != NULL )
 		{
 			char *end;
-			groupID = strtol( (char *)el->data, &end, 0 );
+			groupID = strtol( (char *)el->hme_Data, &end, 0 );
 		}
 		
 		el = HttpGetPOSTParameter( request, "authid" );
 		if( el != NULL )
 		{
-			authid = el->data;
+			authid = el->hme_Data;
 			len += strlen( authid );
 		}
 		el = HttpGetPOSTParameter( request, "args" );
 		if( el != NULL )
 		{
-			args = el->data;
-			//args = UrlDecodeToMem( el->data );
+			args = el->hme_Data;
+			//args = UrlDecodeToMem( el->hme_Data );
 			len += strlen( args );
 		}
 		
@@ -1615,13 +1615,13 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		el = HttpGetPOSTParameter( request, "args" );
 		if( el != NULL )
 		{
-			args = el->data;
+			args = el->hme_Data;
 		}
 		
 		el = HttpGetPOSTParameter( request, "authid" );
 		if( el != NULL )
 		{
-			authid = el->data;
+			authid = el->hme_Data;
 		}
 		
 		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
@@ -1629,8 +1629,8 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			el = HttpGetPOSTParameter( request, "users" );
 			if( el != NULL )
 			{
-				users = UrlDecodeToMem( (char *)el->data );
-				usersSQL = UrlDecodeToMem( (char *)el->data );
+				users = UrlDecodeToMem( (char *)el->hme_Data );
+				usersSQL = UrlDecodeToMem( (char *)el->hme_Data );
 				DEBUG( "[UMWebRequest] addusers users %s!!\n", users );
 			}
 		
@@ -1638,7 +1638,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			if( el != NULL )
 			{
 				char *end;
-				groupID = strtol( (char *)el->data, &end, 0 );
+				groupID = strtol( (char *)el->hme_Data, &end, 0 );
 			}
 			// get from database users by using select ID,UUID from FUser where ID in()
 			
@@ -1705,7 +1705,6 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 							SQLLibrary *sqlLib = l->LibrarySQLGet( l );
 							if( sqlLib != NULL )
 							{
-								File *dstFile = NULL;
 								char *errorStr = NULL;
 
 								UserGroupMountWorkgroupDrives( l->sl_DeviceManager, usr, groupID );
@@ -1714,16 +1713,13 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 								{
 									//INFO( "[MountFS] -- Could not mount device for user %s. Drive was %s.\n", tmpUser->u_Name ? tmpUser->u_Name : "--nousername--", name ? name : "--noname--" );
 								}
-								
-							
+
 								// Tell user!
 								UserNotifyFSEvent2( l->sl_DeviceManager, usr, "refresh", "Mountlist:" );
 
-								//int UserAddDevice( User *usr, File *file )
 								l->LibrarySQLDrop( l, sqlLib );
 							}
 						}
-
 						FFree( rmEntry );
 					} // while ugroups
 				} // ug != NULL
@@ -1796,13 +1792,13 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		el = HttpGetPOSTParameter( request, "args" );
 		if( el != NULL )
 		{
-			args = el->data;
+			args = el->hme_Data;
 		}
 
 		el = HttpGetPOSTParameter( request, "authid" );
 		if( el != NULL )
 		{
-			authid = el->data;
+			authid = el->hme_Data;
 		}
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -1812,8 +1808,8 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			el = HttpGetPOSTParameter( request, "users" );
 			if( el != NULL )
 			{
-				users = UrlDecodeToMem( (char *)el->data );
-				usersSQL = UrlDecodeToMem( (char *)el->data );
+				users = UrlDecodeToMem( (char *)el->hme_Data );
+				usersSQL = UrlDecodeToMem( (char *)el->hme_Data );
 				DEBUG( "[UMWebRequest] removeusers users %s!!\n", users );
 			}
 		
@@ -1821,7 +1817,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			if( el != NULL )
 			{
 				char *end;
-				groupID = strtol( (char *)el->data, &end, 0 );
+				groupID = strtol( (char *)el->hme_Data, &end, 0 );
 			}
 			
 			BufString *retString = BufStringNew();
@@ -2021,13 +2017,13 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			if( el != NULL )
 			{
 				char *end;
-				groupID = strtol( (char *)el->data, &end, 0 );
+				groupID = strtol( (char *)el->hme_Data, &end, 0 );
 			}
 			
 			el = HttpGetPOSTParameter( request, "users" );
 			if( el != NULL )
 			{
-				users = UrlDecodeToMem( (char *)el->data );
+				users = UrlDecodeToMem( (char *)el->hme_Data );
 				usersSQL = StringDuplicate( users );
 				DEBUG( "[UMWebRequest] setusers group, users %s!!\n", users );
 			}

@@ -183,25 +183,25 @@ Http* PrinterManagerWebRequest( void *lb, char **urlpath, Http* request, UserSes
 		HashmapElement *el = HttpGetPOSTParameter(request, "name");
 		if (el != NULL)
 		{
-			name = (char *)el->data;
+			name = (char *)el->hme_Data;
 		}
 		
 		el = HttpGetPOSTParameter(request, "manufacturer");
 		if (el != NULL)
 		{
-			manufacturer = (char *)el->data;
+			manufacturer = (char *)el->hme_Data;
 		}
 		
 		el = HttpGetPOSTParameter(request, "hardwareid");
 		if (el != NULL)
 		{
-			hardwareid = (char *)el->data;
+			hardwareid = (char *)el->hme_Data;
 		}
 		
 		el = HttpGetPOSTParameter(request, "global");
 		if (el != NULL)
 		{
-			global = (char *)el->data;
+			global = (char *)el->hme_Data;
 			if( strcmp( "true", global ) != 0 )
 			{
 				global = NULL;
@@ -286,7 +286,7 @@ Http* PrinterManagerWebRequest( void *lb, char **urlpath, Http* request, UserSes
 		if (el != NULL)
 		{
 			char *next;
-			id = (FLONG)strtol((char *)el->data, &next, 0);
+			id = (FLONG)strtol((char *)el->hme_Data, &next, 0);
 		}
 		
 		if (id > 0)

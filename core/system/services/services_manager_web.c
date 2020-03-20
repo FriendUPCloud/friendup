@@ -452,7 +452,7 @@ Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserS
 				el =  HashmapGet( request->parsedPostContent, "data" );
 				if( el != NULL )
 				{
-					data = el->data;
+					data = el->hme_Data;
 				}
 			
 				selService->ServiceStop( selService, data );	
@@ -622,15 +622,15 @@ Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserS
 			char *ret = NULL;
 		
 			el =  HashmapGet( request->parsedPostContent, "cmd" );
-			if( el != NULL && el->data != NULL )
+			if( el != NULL && el->hme_Data != NULL )
 			{
-				char *cmd = el->data;
+				char *cmd = el->hme_Data;
 				char *serv  = NULL;
 			
 				el =  HashmapGet( request->parsedPostContent, "servers" );
-				if( el != NULL && el->data != NULL )
+				if( el != NULL && el->hme_Data != NULL )
 				{
-					serv  = el->data;
+					serv  = el->hme_Data;
 				}
 
 				if( serv == NULL )
