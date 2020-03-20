@@ -58,14 +58,9 @@ if( $level == 'Admin' )
 	
 	if( $g->ID > 0 )
 	{
-		$Logger->log( "\n-\n" );
+		//$Logger->log( "\n-\n" );
 		
-		$Logger->log( print_r( $args, 1  ) );
-		
-		/*$stdClass = new stdClass();
-		$stdClass->username = $args->args->username;
-		$stdClass->password = $args->args->password;
-		$stdClass->level    = $args->args->level;*/
+		//$Logger->log( print_r( $args, 1  ) );
 		
 		$uargs = Array(
 			'sessionid' => $args->sessionid,
@@ -75,28 +70,34 @@ if( $level == 'Admin' )
 			'level'    => $args->args->level
 		);
 		
-		$Logger->log( 'Creating: ' . print_r( $uargs, 1 ) );
+		//$Logger->log( 'Creating: ' . print_r( $uargs, 1 ) );
 		
 		$res = fc_query( '/system.library/user/create', $uargs );
-		$Logger->log( 'Result from create: ' . $res );
+		//$Logger->log( 'Result from create: ' . $res );
 		
 		// Unexpected error!
 		if( !$res ) die( 'fail<!--separate-->{"response":"100","message":"Failed to create user."}' );
 		
 		list( $code, $message ) = explode( '<!--separate-->', $res );
 		
-		$message = json_parse( $message );
+		//$Logger->log( 'More importantly: ' . $code . ' -> ' . $message );
+		
+		$message = json_decode( $message );
+		
+		//$Logger->log( 'Parsed json message: ' . print_r( $message, 1 ) );
 		
 		// Just pass the error code
 		if( $code != 'ok' )
 			die( $res );
 		
 		// Create the new user
+		//$Logger->log( 'Trying to load user: ' . $message->id );
 		$u = new dbIO( 'FUser' );
 		$u->Load( $message->id );
 
 		if( $u->ID > 0 )
 		{
+			//$Logger->log( 'User was created, now adding user to workgroup.' );
 			//$SqlDatabase->query( 'INSERT INTO FUserToGroup ( UserID, UserGroupID ) VALUES ( \'' . $u->ID . '\', \'' . $g->ID . '\' )' );
 				
 			// TODO: Should be a check if the user that is creating this new user has access to add users to defined workgroup(s) before saving ... 
@@ -143,16 +144,29 @@ if( $level == 'Admin' )
 							
 								// 
 								$err = 'fail<!--separate-->' . ( $resp[1] ? $resp[1] : '' ) . ' [] debug: ' . print_r( $perm,1 ) . ' [] args: ' . print_r( $w_args,1 ); 
-								$Logger->log( $err );
+								//$Logger->log( $err );
 								die( $err );
 							}
+							else
+							{
+								//$Logger->log( 'Added user to workgroup ' . $gid );
+							}
 						
+						}
+						else
+						{
+							//$Logger->log( 'Could not add user to workgroup ' . $gid );
 						}
 					}
 				}
 			}
 			
+			//$Logger->log( 'Completed user ' . $user->Name .'..' );
 			die( 'ok<!--separate-->' . $u->ID );
+		}
+		else
+		{
+			//$Logger->log( 'User was not created (' . $message->id . ') - or could not load from database.' );
 		}
 	}
 }
