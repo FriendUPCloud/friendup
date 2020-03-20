@@ -64,10 +64,11 @@ if( $level == 'Admin' )
 		
 		$uargs = Array(
 			'sessionid' => $args->sessionid,
+			'authid'    => $args->authid,
 			// Requirements!
-			'username' => $args->args->username,
-			'password' => $args->args->password,
-			'level'    => $args->args->level
+			'username'  => $args->args->username,
+			'password'  => $args->args->password,
+			'level'     => $args->args->level
 		);
 		
 		//$Logger->log( 'Creating: ' . print_r( $uargs, 1 ) );
