@@ -305,9 +305,12 @@ class DbTable
 					case 'bigint':
 					case 'double':
 					case 'tinyint':
+						if($value === NULL ) return 'NULL';
+						
 						$value = str_replace( "'", "", $value );
 						if( $value == '' ) $value = 0;
 						return "'$value'";
+						
 					case 'datetime':
 					default:
 						$value = stripslashes( $value );
