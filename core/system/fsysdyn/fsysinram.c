@@ -425,7 +425,6 @@ int FileSeek( struct File *s, int pos )
 
 int MakeDir( struct File *s, const char *path )
 {
-	DEBUG("\n\n\n\n\n\n");
 	INFO("MakeDir %s!\n", path );
 	int error = 0;
 	
