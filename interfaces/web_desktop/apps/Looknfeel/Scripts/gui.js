@@ -27,32 +27,61 @@ Application.run = function( msg )
 }
 
 // Refresh the labels list
-function refreshLabels()
+function refreshLabels( affected )
 {
+	let nl = [];
+	for( let c = 0; c < ge( 'workspaceCount' ).value; c++ )
+	{
+		if( c < Application.labelChoices.length )
+			nl[ c ] = Application.labelChoices[ c ];
+	}
+	Application.labelChoices = nl;
+
 	if( ge( 'workspaceCount' ).value <= 0 )
 	{
 		ge( 'LabelView' ).innerHTML = '<p class="Layout">' + i18n( 'i18n_workspaces_to_label' ) + '</p>';
 		return;
 	}
-	var out = [];
-	for( var a = 0; a < parseInt( ge( 'workspaceCount' ).value ); a++ )
+	// If we haven't specified an affected column
+	if( !affected )
 	{
-		var n = '';
-		if( !Application.labelChoices[ a ] )
+		let out = [];
+		for( let a = 0; a < parseInt( ge( 'workspaceCount' ).value ); a++ )
 		{
-			n = (a+1);
+			let n = '';
+			if( !Application.labelChoices[ a ] )
+			{
+				n = (a+1);
+			}
+			else
+			{
+				n = '<span class="' + Application.labelChoices[ a ] + '"></span>';
+			}
+			let dv = ge( 'Labels' ).value.split( 'Default' ).join( a + 1 + '' );
+			out.push( '<div class="WorkspaceIcons BordersDefault BackgroundDefault Rounded Nr' + (a+1) + '"><span class="Preview">' + n + '</span>' + dv + '</div>' );
 		}
-		else
-		{
-			n = '<span class="' + Application.labelChoices[ a ] + '"></span>';
-		}
-		var dv = ge( 'Labels' ).value.split( 'Default' ).join( a + 1 + '' );
-		out.push( '<div class="WorkspaceIcons BordersDefault BackgroundDefault Rounded Nr' + (a+1) + '"><span class="Preview">' + n + '</span>' + dv + '</div>' );
+		ge( 'LabelView' ).innerHTML = out.join( '' );
 	}
-	ge( 'LabelView' ).innerHTML = out.join( '' );
-	var ws = ge( 'LabelView' ).getElementsByClassName( 'WorkspaceIcons' );
-	for( var a = 0; a < ws.length; a++ )
+	else
 	{
+		let ws = ge( 'LabelView' ).getElementsByClassName( 'WorkspaceIcons' );
+		for( let a = 0; a < ws.length; a++ )
+		{
+			if( ws[ a ] == affected )
+			{
+				let sp = affected.getElementsByTagName( 'span' );
+				sp[0].className = Application.labelChoices[ a ];
+				sp[0].innerHTML = Application.labelChoices[ a ] ? '' : ( a + 1 );
+				affected.classList.remove( 'Active' );
+			}
+		}
+		return;
+	}
+
+	let ws = ge( 'LabelView' ).getElementsByClassName( 'WorkspaceIcons' );
+	for( let a = 0; a < ws.length; a++ )
+	{
+		// If we have specified an affected column, use that
 		( function( list, cont, num )
 		{
 			cont.onclick = function( e )
@@ -66,7 +95,8 @@ function refreshLabels()
 				list[ b ].onclick = function( n )
 				{
 					Application.labelChoices[ num ] = this.querySelector( 'span' ).className;
-					refreshLabels();
+					refreshLabels( cont );
+					cancelBubble( n );
 				}
 			}
 		} )( ws[ a ].getElementsByClassName( 'Choice' ), ws[ a ], a );
