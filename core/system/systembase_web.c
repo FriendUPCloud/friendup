@@ -685,53 +685,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			// Check all calls coming from sessions which do not longer exists
 			//
 			
-			SecurityManagerCheckSession( l->sl_SecurityManager, *request );
-			
-			/*
-			HashmapElement *sesreq = GetHEReq( *request, "sessionid" );
-			if( sesreq != NULL )
-			{
-				DEBUG("sessionid found!\n");
-				if( sesreq->hme_Data != NULL )
-				{
-					DEBUG("sessionid value found!\n");
-					// getting last call for session
-					HashmapElementLong *hel = HashmapLongGet( l->l_badSessionLoginHM, sesreq->hme_Data );
-					if( hel != NULL )
-					{
-						time_t timeNow = time( NULL );
-						// if last call bad call for this session was called one hour ago (60 second * 60 minutes)
-						if( (timeNow - hel->hel_LastUpdate ) > (60*60) )
-						{
-							// so remove this session from list
-							HashmapLongRemove( l->l_badSessionLoginHM, sesreq->hme_Data );
-						}
-						else
-						{
-							hel->hel_LastUpdate = timeNow;
-							hel->hel_Data++;
-							
-							// count delay value
-							float delValue = ((float)hel->hel_Data) * 1.1f;
-							
-							DEBUG("SECURITY WARNING! Same call was made %d times, delay will be set to: %f\n", hel->hel_Data, delValue );
-							
-							if( hel->hel_Data > 5 )
-							{
-								int slValue = ((int)delValue)-4;
-								DEBUG("Sleep value: %d\n", slValue );
-								sleep( slValue );
-							}
-						}
-					}
-					else
-					{
-						DEBUG("create new entry: %s!\n", sesreq->hme_Data );
-						HashmapLongPut( l->l_badSessionLoginHM, StringDuplicate( sesreq->hme_Data ), 1 );
-					}
-				}
-			}
-			*/
+			//SecurityManagerCheckSession( l->sl_SecurityManager, *request );
 		
 			if( response != NULL )
 			{
