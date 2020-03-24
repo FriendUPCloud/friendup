@@ -52,7 +52,7 @@ static FULONG UserApplicationDesc[] = {
 	SQLT_STR,     (FULONG)"Permissions",       offsetof( struct UserApplication, ua_Permissions ),
 	SQLT_STR,     (FULONG)"AuthID",       offsetof( struct UserApplication, ua_AuthID ),
 	SQLT_STR,     (FULONG)"Data",       offsetof( struct UserApplication, ua_Data ),
-	SQLT_DATETIME,(FULONG)"DateCreated",       offsetof( struct UserApplication, ua_DateCreated ),
+	SQLT_INT,     (FULONG)"DateCreated",       offsetof( struct UserApplication, ua_DateCreated ),
 	SQLT_NODE,    (FULONG)"node",        offsetof( struct UserApplication, node ),
 	SQLT_END 
 };
