@@ -487,6 +487,15 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				if( assid != NULL )
 				{
 					authid = UrlDecodeToMem( ( char *)ast->hme_Data );
+					if( authid != NULL )
+					{
+						// If authID is equal to 0 block this call
+						if( strncmp( authid, "0", 1 ) == 0 )
+						{
+							FFree( authid );
+							authid = NULL;
+						}
+					}
 					
 					char *end;
 					FUQUAD asval = strtoull( assid,  &end, 0 );

@@ -33,7 +33,8 @@ typedef struct UserApplication
 	FULONG					ua_ID;
 	FULONG					ua_UserID;
 	FULONG					ua_ApplicationID;
-	char 					*ua_Permissions;     // <- in json format
+	FULONG					ua_UserSessionID;		// user session ID
+	char 					*ua_Permissions;		// <- in json format
 	char 					*ua_AuthID; 
 	char					*ua_Data;
 	FULONG					ua_DateCreated;
@@ -47,6 +48,7 @@ static FULONG UserApplicationDesc[] = {
 	SQLT_IDINT,   (FULONG)"ID",          offsetof( struct UserApplication, ua_ID ), 
 	SQLT_INT,     (FULONG)"UserID", offsetof( struct UserApplication, ua_UserID ),
 	SQLT_INT,     (FULONG)"ApplicationID", offsetof( struct UserApplication, ua_ApplicationID ),
+	SQLT_INT,     (FULONG)"UserSessionID", offsetof( struct UserApplication, ua_UserSessionID ),
 	SQLT_STR,     (FULONG)"Permissions",       offsetof( struct UserApplication, ua_Permissions ),
 	SQLT_STR,     (FULONG)"AuthID",       offsetof( struct UserApplication, ua_AuthID ),
 	SQLT_STR,     (FULONG)"Data",       offsetof( struct UserApplication, ua_Data ),
@@ -59,7 +61,7 @@ static FULONG UserApplicationDesc[] = {
 //
 //	
 
-UserApplication *UserAppNew( FULONG userid, FULONG appid, char *perm );
+UserApplication *UserAppNew( FULONG userid, FULONG appid, FULONG userSessionID, char *perm );
 
 //
 //

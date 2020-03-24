@@ -220,10 +220,10 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	* 
-	* <HR><H2>system.library/app/regapp</H2>Register Application Session
+	* <HR><H2>system.library/app/register</H2>Register Application Session
 	*
 	* @param sessionid - (required) session id of logged user
-	* @param userid - (required ) user id which registered app
+	* @param userid - user id which registered app. By default current user id is used
 	* @param appid - (required) application id which session will be created
 	* @param permissions - (required) application permissions
 	* @param data - additional session data
@@ -231,7 +231,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 	* @return { "response":"success" } otherwise information about error
 	*/
 	/// @endcond
-	else if( strcmp( urlpath[ 0 ], "regapp" ) == 0 )
+	else if( strcmp( urlpath[ 0 ], "register" ) == 0 )
 	{
 		char *qauthid = NULL;
 		char *permissions = NULL;
@@ -273,15 +273,20 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			data = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
+		if( userID == 0 )
+		{
+			userID = loggedSession->us_UserID;
+		}
+		
 		//INSERT INTO `FUserApplication` (`ID`, `UserID`, `ApplicationID`, `Permissions`, `AuthID`, `Data`) VALUES (NULL, '2', '3', 'permission', 'generatedid', '{}')
 		
-		if( userID > 0 && appID > 0 && permissions != NULL )
+		if( appID > 0 && permissions != NULL )
 		{
 			char tmp[ 1024 ];
 			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 			if( sqllib != NULL )
 			{
-				UserApplication *fuapp = UserAppNew( userID, appID, permissions );
+				UserApplication *fuapp = UserAppNew( userID, appID, loggedSession->us_ID, permissions );
 				if( fuapp != NULL )
 				{
 					int err = sqllib->Save( sqllib, UserApplicationDesc, fuapp );
@@ -307,7 +312,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		{
 			char dictmsgbuf[ 256 ];
 			char dictmsgbuf1[ 196 ];
-			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "userid, appid, permissions" );
+			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "appid, permissions" );
 			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, dictmsgbuf );
 
@@ -330,15 +335,15 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	* 
-	* <HR><H2>system.library/app/quit</H2>Remove Application Session by authid
+	* <HR><H2>system.library/app/unregister</H2>Remove Application Session by authid
 	*
 	* @param sessionid - (required) session id of logged user
-	* @param qauthid - (required ) authentication id which will be removed
+	* @param pauthid - (required ) authentication id which will be removed
 
 	* @return { "response":"success" } otherwise information about error
 	*/
 	/// @endcond
-	else if( strcmp( urlpath[ 0 ], "quit" ) == 0 )
+	else if( strcmp( urlpath[ 0 ], "unregister" ) == 0 )
 	{
 		char *qauthid = NULL;
 		
@@ -350,7 +355,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		HashmapElement *el = HashmapGet( request->parsedPostContent, "qauthid" );
+		HashmapElement *el = HashmapGet( request->parsedPostContent, "pauthid" );
 		if( el != NULL )
 		{
 			qauthid = UrlDecodeToMem( ( char *)el->hme_Data );

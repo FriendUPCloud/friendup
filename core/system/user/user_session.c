@@ -192,10 +192,12 @@ void UserSessionDelete( UserSession *us )
 		pthread_mutex_destroy( &(us->us_Mutex) );
 		
 		// lets remove application sessions from system
-		if( nrOfSessionsAttached <= 0 && us->us_UserID > 0 )
-		{
-			ApplicationManagerRemoveApplicationSessionByUserID( lsb->sl_ApplicationManager, us->us_UserID );
-		}
+		ApplicationManagerRemoveApplicationSessionByUserSessionID( lsb->sl_ApplicationManager, us->us_ID );
+		
+		//if( nrOfSessionsAttached <= 0 && us->us_UserID > 0 )
+		//{
+		//	ApplicationManagerRemoveApplicationSessionByUserID( lsb->sl_ApplicationManager, us->us_UserID );
+		//}
 	
 		FFree( us );
 		

@@ -25,10 +25,11 @@
  *
  * @param userid User ID
  * @param appid unique application ID
+ * @param userSessionID user session ID
  * @param perm permissions
  * @return new UserApplication structure when success, otherwise NULL
  */
-UserApplication *UserAppNew( FULONG userid, FULONG appid, char *perm )
+UserApplication *UserAppNew( FULONG userid, FULONG appid, FULONG userSesionID, char *perm )
 {
 	UserApplication *ua = NULL;
 	
@@ -36,6 +37,7 @@ UserApplication *UserAppNew( FULONG userid, FULONG appid, char *perm )
 	{
 		ua->ua_UserID = userid;
 		ua->ua_ApplicationID = appid;
+		ua->ua_UserSessionID = userSesionID;
 		ua->ua_DateCreated = time( NULL );
 		
 		if( perm != NULL )
