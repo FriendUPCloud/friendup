@@ -288,10 +288,18 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 			if( sqllib != NULL )
 			{
+				if( data == NULL )
+				{
+					data = FCalloc( 2, sizeof(char) );
+					data[ 0 ] = ' ';
+				}
+				
 				DEBUG("[/app/register] SQL lib found!\n");
 				UserApplication *fuapp = UserAppNew( userID, appID, loggedSession->us_ID, permissions );
 				if( fuapp != NULL )
 				{
+					fuapp->ua_Data = data;
+					
 					DEBUG("[/app/register] Save entry!\n");
 					int err = sqllib->Save( sqllib, UserApplicationDesc, fuapp );
 					if( err == 0 )
