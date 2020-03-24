@@ -278,6 +278,8 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			userID = loggedSession->us_UserID;
 		}
 		
+		DEBUG("[/app/register] Create!\n");
+		
 		//INSERT INTO `FUserApplication` (`ID`, `UserID`, `ApplicationID`, `Permissions`, `AuthID`, `Data`) VALUES (NULL, '2', '3', 'permission', 'generatedid', '{}')
 		
 		if( appID > 0 && permissions != NULL )
@@ -286,9 +288,11 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 			if( sqllib != NULL )
 			{
+				DEBUG("[/app/register] SQL lib found!\n");
 				UserApplication *fuapp = UserAppNew( userID, appID, loggedSession->us_ID, permissions );
 				if( fuapp != NULL )
 				{
+					DEBUG("[/app/register] Save entry!\n");
 					int err = sqllib->Save( sqllib, UserApplicationDesc, fuapp );
 					if( err == 0 )
 					{
@@ -300,6 +304,9 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 				{
 					strcpy( tmp, "{\"response\":\"fail\"}" );
 				}
+				
+				DEBUG("[/app/register] reponse: %s\n", tmp );
+				
 				HttpAddTextContent( response, tmp );
 			}
 			else
