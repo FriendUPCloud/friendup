@@ -692,9 +692,10 @@ User *UMGetUserByNameDB( UserManager *um, const char *name )
  *
  * @param um pointer to UserManager
  * @param uuid unique user id
+ * @param loadAndAssign set true if you want to load and assign user to group in FriendCore memory
  * @return User or NULL when error will appear
  */
-User *UMGetUserByUUIDDB( UserManager *um, const char *uuid )
+User *UMGetUserByUUIDDB( UserManager *um, const char *uuid, FBOOL loadAndAssign )
 {
 	if( uuid == NULL )
 	{
@@ -718,13 +719,16 @@ User *UMGetUserByUUIDDB( UserManager *um, const char *uuid )
 		user = ( struct User *)sqlLib->Load( sqlLib, UserDesc, where, &entries );
 		sb->LibrarySQLDrop( sb, sqlLib );
 
-		User *tmp = user;
-		while( tmp != NULL )
+		if( loadAndAssign == TRUE )
 		{
-			UGMAssignGroupToUser( sb->sl_UGM, tmp );
-			UMAssignApplicationsToUser( um, tmp );
+			User *tmp = user;
+			while( tmp != NULL )
+			{
+				UGMAssignGroupToUser( sb->sl_UGM, tmp );
+				UMAssignApplicationsToUser( um, tmp );
 		
-			tmp = (User *)tmp->node.mln_Succ;
+				tmp = (User *)tmp->node.mln_Succ;
+			}
 		}
 		FFree( where );
 	}
