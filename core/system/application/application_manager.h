@@ -54,7 +54,7 @@ void ApplicationManagerRemoveApplicationSessionByUserID( ApplicationManager *am,
 //
 //
 
-void ApplicationManagerRemoveApplicationSessionByUserSessionID( ApplicationManager *asm, FUQUAD id );
+void ApplicationManagerRemoveApplicationSessionByUserSessionID( ApplicationManager *lasm, FUQUAD id );
 
 //
 //
