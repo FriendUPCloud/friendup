@@ -169,6 +169,8 @@ i18n_deleting_permission_verify           : Please confirm that you want to dele
 
 #printers related
 
+i18n_file                              : File
+i18n_about                             : About
 i18n_save                              : Save
 i18n_delete                            : Delete
 i18n_delete_template                   : Delete template
@@ -282,6 +284,8 @@ i18n_login_info                      : Login info
 i18n_your_notes                      : Your notes
 i18n_username                        : Username
 i18n_password                        : Password
+i18n_you_forgot_username             : You forgot to enter a username
+i18n_you_forgot_username_desc        : You need a username in order to save the user
 i18n_status                          : Status
 i18n_host_port                       : Server port
 i18n_host_ip                         : Server address or IP

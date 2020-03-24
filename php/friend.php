@@ -52,7 +52,7 @@ function jsUrlEncode( $in )
 }
 
 // Connects to friend core! You must build the whole query after the fc path
-function FriendCall( $queryString = false, $flags = false )
+function FriendCall( $queryString = false, $flags = false, $post = false )
 {
 	global $Config;
 	$ch = curl_init();

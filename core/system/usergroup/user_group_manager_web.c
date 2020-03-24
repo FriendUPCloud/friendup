@@ -1705,7 +1705,6 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 							SQLLibrary *sqlLib = l->LibrarySQLGet( l );
 							if( sqlLib != NULL )
 							{
-								File *dstFile = NULL;
 								char *errorStr = NULL;
 
 								UserGroupMountWorkgroupDrives( l->sl_DeviceManager, usr, groupID );
@@ -1714,16 +1713,13 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 								{
 									//INFO( "[MountFS] -- Could not mount device for user %s. Drive was %s.\n", tmpUser->u_Name ? tmpUser->u_Name : "--nousername--", name ? name : "--noname--" );
 								}
-								
-							
+
 								// Tell user!
 								UserNotifyFSEvent2( l->sl_DeviceManager, usr, "refresh", "Mountlist:" );
 
-								//int UserAddDevice( User *usr, File *file )
 								l->LibrarySQLDrop( l, sqlLib );
 							}
 						}
-
 						FFree( rmEntry );
 					} // while ugroups
 				} // ug != NULL
