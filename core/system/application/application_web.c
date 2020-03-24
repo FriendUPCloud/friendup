@@ -298,7 +298,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 				UserApplication *fuapp = UserAppNew( userID, appID, loggedSession->us_ID, permissions );
 				if( fuapp != NULL )
 				{
-					fuapp->ua_Data = data;
+					fuapp->ua_Data = StringDuplicate( data );
 					
 					DEBUG("[/app/register] Save entry!\n");
 					int err = sqllib->Save( sqllib, UserApplicationDesc, fuapp );
