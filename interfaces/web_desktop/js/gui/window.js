@@ -1086,7 +1086,7 @@ function _ActivateWindow( div, nopoll, e )
 	{
 		if( div.windowObject.workspace != globalConfig.workspaceCurrent )
 		{
-			if( window.Workspace && window.switchWorkspace )
+			if( window.Workspace && Workspace.switchWorkspace )
 			{
 				Workspace.switchWorkspace( div.windowObject.workspace );
 			}
