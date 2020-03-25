@@ -1081,6 +1081,18 @@ function _ActivateWindow( div, nopoll, e )
 		}
 	}
 	
+	// Check if we're on the right workspace
+	if( !div.windowObject.flags.screen || div.windowObject.flags.screen == Workspace.screen )
+	{
+		if( div.windowObject.workspace != globalConfig.workspaceCurrent )
+		{
+			if( window.Workspace )
+			{
+				Workspace.switchWorkspace( div.windowObject.workspace );
+			}
+		}
+	}
+	
 	// Don't reactivate
 	if( div.classList.contains( 'Active' ) ) 
 	{
