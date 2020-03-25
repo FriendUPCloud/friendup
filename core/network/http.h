@@ -327,8 +327,8 @@ typedef struct Http
 	
 	char				h_PartDivider[ 256 ];
 	FBOOL				h_ContentType;
-	FLONG				h_ContentLength;
-	FLONG				h_ExpectedLength;
+	FQUAD				h_ContentLength;
+	FQUAD				h_ExpectedLength;
 	FLONG				h_RangeMin, h_RangeMax;
 	HttpFile			*h_FileList;
 	

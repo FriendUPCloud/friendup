@@ -30,6 +30,9 @@
 
 //#define USE_SELECT
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <core/types.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -988,15 +991,15 @@ void FriendCoreProcess( void *fcv )
 	// Let's go!
 
 	// First pass header, second, data
-	int pass = 0, bodyLength = 0, prevBufSize = 0, preroll = 0, 
+	FQUAD pass = 0, bodyLength = 0, prevBufSize = 0, preroll = 0, 
 		stopReading = 0, headerLength = 0;
 
 	// Often used
-	int partialDivider = 0, foundDivider = 0, y = 0;
+	FQUAD partialDivider = 0, foundDivider = 0, y = 0;
 	char findDivider[ 5 ]; memset( findDivider, 0, 5 );
 
-	int bufferSize = HTTP_READ_BUFFER_DATA_SIZE;
-	int bufferSizeAlloc = HTTP_READ_BUFFER_DATA_SIZE_ALLOC;
+	FQUAD bufferSize = HTTP_READ_BUFFER_DATA_SIZE;
+	FQUAD bufferSizeAlloc = HTTP_READ_BUFFER_DATA_SIZE_ALLOC;
 
 	int tmpFileHandle = -2;
 	char *tmpFilename = NULL;
@@ -1025,7 +1028,7 @@ void FriendCoreProcess( void *fcv )
 
 			// int count = the amount of data read
 			// int res = the amount of data read in one chunk
-			int count = preroll, res = 0, joints = 0, methodGet = 0;
+			FQUAD count = preroll, res = 0, joints = 0, methodGet = 0;
 
 			// We must find divider!
 
