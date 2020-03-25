@@ -427,7 +427,7 @@ int UMUserCreate( UserManager *smgr, Http *r __attribute__((unused)), User *usr 
 	else
 	{
 		FERROR("Cannot create user, mysql.library was not opened!\n");
-		return 1;
+		return 2;
 	}
 	return val;
 }

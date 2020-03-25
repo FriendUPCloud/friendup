@@ -308,6 +308,7 @@ class DbTable
 						$value = str_replace( "'", "", $value );
 						if( $value == '' ) $value = 0;
 						return "'$value'";
+						
 					case 'datetime':
 					default:
 						$value = stripslashes( $value );
