@@ -54,30 +54,7 @@
 Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserSession *loggedSession )
 {
 	Log( FLOG_DEBUG, "ApplicationWebRequest %s  CALLED BY: %s\n", urlpath[ 0 ], loggedSession->us_User->u_Name );
-	
-	// DEBUG disabled
-	/*
-	AppSession *was = l->sl_AppSessionManager->asm_AppSessions;
-	while( was != NULL )
-	{
-		DEBUG("[ApplicationWebRequest] SASID: %lu\n", was->as_SASID );
-		SASUList *wus =  was->as_UserSessionList;
-		while( wus != NULL )
-		{
-			if( wus->authid[ 0 ] == 0 )
-			{
-				DEBUG("[ApplicationWebRequest] authid %s wusptr  %p\n", "empty",  wus );
-			}
-			else
-			{
-				DEBUG("[ApplicationWebRequest] authid %s wusptr  %p\n", wus->authid,  wus );
-			}
-			wus = (SASUList *)wus->node.mln_Succ;
-		}
-		was = (AppSession *)was->node.mln_Succ;
-	}
-	*/
-	
+
 	Http* response = NULL;
 	
 	/// @cond WEB_CALL_DOCUMENTATION
@@ -413,8 +390,6 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			FFree( qauthid );
 		}
 	}
-	
-	
 	else
 	{
 		struct TagItem tags[] = {
@@ -426,53 +401,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 	
 		return response;
 	}
-		
-/*
-						//request->query;
-						//
-						// PARAMETERS SHOULD BE TAKEN FROM
-						// POST NOT GET
-						
-		if( request->uri->query != NULL )
-		{
-			char *usr = NULL;
-			char *pass = NULL;
-							
-			HashmapElement_t *el =  HashmapGet( request->uri->query, "username" );
-			if( el != NULL )
-			{
-				usr = (char *)el->data;
-			}
-							
-			el =  HashmapGet( request->uri->query, "password" );
-			if( el != NULL )
-			{
-				pass = (char *)el->data;
-			}
-							
-			if( usr != NULL && pass != NULL )
-			{
-				User *loggedUser = l->Authenticate( l, usr, pass, NULL );
-				if( loggedUser != NULL )
-				{
-					char tmp[ 20 ];
-					sprintf( tmp, "LERR: %d\n", loggedUser->u_Error );	// check user.library to display errors
-					HttpAddTextContent( response, tmp );
-				}else{
-					HttpAddTextContent( response, "LERR: -1" );			// out of memory/user not found
-				}
-			}
-		}
-		DEBUG("user login response\n");
-
-		HttpWriteAndFree( response, sock );
-		result = 200;
-	}else
-	{
-		Http404( sock );
-		return 404;
-	}
-	*/
+	
 	DEBUG("[ApplicationWebRequest] FriendCore returned %s\n", response->content );
 
 	return response;
