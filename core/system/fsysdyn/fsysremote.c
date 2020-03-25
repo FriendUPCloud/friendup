@@ -264,7 +264,7 @@ DataForm *SendMessageRFS( SpecialData *sd, DataForm *df )
 		
 		if( bs != NULL )
 		{
-			DEBUG2("[SendMessageRFS] Received from socket %lld\n", bs->bs_Size );
+			DEBUG2("[SendMessageRFS] Received from socket %ld\n", bs->bs_Size );
 			lsdata = (FBYTE *)bs->bs_Buffer;
 			sockReadSize = bs->bs_Size;
 		}
@@ -348,7 +348,7 @@ DataForm *SendMessageRFSRelogin( SpecialData *sd, DataForm *df )
 		
 		if( bs != NULL )
 		{
-			DEBUG2("[SendMessageRFSRelogin] Received from socket %lld\n", bs->bs_Size );
+			DEBUG2("[SendMessageRFSRelogin] Received from socket %ld\n", bs->bs_Size );
 			lsdata = (FBYTE *)bs->bs_Buffer;
 			sockReadSize = bs->bs_Size;
 		}

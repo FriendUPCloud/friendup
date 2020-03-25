@@ -1006,7 +1006,7 @@ void FriendCoreProcess( void *fcv )
 	char tmpFileNameTemplate[] = "/tmp/FriendHTTP_XXXXXX";
 
 	char *incomingBufferPtr = 0;
-	unsigned int incomingBufferLength = 0;
+	FQUAD incomingBufferLength = 0;
 
 	BufString *resultString = BufStringNewSize( bufferSizeAlloc*2 );
 
@@ -1203,7 +1203,7 @@ void FriendCoreProcess( void *fcv )
 					request->h_ShutdownPtr = &(th->fc->fci_Shutdown);
 					request->h_Socket = th->sock;
 
-					/* -------------- Support for large uploads -------------- */
+					// -------------- Support for large uploads -------------- 
 					if( tmpFileHandle >= 0 )
 					{
 						if( incomingBufferPtr != NULL )
@@ -1214,6 +1214,7 @@ void FriendCoreProcess( void *fcv )
 						}
 						//DEBUG( "mmaping" );
 						incomingBufferLength = lseek( tmpFileHandle, 0, SEEK_END);
+						DEBUG("->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ibl: %ld", incomingBufferLength );
 						incomingBufferPtr = mmap( 0, incomingBufferLength, PROT_READ | PROT_WRITE, MAP_SHARED, tmpFileHandle, 0/*offset*/);
 						
 						if( incomingBufferPtr == MAP_FAILED )
@@ -1378,6 +1379,8 @@ void FriendCoreProcess( void *fcv )
 				{
 					DEBUG( "regular processing" );
 				}
+				
+				DEBUG("------------>>>>>>>>>>>>>>>>>>>>>>>>>. incomingBufferLength: %ld\n", incomingBufferLength );
 
 				// ------------------------------------------------------- 
 				Http *resp = ProtocolHttp( th->sock, incomingBufferPtr, incomingBufferLength );

@@ -21,6 +21,7 @@
 //
 //
 //
+#include <core/types.h>
 #include <time.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -223,7 +224,7 @@ typedef struct HttpFile
 {
 	char			hf_FileName[ 512 ];
 	char 			*hf_Data;
-	FULONG			hf_FileSize;		// file size
+	FQUAD			hf_FileSize;		// file size
 	FILE			*hf_FP;			// when file is stored on server disk
 	struct MinNode node;
 }HttpFile;
