@@ -2675,11 +2675,11 @@ int SendProcessMessage( Http *request, char *data, int len )
 {
 	DEBUG("[SystemBase] SendProcessMessage\n");
 	
-	if( request->h_RequestSource == HTTP_SOURCE_HTTP_TO_WS )
+	if( request->http_RequestSource == HTTP_SOURCE_HTTP_TO_WS )
 	{
 		DEBUG("[SystemBase] SendProcessMessage to WS: %s\n", data );
 		
-		PIDThread *pidt = (PIDThread *)request->h_PIDThread;
+		PIDThread *pidt = (PIDThread *)request->http_PIDThread;
 		char *sendbuf;
 		int msglen = len+1024;
 		

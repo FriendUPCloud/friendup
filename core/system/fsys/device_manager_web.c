@@ -464,7 +464,7 @@ f.Name ASC";
 		}
 		
 		HashmapElement *el = HttpGetPOSTParameter( request, "devname" );
-		if( !el ) el = HashmapGet( request->query, "devname" );
+		if( !el ) el = HashmapGet( request->http_Query, "devname" );
 		
 		if( el != NULL )
 		{
@@ -876,7 +876,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 		}
 		
 		el = HttpGetPOSTParameter( request, "devname" );
-		if( !el ) el = HashmapGet( request->query, "devname" );
+		if( !el ) el = HashmapGet( request->http_Query, "devname" );
 		
 		// get device name from string
 		if( el != NULL )

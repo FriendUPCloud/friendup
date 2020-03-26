@@ -390,7 +390,7 @@ Http *ServiceManagerWebRequest( void *lsb, char **urlpath, Http* request )
 	
 	DEBUG("[ServiceManagerWebRequest] ---------------------------------%s----servicename %s servicename from service %s\n", urlpath[0], serviceName, selService->GetName() );
 	
-	selService->s_USW = request->h_WSocket;
+	selService->s_USW = request->http_WSocket;
 	
 	DEBUG( "[ServiceManagerWebRequest]  Command OK %s !\n", urlpath[ ELEMENT_COMMAND ] );
 	
@@ -434,7 +434,7 @@ Http *ServiceManagerWebRequest( void *lsb, char **urlpath, Http* request )
 			HashmapElement *el;
 			char *data = NULL;
 			
-			el =  HashmapGet( request->parsedPostContent, "data" );
+			el =  HashmapGet( request->http_ParsedPostContent, "data" );
 			if( el != NULL )
 			{
 				data = el->hme_Data;
@@ -550,13 +550,13 @@ Http *ServiceManagerWebRequest( void *lsb, char **urlpath, Http* request )
 		HashmapElement *el;
 		char *ret = NULL;
 		
-		el =  HashmapGet( request->parsedPostContent, "cmd" );
+		el =  HashmapGet( request->http_ParsedPostContent, "cmd" );
 		if( el != NULL && el->hme_Data != NULL )
 		{
 			char *cmd = el->hme_Data;
 			char *serv  = NULL;
 			
-			el =  HashmapGet( request->parsedPostContent, "servers" );
+			el =  HashmapGet( request->http_ParsedPostContent, "servers" );
 			if( el != NULL && el->hme_Data != NULL )
 			{
 				serv  = el->hme_Data;
@@ -565,11 +565,11 @@ Http *ServiceManagerWebRequest( void *lsb, char **urlpath, Http* request )
 			if( serv == NULL )
 			{
 				// temporary call
-				ret = selService->ServiceCommand( selService, "ALL", cmd, request->parsedPostContent );
+				ret = selService->ServiceCommand( selService, "ALL", cmd, request->http_ParsedPostContent );
 			}
 			else
 			{
-				ret = selService->ServiceCommand( selService, serv, cmd, request->parsedPostContent );
+				ret = selService->ServiceCommand( selService, serv, cmd, request->http_ParsedPostContent );
 			}
 
 			if( ret != NULL )

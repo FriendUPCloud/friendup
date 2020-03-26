@@ -384,7 +384,7 @@ static inline void moveToHttp( int fd )
 		if( HttpBuild( response ) != NULL )
 		{
 			int s;
-			s = send( fd, response->response, response->responseLength, 0 );
+			s = send( fd, response->http_Response, response->http_ResponseLength, 0 );
 			//close( fd );
 		}
 		HttpFree( response );
@@ -426,7 +426,7 @@ static inline void moveToHttps( Socket *sock )
 		{
 			int s;
 			//s = SSL_write( sock->s_Ssl, response->response, response->responseLength );
-			s = send( sock->fd, response->response, response->responseLength, 0 );
+			s = send( sock->fd, response->http_Response, response->http_ResponseLength, 0 );
 			//DEBUG("Response send!!!\n\n\n %s\n\n\n%d\n\n\n", response->response, response->responseLength );
 			//close( fd );
 		}
@@ -855,7 +855,7 @@ void FriendCoreProcess( void *fcv )
 				res = SocketRead( th->sock, locBuffer, bufferSize, expected );
 				if( res > 0 )
 				{
-					DEBUG("----------------------> tmpFileHandle: %d read: %d\n", tmpFileHandle, res );
+					DEBUG("----------------------> tmpFileHandle: %d read: %ld\n", tmpFileHandle, res );
 					if( tmpFileHandle >= 0 )
 					{
 						int wrote = write( tmpFileHandle, locBuffer, res );
@@ -975,11 +975,11 @@ void FriendCoreProcess( void *fcv )
 					if( request == NULL )
 					{
 						request = HttpNew( );
-						request->timestamp = time( NULL );
+						request->http_Timestamp = time( NULL );
 						th->sock->data = ( void* )request;
 					}
-					request->h_ShutdownPtr = &(th->fc->fci_Shutdown);
-					request->h_Socket = th->sock;
+					request->http_ShutdownPtr = &(th->fc->fci_Shutdown);
+					request->http_Socket = th->sock;
 
 					// -------------- Support for large uploads -------------- 
 					if( tmpFileHandle >= 0 )
@@ -1008,7 +1008,7 @@ void FriendCoreProcess( void *fcv )
 					}
 					/* ------------------------------------------------------- */
 					result = HttpParseHeader( request, incomingBufferPtr, incomingBufferLength + 1 );
-					request->gotHeader = TRUE;
+					request->http_GotHeader = TRUE;
 					content = HttpGetHeaderFromTable( request, HTTP_HEADER_CONTENT_LENGTH );
 
 #ifdef USE_SOCKET_REAPER
@@ -1018,7 +1018,7 @@ void FriendCoreProcess( void *fcv )
 					//DEBUG("CONT LENGTH %ld\n", request->h_ContentLength );
 
 					// If we have content, then parse it
-					if( request->h_ContentLength > 0 )
+					if( request->http_ContentLength > 0 )
 					{
 						//DEBUG("Content found\n");
 						
@@ -1039,7 +1039,7 @@ void FriendCoreProcess( void *fcv )
 							break;
 						}
 
-						bodyLength = request->h_ContentLength;//atoi( content );
+						bodyLength = request->http_ContentLength;//atoi( content );
 						
 						// We have enough data and are ready for reading the body
 						headerLength = divider - resultString->bs_Buffer + 4;
@@ -1053,7 +1053,7 @@ void FriendCoreProcess( void *fcv )
 							continue;
 						}
 					}
-					else if( request->h_ExpectedLength > 0 )
+					else if( request->http_ExpectedLength > 0 )
 					{
 						content = HttpGetHeaderFromTable( request, HTTP_HEADER_EXPECTED_CONTENT_LENGTH );
 						if( content == NULL )
@@ -1090,7 +1090,7 @@ void FriendCoreProcess( void *fcv )
 
 						if( chunkSize != 0 )
 						{
-							bodyLength = request->h_ExpectedLength + ( ( request->h_ExpectedLength / ( chunkSize ) << 3 ) );
+							bodyLength = request->http_ExpectedLength + ( ( request->http_ExpectedLength / ( chunkSize ) << 3 ) );
 						}
 						
 						//DEBUG("BODDDY %d\n", bodyLength );
@@ -1098,7 +1098,7 @@ void FriendCoreProcess( void *fcv )
 						// We have enough data and are ready for reading the body
 						int headerLength = divider - resultString->bs_Buffer + 4;
 						
-						request->h_ContentLength = bodyLength - headerLength;
+						request->http_ContentLength = bodyLength - headerLength;
 						
 						if( count > headerLength )
 						{
@@ -1165,7 +1165,7 @@ void FriendCoreProcess( void *fcv )
 
 				if( resp != NULL )
 				{
-					if( resp->h_WriteType == FREE_ONLY )
+					if( resp->http_WriteType == FREE_ONLY )
 					{
 						HttpFree( resp );
 					}

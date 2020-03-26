@@ -1731,7 +1731,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					// !!! logout cannot send message via Websockets!!!!
 					// in this case return error < 0
 					HttpAddTextContent( response, "ok<!--separate-->{ \"logout\": \"success\"}" );
-					if( request->h_RequestSource == HTTP_SOURCE_WS )
+					if( request->http_RequestSource == HTTP_SOURCE_WS )
 					{
 						*result = -666;
 					}
@@ -2257,7 +2257,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		char *msg = NULL;
 
 		el = HttpGetPOSTParameter( request, "message" );
-		if( el == NULL ) el = HashmapGet( request->query, "message" );
+		if( el == NULL ) el = HashmapGet( request->http_Query, "message" );
 		//el =  HashmapGet( (*request)->parsedPostContent, "message" );
 		if( el != NULL )
 		{

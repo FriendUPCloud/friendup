@@ -375,9 +375,9 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 	if( !request )
 	{
 		request = HttpNew( );
-		request->timestamp = time( NULL );
+		request->http_Timestamp = time( NULL );
 		sock->data = (void*)request;
-		request->h_Socket = sock;
+		request->http_Socket = sock;
 	}
 
 	//DEBUG("time %ld\nreqtimestamp %ld\nreqtimestamp %ld\n",
@@ -436,7 +436,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 		HttpFreeRequest( request );
 		return response;
 	}
-	else if (result == 1 && request->uri == NULL)
+	else if (result == 1 && request->http_Uri == NULL)
 	{
 		struct TagItem tags[] = {
 				{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
@@ -445,11 +445,11 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 		response = HttpNewSimple( HTTP_400_BAD_REQUEST, tags );
 	}
-	else if( result == 1 && request->uri->redirect == TRUE && request->uri->queryRaw )
+	else if( result == 1 && request->http_Uri->uri_Redirect == TRUE && request->http_Uri->uri_QueryRaw )
 	{
 		Log( FLOG_DEBUG, "[ProtocolHttp] Redirect\n" );
 		struct TagItem tags[] = {
-				{ HTTP_HEADER_LOCATION, (FULONG)StringDuplicateN( request->uri->queryRaw, strlen( request->uri->queryRaw ) ) },
+				{ HTTP_HEADER_LOCATION, (FULONG)StringDuplicateN( request->http_Uri->uri_QueryRaw, strlen( request->http_Uri->uri_QueryRaw ) ) },
 				{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 				{ TAG_DONE, TAG_DONE }
 		};
@@ -459,27 +459,27 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 		result = 307;
 	}
 	// Request parsed without errors!
-	else if( result == 1 && request->uri->path != NULL )
+	else if( result == 1 && request->http_Uri->uri_Path != NULL )
 	{
 #ifdef __PERF_MEAS
 		stime = GetCurrentTimestampD();
 #endif
 		
 		Log( FLOG_DEBUG, "[ProtocolHttp] Request parsed without problems.\n");
-		Uri *uri = request->uri;
+		Uri *uri = request->http_Uri;
 		Path *path = NULL;
-		if( uri->path->raw )
+		if( uri->uri_Path->raw )
 		{
 			int nlen = 0;
 			for( ; ; nlen++ )
 			{
-				if( !uri->path->raw[nlen] )
+				if( !uri->uri_Path->raw[nlen] )
 				{
 					break;
 				}
 			}
-			DEBUG("[ProtocolHttp] Want to parse path: %s (%d)\n", uri->path->raw, nlen );
-			path = PathNew( uri->path->raw );
+			DEBUG("[ProtocolHttp] Want to parse path: %s (%d)\n", uri->uri_Path->raw, nlen );
+			path = PathNew( uri->uri_Path->raw );
 			if( path )
 			{
 				PathResolve( path );  // Resolve checks for "../"'s, and removes as many as it can.
@@ -487,7 +487,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 		}
 
 		// Disallow proxy requests
-		if( uri && ( uri->scheme || uri->authority ) )
+		if( uri && ( uri->uri_Scheme || uri->uri_Authority ) )
 		{
 			DEBUG("[ProtocolHttp] Dissalow proxy\n");
 			struct TagItem tags[] = {
@@ -506,7 +506,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 		else if( strcmp( "webdav", path->parts[ 0 ] ) == 0 ) //if( (request->h_ContentType == HTTP_CONTENT_TYPE_APPLICATION_XML || request->h_ContentType == HTTP_CONTENT_TYPE_TEXT_XML ) &&
 		{
-			response = HandleWebDav( SLIB, request, request->content, request->sizeOfContent );
+			response = HandleWebDav( SLIB, request, request->http_Content, request->http_SizeOfContent );
 
 			result = 200;
 		}
@@ -515,7 +515,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 		// Cross-domain requests uses a pre-flight OPTIONS call
 		//
 
-		else if( !request->errorCode && request->method && strcmp( request->method, "OPTIONS" ) == 0 )
+		else if( !request->http_ErrorCode && request->http_Method && strcmp( request->http_Method, "OPTIONS" ) == 0 )
 		{
 			struct TagItem tags[] = {
 					{ HTTP_HEADER_CONTROL_ALLOW_ORIGIN, (FULONG)StringDuplicateN( "*", 1 ) },
@@ -530,7 +530,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 			result = 200;
 		}		
 		// Check for connection upgrade
-		else if( !request->errorCode && HttpHeaderContains( request, "connection", "Upgrade", false ) )
+		else if( !request->http_ErrorCode && HttpHeaderContains( request, "connection", "Upgrade", false ) )
 		{
 			struct TagItem tags[] = {
 					{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
@@ -583,7 +583,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							}
 							else
 							{
-								Log( FLOG_INFO, "[HTTP] SysWebRequest response: '%.*s'\n", 200, response->content );
+								Log( FLOG_INFO, "[HTTP] SysWebRequest response: '%.*s'\n", 200, response->http_Content );
 							}
 						}
 						else
@@ -605,7 +605,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 									}
 								}
 							}
-							UserLoggerStore( SLIB->sl_ULM, session, request->rawRequestPath, request->h_UserActionInfo );
+							UserLoggerStore( SLIB->sl_ULM, session, request->http_RawRequestPath, request->http_UserActionInfo );
 
 							FriendCoreInstance_t *fci = (FriendCoreInstance_t *) sock->s_Data;
 							Library* lib = FriendCoreGetLibrary( fci, path->parts[0], 1 );
@@ -689,7 +689,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 								char *command = FMalloc( MAX_LEN_PHP_INT_COMMAND );
 
 								// Make the commandline string with the safe, escaped arguments, and check for buffer overflows.
-								int cx = snprintf( command, MAX_LEN_PHP_INT_COMMAND-1, "php \"php/login.php\" \"%s\" \"%s\" \"%s\"; 2>&1", uri->path->raw, uri->queryRaw, request->content ); // SLIB->sl_ModuleNames
+								int cx = snprintf( command, MAX_LEN_PHP_INT_COMMAND-1, "php \"php/login.php\" \"%s\" \"%s\" \"%s\"; 2>&1", uri->uri_Path->raw, uri->uri_QueryRaw, request->http_Content ); // SLIB->sl_ModuleNames
 								//if( !( cx >= 0 ) )
 								//{
 								//	FERROR( "[ProtocolHttp] snprintf\n" );;
@@ -812,10 +812,10 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 											{
 												LocFileDelete( file );
 											}
-											response->content = NULL;
-											response->sizeOfContent = 0;
+											response->http_Content = NULL;
+											response->http_SizeOfContent = 0;
 
-											response->h_WriteType = FREE_ONLY;
+											response->http_WriteType = FREE_ONLY;
 										}
 									}
 								}
@@ -999,11 +999,11 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 													if( resp == 0 && dataread > 0 )
 													{
 														response = HttpNewSimple( HTTP_200_OK, tags );
-														HttpWrite( response, request->h_Socket );
+														HttpWrite( response, request->http_Socket );
 														resp = 1;
 													}
 													dataread = fread( tbuffer, 1, SHARING_BUFFER_SIZE, cf->cf_Fp );
-													SocketWrite( request->h_Socket, tbuffer, dataread );
+													SocketWrite( request->http_Socket, tbuffer, dataread );
 												}
 												FFree( tbuffer );
 											}
@@ -1013,7 +1013,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 										if( resp == 0 )
 										{
 											response = HttpNewSimple( HTTP_403_FORBIDDEN, tags );
-											HttpWrite( response, request->h_Socket );
+											HttpWrite( response, request->http_Socket );
 										}
 
 										result = 200;
@@ -1101,14 +1101,14 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 														if( resp == 0 && dataread > 0 )
 														{
 															response = HttpNewSimple( HTTP_200_OK, tags );
-															HttpWrite( response, request->h_Socket );
+															HttpWrite( response, request->http_Socket );
 															resp = 1;
 															
-															SocketWrite( request->h_Socket, tbuffer, dataread );
+															SocketWrite( request->http_Socket, tbuffer, dataread );
 														}
 														else
 														{
-															SocketWrite( request->h_Socket, tbuffer, dataread );
+															SocketWrite( request->http_Socket, tbuffer, dataread );
 														}
 														
 														if( cffp != NULL )
@@ -1125,7 +1125,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 												if( resp == 0 )
 												{
 													response = HttpNewSimple( HTTP_403_FORBIDDEN, tags );
-													HttpWrite( response, request->h_Socket );
+													HttpWrite( response, request->http_Socket );
 												}
 
 												result = 200;
@@ -1230,7 +1230,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 								}
 							}
 						}
-						UserLoggerStore( SLIB->sl_ULM, session, request->rawRequestPath, request->h_UserActionInfo );
+						UserLoggerStore( SLIB->sl_ULM, session, request->http_RawRequestPath, request->http_UserActionInfo );
 
 						// Read the file
 
@@ -1319,10 +1319,10 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 									HttpWrite( response, sock );
 									result = 200;
 
-									response->content = NULL;
-									response->sizeOfContent = 0;
+									response->http_Content = NULL;
+									response->http_SizeOfContent = 0;
 
-									response->h_WriteType = FREE_ONLY;
+									response->http_WriteType = FREE_ONLY;
 								}
 								else // file not found in cache
 								{
@@ -1389,7 +1389,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 												}
 												mime = StringDuplicate( MimeFromExtension( extension ) );
 
-												err = ReadServerFile( request->uri, pathTable[ i ], bs, &result );
+												err = ReadServerFile( request->http_Uri, pathTable[ i ], bs, &result );
 
 												if( result == 200 )
 												{
@@ -1689,10 +1689,10 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 											HttpWrite( response, sock );
 											result = 200;
 
-											response->content = NULL;
-											response->sizeOfContent = 0;
+											response->http_Content = NULL;
+											response->http_SizeOfContent = 0;
 
-											response->h_WriteType = FREE_ONLY;
+											response->http_WriteType = FREE_ONLY;
 
 											Log( FLOG_DEBUG, "[ProtocolHttp] File returned to caller, fsize %lu\n", file->lf_FileSize );
 
@@ -1755,33 +1755,33 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 												PathFree( base );
 												PathFree( completePath );
 
-												UriFree( request->uri );
-												request->uri = UriParse( url );
-												if( request->uri->authority )
+												UriFree( request->http_Uri );
+												request->http_Uri = UriParse( url );
+												if( request->http_Uri->uri_Authority )
 												{
-													if( request->uri->authority->user )
+													if( request->http_Uri->uri_Authority->a_User )
 													{
-														FFree( request->uri->authority->user );
+														FFree( request->http_Uri->uri_Authority->a_User );
 													}
-													if( request->uri->authority->host )
+													if( request->http_Uri->uri_Authority->a_Host )
 													{
-														FFree( request->uri->authority->host );
+														FFree( request->http_Uri->uri_Authority->a_Host );
 													}
-													FFree( request->uri->authority );
+													FFree( request->http_Uri->uri_Authority );
 												}
-												if( request->uri->scheme )
+												if( request->http_Uri->uri_Scheme )
 												{
-													FFree( request->uri->scheme );
+													FFree( request->http_Uri->uri_Scheme );
 												}
-												request->uri->authority = NULL;
-												request->uri->scheme = NULL;
+												request->http_Uri->uri_Authority = NULL;
+												request->http_Uri->uri_Scheme = NULL;
 
 												// Override raw query!
-												FFree( request->uri->queryRaw );
+												FFree( request->http_Uri->uri_QueryRaw );
 
 												// Insert tinyurl source
-												request->uri->queryRaw = StringDuplicateN( url, strlen( url ) );
-												request->uri->redirect = TRUE;
+												request->http_Uri->uri_QueryRaw = StringDuplicateN( url, strlen( url ) );
+												request->http_Uri->uri_Redirect = TRUE;
 
 												// Retry request with our new url
 												FFree( url );
@@ -1798,9 +1798,9 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 												char *command = NULL;
 												ListString *phpResp = NULL;
 
-												int clen = strlen( uri->path->raw ) + 256;
+												int clen = strlen( uri->uri_Path->raw ) + 256;
 												
-												if( request->h_ContentType == HTTP_CONTENT_TYPE_APPLICATION_JSON )
+												if( request->http_ContentType == HTTP_CONTENT_TYPE_APPLICATION_JSON )
 												{
 													/*
 													HashmapElement *he = HttpGetPOSTParameter( request, "module" );
@@ -1844,14 +1844,14 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 													if( allArgsNew != NULL )
 													{
 														int argssize = strlen( allArgsNew );
-														char *runFile = FCalloc( ( argssize << 1 ) + 512 + strlen( uri->path->raw ), sizeof(char) );
+														char *runFile = FCalloc( ( argssize << 1 ) + 512 + strlen( uri->uri_Path->raw ), sizeof(char) );
 														if( runFile != NULL )
 														{
-															int rawLength = strlen( uri->path->raw );
+															int rawLength = strlen( uri->uri_Path->raw );
 															
 															strcpy( runFile, "php \"php/catch_all.php\" \"" );
 															
-															strcpy( runFile + 25, uri->path->raw );
+															strcpy( runFile + 25, uri->uri_Path->raw );
 															
 															strcpy( runFile + 25 + rawLength, "\" \"" );
 															
@@ -1896,7 +1896,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 													DEBUG("CatchALL 1621\n");
 													if( ( command = FCalloc( clen, sizeof(char) ) ) != NULL )
 													{
-														snprintf( command, clen, "php \"php/catch_all.php\" \"%s\";", uri->path->raw ); 
+														snprintf( command, clen, "php \"php/catch_all.php\" \"%s\";", uri->uri_Path->raw ); 
 													
 														phpResp = RunPHPScript( command );
 														
@@ -1964,10 +1964,10 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 													HttpWrite( response, sock );
 
-													response->content = NULL;
-													response->sizeOfContent = 0;
+													response->http_Content = NULL;
+													response->http_SizeOfContent = 0;
 
-													response->h_WriteType = FREE_ONLY;
+													response->http_WriteType = FREE_ONLY;
 
 													SocketWrite( sock, resp, (FLONG)(phpResp->ls_Size - (resp - phpResp->ls_Data)) );
 
@@ -2021,7 +2021,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 		if( response != NULL )
 		{
-			if( response != NULL && response->h_Stream == TRUE )
+			if( response != NULL && response->http_Stream == TRUE )
 			{
 				HttpFree( response );
 				response = NULL;

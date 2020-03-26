@@ -558,8 +558,8 @@ extern SystemBase *SLIB;
 
 static inline HashmapElement *GetHEReq( Http *request, char *param )
 {
-	HashmapElement *tst = HashmapGet( request->parsedPostContent, param );
-	if( tst == NULL ) tst = HashmapGet( request->query, param );
+	HashmapElement *tst = HashmapGet( request->http_ParsedPostContent, param );
+	if( tst == NULL ) tst = HashmapGet( request->http_Query, param );
 	if( tst && tst->hme_Data == NULL ) return NULL;
 	return tst;
 }

@@ -375,7 +375,7 @@ int PackDirectory( FILE *zipf, char *path, int cutfilename, char *password, int 
 				
 				if( request != NULL )
 				{
-					SystemBase *sb = (SystemBase *)request->h_SB;
+					SystemBase *sb = (SystemBase *)request->http_SB;
 					char *filename = newpath;
 					int newpathlen = strlen( newpath );
 					if( newpathlen > 255 )

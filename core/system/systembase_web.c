@@ -88,20 +88,20 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 	// Send both get and post
 	int size = 0;
 
-	FBOOL both = request->content && request->uri->queryRaw ? TRUE : FALSE;
-	if( request->content != NULL ) size += strlen( request->content );
-	if( request->uri->queryRaw != NULL ) size += strlen( request->uri->queryRaw );
+	FBOOL both = request->http_Content && request->http_Uri->uri_QueryRaw ? TRUE : FALSE;
+	if( request->http_Content != NULL ) size += strlen( request->http_Content );
+	if( request->http_Uri->uri_QueryRaw != NULL ) size += strlen( request->http_Uri->uri_QueryRaw );
 	char *allArgsNew = NULL;
 	
 	//fprintf( log, " CONTENT : %s\n\n\n\n\n", request->content );
 	
-	INFO("\t\t--->request->content %s raw %s \n\n", request->content, request->uri->queryRaw );
+	INFO("\t\t--->request->content %s raw %s \n\n", request->http_Content, request->http_Uri->uri_QueryRaw );
 	
 	int fullsize = size + ( both ? 2 : 1 );
 	
-	if( request->h_ContentType == HTTP_CONTENT_TYPE_APPLICATION_JSON )
+	if( request->http_ContentType == HTTP_CONTENT_TYPE_APPLICATION_JSON )
 	{
-		fullsize += (int)request->h_ContentLength;
+		fullsize += (int)request->http_ContentLength;
 	}
 	
 	char *allArgs = FCallocAlign( fullsize, sizeof(char) );
@@ -111,34 +111,34 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 	
 		if( both == TRUE )
 		{
-			if( request->h_ContentType == HTTP_CONTENT_TYPE_APPLICATION_JSON )
+			if( request->http_ContentType == HTTP_CONTENT_TYPE_APPLICATION_JSON )
 			{
-				sprintf( allArgs, "%s", request->uri->queryRaw );
+				sprintf( allArgs, "%s", request->http_Uri->uri_QueryRaw );
 			}
 			else
 			{
-				sprintf( allArgs, "%s&%s", request->content, request->uri->queryRaw );
+				sprintf( allArgs, "%s&%s", request->http_Content, request->http_Uri->uri_QueryRaw );
 			}
 		}
-		else if( request->content )
+		else if( request->http_Content )
 		{
-			if( request->h_ContentType == HTTP_CONTENT_TYPE_APPLICATION_JSON )
+			if( request->http_ContentType == HTTP_CONTENT_TYPE_APPLICATION_JSON )
 			{
 				
 			}
 			else
 			{
-				sprintf( allArgs, "%s", request->content );
+				sprintf( allArgs, "%s", request->http_Content );
 			}
 		}
 		else
 		{
-			sprintf( allArgs, "%s", request->uri->queryRaw );
+			sprintf( allArgs, "%s", request->http_Uri->uri_QueryRaw );
 		}
 	
 		// application/json are used to communicate with another tools like onlyoffce
 		char *sessptr = NULL;
-		if( request->h_ContentType != HTTP_CONTENT_TYPE_APPLICATION_JSON )
+		if( request->http_ContentType != HTTP_CONTENT_TYPE_APPLICATION_JSON )
 		{
 			int add = 0;
 			// Check in the middle of the query
@@ -221,13 +221,13 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 		{
 			strcpy( allArgsNew, allArgs );
 		}
-		DEBUG("REquest source: %d\n", request->h_RequestSource );
+		DEBUG("REquest source: %d\n", request->http_RequestSource );
 		
 		// get values from POST 
 		
-		if( request->h_RequestSource == HTTP_SOURCE_HTTP && request->parsedPostContent != NULL )
+		if( request->http_RequestSource == HTTP_SOURCE_HTTP && request->http_ParsedPostContent != NULL )
 		{
-			Hashmap *hm = request->parsedPostContent;
+			Hashmap *hm = request->http_ParsedPostContent;
 			unsigned int i = 0;
 			FBOOL quotationFound = FALSE;
 			//fprintf( log, "AllAgrsNew : '%s'\n\n fter parsing headers, contentType: %d\n", allArgsNew, request->h_ContentType );
@@ -469,14 +469,14 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			
 			DEBUG("Authid received\n");
 			
-			if( (*request)->h_RequestSource == HTTP_SOURCE_WS )
+			if( (*request)->http_RequestSource == HTTP_SOURCE_WS )
 			{
 				char *assid = NULL;
 				char *authid = NULL;
 				
 				DEBUG("HTTPSOURCEWS\n");
 				
-				HashmapElement *el =  HashmapGet( (*request)->parsedPostContent, "sasid" );
+				HashmapElement *el =  HashmapGet( (*request)->http_ParsedPostContent, "sasid" );
 				if( el != NULL )
 				{
 					assid = UrlDecodeToMem( ( char *)el->hme_Data );
@@ -554,7 +554,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			UserSession *curusrsess = l->sl_USM->usm_Sessions;
 			char *deviceid = NULL;
 			
-			HashmapElement *el = HashmapGet( (*request)->parsedPostContent, "deviceid" );
+			HashmapElement *el = HashmapGet( (*request)->http_ParsedPostContent, "deviceid" );
 			if( el != NULL )
 			{
 				deviceid = UrlDecodeToMem( ( char *)el->hme_Data );
@@ -815,13 +815,13 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	
 	if( *request != NULL )
 	{
-		(*request)->h_UserSession = loggedSession;
+		(*request)->http_UserSession = loggedSession;
 	}
 	
 	if( strcmp( urlpath[ 0 ], "file" ) == 0 )
 	{
 		HashmapElement *el = HttpGetPOSTParameter( *request, "path" );
-		if( el == NULL ) el = HashmapGet( (*request)->query, "path" );
+		if( el == NULL ) el = HashmapGet( (*request)->http_Query, "path" );
 		int size = 64;
 		
 		if( el != NULL && el->hme_Data != NULL )
@@ -829,12 +829,12 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			char *data = NULL;
 			size += strlen( el->hme_Data );
 			
-			if( (*request)->h_RequestSource == HTTP_SOURCE_WS )
+			if( (*request)->http_RequestSource == HTTP_SOURCE_WS )
 			{
-				size += strlen( (*request)->uri->queryRaw );
+				size += strlen( (*request)->http_Uri->uri_QueryRaw );
 				if( ( data = FMalloc( size ) ) != NULL )
 				{
-					int pos = snprintf( data, size, "%s Path: ", (*request)->uri->queryRaw );
+					int pos = snprintf( data, size, "%s Path: ", (*request)->http_Uri->uri_QueryRaw );
 					UrlDecode( &data[ pos ], (char *)el->hme_Data );
 					UserLoggerStore( l->sl_ULM, loggedSession, data, loggedSession->us_UserActionInfo );
 					FFree( data );
@@ -842,15 +842,15 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			}
 			else
 			{
-				DEBUG("Check request pointer %p and requeest path %p\n", (*request), (*request)->rawRequestPath );
-				if( (*request)->rawRequestPath != NULL )
+				DEBUG("Check request pointer %p and requeest path %p\n", (*request), (*request)->http_RawRequestPath );
+				if( (*request)->http_RawRequestPath != NULL )
 				{
-					size += strlen( (*request)->rawRequestPath );
+					size += strlen( (*request)->http_RawRequestPath );
 					if( ( data = FMalloc( size ) ) != NULL )
 					{
-						int pos = snprintf( data, size, "%s Path: ", (*request)->rawRequestPath );
+						int pos = snprintf( data, size, "%s Path: ", (*request)->http_RawRequestPath );
 						UrlDecode( &data[ pos ], (char *)el->hme_Data );
-						UserLoggerStore( l->sl_ULM, loggedSession, data, (*request)->h_UserActionInfo );
+						UserLoggerStore( l->sl_ULM, loggedSession, data, (*request)->http_UserActionInfo );
 						FFree( data );
 					}
 				}
@@ -858,26 +858,26 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		}
 		else
 		{
-			if( (*request)->h_RequestSource == HTTP_SOURCE_WS )
+			if( (*request)->http_RequestSource == HTTP_SOURCE_WS )
 			{
-				UserLoggerStore( l->sl_ULM, loggedSession, (*request)->uri->queryRaw , loggedSession->us_UserActionInfo );
+				UserLoggerStore( l->sl_ULM, loggedSession, (*request)->http_Uri->uri_QueryRaw , loggedSession->us_UserActionInfo );
 			}
 			else
 			{
-				UserLoggerStore( l->sl_ULM, loggedSession, (*request)->rawRequestPath, (*request)->h_UserActionInfo );
+				UserLoggerStore( l->sl_ULM, loggedSession, (*request)->http_RawRequestPath, (*request)->http_UserActionInfo );
 			}
 		}
 	}
 	else
 	{
-		if( (*request)->h_RequestSource == HTTP_SOURCE_WS )
+		if( (*request)->http_RequestSource == HTTP_SOURCE_WS )
 		{
-			DEBUG(" request %p  uri %p\n", (*request),(*request)->uri );
-			UserLoggerStore( l->sl_ULM, loggedSession, (*request)->uri->queryRaw , loggedSession->us_UserActionInfo );
+			DEBUG(" request %p  uri %p\n", (*request),(*request)->http_Uri );
+			UserLoggerStore( l->sl_ULM, loggedSession, (*request)->http_Uri->uri_QueryRaw , loggedSession->us_UserActionInfo );
 		}
 		else
 		{
-			UserLoggerStore( l->sl_ULM, loggedSession, (*request)->rawRequestPath, (*request)->h_UserActionInfo );
+			UserLoggerStore( l->sl_ULM, loggedSession, (*request)->http_RawRequestPath, (*request)->http_UserActionInfo );
 		}
 	}
 	
@@ -978,7 +978,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		FBOOL phpCalled = FALSE;
 
 		HashmapElement *he = HttpGetPOSTParameter( (*request), "module" );
-		if( he == NULL ) he = HashmapGet( (*request)->query, "module" );
+		if( he == NULL ) he = HashmapGet( (*request)->http_Query, "module" );
 		// checking if module is in cache and use it if there is need
 		
 		if( he != NULL && he->hme_Data != NULL )
@@ -1286,7 +1286,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		}
 		else
 		{
-			Log( FLOG_ERROR, "[SystemWeb]: php returned NULL for request '%s'\n", (*request)->content );
+			Log( FLOG_ERROR, "[SystemWeb]: php returned NULL for request '%s'\n", (*request)->http_Content );
 			
 			FERROR("[System.library] ERROR returned data is NULL\n");
 			*result = 404;
@@ -1543,7 +1543,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 	
-		if( (*request)->parsedPostContent != NULL )
+		if( (*request)->http_ParsedPostContent != NULL )
 		{
 			char *usrname = NULL;
 			char *pass = NULL;
