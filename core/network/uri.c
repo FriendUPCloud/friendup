@@ -381,7 +381,7 @@ Hashmap* UriParseQuery( char* query )
 		return NULL;
 	}
 	
-	int queryLen = strlen( query );
+	unsigned int queryLen = strlen( query );
 	if( queryLen <= 0 )
 	{
 		FERROR("Lenght of query is <= 0\n");

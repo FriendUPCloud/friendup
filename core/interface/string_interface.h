@@ -49,8 +49,8 @@ typedef struct StringInterface
 	char				*(*StringShellEscape)( const char* str );
 	char				*(*StringShellEscapeSize)( const char* str, int *len );
 	char				*(*FindInBinary)(char *x, int m, char *y, int n) ;
-	FLONG				(*FindInBinaryPOS)(char *x, int m, char *y, FULONG n);
-	FLONG				(*FindInBinarySimple)( char *x, int m, char *y, FULONG n );
+	FLONG				(*FindInBinaryPOS)(char *x, int m, char *y, FQUAD n);
+	FLONG				(*FindInBinarySimple)( char *x, int m, char *y, FQUAD n );
 	void				(*HashedString)( char **str );
 	char				*(*StringDuplicateEOL)( const char* str );
 	int					(*StringNToInt)( char *s, int len );

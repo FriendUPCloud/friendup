@@ -391,7 +391,7 @@ int HttpParseHeader( Http* http, const char* request, FQUAD fullReqLength )
 	FBOOL copyValue = TRUE;
 	
 	// we cannot parse whole big message, nothing is sending so big headers
-	int length = (int)fullReqLength;
+	unsigned int length = (int)fullReqLength;
 	int reqMaxLength = HTTP_MAX_MEM_CONTENT_SIZE;
 	if( fullReqLength > reqMaxLength )
 	{
