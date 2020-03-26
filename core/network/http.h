@@ -220,12 +220,21 @@ if( !request->errorCode && request->queryMap )
 
 HttpFreeRequest( request );*/
 
+/* HTTP requests above this thresholds are saved to temporary files
+* and mmap'ed for later use. This conserves RAM during large
+* file uploads. (TK-628)
+*/
+#define TUNABLE_LARGE_HTTP_REQUEST_SIZE (10*1024*1024) //10MB
+
+
 typedef struct HttpFile
 {
 	char			hf_FileName[ 512 ];
+	char			hf_FileNameOnDisk[ 128 ];
 	char 			*hf_Data;
 	FQUAD			hf_FileSize;		// file size
 	FILE			*hf_FP;			// when file is stored on server disk
+	int				hf_FileHandle;
 	struct MinNode node;
 }HttpFile;
 
@@ -296,7 +305,7 @@ typedef struct Http
 
 	// This is a blob (But most likely text)
 	char				*content;
-	FLONG				sizeOfContent;
+	FQUAD				sizeOfContent;
 	Hashmap				*headers; // Additional headers
 	char				*h_RespHeaders[ HTTP_HEADER_END ]; // response header
 	FBOOL				h_HeadersAlloc[ HTTP_HEADER_END ]; // memory was allocated?
@@ -500,7 +509,7 @@ void HttpWrite( Http* http, Socket *sock );
 // upload file
 //
 
-HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, FLONG size );
+HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, FQUAD size );
 
 //
 //

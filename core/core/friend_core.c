@@ -82,12 +82,6 @@ int accept4(int sockfd, struct sockaddr *addr,            socklen_t *addrlen, in
 int nothreads = 0;					/// threads coutner @todo to rewrite
 #define MAX_CALLHANDLER_THREADS 256			///< maximum number of simulatenous handlers
 
-/* HTTP requests above this thresholds are saved to temporary files
-* and mmap'ed for later use. This conserves RAM during large
-* file uploads. (TK-628)
-*/
-#define TUNABLE_LARGE_HTTP_REQUEST_SIZE (10*1024*1024) //10MB
-
 /**
 * Mutex buffer for ssl locking
 */
@@ -947,7 +941,7 @@ void FriendCoreProcess( void *fcv )
 						int res;
 						if( ( res = SSL_read( th->sock->s_Ssl, buf, sizeof(buf) ) ) > 0 )
 						{
-							DEBUG("----------------------> SSLREAD tmpFileHandle: %d read: %d\n", tmpFileHandle, res );
+							DEBUG("----------------------> tmpFileHandle: %d read: %d\n", tmpFileHandle, res );
 						}
 						else
 						{

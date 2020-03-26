@@ -767,9 +767,9 @@ char *FindInBinary(char *x, int m, char *y, int n)
 //
 //
 
-FLONG FindInBinaryPOS(char *x, int m, char *y, FULONG n) 
+FQUAD FindInBinaryPOS(char *x, int m, char *y, FULONG n) 
 {
-	FLONG i, j;
+	FQUAD i, j;
 	int kmpNext[ m ];
 
 	// Preprocessing 
@@ -777,7 +777,7 @@ FLONG FindInBinaryPOS(char *x, int m, char *y, FULONG n)
 
 	// Searching 
 	i = j = 0;
-	while (j < (FLONG)n) 
+	while (j < (FQUAD)n) 
 	{
 		//printf("find %d\n", j );
 		while (i > -1 && x[i] != y[j])
@@ -798,9 +798,9 @@ FLONG FindInBinaryPOS(char *x, int m, char *y, FULONG n)
 //
 //
 
-FLONG FindInBinarySimple( char *x, int m, char *y, FULONG n )
+FQUAD FindInBinarySimple( char *x, int m, char *y, FULONG n )
 {
-	FULONG i;
+	FQUAD i;
 	
 	//INFO("\n\n\nFIND TEXT %s\n", x );
 	
@@ -810,7 +810,7 @@ FLONG FindInBinarySimple( char *x, int m, char *y, FULONG n )
 		if( memcmp( x, y, m ) == 0 )
 		{
 			//FERROR("Found text %50s ------------------------------ %10s\n", (y-50), y );
-			return (FLONG)i;
+			return (FQUAD)i;
 		}
 		y++;
 	}

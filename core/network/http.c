@@ -1012,11 +1012,11 @@ Content-Type: application/octet-stream
 			{
 				//if( ( contentDisp = strstr( dataPtr, "Content-Disposition: form-data; name=\"file") ) != NULL )
 				char *startOfFile = strstr( nextlineStart, "\r\n\r\n" ) + 4;
-				FLONG size = 0;
+				FQUAD size = 0;
 				
 				if( startOfFile != NULL )
 				{
-					FLONG res;
+					FQUAD res;
 					res = FindInBinaryPOS( http->h_PartDivider, strlen(http->h_PartDivider), startOfFile, http->sizeOfContent ) - 2;
 					
 					//res = (QUAD )FindInBinarySimple( http->h_PartDivider, strlen(http->h_PartDivider), startOfFile, http->sizeOfContent )-2;
@@ -2388,7 +2388,7 @@ void HttpAssertStr( char* value, const char* expected, const char* field )
  * @return HttpFile or NULL when error appear
  */
 
-HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, FLONG size )
+HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, FQUAD size )
 {
 	if( size <= 0 )
 	{
@@ -2396,23 +2396,78 @@ HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, FLONG size )
 		return NULL;
 	}
 	
-	char *locdata = FCalloc( size, sizeof( char ) );
-	if( locdata == NULL )
+	if( size > (10 *1024 *1024) )
 	{
-		FERROR("Cannot allocate memory for HTTP file data\n");
-		return NULL;
+		
 	}
 	
 	HttpFile *file = FCalloc( 1, sizeof( HttpFile ) );
 	if( file == NULL )
 	{
 		FERROR("Cannot allocate memory for HTTP file\n");
-		FFree( locdata );
 		return NULL;
 	}
 	
-	memcpy( locdata, data, size );
-	file->hf_Data = locdata;
+	file->hf_FileHandle = -1;
+	
+	if( size > TUNABLE_LARGE_HTTP_REQUEST_SIZE )
+	{
+		strcpy( file->hf_FileNameOnDisk, "/tmp/FriendHTTP_XXXXXX" );
+
+		//this is going to be a huge request, create a temporary file
+		//copy already received data to it and continue writing to the file
+		char *tmpFilename = mktemp( file->hf_FileNameOnDisk );
+		//DEBUG( "large upload will go to remporary file %s", tmp_filename );
+		if( strlen( tmpFilename ) == 0 )
+		{
+			FERROR("mktemp failed!");
+			HttpFileDelete( file );
+			return NULL;
+		}
+		
+		strcpy( file->hf_FileNameOnDisk, tmpFilename );
+
+		file->hf_FileHandle = open( tmpFilename, O_RDWR | O_CREAT | O_EXCL, 0600/*permissions*/);
+		if( file->hf_FileHandle == -1 )
+		{
+			FERROR("temporary file open failed!");
+			HttpFileDelete( file );
+			return NULL;
+		}
+		
+		file->hf_Data = mmap( 0, size, PROT_READ | PROT_WRITE, MAP_SHARED, file->hf_FileHandle, 0/*offset*/);
+		
+		//write already received chunk
+		FQUAD toWrite = size;
+		char *dataptr = data;
+		
+		int store = TUNABLE_LARGE_HTTP_REQUEST_SIZE;
+		
+		while( toWrite >= 0 )
+		{
+			int wrote = write( file->hf_FileHandle, dataptr, store );
+			dataptr += wrote;
+			toWrite -= wrote;
+			
+			if( toWrite < (FQUAD)store )
+			{
+				store = toWrite;
+			}
+		}
+	
+	}
+	else
+	{
+		char *locdata = FCalloc( size, sizeof( char ) );
+		if( locdata == NULL )
+		{
+			FERROR("Cannot allocate memory for HTTP file data\n");
+			return NULL;
+		}
+		memcpy( locdata, data, size );
+		file->hf_Data = locdata;
+	}
+	
 	strncpy( file->hf_FileName, filename, fnamesize );
 	file->hf_FileSize = size;
 	
@@ -2431,9 +2486,21 @@ void HttpFileDelete( HttpFile *f )
 {
 	if( f != NULL )
 	{
-		if( f->hf_Data != NULL )
+		if( f->hf_FileHandle >= 0 )
 		{
-			FFree( f->hf_Data );
+			if( f->hf_Data )
+			{
+				munmap( f->hf_Data, f->hf_FileSize );
+			}
+			close( f->hf_FileHandle );
+			unlink( f->hf_FileNameOnDisk );
+		}
+		else
+		{
+			if( f->hf_Data != NULL )
+			{
+				FFree( f->hf_Data );
+			}
 		}
 		
 		FFree( f );

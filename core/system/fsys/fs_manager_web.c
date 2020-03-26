@@ -1998,6 +1998,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						}
 					}
 					
+					LOG( FLOG_DEBUG, "UPLOAD\n");
+					
 					if( ( tmpPath = ( char * )FCalloc( strlen(path) + 2048, sizeof(char) ) ) != NULL )
 					{
 						HttpFile *file = request->h_FileList;
@@ -2019,6 +2021,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						
 						while( file != NULL )
 						{
+							LOG( FLOG_DEBUG, "UPLOAD FILE : %s : %ld\n", file->hf_FileName, file->hf_FileSize );
 							DEBUG("Going throug files\n");
 							if( targetPath )
 							{
@@ -2080,6 +2083,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							FBOOL have = FSManagerCheckAccess( l->sl_FSM, tmpPath, actDev->f_ID, loggedSession->us_User, "--W---" );
 							if( have == TRUE )
 							{
+								LOG( FLOG_DEBUG, "UPLOAD ACCESS GRANTED\n");
 								actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
 								
 								File *fp = (File *)actFS->FileOpen( actDev, tmpPath, "wb" );
@@ -2087,10 +2091,20 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								{
 									FULONG bytes = 0;
 									
-									int size = FileSystemActivityCheckAndUpdate( l, &(actDev->f_Activity), file->hf_FileSize );
-									bytes = actFS->FileWrite( fp, file->hf_Data, size );
-									actDev->f_BytesStored += bytes;
-
+									FQUAD sizeLeft = FileSystemActivityCheckAndUpdate( l, &(actDev->f_Activity), file->hf_FileSize );
+									
+									int store = TUNABLE_LARGE_HTTP_REQUEST_SIZE;
+									while( sizeLeft > 0 )
+									{
+										bytes = actFS->FileWrite( fp, file->hf_Data, store );
+										actDev->f_BytesStored += bytes;
+										sizeLeft -= bytes;
+										
+										if( sizeLeft < (FQUAD)store )
+										{
+											store = sizeLeft;
+										}
+									}
 									actFS->FileClose( actDev, fp );
 								
 									uploadedFiles++;
