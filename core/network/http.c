@@ -1484,12 +1484,15 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 					int wrote = write( http->http_ContentFileHandle, dataptr, store );
 					dataptr += wrote;
 					toWrite -= wrote;
+					
+					DEBUG("UPLOAD writing data into buffer toWrite: %ld wrote: %d\n", toWrite, wrote );
 			
 					if( toWrite < (FQUAD)store )
 					{
 						store = toWrite;
 					}
 				}
+				DEBUG("UPLOAD writting done!\n");
 				//FQUAD = 
 				//int wrote = write( http->http_ContentFileHandle, data, length );
 			}
@@ -1500,6 +1503,8 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 			
 			char *endDivider = strstr( http->http_Content, "\r\n" );
 			memset( http->http_PartDivider, 0, sizeof( char ) << 8 );
+			
+			DEBUG("UPLOAD endDivider pointer: %p\n", endDivider );
 			if( endDivider != NULL )
 			{
 				strncpy( http->http_PartDivider, http->http_Content, endDivider-http->http_Content );
