@@ -1473,7 +1473,14 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 		// If we have null data, just purge!
 		if( length > 0 )
 		{
-			memcpy( http->http_Content, data, length );
+			//if( http->http_ContentFileHandle > 0 )
+			//{
+			//	int wrote = write( http->http_ContentFileHandle, data, length );
+			//}
+			//else
+			{
+				memcpy( http->http_Content, data, length );
+			}
 			
 			char *endDivider = strstr( http->http_Content, "\r\n" );
 			memset( http->http_PartDivider, 0, sizeof( char ) << 8 );
