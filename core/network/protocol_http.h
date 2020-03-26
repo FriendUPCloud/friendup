@@ -20,6 +20,6 @@
 //
 //
 
-Http *ProtocolHttp( Socket *sock, char* data, unsigned int size );
+Http *ProtocolHttp( Socket *sock, char* data, FQUAD size );
 
 #endif

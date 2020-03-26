@@ -351,7 +351,7 @@ static inline int ReadServerFile( Uri *uri __attribute__((unused)), char *locpat
  * @param length length of already received data
  * @return new Http structrure when success, otherwise NULL
  */
-Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
+Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 {
 	Http *response = NULL;
 	Log( FLOG_DEBUG,"[ProtocolHttp] HTTP Callback called\n");
@@ -406,7 +406,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 	double stime = GetCurrentTimestampD();
 #endif
 
-	DEBUG("[ProtocolHttp] Data delivered %d\n", length );
+	DEBUG("[ProtocolHttp] Data delivered %ld\n", length );
 	// Continue parsing the request
 	int result = HttpParsePartialRequest( request, data, length );
 
