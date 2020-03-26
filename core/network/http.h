@@ -366,7 +366,7 @@ typedef struct Http
 //
 //
 
-int HttpParseHeader( Http* http, const char* request, unsigned int length );
+int HttpParseHeader( Http* http, const char* request, FQUAD length );
 
 //
 // Create a generic HttpObject
@@ -397,13 +397,13 @@ Http* HttpNewSimpleBaseOnRequest( unsigned int code, Http *request, struct TagIt
 // Error fields are set on error.
 //
 
-Http* HttpParseRequest( const char* request, unsigned int length );
+Http* HttpParseRequest( const char* request, FQUAD length );
 
 //
 // Parse a request in chunks. Useful for data recived over the network
 //
 
-int HttpParsePartialRequest( Http* http, char* data, unsigned int length );
+int HttpParsePartialRequest( Http* http, char* data, FQUAD length );
 
 //
 // Frees an HttpObject element (Only call this for HttpObjects returned from HttpParseRequest!!!)

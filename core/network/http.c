@@ -359,11 +359,11 @@ int HttpParseInt( char* str )
  *
  * @param http pointer to Http where results will be stored.
  * @param request http request represented by string
- * @param length length of provided request
+ * @param fullReqLength length of provided request
  * @return http error code
  */
 
-int HttpParseHeader( Http* http, const char* request, unsigned int length )
+int HttpParseHeader( Http* http, const char* request, FQUAD fullReqLength )
 {
 	// TODO: Better response codes
 	//
@@ -390,7 +390,13 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 	unsigned int i = 0, i1 = 0;
 	FBOOL copyValue = TRUE;
 	
-	//DEBUG("HttpParseHeader\n" );
+	// we cannot parse whole big message, nothing is sending so big headers
+	int length = (int)fullReqLength;
+	int reqMaxLength = (INT_MAX/4);
+	if( fullReqLength > reqMaxLength )
+	{
+		fullReqLength = reqMaxLength;
+	}
 	
 	http->h_ResponseHeadersRelease = FALSE;
 
@@ -1264,7 +1270,7 @@ static inline int HttpParsePartialRequestChunked( Http* http, char* data, unsign
 // we need this information in Log
 extern int nothreads;
 
-int HttpParsePartialRequest( Http* http, char* data, unsigned int length )
+int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 {
 	if( data == NULL || http == NULL )
 	{
@@ -1276,7 +1282,7 @@ int HttpParsePartialRequest( Http* http, char* data, unsigned int length )
 	if( !http->partialRequest )
 	{
 		http->partialRequest = TRUE;
-		Log( FLOG_INFO,"INCOMING Request threads: %d length: %d data: %.*s\n", nothreads, length, 512, data );
+		Log( FLOG_INFO,"INCOMING Request threads: %d length: %ld data: %.*s\n", nothreads, length, 512, data );
 		
 		// Check if the recieved data exceeds the maximum header size. If it does, 404 dat bitch~
 		// TODO
