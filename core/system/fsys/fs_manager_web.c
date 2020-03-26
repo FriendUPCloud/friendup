@@ -2093,9 +2093,12 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									
 									FQUAD sizeLeft = FileSystemActivityCheckAndUpdate( l, &(actDev->f_Activity), file->hf_FileSize );
 									
+									LOG( FLOG_DEBUG, "UPLOAD ACCESS TO STORE: %ld\n", sizeLeft );
+									
 									int store = TUNABLE_LARGE_HTTP_REQUEST_SIZE;
 									while( sizeLeft > 0 )
 									{
+										LOG( FLOG_DEBUG, "UPLOAD WRITE %d\n", store );
 										bytes = actFS->FileWrite( fp, file->hf_Data, store );
 										actDev->f_BytesStored += bytes;
 										sizeLeft -= bytes;
@@ -2105,6 +2108,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 											store = sizeLeft;
 										}
 									}
+									
+									LOG( FLOG_DEBUG, "UPLOAD FINISHED\n");
+									
 									actFS->FileClose( actDev, fp );
 								
 									uploadedFiles++;
