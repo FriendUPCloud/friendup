@@ -1410,6 +1410,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 						{
 							//http->content = FCalloc( (size + 5), sizeof( char ) );
 							http->http_Content = FMalloc( (size + 5) );
+							http->http_Content[ size ] = 0;
 						}
 						
 						if( http->http_Content == NULL )
@@ -1418,9 +1419,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 							return -2;
 						}
 						http->http_SizeOfContent = size;
-					
-						http->http_Content[ size ] = 0;
-					
+
 						// Add some extra data for content..
 						int dataOffset = ( found - data + 4 ), dataLength = length - dataOffset;
 						DEBUG("Content set, ptr %p offset %d\n", http->http_Content, dataOffset );
