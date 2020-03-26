@@ -1810,7 +1810,19 @@ void HttpFreeRequest( Http* http )
 	}
 	if( http->http_Content != NULL && http->http_SizeOfContent != 0 )
 	{
-		FFree( http->http_Content );
+		if( http->http_ContentFileHandle >= 0 )
+		{
+			if( http->http_Content )
+			{
+				munmap( http->http_Content, http->http_SizeOfContent );
+			}
+			close( http->http_ContentFileHandle );
+			unlink( http->http_TempContentFileName );
+		}
+		else
+		{
+			FFree( http->http_Content );
+		}
 		http->http_Content = NULL;
 		http->http_SizeOfContent = 0;
 	}
