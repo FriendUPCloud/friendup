@@ -1405,6 +1405,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 
 							}
 							http->http_Content = mmap( 0, size+5, PROT_READ | PROT_WRITE, MAP_SHARED, http->http_ContentFileHandle, 0/*offset*/);
+							DEBUG("Content set\n");
 						}
 						else
 						{
@@ -1421,7 +1422,8 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 						http->http_SizeOfContent = size;
 
 						// Add some extra data for content..
-						int dataOffset = ( found - data + 4 ), dataLength = length - dataOffset;
+						int dataOffset = ( found - data + 4 );
+						FQUAD dataLength = length - dataOffset;
 						DEBUG("Content set, ptr %p offset %d\n", http->http_Content, dataOffset );
 						if( dataLength <= 0 )
 						{
