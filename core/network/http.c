@@ -1473,11 +1473,27 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 		// If we have null data, just purge!
 		if( length > 0 )
 		{
-			//if( http->http_ContentFileHandle > 0 )
-			//{
-			//	int wrote = write( http->http_ContentFileHandle, data, length );
-			//}
-			//else
+			if( http->http_ContentFileHandle > 0 )
+			{
+				int store = TUNABLE_LARGE_HTTP_REQUEST_SIZE;
+				FQUAD toWrite = length;
+				char *dataptr = data;
+				
+				while( toWrite >= 0 )
+				{
+					int wrote = write( http->http_ContentFileHandle, dataptr, store );
+					dataptr += wrote;
+					toWrite -= wrote;
+			
+					if( toWrite < (FQUAD)store )
+					{
+						store = toWrite;
+					}
+				}
+				//FQUAD = 
+				//int wrote = write( http->http_ContentFileHandle, data, length );
+			}
+			else
 			{
 				memcpy( http->http_Content, data, length );
 			}
