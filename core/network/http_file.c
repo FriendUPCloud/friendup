@@ -71,8 +71,6 @@ HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, FQUAD size )
 			return NULL;
 		}
 		
-		strcpy( file->hf_FileNameOnDisk, tmpFilename );
-
 		file->hf_FileHandle = open( tmpFilename, O_RDWR | O_CREAT | O_EXCL, 0600/*permissions*/);
 		if( file->hf_FileHandle == -1 )
 		{
