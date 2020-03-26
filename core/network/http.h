@@ -31,6 +31,7 @@
 #include "network/socket.h"
 #include <util/tagitem.h>
 #include <network/user_session_websocket.h>
+#include "http_file.h"
 
 #define DEFAULT_CONTENT_TYPE "text/html; charset=utf-8"
 
@@ -228,18 +229,6 @@ HttpFreeRequest( request );*/
 * file uploads. (TK-628)
 */
 #define TUNABLE_LARGE_HTTP_REQUEST_SIZE (10*1024*1024) //10MB
-
-
-typedef struct HttpFile
-{
-	char			hf_FileName[ 512 ];
-	char			hf_FileNameOnDisk[ 128 ];
-	char 			*hf_Data;
-	FQUAD			hf_FileSize;		// file size
-	FILE			*hf_FP;			// when file is stored on server disk
-	int				hf_FileHandle;
-	struct MinNode node;
-}HttpFile;
 
 //
 // HTTP CONTENT TYPE
@@ -510,17 +499,5 @@ void HttpWriteAndFree( Http* http, Socket *sock );
 //
 
 void HttpWrite( Http* http, Socket *sock );
-
-//
-// upload file
-//
-
-HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, FQUAD size );
-
-//
-//
-//
-
-void HttpFileDelete( HttpFile *f );
 
 #endif // __NETWORK_HTTP_H__
