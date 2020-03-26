@@ -1432,7 +1432,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 	
 	if( http->gotHeader && http->expectBody && http->content )
 	{
-		DEBUG("[HttpParsePartialRequest] RECEIVE DATA, length %d\n", length );
+		DEBUG("[HttpParsePartialRequest] RECEIVE DATA, length %ld\n", length );
 		
 		// If we have null data, just purge!
 		if( length > 0 )
