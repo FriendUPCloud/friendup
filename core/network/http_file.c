@@ -132,7 +132,7 @@ void HttpFileDelete( HttpFile *f )
 {
 	if( f != NULL )
 	{
-		if( f->hf_FileHandle >= 0 )
+		if( f->hf_FileHandle > 0 )
 		{
 			if( f->hf_Data )
 			{

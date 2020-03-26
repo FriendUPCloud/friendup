@@ -1810,7 +1810,7 @@ void HttpFreeRequest( Http* http )
 	}
 	if( http->http_Content != NULL && http->http_SizeOfContent != 0 )
 	{
-		if( http->http_ContentFileHandle >= 0 )
+		if( http->http_ContentFileHandle > 0 )
 		{
 			if( http->http_Content )
 			{
