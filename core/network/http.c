@@ -1294,7 +1294,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 		if( found )
 		{
 			int result = 0;
-			int size = 0;
+			FQUAD size = 0;
 			
 			if( http->gotHeader == FALSE )
 			{
@@ -1364,6 +1364,8 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 				else
 				{
 					size = http->h_ContentLength;
+					
+					DEBUG("SIZE %ld\n", size );
 
 					if( size > 0 )
 					{
