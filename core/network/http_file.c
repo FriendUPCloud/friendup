@@ -19,6 +19,7 @@
 #include <time.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <sys/mman.h>
 #include "http_file.h"
 #include "http.h"
 
