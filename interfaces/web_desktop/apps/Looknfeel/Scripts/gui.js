@@ -63,7 +63,7 @@ function refreshLabels( affected )
 		for( let a = 0; a < parseInt( ge( 'workspaceCount' ).value ); a++ )
 		{
 			let n = '';
-			if( !Application.labelChoices[ a ] )
+			if( !Application.labelChoices[ a ] || Application.labelChoices[ a ].length < 2 )
 			{
 				n = (a+1);
 			}

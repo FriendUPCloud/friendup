@@ -412,7 +412,7 @@ var WorkspaceInside = {
 						} } );
 					} )( a );
 					if( a == globalConfig.workspaceCurrent ) w.className += ' Active';
-					if( globalConfig.workspace_labels && globalConfig.workspace_labels[ a ] )
+					if( globalConfig.workspace_labels && globalConfig.workspace_labels[ a ] && typeof( globalConfig.workspace_labels ) == 'object' )
 					{
 						w.innerHTML = '<span class="' + globalConfig.workspace_labels[ a ] + '"></span>';
 						w.className += ' WithIcon';
