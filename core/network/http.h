@@ -118,7 +118,7 @@ static const char *HEADERS[] = {
 #define HTTP_ENABLE_DEBUG 1
 #define HTTP_MAX_MEM_CONTENT_SIZE (INT_MAX/4)
 
-#define HTTP_CONTENT_TEMP_NAME "/tmp/FriendHTTP_CONTENT_XXXXXX"
+#define HTTP_CONTENT_TEMP_NAME "/tmp/Friendup/FriendHTTP_CONTENT_XXXXXX"
 
 #ifdef HTTP_ENABLE_DEBUG
 #define HTTP_PRINT(x) printf( x " (%s:%d)\n", __FILE__, __LINE__ );

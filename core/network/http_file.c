@@ -57,7 +57,7 @@ HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, FQUAD size )
 	
 	if( size > TUNABLE_LARGE_HTTP_REQUEST_SIZE )
 	{
-		strcpy( file->hf_FileNameOnDisk, "/tmp/FriendHTTP_XXXXXX" );
+		strcpy( file->hf_FileNameOnDisk, "/tmp/Friendup/FriendHTTP_XXXXXX" );
 
 		//this is going to be a huge request, create a temporary file
 		//copy already received data to it and continue writing to the file

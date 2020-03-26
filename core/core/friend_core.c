@@ -780,7 +780,7 @@ void FriendCoreProcess( void *fcv )
 
 	int tmpFileHandle = -2;
 	char *tmpFilename = NULL;
-	char tmpFileNameTemplate[] = "/tmp/FriendHTTP_XXXXXX";
+	char tmpFileNameTemplate[] = "/tmp/Friendup/FriendHTTP_XXXXXX";
 
 	char *incomingBufferPtr = 0;
 	FQUAD incomingBufferLength = 0;
