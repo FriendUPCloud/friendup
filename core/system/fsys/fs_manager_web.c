@@ -2098,7 +2098,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									int store = TUNABLE_LARGE_HTTP_REQUEST_SIZE;
 									while( sizeLeft > 0 )
 									{
-										LOG( FLOG_DEBUG, "UPLOAD WRITE %d\n", store );
+										LOG( FLOG_DEBUG, "UPLOAD WRITE store %d left %ld\n", store,  sizeLeft );
 										bytes = actFS->FileWrite( fp, file->hf_Data, store );
 										actDev->f_BytesStored += bytes;
 										sizeLeft -= bytes;

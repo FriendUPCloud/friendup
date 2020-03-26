@@ -358,7 +358,9 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		int slashes = 0, i = 0; for( ; i < spath; i++ )
 		{
 			if( commClean[i] == '/' )
+			{
 				slashes++;
+			}
 		}
 
 		// ---- DEBUG( "New filepath: %s\n", cleanPath );
