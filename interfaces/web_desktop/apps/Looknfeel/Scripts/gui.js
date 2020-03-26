@@ -26,10 +26,24 @@ Application.run = function( msg )
 	}
 }
 
+function constrictWorkspaceCount()
+{
+	if( ge( 'workspaceCount' ).value > 9 )
+	{
+		ge( 'workspaceCount' ).value = 9;
+	}
+	else if( ge( 'workspaceCount' ).value < 0 )
+	{
+		ge( 'workspaceCount' ).value = 0;
+	}
+}
+
 // Refresh the labels list
 function refreshLabels( affected )
 {
 	let nl = [];
+	constrictWorkspaceCount();
+	
 	for( let c = 0; c < ge( 'workspaceCount' ).value; c++ )
 	{
 		if( c < Application.labelChoices.length )

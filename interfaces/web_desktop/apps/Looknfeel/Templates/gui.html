@@ -93,7 +93,7 @@
 								<strong>{i18n_virtual_workspaces}:</strong>
 							</p>
 							<p>
-								<input type="number" size="4" max="9" min="0" name="workspaceCount" id="workspaceCount" onchange="if( this.value < 0 ) this.value = 0; else if ( this.value > 9 ) this.value = 9;"> {i18n_workspace_count}
+								<input type="number" size="4" max="9" min="0" name="workspaceCount" id="workspaceCount" onkeydown="constrictWorkspaceCount()"> {i18n_workspace_count}
 							</p>
 							<p class="Layout">
 								<strong>{i18n_workspace_labels}</strong>
