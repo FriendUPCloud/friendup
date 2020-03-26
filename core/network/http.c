@@ -1479,7 +1479,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 				FQUAD toWrite = length;
 				char *dataptr = data;
 				
-				while( toWrite >= 0 )
+				while( toWrite > 0 )
 				{
 					int wrote = write( http->http_ContentFileHandle, dataptr, store );
 					dataptr += wrote;
@@ -2518,7 +2518,7 @@ HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, FQUAD size )
 		
 		int store = TUNABLE_LARGE_HTTP_REQUEST_SIZE;
 		
-		while( toWrite >= 0 )
+		while( toWrite > 0 )
 		{
 			int wrote = write( file->hf_FileHandle, dataptr, store );
 			dataptr += wrote;
