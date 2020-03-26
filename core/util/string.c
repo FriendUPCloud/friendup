@@ -767,7 +767,7 @@ char *FindInBinary(char *x, int m, char *y, int n)
 //
 //
 
-FQUAD FindInBinaryPOS(char *x, int m, char *y, FULONG n) 
+FQUAD FindInBinaryPOS(char *x, int m, char *y, FQUAD n) 
 {
 	FQUAD i, j;
 	int kmpNext[ m ];
@@ -798,7 +798,7 @@ FQUAD FindInBinaryPOS(char *x, int m, char *y, FULONG n)
 //
 //
 
-FQUAD FindInBinarySimple( char *x, int m, char *y, FULONG n )
+FQUAD FindInBinarySimple( char *x, int m, char *y, FQUAD n )
 {
 	FQUAD i;
 	
@@ -817,6 +817,9 @@ FQUAD FindInBinarySimple( char *x, int m, char *y, FULONG n )
 	return -1;
 }
 
+//
+//
+//
 
 void HashedString ( char **str )
 {

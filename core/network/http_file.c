@@ -55,9 +55,10 @@ HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, FQUAD size )
 	
 	file->hf_FileHandle = -1;
 	
+	DEBUG("[HttpFileNew] File will be created, size: %ld\n", size );
 	if( size > TUNABLE_LARGE_HTTP_REQUEST_SIZE )
 	{
-		strcpy( file->hf_FileNameOnDisk, "/tmp/Friendup/FriendHTTP_XXXXXX" );
+		strcpy( file->hf_FileNameOnDisk, "/tmp/Friendup/Friend_File_XXXXXX" );
 
 		//this is going to be a huge request, create a temporary file
 		//copy already received data to it and continue writing to the file
@@ -88,18 +89,20 @@ HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, FQUAD size )
 		
 		int store = TUNABLE_LARGE_HTTP_REQUEST_SIZE;
 		
+		DEBUG("[HttpFileNew] Store file\n");
 		while( toWrite > 0 )
 		{
 			int wrote = write( file->hf_FileHandle, dataptr, store );
 			dataptr += wrote;
 			toWrite -= wrote;
+			DEBUG("[HttpFileNew] Store: %d ToWrite: %ld\n", store, toWrite );
 			
 			if( toWrite < (FQUAD)store )
 			{
 				store = toWrite;
 			}
 		}
-	
+		DEBUG("[HttpFileNew] Store file END\n");
 	}
 	else
 	{
