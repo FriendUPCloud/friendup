@@ -496,7 +496,7 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 	else if( strcmp( urlpath[ 1 ], "write" ) == 0 )
 	{
 		FULONG pointer = 0;
-		FULONG size = 0;
+		FQUAD size = 0;
 		char *data = NULL;
 		int error = 0;
 		
@@ -513,7 +513,7 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 		if( el != NULL )
 		{
 			char *eptr;
-			size = (FULONG)strtoul( (char *)el->hme_Data, &eptr, 0 );
+			size = (FQUAD)strtoul( (char *)el->hme_Data, &eptr, 0 );
 		}
 		
 		el  = HashmapGet( request->http_ParsedPostContent, "data" );

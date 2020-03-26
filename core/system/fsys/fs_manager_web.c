@@ -1561,7 +1561,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					FHandler *actFS = (FHandler *)actDev->f_FSys;
 					char *mode = NULL;
 					char *fdata = NULL;
-					int dataSize = 0;
+					FQUAD dataSize = 0;
 					
 					response = HttpNewSimpleA( 
 						HTTP_200_OK, 
@@ -1648,11 +1648,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						
 								if( fp != NULL )
 								{
-									int size = 0;
+									FQUAD size = 0;
 								
 									dataSize = FileSystemActivityCheckAndUpdate( l, &(actDev->f_Activity), dataSize );
 								
-									size = actFS->FileWrite( fp, fdata, dataSize );
+									size = actFS->FileWrite( fp, fdata, (int) dataSize );
 									actDev->f_BytesStored += size;
 								
 									if( size > 0 )
@@ -1807,7 +1807,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 												{
 													DEBUG("[FSMWebRequest] file/copy - files opened, copy in progress\n");
 										
-													int dataread = 0;
+													FQUAD dataread = 0;
 													int readTr = 0;
 
 													while( ( dataread = actFS->FileRead( rfp, dataBuffer, 524288 ) ) > 0 )
@@ -2098,7 +2098,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									int store = TUNABLE_LARGE_HTTP_REQUEST_SIZE;
 									while( sizeLeft > 0 )
 									{
-										LOG( FLOG_DEBUG, "UPLOAD WRITE store %d left %ld\n", store,  sizeLeft );
+										//LOG( FLOG_DEBUG, "UPLOAD WRITE store %d left %ld\n", store,  sizeLeft );
 										bytes = actFS->FileWrite( fp, file->hf_Data, store );
 										actDev->f_BytesStored += bytes;
 										sizeLeft -= bytes;
@@ -2892,7 +2892,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 											File *fp = (File *)fsys->FileOpen( dstdevice, archpath, "wb" );
 											if( fp != NULL )
 											{
-												int bufferSize = 0;
+												FQUAD bufferSize = 0;
 												while( ( bufferSize = fread( buffer, 1, 32768, readfile ) ) > 0 )
 												{
 													int stored = 0;

@@ -40,12 +40,7 @@ HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, FQUAD size )
 		FERROR("Cannot upload empty file\n");
 		return NULL;
 	}
-	
-	if( size > (10 *1024 *1024) )
-	{
-		
-	}
-	
+
 	HttpFile *file = FCalloc( 1, sizeof( HttpFile ) );
 	if( file == NULL )
 	{
@@ -117,7 +112,7 @@ HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, FQUAD size )
 	strncpy( file->hf_FileName, filename, fnamesize );
 	file->hf_FileSize = size;
 	
-	INFO("New file created %s size %lu\n", file->hf_FileName, file->hf_FileSize );
+	INFO("New file created %s size %ld\n", file->hf_FileName, file->hf_FileSize );
 	
 	return file;
 }
