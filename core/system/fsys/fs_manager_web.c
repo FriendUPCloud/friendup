@@ -1968,9 +1968,12 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 				/// @endcond
 				else if( strcmp( urlpath[ 1 ], "upload" ) == 0 )
 				{
+					BufString *uploadedFilesBS = BufStringNew();
+					BufStringAddSize( uploadedFilesBS, "[", 1 );
+					
 					FHandler *actFS = (FHandler *)actDev->f_FSys;
 					response = HttpNewSimpleA(
-						HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
+						HTTP_200_OK, request, HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 						HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),
 						TAG_DONE, TAG_DONE 
 					);
@@ -2083,9 +2086,12 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							FBOOL have = FSManagerCheckAccess( l->sl_FSM, tmpPath, actDev->f_ID, loggedSession->us_User, "--W---" );
 							if( have == TRUE )
 							{
+								char tmpFileData[ 512 ];
+								FQUAD storedBytes = 0;
+								
 								LOG( FLOG_DEBUG, "UPLOAD ACCESS GRANTED\n");
 								actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
-								
+
 								File *fp = (File *)actFS->FileOpen( actDev, tmpPath, "wb" );
 								if( fp != NULL )
 								{
@@ -2102,6 +2108,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 										bytes = actFS->FileWrite( fp, file->hf_Data, store );
 										actDev->f_BytesStored += bytes;
 										sizeLeft -= bytes;
+										storedBytes += bytes;
 										
 										if( sizeLeft < (FQUAD)store )
 										{
@@ -2112,6 +2119,17 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									LOG( FLOG_DEBUG, "UPLOAD FINISHED\n");
 									
 									actFS->FileClose( actDev, fp );
+									
+									int addSize = 0;
+									if( uploadedFiles == 0 )
+									{
+										addSize = snprintf( tmpFileData, sizeof( tmpFileData ), "{\"name\":\"%s\",\"bytesexpected\":%ld,\"bytesstored\":%ld}", file->hf_FileName, file->hf_FileSize, storedBytes );
+									}
+									else
+									{
+										addSize = snprintf( tmpFileData, sizeof( tmpFileData ), ",{\"name\":\"%s\",\"bytesexpected\":%ld,\"bytesstored\":%ld}", file->hf_FileName, file->hf_FileSize, storedBytes );
+									}
+									BufStringAddSize( uploadedFilesBS, tmpFileData, addSize );
 								
 									uploadedFiles++;
 								}
@@ -2134,12 +2152,26 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						FERROR("Cannot allocate memory for path buffer\n");
 					}
 					
+					// we want to deliver filename, expected size and size
+					BufStringAddSize( uploadedFilesBS, "]", 1 );
+					
 					if( uploadedFiles > 0 )
 					{
-						char tmp[ 256 ];
-						sprintf( tmp, "ok<!--separate-->{ \"Uploaded files\": \"%d\"}", uploadedFiles );
-						HttpAddTextContent( response, tmp );
-						*result = 200;
+						char *ttmp = FMalloc( 256 + uploadedFilesBS->bs_Size );
+						if( ttmp != NULL )
+						{
+							int spsize = sprintf( ttmp, "ok<!--separate-->{ \"Uploaded files\": \"%d\",\"files\":%s}", uploadedFiles, uploadedFilesBS->bs_Buffer );
+							HttpSetContent( response, ttmp, spsize );
+							*result = 200;
+							// there is no need to release ttmp, it will be released with HttpFree
+						}
+						else
+						{
+							char tmp[ 256 ];
+							sprintf( tmp, "ok<!--separate-->{ \"Uploaded files\": \"%d\"}", uploadedFiles );
+							HttpAddTextContent( response, tmp );
+							*result = 200;
+						}
 					}
 					else
 					{
@@ -2161,6 +2193,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					}
 					
 					DEBUG("[FSMWebRequest] Upload done\n");
+					
+					BufStringDelete( uploadedFilesBS );
 				}		// file/upload
 				
 				/// @cond WEB_CALL_DOCUMENTATION
