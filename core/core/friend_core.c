@@ -855,7 +855,7 @@ void FriendCoreProcess( void *fcv )
 				res = SocketRead( th->sock, locBuffer, bufferSize, expected );
 				if( res > 0 )
 				{
-					DEBUG("----------------------> tmpFileHandle: %d read: %ld\n", tmpFileHandle, res );
+					//DEBUG("----------------------> tmpFileHandle: %d read: %ld\n", tmpFileHandle, res );
 					if( tmpFileHandle >= 0 )
 					{
 						int wrote = write( tmpFileHandle, locBuffer, res );
