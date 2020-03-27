@@ -622,7 +622,7 @@ void FillStat( BufString *bs, INRAMFile *nf, File *d, const char *path )
 	}
 	else
 	{
-		sprintf( tmp, "\"Filesize\": %d,",(int) nf->nf_Data->bs_Size );
+		sprintf( tmp, "\"Filesize\": %ld,", nf->nf_Data->bs_Size );
 		BufStringAdd( bs, tmp );
 		BufStringAdd( bs, "\"MetaType\":\"File\",\"Type\":\"File\" }" );
 	}
