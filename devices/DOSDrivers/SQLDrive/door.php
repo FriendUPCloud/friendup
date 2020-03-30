@@ -529,9 +529,12 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					
 						$f->DiskFilename = $uname . '/' . $fn;
 						$f->Filesize = filesize( $wname. $fn );
+						$Logger->log( '[SQLDRIVE] WRITING done, size: ' . $f->Filesize );
 						if( !$f->DateCreated ) $f->DateCreated = date( 'Y-m-d H:i:s' );
 						$f->DateModified = date( 'Y-m-d H:i:s' );
+						$Logger->log( '[SQLDRIVE] WRITING store in DB' );
 						$f->Save();
+						$Logger->log( '[SQLDRIVE] WRITING stored in db' );
 						return 'ok<!--separate-->' . $len . '<!--separate-->' . $f->ID;
 					}
 				}
