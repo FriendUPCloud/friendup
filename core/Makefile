@@ -22,6 +22,8 @@ SERVICES		=	apacheserv mysqlserv nodejsserv phpserv
 SERVICEFLAGS		=	--std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -Ofast -funroll-loops -I. -Wno-unused  -shared -fPIC
 MATHLIB			=
 
+GLOBAL_CFLAGS		+=	-DMOD_TIMEOUT=$(MOD_TIMEOUT) -DFILESYSTEM_MOD_TIMEOUT=$(FILESYSTEM_MOD_TIMEOUT) -DMOD_NUMBER_TRIES=$(MOD_NUMBER_TRIES) -DMUTEX_TIMEOUT_NUMBER_TRIES=$(MUTEX_TIMEOUT_NUMBER_TRIES) 
+
 # we have to include Sanitizer lib before others
 ifeq ($(USE_SANITIZER),1)
 LFLAGS					+=	-lasan
