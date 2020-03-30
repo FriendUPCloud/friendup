@@ -235,7 +235,7 @@ ListString *PHPCall( const char *command )
 		}
 		else if(  ret < 0 )
 		{
-			//DEBUG("Error\n");
+			DEBUG("FSYSPHP: SELECT Error\n");
 			break;
 		}
 		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
