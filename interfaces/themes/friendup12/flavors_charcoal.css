@@ -381,7 +381,7 @@ html body.Charcoal .Screen > .TitleBar > .Left *
 
 body.Charcoal #DoorsScreen .Left > .VirtualWorkspaces > div.Active 
 {
-	border: 1px solid #505050;
+	border: 0;
 }
 
 [mobile].Charcoal .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name,

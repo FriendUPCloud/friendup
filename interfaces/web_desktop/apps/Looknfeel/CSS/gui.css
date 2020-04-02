@@ -16,6 +16,15 @@
 	bottom: 50px;
 }
 
+#Labels
+{
+	visibility: hidden;
+	height: 0px;
+	overflow: hidden;
+	position: absolute;
+	pointer-events: none;
+}
+
 @media (max-width: 400px)
 {
 	.ThemeList
@@ -27,3 +36,45 @@
 		display: none;
 	}
 }
+
+#LabelView:after
+{
+	content: " ";
+	display: block;
+	clear: both;
+	padding: 0 0 8px 0;
+}
+
+.WorkspaceIcons
+{
+	position: relative;
+	width: 24px;
+	height: 24px;
+	line-height: 24px;
+	overflow: hidden;
+	float: left;
+	text-align: center;
+	margin: 0 5px 0 0;
+}
+
+.WorkspaceIcons > div
+{
+	opacity: 0;
+	transition: opacity 0.25s;
+}
+
+.WorkspaceIcons.Active .Preview
+{
+	display: none;
+}
+
+.WorkspaceIcons.Active
+{
+	height: auto;
+}
+
+.WorkspaceIcons.Active > div
+{
+	opacity: 1;
+}
+

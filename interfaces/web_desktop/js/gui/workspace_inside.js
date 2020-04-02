@@ -377,8 +377,50 @@ var WorkspaceInside = {
 				{
 					var w = document.createElement( 'div' );
 					w.className = 'Workspace';
+					w.setAttribute( 'position', 'top_center' );
+					( function( num ){
+						CreateHelpBubble( w, false, false, { getText: function()
+						{
+							// Create a text representing the content in the virtual workspace
+							var apps = {};
+							var str = '';
+							for( var a in movableWindows )
+							{
+								if( movableWindows[ a ].windowObject.workspace == num )
+								{
+									if( movableWindows[ a ].windowObject.applicationName )
+									{
+										if( !apps[ movableWindows[ a ].windowObject.applicationName ] || !apps[ movableWindows[ a ].windowObject.applicationName ].count )
+										{
+											apps[ movableWindows[ a ].windowObject.applicationName ] = {
+												count: 0,
+												string: movableWindows[ a ].titleString
+											};
+										}
+										apps[ movableWindows[ a ].windowObject.applicationName ].count++;
+									}
+									else
+									{
+										str += movableWindows[ a ].titleString + "\n";
+									}
+								}
+							}
+							var o = '';
+							for( var a in apps )
+								o += ( apps[ a ].string + ( apps[ a ].count > 1 ? ( ' (' + apps[ a ].count + ')' ) : '' ) ) + "\n";
+							return o + str;
+						} } );
+					} )( a );
 					if( a == globalConfig.workspaceCurrent ) w.className += ' Active';
-					w.innerHTML = '<span>' + ( a + 1 ) + '</span>';
+					if( globalConfig.workspace_labels && globalConfig.workspace_labels[ a ] && typeof( globalConfig.workspace_labels ) == 'object' )
+					{
+						w.innerHTML = '<span class="' + globalConfig.workspace_labels[ a ] + '"></span>';
+						w.className += ' WithIcon';
+					}
+					else
+					{
+						w.innerHTML = '<span>' + ( a + 1 ) + '</span>';
+					}
 					w.ind = a;
 					w.onmousedown = function( e )
 					{
@@ -1718,6 +1760,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						//console.log = function(){};
 					}
 					
+					if( dat.workspace_labels )
+					{
+						globalConfig.workspace_labels = dat.workspace_labels;
+					}
+					else
+					{
+						globalConfig.workspace_labels = [];
+					}
+					
 					// Make sure iOS has the correct information
 					if( window.friendApp && window.webkit && window.friendApp.setBackgroundColor )
 					{
@@ -1854,7 +1905,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			'menumode', 'startupsequence', 'navigationmode', 'windowlist', 
 			'focusmode', 'hiddensystem', 'workspacecount', 
 			'scrolldesktopicons', 'wizardrun', 'themedata_' + Workspace.theme,
-			'workspacemode'
+			'workspacemode', 'workspace_labels'
 		] } );
 	},
 	// Called on onunload

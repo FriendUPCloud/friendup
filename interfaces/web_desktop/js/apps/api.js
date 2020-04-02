@@ -8853,12 +8853,15 @@ Friend.GUI.checkInputFocus = function()
 		}
 	}
 	// Send the message
-	Application.sendMessage( {
-		type: 'view',
-		method: 'windowstate',
-		state: 'input-focus',
-		value: response
-	} );
+	if( window.Application && window.Application.sendMessage )
+	{
+		Application.sendMessage( {
+			type: 'view',
+			method: 'windowstate',
+			state: 'input-focus',
+			value: response
+		} );
+	}
 }
 
 // Responsive layout

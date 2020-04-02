@@ -1245,7 +1245,7 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 					var o = {
 						command: 'quit',
 						filePath: '/webclient/jsx/',
-						domain:   sdomain
+						domain:   typeof( sdomain ) != 'undefined' ? sdomain : ''
 					};
 					this.contentWindow.postMessage( JSON.stringify( o ), '*' );
 				}
@@ -1361,7 +1361,14 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 			}
 
 			// Add application iframe to body
-			AttachAppSandbox( ifr );
+			var iconPath = path;
+			if( iconPath.substr( -4, 4 ).toLowerCase() == '.jsx' )
+			{
+				iconPath = iconPath.split( '/' );
+				iconPath.pop();
+				iconPath = iconPath.join( '/' );
+			}
+			AttachAppSandbox( ifr, iconPath, 'friendpath' );
 
 			// Add application
 			Workspace.applications.push( ifr );
@@ -1388,8 +1395,10 @@ function ReplaceString( template, search, replace )
 };
 
 // Attach a sandbox
-function AttachAppSandbox( ifr, path )
+function AttachAppSandbox( ifr, path, pathType )
 {
+	if( !pathType ) pathType = 'default';
+	
 	var d = document.createElement( 'div' );
 	d.className = 'AppSandbox';
 	d.appendChild( ifr );
@@ -1405,7 +1414,9 @@ function AttachAppSandbox( ifr, path )
 	if( !path ) path = ifr.src.split( /\/[^/.]*\.html/ )[0];
 
 	var x = document.createElement( 'div' );
-	var icon = path.indexOf( '?' ) < 0 ? ( path + '/icon.png' ) : '/webclient/gfx/icons/64x64/mimetypes/application-x-javascript.png';
+	var icon = oicon = '/webclient/gfx/icons/64x64/mimetypes/application-x-javascript.png';
+	if( path.indexOf( '?' ) < 0 || path.indexOf( 'command=resource' ) > 0 )
+		icon = ( pathType == 'friendpath' ? oicon : ( path + '/icon.png' ) );
 	ifr.icon = icon;
 	x.style.backgroundImage = 'url(' + ifr.icon + ')';
 	x.className = 'Close';

@@ -28,7 +28,8 @@
 #include <stdio.h> 
 #include <unistd.h>
 #include <system/services/service_manager.h>
-#include <system/services/service_manager_web.h>
+#include <system/services/services_manager_web.h>
+#include <system/service/service_manager_web.h>
 //#include <interface/properties_interface.h>
 #include <ctype.h>
 #include <magic.h>
@@ -1406,11 +1407,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		
 		if( l->sl_UM!= NULL )
 		{
-			if( UMUserIsAdmin( l->sl_UM, *request, loggedSession->us_User ) == TRUE )
-			{
-				response =  ServiceManagerWebRequest( l, &(urlpath[1]), *request );
-				called = TRUE;
-			}
+			response =  ServicesManagerWebRequest( l, &(urlpath[1]), *request, loggedSession );
+			called = TRUE;
 		}
 		
 		if( called == FALSE )
@@ -1425,6 +1423,44 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			{
 				HttpFree( response );
 				FERROR("RESPONSE services\n");
+			}
+			response = HttpNewSimple( HTTP_200_OK,  tags );
+		
+			char buffer[ 256 ];
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, buffer );
+
+			goto error;
+		}
+	}
+	
+	//
+	// atm we want to handle all calls to services via system.library
+	//
+	
+	else if( strcmp( urlpath[ 0 ], "service" ) == 0 )
+	{
+		DEBUG("Service called\n");
+		FBOOL called = FALSE;
+		
+		if( l->sl_UM!= NULL )
+		{
+			response =  SMWebRequest( l, &(urlpath[1]), *request, loggedSession );
+			called = TRUE;
+		}
+		
+		if( called == FALSE )
+		{
+			struct TagItem tags[] = {
+				{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( "text/html", 9 ) },
+				{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ) },
+				{ TAG_DONE, TAG_DONE}
+			};
+		
+			if( response != NULL )
+			{
+				HttpFree( response );
+				FERROR("RESPONSE service\n");
 			}
 			response = HttpNewSimple( HTTP_200_OK,  tags );
 		
