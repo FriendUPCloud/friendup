@@ -190,7 +190,7 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 	* @return { result: 0 } when success, otherwise error with code
 	*/
 	/// @endcond
-	
+	/* MOVED TO SESSION MANAGER
 	else if( strcmp( urlpath[ 1 ], "msgtoextservice" ) == 0 )
 	{
 		struct TagItem tags[] = {
@@ -281,6 +281,8 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		}
 		*result = 200;
 	}
+	*/
+	
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	*

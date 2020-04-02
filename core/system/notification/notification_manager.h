@@ -141,7 +141,7 @@ int NotificationManagerSendInformationToConnections( NotificationManager *nm, ch
 
 int NotificationManagerSendEventToConnections( NotificationManager *nm, Http *req, char *sername, const char *reqid, const char *sertype, const char *func, const char *action, char *msg );
 
-char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http *req, UserSession *ses, char *sername, const char *type, const char *group, const char *action, const char *params );
+char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http *req, UserSession *us, char *sername, int type, const char *path, const char *params );
 
 int NotificationManagerAddIncomingRequestES( NotificationManager *nm, char *reqid, char *message );
 

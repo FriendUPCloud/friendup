@@ -122,8 +122,8 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 	else if( strcmp( urlpath[ 0 ], "list" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -193,8 +193,8 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 	else if( strcmp( urlpath[ 0 ], "userlist" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 	
@@ -333,8 +333,8 @@ Application.checkDocumentSession = function( sasID = null )
 		 */ 
 		
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{ TAG_DONE, TAG_DONE}
 		};
 		
@@ -386,14 +386,59 @@ Application.checkDocumentSession = function( sasID = null )
 			DEBUG("SAS/register: sasid %s\n", sasid );
 			if( sasid != NULL )
 			{
-				/*
 				char *end;
-				FUQUAD asval = strtoull( sasid, &end, 0 );
+				FUQUAD locsasid = strtoull( sasid, &end, 0 );
 			
-				// Try to fetch assid session from session list!
-				AppSession *as = AppSessionManagerGetSession( l->sl_AppSessionManager, asval );
-				DEBUG("SAS/register as: %p\n", as );
-		
+				// do not allow to create SAS with ID = 0
+				if( locsasid == 0 )
+				{
+					char dictmsgbuf[ 256 ];
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_CREATE_SAS], DICT_CANNOT_CREATE_SAS );
+					HttpAddTextContent( response, dictmsgbuf );
+				}
+				else
+				{
+					// Try to fetch assid session from session list!
+					AppSession *as = AppSessionManagerGetSession( l->sl_AppSessionManager, locsasid );
+					DEBUG("SAS/register as: %p\n", as );
+					if( as != NULL )
+					{
+						int size = sprintf( buffer, "{ \"SASID\": \"%lu\",\"type\":%d }", as->as_SASID, as->as_Type );
+						HttpAddTextContent( response, buffer );
+					}
+					else	// as with provided sasid was not found
+					{
+						// create new SAS with provided SASID
+						AppSession *as = AppSessionNew( l, authid, 0, loggedSession );
+						if( as != NULL )
+						{
+							as->as_Type = type;
+							int err = AppSessionManagerAddSession( l->sl_AppSessionManager, as );
+							if( err == 0 )
+							{
+								as->as_SASID = locsasid;	// set SASID
+							
+								int size = sprintf( buffer, "{ \"SASID\": \"%lu\",\"type\":%d }", as->as_SASID, as->as_Type );
+								HttpAddTextContent( response, buffer );
+							}
+							else
+							{
+								char dictmsgbuf[ 256 ];
+								char dictmsgbuf1[ 196 ];
+								snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "SAS register", err );
+								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_FUNCTION_RETURNED );
+								HttpAddTextContent( response, dictmsgbuf );
+							}
+						}
+						else
+						{
+							char dictmsgbuf[ 256 ];
+							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_CREATE_SAS], DICT_CANNOT_CREATE_SAS );
+							HttpAddTextContent( response, dictmsgbuf );
+						}
+					}
+				}
+		/*
 				// We found session!
 				if( as != NULL )
 				{
@@ -481,8 +526,8 @@ Application.checkDocumentSession = function( sasID = null )
 		DEBUG("[ApplicationWebRequest] Unregister session\n");
 		
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
-			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{ TAG_DONE, TAG_DONE}
 		};
 		
@@ -627,8 +672,8 @@ Application.checkDocumentSession = function( sasID = null )
 		char *assid = NULL;
 		
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{ TAG_DONE, TAG_DONE}
 		};
 		
@@ -810,8 +855,8 @@ Application.checkDocumentSession = function( sasID = null )
 		char *assid = NULL;
 		
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{ TAG_DONE, TAG_DONE}
 		};
 		
@@ -921,8 +966,8 @@ Application.checkDocumentSession = function( sasID = null )
 		char *sessid = NULL;
 		
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{ TAG_DONE, TAG_DONE}
 		};
 		
@@ -1101,8 +1146,8 @@ Application.checkDocumentSession = function( sasID = null )
 		char *userlist = NULL;
 		
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{ TAG_DONE, TAG_DONE}
 		};
 		
@@ -1287,8 +1332,8 @@ Application.checkDocumentSession = function( sasID = null )
 		char *msg = NULL;
 		
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		FERROR("app/sendowner called\n");
@@ -1388,8 +1433,8 @@ Application.checkDocumentSession = function( sasID = null )
 	else if( strcmp( urlpath[ 0 ], "takeover" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -1523,8 +1568,8 @@ Application.checkDocumentSession = function( sasID = null )
 	else if( strcmp( urlpath[ 0 ], "switchsession" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -1675,7 +1720,7 @@ Application.checkDocumentSession = function( sasID = null )
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -1832,7 +1877,7 @@ Application.checkDocumentSession = function( sasID = null )
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		

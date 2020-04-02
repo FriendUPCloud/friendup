@@ -93,8 +93,15 @@
 								<strong>{i18n_virtual_workspaces}:</strong>
 							</p>
 							<p>
-								<input type="number" size="4" name="workspaceCount" id="workspaceCount"> {i18n_workspace_count}
+								<input type="number" size="4" max="9" min="0" name="workspaceCount" id="workspaceCount" onkeydown="constrictWorkspaceCount()"> {i18n_workspace_count}
 							</p>
+							<p class="Layout">
+								<strong>{i18n_workspace_labels}</strong>
+							</p>
+							<textarea id="Labels">
+								{workspace_labels}
+							</textarea>
+							<div id="LabelView"></div>
 							<p class="Layout">
 								<strong>{i18n_scrollable_desktop_icons}:</strong>
 							</p>
