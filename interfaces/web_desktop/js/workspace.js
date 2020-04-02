@@ -917,7 +917,15 @@ Workspace = {
 					}
 				}
 
-				Workspace.userLevel = json.level;
+				try
+				{
+					Workspace.userLevel = json.level;
+				}
+				catch( e )
+				{
+					Workspace.userLevel = false;
+				}
+				
 				if( !Workspace.loginUsername && json.username ) Workspace.loginUsername = json.username;
 
 				var hasSessionID = ( typeof( json.sessionid ) != 'undefined' && json.sessionid && json.sessionid.length > 1 );
@@ -1108,7 +1116,14 @@ Workspace = {
 					}
 				}
 
-				Workspace.userLevel = json.level;
+				try
+				{
+					Workspace.userLevel = json.level;
+				}
+				catch( e )
+				{
+					Workspace.userLevel = false;
+				}
 
 				var hasSessionID = ( typeof( json.sessionid ) != 'undefined' && json.sessionid && json.sessionid.length > 1 );
 				var hasLoginID = ( typeof( json.loginid ) != 'undefined' && json.loginid && json.loginid.length > 1 );
