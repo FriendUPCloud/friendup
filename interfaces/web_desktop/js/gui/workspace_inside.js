@@ -8376,6 +8376,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if( Workspace.screen )
 				Workspace.screen.displayOfflineMessage();
 			Workspace.workspaceIsDisconnected = true;
+			Workspace.nudgeWorkspacesWidget();
 		}
 		else
 		{
@@ -8383,6 +8384,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if( Workspace.screen )
 				Workspace.screen.hideOfflineMessage();
 			Workspace.workspaceIsDisconnected = false;
+			Workspace.nudgeWorkspacesWidget();
 		}
 	},
 	// Upgrade settings (for new versions)
