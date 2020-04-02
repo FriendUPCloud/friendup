@@ -811,22 +811,31 @@ Workspace = {
 			}
 			else
 			{
-				try
-				{
-					var js = JSON.parse( d );
-					// Session authentication failed
-					if( parseInt( js.code ) == 3 || parseInt( js.code ) == 11 )
+				if( d )
+				{					
+					try
 					{
-						// console.log( 'Test2: Flush session' );
-						Workspace.flushSession();
-						Workspace.reloginInProgress = false;
-						return executeCleanRelogin();
+						var js = JSON.parse( d );
+						// Session authentication failed
+						if( parseInt( js.code ) == 3 || parseInt( js.code ) == 11 )
+						{
+							// console.log( 'Test2: Flush session' );
+							Workspace.flushSession();
+							Workspace.reloginInProgress = false;
+							return executeCleanRelogin();
+						}
+					}
+					catch( n )
+					{
+						killConn();
+						console.log( 'Error running relogin.', n, d );
 					}
 				}
-				catch( n )
+				else
 				{
-					killConn();
-					console.log( 'Error running relogin.', n );
+					Workspace.flushSession();
+					Workspace.reloginInProgress = false;
+					return executeCleanRelogin();
 				}
 			}
 			if( Workspace.serverIsThere )
