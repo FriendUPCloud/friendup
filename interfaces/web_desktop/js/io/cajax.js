@@ -700,6 +700,8 @@ cAjax.prototype.send = function( data, callback )
 						self.onload( false, false );
 						self.destroy();
 					}
+					if( window.Workspace && Workspace.checkServerConnectionResponse )
+						Workspace.checkServerConnectionResponse();
 				}
 				// // console.log( 'Test2: Here u: ' + out.join( '&' ) );
 			}

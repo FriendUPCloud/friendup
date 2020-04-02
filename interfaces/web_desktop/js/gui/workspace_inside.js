@@ -561,6 +561,9 @@ var WorkspaceInside = {
 		// Force connecting ws state (we will close it!)
 		Workspace.websocketState = 'connecting';
 		Workspace.websocketsOffline = false;
+		
+		// Just remove this by force
+		document.body.classList.remove( 'Busy' );
 
 		var conf = {
 			onstate: onState,
@@ -631,6 +634,17 @@ var WorkspaceInside = {
 				{
 					console.log( '[onState] We got an error.' );
 					Workspace.websocketState = 'error';
+					var serverCheck = new Module( 'system' );
+					serverCheck.onExecuted = function( q, s )
+					{
+						if( q == 'fail' && !s )
+						{
+							Workspace.serverIsThere = false;
+							Workspace.workspaceIsDisconnected = true;
+							Workspace.checkServerConnectionResponse();
+						}
+					}
+					serverCheck.execute( 'getsetting', { setting: 'infowindow' } );
 				}
 				// After such an error, always try reconnect
 				if( Workspace.httpCheckConnectionInterval )
