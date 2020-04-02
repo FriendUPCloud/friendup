@@ -3199,11 +3199,16 @@ body:not([mobile]).ShowTasks #TaskSwitcher .Current .Close
 .Screen > .TitleBar > .Left .Extra .Offline
 {
 	color: #aa0000;
-	background-image: url(/webclient/gfx/system/offline_16px.png);
-	background-repeat: no-repeat;
-	background-position: center left;
 	padding-left: 20px;
 	display: inline-block;
+}
+
+.Screen > .TitleBar > .Left .Extra .Offline:before
+{
+	font-family: fontawesome;
+	content: "\f328";
+	display: inline;
+	margin-right: 5px;
 }
 
 .Screen > .TitleBar > .Right
