@@ -694,7 +694,7 @@ cAjax.prototype.send = function( data, callback )
 				{
 					try
 					{
-						res = this.proxy.send( out.join ( '&' ) );
+						res = self.proxy.send( out.join ( '&' ) );
 						resolve( 'success' );
 					}
 					catch( err )
