@@ -3206,7 +3206,7 @@ body:not([mobile]).ShowTasks #TaskSwitcher .Current .Close
 .Screen > .TitleBar > .Left .Extra .Offline:before
 {
 	font-family: fontawesome;
-	content: "\f328";
+	content: "\f186";
 	display: inline;
 	margin-right: 5px;
 }
