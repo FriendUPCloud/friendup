@@ -637,7 +637,7 @@ var WorkspaceInside = {
 					var serverCheck = new Module( 'system' );
 					serverCheck.onExecuted = function( q, s )
 					{
-						if( q == 'fail' && !s )
+						if( ( q == 'fail' && !s ) || ( !q && !s ) )
 						{
 							Workspace.serverIsThere = false;
 							Workspace.workspaceIsDisconnected = true;
