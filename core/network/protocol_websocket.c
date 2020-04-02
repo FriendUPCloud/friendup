@@ -28,14 +28,14 @@
 
 extern SystemBase *SLIB;
 
-#define USE_WORKERS 1
+//#define USE_WORKERS 1
+//#define USE_PTHREAD 1
 //#define USE_WORKERS_PING
 #define USE_PTHREAD_PING 1
 #define INPUT_QUEUE
 
 // enabled for development/IDE
 //#define ENABLE_WEBSOCKETS_THREADS 1
-//#define USE_PTHREAD 1
 
 //pthread_mutex_t WSThreadMutex;
 

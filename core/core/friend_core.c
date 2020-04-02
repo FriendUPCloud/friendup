@@ -64,8 +64,8 @@
 //#undef DEBUG1
 //#define DEBUG1( ...)
 
-//#define USE_PTHREAD
-#define USE_WORKERS
+#define USE_PTHREAD
+//#define USE_WORKERS
 //#define USE_PTHREAD_ACCEPT
 
 extern void *FCM;			// FriendCoreManager
