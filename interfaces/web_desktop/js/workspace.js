@@ -329,7 +329,7 @@ Workspace = {
 		// Recall wallpaper from settings
 		this.refreshUserSettings( function(){ 
 			// Refresh desktop for the first time
-			Workspace.refreshDesktop(); 
+			Workspace.refreshDesktop( false, true );
 		} );
 
 		// Create desktop
