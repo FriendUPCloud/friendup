@@ -3199,7 +3199,6 @@ body:not([mobile]).ShowTasks #TaskSwitcher .Current .Close
 .Screen > .TitleBar > .Left .Extra .Offline
 {
 	color: #aa0000;
-	padding-left: 20px;
 	display: inline-block;
 }
 
