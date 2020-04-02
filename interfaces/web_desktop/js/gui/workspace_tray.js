@@ -75,14 +75,14 @@ function PollTray()
 	
 	PollTrayPosition();
 	
-	// Checks for tasks
+	// Checks for tasks (running programs)
 	if( tray.tasks )
 	{
 		tray.tasks.poll();
 	}
 	else
 	{
-		// Add task applet
+		// Add task applet (running programs)
 		tray.tasks = document.createElement( 'div' );
 		tray.tasks.className = 'Tasks TrayElement IconSmall';
 		tray.tasks.poll = function()
@@ -321,9 +321,11 @@ function PollTray()
 					}
 					if( !showingStuff )
 					{
+						event.seen = true;
+					
 						var d = document.createElement( 'div' );
 						d.className = 'BubbleInfo';
-						d.innerHTML = '<div><p class="Layout"><strong>' + nots[a].title + '</strong></p><p class="Layout">' + nots[a].text + '</p></div>';
+						d.innerHTML = '<div><p class="Layout"><strong>' + event.title + '</strong></p><p class="Layout">' + event.text + '</p></div>';
 						tray.notifications.appendChild( d );
 						d.onmousedown = function( e )
 						{
