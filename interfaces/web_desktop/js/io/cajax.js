@@ -695,6 +695,7 @@ cAjax.prototype.send = function( data, callback )
 					try
 					{
 						res = this.proxy.send( out.join ( '&' ) );
+						resolve( 'success' );
 					}
 					catch( err )
 					{
@@ -709,11 +710,15 @@ cAjax.prototype.send = function( data, callback )
 					}
 				} ).catch( function( err )
 				{
-					console.log( 'Caught an error.' );
+					console.log( 'Caught an error.', err );
 					if( err == 'error' )
 					{
 						if( callback )
 							callback( false, false );
+					}
+					else if( err == 'success' );
+					{
+						successfulSend();
 					}
 				} );
 				// // console.log( 'Test2: Here u: ' + out.join( '&' ) );
