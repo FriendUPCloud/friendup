@@ -916,10 +916,15 @@ Workspace = {
 						json = serveranswer;
 					}
 				}
+				
+				var hasSessionID = null;
+				var hasLoginID = null;
 
 				try
 				{
 					Workspace.userLevel = json.level;
+					hasSessionID = ( typeof( json.sessionid ) != 'undefined' && json.sessionid && json.sessionid.length > 1 );
+					hasLoginID = ( typeof( json.loginid ) != 'undefined' && json.loginid && json.loginid.length > 1 );
 				}
 				catch( e )
 				{
@@ -928,10 +933,9 @@ Workspace = {
 				
 				if( !Workspace.loginUsername && json.username ) Workspace.loginUsername = json.username;
 
-				var hasSessionID = ( typeof( json.sessionid ) != 'undefined' && json.sessionid && json.sessionid.length > 1 );
-				var hasLoginID = ( typeof( json.loginid ) != 'undefined' && json.loginid && json.loginid.length > 1 );
 				
-				if( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 )
+				
+				if( json && ( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 ) )
 				{
 					// Successful login, clear blockers and execute ajax queue
 					Workspace.reloginInProgress = false;
