@@ -535,7 +535,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						$f->DateModified = date( 'Y-m-d H:i:s' );
 						$Logger->log( '[SQLDRIVE] WRITING store in DB' );
 						$f->Save();
-						$Logger->log( '[SQLDRIVE] WRITING stored in db' );
+						$Logger->log( '[SQLDRIVE] WRITING stored in db - recordID is ' . $f->ID . ' (Err: ' . $f->_lastError . ')' );
 						return 'ok<!--separate-->' . $len . '<!--separate-->' . $f->ID;
 					}
 				}
