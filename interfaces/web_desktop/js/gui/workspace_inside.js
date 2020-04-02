@@ -8767,6 +8767,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		if( newState == 'active' )
 		{
+			Workspace.nudgeWorkspacesWidget();
+			
 			document.body.classList.add( 'ViewStateActive' );
 			// TODO: Remove the uncommented thing, it isn't working
 			// TODO: Check with pawel..
