@@ -637,6 +637,7 @@ var WorkspaceInside = {
 					var serverCheck = new Module( 'system' );
 					serverCheck.onExecuted = function( q, s )
 					{
+						console.log( 'Servercheck result: ', q, d );
 						if( ( q == 'fail' && !s ) || ( !q && !s ) )
 						{
 							Workspace.serverIsThere = false;
