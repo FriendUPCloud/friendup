@@ -695,8 +695,16 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			}
 			response = HttpNewSimple( HTTP_403_FORBIDDEN, tags );
 			
-			char buffer[ 256 ];
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_SESSION_NOT_FOUND] , DICT_USER_SESSION_NOT_FOUND );
+			char buffer[ 512 ];
+			char *lsessidstring = NULL;
+			HashmapElement *lsesid = GetHEReq( *request, "sessionid" );
+			if( lsesid != NULL && lsesid->hme_Data != NULL )
+			{
+				lsessidstring = (char *)lsesid->hme_Data;
+				Log( FLOG_ERROR, "THIS SESSION ID IS BLOCKED: %s !", lsessidstring );
+			}
+			
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\",\"sessionid\":\"%s\"}", l->sl_Dictionary->d_Msg[DICT_USER_SESSION_NOT_FOUND] , DICT_USER_SESSION_NOT_FOUND, lsessidstring );
 			HttpAddTextContent( response, buffer );
 			
 			return response;
