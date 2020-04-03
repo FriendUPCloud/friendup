@@ -703,6 +703,19 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			{
 				lsessidstring = (char *)lsesid->hme_Data;
 				Log( FLOG_ERROR, "THIS SESSION ID IS BLOCKED: %s !", lsessidstring );
+				unsigned int i=0;
+				
+				for( i = 0; i < (*request)->parsedPostContent->hm_TableSize; i++ )
+				{
+					if( (*request)->parsedPostContent->hm_Data[i].hme_InUse == TRUE )
+					{
+						HashmapElement *lochme = &(*request)->parsedPostContent->hm_Data[i];
+						if( lochme->hme_Data != NULL )
+						{
+							Log( FLOG_ERROR, "POST Params: %s\n", lochme->hme_Data );
+						}
+					}
+				}
 			}
 			
 			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\",\"sessionid\":\"%s\"}", l->sl_Dictionary->d_Msg[DICT_USER_SESSION_NOT_FOUND] , DICT_USER_SESSION_NOT_FOUND, lsessidstring );
