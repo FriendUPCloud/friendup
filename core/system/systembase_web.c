@@ -57,6 +57,7 @@
 #include <system/mobile/mobile_web.h>
 #include <system/usergroup/user_group_manager_web.h>
 #include <system/notification/notification_manager_web.h>
+#include <system/service/service_manager_web.h>
 #include <strings.h>
 
 #define LIB_NAME "system.library"
@@ -1453,7 +1454,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		
 		if( l->sl_UM!= NULL )
 		{
-			response =  SMWebRequest( l, &(urlpath[1]), *request, loggedSession );
+			response = SMWebRequest( l, &(urlpath[1]), *request, loggedSession );
 			called = TRUE;
 		}
 		
