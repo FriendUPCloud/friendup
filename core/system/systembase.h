@@ -203,8 +203,9 @@ enum {
 
 typedef struct SQLConPool
 {
-	int inUse;
-	SQLLibrary *sqllib;
+	int				sql_ID;			// ID
+//	int				sqlcp_InUse;	// is in use
+	SQLLibrary		*sqll_Sqllib;	// pointer to library
 }SQLConPool;
 
 //

@@ -458,11 +458,12 @@ SystemBase *SystemInit( void )
 
 			for( ; i < (unsigned int)l->sqlpoolConnections; i++ )
 			{
-				l->sqlpool[i ].sqllib = (struct SQLLibrary *)LibraryOpen( l, l->sl_DefaultDBLib, 0 );
-				if( l->sqlpool[i ].sqllib != NULL )
+				l->sqlpool[ i ].sqll_Sqllib = (struct SQLLibrary *)LibraryOpen( l, l->sl_DefaultDBLib, 0 );
+				if( l->sqlpool[ i ].sqll_Sqllib != NULL )
 				{
-					error = l->sqlpool[i ].sqllib->SetOption( l->sqlpool[i ].sqllib, options );
-					error = l->sqlpool[i ].sqllib->Connect( l->sqlpool[i ].sqllib, host, dbname, login, pass, port );
+					l->sqlpool[ i ].sql_ID = i;
+					error = l->sqlpool[i ].sqll_Sqllib->SetOption( l->sqlpool[ i ].sqll_Sqllib, options );
+					error = l->sqlpool[i ].sqll_Sqllib->Connect( l->sqlpool[ i ].sqll_Sqllib, host, dbname, login, pass, port );
 					if( error != 0 )
 					{
 						break;
@@ -475,8 +476,8 @@ SystemBase *SystemInit( void )
 				i = 0;
 				for( ; i < (unsigned int)l->sqlpoolConnections; i++ )
 				{
-					LibraryClose( l->sqlpool[ i ].sqllib );
-					l->sqlpool[i ].sqllib = NULL;
+					LibraryClose( l->sqlpool[ i ].sqll_Sqllib );
+					l->sqlpool[i ].sqll_Sqllib = NULL;
 				}
 			}
 		}
@@ -489,7 +490,7 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO, "[SystemBase] Reading configuration END\n");
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	
-	if( l->sqlpool == NULL || l->sqlpool[ 0 ].sqllib == NULL )
+	if( l->sqlpool == NULL || l->sqlpool[ 0 ].sqll_Sqllib == NULL )
 	{
 		FERROR("Cannot open 'mysql.library' in first slot\n");
 		FFree( tempString );
@@ -1296,7 +1297,7 @@ void SystemClose( SystemBase *l )
 		for( ; i < (unsigned int)l->sqlpoolConnections; i++ )
 		{
 			DEBUG( "[SystemBase] Closed mysql library slot %d\n", i );
-			LibraryClose( l->sqlpool[ i ].sqllib );
+			LibraryClose( l->sqlpool[ i ].sqll_Sqllib );
 		}
 		
 		FFree( l->sqlpool );
@@ -2254,14 +2255,11 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
 	{
 		if( FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex ) == 0 )
 		{
-			if( l->sqlpool[ l->MsqLlibCounter ].inUse == FALSE )
+			if( l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib->l_InUse == FALSE )
 			{
-				//FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
-			
-				//FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex );
-				retlib = l->sqlpool[l->MsqLlibCounter ].sqllib;
-				DEBUG("retlibptr %p pool %p\n", retlib, l->sqlpool[l->MsqLlibCounter ].sqllib );
-				int status = retlib->GetStatus( (void *)l->sqlpool[l->MsqLlibCounter ].sqllib );
+				retlib = l->sqlpool[l->MsqLlibCounter ].sqll_Sqllib;
+				DEBUG("retlibptr %p pool %p\n", retlib, l->sqlpool[l->MsqLlibCounter ].sqll_Sqllib );
+				int status = retlib->GetStatus( (void *)l->sqlpool[l->MsqLlibCounter ].sqll_Sqllib );
 				if( retlib == NULL || status != SQL_STATUS_READY ) //retlib->con.sql_Con->status != MYSQL_STATUS_READY )
 				{
 					FERROR( "[LibraryMYSQLGet] We found a NULL pointer on slot %d retlib %p status %d!\n", l->MsqLlibCounter, retlib, status );
@@ -2270,11 +2268,12 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
 					FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
 					continue;
 				}
-				l->sqlpool[ l->MsqLlibCounter ].inUse = TRUE;
-				if( l->sqlpool[ l->MsqLlibCounter ].sqllib->con.sql_Recconect == TRUE )
+				
+				l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib->l_InUse = TRUE;
+				if( l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib->con.sql_Recconect == TRUE )
 				{
-					l->sqlpool[ l->MsqLlibCounter ].sqllib->Reconnect(  l->sqlpool[ l->MsqLlibCounter ].sqllib );
-					l->sqlpool[ l->MsqLlibCounter ].sqllib->con.sql_Recconect = FALSE;
+					l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib->Reconnect(  l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib );
+					l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib->con.sql_Recconect = FALSE;
 				}
 			
 				INFO( "[LibraryMYSQLGet] We found mysql library on slot %d.\n", l->MsqLlibCounter );
@@ -2332,20 +2331,19 @@ void LibrarySQLDrop( SystemBase *l, SQLLibrary *mclose )
 	int i = 0;
 	int closed = -1;
 	
-	for( ; i < l->sqlpoolConnections ; i++ )
+	if( mclose->l_InUse == TRUE )
 	{
-		if( l->sqlpool[ i ].sqllib == mclose )
+		if( FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex ) == 0 )
 		{
-			FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex );
-			l->sqlpool[ i ].inUse = FALSE;
+			mclose->l_InUse = FALSE;
 			FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
-			closed = i;
 		}
+		closed = i;
+	}
 		
-		if( l->sqlpool[ i ].inUse != FALSE )
-		{
-			DEBUG( "[SystemBase] Mysql slot %d is still in use\n", i );
-		}
+	if( mclose->l_InUse != FALSE )
+	{
+		DEBUG( "[SystemBase] Mysql slot %d is still in use\n", i );
 	}
 	
 	if( closed != -1 )
