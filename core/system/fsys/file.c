@@ -856,7 +856,7 @@ int FileDownloadFilesOrFolder( Http *request, void *us, const char *basepath, co
 	
 	//DEBUG("[FileDownloadFilesOrFolder] getdevbyname\n");
 	
-	DEBUG("\n============================================================\n\n\n dst: %s\nsrc: %s\nbasepath: %s\nbasepos: %d\n\n\n\n\n", dst, src, basepath, basePos );
+	//DEBUG("\n============================================================\n\n\n dst: %s\nsrc: %s\nbasepath: %s\nbasepos: %d\n\n\n\n\n", dst, src, basepath, basePos );
 	
 	if( ( actDev = GetRootDeviceByName( loggedSession->us_User, devname ) ) != NULL )
 	{
@@ -896,7 +896,7 @@ int FileDownloadFilesOrFolder( Http *request, void *us, const char *basepath, co
 					strcpy( tmpdst, dst );
 					strcat( tmpdst, &src[ lastslash+1 ] );
 					
-					DEBUG("\n\n\nCOPY------------>TMPDST %s   dst %s\n\n\n", tmpdst, &lfile[ j+1 ] );
+					//DEBUG("\n\n\nCOPY------------>TMPDST %s   dst %s\n\n\n", tmpdst, &lfile[ j+1 ] );
 
 					FileDownloadFileOrDirectoryRec( request, actDev, tmpdst, &lfile[ j+1 ], basePos, -1, numberFiles );
 					FFree( tmpdst );

@@ -561,6 +561,9 @@ var WorkspaceInside = {
 		// Force connecting ws state (we will close it!)
 		Workspace.websocketState = 'connecting';
 		Workspace.websocketsOffline = false;
+		
+		// Just remove this by force
+		document.body.classList.remove( 'Busy' );
 
 		var conf = {
 			onstate: onState,
@@ -631,6 +634,17 @@ var WorkspaceInside = {
 				{
 					console.log( '[onState] We got an error.' );
 					Workspace.websocketState = 'error';
+					var serverCheck = new Module( 'system' );
+					serverCheck.onExecuted = function( q, s )
+					{
+						if( ( q == 'fail' && !s ) || ( !q && !s ) )
+						{
+							Workspace.serverIsThere = false;
+							Workspace.workspaceIsDisconnected = true;
+							Workspace.checkServerConnectionResponse();
+						}
+					}
+					serverCheck.execute( 'getsetting', { setting: 'infowindow' } );
 				}
 				// After such an error, always try reconnect
 				if( Workspace.httpCheckConnectionInterval )
@@ -8362,6 +8376,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if( Workspace.screen )
 				Workspace.screen.displayOfflineMessage();
 			Workspace.workspaceIsDisconnected = true;
+			Workspace.nudgeWorkspacesWidget();
 		}
 		else
 		{
@@ -8369,6 +8384,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if( Workspace.screen )
 				Workspace.screen.hideOfflineMessage();
 			Workspace.workspaceIsDisconnected = false;
+			Workspace.nudgeWorkspacesWidget();
 		}
 	},
 	// Upgrade settings (for new versions)
@@ -8753,6 +8769,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		if( newState == 'active' )
 		{
+			Workspace.nudgeWorkspacesWidget();
+			
 			document.body.classList.add( 'ViewStateActive' );
 			// TODO: Remove the uncommented thing, it isn't working
 			// TODO: Check with pawel..

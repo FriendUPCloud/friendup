@@ -966,20 +966,27 @@ UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, F
  */
 BufString *MobleManagerAppTokensByUserPlatformDB( MobileManager *mmgr, FULONG userID, int type, int status, FULONG notifID )
 {
+	char *mobileType = NULL;
 	if( type < 0 || type >= MOBILE_APP_TYPE_MAX )
 	{
 		Log( FLOG_ERROR, "Cannot get tokens where type < 0 || type >= MOBILE_APP_TYPE_MAX" );
 		return NULL;
 	}
-	char *mobileType = NULL;
+	
 	mobileType = MobileAppType[ type ];
 	
 	DEBUG("--------------MobleManagerAppTokensByUserPlatformDB\n");
 
+	if( mmgr == NULL || mmgr->mm_SB == NULL )
+	{
+		Log( FLOG_ERROR, "mmgr or pointer to SB is NULL!\n");
+		return NULL;
+	}
+	
 	BufString *bs = NULL;
 	SystemBase *sb = (SystemBase *)mmgr->mm_SB;
 
-	SQLLibrary *lsqllib = sb->LibrarySQLGet( SLIB );
+	SQLLibrary *lsqllib = sb->LibrarySQLGet( sb );
 	if( lsqllib != NULL )
 	{
 		BufString *sqlInsertBs = NULL;

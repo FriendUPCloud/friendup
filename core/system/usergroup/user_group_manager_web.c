@@ -1159,91 +1159,63 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 						} // users == false (remove all users)
 						else
 						{
-							//sqlLib = l->LibrarySQLGet( l );
-							//if( sqlLib != NULL )
-							//{
-								DEBUG("[Group/Update] going through diff list\n");
-								// going through diff list and add or remove user from group
-								UsrGrEntry *el = diffListRoot;
-								while( el != NULL )
+							DEBUG("[Group/Update] going through diff list\n");
+							// going through diff list and add or remove user from group
+							UsrGrEntry *el = diffListRoot;
+							while( el != NULL )
+							{
+								UsrGrEntry *remel = el;
+								
+								// update database
+
+								if( el->ugid == 0 ) // user is not in group we must add him
 								{
-									UsrGrEntry *remel = el;
+									UGMAddUserToGroupDB( l->sl_UGM, groupID, el->uid );
+								}
+								// user is in group, we can remove him
+								else
+								{
+									UGMRemoveUserFromGroupDB( l->sl_UGM, groupID, el->uid );
+								}
+							
+								User *usr = UMGetUserByID( l->sl_UM, (FULONG)el->uid );
+								// do realtime update only to users which are in memory
+								if( usr != NULL )
+								{
+									DEBUG("[Group/Update] User found %s is in group %lu\n", usr->u_Name, el->ugid );
 									
-									// update database
-									//sqlLib = l->LibrarySQLGet( l );
-									//if( sqlLib != NULL )
-									//{
 									if( el->ugid == 0 ) // user is not in group we must add him
 									{
-										UGMAddUserToGroupDB( l->sl_UGM, groupID, el->uid );
+										UserGroupAddUser( fg, usr );
+										UserGroupMountWorkgroupDrives( l->sl_DeviceManager, usr, groupID );
+										
+										UserNotifyFSEvent2( l->sl_DeviceManager, usr, "refresh", "Mountlist:" );
 									}
 									// user is in group, we can remove him
 									else
 									{
-										UGMRemoveUserFromGroupDB( l->sl_UGM, groupID, el->uid );
-									}
-								
-									User *usr = UMGetUserByID( l->sl_UM, (FULONG)el->uid );
-									// do realtime update only to users which are in memory
-									if( usr != NULL )
-									{
-										DEBUG("[Group/Update] User found %s is in group %lu\n", usr->u_Name, el->ugid );
+										int error = 0;
+										// wait till drive is removed/detached
 										
-										if( el->ugid == 0 ) // user is not in group we must add him
-										{
-											UserGroupAddUser( fg, usr );
-											UserGroupMountWorkgroupDrives( l->sl_DeviceManager, usr, groupID );
-											
-											UserNotifyFSEvent2( l->sl_DeviceManager, usr, "refresh", "Mountlist:" );
-										}
-										// user is in group, we can remove him
-										else
-										{
-											int error = 0;
-											// wait till drive is removed/detached
-											
-											File *remDrive = UserRemDeviceByGroupID( usr, groupID, &error );
-											
-											UserGroupRemoveUser( fg, usr );
-										}
+										File *remDrive = UserRemDeviceByGroupID( usr, groupID, &error );
+										
+										UserGroupRemoveUser( fg, usr );
 									}
-									
-									
-									//l->LibrarySQLDrop( l, sqlLib );
-									//}
-									
-									if( usr != NULL )
-									{
-										// if device was detached from not current user
-										//if( usr != loggedSession->us_User )
-
-										UserNotifyFSEvent2( l->sl_DeviceManager, usr, "refresh", "Mountlist:" );
-									}
-								
-									el = (UsrGrEntry *)el->node.mln_Succ;
-								
-									FFree( remel );	// remove entry from list
 								}
-								//l->LibrarySQLDrop( l, sqlLib );
-							//}
+								
+								if( usr != NULL )
+								{
+									// if device was detached from not current user
+									//if( usr != loggedSession->us_User )
+
+									UserNotifyFSEvent2( l->sl_DeviceManager, usr, "refresh", "Mountlist:" );
+								}
+								
+								el = (UsrGrEntry *)el->node.mln_Succ;
+							
+								FFree( remel );	// remove entry from list
+							}
 						}
-						
-						/*
-						{
-							char tmp[256];
-							int itmp;
-							BufString *retString = BufStringNew();
-							itmp = snprintf( tmp, sizeof(tmp), "{\"groupid\":%lu,\"userids\":[", groupID );
-							BufStringAddSize( retString, tmp, itmp );
-							//generateConnectedUsers( l, groupID, NULL, retString );
-							// return ID's instead of objects
-							generateConnectedUsersID( l, groupID, NULL, retString );
-							BufStringAddSize( retString, "]}", 2 );
-						
-							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "setusers", retString->bs_Buffer );
-							BufStringDelete( retString );
-						}
-						*/
 					}	// users != NULL
 					
 					char buffer[ 256 ];

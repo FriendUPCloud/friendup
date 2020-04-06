@@ -689,18 +689,38 @@ cAjax.prototype.send = function( data, callback )
 				var out = [];
 				for( var a in this.vars )
 					out.push( a + '=' + this.vars[a] );
-				try
+				
+				new Promise( function( resolve, reject )
 				{
-					res = this.proxy.send( out.join ( '&' ) );
-				}
-				catch( err )
-				{
-					if( self.onload )
+					try
 					{
-						self.onload( false, false );
-						self.destroy();
+						res = self.proxy.send( out.join ( '&' ) );
+						resolve( 'success' );
 					}
-				}
+					catch( err )
+					{
+						reject( 'error' );
+						if( self.onload )
+						{
+							self.onload( false, false );
+							self.destroy();
+						}
+						if( window.Workspace && Workspace.checkServerConnectionResponse )
+							Workspace.checkServerConnectionResponse();
+					}
+				} ).catch( function( err )
+				{
+					console.log( 'Caught an error.', err );
+					if( err == 'error' )
+					{
+						if( callback )
+							callback( false, false );
+					}
+					else if( err == 'success' );
+					{
+						successfulSend();
+					}
+				} );
 				// // console.log( 'Test2: Here u: ' + out.join( '&' ) );
 			}
 			// All else fails?
