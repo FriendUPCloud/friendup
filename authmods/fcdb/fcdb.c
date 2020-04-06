@@ -716,6 +716,7 @@ UserSession *IsSessionValid( struct AuthMod *l, Http *r __attribute__((unused)),
 
 	if( users == NULL )
 	{
+		sb->LibrarySQLDrop( sb, sqlLib );
 		//FUP_AUTHERR_USRNOTFOUND
 		return NULL;
 	}

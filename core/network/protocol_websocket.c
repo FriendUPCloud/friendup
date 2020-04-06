@@ -1524,12 +1524,9 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 											sqllib->SNPrintF( sqllib, tmpQuery, 1024, "UPDATE FUserSession SET `LoggedTime` = '%ld' WHERE `SessionID` = '%s'", time(NULL), us->us_SessionID );
 											sqllib->SelectWithoutResults( sqllib, tmpQuery );
 										}
-										SLIB->LibrarySQLDrop( SLIB, sqllib );
-									
-										//FERROR("Logged time updated: %lu\n", time(NULL) );
-									
 										FFree( tmpQuery );
 									}
+									SLIB->LibrarySQLDrop( SLIB, sqllib );
 								}
 							} // if( ses != NULL
 #endif

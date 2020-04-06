@@ -1766,57 +1766,6 @@ AND LOWER(f.Name) = LOWER('%s')",
 					ugl = (UserGroupLink *)ugl->node.mln_Succ;
 				}
 				
-				// now get all devices from database which are not mounted
-				//TODO we should get devices from DB assigned to user, to his groups and not mounted
-				/*
-				SQLLibrary *sqllib  = l->LibrarySQLGet( l );
-				if( sqllib != NULL )
-				{
-					int entries = 0;
-					int querysize = 256 + bsMountedDrives->bs_Size;
-					
-					char *query = FMalloc( querysize );
-					if( query != NULL )
-					{
-						sqllib->SNPrintF( sqllib, query, querysize, " ID NOT IN(%s) AND UserID", bsMountedDrives->bs_Buffer );
-						DEBUG("[DEVICE/LIST] sql: %s\n", query );
-					
-						Filesystem *rootdev = sqllib->Load( sqllib, FilesystemDesc, query, &entries );
-						if( rootdev != NULL )
-						{
-							Filesystem *locdev = rootdev;
-							while( locdev != NULL )
-							{
-								EscapeConfigFromString( locdev->fs_Config, &configEscaped, &executeCmd );
-								
-								FillDeviceInfo( devnr, tmp, TMP_SIZE_MIN1, locdev->fs_Mounted, locdev->fs_Name, locdev->fs_Type, locdev->fs_Path, NULL, configEscaped, 0, executeCmd, 0, locdev->fs_Server, locdev->fs_Port, locdev->fs_GroupID );
-								//locdev->fs_Config
-								BufStringAdd( bs, tmp );
-								
-								if( executeCmd )
-								{
-									FFree( executeCmd );
-									executeCmd = NULL;
-								}
-								if( configEscaped )
-								{
-									FFree( configEscaped );
-									configEscaped = NULL;
-								}
-								
-								locdev = (Filesystem *)locdev->node.mln_Succ;
-							}
-							
-							FilesystemDeleteAll( rootdev );
-						
-							//DEBUG( "[DeviceMWebRequest] We now have information: %s (query: %s) - name: %s\n", rootdev->f_Config, query, rootdev->f_Name );
-						}
-						FFree( query );
-					}
-					l->LibrarySQLDrop( l, sqllib );
-				}
-				*/
-				
 				FFree( tmp );
 				
 				BufStringAdd( bs, "]" );
@@ -2051,11 +2000,10 @@ AND LOWER(f.Name) = LOWER('%s')",
 						sqllib->QueryWithoutResults( sqllib, bs->bs_Buffer );
 						
 						HttpAddTextContent( response, "ok<!--separate-->{ \"Result\": \"Database updated\"}" );
-						
-						l->LibrarySQLDrop( l, sqllib );
 					}
 					
 					BufStringDelete( bs );
+					l->LibrarySQLDrop( l, sqllib );
 				}
 				else	// bs == NULL
 				{

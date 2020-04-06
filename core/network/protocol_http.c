@@ -1194,7 +1194,6 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 								};
 								response = HttpNewSimple( HTTP_403_FORBIDDEN, tags );
 								
-								SLIB->LibrarySQLDrop( SLIB, sqllib );
 								result = 404;
 								Log( FLOG_ERROR,"Fileshared entry not found in DB: sql %s\n", query );
 							}
@@ -1204,6 +1203,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							if( fs_Type != NULL ) FFree( fs_Type );
 							if( fs_Path != NULL ) FFree( fs_Path );
 							if( usrSessionID != NULL ) FFree( usrSessionID );
+							SLIB->LibrarySQLDrop( SLIB, sqllib );
 						}
 					}
 

@@ -553,7 +553,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		}
 		
 		{
-			UserSession *curusrsess = l->sl_USM->usm_Sessions;
 			char *deviceid = NULL;
 			
 			HashmapElement *el = HashmapGet( (*request)->http_ParsedPostContent, "deviceid" );
@@ -582,8 +581,17 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				
 				if( uname != NULL && uname->hme_Data != NULL  )
 				{
+					UserSession *curusrsess = l->sl_USM->usm_Sessions;
 					while( curusrsess != NULL )
 					{
+						if( curusrsess != NULL )
+						{
+							if( FRIEND_MUTEX_LOCK( &(curusrsess->us_Mutex) ) == 0 )
+							{
+								curusrsess->us_InUseCounter++;
+								FRIEND_MUTEX_UNLOCK( &(curusrsess->us_Mutex) );
+							}
+						}
 						User *curusr = curusrsess->us_User;
 						
 						if( curusr != NULL )
@@ -610,11 +618,28 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 
 									loggedSession =  curusrsess;
 									userAdded = TRUE;		// there is no need to free resources
+									
+									if( curusrsess != NULL )
+									{
+										if( FRIEND_MUTEX_LOCK( &(curusrsess->us_Mutex) ) == 0 )
+										{
+											curusrsess->us_InUseCounter--;
+											FRIEND_MUTEX_UNLOCK( &(curusrsess->us_Mutex) );
+										}
+									}
 
 									break;
 								}	// compare password
 							}		// compare user name
 						}	//if usr != NULL
+						if( curusrsess != NULL )
+						{
+							if( FRIEND_MUTEX_LOCK( &(curusrsess->us_Mutex) ) == 0 )
+							{
+								curusrsess->us_InUseCounter--;
+								FRIEND_MUTEX_UNLOCK( &(curusrsess->us_Mutex) );
+							}
+						}
 						curusrsess = (UserSession *)curusrsess->node.mln_Succ;
 					}
 				}
@@ -622,48 +647,55 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			else
 			{
 				DEBUG("CHECK1\n");
-				FRIEND_MUTEX_LOCK( &(l->sl_USM->usm_Mutex) );
-				while( curusrsess != NULL )
+				if( FRIEND_MUTEX_LOCK( &(l->sl_USM->usm_Mutex) ) == 0 )
 				{
-					if( curusrsess->us_SessionID != NULL && curusrsess->us_User && curusrsess->us_User->u_MainSessionID != NULL )
+					UserSession *curusrsess = l->sl_USM->usm_Sessions;
+
+					while( curusrsess != NULL )
 					{
-						if(  (strcmp( curusrsess->us_SessionID, sessionid ) == 0 || strcmp( curusrsess->us_User->u_MainSessionID, sessionid ) == 0 ) )
-					//if( curusrsess->us_SessionID != NULL && strcmp( curusrsess->us_SessionID, sessionid ) == 0 )
+						if( curusrsess != NULL )
 						{
-					// TODO: Reenable this once it works......
-					/*if( ( timestamp - curusr->u_LoggedTime ) > LOGOUT_TIME )
-					{
-						Http_t* response = HttpNewSimple( 
-							HTTP_200_OK, 4,
-							"Content-Type", StringDuplicate( "text/plain" ),
-							"Connection", StringDuplicate( "close" )
-						);
-					
-						FERROR("User timeout\n");
-						HttpAddTextContent( response, "{\"response\":\"timeout!\"}" );
-					
-						HttpWriteAndFree( response, sock );
-					
-						return 200;
-					}
-					else
-					{
-						curusr->u_LoggedTime = timestamp;
-					}*/
-						//loggedUser = curusr;
-							loggedSession = curusrsess;
-							userAdded = TRUE;		// there is no need to free resources
-							User *curusr = curusrsess->us_User;
-							if( curusr != NULL )
+							if( FRIEND_MUTEX_LOCK( &(curusrsess->us_Mutex) ) == 0 )
 							{
-								DEBUG("FOUND user: %s session sessionid %s provided session %s\n", curusr->u_Name, curusrsess->us_SessionID, sessionid );
+								curusrsess->us_InUseCounter++;
+								FRIEND_MUTEX_UNLOCK( &(curusrsess->us_Mutex) );
 							}
-							break;
 						}
+						if( curusrsess->us_SessionID != NULL && curusrsess->us_User && curusrsess->us_User->u_MainSessionID != NULL )
+						{
+							if(  (strcmp( curusrsess->us_SessionID, sessionid ) == 0 || strcmp( curusrsess->us_User->u_MainSessionID, sessionid ) == 0 ) )
+							{
+
+								loggedSession = curusrsess;
+								userAdded = TRUE;		// there is no need to free resources
+								User *curusr = curusrsess->us_User;
+								if( curusr != NULL )
+								{
+									DEBUG("FOUND user: %s session sessionid %s provided session %s\n", curusr->u_Name, curusrsess->us_SessionID, sessionid );
+								}
+								if( curusrsess != NULL )
+								{
+									if( FRIEND_MUTEX_LOCK( &(curusrsess->us_Mutex) ) == 0 )
+									{
+										curusrsess->us_InUseCounter--;
+										FRIEND_MUTEX_UNLOCK( &(curusrsess->us_Mutex) );
+									}
+								}
+								break;
+							}
+						}
+						if( curusrsess != NULL )
+						{
+							if( FRIEND_MUTEX_LOCK( &(curusrsess->us_Mutex) ) == 0 )
+							{
+								curusrsess->us_InUseCounter--;
+								FRIEND_MUTEX_UNLOCK( &(curusrsess->us_Mutex) );
+							}
+						}
+						curusrsess = (UserSession *)curusrsess->node.mln_Succ;
 					}
-					curusrsess = (UserSession *)curusrsess->node.mln_Succ;
+					FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
 				}
-				FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
 				DEBUG("CHECK1END\n");
 			}
 			
