@@ -1509,7 +1509,13 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 			DEBUG("UPLOAD endDivider pointer: %p\n", endDivider );
 			if( endDivider != NULL )
 			{
-				strncpy( http->http_PartDivider, http->http_Content, endDivider-http->http_Content );
+				int maxDivLen = sizeof( http->http_PartDivider ) - 1;
+				int divLen = endDivider-http->http_Content;
+				if(  divLen < maxDivLen )
+				{
+					maxDivLen = divLen;
+				}
+				strncpy( http->http_PartDivider, http->http_Content, maxDivLen );
 			}
 			else
 			{

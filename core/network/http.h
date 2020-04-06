@@ -330,7 +330,7 @@ typedef struct Http
 	FBOOL				http_GotHeader;
 	FBOOL				http_GotBody;
 	
-	char				http_PartDivider[ 256 ];
+	char				http_PartDivider[ 512 ];
 	FBOOL				http_ContentType;
 	FQUAD				http_ContentLength;
 	FQUAD				http_ExpectedLength;
