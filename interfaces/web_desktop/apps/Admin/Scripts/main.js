@@ -265,7 +265,7 @@ function refreshSidebar( show )
 					//atag.classList.add( 'PaddingRight', ch.icon );
 					atag.className = 'IconSmall ' + ch.icon + ' Negative PaddingLeft PaddingRight';
 					atag.innerHTML = '&nbsp;&nbsp;&nbsp;' + atag.innerHTML;
-					( function( module, sect, ch, ele )
+					( function( module, sect, ch, ele, act )
 					{
 						ele.onclick = function()
 						{
@@ -290,7 +290,7 @@ function refreshSidebar( show )
 							
 								ele.parentNode.className = ( ele.parentNode.className.split( ' Selected' ).join( '' ) + ' Selected' );
 							
-								setGUISection( module, sect );
+								setGUISection( module, sect, act );
 							} );
 						}
 					
@@ -299,7 +299,7 @@ function refreshSidebar( show )
 							ele.onclick();
 						}
 					
-					} )( a, b, ch, atag );
+					} )( a, b, ch, atag, ch.action );
 				}
 				headings[ a ].elements.appendChild( ptag );
 				heading_children++;
@@ -353,7 +353,7 @@ function refreshStatistics()
 }
 
 // Sets the gui for a section in the app
-function setGUISection( module, section )
+function setGUISection( module, section, action )
 {
 	var found = false;
 	if( typeof( Application.mods[ module ] ) != 'undefined' )
@@ -368,28 +368,58 @@ function setGUISection( module, section )
 	}
 	if( !found ) return;
 	
-	var sectPart = module.toLowerCase() + '_' + section.toLowerCase();
-	var f = new File( 'Progdir:Templates/' + sectPart + '.html' );
-	f.onLoad = function( data )
+	// Get custom plugin data from module
+	
+	if( action && action.indexOf( '/' ) >= 0 )
 	{
-		ge( 'GuiContent' ).innerHTML = data;
+		var action = action.split( '/' );
 		
-		// Temporary until search is fixed for users ...
-		
-		if( section.toLowerCase() == 'users' ) 
+		if( action[0] && action[1] )
 		{
-			//UsersSettings( 'maxlimit', 99999 );
-			
-			UsersSettings( 'reset', true );
+			ge( 'GuiContent' ).innerHTML = '...';
+			console.log( action );
+			var m = new Module( action[0] );
+			m.onExecuted = function( res, data )
+			{
+				ge( 'GuiContent' ).innerHTML = data;
+				
+				//
+				
+				// Reinitialize!
+				Friend.responsive.pageActive = ge( 'GuiContent' ).getElementsByClassName( 'Responsive-Page' )[0];
+				Friend.responsive.reinit();
+			}
+			m.execute( action[1] );
 		}
-		
-		Sections[ sectPart ]();
-		
-		// Reinitialize!
-		Friend.responsive.pageActive = ge( 'GuiContent' ).getElementsByClassName( 'Responsive-Page' )[0];
-		Friend.responsive.reinit();
 	}
-	f.load();
+	
+	// Default mode
+	
+	else
+	{
+		var sectPart = module.toLowerCase() + '_' + section.toLowerCase();
+		var f = new File( 'Progdir:Templates/' + sectPart + '.html' );
+		f.onLoad = function( data )
+		{
+			ge( 'GuiContent' ).innerHTML = data;
+		
+			// Temporary until search is fixed for users ...
+		
+			if( section.toLowerCase() == 'users' ) 
+			{
+				//UsersSettings( 'maxlimit', 99999 );
+			
+				UsersSettings( 'reset', true );
+			}
+		
+			Sections[ sectPart ]();
+		
+			// Reinitialize!
+			Friend.responsive.pageActive = ge( 'GuiContent' ).getElementsByClassName( 'Responsive-Page' )[0];
+			Friend.responsive.reinit();
+		}
+		f.load();
+	}
 }
 
 var Sections = {
