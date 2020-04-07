@@ -21,6 +21,7 @@
 #include <time.h>
 #include <util/friendqueue.h>
 
+// disable / enable debug
 //#undef DEBUG
 //#define DEBUG( ...)
 //#undef DEBUG1
@@ -28,14 +29,14 @@
 
 extern SystemBase *SLIB;
 
-#define USE_WORKERS 1
+//#define USE_WORKERS 1		// use workers for WS calls
+//#define USE_PTHREAD 1		//
 //#define USE_WORKERS_PING
-#define USE_PTHREAD_PING 1
-#define INPUT_QUEUE
+#define USE_PTHREAD_PING 1	// use pthread for PING-PONG calls
+#define INPUT_QUEUE			// use queue to collect all incoming messages. All this messages will be parsed and executed in different thread
 
 // enabled for development/IDE
 //#define ENABLE_WEBSOCKETS_THREADS 1
-//#define USE_PTHREAD 1
 
 //pthread_mutex_t WSThreadMutex;
 
@@ -519,7 +520,7 @@ void WSThread( void *d )
 		double secs = (double)(stop.tv_usec - start.tv_usec) / 1000000 + (double)(stop.tv_sec - start.tv_sec);
 		FBOOL fileReadCall = FALSE;
 		
-		if( pathParts[1] != NULL && pathParts[2] != NULL )
+		if( response != NULL && pathParts[1] != NULL && pathParts[2] != NULL )
 		{
 			if( strcmp( pathParts[1], "file" ) == 0 && strcmp( pathParts[2], "read" ) == 0 )
 			{
@@ -533,14 +534,7 @@ void WSThread( void *d )
 		}
 		else
 		{
-			//if( response != NULL )
-			//{
-				//Log( FLOG_INFO, "[WS] C. SysWebRequest took %f seconds, err: %d response: '%s'\n" , secs, response->errorCode, response->content );
-			//}
-			//else
-			{
-				Log( FLOG_INFO, "[WS] C. SysWebRequest took %f seconds\n" , secs );
-			}
+			Log( FLOG_INFO, "[WS] C. SysWebRequest took %f seconds\n" , secs );
 		}
 		
 		if( response != NULL )

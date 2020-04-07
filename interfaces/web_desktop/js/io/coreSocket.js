@@ -152,15 +152,20 @@ FriendWebSocket.prototype.connect = function()
 	
 	self.setState( 'connecting' );
 	
-	try
+	
+	if( self.ws )
 	{
-		if( self.ws )
-		{
-			self.cleanup();
-		}
+		self.cleanup();
+	}
+	new Promise( function( resolve, reject )
+	{
 		try
 		{
 			self.ws = new window.WebSocket( self.url, 'FC-protocol' );
+			self.ws.onerror = function()
+			{
+				reject( 'error' );
+			}
 		}
 		catch( e2 )
 		{
@@ -168,11 +173,17 @@ FriendWebSocket.prototype.connect = function()
 			self.handleError( e2 );
 			return;
 		}
-	} 
-	catch( e )
+	} ).catch( function( err )
 	{
-		self.logEx( e, 'connect' );
-	}
+		if( err == 'error' )
+		{
+			self.cleanup();
+		}
+		else
+		{
+			self.logEx( e, 'connect' );
+		}
+	} );
 	
 	self.attachHandlers();
 }

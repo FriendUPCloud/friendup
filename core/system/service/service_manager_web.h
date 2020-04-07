@@ -9,54 +9,25 @@
 *****************************************************************************©*/
 /** @file
  * 
- * ServiceManager header
+ *  Service Manager Web header
  *
  *  @author PS (Pawel Stefanski)
- *  @date created 2015
+ *  @date created 2016
  */
 
-#ifndef __SYSTEM_SERVICES_SERVICE_MANAGER_H__
-#define __SYSTEM_SERVICES_SERVICE_MANAGER_H__
+#ifndef __SERVICE_SERVICE_MANAGER_WEB_H__
+#define __SERVICE_SERVICE_MANAGER_WEB_H__
 
 #include <system/services/service.h>
 #include <network/socket.h>
 #include <network/http.h>
 #include <network/path.h>
+#include <system/user/user_session.h>
 
 //
-// Service Manager structure
+// Web calls handler, void *SystemBase
 //
 
-typedef struct ServiceManager
-{
-	Service                         *sm_Services;       // working services
-	char                            *sm_ServicesPath;   // path to service
-	void                            *sm_FCM;            // pointer to FriendCoreManager
-} ServiceManager;
+Http *SMWebRequest( void *lsb, char **urlpath, Http* request, UserSession *loggedSession );
 
-
-//
-// Create new ServiceManager
-//
-
-ServiceManager *ServiceManagerNew( void *fcm );
-
-//
-// delete ServiceManager
-//
-
-void ServiceManagerDelete( ServiceManager *smgr );
-
-//
-// get service by name
-//
-
-Service *ServiceManagerGetByName( ServiceManager *smgr, char *name );
-
-//
-// change service state
-//
-
-int ServiceManagerChangeServiceState( ServiceManager *smgr, Service *srv, int state );
-
-#endif //__SYSTEM_SERVICES_SERVICE_MANAGER_H__
+#endif //__SERVICE_SERVICE_MANAGER_H__

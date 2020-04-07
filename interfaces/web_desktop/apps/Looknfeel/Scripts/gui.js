@@ -13,10 +13,108 @@ Application.run = function( msg )
 	this.theme = Application.theme; // Current theme
 	
 	this.mode = 'pear';
+	this.labelChoices = [];
 	
 	InitTabs( 'MainTabs' );
 	
-	refreshThemes();	
+	refreshThemes();
+	refreshLabels();
+	
+	ge( 'workspaceCount' ).onchange = function()
+	{
+		refreshLabels();
+	}
+}
+
+function constrictWorkspaceCount()
+{
+	if( ge( 'workspaceCount' ).value > 9 )
+	{
+		ge( 'workspaceCount' ).value = 9;
+	}
+	else if( ge( 'workspaceCount' ).value < 0 )
+	{
+		ge( 'workspaceCount' ).value = 0;
+	}
+}
+
+// Refresh the labels list
+function refreshLabels( affected )
+{
+	let nl = [];
+	constrictWorkspaceCount();
+	
+	for( let c = 0; c < ge( 'workspaceCount' ).value; c++ )
+	{
+		if( c < Application.labelChoices.length )
+			nl[ c ] = Application.labelChoices[ c ];
+	}
+	Application.labelChoices = nl;
+
+	if( ge( 'workspaceCount' ).value <= 0 )
+	{
+		ge( 'LabelView' ).innerHTML = '<p class="Layout">' + i18n( 'i18n_workspaces_to_label' ) + '</p>';
+		return;
+	}
+	// If we haven't specified an affected column
+	if( !affected )
+	{
+		let out = [];
+		for( let a = 0; a < parseInt( ge( 'workspaceCount' ).value ); a++ )
+		{
+			let n = '';
+			if( !Application.labelChoices[ a ] || Application.labelChoices[ a ].length < 2 )
+			{
+				n = (a+1);
+			}
+			else
+			{
+				n = '<span class="' + Application.labelChoices[ a ] + '"></span>';
+			}
+			let dv = ge( 'Labels' ).value.split( 'Default' ).join( a + 1 + '' );
+			out.push( '<div class="WorkspaceIcons BordersDefault BackgroundDefault Rounded Nr' + (a+1) + '"><span class="Preview">' + n + '</span>' + dv + '</div>' );
+		}
+		ge( 'LabelView' ).innerHTML = out.join( '' );
+	}
+	else
+	{
+		let ws = ge( 'LabelView' ).getElementsByClassName( 'WorkspaceIcons' );
+		for( let a = 0; a < ws.length; a++ )
+		{
+			if( ws[ a ] == affected )
+			{
+				let sp = affected.getElementsByTagName( 'span' );
+				sp[0].className = Application.labelChoices[ a ];
+				sp[0].innerHTML = Application.labelChoices[ a ] ? '' : ( a + 1 );
+				affected.classList.remove( 'Active' );
+			}
+		}
+		return;
+	}
+
+	let ws = ge( 'LabelView' ).getElementsByClassName( 'WorkspaceIcons' );
+	for( let a = 0; a < ws.length; a++ )
+	{
+		// If we have specified an affected column, use that
+		( function( list, cont, num )
+		{
+			cont.onclick = function( e )
+			{
+				if( this.classList.contains( 'Active' ) )
+					this.classList.remove( 'Active' );
+				else this.classList.add( 'Active' );
+			}
+			for( var b = 0; b < list.length; b++ )
+			{
+				list[ b ].onclick = function( n )
+				{
+					Application.labelChoices[ num ] = this.querySelector( 'span' ).className;
+					refreshLabels( cont );
+					cancelBubble( n );
+				}
+			}
+		} )( ws[ a ].getElementsByClassName( 'Choice' ), ws[ a ], a );
+	}
 }
 
 function getMenuMode()
@@ -202,6 +300,8 @@ function refreshThemes()
 			ge( 'workspaceCount' ).value = dd.workspacecount > 0 ? dd.workspacecount : 1;
 			ge( 'scrollDesktopIcons' ).checked = dd.scrolldesktopicons == '1' ? 'checked' : '';
 			ge( 'ThemeConfigData' ).value = JSON.stringify( dd[ 'themedata_' + Application.theme.toLowerCase() ] );
+			Application.labelChoices = dd.workspace_labels ? dd.workspace_labels : [];
+			refreshLabels();
 			return;
 		}
 		setMenuMode( 'pear' );
@@ -211,11 +311,14 @@ function refreshThemes()
 		ge( 'workspaceCount' ).value = '1';
 		ge( 'scrollDesktopIcons' ).checked = '';
 		ge( 'ThemeConfigData' ).value = '';
+		Application.labelChoices = [];
+		refreshLabels();
 	}
 	m.execute( 'getsetting', { settings: [ 
 		'menumode', 'navigationmode', 'focusmode', 
 		'windowlist', 'hiddensystem', 'workspacecount',
-		'scrolldesktopicons', 'themedata_' + Application.theme.toLowerCase()
+		'scrolldesktopicons', 'themedata_' + Application.theme.toLowerCase(),
+		'workspace_labels'
 	] } );
 	
 }
@@ -259,27 +362,32 @@ function applyTheme()
 								var m3 = new Module( 'system' );
 								m3.onExecuted = function( e, d )
 								{
-									// check for extra config
-									var m9 = new Module( 'system' );
-									m.onExecuted = function()
+									var m11 = new Module( 'system' );
+									m11.onExecuted = function( e, d )
 									{
-										if( e == 'ok' )
+										// check for extra config
+										var m9 = new Module( 'system' );
+										m9.onExecuted = function()
 										{
-											var dt = {
-												type: 'system',
-												command: 'refreshtheme',
-												theme: currTheme
-											};
-											if( ge( 'ThemeConfigData' ) )
-												dt.themeConfig = ge( 'ThemeConfigData' ).value;
-											Application.sendMessage( dt );
+											if( e == 'ok' )
+											{
+												var dt = {
+													type: 'system',
+													command: 'refreshtheme',
+													theme: currTheme
+												};
+												if( ge( 'ThemeConfigData' ) )
+													dt.themeConfig = ge( 'ThemeConfigData' ).value;
+												Application.sendMessage( dt );
+											}
+											else
+											{
+												console.log( 'Could not set system theme!' );
+											}
 										}
-										else
-										{
-											console.log( 'Could not set system theme!' );
-										}
+										m9.execute( 'setsetting', { setting: 'themedata_' + currTheme.toLowerCase(), data: ge( 'ThemeConfigData' ).value } );
 									}
-									m.execute( 'setsetting', { setting: 'themedata_' + currTheme.toLowerCase(), data: ge( 'ThemeConfigData' ).value } );
+									m11.execute( 'setsetting', { setting: 'workspace_labels', data: JSON.stringify( Application.labelChoices ) } );
 								}
 								m3.execute( 'settheme', { theme: currTheme } );
 							}

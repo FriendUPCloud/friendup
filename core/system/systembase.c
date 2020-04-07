@@ -1008,7 +1008,7 @@ SystemBase *SystemInit( void )
 	
 	EventAdd( l->sl_EventManager, "RemoveOldLogs", RemoveOldLogs, l, time( NULL )+HOUR12, HOUR12, -1 );
 	
-	EventAdd( l->sl_EventManager, "SecurityManagerRemoteOldBadSessionCalls", SecurityManagerRemoteOldBadSessionCalls, l->sl_SecurityManager, time( NULL )+MINS60, MINS60, -1 );
+	//EventAdd( l->sl_EventManager, "SecurityManagerRemoteOldBadSessionCalls", SecurityManagerRemoteOldBadSessionCalls, l->sl_SecurityManager, time( NULL )+MINS60, MINS60, -1 );
 	
 	//@BG-678 
 	//EventAdd( l->sl_EventManager, USMCloseUnusedWebSockets, l->sl_USM, time( NULL )+MINS5, MINS5, -1 );
@@ -1614,26 +1614,6 @@ int SystemInitExternal( SystemBase *l )
 					UserAddSession( l->sl_Sentinel->s_User, ses );
 					
 					USMUserSessionAddToList( l->sl_USM, ses );
-					/*
-					UserSession *nextses = NULL;
-					if( l->sl_USM->usm_Sessions != NULL )
-					{
-						l->sl_USM->usm_Sessions->node.mln_Succ;
-					}
-					ses->node.mln_Succ = (MinNode *)l->sl_USM->usm_Sessions;
-					l->sl_USM->usm_Sessions = ses;
-					if( nextses != NULL )
-					{
-						nextses->node.mln_Pred = (MinNode *)ses;
-					}
-					*/
-					
-					//
-					//if( sqllib->NumberOfRecordsCustomQuery( sqllib, "select * from `FUserSession` where UserID='1' AND DeviceIdentity='remote'") < 1)
-					//{
-					//	sqllib->Save( sqllib, UserSessionDesc, ses );
-					//}
-					//
 				}
 				FFree( newSessionId );
 			}
@@ -1682,8 +1662,6 @@ int SystemInitExternal( SystemBase *l )
 			sentUser = l->sl_Sentinel->s_User;
 		}*/
 		
-		
-		
 		l->LibrarySQLDrop( l, sqllib );
 		
 		UGMMountDrives( l->sl_UGM );
@@ -1717,26 +1695,6 @@ int SystemInitExternal( SystemBase *l )
 	}
 	
 	DEBUG("[SystembaseInitExternal]APNS init\n" );
-	
-	/*
-	l->l_APNSConnection = WebsocketAPNSConnectorNew( l->l_AppleServerHost, l->l_AppleServerPort );
-	if( l->l_APNSConnection != NULL )
-	{
-		
-		//if( WebsocketClientConnect( l->l_APNSConnection->wapns_Connection ) > 0 )
-		//{
-		//	DEBUG("APNS server connected\n");
-		//}
-		//else
-		//{
-		//	DEBUG("APNS server not connected\n");
-		//}
-	}
-	else
-	{
-		FERROR("[SystembaseInitExternal]APNS init ERROR!\n");
-	}
-	*/
 	
 	return 0;
 }
@@ -2470,7 +2428,7 @@ ZLibrary *LibraryZGet( SystemBase *l )
  * Drop z.library to pool UNIMPLEMENTED
  *
  * @param l pointer to SystemBase
- * @param aclose pointer to z.library which will be returned to pool
+ * @param closelib pointer to z.library which will be returned to pool
  */
 
 void LibraryZDrop( SystemBase *l __attribute__((unused)), ZLibrary *closelib __attribute__((unused)) )

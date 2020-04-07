@@ -17,8 +17,8 @@
  *  @date created 12/03/2020
  */
 
-#ifndef __SYSTEM_SECURITY_MANAGER_H__
-#define __SYSTEM_SECURITY_MANAGER_H__
+#ifndef __SYSTEM_SECURITY_SECURITY_MANAGER_H__
+#define __SYSTEM_SECURITY_SECURITY_MANAGER_H__
 
 #include <core/types.h>
 #include <system/user/user_session.h>
@@ -68,6 +68,6 @@ void SecurityManagerRemoteOldBadSessionCalls( SecurityManager *sm );
 //
 //
 
-#endif //__SYSTEM_SECURITY_MANAGER_H__
+#endif //__SYSTEM_SECURITY_SECURITY_MANAGER_H__
 
 

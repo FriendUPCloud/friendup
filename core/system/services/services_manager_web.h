@@ -15,8 +15,8 @@
  *  @date created 2016
  */
 
-#ifndef __SERVICE_SERVICE_MANAGER_WEB_H__
-#define __SERVICE_SERVICE_MANAGER_WEB_H__
+#ifndef __SYSTEM_SERVICES_SERVICE_MANAGER_WEB_H__
+#define __SYSTEM_SERVICES_SERVICE_MANAGER_WEB_H__
 
 #include <system/services/service.h>
 #include <network/socket.h>
@@ -28,6 +28,6 @@
 // Web calls handler, void *SystemBase
 //
 
-Http *ServiceManagerWebRequest( void *sb, char **urlpath, Http *request  );
+Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserSession *loggedSession );
 
-#endif //__SERVICE_SERVICE_MANAGER_H__
+#endif //__SYSTEM_SERVICES_SERVICE_MANAGER_WEB_H__

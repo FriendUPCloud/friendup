@@ -28,7 +28,8 @@
 #include <stdio.h> 
 #include <unistd.h>
 #include <system/services/service_manager.h>
-#include <system/services/service_manager_web.h>
+#include <system/services/services_manager_web.h>
+#include <system/service/service_manager_web.h>
 //#include <interface/properties_interface.h>
 #include <ctype.h>
 #include <magic.h>
@@ -56,6 +57,7 @@
 #include <system/mobile/mobile_web.h>
 #include <system/usergroup/user_group_manager_web.h>
 #include <system/notification/notification_manager_web.h>
+#include <system/service/service_manager_web.h>
 #include <strings.h>
 
 #define LIB_NAME "system.library"
@@ -685,53 +687,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			// Check all calls coming from sessions which do not longer exists
 			//
 			
-			SecurityManagerCheckSession( l->sl_SecurityManager, *request );
-			
-			/*
-			HashmapElement *sesreq = GetHEReq( *request, "sessionid" );
-			if( sesreq != NULL )
-			{
-				DEBUG("sessionid found!\n");
-				if( sesreq->hme_Data != NULL )
-				{
-					DEBUG("sessionid value found!\n");
-					// getting last call for session
-					HashmapElementLong *hel = HashmapLongGet( l->l_badSessionLoginHM, sesreq->hme_Data );
-					if( hel != NULL )
-					{
-						time_t timeNow = time( NULL );
-						// if last call bad call for this session was called one hour ago (60 second * 60 minutes)
-						if( (timeNow - hel->hel_LastUpdate ) > (60*60) )
-						{
-							// so remove this session from list
-							HashmapLongRemove( l->l_badSessionLoginHM, sesreq->hme_Data );
-						}
-						else
-						{
-							hel->hel_LastUpdate = timeNow;
-							hel->hel_Data++;
-							
-							// count delay value
-							float delValue = ((float)hel->hel_Data) * 1.1f;
-							
-							DEBUG("SECURITY WARNING! Same call was made %d times, delay will be set to: %f\n", hel->hel_Data, delValue );
-							
-							if( hel->hel_Data > 5 )
-							{
-								int slValue = ((int)delValue)-4;
-								DEBUG("Sleep value: %d\n", slValue );
-								sleep( slValue );
-							}
-						}
-					}
-					else
-					{
-						DEBUG("create new entry: %s!\n", sesreq->hme_Data );
-						HashmapLongPut( l->l_badSessionLoginHM, StringDuplicate( sesreq->hme_Data ), 1 );
-					}
-				}
-			}
-			*/
+			//SecurityManagerCheckSession( l->sl_SecurityManager, *request );
 		
 			if( response != NULL )
 			{
@@ -740,8 +696,31 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			}
 			response = HttpNewSimple( HTTP_403_FORBIDDEN, tags );
 			
-			char buffer[ 256 ];
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_SESSION_NOT_FOUND] , DICT_USER_SESSION_NOT_FOUND );
+			char buffer[ 512 ];
+			char *lsessidstring = NULL;
+			HashmapElement *lsesid = GetHEReq( *request, "sessionid" );
+			if( lsesid != NULL && lsesid->hme_Data != NULL )
+			{
+				lsessidstring = (char *)lsesid->hme_Data;
+				
+				/*
+				Log( FLOG_ERROR, "THIS SESSION ID IS BLOCKED: %s !", lsessidstring );
+				unsigned int i=0;
+				
+				for( i = 0; i < (*request)->parsedPostContent->hm_TableSize; i++ )
+				{
+					if( (*request)->parsedPostContent->hm_Data[i].hme_InUse == TRUE )
+					{
+						HashmapElement *lochme = &(*request)->parsedPostContent->hm_Data[i];
+						if( lochme->hme_Data != NULL )
+						{
+							Log( FLOG_ERROR, "POST Params: %s\n", lochme->hme_Data );
+						}
+					}
+				}*/
+			}
+			
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\",\"sessionid\":\"%s\"}", l->sl_Dictionary->d_Msg[DICT_USER_SESSION_NOT_FOUND] , DICT_USER_SESSION_NOT_FOUND, lsessidstring );
 			HttpAddTextContent( response, buffer );
 			
 			return response;
@@ -1452,11 +1431,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		
 		if( l->sl_UM!= NULL )
 		{
-			if( UMUserIsAdmin( l->sl_UM, *request, loggedSession->us_User ) == TRUE )
-			{
-				response =  ServiceManagerWebRequest( l, &(urlpath[1]), *request );
-				called = TRUE;
-			}
+			response =  ServicesManagerWebRequest( l, &(urlpath[1]), *request, loggedSession );
+			called = TRUE;
 		}
 		
 		if( called == FALSE )
@@ -1471,6 +1447,44 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			{
 				HttpFree( response );
 				FERROR("RESPONSE services\n");
+			}
+			response = HttpNewSimple( HTTP_200_OK,  tags );
+		
+			char buffer[ 256 ];
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, buffer );
+
+			goto error;
+		}
+	}
+	
+	//
+	// atm we want to handle all calls to services via system.library
+	//
+	
+	else if( strcmp( urlpath[ 0 ], "service" ) == 0 )
+	{
+		DEBUG("Service called\n");
+		FBOOL called = FALSE;
+		
+		if( l->sl_UM!= NULL )
+		{
+			response = SMWebRequest( l, &(urlpath[1]), *request, loggedSession );
+			called = TRUE;
+		}
+		
+		if( called == FALSE )
+		{
+			struct TagItem tags[] = {
+				{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( "text/html", 9 ) },
+				{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ) },
+				{ TAG_DONE, TAG_DONE}
+			};
+		
+			if( response != NULL )
+			{
+				HttpFree( response );
+				FERROR("RESPONSE service\n");
 			}
 			response = HttpNewSimple( HTTP_200_OK,  tags );
 		
