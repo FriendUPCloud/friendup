@@ -8358,6 +8358,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				Workspace.initWebSocket();
 			}
+			else
+			{
+				// Just remove this by force
+				document.body.classList.remove( 'Busy' );
+			}
 		}
 		// Only set serverIsThere if we don't have a response from the server
 		inactiveTimeout = setTimeout( function(){ Workspace.serverIsThere = false; }, 1000 );
