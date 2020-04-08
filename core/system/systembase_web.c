@@ -403,8 +403,9 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	// This part of code check required information
 	//
 	
-	char sessionid[ DEFAULT_SESSION_ID_SIZE ];
-	sessionid[ 0 ] = 0;
+	char *sessionid = FCalloc( DEFAULT_SESSION_ID_SIZE+1, sizeof(char) );
+	//char sessionid[ DEFAULT_SESSION_ID_SIZE ];
+	//sessionid[ 0 ] = 0;
     
     if( urlpath[ 0 ] == NULL )
     {
@@ -421,7 +422,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		char buffer[ 256 ];
 		snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_PATH_PARAMETER_IS_EMPTY] , DICT_PATH_PARAMETER_IS_EMPTY );
 		HttpAddTextContent( response, buffer );
-			
+		
+		FFree( sessionid );
 		return response;
     }
     
@@ -451,6 +453,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SESSIONID_AUTH_MISSING] , DICT_SESSIONID_AUTH_MISSING );
 			HttpAddTextContent( response, buffer );
 			FERROR( "login function miss parameter sessionid or authid\n" );
+			FFree( sessionid );
 			return response;
 		}
 		// Ah, we got our session
@@ -459,7 +462,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			char tmp[ DEFAULT_SESSION_ID_SIZE ];
 			UrlDecode( tmp, (char *)tst->hme_Data );
 			
-			snprintf( sessionid, sizeof(sessionid), "%s", tmp );
+			snprintf( sessionid, DEFAULT_SESSION_ID_SIZE, "%s", tmp );
 			DEBUG( "Finding sessionid %s\n", sessionid );
 		}
 		// Get it by authid
@@ -542,7 +545,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						{
 							if( row[ 0 ] != NULL )
 							{
-								snprintf( sessionid, sizeof(sessionid),"%s", row[ 0 ] );
+								snprintf( sessionid, DEFAULT_SESSION_ID_SIZE,"%s", row[ 0 ] );
 							}
 						}
 						sqllib->FreeResult( sqllib, res );
@@ -754,6 +757,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			
 			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\",\"sessionid\":\"%s\"}", l->sl_Dictionary->d_Msg[DICT_USER_SESSION_NOT_FOUND] , DICT_USER_SESSION_NOT_FOUND, lsessidstring );
 			HttpAddTextContent( response, buffer );
+			FFree( sessionid );
 			
 			return response;
 		}
@@ -1151,8 +1155,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						if( modType != NULL )
 						{
 							DEBUG( "[MODULE] Executing %s module! path %s\n", modType, path );
-							char *modulePath = FCalloc( 256, sizeof( char ) );
-							snprintf( modulePath, 256, "%s/module.%s", path, modType );
+							char *modulePath = FCalloc( MODULE_PATH_LENGTH, sizeof( char ) );
+							snprintf( modulePath, MODULE_PATH_LENGTH-1, "%s/module.%s", path, modType );
 							if( 
 								strcmp( modType, "php" ) == 0 || 
 								strcmp( modType, "jar" ) == 0 ||
@@ -2309,6 +2313,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		loggedSession->us_InUseCounter--;
 	}
 	
+	FFree( sessionid );
 	return response;
 	
 error:
@@ -2319,6 +2324,7 @@ error:
 		loggedSession->us_InUseCounter--;
 	}
 
+	FFree( sessionid );
 	return response;
 }
 

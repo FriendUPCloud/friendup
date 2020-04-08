@@ -103,6 +103,8 @@
 #define MODULE_FILE_CALL_STRING "friendrequestparameters=%s"
 #define MODULE_FILE_CALL_STRING_LEN 24
 
+#define MODULE_PATH_LENGTH	512
+
 //
 // Exit code list
 //

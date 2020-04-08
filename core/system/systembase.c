@@ -2165,8 +2165,6 @@ int UserDeviceUnMount( SystemBase *l, SQLLibrary *sqllib __attribute__((unused))
 
 char *RunMod( SystemBase *l, const char *type, const char *path, const char *args, unsigned long *length )
 {
-	char tmpQuery[ 255 ];
-	int pathlen = strlen( path );
 	char *results = NULL;
 
 	EModule *lmod = l->sl_Modules;

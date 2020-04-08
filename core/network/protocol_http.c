@@ -55,6 +55,8 @@ extern SystemBase *SLIB;
 
 char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL *arg );
 
+#define USE_NPOPEN_POLL
+
 // 
 //	TODO: This should be moved
 //It is to help us with fallback PHP support
@@ -78,7 +80,63 @@ static inline ListString *RunPHPScript( const char *command )
 #define PHP_READ_SIZE 65536	
 	
 	char *buf = FMalloc( PHP_READ_SIZE+16 );
-	ListString *data = ListStringNew();
+	ListString *ls = ListStringNew();
+	
+#ifdef USE_NPOPEN_POLL
+
+	DEBUG("[RunPHPScript] command launched\n");
+
+	int size = 0;
+	int errCounter = 0;
+
+	struct pollfd fds[2];
+
+	// watch stdin for input 
+	fds[0].fd = pofd.np_FD[ NPOPEN_CONSOLE ];// STDIN_FILENO;
+	fds[0].events = POLLIN;
+
+	// watch stdout for ability to write
+	fds[1].fd = STDOUT_FILENO;
+	fds[1].events = POLLOUT;
+
+	while( TRUE )
+	{
+		DEBUG("[RunPHPScript] in loop\n");
+		
+		int ret = poll( fds, 2, MOD_TIMEOUT * 1000);
+
+		if( ret == 0 )
+		{
+			DEBUG("Timeout!\n");
+			break;
+		}
+		else if(  ret < 0 )
+		{
+			DEBUG("Error\n");
+			break;
+		}
+		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
+
+		DEBUG( "[RunPHPScript] Adding %d of data\n", size );
+		if( size > 0 )
+		{
+			DEBUG( "[RunPHPScript] before adding to list\n");
+			ListStringAdd( ls, buf, size );
+			DEBUG( "[RunPHPScript] after adding to list\n");
+			//res += size;
+		}
+		else
+		{
+			errCounter++;
+			DEBUG("ErrCounter: %d\n", errCounter );
+
+			break;
+		}
+	}
+	
+	DEBUG("[RunPHPScript] File readed\n");
+	
+#else
 	int errCounter = 0;
 	int size = 0;
 	
@@ -115,7 +173,7 @@ static inline ListString *RunPHPScript( const char *command )
 		if( size > 0 )
 		{
 			DEBUG( "[RunPHPScript] before adding to list\n");
-			ListStringAdd( data, buf, size );
+			ListStringAdd( ls, buf, size );
 			DEBUG( "[RunPHPScript] after adding to list\n");
 		}
 		else
@@ -135,16 +193,17 @@ static inline ListString *RunPHPScript( const char *command )
 	}
 	DEBUG( "[RunPHPScript] after loop, memory will be released\n");
 	
+#endif
 	FFree( buf );
 	DEBUG("[RunPHPScript] File readed\n");
 	
 	// Free pipe if it's there
 	newpclose( &pofd );
 	
-	ListStringJoin( data );		//we join all string into one buffer
-
-	DEBUG( "[RunPHPScript] Finished PHP call...(%lu length)-\n", data->ls_Size );
-	return data;
+	ListStringJoin( ls );		//we join all string into one buffer
+	
+	DEBUG( "[RunPHPScript] Finished PHP call...(%lu length)-\n", ls->ls_Size );
+	return ls;
 	
 	/*
 	FILE *pipe = popen( command, "r" );
