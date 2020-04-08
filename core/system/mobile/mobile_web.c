@@ -133,7 +133,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			if( el != NULL )
 			{
 				char *next;
-				uid = strtol( el->data, &next, 0 );
+				uid = strtol( el->hme_Data, &next, 0 );
 			}
 			if( uid <= 0 )
 			{
@@ -143,7 +143,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			el = HttpGetPOSTParameter( request, "apptoken" );
 			if( el != NULL )
 			{
-				apptoken = UrlDecodeToMem( (char *)el->data );
+				apptoken = UrlDecodeToMem( (char *)el->hme_Data );
 				unsigned int z;
 				for( z = 0 ; z < strlen( apptoken ) ; z++ )
 				{
@@ -158,7 +158,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			el = HttpGetPOSTParameter( request, "deviceid" );
 			if( el != NULL )
 			{
-				deviceID = UrlDecodeToMem( (char *)el->data );
+				deviceID = UrlDecodeToMem( (char *)el->hme_Data );
 				DEBUG("Got deviceID: >%s<\n",  deviceID );
 				unsigned int z;
 				for( z = 0 ; z < strlen( deviceID ) ; z++ )
@@ -174,19 +174,19 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			el = HttpGetPOSTParameter( request, "appversion" );
 			if( el != NULL )
 			{
-				appversion = UrlDecodeToMem( (char *)el->data );
+				appversion = UrlDecodeToMem( (char *)el->hme_Data );
 			}
 			
 			el = HttpGetPOSTParameter( request, "platform" );
 			if( el != NULL )
 			{
-				platform = UrlDecodeToMem( (char *)el->data );
+				platform = UrlDecodeToMem( (char *)el->hme_Data );
 			}
 			
 			el = HttpGetPOSTParameter( request, "version" );
 			if( el != NULL )
 			{
-				version = UrlDecodeToMem( (char *)el->data );
+				version = UrlDecodeToMem( (char *)el->hme_Data );
 			}
 			
 			if( uid > 0 && apptoken != NULL && deviceID != NULL )
@@ -445,13 +445,13 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 		if( el != NULL )
 		{
 			char *next;
-			id = strtol ( (char *)el->data, &next, 0 );
+			id = strtol ( (char *)el->hme_Data, &next, 0 );
 		}
 		
 		el = HttpGetPOSTParameter( request, "deviceid" );
 		if( el != NULL )
 		{
-			deviceID = UrlDecodeToMem( (char *)el->data );
+			deviceID = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		
 		SQLLibrary *sqllib  = l->LibrarySQLGet( l );
@@ -563,44 +563,44 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			if( el != NULL )
 			{
 				char *next;
-				umaid = strtol( el->data, &next, 0 );
+				umaid = strtol( el->hme_Data, &next, 0 );
 			}
 			
 			el = HttpGetPOSTParameter( request, "userid" );
 			if( el != NULL )
 			{
 				char *next;
-				uid = strtol( el->data, &next, 0 );
+				uid = strtol( el->hme_Data, &next, 0 );
 			}
 			
 			el = HttpGetPOSTParameter( request, "status" );
 			if( el != NULL )
 			{
-				status = atoi( el->data );
+				status = atoi( el->hme_Data );
 			}
 			
 			el = HttpGetPOSTParameter( request, "apptoken" );
 			if( el != NULL )
 			{
-				apptoken = UrlDecodeToMem( (char *)el->data );
+				apptoken = UrlDecodeToMem( (char *)el->hme_Data );
 			}
 			
 			el = HttpGetPOSTParameter( request, "appversion" );
 			if( el != NULL )
 			{
-				appversion = UrlDecodeToMem( (char *)el->data );
+				appversion = UrlDecodeToMem( (char *)el->hme_Data );
 			}
 			
 			el = HttpGetPOSTParameter( request, "platform" );
 			if( el != NULL )
 			{
-				platform = UrlDecodeToMem( (char *)el->data );
+				platform = UrlDecodeToMem( (char *)el->hme_Data );
 			}
 			
 			el = HttpGetPOSTParameter( request, "version" );
 			if( el != NULL )
 			{
-				version = UrlDecodeToMem( (char *)el->data );
+				version = UrlDecodeToMem( (char *)el->hme_Data );
 			}
 			
 			if( umaid > 0 )
@@ -754,7 +754,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			if( el != NULL )
 			{
 				char *next;
-				uid = strtol( el->data, &next, 0 );
+				uid = strtol( el->hme_Data, &next, 0 );
 			}
 			
 			if( uid > 0 )
@@ -860,12 +860,12 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 		if( el != NULL )
 		{
 			char *next;
-			notifid = strtol( el->data, &next, 0 );
+			notifid = strtol( el->hme_Data, &next, 0 );
 		}
 		el = HttpGetPOSTParameter( request, "action" );
 		if( el != NULL )
 		{
-			action = atoi( (char *)el->data );
+			action = atoi( (char *)el->hme_Data );
 		}
 		
 		DEBUG("Update notification. Action %d notifsid %lu\n", action, notifid );
@@ -963,7 +963,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 		el = HttpGetPOSTParameter( request, "status" );
 		if( el != NULL )
 		{
-			status = atoi( el->data );
+			status = atoi( el->hme_Data );
 		}
 		
 		if( status >= 0 )

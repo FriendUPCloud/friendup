@@ -79,7 +79,7 @@ Http *PIDThreadWebRequest( void *sb, char **urlpath, Http *request, UserSession 
 		if( el != NULL )
 		{
 			char *end;
-			pid = strtoull( (char *)el->data,  &end, 0 );
+			pid = strtoull( (char *)el->hme_Data,  &end, 0 );
 		}
 		
 		response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( "text/html", 9 ),

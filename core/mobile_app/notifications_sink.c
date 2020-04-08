@@ -756,7 +756,11 @@ void ProcessSinkMessage( void *locd )
 											udatalen = snprintf( udata, sizeof(udata), ",\"email\":\"%s\"", usr->u_Email );
 											BufStringAddSize( bs, udata, udatalen );
 										}
-										BufStringAddSize( bs, "}", 1 );
+										
+										BufStringAdd( bs, ",\"groups\":[" );
+										UGMGetUserGroupsDB( SLIB->sl_UGM, usr->u_ID, bs );
+										BufStringAddSize( bs, "]}", 2 );
+										
 										NotificationManagerSendEventToConnections( SLIB->sl_NotificationManager, NULL, NULL, reqid, NULL, NULL, NULL, bs->bs_Buffer );
 										
 										UserDelete( usr );

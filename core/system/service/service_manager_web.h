@@ -7,50 +7,27 @@
 * found in the file license_mit.txt.                                           *
 *                                                                              *
 *****************************************************************************©*/
-// code by Hogne Titlestad
-// email: hogga@sub-ether.org
+/** @file
+ * 
+ *  Service Manager Web header
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 2016
+ */
 
-#ifndef __UTIL_LIST_H__
-#define __UTIL_LIST_H__
+#ifndef __SERVICE_SERVICE_MANAGER_WEB_H__
+#define __SERVICE_SERVICE_MANAGER_WEB_H__
 
-//
-// List structure
-//
-
-typedef struct List
-{
-	void			*l_Data;
-	struct List		*next;
-	struct List		*last;
-} List;
-
-//
-// Create List
-//
-
-List* CreateList();
+#include <system/services/service.h>
+#include <network/socket.h>
+#include <network/http.h>
+#include <network/path.h>
+#include <system/user/user_session.h>
 
 //
-// Add to List
+// Web calls handler, void *SystemBase
 //
 
-void AddToList( List *list, void *data );
+Http *SMWebRequest( void *lsb, char **urlpath, Http* request, UserSession *loggedSession );
 
-//
-// Remove List
-//
-
-void FreeList( List *list );
-
-List* ListNew();
-
-List* ListAdd( List **list, void* data );    // Add to the beginning of the list
-
-void ListAppend( List* list, void* data ); // Add to the end of the list
-
-void ListFree( List* list );
-
-void ListFreeWithData( List* list );
-
-#endif	// __UTIL_LIST_H__
-
+#endif //__SERVICE_SERVICE_MANAGER_H__

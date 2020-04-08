@@ -58,6 +58,7 @@
 #include <security/server_checker.h>
 #include <network/websocket_client.h>
 #include <network/protocol_websocket.h>
+#include <util/session_id.h>
 
 #define LIB_NAME "system.library"
 #define LIB_VERSION 		1
@@ -124,6 +125,7 @@ SystemBase *SystemInit( void )
 		FFree( tempString );
 		return NULL;
 	}
+	
 	// uptime
 	l->l_UptimeStart = time( NULL );
 	
@@ -788,6 +790,12 @@ SystemBase *SystemInit( void )
 		return NULL;	
 	}
 	
+	l->sl_SecurityManager = SecurityManagerNew( l );
+	if( l->sl_SecurityManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize SecurityManager\n");
+	}
+	
 	l->sl_UM = UMNew( l );
 	if( l->sl_UM == NULL )
 	{
@@ -1000,6 +1008,8 @@ SystemBase *SystemInit( void )
 	
 	EventAdd( l->sl_EventManager, "RemoveOldLogs", RemoveOldLogs, l, time( NULL )+HOUR12, HOUR12, -1 );
 	
+	//EventAdd( l->sl_EventManager, "SecurityManagerRemoteOldBadSessionCalls", SecurityManagerRemoteOldBadSessionCalls, l->sl_SecurityManager, time( NULL )+MINS60, MINS60, -1 );
+	
 	//@BG-678 
 	//EventAdd( l->sl_EventManager, USMCloseUnusedWebSockets, l->sl_USM, time( NULL )+MINS5, MINS5, -1 );
 	
@@ -1190,6 +1200,10 @@ void SystemClose( SystemBase *l )
 	{
 		RMDelete( l->sl_RoleManager );
 	}
+	if( l->sl_SecurityManager != NULL )
+	{
+		SecurityManagerDelete( l->sl_SecurityManager );
+	}
 	
 	// Remove sentinel from active memory
 	if( l->sl_Sentinel != NULL )
@@ -1359,15 +1373,15 @@ void SystemClose( SystemBase *l )
 		{
 			if( l->l_ServerKeys[i] != NULL )
 			{
-				free( l->l_ServerKeys[i] );
+				FFree( l->l_ServerKeys[i] );
 			}
 			if( l->l_ServerKeyValues[i] != NULL )
 			{
-				free( l->l_ServerKeyValues[i] );
+				FFree( l->l_ServerKeyValues[i] );
 			}
 		}
-		free( l->l_ServerKeys );
-		free( l->l_ServerKeyValues );
+		FFree( l->l_ServerKeys );
+		FFree( l->l_ServerKeyValues );
 	}
 	
 	xmlCleanupParser();
@@ -1587,9 +1601,11 @@ int SystemInitExternal( SystemBase *l )
 			
 			if( foundRemoteSession == FALSE )
 			{
+				char *newSessionId = SessionIDGenerate();
 				DEBUG("[SystemBase] Remote session will be created for Sentinel\n");
 				
-				UserSession *ses = UserSessionNew( "remote", "remote" );
+				UserSession *ses = UserSessionNew( newSessionId, "remote" );
+				//UserSession *ses = UserSessionNew( "remote", "remote" );
 				if( ses != NULL )
 				{
 					ses->us_UserID = l->sl_Sentinel->s_User->u_ID;
@@ -1598,27 +1614,8 @@ int SystemInitExternal( SystemBase *l )
 					UserAddSession( l->sl_Sentinel->s_User, ses );
 					
 					USMUserSessionAddToList( l->sl_USM, ses );
-					/*
-					UserSession *nextses = NULL;
-					if( l->sl_USM->usm_Sessions != NULL )
-					{
-						l->sl_USM->usm_Sessions->node.mln_Succ;
-					}
-					ses->node.mln_Succ = (MinNode *)l->sl_USM->usm_Sessions;
-					l->sl_USM->usm_Sessions = ses;
-					if( nextses != NULL )
-					{
-						nextses->node.mln_Pred = (MinNode *)ses;
-					}
-					*/
-					
-					//
-					//if( sqllib->NumberOfRecordsCustomQuery( sqllib, "select * from `FUserSession` where UserID='1' AND DeviceIdentity='remote'") < 1)
-					//{
-					//	sqllib->Save( sqllib, UserSessionDesc, ses );
-					//}
-					//
 				}
+				FFree( newSessionId );
 			}
 			
 			//
@@ -1665,8 +1662,6 @@ int SystemInitExternal( SystemBase *l )
 			sentUser = l->sl_Sentinel->s_User;
 		}*/
 		
-		
-		
 		l->LibrarySQLDrop( l, sqllib );
 		
 		UGMMountDrives( l->sl_UGM );
@@ -1700,26 +1695,6 @@ int SystemInitExternal( SystemBase *l )
 	}
 	
 	DEBUG("[SystembaseInitExternal]APNS init\n" );
-	
-	/*
-	l->l_APNSConnection = WebsocketAPNSConnectorNew( l->l_AppleServerHost, l->l_AppleServerPort );
-	if( l->l_APNSConnection != NULL )
-	{
-		
-		//if( WebsocketClientConnect( l->l_APNSConnection->wapns_Connection ) > 0 )
-		//{
-		//	DEBUG("APNS server connected\n");
-		//}
-		//else
-		//{
-		//	DEBUG("APNS server not connected\n");
-		//}
-	}
-	else
-	{
-		FERROR("[SystembaseInitExternal]APNS init ERROR!\n");
-	}
-	*/
 	
 	return 0;
 }
@@ -2453,7 +2428,7 @@ ZLibrary *LibraryZGet( SystemBase *l )
  * Drop z.library to pool UNIMPLEMENTED
  *
  * @param l pointer to SystemBase
- * @param aclose pointer to z.library which will be returned to pool
+ * @param closelib pointer to z.library which will be returned to pool
  */
 
 void LibraryZDrop( SystemBase *l __attribute__((unused)), ZLibrary *closelib __attribute__((unused)) )

@@ -21,6 +21,16 @@
 #include <system/fsys/dosdriver.h>
 #include <system/systembase.h>
 
+//
+// temporary structure which allow us to send notification
+//
+
+typedef struct NotifUser
+{
+	User		*nu_User;
+	MinNode		node;
+}NotifUser;
+
 /**
  * Init DeviceManager
  *
@@ -1222,6 +1232,7 @@ int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, cha
 	File *retFile = NULL;
 	struct tm activityTime;
 	memset( &activityTime, 0, sizeof( struct tm ) );
+	NotifUser *rootNotifUser = NULL;
 	
 	if( usr != NULL )
 	{
@@ -1854,7 +1865,14 @@ AND f.Name = '%s'",
 							// Tell user!
 							if( notify == TRUE )
 							{
-								UserNotifyFSEvent2( dm, tmpUser, "refresh", "Mountlist:" );
+								//UserNotifyFSEvent2( dm, tmpUser, "refresh", "Mountlist:" );
+								NotifUser *nun = FCalloc( sizeof(NotifUser), 1 );
+								if( nun != NULL )
+								{
+									nun->nu_User = tmpUser;
+									nun->node.mln_Succ = (MinNode *)rootNotifUser;
+									rootNotifUser = nun;
+								}
 							}
 						}
 						tmpUser = (User *)tmpUser->node.mln_Succ;
@@ -1873,13 +1891,21 @@ AND f.Name = '%s'",
 			MountUnlock( dm, usr );
 		}
 		
-		//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 		// Send notify to user and all his sessions
 		if( notify == TRUE )
 		{
 			UserNotifyFSEvent2( dm, usr, "refresh", "Mountlist:" );
 		}
-		//FRIEND_MUTEX_LOCK( &dm->dm_Mutex );
+		
+		NotifUser *ruser = rootNotifUser;
+		NotifUser *cuser = rootNotifUser;
+		while( cuser != NULL )
+		{
+			ruser = cuser;
+			UserNotifyFSEvent2( dm, cuser->nu_User, "refresh", "Mountlist:" );
+			cuser = (NotifUser *)cuser->node.mln_Succ;
+			FFree( ruser );
+		}
 		
 		DEBUG("[MountFS] %s - Mount device END\n", usr->u_Name );
 	}

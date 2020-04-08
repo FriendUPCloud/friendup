@@ -377,8 +377,50 @@ var WorkspaceInside = {
 				{
 					var w = document.createElement( 'div' );
 					w.className = 'Workspace';
+					w.setAttribute( 'position', 'top_center' );
+					( function( num ){
+						CreateHelpBubble( w, false, false, { getText: function()
+						{
+							// Create a text representing the content in the virtual workspace
+							var apps = {};
+							var str = '';
+							for( var a in movableWindows )
+							{
+								if( movableWindows[ a ].windowObject.workspace == num )
+								{
+									if( movableWindows[ a ].windowObject.applicationName )
+									{
+										if( !apps[ movableWindows[ a ].windowObject.applicationName ] || !apps[ movableWindows[ a ].windowObject.applicationName ].count )
+										{
+											apps[ movableWindows[ a ].windowObject.applicationName ] = {
+												count: 0,
+												string: movableWindows[ a ].titleString
+											};
+										}
+										apps[ movableWindows[ a ].windowObject.applicationName ].count++;
+									}
+									else
+									{
+										str += movableWindows[ a ].titleString + "\n";
+									}
+								}
+							}
+							var o = '';
+							for( var a in apps )
+								o += ( apps[ a ].string + ( apps[ a ].count > 1 ? ( ' (' + apps[ a ].count + ')' ) : '' ) ) + "\n";
+							return o + str;
+						} } );
+					} )( a );
 					if( a == globalConfig.workspaceCurrent ) w.className += ' Active';
-					w.innerHTML = '<span>' + ( a + 1 ) + '</span>';
+					if( globalConfig.workspace_labels && globalConfig.workspace_labels[ a ] && typeof( globalConfig.workspace_labels ) == 'object' )
+					{
+						w.innerHTML = '<span class="' + globalConfig.workspace_labels[ a ] + '"></span>';
+						w.className += ' WithIcon';
+					}
+					else
+					{
+						w.innerHTML = '<span>' + ( a + 1 ) + '</span>';
+					}
 					w.ind = a;
 					w.onmousedown = function( e )
 					{
@@ -519,6 +561,9 @@ var WorkspaceInside = {
 		// Force connecting ws state (we will close it!)
 		Workspace.websocketState = 'connecting';
 		Workspace.websocketsOffline = false;
+		
+		// Just remove this by force
+		document.body.classList.remove( 'Busy' );
 
 		var conf = {
 			onstate: onState,
@@ -589,6 +634,17 @@ var WorkspaceInside = {
 				{
 					console.log( '[onState] We got an error.' );
 					Workspace.websocketState = 'error';
+					var serverCheck = new Module( 'system' );
+					serverCheck.onExecuted = function( q, s )
+					{
+						if( ( q == 'fail' && !s ) || ( !q && !s ) )
+						{
+							Workspace.serverIsThere = false;
+							Workspace.workspaceIsDisconnected = true;
+							Workspace.checkServerConnectionResponse();
+						}
+					}
+					serverCheck.execute( 'getsetting', { setting: 'infowindow' } );
 				}
 				// After such an error, always try reconnect
 				if( Workspace.httpCheckConnectionInterval )
@@ -1154,12 +1210,14 @@ var WorkspaceInside = {
 					}
 					calendar.addButton( newBtn );
 
+					/*
+						TODO: Re-enable the wrench when we have a working calendar
 					var geBtn = calendar.createButton( 'fa-wrench' );
 					geBtn.onclick = function()
 					{
 						ExecuteApplication( 'FriendCalendar' );
 					}
-					calendar.addButton( geBtn );
+					calendar.addButton( geBtn );*/
 
 					// Add events to calendar!
 					calendar.eventWin = false;
@@ -1718,6 +1776,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						//console.log = function(){};
 					}
 					
+					if( dat.workspace_labels )
+					{
+						globalConfig.workspace_labels = dat.workspace_labels;
+					}
+					else
+					{
+						globalConfig.workspace_labels = [];
+					}
+					
 					// Make sure iOS has the correct information
 					if( window.friendApp && window.webkit && window.friendApp.setBackgroundColor )
 					{
@@ -1854,7 +1921,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			'menumode', 'startupsequence', 'navigationmode', 'windowlist', 
 			'focusmode', 'hiddensystem', 'workspacecount', 
 			'scrolldesktopicons', 'wizardrun', 'themedata_' + Workspace.theme,
-			'workspacemode'
+			'workspacemode', 'workspace_labels'
 		] } );
 	},
 	// Called on onunload
@@ -6984,7 +7051,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					},
 					{
 						name: i18n( 'menu_help_manual' ),
-						command: function(){ window.open( 'https://docs.friendup.tech/en-US/docs/FriendUser/End_user_guide', '', '' ); }
+						command: function(){ window.open( 'https://docs.friendos.com/docs/end-user-documentation/', '', '' ); }
 					}
 				]
 			}
@@ -8293,6 +8360,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				Workspace.initWebSocket();
 			}
+			else
+			{
+				// Just remove this by force
+				document.body.classList.remove( 'Busy' );
+			}
 		}
 		// Only set serverIsThere if we don't have a response from the server
 		inactiveTimeout = setTimeout( function(){ Workspace.serverIsThere = false; }, 1000 );
@@ -8311,6 +8383,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if( Workspace.screen )
 				Workspace.screen.displayOfflineMessage();
 			Workspace.workspaceIsDisconnected = true;
+			Workspace.nudgeWorkspacesWidget();
 		}
 		else
 		{
@@ -8318,6 +8391,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if( Workspace.screen )
 				Workspace.screen.hideOfflineMessage();
 			Workspace.workspaceIsDisconnected = false;
+			Workspace.nudgeWorkspacesWidget();
+			// Just remove this by force
+			document.body.classList.remove( 'Busy' );
 		}
 	},
 	// Upgrade settings (for new versions)
@@ -8702,6 +8778,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		if( newState == 'active' )
 		{
+			Workspace.nudgeWorkspacesWidget();
+			
 			document.body.classList.add( 'ViewStateActive' );
 			// TODO: Remove the uncommented thing, it isn't working
 			// TODO: Check with pawel..

@@ -256,8 +256,8 @@ JSONData* JSONParse( char* str, unsigned int length )
 						while( lt )
 						{
 							List* t = lt;
-							if( lt->data )
-								a2[i++] = (JSONData*)lt->data;
+							if( lt->l_Data )
+								a2[i++] = (JSONData*)lt->l_Data;
 							lt = lt->next;
 							free( t );
 						}
@@ -658,7 +658,7 @@ JSONData* JSONParse( char* str, unsigned int length )
 				// Append to array
 				JSONArray* array = ((JSONArray*)d->data);
 				List* newElement = ListNew();
-				newElement->data = currentNode;
+				newElement->l_Data = currentNode;
 
 				// If the array if empty, add the first element
 				if( array->last == NULL )
@@ -821,7 +821,7 @@ void printJSONDocument( JSONData* c )
 	else if( c->type == JSON_TYPE_OBJECT )
 	{
 		h = (Hashmap*)c->data;
-		size = h->size;
+		size = h->hm_Size;
 		printf( "{" );
 	}
 	else
@@ -838,10 +838,14 @@ void printJSONDocument( JSONData* c )
 		{
 			e = HashmapIterate( h, &iterator );
 			if( !e )
+			{
 				printf( "\n;____________;\n" );
+			}
 			if( e )
-				t = (JSONData*)e->data;
-			printf( "\"%s\":", e->key );
+			{
+				t = (JSONData*)e->hme_Data;
+			}
+			printf( "\"%s\":", e->hme_Key );
 		}
 		else
 			t = c;
@@ -918,9 +922,9 @@ void JSONFree( JSONData* document )
 		while( lt )
 		{
 			List* t = lt;
-			if( lt->data )
+			if( lt->l_Data )
 			{
-				JSONFree( lt->data );
+				JSONFree( lt->l_Data );
 			}
 			lt = lt->next;
 			free( t );
@@ -935,9 +939,11 @@ void JSONFree( JSONData* document )
 		unsigned int i = 0;
 		while( ( e = HashmapIterate( h, &i ) ) != NULL )
 		{
-			free( e->key );
-			if( e->data )
-				JSONFree( (JSONData*)e->data );
+			FFree( e->hme_Key );
+			if( e->hme_Data != NULL )
+			{
+				JSONFree( (JSONData*)e->hme_Data );
+			}
 		}
 		HashmapFree( h );
 	}

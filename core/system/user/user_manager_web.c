@@ -191,7 +191,8 @@ inline static void NotifyExtServices( SystemBase *l, Http *request, User *usr, c
 	}
 
 	BufStringAddSize( bs, "]}", 2 );
-	//DEBUG("NotifyExtServices3: %s\n", bs->bs_Buffer );
+	
+	DEBUG("NotifyExtServices3: %s\n", bs->bs_Buffer );
 	
 	NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", action, bs->bs_Buffer );
 	
@@ -294,13 +295,13 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			HashmapElement *el = HttpGetPOSTParameter( request, "dstsessionid" );
 			if( el != NULL )
 			{
-				sessionid = UrlDecodeToMem( (char *)el->data );
+				sessionid = UrlDecodeToMem( (char *)el->hme_Data );
 			}
 			
 			el = HttpGetPOSTParameter( request, "name" );
 			if( el != NULL )
 			{
-				name = UrlDecodeToMem( (char *)el->data );
+				name = UrlDecodeToMem( (char *)el->hme_Data );
 			}
 			
 			if( name != NULL )
@@ -391,25 +392,25 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			HashmapElement *el = HttpGetPOSTParameter( request, "dstsessionid" );
 			if( el != NULL )
 			{
-				sessionid = UrlDecodeToMem( (char *)el->data );
+				sessionid = UrlDecodeToMem( (char *)el->hme_Data );
 			}
 			
 			el = HttpGetPOSTParameter( request, "msg" );
 			if( el != NULL )
 			{
-				msg = UrlDecodeToMem( (char *)el->data );
+				msg = UrlDecodeToMem( (char *)el->hme_Data );
 			}
 			
 			el = HttpGetPOSTParameter( request, "appname" );
 			if( el != NULL )
 			{
-				appname = UrlDecodeToMem( (char *)el->data );
+				appname = UrlDecodeToMem( (char *)el->hme_Data );
 			}
 			
 			el = HttpGetPOSTParameter( request, "dstauthid" );
 			if( el != NULL )
 			{
-				authid = UrlDecodeToMem( (char *)el->data );
+				authid = UrlDecodeToMem( (char *)el->hme_Data );
 			}
 			
 			User *u = loggedSession->us_User;
@@ -542,8 +543,9 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	* @param password - (required) password
 	* @param fullname  - full user name
 	* @param email - user email
-	* @param level - groups to which user will be assigned, separated by comma
-	* @return { create: sucess } when success, otherwise error with code
+	* @param level - (required) groups to which user will be assigned, separated by comma
+	* @param workgroups - groups to which user will be assigned. Groups are passed as string, ID's separated by comma
+	* @return ok<!--separate-->{ "create": "sucess","id":"ID","uuid":"UUID" } when success, otherwise error with code
 	*/
 	/// @endcond
 	
@@ -562,30 +564,56 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		char *fullname = NULL;
 		char *email = NULL;
 		char *level = NULL;
-		//FULONG id = 0;
+		char *workgroups = NULL;
 		FBOOL userCreated = FALSE;
 		
 		DEBUG( "[UMWebRequest] Create user!!\n" );
 		
 		HashmapElement *el = NULL;
+		char *args = NULL;
+		char *authid = NULL;
+			
+		el = HttpGetPOSTParameter( request, "authid" );
+		if( el != NULL )
+		{
+			authid = el->hme_Data;
+		}
+		el = HttpGetPOSTParameter( request, "args" );
+		if( el != NULL )
+		{
+			args = el->hme_Data;//UrlDecodeToMem( el->data );
+		}
 		
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
+		if( loggedSession->us_User->u_IsAdmin || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
 		{
 			el = HttpGetPOSTParameter( request, "username" );
 			if( el != NULL )
 			{
-				usrname = UrlDecodeToMem( (char *)el->data );
+				usrname = UrlDecodeToMem( (char *)el->hme_Data );
 				DEBUG( "[UMWebRequest] Update usrname %s!!\n", usrname );
 			}
 			
 			el = HttpGetPOSTParameter( request, "password" );
 			if( el != NULL )
 			{
-				usrpass = UrlDecodeToMem( (char *)el->data );
+				usrpass = UrlDecodeToMem( (char *)el->hme_Data );
 				DEBUG( "[UMWebRequest] Update usrpass %s!!\n", usrpass );
 			}
 			
-			if( usrname != NULL && usrpass != NULL )
+			el = HttpGetPOSTParameter( request, "workgroups" );
+			if( el != NULL )
+			{
+				workgroups = UrlDecodeToMem( (char *)el->hme_Data );
+				DEBUG("Workgroups found!: %s\n", workgroups );
+			}
+			
+			el = HttpGetPOSTParameter( request, "level" );
+			if( el != NULL )
+			{
+				level = UrlDecodeToMem( (char *)el->hme_Data );
+			}
+			
+			if( usrname != NULL && usrpass != NULL && level != NULL )
 			{
 				User *tusr = UMUserGetByNameDB( l->sl_UM, usrname );
 				
@@ -600,21 +628,15 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					el = HttpGetPOSTParameter( request, "fullname" );
 					if( el != NULL )
 					{
-						fullname = UrlDecodeToMem( (char *)el->data );
+						fullname = UrlDecodeToMem( (char *)el->hme_Data );
 						DEBUG( "[UMWebRequest] Update fullname %s!!\n", fullname );
 					}
 					
 					el = HttpGetPOSTParameter( request, "email" );
 					if( el != NULL )
 					{
-						email = UrlDecodeToMem( (char *)el->data );
+						email = UrlDecodeToMem( (char *)el->hme_Data );
 						DEBUG( "[UMWebRequest] Update email %s!!\n", email );
-					}
-					
-					el = HttpGetPOSTParameter( request, "level" );
-					if( el != NULL )
-					{
-						level = UrlDecodeToMem( (char *)el->data );
 					}
 					
 					User *locusr = UserNew();
@@ -632,7 +654,9 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						
 						if( error == 0 )
 						{
-							HttpAddTextContent( response, "ok<!--separate-->{ \"create\": \"sucess\" }" );
+							char buffer[ 1024 ];
+							snprintf( buffer, sizeof(buffer), "ok<!--separate-->{\"create\":\"sucess\",\"id\":\"%lu\",\"uuid\":\"%s\"}", locusr->u_ID, locusr->u_UUID );
+							HttpAddTextContent( response, buffer );
 						}
 						else
 						{
@@ -643,7 +667,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							HttpAddTextContent( response, buffer );
 						}
 						
-						UGMAssignGroupToUserByStringDB( l->sl_UGM, locusr, level, NULL );
+						UGMAssignGroupToUserByStringDB( l->sl_UGM, locusr, level, workgroups );
 						
 						NotifyExtServices( l, request, locusr, "create" );
 						
@@ -661,7 +685,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			{
 				char buffer[ 256 ];
 				char buffer1[ 256 ];
-				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "username, password" );
+				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "username, password, level" );
 				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
@@ -672,6 +696,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			FFree( level );
 		}
 		
+		if( workgroups != NULL )
+		{
+			FFree( workgroups );
+		}
+		/*
 		if( userCreated == TRUE )
 		{
 			if( usrname != NULL )
@@ -691,6 +720,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				FFree( email );
 			}
 		}
+		*/
 		*result = 200;
 	}
 	
@@ -713,7 +743,9 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
-
+		
+		char *args = NULL;
+		char *authid = NULL;
 		FULONG id = 0;
 		
 		DEBUG( "[UMWebRequest] Delete user!!\n" );
@@ -722,10 +754,21 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		if( el != NULL )
 		{
 			char *next;
-			id = strtol ( (char *)el->data, &next, 0 );
+			id = strtol ( (char *)el->hme_Data, &next, 0 );
 		}
 		
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
+		el = HttpGetPOSTParameter( request, "authid" );
+		if( el != NULL )
+		{
+			authid = el->hme_Data;
+		}
+		el = HttpGetPOSTParameter( request, "args" );
+		if( el != NULL )
+		{
+			args = el->hme_Data;//UrlDecodeToMem( el->data );
+		}
+		
+		if( loggedSession->us_User->u_IsAdmin || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
 		{
 			if( id > 0 )
 			{
@@ -827,12 +870,12 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		el = HttpGetPOSTParameter( request, "authid" );
 		if( el != NULL )
 		{
-			authid = el->data;
+			authid = el->hme_Data;
 		}
 		el = HttpGetPOSTParameter( request, "args" );
 		if( el != NULL )
 		{
-			args = el->data;
+			args = el->hme_Data;
 			//args = UrlDecodeToMem( el->data );
 		}
 		
@@ -842,14 +885,14 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		if( el != NULL )
 		{
 			char *next;
-			id = strtol ( (char *)el->data, &next, 0 );
+			id = strtol ( (char *)el->hme_Data, &next, 0 );
 		}
 		
 		el = HttpGetPOSTParameter( request, "status" );
 		if( el != NULL )
 		{
 			char *next;
-			status = (FLONG)strtol ( (char *)el->data, &next, 0 );
+			status = (FLONG)strtol ( (char *)el->hme_Data, &next, 0 );
 		}
 		
 		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
@@ -1007,13 +1050,13 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		HashmapElement *el = HttpGetPOSTParameter( request, "username" );
 		if( el != NULL )
 		{
-			usrname = UrlDecodeToMem( (char *)el->data );
+			usrname = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		
 		el = HttpGetPOSTParameter( request, "password" );
 		if( el != NULL )
 		{
-			usrpass = UrlDecodeToMem( (char *)el->data );
+			usrpass = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		
 		if( usrname != NULL && usrpass != NULL )
@@ -1160,7 +1203,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		if( el != NULL )
 		{
 			char *next;
-			id = strtol ( (char *)el->data, &next, 0 );
+			id = strtol ( (char *)el->hme_Data, &next, 0 );
 			DEBUG( "[UMWebRequest] Update id %ld!!\n", id );
 		}
 		
@@ -1168,7 +1211,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		if( el != NULL )
 		{
 			char *next;
-			status = (FLONG)strtol ( (char *)el->data, &next, 0 );
+			status = (FLONG)strtol ( (char *)el->hme_Data, &next, 0 );
 		}
 		
 		User *logusr = NULL;
@@ -1179,12 +1222,12 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			el = HttpGetPOSTParameter( request, "authid" );
 			if( el != NULL )
 			{
-				authid = el->data;
+				authid = el->hme_Data;
 			}
 			el = HttpGetPOSTParameter( request, "args" );
 			if( el != NULL )
 			{
-				args = el->data;//UrlDecodeToMem( el->data );
+				args = el->hme_Data;//UrlDecodeToMem( el->data );
 			}
 			
 			if( loggedSession->us_User->u_IsAdmin || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
@@ -1232,7 +1275,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				el = HttpGetPOSTParameter( request, "username" );
 				if( el != NULL )
 				{
-					usrname = UrlDecodeToMem( (char *)el->data );
+					usrname = UrlDecodeToMem( (char *)el->hme_Data );
 					DEBUG( "[UMWebRequest] Update usrname %s!!\n", usrname );
 				
 					if( haveAccess == TRUE )
@@ -1268,7 +1311,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					el = HttpGetPOSTParameter( request, "password" );
 					if( el != NULL )
 					{
-						usrpass = UrlDecodeToMem( (char *)el->data );
+						usrpass = UrlDecodeToMem( (char *)el->hme_Data );
 						DEBUG( "[UMWebRequest] Update usrpass %s!!\n", usrpass );
 						if( usrpass != NULL && logusr->u_Password != NULL )
 						{
@@ -1280,7 +1323,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					el = HttpGetPOSTParameter( request, "fullname" );
 					if( el != NULL )
 					{
-						fullname = UrlDecodeToMem( (char *)el->data );
+						fullname = UrlDecodeToMem( (char *)el->hme_Data );
 						DEBUG( "[UMWebRequest] Update fullname %s!!\n", fullname );
 						if( logusr->u_FullName != NULL )
 						{
@@ -1292,7 +1335,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					el = HttpGetPOSTParameter( request, "email" );
 					if( el != NULL )
 					{
-						email = UrlDecodeToMem( (char *)el->data );
+						email = UrlDecodeToMem( (char *)el->hme_Data );
 						DEBUG( "[UMWebRequest] Update email %s!!\n", email );
 						if( logusr->u_Email != NULL )
 						{
@@ -1304,13 +1347,13 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					el = HttpGetPOSTParameter( request, "level" );
 					if( el != NULL )
 					{
-						level = UrlDecodeToMem( (char *)el->data );
+						level = UrlDecodeToMem( (char *)el->hme_Data );
 					}
 				
 					el = HttpGetPOSTParameter( request, "workgroups" );
 					if( el != NULL )
 					{
-						workgroups = UrlDecodeToMem( (char *)el->data );
+						workgroups = UrlDecodeToMem( (char *)el->hme_Data );
 						DEBUG("Workgroups found!: %s\n", workgroups );
 					}
 			
@@ -1437,7 +1480,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		if( el != NULL )
 		{
 			char *next;
-			id = strtol ( (char *)el->data, &next, 0 );
+			id = strtol ( (char *)el->hme_Data, &next, 0 );
 			DEBUG( "[UMWebRequest] Update id %ld!!\n", id );
 		}
 		
@@ -1448,13 +1491,13 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			el = HttpGetPOSTParameter( request, "authid" );
 			if( el != NULL )
 			{
-				authid = el->data;
+				authid = el->hme_Data;
 			}
 			el = HttpGetPOSTParameter( request, "args" );
 			if( el != NULL )
 			{
-				args = el->data;
-				//args = UrlDecodeToMem( el->data );
+				args = el->hme_Data;
+				//args = UrlDecodeToMem( el->hme_Data );
 			}
 				
 			if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
@@ -1510,7 +1553,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				el = HttpGetPOSTParameter( request, "workgroups" );
 				if( el != NULL )
 				{
-					workgroups = UrlDecodeToMem( (char *)el->data );
+					workgroups = UrlDecodeToMem( (char *)el->hme_Data );
 					DEBUG("Workgroups found!: %s\n", workgroups );
 				}
 			
@@ -1618,7 +1661,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			}
 			else
 			{
-				sessid = (char *)el->data;
+				sessid = (char *)el->hme_Data;
 			}
 		}
 		else
@@ -1739,7 +1782,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		HashmapElement *el = HttpGetPOSTParameter( request, "username" );
 		if( el != NULL )
 		{
-			usrname = UrlDecodeToMem( (char *)el->data );
+			usrname = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		
 		User *logusr = NULL;
@@ -1887,19 +1930,19 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		HashmapElement *el = HttpGetPOSTParameter( request, "sessid" );
 		if( el != NULL )
 		{
-			sessionid = UrlDecodeToMem( (char *)el->data );
+			sessionid = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		
 		el = HttpGetPOSTParameter( request, "deviceid" );
 		if( el != NULL )
 		{
-			deviceid = UrlDecodeToMem( (char *)el->data );
+			deviceid = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		
 		el = HttpGetPOSTParameter( request, "username" );
 		if( el != NULL )
 		{
-			usrname = UrlDecodeToMem( (char *)el->data );
+			usrname = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		
 		if( sessionid != NULL )
@@ -1987,7 +2030,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			HashmapElement *el = HttpGetPOSTParameter( request, "usersonly" );
 			if( el != NULL )
 			{
-				if( ( (char *)el->data ) != NULL && strcmp("true", (char *)el->data ) == 0 )
+				if( ( (char *)el->hme_Data ) != NULL && strcmp("true", (char *)el->hme_Data ) == 0 )
 				{
 					usersOnly = TRUE;
 				}
@@ -2097,7 +2140,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			HashmapElement *el = HttpGetPOSTParameter( request, "usersonly" );
 			if( el != NULL )
 			{
-				if( ( (char *)el->data ) != NULL && strcmp("true", (char *)el->data ) == 0 )
+				if( ( (char *)el->hme_Data ) != NULL && strcmp("true", (char *)el->hme_Data ) == 0 )
 				{
 					usersOnly = TRUE;
 				}
@@ -2179,7 +2222,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			
 			BufStringDelete( bs );
 		}
-		
 		else	//is admin
 		{
 			Log( FLOG_ERROR,"User '%s' dont have admin rights\n", loggedSession->us_User->u_Name );
@@ -2218,7 +2260,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		//el =  HashmapGet( (*request)->parsedPostContent, "message" );
 		if( el != NULL )
 		{
-			msg = UrlDecodeToMem( ( char *)el->data );
+			msg = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
 		BufString *bs = BufStringNew();
@@ -2324,7 +2366,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		if( el != NULL )
 		{
 			char *end;
-			keyid = strtol( (char *)el->data, &end, 0 );
+			keyid = strtol( (char *)el->hme_Data, &end, 0 );
 		}
 		
 		if( keyid > 0 )

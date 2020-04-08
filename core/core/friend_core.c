@@ -64,8 +64,8 @@
 //#undef DEBUG1
 //#define DEBUG1( ...)
 
-//#define USE_PTHREAD
-#define USE_WORKERS
+#define USE_PTHREAD
+//#define USE_WORKERS
 //#define USE_PTHREAD_ACCEPT
 
 extern void *FCM;			// FriendCoreManager
@@ -139,9 +139,6 @@ static unsigned long ssl_id_function( void )
 FriendCoreInstance *FriendCoreNew( void *sb, int id, FBOOL ssl, int port, int maxp, int bufsiz, char *hostname )
 {
 	LOG( FLOG_INFO, "[FriendCoreNew] Starting friend core\n" );
-	
-	// Static locks callbacks
-	SSL_library_init();
 	
 	// Watch our threads
 	// TODO: make an array and use one for each friend core! (if multiple)
@@ -2054,11 +2051,11 @@ int FriendCoreRun( FriendCoreInstance* fc )
 		HashmapElement* e = NULL;
 		while( ( e = HashmapIterate( fc->fci_Libraries, &iterator ) ) != NULL )
 		{
-			DEBUG( "[FriendCore] Closing library at address %lld\n", ( long long int )e->data );
-			LibraryClose( (Library*)e->data );
-			e->data = NULL;
-			FFree( e->key );
-			e->key = NULL;
+			DEBUG( "[FriendCore] Closing library at address %lld\n", ( long long int )e->hme_Data );
+			LibraryClose( (Library*)e->hme_Data );
+			e->hme_Data = NULL;
+			FFree( e->hme_Key );
+			e->hme_Key = NULL;
 		}
 		HashmapFree( fc->fci_Libraries );
 		fc->fci_Libraries = NULL;
@@ -2118,7 +2115,7 @@ Library* FriendCoreGetLibrary( FriendCoreInstance* fc, char* libname, FULONG ver
 	}
 	else
 	{
-		lib = (Library*)e->data;
+		lib = (Library*)e->hme_Data;
 		if( lib->l_Version < version )
 		{
 			lib = NULL;

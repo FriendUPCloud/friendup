@@ -28,7 +28,8 @@
 #include <stdio.h> 
 #include <unistd.h>
 #include <system/services/service_manager.h>
-#include <system/services/service_manager_web.h>
+#include <system/services/services_manager_web.h>
+#include <system/service/service_manager_web.h>
 //#include <interface/properties_interface.h>
 #include <ctype.h>
 #include <magic.h>
@@ -56,6 +57,8 @@
 #include <system/mobile/mobile_web.h>
 #include <system/usergroup/user_group_manager_web.h>
 #include <system/notification/notification_manager_web.h>
+#include <system/service/service_manager_web.h>
+#include <strings.h>
 
 #define LIB_NAME "system.library"
 #define LIB_VERSION 		1
@@ -239,26 +242,26 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 			}
 			
 			DEBUG("Before for\n");
-			for( ; i < hm->table_size; i++ )
+			for( ; i < hm->hm_TableSize; i++ )
 			{
-				if( hm->data[ i ].inUse == TRUE && hm->data[ i ].key != NULL && hm->data[ i ].data != NULL )
+				if( hm->hm_Data[ i ].hme_InUse == TRUE && hm->hm_Data[ i ].hme_Key != NULL && hm->hm_Data[ i ].hme_Data != NULL )
 				{
 					// if parameter was not passed, it must be taken from POST
-					if( strstr( allArgsNew, hm->data[ i ].key ) == NULL )
+					if( strstr( allArgsNew, hm->hm_Data[ i ].hme_Key ) == NULL )
 					{
-						DEBUG("Parameter not found, FC will use one from POST: %s\n", hm->data[ i ].key );
-						int size = 10 + strlen( hm->data[ i ].key ) + strlen ( hm->data[ i ].data );
+						DEBUG("Parameter not found, FC will use one from POST: %s\n", hm->hm_Data[ i ].hme_Key );
+						int size = 10 + strlen( hm->hm_Data[ i ].hme_Key ) + strlen ( hm->hm_Data[ i ].hme_Data );
 						char *buffer;
 						
 						if( ( buffer = FCalloc( size, sizeof(char) ) ) != NULL )
 						{
 							if( quotationFound == TRUE )
 							{
-								sprintf( buffer, "&%s=%s", hm->data[ i ].key, (char *)hm->data[ i ].data );
+								sprintf( buffer, "&%s=%s", hm->hm_Data[ i ].hme_Key, (char *)hm->hm_Data[ i ].hme_Data );
 							}
 							else
 							{
-								sprintf( buffer, "?%s=%s", hm->data[ i ].key, (char *)hm->data[ i ].data );
+								sprintf( buffer, "?%s=%s", hm->hm_Data[ i ].hme_Key, (char *)hm->hm_Data[ i ].hme_Data );
 								quotationFound = TRUE;
 							}
 							
@@ -394,6 +397,12 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	
 	//USMDebugSessions( l->sl_USM );
 	
+	//
+	// SECURITY SECTION START
+	//
+	// This part of code check required information
+	//
+	
 	char sessionid[ DEFAULT_SESSION_ID_SIZE ];
 	sessionid[ 0 ] = 0;
     
@@ -448,7 +457,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		if( tst )
 		{
 			char tmp[ DEFAULT_SESSION_ID_SIZE ];
-			UrlDecode( tmp, (char *)tst->data );
+			UrlDecode( tmp, (char *)tst->hme_Data );
 			
 			snprintf( sessionid, sizeof(sessionid), "%s", tmp );
 			DEBUG( "Finding sessionid %s\n", sessionid );
@@ -459,6 +468,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			//
 			// check if request came from WebSockets
 			//
+			
 			DEBUG("Authid received\n");
 			
 			if( (*request)->h_RequestSource == HTTP_SOURCE_WS )
@@ -471,12 +481,12 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				HashmapElement *el =  HashmapGet( (*request)->parsedPostContent, "sasid" );
 				if( el != NULL )
 				{
-					assid = UrlDecodeToMem( ( char *)el->data );
+					assid = UrlDecodeToMem( ( char *)el->hme_Data );
 				}
 				
 				if( assid != NULL )
 				{
-					authid = UrlDecodeToMem( ( char *)ast->data );
+					authid = UrlDecodeToMem( ( char *)ast->hme_Data );
 					
 					char *end;
 					FUQUAD asval = strtoull( assid,  &end, 0 );
@@ -522,7 +532,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				{
 					char qery[ 1024 ];
 
-					sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT * FROM ( ( SELECT u.SessionID FROM FUser u, FUserApplication a WHERE a.AuthID=\"%s\" AND a.UserID = u.ID LIMIT 1 ) UNION ( SELECT u2.SessionID FROM FUser u2, Filesystem f WHERE f.Config LIKE \"%s%s%s\" AND u2.ID = f.UserID LIMIT 1 ) ) z LIMIT 1",( char *)ast->data, "%", ( char *)ast->data, "%");
+					sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT * FROM ( ( SELECT u.SessionID FROM FUser u, FUserApplication a WHERE a.AuthID=\"%s\" AND a.UserID = u.ID LIMIT 1 ) UNION ( SELECT u2.SessionID FROM FUser u2, Filesystem f WHERE f.Config LIKE \"%s%s%s\" AND u2.ID = f.UserID LIMIT 1 ) ) z LIMIT 1",( char *)ast->hme_Data, "%", ( char *)ast->hme_Data, "%");
 					
 					void *res = sqllib->Query( sqllib, qery );
 					if( res != NULL )
@@ -544,10 +554,18 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		
 		{
 			UserSession *curusrsess = l->sl_USM->usm_Sessions;
+			char *deviceid = NULL;
+			
+			HashmapElement *el = HashmapGet( (*request)->parsedPostContent, "deviceid" );
+			if( el != NULL )
+			{
+				deviceid = UrlDecodeToMem( ( char *)el->hme_Data );
+			}
 			
 			DEBUG("Checking remote sessions\n");
 				
-			if( strcmp( sessionid, "remote" ) == 0 )
+ 			if( deviceid != NULL && strcmp( deviceid, "remote" ) == 0 )
+			//if( strcmp( sessionid, "remote" ) == 0 )
 			{
 				HashmapElement *uname = GetHEReq( *request, "username" );
 				HashmapElement *passwd = GetHEReq( *request, "password" );
@@ -556,23 +574,23 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				
 				if( passwd != NULL )
 				{
-					if( passwd->data != NULL )
+					if( passwd->hme_Data != NULL )
 					{
-						lpass = (char *)passwd->data;
+						lpass = (char *)passwd->hme_Data;
 					}
 				}
 				
-				if( uname != NULL && uname->data != NULL  )
+				if( uname != NULL && uname->hme_Data != NULL  )
 				{
 					while( curusrsess != NULL )
 					{
-						User *curusr =curusrsess->us_User;
+						User *curusr = curusrsess->us_User;
 						
 						if( curusr != NULL )
 						{
-							DEBUG("CHECK remote user: %s pass %s  provided pass %s \n", curusr->u_Name, curusr->u_Password, (char *)lpass );
+							DEBUG("CHECK remote user: %s pass %s  provided pass %s uname param: %s\n", curusr->u_Name, curusr->u_Password, (char *)lpass, (char *)uname->hme_Data );
 						
-							if( strcmp( curusr->u_Name, (char *)uname->data ) == 0  )
+							if( strcasecmp( curusr->u_Name, (char *)uname->hme_Data ) == 0 )
 							{
 								FBOOL isUserSentinel = FALSE;
 							
@@ -585,7 +603,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 									}
 								}
 							
-								if( isUserSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, curusr, (char *)passwd->data, &blockedTime ) == TRUE )
+								if( isUserSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, curusr, (char *)passwd->hme_Data, &blockedTime ) == TRUE )
 								{
 									//snprintf( sessionid, sizeof(sessionid), "%lu", curusrsess->us_User->u_ID );
 									//strcpy( sessionid, curusrsess->us_User->u_MainSessionID );
@@ -648,6 +666,11 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
 				DEBUG("CHECK1END\n");
 			}
+			
+			if( deviceid != NULL )
+			{
+				FFree( deviceid );
+			}
 		}
 		
 		if( loggedSession == NULL )
@@ -659,18 +682,47 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 				{TAG_DONE, TAG_DONE}
 			};
+			
+			//
+			// Check all calls coming from sessions which do not longer exists
+			//
+			
+			//SecurityManagerCheckSession( l->sl_SecurityManager, *request );
 		
 			if( response != NULL )
 			{
 				HttpFree( response );
 				FERROR("RESPONSE no user\n");
 			}
-			response = HttpNewSimple( HTTP_200_OK, tags );
+			response = HttpNewSimple( HTTP_403_FORBIDDEN, tags );
 			
-			char buffer[ 256 ];
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_SESSION_NOT_FOUND] , DICT_USER_SESSION_NOT_FOUND );
-			HttpAddTextContent( response, buffer );
+			char buffer[ 512 ];
+			char *lsessidstring = NULL;
+			HashmapElement *lsesid = GetHEReq( *request, "sessionid" );
+			if( lsesid != NULL && lsesid->hme_Data != NULL )
+			{
+				lsessidstring = (char *)lsesid->hme_Data;
 				
+				/*
+				Log( FLOG_ERROR, "THIS SESSION ID IS BLOCKED: %s !", lsessidstring );
+				unsigned int i=0;
+				
+				for( i = 0; i < (*request)->parsedPostContent->hm_TableSize; i++ )
+				{
+					if( (*request)->parsedPostContent->hm_Data[i].hme_InUse == TRUE )
+					{
+						HashmapElement *lochme = &(*request)->parsedPostContent->hm_Data[i];
+						if( lochme->hme_Data != NULL )
+						{
+							Log( FLOG_ERROR, "POST Params: %s\n", lochme->hme_Data );
+						}
+					}
+				}*/
+			}
+			
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\",\"sessionid\":\"%s\"}", l->sl_Dictionary->d_Msg[DICT_USER_SESSION_NOT_FOUND] , DICT_USER_SESSION_NOT_FOUND, lsessidstring );
+			HttpAddTextContent( response, buffer );
+			
 			return response;
 		}
 		else
@@ -706,6 +758,10 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	}
 	
 	//
+	// SECURITY SECTION END
+	//
+	
+	//
 	// Check dos token
 	//
 		
@@ -715,11 +771,11 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			
 			DEBUG("Found DOSToken parameter, tokenid %p\n", tokid );
 			
-			if( tokid != NULL && tokid->data != NULL )
+			if( tokid != NULL && tokid->hme_Data != NULL )
 			{
 				DEBUG("Found DOSToken parameter\n");
 				
-				DOSToken *dt = DOSTokenManagerGetDOSToken( l->sl_DOSTM, tokid->data );
+				DOSToken *dt = DOSTokenManagerGetDOSToken( l->sl_DOSTM, tokid->hme_Data );
 				if( dt != NULL && dt->ct_UserSession != NULL && dt->ct_Commands != NULL )
 				{
 					DEBUG("Found DOSToken\n");
@@ -775,7 +831,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	HashmapElement *dtask = GetHEReq( *request, "detachtask" );
 	if( dtask != NULL )
 	{
-		if( dtask->data != NULL && strcmp( "true", dtask->data ) == 0 )
+		if( dtask->hme_Data != NULL && strcmp( "true", dtask->hme_Data ) == 0 )
 		{
 			detachTask = TRUE;
 			DEBUG("Task will be detached\n");
@@ -793,10 +849,10 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		if( el == NULL ) el = HashmapGet( (*request)->query, "path" );
 		int size = 64;
 		
-		if( el != NULL && el->data != NULL )
+		if( el != NULL && el->hme_Data != NULL )
 		{
 			char *data = NULL;
-			size += strlen( el->data );
+			size += strlen( el->hme_Data );
 			
 			if( (*request)->h_RequestSource == HTTP_SOURCE_WS )
 			{
@@ -804,7 +860,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				if( ( data = FMalloc( size ) ) != NULL )
 				{
 					int pos = snprintf( data, size, "%s Path: ", (*request)->uri->queryRaw );
-					UrlDecode( &data[ pos ], (char *)el->data );
+					UrlDecode( &data[ pos ], (char *)el->hme_Data );
 					UserLoggerStore( l->sl_ULM, loggedSession, data, loggedSession->us_UserActionInfo );
 					FFree( data );
 				}
@@ -818,7 +874,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					if( ( data = FMalloc( size ) ) != NULL )
 					{
 						int pos = snprintf( data, size, "%s Path: ", (*request)->rawRequestPath );
-						UrlDecode( &data[ pos ], (char *)el->data );
+						UrlDecode( &data[ pos ], (char *)el->hme_Data );
 						UserLoggerStore( l->sl_ULM, loggedSession, data, (*request)->h_UserActionInfo );
 						FFree( data );
 					}
@@ -950,9 +1006,9 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		if( he == NULL ) he = HashmapGet( (*request)->query, "module" );
 		// checking if module is in cache and use it if there is need
 		
-		if( he != NULL && he->data != NULL )
+		if( he != NULL && he->hme_Data != NULL )
 		{
-			char *module = (char *)he->data;
+			char *module = (char *)he->hme_Data;
 			int size = 0;
 			if( ( size = strlen( module ) ) > 4 )
 			{
@@ -1000,7 +1056,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 
 				if( he != NULL )
 				{
-					char *module = ( char *)he->data;
+					char *module = ( char *)he->hme_Data;
 					char path[ 512 ];
 					snprintf( path, sizeof(path), "modules/%s", module );
 					path[ 511 ] = 0;
@@ -1375,11 +1431,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		
 		if( l->sl_UM!= NULL )
 		{
-			if( UMUserIsAdmin( l->sl_UM, *request, loggedSession->us_User ) == TRUE )
-			{
-				response =  ServiceManagerWebRequest( l, &(urlpath[1]), *request );
-				called = TRUE;
-			}
+			response =  ServicesManagerWebRequest( l, &(urlpath[1]), *request, loggedSession );
+			called = TRUE;
 		}
 		
 		if( called == FALSE )
@@ -1394,6 +1447,44 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			{
 				HttpFree( response );
 				FERROR("RESPONSE services\n");
+			}
+			response = HttpNewSimple( HTTP_200_OK,  tags );
+		
+			char buffer[ 256 ];
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, buffer );
+
+			goto error;
+		}
+	}
+	
+	//
+	// atm we want to handle all calls to services via system.library
+	//
+	
+	else if( strcmp( urlpath[ 0 ], "service" ) == 0 )
+	{
+		DEBUG("Service called\n");
+		FBOOL called = FALSE;
+		
+		if( l->sl_UM!= NULL )
+		{
+			response = SMWebRequest( l, &(urlpath[1]), *request, loggedSession );
+			called = TRUE;
+		}
+		
+		if( called == FALSE )
+		{
+			struct TagItem tags[] = {
+				{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( "text/html", 9 ) },
+				{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ) },
+				{ TAG_DONE, TAG_DONE}
+			};
+		
+			if( response != NULL )
+			{
+				HttpFree( response );
+				FERROR("RESPONSE service\n");
 			}
 			response = HttpNewSimple( HTTP_200_OK,  tags );
 		
@@ -1525,12 +1616,12 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			HashmapElement *el = HttpGetPOSTParameter( *request, "username" );
 			if( el != NULL )
 			{
-				//usrname = (char *)el->data;
-				if( el->data != NULL )
+				//usrname = (char *)el->hme_Data;
+				if( el->hme_Data != NULL )
 				{
-					//if( strcmp( (char *)el->data, "apiuser" ) != 0 )
+					//if( strcmp( (char *)el->hme_Data, "apiuser" ) != 0 )
 					{
-						usrname = UrlDecodeToMem( (char *)el->data );
+						usrname = UrlDecodeToMem( (char *)el->hme_Data );
 					}
 				}
 			}
@@ -1539,31 +1630,31 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			el = HttpGetPOSTParameter( *request, "encryptedblob" );
 			if( el != NULL )
 			{
-				encryptedBlob = ( char *)el->data;
+				encryptedBlob = ( char *)el->hme_Data;
 			}
 			
 			el = HttpGetPOSTParameter( *request, "password" );
 			if( el != NULL )
 			{
-				pass = ( char *)el->data;
+				pass = ( char *)el->hme_Data;
 			}
 			
 			el = HttpGetPOSTParameter( *request, "appname" );
 			if( el != NULL )
 			{
-				appname = ( char *)el->data;
+				appname = ( char *)el->hme_Data;
 			}
 			
 			el = HttpGetPOSTParameter( *request, "deviceid" );
 			if( el != NULL )
 			{
-				deviceid = (char *)el->data;
+				deviceid = (char *)el->hme_Data;
 			}
 			
 			el = HttpGetPOSTParameter( *request, "sessionid" );
 			if( el != NULL )
 			{
-				locsessionid = ( char *)el->data;
+				locsessionid = ( char *)el->hme_Data;
 			}
 			
 			if( locsessionid != NULL && deviceid != NULL )

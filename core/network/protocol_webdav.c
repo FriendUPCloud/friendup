@@ -1538,7 +1538,7 @@ Host: 192.168.153.138:6502
 		
 		if( have == TRUE )
 		{
-			DEBUG("DELETE WEBDAV FUNCTION: '%s'\n\n", filePath );
+			DEBUG("DELETE WEBDAV FUNCTION: '%s'\n", filePath );
 			actFS->Delete( rootDev, filePath );
 			
 			//int deleteFiles = 0;

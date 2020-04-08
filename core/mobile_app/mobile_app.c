@@ -1082,7 +1082,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	
 	unsigned int reqLengith = 0;
 	
-	DEBUG("\n\n\n\n---------------------------------------------MobileAppNotifyUserRegister\n");
+	//DEBUG("\n\n\n\n---------------------------------------------MobileAppNotifyUserRegister\n");
 	
 	// if value was not passed, create new Notification
 	
@@ -1370,7 +1370,7 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 	}
 	else
 	{
-		FERROR("\n\n\n\nCannot find notification!\n");
+		FERROR("Cannot find notification!\n");
 		return 1;
 	}
 

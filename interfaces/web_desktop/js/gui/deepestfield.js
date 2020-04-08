@@ -284,6 +284,9 @@ DeepestField = {
 	selectTask: function()
 	{
 		document.body.classList.remove( 'ShowTasks' );
+		
+		if( !ge( 'TaskSwitcher' ) ) return;
+		
 		if( ge( 'TaskSwitcher' ).currentTask )
 		{
 			ge( 'TaskSwitcher' ).currentTask.window.windowObject.activate( 'force' );
@@ -293,6 +296,8 @@ DeepestField = {
 	// Clean out!
 	cleanTasks: function()
 	{
+		if( !ge( 'TaskSwitcher' ) ) return;
+		
 		var currentItems = ge( 'TaskSwitcher' ).getElementsByClassName( 'WindowItem' );
 		var dels = [];
 		for( var a = 0; a < currentItems.length; a++ )
@@ -322,6 +327,8 @@ DeepestField = {
 	{
 		window.blur();
 		window.focus();
+		
+		if( !ge( 'TaskSwitcher' ) ) return;
 		
 		// Repopulate
 		var currentItems = ge( 'TaskSwitcher' ).getElementsByClassName( 'WindowItem' );
@@ -539,6 +546,7 @@ DeepestField = {
 	},
 	updateTaskInformation: function()
 	{
+		if( !ge( 'TasksHeader' ) ) return;
 		ge( 'TasksHeader' ).innerHTML = ge( 'TaskSwitcher' ).getElementsByTagName( 'iframe' ).length + ' ' + i18n( 'i18n_tasks_running' ) + ':';
 	},
 	updateNotificationInformation: function()
