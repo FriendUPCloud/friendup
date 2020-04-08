@@ -190,6 +190,7 @@ char *GetFileName( const char *path )
 //#define PHP_READ_SIZE 262144
 //#define PHP_READ_SIZE 2048
 #define PHP_READ_SIZE 132144
+#define USE_NPOPEN_POLL
 
 //
 // php call, send request, read answer
@@ -208,10 +209,56 @@ ListString *PHPCall( const char *command )
 	}
 	
 	char *buf = FMalloc( PHP_READ_SIZE+16 );
-	ListString *data = ListStringNew();
+	ListString *ls = ListStringNew();
 	int errCounter = 0;
 	int size = 0;
-	
+
+#ifdef USE_NPOPEN_POLL
+	struct pollfd fds[2];
+
+	// watch stdin for input 
+	fds[0].fd = pofd.np_FD[ NPOPEN_CONSOLE ];// STDIN_FILENO;
+	fds[0].events = POLLIN;
+
+	// watch stdout for ability to write
+	fds[1].fd = STDOUT_FILENO;
+	fds[1].events = POLLOUT;
+
+	while( TRUE )
+	{
+		DEBUG("[PHPFsys] in loop\n");
+		
+		int ret = poll( fds, 2, FILESYSTEM_MOD_TIMEOUT * 1000);
+
+		if( ret == 0 )
+		{
+			DEBUG("Timeout!\n");
+			break;
+		}
+		else if(  ret < 0 )
+		{
+			DEBUG("Error\n");
+			break;
+		}
+		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
+
+		DEBUG( "[PHPFsys] Adding %d of data\n", size );
+		if( size > 0 )
+		{
+			DEBUG( "[PHPFsys] before adding to list\n");
+			ListStringAdd( ls, buf, size );
+			DEBUG( "[PHPFsys] after adding to list\n");
+			//res += size;
+		}
+		else
+		{
+			errCounter++;
+			DEBUG("ErrCounter: %d\n", errCounter );
+
+			break;
+		}
+	}
+#else
 	fd_set set;
 	struct timeval timeout;
 
@@ -242,7 +289,7 @@ ListString *PHPCall( const char *command )
 
 		if( size > 0 )
 		{
-			ListStringAdd( data, buf, size );
+			ListStringAdd( ls, buf, size );
 		}
 		else
 		{
@@ -254,15 +301,17 @@ ListString *PHPCall( const char *command )
 			}
 		}
 	}
+#endif
+	
 	FFree( buf );
 
 	// Free pipe if it's there
 	newpclose( &pofd );
 	
-	ListStringJoin( data );		//we join all string into one buffer
+	ListStringJoin( ls );		//we join all string into one buffer
 
-	DEBUG( "[fsysphp] Finished PHP call...(%lu length)-\n", data->ls_Size );
-	return data;
+	DEBUG( "[fsysphp] Finished PHP call...(%lu length)-\n", ls->ls_Size );
+	return ls;
 }
 
 //
