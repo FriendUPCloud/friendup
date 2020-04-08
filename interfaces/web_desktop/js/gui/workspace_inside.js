@@ -7051,7 +7051,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					},
 					{
 						name: i18n( 'menu_help_manual' ),
-						command: function(){ window.open( 'https://docs.friendup.tech/en-US/docs/FriendUser/End_user_guide', '', '' ); }
+						command: function(){ window.open( 'https://docs.friendos.com/docs/end-user-documentation/', '', '' ); }
 					}
 				]
 			}
