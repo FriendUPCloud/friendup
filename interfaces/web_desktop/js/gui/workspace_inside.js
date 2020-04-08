@@ -1210,12 +1210,14 @@ var WorkspaceInside = {
 					}
 					calendar.addButton( newBtn );
 
+					/*
+						TODO: Re-enable the wrench when we have a working calendar
 					var geBtn = calendar.createButton( 'fa-wrench' );
 					geBtn.onclick = function()
 					{
 						ExecuteApplication( 'FriendCalendar' );
 					}
-					calendar.addButton( geBtn );
+					calendar.addButton( geBtn );*/
 
 					// Add events to calendar!
 					calendar.eventWin = false;
@@ -7049,7 +7051,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					},
 					{
 						name: i18n( 'menu_help_manual' ),
-						command: function(){ window.open( 'https://docs.friendup.tech/en-US/docs/FriendUser/End_user_guide', '', '' ); }
+						command: function(){ window.open( 'https://docs.friendos.com/docs/end-user-documentation/', '', '' ); }
 					}
 				]
 			}
@@ -8358,6 +8360,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				Workspace.initWebSocket();
 			}
+			else
+			{
+				// Just remove this by force
+				document.body.classList.remove( 'Busy' );
+			}
 		}
 		// Only set serverIsThere if we don't have a response from the server
 		inactiveTimeout = setTimeout( function(){ Workspace.serverIsThere = false; }, 1000 );
@@ -8385,6 +8392,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				Workspace.screen.hideOfflineMessage();
 			Workspace.workspaceIsDisconnected = false;
 			Workspace.nudgeWorkspacesWidget();
+			// Just remove this by force
+			document.body.classList.remove( 'Busy' );
 		}
 	},
 	// Upgrade settings (for new versions)
