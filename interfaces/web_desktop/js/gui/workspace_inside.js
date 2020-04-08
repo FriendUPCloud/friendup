@@ -1210,12 +1210,14 @@ var WorkspaceInside = {
 					}
 					calendar.addButton( newBtn );
 
+					/*
+						TODO: Re-enable the wrench when we have a working calendar
 					var geBtn = calendar.createButton( 'fa-wrench' );
 					geBtn.onclick = function()
 					{
 						ExecuteApplication( 'FriendCalendar' );
 					}
-					calendar.addButton( geBtn );
+					calendar.addButton( geBtn );*/
 
 					// Add events to calendar!
 					calendar.eventWin = false;
