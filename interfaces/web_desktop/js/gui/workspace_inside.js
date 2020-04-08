@@ -8390,6 +8390,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				Workspace.screen.hideOfflineMessage();
 			Workspace.workspaceIsDisconnected = false;
 			Workspace.nudgeWorkspacesWidget();
+			// Just remove this by force
+			document.body.classList.remove( 'Busy' );
 		}
 	},
 	// Upgrade settings (for new versions)
