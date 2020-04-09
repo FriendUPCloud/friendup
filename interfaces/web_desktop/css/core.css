@@ -1746,6 +1746,12 @@ a.Negative:hover, a.Negative:active, a.Negative:visited
 	height: 0px !important;
 }
 
+#calendarEventsToday
+{
+	max-height: 400px;
+	overflow: auto;
+}
+
 .Calendar.MonthName
 {
 	padding: 8px;

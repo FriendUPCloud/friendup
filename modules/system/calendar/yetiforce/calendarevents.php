@@ -37,20 +37,25 @@ $p = getByPost(
 );
 
 // Add the events
-if( $rows = json_decode( $p ) )
+if( substr( $p, 0, 3 ) == 'ok<' )
 {
-	foreach( $rows as $row )
+	list( , $decode ) = explode( '<!--separate-->', $p );
+	if( $rows = json_decode( $decode ) )
 	{
-		$ob = new stdClass();
-		$ob->ID = $evt->activityid . '_yetiforce';
-		$ob->Title = $evt->subject .'';
-		$ob->Description = '<strong>Location:</strong> '. $evt->location . '<br>' . 'TEMP'; //$evt->EventDetails;
-		$ob->TimeTo = date( 'H:i:s', strtotime( $evt->time_end ) );
-		$ob->TimeFrom = date( 'H:i:s', strtotime( $evt->time_start ) );
-		$ob->Date = date( 'Y-m-d', strtotime( $evt->date_start ) );
-		$ob->Type = 'yetiforce';
-		$os[] = $ob;
+		foreach( $rows as $evt )
+		{
+			$ob = new stdClass();
+			$ob->ID = $evt->activityid . '_yetiforce';
+			$ob->Title = $evt->subject .'';
+			$ob->Description = '<strong>Location:</strong> '. $evt->location . '<br>' . 'TEMP'; //$evt->EventDetails;
+			$ob->TimeTo = date( 'H:i:s', strtotime( $evt->time_end ) );
+			$ob->TimeFrom = date( 'H:i:s', strtotime( $evt->time_start ) );
+			$ob->Date = date( 'Y-m-d', strtotime( $evt->date_start ) );
+			$ob->Type = 'yetiforce';
+			$os[] = $ob;
+		}
 	}
+	$Logger->log( 'OS Length: ' . count( $os ) );
 }
 
 ?>

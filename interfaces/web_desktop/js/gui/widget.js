@@ -65,6 +65,11 @@ Widget.prototype.calcPosition = function()
 	if( !sccont ) sscont = screen;
 	
 	var realTop = 0;
+	if( window.Workspace && Workspace.screen )
+	{
+		realTop = Workspace.screen._titleBar.offsetHeight;
+	}
+	
 	var target = this.target;
 	
 	// TODO: Support left right bottom
@@ -136,7 +141,7 @@ Widget.prototype.calcPosition = function()
 		// Absolute position
 		if( this.ty + this.th > target.offsetHeight )
 			this.ty = target.offsetHeight - this.th;
-		else if( this.ty < realTop ) this.ty = realTop;
+		if( this.ty < realTop ) this.ty = realTop;
 		
 		this.dom.style.top = this.ty + 'px';
 	}
