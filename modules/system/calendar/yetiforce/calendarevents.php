@@ -29,10 +29,10 @@ $p = getByPost(
 	$server . 'friend-API.php', 
 	array( 
 		'command' => 'calendar',
-		'SessionID' => $source->ApiSession,
-		'DateFrom' => $date . '-01 00:00:00',
-		'DateTo' => $date . '-31 23:59:59',
-		'Mode' => 'month'
+		'username' => $source->Username,
+		'password' => $source->Password,
+		'datefrom' => $date . '-01 00:00:00',
+		'dateto' => $date . '-31 23:59:59'
 	)
 );
 
