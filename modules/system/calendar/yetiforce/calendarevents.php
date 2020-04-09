@@ -1,5 +1,7 @@
 <?php
 
+global $Logger;
+
 $server = $source->Server;
 
 function getByPost( $url, $post )
@@ -19,45 +21,35 @@ function getByPost( $url, $post )
 
 $firstDate = $date;
 
+// Sanitation
+if( substr( $server, -1, 1 ) != '/' )
+	$server .= '/';
+
 $p = getByPost( 
-	$server . '/api-xml/v1/components/events/', 
+	$server . 'friend-API.php', 
 	array( 
+		'command' => 'calendar',
 		'SessionID' => $source->ApiSession,
-		'Date' => $date . '-01 00:00:00',
+		'DateFrom' => $date . '-01 00:00:00',
+		'DateTo' => $date . '-31 23:59:59',
 		'Mode' => 'month'
 	)
 );
 
 // Add the events
-if( $xml = simplexml_load_string( $p ) )
+if( $rows = json_decode( $p ) )
 {
-	if( isset( $xml->items ) && isset( $xml->items->object ) )
+	foreach( $rows as $row )
 	{
-		foreach( $xml->items->object->weeks as $weeks )
-		{
-			foreach( $weeks->array as $week )
-			{
-				foreach( $week->days->array as $day )
-				{
-					//$Logger->log( 'Daya: ' . print_r( $day, 1 ) );
-					if( isset( $day->events ) && isset( $day->events->array ) )
-					{
-						foreach( $day->events->array as $evt )
-						{
-							$ob = new stdClass();
-							$ob->ID = $evt->EventID . '_treeroot';
-							$ob->Title = $evt->EventName .'';
-							$ob->Description = '<strong>Location:</strong> '. $evt->EventPlace . '<br>' . $evt->EventDetails;
-							$ob->TimeTo = date( 'H:i:s', strtotime( $evt->EventDateEnd ) );
-							$ob->TimeFrom = date( 'H:i:s', strtotime( $evt->EventDateStart ) );
-							$ob->Date = date( 'Y-m-d', strtotime( $evt->EventDateEnd ) );
-							$ob->Type = 'treeroot';
-							$os[] = $ob;
-						}
-					}
-				}
-			}
-		}
+		$ob = new stdClass();
+		$ob->ID = $evt->activityid . '_yetiforce';
+		$ob->Title = $evt->subject .'';
+		$ob->Description = '<strong>Location:</strong> '. $evt->location . '<br>' . 'TEMP'; //$evt->EventDetails;
+		$ob->TimeTo = date( 'H:i:s', strtotime( $evt->time_end ) );
+		$ob->TimeFrom = date( 'H:i:s', strtotime( $evt->time_start ) );
+		$ob->Date = date( 'Y-m-d', strtotime( $evt->date_start ) );
+		$ob->Type = 'yetiforce';
+		$os[] = $ob;
 	}
 }
 
