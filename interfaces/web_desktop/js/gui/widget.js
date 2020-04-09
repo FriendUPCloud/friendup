@@ -536,12 +536,22 @@ Widget.prototype.autosize = function()
 	{
 		var children = this.dom.getElementsByTagName( '*' );
 		var height = 0;
-		for( var a = 0; a < children.length; a++ )
+		
+		// Try to not calculate
+		var lch = this.dom.lastChild;
+		if( lch.offsetTop + lch.offsetHeight > 0 )
 		{
-			var cand = children[a].offsetTop + children[a].offsetHeight;
-			if( cand > height )
+			height = lch.offsetTop + lch.offsetHeight;
+		}
+		else
+		{
+			for( var a = 0; a < children.length; a++ )
 			{
-				height = cand;
+				var cand = children[a].offsetTop + children[a].offsetHeight;
+				if( cand > height )
+				{
+					height = cand;
+				}
 			}
 		}
 
