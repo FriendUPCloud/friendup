@@ -8373,7 +8373,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			
 			//console.log( 'Response from connection checker: ', e, d );
-			if( e == 'fail' ) 
+			if( e == 'error' )
+			{
+				// Just die!
+				return;
+			}
+			else if( e == 'fail' ) 
 			{
 				console.log( '[getsetting] Got "fail" response.' );
 				//console.trace();

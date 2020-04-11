@@ -310,7 +310,7 @@ cAjax = function()
 			// tell our caller...
 			if( jax.onload ) 
 			{
-				jax.onload( 'fail', false );
+				jax.onload( 'error', false );
 			}
 			jax.destroy();
 		}
@@ -822,11 +822,11 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 	
 	if( typeof( wsdata ) == 'object' && wsdata.response )
 	{
-		self.rawData = 'fail';
+		self.rawData = 'error';
 		if( self.proxy )
 			self.proxy.responseText = self.rawData;
 		//else console.log( 'No more proxy 1..', wsdata, self.onload );
-		self.returnCode = 'fail';
+		self.returnCode = 'error';
 		self.destroy();
 		return false;
 	}
