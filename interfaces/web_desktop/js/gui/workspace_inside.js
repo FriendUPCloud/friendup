@@ -1015,7 +1015,7 @@ var WorkspaceInside = {
 			// Not all applications should be able to send messages to
 			// all other applications...
 			msg.applicationId = apps[a].applicationId;
-			apps[ a ].contentWindow.postMessage( msg );
+			apps[ a ].sendMessage( msg );
 		}
 	},
 	checkFriendNetwork: function()
