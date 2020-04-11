@@ -8100,6 +8100,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	showLauncher: function()
 	{
 		if( !Workspace.sessionId ) return;
+		var selfw = this;
 
 		if( this.launcherWindow )
 		{
@@ -8132,17 +8133,25 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				ge( 'WorkspaceRunCommand' ).value = Workspace.lastExecuted;
 			}
-			ge( 'WorkspaceRunCommand' ).addEventListener( 'keydown', function( e )
+			if( ge( 'WorkspaceRunCommand' ) )
 			{
-				var wh = e.which ? e.which : e.keyCode;
-				if( wh == 27 )
+				ge( 'WorkspaceRunCommand' ).addEventListener( 'keydown', function( e )
 				{
-					Workspace.hideLauncher();
-					return cancelBubble( e );
-				}
-			} );
-			ge( 'WorkspaceRunCommand' ).select();
-			ge( 'WorkspaceRunCommand' ).focus();
+					var wh = e.which ? e.which : e.keyCode;
+					if( wh == 27 )
+					{
+						Workspace.hideLauncher();
+						return cancelBubble( e );
+					}
+				} );
+				ge( 'WorkspaceRunCommand' ).select();
+				ge( 'WorkspaceRunCommand' ).focus();
+			}
+			else
+			{
+				if( w.setContent ) w.close();
+				selfw.launcherWindow = null;
+			}
 		}
 		f.load();
 		this.launcherWindow = w;
