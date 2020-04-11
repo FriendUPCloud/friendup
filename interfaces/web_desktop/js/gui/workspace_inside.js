@@ -999,6 +999,25 @@ var WorkspaceInside = {
 			}
 		}
 	},
+	// Notify all apps of a state change
+	notifyAppsOfState: function( flags )
+	{
+		if( !flags || !flags.state ) return;
+		
+		let msg = {
+			command: 'workspace-notify',
+			state: flags.state
+		};
+		let apps = ge( 'Tasks' ).getElementsByTagName( 'iframe' );
+		for( var a = 0; a < apps.length; a++ )
+		{
+			// TODO: Have per application permissions here..
+			// Not all applications should be able to send messages to
+			// all other applications...
+			msg.applicationId = apps[a].applicationId;
+			apps[ a ].contentWindow.postMessage( msg );
+		}
+	},
 	checkFriendNetwork: function()
 	{
 		var self = this;
