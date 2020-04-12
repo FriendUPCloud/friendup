@@ -3423,7 +3423,7 @@ function AudioObject( sample, callback )
 		if( this.interval ) clearInterval( this.interval );
 		this.interval = setInterval( function()
 		{
-			if( t.loader.audioGraph.started && t.onplaying && !t.loader.audioGraph.paused )
+			if( t.loader && t.loader.audioGraph.started && t.onplaying && !t.loader.audioGraph.paused )
 			{
 				var ct = t.getContext().currentTime;
 				var pt = t.loader.audioGraph.playTime;
