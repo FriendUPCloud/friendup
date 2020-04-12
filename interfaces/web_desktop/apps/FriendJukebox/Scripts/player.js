@@ -66,7 +66,7 @@ Application.redrawMiniPlaylist = function()
 			{
 				c = ' Selected Playing';
 			}
-			tr.className = 'Padding Ellipsis sw' + sw + c;
+			tr.className = 'Tune Padding Ellipsis sw' + sw + c;
 			( function( ele, eles, index )
 			{
 				tr.onclick = function()

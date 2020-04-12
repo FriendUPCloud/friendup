@@ -3464,7 +3464,6 @@ function AudioObject( sample, callback )
 				t.onfinished();
 		}
 		
-		console.log( 'Playing now!' );
 		this.loader.audioGraph.playSound( { onEnded: ended } );
 	}
 
