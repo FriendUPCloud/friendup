@@ -3435,6 +3435,29 @@ function AudioObject( sample, callback )
 	this.pause = function()
 	{
 		this.paused = this.loader.audioGraph.pause();
+		if( !this.paused )
+		{
+			// Reboot the counter!
+			var t = this;
+			if( this.interval ) clearInterval( this.interval );
+			this.interval = setInterval( function()
+			{
+				if( t.loader && t.loader.audioGraph.started && t.onplaying && !t.loader.audioGraph.paused )
+				{
+					var ct = t.getContext().currentTime;
+					var pt = t.loader.audioGraph.playTime;
+					try
+					{
+						var dr = t.loader.audioGraph.source.buffer.duration;
+						t.onplaying( ( ct - pt ) / dr, ct, pt, dr );
+					}
+					catch( e )
+					{
+						console.log( 'Playing streaming segment. Fixme!' );
+					}
+				}
+			}, 100 );
+		}
 	}
 
 	this.unload = function()
