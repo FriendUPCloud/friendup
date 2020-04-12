@@ -87,7 +87,10 @@ Application.redrawMiniPlaylist = function()
 						}
 					}
 					ele.classList.add( 'Playing', 'Selected' );
-					if( Application.song ) Application.song.stop();
+					if( Application.song )
+					{
+						Application.song.stop();
+					}
 					Application.sendMessage( { command: 'playsongindex', index: index } );
 				}
 			} )( tr, tb, a );
@@ -168,6 +171,8 @@ Application.receiveMessage = function( msg )
 			ge( 'scroll' ).innerHTML = '<div>Loading song...</div>';
 			if( this.song ) 
 			{
+				var tmp = this.song.onfinished;
+				this.song.onfinished = function(){};
 				this.song.stop();
 				this.song.unload();
 			}
@@ -226,8 +231,6 @@ Application.receiveMessage = function( msg )
 			}
 			this.song.onfinished = function()
 			{
-				if( this.song && ( this.song.stopped || this.song.paused ) )
-					return;
 				Seek( 1 );
 			}
 			this.song.ct = -1;
