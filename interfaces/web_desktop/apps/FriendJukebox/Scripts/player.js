@@ -59,7 +59,14 @@ Application.redrawMiniPlaylist = function()
 		for( var a = 0; a < playlist.length; a++ )
 		{
 			var tr = document.createElement( 'div' );
-			tr.innerHTML = playlist[a].Filename;
+			var sanitize = playlist[a].Filename;
+			if( sanitize.indexOf( '.' ) > 0 )
+			{
+				sanitize = sanitize.split( '.' );
+				sanitize.pop();
+				sanitize = sanitize.join( '.' );
+			}
+			tr.innerHTML = sanitize;
 			sw = sw == 1 ? 2 : 1;
 			var c = '';
 			if( a == index )
@@ -80,6 +87,7 @@ Application.redrawMiniPlaylist = function()
 						}
 					}
 					ele.classList.add( 'Playing', 'Selected' );
+					if( Application.song ) Application.song.stop();
 					Application.sendMessage( { command: 'playsongindex', index: index } );
 				}
 			} )( tr, tb, a );
@@ -206,10 +214,20 @@ Application.receiveMessage = function( msg )
 			{
 				this.play();
 				Application.initVisualizer();
-				ge( 'scroll' ).innerHTML = '<div>' + msg.item.Filename + '</div>';
+				var fn = this.loader ? ( this.loader.metadata ? 
+					( 
+						this.loader.metadata.title + ' by ' + 
+						this.loader.metadata.artist + ' (' + 
+						this.loader.metadata.album + ', ' + this.loader.metadata.year + ')'
+					)
+					: msg.item.Filename ) : false;
+				if( fn == false ) return;
+				ge( 'scroll' ).innerHTML = '<div>' + fn + '</div>';
 			}
 			this.song.onfinished = function()
 			{
+				if( this.song && ( this.song.stopped || this.song.paused ) )
+					return;
 				Seek( 1 );
 			}
 			this.song.ct = -1;
