@@ -534,7 +534,6 @@ Application.receiveMessage = function( msg )
 }
 
 // Shortcut --------------------------------------------------------------------
-
 function ShowPlaylist()
 {
 	Application.editPlaylist();

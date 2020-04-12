@@ -3387,6 +3387,7 @@ function AudioObject( sample, callback )
 	this.stop = function()
 	{
 		this.loader.audioGraph.stop();
+		this.stopped = true;
 		if( this.interval )
 		{
 			clearInterval( this.interval );
@@ -3417,6 +3418,7 @@ function AudioObject( sample, callback )
 	// Plays notes!
 	this.play = function()
 	{
+		this.stopped = false;
 		var t = this;
 		if( this.interval ) clearInterval( this.interval );
 		this.interval = setInterval( function()

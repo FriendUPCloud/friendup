@@ -10,7 +10,7 @@
 
 var pausebtn, playbtn;
 
-
+// Initialize the GUI ----------------------------------------------------------
 Application.run = function( msg, iface )
 {
 	this.song = false;
@@ -217,14 +217,18 @@ Application.receiveMessage = function( msg )
 			{	
 				var seconds = Math.round( ct - pt ) % 60;
 				
+				var timeFin = dr + ( pt - ct );
+				var finMins = Math.floor( timeFin / 60 );
+				var finSecs = Math.floor( timeFin ) % 60;
+				
 				if( this.ct != seconds )
 				{
 					ge( 'progress' ).style.width = Math.floor( progress * 100 ) + '%';
 					ge( 'progress' ).style.opacity = 1;
 					
 					this.ct = seconds;
-					var minutes = Math.round( ct - pt ) < 60 ? 0 : Math.round( ( ( ct - pt ) ) / 60 );
-					ge( 'time' ).innerHTML = minutes + ':' + StrPad( seconds, 2, '0' );
+
+					ge( 'time' ).innerHTML = finMins + ':' + StrPad( finSecs, 2, '0' );
 				}
 			}
 			pausebtn.className = pausebtn.className.split( 
@@ -400,6 +404,9 @@ function StopSong()
 
 function Seek( direction )
 {
+	if( Application.song.paused || Application.song.stopped )
+		return;
+	StopSong();
 	Application.sendMessage( { command: 'seek', dir: direction } ); 
 }
 
