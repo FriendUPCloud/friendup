@@ -250,6 +250,8 @@ Application.receiveMessage = function( msg )
 					this.ct = seconds;
 
 					ge( 'time' ).innerHTML = finMins + ':' + StrPad( finSecs, 2, '0' );
+					if( finMins < 0 )
+						Seek( 1 );
 				}
 			}
 			pausebtn.className = pausebtn.className.split( 
@@ -356,6 +358,10 @@ Application.initVisualizer = function()
 	
 	// Run it!
 	
+	var scroll = ge( 'scroll' );
+	var scrollPos = 0;
+	var scrollDir = -1;
+	
 	this.dr = function()
 	{
 		ana.getByteTimeDomainData( dataArray );
@@ -401,6 +407,30 @@ Application.initVisualizer = function()
 		if( agr.started )
 		{
 			requestAnimationFrame( Application.dr );
+		}
+		
+		if( scroll.firstChild )
+		{
+			var scrollW = scroll.offsetWidth - 60;
+			var elemenW = scroll.firstChild.offsetWidth;
+			if( elemenW > scrollW )
+			{
+				if( scrollDir < 0 )
+				{
+					scrollPos -= 0.25;
+				
+					if( elemenW + scrollPos <= scrollW )
+						scrollDir = 1;
+				}
+				else
+				{
+					scrollPos += 0.25;
+					
+					if( scrollPos >= 0 )
+						scrollDir = -1;
+				}
+				scroll.firstChild.style.left = parseInt( scrollPos ) + 'px';
+			}
 		}
 	};
 	requestAnimationFrame( Application.dr );

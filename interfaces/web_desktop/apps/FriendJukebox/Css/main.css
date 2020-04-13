@@ -47,13 +47,14 @@ tr.Playing
 #time 
 {
 	position: absolute;
-	line-height: 25px;
+	line-height: 42px;
 	height: 35px;
-	right: 6px;
+	right: 10px;
 	top: 75px;
 	font-family: monospace, courier;
 	font-size: 0.9em;
 	color: white;
+	padding: 0;
 }
 #scroll, #progress
 {
@@ -70,27 +71,38 @@ tr.Playing
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	padding: 5px 8px;
 	box-sizing: border-box;
+	padding: 0;
 }
 .Synthwave #scroll, 
 .Synthwave #progress
 {
 	background: #18154c;
 }
+#scroll
+{
+	line-height: 35px;
+    -webkit-mask-image: linear-gradient(90deg, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 55%, rgba(0,212,255,0) 87%);
+}
+#scroll:before
+{
+	display: inline-block;
+	width: 12px;
+	content: " ";
+}
 #scroll > div
 {
 	position: absolute;
 	top: 0;
 	left: 0;
-	width: 87%;
+	width: auto;
 	height: 100%;
 	line-height: 25px;
 	padding: 5px 8px;
 	box-sizing: border-box;
 	white-space: nowrap;
 	text-overflow: ellipsis;
-	overflow: hidden;
+	overflow: visible;
 }
 #progress
 {
