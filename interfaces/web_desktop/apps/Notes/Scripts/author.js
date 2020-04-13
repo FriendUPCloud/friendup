@@ -495,7 +495,6 @@ Application.receiveMessage = function( msg )
 								{
 									Application.wholeFilename = msg.rename;
 									Application.setCorrectTitle();
-									console.log( 'We wanna do it like it is!' );
 									return;
 								}
 								var comps = ocomp.split( '.' );
@@ -525,7 +524,6 @@ Application.receiveMessage = function( msg )
 			else
 			{
 				this.setCorrectTitle();
-				console.log( 'No rename' );
 			}
 			break;
 		case 'newdocument':

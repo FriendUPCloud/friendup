@@ -370,7 +370,7 @@ Application.refreshFilePane = function( method, force, callback )
 									{
 										if( Application.currentDocument == path )
 										{
-											Application.newDocument( { just: 'makenew' } );
+											ge( 'FileBar' ).add.onclick();
 										}
 										Application.refreshFilePane();
 									}
