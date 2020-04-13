@@ -769,7 +769,6 @@ Application.initCKE = function()
 				// Create temporary file "to be saved"
 				if( !Application.currentDocument )
 				{
-					console.log( 'Fobar' );
 					if( !Application._toBeSaved )
 					{
 						var fb = ge( 'FileBar' );
@@ -799,11 +798,17 @@ Application.initCKE = function()
 				// Rename or set name
 				if( Application.currentDocument != Application.path + data + '.html' )
 				{
-					Application.sendMessage( {
-						command: 'setfilename',
-						data: Application.path + data + '.html',
-						rename: Application.currentDocument ? Application.currentDocument : false
-					} );
+					if( Application.setFilenameTimeo )
+						clearTimeout( Application.setFilenameTimeo );
+					Application.setFilenameTimeo = setTimeout( function()
+					{
+						Application.sendMessage( {
+							command: 'setfilename',
+							data: Application.path + data + '.html',
+							rename: Application.currentDocument ? Application.currentDocument : false
+						} );
+						Application.setFilenameTimeo = null;
+					}, 500 );
 				}
 			
 				if( Application.contentTimeout )
@@ -1587,6 +1592,9 @@ Application.receiveMessage = function( msg )
 			{
 				ApplyStyle( msg.style );
 			}
+			break;
+		case 'setcurrentdocument':
+			Application.setCurrentDocument( msg.path );
 			break;
 		// Let's print!
 		case 'print_iframe':
