@@ -47,16 +47,16 @@ tr.Playing
 #time 
 {
 	position: absolute;
-	line-height: 42px;
+	line-height: 38px;
 	height: 35px;
 	right: 10px;
-	top: 75px;
+	bottom: 0;
 	font-family: monospace, courier;
 	font-size: 0.9em;
 	color: white;
 	padding: 0;
 }
-#scroll, #progress
+#scroll, #progress, #scrollbg
 {
 	position: absolute;
 	bottom: 0;
@@ -82,7 +82,9 @@ tr.Playing
 #scroll
 {
 	line-height: 35px;
-    -webkit-mask-image: linear-gradient(90deg, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 55%, rgba(0,212,255,0) 87%);
+    mask-image: linear-gradient(90deg, rgb(0,0,0) 0%, rgb(0,0,0) 80%, rgba(0,0,0,0) 88%, rgba(0,0,0,0) 100%);
+	-moz-mask-image: linear-gradient(90deg, rgb(0,0,0) 0%, rgb(0,0,0) 80%, rgba(0,0,0,0) 88%, rgba(0,0,0,0) 100%);
+    -webkit-mask-image: linear-gradient(90deg, rgb(0,0,0) 0%, rgb(0,0,0) 80%, rgba(0,0,0,0) 88%, rgba(0,0,0,0) 100%);
 }
 #scroll:before
 {
@@ -108,7 +110,9 @@ tr.Playing
 {
 	background-color: #41185f;
 	width: 0;
-	transition: width,opacity 0.25s,0.1s;
+	transition-property: width, opacity;
+	transition-duration: 0.5s;
+	transition-timing-function: linear;
 	opacity: 0;
 	mix-blend-mode: screen;
 }

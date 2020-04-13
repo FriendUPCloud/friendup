@@ -244,14 +244,18 @@ Application.receiveMessage = function( msg )
 				
 				if( this.ct != seconds )
 				{
-					ge( 'progress' ).style.width = Math.floor( progress * 100 ) + '%';
+					ge( 'progress' ).style.width = ( Math.floor( progress * 10000 ) / 100 ) + '%';
 					ge( 'progress' ).style.opacity = 1;
 					
 					this.ct = seconds;
 
-					ge( 'time' ).innerHTML = finMins + ':' + StrPad( finSecs, 2, '0' );
 					if( finMins < 0 )
+					{
 						Seek( 1 );
+						ge( 'time' ).innerHTML = '0:00';
+						return;
+					}
+					ge( 'time' ).innerHTML = finMins + ':' + StrPad( finSecs, 2, '0' );
 				}
 			}
 			pausebtn.className = pausebtn.className.split( 
@@ -361,6 +365,7 @@ Application.initVisualizer = function()
 	var scroll = ge( 'scroll' );
 	var scrollPos = 0;
 	var scrollDir = -1;
+	var waitTime = 0;
 	
 	this.dr = function()
 	{
@@ -409,7 +414,7 @@ Application.initVisualizer = function()
 			requestAnimationFrame( Application.dr );
 		}
 		
-		if( scroll.firstChild )
+		if( scroll.firstChild && waitTime == 0 )
 		{
 			var scrollW = scroll.offsetWidth - 60;
 			var elemenW = scroll.firstChild.offsetWidth;
@@ -420,18 +425,25 @@ Application.initVisualizer = function()
 					scrollPos -= 0.25;
 				
 					if( elemenW + scrollPos <= scrollW )
+					{
 						scrollDir = 1;
+						waitTime = 1000;
+					}
 				}
 				else
 				{
 					scrollPos += 0.25;
 					
 					if( scrollPos >= 0 )
+					{
 						scrollDir = -1;
+						waitTime = 1000;
+					}
 				}
 				scroll.firstChild.style.left = parseInt( scrollPos ) + 'px';
 			}
 		}
+		if( waitTime > 0 ) waitTime--;
 	};
 	requestAnimationFrame( Application.dr );
 	
