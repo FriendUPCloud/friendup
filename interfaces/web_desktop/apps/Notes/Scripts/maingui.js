@@ -760,9 +760,16 @@ Application.initCKE = function()
 			// Other keys...
 			editor.editing.view.document.on( 'keyup', ( evt, data ) => {
 			
+				// Guess a new filename from the document data
+				var data = Application.editor.element.innerText.split( "\n" )[0].substr( 0, 32 );
+				data = data.split( /[^ a-z0-9]/i ).join( '' );
+				if( !data.length )
+					data = 'unnamed';
+			
 				// Create temporary file "to be saved"
 				if( !Application.currentDocument )
 				{
+					console.log( 'Fobar' );
 					if( !Application._toBeSaved )
 					{
 						var fb = ge( 'FileBar' );
@@ -778,26 +785,31 @@ Application.initCKE = function()
 							}
 						}
 					}
-					var data = Application.editor.element.innerText.split( "\n" )[0].substr( 0, 32 );
-					data = data.split( /[^ a-z0-9]/i ).join( '' );
-					if( !data.length )
-						data = 'unnamed';
 					if( Application._toBeSaved )
 						Application._toBeSaved.innerHTML = '<p class="Layout"><strong>' + data + '</strong></p><p class="Layout"><em>' + i18n( 'i18n_unsaved' ) + '...</em></p>';
-					Application.sendMessage( {
-						command: 'setfilename',
-						data: Application.path + data + '.html'
-					} );
 				}
 				// Remove "to be saved"
 				else if( Application._toBeSaved )
 				{
+					console.log( '[key] Remove to be saved.' );
 					Application._toBeSaved.parentNode.removeChild( Application._toBeSaved );
 					Application._toBeSaved = null;
 				}
 			
+				// Rename or set name
+				if( Application.currentDocument != Application.path + data + '.html' )
+				{
+					Application.sendMessage( {
+						command: 'setfilename',
+						data: Application.path + data + '.html',
+						rename: Application.currentDocument ? Application.currentDocument : false
+					} );
+				}
+			
 				if( Application.contentTimeout )
+				{
 					clearTimeout( Application.contentTimeout );
+				}
 				Application.contentTimeout = setTimeout( function()
 				{
 					Application.sendMessage( { 

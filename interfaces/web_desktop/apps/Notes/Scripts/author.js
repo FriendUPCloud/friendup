@@ -457,8 +457,23 @@ Application.receiveMessage = function( msg )
 			this.setCorrectTitle();
 			break;
 		case 'setfilename':
+			var oldWhole = this.wholeFilename;
 			this.wholeFilename = msg.data;
 			this.setCorrectTitle();
+			if( msg.rename && oldWhole != this.wholeFilename )
+			{
+				var filenameComponent = this.wholeFilename;
+				if( filenameComponent.indexOf( ':' ) > 0 )
+				{
+					filenameComponent = filenameComponent.split( ':' )[1];
+				}
+				if( filenameComponent.indexOf( '/' ) > 0 )
+				{
+					filenameComponent = filenameComponent.split( '/' ).pop();
+				}
+				var l = new Library( 'system.library' );
+				l.execute( 'file/rename', { path: oldWhole, newname: filenameComponent } );
+			}
 			break;
 		case 'newdocument':
 			this.wholeFilename = '';
