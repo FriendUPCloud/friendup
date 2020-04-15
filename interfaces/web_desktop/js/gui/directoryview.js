@@ -1338,7 +1338,6 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					{
 						if( itm.file )
 						{
-							console.log( 'Posting file: ', itm.file );
 							itm.file( function( f )
 							{
 								var ic = new FileIcon(); ic.delCache( itm.fullPath );
@@ -1347,7 +1346,6 @@ DirectoryView.prototype.InitWindow = function( winobj )
 						}
 						else
 						{
-							console.log( 'Making directory: ', itm.fullPath );
 							uworker.postMessage( { recursiveUpdate: true, item: 'directory', fullPath: itm.fullPath, session: Workspace.sessionId } );
 						}
 						busyChecker();
