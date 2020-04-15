@@ -8718,6 +8718,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			if( percent == 100 )
 			{
+				uprogress.done = true;
 				if( uprogress.info )
 					uprogress.info.innerHTML = '<div id="transfernotice" style="padding-top:10px;">' +
 						'Storing file in destination folder...</div>';
@@ -8727,6 +8728,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// show notice that we are transporting files to the server....
 		uprogress.setUnderTransport = function()
 		{
+			if( uprogress.done ) return;
 			if( uprogress.info )
 				uprogress.info.innerHTML = '<div id="transfernotice" style="padding-top:10px;">' +
 					'Transferring files to target volume...</div>';
