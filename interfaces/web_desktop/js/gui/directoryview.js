@@ -1531,15 +1531,17 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					// show notice that we are transporting files to the server....
 					uprogress.setUnderTransport = function()
 					{
-						uprogress.info.innerHTML = '<div id="transfernotice" style="padding-top:10px;">' +
-							'Transferring files to target volume...</div>';
+						if( uprogress.info )
+							uprogress.info.innerHTML = '<div id="transfernotice" style="padding-top:10px;">' +
+								'Transferring files to target volume...</div>';
 						uprogress.myview.setFlag( 'height', 125 );
 					}
 
 					// An error occurred
 					uprogress.displayError = function( msg )
 					{
-						uprogress.info.innerHTML = '<div style="color:#F00; padding-top:10px; font-weight:700;">'+ msg +'</div>';
+						if( uprogress.info )
+							uprogress.info.innerHTML = '<div style="color:#F00; padding-top:10px; font-weight:700;">'+ msg +'</div>';
 						uprogress.myview.setFlag( 'height', 140 );
 					}
 
