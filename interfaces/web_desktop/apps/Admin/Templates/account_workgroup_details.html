@@ -89,6 +89,23 @@
 		</div>
 	</div>
 
+	<div id="AdminStorageContainer" class="Open">
+		<!--<div class="HRow MarginTop BackgroundNegativeAlt Negative Padding">-->
+		<div class="HRow MarginTop BackgroundNegative Negative Padding">
+			<div class="HContent50 FloatLeft">
+				<h3 class="NoMargin">
+					<strong>{i18n_storage}</strong>
+				</h3>
+			</div>
+			<div class="HContent50 FloatLeft Relative">
+				<button class="IconButton IconSmall Negative FloatRight MarginRight fa-plus-circle" onclick="Sections.group_disk_update( {id} )"></button>
+			</div>
+		</div>
+		<div class="Box Padding" id="StorageGui">
+			{storage}
+		</div>
+	</div>
+
 	<div id="AdminRolesContainer" class="Open">
 		<h2 class="MarginTop">
 			{i18n_roles}
