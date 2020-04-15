@@ -8716,6 +8716,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				uprogress.bar.style.width = Math.floor( Math.max(1,percent ) ) + '%';
 				progress.innerHTML = Math.floor( percent ) + '%' + ( wri ? ( ' ' + humanFilesize( wri ) + '/' + humanFilesize( tot ) ) : '' );
 			}
+			if( percent == 100 )
+			{
+				if( uprogress.info )
+					uprogress.info.innerHTML = '<div id="transfernotice" style="padding-top:10px;">' +
+						'Storing file in destination folder...</div>';
+			}
 		};
 
 		// show notice that we are transporting files to the server....
