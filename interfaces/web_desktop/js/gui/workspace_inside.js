@@ -8684,6 +8684,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				groove.style.height = '30px';
 				groove.style.top = '0';
 				groove.style.left = '0';
+				progress.style.position = 'absolute';
 				progress.style.top = '0';
 				progress.style.left = '0';
 				progress.style.width = '100%';
