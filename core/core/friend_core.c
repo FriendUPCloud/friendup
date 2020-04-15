@@ -831,7 +831,10 @@ void FriendCoreProcess( void *fcv )
 					if( strlen( tmpFilename ) == 0 )
 					{
 						FERROR("mktemp failed!");
-						break; //drop the connection, rest of this function will do the cleanup
+						//break; //drop the connection, rest of this function will do the cleanup
+						BufStringDelete( resultString );
+						DecreaseThreads();
+						return;
 					}
 					else
 					{
