@@ -1028,12 +1028,26 @@ Screen = function ( flags, initObject )
 			offline.innerHTML = i18n('i18n_server_disconnected');
 			this.div.appendChild( offline );	
 		}
+		
+		if( window.Workspace && Workspace.notifyAppsOfState )
+		{
+			Workspace.notifyAppsOfState( {
+				state: 'offline'
+			} );
+		}
 	}
 	
 	this.hideOfflineMessage = function()
 	{
 		var offline = this.div.getElementsByClassName( 'Offline' )[0];
 		if( offline ) offline.style.display = 'none';
+		
+		if( window.Workspace && Workspace.notifyAppsOfState )
+		{
+			Workspace.notifyAppsOfState( {
+				state: 'online'
+			} );
+		}
 	}
 	
 	// Go through flags

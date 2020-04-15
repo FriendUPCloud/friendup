@@ -8,6 +8,10 @@
 *                                                                              *
 *****************************************************************************©*/
 
+/* 
+	This is where Friend Jukebox starts.
+	Exotica was the first name of this app, hence, it's historic :-)
+*/
 Application.run = function( msg, iface )
 {
 	// Start with empty playlist
@@ -50,7 +54,7 @@ Application.run = function( msg, iface )
 		this.handleFiles( msg.args );
 }
 
-// Add the files of as playlist
+// Add the files of as playlist ------------------------------------------------
 Application.addPlaylist = function ( fname )
 {
 	var f = new File( fname );
@@ -72,7 +76,7 @@ Application.addPlaylist = function ( fname )
 	f.load();
 }
 
-// Handle files by path
+// Handle files by path --------------------------------------------------------
 Application.handleFiles = function( args )
 {
 	// We start with a bang!
@@ -107,7 +111,7 @@ Application.handleFiles = function( args )
 	}
 }
 
-// Redraws the main application pulldown menu
+// Redraws the main application pulldown menu ----------------------------------
 Application.redrawMenu = function()
 {
 	this.mainView.setMenuItems( [
@@ -154,7 +158,7 @@ Application.redrawMenu = function()
 	] );
 }
 
-// About exotica view window
+// About exotica view window ---------------------------------------------------
 Application.openAbout = function()
 {
 	if( this.aboutWindow ) return this.aboutWindow.activate();
@@ -177,7 +181,7 @@ Application.openAbout = function()
 	f.load();
 }
 
-// Shows the playlist editor
+// Shows the playlist editor ---------------------------------------------------
 Application.editPlaylist = function()
 {
 	if( this.playlistWindow ) return this.playlistWindow.activate();
@@ -239,7 +243,7 @@ Application.editPlaylist = function()
 	f.load();
 }
 
-// Opens a playlist using a file dialog
+// Opens a playlist using a file dialog ----------------------------------------
 Application.openPlaylist = function()
 {
 	if( this.of ) return this.of.activate();
@@ -283,7 +287,7 @@ Application.addToPlaylist = function( items )
 	
 }
 
-// Receives events from OS and child windows
+// Receives events from OS and child windows -----------------------------------
 Application.receiveMessage = function( msg )
 {
 	if( !msg.command ) return;
@@ -529,7 +533,7 @@ Application.receiveMessage = function( msg )
 	}
 }
 
-// Shortcut
+// Shortcut --------------------------------------------------------------------
 function ShowPlaylist()
 {
 	Application.editPlaylist();

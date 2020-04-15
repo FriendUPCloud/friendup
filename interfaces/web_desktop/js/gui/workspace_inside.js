@@ -999,6 +999,25 @@ var WorkspaceInside = {
 			}
 		}
 	},
+	// Notify all apps of a state change
+	notifyAppsOfState: function( flags )
+	{
+		if( !flags || !flags.state ) return;
+		
+		let msg = {
+			command: 'workspace-notify',
+			state: flags.state
+		};
+		let apps = ge( 'Tasks' ).getElementsByTagName( 'iframe' );
+		for( var a = 0; a < apps.length; a++ )
+		{
+			// TODO: Have per application permissions here..
+			// Not all applications should be able to send messages to
+			// all other applications...
+			msg.applicationId = apps[a].applicationId;
+			apps[ a ].sendMessage( msg );
+		}
+	},
 	checkFriendNetwork: function()
 	{
 		var self = this;
@@ -8100,6 +8119,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	showLauncher: function()
 	{
 		if( !Workspace.sessionId ) return;
+		var selfw = this;
 
 		if( this.launcherWindow )
 		{
@@ -8132,17 +8152,25 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				ge( 'WorkspaceRunCommand' ).value = Workspace.lastExecuted;
 			}
-			ge( 'WorkspaceRunCommand' ).addEventListener( 'keydown', function( e )
+			if( ge( 'WorkspaceRunCommand' ) )
 			{
-				var wh = e.which ? e.which : e.keyCode;
-				if( wh == 27 )
+				ge( 'WorkspaceRunCommand' ).addEventListener( 'keydown', function( e )
 				{
-					Workspace.hideLauncher();
-					return cancelBubble( e );
-				}
-			} );
-			ge( 'WorkspaceRunCommand' ).select();
-			ge( 'WorkspaceRunCommand' ).focus();
+					var wh = e.which ? e.which : e.keyCode;
+					if( wh == 27 )
+					{
+						Workspace.hideLauncher();
+						return cancelBubble( e );
+					}
+				} );
+				ge( 'WorkspaceRunCommand' ).select();
+				ge( 'WorkspaceRunCommand' ).focus();
+			}
+			else
+			{
+				if( w.setContent ) w.close();
+				selfw.launcherWindow = null;
+			}
 		}
 		f.load();
 		this.launcherWindow = w;
@@ -8345,7 +8373,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			
 			//console.log( 'Response from connection checker: ', e, d );
-			if( e == 'fail' ) 
+			if( e == 'error' )
+			{
+				// Just die!
+				return;
+			}
+			else if( e == 'fail' ) 
 			{
 				console.log( '[getsetting] Got "fail" response.' );
 				//console.trace();
