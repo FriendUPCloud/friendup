@@ -8637,12 +8637,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 			// Setup progress bar
 			var eled = w.getWindowElement().getElementsByTagName( 'div' );
-			var groove = false, bar = false, frame = false, progressbar = false;
+			var groove = false, bar = false, frame = false, progressbar = false, progress = false;
 			for( var a = 0; a < eled.length; a++ )
 			{
 				if( eled[a].className )
 				{
-					var types = [ 'ProgressBar', 'Groove', 'Frame', 'Bar', 'Info' ];
+					var types = [ 'ProgressBar', 'Groove', 'Frame', 'Bar', 'Info', 'Progress' ];
 					for( var b = 0; b < types.length; b++ )
 					{
 						if( eled[a].className.indexOf( types[b] ) == 0 )
@@ -8654,6 +8654,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								case 'Frame':       frame          = eled[a]; break;
 								case 'Bar':         bar            = eled[a]; break;
 								case 'Info':		uprogress.info = eled[a]; break;
+								case 'Progress':    progress       = eled[a]; break;
 							}
 							break;
 						}
@@ -8683,6 +8684,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				groove.style.height = '30px';
 				groove.style.top = '0';
 				groove.style.left = '0';
+				progress.style.top = '0';
+				progress.style.left = '0';
+				progress.style.width = '100%';
+				progress.style.height = '30px';
+				progress.style.textAlign = 'center';
+				progress.style.zIndex = 2;
 				bar.style.position = 'absolute';
 				bar.style.width = '2px';
 				bar.style.height = '30px';
@@ -8699,15 +8706,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 
 		// For the progress bar
-		uprogress.setProgress = function( percent )
+		uprogress.setProgress = function( percent, wri, tot )
 		{
 			// only update display if we are loaded...
 			// otherwise just drop and wait for next call to happen ;)
 			if( uprogress.loaded )
 			{
 				uprogress.bar.style.width = Math.floor( Math.max(1,percent ) ) + '%';
-				uprogress.bar.innerHTML = '<div class="FullWidth" style="text-overflow: ellipsis; text-align: center; line-height: 30px; color: white">' +
-				Math.floor( percent ) + '%</div>';
+				progress.innerHTML = Math.floor( percent ) + '%' + (wri ? ( ' ' + wri + '/' + tot + 'b') : '' );
 			}
 		};
 
@@ -8745,7 +8751,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				else if( e.data['progress'] )
 				{
-					uprogress.setProgress( e.data['progress'] );
+					var tot = -1;
+					if( e.data[ 'bytesWritten' ] )
+					{
+						uprogress.setProgress( e.data['progress'], e.data[ 'bytesWritten' ], e.data[ 'bytesTotal' ] );
+					}
+					else uprogress.setProgress( e.data['progress'] );
+					
 					if( e.data['filesundertransport'] && e.data['filesundertransport'] > 0 )
 					{
 						uprogress.setUnderTransport();

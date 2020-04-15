@@ -352,6 +352,8 @@ self.uploadFiles = function()
 					self.postMessage( {
 						'progressinfo': 1,
 						'progress': progress,
+						'bytesWritten': prog,
+						'bytesTotal': tota,
 						'progresson': ind,
 						'filesundertransport': self.filesUnderTransport
 					} );
