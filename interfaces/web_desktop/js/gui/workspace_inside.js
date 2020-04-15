@@ -8613,6 +8613,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		var uprogress = new File( 'templates/file_operation.html' );
 
 		uprogress.connectedworker = uworker;
+		var groove = false, bar = false, frame = false, progressbar = false, progress = false;
 
 		//upload dialog...
 		uprogress.onLoad = function( data )
@@ -8637,7 +8638,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 			// Setup progress bar
 			var eled = w.getWindowElement().getElementsByTagName( 'div' );
-			var groove = false, bar = false, frame = false, progressbar = false, progress = false;
 			for( var a = 0; a < eled.length; a++ )
 			{
 				if( eled[a].className )
@@ -8713,7 +8713,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if( uprogress.loaded )
 			{
 				uprogress.bar.style.width = Math.floor( Math.max(1,percent ) ) + '%';
-				progress.innerHTML = Math.floor( percent ) + '%' + (wri ? ( ' ' + wri + '/' + tot + 'b') : '' );
+				progress.innerHTML = Math.floor( percent ) + '%' + ( wri ? ( ' ' + humanFilesize( wri ) + '/' + humanFilesize( tot ) ) : '' );
 			}
 		};
 
@@ -8752,11 +8752,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				else if( e.data['progress'] )
 				{
 					var tot = -1;
+					
+					// Do we get extra information?
 					if( e.data[ 'bytesWritten' ] )
 					{
 						uprogress.setProgress( e.data['progress'], e.data[ 'bytesWritten' ], e.data[ 'bytesTotal' ] );
 					}
-					else uprogress.setProgress( e.data['progress'] );
+					// No extra information
+					else
+					{
+						uprogress.setProgress( e.data['progress'] );
+					}
 					
 					if( e.data['filesundertransport'] && e.data['filesundertransport'] > 0 )
 					{
