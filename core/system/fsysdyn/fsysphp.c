@@ -800,7 +800,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		do
 		{
 			//snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/%s_read_%d%d%d%d", s->f_SessionIDPTR, rand()%9999, rand()%9999, rand()%9999, rand()%9999 );
-			snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/%s_read_%f%d%d", s->f_SessionIDPTR, timeInMill, rand()%9999, rand()%9999 );
+			snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/Friendup/%s_read_%f%d%d", s->f_SessionIDPTR, timeInMill, rand()%9999, rand()%9999 );
 			//DEBUG( "[fsysphp] Trying to lock %s\n", tmpfilename );
 			if( ( lockf = open( tmpfilename, O_CREAT|O_EXCL|O_RDWR ) ) >= 0 )
 			{
@@ -847,7 +847,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 			{
 				if( strncmp( result->ls_Data, "fail", 4 ) == 0 )
 				{
-					FERROR( "[fsysphp] [FileOpen] Failed to get exclusive lock on lockfile.\n" );
+					FERROR( "[fsysphp] [FileOpen] Failed to get exclusive lock on lockfile. Fail returned.\n" );
 					FFree( command );
 					FFree( encodedcomm );
 					ListStringDelete( result );
@@ -937,7 +937,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		// Make sure we can make the tmp file unique
 		//do
 		//{
-		snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/%s_write_%d%d%d%d", s->f_SessionIDPTR, rand()%9999, rand()%9999, rand()%9999, rand()%9999 );
+		snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/Friendup/%s_write_%d%d%d%d", s->f_SessionIDPTR, rand()%9999, rand()%9999, rand()%9999, rand()%9999 );
 		//}
 		//while( access( tmpfilename, F_OK ) != -1 );
 
