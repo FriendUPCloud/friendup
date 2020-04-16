@@ -341,12 +341,12 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 		var dom = window.isMobile ? vie.dom : vie.getWindowElement();
 		var eled = dom.getElementsByTagName( '*' );
 		var groove = false, bar = false, frame = false, progressbar = false;
-		var fcb = infocontent = false;
+		var fcb = infocontent = false, progress = false;
 		for( var a = 0; a < eled.length; a++ )
 		{
 			if( eled[a].classList )
 			{
-				var types = [ 'ProgressBar', 'Groove', 'Frame', 'Bar', 'FileCancelButton', 'InfoContents' ];
+				var types = [ 'ProgressBar', 'Groove', 'Frame', 'Bar', 'FileCancelButton', 'InfoContents', 'Progress' ];
 				for( var b = 0; b < types.length; b++ )
 				{
 					if( eled[a].classList.contains( types[b] ) )
@@ -354,6 +354,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						switch( types[b] )
 						{
 							case 'ProgressBar': progressbar  = eled[a]; break;
+							case 'Progress':    progress     = eled[a]; break;
 							case 'Groove':      groove       = eled[a]; break;
 							case 'Frame':       frame        = eled[a]; break;
 							case 'Bar':         bar          = eled[a]; break;
@@ -384,6 +385,13 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 			progressbar.style.position = 'relative';
 			frame.style.width = '100%';
 			frame.style.height = '40px';
+			progress.style.position = 'absolute';
+			progress.style.top = '0';
+			progress.style.left = '0';
+			progress.style.width = '100%';
+			progress.style.height = '30px';
+			progress.style.textAlign = 'center';
+			progress.style.zIndex = 2;
 			groove.style.position = 'absolute';
 			groove.style.width = '100%';
 			groove.style.height = '30px';
@@ -418,7 +426,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 				{
 					bar.friendSize = size;
 					bar.style.width = size + '%';
-					bar.innerHTML = '<div>' + size + '%</div>';
+					progress.innerHTML = size + '%';
 				}
 			}, 100 );
 			

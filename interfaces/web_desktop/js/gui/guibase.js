@@ -3744,7 +3744,7 @@ function DefaultToWorkspaceScreen( tar ) // tar = click target
 
 function convertIconsToMultiple()
 {
-	if( currentMovable && currentMovable && currentMovable.content.icons )
+	if( currentMovable && currentMovable && currentMovable.content && currentMovable.content.icons )
 	{
 		var ics = currentMovable.content.icons;
 		for( var a = 0; a < ics.length; a++ )

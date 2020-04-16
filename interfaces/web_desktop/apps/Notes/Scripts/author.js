@@ -457,8 +457,74 @@ Application.receiveMessage = function( msg )
 			this.setCorrectTitle();
 			break;
 		case 'setfilename':
+			var oldWhole = this.wholeFilename;
 			this.wholeFilename = msg.data;
-			this.setCorrectTitle();
+
+			if( msg.rename && oldWhole != this.wholeFilename )
+			{
+				// Get the filename component
+				var filenameComponent = this.wholeFilename;
+				if( filenameComponent.indexOf( ':' ) > 0 )
+				{
+					filenameComponent = filenameComponent.split( ':' )[1];
+				}
+				if( filenameComponent.indexOf( '/' ) > 0 )
+				{
+					filenameComponent = filenameComponent.split( '/' ).pop();
+				}
+				var ocomp = filenameComponent;
+				
+				var newFile = oldWhole.substr( -13, 13 ) == '/unnamed.html';
+				
+				// Don't use a filename already taken
+				var docPath = this.wholeFilename.substr( 0, this.wholeFilename.length - filenameComponent.length );
+				var dr = new Door( docPath );
+				var ics = dr.getIcons( function( items )
+				{
+					var found = false;
+					var num = 2;
+					do
+					{
+						found = false;
+						for( var a = 0; a < items.length; a++ )
+						{
+							if( !newFile && items[ a ].Filename == oldWhole ) continue;
+							if( items[ a ].Filename == filenameComponent )
+							{
+								if( docPath + filenameComponent == msg.rename )
+								{
+									Application.wholeFilename = msg.rename;
+									Application.setCorrectTitle();
+									return;
+								}
+								var comps = ocomp.split( '.' );
+								filenameComponent = comps[0] + ' ' + ( num++ ) + '.' + comps[1];
+								found = true;
+							}
+						}
+					}
+					while( found );
+					
+					// Make the change
+					let l = new Library( 'system.library' );
+					l.onExecuted = function( e, d )
+					{
+						if( e == 'ok' )
+						{
+							Application.mainView.sendMessage( {
+								command: 'setcurrentdocument',
+								path: docPath + filenameComponent
+							} );
+							Application.setCorrectTitle();
+						}
+					}
+					l.execute( 'file/rename', { path: oldWhole, newname: filenameComponent } );
+				} );
+			}
+			else
+			{
+				this.setCorrectTitle();
+			}
 			break;
 		case 'newdocument':
 			this.wholeFilename = '';

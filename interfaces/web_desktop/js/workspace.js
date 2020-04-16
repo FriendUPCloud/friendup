@@ -329,7 +329,7 @@ Workspace = {
 		// Recall wallpaper from settings
 		this.refreshUserSettings( function(){ 
 			// Refresh desktop for the first time
-			Workspace.refreshDesktop(); 
+			Workspace.refreshDesktop( false, true );
 		} );
 
 		// Create desktop
@@ -811,22 +811,31 @@ Workspace = {
 			}
 			else
 			{
-				try
-				{
-					var js = JSON.parse( d );
-					// Session authentication failed
-					if( parseInt( js.code ) == 3 || parseInt( js.code ) == 11 )
+				if( d )
+				{					
+					try
 					{
-						// console.log( 'Test2: Flush session' );
-						Workspace.flushSession();
-						Workspace.reloginInProgress = false;
-						return executeCleanRelogin();
+						var js = JSON.parse( d );
+						// Session authentication failed
+						if( parseInt( js.code ) == 3 || parseInt( js.code ) == 11 )
+						{
+							// console.log( 'Test2: Flush session' );
+							Workspace.flushSession();
+							Workspace.reloginInProgress = false;
+							return executeCleanRelogin();
+						}
+					}
+					catch( n )
+					{
+						killConn();
+						console.log( 'Error running relogin.', n, d );
 					}
 				}
-				catch( n )
+				else
 				{
-					killConn();
-					console.log( 'Error running relogin.', n );
+					Workspace.flushSession();
+					Workspace.reloginInProgress = false;
+					return executeCleanRelogin();
 				}
 			}
 			if( Workspace.serverIsThere )
@@ -907,14 +916,26 @@ Workspace = {
 						json = serveranswer;
 					}
 				}
+				
+				var hasSessionID = null;
+				var hasLoginID = null;
 
-				Workspace.userLevel = json.level;
+				try
+				{
+					Workspace.userLevel = json.level;
+					hasSessionID = ( typeof( json.sessionid ) != 'undefined' && json.sessionid && json.sessionid.length > 1 );
+					hasLoginID = ( typeof( json.loginid ) != 'undefined' && json.loginid && json.loginid.length > 1 );
+				}
+				catch( e )
+				{
+					Workspace.userLevel = false;
+				}
+				
 				if( !Workspace.loginUsername && json.username ) Workspace.loginUsername = json.username;
 
-				var hasSessionID = ( typeof( json.sessionid ) != 'undefined' && json.sessionid && json.sessionid.length > 1 );
-				var hasLoginID = ( typeof( json.loginid ) != 'undefined' && json.loginid && json.loginid.length > 1 );
 				
-				if( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 )
+				
+				if( json && ( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 ) )
 				{
 					// Successful login, clear blockers and execute ajax queue
 					Workspace.reloginInProgress = false;
@@ -1099,12 +1120,22 @@ Workspace = {
 					}
 				}
 
-				Workspace.userLevel = json.level;
+				var hasSessionID = null;
+				var hasLoginID = null;
 
-				var hasSessionID = ( typeof( json.sessionid ) != 'undefined' && json.sessionid && json.sessionid.length > 1 );
-				var hasLoginID = ( typeof( json.loginid ) != 'undefined' && json.loginid && json.loginid.length > 1 );
+				try
+				{
+					Workspace.userLevel = json.level;
+					hasSessionID = ( typeof( json.sessionid ) != 'undefined' && json.sessionid && json.sessionid.length > 1 );
+					hasLoginID = ( typeof( json.loginid ) != 'undefined' && json.loginid && json.loginid.length > 1 );
+				}
+				catch( e )
+				{
+					Workspace.userLevel = false;
+				}
 
-				if( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 )
+
+				if( json && ( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 ) )
 				{
 					// // console.log( 'Test2: We got a login.' );
 					

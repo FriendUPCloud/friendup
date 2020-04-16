@@ -30,6 +30,9 @@
 
 //#define USE_SELECT
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <core/types.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -64,8 +67,8 @@
 //#undef DEBUG1
 //#define DEBUG1( ...)
 
-//#define USE_PTHREAD
-#define USE_WORKERS
+#define USE_PTHREAD
+//#define USE_WORKERS
 //#define USE_PTHREAD_ACCEPT
 
 extern void *FCM;			// FriendCoreManager
@@ -78,12 +81,6 @@ int accept4(int sockfd, struct sockaddr *addr,            socklen_t *addrlen, in
 
 int nothreads = 0;					/// threads coutner @todo to rewrite
 #define MAX_CALLHANDLER_THREADS 256			///< maximum number of simulatenous handlers
-
-/* HTTP requests above this thresholds are saved to temporary files
-* and mmap'ed for later use. This conserves RAM during large
-* file uploads. (TK-628)
-*/
-#define TUNABLE_LARGE_HTTP_REQUEST_SIZE (10*1024*1024) //10MB
 
 /**
 * Mutex buffer for ssl locking
@@ -387,7 +384,7 @@ static inline void moveToHttp( int fd )
 		if( HttpBuild( response ) != NULL )
 		{
 			int s;
-			s = send( fd, response->response, response->responseLength, 0 );
+			s = send( fd, response->http_Response, response->http_ResponseLength, 0 );
 			//close( fd );
 		}
 		HttpFree( response );
@@ -429,7 +426,7 @@ static inline void moveToHttps( Socket *sock )
 		{
 			int s;
 			//s = SSL_write( sock->s_Ssl, response->response, response->responseLength );
-			s = send( sock->fd, response->response, response->responseLength, 0 );
+			s = send( sock->fd, response->http_Response, response->http_ResponseLength, 0 );
 			//DEBUG("Response send!!!\n\n\n %s\n\n\n%d\n\n\n", response->response, response->responseLength );
 			//close( fd );
 		}
@@ -736,226 +733,9 @@ accerror:
 	return NULL;
 }
 
-/**
-* Processes Friend Core messages
-*
-* @param fcv pointer to thread instance of Friend Core
-* @return NULL
-*/
-void *FriendCoreProcess__httponthefly( void *fcv )
-{
-#ifdef USE_PTHREAD
-	pthread_detach( pthread_self() );
-#endif
-	
-	IncreaseThreads();
-	
-	DEBUG("[FriendCoreProcess] Before while\n");
-	
-	struct fcThreadInstance *th = ( struct fcThreadInstance *)fcv;
-	
-	// Get socket
-	if( th->sock == NULL )
-	{
-		DecreaseThreads();
-		FFree( th );
-#ifdef USE_PTHREAD
-		pthread_exit( 0 );
-#endif
-		return NULL;
-	}
-	
-	// First pass header, second, data
-	int pass = 0, bodyLength = 0, prevBufSize = 0, preroll = 0, stopReading = 0;
-	
-	// Often used
-	int partialDivider = 0, foundDivider = 0, y = 0, x = 0, yc = 0, yy = 0;
-	char findDivider[ 5 ];
-	char *std_Buffer = FCalloc( HTTP_READ_BUFFER_DATA_SIZE_ALLOC, sizeof( char ) );
-	if( std_Buffer != NULL )
-	{
-		HttpString *resultString = HttpStringNew( HTTP_READ_BUFFER_DATA_SIZE );
-		
-		int res = 0;
-		int requestSize = 0;
-		int timesRead = 0;
-		FBOOL everythingRead = FALSE;
-		FBOOL parseOnlyHeader = FALSE;
-		
-		DEBUG("[FriendCoreProcess] before process ptr %p fd %d\n", th->sock, th->sock->fd );
-
-		Http *request = NULL;
-		
-		while( TRUE )
-		{
-			if( ( res = SocketRead( th->sock, std_Buffer, HTTP_READ_BUFFER_DATA_SIZE, pass ) ) > 0 )
-			{
-				char stdBufChr = std_Buffer[ res - 1 ];
-				requestSize += res;
-				timesRead++;
-				
-				HttpStringAdd( resultString, std_Buffer, res );
-
-				if( ( stdBufChr == '\r' ||  stdBufChr == '\n' ) )
-				{
-					if( res < HTTP_READ_BUFFER_DATA_SIZE )
-					{
-						everythingRead = TRUE;
-
-						// we have whole message, no need to read more
-						//break;
-					}
-				}
-				// enough to parse header
-				else if( strstr( std_Buffer, dividerStr ) != NULL )
-				{
-					parseOnlyHeader = TRUE;
-				}
-				
-				if( everythingRead == TRUE || parseOnlyHeader == TRUE )
-				{
-					request = ( Http *)th->sock->data;
-					if( request == NULL )
-					{
-						request = HttpNew( );
-						request->timestamp = time( NULL );
-						th->sock->data = ( void* )request;
-						resultString->ht_Reqest = request;
-					}
-					
-					if( request != NULL && request->gotHeader == FALSE )
-					{
-						int result = HttpParseHeader( request, resultString->ht_Buffer, resultString->ht_Size + 1 );
-						if( result == 1 )
-						{
-							if( request->h_ContentLength > 0 )
-							{
-								//char *divider = strstr( content, dividerStr );
-								char *divider = strstr( resultString->ht_Buffer, dividerStr );
-
-								// No divider?
-								if( !divider )
-								{
-									break;
-								}
-
-								bodyLength = request->h_ContentLength;//atoi( content );
-								
-								int headerLength = divider - resultString->ht_Buffer + 4;
-
-								// We have enough data and are ready for reading the body
-								if( requestSize >= ( headerLength + bodyLength ) )
-								{
-									everythingRead = TRUE;
-								}
-								
-							}
-							else
-							{
-								FERROR("content = NULL\n");
-							}
-						}
-						else
-						{
-							FERROR("Error during parsing header %d\n", result );
-						}
-						
-						if( bodyLength == 0 )
-						{
-							break;
-						}
-						request->gotHeader = TRUE;
-					}
-					
-					if( everythingRead == TRUE )
-					{
-						
-						break;
-					}
-				}
-				
-				//TEST
-				if( timesRead > 2 )
-				{
-					break;
-				}
-			}
-			else
-			{
-				break;
-			}
-		}
-		
-		
-		if( everythingRead == TRUE )
-		{
-			// Free up
-			if( resultString->ht_Buffer != NULL )
-			{
-				if( resultString->ht_Size > 0 )
-				{
-					// Process data
-					//LOG( FLOG_DEBUG, "We received this (%d bytes): >>%s<<\n", resultString->bs_Size, resultString->bs_Buffer);
-					Http *resp = ProtocolHttp( th->sock, resultString->ht_Buffer, resultString->ht_Size );
-					
-					// -1 is special case, the response already was sent and cleaned up
-					if( resp != NULL )//&& resp != -1 )
-					{
-						if( resp->h_WriteType == FREE_ONLY )
-						{
-							HttpFree( resp );
-						}
-						else
-						{
-							HttpWriteAndFree( resp, th->sock );
-						}
-					}
-				}
-				// No data, just free
-				else
-				{
-					// Ask for more info
-					DEBUG( "[FriendCoreProcess] No buffer to write, so just free!\n" );
-				}
-				HttpStringDelete( resultString );
-			}
-			else
-			{
-				// Ask for more info
-				DEBUG( "[FriendCoreProcess] No buffer to write!\n" );
-			}
-		}
-		else
-		{
-			HttpStringDelete( resultString );
-			if( request != NULL )
-			{
-				HttpFree( request );
-			}
-		}
-		
-		// Free the pair
-		if( th != NULL )
-		{
-			FFree( th );
-		}
-		
-		// Free up buffers
-		FFree( std_Buffer );
-	}
-	
-	SocketDelete( th->sock );
-	th->sock = NULL;
-	
-	// No more threads
-	DecreaseThreads();
-#ifdef USE_PTHREAD
-	//pthread_exit( 0 );
-#endif
-	return NULL;
-}
-
-
+//
+//
+//
 
 void FriendCoreProcess( void *fcv )
 {
@@ -988,22 +768,22 @@ void FriendCoreProcess( void *fcv )
 	// Let's go!
 
 	// First pass header, second, data
-	int pass = 0, bodyLength = 0, prevBufSize = 0, preroll = 0, 
+	FQUAD pass = 0, bodyLength = 0, prevBufSize = 0, preroll = 0, 
 		stopReading = 0, headerLength = 0;
 
 	// Often used
-	int partialDivider = 0, foundDivider = 0, y = 0;
+	FQUAD partialDivider = 0, foundDivider = 0, y = 0;
 	char findDivider[ 5 ]; memset( findDivider, 0, 5 );
 
-	int bufferSize = HTTP_READ_BUFFER_DATA_SIZE;
-	int bufferSizeAlloc = HTTP_READ_BUFFER_DATA_SIZE_ALLOC;
+	FQUAD bufferSize = HTTP_READ_BUFFER_DATA_SIZE;
+	FQUAD bufferSizeAlloc = HTTP_READ_BUFFER_DATA_SIZE_ALLOC;
 
 	int tmpFileHandle = -2;
 	char *tmpFilename = NULL;
-	char tmpFileNameTemplate[] = "/tmp/FriendHTTP_XXXXXX";
+	char tmpFileNameTemplate[] = "/tmp/Friendup/FriendHTTP_XXXXXXXXXXXXXXXX";
 
 	char *incomingBufferPtr = 0;
-	unsigned int incomingBufferLength = 0;
+	FQUAD incomingBufferLength = 0;
 
 	BufString *resultString = BufStringNewSize( bufferSizeAlloc*2 );
 
@@ -1025,7 +805,7 @@ void FriendCoreProcess( void *fcv )
 
 			// int count = the amount of data read
 			// int res = the amount of data read in one chunk
-			int count = preroll, res = 0, joints = 0, methodGet = 0;
+			FQUAD count = preroll, res = 0, joints = 0, methodGet = 0;
 
 			// We must find divider!
 
@@ -1051,7 +831,10 @@ void FriendCoreProcess( void *fcv )
 					if( strlen( tmpFilename ) == 0 )
 					{
 						FERROR("mktemp failed!");
-						break; //drop the connection, rest of this function will do the cleanup
+						//break; //drop the connection, rest of this function will do the cleanup
+						BufStringDelete( resultString );
+						DecreaseThreads();
+						return;
 					}
 					else
 					{
@@ -1075,6 +858,7 @@ void FriendCoreProcess( void *fcv )
 				res = SocketRead( th->sock, locBuffer, bufferSize, expected );
 				if( res > 0 )
 				{
+					//DEBUG("----------------------> tmpFileHandle: %d read: %ld\n", tmpFileHandle, res );
 					if( tmpFileHandle >= 0 )
 					{
 						int wrote = write( tmpFileHandle, locBuffer, res );
@@ -1160,7 +944,7 @@ void FriendCoreProcess( void *fcv )
 						int res;
 						if( ( res = SSL_read( th->sock->s_Ssl, buf, sizeof(buf) ) ) > 0 )
 						{
-							
+							DEBUG("----------------------> tmpFileHandle: %d read: %d\n", tmpFileHandle, res );
 						}
 						else
 						{
@@ -1194,13 +978,13 @@ void FriendCoreProcess( void *fcv )
 					if( request == NULL )
 					{
 						request = HttpNew( );
-						request->timestamp = time( NULL );
+						request->http_Timestamp = time( NULL );
 						th->sock->data = ( void* )request;
 					}
-					request->h_ShutdownPtr = &(th->fc->fci_Shutdown);
-					request->h_Socket = th->sock;
+					request->http_ShutdownPtr = &(th->fc->fci_Shutdown);
+					request->http_Socket = th->sock;
 
-					/* -------------- Support for large uploads -------------- */
+					// -------------- Support for large uploads -------------- 
 					if( tmpFileHandle >= 0 )
 					{
 						if( incomingBufferPtr != NULL )
@@ -1211,6 +995,7 @@ void FriendCoreProcess( void *fcv )
 						}
 						//DEBUG( "mmaping" );
 						incomingBufferLength = lseek( tmpFileHandle, 0, SEEK_END);
+						DEBUG("->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ibl: %ld", incomingBufferLength );
 						incomingBufferPtr = mmap( 0, incomingBufferLength, PROT_READ | PROT_WRITE, MAP_SHARED, tmpFileHandle, 0/*offset*/);
 						
 						if( incomingBufferPtr == MAP_FAILED )
@@ -1226,7 +1011,7 @@ void FriendCoreProcess( void *fcv )
 					}
 					/* ------------------------------------------------------- */
 					result = HttpParseHeader( request, incomingBufferPtr, incomingBufferLength + 1 );
-					request->gotHeader = TRUE;
+					request->http_GotHeader = TRUE;
 					content = HttpGetHeaderFromTable( request, HTTP_HEADER_CONTENT_LENGTH );
 
 #ifdef USE_SOCKET_REAPER
@@ -1236,7 +1021,7 @@ void FriendCoreProcess( void *fcv )
 					//DEBUG("CONT LENGTH %ld\n", request->h_ContentLength );
 
 					// If we have content, then parse it
-					if( request->h_ContentLength > 0 )
+					if( request->http_ContentLength > 0 )
 					{
 						//DEBUG("Content found\n");
 						
@@ -1257,7 +1042,7 @@ void FriendCoreProcess( void *fcv )
 							break;
 						}
 
-						bodyLength = request->h_ContentLength;//atoi( content );
+						bodyLength = request->http_ContentLength;//atoi( content );
 						
 						// We have enough data and are ready for reading the body
 						headerLength = divider - resultString->bs_Buffer + 4;
@@ -1271,7 +1056,7 @@ void FriendCoreProcess( void *fcv )
 							continue;
 						}
 					}
-					else if( request->h_ExpectedLength > 0 )
+					else if( request->http_ExpectedLength > 0 )
 					{
 						content = HttpGetHeaderFromTable( request, HTTP_HEADER_EXPECTED_CONTENT_LENGTH );
 						if( content == NULL )
@@ -1308,7 +1093,7 @@ void FriendCoreProcess( void *fcv )
 
 						if( chunkSize != 0 )
 						{
-							bodyLength = request->h_ExpectedLength + ( ( request->h_ExpectedLength / ( chunkSize ) << 3 ) );
+							bodyLength = request->http_ExpectedLength + ( ( request->http_ExpectedLength / ( chunkSize ) << 3 ) );
 						}
 						
 						//DEBUG("BODDDY %d\n", bodyLength );
@@ -1316,7 +1101,7 @@ void FriendCoreProcess( void *fcv )
 						// We have enough data and are ready for reading the body
 						int headerLength = divider - resultString->bs_Buffer + 4;
 						
-						request->h_ContentLength = bodyLength - headerLength;
+						request->http_ContentLength = bodyLength - headerLength;
 						
 						if( count > headerLength )
 						{
@@ -1375,13 +1160,15 @@ void FriendCoreProcess( void *fcv )
 				{
 					DEBUG( "regular processing" );
 				}
+				
+				DEBUG("------------>>>>>>>>>>>>>>>>>>>>>>>>>. incomingBufferLength: %ld\n", incomingBufferLength );
 
 				// ------------------------------------------------------- 
 				Http *resp = ProtocolHttp( th->sock, incomingBufferPtr, incomingBufferLength );
 
 				if( resp != NULL )
 				{
-					if( resp->h_WriteType == FREE_ONLY )
+					if( resp->http_WriteType == FREE_ONLY )
 					{
 						HttpFree( resp );
 					}

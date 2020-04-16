@@ -87,9 +87,9 @@ char* StringShellEscapeSize( const char* str, int *len );
 
 char *FindInBinary(char *x, int m, char *y, int n) ;
 
-FLONG FindInBinaryPOS(char *x, int m, char *y, FULONG n);
+FQUAD FindInBinaryPOS(char *x, int m, char *y, FQUAD n);
 
-FLONG FindInBinarySimple( char *x, int m, char *y, FULONG n );
+FQUAD FindInBinarySimple( char *x, int m, char *y, FQUAD n );
 
 void HashedString ( char **str );
 

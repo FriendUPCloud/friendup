@@ -2400,11 +2400,12 @@ function apiWrapper( event, force )
 				// Perhaps do error?
 				if( msg.module.toLowerCase() != 'system' && msg.module.toLowerCase() != 'files' )
 				{
-					if( !checkAppPermission( app.authId, 'Module ' + msg.module.charAt( 0 ).toUpperCase()+msg.module.substr( 1 ).toLowerCase() ) )
+					// TODO: Reenable once we have proper working functionality!!
+					/*if( !checkAppPermission( app.authId, 'Module ' + msg.module.charAt( 0 ).toUpperCase()+msg.module.substr( 1 ).toLowerCase() ) )
 					{
 						console.log( 'Permission denied!' );
 						return false;
-					}
+					}*/
 				}
 
 				// Make real module object

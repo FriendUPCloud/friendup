@@ -122,8 +122,8 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 	else if( strcmp( urlpath[ 0 ], "list" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -193,8 +193,8 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 	else if( strcmp( urlpath[ 0 ], "userlist" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 	
@@ -203,7 +203,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		char *assid = NULL;
 		char buffer[ 1024 ];
 		
-		HashmapElement *el = HashmapGet( request->parsedPostContent, "sasid" );
+		HashmapElement *el = HashmapGet( request->http_ParsedPostContent, "sasid" );
 		if( el != NULL )
 		{
 			assid = UrlDecodeToMem( ( char *)el->hme_Data );
@@ -333,8 +333,8 @@ Application.checkDocumentSession = function( sasID = null )
 		 */ 
 		
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{ TAG_DONE, TAG_DONE}
 		};
 		
@@ -342,19 +342,19 @@ Application.checkDocumentSession = function( sasID = null )
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		HashmapElement *el =  HashmapGet( request->parsedPostContent, "authid" );
+		HashmapElement *el =  HashmapGet( request->http_ParsedPostContent, "authid" );
 		if( el != NULL )
 		{
 			authid = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
-		el =  HashmapGet( request->parsedPostContent, "sasid" );
+		el =  HashmapGet( request->http_ParsedPostContent, "sasid" );
 		if( el != NULL )
 		{
 			sasid = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
-		el =  HashmapGet( request->parsedPostContent, "type" );
+		el =  HashmapGet( request->http_ParsedPostContent, "type" );
 		if( el != NULL )
 		{
 			if( el->hme_Data != NULL )
@@ -386,14 +386,59 @@ Application.checkDocumentSession = function( sasID = null )
 			DEBUG("SAS/register: sasid %s\n", sasid );
 			if( sasid != NULL )
 			{
-				/*
 				char *end;
-				FUQUAD asval = strtoull( sasid, &end, 0 );
+				FUQUAD locsasid = strtoull( sasid, &end, 0 );
 			
-				// Try to fetch assid session from session list!
-				AppSession *as = AppSessionManagerGetSession( l->sl_AppSessionManager, asval );
-				DEBUG("SAS/register as: %p\n", as );
-		
+				// do not allow to create SAS with ID = 0
+				if( locsasid == 0 )
+				{
+					char dictmsgbuf[ 256 ];
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_CREATE_SAS], DICT_CANNOT_CREATE_SAS );
+					HttpAddTextContent( response, dictmsgbuf );
+				}
+				else
+				{
+					// Try to fetch assid session from session list!
+					AppSession *as = AppSessionManagerGetSession( l->sl_AppSessionManager, locsasid );
+					DEBUG("SAS/register as: %p\n", as );
+					if( as != NULL )
+					{
+						int size = sprintf( buffer, "{ \"SASID\": \"%lu\",\"type\":%d }", as->as_SASID, as->as_Type );
+						HttpAddTextContent( response, buffer );
+					}
+					else	// as with provided sasid was not found
+					{
+						// create new SAS with provided SASID
+						AppSession *as = AppSessionNew( l, authid, 0, loggedSession );
+						if( as != NULL )
+						{
+							as->as_Type = type;
+							int err = AppSessionManagerAddSession( l->sl_AppSessionManager, as );
+							if( err == 0 )
+							{
+								as->as_SASID = locsasid;	// set SASID
+							
+								int size = sprintf( buffer, "{ \"SASID\": \"%lu\",\"type\":%d }", as->as_SASID, as->as_Type );
+								HttpAddTextContent( response, buffer );
+							}
+							else
+							{
+								char dictmsgbuf[ 256 ];
+								char dictmsgbuf1[ 196 ];
+								snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "SAS register", err );
+								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_FUNCTION_RETURNED );
+								HttpAddTextContent( response, dictmsgbuf );
+							}
+						}
+						else
+						{
+							char dictmsgbuf[ 256 ];
+							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_CREATE_SAS], DICT_CANNOT_CREATE_SAS );
+							HttpAddTextContent( response, dictmsgbuf );
+						}
+					}
+				}
+		/*
 				// We found session!
 				if( as != NULL )
 				{
@@ -481,14 +526,14 @@ Application.checkDocumentSession = function( sasID = null )
 		DEBUG("[ApplicationWebRequest] Unregister session\n");
 		
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
-			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{ TAG_DONE, TAG_DONE}
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		HashmapElement *el =  HashmapGet( request->parsedPostContent, "sasid" );
+		HashmapElement *el =  HashmapGet( request->http_ParsedPostContent, "sasid" );
 		if( el != NULL )
 		{
 			assid = UrlDecodeToMem( ( char *)el->hme_Data );
@@ -627,8 +672,8 @@ Application.checkDocumentSession = function( sasID = null )
 		char *assid = NULL;
 		
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{ TAG_DONE, TAG_DONE}
 		};
 		
@@ -636,13 +681,13 @@ Application.checkDocumentSession = function( sasID = null )
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		HashmapElement *el =  HashmapGet( request->parsedPostContent, "authid" );
+		HashmapElement *el =  HashmapGet( request->http_ParsedPostContent, "authid" );
 		if( el != NULL )
 		{
 			authid = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
-		el = HashmapGet( request->parsedPostContent, "sasid" );
+		el = HashmapGet( request->http_ParsedPostContent, "sasid" );
 		if( el != NULL )
 		{
 			assid = UrlDecodeToMem( ( char *)el->hme_Data );
@@ -810,8 +855,8 @@ Application.checkDocumentSession = function( sasID = null )
 		char *assid = NULL;
 		
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{ TAG_DONE, TAG_DONE}
 		};
 		
@@ -821,7 +866,7 @@ Application.checkDocumentSession = function( sasID = null )
 		
 		HashmapElement *el =  NULL;
 		
-		el = HashmapGet( request->parsedPostContent, "sasid" );
+		el = HashmapGet( request->http_ParsedPostContent, "sasid" );
 		if( el != NULL )
 		{
 			assid = UrlDecodeToMem( ( char *)el->hme_Data );
@@ -921,14 +966,14 @@ Application.checkDocumentSession = function( sasID = null )
 		char *sessid = NULL;
 		
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{ TAG_DONE, TAG_DONE}
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		HashmapElement *el =  HashmapGet( request->parsedPostContent, "sasid" );
+		HashmapElement *el =  HashmapGet( request->http_ParsedPostContent, "sasid" );
 		if( el != NULL )
 		{
 			assid = UrlDecodeToMem( ( char *)el->hme_Data );
@@ -993,7 +1038,7 @@ Application.checkDocumentSession = function( sasID = null )
 		}
 		
 		// Register invite message so we can send it to users
-		el =  HashmapGet( request->parsedPostContent, "message" );
+		el =  HashmapGet( request->http_ParsedPostContent, "message" );
 		if( el != NULL )
 		{
 			msg = UrlDecodeToMem( ( char *)el->hme_Data );
@@ -1001,14 +1046,14 @@ Application.checkDocumentSession = function( sasID = null )
 		
 		// Get sessionid
 		
-		el = HashmapGet( request->parsedPostContent, "sessid" );
+		el = HashmapGet( request->http_ParsedPostContent, "sessid" );
 		if( el != NULL )
 		{
 			sessid = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
 		// Get list of usernames
-		el = HashmapGet( request->parsedPostContent, "users" );
+		el = HashmapGet( request->http_ParsedPostContent, "users" );
 		if( el != NULL )
 		{
 			userlist = UrlDecodeToMem( ( char *)el->hme_Data );
@@ -1101,20 +1146,20 @@ Application.checkDocumentSession = function( sasID = null )
 		char *userlist = NULL;
 		
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{ TAG_DONE, TAG_DONE}
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		HashmapElement *el =  HashmapGet( request->parsedPostContent, "sasid" );
+		HashmapElement *el =  HashmapGet( request->http_ParsedPostContent, "sasid" );
 		if( el != NULL )
 		{
 			assid = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
-		el =  HashmapGet( request->parsedPostContent, "users" );
+		el =  HashmapGet( request->http_ParsedPostContent, "users" );
 		if( el != NULL )
 		{
 			userlist = UrlDecodeToMem( ( char *)el->hme_Data );
@@ -1192,13 +1237,13 @@ Application.checkDocumentSession = function( sasID = null )
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		HashmapElement *el = HashmapGet( request->parsedPostContent, "sasid" );
+		HashmapElement *el = HashmapGet( request->http_ParsedPostContent, "sasid" );
 		if( el != NULL ) assid = UrlDecodeToMem( ( char *)el->hme_Data );
 		
-		el = HashmapGet( request->parsedPostContent, "msg" );
+		el = HashmapGet( request->http_ParsedPostContent, "msg" );
 		if( el != NULL ) msg = UrlDecodeToMem( ( char *)el->hme_Data );
 		
-		el = HashmapGet( request->parsedPostContent, "usernames" );
+		el = HashmapGet( request->http_ParsedPostContent, "usernames" );
 		if( el != NULL ) usernames = UrlDecodeToMem( ( char *)el->hme_Data );
 		
 		char buffer[ 1024 ];
@@ -1287,18 +1332,18 @@ Application.checkDocumentSession = function( sasID = null )
 		char *msg = NULL;
 		
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		FERROR("app/sendowner called\n");
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		HashmapElement *el =  HashmapGet( request->parsedPostContent, "sasid" );
+		HashmapElement *el =  HashmapGet( request->http_ParsedPostContent, "sasid" );
 		if( el != NULL ) assid = UrlDecodeToMem( ( char *)el->hme_Data );
 		
-		el =  HashmapGet( request->parsedPostContent, "msg" );
+		el =  HashmapGet( request->http_ParsedPostContent, "msg" );
 		if( el != NULL ) msg = UrlDecodeToMem( ( char *)el->hme_Data );
 		
 		char buffer[ 1024 ];
@@ -1388,8 +1433,8 @@ Application.checkDocumentSession = function( sasID = null )
 	else if( strcmp( urlpath[ 0 ], "takeover" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -1402,13 +1447,13 @@ Application.checkDocumentSession = function( sasID = null )
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		HashmapElement *el =  HashmapGet( request->parsedPostContent, "sasid" );
+		HashmapElement *el =  HashmapGet( request->http_ParsedPostContent, "sasid" );
 		if( el != NULL ) assid = UrlDecodeToMem( ( char *)el->hme_Data );
 		
-		el =  HashmapGet( request->parsedPostContent, "deviceid" );
+		el =  HashmapGet( request->http_ParsedPostContent, "deviceid" );
 		if( el != NULL ) devid = UrlDecodeToMem( ( char *)el->hme_Data );
 		
-		el =  HashmapGet( request->parsedPostContent, "username" );
+		el =  HashmapGet( request->http_ParsedPostContent, "username" );
 		if( el != NULL ) username = UrlDecodeToMem( ( char *)el->hme_Data );
 		
 		if( assid != NULL && devid != NULL && username != NULL )
@@ -1523,8 +1568,8 @@ Application.checkDocumentSession = function( sasID = null )
 	else if( strcmp( urlpath[ 0 ], "switchsession" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -1536,10 +1581,10 @@ Application.checkDocumentSession = function( sasID = null )
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		HashmapElement *el =  HashmapGet( request->parsedPostContent, "sasid" );
+		HashmapElement *el =  HashmapGet( request->http_ParsedPostContent, "sasid" );
 		if( el != NULL ) assid = UrlDecodeToMem( ( char *)el->hme_Data );
 		
-		el =  HashmapGet( request->parsedPostContent, "deviceid" );
+		el =  HashmapGet( request->http_ParsedPostContent, "deviceid" );
 		if( el != NULL ) devid = UrlDecodeToMem( ( char *)el->hme_Data );
 		
 		if( assid != NULL && devid != NULL )
@@ -1675,7 +1720,7 @@ Application.checkDocumentSession = function( sasID = null )
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -1683,16 +1728,16 @@ Application.checkDocumentSession = function( sasID = null )
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		HashmapElement *el = HashmapGet( request->parsedPostContent, "sasid" );
+		HashmapElement *el = HashmapGet( request->http_ParsedPostContent, "sasid" );
 		if( el != NULL ) assid = ( char *)el->hme_Data;
 		
-		el = HashmapGet( request->parsedPostContent, "var" );
+		el = HashmapGet( request->http_ParsedPostContent, "var" );
 		if( el != NULL ) var = UrlDecodeToMem( ( char *)el->hme_Data );
 		
-		el = HashmapGet( request->parsedPostContent, "varid" );
+		el = HashmapGet( request->http_ParsedPostContent, "varid" );
 		if( el != NULL ) varid = ( char *)el->hme_Data;
 		
-		el = HashmapGet( request->parsedPostContent, "mode" );
+		el = HashmapGet( request->http_ParsedPostContent, "mode" );
 		if( el != NULL )
 		{
 			if( el->hme_Data != NULL )
@@ -1832,7 +1877,7 @@ Application.checkDocumentSession = function( sasID = null )
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -1840,10 +1885,10 @@ Application.checkDocumentSession = function( sasID = null )
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		HashmapElement *el = HashmapGet( request->parsedPostContent, "sasid" );
+		HashmapElement *el = HashmapGet( request->http_ParsedPostContent, "sasid" );
 		if( el != NULL ) assid = ( char *)el->hme_Data;
 		
-		el = HashmapGet( request->parsedPostContent, "varid" );
+		el = HashmapGet( request->http_ParsedPostContent, "varid" );
 		if( el != NULL ) varid = ( char *)el->hme_Data;
 		
 		char buffer[ 1024 ];
@@ -1950,14 +1995,14 @@ Application.checkDocumentSession = function( sasID = null )
 		char *url = NULL;
 		
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		HashmapElement *el =  HashmapGet( request->uri->query, "url" );
+		HashmapElement *el =  HashmapGet( request->http_Uri->uri_Query, "url" );
 		if( el != NULL )
 		{
 			url = UrlDecodeToMem( ( char *)el->hme_Data );
@@ -2031,7 +2076,7 @@ Application.checkDocumentSession = function( sasID = null )
 		return 404;
 	}
 	*/
-	DEBUG("[ApplicationWebRequest] FriendCore returned %s\n", response->content );
+	DEBUG("[ApplicationWebRequest] FriendCore returned %s\n", response->http_Content );
 
 	return response;
 }

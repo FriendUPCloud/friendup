@@ -94,7 +94,7 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 		DEBUG("[FSMRemoteWebRequest] UFILE/OPEN\n");
 		
 		HashmapElement *el = HttpGetPOSTParameter( request, "path" );
-		if( el == NULL ) el = HashmapGet( request->query, "path" );
+		if( el == NULL ) el = HashmapGet( request->http_Query, "path" );
 		
 		if( el != NULL )
 		{
@@ -162,7 +162,7 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 				DEBUG("[FSMRemoteWebRequest] Filesystem taken from file\n");
 				
 				el = HttpGetPOSTParameter( request, "mode" );
-				if( el == NULL ) el = HashmapGet( request->query, "mode" );
+				if( el == NULL ) el = HashmapGet( request->http_Query, "mode" );
 				if( el != NULL )
 				{
 					mode = (char *)el->hme_Data;
@@ -252,7 +252,7 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 							{
 								fp->f_OperationMode = MODE_WRITE;
 							}
-							fp->f_Socket = request->h_Socket;
+							fp->f_Socket = request->http_Socket;
 						
 							sprintf( tmp, "ok<!--separate-->{\"fileptr\":\"%p\"} ", fp );
 							HttpAddTextContent( response, tmp );
@@ -314,8 +314,8 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 			
 			FULONG pointer = 0;
 			
-			HashmapElement *el  = HashmapGet( request->parsedPostContent, "fptr" );
-			if( el == NULL ) el = HashmapGet( request->query, "fptr" );
+			HashmapElement *el  = HashmapGet( request->http_ParsedPostContent, "fptr" );
+			if( el == NULL ) el = HashmapGet( request->http_Query, "fptr" );
 			if( el != NULL )
 			{
 				char *eptr;
@@ -371,16 +371,16 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 		int error = 0;
 		FBOOL streaming = FALSE;
 		
-		HashmapElement *el  = HashmapGet( request->parsedPostContent, "fptr" );
-		if( el == NULL ) el = HashmapGet( request->query, "fptr" );
+		HashmapElement *el  = HashmapGet( request->http_ParsedPostContent, "fptr" );
+		if( el == NULL ) el = HashmapGet( request->http_Query, "fptr" );
 		if( el != NULL )
 		{
 			char *eptr;
 			pointer = (FULONG)strtoul( (char *)el->hme_Data, &eptr, 0 );
 		}
 		
-		el  = HashmapGet( request->parsedPostContent, "size" );
-		if( el == NULL ) el = HashmapGet( request->query, "size" );
+		el  = HashmapGet( request->http_ParsedPostContent, "size" );
+		if( el == NULL ) el = HashmapGet( request->http_Query, "size" );
 		if( el != NULL )
 		{
 			char *eptr;
@@ -390,7 +390,7 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 		response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( "text/html", 9 ),
 								   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 		
-		response->h_ResponseID = request->h_ResponseID;
+		response->http_ResponseID = request->http_ResponseID;
 		
 		int readsize = -2;
 		DEBUG("[FSMRemoteWebRequest] Read   size %lu  pointer %lu\n", size,  pointer );
@@ -461,7 +461,7 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 			
 			if( streaming == TRUE )
 			{
-				SocketWrite( request->h_Socket, sizec, sizei );
+				SocketWrite( request->http_Socket, sizec, sizei );
 			}
 			else
 			{
@@ -496,28 +496,28 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 	else if( strcmp( urlpath[ 1 ], "write" ) == 0 )
 	{
 		FULONG pointer = 0;
-		FULONG size = 0;
+		FQUAD size = 0;
 		char *data = NULL;
 		int error = 0;
 		
-		HashmapElement *el  = HashmapGet( request->parsedPostContent, "fptr" );
-		if( el == NULL ) el = HashmapGet( request->query, "fptr" );
+		HashmapElement *el  = HashmapGet( request->http_ParsedPostContent, "fptr" );
+		if( el == NULL ) el = HashmapGet( request->http_Query, "fptr" );
 		if( el != NULL )
 		{
 			char *eptr;
 			pointer = (FULONG)strtoul( (char *)el->hme_Data, &eptr, 0 );
 		}
 		
-		el  = HashmapGet( request->parsedPostContent, "size" );
-		if( el == NULL ) el = HashmapGet( request->query, "size" );
+		el  = HashmapGet( request->http_ParsedPostContent, "size" );
+		if( el == NULL ) el = HashmapGet( request->http_Query, "size" );
 		if( el != NULL )
 		{
 			char *eptr;
-			size = (FULONG)strtoul( (char *)el->hme_Data, &eptr, 0 );
+			size = (FQUAD)strtoul( (char *)el->hme_Data, &eptr, 0 );
 		}
 		
-		el  = HashmapGet( request->parsedPostContent, "data" );
-		if( el == NULL ) el = HashmapGet( request->query, "data" );
+		el  = HashmapGet( request->http_ParsedPostContent, "data" );
+		if( el == NULL ) el = HashmapGet( request->http_Query, "data" );
 		if( el != NULL )
 		{
 			data = (char *)el->hme_Data;
@@ -592,8 +592,8 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 	{
 		char *username = NULL;
 		
-		HashmapElement *el  = HashmapGet( request->parsedPostContent, "username" );
-		if( el == NULL ) el = HashmapGet( request->query, "username" );
+		HashmapElement *el  = HashmapGet( request->http_ParsedPostContent, "username" );
+		if( el == NULL ) el = HashmapGet( request->http_Query, "username" );
 		if( el != NULL )
 		{
 			username = (char *)el->hme_Data;
