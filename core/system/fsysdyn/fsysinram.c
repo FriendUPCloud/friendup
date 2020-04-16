@@ -707,7 +707,6 @@ BufString *Call( File *s, const char *path, Http *request )
 BufString *Dir( File *s, const char *path )
 {
 	BufString *bs = BufStringNew();
-	DEBUG("\n\n\n\n\n\n");
 	DEBUG("Dir!\n");
 	
 	int error = 0;
