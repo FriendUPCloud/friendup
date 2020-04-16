@@ -1892,7 +1892,7 @@ BufString *Dir( File *s, const char *path )
 							}
 							ListStringDelete( result );
 						}
-						//DEBUG("\n\n\n\nAnswer %s\n\n\n\n\n", bs->bs_Buffer );
+						//DEBUG("Answer %s\n", bs->bs_Buffer );
 					}
 					
 					FFree( commandCnt );
