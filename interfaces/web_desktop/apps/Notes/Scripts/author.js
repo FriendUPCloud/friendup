@@ -23,6 +23,22 @@ Application.run = function( msg, iface )
 	
 	this.mainView = w;
 	
+	// On set flag
+	w.onSetFlag = function( flag, value )
+	{
+		if( flag == 'minimized' )
+		{
+			if( value )
+			{
+				console.log( 'Minimized' );
+			}
+			else
+			{
+				console.log( 'Maximized!' );
+			}
+		}
+	}
+	
 	w.onClose = function( closeWindow )
 	{
 		Application.quit();
