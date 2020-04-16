@@ -2102,9 +2102,13 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									LOG( FLOG_DEBUG, "UPLOAD ACCESS TO STORE: %ld\n", sizeLeft );
 									
 									int store = TUNABLE_LARGE_HTTP_REQUEST_SIZE;
+									if( sizeLeft < (FQUAD)store )
+									{
+										store = sizeLeft;
+									}
 									while( sizeLeft > 0 )
 									{
-										//LOG( FLOG_DEBUG, "UPLOAD WRITE store %d left %ld\n", store,  sizeLeft );
+										LOG( FLOG_DEBUG, "UPLOAD WRITE store %d left %ld\n", store,  sizeLeft );
 										bytes = actFS->FileWrite( fp, file->hf_Data, store );
 										actDev->f_BytesStored += bytes;
 										sizeLeft -= bytes;
