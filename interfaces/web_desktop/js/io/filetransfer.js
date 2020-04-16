@@ -166,6 +166,10 @@ self.uploadFiles = function()
 			self.close();
 			return;
 		}
+		else
+		{
+			console.log( 'In queue: ' + queuePos + ' / ' + filesList.length );
+		}
 		
 		if( typeof filesList[ queuePos ] != 'object' )
 		{
