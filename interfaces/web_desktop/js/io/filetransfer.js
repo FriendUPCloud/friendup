@@ -156,6 +156,8 @@ self.uploadFiles = function()
 		// Are we done?
 		if( queuePos > filesList.length )
 		{
+			console.log( 'We should now close the window!!!!!' );
+			
 			self.postMessage( {
 				'progressinfo': 1,
 				'progress': 100,
