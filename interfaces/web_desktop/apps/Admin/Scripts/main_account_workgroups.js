@@ -194,6 +194,326 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 	}
 	
+	function listStorage( callback, gid, sid )
+	{
+		if( callback )
+		{
+			if( gid )
+			{
+				if( sid )
+				{
+					var m = new Module( 'system' );
+					m.onExecuted = function( e, d )
+					{
+						
+						var js = null;
+						
+						try
+						{
+							js = JSON.parse( d );
+						}
+						catch( e )
+						{
+							js = {};
+						}
+						
+						if( e == 'ok' )
+						{
+							return callback( true, js );
+						}
+						else
+						{
+							return callback( false, js );
+						}
+						
+					}
+					m.execute( 'filesystem', { id: sid, authid: Application.authId } );
+				}
+				else
+				{
+					var m = new Module( 'system' );
+					m.onExecuted = function( e, d )
+					{
+					
+						var rows = null;
+					
+						try
+						{
+							rows = JSON.parse( d );
+						}
+						catch( e )
+						{
+							rows = [];
+						}
+					
+						return callback( true, rows );
+						
+					}
+					m.execute( 'mountlist', { groupid: gid, authid: Application.authId } );
+				}
+				
+				return true;
+			}
+			
+			return callback( false, {} );
+		}
+	}
+	
+	function dosdrivergui( storage, callback )
+	{
+		var ft = new Module( 'system' );
+		ft.onExecuted = function( e, d )
+		{
+			if( e == 'ok' )
+			{
+				i18nAddTranslations( d )
+			}
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				// return info that this is loaded.
+				
+				//console.log( { e:e, d:d } );
+			
+				if( callback ) callback( storage );
+				
+				return;
+				
+				
+				// Not needed ????
+				
+				
+				var scripts = [];
+			
+				if( e == 'ok' )
+				{
+					// collect scripts
+				
+					var scr;
+					while ( scr = d.match ( /\<script[^>]*?\>([\w\W]*?)\<\/script\>/i ) )
+					{
+						d = d.split( scr[0] ).join( '' );
+						scripts.push( scr[1] );
+					}
+				
+					var mch;
+					var i = 0;
+					while( ( mch = d.match( /\{([^}]*?)\}/ ) ) )
+					{
+						d = d.split( mch[0] ).join( i18n( mch[1] ) );
+					}
+				
+					// Fix to add more space
+					d = d.split( 'HRow' ).join( 'MarginBottom HRow' );
+				}
+				else
+				{
+					d = '';
+				}
+			
+				d = i18nReplace( d, [ 'i18n_port', 'i18n_key' ] );
+			
+				if( ge( 'DosDriverGui' ) )
+				{
+					ge( 'DosDriverGui' ).innerHTML = d;
+				
+					if( ge( 'StorageGui' ) )
+					{
+						var data = ( storage.data ? storage.data : false );
+					
+						// We are in edit mode..
+						if( data )
+						{
+							var elems = {};
+						
+							var inputs = ge( 'StorageGui' ).getElementsByTagName( 'input' );
+					
+							if( inputs.length > 0 )
+							{
+								for( var i in inputs )
+								{
+									if( inputs[i] && inputs[i].id )
+									{
+										elems[inputs[i].id] = inputs[i];
+									}
+								}
+							}
+						
+							var selects = ge( 'StorageGui' ).getElementsByTagName( 'select' );
+						
+							if( selects.length > 0 )
+							{
+								for( var s in selects )
+								{
+									if( selects[s] && selects[s].id )
+									{
+										elems[selects[s].id] = selects[s];
+									}
+								}
+							}
+						
+							//console.log( elems );
+						
+							var fields = [
+								'Name', 'Server', 'ShortDescription', 'Port', 'Username', 
+								'Password', 'Path', 'Type', 'Workgroup', 'PrivateKey'
+							];
+							if( elems )
+							{
+								for( var a = 0; a < fields.length; a++ )
+								{
+									if( elems[ fields[ a ] ] && typeof( data[ fields[ a ] ] ) != 'undefined' )
+									{
+										elems[ fields[ a ] ].value   = data[ fields[ a ] ];
+										elems[ fields[ a ] ].current = data[ fields[ a ] ];
+									}
+								}
+								// Do we have conf?
+								if( data.Config )
+								{
+									for( var a in data.Config )
+									{
+										if( elems[ 'conf.' + a ] )
+										{
+											elems[ 'conf.' + a ].value = data.Config[ a ];
+										}
+									}
+								}
+							}
+						}
+					
+					}
+				}
+			
+				if( ge( 'DiskSizeContainer' ) )
+				{
+					ge( 'DiskSizeContainer' ).style.display = 'none';
+				}
+			
+				// TODO: Don't know what Types and Cbutton relates to ... remove later if it doesn't serve a purpose ...
+			
+				if( ge( 'Types' ) )
+				{
+					ge( 'Types' ).classList.add( 'closed' );
+				}
+			
+				if( ge( 'CButton' ) )
+				{
+					ge( 'CButton' ).innerHTML = '&nbsp;' + i18n( 'i18n_back' );
+					ge( 'CButton' ).disabled = '';
+					ge( 'CButton' ).oldOnclick = ge( 'CButton' ).onclick;
+				
+					// Return!!
+					ge( 'CButton' ).onclick = function()
+					{
+						if( ge( 'Types' ) )
+						{
+							ge( 'Types' ).classList.remove( 'closed' );
+						}
+						ge( 'Form' ).classList.remove( 'open' );
+						ge( 'CButton' ).innerHTML = '&nbsp;' + i18n( 'i18n_cancel' );
+						ge( 'CButton' ).onclick = ge( 'CButton' ).oldOnclick;
+					}
+				}
+			
+			
+			
+				// Run scripts at the end ...
+				if( scripts )
+				{
+					for( var key in scripts )
+					{
+						if( scripts[key] )
+						{
+							eval( scripts[key] );
+						}
+					}
+				}
+			}
+			m.execute( 'dosdrivergui', { type: storage.type, id: storage.id, authid: Application.authId } );
+		}
+		ft.execute( 'dosdrivergui', { component: 'locale', type: storage.type, language: Application.language, authid: Application.authId } );
+	}
+	
+	function LoadDOSDriverGUI( _this )
+	{
+		var type = ( _this ? _this.value : false );
+		
+		// Double ????? ... use only one, what a mess ...
+		
+		if( type )
+		{
+			var ft = new Module( 'system' );
+			ft.onExecuted = function( e, d )
+			{
+				if( e == 'ok' )
+				{
+					i18nAddTranslations( d )
+				}
+			
+				var m = new Module( 'system' );
+				m.onExecuted = function( e, d )
+				{
+					var scripts = [];
+			
+					if( e == 'ok' )
+					{
+						// collect scripts
+				
+						var scr;
+						while ( scr = d.match ( /\<script[^>]*?\>([\w\W]*?)\<\/script\>/i ) )
+						{
+							d = d.split( scr[0] ).join( '' );
+							scripts.push( scr[1] );
+						}
+				
+						var mch;
+						var i = 0;
+						while( ( mch = d.match( /\{([^}]*?)\}/ ) ) )
+						{
+							d = d.split( mch[0] ).join( i18n( mch[1] ) );
+						}
+				
+						// Fix to add more space
+						d = d.split( 'HRow' ).join( 'MarginBottom HRow' );
+				
+						d = i18nReplace( d, [ 'i18n_port', 'i18n_key' ] );
+					
+					
+					
+						i18nAddTranslations( d );
+						var f = new File();
+						f.i18n();
+						for( var a in f.replacements )
+						{
+							d = d.split( '{' + a + '}' ).join( f.replacements[a] );
+						}
+						ge( 'DosDriverGui' ).innerHTML = d;
+				
+						// Run scripts at the end ...
+						if( scripts )
+						{
+							for( var key in scripts )
+							{
+								if( scripts[key] )
+								{
+									eval( scripts[key] );
+								}
+							}
+						}
+					}
+					else
+					{
+						ge( 'DosDriverGui' ).innerHTML = '';
+					}
+				}
+				m.execute( 'dosdrivergui', { type: type, authid: Application.authId } );
+		
+			}
+			ft.execute( 'dosdrivergui', { component: 'locale', type: type, language: Application.language, authid: Application.authId } );
+		}
+	}
+	
 	function refresh( id, _this )
 	{
 		
@@ -684,6 +1004,21 @@ Sections.accounts_workgroups = function( cmd, extra )
 		return false;
 	}
 	
+	function readableBytes( bytes, decimals = 2, units = 1 ) 
+	{
+		if ( bytes == 0 ) return ( '' + ( units ? '0B' : '' ) );
+	
+		const k = 1024;
+		const dm = decimals < 0 ? 0 : decimals;
+		const sizes = [ 'B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB' ];
+	
+		const i = Math.floor( Math.log( bytes ) / Math.log( k ) );
+	
+		if( units === 2 ) return sizes[i];
+	
+		return parseFloat( ( bytes / Math.pow( k, i ) ).toFixed( dm ) ) + ( units ? ( sizes[i] ) : '' );
+	}
+	
 	function removeBtn( _this, args, callback )
 	{
 		
@@ -925,25 +1260,16 @@ Sections.accounts_workgroups = function( cmd, extra )
 				// Get storage
 				function(  )
 				{
-					var m = new Module( 'system' );
-					m.onExecuted = function( e, d )
+					
+					listStorage( function( e, d )
 					{
-						console.log( { e:e, d:d, args: { groupid: id, authid: Application.authId } } );
-						var rows = null;
-						try
-						{
-							rows = JSON.parse( d );
-						}
-						catch( e )
-						{
-							rows = [];
-						}
 						
-						info.mountlist = rows;
+						info.mountlist = d;
 						
 						loadingList[ ++loadingSlot ]( info );
-					}
-					m.execute( 'mountlist', { groupid: id, authid: Application.authId } );
+						
+					}, id );
+					
 				},
 				
 				// Get workgroup's roles
@@ -1038,7 +1364,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 		}
 		
 		// Storage / disks
-		var mlst = Sections.group_disk_refresh( mountlist, workgroup.groupid );
+		//var mlst = Sections.group_disk_refresh( mountlist, workgroup.groupid );
 		
 		// Roles
 		var rstr = '';
@@ -1067,7 +1393,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			workgroup_name        : ( workgroup.name        ? workgroup.name        : ''                           ),
 			workgroup_parent      : pstr,
 			workgroup_description : ( workgroup.description ? workgroup.description : ''                           ),
-			storage               : mlst,
+			storage               : ''/*mlst*/,
 			roles                 : rstr
 		};
 		
@@ -1794,7 +2120,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 									};
 								}
 							
-								// Show listed dock ... 
+								// Show listed users ... 
 						
 								init.list();
 								
@@ -1804,14 +2130,823 @@ Sections.accounts_workgroups = function( cmd, extra )
 						
 					},
 					
-					//
+					// Storage -----------------------------------------------------------------------------------------
 					
-					storage : function (  )
+					storage : function ( func )
 					{
 						
-						if( ge( 'StorageGui' ) && mlst )
+						// Editing Storage
+						
+						var init =
 						{
-							ge( 'StorageGui' ).innerHTML = mlst;
+							
+							func : this,
+							
+							list : function (  )
+							{
+								
+								this.func.mode[ 'storage' ] = 'list';
+								
+								var o = ge( 'StorageGui' ); o.innerHTML = '';
+								
+								console.log( 'init.list ', mountlist );
+								
+								if( mountlist && mountlist.length )
+								{
+									var sorted = {};
+		
+									for( var a = 0; a < mountlist.length; a++ )
+									{
+										if( mountlist[a].Mounted <= 0 )
+										{
+											sorted['1000'+a] = mountlist[a];
+										}
+										else
+										{
+											sorted[a] = mountlist[a];
+										}
+									}
+									
+									for( var b in sorted )
+									{
+										if( sorted[b] && !sorted[b].ID ) continue;
+			
+										try
+										{
+											sorted[b].Config = JSON.parse( sorted[b].Config );
+										}
+										catch( e )
+										{
+											sorted[b].Config = {};
+										}
+								
+										// Calculate disk usage
+										var size = ( sorted[b].Config.DiskSize ? sorted[b].Config.DiskSize : 0 );
+										var mode = ( size && size.length && size != 'undefined' ? size.match( /[a-z]+/i ) : [ '' ] );
+										size = parseInt( size );
+										var type = mode[0].toLowerCase();
+										if( type == 'kb' )
+										{
+											size = size * 1024;
+										}
+										else if( type == 'mb' )
+										{
+											size = size * 1024 * 1024;
+										}
+										else if( type == 'gb' )
+										{
+											size = size * 1024 * 1024 * 1024;
+										}
+										else if( type == 'tb' )
+										{
+											size = size * 1024 * 1024 * 1024 * 1024;
+										}
+										var used = parseInt( sorted[b].StoredBytes );
+										if( isNaN( size ) ) size = 512 * 1024; // < Normally the default size
+										if( !used && !size ) used = 0, size = 0;
+										if( !size ) size = 536870912;
+										if( !used ) used = 0;
+										if( used > size || ( used && !size ) ) size = used;
+			
+										var storage = {
+											id   : sorted[b].ID,
+											user : sorted[b].UserID,
+											name : sorted[b].Name,
+											type : sorted[b].Type,
+											size : readableBytes( size, 0 ), 
+											used : readableBytes( used, 0 ), 
+											free : readableBytes( ( size - used ), 0 ), 
+											prog : ( ( used / size * 100 ) > 100 ? 100 : ( used / size * 100 ) ), 
+											icon : '/iconthemes/friendup15/DriveLabels/FriendDisk.svg',
+											mont : sorted[b].Mounted
+										};
+			
+										if( Friend.dosDrivers[ storage.type ] && Friend.dosDrivers[ storage.type ].iconLabel )
+										{
+											storage.icon = 'data:image/svg+xml;base64,' + Friend.dosDrivers[ storage.type ].iconLabel;
+										}
+										if( storage.name == 'Home' )
+										{
+											storage.icon = '/iconthemes/friendup15/DriveLabels/Home.svg';
+										}
+										else if( storage.name == 'System' )
+										{
+											storage.icon = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
+										}
+								
+										
+								
+										var divs = appendChild( [
+											{
+								
+												'element' : function( mounted ) 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'HContent33 FloatLeft DiskContainer';
+													if( mounted <= 0 )
+													{
+														d.style.opacity = '0.6';
+													}
+													return d;
+												}( storage.mont ),
+								
+												'child' : 
+												[ 
+													{ 
+												
+														'element' : function( init, storage, groupid ) 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmall Ellipsis';
+															d.onclick = function (  )
+															{
+																																
+																init.edit( storage.id );
+																
+															};
+															d.innerHTML = ''
+															+ '	<div class="Col1 FloatLeft" id="Storage_' + storage.id + '">'
+															+ '		<div class="disk">'
+															+ '			<div class="label" style="background-image: url(\'' + storage.icon + '\')"></div>'
+															+ '		</div>'
+															+ '	</div>'
+															+ '	<div class="Col2 FloatLeft HContent100 Name Ellipsis">'
+															+ '		<div class="name" title="' + storage.name + '">' + storage.name + ':</div>'
+															+ '		<div class="type" title="' + i18n( 'i18n_' + storage.type ) + '">' + i18n( 'i18n_' + storage.type ) + '</div>'
+															+ '		<div class="rectangle">'
+															+ '			<div title="' + storage.used + ' used" style="width:' + storage.prog + '%"></div>'
+															+ '		</div>'
+															+ '		<div class="bytes">' + storage.free  + ' free of ' + storage.size + '</div>'
+															+ '	<div>';
+															return d;
+														}( this, storage, workgroup.groupid )
+												
+													}
+												]
+											}
+										] );
+								
+								
+								
+										if( divs )
+										{
+											for( var i in divs )
+											{
+												if( divs[i] && o )
+												{
+													o.appendChild( divs[i] );
+												}
+											}
+										}
+							
+									}
+							
+								}
+								else
+								{
+							
+									o.innerHTML = '<div class="HContent100">' + i18n( 'i18n_workgroup_mountlist_empty' ) + '</div>';
+							
+								}
+						
+							},
+							
+							edit : function ( sid )
+							{
+								
+								this.func.mode[ 'storage' ] = 'edit';
+								
+								var args = {
+									groupid   : ( sid ? workgroup.groupid : null ),
+									storageid : ( sid ? sid               : null )
+								};
+								
+								var n = new Module( 'system' );
+								n.onExecuted = function( ee, dat )
+								{
+									console.log( { e:ee, d:dat } );
+									
+									try
+									{
+										var da = JSON.parse( dat );
+									}
+									catch( e )
+									{
+										var da = {};
+									}
+			
+									if( !da.length ) return;
+									
+									
+									
+									listStorage( function( res, js )
+									{
+										
+										var storage = { id : '', name : '', type : '', size : 512 };
+										
+										var units = [ 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB' ];
+										
+										console.log( { res:res, js:js } );
+										
+										if( res && js )
+										{
+											
+											try
+											{
+												js.Config = JSON.parse( js.Config );
+											}
+											catch( e )
+											{
+												js.Config = {};
+											}
+											
+											// Calculate disk usage
+											var size = ( js.Config.DiskSize ? js.Config.DiskSize : 0 );
+											var mode = ( size && size.length && size != 'undefined' ? size.match( /[a-z]+/i ) : [ '' ] );
+											size = parseInt( size );
+											var type = mode[0].toLowerCase();
+											if( type == 'kb' )
+											{
+												size = size * 1024;
+											}
+											else if( type == 'mb' )
+											{
+												size = size * 1024 * 1024;
+											}
+											else if( type == 'gb' )
+											{
+												size = size * 1024 * 1024 * 1024;
+											}
+											else if( type == 'tb' )
+											{
+												size = size * 1024 * 1024 * 1024 * 1024;
+											}
+											var used = parseInt( js.StoredBytes );
+											if( isNaN( size ) ) size = 512 * 1024; // < Normally the default size
+											if( !used && !size ) used = 0, size = 0;
+											if( !size ) size = 536870912;
+											if( !used ) used = 0;
+											if( used > size || ( used && !size ) ) size = used;
+			
+											storage = {
+												id   : js.ID,
+												user : js.UserID,
+												name : js.Name,
+												type : js.Type,
+												size : size, 
+												used : used, 
+												free : ( size - used ), 
+												prog : ( ( used / size * 100 ) > 100 ? 100 : ( used / size * 100 ) ), 
+												icon : '/iconthemes/friendup15/DriveLabels/FriendDisk.svg',
+												mont : js.Mounted
+											};
+											
+											if( Friend.dosDrivers[ storage.type ] && Friend.dosDrivers[ storage.type ].iconLabel )
+											{
+												storage.icon = 'data:image/svg+xml;base64,' + Friend.dosDrivers[ storage.type ].iconLabel;
+											}
+											if( storage.name == 'Home' )
+											{
+												storage.icon = '/iconthemes/friendup15/DriveLabels/Home.svg';
+											}
+											else if( storage.name == 'System' )
+											{
+												storage.icon = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
+											}
+											
+										}
+										
+										console.log( storage );
+										
+										dosdrivergui( storage, function( storage )
+										{
+											
+											var o = ge( 'StorageGui' ); o.innerHTML = '';
+											
+											var divs = appendChild( [
+												{
+								
+													'element' : function( storage ) 
+													{
+														var d = document.createElement( 'div' );
+														d.className = 'Col1 FloatLeft';
+														d.innerHTML = ''
+														+ '	<div class="disk">'
+														+ '		<div class="label" style="background-image: url(\'' + storage.icon + '\')"></div>'
+														+ '	</div>';
+														return d;
+													}( storage )
+													
+												},
+												
+												{
+													
+													'element' : function(  ) 
+													{
+														var d = document.createElement( 'div' );
+														d.className = 'Col2 FloatLeft';
+														return d;
+													}(  ), 
+													
+													'child' : 
+													[ 
+														
+														{ 
+															
+															'element' : function( storage ) 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'HRow MarginBottom';
+																d.innerHTML = ''
+																+ '	<div class="HContent30 FloatLeft Ellipsis">';
+																+ '		<strong>' + i18n( 'i18n_name' ) + ':</strong>';
+																+ '	</div>';
+																+ '	<div class="HContent70 FloatLeft Ellipsis">';
+																+ '		<input type="text" class="FullWidth" id="Name" value="' + storage.name + '" placeholder="Mydisk"/>';
+																+ '	</div>';
+																return d;
+															}( storage )
+															
+														},
+														
+														{
+															
+															'element' : function(  ) 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'HRow MarginBottom';
+																return d;
+															}(  ),
+															
+															'child' : 
+															[ 
+																
+																{ 
+																	
+																	'element' : function(  ) 
+																	{
+																		var d = document.createElement( 'div' );
+																		d.className = 'HContent30 FloatLeft Ellipsis';
+																		d.innerHTML = '<strong>' + i18n( 'i18n_type' ) + ':</strong>';
+																		return d;
+																	}(  )
+																	
+																},
+																
+																{
+																	
+																	'element' : function(  ) 
+																	{
+																		var d = document.createElement( 'div' );
+																		d.className = 'HContent70 FloatLeft Ellipsis';
+																		return d;
+																	}(  ),
+																	
+																	'child' : 
+																	[ 
+																
+																		{ 
+																			
+																			'element' : function( storage, da ) 
+																			{
+																				var d = document.createElement( 'select' );
+																				d.className = 'FullWidth';
+																				d.id = 'Type';
+																				if( storage.id )
+																				{
+																					d.disabled = true;
+																				}
+																				d.onchange = function(  )
+																				{
+																					LoadDOSDriverGUI( this );
+																				};
+																				d.innerHTML = '';
+																				if( da )
+																				{
+																					for( var i in da )
+																					{
+																						if( da[i].type )
+																						{
+																							d.innerHTML += ''
+																							+ '<option value="' + da[i].type + '"' + ( storage.type == da[i].type ? ' selected="selected"' : '' ) + '>' 
+																							+ 	i18n( 'i18n_' + da[i].type ) 
+																							+ '</option>';
+																						}
+																					}
+																				}
+																				return d;
+																			}( storage, da )
+																			
+																		}
+																	]
+																	
+																}
+																
+															]
+															
+														},
+														
+														{
+															
+															'element' : function(  ) 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'HRow MarginBottom';
+																return d;
+															}(  ),
+															
+															'child' : 
+															[ 
+																
+																{ 
+																	
+																	'element' : function(  ) 
+																	{
+																		var d = document.createElement( 'div' );
+																		d.className = 'HContent30 FloatLeft Ellipsis';
+																		d.innerHTML = '<strong>' + i18n( 'i18n_size' ) + ':</strong>';
+																		return d;
+																	}(  )
+																	
+																},
+																
+																{
+																	
+																	'element' : function(  ) 
+																	{
+																		var d = document.createElement( 'div' );
+																		d.className = 'HContent35 FloatLeft Ellipsis PaddingRight';
+																		d.innerHTML = '<input type="text" class="FullWidth" id="DiskSizeA" value="' + readableBytes( storage.size, 0, 0 ) + '" placeholder="512"/>';
+																		return d;
+																	}(  )
+																	
+																},
+																
+																{
+																	
+																	'element' : function(  ) 
+																	{
+																		var d = document.createElement( 'div' );
+																		d.className = 'HContent35 FloatLeft Ellipsis PaddingLeft';
+																		return d;																		
+																	}(  ),
+																	
+																	'child' : 
+																	[ 
+																
+																		{ 
+																			
+																			'element' : function( storage, units ) 
+																			{
+																				var d = document.createElement( 'select' );
+																				d.className = 'FullWidth';
+																				d.id = 'DiskSizeB';
+																				d.innerHTML = '';
+																				if( units )
+																				{
+																					for( var a in units )
+																					{
+																						d.innerHTML += ''
+																						+ '<option' + ( storage.size && readableBytes( storage.size, 0, 2 ) == units[a] ? ' selected="selected"' : '' ) + '>' 
+																						+ 	units[a] 
+																						+ '</option>';
+																					}
+																				}
+																				return d;
+																			}( storage, units )
+																			
+																		}
+																	]
+																
+																}
+																
+															]
+															
+														},
+														
+														{
+															
+															'element' : function(  ) 
+															{
+																var d = document.createElement( 'div' );
+																d.id = 'DosDriverGui';
+																return d;
+															}(  )
+															
+														}
+														
+													]
+													
+												},
+												
+												{
+													
+													'element' : function(  ) 
+													{
+														var d = document.createElement( 'div' );
+														d.className = 'HRow PaddingTop';
+														return d;
+													}(  ),
+													
+													'child' : 
+													[ 
+												
+														{ 
+															
+															'element' : function( init, storage ) 
+															{
+																var d = document.createElement( 'button' );
+																d.className = 'IconSmall FloatRight MarginLeft';
+																d.innerHTML = 'Save';
+																d.onclick = function ()
+																{
+																	
+																	//Sections.group_disk_save( storage.id );
+																	
+																	console.log( 'TODO: Save disk' );
+																	
+																};
+																return d;
+															}( init, storage )
+															
+														},
+														
+														{ 
+															
+															'element' : function( init ) 
+															{
+																var d = document.createElement( 'button' );
+																d.className = 'IconSmall FloatRight MarginLeft';
+																d.innerHTML = 'Cancel';
+																d.onclick = function ()
+																{
+																	
+																	init.list();
+																	
+																};
+																return d;
+															}( init )
+															
+														},
+														
+														{ 
+															
+															'element' : function( init, storage ) 
+															{
+																if( storage.id )
+																{
+																	var d = document.createElement( 'button' );
+																	d.className = 'IconSmall Danger FloatRight MarginLeft';
+																	d.innerHTML = 'Remove disk';
+																	d.onclick = function ()
+																	{
+																	
+																		//Sections.group_disk_remove( storage.id );
+																		
+																		console.log( 'TODO: Remove disk' );
+																	
+																	};
+																	return d;
+																}
+															}( init, storage )
+															
+														},
+														
+														{ 
+															
+															'element' : function( init, storage ) 
+															{
+																if( storage.id )
+																{
+																	var d = document.createElement( 'button' );
+																	d.className = 'IconSmall FloatLeft MarginRight';
+																	d.innerHTML = ( storage.mont > 0 ? 'Unmount disk' : 'Mount disk' );
+																	d.onclick = function ()
+																	{
+																	
+																		//Sections.group_disk_mount( storage.name, this );
+																		
+																		console.log( 'TODO: Mount/Unmount disk' );
+																		
+																	};
+																	return d;
+																}
+															}( init, storage )
+															
+														}
+														
+													]
+													
+												}
+												
+											] );
+											
+											
+											
+											if( divs )
+											{
+												for( var i in divs )
+												{
+													if( divs[i] && o )
+													{
+														o.appendChild( divs[i] );
+													}
+												}
+											}
+											
+											
+											
+											
+											
+											
+											
+											return;
+											
+											
+											
+											var str = '';
+				
+											//str += '<div class="HRow">';
+											
+											
+											
+											str += '<div class="Col1 FloatLeft">';
+			
+											str += '<div class="disk"><div class="label" style="background-image: url(\'' + storage.icon + '\')"></div></div>';
+			
+											str += '</div><div class="Col2 FloatLeft">';
+			
+											str += '<div class="HRow MarginBottom">';
+											str += '	<div class="HContent30 FloatLeft Ellipsis">';
+											str += '		<strong>' + i18n( 'i18n_name' ) + ':</strong>';
+											str += '	</div>';
+											str += '	<div class="HContent70 FloatLeft Ellipsis">';
+											str += '		<input type="text" class="FullWidth" id="Name" value="' + storage.name + '" placeholder="Mydisk"/>';
+											str += '	</div>';
+											str += '</div>';
+		
+											str += '<div class="HRow MarginBottom">';
+											str += '	<div class="HContent30 FloatLeft Ellipsis">';
+											str += '		<strong>' + i18n( 'i18n_type' ) + ':</strong>';
+											str += '	</div>';
+											str += '	<div class="HContent70 FloatLeft Ellipsis">';
+											
+											str += '		<select class="FullWidth" id="Type" onchange="LoadDOSDriverGUI(this)"' + ( storage.id ? ' disabled="disabled"' : '' ) + '>';
+											
+											if( da )
+											{
+												var found = false;
+						
+												for( var i in da )
+												{
+													if( da[i].type )
+													{
+														str += '<option value="' + da[i].type + '"' + ( storage.type == da[i].type ? ' selected="selected"' : '' ) + '>' + i18n( 'i18n_' + da[i].type ) + '</option>';
+								
+														if( storage.type == da[i].type )
+														{
+															found = true;
+														}
+													}
+												}
+						
+												if( storage.id && !found )
+												{
+													str  = '<div class="HRow"><div class="HContent100">' + i18n( 'i18n_user_disks_access_denied' ) + '</div></div>';
+													str += '<div class="HRow PaddingTop"><button class="IconSmall FloatRight MarginLeft" onclick="init.list()">Cancel</button></div>';
+							
+													return ge( 'StorageGui' ).innerHTML = str;
+												}
+											}
+											
+											str += '		</select>';
+											str += '	</div>';
+											str += '</div>';
+											
+											
+											
+											str += '<div class="HRow MarginBottom">';
+											str += '	<div class="HContent30 FloatLeft Ellipsis">';
+											str += '		<strong>' + i18n( 'i18n_size' ) + ':</strong>';
+											str += '	</div>';
+											str += '	<div class="HContent35 FloatLeft Ellipsis PaddingRight">';
+											str += '		<input type="text" class="FullWidth" id="DiskSizeA" value="' + readableBytes( storage.size, 0, 0 ) + '" placeholder="512"/>';
+											str += '	</div>';
+											str += '	<div class="HContent35 FloatLeft Ellipsis PaddingLeft">';
+											str += '		<select class="FullWidth" id="DiskSizeB">';
+				
+											if( units )
+											{
+												for( var a in units )
+												{
+													str += '	<option' + ( storage.size && readableBytes( storage.size, 0, 2 ) == units[a] ? ' selected="selected"' : '' ) + '>' + units[a] + '</option>';
+												}
+											}
+			
+											str += '		</select>';
+											str += '	</div>';
+											str += '</div>';
+			
+											// Insert Gui based on DosDriver
+					
+											str += '	<div id="DosDriverGui"></div>';
+				
+											str += '</div>';
+					
+											str += '<div class="HRow PaddingTop">';
+											str += '	<button class="IconSmall FloatRight MarginLeft" onclick="Sections.group_disk_save(\'' + storage.id + '\')">Save</button>';
+											str += '	<button class="IconSmall FloatRight MarginLeft" onclick="init.list()">Cancel</button>';
+											
+											if( storage.id )
+											{
+												str += '<button class="IconSmall Danger FloatRight MarginLeft" onclick="Sections.group_disk_remove(' + storage.id + ')">Remove disk</button>';
+												str += '<button class="IconSmall FloatLeft MarginRight" onclick="Sections.group_disk_mount(\'' + storage.name + '\',this)">' + ( storage.mont > 0 ? 'Unmount disk' : 'Mount disk' ) + '</button>';
+											}
+					
+											str += '</div>';
+											
+											
+											
+											
+											//str += '</div>';
+			
+											ge( 'StorageGui' ).innerHTML = str;
+				
+											
+				
+										} );
+										
+									}, args.groupid, args.storageid );
+									
+								}
+								n.execute( 'types', { mode: 'all', authid: Application.authId } );
+								
+							},
+							
+							refresh : function (  )
+							{
+								
+								switch( this.func.mode[ 'storage' ] )
+								{
+									
+									case 'list':
+										
+										this.list();
+										
+										break;
+										
+									case 'edit':
+										
+										this.edit();
+										
+										break;
+										
+								}
+								
+							}
+							
+						}
+						
+						switch( func )
+						{
+							
+							case 'list':
+								
+								init.list();
+								
+								break;
+								
+							case 'edit':
+								
+								init.edit();
+								
+								break;
+								
+							case 'refresh':
+								
+								init.refresh();
+								
+								break;
+							
+							default:
+								
+								var etn = ge( 'StorageEdit' );
+								if( etn )
+								{
+									etn.onclick = function( e )
+									{
+								
+										init.edit();
+										
+									};
+								}
+								
+								// Show listed storage ... 
+						
+								init.list();
+								
+								break;
+								
 						}
 						
 					}
@@ -2027,6 +3162,33 @@ Sections.accounts_workgroups = function( cmd, extra )
 	
 };
 
+
+Sections.group_disk_cancel = function( groupid )
+{
+	//console.log( 'Sections.group_disk_cancel ' + userid );
+	
+	var u = new Module( 'system' );
+	u.onExecuted = function( e, d )
+	{
+		var ul = null;
+		try
+		{
+			ul = JSON.parse( d );
+		}
+		catch( e )
+		{
+			ul = null;
+		}
+		
+		ge( 'StorageGui' ).innerHTML = Sections.group_disk_refresh( ul, groupid );
+		
+		//console.log( 'Application.sendMessage( { type: \'system\', command: \'refreshdoors\' } );' );
+		
+		Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
+	}
+	u.execute( 'mountlist', { groupid: groupid, authid: Application.authId } );
+	
+};
 
 Sections.group_disk_refresh = function( mountlist, groupid )
 {
@@ -2330,7 +3492,7 @@ Sections.group_disk_update = function( user, did = 0, name = '', userid )
 						if( storage.id && !found )
 						{
 							str  = '<div class="HRow"><div class="HContent100">' + i18n( 'i18n_user_disks_access_denied' ) + '</div></div>';
-							str += '<div class="HRow PaddingTop"><button class="IconSmall FloatRight MarginLeft" onclick="Sections.user_disk_cancel(' + userid + ')">Cancel</button></div>';
+							str += '<div class="HRow PaddingTop"><button class="IconSmall FloatRight MarginLeft" onclick="Sections.group_disk_cancel(' + userid + ')">Cancel</button></div>';
 							
 							return ge( 'StorageGui' ).innerHTML = str;
 						}
@@ -2363,19 +3525,19 @@ Sections.group_disk_update = function( user, did = 0, name = '', userid )
 					str += '</div>';
 			
 					// Insert Gui based on DosDriver
-				
+					
 					str += '<div id="DosDriverGui"></div>';
 				
 					str += '</div>';
 					
 					str += '<div class="HRow PaddingTop">';
-					str += '<button class="IconSmall FloatRight MarginLeft" onclick="Sections.user_disk_save(' + userid + ',\'' + storage.id + '\')">Save</button>';
-					str += '<button class="IconSmall FloatRight MarginLeft" onclick="Sections.user_disk_cancel(' + userid + ')">Cancel</button>';
+					str += '<button class="IconSmall FloatRight MarginLeft" onclick="Sections.group_disk_save(' + userid + ',\'' + storage.id + '\')">Save</button>';
+					str += '<button class="IconSmall FloatRight MarginLeft" onclick="Sections.group_disk_cancel(' + userid + ')">Cancel</button>';
 					
 					if( storage.id )
 					{
-						str += '<button class="IconSmall Danger FloatRight MarginLeft" onclick="Sections.user_disk_remove(\'' + storage.name + '\',' + storage.id + ',' + userid + ')">Remove disk</button>';
-						str += '<button class="IconSmall FloatLeft MarginRight" onclick="Sections.user_disk_mount(\'' + storage.name + '\',' + userid + ',this)">' + ( storage.mont > 0 ? 'Unmount disk' : 'Mount disk' ) + '</button>';
+						str += '<button class="IconSmall Danger FloatRight MarginLeft" onclick="Sections.group_disk_remove(\'' + storage.name + '\',' + storage.id + ',' + userid + ')">Remove disk</button>';
+						str += '<button class="IconSmall FloatLeft MarginRight" onclick="Sections.group_disk_mount(\'' + storage.name + '\',' + userid + ',this)">' + ( storage.mont > 0 ? 'Unmount disk' : 'Mount disk' ) + '</button>';
 					}
 					
 					str += '</div>';
@@ -2388,9 +3550,9 @@ Sections.group_disk_update = function( user, did = 0, name = '', userid )
 				
 				} );
 			}
-		
+			
 			// TODO: Update userid to be selected user ...
-		
+			
 			m.execute( 'filesystem', {
 				userid: user,
 				devname: name, 
@@ -2398,7 +3560,7 @@ Sections.group_disk_update = function( user, did = 0, name = '', userid )
 			} );
 			
 		}
-		n.execute( 'types', { mode: 'all', userid: user, authid: Application.authId } );
+		n.execute( 'types', { mode: 'all', authid: Application.authId } );
 	}
 };
 
