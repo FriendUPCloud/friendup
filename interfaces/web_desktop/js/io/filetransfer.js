@@ -399,6 +399,10 @@ self.uploadFiles = function()
 							this.readyState + '/' + this.status + '|' 
 					} );
 				}
+				else
+				{
+					console.log( 'Some other upload status: ' + this.readyState + ' / ' + this.status );
+				}
 			}
 		
 			xh.open( 'POST', '/system.library/file/upload', true );
