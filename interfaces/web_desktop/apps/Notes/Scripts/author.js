@@ -30,17 +30,18 @@ Application.run = function( msg, iface )
 		{
 			if( value )
 			{
-				console.log( 'Minimized' );
+				Application.showWidget();
 			}
 			else
 			{
-				console.log( 'Maximized!' );
+				Application.hideWidget();
 			}
 		}
 	}
 	
 	w.onClose = function( closeWindow )
 	{
+		Application.destroyWidget();
 		Application.quit();
 		return false;
 	}
@@ -444,6 +445,39 @@ Application.setCorrectTitle = function()
 	{
 		Application.mainView.setFlag( 'title', 'Notes - ' + sanitizeFilename( Application.wholeFilename ) );
 	}
+}
+
+Application.showWidget = function()
+{
+	if( this.widget ) return this.widget.show();
+	
+	var w = new Widget( {
+		width: 'full',
+		height: 'full',
+		top: 0,
+		left: 0,
+		transparent: true,
+		'border-radius': 0,
+		below: true
+	} );
+	this.widget = w;
+	
+	var f = new File( 'Progdir:Templates/widget.html' );
+	f.onLoad = function( data )
+	{
+		if( Application.widget ) w.setContent( data );
+	}
+	f.load();
+}
+
+Application.hideWidget = function()
+{
+	if( this.widget ) this.widget.hide();
+}
+
+Application.destroyWidget = function()
+{
+	if( this.widget ) this.widget.close();
 }
 
 Application.receiveMessage = function( msg )
