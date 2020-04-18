@@ -511,8 +511,10 @@ Application.receiveMessage = function( msg )
 						var s = this;
 						if( it.Path.substr( -1, 1 ) == '/' )
 						{
-							function addByPath( theItem )
+							function addByPath( theItem, volume )
 							{
+								if( !volume )
+									volume = theItem.Path.indexOf( ':' ) > 0 ? theItem.Path.split( ':' )[0] : false;
 								var m = new Library( 'system.library' );
 								m.onExecuted = function( e, d )
 								{
@@ -530,14 +532,18 @@ Application.receiveMessage = function( msg )
 									for( let a = 0; a < list.length; a++ )
 									{
 										// Recursive
-										if( list[ a ].Path.substr( -1, 1 ) == '/' )
+										if( ( list[ a ].Type && list[ a ].Type == 'Directory' ) || list[ a ].Path.substr( -1, 1 ) == '/' )
 										{
-											addByPath( list[ a ] );
+											if( volume )
+												list[ a ].Path = volume + ':' + list[ a ].Path;
+											addByPath( list[ a ], volume );
 										}
 										else
 										{
 											if( supportedFormat( list[ a ] ) )
 											{
+												if( volume )
+													list[ a ].Path = volume + ':' + list[ a ].Path;
 												s.playlist.push( list[ a ] );
 											}
 										}
@@ -551,7 +557,7 @@ Application.receiveMessage = function( msg )
 									}
 									Application.receiveMessage ( { command: 'get_playlist' } );
 								}
-								m.execute( 'file/dir', { path: theItem.Path } );
+								m.execute( 'file/dir', { path: ( volume ? ( volume + ':' ) : '' ) + theItem.Path } );
 							}
 							addByPath( it );
 						}
