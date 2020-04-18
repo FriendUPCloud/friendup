@@ -75,7 +75,7 @@ Http *PIDThreadWebRequest( void *sb, char **urlpath, Http *request, UserSession 
 		char buffer[ 256 ];
 		FUQUAD pid = 0;
 		HashmapElement *el = HttpGetPOSTParameter( request, "id" );
-		if( el == NULL ) el = HashmapGet( request->query, "id" );
+		if( el == NULL ) el = HashmapGet( request->http_Query, "id" );
 		if( el != NULL )
 		{
 			char *end;

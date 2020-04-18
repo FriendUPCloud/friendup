@@ -406,6 +406,8 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					$testPath = substr( $testPath, 0, strlen( $testPath ) - 1 );
 				$pathLen = explode( '/', $testPath );
 				$pathLen = count( $pathLen );
+
+				$Logger->log( 'Pathlen: ' . pathLen );
 				
 				if( $pathLen == 1 || ( $pathLen > 1 && $fo ) )
 				{
@@ -428,6 +430,8 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						$fn = explode( '/', $fn );
 						$fn = $fn[1];
 					}
+
+					$Logger->log( 'Before write file' );
 	
 					// Write the file
 				
@@ -448,19 +452,25 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							else $fn .= rand(0,99999); 
 						}
 					}
+
+					$Logger->log( 'Before w+' );
 				
 					if( $file = fopen( $wname . $fn, 'w+' ) )
 					{
 						// Delete existing file
 						if( $deletable ) unlink( $deletable );
 					
+						$Logger->log( 'is test' );
 						if( isset( $args->tmpfile ) )
 						{
+							$Logger->log( 'exist?' );
 							if( file_exists( $args->tmpfile ) )
 							{
+								$Logger->log( 'exist!' );
 								fclose( $file );
 								$len = filesize( $args->tmpfile );
 							
+								$Logger->log( 'workaround?' );
 								// TODO: UGLY WORKAROUND, FIX IT!
 								//       We need to support base64 streams
 								if( $fr = fopen( $args->tmpfile, 'r' ) )
@@ -481,6 +491,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 
 								if( $total + $len < SQLDRIVE_FILE_LIMIT )
 								{
+									$Logger->log( 'Moving tmp file ' . $args->tmpfile . ' to ' . $wname . $fn . ' because ' . ( $total + $len ) . ' < ' . SQLDRIVE_FILE_LIMIT );
 									rename( $args->tmpfile, $wname . $fn );
 								}
 								else
@@ -497,6 +508,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						}
 						else
 						{
+							$Logger->log( 'is tmp file set, limit: ' . SQLDRIVE_FILE_LIMIT );
 							if( $total + strlen( $args->data ) < SQLDRIVE_FILE_LIMIT )
 							{
 								$len = fwrite( $file, $args->data );
@@ -504,6 +516,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							}
 							else
 							{
+								$Logger->log( 'die!die!die! my darling! ' );
 								fclose( $file );
 								$Logger->log( 'fail<!--separate-->Limit broken ' . SQLDRIVE_FILE_LIMIT );
 								die( 'fail<!--separate-->Limit broken' );
@@ -517,9 +530,12 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					
 						$f->DiskFilename = $uname . '/' . $fn;
 						$f->Filesize = filesize( $wname. $fn );
+						$Logger->log( '[SQLDRIVE] WRITING done, size: ' . $f->Filesize );
 						if( !$f->DateCreated ) $f->DateCreated = date( 'Y-m-d H:i:s' );
 						$f->DateModified = date( 'Y-m-d H:i:s' );
+						$Logger->log( '[SQLDRIVE] WRITING store in DB' );
 						$f->Save();
+						$Logger->log( '[SQLDRIVE] WRITING stored in db - recordID is ' . $f->ID . ' (Err: ' . $f->_lastError . ')' . ' -> ' . $f->_lastQuery );
 						return 'ok<!--separate-->' . $len . '<!--separate-->' . $f->ID;
 					}
 				}

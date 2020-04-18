@@ -348,7 +348,7 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
 				if( df->df_ID == ID_HTTP )
 				{
 					Http *http = HttpNew( );
-					http->parsedPostContent = HashmapNew();
+					http->http_ParsedPostContent = HashmapNew();
 					char temp[ 1024 ];
 					char *pathParts[ 1024 ];
 					memset( pathParts, 0, 1024*sizeof(char *) );
@@ -470,7 +470,7 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
 										DEBUG("[CommServiceRemote] Mem allocated for data %p\n",  param );
 									}
 									//char *param = StringDuplicateN( val, parsize );
-									if( HashmapPut( http->parsedPostContent, StringDuplicate( attr ), param ) == MAP_OK )
+									if( HashmapPut( http->http_ParsedPostContent, StringDuplicate( attr ), param ) == MAP_OK )
 									{
 										DEBUG("[CommServiceRemote] New values passed to POST - %s - %.10s -\n", attr, val );
 									}
@@ -490,9 +490,9 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
 						}
 					}
 					
-					http->h_Socket = socket;
-					http->h_RequestSource = HTTP_SOURCE_FC;
-					http->h_ResponseID = responseID;
+					http->http_Socket = socket;
+					http->http_RequestSource = HTTP_SOURCE_FC;
+					http->http_ResponseID = responseID;
 					DEBUG2("-----------------------------Calling SYSBASE via CommuncationService: %s\n\n", (pathParts[ 1 ]) );
 					
 					SystemBase *lsysbase = (SystemBase *) serv->csr_SB;
@@ -502,11 +502,11 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
 						Http *response = lsysbase->SysWebRequest( lsysbase, &(pathParts[ 1 ]), &http, NULL, &respcode );
 						if( response != NULL )
 						{
-							*isStream = response->h_Stream;
+							*isStream = response->http_Stream;
 							MsgItem tags[] = {
 								{ ID_FCRE, (FULONG)0, MSG_GROUP_START },
 								{ ID_FRID, (FULONG)responseID , MSG_INTEGER_VALUE },
-								{ ID_RESP, (FULONG)response->sizeOfContent+1, (FULONG)response->content },
+								{ ID_RESP, (FULONG)response->http_SizeOfContent+1, (FULONG)response->http_Content },
 								//{ MSG_GROUP_END, 0,  0 },
 								{ TAG_DONE, TAG_DONE, TAG_DONE }
 							};

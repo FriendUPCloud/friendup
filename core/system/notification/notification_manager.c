@@ -699,7 +699,7 @@ int NotificationManagerSendEventToConnections( NotificationManager *nm, Http *re
 		}
 	}
 	
-	if( req != NULL && req->h_RequestSource == HTTP_SOURCE_EXTERNAL_SERVER )
+	if( req != NULL && req->http_RequestSource == HTTP_SOURCE_EXTERNAL_SERVER )
 	{
 		INFO( "Request comes from external server\n");
 		return 0;
@@ -852,7 +852,7 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 	//char *retMessage = NULL;
 	BufString *retMsg = BufStringNew();
 	
-	if( req != NULL && req->h_RequestSource == HTTP_SOURCE_EXTERNAL_SERVER )
+	if( req != NULL && req->http_RequestSource == HTTP_SOURCE_EXTERNAL_SERVER )
 	{
 		INFO( "Request comes from external server\n");
 		return NULL;

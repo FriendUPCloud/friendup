@@ -160,12 +160,13 @@ UserMobileApp *MobleManagerGetByTokenDB( MobileManager *mmgr, char *id )
 		
 		if( uma != NULL )
 		{
-			FRIEND_MUTEX_LOCK( &(mmgr->mm_Mutex) );
+			if( FRIEND_MUTEX_LOCK( &(mmgr->mm_Mutex) ) == 0 )
+			{
+				uma->node.mln_Succ = (MinNode *)mmgr->mm_UMApps;
+				mmgr->mm_UMApps = uma;
 			
-			uma->node.mln_Succ = (MinNode *)mmgr->mm_UMApps;
-			mmgr->mm_UMApps = uma;
-			
-			FRIEND_MUTEX_UNLOCK( &(mmgr->mm_Mutex) );
+				FRIEND_MUTEX_UNLOCK( &(mmgr->mm_Mutex) );
+			}
 		}
 		
 		sb->LibrarySQLDrop( sb, lsqllib );
@@ -206,12 +207,13 @@ UserMobileApp *MobleManagerGetByIDDB( MobileManager *mmgr, FULONG id )
 		
 		if( uma != NULL )
 		{
-			FRIEND_MUTEX_LOCK( &(mmgr->mm_Mutex) );
+			if( FRIEND_MUTEX_LOCK( &(mmgr->mm_Mutex) ) == 0 )
+			{
+				uma->node.mln_Succ = (MinNode *)mmgr->mm_UMApps;
+				mmgr->mm_UMApps = uma;
 			
-			uma->node.mln_Succ = (MinNode *)mmgr->mm_UMApps;
-			mmgr->mm_UMApps = uma;
-			
-			FRIEND_MUTEX_UNLOCK( &(mmgr->mm_Mutex) );
+				FRIEND_MUTEX_UNLOCK( &(mmgr->mm_Mutex) );
+			}
 		}
 		
 		sb->LibrarySQLDrop( sb, lsqllib );
@@ -232,22 +234,24 @@ MobileListEntry *MobleManagerGetByUserIDDB( MobileManager *mmgr, FULONG user_id 
 	SystemBase *sb = (SystemBase *)mmgr->mm_SB;
 	MobileListEntry *root = NULL;
 	
-	FRIEND_MUTEX_LOCK( &(mmgr->mm_Mutex) );
-	uma = mmgr->mm_UMApps;
-	while( uma != NULL )
+	if( FRIEND_MUTEX_LOCK( &(mmgr->mm_Mutex) ) == 0 )
 	{
-		if( uma->uma_UserID == user_id )
+		uma = mmgr->mm_UMApps;
+		while( uma != NULL )
 		{
-			MobileListEntry *e = MobileListEntryNew( uma );
-			if( e != NULL )
+			if( uma->uma_UserID == user_id )
 			{
-				e->node.mln_Succ = (MinNode *)root;
-				root = e;
+				MobileListEntry *e = MobileListEntryNew( uma );
+				if( e != NULL )
+				{
+					e->node.mln_Succ = (MinNode *)root;
+					root = e;
+				}
 			}
+			uma = (UserMobileApp *)uma->node.mln_Succ;
 		}
-		uma = (UserMobileApp *)uma->node.mln_Succ;
+		FRIEND_MUTEX_UNLOCK( &(mmgr->mm_Mutex) );
 	}
-	FRIEND_MUTEX_UNLOCK( &(mmgr->mm_Mutex) );
 
 	SQLLibrary *lsqllib = sb->LibrarySQLGet( SLIB );
 	if( lsqllib != NULL )
@@ -316,19 +320,20 @@ MobileListEntry *MobleManagerGetByUserIDDB( MobileManager *mmgr, FULONG user_id 
 			FFree( rel );
 		}
 		
-		FRIEND_MUTEX_LOCK( &(mmgr->mm_Mutex) );
-		
-		// add entries to main lists
-		while( addEntries != NULL )
+		if( FRIEND_MUTEX_LOCK( &(mmgr->mm_Mutex) ) == 0 )
 		{
-			MobileListEntry *add = addEntries;
-			addEntries = (MobileListEntry *)addEntries->node.mln_Succ;
+			// add entries to main lists
+			while( addEntries != NULL )
+			{
+				MobileListEntry *add = addEntries;
+				addEntries = (MobileListEntry *)addEntries->node.mln_Succ;
 			
-			add->node.mln_Succ = (MinNode *)root;
-			root = add;
-		}
+				add->node.mln_Succ = (MinNode *)root;
+				root = add;
+			}
 		
-		FRIEND_MUTEX_UNLOCK( &(mmgr->mm_Mutex) );
+			FRIEND_MUTEX_UNLOCK( &(mmgr->mm_Mutex) );
+		}
 
 		sb->LibrarySQLDrop( sb, lsqllib );
 	}
@@ -500,22 +505,24 @@ MobileListEntry *MobleManagerGetByUserNameDBPlatform( MobileManager *mmgr, FULON
 	SystemBase *sb = (SystemBase *)mmgr->mm_SB;
 	MobileListEntry *root = NULL;
 	
-	FRIEND_MUTEX_LOCK( &(mmgr->mm_Mutex) );
-	uma = mmgr->mm_UMApps;
-	while( uma != NULL )
+	if( FRIEND_MUTEX_LOCK( &(mmgr->mm_Mutex) ) == 0 )
 	{
-		if( uma->uma_UserID == user_id && strcmp( uma->uma_Platform, mobileType ) == 0 )
+		uma = mmgr->mm_UMApps;
+		while( uma != NULL )
 		{
-			MobileListEntry *e = MobileListEntryNew( uma );
-			if( e != NULL )
+			if( uma->uma_UserID == user_id && strcmp( uma->uma_Platform, mobileType ) == 0 )
 			{
-				e->node.mln_Succ = (MinNode *)root;
-				root = e;
+				MobileListEntry *e = MobileListEntryNew( uma );
+				if( e != NULL )
+				{
+					e->node.mln_Succ = (MinNode *)root;
+					root = e;
+				}
 			}
+			uma = (UserMobileApp *)uma->node.mln_Succ;
 		}
-		uma = (UserMobileApp *)uma->node.mln_Succ;
+		FRIEND_MUTEX_UNLOCK( &(mmgr->mm_Mutex) );
 	}
-	FRIEND_MUTEX_UNLOCK( &(mmgr->mm_Mutex) );
 
 	SQLLibrary *lsqllib = sb->LibrarySQLGet( SLIB );
 	if( lsqllib != NULL )
@@ -586,20 +593,21 @@ MobileListEntry *MobleManagerGetByUserNameDBPlatform( MobileManager *mmgr, FULON
 			FFree( rel );
 		}
 		
-		FRIEND_MUTEX_LOCK( &(mmgr->mm_Mutex) );
-		
-		// add entries to main lists
-		while( addEntries != NULL )
+		if( FRIEND_MUTEX_LOCK( &(mmgr->mm_Mutex) ) == 0 )
 		{
-			MobileListEntry *add = addEntries;
-			addEntries = (MobileListEntry *)addEntries->node.mln_Succ;
-			
-			add->node.mln_Succ = (MinNode *)root;
-			root = add;
-		}
 		
-		FRIEND_MUTEX_UNLOCK( &(mmgr->mm_Mutex) );
-
+			// add entries to main lists
+			while( addEntries != NULL )
+			{
+				MobileListEntry *add = addEntries;
+				addEntries = (MobileListEntry *)addEntries->node.mln_Succ;
+			
+				add->node.mln_Succ = (MinNode *)root;
+				root = add;
+			}
+		
+			FRIEND_MUTEX_UNLOCK( &(mmgr->mm_Mutex) );
+		}
 		sb->LibrarySQLDrop( sb, lsqllib );
 	}
 	return root;

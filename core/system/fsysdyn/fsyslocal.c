@@ -358,7 +358,9 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		int slashes = 0, i = 0; for( ; i < spath; i++ )
 		{
 			if( commClean[i] == '/' )
+			{
 				slashes++;
+			}
 		}
 
 		// ---- DEBUG( "New filepath: %s\n", cleanPath );
@@ -1189,7 +1191,7 @@ void FillStatLocal( BufString *bs, struct stat *s, File *d, const char *path )
 	}
 	
 	BufStringAddSize( bs, tmp, ls );
-	ls = snprintf( tmp, TMP_SIZEM1, "\"Filesize\": %d,",(int) s->st_size );
+	ls = snprintf( tmp, TMP_SIZEM1, "\"Filesize\": %ld,", s->st_size );
 	BufStringAddSize( bs, tmp, ls );
 	
 	char *timeStr = FCalloc( 64, sizeof( char ) );

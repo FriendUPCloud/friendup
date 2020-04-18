@@ -90,11 +90,20 @@ Workspace.deleteFile = function()
 					bar.style.width = '0';
 					bar.style.height = 'calc(100% - 2px)';
 					
-					var text = document.createElement( 'div' );
-					bar.appendChild( text );
+					var progress = document.createElement( 'div' );
+					progress.className = 'Progress';
+					progress.style.position = 'absolute';
+					progress.style.top = '1px';
+					progress.style.left = '1px';
+					progress.style.width = 'calc(100% - 2px)';
+					progress.style.height = 'calc(100% - 2px)';
+					progress.style.textAlign = 'center';
+					progress.style.lineHeight = '28px';
+					progress.style.zIndex = 2;
 					
 					cont.appendChild( frame );						
 					cont.appendChild( bar );
+					cont.appendChild( progress );
 					
 					var stop = false;
 					
@@ -179,7 +188,7 @@ Workspace.deleteFile = function()
 							}, 100 );
 							
 							bar.style.width = 'calc(' + pct + ' - 2px)';
-							text.innerHTML = pct;
+							progress.innerHTML = pct;
 							
 							doDeleteFiles( files, index + 1 ); 
 						}

@@ -426,11 +426,11 @@ DataForm *DataFormFromHttp( Http *http )
 	
 	DEBUG("[DataFormFromHttp] headers parsed\n");
 	
-	if( http->parsedPostContent != NULL )
+	if( http->http_ParsedPostContent != NULL )
 	{
-		for( i = 0 ; i < http->parsedPostContent->hm_TableSize; i++ )
+		for( i = 0 ; i < http->http_ParsedPostContent->hm_TableSize; i++ )
 		{
-			HashmapElement e = http->parsedPostContent->hm_Data[i];
+			HashmapElement e = http->http_ParsedPostContent->hm_Data[i];
 			
 			if( e.hme_Key != NULL && e.hme_InUse == TRUE )
 			{

@@ -114,7 +114,7 @@ int HttpStringAdd( HttpString *bs, const char *ntext, int len )
 	if( bs->ht_Reqest != NULL )
 	{
 		//FERROR("\n\n\n\n\requestnot null!!!\n\n\n\n\n");
-		if( bs->ht_Reqest->h_ContentType == HTTP_CONTENT_TYPE_MULTIPART )
+		if( bs->ht_Reqest->http_ContentType == HTTP_CONTENT_TYPE_MULTIPART )
 		{
 			//FERROR("\n\n\n\n\nMULTIPART!!!\n\n\n\n\n");
 		}
