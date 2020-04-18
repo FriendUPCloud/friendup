@@ -490,8 +490,57 @@ Application.receiveMessage = function( msg )
 					}
 					else 
 					{
-						this.playlist.push( it );
-						added++;
+						// Folder
+						var s = this;
+						if( it.Path.substr( -1, 1 ) == '/' )
+						{
+							function addByPath( theItem )
+							{
+								var m = new Library( 'system.library' );
+								m.onExecuted = function( e, d )
+								{
+									if( e != 'ok' ) return;
+									let list = false;
+									try
+									{
+										list = JSON.parse( d );
+									}
+									catch( e )
+									{
+										// Failed
+									}
+									if( !list ) return;
+									for( let a = 0; a < list.length; a++ )
+									{
+										// Recursive
+										if( list[ a ].Path.substr( -1, 1 ) == '/' )
+										{
+											addByPath( list[ a ].Path );
+										}
+										else
+										{
+											s.playlist.push( list[ a ] );
+										}
+									}
+									if( Application.playlistWindow )
+									{
+										Application.playlistWindow.sendMessage( {
+											command: 'refresh',
+											items: Application.playlist
+										} );
+									}
+									Application.receiveMessage ( { command: 'get_playlist' } );
+								}
+								m.execute( 'file/dir', { path: theItem.Path } );
+							}
+							addByPath( it );
+						}
+						// Normal file
+						else
+						{
+							this.playlist.push( it );
+							added++;
+						}
 					}
 				}
 				if( added > 0 )
