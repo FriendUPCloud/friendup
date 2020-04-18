@@ -407,7 +407,7 @@ self.uploadFiles = function()
 				}
 				else
 				{
-					console.log( 'Some other upload status: ' + this.readyState + ' / ' + this.status );
+					//console.log( 'Some other upload status: ' + this.readyState + ' / ' + this.status );
 				}
 			}
 		
