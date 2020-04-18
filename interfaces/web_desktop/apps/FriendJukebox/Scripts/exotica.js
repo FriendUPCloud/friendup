@@ -532,7 +532,7 @@ Application.receiveMessage = function( msg )
 										// Recursive
 										if( list[ a ].Path.substr( -1, 1 ) == '/' )
 										{
-											addByPath( list[ a ].Path );
+											addByPath( list[ a ] );
 										}
 										else
 										{
