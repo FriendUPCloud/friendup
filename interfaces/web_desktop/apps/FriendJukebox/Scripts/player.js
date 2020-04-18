@@ -100,7 +100,7 @@ Application.redrawMiniPlaylist = function()
 		{
 			ge( 'MiniPlaylist' ).innerHTML = '';
 			ge( 'MiniPlaylist' ).appendChild( tb );
-			ge( 'MiniPlaylist' ).style.bottom = '47px';
+			ge( 'MiniPlaylist' ).style.bottom = '45px';
 			ge( 'MiniPlaylist' ).style.height = GetElementHeight( tb );
 		}
 		else
@@ -142,7 +142,7 @@ Application.receiveMessage = function( msg )
 			if( this.miniplaylist )
 			{
 				ge( 'Equalizer' ).style.height = '110px';
-				ge( 'MiniPlaylist' ).style.bottom = '47px';
+				ge( 'MiniPlaylist' ).style.bottom = '45px';
 				ge( 'MiniPlaylist' ).style.top = '110px';
 				ge( 'MiniPlaylist' ).style.visibility = 'visible';
 				ge( 'MiniPlaylist' ).style.inputEvents = '';
@@ -154,7 +154,7 @@ Application.receiveMessage = function( msg )
 			else
 			{
 				ge( 'Equalizer' ).style.height = 'auto';
-				ge( 'Equalizer' ).style.bottom = '47px';
+				ge( 'Equalizer' ).style.bottom = '45px';
 				ge( 'MiniPlaylist' ).style.bottom = '';
 				ge( 'MiniPlaylist' ).style.top = 'auto';
 				ge( 'MiniPlaylist' ).style.visibility = 'hidden';
@@ -224,26 +224,28 @@ Application.receiveMessage = function( msg )
 				var cand = '';
 				if( this.loader && this.loader.metadata )
 				{
-					if( this.loader.metadata.title )
+					let md = this.loader.metadata;
+					
+					if( typeof md.title != undefined && md.title != 'undefined' )
 					{
-						cand += this.loader.metadata.title;
+						cand += md.title;
 					}
-					if( this.loader.metadata.artist )
+					if( typeof md.artist != undefined && md.artist != 'undefined' )
 					{
-						cand += ' by ' + this.loader.metadata.artist;
+						cand += ' by ' + md.artist;
 					}
-					if( this.loader.metadata.album || this.loader.metadata.year )
+					if( typeof md.album != undefined || typeof md.year != undefined )
 					{
 						cand += ' (';
-						if( this.loader.metadata.album )
+						if( typeof md.album != undefined && md.album != 'undefined' )
 						{
-							cand += this.loader.metadata.album;
-							if( this.loader.metadata.year )
+							cand += md.album;
+							if( typeof md.year != undefined && md.year != 'undefined' )
 								cand += ', ';
 						}
-						if( this.loader.metadata.year )
+						if( typeof md.year != undefined && md.year != 'undefined' )
 						{
-							cand += this.loader.metadata.year;
+							cand += md.year;
 						}
 						cand += ')';
 					}
