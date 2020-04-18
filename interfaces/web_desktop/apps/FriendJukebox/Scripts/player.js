@@ -219,13 +219,37 @@ Application.receiveMessage = function( msg )
 			{
 				this.play();
 				Application.initVisualizer();
-				var fn = this.loader ? ( this.loader.metadata ? 
-					( 
-						this.loader.metadata.title + ' by ' + 
-						this.loader.metadata.artist + ' (' + 
-						this.loader.metadata.album + ', ' + this.loader.metadata.year + ')'
-					)
-					: msg.item.Filename ) : false;
+				var fn = msg.item.Filename;
+				
+				var cand = '';
+				if( this.loader && this.loader.metadata )
+				{
+					if( this.loader.metadata.title )
+					{
+						cand += this.loader.metadata.title;
+					}
+					if( this.loader.metadata.artist )
+					{
+						cand += ' by ' + this.loader.metadata.artist;
+					}
+					if( this.loader.metadata.album || this.loader.metadata.year )
+					{
+						cand += ' (';
+						if( this.loader.metadata.album )
+						{
+							cand += this.loader.metadata.album;
+							if( this.loader.metadata.year )
+								cand += ', ';
+						}
+						if( this.loader.metadata.year )
+						{
+							cand += this.loader.metadata.year;
+						}
+						cand += ')';
+					}
+					fn = cand;
+				}
+				
 				if( fn == false ) return;
 				ge( 'scroll' ).innerHTML = '<div>' + fn + '</div>';
 			}
