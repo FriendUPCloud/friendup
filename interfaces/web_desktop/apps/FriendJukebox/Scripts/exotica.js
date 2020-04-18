@@ -266,10 +266,13 @@ Application.addToPlaylist = function( items )
 			{
 				for( var a = 0; a < arr.length; a++ )
 				{
-					Application.playlist.push( {
-						Filename: arr[a].Filename, 
-						Path: arr[a].Path
-					} );
+					if( supportedFormat( arr[ a ] ) )
+					{
+						Application.playlist.push( {
+							Filename: arr[a].Filename, 
+							Path: arr[a].Path
+						} );
+					}
 				}
 				if( Application.playlistWindow )
 				{
@@ -306,10 +309,13 @@ Application.receiveMessage = function( msg )
 						{
 							for( var a = 0; a < files.length; a++ )
 							{
-								Application.playlist.push( {
-									Filename: files[a].Filename,
-									Path: files[a].Path
-								} );
+								if( supportedFormat( files[ a ] ) )
+								{
+									Application.playlist.push( {
+										Filename: files[a].Filename,
+										Path: files[a].Path
+									} );
+								}
 							}
 						}
 						else
@@ -318,10 +324,13 @@ Application.receiveMessage = function( msg )
 							var fn = files.split( ':' )[1];
 							if( fn.indexOf( '/' ) > 0 )
 								fn = fn.split( '/' ).pop();
-							Application.playlist.push( {
-								Filename: fn,
-								Path: pth
-							} );
+							if( supportedFormat( pth ) )
+							{
+								Application.playlist.push( {
+									Filename: fn,
+									Path: pth
+								} );
+							}
 						}
 						Application.receiveMessage( { command: 'playsong' } );
 					}
@@ -377,7 +386,12 @@ Application.receiveMessage = function( msg )
 			if( msg.items )
 			{
 				for( var a in msg.items )
-					Application.playlist.push( msg.items[a] );
+				{
+					if( supportedFormat( msg.items[ a ] ) )
+					{
+						Application.playlist.push( msg.items[a] );
+					}
+				}
 				Application.receiveMessage( { command: 'get_playlist' } );
 			}
 			else this.addToPlaylist();
@@ -465,11 +479,14 @@ Application.receiveMessage = function( msg )
 								// Add it!
 								if( path.length && title.length )
 								{
-									Application.playlist.push( {
-										Filename: title,
-										Path: path
-									} );
-									ad++;
+									if( supportedFormat( path ) )
+									{
+										Application.playlist.push( {
+											Filename: title,
+											Path: path
+										} );
+										ad++;
+									}
 								}
 							}
 							// Yo!
@@ -519,7 +536,10 @@ Application.receiveMessage = function( msg )
 										}
 										else
 										{
-											s.playlist.push( list[ a ] );
+											if( supportedFormat( list[ a ] ) )
+											{
+												s.playlist.push( list[ a ] );
+											}
 										}
 									}
 									if( Application.playlistWindow )
@@ -538,8 +558,11 @@ Application.receiveMessage = function( msg )
 						// Normal file
 						else
 						{
-							this.playlist.push( it );
-							added++;
+							if( supportedFormat( it ) )
+							{
+								this.playlist.push( it );
+								added++;
+							}
 						}
 					}
 				}
@@ -647,5 +670,22 @@ function LoadPlaylist()
 		}
 		f.load();
 	}, path, 'load', fnam, i18n( 'i18n_load_playlist' ) );
+}
+
+function supportedFormat( itm )
+{
+	if( itm && itm.Path )
+	{
+		var ext = itm.Path.split( '.' ).pop();
+		switch( ext.toLowerCase() )
+		{
+			case 'ogg':
+			case 'wav':
+			case 'flac':
+			case 'mp3':
+				return true;
+		}
+	}
+	return false;
 }
 
