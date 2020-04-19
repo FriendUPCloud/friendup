@@ -1,0 +1,103 @@
+<div class="ContentFull" id="Notes"></div>
+<style>
+	
+	#Notes
+	{
+		overflow: auto;
+		mask-image: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgb(0,0,0) 25px, rgb(0,0,0) calc(100% - 25px), rgba(0,0,0,0) 100%);
+		-moz-mask-image: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgb(0,0,0) 25px, rgb(0,0,0) calc(100% - 25px), rgba(0,0,0,0) 100%);
+		-webkit-mask-image: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgb(0,0,0) 25px, rgb(0,0,0) calc(100% - 25px), rgba(0,0,0,0) 100%);
+	}
+	
+	#Notes:not(:hover)::-webkit-scrollbar,
+	#Notes:not(:hover)::-webkit-scrollbar-track
+	{
+		display: none;
+	}
+	
+	
+	html
+	{
+		background-color: transparent !important;
+	}
+	
+	html > body:not(.One):not(.Two):not(.Three)
+	{
+		background-color: rgba(0,0,0,0.3) !important;
+		border-radius: 2px;
+	}
+	
+	.NoteContainer
+	{
+		position: absolute;
+	}
+	
+	.NoteContainer > h2
+	{
+		color: white;
+		text-transform: uppercase;
+		background: rgba(0,0,0,0.8);
+		padding: 4px;
+		box-sizing: border-box;
+	}
+	
+	.Note
+	{
+		pointer-events: all;
+		position: absolute;
+		width: 120px;
+		height: 120px;
+		transform: rotatez(1deg);
+		overflow: hidden;
+		box-sizing: border-box;
+		border: 0;
+		padding: 8px;
+		transition: background 0.25s;
+		cursor: pointer;
+		box-shadow: 0px 1px 3px rgba(0,0,0,0.4);
+	}
+	
+	.Note:hover
+	{
+		background: rgb(255,255,200) !important;
+	}
+	
+	.Note > .Content
+	{
+		opacity: 0;
+		transition: opacity 0.25s;
+	}
+	
+	.Note > .Content:after, .Note:after
+	{
+		content: " ";
+		display: block;
+		margin: 10px 0 0 0;
+		height: 15px;
+		border-top: 2px solid rgba(0,0,0,0.15);
+		border-bottom: 2px solid rgba(0,0,0,0.15);
+	}
+	
+	.Note:after
+	{
+		margin: 15px 0 0 0;
+		width: 80%;
+	}
+	
+	.Note > .Content.Showing
+	{
+		opacity: 1;
+	}
+	
+	.Note h2
+	{
+		font-size: 14px;
+	}
+	
+	.Note p
+	{
+		font-size: 12px;
+	}
+	
+</style>
+<script src="Progdir:Scripts/widget.js"></script>
