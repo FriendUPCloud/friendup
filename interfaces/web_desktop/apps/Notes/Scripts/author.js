@@ -458,13 +458,6 @@ Application.showWidget = function()
 		left: 220,
 		transparent: true,
 		'border-radius': 0,
-		moveGadget: {
-			left: 0,
-			top: 0,
-			width: '100%',
-			height: 24
-		},
-		resizeGadget: true,
 		below: true
 	} );
 	this.widget = w;

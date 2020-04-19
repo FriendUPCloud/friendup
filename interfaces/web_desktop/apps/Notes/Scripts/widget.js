@@ -48,17 +48,17 @@ var Note = function( obj, parentEle )
 	this.dom = d;
 	
 	// Keep on page and within margins!
-	if( parentEle.x + 140 >= document.body.clientWidth - marginLeft )
+	if( parentEle.x + 120 >= document.body.clientWidth - marginLeft )
 	{
 		parentEle.x = marginLeft;
-		parentEle.y += 140;
-		notesYPos += 140;
+		parentEle.y += 120;
+		notesYPos += 120;
 	}
 	
 	d.className = 'Note';
 	d.style.left = parentEle.x + 'px';
 	d.style.top = parentEle.y + 'px';
-	parentEle.x += 140;
+	parentEle.x += 120;
 	parentEle.appendChild( d );
 	
 	let rnd = -2 + ( Math.random() * 4 );

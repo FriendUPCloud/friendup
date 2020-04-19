@@ -1,3 +1,5 @@
+<div class="MoveElement" onmousedown="MoveWidget()"></div>
+<div class="ResizeElement" onmousedown="ResizeWidget()"></div>
 <div class="ContentFull" id="Notes"></div>
 <style>
 	
@@ -24,7 +26,65 @@
 	html > body:not(.One):not(.Two):not(.Three)
 	{
 		background-color: rgba(0,0,0,0.3) !important;
-		border-radius: 2px;
+		border-radius: 4px;
+		overflow: hidden;
+	}
+	
+	.MoveElement
+	{
+		position: absolute;
+		opacity: 0;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 25px;
+		background: rgba(0,0,0,0.5);
+		text-align: center;
+		line-height: 24px;
+		color: white;
+		cursor: pointer;
+		z-index: 5;
+		transition: opacity 0.25s;
+		border-radius: 3px 3px 0 0;
+	}
+	.MoveElement:hover
+	{
+		opacity: 1;
+	}
+	
+	.MoveElement:after
+	{
+		content: ":::";
+		display: block;
+		margin: auto;
+		pointer-events: none;
+	}
+	
+	.ResizeElement
+	{
+		position: absolute;
+		opacity: 0;
+		transition: opacity 0.25s;
+		bottom: 0;
+		right: 0;
+		width: 25px;
+		height: 25px;
+		cursor: nwse-resize;
+		z-index: 5;
+	}
+	.ResizeElement:hover
+	{
+		opacity: 1;
+	}
+	.ResizeElement:before
+	{
+		position: absolute;
+		top: 5px;
+		left: 8px;
+		transform: rotatez(135deg);
+		font-family: fontawesome;
+		content: '\f0dc';
+		color: white;
 	}
 	
 	.NoteContainer
@@ -45,8 +105,8 @@
 	{
 		pointer-events: all;
 		position: absolute;
-		width: 120px;
-		height: 120px;
+		width: 90px;
+		height: 90px;
 		transform: rotatez(1deg);
 		overflow: hidden;
 		box-sizing: border-box;
@@ -91,12 +151,12 @@
 	
 	.Note h2
 	{
-		font-size: 14px;
+		font-size: 11px;
 	}
 	
 	.Note p
 	{
-		font-size: 12px;
+		font-size: 10px;
 	}
 	
 </style>
