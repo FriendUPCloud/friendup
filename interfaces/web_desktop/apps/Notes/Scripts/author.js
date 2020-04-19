@@ -457,7 +457,8 @@ Application.showWidget = function()
 		top: 38,
 		left: 220,
 		transparent: true,
-		'border-radius': 0,
+		'border-radius': 3,
+		scrolling: false,
 		below: true
 	} );
 	this.widget = w;
