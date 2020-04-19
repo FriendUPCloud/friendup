@@ -77,10 +77,20 @@ Widget.prototype.calcPosition = function()
 	
 	if( this.tw == 'full' )
 		this.dom.style.width = '100%';
+	else if( this.tw.substr && this.tw.substr( -1, 1 ) == '%' )
+	{
+		var pct = window.innerWidth / 100 * parseInt( this.tw );
+		this.dom.style.width = pct + 'px';
+	}
 	else
 		this.dom.style.width = this.tw + 'px';
 	if( this.th == 'full' )
 		this.dom.style.height = '100%';
+	else if( this.th.substr && this.th.substr( -1, 1 ) == '%' )
+	{
+		var pct = window.innerHeight / 100 * parseInt( this.th );
+		this.dom.style.height = pct + 'px';
+	}
 	else
 		this.dom.style.height = this.th + 'px';
 	
@@ -100,6 +110,11 @@ Widget.prototype.calcPosition = function()
 		else if( this.tx == 'center' )
 		{
 			this.dom.style.left = ( target.offsetWidth >> 1 ) - ( this.tw >> 1 ) + 'px';
+		}
+		else if( this.tx.substr && this.tx.substr( -1, 1 ) == '%' )
+		{
+			var pct = window.innerWidth / 100 * parseInt( this.tx );
+			this.dom.style.left = pct + 'px';
 		}
 	}
 	else
@@ -129,6 +144,11 @@ Widget.prototype.calcPosition = function()
 		else if( this.ty == 'middle' || this.ty == 'center' )
 		{
 			this.dom.style.top = ( target.offsetHeight >> 1 ) - ( this.th >> 1 ) + 'px';
+		}
+		else if( this.ty.substr && this.ty.substr( -1, 1 ) == '%' )
+		{
+			var pct = window.innerHeight / 100 * parseInt( this.ty );
+			this.dom.style.top = pct + 'px';
 		}
 	}
 	else

@@ -452,12 +452,19 @@ Application.showWidget = function()
 	if( this.widget ) return this.widget.show();
 	
 	var w = new Widget( {
-		width: 'full',
-		height: 'full',
-		top: 0,
-		left: 0,
+		width: 800,
+		height: 800,
+		top: 38,
+		left: 220,
 		transparent: true,
 		'border-radius': 0,
+		moveGadget: {
+			left: 0,
+			top: 0,
+			width: '100%',
+			height: 24
+		},
+		resizeGadget: true,
 		below: true
 	} );
 	this.widget = w;
