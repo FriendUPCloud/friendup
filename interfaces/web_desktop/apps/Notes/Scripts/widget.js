@@ -166,7 +166,7 @@ function reloadNotes( path, depth )
 			
 			// Cycle colors
 			currColor += 2; if( currColor >= colors.length ) currColor = 0;
-			notesYPos += 140;
+			notesYPos += 120;
 			
 			ge( 'Notes' ).appendChild( dv );
 		}
