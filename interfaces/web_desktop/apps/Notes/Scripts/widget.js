@@ -36,7 +36,7 @@ Application.run = function( msg )
 		}
 	}
 	document.body.oncontextmenu = function( e ){ return cancelBubble( e ); }
-	refreshNotes( 'Home:Notes/' );
+	reloadNotes( 'Home:Notes/' );
 }
 
 let notes = [];
@@ -113,7 +113,18 @@ var colors = [
 	'#CC9BE1', '#611483'
 ];
 
-function refreshNotes( path, depth )
+// Just reposition these notes!
+function refreshNotes()
+{
+	let rows = ge( 'Notes' ).getElementsByClassName( 'NoteContainer' );
+	for( var a = 0; a < rows.length; a++ )
+	{
+		
+	}
+}
+
+// Draw notes from new data
+function reloadNotes( path, depth )
 {
 	if( !depth ) depth = 1;
 	let volume = path.split( ':' )[0] + ':';
@@ -164,7 +175,7 @@ function refreshNotes( path, depth )
 		{
 			if( list[ a ].Type == 'Directory' )
 			{
-				refreshNotes( volume + list[ a ].Path, depth + 1 );
+				reloadNotes( volume + list[ a ].Path, depth + 1 );
 			}
 			else if( list[ a ].Filename.split( '.' ).pop().toLowerCase() == 'html' )
 			{
