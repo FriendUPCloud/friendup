@@ -422,3 +422,9 @@ html body.Dark .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	border-color: #314559;
 }  
 
+html body.Charcoal .Frame .Progress
+{
+	text-shadow: 1px 1px rgba(0,0,0,0.7);
+}
+
+

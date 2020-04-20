@@ -3290,7 +3290,6 @@ body:not([mobile]).ShowTasks #TaskSwitcher .Current .Close
 .Frame .Progress
 {
 	line-height: 30px;
-	text-shadow: 1px 1px rgba(0,0,0,0.7);
 }
 
 .Frame .Groove + .Bar
