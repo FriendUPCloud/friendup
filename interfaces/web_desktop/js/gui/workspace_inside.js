@@ -8788,7 +8788,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			else
 			{
-				console.log('Unhandles messge from out filetransfer worker',e);
+				console.log('Unhandles message from filetransfer worker',e);
 			}
 
 		}
