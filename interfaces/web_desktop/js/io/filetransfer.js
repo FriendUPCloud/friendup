@@ -253,6 +253,7 @@ self.uploadFiles = function()
 					// Now go upload!
 					doUpload( queuePos, function()
 					{
+						console.log( 'Another next in queue!' );
 						// Rerun queue
 						uploadQueueRun( ++queuePos ); 
 					} );
@@ -270,6 +271,7 @@ self.uploadFiles = function()
 			//console.log( 'JUST UPLOAD: ' + destPath );
 			doUpload( queuePos, function()
 			{ 
+				console.log( 'Next in queue!' );
 				// Rerun queue
 				uploadQueueRun( ++queuePos ); 
 			} );
@@ -394,6 +396,7 @@ self.uploadFiles = function()
 					calcProgress();
 					
 					// Run callback
+					console.log( 'Checking for callback.' );
 					if( callback ) callback();
 				}
 				else if( this.readyState > 1 && this.status > 0 )
