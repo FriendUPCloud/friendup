@@ -3325,11 +3325,15 @@ WebAudioLoader = function( filePath, callback )
 					if( info && info.TIT2 )
 					{
 						t.metadata = {
-							title: info.TIT2,
-							artist: info.TCOM,
-							album: info.TALB,
-							year: info.TYER
+							title: Trim( info.TIT2 ),
+							artist: Trim( info.TCOM ),
+							album: Trim( info.TALB ),
+							year: Trim( info.TYER )
 						};
+						for( let a in t.metadata )
+						{
+							t.metadata[ a ] = t.metadata[ a ].split( /[^ a-z0-9øæå!,.-_]/i ).join( '' );
+						}
 					} 
 					else 
 					{
