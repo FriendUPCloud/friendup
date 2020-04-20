@@ -1685,6 +1685,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			if( el != NULL )
 			{
 				deviceid = (char *)el->hme_Data;
+				DEBUG("\t\t\t\tDEVICEID PARAMETER: %s\n", deviceid );
 			}
 			
 			el = HttpGetPOSTParameter( *request, "sessionid" );
