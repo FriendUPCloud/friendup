@@ -416,6 +416,11 @@ body.Charcoal .Active > .FileBrowserItemImage,
 	filter: invert(100%);
 }
 
+body.Charcoal .Frame .Progress
+{
+	text-shadow: 1px 1px rgba(0,0,0,0.7);
+}
+
 /* Charcoal scheme scrollbars */
 
 body.Charcoal::-webkit-scrollbar
