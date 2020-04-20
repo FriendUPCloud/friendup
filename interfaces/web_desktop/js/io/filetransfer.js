@@ -396,7 +396,7 @@ self.uploadFiles = function()
 					calcProgress();
 					
 					// Run callback
-					console.log( 'Checking for callback.' );
+					console.log( 'Checking for callback.', this.responseText );
 					if( callback ) callback();
 				}
 				else if( this.readyState > 1 && this.status > 0 )
