@@ -1921,7 +1921,7 @@ BufString *Info( File *s, const char *path )
 				
 				char tmp[ 256 ];
 				//BufStringAdd( bs, tmp );
-				sprintf( tmp, "\"Filesize\": %d,",(int) attrs.filesize );
+				sprintf( tmp, "\"Filesize\": %llu,", attrs.filesize );
 				BufStringAdd( bs, tmp );
 				
 				char *timeStr = FCalloc( 40, sizeof( char ) );
@@ -2162,7 +2162,7 @@ BufString *Dir( File *s, const char *path )
 				//DEBUG("ISDIR %d NAME %d LONG %s\n", isDir, mem, longentry );
 				
 				char tmp[ 256 ];
-				sprintf( tmp, "\"Filesize\": %d,",(int) attrs.filesize );
+				sprintf( tmp, "\"Filesize\": %llu,", attrs.filesize );
 				BufStringAdd( bs, tmp );
 				
 				char *timeStr = FCalloc( 40, sizeof( char ) );

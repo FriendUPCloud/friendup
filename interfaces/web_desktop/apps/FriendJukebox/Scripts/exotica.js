@@ -8,6 +8,10 @@
 *                                                                              *
 *****************************************************************************©*/
 
+/* 
+	This is where Friend Jukebox starts.
+	Exotica was the first name of this app, hence, it's historic :-)
+*/
 Application.run = function( msg, iface )
 {
 	// Start with empty playlist
@@ -50,7 +54,7 @@ Application.run = function( msg, iface )
 		this.handleFiles( msg.args );
 }
 
-// Add the files of as playlist
+// Add the files of as playlist ------------------------------------------------
 Application.addPlaylist = function ( fname )
 {
 	var f = new File( fname );
@@ -72,7 +76,7 @@ Application.addPlaylist = function ( fname )
 	f.load();
 }
 
-// Handle files by path
+// Handle files by path --------------------------------------------------------
 Application.handleFiles = function( args )
 {
 	// We start with a bang!
@@ -107,7 +111,7 @@ Application.handleFiles = function( args )
 	}
 }
 
-// Redraws the main application pulldown menu
+// Redraws the main application pulldown menu ----------------------------------
 Application.redrawMenu = function()
 {
 	this.mainView.setMenuItems( [
@@ -154,7 +158,7 @@ Application.redrawMenu = function()
 	] );
 }
 
-// About exotica view window
+// About exotica view window ---------------------------------------------------
 Application.openAbout = function()
 {
 	if( this.aboutWindow ) return this.aboutWindow.activate();
@@ -177,7 +181,7 @@ Application.openAbout = function()
 	f.load();
 }
 
-// Shows the playlist editor
+// Shows the playlist editor ---------------------------------------------------
 Application.editPlaylist = function()
 {
 	if( this.playlistWindow ) return this.playlistWindow.activate();
@@ -239,7 +243,7 @@ Application.editPlaylist = function()
 	f.load();
 }
 
-// Opens a playlist using a file dialog
+// Opens a playlist using a file dialog ----------------------------------------
 Application.openPlaylist = function()
 {
 	if( this.of ) return this.of.activate();
@@ -262,10 +266,13 @@ Application.addToPlaylist = function( items )
 			{
 				for( var a = 0; a < arr.length; a++ )
 				{
-					Application.playlist.push( {
-						Filename: arr[a].Filename, 
-						Path: arr[a].Path
-					} );
+					if( supportedFormat( arr[ a ] ) )
+					{
+						Application.playlist.push( {
+							Filename: arr[a].Filename, 
+							Path: arr[a].Path
+						} );
+					}
 				}
 				if( Application.playlistWindow )
 				{
@@ -283,7 +290,7 @@ Application.addToPlaylist = function( items )
 	
 }
 
-// Receives events from OS and child windows
+// Receives events from OS and child windows -----------------------------------
 Application.receiveMessage = function( msg )
 {
 	if( !msg.command ) return;
@@ -302,10 +309,13 @@ Application.receiveMessage = function( msg )
 						{
 							for( var a = 0; a < files.length; a++ )
 							{
-								Application.playlist.push( {
-									Filename: files[a].Filename,
-									Path: files[a].Path
-								} );
+								if( supportedFormat( files[ a ] ) )
+								{
+									Application.playlist.push( {
+										Filename: files[a].Filename,
+										Path: files[a].Path
+									} );
+								}
 							}
 						}
 						else
@@ -314,10 +324,13 @@ Application.receiveMessage = function( msg )
 							var fn = files.split( ':' )[1];
 							if( fn.indexOf( '/' ) > 0 )
 								fn = fn.split( '/' ).pop();
-							Application.playlist.push( {
-								Filename: fn,
-								Path: pth
-							} );
+							if( supportedFormat( pth ) )
+							{
+								Application.playlist.push( {
+									Filename: fn,
+									Path: pth
+								} );
+							}
 						}
 						Application.receiveMessage( { command: 'playsong' } );
 					}
@@ -373,7 +386,12 @@ Application.receiveMessage = function( msg )
 			if( msg.items )
 			{
 				for( var a in msg.items )
-					Application.playlist.push( msg.items[a] );
+				{
+					if( supportedFormat( msg.items[ a ] ) )
+					{
+						Application.playlist.push( msg.items[a] );
+					}
+				}
 				Application.receiveMessage( { command: 'get_playlist' } );
 			}
 			else this.addToPlaylist();
@@ -461,11 +479,14 @@ Application.receiveMessage = function( msg )
 								// Add it!
 								if( path.length && title.length )
 								{
-									Application.playlist.push( {
-										Filename: title,
-										Path: path
-									} );
-									ad++;
+									if( supportedFormat( path ) )
+									{
+										Application.playlist.push( {
+											Filename: title,
+											Path: path
+										} );
+										ad++;
+									}
 								}
 							}
 							// Yo!
@@ -486,8 +507,69 @@ Application.receiveMessage = function( msg )
 					}
 					else 
 					{
-						this.playlist.push( it );
-						added++;
+						// Folder
+						var s = this;
+						if( it.Path.substr( -1, 1 ) == '/' )
+						{
+							function addByPath( theItem, volume )
+							{
+								if( !volume )
+									volume = theItem.Path.indexOf( ':' ) > 0 ? theItem.Path.split( ':' )[0] : false;
+								var m = new Library( 'system.library' );
+								m.onExecuted = function( e, d )
+								{
+									if( e != 'ok' ) return;
+									let list = false;
+									try
+									{
+										list = JSON.parse( d );
+									}
+									catch( e )
+									{
+										// Failed
+									}
+									if( !list ) return;
+									for( let a = 0; a < list.length; a++ )
+									{
+										// Recursive
+										if( ( list[ a ].Type && list[ a ].Type == 'Directory' ) || list[ a ].Path.substr( -1, 1 ) == '/' )
+										{
+											if( volume )
+												list[ a ].Path = volume + ':' + list[ a ].Path;
+											addByPath( list[ a ], volume );
+										}
+										else
+										{
+											if( supportedFormat( list[ a ] ) )
+											{
+												if( volume )
+													list[ a ].Path = volume + ':' + list[ a ].Path;
+												s.playlist.push( list[ a ] );
+											}
+										}
+									}
+									if( Application.playlistWindow )
+									{
+										Application.playlistWindow.sendMessage( {
+											command: 'refresh',
+											items: Application.playlist
+										} );
+									}
+									Application.receiveMessage ( { command: 'get_playlist' } );
+								}
+								m.execute( 'file/dir', { path: ( volume ? ( volume + ':' ) : '' ) + theItem.Path } );
+							}
+							addByPath( it );
+						}
+						// Normal file
+						else
+						{
+							if( supportedFormat( it ) )
+							{
+								this.playlist.push( it );
+								added++;
+							}
+						}
 					}
 				}
 				if( added > 0 )
@@ -529,7 +611,7 @@ Application.receiveMessage = function( msg )
 	}
 }
 
-// Shortcut
+// Shortcut --------------------------------------------------------------------
 function ShowPlaylist()
 {
 	Application.editPlaylist();
@@ -594,5 +676,22 @@ function LoadPlaylist()
 		}
 		f.load();
 	}, path, 'load', fnam, i18n( 'i18n_load_playlist' ) );
+}
+
+function supportedFormat( itm )
+{
+	if( itm && itm.Path )
+	{
+		var ext = itm.Path.split( '.' ).pop();
+		switch( ext.toLowerCase() )
+		{
+			case 'ogg':
+			case 'wav':
+			case 'flac':
+			case 'mp3':
+				return true;
+		}
+	}
+	return false;
 }
 

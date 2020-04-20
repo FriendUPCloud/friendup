@@ -409,12 +409,12 @@ void releaseWSData( WSThreadData *data )
 	BufString *queryrawbs = data->queryrawbs;
 	if( http != NULL )
 	{
-		UriFree( http->uri );
+		UriFree( http->http_Uri );
 		
-		if( http->rawRequestPath != NULL )
+		if( http->http_RawRequestPath != NULL )
 		{
-			FFree( http->rawRequestPath );
-			http->rawRequestPath = NULL;
+			FFree( http->http_RawRequestPath );
+			http->http_RawRequestPath = NULL;
 		}
 		HttpFree( http );
 	}
@@ -483,15 +483,15 @@ void WSThread( void *d )
 	
 	if( strcmp( pathParts[ 0 ], "system.library" ) == 0 && error == 0 )
 	{
-		http->h_WSocket = wscl;//fcd->fcd_WSClient;
+		http->http_WSocket = wscl;//fcd->fcd_WSClient;
 		
 		struct timeval start, stop;
 		gettimeofday(&start, NULL);
 		
-		http->content = queryrawbs->bs_Buffer;
+		http->http_Content = queryrawbs->bs_Buffer;
 		queryrawbs->bs_Buffer = NULL;
 		
-		http->h_ShutdownPtr = &(SLIB->fcm->fcm_Shutdown);
+		http->http_ShutdownPtr = &(SLIB->fcm->fcm_Shutdown);
 		
 		int respcode = 0;
 		Http *response = SLIB->SysWebRequest( SLIB, &(pathParts[ 1 ]), &http, ses, &respcode );
@@ -524,12 +524,12 @@ void WSThread( void *d )
 		{
 			if( strcmp( pathParts[1], "file" ) == 0 && strcmp( pathParts[2], "read" ) == 0 )
 			{
-				Log( FLOG_INFO, "[WS] A. SysWebRequest took %f seconds, err: %d response: '%.*s'\n" , secs, response->errorCode, 200, response->content );
+				Log( FLOG_INFO, "[WS] A. SysWebRequest took %f seconds, err: %d response: '%.*s'\n" , secs, response->http_ErrorCode, 200, response->http_Content );
 				fileReadCall = TRUE;
 			}
 			else
 			{	// we also dont want to have large responses in logs
-				Log( FLOG_INFO, "[WS] B. SysWebRequest took %f seconds, err: %d response: '%.*s'\n" , secs, response->errorCode, 200, response->content );
+				Log( FLOG_INFO, "[WS] B. SysWebRequest took %f seconds, err: %d response: '%.*s'\n" , secs, response->http_ErrorCode, 200, response->http_Content );
 			}
 		}
 		else
@@ -545,10 +545,10 @@ void WSThread( void *d )
 			//Log( FLOG_INFO, "[WS] Trying to check response content..\n" );
 			
 			// If it is not JSON!
-			if( (response->content != NULL && ( response->content[ 0 ] != '[' && response->content[ 0 ] != '{' ) ) || fileReadCall == TRUE )
+			if( (response->http_Content != NULL && ( response->http_Content[ 0 ] != '[' && response->http_Content[ 0 ] != '{' ) ) || fileReadCall == TRUE )
 			{
 				//Log( FLOG_INFO, "[WS] Has NON JSON response content..\n" );
-				char *d = response->content;
+				char *d = response->http_Content;
 				if( d[0] == 'f' && d[1] == 'a' && d[2] == 'i' && d[3] == 'l' )
 				{
 					char *code = strstr( d, "\"code\":");
@@ -568,7 +568,7 @@ void WSThread( void *d )
 				);
 				
 				buf = (unsigned char *)FCalloc( 
-					jsonsize + ( SHIFT_LEFT( response->sizeOfContent, 1 ) ) + 1 + 
+					jsonsize + ( SHIFT_LEFT( response->http_SizeOfContent, 1 ) ) + 1 + 
 					END_CHAR_SIGNS + LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) 
 				);
 				
@@ -579,13 +579,13 @@ void WSThread( void *d )
 					char *locptr = (char *) buf+jsonsize;
 					int z = 0;
 					int znew = 0;
-					int len = (int)response->sizeOfContent;
+					int len = (int)response->http_SizeOfContent;
 					unsigned char car;
 					
 					// Add escape characters to single and double quotes!
 					for( ; z < len; z++ )
 					{
-						car = response->content[ z ];
+						car = response->http_Content[ z ];
 						switch( car )
 						{
 							case '\\':
@@ -635,37 +635,37 @@ void WSThread( void *d )
 			}
 			else
 			{
-				if( response->content != NULL )
+				if( response->http_Content != NULL )
 				{
-					if( strcmp( response->content, "{\"response\":\"user session not found\"}" )  == 0 )
+					if( strcmp( response->http_Content, "{\"response\":\"user session not found\"}" )  == 0 )
 					{
 						returnError = -1;
 					}
 					
-					int END_CHAR_SIGNS = response->sizeOfContent > 0 ? 2 : 4;
-					char *end = response->sizeOfContent > 0 ? "}}" : "\"\"}}";
+					int END_CHAR_SIGNS = response->http_SizeOfContent > 0 ? 2 : 4;
+					char *end = response->http_SizeOfContent > 0 ? "}}" : "\"\"}}";
 					int jsonsize = sprintf( jsontemp, "{ \"type\":\"msg\", \"data\":{ \"type\":\"response\", \"requestid\":\"%s\",\"data\":", data->requestid );
 					
-					buf = (unsigned char *)FCalloc( jsonsize + response->sizeOfContent + END_CHAR_SIGNS + 128, sizeof( char ) );
+					buf = (unsigned char *)FCalloc( jsonsize + response->http_SizeOfContent + END_CHAR_SIGNS + 128, sizeof( char ) );
 					if( buf != NULL )
 					{
 						//unsigned char buf[ response->sizeOfContent +LWS_SEND_BUFFER_POST_PADDING ];
 						memcpy( buf, jsontemp,  jsonsize );
-						memcpy( buf+jsonsize, response->content, response->sizeOfContent );
-						memcpy( buf+jsonsize+response->sizeOfContent, end, END_CHAR_SIGNS );
+						memcpy( buf+jsonsize, response->http_Content, response->http_SizeOfContent );
+						memcpy( buf+jsonsize+response->http_SizeOfContent, end, END_CHAR_SIGNS );
 						
 						if( fcd->wsc_UserSession != NULL && fcd->wsc_WebsocketsServerClient != NULL )
 						{
 							//WebsocketWriteInline( fcd, buf , response->sizeOfContent+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
-							WebsocketWrite( fcd->wsc_WebsocketsServerClient, buf , response->sizeOfContent+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
+							WebsocketWrite( fcd->wsc_WebsocketsServerClient, buf , response->http_SizeOfContent+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
 						}
 						FFree( buf );
 					}
 				}
 				else		// content == NULL
 				{
-					int END_CHAR_SIGNS = response->sizeOfContent > 0 ? 2 : 4;
-					char *end = response->sizeOfContent > 0 ? "}}" : "\"\"}}";
+					int END_CHAR_SIGNS = response->http_SizeOfContent > 0 ? 2 : 4;
+					char *end = response->http_SizeOfContent > 0 ? "}}" : "\"\"}}";
 					int jsonsize = sprintf( jsontemp, "{ \"type\":\"msg\", \"data\":{ \"type\":\"response\", \"requestid\":\"%s\",\"data\":", data->requestid );
 					
 					buf = (unsigned char *)FCalloc( jsonsize + END_CHAR_SIGNS + 128, sizeof( char ) );
@@ -684,7 +684,7 @@ void WSThread( void *d )
 				}
 			}
 			
-			response->h_RequestSource = HTTP_SOURCE_WS;
+			response->http_RequestSource = HTTP_SOURCE_WS;
 			HttpFree( response );
 		}
 		DEBUG1("[WS] SysWebRequest return\n"  );
@@ -1524,12 +1524,9 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 											sqllib->SNPrintF( sqllib, tmpQuery, 1024, "UPDATE FUserSession SET `LoggedTime` = '%ld' WHERE `SessionID` = '%s'", time(NULL), us->us_SessionID );
 											sqllib->SelectWithoutResults( sqllib, tmpQuery );
 										}
-										SLIB->LibrarySQLDrop( SLIB, sqllib );
-									
-										//FERROR("Logged time updated: %lu\n", time(NULL) );
-									
 										FFree( tmpQuery );
 									}
+									SLIB->LibrarySQLDrop( SLIB, sqllib );
 								}
 							} // if( ses != NULL
 #endif
@@ -1566,9 +1563,9 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 								Http *http = HttpNew( );
 								if( http != NULL )
 								{
-									http->h_RequestSource = HTTP_SOURCE_WS;
-									http->parsedPostContent = HashmapNew();
-									http->uri = UriNew();
+									http->http_RequestSource = HTTP_SOURCE_WS;
+									http->http_ParsedPostContent = HashmapNew();
+									http->http_Uri = UriNew();
 
 									UserSession *s = NULL;
 									
@@ -1579,7 +1576,7 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 									
 									if( s != NULL )
 									{
-										if( HashmapPut( http->parsedPostContent, StringDuplicate( "sessionid" ), StringDuplicate( s->us_SessionID ) ) == MAP_OK )
+										if( HashmapPut( http->http_ParsedPostContent, StringDuplicate( "sessionid" ), StringDuplicate( s->us_SessionID ) ) == MAP_OK )
 										{
 											//DEBUG1("[WS]:New values passed to POST %s\n", s->us_SessionID );
 										}
@@ -1617,7 +1614,7 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 											wstdata->requestid = StringDuplicateN(  (char *)(in + t[i1].start), (int)(t[i1].end-t[i1].start) );
 											requestid = wstdata->requestid;
 											
-											if( HashmapPut( http->parsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
+											if( HashmapPut( http->http_ParsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
 											{
 												//DEBUG1("[WS] New values passed to POST %.*s %.*s\n", t[i].end-t[i].start, (char *)(in + t[i].start), t[i1].end-t[i1].start, (char *)(in + t[i1].start) );
 											}
@@ -1635,9 +1632,9 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 												path = wstdata->path;//in + t[i1].start;
 												paths = t[i1].end-t[i1].start;
 												
-												if( http->uri != NULL )
+												if( http->http_Uri != NULL )
 												{
-													http->uri->queryRaw = StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start );
+													http->http_Uri->uri_QueryRaw = StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start );
 												}
 											
 												path[ paths ] = 0;
@@ -1661,7 +1658,7 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 											else
 											{
 												// this is path parameter
-												if( HashmapPut( http->parsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
+												if( HashmapPut( http->http_ParsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
 												{
 												}
 												i++;
@@ -1672,12 +1669,12 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 											authid = in + t[i1].start;
 											authids = t[i1].end-t[i1].start;
 											
-											if( HashmapPut( http->parsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
+											if( HashmapPut( http->http_ParsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
 											{
 												//DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", t[i].end-t[i].start, in + t[i].start, t[i+1].end-t[i+1].start, in + t[i+1].start );
 											}
 											
-											if( HashmapPut( http->parsedPostContent, StringDuplicateN(  "authid", 6 ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
+											if( HashmapPut( http->http_ParsedPostContent, StringDuplicateN(  "authid", 6 ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
 											{
 												//DEBUG1("[WS]:New values passed to POST %s %s\n", "authid", " " );
 											}
@@ -1694,7 +1691,7 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 
 											if(( i1) < r && t[ i ].type != JSMN_ARRAY )
 											{
-												if( HashmapPut( http->parsedPostContent, StringDuplicateN( in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN( in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
+												if( HashmapPut( http->http_ParsedPostContent, StringDuplicateN( in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN( in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
 												{
 													//DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", (int)(t[i].end-t[i].start), (char *)(in + t[i].start), (int)(t[i1].end-t[i1].start), (char *)(in + t[i1].start) );
 												}
@@ -1796,15 +1793,15 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 								Http *http = HttpNew( );
 								if( http != NULL )
 								{
-									http->h_RequestSource = HTTP_SOURCE_WS;
-									http->parsedPostContent = HashmapNew();
-									http->uri = UriNew();
+									http->http_RequestSource = HTTP_SOURCE_WS;
+									http->http_ParsedPostContent = HashmapNew();
+									http->http_Uri = UriNew();
 									
 									UserSession *s = fcd->wsc_UserSession;
 									if( s != NULL )
 									{
 										DEBUG("[WS] Session ptr %p  session %p\n", s, s->us_SessionID );
-										if( HashmapPut( http->parsedPostContent, StringDuplicate( "sessionid" ), StringDuplicate( s->us_SessionID ) ) == MAP_OK )
+										if( HashmapPut( http->http_ParsedPostContent, StringDuplicate( "sessionid" ), StringDuplicate( s->us_SessionID ) ) == MAP_OK )
 										{
 											DEBUG1("[WS] New values passed to POST %s\n", s->us_SessionID );
 										}
@@ -1823,7 +1820,7 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 												requestid = in + t[i1].start;
 												requestis =  t[i1].end-t[i1].start;
 											
-												if( HashmapPut( http->parsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
+												if( HashmapPut( http->http_ParsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
 												{
 													//DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", t[i].end-t[i].start, in + t[i].start, t[i+1].end-t[i+1].start, in + t[i+1].start );
 												}
@@ -1838,12 +1835,12 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 													path = in + t[i1].start;
 													paths = t[i1].end-t[i1].start;
 												
-													if( http->uri != NULL )
+													if( http->http_Uri != NULL )
 													{
-														http->uri->queryRaw = StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start );
+														http->http_Uri->uri_QueryRaw = StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start );
 													}
 												
-													http->rawRequestPath = StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start );
+													http->http_RawRequestPath = StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start );
 													path[ paths ] = 0;
 													int j = 1;
 												
@@ -1864,7 +1861,7 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 												else
 												{
 													// this is path parameter
-													if( HashmapPut( http->parsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
+													if( HashmapPut( http->http_ParsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
 													{
 														//DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", t[i].end-t[i].start, (char *)(in + t[i].start), t[i1].end-t[i1].start, (char *)(in + t[i1].start) );
 													}
@@ -1876,12 +1873,12 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 												authid = in + t[i1].start;
 												authids = t[i1].end-t[i1].start;
 											
-												if( HashmapPut( http->parsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
+												if( HashmapPut( http->http_ParsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
 												{
 													//DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", t[i].end-t[i].start, in + t[i].start, t[i+1].end-t[i+1].start, in + t[i+1].start );
 												}
 											
-												if( HashmapPut( http->parsedPostContent, StringDuplicateN(  "authid", 6 ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
+												if( HashmapPut( http->http_ParsedPostContent, StringDuplicateN(  "authid", 6 ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
 												{
 
 												}
@@ -1892,7 +1889,7 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 												{
 													if(( i1) < r && t[ i ].type != JSMN_ARRAY )
 													{
-														if( HashmapPut( http->parsedPostContent, StringDuplicateN( in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN( in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
+														if( HashmapPut( http->http_ParsedPostContent, StringDuplicateN( in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN( in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
 														{
 															DEBUG1("[WS] New values passed to POST %.*s %.*s\n", (int)(t[i].end-t[i].start), (char *)(in + t[i].start), (int)(t[i1].end-t[i1].start), (char *)(in + t[ i1 ].start) );
 														}
@@ -1934,15 +1931,15 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 										
 										if( strcmp( pathParts[ 0 ], "system.library" ) == 0)
 										{
-											http->h_WSocket = fcd->wsc_WebsocketsServerClient;
+											http->http_WSocket = fcd->wsc_WebsocketsServerClient;
 											
 											struct timeval start, stop;
 											gettimeofday(&start, NULL);
 										
-											http->content = queryrawbs->bs_Buffer;
+											http->http_Content = queryrawbs->bs_Buffer;
 											queryrawbs->bs_Buffer = NULL;
 											
-											http->h_ShutdownPtr = &(SLIB->fcm->fcm_Shutdown);
+											http->http_ShutdownPtr = &(SLIB->fcm->fcm_Shutdown);
 											
 											int respcode = 0;
 											
@@ -1955,7 +1952,7 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 											
 											if( response != NULL )
 											{
-												char *d = response->content;
+												char *d = response->http_Content;
 												if( d[0] == 'f' && d[1] == 'a' && d[2] == 'i' && d[3] == 'l' )
 												{
 													char *code = strstr( d, "\"code\":");
@@ -1980,11 +1977,11 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 
 										if( http != NULL )
 										{
-											UriFree( http->uri );
-											if( http->rawRequestPath != NULL )
+											UriFree( http->http_Uri );
+											if( http->http_RawRequestPath != NULL )
 											{
-												FFree( http->rawRequestPath );
-												http->rawRequestPath = NULL;
+												FFree( http->http_RawRequestPath );
+												http->http_RawRequestPath = NULL;
 											}
 										}
 										HttpFree( http );

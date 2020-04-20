@@ -352,6 +352,8 @@ self.uploadFiles = function()
 					self.postMessage( {
 						'progressinfo': 1,
 						'progress': progress,
+						'bytesWritten': prog,
+						'bytesTotal': tota,
 						'progresson': ind,
 						'filesundertransport': self.filesUnderTransport
 					} );
@@ -411,6 +413,9 @@ self.uploadFiles = function()
 			fd.append( 'module','files' );
 			fd.append( 'command','uploadfile' );
 			fd.append( 'path', destPath );
+			// Sanitize
+			filename = filename.split( ':' ).join( '-' );
+			filename = filename.split( '/' ).join( '-' );
 			fd.append( 'file', file, encodeURIComponent( filename ) );
 		
 			// Get the party started

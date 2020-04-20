@@ -10,7 +10,7 @@
 
 var pausebtn, playbtn;
 
-
+// Initialize the GUI ----------------------------------------------------------
 Application.run = function( msg, iface )
 {
 	this.song = false;
@@ -59,14 +59,21 @@ Application.redrawMiniPlaylist = function()
 		for( var a = 0; a < playlist.length; a++ )
 		{
 			var tr = document.createElement( 'div' );
-			tr.innerHTML = playlist[a].Filename;
+			var sanitize = playlist[a].Filename;
+			if( sanitize.indexOf( '.' ) > 0 )
+			{
+				sanitize = sanitize.split( '.' );
+				sanitize.pop();
+				sanitize = sanitize.join( '.' );
+			}
+			tr.innerHTML = sanitize;
 			sw = sw == 1 ? 2 : 1;
 			var c = '';
 			if( a == index )
 			{
 				c = ' Selected Playing';
 			}
-			tr.className = 'Padding Ellipsis sw' + sw + c;
+			tr.className = 'Tune Padding Ellipsis sw' + sw + c;
 			( function( ele, eles, index )
 			{
 				tr.onclick = function()
@@ -80,6 +87,10 @@ Application.redrawMiniPlaylist = function()
 						}
 					}
 					ele.classList.add( 'Playing', 'Selected' );
+					if( Application.song )
+					{
+						Application.song.stop();
+					}
 					Application.sendMessage( { command: 'playsongindex', index: index } );
 				}
 			} )( tr, tb, a );
@@ -89,7 +100,7 @@ Application.redrawMiniPlaylist = function()
 		{
 			ge( 'MiniPlaylist' ).innerHTML = '';
 			ge( 'MiniPlaylist' ).appendChild( tb );
-			ge( 'MiniPlaylist' ).style.bottom = '47px';
+			ge( 'MiniPlaylist' ).style.bottom = '45px';
 			ge( 'MiniPlaylist' ).style.height = GetElementHeight( tb );
 		}
 		else
@@ -131,7 +142,7 @@ Application.receiveMessage = function( msg )
 			if( this.miniplaylist )
 			{
 				ge( 'Equalizer' ).style.height = '110px';
-				ge( 'MiniPlaylist' ).style.bottom = '47px';
+				ge( 'MiniPlaylist' ).style.bottom = '45px';
 				ge( 'MiniPlaylist' ).style.top = '110px';
 				ge( 'MiniPlaylist' ).style.visibility = 'visible';
 				ge( 'MiniPlaylist' ).style.inputEvents = '';
@@ -143,7 +154,7 @@ Application.receiveMessage = function( msg )
 			else
 			{
 				ge( 'Equalizer' ).style.height = 'auto';
-				ge( 'Equalizer' ).style.bottom = '47px';
+				ge( 'Equalizer' ).style.bottom = '45px';
 				ge( 'MiniPlaylist' ).style.bottom = '';
 				ge( 'MiniPlaylist' ).style.top = 'auto';
 				ge( 'MiniPlaylist' ).style.visibility = 'hidden';
@@ -160,6 +171,8 @@ Application.receiveMessage = function( msg )
 			ge( 'scroll' ).innerHTML = '<div>Loading song...</div>';
 			if( this.song ) 
 			{
+				var tmp = this.song.onfinished;
+				this.song.onfinished = function(){};
 				this.song.stop();
 				this.song.unload();
 			}
@@ -206,7 +219,41 @@ Application.receiveMessage = function( msg )
 			{
 				this.play();
 				Application.initVisualizer();
-				ge( 'scroll' ).innerHTML = '<div>' + msg.item.Filename + '</div>';
+				var fn = msg.item.Filename;
+				
+				var cand = '';
+				if( this.loader && this.loader.metadata )
+				{
+					let md = this.loader.metadata;
+					
+					if( typeof md.title != undefined && md.title != 'undefined' )
+					{
+						cand += md.title;
+					}
+					if( typeof md.artist != undefined && md.artist != 'undefined' )
+					{
+						cand += ' by ' + md.artist;
+					}
+					if( typeof md.album != undefined || typeof md.year != undefined )
+					{
+						cand += ' (';
+						if( typeof md.album != undefined && md.album != 'undefined' )
+						{
+							cand += md.album;
+							if( typeof md.year != undefined && md.year != 'undefined' )
+								cand += ', ';
+						}
+						if( typeof md.year != undefined && md.year != 'undefined' )
+						{
+							cand += md.year;
+						}
+						cand += ')';
+					}
+					fn = cand;
+				}
+				
+				if( fn == false ) return;
+				ge( 'scroll' ).innerHTML = '<div>' + fn + '</div>';
 			}
 			this.song.onfinished = function()
 			{
@@ -217,14 +264,24 @@ Application.receiveMessage = function( msg )
 			{	
 				var seconds = Math.round( ct - pt ) % 60;
 				
+				var timeFin = dr + ( pt - ct );
+				var finMins = Math.floor( timeFin / 60 );
+				var finSecs = Math.floor( timeFin ) % 60;
+				
 				if( this.ct != seconds )
 				{
-					ge( 'progress' ).style.width = Math.floor( progress * 100 ) + '%';
+					ge( 'progress' ).style.width = ( Math.floor( progress * 10000 ) / 100 ) + '%';
 					ge( 'progress' ).style.opacity = 1;
 					
 					this.ct = seconds;
-					var minutes = Math.round( ct - pt ) < 60 ? 0 : Math.round( ( ( ct - pt ) ) / 60 );
-					ge( 'time' ).innerHTML = minutes + ':' + StrPad( seconds, 2, '0' );
+
+					if( finMins < 0 )
+					{
+						Seek( 1 );
+						ge( 'time' ).innerHTML = '0:00';
+						return;
+					}
+					ge( 'time' ).innerHTML = finMins + ':' + StrPad( finSecs, 2, '0' );
 				}
 			}
 			pausebtn.className = pausebtn.className.split( 
@@ -331,6 +388,11 @@ Application.initVisualizer = function()
 	
 	// Run it!
 	
+	var scroll = ge( 'scroll' );
+	var scrollPos = 0;
+	var scrollDir = -1;
+	var waitTime = 0;
+	
 	this.dr = function()
 	{
 		ana.getByteTimeDomainData( dataArray );
@@ -377,6 +439,37 @@ Application.initVisualizer = function()
 		{
 			requestAnimationFrame( Application.dr );
 		}
+		
+		if( scroll.firstChild && waitTime == 0 )
+		{
+			var scrollW = scroll.offsetWidth - 60;
+			var elemenW = scroll.firstChild.offsetWidth;
+			if( elemenW > scrollW )
+			{
+				if( scrollDir < 0 )
+				{
+					scrollPos -= 0.25;
+				
+					if( elemenW + scrollPos <= scrollW )
+					{
+						scrollDir = 1;
+						waitTime = 1000;
+					}
+				}
+				else
+				{
+					scrollPos += 0.25;
+					
+					if( scrollPos >= 0 )
+					{
+						scrollDir = -1;
+						waitTime = 1000;
+					}
+				}
+				scroll.firstChild.style.left = parseInt( scrollPos ) + 'px';
+			}
+		}
+		if( waitTime > 0 ) waitTime--;
 	};
 	requestAnimationFrame( Application.dr );
 	
@@ -400,6 +493,9 @@ function StopSong()
 
 function Seek( direction )
 {
+	if( Application.song.paused || Application.song.stopped )
+		return;
+	StopSong();
 	Application.sendMessage( { command: 'seek', dir: direction } ); 
 }
 

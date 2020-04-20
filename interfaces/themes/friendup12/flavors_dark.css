@@ -387,6 +387,11 @@ body.Dark .Active > .FileBrowserItemImage
 	filter: invert(100%);
 }
 
+body.Dark .Frame .Progress
+{
+	text-shadow: 1px 1px rgba(0,0,0,0.7);
+}
+
 /* Dark scheme scrollbars */
 
 body.Dark::-webkit-scrollbar

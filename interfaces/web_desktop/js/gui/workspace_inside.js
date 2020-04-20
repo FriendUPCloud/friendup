@@ -999,6 +999,25 @@ var WorkspaceInside = {
 			}
 		}
 	},
+	// Notify all apps of a state change
+	notifyAppsOfState: function( flags )
+	{
+		if( !flags || !flags.state ) return;
+		
+		let msg = {
+			command: 'workspace-notify',
+			state: flags.state
+		};
+		let apps = ge( 'Tasks' ).getElementsByTagName( 'iframe' );
+		for( var a = 0; a < apps.length; a++ )
+		{
+			// TODO: Have per application permissions here..
+			// Not all applications should be able to send messages to
+			// all other applications...
+			msg.applicationId = apps[a].applicationId;
+			apps[ a ].sendMessage( msg );
+		}
+	},
 	checkFriendNetwork: function()
 	{
 		var self = this;
@@ -1210,12 +1229,14 @@ var WorkspaceInside = {
 					}
 					calendar.addButton( newBtn );
 
+					/*
+						TODO: Re-enable the wrench when we have a working calendar
 					var geBtn = calendar.createButton( 'fa-wrench' );
 					geBtn.onclick = function()
 					{
 						ExecuteApplication( 'FriendCalendar' );
 					}
-					calendar.addButton( geBtn );
+					calendar.addButton( geBtn );*/
 
 					// Add events to calendar!
 					calendar.eventWin = false;
@@ -7049,7 +7070,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					},
 					{
 						name: i18n( 'menu_help_manual' ),
-						command: function(){ window.open( 'https://docs.friendup.tech/en-US/docs/FriendUser/End_user_guide', '', '' ); }
+						command: function(){ window.open( 'https://docs.friendos.com/docs/end-user-documentation/', '', '' ); }
 					}
 				]
 			}
@@ -8098,6 +8119,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	showLauncher: function()
 	{
 		if( !Workspace.sessionId ) return;
+		var selfw = this;
 
 		if( this.launcherWindow )
 		{
@@ -8130,17 +8152,25 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				ge( 'WorkspaceRunCommand' ).value = Workspace.lastExecuted;
 			}
-			ge( 'WorkspaceRunCommand' ).addEventListener( 'keydown', function( e )
+			if( ge( 'WorkspaceRunCommand' ) )
 			{
-				var wh = e.which ? e.which : e.keyCode;
-				if( wh == 27 )
+				ge( 'WorkspaceRunCommand' ).addEventListener( 'keydown', function( e )
 				{
-					Workspace.hideLauncher();
-					return cancelBubble( e );
-				}
-			} );
-			ge( 'WorkspaceRunCommand' ).select();
-			ge( 'WorkspaceRunCommand' ).focus();
+					var wh = e.which ? e.which : e.keyCode;
+					if( wh == 27 )
+					{
+						Workspace.hideLauncher();
+						return cancelBubble( e );
+					}
+				} );
+				ge( 'WorkspaceRunCommand' ).select();
+				ge( 'WorkspaceRunCommand' ).focus();
+			}
+			else
+			{
+				if( w.setContent ) w.close();
+				selfw.launcherWindow = null;
+			}
 		}
 		f.load();
 		this.launcherWindow = w;
@@ -8343,7 +8373,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			
 			//console.log( 'Response from connection checker: ', e, d );
-			if( e == 'fail' ) 
+			if( e == 'error' )
+			{
+				// Just die!
+				return;
+			}
+			else if( e == 'fail' ) 
 			{
 				console.log( '[getsetting] Got "fail" response.' );
 				//console.trace();
@@ -8357,6 +8392,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if( Workspace.websocketState != 'open' )
 			{
 				Workspace.initWebSocket();
+			}
+			else
+			{
+				// Just remove this by force
+				document.body.classList.remove( 'Busy' );
 			}
 		}
 		// Only set serverIsThere if we don't have a response from the server
@@ -8385,6 +8425,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				Workspace.screen.hideOfflineMessage();
 			Workspace.workspaceIsDisconnected = false;
 			Workspace.nudgeWorkspacesWidget();
+			// Just remove this by force
+			document.body.classList.remove( 'Busy' );
 		}
 	},
 	// Upgrade settings (for new versions)
@@ -8571,6 +8613,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		var uprogress = new File( 'templates/file_operation.html' );
 
 		uprogress.connectedworker = uworker;
+		var groove = false, bar = false, frame = false, progressbar = false, progress = false;
 
 		//upload dialog...
 		uprogress.onLoad = function( data )
@@ -8595,12 +8638,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 			// Setup progress bar
 			var eled = w.getWindowElement().getElementsByTagName( 'div' );
-			var groove = false, bar = false, frame = false, progressbar = false;
 			for( var a = 0; a < eled.length; a++ )
 			{
 				if( eled[a].className )
 				{
-					var types = [ 'ProgressBar', 'Groove', 'Frame', 'Bar', 'Info' ];
+					var types = [ 'ProgressBar', 'Groove', 'Frame', 'Bar', 'Info', 'Progress' ];
 					for( var b = 0; b < types.length; b++ )
 					{
 						if( eled[a].className.indexOf( types[b] ) == 0 )
@@ -8612,6 +8654,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								case 'Frame':       frame          = eled[a]; break;
 								case 'Bar':         bar            = eled[a]; break;
 								case 'Info':		uprogress.info = eled[a]; break;
+								case 'Progress':    progress       = eled[a]; break;
 							}
 							break;
 						}
@@ -8641,6 +8684,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				groove.style.height = '30px';
 				groove.style.top = '0';
 				groove.style.left = '0';
+				progress.style.position = 'absolute';
+				progress.style.top = '0';
+				progress.style.left = '0';
+				progress.style.width = '100%';
+				progress.style.height = '30px';
+				progress.style.textAlign = 'center';
+				progress.style.zIndex = 2;
 				bar.style.position = 'absolute';
 				bar.style.width = '2px';
 				bar.style.height = '30px';
@@ -8657,30 +8707,39 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 
 		// For the progress bar
-		uprogress.setProgress = function( percent )
+		uprogress.setProgress = function( percent, wri, tot )
 		{
 			// only update display if we are loaded...
 			// otherwise just drop and wait for next call to happen ;)
 			if( uprogress.loaded )
 			{
 				uprogress.bar.style.width = Math.floor( Math.max(1,percent ) ) + '%';
-				uprogress.bar.innerHTML = '<div class="FullWidth" style="text-overflow: ellipsis; text-align: center; line-height: 30px; color: white">' +
-				Math.floor( percent ) + '%</div>';
+				progress.innerHTML = Math.floor( percent ) + '%' + ( wri ? ( ' ' + humanFilesize( wri ) + '/' + humanFilesize( tot ) ) : '' );
+			}
+			if( percent == 100 )
+			{
+				uprogress.done = true;
+				if( uprogress.info )
+					uprogress.info.innerHTML = '<div id="transfernotice" style="padding-top:10px;">' +
+						'Storing file in destination folder...</div>';
 			}
 		};
 
 		// show notice that we are transporting files to the server....
 		uprogress.setUnderTransport = function()
 		{
-			uprogress.info.innerHTML = '<div id="transfernotice" style="padding-top:10px;">' +
-				'Transferring files to target volume...</div>';
+			if( uprogress.done ) return;
+			if( uprogress.info )
+				uprogress.info.innerHTML = '<div id="transfernotice" style="padding-top:10px;">' +
+					'Transferring files to target volume...</div>';
 			uprogress.myview.setFlag( 'height', 125 );
 		}
 
 		// An error occurred
 		uprogress.displayError = function( msg )
 		{
-			uprogress.info.innerHTML = '<div style="color:#F00; padding-top:10px; font-weight:700;">'+ msg +'</div>';
+			if( uprogress.info )
+				uprogress.info.innerHTML = '<div style="color:#F00; padding-top:10px; font-weight:700;">'+ msg +'</div>';
 			uprogress.myview.setFlag( 'height', 140 );
 		}
 
@@ -8703,7 +8762,19 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				else if( e.data['progress'] )
 				{
-					uprogress.setProgress( e.data['progress'] );
+					var tot = -1;
+					
+					// Do we get extra information?
+					if( e.data[ 'bytesWritten' ] )
+					{
+						uprogress.setProgress( e.data['progress'], e.data[ 'bytesWritten' ], e.data[ 'bytesTotal' ] );
+					}
+					// No extra information
+					else
+					{
+						uprogress.setProgress( e.data['progress'] );
+					}
+					
 					if( e.data['filesundertransport'] && e.data['filesundertransport'] > 0 )
 					{
 						uprogress.setUnderTransport();

@@ -117,7 +117,6 @@ if( ( !isset( $args->args->exclude ) || isset( $args->args->exclude ) && !in_arr
 		array( 'FriendCreate', 'A programmers editor' ),
 		array( 'Author', 'A simple word processor' ),
 		array( 'Wallpaper', 'Select wallpapers' ),
-		array( 'Astray', 'A labyrinth ball game in 3D' ),
 		array( 'Calculator', 'Do some math' )
 	);
 	$i = 0;

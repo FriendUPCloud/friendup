@@ -28,9 +28,9 @@
 
 typedef struct Authority
 {
-	char                  *user;
-	char                  *host;
-	unsigned short  port;
+	char					*a_User;
+	char					*a_Host;
+	unsigned short			a_Port;
 } Authority;
 
 //
@@ -39,14 +39,14 @@ typedef struct Authority
 
 typedef struct Uri
 {
-	char                 *scheme;
-	Authority            *authority;
-	Path                 *path;
-	char                 *queryRaw;
-	Hashmap              *query;
-	char                 *fragment;
-	FBOOL                 redirect;
-	FBOOL                 valid; // If an illegal character is found, this will be 0, else it'll be 1 (When validation is implemented...)
+	char				*uri_Scheme;
+	Authority			*uri_Authority;
+	Path				*uri_Path;
+	char				*uri_QueryRaw;
+	Hashmap				*uri_Query;
+	char				*uri_Fragment;
+	FBOOL				uri_Redirect;
+	FBOOL				uri_Valid; // If an illegal character is found, this will be 0, else it'll be 1 (When validation is implemented...)
 } Uri;
 
 //

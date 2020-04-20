@@ -1,0 +1,174 @@
+@keyframes playing
+{
+	0% {
+		opacity: 0.7;
+	}
+	50% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0.7;
+	}
+}
+
+
+tr.Playing
+{
+	animation: playing 1.5s infinite;
+}
+
+.VolumeSlider > div
+{
+	width: 100%;
+	margin-top: 4px;
+}
+#MiniPlaylist
+{
+	visibility: hidden;
+	opacity: 0;
+}
+#visualizer
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 77px;
+	background: #0F2336;
+}
+.Synthwave #visualizer
+{
+	background: #2d1a47;
+}
+#visualizer.Fullscreen
+{
+	height: 100%;
+}
+#time 
+{
+	position: absolute;
+	line-height: 38px;
+	height: 35px;
+	right: 10px;
+	bottom: 0;
+	font-family: monospace, courier;
+	font-size: 0.9em;
+	color: white;
+	padding: 0;
+}
+#scroll, #progress, #scrollbg
+{
+	position: absolute;
+	bottom: 0;
+	background: #0f2336;
+	color: white;
+	text-shadow: 1px 1px 1px rgba(0,0,0,0.8);
+	box-shadow: inset 0px 0px 50px rgba(0,0,0,0.3);
+	height: 35px;
+	line-height: 25px;
+	left: 0;
+	width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	box-sizing: border-box;
+	padding: 0;
+}
+.Synthwave #scroll, 
+.Synthwave #progress
+{
+	background: #18154c;
+}
+#scroll
+{
+	line-height: 35px;
+    mask-image: linear-gradient(90deg, rgb(0,0,0) 0%, rgb(0,0,0) 80%, rgba(0,0,0,0) 88%, rgba(0,0,0,0) 100%);
+	-moz-mask-image: linear-gradient(90deg, rgb(0,0,0) 0%, rgb(0,0,0) 80%, rgba(0,0,0,0) 88%, rgba(0,0,0,0) 100%);
+    -webkit-mask-image: linear-gradient(90deg, rgb(0,0,0) 0%, rgb(0,0,0) 80%, rgba(0,0,0,0) 88%, rgba(0,0,0,0) 100%);
+}
+#scroll:before
+{
+	display: inline-block;
+	width: 12px;
+	content: " ";
+}
+#scroll > div
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: auto;
+	height: 100%;
+	line-height: 25px;
+	padding: 5px 8px;
+	box-sizing: border-box;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: visible;
+}
+#progress
+{
+	background-color: #41185f;
+	width: 0;
+	transition-property: width, opacity;
+	transition-duration: 0.5s;
+	transition-timing-function: linear;
+	opacity: 0;
+	mix-blend-mode: screen;
+}
+#playbutton.active, #pausebutton.active
+{
+	-webkit-animation: flash 2s infinite;
+	-moz-animation:    flash 2s infinite;
+	-o-animation:      flash 2s infinite;
+	animation:         flash 2s infinite;
+	text-shadow: 0 0 3px rgba(255,255,255,0.5);
+}
+
+/* Tunes */
+
+.Tune
+{
+	position: relative;
+}
+
+.Tune:after
+{
+	transition: background-color 0.25s;
+	content: " ";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	background-color: rgba(255,255,255,0);
+}
+
+.Tune:hover:after
+{
+	background-color: rgba(255,255,255,0.1);
+}
+
+/* End tunes */
+
+@-webkit-keyframes flash {
+  0%   { color: #666666; }
+  50%  { color: #ffffff; }
+  100% { color: #666666; }
+}
+@-moz-keyframes flash {
+  0%   { color: #666666; }
+  50%  { color: #ffffff; }
+  100% { color: #666666; }
+}
+@-o-keyframes flash {
+  0%   { color: #666666; }
+  50%  { color: #ffffff; }
+  100% { color: #666666; }
+}
+@keyframes flash {
+  0%   { color: #666666; }
+  50%  { color: #ffffff; }
+  100% { color: #666666; }
+}
