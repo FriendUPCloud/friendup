@@ -2164,7 +2164,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						char *ttmp = FMalloc( 256 + uploadedFilesBS->bs_Size );
 						if( ttmp != NULL )
 						{
-							int spsize = sprintf( ttmp, "ok<!--separate-->{\"Uploaded files\":\"%d\",\"files\":%s}", uploadedFiles, uploadedFilesBS->bs_Buffer );
+							int spsize = sprintf( ttmp, "ok<!--separate-->{\"uploaded\":%d,\"files\":%s}", uploadedFiles, uploadedFilesBS->bs_Buffer );
 							HttpSetContent( response, ttmp, spsize );
 							*result = 200;
 							// there is no need to release ttmp, it will be released with HttpFree
