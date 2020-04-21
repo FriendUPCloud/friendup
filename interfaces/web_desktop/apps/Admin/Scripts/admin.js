@@ -8,8 +8,11 @@
 *                                                                              *
 *****************************************************************************©*/
 
+var AdminViews = {};
+
 Application.run = function( msg )
 {
+		
 	this.sendMessage( { type: 'system', command: 'setsingleinstance', value: true } );
 	
 	var v = new View( {
@@ -48,13 +51,60 @@ Application.run = function( msg )
 
 // Available functions
 messageFunctions = {
+
 	about( msg )
 	{
 		console.log( msg );
+		
+		if( !AdminViews[ 'about' ] )
+		{
+			
+			var d = new File( 'Progdir:Config.conf' );
+			d.onLoad = function( conf )
+			{
+				var obj = {
+					title: 'About Friend Admin',
+					width: 400,
+					height: 288
+				};
+				
+				var f = new File( 'Progdir:Templates/about.html' );
+				
+				try
+				{
+					var json = JSON.parse( conf ); 
+					
+					console.log( json );
+					
+					obj.title += ( ' (v' + json.Version + ')' );
+					
+					f.replacements = { content: /*JSON.stringify( */conf/*, null, 2 )*/ };
+				}
+				catch( e ){  }
+				
+				AdminViews[ 'about' ] = new View( obj );
+				
+				f.onLoad = function( data )
+				{
+					AdminViews[ 'about' ].setContent( data );
+				}
+				f.load();
+				
+				AdminViews[ 'about' ].onClose = function()
+				{
+					AdminViews[ 'about' ] = false;
+				}
+				
+			}
+			d.load();
+			
+		}
+		
 		return Application.mainView.sendMessage( {
 			command: 'about'
 		} );
 	}
+	
 };
 
 // Execute on received message

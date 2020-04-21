@@ -100,26 +100,38 @@ function refreshSidebar( show )
 				icon: 'fa-user-circle-o',
 				showing: isAdmin,
 				display: true,
-				permissions: [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ],
+				permissions: [ 
+					'PERM_USER_GLOBAL', 
+					'PERM_USER_WORKGROUP' 
+				],
 				init: true
 			},
 			'Workgroups': {
 				icon: 'fa-users',
 				showing: isAdmin,
 				display: true,
-				permissions: [ 'PERM_WORKGROUP_GLOBAL', 'PERM_WORKGROUP_WORKGROUP' ]
+				permissions: [ 
+					'PERM_WORKGROUP_GLOBAL', 
+					'PERM_WORKGROUP_WORKGROUP' 
+				]
 			},
 			'Roles': {
 				icon: 'fa-user-secret',
 				showing: isAdmin,
 				display: true,
-				permissions: [ 'PERM_ROLE_GLOBAL', 'PERM_ROLE_WORKGROUP' ]
+				permissions: [ 
+					'PERM_ROLE_GLOBAL', 
+					'PERM_ROLE_WORKGROUP' 
+				]
 			},
 			'Templates': {
 				icon: 'fa-file-text',
 				showing: isAdmin,
 				display: true,
-				permissions: [ 'PERM_TEMPLATE_GLOBAL', 'PERM_TEMPLATE_WORKGROUP' ]
+				permissions: [ 
+					'PERM_TEMPLATE_GLOBAL', 
+					'PERM_TEMPLATE_WORKGROUP' 
+				]
 			}
 		}
 	};
