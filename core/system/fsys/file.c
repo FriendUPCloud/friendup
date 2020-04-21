@@ -651,8 +651,6 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 											{
 												char dbuf[ 32768 ];
 												
-												//DEBUG("\n\n\n\n--->STOREFILE srcdev  : %s changed: %s NEWDST %s\n\n", src, &src[ cutPos ], newdst );
-											
 												File *srcfp = (File *)fsys->FileOpen( srcdev, newsrc, "rb" );
 												if( srcfp != NULL )
 												{

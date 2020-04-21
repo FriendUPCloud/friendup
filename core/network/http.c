@@ -1037,7 +1037,7 @@ Content-Type: application/octet-stream
 							char *fnameend = strchr( fname, '"' );
 							size = endOfFile - startOfFile;
 							int fnamesize = (int)(fnameend - fname);
-							//DEBUG("[Http] Found file - name %.*s\n", 30, fname );
+							//DEBUG("\n\n\n\n\n\n\n\n\n\n[Http] Found file - name %.*s\n", 30, fname );
 						
 							HttpFile *newFile = HttpFileNew( fname, fnamesize, startOfFile, size );
 							if( newFile != NULL )
@@ -1480,6 +1480,11 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 				int store = TUNABLE_LARGE_HTTP_REQUEST_SIZE;
 				FQUAD toWrite = length;
 				char *dataptr = data;
+				
+				if( toWrite < (FQUAD)store )
+				{
+					store = toWrite;
+				}
 				
 				while( toWrite > 0 )
 				{
