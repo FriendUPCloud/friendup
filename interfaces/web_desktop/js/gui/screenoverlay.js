@@ -65,6 +65,11 @@ var ScreenOverlay = {
 	// Hide self
 	hide: function()
 	{
+		// Tell app we can show ourselves!
+		if( window.friendApp && window.friendApp.reveal )
+		{
+			friendApp.reveal();
+		}
 		if( this.debug ) return;
 		var self = this;
 		if( !this.visibility ) return;
@@ -95,13 +100,6 @@ var ScreenOverlay = {
 				
 				// Make sure we update screen title and tray/tasks
 				PollTaskbar();
-				
-				// Tell app we can show ourselves!
-				if( window.friendApp && window.friendApp.reveal )
-				{
-					friendApp.reveal();
-				}
-				
 			}, 250 );
 		}, 250 );
 	},
