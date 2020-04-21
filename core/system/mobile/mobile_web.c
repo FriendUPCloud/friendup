@@ -404,14 +404,14 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 					else
 					{
 						char buffer[ 256 ];
-						snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
+						snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
 						HttpAddTextContent( response, buffer );
 					}
 				}
 				else
 				{
 					char buffer[ 256 ];
-					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_UMA_ENTRY_NOT_FOUND] , DICT_UMA_ENTRY_NOT_FOUND );
+					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_UMA_ENTRY_NOT_FOUND] , DICT_UMA_ENTRY_NOT_FOUND );
 					HttpAddTextContent( response, buffer );
 				}
 				l->LibrarySQLDrop( l, sqllib );
@@ -421,7 +421,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 				char buffer[ 256 ];
 				char buffer1[ 256 ];
 				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "id or deviceid" );
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
 		}	// no DB connection
