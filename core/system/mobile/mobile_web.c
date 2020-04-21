@@ -354,54 +354,67 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			deviceID = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		
-		SQLLibrary *sqllib  = l->LibrarySQLGet( l );
-		if( sqllib != NULL )
+		if( id > 0 || deviceID != NULL )
 		{
-			// looks like id parameter was not passed, checking additional parameters like deviceid
-			if( id == 0 )
+			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+			if( sqllib != NULL )
 			{
-				char query[ 512 ];
-			
-				DEBUG("Find entry for Device: %s\n", deviceID );
-			
-				snprintf( query, sizeof(query), "SELECT ID from `FUserMobileApp` where DeviceID='%s' AND UserID=%lu", deviceID, loggedSession->us_UserID );
-				void *res = sqllib->Query( sqllib, query );
-			
-				if( res != NULL )
+				FBOOL idFoundByDeviceID = FALSE;
+				// looks like id parameter was not passed, checking additional parameters like deviceid
+				if( deviceID != NULL && id == 0 )
 				{
-					char **row;
-					while( ( row = sqllib->FetchRow( sqllib, res ) ) )
+					char query[ 512 ];
+			
+					DEBUG("Find entry for Device: %s\n", deviceID );
+			
+					snprintf( query, sizeof(query), "SELECT ID from `FUserMobileApp` where DeviceID='%s' AND UserID=%lu", deviceID, loggedSession->us_UserID );
+					void *res = sqllib->Query( sqllib, query );
+			
+					if( res != NULL )
 					{
-						if( row[ 0 ] != NULL )
+						char **row;
+						while( ( row = sqllib->FetchRow( sqllib, res ) ) )
 						{
-							char *end;
-							id = strtoul( row[ 0 ], &end, 0 );
+							if( row[ 0 ] != NULL )
+							{
+								char *end;
+								id = strtoul( row[ 0 ], &end, 0 );
+								idFoundByDeviceID = TRUE;
+							}
 						}
+						sqllib->FreeResult( sqllib, res );
 					}
-					sqllib->FreeResult( sqllib, res );
 				}
-			}
 		
-			if( id > 0 )
-			{
-				char *tmpQuery = NULL;
-				int querysize = 1024;
-				
-				if( ( tmpQuery = FCalloc( querysize, sizeof(char) ) ) != NULL )
+				// deviceID was not delivered but id was. So lets remove it by id
+				if( id > 0 )
 				{
-					sprintf( tmpQuery, "DELETE FROM `FUserMobileApp` WHERE ID=%lu", id );
+					char *tmpQuery = NULL;
+					int querysize = 1024;
+				
+					if( ( tmpQuery = FCalloc( querysize, sizeof(char) ) ) != NULL )
+					{
+						sprintf( tmpQuery, "DELETE FROM `FUserMobileApp` WHERE ID=%lu", id );
 					
-					sqllib->QueryWithoutResults( sqllib, tmpQuery );
-					FFree( tmpQuery );
+						sqllib->QueryWithoutResults( sqllib, tmpQuery );
+						FFree( tmpQuery );
 					
-					HttpAddTextContent( response, "ok<!--separate-->{ \"Result\": \"success\"}" );
+						HttpAddTextContent( response, "ok<!--separate-->{ \"result\":\"success\"}" );
+					}
+					else
+					{
+						char buffer[ 256 ];
+						snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
+						HttpAddTextContent( response, buffer );
+					}
 				}
 				else
 				{
 					char buffer[ 256 ];
-					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
+					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_UMA_ENTRY_NOT_FOUND] , DICT_UMA_ENTRY_NOT_FOUND );
 					HttpAddTextContent( response, buffer );
 				}
+				l->LibrarySQLDrop( l, sqllib );
 			}
 			else
 			{
@@ -411,7 +424,6 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
-			l->LibrarySQLDrop( l, sqllib );
 		}	// no DB connection
 		
 		if( deviceID != NULL )
