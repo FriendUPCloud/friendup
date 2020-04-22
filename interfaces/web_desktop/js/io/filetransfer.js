@@ -429,6 +429,8 @@ self.uploadFiles = function()
 			// Sanitize
 			filename = filename.split( ':' ).join( '-' );
 			filename = filename.split( '/' ).join( '-' );
+			filename = filename.split( '[' ).join( '(' );
+			filename = filename.split( ']' ).join( ')' );
 			fd.append( 'file', file, encodeURIComponent( filename ) );
 		
 			// Get the party started
