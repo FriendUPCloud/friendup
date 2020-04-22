@@ -1338,7 +1338,8 @@ var WorkspaceInside = {
 					}
 				}
 				
-				Workspace.mainDock.closeDesklet();
+				if( !Workspace.isSingleTask && Workspace.mainDock )
+					Workspace.mainDock.closeDesklet();
 				DefaultToWorkspaceScreen();
 				_DeactivateWindows();
 				Friend.GUI.reorganizeResponsiveMinimized();
@@ -1353,7 +1354,8 @@ var WorkspaceInside = {
 			appMenu.onclick = function()
 			{
 				// Turn off openlock
-				Workspace.mainDock.openLock = false;
+				if( Workspace.mainDock )
+					Workspace.mainDock.openLock = false;
 				window.focus();
 				
 				if( ge( 'WorkspaceMenu' ) )
@@ -1363,12 +1365,14 @@ var WorkspaceInside = {
 				}
 				if( document.body.classList.contains( 'AppsShowing' ) )
 				{
-					Workspace.mainDock.closeDesklet();
+					if( !Workspace.isSingleTask && Workspace.mainDock )
+						Workspace.mainDock.closeDesklet();
 					Friend.GUI.reorganizeResponsiveMinimized();
 				}
 				else
 				{
-					Workspace.mainDock.openDesklet();
+					if( !Workspace.isSingleTask && Workspace.mainDock )
+						Workspace.mainDock.openDesklet();
 				}
 			}
 		}
@@ -1376,25 +1380,28 @@ var WorkspaceInside = {
 	zapMobileAppMenu: function()
 	{
 		// Turn on openlock
-		Workspace.mainDock.openLock = true;
-		if( document.body.classList.contains( 'AppsShowing' ) )
+		if( Workspace.mainDock )
 		{
-			Workspace.mainDock.dom.style.display = 'none';
-			setTimeout( function()
+			Workspace.mainDock.openLock = true;
+			if( document.body.classList.contains( 'AppsShowing' ) )
 			{
-				Workspace.mainDock.dom.style.display = '';
-			}, 400 );
-			Workspace.mainDock.closeDesklet();
-			Workspace.mainDock.dom.classList.remove( 'Open' );
+				Workspace.mainDock.dom.style.display = 'none';
+				setTimeout( function()
+				{
+					Workspace.mainDock.dom.style.display = '';
+				}, 400 );
+				if( !Workspace.isSingleTask )
+					Workspace.mainDock.closeDesklet();
+				Workspace.mainDock.dom.classList.remove( 'Open' );
+			}
 		}
-		
 	},
 	// Close widgets and return to desktop..
 	goToMobileDesktop: function()
 	{
 		if( Workspace.widget )
 			Workspace.widget.slideUp();
-		if( Workspace.mainDock )
+		if( Workspace.mainDock && !Workspace.isSingleTask )
 			Workspace.mainDock.closeDesklet();
 		this.exitMobileMenu();
 	},
@@ -1823,6 +1830,23 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					if( !Workspace.startupSequenceRegistered )
 					{	
 						Workspace.startupSequenceRegistered = true;
+						
+						// In single tasking mode, we just skip
+						if( Workspace.isSingleTask )
+						{
+							// Oh! We wanted to start an application!
+							if( GetUrlVar( 'app' ) )
+							{
+								var args = false;
+								if( GetUrlVar( 'args' ) ) args = GetUrlVar( 'args' );
+								ExecuteApplication( GetUrlVar( 'app' ), args );
+							}
+							ScreenOverlay.hide();
+							return;
+						}
+						
+						/* We have a startup application! */
+						
 						Workspace.onReadyList.push( function()
 						{
 							var seq = dat.startupsequence;
@@ -1885,7 +1909,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 																ScreenOverlay.addDebug( 'Done ' + cmd );
 															}
 															l.func();
-															if( Workspace.mainDock )
+															if( Workspace.mainDock && !Workspace.isSingleTask )
 																Workspace.mainDock.closeDesklet();
 														} );
 													}
@@ -2038,21 +2062,25 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				this.smenu.dom.parentNode.removeChild( this.smenu.dom );
 			this.smenu.currentItem = false;
 			
-			var d = document.createElement( 'div' );
-			d.className = 'DockMenu';
-			Workspace.mainDock.dom.appendChild( d );
-			d.onclick = function( e )
+			if( Workspace.mainDock )
 			{
-				Workspace.toggleStartMenu( false );
-			};
-			this.smenu.dom = d;
-			this.smenu.dom.style.height = '0px';
-			this.smenu.dom.style.top = '0px';
+				var d = document.createElement( 'div' );
+				d.className = 'DockMenu';
+			
+				Workspace.mainDock.dom.appendChild( d );
+				d.onclick = function( e )
+				{
+					Workspace.toggleStartMenu( false );
+				};
+				this.smenu.dom = d;
+				this.smenu.dom.style.height = '0px';
+				this.smenu.dom.style.top = '0px';
 
-			d.addEventListener( 'contextmenu', function( e )
-			{
-				return cancelBubble( e );
-			}, false );
+				d.addEventListener( 'contextmenu', function( e )
+				{
+					return cancelBubble( e );
+				}, false );
+			}
 
 			// We don't show the menu at first, we need to build!
 			var delayedBuildTime = false;
@@ -2579,6 +2607,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Reload docks and readd launchers
 	reloadDocks: function()
 	{
+		if( !Workspace.mainDock ) return;
 		if( Workspace.mode == 'vr' ) return;
 		Workspace.docksReloading = true;
 		
@@ -2724,7 +2753,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									false, false, u
 								);
 							}
-							Workspace.mainDock.closeDesklet();
+							if( !Workspace.isSingleTask )
+								Workspace.mainDock.closeDesklet();
 						},
 						type: 'Executable',
 						displayname: i18n( 'i18n_files' ),
@@ -2752,7 +2782,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					// Open the main dock first
 					if( !Workspace.insideInitialized )
 					{
-						Workspace.mainDock.openDesklet();
+						if( !Workspace.isSingleTask )
+							Workspace.mainDock.openDesklet();
 						Workspace.insideInitialized = true;
 						forceScreenMaxHeight();
 					}
@@ -4152,9 +4183,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	
 		// The desktop always uses the same fixed values :)
 		var wb = this.screen.contentDiv;
-		wb.onselectstart = function( e ) { return cancelBubble ( e ); };
-		wb.ondragstart = function( e ) { return cancelBubble ( e ); };
-		wb.redrawIcons( this.getIcons(), 'vertical' );
+		if( wb && wb.redrawIcons )
+		{
+			wb.onselectstart = function( e ) { return cancelBubble ( e ); };
+			wb.ondragstart = function( e ) { return cancelBubble ( e ); };
+			wb.redrawIcons( this.getIcons(), 'vertical' );
+		}
 		
 		if ( RefreshDesklets ) RefreshDesklets();
 		
@@ -8189,7 +8223,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				movableWindows[ a ].minimize.onclick();
 		}
 		PollTaskbar();
-		Workspace.mainDock.refresh();
+		if( Workspace.mainDock )
+			Workspace.mainDock.refresh();
 	},
 	//
 	hideInactiveViews: function()
@@ -8204,7 +8239,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 		}
 		PollTaskbar();
-		Workspace.mainDock.refresh();
+		if( Workspace.mainDock )
+			Workspace.mainDock.refresh();
 	},
 	// Force update
 	refreshDirectory: function()

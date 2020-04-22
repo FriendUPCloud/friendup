@@ -11,16 +11,17 @@
 /*******************************************************************************
 *                                                                              *
 * The FriendUP Desktop Environment interface. For use on workstations and      *
-* other places.                                                                *
+* other places. This is the Workspace used for running single-tasking apps.    *
 *                                                                              *
 *******************************************************************************/
 
 var _protocol = document.location.href.split( '://' )[0];
 
 Workspace = {
+	isSingleTask: true,   // Signifies that the Workspace is in "appshared" mode
 	icons: [],
 	reloginAttempts: 0,
-	menuMode: 'pear', // 'miga', 'fensters' (alternatives)
+	menuMode: 'pear',
 	mode: 'default',
 	initialized: false,
 	protocol: _protocol,
@@ -45,7 +46,6 @@ Workspace = {
 		{
 			name: 'utilities',
 			domain: _protocol + '://' + document.location.href.match( /h[^:]*?\:\/\/([^/]+)/i )[1],
-			/*domain: 'http://utilities.' + document.location.href.match( /h[^:]*?\:\/\/([^/]+)/i )[1],*/
 			listener: apiWrapper
 		}
 	],
@@ -329,99 +329,13 @@ Workspace = {
 		// Recall wallpaper from settings
 		this.refreshUserSettings( function(){ 
 			// Refresh desktop for the first time
-			Workspace.refreshDesktop(); 
+			Workspace.refreshDesktop( false, true );
 		} );
 
-		// Create desktop
-		this.directoryView = new DirectoryView( wbscreen.contentDiv );
+		// The desktop is missing in the singletasking workspace
 
-		// Create default desklet
-		var mainDesklet = CreateDesklet( this.screenDiv, 64, 480, 'right' );
-
-		// Add desklet to dock
-		this.mainDock = mainDesklet;
-		if( !isMobile )
-		{
-			this.mainDock.dom.oncontextmenu = function( e )
-			{
-				var tar = e.target ? e.target : e.srcElement;
-				if( tar.classList && tar.classList.contains( 'Task' ) )
-				{
-					return Workspace.showContextMenu( false, e );
-				}
-
-				var men = [
-					{
-						name: i18n( 'i18n_edit_dock' ),
-						command: function()
-						{
-							ExecuteApplication( 'Dock' );
-						}
-					}
-				];
-
-				if( tar.classList && tar.classList.contains( 'Launcher' ) )
-				{
-					men.push( {
-						name: i18n( 'i18n_remove_from_dock' ),
-						command: function()
-						{
-							Workspace.removeFromDock( tar.executable );
-						}
-					} );
-				}
-			
-				if( movableWindowCount > 0 )
-				{
-					men.push( {
-						name: i18n( 'i18n_minimize_all_windows' ),
-						command: function( e )
-						{
-							var t = GetTaskbarElement();
-							var lW = null;
-							for( var a = 0; a < t.childNodes.length; a++ )
-							{
-								if( t.childNodes[a].view && !t.childNodes[a].view.parentNode.getAttribute( 'minimized' ) )
-								{
-									t.childNodes[a].view.parentNode.setAttribute( 'minimized', 'minimized' );
-								}
-							}
-							_DeactivateWindows();
-						}
-					} );
-					men.push( {
-						name: i18n( 'i18n_show_all_windows' ),
-						command: function( e )
-						{
-							var t = GetTaskbarElement();
-							for( var a = 0; a < t.childNodes.length; a++ )
-							{
-								if( t.childNodes[a].view && t.childNodes[a].view.parentNode.getAttribute( 'minimized' ) == 'minimized' )
-								{
-									t.childNodes[a].view.parentNode.removeAttribute( 'minimized' );
-								}
-							}
-							_ActivateWindow( t.childNodes[t.childNodes.length-1].view );
-						}
-					} );
-				}
-
-				Workspace.showContextMenu( men, e );
-			}
-		}
-		// For mobiles
-		else
-		{
-			this.mainDock.dom.oncontextmenu = function( e )
-			{
-				var tar = e.target ? e.target : e.srcElement;
-				if( window.MobileContextMenu )
-				{
-					MobileContextMenu.show( tar );
-				}
-			}
-		}
-		this.reloadDocks();
+		// The main dock is missing in the workspace_share singletasking mode
+		// Hat tip..
 
 		// Init security subdomains
 		SubSubDomains.initSubSubDomains();
