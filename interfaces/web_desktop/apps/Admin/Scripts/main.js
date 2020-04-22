@@ -101,8 +101,24 @@ function refreshSidebar( show )
 				showing: isAdmin,
 				display: true,
 				permissions: [ 
+					
+					// Old
+					
 					'PERM_USER_GLOBAL', 
-					'PERM_USER_WORKGROUP' 
+					'PERM_USER_WORKGROUP', 
+					
+					// New
+					
+					'PERM_USER_CREATE_GLOBAL', 
+					'PERM_USER_READ_GLOBAL', 
+					'PERM_USER_UPDATE_GLOBAL', 
+					'PERM_USER_DELETE_GLOBAL',
+					 
+					'PERM_USER_CREATE_IN_WORKGROUP', 
+					'PERM_USER_READ_IN_WORKGROUP', 
+					'PERM_USER_UPDATE_IN_WORKGROUP', 
+					'PERM_USER_DELETE_IN_WORKGROUP'
+					 
 				],
 				init: true
 			},
@@ -111,8 +127,24 @@ function refreshSidebar( show )
 				showing: isAdmin,
 				display: true,
 				permissions: [ 
+					
+					// Old
+					
 					'PERM_WORKGROUP_GLOBAL', 
-					'PERM_WORKGROUP_WORKGROUP' 
+					'PERM_WORKGROUP_WORKGROUP', 
+					
+					// New
+					
+					'PERM_WORKGROUP_CREATE_GLOBAL', 
+					'PERM_WORKGROUP_READ_GLOBAL', 
+					'PERM_WORKGROUP_UPDATE_GLOBAL', 
+					'PERM_WORKGROUP_DELETE_GLOBAL', 
+					
+					'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+					'PERM_WORKGROUP_READ_IN_WORKGROUP', 
+					'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+					'PERM_WORKGROUP_DELETE_IN_WORKGROUP' 
+					
 				]
 			},
 			'Roles': {
@@ -120,8 +152,24 @@ function refreshSidebar( show )
 				showing: isAdmin,
 				display: true,
 				permissions: [ 
+					
+					// Old
+					
 					'PERM_ROLE_GLOBAL', 
-					'PERM_ROLE_WORKGROUP' 
+					'PERM_ROLE_WORKGROUP', 
+					
+					// New
+					
+					'PERM_ROLE_CREATE_GLOBAL', 
+					'PERM_ROLE_READ_GLOBAL', 
+					'PERM_ROLE_UPDATE_GLOBAL', 
+					'PERM_ROLE_DELETE_GLOBAL', 
+					
+					'PERM_ROLE_CREATE_IN_WORKGROUP', 
+					'PERM_ROLE_READ_IN_WORKGROUP', 
+					'PERM_ROLE_UPDATE_IN_WORKGROUP', 
+					'PERM_ROLE_DELETE_IN_WORKGROUP' 
+					
 				]
 			},
 			'Templates': {
@@ -129,8 +177,24 @@ function refreshSidebar( show )
 				showing: isAdmin,
 				display: true,
 				permissions: [ 
+					
+					// Old
+					
 					'PERM_TEMPLATE_GLOBAL', 
-					'PERM_TEMPLATE_WORKGROUP' 
+					'PERM_TEMPLATE_WORKGROUP', 
+					
+					// New
+					
+					'PERM_TEMPLATE_CREATE_GLOBAL', 
+					'PERM_TEMPLATE_READ_GLOBAL', 
+					'PERM_TEMPLATE_UPDATE_GLOBAL', 
+					'PERM_TEMPLATE_DELETE_GLOBAL', 
+					
+					'PERM_TEMPLATE_CREATE_IN_WORKGROUP', 
+					'PERM_TEMPLATE_READ_IN_WORKGROUP', 
+					'PERM_TEMPLATE_UPDATE_IN_WORKGROUP', 
+					'PERM_TEMPLATE_DELETE_IN_WORKGROUP' 
+					
 				]
 			}
 		}

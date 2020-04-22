@@ -528,7 +528,7 @@ Sections.accounts_users = function( cmd, extra )
 									}
 								}
 								
-								if( ge( 'AdminLevelContainer' ) && Application.checkAppPermission( 'PERM_USER_GLOBAL' ) )
+								if( ge( 'AdminLevelContainer' ) && Application.checkAppPermission( [ 'PERM_USER_READ_GLOBAL', 'PERM_USER_GLOBAL' ] ) )
 								{
 									if( ge( 'AdminLevelContainer' ).classList.contains( 'Closed' ) )
 									{
@@ -625,17 +625,30 @@ Sections.accounts_users = function( cmd, extra )
 								}
 								
 								var bg1  = ge( 'UserSaveBtn' );
-								if( bg1 ) bg1.onclick = function( e )
+								if( bg1 )
 								{
-									if( ge( 'usUsername' ).value )
+									if( Application.checkAppPermission( [ 
+										'PERM_USER_UPDATE_GLOBAL', 'PERM_USER_UPDATE_IN_WORKGROUP', 
+										'PERM_USER_GLOBAL',        'PERM_USER_WORKGROUP' 
+									] ) )
 									{
-										saveUser( userInfo.ID );
+										bg1.onclick = function( e )
+										{
+											if( ge( 'usUsername' ).value )
+											{
+												saveUser( userInfo.ID );
 										
-										editMode( true );
+												editMode( true );
+											}
+											else
+											{
+												ge( 'usUsername' ).focus();
+											}
+										}
 									}
 									else
 									{
-										ge( 'usUsername' ).focus();
+										bg1.style.display = 'none';
 									}
 								}
 								var bg2  = ge( 'UserCancelBtn' );
@@ -659,24 +672,37 @@ Sections.accounts_users = function( cmd, extra )
 								}
 								
 								var bg4  = ge( 'UserDeleteBtn' );
-								if( bg4 ) bg4.onclick = function( e )
+								if( bg4 ) 
 								{
-				
-									// Delete user ...
-							
-									if( userInfo.ID )
+									if( Application.checkAppPermission( [ 
+										'PERM_USER_DELETE_GLOBAL', 'PERM_USER_DELETE_IN_WORKGROUP', 
+										'PERM_USER_GLOBAL',        'PERM_USER_WORKGROUP' 
+									] ) )
 									{
-										//console.log( '// delete user' );
-					
-										removeBtn( this, { id: userInfo.ID, button_text: 'i18n_delete_user', }, function ( args )
+										bg4.onclick = function( e )
 										{
-									
-											removeUser( args.id );
-									
-										} );
-								
-									}
 				
+											// Delete user ...
+							
+											if( userInfo.ID )
+											{
+												//console.log( '// delete user' );
+					
+												removeBtn( this, { id: userInfo.ID, button_text: 'i18n_delete_user', }, function ( args )
+												{
+									
+													removeUser( args.id );
+									
+												} );
+								
+											}
+				
+										}
+									}
+									else
+									{
+										bg4.style.display = 'none';
+									}
 								}
 								
 								if( ge( 'UserEditButtons' ) )
@@ -737,6 +763,8 @@ Sections.accounts_users = function( cmd, extra )
 															'authid'  : Application.authId, 
 															'data'    : { 
 																'permission' : [ 
+																	'PERM_WORKGROUP_UPDATE_GLOBAL', 
+																	'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
 																	'PERM_WORKGROUP_GLOBAL', 
 																	'PERM_WORKGROUP_WORKGROUP' 
 																]
@@ -1080,6 +1108,8 @@ Sections.accounts_users = function( cmd, extra )
 															'authid'  : Application.authId, 
 															'data'    : { 
 																'permission' : [ 
+																	'PERM_WORKGROUP_UPDATE_GLOBAL', 
+																	'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
 																	'PERM_WORKGROUP_GLOBAL', 
 																	'PERM_WORKGROUP_WORKGROUP' 
 																]
@@ -1279,6 +1309,8 @@ Sections.accounts_users = function( cmd, extra )
 																'authid'  : Application.authId, 
 																'data'    : { 
 																	'permission' : [ 
+																		'PERM_WORKGROUP_UPDATE_GLOBAL', 
+																		'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
 																		'PERM_WORKGROUP_GLOBAL', 
 																		'PERM_WORKGROUP_WORKGROUP' 
 																	]
@@ -3437,7 +3469,10 @@ Sections.accounts_users = function( cmd, extra )
 								
 								if( !show || show.indexOf( 'workgroup' ) >= 0 )
 								{
-									if( Application.checkAppPermission( 'PERM_WORKGROUP_GLOBAL' ) || Application.checkAppPermission( 'PERM_WORKGROUP_WORKGROUP' ) )
+									if( Application.checkAppPermission( [ 
+										'PERM_WORKGROUP_READ_GLOBAL', 'PERM_WORKGROUP_READ_IN_WORKGROUP', 
+										'PERM_WORKGROUP_GLOBAL',      'PERM_WORKGROUP_WORKGROUP' 
+									] ) )
 									{
 										if( ge( 'AdminWorkgroupContainer' ) ) ge( 'AdminWorkgroupContainer' ).className = 'Open';
 									}
@@ -3445,7 +3480,10 @@ Sections.accounts_users = function( cmd, extra )
 								
 								if( !show || show.indexOf( 'role' ) >= 0 )
 								{
-									if( Application.checkAppPermission( 'PERM_ROLE_GLOBAL' ) || Application.checkAppPermission( 'PERM_ROLE_WORKGROUP' ) )
+									if( Application.checkAppPermission( [ 
+										'PERM_ROLE_READ_GLOBAL', 'PERM_ROLE_READ_IN_WORKGROUP', 
+										'PERM_ROLE_GLOBAL',      'PERM_ROLE_WORKGROUP' 
+									] ) )
 									{
 										if( ge( 'AdminRoleContainer' ) ) ge( 'AdminRoleContainer' ).className = 'Open';
 									}
@@ -3453,7 +3491,10 @@ Sections.accounts_users = function( cmd, extra )
 								
 								if( !show || show.indexOf( 'storage' ) >= 0 )
 								{
-									if( Application.checkAppPermission( 'PERM_STORAGE_GLOBAL' ) || Application.checkAppPermission( 'PERM_STORAGE_WORKGROUP' ) )
+									if( Application.checkAppPermission( [ 
+										'PERM_STORAGE_READ_GLOBAL', 'PERM_STORAGE_READ_IN_WORKGROUP', 
+										'PERM_STORAGE_GLOBAL',      'PERM_STORAGE_WORKGROUP' 
+									] ) )
 									{
 										if( ge( 'AdminStorageContainer' ) ) ge( 'AdminStorageContainer' ).className = 'Open';
 									}
@@ -3461,7 +3502,10 @@ Sections.accounts_users = function( cmd, extra )
 								
 								if( !show || show.indexOf( 'application' ) >= 0 )
 								{
-									if( Application.checkAppPermission( 'PERM_APPLICATION_GLOBAL' ) || Application.checkAppPermission( 'PERM_APPLICATION_WORKGROUP' ) )
+									if( Application.checkAppPermission( [ 
+										'PERM_APPLICATION_READ_GLOBAL', 'PERM_APPLICATION_READ_IN_WORKGROUP', 
+										'PERM_APPLICATION_GLOBAL',      'PERM_APPLICATION_WORKGROUP' 
+									] ) )
 									{
 										// TODO: Implement Save support in a PHP module first ...
 										if( ge( 'AdminApplicationContainer' ) ) ge( 'AdminApplicationContainer' ).className = 'Open';
@@ -3470,7 +3514,10 @@ Sections.accounts_users = function( cmd, extra )
 								
 								if( !show || show.indexOf( 'dock' ) >= 0 )
 								{
-									if( Application.checkAppPermission( 'PERM_APPLICATION_GLOBAL' ) || Application.checkAppPermission( 'PERM_APPLICATION_WORKGROUP' ) )
+									if( Application.checkAppPermission( [ 
+										'PERM_APPLICATION_READ_GLOBAL', 'PERM_APPLICATION_READ_IN_WORKGROUP', 
+										'PERM_APPLICATION_GLOBAL',      'PERM_APPLICATION_WORKGROUP' 
+									] ) )
 									{
 										// TODO: Implement Save support in a PHP module first ...
 										if( ge( 'AdminDockContainer' ) ) ge( 'AdminDockContainer' ).className = 'Open';
@@ -3479,7 +3526,10 @@ Sections.accounts_users = function( cmd, extra )
 								
 								if( !show || show.indexOf( 'looknfeel' ) >= 0 )
 								{
-									if( Application.checkAppPermission( 'PERM_LOOKNFEEL_GLOBAL' ) || Application.checkAppPermission( 'PERM_LOOKNFEEL_WORKGROUP' ) )
+									if( Application.checkAppPermission( [ 
+										'PERM_LOOKNFEEL_READ_GLOBAL', 'PERM_LOOKNFEEL_READ_IN_WORKGROUP', 
+										'PERM_LOOKNFEEL_GLOBAL',      'PERM_LOOKNFEEL_WORKGROUP' 
+									] ) )
 									{
 										if( ge( 'AdminLooknfeelContainer' ) ) ge( 'AdminLooknfeelContainer' ).className = 'Open';
 									}
@@ -4016,8 +4066,8 @@ Sections.accounts_users = function( cmd, extra )
 		}
 	}
 	
-	var checkedGlobal = Application.checkAppPermission( 'PERM_USER_GLOBAL' );
-	var checkedWorkgr = Application.checkAppPermission( 'PERM_USER_WORKGROUP' );
+	var checkedGlobal = Application.checkAppPermission( [ 'PERM_USER_READ_GLOBAL', 'PERM_USER_GLOBAL' ] );
+	var checkedWorkgr = Application.checkAppPermission( [ 'PERM_USER_READ_IN_WORKGROUP', 'PERM_USER_WORKGROUP' ] );
 	
 	
 	
@@ -4232,30 +4282,43 @@ Sections.accounts_users = function( cmd, extra )
 						// User
 						
 						var bg1  = ge( 'UserSaveBtn' );
-						if( bg1 ) bg1.onclick = function( e )
+						if( bg1 )
 						{
-							if( ge( 'usUsername' ).value )
+							if( Application.checkAppPermission( [ 
+								'PERM_USER_CREATE_GLOBAL', 'PERM_USER_CREATE_IN_WORKGROUP', 
+								'PERM_USER_GLOBAL',        'PERM_USER_WORKGROUP' 
+							] ) )
 							{
-								saveUser( false, function( uid )
+								bg1.onclick = function( e )
 								{
-							
-									if( uid )
+									if( ge( 'usUsername' ).value )
 									{
-										// Refresh whole users list ...
-									
-										Sections.accounts_users(  );
-									
-										// Go to edit mode for the new user ...
-									
-										Sections.accounts_users( 'edit', uid );
-									
-									}
+										saveUser( false, function( uid )
+										{
 							
-								} );
+											if( uid )
+											{
+												// Refresh whole users list ...
+									
+												Sections.accounts_users(  );
+									
+												// Go to edit mode for the new user ...
+									
+												Sections.accounts_users( 'edit', uid );
+									
+											}
+							
+										} );
+									}
+									else
+									{
+										ge( 'usUsername' ).focus();
+									}
+								}
 							}
 							else
 							{
-								ge( 'usUsername' ).focus();
+								bg1.style.display = 'none';
 							}
 						}
 						var bg2  = ge( 'UserCancelBtn' );
@@ -4311,7 +4374,7 @@ Sections.accounts_users = function( cmd, extra )
 								ge( 'usLevel' ).current = ge( 'usLevel' ).value;
 							}
 							
-							if( ge( 'AdminLevelContainer' ) && Application.checkAppPermission( 'PERM_USER_GLOBAL' ) )
+							if( ge( 'AdminLevelContainer' ) && Application.checkAppPermission( [ 'PERM_USER_READ_GLOBAL', 'PERM_USER_GLOBAL' ] ) )
 							{
 								if( ge( 'AdminLevelContainer' ).classList.contains( 'Closed' ) )
 								{
@@ -4384,7 +4447,10 @@ Sections.accounts_users = function( cmd, extra )
 						function GetUserWorkgroups( callback )
 						{
 							
-							if( Application.checkAppPermission( 'PERM_WORKGROUP_GLOBAL' ) || Application.checkAppPermission( 'PERM_WORKGROUP_WORKGROUP' ) )
+							if( Application.checkAppPermission( [ 
+								'PERM_WORKGROUP_READ_GLOBAL', 'PERM_WORKGROUP_READ_IN_WORKGROUP', 
+								'PERM_WORKGROUP_GLOBAL',      'PERM_WORKGROUP_WORKGROUP' 
+							] ) )
 							{
 								
 								// Specific for Pawel's code ... He just wants to forward json ...
@@ -4395,6 +4461,8 @@ Sections.accounts_users = function( cmd, extra )
 									'authid'  : Application.authId, 
 									'data'    : { 
 										'permission' : [ 
+											'PERM_WORKGROUP_READ_GLOBAL',
+											'PERM_WORKGROUP_READ_IN_WORKGROUP',
 											'PERM_WORKGROUP_GLOBAL', 
 											'PERM_WORKGROUP_WORKGROUP' 
 										]
@@ -4497,8 +4565,8 @@ Sections.accounts_users = function( cmd, extra )
 							if( workgroups )
 							{
 								
-								var adminlevel = Application.checkAppPermission( 'PERM_WORKGROUP_GLOBAL' ) || Application.checkAppPermission( 'PERM_USER_GLOBAL' );
-								var userlevel  = Application.checkAppPermission( 'PERM_WORKGROUP_WORKGROUP' ) || Application.checkAppPermission( 'PERM_USER_WORKGROUP' );
+								var adminlevel = Application.checkAppPermission( [ 'PERM_WORKGROUP_READ_GLOBAL', 'PERM_USER_READ_GLOBAL', 'PERM_WORKGROUP_GLOBAL', 'PERM_USER_GLOBAL' ] );
+								var userlevel  = Application.checkAppPermission( [ 'PERM_WORKGROUP_READ_IN_WORKGROUP', 'PERM_USER_READ_IN_WORKGROUP', 'PERM_WORKGROUP_WORKGROUP', 'PERM_USER_WORKGROUP' ] );
 								
 								var wgroups = false;
 								
@@ -6705,6 +6773,8 @@ Sections.user_status_update = function( userid, status, callback )
 					'authid'  : Application.authId, 
 					'data'    : { 
 						'permission' : [ 
+							'PERM_USER_UPDATE_GLOBAL', 
+							'PERM_USER_UPDATE_IN_WORKGROUP', 
 							'PERM_USER_GLOBAL', 
 							'PERM_USER_WORKGROUP' 
 						]
@@ -6745,6 +6815,8 @@ Sections.user_status_update = function( userid, status, callback )
 					'authid'  : Application.authId, 
 					'data'    : { 
 						'permission' : [ 
+							'PERM_USER_UPDATE_GLOBAL', 
+							'PERM_USER_UPDATE_IN_WORKGROUP', 
 							'PERM_USER_GLOBAL', 
 							'PERM_USER_WORKGROUP' 
 						]
@@ -7855,6 +7927,8 @@ function mountDrive( devname, userid, callback )
 				'authid'  : Application.authId, 
 				'data'    : { 
 					'permission' : [ 
+						'PERM_STORAGE_UPDATE_GLOBAL', 
+						'PERM_STORAGE_UPDATE_IN_WORKGROUP', 
 						'PERM_STORAGE_GLOBAL', 
 						'PERM_STORAGE_WORKGROUP' 
 					]
@@ -7896,6 +7970,8 @@ function unmountDrive( devname, userid, callback )
 				'authid'  : Application.authId, 
 				'data'    : { 
 					'permission' : [ 
+						'PERM_STORAGE_UPDATE_GLOBAL', 
+						'PERM_STORAGE_UPDATE_IN_WORKGROUP', 
 						'PERM_STORAGE_GLOBAL', 
 						'PERM_STORAGE_WORKGROUP' 
 					]
@@ -7960,7 +8036,10 @@ function addUser( callback, username )
 		{
 			args.workgroups = ge( 'usWorkgroups' ).value;
 		}
-		else if( !Application.checkAppPermission( 'PERM_USER_GLOBAL' ) )
+		else if( !Application.checkAppPermission( [ 
+			'PERM_USER_READ_GLOBAL', 
+			'PERM_USER_GLOBAL' 
+		] ) )
 		{
 			Notify( { title: i18n( 'i18n_user_workgroup_missing' ), text: i18n( 'i18n_Adding a User to a Workgroup is required.' ) } );
 			
@@ -8034,7 +8113,10 @@ function saveUser( uid, cb, newuser )
 	
 	// TODO: Make sure that if you don't have GLOBAL or Level Admin, you cannot set a User or yourself to Level Admin ..
 	
-	if( Application.checkAppPermission( 'PERM_USER_GLOBAL' ) )
+	if( Application.checkAppPermission( [ 
+		'PERM_USER_READ_GLOBAL', 
+		'PERM_USER_GLOBAL' 
+	] ) )
 	{
 		mapping[ 'usLevel' ] = 'level';
 	}
@@ -8121,6 +8203,10 @@ function saveUser( uid, cb, newuser )
 		'authid'  : Application.authId, 
 		'data'    : { 
 			'permission' : [ 
+				'PERM_USER_CREATE_GLOBAL', 
+				'PERM_USER_CREATE_IN_WORKGROUP',
+				'PERM_USER_UPDATE_GLOBAL', 
+				'PERM_USER_UPDATE_IN_WORKGROUP', 
 				'PERM_USER_GLOBAL', 
 				'PERM_USER_WORKGROUP' 
 			]
@@ -8392,6 +8478,8 @@ function removeUser( id )
 			'authid'  : Application.authId, 
 			'data'    : { 
 				'permission' : [ 
+					'PERM_USER_DELETE_GLOBAL', 
+					'PERM_USER_DELETE_IN_WORKGROUP', 
 					'PERM_USER_GLOBAL', 
 					'PERM_USER_WORKGROUP' 
 				]

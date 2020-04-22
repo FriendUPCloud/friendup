@@ -27,7 +27,11 @@ else
 {
 	require_once( 'php/include/permissions.php' );
 	
-	if( $perm = Permissions( 'write', 'application', ( 'AUTHID'.$args->authid ), [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ], 'user', ( isset( $args->args->userid ) ? $args->args->userid : $userid ) ) )
+	if( $perm = Permissions( 'write', 'application', ( 'AUTHID'.$args->authid ), [ 
+		'PERM_USER_CREATE_GLOBAL', 'PERM_USER_CREATE_IN_WORKGROUP', 
+		'PERM_USER_UPDATE_GLOBAL', 'PERM_USER_UPDATE_IN_WORKGROUP', 
+		'PERM_USER_GLOBAL',        'PERM_USER_WORKGROUP' 
+	], 'user', ( isset( $args->args->userid ) ? $args->args->userid : $userid ) ) )
 	{
 		if( is_object( $perm ) )
 		{

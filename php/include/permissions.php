@@ -40,6 +40,48 @@ function GetAppPermissions( $appName, $UserID = false )
 	// Specific or session based userid?
 	$UserID = ( $UserID ? $UserID : $User->ID );
 	
+	// Get user level
+	if( $level = $SqlDatabase->FetchObject( '
+		SELECT g.Name FROM FUserGroup g, FUserToGroup ug
+		WHERE
+			g.Type = \'Level\' AND
+			ug.UserID=\'' . $UserID . '\' AND
+			ug.UserGroupID = g.ID
+	' ) )
+	{
+		$level = $level->Name;
+	}
+	else $level = 'User';
+	
+	if( $level == 'Admin' )
+	{
+		$pem = new stdClass();
+		
+		if( $rows = $SqlDatabase->FetchObjects( $q = '
+			SELECT p.* 
+			FROM FUserRolePermission p 
+			WHERE p.Key ' . ( strstr( $appName, '","' ) ? 'IN (' . $appName . ')' : '= "' . $appName . '"' ) . ' 
+			ORDER BY p.ID 
+		' ) )
+		{
+			// Go through all roles and set permissions
+			foreach( $rows as $v )
+			{
+				if( $v->Permission )
+				{
+					$obj = new stdClass();
+					$obj->Permission = $v->Permission;
+					$obj->Key        = $v->Key;
+					$obj->Data       = $v->Data;
+					
+					$pem->{ $v->Permission } = array( $obj );
+				}
+			}
+		}
+		
+		return $pem;
+	}
+	
 	// Fetch permissions from user based on role relations
 	if( $rows = $SqlDatabase->FetchObjects( $q = '
 		SELECT 

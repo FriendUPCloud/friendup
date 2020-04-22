@@ -60,7 +60,10 @@ else
 	// Only check permissions if userid is defined ...
 	if( isset( $args->args->userid ) )
 	{
-		if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), [ 'PERM_LOOKNFEEL_GLOBAL', 'PERM_LOOKNFEEL_WORKGROUP' ], 'user', ( isset( $args->args->userid ) ? $args->args->userid : $User->ID ) ) )
+		if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), [ 
+			'PERM_LOOKNFEEL_READ_GLOBAL', 'PERM_LOOKNFEEL_READ_IN_WORKGROUP', 
+			'PERM_LOOKNFEEL_GLOBAL',      'PERM_LOOKNFEEL_WORKGROUP' 
+		], 'user', ( isset( $args->args->userid ) ? $args->args->userid : $User->ID ) ) )
 		{
 			if( is_object( $perm ) )
 			{
