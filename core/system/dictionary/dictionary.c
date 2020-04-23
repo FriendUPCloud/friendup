@@ -94,7 +94,8 @@ static const char *DefaultDictionaryMessages[] =
 "Cannot remove token from list",
 "User Group already exist",
 "Bad chars used",
-"No access, special rights required"
+"No access, special rights required",
+"User Mobile App entry not found"
 };
 
 /**
