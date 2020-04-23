@@ -1367,29 +1367,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 				}
 				FThread *t = ThreadNew( NotificationSendThread, sntd, TRUE, NULL );
 			}
-			/*
-			DelListEntry *le = rootDeleteList;
-			while( le != NULL )
-			{
-				DelListEntry *nextentry = (DelListEntry *)le->node.mln_Succ;
-				
-				Notification *dnotif = le->dle_NotificationPtr;
-				
-				if( dnotif != NULL )
-				{
-					DEBUG1("Msg will be sent! ID: %lu content: %s and deleted\n", dnotif->n_ID, dnotif->n_Content );
-				
-					MobileAppNotifyUserUpdate( nm->nm_SB, dnotif->n_UserName, dnotif, 0, NOTIFY_ACTION_TIMEOUT );
-					NotificationDelete( dnotif );
-					le->dle_NotificationPtr = NULL;
-				}
-				
-				FFree( le );
-				
-				le = nextentry;
-			}
-			DEBUG("[NotificationManagerTimeoutThread]\t\t\t\t\t\t\t\t\t\t\t update and remove list of entries END\n" );
-			*/
+
 			DEBUG("[NotificationManagerTimeoutThread] Check Notification!\n");
 			counter = 0;
 			
@@ -1401,6 +1379,63 @@ void NotificationManagerTimeoutThread( FThread *data )
 			}
 		}
 	}
-	
 	data->t_Launched = FALSE;
+}
+
+
+/**
+ * Send notification to Firebase server (in queue)
+ * 
+ * @param nm pointer to NotificationManager
+ * @param notif Notification structure
+ * @param ID NotificationSent  ID
+ * @param action actions after which messages were sent
+ * @param tokens device tokens separated by coma
+ * @return 0 when success, otherwise error number
+ */
+
+int NotificationManagerNotificationSendFirebaseQueue( NotificationManager *nm, Notification *notif, FULONG ID, char *action, char *tokens )
+{
+	SystemBase *sb = (SystemBase *)nm->nm_SB;
+	char *host = FIREBASE_HOST;
+	
+	
+	int msgSize = 512;
+	
+	if( tokens != NULL ){ msgSize += strlen( tokens ); }
+	if( notif->n_Channel != NULL ){ msgSize += strlen( notif->n_Channel ); }
+	if( notif->n_Content != NULL ){ msgSize += strlen( notif->n_Content ); }
+	if( notif->n_Title != NULL ){ msgSize += strlen( notif->n_Title ); }
+	if( notif->n_Extra != NULL ){ msgSize += strlen( notif->n_Extra ); }
+	if( notif->n_Application != NULL ){ msgSize += strlen( notif->n_Application ); }
+	
+	char *msg = FMalloc( msgSize );
+	if( msg != NULL )
+	{
+		int len = snprintf( msg, msgSize, "{\"registration_ids\":[%s],\"notification\": {},\"data\":{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"%s\",\"id\":%lu,\"notifid\":%lu,\"source\":\"notification\",\"createtime\":%lu},\"android\":{\"priority\":\"high\"}}", tokens, notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, action, ID , notif->n_ID, notif->n_OriginalCreateT );
+	
+		FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
+		if( en != NULL )
+		{
+			en->fq_Data = (void *)msg;
+			en->fq_Size = len;
+			
+			if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
+			{
+				FQPushFIFO( &(nm->nm_AndroidSendMessages), en );
+				
+				pthread_cond_signal( &(nm->nm_AndroidSendCond) );
+				FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
+			}
+		}
+
+		//FFree( msg ); // do not release message if its going to queue
+	}
+	else
+	{
+		DEBUG("Cannot allocate memory for message\n");
+		return -1;
+	}
+	
+	return 0;
 }

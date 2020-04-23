@@ -25,6 +25,7 @@
 
 #define KEEPALIVE_TIME_s 180 //ping time (10 before)
 #define ENABLE_MOBILE_APP_NOTIFICATION_TEST_SIGNAL 1
+#define USE_ONLY_FIREBASE		//use only firebase
 
 #define CKPT DEBUG("====== %d\n", __LINE__)
 
@@ -1209,7 +1210,29 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	}
 	
 	DEBUG("NotificationRegister: get all connections by name: %s pointer: %p\n", username, userConnections );
+
+#ifdef USE_ONLY_FIREBASE
 	
+	BufString *bsMobileReceivedMessage = BufStringNew();
+	
+	if( wsMessageSent == FALSE )
+	{
+		DEBUG("Sending messages across Firebase devices\n");
+		BufString *bs = MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_FIREBASE, USER_MOBILE_APP_STATUS_APPROVED, notif->n_ID );
+		if( bs != NULL )
+		{
+			NotificationManagerNotificationSendFirebaseQueue( sb->sl_NotificationManager, notif, 1, "register", bs->bs_Buffer );
+			Log( FLOG_INFO, "Firebase tokens which should get notification: %s", bs->bs_Buffer );
+			BufStringDelete( bs );
+		}
+	}
+	
+	/*				
+	// this way all of devices which were not avaiable during sending will get message
+	// they will not get them in one case, when Notification attached to it will be removed
+	 */
+	BufStringDelete( bsMobileReceivedMessage );
+#else
 	BufString *bsMobileReceivedMessage = BufStringNew();
 	
 	if( wsMessageSent == FALSE )
@@ -1237,7 +1260,6 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	// message from example to APNS: /client.py '{"auth":"72e3e9ff5ac019cb41aed52c795d9f4c","action":"notify","payload":"hellooooo","sound":"default","token":"1f3b66d2d16e402b5235e1f6f703b7b2a7aacc265b5af526875551475a90e3fe","badge":1,"category":"whatever"}'
 	
 	DEBUG("[MobileAppNotifyUserRegister] send message to other mobile apps, message was alerady sent? %d\n", wsMessageSent );
-	
 	char *jsonMessageIOS = NULL;
 	int jsonMessageIosLength = reqLengith+512;
 	if( wsMessageSent == FALSE && sb->sl_NotificationManager->nm_APNSCert != NULL )
@@ -1265,6 +1287,8 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	{
 		FERROR("Message was sent through websockets or there is no valid Apple APNS certyficate!\n");
 	}
+#endif
+
 	FFree( jsonMessage );
 	
 	// message was not sent via Websockets, there is no need to put it into queue
@@ -1375,6 +1399,18 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 	}
 
 	FULONG userID = UMGetUserIDByName( sb->sl_UM, username );
+	
+#ifdef USE_ONLY_FIREBASE
+	BufString *bs= MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_FIREBASE, USER_MOBILE_APP_STATUS_APPROVED, notif->n_ID );
+	if( bs != NULL )
+	{
+		NotificationManagerNotificationSendFirebaseQueue( sb->sl_NotificationManager, notif, 1, "update", bs->bs_Buffer );
+		//NotificationManagerNotificationSendAndroid( sb->sl_NotificationManager, notif, 1, "update", bs->bs_Buffer );
+		//NotificationManagerNotificationSendAndroid( sb->sl_NotificationManager, notif, 1, "update", "\"fVpPVyTb6OY:APA91bGhIvzwL2kFEdjwQa1ToI147uydLdw0hsauNUtqDx7NoV1EJ6CWjwSCmHDeDw6C4GsZV3jEpnTwk8asplawkCdAmC1NfmVE7GSp-H4nk_HDoYtBrhNz3es2uq-1bHiYqg2punIg\"" );
+		Log( FLOG_INFO, "Android (update) tokens which should get notification: %s", bs->bs_Buffer );
+		BufStringDelete( bs );
+	}
+#else
 	BufString *bs= MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_ANDROID, USER_MOBILE_APP_STATUS_APPROVED, notif->n_ID );
 	if( bs != NULL )
 	{
@@ -1447,6 +1483,7 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 	{
 		INFO("[MobileAppNotifyUserUpdate]: No A!\n");
 	}
+#endif
 	
 	return 0;
 }
