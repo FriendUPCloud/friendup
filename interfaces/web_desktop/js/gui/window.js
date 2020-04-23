@@ -5523,6 +5523,16 @@ var View = function( args )
 
 	if( !args.id ) args.id = false;
 	
+	// Fullscreen single task
+	if( Workspace.isSingleTask )
+	{
+		args.width = 'max';
+		args.height = 'max';
+		args.left = 0;
+		args.top = 0;
+		args.resize = false;
+	}
+	
 	this.createDomElements( 'CREATE', args.title, args.width, args.height, args.id, args, args.applicationId );
 
 	if( !self._window || !self._window.parentNode ) return false;

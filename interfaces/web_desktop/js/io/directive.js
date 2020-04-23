@@ -32,8 +32,17 @@ function RemoveFromExecutionQueue( app )
 }
 
 // Load a javascript application into a sandbox
-function ExecuteApplication( app, args, callback )
+function ExecuteApplication( app, args, callback, retries )
 {
+	// If we don't have any cached basics, wait a bit
+	if( typeof( _applicationBasics ) == 'undefined' || !_applicationBasics.js )
+	{
+		if( retries == 3 ) return console.log( 'Could not execute app: ' + app );
+		return setTimeout( function()
+		{
+			ExecuteApplication( app, args, callback, !retries ? 1 : retries++ );
+		}, 125 );
+	}
 	var appName = app;
 	if( app.indexOf( ':' ) > 0 )
 	{
