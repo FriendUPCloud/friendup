@@ -186,30 +186,10 @@ Workspace = {
 
 		this.initWorkspaces();
 
-		wbscreen.div.addEventListener( 'mousedown', function( e )
-		{
-			var wd = wbscreen.div.screenTitle.getElementsByClassName( 'Extra' )[0].widget;
-			if( wd )
-			{
-				if( wd.shown )
-				{
-					wd.hideWidget();
-				}
-			}
-		} );
-
-		// Widget for various cool facts!
-		wbscreen.div.screenTitle.getElementsByClassName( 'Extra' )[0].onmouseover = function( e )
-		{
-			this.classList.add( 'Hover' );
-		}
-		wbscreen.div.screenTitle.getElementsByClassName( 'Extra' )[0].onmouseout = function( e )
-		{
-			this.classList.remove( 'Hover' );
-		}
+		// In singletask mode - we don't have the calendar widget
 
 		// In desktop mode, show the calendar
-		if( !window.isMobile )
+		if( !window.isMobile && !Workspace.isSingleTask )
 		{
 			var ex = wbscreen.div.screenTitle.getElementsByClassName( 'Extra' )[0];
 			Workspace.calendarClickEvent = function( e )

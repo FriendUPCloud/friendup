@@ -346,7 +346,7 @@ var WorkspaceInside = {
 	// Initialize virtual workspaces
 	initWorkspaces: function()
 	{
-		if( this.mode == 'vr' || isMobile ) return;
+		if( this.mode == 'vr' || isMobile || Workspace.isSingleTask ) return;
 		
 		if( globalConfig.workspacesInitialized )
 		{
@@ -1097,6 +1097,7 @@ var WorkspaceInside = {
 	refreshExtraWidgetContents: function()
 	{
 		if( this.mode == 'vr' ) return;
+		if( Workspace.isSingleTask ) return;
 		
 		var mo = new Library( 'system.library' );
 		mo.onExecuted = function( rc, sessionList )
@@ -1177,7 +1178,7 @@ var WorkspaceInside = {
 
 			// Mobile launches calendar in a different way, so this 
 			// functionality is only for desktops
-			if( !isMobile )
+			if( !isMobile && !Workspace.isSingleTask )
 			{
 				var wid = Workspace.widget ? Workspace.widget : m.widget;
 				if( wid )
@@ -1957,7 +1958,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				if( callback && typeof( callback ) == 'function' ) callback();
 			}
-			initFriendWorkspace();
+			
+			// Load application cache's and then init workspace
+			loadApplicationBasics(
+				initFriendWorkspace()
+			);
 		}
 		m.execute( 'getsetting', { settings: [ 
 			'avatar', 'workspacemode', 'wallpaperdoors', 'wallpaperwindows', 'language', 
@@ -3142,8 +3147,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								{
 									clearInterval( Workspace.insideInterval );
 									Workspace.insideInterval = null;
-								
-									loadApplicationBasics();
 								
 									// Set right classes
 									document.body.classList.add( 'Inside' );
@@ -4340,7 +4343,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			
 			var d;
 			
-			if( !window.isMobile )
+			if( !window.isMobile && !Workspace.isSingleTask )
 			{
 				d = new View( {
 					id: 'makedir',
@@ -4523,7 +4526,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				
 
 				var w;
-				if( window.isMobile )
+				if( window.isMobile || Workspace.isSingleTask )
 				{
 					w = new Widget( {
 						width: 'full',
@@ -10309,7 +10312,7 @@ function mobileDebug( str, clear )
 // TODO: Test loading different themes
 
 _applicationBasics = {};
-function loadApplicationBasics()
+function loadApplicationBasics( callback )
 {
 	// Preload basic scripts
 	var a = new File( '/webclient/js/apps/api.js' );
@@ -10348,6 +10351,7 @@ function loadApplicationBasics()
 	j.onLoad = function( data )
 	{
 		_applicationBasics.js = data;
+		if( callback ) callback();
 	}
 	j.load();
 };
