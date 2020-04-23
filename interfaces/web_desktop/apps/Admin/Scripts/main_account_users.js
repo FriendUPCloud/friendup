@@ -254,7 +254,16 @@ Sections.accounts_users = function( cmd, extra )
 									wstr += '<div class="HRow">';
 									wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis"><strong>' + wids[b].Name + '</strong></div>';
 									wstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
-									wstr += '		<button wid="' + wids[b].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+									
+									if( Application.checkAppPermission( [ 
+										'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+										'PERM_WORKGROUP_UPDATE_GLOBAL', 'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+										'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
+									] ) )
+									{
+										wstr += '	<button wid="' + wids[b].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+									}
+									
 									wstr += '	</div>';
 									wstr += '</div>';
 								}
@@ -276,9 +285,19 @@ Sections.accounts_users = function( cmd, extra )
 						}
 						else if( uroles && uroles.length )
 						{
-					
+							
 							for( var a in uroles )
 							{
+								if( !uroles[a].UserID && !Application.checkAppPermission( [ 
+									'PERM_ROLE_CREATE_GLOBAL', 'PERM_ROLE_CREATE_IN_WORKGROUP', 
+									'PERM_ROLE_READ_GLOBAL',   'PERM_ROLE_READ_IN_WORKGROUP', 
+									'PERM_ROLE_UPDATE_GLOBAL', 'PERM_ROLE_UPDATE_IN_WORKGROUP', 
+									'PERM_ROLE_GLOBAL',        'PERM_ROLE_WORKGROUP' 
+								] ) )
+								{
+									continue;
+								}
+								
 								rstr += '<div class="HRow">';
 								rstr += '<div class="PaddingSmall HContent45 FloatLeft Ellipsis"><strong>' + uroles[a].Name + '</strong></div>';
 						
@@ -302,7 +321,16 @@ Sections.accounts_users = function( cmd, extra )
 								rstr += '<div class="PaddingSmall HContent40 FloatLeft Ellipsis"' + ( title ? ' title="' + title + '"' : '' ) + '>' + title + '</div>';
 						
 								rstr += '<div class="PaddingSmall HContent15 FloatLeft Ellipsis">';
-								rstr += '<button onclick="Sections.userrole_update('+uroles[a].ID+','+userInfo.ID+',this)" class="IconButton IconSmall IconToggle ButtonSmall FloatRight' + ( uroles[a].UserID ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+								
+								if( Application.checkAppPermission( [ 
+									'PERM_ROLE_CREATE_GLOBAL', 'PERM_ROLE_CREATE_IN_WORKGROUP', 
+									'PERM_ROLE_UPDATE_GLOBAL', 'PERM_ROLE_UPDATE_IN_WORKGROUP', 
+									'PERM_ROLE_GLOBAL',        'PERM_ROLE_WORKGROUP' 
+								] ) )
+								{
+									rstr += '<button onclick="Sections.userrole_update('+uroles[a].ID+','+userInfo.ID+',this)" class="IconButton IconSmall IconToggle ButtonSmall FloatRight' + ( uroles[a].UserID ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+								}
+								
 								rstr += '</div>';
 								rstr += '</div>';
 							}
@@ -313,6 +341,17 @@ Sections.accounts_users = function( cmd, extra )
 					
 					storage : function (  )
 					{
+						if( !Application.checkAppPermission( [ 
+							'PERM_STORAGE_CREATE_GLOBAL', 'PERM_STORAGE_CREATE_IN_WORKGROUP', 
+							'PERM_STORAGE_GLOBAL',        'PERM_STORAGE_WORKGROUP' 
+						] ) )
+						{
+							if( ge( 'StorageAdd' ) )
+							{
+								ge( 'StorageAdd' ).style.display = 'none';
+							}
+						}
+						
 						// Storage / disks
 						var mlst = Sections.user_disk_refresh( mountlist, userInfo.ID );
 					
@@ -497,17 +536,28 @@ Sections.accounts_users = function( cmd, extra )
 							password : function (  )
 							{
 								// Password ------------------------------------------------
-							
+								
 								if( ge( 'ChangePassContainer' ) && ge( 'ResetPassContainer' ) )
 								{
 									ge( 'ChangePassContainer' ).className = 'Closed';
 									ge( 'ResetPassContainer'  ).className = 'Open';
-						
-									var res = ge( 'passToggle' );
-									if( res ) res.onclick = function( e )
+									
+									if( Application.checkAppPermission( [ 
+										'PERM_USER_CREATE_GLOBAL', 'PERM_USER_CREATE_IN_WORKGROUP', 
+										'PERM_USER_UPDATE_GLOBAL', 'PERM_USER_UPDATE_IN_WORKGROUP', 
+										'PERM_USER_GLOBAL',        'PERM_WORKGROUP_GLOBAL' 
+									] ) )
 									{
-										toggleChangePass();
-										editMode();
+										var res = ge( 'passToggle' );
+										if( res ) res.onclick = function( e )
+										{
+											toggleChangePass();
+											editMode();
+										}
+									}
+									else
+									{
+										ge( 'ResetPassContainer' ).style.display = 'none';
 									}
 								}
 							},
@@ -581,9 +631,23 @@ Sections.accounts_users = function( cmd, extra )
 								} 
 								
 								var ae = ge( 'AdminAvatarEdit' );
-								if( ae ) ae.onclick = function( e )
+								if( ae ) 
 								{
-									changeAvatar();
+									if( Application.checkAppPermission( [ 
+										'PERM_USER_CREATE_GLOBAL', 'PERM_USER_CREATE_IN_WORKGROUP', 
+										'PERM_USER_UPDATE_GLOBAL', 'PERM_USER_UPDATE_IN_WORKGROUP', 
+										'PERM_USER_GLOBAL',        'PERM_WORKGROUP_GLOBAL' 
+									] ) )
+									{
+										ae.onclick = function( e )
+										{
+											changeAvatar();
+										}
+									}
+									else
+									{
+										ae.style.display = 'none';
+									}
 								}
 							},
 							
@@ -717,6 +781,17 @@ Sections.accounts_users = function( cmd, extra )
 								// Editing workgroups
 								
 								var wge = ge( 'WorkgroupEdit' );
+								
+								if( !Application.checkAppPermission( [ 
+									'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+									'PERM_WORKGROUP_UPDATE_GLOBAL', 'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+									'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
+								] ) )
+								{
+									wge.style.display = 'none';
+									wge = false;
+								}
+								
 								if( wge )
 								{
 									wge.wids = {};
@@ -763,6 +838,8 @@ Sections.accounts_users = function( cmd, extra )
 															'authid'  : Application.authId, 
 															'data'    : { 
 																'permission' : [ 
+																	'PERM_WORKGROUP_CREATE_GLOBAL', 
+																	'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
 																	'PERM_WORKGROUP_UPDATE_GLOBAL', 
 																	'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
 																	'PERM_WORKGROUP_GLOBAL', 
@@ -908,14 +985,23 @@ Sections.accounts_users = function( cmd, extra )
 												
 												str += '<div>';
 												
-												str += '<div class="HRow">\
-													<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
-														<span class="IconSmall ' + ( groups[a].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;' + groups[a].Name + '</span>\
-													</div>\
-													<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
-														<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
-													</div>\
-												</div>';
+												str += '<div class="HRow">';
+												str += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">';
+												str += '		<span class="IconSmall ' + ( groups[a].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;' + groups[a].Name + '</span>';
+												str += '	</div>';
+												str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
+												
+												if( Application.checkAppPermission( [ 
+													'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+													'PERM_WORKGROUP_UPDATE_GLOBAL', 'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+													'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
+												] ) )
+												{
+													str += '	<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
+												}
+												
+												str += '	</div>';
+												str += '</div>';
 												
 												
 												
@@ -942,14 +1028,23 @@ Sections.accounts_users = function( cmd, extra )
 															}
 														}
 														
-														str += '<div class="HRow">\
-															<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
-																<span class="IconSmall ' + ( groups[a].groups[aa].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>\
-															</div>\
-															<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
-																<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
-															</div>\
-														</div>';
+														str += '<div class="HRow">';
+														str += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">';
+														str += '		<span class="IconSmall ' + ( groups[a].groups[aa].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>';
+														str += '	</div>';
+														str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
+														
+														if( Application.checkAppPermission( [ 
+															'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+															'PERM_WORKGROUP_UPDATE_GLOBAL', 'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+															'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
+														] ) )
+														{
+															str += '	<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
+														}
+														
+														str += '	</div>';
+														str += '</div>';
 														
 														if( groups[a].groups[aa].groups.length > 0 )
 														{
@@ -974,14 +1069,23 @@ Sections.accounts_users = function( cmd, extra )
 																	}
 																}
 																
-																str += '<div class="HRow">\
-																	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
-																		<span class="IconSmall">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>\
-																	</div>\
-																	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
-																		<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
-																	</div>\
-																</div>';
+																str += '<div class="HRow">';
+																str += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">';
+																str += '		<span class="IconSmall">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>';
+																str += '	</div>';
+																str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
+																
+																if( Application.checkAppPermission( [ 
+																	'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+																	'PERM_WORKGROUP_UPDATE_GLOBAL', 'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+																	'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
+																] ) )
+																{
+																	str += '	<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
+																}
+																
+																str += '	</div>';
+																str += '</div>';
 																
 															}
 															
@@ -1108,6 +1212,8 @@ Sections.accounts_users = function( cmd, extra )
 															'authid'  : Application.authId, 
 															'data'    : { 
 																'permission' : [ 
+																	'PERM_WORKGROUP_CREATE_GLOBAL', 
+																	'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
 																	'PERM_WORKGROUP_UPDATE_GLOBAL', 
 																	'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
 																	'PERM_WORKGROUP_GLOBAL', 
@@ -1229,7 +1335,16 @@ Sections.accounts_users = function( cmd, extra )
 														wstr += '<div class="HRow">';
 														wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis"><strong>' + groups[b].Name + '</strong></div>';
 														wstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
-														wstr += '		<button wid="' + groups[b].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+														
+														if( Application.checkAppPermission( [ 
+															'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+															'PERM_WORKGROUP_UPDATE_GLOBAL', 'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+															'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
+														] ) )
+														{
+															wstr += '		<button wid="' + groups[b].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+														}
+														
 														wstr += '	</div>';
 														wstr += '</div>';
 													}
@@ -1249,7 +1364,16 @@ Sections.accounts_users = function( cmd, extra )
 																	wstr += '<div class="HRow">';
 																	wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis"><strong>' + groups[b].groups[k].Name + '</strong></div>';
 																	wstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
-																	wstr += '		<button wid="' + groups[b].groups[k].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+																	
+																	if( Application.checkAppPermission( [ 
+																		'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+																		'PERM_WORKGROUP_UPDATE_GLOBAL', 'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+																		'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
+																	] ) )
+																	{
+																		wstr += '		<button wid="' + groups[b].groups[k].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+																	}
+																	
 																	wstr += '	</div>';
 																	wstr += '</div>';
 																}
@@ -1269,7 +1393,16 @@ Sections.accounts_users = function( cmd, extra )
 																				wstr += '<div class="HRow">';
 																				wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis"><strong>' + groups[b].groups[k].groups[i].Name + '</strong></div>';
 																				wstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
-																				wstr += '		<button wid="' + groups[b].groups[k].groups[i].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+																				
+																				if( Application.checkAppPermission( [ 
+																					'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+																					'PERM_WORKGROUP_UPDATE_GLOBAL', 'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+																					'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
+																				] ) )
+																				{
+																					wstr += '		<button wid="' + groups[b].groups[k].groups[i].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+																				}
+																				
 																				wstr += '	</div>';
 																				wstr += '</div>';
 																			}
@@ -1309,6 +1442,8 @@ Sections.accounts_users = function( cmd, extra )
 																'authid'  : Application.authId, 
 																'data'    : { 
 																	'permission' : [ 
+																		'PERM_WORKGROUP_CREATE_GLOBAL', 
+																		'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
 																		'PERM_WORKGROUP_UPDATE_GLOBAL', 
 																		'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
 																		'PERM_WORKGROUP_GLOBAL', 
@@ -1826,48 +1961,55 @@ Sections.accounts_users = function( cmd, extra )
 																			{ 
 																				'element' : function( ids, name, func ) 
 																				{
-																					var b = document.createElement( 'button' );
-																					b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
-																					b.onclick = function(  )
+																					if( Application.checkAppPermission( [ 
+																						'PERM_APPLICATION_CREATE_GLOBAL', 'PERM_APPLICATION_CREATE_IN_WORKGROUP', 
+																						'PERM_APPLICATION_UPDATE_GLOBAL', 'PERM_APPLICATION_UPDATE_IN_WORKGROUP', 
+																						'PERM_APPLICATION_GLOBAL',        'PERM_APPLICATION_GLOBAL' 
+																					] ) )
 																					{
-																			
-																						var pnt = this.parentNode.parentNode;
-																			
-																						removeBtn( this, { ids: ids, name: name, func: func, pnt: pnt }, function ( args )
+																						var b = document.createElement( 'button' );
+																						b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																						b.onclick = function(  )
 																						{
-																				
-																							args.func.updateids( 'applications', args.name, false );
-																							
-																							//console.log( 'updateApplications( '+userInfo.ID+', callback, vars )' );
-																							
-																							updateApplications( userInfo.ID, function( e, d, vars )
+																			
+																							var pnt = this.parentNode.parentNode;
+																			
+																							removeBtn( this, { ids: ids, name: name, func: func, pnt: pnt }, function ( args )
 																							{
-																					
-																								if( e && vars )
-																								{
-																						
-																									if( vars.pnt )
-																									{
-																										vars.pnt.innerHTML = '';
-																									}
-																			
-																									if( vars.func )
-																									{
-																										vars.func.dock( 'refresh' );
-																									}
-																						
-																								}
-																								else
-																								{
-																									console.log( { e:e, d:d, vars: vars } );
-																								}
-																					
-																							}, { pnt: args.pnt, func: args.func } );
 																				
-																						} );
+																								args.func.updateids( 'applications', args.name, false );
+																							
+																								//console.log( 'updateApplications( '+userInfo.ID+', callback, vars )' );
+																							
+																								updateApplications( userInfo.ID, function( e, d, vars )
+																								{
+																					
+																									if( e && vars )
+																									{
+																						
+																										if( vars.pnt )
+																										{
+																											vars.pnt.innerHTML = '';
+																										}
 																			
-																					};
-																					return b;
+																										if( vars.func )
+																										{
+																											vars.func.dock( 'refresh' );
+																										}
+																						
+																									}
+																									else
+																									{
+																										console.log( { e:e, d:d, vars: vars } );
+																									}
+																					
+																								}, { pnt: args.pnt, func: args.func } );
+																				
+																							} );
+																			
+																						};
+																						return b;
+																					}
 																				}( this.ids, apps[k].Name, this.func ) 
 																			}
 																		]
@@ -2006,77 +2148,84 @@ Sections.accounts_users = function( cmd, extra )
 																		{ 
 																			'element' : function( ids, name, func ) 
 																			{
-																				var b = document.createElement( 'button' );
-																				b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' );
-																				b.onclick = function(  )
+																				if( Application.checkAppPermission( [ 
+																					'PERM_APPLICATION_CREATE_GLOBAL', 'PERM_APPLICATION_CREATE_IN_WORKGROUP', 
+																					'PERM_APPLICATION_UPDATE_GLOBAL', 'PERM_APPLICATION_UPDATE_IN_WORKGROUP', 
+																					'PERM_APPLICATION_GLOBAL',        'PERM_APPLICATION_GLOBAL' 
+																				] ) )
 																				{
-																					if( this.classList.contains( 'fa-toggle-off' ) )
+																					var b = document.createElement( 'button' );
+																					b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' );
+																					b.onclick = function(  )
 																					{
-																						
-																						func.updateids( 'applications', name, [ name, '0' ] );
-																						
-																						//console.log( 'updateApplications( '+userInfo.ID+', callback, vars )' );
-																						
-																						
-																						
-																						updateApplications( userInfo.ID, function( e, d, vars )
+																						if( this.classList.contains( 'fa-toggle-off' ) )
 																						{
-																					
-																							if( e && vars )
+																						
+																							func.updateids( 'applications', name, [ name, '0' ] );
+																						
+																							//console.log( 'updateApplications( '+userInfo.ID+', callback, vars )' );
+																						
+																						
+																						
+																							updateApplications( userInfo.ID, function( e, d, vars )
 																							{
-																						
-																								vars._this.classList.remove( 'fa-toggle-off' );
-																								vars._this.classList.add( 'fa-toggle-on' );
-																						
-																								if( vars.func )
+																					
+																								if( e && vars )
 																								{
-																									vars.func.dock( 'refresh' );
+																						
+																									vars._this.classList.remove( 'fa-toggle-off' );
+																									vars._this.classList.add( 'fa-toggle-on' );
+																						
+																									if( vars.func )
+																									{
+																										vars.func.dock( 'refresh' );
+																									}
+																						
 																								}
-																						
-																							}
-																							else
-																							{
-																								console.log( { e:e, d:d, vars: vars } );
-																							}
+																								else
+																								{
+																									console.log( { e:e, d:d, vars: vars } );
+																								}
 																					
-																						}, { _this: this, func: func } );
+																							}, { _this: this, func: func } );
 																				
-																					}
-																					else
-																					{
-																						
-																						func.updateids( 'applications', name, false );
-																						
-																						//console.log( 'updateApplications( '+userInfo.ID+', callback, vars )' );
-																						
-																						
-																						
-																						updateApplications( userInfo.ID, function( e, d, vars )
+																						}
+																						else
 																						{
-																					
-																							if( e && vars )
+																						
+																							func.updateids( 'applications', name, false );
+																						
+																							//console.log( 'updateApplications( '+userInfo.ID+', callback, vars )' );
+																						
+																						
+																						
+																							updateApplications( userInfo.ID, function( e, d, vars )
 																							{
-																						
-																								vars._this.classList.remove( 'fa-toggle-on' );
-																								vars._this.classList.add( 'fa-toggle-off' );
-																						
-																								if( vars.func )
+																					
+																								if( e && vars )
 																								{
-																									vars.func.dock( 'refresh' );
-																								}
 																						
-																							}
-																							else
-																							{
-																								console.log( { e:e, d:d, vars: vars } );
-																							}
+																									vars._this.classList.remove( 'fa-toggle-on' );
+																									vars._this.classList.add( 'fa-toggle-off' );
+																						
+																									if( vars.func )
+																									{
+																										vars.func.dock( 'refresh' );
+																									}
+																						
+																								}
+																								else
+																								{
+																									console.log( { e:e, d:d, vars: vars } );
+																								}
 																					
-																						}, { _this: this, func: func } );
+																							}, { _this: this, func: func } );
 																				
-																					}
+																						}
 																			
-																				};
-																				return b;
+																					};
+																					return b;
+																				}
 																			}( this.ids, apps[k].Name, this.func ) 
 																		}
 																	]
@@ -2227,28 +2376,43 @@ Sections.accounts_users = function( cmd, extra )
 										var etn = ge( 'ApplicationEdit' );
 										if( etn )
 										{
-											etn.onclick = function( e )
+											
+											if( Application.checkAppPermission( [ 
+												'PERM_APPLICATION_CREATE_GLOBAL', 'PERM_APPLICATION_CREATE_IN_WORKGROUP', 
+												'PERM_APPLICATION_UPDATE_GLOBAL', 'PERM_APPLICATION_UPDATE_IN_WORKGROUP', 
+												'PERM_APPLICATION_GLOBAL',        'PERM_APPLICATION_GLOBAL' 
+											] ) )
 											{
-								
-												init.edit();
-								
-												// Hide add / edit button ...
-								
-												if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+												
+												etn.onclick = function( e )
 												{
-													etn.classList.remove( 'Open' );
-													etn.classList.add( 'Closed' );
-												}
 								
-												// Show back button ...
+													init.edit();
 								
-												if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
-												{
-													btn.classList.remove( 'Closed' );
-													btn.classList.add( 'Open' );
-												}
+													// Hide add / edit button ...
 								
-											};
+													if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+													{
+														etn.classList.remove( 'Open' );
+														etn.classList.add( 'Closed' );
+													}
+								
+													// Show back button ...
+								
+													if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+													{
+														btn.classList.remove( 'Closed' );
+														btn.classList.add( 'Open' );
+													}
+								
+												};
+												
+											}
+											else
+											{
+												etn.style.display = 'none';
+											}
+											
 										}
 						
 										var btn = ge( 'ApplicationEditBack' );
@@ -2387,8 +2551,12 @@ Sections.accounts_users = function( cmd, extra )
 										
 										if( apps )
 										{
-											this.head();
-									
+											this.head( !Application.checkAppPermission( [ 
+												'PERM_APPLICATION_CREATE_GLOBAL', 'PERM_APPLICATION_CREATE_IN_WORKGROUP', 
+												'PERM_APPLICATION_UPDATE_GLOBAL', 'PERM_APPLICATION_UPDATE_IN_WORKGROUP', 
+												'PERM_APPLICATION_GLOBAL',        'PERM_APPLICATION_GLOBAL' 
+											] ) );
+											
 											var o = ge( 'DockInner' ); if( o ) o.innerHTML = '';
 											
 											if( this.ids )
@@ -2490,53 +2658,67 @@ Sections.accounts_users = function( cmd, extra )
 																			{ 
 																				'element' : function( order, itemId, _this ) 
 																				{
-																					var b = document.createElement( 'button' );
-																					b.className = 'IconButton IconSmall IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-down';
-																					b.onclick = function(  )
+																					if( Application.checkAppPermission( [ 
+																						'PERM_APPLICATION_CREATE_GLOBAL', 'PERM_APPLICATION_CREATE_IN_WORKGROUP', 
+																						'PERM_APPLICATION_UPDATE_GLOBAL', 'PERM_APPLICATION_UPDATE_IN_WORKGROUP', 
+																						'PERM_APPLICATION_GLOBAL',        'PERM_APPLICATION_GLOBAL' 
+																					] ) )
 																					{
-																			
-																						_this.sortdown( order, function( e, vars )
+																						var b = document.createElement( 'button' );
+																						b.className = 'IconButton IconSmall IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-down';
+																						b.onclick = function(  )
 																						{
-																							
-																							//console.log( { e:e, vars:vars } );
-																							
-																							if( e && vars && vars.itemId )
-																							{
-																								// TODO: Update two dockitems only ...
-																								
-																								sortDockItem( 'down', vars.itemId, userInfo.ID );
-																							}
-																							
-																						}, { itemId: itemId } );
 																			
-																					};
-																					return b;
+																							_this.sortdown( order, function( e, vars )
+																							{
+																							
+																								//console.log( { e:e, vars:vars } );
+																							
+																								if( e && vars && vars.itemId )
+																								{
+																									// TODO: Update two dockitems only ...
+																								
+																									sortDockItem( 'down', vars.itemId, userInfo.ID );
+																								}
+																							
+																							}, { itemId: itemId } );
+																			
+																						};
+																						return b;
+																					}
 																				}( a, this.ids[a].Id, this ) 
 																			},
 																			{ 
 																				'element' : function( order, itemId, _this ) 
 																				{
-																					var b = document.createElement( 'button' );
-																					b.className = 'IconButton IconSmall IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-up';
-																					b.onclick = function()
+																					if( Application.checkAppPermission( [ 
+																						'PERM_APPLICATION_CREATE_GLOBAL', 'PERM_APPLICATION_CREATE_IN_WORKGROUP', 
+																						'PERM_APPLICATION_UPDATE_GLOBAL', 'PERM_APPLICATION_UPDATE_IN_WORKGROUP', 
+																						'PERM_APPLICATION_GLOBAL',        'PERM_APPLICATION_GLOBAL' 
+																					] ) )
 																					{
-																			
-																						_this.sortup( order, function( e, vars )
+																						var b = document.createElement( 'button' );
+																						b.className = 'IconButton IconSmall IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-up';
+																						b.onclick = function()
 																						{
-																							
-																							//console.log( { e:e, vars:vars } );
-																							
-																							if( e && vars && vars.itemId )
-																							{
-																								// TODO: Update two dockitems only ...
-																								
-																								sortDockItem( 'up', vars.itemId, userInfo.ID );
-																							}
-																							
-																						}, { itemId: itemId } );
 																			
-																					};
-																					return b;
+																							_this.sortup( order, function( e, vars )
+																							{
+																							
+																								//console.log( { e:e, vars:vars } );
+																							
+																								if( e && vars && vars.itemId )
+																								{
+																									// TODO: Update two dockitems only ...
+																								
+																									sortDockItem( 'up', vars.itemId, userInfo.ID );
+																								}
+																							
+																							}, { itemId: itemId } );
+																			
+																						};
+																						return b;
+																					}
 																				}( a, this.ids[a].Id, this ) 
 																			}
 																		] 
@@ -2554,37 +2736,44 @@ Sections.accounts_users = function( cmd, extra )
 																			{ 
 																				'element' : function( name, itemId, func ) 
 																				{
-																					var b = document.createElement( 'button' );
-																					b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
-																					b.onclick = function(  )
+																					if( Application.checkAppPermission( [ 
+																						'PERM_APPLICATION_CREATE_GLOBAL', 'PERM_APPLICATION_CREATE_IN_WORKGROUP', 
+																						'PERM_APPLICATION_UPDATE_GLOBAL', 'PERM_APPLICATION_UPDATE_IN_WORKGROUP', 
+																						'PERM_APPLICATION_GLOBAL',        'PERM_APPLICATION_GLOBAL' 
+																					] ) )
 																					{
-																			
-																						var pnt = this.parentNode.parentNode;
-																			
-																						removeBtn( this, { name: name, itemId: itemId, func: func, pnt: pnt }, function ( args )
+																						var b = document.createElement( 'button' );
+																						b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																						b.onclick = function(  )
 																						{
-																							
-																							removeDockItem( args.name, userInfo.ID, function( e, d, vars )
-																							{
-																								
-																								if( e && vars )
-																								{
-																									
-																									vars.func.updateids( 'dock', vars.name, false );
-																									
-																									if( vars.pnt )
-																									{
-																										vars.pnt.innerHTML = '';
-																									}
-																					
-																								}
-																								
-																							}, { pnt: args.pnt, name: args.name, itemId: args.itemId, func: args.func } );
-																				
-																						} );
 																			
-																					};
-																					return b;
+																							var pnt = this.parentNode.parentNode;
+																			
+																							removeBtn( this, { name: name, itemId: itemId, func: func, pnt: pnt }, function ( args )
+																							{
+																							
+																								removeDockItem( args.name, userInfo.ID, function( e, d, vars )
+																								{
+																								
+																									if( e && vars )
+																									{
+																									
+																										vars.func.updateids( 'dock', vars.name, false );
+																									
+																										if( vars.pnt )
+																										{
+																											vars.pnt.innerHTML = '';
+																										}
+																					
+																									}
+																								
+																								}, { pnt: args.pnt, name: args.name, itemId: args.itemId, func: args.func } );
+																				
+																							} );
+																			
+																						};
+																						return b;
+																					}
 																				}( apps[k].Name, this.ids[a].Id, this.func ) 
 																			}
 																		]
@@ -2735,49 +2924,56 @@ Sections.accounts_users = function( cmd, extra )
 																			{ 
 																				'element' : function( name, func ) 
 																				{
-																					var b = document.createElement( 'button' );
-																					b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( toggle ? 'on' : 'off' );
-																					b.onclick = function(  )
+																					if( Application.checkAppPermission( [ 
+																						'PERM_APPLICATION_CREATE_GLOBAL', 'PERM_APPLICATION_CREATE_IN_WORKGROUP', 
+																						'PERM_APPLICATION_UPDATE_GLOBAL', 'PERM_APPLICATION_UPDATE_IN_WORKGROUP', 
+																						'PERM_APPLICATION_GLOBAL',        'PERM_APPLICATION_GLOBAL' 
+																					] ) )
 																					{
-																						if( this.classList.contains( 'fa-toggle-off' ) )
+																						var b = document.createElement( 'button' );
+																						b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( toggle ? 'on' : 'off' );
+																						b.onclick = function(  )
 																						{
-																							
-																							addDockItem( name, userInfo.ID, function( e, d, vars )
+																							if( this.classList.contains( 'fa-toggle-off' ) )
 																							{
-																								
-																								if( e && d && vars )
+																							
+																								addDockItem( name, userInfo.ID, function( e, d, vars )
 																								{
+																								
+																									if( e && d && vars )
+																									{
 																									
-																									vars.func.updateids( 'dock', vars.name, { Id: d, Name: vars.name } );
+																										vars.func.updateids( 'dock', vars.name, { Id: d, Name: vars.name } );
 																									
-																									vars._this.classList.remove( 'fa-toggle-off' );
-																									vars._this.classList.add( 'fa-toggle-on' );
+																										vars._this.classList.remove( 'fa-toggle-off' );
+																										vars._this.classList.add( 'fa-toggle-on' );
 																						
-																								}
+																									}
 																								
-																							}, { _this: this, func: func, name: name } );
+																								}, { _this: this, func: func, name: name } );
 																				
-																						}
-																						else
-																						{
-																							
-																							removeDockItem( name, userInfo.ID, function( e, d, vars )
+																							}
+																							else
 																							{
-																								
-																								if( e && vars )
+																							
+																								removeDockItem( name, userInfo.ID, function( e, d, vars )
 																								{
-																									vars.func.updateids( 'dock', vars.name, false );
-																									
-																									vars._this.classList.remove( 'fa-toggle-on' );
-																									vars._this.classList.add( 'fa-toggle-off' );
-																									
-																								}
 																								
-																							}, { _this: this, func: func, name: name } );
+																									if( e && vars )
+																									{
+																										vars.func.updateids( 'dock', vars.name, false );
+																									
+																										vars._this.classList.remove( 'fa-toggle-on' );
+																										vars._this.classList.add( 'fa-toggle-off' );
+																									
+																									}
+																								
+																								}, { _this: this, func: func, name: name } );
 																				
-																						}
-																					};
-																					return b;
+																							}
+																						};
+																						return b;
+																					}
 																				}( apps[k].Name, this.func ) 
 																			}
 																		]
@@ -3017,28 +3213,43 @@ Sections.accounts_users = function( cmd, extra )
 										var etn = ge( 'DockEdit' );
 										if( etn )
 										{
-											etn.onclick = function( e )
+											
+											if( Application.checkAppPermission( [ 
+												'PERM_APPLICATION_CREATE_GLOBAL', 'PERM_APPLICATION_CREATE_IN_WORKGROUP', 
+												'PERM_APPLICATION_UPDATE_GLOBAL', 'PERM_APPLICATION_UPDATE_IN_WORKGROUP', 
+												'PERM_APPLICATION_GLOBAL',        'PERM_APPLICATION_GLOBAL' 
+											] ) )
 											{
-								
-												init.edit();
-								
-												// Hide add / edit button ...
-								
-												if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+												
+												etn.onclick = function( e )
 												{
-													etn.classList.remove( 'Open' );
-													etn.classList.add( 'Closed' );
-												}
 								
-												// Show back button ...
+													init.edit();
 								
-												if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
-												{
-													btn.classList.remove( 'Closed' );
-													btn.classList.add( 'Open' );
-												}
+													// Hide add / edit button ...
+								
+													if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+													{
+														etn.classList.remove( 'Open' );
+														etn.classList.add( 'Closed' );
+													}
+								
+													// Show back button ...
+								
+													if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+													{
+														btn.classList.remove( 'Closed' );
+														btn.classList.add( 'Open' );
+													}
 										
-											};
+												};
+												
+											}
+											else
+											{
+												etn.style.display = 'none';
+											}
+											
 										}
 						
 										var btn = ge( 'DockEditBack' );
@@ -3145,41 +3356,54 @@ Sections.accounts_users = function( cmd, extra )
 									
 									themeConfig.buttonSchemeText = s.current;
 									
-									s.onchange = function(  )
+									if( Application.checkAppPermission( [ 
+										'PERM_LOOKNFEEL_CREATE_GLOBAL', 'PERM_LOOKNFEEL_CREATE_IN_WORKGROUP', 
+										'PERM_LOOKNFEEL_UPDATE_GLOBAL', 'PERM_LOOKNFEEL_UPDATE_IN_WORKGROUP', 
+										'PERM_LOOKNFEEL_GLOBAL',        'PERM_LOOKNFEEL_WORKGROUP' 
+									] ) )
 									{
 										
-										themeConfig.buttonSchemeText = this.value;
-										
-										var m = new Module( 'system' );
-										m.s = this;
-										m.onExecuted = function( e, d )
+										s.onchange = function(  )
 										{
 											
-											/*console.log( { e:e, d:d, args: { 
+											themeConfig.buttonSchemeText = this.value;
+										
+											var m = new Module( 'system' );
+											m.s = this;
+											m.onExecuted = function( e, d )
+											{
+											
+												/*console.log( { e:e, d:d, args: { 
+													setting : 'themedata_' + currTheme.toLowerCase(), 
+													data    : themeConfig, 
+													userid  : userInfo.ID, 
+													authid  : Application.authId 
+												} } );*/
+											
+												if( e != 'ok' )
+												{
+													themeConfig.buttonSchemeText = this.s.current;
+												}
+												else
+												{
+													themeConfig.buttonSchemeText = this.s.value;
+												}
+											
+											}
+											m.execute( 'setsetting', { 
 												setting : 'themedata_' + currTheme.toLowerCase(), 
 												data    : themeConfig, 
 												userid  : userInfo.ID, 
 												authid  : Application.authId 
-											} } );*/
-											
-											if( e != 'ok' )
-											{
-												themeConfig.buttonSchemeText = this.s.current;
-											}
-											else
-											{
-												themeConfig.buttonSchemeText = this.s.value;
-											}
-											
-										}
-										m.execute( 'setsetting', { 
-											setting : 'themedata_' + currTheme.toLowerCase(), 
-											data    : themeConfig, 
-											userid  : userInfo.ID, 
-											authid  : Application.authId 
-										} );
+											} );
 										
-									};
+										};
+										
+									}
+									else
+									{
+										s.disabled = true;
+									}
 								}
 								
 								if( ge( 'theme_dark_button' ) )
@@ -3201,68 +3425,78 @@ Sections.accounts_users = function( cmd, extra )
 										themeConfig.colorSchemeText = 'light';
 									}
 									
-									b.onclick = function(  )
+									if( Application.checkAppPermission( [ 
+										'PERM_LOOKNFEEL_CREATE_GLOBAL', 'PERM_LOOKNFEEL_CREATE_IN_WORKGROUP', 
+										'PERM_LOOKNFEEL_UPDATE_GLOBAL', 'PERM_LOOKNFEEL_UPDATE_IN_WORKGROUP', 
+										'PERM_LOOKNFEEL_GLOBAL',        'PERM_LOOKNFEEL_WORKGROUP' 
+									] ) )
 									{
 										
-										if( this.classList.contains( 'fa-toggle-off' ) )
+										b.onclick = function(  )
 										{
-											themeConfig.colorSchemeText = 'charcoal';
-										}
-										else
-										{
-											themeConfig.colorSchemeText = 'light';
-										}
 										
-										var m = new Module( 'system' );
-										m.b = this;
-										m.onExecuted = function( e, d )
-										{
+											if( this.classList.contains( 'fa-toggle-off' ) )
+											{
+												themeConfig.colorSchemeText = 'charcoal';
+											}
+											else
+											{
+												themeConfig.colorSchemeText = 'light';
+											}
+										
+											var m = new Module( 'system' );
+											m.b = this;
+											m.onExecuted = function( e, d )
+											{
 											
-											/*console.log( { e:e, d:d, args: { 
+												/*console.log( { e:e, d:d, args: { 
+													setting : 'themedata_' + currTheme.toLowerCase(), 
+													data    : themeConfig, 
+													userid  : userInfo.ID, 
+													authid  : Application.authId 
+												} } );*/
+											
+												if( this.b.classList.contains( 'fa-toggle-off' ) )
+												{
+												
+													if( e == 'ok' )
+													{
+														this.b.classList.remove( 'fa-toggle-off' );
+														this.b.classList.add( 'fa-toggle-on' );
+													}
+													else
+													{
+														themeConfig.colorSchemeText = 'light';
+													}
+												
+												}
+												else
+												{
+												
+													if( e == 'ok' )
+													{
+														this.b.classList.remove( 'fa-toggle-on' );
+														this.b.classList.add( 'fa-toggle-off' );
+													}
+													else
+													{
+														themeConfig.colorSchemeText = 'charcoal';
+													}
+												
+												}
+											
+											}
+											m.execute( 'setsetting', { 
 												setting : 'themedata_' + currTheme.toLowerCase(), 
 												data    : themeConfig, 
 												userid  : userInfo.ID, 
 												authid  : Application.authId 
-											} } );*/
-											
-											if( this.b.classList.contains( 'fa-toggle-off' ) )
-											{
-												
-												if( e == 'ok' )
-												{
-													this.b.classList.remove( 'fa-toggle-off' );
-													this.b.classList.add( 'fa-toggle-on' );
-												}
-												else
-												{
-													themeConfig.colorSchemeText = 'light';
-												}
-												
-											}
-											else
-											{
-												
-												if( e == 'ok' )
-												{
-													this.b.classList.remove( 'fa-toggle-on' );
-													this.b.classList.add( 'fa-toggle-off' );
-												}
-												else
-												{
-													themeConfig.colorSchemeText = 'charcoal';
-												}
-												
-											}
-											
-										}
-										m.execute( 'setsetting', { 
-											setting : 'themedata_' + currTheme.toLowerCase(), 
-											data    : themeConfig, 
-											userid  : userInfo.ID, 
-											authid  : Application.authId 
-										} );
+											} );
 										
-									};
+										};
+										
+									}
+									
 								}
 								
 								if( ge( 'workspace_count_input' ) )
@@ -3270,47 +3504,62 @@ Sections.accounts_users = function( cmd, extra )
 									var i = ge( 'workspace_count_input' );
 									i.value = ( workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1' );
 									i.current = i.value;
-									i.onchange = function(  )
+									
+									if( Application.checkAppPermission( [ 
+										'PERM_LOOKNFEEL_CREATE_GLOBAL', 'PERM_LOOKNFEEL_CREATE_IN_WORKGROUP', 
+										'PERM_LOOKNFEEL_UPDATE_GLOBAL', 'PERM_LOOKNFEEL_UPDATE_IN_WORKGROUP', 
+										'PERM_LOOKNFEEL_GLOBAL',        'PERM_LOOKNFEEL_WORKGROUP' 
+									] ) )
 									{
-										if( this.value >= 1 )
+										
+										i.onchange = function(  )
 										{
-											var m = new Module( 'system' );
-											m.i = this;
-											m.onExecuted = function( e, d )
+											if( this.value >= 1 )
 											{
+												var m = new Module( 'system' );
+												m.i = this;
+												m.onExecuted = function( e, d )
+												{
 												
-												/*console.log( { e:e, d:d, args: { 
+													/*console.log( { e:e, d:d, args: { 
+														setting : 'workspacecount', 
+														data    : this.i.value, 
+														userid  : userInfo.ID, 
+														authid  : Application.authId 
+													} } );*/
+												
+													if( e != 'ok' )
+													{
+														this.i.value = this.i.current;
+													}
+													else
+													{
+														this.i.current = this.i.value;
+													}
+												
+												}
+											
+												var setData = { 
 													setting : 'workspacecount', 
-													data    : this.i.value, 
+													data    : this.value, 
 													userid  : userInfo.ID, 
 													authid  : Application.authId 
-												} } );*/
-												
-												if( e != 'ok' )
-												{
-													this.i.value = this.i.current;
 												}
-												else
-												{
-													this.i.current = this.i.value;
-												}
-												
+												m.execute( 'setsetting', setData );
 											}
-											
-											var setData = { 
-												setting : 'workspacecount', 
-												data    : this.value, 
-												userid  : userInfo.ID, 
-												authid  : Application.authId 
+											else
+											{
+												this.value = this.current;
 											}
-											m.execute( 'setsetting', setData );
-										}
-										else
-										{
-											this.value = this.current;
-										}
 										
-									};
+										};
+										
+									}
+									else
+									{
+										i.disabled = true;
+									}
+									
 								}
 								
 								if( ge( 'wallpaper_button_inner' ) )
@@ -3324,86 +3573,98 @@ Sections.accounts_users = function( cmd, extra )
 									//	ge( 'WallpaperContainer' ).classList.add( 'Open' );
 									//}
 									
-									
-									
-									var b = ge( 'wallpaper_button_inner' );
-									b.onclick = function(  )
+									if( Application.checkAppPermission( [ 
+										'PERM_LOOKNFEEL_CREATE_GLOBAL', 'PERM_LOOKNFEEL_CREATE_IN_WORKGROUP', 
+										'PERM_LOOKNFEEL_UPDATE_GLOBAL', 'PERM_LOOKNFEEL_UPDATE_IN_WORKGROUP', 
+										'PERM_LOOKNFEEL_GLOBAL',        'PERM_LOOKNFEEL_WORKGROUP' 
+									] ) )
 									{
 										
-										var flags = {
-											type: 'load',
-											path: 'Home:',
-											suffix: [ 'jpg', 'jpeg', 'png', 'gif' ],
-											triggerFunction: function( item )
-											{
-												if( item && item.length && item[ 0 ].Path )
+										var b = ge( 'wallpaper_button_inner' );
+										b.onclick = function(  )
+										{
+										
+											var flags = {
+												type: 'load',
+												path: 'Home:',
+												suffix: [ 'jpg', 'jpeg', 'png', 'gif' ],
+												triggerFunction: function( item )
 												{
-													
-													//console.log( 'loaded image ... ', item );
-													
-													var m = new Module( 'system' );
-													m.onExecuted = function( e, d )
+													if( item && item.length && item[ 0 ].Path )
 													{
+													
+														//console.log( 'loaded image ... ', item );
+													
+														var m = new Module( 'system' );
+														m.onExecuted = function( e, d )
+														{
 														
-														/*console.log( 'userwallpaperset ', { e:e, d:d, args: { 
+															/*console.log( 'userwallpaperset ', { e:e, d:d, args: { 
+																path    : item[ 0 ].Path, 
+																userid  : userInfo.ID, 
+																authid  : Application.authId 
+															} } );*/
+														
+															var data = false;
+														
+															try
+															{
+																data = JSON.parse( d );
+															}
+															catch( e ) {  }
+														
+															if( e == 'ok' )
+															{
+															
+																// Load the image
+																var image = new Image();
+																image.onload = function()
+																{
+																	// Resizes the image
+																	var canvas = ge( 'AdminWallpaper' );
+																	var context = canvas.getContext( '2d' );
+																	context.drawImage( image, 0, 0, 256, 256 );
+																
+																	if( data )
+																	{
+																		Notify( { title: 'success', text: data.message } );
+																	}
+																
+																}
+																image.src = getImageUrl( item[ 0 ].Path );
+															
+															}
+															else
+															{
+															
+																if( data )
+																{
+																	Notify( { title: 'failed', text: data.message } );
+																}
+															
+															}
+													
+														}
+														m.execute( 'userwallpaperset', { 
 															path    : item[ 0 ].Path, 
 															userid  : userInfo.ID, 
 															authid  : Application.authId 
-														} } );*/
-														
-														var data = false;
-														
-														try
-														{
-															data = JSON.parse( d );
-														}
-														catch( e ) {  }
-														
-														if( e == 'ok' )
-														{
-															
-															// Load the image
-															var image = new Image();
-															image.onload = function()
-															{
-																// Resizes the image
-																var canvas = ge( 'AdminWallpaper' );
-																var context = canvas.getContext( '2d' );
-																context.drawImage( image, 0, 0, 256, 256 );
-																
-																if( data )
-																{
-																	Notify( { title: 'success', text: data.message } );
-																}
-																
-															}
-															image.src = getImageUrl( item[ 0 ].Path );
-															
-														}
-														else
-														{
-															
-															if( data )
-															{
-																Notify( { title: 'failed', text: data.message } );
-															}
-															
-														}
+														} );
 													
 													}
-													m.execute( 'userwallpaperset', { 
-														path    : item[ 0 ].Path, 
-														userid  : userInfo.ID, 
-														authid  : Application.authId 
-													} );
-													
 												}
-											}
-										};
-										// Execute
-										( new Filedialog( flags ) );
+											};
+											// Execute
+											( new Filedialog( flags ) );
 								
-									};
+										};
+									
+									}
+									else
+									{
+										ge( 'WallpaperContainer' ).style.display = 'none';
+									}
+									
 								}
 						
 								if( ge( 'AdminWallpaper' ) && ge( 'AdminWallpaperPreview' ) )
@@ -3934,7 +4195,7 @@ Sections.accounts_users = function( cmd, extra )
 						
 						console.log( '// 6 | Get all applications' );
 						
-						initUsersDetails( loadingInfo, [ /*'application', */'looknfeel' ] );
+						initUsersDetails( loadingInfo, [ 'application', 'looknfeel' ] );
 						
 					} );
 					
@@ -4396,9 +4657,23 @@ Sections.accounts_users = function( cmd, extra )
 						// Avatar 
 					
 						var ae = ge( 'AdminAvatarEdit' );
-						if( ae ) ae.onclick = function( e )
+						if( ae )
 						{
-							changeAvatar();
+							if( Application.checkAppPermission( [ 
+								'PERM_USER_CREATE_GLOBAL', 'PERM_USER_CREATE_IN_WORKGROUP', 
+								'PERM_USER_UPDATE_GLOBAL', 'PERM_USER_UPDATE_IN_WORKGROUP', 
+								'PERM_USER_GLOBAL',        'PERM_WORKGROUP_GLOBAL' 
+							] ) )
+							{
+								ae.onclick = function( e )
+								{
+									changeAvatar();
+								}
+							}
+							else
+							{
+								ae.style.display = 'none';
+							}
 						}
 					
 						var au = ge( 'usFullname' );
@@ -5288,8 +5563,6 @@ Sections.accounts_users = function( cmd, extra )
 				var m = new Module( 'system' );
 				m.onExecuted = function( e, d )
 				{
-					//console.log( 'listuserapplications ', { e:e, d:d } );
-					
 					if( e == 'ok' && d )
 					{
 						try
@@ -5298,12 +5571,16 @@ Sections.accounts_users = function( cmd, extra )
 					
 							if( json )
 							{
+								console.log( 'listuserapplications ', { e:e, d:json } );
+								
 								return callback( true, json );
 							}
 						} 
 						catch( e ){ } 
 					}
-				
+					
+					console.log( 'listuserapplications ', { e:e, d:d } );
+					
 					return callback( false, false );
 				}
 				m.execute( 'listuserapplications', { userid: id, authid: Application.authId } );
@@ -5321,12 +5598,16 @@ Sections.accounts_users = function( cmd, extra )
 					
 							if( json )
 							{
+								console.log( 'software ', { e:e, d:json } );
+								
 								return callback( true, json );
 							}
 						} 
 						catch( e ){ } 
 					}
-				
+					
+					console.log( 'software ', { e:e, d:d } );
+					
 					return callback( false, false );
 				}
 				m.execute( 'software', { mode: 'showall', authid: Application.authId } );
@@ -5449,8 +5730,6 @@ Sections.accounts_users = function( cmd, extra )
 		var m = new Module( 'dock' );
 		m.onExecuted = function( e, d )
 		{
-			//console.log( 'getDockItems ', { e:e, d:d } );
-			
 			var data = false;
 												
 			try
@@ -5461,10 +5740,14 @@ Sections.accounts_users = function( cmd, extra )
 			
 			if( e == 'ok' && data )
 			{
+				console.log( 'getDockItems ', { e:e, d:data } );
+				
 				if( callback ) callback( true, data );
 			}
 			else
 			{
+				console.log( 'getDockItems ', { e:e, d:d } );
+				
 				if( callback ) callback( false, false );
 			}
 		}
@@ -7386,13 +7669,36 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 					str += '</div>';
 					
 					str += '<div class="HRow PaddingTop">';
-					str += '<button class="IconSmall FloatRight MarginLeft" onclick="Sections.user_disk_save(' + userid + ',\'' + storage.id + '\')">Save</button>';
+					
+					if( Application.checkAppPermission( [ 
+						'PERM_STORAGE_CREATE_GLOBAL', 'PERM_STORAGE_CREATE_IN_WORKGROUP', 
+						'PERM_STORAGE_UPDATE_GLOBAL', 'PERM_STORAGE_UPDATE_IN_WORKGROUP', 
+						'PERM_STORAGE_GLOBAL',        'PERM_STORAGE_WORKGROUP' 
+					] ) )
+					{
+						str += '<button class="IconSmall FloatRight MarginLeft" onclick="Sections.user_disk_save(' + userid + ',\'' + storage.id + '\')">Save</button>';
+					}
+					
 					str += '<button class="IconSmall FloatRight MarginLeft" onclick="Sections.user_disk_cancel(' + userid + ')">Cancel</button>';
 					
 					if( storage.id )
 					{
-						str += '<button class="IconSmall Danger FloatRight MarginLeft" onclick="Sections.user_disk_remove(\'' + storage.name + '\',' + storage.id + ',' + userid + ')">Remove disk</button>';
-						str += '<button class="IconSmall FloatLeft MarginRight" onclick="Sections.user_disk_mount(\'' + storage.name + '\',' + userid + ',this)">' + ( storage.mont > 0 ? 'Unmount disk' : 'Mount disk' ) + '</button>';
+						if( Application.checkAppPermission( [ 
+							'PERM_STORAGE_DELETE_GLOBAL', 'PERM_STORAGE_DELETE_IN_WORKGROUP', 
+							'PERM_STORAGE_GLOBAL',        'PERM_STORAGE_WORKGROUP' 
+						] ) )
+						{
+							str += '<button class="IconSmall Danger FloatRight MarginLeft" onclick="Sections.user_disk_remove(\'' + storage.name + '\',' + storage.id + ',' + userid + ')">Remove disk</button>';
+						}
+						
+						if( Application.checkAppPermission( [ 
+							'PERM_STORAGE_CREATE_GLOBAL', 'PERM_STORAGE_CREATE_IN_WORKGROUP', 
+							'PERM_STORAGE_UPDATE_GLOBAL', 'PERM_STORAGE_UPDATE_IN_WORKGROUP', 
+							'PERM_STORAGE_GLOBAL',        'PERM_STORAGE_WORKGROUP' 
+						] ) )
+						{
+							str += '<button class="IconSmall FloatLeft MarginRight" onclick="Sections.user_disk_mount(\'' + storage.name + '\',' + userid + ',this)">' + ( storage.mont > 0 ? 'Unmount disk' : 'Mount disk' ) + '</button>';
+						}
 					}
 					
 					str += '</div>';
@@ -7534,7 +7840,11 @@ Sections.user_disk_refresh = function( mountlist, userid )
 			
 			// If "SQLWorkgroupDrive" handle the edit in Workgroups ...
 			
-			if( storage.type == 'SQLWorkgroupDrive' )
+			if( storage.type == 'SQLWorkgroupDrive' || !Application.checkAppPermission( [ 
+				'PERM_STORAGE_CREATE_GLOBAL', 'PERM_STORAGE_CREATE_IN_WORKGROUP', 
+				'PERM_STORAGE_UPDATE_GLOBAL', 'PERM_STORAGE_UPDATE_IN_WORKGROUP', 
+				'PERM_STORAGE_GLOBAL',        'PERM_STORAGE_WORKGROUP' 
+			] ) )
 			{
 				mlst += '<div class="PaddingSmall Ellipsis">';
 			}

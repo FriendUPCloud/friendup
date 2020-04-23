@@ -96,6 +96,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 					'authid'  : Application.authId, 
 					'data'    : { 
 						'permission' : [ 
+							'PERM_WORKGROUP_READ_GLOBAL', 
+							'PERM_WORKGROUP_READ_IN_WORKGROUP', 
 							'PERM_WORKGROUP_GLOBAL', 
 							'PERM_WORKGROUP_WORKGROUP' 
 						]
@@ -147,6 +149,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 					'authid'  : Application.authId, 
 					'data'    : { 
 						'permission' : [ 
+							'PERM_WORKGROUP_READ_GLOBAL', 
+							'PERM_WORKGROUP_READ_IN_WORKGROUP', 
 							'PERM_WORKGROUP_GLOBAL', 
 							'PERM_WORKGROUP_WORKGROUP' 
 						]
@@ -362,6 +366,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 			'authid'  : Application.authId, 
 			'data'    : { 
 				'permission' : [ 
+					'PERM_WORKGROUP_CREATE_GLOBAL', 
+					'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
 					'PERM_WORKGROUP_GLOBAL', 
 					'PERM_WORKGROUP_WORKGROUP' 
 				]
@@ -468,6 +474,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 				'authid'  : Application.authId, 
 				'data'    : { 
 					'permission' : [ 
+						'PERM_WORKGROUP_CREATE_GLOBAL', 
+						'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+						'PERM_WORKGROUP_UPDATE_GLOBAL', 
+						'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
 						'PERM_WORKGROUP_GLOBAL', 
 						'PERM_WORKGROUP_WORKGROUP' 
 					]
@@ -587,6 +597,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 				'authid'  : Application.authId, 
 				'data'    : { 
 					'permission' : [ 
+						'PERM_WORKGROUP_CREATE_GLOBAL', 
+						'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+						'PERM_WORKGROUP_UPDATE_GLOBAL', 
+						'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
 						'PERM_WORKGROUP_GLOBAL', 
 						'PERM_WORKGROUP_WORKGROUP' 
 					]
@@ -628,6 +642,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 				'authid'  : Application.authId, 
 				'data'    : { 
 					'permission' : [ 
+						'PERM_WORKGROUP_DELETE_GLOBAL', 
+						'PERM_WORKGROUP_DELETE_IN_WORKGROUP', 
 						'PERM_WORKGROUP_GLOBAL', 
 						'PERM_WORKGROUP_WORKGROUP' 
 					]
@@ -925,6 +941,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 					'authid'  : Application.authId, 
 					'data'    : { 
 						'permission' : [ 
+							'PERM_STORAGE_CREATE_GLOBAL', 
+							'PERM_STORAGE_CREATE_IN_WORKGROUP', 
+							'PERM_STORAGE_UPDATE_GLOBAL', 
+							'PERM_STORAGE_UPDATE_IN_WORKGROUP', 
 							'PERM_STORAGE_GLOBAL', 
 							'PERM_STORAGE_WORKGROUP' 
 						]
@@ -965,13 +985,17 @@ Sections.accounts_workgroups = function( cmd, extra )
 				}
 				
 				vars.authid = Application.authId;
-			
+				
 				vars.args = JSON.stringify( {
 					'type'    : 'write', 
 					'context' : 'application', 
 					'authid'  : Application.authId, 
 					'data'    : { 
 						'permission' : [ 
+							'PERM_STORAGE_CREATE_GLOBAL', 
+							'PERM_STORAGE_CREATE_IN_WORKGROUP', 
+							'PERM_STORAGE_UPDATE_GLOBAL', 
+							'PERM_STORAGE_UPDATE_IN_WORKGROUP', 
 							'PERM_STORAGE_GLOBAL', 
 							'PERM_STORAGE_WORKGROUP' 
 						]
@@ -1059,6 +1083,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 						'authid'  : Application.authId, 
 						'data'    : { 
 							'permission' : [ 
+								'PERM_WORKGROUP_DELETE_GLOBAL', 
+								'PERM_WORKGROUP_DELETE_IN_WORKGROUP', 
 								'PERM_WORKGROUP_GLOBAL', 
 								'PERM_WORKGROUP_WORKGROUP' 
 							]
@@ -1555,12 +1581,33 @@ Sections.accounts_workgroups = function( cmd, extra )
 		{
 			for( var a in roles )
 			{
+				
+				if( !roles[a].WorkgroupID && !Application.checkAppPermission( [ 
+					'PERM_ROLE_CREATE_GLOBAL', 'PERM_ROLE_CREATE_IN_WORKGROUP', 
+					'PERM_ROLE_READ_GLOBAL',   'PERM_ROLE_READ_IN_WORKGROUP', 
+					'PERM_ROLE_UPDATE_GLOBAL', 'PERM_ROLE_UPDATE_IN_WORKGROUP', 
+					'PERM_ROLE_GLOBAL',        'PERM_ROLE_WORKGROUP' 
+				] ) )
+				{
+					continue;
+				}
+				
 				rstr += '<div class="HRow">';
 				rstr += '<div class="PaddingSmall HContent80 FloatLeft Ellipsis">' + roles[a].Name + '</div>';
 				rstr += '<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
-				rstr += '<button onclick="Sections.accounts_workgroups(\'update_role\',{rid:'+roles[a].ID+',groupid:'+workgroup.groupid+',_this:this})" class="IconButton IconSmall ButtonSmall FloatRight' + ( roles[a].WorkgroupID ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+				
+				if( Application.checkAppPermission( [ 
+					'PERM_ROLE_CREATE_GLOBAL', 'PERM_ROLE_CREATE_IN_WORKGROUP', 
+					'PERM_ROLE_UPDATE_GLOBAL', 'PERM_ROLE_UPDATE_IN_WORKGROUP', 
+					'PERM_ROLE_GLOBAL',        'PERM_ROLE_WORKGROUP' 
+				] ) )
+				{
+					rstr += '<button onclick="Sections.accounts_workgroups(\'update_role\',{rid:'+roles[a].ID+',groupid:'+workgroup.groupid+',_this:this})" class="IconButton IconSmall ButtonSmall FloatRight' + ( roles[a].WorkgroupID ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+				}
+				
 				rstr += '</div>';
 				rstr += '</div>';
+				
 			}
 		}
 		
@@ -1615,25 +1662,45 @@ Sections.accounts_workgroups = function( cmd, extra )
 					}
 				}
 				
-				ge( 'AdminUsersContainer' ).className = 'Open';
+				//ge( 'AdminUsersContainer' ).className = 'Open';
 			}
 			
 			var bg1  = ge( 'GroupSaveBtn' );
-			if( bg1 ) bg1.onclick = function( e )
+			if( bg1 ) 
 			{
-				// Save workgroup ...
-				
-				if( info.ID )
+				if( 
+				( info.ID && Application.checkAppPermission( [ 
+					'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+					'PERM_WORKGROUP_UPDATE_GLOBAL', 'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+					'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
+				] ) ) || 
+				( !info.ID && Application.checkAppPermission( [ 
+					'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+					'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
+				] ) ) 
+				)
 				{
-					console.log( '// save workgroup' );
+					bg1.onclick = function( e )
+					{
+						// Save workgroup ...
+				
+						if( info.ID )
+						{
+							console.log( '// save workgroup' );
 					
-					update( info.ID );
+							update( info.ID );
+						}
+						else
+						{
+							console.log( '// create workgroup' );
+					
+							create();
+						}
+					}
 				}
 				else
 				{
-					console.log( '// create workgroup' );
-					
-					create();
+					bg1.style.display = 'none';
 				}
 			}
 			var bg2  = ge( 'GroupCancelBtn' );
@@ -1655,24 +1722,37 @@ Sections.accounts_workgroups = function( cmd, extra )
 			}
 			
 			var bg4  = ge( 'GroupDeleteBtn' );
-			if( bg4 ) bg4.onclick = function( e )
+			if( bg4 )
 			{
-				
-				// Delete workgroup ...
-				
-				if( info.ID )
+				if( Application.checkAppPermission( [ 
+					'PERM_WORKGROUP_DELETE_GLOBAL', 'PERM_WORKGROUP_DELETE_IN_WORKGROUP', 
+					'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
+				] ) )
 				{
-					console.log( '// delete workgroup' );
-					
-					removeBtn( this, { id: info.ID, button_text: 'i18n_delete_workgroup', }, function ( args )
+					bg4.onclick = function( e )
 					{
-						
-						remove( args.id );
-						
-					} );
-					
-				}
 				
+						// Delete workgroup ...
+				
+						if( info.ID )
+						{
+							console.log( '// delete workgroup' );
+					
+							removeBtn( this, { id: info.ID, button_text: 'i18n_delete_workgroup', }, function ( args )
+							{
+						
+								remove( args.id );
+						
+							} );
+					
+						}
+				
+					}
+				}
+				else
+				{
+					bg4.style.display = 'none';
+				}
 			}
 			
 			
@@ -1951,41 +2031,48 @@ Sections.accounts_workgroups = function( cmd, extra )
 																{ 
 																	'element' : function( ids, id, func ) 
 																	{
-																		var b = document.createElement( 'button' );
-																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
-																		b.onclick = function(  )
+																		if( Application.checkAppPermission( [ 
+																			'PERM_USER_CREATE_GLOBAL', 'PERM_USER_CREATE_IN_WORKGROUP', 
+																			'PERM_USER_UPDATE_GLOBAL', 'PERM_USER_UPDATE_IN_WORKGROUP', 
+																			'PERM_USER_GLOBAL',        'PERM_USER_WORKGROUP' 
+																		] ) )
 																		{
-																			
-																			var pnt = this.parentNode.parentNode;
-																			
-																			removeBtn( this, { ids: ids, id: id, func: func, pnt: pnt }, function ( args )
+																			var b = document.createElement( 'button' );
+																			b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																			b.onclick = function(  )
 																			{
-																				
-																				console.log( 'removeUser( '+args.id+', '+info.ID+', callback, vars )' );
-																				
-																				removeUser( args.id, info.ID, function( e, d, vars )
-																				{
-																					
-																					if( e && vars )
-																					{
-																						vars.func.updateids( 'users', vars.uid, false );
-																						
-																						if( vars.pnt )
-																						{
-																							vars.pnt.innerHTML = '';
-																						}
-																					}
-																					else
-																					{
-																						console.log( { e:e, d:d, vars: vars } );
-																					}
-																					
-																				}, { uid: args.id, func: func, pnt: pnt } );
-																				
-																			} );
 																			
-																		};
-																		return b;
+																				var pnt = this.parentNode.parentNode;
+																			
+																				removeBtn( this, { ids: ids, id: id, func: func, pnt: pnt }, function ( args )
+																				{
+																				
+																					console.log( 'removeUser( '+args.id+', '+info.ID+', callback, vars )' );
+																				
+																					removeUser( args.id, info.ID, function( e, d, vars )
+																					{
+																					
+																						if( e && vars )
+																						{
+																							vars.func.updateids( 'users', vars.uid, false );
+																						
+																							if( vars.pnt )
+																							{
+																								vars.pnt.innerHTML = '';
+																							}
+																						}
+																						else
+																						{
+																							console.log( { e:e, d:d, vars: vars } );
+																						}
+																					
+																					}, { uid: args.id, func: func, pnt: pnt } );
+																				
+																				} );
+																			
+																			};
+																			return b;
+																		}
 																	}( this.ids, list[k].ID, this.func ) 
 																}
 															]
@@ -2251,28 +2338,39 @@ Sections.accounts_workgroups = function( cmd, extra )
 								var etn = ge( 'UsersEdit' );
 								if( etn )
 								{
-									etn.onclick = function( e )
+									if( Application.checkAppPermission( [ 
+										'PERM_USER_CREATE_GLOBAL', 'PERM_USER_CREATE_IN_WORKGROUP', 
+										'PERM_USER_UPDATE_GLOBAL', 'PERM_USER_UPDATE_IN_WORKGROUP', 
+										'PERM_USER_GLOBAL',        'PERM_USER_WORKGROUP' 
+									] ) )
 									{
-								
-										init.edit();
-								
-										// Hide add / edit button ...
-								
-										if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+										etn.onclick = function( e )
 										{
-											etn.classList.remove( 'Open' );
-											etn.classList.add( 'Closed' );
-										}
 								
-										// Show back button ...
+											init.edit();
 								
-										if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
-										{
-											btn.classList.remove( 'Closed' );
-											btn.classList.add( 'Open' );
-										}
+											// Hide add / edit button ...
+								
+											if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+											{
+												etn.classList.remove( 'Open' );
+												etn.classList.add( 'Closed' );
+											}
+								
+											// Show back button ...
+								
+											if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+											{
+												btn.classList.remove( 'Closed' );
+												btn.classList.add( 'Open' );
+											}
 										
-									};
+										};
+									}
+									else
+									{
+										etn.style.display = 'none';
+									}
 								}
 						
 								var btn = ge( 'UsersEditBack' );
@@ -2442,12 +2540,21 @@ Sections.accounts_workgroups = function( cmd, extra )
 														{
 															var d = document.createElement( 'div' );
 															d.className = 'PaddingSmall Ellipsis';
-															d.onclick = function (  )
+															
+															if( Application.checkAppPermission( [ 
+																'PERM_STORAGE_CREATE_GLOBAL', 'PERM_STORAGE_CREATE_IN_WORKGROUP', 
+																'PERM_STORAGE_UPDATE_GLOBAL', 'PERM_STORAGE_UPDATE_IN_WORKGROUP', 
+																'PERM_STORAGE_GLOBAL',        'PERM_STORAGE_WORKGROUP' 
+															] ) )
 															{
+																d.onclick = function (  )
+																{
 																																
-																init.edit( storage.id, storage.user );
+																	init.edit( storage.id, storage.user );
 																
-															};
+																};
+															}
+															
 															d.innerHTML = ''
 															+ '	<div class="Col1 FloatLeft" id="Storage_' + storage.id + '">'
 															+ '		<div class="disk">'
@@ -2929,31 +3036,38 @@ Sections.accounts_workgroups = function( cmd, extra )
 															
 															'element' : function( groupid, storage, init ) 
 															{
-																var d = document.createElement( 'button' );
-																d.className = 'IconSmall FloatRight MarginLeft';
-																d.innerHTML = 'Save';
-																d.onclick = function ()
+																if( Application.checkAppPermission( [ 
+																	'PERM_STORAGE_CREATE_GLOBAL', 'PERM_STORAGE_CREATE_IN_WORKGROUP', 
+																	'PERM_STORAGE_UPDATE_GLOBAL', 'PERM_STORAGE_UPDATE_IN_WORKGROUP', 
+																	'PERM_STORAGE_GLOBAL',        'PERM_STORAGE_WORKGROUP' 
+																] ) )
 																{
-																	
-																	saveStorage( storage.id, storage.user, function()
+																	var d = document.createElement( 'button' );
+																	d.className = 'IconSmall FloatRight MarginLeft';
+																	d.innerHTML = 'Save';
+																	d.onclick = function ()
 																	{
-																		
-																		listStorage( function( res, js )
-																		{
-																			
-																			console.log( 'init.list(  ); ', { res: res, js:js } );
-																			
-																			if( res )
-																			{
-																				init.list( js );
-																			}
-																			
-																		}, groupid );
-																		
-																	} );
 																	
-																};
-																return d;
+																		saveStorage( storage.id, storage.user, function()
+																		{
+																		
+																			listStorage( function( res, js )
+																			{
+																			
+																				console.log( 'init.list(  ); ', { res: res, js:js } );
+																			
+																				if( res )
+																				{
+																					init.list( js );
+																				}
+																			
+																			}, groupid );
+																		
+																		} );
+																	
+																	};
+																	return d;
+																}
 															}( workgroup.groupid, storage, init )
 															
 														},
@@ -2980,7 +3094,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 															
 															'element' : function( groupid, storage, init ) 
 															{
-																if( storage.id )
+																if( storage.id && Application.checkAppPermission( [ 
+																	'PERM_STORAGE_DELETE_GLOBAL', 'PERM_STORAGE_DELETE_IN_WORKGROUP', 
+																	'PERM_STORAGE_GLOBAL',        'PERM_STORAGE_WORKGROUP' 
+																] ) )
 																{
 																	var d = document.createElement( 'button' );
 																	d.className = 'IconSmall Danger FloatRight MarginLeft';
@@ -3016,7 +3133,11 @@ Sections.accounts_workgroups = function( cmd, extra )
 															
 															'element' : function( groupid, storage, init ) 
 															{
-																if( storage.id )
+																if( storage.id && Application.checkAppPermission( [ 
+																	'PERM_STORAGE_CREATE_GLOBAL', 'PERM_STORAGE_CREATE_IN_WORKGROUP', 
+																	'PERM_STORAGE_UPDATE_GLOBAL', 'PERM_STORAGE_UPDATE_IN_WORKGROUP', 
+																	'PERM_STORAGE_GLOBAL',        'PERM_STORAGE_WORKGROUP' 
+																] ) )
 																{
 																	var d = document.createElement( 'button' );
 																	d.className = 'IconSmall FloatLeft MarginRight';
@@ -3133,12 +3254,22 @@ Sections.accounts_workgroups = function( cmd, extra )
 								var etn = ge( 'StorageEdit' );
 								if( etn )
 								{
-									etn.onclick = function( e )
+									if( Application.checkAppPermission( [ 
+										'PERM_STORAGE_CREATE_GLOBAL', 'PERM_STORAGE_CREATE_IN_WORKGROUP', 
+										'PERM_STORAGE_GLOBAL',        'PERM_STORAGE_WORKGROUP' 
+									] ) )
 									{
+										etn.onclick = function( e )
+										{
 								
-										init.edit();
+											init.edit();
 										
-									};
+										};
+									}
+									else
+									{
+										etn.style.display = 'none';
+									}
 								}
 								
 								// Show listed storage ... 
@@ -3149,6 +3280,49 @@ Sections.accounts_workgroups = function( cmd, extra )
 								
 						}
 						
+					},
+					
+					// Permissions -------------------------------------------------------------------------------------
+					
+					permissions : function ( show )
+					{
+						// Check Permissions
+						
+						console.log( '// Check Permissions ', ( show ? show : [] ) );
+						
+						if( !show || show.indexOf( 'user' ) >= 0 )
+						{
+							if( Application.checkAppPermission( [ 
+								'PERM_USER_READ_GLOBAL', 'PERM_USER_READ_IN_WORKGROUP', 
+								'PERM_USER_GLOBAL',      'PERM_USER_WORKGROUP' 
+							] ) )
+							{
+								if( ge( 'AdminUsersContainer' ) ) ge( 'AdminUsersContainer' ).className = 'Open';
+							}
+						}
+						
+						if( !show || show.indexOf( 'storage' ) >= 0 )
+						{
+							if( Application.checkAppPermission( [ 
+								'PERM_STORAGE_READ_GLOBAL', 'PERM_STORAGE_READ_IN_WORKGROUP', 
+								'PERM_STORAGE_GLOBAL',      'PERM_STORAGE_WORKGROUP' 
+							] ) )
+							{
+								if( ge( 'AdminStorageContainer' ) ) ge( 'AdminStorageContainer' ).className = 'Open';
+							}
+						}
+						
+						if( !show || show.indexOf( 'role' ) >= 0 )
+						{
+							if( Application.checkAppPermission( [ 
+								'PERM_ROLE_READ_GLOBAL', 'PERM_ROLE_READ_IN_WORKGROUP', 
+								'PERM_ROLE_GLOBAL',      'PERM_ROLE_WORKGROUP' 
+							] ) )
+							{
+								if( ge( 'AdminRolesContainer' ) ) ge( 'AdminRolesContainer' ).className = 'Open';
+							}
+						}
+						
 					}
 					
 				};
@@ -3157,6 +3331,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				
 				func.users();
 				func.storage();
+				func.permissions();
 				
 			
 			
@@ -3182,8 +3357,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 	
 	function initMain()
 	{
-		var checkedGlobal = Application.checkAppPermission( 'PERM_WORKGROUP_GLOBAL' );
-		var checkedWorkgr = Application.checkAppPermission( 'PERM_WORKGROUP_WORKGROUP' );
+		var checkedGlobal = Application.checkAppPermission( [ 'PERM_WORKGROUP_READ_GLOBAL', 'PERM_WORKGROUP_GLOBAL' ] );
+		var checkedWorkgr = Application.checkAppPermission( [ 'PERM_WORKGROUP_READ_IN_WORKGROUP', 'PERM_WORKGROUP_WORKGROUP' ] );
 		
 		if( checkedGlobal || checkedWorkgr )
 		{
@@ -3255,16 +3430,23 @@ Sections.accounts_workgroups = function( cmd, extra )
 					d.innerHTML = '<strong' + ( z != '&nbsp;' ? '' : '' ) + '>' + ( z != '&nbsp;' ? i18n( 'i18n_header_' + z ) : '&nbsp;' ) + '</strong>';
 					headRow.appendChild( d );
 				}
-			
-				var d = document.createElement( 'div' );
-				d.className = 'HContent' + '10' + ' TextCenter FloatLeft Ellipsis';
-				d.innerHTML = '<button class="IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle"></button>';
-				d.onclick = function()
+				
+				if( Application.checkAppPermission( [ 
+					'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+					'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
+				] ) )
 				{
-					//Sections.accounts_workgroups( 'create' );
-					edit(  );
-				};
-				headRow.appendChild( d );
+					var d = document.createElement( 'div' );
+					d.className = 'HContent' + '10' + ' TextCenter FloatLeft Ellipsis';
+					d.innerHTML = '<button class="IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle"></button>';
+					d.onclick = function()
+					{
+						//Sections.accounts_workgroups( 'create' );
+						edit(  );
+					};
+					headRow.appendChild( d );
+				}
+				
 			
 				header.appendChild( headRow );
 				o.appendChild( header );
