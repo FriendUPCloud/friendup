@@ -88,6 +88,8 @@ i18n_deleting_permission_verify        : Vennligst bekreft at du ønsker å slet
 
 #printers related
 
+i18n_file                              : Fil
+i18n_about                             : About
 i18n_save                              : Lagre
 i18n_delete                            : Slett
 i18n_cancel                            : Avbryt
@@ -131,4 +133,8 @@ i18n_workgroups                        : Arbeidsgrupper
 i18n_workgroup_profile                 : Arbeidsgruppe
 i18n_workgroup_name                    : Navn
 i18n_workgroup_description             : Beskrivelse
+
+
+i18n_you_forgot_username             : Du glemte brukernavn
+i18n_you_forgot_username_desc        : Du må skrive inn et brukernavn for å lagre
 

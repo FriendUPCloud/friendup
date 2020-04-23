@@ -31,3 +31,7 @@ i18n_hide_system                        : Hide System disk
 i18n_virtual_workspaces                 : Virtual workspaces
 i18n_workspace_count                    : Workspace count
 i18n_scrollable_desktop_icons           : Scrollable desktop icons
+
+i18n_workspace_labels                   : Workspace labels
+i18n_workspaces_to_label                : No workspaces to label.
+

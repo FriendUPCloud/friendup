@@ -411,7 +411,8 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 		// use remote session
 		//
 		
-		if( strcmp( sessionId, "remote" ) == 0 )
+		if( strcmp( devname, "remote" ) == 0 )
+		//if( strcmp( sessionId, "remote" ) == 0 )
 		{
 			DEBUG("[FCDB] remote connection found\n");
 			if( l->CheckPassword( l, r, tmpusr, (char *)pass, blockTime ) == FALSE )
@@ -425,7 +426,8 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 			while( usl != NULL )
 			{
 				UserSession *s = (UserSession *)usl->us;
-				if( strcmp( s->us_SessionID, "remote" ) == 0 )
+				if( strcmp( s->us_DeviceIdentity, "remote" ) == 0 )
+				//if( strcmp( s->us_SessionID, "remote" ) == 0 )
 				{
 					break;
 				}
@@ -435,7 +437,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 			if( usl == NULL )
 			{
 				if(  tmpusr != NULL && userFromDB == TRUE ){ UserDelete( tmpusr );	tmpusr =  NULL; }
-				UserSession *ses = UserSessionNew( "remote", "remote" );
+				UserSession *ses = UserSessionNew( sessionId, "remote" );
 				if( ses != NULL )
 				{
 					ses->us_UserID = tmpusr->u_ID;
@@ -714,6 +716,7 @@ UserSession *IsSessionValid( struct AuthMod *l, Http *r __attribute__((unused)),
 
 	if( users == NULL )
 	{
+		sb->LibrarySQLDrop( sb, sqlLib );
 		//FUP_AUTHERR_USRNOTFOUND
 		return NULL;
 	}

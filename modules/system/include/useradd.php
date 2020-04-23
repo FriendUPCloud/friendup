@@ -10,8 +10,170 @@
 *                                                                              *
 *****************************************************************************©*/
 
-// Helper functions ...
+global $Logger;
+$prevlevel = $level;
 
+if( isset( $args->args->authid ) && !isset( $args->authid ) )
+{
+	$args->authid = $args->args->authid;
+}
+
+if( isset( $args->authid ) )
+{
+	require_once( 'php/include/permissions.php' );
+	
+	if( $perm = Permissions( 'write', 'application', ( 'AUTHID' . $args->authid ), [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ] ) )
+	{
+		if( is_object( $perm ) )
+		{
+			// Permission denied.
+			
+			if( $perm->response == -1 )
+			{
+				//
+				
+				//die( 'fail<!--separate-->' . json_encode( $perm ) );
+			}
+			
+			// Permission granted.
+			
+			if( $perm->response == 1 )
+			{
+				
+				$level = 'Admin';
+				
+			}
+		}
+	}
+}
+
+if( $level == 'Admin' )
+{
+	// Make sure we have the "User" type group
+	// TODO: This should not strictly be necessary when adding a user..
+	$g = new dbIO( 'FUserGroup' );
+	$g->Name = 'User';
+	$g->Load();
+	$g->Save();
+	
+	if( $g->ID > 0 )
+	{
+		//$Logger->log( "\n-\n" );
+		
+		//$Logger->log( print_r( $args, 1  ) );
+		
+		$uargs = Array(
+			'sessionid' => $args->sessionid,
+			'authid'    => $args->authid,
+			// Requirements!
+			'username'  => $args->args->username,
+			'password'  => $args->args->password,
+			'level'     => $args->args->level
+		);
+		
+		//$Logger->log( 'Creating: ' . print_r( $uargs, 1 ) );
+		
+		$res = fc_query( '/system.library/user/create', $uargs );
+		//$Logger->log( 'Result from create: ' . $res );
+		
+		// Unexpected error!
+		if( !$res ) die( 'fail<!--separate-->{"response":"100","message":"Failed to create user."}' );
+		
+		list( $code, $message ) = explode( '<!--separate-->', $res );
+		
+		//$Logger->log( 'More importantly: ' . $code . ' -> ' . $message );
+		
+		$message = json_decode( $message );
+		
+		//$Logger->log( 'Parsed json message: ' . print_r( $message, 1 ) );
+		
+		// Just pass the error code
+		if( $code != 'ok' )
+			die( $res );
+		
+		// Create the new user
+		//$Logger->log( 'Trying to load user: ' . $message->id );
+		$u = new dbIO( 'FUser' );
+		$u->Load( $message->id );
+
+		if( $u->ID > 0 )
+		{
+			//$Logger->log( 'User was created, now adding user to workgroup.' );
+			//$SqlDatabase->query( 'INSERT INTO FUserToGroup ( UserID, UserGroupID ) VALUES ( \'' . $u->ID . '\', \'' . $g->ID . '\' )' );
+				
+			// TODO: Should be a check if the user that is creating this new user has access to add users to defined workgroup(s) before saving ... 
+			
+			// TODO: It's required to add user with a workgroup if the user adding is not Admin and have rolepermissions ...
+			
+			if( $prevlevel == 'User' || isset( $args->args->workgroups ) )
+			{
+				if( !isset( $args->args->workgroups ) || !$args->args->workgroups )
+				{
+					die( 'fail<!--separate-->{"response":"Adding a User to a Workgroup is required.","code":"20"}'  );
+				}
+				else if( $wgr = explode( ',', $args->args->workgroups ) )
+				{
+					foreach( $wgr as $gid )
+					{
+						$nestedArgs = new stdClass();
+						$nestedArgs->type = 'write';
+						$nestedArgs->context = 'application';
+						$nestedArgs->authid = $args->authid;
+						$nestedArgs->data = new stdClass();
+						$nestedArgs->data->permission = Array( 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' );
+						$nestedArgs->object = 'workgroup';
+						$nestedArgs->objectid = $gid;
+						
+						$nestedArgs = json_encode( $nestedArgs );
+						
+						$w_args = [
+							'sessionid' => $args->sessionid,
+							'id'        => intval( $gid   ), 
+							'users'     => intval( $u->ID ),
+							'args'      => $nestedArgs
+						];
+						
+						// If you wanna know what's going on.
+						//$Logger->log( 'Added nested arguments: ' . print_r( $w_args, 1 ) );
+						
+						if( $res = fc_query( '/system.library/group/addusers', $w_args ) )
+						{
+							$resp = explode( '<!--separate-->', $res );
+							
+							if( $resp[0] == 'fail' )
+							{
+							
+								// 
+								$err = 'fail<!--separate-->' . ( $resp[1] ? $resp[1] : '' ) . ' [] debug: ' . print_r( $perm,1 ) . ' [] args: ' . print_r( $w_args,1 ); 
+								//$Logger->log( $err );
+								die( $err );
+							}
+							else
+							{
+								//$Logger->log( 'Added user to workgroup ' . $gid );
+							}
+						
+						}
+						else
+						{
+							//$Logger->log( 'Could not add user to workgroup ' . $gid );
+						}
+					}
+				}
+			}
+			
+			//$Logger->log( 'Completed user ' . $user->Name .'..' );
+			die( 'ok<!--separate-->' . $u->ID );
+		}
+		else
+		{
+			//$Logger->log( 'User was not created (' . $message->id . ') - or could not load from database.' );
+		}
+	}
+}
+die( 'fail<!--separate-->{"response":"user add failed"}'  );
+
+// Helper functions ...
 function fc_query( $command = '', $args = false, $method = 'POST', $headers = false )
 {
 	global $Config;	
@@ -25,7 +187,6 @@ function fc_query( $command = '', $args = false, $method = 'POST', $headers = fa
 	if( $url && strstr( $url, '?' ) )
 	{
 		$thispath = $url;
-	
 		$url = explode( '?', $url );
 	
 		if( isset( $url[1] ) )
@@ -112,147 +273,5 @@ function fc_query( $command = '', $args = false, $method = 'POST', $headers = fa
 
 	return $output;
 }
-
-
-
-$prevlevel = $level;
-
-if( isset( $args->args->authid ) && !isset( $args->authid ) )
-{
-	$args->authid = $args->args->authid;
-}
-
-if( isset( $args->authid ) )
-{
-	require_once( 'php/include/permissions.php' );
-	
-	if( $perm = Permissions( 'write', 'application', ( 'AUTHID'.$args->authid ), [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ] ) )
-	{
-		if( is_object( $perm ) )
-		{
-			// Permission denied.
-			
-			if( $perm->response == -1 )
-			{
-				//
-				
-				//die( 'fail<!--separate-->' . json_encode( $perm ) );
-			}
-			
-			// Permission granted.
-			
-			if( $perm->response == 1 )
-			{
-				
-				$level = 'Admin';
-				
-			}
-		}
-	}
-}
-
-
-
-if( $level == 'Admin' )
-{
-	// Make sure we have the "User" type group
-	$g = new dbIO( 'FUserGroup' );
-	$g->Name = 'User';
-	$g->Load();
-	$g->Save();
-
-	if( $g->ID > 0 )
-	{
-		// Create the new user
-		$u = new dbIO( 'FUser' );
-		$u->Name = ( isset( $args->args->username ) ? $args->args->username : 'Unnamed user' );
-		if( isset( $args->args->username ) && $u->Load() )
-		{
-			die( 'fail<!--separate-->{"response":"User already exist","code":"19"}'  );
-		}
-		$u->Password = md5( rand(0,999) + microtime() );
-		$u->FullName = 'Unnamed user';
-		$u->Save();
-
-		if( $u->ID > 0 )
-		{
-			
-			$SqlDatabase->query( 'INSERT INTO FUserToGroup ( UserID, UserGroupID ) VALUES ( \'' . $u->ID . '\', \'' . $g->ID . '\' )' );
-			
-			
-			
-			// TODO: Should be a check if the user that is creating this new user has access to add users to defined workgroup(s) before saving ... 
-			
-			// TODO: It's required to add user with a workgroup if the user adding is not Admin and have rolepermissions ...
-			
-			if( $prevlevel == 'User' || isset( $args->args->workgroups ) )
-			{
-				if( !isset( $args->args->workgroups ) || !$args->args->workgroups )
-				{
-					die( 'fail<!--separate-->{"response":"Adding a User to a Workgroup is required.","code":"20"}'  );
-				}
-				else if( $wgr = explode( ',', $args->args->workgroups ) )
-				{
-					foreach( $wgr as $gid )
-					{
-						
-						$args = [ 
-							'sessionid' => $args->sessionid, 
-							'id'        => intval( $gid   ), 
-							'users'     => intval( $u->ID ),
-							'args'      => urlencode( '{
-								"type"    : "write", 
-								"context" : "application", 
-								"authid"  : "' . $args->authid . '", 
-								"data"    : { 
-									"permission" : [ 
-										"PERM_USER_GLOBAL", 
-										"PERM_USER_WORKGROUP" 
-									]
-								}, 
-								"object"   : "workgroup", 
-								"objectid" : "' . $gid . '" 
-							}' )
-						];
-						
-						/*$args = [ 
-							'sessionid' => $args->sessionid, 
-							'id'        => intval( $gid   ), 
-							'users'     => intval( $u->ID ),
-							'args'      => urlencode( '{
-								"type"    : "write", 
-								"context" : "application", 
-								"authid"  : "' . $args->authid . '", 
-								"data"    : { 
-									"permission" : [ 
-										"PERM_USER_GLOBAL", 
-										"PERM_USER_WORKGROUP" 
-									]
-								}
-							}' )
-						];*/
-						
-						if( $res = fc_query( '/system.library/group/addusers', $args ) )
-						{
-							$resp = explode( '<!--separate-->', $res );
-							
-							if( $resp[0] == 'fail' )
-							{
-							
-								// 
-								
-								die( 'fail<!--separate-->' . ( $resp[1] ? $resp[1] : '' ) . ' [] debug: ' . print_r( $perm,1 ) . ' [] args: ' . print_r( $args,1 )  );
-							}
-						
-						}
-					}
-				}
-			}
-			
-			die( 'ok<!--separate-->' . $u->ID );
-		}
-	}
-}
-die( 'fail<!--separate-->{"response":"user add failed"}'  );
 
 ?>

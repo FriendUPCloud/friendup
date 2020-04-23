@@ -382,6 +382,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 		t = div.windowObject.flags.top;
 		if( !l ) l = isWorkspaceScreen ? div.windowObject.workspace * window.innerWidth : 0;
 		if( !t ) t = 0;
+		console.log( 'L here: ' + l );
 	}
 	
 	// Maximized
@@ -393,6 +394,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 	
 	// Skew for calculating beyond workspace 1
 	var skewx = div.windowObject.workspace * window.innerWidth;
+	if( !isWorkspaceScreen ) skewx = 0;
 	
 	if( l + wi > maxWidth + skewx + margins.left )
 		wi = maxWidth + skewx - l + margins.left;
@@ -735,15 +737,18 @@ function ConstrainWindow( div, l, t, depth, caller )
 	}
 
 	// Add workspace when opening this way
-	if( typeof( currentScreen ) != 'undefined' && globalConfig.workspaceCurrent >= 0 )
+	if( !div.content.windowObject.flags.screen || div.content.windowObject.flags.screen == Workspace.screen )
 	{
-		if( div.windowObject.workspace < 0 )
-			div.windowObject.workspace = globalConfig.workspaceCurrent;
-	}
-	else if( typeof( div.windowObject ) != 'undefined' )
-	{
-		if( !div.windowObject.workspace )
-			div.windowObject.workspace = 0;
+		if( typeof( currentScreen ) != 'undefined' && globalConfig.workspaceCurrent >= 0 )
+		{
+			if( div.windowObject.workspace < 0 )
+				div.windowObject.workspace = globalConfig.workspaceCurrent;
+		}
+		else if( typeof( div.windowObject ) != 'undefined' )
+		{
+			if( !div.windowObject.workspace )
+				div.windowObject.workspace = 0;
+		}
 	}
 
 	// When cascading, the view is moved
@@ -1072,6 +1077,18 @@ function _ActivateWindow( div, nopoll, e )
 			if( app )
 			{
 				app.displayedView = div;
+			}
+		}
+	}
+	
+	// Check if we're on the right workspace
+	if( !div.windowObject.flags.screen || div.windowObject.flags.screen == Workspace.screen )
+	{
+		if( div.windowObject.workspace != globalConfig.workspaceCurrent )
+		{
+			if( window.Workspace && Workspace.switchWorkspace )
+			{
+				Workspace.switchWorkspace( div.windowObject.workspace );
 			}
 		}
 	}
@@ -2011,15 +2028,19 @@ var View = function( args )
 {
 	var self = this;
 	
-	if( globalConfig && typeof( globalConfig.workspaceCurrent ) != 'undefined' )
-		this.workspace = globalConfig.workspaceCurrent;
-	else this.workspace = 0;
-	
-	if( args.workspace === 0 || args.workspace )
+	// Windows on own screen ignores the virtual workspaces
+	if( args.screen && args.screen != Workspace.screen )
 	{
-		if( args.workspace < globalConfig.workspacecount - 1 )
+		if( globalConfig && typeof( globalConfig.workspaceCurrent ) != 'undefined' )
+			this.workspace = globalConfig.workspaceCurrent;
+		else this.workspace = 0;
+	
+		if( args.workspace === 0 || args.workspace )
 		{
-			this.workspace = args.workspace;
+			if( args.workspace < globalConfig.workspacecount - 1 )
+			{
+				this.workspace = args.workspace;
+			}
 		}
 	}
 	
@@ -2033,6 +2054,8 @@ var View = function( args )
 	// Reaffirm workspace
 	this.setWorkspace = function()
 	{
+		// Ignore windows on own screen
+		if( this.flags.screen && this.flags.screen != Workspace.screen ) return;
 		if( globalConfig.workspacecount > 1 )
 		{
 			var ws = this.getFlag( 'left' );
@@ -2098,13 +2121,16 @@ var View = function( args )
 		}
 		
 		// Set initial workspace
-		if( flags.workspace && flags.workspace > 0 )
+		if( !flags.screen || flags.screen == Workspace.screen )
 		{
-			self.workspace = flags.workspace;
-		}
-		else
-		{
-			self.workspace = globalConfig.workspaceCurrent;
+			if( flags.workspace && flags.workspace > 0 )
+			{
+				self.workspace = flags.workspace;
+			}
+			else
+			{
+				self.workspace = globalConfig.workspaceCurrent;
+			}
 		}
 		
 		if( !self.getFlag( 'min-width' ) )
@@ -2271,7 +2297,12 @@ var View = function( args )
 			movableWindows[ id ] = div;
 			div.titleString = titleStr;
 			div.viewId = id;
-			div.workspace = self.workspace;
+			
+			if( !flags.screen || flags.screen == Workspace.screen )
+			{
+				div.workspace = self.workspace;
+			}
+			else div.workspace = 0;
 		}
 		else if ( div == 'CREATE' )
 		{
@@ -3855,8 +3886,13 @@ var View = function( args )
 		self.parseFlags( flags );
 		
 		// Move workspace to designated position	
-		if( self.workspace > 0 )
-			self.sendToWorkspace( self.workspace );
+		if( !flags.screen || flags.screen == Workspace.screen )
+		{
+			if( self.workspace > 0 )
+			{
+				self.sendToWorkspace( self.workspace );
+			}
+		}
 		
 		// Remove menu on calendar
 		if( !flags.minimized && Workspace.calendarWidget )
@@ -3868,6 +3904,10 @@ var View = function( args )
 	this.sendToWorkspace = function( wsnum )
 	{
 		if( isMobile ) return;
+		
+		// Windows on own screen ignores the virtual workspaces
+		if( this.flags.screen && this.flags.screen != Workspace.screen ) return;
+		
 		if( wsnum < 0 || wsnum > globalConfig.workspacecount - 1 )
 			return; 
 		var wn = this._window.parentNode;

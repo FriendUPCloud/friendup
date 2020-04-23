@@ -30,6 +30,7 @@
 
 #include <util/hooks.h>
 #include <util/hashmap.h>
+#include <util/hashmap_long.h>
 #include <util/tagitem.h>
 #include <util/base64.h>
 #include "auth/authmodule.h"
@@ -70,6 +71,7 @@
 #include <system/mobile/mobile_manager.h>
 #include <system/calendar/calendar_manager.h>
 #include <system/notification/notification_manager.h>
+#include <system/security/security_manager.h>
 
 #include <interface/socket_interface.h>
 #include <interface/string_interface.h>
@@ -100,6 +102,8 @@
 
 #define MODULE_FILE_CALL_STRING "friendrequestparameters=%s"
 #define MODULE_FILE_CALL_STRING_LEN 24
+
+#define MODULE_PATH_LENGTH	512
 
 //
 // Exit code list
@@ -201,8 +205,9 @@ enum {
 
 typedef struct SQLConPool
 {
-	int inUse;
-	SQLLibrary *sqllib;
+	int				sql_ID;			// ID
+//	int				sqlcp_InUse;	// is in use
+	SQLLibrary		*sqll_Sqllib;	// pointer to library
 }SQLConPool;
 
 //
@@ -246,6 +251,7 @@ typedef struct SystemBase
 	NotificationManager				*sl_NotificationManager;	// Notification Manager
 	PermissionManager				*sl_PermissionManager;		// Permission Manager
 	RoleManager						*sl_RoleManager;	// Role Manager
+	SecurityManager					*sl_SecurityManager;	// Security Manager
 
 	pthread_mutex_t 				sl_ResourceMutex;	// resource mutex
 	pthread_mutex_t					sl_InternalMutex;		// internal slib mutex
@@ -555,9 +561,9 @@ extern SystemBase *SLIB;
 
 static inline HashmapElement *GetHEReq( Http *request, char *param )
 {
-	HashmapElement *tst = HashmapGet( request->parsedPostContent, param );
-	if( tst == NULL ) tst = HashmapGet( request->query, param );
-	if( tst && tst->data == NULL ) return NULL;
+	HashmapElement *tst = HashmapGet( request->http_ParsedPostContent, param );
+	if( tst == NULL ) tst = HashmapGet( request->http_Query, param );
+	if( tst && tst->hme_Data == NULL ) return NULL;
 	return tst;
 }
 

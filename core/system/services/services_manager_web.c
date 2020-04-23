@@ -41,10 +41,11 @@ typedef struct SServ
  * @param lsb pointer to SystemBase
  * @param urlpath pointer to memory where table with path is stored
  * @param request pointer to request sent by client
+ * @param loggedSession user session which is making a call
  * @return reponse in Http structure
  */
 
-Http *ServiceManagerWebRequest( void *lsb, char **urlpath, Http* request )
+Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserSession *loggedSession )
 {
 	SystemBase *l = (SystemBase *)lsb;
 	char *serviceName = NULL;
@@ -84,7 +85,7 @@ Http *ServiceManagerWebRequest( void *lsb, char **urlpath, Http* request )
 		MsgItem tags[] = {
 			{ ID_FCRE, (FULONG)0, (FULONG)MSG_GROUP_START },
 			{ ID_FCID, (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)l->fcm->fcm_ID },
-			{ ID_FRID, (FULONG)0 , MSG_INTEGER_VALUE },
+			{ ID_FRID, (FULONG)0, MSG_INTEGER_VALUE },
 			{ ID_CMMD, (FULONG)0, MSG_INTEGER_VALUE },
 			{ ID_QUER, (FULONG)FC_QUERY_SERVICES , MSG_INTEGER_VALUE },
 			{ MSG_GROUP_END, 0,  0 },
@@ -390,7 +391,7 @@ Http *ServiceManagerWebRequest( void *lsb, char **urlpath, Http* request )
 	
 	DEBUG("[ServiceManagerWebRequest] ---------------------------------%s----servicename %s servicename from service %s\n", urlpath[0], serviceName, selService->GetName() );
 	
-	selService->s_USW = request->h_WSocket;
+	selService->s_USW = request->http_WSocket;
 	
 	DEBUG( "[ServiceManagerWebRequest]  Command OK %s !\n", urlpath[ ELEMENT_COMMAND ] );
 	
@@ -406,15 +407,27 @@ Http *ServiceManagerWebRequest( void *lsb, char **urlpath, Http* request )
 	
 	if( strcmp( urlpath[ ELEMENT_COMMAND ], "start" ) == 0 )
 	{
-		if( selService->ServiceStart != NULL )
+		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
 		{
-			DEBUG("[ServiceManagerWebRequest] SERVICE START\n");
-			selService->ServiceStart( selService );
-		}else{
-			error = 1;
-		}
+			if( selService->ServiceStart != NULL )
+			{
+				DEBUG("[ServiceManagerWebRequest] SERVICE START\n");
+				selService->ServiceStart( selService );
+			}
+			else
+			{
+				error = 1;
+			}
 		
-		HttpAddTextContent( response, "{ \"Status\": \"ok\"}" );
+			HttpAddTextContent( response, "{ \"Status\": \"ok\"}" );
+		}
+		else
+		{
+			Log( FLOG_ERROR,"User '%s' dont have admin rights\n", loggedSession->us_User->u_Name );
+			char buffer[ 256 ];
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, buffer );
+		}
 	}
 	
 	/// @cond WEB_CALL_DOCUMENTATION
@@ -429,22 +442,34 @@ Http *ServiceManagerWebRequest( void *lsb, char **urlpath, Http* request )
 	
 	else if( strcmp( urlpath[ ELEMENT_COMMAND ], "stop" ) == 0 )
 	{
-		if( selService->ServiceStop != NULL )
+		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
 		{
-			HashmapElement *el;
-			char *data = NULL;
-			
-			el =  HashmapGet( request->parsedPostContent, "data" );
-			if( el != NULL )
+			if( selService->ServiceStop != NULL )
 			{
-				data = el->data;
-			}
+				HashmapElement *el;
+				char *data = NULL;
 			
-			selService->ServiceStop( selService, data );	
-		}else{
-			error = 1;
+				el =  HashmapGet( request->http_ParsedPostContent, "data" );
+				if( el != NULL )
+				{
+					data = el->hme_Data;
+				}
+			
+				selService->ServiceStop( selService, data );	
+			}
+			else
+			{
+				error = 1;
+			}
+			HttpAddTextContent( response, "{ \"Status\": \"ok\"}" );
 		}
-		HttpAddTextContent( response, "{ \"Status\": \"ok\"}" );
+		else
+		{
+			Log( FLOG_ERROR,"User '%s' dont have admin rights\n", loggedSession->us_User->u_Name );
+			char buffer[ 256 ];
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, buffer );
+		}
 	}
 	
 	/// @cond WEB_CALL_DOCUMENTATION
@@ -459,8 +484,18 @@ Http *ServiceManagerWebRequest( void *lsb, char **urlpath, Http* request )
 	
 	else if( strcmp( urlpath[ ELEMENT_COMMAND ], "pause" ) == 0 )
 	{
-		error = 2;
-		HttpAddTextContent( response, "{ \"Status\": \"ok\"}" );
+		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
+		{
+			error = 2;
+			HttpAddTextContent( response, "{ \"Status\": \"ok\"}" );
+		}
+		else
+		{
+			Log( FLOG_ERROR,"User '%s' dont have admin rights\n", loggedSession->us_User->u_Name );
+			char buffer[ 256 ];
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, buffer );
+		}
 	}
 	
 	/// @cond WEB_CALL_DOCUMENTATION
@@ -475,14 +510,26 @@ Http *ServiceManagerWebRequest( void *lsb, char **urlpath, Http* request )
 	
 	else if( strcmp( urlpath[ ELEMENT_COMMAND ], "install" ) == 0 )
 	{
-		if( selService->ServiceInstall != NULL )
+		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
 		{
-			selService->ServiceInstall( selService );
-		}else{
-			error = 1;
-		}
+			if( selService->ServiceInstall != NULL )
+			{
+				selService->ServiceInstall( selService );
+			}
+			else
+			{
+				error = 1;
+			}
 		
-		HttpAddTextContent( response, "{ \"Status\": \"ok\"}" );
+			HttpAddTextContent( response, "{ \"Status\": \"ok\"}" );
+		}
+		else
+		{
+			Log( FLOG_ERROR,"User '%s' dont have admin rights\n", loggedSession->us_User->u_Name );
+			char buffer[ 256 ];
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, buffer );
+		}
 	}
 	
 	/// @cond WEB_CALL_DOCUMENTATION
@@ -497,14 +544,26 @@ Http *ServiceManagerWebRequest( void *lsb, char **urlpath, Http* request )
 	
 	else if( strcmp( urlpath[ ELEMENT_COMMAND ], "uninstall" ) == 0 )
 	{
-		if( selService->ServiceUninstall != NULL )
+		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
 		{
-			selService->ServiceUninstall( selService );
-		}else{
-			error = 1;
-		}
+			if( selService->ServiceUninstall != NULL )
+			{
+				selService->ServiceUninstall( selService );
+			}
+			else
+			{
+				error = 1;
+			}
 		
-		HttpAddTextContent( response, "{ \"Status\": \"ok\"}" );
+			HttpAddTextContent( response, "{ \"Status\": \"ok\"}" );
+		}
+		else
+		{
+			Log( FLOG_ERROR,"User '%s' dont have admin rights\n", loggedSession->us_User->u_Name );
+			char buffer[ 256 ];
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, buffer );
+		}
 	}
 	
 	/// @cond WEB_CALL_DOCUMENTATION
@@ -519,18 +578,28 @@ Http *ServiceManagerWebRequest( void *lsb, char **urlpath, Http* request )
 	
 	else if( strcmp( urlpath[ ELEMENT_COMMAND ], "status" ) == 0 )
 	{
-		int len;
-		
-		if( selService->ServiceGetStatus != NULL )
+		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
 		{
-			selService->ServiceGetStatus( selService, &len );
+			int len;
+		
+			if( selService->ServiceGetStatus != NULL )
+			{
+				selService->ServiceGetStatus( selService, &len );
+			}
+			else
+			{
+				error = 1;
+			}
+		
+			HttpAddTextContent( response, "{ \"Status\": \"ok\"}" );
 		}
 		else
 		{
-			error = 1;
+			Log( FLOG_ERROR,"User '%s' dont have admin rights\n", loggedSession->us_User->u_Name );
+			char buffer[ 256 ];
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, buffer );
 		}
-		
-		HttpAddTextContent( response, "{ \"Status\": \"ok\"}" );
 	}
 	
 	/// @cond WEB_CALL_DOCUMENTATION
@@ -547,43 +616,55 @@ Http *ServiceManagerWebRequest( void *lsb, char **urlpath, Http* request )
 	
 	else if( strcmp( urlpath[ ELEMENT_COMMAND ], "command" ) == 0 )
 	{
-		HashmapElement *el;
-		char *ret = NULL;
-		
-		el =  HashmapGet( request->parsedPostContent, "cmd" );
-		if( el != NULL && el->data != NULL )
+
+		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
 		{
-			char *cmd = el->data;
-			char *serv  = NULL;
+			HashmapElement *el;
+			char *ret = NULL;
+		
+			el =  HashmapGet( request->http_ParsedPostContent, "cmd" );
+
+			if( el != NULL && el->hme_Data != NULL )
+			{
+				char *cmd = el->hme_Data;
+				char *serv  = NULL;
 			
-			el =  HashmapGet( request->parsedPostContent, "servers" );
-			if( el != NULL && el->data != NULL )
-			{
-				serv  = el->data;
-			}
+				el =  HashmapGet( request->http_ParsedPostContent, "servers" );
+				if( el != NULL && el->hme_Data != NULL )
+				{
+					serv  = el->hme_Data;
+				}
 
-			if( serv == NULL )
-			{
-				// temporary call
-				ret = selService->ServiceCommand( selService, "ALL", cmd, request->parsedPostContent );
+				if( serv == NULL )
+				{
+					// temporary call
+					ret = selService->ServiceCommand( selService, "ALL", cmd, request->http_ParsedPostContent );
+				}
+				else
+				{
+					ret = selService->ServiceCommand( selService, serv, cmd, request->http_ParsedPostContent );
+				}
+
+				if( ret != NULL )
+				{
+					HttpSetContent( response, ret, strlen( ret ) );
+				}
+				else
+				{
+					HttpAddTextContent( response, "{ \"Status\": \"ok\"}" );
+				}
 			}
 			else
 			{
-				ret = selService->ServiceCommand( selService, serv, cmd, request->parsedPostContent );
-			}
-
-			if( ret != NULL )
-			{
-				HttpSetContent( response, ret, strlen( ret ) );
-			}
-			else
-			{
-				HttpAddTextContent( response, "{ \"Status\": \"ok\"}" );
+				error = 2;
 			}
 		}
 		else
 		{
-			error = 2;
+			Log( FLOG_ERROR,"User '%s' dont have admin rights\n", loggedSession->us_User->u_Name );
+			char buffer[ 256 ];
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, buffer );
 		}
 	}
 	
@@ -599,16 +680,26 @@ Http *ServiceManagerWebRequest( void *lsb, char **urlpath, Http* request )
 	
 	else if( strcmp( urlpath[ ELEMENT_COMMAND ], "getwebguii" ) == 0 )
 	{
-		DEBUG("[ServiceManagerWebRequest] GetWebGUI\n");
-		char *lresp = selService->ServiceGetWebGUI( selService );
-		if( lresp != NULL )
+		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
 		{
-			DEBUG("[ServiceManagerWebRequest] Service response %s\n", lresp );
-			HttpAddTextContent( response, lresp );
+			DEBUG("[ServiceManagerWebRequest] GetWebGUI\n");
+			char *lresp = selService->ServiceGetWebGUI( selService );
+			if( lresp != NULL )
+			{
+				DEBUG("[ServiceManagerWebRequest] Service response %s\n", lresp );
+				HttpAddTextContent( response, lresp );
+			}
+			else
+			{
+				HttpAddTextContent( response, "<div> </div>" );
+			}
 		}
 		else
 		{
-			HttpAddTextContent( response, "<div> </div>" );
+			Log( FLOG_ERROR,"User '%s' dont have admin rights\n", loggedSession->us_User->u_Name );
+			char buffer[ 256 ];
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, buffer );
 		}
 	}
 

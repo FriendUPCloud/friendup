@@ -190,6 +190,7 @@ char *GetFileName( const char *path )
 //#define PHP_READ_SIZE 262144
 //#define PHP_READ_SIZE 2048
 #define PHP_READ_SIZE 132144
+#define USE_NPOPEN_POLL
 
 //
 // php call, send request, read answer
@@ -208,15 +209,61 @@ ListString *PHPCall( const char *command )
 	}
 	
 	char *buf = FMalloc( PHP_READ_SIZE+16 );
-	ListString *data = ListStringNew();
+	ListString *ls = ListStringNew();
 	int errCounter = 0;
 	int size = 0;
-	
+
+#ifdef USE_NPOPEN_POLL
+	struct pollfd fds[2];
+
+	// watch stdin for input 
+	fds[0].fd = pofd.np_FD[ NPOPEN_CONSOLE ];// STDIN_FILENO;
+	fds[0].events = POLLIN;
+
+	// watch stdout for ability to write
+	fds[1].fd = STDOUT_FILENO;
+	fds[1].events = POLLOUT;
+
+	while( TRUE )
+	{
+		DEBUG("[PHPFsys] in loop\n");
+		
+		int ret = poll( fds, 2, FILESYSTEM_MOD_TIMEOUT * 1000);
+
+		if( ret == 0 )
+		{
+			DEBUG("Timeout!\n");
+			break;
+		}
+		else if(  ret < 0 )
+		{
+			DEBUG("Error\n");
+			break;
+		}
+		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
+
+		DEBUG( "[PHPFsys] Adding %d of data\n", size );
+		if( size > 0 )
+		{
+			DEBUG( "[PHPFsys] before adding to list\n");
+			ListStringAdd( ls, buf, size );
+			DEBUG( "[PHPFsys] after adding to list\n");
+			//res += size;
+		}
+		else
+		{
+			errCounter++;
+			DEBUG("ErrCounter: %d\n", errCounter );
+
+			break;
+		}
+	}
+#else
 	fd_set set;
 	struct timeval timeout;
 
 	// Initialize the timeout data structure. 
-	timeout.tv_sec = MOD_TIMEOUT;
+	timeout.tv_sec = FILESYSTEM_MOD_TIMEOUT;
 	timeout.tv_usec = 0;
 
 	while( TRUE )
@@ -235,14 +282,14 @@ ListString *PHPCall( const char *command )
 		}
 		else if(  ret < 0 )
 		{
-			//DEBUG("Error\n");
+			DEBUG("FSYSPHP: SELECT Error\n");
 			break;
 		}
 		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
 
 		if( size > 0 )
 		{
-			ListStringAdd( data, buf, size );
+			ListStringAdd( ls, buf, size );
 		}
 		else
 		{
@@ -254,15 +301,17 @@ ListString *PHPCall( const char *command )
 			}
 		}
 	}
+#endif
+	
 	FFree( buf );
 
 	// Free pipe if it's there
 	newpclose( &pofd );
 	
-	ListStringJoin( data );		//we join all string into one buffer
+	ListStringJoin( ls );		//we join all string into one buffer
 
-	DEBUG( "[fsysphp] Finished PHP call...(%lu length)-\n", data->ls_Size );
-	return data;
+	DEBUG( "[fsysphp] Finished PHP call...(%lu length)-\n", ls->ls_Size );
+	return ls;
 }
 
 //
@@ -751,7 +800,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		do
 		{
 			//snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/%s_read_%d%d%d%d", s->f_SessionIDPTR, rand()%9999, rand()%9999, rand()%9999, rand()%9999 );
-			snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/%s_read_%f%d%d", s->f_SessionIDPTR, timeInMill, rand()%9999, rand()%9999 );
+			snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/Friendup/%s_read_%f%d%d", s->f_SessionIDPTR, timeInMill, rand()%9999, rand()%9999 );
 			//DEBUG( "[fsysphp] Trying to lock %s\n", tmpfilename );
 			if( ( lockf = open( tmpfilename, O_CREAT|O_EXCL|O_RDWR ) ) >= 0 )
 			{
@@ -798,7 +847,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 			{
 				if( strncmp( result->ls_Data, "fail", 4 ) == 0 )
 				{
-					FERROR( "[fsysphp] [FileOpen] Failed to get exclusive lock on lockfile.\n" );
+					FERROR( "[fsysphp] [FileOpen] Failed to get exclusive lock on lockfile. Fail returned.\n" );
 					FFree( command );
 					FFree( encodedcomm );
 					ListStringDelete( result );
@@ -888,7 +937,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		// Make sure we can make the tmp file unique
 		//do
 		//{
-		snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/%s_write_%d%d%d%d", s->f_SessionIDPTR, rand()%9999, rand()%9999, rand()%9999, rand()%9999 );
+		snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/Friendup/%s_write_%d%d%d%d", s->f_SessionIDPTR, rand()%9999, rand()%9999, rand()%9999, rand()%9999 );
 		//}
 		//while( access( tmpfilename, F_OK ) != -1 );
 
@@ -1843,7 +1892,7 @@ BufString *Dir( File *s, const char *path )
 							}
 							ListStringDelete( result );
 						}
-						//DEBUG("\n\n\n\nAnswer %s\n\n\n\n\n", bs->bs_Buffer );
+						//DEBUG("Answer %s\n", bs->bs_Buffer );
 					}
 					
 					FFree( commandCnt );

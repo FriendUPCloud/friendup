@@ -123,14 +123,14 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 			el = HttpGetPOSTParameter( request, "msg" );
 			if( el != NULL )
 			{
-				msg = UrlDecodeToMem( (char *)el->data );
+				msg = UrlDecodeToMem( (char *)el->hme_Data );
 				DEBUG( "[NMWebRequest] msg %s!!\n", msg );
 			}
 			
 			el = HttpGetPOSTParameter( request, "servername" );
 			if( el != NULL )
 			{
-				servername = UrlDecodeToMem( (char *)el->data );
+				servername = UrlDecodeToMem( (char *)el->hme_Data );
 				DEBUG( "[NMWebRequest] servername %s!!\n", servername );
 			}
 			
@@ -190,7 +190,7 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 	* @return { result: 0 } when success, otherwise error with code
 	*/
 	/// @endcond
-	
+	/* MOVED TO SESSION MANAGER
 	else if( strcmp( urlpath[ 1 ], "msgtoextservice" ) == 0 )
 	{
 		struct TagItem tags[] = {
@@ -214,35 +214,35 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		el = HttpGetPOSTParameter( request, "params" );
 		if( el != NULL )
 		{
-			params = UrlDecodeToMem( (char *)el->data );
+			params = UrlDecodeToMem( (char *)el->hme_Data );
 			DEBUG( "[NMWebRequest] params %s!!\n", params );
 		}
 		
 		el = HttpGetPOSTParameter( request, "type" );
 		if( el != NULL )
 		{
-			type = UrlDecodeToMem( (char *)el->data );
+			type = UrlDecodeToMem( (char *)el->hme_Data );
 			DEBUG( "[NMWebRequest] type %s!!\n", type );
 		}
 		
 		el = HttpGetPOSTParameter( request, "group" );
 		if( el != NULL )
 		{
-			group = UrlDecodeToMem( (char *)el->data );
+			group = UrlDecodeToMem( (char *)el->hme_Data );
 			DEBUG( "[NMWebRequest] group %s!!\n", group );
 		}
 		
 		el = HttpGetPOSTParameter( request, "action" );
 		if( el != NULL )
 		{
-			action = UrlDecodeToMem( (char *)el->data );
+			action = UrlDecodeToMem( (char *)el->hme_Data );
 			DEBUG( "[NMWebRequest] action %s!!\n", action );
 		}
 		
 		el = HttpGetPOSTParameter( request, "servername" );
 		if( el != NULL )
 		{
-			servername = UrlDecodeToMem( (char *)el->data );
+			servername = UrlDecodeToMem( (char *)el->hme_Data );
 			DEBUG( "[NMWebRequest] servername %s!!\n", servername );
 		}
 		
@@ -281,6 +281,8 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		}
 		*result = 200;
 	}
+	*/
+	
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	*
@@ -317,37 +319,37 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		HashmapElement *el = HttpGetPOSTParameter( request, "username" );
 		if( el != NULL )
 		{
-			username = UrlDecodeToMem( el->data );
+			username = UrlDecodeToMem( el->hme_Data );
 		}
 		
 		el = HttpGetPOSTParameter( request, "channelid" );
 		if( el != NULL )
 		{
-			channelid = UrlDecodeToMem( el->data );
+			channelid = UrlDecodeToMem( el->hme_Data );
 		}
 		
 		el = HttpGetPOSTParameter( request, "app" );
 		if( el != NULL )
 		{
-			app = UrlDecodeToMem( el->data );
+			app = UrlDecodeToMem( el->hme_Data );
 		}
 		
 		el = HttpGetPOSTParameter( request, "title" );
 		if( el != NULL )
 		{
-			title = UrlDecodeToMem( el->data );
+			title = UrlDecodeToMem( el->hme_Data );
 		}
 		
 		el = HttpGetPOSTParameter( request, "message" );
 		if( el != NULL )
 		{
-			message = UrlDecodeToMem( el->data );
+			message = UrlDecodeToMem( el->hme_Data );
 		}
 		
 		el = HttpGetPOSTParameter( request, "extra" );
 		if( el != NULL )
 		{
-			extra = UrlDecodeToMem( el->data );
+			extra = UrlDecodeToMem( el->hme_Data );
 		}
 		
 		if( username == NULL || channelid == NULL || app == NULL || title == NULL || message == NULL )

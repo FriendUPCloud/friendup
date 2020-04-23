@@ -154,6 +154,7 @@ enum {
 	DICT_USER_GROUP_ALREADY_EXIST,
 	DICT_BAD_CHARS_USED,
 	DICT_NO_PERMISSION,
+	DICT_UMA_ENTRY_NOT_FOUND,
 	DICT_MAX
 };
 /*
@@ -246,6 +247,8 @@ INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) 
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Bad chars used', 'ENG', '69');
 
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'No access, special rights required', 'ENG', '70');
+
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'User Mobile App entry not found', 'ENG', '71');
 */
 
 // User status

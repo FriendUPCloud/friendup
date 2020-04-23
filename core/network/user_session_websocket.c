@@ -56,7 +56,7 @@ void UserSessionWebsocketDelete( UserSessionWebsocket *cl )
 		}
 		*/
 		
-		Log( FLOG_DEBUG, "\n[UserSessionWebsocketDelete] connection will be removed\n\n");
+		Log( FLOG_DEBUG, "[UserSessionWebsocketDelete] connection will be removed\n");
 		WSCData *data = (WSCData *)cl->wusc_Data;
 		if( data != NULL )
 		{

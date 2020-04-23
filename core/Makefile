@@ -22,6 +22,8 @@ SERVICES		=	apacheserv mysqlserv nodejsserv phpserv
 SERVICEFLAGS		=	--std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -Ofast -funroll-loops -I. -Wno-unused  -shared -fPIC
 MATHLIB			=
 
+GLOBAL_CFLAGS		+=	-DMOD_TIMEOUT=$(MOD_TIMEOUT) -DFILESYSTEM_MOD_TIMEOUT=$(FILESYSTEM_MOD_TIMEOUT) -DMOD_NUMBER_TRIES=$(MOD_NUMBER_TRIES) -DMUTEX_TIMEOUT_NUMBER_TRIES=$(MUTEX_TIMEOUT_NUMBER_TRIES) 
+
 # we have to include Sanitizer lib before others
 ifeq ($(USE_SANITIZER),1)
 LFLAGS					+=	-lasan
@@ -96,7 +98,7 @@ endif
 C_FILES := $(wildcard main.c core/*.c system/cache/*.c network/*.c system/services/*.c util/*.c class/*.c ssh/*.c hardware/*.c system/*.c \
 			system/dictionary/*.c system/module/*.c system/fsys/*.c system/json/*.c system/user/*.c util/log/*.c system/inram/*.c system/invar/*.c system/application/*.c system/auth/*.c \
 			hardware/usb/*.c hardware/printer/*.c system/datatypes/images/*.c system/log/*.c system/admin/*.c communication/*.c system/autotask/*.c system/token/*.c \
-			websockets/*.c security/*.c webdav/*.c system/connection/*.c mobile_app/*.c mutex/*.c system/usa/*.c system/mobile/*.c system/calendar/*.c config/*.c system/notification/*.c system/usergroup/*.c system/permission/*.c system/roles/*.c )
+			websockets/*.c security/*.c webdav/*.c system/connection/*.c mobile_app/*.c mutex/*.c system/usa/*.c system/mobile/*.c system/calendar/*.c config/*.c system/notification/*.c system/usergroup/*.c system/permission/*.c system/roles/*.c system/security/*.c system/service/*.c )
 OBJ_FILES := $(addprefix obj/,$(notdir $(C_FILES:.c=.o)))
 
 ALL:	$(OBJ_FILES) $(OUTPUT) $(MODS) $(FSYS) $(LOGGERS) $(SERVICES)
@@ -224,6 +226,10 @@ obj/%.o: network/%.c network/*.h network/%.d
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 obj/%.o: system/services/%.c system/services/*.h system/services/%.d
+	@echo "\033[34mCompile ...\033[0m"
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+obj/%.o: system/service/%.c system/service/*.h system/service/%.d
 	@echo "\033[34mCompile ...\033[0m"
 	$(CC) $(CFLAGS) -c -o $@ $<
 
@@ -372,6 +378,10 @@ obj/%.o: system/permission/%.c system/permission/*.h system/permission/%.d
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 obj/%.o: system/roles/%.c system/roles/*.h system/roles/%.d
+	@echo "\033[34mCompile ...\033[0m"
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+obj/%.o: system/security/%.c system/security/*.h system/security/%.d
 	@echo "\033[34mCompile ...\033[0m"
 	$(CC) $(CFLAGS) -c -o $@ $<
 	

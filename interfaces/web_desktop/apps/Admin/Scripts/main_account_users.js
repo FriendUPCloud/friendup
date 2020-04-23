@@ -882,7 +882,7 @@ Sections.accounts_users = function( cmd, extra )
 												
 												str += '<div class="HRow">\
 													<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
-														<span class="IconSmall NegativeAlt ' + ( groups[a].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;' + groups[a].Name + '</span>\
+														<span class="IconSmall ' + ( groups[a].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;' + groups[a].Name + '</span>\
 													</div>\
 													<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
 														<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
@@ -916,7 +916,7 @@ Sections.accounts_users = function( cmd, extra )
 														
 														str += '<div class="HRow">\
 															<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
-																<span class="IconSmall NegativeAlt ' + ( groups[a].groups[aa].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>\
+																<span class="IconSmall ' + ( groups[a].groups[aa].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>\
 															</div>\
 															<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
 																<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
@@ -948,7 +948,7 @@ Sections.accounts_users = function( cmd, extra )
 																
 																str += '<div class="HRow">\
 																	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
-																		<span class="IconSmall NegativeAlt">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>\
+																		<span class="IconSmall">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>\
 																	</div>\
 																	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
 																		<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
@@ -3264,12 +3264,14 @@ Sections.accounts_users = function( cmd, extra )
 												}
 												
 											}
-											m.execute( 'setsetting', { 
+											
+											var setData = { 
 												setting : 'workspacecount', 
 												data    : this.value, 
 												userid  : userInfo.ID, 
 												authid  : Application.authId 
-											} );
+											}
+											m.execute( 'setsetting', setData );
 										}
 										else
 										{
@@ -7941,17 +7943,19 @@ function addUser( callback, username )
 		authid: Application.authId
 	};
 	
-	if( username )
+	if( !username )
 	{
-		args[ 'username' ] = username;
+		return Alert( i18n( 'i18n_you_forgot_username' ), i18n( 'i18n_you_forgot_username_desc' ) );
 	}
+	
+	args[ 'username' ] = username;
+	// Temporary password
+	args[ 'password' ] = ( Math.random() % 999 ) + '_' + ( Math.random() % 999 ) + '_' + ( Math.random() % 999 );
+	args[ 'level' ] = ge( 'usLevel' ).value;
 	
 	if( ge( 'usWorkgroups' ) )
 	{
-		//
-		
-		
-		
+		//	
 		if( ge( 'usWorkgroups' ).value )
 		{
 			args.workgroups = ge( 'usWorkgroups' ).value;
@@ -8072,12 +8076,14 @@ function saveUser( uid, cb, newuser )
 		
 	}
 	
+	// If there's no uid, it means that this is a new user - add it.
 	if( !uid )
 	{
 		addUser( function( res, dat )
 		{
 			if( res )
 			{
+				// The user was added, now save the rest of the information
 				if( dat && dat > 0 )
 				{
 					saveUser( dat, cb, true );
@@ -8085,6 +8091,7 @@ function saveUser( uid, cb, newuser )
 			}
 			else
 			{
+				// Seems we failed to create user
 				if( dat && dat.code == 19 && dat.response )
 				{
 					Notify( { title: i18n( 'i18n_user_create_fail' ), text: i18n( 'i18n_' + dat.response ) } );
@@ -8098,6 +8105,7 @@ function saveUser( uid, cb, newuser )
 			
 		}, args[ 'username' ] );
 		
+		// No going beyond this point
 		return;
 	}
 	else

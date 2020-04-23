@@ -425,7 +425,6 @@ int FileSeek( struct File *s, int pos )
 
 int MakeDir( struct File *s, const char *path )
 {
-	DEBUG("\n\n\n\n\n\n");
 	INFO("MakeDir %s!\n", path );
 	int error = 0;
 	
@@ -622,7 +621,7 @@ void FillStat( BufString *bs, INRAMFile *nf, File *d, const char *path )
 	}
 	else
 	{
-		sprintf( tmp, "\"Filesize\": %d,",(int) nf->nf_Data->bs_Size );
+		sprintf( tmp, "\"Filesize\": %ld,", nf->nf_Data->bs_Size );
 		BufStringAdd( bs, tmp );
 		BufStringAdd( bs, "\"MetaType\":\"File\",\"Type\":\"File\" }" );
 	}
@@ -708,7 +707,6 @@ BufString *Call( File *s, const char *path, Http *request )
 BufString *Dir( File *s, const char *path )
 {
 	BufString *bs = BufStringNew();
-	DEBUG("\n\n\n\n\n\n");
 	DEBUG("Dir!\n");
 	
 	int error = 0;

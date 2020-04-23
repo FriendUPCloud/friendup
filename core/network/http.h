@@ -21,6 +21,7 @@
 //
 //
 //
+#include <core/types.h>
 #include <time.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -30,6 +31,7 @@
 #include "network/socket.h"
 #include <util/tagitem.h>
 #include <network/user_session_websocket.h>
+#include "http_file.h"
 
 #define DEFAULT_CONTENT_TYPE "text/html; charset=utf-8"
 
@@ -114,6 +116,9 @@ static const char *HEADERS[] = {
 #define HTTP_HEADER_MAX_SIZE 16384+16 // 16 KiB (16 from stefkos)
 #define HTTP_ENTITY_MAX_SIZE 1048576 // 1 MiB
 #define HTTP_ENABLE_DEBUG 1
+#define HTTP_MAX_MEM_CONTENT_SIZE (INT_MAX/4)
+
+#define HTTP_CONTENT_TEMP_NAME "/tmp/Friendup/FriendHTTP_CONTENT_XXXXXXXXXXXXXXXXXX"
 
 #ifdef HTTP_ENABLE_DEBUG
 #define HTTP_PRINT(x) printf( x " (%s:%d)\n", __FILE__, __LINE__ );
@@ -219,14 +224,11 @@ if( !request->errorCode && request->queryMap )
 
 HttpFreeRequest( request );*/
 
-typedef struct HttpFile
-{
-	char			hf_FileName[ 512 ];
-	char 			*hf_Data;
-	FULONG			hf_FileSize;		// file size
-	FILE			*hf_FP;			// when file is stored on server disk
-	struct MinNode node;
-}HttpFile;
+/* HTTP requests above this thresholds are saved to temporary files
+* and mmap'ed for later use. This conserves RAM during large
+* file uploads. (TK-628)
+*/
+#define TUNABLE_LARGE_HTTP_REQUEST_SIZE (10*1024*1024) //10MB
 
 //
 // HTTP CONTENT TYPE
@@ -273,90 +275,93 @@ typedef struct Http
 	// These fields only applies to requests.
 	//
 	// Raw null-terminated strings
-	char				*method;
-	Uri					*uri;
-	char				*rawRequestPath;
-	char				*version;
+	char				*http_Method;
+	Uri					*http_Uri;
+	char				*http_RawRequestPath;
+	char				*http_Version;
 
-	Hashmap				*query;   // Hasmap of the query, for convinience (Is null when no query, or invalid key/value query)
+	Hashmap				*http_Query;   // Hasmap of the query, for convinience (Is null when no query, or invalid key/value query)
 
-	unsigned int		errorCode;  // If any of these are non-null, an error has occured and a fitting response should be generated
-	unsigned int		errorLine;   // Useful for debugging, otherwise ignore
+	unsigned int		http_ErrorCode;  // If any of these are non-null, an error has occured and a fitting response should be generated
+	unsigned int		http_ErrorLine;   // Useful for debugging, otherwise ignore
 
-	Hashmap				*parsedPostContent; // x-www-form-urlencoded
+	Hashmap				*http_ParsedPostContent; // x-www-form-urlencoded
 
 	// -----------------------------------------------------------------------------------------------------------------
 	//
 	// Fields for both requests and responses.
 	//
 	// HTTP x.x
-	int					versionMajor; // Pretty much always 1
-	int					versionMinor; // Also pretty much always 1 or 0
+	int					http_VersionMajor; // Pretty much always 1
+	int					http_VersionMinor; // Also pretty much always 1 or 0
 
 	// This is a blob (But most likely text)
-	char				*content;
-	FLONG				sizeOfContent;
-	Hashmap				*headers; // Additional headers
-	char				*h_RespHeaders[ HTTP_HEADER_END ]; // response header
-	FBOOL				h_HeadersAlloc[ HTTP_HEADER_END ]; // memory was allocated?
-	FBOOL				h_ResponseHeadersRelease;		// if response headers points to allocated memory, they should not be released
-	int					h_RequestSource;			// depends who is calling response should go to the target
-	time_t				timestamp;  // Optional timestamp
+	int					http_ContentFileHandle;
+	char				*http_Content;
+	FQUAD				http_SizeOfContent;
+	char				http_TempContentFileName[ 128 ];
+	
+	Hashmap				*http_Headers; // Additional headers
+	char				*http_RespHeaders[ HTTP_HEADER_END ]; // response header
+	FBOOL				http_HeadersAlloc[ HTTP_HEADER_END ]; // memory was allocated?
+	FBOOL				http_ResponseHeadersRelease;		// if response headers points to allocated memory, they should not be released
+	int					http_RequestSource;			// depends who is calling response should go to the target
+	time_t				http_Timestamp;  // Optional timestamp
 
 	// -----------------------------------------------------------------------------------------------------------------
 	//
 	// These fields only applies to responses.
 	//
-	unsigned int		responseCode;
-	char				*responseReason;
+	unsigned int		http_ResponseCode;
+	char				*http_ResponseReason;
 
 	// -----------------------------------------------------------------------------------------------------------------
 	//
 	// Do not write to these. They are "private"
 	//
-	char				*response;
-	FLONG				responseLength;
+	char				*http_Response;
+	FLONG				http_ResponseLength;
 
-	FBOOL				partialRequest;
-	char				*partialData;
-	unsigned int		partialDataIndex;
-	FBOOL				expectBody;
-	int					expectSize;
-	FBOOL				gotHeader;
-	FBOOL				gotBody;
+	FBOOL				http_PartialRequest;
+	char				*http_PartialData;
+	unsigned int		http_PartialDataIndex;
+	FBOOL				http_ExpectBody;
+	int					http_ExpectSize;
+	FBOOL				http_GotHeader;
+	FBOOL				http_GotBody;
 	
-	char				h_PartDivider[ 256 ];
-	FBOOL				h_ContentType;
-	FLONG				h_ContentLength;
-	FLONG				h_ExpectedLength;
-	FLONG				h_RangeMin, h_RangeMax;
-	HttpFile			*h_FileList;
+	char				http_PartDivider[ 512 ];
+	FBOOL				http_ContentType;
+	FQUAD				http_ContentLength;
+	FQUAD				http_ExpectedLength;
+	FLONG				http_RangeMin, http_RangeMax;
+	HttpFile			*http_FileList;
 	
-	FBOOL				h_Stream;			// stream
-	UserSessionWebsocket *h_WSocket;				// websocket context, if provided data should be delivered here
-	Socket				*h_Socket;		// socket,  if != NULL  data should be delivered here
+	FBOOL				http_Stream;			// stream
+	UserSessionWebsocket *http_WSocket;				// websocket context, if provided data should be delivered here
+	Socket				*http_Socket;		// socket,  if != NULL  data should be delivered here
 	
-	int					h_WriteType;
+	int					http_WriteType;
 	
-	FBOOL				h_WriteOnlyContent;		// set to TRUE if you want to stream content
+	FBOOL				http_WriteOnlyContent;		// set to TRUE if you want to stream content
 	
-	void				*h_ActiveSession;	// pointer to UserSession
-	FULONG				h_ResponseID;		// number used to compare http calls (unique number)
+	void				*http_ActiveSession;	// pointer to UserSession
+	FULONG				http_ResponseID;		// number used to compare http calls (unique number)
 	
-	FILE				*h_ContentFile;		// http content in FILE
-	void				*h_PIDThread;    // PIDThread
-	void				*h_UserSession;  // user session
-	void				*h_SB; // SystemBase
+	FILE				*http_ContentFile;		// http content in FILE
+	void				*http_PIDThread;    // PIDThread
+	void				*http_UserSession;  // user session
+	void				*http_SB; // SystemBase
 	
-	FBOOL				*h_ShutdownPtr;		// pointer to quit flag
-	char				h_UserActionInfo[ 512 ];
+	FBOOL				*http_ShutdownPtr;		// pointer to quit flag
+	char				http_UserActionInfo[ 512 ];
 } Http;
 
 //
 //
 //
 
-int HttpParseHeader( Http* http, const char* request, unsigned int length );
+int HttpParseHeader( Http* http, const char* request, FQUAD length );
 
 //
 // Create a generic HttpObject
@@ -387,13 +392,13 @@ Http* HttpNewSimpleBaseOnRequest( unsigned int code, Http *request, struct TagIt
 // Error fields are set on error.
 //
 
-Http* HttpParseRequest( const char* request, unsigned int length );
+Http* HttpParseRequest( const char* request, FQUAD length );
 
 //
 // Parse a request in chunks. Useful for data recived over the network
 //
 
-int HttpParsePartialRequest( Http* http, char* data, unsigned int length );
+int HttpParsePartialRequest( Http* http, char* data, FQUAD length );
 
 //
 // Frees an HttpObject element (Only call this for HttpObjects returned from HttpParseRequest!!!)
@@ -494,17 +499,5 @@ void HttpWriteAndFree( Http* http, Socket *sock );
 //
 
 void HttpWrite( Http* http, Socket *sock );
-
-//
-// upload file
-//
-
-HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, FLONG size );
-
-//
-//
-//
-
-void HttpFileDelete( HttpFile *f );
 
 #endif // __NETWORK_HTTP_H__

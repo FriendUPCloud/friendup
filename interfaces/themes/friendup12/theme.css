@@ -310,14 +310,26 @@ html #DoorsScreen .Left > .VirtualWorkspaces > div
 	height: 16px;
 	margin: 5px 6px 0 0 !important;
 	border-radius: 3px;
-	line-height: 14px;
+	line-height: 16px;
 	overflow: hidden;
-	border: 1px solid rgba(69, 81, 85, 0.4);
+	border: 0;
+	background: rgba(0,0,0,0.1);
+}
+
+html #DoorsScreen .Left > .VirtualWorkspaces > div:hover
+{
+	background: rgba(0,0,0,0.8);
+}
+
+html #DoorsScreen .Left > .VirtualWorkspaces > div.Active:hover
+{
+	background: rgba(0,0,0,0.9);
 }
 
 html #DoorsScreen .Left > .VirtualWorkspaces > div.Active
 {
-	background: #455155;
+	background: rgba(0,0,0,0.4);
+	border: 0;
 }
 
 html #DoorsScreen .Left > .VirtualWorkspaces > div:first-child
@@ -333,7 +345,7 @@ html #DoorsScreen .Left > .VirtualWorkspaces > div > span
 
 html #DoorsScreen .Left > .VirtualWorkspaces > div.Active > span
 {
-	background: #455155;
+	background: transparent;
 	color: #e0e0e0;
 }
 

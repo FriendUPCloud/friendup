@@ -442,7 +442,7 @@ html body.Synthwave .Screen > .TitleBar > .Left *
 
 body.Synthwave #DoorsScreen .Left > .VirtualWorkspaces > div.Active 
 {
-	border: 1px solid #505050;
+	border: 0;
 }
 
 .Synthwave .FileBrowser div.Name.Active
@@ -482,6 +482,10 @@ body.Synthwave .Active > .FileBrowserItemImage,
 	filter: invert(100%);
 }
 
+body.Synthwave .Frame .Progress
+{
+	text-shadow: 1px 1px rgba(0,0,0,0.7);
+}
 
 /* Synthwave scheme scrollbars */
 
@@ -526,6 +530,10 @@ html body.Synthwave .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	filter: contrast(1.5) hue-rotate(230deg) grayscale(0.3);
 }
 
+html body.Charcoal .Frame .Progress
+{
+	text-shadow: 1px 1px rgba(0,0,0,0.7);
+}
 
 
 

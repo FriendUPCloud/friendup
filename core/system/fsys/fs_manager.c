@@ -94,35 +94,34 @@ FBOOL FSManagerCheckAccess( FSManager *fm, const char *path, FULONG devid, User 
 	
 	SystemBase *sb = (SystemBase  *) fm->fm_SB;
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
-	
-	if( fm != NULL && perm != NULL && newPath != NULL && sqlLib != NULL )
+	if( sqlLib != NULL )
 	{
-		int querysize = 0;
-		querysize = 1024  + (2*strlen( newPath ));
-		
-		int pathLen = strlen(newPath);
-		
-		char *tmpQuery;
-		
-		DEBUG("[FSManagerCheckAccess] User ptr %p alloc size %d\n", usr, querysize );
-		
-		if( ( tmpQuery = FCalloc( querysize, sizeof(char) ) ) != NULL )
+		if( fm != NULL && perm != NULL && newPath != NULL )
 		{
-			if( perm[ 2 ] == 'W' )	// if we are checking write permission, we must check also parent folder permissions
+			int querysize = 0;
+			querysize = 1024  + (2*strlen( newPath ));
+			int pathLen = strlen(newPath);
+			char *tmpQuery;
+		
+			DEBUG("[FSManagerCheckAccess] User ptr %p alloc size %d\n", usr, querysize );
+		
+			if( ( tmpQuery = FCalloc( querysize, sizeof(char) ) ) != NULL )
 			{
-				char *parentPath = StringDuplicate( newPath );
-				int i;
-				// getting parent directory path
-				for( i=pathLen ; i>=0 ; i-- )
+				if( perm[ 2 ] == 'W' )	// if we are checking write permission, we must check also parent folder permissions
 				{
-					if( parentPath[ i ] == '/' )
+					char *parentPath = StringDuplicate( newPath );
+					int i;
+					// getting parent directory path
+					for( i=pathLen ; i>=0 ; i-- )
 					{
-						parentPath[ i ] = 0;
-						break;
+						if( parentPath[ i ] == '/' )
+						{
+							parentPath[ i ] = 0;
+							break;
+						}
 					}
-				}
 				
-				sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where \
+					sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where \
 PermissionID in( \
 SELECT ID FROM `FFilePermission` WHERE \
 ( Path = '%s' OR Path = '%s' ) \
@@ -137,11 +136,11 @@ OR \
 ) \
 ", newPath, parentPath, devid, usr->u_ID, usr->u_ID );
 				
-				FFree( parentPath );
-			}
-			else
-			{
-				sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where \
+					FFree( parentPath );
+				}
+				else
+				{
+					sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where \
 PermissionID in( \
 SELECT ID FROM `FFilePermission` WHERE \
 Path = '%s' \
@@ -155,17 +154,17 @@ OR \
 ( Type = 2 ) \
 ) \
 ", newPath, devid, usr->u_ID, usr->u_ID );
-			}
+				}
 			
-			DEBUG("[FSManagerCheckAccess] Checking access via SQL '%s'\n", tmpQuery );
+				DEBUG("[FSManagerCheckAccess] Checking access via SQL '%s'\n", tmpQuery );
 		
-			void *res = sqlLib->Query( sqlLib, tmpQuery );
-			FBOOL access = FALSE;
+				void *res = sqlLib->Query( sqlLib, tmpQuery );
+				FBOOL access = FALSE;
 			
-			char defaultAccessRights[] = "-RWED";
+				char defaultAccessRights[] = "-RWED";
 
-			if( res != NULL )
-			{
+				if( res != NULL )
+				{
 				// default access
 				// -RWED-     - ARWEDH
 				
@@ -175,75 +174,75 @@ OR \
 				// 2 - type of id  0 - user, 1- group,  2  - others
 				// 3 - permissionid
 				// 4 - ID - unused
-				int nrrows = sqlLib->NumberOfRows( sqlLib, res );
+					int nrrows = sqlLib->NumberOfRows( sqlLib, res );
 
-				if( nrrows > 0 )
-				{
-					char **row = NULL;
-					
-					DEBUG("[FSManagerCheckAccess] Checking permissions %c  -   permission param %s\n", (char)perm[ 0 ], perm );
-					
-					while( ( row = sqlLib->FetchRow( sqlLib, res ) ) ) 
+					if( nrrows > 0 )
 					{
-						DEBUG("[FSManagerCheckAccess] Found permission entry %s  permissions to check PERM %s OBJID %s TYPE %s\n", row[ 0 ], perm, row[1], row[2] );
-						
-						// others rights
-						//if( row[ 2 ][ 0 ] == '2' )
-						//{
-						//	strcpy( defaultAccessRights, row[ 0 ] );
-						//}
-						//else
+						char **row = NULL;
+					
+						DEBUG("[FSManagerCheckAccess] Checking permissions %c  -   permission param %s\n", (char)perm[ 0 ], perm );
+					
+						while( ( row = sqlLib->FetchRow( sqlLib, res ) ) ) 
 						{
-							// read
-							if( perm[ 1 ] == 'R' && ((char)row[ 0 ][ 1 ]) == perm[ 1 ] )
-							{
-								access = TRUE;
-								break;
-							}
-							// write
-							if( perm[ 2 ] == 'W' && ((char)row[ 0 ][ 2 ]) == perm[ 2 ] )
-							{
-								access = TRUE;
-								break;
-							}
+							DEBUG("[FSManagerCheckAccess] Found permission entry %s  permissions to check PERM %s OBJID %s TYPE %s\n", row[ 0 ], perm, row[1], row[2] );
 						
-							if( perm[ 3 ] == 'E' && ((char)row[ 0 ][ 3 ]) == perm[ 3 ] )
+							// others rights
+							//if( row[ 2 ][ 0 ] == '2' )
+							//{
+							//	strcpy( defaultAccessRights, row[ 0 ] );
+							//}
+							//else
 							{
-								access = TRUE;
-								break;
-							}
+								// read
+								if( perm[ 1 ] == 'R' && ((char)row[ 0 ][ 1 ]) == perm[ 1 ] )
+								{
+									access = TRUE;
+									break;
+								}
+								// write
+								if( perm[ 2 ] == 'W' && ((char)row[ 0 ][ 2 ]) == perm[ 2 ] )
+								{
+									access = TRUE;
+									break;
+								}
 						
-							if( perm[ 4 ] == 'D' && ((char)row[ 0 ][ 4 ]) == perm[ 4 ] )
-							{
-								access = TRUE;
-								break;
+								if( perm[ 3 ] == 'E' && ((char)row[ 0 ][ 3 ]) == perm[ 3 ] )
+								{
+									access = TRUE;
+									break;
+								}
+						
+								if( perm[ 4 ] == 'D' && ((char)row[ 0 ][ 4 ]) == perm[ 4 ] )
+								{
+									access = TRUE;
+									break;
+								}
 							}
 						}
 					}
-				}
-				// number of rows > 0
-				// checking default access
-				else
-				{
-					access = TRUE;
-				}
+					// number of rows > 0
+					// checking default access
+					else
+					{
+						access = TRUE;
+					}
 				
-				if( access == TRUE )
-				{
-					result = TRUE;
+					if( access == TRUE )
+					{
+						result = TRUE;
+					}
+					sqlLib->FreeResult( sqlLib, res );
 				}
-				sqlLib->FreeResult( sqlLib, res );
+				FFree( tmpQuery );
 			}
-			FFree( tmpQuery );
+			else
+			{
+				FERROR("Cannot allocate memory for query!\n");
+				FFree( newPath );
+				sb->LibrarySQLDrop( sb, sqlLib );
+				return result;
+			}
 		}
-		else
-		{
-			FERROR("Cannot allocate memory for query!\n");
-			FFree( newPath );
-			sb->LibrarySQLDrop( sb, sqlLib );
-			return result;
-		}
-		
 		sb->LibrarySQLDrop( sb, sqlLib );
 	}
 	FFree( newPath );

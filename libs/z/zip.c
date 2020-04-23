@@ -2081,8 +2081,6 @@ extern int ZEXPORT zipOpenNewDirectoryInZip4_64(zipFile file, const char* filena
         size_comment = (uInt)strlen(comment);
 
     size_filename = (uInt)strlen(filename);
-	
-	//printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n -------------------------------------------------------------------------%s\n\n\n\n\n\n\n\n\n\n\n", filename );
 
     if (zipfi == NULL)
         zi->ci.dosDate = 0;

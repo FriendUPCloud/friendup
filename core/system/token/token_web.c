@@ -124,26 +124,26 @@ Http *TokenWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		int pos = 0;
 		
 		el = GetHEReq( *request, "command" );
-		if( el != NULL && el->data )
+		if( el != NULL && el->hme_Data )
 		{
-			command = UrlDecodeToMem( (char *)el->data );
+			command = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		el = GetHEReq( *request, "tokensesid" );
-		if( el != NULL && el->data )
+		if( el != NULL && el->hme_Data )
 		{
-			tokensesid = UrlDecodeToMem( (char *)el->data );
+			tokensesid = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		el = GetHEReq( *request, "times" );
-		if( el != NULL && el->data )
+		if( el != NULL && el->hme_Data )
 		{
 			char *end;
-			times = (int)strtol( (char *)el->data, &end, 0 );
+			times = (int)strtol( (char *)el->hme_Data, &end, 0 );
 		}
 		el = GetHEReq( *request, "timeout" );
-		if( el != NULL && el->data )
+		if( el != NULL && el->hme_Data )
 		{
 			char *end;
-			timeout = (int)strtol( (char *)el->data, &end, 0 );
+			timeout = (int)strtol( (char *)el->hme_Data, &end, 0 );
 		}
 		
 		DOSToken *ntoken = DOSTokenNew( loggedSession, timeout, times );
@@ -197,9 +197,9 @@ Http *TokenWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		char *tokenid = NULL;		//
 		
 		el = GetHEReq( *request, "dostokenid" );
-		if( el != NULL && el->data )
+		if( el != NULL && el->hme_Data )
 		{
-			tokenid = UrlDecodeToMem( (char *)el->data );
+			tokenid = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		
 		int error = DOSTokenManagerDeleteToken( l->sl_DOSTM, tokenid );

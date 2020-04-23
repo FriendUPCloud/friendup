@@ -58,6 +58,7 @@
 #include <security/server_checker.h>
 #include <network/websocket_client.h>
 #include <network/protocol_websocket.h>
+#include <util/session_id.h>
 
 #define LIB_NAME "system.library"
 #define LIB_VERSION 		1
@@ -124,6 +125,7 @@ SystemBase *SystemInit( void )
 		FFree( tempString );
 		return NULL;
 	}
+	
 	// uptime
 	l->l_UptimeStart = time( NULL );
 	
@@ -456,11 +458,12 @@ SystemBase *SystemInit( void )
 
 			for( ; i < (unsigned int)l->sqlpoolConnections; i++ )
 			{
-				l->sqlpool[i ].sqllib = (struct SQLLibrary *)LibraryOpen( l, l->sl_DefaultDBLib, 0 );
-				if( l->sqlpool[i ].sqllib != NULL )
+				l->sqlpool[ i ].sqll_Sqllib = (struct SQLLibrary *)LibraryOpen( l, l->sl_DefaultDBLib, 0 );
+				if( l->sqlpool[ i ].sqll_Sqllib != NULL )
 				{
-					error = l->sqlpool[i ].sqllib->SetOption( l->sqlpool[i ].sqllib, options );
-					error = l->sqlpool[i ].sqllib->Connect( l->sqlpool[i ].sqllib, host, dbname, login, pass, port );
+					l->sqlpool[ i ].sql_ID = i;
+					error = l->sqlpool[i ].sqll_Sqllib->SetOption( l->sqlpool[ i ].sqll_Sqllib, options );
+					error = l->sqlpool[i ].sqll_Sqllib->Connect( l->sqlpool[ i ].sqll_Sqllib, host, dbname, login, pass, port );
 					if( error != 0 )
 					{
 						break;
@@ -473,8 +476,8 @@ SystemBase *SystemInit( void )
 				i = 0;
 				for( ; i < (unsigned int)l->sqlpoolConnections; i++ )
 				{
-					LibraryClose( l->sqlpool[ i ].sqllib );
-					l->sqlpool[i ].sqllib = NULL;
+					LibraryClose( l->sqlpool[ i ].sqll_Sqllib );
+					l->sqlpool[i ].sqll_Sqllib = NULL;
 				}
 			}
 		}
@@ -487,7 +490,7 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO, "[SystemBase] Reading configuration END\n");
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	
-	if( l->sqlpool == NULL || l->sqlpool[ 0 ].sqllib == NULL )
+	if( l->sqlpool == NULL || l->sqlpool[ 0 ].sqll_Sqllib == NULL )
 	{
 		FERROR("Cannot open 'mysql.library' in first slot\n");
 		FFree( tempString );
@@ -788,6 +791,12 @@ SystemBase *SystemInit( void )
 		return NULL;	
 	}
 	
+	l->sl_SecurityManager = SecurityManagerNew( l );
+	if( l->sl_SecurityManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize SecurityManager\n");
+	}
+	
 	l->sl_UM = UMNew( l );
 	if( l->sl_UM == NULL )
 	{
@@ -1000,6 +1009,8 @@ SystemBase *SystemInit( void )
 	
 	EventAdd( l->sl_EventManager, "RemoveOldLogs", RemoveOldLogs, l, time( NULL )+HOUR12, HOUR12, -1 );
 	
+	//EventAdd( l->sl_EventManager, "SecurityManagerRemoteOldBadSessionCalls", SecurityManagerRemoteOldBadSessionCalls, l->sl_SecurityManager, time( NULL )+MINS60, MINS60, -1 );
+	
 	//@BG-678 
 	//EventAdd( l->sl_EventManager, USMCloseUnusedWebSockets, l->sl_USM, time( NULL )+MINS5, MINS5, -1 );
 	
@@ -1190,6 +1201,10 @@ void SystemClose( SystemBase *l )
 	{
 		RMDelete( l->sl_RoleManager );
 	}
+	if( l->sl_SecurityManager != NULL )
+	{
+		SecurityManagerDelete( l->sl_SecurityManager );
+	}
 	
 	// Remove sentinel from active memory
 	if( l->sl_Sentinel != NULL )
@@ -1282,7 +1297,7 @@ void SystemClose( SystemBase *l )
 		for( ; i < (unsigned int)l->sqlpoolConnections; i++ )
 		{
 			DEBUG( "[SystemBase] Closed mysql library slot %d\n", i );
-			LibraryClose( l->sqlpool[ i ].sqllib );
+			LibraryClose( l->sqlpool[ i ].sqll_Sqllib );
 		}
 		
 		FFree( l->sqlpool );
@@ -1359,15 +1374,15 @@ void SystemClose( SystemBase *l )
 		{
 			if( l->l_ServerKeys[i] != NULL )
 			{
-				free( l->l_ServerKeys[i] );
+				FFree( l->l_ServerKeys[i] );
 			}
 			if( l->l_ServerKeyValues[i] != NULL )
 			{
-				free( l->l_ServerKeyValues[i] );
+				FFree( l->l_ServerKeyValues[i] );
 			}
 		}
-		free( l->l_ServerKeys );
-		free( l->l_ServerKeyValues );
+		FFree( l->l_ServerKeys );
+		FFree( l->l_ServerKeyValues );
 	}
 	
 	xmlCleanupParser();
@@ -1587,9 +1602,11 @@ int SystemInitExternal( SystemBase *l )
 			
 			if( foundRemoteSession == FALSE )
 			{
+				char *newSessionId = SessionIDGenerate();
 				DEBUG("[SystemBase] Remote session will be created for Sentinel\n");
 				
-				UserSession *ses = UserSessionNew( "remote", "remote" );
+				UserSession *ses = UserSessionNew( newSessionId, "remote" );
+				//UserSession *ses = UserSessionNew( "remote", "remote" );
 				if( ses != NULL )
 				{
 					ses->us_UserID = l->sl_Sentinel->s_User->u_ID;
@@ -1598,27 +1615,8 @@ int SystemInitExternal( SystemBase *l )
 					UserAddSession( l->sl_Sentinel->s_User, ses );
 					
 					USMUserSessionAddToList( l->sl_USM, ses );
-					/*
-					UserSession *nextses = NULL;
-					if( l->sl_USM->usm_Sessions != NULL )
-					{
-						l->sl_USM->usm_Sessions->node.mln_Succ;
-					}
-					ses->node.mln_Succ = (MinNode *)l->sl_USM->usm_Sessions;
-					l->sl_USM->usm_Sessions = ses;
-					if( nextses != NULL )
-					{
-						nextses->node.mln_Pred = (MinNode *)ses;
-					}
-					*/
-					
-					//
-					//if( sqllib->NumberOfRecordsCustomQuery( sqllib, "select * from `FUserSession` where UserID='1' AND DeviceIdentity='remote'") < 1)
-					//{
-					//	sqllib->Save( sqllib, UserSessionDesc, ses );
-					//}
-					//
 				}
+				FFree( newSessionId );
 			}
 			
 			//
@@ -1665,8 +1663,6 @@ int SystemInitExternal( SystemBase *l )
 			sentUser = l->sl_Sentinel->s_User;
 		}*/
 		
-		
-		
 		l->LibrarySQLDrop( l, sqllib );
 		
 		UGMMountDrives( l->sl_UGM );
@@ -1700,26 +1696,6 @@ int SystemInitExternal( SystemBase *l )
 	}
 	
 	DEBUG("[SystembaseInitExternal]APNS init\n" );
-	
-	/*
-	l->l_APNSConnection = WebsocketAPNSConnectorNew( l->l_AppleServerHost, l->l_AppleServerPort );
-	if( l->l_APNSConnection != NULL )
-	{
-		
-		//if( WebsocketClientConnect( l->l_APNSConnection->wapns_Connection ) > 0 )
-		//{
-		//	DEBUG("APNS server connected\n");
-		//}
-		//else
-		//{
-		//	DEBUG("APNS server not connected\n");
-		//}
-	}
-	else
-	{
-		FERROR("[SystembaseInitExternal]APNS init ERROR!\n");
-	}
-	*/
 	
 	return 0;
 }
@@ -2189,8 +2165,6 @@ int UserDeviceUnMount( SystemBase *l, SQLLibrary *sqllib __attribute__((unused))
 
 char *RunMod( SystemBase *l, const char *type, const char *path, const char *args, unsigned long *length )
 {
-	char tmpQuery[ 255 ];
-	int pathlen = strlen( path );
 	char *results = NULL;
 
 	EModule *lmod = l->sl_Modules;
@@ -2279,14 +2253,11 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
 	{
 		if( FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex ) == 0 )
 		{
-			if( l->sqlpool[ l->MsqLlibCounter ].inUse == FALSE )
+			if( l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib->l_InUse == FALSE )
 			{
-				//FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
-			
-				//FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex );
-				retlib = l->sqlpool[l->MsqLlibCounter ].sqllib;
-				DEBUG("retlibptr %p pool %p\n", retlib, l->sqlpool[l->MsqLlibCounter ].sqllib );
-				int status = retlib->GetStatus( (void *)l->sqlpool[l->MsqLlibCounter ].sqllib );
+				retlib = l->sqlpool[l->MsqLlibCounter ].sqll_Sqllib;
+				DEBUG("retlibptr %p pool %p\n", retlib, l->sqlpool[l->MsqLlibCounter ].sqll_Sqllib );
+				int status = retlib->GetStatus( (void *)l->sqlpool[l->MsqLlibCounter ].sqll_Sqllib );
 				if( retlib == NULL || status != SQL_STATUS_READY ) //retlib->con.sql_Con->status != MYSQL_STATUS_READY )
 				{
 					FERROR( "[LibraryMYSQLGet] We found a NULL pointer on slot %d retlib %p status %d!\n", l->MsqLlibCounter, retlib, status );
@@ -2295,11 +2266,12 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
 					FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
 					continue;
 				}
-				l->sqlpool[ l->MsqLlibCounter ].inUse = TRUE;
-				if( l->sqlpool[ l->MsqLlibCounter ].sqllib->con.sql_Recconect == TRUE )
+				
+				l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib->l_InUse = TRUE;
+				if( l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib->con.sql_Recconect == TRUE )
 				{
-					l->sqlpool[ l->MsqLlibCounter ].sqllib->Reconnect(  l->sqlpool[ l->MsqLlibCounter ].sqllib );
-					l->sqlpool[ l->MsqLlibCounter ].sqllib->con.sql_Recconect = FALSE;
+					l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib->Reconnect(  l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib );
+					l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib->con.sql_Recconect = FALSE;
 				}
 			
 				INFO( "[LibraryMYSQLGet] We found mysql library on slot %d.\n", l->MsqLlibCounter );
@@ -2357,20 +2329,19 @@ void LibrarySQLDrop( SystemBase *l, SQLLibrary *mclose )
 	int i = 0;
 	int closed = -1;
 	
-	for( ; i < l->sqlpoolConnections ; i++ )
+	if( mclose->l_InUse == TRUE )
 	{
-		if( l->sqlpool[ i ].sqllib == mclose )
+		if( FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex ) == 0 )
 		{
-			FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex );
-			l->sqlpool[ i ].inUse = FALSE;
+			mclose->l_InUse = FALSE;
 			FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
-			closed = i;
 		}
+		closed = i;
+	}
 		
-		if( l->sqlpool[ i ].inUse != FALSE )
-		{
-			DEBUG( "[SystemBase] Mysql slot %d is still in use\n", i );
-		}
+	if( mclose->l_InUse != FALSE )
+	{
+		DEBUG( "[SystemBase] Mysql slot %d is still in use\n", i );
 	}
 	
 	if( closed != -1 )
@@ -2453,7 +2424,7 @@ ZLibrary *LibraryZGet( SystemBase *l )
  * Drop z.library to pool UNIMPLEMENTED
  *
  * @param l pointer to SystemBase
- * @param aclose pointer to z.library which will be returned to pool
+ * @param closelib pointer to z.library which will be returned to pool
  */
 
 void LibraryZDrop( SystemBase *l __attribute__((unused)), ZLibrary *closelib __attribute__((unused)) )
@@ -2658,11 +2629,11 @@ int SendProcessMessage( Http *request, char *data, int len )
 {
 	DEBUG("[SystemBase] SendProcessMessage\n");
 	
-	if( request->h_RequestSource == HTTP_SOURCE_HTTP_TO_WS )
+	if( request->http_RequestSource == HTTP_SOURCE_HTTP_TO_WS )
 	{
 		DEBUG("[SystemBase] SendProcessMessage to WS: %s\n", data );
 		
-		PIDThread *pidt = (PIDThread *)request->h_PIDThread;
+		PIDThread *pidt = (PIDThread *)request->http_PIDThread;
 		char *sendbuf;
 		int msglen = len+1024;
 		

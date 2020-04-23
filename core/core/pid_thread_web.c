@@ -75,11 +75,11 @@ Http *PIDThreadWebRequest( void *sb, char **urlpath, Http *request, UserSession 
 		char buffer[ 256 ];
 		FUQUAD pid = 0;
 		HashmapElement *el = HttpGetPOSTParameter( request, "id" );
-		if( el == NULL ) el = HashmapGet( request->query, "id" );
+		if( el == NULL ) el = HashmapGet( request->http_Query, "id" );
 		if( el != NULL )
 		{
 			char *end;
-			pid = strtoull( (char *)el->data,  &end, 0 );
+			pid = strtoull( (char *)el->hme_Data,  &end, 0 );
 		}
 		
 		response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( "text/html", 9 ),

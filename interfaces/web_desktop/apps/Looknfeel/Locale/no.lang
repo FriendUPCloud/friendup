@@ -31,3 +31,7 @@ i18n_hide_system                        : Gjem System disk
 i18n_virtual_workspaces                 : Virtuelle arbeidsbord
 i18n_workspace_count                    : Antall arbeidsbord
 i18n_scrollable_desktop_icons           : Rullefelt for desktop ikoner
+
+i18n_workspace_labels                   : Arbeidsbordikoner
+i18n_workspaces_to_label                : Ingen virtuelle arbeidsbord tilgjengelige.
+

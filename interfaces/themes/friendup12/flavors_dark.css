@@ -353,7 +353,7 @@ html body.Dark .Screen > .TitleBar > .Left *
 
 body.Dark #DoorsScreen .Left > .VirtualWorkspaces > div.Active 
 {
-	border: 1px solid #455155;
+	border: 0;
 }
 
 [mobile].Dark .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name,
@@ -385,6 +385,11 @@ body.Dark .FileBrowserItemImage
 body.Dark .Active > .FileBrowserItemImage
 {
 	filter: invert(100%);
+}
+
+body.Dark .Frame .Progress
+{
+	text-shadow: 1px 1px rgba(0,0,0,0.7);
 }
 
 /* Dark scheme scrollbars */
@@ -421,4 +426,10 @@ html body.Dark .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	background-color: #34495e !important;
 	border-color: #314559;
 }  
+
+html body.Charcoal .Frame .Progress
+{
+	text-shadow: 1px 1px rgba(0,0,0,0.7);
+}
+
 

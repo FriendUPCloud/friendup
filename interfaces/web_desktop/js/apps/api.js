@@ -3037,6 +3037,7 @@ WebAudioLoader = function( filePath, callback )
 	this.audioGraph =
 	{
 		volume: 0.5,
+		metadata: false,
 		context: __audioContext,                                                //this is the container for your entire audio graph
 		bufferArray: [],
 		bufferArrayIndex: 0,
@@ -3181,7 +3182,7 @@ WebAudioLoader = function( filePath, callback )
 			this.source.stop();
 			this.bufferArrayIndex = 0;
 		}
-	}
+	};
 
 	// Do we need this?
 	this.audioGraph.source = this.audioGraph.context.createBufferSource();      //your buffer will sit here
@@ -3277,9 +3278,72 @@ WebAudioLoader = function( filePath, callback )
 		{
 			var request = new XMLHttpRequest();
 			request.responseType = 'arraybuffer';
-			request.onload = function( evt )
+			request.onload = function( evt, a1, c1, b1, d1, e1, f1, g1 )
 			{
 				var theData = request.response;
+			
+				// Try to get ID3 information
+				try
+				{
+					function parseID3( a, b, c, d, e, f, g, h )
+					{
+						DataView.prototype.str=function(a,b,c,d){//start,length,placeholder,placeholder
+							b=b||1;c=0;d='';for(;c<b;)d+=String.fromCharCode(this.getUint8(a+c++));return d
+						}
+						DataView.prototype.int=function(a){//start
+							return (this.getUint8(a)<<21)|(this.getUint8(a+1)<<14)|
+							(this.getUint8(a+2)<<7)|this.getUint8(a+3)
+						}
+						var frID3={
+							'APIC':function(x,y,z,q){
+								var b=0,c=['',0,''],d=1,e,b64;
+								while(b<3)e=x.getUint8(y+z+d++),c[b]+=String.fromCharCode(e),
+								e!=0||(b+=b==0?(c[1]=x.getUint8(y+z+d),2):1);
+								b64='data:'+c[0]+';base64,'+
+								btoa(String.fromCharCode.apply(null,new Uint8Array(x.buffer.slice(y+z+++d,q))));
+								return {mime:c[0],description:c[2],type:c[1],base64:b64}
+							}
+						}
+						function readID3(result,a,b,c,d,e,f,g,h){
+							if(!(a=new DataView(result))||a.str(0,3)!='ID3')return;
+							g={Version:'ID3v2.'+a.getUint8(3)+'.'+a.getUint8(4)};
+							a=new DataView(a.buffer.slice(10+((a.getUint8(5)&0x40)!=0?a.int(10):0),a.int(6)+10));
+							b=a.byteLength;c=0;d=10;
+							while(true){
+								f=a.str(c);e=a.int(c+4);
+								if(b-c<d||(f<'A'||f>'Z')||c+e>b)break;
+								g[h=a.str(c,4)]=frID3[h]?frID3[h](a,c,d,e):a.str(c+d,e);
+								c+=e+d;
+							}
+							return g;
+						}
+						return readID3( a, b, c, d, e, f, g, h );
+					}
+					
+					var info = parseID3( theData, a1, b1, c1, d1, e1, f1, g1 );
+										
+					if( info && info.TIT2 )
+					{
+						t.metadata = {
+							title: Trim( info.TIT2 ),
+							artist: Trim( info.TCOM ),
+							album: Trim( info.TALB ),
+							year: Trim( info.TYER )
+						};
+						for( let a in t.metadata )
+						{
+							t.metadata[ a ] = t.metadata[ a ].split( /[^ a-z0-9øæå!,.-_]/i ).join( '' );
+						}
+					} 
+					else 
+					{
+						console.log( 'No ID3v1 data found.' );
+					}
+				}
+				catch( e )
+				{
+					console.log( 'Failed to use dataview object.' );
+				}
 			
 				// Decode
 				try
@@ -3375,6 +3439,29 @@ function AudioObject( sample, callback )
 	this.pause = function()
 	{
 		this.paused = this.loader.audioGraph.pause();
+		if( !this.paused )
+		{
+			// Reboot the counter!
+			var t = this;
+			if( this.interval ) clearInterval( this.interval );
+			this.interval = setInterval( function()
+			{
+				if( t.loader && t.loader.audioGraph.started && t.onplaying && !t.loader.audioGraph.paused )
+				{
+					var ct = t.getContext().currentTime;
+					var pt = t.loader.audioGraph.playTime;
+					try
+					{
+						var dr = t.loader.audioGraph.source.buffer.duration;
+						t.onplaying( ( ct - pt ) / dr, ct, pt, dr );
+					}
+					catch( e )
+					{
+						console.log( 'Playing streaming segment. Fixme!' );
+					}
+				}
+			}, 100 );
+		}
 	}
 
 	this.unload = function()
@@ -3387,6 +3474,7 @@ function AudioObject( sample, callback )
 	this.stop = function()
 	{
 		this.loader.audioGraph.stop();
+		this.stopped = true;
 		if( this.interval )
 		{
 			clearInterval( this.interval );
@@ -3417,11 +3505,12 @@ function AudioObject( sample, callback )
 	// Plays notes!
 	this.play = function()
 	{
+		this.stopped = false;
 		var t = this;
 		if( this.interval ) clearInterval( this.interval );
 		this.interval = setInterval( function()
 		{
-			if( t.loader.audioGraph.started && t.onplaying && !t.loader.audioGraph.paused )
+			if( t.loader && t.loader.audioGraph.started && t.onplaying && !t.loader.audioGraph.paused )
 			{
 				var ct = t.getContext().currentTime;
 				var pt = t.loader.audioGraph.playTime;
@@ -3438,6 +3527,8 @@ function AudioObject( sample, callback )
 		}, 100 );
 		
 		// Handle ending
+		if( !t.loader )
+			return;
 		var ag = t.loader.audioGraph;
 	
 		function ended()
@@ -3462,7 +3553,6 @@ function AudioObject( sample, callback )
 				t.onfinished();
 		}
 		
-		console.log( 'Playing now!' );
 		this.loader.audioGraph.playSound( { onEnded: ended } );
 	}
 
@@ -8853,12 +8943,15 @@ Friend.GUI.checkInputFocus = function()
 		}
 	}
 	// Send the message
-	Application.sendMessage( {
-		type: 'view',
-		method: 'windowstate',
-		state: 'input-focus',
-		value: response
-	} );
+	if( window.Application && window.Application.sendMessage )
+	{
+		Application.sendMessage( {
+			type: 'view',
+			method: 'windowstate',
+			state: 'input-focus',
+			value: response
+		} );
+	}
 }
 
 // Responsive layout

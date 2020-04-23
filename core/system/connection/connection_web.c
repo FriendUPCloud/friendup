@@ -97,9 +97,9 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 		int pos = 0;
 		
 		el = GetHEReq( *request, "id" );
-		if( el != NULL && el->data )
+		if( el != NULL && el->hme_Data )
 		{
-			fname = UrlDecodeToMem( (char *)el->data );
+			fname = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		
 		if( UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE && temp != NULL )
@@ -191,9 +191,9 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 		int pos = 0;
 		
 		el = GetHEReq( *request, "address" );
-		if( el != NULL && el->data )
+		if( el != NULL && el->hme_Data )
 		{
-			addr = UrlDecodeToMem( (char *)el->data );
+			addr = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		
 		if( UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE && temp != NULL )
@@ -292,22 +292,22 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 		
 		if( UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE )
 		{
-			el =  HashmapGet( (*request)->parsedPostContent, "address" );
+			el =  HashmapGet( (*request)->http_ParsedPostContent, "address" );
 			if( el != NULL )
 			{
-				address = UrlDecodeToMem( ( char *)el->data );
+				address = UrlDecodeToMem( ( char *)el->hme_Data );
 			}
 		
-			el =  HashmapGet( (*request)->parsedPostContent, "name" );
+			el =  HashmapGet( (*request)->http_ParsedPostContent, "name" );
 			if( el != NULL )
 			{
-				name = UrlDecodeToMem( ( char *)el->data );
+				name = UrlDecodeToMem( ( char *)el->hme_Data );
 			}
 		
-			el =  HashmapGet( (*request)->parsedPostContent, "type" );
+			el =  HashmapGet( (*request)->http_ParsedPostContent, "type" );
 			if( el != NULL )
 			{
-				type = atoi( ( char *)el->data );
+				type = atoi( ( char *)el->hme_Data );
 			}
 		
 			if( address != NULL && name != NULL )
@@ -521,53 +521,53 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 		
 		if( UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE )
 		{
-			el =  HashmapGet( (*request)->parsedPostContent, "id" );
+			el =  HashmapGet( (*request)->http_ParsedPostContent, "id" );
 			if( el != NULL )
 			{
 				char *end;
-				id = strtol( ( char *)el->data,  &end, 0 );
+				id = strtol( ( char *)el->hme_Data,  &end, 0 );
 			}
 			
-			el =  HashmapGet( (*request)->parsedPostContent, "address" );
+			el =  HashmapGet( (*request)->http_ParsedPostContent, "address" );
 			if( el != NULL )
 			{
-				address = UrlDecodeToMem( ( char *)el->data );
+				address = UrlDecodeToMem( ( char *)el->hme_Data );
 			}
 			
-			el =  HashmapGet( (*request)->parsedPostContent, "destinationfcid" );
+			el =  HashmapGet( (*request)->http_ParsedPostContent, "destinationfcid" );
 			if( el != NULL )
 			{
-				destFCID = UrlDecodeToMem( ( char *)el->data );
+				destFCID = UrlDecodeToMem( ( char *)el->hme_Data );
 			}
 			
-			el =  HashmapGet( (*request)->parsedPostContent, "pem" );
+			el =  HashmapGet( (*request)->http_ParsedPostContent, "pem" );
 			if( el != NULL )
 			{
-				PEM = UrlDecodeToMem( ( char *)el->data );
+				PEM = UrlDecodeToMem( ( char *)el->hme_Data );
 			}
 			
-			el =  HashmapGet( (*request)->parsedPostContent, "servertype" );
+			el =  HashmapGet( (*request)->http_ParsedPostContent, "servertype" );
 			if( el != NULL )
 			{
-				serverType = UrlDecodeToMem( ( char *)el->data );
+				serverType = UrlDecodeToMem( ( char *)el->hme_Data );
 			}
 			
-			el =  HashmapGet( (*request)->parsedPostContent, "clusterid" );
+			el =  HashmapGet( (*request)->http_ParsedPostContent, "clusterid" );
 			if( el != NULL )
 			{
-				clusterID = UrlDecodeToMem( ( char *)el->data );
+				clusterID = UrlDecodeToMem( ( char *)el->hme_Data );
 			}
 			
-			el =  HashmapGet( (*request)->parsedPostContent, "name" );
+			el =  HashmapGet( (*request)->http_ParsedPostContent, "name" );
 			if( el != NULL )
 			{
-				name = UrlDecodeToMem( ( char *)el->data );
+				name = UrlDecodeToMem( ( char *)el->hme_Data );
 			}
 			
-			el =  HashmapGet( (*request)->parsedPostContent, "approved" );
+			el =  HashmapGet( (*request)->http_ParsedPostContent, "approved" );
 			if( el != NULL )
 			{
-				approved = atoi( ( char *)el->data );
+				approved = atoi( ( char *)el->hme_Data );
 			}
 			
 			if( id > 0 )
@@ -739,17 +739,17 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 		
 		if( UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE )
 		{
-			el =  HashmapGet( (*request)->parsedPostContent, "id" );
+			el =  HashmapGet( (*request)->http_ParsedPostContent, "id" );
 			if( el != NULL )
 			{
 				char *end;
-				id = strtol( ( char *)el->data,  &end, 0 );
+				id = strtol( ( char *)el->hme_Data,  &end, 0 );
 			}
 			
-			el =  HashmapGet( (*request)->parsedPostContent, "name" );
+			el =  HashmapGet( (*request)->http_ParsedPostContent, "name" );
 			if( el != NULL )
 			{
-				name = UrlDecodeToMem( ( char *)el->data );
+				name = UrlDecodeToMem( ( char *)el->hme_Data );
 			}
 			
 			if( id > 0 || name != NULL )
