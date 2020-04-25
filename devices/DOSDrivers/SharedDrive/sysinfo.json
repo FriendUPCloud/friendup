@@ -1,0 +1,6 @@
+{
+	"type":    "SharedDrive",
+	"literal": "Shared drive",
+	"group":   "API",
+	"sharing": "0"
+}
