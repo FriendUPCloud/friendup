@@ -33,7 +33,7 @@ if( $args->args->userid == 'new' )
 }
 
 // Check if the user exists
-if( $user = $SqlDatabase->fetchObject( 'SELECT * FROM FUser WHERE ID=\'' . intval( $args->args->userid, 10 ) . '\'' ) )
+if( $suser = $SqlDatabase->fetchObject( 'SELECT * FROM FUser WHERE ID=\'' . intval( $args->args->userid, 10 ) . '\'' ) )
 {
 	// Check if the shared drive exists
 	if( !$sharedrive->ID )
@@ -51,7 +51,27 @@ if( isset( $args->args->type ) )
 	switch( $args->args->type )
 	{
 		case 'file':
-			
+			$mode = 'r';
+			if( $args->args->mode )
+			{
+				if( $args->args->mode == 'rw' )
+				{
+					$mode = 'rw';
+				}
+			}
+			$SqlDatabase->query( '
+				INSERT INTO `FShared`
+				( OwnerUserID, SharedUserID, Data, Mode, DateCreated, DateTouched )
+				VALUES
+				(
+					\'' . $User->ID . '\',
+					\'' . $suser->ID . '\',
+					\'' . $filePath . '\',
+					\'' . $mode . '\',
+					NOW(),
+					NOW()
+				)	
+			' );
 			break;
 		case 'application':
 			break;
