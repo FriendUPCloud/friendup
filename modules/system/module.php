@@ -815,6 +815,10 @@ if( isset( $args->command ) )
 			}
 			die( 'fail<!--separate-->' );
 			break;
+		// Share something!
+		case 'share':
+			require( 'modules/system/include/share.php' );
+			break;
 		// Get a list of mounted and unmounted devices
 		case 'mountlist':
 			require( 'modules/system/include/mountlist.php' );
