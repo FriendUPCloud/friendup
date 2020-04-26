@@ -35,11 +35,39 @@ if( $args->args->userid == 'new' )
 // Check if the user exists
 if( $suser = $SqlDatabase->fetchObject( 'SELECT * FROM FUser WHERE ID=\'' . intval( $args->args->userid, 10 ) . '\'' ) )
 {
-	// Check if the shared drive exists
-	if( !$sharedrive->ID )
+	// Check if the owner's shared drive exists
+	$shareddrive = $SqlDatabase->fetchObject( '
+		SELECT * FROM
+			Filesystem f
+		WHERE
+			f.UserID=\'' . $User->ID . '\' AND
+			f.Type=\'SharedDrive\'
+	' );
+	// The drive doesn't exist? Create it
+	if( !$shareddrive )
 	{
-		die( 'fail<!--separate-->{"message":"Could not share item - no sharing target.","response":"-1"}' );
+		$shareddrive = CreateSharedDrive( $User->ID );
+		if( !$shareddrive )
+		{
+			die( 'fail<!--separate-->{"message":"Could not create shared drive.","response":"-1"}' );
+		}
 	}
+	$targetshared = $SqlDatabase->fetchObject( '
+		SELECT * FROM
+			Filesystem f
+		WHERE
+			f.UserID=\'' . intval( $args->args->userid . '\' AND
+			f.Type=\'SharedDrive\'
+	' );
+	if( !$targetshared )
+	{
+		$targetshared = CreateSharedDrive( $User->ID );
+		if( !$targetshared )
+		{
+			die( 'fail<!--separate-->{"message":"Could not create shared drive for target.","response":"-1"}' );
+		}
+	}
+	// If we get to this point there's no problemo!
 }
 else
 {
@@ -50,6 +78,7 @@ if( isset( $args->args->type ) )
 {
 	switch( $args->args->type )
 	{
+		// Share a file
 		case 'file':
 			$mode = 'r';
 			if( $args->args->mode )
@@ -59,6 +88,9 @@ if( isset( $args->args->type ) )
 					$mode = 'rw';
 				}
 			}
+			
+			$filePath = mysqli_real_escape_string( $args->args->path );
+			
 			$SqlDatabase->query( '
 				INSERT INTO `FShared`
 				( OwnerUserID, SharedUserID, Data, Mode, DateCreated, DateTouched )
