@@ -68,6 +68,8 @@ if( $suser = $SqlDatabase->fetchObject( 'SELECT * FROM FUser WHERE ID=\'' . intv
 		}
 	}
 	// If we get to this point there's no problemo!
+	
+	
 }
 else
 {
