@@ -297,7 +297,7 @@ int FileUploadFileOrDirectoryRec( Http *request, File *dstdev, const char *dst, 
 							{
 								int namelen = strlen( newdst );
 								char message[ 1024 ];
-								SystemBase *sb = (SystemBase *)request->h_SB;
+								SystemBase *sb = (SystemBase *)request->http_SB;
 								
 								char *fname = (char *)newdst;
 								if( namelen > 255 )
@@ -366,7 +366,7 @@ int FileUploadFileOrDirectoryRec( Http *request, File *dstdev, const char *dst, 
 		{
 			int namelen = strlen( dst );
 			char message[ 1024 ];
-			SystemBase *sb = (SystemBase *)request->h_SB;
+			SystemBase *sb = (SystemBase *)request->http_SB;
 			
 			char *fname = (char *)dst;
 			if( namelen > 255 )
@@ -651,8 +651,6 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 											{
 												char dbuf[ 32768 ];
 												
-												//DEBUG("\n\n\n\n--->STOREFILE srcdev  : %s changed: %s NEWDST %s\n\n", src, &src[ cutPos ], newdst );
-											
 												File *srcfp = (File *)fsys->FileOpen( srcdev, newsrc, "rb" );
 												if( srcfp != NULL )
 												{
@@ -677,7 +675,7 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 											{
 												int namelen = strlen( dst );
 												char message[ 1024 ];
-												SystemBase *sb = (SystemBase *)request->h_SB;
+												SystemBase *sb = (SystemBase *)request->http_SB;
 												
 												char *fname = (char *)dst;
 												if( namelen > 255 )
@@ -791,7 +789,7 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 				{
 					int namelen = strlen( dst );
 					char message[ 1024 ];
-					SystemBase *sb = (SystemBase *)request->h_SB;
+					SystemBase *sb = (SystemBase *)request->http_SB;
 					
 					char *fname = (char *)dst;
 					if( namelen > 255 )

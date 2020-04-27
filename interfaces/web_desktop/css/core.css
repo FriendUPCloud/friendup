@@ -3292,6 +3292,12 @@ body:not([mobile]).ShowTasks #TaskSwitcher .Current .Close
 }
 
 /* Progress bars ------------------------------------------------------------ */
+
+.Frame .Progress
+{
+	line-height: 30px;
+}
+
 .Frame .Groove + .Bar
 {
 	background-image: url(/webclient/gfx/system/progressbar.gif);

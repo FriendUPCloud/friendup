@@ -405,13 +405,13 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		char *host = NULL;
 		char *remsession = NULL;
 		
-		el =  HashmapGet( (*request)->parsedPostContent, "remotehost" );
+		el =  HashmapGet( (*request)->http_ParsedPostContent, "remotehost" );
 		if( el != NULL )
 		{
 			host = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
-		el =  HashmapGet( (*request)->parsedPostContent, "remotesessionid" );
+		el =  HashmapGet( (*request)->http_ParsedPostContent, "remotesessionid" );
 		if( el != NULL )
 		{
 			remsession = UrlDecodeToMem( ( char *)el->hme_Data );
@@ -422,7 +422,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 			// deviceid , appname
 			// overwrite sessionid
 			
-			HashmapPut( (*request)->parsedPostContent, StringDuplicate("sessionid"), remsession );
+			HashmapPut( (*request)->http_ParsedPostContent, StringDuplicate("sessionid"), remsession );
 			
 			DataForm *df = DataFormFromHttp( *request );
 			if( df != NULL )
@@ -515,7 +515,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		char *usersession = NULL;
 		
 		el = HttpGetPOSTParameter( (*request), "message" );
-		if( el == NULL ) el = HashmapGet( (*request)->query, "message" );
+		if( el == NULL ) el = HashmapGet( (*request)->http_Query, "message" );
 		//el =  HashmapGet( (*request)->parsedPostContent, "message" );
 		if( el != NULL )
 		{
@@ -523,7 +523,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		}
 		
 		el = HttpGetPOSTParameter( (*request), "usersession" );
-		if( el == NULL ) el = HashmapGet( (*request)->query, "usersession" );
+		if( el == NULL ) el = HashmapGet( (*request)->http_Query, "usersession" );
 		//el =  HashmapGet( (*request)->parsedPostContent, "usersession" );
 		if( el != NULL )
 		{

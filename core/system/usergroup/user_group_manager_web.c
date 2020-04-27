@@ -1327,6 +1327,9 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			BufString *retString = BufStringNew();
+			
+			DEBUG("Group/list - send information to 3rd party services\n");
+			
 			BufStringAddSize( retString, "ok<!--separate-->{", 18 );
 			BufStringAdd( retString, "\"groups\":[" );
 

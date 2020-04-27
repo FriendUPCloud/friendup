@@ -184,8 +184,8 @@ FUQUAD PIDThreadManagerRunThread( PIDThreadManager *ptm, Http *request, char **u
 		
 		DEBUG("[PIDThreadManager] runThread ptr sb %p uurl %p func ptr %p reqptr %p usersession %p\n", pidt->pt_SB, pidt->pt_Url, pidt->pt_Function, pidt->pt_Request , pidt->pt_UserSession );
 		
-		request->h_RequestSource = HTTP_SOURCE_HTTP_TO_WS;
-		request->h_PIDThread = pidt;
+		request->http_RequestSource = HTTP_SOURCE_HTTP_TO_WS;
+		request->http_PIDThread = pidt;
 		
 		for( i=0 ; i < PID_URL_MAX_DEPTH ; i++ )
 		{

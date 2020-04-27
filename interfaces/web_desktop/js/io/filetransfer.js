@@ -156,6 +156,8 @@ self.uploadFiles = function()
 		// Are we done?
 		if( queuePos > filesList.length )
 		{
+			//console.log( 'We should now close the window!!!!!' );
+			
 			self.postMessage( {
 				'progressinfo': 1,
 				'progress': 100,
@@ -165,6 +167,10 @@ self.uploadFiles = function()
 			} );
 			self.close();
 			return;
+		}
+		else
+		{
+			//console.log( 'In queue: ' + queuePos + ' / ' + filesList.length );
 		}
 		
 		if( typeof filesList[ queuePos ] != 'object' )
@@ -247,6 +253,7 @@ self.uploadFiles = function()
 					// Now go upload!
 					doUpload( queuePos, function()
 					{
+						//console.log( 'Another next in queue!' );
 						// Rerun queue
 						uploadQueueRun( ++queuePos ); 
 					} );
@@ -264,6 +271,7 @@ self.uploadFiles = function()
 			//console.log( 'JUST UPLOAD: ' + destPath );
 			doUpload( queuePos, function()
 			{ 
+				//console.log( 'Next in queue!' );
 				// Rerun queue
 				uploadQueueRun( ++queuePos ); 
 			} );
@@ -352,6 +360,8 @@ self.uploadFiles = function()
 					self.postMessage( {
 						'progressinfo': 1,
 						'progress': progress,
+						'bytesWritten': prog,
+						'bytesTotal': tota,
 						'progresson': ind,
 						'filesundertransport': self.filesUnderTransport
 					} );
@@ -386,6 +396,7 @@ self.uploadFiles = function()
 					calcProgress();
 					
 					// Run callback
+					//console.log( 'Checking for callback.', this.responseText );
 					if( callback ) callback();
 				}
 				else if( this.readyState > 1 && this.status > 0 )
@@ -396,6 +407,10 @@ self.uploadFiles = function()
 						'uploaderror' : 'Upload failed. Server response was readystate/status: |' + 
 							this.readyState + '/' + this.status + '|' 
 					} );
+				}
+				else
+				{
+					//console.log( 'Some other upload status: ' + this.readyState + ' / ' + this.status );
 				}
 			}
 		
@@ -411,6 +426,11 @@ self.uploadFiles = function()
 			fd.append( 'module','files' );
 			fd.append( 'command','uploadfile' );
 			fd.append( 'path', destPath );
+			// Sanitize
+			filename = filename.split( ':' ).join( '-' );
+			filename = filename.split( '/' ).join( '-' );
+			filename = filename.split( '[' ).join( '(' );
+			filename = filename.split( ']' ).join( ')' );
 			fd.append( 'file', file, encodeURIComponent( filename ) );
 		
 			// Get the party started
@@ -539,7 +559,7 @@ self.onmessage = function( e )
 	}
 	else if( e.data && e.data['terminate'] == 1 )
 	{
-		console.log('Terminating worker here...');
+		//console.log('Terminating worker here...');
 		self.close();
 	}
 } // end of onmessage

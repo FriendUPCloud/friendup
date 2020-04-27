@@ -325,7 +325,7 @@ void WorkerManagerDebug( void *sb )
 					Http *request = (Http *)wm->wm_Workers[ i ]->w_Request;
 					if( request != NULL )
 					{
-						Log( FLOG_ERROR, "[WorkerManager] worker: %d content: %s pointer to session: %p rawrequest: %s\n", i, request->content, request->h_UserSession, request->rawRequestPath );
+						Log( FLOG_ERROR, "[WorkerManager] worker: %d content: %s pointer to session: %p rawrequest: %s\n", i, request->http_Content, request->http_UserSession, request->http_RawRequestPath );
 					}
 					FRIEND_MUTEX_UNLOCK( &(wm->wm_Workers[ i ]->w_Mut) );
 				}
