@@ -229,7 +229,7 @@ if( isset( $args->command ) )
 				die( 'ok<!--separate-->' );
 			}
 			die( 'fail<!--separate-->{"response":"failed"}'  );
-			break;*/
+			break;*/			
 		case 'help':
 			$commands = array(
 				'ping', 'theme', 'systempath', 'software', 'save_external_file', 'proxycheck', 'proxyget',
@@ -247,7 +247,7 @@ if( isset( $args->command ) )
 				'usersetup', 'usersetupadd', 'usersetupapply', 'usersetupsave', 'usersetupdelete',
 				'usersetupget', 'userwallpaperset', 'workgroups', 'workgroupadd', 'workgroupupdate', 'workgroupdelete',
 				'workgroupget', 'setsetting', 'getsetting', 'getavatar', 'listlibraries', 'listmodules',
-				'listuserapplications', 'getmimetypes',  'setmimetype', 'setmimetypes', 'deletemimetypes',
+				'listuserapplications', 'adduserapplication', 'removeuserapplication', 'getmimetypes',  'setmimetype', 'setmimetypes', 'deletemimetypes',
 				'deletecalendarevent', 'getcalendarevents', 'addcalendarevent',
 				'listappcategories', 'systempath', 'listthemes', 'settheme', /* DEPRECATED - look for comment below 'userdelete',*/'userunblock',
 				'usersettings', 'listsystemsettings', 'savestate', 'getsystemsetting',
@@ -1618,6 +1618,12 @@ if( isset( $args->command ) )
 			break;
 		case 'listuserapplications':
 			require( 'modules/system/include/listuserapplications.php' );
+			break;
+		case 'adduserapplication':
+			require( 'modules/system/include/adduserapplication.php' );
+			break;
+		case 'removeuserapplication':
+			require( 'modules/system/include/removeuserapplication.php' );
 			break;
 		case 'getapplicationpreview':
 			require( 'modules/system/include/getapplicationpreview.php' );

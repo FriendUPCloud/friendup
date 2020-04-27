@@ -1978,10 +1978,8 @@ Sections.accounts_users = function( cmd, extra )
 																							{
 																				
 																								args.func.updateids( 'applications', args.name, false );
-																							
-																								//console.log( 'updateApplications( '+userInfo.ID+', callback, vars )' );
-																							
-																								updateApplications( userInfo.ID, function( e, d, vars )
+																								
+																								removeApplication( args.name, userInfo.ID, function( e, d, vars )
 																								{
 																					
 																									if( e && vars )
@@ -1993,7 +1991,9 @@ Sections.accounts_users = function( cmd, extra )
 																										}
 																			
 																										if( vars.func )
-																										{
+																										{	
+																											// TODO: Look at dock refresh, doesn't get latest info ...
+																											
 																											vars.func.dock( 'refresh' );
 																										}
 																						
@@ -2004,7 +2004,7 @@ Sections.accounts_users = function( cmd, extra )
 																									}
 																					
 																								}, { pnt: args.pnt, func: args.func } );
-																				
+																								
 																							} );
 																			
 																						};
@@ -2162,12 +2162,8 @@ Sections.accounts_users = function( cmd, extra )
 																						{
 																						
 																							func.updateids( 'applications', name, [ name, '0' ] );
-																						
-																							//console.log( 'updateApplications( '+userInfo.ID+', callback, vars )' );
-																						
-																						
-																						
-																							updateApplications( userInfo.ID, function( e, d, vars )
+																							
+																							addApplication( name, userInfo.ID, function( e, d, vars )
 																							{
 																					
 																								if( e && vars )
@@ -2188,18 +2184,14 @@ Sections.accounts_users = function( cmd, extra )
 																								}
 																					
 																							}, { _this: this, func: func } );
-																				
+																							
 																						}
 																						else
 																						{
 																						
 																							func.updateids( 'applications', name, false );
-																						
-																							//console.log( 'updateApplications( '+userInfo.ID+', callback, vars )' );
-																						
-																						
-																						
-																							updateApplications( userInfo.ID, function( e, d, vars )
+																							
+																							removeApplication( name, userInfo.ID, function( e, d, vars )
 																							{
 																					
 																								if( e && vars )
@@ -2220,7 +2212,7 @@ Sections.accounts_users = function( cmd, extra )
 																								}
 																					
 																							}, { _this: this, func: func } );
-																				
+																							
 																						}
 																			
 																					};
@@ -5620,6 +5612,52 @@ Sections.accounts_users = function( cmd, extra )
 		
 	}
 	
+	function addApplication( appName, userId, callback, vars )
+	{
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			console.log( 'adduserapplication ', { e:e, d:d } );
+			
+			if( e == 'ok' )
+			{
+				if( callback ) callback( true, d, vars );
+			}
+			else
+			{
+				if( callback ) callback( false, d, vars );
+			}
+		}
+		m.execute( 'adduserapplication', { application: appName, userid: userId, authid: Application.authId } );
+	}
+	
+	function removeApplication( appName, userId, callback, vars )
+	{
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			console.log( 'removeApplication ', { e:e, d:d } );
+			
+			if( e == 'ok' )
+			{
+				
+				removeDockItem( appName, userId, function( ee, dd )
+				{
+					console.log( 'removeDockItem ', { ee:ee, dd:dd } );
+					
+					if( callback ) callback( true, d, vars );
+					
+				} );
+				
+			}
+			else
+			{
+				if( callback ) callback( false, d, vars );
+			}
+		}
+		m.execute( 'removeuserapplication', { application: appName, userid: userId, authid: Application.authId } );
+	}
+	
 	function mitraApps( callback, id )
 	{
 		if( callback )
@@ -5653,71 +5691,6 @@ Sections.accounts_users = function( cmd, extra )
 				Sections.accounts_users( 'edit', userid );
 				
 			} );
-			
-		}
-		
-	}
-	
-	function updateApplications( id, callback, vars )
-	{
-		
-		// TODO: Change this to be instant based on User and app information ...
-		
-		if( id && ge( 'TempApplications' ) )
-		{
-			// TODO: Save it ...
-			
-			/*var m = new Module( 'system' );
-			m.onExecuted = function( e, d )
-			{
-				console.log( { e:e, d:d } );
-				
-				var data = false;
-													
-				try
-				{
-					data = JSON.parse( d );
-				}
-				catch( e ) {  }
-				
-				if( e == 'ok' )
-				{
-					
-					if( data && data.message )
-					{
-						//Notify( { title: 'success', text: data.message } );
-					}
-					*/
-					if( callback ) callback( true, true/*data*/, vars );
-					
-				/*}
-				else
-				{
-					
-					if( data && data.message )
-					{
-						Notify( { title: 'failed', text: data.message } );
-					}
-					
-					if( callback ) callback( false, data, vars );
-					
-				}
-				
-			}
-			m.execute( 'usersetupsave', { 
-				id           : tid, 
-				Preinstall   : true, 
-				Themes       : 'Friendup12', 
-				Applications : ge( 'TempApplications' ).value, 
-				Startup      : ge( 'TempStartup' ).value, 
-				authid       : Application.authId 
-			} );*/
-			
-		}
-		else
-		{
-			
-			if( callback ) callback( false, false, vars );
 			
 		}
 		
