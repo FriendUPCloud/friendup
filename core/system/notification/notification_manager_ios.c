@@ -725,11 +725,17 @@ int NotificationManagerNotificationSendIOSQueue( NotificationManager *nm, const 
 								binaryMessagePt += pushContentLen;
 								
 								FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
-								en->fq_Data = (void *)binaryMessageBuff;
-								en->fq_Size = (binaryMessagePt - binaryMessageBuff);
+								if( en != NULL )
+								{
+									en->fq_Data = (void *)binaryMessageBuff;
+									en->fq_Size = (binaryMessagePt - binaryMessageBuff);
 				
-								FQPushFIFO( &(nm->nm_IOSSendMessages), en );
-
+									if( FRIEND_MUTEX_LOCK( &(nm->nm_IOSSendMutex) ) == 0 )
+									{
+										FQPushFIFO( &(nm->nm_IOSSendMessages), en );
+										FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
+									}
+								}
 								successNumber++;
 								//FFree( binaryMessageBuff ); // do not release when message is going to queue
 							}
