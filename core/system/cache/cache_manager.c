@@ -302,7 +302,6 @@ LocFile *CacheManagerFileGet( CacheManager *cm, char *path, FBOOL checkByPath __
 			{
 				if( memcmp( hash, lf->hash, sizeof(hash) ) == 0 )
 				{
-					//DEBUG("\n\n\n\n\n======================================got file\n\n\n\n\n\n\n\n\n");
 					lf->lf_FileUsed++;
 					FRIEND_MUTEX_UNLOCK( &(cm->cm_Mutex) );
 					return lf;
