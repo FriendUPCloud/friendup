@@ -545,51 +545,55 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 		else
 		{
 			// set proper user level
-			UserGroup *gr = sb->sl_UGM->ugm_UserGroups;
-			while( gr != NULL )
+			if( FRIEND_MUTEX_LOCK( &(sb->sl_UGM->ugm_Mutex) ) == 0 )
 			{
-				if( strcmp( gr->ug_Name, level ) == 0 )
+				UserGroup *gr = sb->sl_UGM->ugm_UserGroups;
+				while( gr != NULL )
 				{
-					DEBUG("User is in level: %s\n", level );
-					if( gr->ug_IsAdmin == TRUE ) isAdmin = TRUE;
-					if( gr->ug_IsAPI == TRUE ) isAPI = TRUE;
+					if( strcmp( gr->ug_Name, level ) == 0 )
+					{
+						DEBUG("User is in level: %s\n", level );
+						if( gr->ug_IsAdmin == TRUE ) isAdmin = TRUE;
+						if( gr->ug_IsAPI == TRUE ) isAPI = TRUE;
 			
-					UserGroupAddUser( gr, usr );
+						UserGroupAddUser( gr, usr );
 			
-					DEBUG("[UMAssignGroupToUserByStringDB] Group found %s will be added to user %s\n", gr->ug_Name, usr->u_Name );
+						DEBUG("[UMAssignGroupToUserByStringDB] Group found %s will be added to user %s\n", gr->ug_Name, usr->u_Name );
 			
-					char loctmp[ 256 ];
-					int loctmplen;
-					// insert to database
-					if( pos == 0 )
-					{
-						loctmplen = snprintf( loctmp, sizeof( loctmp ),  "( %lu, %lu ) ", usr->u_ID, gr->ug_ID );
-						tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "%lu", gr->ug_ID );
+						char loctmp[ 256 ];
+						int loctmplen;
+						// insert to database
+						if( pos == 0 )
+						{
+							loctmplen = snprintf( loctmp, sizeof( loctmp ),  "( %lu, %lu ) ", usr->u_ID, gr->ug_ID );
+							tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "%lu", gr->ug_ID );
+						}
+						else
+						{
+							loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",( %lu, %lu ) ", usr->u_ID, gr->ug_ID ); 
+							tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
+						}
+						BufStringAdd( bsInsert, loctmp );
+						/*
+						// information to external service
+						if( pos == 0 )
+						{
+							loctmplen = snprintf( loctmp, sizeof( loctmp ),  "( %s, %lu ) ", usr->u_UUID, gr->ug_ID );
+							tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "%lu", gr->ug_ID );
+						}
+						else
+						{
+							loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",( %s, %lu ) ", usr->u_UUID, gr->ug_ID ); 
+							tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
+						}
+						BufStringAddSize( bsGroups, tmpQuery, tmplen );
+						*/
+						pos++;
+						break;
 					}
-					else
-					{
-						loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",( %lu, %lu ) ", usr->u_ID, gr->ug_ID ); 
-						tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
-					}
-					BufStringAdd( bsInsert, loctmp );
-					/*
-					// information to external service
-					if( pos == 0 )
-					{
-						loctmplen = snprintf( loctmp, sizeof( loctmp ),  "( %s, %lu ) ", usr->u_UUID, gr->ug_ID );
-						tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "%lu", gr->ug_ID );
-					}
-					else
-					{
-						loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",( %s, %lu ) ", usr->u_UUID, gr->ug_ID ); 
-						tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
-					}
-					BufStringAddSize( bsGroups, tmpQuery, tmplen );
-					*/
-					pos++;
-					break;
+					gr = (UserGroup *) gr->node.mln_Succ;
 				}
-				gr = (UserGroup *) gr->node.mln_Succ;
+				FRIEND_MUTEX_UNLOCK( &(sb->sl_UGM->ugm_Mutex) );
 			}
 		
 			usr->u_IsAdmin = isAdmin;
