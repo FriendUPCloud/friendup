@@ -5148,6 +5148,13 @@ Sections.accounts_users = function( cmd, extra )
 								}
 							}
 							
+							// Storage
+							
+							//if( ge( 'AdminStorageContainer' ) ) 
+							//{ 
+							//	ge( 'AdminStorageContainer' ).className = 'Open';
+							//}
+							
 							
 						} );
 						
@@ -7704,17 +7711,35 @@ Sections.user_disk_refresh = function( mountlist, userid )
 	var mlst = '';
 	if( mountlist && mountlist.length )
 	{
-		var sorted = {};
+		var sorted = { 
+			'personal_drives' : 
+			{ 
+				'heading' : 'personal_drives', 
+				'rows'    : null 
+			}, 
+			'workgroup_drives' : 
+			{
+				'heading' : 'workgroup_drives', 
+				'rows'    : null 
+			}
+		};
 		
 		for( var a = 0; a < mountlist.length; a++ )
 		{
+			if( mountlist[a] && !mountlist[a].ID ) continue;
+			
+			if( !sorted[(mountlist[a].Type=='SQLWorkgroupDrive'?'workgroup_drives':'personal_drives')]['rows'] )
+			{
+				sorted[(mountlist[a].Type=='SQLWorkgroupDrive'?'workgroup_drives':'personal_drives')]['rows'] = {};
+			}
+			
 			if( mountlist[a].Mounted <= 0 )
 			{
-				sorted['1000'+a] = mountlist[a];
+				sorted[(mountlist[a].Type=='SQLWorkgroupDrive'?'workgroup_drives':'personal_drives')]['rows']['1000'+mountlist[a].ID] = mountlist[a];
 			}
 			else
 			{
-				sorted[a] = mountlist[a];
+				sorted[(mountlist[a].Type=='SQLWorkgroupDrive'?'workgroup_drives':'personal_drives')]['rows'][mountlist[a].ID] = mountlist[a];
 			}
 		}
 		
@@ -7726,118 +7751,133 @@ Sections.user_disk_refresh = function( mountlist, userid )
 		//console.log( 'mountlist ', { mountlist: mountlist, userid: userid } );
 		
 		mlst += '<div class="HRow">';
-		for( var b in mountlist )
+		for( var a in mountlist )
 		{
-			if( mountlist[b] && !mountlist[b].ID ) continue;
+			var heading = mountlist[a]['heading'];
+			var rows    = mountlist[a]['rows'];
 			
-			try
+			if( rows )
 			{
-				mountlist[b].Config = JSON.parse( mountlist[b].Config );
-			}
-			catch( e )
-			{
-				mountlist[b].Config = {};
-			}
+				// TODO: Add Alt (alternative css class) for blue color in design ...
+				
+				mlst += '<div class="HContent100 FloatLeft PaddingSmall BorderBottom"><strong>' + i18n( 'i18n_' + heading ) + ':</strong></div>';
+				
+				for( var b in rows )
+				{
+					
+					try
+					{
+						rows[b].Config = JSON.parse( rows[b].Config );
+					}
+					catch( e )
+					{
+						rows[b].Config = {};
+					}
+					
+					// Return access denied if the list is only the logged in Users disks
+					if( userid && userid != rows[b].UserID )
+					{
+						// Skip if user doesn't have access to this disk ...
+						//continue;
+						//console.log( '['+rows[b].ID+']['+rows[b].Type+'] '+rows[b].Name+' has another owner id:'+rows[b].UserID );
+						//return '<div class="HRow"><div class="HContent100">' + i18n( 'i18n_user_disks_access_denied' ) + '</div></div>';
+					}
 			
-			// Return access denied if the list is only the logged in Users disks
-			if( userid && userid != mountlist[b].UserID )
-			{
-				// Skip if user doesn't have access to this disk ...
-				//continue;
-				//console.log( '['+mountlist[b].ID+']['+mountlist[b].Type+'] '+mountlist[b].Name+' has another owner id:'+mountlist[b].UserID );
-				//return '<div class="HRow"><div class="HContent100">' + i18n( 'i18n_user_disks_access_denied' ) + '</div></div>';
-			}
+					// Skip the IsDeleted disks for now ...
+					//if( rows[b] && rows[b].Mounted < 0 ) continue;
 			
-			// Skip the IsDeleted disks for now ...
-			//if( mountlist[b] && mountlist[b].Mounted < 0 ) continue;
+					//console.log( rows[b] );
 			
-			//console.log( mountlist[b] );
+					// Calculate disk usage
+					var size = ( rows[b].Config.DiskSize ? rows[b].Config.DiskSize : 0 );
+					var mode = ( size && size.length && size != 'undefined' ? size.match( /[a-z]+/i ) : [ '' ] );
+					size = parseInt( size );
+					var type = mode[0].toLowerCase();
+					if( type == 'kb' )
+					{
+						size = size * 1024;
+					}
+					else if( type == 'mb' )
+					{
+						size = size * 1024 * 1024;
+					}
+					else if( type == 'gb' )
+					{
+						size = size * 1024 * 1024 * 1024;
+					}
+					else if( type == 'tb' )
+					{
+						size = size * 1024 * 1024 * 1024 * 1024;
+					}
+					var used = parseInt( rows[b].StoredBytes );
+					if( isNaN( size ) ) size = 512 * 1024; // < Normally the default size
+					if( !used && !size ) used = 0, size = 0;
+					if( !size ) size = 536870912;
+					if( !used ) used = 0;
+					if( used > size || ( used && !size ) ) size = used;
 			
-			// Calculate disk usage
-			var size = ( mountlist[b].Config.DiskSize ? mountlist[b].Config.DiskSize : 0 );
-			var mode = ( size && size.length && size != 'undefined' ? size.match( /[a-z]+/i ) : [ '' ] );
-			size = parseInt( size );
-			var type = mode[0].toLowerCase();
-			if( type == 'kb' )
-			{
-				size = size * 1024;
-			}
-			else if( type == 'mb' )
-			{
-				size = size * 1024 * 1024;
-			}
-			else if( type == 'gb' )
-			{
-				size = size * 1024 * 1024 * 1024;
-			}
-			else if( type == 'tb' )
-			{
-				size = size * 1024 * 1024 * 1024 * 1024;
-			}
-			var used = parseInt( mountlist[b].StoredBytes );
-			if( isNaN( size ) ) size = 512 * 1024; // < Normally the default size
-			if( !used && !size ) used = 0, size = 0;
-			if( !size ) size = 536870912;
-			if( !used ) used = 0;
-			if( used > size || ( used && !size ) ) size = used;
+					var storage = {
+						id   : rows[b].ID,
+						user : rows[b].UserID,
+						name : rows[b].Name,
+						type : rows[b].Type,
+						size : size, 
+						used : used, 
+						free : ( size - used ), 
+						prog : ( ( used / size * 100 ) > 100 ? 100 : ( used / size * 100 ) ), 
+						icon : '/iconthemes/friendup15/DriveLabels/FriendDisk.svg',
+						mont : rows[b].Mounted
+					};
 			
-			var storage = {
-				id   : mountlist[b].ID,
-				user : mountlist[b].UserID,
-				name : mountlist[b].Name,
-				type : mountlist[b].Type,
-				size : size, 
-				used : used, 
-				free : ( size - used ), 
-				prog : ( ( used / size * 100 ) > 100 ? 100 : ( used / size * 100 ) ), 
-				icon : '/iconthemes/friendup15/DriveLabels/FriendDisk.svg',
-				mont : mountlist[b].Mounted
-			};
+					if( Friend.dosDrivers[ storage.type ] && Friend.dosDrivers[ storage.type ].iconLabel )
+					{
+						storage.icon = 'data:image/svg+xml;base64,' + Friend.dosDrivers[ storage.type ].iconLabel;
+					}
+					if( storage.name == 'Home' )
+					{
+						storage.icon = '/iconthemes/friendup15/DriveLabels/Home.svg';
+					}
+					else if( storage.name == 'System' )
+					{
+						storage.icon = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
+					}
 			
-			if( Friend.dosDrivers[ storage.type ] && Friend.dosDrivers[ storage.type ].iconLabel )
-			{
-				storage.icon = 'data:image/svg+xml;base64,' + Friend.dosDrivers[ storage.type ].iconLabel;
+					//console.log( storage );
+			
+					mlst += '<div class="HContent33 FloatLeft DiskContainer"' + ( storage.mont <= 0 ? ' style="opacity:0.6"' : '' ) + '>';
+			
+					// If "SQLWorkgroupDrive" handle the edit in Workgroups ...
+					
+					if( !Application.checkAppPermission( [ 
+						'PERM_STORAGE_CREATE_GLOBAL', 'PERM_STORAGE_CREATE_IN_WORKGROUP', 
+						'PERM_STORAGE_UPDATE_GLOBAL', 'PERM_STORAGE_UPDATE_IN_WORKGROUP', 
+						'PERM_STORAGE_GLOBAL',        'PERM_STORAGE_WORKGROUP' 
+					] ) )
+					{
+						mlst += '<div class="PaddingSmall Ellipsis">';
+					}
+					else if( storage.type == 'SQLWorkgroupDrive' )
+					{
+						mlst += '<div class="PaddingSmall Ellipsis" onclick="Notify( { title: i18n( \'i18n_cannot_edit_workgroup_drive\' ), text: i18n( \'i18n_workgroup_drive_edit_in\' ) } )">';
+					}
+					else
+					{
+						mlst += '<div class="PaddingSmall Ellipsis" onclick="Sections.user_disk_update(' + storage.user + ',' + storage.id + ',\'' + storage.name + '\',' + userid + ')">';
+					}
+					
+					mlst += '<div class="Col1 FloatLeft" id="Storage_' + storage.id + '">';
+					mlst += '<div class="disk"><div class="label" style="background-image: url(\'' + storage.icon + '\')"></div></div>';
+					mlst += '</div>';
+					mlst += '<div class="Col2 FloatLeft HContent100 Name Ellipsis">';
+					mlst += '<div class="name Ellipsis" title="' + storage.name + '">' + storage.name + ':</div>';
+					mlst += '<div class="type Ellipsis" title="' + i18n( 'i18n_' + storage.type ) + '">' + i18n( 'i18n_' + storage.type ) + '</div>';
+					mlst += '<div class="rectangle"><div title="' + FormatBytes( storage.used, 0 ) + ' used" style="width:' + storage.prog + '%"></div></div>';
+					mlst += '<div class="bytes Ellipsis">' + FormatBytes( storage.free, 0 )  + ' free of ' + FormatBytes( storage.size, 0 ) + '</div>';
+					mlst += '</div>';
+					mlst += '</div>';
+					mlst += '</div>';
+				}
 			}
-			if( storage.name == 'Home' )
-			{
-				storage.icon = '/iconthemes/friendup15/DriveLabels/Home.svg';
-			}
-			else if( storage.name == 'System' )
-			{
-				storage.icon = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
-			}
-			
-			//console.log( storage );
-			
-			mlst += '<div class="HContent33 FloatLeft DiskContainer"' + ( mountlist[b].Mounted <= 0 ? ' style="opacity:0.6"' : '' ) + '>';
-			
-			// If "SQLWorkgroupDrive" handle the edit in Workgroups ...
-			
-			if( storage.type == 'SQLWorkgroupDrive' || !Application.checkAppPermission( [ 
-				'PERM_STORAGE_CREATE_GLOBAL', 'PERM_STORAGE_CREATE_IN_WORKGROUP', 
-				'PERM_STORAGE_UPDATE_GLOBAL', 'PERM_STORAGE_UPDATE_IN_WORKGROUP', 
-				'PERM_STORAGE_GLOBAL',        'PERM_STORAGE_WORKGROUP' 
-			] ) )
-			{
-				mlst += '<div class="PaddingSmall Ellipsis">';
-			}
-			else
-			{
-				mlst += '<div class="PaddingSmall Ellipsis" onclick="Sections.user_disk_update(' + storage.user + ',' + storage.id + ',\'' + storage.name + '\',' + userid + ')">';
-			}
-			
-			mlst += '<div class="Col1 FloatLeft" id="Storage_' + storage.id + '">';
-			mlst += '<div class="disk"><div class="label" style="background-image: url(\'' + storage.icon + '\')"></div></div>';
-			//mlst += '<canvas class="Rounded" name="' + mountlist[b].Name + '" id="Storage_Graph_' + mountlist[b].ID + '" size="' + mountlist[b].Config.DiskSize + '" used="' + mountlist[b].StoredBytes + '"></canvas>';
-			mlst += '</div>';
-			mlst += '<div class="Col2 FloatLeft HContent100 Name Ellipsis">';
-			mlst += '<div class="name" title="' + storage.name + '">' + storage.name + ':</div>';
-			mlst += '<div class="type" title="' + i18n( 'i18n_' + storage.type ) + '">' + i18n( 'i18n_' + storage.type ) + '</div>';
-			mlst += '<div class="rectangle"><div title="' + FormatBytes( storage.used, 0 ) + ' used" style="width:' + storage.prog + '%"></div></div>';
-			mlst += '<div class="bytes">' + FormatBytes( storage.free, 0 )  + ' free of ' + FormatBytes( storage.size, 0 ) + '</div>';
-			mlst += '</div>';
-			mlst += '</div>';
-			mlst += '</div>';
 		}
 		mlst += '</div>';
 	}
