@@ -79,7 +79,7 @@
 		</div>
 		<div class="HRow sw2">
 			<div class="HContent30 FloatLeft Padding">
-				<label for="Country">{i18n_email}</label>
+				<label for="Email">{i18n_email}</label>
 			</div>
 			<div class="HContent70 FloatLeft Padding">
 				<input type="text" id="Email" value="{inpEmail}" class="FullWidth"/>
@@ -95,14 +95,31 @@
 		</div>
 		<div class="HRow sw2">
 			<div class="HContent30 FloatLeft Padding">
+				<label for="Mobile">{i18n_mobile}</label>
+			</div>
+			<div class="HContent70 FloatLeft Padding">
+				<input type="text" id="Mobile" value="{inpMobile}" size="20"/>
+			</div>
+		</div>
+		<!--<div class="HRow sw1">
+			<div class="HContent30 FloatLeft Padding">
+				<label for="Phone">{i18n_phone}</label>
+			</div>
+			<div class="HContent70 FloatLeft Padding">
+				<input type="text" id="Phone" value="{inpPhone}" size="20"/>
+			</div>
+		</div>-->
+		<div class="HRow sw1">
+			<div class="HContent30 FloatLeft Padding">
 				<label for="Avatar">{i18n_avatar}</label>
 			</div>
 			<div class="HContent70 FloatLeft Padding">
 				<div id="AvatarImage"></div>
+				<textarea style="visibility: hidden; pointer-events: none; height: 0px; overflow: hidden" id="Avatar"></textarea>
 				<button type="button" class="ImageButton IconSmall fa-image"> {i18n_select_avatar}</button>
 			</div>
 		</div>
-		<div class="HRow sw1">
+		<div class="HRow sw2">
 			<div class="HContent30 FloatLeft Padding">
 				<label for="Comment">{i18n_comment}</label>
 			</div>
