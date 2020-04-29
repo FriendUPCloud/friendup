@@ -1,3 +1,7 @@
 
 i18n_contacts                           : Kontakter
+i18n_no_contacts_available              : Ingen kontakter tilgjengelig.
+i18n_add_contact                        : Ny kontakt
+i18n_search                             : Søk
+i18n_keywords                           : søkeord...
 

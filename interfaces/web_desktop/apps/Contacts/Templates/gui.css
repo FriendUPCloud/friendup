@@ -1,0 +1,54 @@
+
+#Toolbar
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 50px;
+	
+	display: flex;
+	flex-direction: row;
+}
+
+#List
+{
+	position: absolute;
+	top: 50px;
+	left: 0;
+	width: 100%;
+	height: calc(100% - 38px);
+}
+
+#List:after
+{
+	content: " ";
+	pointer-events: none;
+	position: absolute;
+	box-shadow: inset 0px 0px 20px rgba(0,0,0,0.2);
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+
+#Toolbar input
+{
+	width: 100%;
+	height: 25px;
+}
+
+#Toolbar div.Flex
+{
+	flex: 1;
+}
+
+#Toolbar div.Flex + div.Flex
+{
+	flex: 1;
+}
+
+#Toolbar div.Flex + div.Flex + div.Flex
+{
+	flex: 1;
+}

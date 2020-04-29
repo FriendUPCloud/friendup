@@ -1,5 +1,8 @@
 
 i18n_contacts                           : Contacts
-
+i18n_no_contacts_available              : No contacts available.
+i18n_add_contact                        : Add contact
+i18n_search                             : Search
+i18n_keywords                           : keywords...
 
 
