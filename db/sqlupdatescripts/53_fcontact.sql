@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS `FContact` (
   `Avatar` longtext NOT NULL,
   PRIMARY KEY (`ID`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
+
 CREATE TABLE IF NOT EXISTS `FContactAttribute` (
   `ID` bigint(20) NOT NULL AUTO_INCREMENT,
   `ContactID` bigint(20) NOT NULL,
