@@ -20,5 +20,10 @@ i18n_city                               : By
 i18n_county                             : Fylke/stat
 i18n_country                            : Land
 
+i18n_sex                                : Kjønn
+i18n_male                               : Mann
+i18n_female                             : Kvinne
+i18n_undefined                          : Ukjent
 
+i18n_email                              : Epost
 

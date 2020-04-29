@@ -20,5 +20,10 @@ i18n_city                               : City
 i18n_county                             : County
 i18n_country                            : Country
 
+i18n_sex                                : Sex
+i18n_male                               : Male
+i18n_female                             : Female
+i18n_undefined                          : Undefined
 
+i18n_email                              : Email
 
