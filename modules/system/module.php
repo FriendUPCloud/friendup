@@ -506,6 +506,11 @@ if( isset( $args->command ) )
 			require( 'modules/system/include/savefile.php' );
 			break;
 
+		// Save contact information
+		case 'setcontact':
+			require( 'modules/system/include/setcontact.php' );
+			break;
+
 		// Likes
 		case 'like':
 			require( 'modules/system/include/like.php' );
