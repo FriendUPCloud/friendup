@@ -9,8 +9,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-
-
 // Get arguments from argv
 if( isset( $argv ) && isset( $argv[1] ) )
 {
@@ -59,6 +57,11 @@ if( isset( $argv ) && isset( $argv[1] ) )
 			}
 			
 			die( '<script>document.location.href=\'' . $host . '/webclient/index.html\';</script>' );
+		}
+		// User is requesting an operation on calendarevent
+		else if( preg_match( '/^\/calendarevent[\/]{0,1}/i', $argv[ 1 ], $m ) )
+		{
+			require( 'calendarevent.php' );
 		}
 		// Check for guest accounts
 		else if( preg_match( '/^\/guests[\/]{0,1}/i', $argv[1], $m ) )
