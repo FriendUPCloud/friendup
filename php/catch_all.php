@@ -60,7 +60,7 @@ if( isset( $argv ) && isset( $argv[1] ) )
 			
 			die( '<script>document.location.href=\'' . $host . '/webclient/index.html\';</script>' );
 		}
-		// Check for quest accounts
+		// Check for guest accounts
 		else if( preg_match( '/^\/guests[\/]{0,1}/i', $argv[1], $m ) )
 		{
 			$groupSession = true;
