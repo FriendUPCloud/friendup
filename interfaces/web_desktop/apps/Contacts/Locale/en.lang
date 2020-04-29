@@ -6,8 +6,8 @@ i18n_search                             : Search
 i18n_keywords                           : keywords...
 
 #Contact
-i18n_save                               : Lagre
-i18n_cancel                             : Avbryt
+i18n_save                               : Save
+i18n_cancel                             : Cancel
 
 i18n_firstname                          : First name
 i18n_lastname                           : Last name
@@ -27,3 +27,6 @@ i18n_undefined                          : Undefined
 
 i18n_email                              : Email
 
+i18n_avatar                             : Profile image
+i18n_select_avatar                      : Select image
+i18n_comment                            : Comment
