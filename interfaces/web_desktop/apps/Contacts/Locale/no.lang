@@ -5,3 +5,20 @@ i18n_add_contact                        : Ny kontakt
 i18n_search                             : Søk
 i18n_keywords                           : søkeord...
 
+#Contact
+i18n_save                               : Lagre
+i18n_cancel                             : Avbryt
+
+i18n_firstname                          : Fornavn
+i18n_lastname                           : Etternavn
+i18n_mobile                             : Mobil
+i18n_phone                              : Telefon
+i18n_address1                           : Adresselinje 1
+i18n_address2                           : Adresselinje 2
+i18n_postcode                           : Postnummer
+i18n_city                               : By
+i18n_county                             : Fylke/stat
+i18n_country                            : Land
+
+
+

@@ -34,3 +34,13 @@ CREATE TABLE IF NOT EXISTS `FContactAttribute` (
   `ValueFloat` float(7,4) NOT NULL,
   PRIMARY KEY (`ID`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
+
+CREATE TABLE IF NOT EXISTS `FContactParticipation` (
+  `ID` bigint(20) NOT NULL AUTO_INCREMENT,
+  `ContactID` bigint(20) NOT NULL,
+  `EventID` bigint(20) NOT NULL,
+  `Time` datetime,
+  `Token` varchar(255) NOT NULL,
+  `Message` text,
+  PRIMARY KEY (`ID`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;

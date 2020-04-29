@@ -1,24 +1,74 @@
-<div id="Form" class="Padding ScrollArea SmoothScrolling">
+<script type="text/javascript" src="Progdir:Scripts/contact.js"></script>
+<link rel="stylesheet" href="Progdir:Templates/gui.css"/>
+<div id="Form" class="ScrollArea SmoothScrolling">
 	<div class="List">
 		<div class="HRow sw1">
-			<div class="HContent30 FloatLeft">
+			<div class="HContent30 FloatLeft Padding">
 				<label for="Firstname">{i18n_firstname}</label>
 			</div>
-			<div class="HContent70 FloatLeft">
-				<input type="text" id="Firstname" value="{inpFirstname}"/>
+			<div class="HContent70 FloatLeft Padding">
+				<input type="text" id="Firstname" value="{inpFirstname}" class="FullWidth"/>
 			</div>
 		</div>
 		<div class="HRow sw2">
-			<div class="HContent30 FloatLeft">
+			<div class="HContent30 FloatLeft Padding">
 				<label for="Lastname">{i18n_lastname}</label>
 			</div>
-			<div class="HContent70 FloatLeft">
-				<input type="text" id="Lastname" value="{inpLastname}"/>
+			<div class="HContent70 FloatLeft Padding">
+				<input type="text" id="Lastname" value="{inpLastname}" class="FullWidth"/>
+			</div>
+		</div>
+		<div class="HRow sw1">
+			<div class="HContent30 FloatLeft Padding">
+				<label for="Address1">{i18n_address1}</label>
+			</div>
+			<div class="HContent70 FloatLeft Padding">
+				<input type="text" id="Address1" value="{inpAddress1}" class="FullWidth"/>
+			</div>
+		</div>
+		<div class="HRow sw2">
+			<div class="HContent30 FloatLeft Padding">
+				<label for="Address2">{i18n_address2}</label>
+			</div>
+			<div class="HContent70 FloatLeft Padding">
+				<input type="text" id="Address2" value="{inpAddress2}" class="FullWidth"/>
+			</div>
+		</div>
+		<div class="HRow sw1">
+			<div class="HContent30 FloatLeft Padding">
+				<label for="Postcode">{i18n_postcode}</label>
+			</div>
+			<div class="HContent70 FloatLeft Padding">
+				<input type="text" id="Postcode" value="{inpPostcode}" size="8"/>
+			</div>
+		</div>
+		<div class="HRow sw2">
+			<div class="HContent30 FloatLeft Padding">
+				<label for="City">{i18n_city}</label>
+			</div>
+			<div class="HContent70 FloatLeft Padding">
+				<input type="text" id="City" value="{inpCity}" class="FullWidth"/>
+			</div>
+		</div>
+		<div class="HRow sw1">
+			<div class="HContent30 FloatLeft Padding">
+				<label for="County">{i18n_county}</label>
+			</div>
+			<div class="HContent70 FloatLeft Padding">
+				<input type="text" id="County" value="{inpCounty}" class="FullWidth"/>
+			</div>
+		</div>
+		<div class="HRow sw2">
+			<div class="HContent30 FloatLeft Padding">
+				<label for="Country">{i18n_country}</label>
+			</div>
+			<div class="HContent70 FloatLeft Padding">
+				<input type="text" id="Country" value="{inpCountry}" class="FullWidth"/>
 			</div>
 		</div>
 	</div>
 </div>
-<div id="BottomBar">
+<div id="BottomBar" class="Padding">
 	<button type="button">
 		{i18n_save}
 	</button>

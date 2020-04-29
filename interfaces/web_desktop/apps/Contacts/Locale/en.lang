@@ -5,4 +5,20 @@ i18n_add_contact                        : Add contact
 i18n_search                             : Search
 i18n_keywords                           : keywords...
 
+#Contact
+i18n_save                               : Lagre
+i18n_cancel                             : Avbryt
+
+i18n_firstname                          : First name
+i18n_lastname                           : Last name
+i18n_mobile                             : Mobile
+i18n_phone                              : Telephone
+i18n_address1                           : Address line 1
+i18n_address2                           : Address line 2
+i18n_postcode                           : Postcode
+i18n_city                               : City
+i18n_county                             : County
+i18n_country                            : Country
+
+
 
