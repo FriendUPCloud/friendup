@@ -168,7 +168,7 @@ char *TokenToBinary( const char *token, int *bsize )
 //#define IOS_MAX_MSG_SIZE (DEVICE_BINARY_SIZE+MAXPAYLOAD_SIZE+2048)
 
 // Source: https://developer.apple.com/library/ios/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/Chapters/LegacyFormat.html
-FBOOL SendPayload( NotificationManager *nm, SSL *sslPtr, char *deviceTokenBinary, char *payloadBuff, size_t payloadLength )
+FBOOL SendPayload( NotificationManager *nm, SSL *sslPtr, char *deviceTokenBinary, char *payloadBuff, size_t payloadLength, int toklen )
 {
 	DEBUG("Send payload\n");
 	FBOOL rtn = FALSE;
@@ -183,7 +183,7 @@ FBOOL SendPayload( NotificationManager *nm, SSL *sslPtr, char *deviceTokenBinary
 			char *binaryMessagePt = binaryMessageBuff;
 			uint32_t whicheverOrderIWantToGetBackInAErrorResponse_ID = 1234;
 			uint32_t networkOrderExpiryEpochUTC = htonl( nm->nm_APNSNotificationTimeout );
-			uint16_t networkOrderTokenLength = htons(DEVICE_BINARY_SIZE);
+			uint16_t networkOrderTokenLength = htons( toklen );// htons(DEVICE_BINARY_SIZE);
 			uint16_t networkOrderPayloadLength = htons(payloadLength);
         
 			// command
@@ -202,8 +202,10 @@ FBOOL SendPayload( NotificationManager *nm, SSL *sslPtr, char *deviceTokenBinary
 			binaryMessagePt += sizeof (uint16_t);
         
 			// device token
-			memcpy(binaryMessagePt, deviceTokenBinary, DEVICE_BINARY_SIZE);
-			binaryMessagePt += DEVICE_BINARY_SIZE;
+			//memcpy(binaryMessagePt, deviceTokenBinary, DEVICE_BINARY_SIZE);
+			//binaryMessagePt += DEVICE_BINARY_SIZE;
+			memcpy(binaryMessagePt, deviceTokenBinary, toklen);
+			binaryMessagePt += toklen;
         
 			// payload length network order 
 			memcpy(binaryMessagePt, &networkOrderPayloadLength, sizeof (uint16_t));
@@ -381,6 +383,7 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 							SSL_set_fd( ssl, sockfd );
 							if( SSL_connect( ssl ) != -1 )
 							{
+								int tokLen = 0;
 								if( encmsg != NULL )
 								{
 									//pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\"},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, encmsg );
@@ -397,11 +400,11 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 									startToken++;
 								}
 			
-								char *tok = TokenToBinary( startToken );
+								char *tok = TokenToBinary( startToken, &tokLen );
 								DEBUG("Send payload, token pointer %p token '%s' payload: %s\n", tok, startToken, pushContent );
 								if( tok != NULL )
 								{
-									if( !SendPayload( nm, ssl, tok, pushContent, pushContentLen ) )
+									if( !SendPayload( nm, ssl, tok, pushContent, pushContentLen, tokLen ) )
 									{
 										failedNumber++;
 									}
@@ -800,7 +803,7 @@ int NotificationManagerNotificationSendIOSQueue( NotificationManager *nm, const 
 			}
 			
 			StringListEl *remToken = curToken;
-			curToken = curToken->node.mln_Succ;
+			curToken = (StringListEl *)curToken->node.mln_Succ;
 			if( remToken->s_Data != NULL )
 			{
 				FFree( remToken->s_Data );
