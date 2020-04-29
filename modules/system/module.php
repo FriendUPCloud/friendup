@@ -511,6 +511,11 @@ if( isset( $args->command ) )
 			require( 'modules/system/include/setcontact.php' );
 			break;
 
+		// Get contacts
+		case 'getcontacts':
+			require( 'modules/system/include/getcontacts.php' );
+			break;
+
 		// Likes
 		case 'like':
 			require( 'modules/system/include/like.php' );

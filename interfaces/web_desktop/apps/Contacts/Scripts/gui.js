@@ -23,6 +23,24 @@ function RefreshContacts( searchkeys )
 			ge( 'List' ).innerHTML = '<div class="List"><div class="HRow PaddingSmall sw1">' + i18n( 'i18n_no_contacts_available' ) + '</div></div>';
 			return;
 		}
+		
+		let conta = JSON.parse( d );
+		let str = '<div class="List">';
+		let sw = 2;
+		console.log( conta );
+		for( var a = 0; a < conta.length; a++ )
+		{
+			sw = sw == 2 ? 1 : 2;
+			str += '<div class="HRow PaddingSmall sw' + sw + '">';
+			str += '<div class="HContent25 Ellipsis FloatLeft">' + conta[ a ].Firstname + '</div>';
+			str += '<div class="HContent25 Ellipsis FloatLeft">' + conta[ a ].Lastname + '</div>';
+			str += '<div class="HContent25 Ellipsis FloatLeft">' + conta[ a ].Mobile + '</div>';
+			str += '<div class="HContent25 Ellipsis FloatLeft">' + conta[ a ].Email + '</div>';
+			str += '</div>';
+		}
+		str += '</div>';
+		ge( 'List' ).innerHTML = str;
+		
 	};
 	m.execute( 'getcontacts' );
 };
