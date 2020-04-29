@@ -19,15 +19,19 @@ i18n_postcode                           : Postnummer
 i18n_city                               : By
 i18n_county                             : Fylke/stat
 i18n_country                            : Land
+i18n_company                            : Firma/organisasjon
 
 i18n_sex                                : Kjønn
 i18n_male                               : Mann
 i18n_female                             : Kvinne
-i18n_undefined                          : Ukjent
+i18n_unknown                            : Ukjent
 
 i18n_email                              : Epost
 
 i18n_avatar                             : Passbilde
 i18n_select_avatar                      : Velg bilde
 i18n_comment                            : Kommentar
+
+i18n_problem_saving_contact             : Kunne ikke lagre
+i18n_problem_saving_contact_desc        : Kontakten kunne ikke lagres. Kontrollerte du skjemaet?
 

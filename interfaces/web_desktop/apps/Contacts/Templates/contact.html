@@ -71,9 +71,9 @@
 			</div>
 			<div class="HContent70 FloatLeft Padding">
 				<form>
-					<input type="radio" name="Sex" value="male"/> {i18n_male}
-					<input type="radio" name="Sex" value="female"/> {i18n_female}
-					<input type="radio" name="Sex" value="undefined"/> {i18n_undefined}
+					<input type="radio" name="Sex" key="male" value="male"/> {i18n_male}
+					<input type="radio" name="Sex" key="female" value="female"/> {i18n_female}
+					<input type="radio" name="Sex" key="unknown" value="undefined"/> {i18n_unknown}
 				</form>
 			</div>
 		</div>
@@ -113,10 +113,10 @@
 	</div>
 </div>
 <div id="BottomBar" class="Padding">
-	<button type="button" class="IconSmall fa-disk">
+	<button type="button" class="IconSmall fa-save FloatRight MarginLeft" onclick="SaveForm()">
 		{i18n_save}
 	</button>
-	<button type="button" class="IconSmall fa-remove">
+	<button type="button" class="IconSmall fa-remove FloatRight" onclick="CloseView();">
 		{i18n_cancel}
 	</button>
 </div>

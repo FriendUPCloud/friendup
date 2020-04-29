@@ -19,14 +19,19 @@ i18n_postcode                           : Postcode
 i18n_city                               : City
 i18n_county                             : County
 i18n_country                            : Country
+i18n_company                            : Company/org
 
 i18n_sex                                : Sex
 i18n_male                               : Male
 i18n_female                             : Female
-i18n_undefined                          : Undefined
+i18n_unknown                            : Unknown
 
 i18n_email                              : Email
 
 i18n_avatar                             : Profile image
 i18n_select_avatar                      : Select image
 i18n_comment                            : Comment
+
+i18n_problem_saving_contact             : Problem saving contact
+i18n_problem_saving_contact_desc        : Could not save this contact. Did you check the form?
+
