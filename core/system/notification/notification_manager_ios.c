@@ -158,7 +158,7 @@ char *TokenToBinary( const char *token, int *bsize )
 		buffer[ i+1 ] = '0';
 		buffer[ i+2 ] = 0;
 		
-		*bsize = i;
+		*bsize = i/2;
 	}
 	FFree( inputCharVector );
 	return buffer;
