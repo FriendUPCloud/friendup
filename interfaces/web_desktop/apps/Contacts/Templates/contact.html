@@ -1,4 +1,3 @@
-<script type="text/javascript" src="Progdir:Scripts/contact.js"></script>
 <link rel="stylesheet" href="Progdir:Templates/gui.css"/>
 <div id="Form" class="ScrollArea SmoothScrolling">
 	<div class="List">
@@ -88,6 +87,14 @@
 		</div>
 		<div class="HRow sw1">
 			<div class="HContent30 FloatLeft Padding">
+				<label for="Company">{i18n_company}</label>
+			</div>
+			<div class="HContent70 FloatLeft Padding">
+				<input type="text" id="Company" value="{inpCompany}" class="FullWidth"/>
+			</div>
+		</div>
+		<div class="HRow sw2">
+			<div class="HContent30 FloatLeft Padding">
 				<label for="Avatar">{i18n_avatar}</label>
 			</div>
 			<div class="HContent70 FloatLeft Padding">
@@ -95,7 +102,7 @@
 				<button type="button" class="ImageButton IconSmall fa-image"> {i18n_select_avatar}</button>
 			</div>
 		</div>
-		<div class="HRow sw2">
+		<div class="HRow sw1">
 			<div class="HContent30 FloatLeft Padding">
 				<label for="Comment">{i18n_comment}</label>
 			</div>
@@ -106,10 +113,11 @@
 	</div>
 </div>
 <div id="BottomBar" class="Padding">
-	<button type="button">
+	<button type="button" class="IconSmall fa-disk">
 		{i18n_save}
 	</button>
-	<button type="button">
+	<button type="button" class="IconSmall fa-remove">
 		{i18n_cancel}
 	</button>
 </div>
+<script type="text/javascript" src="Progdir:Scripts/contact.js"></script>
