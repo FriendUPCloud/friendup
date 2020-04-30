@@ -1260,27 +1260,20 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	// message from example to APNS: /client.py '{"auth":"72e3e9ff5ac019cb41aed52c795d9f4c","action":"notify","payload":"hellooooo","sound":"default","token":"1f3b66d2d16e402b5235e1f6f703b7b2a7aacc265b5af526875551475a90e3fe","badge":1,"category":"whatever"}'
 	
 	DEBUG("[MobileAppNotifyUserRegister] send message to other mobile apps, message was alerady sent? %d\n", wsMessageSent );
-	char *jsonMessageIOS = NULL;
-	int jsonMessageIosLength = reqLengith+512;
+
 	if( wsMessageSent == FALSE && sb->sl_NotificationManager->nm_APNSCert != NULL )
 	{
-		if( ( jsonMessageIOS = FMalloc( jsonMessageIosLength ) ) != NULL )
+		char *tokens = MobleManagerGetIOSAppTokensDBm( sb->sl_MobileManager, userID );
+		if( tokens != NULL )
 		{
-			// on the end, list for the user should be taken from DB instead of going through all connections
-			
-			char *tokens = MobleManagerGetIOSAppTokensDBm( sb->sl_MobileManager, userID );
-			if( tokens != NULL )
-			{
-				Log( FLOG_INFO, "Send notification through Mobile App: IOS '%s' : tokens %s\n", notif->n_Content, tokens );
-				NotificationManagerNotificationSendIOSQueue( sb->sl_NotificationManager, notif->n_Title, notif->n_Content, "default", 1, notif->n_Application, notif->n_Extra, tokens );
-				//NotificationManagerNotificationSendIOS( sb->sl_NotificationManager, notif->n_Title, notif->n_Content, "default", 1, notif->n_Application, notif->n_Extra, tokens );
-				FFree( tokens );
-			}
-			else
-			{
-				Log( FLOG_ERROR, "[MobileAppNotifyUserRegister] IOS tokens are equal to NULL for user: %lu\n", userID );
-			}
-			FFree( jsonMessageIOS );
+			Log( FLOG_INFO, "Send notification through Mobile App: IOS '%s' : tokens %s\n", notif->n_Content, tokens );
+			NotificationManagerNotificationSendIOSQueue( sb->sl_NotificationManager, notif->n_Title, notif->n_Content, "default", 1, notif->n_Application, notif->n_Extra, tokens );
+			//NotificationManagerNotificationSendIOS( sb->sl_NotificationManager, notif->n_Title, notif->n_Content, "default", 1, notif->n_Application, notif->n_Extra, tokens );
+			FFree( tokens );
+		}
+		else
+		{
+			Log( FLOG_ERROR, "[MobileAppNotifyUserRegister] IOS tokens are equal to NULL for user: %lu\n", userID );
 		}
 	}
 	else
