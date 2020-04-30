@@ -442,25 +442,29 @@ int UGMAssignGroupToUser( UserGroupManager *smgr, User *usr )
 				
 					DEBUG("[UMAssignGroupToUser] User is in group %lu\n", gid  );
 				
-					UserGroup *g = sb->sl_UGM->ugm_UserGroups;
-					while( g != NULL )
+					if( FRIEND_MUTEX_LOCK( &(sb->sl_UGM->ugm_Mutex) ) == 0 )
 					{
-						if( g->ug_ID == gid )
+						UserGroup *g = sb->sl_UGM->ugm_UserGroups;
+						while( g != NULL )
 						{
-							if( g->ug_IsAdmin == TRUE )
+							if( g->ug_ID == gid )
 							{
-								isAdmin = g->ug_IsAdmin;
-							}
-							if( g->ug_IsAPI == TRUE )
-							{
-								isAPI = g->ug_IsAPI;
-							}
+								if( g->ug_IsAdmin == TRUE )
+								{
+									isAdmin = g->ug_IsAdmin;
+								}
+								if( g->ug_IsAPI == TRUE )
+								{
+									isAPI = g->ug_IsAPI;
+								}
 							
-							UserGroupAddUser( g, usr );
-							DEBUG("[UMAssignGroupToUser] Added group %s to user %s\n", g->ug_Name, usr->u_Name );
-							//usr->u_Groups[ pos++ ] = g;
+								UserGroupAddUser( g, usr );
+								DEBUG("[UMAssignGroupToUser] Added group %s to user %s\n", g->ug_Name, usr->u_Name );
+								//usr->u_Groups[ pos++ ] = g;
+							}
+							g  = (UserGroup *) g->node.mln_Succ;
 						}
-						g  = (UserGroup *) g->node.mln_Succ;
+						FRIEND_MUTEX_UNLOCK( &(sb->sl_UGM->ugm_Mutex) );
 					}
 				}
 			}
@@ -627,52 +631,56 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 		
 				DEBUG("[UMAssignGroupToUserByStringDB] in loop %d\n", pos );
 		
-				UserGroup *gr = sb->sl_UGM->ugm_UserGroups;
-				while( gr != NULL )
+				if( FRIEND_MUTEX_LOCK( &(sb->sl_UGM->ugm_Mutex) ) == 0 )
 				{
-					DEBUG("[UMAssignGroupToUserByStringDB] compare %s - %s\n", gr->ug_Name, gr->ug_Name );
-			
-					if( gr->ug_ID == rmEntry->i_Data )
+					UserGroup *gr = sb->sl_UGM->ugm_UserGroups;
+					while( gr != NULL )
 					{
-						UserGroupAddUser( gr, usr );
+						DEBUG("[UMAssignGroupToUserByStringDB] compare %s - %s\n", gr->ug_Name, gr->ug_Name );
+			
+						if( gr->ug_ID == rmEntry->i_Data )
+						{
+							UserGroupAddUser( gr, usr );
 				
-						DEBUG("[UMAssignGroupToUserByStringDB] Group found %s will be added to user %s\n", gr->ug_Name, usr->u_Name );
+							DEBUG("[UMAssignGroupToUserByStringDB] Group found %s will be added to user %s\n", gr->ug_Name, usr->u_Name );
 				
-						char loctmp[ 256 ];
-						int loctmplen;
+							char loctmp[ 256 ];
+							int loctmplen;
 						
-						// insert to database
-						if( pos == 0 )
-						{
-							loctmplen = snprintf( loctmp, sizeof( loctmp ),  "( %lu, %lu ) ", usr->u_ID, gr->ug_ID );
-							tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "%lu", gr->ug_ID );
-						}
-						else
-						{
-							loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",( %lu, %lu ) ", usr->u_ID, gr->ug_ID ); 
-							tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
-						}
-						BufStringAdd( bsInsert, loctmp );
-						/*
-						// message to external service
-						if( pos == 0 )
-						{
-							loctmplen = snprintf( loctmp, sizeof( loctmp ),  "( %s, %lu ) ", usr->u_UUID, gr->ug_ID );
-							tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "%lu", gr->ug_ID );
-						}
-						else
-						{
-							loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",( %s, %lu ) ", usr->u_UUID, gr->ug_ID ); 
-							tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
-						}
-						BufStringAddSize( bsGroups, tmpQuery, tmplen );
-						*/
+							// insert to database
+							if( pos == 0 )
+							{
+								loctmplen = snprintf( loctmp, sizeof( loctmp ),  "( %lu, %lu ) ", usr->u_ID, gr->ug_ID );
+								tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "%lu", gr->ug_ID );
+							}
+							else
+							{
+								loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",( %lu, %lu ) ", usr->u_ID, gr->ug_ID ); 
+								tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
+							}
+							BufStringAdd( bsInsert, loctmp );
+							/*
+							// message to external service
+							if( pos == 0 )
+							{
+								loctmplen = snprintf( loctmp, sizeof( loctmp ),  "( %s, %lu ) ", usr->u_UUID, gr->ug_ID );
+								tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "%lu", gr->ug_ID );
+							}
+							else
+							{
+								loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",( %s, %lu ) ", usr->u_UUID, gr->ug_ID ); 
+								tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
+							}
+							BufStringAddSize( bsGroups, tmpQuery, tmplen );
+							*/
 				
-						pos++;
-						break;
-					}
-					gr = (UserGroup *) gr->node.mln_Succ;
-				} // while group
+							pos++;
+							break;
+						}
+						gr = (UserGroup *) gr->node.mln_Succ;
+					} // while group
+					FRIEND_MUTEX_UNLOCK( &(sb->sl_UGM->ugm_Mutex) );
+				}
 				FFree( rmEntry );
 			}
 		}	// workgroups != "none"
