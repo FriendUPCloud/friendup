@@ -190,6 +190,7 @@
 				include_once('3rdparty/phpmailer/class.smtp.php');
 				$mail = new PHPMailer();
 				$mail->isSMTP();                                      // Set mailer to use SMTP
+				$mail->Port = isset( $cfg['Mail']['port'] ) ? intval( $cfg['Mail']['port'] ) :  587; 
 				$mail->Host = $cfg['Mail']['host']; 					 // Specify main and backup SMTP servers
 				$mail->SMTPAuth = true;                               // Enable SMTP authentication
 				$mail->Username = $cfg['Mail']['user'];                 // SMTP username
