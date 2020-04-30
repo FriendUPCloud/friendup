@@ -73,3 +73,11 @@
 	height: 50px;
 }
 
+/* List */
+
+.List .Ellipsis:after
+{
+	content: " ";
+	display: inline-block;
+}
+

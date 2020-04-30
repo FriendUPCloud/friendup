@@ -32,3 +32,14 @@ Application.run = function( msg )
 	f.load();
 };
 
+Application.receiveMessage = function( msg )
+{
+	if( msg.command && msg.command == 'refreshcontacts' )
+	{
+		if( cview )
+		{
+			cview.sendMessage( msg );
+		}
+	}
+}
+

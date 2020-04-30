@@ -31,8 +31,9 @@ function RefreshContacts( searchkeys )
 		for( var a = 0; a < conta.length; a++ )
 		{
 			sw = sw == 2 ? 1 : 2;
-			str += '<div class="HRow PaddingSmall sw' + sw + '">';
-			str += '<div class="HContent25 Ellipsis FloatLeft">' + conta[ a ].Firstname + '</div>';
+			
+			str += '<div class="HRow PaddingSmall sw' + sw + '" onclick="EditContact(' + conta[ a ].ID + ')">';
+			str += '<div class="PaddingLeft HContent25 Ellipsis FloatLeft">' + conta[ a ].Firstname + '</div>';
 			str += '<div class="HContent25 Ellipsis FloatLeft">' + conta[ a ].Lastname + '</div>';
 			str += '<div class="HContent25 Ellipsis FloatLeft">' + conta[ a ].Mobile + '</div>';
 			str += '<div class="HContent25 Ellipsis FloatLeft">' + conta[ a ].Email + '</div>';
@@ -45,6 +46,50 @@ function RefreshContacts( searchkeys )
 	m.execute( 'getcontacts' );
 };
 
+function EditContact( id )
+{
+	var m = new Module( 'system' );
+	m.onExecuted = function( e, b )
+	{
+		if( e != 'ok' ) return;
+		var contact = JSON.parse( b );
+		
+		let cnt = new View( {
+			title: i18n( 'i18n_edit_contact' ),
+			width: 400,
+			height: 400
+		} );
+	
+	
+		let d = new File( 'Progdir:Templates/contact.html' );
+		d.replacements = {
+			inpID: contact.ID,
+			inpFirstname: contact.Firstname,
+			inpLastname: contact.Lastname,
+			inpMobile: contact.Mobile,
+			inpTelephone: contact.Telephone,
+			inpAddress1: contact.Address1,
+			inpAddress2: contact.Address2,
+			inpPostcode: contact.Postcode,
+			inpCity: contact.City,
+			inpCounty: contact.County,
+			inpCountry: contact.Country,
+			inpComment: contact.Comment,
+			inpSex: contact.Sex,
+			inpAvatar: contact.Avatar,
+			inpCompany: contact.Company,
+			inpEmail: contact.Email
+		};
+		d.i18n();
+		d.onLoad = function( data )
+		{
+			cnt.setContent( data );
+		}
+		d.load();
+	}
+	m.execute( 'getcontact', { contactid: id } );
+}
+
 function AddContact()
 {
 	let cnt = new View( {
@@ -56,6 +101,7 @@ function AddContact()
 	
 	let d = new File( 'Progdir:Templates/contact.html' );
 	d.replacements = {
+		inpID: '',
 		inpFirstname: '',
 		inpLastname: '',
 		inpMobile: '',

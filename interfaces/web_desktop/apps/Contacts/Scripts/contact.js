@@ -46,7 +46,7 @@ Application.receiveMessage = function( msg )
 function SaveForm()
 {
 	// TODO: Control form!
-	var data = {
+	let data = {
 		Firstname:    ge( 'Firstname' ).value,
 		Lastname:     ge( 'Lastname' ).value,
 		Mobile:       ge( 'Mobile' ).value,
