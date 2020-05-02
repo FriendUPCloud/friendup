@@ -506,6 +506,11 @@ if( isset( $args->command ) )
 			require( 'modules/system/include/savefile.php' );
 			break;
 
+		// Get timeszones in a json format
+		case 'gettimezones':
+			require( 'modules/system/include/gettimezones.php' );
+			break;
+		
 		// Save contact information
 		case 'setcontact':
 			require( 'modules/system/include/setcontact.php' );
