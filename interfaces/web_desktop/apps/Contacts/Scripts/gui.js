@@ -27,7 +27,6 @@ function RefreshContacts( searchkeys )
 		let conta = JSON.parse( d );
 		let str = '<div class="List">';
 		let sw = 2;
-		console.log( conta );
 		for( var a = 0; a < conta.length; a++ )
 		{
 			sw = sw == 2 ? 1 : 2;

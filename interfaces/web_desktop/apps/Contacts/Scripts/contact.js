@@ -79,7 +79,7 @@ function DeleteContact( id )
 				} );
 				CloseView();
 			}
-			m.execute( 'deletecontact', { ID: id } );
+			m.execute( 'deletecontact', { contactid: id } );
 		}
 	} );
 }
