@@ -1608,6 +1608,12 @@ var WorkspaceInside = {
 			TimeTo: ge( 'calTimeTo' ).value,
 			Date: ge( 'calDateField' ).value
 		};
+		
+		if( ge( 'calendarEventParticipants' ) )
+		{
+			evt.Participants = ge( 'calendarEventParticipants' ).value;
+			if( !evt.Participants ) evt.Participants = '';
+		}
 
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )

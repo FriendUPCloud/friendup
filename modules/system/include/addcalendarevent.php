@@ -45,6 +45,31 @@ if( is_object( $args->args->event ) )
 	$o->Type = 'friend';
 	$o->Source = 'friend';
 	$o->Save();
+	
+	// Participant support!
+	if( isset( $args->args->participants ) )
+	{
+		$parts = explode( ',', $args->args->participants );
+		foreach( $parts as $part )
+		{
+			$cid = intval( trim( $part ), 10 );
+			$con = new dbIO( 'FContact' );
+			$con->Load( $cid );
+			
+			// Check participant!
+			if( $con->ID )
+			{
+				$p = new dbIO( 'FContactParticipation' );
+				$p->ContactID = $cid;
+				$p->EventID = $o->ID;
+				$p->Load();
+				$p->DateTime = date( 'Y-m-d H:i:s' ); // When added!
+				$p->Token = hash( 'sha256', strtotime( $p->DateTime ) . rand(0,9999) . rand(0,9999) );
+				$p->Message = '';
+				$p->Save();
+			}
+		}
+	}
 
 	if( $o->ID > 0 ) die( 'ok<!--separate-->{"ID":"' . $o->ID . '"}' );
 }
