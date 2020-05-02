@@ -1553,5 +1553,6 @@ function SetSubTimeZones( zone )
 	}
 	cstr += '</select>';
 	ge( 'TimeZoneSelectB' ).innerHTML = found ? cstr : '';
+	ge( 'UserAccTimezone' ).value = ge( 'TimeZoneType' ).value + '/' + ge( 'TimeZoneSubType' ).value;
 }
 

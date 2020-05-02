@@ -1108,6 +1108,7 @@ var WorkspaceInside = {
 					if( ge( 'calType' ) && ge( 'calType' ).value == 'meeting' )
 					{
 						ge( 'calTypeGui' ).innerHTML = data;
+						InitTimezoneGui( 'EventZoneCat', 'EventZoneZone', 'calTimezone' );
 					}
 				}
 				f.load();
@@ -10339,3 +10340,77 @@ function loadApplicationBasics()
 	}
 	j.load();
 };
+
+// Init the timezone gui! ------------------------------------------------------
+
+var timezones = null;
+
+// Africa,Europe etc
+// targetcat = category elementid
+// targetzone = timezone elementid
+// valuefield = hidden actual value field
+function InitTimezoneGui( targetcat, targetzone, valuefield )
+{
+	if( !timezones )
+	{
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( e != 'ok' ) return;
+			timezones = JSON.parse( d );
+			InitTimezoneGui();
+		}
+		m.execute( 'gettimezones' );
+		return;
+	}
+	
+	var current = ge( valuefield ).value.split( '/' );
+	current = current[0];
+	
+	let cstr = '';
+	let firstZone = null;
+	cstr += '<select id="' + targetcat + 'TimeZoneType" onchange="SetSubTimeZones( \'' + targetcat + '\', \'' + targetzone + '\', this.value, \'' + valuefield + '\' )">';
+	for( let a in timezones )
+	{
+		let sel = current == a ? ' selected="selected"' : '';
+		cstr += '<option' + sel + ' value="' + a + '">' + a + '</option>';
+		if( !firstZone )
+			firstZone = a;
+	}
+	cstr += '</select>';
+	ge( targetcat ).innerHTML = cstr;
+	SetSubTimeZones( targetcat, targetzone, firstZone, valuefield );
+}
+
+// Africa/Somewhere
+// targetcat = category elementid
+// targetzone = timezone elementid
+// valuefield = hidden actual value field
+// zone = the category zone to look at
+function SetSubTimeZones( targetcat, targetzone, zone, valuefield )
+{
+	var current = ge( valuefield ).value.split( '/' );
+	if( current.length > 1 )
+		current = current[1];
+	else current = false;
+	
+	let found = false;
+	let cstr = '<select id="' + targetzone + 'TimeZoneSubType" onchange="ge( \'' + valuefield + '\' ).value = ge( \'' + targetcat + 'TimeZoneType\' ).value + \'/\' + ge( \'' + targetzone + 'TimeZoneSubType\' ).value">';
+	for( let a in timezones )
+	{
+		if( a == zone )
+		{
+			found = true;
+			for( let b in timezones[ a ] )
+			{
+				let sel = current == timezones[ a ][ b ] ? ' selected="selected"' : '';
+				cstr += '<option' + sel + ' value="' + timezones[ a ][ b ] + '">' + timezones[ a ][ b ] + '</option>';
+			}
+		}
+	}
+	cstr += '</select>';
+	ge( targetzone ).innerHTML = found ? cstr : '';
+	ge( valuefield ).value = ge( targetcat + 'TimeZoneType' ).value + '/' + ge( targetzone + 'TimeZoneSubType' ).value;
+}
+
+
