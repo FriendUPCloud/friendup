@@ -1097,7 +1097,26 @@ var WorkspaceInside = {
 	// Poll the calendar gui to change depending on user choices
 	pollCalendarEventGui: function()
 	{
-		
+		if( ge( 'calType' ) )
+		{
+			if( ge( 'calType' ).value == 'meeting' )
+			{
+				var f = new File( 'System:templates/calendar_event_type_meeting.html' );
+				f.i18n();
+				f.onLoad = function( data )
+				{
+					if( ge( 'calType' ) && ge( 'calType' ).value == 'meeting' )
+					{
+						ge( 'calTypeGui' ).innerHTML = data;
+					}
+				}
+				f.load();
+			}
+			else
+			{
+				ge( 'calTypeGui' ).innerHTML = '';
+			}
+		}
 	},
 	refreshExtraWidgetContents: function()
 	{

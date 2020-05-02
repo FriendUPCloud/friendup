@@ -579,6 +579,8 @@ i18n_cal_evt_type_meeting               : Møte
 i18n_cal_evt_type_todo                  : Gjøremål
 i18n_cal_evt_type_note                  : Notat
 
+i18n_cal_evt_timezone                   : Tidssone
+
 i18n_evt_added                          : Kalender oppdatert
 i18n_evt_addeddesc                      : Hendelsen ble lagt til din kalender.
 i18n_evt_delete_desc                    : Dette vil slette kalender hendelsen.

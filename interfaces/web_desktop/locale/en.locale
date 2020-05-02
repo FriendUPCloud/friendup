@@ -601,6 +601,8 @@ i18n_cal_evt_type_meeting               : Meeting
 i18n_cal_evt_type_todo                  : Todo
 i18n_cal_evt_type_note                  : Note
 
+i18n_cal_evt_timezone                   : Timezone
+
 i18n_evt_added                          : Calendar updated
 i18n_evt_addeddesc                      : The event was added to your calendar.
 i18n_evt_delete_desc                    : This will delete your calendar event.
