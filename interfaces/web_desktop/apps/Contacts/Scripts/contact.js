@@ -74,6 +74,9 @@ function DeleteContact( id )
 			var m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{
+				Application.sendMessage( {
+					command: 'refreshcontacts'
+				} );
 				CloseView();
 			}
 			m.execute( 'deletecontact', { ID: id } );
