@@ -60,7 +60,6 @@ function EditContact( id )
 			height: 400
 		} );
 	
-	
 		let d = new File( 'Progdir:Templates/contact.html' );
 		d.replacements = {
 			inpID: contact.ID,

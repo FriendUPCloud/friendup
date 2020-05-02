@@ -32,6 +32,7 @@ Application.run = function( msg )
 	f.load();
 };
 
+// Receive application messages
 Application.receiveMessage = function( msg )
 {
 	if( msg.command && msg.command == 'refreshcontacts' )

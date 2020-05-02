@@ -10,32 +10,28 @@
 *                                                                              *
 *****************************************************************************©*/
 
-global $Database, $User;
+$lang = 'en';
 
-$d = new dbIO( 'FContact' );
-
-if( $args->args->ID )
+if( $args->args->get )
 {
-	$d->Load( $args->args->ID );
+	switch( $args->args->get )
+	{
+		case 'countries':
+			$cnt = file_get_contents( 'modules/system/assets/contries.' . $lang . '.lang' );
+			$cnt = explode( "\n", $cnt );
+			$std = array();
+			foreach( $cnt as $k )
+			{
+				$k = explode( ':', $k );
+				$cl = new stdClass();
+				$cl->Key = trim( $k[0] );
+				$cl->Value = trim( $k[1] );
+				$std[] =$cl;
+			}
+			die( 'ok<!--separate-->' . json_encode( $std ) );
+			break;
+	}
 }
-
-foreach( $args->args as $k=>$v )
-{
-	$d->$k = $v;
-}
-
-if( !$d->ID )
-{
-	$d->DateCreated = date( 'Y-m-d H:i:s' );
-	$d->UserID = $User->ID;
-}
-$d->DateTouched = date( 'Y-m-d H:i:s' );
-
-if( $d->Save() )
-{
-	die( 'ok<!--separate-->{"message":"Saved contact.","response":"1","id":"' . $d->ID . '"}' );
-}
-
-die( 'fail<!--separate-->{"message":"Failed to save contact.","response":"-1"}' );
+die( 'fail<!--separate-->' );
 
 ?>

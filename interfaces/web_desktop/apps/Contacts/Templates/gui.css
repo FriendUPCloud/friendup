@@ -81,3 +81,8 @@
 	display: inline-block;
 }
 
+#List > .List .HRow:hover
+{
+	filter: invert(1);
+}
+

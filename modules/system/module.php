@@ -510,6 +510,11 @@ if( isset( $args->command ) )
 		case 'setcontact':
 			require( 'modules/system/include/setcontact.php' );
 			break;
+		
+		// Get single contact information
+		case 'getcontact':
+			require( 'modules/system/include/getcontact.php' );
+			break;
 
 		// Get contacts
 		case 'getcontacts':
@@ -682,6 +687,10 @@ if( isset( $args->command ) )
 		case 'setup':
 			//include( 'modules/system/include/dbchecker.php' );
 			die( 'ok' );
+			break;
+		// Get localized geographical information
+		case 'geoinfo':
+			include( 'modules/system/include/geoinfo.php' );
 			break;
 		case 'languages':
 			include( 'modules/system/include/languages.php' );

@@ -8,9 +8,11 @@
 *                                                                              *
 *****************************************************************************©*/
 
+var contact = {};
+
 Application.run = function( msg )
 {
-	
+	GetCountries();
 };
 
 Application.receiveMessage = function( msg )
@@ -43,6 +45,28 @@ Application.receiveMessage = function( msg )
 	}
 };
 
+function GetCountries()
+{
+	var m = new Module( 'system' );
+	m.onExecuted = function( e, d )
+	{
+		if( e != 'ok' ) return;
+		let list = JSON.parse( d );
+		let str = '';
+		for( let c = 0; c < list.length; c++ )
+		{
+			let sel = '';
+			if( contact.Country && contact.Country == list[ c ].key )
+			{
+				sel = ' selected="selected"';
+			}
+			str += '<option' + sel + ' value="' + list[ c ].key + '">' + list[ c ].value + '</option>';
+		}
+		ge( 'Country' ).innerHTML = str;
+	}
+	m.execute( 'geoinfo', { get: 'countries' } );
+}
+
 function SaveForm()
 {
 	// TODO: Control form!
@@ -62,6 +86,8 @@ function SaveForm()
 		Company:      ge( 'Company' ).value,
 		Email:        ge( 'Email' ).value
 	};
+	if( ge( 'ID' ).value > 0 )
+		data.ID = ge( 'ID' ).value;
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
@@ -82,3 +108,4 @@ function SaveForm()
 	}
 	m.execute( 'setcontact', data );
 };
+

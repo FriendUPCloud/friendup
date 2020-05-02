@@ -10,32 +10,18 @@
 *                                                                              *
 *****************************************************************************©*/
 
-global $Database, $User;
+global $SqlDatabase, $User;
 
-$d = new dbIO( 'FContact' );
+$query = 'SELECT * FROM FContact WHERE UserID=\'' . $User->ID . '\' AND ID=\'' . intval( $args->args->contactid, 10 ) . '\' LIMIT 1';
 
-if( $args->args->ID )
+if( $row = $SqlDatabase->fetchObject( $query ) )
 {
-	$d->Load( $args->args->ID );
+	die( 'ok<!--separate-->' . json_encode( $row ) );
+}
+else
+{
+	die( 'fail<!--separate-->{"response":-1,"message":"No such contact exist."}' );
 }
 
-foreach( $args->args as $k=>$v )
-{
-	$d->$k = $v;
-}
-
-if( !$d->ID )
-{
-	$d->DateCreated = date( 'Y-m-d H:i:s' );
-	$d->UserID = $User->ID;
-}
-$d->DateTouched = date( 'Y-m-d H:i:s' );
-
-if( $d->Save() )
-{
-	die( 'ok<!--separate-->{"message":"Saved contact.","response":"1","id":"' . $d->ID . '"}' );
-}
-
-die( 'fail<!--separate-->{"message":"Failed to save contact.","response":"-1"}' );
 
 ?>
