@@ -1094,6 +1094,11 @@ var WorkspaceInside = {
 		} );
 		return cancelBubble( e );
 	},
+	// Poll the calendar gui to change depending on user choices
+	pollCalendarEventGui: function()
+	{
+		
+	},
 	refreshExtraWidgetContents: function()
 	{
 		if( this.mode == 'vr' ) return;

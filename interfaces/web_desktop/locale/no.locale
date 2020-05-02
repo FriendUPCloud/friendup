@@ -573,6 +573,12 @@ i18n_to                                 : Til
 i18n_cal_evt_type                       : Velg kalender
 i18n_cal_private_calendar               : Din private kalender
 
+i18n_cal_evt_type                       : Type
+i18n_cal_evt_type_event                 : Hendelse
+i18n_cal_evt_type_meeting               : Møte
+i18n_cal_evt_type_todo                  : Gjøremål
+i18n_cal_evt_type_note                  : Notat
+
 i18n_evt_added                          : Kalender oppdatert
 i18n_evt_addeddesc                      : Hendelsen ble lagt til din kalender.
 i18n_evt_delete_desc                    : Dette vil slette kalender hendelsen.
