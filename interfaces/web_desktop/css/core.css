@@ -4902,5 +4902,29 @@ div.Orange, button.Orange
 	}
 }
 
+/* Misc elements */
+
+.Dropdown
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	opacity: 0;
+	height: 0;
+	pointer-events: none;
+	transition: opacity,height 0.25s;
+	border-radius: 0 0 3px 3px;
+	overflow: hidden;
+}
+
+.Dropdown.Showing
+{
+	opacity: 1;
+	height: 100px;
+	max-height: auto;
+	overflow: auto;
+	pointer-events: all;
+}
 
 

@@ -9,14 +9,14 @@
 	</div>
 	<div class="HRow MarginBottom">
 		<div class="HContent30 FloatLeft">
-			<p class="InputHeight"><strong>{i18n_cal_evt_type}:</strong></p>
+			<p class="InputHeight"><strong>{i18n_cal_evt_typec}:</strong></p>
 		</div>
 		<div class="HContent70 FloatLeft">
 			<select id="calTypeSelect" onchange="ge('calType' ).value = this.value; Workspace.pollCalendarEventGui();">
 				<option value="event">{i18n_cal_evt_type_event}</option>
 				<option value="meeting">{i18n_cal_evt_type_meeting}</option>
-				<option value="todo">{i18n_cal_evt_type_todo}</option>
-				<option value="note">{i18n_cal_evt_type_note}</option>
+				<!--<option value="todo">{i18n_cal_evt_type_todo}</option>
+				<option value="note">{i18n_cal_evt_type_note}</option>-->
 			</select>
 			<input type="hidden" id="calType" value="event"/>
 		</div>
@@ -63,7 +63,7 @@
 	</div>
 	<div class="HRow">
 		<div class="HContent100 FloatLeft">
-			<textarea class="FullWidth" style="height: 160px" id="calDescription"></textarea>
+			<textarea class="FullWidth" style="height: 120px" id="calDescription"></textarea>
 		</div>
 	</div>
 	<div class="HRow">

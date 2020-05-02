@@ -1107,8 +1107,163 @@ var WorkspaceInside = {
 				{
 					if( ge( 'calType' ) && ge( 'calType' ).value == 'meeting' )
 					{
+						let participants = [];
+						let loaded = false;
+						function removeParticipant( id )
+						{
+							let out = [];
+							for( let c = 0; c < participants.length; c++ )
+							{
+								if( participants[ c ].ID == id )
+									continue;
+								out.push( participants[ c ] );
+							}
+							participants = out;
+							redrawParticipants();
+						}
+						function addParticipant( id )
+						{
+							let o = new Module( 'system' );
+							o.onExecuted = function( e, d )
+							{
+								if( e == 'ok' )
+								{
+									participants.push( JSON.parse( d ) );
+									redrawParticipants();
+								}
+							}
+							o.execute( 'getcontact', { contactid: id } );
+						}
+						function redrawParticipants()
+						{
+							if( !loaded )
+							{
+								var m = new Module( 'system' );
+								m.onExecuted = function( e, d )
+								{
+									if( e == 'ok' )
+									{
+										participants = JSON.parse( d );
+									}
+									else
+									{
+										participants = [];
+									}
+									redrawParticipants();
+								}
+								m.execute( 'getcalendareventparticipants', { eventid: false } );
+								loaded = true;
+							}
+							else
+							{
+								if( ge( 'CalEvtMeetingParticipants' ) )
+								{
+									let gstr = '';
+									let parts = [];
+									if( participants.length )
+									{
+										gstr += '<div class="List">';
+										let sw = 2;
+										for( let c = 0; c < participants.length; c++ )
+										{
+											parts.push( participants[ c ].ID );
+											sw = sw == 2 ? 1 : 2;
+											gstr += '<div class="HRow sw' + sw + '">';
+											gstr += '<div class="PaddingSmall HContent45 FloatLeft Ellipsis">' + participants[c].Firstname + ' ' + participants[c].Lastname + '</div>';
+											gstr += '<div class="BorderLeft PaddingSmall HContent45 FloatLeft Ellipsis">' + participants[c].Email + '</div>';
+											gstr += '<div class="PaddingSmall HContent10 FloatLeft Ellipsis TextRight"><span attrid="' + participants[c].ID + '" class="IconSmall fa-remove"></span></div>';
+											gstr += '</div>';
+										}
+										gstr += '</div>';
+										// Just add the participants
+										ge( 'calendarEventParticipants' ).value = parts.join( ',' );
+									}
+									else
+									{
+										gstr += '<div class="PaddingSmall">' + i18n( 'i18n_no_participants_here' ) + '</div>';
+									}
+									ge( 'CalEvtMeetingParticipants' ).innerHTML = gstr;
+									let spans = ge( 'CalEvtMeetingParticipants' ).getElementsByTagName( 'span' );
+									for( let c = 0; c < spans.length; c++ )
+									{
+										spans[ c ].onclick = function()
+										{
+											removeParticipant( this.getAttribute( 'attrid' ) );
+										}
+									}
+								}
+							}
+						}
+					
+						// Set the template
 						ge( 'calTypeGui' ).innerHTML = data;
-						InitTimezoneGui( 'EventZoneCat', 'EventZoneZone', 'calTimezone' );
+						
+						redrawParticipants();
+						
+						let timeo = null;
+						let selection = ge( 'CalEvtMeetingParticipantsSelection' );
+						ge( 'calTypeGui' ).onclick = function()
+						{
+							selection.classList.remove( 'Showing', 'List' );
+							ge( 'CalEvtMeetingContacts' ).value = '';
+						}
+						ge( 'CalEvtMeetingContacts' ).onkeyup = function()
+						{
+							if( timeo ) clearTimeout( timeo );
+							timeo = setTimeout( function()
+							{
+								if( ge( 'CalEvtMeetingContacts' ) )
+								{
+									var m = new Module( 'system' );
+									m.onExecuted = function( e, d )
+									{
+										if( e == 'ok' )
+										{
+											let list = JSON.parse( d );
+											selection.classList.add( 'Showing', 'List' );
+											let sw = 2, str = '';
+											for( let c = 0; c < list.length; c++ )
+											{
+												sw = sw == 2 ? 1 : 2;
+												str += '<div class="HRow sw' + sw + ' "attrid="' + list[c].ID + '">';
+												str += '<div class="PaddingSmall HContent45 FloatLeft Ellipsis">' + list[c].Firstname + ' ' + list[c].Lastname + '</div>';
+												str += '<div class="BorderLeft PaddingSmall HContent45 FloatLeft Ellipsis">' + list[c].Email + '</div>';
+												str += '<div class="PaddingSmall HContent10 FloatLeft Ellipsis TextRight"><span></span></div>';
+												str += '</div>';
+											}
+											selection.innerHTML = str;
+											var eles = selection.getElementsByClassName( 'HRow' );
+											for( let c = 0; c < eles.length; c++ )
+											{
+												eles[ c ].onclick = function( e )
+												{
+													if( this.classList && this.classList.contains( 'Selected' ) )
+													{
+														this.classList.remove( 'Selected' );
+														let sp = this.getElementsByTagName( 'span' );
+														sp[0].className = '';
+														removeParticipant( this.getAttribute( 'attrid' ) );
+													}
+													else
+													{
+														this.classList.add( 'Selected' );
+														let sp = this.getElementsByTagName( 'span' );
+														sp[0].className = 'IconSmall fa-check';
+														addParticipant( this.getAttribute( 'attrid' ) );
+													}
+													return cancelBubble( e );
+												}
+											}
+										}
+										else
+										{
+											selection.classList.remove( 'Showing' );
+										}
+									}
+									m.execute( 'getcontacts', { search: ge( 'CalEvtMeetingContacts' ).value } );
+								}
+							}, 250 );
+						}
 					}
 				}
 				f.load();
@@ -10340,77 +10495,4 @@ function loadApplicationBasics()
 	}
 	j.load();
 };
-
-// Init the timezone gui! ------------------------------------------------------
-
-var timezones = null;
-
-// Africa,Europe etc
-// targetcat = category elementid
-// targetzone = timezone elementid
-// valuefield = hidden actual value field
-function InitTimezoneGui( targetcat, targetzone, valuefield )
-{
-	if( !timezones )
-	{
-		var m = new Module( 'system' );
-		m.onExecuted = function( e, d )
-		{
-			if( e != 'ok' ) return;
-			timezones = JSON.parse( d );
-			InitTimezoneGui();
-		}
-		m.execute( 'gettimezones' );
-		return;
-	}
-	
-	var current = ge( valuefield ).value.split( '/' );
-	current = current[0];
-	
-	let cstr = '';
-	let firstZone = null;
-	cstr += '<select id="' + targetcat + 'TimeZoneType" onchange="SetSubTimeZones( \'' + targetcat + '\', \'' + targetzone + '\', this.value, \'' + valuefield + '\' )">';
-	for( let a in timezones )
-	{
-		let sel = current == a ? ' selected="selected"' : '';
-		cstr += '<option' + sel + ' value="' + a + '">' + a + '</option>';
-		if( !firstZone )
-			firstZone = a;
-	}
-	cstr += '</select>';
-	ge( targetcat ).innerHTML = cstr;
-	SetSubTimeZones( targetcat, targetzone, firstZone, valuefield );
-}
-
-// Africa/Somewhere
-// targetcat = category elementid
-// targetzone = timezone elementid
-// valuefield = hidden actual value field
-// zone = the category zone to look at
-function SetSubTimeZones( targetcat, targetzone, zone, valuefield )
-{
-	var current = ge( valuefield ).value.split( '/' );
-	if( current.length > 1 )
-		current = current[1];
-	else current = false;
-	
-	let found = false;
-	let cstr = '<select id="' + targetzone + 'TimeZoneSubType" onchange="ge( \'' + valuefield + '\' ).value = ge( \'' + targetcat + 'TimeZoneType\' ).value + \'/\' + ge( \'' + targetzone + 'TimeZoneSubType\' ).value">';
-	for( let a in timezones )
-	{
-		if( a == zone )
-		{
-			found = true;
-			for( let b in timezones[ a ] )
-			{
-				let sel = current == timezones[ a ][ b ] ? ' selected="selected"' : '';
-				cstr += '<option' + sel + ' value="' + timezones[ a ][ b ] + '">' + timezones[ a ][ b ] + '</option>';
-			}
-		}
-	}
-	cstr += '</select>';
-	ge( targetzone ).innerHTML = found ? cstr : '';
-	ge( valuefield ).value = ge( targetcat + 'TimeZoneType' ).value + '/' + ge( targetzone + 'TimeZoneSubType' ).value;
-}
-
 

@@ -10,9 +10,42 @@
 *                                                                              *
 *****************************************************************************©*/
 
-global $SqlDatabase, $User;
+global $SqlDatabase, $User, $Logger;
 
-$query = 'SELECT * FROM FContact WHERE UserID=\'' . $User->ID . '\' ORDER BY Firstname ASC';
+$search = '';
+
+if( isset( $args->args->search ) )
+{
+	if( strstr( $args->args->search, ',' ) )
+	{
+		$keys = explode( ',', $args->args->search );
+	}
+	else
+	{
+		$keys = array( $args->args->search );
+	}
+	$search .= '(';
+	$a = 0;
+	
+	foreach( $keys as $key )
+	{
+		$key = mysqli_real_escape_string( $SqlDatabase->_link, trim( $key ) );
+		
+		if( $a++ > 0 )
+			$search .= ' OR ';
+		$search .= '(';
+		$search .= '`Firstname` LIKE "%' . $key . '%" OR ';
+		$search .= '`Lastname` LIKE "%' . $key . '%" OR ';
+		$search .= '`Company` LIKE "%' . $key . '%" OR ';
+		$search .= '`Email` LIKE "%' . $key . '%"';
+		$search .= ')';
+	}
+	$search .= ') AND ';
+}
+
+$query = 'SELECT * FROM FContact WHERE ' . $search . 'UserID=\'' . $User->ID . '\' ORDER BY Firstname ASC';
+
+$Logger->log( $query );
 
 if( $rows = $SqlDatabase->fetchObjects( $query ) )
 {

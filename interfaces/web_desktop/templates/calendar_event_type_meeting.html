@@ -1,11 +1,23 @@
 
 	<div class="HRow MarginBottom">
 		<div class="HContent30 FloatLeft">
-			<p class="InputHeight"><strong>{i18n_cal_evt_timezone}:</strong></p>
+			<p class="InputHeight"><strong>{i18n_cal_evt_participants}:</strong></p>
 		</div>
 		<div class="HContent70 FloatLeft">
-			<div id="EventZoneCat"></div><div id="EventZoneZone"></div>
-			<input type="hidden" id="calTimezone" value=""/>
+			<input type="text" id="CalEvtMeetingContacts" class="InputHeight FullWidth" placeholder="{i18n_find_contacts}"/>
+			<div class="Relative" style="width: 100%">
+				<div id="CalEvtMeetingParticipantsSelection" class="Dropdown"></div>
+			</div>
+			<div id="CalEvtMeetingParticipants" class="FullWidth BordersDefault Rounded BackgroundNegative Negative" style="height: 100px; overflow: auto"></div>
+			<input type="hidden" id="calendarEventParticipants"/>
 		</div>
 	</div>
-	
+	<div class="HRow MarginBottom">
+		<div class="HContent30 FloatLeft">
+			<p class="InputHeight"><strong>{i18n_cal_evt_link}:</strong></p>
+		</div>
+		<div class="HContent70 FloatLeft">
+			<input type="text" value="" placeholder="https://somelink.com" class="FullWidth InputHeight"/>
+		</div>
+	</div>
+
