@@ -12,12 +12,20 @@
 
 $lang = 'en';
 
-if( $args->args->get )
+if( isset( $args->args->get ) )
 {
 	switch( $args->args->get )
 	{
+		// Get countries - localized if possible
 		case 'countries':
-			$cnt = file_get_contents( 'modules/system/assets/contries.' . $lang . '.lang' );
+			if( isset( $args->args->lang ) && file_exists( 'modules/system/assets/countries.' . $args->args->lang . '.lang' ) )
+			{
+				$cnt = file_get_contents( 'modules/system/assets/countries.' . $args->args->lang . '.lang' );
+			}
+			else
+			{
+				$cnt = file_get_contents( 'modules/system/assets/countries.' . $lang . '.lang' );
+			}
 			$cnt = explode( "\n", $cnt );
 			$std = array();
 			foreach( $cnt as $k )
