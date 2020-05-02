@@ -171,6 +171,7 @@ typedef struct User
 	FLONG						u_MaxBytesReadedPerDevice;		// maximum bytes readed per device
 	
 	char						*u_UUID;						// unique ID
+	char						*u_Timezone;					// timezone
 } User;
 
 //
@@ -275,6 +276,7 @@ static FULONG UserDesc[] = {
 	SQLT_STR,     (FULONG)"Password",    offsetof( struct User, u_Password ),
 	SQLT_STR,     (FULONG)"Fullname",    offsetof( struct User, u_FullName ),
 	SQLT_STR,     (FULONG)"Email",       offsetof( struct User, u_Email ),
+	SQLT_STR,     (FULONG)"Timezone",    offsetof( struct User, u_Timezone ),
 	SQLT_STR,     (FULONG)"SessionID",   offsetof( struct User, u_MainSessionID ),
 	SQLT_INT,     (FULONG)"LoggedTime",  offsetof( struct User, u_LoggedTime ),
 	SQLT_INT,     (FULONG)"CreatedTime", offsetof( struct User, u_CreatedTime ),

@@ -248,6 +248,8 @@ void UserDelete( User *usr )
 		if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
 		{
 			if( usr->u_Email ){ FFree( usr->u_Email );}
+			
+			if( usr->u_Timezone ){ FFree( usr->u_Timezone );}
 		
 			if( usr->u_FullName ){ FFree( usr->u_FullName );}
 		
