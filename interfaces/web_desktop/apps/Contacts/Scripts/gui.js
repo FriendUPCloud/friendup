@@ -62,6 +62,7 @@ function EditContact( id )
 	
 		let d = new File( 'Progdir:Templates/contact.html' );
 		d.replacements = {
+			deletevisibility: '',
 			inpID: contact.ID,
 			inpFirstname: contact.Firstname,
 			inpLastname: contact.Lastname,
@@ -100,6 +101,7 @@ function AddContact()
 	
 	let d = new File( 'Progdir:Templates/contact.html' );
 	d.replacements = {
+		deletevisibility: 'visibility: hidden; pointer-events: none',
 		inpID: '',
 		inpFirstname: '',
 		inpLastname: '',

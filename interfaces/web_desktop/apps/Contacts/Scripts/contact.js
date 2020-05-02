@@ -8,8 +8,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-var contact = {};
-
 Application.run = function( msg )
 {
 	GetCountries();
@@ -56,15 +54,31 @@ function GetCountries()
 		for( let c = 0; c < list.length; c++ )
 		{
 			let sel = '';
-			if( contact.Country && contact.Country == list[ c ].key )
+			if( ge( 'Country' ) && ge( 'Country' ).value == list[ c ].Key )
 			{
 				sel = ' selected="selected"';
 			}
-			str += '<option' + sel + ' value="' + list[ c ].key + '">' + list[ c ].value + '</option>';
+			str += '<option' + sel + ' value="' + list[ c ].Key + '">' + list[ c ].Value + '</option>';
 		}
-		ge( 'Country' ).innerHTML = str;
+		ge( 'CountrySelector' ).innerHTML = str;
 	}
 	m.execute( 'geoinfo', { get: 'countries' } );
+}
+
+function DeleteContact( id )
+{
+	Confirm( i18n( 'i18n_really_delete' ), i18n( 'i18n_really_delete_desc' ), function( d )
+	{
+		if( d.data == true )
+		{
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				CloseView();
+			}
+			m.execute( 'deletecontact', { ID: id } );
+		}
+	} );
 }
 
 function SaveForm()

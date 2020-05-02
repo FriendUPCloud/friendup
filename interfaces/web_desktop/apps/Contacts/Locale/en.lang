@@ -9,6 +9,7 @@ i18n_keywords                           : keywords...
 #Contact
 i18n_save                               : Save
 i18n_cancel                             : Cancel
+i18n_delete                             : Delete
 
 i18n_firstname                          : First name
 i18n_lastname                           : Last name
@@ -35,4 +36,6 @@ i18n_comment                            : Comment
 
 i18n_problem_saving_contact             : Problem saving contact
 i18n_problem_saving_contact_desc        : Could not save this contact. Did you check the form?
+i18n_really_delete                      : Do you really want to delete?
+i18n_really_delete_desc                 : This will delete the contact for you and those you shared with.
 

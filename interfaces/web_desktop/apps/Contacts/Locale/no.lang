@@ -9,6 +9,7 @@ i18n_keywords                           : søkeord...
 #Contact
 i18n_save                               : Lagre
 i18n_cancel                             : Avbryt
+i18n_delete                             : Slett
 
 i18n_firstname                          : Fornavn
 i18n_lastname                           : Etternavn
@@ -35,4 +36,5 @@ i18n_comment                            : Kommentar
 
 i18n_problem_saving_contact             : Kunne ikke lagre
 i18n_problem_saving_contact_desc        : Kontakten kunne ikke lagres. Kontrollerte du skjemaet?
-
+i18n_really_delete                      : Vil du virkelig slette?
+i18n_really_delete_desc                 : Dette sletter kontakten og delinger av kontakten.

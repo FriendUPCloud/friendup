@@ -511,6 +511,11 @@ if( isset( $args->command ) )
 			require( 'modules/system/include/setcontact.php' );
 			break;
 		
+		// Delete a contact by contact id
+		case 'deletecontact':
+			require( 'modules/system/include/deletecontact.php' );
+			break;
+		
 		// Get single contact information
 		case 'getcontact':
 			require( 'modules/system/include/getcontact.php' );

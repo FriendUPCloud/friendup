@@ -79,7 +79,7 @@
 				<label for="County">{i18n_county}</label>
 			</div>
 			<div class="HContent70 FloatLeft Padding">
-				<select id="County"></select>
+				<input type="text" id="County" value="{inpCounty}" class="FullWidth"/>
 			</div>
 		</div>
 		<div class="HRow sw2">
@@ -87,7 +87,8 @@
 				<label for="Country">{i18n_country}</label>
 			</div>
 			<div class="HContent70 FloatLeft Padding">
-				<input type="text" id="Country" value="{inpCountry}" class="FullWidth"/>
+				<select id="CountrySelector" onchange="ge('Country').value=this.value"></select>
+				<input type="hidden" id="Country" value="{inpCountry}"/>
 			</div>
 		</div>
 		<div class="HRow sw1">
@@ -131,6 +132,9 @@
 	</div>
 </div>
 <div id="BottomBar" class="Padding">
+	<button type="button" class="Alert IconSmall fa-save FloatLeft" style="{deletevisibility}" onclick="DeleteContact({inpID})">
+		{i18n_delete}
+	</button>
 	<button type="button" class="IconSmall fa-save FloatRight MarginLeft" onclick="SaveForm()">
 		{i18n_save}
 	</button>
