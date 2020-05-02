@@ -24,7 +24,7 @@ $out->Other = [];
 
 foreach( $timezones as $zone )
 {
-	if( strstr( '/', $zone ) )
+	if( strstr( $zone, '/' ) )
 	{
 		$zone = explode( '/', $zone );
 		if( !isset( $out->{$zone[0]} ) )

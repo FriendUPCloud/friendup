@@ -45,4 +45,4 @@ CREATE TABLE IF NOT EXISTS `FContactParticipation` (
   PRIMARY KEY (`ID`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
 
-ALTER TABLE `FUser` ADD `Timezone` varchar(255) NOT NULL default "CET" AFTER `Email`;
+ALTER TABLE `FUser` ADD `Timezone` varchar(255) NOT NULL default "Other/CET" AFTER `Email`;
