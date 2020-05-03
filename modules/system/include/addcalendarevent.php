@@ -13,7 +13,7 @@
 global $User, $Logger;
 
 // Just include our mailer!
-include_once( 'php/3rdparty/phpmailer/class.phpmailer.php' );
+include_once( 'php/classes/mailserver.php' );
 
 // Create FSFile table for managing doors
 $t = new DbTable( 'FCalendar' );
@@ -54,6 +54,22 @@ if( is_object( $args->args->event ) )
 	// Participant support!
 	if( isset( $args->args->event->Participants ) )
 	{
+		$timeto = date( 'Y-m-d H:i:s', strtotime( $o->TimeTo ) );
+		$timefrom = date( 'Y-m-d H:i:s', strtotime( $o->TimeFrom ) );
+	
+		$mail = new Mailer();
+		$mail->setSubject( 'Invite to participate in meeting' );
+		$mail->setFrom( 'info@friendos.com' );
+		$mail->setContent( "" . 
+			"Hey! Just testing this e-mail!\n" . 
+			"\n" . 
+			"Meet on:\n" . 
+			"\t" . $timefrom . " till " . $timeto . "\n" . 
+			"\n" . 
+			"See you there or be square!\n"
+		);
+
+		
 		$parts = explode( ',', $args->args->event->Participants );
 		foreach( $parts as $part )
 		{
@@ -62,7 +78,7 @@ if( is_object( $args->args->event ) )
 			$con->Load( $cid );
 			
 			// Check participant!
-			if( $con->ID )
+			if( $con->ID && $con->Email )
 			{
 				$p = new dbIO( 'FContactParticipation' );
 				$p->ContactID = $cid;
@@ -72,8 +88,18 @@ if( is_object( $args->args->event ) )
 				$p->Token = hash( 'sha256', strtotime( $p->DateTime ) . rand(0,9999) . rand(0,9999) );
 				$p->Message = '';
 				$p->Save();
+				
+				// Successful save!
+				if( $p->ID > 0 )
+				{
+					$name = $con->Firstname && $con->Lastname ? ( $con->Firstname . ' ' . $con->Lastname ) : false;
+					$mail->addRecipient( $con->Email, $name );
+				}
 			}
 		}
+		
+		// Send the invite mail!
+		$mail->send();
 	}
 
 	if( $o->ID > 0 ) die( 'ok<!--separate-->{"ID":"' . $o->ID . '"}' );
