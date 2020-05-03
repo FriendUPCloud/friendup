@@ -54,7 +54,6 @@ if( is_object( $args->args->event ) )
 	// Participant support!
 	if( isset( $args->args->event->Participants ) )
 	{
-		//$Logger->log( 'Er have participants!' );
 		$parts = explode( ',', $args->args->event->Participants );
 		foreach( $parts as $part )
 		{
@@ -75,10 +74,6 @@ if( is_object( $args->args->event ) )
 				$p->Save();
 			}
 		}
-	}
-	else
-	{
-		//$Logger->log( 'No participants!' );
 	}
 
 	if( $o->ID > 0 ) die( 'ok<!--separate-->{"ID":"' . $o->ID . '"}' );
