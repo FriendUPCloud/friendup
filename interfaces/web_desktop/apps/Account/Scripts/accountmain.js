@@ -1523,6 +1523,8 @@ function InitTimezoneGui()
 		cstr += '<option' + sel + ' value="' + a + '">' + a + '</option>';
 		if( !firstZone )
 			firstZone = a;
+		if( current == a )
+			firstZone = a;
 	}
 	cstr += '</select>';
 	ge( 'TimeZoneSelectA' ).innerHTML = cstr;

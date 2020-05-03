@@ -1614,6 +1614,23 @@ var WorkspaceInside = {
 			evt.Participants = ge( 'calendarEventParticipants' ).value;
 			if( !evt.Participants ) evt.Participants = '';
 		}
+		var metadata = {};
+		var metadataset = 0;
+		
+		if( ge( 'CalEvtMeetingLocation' ) )
+		{
+			metadata.Location = ge( 'CalEvtMeetingLocation' ).value;
+			metadataset++;
+		}
+		
+		if( ge( 'CalEvtMeetingLink' ) )
+		{
+			metadata.Link = ge( 'CalEvtMeetingLink' ).value;
+			metadataset++;
+		}
+		
+		if( metadataset > 0 )
+			evt.MetaData = JSON.stringify( metadata );
 
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )

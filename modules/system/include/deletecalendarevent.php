@@ -17,7 +17,7 @@ if( $o->ID > 0 && $o->UserID == $User->ID )
 	$o->delete();
 	
 	// Remove the corresponding participation
-	$SqlDatabase->Query( 'DELETE FROM FContactParticipation f WHERE f.EventID=\'' . $o->ID . '\'' );
+	$SqlDatabase->Query( 'DELETE FROM FContactParticipation WHERE `EventID`=\'' . $o->ID . '\'' );
 	
 	die( 'ok' );
 }

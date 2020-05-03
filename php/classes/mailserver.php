@@ -14,7 +14,7 @@
 require_once( 'php/3rdparty/phpmailer/PHPMailerAutoload.php' );
 
 // Define the mailserver class
-class MailServer
+class Mailer
 {
 	var $template = false;
 	var $content = '';
@@ -24,12 +24,14 @@ class MailServer
 	var $fromName = '';
 	var $subject = '';
 	var $recipients = [];
+	var $attachments = [];
 
 	function __construct()
 	{
 		global $Config;
 	}
 	
+	// Just set the subject
 	function setSubject( $subject )
 	{
 		$this->subject = $subject;
@@ -129,6 +131,21 @@ class MailServer
 		$this->recipients[] = $recipient;
 	}
 	
+	// Content is string
+	// filename is string
+	// encoding e.g. base64
+	// mimetype e.g. text/calendar (string)
+	function addStringAttachment( $content, $filename, $encoding, $mimetype )
+	{
+		$a = new stdClass();
+		$a->type = 'string';
+		$a->content = $content;
+		$a->filename = $filename;
+		$a->encoding = $encoding;
+		$a->mimetype = $enctype;
+		$this->attachments[] = $a;
+	}
+	
 	// Parses the content
 	function parseContent()
 	{
@@ -143,30 +160,84 @@ class MailServer
 	// Send the email
 	function send()
 	{
-		global $Logger;
+		global $Logger, $Config, $configfilesettings;
 		
-		if( !count( $this->recipients ) )
+		if( count( $this->recipients ) < 1 )
 		{
-			$Logger->log( '[Mailserver.Class] No recipients, no e-mails will be sent.' );
 			return false;
 		}
 		
 		$mailer = new PHPMailer;
-		$mailer->setFrom( $this->from, $this->fromName );
 		foreach( $this->recipients as $r )
 		{
-			$mailer->addAddress( $r );
+			if( strstr( $r, '<' ) )
+			{
+				$cand = explode( '<', $r );
+				$email = trim( $cand[ 0 ] );
+				$name = str_replace( '>', '', $cant[ 1 ] );
+				$mailer->addAddress( $email, $name );
+			}
+			else $mailer->addAddress( $r );
 		}
 		$mailer->Subject = $this->subject;
 		$mailer->Body = $this->parseContent();
+		if( $this->isHTML || strstr( $mailer->Body, '<' ) > 0 )
+			$mailer->isHTML( true );
+		
+		// Use the mail server setting for sending the e-mail
+		if( isset( $configfilesettings[ 'FriendMail' ] ) )
+		{
+			$cnf = $configfilesettings[ 'FriendMail' ];
+			$mailer->isSMTP();
+			$mailer->SMTPDebug = 3;
+			$mailer->SMTPAuth    = true;
+			$mailer->Username    = $cnf[ 'friendmail_user' ];
+			$mailer->Password    = $cnf[ 'friendmail_pass' ];
+			$mailer->Port        = intval( $cnf[ 'friendmail_port' ], 10 );
+			if( isset( $cnf[ 'friendmail_name' ] ) )
+			{
+				$mailer->setFrom(  $cnf[ 'friendmail_user' ], $cnf[ 'friendmail_name' ] );
+			}
+			else
+			{
+				$mailer->setFrom(  $cnf[ 'friendmail_user' ] );
+			}
+			if( isset( $cnf[ 'friendmail_pcol' ] ) )
+			{
+				$mailer->SMTPSecure = $cnf[ 'friendmail_pcol' ];
+				$mailer->Host        = gethostbyname( $mailer->SMTPSecure . 
+										'://' . $cnf[ 'friendmail_host' ] );
+			}
+			else
+			{
+				$mailer->Host        = $cnf[ 'friendmail_host' ];
+			}
+			$mailer->Timeout     = 10; // Ten seconds timeout.
+		}
+		else
+		{
+			$mailer->setFrom( $this->from, $this->fromName );
+		}
+		
+		if( count( $this->attachments ) > 0 )
+		{
+			foreach( $this->attachments as $attachment )
+			{
+				if( $attachment->type == 'string' )
+				{
+					$mailer->addStringAttachment( 
+						$attachment->content,
+						$attachment->filename,
+						$attachment->encoding,
+						$attachment->mimetype
+					);
+				}
+			}
+		}
 		
 		if( !$mailer->send() )
 		{
 			$Logger->log( '[Mailserver.Class] Could not send emails: ' . $mailer->ErrorInfo );
-		}
-		else 
-		{
-			$Logger->log( '[Mailserver.Class] Sent email to ' . count( $this->recipients ) . ' recipients.' );
 		}
 	}
 }
