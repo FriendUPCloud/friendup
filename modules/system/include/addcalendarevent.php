@@ -10,6 +10,11 @@
 *                                                                              *
 *****************************************************************************©*/
 
+global $User, $Logger;
+
+// Just include our mailer!
+include_once( 'php/3rdparty/phpmailer/class.phpmailer.php' );
+
 // Create FSFile table for managing doors
 $t = new DbTable( 'FCalendar' );
 if( !$t->load() )
@@ -47,9 +52,10 @@ if( is_object( $args->args->event ) )
 	$o->Save();
 	
 	// Participant support!
-	if( isset( $args->args->participants ) )
+	if( isset( $args->args->event->Participants ) )
 	{
-		$parts = explode( ',', $args->args->participants );
+		//$Logger->log( 'Er have participants!' );
+		$parts = explode( ',', $args->args->event->Participants );
 		foreach( $parts as $part )
 		{
 			$cid = intval( trim( $part ), 10 );
@@ -63,12 +69,16 @@ if( is_object( $args->args->event ) )
 				$p->ContactID = $cid;
 				$p->EventID = $o->ID;
 				$p->Load();
-				$p->DateTime = date( 'Y-m-d H:i:s' ); // When added!
+				$p->Time = date( 'Y-m-d H:i:s' ); // When added!
 				$p->Token = hash( 'sha256', strtotime( $p->DateTime ) . rand(0,9999) . rand(0,9999) );
 				$p->Message = '';
 				$p->Save();
 			}
 		}
+	}
+	else
+	{
+		//$Logger->log( 'No participants!' );
 	}
 
 	if( $o->ID > 0 ) die( 'ok<!--separate-->{"ID":"' . $o->ID . '"}' );

@@ -45,8 +45,6 @@ if( isset( $args->args->search ) )
 
 $query = 'SELECT * FROM FContact WHERE ' . $search . 'UserID=\'' . $User->ID . '\' ORDER BY Firstname ASC';
 
-$Logger->log( $query );
-
 if( $rows = $SqlDatabase->fetchObjects( $query ) )
 {
 	die( 'ok<!--separate-->' . json_encode( $rows ) );
