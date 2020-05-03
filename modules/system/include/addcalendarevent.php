@@ -10,9 +10,10 @@
 *                                                                              *
 *****************************************************************************©*/
 
-global $User, $Logger;
+global $User, $Logger, $SqlDatabase;
 
 // Just include our mailer!
+include_once( 'php/classes/dbio.php' );
 include_once( 'php/classes/mailserver.php' );
 
 // Create FSFile table for managing doors
@@ -54,12 +55,20 @@ if( is_object( $args->args->event ) )
 	// Participant support!
 	if( isset( $args->args->event->Participants ) )
 	{
+		$Logger->log( 'Starting with our mailer.' );
+		
 		$timeto = date( 'Y-m-d H:i:s', strtotime( $o->TimeTo ) );
 		$timefrom = date( 'Y-m-d H:i:s', strtotime( $o->TimeFrom ) );
 	
 		$mail = new Mailer();
+		
+		$Logger->log( 'Mailer instantiated!' );
+		
 		$mail->setSubject( 'Invite to participate in meeting' );
-		$mail->setFrom( 'info@friendos.com' );
+		$mail->setFrom( 'info@friendos.com', 'Friend Software Corporation' );
+		
+		$Logger->log( 'Setting content!' );
+		
 		$mail->setContent( "" . 
 			"Hey! Just testing this e-mail!\n" . 
 			"\n" . 
@@ -69,7 +78,6 @@ if( is_object( $args->args->event ) )
 			"See you there or be square!\n"
 		);
 
-		
 		$parts = explode( ',', $args->args->event->Participants );
 		foreach( $parts as $part )
 		{
@@ -78,8 +86,10 @@ if( is_object( $args->args->event ) )
 			$con->Load( $cid );
 			
 			// Check participant!
+			$Logger->log( 'Preparing to add participation record.' );
 			if( $con->ID && $con->Email )
 			{
+				$Logger->log( 'Adding participation record.' );
 				$p = new dbIO( 'FContactParticipation' );
 				$p->ContactID = $cid;
 				$p->EventID = $o->ID;
@@ -93,12 +103,14 @@ if( is_object( $args->args->event ) )
 				if( $p->ID > 0 )
 				{
 					$name = $con->Firstname && $con->Lastname ? ( $con->Firstname . ' ' . $con->Lastname ) : false;
+					$Logger->log( 'Adding recipient: ' . $con->Email . ' -> ' . $name );
 					$mail->addRecipient( $con->Email, $name );
 				}
 			}
 		}
 		
 		// Send the invite mail!
+		$Logger->log( 'Trying to send email.' );
 		$mail->send();
 	}
 
