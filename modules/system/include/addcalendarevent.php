@@ -78,8 +78,8 @@ if( is_object( $args->args->event ) )
 	{
 		$timeto = date( 'Y-m-d H:i:s', strtotime( $o->Date . ' ' . $o->TimeTo ) );
 		$timefrom = date( 'Y-m-d H:i:s', strtotime( $o->Date . ' ' . $o->TimeFrom ) );
-		$utimeto = date( 'Ymd\THis', strtotime( $timeto ) );
-		$utimefrom = date( 'Ymd\THis', strtotime( $timefrom ) );
+		$utimeto = date( 'Ymd\THis\Z', strtotime( $timeto ) );
+		$utimefrom = date( 'Ymd\THis\Z', strtotime( $timefrom ) );
 		$timenow = date( 'Ymd\THis\Z' );
 	
 		// TODO: Implement template support!
@@ -170,8 +170,8 @@ if( is_object( $args->args->event ) )
 				if( $location )
 					$vevent->setLocation( $location );
 				// Set the time
-				$vevent->setDtstart( new DateTime( $timefrom ), new DateTimeZone( $timezone ) );
-				$vevent->setDtend( new DateTime( $timeto ), new DateTimeZone( $timezone ) );
+				$vevent->setDtstart( $utimefrom, new DateTimeZone( $timezone ) );
+				$vevent->setDtend( $utimeto, new DateTimeZone( $timezone ) );
 				// Organizer
 				$vevent->setOrganizer( $email );
 
