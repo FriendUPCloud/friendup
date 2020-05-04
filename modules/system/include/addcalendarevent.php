@@ -193,9 +193,10 @@ END:VCALENDAR';
 				//$mail->Ical = $ics;
 				// Add the meeting request
 				$mail->addStringAttachment( 
-					$ics, 'ical.ics', 'base64', 
+					$ics, 'ical.ics', '7bit', 
 					'text/calendar; charset="UTF-8"; method=REQUEST' 
 				);
+				$mail->Ical = $ics;
 				
 				// Successful save!
 				if( $p->ID > 0 )
