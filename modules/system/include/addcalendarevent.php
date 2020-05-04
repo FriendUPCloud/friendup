@@ -90,16 +90,20 @@ if( is_object( $args->args->event ) )
 		}*/
 		
 		// Create a unique hash
-		$uid = hash( 'sha256', $o->ID . $User->Email );
+		$domain = explode( '@', $User->Email ); $domain = $domain[1];
+		$uid = hash( 'md5', $o->ID . $User->Email ) . '@' . $domain;
 		
 		// Get attendees
 		$parts = explode( ',', $args->args->event->Participants );
 		$participants = $SqlDatabase->fetchObjects( 'SELECT Firstname, Lastname, Email FROM FContact WHERE ID IN (' . $args->args->event->Participants . ')' );
 		$attendees = '';
+		$partcount = 0;
 		foreach( $participants as $part )
 		{
+			if( $partcount++ > 0 )
+				$attendees .= "\n";
 			$nam = $part->Firstname && $part->Lastname ? ( $part->Firstname . ' ' . $part->Lastname ) : $part->Email;
-			$attendees .= 'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN=' . $nam . ';X-NUM-GUESTS=0:mailto:' . $part->Email . "\n";
+			$attendees .= 'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=' . "\n " . 'TRUE;CN=' . $nam . ';X-NUM-GUESTS=0:mailto:' . $part->Email;
 		}
 		
 		// Get participants and generate emails
@@ -141,7 +145,7 @@ if( is_object( $args->args->event ) )
 				
 				$mail->setContent( $desc );
 				
-				// Add an HTML meeting request
+				/*// Add an HTML meeting request
 				$mail->addStringAttachment( '<table border=1 bgcolor=white bordercolor=black borderspacing=1 width="600">
 	<tr>
 		<td>
@@ -156,7 +160,7 @@ if( is_object( $args->args->event ) )
 			</p>
 		</td>
 	</tr>
-</table>', 'invite.html', 'quoted-printable', 'text/html; charset="UTF-8"' );
+</table>', 'invite.html', 'quoted-printable', 'text/html; charset="UTF-8"' );*/
 		
 				
 				// Add the meeting request
@@ -172,7 +176,6 @@ DTEND;TZID=' . $timezone . ':' . $utimeto . '
 DTSTAMP:' . $timenow . '
 ORGANIZER;CN=' . $name . ':MAILTO:' . $email . '
 ' . $attendees . '
-X-MICROSOFT-CDO-OWNERAPPTID:' . $uid . '
 UID:' . $uid . '
 CREATED:' . $timenow . '
 DESCRIPTION:' . strip_tags( str_replace( "\n", ' ', $o->Description ) ). '
