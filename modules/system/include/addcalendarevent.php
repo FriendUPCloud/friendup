@@ -75,8 +75,9 @@ if( is_object( $args->args->event ) )
 	{
 		$timeto = date( 'Y-m-d H:i:s', strtotime( $o->Date . ' ' . $o->TimeTo ) );
 		$timefrom = date( 'Y-m-d H:i:s', strtotime( $o->Date . ' ' . $o->TimeFrom ) );
-		$utimeto = date( 'Ymd\THis', strtotime( $o->TimeTo ) );
-		$utimefrom = date( 'Ymd\THis', strtotime( $o->TimeFrom ) );
+		$utimeto = date( 'Ymd\THis\Z', strtotime( $o->TimeTo ) );
+		$utimefrom = date( 'Ymd\THis\Z', strtotime( $o->TimeFrom ) );
+		$timenow = date( 'Ymd\THis\Z' );
 	
 		// TODO: Implement template support!
 		/*if( isset( $configfilesettings[ 'FriendMail' ] ) &&
@@ -132,21 +133,23 @@ if( is_object( $args->args->event ) )
 				
 				// Add the meeting request
 				$mail->addStringAttachment( 'BEGIN:VCALENDAR
-VERSION:2.0
 PRODID:-//Friend Software Corp//Friend OS
+VERSION:2.0
 CALSCALE:GREGORIAN
 X-MS-OLK-FORCEINSPECTOROPEN:TRUE
 X-WR-TIMEZONE:' . $timezone . '
-METHOD:PUBLISH
+METHOD:REQUEST
 BEGIN:VEVENT
-SUMMARY:' . $o->Title . '
 DTSTART;TZID=' . $timezone . ':' . $utimefrom . '
 DTEND;TZID=' . $timezone . ':' . $utimeto . '
-SEQUENCE:0
-UID:' . $uid . '
-LOCATION:' . $location . $link . '
-DESCRIPTION:' . str_replace( "\n", ' ', $o->Description ) . '
 ORGANIZER;CN=' . $name . ':MAILTO:' . $email . '
+UID:' . $User->Email . '
+CREATED:' . $timenow . '
+DESCRIPTION:' . str_replace( "\n", ' ', $o->Description ) . '
+LOCATION:' . $location . $link . '
+SEQUENCE:0
+STATUS:CONFIRMED
+SUMMARY:' . $o->Title . '
 TRANSP:OPAQUE
 END:VEVENT
 END:VCALENDAR', 'ical.ics', 'base64', 'text/calendar' 
