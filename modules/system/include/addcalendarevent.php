@@ -169,9 +169,6 @@ VERSION:2.0
 CALSCALE:GREGORIAN
 METHOD:REQUEST
 X-WR-TIMEZONE:' . $timezone . '
-BEGIN:VTIMEZONE
-TZID:' . $timezone . '
-END:VTIMEZONE
 BEGIN:VEVENT
 DTSTART;TZID=' . $timezone . ':' . $utimefrom . '
 DTEND;TZID=' . $timezone . ':' . $utimeto . '
