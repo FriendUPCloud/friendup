@@ -92,7 +92,17 @@ if( is_object( $args->args->event ) )
 		// Create a unique hash
 		$uid = hash( 'sha256', $o->ID . $User->Email );
 		
+		// Get attendees
 		$parts = explode( ',', $args->args->event->Participants );
+		$participants = $SqlDatabase->fetchObjects( 'SELECT Firstname, Lastname, Email FROM FContact WHERE ID IN (' . $args->args->event->Participants . ')' );
+		$attendees = '';
+		foreach( $participants as $part )
+		{
+			$nam = $part->Firstname && $part->Lastname ? ( $part->Firstname . ' ' . $part->Lastname ) : $part->Email;
+			$attendees .= 'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN=' . $nam . ';X-NUM-GUESTS=0:mailto:' . $part->Email . "\n";
+		}
+		
+		// Get participants and generate emails
 		foreach( $parts as $part )
 		{
 			$mail = new Mailer();
@@ -146,7 +156,7 @@ if( is_object( $args->args->event ) )
 			</p>
 		</td>
 	</tr>
-</table>', 'invite.html', 'base64', 'text/html; charset="UTF-8"' );
+</table>', 'invite.html', 'quoted-printable', 'text/html; charset="UTF-8"' );
 		
 				
 				// Add the meeting request
@@ -159,11 +169,14 @@ METHOD:REQUEST
 BEGIN:VEVENT
 DTSTART;TZID=' . $timezone . ':' . $utimefrom . '
 DTEND;TZID=' . $timezone . ':' . $utimeto . '
-DTSTAMP:'.$utimefrom.'
+DTSTAMP:' . $timenow . '
 ORGANIZER;CN=' . $name . ':MAILTO:' . $email . '
+' . $attendees . '
+X-MICROSOFT-CDO-OWNERAPPTID:' . $uid . '
 UID:' . $uid . '
 CREATED:' . $timenow . '
 DESCRIPTION:' . strip_tags( str_replace( "\n", ' ', $o->Description ) ). '
+LAST-MODIFIED:' . $timenow . '
 LOCATION:' . $location . '
 SEQUENCE:0
 STATUS:CONFIRMED
