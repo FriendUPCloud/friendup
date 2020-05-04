@@ -13,8 +13,6 @@
 global $User, $Logger, $SqlDatabase, $configfilesettings;
 
 use Kigkonsult\Icalcreator\Vcalendar;
-use DateTime;
-use DateTimezone;
 
 // Just include our mailer!
 include_once( 'php/classes/dbio.php' );
@@ -198,7 +196,7 @@ if( is_object( $args->args->event ) )
 				// TODO: make configurable
 				$alarm = $event1->newValarm();
 				$alarm->setAction( Vcalendar::DISPLAY );
-				$alarm->setDescription( $event1->getDescription())
+				$alarm->setDescription( $event1->getDescription() );
 				// Fire off the alarm one day before
 				$alarm->setTrigger( '-P1D' );
 				
