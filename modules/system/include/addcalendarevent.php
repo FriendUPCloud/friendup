@@ -88,6 +88,9 @@ if( is_object( $args->args->event ) )
 			);
 		}*/
 		
+		// Create a unique hash
+		$uid = hash( 'sha256', $o->Description . $o->Title . rand(0,999) . rand(0,999) . mktime() . $o->Date );
+		
 		$parts = explode( ',', $args->args->event->Participants );
 		foreach( $parts as $part )
 		{
@@ -122,7 +125,7 @@ if( is_object( $args->args->event ) )
 				$desc = str_replace( "\n", "<br>", $o->Description );
 				if( $link )
 				{
-					$desc .= '<br><ul><li>Please verify your attendance here: <a href="' . $link . '">' . $link . "</a></lu></ul><br>";
+					$desc .= '<br><ul><li>Please verify your attendance here: <a href="' . $link . '">' . $link . '</a></lu></ul><br>';
 				}
 				
 				$mail->setContent( $desc );
@@ -135,17 +138,16 @@ CALSCALE:GREGORIAN
 X-MS-OLK-FORCEINSPECTOROPEN:TRUE
 X-WR-TIMEZONE:' . $timezone . '
 METHOD:PUBLISH
-X-COMMENT: See https://icalendar.org/validator.html 12
 BEGIN:VEVENT
 SUMMARY:' . $o->Title . '
-UID:<<[ICS_UID]>>
 DTSTART;TZID=' . $timezone . ':' . $utimefrom . '
 DTEND;TZID=' . $timezone . ':' . $utimeto . '
-LOCATION:' . $location . $link . '
 SEQUENCE:0
-PRIORITY:5
+UID:' . $uid . '
+LOCATION:' . $location . $link . '
 DESCRIPTION:' . str_replace( "\n", ' ', $o->Description ) . '
 ORGANIZER;CN=' . $name . ':MAILTO:' . $email . '
+TRANSP:OPAQUE
 END:VEVENT
 END:VCALENDAR', 'ical.ics', 'base64', 'text/calendar' 
 				);
