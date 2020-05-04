@@ -145,7 +145,7 @@ ORGANIZER;CN=' . $name . ':MAILTO:' . $email . '
 UID:' . $User->Email . '
 CREATED:' . $timenow . '
 DESCRIPTION:' . strip_tags( str_replace( "\n", ' ', $o->Description ) ). '
-LOCATION:' . $location . $link . '
+LOCATION:' . $location . '
 SEQUENCE:0
 STATUS:CONFIRMED
 SUMMARY:' . $o->Title . '

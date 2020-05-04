@@ -181,6 +181,8 @@ class Mailer
 		}
 		$mailer->Subject = $this->subject;
 		$mailer->Body = $this->parseContent();
+		
+		// Test if the content is HTML
 		if( $this->isHTML || strstr( $mailer->Body, '<' ) > 0 )
 			$mailer->isHTML( true );
 		
