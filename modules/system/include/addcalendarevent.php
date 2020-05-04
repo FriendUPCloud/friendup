@@ -133,10 +133,8 @@ if( is_object( $args->args->event ) )
 				
 				$desc = str_replace( "\n", "<br>", $o->Description );
 				
-				// Add an HTML meeting request
-				$mail->setContent( '<table border=1 bgcolor=white bordercolor=black borderspacing=1 borderpadding=0 width="600">
-	<tr>
-		<td>
+				// Add an HTML meeting request (for browsers that support it
+				$mail->setContent( '
 			<p>
 				<strong>You have been invited to a meeting.</strong>
 			</p>
@@ -150,11 +148,9 @@ if( is_object( $args->args->event ) )
 				Please follow the link below to set your response:
 			</p>
 			<p>
-				<a href="' . $link . '">Confirm or reject meeting</a>
+				' . $link . '
 			</p>
-		</td>
-	</tr>
-</table>' );
+' );
 
 				// Begin iCal generation ---------------------------------------
 				// Offsets
@@ -170,7 +166,7 @@ if( is_object( $args->args->event ) )
 				$vevent->setClass( Vcalendar::P_BLIC );
 				$vevent->setSequence( 1 );
 				$vevent->setSummary( $o->Title );
-				$vevent->setDescription( $o->Description );
+				$vevent->setDescription( $o->Description . "\n\nPlease follow this link: " . $link );
 				if( $location )
 					$vevent->setLocation( $location );
 				// Set the time
@@ -205,11 +201,12 @@ if( is_object( $args->args->event ) )
 
 				// Add the meeting request
 				$mail->WordWrap = 50;
-				$mail->addStringAttachment( 
-					$ical, 'ical.ics', 'base64', 
-					'text/calendar; charset="UTF-8"; method=REQUEST' 
-				);
-				//$mail->Ical = $ical;
+				
+				/*$mail->addAttachment( 
+					'tempfile.ics', 'tempfile.ics', '7bit', 
+					'text/calendar; charset=utf-8; method=REQUEST' 
+				);*/
+				$mail->Ical = $ical;
 				
 				// Successful save!
 				if( $p->ID > 0 )

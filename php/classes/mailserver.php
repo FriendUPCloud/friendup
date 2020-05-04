@@ -151,6 +151,21 @@ class Mailer
 		$this->attachments[] = $a;
 	}
 	
+	// Content is string
+	// filename is string
+	// encoding e.g. base64
+	// mimetype e.g. text/calendar (string)
+	function addAttachment( $file, $filename, $encoding = false, $mimetype = false )
+	{
+		$a = new stdClass();
+		$a->type = 'file';
+		$a->content = $content;
+		$a->filename = $filename;
+		$a->encoding = $encoding;
+		$a->mimetype = $enctype;
+		$this->attachments[] = $a;
+	}
+	
 	// Parses the content
 	function parseContent()
 	{
@@ -184,16 +199,20 @@ class Mailer
 			}
 			else $mailer->addAddress( $r );
 		}
-		$mailer->Subject = $this->subject;
+		
+		if( isset( $this->Ical ) )
+		{
+			$mailer->Ical = $this->Ical;;
+		}
+		
 		$mailer->Body = $this->parseContent();
 		$mailer->AltBody = strip_tags( str_replace( '<br>', "\n", $mailer->Body ) );
+			
+		$mailer->Subject = $this->subject;
 		
 		// Test if the content is HTML
 		if( $this->isHTML || strstr( $mailer->Body, '<' ) > 0 )
 			$mailer->isHTML( true );
-			
-		if( isset( $this->Ical ) )
-			$mailer->Ical = $this->Ical;
 		
 		// Use the mail server setting for sending the e-mail
 		if( isset( $configfilesettings[ 'FriendMail' ] ) )
@@ -237,6 +256,15 @@ class Mailer
 				if( $attachment->type == 'string' )
 				{
 					$mailer->addStringAttachment( 
+						$attachment->content,
+						$attachment->filename,
+						$attachment->encoding,
+						$attachment->mimetype
+					);
+				}
+				else if( $attachment->type == 'file' )
+				{
+					$mailer->addAttachment( 
 						$attachment->content,
 						$attachment->filename,
 						$attachment->encoding,
