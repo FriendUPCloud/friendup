@@ -11,7 +11,9 @@
 *****************************************************************************©*/
 
 // Include requirements
-require_once( 'php/3rdparty/phpmailer/PHPMailerAutoload.php' );
+require 'php/3rdparty/phpmailer6/Exception.php';
+require 'php/3rdparty/phpmailer6/PHPMailer.php';
+require 'php/3rdparty/phpmailer6/SMTP.php';
 
 // Define the mailserver class
 class Mailer
