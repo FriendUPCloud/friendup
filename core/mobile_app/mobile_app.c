@@ -998,7 +998,7 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
  * @param channel_id number of channel
  * @param app application name
  * @param title title of message which will be send to user
- * @param message message which will be send to user
+ * @param content message which will be send to user
  * @param notification_type type of notification
  * @param extraString additional string which will be send to user
  * @param ctimestamp create message timestamp
@@ -1016,7 +1016,7 @@ typedef struct NotifRegMsg
 	char *channel_id;
 	char *app;
 	char *title;
-	char *message;
+	char *content;
 	MobileNotificationTypeT notification_type;
 	char *extraString;
 	FULONG ctimestamp;
@@ -1029,7 +1029,7 @@ typedef struct NotifRegMsg
 
 void ProcessMobileRegister( void *locd );
 
-int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *channel_id, const char *app, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extraString, FULONG ctimestamp )
+int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *channel_id, const char *app, const char *title, const char *content, MobileNotificationTypeT notification_type, const char *extraString, FULONG ctimestamp )
 {
 	NotifRegMsg *nrm = FCalloc( 1, sizeof(NotifRegMsg) );
 	if( nrm != NULL )
@@ -1039,7 +1039,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		nrm->channel_id = StringDuplicate( channel_id );
 		nrm->app = StringDuplicate( app );
 		nrm->title = StringDuplicate( title );
-		nrm->message = StringDuplicate( message );
+		nrm->message = StringDuplicate( content );
 		nrm->notification_type = notification_type;
 		nrm->extraString = StringDuplicate( extraString );
 		nrm->ctimestamp = ctimestamp;
@@ -1070,7 +1070,7 @@ void ProcessMobileRegister( void *locd )
 	pthread_detach( pthread_self() );
 	
 #else
-int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *channel_id, const char *app, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extraString, FULONG ctimestamp )
+int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *channel_id, const char *app, const char *title, const char *content, MobileNotificationTypeT notification_type, const char *extraString, FULONG ctimestamp )
 {
 #endif
 	SystemBase *sb = (SystemBase *)lsb;
@@ -1089,7 +1089,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	
 	char *escapedChannelId = json_escape_string(channel_id);
 	char *escapedTitle = json_escape_string(title);
-	char *escapedMessage = json_escape_string(message);
+	char *escapedContent = json_escape_string(content);
 	char *escapedApp = NULL;
 	char *escapedExtraString = NULL;
 	FULONG userID = 0;
@@ -1112,7 +1112,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		notif->n_Channel = escapedChannelId;
 		notif->n_UserName = StringDuplicate( username );
 		notif->n_Title = escapedTitle;
-		notif->n_Content = escapedMessage;
+		notif->n_Content = escapedContent;
 		notif->n_Extra = escapedExtraString;
 		notif->n_NotificationType = notification_type;
 		notif->n_Status = NOTIFY_ACTION_REGISTER;
@@ -1195,7 +1195,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		userID = UMGetUserIDByName( sb->sl_UM, username );
 	}
 	
-	Log( FLOG_INFO, "User: %s userid: %lu will get message: %s\n", username, userID, message );
+	Log( FLOG_INFO, "User: %s userid: %lu will get content: %s\n", username, userID, content );
 	
 	if( bytesSent > 0 )
 	{
