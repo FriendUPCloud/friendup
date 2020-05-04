@@ -171,9 +171,7 @@ if( is_object( $args->args->event ) )
 					$vevent->setLocation( $location );
 				// Set the time
 				$vevent->setDtstart( new DateTime( $timefrom ), new DateTimeZone( $timezone ) );
-				$Logger->log( 'What is it? ' . $timeto );
-				$timeToTest = array( 'timestamp' => strtotime( $timeto ) );
-				$vevent->setDtend( $timeToTest, new DateTimeZone( $timezone ) );
+				$vevent->setDtend( new DateTime( $timeto ), new DateTimeZone( $timezone ) );
 				// Organizer
 				$vevent->setOrganizer( $email );
 
