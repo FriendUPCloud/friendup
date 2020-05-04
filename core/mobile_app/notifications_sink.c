@@ -671,7 +671,7 @@ void ProcessSinkMessage( void *locd )
 							//if( username != NULL ) FFree( username );
 							if( channel_id != NULL ) FFree( channel_id );
 							if( title != NULL ) FFree( title );
-							if( message != NULL ) FFree( message );
+							if( content != NULL ) FFree( content );
 							if( application != NULL ) FFree( application );
 							if( extra != NULL ) FFree( extra );
 						}
