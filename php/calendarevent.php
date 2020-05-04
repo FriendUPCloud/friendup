@@ -44,8 +44,9 @@ if( $participant->Load() )
 	{
 		$cuser = new dbIO( 'FUser' );
 		$cuser->Load( $c->UserID );
-		if( $cuser->ID )
+		if( $cuser->ID && strlen( $c->MetaData ) )
 		{
+			$md = json_decode( $c->MetaData );
 			// We got a message
 			if( trim( $participant->Message ) )
 			{
@@ -56,7 +57,7 @@ if( $participant->Load() )
 					$tpl = str_replace( '{title}', 'Confirm invite', $tpl );
 	
 					$cnt = file_get_contents( 'php/templates/calendar/calendar_meeting_accessing.html' );
-	
+					
 					$cnt = str_replace( '{meeting request}', $c->Description, $cnt );
 					$cnt = str_replace( '{date}', $c->Date, $cnt );
 					$cnt = str_replace( '{dateLiteral}', date( 'M d Y', strtotime( $c->Date ) ), $cnt );
@@ -65,7 +66,7 @@ if( $participant->Load() )
 					$cnt = str_replace( '{timeto}', $c->TimeTo, $cnt );
 					$cnt = str_replace( '{timezone}', $cuser->Timezone, $cnt );
 					$cnt = str_replace( '{action}', '/calendarevent/' . $r . '/access', $cnt );
-		
+					$cnt = str_replace( '{link}', $md->Link, $cnt );
 					$tpl = str_replace( '{content}', $cnt, $tpl );
 	
 					die( $tpl );

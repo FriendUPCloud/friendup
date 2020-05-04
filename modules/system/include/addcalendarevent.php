@@ -50,9 +50,9 @@ if( is_object( $args->args->event ) )
 	$o->UserID = $User->ID;
 	$o->Type = 'friend';
 	$o->Source = 'friend';
-	if( isset( $args->args->MetaData ) )
+	if( isset( $args->args->event->MetaData ) )
 	{
-		$o->MetaData = $args->args->MetaData;
+		$o->MetaData = $args->args->event->MetaData;
 	}
 	$o->Save();
 	
