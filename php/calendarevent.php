@@ -37,6 +37,7 @@ $GLOBALS['SqlDatabase'] =& $SqlDatabase;
 // Check token
 $participant = new dbIO( 'FContactParticipation' );
 $participant->Token = $route[2];
+$r = $participant->Token;
 if( $participant->Load() )
 {
 	$c = new dbIO( 'FCalendar' );
@@ -79,13 +80,16 @@ if( $participant->Load() )
 				}
 				die( $tpl );
 			}
+			
+			$redirectScript = '<script>setTimeout( function(){ document.location.href = \'/calendarevent/' . $r . '\'; }, 4000 );</script>';
+			
 			// We are asking to accept
 			if( $route[ 3 ] == 'accept' )
 			{
 				$participant->Message = '{"response":"' . $route[ 3 ] . '"}';
 				$participant->Save();
 				$tpl = str_replace( '{title}', 'Invite confirmed', $tpl );
-				$tpl = str_replace( '{content}', '<div class="Dialog"><h1>Invite accepted</h1><p>Thank you for participating.</p></div>', $tpl );
+				$tpl = str_replace( '{content}', '<div class="Dialog"><h1>Invite accepted</h1><p>Thank you for participating.</p></div>' . $redirectScript, $tpl );
 				die( $tpl );
 			}
 			// We are asking tentatively to accept
@@ -94,7 +98,7 @@ if( $participant->Load() )
 				$participant->Message = '{"response":"' . $route[ 3 ] . '"}';
 				$participant->Save();
 				$tpl = str_replace( '{title}', 'Invite confirmed', $tpl );
-				$tpl = str_replace( '{content}', '<div class="Dialog"><h1>Invite accepted tentatively</h1><p>Thank you for participating.</p></div>', $tpl );
+				$tpl = str_replace( '{content}', '<div class="Dialog"><h1>Invite accepted tentatively</h1><p>Thank you for participating.</p></div>' . $redirectScript, $tpl );
 				die( $tpl );
 			}
 			// We are rejecting

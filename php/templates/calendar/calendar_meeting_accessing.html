@@ -59,6 +59,26 @@
 					str += '<p><button type="button" class="Accept" onclick="document.location.href=\'{link}\'">Join meeting</button></p>';
 					document.getElementById( 'CurrentTime' ).innerHTML = str;
 				}
+				else
+				{
+					let timeToDo = timestampupcoming - timestampnow;
+					let minutes = Math.floor( timeToDo / 1000 / 60 );
+					let seconds = Math.floor( timeToDo / 1000 );
+					let str = '';
+					if( seconds < 60 )
+					{
+						str = '<p><strong>Meeting starts in ' + seconds + ' seconds.</strong></p>';
+					}
+					else if( seconds <= 0 )
+					{
+						document.location.href = '{link}';
+					}
+					else
+					{
+						str = '<p>Meeting starts in ' + minutes + ' minutes.</p>';
+					}
+					document.getElementById( 'CurrentTime' ).innerHTML = str;
+				}
 				document.getElementById( 'UpcomingDate' ).innerHTML = tf;
 				document.getElementById( 'Held' ).className = '';
 				document.getElementById( 'Upcoming' ).className = 'Showing';
