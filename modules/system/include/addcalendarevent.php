@@ -12,9 +12,14 @@
 
 global $User, $Logger, $SqlDatabase, $configfilesettings;
 
+use Kigkonsult\Icalcreator\Vcalendar;
+use DateTime;
+use DateTimezone;
+
 // Just include our mailer!
 include_once( 'php/classes/dbio.php' );
 include_once( 'php/classes/mailserver.php' );
+include_once( 'php/3rdparty/iCalcreator/autoload.php' );
 
 // Create FSFile table for managing doors
 $t = new DbTable( 'FCalendar' );
@@ -96,15 +101,6 @@ if( is_object( $args->args->event ) )
 		// Get attendees
 		$parts = explode( ',', $args->args->event->Participants );
 		$participants = $SqlDatabase->fetchObjects( 'SELECT Firstname, Lastname, Email FROM FContact WHERE ID IN (' . $args->args->event->Participants . ')' );
-		$attendees = '';
-		$partcount = 0;
-		foreach( $participants as $part )
-		{
-			if( $partcount++ > 0 )
-				$attendees .= "\n";
-			$nam = $part->Firstname && $part->Lastname ? ( $part->Firstname . ' ' . $part->Lastname ) : $part->Email;
-			$attendees .= 'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=' . "\n " . 'TRUE;CN=' . $nam . ';X-NUM-GUESTS=0:' . "\n " . 'mailto:' . $part->Email;
-		}
 		
 		// Get participants and generate emails
 		foreach( $parts as $part )
@@ -138,13 +134,9 @@ if( is_object( $args->args->event ) )
 				$link .= $fcore[ 'fchost' ] . '/calendarevent/' . $p->Token;
 				
 				$desc = str_replace( "\n", "<br>", $o->Description );
-				if( $link )
-				{
-					$desc .= '<br><ul><li>Please verify your attendance: <a href="' . $link . '">Click here</a></lu></ul><br>';
-				}
 				
 				// Add an HTML meeting request
-				$mail->setContent( '<table border=1 bgcolor=white bordercolor=black borderspacing=1 width="600">
+				$mail->setContent( '<table border=1 bgcolor=white bordercolor=black borderspacing=1 borderpadding=0 width="600">
 	<tr>
 		<td>
 			<p>
@@ -165,37 +157,54 @@ if( is_object( $args->args->event ) )
 		</td>
 	</tr>
 </table>' );
-		
-				// Generate ICS
-				$ical = 'BEGIN:VCALENDAR
-PRODID:-//Friend Software Corp//Friend OS v1.2.3//EN
-VERSION:2.0
-CALSCALE:GREGORIAN
-METHOD:REQUEST
-X-WR-TIMEZONE:' . $timezone . '
-BEGIN:VTIMEZONE
-TZID:' . $timezone . '
 
-END:VTIMEZONE
-BEGIN:VEVENT
-DTSTART;TZID=' . $timezone . ':' . $utimefrom . '
-DTEND;TZID=' . $timezone . ':' . $utimeto . '
-DTSTAMP:' . $timenow . '
-ORGANIZER;CN=' . $name . ':MAILTO:' . $email . '
-' . $attendees . '
-UID:' . $uid . '
-CREATED:' . $timenow . '
-DESCRIPTION:' . strip_tags( str_replace( "\n", ' ', $o->Description ) ). '
-LAST-MODIFIED:' . $timenow . '
-LOCATION:' . $location . '
-SEQUENCE:0
-STATUS:CONFIRMED
-SUMMARY:' . $o->Title . '
-TRANSP:OPAQUE
-END:VEVENT
-END:VCALENDAR';
+				// Offsets
+				$vcalendar = Vcalendar::factory( [ Vcalendar::UNIQUE_ID => 'Friend OS', ] );
+				$vcalendar->setMethod( Vcalendar::PUBLISH );
+				$vcalendar->setXprop( Vcalendar::X_WR_CALNAME, 'Friend OS Calendar Integration' );
+				$vcalendar->setXprop( Vcalendar::X_WR_CALDESC, 'Friend OS' );
+				$vcalendar->setXprop( Vcalendar::X_WR_RELCALID, '3E26604A-50F4-4449-8B3E-E4F4932D05B5' );
+				$vcalendar->setXprop( Vcalendar::X_WR_TIMEZONE, $timezone );
+				// Event
+				$vevent = $vcalendar->newVevent();
+				$vevent->setTransp( Vcalendar::OPAQUE );
+				$vevent->setClass( Vcalendar::P_BLIC );
+				$vevent->setSequence( 1 );
+				$vevent->setSummary( $o->Title );
+				$vevent->setDescription( $o->Description );
+				if( $location )
+					$vevent->setLocation( $location );
+				// Set the time
+				$vevent->setDtstart( $utimefrom, new DateTimezone( $timezone ) );
+				$vevent->setDtend( $utimeto, new DateTimezone( $timezone ) );
+				// Organizer
+				$vevent->setOrganizer( $email );
+
+				// Add participants
+				foreach( $participants as $part )
+				{
+					$nam = $part->Firstname && $part->Lastname ? ( $part->Firstname . ' ' . $part->Lastname ) : $part->Email;
+					$vevent->setAttendee( $part->Email,
+						[
+							Vcalendar::ROLE     => Vcalendar::REQ_PARTICIPANT,
+							Vcalendar::PARTSTAT => Vcalendar::NEEDS_ACTION,
+							Vcalendar::RSVP     => Vcalendar::TRUE,
+							Vcalendar::CN       => $nam
+						]
+					);
+				}
 				
-				//$mail->Ical = $ics;
+				// Add alarm for the event
+				// TODO: make configurable
+				$alarm = $event1->newValarm();
+				$alarm->setAction( Vcalendar::DISPLAY );
+				$alarm->setDescription( $event1->getDescription())
+				// Fire off the alarm one day before
+				$alarm->setTrigger( '-P1D' );
+				
+				// Generate ical thingie
+				$ical = $vcalendar->vtimezonePopulate()->createCalendar();
+
 				// Add the meeting request
 				$mail->WordWrap = 50;
 				$mail->addStringAttachment( 
@@ -221,5 +230,41 @@ END:VCALENDAR';
 	if( $o->ID > 0 ) die( 'ok<!--separate-->{"ID":"' . $o->ID . '"}' );
 }
 die( 'fail' );
+
+// OLD STUFF -------------------------------------------------------------------
+
+/*				// Generate ICS
+				$ical = 'BEGIN:VCALENDAR
+PRODID:-//Friend Software Corp//Friend OS v1.2.3//EN
+VERSION:2.0
+CALSCALE:GREGORIAN
+METHOD:REQUEST
+X-WR-TIMEZONE:' . $timezone . '
+BEGIN:VTIMEZONE
+TZID:' . $timezone . '
+BEGIN:STANDARD
+
+END:STANDARD
+BEGIN:DAYLIGHT
+
+END:DAYLIGHT
+END:VTIMEZONE
+BEGIN:VEVENT
+DTSTART;TZID=' . $timezone . ':' . $utimefrom . '
+DTEND;TZID=' . $timezone . ':' . $utimeto . '
+DTSTAMP:' . $timenow . '
+ORGANIZER;CN=' . $name . ':MAILTO:' . $email . '
+' . $attendees . '
+UID:' . $uid . '
+CREATED:' . $timenow . '
+DESCRIPTION:' . strip_tags( str_replace( "\n", ' ', $o->Description ) ). '
+LAST-MODIFIED:' . $timenow . '
+LOCATION:' . $location . '
+SEQUENCE:0
+STATUS:CONFIRMED
+SUMMARY:' . $o->Title . '
+TRANSP:OPAQUE
+END:VEVENT
+END:VCALENDAR';*/
 
 ?>
