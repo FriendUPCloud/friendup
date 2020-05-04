@@ -172,7 +172,7 @@ class Mailer
 			return false;
 		}
 		
-		$mailer = new PHPMailer( true );
+		$mailer = new PHPMailer();
 		foreach( $this->recipients as $r )
 		{
 			if( strstr( $r, '<' ) )
