@@ -35,37 +35,104 @@ $SqlDatabase->SelectDatabase( $conf[ 'DatabaseUser' ][ 'dbname' ] );
 $GLOBALS['SqlDatabase'] =& $SqlDatabase;
 
 // Check token
-$r = mysqli_real_escape_string( $SqlDatabase->_link, $route[2] );
-if( $participant = $SqlDatabase->fetchObject(
-	'SELECT * FROM FContactParticipation WHERE `Token`="' . $r . '"' 
-) )
+$participant = new dbIO( 'FContactParticipation' );
+$participant->Token = $route[2];
+if( $participant->Load() )
 {
 	$c = new dbIO( 'FCalendar' );
 	if( $c->Load( $participant->EventID ) )
 	{
-		$tpl = str_replace( '{title}', 'Confirm invite', $tpl );
+		$cuser = new dbIO( 'FUser' );
+		$cuser->Load( $c->UserID );
+		if( $cuser->ID )
+		{
+			// We got a message
+			if( trim( $participant->Message ) )
+			{
+				$m = json_decode( $participant->Message );
+				// We are in accept / tentative stage - bring up the scheduler
+				if( $m->response == 'accept' || $m->response == 'tentative' )
+				{
+					$tpl = str_replace( '{title}', 'Confirm invite', $tpl );
 	
-		$cnt = file_get_contents( 'php/templates/calendar/calendar_meeting.html' );
+					$cnt = file_get_contents( 'php/templates/calendar/calendar_meeting_accessing.html' );
 	
-		$cnt = str_replace( '{meeting request}', $c->Description, $cnt );
-		$cnt = str_replace( '{date}', $c->Date, $cnt );
-		$cnt = str_replace( '{time}', $c->TimeFrom . ' - ' . $c->TimeTo, $cnt );
+					$cnt = str_replace( '{meeting request}', $c->Description, $cnt );
+					$cnt = str_replace( '{date}', $c->Date, $cnt );
+					$cnt = str_replace( '{dateLiteral}', date( 'M d Y', strtotime( $c->Date ) ), $cnt );
+					$cnt = str_replace( '{time}', $c->TimeFrom . ' - ' . $c->TimeTo, $cnt );
+					$cnt = str_replace( '{timefrom}', $c->TimeFrom, $cnt );
+					$cnt = str_replace( '{timeto}', $c->TimeTo, $cnt );
+					$cnt = str_replace( '{timezone}', $cuser->Timezone, $cnt );
+					$cnt = str_replace( '{action}', '/calendarevent/' . $r . '/access', $cnt );
 		
-		$tpl = str_replace( '{content}', $cnt, $tpl );
+					$tpl = str_replace( '{content}', $cnt, $tpl );
 	
-		die( $tpl );
+					die( $tpl );
+				}
+				// This link was rejected
+				else
+				{
+					$tpl = str_replace( '{title}', 'Link expired', $tpl );
+					$tpl = str_replace( '{content}', '<div class="Dialog"><h1>This link expired</h1><p>Go back <a href="javascript:history.back(-1)">here</a>.</p></div>', $tpl );
+				}
+				die( $tpl );
+			}
+			// We are asking to accept
+			if( $route[ 3 ] == 'accept' )
+			{
+				$participant->Message = '{"response":"' . $route[ 3 ] . '"}';
+				$participant->Save();
+				$tpl = str_replace( '{title}', 'Invite confirmed', $tpl );
+				$tpl = str_replace( '{content}', '<div class="Dialog"><h1>Invite accepted</h1><p>Thank you for participating.</p></div>', $tpl );
+				die( $tpl );
+			}
+			// We are asking tentatively to accept
+			else if( $route[ 3 ] == 'tentative' )
+			{
+				$participant->Message = '{"response":"' . $route[ 3 ] . '"}';
+				$participant->Save();
+				$tpl = str_replace( '{title}', 'Invite confirmed', $tpl );
+				$tpl = str_replace( '{content}', '<div class="Dialog"><h1>Invite accepted tentatively</h1><p>Thank you for participating.</p></div>', $tpl );
+				die( $tpl );
+			}
+			// We are rejecting
+			else if( $route[ 3 ] == 'reject' )
+			{
+				$participant->Message = '{"response":"' . $route[ 3 ] . '"}';
+				$participant->Save();
+				$tpl = str_replace( '{title}', 'Invite rejected', $tpl );
+				$tpl = str_replace( '{content}', '<div class="Dialog"><h1>Invite rejected</h1><p>The invitee will get notified of your absence.</p></div>', $tpl );
+				die( $tpl );
+			}
+			// We are proposing a new time
+			// TODO: Get the times! Pawel needs to pass form vars
+			else if( $route[ 3 ] == 'newtime' )
+			{
+				$participant->Message = '{"response":"' . $route[ 3 ] . '"}';
+				$participant->Save();
+				$tpl = str_replace( '{title}', 'Suggestion submitted', $tpl );
+				$tpl = str_replace( '{content}', '<div class="Dialog"><h1>Suggestion submitted</h1><p>Thank you for your suggestion.</p></div>', $tpl );
+				die( $tpl );
+			}
+			// Go to the main "front door" where the user gets options
+			else
+			{
+				$tpl = str_replace( '{title}', 'Confirm invite', $tpl );
+	
+				$cnt = file_get_contents( 'php/templates/calendar/calendar_meeting.html' );
+	
+				$cnt = str_replace( '{meeting request}', $c->Description, $cnt );
+				$cnt = str_replace( '{date}', $c->Date, $cnt );
+				$cnt = str_replace( '{time}', $c->TimeFrom . ' - ' . $c->TimeTo, $cnt );
+				$cnt = str_replace( '{action}', '/calendarevent/' . $r . '/newtime', $cnt );
+		
+				$tpl = str_replace( '{content}', $cnt, $tpl );
+	
+				die( $tpl );
+			}
+		}
 	}
-}
-else if( $route[ 2 ] == 'meeting' )
-{
-	/*$tpl = str_replace( '{title}', 'Meeting', $tpl );
-	
-	$cnt = file_get_contents( 'php/templates/calendar/calendar_meeting.html' );
-	
-	$tpl = str_replace( '{content}', $cnt, $tpl );
-	
-	die( $tpl );*/
-	die( 'ERROR' );
 }
 else
 {
