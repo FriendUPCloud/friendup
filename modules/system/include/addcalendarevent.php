@@ -190,12 +190,12 @@ TRANSP:OPAQUE
 END:VEVENT
 END:VCALENDAR';
 				
-				$mail->Ical = $ics;
-				/*// Add the meeting request
+				//$mail->Ical = $ics;
+				// Add the meeting request
 				$mail->addStringAttachment( 
 					$ics, 'ical.ics', 'base64', 
 					'text/calendar; charset="UTF-8"; method=REQUEST' 
-				);*/
+				);
 				
 				// Successful save!
 				if( $p->ID > 0 )
