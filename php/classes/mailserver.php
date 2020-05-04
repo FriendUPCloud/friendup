@@ -186,6 +186,7 @@ class Mailer
 		}
 		$mailer->Subject = $this->subject;
 		$mailer->Body = $this->parseContent();
+		$mailer->AltBody = strip_tags( str_replace( '<br>', "\n", $mailer->Body ) );
 		
 		// Test if the content is HTML
 		if( $this->isHTML || strstr( $mailer->Body, '<' ) > 0 )

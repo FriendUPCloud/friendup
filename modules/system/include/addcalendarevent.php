@@ -145,22 +145,28 @@ if( is_object( $args->args->event ) )
 				
 				$mail->setContent( $desc );
 				
-				/*// Add an HTML meeting request
-				$mail->addStringAttachment( '<table border=1 bgcolor=white bordercolor=black borderspacing=1 width="600">
+				// Add an HTML meeting request
+				$mail->bodyHTML = '<table border=1 bgcolor=white bordercolor=black borderspacing=1 width="600">
 	<tr>
 		<td>
 			<p>
-				You have been invited to a meeting.
+				<strong>You have been invited to a meeting.</strong>
+			</p>
+			<h2>
+				' . $o->Title . '
+			</h2>
+			<p>
+				' . $desc . '
 			</p>
 			<p>
-				Please click this link:
+				Please follow the link below to set your response:
 			</p>
 			<p>
-				<a href="' . $link . '">Click here to voice your answer.</a>
+				<a href="' . $link . '">Confirm or reject meeting</a>
 			</p>
 		</td>
 	</tr>
-</table>', 'invite.html', 'quoted-printable', 'text/html; charset="UTF-8"' );*/
+</table>';
 		
 				// Generate ICS
 				$ical = 'BEGIN:VCALENDAR
@@ -169,6 +175,10 @@ VERSION:2.0
 CALSCALE:GREGORIAN
 METHOD:REQUEST
 X-WR-TIMEZONE:' . $timezone . '
+BEGIN:VTIMEZONE
+TZID:' . $timezone . '
+
+END:VTIMEZONE
 BEGIN:VEVENT
 DTSTART;TZID=' . $timezone . ':' . $utimefrom . '
 DTEND;TZID=' . $timezone . ':' . $utimeto . '
