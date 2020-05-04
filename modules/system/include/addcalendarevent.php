@@ -131,13 +131,31 @@ if( is_object( $args->args->event ) )
 				
 				$mail->setContent( $desc );
 				
+				// Add an HTML meeting request
+				$mail->addStringAttachment( '<table border=1 bgcolor=white bordercolor=black borderspacing=1 width="600">
+	<tr>
+		<td>
+			<p>
+				You have been invited to a meeting.
+			</p>
+			<p>
+				Please click this link:
+			</p>
+			<p>
+				<a href="' . $link . '">Click here to voice your answer.</a>
+			</p>
+		</td>
+	</tr>
+</table>', 'invite.html', 'base64', 'text/html; charset="UTF-8"' );
+		
+				
 				// Add the meeting request
 				$mail->addStringAttachment( 'BEGIN:VCALENDAR
 PRODID:-//Friend Software Corp//Friend OS
 VERSION:2.0
 CALSCALE:GREGORIAN
 X-WR-TIMEZONE:' . $timezone . '
-METHOD:PUBLISH
+METHOD:REQUEST
 BEGIN:VEVENT
 DTSTART;TZID=' . $timezone . ':' . $utimefrom . '
 DTEND;TZID=' . $timezone . ':' . $utimeto . '
