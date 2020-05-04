@@ -163,7 +163,7 @@ if( is_object( $args->args->event ) )
 </table>', 'invite.html', 'quoted-printable', 'text/html; charset="UTF-8"' );*/
 		
 				// Generate ICS
-				$ics = 'BEGIN:VCALENDAR
+				$ical = 'BEGIN:VCALENDAR
 PRODID:-//Friend Software Corp//Friend OS v1.2.3//EN
 VERSION:2.0
 CALSCALE:GREGORIAN
@@ -192,11 +192,12 @@ END:VCALENDAR';
 				
 				//$mail->Ical = $ics;
 				// Add the meeting request
+				$mail->WordWrap = 50
 				$mail->addStringAttachment( 
-					$ics, 'ical.ics', '7bit', 
+					$ical, 'ical.ics', '7bit', 
 					'text/calendar; charset="UTF-8"; method=REQUEST' 
 				);
-				$mail->Ical = $ics;
+				$mail->Ical = $ical;
 				
 				// Successful save!
 				if( $p->ID > 0 )
