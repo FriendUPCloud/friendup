@@ -194,9 +194,9 @@ if( is_object( $args->args->event ) )
 				
 				// Add alarm for the event
 				// TODO: make configurable
-				$alarm = $event1->newValarm();
+				$alarm = $vevent->newValarm();
 				$alarm->setAction( Vcalendar::DISPLAY );
-				$alarm->setDescription( $event1->getDescription() );
+				$alarm->setDescription( $vevent->getDescription() );
 				// Fire off the alarm one day before
 				$alarm->setTrigger( '-P1D' );
 				
