@@ -206,10 +206,10 @@ if( is_object( $args->args->event ) )
 				// Add the meeting request
 				$mail->WordWrap = 50;
 				$mail->addStringAttachment( 
-					$ical, 'ical.ics', '7bit', 
+					$ical, 'ical.ics', 'base64', 
 					'text/calendar; charset="UTF-8"; method=REQUEST' 
 				);
-				$mail->Ical = $ical;
+				//$mail->Ical = $ical;
 				
 				// Successful save!
 				if( $p->ID > 0 )
