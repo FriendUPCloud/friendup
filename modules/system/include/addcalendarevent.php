@@ -170,8 +170,9 @@ if( is_object( $args->args->event ) )
 				if( $location )
 					$vevent->setLocation( $location );
 				// Set the time
-				$vevent->setDtstart( new DateTime( $timefrom ), new DateTimezone( $timezone ) );
-				$vevent->setDtend( new DateTime( $timeto ), new DateTimezone( $timezone ) );
+				$vevent->setDtstart( new DateTime( $timefrom ), new DateTimeZone( $timezone ) );
+				$Logger->log( 'What is it? ' . $timeto );
+				$vevent->setDtend( new DateTime( $timeto ), new DateTimeZone( $timezone ) );
 				// Organizer
 				$vevent->setOrganizer( $email );
 
