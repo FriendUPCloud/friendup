@@ -103,7 +103,7 @@ if( is_object( $args->args->event ) )
 			if( $partcount++ > 0 )
 				$attendees .= "\n";
 			$nam = $part->Firstname && $part->Lastname ? ( $part->Firstname . ' ' . $part->Lastname ) : $part->Email;
-			$attendees .= 'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=' . "\n " . 'TRUE;CN=' . $nam . ';X-NUM-GUESTS=0:mailto:' . $part->Email;
+			$attendees .= 'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=' . "\n " . 'TRUE;CN=' . $nam . ';X-NUM-GUESTS=0:' . "\n " . 'mailto:' . $part->Email;
 		}
 		
 		// Get participants and generate emails
@@ -162,14 +162,16 @@ if( is_object( $args->args->event ) )
 	</tr>
 </table>', 'invite.html', 'quoted-printable', 'text/html; charset="UTF-8"' );*/
 		
-				
-				// Add the meeting request
-				$mail->addStringAttachment( 'BEGIN:VCALENDAR
-PRODID:-//Friend Software Corp//Friend OS
+				// Generate ICS
+				$ics = 'BEGIN:VCALENDAR
+PRODID:-//Friend Software Corp//Friend OS v1.2.3//EN
 VERSION:2.0
 CALSCALE:GREGORIAN
-X-WR-TIMEZONE:' . $timezone . '
 METHOD:REQUEST
+X-WR-TIMEZONE:' . $timezone . '
+BEGIN:VTIMEZONE
+TZID:' . $timezone . '
+END:VTIMEZONE
 BEGIN:VEVENT
 DTSTART;TZID=' . $timezone . ':' . $utimefrom . '
 DTEND;TZID=' . $timezone . ':' . $utimeto . '
@@ -186,8 +188,14 @@ STATUS:CONFIRMED
 SUMMARY:' . $o->Title . '
 TRANSP:OPAQUE
 END:VEVENT
-END:VCALENDAR', 'ical.ics', 'base64', 'text/calendar; charset="UTF-8"; method=REQUEST' 
-				);
+END:VCALENDAR';
+				
+				$mail->Ical = $ics;
+				/*// Add the meeting request
+				$mail->addStringAttachment( 
+					$ics, 'ical.ics', 'base64', 
+					'text/calendar; charset="UTF-8"; method=REQUEST' 
+				);*/
 				
 				// Successful save!
 				if( $p->ID > 0 )
