@@ -126,7 +126,7 @@ if( is_object( $args->args->event ) )
 				$desc = str_replace( "\n", "<br>", $o->Description );
 				if( $link )
 				{
-					$desc .= '<br><ul><li>Please verify your attendance here: <a href="' . $link . '">' . $link . '</a></lu></ul><br>';
+					$desc .= '<br><ul><li>Please verify your attendance: <a href="' . $link . '">Click here</a></lu></ul><br>';
 				}
 				
 				$mail->setContent( $desc );
@@ -136,7 +136,6 @@ if( is_object( $args->args->event ) )
 PRODID:-//Friend Software Corp//Friend OS
 VERSION:2.0
 CALSCALE:GREGORIAN
-X-MS-OLK-FORCEINSPECTOROPEN:TRUE
 X-WR-TIMEZONE:' . $timezone . '
 METHOD:REQUEST
 BEGIN:VEVENT
@@ -145,14 +144,14 @@ DTEND;TZID=' . $timezone . ':' . $utimeto . '
 ORGANIZER;CN=' . $name . ':MAILTO:' . $email . '
 UID:' . $User->Email . '
 CREATED:' . $timenow . '
-DESCRIPTION:' . str_replace( "\n", ' ', $o->Description ) . '
+DESCRIPTION:' . strip_tags( str_replace( "\n", ' ', $o->Description ) ). '
 LOCATION:' . $location . $link . '
 SEQUENCE:0
 STATUS:CONFIRMED
 SUMMARY:' . $o->Title . '
 TRANSP:OPAQUE
 END:VEVENT
-END:VCALENDAR', 'ical.ics', 'base64', 'text/calendar' 
+END:VCALENDAR', 'ical.ics', 'base64', 'text/calendar; charset="UTF-8"; method=REQUEST' 
 				);
 				
 				// Successful save!
