@@ -121,7 +121,7 @@ if( is_object( $args->args->event ) )
 				$p->EventID = $o->ID;
 				$p->Load();
 				$p->Time = date( 'Y-m-d H:i:s' ); // When added!
-				$p->Token = hash( 'sha256', strtotime( $p->DateTime ) . rand(0,9999) . rand(0,9999) );
+				$p->Token = hash( 'sha256', strtotime( $p->Time ) . rand(0,9999) . rand(0,9999) );
 				$p->Message = '';
 				$p->Save();
 				
