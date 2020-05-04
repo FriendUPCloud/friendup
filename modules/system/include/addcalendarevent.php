@@ -156,6 +156,7 @@ if( is_object( $args->args->event ) )
 	</tr>
 </table>' );
 
+				// Begin iCal generation ---------------------------------------
 				// Offsets
 				$vcalendar = Vcalendar::factory( [ Vcalendar::UNIQUE_ID => 'Friend OS', ] );
 				$vcalendar->setMethod( Vcalendar::PUBLISH );
@@ -191,7 +192,6 @@ if( is_object( $args->args->event ) )
 						]
 					);
 				}
-				
 				// Add alarm for the event
 				// TODO: make configurable
 				$alarm = $vevent->newValarm();
@@ -199,9 +199,9 @@ if( is_object( $args->args->event ) )
 				$alarm->setDescription( $vevent->getDescription() );
 				// Fire off the alarm one day before
 				$alarm->setTrigger( '-P1D' );
-				
 				// Generate ical thingie
-				$ical = $vcalendar->vtimezonePopulate()->createCalendar();
+				$ical = $vcalendar->vtimezonePopulate()->createCalendar();				
+				// DONE: iCal generation ---------------------------------------
 
 				// Add the meeting request
 				$mail->WordWrap = 50;
