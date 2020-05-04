@@ -136,6 +136,9 @@ if( is_object( $args->args->event ) )
 				// Add an HTML meeting request (for browsers that support it
 				$mail->setContent( '
 			<p>
+				<a href="' . $link . '">' . $link . '</a>
+			</p>
+			<p>
 				<strong>You have been invited to a meeting.</strong>
 			</p>
 			<h2>
@@ -143,12 +146,6 @@ if( is_object( $args->args->event ) )
 			</h2>
 			<p>
 				' . $desc . '
-			</p>
-			<p>
-				Please follow the link below to set your response:
-			</p>
-			<p>
-				' . $link . '
 			</p>
 ' );
 
