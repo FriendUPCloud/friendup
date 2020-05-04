@@ -90,7 +90,7 @@ if( is_object( $args->args->event ) )
 		}*/
 		
 		// Create a unique hash
-		$uid = hash( 'sha256', $o->Description . $o->Title . rand(0,999) . rand(0,999) . mktime() . $o->Date );
+		$uid = hash( 'sha256', $o->ID . $User->Email );
 		
 		$parts = explode( ',', $args->args->event->Participants );
 		foreach( $parts as $part )
@@ -137,12 +137,13 @@ PRODID:-//Friend Software Corp//Friend OS
 VERSION:2.0
 CALSCALE:GREGORIAN
 X-WR-TIMEZONE:' . $timezone . '
-METHOD:REQUEST
+METHOD:PUBLISH
 BEGIN:VEVENT
 DTSTART;TZID=' . $timezone . ':' . $utimefrom . '
 DTEND;TZID=' . $timezone . ':' . $utimeto . '
+DTSTAMP:'.$utimefrom.'
 ORGANIZER;CN=' . $name . ':MAILTO:' . $email . '
-UID:' . $User->Email . '
+UID:' . $uid . '
 CREATED:' . $timenow . '
 DESCRIPTION:' . strip_tags( str_replace( "\n", ' ', $o->Description ) ). '
 LOCATION:' . $location . '
