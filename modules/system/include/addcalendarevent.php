@@ -78,8 +78,8 @@ if( is_object( $args->args->event ) )
 	{
 		$timeto = date( 'Y-m-d H:i:s', strtotime( $o->Date . ' ' . $o->TimeTo ) );
 		$timefrom = date( 'Y-m-d H:i:s', strtotime( $o->Date . ' ' . $o->TimeFrom ) );
-		$utimeto = date( 'Ymd\THis', strtotime( $o->TimeTo ) );
-		$utimefrom = date( 'Ymd\THis', strtotime( $o->TimeFrom ) );
+		$utimeto = date( 'Ymd\THis', strtotime( $timeto ) );
+		$utimefrom = date( 'Ymd\THis', strtotime( $timefrom ) );
 		$timenow = date( 'Ymd\THis\Z' );
 	
 		// TODO: Implement template support!
