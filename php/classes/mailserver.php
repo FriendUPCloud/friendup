@@ -11,6 +11,9 @@
 *****************************************************************************©*/
 
 // Include requirements
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
 require 'php/3rdparty/phpmailer6/Exception.php';
 require 'php/3rdparty/phpmailer6/PHPMailer.php';
 require 'php/3rdparty/phpmailer6/SMTP.php';
@@ -169,7 +172,7 @@ class Mailer
 			return false;
 		}
 		
-		$mailer = new PHPMailer;
+		$mailer = new PHPMailer( true );
 		foreach( $this->recipients as $r )
 		{
 			if( strstr( $r, '<' ) )
@@ -187,6 +190,9 @@ class Mailer
 		// Test if the content is HTML
 		if( $this->isHTML || strstr( $mailer->Body, '<' ) > 0 )
 			$mailer->isHTML( true );
+			
+		if( $this->Ical )
+			$mailer->Ical = $this->Ical;
 		
 		// Use the mail server setting for sending the e-mail
 		if( isset( $configfilesettings[ 'FriendMail' ] ) )
