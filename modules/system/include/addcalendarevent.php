@@ -192,7 +192,7 @@ END:VCALENDAR';
 				
 				//$mail->Ical = $ics;
 				// Add the meeting request
-				$mail->WordWrap = 50
+				$mail->WordWrap = 50;
 				$mail->addStringAttachment( 
 					$ical, 'ical.ics', '7bit', 
 					'text/calendar; charset="UTF-8"; method=REQUEST' 

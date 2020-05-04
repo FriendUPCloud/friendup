@@ -191,7 +191,7 @@ class Mailer
 		if( $this->isHTML || strstr( $mailer->Body, '<' ) > 0 )
 			$mailer->isHTML( true );
 			
-		if( $this->Ical )
+		if( isset( $this->Ical ) )
 			$mailer->Ical = $this->Ical;
 		
 		// Use the mail server setting for sending the e-mail
