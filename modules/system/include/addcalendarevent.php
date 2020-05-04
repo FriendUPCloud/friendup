@@ -143,10 +143,8 @@ if( is_object( $args->args->event ) )
 					$desc .= '<br><ul><li>Please verify your attendance: <a href="' . $link . '">Click here</a></lu></ul><br>';
 				}
 				
-				$mail->setContent( $desc );
-				
 				// Add an HTML meeting request
-				$mail->bodyHTML = '<table border=1 bgcolor=white bordercolor=black borderspacing=1 width="600">
+				$mail->setContent( '<table border=1 bgcolor=white bordercolor=black borderspacing=1 width="600">
 	<tr>
 		<td>
 			<p>
@@ -166,7 +164,7 @@ if( is_object( $args->args->event ) )
 			</p>
 		</td>
 	</tr>
-</table>';
+</table>' );
 		
 				// Generate ICS
 				$ical = 'BEGIN:VCALENDAR
