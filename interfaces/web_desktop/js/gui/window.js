@@ -953,6 +953,8 @@ function _ActivateWindowOnly( div )
 			m.classList.add( 'Active' );
 			m.viewContainer.classList.add( 'Active' );
 
+			var app = _getAppByAppId( div.applicationId );
+
 			// Extra force!
 			if( isMobile )
 			{	
@@ -964,7 +966,6 @@ function _ActivateWindowOnly( div )
 				
 				if( window._getAppByAppId )
 				{
-					var app = _getAppByAppId( div.applicationId );
 					if( app )
 					{
 						if( m.windowObject != app.mainView )
@@ -975,14 +976,6 @@ function _ActivateWindowOnly( div )
 						{
 							m.parentNode.removeAttribute( 'childview' );
 						}
-						
-						app.sendMessage( {
-							'command': 'notify',
-							'method': 'setviewflag',
-							'flag': 'minimized',
-							'viewId': div.windowObject.viewId,
-							'value': false
-						} );
 					}
 				}
 				
@@ -994,6 +987,18 @@ function _ActivateWindowOnly( div )
 			{
 				m.viewContainer.removeAttribute( 'minimized' );
 				m.minimized = false;
+			}
+			
+			// Notify app
+			if( app )
+			{
+				app.sendMessage( {
+					'command': 'notify',
+					'method': 'setviewflag',
+					'flag': 'minimized',
+					'viewId': div.windowObject.viewId,
+					'value': false
+				} );
 			}
 			
 			if( div.windowObject )

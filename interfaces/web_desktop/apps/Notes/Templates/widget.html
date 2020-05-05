@@ -1,0 +1,165 @@
+<div class="MoveElement" onmousedown="MoveWidget()"></div>
+<div class="ResizeElement" onmousedown="ResizeWidget()"></div>
+<div class="ContentFull" id="Notes"></div>
+<style>
+	
+	#Notes
+	{
+		overflow: auto;
+		mask-image: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgb(0,0,0) 25px, rgb(0,0,0) calc(100% - 25px), rgba(0,0,0,0) 100%);
+		-moz-mask-image: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgb(0,0,0) 25px, rgb(0,0,0) calc(100% - 25px), rgba(0,0,0,0) 100%);
+		-webkit-mask-image: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgb(0,0,0) 25px, rgb(0,0,0) calc(100% - 25px), rgba(0,0,0,0) 100%);
+		box-shadow: inset 0px 0px 4px rgba(0,0,0,0.3);
+	}
+	
+	#Notes:not(:hover)::-webkit-scrollbar,
+	#Notes:not(:hover)::-webkit-scrollbar-track
+	{
+		display: none;
+	}
+	
+	
+	html
+	{
+		background-color: transparent !important;
+	}
+	
+	html > body:not(.One):not(.Two):not(.Three)
+	{
+		background-color: rgba(0,0,0,0.3) !important;
+		border-radius: 4px;
+		overflow: hidden;
+	}
+	
+	.MoveElement
+	{
+		position: absolute;
+		opacity: 0;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 25px;
+		background: rgba(0,0,0,0.5);
+		text-align: center;
+		line-height: 24px;
+		color: white;
+		cursor: pointer;
+		z-index: 5;
+		transition: opacity 0.25s;
+		border-radius: 3px 3px 0 0;
+	}
+	.MoveElement:hover
+	{
+		opacity: 1;
+	}
+	
+	.MoveElement:after
+	{
+		content: ":::";
+		display: block;
+		margin: auto;
+		pointer-events: none;
+	}
+	
+	.ResizeElement
+	{
+		position: absolute;
+		opacity: 0;
+		transition: opacity 0.25s;
+		bottom: 0;
+		right: 0;
+		width: 25px;
+		height: 25px;
+		cursor: nwse-resize;
+		z-index: 5;
+	}
+	.ResizeElement:hover
+	{
+		opacity: 1;
+	}
+	.ResizeElement:before
+	{
+		position: absolute;
+		top: 5px;
+		left: 8px;
+		transform: rotatez(135deg);
+		font-family: fontawesome;
+		content: '\f0dc';
+		color: white;
+	}
+	
+	.NoteContainer
+	{
+		position: absolute;
+	}
+	
+	.NoteContainer > h2
+	{
+		color: white;
+		text-transform: uppercase;
+		background: rgba(0,0,0,0.8);
+		padding: 4px 8px;
+		box-sizing: border-box;
+	}
+	
+	.Note
+	{
+		pointer-events: all;
+		position: absolute;
+		width: 90px;
+		height: 90px;
+		transform: rotatez(1deg);
+		overflow: hidden;
+		box-sizing: border-box;
+		border: 0;
+		padding: 8px;
+		transition: background 0.25s;
+		cursor: pointer;
+		box-shadow: 0px 1px 3px rgba(0,0,0,0.4);
+		margin: 0 0 30px 0;
+	}
+	
+	.Note:hover
+	{
+		background: rgb(255,255,200) !important;
+	}
+	
+	.Note > .Content
+	{
+		opacity: 0;
+		transition: opacity 0.25s;
+	}
+	
+	.Note > .Content:after, .Note:after
+	{
+		content: " ";
+		display: block;
+		margin: 10px 0 0 0;
+		height: 15px;
+		border-top: 2px solid rgba(0,0,0,0.15);
+		border-bottom: 2px solid rgba(0,0,0,0.15);
+	}
+	
+	.Note:after
+	{
+		margin: 15px 0 0 0;
+		width: 80%;
+	}
+	
+	.Note > .Content.Showing
+	{
+		opacity: 1;
+	}
+	
+	.Note h2
+	{
+		font-size: 11px;
+	}
+	
+	.Note p
+	{
+		font-size: 10px;
+	}
+	
+</style>
+<script src="Progdir:Scripts/widget.js"></script>

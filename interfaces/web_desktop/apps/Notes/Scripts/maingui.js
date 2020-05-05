@@ -294,7 +294,7 @@ Application.refreshFilePane = function( method, force, callback )
 			fBar.appendChild( fBar.add );
 		}
 		fBar.contents.innerHTML = '';
-		fBar.contents.className = 'ContentFull List ScrollArea ScrollBarSmall BorderRight';
+		fBar.contents.className = 'ContentFull List ScrollArea ScrollBarSmall BorderRight Notelist';
 		
 		var sw = 2;
 		var firstFileNum = 0;

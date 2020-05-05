@@ -1157,6 +1157,11 @@ function receiveEvent( event, queued )
 									document.body.classList.remove( 'Scrolling' );
 								}
 							}
+							// Do we have a setFlag event?
+							if( w.onSetFlag )
+							{
+								w.onSetFlag( dataPacket.flag, dataPacket.value );
+							}
 						}
 						break;
 					case 'servermessage':
