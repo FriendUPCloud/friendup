@@ -1407,7 +1407,7 @@ int NotificationManagerNotificationSendFirebaseQueue( NotificationManager *nm, N
 	char *host = FIREBASE_HOST;
 	FBOOL isImage = FALSE;
 	
-	int msgSize = 512;
+	int msgSize = 728;
 	
 	if( tokens != NULL ){ msgSize += strlen( tokens ); }
 	if( notif->n_Channel != NULL ){ msgSize += strlen( notif->n_Channel ); }
