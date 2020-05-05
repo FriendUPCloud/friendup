@@ -608,6 +608,9 @@ i18n_cal_evt_location                   : Location
 i18n_find_contacts                      : Find contacts
 i18n_no_participants_here               : No participants here.
 
+i18n_to_not_in_past                     : Wrong to-date
+i18n_to_not_in_past_desc                : The meeting end time is before the start time.
+
 i18n_evt_added                          : Calendar updated
 i18n_evt_addeddesc                      : The event was added to your calendar.
 i18n_evt_delete_desc                    : This will delete your calendar event.

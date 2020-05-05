@@ -586,6 +586,9 @@ i18n_cal_evt_location                   : Sted
 i18n_find_contacts                      : Finn kontakter
 i18n_no_participants_here               : Ingen deltakere.
 
+i18n_to_not_in_past                     : Feil til-dato
+i18n_to_not_in_past_desc                : Møtet er satt til å slutte før det begynner.
+
 i18n_evt_added                          : Kalender oppdatert
 i18n_evt_addeddesc                      : Hendelsen ble lagt til din kalender.
 i18n_evt_delete_desc                    : Dette vil slette kalender hendelsen.

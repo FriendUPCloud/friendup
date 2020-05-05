@@ -1601,6 +1601,20 @@ var WorkspaceInside = {
 	},
 	addCalendarEvent: function()
 	{
+		var date = ge( 'calDateField' ).value;
+		var tmto = ge( 'calTimeTo' ).value;
+		var tmfr = ge( 'calTimeFrom' ).value;
+		
+		var timefrom = new Date( date + ' ' + tmfr ).getTime();
+		var timeto   = new Date( date + ' ' + tmto ).getTime();
+		if( timeto < timefrom )
+		{
+			Notify( { title: i18n( 'i18n_to_not_in_past' ), text: i18n( 'i18n_to_not_in_past_desc' ) } );
+			ge( 'calTimeFrom' ).focus();
+			return;
+		}
+		
+		
 		var evt = {
 			Title: ge( 'calTitle' ).value,
 			Description: ge( 'calDescription' ).value,
