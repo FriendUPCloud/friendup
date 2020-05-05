@@ -998,7 +998,8 @@ BufString *MobleManagerAppTokensByUserPlatformDB( MobileManager *mmgr, FULONG us
 	{
 		BufString *sqlInsertBs = NULL;
 		char *qery = FMalloc( 1048 );
-		qery[ 1024 ] = 0;
+		if( qery )
+		{
 		lsqllib->SNPrintF( lsqllib, qery, 1024, "select uma.ID,uma.AppToken from FUserMobileApp uma where uma.Platform='%s' AND uma.Status=0 AND uma.UserID=%lu AND LENGTH( uma.AppToken ) > 0 GROUP BY uma.ID", mobileType, userID );
 		void *res = lsqllib->Query( lsqllib, qery );
 		if( res != NULL )
@@ -1037,17 +1038,6 @@ BufString *MobleManagerAppTokensByUserPlatformDB( MobileManager *mmgr, FULONG us
 				// if notifID was provided then we create SQL which will store sent messages in FNotificationSent table
 				if( notifID > 0 )
 				{
-					/*
-					NOTIFICATION_SENT_STATUS_REGISTERED = 0,
-	NOTIFICATION_SENT_STATUS_RECEIVED,
-	NOTIFICATION_SENT_STATUS_READ,
-	NOTIFICATION_SENT_STATUS_END,
-	NOTIFICATION_SENT_STATUS_MAX
-					 */ 
-					//int temp2size = snprintf( temp2, sizeof(temp2), "INSERT INTO FNotificationSent (NotificationID,RequestID,UserMobileAppID,Target,Status) VALUES ( %lu, 0, %s, 1, 1);", notifID, row[0] );
-					
-					//lsqllib->QueryWithoutResults( lsqllib, temp2 );
-					
 					BufStringAddSize( sqlInsertBs, temp2, temp2size );
 				}
 				
@@ -1059,21 +1049,19 @@ BufString *MobleManagerAppTokensByUserPlatformDB( MobileManager *mmgr, FULONG us
 				BufStringAddSize( bs, temp, sizeAdd );
 			}
 			lsqllib->FreeResult( lsqllib, res );
-		}
 		
-		if( notifID > 0 )
-		{
-			DEBUG("Insert NotificationSent into database\n");
-			if( sqlInsertBs->bs_Size > 0 )
+			if( notifID > 0 )
 			{
-				BufStringAddSize( sqlInsertBs, ";", 1 );
-				lsqllib->QueryWithoutResults( lsqllib, sqlInsertBs->bs_Buffer );
+				DEBUG("Insert NotificationSent into database\n");
+				if( sqlInsertBs->bs_Size > 0 )
+				{
+					BufStringAddSize( sqlInsertBs, ";", 1 );
+					lsqllib->QueryWithoutResults( lsqllib, sqlInsertBs->bs_Buffer );
+				}
+				BufStringDelete( sqlInsertBs );
 			}
-			BufStringDelete( sqlInsertBs );
+			FFree( qery );
 		}
-		
-		FFree( qery );
-		
 		sb->LibrarySQLDrop( sb, lsqllib );
 	}
 	return bs;
