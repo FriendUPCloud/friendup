@@ -131,7 +131,7 @@ int NotificationManagerNotificationSendAndroid( NotificationManager *nm, Notific
 
 int NotificationManagerNotificationSendAndroidQueue( NotificationManager *nm, Notification *notif, FULONG ID, char *action, char *tokens );
 
-int NotificationManagerNotificationSendFirebaseQueue( NotificationManager *nm, Notification *notif, FULONG ID, char *action, char *tokens );
+int NotificationManagerNotificationSendFirebaseQueue( NotificationManager *nm, Notification *notif, FULONG ID, char *action, char *tokens, int type );
 
 NotificationSent *NotificationManagerGetNotificationsSentByStatusPlatformAndUMAIDDB( NotificationManager *nm, int status, int platform, FULONG umaID );
 

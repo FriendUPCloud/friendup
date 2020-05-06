@@ -1398,10 +1398,11 @@ void NotificationManagerTimeoutThread( FThread *data )
  * @param ID NotificationSent  ID
  * @param action actions after which messages were sent
  * @param tokens device tokens separated by coma
+ * @param type notification type android/ios
  * @return 0 when success, otherwise error number
  */
 
-int NotificationManagerNotificationSendFirebaseQueue( NotificationManager *nm, Notification *notif, FULONG ID, char *action, char *tokens )
+int NotificationManagerNotificationSendFirebaseQueue( NotificationManager *nm, Notification *notif, FULONG ID, char *action, char *tokens, int type )
 {
 	SystemBase *sb = (SystemBase *)nm->nm_SB;
 	char *host = FIREBASE_HOST;
@@ -1448,8 +1449,32 @@ int NotificationManagerNotificationSendFirebaseQueue( NotificationManager *nm, N
 		}
 		*/
 		
-		len = snprintf( msg, msgSize, "{\"registration_ids\":[%s],\"notification\": {},\"data\":{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"%s\",\"id\":%lu,\"notifid\":%lu,\"source\":\"notification\",\"createtime\":%lu},\"android\":{\"priority\":\"high\"}}", tokens, notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, action, ID , notif->n_ID, notif->n_OriginalCreateT );
+		// original message
+		//len = snprintf( msg, msgSize, "{\"registration_ids\":[%s],\"notification\": {},\"data\":{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"%s\",\"id\":%lu,\"notifid\":%lu,\"source\":\"notification\",\"createtime\":%lu},\"android\":{\"priority\":\"high\"}}", tokens, notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, action, ID , notif->n_ID, notif->n_OriginalCreateT );
 	
+		if( type == MOBILE_APP_TYPE_ANDROID )
+		{
+			if( isImage == TRUE )
+			{
+				len = snprintf( msg, msgSize, "{\"registration_ids\":[%s],\"notification\":{},\"data\":{\"t\":\"notify\"{\"badge\":%d,\"title\":\"%s\",\"subtitle\":\"%s\",\"body\":\"%s\",\"image\":\"%s\",\"channel\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"%s\",\"id\":%lu,\"notifid\":%lu,\"source\":\"notification\",\"createtime\":%lu},\"android\":{\"priority\":\"high\"}}", tokens, DEFAULT_BADGE_NUMBER, notif->n_Application, notif->n_Title, notif->n_Content, notif->n_Content, notif->n_Channel, notif->n_Extra, notif->n_Application, action, ID , notif->n_ID, notif->n_OriginalCreateT );
+			}
+			else
+			{
+				len = snprintf( msg, msgSize, "{\"registration_ids\":[%s],\"notification\":{},\"data\":{\"t\":\"notify\"{\"badge\":%d,\"title\":\"%s\",\"subtitle\":\"%s\",\"body\":\"%s\",\"channel\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"%s\",\"id\":%lu,\"notifid\":%lu,\"source\":\"notification\",\"createtime\":%lu},\"android\":{\"priority\":\"high\"}}", tokens, DEFAULT_BADGE_NUMBER, notif->n_Application, notif->n_Title, notif->n_Content, notif->n_Channel, notif->n_Extra, notif->n_Application, action, ID , notif->n_ID, notif->n_OriginalCreateT );
+			}
+		}
+		else	// IOS
+		{
+			if( isImage == TRUE )
+			{
+				len = snprintf( msg, msgSize, "{\"registration_ids\":[%s],\"notification\":{\"badge\":%d,\"title\":\"%s\",\"subtitle\":\"%s\",\"body\":\"%s\",\"image\":\"%s\",\"mutable_content\":true,\"content_available\":true},\"data\":{\"t\":\"notify\",\"title\":\"%s\",\"content\":\"%s\",\"channel\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"%s\",\"id\":%lu,\"notifid\":%lu,\"source\":\"notification\",\"createtime\":%lu},\"android\":{\"priority\":\"high\"},\"apns\":{\"payload\":{\"aps\":{\"mutable-content\":1}},\"fcm_options\":{\"image\":\"%s\"}}}", tokens, DEFAULT_BADGE_NUMBER, notif->n_Application, notif->n_Title, notif->n_Content, notif->n_Content, notif->n_Title, notif->n_Content, notif->n_Channel, notif->n_Extra, notif->n_Application, action, ID , notif->n_ID, notif->n_OriginalCreateT, notif->n_Content );
+			}
+			else
+			{
+				len = snprintf( msg, msgSize, "{\"registration_ids\":[%s],\"notification\":{\"badge\":%d,\"title\":\"%s\",\"subtitle\":\"%s\",\"body\":\"%s\",\"mutable_content\":true,\"content_available\":true},\"data\":{\"t\":\"notify\",\"title\":\"%s\",\"content\":\"%s\",\"channel\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"%s\",\"id\":%lu,\"notifid\":%lu,\"source\":\"notification\",\"createtime\":%lu},\"android\":{\"priority\":\"high\"}}", tokens, DEFAULT_BADGE_NUMBER, notif->n_Application, notif->n_Title, notif->n_Content, notif->n_Title, notif->n_Content, notif->n_Channel, notif->n_Extra, notif->n_Application, action, ID , notif->n_ID, notif->n_OriginalCreateT );
+			}
+		}
+		
 		FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 		if( en != NULL )
 		{

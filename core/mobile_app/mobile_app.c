@@ -1218,11 +1218,22 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	if( wsMessageSent == FALSE )
 	{
 		DEBUG("Sending messages across Firebase devices\n");
-		BufString *bs = MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_FIREBASE, USER_MOBILE_APP_STATUS_APPROVED, notif->n_ID );
+		
+		// android
+		
+		BufString *bs = MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_ANDROID, USER_MOBILE_APP_STATUS_APPROVED, notif->n_ID );
 		if( bs != NULL )
 		{
-			NotificationManagerNotificationSendFirebaseQueue( sb->sl_NotificationManager, notif, 1, "register", bs->bs_Buffer );
-			Log( FLOG_INFO, "Firebase tokens which should get notification: %s", bs->bs_Buffer );
+			NotificationManagerNotificationSendFirebaseQueue( sb->sl_NotificationManager, notif, 1, "register", bs->bs_Buffer, MOBILE_APP_TYPE_ANDROID );
+			Log( FLOG_INFO, "Firebase tokens which should get notification: %s (Android)", bs->bs_Buffer );
+			BufStringDelete( bs );
+		}
+		
+		bs = MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_IOS, USER_MOBILE_APP_STATUS_APPROVED, notif->n_ID );
+		if( bs != NULL )
+		{
+			NotificationManagerNotificationSendFirebaseQueue( sb->sl_NotificationManager, notif, 1, "register", bs->bs_Buffer, MOBILE_APP_TYPE_IOS );
+			Log( FLOG_INFO, "Firebase tokens which should get notification: %s (IOS)", bs->bs_Buffer );
 			BufStringDelete( bs );
 		}
 	}
@@ -1394,13 +1405,22 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 	FULONG userID = UMGetUserIDByName( sb->sl_UM, username );
 	
 #ifdef USE_ONLY_FIREBASE
-	BufString *bs= MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_FIREBASE, USER_MOBILE_APP_STATUS_APPROVED, notif->n_ID );
+	BufString *bs = MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_ANDROID, USER_MOBILE_APP_STATUS_APPROVED, notif->n_ID );
 	if( bs != NULL )
 	{
-		NotificationManagerNotificationSendFirebaseQueue( sb->sl_NotificationManager, notif, 1, "update", bs->bs_Buffer );
+		NotificationManagerNotificationSendFirebaseQueue( sb->sl_NotificationManager, notif, 1, "update", bs->bs_Buffer, MOBILE_APP_TYPE_ANDROID );
 		//NotificationManagerNotificationSendAndroid( sb->sl_NotificationManager, notif, 1, "update", bs->bs_Buffer );
 		//NotificationManagerNotificationSendAndroid( sb->sl_NotificationManager, notif, 1, "update", "\"fVpPVyTb6OY:APA91bGhIvzwL2kFEdjwQa1ToI147uydLdw0hsauNUtqDx7NoV1EJ6CWjwSCmHDeDw6C4GsZV3jEpnTwk8asplawkCdAmC1NfmVE7GSp-H4nk_HDoYtBrhNz3es2uq-1bHiYqg2punIg\"" );
-		Log( FLOG_INFO, "Android (update) tokens which should get notification: %s", bs->bs_Buffer );
+		Log( FLOG_INFO, "Android (update) tokens which should get notification: %s (Android)", bs->bs_Buffer );
+		BufStringDelete( bs );
+	}
+	bs = MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_IOS, USER_MOBILE_APP_STATUS_APPROVED, notif->n_ID );
+	if( bs != NULL )
+	{
+		NotificationManagerNotificationSendFirebaseQueue( sb->sl_NotificationManager, notif, 1, "update", bs->bs_Buffer, MOBILE_APP_TYPE_IOS );
+		//NotificationManagerNotificationSendAndroid( sb->sl_NotificationManager, notif, 1, "update", bs->bs_Buffer );
+		//NotificationManagerNotificationSendAndroid( sb->sl_NotificationManager, notif, 1, "update", "\"fVpPVyTb6OY:APA91bGhIvzwL2kFEdjwQa1ToI147uydLdw0hsauNUtqDx7NoV1EJ6CWjwSCmHDeDw6C4GsZV3jEpnTwk8asplawkCdAmC1NfmVE7GSp-H4nk_HDoYtBrhNz3es2uq-1bHiYqg2punIg\"" );
+		Log( FLOG_INFO, "Android (update) tokens which should get notification: %s (IOS)", bs->bs_Buffer );
 		BufStringDelete( bs );
 	}
 #else
