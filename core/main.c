@@ -35,6 +35,8 @@
 #include <config/properties.h>
 #include <util/base64.h>
 
+#include <util/file_operations.h>
+
 // memory check
 #include <mcheck.h>
 
@@ -163,6 +165,10 @@ int main( int argc, char *argv[])
 		return 1;
 	}
 	
+	// remove temporary directory
+	DeleteDirectory( "/tmp/Friendup/" );
+	
+	// create crash log file name
 	{
 		time_t rawtime;
 		struct tm timeinfo;
@@ -204,6 +210,7 @@ int main( int argc, char *argv[])
 
 	LOG( FLOG_INFO, "Core started log\n" );
 	
+	// initialize System.library
 	if( ( SLIB =  SystemInit() ) != NULL ) // (struct SystemLibrary *)LibraryOpen( "system.library", 0 ) ) != NULL )
 	{
 		SLIB->SystemInitExternal( SLIB );

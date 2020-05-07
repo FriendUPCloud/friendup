@@ -1404,7 +1404,30 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 								}
 
 							}
-							http->http_Content = mmap( 0, size+5, PROT_READ | PROT_WRITE, MAP_SHARED, http->http_ContentFileHandle, 0/*offset*/);
+							
+							/*
+							if( incomingBufferPtr != NULL )
+						{
+							//DEBUG("incoming buffer already set? unmapping");
+							munmap( incomingBufferPtr, incomingBufferLength );
+							incomingBufferPtr = NULL;
+						}
+						//DEBUG( "mmaping" );
+						incomingBufferLength = lseek( tmpFileHandle, 0, SEEK_END);
+						DEBUG("->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ibl: %ld", incomingBufferLength );
+						incomingBufferPtr = mmap( 0, incomingBufferLength, PROT_READ | PROT_WRITE, MAP_SHARED, tmpFileHandle, 0);
+						
+						if( incomingBufferPtr == MAP_FAILED )
+						{
+							Log( FLOG_ERROR, "Cannot allocate memory for stream, length: %d\n", incomingBufferLength );
+							goto close_fcp;
+						}
+							*/
+							//int sizes = lseek( http->http_ContentFileHandle, 0, SEEK_END);
+							DEBUG("MMAP: HttpParsePartialRequest size: %lu\n", size );
+							http->http_Content = mmap( 0, size, PROT_READ | PROT_WRITE, MAP_SHARED, http->http_ContentFileHandle, 0/*offset*/);
+							
+							//http->http_Content = mmap( 0, size, PROT_READ | PROT_WRITE, MAP_SHARED, http->http_ContentFileHandle, 0/*offset*/);
 							DEBUG("Content set\n");
 						}
 						else

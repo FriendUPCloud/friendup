@@ -74,6 +74,9 @@ HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, FQUAD size )
 			return NULL;
 		}
 		
+		DEBUG("MMAP: HttpFileNew size: %lu\n", size );
+		//int sizes = lseek( file->hf_FileHandle, 0, SEEK_END);
+		//file->hf_Data = mmap( 0, sizes, PROT_READ | PROT_WRITE, MAP_SHARED, file->hf_FileHandle, 0/*offset*/);
 		file->hf_Data = mmap( 0, size, PROT_READ | PROT_WRITE, MAP_SHARED, file->hf_FileHandle, 0/*offset*/);
 		
 		//write already received chunk
@@ -81,6 +84,10 @@ HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, FQUAD size )
 		char *dataptr = data;
 		
 		int store = TUNABLE_LARGE_HTTP_REQUEST_SIZE;
+		if( store > size )
+		{
+			store = size;
+		}
 		
 		DEBUG("[HttpFileNew] Store file\n");
 		while( toWrite > 0 )
