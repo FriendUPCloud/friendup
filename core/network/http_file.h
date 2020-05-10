@@ -47,7 +47,7 @@ typedef struct HttpFile
 // upload file
 //
 
-HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, FQUAD size );
+HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, FQUAD size, FBOOL allocate );
 
 //
 //
