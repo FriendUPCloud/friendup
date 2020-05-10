@@ -973,7 +973,7 @@ int ParseMultipart( Http* http )
 		Log( FLOG_ERROR,"Map was not created\n");
 		return -1;
 	}
-
+	
 	DEBUG("Multipart parsing, content length %ld\n", http->http_ContentLength);
 	
 	
@@ -1022,23 +1022,30 @@ Content-Type: application/octet-stream
 				
 				if( startOfFile != NULL )
 				{
+					DEBUG("START CONTENT TO START FILE %d\n", startOfFile - http->http_Content );
+
 					FQUAD res;
-					res = FindInBinaryPOS( http->http_PartDivider, strlen(http->http_PartDivider), startOfFile, http->http_SizeOfContent ) - 2;
+					int divSize = strlen( http->http_PartDivider );
+
+					DEBUG("DIVSIZE %d\n", divSize );
+					res = FindInBinaryPOS( http->http_PartDivider, divSize, startOfFile, (http->http_SizeOfContent-(startOfFile-http->http_Content)) )-2;// + divSize;
+					//res = FindInBinaryPOS( http->http_PartDivider, strlen(http->http_PartDivider), startOfFile, http->http_SizeOfContent ) - 2;
 					
-					//res = (QUAD )FindInBinarySimple( http->h_PartDivider, strlen(http->h_PartDivider), startOfFile, http->sizeOfContent )-2;
+					//res = (FQUAD )FindInBinarySimple( http->http_PartDivider, divSize, startOfFile, http->http_SizeOfContent )-2;
 					
 					char *endOfFile = startOfFile + res;
-
+					DEBUG("MULTI FOUND END OF FILE %p START %p LEN %lu\n", endOfFile, startOfFile, res );
 					if( endOfFile != NULL )
 					{
 						char *fname = strstr( contentDisp, "filename=\"" ) + 10;
 						if( fname != NULL )
 						{
 							char *fnameend = strchr( fname, '"' );
-							size = endOfFile - startOfFile;
+							size = (FQUAD)(endOfFile - startOfFile);
 							int fnamesize = (int)(fnameend - fname);
-							//DEBUG("\n\n\n\n\n\n\n\n\n\n[Http] Found file - name %.*s\n", 30, fname );
-						
+							
+							INFO("[Http] Found file - name %.*s  FILESIZE %lu  FIRST CHAR\n", 30, fname, size );
+
 							HttpFile *newFile = HttpFileNew( fname, fnamesize, startOfFile, size );
 							if( newFile != NULL )
 							{
@@ -1317,18 +1324,55 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 					if( size > 0 )
 					{
 						http->http_ExpectBody = TRUE;
-						//DEBUG("Size %d\n", size );
-				
-						if( http->http_Content )
+
+						DEBUG("=================\n=================\n================\n===============\n==============\n");
+						if( http->http_ContentFileHandle > 0 )
 						{
-							FFree( http->http_Content );
+							munmap( http->http_Content, http->http_ContentLength );
+							http->http_Content = NULL;
+							unlink( http->http_TempContentFileName );
 						}
-						//http->content = FCalloc( (size + 5), sizeof( char ) );
-						http->http_Content = FMalloc( size + 5 );
-						http->http_SizeOfContent = size;
+						else
+						{
+							if( http->http_Content )
+							{
+								FFree( http->http_Content );
+							}
+						}
+						
+						if( size > HTTP_MAX_MEM_CONTENT_SIZE )
+						{
+							strcpy( http->http_TempContentFileName, HTTP_CONTENT_TEMP_NAME );
+							char *tfname = mktemp( http->http_TempContentFileName );
+							if( strlen( http->http_TempContentFileName ) == 0 )
+							{
+								FERROR("mktemp failed!");
+							}
+							else
+							{
+								http->http_ContentFileHandle = open( http->http_TempContentFileName, O_RDWR | O_CREAT | O_EXCL, 0600/*permissions*/);
+								if( http->http_ContentFileHandle == -1 )
+								{
+									FERROR("temporary file open failed!");
+								}
+
+							}
+
+							DEBUG("MMAP: HttpParsePartialRequest size: %lu\n", size );
+							http->http_Content = mmap( 0, size+5, PROT_READ | PROT_WRITE, MAP_SHARED, http->http_ContentFileHandle, 0/*offset*/);
+							
+							//http->http_Content = mmap( 0, size, PROT_READ | PROT_WRITE, MAP_SHARED, http->http_ContentFileHandle, 0/*offset*/);
+							DEBUG("Content set\n");
+						}
+						else
+						{
+							//http->content = FCalloc( (size + 5), sizeof( char ) );
+							http->http_Content = FMalloc( size + 5 );
+							http->http_SizeOfContent = size;
 					
-						http->http_Content[ size ] = 0;
-					
+							http->http_Content[ size ] = 0;
+						}
+						
 						// Add some extra data for content..
 						int dataOffset = ( found - data + 4 ), dataLength = length - dataOffset;
 						DEBUG("Content set, ptr %p offset %d\n", http->http_Content, dataOffset );
@@ -1376,7 +1420,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 						{
 							if( http->http_ContentFileHandle > 0 )
 							{
-								munmap( http->http_Content, http->http_ContentLength+5 );
+								munmap( http->http_Content, http->http_ContentLength );
 								http->http_Content = NULL;
 								unlink( http->http_TempContentFileName );
 							}
@@ -1501,6 +1545,9 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 			if( http->http_ContentFileHandle > 0 )
 			{
 				int store = TUNABLE_LARGE_HTTP_REQUEST_SIZE;
+				
+				int wrote = write( http->http_ContentFileHandle, data, store );
+				/*
 				FQUAD toWrite = length;
 				char *dataptr = data;
 				
@@ -1522,6 +1569,17 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 						store = toWrite;
 					}
 				}
+				*/
+				DEBUG("-----------------------------------\n--------------------------------\n---------------------\n---------------------\n---------\n");
+				FQUAD z;
+				for( z=0 ; z < (length-8) ; z++ )
+				{
+					if( data[ z-8 ] == (char)0x00 && data[ z-7 ] == (char)0x00 && data[ z-6 ] == (char)0x9E && data[ z-5 ] == (char)0xCF && data[ z-4 ] == (char)0x04 && data[ z-3 ] == (char)0x01 && data[ z-2 ] == (char)0x00 && data[ z-1 ] == (char)0x00 )
+					{
+						FERROR("HTTP.c END FILE FOUDN! in CONTENT\n");
+					}
+				}
+				
 				DEBUG("UPLOAD writting done!\n");
 				//FQUAD = 
 				//int wrote = write( http->http_ContentFileHandle, data, length );
@@ -1773,7 +1831,7 @@ void HttpFree( Http* http )
 	}
 	if( http->http_ContentFileHandle > 0 )
 	{
-		munmap( http->http_Content, http->http_ContentLength+5 );
+		munmap( http->http_Content, http->http_ContentLength );
 		http->http_Content = NULL;
 		unlink( http->http_TempContentFileName );
 	}

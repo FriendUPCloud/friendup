@@ -2101,18 +2101,29 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									
 									LOG( FLOG_DEBUG, "UPLOAD ACCESS TO STORE: %ld\n", sizeLeft );
 									
+									
+									printf("upload!!! last 30 bytes\n");
+									int z;
+							for( z = (sizeLeft-30) ; z < sizeLeft ; z++ )
+							{
+								printf("%02hhX", file->hf_Data[ z ] );
+							}
+							printf("\n");
+									
 									int store = TUNABLE_LARGE_HTTP_REQUEST_SIZE;
 									if( sizeLeft < (FQUAD)store )
 									{
 										store = sizeLeft;
 									}
+									char *filePtr = file->hf_Data;
 									while( sizeLeft > 0 )
 									{
 										LOG( FLOG_DEBUG, "UPLOAD WRITE store %d left %ld\n", store,  sizeLeft );
-										bytes = actFS->FileWrite( fp, file->hf_Data, store );
+										bytes = actFS->FileWrite( fp, filePtr, store );
 										actDev->f_BytesStored += bytes;
 										sizeLeft -= bytes;
 										storedBytes += bytes;
+										filePtr += bytes;
 										
 										if( sizeLeft < (FQUAD)store )
 										{

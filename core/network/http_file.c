@@ -22,6 +22,7 @@
 #include <sys/mman.h>
 #include "http_file.h"
 #include "http.h"
+#include <unistd.h>
 
 /**
  * Create new HttpFile
@@ -59,7 +60,7 @@ HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, FQUAD size )
 		//copy already received data to it and continue writing to the file
 		char *tmpFilename = mktemp( file->hf_FileNameOnDisk );
 		//DEBUG( "large upload will go to remporary file %s", tmp_filename );
-		if( strlen( tmpFilename ) == 0 )
+		if( strlen( file->hf_FileNameOnDisk ) == 0 )
 		{
 			FERROR("mktemp failed!");
 			HttpFileDelete( file );
@@ -79,30 +80,10 @@ HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, FQUAD size )
 		//file->hf_Data = mmap( 0, sizes, PROT_READ | PROT_WRITE, MAP_SHARED, file->hf_FileHandle, 0/*offset*/);
 		file->hf_Data = mmap( 0, size, PROT_READ | PROT_WRITE, MAP_SHARED, file->hf_FileHandle, 0/*offset*/);
 		
-		//write already received chunk
-		FQUAD toWrite = size;
-		char *dataptr = data;
-		
-		int store = TUNABLE_LARGE_HTTP_REQUEST_SIZE;
-		if( store > size )
-		{
-			store = size;
-		}
-		
-		DEBUG("[HttpFileNew] Store file\n");
-		while( toWrite > 0 )
-		{
-			int wrote = write( file->hf_FileHandle, dataptr, store );
-			dataptr += wrote;
-			toWrite -= wrote;
-			DEBUG("[HttpFileNew] Store: %d ToWrite: %ld\n", store, toWrite );
-			
-			if( toWrite < (FQUAD)store )
-			{
-				store = toWrite;
-			}
-		}
+		int wrote = write( file->hf_FileHandle, data, size );
+
 		DEBUG("[HttpFileNew] Store file END\n");
+		//printf("%02hhX", data[ z ] );   HEX DISPLAY
 	}
 	else
 	{
