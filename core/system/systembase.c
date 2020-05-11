@@ -492,7 +492,7 @@ SystemBase *SystemInit( void )
 	
 	if( l->sqlpool == NULL || l->sqlpool[ 0 ].sqll_Sqllib == NULL )
 	{
-		FERROR("Cannot open 'mysql.library' in first slot\n");
+		Log( FLOG_ERROR, "Cannot open 'mysql.library' in first slot\n");
 		FFree( tempString );
 		FFree( l->sqlpool );
 		FFree( l );
@@ -571,7 +571,7 @@ SystemBase *SystemInit( void )
 	}
 	else
 	{
-		FERROR("Cannot open 'mysql.library' instance!\n");
+		Log( FLOG_ERROR, "Cannot open 'mysql.library' instance!\n");
 		return NULL;
 	}
 	
@@ -612,7 +612,7 @@ SystemBase *SystemInit( void )
 			l->fcm->fcm_WebSocketNotification = NULL;
 		}
 		
-		FERROR("FriendCoreManagerInit fail!\n");
+		Log( FLOG_ERROR, "FriendCoreManagerInit fail!\n");
 		SystemClose( l );
 		return NULL;
 	}
@@ -650,6 +650,7 @@ SystemBase *SystemInit( void )
 	if( l->sl_ModPath == NULL )
 	{
 		FFree( l );
+		Log( FLOG_ERROR, "Cannot allocate memory for module path!\n");
 		return NULL;
 	}
 
@@ -726,7 +727,7 @@ SystemBase *SystemInit( void )
 	if( l->sl_LoginModPath == NULL )
 	{
 		FFree( l );
-		FERROR("Cannot allocate memory for login module path!\n");
+		Log( FLOG_ERROR, "Cannot allocate memory for login module path!\n");
 		return NULL;
 	}
 
@@ -786,7 +787,8 @@ SystemBase *SystemInit( void )
 	}
 	else
 	{
-		FERROR("Authentication module not provided\n");
+		Log( FLOG_ERROR, "Authentication module not provided\n");
+
 		FFree( tempString );
 		return NULL;	
 	}
