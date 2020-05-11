@@ -1046,7 +1046,7 @@ Content-Type: application/octet-stream
 							
 							INFO("[Http] Found file - name %.*s  FILESIZE %lu  FIRST CHAR\n", 30, fname, size );
 
-							HttpFile *newFile = HttpFileNew( fname, fnamesize, startOfFile, size );
+							HttpFile *newFile = HttpFileNew( fname, fnamesize, startOfFile, size, FALSE );
 							if( newFile != NULL )
 							{
 								//FERROR("TEMP POS %p END POS %p   size %d\n", startOfFile, endOfFile, (int)( endOfFile-startOfFile ) );
@@ -1122,6 +1122,8 @@ Content-Type: application/octet-stream
 	return 0;
 }
 
+static const char *headerEnd = "\r\n\r\n";
+
 /**
  * Parse first part of the request
  *
@@ -1130,8 +1132,6 @@ Content-Type: application/octet-stream
  * @param length data length
  * @return 0 when success, otherwise error number
  */
-
-static const char *headerEnd = "\r\n\r\n";
 
 static inline int HttpParsePartialRequestChunked( Http* http, char* data, unsigned int length )
 {

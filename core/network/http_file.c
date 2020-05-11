@@ -54,6 +54,8 @@ HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, FQUAD size, FB
 	
 	if( allocate == TRUE )
 	{
+		file->hf_Allocated = TRUE;
+		
 		DEBUG("[HttpFileNew] File will be created, size: %ld\n", size );
 		if( size > TUNABLE_LARGE_HTTP_REQUEST_SIZE )
 		{
@@ -102,7 +104,7 @@ HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, FQUAD size, FB
 	}
 	else
 	{
-		
+		file->hf_Data = data;
 	}
 	
 	strncpy( file->hf_FileName, filename, fnamesize );
@@ -123,20 +125,23 @@ void HttpFileDelete( HttpFile *f )
 {
 	if( f != NULL )
 	{
-		if( f->hf_FileHandle > 0 )
+		if( f->hf_Allocated == TRUE )	// if memory was allocated
 		{
-			if( f->hf_Data )
+			if( f->hf_FileHandle > 0 )
 			{
-				munmap( f->hf_Data, f->hf_FileSize );
+				if( f->hf_Data )
+				{
+					munmap( f->hf_Data, f->hf_FileSize );
+				}
+				close( f->hf_FileHandle );
+				unlink( f->hf_FileNameOnDisk );
 			}
-			close( f->hf_FileHandle );
-			unlink( f->hf_FileNameOnDisk );
-		}
-		else
-		{
-			if( f->hf_Data != NULL )
+			else
 			{
-				FFree( f->hf_Data );
+				if( f->hf_Data != NULL )
+				{
+					FFree( f->hf_Data );
+				}
 			}
 		}
 		
