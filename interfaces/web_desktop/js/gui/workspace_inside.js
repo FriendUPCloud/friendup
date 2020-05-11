@@ -10028,6 +10028,42 @@ if( window.friendApp )
 	}
 }
 
+// Friendchat / presence live events handler
+Workspace.receiveLive = function( viewId, jsonEvent ) {
+	const self = this;
+	const event = JSON.parse( jsonEvent );
+	console.log( 'receiveLive', {
+		viewId : viewId,
+		json   : jsonEvent,
+		event  : event,
+	});
+	const appName = 'friendchat';
+	// find friendchat app
+	let chat = null;
+	console.log( 'all apps', Workspace.applications );
+	Workspace.applications.some( app => {
+		console.log( 'looking for chat', app );
+		if ( app.applicationName != chat )
+			return false;
+		
+		chat = app;
+		return true;
+	});
+	
+	if ( !chat ) {
+		console.log( 'receiveLive - chat not found' );
+		return;
+	}
+	
+	// send event
+	const msg = {
+		type   : 'native-view',
+		viewId : viewId,
+		data   : event,
+	};
+	app.contentWindow.postMessage( msg, '*' );
+}
+
 // Receive push notification (when a user clicks native push notification on phone)
 Workspace.receivePush = function( jsonMsg, ready )
 {
@@ -10130,7 +10166,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 				return 'ok';
 			}
 		}
-	
+		
 		// Function to set the notification as read...
 		function notificationRead()
 		{

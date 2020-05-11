@@ -1927,6 +1927,17 @@ function apiWrapper( event, force )
 					}
 				}
 				break;
+			// Native view ( mobile app / ios ) --------------------------------------------
+			case 'native-view':
+				if ( !window.friendApp ) {
+					console.log( 'apiWrapper - native-view event, no friendApp', msg );
+					return;
+				}
+				
+				const event = JSON.stringify( msg.data );
+				window.friendApp.receiveLive( msg.viewId, event );
+				
+				break;
 			// Widget ---------------------------------------------------------
 			case 'widget':
 				var widgetId = msg.widgetId;
