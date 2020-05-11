@@ -1934,8 +1934,8 @@ function apiWrapper( event, force )
 					return;
 				}
 				
-				const event = JSON.stringify( msg.data );
-				window.friendApp.receiveLive( msg.viewId, event );
+				const nve = JSON.stringify( msg.data );
+				window.friendApp.receiveLive( msg.viewId, nve );
 				
 				break;
 			// Widget ---------------------------------------------------------
