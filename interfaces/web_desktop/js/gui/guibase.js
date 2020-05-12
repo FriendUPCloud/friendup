@@ -2953,7 +2953,7 @@ function PollTaskbar( curr )
 									}
 								}, 5 );
 							} )( d, pn );
-							// Check directoryvuew
+							// Check directoryview
 							if( pn.content.directoryview )
 								d.classList.add( 'Directory' );
 							break;
@@ -2964,7 +2964,7 @@ function PollTaskbar( curr )
 					if( !d )
 					{
 						// New view!
-						d = document.createElement ( 'div' );
+						d = document.createElement( 'div' );
 						d.viewId = pn.viewId;
 						d.view = pn;
 						d.className = pn.parentNode.getAttribute( 'minimized' ) == 'minimized' ? 'Task Hidden MousePointer' : 'Task MousePointer';
@@ -3744,7 +3744,7 @@ function DefaultToWorkspaceScreen( tar ) // tar = click target
 
 function convertIconsToMultiple()
 {
-	if( currentMovable && currentMovable && currentMovable.content.icons )
+	if( currentMovable && currentMovable && currentMovable.content && currentMovable.content.icons )
 	{
 		var ics = currentMovable.content.icons;
 		for( var a = 0; a < ics.length; a++ )
@@ -4118,7 +4118,8 @@ function FindImageColorProduct( img )
 function CreateHelpBubble( element, text, uniqueid, rules )
 {
 	if( isMobile || isTablet ) return;
-	if( !element || !text ) return;
+	if( !element ) return;
+	if( !text ) text = '';
 	
 	if( element.helpBubble )
 	{
@@ -4205,10 +4206,29 @@ function CreateHelpBubble( element, text, uniqueid, rules )
 			var c = document.createElement( 'canvas' );
 			var d = c.getContext( '2d' );
 			d.font = '1em default';
-			var textWidth = d.measureText( text );
+			
+			// Dynamic text
+			if( rules && rules.getText )
+				text = rules.getText();
+			if( !text ) return;
+			
+			var mw = 0;
+			var mh = 0;
+			if( text.indexOf( "\n" ) > 0 )
+			{
+				text = text.split( "\n" );
+				for( var a = 0; a < text.length; a++ )
+				{
+					if( d.measureText( text[ a ] ).width > mw )
+						mw = d.measureText( text[ a ] ).width;
+					mh += d.measureText( text[ a ] ).height;
+				}
+				text = text.join ( "<br>" );
+			}
+			var textWidth = mw ? mw : d.measureText( text ).width;
 			
 			// Normal operation
-			mx = GetElementLeft( element ) + ( GetElementWidth( element ) >> 1 ) - ( textWidth.width >> 1 ) - 30;
+			mx = GetElementLeft( element ) + ( GetElementWidth( element ) >> 1 ) - ( textWidth >> 1 ) - 30;
 			
 			// Check element position
 			if( positionClass )
@@ -4216,7 +4236,7 @@ function CreateHelpBubble( element, text, uniqueid, rules )
 				if( positionClass == 'Right' )
 				{
 					mt = GetElementTop( element ) + 5;
-					mx = GetElementLeft( element ) - Math.floor( textWidth.width + 90 );
+					mx = GetElementLeft( element ) - Math.floor( textWidth + 90 );
 					posset = true;
 				}
 				else if( positionClass == 'Left' )
@@ -4252,11 +4272,15 @@ function CreateHelpBubble( element, text, uniqueid, rules )
 				}
 			}
 			
+			if( mt < 0 ) mt = 0;
+			
+			var lfeeds = text.split( '<br>' ).length;
+			
 			var v = new Widget( {
 				left: mx,
 				top: mt,
 				width: 200,
-				height: 40,
+				height: ( lfeeds > 1 ? lfeeds * 20 : 40 ),
 				'border-radius': 20,
 				above: true,
 				fadeOut: true,
@@ -4264,7 +4288,8 @@ function CreateHelpBubble( element, text, uniqueid, rules )
 			} );
 			
 			d.innerHTML = text;
-			v.setFlag( 'width', textWidth.width + 60 );
+			
+			v.setFlag( 'width', textWidth + 60 );
 			v.setFlag( 'left', mx );
 			v.setFlag( 'top', mt );
 			v.setContent( '<div class="TextCenter Padding Ellipsis">' + text + '</div>' );

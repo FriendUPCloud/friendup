@@ -15,8 +15,13 @@ $ext = explode( '.', $args->file );
 $ext = array_pop( $ext );
 if( file_exists( $f ) )
 {
-	switch( $ext )
+	switch( strtolower( $ext ) )
 	{
+		case 'jpg':
+		case 'gif':
+		case 'png':
+			FriendHeader( ( 'Content-type: image/' . $ext ) == 'jpg' ? 'jpeg' : strtolower( $ext ) );
+			break;
 		case 'css':
 			FriendHeader( 'Content-Type: text/css' );
 			break;

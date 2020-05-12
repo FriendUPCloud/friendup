@@ -76,8 +76,8 @@ Http* WebRequestImage( struct ImageLibrary *l, UserSession *usr, char **urlpath,
 		int width = 0, height = 0;
 		char *error = NULL;
 		
-		HashmapElement *tst = HashmapGet( request->parsedPostContent, "path" );
-		if( tst == NULL ) tst = HashmapGet( request->query, "path" );
+		HashmapElement *tst = HashmapGet( request->http_ParsedPostContent, "path" );
+		if( tst == NULL ) tst = HashmapGet( request->http_Query, "path" );
 		if( tst != NULL  )
 		{
 			path = UrlDecodeToMem(  (char *) tst->hme_Data );
@@ -86,8 +86,8 @@ Http* WebRequestImage( struct ImageLibrary *l, UserSession *usr, char **urlpath,
 			DEBUG("[ImageLibrary] Found PATH parameter %s root %s\n", path, oPath );
 		}
 		
-		tst = HashmapGet( request->parsedPostContent, "to" );
-		if( tst == NULL ) tst = HashmapGet( request->query, "to" );
+		tst = HashmapGet( request->http_ParsedPostContent, "to" );
+		if( tst == NULL ) tst = HashmapGet( request->http_Query, "to" );
 		if( tst != NULL  )
 		{
 			toPath = UrlDecodeToMem(  (char *) tst->hme_Data );
@@ -96,15 +96,15 @@ Http* WebRequestImage( struct ImageLibrary *l, UserSession *usr, char **urlpath,
 			//DEBUG("[ImageLibrary] Found DESTINATION PATH parameter %s root %s\n", toPath, toRoot );
 		}
 		
-		tst = HashmapGet( request->parsedPostContent, "width" );
-		if( tst == NULL ) tst = HashmapGet( request->query, "width" );
+		tst = HashmapGet( request->http_ParsedPostContent, "width" );
+		if( tst == NULL ) tst = HashmapGet( request->http_Query, "width" );
 		if( tst != NULL  )
 		{
 			width = atoi(  (char *) tst->hme_Data );
 		}
 		
-		tst = HashmapGet( request->parsedPostContent, "height" );
-		if( tst == NULL ) tst = HashmapGet( request->query, "height" );
+		tst = HashmapGet( request->http_ParsedPostContent, "height" );
+		if( tst == NULL ) tst = HashmapGet( request->http_Query, "height" );
 		if( tst != NULL  )
 		{
 			height = atoi(  (char *) tst->hme_Data );

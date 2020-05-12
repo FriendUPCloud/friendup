@@ -105,6 +105,7 @@ char *FilterPHPVar( char *line )
 }
 
 #define USE_NPOPEN
+#define USE_NPOPEN_POLL
 
 /**
  * @brief Run a PHP module with arguments
@@ -131,10 +132,10 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	//int siz = eargLen + epathLen + 128;
 	
 	char *command = NULL;
-	if( ( command = calloc( 1024 + strlen( path ) + ( args != NULL ? strlen( args ) : 0 ), sizeof( char ) ) ) == NULL )
+	if( ( command = FCalloc( 1024 + strlen( path ) + ( args != NULL ? strlen( args ) : 0 ), sizeof( char ) ) ) == NULL )
 	{
 		FERROR("Cannot allocate memory for data\n");
-		free( epath ); free( earg );
+		FFree( epath ); FFree( earg );
 		return NULL;
 	}
 
@@ -156,22 +157,85 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	if( !( cx >= 0 && cx < escapedSize ) )
 	{
 		FERROR( "[PHPmod] snprintf\n" );
-		free( command ); free( epath ); free( earg );
+		FFree( command ); FFree( epath ); FFree( earg );
 		return NULL;
 	}
 	
 	DEBUG( "[PHPmod] run app: %s\n", command );
 	
-//#define PHP_READ_SIZE 8192	
 #define PHP_READ_SIZE 65536
 	
 	char *buf = FMalloc( PHP_READ_SIZE+16 );
 	
 	ListString *ls = ListStringNew();
-	//BufString *bs = BufStringNew();
 	
 #ifdef USE_NPOPEN
+#ifdef USE_NPOPEN_POLL
+	NPOpenFD pofd;
+	int err = newpopen( command, &pofd );
+	if( err != 0 )
+	{
+		FERROR("[PHPmod] cannot open pipe: %s\n", strerror( errno ) );
+		//ListStringDelete( ls );
+		FFree( buf );
+		return NULL;
+	}
 	
+	DEBUG("[PHPmod] command launched\n");
+
+	int size = 0;
+	int errCounter = 0;
+
+	struct pollfd fds[2];
+
+	// watch stdin for input 
+	fds[0].fd = pofd.np_FD[ NPOPEN_CONSOLE ];// STDIN_FILENO;
+	fds[0].events = POLLIN;
+
+	// watch stdout for ability to write
+	fds[1].fd = STDOUT_FILENO;
+	fds[1].events = POLLOUT;
+
+	while( TRUE )
+	{
+		DEBUG("[PHPmod] in loop\n");
+		
+		int ret = poll( fds, 2, MOD_TIMEOUT * 1000);
+
+		if( ret == 0 )
+		{
+			DEBUG("Timeout!\n");
+			break;
+		}
+		else if(  ret < 0 )
+		{
+			DEBUG("Error\n");
+			break;
+		}
+		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
+
+		DEBUG( "[PHPmod] Adding %d of data\n", size );
+		if( size > 0 )
+		{
+			DEBUG( "[PHPmod] before adding to list\n");
+			ListStringAdd( ls, buf, size );
+			DEBUG( "[PHPmod] after adding to list\n");
+			res += size;
+		}
+		else
+		{
+			errCounter++;
+			DEBUG("ErrCounter: %d\n", errCounter );
+
+			break;
+		}
+	}
+	
+	DEBUG("[PHPmod] File readed\n");
+	
+	// Free pipe if it's there
+	newpclose( &pofd );
+#else
 	NPOpenFD pofd;
 	int err = newpopen( command, &pofd );
 	if( err != 0 )
@@ -196,8 +260,13 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	
 	while( TRUE )
 	{
-			/* Initialize the file descriptor set. */
+		// Initialize the file descriptor set.
 		FD_ZERO( &set );
+		if( pofd.np_FD[ NPOPEN_CONSOLE ] < 1 )
+		{
+			FERROR("Console output is < 0!\n");
+			break;
+		}
 		FD_SET( pofd.np_FD[ NPOPEN_CONSOLE ], &set);
 		DEBUG("[PHPmod] in loop\n");
 		
@@ -239,6 +308,7 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	// Free pipe if it's there
 	newpclose( &pofd );
 
+#endif
 #else // USE_NPOPEN
 
 	FILE *pipe = popen( command, "r" );
@@ -273,29 +343,24 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	}
 
 	ListStringJoin( ls );
+	
 	char *final = ls->ls_Data;
 	ls->ls_Data = NULL;
 	ListStringDelete( ls );
-	//char *final = bs->bs_Buffer;
-	//bs->bs_Buffer = NULL;
-	//BufStringDelete( bs );
-	
-	//DEBUG("Final string %s\n", final );
-	
-	//DEBUG( "[PHPmod] We are now complete.. %s\n", final );
+
 	if( command != NULL )
 	{
-		free( command );
+		FFree( command );
 	}
 	
 	if( epath != NULL )
 	{
-		free( epath );
+		FFree( epath );
 	}
 	
 	if( earg != NULL )
 	{
-		free( earg );
+		FFree( earg );
 	}
 	return final;
 }

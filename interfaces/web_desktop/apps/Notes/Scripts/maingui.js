@@ -370,7 +370,7 @@ Application.refreshFilePane = function( method, force, callback )
 									{
 										if( Application.currentDocument == path )
 										{
-											Application.newDocument( { just: 'makenew' } );
+											ge( 'FileBar' ).add.onclick();
 										}
 										Application.refreshFilePane();
 									}
@@ -760,6 +760,12 @@ Application.initCKE = function()
 			// Other keys...
 			editor.editing.view.document.on( 'keyup', ( evt, data ) => {
 			
+				// Guess a new filename from the document data
+				var data = Application.editor.element.innerText.split( "\n" )[0].substr( 0, 32 );
+				data = data.split( /[^ a-z0-9]/i ).join( '' );
+				if( !data.length )
+					data = 'unnamed';
+			
 				// Create temporary file "to be saved"
 				if( !Application.currentDocument )
 				{
@@ -778,26 +784,37 @@ Application.initCKE = function()
 							}
 						}
 					}
-					var data = Application.editor.element.innerText.split( "\n" )[0].substr( 0, 32 );
-					data = data.split( /[^ a-z0-9]/i ).join( '' );
-					if( !data.length )
-						data = 'unnamed';
 					if( Application._toBeSaved )
 						Application._toBeSaved.innerHTML = '<p class="Layout"><strong>' + data + '</strong></p><p class="Layout"><em>' + i18n( 'i18n_unsaved' ) + '...</em></p>';
-					Application.sendMessage( {
-						command: 'setfilename',
-						data: Application.path + data + '.html'
-					} );
 				}
 				// Remove "to be saved"
 				else if( Application._toBeSaved )
 				{
+					console.log( '[key] Remove to be saved.' );
 					Application._toBeSaved.parentNode.removeChild( Application._toBeSaved );
 					Application._toBeSaved = null;
 				}
 			
+				// Rename or set name
+				if( Application.currentDocument != Application.path + data + '.html' )
+				{
+					if( Application.setFilenameTimeo )
+						clearTimeout( Application.setFilenameTimeo );
+					Application.setFilenameTimeo = setTimeout( function()
+					{
+						Application.sendMessage( {
+							command: 'setfilename',
+							data: Application.path + data + '.html',
+							rename: Application.currentDocument ? Application.currentDocument : false
+						} );
+						Application.setFilenameTimeo = null;
+					}, 500 );
+				}
+			
 				if( Application.contentTimeout )
+				{
 					clearTimeout( Application.contentTimeout );
+				}
 				Application.contentTimeout = setTimeout( function()
 				{
 					Application.sendMessage( { 
@@ -1575,6 +1592,9 @@ Application.receiveMessage = function( msg )
 			{
 				ApplyStyle( msg.style );
 			}
+			break;
+		case 'setcurrentdocument':
+			Application.setCurrentDocument( msg.path );
 			break;
 		// Let's print!
 		case 'print_iframe':

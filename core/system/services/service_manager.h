@@ -15,8 +15,8 @@
  *  @date created 2015
  */
 
-#ifndef __SERVICE_SERVICE_MANAGER_H__
-#define __SERVICE_SERVICE_MANAGER_H__
+#ifndef __SYSTEM_SERVICES_SERVICE_MANAGER_H__
+#define __SYSTEM_SERVICES_SERVICE_MANAGER_H__
 
 #include <system/services/service.h>
 #include <network/socket.h>
@@ -59,4 +59,4 @@ Service *ServiceManagerGetByName( ServiceManager *smgr, char *name );
 
 int ServiceManagerChangeServiceState( ServiceManager *smgr, Service *srv, int state );
 
-#endif //__SERVICE_SERVICE_MANAGER_H__
+#endif //__SYSTEM_SERVICES_SERVICE_MANAGER_H__

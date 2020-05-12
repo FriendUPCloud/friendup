@@ -1500,16 +1500,19 @@ FConnection *CommServiceAddConnection( CommService* s, Socket* socket, char *nam
 			cfcn->fc_ClusterID = clusterID;
 		
 			SQLLibrary *sqllib  = lsb->LibrarySQLGet( lsb );
-			//fcm->fcm_ClusterNodes->cn_NodeID = clusterID;
+			if( sqllib != NULL )
+			{
+				//fcm->fcm_ClusterNodes->cn_NodeID = clusterID;
 		
-			// if ClusterID was changed, we must update it
-			char tmpQuery[ 256 ];
-			sprintf( tmpQuery, "UPDATE `FClusterNode` SET NodeID='%lu' WHERE ID=%lu", cfcn->fc_ClusterID, cfcn->fc_ID );
+				// if ClusterID was changed, we must update it
+				char tmpQuery[ 256 ];
+				sprintf( tmpQuery, "UPDATE `FClusterNode` SET NodeID='%lu' WHERE ID=%lu", cfcn->fc_ClusterID, cfcn->fc_ID );
 
-			int error = sqllib->QueryWithoutResults( sqllib, tmpQuery );
-			DEBUG("CluserID updated: %lu for ID %lu\n", clusterID, cfcn->fc_ClusterID );
+				int error = sqllib->QueryWithoutResults( sqllib, tmpQuery );
+				DEBUG("CluserID updated: %lu for ID %lu\n", clusterID, cfcn->fc_ClusterID );
 		
-			lsb->LibrarySQLDrop( lsb, sqllib );
+				lsb->LibrarySQLDrop( lsb, sqllib );
+			}
 		}
 	}
 	

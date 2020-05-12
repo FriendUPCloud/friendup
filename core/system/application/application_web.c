@@ -98,8 +98,8 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 	else if( strcmp( urlpath[ 0 ], "list" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -177,7 +177,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		HashmapElement *el =  HashmapGet( request->uri->query, "url" );
+		HashmapElement *el =  HashmapGet( request->http_ParsedPostContent, "url" );
 		if( el != NULL )
 		{
 			url = UrlDecodeToMem( ( char *)el->hme_Data );
@@ -224,27 +224,27 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		HashmapElement *el = HashmapGet( request->parsedPostContent, "userid" );
+		HashmapElement *el = HashmapGet( request->http_ParsedPostContent, "userid" );
 		if( el != NULL )
 		{
 			char *end;
 			userID = strtoull( el->hme_Data,  &end, 0 );
 		}
 		
-		el = HashmapGet( request->parsedPostContent, "appid" );
+		el = HashmapGet( request->http_ParsedPostContent, "appid" );
 		if( el != NULL )
 		{
 			char *end;
 			appID = strtoull( el->hme_Data,  &end, 0 );
 		}
 		
-		el = HashmapGet( request->parsedPostContent, "permissions" );
+		el = HashmapGet( request->http_ParsedPostContent, "permissions" );
 		if( el != NULL )
 		{
 			permissions = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
-		el = HashmapGet( request->parsedPostContent, "data" );
+		el = HashmapGet( request->http_ParsedPostContent, "data" );
 		if( el != NULL )
 		{
 			data = UrlDecodeToMem( ( char *)el->hme_Data );
@@ -257,7 +257,6 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		
 		DEBUG("[/app/register] Create!\n");
 		
-		//INSERT INTO `FUserApplication` (`ID`, `UserID`, `ApplicationID`, `Permissions`, `AuthID`, `Data`) VALUES (NULL, '2', '3', 'permission', 'generatedid', '{}')
 		
 		if( appID > 0 && permissions != NULL )
 		{
@@ -347,7 +346,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		HashmapElement *el = HashmapGet( request->parsedPostContent, "pauthid" );
+		HashmapElement *el = HashmapGet( request->http_ParsedPostContent, "pauthid" );
 		if( el != NULL )
 		{
 			qauthid = UrlDecodeToMem( ( char *)el->hme_Data );
@@ -401,8 +400,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 	
 		return response;
 	}
-	
-	DEBUG("[ApplicationWebRequest] FriendCore returned %s\n", response->content );
+	DEBUG("[ApplicationWebRequest] FriendCore returned %s\n", response->http_Content );
 
 	return response;
 }

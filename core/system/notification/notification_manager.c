@@ -699,7 +699,7 @@ int NotificationManagerSendEventToConnections( NotificationManager *nm, Http *re
 		}
 	}
 	
-	if( req != NULL && req->h_RequestSource == HTTP_SOURCE_EXTERNAL_SERVER )
+	if( req != NULL && req->http_RequestSource == HTTP_SOURCE_EXTERNAL_SERVER )
 	{
 		INFO( "Request comes from external server\n");
 		return 0;
@@ -779,6 +779,61 @@ OR
 	return ret;
 }
 
+//
+// internal funciton
+//
+
+inline static int GenerateServiceMessage( char *dstMsg, char *reqID, char *path, char *params, UserSession *us )
+{
+	int dstsize = 0;
+	
+	if( reqID != NULL )
+	{
+		snprintf( reqID, 128, "EXTSER_%lu%d_ID", time(NULL), rand()%999999 );
+		dstsize = sprintf( dstMsg, "{\"path\":\"service%s\",\"requestId\":\"%s\",\"data\":", path, reqID );
+	}
+	else
+	{
+		dstsize = sprintf( dstMsg, "{\"path\":\"service%s\",\"data\":", path );
+	}
+	
+	int perLen = strlen( params );
+	int afterBracePos = 0;
+	int i;
+	
+	// lets figure out where first brace is
+	for( i=0 ; i < perLen ; i++ )
+	{
+		if( params[ i ] == '{' )
+		{
+			afterBracePos = i+1;
+			break;
+		}
+	}
+	
+	int uuidLen = strlen( us->us_User->u_UUID );
+	if( perLen > 4 ) // params is not only {}
+	{
+		strcat( dstMsg, "{\"originUserId\":\"" );
+		strcat( dstMsg, us->us_User->u_UUID );
+		strcat( dstMsg, "\",");
+		strcat( dstMsg, &params[ afterBracePos ] );
+		strcat( dstMsg, "}");
+		
+		dstsize += 17+uuidLen+2+strlen(&params[ afterBracePos ])+1;
+	}
+	else
+	{
+		strcat( dstMsg, "{\"originUserId\":\"" );
+		strcat( dstMsg, us->us_User->u_UUID );
+		strcat( dstMsg, "}}");
+		
+		dstsize += 17+uuidLen+2;
+	}
+	
+	return dstsize;
+}
+
 /**
  * Send message to external servers
  * 
@@ -786,49 +841,43 @@ OR
  * @param req Http request
  * @param us user session
  * @param sername server name to which message will be sent. NULL means that message will be send to all connections.
- * @param type type of message
- * @param group message group
- * @param action action
+ * @param type type of message (request or event)
+ * @param path command path
  * @param params additional parameters
  * @return response
  */
 
-char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http *req, UserSession *us, char *sername, const char *type, const char *group, const char *action, const char *params )
+char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http *req, UserSession *us, char *sername, int type, const char *path, const char *params )
 {
 	//char *retMessage = NULL;
 	BufString *retMsg = BufStringNew();
 	
-	if( req != NULL && req->h_RequestSource == HTTP_SOURCE_EXTERNAL_SERVER )
+	if( req != NULL && req->http_RequestSource == HTTP_SOURCE_EXTERNAL_SERVER )
 	{
 		INFO( "Request comes from external server\n");
 		return NULL;
 	}
 	
+	if( params == NULL )
+	{
+		INFO( "PARAMS = NULL\n");
+		return NULL;
+	}
+	
 	/*
 {
-   type : 'path',
-   data : {
-       type : 'to',
-       data : {
-            type : 'thing'
-            requestId : 'id-string'
-            data : {
-                  request parameters
-	}}}}
+	path : 'path',
+	requestId : 'id-string'
+	data : {
+		request parameters
+	}
+}
 	 */
 	
 	int msglen = 728 + strlen( params );
-	if( type != NULL )
+	if( path != NULL )
 	{
-		msglen += strlen( type );
-	}
-	if( group != NULL )
-	{
-		msglen += strlen( group );
-	}
-	if( action != NULL )
-	{
-		msglen += strlen( action );
+		msglen += strlen( path );
 	}
 
 	char *dstMsg = FMalloc( msglen );
@@ -838,7 +887,12 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 	{
 		int sentMessageTo = 0;	// number of receipients
 		int dstsize = 0;
-		char *reqID = FCalloc( 128, sizeof(char) );
+		char *reqID = NULL;
+		
+		if( type == 0 )	// request
+		{
+			reqID = FCalloc( 128, sizeof(char) );
+		}
 
 		ExternalServerConnection *con = nm->nm_ESConnections;
 		if( sername == NULL ) // send to all servers
@@ -847,10 +901,20 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 			while( con != NULL )
 			{
 				DataQWSIM *en = (DataQWSIM *)con->esc_Connection;
+				/*
+				if( reqID != NULL )
+				{
+					snprintf( reqID, 128, "EXTSER_%lu%d_ID", time(NULL), rand()%999999 );
+					dstsize = snprintf( dstMsg, msglen, "{\"path\":\"service/%s\",\"requestId\":\"%s\",\"data\":{%s,\"originUserId\":\"%s\"}}", path, reqID, params, us->us_User->u_UUID );
+				}
+				else
+				{
+					dstsize = snprintf( dstMsg, msglen, "{\"path\":\"service/%s\",\"data\":{%s,\"originUserId\":\"%s\"}}", path, params, us->us_User->u_UUID );
+				}
+				*/
 				
-				snprintf( reqID, 128, "EXTSER_%lu%d_ID", time(NULL), rand()%999999 );
-				dstsize = snprintf( dstMsg, msglen, "{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"requestId\":\"%s\",\"data\":{%s,\"originUserId\":\"%s\"}}}}", type, group, action, reqID, params, us->us_User->u_UUID );
-		
+				dstsize = GenerateServiceMessage( dstMsg, reqID, path, params, us );
+				
 				Log( FLOG_INFO, "[NotificationManagerSendRequestToConnections] Send message: '%s'\n", dstMsg );
 				
 				DEBUG("Msg sent to: %s\n", en->d_ServerName );
@@ -865,9 +929,19 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 			DEBUG("Server name != NULL\n");
 			while( con != NULL )
 			{
-				snprintf( reqID, 128, "EXTSER_%lu%d_ID", time(NULL), rand()%999999 );
-				dstsize = snprintf( dstMsg, msglen, "{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"requestId\":\"%s\",\"data\":{%s,\"originUserId\":\"%s\"}}}}", type, group, action, reqID, params, us->us_User->u_UUID );
-		
+				/*
+				if( reqID != NULL )
+				{
+					snprintf( reqID, 128, "EXTSER_%lu%d_ID", time(NULL), rand()%999999 );
+					dstsize = snprintf( dstMsg, msglen, "{\"path\":\"service/%s\",\"requestId\":\"%s\",\"data\":{%s,\"originUserId\":\"%s\"}}", path, reqID, params, us->us_User->u_UUID );
+				}
+				else
+				{
+					dstsize = snprintf( dstMsg, msglen, "{\"path\":\"service/%s\",\"data\":{%s,\"originUserId\":\"%s\"}}", path, params, us->us_User->u_UUID );
+				}
+				*/
+				
+				dstsize = GenerateServiceMessage( dstMsg, reqID, path, params, us );
 				Log( FLOG_INFO, "[NotificationManagerSendRequestToConnections] Send message: '%s'\n", dstMsg );
 				
 				ret += WriteMessageToServers( con->esc_Connection, (unsigned char *)dstMsg, dstsize );
@@ -876,116 +950,130 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 				sentMessageTo++;
 			}
 		}
+		
 		FFree( dstMsg );
 		
 		//
 		// wait for response
 		//
 		
-		if( sentMessageTo > 0 )
+		if( type == 0 ) // if type = REQUEST (event do not require response)
 		{
-			int secs = 0;
-			while( TRUE )
+			if( sentMessageTo > 0 )
 			{
-				// response
-				FQEntry *foundEntry = NULL;
-			
-				DEBUG("[Notify Service] check queue\n");
-			
-				if( FRIEND_MUTEX_LOCK( &(nm->nm_ExtServiceMutex)) == 0 )
+				int secs = 0;
+				while( TRUE )
 				{
-					FQEntry *qe = nm->nm_ExtServiceMessage.fq_First;
-					// we will build new linked list
-					FQEntry *qenroot = NULL;
-					while( qe != NULL )
+					// response
+					FQEntry *foundEntry = NULL;
+			
+					DEBUG("[Notify Service] check queue\n");
+			
+					if( FRIEND_MUTEX_LOCK( &(nm->nm_ExtServiceMutex)) == 0 )
 					{
-						FQEntry *locentry = qe;
-						qe = (FQEntry *)qe->node.mln_Succ;
-						DEBUG("Going through entries\n");
+						FQEntry *qe = nm->nm_ExtServiceMessage.fq_First;
+						// we will build new linked list
+						FQEntry *qenroot = NULL;
+						while( qe != NULL )
+						{
+							FQEntry *locentry = qe;
+							qe = (FQEntry *)qe->node.mln_Succ;
+							DEBUG("Going through entries\n");
 					
-						// check if its same reqid
-						// if same return response
-						if( locentry->fq_RequestID != NULL && strcmp( locentry->fq_RequestID, reqID ) == 0 )
-						{
-							DEBUG("Found entry by requestid : %s\n", reqID );
-							foundEntry = locentry;
-						}
-						// if msg is older then 30 seconds remove it
-						else if( (time(NULL) - locentry->fq_Timestamp) > 30  )	// message is older then 30 seconds
-						{
-							DEBUG("Delete old message\n");
-							if( locentry->fq_Data != NULL )
+							// check if its same reqid
+							// if same return response
+							if( locentry->fq_RequestID != NULL && strcmp( locentry->fq_RequestID, reqID ) == 0 )
 							{
-								FFree( locentry->fq_Data );
+								DEBUG("Found entry by requestid : %s\n", reqID );
+								foundEntry = locentry;
 							}
-							if( locentry->fq_RequestID != NULL )
+							// if msg is older then 30 seconds remove it
+							else if( (time(NULL) - locentry->fq_Timestamp) > 30  )	// message is older then 30 seconds
 							{
-								FFree( locentry->fq_RequestID );
+								DEBUG("Delete old message\n");
+								if( locentry->fq_Data != NULL )
+								{
+									FFree( locentry->fq_Data );
+								}
+								if( locentry->fq_RequestID != NULL )
+								{
+									FFree( locentry->fq_RequestID );
+								}
+								FFree( locentry );
 							}
-							FFree( locentry );
+							// otherwise leave message
+							else
+							{
+								DEBUG("Leave message in queue\n");
+								locentry->node.mln_Succ = (MinNode *)qenroot;
+								qenroot = locentry;
+							}
 						}
-						// otherwise leave message
-						else
+						// assign new list to root
+						nm->nm_ExtServiceMessage.fq_First = qenroot;
+				
+						FRIEND_MUTEX_UNLOCK( &(nm->nm_ExtServiceMutex));
+					}
+			
+					DEBUG("[Notify Service] found entry %p\n", foundEntry );
+			
+					// if entry was found we can come back with response
+					if( foundEntry != NULL )
+					{
+						if( retMsg->bs_Size > 0 )
 						{
-							DEBUG("Leave message in queue\n");
-							locentry->node.mln_Succ = (MinNode *)qenroot;
-							qenroot = locentry;
+							BufStringAddSize( retMsg, ",", 1 );
+						}
+						BufStringAdd( retMsg, (char *)foundEntry->fq_Data );
+				
+						if( foundEntry->fq_RequestID != NULL )
+						{
+							FFree( foundEntry->fq_RequestID );
+						}
+						if( foundEntry->fq_Data != NULL )
+						{
+							FFree( foundEntry->fq_Data );
+						}
+						FFree( foundEntry );
+				
+						// if message was send to more then one servers we are waiting for reply
+						sentMessageTo--;
+				
+						if( sentMessageTo <= 0 )
+						{
+							DEBUG("[Notify Service] All responses recevied, quit loop\n");
+							break;
 						}
 					}
-					// assign new list to root
-					nm->nm_ExtServiceMessage.fq_First = qenroot;
-				
-					FRIEND_MUTEX_UNLOCK( &(nm->nm_ExtServiceMutex));
-				}
 			
-				DEBUG("[Notify Service] found entry %p\n", foundEntry );
-			
-				// if entry was found we can come back with response
-				if( foundEntry != NULL )
-				{
-					if( retMsg->bs_Size > 0 )
+					sleep( 1 );
+					//usleep( 50000 );
+					if( secs++ >30 )	// around 15 seconds
 					{
-						BufStringAddSize( retMsg, ",", 1 );
-					}
-					BufStringAdd( retMsg, (char *)foundEntry->fq_Data );
-				
-					if( foundEntry->fq_RequestID != NULL )
-					{
-						FFree( foundEntry->fq_RequestID );
-					}
-					if( foundEntry->fq_Data != NULL )
-					{
-						FFree( foundEntry->fq_Data );
-					}
-					FFree( foundEntry );
-				
-					// if message was send to more then one servers we are waiting for reply
-					sentMessageTo--;
-				
-					if( sentMessageTo <= 0 )
-					{
-						DEBUG("[Notify Service] All responses recevied, quit loop\n");
-						break;
-					}
-				}
-			
-				sleep( 1 );
-				//usleep( 50000 );
-				if( secs++ >30 )	// around 15 seconds
-				{
-					const char *timeoutResp = "{\"result\":-1,\"error\",\"Timeout\"}";
-					BufStringAdd( retMsg, timeoutResp );
-					FERROR("Timeout\n");
-					break; 
-				} 
-			} // while TRUE
-			DEBUG("[Notify Service] ret message: %s\n", retMsg->bs_Buffer );
-		}
-		else // message was not send
+						const char *timeoutResp = "{\"result\":-1,\"error\",\"Timeout\"}";
+						BufStringAdd( retMsg, timeoutResp );
+						FERROR("Timeout\n");
+						break; 
+					} 
+				} // while TRUE
+				DEBUG("[Notify Service] ret message: %s\n", retMsg->bs_Buffer );
+			}
+			else // message was not send
+			{
+				const char *timeoutResp = "{\"result\":-2,\"error\",\"No Connection\"}";
+				BufStringAdd( retMsg, timeoutResp );
+				FERROR("No connection\n");
+			}
+		}	// if request
+		else
 		{
-			const char *timeoutResp = "{\"result\":-2,\"error\",\"No Connection\"}";
+			const char *timeoutResp = "{\"result\":0}";
 			BufStringAdd( retMsg, timeoutResp );
-			FERROR("No connection\n");
+		}
+		
+		if( reqID != NULL )
+		{
+			FFree( reqID );
 		}
 	}
 	

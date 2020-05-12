@@ -2989,6 +2989,13 @@ body:not([mobile]).ShowTasks #TaskSwitcher .Current .Close
 	transition: background,color 0.25s;
 }
 
+#DoorsScreen .Left > .VirtualWorkspaces > div.Workspace.WithIcon
+{
+	text-align: center;
+	font-size: 0.9em;
+	line-height: 16px;
+}
+
 #DoorsScreen .Left > .VirtualWorkspaces > div.Active
 {
 	background: transparent;
@@ -3192,11 +3199,16 @@ body:not([mobile]).ShowTasks #TaskSwitcher .Current .Close
 .Screen > .TitleBar > .Left .Extra .Offline
 {
 	color: #aa0000;
-	background-image: url(/webclient/gfx/system/offline_16px.png);
-	background-repeat: no-repeat;
-	background-position: center left;
-	padding-left: 20px;
 	display: inline-block;
+}
+
+.Screen > .TitleBar > .Left .Extra .Offline:before
+{
+	font-family: fontawesome;
+	font-size: 90%;
+	content: "\f186";
+	display: inline;
+	margin-right: 5px;
 }
 
 .Screen > .TitleBar > .Right
@@ -3274,6 +3286,12 @@ body:not([mobile]).ShowTasks #TaskSwitcher .Current .Close
 }
 
 /* Progress bars ------------------------------------------------------------ */
+
+.Frame .Progress
+{
+	line-height: 30px;
+}
+
 .Frame .Groove + .Bar
 {
 	background-image: url(/webclient/gfx/system/progressbar.gif);

@@ -38,8 +38,8 @@ typedef struct FilesystemActivity
 	FULONG				fsa_FilesystemID;   // filesystem id
 	struct tm			fsa_ToDate;         // till what date this entry will be used
 	time_t				fsa_ToDateTimeT;
-	FLONG				fsa_StoredBytesLeft;  // how many bytes user can store, this entry is updated each month
-	FLONG				fsa_ReadedBytesLeft;  // how many bytes user can read, this entry is updated each month
+	FQUAD				fsa_StoredBytesLeft;  // how many bytes user can store, this entry is updated each month
+	FQUAD				fsa_ReadedBytesLeft;  // how many bytes user can read, this entry is updated each month
 } FilesystemActivity;
 
 static const FULONG FilesystemActivityDesc[] = { 
@@ -69,12 +69,12 @@ int UpdateFilesystemActivityDB( void *sb, FilesystemActivity *act );
 //
 //
 
-static inline int FileSystemActivityCheckAndUpdate( void *sb, FilesystemActivity *fsa, int bytes )
+static inline FQUAD FileSystemActivityCheckAndUpdate( void *sb, FilesystemActivity *fsa, FQUAD bytes )
 {
-	DEBUG("[FileSystemActivityCheckAndUpdate] store %d left %lu ID %lu\n", bytes, fsa->fsa_StoredBytesLeft, fsa->fsa_ID );
+	DEBUG("[FileSystemActivityCheckAndUpdate] store %ld left %lu ID %lu\n", bytes, fsa->fsa_StoredBytesLeft, fsa->fsa_ID );
 	if( fsa->fsa_StoredBytesLeft != 0 )	// 0 == unlimited bytes to store
 	{
-		int left = fsa->fsa_StoredBytesLeft;
+		FQUAD left = fsa->fsa_StoredBytesLeft;
 		if( (fsa->fsa_StoredBytesLeft-bytes) <= 0 )
 		{
 			fsa->fsa_StoredBytesLeft = -1;
