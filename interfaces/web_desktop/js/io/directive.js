@@ -558,7 +558,19 @@ function ExecuteApplication( app, args, callback )
 						callback = null;
 					}
 				} );
-
+				
+				// check for app
+				let fApp = null;
+				if ( window.friendApp )
+				{
+					const version = window.friendApp.get_version();
+					const platform = window.friendApp.get_platform();
+					fApp = {
+						version  : version,
+						platform : platform,
+					};
+				}
+				
 				// Args could be sent in JSON format, then try to give this on.
 				var oargs = args;
 				try
@@ -581,11 +593,11 @@ function ExecuteApplication( app, args, callback )
 					authId: ifr.authId,
 					args: oargs,
 					workspace: workspace,
+					friendApp : fApp,
 					dosDrivers: Friend.dosDrivers,
 					locale: Workspace.locale,
 					theme: Workspace.theme,
 					themeData: Workspace.themeData,
-					workspaceMode: Workspace.workspacemode,
 					filePath: sdomain + filepath,
 					domain:   sdomain,
 					registerCallback: cid,
