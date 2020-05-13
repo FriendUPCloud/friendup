@@ -1745,6 +1745,10 @@ a.Negative:hover, a.Negative:active, a.Negative:visited
 {
 	height: 0px !important;
 }
+body #CalendarWidget
+{
+	border-radius: 0 0 0 3px;
+}
 
 #calendarEventsToday
 {
