@@ -121,6 +121,10 @@ function PollTray()
 		
 		var ca = tray.calendarApplet = document.createElement( 'div' );
 		ca.className = 'Calendar TrayElement IconSmall';
+		ca.onclick = function()
+		{
+			Workspace.newCalendarEvent();
+		}
 		ca.poll = function()
 		{
 		}

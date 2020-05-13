@@ -18,35 +18,7 @@ Workspace.createCalendar = function( wid, sessions )
 	var newBtn = calendar.createButton( 'fa-calendar-plus-o' );
 	newBtn.onclick = function()
 	{
-		if( calendar.eventWin ) return;
-	
-		var date = calendar.date.getFullYear() + '-' + ( calendar.date.getMonth() + 1 ) + '-' + calendar.date.getDate();
-		var dateForm = date.split( '-' );
-		dateForm = dateForm[0] + '-' + StrPad( dateForm[1], 2, '0' ) + '-' + StrPad( dateForm[2], 2, '0' );
-	
-		calendar.eventWin = new View( {
-			title: i18n( 'i18n_event_overview' ) + ' ' + dateForm,
-			width: 700,
-			height: 445
-		} );
-	
-		calendar.eventWin.onClose = function()
-		{
-			calendar.eventWin = false;
-		}
-
-		var f1 = new File( 'System:templates/calendar_event_add.html' );
-		f1.replacements = { date: dateForm };
-		f1.i18n();
-		f1.onLoad = function( data1 )
-		{
-			calendar.eventWin.setContent( data1 );
-		}
-		f1.load();
-
-		// Just close the widget
-		if( m && wid )
-			wid.hide();
+		Workspace.newCalendarEvent();
 	}
 	calendar.addButton( newBtn );
 
@@ -108,6 +80,49 @@ Workspace.createCalendar = function( wid, sessions )
 	wid.dom.appendChild( sess );
 	m.sessions = sess;
 };
+
+Workspace.newCalendarEvent = function()
+{	
+	var m = this.widget ? this.widget.target : ge( 'DoorsScreen' );
+	var wid = this.widget;
+	var calendar = Workspace.calendar;
+
+	let source = new Date();
+	if( calendar )
+	{
+		source = calendar.date;
+	}
+	else calendar = {};
+	
+	var date = source.getFullYear() + '-' + ( source.getMonth() + 1 ) + '-' + source.getDate();
+	var dateForm = date.split( '-' );
+	dateForm = dateForm[0] + '-' + StrPad( dateForm[1], 2, '0' ) + '-' + StrPad( dateForm[2], 2, '0' );
+
+	calendar.eventWin = new View( {
+		title: i18n( 'i18n_event_overview' ) + ' ' + dateForm,
+		width: 700,
+		height: 445
+	} );
+
+	calendar.eventWin.onClose = function()
+	{
+		calendar.eventWin = false;
+	}
+
+	var f1 = new File( 'System:templates/calendar_event_add.html' );
+	f1.replacements = { date: dateForm };
+	f1.i18n();
+	f1.onLoad = function( data1 )
+	{
+		calendar.eventWin.setContent( data1 );
+	}
+	f1.load();
+
+	// Just close the widget
+	if( m && wid )
+		wid.hide();
+
+}
 
 Workspace.removeCalendarEvent = function( id )
 {
