@@ -1,3 +1,113 @@
+Workspace.createCalendar = function( wid, sessions )
+{
+	if( !wid ) return;
+	
+	var m = this.widget ? this.widget.target : ge( 'DoorsScreen' );
+	
+	var d = '<hr class="Divider"/>\
+			<div class="Padding"><p class="Layout"><strong>' + i18n( 'i18n_active_session_list' ) + ':</strong></p>\
+			' + ( sessions.length > 0 ? sessions.join( '' ) : '<ul><li>' + i18n( 'i18n_no_other_sessions_available' ) + '.</li></ul>' ) + '\
+			</div>\
+			';
+	
+	var calendar = new Calendar( wid.dom );
+	wid.dom.id = 'CalendarWidget';
+
+	Workspace.calendarWidget = wid;
+
+	var newBtn = calendar.createButton( 'fa-calendar-plus-o' );
+	newBtn.onclick = function()
+	{
+		if( calendar.eventWin ) return;
+	
+		var date = calendar.date.getFullYear() + '-' + ( calendar.date.getMonth() + 1 ) + '-' + calendar.date.getDate();
+		var dateForm = date.split( '-' );
+		dateForm = dateForm[0] + '-' + StrPad( dateForm[1], 2, '0' ) + '-' + StrPad( dateForm[2], 2, '0' );
+	
+		calendar.eventWin = new View( {
+			title: i18n( 'i18n_event_overview' ) + ' ' + dateForm,
+			width: 700,
+			height: 445
+		} );
+	
+		calendar.eventWin.onClose = function()
+		{
+			calendar.eventWin = false;
+		}
+
+		var f1 = new File( 'System:templates/calendar_event_add.html' );
+		f1.replacements = { date: dateForm };
+		f1.i18n();
+		f1.onLoad = function( data1 )
+		{
+			calendar.eventWin.setContent( data1 );
+		}
+		f1.load();
+
+		// Just close the widget
+		if( m && wid )
+			wid.hide();
+	}
+	calendar.addButton( newBtn );
+
+	/*
+		TODO: Re-enable the wrench when we have a working calendar
+	var geBtn = calendar.createButton( 'fa-wrench' );
+	geBtn.onclick = function()
+	{
+		ExecuteApplication( 'FriendCalendar' );
+	}
+	calendar.addButton( geBtn );*/
+
+	// Add events to calendar!
+	calendar.eventWin = false;
+	calendar.onSelectDay = function( date )
+	{
+		calendar.date.setDate( parseInt( date.split( '-' )[2] ) );
+		calendar.date.setMonth( parseInt( date.split( '-' )[1] ) - 1 );
+		calendar.date.setFullYear( parseInt( date.split( '-' )[0] ) );
+		calendar.render();
+	}
+
+	calendar.setDate( new Date() );
+	calendar.onRender = function( callback )
+	{
+		var md = new Module( 'system' );
+		md.onExecuted = function( e, d )
+		{
+			try
+			{
+				// Update events
+				var eles = JSON.parse( d );
+				calendar.events = [];
+				for( var a in eles )
+				{
+					if( !calendar.events[eles[a].Date] )
+						calendar.events[eles[a].Date] = [];
+					calendar.events[eles[a].Date].push( eles[a] );
+				}
+			}
+			catch( e )
+			{
+			}
+			calendar.render( true );
+			wid.autosize();
+			ge( 'DoorsScreen' ).screenObject.resize();
+		}
+		md.execute( 'getcalendarevents', { date: calendar.date.getFullYear() + '-' + ( calendar.date.getMonth() + 1 ) } );
+	}
+	calendar.render();
+	Workspace.calendar = calendar;
+
+	m.calendar = calendar;
+
+	var sess = document.createElement( 'div' );
+	sess.className = 'ActiveSessions';
+	sess.innerHTML = d;
+	wid.dom.appendChild( sess );
+	m.sessions = sess;
+};
+
 Workspace.removeCalendarEvent = function( id )
 {
 	Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_evt_delete_desc' ), function( ok )
