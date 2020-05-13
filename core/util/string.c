@@ -767,25 +767,27 @@ char *FindInBinary(char *x, int m, char *y, int n)
 //
 //
 
-FQUAD FindInBinaryPOS(char *x, int m, char *y, FQUAD n) 
+FQUAD FindInBinaryPOS( char *findString, int m, char *findIn, FQUAD n) 
 {
 	FQUAD i, j;
 	FQUAD kmpNext[ m ];
 
 	// Preprocessing 
-	preKmp(x, m, kmpNext);
+	preKmp( findString, m, kmpNext );
 
 	// Searching 
 	i = j = 0;
-	while (j < (FQUAD)n) 
+	while( j < (FQUAD)n ) 
 	{
 		//printf("find %d\n", j );
-		while (i > -1 && x[i] != y[j])
+		while (i > -1 && findString[i] != *findIn )
 		{
 			i = kmpNext[ i ];
 		}
 		i++;
 		j++;
+		findIn++;
+		
 		if (i >= m) 
 		{
 			return j-i;
