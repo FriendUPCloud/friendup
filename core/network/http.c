@@ -1917,6 +1917,7 @@ void HttpFreeRequest( Http* http )
 				munmap( http->http_Content, http->http_SizeOfContent );
 			}
 			close( http->http_ContentFileHandle );
+			http->http_ContentFileHandle = -1;
 			unlink( http->http_TempContentFileName );
 		}
 		else
