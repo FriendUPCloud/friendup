@@ -30,6 +30,7 @@
 #include <system/systembase.h>
 #include <arpa/inet.h>
 #include <linux/limits.h>
+#include <util/string.h>
 
 #ifndef INT_MAX
 #define INT_MAX (int) (0x7FFF/0x7FFFFFFF)
@@ -1025,15 +1026,14 @@ Content-Type: application/octet-stream
 					DEBUG("START CONTENT TO START FILE %d\n", startOfFile - http->http_Content );
 
 					FQUAD res;
-					int divSize = strlen( http->http_PartDivider );
 
-					DEBUG("DIVSIZE %d\n", divSize );
+					DEBUG("DIVSIZE %d\n", http->http_PartDividerLen );
 					FQUAD multipartLen = (http->http_SizeOfContent-(startOfFile-http->http_Content) );
 					DEBUG("MULTIPART LEN %lu\n", multipartLen );
-					//res = FindInBinaryPOS( http->http_PartDivider, divSize, startOfFile, multipartLen )-2;// + divSize;
+					res = FindInBinaryPOS( http->http_PartDivider, http->http_PartDividerLen, startOfFile, multipartLen )-2;// + divSize;
 					//res = FindInBinaryPOS( http->http_PartDivider, divSize, startOfFile, multipartLen ) - 2;
 					
-					res = (FQUAD )FindInBinarySimple( http->http_PartDivider, divSize, startOfFile, multipartLen )-2;
+					//res = (FQUAD )FindInBinarySimple( http->http_PartDivider, divSize, startOfFile, multipartLen )-2;
 					
 					char *endOfFile = startOfFile + res;
 					DEBUG("MULTI FOUND END OF FILE %p START %p LEN %lu\n", endOfFile, startOfFile, res );
@@ -1333,6 +1333,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 							munmap( http->http_Content, http->http_ContentLength );
 							http->http_Content = NULL;
 							unlink( http->http_TempContentFileName );
+							http->http_ContentFileHandle = 0;
 						}
 						else
 						{
@@ -1592,22 +1593,20 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 			}
 			
 			char *endDivider = strstr( http->http_Content, "\r\n" );
-			memset( http->http_PartDivider, 0, sizeof( char ) << 8 );
-			
+
 			DEBUG("UPLOAD endDivider pointer: %p\n", endDivider );
+
 			if( endDivider != NULL )
 			{
-				int maxDivLen = sizeof( http->http_PartDivider ) - 1;
-				int divLen = endDivider-http->http_Content;
-				if(  divLen < maxDivLen )
-				{
-					maxDivLen = divLen;
-				}
-				strncpy( http->http_PartDivider, http->http_Content, maxDivLen );
+				int maxDivLen = endDivider-http->http_Content;
+				http->http_PartDivider = StringDuplicateN( http->http_Content, maxDivLen );
+				http->http_PartDividerLen = maxDivLen;
 			}
 			else
 			{
-				strcpy( http->http_PartDivider, "\n");
+				http->http_PartDivider = StringDuplicate( "\n" );
+				http->http_PartDividerLen = 1;
+				//strcpy( http->http_PartDivider, "\n");
 			}
 			DEBUG("[HttpParsePartialRequest] Purge... Divider: %s\n", http->http_PartDivider );
 		}
@@ -1856,6 +1855,11 @@ void HttpFree( Http* http )
 		remFile = curFile;
 		curFile = ( HttpFile * )curFile->node.mln_Succ;
 		HttpFileDelete( remFile );
+	}
+	
+	if( http->http_PartDivider )
+	{
+		FFree( http->http_PartDivider );
 	}
 	//DEBUG("Free http\n");
 
