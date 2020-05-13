@@ -1031,9 +1031,9 @@ Content-Type: application/octet-stream
 					FQUAD multipartLen = (http->http_SizeOfContent-(startOfFile-http->http_Content) );
 					DEBUG("MULTIPART LEN %lu\n", multipartLen );
 					//res = FindInBinaryPOS( http->http_PartDivider, divSize, startOfFile, multipartLen )-2;// + divSize;
-					res = FindInBinaryPOS( http->http_PartDivider, divSize, startOfFile, multipartLen ) - 2;
+					//res = FindInBinaryPOS( http->http_PartDivider, divSize, startOfFile, multipartLen ) - 2;
 					
-					//res = (FQUAD )FindInBinarySimple( http->http_PartDivider, divSize, startOfFile, http->http_SizeOfContent )-2;
+					res = (FQUAD )FindInBinarySimple( http->http_PartDivider, divSize, startOfFile, multipartLen )-2;
 					
 					char *endOfFile = startOfFile + res;
 					DEBUG("MULTI FOUND END OF FILE %p START %p LEN %lu\n", endOfFile, startOfFile, res );
