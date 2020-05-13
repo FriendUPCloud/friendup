@@ -3907,8 +3907,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 					// Check for new events
 					t.checkDesktopEvents();
-					
-					console.log( 'All: ' + ( forceRefresh ? 'force' : 'not' ), newIcons );
 				}
 				m.execute( 'device/list' );
 			}
