@@ -302,6 +302,9 @@ Widget.prototype.setFlag = function( flag, val )
 			this.dom.style.position = 'fixed';
 			this.dom.style.zIndex = '';
 			break;
+		case 'resizable':
+			
+			break;
 	}
 	this.flags[flag] = val;
 }
@@ -343,6 +346,7 @@ Widget.prototype.show = function( callback )
 		}, 5 );
 	}
 	this.dom.style.visibility = 'visible';
+	this.dom.classList.add( 'Showing' );
 	this.dom.style.pointerEvents = 'all';
 	if( callback ) callback();
 }
@@ -354,6 +358,7 @@ Widget.prototype.hide = function( callback )
 	{
 		self.shown = false;
 		self.dom.style.visibility = 'hidden';
+		self.dom.classList.remove( 'Showing' );
 		self.dom.style.pointerEvents = 'none';
 		if( callback ) callback();
 	}

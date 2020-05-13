@@ -1750,6 +1750,7 @@ body #CalendarWidget
 	border-radius: 0 0 0 3px;
 }
 
+
 #calendarEventsToday
 {
 	max-height: 400px;
@@ -2502,6 +2503,22 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 }
 
 /* Various built-in icons */
+
+.TrayElement.Calendar:before
+{
+	font-family: fontawesome;
+	margin: 0px 0 0 2px;
+	content: "\f271";
+	font-size: 106%;
+	text-align: center;
+	line-height: 24px;
+}
+
+#Tray.Size16 .TrayElement.Calendar:before
+{
+    font-size: 93%;
+    line-height: 18px;
+}
 
 .TrayElement.Download:before
 {

@@ -449,6 +449,7 @@ i18n_volume_information                 : Disk information
 i18n_volume_permissions                 : Disk permissions
 i18n_drag_to_download_file              : Click or drag to desktop to download.
 i18n_drag_files_to_download             : Drop files to download.
+i18n_add_calendar_event                 : Add calendar event.
 
 i18n_creating_directory                 : Creating directory
 i18n_building_file_index                : Building file index...

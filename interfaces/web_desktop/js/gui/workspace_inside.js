@@ -2929,6 +2929,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									{
 										ge( 'Tray' ).downloadApplet.innerHTML = '<div class="BubbleInfo"><div>' + i18n( 'i18n_drag_files_to_download' ) + '.</div></div>';
 									}
+									// And the calendar applet
+									if( ge( 'Tray' ) && ge( 'Tray' ).calendarApplet )
+									{
+										ge( 'Tray' ).calendarApplet.innerHTML = '<div class="BubbleInfo"><div>' + i18n( 'i18n_add_calendar_event' ) + '.</div></div>';
+									}
 									
 									// New version of Friend?
 									if( Workspace.loginUsername != 'go' )

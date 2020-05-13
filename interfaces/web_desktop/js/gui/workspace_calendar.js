@@ -93,6 +93,7 @@ Workspace.createCalendar = function( wid, sessions )
 			calendar.render( true );
 			wid.autosize();
 			ge( 'DoorsScreen' ).screenObject.resize();
+			wid.dom.classList.add( 'Loaded' );
 		}
 		md.execute( 'getcalendarevents', { date: calendar.date.getFullYear() + '-' + ( calendar.date.getMonth() + 1 ) } );
 	}

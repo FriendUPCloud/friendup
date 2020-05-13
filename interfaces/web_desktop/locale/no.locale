@@ -445,6 +445,7 @@ i18n_volume_information                 : Enhetsinformasjon
 i18n_volume_permissions                 : Enhetsrettigheter
 i18n_drag_to_download_file              : Clikk eller dra og slipp på din desktop.
 i18n_drag_files_to_download             : Slipp filer for nedlastning.
+i18n_add_calendar_event                 : Ny kalenderhendelse.
 
 i18n_creating_directory                 : Lager mappe
 i18n_building_file_index                : Lager filindex...
