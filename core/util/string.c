@@ -701,8 +701,8 @@ char* StringShellEscapeSize( const char* str, int *len )
 //
 //
 
-static inline void preKmp(char *x, int m, int kmpNext[]) {
-	int i, j;
+static inline void preKmp(char *x, int m, FQUAD kmpNext[]) {
+	FQUAD i, j;
 
 	i = 0;
 	j = kmpNext[0] = -1;
@@ -770,7 +770,7 @@ char *FindInBinary(char *x, int m, char *y, int n)
 FQUAD FindInBinaryPOS(char *x, int m, char *y, FQUAD n) 
 {
 	FQUAD i, j;
-	int kmpNext[ m ];
+	FQUAD kmpNext[ m ];
 
 	// Preprocessing 
 	preKmp(x, m, kmpNext);
