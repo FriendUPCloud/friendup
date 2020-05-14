@@ -589,10 +589,14 @@ cAjax.prototype.send = function( data, callback )
 				for( var b = 0; b < titleBars.length; b++ )
 				{
 					if( !titleBars[b].classList.contains( 'Busy' ) )
+					{
 						titleBars[b].classList.add( 'Busy' );
+					}
 				}
 				if( !document.body.classList.contains( 'Busy' ) )
+				{
 					document.body.classList.add( 'Busy' );
+				}
 			}
 		}
 	}
@@ -952,4 +956,16 @@ if( typeof bindSingleParameterMethod != 'function' )
 	};
 }
 
+// Clean ajax calls!
+function CleanAjaxCalls()
+{
+	if( _cajax_connection_num == 0 && Friend.cajax.length == 0 )
+	{
+		// Clean it up!
+		while( _cajax_process_count > 0 )
+		{
+			let x = new cAjax(); x.destroySilent();
+		}
+	}
+}
 
