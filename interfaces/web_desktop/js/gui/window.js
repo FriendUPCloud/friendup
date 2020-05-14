@@ -4485,13 +4485,13 @@ var View = function( args )
 		// Check if the iframe is ready to receive a message
 		if( this.iframe && this.iframe.loaded && this.iframe.contentWindow )
 		{
-			let u = Workspace.protocol + '://' + 
+			let u = Workspace.protocolUrl + 
 				this.iframe.src.split( '//' )[1].split( '/' )[0];
 			
-			let origin = event && 
-				event.origin && event.origin != 'null' && event.origin.indexOf( 'wss:' ) != 0 ? event.origin : '*'; // * used to be u;
+			//let origin = event && 
+			//	event.origin && event.origin != 'null' && event.origin.indexOf( 'wss:' ) != 0 ? event.origin : '*'; // * used to be u;
 			// TODO: Fix this with security
-			origin = '*';
+			let origin = '*';
 			
 			if( !dataObject.applicationId && this.iframe.applicationId )
 			{
@@ -4527,7 +4527,7 @@ var View = function( args )
 
 		if( this.executingSendQueue || !this.iframe ) return;
 		this.executingSendQueue = true;
-		for( var a = 0; a < this.sendQueue.length; a++ )
+		for( let a = 0; a < this.sendQueue.length; a++ )
 		{
 			let msg = this.sendQueue[ a ];
 			this.sendMessage( msg );
