@@ -890,7 +890,13 @@ function _ActivateWindowOnly( div )
 	
 	// Don't select other fields
 	if( !div.classList.contains( 'Active' ) )
-		FocusOnNothing();
+	{
+		let ae = document.activeElement;
+		if( ae.parentNode && ae.parentNode.parentNode != div )
+		{
+			FocusOnNothing();
+		}
+	}
 	
 	// Special case
 	var delayedDeactivation = true;

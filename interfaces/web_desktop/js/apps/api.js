@@ -36,7 +36,7 @@ window.loaded = false;
 window.applicationStarted = false;
 var __timeout = 200;
 
-if ( this.apijsHasExecuted )
+if( this.apijsHasExecuted )
 	throw new Error( 'api.js has already run, aborting' );
 
 this.apijsHasExecuted = true;

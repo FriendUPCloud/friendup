@@ -8396,7 +8396,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			else if( e == 'fail' ) 
 			{
 				console.log( '[getsetting] Got "fail" response.' );
-				//console.trace();
 			}
 			
 			Workspace.serverIsThere = true;
