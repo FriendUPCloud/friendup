@@ -123,6 +123,8 @@ static const char *HEADERS[] = {
 * file uploads. (TK-628)
 */
 #define TUNABLE_LARGE_HTTP_REQUEST_SIZE (10*1024*1024) //10MB
+// max bytes wrote by one write() function in one call
+#define TUNABLE_LARGE_HTTP_REQUEST_COPY_SIZE (INT_MAX/8)
 
 
 #define HTTP_CONTENT_TEMP_NAME "/tmp/Friendup/FriendHTTP_CONTENT_XXXXXXXXXXXXXXXXXX"

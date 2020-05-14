@@ -1547,7 +1547,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 		{
 			if( http->http_ContentFileHandle > 0 )
 			{
-				int store = TUNABLE_LARGE_HTTP_REQUEST_SIZE;
+				int store = TUNABLE_LARGE_HTTP_REQUEST_COPY_SIZE;
 				
 				//int wrote = write( http->http_ContentFileHandle, data, length );
 				//int wrote = write( http->http_ContentFileHandle, data, store );
@@ -1555,9 +1555,9 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 				FQUAD toWrite = length;
 				char *dataptr = data;
 				
-				if( toWrite > TUNABLE_LARGE_HTTP_REQUEST_SIZE )
+				if( toWrite > TUNABLE_LARGE_HTTP_REQUEST_COPY_SIZE )
 				{
-					store = TUNABLE_LARGE_HTTP_REQUEST_SIZE;
+					store = TUNABLE_LARGE_HTTP_REQUEST_COPY_SIZE;
 				}
 				else
 				{
@@ -1572,9 +1572,9 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 					
 					DEBUG("UPLOAD writing data into buffer toWrite: %ld wrote: %d\n", toWrite, wrote );
 			
-					if( toWrite > TUNABLE_LARGE_HTTP_REQUEST_SIZE )
+					if( toWrite > TUNABLE_LARGE_HTTP_REQUEST_COPY_SIZE )
 					{
-						store = TUNABLE_LARGE_HTTP_REQUEST_SIZE;
+						store = TUNABLE_LARGE_HTTP_REQUEST_COPY_SIZE;
 					}
 					else
 					{
@@ -1582,6 +1582,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 					}
 				}
 				
+				/*
 				DEBUG("-----------------------------------\n--------------------------------\n---------------------\n---------------------\n---------\n");
 				FQUAD z;
 				for( z=0 ; z < (length-8) ; z++ )
@@ -1591,6 +1592,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 						FERROR("HTTP.c END FILE FOUDN! in CONTENT\n");
 					}
 				}
+				*/
 				
 				DEBUG("UPLOAD writting done!\n");
 				//FQUAD = 
