@@ -4074,12 +4074,12 @@ var View = function( args )
 			let instance = Math.random() % 100;
 			if( ifr.applicationId )
 			{
-				for( var a = 0; a < Workspace.applications.length; a++ )
+				for( let a = 0; a < Workspace.applications.length; a++ )
 				{
 					let app = Workspace.applications[a];
 					if( app.applicationId == ifr.applicationId )
 					{
-						for( var b in app.windows )
+						for( let b in app.windows )
 						{
 							// Ah we found our parent view
 							if( self.parentViewId == b )
@@ -4099,7 +4099,7 @@ var View = function( args )
 				}
 			}
 
-			let msg = {}; if( packet ) for( var a in packet ) msg[a] = packet[a];
+			let msg = {}; if( packet ) for( let a in packet ) msg[a] = packet[a];
 			msg.command = 'setbodycontent';
 			msg.cachedAppData = _applicationBasics;
 			msg.dosDrivers = Friend.dosDrivers;
