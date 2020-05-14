@@ -965,6 +965,7 @@ function CleanAjaxCalls()
 		// Clean it up!
 		while( _cajax_process_count > 0 )
 		{
+			_cajax_process_count--; // Trick cajax
 			let x = new cAjax(); x.destroySilent();
 		}
 	}
