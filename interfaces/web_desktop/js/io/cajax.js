@@ -55,7 +55,7 @@ function AddToCajaxQueue( ele )
 		return false;
 	}
 	// Duplicate check
-	for( var a = 0; a < Friend.cajax.length; a++ )
+	for( let a = 0; a < Friend.cajax.length; a++ )
 	{
 		if( Friend.cajax[a] == ele )
 		{
@@ -63,18 +63,18 @@ function AddToCajaxQueue( ele )
 		}
 	}
 	// Add ajax element to the top of the queue
-	var o = [ ele ];
-	for( var a = 0; a < Friend.cajax.length; a++ )
+	let o = [ ele ];
+	for( let a = 0; a < Friend.cajax.length; a++ )
 		o.push( Friend.cajax[ a ] );
 	Friend.cajax = o;
 }
 
 function RemoveFromCajaxQueue( ele )
 {
-	var o = [];
-	var executeLength = 6;
-	var executors = [];
-	for( var a = 0; a < Friend.cajax.length; a++ )
+	let o = [];
+	let executeLength = 6;
+	let executors = [];
+	for( let a = 0; a < Friend.cajax.length; a++ )
 	{
 		if( Friend.cajax[a] != ele )
 		{
@@ -90,7 +90,7 @@ function RemoveFromCajaxQueue( ele )
 		}
 	}
 	Friend.cajax = o;
-	for( var a = 0; a < executors.length; a++ )
+	for( let a = 0; a < executors.length; a++ )
 	{
 		executors[ a ].send( null );
 	}
@@ -99,8 +99,8 @@ function RemoveFromCajaxQueue( ele )
 // Cancel all queued cajax calls on id
 function CancelCajaxOnId( id )
 {
-	var o = [];
-	for( var a = 0; a < Friend.cajax.length; a++ )
+	let o = [];
+	for( let a = 0; a < Friend.cajax.length; a++ )
 	{
 		if( Friend.cajax[ a ].cancelId != id )
 			o.push( Friend.cajax[ a ] );
@@ -117,7 +117,7 @@ function CancelCajaxOnId( id )
 // Can have a cancellable series
 cAjax = function()
 {
-	var self = this;
+	let self = this;
 	
 	_cajax_process_count++;
 	
@@ -164,7 +164,7 @@ cAjax = function()
 	else this.proxy = new XMLHttpRequest();
 	
 	// State call
-	var jax = this;
+	let jax = this;
 	this.proxy.onreadystatechange = function()
 	{
 		// We're finished handshaking
@@ -190,7 +190,7 @@ cAjax = function()
 			}
 			else if( this.hasReturnCode )
 			{
-				var sep = '<!--separate-->';
+				let sep = '<!--separate-->';
 				if( this.responseText.indexOf( sep ) > 0)
 				{
 					jax.returnCode = this.responseText.substr( 0, this.responseText.indexOf( sep ) );
@@ -215,9 +215,9 @@ cAjax = function()
 				{
 					try
 					{
-						var t = JSON.parse( jax.rawData );
+						let t = JSON.parse( jax.rawData );
 						// Deprecate from 1.0 beta 2 "no user!"
-						var res = t ? t.response.toLowerCase() : '';
+						let res = t ? t.response.toLowerCase() : '';
 						if( t && ( res == 'user not found' || res.toLowerCase() == 'user session not found' ) )
 						{
 							if( window.Workspace && res.toLowerCase() == 'user session not found' ) 
@@ -251,9 +251,9 @@ cAjax = function()
 				{
 					try
 					{
-						var r = JSON.parse( jax.returnData );
+						let r = JSON.parse( jax.returnData );
 						
-						var res = r ? r.response.toLowerCase() : '';
+						let res = r ? r.response.toLowerCase() : '';
 						
 						if( res == 'user not found' || res.toLowerCase() == 'user session not found' )
 						{
@@ -325,7 +325,7 @@ cAjax = function()
 // Never use this one outside the destroy() function!!!
 cAjax.prototype.destroySilent = function()
 {
-	var self = this;
+	let self = this;
 	
 	// No more activity here!
 	self.decreaseProcessCount();
@@ -383,7 +383,7 @@ cAjax.prototype.destroy = function()
 // Open an ajax query
 cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 {
-	var self = this;
+	let self = this;
 	
 	if( this.opened )
 	{
@@ -451,10 +451,10 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		this.openFunc = function(){ 
 			if( window.Workspace )
 				self.addVar( 'sessionid', Workspace.sessionId );
-			var u = self.url;
+			let u = self.url;
 			if( u.substr( 0, 1 ) == '/' )
 			{
-				var urlbase = document.location.origin;
+				let urlbase = document.location.origin;
 				u = urlbase + u;
 			}
 			self.proxy.open( self.method, u, syncing ); 
@@ -496,8 +496,8 @@ cAjax.prototype.setRequestHeader = function( type, data )
 // Just generate a random unique number
 cAjax.prototype.getRandNumbers = function()
 {
-	var i = '';
-	for( var a = 0; a < 2; a++ )
+	let i = '';
+	for( let a = 0; a < 2; a++ )
 		i += Math.floor( Math.random() * 1000 ) + '';
 	i += ( new Date() ).getTime();
 	return i;
@@ -523,7 +523,7 @@ cAjax.prototype.send = function( data, callback )
 		}
 	}
 
-	var self = this;
+	let self = this;
 	
 	if( self.life )
 	{
@@ -585,8 +585,8 @@ cAjax.prototype.send = function( data, callback )
 		{
 			if( _cajax_process_count > 0 )
 			{
-				var titleBars = document.getElementsByClassName( 'TitleBar' );
-				for( var b = 0; b < titleBars.length; b++ )
+				let titleBars = document.getElementsByClassName( 'TitleBar' );
+				for( let b = 0; b < titleBars.length; b++ )
 				{
 					if( !titleBars[b].classList.contains( 'Busy' ) )
 					{
@@ -605,8 +605,8 @@ cAjax.prototype.send = function( data, callback )
 	if( self.mode == 'websocket' && window.Workspace && Workspace.conn && Workspace.conn.ws && Workspace.websocketState == 'open' )
 	{
 		//console.log( '[cajax] Sending ajax call with websockets.' );
-        var u = self.url.split( '?' );
-        var wsdata = ( data ? data : {} );
+        let u = self.url.split( '?' );
+        let wsdata = ( data ? data : {} );
         if( self.vars )
         {
 	       for (dataIndex in self.vars)
@@ -618,20 +618,20 @@ cAjax.prototype.send = function( data, callback )
 	    // if we have parameters set in the URL we add them to the socket...
         if( u[1] )
         {
-			var pairs = u[1].split( '&' );
-			for( var a = 0; a < pairs.length; a++ )
+			let pairs = u[1].split( '&' );
+			for( let a = 0; a < pairs.length; a++ )
 			{
-				var p = pairs[a].split( '=' );
+				let p = pairs[a].split( '=' );
 				wsdata[p[0]] = p[1];
 			}
         }
         
-        var req = {
+        let req = {
                 path : u[0].substr(1),
                 data : wsdata
         };
         
-        var reqID = Workspace.conn.request( req, bindSingleParameterMethod( self, 'handleWebSocketResponse' ) );
+        let reqID = Workspace.conn.request( req, bindSingleParameterMethod( self, 'handleWebSocketResponse' ) );
         
         if( typeof( reqID ) != 'undefined' && !reqID )
         {
@@ -650,7 +650,7 @@ cAjax.prototype.send = function( data, callback )
         self.wsRequestID = reqID;
 		
 		// Not for module calls
-		var addBusy = true;
+		let addBusy = true;
 		if( self.url.indexOf( 'module/' ) < 0 ) 
 		{
 			addBusy = false;
@@ -664,11 +664,11 @@ cAjax.prototype.send = function( data, callback )
 	{
 		this.openFunc();
 	
-		var res = null;
+		let res = null;
 		
 		if( this.method == 'POST' )
 		{
-			var u = this.url.split( '?' );
+			let u = this.url.split( '?' );
 			u = u[0] + '?' + ( u[1] ? ( u[1]+'&' ) : '' ) + 'cachekiller=' + this.getRandNumbers();
 			this.proxy.setRequestHeader( 'Method', 'POST ' + u + ' HTTP/1.1' );
 			this.proxy.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' );
@@ -691,8 +691,8 @@ cAjax.prototype.send = function( data, callback )
 			}
 			else if( this.varcount > 0 )
 			{
-				var out = [];
-				for( var a in this.vars )
+				let out = [];
+				for( let a in this.vars )
 					out.push( a + '=' + this.vars[a] );
 				
 				new Promise( function( resolve, reject )
@@ -740,7 +740,7 @@ cAjax.prototype.send = function( data, callback )
 		// Normal GET request
 		else
 		{
-			var u = this.url.split( '?' );
+			let u = this.url.split( '?' );
 			u = u[0] + '?' + ( u[1] ? ( u[1]+'&' ) : '' ) + 'cachekiller=' + this.getRandNumbers();
 			this.proxy.setRequestHeader( 'Method', 'GET ' + u + ' HTTP/1.1' );
 			// // console.log( 'Test2: Here: ' + u );
@@ -789,8 +789,8 @@ cAjax.prototype.decreaseProcessCount = function()
 	_cajax_process_count--;
 	if( _cajax_process_count == 0 )
 	{
-		var titleBars = document.getElementsByClassName( 'TitleBar' );
-		for( var b = 0; b < titleBars.length; b++ )
+		let titleBars = document.getElementsByClassName( 'TitleBar' );
+		for( let b = 0; b < titleBars.length; b++ )
 		{
 			titleBars[b].classList.remove( 'Busy' );
 		}
@@ -800,7 +800,7 @@ cAjax.prototype.decreaseProcessCount = function()
 
 cAjax.prototype.handleWebSocketResponse = function( wsdata )
 {	
-	var self = this;
+	let self = this;
 	
 	if( self.life )
 		clearTimeout( self.life );
@@ -854,8 +854,8 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 	if( self.hasReturnCode )
 	{
 		// With a separator
-		var sep = '<!--separate-->';
-		var sepaIndex = self.rawData.indexOf( sep );
+		let sep = '<!--separate-->';
+		let sepaIndex = self.rawData.indexOf( sep );
 		if( sepaIndex > 0 )
 		{
 			self.returnCode = self.rawData.substr( 0, sepaIndex );
@@ -880,7 +880,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 	{
 		try
 		{
-			var t = JSON.parse( self.returnData );
+			let t = JSON.parse( self.returnData );
 			// Deprecate from 1.0 beta 2 "no user!"
 			if( t && ( t.response.toLowerCase() == 'user not found' || t.response.toLowerCase() == 'user session not found' ) )
 			{
@@ -913,7 +913,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 	{
 		try
 		{
-			var r = JSON.parse( self.returnData );
+			let r = JSON.parse( self.returnData );
 			if( r.response.toLowerCase() == 'user session not found' )
 			{
 				if( window.Workspace )
