@@ -1555,13 +1555,9 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 				FQUAD toWrite = length;
 				char *dataptr = data;
 				
-				if( toWrite > TUNABLE_LARGE_HTTP_REQUEST_COPY_SIZE )
+				if( toWrite < (FQUAD)store )
 				{
-					store = TUNABLE_LARGE_HTTP_REQUEST_COPY_SIZE;
-				}
-				else
-				{
-					store = toWrite;
+					store = (int)toWrite;
 				}
 				
 				while( toWrite > 0 )
@@ -1572,13 +1568,9 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 					
 					DEBUG("UPLOAD writing data into buffer toWrite: %ld wrote: %d\n", toWrite, wrote );
 			
-					if( toWrite > TUNABLE_LARGE_HTTP_REQUEST_COPY_SIZE )
+					if( toWrite < store )
 					{
-						store = TUNABLE_LARGE_HTTP_REQUEST_COPY_SIZE;
-					}
-					else
-					{
-						store = toWrite;
+						store = (int)toWrite;
 					}
 				}
 				

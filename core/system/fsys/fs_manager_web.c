@@ -1264,7 +1264,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								fp->f_WSocket =  request->http_WSocket;
 							
 								#define FS_READ_BUFFER 262144
-								int readbytes = 0;// FS_READ_BUFFER;
+								FQUAD readbytes = 0;// FS_READ_BUFFER;
 								char *dataBuffer = FCalloc( FS_READ_BUFFER + 1, sizeof( char ) ); 
 							
 								if( dataBuffer != NULL )
@@ -1330,14 +1330,14 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								//we want to read only part of data
 #define FS_READ_BUFFER 262144
 
-								int totalBytes = 0;
+								FQUAD totalBytes = 0;
 								
 								ListString *ls = ListStringNew();
 							
 								if( offset != NULL && bytes != NULL )
 								{
-									int offsetint = atoi( offset );
-									int bytesint = atoi( bytes );
+									FQUAD offsetint = atoll( offset );
+									FQUAD bytesint = atoll( bytes );
 								
 									if( actFS->FileSeek( fp, offsetint ) != -1 )
 									{

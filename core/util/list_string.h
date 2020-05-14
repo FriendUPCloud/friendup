@@ -23,13 +23,13 @@
 
 typedef struct ListString
 {
-	char *ls_Data;
-	FLONG ls_Size;					// size == 0, first element without data
+	char					*ls_Data;
+	FQUAD					ls_Size;					// size == 0, first element without data
 	
-	FILE			*ls_File;			// poitner to file
-	char			*ls_FName;		// pointer to file name
-	struct ListString *ls_Next;
-	struct ListString *ls_Last;		// we always hold pointer to last structure
+	FILE					*ls_File;			// poitner to file
+	char					*ls_FName;		// pointer to file name
+	struct ListString		*ls_Next;
+	struct ListString		*ls_Last;		// we always hold pointer to last structure
 }ListString;
 
 //
