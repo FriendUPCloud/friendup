@@ -520,6 +520,7 @@ cAjax.prototype.send = function( data, callback )
 			this.onload = null;
 			this.onloadAfter( e, d );
 			this.onloadAfter = null;
+			CleanAjaxCalls();
 		}
 	}
 
