@@ -963,11 +963,13 @@ function CleanAjaxCalls()
 	if( _cajax_connection_num == 0 && Friend.cajax.length == 0 )
 	{
 		// Clean it up!
-		while( _cajax_process_count > 0 )
+		_cajax_process_count = 0;
+		let titleBars = document.getElementsByClassName( 'TitleBar' );
+		for( let b = 0; b < titleBars.length; b++ )
 		{
-			_cajax_process_count--; // Trick cajax
-			let x = new cAjax(); x.destroySilent();
+			titleBars[b].classList.remove( 'Busy' );
 		}
+		document.body.classList.remove( 'Busy' );
 	}
 }
 
