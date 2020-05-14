@@ -393,7 +393,7 @@ int HttpParseHeader( Http* http, const char* request, FQUAD fullReqLength )
 	
 	// we cannot parse whole big message, nothing is sending so big headers
 	unsigned int length = (int)fullReqLength;
-	int reqMaxLength = HTTP_MAX_MEM_CONTENT_SIZE;
+	int reqMaxLength = TUNABLE_LARGE_HTTP_REQUEST_SIZE;
 	if( fullReqLength > reqMaxLength )
 	{
 		fullReqLength = reqMaxLength;
@@ -1343,7 +1343,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 							}
 						}
 						
-						if( size > HTTP_MAX_MEM_CONTENT_SIZE )
+						if( size > TUNABLE_LARGE_HTTP_REQUEST_SIZE )
 						{
 							strcpy( http->http_TempContentFileName, HTTP_CONTENT_TEMP_NAME );
 							char *tfname = mktemp( http->http_TempContentFileName );
@@ -1433,7 +1433,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 							}
 						}
 						
-						if( size > HTTP_MAX_MEM_CONTENT_SIZE )
+						if( size > TUNABLE_LARGE_HTTP_REQUEST_SIZE )
 						{
 							strcpy( http->http_TempContentFileName, HTTP_CONTENT_TEMP_NAME );
 							char *tfname = mktemp( http->http_TempContentFileName );
