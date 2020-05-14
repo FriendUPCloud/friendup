@@ -292,7 +292,6 @@ cAjax = function()
 			{
 				if( !jax.forceSend )
 					_cajax_http_connections--;
-				//console.log( '[cajax] We now are running ' + _cajax_http_connections + '/' + _cajax_http_max_connections + ' connections. (closed one)', Friend.cajax );
 			}
 			
 			// End clean queue
@@ -316,7 +315,6 @@ cAjax = function()
 		}
 		else
 		{
-			//console.log( '* Idling ajax: ' + this.readyState + ' ' + this.status );
 		}
 	}
 }
@@ -396,15 +394,15 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	// Try websockets!!
 	if( 
 		!this.forceHTTP &&
-		this.proxy.responseType != 'arraybuffer' &&
 		window.Workspace &&
 		Workspace.conn && 
 		Workspace.conn.ws && 
 		!Workspace.websocketsOffline && 
+		this.proxy.responseType != 'arraybuffer' &&
 		Workspace.websocketState == 'open' &&
 		typeof( url ) == 'string' && 
-		url.indexOf( 'system.library' ) >= 0 &&
 		url.indexOf( 'http' ) != 0 &&
+		url.indexOf( 'system.library' ) >= 0 &&
 		url.indexOf( '/file/read' ) < 0 &&
 		url.indexOf( '/file/write' ) < 0
 	)
@@ -424,8 +422,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	if( this.lastOptions && !method && !url && !syncing && !hasReturnCode )
 	{
 		this.proxy.hasReturnCode = this.lastOptions.hasReturnCode;
-		this.openFunc = function(){ 
-			//console.log( '[cajax] Last options opening: ' + self.lastOptions.url );
+		this.openFunc = function() { 
 			if( window.Workspace )
 				self.addVar( 'sessionid', Workspace.sessionId );
 			self.proxy.open( self.lastOptions.method, self.lastOptions.url, self.lastOptions.syncing ); 
@@ -448,7 +445,8 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		if( !url ) url = this.url;
 		this.url = url;
 		this.proxy.hasReturnCode = hasReturnCode;
-		this.openFunc = function(){ 
+		this.openFunc = function()
+		{ 
 			if( window.Workspace )
 				self.addVar( 'sessionid', Workspace.sessionId );
 			let u = self.url;
@@ -563,7 +561,6 @@ cAjax.prototype.send = function( data, callback )
 			AddToCajaxQueue( self );
 			return;
 		}
-		//console.log( '[cajax] We now are running ' + _cajax_http_connections + '/' + _cajax_http_max_connections + ' connections. (added one)' );
 		if( !this.forceSend )
 			_cajax_http_connections++;
 	}
@@ -641,11 +638,9 @@ cAjax.prototype.send = function( data, callback )
         }
         else if( typeof( reqID ) == 'undefined' )
         {
-        	//console.log( 'cAjax: Request was undefined.' );
         }
         else
         {
-        	// console.log( 'Test3: We got requestID: ' + reqID );
         }
         
         self.wsRequestID = reqID;
@@ -670,7 +665,7 @@ cAjax.prototype.send = function( data, callback )
 		if( this.method == 'POST' )
 		{
 			let u = this.url.split( '?' );
-			u = u[0] + '?' + ( u[1] ? ( u[1]+'&' ) : '' ) + 'cachekiller=' + this.getRandNumbers();
+			u = u[ 0 ] + '?' + ( u[ 1 ] ? ( u[ 1 ] + '&' ) : '' ) + 'cachekiller=' + this.getRandNumbers();
 			this.proxy.setRequestHeader( 'Method', 'POST ' + u + ' HTTP/1.1' );
 			this.proxy.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' );
 			
@@ -694,7 +689,7 @@ cAjax.prototype.send = function( data, callback )
 			{
 				let out = [];
 				for( let a in this.vars )
-					out.push( a + '=' + this.vars[a] );
+					out.push( a + '=' + this.vars[ a ] );
 				
 				new Promise( function( resolve, reject )
 				{
@@ -727,7 +722,6 @@ cAjax.prototype.send = function( data, callback )
 						successfulSend();
 					}
 				} );
-				// // console.log( 'Test2: Here u: ' + out.join( '&' ) );
 			}
 			// All else fails?
 			else
@@ -735,16 +729,13 @@ cAjax.prototype.send = function( data, callback )
 				try { res = this.proxy.send ( null ); }
 				catch ( e ) { res = this.proxy.send( NULL ); }
 			}
-		
-			//console.log( 'Posting ' + u );
 		}
 		// Normal GET request
 		else
 		{
 			let u = this.url.split( '?' );
-			u = u[0] + '?' + ( u[1] ? ( u[1]+'&' ) : '' ) + 'cachekiller=' + this.getRandNumbers();
+			u = u[0] + '?' + ( u[ 1 ] ? ( u[ 1 ] + '&' ) : '' ) + 'cachekiller=' + this.getRandNumbers();
 			this.proxy.setRequestHeader( 'Method', 'GET ' + u + ' HTTP/1.1' );
-			// // console.log( 'Test2: Here: ' + u );
 			try 
 			{ 
 				res = this.proxy.send( null ); 
@@ -753,8 +744,6 @@ cAjax.prototype.send = function( data, callback )
 			{ 
 				res = this.proxy.send( NULL ); 
 			}
-		
-			//console.log( 'Getting ' + u );
 		}
 		
 		if( res )
@@ -766,12 +755,8 @@ cAjax.prototype.send = function( data, callback )
 		if( self.life ) clearTimeout( self.life );
 		self.life = setTimeout( function()
 		{
-			//console.log( 'Destroying self after ten seconds. ' + u );
 			self.destroy();
 		}, 10000 );
-		
-		//console.log( '[cajax] We sent stuff! ' + u );
-		
 		return;
 	}
 	else
