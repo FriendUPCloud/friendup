@@ -940,6 +940,10 @@ function _ActivateWindowOnly( div )
 		// This is the div we are looking for!
 		else if( m == div )
 		{
+			// Record active window for this workspace
+			if( globalConfig.workspaceCurrent == div.workspace )
+				setVirtualWorkspaceInformation( div.workspace, 'activeWindow', div );
+			
 			if( div.content )
 				window.regionWindow = div.content;
 			else window.regionWindow = div;
@@ -1707,6 +1711,17 @@ function CloseView( win, delayed )
 		// Unassign this
 		if( win.parentNode == Friend.currentWindowHover )
 			Friend.currentWindowHover = null;
+		
+		// Check virtual workspace information
+		if( win.workspace )
+		{
+			// Unset if the active window is this to be closed..
+			if( virtualWorkspaces[ win.workspace ] )
+			{
+				if( virtualWorkspaces[ win.workspace ].activeWindow == win )
+					virtualWorkspaces[ win.workspace ].activeWindow = null;
+			}
+		}
 		
 		var count = 0;
 
@@ -3915,6 +3930,8 @@ var View = function( args )
 		
 		// Move the viewcontainer
 		wn.viewContainer.style.left = ( Workspace.screen.getMaxViewWidth() * wsnum ) + 'px';
+		wn.workspace = wsnum;
+		cleanVirtualWorkspaceInformation(); // Just clean the workspace info
 		
 		// Done moving
 		if( this.flags.screen )

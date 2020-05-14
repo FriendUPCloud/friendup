@@ -20,6 +20,37 @@ var FUI_MOUSEDOWN_PICKOBJ = 11;
 
 /* Done important flags for GUI elements ------------------------------------ */
 
+// Container of settings for virtual workspaces
+var virtualWorkspaces = [];
+function setVirtualWorkspaceInformation( num, flag, value )
+{
+	if( typeof( num ) == 'undefined' || num < 0 ) return;
+
+	if( typeof( virtualWorkspaces[ num ] ) == 'undefined' )
+	{
+		virtualWorkspaces[ num ] = {
+			'activeWindow': false
+		};
+	}
+	switch( flag.toLowerCase() )
+	{
+		case 'activewindow':
+			virtualWorkspaces[ num ].activeWindow = value;
+			break;
+	}
+}
+function cleanVirtualWorkspaceInformation()
+{
+	for( let a in virtualWorkspaces )
+	{
+		if( virtualWorkspaces[ a ].activeWindow && virtualWorkspaces[ a ].activeWindow.workspace != a )
+		{
+			virtualWorkspaces[ a ].activeWindow = null;
+		}
+	}
+}
+
+// Window information
 var movableHighestZindex = 99;
 var movableWindowCount = 0;
 var movableWindows = [];
