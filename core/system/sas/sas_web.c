@@ -236,6 +236,7 @@ Http* SASWebRequest( SystemBase *l, char **urlpath, Http* request, UserSession *
 		char *authid = NULL;
 		char *sasid = NULL;
 		int type = 0;
+		FBOOL forceID = FALSE;
 		
 		/*
 		Thomas Wollburg :
