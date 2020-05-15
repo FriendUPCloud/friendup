@@ -164,6 +164,12 @@ User *UMGetUserByUUIDDB( UserManager *um, const char *name );
 //
 //
 
+User *UMGetOnlyUserByUUIDDB( UserManager *um, const char *uuid );
+
+//
+//
+//
+
 User *UMGetUserByIDDB( UserManager *um, FULONG id );
 
 //

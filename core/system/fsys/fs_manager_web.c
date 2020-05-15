@@ -2249,12 +2249,12 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 				
 				else if( strcmp( urlpath[ 1 ], "expose" ) == 0 )
 				{
-					response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
-											   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
-					
 					char userid[ 512 ];
 					char name[ 256 ];
 					char dstfield[10];
+					
+					response = HttpNewSimpleA( HTTP_200_OK, request, HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
+											   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 					
 					strcpy( dstfield, "Public" );
 					
@@ -2315,7 +2315,12 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 
 							if( tmpfs != NULL )
 							{
+								// we store user which is sharing data
 								tmpfs->fs_IDUser = loggedSession->us_User->u_ID;
+								// we also store filesystemID
+								tmpfs->fs_FSID = actDev->f_ID;
+								
+								DEBUG("\n\n\n\n\n tmpfs->fs_FSID : %lu\n\n\n\n\n", tmpfs->fs_FSID );
 						
 								tmpfs->fs_DeviceName = StringDuplicate( devname );
 						

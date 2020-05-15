@@ -734,6 +734,45 @@ User *UMGetUserByUUIDDB( UserManager *um, const char *uuid )
 }
 
 /**
+ * Get user structure from database by his name
+ * Do not assign him to any groups, just load
+ *
+ * @param um pointer to UserManager
+ * @param uuid unique user id
+ * @return User or NULL when error will appear
+ */
+User *UMGetOnlyUserByUUIDDB( UserManager *um, const char *uuid )
+{
+	if( uuid == NULL )
+	{
+		return NULL;
+	}
+	SystemBase *sb = (SystemBase *)um->um_SB;
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	User *user = NULL;
+	
+	if( sqlLib != NULL )
+	{
+		int len = strlen( uuid )+128;
+		char *where = FMalloc( len );
+	
+		DEBUG("[UMGetUserByNameDB] start\n");
+
+		sqlLib->SNPrintF( sqlLib, where, len, " `UniqueID`='%s'", uuid );
+	
+		int entries;
+	
+		user = ( struct User *)sqlLib->Load( sqlLib, UserDesc, where, &entries );
+		sb->LibrarySQLDrop( sb, sqlLib );
+
+		FFree( where );
+	}
+	
+	DEBUG("[UMGetUserByNameDB] end\n");
+	return user;
+}
+
+/**
  * Get user from database by his name
  *
  * @param um pointer to UserManager
