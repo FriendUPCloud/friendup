@@ -167,6 +167,8 @@ install:
 	mkdir -p $(FRIEND_PATH)/authmods
 	mkdir -p $(FRIEND_PATH)/resources
 	mkdir -p $(FRIEND_PATH)/resources/webclient
+	mkdir -p $(FRIEND_PATH)/repository
+	mkdir -p $(FRIEND_PATH)/cfg/crt
 
 	rsync -ravl interfaces/web_desktop/* $(FRIEND_PATH)/resources/webclient/
 	rsync -ravl interfaces/web_desktop/favicon.ico $(FRIEND_PATH)/resources/

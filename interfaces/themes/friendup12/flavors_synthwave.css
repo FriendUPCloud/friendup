@@ -530,6 +530,10 @@ html body.Synthwave .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	filter: contrast(1.5) hue-rotate(230deg) grayscale(0.3);
 }
 
+html body.Charcoal .Frame .Progress
+{
+	text-shadow: 1px 1px rgba(0,0,0,0.7);
+}
 
 
 

@@ -1147,6 +1147,7 @@ void FriendCoreProcess( void *fcv )
 					}
 					//DEBUG("mmaping");
 					incomingBufferLength = lseek( tmpFileHandle, 0, SEEK_END);
+					DEBUG("MMAP: friendcore size: %lu\n", incomingBufferLength );
 					incomingBufferPtr = mmap(0, incomingBufferLength, PROT_READ | PROT_WRITE, MAP_SHARED, tmpFileHandle, 0 );// offset);
 					//DEBUG("mmap status %p", incomingBufferPtr);
 					
@@ -1162,6 +1163,7 @@ void FriendCoreProcess( void *fcv )
 				}
 				
 				DEBUG("------------>>>>>>>>>>>>>>>>>>>>>>>>>. incomingBufferLength: %ld\n", incomingBufferLength );
+				DEBUG("MMAP_CHECK: %c > %c\n", incomingBufferPtr[0], incomingBufferPtr[ incomingBufferLength-1 ] );
 
 				// ------------------------------------------------------- 
 				Http *resp = ProtocolHttp( th->sock, incomingBufferPtr, incomingBufferLength );

@@ -63,7 +63,6 @@ if( $level == 'Admin' && $args->args->id > 0 )
 				array( 'FriendCreate', 'A programmers editor' ),
 				array( 'Author', 'A word processor' ),
 				array( 'Wallpaper', 'Select a wallpaper' ),
-				array( 'Astray', 'Play a game' ),
 				array( 'Calculator', 'Do some math' )
 			);
 			

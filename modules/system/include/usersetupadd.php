@@ -39,7 +39,6 @@ if( $level == 'Admin' )
 			array( 'FriendCreate', '1' ),
 			array( 'Author', '1' ),
 			array( 'Wallpaper', '1' ),
-			array( 'Astray', '1' ),
 			array( 'Calculator', '1' )
 		);
 		
