@@ -749,11 +749,20 @@ void WSThreadPing( void *p )
 #if USE_PTHREAD_PING == 1
 	pthread_detach( pthread_self() );
 #endif
-	
+	if( data == NULL )
+	{
+		return;
+	}
 	INCREASE_WS_THREADS();
 	
 	int n = 0;
 	WSCData *fcd = data->fcd;
+	
+	if( data == NULL || data->fcd == NULL )
+	{
+		DECREASE_WS_THREADS();
+		return;
+	}
 	
 	unsigned char *answer = FCalloc( 1024, sizeof(char) );
 	int answersize = snprintf( (char *)answer, 1024, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%s\"}}", data->requestid );
