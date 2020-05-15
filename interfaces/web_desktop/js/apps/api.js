@@ -8157,6 +8157,7 @@ GuiDesklet = function()
 		self.sessiontype = conf.sessiontype || null;
 		self.onevent = conf.onevent;
 		self.callback = callback;
+		self.forceid = conf.force;
 
 		self.isHost = false;
 		self.users = {};
@@ -8420,6 +8421,8 @@ GuiDesklet = function()
 		var self = this;
 		var reg = {
 			path : self.regPath,
+			sasid : self.id,
+			force : self.forceid,
 			data : {
 				authId : Application.authId,
 			},
