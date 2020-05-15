@@ -52,8 +52,10 @@ lws_vhost_bind_wsi(struct lws_vhost *vh, struct lws *wsi)
 	wsi->vhost = vh;
 	vh->count_bound_wsi++;
 	lws_context_unlock(vh->context); /* } context ---------- */
-	lwsl_info("%s: vh %s: count_bound_wsi %d\n",
-		    __func__, vh->name, vh->count_bound_wsi);
+	lwsl_debug("%s: vh %s: wsi %s/%s, count_bound_wsi %d\n", __func__,
+		   vh->name, wsi->role_ops ? wsi->role_ops->name : "none",
+		   wsi->protocol ? wsi->protocol->name : "none",
+		   vh->count_bound_wsi);
 	assert(wsi->vhost->count_bound_wsi > 0);
 }
 
@@ -67,8 +69,8 @@ lws_vhost_unbind_wsi(struct lws *wsi)
 
 	assert(wsi->vhost->count_bound_wsi > 0);
 	wsi->vhost->count_bound_wsi--;
-	lwsl_info("%s: vh %s: count_bound_wsi %d\n", __func__,
-		  wsi->vhost->name, wsi->vhost->count_bound_wsi);
+	lwsl_debug("%s: vh %s: count_bound_wsi %d\n", __func__,
+		   wsi->vhost->name, wsi->vhost->count_bound_wsi);
 
 	if (!wsi->vhost->count_bound_wsi &&
 	    wsi->vhost->being_destroyed) {
@@ -86,29 +88,29 @@ lws_vhost_unbind_wsi(struct lws *wsi)
 	lws_context_unlock(wsi->context); /* } context ---------- */
 }
 
-LWS_VISIBLE struct lws *
+struct lws *
 lws_get_network_wsi(struct lws *wsi)
 {
 	if (!wsi)
 		return NULL;
 
-#if defined(LWS_WITH_HTTP2)
-	if (!wsi->http2_substream
+#if defined(LWS_WITH_HTTP2) || defined(LWS_ROLE_MQTT)
+	if (!wsi->mux_substream
 #if defined(LWS_WITH_CLIENT)
-			&& !wsi->client_h2_substream
+			&& !wsi->client_mux_substream
 #endif
 	)
 		return wsi;
 
-	while (wsi->h2.parent_wsi)
-		wsi = wsi->h2.parent_wsi;
+	while (wsi->mux.parent_wsi)
+		wsi = wsi->mux.parent_wsi;
 #endif
 
 	return wsi;
 }
 
 
-LWS_VISIBLE LWS_EXTERN const struct lws_protocols *
+const struct lws_protocols *
 lws_vhost_name_to_protocol(struct lws_vhost *vh, const char *name)
 {
 	int n;
@@ -120,7 +122,7 @@ lws_vhost_name_to_protocol(struct lws_vhost *vh, const char *name)
 	return NULL;
 }
 
-LWS_VISIBLE int
+int
 lws_callback_all_protocol(struct lws_context *context,
 			  const struct lws_protocols *protocol, int reason)
 {
@@ -143,7 +145,7 @@ lws_callback_all_protocol(struct lws_context *context,
 	return 0;
 }
 
-LWS_VISIBLE int
+int
 lws_callback_all_protocol_vhost_args(struct lws_vhost *vh,
 			  const struct lws_protocols *protocol, int reason,
 			  void *argp, size_t len)
@@ -169,14 +171,14 @@ lws_callback_all_protocol_vhost_args(struct lws_vhost *vh,
 	return 0;
 }
 
-LWS_VISIBLE int
+int
 lws_callback_all_protocol_vhost(struct lws_vhost *vh,
 			  const struct lws_protocols *protocol, int reason)
 {
 	return lws_callback_all_protocol_vhost_args(vh, protocol, reason, NULL, 0);
 }
 
-LWS_VISIBLE LWS_EXTERN int
+int
 lws_callback_vhost_protocols(struct lws *wsi, int reason, void *in, int len)
 {
 	int n;
@@ -188,7 +190,7 @@ lws_callback_vhost_protocols(struct lws *wsi, int reason, void *in, int len)
 	return 0;
 }
 
-LWS_VISIBLE LWS_EXTERN int
+int
 lws_callback_vhost_protocols_vhost(struct lws_vhost *vh, int reason, void *in,
 				   size_t len)
 {
@@ -215,14 +217,14 @@ lws_callback_vhost_protocols_vhost(struct lws_vhost *vh, int reason, void *in,
 }
 
 
-LWS_VISIBLE int
+int
 lws_rx_flow_control(struct lws *wsi, int _enable)
 {
 	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
 	int en = _enable;
 
 	// h2 ignores rx flow control atm
-	if (lwsi_role_h2(wsi) || wsi->http2_substream ||
+	if (lwsi_role_h2(wsi) || wsi->mux_substream ||
 	    lwsi_role_h2_ENCAPSULATION(wsi))
 		return 0; // !!!
 
@@ -270,7 +272,7 @@ skip:
 	return 0;
 }
 
-LWS_VISIBLE void
+void
 lws_rx_flow_allow_all_protocol(const struct lws_context *context,
 			       const struct lws_protocols *protocol)
 {
@@ -306,13 +308,13 @@ int user_callback_handle_rxflow(lws_callback_function callback_function,
 	return n;
 }
 
-LWS_EXTERN int
+int
 __lws_rx_flow_control(struct lws *wsi)
 {
 	struct lws *wsic = wsi->child_list;
 
 	// h2 ignores rx flow control atm
-	if (lwsi_role_h2(wsi) || wsi->http2_substream ||
+	if (lwsi_role_h2(wsi) || wsi->mux_substream ||
 	    lwsi_role_h2_ENCAPSULATION(wsi))
 		return 0; // !!!
 
@@ -359,7 +361,7 @@ __lws_rx_flow_control(struct lws *wsi)
 }
 
 
-LWS_VISIBLE const struct lws_protocols *
+const struct lws_protocols *
 lws_get_protocol(struct lws *wsi)
 {
 	return wsi->protocol;
@@ -388,7 +390,7 @@ lws_ensure_user_space(struct lws *wsi)
 	return 0;
 }
 
-LWS_VISIBLE void *
+void *
 lws_adjust_protocol_psds(struct lws *wsi, size_t new_size)
 {
 	((struct lws_protocols *)lws_get_protocol(wsi))->per_session_data_size =
@@ -400,9 +402,13 @@ lws_adjust_protocol_psds(struct lws *wsi, size_t new_size)
 	return wsi->user_space;
 }
 
+int
+lws_get_tsi(struct lws *wsi)
+{
+        return (int)wsi->tsi;
+}
 
-
-LWS_VISIBLE int
+int
 lws_is_ssl(struct lws *wsi)
 {
 #if defined(LWS_WITH_TLS)
@@ -414,38 +420,38 @@ lws_is_ssl(struct lws *wsi)
 }
 
 #if defined(LWS_WITH_TLS) && !defined(LWS_WITH_MBEDTLS)
-LWS_VISIBLE lws_tls_conn*
+lws_tls_conn*
 lws_get_ssl(struct lws *wsi)
 {
 	return wsi->tls.ssl;
 }
 #endif
 
-LWS_VISIBLE int
+int
 lws_partial_buffered(struct lws *wsi)
 {
 	return lws_has_buffered_out(wsi);
 }
 
-LWS_VISIBLE lws_fileofs_t
+lws_fileofs_t
 lws_get_peer_write_allowance(struct lws *wsi)
 {
 	if (!wsi->role_ops->tx_credit)
 		return -1;
-	return wsi->role_ops->tx_credit(wsi);
+	return wsi->role_ops->tx_credit(wsi, LWSTXCR_US_TO_PEER, 0);
 }
 
-LWS_VISIBLE void
+void
 lws_role_transition(struct lws *wsi, enum lwsi_role role, enum lwsi_state state,
 		    const struct lws_role_ops *ops)
 {
-#if defined(_DEBUG)
+#if (_LWS_ENABLED_LOGS & LLL_DEBUG) 
 	const char *name = "(unset)";
 #endif
 	wsi->wsistate = role | state;
 	if (ops)
 		wsi->role_ops = ops;
-#if defined(_DEBUG)
+#if (_LWS_ENABLED_LOGS & LLL_DEBUG)
 	if (wsi->role_ops)
 		name = wsi->role_ops->name;
 	lwsl_debug("%s: %p: wsistate 0x%lx, ops %s\n", __func__, wsi,
@@ -453,7 +459,7 @@ lws_role_transition(struct lws *wsi, enum lwsi_role role, enum lwsi_state state,
 #endif
 }
 
-LWS_VISIBLE LWS_EXTERN int
+int
 lws_parse_uri(char *p, const char **prot, const char **ads, int *port,
 	      const char **path)
 {
@@ -509,7 +515,7 @@ lws_parse_uri(char *p, const char **prot, const char **ads, int *port,
 
 /* ... */
 
-LWS_VISIBLE LWS_EXTERN const char *
+const char *
 lws_get_urlarg_by_name(struct lws *wsi, const char *name, char *buf, int len)
 {
 	int n = 0, sl = (int)strlen(name);
@@ -534,7 +540,7 @@ lws_get_urlarg_by_name(struct lws *wsi, const char *name, char *buf, int len)
  * extensions disabled.
  */
 
-LWS_VISIBLE int
+int
 lws_extension_callback_pm_deflate(struct lws_context *context,
                                   const struct lws_extension *ext,
                                   struct lws *wsi,
@@ -552,7 +558,7 @@ lws_extension_callback_pm_deflate(struct lws_context *context,
 	return 0;
 }
 
-LWS_EXTERN int
+int
 lws_set_extension_option(struct lws *wsi, const char *ext_name,
 			 const char *opt_name, const char *opt_val)
 {
@@ -560,7 +566,7 @@ lws_set_extension_option(struct lws *wsi, const char *ext_name,
 }
 #endif
 
-LWS_VISIBLE LWS_EXTERN int
+int
 lws_is_cgi(struct lws *wsi) {
 #ifdef LWS_WITH_CGI
 	return !!wsi->http.cgi;
@@ -622,65 +628,65 @@ lws_broadcast(struct lws_context_per_thread *pt, int reason, void *in, size_t le
 	return ret;
 }
 
-LWS_VISIBLE LWS_EXTERN void *
+void *
 lws_wsi_user(struct lws *wsi)
 {
 	return wsi->user_space;
 }
 
-LWS_VISIBLE LWS_EXTERN void
+void
 lws_set_wsi_user(struct lws *wsi, void *data)
 {
-	if (wsi->user_space_externally_allocated)
-		wsi->user_space = data;
-	else
-		lwsl_err("%s: Cannot set internally-allocated user_space\n",
-			 __func__);
+	if (!wsi->user_space_externally_allocated && wsi->user_space)
+		lws_free(wsi->user_space);
+
+	wsi->user_space_externally_allocated = 1;
+	wsi->user_space = data;
 }
 
-LWS_VISIBLE LWS_EXTERN struct lws *
+struct lws *
 lws_get_parent(const struct lws *wsi)
 {
 	return wsi->parent;
 }
 
-LWS_VISIBLE LWS_EXTERN struct lws *
+struct lws *
 lws_get_child(const struct lws *wsi)
 {
 	return wsi->child_list;
 }
 
-LWS_VISIBLE LWS_EXTERN void *
+void *
 lws_get_opaque_parent_data(const struct lws *wsi)
 {
 	return wsi->opaque_parent_data;
 }
 
-LWS_VISIBLE LWS_EXTERN void
+void
 lws_set_opaque_parent_data(struct lws *wsi, void *data)
 {
 	wsi->opaque_parent_data = data;
 }
 
-LWS_VISIBLE LWS_EXTERN void *
+void *
 lws_get_opaque_user_data(const struct lws *wsi)
 {
 	return wsi->opaque_user_data;
 }
 
-LWS_VISIBLE LWS_EXTERN void
+void
 lws_set_opaque_user_data(struct lws *wsi, void *data)
 {
 	wsi->opaque_user_data = data;
 }
 
-LWS_VISIBLE LWS_EXTERN int
+int
 lws_get_child_pending_on_writable(const struct lws *wsi)
 {
 	return wsi->parent_pending_cb_on_writable;
 }
 
-LWS_VISIBLE LWS_EXTERN void
+void
 lws_clear_child_pending_on_writable(struct lws *wsi)
 {
 	wsi->parent_pending_cb_on_writable = 0;
@@ -688,31 +694,31 @@ lws_clear_child_pending_on_writable(struct lws *wsi)
 
 
 
-LWS_VISIBLE LWS_EXTERN const char *
+const char *
 lws_get_vhost_name(struct lws_vhost *vhost)
 {
 	return vhost->name;
 }
 
-LWS_VISIBLE LWS_EXTERN int
+int
 lws_get_vhost_port(struct lws_vhost *vhost)
 {
 	return vhost->listen_port;
 }
 
-LWS_VISIBLE LWS_EXTERN void *
+void *
 lws_get_vhost_user(struct lws_vhost *vhost)
 {
 	return vhost->user;
 }
 
-LWS_VISIBLE LWS_EXTERN const char *
+const char *
 lws_get_vhost_iface(struct lws_vhost *vhost)
 {
 	return vhost->iface;
 }
 
-LWS_VISIBLE lws_sockfd_type
+lws_sockfd_type
 lws_get_socket_fd(struct lws *wsi)
 {
 	if (!wsi)
@@ -721,33 +727,33 @@ lws_get_socket_fd(struct lws *wsi)
 }
 
 
-LWS_VISIBLE struct lws_vhost *
+struct lws_vhost *
 lws_vhost_get(struct lws *wsi)
 {
 	return wsi->vhost;
 }
 
-LWS_VISIBLE struct lws_vhost *
+struct lws_vhost *
 lws_get_vhost(struct lws *wsi)
 {
 	return wsi->vhost;
 }
 
-LWS_VISIBLE const struct lws_protocols *
+const struct lws_protocols *
 lws_protocol_get(struct lws *wsi)
 {
 	return wsi->protocol;
 }
 
 #if defined(LWS_WITH_UDP)
-LWS_VISIBLE const struct lws_udp *
+const struct lws_udp *
 lws_get_udp(const struct lws *wsi)
 {
 	return wsi->udp;
 }
 #endif
 
-LWS_VISIBLE LWS_EXTERN struct lws_context *
+struct lws_context *
 lws_get_context(const struct lws *wsi)
 {
 	return wsi->context;
@@ -755,9 +761,9 @@ lws_get_context(const struct lws *wsi)
 
 #if defined(LWS_WITH_CLIENT)
 int
-_lws_generic_transaction_completed_active_conn(struct lws *wsi)
+_lws_generic_transaction_completed_active_conn(struct lws **_wsi)
 {
-	struct lws *wsi_eff = lws_client_wsi_effective(wsi);
+	struct lws *wnew, *wsi = *_wsi;
 
 	/*
 	 * Are we constitutionally capable of having a queue, ie, we are on
@@ -769,34 +775,25 @@ _lws_generic_transaction_completed_active_conn(struct lws *wsi)
 	if (lws_dll2_is_detached(&wsi->dll_cli_active_conns))
 		return 0; /* no new transaction */
 
-	/* if this was a queued guy, close him and remove from queue */
-
-	if (wsi->transaction_from_pipeline_queue) {
-		lwsl_debug("closing queued wsi %p\n", wsi_eff);
-		/* so the close doesn't trigger a CCE */
-		wsi_eff->already_did_cce = 1;
-		__lws_close_free_wsi(wsi_eff,
-			LWS_CLOSE_STATUS_CLIENT_TRANSACTION_DONE,
-			"queued client done");
-	}
-
-	/* after the first one, they can only be coming from the queue */
-	wsi->transaction_from_pipeline_queue = 1;
-
-	wsi->hdr_parsing_completed = 0;
-
-	/* is there a new tail after removing that one? */
-	wsi_eff = lws_client_wsi_effective(wsi);
-
 	/*
-	 * Do we have something pipelined waiting?
-	 * it's OK if he hasn't managed to send his headers yet... he's next
-	 * in line to do that...
+	 * With h1 queuing, the original "active client" moves his attributes
+	 * like fd, ssl, queue and active client list entry to the next guy in
+	 * the queue before closing... it's because the user code knows the
+	 * individual wsi and the action must take place in the correct wsi
+	 * context.  Note this means we don't truly pipeline headers.
+	 *
+	 * Trying to keep the original "active client" in place to do the work
+	 * of the wsi breaks down when dealing with queued POSTs otherwise; it's
+	 * also competing with the real mux child arrangements and complicating
+	 * the code.
+	 *
+	 * For that reason, see if we have any queued child now...
 	 */
-	if (wsi_eff == wsi) {
+
+	if (!wsi->dll2_cli_txn_queue_owner.head) {
 		/*
 		 * Nothing pipelined... we should hang around a bit
-		 * in case something turns up...
+		 * in case something turns up... otherwise we'll close
 		 */
 		lwsl_info("%s: nothing pipelined waiting\n", __func__);
 		lwsi_set_state(wsi, LRS_IDLING);
@@ -806,11 +803,101 @@ _lws_generic_transaction_completed_active_conn(struct lws *wsi)
 		return 0; /* no new transaction right now */
 	}
 
+	/*
+	 * We have a queued child wsi we should bequeath our assets to, before
+	 * closing ourself
+	 */
+
+	lws_vhost_lock(wsi->vhost);
+
+	wnew = lws_container_of(wsi->dll2_cli_txn_queue_owner.head, struct lws,
+				dll2_cli_txn_queue);
+
+	assert(wsi != wnew);
+
+	lws_dll2_remove(&wnew->dll2_cli_txn_queue);
+
+	assert(lws_socket_is_valid(wsi->desc.sockfd));
+
+	/* copy the fd */
+	wnew->desc = wsi->desc;
+
+	assert(lws_socket_is_valid(wnew->desc.sockfd));
+
+	/* disconnect the fd from association with old wsi */
+
+	if (__remove_wsi_socket_from_fds(wsi))
+		return -1;
+	wsi->desc.sockfd = LWS_SOCK_INVALID;
+
+	/* point the fd table entry to new guy */
+
+	assert(lws_socket_is_valid(wnew->desc.sockfd));
+
+	if (__insert_wsi_socket_into_fds(wsi->context, wnew))
+		return -1;
+
+#if defined(LWS_WITH_TLS)
+	/* pass on the tls */
+
+	wnew->tls = wsi->tls;
+	wsi->tls.client_bio = NULL;
+	wsi->tls.ssl = NULL;
+	wsi->tls.use_ssl = 0;
+#endif
+
+	/* take over his copy of his endpoint as an active connection */
+
+	wnew->cli_hostname_copy = wsi->cli_hostname_copy;
+	wsi->cli_hostname_copy = NULL;
+
+
+	/*
+	 * selected queued guy now replaces the original leader on the
+	 * active client conn list
+	 */
+
+	lws_dll2_remove(&wsi->dll_cli_active_conns);
+	lws_dll2_add_tail(&wnew->dll_cli_active_conns,
+			  &wsi->vhost->dll_cli_active_conns_owner);
+
+	/* move any queued guys to queue on new active conn */
+
+	lws_start_foreach_dll_safe(struct lws_dll2 *, d, d1,
+				   wsi->dll2_cli_txn_queue_owner.head) {
+		struct lws *ww = lws_container_of(d, struct lws,
+					  dll2_cli_txn_queue);
+
+		lws_dll2_remove(&ww->dll2_cli_txn_queue);
+		lws_dll2_add_tail(&ww->dll2_cli_txn_queue,
+				  &wnew->dll2_cli_txn_queue_owner);
+
+	} lws_end_foreach_dll_safe(d, d1);
+
+	lws_vhost_unlock(wsi->vhost);
+
+	/*
+	 * The original leader who passed on all his powers already can die...
+	 * in the call stack above us there are guys who still want to touch
+	 * him, so have him die next time around the event loop, not now.
+	 */
+
+	wsi->already_did_cce = 1; /* so the close doesn't trigger a CCE */
+	lws_set_timeout(wsi, 1, LWS_TO_KILL_ASYNC);
+
+	/* after the first one, they can only be coming from the queue */
+	wnew->transaction_from_pipeline_queue = 1;
+
+	lwsl_notice("%s: pipeline queue passed wsi %p on to queued wsi %p\n",
+			__func__, wsi, wnew);
+
+	*_wsi = wnew; /* inform caller we swapped */
+
 	return 1; /* new transaction */
 }
 #endif
 
-LWS_VISIBLE int LWS_WARN_UNUSED_RESULT
+int LWS_WARN_UNUSED_RESULT
 lws_raw_transaction_completed(struct lws *wsi)
 {
 	if (lws_has_buffered_out(wsi)) {
@@ -894,11 +981,11 @@ lws_http_close_immortal(struct lws *wsi)
 {
 	struct lws *nwsi;
 
-	if (!wsi->http2_substream)
+	if (!wsi->mux_substream)
 		return;
 
-	assert(wsi->h2_stream_immortal);
-	wsi->h2_stream_immortal = 0;
+	assert(wsi->mux_stream_immortal);
+	wsi->mux_stream_immortal = 0;
 
 	nwsi = lws_get_network_wsi(wsi);
 	lwsl_debug("%s: %p %p %d\n", __func__, wsi, nwsi,
@@ -916,15 +1003,15 @@ lws_http_close_immortal(struct lws *wsi)
 }
 
 void
-lws_http_mark_immortal(struct lws *wsi)
+lws_mux_mark_immortal(struct lws *wsi)
 {
 	struct lws *nwsi;
 
 	lws_set_timeout(wsi, NO_PENDING_TIMEOUT, 0);
 
-	if (!wsi->http2_substream
+	if (!wsi->mux_substream
 #if defined(LWS_WITH_CLIENT)
-			&& !wsi->client_h2_substream
+			&& !wsi->client_mux_substream
 #endif
 	) {
 		lwsl_err("%s: not h2 substream\n", __func__);
@@ -936,7 +1023,7 @@ lws_http_mark_immortal(struct lws *wsi)
 	lwsl_debug("%s: %p %p %d\n", __func__, wsi, nwsi,
 				     nwsi->immortal_substream_count);
 
-	wsi->h2_stream_immortal = 1;
+	wsi->mux_stream_immortal = 1;
 	assert(nwsi->immortal_substream_count < 255); /* largest count */
 	nwsi->immortal_substream_count++;
 	if (nwsi->immortal_substream_count == 1)
@@ -948,10 +1035,340 @@ int
 lws_http_mark_sse(struct lws *wsi)
 {
 	lws_http_headers_detach(wsi);
-	lws_http_mark_immortal(wsi);
+	lws_mux_mark_immortal(wsi);
 
-	if (wsi->http2_substream)
+	if (wsi->mux_substream)
 		wsi->h2_stream_carries_sse = 1;
 
 	return 0;
 }
+
+#if defined(LWS_WITH_CLIENT)
+
+const char *
+lws_wsi_client_stash_item(struct lws *wsi, int stash_idx, int hdr_idx)
+{
+	/* try the generic client stash */
+	if (wsi->stash)
+		return wsi->stash->cis[stash_idx];
+
+#if defined(LWS_ROLE_H1) || defined(LWS_ROLE_H2)
+	/* if not, use the ah stash if applicable */
+	return lws_hdr_simple_ptr(wsi, hdr_idx);
+#else
+	return NULL;
+#endif
+}
+#endif
+
+#if defined(LWS_ROLE_H2) || defined(LWS_ROLE_MQTT)
+
+void
+lws_wsi_mux_insert(struct lws *wsi, struct lws *parent_wsi, int sid)
+{
+	lwsl_info("%s: wsi %p, par %p: assign sid %d (curr %d)\n", __func__,
+		  wsi, parent_wsi, sid, wsi->mux.my_sid);
+
+	if (wsi->mux.my_sid && wsi->mux.my_sid != (unsigned int)sid)
+		assert(0);
+
+	wsi->mux.my_sid = sid;
+	wsi->mux.parent_wsi = parent_wsi;
+	wsi->role_ops = parent_wsi->role_ops;
+
+	/* new guy's sibling is whoever was the first child before */
+	wsi->mux.sibling_list = parent_wsi->mux.child_list;
+
+	/* first child is now the new guy */
+	parent_wsi->mux.child_list = wsi;
+
+	parent_wsi->mux.child_count++;
+}
+
+struct lws *
+lws_wsi_mux_from_id(struct lws *parent_wsi, unsigned int sid)
+{
+	lws_start_foreach_ll(struct lws *, wsi, parent_wsi->mux.child_list) {
+		if (wsi->mux.my_sid == sid)
+			return wsi;
+	} lws_end_foreach_ll(wsi, mux.sibling_list);
+
+	return NULL;
+}
+
+void
+lws_wsi_mux_dump_children(struct lws *wsi)
+{
+#if defined(_DEBUG)
+	if (!wsi->mux.parent_wsi || !lwsl_visible(LLL_INFO))
+		return;
+
+	lws_start_foreach_llp(struct lws **, w,
+			      wsi->mux.parent_wsi->mux.child_list) {
+		lwsl_info("   \\---- child %s %p\n",
+			  (*w)->role_ops ? (*w)->role_ops->name : "?", *w);
+		assert(*w != (*w)->mux.sibling_list);
+	} lws_end_foreach_llp(w, mux.sibling_list);
+#endif
+}
+
+void
+lws_wsi_mux_close_children(struct lws *wsi, int reason)
+{
+	struct lws *wsi2;
+
+	if (!wsi->mux.child_list)
+		return;
+
+	lws_start_foreach_llp(struct lws **, w, wsi->mux.child_list) {
+		lwsl_info("   closing child %p\n", *w);
+		/* disconnect from siblings */
+		wsi2 = (*w)->mux.sibling_list;
+		assert (wsi2 != *w);
+		(*w)->mux.sibling_list = NULL;
+		(*w)->socket_is_permanently_unusable = 1;
+		__lws_close_free_wsi(*w, reason, "mux child recurse");
+		*w = wsi2;
+		continue;
+	} lws_end_foreach_llp(w, mux.sibling_list);
+}
+
+
+void
+lws_wsi_mux_sibling_disconnect(struct lws *wsi)
+{
+	struct lws *wsi2;
+
+	lws_start_foreach_llp(struct lws **, w,
+			      wsi->mux.parent_wsi->mux.child_list) {
+
+		/* disconnect from siblings */
+		if (*w == wsi) {
+			wsi2 = (*w)->mux.sibling_list;
+			(*w)->mux.sibling_list = NULL;
+			*w = wsi2;
+			lwsl_debug("  %p disentangled from sibling %p\n",
+				  wsi, wsi2);
+			break;
+		}
+	} lws_end_foreach_llp(w, mux.sibling_list);
+	wsi->mux.parent_wsi->mux.child_count--;
+
+	wsi->mux.parent_wsi = NULL;
+}
+
+void
+lws_wsi_mux_dump_waiting_children(struct lws *wsi)
+{
+#if defined(_DEBUG)
+	lwsl_info("%s: %p: children waiting for POLLOUT service:\n",
+		  __func__, wsi);
+
+	wsi = wsi->mux.child_list;
+	while (wsi) {
+		lwsl_info("  %c %p: sid %u: 0x%x %s %s\n",
+			  wsi->mux.requested_POLLOUT ? '*' : ' ',
+			  wsi, wsi->mux.my_sid, lwsi_state(wsi),
+			  wsi->role_ops->name,
+			  wsi->protocol ? wsi->protocol->name : "noprotocol");
+
+		wsi = wsi->mux.sibling_list;
+	}
+#endif
+}
+
+int
+lws_wsi_mux_mark_parents_needing_writeable(struct lws *wsi)
+{
+	struct lws /* *network_wsi = lws_get_network_wsi(wsi), */ *wsi2;
+	//int already = network_wsi->mux.requested_POLLOUT;
+
+	/* mark everybody above him as requesting pollout */
+
+	wsi2 = wsi;
+	while (wsi2) {
+		wsi2->mux.requested_POLLOUT = 1;
+		lwsl_info("%s: mark wsi: %p, sid %u, pending writable\n",
+			  __func__, wsi2, wsi2->mux.my_sid);
+		wsi2 = wsi2->mux.parent_wsi;
+	}
+
+	return 0; // already;
+}
+
+struct lws *
+lws_wsi_mux_move_child_to_tail(struct lws **wsi2)
+{
+	struct lws *w = *wsi2;
+
+	while (w) {
+		if (!w->mux.sibling_list) { /* w is the current last */
+			lwsl_debug("w=%p, *wsi2 = %p\n", w, *wsi2);
+
+			if (w == *wsi2) /* we are already last */
+				break;
+
+			/* last points to us as new last */
+			w->mux.sibling_list = *wsi2;
+
+			/* guy pointing to us until now points to
+			 * our old next */
+			*wsi2 = (*wsi2)->mux.sibling_list;
+
+			/* we point to nothing because we are last */
+			w->mux.sibling_list->mux.sibling_list = NULL;
+
+			/* w becomes us */
+			w = w->mux.sibling_list;
+			break;
+		}
+		w = w->mux.sibling_list;
+	}
+
+	/* clear the waiting for POLLOUT on the guy that was chosen */
+
+	if (w)
+		w->mux.requested_POLLOUT = 0;
+
+	return w;
+}
+
+int
+lws_wsi_mux_action_pending_writeable_reqs(struct lws *wsi)
+{
+	struct lws *w = wsi->mux.child_list;
+
+	while (w) {
+		if (w->mux.requested_POLLOUT) {
+			if (lws_change_pollfd(wsi, 0, LWS_POLLOUT))
+				return -1;
+			return 0;
+		}
+		w = w->mux.sibling_list;
+	}
+
+	if (lws_change_pollfd(wsi, LWS_POLLOUT, 0))
+		return -1;
+
+	return 0;
+}
+
+int
+lws_wsi_txc_check_skint(struct lws_tx_credit *txc, int32_t tx_cr)
+{
+	if (txc->tx_cr <= 0) {
+		/*
+		 * If other side is not able to cope with us sending any DATA
+		 * so no matter if we have POLLOUT on our side if it's DATA we
+		 * want to send.
+		 */
+
+		if (!txc->skint)
+			lwsl_info("%s: %p: skint (%d)\n", __func__, txc,
+				  (int)txc->tx_cr);
+
+		txc->skint = 1;
+
+		return 1;
+	}
+
+	if (txc->skint)
+		lwsl_info("%s: %p: unskint (%d)\n", __func__, txc,
+			  (int)txc->tx_cr);
+
+	txc->skint = 0;
+
+	return 0;
+}
+
+#if defined(_DEBUG)
+void
+lws_wsi_txc_describe(struct lws_tx_credit *txc, const char *at, uint32_t sid)
+{
+	lwsl_info("%s: %p: %s: sid %d: %speer-to-us: %d, us-to-peer: %d\n",
+		  __func__, txc, at, (int)sid, txc->skint ? "SKINT, " : "",
+		  (int)txc->peer_tx_cr_est, (int)txc->tx_cr);
+}
+#endif
+
+int
+lws_wsi_tx_credit(struct lws *wsi, char peer_to_us, int add)
+{
+	if (wsi->role_ops && wsi->role_ops->tx_credit)
+		return wsi->role_ops->tx_credit(wsi, peer_to_us, add);
+
+	return 0;
+}
+
+/*
+ * Let the protocol know about incoming tx credit window updates if it's
+ * managing the flow control manually (it may want to proxy this information)
+ */
+
+int
+lws_wsi_txc_report_manual_txcr_in(struct lws *wsi, int32_t bump)
+{
+	if (!wsi->txc.manual)
+		/*
+		 * If we don't care about managing it manually, no need to
+		 * report it
+		 */
+		return 0;
+
+	return user_callback_handle_rxflow(wsi->protocol->callback,
+					   wsi, LWS_CALLBACK_WSI_TX_CREDIT_GET,
+					   wsi->user_space, NULL, (size_t)bump);
+}
+
+#if defined(LWS_WITH_CLIENT)
+
+int
+lws_wsi_mux_apply_queue(struct lws *wsi)
+{
+	/* we have a transaction queue that wants to pipeline */
+
+	lws_vhost_lock(wsi->vhost);
+
+	lws_start_foreach_dll_safe(struct lws_dll2 *, d, d1,
+				   wsi->dll2_cli_txn_queue_owner.head) {
+		struct lws *w = lws_container_of(d, struct lws,
+						 dll2_cli_txn_queue);
+
+#if defined(LWS_ROLE_H2)
+		if (lwsi_role_http(wsi) &&
+		    lwsi_state(w) == LRS_H2_WAITING_TO_SEND_HEADERS) {
+			lwsl_info("%s: cli pipeq %p to be h2\n", __func__, w);
+
+			lwsi_set_state(w, LRS_H1C_ISSUE_HANDSHAKE2);
+
+			/* remove ourselves from client queue */
+			lws_dll2_remove(&w->dll2_cli_txn_queue);
+
+			/* attach ourselves as an h2 stream */
+			lws_wsi_h2_adopt(wsi, w);
+		}
+#endif
+
+#if defined(LWS_ROLE_MQTT)
+		if (lwsi_role_mqtt(wsi) &&
+		    lwsi_state(wsi) == LRS_ESTABLISHED) {
+			lwsl_info("%s: cli pipeq %p to be mqtt\n", __func__, w);
+
+			/* remove ourselves from client queue */
+			lws_dll2_remove(&w->dll2_cli_txn_queue);
+
+			/* attach ourselves as an h2 stream */
+			lws_wsi_mqtt_adopt(wsi, w);
+		}
+#endif
+
+	} lws_end_foreach_dll_safe(d, d1);
+
+	lws_vhost_unlock(wsi->vhost);
+
+	return 0;
+}
+
+#endif
+
+#endif

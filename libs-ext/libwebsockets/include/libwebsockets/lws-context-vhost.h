@@ -218,12 +218,17 @@
 	 * poll mode.
 	 */
 
+#define LWS_SERVER_OPTION_GLIB					 (1ll << 33)
+	/**< (CTX) Use glib event loop */
+
 	/****** add new things just above ---^ ******/
 
 
 #define lws_check_opt(c, f) ((((uint64_t)c) & ((uint64_t)f)) == ((uint64_t)f))
 
 struct lws_plat_file_ops;
+struct lws_ss_policy;
+struct lws_ss_plugin;
 
 typedef int (*lws_context_ready_cb_t)(struct lws_context *context);
 
@@ -510,7 +515,9 @@ struct lws_context_creation_info {
 	 * If proxy auth is required, use format
 	 * "username:password\@server:port" */
 	unsigned int socks_proxy_port;
-	/**< VHOST: If socks_proxy_address was non-NULL, uses this port */
+	/**< VHOST: If socks_proxy_address was non-NULL, uses this port
+	 * if nonzero, otherwise requires "server:port" in .socks_proxy_address
+	 */
 #if defined(LWS_HAVE_SYS_CAPABILITY_H) && defined(LWS_HAVE_LIBCAP)
 	cap_value_t caps[4];
 	/**< CONTEXT: array holding Linux capabilities you want to
@@ -694,7 +701,7 @@ struct lws_context_creation_info {
 	/**< VHOST: optional retry and idle policy to apply to this vhost.
 	 *   Currently only the idle parts are applied to the connections.
 	 */
-	lws_state_notify_link_t **register_notifier_list;
+	lws_state_notify_link_t * const *register_notifier_list;
 	/**< CONTEXT: NULL, or pointer to an array of notifiers that should
 	 * be registered during context creation, so they can see state change
 	 * events from very early on.  The array should end with a NULL. */
@@ -704,6 +711,26 @@ struct lws_context_creation_info {
 	uint8_t udp_loss_sim_rx_pc;
 	/**< CONTEXT: percentage of udp reads we actually received
 	 * to make disappear, in order to simulate and test udp retry flow */
+#if defined(LWS_WITH_SECURE_STREAMS)
+	const char *pss_policies_json; /**< CONTEXT: point to a string
+	 * containing a JSON description of the secure streams policies.  Set
+	 * to NULL if not using Secure Streams. */
+	const struct lws_ss_plugin **pss_plugins; /**< CONTEXT: point to an array
+	 * of pointers to plugin structs here, terminated with a NULL ptr.
+	 * Set to NULL if not using Secure Streams. */
+	const char *ss_proxy_bind; /**< CONTEXT: NULL, or: ss_proxy_port == 0:
+	 * point to a string giving the Unix Domain Socket address to use (start
+	 * with @ for abstract namespace), ss_proxy_port nonzero: set the
+	 * network interface address (not name, it's ambiguous for ipv4/6) to
+	 * bind the tcp connection to the proxy to */
+	const char *ss_proxy_address; /**< CONTEXT: NULL, or if ss_proxy_port
+	 * nonzero: the tcp address of the ss proxy to connect to */
+	uint16_t ss_proxy_port; /* 0 = if connecting to ss proxy, do it via a
+	 * Unix Domain Socket, "+@proxy.ss.lws" if ss_proxy_bind is NULL else
+	 * the socket path given in ss_proxy_bind (start it with a + or +@);
+	 * nonzero means connect via a tcp socket to the tcp address in
+	 * ss_proxy_bind and the given port */
+#endif
 
 	/* Add new things just above here ---^
 	 * This is part of the ABI, don't needlessly break compatibility
@@ -713,7 +740,7 @@ struct lws_context_creation_info {
 	 * was not built against the newer headers.
 	 */
 
-	void *_unused[4]; /**< dummy */
+	void *_unused[2]; /**< dummy */
 };
 
 /**
@@ -1040,6 +1067,18 @@ enum lws_mount_protocols {
 	LWSMPRO_CALLBACK	= 6, /**< hand by named protocol's callback */
 };
 
+/** enum lws_authentication_mode
+ * This specifies the authentication mode of the mount. The basic_auth_login_file mount parameter
+ * is ignored unless LWSAUTHM_DEFAULT is set.
+ */
+enum lws_authentication_mode {
+	LWSAUTHM_DEFAULT = 0, /**< default authenticate only if basic_auth_login_file is provided */
+	LWSAUTHM_BASIC_AUTH_CALLBACK = 1 << 28 /**< Basic auth with a custom verifier */
+};
+
+/** The authentication mode is stored in the top 4 bits of lws_http_mount.auth_mask */
+#define AUTH_MODE_MASK 0xF0000000
+
 /** struct lws_http_mount
  *
  * arguments for mounting something in a vhost's url namespace
@@ -1080,7 +1119,7 @@ struct lws_http_mount {
 	unsigned char mountpoint_len; /**< length of mountpoint string */
 
 	const char *basic_auth_login_file;
-	/**<NULL, or filepath to use to check basic auth logins against */
+	/**<NULL, or filepath to use to check basic auth logins against. (requires LWSAUTHM_DEFAULT) */
 
 	/* Add new things just above here ---^
 	 * This is part of the ABI, don't needlessly break compatibility

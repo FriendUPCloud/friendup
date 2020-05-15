@@ -24,19 +24,10 @@
 
 #include <private-lib-core.h>
 
-#if defined(LWS_WITH_NETWORK)
-static const char *hex = "0123456789ABCDEF";
-#endif
-
-int
-lws_system_get_info(struct lws_context *context, lws_system_item_t item,
-		    lws_system_arg_t *arg)
-{
-	if (!context->system_ops || !context->system_ops->get_info)
-		return 1;
-
-	return context->system_ops->get_info(item, arg);
-}
+/*
+ * It's either a buflist (.is_direct = 0) or
+ * a direct pointer + len (.is_direct = 1)
+ */
 
 const lws_system_ops_t *
 lws_system_get_ops(struct lws_context *context)
@@ -44,95 +35,229 @@ lws_system_get_ops(struct lws_context *context)
 	return context->system_ops;
 }
 
+
+void
+lws_system_blob_direct_set(lws_system_blob_t *b, const uint8_t *ptr, size_t len)
+{
+	b->is_direct = 1;
+	b->u.direct.ptr = ptr;
+	b->u.direct.len = len;
+}
+
+void
+lws_system_blob_heap_empty(lws_system_blob_t *b)
+{
+	b->is_direct = 0;
+	lws_buflist_destroy_all_segments(&b->u.bl);
+}
+
+int
+lws_system_blob_heap_append(lws_system_blob_t *b, const uint8_t *buf, size_t len)
+{
+	assert(!b->is_direct);
+
+	lwsl_debug("%s: blob %p\n", __func__, b);
+
+	if (lws_buflist_append_segment(&b->u.bl, buf, len) < 0)
+		return -1;
+
+	return 0;
+}
+
+size_t
+lws_system_blob_get_size(lws_system_blob_t *b)
+{
+	if (b->is_direct)
+		return b->u.direct.len;
+
+	return lws_buflist_total_len(&b->u.bl);
+}
+
+int
+lws_system_blob_get(lws_system_blob_t *b, uint8_t *buf, size_t *len, size_t ofs)
+{
+	int n;
+
+	if (b->is_direct) {
+
+		assert(b->u.direct.ptr);
+
+		if (ofs >= b->u.direct.len) {
+			*len = 0;
+			return 1;
+		}
+
+		if (*len > b->u.direct.len - ofs)
+			*len = b->u.direct.len - ofs;
+
+		memcpy(buf, b->u.direct.ptr + ofs, *len);
+
+		return 0;
+	}
+
+	n = lws_buflist_linear_copy(&b->u.bl, ofs, buf, *len);
+	if (n < 0)
+		return -2;
+
+	*len = n;
+
+	return 0;
+}
+
+int
+lws_system_blob_get_single_ptr(lws_system_blob_t *b, const uint8_t **ptr)
+{
+	if (b->is_direct) {
+		*ptr = b->u.direct.ptr;
+		return 0;
+	}
+
+	if (!b->u.bl)
+		return -1;
+
+	if (b->u.bl->next)
+		return -1;  /* multipart buflist, no single pointer to it all */
+
+	*ptr = (const uint8_t *)&b->u.bl[1];
+
+	return 0;
+}
+
+void
+lws_system_blob_destroy(lws_system_blob_t *b)
+{
+	if (!b)
+		return;
+	lwsl_info("%s: blob %p\n", __func__, b);
+	if (!b->is_direct)
+		lws_buflist_destroy_all_segments(&b->u.bl);
+}
+
+lws_system_blob_t *
+lws_system_get_blob(struct lws_context *context, lws_system_blob_item_t type,
+		    int idx)
+{
+	if (idx < 0 ||
+	    idx >= (int)LWS_ARRAY_SIZE(context->system_blobs))
+		return NULL;
+
+	return &context->system_blobs[type + idx];
+}
+
 #if defined(LWS_WITH_NETWORK)
+
+/*
+ * Caller must protect the whole call with system-specific locking
+ */
+
 int
-lws_system_auth_default_cb(struct lws_context *context, int idx, size_t ofs,
-			   uint8_t *buf, size_t *plen, lws_system_auth_op_t op)
+__lws_system_attach(struct lws_context *context, int tsi, lws_attach_cb_t cb,
+		    lws_system_states_t state, void *opaque,
+		    struct lws_attach_item **get)
 {
-	int n;
+	struct lws_context_per_thread *pt = &context->pt[tsi];
+	struct lws_attach_item *item;
 
-	if (idx >= (int)LWS_ARRAY_SIZE(context->auth_token))
-		return -1;
+	if (!get) {
+		/*
+		 * allocate and add to the head of the pt's attach list
+		 */
 
-	switch (op) {
-	case LWSSYS_AUTH_GET:
-		if (!context->auth_token[idx])
-			return -1;
+		item = lws_zalloc(sizeof(*item), __func__);
+		if (!item)
+			return 1;
 
-		if (!buf) /* we just need to tell him that it exists */
-			return -2;
+		item->cb = cb;
+		item->opaque = opaque;
+		item->state = state;
 
-		n = lws_buflist_linear_copy(&context->auth_token[idx], ofs, buf,
-					    *plen);
-		if (n < 0)
-			return -2;
+		lws_dll2_add_head(&item->list, &pt->attach_owner);
 
-		*plen = (size_t)n;
-
-		return 0;
-
-	case LWSSYS_AUTH_TOTAL_LENGTH:
-		*plen = lws_buflist_total_len(&context->auth_token[idx]);
-		return 0;
-
-	case LWSSYS_AUTH_APPEND:
-		if (lws_buflist_append_segment(&context->auth_token[idx], buf,
-					       *plen) < 0)
-			return -1;
+		lws_cancel_service(context);
 
 		return 0;
-
-	case LWSSYS_AUTH_FREE:
-		lws_buflist_destroy_all_segments(&context->auth_token[idx]);
-		return 0;
-
-	default:
-		break;
 	}
 
-	return -1;
+	*get = NULL;
+	if (!pt->attach_owner.count)
+		return 0;
+
+	/*
+	 * If any, return the first guy whose state requirement matches
+	 */
+
+	lws_start_foreach_dll(struct lws_dll2 *, d,
+			      lws_dll2_get_head(&pt->attach_owner)) {
+		item = lws_container_of(d, lws_attach_item_t, list);
+
+		if (pt->context->mgr_system.state >= (int)item->state) {
+			*get = item;
+			lws_dll2_remove(d);
+
+			/*
+			 * We detached it, but the caller now has the
+			 * responsibility to lws_free() *get.
+			 */
+
+			return 0;
+		}
+	} lws_end_foreach_dll(d);
+
+	/* nobody ready to go... leave *get as NULL and return cleanly */
+
+	return 0;
 }
 
 int
-lws_system_get_auth(struct lws_context *context, int idx, size_t ofs,
-		    uint8_t *buf, size_t buflen, int flags)
+lws_system_do_attach(struct lws_context_per_thread *pt)
 {
-	size_t bl = buflen;
-	uint8_t *p, b;
-	int n;
+	/*
+	 * If nothing to do, we just return immediately
+	 */
 
-	if (!context->system_ops || !context->system_ops->auth)
-		n = lws_system_auth_default_cb(context, idx, ofs, buf, &buflen, 0);
-	else
-		n = context->system_ops->auth(context, idx, ofs, buf, &buflen, 0);
-	if (n < 0) {
-		if (buf)
-			lwsl_err("%s: auth get failed\n", __func__);
-		return -1;
-	}
+	while (pt->attach_owner.count) {
 
-	if (buf && (flags & LWSSYSGAUTH_HEX)) {
-		if (bl < (buflen * 2) + 1) {
-			lwsl_err("%s: auth in hex oversize %d\n", __func__,
-					(int)bl);
-			return -1;
+		struct lws_attach_item *item;
+
+		/*
+		 * If anybody used the attach apis, there must be an
+		 * implementation of the (*attach) lws_system op function
+		 */
+
+		assert(pt->context->system_ops->attach);
+		if (!pt->context->system_ops->attach) {
+			lwsl_err("%s: define (*attach)\n", __func__);
+			return 1;
 		}
 
-		/* convert to ascii hex inplace, backwards */
+		/*
+		 * System locking is applied only around this next call, while
+		 * we detach and get a pointer to the tail attach item.  We
+		 * become responsible to free what we have detached.
+		 */
 
-		p = buf + (buflen * 2);
-		*p = '\0'; /* terminating NUL */
-
-		for (n = (int)buflen - 1; n >= 0; n--) {
-			p -= 2;
-			b = buf[n];
-			p[0] = hex[(b >> 4) & 0xf];
-			p[1] = hex[b & 0xf];
+		if (pt->context->system_ops->attach(pt->context, pt->tid, NULL,
+						    0, NULL, &item)) {
+			lwsl_err("%s: attach problem\n", __func__);
+			return 1;
 		}
 
-		buflen = (buflen * 2);
+		if (!item)
+			/* there's nothing more to do at the moment */
+			return 0;
+
+		/*
+		 * Do the callback from the lws event loop thread
+		 */
+
+		item->cb(pt->context, pt->tid, item->opaque);
+
+		/* it's done, destroy the item */
+
+		lws_free(item);
 	}
 
-	return (int)buflen;
+	return 0;
 }
+
 #endif

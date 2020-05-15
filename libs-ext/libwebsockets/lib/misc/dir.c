@@ -22,8 +22,12 @@
  * IN THE SOFTWARE.
  */
 
+#if !defined(NO_GNU_SOURCE_THIS_TIME)
 #define NO_GNU_SOURCE_THIS_TIME
+#endif
+#if !defined(_DARWIN_C_SOURCE)
 #define _DARWIN_C_SOURCE
+#endif
 
 #include <libwebsockets.h>
 #include "private-lib-core.h"
@@ -44,25 +48,28 @@ lws_dir(const char *dirpath, void *user, lws_dir_callback_function cb)
 	ir = uv_loop_init(&loop);
 	if (ir) {
 		lwsl_err("%s: loop init failed %d\n", __func__, ir);
+		return 1;
 	}
 
 	ir = uv_fs_scandir(&loop, &req, dirpath, 0, NULL);
 	if (ir < 0) {
 		lwsl_err("Scandir on %s failed, errno %d\n", dirpath, LWS_ERRNO);
-		return 2;
+		ret = 2;
+		goto bail;
 	}
 
 	while (uv_fs_scandir_next(&req, &dent) != UV_EOF) {
 		lde.name = dent.name;
 		lde.type = (int)dent.type;
 		if (cb(dirpath, user, &lde))
-			goto bail;
+			goto bail1;
 	}
 
 	ret = 0;
 
-bail:
+bail1:
 	uv_fs_req_cleanup(&req);
+bail:
 	while (uv_loop_close(&loop))
 		;
 
@@ -106,7 +113,7 @@ lws_dir(const char *dirpath, void *user, lws_dir_callback_function cb)
 		 * files are LDOT_UNKNOWN
 		 */
 
-#if defined(__illumos__)
+#if defined(__sun)
         struct stat s;
         stat(namelist[i]->d_name, &s);
 		switch (s.st_mode) {
@@ -178,6 +185,6 @@ bail:
 }
 
 #else
-#error "If you want lws_dir onw windows, you need libuv"
+#error "If you want lws_dir on windows, you need libuv"
 #endif
 #endif

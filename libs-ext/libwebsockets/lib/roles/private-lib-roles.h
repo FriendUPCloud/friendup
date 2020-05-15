@@ -110,6 +110,8 @@ enum lwsi_state {
 	LRS_H2_AWAIT_PREFACE			= LWSIFS_NOT_EST | 12,
 	LRS_H2_AWAIT_SETTINGS			= LWSIFS_NOT_EST |
 						  LWSIFS_POCB | 13,
+	LRS_MQTTC_IDLE				= LWSIFS_POCB | 33,
+	LRS_MQTTC_AWAIT_CONNACK			= 34,
 
 	/* Phase 5: protocol logically established */
 
@@ -125,6 +127,7 @@ enum lwsi_state {
 	LRS_BODY				= 23,
 	LRS_DISCARD_BODY			= 24,
 	LRS_ESTABLISHED				= LWSIFS_POCB | 25,
+
 	/* we are established, but we have embarked on serving a single
 	 * transaction.  Other transaction input may be pending, but we will
 	 * not service it while we are busy dealing with the current
@@ -200,7 +203,7 @@ struct lws_role_ops {
 	/* do effective callback on writeable */
 	int (*callback_on_writable)(struct lws *wsi);
 	/* connection-specific tx credit in bytes */
-	lws_fileofs_t (*tx_credit)(struct lws *wsi);
+	int (*tx_credit)(struct lws *wsi, char peer_to_us, int add);
 	/* role-specific write formatting */
 	int (*write_role_protocol)(struct lws *wsi, unsigned char *buf,
 				   size_t len, enum lws_write_protocol *wp);
@@ -270,8 +273,8 @@ struct lws_role_ops {
 };
 
 /* core roles */
-extern struct lws_role_ops role_ops_raw_skt, role_ops_raw_file, role_ops_listen,
-			   role_ops_pipe;
+extern const struct lws_role_ops role_ops_raw_skt, role_ops_raw_file,
+				 role_ops_listen, role_ops_pipe;
 
 /* bring in role private declarations */
 
@@ -317,10 +320,17 @@ extern struct lws_role_ops role_ops_raw_skt, role_ops_raw_file, role_ops_listen,
  #define lwsi_role_raw_proxy(wsi) (0)
 #endif
 
+#if defined(LWS_ROLE_MQTT)
+ #include "mqtt/private-lib-roles-mqtt.h"
+#else
+ #define lwsi_role_mqtt(wsi) (0)
+#endif
+
 enum {
 	LWS_HP_RET_BAIL_OK,
 	LWS_HP_RET_BAIL_DIE,
 	LWS_HP_RET_USER_SERVICE,
+	LWS_HP_RET_DROP_POLLOUT,
 
 	LWS_HPI_RET_WSI_ALREADY_DIED,	/* we closed it */
 	LWS_HPI_RET_HANDLED,		/* no probs */

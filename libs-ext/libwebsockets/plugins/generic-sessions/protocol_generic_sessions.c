@@ -111,11 +111,12 @@ lwsgs_subst(void *data, int index)
 static int
 lws_get_effective_host(struct lws *wsi, char *buf, size_t buflen)
 {
+#if defined(LWS_ROLE_H2)
 	/* h2 */
 	if (lws_hdr_copy(wsi, buf, buflen - 1,
 			 WSI_TOKEN_HTTP_COLON_AUTHORITY) > 0)
 		return 0;
-
+#endif
 	/* h1 */
 	if (lws_hdr_copy(wsi, buf, buflen - 1,  WSI_TOKEN_HOST) > 0)
 		return 0;
@@ -142,7 +143,9 @@ callback_generic_sessions(struct lws *wsi, enum lws_callback_reasons reason,
 	const char *cp, *cp1;
 	sqlite3_stmt *sm;
 	lwsgw_hash sid;
+#if defined(LWS_WITH_SMTP)
 	lws_abs_t abs;
+#endif
 	int n;
 
 	switch (reason) {
@@ -275,6 +278,8 @@ callback_generic_sessions(struct lws *wsi, enum lws_callback_reasons reason,
 			return 1;
 		}
 
+#if defined(LWS_WITH_SMTP)
+
 		memset(&abs, 0, sizeof(abs));
 		abs.vh = lws_get_vhost(wsi);
 
@@ -307,6 +312,7 @@ callback_generic_sessions(struct lws *wsi, enum lws_callback_reasons reason,
 			return 1;
 
 		lwsl_notice("%s: created SMTP client\n", __func__);
+#endif
 		break;
 
 	case LWS_CALLBACK_PROTOCOL_DESTROY:
@@ -315,8 +321,10 @@ callback_generic_sessions(struct lws *wsi, enum lws_callback_reasons reason,
 			sqlite3_close(vhd->pdb);
 			vhd->pdb = NULL;
 		}
+#if defined(LWS_WITH_SMTP)
 		if (vhd->smtp_client)
 			lws_abs_destroy_instance(&vhd->smtp_client);
+#endif
 		break;
 
 	case LWS_CALLBACK_HTTP_WRITEABLE:
@@ -366,25 +374,25 @@ callback_generic_sessions(struct lws *wsi, enum lws_callback_reasons reason,
 			lwsgs_handler_confirm(vhd, wsi, pss);
 			goto redirect_with_cookie;
 		}
-		cp = strstr(cp, "lwsgs-check/");
-		if (cp) {
-			lwsgs_handler_check(vhd, wsi, pss, cp + 12);
+		cp1 = strstr(cp, "lwsgs-check/");
+		if (cp1) {
+			lwsgs_handler_check(vhd, wsi, pss, cp1 + 12);
 			/* second, async part will complete transaction */
 			break;
 		}
 
-		if (n >= 11 && !strcmp(cp + n - 11, "lwsgs-login"))
+		if (n >= 11 && cp && !strcmp(cp + n - 11, "lwsgs-login"))
 			break;
-		if (n >= 12 && !strcmp(cp + n - 12, "lwsgs-logout"))
+		if (n >= 12 && cp && !strcmp(cp + n - 12, "lwsgs-logout"))
 			break;
-		if (n >= 12 && !strcmp(cp + n - 12, "lwsgs-forgot"))
+		if (n >= 12 && cp && !strcmp(cp + n - 12, "lwsgs-forgot"))
 			break;
-		if (n >= 12 && !strcmp(cp + n - 12, "lwsgs-change"))
+		if (n >= 12 && cp && !strcmp(cp + n - 12, "lwsgs-change"))
 			break;
 
 		/* if no legitimate url for GET, return 404 */
 
-		lwsl_err("http doing 404 on %s\n", cp);
+		lwsl_err("%s: http doing 404 on %s\n", __func__, cp ? cp : "null");
 		lws_return_http_status(wsi, HTTP_STATUS_NOT_FOUND, NULL);
 
 		return -1;
@@ -431,9 +439,10 @@ callback_generic_sessions(struct lws *wsi, enum lws_callback_reasons reason,
 				goto redirect_with_cookie;
 			}
 		} else
-			lwsl_notice("failed to get sid from wsi\n");
+			lwsl_notice("%s: failed to get sid from wsi\n", __func__);
 
 		n = lwsgs_get_auth_level(vhd, username);
+		lwsl_notice("%s: lwsgs_get_auth_level '%s' says %d\n", __func__, username, n);
 
 		if ((args->max_len & n) != args->max_len) {
 			lwsl_notice("Access rights fail 0x%X vs 0x%X (cookie %s)\n",
@@ -504,8 +513,10 @@ callback_generic_sessions(struct lws *wsi, enum lws_callback_reasons reason,
 		break;
 
 	case LWS_CALLBACK_HTTP_BODY:
-		if (len < 2)
+		if (len < 2) {
+			lwsl_err("%s: HTTP_BODY: len %d < 2\n", __func__, (int)len);
 			break;
+		}
 
 		if (!pss->spa) {
 			pss->spa = lws_spa_create(wsi, param_names,
@@ -522,6 +533,8 @@ callback_generic_sessions(struct lws *wsi, enum lws_callback_reasons reason,
 		break;
 
 	case LWS_CALLBACK_HTTP_BODY_COMPLETION:
+
+		lwsl_debug("%s: LWS_CALLBACK_HTTP_BODY_COMPLETION\n", __func__);
 
 		if (!pss->spa)
 			break;
@@ -561,8 +574,10 @@ callback_generic_sessions(struct lws *wsi, enum lws_callback_reasons reason,
 					n = FGS_FORGOT_BAD;
 					goto reg_done;
 				}
+#if defined(LWS_WITH_SMTP)
 				/* get the email monitor to take a look */
 				lws_smtpc_kick(vhd->smtp_client);
+#endif
 				n = FGS_FORGOT_GOOD;
 				goto reg_done;
 			}
@@ -582,9 +597,10 @@ callback_generic_sessions(struct lws *wsi, enum lws_callback_reasons reason,
 					n = FGS_REG_BAD;
 				else {
 					n = FGS_REG_GOOD;
-
+#if defined(LWS_WITH_SMTP)
 					/* get the email monitor to take a look */
 					lws_smtpc_kick(vhd->smtp_client);
+#endif
 				}
 reg_done:
 				lws_snprintf(pss->onward, sizeof(pss->onward),
@@ -690,14 +706,16 @@ pass:
 					pss->login_expires))
 				goto try_to_reuse;
 
-			lwsl_notice("Creating new session: %s\n",
+			lwsl_notice("%s: Creating new session: %s\n", __func__,
 				    pss->login_session.id);
 		} else {
 			/*
 			 * we can just update the existing session to be
 			 * authorized
 			 */
-			lwsl_notice("Authorizing existing session %s", sid.id);
+			lwsl_notice("%s: Authorizing existing session %s, name %s\n",
+				    __func__, sid.id,
+				    lws_spa_get_string(pss->spa, FGS_USERNAME));
 			lwsgw_update_session(vhd, &sid,
 				lws_spa_get_string(pss->spa, FGS_USERNAME));
 			pss->login_session = sid;
@@ -877,7 +895,7 @@ static const struct lws_protocols protocols[] = {
 	},
 };
 
-LWS_EXTERN LWS_VISIBLE int
+LWS_VISIBLE int
 init_protocol_generic_sessions(struct lws_context *context,
 			struct lws_plugin_capability *c)
 {
@@ -895,7 +913,7 @@ init_protocol_generic_sessions(struct lws_context *context,
 	return 0;
 }
 
-LWS_EXTERN LWS_VISIBLE int
+LWS_VISIBLE int
 destroy_protocol_generic_sessions(struct lws_context *context)
 {
 	return 0;

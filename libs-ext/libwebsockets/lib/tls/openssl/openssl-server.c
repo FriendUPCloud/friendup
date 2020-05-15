@@ -169,11 +169,10 @@ lws_tls_server_certs_load(struct lws_vhost *vhost, struct lws *wsi,
 	unsigned long error;
 	lws_filepos_t flen;
 	uint8_t *p;
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 	int ret;
-
+#endif
 	int n = lws_tls_generic_cert_checks(vhost, cert, private_key), m;
-
-	(void)ret;
 
 	if (!cert && !private_key)
 		n = LWS_TLS_EXTANT_ALTERNATIVE;
@@ -623,6 +622,8 @@ lws_tls_server_accept(struct lws *wsi)
 	ERR_clear_error();
 	n = SSL_accept(wsi->tls.ssl);
 
+	wsi->skip_fallback = 1;
+
 	if (n == 1) {
 		n = lws_tls_peer_cert_info(wsi, LWS_TLS_CERT_INFO_COMMON_NAME, &ir,
 					   sizeof(ir.ns.name));
@@ -711,7 +712,7 @@ struct lws_tls_ss_pieces {
 	RSA *rsa;
 };
 
-LWS_VISIBLE LWS_EXTERN int
+int
 lws_tls_acme_sni_cert_create(struct lws_vhost *vhost, const char *san_a,
 			     const char *san_b)
 {
@@ -868,10 +869,11 @@ static int nid_list[] = {
 	NID_localityName,		/* LWS_TLS_REQ_ELEMENT_LOCALITY */
 	NID_organizationName,		/* LWS_TLS_REQ_ELEMENT_ORGANIZATION */
 	NID_commonName,			/* LWS_TLS_REQ_ELEMENT_COMMON_NAME */
-	NID_organizationalUnitName,	/* LWS_TLS_REQ_ELEMENT_EMAIL */
+	NID_subject_alt_name,		/* LWS_TLS_REQ_ELEMENT_SUBJECT_ALT_NAME */
+	NID_pkcs9_emailAddress,		/* LWS_TLS_REQ_ELEMENT_EMAIL */
 };
 
-LWS_VISIBLE LWS_EXTERN int
+int
 lws_tls_acme_sni_csr_create(struct lws_context *context, const char *elements[],
 			    uint8_t *csr, size_t csr_len, char **privkey_pem,
 			    size_t *privkey_len)
@@ -906,14 +908,44 @@ lws_tls_acme_sni_csr_create(struct lws_context *context, const char *elements[],
 		goto bail2;
 
 	for (n = 0; n < LWS_TLS_REQ_ELEMENT_COUNT; n++)
-		if (lws_tls_openssl_add_nid(subj, nid_list[n], elements[n])) {
-			lwsl_notice("%s: failed to add element %d\n", __func__,
-				    n);
+		if (elements[n] &&
+			lws_tls_openssl_add_nid(subj, nid_list[n],
+				elements[n])) {
+				lwsl_notice("%s: failed to add element %d\n",
+						__func__, n);
 			goto bail3;
 		}
 
 	if (X509_REQ_set_subject_name(req, subj) != 1)
 		goto bail3;
+
+	if (elements[LWS_TLS_REQ_ELEMENT_SUBJECT_ALT_NAME]) {
+		STACK_OF(X509_EXTENSION) *exts;
+		X509_EXTENSION *ext;
+		char san[256];
+
+		exts = sk_X509_EXTENSION_new_null();
+		if (!exts)
+			goto bail3;
+
+		lws_snprintf(san, sizeof(san), "DNS:%s,DNS:%s",
+				elements[LWS_TLS_REQ_ELEMENT_COMMON_NAME],
+				elements[LWS_TLS_REQ_ELEMENT_SUBJECT_ALT_NAME]);
+
+		ext = X509V3_EXT_conf_nid(NULL, NULL, NID_subject_alt_name,
+				san);
+		if (!ext) {
+			sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
+			goto bail3;
+		}
+		sk_X509_EXTENSION_push(exts, ext);
+
+		if (!X509_REQ_add_extensions(req, exts)) {
+			sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
+			goto bail3;
+		}
+		sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
+	}
 
 	if (!X509_REQ_sign(req, pkey, EVP_sha256()))
 		goto bail3;

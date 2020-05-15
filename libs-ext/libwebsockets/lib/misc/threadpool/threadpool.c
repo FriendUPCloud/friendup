@@ -22,7 +22,10 @@
  * IN THE SOFTWARE.
  */
 
+#if !defined(_GNU_SOURCE)
 #define _GNU_SOURCE
+#endif
+
 #include <pthread.h>
 
 #include "private-lib-core.h"
@@ -146,7 +149,7 @@ __lws_threadpool_task_dump(struct lws_threadpool_task *task, char *buf, int len)
 		return;
 	}
 
-	buf += lws_snprintf(buf, end - buf,
+	lws_snprintf(buf, end - buf,
 		"task: %s, DONE state %d lived: %dms "
 		"(queued %dms, on thread: %dms, "
 		"ran: %d%%, synced: %d%%)", task->name, task->status,

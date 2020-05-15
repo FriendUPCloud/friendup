@@ -1,7 +1,7 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2020 Andy Green <andy@warmcat.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -172,7 +172,11 @@ lws_async_dns_writeable(struct lws *wsi, lws_adns_q_t *q)
 
 	/* we hack b0 of the tid to be 0 = A, 1 = AAAA */
 
-	lws_ser_wu16be(&p[DHO_TID], which ? q->tid | 1 : q->tid);
+	lws_ser_wu16be(&p[DHO_TID],
+#if defined(LWS_WITH_IPV6)
+			which ? q->tid | 1 :
+#endif
+			q->tid);
 	lws_ser_wu16be(&p[DHO_FLAGS], (1 << 8));
 	lws_ser_wu16be(&p[DHO_NQUERIES], 1);
 
@@ -320,7 +324,7 @@ ok:
 
 	context->async_dns.wsi = lws_create_adopt_udp(context->vhost_list, ads,
 				      53, 0, lws_async_dns_protocol.name, NULL,
-				      NULL, &retry_policy);
+				      NULL, NULL, &retry_policy);
 	if (!dns->wsi) {
 		lwsl_err("%s: foreign socket adoption failed\n", __func__);
 		return 1;
@@ -479,7 +483,7 @@ check_tid(struct lws_dll2 *d, void *user)
 {
 	lws_adns_q_t *q = lws_container_of(d, lws_adns_q_t, list);
 
-	return q->tid == (uint16_t)(long)user;
+	return q->tid == (uint16_t)(intptr_t)user;
 }
 
 int
@@ -498,7 +502,7 @@ lws_async_dns_get_new_tid(struct lws_context *context, lws_adns_q_t *q)
 			return -1;
 
 		if (lws_dll2_foreach_safe(&dns->waiting,
-					  (void *)(long)tid, check_tid))
+					  (void *)(intptr_t)tid, check_tid))
 			continue;
 
 		q->tid = tid;
@@ -712,8 +716,9 @@ lws_async_dns_query(struct lws_context *context, int tsi, const char *name,
 		q->standalone_cb = cb;
 
 	/* schedule a retry according to the retry policy on the wsi */
-	lws_retry_sul_schedule_retry_wsi(dns->wsi, &q->sul,
-					 lws_async_dns_sul_cb_retry, &q->retry);
+	if (lws_retry_sul_schedule_retry_wsi(dns->wsi, &q->sul,
+					 lws_async_dns_sul_cb_retry, &q->retry))
+		goto failed;
 
 	/*
 	 * We may rewrite the copy at +sizeof(*q) for CNAME recursion.  Keep

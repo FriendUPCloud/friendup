@@ -164,7 +164,7 @@ static const char *ec_names[] = {
 };
 static const char ec_b64[] = { 0, 1, 1, 1 };
 
-LWS_VISIBLE int
+int
 lws_jwk_dump(struct lws_jwk *jwk)
 {
 	const char **enames, *b64;
@@ -287,7 +287,7 @@ lws_jwk_destroy_elements(struct lws_gencrypto_keyelem *el, int m)
 		}
 }
 
-LWS_VISIBLE void
+void
 lws_jwk_destroy(struct lws_jwk *jwk)
 {
 	lws_jwk_destroy_elements(jwk->e, LWS_ARRAY_SIZE(jwk->e));
@@ -300,6 +300,7 @@ cb_jwk(struct lejp_ctx *ctx, char reason)
 	struct lws_jwk_parse_state *jps = (struct lws_jwk_parse_state *)ctx->user;
 	struct lws_jwk *jwk = jps->jwk;
 	unsigned int idx, poss, n;
+	char dotstar[64];
 
 	if (reason == LEJPCB_VAL_STR_START)
 		jps->pos = 0;
@@ -460,8 +461,8 @@ cb_jwk(struct lejp_ctx *ctx, char reason)
 			jps->possible = F_EC;
 			goto cont;
 		}
-		lwsl_err("%s: Unknown KTY '%.*s'\n", __func__, ctx->npos,
-			  ctx->buf);
+		lws_strnncpy(dotstar, ctx->buf, ctx->npos, sizeof(dotstar));
+		lwsl_err("%s: Unknown KTY '%s'\n", __func__, dotstar);
 		return -1;
 
 	default:
@@ -549,7 +550,7 @@ lws_jwk_init_jps(struct lejp_ctx *jctx, struct lws_jwk_parse_state *jps,
 		       LWS_ARRAY_SIZE(jwk_tok));
 }
 
-LWS_VISIBLE int
+int
 lws_jwk_dup_oct(struct lws_jwk *jwk, const void *key, int len)
 {
 	jwk->e[LWS_GENCRYPTO_KTY_OCT].buf = lws_malloc(len, __func__);
@@ -564,10 +565,11 @@ lws_jwk_dup_oct(struct lws_jwk *jwk, const void *key, int len)
 	return 0;
 }
 
-LWS_VISIBLE int
+int
 lws_jwk_generate(struct lws_context *context, struct lws_jwk *jwk,
 	         enum lws_gencrypto_kty kty, int bits, const char *curve)
 {
+	size_t sn;
 	int n;
 
 	memset(jwk, 0, sizeof(*jwk));
@@ -591,11 +593,11 @@ lws_jwk_generate(struct lws_context *context, struct lws_jwk *jwk,
 	}
 		break;
 	case LWS_GENCRYPTO_KTY_OCT:
-		n = lws_gencrypto_bits_to_bytes(bits);
-		jwk->e[LWS_GENCRYPTO_OCT_KEYEL_K].buf = lws_malloc(n, "oct");
-		jwk->e[LWS_GENCRYPTO_OCT_KEYEL_K].len = n;
+		sn = lws_gencrypto_bits_to_bytes(bits);
+		jwk->e[LWS_GENCRYPTO_OCT_KEYEL_K].buf = lws_malloc(sn, "oct");
+		jwk->e[LWS_GENCRYPTO_OCT_KEYEL_K].len = sn;
 		if (lws_get_random(context,
-				 jwk->e[LWS_GENCRYPTO_OCT_KEYEL_K].buf, n) != n) {
+			     jwk->e[LWS_GENCRYPTO_OCT_KEYEL_K].buf, sn) != sn) {
 			lwsl_err("%s: problem getting random\n", __func__);
 			return 1;
 		}
@@ -634,7 +636,7 @@ lws_jwk_generate(struct lws_context *context, struct lws_jwk *jwk,
 	return 0;
 }
 
-LWS_VISIBLE int
+int
 lws_jwk_import(struct lws_jwk *jwk, lws_jwk_key_import_callback cb, void *user,
 	       const char *in, size_t len)
 {
@@ -666,8 +668,8 @@ lws_jwk_import(struct lws_jwk *jwk, lws_jwk_key_import_callback cb, void *user,
 }
 
 
-LWS_VISIBLE int
-lws_jwk_export(struct lws_jwk *jwk, int private, char *p, int *len)
+int
+lws_jwk_export(struct lws_jwk *jwk, int flags, char *p, int *len)
 {
 	char *start = p, *end = &p[*len - 1];
 	int n, m, limit, first = 1, asym = 0;
@@ -740,9 +742,9 @@ lws_jwk_export(struct lws_jwk *jwk, int private, char *p, int *len)
 					}
 					tok[pos] = '\0';
 					pos = 0;
-					if (private || !asym ||
-					    (strcmp(tok, "sign") &&
-					    strcmp(tok, "encrypt"))) {
+					if ((flags & LWSJWKF_EXPORT_PRIVATE) ||
+					    !asym || (strcmp(tok, "sign") &&
+						      strcmp(tok, "encrypt"))) {
 						if (!f)
 							*p++ = ',';
 						f = 0;
@@ -758,20 +760,24 @@ lws_jwk_export(struct lws_jwk *jwk, int private, char *p, int *len)
 
 			default:
 				/* both sig and enc require asym private key */
-				if (!private && asym && l->idx == (int)JWK_META_USE)
+				if (!(flags & LWSJWKF_EXPORT_PRIVATE) &&
+				    asym && l->idx == (int)JWK_META_USE)
 					break;
 				if (!first)
 					*p++ = ',';
 				first = 0;
-				p += lws_snprintf(p, end - p, "\"%s\":\"%.*s\"",
-						  l->name, jwk->meta[l->idx].len,
-						  jwk->meta[l->idx].buf);
+				p += lws_snprintf(p, end - p, "\"%s\":\"",
+						  l->name);
+				lws_strnncpy(p, (const char *)jwk->meta[l->idx].buf,
+					     jwk->meta[l->idx].len, end - p);
+				p += strlen(p);
+				p += lws_snprintf(p, end - p, "\"");
 				break;
 			}
 		}
 
 		if ((!(l->meta & 1)) && jwk->e[l->idx].buf &&
-		    (private || !(l->meta & 2))) {
+		    ((flags & LWSJWKF_EXPORT_PRIVATE) || !(l->meta & 2))) {
 			if (!first)
 				*p++ = ',';
 			first = 0;
@@ -779,11 +785,12 @@ lws_jwk_export(struct lws_jwk *jwk, int private, char *p, int *len)
 			p += lws_snprintf(p, end - p, "\"%s\":\"", l->name);
 
 			if (jwk->kty == LWS_GENCRYPTO_KTY_EC &&
-			    l->idx == (int)LWS_GENCRYPTO_EC_KEYEL_CRV)
-				m = lws_snprintf(p, end - p, "%.*s",
-					jwk->e[l->idx].len,
-					(const char *)jwk->e[l->idx].buf);
-			else
+			    l->idx == (int)LWS_GENCRYPTO_EC_KEYEL_CRV) {
+				lws_strnncpy(p,
+					     (const char *)jwk->e[l->idx].buf,
+					     jwk->e[l->idx].len, end - p);
+				m = strlen(p);
+			} else
 				m = lws_jws_base64_enc(
 					(const char *)jwk->e[l->idx].buf,
 					jwk->e[l->idx].len, p, end - p - 4);
@@ -798,14 +805,15 @@ lws_jwk_export(struct lws_jwk *jwk, int private, char *p, int *len)
 		l++;
 	}
 
-	p += lws_snprintf(p, end - p, "}\n");
+	p += lws_snprintf(p, end - p,
+			  (flags & LWSJWKF_EXPORT_NOCRLF) ? "}" : "}\n");
 
 	*len -= p - start;
 
 	return p - start;
 }
 
-LWS_VISIBLE int
+int
 lws_jwk_rfc7638_fingerprint(struct lws_jwk *jwk, char *digest32)
 {
 	struct lws_genhash_ctx hash_ctx;
@@ -814,7 +822,7 @@ lws_jwk_rfc7638_fingerprint(struct lws_jwk *jwk, char *digest32)
 
 	tmp = lws_malloc(tmpsize, "rfc7638 tmp");
 
-	n = lws_jwk_export(jwk, 0, tmp, &tmpsize);
+	n = lws_jwk_export(jwk, LWSJWKF_EXPORT_NOCRLF, tmp, &tmpsize);
 	if (n < 0)
 		goto bail;
 
@@ -839,7 +847,7 @@ bail:
 	return -1;
 }
 
-LWS_VISIBLE int
+int
 lws_jwk_strdup_meta(struct lws_jwk *jwk, enum enum_jwk_meta_tok idx,
 		    const char *in, int len)
 {
@@ -852,7 +860,7 @@ lws_jwk_strdup_meta(struct lws_jwk *jwk, enum enum_jwk_meta_tok idx,
 	return 0;
 }
 
-LWS_VISIBLE int
+int
 lws_jwk_load(struct lws_jwk *jwk, const char *filename,
 	     lws_jwk_key_import_callback cb, void *user)
 {
@@ -877,7 +885,7 @@ bail:
 	return -1;
 }
 
-LWS_VISIBLE int
+int
 lws_jwk_save(struct lws_jwk *jwk, const char *filename)
 {
 	int buflen = 4096;
@@ -887,7 +895,7 @@ lws_jwk_save(struct lws_jwk *jwk, const char *filename)
 	if (!buf)
 		return -1;
 
-	n = lws_jwk_export(jwk, 1, buf, &buflen);
+	n = lws_jwk_export(jwk, LWSJWKF_EXPORT_PRIVATE, buf, &buflen);
 	if (n < 0)
 		goto bail;
 

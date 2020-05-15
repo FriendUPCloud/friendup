@@ -22,9 +22,10 @@
  * IN THE SOFTWARE.
  */
 
+#include <libwebsockets.h>
 #include "private-lib-core.h"
 
-LWS_VISIBLE struct lws *
+struct lws *
 lws_client_connect_via_info(const struct lws_client_connect_info *i)
 {
 	const char *local = i->protocol;
@@ -56,6 +57,8 @@ lws_client_connect_via_info(const struct lws_client_connect_info *i)
 	wsi = lws_zalloc(sizeof(struct lws), "client wsi");
 	if (wsi == NULL)
 		goto bail;
+
+
 
 	wsi->context = i->context;
 	wsi->desc.sockfd = LWS_SOCK_INVALID;
@@ -142,17 +145,24 @@ lws_client_connect_via_info(const struct lws_client_connect_info *i)
 	wsi->user_space = NULL;
 	wsi->pending_timeout = NO_PENDING_TIMEOUT;
 	wsi->position_in_fds_table = LWS_NO_FDS_POS;
-	wsi->c_port = i->port;
+	wsi->ocport = wsi->c_port = i->port;
+	wsi->sys_tls_client_cert = i->sys_tls_client_cert;
+
+#if defined(LWS_ROLE_H2)
+	wsi->txc.manual_initial_tx_credit = (int32_t)i->manual_initial_tx_credit;
+#endif
 
 	wsi->protocol = &wsi->vhost->protocols[0];
 	wsi->client_pipeline = !!(i->ssl_connection & LCCSCF_PIPELINE);
+	wsi->client_no_follow_redirect = !!(i->ssl_connection &
+					    LCCSCF_HTTP_NO_FOLLOW_REDIRECT);
 
 	/*
 	 * PHASE 5: handle external user_space now, generic alloc is done in
 	 * role finalization
 	 */
 
-	if (!wsi->user_space && i->userdata) {
+	if (i->userdata) {
 		wsi->user_space_externally_allocated = 1;
 		wsi->user_space = i->userdata;
 	}
@@ -227,13 +237,14 @@ lws_client_connect_via_info(const struct lws_client_connect_info *i)
 	/* all the pointers default to NULL, but no need to zero the args */
 	memset(wsi->stash, 0, sizeof(*wsi->stash));
 
-	wsi->stash->opaque_user_data = i->opaque_user_data;
+	wsi->opaque_user_data = wsi->stash->opaque_user_data =
+		i->opaque_user_data;
 	pc = (char *)&wsi->stash[1];
 
 	for (n = 0; n < CIS_COUNT; n++)
 		if (cisin[n]) {
 			wsi->stash->cis[n] = pc;
-			m = strlen(cisin[n]) + 1;
+			m = (int)strlen(cisin[n]) + 1;
 			memcpy(pc, cisin[n], m);
 			pc += m;
 		}
@@ -283,17 +294,18 @@ lws_client_connect_via_info(const struct lws_client_connect_info *i)
 
 	/* PHASE 8: notify protocol with role-specific connected callback */
 
-	/* raw socket doesn't want this... not sure if any want this */
-	if (wsi->role_ops != &role_ops_raw_skt) {
-		lwsl_debug("%s: wsi %p: cb %d to %s %s\n", __func__,
-				wsi, wsi->role_ops->adoption_cb[0],
-				wsi->role_ops->name, wsi->protocol->name);
+	/* raw socket per se doesn't want this... raw socket proxy wants it... */
 
-		wsi->protocol->callback(wsi,
-				wsi->role_ops->adoption_cb[0],
+	if (wsi->role_ops != &role_ops_raw_skt ||
+	    (i->local_protocol_name &&
+	     !strcmp(i->local_protocol_name, "raw-proxy"))) {
+		lwsl_debug("%s: wsi %p: adoption cb %d to %s %s\n", __func__,
+			   wsi, wsi->role_ops->adoption_cb[0],
+			   wsi->role_ops->name, wsi->protocol->name);
+
+		wsi->protocol->callback(wsi, wsi->role_ops->adoption_cb[0],
 				wsi->user_space, NULL, 0);
 	}
-
 
 #if defined(LWS_WITH_HUBBUB)
 	if (i->uri_replace_to)
@@ -302,10 +314,52 @@ lws_client_connect_via_info(const struct lws_client_connect_info *i)
 					     i->uri_replace_to);
 #endif
 
-	if (i->method && !strcmp(i->method, "RAW"))
+	if (i->method && (!strcmp(i->method, "RAW") // ||
+//			  !strcmp(i->method, "MQTT")
+	)) {
+
+		/*
+		 * Not for MQTT here, since we don't know if we will
+		 * pipeline it or not...
+		 */
+
+#if defined(LWS_WITH_TLS)
+
+		wsi->tls.ssl = NULL;
+
+		if (wsi->tls.use_ssl & LCCSCF_USE_SSL) {
+			const char *cce = NULL;
+
+			switch (
+#if !defined(LWS_WITH_SYS_ASYNC_DNS)
+			lws_client_create_tls(wsi, &cce, 1)
+#else
+			lws_client_create_tls(wsi, &cce, 0)
+#endif
+			) {
+			case 1:
+				return wsi;
+			case 0:
+				break;
+			default:
+				goto bail3;
+			}
+		}
+#endif
+
+		/* fallthru */
+
 		lws_http_client_connect_via_info2(wsi);
+	}
 
 	return wsi;
+
+#if defined(LWS_WITH_TLS)
+bail3:
+	lws_close_free_wsi(wsi, LWS_CLOSE_STATUS_NOSTATUS, "tls start fail");
+
+	return NULL;
+#endif
 
 bail1:
 	lws_free_set_NULL(wsi->stash);
@@ -315,6 +369,10 @@ bail:
 #if defined(LWS_ROLE_H1) || defined(LWS_ROLE_H2)
 bail2:
 #endif
+
+	if (i->ssl_connection & LCCSCF_USE_SSL)
+		lws_tls_restrict_return(i->context);
+
 	if (i->pwsi)
 		*i->pwsi = NULL;
 

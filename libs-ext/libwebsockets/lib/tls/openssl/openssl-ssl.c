@@ -36,7 +36,7 @@ int openssl_websocket_private_data_index,
 
 int lws_openssl_describe_cipher(struct lws *wsi)
 {
-#if !defined(LWS_WITH_NO_LOGS)
+#if !defined(LWS_WITH_NO_LOGS) && !defined(USE_WOLFSSL)
 	int np = -1;
 	SSL *s = wsi->tls.ssl;
 
@@ -59,6 +59,8 @@ int lws_ssl_get_error(struct lws *wsi, int n)
 	m = SSL_get_error(wsi->tls.ssl, n);
 	lwsl_debug("%s: %p %d -> %d (errno %d)\n", __func__, wsi->tls.ssl, n, m,
 		   errno);
+
+	assert (errno != 9);
 
 	return m;
 }
@@ -134,7 +136,7 @@ lws_ssl_destroy_client_ctx(struct lws_vhost *vhost)
 	lws_free(tcr);
 }
 
-LWS_VISIBLE void
+void
 lws_ssl_destroy(struct lws_vhost *vhost)
 {
 	if (!lws_check_opt(vhost->context->options,
@@ -171,7 +173,7 @@ lws_ssl_destroy(struct lws_vhost *vhost)
 #endif
 }
 
-LWS_VISIBLE int
+int
 lws_ssl_capable_read(struct lws *wsi, unsigned char *buf, int len)
 {
 	struct lws_context *context = wsi->context;
@@ -307,7 +309,7 @@ bail:
 	return n;
 }
 
-LWS_VISIBLE int
+int
 lws_ssl_pending(struct lws *wsi)
 {
 	if (!wsi->tls.ssl)
@@ -316,10 +318,13 @@ lws_ssl_pending(struct lws *wsi)
 	return SSL_pending(wsi->tls.ssl);
 }
 
-LWS_VISIBLE int
+int
 lws_ssl_capable_write(struct lws *wsi, unsigned char *buf, int len)
 {
 	int n, m;
+
+	// lwsl_notice("%s: len %d\n", __func__, len);
+	// lwsl_hexdump_notice(buf, len);
 
 	if (!wsi->tls.ssl)
 		return lws_ssl_capable_write_no_ssl(wsi, buf, len);
@@ -390,7 +395,7 @@ lws_ssl_info_callback(const SSL *ssl, int where, int ret)
 }
 
 
-LWS_VISIBLE int
+int
 lws_ssl_close(struct lws *wsi)
 {
 	lws_sockfd_type n;
@@ -413,19 +418,11 @@ lws_ssl_close(struct lws *wsi)
 	SSL_free(wsi->tls.ssl);
 	wsi->tls.ssl = NULL;
 
-	if (wsi->context->simultaneous_ssl_restriction &&
-	    wsi->context->simultaneous_ssl-- ==
-			    wsi->context->simultaneous_ssl_restriction)
-		/* we made space and can do an accept */
-		lws_gate_accepts(wsi->context, 1);
+	lws_tls_restrict_return(wsi->context);
 
 	// lwsl_notice("%s: ssl restr %d, simul %d\n", __func__,
 	//		wsi->context->simultaneous_ssl_restriction,
 	//		wsi->context->simultaneous_ssl);
-
-#if defined(LWS_WITH_STATS)
-	wsi->context->updated = 1;
-#endif
 
 	return 1; /* handled */
 }

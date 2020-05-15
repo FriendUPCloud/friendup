@@ -38,10 +38,9 @@ lws_ssl_client_connect1(struct lws *wsi)
 	case LWS_SSL_CAPABLE_MORE_SERVICE_WRITE:
 		lws_callback_on_writable(wsi);
 		/* fallthru */
+	case LWS_SSL_CAPABLE_MORE_SERVICE:
 	case LWS_SSL_CAPABLE_MORE_SERVICE_READ:
 		lwsi_set_state(wsi, LRS_WAITING_SSL);
-		break;
-	case LWS_SSL_CAPABLE_MORE_SERVICE:
 		break;
 	}
 
@@ -51,7 +50,7 @@ lws_ssl_client_connect1(struct lws *wsi)
 int
 lws_ssl_client_connect2(struct lws *wsi, char *errbuf, int len)
 {
-	int n = 0;
+	int n;
 
 	if (lwsi_state(wsi) == LRS_WAITING_SSL) {
 		n = lws_tls_client_connect(wsi);
