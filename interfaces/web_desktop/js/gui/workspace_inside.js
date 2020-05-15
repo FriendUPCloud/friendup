@@ -413,7 +413,13 @@ var WorkspaceInside = {
 					} )( a );
 					if( a == globalConfig.workspaceCurrent ) w.className += ' Active';
 					
-					if( globalConfig.workspace_labels && typeof( globalConfig.workspace_labels ) == 'object' && globalConfig.workspace_labels[ a ] )
+					if( 
+						globalConfig.workspace_labels && 
+						typeof( globalConfig.workspace_labels ) == 'object' && 
+						globalConfig.workspace_labels[ a ] && 
+						globalConfig.workspace_labels[ a ] != '[' &&
+						globalConfig.workspace_labels[ a ] != ']'
+					)
 					{
 						w.innerHTML = '<span class="' + globalConfig.workspace_labels[ a ] + '"></span>';
 						w.className += ' WithIcon';
