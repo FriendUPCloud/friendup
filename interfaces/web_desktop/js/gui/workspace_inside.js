@@ -413,6 +413,7 @@ var WorkspaceInside = {
 					} )( a );
 					if( a == globalConfig.workspaceCurrent ) w.className += ' Active';
 					
+					// Check if the label is an icon or a number
 					if( 
 						globalConfig.workspace_labels && 
 						typeof( globalConfig.workspace_labels ) == 'object' && 
