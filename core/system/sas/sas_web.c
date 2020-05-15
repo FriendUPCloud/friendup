@@ -797,7 +797,7 @@ Application.checkDocumentSession = function( sasID = null )
 				SASSession *as = SASSessionNew( l, authid, 0, loggedSession );
 				if( as != NULL )
 				{
-					as->sas_Type = type;
+					as->sas_Type = SAS_TYPE_OPEN;	// we can only create open sessions
 					int err = SASManagerAddSession( l->sl_SASManager, as );
 					if( err == 0 )
 					{
