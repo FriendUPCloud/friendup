@@ -1979,6 +1979,10 @@ BufString *Call( File *s __attribute__((unused)), const char *path __attribute__
 
 BufString *Dir( File *s, const char *path )
 {
+	if( s == NULL )
+	{
+		return NULL;
+	}
 	BufString *bs = BufStringNew();
 	
 	int rspath = strlen( s->f_Path );
@@ -1986,14 +1990,21 @@ BufString *Dir( File *s, const char *path )
 	DEBUG("Dir!\n");
 	
 	// user is trying to get access to not his directory
-	
-	//int doub = strlen( s->f_Name );
-	
+
 	char *comm = NULL;
-	char *tempString = FCalloc( rspath +512, sizeof(char) );
+	int tempStringLen = rspath +512;
+	char *tempString = FCalloc( tempStringLen, sizeof(char) );
 	
 	if( ( comm = FCalloc( rspath +512, sizeof(char) ) ) != NULL )
 	{
+		LIBSSH2_SFTP_HANDLE *sftphandle = NULL;
+		
+		SpecialData *sd = (SpecialData *)s->f_SpecialData;
+		FHandler *fh = (FHandler *)s->f_FSys;
+		HandlerData *hd = (HandlerData *)fh->fh_SpecialData;
+		SystemBase *sb = (SystemBase *)sd->sb;
+		int pos = 0;
+		
 		strcpy( comm, s->f_Path );
 		if( comm[ strlen( comm ) -1 ] != '/' && s->f_Path[ strlen(s->f_Path)-1 ] != '/' )
 		{
@@ -2011,13 +2022,6 @@ BufString *Dir( File *s, const char *path )
 			DEBUG("end was not endeed /\n");
 			strcat( comm, "/" );
 		}
-		
-		LIBSSH2_SFTP_HANDLE *sftphandle;
-		
-		SpecialData *sd = (SpecialData *)s->f_SpecialData;
-		FHandler *fh = (FHandler *)s->f_FSys;
-		HandlerData *hd = (HandlerData *)fh->fh_SpecialData;
-		SystemBase *sb = (SystemBase *)sd->sb;
 		
 #ifdef __ENABLE_MUTEX
 		DEBUG("locking %p\n", &hd->hd_Mutex );
@@ -2065,8 +2069,7 @@ BufString *Dir( File *s, const char *path )
 #endif
 			return bs;
 		}
-		int pos = 0;
-		
+
 		BufStringAdd( bs, "ok<!--separate-->");
 		BufStringAdd( bs, "[" );
 		
@@ -2076,7 +2079,9 @@ BufString *Dir( File *s, const char *path )
 		{
 			char mem[512];
 			char longentry[512];
+			char tmp[ 256 ];
 			char *fname = NULL;
+			
 			LIBSSH2_SFTP_ATTRIBUTES attrs;
 			
 			DEBUG("dir\n");
@@ -2133,11 +2138,11 @@ BufString *Dir( File *s, const char *path )
 					int size = 0;
 					if( path[ 0 ] == '/' )
 					{
-						size = sprintf( tempString, "%s%s", &path[ 1 ], fname );
+						size = snprintf( tempString, tempStringLen, "%s%s", &path[ 1 ], fname );
 					}
 					else
 					{
-						size = sprintf( tempString, "%s%s", path, fname );
+						size = snprintf( tempString, tempStringLen, "%s%s", path, fname );
 					}
 					BufStringAddSize( bs, tempString, size );
 					BufStringAdd( bs, "/\",");
@@ -2148,28 +2153,28 @@ BufString *Dir( File *s, const char *path )
 					int size = 0;
 					if( path[ 0 ] == '/' )
 					{
-						size = sprintf( tempString, "%s%s", &path[ 1 ], fname );
+						size = snprintf( tempString, tempStringLen, "%s%s", &path[ 1 ], fname );
 					}
 					else
 					{
-						size = sprintf( tempString, "%s%s", path, fname );
+						size = snprintf( tempString, tempStringLen, "%s%s", path, fname );
 					}
 					BufStringAddSize( bs, tempString, size );
 					//BufStringAdd( bs, tempString );
 					BufStringAdd( bs, "\",");
 				}
 				
-				//DEBUG("ISDIR %d NAME %d LONG %s\n", isDir, mem, longentry );
-				
-				char tmp[ 256 ];
-				sprintf( tmp, "\"Filesize\": %llu,", attrs.filesize );
+				snprintf( tmp, sizeof(tmp), "\"Filesize\": %llu,", attrs.filesize );
 				BufStringAdd( bs, tmp );
 				
-				char *timeStr = FCalloc( 40, sizeof( char ) );
-				strftime( timeStr, 36, "%Y-%m-%d %H:%M:%S", localtime( (const time_t *)&(attrs.mtime) ) );
-				sprintf( tmp, "\"DateModified\": \"%s\",", timeStr );
-				BufStringAdd( bs, tmp );
-				FFree( timeStr );
+				char *timeStr = FCalloc( 64, sizeof( char ) );
+				if( timeStr != NULL )
+				{
+					strftime( timeStr, 63, "%Y-%m-%d %H:%M:%S", localtime( (const time_t *)&(attrs.mtime) ) );
+					snprintf( tmp, 63, "\"DateModified\": \"%s\",", timeStr );
+					BufStringAdd( bs, tmp );
+					FFree( timeStr );
+				}
 				
 				if( isDir )
 				{
@@ -2221,7 +2226,7 @@ BufString *Dir( File *s, const char *path )
 				break;
 			}
 			
-		} while (1);
+		}while (1);
 		
 #ifdef __ENABLE_MUTEX
 		pthread_mutex_lock( &hd->hd_Mutex );
@@ -2232,8 +2237,6 @@ BufString *Dir( File *s, const char *path )
 #endif
 		
 		BufStringAdd( bs, "]" );
-		
-		//DEBUG("------------>%s\n", bs->bs_Buffer );
 		
 		FFree( comm );
 	}
