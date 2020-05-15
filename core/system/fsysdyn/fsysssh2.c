@@ -74,21 +74,21 @@ typedef struct SpecialData
     //const char *commandline = "uptime";
    // const char *username;//    = "user";
    // const char *password ;//   = "password";
-	unsigned long hostaddr;
-	int sock;
-	struct sockaddr_in sin;
-	const char *fingerprint;
-	LIBSSH2_SESSION *session;
-	LIBSSH2_CHANNEL *channel;
-	LIBSSH2_SFTP *sftp_session;
-	LIBSSH2_SFTP_HANDLE *sftp_handle;
-	int rc;
-	int exitcode;
-	char *exitsignal;//=(char *)"none";
-	int bytecount;// = 0;
-	size_t len;
-	LIBSSH2_KNOWNHOSTS *nh;
-	int type;
+	unsigned long							hostaddr;
+	int										sock;
+	struct sockaddr_in						sin;
+	const char 								*fingerprint;
+	LIBSSH2_SESSION							*session;
+	LIBSSH2_CHANNEL							*channel;
+	LIBSSH2_SFTP							*sftp_session;
+	LIBSSH2_SFTP_HANDLE						*sftp_handle;
+	int										rc;
+	int										exitcode;
+	char									*exitsignal;//=(char *)"none";
+	int										bytecount;// = 0;
+	size_t									len;
+	LIBSSH2_KNOWNHOSTS						*nh;
+	int										type;
 	
 	char									*sd_LoginUser;		// login user
 	char									*sd_LoginPass;		// login password
@@ -1292,8 +1292,6 @@ int FileWrite( struct File *f, char *buffer, int wsize )
 
 int FileSeek( struct File *s, int pos )
 {
-	int result = -1;
-	
 	SpecialData *sd = (SpecialData *)s->f_SpecialData;
 	if( sd )
 	{
@@ -1348,7 +1346,8 @@ int MakeDir( struct File *s, const char *path )
 	// Create a string that has the real file path of the file
 	if( path != NULL )
 	{
-		char *directory = FCalloc( rspath + spath, sizeof( char ) );
+		int dirLen = rspath + spath;
+		char *directory = FCalloc( dirLen, sizeof( char ) );
 		if( directory != NULL )
 		{
 			// Make the directories that do not exist
@@ -1367,7 +1366,7 @@ int MakeDir( struct File *s, const char *path )
 				{
 					if( path[i] == '/' )
 					{
-						sprintf( directory, "%s%.*s", newPath, i, path );
+						snprintf( directory, dirLen, "%s%.*s", newPath, i, path );
 						
 						FERROR("PATH CREATED %s   NPATH %s   PATH %s\n", directory,  newPath, path );
 						
@@ -1393,7 +1392,7 @@ int MakeDir( struct File *s, const char *path )
 			
 			//struct stat filest;
 			
-			sprintf( directory, "%s%s", newPath, path );
+			snprintf( directory, dirLen, "%s%s", newPath, path );
 			error = libssh2_sftp_mkdir( sdat->sftp_session, directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
 
 			FFree( directory );
@@ -1435,16 +1434,12 @@ static FLONG RemoveDirectory( SpecialData *sdat, const char *path )
 			LIBSSH2_SFTP_ATTRIBUTES attrs;
 			int r2 = 0;
 			
-			//DEBUG("Loop dir\n");
-		
 			// loop until we fail *
 			int rc = libssh2_sftp_readdir_ex( sftphandle, mem, sizeof(mem), longentry, sizeof(longentry), &attrs);
 			if( rc > 0 )//&&  > 0 && strcmp( mem, ".." ) > 0 )
 			{
-				if( strcmp( mem, ".") == 0 ){ continue; }
-			
-				if( strcmp( mem, "..") == 0 ){ continue; }
-				
+				if( (strcmp( mem, ".") == 0) || ( strcmp( mem, "..") == 0 ) ){ continue; }
+
 				int isDir = 0;
 				if( longentry[ 0 ] == 'd' )
 				{
@@ -1509,6 +1504,8 @@ FLONG Delete( struct File *s, const char *path )
 	int rspath = strlen( s->f_Path );
 	
 	SpecialData *sdat = (SpecialData *)s->f_SpecialData;
+	FHandler *fh = (FHandler *)s->f_FSys;
+	HandlerData *hd = (HandlerData *)fh->fh_SpecialData;
 	
 	int i;
 	for( i = 0 ; i < spath ; i++ )
@@ -1542,9 +1539,6 @@ FLONG Delete( struct File *s, const char *path )
 		
 		DEBUG("Delete file or directory '%s'\n", comm );
 		
-		FHandler *fh = (FHandler *)s->f_FSys;
-		HandlerData *hd = (HandlerData *)fh->fh_SpecialData;
-		
 #ifdef __ENABLE_MUTEX
 		pthread_mutex_lock( &hd->hd_Mutex );
 #endif
@@ -1574,6 +1568,9 @@ int Rename( struct File *s, const char *path, const char *nname )
 	char *pathNoDiskName = (char *)path;
 	int spath = strlen( path );
 	int rspath = strlen( s->f_Path );
+	SpecialData *sdat = (SpecialData *)s->f_SpecialData;
+	FHandler *fh = (FHandler *)s->f_FSys;
+	HandlerData *hd = (HandlerData *)fh->fh_SpecialData;
 	
 	int i;
 	for( i = 0 ; i < spath ; i++ )
@@ -1611,9 +1608,6 @@ int Rename( struct File *s, const char *path, const char *nname )
 			off = c + 1;
 		}
 	}
-	SpecialData *sdat = (SpecialData *)s->f_SpecialData;
-	FHandler *fh = (FHandler *)s->f_FSys;
-	HandlerData *hd = (HandlerData *)fh->fh_SpecialData;
 	
 	// 2. Full path of source
 	char *source = FCalloc( rspath + spath + 1, sizeof( char ) );
@@ -1624,15 +1618,21 @@ int Rename( struct File *s, const char *path, const char *nname )
 	if( hasSubFolder > 0 )
 	{
 		dest = FCalloc( rspath + off + strlen( nname ) + 1, sizeof( char ) );
-		sprintf( dest, "%.*s", rspath, s->f_Path );
-		sprintf( dest + rspath, "%.*s", off, targetPath );
-		sprintf( dest + rspath + off, "%s", nname );
+		if( dest != NULL )
+		{
+			sprintf( dest, "%.*s", rspath, s->f_Path );
+			sprintf( dest + rspath, "%.*s", off, targetPath );
+			sprintf( dest + rspath + off, "%s", nname );
+		}
 	}
 	else 
 	{
 		dest = FCalloc( rspath + strlen( nname ) + 1, sizeof( char ) );
-		sprintf( dest, "%s", s->f_Path );
-		sprintf( dest + rspath, "%s", nname );
+		if( dest != NULL )
+		{
+			sprintf( dest, "%s", s->f_Path );
+			sprintf( dest + rspath, "%s", nname );
+		}
 	}
 	
 #ifdef __ENABLE_MUTEX
@@ -1727,13 +1727,14 @@ FLONG GetChangeTimestamp( struct File *s, const char *path )
 	// user is trying to get access to not his directory
 	DEBUG("Check access for path '%s' in root path '%s'  name '%s'\n", path, s->f_Path, s->f_Name );
 	
-	//int doub = strlen( s->f_Name );
-	
 	char *comm = NULL;
 	char *tempString = FCalloc( rspath +512, sizeof(char) );
 	
 	if( ( comm = FCalloc( rspath + spath + 512, sizeof(char) ) ) != NULL )
 	{
+		FHandler *fh = (FHandler *)s->f_FSys;
+		HandlerData *hd = (HandlerData *)fh->fh_SpecialData;
+		
 		strcpy( comm, s->f_Path );
 		
 		if( comm[ strlen( comm ) -1 ] != '/' )
@@ -1745,9 +1746,6 @@ FLONG GetChangeTimestamp( struct File *s, const char *path )
 		{
 			strcat( comm, path );
 		}
-		
-		FHandler *fh = (FHandler *)s->f_FSys;
-		HandlerData *hd = (HandlerData *)fh->fh_SpecialData;
 		
 #ifdef __ENABLE_MUTEX
 		DEBUG("info lock %p\n", &hd->hd_Mutex );
@@ -1824,7 +1822,8 @@ BufString *Info( File *s, const char *path )
 	//int doub = strlen( s->f_Name );
 	
 	char *comm = NULL;
-	char *tempString = FCalloc( rspath +512, sizeof(char) );
+	int tempStringLen = rspath +512;
+	char *tempString = FCalloc( tempStringLen, sizeof(char) );
 	
 	if( ( comm = FCalloc( rspath + spath + 512, sizeof(char) ) ) != NULL )
 	{
@@ -1892,11 +1891,11 @@ BufString *Info( File *s, const char *path )
 					int size = 0;
 					if( path[ 0 ] == '/' )
 					{
-						size = sprintf( tempString, "%s", &path[ 1 ] );
+						size = snprintf( tempString, tempStringLen, "%s", &path[ 1 ] );
 					}
 					else
 					{
-						size = sprintf( tempString, "%s", path );
+						size = snprintf( tempString, tempStringLen, "%s", path );
 					}
 					BufStringAddSize( bs, tempString, size );
 					BufStringAdd( bs, "/\",");
@@ -1906,11 +1905,11 @@ BufString *Info( File *s, const char *path )
 					int size = 0;
 					if( path[ 0 ] == '/' )
 					{
-						size = sprintf( tempString, "%s", &path[ 1 ] );
+						size = snprintf( tempString, tempStringLen, "%s", &path[ 1 ] );
 					}
 					else
 					{
-						size = sprintf( tempString, "%s", path );
+						size = snprintf( tempString, tempStringLen, "%s", path );
 					}
 					BufStringAddSize( bs, tempString, size );
 					BufStringAdd( bs, tempString );
@@ -1921,17 +1920,20 @@ BufString *Info( File *s, const char *path )
 				
 				char tmp[ 256 ];
 				//BufStringAdd( bs, tmp );
-				sprintf( tmp, "\"Filesize\": %llu,", attrs.filesize );
+				snprintf( tmp, sizeof(tmp ), "\"Filesize\": %llu,", attrs.filesize );
 				BufStringAdd( bs, tmp );
 				
-				char *timeStr = FCalloc( 40, sizeof( char ) );
-				strftime( timeStr, 36, "%Y-%m-%d %H:%M:%S", localtime( (const time_t *)&(attrs.mtime) ) );
-				sprintf( tmp, "\"DateModified\": \"%s\",", timeStr );
-				BufStringAdd( bs, tmp );
-				strftime( timeStr, 36, "%Y-%m-%d %H:%M:%S", localtime( (const time_t *)&(attrs.atime) ) );
-				sprintf( tmp, "\"DateAccessed\": \"%s\",", timeStr );
-				BufStringAdd( bs, tmp );
-				FFree( timeStr );
+				char *timeStr = FCalloc( 64, sizeof( char ) );
+				if( timeStr != NULL )
+				{
+					strftime( timeStr, 60, "%Y-%m-%d %H:%M:%S", localtime( (const time_t *)&(attrs.mtime) ) );
+					snprintf( tmp, 60, "\"DateModified\": \"%s\",", timeStr );
+					BufStringAdd( bs, tmp );
+					strftime( timeStr, 60, "%Y-%m-%d %H:%M:%S", localtime( (const time_t *)&(attrs.atime) ) );
+					snprintf( tmp, 60, "\"DateAccessed\": \"%s\",", timeStr );
+					BufStringAdd( bs, tmp );
+					FFree( timeStr );
+				}
 				
 				if( isDir )
 				{
@@ -2097,12 +2099,7 @@ BufString *Dir( File *s, const char *path )
 			if( rc > 0 )//&&  > 0 && strcmp( mem, ".." ) > 0 )
 			{
 				DEBUG("FILE/DIR >%s<\n", mem );
-				if( strcmp( mem, ".") == 0 )
-				{
-					continue;
-				}
-				
-				if( strcmp( mem, "..") == 0 )
+				if( strcmp( mem, ".") == 0 || strcmp( mem, "..") == 0 )
 				{
 					continue;
 				}
