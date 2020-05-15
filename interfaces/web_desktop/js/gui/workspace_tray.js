@@ -134,9 +134,9 @@ function PollTray()
 			
 			if( notties.length > 0 )
 			{
-				for( var a = notties.length - 1; a >= 0; a-- )
+				for( let a = notties.length - 1; a >= 0; a-- )
 				{
-					var d = document.createElement( 'div' );
+					let d = document.createElement( 'div' );
 					d.className = 'NotificationPopupElement BorderBottom';
 					d.notification = notties[a];
 					notties[ a ].seen = true;
@@ -259,10 +259,11 @@ function PollTray()
 		
 		tray.notifications.className = 'Notification TrayElement IconSmall';
 		
-		var toClear = true;
-		for( var a = 0; a < nots.length; a++ )
+		let toClear = true;
+		let tm = ( new Date() ).getTime();
+		for( let a = 0; a < nots.length; a++ )
 		{
-			if( ( new Date() ).getTime() - nots[ a ].time < 250 )
+			if( tm - nots[ a ].time < 250 )
 			{
 				toClear = false;
 			}
@@ -284,7 +285,7 @@ function PollTray()
 			tray.notifications.num.innerHTML = Workspace.notificationEvents.length;
 		// Done numbers bubble
 		
-		for( var a = 0; a < nots.length; a++ )
+		for( let a = 0; a < nots.length; a++ )
 		{
 			// Unseen notification!
 			if( !nots[ a ].seen )

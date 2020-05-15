@@ -24,6 +24,7 @@ Workspace = {
 	mode: 'default',
 	initialized: false,
 	protocol: _protocol,
+	protocolUrl: _protocol + '://',
 	menu: [],
 	diskNotificationList: [],
 	notifications: [],
