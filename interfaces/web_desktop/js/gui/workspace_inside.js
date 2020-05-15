@@ -10069,7 +10069,7 @@ Workspace.receiveLive = function( viewId, jsonEvent ) {
 		viewId : viewId,
 		data   : event,
 	};
-	app.contentWindow.postMessage( msg, '*' );
+	chat.contentWindow.postMessage( msg, '*' );
 }
 
 // Receive push notification (when a user clicks native push notification on phone)
