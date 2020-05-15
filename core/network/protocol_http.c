@@ -907,12 +907,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							char *usrSessionID = NULL;
 							FBOOL sessionIDGenerated = FALSE;
 							
-<<<<<<< HEAD
-							sqllib->SNPrintF( sqllib, query, sizeof(query), "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,u.SessionID,f.ID from FFileShared fs inner join Filesystem f on fs.Devname=f.Name AND fs.UserID=f.UserID inner join FUser u on fs.UserID=u.ID where `Hash`='%s'", path->parts[ 1 ] );
-=======
 							sqllib->SNPrintF( sqllib, query, sizeof(query), "SELECT fs.Name, fs.Devname, fs.Path, fs.UserID, f.Type, u.SessionID FROM FFileShared fs, Filesystem f, FUser u WHERE fs.Hash=\"%s\" AND u.ID = fs.UserID AND f.Name = fs.Devname", path->parts[ 1 ] );
-							//sqllib->SNPrintF( sqllib, query, sizeof(query), " `Hash` = '%s'", path->parts[ 1 ] );
->>>>>>> feature/workspace
 							
 							void *res = sqllib->Query( sqllib, query );
 							if( res != NULL )
