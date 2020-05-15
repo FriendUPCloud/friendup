@@ -636,6 +636,7 @@ Application.checkDocumentSession = function( sasID = null )
 	{
 		char *authid = NULL;
 		char *assid = NULL;
+		FBOOL force = FALSE;
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
@@ -657,6 +658,15 @@ Application.checkDocumentSession = function( sasID = null )
 		if( el != NULL )
 		{
 			assid = UrlDecodeToMem( ( char *)el->hme_Data );
+		}
+		
+		el =  HashmapGet( request->http_ParsedPostContent, "force" );
+		if( el != NULL )
+		{
+			if( el->hme_Data != NULL && (strcmp( el->hme_Data, "true" ) == 0 ) )
+			{
+				force = TRUE;
+			}
 		}
 		
 		// Comes in without required authid or assid!
@@ -782,7 +792,35 @@ Application.checkDocumentSession = function( sasID = null )
 					HttpAddTextContent( response, dictmsgbuf );
 				}
 			}
-			else
+			else if( force == TRUE )	// if session do not exist and system is forced to create new SAS
+			{
+				SASSession *as = SASSessionNew( l, authid, 0, loggedSession );
+				if( as != NULL )
+				{
+					as->sas_Type = type;
+					int err = SASManagerAddSession( l->sl_SASManager, as );
+					if( err == 0 )
+					{
+						int size = sprintf( buffer, "{ \"SASID\": \"%lu\",\"type\":%d }", as->sas_SASID, as->sas_Type );
+						HttpAddTextContent( response, buffer );
+					}
+					else
+					{
+						char dictmsgbuf[ 256 ];
+						char dictmsgbuf1[ 196 ];
+						snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "SAS register", err );
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_FUNCTION_RETURNED );
+						HttpAddTextContent( response, dictmsgbuf );
+					}
+				}
+				else
+				{
+					char dictmsgbuf[ 256 ];
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_CREATE_SAS], DICT_CANNOT_CREATE_SAS );
+					HttpAddTextContent( response, dictmsgbuf );
+				}
+			}
+			else	// session not found and system is not forced to create it
 			{
 				char dictmsgbuf[ 256 ];
 				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SASID_NOT_FOUND] , DICT_SASID_NOT_FOUND );

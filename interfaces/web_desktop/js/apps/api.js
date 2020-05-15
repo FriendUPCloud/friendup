@@ -8464,6 +8464,7 @@ GuiDesklet = function()
 			data : {
 				accauthid : Application.authId,
 				sasid  : self.id,
+				force : self.forceid
 			}
 		};
 		self.conn.request( accept, accBack );
