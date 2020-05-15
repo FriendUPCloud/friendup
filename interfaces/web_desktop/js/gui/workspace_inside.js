@@ -373,7 +373,7 @@ var WorkspaceInside = {
 				var wp = document.createElement( 'wp' );
 				var d = document.createElement( 'div' )
 				d.className = 'VirtualWorkspaces';
-				for( var a = 0; a < globalConfig.workspacecount; a++ )
+				for( let a = 0; a < globalConfig.workspacecount; a++ )
 				{
 					var w = document.createElement( 'div' );
 					w.className = 'Workspace';
@@ -384,7 +384,7 @@ var WorkspaceInside = {
 							// Create a text representing the content in the virtual workspace
 							var apps = {};
 							var str = '';
-							for( var a in movableWindows )
+							for( let a in movableWindows )
 							{
 								if( movableWindows[ a ].windowObject.workspace == num )
 								{
@@ -406,14 +406,20 @@ var WorkspaceInside = {
 								}
 							}
 							var o = '';
-							for( var a in apps )
+							for( let a in apps )
 								o += ( apps[ a ].string + ( apps[ a ].count > 1 ? ( ' (' + apps[ a ].count + ')' ) : '' ) ) + "\n";
 							return o + str;
 						} } );
 					} )( a );
 					if( a == globalConfig.workspaceCurrent ) w.className += ' Active';
-					console.log( globalConfig.w
-					if( globalConfig.workspace_labels && typeof( globalConfig.workspace_labels ) == 'object' && globalConfig.workspace_labels[ a ] )
+					
+					if( 
+						globalConfig.workspace_labels && 
+						typeof( globalConfig.workspace_labels ) == 'object' && 
+						globalConfig.workspace_labels[ a ] && 
+						globalConfig.workspace_labels[ a ] != '[' &&
+						globalConfig.workspace_labels[ a ] != ']'
+					)
 					{
 						w.innerHTML = '<span class="' + globalConfig.workspace_labels[ a ] + '"></span>';
 						w.className += ' WithIcon';
