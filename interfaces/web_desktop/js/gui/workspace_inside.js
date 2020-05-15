@@ -419,7 +419,6 @@ var WorkspaceInside = {
 					}
 					else
 					{
-						console.log( 'What is it? ' + ( a + 1 ) + '...' );
 						w.innerHTML = '<span>' + ( a + 1 ) + '</span>';
 					}
 					w.ind = a;

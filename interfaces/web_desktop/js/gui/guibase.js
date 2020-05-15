@@ -367,6 +367,9 @@ var mousePointer =
 			{
 				// Don't check minimized windows
 				if( movableWindows[a].parentNode.getAttribute( 'minimized' ) ) continue;
+				// Don't check windows on other workspaces
+				if( globalConfig.workspaceCurrent != movableWindows[a].workspace )
+					continue;
 				ars.push( movableWindows[a] );
 			}
 			ars = ars.concat( screens );
