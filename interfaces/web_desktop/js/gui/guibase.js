@@ -367,6 +367,9 @@ var mousePointer =
 			{
 				// Don't check minimized windows
 				if( movableWindows[a].parentNode.getAttribute( 'minimized' ) ) continue;
+				// Don't check windows on other workspaces
+				if( globalConfig.workspaceCurrent != movableWindows[a].workspace )
+					continue;
 				ars.push( movableWindows[a] );
 			}
 			ars = ars.concat( screens );
@@ -600,7 +603,7 @@ var mousePointer =
 						window.currentMovable.content.refresh();
 				}
 				// We dropped on a screen
-				if( objs && dropper && dropper.classList.contains( 'ScreenContent' ) )
+				if( objs && dropper && dropper.classList && dropper.classList.contains( 'ScreenContent' ) )
 				{
 					// We dropped on the Workspace screen
 					if( dropper == Workspace.screen.contentDiv )
