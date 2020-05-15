@@ -10051,7 +10051,7 @@ Workspace.receiveLive = function( viewId, jsonEvent ) {
 			app  : app,
 			name : app.applicationName,
 		});
-		if ( app.applicationName != chat )
+		if ( app.applicationName != appName )
 			return false;
 		
 		chat = app;
