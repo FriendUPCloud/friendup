@@ -9870,6 +9870,11 @@ function ShowEula( accept, cbk )
 	f.onLoad = function( data )
 	{
 		d.innerHTML = data;
+		// Tell app we can show ourselves!
+		if( window.friendApp && window.friendApp.reveal )
+		{
+			friendApp.reveal();
+		}		
 	}
 	f.load();
 }
