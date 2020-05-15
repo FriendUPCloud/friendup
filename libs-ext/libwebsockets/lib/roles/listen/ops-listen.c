@@ -34,6 +34,8 @@ rops_handle_POLLIN_listen(struct lws_context_per_thread *pt, struct lws *wsi,
 	struct sockaddr_storage cli_addr;
 	socklen_t clilen;
 
+	memset(&cli_addr, 0, sizeof(cli_addr));
+
 	/* if our vhost is going down, ignore it */
 
 	if (wsi->vhost->being_destroyed)
@@ -108,6 +110,7 @@ rops_handle_POLLIN_listen(struct lws_context_per_thread *pt, struct lws *wsi,
 #else
 		{
 		struct sockaddr_in sain;
+
 		memcpy(&sain, &cli_addr, sizeof(sain));
 		lwsl_debug("accepted new conn port %u on fd=%d\n",
 			   ntohs(sain.sin_port),
@@ -173,7 +176,7 @@ int rops_handle_POLLOUT_listen(struct lws *wsi)
 	return LWS_HP_RET_USER_SERVICE;
 }
 
-struct lws_role_ops role_ops_listen = {
+const struct lws_role_ops role_ops_listen = {
 	/* role name */			"listen",
 	/* alpn id */			NULL,
 	/* check_upgrades */		NULL,

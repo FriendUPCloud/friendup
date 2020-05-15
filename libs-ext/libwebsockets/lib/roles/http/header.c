@@ -186,7 +186,7 @@ lws_add_http_common_headers(struct lws *wsi, unsigned int code,
 		/* there was no length... it normally means CONNECTION_CLOSE */
 #if defined(LWS_WITH_HTTP_STREAM_COMPRESSION)
 
-		if (!wsi->http2_substream && wsi->http.lcs) {
+		if (!wsi->mux_substream && wsi->http.lcs) {
 			/* so...
 			 *  - h1 connection
 			 *  - http compression transform active
@@ -208,7 +208,7 @@ lws_add_http_common_headers(struct lws *wsi, unsigned int code,
 				t = 1;
 		}
 #endif
-		if (!wsi->http2_substream) {
+		if (!wsi->mux_substream) {
 			if (lws_add_http_header_by_token(wsi,
 						 WSI_TOKEN_CONNECTION,
 						 (unsigned char *)ka[t],
@@ -267,7 +267,7 @@ struct lws_protocol_vhost_options pvo_hsbph[] = {{
 	&pvo_hsbph[3], NULL, "content-security-policy:",
 	"default-src 'none'; img-src 'self' data: ; "
 		"script-src 'self'; font-src 'self'; "
-		"style-src 'self'; connect-src 'self'; "
+		"style-src 'self'; connect-src 'self' ws: wss:; "
 		"frame-ancestors 'none'; base-uri 'none';"
 		"form-action 'self';"
 }};
@@ -376,7 +376,7 @@ lws_add_http_header_status(struct lws *wsi, unsigned int _code,
 	return 0;
 }
 
-LWS_VISIBLE int
+int
 lws_return_http_status(struct lws *wsi, unsigned int code,
 		       const char *html_body)
 {
@@ -437,7 +437,7 @@ lws_return_http_status(struct lws *wsi, unsigned int code,
 		return 1;
 
 #if defined(LWS_WITH_HTTP2)
-	if (wsi->http2_substream) {
+	if (wsi->mux_substream) {
 
 		/*
 		 * for HTTP/2, the headers must be sent separately, since they
@@ -493,7 +493,7 @@ lws_return_http_status(struct lws *wsi, unsigned int code,
 	return m != n;
 }
 
-LWS_VISIBLE int
+int
 lws_http_redirect(struct lws *wsi, int code, const unsigned char *loc, int len,
 		  unsigned char **p, unsigned char *end)
 {
@@ -527,7 +527,7 @@ lws_http_redirect(struct lws *wsi, int code, const unsigned char *loc, int len,
 #endif
 
 #if !defined(LWS_WITH_HTTP_STREAM_COMPRESSION)
-LWS_VISIBLE int
+int
 lws_http_compression_apply(struct lws *wsi, const char *name,
 			   unsigned char **p, unsigned char *end, char decomp)
 {

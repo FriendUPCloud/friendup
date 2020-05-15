@@ -73,8 +73,8 @@ lws_now_usecs(void)
 }
 #endif
 
-int
-lws_get_random(struct lws_context *context, void *buf, int len)
+size_t
+lws_get_random(struct lws_context *context, void *buf, size_t len)
 {
 #if defined(LWS_WITH_NETWORK)
 	TEE_GenerateRandom(buf, len);
@@ -126,7 +126,7 @@ void lwsl_emit_optee(int level, const char *line)
 }
 
 int
-lws_plat_set_nonblocking(int fd)
+lws_plat_set_nonblocking(lws_sockfd_type fd)
 {
 	return 0;
 }

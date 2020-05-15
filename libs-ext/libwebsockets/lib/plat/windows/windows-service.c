@@ -55,7 +55,7 @@ _lws_plat_service_forced_tsi(struct lws_context *context, int tsi)
 }
 
 
-LWS_EXTERN int
+int
 _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 {
 	struct lws_context_per_thread *pt;
@@ -130,12 +130,15 @@ _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 	if (!lws_service_adjust_timeout(context, 1, tsi))
 		_lws_plat_service_forced_tsi(context, tsi);
 
-	if (timeout_us) {
+	/*
+	 * service pending callbakcs and get maximum wait time
+	 */
+	{
 		lws_usec_t us;
 
 		lws_pt_lock(pt, __func__);
 		/* don't stay in poll wait longer than next hr timeout */
-		us = __lws_sul_check(&pt->pt_sul_owner, lws_now_usecs());
+		us = __lws_sul_service_ripe(&pt->pt_sul_owner, lws_now_usecs());
 		if (us && us < timeout_us)
 			timeout_us = us;
 

@@ -7,7 +7,7 @@
  * he replied it is Public Domain.  Use the URL above to get the original
  * Public Domain version if you want it.
  *
- * This version is LGPL2.1+SLE like the rest of libwebsockets and is
+ * This version is MIT like the rest of libwebsockets and is
  * Copyright (c)2006 - 2013 Andy Green <andy@warmcat.com>
  *
  *
@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include <libwebsockets.h>
 #include "private-lib-core.h"
 
 pid_t pid_daemon;
@@ -99,7 +100,7 @@ static void lws_daemon_closing(int sigact)
  * The process context you called from has been terminated then.
  */
 
-LWS_VISIBLE int
+int
 lws_daemonize(const char *_lock_path)
 {
 	struct sigaction act;

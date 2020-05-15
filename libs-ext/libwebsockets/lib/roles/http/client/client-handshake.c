@@ -29,9 +29,12 @@ static int
 lws_getaddrinfo46(struct lws *wsi, const char *ads, struct addrinfo **result)
 {
 	struct addrinfo hints;
+	int n;
 
 	memset(&hints, 0, sizeof(hints));
 	*result = NULL;
+
+	hints.ai_socktype = SOCK_STREAM;
 
 #ifdef LWS_WITH_IPV6
 	if (wsi->ipv6) {
@@ -44,10 +47,13 @@ lws_getaddrinfo46(struct lws *wsi, const char *ads, struct addrinfo **result)
 #endif
 	{
 		hints.ai_family = PF_UNSPEC;
-		hints.ai_socktype = SOCK_STREAM;
 	}
 
-	return getaddrinfo(ads, NULL, &hints, result);
+	n = getaddrinfo(ads, NULL, &hints, result);
+
+	lwsl_info("%s: getaddrinfo '%s' says %d\n", __func__, ads, n);
+
+	return n;
 }
 #endif
 
@@ -58,17 +64,19 @@ lws_client_connect_4_established(struct lws *wsi, struct lws *wsi_piggyback,
 #if defined(LWS_CLIENT_HTTP_PROXYING)
 	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
 #endif
-	const char *meth = NULL;
+	const char *meth;
 	struct lws_pollfd pfd;
 	const char *cce = "";
 	int n, m, rawish = 0;
 
-	if (wsi->stash)
-		meth = wsi->stash->cis[CIS_METHOD];
-	else
-		meth = lws_hdr_simple_ptr(wsi, _WSI_TOKEN_CLIENT_METHOD);
+	meth = lws_wsi_client_stash_item(wsi, CIS_METHOD,
+					 _WSI_TOKEN_CLIENT_METHOD);
 
-	if (meth && !strcmp(meth, "RAW"))
+	if (meth && (!strcmp(meth, "RAW")
+#if defined(LWS_ROLE_MQTT)
+		     || !strcmp(meth, "MQTT")
+#endif
+	))
 		rawish = 1;
 
 	if (wsi_piggyback)
@@ -80,6 +88,31 @@ lws_client_connect_4_established(struct lws *wsi, struct lws *wsi_piggyback,
 
 	/* http proxy */
 	if (wsi->vhost->http.http_proxy_port) {
+		const char *cpa;
+
+		cpa = lws_wsi_client_stash_item(wsi, CIS_ADDRESS,
+						_WSI_TOKEN_CLIENT_PEER_ADDRESS);
+		if (!cpa)
+			goto failed;
+
+		lwsl_info("%s: going via proxy\n", __func__);
+
+		plen = lws_snprintf((char *)pt->serv_buf, 256,
+			"CONNECT %s:%u HTTP/1.1\x0d\x0a"
+			"Host: %s:%u\x0d\x0a"
+			"User-agent: lws\x0d\x0a", cpa, wsi->ocport,
+						   cpa, wsi->ocport);
+
+#if defined(LWS_WITH_HTTP_BASIC_AUTH)
+		if (wsi->vhost->proxy_basic_auth_token[0])
+			plen += lws_snprintf((char *)pt->serv_buf + plen, 256,
+					"Proxy-authorization: basic %s\x0d\x0a",
+					wsi->vhost->proxy_basic_auth_token);
+#endif
+
+		plen += lws_snprintf((char *)pt->serv_buf + plen, 5, "\x0d\x0a");
+
+		/* lwsl_hexdump_notice(pt->serv_buf, plen); */
 
 		/*
 		 * OK from now on we talk via the proxy, so connect to that
@@ -103,7 +136,7 @@ lws_client_connect_4_established(struct lws *wsi, struct lws *wsi_piggyback,
 		}
 
 		lws_set_timeout(wsi, PENDING_TIMEOUT_AWAITING_PROXY_RESPONSE,
-				AWAITING_TIMEOUT);
+				wsi->context->timeout_secs);
 
 		lwsi_set_state(wsi, LRS_WAITING_PROXY_REPLY);
 
@@ -111,26 +144,19 @@ lws_client_connect_4_established(struct lws *wsi, struct lws *wsi_piggyback,
 	}
 #endif
 #endif
+
 #if defined(LWS_WITH_SOCKS5)
-	/* socks proxy */
-	else if (wsi->vhost->socks_proxy_port) {
-		n = send(wsi->desc.sockfd, (char *)pt->serv_buf, plen,
-			 MSG_NOSIGNAL);
-		if (n < 0) {
-			lwsl_debug("ERROR writing socks greeting\n");
-			cce = "socks write failed";
+	if (lwsi_state(wsi) != 	LRS_ESTABLISHED)
+		switch (lws_socks5c_greet(wsi, &cce)) {
+		case -1:
 			goto failed;
+		case 1:
+			return wsi;
+		default:
+			break;
 		}
-
-		lws_set_timeout(wsi,
-				PENDING_TIMEOUT_AWAITING_SOCKS_GREETING_REPLY,
-				AWAITING_TIMEOUT);
-
-		lwsi_set_state(wsi, LRS_WAITING_SOCKS_GREETING_REPLY);
-
-		return wsi;
-	}
 #endif
+
 #if defined(LWS_ROLE_H1) || defined(LWS_ROLE_H2)
 send_hs:
 
@@ -139,9 +165,12 @@ send_hs:
 		/*
 		 * We are pipelining on an already-established connection...
 		 * we can skip tls establishment.
+		 *
+		 * Set these queued guys to a state where they won't actually
+		 * send their headers until we decide later.
 		 */
 
-		lwsi_set_state(wsi, LRS_H1C_ISSUE_HANDSHAKE2);
+		lwsi_set_state(wsi, LRS_H2_WAITING_TO_SEND_HEADERS);
 
 		/*
 		 * we can't send our headers directly, because they have to
@@ -161,16 +190,52 @@ send_hs:
 		lwsl_info("%s: wsi %p: waiting to send hdrs (par state 0x%x)\n",
 			    __func__, wsi, lwsi_state(wsi_piggyback));
 	} else {
-		lwsl_info("%s: wsi %p: %s %s client created own conn (raw %d) vh %s\n",
+		lwsl_info("%s: wsi %p: %s %s client created own conn (raw %d) vh %sm st 0x%x\n",
 			    __func__, wsi, wsi->role_ops->name,
-			    wsi->protocol->name, rawish, wsi->vhost->name);
+			    wsi->protocol->name, rawish, wsi->vhost->name, lwsi_state(wsi));
 
 		/* we are making our own connection */
-		if (!rawish)
-			lwsi_set_state(wsi, LRS_H1C_ISSUE_HANDSHAKE);
-		else {
-			/* for a method = "RAW" connection, this makes us
-			 * established */
+
+	if (!rawish)
+		lwsi_set_state(wsi, LRS_H1C_ISSUE_HANDSHAKE);
+	else {
+		/* for a method = "RAW" connection, this makes us
+		 * established */
+
+
+#if defined(LWS_WITH_TLS) && !defined(LWS_WITH_MBEDTLS)
+
+		/* we have connected if we got here */
+
+		if (lwsi_state(wsi) == LRS_WAITING_CONNECT &&
+		    (wsi->tls.use_ssl & LCCSCF_USE_SSL)) {
+
+
+
+			/* we can retry this... just cook the SSL BIO the first time */
+
+			switch (lws_client_create_tls(wsi, &cce, 1)) {
+			case 0:
+				break;
+			case 1:
+				return wsi;
+			default:
+				goto failed;
+			}
+
+
+
+			lwsl_notice("%s: wsi %p: st 0x%x\n",
+				    __func__, wsi, lwsi_state(wsi));
+
+			if (lwsi_state(wsi) == LRS_WAITING_CONNECT)
+				lwsi_set_state(wsi, LRS_H1C_ISSUE_HANDSHAKE2);
+			lws_set_timeout(wsi, PENDING_TIMEOUT_AWAITING_CLIENT_HS_SEND,
+					wsi->context->timeout_secs);
+
+			return wsi;
+		}
+#endif
 
 			/* clear his established timeout */
 			lws_set_timeout(wsi, NO_PENDING_TIMEOUT, 0);
@@ -188,6 +253,41 @@ send_hs:
 
 			/* service.c pollout processing wants this */
 			wsi->hdr_parsing_completed = 1;
+#if defined(LWS_ROLE_MQTT)
+			if (!strcmp(meth, "MQTT")) {
+#if defined(LWS_WITH_TLS)
+				if (wsi->tls.use_ssl & LCCSCF_USE_SSL) {
+					lwsi_set_state(wsi, LRS_WAITING_SSL);
+					return wsi;
+				}
+#endif
+				lwsl_info("%s: settings LRS_MQTTC_IDLE\n",
+					  __func__);
+				lwsi_set_state(wsi, LRS_MQTTC_IDLE);
+
+				/*
+				 * provoke service to issue the CONNECT directly.
+				 */
+				lws_set_timeout(wsi, PENDING_TIMEOUT_SENT_CLIENT_HANDSHAKE,
+						AWAITING_TIMEOUT);
+
+				assert(lws_socket_is_valid(wsi->desc.sockfd));
+
+				pfd.fd = wsi->desc.sockfd;
+				pfd.events = LWS_POLLIN;
+				pfd.revents = LWS_POLLOUT;
+
+				lwsl_info("%s: going to service fd\n", __func__);
+				n = lws_service_fd(wsi->context, &pfd);
+				if (n < 0) {
+					cce = "first service failed";
+					goto failed;
+				}
+				if (n) /* returns 1 on failure after closing wsi */
+					return NULL;
+				return wsi;
+			}
+#endif
 			lwsl_info("%s: setting ESTABLISHED\n", __func__);
 			lwsi_set_state(wsi, LRS_ESTABLISHED);
 
@@ -206,7 +306,7 @@ send_hs:
 		 */
 
 		lws_set_timeout(wsi, PENDING_TIMEOUT_SENT_CLIENT_HANDSHAKE,
-				AWAITING_TIMEOUT);
+				wsi->context->timeout_secs);
 
 		assert(lws_socket_is_valid(wsi->desc.sockfd));
 
@@ -240,12 +340,6 @@ lws_client_connect_3_connect(struct lws *wsi, const char *ads,
 #if defined(LWS_WITH_UNIX_SOCK)
 	struct sockaddr_un sau;
 #endif
-#if defined(LWS_ROLE_H1) || defined(LWS_ROLE_H2)
-#if defined(LWS_CLIENT_HTTP_PROXYING)
-	struct lws_context *context = wsi->context;
-	struct lws_context_per_thread *pt = &context->pt[(int)wsi->tsi];
-#endif
-#endif
 #ifdef LWS_WITH_IPV6
 	char ipv6only = lws_check_opt(wsi->vhost->options,
 				      LWS_SERVER_OPTION_IPV6_V6ONLY_MODIFY |
@@ -253,8 +347,9 @@ lws_client_connect_3_connect(struct lws *wsi, const char *ads,
 #endif
 	const struct sockaddr *psa = NULL;
 	const char *cce = "", *iface;
-	ssize_t plen = 0;
+	uint16_t port = wsi->c_port;
 	lws_sockaddr46 sa46;
+	ssize_t plen = 0;
 	char ni[48];
 	int m;
 
@@ -279,9 +374,12 @@ lws_client_connect_3_connect(struct lws *wsi, const char *ads,
 			goto failed;
 	}
 #endif
-
+#if !defined(WIN32)
 	/*
-	* We can check using getsockopt if our connect actually completed
+	* We can check using getsockopt if our connect actually completed.
+	* Posix connect() allows nonblocking to redo the connect to
+	* find out if it succeeded, for win32 we have to use this path
+	* and take WSAEALREADY as a successful connect.
 	*/
 
 	if (lwsi_state(wsi) == LRS_WAITING_CONNECT &&
@@ -295,6 +393,9 @@ lws_client_connect_3_connect(struct lws *wsi, const char *ads,
 		*/
 
 		if (!getsockopt(wsi->desc.sockfd, SOL_SOCKET, SO_ERROR,
+#if defined(WIN32)
+				(char *)
+#endif
 				&e, &sl)) {
 			if (!e) {
 				lwsl_info("%s: getsockopt check: conn OK\n",
@@ -303,17 +404,20 @@ lws_client_connect_3_connect(struct lws *wsi, const char *ads,
 				goto conn_good;
 			}
 
-			lwsl_debug("%s: getsockopt says err %d\n", __func__, e);
+			lwsl_debug("%s: getsockopt fd %d says err %d\n", __func__,
+					wsi->desc.sockfd, e);
 		}
 
 		lwsl_debug("%s: getsockopt check: conn fail: errno %d\n",
 				__func__, LWS_ERRNO);
 		goto try_next_result_fds;
 	}
+#endif
 
 #if defined(LWS_WITH_UNIX_SOCK)
 	if (ads && *ads == '+') {
 		ads++;
+		memset(&sa46, 0, sizeof(sa46));
 		memset(&sau, 0, sizeof(sau));
 		sau.sun_family = AF_UNIX;
 		strncpy(sau.sun_path, ads, sizeof(sau.sun_path));
@@ -362,19 +466,8 @@ lws_client_connect_3_connect(struct lws *wsi, const char *ads,
 	 * Priority 1: connect to http proxy */
 
 	if (wsi->vhost->http.http_proxy_port) {
-		plen = lws_snprintf((char *)pt->serv_buf, 256,
-			"CONNECT %s:%u HTTP/1.0\x0d\x0a"
-			"User-agent: libwebsockets\x0d\x0a",
-			ads, wsi->c_port);
-
-		if (wsi->vhost->proxy_basic_auth_token[0])
-			plen += lws_snprintf((char *)pt->serv_buf + plen, 256,
-					"Proxy-authorization: basic %s\x0d\x0a",
-					wsi->vhost->proxy_basic_auth_token);
-
-		plen += lws_snprintf((char *)pt->serv_buf + plen, 5, "\x0d\x0a");
 		ads = wsi->vhost->http.http_proxy_address;
-		wsi->c_port = wsi->vhost->http.http_proxy_port;
+		port = wsi->vhost->http.http_proxy_port;
 #else
 		if (0) {
 #endif
@@ -384,14 +477,14 @@ lws_client_connect_3_connect(struct lws *wsi, const char *ads,
 	/* Priority 2: Connect to SOCK5 Proxy */
 
 	} else if (wsi->vhost->socks_proxy_port) {
-		if (socks_generate_msg(wsi, SOCKS_MSG_GREETING, &plen)) {
+		if (lws_socks5c_generate_msg(wsi, SOCKS_MSG_GREETING, &plen)) {
 			cce = "socks msg too large";
 			goto oom4;
 		}
 
 		lwsl_client("Sending SOCKS Greeting\n");
 		ads = wsi->vhost->socks_proxy_address;
-		wsi->c_port = wsi->vhost->socks_proxy_port;
+		port = wsi->vhost->socks_proxy_port;
 #endif
 	}
 
@@ -401,6 +494,7 @@ lws_client_connect_3_connect(struct lws *wsi, const char *ads,
 		/* lws_getaddrinfo46 failed, there is no usable result */
 		lwsl_notice("%s: lws_getaddrinfo46 failed %d\n",
 				__func__, n);
+
 		cce = "ipv6 lws_getaddrinfo46 failed";
 		goto oom4;
 	}
@@ -431,7 +525,7 @@ next_result:
 				&((struct sockaddr_in *)
 				    wsi->dns_results_next->ai_addr)->sin_addr,
 							sizeof(struct in_addr));
-			sa46.sa6.sin6_port = htons(wsi->c_port);
+			sa46.sa6.sin6_port = htons(port);
 			ni[0] = '\0';
 			lws_write_numeric_address(sa46.sa6.sin6_addr.s6_addr,
 						  16, ni, sizeof(ni));
@@ -444,7 +538,7 @@ next_result:
 			((struct sockaddr_in *)wsi->dns_results_next->ai_addr)->
 								sin_addr.s_addr;
 		memset(&sa46.sa4.sin_zero, 0, sizeof(sa46.sa4.sin_zero));
-		sa46.sa4.sin_port = htons(wsi->c_port);
+		sa46.sa4.sin_port = htons(port);
 		n = sizeof(struct sockaddr_in);
 		lws_write_numeric_address((uint8_t *)&sa46.sa4.sin_addr.s_addr,
 					  4, ni, sizeof(ni));
@@ -462,7 +556,7 @@ next_result:
 				wsi->dns_results_next->ai_addr)->sin6_scope_id;
 		sa46.sa6.sin6_flowinfo = ((struct sockaddr_in6 *)
 				wsi->dns_results_next->ai_addr)->sin6_flowinfo;
-		sa46.sa6.sin6_port = htons(wsi->c_port);
+		sa46.sa6.sin6_port = htons(port);
 		lws_write_numeric_address((uint8_t *)&sa46.sa6.sin6_addr,
 				16, ni, sizeof(ni));
 		lwsl_info("%s: %s ipv6 %s\n", __func__, ads, ni);
@@ -512,11 +606,9 @@ ads_known:
 		lwsl_debug("%s: %p: WAITING_CONNECT\n", __func__, wsi);
 		lwsi_set_state(wsi, LRS_WAITING_CONNECT);
 
-#if !defined(LWS_AMAZON_RTOS)
-		if (wsi->context->event_loop_ops->accept)
-			if (wsi->context->event_loop_ops->accept(wsi))
+		if (wsi->context->event_loop_ops->sock_accept)
+			if (wsi->context->event_loop_ops->sock_accept(wsi))
 				goto try_next_result_closesock;
-#endif
 
 		if (__insert_wsi_socket_into_fds(wsi->context, wsi))
 			goto try_next_result_closesock;
@@ -536,17 +628,15 @@ ads_known:
 			wsi->protocol = &wsi->vhost->protocols[0];
 
 		lws_set_timeout(wsi, PENDING_TIMEOUT_AWAITING_CONNECT_RESPONSE,
-				AWAITING_TIMEOUT);
+				wsi->context->timeout_secs);
 
-		if (wsi->stash)
-			iface = wsi->stash->cis[CIS_IFACE];
-		else
-			iface = lws_hdr_simple_ptr(wsi, _WSI_TOKEN_CLIENT_IFACE);
+		iface = lws_wsi_client_stash_item(wsi, CIS_IFACE,
+						  _WSI_TOKEN_CLIENT_IFACE);
 
 		if (iface && *iface) {
-			n = lws_socket_bind(wsi->vhost, wsi->desc.sockfd, 0,
+			m = lws_socket_bind(wsi->vhost, wsi->desc.sockfd, 0,
 					    iface, wsi->ipv6);
-			if (n < 0)
+			if (m < 0)
 				goto try_next_result_fds;
 		}
 	}
@@ -572,26 +662,33 @@ ads_known:
 
 	m = connect(wsi->desc.sockfd, (const struct sockaddr *)psa, n);
 	if (m == -1) {
-		lwsl_debug("%s: connect says errno: %d\n", __func__, LWS_ERRNO);
+		int errno_copy = LWS_ERRNO;
 
-		if (LWS_ERRNO != LWS_EALREADY &&
-		    LWS_ERRNO != LWS_EINPROGRESS &&
-		    LWS_ERRNO != LWS_EWOULDBLOCK
+		lwsl_debug("%s: connect says errno: %d\n", __func__, errno_copy);
+
+		if (errno_copy != LWS_EALREADY &&
+		    errno_copy != LWS_EINPROGRESS &&
+		    errno_copy != LWS_EWOULDBLOCK
 #ifdef _WIN32
-			&& LWS_ERRNO != WSAEINVAL
+			&& errno_copy != WSAEINVAL
+                       && errno_copy != WSAEISCONN
 #endif
 		) {
 #if defined(_DEBUG)
 			char nads[48];
 			lws_sa46_write_numeric_address(&sa46, nads, sizeof(nads));
 			lwsl_info("%s: Connect failed: %s port %d\n",
-				    __func__, nads, wsi->c_port);
+				    __func__, nads, port);
 #endif
 			goto try_next_result_fds;
 		}
 
+#if defined(WIN32)
 		if (lws_plat_check_connection_error(wsi))
 			goto try_next_result_fds;
+               if (errno_copy == WSAEISCONN)
+                       goto conn_good;
+#endif
 
 		/*
 		 * must do specifically a POLLOUT poll to hear
@@ -605,7 +702,7 @@ ads_known:
 
 conn_good:
 
-	lwsl_debug("%s: Connection started\n", __func__);
+	lwsl_info("%s: Connection started %p\n", __func__, wsi->dns_results);
 
 	/* the tcp connection has happend */
 
@@ -671,6 +768,7 @@ try_next_result:
 		if (wsi->dns_results_next)
 			goto next_result;
 	}
+	lws_addrinfo_clean(wsi);
 	cce = "Unable to connect";
 
 //failed:
@@ -685,25 +783,30 @@ failed1:
 struct lws *
 lws_client_connect_2_dnsreq(struct lws *wsi)
 {
-	const char *meth = NULL, *ads;
 	struct addrinfo *result = NULL;
+	const char *meth = NULL, *ads;
 #if defined(LWS_WITH_IPV6)
 	struct sockaddr_in addr;
 	const char *iface;
 #endif
+	const char *adsin;
 	int n, port = 0;
 	struct lws *w;
 
-	if (lwsi_state(wsi) == LRS_WAITING_DNS) {
-		lwsl_notice("%s: LRS_WAITING_DNS\n", __func__);
+	if (lwsi_state(wsi) == LRS_WAITING_DNS ||
+	    lwsi_state(wsi) == LRS_WAITING_CONNECT) {
+		lwsl_info("%s: LRS_WAITING_DNS / CONNECT\n", __func__);
 
 		return wsi;
 	}
 
-	if (wsi->stash)
-		meth = wsi->stash->cis[CIS_METHOD];
-	else
-		meth = lws_hdr_simple_ptr(wsi, _WSI_TOKEN_CLIENT_METHOD);
+	/*
+	 * The first job is figure out if we want to pipeline on or just join
+	 * an existing "active connection" to the same place
+	 */
+
+	meth = lws_wsi_client_stash_item(wsi, CIS_METHOD,
+					 _WSI_TOKEN_CLIENT_METHOD);
 
 	/* we only pipeline connections that said it was okay */
 
@@ -716,15 +819,32 @@ lws_client_connect_2_dnsreq(struct lws *wsi)
 	/* only pipeline things we associate with being a stream */
 
 	if (meth && strcmp(meth, "RAW") && strcmp(meth, "GET") &&
-		    strcmp(meth, "POST"))
+		    strcmp(meth, "POST") && strcmp(meth, "PUT") &&
+		    strcmp(meth, "UDP") && strcmp(meth, "MQTT"))
 		goto solo;
 
 	/* consult active connections to find out disposition */
 
-	switch (lws_vhost_active_conns(wsi, &w)) {
+	adsin = lws_wsi_client_stash_item(wsi, CIS_ADDRESS,
+					  _WSI_TOKEN_CLIENT_PEER_ADDRESS);
+
+	switch (lws_vhost_active_conns(wsi, &w, adsin)) {
 	case ACTIVE_CONNS_SOLO:
 		break;
 	case ACTIVE_CONNS_MUXED:
+		lwsl_notice("%s: ACTIVE_CONNS_MUXED\n", __func__);
+		if (lwsi_role_h2(wsi)) {
+
+			if (wsi->protocol->callback(wsi,
+						    LWS_CALLBACK_ESTABLISHED_CLIENT_HTTP,
+						    wsi->user_space, NULL, 0))
+				goto failed1;
+
+			//lwsi_set_state(wsi, LRS_H1C_ISSUE_HANDSHAKE2);
+			//lwsi_set_state(w, LRS_ESTABLISHED);
+			lws_callback_on_writable(wsi);
+		}
+
 		return wsi;
 	case ACTIVE_CONNS_QUEUED:
 		return lws_client_connect_4_established(wsi, w, 0);
@@ -743,27 +863,31 @@ solo:
 		if (wsi->stash && wsi->stash->cis[CIS_HOST])
 			wsi->cli_hostname_copy =
 					lws_strdup(wsi->stash->cis[CIS_HOST]);
+#if defined(LWS_ROLE_H1) || defined(LWS_ROLE_H2)
 		else {
 			char *pa = lws_hdr_simple_ptr(wsi,
 					      _WSI_TOKEN_CLIENT_PEER_ADDRESS);
 			if (pa)
 				wsi->cli_hostname_copy = lws_strdup(pa);
 		}
+#endif
 	}
 
 	/*
-	 * If we made our own connection, and we're doing a method that can take
-	 * a pipeline, we are an "active client connection".
+	 * If we made our own connection, and we're doing a method that can
+	 * take a pipeline, we are an "active client connection".
 	 *
 	 * Add ourselves to the vhost list of those so that others can
 	 * piggyback on our transaction queue
 	 */
 
 	if (meth && (!strcmp(meth, "RAW") || !strcmp(meth, "GET") ||
-		     !strcmp(meth, "POST")) &&
+		     !strcmp(meth, "POST") || !strcmp(meth, "PUT") ||
+		     !strcmp(meth, "MQTT")) &&
 	    lws_dll2_is_detached(&wsi->dll2_cli_txn_queue) &&
 	    lws_dll2_is_detached(&wsi->dll_cli_active_conns)) {
 		lws_vhost_lock(wsi->vhost);
+		lwsl_info("%s: adding active conn %p\n", __func__, wsi);
 		/* caution... we will have to unpick this on oom4 path */
 		lws_dll2_add_head(&wsi->dll_cli_active_conns,
 				 &wsi->vhost->dll_cli_active_conns_owner);
@@ -860,7 +984,10 @@ solo:
 	wsi->detlat.earliest_write_req_pre_write = lws_now_usecs();
 #endif
 #if !defined(LWS_WITH_SYS_ASYNC_DNS)
-	n = lws_getaddrinfo46(wsi, ads, &result);
+	if (wsi->dns_results)
+		n = 0;
+	else
+		n = lws_getaddrinfo46(wsi, ads, &result);
 #else
 	lwsi_set_state(wsi, LRS_WAITING_DNS);
 	/* this is either FAILED, CONTINUING, or already called connect_4 */
@@ -881,12 +1008,12 @@ next_step:
 #endif
 	return lws_client_connect_3_connect(wsi, ads, result, n, NULL);
 
-#if defined(LWS_WITH_SYS_ASYNC_DNS)
+//#if defined(LWS_WITH_SYS_ASYNC_DNS)
 failed1:
 	lws_close_free_wsi(wsi, LWS_CLOSE_STATUS_NOSTATUS, "client_connect2");
 
 	return NULL;
-#endif
+//#endif
 }
 
 #if defined(LWS_ROLE_H1) || defined(LWS_ROLE_H2)
@@ -911,8 +1038,11 @@ static uint8_t hnames2[] = {
  */
 struct lws *
 lws_client_reset(struct lws **pwsi, int ssl, const char *address, int port,
-		 const char *path, const char *host)
+		 const char *path, const char *host, char weak)
 {
+#if defined(LWS_ROLE_WS)
+	struct _lws_websocket_related *ws;
+#endif
 	char *stash, *p;
 	struct lws *wsi;
 	size_t size = 0;
@@ -938,37 +1068,53 @@ lws_client_reset(struct lws **pwsi, int ssl, const char *address, int port,
 	 */
 
 	for (n = 0; n < (int)LWS_ARRAY_SIZE(hnames2); n++)
-		size += lws_hdr_total_length(wsi, hnames2[n]) + 1;
+		size += lws_hdr_total_length(wsi, hnames2[n]) + (size_t)1;
 
-	if ((int)size < lws_hdr_total_length(wsi, _WSI_TOKEN_CLIENT_URI) + 1)
-		size = lws_hdr_total_length(wsi, _WSI_TOKEN_CLIENT_URI) + 1;
+	if (size < (size_t)lws_hdr_total_length(wsi, _WSI_TOKEN_CLIENT_URI) + 1)
+		size = lws_hdr_total_length(wsi, _WSI_TOKEN_CLIENT_URI) + (size_t)1;
 
 	/*
 	 * The incoming address and host can be from inside the existing ah
 	 * we are going to detach and reattch
 	 */
 
-	size += strlen(address) + 1 + strlen(host) + 1;
+	size += strlen(path) + 1 + strlen(address) + 1 + strlen(host) + 1 + 1;
 
 	p = stash = lws_malloc(size, __func__);
 	if (!stash)
 		return NULL;
 
+	/*
+	 * _WSI_TOKEN_CLIENT_ORIGIN,
+	 * _WSI_TOKEN_CLIENT_SENT_PROTOCOLS,
+	 * _WSI_TOKEN_CLIENT_METHOD,
+	 * _WSI_TOKEN_CLIENT_IFACE,
+	 * _WSI_TOKEN_CLIENT_ALPN
+	 * address
+	 * host
+	 * path
+	 */
+
 	for (n = 0; n < (int)LWS_ARRAY_SIZE(hnames2); n++)
 		if (lws_hdr_total_length(wsi, hnames2[n])) {
-			memcpy(p, lws_hdr_simple_ptr(wsi, hnames2[n]),
-				lws_hdr_total_length(wsi, hnames2[n]) + 1);
-			p += lws_hdr_total_length(wsi, hnames2[n]) + 1;
+			memcpy(p, lws_hdr_simple_ptr(wsi, hnames2[n]), (size_t)(
+			       lws_hdr_total_length(wsi, hnames2[n]) + 1));
+			p += (size_t)(lws_hdr_total_length(wsi, hnames2[n]) + 1);
 		} else
 			*p++ = '\0';
 
-	memcpy(p, address, strlen(address) + 1);
+	memcpy(p, address, strlen(address) + (size_t)1);
 	address = p;
 	p += strlen(address) + 1;
-	memcpy(p, host, strlen(host) + 1);
+	memcpy(p, host, strlen(host) + (size_t)1);
 	host = p;
+	p += strlen(host) + 1;
+	memcpy(p, path, strlen(path) + (size_t)1);
+	path = p;
 
 	if (!port) {
+		lwsl_info("%s: forcing port 443\n", __func__);
+
 		port = 443;
 		ssl = 1;
 	}
@@ -977,7 +1123,17 @@ lws_client_reset(struct lws **pwsi, int ssl, const char *address, int port,
 		   address, port, path, ssl, wsi->position_in_fds_table);
 
 	__remove_wsi_socket_from_fds(wsi);
+#if defined(LWS_ROLE_WS)
+	if (weak) {
+		ws = wsi->ws;
+		wsi->ws = NULL;
+	}
+#endif
 	__lws_reset_wsi(wsi); /* detaches ah here */
+#if defined(LWS_ROLE_WS)
+	if (weak)
+		wsi->ws = ws;
+#endif
 	wsi->client_pipeline = 1;
 
 	/* close the connection by hand */
@@ -996,7 +1152,10 @@ lws_client_reset(struct lws **pwsi, int ssl, const char *address, int port,
 			compatible_close(wsi->desc.sockfd);
 
 #if defined(LWS_WITH_TLS)
-	wsi->tls.use_ssl = ssl;
+	if (!ssl)
+		wsi->tls.use_ssl &= ~LCCSCF_USE_SSL;
+	else
+		wsi->tls.use_ssl |= LCCSCF_USE_SSL;
 #else
 	if (ssl) {
 		lwsl_err("%s: not configured for ssl\n", __func__);
@@ -1009,12 +1168,15 @@ lws_client_reset(struct lws **pwsi, int ssl, const char *address, int port,
 				wsi->role_ops->protocol_unbind_cb[
 				       !!lwsi_role_server(wsi)],
 				       wsi->user_space, (void *)__func__, 0);
+
 		wsi->protocol_bind_balance = 0;
 	}
 
 	wsi->desc.sockfd = LWS_SOCK_INVALID;
 	lws_role_transition(wsi, LWSIFR_CLIENT, LRS_UNCONNECTED, &role_ops_h1);
 //	wsi->protocol = NULL;
+	if (wsi->protocol)
+		lws_bind_protocol(wsi, wsi->protocol, "client_reset");
 	wsi->pending_timeout = NO_PENDING_TIMEOUT;
 	wsi->c_port = port;
 	wsi->hdr_parsing_completed = 0;
@@ -1031,19 +1193,36 @@ lws_client_reset(struct lws **pwsi, int ssl, const char *address, int port,
 	if (lws_hdr_simple_create(wsi, _WSI_TOKEN_CLIENT_HOST, host))
 		goto bail;
 
+	/*
+	 * _WSI_TOKEN_CLIENT_ORIGIN,
+	 * _WSI_TOKEN_CLIENT_SENT_PROTOCOLS,
+	 * _WSI_TOKEN_CLIENT_METHOD,
+	 * _WSI_TOKEN_CLIENT_IFACE,
+	 * _WSI_TOKEN_CLIENT_ALPN
+	 * address
+	 * host
+	 * path
+	 */
+
 	p = stash;
 	for (n = 0; n < (int)LWS_ARRAY_SIZE(hnames2); n++) {
 		if (lws_hdr_simple_create(wsi, hnames2[n], p))
 			goto bail;
-		p += lws_hdr_total_length(wsi, hnames2[n]) + 1;
+		p += lws_hdr_total_length(wsi, hnames2[n]) + (size_t)1;
 	}
 
 	stash[0] = '/';
-	lws_strncpy(&stash[1], path, size - 1);
+	memmove(&stash[1], path, size - 1 < strlen(path) + 1 ?
+					size - 1 : strlen(path) + (size_t)1);
 	if (lws_hdr_simple_create(wsi, _WSI_TOKEN_CLIENT_URI, stash))
 		goto bail;
 
 	lws_free_set_NULL(stash);
+
+#if defined(LWS_WITH_HTTP2)
+	if (wsi->client_mux_substream)
+		wsi->h2.END_STREAM = wsi->h2.END_HEADERS = 0;
+#endif
 
 	*pwsi = lws_client_connect_2_dnsreq(wsi);
 
@@ -1061,36 +1240,43 @@ html_parser_cb(const hubbub_token *token, void *pw)
 {
 	struct lws_rewrite *r = (struct lws_rewrite *)pw;
 	char buf[1024], *start = buf + LWS_PRE, *p = start,
-	     *end = &buf[sizeof(buf) - 1];
+	     *end = &buf[sizeof(buf) - 1], dotstar[128];
 	size_t i;
 
 	switch (token->type) {
 	case HUBBUB_TOKEN_DOCTYPE:
 
-		p += lws_snprintf(p, end - p, "<!DOCTYPE %.*s %s ",
-				(int) token->data.doctype.name.len,
-				token->data.doctype.name.ptr,
-				token->data.doctype.force_quirks ?
+		lws_strnncpy(dotstar, token->data.doctype.name.ptr,
+			     token->data.doctype.name.len, sizeof(dotstar));
+
+		p += lws_snprintf(p, end - p, "<!DOCTYPE %s %s ",
+				  dotstar, token->data.doctype.force_quirks ?
 						"(force-quirks) " : "");
 
 		if (token->data.doctype.public_missing)
 			lwsl_debug("\tpublic: missing\n");
-		else
-			p += lws_snprintf(p, end - p, "PUBLIC \"%.*s\"\n",
-				(int) token->data.doctype.public_id.len,
-				token->data.doctype.public_id.ptr);
+		else {
+			lws_strnncpy(dotstar, token->data.doctype.public_id.ptr,
+				     token->data.doctype.public_id.len,
+				     sizeof(dotstar));
+			p += lws_snprintf(p, end - p, "PUBLIC \"%s\"\n",
+					  dotstar);
+		}
 
 		if (token->data.doctype.system_missing)
 			lwsl_debug("\tsystem: missing\n");
-		else
-			p += lws_snprintf(p, end - p, " \"%.*s\">\n",
-				(int) token->data.doctype.system_id.len,
-				token->data.doctype.system_id.ptr);
+		else {
+			lws_strnncpy(dotstar, token->data.doctype.system_id.ptr,
+				     token->data.doctype.system_id.len,
+				     sizeof(dotstar));
+			p += lws_snprintf(p, end - p, " \"%s\">\n", dotstar);
+		}
 
 		break;
 	case HUBBUB_TOKEN_START_TAG:
-		p += lws_snprintf(p, end - p, "<%.*s", (int)token->data.tag.name.len,
-				token->data.tag.name.ptr);
+		lws_strnncpy(dotstar, token->data.tag.name.ptr,
+			     token->data.tag.name.len, sizeof(dotstar));
+		p += lws_snprintf(p, end - p, "<%s", dotstar);
 
 /*				(token->data.tag.self_closing) ?
 						"(self-closing) " : "",
@@ -1111,25 +1297,37 @@ html_parser_cb(const hubbub_token *token, void *pw)
 						pp += r->from_len;
 						plen -= r->from_len;
 					}
-					p += lws_snprintf(p, end - p, " %.*s=\"%s/%.*s\"",
-					       (int) token->data.tag.attributes[i].name.len,
-					       token->data.tag.attributes[i].name.ptr,
-					       r->to, plen, pp);
+					lws_strnncpy(dotstar,
+						token->data.tag.attributes[i].name.ptr,
+						token->data.tag.attributes[i].name.len,
+						sizeof(dotstar));
+
+					p += lws_snprintf(p, end - p, " %s=\"%s",
+							  dotstar, r->to);
+					lws_strnncpy(dotstar, pp, plen, sizeof(dotstar));
+					p += lws_snprintf(p, end - p, " /%s\"", dotstar);
 					continue;
 				}
 			}
 
-			p += lws_snprintf(p, end - p, " %.*s=\"%.*s\"",
-				(int) token->data.tag.attributes[i].name.len,
+			lws_strnncpy(dotstar,
 				token->data.tag.attributes[i].name.ptr,
-				(int) token->data.tag.attributes[i].value.len,
-				token->data.tag.attributes[i].value.ptr);
+				token->data.tag.attributes[i].name.len,
+				sizeof(dotstar));
+
+			p += lws_snprintf(p, end - p, " %s=\"", dotstar);
+			lws_strnncpy(dotstar,
+				token->data.tag.attributes[i].value.ptr,
+				token->data.tag.attributes[i].value.len,
+				sizeof(dotstar));
+			p += lws_snprintf(p, end - p, "%s\"", dotstar);
 		}
 		p += lws_snprintf(p, end - p, ">");
 		break;
 	case HUBBUB_TOKEN_END_TAG:
-		p += lws_snprintf(p, end - p, "</%.*s", (int) token->data.tag.name.len,
-				token->data.tag.name.ptr);
+		lws_strnncpy(dotstar, token->data.tag.name.ptr,
+			     token->data.tag.name.len, sizeof(dotstar));
+		p += lws_snprintf(p, end - p, "</%s", dotstar);
 /*
 				(token->data.tag.self_closing) ?
 						"(self-closing) " : "",
@@ -1137,18 +1335,23 @@ html_parser_cb(const hubbub_token *token, void *pw)
 						"attributes:" : "");
 */
 		for (i = 0; i < token->data.tag.n_attributes; i++) {
-			p += lws_snprintf(p, end - p, " %.*s='%.*s'\n",
-				(int) token->data.tag.attributes[i].name.len,
-				token->data.tag.attributes[i].name.ptr,
-				(int) token->data.tag.attributes[i].value.len,
-				token->data.tag.attributes[i].value.ptr);
+			lws_strnncpy(dotstar,
+				     token->data.tag.attributes[i].name.ptr,
+				     token->data.tag.attributes[i].name.len,
+				     sizeof(dotstar));
+			p += lws_snprintf(p, end - p, " %s='", dotstar);
+			lws_strnncpy(dotstar,
+				     token->data.tag.attributes[i].value.ptr,
+				     token->data.tag.attributes[i].value.len,
+				     sizeof(dotstar));
+			p += lws_snprintf(p, end - p, "%s'\n", dotstar);
 		}
 		p += lws_snprintf(p, end - p, ">");
 		break;
 	case HUBBUB_TOKEN_COMMENT:
-		p += lws_snprintf(p, end - p, "<!-- %.*s -->\n",
-				(int) token->data.comment.len,
-				token->data.comment.ptr);
+		lws_strnncpy(dotstar, token->data.comment.ptr,
+			     token->data.comment.len, sizeof(dotstar));
+		p += lws_snprintf(p, end - p, "<!-- %s -->\n",  dotstar);
 		break;
 	case HUBBUB_TOKEN_CHARACTER:
 		if (token->data.character.len == 1) {
@@ -1165,9 +1368,9 @@ html_parser_cb(const hubbub_token *token, void *pw)
 				break;
 			}
 		}
-
-		p += lws_snprintf(p, end - p, "%.*s", (int) token->data.character.len,
-				token->data.character.ptr);
+		lws_strnncpy(dotstar, token->data.character.ptr,
+			     token->data.character.len, sizeof(dotstar));
+		p += lws_snprintf(p, end - p, "%s", dotstar);
 		break;
 	case HUBBUB_TOKEN_EOF:
 		p += lws_snprintf(p, end - p, "\n");
@@ -1210,7 +1413,8 @@ lws_http_client_connect_via_info2(struct lws *wsi)
 
 	wsi->opaque_user_data = wsi->stash->opaque_user_data;
 
-	if (stash->cis[CIS_METHOD] && !strcmp(stash->cis[CIS_METHOD], "RAW"))
+	if (stash->cis[CIS_METHOD] && (!strcmp(stash->cis[CIS_METHOD], "RAW") ||
+				      !strcmp(stash->cis[CIS_METHOD], "MQTT")))
 		goto no_ah;
 
 	/*
@@ -1219,9 +1423,10 @@ lws_http_client_connect_via_info2(struct lws *wsi)
 	 * allocated stash
 	 */
 	for (n = 0; n < (int)LWS_ARRAY_SIZE(hnames); n++)
-		if (hnames[n] && stash->cis[n])
+		if (hnames[n] && stash->cis[n]) {
 			if (lws_hdr_simple_create(wsi, hnames[n], stash->cis[n]))
 				goto bail1;
+		}
 
 #if defined(LWS_WITH_SOCKS5)
 	if (!wsi->vhost->socks_proxy_port)
@@ -1241,96 +1446,3 @@ bail1:
 
 	return NULL;
 }
-
-#if defined(LWS_WITH_SOCKS5)
-int
-socks_generate_msg(struct lws *wsi, enum socks_msg_type type, ssize_t *msg_len)
-{
-	struct lws_context *context = wsi->context;
-	struct lws_context_per_thread *pt = &context->pt[(int)wsi->tsi];
-	uint8_t *p = pt->serv_buf, *end = &p[context->pt_serv_buf_size];
-	ssize_t n, passwd_len;
-	short net_num;
-	char *cp;
-
-	switch (type) {
-	case SOCKS_MSG_GREETING:
-		if (lws_ptr_diff(end, p) < 4)
-			return 1;
-		/* socks version, version 5 only */
-		*p++ = SOCKS_VERSION_5;
-		/* number of methods */
-		*p++ = 2;
-		/* username password method */
-		*p++ = SOCKS_AUTH_USERNAME_PASSWORD;
-		/* no authentication method */
-		*p++ = SOCKS_AUTH_NO_AUTH;
-		break;
-
-	case SOCKS_MSG_USERNAME_PASSWORD:
-		n = strlen(wsi->vhost->socks_user);
-		passwd_len = strlen(wsi->vhost->socks_password);
-
-		if (n > 254 || passwd_len > 254)
-			return 1;
-
-		if (lws_ptr_diff(end, p) < 3 + n + passwd_len)
-			return 1;
-
-		/* the subnegotiation version */
-		*p++ = SOCKS_SUBNEGOTIATION_VERSION_1;
-
-		/* length of the user name */
-		*p++ = n;
-		/* user name */
-		memcpy(p, wsi->vhost->socks_user, n);
-		p += n;
-
-		/* length of the password */
-		*p++ = passwd_len;
-
-		/* password */
-		memcpy(p, wsi->vhost->socks_password, passwd_len);
-		p += passwd_len;
-		break;
-
-	case SOCKS_MSG_CONNECT:
-		n = strlen(wsi->stash->address);
-
-		if (n > 254 || lws_ptr_diff(end, p) < 5 + n + 2)
-			return 1;
-
-		cp = (char *)&net_num;
-
-		/* socks version */
-		*p++ = SOCKS_VERSION_5;
-		/* socks command */
-		*p++ = SOCKS_COMMAND_CONNECT;
-		/* reserved */
-		*p++ = 0;
-		/* address type */
-		*p++ = SOCKS_ATYP_DOMAINNAME;
-		/* length of ---> */
-		*p++ = n;
-
-		/* the address we tell SOCKS proxy to connect to */
-		memcpy(p, wsi->stash->address, n);
-		p += n;
-
-		net_num = htons(wsi->c_port);
-
-		/* the port we tell SOCKS proxy to connect to */
-		*p++ = cp[0];
-		*p++ = cp[1];
-
-		break;
-		
-	default:
-		return 1;
-	}
-
-	*msg_len = lws_ptr_diff(p, pt->serv_buf);
-
-	return 0;
-}
-#endif

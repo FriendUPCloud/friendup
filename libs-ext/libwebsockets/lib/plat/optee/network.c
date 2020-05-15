@@ -42,7 +42,7 @@ lws_plat_pipe_close(struct lws *wsi)
 {
 }
 
-LWS_VISIBLE int
+int
 lws_send_pipe_choked(struct lws *wsi)
 {
 	struct lws *wsi_eff;
@@ -79,7 +79,7 @@ lws_poll_listen_fd(struct lws_pollfd *fd)
 }
 
 
-LWS_EXTERN int
+int
 _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 {
 	lws_usec_t timeout_us = timeout_ms * LWS_US_PER_MS;
@@ -121,7 +121,7 @@ again:
 
 			lws_pt_lock(pt, __func__);
 			/* don't stay in poll wait longer than next hr timeout */
-			us = __lws_sul_check(&pt->pt_sul_owner, lws_now_usecs());
+			us = __lws_sul_service_ripe(&pt->pt_sul_owner, lws_now_usecs());
 			if (us && us < timeout_us)
 				timeout_us = us;
 
@@ -176,12 +176,6 @@ again:
 	if (a)
 		goto again;
 
-	return 0;
-}
-
-int
-lws_plat_check_connection_error(struct lws *wsi)
-{
 	return 0;
 }
 

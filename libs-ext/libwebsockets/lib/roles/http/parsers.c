@@ -24,7 +24,7 @@
 
 #include "private-lib-core.h"
 
-static const unsigned char lextable[] = {
+static const unsigned char lextable_h1[] = {
 	#include "lextable.h"
 };
 
@@ -58,8 +58,8 @@ _lws_create_ah(struct lws_context_per_thread *pt, ah_data_idx_t data_size)
 	ah->data_length = data_size;
 	pt->http.ah_pool_length++;
 
-	lwsl_info("%s: created ah %p (size %d): pool length %ld\n", __func__,
-		    ah, (int)data_size, (unsigned long)pt->http.ah_pool_length);
+	lwsl_info("%s: created ah %p (size %d): pool length %u\n", __func__,
+		    ah, (int)data_size, (unsigned int)pt->http.ah_pool_length);
 
 	return ah;
 }
@@ -71,9 +71,9 @@ _lws_destroy_ah(struct lws_context_per_thread *pt, struct allocated_headers *ah)
 		if ((*a) == ah) {
 			*a = ah->next;
 			pt->http.ah_pool_length--;
-			lwsl_info("%s: freed ah %p : pool length %ld\n",
+			lwsl_info("%s: freed ah %p : pool length %u\n",
 				    __func__, ah,
-				    (unsigned long)pt->http.ah_pool_length);
+				    (unsigned int)pt->http.ah_pool_length);
 			if (ah->data)
 				lws_free(ah->data);
 			lws_free(ah);
@@ -211,6 +211,11 @@ lws_header_table_attach(struct lws *wsi, int autoservice)
 	struct lws_pollargs pa;
 	int n;
 
+#if defined(LWS_ROLE_MQTT) && defined(LWS_WITH_CLIENT)
+	if (lwsi_role_mqtt(wsi))
+		goto connect_via_info2;
+#endif
+
 	lwsl_info("%s: wsi %p: ah %p (tsi %d, count = %d) in\n", __func__,
 		  (void *)wsi, (void *)wsi->http.ah, wsi->tsi,
 		  pt->http.ah_count_in_use);
@@ -282,6 +287,9 @@ reset:
 	lws_pt_unlock(pt);
 
 #if defined(LWS_WITH_CLIENT)
+#if defined(LWS_ROLE_MQTT)
+connect_via_info2:
+#endif
 	if (lwsi_role_client(wsi) && lwsi_state(wsi) == LRS_UNCONNECTED)
 		if (!lws_http_client_connect_via_info2(wsi))
 			/* our client connect has failed, the wsi
@@ -341,6 +349,7 @@ int __lws_header_table_detach(struct lws *wsi, int autoservice)
 		lws_peer_track_ah_detach(context, wsi->peer);
 #endif
 	ah->wsi = NULL; /* no owner */
+	wsi->http.ah = NULL;
 
 	pwsi = &pt->http.ah_wait_list;
 
@@ -453,7 +462,7 @@ int lws_header_table_detach(struct lws *wsi, int autoservice)
 	return n;
 }
 
-LWS_VISIBLE int
+int
 lws_hdr_fragment_length(struct lws *wsi, enum lws_token_indexes h, int frag_idx)
 {
 	int n;
@@ -473,7 +482,7 @@ lws_hdr_fragment_length(struct lws *wsi, enum lws_token_indexes h, int frag_idx)
 	return 0;
 }
 
-LWS_VISIBLE int lws_hdr_total_length(struct lws *wsi, enum lws_token_indexes h)
+int lws_hdr_total_length(struct lws *wsi, enum lws_token_indexes h)
 {
 	int n;
 	int len = 0;
@@ -496,7 +505,7 @@ LWS_VISIBLE int lws_hdr_total_length(struct lws *wsi, enum lws_token_indexes h)
 	return len;
 }
 
-LWS_VISIBLE int lws_hdr_copy_fragment(struct lws *wsi, char *dst, int len,
+int lws_hdr_copy_fragment(struct lws *wsi, char *dst, int len,
 				      enum lws_token_indexes h, int frag_idx)
 {
 	int n = 0;
@@ -527,7 +536,7 @@ LWS_VISIBLE int lws_hdr_copy_fragment(struct lws *wsi, char *dst, int len,
 	return wsi->http.ah->frags[f].len;
 }
 
-LWS_VISIBLE int lws_hdr_copy(struct lws *wsi, char *dst, int len,
+int lws_hdr_copy(struct lws *wsi, char *dst, int len,
 			     enum lws_token_indexes h)
 {
 	int toklen = lws_hdr_total_length(wsi, h);
@@ -570,12 +579,12 @@ LWS_VISIBLE int lws_hdr_copy(struct lws *wsi, char *dst, int len,
 }
 
 #if defined(LWS_WITH_CUSTOM_HEADERS)
-LWS_VISIBLE int
+int
 lws_hdr_custom_length(struct lws *wsi, const char *name, int nlen)
 {
 	ah_data_idx_t ll;
 
-	if (!wsi->http.ah || wsi->http2_substream)
+	if (!wsi->http.ah || wsi->mux_substream)
 		return -1;
 
 	ll = wsi->http.ah->unk_ll_head;
@@ -594,14 +603,14 @@ lws_hdr_custom_length(struct lws *wsi, const char *name, int nlen)
 	return -1;
 }
 
-LWS_VISIBLE int
+int
 lws_hdr_custom_copy(struct lws *wsi, char *dst, int len, const char *name,
 		    int nlen)
 {
 	ah_data_idx_t ll;
 	int n;
 
-	if (!wsi->http.ah || wsi->http2_substream)
+	if (!wsi->http.ah || wsi->mux_substream)
 		return -1;
 
 	*dst = '\0';
@@ -673,6 +682,16 @@ lws_pos_in_bounds(struct lws *wsi)
 int LWS_WARN_UNUSED_RESULT
 lws_hdr_simple_create(struct lws *wsi, enum lws_token_indexes h, const char *s)
 {
+	if (!*s) {
+		/*
+		 * If we get an empty string, then remove any entry for the
+		 * header
+		 */
+		wsi->http.ah->frag_index[h] = 0;
+
+		return 0;
+	}
+
 	wsi->http.ah->nfrag++;
 	if (wsi->http.ah->nfrag == LWS_ARRAY_SIZE(wsi->http.ah->frags)) {
 		lwsl_warn("More hdr frags than we can deal with, dropping\n");
@@ -924,10 +943,12 @@ excessive:
 static const unsigned char methods[] = {
 	WSI_TOKEN_GET_URI,
 	WSI_TOKEN_POST_URI,
+#if defined(LWS_WITH_HTTP_UNCOMMON_HEADERS)
 	WSI_TOKEN_OPTIONS_URI,
 	WSI_TOKEN_PUT_URI,
 	WSI_TOKEN_PATCH_URI,
 	WSI_TOKEN_DELETE_URI,
+#endif
 	WSI_TOKEN_CONNECT,
 	WSI_TOKEN_HEAD_URI,
 };
@@ -1085,7 +1106,7 @@ swallow:
 			 * a known header, we'll snip this.
 			 */
 
-			if (!wsi->http2_substream && !ah->unk_pos) {
+			if (!wsi->mux_substream && !ah->unk_pos) {
 				ah->unk_pos = ah->pos;
 				/*
 				 * Prepare new unknown header linked-list entry
@@ -1107,7 +1128,12 @@ swallow:
 			pos = ah->lextable_pos;
 
 #if defined(LWS_WITH_CUSTOM_HEADERS)
-			if (!wsi->http2_substream && pos < 0 && c == ':') {
+			if (!wsi->mux_substream && pos < 0 && c == ':') {
+#if defined(_DEBUG)
+				char dotstar[64];
+				int uhlen;
+#endif
+
 				/*
 				 * process unknown headers
 				 *
@@ -1124,11 +1150,16 @@ swallow:
 
 				ah->unk_ll_tail = ah->unk_pos;
 
-				lwsl_debug("%s: unk header %d '%.*s'\n",
-					   __func__,
-					   ah->pos - (ah->unk_pos + UHO_NAME),
-					   ah->pos - (ah->unk_pos + UHO_NAME),
-					   &ah->data[ah->unk_pos + UHO_NAME]);
+#if defined(_DEBUG)
+				uhlen = ah->pos - (ah->unk_pos + UHO_NAME);
+				lws_strnncpy(dotstar,
+					&ah->data[ah->unk_pos + UHO_NAME],
+					uhlen, sizeof(dotstar));
+				lwsl_debug("%s: unk header %d '%s'\n",
+					    __func__,
+					    ah->pos - (ah->unk_pos + UHO_NAME),
+					    dotstar);
+#endif
 
 				/* set the unknown header name part length */
 
@@ -1149,29 +1180,29 @@ swallow:
 				break;
 
 			while (1) {
-				if (lextable[pos] & (1 << 7)) {
+				if (lextable_h1[pos] & (1 << 7)) {
 					/* 1-byte, fail on mismatch */
-					if ((lextable[pos] & 0x7f) != c) {
+					if ((lextable_h1[pos] & 0x7f) != c) {
 nope:
 						ah->lextable_pos = -1;
 						break;
 					}
 					/* fall thru */
 					pos++;
-					if (lextable[pos] == FAIL_CHAR)
+					if (lextable_h1[pos] == FAIL_CHAR)
 						goto nope;
 
 					ah->lextable_pos = pos;
 					break;
 				}
 
-				if (lextable[pos] == FAIL_CHAR)
+				if (lextable_h1[pos] == FAIL_CHAR)
 					goto nope;
 
 				/* b7 = 0, end or 3-byte */
-				if (lextable[pos] < FAIL_CHAR) {
+				if (lextable_h1[pos] < FAIL_CHAR) {
 #if defined(LWS_WITH_CUSTOM_HEADERS)
-					if (!wsi->http2_substream) {
+					if (!wsi->mux_substream) {
 						/*
 						 * We hit a terminal marker, so
 						 * we recognized this header...
@@ -1186,10 +1217,10 @@ nope:
 					break;
 				}
 
-				if (lextable[pos] == c) { /* goto */
+				if (lextable_h1[pos] == c) { /* goto */
 					ah->lextable_pos = pos +
-						(lextable[pos + 1]) +
-						(lextable[pos + 2] << 8);
+						(lextable_h1[pos + 1]) +
+						(lextable_h1[pos + 2] << 8);
 					break;
 				}
 
@@ -1217,7 +1248,7 @@ nope:
 #if !defined(LWS_WITH_CUSTOM_HEADERS)
 						ah->parser_state = WSI_TOKEN_SKIPPING;
 #endif
-						if (wsi->http2_substream)
+						if (wsi->mux_substream)
 							ah->parser_state = WSI_TOKEN_SKIPPING;
 						break;
 					}
@@ -1228,7 +1259,7 @@ nope:
 					 * We have the method, this is just an
 					 * unknown header then
 					 */
-					if (!wsi->http2_substream)
+					if (!wsi->mux_substream)
 						goto unknown_hdr;
 					else
 						break;
@@ -1256,7 +1287,7 @@ nope:
 			}
 			if (ah->lextable_pos < 0) {
 #if defined(LWS_WITH_CUSTOM_HEADERS)
-				if (!wsi->http2_substream)
+				if (!wsi->mux_substream)
 					goto unknown_hdr;
 #endif
 				/*
@@ -1267,11 +1298,11 @@ nope:
 				break;
 			}
 
-			if (lextable[ah->lextable_pos] < FAIL_CHAR) {
+			if (lextable_h1[ah->lextable_pos] < FAIL_CHAR) {
 				/* terminal state */
 
-				n = ((unsigned int)lextable[ah->lextable_pos] << 8) |
-						lextable[ah->lextable_pos + 1];
+				n = ((unsigned int)lextable_h1[ah->lextable_pos] << 8) |
+						lextable_h1[ah->lextable_pos + 1];
 
 				lwsl_parser("known hdr %d\n", n);
 				for (m = 0; m < LWS_ARRAY_SIZE(methods); m++)
@@ -1285,8 +1316,10 @@ nope:
 				 * WSORIGIN is protocol equiv to ORIGIN,
 				 * JWebSocket likes to send it, map to ORIGIN
 				 */
+#if defined(LWS_ROLE_WS)
 				if (n == WSI_TOKEN_SWORIGIN)
 					n = WSI_TOKEN_ORIGIN;
+#endif
 
 				ah->parser_state = (enum lws_token_indexes)
 							(WSI_TOKEN_GET_URI + n);
@@ -1311,7 +1344,7 @@ nope:
 unknown_hdr:
 			//ah->parser_state = WSI_TOKEN_SKIPPING;
 			//break;
-			if (!wsi->http2_substream)
+			if (!wsi->mux_substream)
 				break;
 #endif
 
@@ -1380,11 +1413,13 @@ set_parsing_complete:
 		goto forbid;
 
 	if (lws_hdr_total_length(wsi, WSI_TOKEN_UPGRADE)) {
+#if defined(LWS_ROLE_WS)
 		if (lws_hdr_total_length(wsi, WSI_TOKEN_VERSION))
 			wsi->rx_frame_type = /* temp for ws version index */
 			       atoi(lws_hdr_simple_ptr(wsi, WSI_TOKEN_VERSION));
 
 		lwsl_parser("v%02d hdrs done\n", wsi->rx_frame_type);
+#endif
 	}
 	ah->parser_state = WSI_PARSING_COMPLETE;
 	wsi->hdr_parsing_completed = 1;
@@ -1392,7 +1427,7 @@ set_parsing_complete:
 	return LPR_OK;
 
 forbid:
-	lwsl_notice(" forbidding on uri sanitation\n");
+	lwsl_info(" forbidding on uri sanitation\n");
 #if defined(LWS_WITH_SERVER)
 	lws_return_http_status(wsi, HTTP_STATUS_FORBIDDEN, NULL);
 #endif

@@ -32,7 +32,7 @@ lws_struct_schema_only_lejp_cb(struct lejp_ctx *ctx, char reason)
 {
 	lws_struct_args_t *a = (lws_struct_args_t *)ctx->user;
 	const lws_struct_map_t *map = a->map_st[ctx->pst_sp];
-	int n = a->map_entries_st[ctx->pst_sp];
+	size_t n = a->map_entries_st[ctx->pst_sp];
 	lejp_callback cb = map->lejp_cb;
 
 	if (reason != LEJPCB_VAL_STR_END || ctx->path_match != 1)
@@ -51,6 +51,8 @@ lws_struct_schema_only_lejp_cb(struct lejp_ctx *ctx, char reason)
 			return 1;
 		}
 		a->dest_len = map->aux;
+		if (!ctx->pst_sp)
+			a->top_schema_index = (int)(map - a->map_st[ctx->pst_sp]);
 
 		if (!cb)
 			cb = lws_struct_default_lejp_cb;
@@ -92,8 +94,8 @@ lws_struct_default_lejp_cb(struct lejp_ctx *ctx, char reason)
 	lws_struct_args_t *args = (lws_struct_args_t *)ctx->user;
 	const lws_struct_map_t *map, *pmap = NULL;
 	uint8_t *ch;
+	size_t n;
 	char *u;
-	int n;
 
 	if (reason == LEJPCB_ARRAY_END) {
 		lejp_parser_pop(ctx);
@@ -103,7 +105,6 @@ lws_struct_default_lejp_cb(struct lejp_ctx *ctx, char reason)
 
 	if (reason == LEJPCB_ARRAY_START) {
 		map = &args->map_st[ctx->pst_sp][ctx->path_match - 1];
-		n = args->map_entries_st[ctx->pst_sp];
 
 		if (map->type == LSMT_LIST)
 			lws_struct_lejp_push(ctx, args, map, NULL);
@@ -366,6 +367,7 @@ chunk_copy:
 				if (b > lim)
 					b = lim;
 				memcpy(s, ctx->buf, b);
+				s[b] = '\0';
 			}
 			break;
 		default:
@@ -405,7 +407,7 @@ lws_struct_json_init_parse(struct lejp_ctx *ctx, lejp_callback cb, void *user)
 lws_struct_serialize_t *
 lws_struct_json_serialize_create(const lws_struct_map_t *map,
 				 size_t map_entries, int flags,
-				 void *ptoplevel)
+				 const void *ptoplevel)
 {
 	lws_struct_serialize_t *js = lws_zalloc(sizeof(*js), __func__);
 	lws_struct_serialize_st_t *j;
@@ -456,14 +458,14 @@ lws_struct_json_serialize(lws_struct_serialize_t *js, uint8_t *buf,
 {
 	lws_struct_serialize_st_t *j;
 	const lws_struct_map_t *map;
-	size_t budget = 0, olen = len;
+	size_t budget = 0, olen = len, m;
 	struct lws_dll2_owner *o;
 	unsigned long long uli;
 	const char *q;
 	const void *p;
 	char dbuf[72];
 	long long li;
-	int n;
+	int n, used;
 
 	*written = 0;
 	*buf = '\0';
@@ -555,20 +557,13 @@ lws_struct_json_serialize(lws_struct_serialize_t *js, uint8_t *buf,
 			break;
 
 		case LSMT_STRING_CHAR_ARRAY:
-			budget = strlen(q);
+		case LSMT_STRING_PTR:
 			if (!js->offset) {
 				*buf++ = '\"';
 				len--;
 			}
 			break;
 
-		case LSMT_STRING_PTR:
-			budget = strlen(q);
-			if (!js->offset) {
-				*buf++ = '\"';
-				len--;
-			}
-			break;
 		case LSMT_LIST:
 			*buf++ = '[';
 			len--;
@@ -609,7 +604,7 @@ lws_struct_json_serialize(lws_struct_serialize_t *js, uint8_t *buf,
 			if (js->sp + 1 == LEJP_MAX_PARSING_STACK_DEPTH)
 				return LSJS_RESULT_ERROR;
 
-			/* add a stack level tto handle parsing child members */
+			/* add a stack level to handle parsing child members */
 
 			n = j->idt;
 			j = &js->st[++js->sp];
@@ -623,6 +618,7 @@ lws_struct_json_serialize(lws_struct_serialize_t *js, uint8_t *buf,
 			len--;
 			lws_struct_pretty(js, &buf, &len);
 			j->obj = q;
+
 			continue;
 
 		case LSMT_SCHEMA:
@@ -655,22 +651,57 @@ lws_struct_json_serialize(lws_struct_serialize_t *js, uint8_t *buf,
 			break;
 		}
 
-		q += js->offset;
-		budget -= js->remaining;
+		switch (map->type) {
+		case LSMT_STRING_CHAR_ARRAY:
+		case LSMT_STRING_PTR:
+			/*
+			 * This is a bit tricky... we have to escape the string
+			 * which may 6x its length depending on what the
+			 * contents are.
+			 *
+			 * We offset the unescaped string starting point first
+			 */
 
-		if (budget > len) {
-			js->remaining = budget - len;
-			js->offset = len;
-			budget = len;
-		} else {
-			js->remaining = 0;
-			js->offset = 0;
+			q += js->offset;
+			budget = strlen(q); /* how much unescaped is left */
+
+			/*
+			 * This is going to escape as much as it can fit, and
+			 * let us know the amount of input that was consumed
+			 * in "used".
+			 */
+
+			lws_json_purify((char *)buf, q, len, &used);
+			m = strlen((const char *)buf);
+			buf += m;
+			len -= m;
+			js->remaining = budget - used;
+			js->offset = used;
+			if (!js->remaining)
+				js->offset = 0;
+
+			break;
+		default:
+			q += js->offset;
+			budget -= js->remaining;
+
+			if (budget > len) {
+				js->remaining = budget - len;
+				js->offset = len;
+				budget = len;
+			} else {
+				js->remaining = 0;
+				js->offset = 0;
+			}
+
+			memcpy(buf, q, budget);
+			buf += budget;
+			*buf = '\0';
+			len -= budget;
+			break;
 		}
 
-		memcpy(buf, q, budget);
-		buf += budget;
-		*buf = '\0';
-		len -= budget;
+
 
 		switch (map->type) {
 		case LSMT_STRING_CHAR_ARRAY:
@@ -730,7 +761,7 @@ up:
 		if (j->dllpos) {
 			/*
 			 * there was another item in the array to do... let's
-			 * move on to that nd do it
+			 * move on to that and do it
 			 */
 			*buf++ = ',';
 			len--;

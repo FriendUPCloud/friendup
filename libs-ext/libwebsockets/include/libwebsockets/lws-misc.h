@@ -22,6 +22,15 @@
  * IN THE SOFTWARE.
  */
 
+#if defined(LWS_WITH_SPAWN)
+
+#if defined(WIN32) || defined(_WIN32)
+#else
+#include <sys/wait.h>
+#include <sys/times.h>
+#endif
+#endif
+
 /** \defgroup misc Miscellaneous APIs
 * ##Miscellaneous APIs
 *
@@ -72,7 +81,7 @@ lws_buflist_next_segment_len(struct lws_buflist **head, uint8_t **buf);
  * Returns the number of bytes left in the current segment.  0 indicates
  * that the buflist is empty (there are no segments on the buflist).
  */
-LWS_VISIBLE LWS_EXTERN int
+LWS_VISIBLE LWS_EXTERN size_t
 lws_buflist_use_segment(struct lws_buflist **head, size_t len);
 
 /**
@@ -163,6 +172,14 @@ lws_snprintf(char *str, size_t size, const char *format, ...) LWS_FORMAT(3);
 LWS_VISIBLE LWS_EXTERN char *
 lws_strncpy(char *dest, const char *src, size_t size);
 
+/*
+ * Variation where we want to use the smaller of two lengths, useful when the
+ * source string is not NUL terminated
+ */
+#define lws_strnncpy(dest, src, size1, destsize) \
+	lws_strncpy(dest, src, (size_t)(size1 + 1) < (size_t)(destsize) ? \
+				(size_t)(size1 + 1) : (size_t)(destsize))
+
 /**
  * lws_hex_to_byte_array(): convert hex string like 0123456789ab into byte data
  *
@@ -208,8 +225,8 @@ lws_timingsafe_bcmp(const void *a, const void *b, uint32_t len);
  * Fills buf with len bytes of random.  Returns the number of bytes set, if
  * not equal to len, then getting the random failed.
  */
-LWS_VISIBLE LWS_EXTERN int
-lws_get_random(struct lws_context *context, void *buf, int len);
+LWS_VISIBLE LWS_EXTERN size_t
+lws_get_random(struct lws_context *context, void *buf, size_t len);
 /**
  * lws_daemonize(): make current process run in the background
  *
@@ -580,6 +597,15 @@ lws_dir(const char *dirpath, void *user, lws_dir_callback_function cb);
 size_t lws_get_allocated_heap(void);
 
 /**
+ * lws_get_tsi() - Get thread service index wsi belong to
+ * \param wsi:  websocket connection to check
+ *
+ * Returns more than zero (or zero if only one service thread as is the default).
+ */
+LWS_VISIBLE LWS_EXTERN int
+lws_get_tsi(struct lws *wsi);
+
+/**
  * lws_is_ssl() - Find out if connection is using SSL
  * \param wsi:	websocket connection to check
  *
@@ -637,19 +663,19 @@ typedef struct lws_humanize_unit {
 	uint64_t factor;
 } lws_humanize_unit_t;
 
-LWS_VISIBLE LWS_EXTERN const lws_humanize_unit_t humanize_schema_si[];
-LWS_VISIBLE LWS_EXTERN const lws_humanize_unit_t humanize_schema_si_bytes[];
-LWS_VISIBLE LWS_EXTERN const lws_humanize_unit_t humanize_schema_us[];
+LWS_VISIBLE LWS_EXTERN const lws_humanize_unit_t humanize_schema_si[7];
+LWS_VISIBLE LWS_EXTERN const lws_humanize_unit_t humanize_schema_si_bytes[7];
+LWS_VISIBLE LWS_EXTERN const lws_humanize_unit_t humanize_schema_us[8];
 
 /**
- * lws_humanize() - Convert possibly large number to himan-readable uints
+ * lws_humanize() - Convert possibly large number to human-readable uints
  *
  * \param buf: result string buffer
  * \param len: remaining length in \p buf
  * \param value: the uint64_t value to represent
  * \param schema: and array of scaling factors and units
  *
- * This produces a concise string representation of \p value, referening the
+ * This produces a concise string representation of \p value, referencing the
  * schema \p schema of scaling factors and units to find the smallest way to
  * render it.
  *
@@ -684,10 +710,190 @@ lws_ser_ru32be(const uint8_t *b);
 LWS_VISIBLE LWS_EXTERN uint64_t
 lws_ser_ru64be(const uint8_t *b);
 
-int
+LWS_VISIBLE LWS_EXTERN int
 lws_vbi_encode(uint64_t value, void *buf);
 
-int
+LWS_VISIBLE LWS_EXTERN int
 lws_vbi_decode(const void *buf, uint64_t *value, size_t len);
 
 ///@}
+
+#if defined(LWS_WITH_SPAWN)
+
+/* opaque internal struct */
+struct lws_spawn_piped;
+
+typedef void (*lsp_cb_t)(void *opaque, lws_usec_t *accounting, siginfo_t *si,
+			 int we_killed_him);
+
+
+/**
+ * lws_spawn_piped_info - details given to create a spawned pipe
+ *
+ * \p owner: lws_dll2_owner_t that lists all active spawns, or NULL
+ * \p vh: vhost to bind stdwsi to... from opt_parent if given
+ * \p opt_parent: optional parent wsi for stdwsi
+ * \p exec_array: argv for process to spawn
+ * \p env_array: environment for spawned process, NULL ends env list
+ * \p protocol_name: NULL, or vhost protocol name to bind stdwsi to
+ * \p chroot_path: NULL, or chroot patch for child process
+ * \p wd: working directory to cd to after fork, NULL defaults to /tmp
+ * \p plsp: NULL, or pointer to the outer lsp pointer so it can be set NULL when destroyed
+ * \p opaque: pointer passed to the reap callback, if any
+ * \p timeout: optional us-resolution timeout, or zero
+ * \p reap_cb: callback when child process has been reaped and the lsp destroyed
+ * \p tsi: tsi to bind stdwsi to... from opt_parent if given
+ */
+struct lws_spawn_piped_info {
+	struct lws_dll2_owner		*owner;
+	struct lws_vhost		*vh;
+	struct lws			*opt_parent;
+
+	const char * const		*exec_array;
+	char				**env_array;
+	const char			*protocol_name;
+	const char			*chroot_path;
+	const char			*wd;
+
+	struct lws_spawn_piped		**plsp;
+
+	void				*opaque;
+
+	lsp_cb_t			reap_cb;
+
+	lws_usec_t			timeout_us;
+	int				max_log_lines;
+	int				tsi;
+
+	const struct lws_role_ops	*ops; /* NULL is raw file */
+
+	uint8_t				disable_ctrlc;
+};
+
+/**
+ * lws_spawn_piped() - spawn a child process with stdxxx redirected
+ *
+ * \p lspi: info struct describing details of spawn to create
+ *
+ * This spawns a child process managed in the lsp object and with attributes
+ * set in the arguments.  The stdin/out/err streams are redirected to pipes
+ * which are instantiated into wsi that become child wsi of \p parent if non-
+ * NULL.  .opaque_user_data on the stdwsi created is set to point to the
+ * lsp object, so this can be recovered easily in the protocol handler.
+ *
+ * If \p owner is non-NULL, successful spawns join the given dll2 owner in the
+ * original process.
+ *
+ * If \p timeout is non-zero, successful spawns register a sul with the us-
+ * resolution timeout to callback \p timeout_cb, in the original process.
+ *
+ * Returns 0 if the spawn went OK or nonzero if it failed and was cleaned up.
+ * The spawned process continues asynchronously and this will return after
+ * starting it if all went well.
+ */
+LWS_VISIBLE LWS_EXTERN struct lws_spawn_piped *
+lws_spawn_piped(const struct lws_spawn_piped_info *lspi);
+
+/*
+ * lws_spawn_piped_kill_child_process() - attempt to kill child process
+ *
+ * \p lsp: child object to kill
+ *
+ * Attempts to signal the child process in \p lsp to terminate.
+ */
+LWS_VISIBLE LWS_EXTERN int
+lws_spawn_piped_kill_child_process(struct lws_spawn_piped *lsp);
+
+/**
+ * lws_spawn_stdwsi_closed() - inform the spawn one of its stdxxx pipes closed
+ *
+ * \p lsp: the spawn object
+ *
+ * When you notice one of the spawn stdxxx pipes closed, inform the spawn
+ * instance using this api.  When it sees all three have closed, it will
+ * automatically try to reap the child process.
+ *
+ * This is the mechanism whereby the spawn object can understand its child
+ * has closed.
+ */
+LWS_VISIBLE LWS_EXTERN void
+lws_spawn_stdwsi_closed(struct lws_spawn_piped *lsp);
+
+/**
+ * lws_spawn_get_stdfd() - return std channel index for stdwsi
+ *
+ * \p wsi: the wsi
+ *
+ * If you know wsi is a stdwsi from a spawn, you can determine its original
+ * channel index / fd before the pipes replaced the default fds.  It will return
+ * one of 0 (STDIN), 1 (STDOUT) or 2 (STDERR).  You can handle all three in the
+ * same protocol handler and then disambiguate them using this api.
+ */
+LWS_VISIBLE LWS_EXTERN int
+lws_spawn_get_stdfd(struct lws *wsi);
+
+#endif
+
+struct lws_fsmount {
+	const char	*layers_path;	/* where layers live */
+	const char	*overlay_path;	/* where overlay instantiations live */
+
+	char		mp[256];	/* mountpoint path */
+	char		ovname[64];	/* unique name for mount instance */
+	char		distro[64];	/* unique name for layer source */
+
+#if defined(__linux__)
+	const char	*layers[4];	/* distro layers, like "base", "env" */
+#endif
+};
+
+/**
+ * lws_fsmount_mount() - Mounts an overlayfs stack of layers
+ *
+ * \p fsm: struct lws_fsmount specifying the mount layout
+ *
+ * This api is able to assemble up to 4 layer directories on to a mountpoint
+ * using overlayfs mount (Linux only).
+ *
+ * Set fsm.layers_path to the base dir where the layers themselves live, the
+ * entries in fsm.layers[] specifies the relative path to the layer, comprising
+ * fsm.layers_path/fsm.distro/fsm.layers[], with [0] being the deepest, earliest
+ * layer and the rest being progressively on top of [0]; NULL indicates the
+ * layer is unused.
+ *
+ * fsm.overlay_path is the base path of the overlayfs instantiations... empty
+ * dirs must exist at
+ *
+ * fsm.overlay_path/overlays/fsm.ovname/work
+ * fsm.overlay_path/overlays/fsm.ovname/session
+ *
+ * Set fsm.mp to the path of an already-existing empty dir that will be the
+ * mountpoint, this can be whereever you like.
+ *
+ * Overlayfs merges the union of all the contributing layers at the mountpoint,
+ * the mount is writeable but the layer themselves are immutable, all additions
+ * and changes are stored in
+ *
+ * fsm.overlay_path/overlays/fsm.ovname/session
+ *
+ * Returns 0 if mounted OK, nonzero if errors.
+ *
+ * Retain fsm for use with unmounting.
+ */
+LWS_VISIBLE LWS_EXTERN int
+lws_fsmount_mount(struct lws_fsmount *fsm);
+
+/**
+ * lws_fsmount_unmount() - Unmounts an overlayfs dir
+ *
+ * \p fsm: struct lws_fsmount specifying the mount layout
+ *
+ * Unmounts the mountpoint in fsm.mp.
+ *
+ * Delete fsm.overlay_path/overlays/fsm.ovname/session to permanently eradicate
+ * all changes from the time the mountpoint was in use.
+ *
+ * Returns 0 if unmounted OK.
+ */
+LWS_VISIBLE LWS_EXTERN int
+lws_fsmount_unmount(struct lws_fsmount *fsm);
