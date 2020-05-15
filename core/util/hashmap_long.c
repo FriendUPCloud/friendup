@@ -543,7 +543,7 @@ void HashmapDeleteOldEntries( HashmapLong* in, int timeout )
 		return;
 	}
 
-	int i = 0;
+	unsigned int i = 0;
 	for( ; i < in->hl_TableSize; i++ )
 	{
 		if( in->hl_Data[i].hel_InUse != 0 )

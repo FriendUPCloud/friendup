@@ -323,36 +323,36 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		}
 		
 		el = HttpGetPOSTParameter( request, "channelid" );
-		if( el != NULL )
+		if( el != NULL && el->hme_Data )
 		{
 			channelid = UrlDecodeToMem( el->hme_Data );
 		}
 		
 		el = HttpGetPOSTParameter( request, "app" );
-		if( el != NULL )
+		if( el != NULL && el->hme_Data )
 		{
 			app = UrlDecodeToMem( el->hme_Data );
 		}
 		
 		el = HttpGetPOSTParameter( request, "title" );
-		if( el != NULL )
+		if( el != NULL && el->hme_Data )
 		{
 			title = UrlDecodeToMem( el->hme_Data );
 		}
 		
 		el = HttpGetPOSTParameter( request, "message" );
-		if( el != NULL )
+		if( el != NULL && el->hme_Data )
 		{
 			message = UrlDecodeToMem( el->hme_Data );
 		}
 		
 		el = HttpGetPOSTParameter( request, "extra" );
-		if( el != NULL )
+		if( el != NULL && el->hme_Data )
 		{
 			extra = UrlDecodeToMem( el->hme_Data );
 		}
 		
-		if( username == NULL || channelid == NULL || app == NULL || title == NULL || message == NULL )
+		if( username != NULL && channelid != NULL && app != NULL && title != NULL && message != NULL )
 		{
 			int error = MobileAppNotifyUserRegister( l, username, channelid, app, title, message, type, extra, time(NULL) );
 			

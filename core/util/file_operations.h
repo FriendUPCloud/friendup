@@ -7,19 +7,22 @@
 * found in the file license_mit.txt.                                           *
 *                                                                              *
 *****************************************************************************©*/
+/** @file
+ * 
+ *  File operations
+ *
+ *  file contain definitions related to File operations
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 07/05/2020
+ */
 
+#ifndef __UTIL_FILE_OPERATIONS_H__
+#define __UTIL_FILE_OPERATIONS_H__
 
-#ifndef __NETWORK_PROTOCOLHTTP_H__
-#define __NETWORK_PROTOCOLHTTP_H__
+#include <core/nodes.h>
+#include <util/time.h>
 
-#include <network/socket.h>
-#include <util/buffered_string.h>
-#include <network/http.h>
+int DeleteDirectory( const char * path );
 
-//
-//
-//
-
-Http *ProtocolHttp( Socket *sock, char* data, FQUAD size );
-
-#endif
+#endif // __UTIL_FILE_OPERATIONS_H__

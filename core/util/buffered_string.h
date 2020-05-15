@@ -15,6 +15,8 @@
 #ifndef __BUFFERED_STRING_H__
 #define __BUFFERED_STRING_H__
 
+#include <core/types.h>
+
 #define BUF_STRING_MAX 1024 * 12
 
 //
@@ -23,11 +25,11 @@
 
 typedef struct BufString
 {
-	unsigned int             bs_Size;        // current data size
-	unsigned int             bs_Bufsize;     // buffer size
-	char           *bs_Buffer;      // pointer to buffer
-	unsigned int  buffer_increments;
-	unsigned int previous_increment;
+	FQUAD			bs_Size;        // current data size
+	FQUAD			bs_Bufsize;     // buffer size
+	char			*bs_Buffer;      // pointer to buffer
+	FQUAD			buffer_increments;
+	FQUAD			previous_increment;
 } BufString;
 
 

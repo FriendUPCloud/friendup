@@ -95,6 +95,13 @@ var ScreenOverlay = {
 				
 				// Make sure we update screen title and tray/tasks
 				PollTaskbar();
+				
+				// Tell app we can show ourselves!
+				if( window.friendApp && window.friendApp.reveal )
+				{
+					friendApp.reveal();
+				}
+				
 			}, 250 );
 		}, 250 );
 	},

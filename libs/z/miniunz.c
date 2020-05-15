@@ -598,7 +598,7 @@ int do_extract_all(unzFile uf, const char *directory, int opt_extract_without_pa
 		{
 			curfile++;
 			
-			SystemBase *sb = (SystemBase *) request->h_SB;
+			SystemBase *sb = (SystemBase *) request->http_SB;
 			
 			char message[ 1024 ];
 			
@@ -619,7 +619,7 @@ int do_extract_all(unzFile uf, const char *directory, int opt_extract_without_pa
 			{
 				int size = snprintf( message, sizeof(message), "\"action\":\"decompress\",\"filename\":\"%s\",\"progress\":%d", filename_inzip, per );
 				
-				DEBUG(" sbptr %p  request ptr %p usersession %p\n", sb, request, request->h_UserSession );
+				DEBUG(" sbptr %p  request ptr %p usersession %p\n", sb, request, request->http_UserSession );
 				
 				sb->SendProcessMessage( request, message, size );
 			}

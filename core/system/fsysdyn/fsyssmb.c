@@ -1134,7 +1134,7 @@ void FillStatSAMBA( BufString *bs, struct stat *s, File *d, const char *path )
 	}
 
 	BufStringAdd( bs, tmp );
-	snprintf( tmp, 1023, "\"Filesize\": %d,",(int) s->st_size );
+	snprintf( tmp, 1023, "\"Filesize\": %ld,", s->st_size );
 	BufStringAdd( bs, tmp );
 	
 	char *timeStr = FCalloc( 40, sizeof( char ) );

@@ -81,8 +81,8 @@ typedef struct File
 	FUQUAD						f_Position;         // position where user stopped to read/write
 	FULONG						f_DataPassed;       // size in bytes, to read or write (inside buffer)
 	char						*f_Buffer;          // [ FILE_MAX_BUFFER ];
-	FLONG						f_BytesStored;		// number of bytes stored in root file
-	FLONG						f_MaxBytesStored;	// maximum bytes which could be stored on disk
+	FQUAD						f_BytesStored;		// number of bytes stored in root file
+	FQUAD						f_MaxBytesStored;	// maximum bytes which could be stored on disk
 	
 	struct File					*f_SharedFile;		// points to shared device
 	struct File					*f_RootDevice;

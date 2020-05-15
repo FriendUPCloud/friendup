@@ -519,7 +519,7 @@ void *GetStructureFromJSON( FULONG *descr, const char *jsondata )
 							}
 							json_value*mval = locaval->u.object.values[retPos].value;
 							
-							//DEBUG("INT 1 '%s' '%ld'!\n\n\n\n", mval->u.string.ptr, mval->u.integer );
+							//DEBUG("INT 1 '%s' '%ld'!\n", mval->u.string.ptr, mval->u.integer );
 							if( retPos >= 0  && mval->type == json_string && mval->u.string.ptr != NULL )
 							{
 								char *end;
