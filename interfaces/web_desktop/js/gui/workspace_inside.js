@@ -412,13 +412,14 @@ var WorkspaceInside = {
 						} } );
 					} )( a );
 					if( a == globalConfig.workspaceCurrent ) w.className += ' Active';
-					if( globalConfig.workspace_labels && globalConfig.workspace_labels[ a ] && typeof( globalConfig.workspace_labels ) == 'object' )
+					if( typeof( globalConfig.workspace_labels ) == 'array' && globalConfig.workspace_labels && globalConfig.workspace_labels[ a ] && typeof( globalConfig.workspace_labels ) == 'object' )
 					{
 						w.innerHTML = '<span class="' + globalConfig.workspace_labels[ a ] + '"></span>';
 						w.className += ' WithIcon';
 					}
 					else
 					{
+						console.log( 'What is it? ' + ( a + 1 ) + '...' );
 						w.innerHTML = '<span>' + ( a + 1 ) + '</span>';
 					}
 					w.ind = a;
