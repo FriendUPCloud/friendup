@@ -967,6 +967,12 @@ int USMRemoveOldSessions( void *lsb )
 	}
 	BufStringDelete( sqlreq );
 	
+	//
+	// now remove unused application sessions
+	//
+	
+	ApplicationManagerRemoveDetachedApplicationSession( sb->sl_ApplicationManager );
+	
 	return 0;
 }
 

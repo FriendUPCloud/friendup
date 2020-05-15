@@ -158,7 +158,7 @@ User *UMGetUserByNameDB( UserManager *um, const char *name );
 //
 //
 
-User *UMGetUserByUUIDDB( UserManager *um, const char *name );
+User *UMGetUserByUUIDDB( UserManager *um, const char *uuid, FBOOL loadAndAssign );
 
 //
 //

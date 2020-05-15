@@ -3675,7 +3675,7 @@ function handleAssidRequest( e )
 	function deny( assid )
 	{
 		var un = {
-			path : 'system.library/app/unregister/',
+			path : 'system.library/sas/unregister/',
 			data : {
 				assid : assid,
 			},

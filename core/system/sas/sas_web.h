@@ -9,14 +9,14 @@
 *****************************************************************************©*/
 /** @file
  * 
- *  Application Web
+ *  SAS Web
  *
  *  @author PS (Pawel Stefanski)
- *  @date created 2016
+ *  @date created 19.03.2020
  */
 
-#ifndef __SYSTEM_APPLICATION_APPLICATIONWEB_H__
-#define __SYSTEM_APPLICATION_APPLICATIONWEB_H__
+#ifndef __SYSTEM_SAS_WEB_H__
+#define __SYSTEM_SAS_WEB_H__
 
 #include <core/types.h>
 #include <core/library.h>
@@ -30,6 +30,6 @@
 #include <z/zlibrary.h>
 #include <system/systembase.h>
 
-Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserSession *loggedUser );
+Http* SASWebRequest( SystemBase *l, char **urlpath, Http* request, UserSession *loggedUser );
 
-#endif // __SYSTEM_APPLICATION_APPLICATIONWEB_H__
+#endif // __APPLICATIONWEB_H__

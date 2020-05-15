@@ -433,7 +433,6 @@ int DoorNotificationRemoveEntries( void *lsb )
 		
 		sb->LibrarySQLDrop( sb, sqllib );
 	}
-	//pthread_exit( 0 );
 	return 0;
 }
 
