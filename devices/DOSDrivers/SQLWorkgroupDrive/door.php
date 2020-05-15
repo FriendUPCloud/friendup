@@ -155,6 +155,21 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				$volume = explode( ':', $path );
 				$volume = reset( $volume ) . ':';
 	
+				// Get workgroup users
+				$wuids = [];
+				if( $this->GroupID )
+				{
+					if( $ws = $SqlDatabase->FetchObjects( '
+						SELECT u.ID FROM FUser u, FUserGroup ug, FUserToGroup utg
+						WHERE
+							u.ID = utg.UserID AND ug.ID = utg.UserGroupID AND
+							ug.Type = "Workgroup" AND ug.ID = \'' . $this->GroupID . '\'
+					' ) )
+					{
+						foreach( $ws as $w ) $wuids[] = $w->ID;
+					}
+				}
+				
 				$out = [];
 				if( $entries = $SqlDatabase->FetchObjects( $q = '
 					SELECT * FROM
@@ -202,6 +217,13 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 							$entries[$k]->Shared = 'Private';
 						}
 					}
+					
+					// Add group user ids
+					if( count( $wuids ) )
+					{
+						foreach( $wuids as $w ) $userids[] = $w;
+					}
+					
 					if( $shared = $SqlDatabase->FetchObjects( $q = ( '
 						SELECT Path, UserID, ID, `Name`, `Hash` FROM FFileShared s
 						WHERE
@@ -217,7 +239,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 								// TODO: Make sure its always there!
 								if( !strstr( $entry->Path, ':' ) )
 									$entry->Path = $volume . $entry->Path;
-								if( isset( $entry->Path ) && isset( $sh->Path ) && $entry->Path == $sh->Path && $entry->UserID == $sh->UserID )
+								if( isset( $entry->Path ) && isset( $sh->Path ) && $entry->Path == $sh->Path && in_array( $sh->UserID, $userids ) )
 								{
 									$entries[$k]->Shared = 'Public';
 									
