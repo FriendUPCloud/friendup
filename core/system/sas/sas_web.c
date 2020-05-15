@@ -668,9 +668,6 @@ Application.checkDocumentSession = function( sasID = null )
 			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, dictmsgbuf );
 			FERROR("authid or sasid is missing!\n");
-			
-			if( authid != NULL ) { FFree( authid ); }
-			if( assid != NULL ) { FFree( assid ); }
 		}
 		// We've got what we need! Continue
 		else
