@@ -10037,12 +10037,15 @@ Workspace.receiveLive = function( viewId, jsonEvent ) {
 		json   : jsonEvent,
 		event  : event,
 	});
-	const appName = 'friendchat';
+	const appName = 'FriendChat';
 	// find friendchat app
 	let chat = null;
 	console.log( 'all apps', Workspace.applications );
 	Workspace.applications.some( app => {
-		console.log( 'looking for chat', app );
+		console.log( 'looking for chat', {
+			app  : app,
+			name : app.applicationName,
+		});
 		if ( app.applicationName != chat )
 			return false;
 		
