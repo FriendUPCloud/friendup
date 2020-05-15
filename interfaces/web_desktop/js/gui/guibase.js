@@ -600,7 +600,7 @@ var mousePointer =
 						window.currentMovable.content.refresh();
 				}
 				// We dropped on a screen
-				if( objs && dropper && dropper.classList.contains( 'ScreenContent' ) )
+				if( objs && dropper && dropper.classList && dropper.classList.contains( 'ScreenContent' ) )
 				{
 					// We dropped on the Workspace screen
 					if( dropper == Workspace.screen.contentDiv )
