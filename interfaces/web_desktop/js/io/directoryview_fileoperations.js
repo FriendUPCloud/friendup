@@ -880,10 +880,13 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 							// Tell Friend Core something changed
 							var l = new Library( 'system.library' );
 							l.cancelId = series;
-							var p = winobj._window ? ( winobj._window.fileInfo.Path ? winobj._window.fileInfo.Path : winobj._window.fileInfo.Volume ) : false;
-							if( p )
+							if( typeof( winobj ) != 'undefined' && winobj )
 							{
-								l.execute( 'file/notifychanges', { path: p } );
+								var p = winobj._window ? ( winobj._window.fileInfo.Path ? winobj._window.fileInfo.Path : winobj._window.fileInfo.Volume ) : false;
+								if( p )
+								{
+									l.execute( 'file/notifychanges', { path: p } );
+								}
 							}
 						}
 						// Clean out
