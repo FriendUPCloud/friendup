@@ -726,7 +726,7 @@ void ProcessSinkMessage( void *locd )
 									BufString *bs = BufStringNew();
 									//BufStringAddSize( bs, "{", 1 );
 								
-									User *usr = UMGetUserByUUIDDB( SLIB->sl_UM, uuid );
+									User *usr = UMGetUserByUUIDDB( SLIB->sl_UM, uuid, FALSE );
 									if( usr != NULL )
 									{
 										char udata[ 1024 ];

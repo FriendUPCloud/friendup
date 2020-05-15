@@ -953,10 +953,16 @@ SystemBase *SystemInit( void )
 		Log( FLOG_ERROR, "Cannot initialize INVARManager\n");
 	}
 	
-	l->sl_AppSessionManager = AppSessionManagerNew();
-	if( l->sl_AppSessionManager == NULL )
+	l->sl_ApplicationManager = ApplicationManagerNew( l );
+	if( l->sl_ApplicationManager == NULL )
 	{
 		Log( FLOG_ERROR, "Cannot initialize AppSessionManager\n");
+	}
+	
+	l->sl_SASManager = SASManagerNew( l );
+	if( l->sl_SASManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize l_SASManager\n");
 	}
 	
 	l->sl_DOSTM = DOSTokenManagerNew( l );
@@ -1073,10 +1079,10 @@ void SystemClose( SystemBase *l )
 	
 	Log( FLOG_INFO, "[SystemBase] SystemClose in progress\n");
 	
-	if( l->sl_AppSessionManager != NULL )
+	if( l->sl_ApplicationManager != NULL )
 	{
-		AppSessionManagerDelete( l->sl_AppSessionManager );
-		l->sl_AppSessionManager = NULL;
+		ApplicationManagerDelete( l->sl_ApplicationManager );
+		l->sl_ApplicationManager = NULL;
 	}
 	
 	// Check if INRAM is initialized
@@ -1204,6 +1210,10 @@ void SystemClose( SystemBase *l )
 	if( l->sl_SecurityManager != NULL )
 	{
 		SecurityManagerDelete( l->sl_SecurityManager );
+	}
+	if( l->sl_SASManager != NULL )
+	{
+		SASManagerDelete( l->sl_SASManager );
 	}
 	
 	// Remove sentinel from active memory

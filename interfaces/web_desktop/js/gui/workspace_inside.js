@@ -9897,7 +9897,7 @@ function handleSASRequest( e )
 	function deny( sasid )
 	{
 		var dec = {
-			path : 'system.library/app/decline/',
+			path : 'system.library/sas/decline/',
 			data : {
 				sasid : sasid,
 			},

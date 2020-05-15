@@ -207,7 +207,7 @@ int UserDeleteAll( User *usr );
 //
 //
 
-void UserRemoveSession( User *usr, void *s );
+int UserRemoveSession( User *usr, void *ls );
 
 //
 //
