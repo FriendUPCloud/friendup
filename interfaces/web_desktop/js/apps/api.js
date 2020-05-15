@@ -36,7 +36,7 @@ window.loaded = false;
 window.applicationStarted = false;
 var __timeout = 200;
 
-if ( this.apijsHasExecuted )
+if( this.apijsHasExecuted )
 	throw new Error( 'api.js has already run, aborting' );
 
 this.apijsHasExecuted = true;
@@ -57,7 +57,13 @@ Friend.application = {
 		document.body.classList.add( 'activated' );
 		setTimeout( function()
 		{
+			document.body.style.willChange = 'opacity';
 			document.body.style.opacity = '';
+			document.body.style.pointerEvents = '';
+			setTimeout( function()
+			{
+				document.body.style.willChange = '';
+			}, 250 );
 		}, 100 );
 		Application.sendMessage( {
 			type: 'view',
@@ -1272,12 +1278,10 @@ function receiveEvent( event, queued )
 			if( dataPacket.screenId ) Application.screenId = dataPacket.screenId;
 
 			// Make sure the base href is correct.
-			if( typeof( data ) != 'string' )
-				data = '';
-			var data = Friend.convertFriendPaths( dataPacket.data );
+			data = Friend.convertFriendPaths( dataPacket.data );
 
 			// For jquery etc
-			var m = '';
+			let m = '';
 			while( m = data.match( /\$\(document[^{]*?\{([^}]*?)\}\)/i ) )
 				data = data.split( m[0] ).join( '(' + m[1] + ')' );
 
@@ -1289,7 +1293,7 @@ function receiveEvent( event, queued )
 			{
 				try
 				{
-					var nw = parent.document.getElementById( dataPacket.parentSandboxId );
+					let nw = parent.document.getElementById( dataPacket.parentSandboxId );
 					if( parent != nw )
 						parentView = nw.contentWindow;
 				}
@@ -1483,10 +1487,10 @@ function receiveEvent( event, queued )
 					}
 					else if( f.onCall )
 					{
-						var firstPart = dataPacket.data.indexOf( '<!--separate-->' ) + ( '<!--separate-->' ).length;
-						var data = dataPacket.data.substr( firstPart, dataPacket.data.length - firstPart );
-						var resp = dataPacket.data.substr( 0, dataPacket.data.indexOf( '<!--separate-->' ) );
-						f.onCall( resp, data );
+						let firstPart = dataPacket.data.indexOf( '<!--separate-->' ) + ( '<!--separate-->' ).length;
+						let pdata = dataPacket.data.substr( firstPart, dataPacket.data.length - firstPart );
+						let resp = dataPacket.data.substr( 0, dataPacket.data.indexOf( '<!--separate-->' ) );
+						f.onCall( resp, pdata );
 					}
 					// For Module objects
 					else if ( f.onExecuted )
@@ -1712,13 +1716,13 @@ function receiveEvent( event, queued )
 					// Execute and give callback
 					if( DormantMaster.doors[ dataPacket.doorId ] )
 					{
-						var data = DormantMaster.doors[ dataPacket.doorId ].execute( dataPacket.dormantCommand, dataPacket.dormantArgs );
+						let ddata = DormantMaster.doors[ dataPacket.doorId ].execute( dataPacket.dormantCommand, dataPacket.dormantArgs );
 						Application.sendMessage( {
 							type: 'dormantmaster',
 							method: 'callback',
 							doorId: dataPacket.doorId,
 							callbackId: dataPacket.callbackId,
-							data: data
+							data: ddata
 						} );
 					}
 				}
@@ -5767,6 +5771,7 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 
 	// Don't do this twice
 	document.body.style.opacity = '0';
+	document.body.style.pointerEvents = 'none';
 	window.frameInitialized = true;
 	var pbase = document.getElementsByTagName( 'base' );
 	if( pbase && pbase.length )
@@ -5775,9 +5780,9 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 	}
 	else
 	{
-		var b = document.createElement( 'base' );
+		let b = document.createElement( 'base' );
 		//console.log( packet );
-		var test = packet.appPath ? ( '/' + encodeURIComponent( packet.appPath.split( '/' ).join( '|' ) ) + '/' ) : packet.base;
+		let test = packet.appPath ? ( '/' + encodeURIComponent( packet.appPath.split( '/' ).join( '|' ) ) + '/' ) : packet.base;
 		b.href = !!test ? test : '';
 		b.href += ( packet.authId && packet.authId.length ? ( 'aid' + packet.authId ) : ( 'sid' + packet.sessionId ) ) + '/';
 		document.getElementsByTagName( 'head' )[0].appendChild( b );

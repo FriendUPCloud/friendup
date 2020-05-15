@@ -445,18 +445,33 @@ var WorkspaceInside = {
 						ge( 'DoorsScreen' ).screenObject.contentDiv.style.left = '-' + 100 * this.ind + '%';
 						
 						_DeactivateWindows();
-						// Activate next window on next screen
-						for( var c in movableWindows )
+						
+						// Check if we have a preset window that should be activated
+						var foundActive = false;
+						if( typeof( virtualWorkspaces[ this.ind ] ) != 'undefined' )
 						{
-							if( !movableWindows[c].windowObject ) continue;
-							
-							if( movableWindows[c].windowObject.workspace == this.ind )
+							if( virtualWorkspaces[ this.ind ].activeWindow )
 							{
-								var pn = movableWindows[c].parentNode;
-								if( pn.getAttribute( 'minimized' ) != 'minimized' )
+								_ActivateWindow( virtualWorkspaces[ this.ind ].activeWindow );
+								foundActive = true;
+							}
+						}
+						
+						// Activate next window on next screen
+						if( !foundActive )
+						{
+							for( var c in movableWindows )
+							{
+								if( !movableWindows[c].windowObject ) continue;
+							
+								if( movableWindows[c].windowObject.workspace == this.ind )
 								{
-									_ActivateWindow( movableWindows[c] );
-									break;
+									var pn = movableWindows[c].parentNode;
+									if( pn.getAttribute( 'minimized' ) != 'minimized' )
+									{
+										_ActivateWindow( movableWindows[c] );
+										break;
+									}
 								}
 							}
 						}
@@ -8381,7 +8396,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			else if( e == 'fail' ) 
 			{
 				console.log( '[getsetting] Got "fail" response.' );
-				//console.trace();
 			}
 			
 			Workspace.serverIsThere = true;
