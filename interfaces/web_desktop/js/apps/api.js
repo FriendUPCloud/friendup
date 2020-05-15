@@ -8462,7 +8462,7 @@ GuiDesklet = function()
 		var accept = {
 			path : self.acceptPath,
 			data : {
-				accauthid : Application.authId,
+				authid : Application.authId,
 				sasid  : self.id,
 				force : self.forceid
 			}
