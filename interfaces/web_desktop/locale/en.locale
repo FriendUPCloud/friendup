@@ -152,6 +152,8 @@ documentation_on                        : Documentation on
 i18n_sharewith                          : Share with
 i18n_sharename                          : Share name
 i18n_share_with_workgroup               : Share with workgroup
+i18n_share_file                     	: Share file with user/workgroup
+i18n_sharing_options                    : Sharing options
 i18n_no_workgroup_sharing               : Do not share with a workgroup
 my_account                              : My account
 i18n_account_setup                      : My account - setup

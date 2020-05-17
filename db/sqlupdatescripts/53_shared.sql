@@ -1,7 +1,8 @@
 CREATE TABLE IF NOT EXISTS `FShared` (
   `ID` bigint(20) NOT NULL AUTO_INCREMENT,
   `OwnerUserID` bigint(20) NOT NULL,
-  `SharedUserID` bigint(20) NOT NULL,
+  `SharedType` varchar(255) default "User",
+  `SharedID` bigint(20) NOT NULL,
   `Data` varchar(1024) NOT NULL,
   `Mode` varchar(255) NOT NULL,
   `DateCreated` datetime,
