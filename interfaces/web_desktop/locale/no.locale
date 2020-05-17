@@ -153,6 +153,9 @@ i18n_share_with_workgroup               : Del i en arbeidsgruppe
 i18n_share_file                     	: Del filen
 i18n_sharing_options                    : Del med bruker/arbeidsgruppe
 i18n_no_workgroup_sharing               : Ikke del med arbeidsgruppe
+i18n_file_not_shared                    : Denne filen er ikke delt.
+i18n_workgroups                         : Arbeidsgrupper
+i18n_users                              : Brukere
 my_account                              : Min konto
 i18n_account_setup                      : Min konto - oppsett
 

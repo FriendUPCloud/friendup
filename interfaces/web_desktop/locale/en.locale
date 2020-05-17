@@ -155,6 +155,9 @@ i18n_share_with_workgroup               : Share with workgroup
 i18n_share_file                     	: Share file with user/workgroup
 i18n_sharing_options                    : Sharing options
 i18n_no_workgroup_sharing               : Do not share with a workgroup
+i18n_file_not_shared                    : This file is not shared.
+i18n_workgroups                         : Workgroups
+i18n_users                              : Users
 my_account                              : My account
 i18n_account_setup                      : My account - setup
 

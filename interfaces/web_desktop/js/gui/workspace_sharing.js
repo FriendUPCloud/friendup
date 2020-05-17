@@ -17,145 +17,114 @@
 // Set up sharing on a disk
 Workspace.viewSharingOptions = function( path )
 {
-	var v = new View( {
+	let v = new View( {
 		title: i18n( 'i18n_sharing_options' ) + ' ' + path,
 		width: 640,
 		height: 380
 	} );
-	var uniqueId = Math.round( Math.random() * 9999 ) + ( new Date() ).getTime();
-	var f = new File( '/webclient/templates/iconinfo_sharing_options.html' );
+	let uniqueId = Math.round( Math.random() * 9999 ) + ( new Date() ).getTime();
+	v.uniqueId = uniqueId;
+	v.path = path;
+	let f = new File( '/webclient/templates/iconinfo_sharing_options.html' );
 	f.replacements = {
 		uniqueId: uniqueId
 	};
 	f.i18n();
 	f.onLoad = function( data )
 	{
-		v.setContent( data );
-		
-		var elements = {};
-		
-		var ele = ge( 'element_' + uniqueId );
-		var el = ele.getElementsByTagName( 'input' );
-		for( var a = 0; a < el.length; a++ )
+		v.setContent( data, function()
 		{
-			if( !el[ a ].getAttribute( 'name' ) ) continue;
-			elements[ el[ a ].getAttribute( 'name' ) ] = el[ a ];
-		}
-		el = ele.getElementsByTagName( 'button' );
-		for( var a = 0; a < el.length; a++ )
-		{
-			if( !el[ a ].getAttribute( 'name' ) ) continue;
-			elements[ el[ a ].getAttribute( 'name' ) ] = el[ a ];
-		}
-		elements.apply_sharing.onclick = function( e )
-		{
-		}
-		elements.sharing_with.onkeydown = function( e )
-		{
-			var self = this;
-			var w = e.which ? e.which : e.keyCode;
-			if( w == 38 || w == 40 || w == 13 )
-			{
-				return;
-			}
-			// Typing something else? Break bond with wid
-			if( this.value != this.getAttribute( 'punch' ) )
-			{
-				this.setAttribute( 'wid', '' );
-				this.setAttribute( 'punch', '' );
-			}
-			
-			var m = new Module( 'system' );
-			m.onExecuted = function( e, d )
-			{
-				if( e != 'ok' )
-				{
-					ele.showDropdown( self, i18n( 'i18n_no_users_found' ) );
-					return;
-				}
-				var wList = null;
-				try
-				{
-					wList = JSON.parse( d );
-				}
-				catch( e )
-				{
-					ele.showDropdown( self, i18n( 'i18n_error_in_userlist' ) );
-					return;
-				}
-				var str = '';
-				for( var a = 0; a < wList.length; a++ )
-				{
-					if( wList[ a ].Name.indexOf( self.value ) >= 0 )
-					{
-						var wname = wList[ a ].Name.split( self.value ).join( '<em>' + self.value + '</em>' );
-						str += '<p class="MarginTop" wid="' + wList[ a ].ID + '">' + wname + '</p>';
-					}
-				}
-				if( !str )
-				{
-					str = i18n( 'i18n_no_users_found' );
-				}
-				ele.showDropdown( self, str, 'p' );
-			}
-			m.execute( 'workgroups' );
-		}
-		ele.showDropdown = function( trigger, content, tagSelector )
-		{
-			if( !ele.dropdown )
-			{
-				var d = document.createElement( 'div' );
-				ele.dropdown = d;
-				d.className = 'Padding Borders BackgroundHeavier Rounded';
-				ele.appendChild( d );
-				d.style.position = 'absolute';
-				d.style.top = trigger.offsetTop + trigger.offsetHeight + 'px';
-				d.style.left = trigger.offsetLeft + 'px';
-				d.style.width = trigger.offsetWidth + 'px';
-				d.style.maxHeight = '200px';
-				d.style.overflow = 'auto';
-				d.style.transition = 'opacity 0.25s';
-				d.style.opacity = 0;
-				setTimeout( function(){ d.style.opacity = 1; }, 50 );
-				d.onmouseout = function()
-				{
-					if( this.tm ) return;
-					d.style.opacity = 0;
-					this.tm = setTimeout( function()
-					{
-						ele.removeChild( d );
-						ele.dropdown = null;
-					}, 500 );
-				}
-				d.onmouseover = function()
-				{
-					d.style.opacity = 1;
-					clearTimeout( this.tm );
-					this.tm = null;
-				}
-				trigger.onblur = function()
-				{
-					d.onmouseout();
-				}
-			}
-			ele.dropdown.innerHTML = content;
-			if( tagSelector )
-			{
-				var eles = ele.dropdown.getElementsByTagName( tagSelector );
-				for( var a = 0; a < eles.length; a++ )
-				{
-					eles[ a ].onclick = function()
-					{
-						trigger.value = this.innerText;
-						trigger.setAttribute( 'wid', this.getAttribute( 'wid' ) );
-						trigger.setAttribute( 'punch', this.innerText );
-						ele.dropdown.onmouseout();
-						trigger.focus();
-						trigger.select();
-					}
-				}
-			}
-		}
+			Workspace.setSharingGui( v );
+		} );
 	}
 	f.load();
+};
+Workspace.setSharingGui = function( viewObject )
+{
+	Workspace.refreshShareInformation( viewObject );
+	
+	let searchF = ge( 'dropdownfield_' + viewObject.uniqueId );
+	let dropDown = ge( 'dropdown_' + viewObject.uniqueId );
+	searchF.onkeydown = function( e )
+	{
+		if( Trim( this.value ) == '' )
+		{
+			this.className = '';
+			this.innerHTML = '';
+			return;
+		}
+		let m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			let wrkg = [];
+			if( e == 'ok' )
+			{
+				wrkg = JSON.parse( d );
+			}
+			let m2 = new Module( 'system' );
+			m2.onExecuted = function( e2, d2 )
+			{
+				let us = [];
+				if( e2 == 'ok' )
+				{
+					us = JSON.parse( d2 );
+				}
+				makeList( wrkg, us );
+			}
+			m2.execute( 'listconnectedusers' );
+		}
+		m.execute( 'workgroups' );
+	}
+	function makeList( workgroups, users )
+	{
+		let str = '';
+		let sw = 2;
+		if( workgroups.length )
+		{
+			str += '<p class="Layout"><strong>' + i18n( 'i18n_workgroups' ) + ':</strong></p>';
+			for( let a in workgroups )
+			{
+				sw = sw == 1 ? 2 : 1;
+				str += '\
+				<div class="GroupEle HContent30 Ellipsis PaddingSmall sw' + sw + '" onclick="Workspace.selectShareItem(this, \'GroupEle\', \'' + viewObject.uniqueId + '\')">\
+					' + workgroups[a].Name + '\
+				</div>';
+			}
+		}
+		if( users.length )
+		{
+			str += '<p class="Layout"><strong>' + i18n( 'i18n_users' ) + ':</strong></p>';
+			for( let a in users )
+			{
+				sw = sw == 1 ? 2 : 1;
+				str += '\
+				<div class="UserEle HContent30 Ellipsis PaddingSmall sw' + sw + '" onclick="Workspace.selectShareItem(this, \'UserEle\', \'' + viewObject.uniqueId + '\')">\
+					' + users[a].Fullname + '\
+				</div>';
+			}
+		}
+		if( dropDown && dropDown.parentNode )
+		{
+			dropDown.innerHTML = str;
+			dropDown.className = 'Dropdown';
+		}
+	}
+};
+Workspace.selectShareItem = function( ele, type, uniqueId )
+{
+};
+Workspace.refreshShareInformation = function( viewObject )
+{
+	let list = ge( 'sharedList_' + viewObject.uniqueId );
+
+	let m = new Module( 'system' );
+	m.onExecuted = function( e, d )
+	{
+		if( e != 'ok' )
+		{
+			list.innerHTML = '<div class="HRow sw1 Padding">' + i18n( 'i18n_file_not_shared' ) + '</div>';
+		}
+	}
+	m.execute( 'getfileshareinfo', { path: viewObject.path } );
+	
 };
