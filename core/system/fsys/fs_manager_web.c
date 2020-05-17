@@ -1264,7 +1264,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								fp->f_WSocket =  request->http_WSocket;
 							
 								#define FS_READ_BUFFER 262144
-								int readbytes = 0;// FS_READ_BUFFER;
+								FQUAD readbytes = 0;// FS_READ_BUFFER;
 								char *dataBuffer = FCalloc( FS_READ_BUFFER + 1, sizeof( char ) ); 
 							
 								if( dataBuffer != NULL )
@@ -1330,14 +1330,14 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								//we want to read only part of data
 #define FS_READ_BUFFER 262144
 
-								int totalBytes = 0;
+								FQUAD totalBytes = 0;
 								
 								ListString *ls = ListStringNew();
 							
 								if( offset != NULL && bytes != NULL )
 								{
-									int offsetint = atoi( offset );
-									int bytesint = atoi( bytes );
+									FQUAD offsetint = atoll( offset );
+									FQUAD bytesint = atoll( bytes );
 								
 									if( actFS->FileSeek( fp, offsetint ) != -1 )
 									{
@@ -2101,16 +2101,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									
 									LOG( FLOG_DEBUG, "UPLOAD ACCESS TO STORE: %ld\n", sizeLeft );
 									
-									
-									printf("upload!!! last 30 bytes\n");
-									int z;
-							for( z = (sizeLeft-30) ; z < sizeLeft ; z++ )
-							{
-								printf("%02hhX", file->hf_Data[ z ] );
-							}
-							printf("\n");
-									
-									int store = TUNABLE_LARGE_HTTP_REQUEST_SIZE;
+									int store = TUNABLE_LARGE_HTTP_REQUEST_COPY_SIZE;
 									if( sizeLeft < (FQUAD)store )
 									{
 										store = sizeLeft;
@@ -2258,12 +2249,12 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 				
 				else if( strcmp( urlpath[ 1 ], "expose" ) == 0 )
 				{
-					response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
-											   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
-					
 					char userid[ 512 ];
 					char name[ 256 ];
 					char dstfield[10];
+					
+					response = HttpNewSimpleA( HTTP_200_OK, request, HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
+											   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 					
 					strcpy( dstfield, "Public" );
 					
@@ -2324,7 +2315,12 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 
 							if( tmpfs != NULL )
 							{
+								// we store user which is sharing data
 								tmpfs->fs_IDUser = loggedSession->us_User->u_ID;
+								// we also store filesystemID
+								tmpfs->fs_FSID = actDev->f_ID;
+								
+								DEBUG("\n\n\n\n\n tmpfs->fs_FSID : %lu\n\n\n\n\n", tmpfs->fs_FSID );
 						
 								tmpfs->fs_DeviceName = StringDuplicate( devname );
 						

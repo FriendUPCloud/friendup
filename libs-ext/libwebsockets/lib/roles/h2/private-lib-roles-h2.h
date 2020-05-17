@@ -22,21 +22,8 @@
  * IN THE SOFTWARE.
  */
 
-extern struct lws_role_ops role_ops_h2;
+extern const struct lws_role_ops role_ops_h2;
 #define lwsi_role_h2(wsi) (wsi->role_ops == &role_ops_h2)
-
-enum lws_h2_settings {
-	H2SET_HEADER_TABLE_SIZE = 1,
-	H2SET_ENABLE_PUSH,
-	H2SET_MAX_CONCURRENT_STREAMS,
-	H2SET_INITIAL_WINDOW_SIZE,
-	H2SET_MAX_FRAME_SIZE,
-	H2SET_MAX_HEADER_LIST_SIZE,
-	H2SET_RESERVED7,
-	H2SET_ENABLE_CONNECT_PROTOCOL, /* defined in mcmanus-httpbis-h2-ws-02 */
-
-	H2SET_COUNT /* always last */
-};
 
 struct http2_settings {
 	uint32_t s[H2SET_COUNT];
@@ -216,6 +203,7 @@ enum lws_h2_protocol_send_type {
 	LWS_H2_PPS_GOAWAY,
 	LWS_H2_PPS_RST_STREAM,
 	LWS_H2_PPS_UPDATE_WINDOW,
+	LWS_H2_PPS_SETTINGS_INITIAL_UPDATE_WINDOW
 };
 
 struct lws_h2_protocol_send {
@@ -261,7 +249,8 @@ struct lws_h2_ghost_sid {
  * fills it but it belongs to the logical child.
  */
 struct lws_h2_netconn {
-	struct http2_settings set;
+	struct http2_settings our_set;
+	struct http2_settings peer_set;
 	struct hpack_dynamic_table hpack_dyn_table;
 	uint8_t	ping_payload[8];
 	uint8_t one_setting[LWS_H2_SETTINGS_LEN];
@@ -315,37 +304,20 @@ struct lws_h2_netconn {
 
 struct _lws_h2_related {
 
-	struct lws_h2_netconn *h2n; /* malloc'd for root net conn */
-	struct lws *parent_wsi;
-	struct lws *child_list;
-	struct lws *sibling_list;
+	struct lws_h2_netconn	*h2n; /* malloc'd for root net conn */
 
-	char *pending_status_body;
+	char			*pending_status_body;
 
-	int tx_cr;
-	int peer_tx_cr_est;
-	unsigned int my_sid;
-	unsigned int child_count;
-	int my_priority;
-	uint32_t dependent_on;
+	uint8_t			h2_state; /* RFC7540 state of the connection */
 
-	uint16_t END_STREAM:1;
-	uint16_t END_HEADERS:1;
-	uint16_t send_END_STREAM:1;
-	uint16_t long_poll:1;
-	uint16_t GOING_AWAY;
-	uint16_t requested_POLLOUT:1;
-	uint16_t skint:1;
-
-	uint16_t round_robin_POLLOUT;
-	uint16_t count_POLLOUT_children;
-
-	uint8_t h2_state; /* the RFC7540 state of the connection */
-	uint8_t weight;
-	uint8_t initialized;
+	uint8_t			END_STREAM:1;
+	uint8_t			END_HEADERS:1;
+	uint8_t			send_END_STREAM:1;
+	uint8_t			long_poll:1;
+	uint8_t			initialized:1;
 };
 
-#define HTTP2_IS_TOPLEVEL_WSI(wsi) (!wsi->h2.parent_wsi)
+#define HTTP2_IS_TOPLEVEL_WSI(wsi) (!wsi->mux.parent_wsi)
 
 int
 lws_h2_rst_stream(struct lws *wsi, uint32_t err, const char *reason);
@@ -363,7 +335,7 @@ LWS_EXTERN int
 lws_h2_frame_write(struct lws *wsi, int type, int flags, unsigned int sid,
 		   unsigned int len, unsigned char *buf);
 LWS_EXTERN struct lws *
-lws_h2_wsi_from_id(struct lws *wsi, unsigned int sid);
+lws_wsi_mux_from_id(struct lws *wsi, unsigned int sid);
 LWS_EXTERN int
 lws_hpack_interpret(struct lws *wsi, unsigned char c);
 LWS_EXTERN int

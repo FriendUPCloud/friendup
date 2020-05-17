@@ -1,6 +1,7 @@
 {
 	"type":    "SQLRODrive",
-	"literal": "MySQL Based Filesystem (Read Only)",
+	"short":   "Read Only",
+	"literal": "Read only filesystem",
 	"group":   "Admin",
 	"sharing": "1",
 	"icon": "logo.png"

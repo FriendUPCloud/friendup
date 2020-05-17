@@ -45,7 +45,7 @@
  * library and in the user code.
  */
 
-#if defined(LWS_WITH_ESP32)
+#if defined(LWS_PLAT_FREERTOS)
 /* sdk preprocessor defs? compiler issue? gets confused with member names */
 #define LWS_FOP_OPEN		_open
 #define LWS_FOP_CLOSE		_close
@@ -202,7 +202,10 @@ lws_vfs_file_open(const struct lws_plat_file_ops *fops, const char *vfs_path,
 static LWS_INLINE int
 lws_vfs_file_close(lws_fop_fd_t *fop_fd)
 {
-	return (*fop_fd)->fops->LWS_FOP_CLOSE(fop_fd);
+	if (*fop_fd && (*fop_fd)->fops)
+		return (*fop_fd)->fops->LWS_FOP_CLOSE(fop_fd);
+
+	return 0;
 }
 
 /**

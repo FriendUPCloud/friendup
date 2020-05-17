@@ -267,13 +267,13 @@ callback_messageboard(struct lws *wsi, enum lws_callback_reasons reason,
 					"{\"idx\":\"%lu\",\"time\":\"%lu\",",
 					m.idx, m.time);
 			p += lws_snprintf(p, end - p, " \"username\":\"%s\",",
-				lws_json_purify(e, m.username, sizeof(e)));
+				lws_json_purify(e, m.username, sizeof(e), NULL));
 			p += lws_snprintf(p, end - p, " \"email\":\"%s\",",
-				lws_json_purify(e, m.email, sizeof(e)));
+				lws_json_purify(e, m.email, sizeof(e), NULL));
 			p += lws_snprintf(p, end - p, " \"ip\":\"%s\",",
-				lws_json_purify(e, m.ip, sizeof(e)));
+				lws_json_purify(e, m.ip, sizeof(e), NULL));
 			p += lws_snprintf(p, end - p, " \"content\":\"%s\"}",
-				lws_json_purify(e, m.content, sizeof(e)));
+				lws_json_purify(e, m.content, sizeof(e), NULL));
 
 			if (lws_write(wsi, (unsigned char *)start, p - start,
 				      LWS_WRITE_TEXT) < 0)
@@ -413,7 +413,7 @@ static const struct lws_protocols protocols[] = {
 	},
 };
 
-LWS_EXTERN LWS_VISIBLE int
+LWS_VISIBLE int
 init_protocol_lws_messageboard(struct lws_context *context,
 			       struct lws_plugin_capability *c)
 {
@@ -431,7 +431,7 @@ init_protocol_lws_messageboard(struct lws_context *context,
 	return 0;
 }
 
-LWS_EXTERN LWS_VISIBLE int
+LWS_VISIBLE int
 destroy_protocol_lws_messageboard(struct lws_context *context)
 {
 	return 0;

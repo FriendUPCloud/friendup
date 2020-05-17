@@ -21,6 +21,7 @@ static int interrupted, bad = 1, status;
 static int long_poll;
 #endif
 static struct lws *client_wsi;
+static const char *ba_user, *ba_password;
 
 static const lws_retry_bo_t retry = {
 	.secs_since_valid_ping = 3,
@@ -41,8 +42,15 @@ callback_http(struct lws *wsi, enum lws_callback_reasons reason,
 		break;
 
 	case LWS_CALLBACK_ESTABLISHED_CLIENT_HTTP:
-		status = lws_http_client_http_response(wsi);
-		lwsl_user("Connected with server response: %d\n", status);
+		{
+			char buf[128];
+
+			lws_get_peer_simple(wsi, buf, sizeof(buf));
+			status = lws_http_client_http_response(wsi);
+
+			lwsl_user("Connected to %s, http response: %d\n",
+					buf, status);
+		}
 #if defined(LWS_WITH_HTTP2)
 		if (long_poll) {
 			lwsl_user("%s: Client entering long poll mode\n", __func__);
@@ -51,13 +59,38 @@ callback_http(struct lws *wsi, enum lws_callback_reasons reason,
 #endif
 		break;
 
+#if defined(LWS_WITH_HTTP_BASIC_AUTH)
+
+	/* you only need this if you need to do Basic Auth */
+	case LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER:
+	{
+		unsigned char **p = (unsigned char **)in, *end = (*p) + len;
+		char b[128];
+
+		if (!ba_user || !ba_password)
+			break;
+
+		if (lws_http_basic_auth_gen(ba_user, ba_password, b, sizeof(b)))
+			break;
+		if (lws_add_http_header_by_token(wsi, WSI_TOKEN_HTTP_AUTHORIZATION,
+				(unsigned char *)b, (int)strlen(b), p, end))
+			return -1;
+
+		break;
+	}
+#endif
+
 	/* chunks of chunked content, with header removed */
 	case LWS_CALLBACK_RECEIVE_CLIENT_HTTP_READ:
 		lwsl_user("RECEIVE_CLIENT_HTTP_READ: read %d\n", (int)len);
 #if defined(LWS_WITH_HTTP2)
-		if (long_poll)
-			lwsl_notice("long poll rx: '%.*s'\n",
-					(int)len, (const char *)in);
+		if (long_poll) {
+			char dotstar[128];
+			lws_strnncpy(dotstar, (const char *)in, len,
+				     sizeof(dotstar));
+			lwsl_notice("long poll rx: %d '%s'\n", (int)len,
+					dotstar);
+		}
 #endif
 #if 0  /* enable to dump the html */
 		{
@@ -161,11 +194,23 @@ system_notify_cb(lws_state_manager_t *mgr, lws_state_notify_link_t *link,
 		i.address = "warmcat.com";
 	}
 
+	if (lws_cmdline_option(a->argc, a->argv, "--nossl"))
+		i.ssl_connection = 0;
+
+	i.ssl_connection |= LCCSCF_H2_QUIRK_OVERFLOWS_TXCR |
+			    LCCSCF_H2_QUIRK_NGHTTP2_END_STREAM;
+
+	i.alpn = "h2";
 	if (lws_cmdline_option(a->argc, a->argv, "--h1"))
 		i.alpn = "http/1.1";
 
 	if ((p = lws_cmdline_option(a->argc, a->argv, "-p")))
 		i.port = atoi(p);
+
+	if ((p = lws_cmdline_option(a->argc, a->argv, "--user")))
+		ba_user = p;
+	if ((p = lws_cmdline_option(a->argc, a->argv, "--password")))
+		ba_password = p;
 
 	if (lws_cmdline_option(a->argc, a->argv, "-j"))
 		i.ssl_connection |= LCCSCF_ALLOW_SELFSIGNED;
@@ -179,6 +224,13 @@ system_notify_cb(lws_state_manager_t *mgr, lws_state_notify_link_t *link,
 	if (lws_cmdline_option(a->argc, a->argv, "-e"))
 		i.ssl_connection |= LCCSCF_ALLOW_EXPIRED;
 
+	if ((p = lws_cmdline_option(a->argc, a->argv, "-f"))) {
+		i.ssl_connection |= LCCSCF_H2_MANUAL_RXFLOW;
+		i.manual_initial_tx_credit = atoi(p);
+		lwsl_notice("%s: manual peer tx credit %d\n", __func__,
+				i.manual_initial_tx_credit);
+	}
+
 	/* the default validity check is 5m / 5m10s... -v = 3s / 10s */
 
 	if (lws_cmdline_option(a->argc, a->argv, "-v"))
@@ -187,7 +239,11 @@ system_notify_cb(lws_state_manager_t *mgr, lws_state_notify_link_t *link,
 	if ((p = lws_cmdline_option(a->argc, a->argv, "--server")))
 		i.address = p;
 
-	i.path = "/";
+	if ((p = lws_cmdline_option(a->argc, a->argv, "--path")))
+		i.path = p;
+	else
+		i.path = "/";
+
 	i.host = i.address;
 	i.origin = i.address;
 	i.method = "GET";
@@ -200,7 +256,7 @@ system_notify_cb(lws_state_manager_t *mgr, lws_state_notify_link_t *link,
 
 int main(int argc, const char **argv)
 {
-	lws_state_notify_link_t notifier = { {}, system_notify_cb, "app" };
+	lws_state_notify_link_t notifier = { {0}, system_notify_cb, "app" };
 	lws_state_notify_link_t *na[] = { &notifier, NULL };
 	struct lws_context_creation_info info;
 	struct lws_context *context;

@@ -103,7 +103,8 @@ int DeviceMountDB( DeviceManager *dm, File *rootDev, FBOOL mount );
 //
 //
 
-File *GetUserDeviceByUserID( DeviceManager *dm, SQLLibrary *sqllib, FULONG uid, const char *devname, char **mountError );
+File *GetUserDeviceByFSysUserIDDevName( DeviceManager *dm, SQLLibrary *sqllib, FULONG fsysid, FULONG uid, const char *devname, char **mountError );
+//File *GetUserDeviceByUserID( DeviceManager *dm, SQLLibrary *sqllib, FULONG uid, const char *devname, char **mountError );
 
 //
 //

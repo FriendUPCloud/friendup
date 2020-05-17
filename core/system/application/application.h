@@ -15,8 +15,8 @@
  *  @date created 2016
  */
 
-#ifndef __APPLICATION_H__
-#define __APPLICATION_H__
+#ifndef __SYSTEM_APPLICATION_APPLICATION_H__
+#define __SYSTEM_APPLICATION_APPLICATION_H__
 
 #include <time.h>
 #include <core/types.h>
@@ -86,4 +86,4 @@ static FULONG ApplicationDesc[] = { SQLT_TABNAME, (FULONG)"FApplication", SQLT_S
 	SQLT_NODE, (FULONG)"node", offsetof( struct Application, node ),
 	SQLT_END };
 
-#endif //__APPLICATION_H__
+#endif //__SYSTEM_APPLICATION_APPLICATION_H__

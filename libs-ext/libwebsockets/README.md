@@ -3,18 +3,180 @@
 # Libwebsockets
 
 Libwebsockets is a simple-to-use, pure C library providing client and server
-for **http/1**, **http/2**, **websockets** and other protocols in a security-minded,
+for **http/1**, **http/2**, **websockets**, **MQTT** and other protocols in a security-minded,
 lightweight, configurable, scalable and flexible way.  It's easy to build and
 cross-build via cmake and is suitable for tasks from embedded RTOS through mass
 cloud serving.
 
-[50 minimal examples](https://libwebsockets.org/git/libwebsockets/tree/minimal-examples) for
+[80 independent minimal examples](https://libwebsockets.org/git/libwebsockets/tree/minimal-examples) for
 various scenarios, CC0-licensed (public domain) for cut-and-paste, allow you to get started quickly.
 
 ![overview](./doc-assets/lws-overview.png)
 
 News
 ----
+
+## v4.0 is released
+
+Users wanting a stable branch should follow v4.0-stable to get the most stable version
+at any given time.
+
+See the [changelog](https://libwebsockets.org/git/libwebsockets/tree/changelog) for
+information on the huge amount of new features in this release, and additional information
+below.
+
+```
+ - NEW: Lws is now under the MIT license, see ./LICENSE for details
+ 
+ - NEW: GLIB native event loop support, lws + gtk example
+
+ - NEW: native lws MQTT client... supports client stream binding like h2 when
+   multiple logical connections are going to the same endpoint over MQTT, they
+   transparently and independently share the one connection + tls tunnel
+ 
+ - NEW: "Secure Streams"... if you are making a device with client connections
+   to the internet or cloud, this allows separation of the communications
+   policy (endpoints, tls cert validation, protocols, etc) from the code, with
+   the goal you can combine streams, change protocols and cloud provision, and
+   reflect that in the device's JSON policy document without having to change
+   any code.
+
+ - NEW: lws_system: New lightweight and efficient Asynchronous DNS resolver
+   implementation for both A and AAAA records, supports recursive (without
+   recursion in code) lookups, caching, and getaddrinfo() compatible results
+   scheme (from cache directly without per-consumer allocation).  Able to
+   perform DNS lookups without introducing latency in the event loop.
+
+ - NEW: lws_system: ntpclient implementation with interface for setting system
+   time via lws_system ops
+ 
+ - NEW: lws_system: dhcpclient implementation
+ 
+ - NEW: Connection validity tracking, autoproduce PING/PONG for protocols that
+   support it if not informed that the connection has passed data in both
+   directions recently enough
+
+ - NEW: lws_retry: standardized exponential backoff and retry timing based
+   around backoff table and lws_sul
+
+ - NEW: there are official public helpers for unaligned de/serialization of all
+   common types, see eh, lws_ser_wu16be() in include/libwebsockets/lws-misc.h
+
+ - NEW: lws_tls_client_vhost_extra_cert_mem() api allows attaching extra certs
+   to a client vhost from DER in memory
+   
+ - NEW: lws_system: generic blobs support passing auth tokens, per-connection
+   client certs etc from platform into lws
+
+ - NEW: public helpers to consume and produce ipv4/6 addresses in a clean way,
+   along with lws_sockaddr46 type now public.  See eg, lws_sockaddr46-based
+   lws_sa46_parse_numeric_address(), lws_write_numeric_address()
+   in include/libwebsockets/lws-network-helper.h
+
+ - Improved client redirect handling, h2 compatibility
+ 
+ - NEW: lwsac: additional features for constant folding support (strings that
+   already are in the lwsac can be pointed to without copying again), backfill
+   (look for gaps in previous chunks that could take a new use size), and
+   lwsac_extend() so last use() can attempt to use more unallocated chunk space
+
+ - NEW: lws_humanize: apis for reporting scalar quanties like 1234 as "1.234KB"
+   with the scaled symbol strings passed in by caller
+
+ - NEW: freertos: support lws_cancel_service() by using UDP pair bound to lo,
+   since it doesn't have logical pipes
+
+ - NEW: "esp32" plat, which implemented freertos plat compatibility on esp32, is
+   renamed to "freertos" plat, targeting esp32 and other freertos platforms
+
+ - NEW: base64 has an additional api supporting stateful decode, where the input
+   is not all in the same place at the same time and can be processed
+   incrementally
+
+ - NEW: lws ws proxy: support RFC8441
+   
+ - NEW: lws_spawn_piped apis: generic support for vforking a process with child
+   wsis attached to its stdin, stdout and stderr via pipes.  When processes are
+   reaped, a specified callback is triggered.  Currently Linux + OSX.
+   
+ - NEW: lws_fsmount apis: Linux-only overlayfs mount and unmount management for
+   aggregating read-only layers with disposable, changeable upper layer fs
+
+ - Improvements for RTOS / small build case bring the footprint of lws v4 below
+   that of v3.1 on ARM 
+   
+ - lws_tokenize: flag specifying # should mark rest of line as comment
+
+ - NEW: minimal example for integrating libasound / alsa via raw file
+
+ - lws_struct: sqlite and json / lejp translation now usable
+
+
+```
+
+## Introducing Secure Streams client support
+
+Secure Streams is an optional layer above lws (`-DLWS_WITH_SECURE_STREAMS=1`) that
+separates connectivity policy into a JSON document, which can be part of the
+firmware or fetched at boot time.
+
+Code no longer deals with details like endpoint specification or tls cert stack used
+to validate the remote server, it's all specified in JSON, eg, see
+[this example](https://warmcat.com/policy/minimal-proxy.json).  Even the protocol to use to talk to the
+server, between h1, h2, ws or MQTT, is specified in the policy JSON and the code
+itself just deals with payloads and optionally metadata, making it possible to
+switch endpoints, update certs and even switch communication protocols by just
+editing the JSON policy and leaving the code alone.
+
+Logical Secure Stream connections outlive any underlying lws connection, and support
+"nailed-up" connection reacquisition and exponential backoff management.
+
+See [./lib/secure-streams/README.md](https://libwebsockets.org/git/libwebsockets/tree/lib/secure-streams/README.md) and the related minimal examples
+for more details.
+
+## mqtt client support
+
+If you enable `-DLWS_ROLE_MQTT=1`, lws can now support QoS0 and QoS1 MQTT client
+connections.  See the examples at ./minimal-examples/mqtt-client
+
+## libglib native event loop support
+
+glib's event loop joins libuv, libevent and libev support in lws for both the
+`lws_context` creating and owning the loop object for its lifetime, and for
+an already-existing "foreign loop" where the `lws_context` is created, attaches,
+detaches, and is destroyed without affecting the loop.
+
+This allows direct, lock-free integration of lws functionality with, eg, a GTK app's
+existing `GMainLoop` / glib `g_main_loop`.  Just select `-DLWS_WITH_GLIB=1` at cmake
+time to enable.  The -eventlib minimal examples also support --glib option to
+select using the glib loop at runtime.
+
+There's also a gtk example that is built if lws cmake has `-DLWS_WITH_GTK=1`.
+
+## `lws_system` helper for attaching code to a single event loop from another thread
+
+`lws_system` ops struct now has a member that enables other threads (in the
+same process) to request a callback they define from the lws event loop thread
+context as soon as possible.  From here, in the event loop thread context,
+they can set up their lws functionality before returning and letting it
+operate wholly from the lws event loop.  The original thread calling the
+api to request the callback returns immediately.
+
+## Improvements on tx credit
+
+H2 clients and servers can now modulate RX flow control on streams precisely,
+ie, define the size of the first incoming data and hand out more tx credit
+at timing of its choosing to throttle or completely quench the remote server
+sending as it likes.
+
+The only RFC-compatible way to acheive this is set the initial tx credit to
+0 and set it explicitly when sending the headers... client code can elect to
+do this rather than automatically manage the credit by setting a new flag
+LCCSCF_H2_MANUAL_RXFLOW and indicating the initial tx credit for that stream
+in client connection info member manual_initial_tx_credit.  A new public api
+lws_wsi_tx_credit() allows dynamic get and add to local and estimated remote
+peer credit for a connection.  This api can be used without knowing if the
+underlying connection is h2 or not.
 
 ## `lws_system`: DHCP client
 

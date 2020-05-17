@@ -1,7 +1,7 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2020 Andy Green <andy@warmcat.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,7 +27,8 @@
 int
 _lws_change_pollfd(struct lws *wsi, int _and, int _or, struct lws_pollargs *pa)
 {
-#if !defined(LWS_WITH_LIBUV) && !defined(LWS_WITH_LIBEV) && !defined(LWS_WITH_LIBEVENT)
+#if !defined(LWS_WITH_LIBUV) && !defined(LWS_WITH_LIBEV) && \
+    !defined(LWS_WITH_LIBEVENT) && !defined(LWS_WITH_GLIB)
 	volatile struct lws_context_per_thread *vpt;
 #endif
 	struct lws_context_per_thread *pt;
@@ -71,9 +72,8 @@ _lws_change_pollfd(struct lws *wsi, int _and, int _or, struct lws_pollargs *pa)
 
 	assert(wsi->position_in_fds_table < (int)pt->fds_count);
 
-#if !defined(LWS_WITH_LIBUV) && \
-    !defined(LWS_WITH_LIBEV) && \
-    !defined(LWS_WITH_LIBEVENT)
+#if !defined(LWS_WITH_LIBUV) && !defined(LWS_WITH_LIBEV) && \
+    !defined(LWS_WITH_LIBEVENT) && !defined(LWS_WITH_GLIB)
 	/*
 	 * This only applies when we use the default poll() event loop.
 	 *
@@ -140,6 +140,11 @@ _lws_change_pollfd(struct lws *wsi, int _and, int _or, struct lws_pollargs *pa)
 	lws_memory_barrier();
 #endif
 
+#if !defined(__linux__)
+	/* OSX couldn't see close on stdin pipe side otherwise */
+	_or |= LWS_POLLHUP;
+#endif
+
 	pfd = &pt->fds[wsi->position_in_fds_table];
 	pa->fd = wsi->desc.sockfd;
 	lwsl_debug("%s: wsi %p: fd %d events %d -> %d\n", __func__, wsi,
@@ -147,7 +152,7 @@ _lws_change_pollfd(struct lws *wsi, int _and, int _or, struct lws_pollargs *pa)
 	pa->prev_events = pfd->events;
 	pa->events = pfd->events = (pfd->events & ~_and) | _or;
 
-	if (wsi->http2_substream)
+	if (wsi->mux_substream)
 		return 0;
 
 #if defined(LWS_WITH_EXTERNAL_POLL)
@@ -237,7 +242,7 @@ lws_accept_modulation(struct lws_context *context,
 }
 #endif
 
-#if defined(_DEBUG)
+#if _LWS_ENABLED_LOGS & LLL_WARN
 void
 __dump_fds(struct lws_context_per_thread *pt, const char *s)
 {
@@ -498,10 +503,11 @@ lws_change_pollfd(struct lws *wsi, int _and, int _or)
 	return ret;
 }
 
-LWS_VISIBLE int
+int
 lws_callback_on_writable(struct lws *wsi)
 {
 	struct lws_context_per_thread *pt;
+	struct lws *w = wsi;
 
 	if (lwsi_state(wsi) == LRS_SHUTDOWN)
 		return 0;
@@ -525,18 +531,22 @@ lws_callback_on_writable(struct lws *wsi)
 #endif
 
 	if (wsi->role_ops->callback_on_writable) {
-		if (wsi->role_ops->callback_on_writable(wsi))
+		int q = wsi->role_ops->callback_on_writable(wsi);
+		//lwsl_notice("%s: rops_cow says %d\n", __func__, q);
+		if (q)
 			return 1;
-		wsi = lws_get_network_wsi(wsi);
-	}
+		w = lws_get_network_wsi(wsi);
+	} else
 
-	if (wsi->position_in_fds_table == LWS_NO_FDS_POS) {
-		lwsl_debug("%s: failed to find socket %d\n", __func__,
-			   wsi->desc.sockfd);
-		return -1;
-	}
+		if (w->position_in_fds_table == LWS_NO_FDS_POS) {
+			lwsl_debug("%s: failed to find socket %d\n", __func__,
+				   wsi->desc.sockfd);
+			return -1;
+		}
 
-	if (__lws_change_pollfd(wsi, 0, LWS_POLLOUT))
+	//lwsl_notice("%s: marking for POLLOUT %p (wsi %p)\n", __func__, w, wsi);
+
+	if (__lws_change_pollfd(w, 0, LWS_POLLOUT))
 		return -1;
 
 	return 1;
@@ -587,7 +597,7 @@ lws_same_vh_protocol_remove(struct lws *wsi)
 }
 
 
-LWS_VISIBLE int
+int
 lws_callback_on_writable_all_protocol_vhost(const struct lws_vhost *vhost,
 				           const struct lws_protocols *protocol)
 {
@@ -617,7 +627,7 @@ lws_callback_on_writable_all_protocol_vhost(const struct lws_vhost *vhost,
 	return 0;
 }
 
-LWS_VISIBLE int
+int
 lws_callback_on_writable_all_protocol(const struct lws_context *context,
 				      const struct lws_protocols *protocol)
 {

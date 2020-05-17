@@ -492,7 +492,7 @@ SystemBase *SystemInit( void )
 	
 	if( l->sqlpool == NULL || l->sqlpool[ 0 ].sqll_Sqllib == NULL )
 	{
-		FERROR("Cannot open 'mysql.library' in first slot\n");
+		Log( FLOG_ERROR, "Cannot open 'mysql.library' in first slot\n");
 		FFree( tempString );
 		FFree( l->sqlpool );
 		FFree( l );
@@ -571,7 +571,7 @@ SystemBase *SystemInit( void )
 	}
 	else
 	{
-		FERROR("Cannot open 'mysql.library' instance!\n");
+		Log( FLOG_ERROR, "Cannot open 'mysql.library' instance!\n");
 		return NULL;
 	}
 	
@@ -612,7 +612,7 @@ SystemBase *SystemInit( void )
 			l->fcm->fcm_WebSocketNotification = NULL;
 		}
 		
-		FERROR("FriendCoreManagerInit fail!\n");
+		Log( FLOG_ERROR, "FriendCoreManagerInit fail!\n");
 		SystemClose( l );
 		return NULL;
 	}
@@ -650,6 +650,7 @@ SystemBase *SystemInit( void )
 	if( l->sl_ModPath == NULL )
 	{
 		FFree( l );
+		Log( FLOG_ERROR, "Cannot allocate memory for module path!\n");
 		return NULL;
 	}
 
@@ -726,7 +727,7 @@ SystemBase *SystemInit( void )
 	if( l->sl_LoginModPath == NULL )
 	{
 		FFree( l );
-		FERROR("Cannot allocate memory for login module path!\n");
+		Log( FLOG_ERROR, "Cannot allocate memory for login module path!\n");
 		return NULL;
 	}
 
@@ -786,7 +787,8 @@ SystemBase *SystemInit( void )
 	}
 	else
 	{
-		FERROR("Authentication module not provided\n");
+		Log( FLOG_ERROR, "Authentication module not provided\n");
+
 		FFree( tempString );
 		return NULL;	
 	}
@@ -953,10 +955,16 @@ SystemBase *SystemInit( void )
 		Log( FLOG_ERROR, "Cannot initialize INVARManager\n");
 	}
 	
-	l->sl_AppSessionManager = AppSessionManagerNew();
-	if( l->sl_AppSessionManager == NULL )
+	l->sl_ApplicationManager = ApplicationManagerNew( l );
+	if( l->sl_ApplicationManager == NULL )
 	{
 		Log( FLOG_ERROR, "Cannot initialize AppSessionManager\n");
+	}
+	
+	l->sl_SASManager = SASManagerNew( l );
+	if( l->sl_SASManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize l_SASManager\n");
 	}
 	
 	l->sl_DOSTM = DOSTokenManagerNew( l );
@@ -1073,10 +1081,10 @@ void SystemClose( SystemBase *l )
 	
 	Log( FLOG_INFO, "[SystemBase] SystemClose in progress\n");
 	
-	if( l->sl_AppSessionManager != NULL )
+	if( l->sl_ApplicationManager != NULL )
 	{
-		AppSessionManagerDelete( l->sl_AppSessionManager );
-		l->sl_AppSessionManager = NULL;
+		ApplicationManagerDelete( l->sl_ApplicationManager );
+		l->sl_ApplicationManager = NULL;
 	}
 	
 	// Check if INRAM is initialized
@@ -1204,6 +1212,10 @@ void SystemClose( SystemBase *l )
 	if( l->sl_SecurityManager != NULL )
 	{
 		SecurityManagerDelete( l->sl_SecurityManager );
+	}
+	if( l->sl_SASManager != NULL )
+	{
+		SASManagerDelete( l->sl_SASManager );
 	}
 	
 	// Remove sentinel from active memory

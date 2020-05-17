@@ -114,7 +114,7 @@ void
 lws_set_timeout_us(struct lws *wsi, enum pending_timeout reason, lws_usec_t us);
 
 #define LWS_SET_TIMER_USEC_CANCEL ((lws_usec_t)-1ll)
-#define LWS_USEC_PER_SEC (1000000ll)
+#define LWS_USEC_PER_SEC ((lws_usec_t)1000000)
 
 /**
  * lws_set_timer_usecs() - schedules a callback on the wsi in the future
@@ -250,5 +250,17 @@ lws_sul_schedule(struct lws_context *context, int tsi,
  */
 LWS_VISIBLE LWS_EXTERN void
 lws_validity_confirmed(struct lws *wsi);
+
+/*
+ * These are not normally needed, they're exported for the case there's code
+ * using lws_sul for which lws is an optional link dependency.
+ */
+
+LWS_VISIBLE LWS_EXTERN int
+__lws_sul_insert(lws_dll2_owner_t *own, lws_sorted_usec_list_t *sul,
+		 lws_usec_t us);
+
+LWS_VISIBLE LWS_EXTERN lws_usec_t
+__lws_sul_service_ripe(lws_dll2_owner_t *own, lws_usec_t usnow);
 
 ///@}

@@ -35,6 +35,7 @@
 #include <unistd.h>
 #include <util/string.h>
 #include <mutex/mutex_manager.h>
+#include <system/systembase.h>
 
 void *EventManagerLoopThread( FThread *ptr );
 
@@ -176,6 +177,7 @@ void EventLaunch( CoreEvent *ptr )
 void *EventManagerLoopThread( FThread *ptr )
 {
 	EventManager *ce = (EventManager *)ptr->t_Data;
+	SystemBase *lsb = (SystemBase *)ce->em_SB;
 	//const unsigned long long nano = 1000000000;
 	//unsigned long long t1, t2, lasttime;
 	//struct timespec tm;
@@ -205,6 +207,11 @@ void *EventManagerLoopThread( FThread *ptr )
 		
 		stime = etime;
 		etime = time( NULL );
+		
+		if( lsb->fcm->fcm_Shutdown == TRUE )
+		{
+			break;
+		}
 	}
 	while( ptr->t_Quit != TRUE );
 	
@@ -304,7 +311,7 @@ int EventAdd( EventManager *em, char *name, void *function, void *data, time_t n
  * Force call an event
  *
  * @param em pointer to the event manager structure
- * @param id ID of the event to call
+ * @param ev event
  * @return NULL
  */
 CoreEvent *EventCheck( EventManager *em, CoreEvent *ev, time_t ti )
