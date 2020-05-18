@@ -1297,7 +1297,7 @@ int FileSeek( struct File *s, int pos )
 	{
 		libssh2_sftp_seek( sd->sd_FileHandle, pos );
 	}
-	DEBUG("Seek %d\n", result );
+	DEBUG("Seek %d\n", pos );
 	return pos;
 }
 
