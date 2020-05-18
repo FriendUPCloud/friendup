@@ -49,8 +49,8 @@ Workspace.setSharingGui = function( viewObject )
 	{
 		if( Trim( this.value ) == '' )
 		{
-			this.className = '';
-			this.innerHTML = '';
+			dropDown.classList.remove( 'Showing' );
+			dropDown.innerHTML = '';
 			return;
 		}
 		let m = new Module( 'system' );
@@ -79,6 +79,7 @@ Workspace.setSharingGui = function( viewObject )
 	{
 		let str = '';
 		let sw = 2;
+		let items = 0;
 		if( workgroups.length )
 		{
 			str += '<p class="Layout"><strong>' + i18n( 'i18n_workgroups' ) + ':</strong></p>';
@@ -89,6 +90,7 @@ Workspace.setSharingGui = function( viewObject )
 				<div class="GroupEle HContent30 Ellipsis PaddingSmall sw' + sw + '" onclick="Workspace.selectShareItem(this, \'GroupEle\', \'' + viewObject.uniqueId + '\')">\
 					' + workgroups[a].Name + '\
 				</div>';
+				items++;
 			}
 		}
 		if( users.length )
@@ -101,12 +103,17 @@ Workspace.setSharingGui = function( viewObject )
 				<div class="UserEle HContent30 Ellipsis PaddingSmall sw' + sw + '" onclick="Workspace.selectShareItem(this, \'UserEle\', \'' + viewObject.uniqueId + '\')">\
 					' + users[a].Fullname + '\
 				</div>';
+				items++;
 			}
 		}
 		if( dropDown && dropDown.parentNode )
 		{
 			dropDown.innerHTML = str;
-			dropDown.className = 'Dropdown';
+			dropDown.classList.add( 'Showing', 'BackgroundDefault', 'BordersDefault' );
+		}
+		else
+		{
+			dropDown.classList.remove( 'Showing', 'BackgroundDefault', 'BordersDefault' );
 		}
 	}
 };
