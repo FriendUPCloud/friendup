@@ -37,12 +37,7 @@ var ScreenOverlay = {
 		if( this.debug )
 		{
 			this.enableDebug();
-		}
-        // Tell app we can show ourselves!
-        if( window.friendApp && window.friendApp.reveal )
-        {
-                friendApp.reveal();
-        }		
+		}	
 	},
 	// Trick hide
 	invisible: function()
