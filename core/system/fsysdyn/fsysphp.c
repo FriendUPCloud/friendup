@@ -321,13 +321,13 @@ ListString *PHPCall( const char *command )
 
 BufStringDisk *PHPCallDisk( const char *command )
 {
-	DEBUG("[PHPFsys] run app: '%s'\n", command );
+	DEBUG("[PHPCallDisk] run app: '%s'\n", command );
     
 	NPOpenFD pofd;
 	int err = newpopen( command, &pofd );
 	if( err != 0 )
 	{
-		FERROR("[PHPFsys] cannot open pipe: %s\n", strerror( errno ) );
+		FERROR("[PHPCallDisk] cannot open pipe: %s\n", strerror( errno ) );
 		return NULL;
 	}
 	
@@ -350,7 +350,7 @@ BufStringDisk *PHPCallDisk( const char *command )
 
 	while( TRUE )
 	{
-		DEBUG("[PHPFsys] in loop\n");
+		DEBUG("[PHPCallDisk] in loop\n");
 		
 		int ret = poll( fds, 2, FILESYSTEM_MOD_TIMEOUT * 1000);
 
@@ -366,13 +366,13 @@ BufStringDisk *PHPCallDisk( const char *command )
 		}
 		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
 
-		DEBUG( "[PHPFsys] Adding %d of data\n", size );
+		DEBUG( "[PHPCallDisk] Adding %d of data\n", size );
 		if( size > 0 )
 		{
-			DEBUG( "[PHPFsys] before adding to list\n");
+			DEBUG( "[PHPCallDisk] before adding to list\n");
 			BufStringDiskAddSize( ls, buf, size );
-			//ListStringAdd( ls, buf, size );
-			DEBUG( "[PHPFsys] after adding to list\n");
+			
+			DEBUG( "[PHPCallDisk] after adding to list: %s\n", buf );
 			//res += size;
 		}
 		else
@@ -396,7 +396,7 @@ BufStringDisk *PHPCallDisk( const char *command )
 		/* Initialize the file descriptor set. */
 		FD_ZERO( &set );
 		FD_SET( pofd.np_FD[ NPOPEN_CONSOLE ], &set);
-		DEBUG("[PHPFsys] in loop\n");
+		DEBUG("[PHPCallDisk] in loop\n");
 		
 		int ret = select( pofd.np_FD[ NPOPEN_CONSOLE ]+1, &set, NULL, NULL, &timeout );
 		// Make a new buffer and read
@@ -433,7 +433,7 @@ BufStringDisk *PHPCallDisk( const char *command )
 	// Free pipe if it's there
 	newpclose( &pofd );
 	
-	DEBUG( "[fsysphp] Finished PHP call...(%lu length)-\n", ls->bsd_Size );
+	DEBUG( "[PHPCallDisk] Finished PHP call...(%lu length)-\n", ls->bsd_Size );
 	return ls;
 }
 
