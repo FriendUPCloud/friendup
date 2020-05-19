@@ -10215,7 +10215,8 @@ Workspace.receivePush = function( jsonMsg, ready )
 			// TODO: Localize response!
 			if( !app )
 			{
-				Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
+				// no notification here... we got weird message in our new android app but everything worked...
+				//Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
 				if( Workspace.onReady ) Workspace.onReady();
 				return;
 			}
