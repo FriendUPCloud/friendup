@@ -323,16 +323,19 @@ BufStringDisk *PHPCallDisk( const char *command )
 {
 	BufStringDisk *ls = BufStringDiskNew();
 	FILE *pipe = popen( command, "r" );
+	DEBUG("[PHPCallDisk]: popen done\n");
 	if( !pipe )
 	{
 #define PHP_READ_SIZE 65536
 		char *buf = FCalloc( PHP_READ_SIZE, sizeof( char ) );
+		DEBUG("[PHPCallDisk]: Buffer allocated\n");
 		if( buf != NULL )
 		{
 			while( !feof( pipe ) )
 			{
 				// Make a new buffer and read
 				int size = fread( buf, sizeof(char), PHP_READ_SIZE, pipe );
+				DEBUG("[PHPCallDisk]: Data readed %d\n", size );
 
 				if( size > 0 )
 				{
@@ -340,8 +343,10 @@ BufStringDisk *PHPCallDisk( const char *command )
 				}
 			}
 			FFree( buf );
+			DEBUG("[PHPCallDisk]: Buffer released\n");
 		}
 		pclose( pipe  );
+		DEBUG("[PHPCallDisk]: pipe closed\n");
 	}
 	return ls;
 }
