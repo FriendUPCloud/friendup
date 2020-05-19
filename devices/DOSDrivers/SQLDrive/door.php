@@ -614,9 +614,9 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							ob_end_clean(); 
 							if( $fp = fopen( $fname, 'r' ) )
 							{
-								while( $str = fread( $fp, 1024 ) )
+								while( !feof( $fp ) )
 								{
-									echo $str;
+									echo fread( $fp, 8192 );
 								}
 								fclose( $fp );
 							}
