@@ -316,9 +316,41 @@ ListString *PHPCall( const char *command )
 }
 
 //
-// php call, send request, read answer
+//
 //
 
+BufStringDisk *PHPCallDisk( const char *command )
+{
+	BufStringDisk *ls = BufStringDiskNew();
+	FILE *pipe = popen( command, "r" );
+	if( !pipe )
+	{
+#define PHP_READ_SIZE 65536
+		char *buf = FCalloc( PHP_READ_SIZE, sizeof( char ) );
+		if( buf != NULL )
+		{
+			while( !feof( pipe ) )
+			{
+				// Make a new buffer and read
+				int size = fread( buf, sizeof(char), PHP_READ_SIZE, pipe );
+
+				if( size > 0 )
+				{
+					BufStringDiskAddSize( ls, buf, size );
+				}
+			}
+			FFree( buf );
+		}
+		pclose( pipe  );
+	}
+	return ls;
+}
+
+
+//
+// php call, send request, read answer
+//
+/*
 BufStringDisk *PHPCallDisk( const char *command )
 {
 	DEBUG("[PHPCallDisk] run app: '%s'\n", command );
@@ -393,7 +425,7 @@ BufStringDisk *PHPCallDisk( const char *command )
 
 	while( TRUE )
 	{
-		/* Initialize the file descriptor set. */
+		// Initialize the file descriptor set. 
 		FD_ZERO( &set );
 		FD_SET( pofd.np_FD[ NPOPEN_CONSOLE ], &set);
 		DEBUG("[PHPCallDisk] in loop\n");
@@ -437,6 +469,7 @@ BufStringDisk *PHPCallDisk( const char *command )
 	DEBUG( "[PHPCallDisk] Finished PHP call...(%lu length)-\n", ls->bsd_Size );
 	return ls;
 }
+*/
 
 //
 //
