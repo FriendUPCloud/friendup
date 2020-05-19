@@ -613,10 +613,8 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							//Previously the download got broken at 94MB (or another file size depending on php.ini)
 							ob_end_clean(); 
 							set_time_limit( 0 );
-							passthru('/bin/cat '.$fname);
-							exit(0);
-							//readfile( $fname );
-							//die();
+							readfile( $fname );
+							die();
 						}
 						// Return ok
 						$okRet = 'ok<!--separate-->';
