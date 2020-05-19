@@ -11,13 +11,15 @@
 *****************************************************************************©*/
 
 // Connects to friend core and builds the query at the same time
-function FriendCoreQuery( $command = '', $args = false, $method = 'POST', $headers = false )
+function FriendCoreQuery( $command = '', $args = false, $method = 'POST', $headers = false, $conf = false )
 {
-	global $Config;	
+	global $Config;
+	
+	if( !$conf ) $conf = $Config;
 	
 	$curl = curl_init();
 	
-	$server = ( $Config->SSLEnable ? 'https://' : 'http://' ) . $Config->FCHost . ( $Config->FCHost == 'localhost' && $Config->FCPort ? ':' . $Config->FCPort : '' );
+	$server = ( $conf->SSLEnable ? 'https://' : 'http://' ) . $conf->FCHost . ( $conf->FCHost == 'localhost' && $conf->FCPort ? ':' . $conf->FCPort : '' );
 	
 	$url = ( $server . $command );
 	

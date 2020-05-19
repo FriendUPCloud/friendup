@@ -433,7 +433,10 @@ int HttpParseHeader( Http* http, const char* request, FQUAD fullReqLength )
 					// Method -----------------------------------------------------------------------------------------
 					case 0:
 						http->http_Method = StringDuplicateN( ptr, ( r + i ) - ptr );
-						StringToUppercase( http->http_Method );
+						if( http->http_Method != NULL )
+						{
+							StringToUppercase( http->http_Method );
+						}
 
 						// TODO: Validate method
 						break;
