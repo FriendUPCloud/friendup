@@ -375,7 +375,7 @@ BufStringDisk *PHPCallDisk( const char *command )
 			DEBUG( "[PHPCallDisk] after adding to list: %s\n", buf );
 			//res += size;
 		}
-		else
+		else if( size < 0 )
 		{
 			errCounter++;
 			DEBUG("ErrCounter: %d\n", errCounter );
