@@ -342,7 +342,7 @@ Application.checkDocumentSession = function( sasID = null )
 							int err = SASManagerAddSession( l->sl_SASManager, as );
 							if( err == 0 )
 							{
-								int size = sprintf( buffer, "{ \"SASID\": \"%lu\",\"type\":%d }", as->sas_SASID, as->sas_Type );
+								int size = sprintf( buffer, "{\"SASID\":\"%lu\",\"type\":%d}", as->sas_SASID, as->sas_Type );
 								HttpAddTextContent( response, buffer );
 							}
 							else
@@ -350,15 +350,17 @@ Application.checkDocumentSession = function( sasID = null )
 								char dictmsgbuf[ 256 ];
 								char dictmsgbuf1[ 196 ];
 								snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "SAS register", err );
-								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_FUNCTION_RETURNED );
+								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", dictmsgbuf1 , DICT_FUNCTION_RETURNED );
 								HttpAddTextContent( response, dictmsgbuf );
 							}
 						}
 						else
 						{
-							char dictmsgbuf[ 256 ];
-							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_CREATE_SAS], DICT_CANNOT_CREATE_SAS );
-							HttpAddTextContent( response, dictmsgbuf );
+							int size = sprintf( buffer, "{\"SASID\":\"%lu\",\"type\":%d,\"exist\":true}", as->sas_SASID, as->sas_Type );
+							HttpAddTextContent( response, buffer );
+							//char dictmsgbuf[ 256 ];
+							//snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_CANNOT_CREATE_SAS], DICT_CANNOT_CREATE_SAS );
+							//HttpAddTextContent( response, dictmsgbuf );
 						}
 					}
 					else	// session was found, lets join it
