@@ -334,12 +334,19 @@ Application.checkDocumentSession = function( sasID = null )
 					SASSession *as = SASManagerGetSession( l->sl_SASManager, asval );
 					if( as == NULL )
 					{
+						DEBUG("SASWeb will create session now\n");
 						as = SASSessionNew( l, authid, 0, loggedSession );
 						if( as != NULL )
 						{
 							as->sas_SASID = asval;
 							as->sas_Type = type;
+							
+							DEBUG("SASWeb will add session now\n");
+							
 							int err = SASManagerAddSession( l->sl_SASManager, as );
+							
+							DEBUG("SASWeb Add session: %d\n", err );
+							
 							if( err == 0 )
 							{
 								int size = sprintf( buffer, "{\"SASID\":\"%lu\",\"type\":%d}", as->sas_SASID, as->sas_Type );
@@ -376,8 +383,9 @@ Application.checkDocumentSession = function( sasID = null )
 						}
 						else
 						{
+							DEBUG("SASWeb Cannot join session\n");
 							char dictmsgbuf[ 256 ];
-							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_CREATE_SAS], DICT_CANNOT_CREATE_SAS );
+							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_CANNOT_CREATE_SAS], DICT_CANNOT_CREATE_SAS );
 							HttpAddTextContent( response, dictmsgbuf );
 						}
 					}
