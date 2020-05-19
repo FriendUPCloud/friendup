@@ -414,12 +414,13 @@ BufStringDisk *PHPCallDisk( const char *command )
 
 		if( size > 0 )
 		{
-			ListStringAdd( ls, buf, size );
+			//ListStringAdd( ls, buf, size );
+			BufStringDiskAddSize( ls, buf, size );
 		}
 		else
 		{
 			errCounter++;
-			if( errCounter > MOD_NUMBER_TRIES )
+			if( errCounter > 30 )
 			{
 				//FERROR("Error in popen, Quit! Command: %s\n", command );
 				break;

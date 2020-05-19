@@ -121,10 +121,10 @@ unsigned int BufStringDiskAddSize( BufStringDisk *bs, const char *stringToAppend
 
 		bs->bsd_PreviousIncrement = increment;
 
-		unsigned int newSize = bs->bsd_Bufsize + increment + 1/*place for terminator*/;
-
+		unsigned int newSize = bs->bsd_Bufsize + increment + 1;
 		if( bs->bsd_FileHandler <= 0 )
 		{
+			// I must open file
 			strcpy( bs->bsd_FileName, TEMP_FILE_TEMPLATE );
 			char *tfname = mktemp( bs->bsd_FileName );
 		
@@ -142,6 +142,39 @@ unsigned int BufStringDiskAddSize( BufStringDisk *bs, const char *stringToAppend
 					return -1;
 				}
 			}
+			// we must flush memory buffer
+			int wrote = write( bs->bsd_FileHandler, bs->bsd_Buffer, bs->bsd_Size );
+			// we must erase it, otherwise munmap will be called
+			FFree( bs->bsd_Buffer );
+			bs->bsd_Buffer = NULL;
+		}
+		else	// file is opened
+		{
+			
+		}
+		
+		// now we can write 
+		int wrote = write( bs->bsd_FileHandler, stringToAppend, stringToAppendLength );
+		
+		if( bs->bsd_Buffer != NULL )
+		{
+			munmap( bs->bsd_Buffer, bs->bsd_Size );
+			bs->bsd_Buffer = NULL;
+		}
+		
+		FQUAD incomingBufferLength = lseek( bs->bsd_FileHandler, 0, SEEK_END);
+		bs->bsd_Buffer = mmap( 0, incomingBufferLength, PROT_READ | PROT_WRITE, MAP_SHARED, bs->bsd_FileHandler, 0 );
+		
+		if( bs->bsd_Buffer == MAP_FAILED )
+		{
+			Log( FLOG_ERROR, "Cannot allocate memory for stream, length: %d\n", incomingBufferLength );
+			return -1;
+		}
+		
+		/*
+		if( bs->bsd_FileHandler <= 0 )
+		{
+			
 
 			char *tmp = mmap( 0, newSize, PROT_READ | PROT_WRITE, MAP_SHARED, bs->bsd_FileHandler, 0 );
 		
@@ -179,6 +212,7 @@ unsigned int BufStringDiskAddSize( BufStringDisk *bs, const char *stringToAppend
 			int wrote = write( bs->bsd_FileHandler, stringToAppend, stringToAppendLength );
 			bs->bsd_Size = incomingBufferLength;
 		}
+		*/
 	}
 	else	// we can still store data in memory
 	{
