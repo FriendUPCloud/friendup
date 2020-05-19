@@ -10197,6 +10197,10 @@ Workspace.receivePush = function( jsonMsg, ready )
 		{
 			var app = false;
 			var apps = Workspace.applications;
+			
+			//too early?
+			if( !apps ) return;
+			
 			for( var a = 0; a < apps.length; a++ )
 			{
 				// Found the application
