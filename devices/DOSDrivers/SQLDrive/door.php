@@ -611,7 +611,6 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						{
 							//US-230 This is a memory friendly way to dump a file :-)
 							//Previously the download got broken at 94MB (or another file size depending on php.ini)
-<<<<<<< HEAD
 							ob_end_clean(); 
 							if( $fp = fopen( $fname, 'r' ) )
 							{
@@ -622,10 +621,6 @@ if( !class_exists( 'DoorSQLDrive' ) )
 								fclose( $fp );
 							}
 							//readfile($fname);
-=======
-							//ob_end_clean(); 
-							readfile($fname);
->>>>>>> 7897b08e2881662bdeabee18a0e35d0841a3a820
 							die();
 						}
 						// Return ok
