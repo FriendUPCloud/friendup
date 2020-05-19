@@ -10076,7 +10076,7 @@ Workspace.receiveLive = function( viewId, jsonEvent ) {
 Workspace.receivePush = function( jsonMsg, ready )
 {
 	if( !isMobile ) return "mobile";
-	var msg = jsonMsg ? jsonMsg : ( window.friendApp ? friendApp.get_notification() : false );
+	var msg = jsonMsg ? jsonMsg : ( window.friendApp && typeof friendApp.get_notification == 'function' ? friendApp.get_notification() : false );
 
 	// we use 1 as special case for no push being here... to make it easier to know when to launch startup sequence... maybe not ideal, but works
 	if( msg == false || msg == 1 ) 
