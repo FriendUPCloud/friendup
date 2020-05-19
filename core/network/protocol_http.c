@@ -2017,7 +2017,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 													DEBUG("CatchALL 1621\n");
 													if( ( command = FCalloc( clen, sizeof(char) ) ) != NULL )
 													{
-														snprintf( command, clen, "php \"php/catch_all.php\" \"%s\";", uri->uri_Path->raw ); 
+														snprintf( command, clen, "php \"php/catch_all.php\" \"%s\" \"%s\";", uri->uri_Path->raw, request->http_Uri ? request->http_Uri->uri_QueryRaw : NULL );
 													
 														phpResp = RunPHPScript( command );
 														
