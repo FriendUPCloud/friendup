@@ -406,8 +406,6 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					$testPath = substr( $testPath, 0, strlen( $testPath ) - 1 );
 				$pathLen = explode( '/', $testPath );
 				$pathLen = count( $pathLen );
-
-				$Logger->log( 'Pathlen: ' . pathLen );
 				
 				if( $pathLen == 1 || ( $pathLen > 1 && $fo ) )
 				{
