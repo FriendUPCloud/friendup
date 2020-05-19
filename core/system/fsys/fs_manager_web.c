@@ -3230,12 +3230,23 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									FFree( dsttmp );
 								}
 								
-								HttpAddTextContent( response,  "ok<!--separate-->{ \"Result\": 0 }" );
+								if( filesExtracted <= 0 )	// if unzip fail
+								{
+									char dictmsgbuf[ 256 ];
+									snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_FILE_UNCOMPRESS_PROBLEM] , DICT_FILE_UNCOMPRESS_PROBLEM );
+									HttpAddTextContent( response, dictmsgbuf );
+								}
+								else
+								{
+									char tmp[ 256 ];
+									snprintf( tmp, sizeof(tmp), "ok<!--separate-->{\"Result\":0,\"files\":%d}", filesExtracted );
+									HttpAddTextContent( response, tmp );
+								}
 							}
 							else
 							{
 								char dictmsgbuf[ 256 ];
-								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FILE_NOT_EXIST_OR_EMPTY] , DICT_FILE_NOT_EXIST_OR_EMPTY );
+								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_FILE_NOT_EXIST_OR_EMPTY] , DICT_FILE_NOT_EXIST_OR_EMPTY );
 								HttpAddTextContent( response, dictmsgbuf );
 							}
 						}

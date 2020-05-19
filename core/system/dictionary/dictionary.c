@@ -95,7 +95,8 @@ static const char *DefaultDictionaryMessages[] =
 "User Group already exist",
 "Bad chars used",
 "No access, special rights required",
-"User Mobile App entry not found"
+"User Mobile App entry not found",
+"File uncompress problem: %d"
 };
 
 /**
