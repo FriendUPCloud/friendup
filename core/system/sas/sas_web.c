@@ -227,6 +227,7 @@ Http* SASWebRequest( SystemBase *l, char **urlpath, Http* request, UserSession *
 	* @param authid - (required) authentication id (provided by application)
 	* @param type - type of application session 'close'(default), 'open' for everyone
 	* @param sasid - if passed then it will be used to join already created SAS
+	* @param force - if set to yes then number is coming from client
 
 	* @return { SASID: <number> } when success, otherwise response with error code
 	*/
@@ -236,6 +237,7 @@ Http* SASWebRequest( SystemBase *l, char **urlpath, Http* request, UserSession *
 		char *authid = NULL;
 		char *sasid = NULL;
 		int type = 0;
+		FBOOL force = FALSE;
 		
 		/*
 		Thomas Wollburg :
@@ -282,6 +284,15 @@ Application.checkDocumentSession = function( sasID = null )
 			sasid = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
+		el =  HashmapGet( request->http_ParsedPostContent, "force" );
+		if( el != NULL )
+		{
+			if( el->hme_Data != NULL && (strcmp( el->hme_Data, "true" ) == 0 ) )
+			{
+				force = TRUE;
+			}
+		}
+		
 		el =  HashmapGet( request->http_ParsedPostContent, "type" );
 		if( el != NULL )
 		{
@@ -314,6 +325,88 @@ Application.checkDocumentSession = function( sasID = null )
 			DEBUG("SAS/register: sasid %s\n", sasid );
 			if( sasid != NULL )
 			{
+				char *end;
+				FUQUAD asval = strtoull( sasid, &end, 0 );
+				DEBUG("SASWeb sasid: %lu force: %d\n", asval, force );
+				if( force == TRUE )
+				{
+					// if user want to create SAS with his own ID
+					SASSession *as = SASManagerGetSession( l->sl_SASManager, asval );
+					if( as == NULL )
+					{
+						DEBUG("SASWeb will create session now\n");
+						as = SASSessionNew( l, authid, 0, loggedSession );
+						if( as != NULL )
+						{
+							as->sas_SASID = asval;
+							as->sas_Type = type;
+							
+							DEBUG("SASWeb will add session now\n");
+							
+							int err = SASManagerAddSession( l->sl_SASManager, as );
+							
+							DEBUG("SASWeb Add session: %d\n", err );
+							
+							if( err == 0 )
+							{
+								int size = sprintf( buffer, "{\"SASID\":\"%lu\",\"type\":%d}", as->sas_SASID, as->sas_Type );
+								HttpAddTextContent( response, buffer );
+							}
+							else
+							{
+								char dictmsgbuf[ 256 ];
+								char dictmsgbuf1[ 196 ];
+								snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "SAS register", err );
+								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", dictmsgbuf1 , DICT_FUNCTION_RETURNED );
+								HttpAddTextContent( response, dictmsgbuf );
+							}
+						}
+						else
+						{
+							int size = sprintf( buffer, "{\"SASID\":\"%lu\",\"type\":%d,\"exist\":true}", as->sas_SASID, as->sas_Type );
+							HttpAddTextContent( response, buffer );
+							//char dictmsgbuf[ 256 ];
+							//snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_CANNOT_CREATE_SAS], DICT_CANNOT_CREATE_SAS );
+							//HttpAddTextContent( response, dictmsgbuf );
+						}
+					}
+					else	// session was found, lets join it
+					{
+						SASUList *entry;
+						DEBUG("[SASWebRequest] I will try to add session\n");
+					
+						if( ( entry = SASSessionAddCurrentUserSession( as, loggedSession) ) != NULL )
+						{
+							char tmpmsg[ 255 ];
+							int msgsize = snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"client-accept\",\"data\":\"%s\"}", loggedSession->us_User->u_Name );
+							HttpAddTextContent( response, tmpmsg );
+						}
+						else
+						{
+							DEBUG("SASWeb Cannot join session\n");
+							char dictmsgbuf[ 256 ];
+							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_CANNOT_CREATE_SAS], DICT_CANNOT_CREATE_SAS );
+							HttpAddTextContent( response, dictmsgbuf );
+						}
+					}
+				}
+				else	// sasid paramter was not sent
+				{
+					// Try to fetch assid session from session list!
+					SASSession *as = SASManagerGetSession( l->sl_SASManager, asval );
+					if( as != NULL )
+					{
+						char tmpmsg[ 255 ];
+						int msgsize = snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"client-accept\",\"data\":\"%s\"}", loggedSession->us_User->u_Name );
+						HttpAddTextContent( response, tmpmsg );
+					}
+					else
+					{
+						char dictmsgbuf[ 256 ];
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_CREATE_SAS], DICT_CANNOT_CREATE_SAS );
+						HttpAddTextContent( response, dictmsgbuf );
+					}
+				}
 				/*
 				char *end;
 				FUQUAD asval = strtoull( sasid, &end, 0 );
@@ -349,7 +442,7 @@ Application.checkDocumentSession = function( sasID = null )
 				}
 				*/
 			}
-			else
+			else	// sas with provided id do not exist
 			{
 				FERROR("[SASWebRequest] User set session: %s ---------- authid ---- %s\n", loggedSession->us_User->u_Name, authid );
 			
@@ -553,6 +646,7 @@ Application.checkDocumentSession = function( sasID = null )
 	{
 		char *authid = NULL;
 		char *assid = NULL;
+		FBOOL force = FALSE;
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
@@ -576,6 +670,15 @@ Application.checkDocumentSession = function( sasID = null )
 			assid = UrlDecodeToMem( ( char *)el->hme_Data );
 		}
 		
+		el =  HashmapGet( request->http_ParsedPostContent, "force" );
+		if( el != NULL )
+		{
+			if( el->hme_Data != NULL && (strcmp( el->hme_Data, "true" ) == 0 ) )
+			{
+				force = TRUE;
+			}
+		}
+		
 		// Comes in without required authid or assid!
 		if( authid == NULL || assid == NULL )
 		{
@@ -585,9 +688,6 @@ Application.checkDocumentSession = function( sasID = null )
 			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, dictmsgbuf );
 			FERROR("authid or sasid is missing!\n");
-			
-			if( authid != NULL ) { FFree( authid ); }
-			if( assid != NULL ) { FFree( assid ); }
 		}
 		// We've got what we need! Continue
 		else
@@ -702,7 +802,35 @@ Application.checkDocumentSession = function( sasID = null )
 					HttpAddTextContent( response, dictmsgbuf );
 				}
 			}
-			else
+			else if( force == TRUE )	// if session do not exist and system is forced to create new SAS
+			{
+				SASSession *as = SASSessionNew( l, authid, 0, loggedSession );
+				if( as != NULL )
+				{
+					as->sas_Type = SAS_TYPE_OPEN;	// we can only create open sessions
+					int err = SASManagerAddSession( l->sl_SASManager, as );
+					if( err == 0 )
+					{
+						int size = sprintf( buffer, "{ \"SASID\": \"%lu\",\"type\":%d }", as->sas_SASID, as->sas_Type );
+						HttpAddTextContent( response, buffer );
+					}
+					else
+					{
+						char dictmsgbuf[ 256 ];
+						char dictmsgbuf1[ 196 ];
+						snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "SAS register", err );
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_FUNCTION_RETURNED );
+						HttpAddTextContent( response, dictmsgbuf );
+					}
+				}
+				else
+				{
+					char dictmsgbuf[ 256 ];
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_CREATE_SAS], DICT_CANNOT_CREATE_SAS );
+					HttpAddTextContent( response, dictmsgbuf );
+				}
+			}
+			else	// session not found and system is not forced to create it
 			{
 				char dictmsgbuf[ 256 ];
 				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SASID_NOT_FOUND] , DICT_SASID_NOT_FOUND );
