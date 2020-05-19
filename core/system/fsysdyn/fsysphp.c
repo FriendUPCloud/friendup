@@ -254,10 +254,7 @@ ListString *PHPCall( const char *command )
 		{
 			errCounter++;
 			DEBUG("ErrCounter: %d\n", errCounter );
-			if( errCounter > 50 )
-			{
-				break;
-			}
+			break;
 		}
 	}
 #else
