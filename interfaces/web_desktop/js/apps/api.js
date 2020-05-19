@@ -8427,6 +8427,10 @@ GuiDesklet = function()
 		if( self.sessiontype ) reg.data.type = self.sessiontype;
 		
 		self.conn.request( reg, regBack );
+		
+		console.log('register host... ' + self.regPath);
+
+		
 		function regBack( res ) {
 			if ( !res.SASID ) {
 				callback( false );
@@ -8458,6 +8462,16 @@ GuiDesklet = function()
 				sasid  : self.id,
 			}
 		};
+		
+
+		console.log('register client... ' + self.sessiontype);
+		
+		if( self.sessiontype == 'open' )
+		{
+			accept.path = self.regPath;
+			console.log('open session change path for our acceptance to register ourselves' + self.regPath)
+		}
+		
 		self.conn.request( accept, accBack );
 		function accBack( res ) {
 			var host = res.identity;
