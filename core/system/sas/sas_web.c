@@ -327,7 +327,7 @@ Application.checkDocumentSession = function( sasID = null )
 			{
 				char *end;
 				FUQUAD asval = strtoull( sasid, &end, 0 );
-				
+				DEBUG("SASWeb sasid: %lu force: %d\n", asval, force );
 				if( force == TRUE )
 				{
 					// if user want to create SAS with his own ID
