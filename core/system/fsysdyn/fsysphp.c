@@ -1055,7 +1055,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 					}
 				}
 				
-				int written = write( lockf, ( void *)result->bsd_Buffer, result->bsd_Size );
+				//int written = write( lockf, ( void *)result->bsd_Buffer, result->bsd_Size );
 				//int written = write( lockf, ( void *)result->ls_Data, result->ls_Size );
 	
 				// Clean out result
