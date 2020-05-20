@@ -498,7 +498,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 									if( $total + $len < SQLDRIVE_FILE_LIMIT )
 									{
 										$Logger->log( '[SqlDrive] Moving tmp file ' . $args->tmpfile . ' to ' . $wname . $fn . ' because ' . ( $total + $len ) . ' < ' . SQLDRIVE_FILE_LIMIT );
-										rename( $args->tmpfile, $wname . $fn );
+										//rename( $args->tmpfile, $wname . $fn );
 									}
 									else
 									{
