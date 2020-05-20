@@ -477,6 +477,8 @@ if( !class_exists( 'DoorSQLDrive' ) )
 									fclose( $fr );
 									if( substr( urldecode( $string ), 0, strlen( '<!--BASE64-->' ) ) == '<!--BASE64-->' )
 									{
+										// TODO: Add filesize limit!
+										$Logger->log( '[SqlDrive] Trying to read the temp file! May crash!' );
 										$fr = file_get_contents( $args->tmpfile );
 										$fr = base64_decode( end( explode( '<!--BASE64-->', urldecode( $fr ) ) ) );
 										if( $fo = fopen( $args->tmpfile, 'w' ) )
@@ -485,11 +487,15 @@ if( !class_exists( 'DoorSQLDrive' ) )
 											fclose( $fo );
 										}
 									}
+									else
+									{
+										$Logger->log( '[SqlDrive] Not reading temp file, because it\'s not base 64. Plain move commencing.' );
+									}
 								}
 
 								if( $total + $len < SQLDRIVE_FILE_LIMIT )
 								{
-									$Logger->log( 'Moving tmp file ' . $args->tmpfile . ' to ' . $wname . $fn . ' because ' . ( $total + $len ) . ' < ' . SQLDRIVE_FILE_LIMIT );
+									$Logger->log( '[SqlDrive] Moving tmp file ' . $args->tmpfile . ' to ' . $wname . $fn . ' because ' . ( $total + $len ) . ' < ' . SQLDRIVE_FILE_LIMIT );
 									rename( $args->tmpfile, $wname . $fn );
 								}
 								else

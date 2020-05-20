@@ -488,6 +488,8 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 									fclose( $fr );
 									if( substr( urldecode( $string ), 0, strlen( '<!--BASE64-->' ) ) == '<!--BASE64-->' )
 									{
+										// TODO: Add filesize limit!
+										$Logger->log( '[SQLWorkgroupDrive] Trying to read the temp file! May crash!' );
 										$fr = file_get_contents( $args->tmpfile );
 										$fr = base64_decode( end( explode( '<!--BASE64-->', urldecode( $fr ) ) ) );
 										if( $fo = fopen( $args->tmpfile, 'w' ) )
@@ -495,6 +497,10 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 											fwrite( $fo, $fr );
 											fclose( $fo );
 										}
+									}
+									else
+									{
+										$Logger->log( '[SqlWorkgroupDrive] Not reading temp file, because it\'s not base 64. Plain move commencing.' );
 									}
 								}
 
