@@ -382,7 +382,10 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				// Get by path (subfolder)
 				$subPath = $testPath = false;
 				if( is_string( $path ) && strstr( $path, ':' ) )
-					$testPath = $subPath = end( explode( ':', $path ) );
+				{
+					$subPath = explode( ':', $path );
+					$testPath = $subPath = end( $subPath );
+				}
 				
 				// Remove filename
 				if( substr( $subPath, -1, 1 ) != '/' && strstr( $subPath, '/' ) )
