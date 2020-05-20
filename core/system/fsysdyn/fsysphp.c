@@ -355,6 +355,7 @@ BufStringDisk *PHPCallDisk( const char *command )
 	else
 	{
 		FERROR("[PHPCallDisk]: Popen fail\n");
+		FERROR("Error opening file unexist.ent: %s\n",strerror(errno) );
 	}
 	return ls;
 }
