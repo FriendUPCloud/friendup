@@ -170,6 +170,7 @@ unsigned int BufStringDiskAddSize( BufStringDisk *bs, const char *stringToAppend
 			Log( FLOG_ERROR, "Cannot allocate memory for stream, length: %d\n", incomingBufferLength );
 			return -1;
 		}
+		bs->bsd_Size += stringToAppendLength;
 		
 		/*
 		if( bs->bsd_FileHandler <= 0 )
