@@ -1022,6 +1022,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		if( result )
 		{
 			//if( result->bsd_Buffer )
+			if( result->ls_Data )
 			{
 				if( strncmp( result->ls_Data, "fail", 4 ) == 0 )
 				//if( strncmp( result->bsd_Buffer, "fail", 4 ) == 0 )
