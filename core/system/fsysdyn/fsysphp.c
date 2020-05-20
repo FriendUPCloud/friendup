@@ -1015,29 +1015,34 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		DEBUG( "[fsysphp] Getting data for tempfile, seen below as command:\n" );
 		DEBUG( "[fsysphp] %s\n", command );
 		
-		BufStringDisk *result = PHPCallDisk( command );
+		//BufStringDisk *result = PHPCallDisk( command );
+		ListString *result = PHPCall( command );
 
 		// Open a file pointer
 		if( result )
 		{
-			if( result->bsd_Buffer )
+			//if( result->bsd_Buffer )
 			{
-				if( strncmp( result->bsd_Buffer, "fail", 4 ) == 0 )
+				if( strncmp( result->ls_Data, "fail", 4 ) == 0 )
+				//if( strncmp( result->bsd_Buffer, "fail", 4 ) == 0 )
 				{
 					FERROR( "[fsysphp] [FileOpen] Failed to get exclusive lock on lockfile. Fail returned.\n" );
 					FFree( command );
 					FFree( encodedcomm );
-					BufStringDiskDelete( result );
+					//BufStringDiskDelete( result );
+					ListStringDelete( result );
 					close( lockf );
 					unlink( tmpfilename );
 					return NULL;
 				}
 				
 				// Write the buffer to the file
-				int written = write( lockf, ( void *)result->bsd_Buffer, result->bsd_Size );
+				//int written = write( lockf, ( void *)result->bsd_Buffer, result->bsd_Size );
+				int written = write( lockf, ( void *)result->ls_Data, result->ls_Size );
 	
 				// Clean out result
-				BufStringDiskDelete( result ); result = NULL;
+				//BufStringDiskDelete( result ); result = NULL;
+				ListStringDelete( result ); result = NULL;
 
 				// Remove lock!
 				//fcntl( lockf, F_SETLKW ); // TODO: Why the hell was this here? :-D
