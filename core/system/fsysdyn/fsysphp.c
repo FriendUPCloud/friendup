@@ -335,7 +335,7 @@ BufStringDisk *PHPCallDisk( const char *command )
 			{
 				// Make a new buffer and read
 				int size = fread( buf, sizeof(char), PHP_READ_SIZE, pipe );
-				DEBUG("[PHPCallDisk]: Data readed %d\n", size );
+				DEBUG("[PHPCallDisk]: Data read %d\n", size );
 
 				if( size > 0 )
 				{
