@@ -318,7 +318,7 @@ ListString *PHPCall( const char *command )
 //
 //
 //
-
+/*
 BufStringDisk *PHPCallDisk( const char *command )
 {
 	BufStringDisk *ls = BufStringDiskNew();
@@ -350,12 +350,12 @@ BufStringDisk *PHPCallDisk( const char *command )
 	}
 	return ls;
 }
-
+*/
 
 //
 // php call, send request, read answer
 //
-/*
+
 BufStringDisk *PHPCallDisk( const char *command )
 {
 	DEBUG("[PHPCallDisk] run app: '%s'\n", command );
@@ -474,7 +474,6 @@ BufStringDisk *PHPCallDisk( const char *command )
 	DEBUG( "[PHPCallDisk] Finished PHP call...(%lu length)-\n", ls->bsd_Size );
 	return ls;
 }
-*/
 
 //
 //
