@@ -125,7 +125,7 @@ unsigned int BufStringDiskAddSize( BufStringDisk *bs, const char *stringToAppend
 		if( bs->bsd_FileHandler <= 0 )
 		{
 			// I must open file
-			strcpy( bs->bsd_FileName, TEMP_FILE_TEMPLATE );
+			strcpy( bs->bsd_FileName, BUF_STRING_TEMP_FILE_TEMPLATE );
 			char *tfname = mktemp( bs->bsd_FileName );
 		
 			if( strlen( bs->bsd_FileName ) == 0 )
@@ -170,7 +170,7 @@ unsigned int BufStringDiskAddSize( BufStringDisk *bs, const char *stringToAppend
 			Log( FLOG_ERROR, "Cannot allocate memory for stream, length: %d\n", incomingBufferLength );
 			return -1;
 		}
-		bs->bsd_Size += stringToAppendLength;
+		bs->bsd_Size = stringToAppendLength;
 		
 		/*
 		if( bs->bsd_FileHandler <= 0 )
@@ -222,6 +222,7 @@ unsigned int BufStringDiskAddSize( BufStringDisk *bs, const char *stringToAppend
 		memcpy( bs->bsd_Buffer + bs->bsd_Size, stringToAppend, stringToAppendLength );
 		bs->bsd_Size += stringToAppendLength;
 		bs->bsd_Buffer[ bs->bsd_Size ] = '\0'; //force null termination
+		DEBUG("[BufStringDiskAddSize] %ld\n", bs->bsd_Size );
 	}
 	
 	return 0;

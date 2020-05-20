@@ -21,6 +21,8 @@
 #include <stdlib.h>
 #include <util/log/log.h>
 #include <string.h>
+#include <fcntl.h>
+#include <sys/mman.h>
 
 #ifndef NULL
 #define NULL 0
@@ -92,11 +94,52 @@ FLONG ListStringDiskAdd( ListStringDisk *ls, char *data, FLONG size )
 		{
 			if( ls->lsd_FileHandler <= 0 )	// file was not created, lets create it
 			{
+				ls->lsd_Size = 0;
 				
+				strcpy( ls->lsd_TemFileName, LIST_STRING_TEMP_FILE_TEMPLATE );
+				char *tfname = mktemp( ls->lsd_TemFileName );
+				
+				if( strlen( ls->lsd_TemFileName ) == 0 )
+				{
+					FERROR("mktemp failed!");
+					return -1;
+				}
+				else
+				{
+					ls->lsd_FileHandler = open( ls->lsd_TemFileName, O_RDWR | O_CREAT | O_EXCL, 0600 );
+					if( ls->lsd_FileHandler == -1 )
+					{
+						FERROR("temporary file open failed!");
+						return -1;
+					}
+				}
+				
+				ListStringDisk *cur = ls->lsd_Next;
+				ListStringDisk *rem = cur;
+
+				while( cur != NULL )
+				{
+					rem = cur;
+					cur = cur->lsd_Next;
+
+					if( rem != NULL )
+					{
+						if( rem->lsd_Data != NULL )
+						{
+							int wrote = write( ls->lsd_FileHandler, rem->lsd_Data, rem->lsd_Size );
+							ls->lsd_Size += rem->lsd_Size;
+							FFree( rem->lsd_Data );
+						}
+						FFree( rem );
+					}
+				}
+				ls->lsd_Next = NULL;
+				ls->lsd_Last = NULL;
 			}
 			else
 			{
-				
+				int wrote = write( ls->lsd_FileHandler, data, size );
+				ls->lsd_Size += size;
 			}
 		}
 		else	// we can do everything in old way (in memory)
@@ -133,32 +176,38 @@ ListStringDisk *ListStringDiskJoin( ListStringDisk *ls )
 	ls->lsd_Data = FCalloc( ls->lsd_Size + 1, sizeof(char));
 	if( ls->lsd_Data != NULL )
 	{
-		ListStringDisk *cur = ls->lsd_Next;
-		ListStringDisk *rem = cur;
-		char *pos = ls->lsd_Data;
-
-		while( cur != NULL )
+		if( ls->lsd_FileHandler <= 0 )
 		{
-			memcpy( pos, cur->lsd_Data, cur->lsd_Size );
+			ListStringDisk *cur = ls->lsd_Next;
+			ListStringDisk *rem = cur;
+			char *pos = ls->lsd_Data;
 
-			pos += cur->lsd_Size;
-			rem = cur;
-			cur = cur->lsd_Next;
-
-			if( rem != NULL )
+			while( cur != NULL )
 			{
-				if( rem->lsd_Data != NULL )
-				{
-					FFree( rem->lsd_Data );
-				}
-				FFree( rem );
-			}
-		}
-		ls->lsd_Next = NULL;
-		ls->lsd_Last = NULL;
-		
-		ls->lsd_Data[ ls->lsd_Size ] = 0;
+				memcpy( pos, cur->lsd_Data, cur->lsd_Size );
 
+				pos += cur->lsd_Size;
+				rem = cur;
+				cur = cur->lsd_Next;
+
+				if( rem != NULL )
+				{
+					if( rem->lsd_Data != NULL )
+					{
+						FFree( rem->lsd_Data );
+					}
+					FFree( rem );
+				}
+			}
+			ls->lsd_Next = NULL;
+			ls->lsd_Last = NULL;
+		
+			ls->lsd_Data[ ls->lsd_Size ] = 0;
+		}
+		else	// all data were stored on disk before
+		{
+			
+		}
 		return ls;
 	}
 	FERROR("Cannot allocate memory %ld\n", ls->lsd_Size );

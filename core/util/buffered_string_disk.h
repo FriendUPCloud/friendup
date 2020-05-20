@@ -21,7 +21,7 @@
 #define BUF_STRING_DISK_MAX 1024 * 12
 #define BUF_STRING_DISK_MAX_IN_MEM 10*1024*1024
 
-#define TEMP_FILE_TEMPLATE "/tmp/Friendup/FriendBufStringDisk_XXXXXXXXXXXXXXXXXX"
+#define BUF_STRING_TEMP_FILE_TEMPLATE "/tmp/Friendup/FriendBufStringDisk_XXXXXXXXXXXXXXXXXX"
 
 //
 // BufferString structure

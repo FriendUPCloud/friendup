@@ -33,7 +33,7 @@ typedef struct ListStringDisk
 	
 	FILE						*lsd_File;			// poitner to file
 	char						*lsd_FName;		// pointer to file name
-	char						lsd_TemFileName;
+	char						lsd_TemFileName[ 128 ];
 	int							lsd_FileHandler;
 	struct ListStringDisk		*lsd_Next;
 	struct ListStringDisk		*lsd_Last;		// we always hold pointer to last structure
