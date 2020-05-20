@@ -73,7 +73,7 @@ char *Base64Encode( const unsigned char* data, int length, int *dstlen )
 	unsigned char c1 = 0, c2 = 0, c3 = 0;
 	int j = 0, i;
 
-	char* encoded = FMalloc( outSize + 1 );
+	char* encoded = (char *)FMalloc( (outSize + 16) );	// was +1 before
 	if( encoded == NULL )
 	{
 		FERROR("Cannot allocate memory in Base64Encode\n");
@@ -103,9 +103,13 @@ char *Base64Encode( const unsigned char* data, int length, int *dstlen )
 	}
 
 	if( padding > 0 )
+	{
 		encoded[i++] = '=';
+	}
 	if( padding > 1 )
+	{
 		encoded[i++] = '=';
+	}
 	encoded[i] = 0;
 	
 	*dstlen = outSize;

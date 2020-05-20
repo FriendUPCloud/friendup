@@ -8,6 +8,7 @@
 *                                                                              *
 *****************************************************************************©*/
 
+#include <core/types.h>
 #include "element_list.h"
 #include "string.h"
 
@@ -36,6 +37,10 @@ IntListEl *ILEParseString( char *str )
 		if( *curToken == 0 || *curToken == ',' )
 		{
 			char *end;
+			char oldChar = *curToken;
+			char *oldCurToken = curToken;
+			int64_t var = 0;
+			IntListEl *el = NULL;
 			
 			if( *curToken != 0 )
 			{
@@ -44,8 +49,8 @@ IntListEl *ILEParseString( char *str )
 			curToken++;
 			
 			//printf("Entry found: %s\n", startToken );
-			int64_t var = strtol( startToken, &end, 0 );
-			IntListEl *el = FCalloc( 1, sizeof( IntListEl ) );
+			var = strtol( startToken, &end, 0 );
+			el = FCalloc( 1, sizeof( IntListEl ) );
 			if( el != NULL )
 			{
 				el->i_Data = var;
@@ -54,6 +59,7 @@ IntListEl *ILEParseString( char *str )
 			}
 			// do something here
 		
+			*oldCurToken = oldChar;
 			startToken = curToken;
 		
 			if( *curToken == 0 )
@@ -94,6 +100,10 @@ UIntListEl *UILEParseString( char *str )
 		if( *curToken == 0 || *curToken == ',' )
 		{
 			char *end;
+			char oldChar = *curToken;
+			char *oldCurToken = curToken;
+			uint64_t var = 0;
+			UIntListEl *el = NULL;
 			
 			if( *curToken != 0 )
 			{
@@ -102,8 +112,8 @@ UIntListEl *UILEParseString( char *str )
 			curToken++;
 			
 			//printf("Entry found: %s\n", startToken );
-			uint64_t var = strtoul( startToken, &end, 0 );
-			UIntListEl *el = FCalloc( 1, sizeof( UIntListEl ) );
+			var = strtoul( startToken, &end, 0 );
+			el = FCalloc( 1, sizeof( UIntListEl ) );
 			if( el != NULL )
 			{
 				el->i_Data = var;
@@ -112,6 +122,7 @@ UIntListEl *UILEParseString( char *str )
 			}
 			// do something here
 		
+			*oldCurToken = oldChar;	//lets fix string
 			startToken = curToken;
 		
 			if( *curToken == 0 )
@@ -152,6 +163,10 @@ StringListEl *SLEParseString( char *str )
 		if( *curToken == 0 || *curToken == ',' )
 		{
 			char *end;
+			char oldChar = *curToken;
+			char *oldCurToken = curToken;
+			int64_t var = 0;
+			StringListEl *el = NULL;
 			
 			if( *curToken != 0 )
 			{
@@ -159,8 +174,8 @@ StringListEl *SLEParseString( char *str )
 			}
 			
 			curToken++;
-			int64_t var = strtol( startToken, &end, 0 );
-			StringListEl *el = FCalloc( 1, sizeof( StringListEl ) );
+			var = strtol( startToken, &end, 0 );
+			el = FCalloc( 1, sizeof( StringListEl ) );
 			if( el != NULL )
 			{
 				el->s_Data = StringDuplicate( startToken );
@@ -169,6 +184,7 @@ StringListEl *SLEParseString( char *str )
 			}
 			// do something here
 		
+			*oldCurToken = oldChar;
 			startToken = curToken;
 		
 			if( *curToken == 0 )
