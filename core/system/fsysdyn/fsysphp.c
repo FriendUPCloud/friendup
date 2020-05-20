@@ -393,12 +393,12 @@ BufStringDisk *PHPCallDisk( const char *command )
 
 		if( ret == 0 )
 		{
-			DEBUG("Timeout!\n");
+			DEBUG("[PHPCallDisk] Timeout!\n");
 			break;
 		}
 		else if(  ret < 0 )
 		{
-			DEBUG("Error\n");
+			DEBUG("[PHPCallDisk] Error\n");
 			break;
 		}
 		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
@@ -415,9 +415,13 @@ BufStringDisk *PHPCallDisk( const char *command )
 		else
 		{
 			errCounter++;
-			DEBUG("ErrCounter: %d\n", errCounter );
+			DEBUG("[PHPCallDisk] ErrCounter: %d\n", errCounter );
 
-			break;
+			if( errCounter > 10 )
+			{
+				break;
+			}
+			usleep( 500 );
 		}
 	}
 #else
