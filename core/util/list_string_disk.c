@@ -128,40 +128,40 @@ FLONG ListStringDiskAdd( ListStringDisk *ls, char *data, FLONG size )
 // join all lists to one string
 //
 
-ListStringDisk *ListStringJoin( ListStringDisk *ls )
+ListStringDisk *ListStringDiskJoin( ListStringDisk *ls )
 {
-	ls->ls_Data = FCalloc( ls->ls_Size + 1, sizeof(char));
-	if( ls->ls_Data != NULL )
+	ls->lsd_Data = FCalloc( ls->lsd_Size + 1, sizeof(char));
+	if( ls->lsd_Data != NULL )
 	{
-		ListStringDisk *cur = ls->ls_Next;
+		ListStringDisk *cur = ls->lsd_Next;
 		ListStringDisk *rem = cur;
-		char *pos = ls->ls_Data;
+		char *pos = ls->lsd_Data;
 
 		while( cur != NULL )
 		{
-			memcpy( pos, cur->ls_Data, cur->ls_Size );
+			memcpy( pos, cur->lsd_Data, cur->lsd_Size );
 
-			pos += cur->ls_Size;
+			pos += cur->lsd_Size;
 			rem = cur;
-			cur = cur->ls_Next;
+			cur = cur->lsd_Next;
 
 			if( rem != NULL )
 			{
-				if( rem->ls_Data != NULL )
+				if( rem->lsd_Data != NULL )
 				{
-					FFree( rem->ls_Data );
+					FFree( rem->lsd_Data );
 				}
 				FFree( rem );
 			}
 		}
-		ls->ls_Next = NULL;
-		ls->ls_Last = NULL;
+		ls->lsd_Next = NULL;
+		ls->lsd_Last = NULL;
 		
-		ls->ls_Data[ ls->ls_Size ] = 0;
+		ls->lsd_Data[ ls->lsd_Size ] = 0;
 
 		return ls;
 	}
-	FERROR("Cannot allocate memory %ld\n", ls->ls_Size );
+	FERROR("Cannot allocate memory %ld\n", ls->lsd_Size );
 	
 	return NULL;
 }
