@@ -428,11 +428,7 @@ BufStringDisk *PHPCallDisk( const char *command )
 			errCounter++;
 			DEBUG("[PHPCallDisk] ErrCounter: %d\n", errCounter );
 
-			if( errCounter > 10 )
-			{
-				break;
-			}
-			usleep( 500 );
+			break;
 		}
 	}
 #else
@@ -1237,7 +1233,7 @@ int FileClose( struct File *s, void *fp )
 				{
 					if( sd->fname != NULL )
 					{
-						//remove( sd->fname );
+						remove( sd->fname );
 					}
 				}
 			}
@@ -1299,7 +1295,7 @@ int FileClose( struct File *s, void *fp )
 				
 				if( encPath ) FFree( encPath );
 				
-				//remove( sd->fname );
+				remove( sd->fname );
 			}
 			
 			if ( sd->fname != NULL ){ FFree( sd->fname ); sd->fname = NULL; }
