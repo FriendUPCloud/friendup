@@ -597,7 +597,8 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 							$mime = $info['mime'];
 					
 						// Try to guess the mime type
-						if( !$mime && $ext = end( explode( '.', $fname ) ) )
+						$ext = explode( '.', $fname );
+						if( !$mime && $ext = end( $ext ) )
 						{
 							switch( strtolower( $ext ) )
 							{
