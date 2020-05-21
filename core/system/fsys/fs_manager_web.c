@@ -1817,7 +1817,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 															break;
 														}
 													
-														DEBUG("\n\n\n\n[FSMWebRequest] dataread %ld\n", dataread );
 														readall += dataread;
 													
 														if( dataread > 0 )
@@ -1825,7 +1824,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 															int bytes = 0;
 														
 															dataread = FileSystemActivityCheckAndUpdate( l, &(dstrootf->f_Activity), dataread );
-															DEBUG("\n\n\n\n[FSMWebRequest] dataread2 %ld\n", dataread );
 
 															bytes = dsthand->FileWrite( wfp, dataBuffer, dataread );
 
