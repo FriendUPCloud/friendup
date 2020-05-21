@@ -1571,7 +1571,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 
 								Notify( { title: i18n( 'i18n_upload_completed' ), 'text':i18n('i18n_uploaded') }, false, function()
 								{
-									OpenWindowByFileinfo( { Title: 'Downloads', Path: 'Home:Downloads/', Type: 'Directory', MetaType: 'Directory' } );
+									OpenWindowByFileinfo( { Title: 'Downloads', Path: info.targetPath ? info.targetPath : 'Home:Downloads/', Type: 'Directory', MetaType: 'Directory' } );
 								} );
 								return true;
 							}
