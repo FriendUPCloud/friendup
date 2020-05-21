@@ -420,7 +420,7 @@ BufStringDisk *PHPCallDisk( const char *command )
 			DEBUG( "[PHPCallDisk] before adding to list\n");
 			BufStringDiskAddSize( ls, buf, size );
 			
-			DEBUG( "[PHPCallDisk] after adding to list: %s\n", buf );
+			//DEBUG( "[PHPCallDisk] after adding to list: %s\n", buf );
 			//res += size;
 		}
 		else
