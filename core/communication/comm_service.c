@@ -825,7 +825,7 @@ int CommServiceThreadServer( FThread *ptr )
 						{
 							count = (int)bs->bs_Size;
 							
-							DEBUG2("[COMMSERV] Readed from socket %lu\n", (unsigned long)bs->bs_Size );
+							DEBUG2("[COMMSERV] Read from socket %lu\n", (unsigned long)bs->bs_Size );
 							
 							DataForm *df = (DataForm *)bs->bs_Buffer;
 							

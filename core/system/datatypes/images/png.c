@@ -237,7 +237,7 @@ int ImageSavePNG( FImage *img, const char *filename )
 /**
  * Load Image from disk (PNG)
  *
- * @param fname path with filename from which file will be readed
+ * @param fname path with filename from which file will be read
  * @return new FImage structure when success, otherwise NULL
  */
 FImage *ImageLoadPNG( const char *fname )

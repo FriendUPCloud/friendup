@@ -1436,7 +1436,7 @@ inline Socket* SocketAcceptPair( Socket* sock, struct AcceptPair *p )
  * @param data pointer to char table where data will be stored
  * @param length size of char table
  * @param expectedLength tells us how much exactly we know we need until we can stop reading (0 if unknown)
- * @return number of bytes readed from socket
+ * @return number of bytes read from socket
  */
 
 inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned int expectedLength )
@@ -1661,7 +1661,7 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
  * @param data pointer to char table where data will be stored
  * @param length size of char table
  * @param pass (obsolete?)
- * @return number of bytes readed from socket
+ * @return number of bytes read from socket
  */
 
 int SocketReadBlocked( Socket* sock, char* data, unsigned int length, unsigned int pass __attribute__((unused)))
@@ -1745,7 +1745,7 @@ int SocketReadBlocked( Socket* sock, char* data, unsigned int length, unsigned i
  * @param length size of char table
  * @param pass (obsolete?)
  * @param sec number of timeout seconds
- * @return number of bytes readed from socket
+ * @return number of bytes read from socket
  */
 
 int SocketWaitRead( Socket* sock, char* data, unsigned int length, unsigned int pass __attribute__((unused)), int sec __attribute__((unused)))
@@ -2115,7 +2115,7 @@ BufString *SocketReadPackage( Socket *sock )
 			}
 		}
 		while( TRUE );
-		DEBUG("[SocketReadPackage]  readed\n");
+		DEBUG("[SocketReadPackage] read\n");
 
 		return bs;
 	}

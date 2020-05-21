@@ -1146,9 +1146,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 				* @param sessionid - (required) session id of logged user
 				* @param path - (required) path to file which you want to read
 				* @param mode - (required) "rb" - read bytes, "rs" - read as stream
-				* @param offset - offset from which file will be readed
+				* @param offset - offset from which file will be read
 				* @param bytes - number of bytes which you want to read
-				* @param download - if set to 1 then whole file will be readed and no friend special header will be added
+				* @param download - if set to 1 then whole file will be read and no friend special header will be added
 				* @return file content when success, otherwise error number
 				*/
 				/// @endcond
@@ -1658,14 +1658,14 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									if( size > 0 )
 									{
 										char tmp[ 128 ];
-										sprintf( tmp, "ok<!--separate-->{ \"FileDataStored\" : \"%d\" }", size );
+										sprintf( tmp, "ok<!--separate-->{\"FileDataStored\":\"%ld\"}", size );
 										HttpAddTextContent( response, tmp );
 									}
 									else
 									{
 										char dictmsgbuf[ 256 ];
 										snprintf( dictmsgbuf, sizeof( dictmsgbuf ), 
-											"fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", 
+											"fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", 
 											l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , 
 											DICT_CANNOT_ALLOCATE_MEMORY 
 										);
@@ -1689,7 +1689,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									char dictmsgbuf[ 256 ];
 									char dictmsgbuf1[ 196 ];
 									snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_CANNOT_OPEN_FILE], path );
-									snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_CANNOT_OPEN_FILE );
+									snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", dictmsgbuf1 , DICT_CANNOT_OPEN_FILE );
 									HttpAddTextContent( response, dictmsgbuf );
 								}
 							}
@@ -1698,7 +1698,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								char dictmsgbuf[ 256 ];
 								char dictmsgbuf1[ 196 ];
 								snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_NO_ACCESS_TO], path );
-								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_NO_ACCESS_TO );
+								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", dictmsgbuf1 , DICT_NO_ACCESS_TO );
 								HttpAddTextContent( response, dictmsgbuf );
 							}
 						}
@@ -1707,7 +1707,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							char dictmsgbuf[ 256 ];
 							char dictmsgbuf1[ 256 ];
 							snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "data" );
-							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 							HttpAddTextContent( response, dictmsgbuf );
 						}
 					}
@@ -1716,7 +1716,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						char dictmsgbuf[ 256 ];
 						char dictmsgbuf1[ 256 ];
 						snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "mode" );
-						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 						HttpAddTextContent( response, dictmsgbuf );
 					}
 					
@@ -1860,11 +1860,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 										char tmp[ 128 ];
 										if( closeError != 0 )
 										{
-											sprintf( tmp, "fail<!--separate-->{ \"response\": \"0\", \"Written\": \"%lu\",\"Error\":\"%d\"}", written, closeError );
+											sprintf( tmp, "fail<!--separate-->{\"response\":\"0\",\"Written\":\"%lu\",\"Error\":\"%d\"}", written, closeError );
 										}
 										else
 										{
-											sprintf( tmp, "ok<!--separate-->{ \"response\": \"0\", \"Written\": \"%lu\"}", written );
+											sprintf( tmp, "ok<!--separate-->{\"response\":\"0\",\"Written\":\"%lu\"}", written );
 										}
 
 										HttpAddTextContent( response, tmp );
@@ -1890,7 +1890,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								
 										dstrootf->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
 										int error = dsthand->MakeDir( dstrootf, topath );
-										sprintf( tmp, "ok<!--separate-->{ \"response\": \"%d\"}", error );
+										sprintf( tmp, "ok<!--separate-->{\"response\":\"%d\"}", error );
 								
 										HttpAddTextContent( response, tmp );
 									}
@@ -3162,7 +3162,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							}
 							fclose( localfp );
 							
-							DEBUG("[FSMWebRequest] Archive readed, bytes %d\n", readbytes );
+							DEBUG("[FSMWebRequest] Archive read, bytes %d\n", readbytes );
 							
 							// archive was stored on disk
 							

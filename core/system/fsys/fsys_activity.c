@@ -72,7 +72,7 @@ int LoadFilesystemActivityDB( void *sb, FilesystemActivity *act, FULONG id, FBOO
 				if( row[ 3 ] != NULL )
 				{
 					char *end;
-					act->fsa_ReadedBytesLeft = strtoul( (char *)row[ 3 ],  &end, 0 );
+					act->fsa_ReadBytesLeft = strtoul( (char *)row[ 3 ],  &end, 0 );
 				}
 				if( row[ 4 ] != NULL )
 				{
@@ -122,7 +122,7 @@ int UpdateFilesystemActivityDB( void *sb, FilesystemActivity *act )
 	{
 		char temptext[ 256 ];
 		
-		snprintf( temptext, sizeof(temptext), "UPDATE `FilesystemActivity` SET `StoredBytesLeft`='%ld',`ReadedBytesLeft`='%ld' WHERE `ID` = '%lu'", act->fsa_StoredBytesLeft, act->fsa_ReadedBytesLeft, act->fsa_ID );
+		snprintf( temptext, sizeof(temptext), "UPDATE `FilesystemActivity` SET `StoredBytesLeft`='%ld',`ReadedBytesLeft`='%ld' WHERE `ID` = '%lu'", act->fsa_StoredBytesLeft, act->fsa_ReadBytesLeft, act->fsa_ID );
 		sqllib->QueryWithoutResults( sqllib, temptext );
 
 		l->LibrarySQLDrop( l, sqllib );
