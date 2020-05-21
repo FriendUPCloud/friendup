@@ -35,6 +35,7 @@ typedef struct ListStringDisk
 	char						*lsd_FName;		// pointer to file name
 	char						lsd_TemFileName[ 128 ];
 	int							lsd_FileHandler;
+	FBOOL						lsd_ListJoined;
 	struct ListStringDisk		*lsd_Next;
 	struct ListStringDisk		*lsd_Last;		// we always hold pointer to last structure
 }ListStringDisk;
@@ -55,7 +56,7 @@ void ListStringDiskDelete(ListStringDisk *ls);
 // add entry to list
 //
 
-FLONG ListStringDiskAdd( ListStringDisk *add, char *data, FLONG size );
+FQUAD ListStringDiskAdd( ListStringDisk *add, char *data, FLONG size );
 
 //
 // join all lists to one string

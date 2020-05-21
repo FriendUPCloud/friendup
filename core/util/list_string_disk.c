@@ -21,6 +21,9 @@
 #include <stdlib.h>
 #include <util/log/log.h>
 #include <string.h>
+#include <unistd.h>
+#include <errno.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/mman.h>
 
@@ -75,6 +78,18 @@ void ListStringDiskDelete( ListStringDisk *ls )
 		}
 		else	// looks like everything is in file
 		{
+			// data stored on disk
+			if( ls->lsd_ListJoined == TRUE )	// if string was joined = was mapped!
+			{
+				if( ls->lsd_Data != NULL )
+				{
+					munmap( ls->lsd_Data, ls->lsd_Size );
+					ls->lsd_Data = NULL;
+				}
+			}
+			
+			close( ls->lsd_FileHandler );
+			unlink( ls->lsd_TemFileName );
 			
 		}
 		FFree( ls );
@@ -85,13 +100,14 @@ void ListStringDiskDelete( ListStringDisk *ls )
 // add entry to list
 //
 
-FLONG ListStringDiskAdd( ListStringDisk *ls, char *data, FLONG size )
+FQUAD ListStringDiskAdd( ListStringDisk *ls, char *data, FLONG size )
 {
 	ListStringDisk *nls = FCalloc( 1, sizeof( ListStringDisk ) );
 	if( ls != NULL && size > 0 && nls != NULL )
 	{
 		if( (ls->lsd_Size + size ) > LIST_STRING_DISK_MAX_IN_MEM )
 		{
+			DEBUG("[ListStringDisk] handler: %d", ls->lsd_FileHandler );
 			if( ls->lsd_FileHandler <= 0 )	// file was not created, lets create it
 			{
 				ls->lsd_Size = 0;
@@ -101,7 +117,7 @@ FLONG ListStringDiskAdd( ListStringDisk *ls, char *data, FLONG size )
 				
 				if( strlen( ls->lsd_TemFileName ) == 0 )
 				{
-					FERROR("mktemp failed!");
+					FERROR("[ListStringDisk] mktemp failed!");
 					return -1;
 				}
 				else
@@ -109,11 +125,12 @@ FLONG ListStringDiskAdd( ListStringDisk *ls, char *data, FLONG size )
 					ls->lsd_FileHandler = open( ls->lsd_TemFileName, O_RDWR | O_CREAT | O_EXCL, 0600 );
 					if( ls->lsd_FileHandler == -1 )
 					{
-						FERROR("temporary file open failed!");
+						FERROR("[ListStringDisk] temporary file open failed!");
 						return -1;
 					}
 				}
 				
+				// now lets release buffer!
 				ListStringDisk *cur = ls->lsd_Next;
 				ListStringDisk *rem = cur;
 
@@ -136,14 +153,15 @@ FLONG ListStringDiskAdd( ListStringDisk *ls, char *data, FLONG size )
 				ls->lsd_Next = NULL;
 				ls->lsd_Last = NULL;
 			}
-			else
-			{
-				int wrote = write( ls->lsd_FileHandler, data, size );
-				ls->lsd_Size += size;
-			}
+			
+			// lets write data!
+			int wrote = write( ls->lsd_FileHandler, data, size );
+			ls->lsd_Size += size;
+			return size;
 		}
 		else	// we can do everything in old way (in memory)
 		{
+			DEBUG("[ListStringDisk] data added to memory: %d\n", size );
 			if( ( nls->lsd_Data = FCalloc( size + 1, sizeof( char ) ) ) != NULL )
 			{
 				memcpy( nls->lsd_Data, data, size );
@@ -152,6 +170,8 @@ FLONG ListStringDiskAdd( ListStringDisk *ls, char *data, FLONG size )
 				ls->lsd_Last->lsd_Next = nls;
 				ls->lsd_Last = nls;
 				ls->lsd_Size += size;
+				
+				return size;
 			}
 			else
 			{
@@ -173,10 +193,10 @@ FLONG ListStringDiskAdd( ListStringDisk *ls, char *data, FLONG size )
 
 ListStringDisk *ListStringDiskJoin( ListStringDisk *ls )
 {
-	ls->lsd_Data = FCalloc( ls->lsd_Size + 1, sizeof(char));
-	if( ls->lsd_Data != NULL )
+	if( ls->lsd_FileHandler <= 0 )
 	{
-		if( ls->lsd_FileHandler <= 0 )
+		ls->lsd_Data = FCalloc( ls->lsd_Size + 1, sizeof(char));
+		if( ls->lsd_Data != NULL )
 		{
 			ListStringDisk *cur = ls->lsd_Next;
 			ListStringDisk *rem = cur;
@@ -204,15 +224,29 @@ ListStringDisk *ListStringDiskJoin( ListStringDisk *ls )
 		
 			ls->lsd_Data[ ls->lsd_Size ] = 0;
 		}
-		else	// all data were stored on disk before
+		else
 		{
-			
-		}
-		return ls;
-	}
-	FERROR("Cannot allocate memory %ld\n", ls->lsd_Size );
+			FERROR("[ListStringDisk] Cannot allocate memory %ld\n", ls->lsd_Size );
 	
-	return NULL;
+			return NULL;
+		}
+	}
+	else	// all data were stored on disk before
+	{
+		FQUAD incomingBufferLength = lseek( ls->lsd_FileHandler, 0, SEEK_END );
+		ls->lsd_Data = mmap( 0, incomingBufferLength, PROT_READ | PROT_WRITE, MAP_SHARED, ls->lsd_FileHandler, 0 );
+		
+		if( ls->lsd_Data == MAP_FAILED )
+		{
+			Log( FLOG_ERROR, "[ListStringDisk] Cannot allocate memory for stream, length: %d\n", incomingBufferLength );
+			return NULL;
+		}
+	}
+	
+	ls->lsd_ListJoined = TRUE;
+	
+	return ls;
+	
 }
 
 
