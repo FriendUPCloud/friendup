@@ -544,6 +544,8 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				
 				$fname = explode( ':', $args->path );
 				$fname = end( $fname );
+
+				set_time_limit( 0 );
 				
 				$subPath = $fname;
 				

@@ -550,6 +550,8 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				
 				$fname = explode( ':', $args->path );
 				$fname = end( $fname );
+
+				set_time_limit( 0 );
 				
 				$subPath = $fname;
 				
