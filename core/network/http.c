@@ -1026,7 +1026,7 @@ Content-Type: application/octet-stream
 				
 				if( startOfFile != NULL )
 				{
-					DEBUG("START CONTENT TO START FILE %d\n", startOfFile - http->http_Content );
+					DEBUG("START CONTENT TO START FILE %ld\n", startOfFile - http->http_Content );
 
 					FQUAD res;
 

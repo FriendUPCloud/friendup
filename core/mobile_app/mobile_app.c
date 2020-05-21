@@ -1310,7 +1310,7 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 			//notif->n_NotificationsSent = NotificationManagerGetNotificationsSentDB( sb->sl_NotificationManager, notif->n_ID );
 		}
 	}
-	else	// Notification was not provided by function, must be readed from DB
+	else	// Notification was not provided by function, must be read from DB
 	{
 		DEBUG("notif is equal to NULL\n");
 		return 1;

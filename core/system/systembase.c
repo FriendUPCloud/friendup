@@ -1858,8 +1858,8 @@ void CheckAndUpdateDB( struct SystemBase *l )
 							char *script;
 							if( ( script = FCalloc( fsize+1, sizeof(char) ) ) != NULL )
 							{
-								int readedbytes = 0;
-								if( ( readedbytes = fread( script, fsize, 1, fp ) ) > 0 )
+								int readbytes = 0;
+								if( ( readbytes = fread( script, fsize, 1, fp ) ) > 0 )
 								{
 									char *command = script;
 									int i;

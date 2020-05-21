@@ -190,7 +190,8 @@ char *GetFileName( const char *path )
 
 //#define PHP_READ_SIZE 262144
 //#define PHP_READ_SIZE 2048
-#define PHP_READ_SIZE 132144
+//#define PHP_READ_SIZE 132144
+#define PHP_READ_SIZE (1024 * 1024 * 2)
 #define USE_NPOPEN_POLL
 
 //
@@ -397,8 +398,6 @@ BufStringDisk *PHPCallDisk( const char *command )
 
 	while( TRUE )
 	{
-		DEBUG("[PHPCallDisk] in loop\n");
-		
 		int ret = poll( fds, 2, FILESYSTEM_MOD_TIMEOUT * 1000);
 
 		if( ret == 0 )
@@ -413,7 +412,7 @@ BufStringDisk *PHPCallDisk( const char *command )
 		}
 		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
 
-		//DEBUG( "[PHPCallDisk] Adding %d of data\n", size );
+		DEBUG( "[PHPCallDisk] Adding %d of data\n", size );
 		if( size > 0 )
 		{
 			//DEBUG( "[PHPCallDisk] before adding to list\n");
@@ -443,7 +442,6 @@ BufStringDisk *PHPCallDisk( const char *command )
 		// Initialize the file descriptor set. 
 		FD_ZERO( &set );
 		FD_SET( pofd.np_FD[ NPOPEN_CONSOLE ], &set);
-		DEBUG("[PHPCallDisk] in loop\n");
 		
 		int ret = select( pofd.np_FD[ NPOPEN_CONSOLE ]+1, &set, NULL, NULL, &timeout );
 		// Make a new buffer and read
@@ -458,6 +456,7 @@ BufStringDisk *PHPCallDisk( const char *command )
 			break;
 		}
 		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
+		DEBUG("[PHPCallDisk] in loop, received: %d\n", size );
 
 		if( size > 0 )
 		{

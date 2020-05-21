@@ -550,7 +550,7 @@ static inline int MountFSNoSubMount( DeviceManager *dm, struct TagItem *tl, File
 	FULONG id = 0, factivityID = 0, keysid = 0, userID = 0, userGroupID = 0;
 	FLONG storedBytes = 0;
 	FLONG storedBytesLeft = 0;
-	FLONG readedBytesLeft = 0;
+	FLONG readBytesLeft = 0;
 	FULONG dbUserID = 0;
 	File *retFile = NULL;
 	FHandler *filesys = NULL;
@@ -815,7 +815,7 @@ AND f.Name = '%s'",
 				
 				if( row[ 11 ] != NULL ){ char *end; storedBytesLeft = strtoul( (char *)row[ 11 ],  &end, 0 ); }
 				
-				if( row[ 12 ] != NULL ){ char *end; readedBytesLeft = strtoul( (char *)row[ 12 ],  &end, 0 ); }
+				if( row[ 12 ] != NULL ){ char *end; readBytesLeft = strtoul( (char *)row[ 12 ],  &end, 0 ); }
 				
 				if( row[ 13 ] != NULL )
 				{
@@ -1094,7 +1094,7 @@ AND f.Name = '%s'",
 				}
 				retFile->f_DevServer = StringDuplicate( server );
 				
-				retFile->f_Activity.fsa_ReadedBytesLeft = readedBytesLeft;
+				retFile->f_Activity.fsa_ReadBytesLeft = readBytesLeft;
 				retFile->f_Activity.fsa_StoredBytesLeft = storedBytesLeft;
 				retFile->f_Activity.fsa_FilesystemID = retFile->f_ID;
 				retFile->f_Activity.fsa_ID = factivityID;
@@ -1226,7 +1226,7 @@ int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, cha
 	FULONG id = 0, factivityID = 0, keysid = 0, userID = 0, userGroupID = 0;
 	FLONG storedBytes = 0;
 	FLONG storedBytesLeft = 0;
-	FLONG readedBytesLeft = 0;
+	FLONG readBytesLeft = 0;
 	FULONG dbUserID = 0;
 	FHandler *filesys = NULL;
 	File *retFile = NULL;
@@ -1492,7 +1492,7 @@ AND f.Name = '%s'",
 				
 				if( row[ 11 ] != NULL ){ char *end; storedBytesLeft = strtoul( (char *)row[ 11 ],  &end, 0 ); }
 				
-				if( row[ 12 ] != NULL ){ char *end; readedBytesLeft = strtoul( (char *)row[ 12 ],  &end, 0 ); }
+				if( row[ 12 ] != NULL ){ char *end; readBytesLeft = strtoul( (char *)row[ 12 ],  &end, 0 ); }
 				
 				if( row[ 13 ] != NULL )
 				{
@@ -1770,7 +1770,7 @@ AND f.Name = '%s'",
 				}
 				retFile->f_DevServer = StringDuplicate( server );
 				
-				retFile->f_Activity.fsa_ReadedBytesLeft = readedBytesLeft;
+				retFile->f_Activity.fsa_ReadBytesLeft = readBytesLeft;
 				retFile->f_Activity.fsa_StoredBytesLeft = storedBytesLeft;
 				retFile->f_Activity.fsa_FilesystemID = retFile->f_ID;
 				retFile->f_Activity.fsa_ID = factivityID;
@@ -3273,7 +3273,7 @@ int DeviceRelease( DeviceManager *dm, File *rootDev )
 		snprintf( temptext, sizeof(temptext), "UPDATE `Filesystem` SET `StoredBytes` = '%ld' WHERE `ID` = '%lu'", rootDev->f_BytesStored, rootDev->f_ID );
 		sqllib->QueryWithoutResults( sqllib, temptext );
 		
-		snprintf( temptext, sizeof(temptext), "UPDATE `FilesystemActivity` SET `StoredBytesLeft`='%ld',`ReadedBytesLeft`='%ld' WHERE `FilesystemID` = '%lu'", rootDev->f_Activity.fsa_StoredBytesLeft, rootDev->f_Activity.fsa_ReadedBytesLeft, rootDev->f_ID );
+		snprintf( temptext, sizeof(temptext), "UPDATE `FilesystemActivity` SET `StoredBytesLeft`='%ld',`ReadedBytesLeft`='%ld' WHERE `FilesystemID` = '%lu'", rootDev->f_Activity.fsa_StoredBytesLeft, rootDev->f_Activity.fsa_ReadBytesLeft, rootDev->f_ID );
 	
 		FHandler *fsys = (FHandler *)rootDev->f_FSys;
 
@@ -3316,7 +3316,7 @@ int DeviceUnMount( DeviceManager *dm, File *rootDev, User *usr )
 		snprintf( temptext, sizeof(temptext), "UPDATE `Filesystem` SET `StoredBytes` = '%ld' WHERE `ID` = '%lu'", rootDev->f_BytesStored, rootDev->f_ID );
 		sqllib->QueryWithoutResults( sqllib, temptext );
 		
-		snprintf( temptext, sizeof(temptext), "UPDATE `FilesystemActivity` SET `StoredBytesLeft`='%ld',`ReadedBytesLeft`='%ld' WHERE `ID` = '%lu'", rootDev->f_Activity.fsa_StoredBytesLeft, rootDev->f_Activity.fsa_ReadedBytesLeft, rootDev->f_Activity.fsa_ID );
+		snprintf( temptext, sizeof(temptext), "UPDATE `FilesystemActivity` SET `StoredBytesLeft`='%ld',`ReadedBytesLeft`='%ld' WHERE `ID` = '%lu'", rootDev->f_Activity.fsa_StoredBytesLeft, rootDev->f_Activity.fsa_ReadBytesLeft, rootDev->f_Activity.fsa_ID );
 		sqllib->QueryWithoutResults( sqllib, temptext );
 
 		Log( FLOG_INFO, "DeviceUnMount: %s\n", temptext );

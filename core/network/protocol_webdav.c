@@ -441,7 +441,7 @@ int isError( char *val )
  *
  * @param lsb pointer to SystemBase
  * @param req pointer to Http request
- * @param data pointer to data readed by sockets
+ * @param data pointer to data read by sockets
  * @param len size of provided data
  * 
  * @return new Http structure is returned
@@ -1244,7 +1244,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 								if( futbytes > req->http_RangeMax )
 								{
 									storeBytes -= (futbytes-req->http_RangeMax);
-									DEBUG("More bytes readed then max\n");
+									DEBUG("More bytes read then max\n");
 								}
 							}
 							
@@ -1285,7 +1285,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 				
 				while( ( dataread = actFS->FileRead( fp, dataBuffer, FS_READ_BUFFER ) ) != -1 )
 				{
-					DEBUG("Readed %d\n", dataread );
+					DEBUG("Read %d\n", dataread );
 					//BufStringAddSize( bs, dataBuffer, dataread );
 				}
 				

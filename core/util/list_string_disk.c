@@ -161,7 +161,7 @@ FQUAD ListStringDiskAdd( ListStringDisk *ls, char *data, FLONG size )
 		}
 		else	// we can do everything in old way (in memory)
 		{
-			DEBUG("[ListStringDisk] data added to memory: %d\n", size );
+			DEBUG("[ListStringDisk] data added to memory: %ld\n", size );
 			if( ( nls->lsd_Data = FCalloc( size + 1, sizeof( char ) ) ) != NULL )
 			{
 				memcpy( nls->lsd_Data, data, size );

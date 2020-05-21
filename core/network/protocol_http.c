@@ -134,7 +134,7 @@ static inline ListString *RunPHPScript( const char *command )
 		}
 	}
 	
-	DEBUG("[RunPHPScript] File readed\n");
+	DEBUG("[RunPHPScript] File read\n");
 	
 #else
 	int errCounter = 0;
@@ -195,7 +195,7 @@ static inline ListString *RunPHPScript( const char *command )
 	
 #endif
 	FFree( buf );
-	DEBUG("[RunPHPScript] File readed\n");
+	DEBUG("[RunPHPScript] File read\n");
 	
 	// Free pipe if it's there
 	newpclose( &pofd );
@@ -405,7 +405,7 @@ static inline int ReadServerFile( Uri *uri __attribute__((unused)), char *locpat
 /**
  * Http protocol parser
  *
- * @param sock pointer to Socket from which request will readed and which will be used to return response
+ * @param sock pointer to Socket from which request will read and which will be used to return response
  * @param data pointer to already received data
  * @param length length of already received data
  * @return new Http structrure when success, otherwise NULL
@@ -1211,7 +1211,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 													DEBUG("tbuffer\n");
 													while( ( dataread = actFS->FileRead( fp, tbuffer, SHARING_BUFFER_SIZE ) ) != -1 )
 													{
-														DEBUG("inside of loop: readed %d\n", dataread );
+														DEBUG("inside of loop: read %d\n", dataread );
 														if( resp == 0 && dataread > 0 )
 														{
 															response = HttpNewSimple( HTTP_200_OK, tags );
