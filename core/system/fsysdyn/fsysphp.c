@@ -413,10 +413,10 @@ BufStringDisk *PHPCallDisk( const char *command )
 		}
 		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
 
-		DEBUG( "[PHPCallDisk] Adding %d of data\n", size );
+		//DEBUG( "[PHPCallDisk] Adding %d of data\n", size );
 		if( size > 0 )
 		{
-			DEBUG( "[PHPCallDisk] before adding to list\n");
+			//DEBUG( "[PHPCallDisk] before adding to list\n");
 			BufStringDiskAddSize( ls, buf, size );
 			
 			//DEBUG( "[PHPCallDisk] after adding to list: %s\n", buf );
