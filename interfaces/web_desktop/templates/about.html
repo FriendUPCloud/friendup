@@ -14,6 +14,25 @@
 				padding: 0; 
 				overflow: hidden;
 			}
+			body
+			{
+				opacity: 0;
+				transition: opacity 0.5s;
+			}
+			body.activated
+			{
+				opacity: 1;
+			}
+			body #content
+			{
+				opacity: 0;
+				transition: opacity 1s;
+				background: linear-gradient(180deg, #3B1C47 0%, #01101A 80%);
+			}
+			body #content.Showing
+			{
+				opacity: 1;
+			}
 			#fc-info
 			{
 				position: relative;
@@ -22,8 +41,9 @@
 			}
 			#buildInfo
 			{
-				background: rgba( 230, 230, 230, 0.6 );
-				padding:12px;
+				background: rgba( 230, 230, 230, 0.1 );
+				padding: 12px;
+				background-blend-mode: screen;
 			}
 			#buildInfo .item,
 			.contributorBlock
@@ -48,7 +68,8 @@
 				width: 100%; 
 				height: 100%;
 				padding: 0;
-				background: rgba( 230, 230, 230, 0.3 ); 
+				background: rgba( 230, 230, 230, 0.1 );
+				background-blend-mode: screen;
 				color: white; 
 				text-shadow: 0px 1px 1px rgba(0,0,0,0.6);
 				position: relative;
@@ -98,7 +119,8 @@
 				width: 100%;
 			}
 		
-			#logo {
+			#logo
+			{
 				position: absolute;
 				top: 0;
 				left: 0;
@@ -106,7 +128,8 @@
 				height: 280px;
 			}
 		
-			#logo img {
+			#logo img 
+			{
 				position: absolute;
 				top : 50%;
 				left: 50%;
@@ -114,9 +137,11 @@
 				max-width:calc( 100% - 40px );
 				display:block;
 				margin:0 auto;
+				filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.5))
 			}
 		
-			#info {
+			#info
+			{
 				position: absolute;
 				top: 280px;
 				left: 0;
@@ -175,5 +200,6 @@
 				</div>
 			</div>
 		</div>
+		<script> setTimeout( function(){ document.getElementById( 'content' ).className = 'Showing'; }, 500 );</script>
 	</body>
 </html>
