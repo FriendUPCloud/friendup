@@ -275,9 +275,13 @@ i18n_zip_not_comdesc                    : Compressing the file(s) did not comple
 
 i18n_unzip_start                        : Uncompressing file(s).
 i18n_unzip_startdesc                    : Uncompressing selected file(s).
+i18n_unzip_start_none                   : Could not uncompress.
+i18n_unzip_startdesc_none               : You did not select any files.
 
 i18n_zip_start                          : Compressing file(s).
 i18n_zip_startdesc                      : Compressing selected file(s).
+i18n_zip_start_none                     : Could not compress.
+i18n_zip_startdesc_none                 : You did not select any files.
 
 cmd_execute                             : Execute
 

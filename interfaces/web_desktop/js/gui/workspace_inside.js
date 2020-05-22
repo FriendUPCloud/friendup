@@ -6491,7 +6491,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		var zipPath = currentMovable.content.fileInfo.Path;
 		
-		Notify( { title: i18n( 'i18n_zip_start' ), text: i18n( 'i18n_zip_startdesc' ) } );
 		var ic = currentMovable.content.icons;
 		var f = [];
 		var dest = false;
@@ -6506,6 +6505,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		if( dest && f.length )
 		{
+			Notify( { title: i18n( 'i18n_zip_start' ), text: i18n( 'i18n_zip_startdesc' ) } );
+			
 			// Files
 			if( dest.indexOf( '.' ) > 0 && dest.substr( dest.length - 1, 1 ) != '/' )
 			{
@@ -6563,11 +6564,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			
 			s.execute( 'file/compress', { source: zipPath, files: files, archiver: 'zip', destination: dest, path: lpath } );
 		}
+		else
+		{
+			Notify( { title: i18n( 'i18n_zip_start_none' ), text: i18n( 'i18n_zip_startdesc_none' ) } );
+		}
 	},
 	// Uncompress files
 	unzipFiles: function()
 	{
-		Notify( { title: i18n( 'i18n_unzip_start' ), text: i18n( 'i18n_unzip_startdesc' ) } );
 		var ic = currentMovable.content.icons;
 		var f = [];
 		for( var a = 0; a < ic.length; a++ )
@@ -6579,6 +6583,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		if( f.length )
 		{
+			Notify( { title: i18n( 'i18n_unzip_start' ), text: i18n( 'i18n_unzip_startdesc' ) } );
 			for( var a = 0; a < f.length; a++ )
 			{
 				var s = new Library( 'system.library' );
@@ -6622,6 +6627,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				s.execute( 'file/decompress', { path: f[a].Path, archiver: 'zip', detachtask : true } );
 			}
+		}
+		else
+		{
+			Notify( { title: i18n( 'i18n_unzip_start_none' ), text: i18n( 'i18n_unzip_startdesc_none' ) } );
 		}
 	},
 	// Refresh Doors menu recursively ------------------------------------------

@@ -275,9 +275,13 @@ i18n_zip_comdesc                        : Systemet fullførte pakkingen av filen
 
 i18n_unzip_start                        : Starter utpakking.
 i18n_unzip_startdesc                    : Systemet pakker ut filen(e).
+i18n_unzip_start_none                   : Kan ikke pakke ut.
+i18n_unzip_startdesc_none               : Du valgte ingen filer.
 
 i18n_zip_start                          : Pakker filer.
 i18n_zip_startdesc                      : Systemet pakker filen(e).
+i18n_zip_start_none                     : Kan ikke pakke.
+i18n_zip_startdesc_none                 : Du valgte ingen filer.
 
 cmd_execute                             : Kjør
 
