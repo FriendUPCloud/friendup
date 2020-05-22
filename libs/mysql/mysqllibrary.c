@@ -822,16 +822,16 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 		// end of if( statement init)
 	
 		int finalqsize = tablequerybs->bs_Size + dataquerybs->bs_Size + 256;
+		SystemBase *sb = (SystemBase *)l->sb;
 		
 		if( ( finalQuery = FCalloc( finalqsize, sizeof(char) ) ) != NULL )
 		{
-			
 			sprintf( finalQuery, "INSERT INTO %s ( %s ) VALUES( %s )", (char *)descr[ 1 ], tablequerybs->bs_Buffer, dataquerybs->bs_Buffer );
 
 			if (mysql_stmt_prepare(stmt, finalQuery, strlen(finalQuery)))
 			{
-				FERROR( "\n mysql_stmt_prepare(), INSERT failed");
-				FERROR( "\n %s", mysql_stmt_error(stmt));
+				sb->sl_UtilInterface.Log( FLOG_ERROR,  "\n mysql_stmt_prepare(), INSERT failed");
+				sb->sl_UtilInterface.Log( FLOG_ERROR,  "\n %s", mysql_stmt_error(stmt));
 				mysql_stmt_close( stmt ); // Free
 				BufStringDelete( tablequerybs );
 				BufStringDelete( dataquerybs );
@@ -842,8 +842,8 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 			// Bind the buffers 
 			if (mysql_stmt_bind_param( stmt, bindTable ) )
 			{
-				FERROR("param bind failed! ");
-				FERROR(" %s\n", mysql_stmt_error(stmt) );
+				sb->sl_UtilInterface.Log( FLOG_ERROR, "param bind failed! ");
+				sb->sl_UtilInterface.Log( FLOG_ERROR, " %s\n", mysql_stmt_error(stmt) );
 				mysql_stmt_close( stmt ); // Free
 				BufStringDelete( tablequerybs );
 				BufStringDelete( dataquerybs );
@@ -860,7 +860,7 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 					// Supply data in chunks to server 
 					if (mysql_stmt_send_long_data(stmt, i, bindData[ i ]->ls_Data , bindData[ i ]->ls_Size ) )
 					{
-						FERROR( " send_long_data failed %s\n", mysql_stmt_error(stmt));
+						sb->sl_UtilInterface.Log( FLOG_ERROR," send_long_data failed %s\n", mysql_stmt_error(stmt));
 					}
 				}
 			}
@@ -868,7 +868,6 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 			// Now, execute the query 
 			if ( mysql_stmt_execute(stmt) )
 			{
-				SystemBase *sb = (SystemBase *)l->sb;
 				//FERROR("mysql_stmt_execute failed %s\n", mysql_stmt_error(stmt));
 				sb->sl_UtilInterface.Log( FLOG_ERROR, "Save query error: %s, query: %s\n", mysql_stmt_error(stmt), finalQuery );
 				retValue = 1;
