@@ -49,12 +49,12 @@ typedef struct SpecialData
 	CommServiceRemote				*csr;
 	SystemBase 						*sb;
 	
-	char							*host;
-	char 							*id;
-	char 							*login;
-	char							*passwd;
-	char							*devid;
-	char 							*privkey;
+	char							*host;				// host name / ip
+	char 							*id;				//
+	char 							*login;				// remote user login
+	char							*passwd;			// remote user password
+	char							*devid;				// remote device id
+	char 							*privkey;			// private key
 	char 							fileptr[ 64 ];
 	char							enc[ 10 ];
 	
@@ -62,7 +62,7 @@ typedef struct SpecialData
 	char							*localDevName;
 	char							*remoteDevName;
 	
-	int								idi, 
+	int								idi, 			// length of commands
 									logini, 
 									passwdi, 
 									devidi,
@@ -72,13 +72,13 @@ typedef struct SpecialData
 	int								enci;
 
 	int								mode;			// read or write
-	char 							*tmppath;			// path to temporary file
-	char 							*remotepath;		// path to remote file
+	char 							*tmppath;		// path to temporary file
+	char 							*remotepath;	// path to remote file
 	int								fileSize;		// temporary file size
 	
 	FConnection		 				*con;			// remote fs connection
 	
-	char							*address;	// hold destination server address
+	char							*address;		// hold destination server address
 	int 							port;			// port
 	int								secured;		// is connection secured
 }SpecialData;

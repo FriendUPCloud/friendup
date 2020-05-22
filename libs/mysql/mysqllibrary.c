@@ -588,7 +588,8 @@ int Update( struct SQLLibrary *l, FULONG *descr, void *data )
 	
 	if( mysql_query( l->con.sql_Con, querybs->bs_Buffer ) )
 	{
-		FERROR("Query error!\n");
+		SystemBase *sb = (SystemBase *)l->sb;
+		sb->sl_UtilInterface.Log( FLOG_ERROR, "Update query error: %s\n", querybs->bs_Buffer );
 		BufStringDelete( querybs );
 		
 		return 2;
@@ -867,7 +868,9 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 			// Now, execute the query 
 			if ( mysql_stmt_execute(stmt) )
 			{
-				FERROR("mysql_stmt_execute failed %s\n", mysql_stmt_error(stmt));
+				SystemBase *sb = (SystemBase *)l->sb;
+				//FERROR("mysql_stmt_execute failed %s\n", mysql_stmt_error(stmt));
+				sb->sl_UtilInterface.Log( FLOG_ERROR, "Save query error: %s, query: %s\n", mysql_stmt_error(stmt), finalQuery );
 				retValue = 1;
 			}
 		
@@ -2009,6 +2012,7 @@ void *libInit( void *sb )
 		return NULL;
 	}
 
+	l->sb = sb;
 	l->l_Name = LIB_NAME;
 	l->l_Version = LIB_VERSION;
 	

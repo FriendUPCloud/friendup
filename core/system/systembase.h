@@ -82,6 +82,7 @@
 #include <interface/comm_service_interface.h>
 #include <interface/comm_service_remote_interface.h>
 #include <interface/properties_interface.h>
+#include <interface/util_interface.h>
 #include <core/event_manager.h>
 #include <system/cache/cache_uf_manager.h>
 #include <db/sqllib.h>
@@ -298,6 +299,7 @@ typedef struct SystemBase
 	CommServiceInterface			sl_CommServiceInterface;	// communication interface
 	CommServiceRemoteInterface		sl_CommServiceRemoteInterface;	// communication remote interface
 	PropertiesInterface				sl_PropertiesInterface;	// communication remote interface
+	UtilInterface					sl_UtilInterface; // util interface
 	
 	EModule							*sl_PHPModule;
 

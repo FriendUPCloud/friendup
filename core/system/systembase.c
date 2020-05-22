@@ -131,6 +131,8 @@ SystemBase *SystemInit( void )
 	
 	PropertiesInterfaceInit( &(l->sl_PropertiesInterface) );
 	
+	UtilInterfaceInit( &(l->sl_UtilInterface) );
+	
 	LIBXML_TEST_VERSION;
 	
 	l->sl_RemoveSessionsAfterTime = 10800;
