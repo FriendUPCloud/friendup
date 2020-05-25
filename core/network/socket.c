@@ -2308,7 +2308,7 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 					default:
 
 						usleep( 50 );
-						if( retries++ > 50 )
+						if( retries++ > 15 )
 						{
 							return bs;
 						}
@@ -2316,7 +2316,7 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 				}
 				else if( res == 0 )
 				{
-					if( retries++ > 50 )
+					if( retries++ > 15 )
 					{
 						return bs;
 					}
