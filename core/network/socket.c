@@ -2197,24 +2197,17 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 	DEBUG2("[SocketReadTillEnd] Socket wait for message, blocked %d\n", sock->s_Blocked );
 
 	int n;
-	fd_set wset, rset;
 	struct timeval tv;
-	/*
-	 FD_ZERO( &(app->readfd) );
-			FD_ZERO( &(app->writefd) );
-			FD_SET( app->infd[0] , &(app->readfd) );
-			FD_SET( app->outfd[1] , &(app->writefd) );
-	 */
 
-	//if( FRIEND_MUTEX_LOCK( &sock->mutex ) == 0 )
-	{
-		FD_ZERO( &rset );
-		//FD_SET( 0,  &rset );
-		FD_SET( sock->fd,  &rset );
-		//wset = rset;
+	struct pollfd fds[2];
 
-		//FRIEND_MUTEX_UNLOCK( &sock->mutex );
-	}
+	// watch stdin for input 
+	fds[0].fd = sock->fd;// STDIN_FILENO;
+	fds[0].events = POLLIN;
+
+	// watch stdout for ability to write
+	fds[1].fd = STDOUT_FILENO;
+	fds[1].events = POLLOUT;
 
 	tv.tv_sec = sec;
 	tv.tv_usec = 0;
@@ -2230,7 +2223,22 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 	{
 		if( sock->s_Blocked == TRUE )
 		{
+			int ret = poll( fds, 2, 10 * 1000);
+			
 			DEBUG("Before select\n");
+			if( ret == 0 )
+			{
+				DEBUG("Timeout!\n");
+				BufStringDelete( bs );
+				return NULL;
+			}
+			else if(  ret < 0 )
+			{
+				DEBUG("Error\n");
+				BufStringDelete( bs );
+				return NULL;
+			}
+			/*
 			if( ( n = select( sock->fd+1, &rset, NULL, NULL, &tv ) ) == 0 )
 			{
 				FERROR("[SocketReadTillEnd] Connection timeout\n");
@@ -2243,6 +2251,7 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 			{
 				FERROR("[SocketReadTillEnd] Select error\n");
 			}
+			*/
 		}
 
 		//SocketSetBlocking( sock, FALSE );
@@ -2371,7 +2380,7 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 					default:
 
 						usleep( 0 );
-						if( retries++ > 500 )
+						if( retries++ > 50 )
 						{
 							return bs;
 						}
@@ -2381,7 +2390,7 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 				}
 				else if( res == 0 )
 				{
-					if( retries++ > 500 )
+					if( retries++ > 50 )
 					{
 						return bs;
 					}
@@ -2499,17 +2508,8 @@ FLONG SocketWrite( Socket* sock, char* data, FLONG length )
 
 			res = SSL_write( sock->s_Ssl, data + written, bsize );
 
-			if( res < 0 )
+			if( res <= 0 )
 			{
-				// TODO: For select?
-				/*if( FRIEND_MUTEX_LOCK( &sock->mutex ) == 0 )
-				{
-					FD_ZERO( &fdstate );
-					FD_SET( sock->fd, &fdstate );
-
-					FRIEND_MUTEX_UNLOCK( &sock->mutex );
-				}*/
-
 				err = SSL_get_error( sock->s_Ssl, res );
 
 				switch( err )
