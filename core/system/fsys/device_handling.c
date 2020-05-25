@@ -1490,7 +1490,7 @@ AND f.Name = '%s'",
 				
 				if( row[ 10 ] != NULL ){ char *end; factivityID = strtoul( (char *)row[ 10 ],  &end, 0 );}
 				
-				if( row[ 11 ] != NULL ){ char *end; storedBytesLeft = strtoul( (char *)row[ 11 ],  &end, 0 ); }
+				if( row[ 11 ] != NULL ){ char *end; DEBUG("STOREDBYTESLEFT DEBUG : %s\n", (char *)row[ 11 ] ); storedBytesLeft = strtoul( (char *)row[ 11 ],  &end, 0 ); }
 				
 				if( row[ 12 ] != NULL ){ char *end; readBytesLeft = strtoul( (char *)row[ 12 ],  &end, 0 ); }
 				
