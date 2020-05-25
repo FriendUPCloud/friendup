@@ -157,6 +157,7 @@ StringListEl *SLEParseString( char *str )
 	char *curToken = str+1;
 	
 	StringListEl *rootEl = NULL;
+	DEBUG("SLEParseString: %s\n", str );
 	
 	while( TRUE )
 	{
