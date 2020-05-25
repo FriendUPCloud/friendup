@@ -1789,13 +1789,13 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 										int64_t written = 0;
 										int64_t readall = 0;
 										
-										actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
+										actDev->f_SessionIDPTR = loggedSession->us_SessionID;//->us_User->u_MainSessionID;
 										File *rfp = (File *)actFS->FileOpen( actDev, path, "rb" );
 										int closeError = 0;
 										
 										if( rfp != NULL )
 										{
-											dstrootf->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
+											dstrootf->f_SessionIDPTR = loggedSession->us_SessionID;//->us_User->u_MainSessionID;
 											
 											File *wfp = (File *)dsthand->FileOpen( dstrootf, dstpath, "w+" );
 											
