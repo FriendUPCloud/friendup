@@ -2292,10 +2292,7 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 					err = SSL_get_error( sock->s_Ssl, res );
 					switch( err )
 					{
-					err = SSL_get_error( sock->s_Ssl, res );
 
-					switch( err )
-					{
 					// The TLS/SSL I/O operation completed.
 					case SSL_ERROR_NONE:
 						FERROR( "[SocketReadTillEnd] Completed successfully.\n" );
@@ -2306,75 +2303,10 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 						return bs;
 						// The operation did not complete. Call again.
 					case SSL_ERROR_WANT_READ:
-						/*
-						// no data available right now, wait a few seconds in case new data arrives...
-						//printf("SSL_ERROR_WANT_READ %i\n", count);
-
-						if( FRIEND_MUTEX_LOCK( &sock->mutex ) == 0 )
-						{
-							FD_ZERO( &fds );
-							FD_SET( sock->fd, &fds );
-
-							FRIEND_MUTEX_UNLOCK( &sock->mutex );
-						}
-
-						timeout.tv_sec = sock->s_Timeouts;
-						timeout.tv_usec = sock->s_Timeoutu;
-
-						err = select( sock->fd+1, &fds, NULL, NULL, &timeout );
-						if( err > 0 )
-						{
-							return NULL; // more data to read...
-						}
-
-						if( err == 0 ) 
-						{
-							FERROR("[SocketReadTillEnd] want read TIMEOUT....\n");
-							return bs;
-						}
-						else 
-						{
-							FERROR("[SocketReadTillEnd] want read everything read....\n");
-							return bs;
-						}
-						 */
-						FERROR("want read\n");
-						//return NULL;
-						// The operation did not complete. Call again.
+						return bs;
 
 					case SSL_ERROR_WANT_WRITE:
-						/*
-							FERROR( "[SocketReadTillEnd] Want write.\n" );
-
-							if( FRIEND_MUTEX_LOCK( &sock->mutex ) == 0 )
-							{
-								FD_ZERO( &fds );
-								FD_SET( sock->fd, &fds );
-
-								FRIEND_MUTEX_UNLOCK( &sock->mutex );
-							}
-
-							timeout.tv_sec = sock->s_Timeouts;
-							timeout.tv_usec = sock->s_Timeoutu;
-
-							err = select( sock->fd+1, &fds, NULL, NULL, &timeout );
-							if( err > 0 )
-							{
-								return NULL; // more data to read...
-							}
-
-							if( err == 0 ) 
-							{
-								FERROR("[SocketReadTillEnd] want read TIMEOUT....\n");
-								return bs;
-							}
-							else 
-							{
-								FERROR("[SocketReadTillEnd] want read everything read....\n");
-								return bs;
-							}
-						 */
-						//return read;
+						return bs;
 					case SSL_ERROR_SYSCALL:
 						return bs;
 					default:
@@ -2384,8 +2316,6 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 						{
 							return bs;
 						}
-						//return NULL;
-					}
 					}
 				}
 				else if( res == 0 )
