@@ -1015,7 +1015,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		// Open a file pointer
 		if( result )
 		{
-			if( result->bsd_Buffer )
+			if( result->bsd_Buffer && result->bsd_Size> 0 )
 			//if( result->ls_Data )
 			{
 				//if( strncmp( result->ls_Data, "fail", 4 ) == 0 )
