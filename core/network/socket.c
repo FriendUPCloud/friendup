@@ -2260,7 +2260,6 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 		{
 			unsigned int read = 0;
 			int res = 0, err = 0;//, buf = length;
-			fd_set rd_set, wr_set;
 			int retries = 0;
 
 			while( TRUE )
@@ -2283,9 +2282,6 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 						return bs;
 					}
 				}
-
-				struct timeval timeout;
-				fd_set fds;
 
 				if( res < 0 )
 				{
@@ -2311,7 +2307,7 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 						return bs;
 					default:
 
-						usleep( 0 );
+						usleep( 50 );
 						if( retries++ > 50 )
 						{
 							return bs;
