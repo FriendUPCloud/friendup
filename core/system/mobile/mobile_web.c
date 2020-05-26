@@ -749,7 +749,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 	*
 	* @param sessionid - (required) session id of logged user
 	* @param notifid - (required) mobile request ID
-	* @param action - (required) action ( NOTIFY_ACTION_REGISTER = 0, NOTIFY_ACTION_READED, NOTIFY_ACTION_TIMEOUT )
+	* @param action - (required) action ( NOTIFY_ACTION_REGISTER = 0, NOTIFY_ACTION_READ, NOTIFY_ACTION_TIMEOUT )
 	* @return { update: sucess, result: <ID> } when success, otherwise error with code
 	*/
 	/// @endcond

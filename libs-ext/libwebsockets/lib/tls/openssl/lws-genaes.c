@@ -32,7 +32,7 @@
  * lws convention of 0 for success.
  */
 
-LWS_VISIBLE int
+int
 lws_genaes_create(struct lws_genaes_ctx *ctx, enum enum_aes_operation op,
 		  enum enum_aes_modes mode, struct lws_gencrypto_keyelem *el,
 		  enum enum_aes_padding padding, void *engine)
@@ -234,11 +234,11 @@ bail:
 	return -1;
 }
 
-LWS_VISIBLE int
+int
 lws_genaes_destroy(struct lws_genaes_ctx *ctx, unsigned char *tag, size_t tlen)
 {
-	int outl = 0, n = 0;
 	uint8_t buf[256];
+	int outl = sizeof(buf), n = 0;
 
 	if (!ctx->ctx)
 		return 0;
@@ -261,7 +261,11 @@ lws_genaes_destroy(struct lws_genaes_ctx *ctx, unsigned char *tag, size_t tlen)
 					n = 1;
 				}
 			}
+			if (ctx->mode == LWS_GAESM_CBC)
+				memcpy(tag, buf, outl);
+
 			break;
+
 		case LWS_GAESO_DEC:
 			if (EVP_DecryptFinal_ex(ctx->ctx, buf, &outl) != 1) {
 				lwsl_err("%s: dec final failed\n", __func__);
@@ -282,7 +286,7 @@ lws_genaes_destroy(struct lws_genaes_ctx *ctx, unsigned char *tag, size_t tlen)
 	return n;
 }
 
-LWS_VISIBLE int
+int
 lws_genaes_crypt(struct lws_genaes_ctx *ctx,
 		 const uint8_t *in, size_t len, uint8_t *out,
 		 uint8_t *iv_or_nonce_ctr_or_data_unit_16,
@@ -296,7 +300,7 @@ lws_genaes_crypt(struct lws_genaes_ctx *ctx,
 
 		if (ctx->mode == LWS_GAESM_GCM) {
 			n = EVP_CIPHER_CTX_ctrl(ctx->ctx, EVP_CTRL_GCM_SET_IVLEN,
-					    *nc_or_iv_off, NULL);
+					   (int)*nc_or_iv_off, NULL);
 			if (n != 1) {
 				lwsl_err("%s: SET_IVLEN failed\n", __func__);
 				return -1;
@@ -340,10 +344,10 @@ lws_genaes_crypt(struct lws_genaes_ctx *ctx,
 
 		switch (ctx->op) {
 		case LWS_GAESO_ENC:
-			n = EVP_EncryptUpdate(ctx->ctx, NULL, &olen, in, len);
+			n = EVP_EncryptUpdate(ctx->ctx, NULL, &olen, in, (int)len);
 			break;
 		case LWS_GAESO_DEC:
-			n = EVP_DecryptUpdate(ctx->ctx, NULL, &olen, in, len);
+			n = EVP_DecryptUpdate(ctx->ctx, NULL, &olen, in, (int)len);
 			break;
 		default:
 			return -1;
@@ -360,10 +364,10 @@ lws_genaes_crypt(struct lws_genaes_ctx *ctx,
 
 	switch (ctx->op) {
 	case LWS_GAESO_ENC:
-		n = EVP_EncryptUpdate(ctx->ctx, out, &outl, in, len);
+		n = EVP_EncryptUpdate(ctx->ctx, out, &outl, in, (int)len);
 		break;
 	case LWS_GAESO_DEC:
-		n = EVP_DecryptUpdate(ctx->ctx, out, &outl, in, len);
+		n = EVP_DecryptUpdate(ctx->ctx, out, &outl, in, (int)len);
 		break;
 	default:
 		return -1;

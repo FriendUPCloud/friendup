@@ -35,7 +35,7 @@ enum {
 static char *NotifyActionType[] =
 {
 	"register",
-	"readed",
+	"read",
 	"timeout"
 };
 

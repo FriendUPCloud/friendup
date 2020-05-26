@@ -692,9 +692,10 @@ User *UMGetUserByNameDB( UserManager *um, const char *name )
  *
  * @param um pointer to UserManager
  * @param uuid unique user id
+ * @param loadAndAssign set true if you want to load and assign user to group in FriendCore memory
  * @return User or NULL when error will appear
  */
-User *UMGetUserByUUIDDB( UserManager *um, const char *uuid )
+User *UMGetUserByUUIDDB( UserManager *um, const char *uuid, FBOOL loadAndAssign )
 {
 	if( uuid == NULL )
 	{
@@ -718,14 +719,56 @@ User *UMGetUserByUUIDDB( UserManager *um, const char *uuid )
 		user = ( struct User *)sqlLib->Load( sqlLib, UserDesc, where, &entries );
 		sb->LibrarySQLDrop( sb, sqlLib );
 
-		User *tmp = user;
-		while( tmp != NULL )
+		if( loadAndAssign == TRUE )
 		{
-			UGMAssignGroupToUser( sb->sl_UGM, tmp );
-			UMAssignApplicationsToUser( um, tmp );
+			User *tmp = user;
+			while( tmp != NULL )
+			{
+				UGMAssignGroupToUser( sb->sl_UGM, tmp );
+				UMAssignApplicationsToUser( um, tmp );
 		
-			tmp = (User *)tmp->node.mln_Succ;
+				tmp = (User *)tmp->node.mln_Succ;
+			}
 		}
+		FFree( where );
+	}
+	
+	DEBUG("[UMGetUserByNameDB] end\n");
+	return user;
+}
+
+/**
+ * Get user structure from database by his name
+ * Do not assign him to any groups, just load
+ *
+ * @param um pointer to UserManager
+ * @param uuid unique user id
+ * @return User or NULL when error will appear
+ */
+User *UMGetOnlyUserByUUIDDB( UserManager *um, const char *uuid )
+{
+	if( uuid == NULL )
+	{
+		return NULL;
+	}
+	SystemBase *sb = (SystemBase *)um->um_SB;
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	User *user = NULL;
+	
+	if( sqlLib != NULL )
+	{
+		int len = strlen( uuid )+128;
+		char *where = FMalloc( len );
+	
+		DEBUG("[UMGetUserByNameDB] start\n");
+
+		sqlLib->SNPrintF( sqlLib, where, len, " `UniqueID`='%s'", uuid );
+	
+		int entries;
+	
+		user = ( struct User *)sqlLib->Load( sqlLib, UserDesc, where, &entries );
+		sb->LibrarySQLDrop( sb, sqlLib );
+
 		FFree( where );
 	}
 	

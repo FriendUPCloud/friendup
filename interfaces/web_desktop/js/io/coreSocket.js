@@ -237,7 +237,7 @@ FriendWebSocket.prototype.doReconnect = function()
 	if ( delay > self.reconnectMaxDelay )
 		delay = self.reconnectMaxDelay;
 	
-	console.log( 'prepare reconnect - delay( s )', ( delay / 1000 ));
+	//console.log( 'prepare reconnect - delay( s )', ( delay / 1000 ));
 	var showReconnectLogTimeLimit = 5000; // 5 seconds
 	if ( delay > showReconnectLogTimeLimit )
 		self.setState( 'reconnect', delay );

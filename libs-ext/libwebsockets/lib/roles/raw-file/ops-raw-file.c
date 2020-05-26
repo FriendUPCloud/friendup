@@ -50,7 +50,8 @@ rops_handle_POLLIN_raw_file(struct lws_context_per_thread *pt, struct lws *wsi,
 	}
 
 	if (pollfd->revents & LWS_POLLHUP)
-		return LWS_HPI_RET_PLEASE_CLOSE_ME;
+		if (!(pollfd->revents & LWS_POLLIN))
+			return LWS_HPI_RET_PLEASE_CLOSE_ME;
 
 	return LWS_HPI_RET_HANDLED;
 }
@@ -77,7 +78,7 @@ rops_adoption_bind_raw_file(struct lws *wsi, int type, const char *vh_prot_name)
 	return 1; /* bound */
 }
 
-struct lws_role_ops role_ops_raw_file = {
+const struct lws_role_ops role_ops_raw_file = {
 	/* role name */			"raw-file",
 	/* alpn id */			NULL,
 	/* check_upgrades */		NULL,

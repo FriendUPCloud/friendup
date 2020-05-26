@@ -255,8 +255,10 @@ int
 lws_process_ws_upgrade2(struct lws *wsi)
 {
 	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
+#if defined(LWS_WITH_HTTP_BASIC_AUTH)
 	const struct lws_protocol_vhost_options *pvos = NULL;
 	const char *ws_prot_basic_auth = NULL;
+
 
 	/*
 	 * Allow basic auth a look-in now we bound the wsi to the protocol.
@@ -271,7 +273,8 @@ lws_process_ws_upgrade2(struct lws *wsi)
 	    !lws_pvo_get_str((void *)pvos->options, "basic-auth",
 			     &ws_prot_basic_auth)) {
 		lwsl_info("%s: ws upgrade requires basic auth\n", __func__);
-		switch(lws_check_basic_auth(wsi, ws_prot_basic_auth)) {
+		switch (lws_check_basic_auth(wsi, ws_prot_basic_auth, LWSAUTHM_DEFAULT
+						/* no callback based auth here */)) {
 		case LCBA_CONTINUE:
 			break;
 		case LCBA_FAILED_AUTH:
@@ -281,6 +284,7 @@ lws_process_ws_upgrade2(struct lws *wsi)
 			return lws_http_transaction_completed(wsi);
 		}
 	}
+#endif
 
 	/*
 	 * We are upgrading to ws, so http/1.1 + h2 and keepalive + pipelined
@@ -351,6 +355,15 @@ lws_process_ws_upgrade2(struct lws *wsi)
 			lws_role_transition(wsi,
 					    LWSIFR_SERVER | LWSIFR_P_ENCAP_H2,
 					    LRS_ESTABLISHED, &role_ops_ws);
+
+			/*
+			 * There should be no validity checking since we
+			 * are encapsulated in something else with its own
+			 * validity checking
+			 */
+
+			__lws_sul_insert(&pt->pt_sul_owner, &wsi->sul_validity,
+					 LWS_SET_TIMER_USEC_CANCEL);
 		} else
 #endif
 		{
@@ -368,7 +381,7 @@ lws_process_ws_upgrade2(struct lws *wsi)
 
 #if defined(LWS_WITH_ACCESS_LOG)
 	{
-		char *uptr = "unknown method", combo[128];
+		char *uptr = "unknown method", combo[128], dotstar[64];
 		int l = 14, meth = lws_http_get_uri_and_method(wsi, &uptr, &l);
 
 		if (wsi->h2_stream_carries_ws)
@@ -376,9 +389,12 @@ lws_process_ws_upgrade2(struct lws *wsi)
 
 		wsi->http.access_log.response = 101;
 
-		l = lws_snprintf(combo, sizeof(combo), "%.*s (%s)", l, uptr,
+		lws_strnncpy(dotstar, uptr, l, sizeof(dotstar));
+		l = lws_snprintf(combo, sizeof(combo), "%s (%s)", dotstar,
 				 wsi->protocol->name);
 
+		if (meth < 0)
+			meth = 0;
 		lws_prepare_access_log_info(wsi, combo, l, meth);
 		lws_access_log(wsi);
 	}
@@ -397,6 +413,7 @@ lws_process_ws_upgrade(struct lws *wsi)
 	char buf[128], name[64];
 	struct lws_tokenize ts;
 	lws_tokenize_elem e;
+	int n;
 
 	if (!wsi->protocol)
 		lwsl_err("NULL protocol at lws_read\n");
@@ -409,17 +426,17 @@ lws_process_ws_upgrade(struct lws *wsi)
 	 */
 
 #if defined(LWS_WITH_HTTP2)
-	if (!wsi->http2_substream) {
+	if (!wsi->mux_substream) {
 #endif
 
 		lws_tokenize_init(&ts, buf, LWS_TOKENIZE_F_COMMA_SEP_LIST |
 					    LWS_TOKENIZE_F_DOT_NONTERM |
 					    LWS_TOKENIZE_F_RFC7230_DELIMS |
 					    LWS_TOKENIZE_F_MINUS_NONTERM);
-		ts.len = lws_hdr_copy(wsi, buf, sizeof(buf) - 1,
-				      WSI_TOKEN_CONNECTION);
-		if (ts.len <= 0)
+		n = lws_hdr_copy(wsi, buf, sizeof(buf) - 1, WSI_TOKEN_CONNECTION);
+		if (n <= 0)
 			goto bad_conn_format;
+		ts.len = n;
 
 		do {
 			e = lws_tokenize(&ts);
@@ -454,7 +471,9 @@ lws_process_ws_upgrade(struct lws *wsi)
 		meth = lws_http_get_uri_and_method(wsi, &uri_ptr, &uri_len);
 		hit = lws_find_mount(wsi, uri_ptr, uri_len);
 
-		if (hit && (meth == 0 || meth == 8) &&
+		if (hit && (meth == LWSHUMETH_GET ||
+			    meth == LWSHUMETH_CONNECT ||
+			    meth == LWSHUMETH_COLON_PATH) &&
 		    (hit->origin_protocol == LWSMPRO_HTTPS ||
 		     hit->origin_protocol == LWSMPRO_HTTP))
 			/*
@@ -481,11 +500,12 @@ lws_process_ws_upgrade(struct lws *wsi)
 				    LWS_TOKENIZE_F_MINUS_NONTERM |
 				    LWS_TOKENIZE_F_DOT_NONTERM |
 				    LWS_TOKENIZE_F_RFC7230_DELIMS);
-	ts.len = lws_hdr_copy(wsi, buf, sizeof(buf) - 1, WSI_TOKEN_PROTOCOL);
-	if (ts.len < 0) {
+	n = lws_hdr_copy(wsi, buf, sizeof(buf) - 1, WSI_TOKEN_PROTOCOL);
+	if (n < 0) {
 		lwsl_err("%s: protocol list too long\n", __func__);
 		return 1;
 	}
+	ts.len = n;
 	if (!ts.len) {
 		int n = wsi->vhost->default_protocol_index;
 		/*

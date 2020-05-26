@@ -64,7 +64,7 @@ __lws_set_timer_usecs(struct lws *wsi, lws_usec_t us)
 	__lws_sul_insert(&pt->pt_sul_owner, &wsi->sul_hrtimer, us);
 }
 
-LWS_VISIBLE void
+void
 lws_set_timer_usecs(struct lws *wsi, lws_usec_t usecs)
 {
 	__lws_set_timer_usecs(wsi, usecs);
@@ -156,7 +156,9 @@ lws_set_timeout(struct lws *wsi, enum pending_timeout reason, int secs)
 	if (secs == LWS_TO_KILL_ASYNC)
 		secs = 0;
 
-	assert(!wsi->h2_stream_immortal);
+	// assert(!secs || !wsi->mux_stream_immortal);
+	if (secs && wsi->mux_stream_immortal)
+		lwsl_err("%s: on immortal stream %d %d\n", __func__, reason, secs);
 
 	lws_pt_lock(pt, __func__);
 	__lws_set_timeout(wsi, reason, secs);
@@ -178,7 +180,7 @@ lws_set_timeout_us(struct lws *wsi, enum pending_timeout reason, lws_usec_t us)
 	lws_pt_lock(pt, __func__);
 	__lws_sul_insert(&pt->pt_sul_owner, &wsi->sul_timeout, us);
 
-	lwsl_debug("%s: %p: %llu us, reason %d\n", __func__, wsi,
+	lwsl_notice("%s: %p: %llu us, reason %d\n", __func__, wsi,
 		   (unsigned long long)us, reason);
 
 	wsi->pending_timeout = reason;
@@ -351,6 +353,7 @@ lws_validity_confirmed(struct lws *wsi)
 	 * to the role to figure out who actually needs to understand their
 	 * validity was confirmed.
 	 */
-	if (wsi->role_ops && wsi->role_ops->issue_keepalive)
+	if (!wsi->h2_stream_carries_ws && /* only if not encapsulated */
+	    wsi->role_ops && wsi->role_ops->issue_keepalive)
 		wsi->role_ops->issue_keepalive(wsi, 1);
 }

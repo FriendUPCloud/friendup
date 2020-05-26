@@ -82,8 +82,6 @@ friendUP.native = friendUP.native || {};
 		var width = self.container.clientWidth;
 		var height = self.container.clientHeight;
 		
-		console.log( { w : width, h : height });
-		
 		self.camera.aspect = width / height;
 		self.camera.updateProjectionMatrix();
 		self.renderer.setSize( width, height );
@@ -92,7 +90,6 @@ friendUP.native = friendUP.native || {};
 	ns.FTheory.prototype.loadLogo = function( readyCallback ) {
 		var self = this;
 		var logoUrl = '/webclient/native/About/res/Logo.obj';
-		//console.log( 'objlaoder: ', THREE );
 		var loader = new THREE.ObjectLoader();
 		loader.load( logoUrl, loadBack );
 		
@@ -113,14 +110,18 @@ friendUP.native = friendUP.native || {};
 		self.scene = new THREE.Scene();
 		self.camera = new THREE.PerspectiveCamera( fov, aspectRatio, nearClip, farClip );
 		//self.camera.
-		self.renderer = new THREE.WebGLRenderer();
+		self.renderer = new THREE.WebGLRenderer(
+		{
+			antialias: true,
+			alpha: true
+		} );
 		
 		self.renderer.setSize( self.container.clientWidth, self.container.clientHeight );
 		self.container.appendChild( self.renderer.domElement );
 		
 		self.camera.position.z = 12000;
 		self.scene.add( self.camera );
-		self.scene.fog = new THREE.Fog( 0x000000, 1, 10000 );
+		self.scene.fog = new THREE.Fog( 0xff22ff, 1, 10000 );
 	}
 	
 	ns.FTheory.prototype.setupParticles = function()
@@ -135,7 +136,7 @@ friendUP.native = friendUP.native || {};
 			create( i );
 		}
 		function create( index ) {
-			var starGeo = new THREE.CircleGeometry( 10, 6 );
+			var starGeo = new THREE.CircleGeometry( 10, 10 );
 			var star = new THREE.Mesh( starGeo, material.clone() );
 			self.randomPosition( star );
 			star.position.z = index * ( self.near / self.particleCount );
@@ -154,7 +155,6 @@ friendUP.native = friendUP.native || {};
 	ns.FTheory.prototype.startRenderLoop = function()
 	{
 		var self = this;
-		console.log( 'fTheory.startRenderLoop()' );
 		render();
 		
 		function render() {
@@ -195,44 +195,11 @@ friendUP.native = friendUP.native || {};
 	
 })( friendUP.native );
 
-
-/*
-(function( ns, undefined ) {
-	ns.FCInfo = function() {
-
-		var f = new window.Library( 'system.library' );
-		f.onExecuted = function( e, d )
-		{
-			console.log('got sysinfo...');
-			var rs = false;
-			try
-			{
-				rs = eval(e); //JSON.parse(e);
-				
-			}
-			catch(e) { console.log('unexpected response from server',e); }
-
-			
-			console.log('got it???',rs);
-		}
-		f.execute( 'admin', {command:'info'} );	
-		console.log('sent it? or what?',f);		
-
-		var getInfo = new window.Module( 'system.library' );
-		getInfo.onExecuted = function( err, res ) {
-			console.log( 'FCInfo - lib on executed', { err : err, res : res });
-		}
-		getInfo.execute( 'admin/info' );
-		console.log( 'FCInfo get Ingo,..', getInfo );
-
-	}
-})( friendUP.native );
-*/
 window.Application.run = fun;
-function fun( fupConf ) {
+function fun( fupConf )
+{
 	//console.log( 'About.app.fun', fupConf);
 	var container = document.getElementById( 'FTheoryCanvasContainer' );
 	//window.about = new friendUP.native.FCInfo();
-	window.fTheory = new friendUP.native.FTheory( container );
-	
+	window.fTheory = new friendUP.native.FTheory( container );	
 }

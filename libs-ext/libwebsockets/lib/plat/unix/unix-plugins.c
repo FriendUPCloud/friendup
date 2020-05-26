@@ -22,7 +22,9 @@
  * IN THE SOFTWARE.
  */
 
+#if !defined(_GNU_SOURCE)
 #define _GNU_SOURCE
+#endif
 #include "private-lib-core.h"
 
 #include <pwd.h>
@@ -87,21 +89,21 @@ lws_plat_plugins_init(struct lws_context * context, const char * const *d)
 			path[m - 3] = '\0'; /* snip the .so */
 			initfunc = dlsym(l, path);
 			if (!initfunc) {
-				lwsl_err("Failed to get init on %s: %s",
-						namelist[i]->d_name, dlerror());
-				dlclose(l);
+				lwsl_err("%s: Failed to get init '%s' on %s: %s\n",
+					__func__, path, namelist[i]->d_name, dlerror());
+				goto skip;
 			}
 			lcaps.api_magic = LWS_PLUGIN_API_MAGIC;
 			m = initfunc(context, &lcaps);
 			if (m) {
 				lwsl_err("Initializing %s failed %d\n",
 					namelist[i]->d_name, m);
-				dlclose(l);
 				goto skip;
 			}
 
 			plugin = lws_malloc(sizeof(*plugin), "plugin");
 			if (!plugin) {
+				dlclose(l);
 				lwsl_err("OOM\n");
 				goto bail;
 			}

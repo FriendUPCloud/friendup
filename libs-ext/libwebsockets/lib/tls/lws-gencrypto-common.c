@@ -238,6 +238,8 @@ static const struct lws_jose_jwe_alg lws_gencrypto_jws_alg_map[] = {
 		"PS512", NULL, 2048, 4096, 0
 	},
 #endif
+	/* list terminator */
+	{ 0, 0, 0, 0, NULL, NULL, 0, 0, 0}
 };
 
 /*
@@ -570,7 +572,7 @@ static const struct lws_jose_jwe_alg lws_gencrypto_jwe_enc_map[] = {
 	{ 0, 0, 0, 0, NULL, NULL, 0, 0, 0 } /* sentinel */
 };
 
-LWS_VISIBLE int
+int
 lws_gencrypto_jws_alg_to_definition(const char *alg,
 				    const struct lws_jose_jwe_alg **jose)
 {
@@ -588,7 +590,7 @@ lws_gencrypto_jws_alg_to_definition(const char *alg,
 	return 1;
 }
 
-LWS_VISIBLE int
+int
 lws_gencrypto_jwe_alg_to_definition(const char *alg,
 				    const struct lws_jose_jwe_alg **jose)
 {
@@ -606,7 +608,7 @@ lws_gencrypto_jwe_alg_to_definition(const char *alg,
 	return 1;
 }
 
-LWS_VISIBLE int
+int
 lws_gencrypto_jwe_enc_to_definition(const char *enc,
 				    const struct lws_jose_jwe_alg **jose)
 {
@@ -685,4 +687,9 @@ lws_gencrypto_destroy_elements(struct lws_gencrypto_keyelem *el, int m)
 	for (n = 0; n < m; n++)
 		if (el[n].buf)
 			lws_free_set_NULL(el[n].buf);
+}
+
+size_t lws_gencrypto_padded_length(size_t pad_block_size, size_t len)
+{
+	return (len / pad_block_size + 1) * pad_block_size;
 }

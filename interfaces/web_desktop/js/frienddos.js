@@ -2098,7 +2098,7 @@ window.Shell = function( appObject )
 		}
 		
 		out2 = out.split( ' ' );*/
-		console.log( 'this.parseInput = function( string ) ', out );
+		//console.log( 'this.parseInput = function( string ) ', out );
 		out = out.split( ' ' );
 		var object = { args: [], vars: [] };
 		for( a = 0; a < out.length; a++ )

@@ -36,7 +36,7 @@ window.loaded = false;
 window.applicationStarted = false;
 var __timeout = 200;
 
-if ( this.apijsHasExecuted )
+if( this.apijsHasExecuted )
 	throw new Error( 'api.js has already run, aborting' );
 
 this.apijsHasExecuted = true;
@@ -57,7 +57,13 @@ Friend.application = {
 		document.body.classList.add( 'activated' );
 		setTimeout( function()
 		{
+			document.body.style.willChange = 'opacity';
 			document.body.style.opacity = '';
+			document.body.style.pointerEvents = '';
+			setTimeout( function()
+			{
+				document.body.style.willChange = '';
+			}, 250 );
 		}, 100 );
 		Application.sendMessage( {
 			type: 'view',
@@ -1017,7 +1023,7 @@ function receiveEvent( event, queued )
 						var owner = ( arq.isHost ? '' : 'owner' );
 						// Send to others
 						var msg = {
-							path : 'system.library/app/send' + owner + '/',
+							path : 'system.library/sas/send' + owner + '/',
 							data : {
 								sasid : dataPacket.sasid,
 								msg: dataPacket.eventData
@@ -1272,12 +1278,10 @@ function receiveEvent( event, queued )
 			if( dataPacket.screenId ) Application.screenId = dataPacket.screenId;
 
 			// Make sure the base href is correct.
-			if( typeof( data ) != 'string' )
-				data = '';
-			var data = Friend.convertFriendPaths( dataPacket.data );
+			data = Friend.convertFriendPaths( dataPacket.data );
 
 			// For jquery etc
-			var m = '';
+			let m = '';
 			while( m = data.match( /\$\(document[^{]*?\{([^}]*?)\}\)/i ) )
 				data = data.split( m[0] ).join( '(' + m[1] + ')' );
 
@@ -1289,7 +1293,7 @@ function receiveEvent( event, queued )
 			{
 				try
 				{
-					var nw = parent.document.getElementById( dataPacket.parentSandboxId );
+					let nw = parent.document.getElementById( dataPacket.parentSandboxId );
 					if( parent != nw )
 						parentView = nw.contentWindow;
 				}
@@ -1483,10 +1487,10 @@ function receiveEvent( event, queued )
 					}
 					else if( f.onCall )
 					{
-						var firstPart = dataPacket.data.indexOf( '<!--separate-->' ) + ( '<!--separate-->' ).length;
-						var data = dataPacket.data.substr( firstPart, dataPacket.data.length - firstPart );
-						var resp = dataPacket.data.substr( 0, dataPacket.data.indexOf( '<!--separate-->' ) );
-						f.onCall( resp, data );
+						let firstPart = dataPacket.data.indexOf( '<!--separate-->' ) + ( '<!--separate-->' ).length;
+						let pdata = dataPacket.data.substr( firstPart, dataPacket.data.length - firstPart );
+						let resp = dataPacket.data.substr( 0, dataPacket.data.indexOf( '<!--separate-->' ) );
+						f.onCall( resp, pdata );
 					}
 					// For Module objects
 					else if ( f.onExecuted )
@@ -1712,13 +1716,13 @@ function receiveEvent( event, queued )
 					// Execute and give callback
 					if( DormantMaster.doors[ dataPacket.doorId ] )
 					{
-						var data = DormantMaster.doors[ dataPacket.doorId ].execute( dataPacket.dormantCommand, dataPacket.dormantArgs );
+						let ddata = DormantMaster.doors[ dataPacket.doorId ].execute( dataPacket.dormantCommand, dataPacket.dormantArgs );
 						Application.sendMessage( {
 							type: 'dormantmaster',
 							method: 'callback',
 							doorId: dataPacket.doorId,
 							callbackId: dataPacket.callbackId,
-							data: data
+							data: ddata
 						} );
 					}
 				}
@@ -5767,6 +5771,7 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 
 	// Don't do this twice
 	document.body.style.opacity = '0';
+	document.body.style.pointerEvents = 'none';
 	window.frameInitialized = true;
 	var pbase = document.getElementsByTagName( 'base' );
 	if( pbase && pbase.length )
@@ -5775,9 +5780,9 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 	}
 	else
 	{
-		var b = document.createElement( 'base' );
+		let b = document.createElement( 'base' );
 		//console.log( packet );
-		var test = packet.appPath ? ( '/' + encodeURIComponent( packet.appPath.split( '/' ).join( '|' ) ) + '/' ) : packet.base;
+		let test = packet.appPath ? ( '/' + encodeURIComponent( packet.appPath.split( '/' ).join( '|' ) ) + '/' ) : packet.base;
 		b.href = !!test ? test : '';
 		b.href += ( packet.authId && packet.authId.length ? ( 'aid' + packet.authId ) : ( 'sid' + packet.sessionId ) ) + '/';
 		document.getElementsByTagName( 'head' )[0].appendChild( b );
@@ -7735,7 +7740,7 @@ AssidRequest.prototype.share = function( handler, callback )
 	{
 		sas.applicationState = 'pending';
 		var reg = {
-			path : 'system.library/app/register/',
+			path : 'system.library/sas/register/',
 			data : {
 				authid : Application.authId,
 			},
@@ -7828,7 +7833,7 @@ AssidRequest.prototype.shareEvents = function( args, handler, callback )
 
 		Friend.conn.on( args.sasid, handler );
 		var accept = {
-			path : 'system.library/app/accept/',
+			path : 'system.library/sas/accept/',
 			data : {
 				authid : Application.authId,
 				sasid : args.sasid
@@ -7858,7 +7863,7 @@ AssidRequest.prototype.unshare = function( callback )
 	{
 		Friend.conn.off( this.applicationId );
 		var unReg = {
-			path : 'system.library/app/unregister',
+			path : 'system.library/sas/unregister',
 			data : {
 				sasid: this.applicationId
 			},
@@ -7896,7 +7901,7 @@ AssidRequest.prototype.sendInvite = function( userlist, inviteMessage, callback 
 	}
 
 	var inv = {
-		path : 'system.library/app/share',
+		path : 'system.library/sas/share',
 		data : {
 			sasid : sas.applicationId,
 			authid : Application.authId,
@@ -7924,7 +7929,7 @@ AssidRequest.prototype.eventDispatcher = function( e )
 	// Send the event through the network!
 	var hostEndpoint = 'send/'; // broadcast to all clients
 	var clientEndpoint = 'sendowner/'; // send to session owner
-	var path = 'system.library/app/';
+	var path = 'system.library/sas/';
 	if ( this.isHost )
 		path += hostEndpoint;
 	else path += clientEndpoint;
@@ -7948,7 +7953,7 @@ AssidRequest.prototype.sendEvent = function( e )
 	//console.log( 'sendEVent', e );
 	var hostEndpoint = 'send/'; // broadcast to all clients
 	var clientEndpoint = 'sendowner/'; // send to session owner
-	var path = 'system.library/app/';
+	var path = 'system.library/sas/';
 	if ( this.isHost )
 		path += hostEndpoint;
 	else path += clientEndpoint;
@@ -8155,8 +8160,11 @@ GuiDesklet = function()
 		var self = this;
 		self.id = conf.sasid || null;
 		self.sessiontype = conf.sessiontype || null;
+		self.forceid = conf.forceid ? conf.forceid : false;
+
 		self.onevent = conf.onevent;
 		self.callback = callback;
+		self.forceid = conf.force;
 
 		self.isHost = false;
 		self.users = {};
@@ -8388,14 +8396,14 @@ GuiDesklet = function()
 
 	// Private - if you are calling these, you are doing it wrong
 
-	ns.SAS.prototype.regPath = 'system.library/app/register';
-	ns.SAS.prototype.acceptPath = 'system.library/app/accept';
-	ns.SAS.prototype.invitePath = 'system.library/app/share';
-	ns.SAS.prototype.removePath = 'system.library/app/unshare';
-	ns.SAS.prototype.closePath = 'system.library/app/unregister';
-	ns.SAS.prototype.toClientsPath = 'system.library/app/send';
-	ns.SAS.prototype.toHostPath = 'system.library/app/sendowner';
-	ns.SAS.prototype.userlistPath = 'system.library/app/userlist';
+	ns.SAS.prototype.regPath = 'system.library/sas/register';
+	ns.SAS.prototype.acceptPath = 'system.library/sas/accept';
+	ns.SAS.prototype.invitePath = 'system.library/sas/share';
+	ns.SAS.prototype.removePath = 'system.library/sas/unshare';
+	ns.SAS.prototype.closePath = 'system.library/sas/unregister';
+	ns.SAS.prototype.toClientsPath = 'system.library/sas/send';
+	ns.SAS.prototype.toHostPath = 'system.library/sas/sendowner';
+	ns.SAS.prototype.userlistPath = 'system.library/sas/userlist';
 
 	ns.SAS.prototype.init =function() {
 		var self = this;
@@ -8420,13 +8428,20 @@ GuiDesklet = function()
 		var self = this;
 		var reg = {
 			path : self.regPath,
+			sasid : self.id,
+			force : self.forceid,
 			data : {
 				authId : Application.authId,
+				'force' : self.forceid
 			},
 		};
 		if( self.sessiontype ) reg.data.type = self.sessiontype;
 		
 		self.conn.request( reg, regBack );
+		
+		//console.log('register host... ' + self.regPath);
+
+		
 		function regBack( res ) {
 			if ( !res.SASID ) {
 				callback( false );
@@ -8454,10 +8469,23 @@ GuiDesklet = function()
 		var accept = {
 			path : self.acceptPath,
 			data : {
-				accauthid : Application.authId,
+				authid : Application.authId,
 				sasid  : self.id,
+				force : self.forceid
 			}
 		};
+		
+
+		console.log('register client... ' + self.sessiontype);
+		
+		if( self.sessiontype == 'open' )
+		{
+			accept.path = self.regPath;
+			accept.data.authId = Application.authId;
+			accept.data.force = self.forceid;
+			console.log('open session change path for our acceptance to register ourselves' + self.regPath)
+		}
+		
 		self.conn.request( accept, accBack );
 		function accBack( res ) {
 			var host = res.identity;

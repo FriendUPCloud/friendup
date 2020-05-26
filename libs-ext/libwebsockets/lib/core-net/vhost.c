@@ -40,6 +40,9 @@ const struct lws_role_ops *available_roles[] = {
 #if defined(LWS_ROLE_RAW_PROXY)
 	&role_ops_raw_proxy,
 #endif
+#if defined(LWS_ROLE_MQTT) && defined(LWS_WITH_CLIENT)
+	&role_ops_mqtt,
+#endif
 	NULL
 };
 
@@ -68,6 +71,24 @@ const struct lws_protocols *available_abstract_protocols[] = {
 };
 #endif
 
+#if defined(LWS_WITH_SECURE_STREAMS)
+const struct lws_protocols *available_secstream_protocols[] = {
+#if defined(LWS_ROLE_H1)
+	&protocol_secstream_h1,
+#endif
+#if defined(LWS_ROLE_H2)
+	&protocol_secstream_h2,
+#endif
+#if defined(LWS_ROLE_WS)
+	&protocol_secstream_ws,
+#endif
+#if defined(LWS_ROLE_MQTT)
+	&protocol_secstream_mqtt,
+#endif
+	NULL
+};
+#endif
+
 static const char * const mount_protocols[] = {
 	"http://",
 	"https://",
@@ -89,8 +110,10 @@ lws_role_by_name(const char *name)
 	if (!strcmp(name, role_ops_raw_skt.name))
 		return &role_ops_raw_skt;
 
+#if defined(LWS_ROLE_RAW_FILE)
 	if (!strcmp(name, role_ops_raw_file.name))
 		return &role_ops_raw_file;
+#endif
 
 	return NULL;
 }
@@ -170,11 +193,14 @@ lws_role_call_adoption_bind(struct lws *wsi, int type, const char *prot)
 	    role_ops_raw_skt.adoption_bind(wsi, type, prot))
 		return 0;
 
+#if defined(LWS_ROLE_RAW_FILE)
+
 	/* fall back to raw file role if, eg, h1 not configured */
 
 	if (role_ops_raw_file.adoption_bind &&
 	    role_ops_raw_file.adoption_bind(wsi, type, prot))
 		return 0;
+#endif
 
 	return 1;
 }
@@ -204,7 +230,7 @@ lws_role_call_client_bind(struct lws *wsi,
 }
 #endif
 
-LWS_VISIBLE void *
+void *
 lws_protocol_vh_priv_zalloc(struct lws_vhost *vhost,
 			    const struct lws_protocols *prot, int size)
 {
@@ -236,7 +262,7 @@ lws_protocol_vh_priv_zalloc(struct lws_vhost *vhost,
 	return vhost->protocol_vh_privs[n];
 }
 
-LWS_VISIBLE void *
+void *
 lws_protocol_vh_priv_get(struct lws_vhost *vhost,
 			 const struct lws_protocols *prot)
 {
@@ -369,7 +395,7 @@ lws_protocol_init_vhost(struct lws_vhost *vh, int *any)
  * inform every vhost that hasn't already done it, that
  * his protocols are initializing
  */
-LWS_VISIBLE int
+int
 lws_protocol_init(struct lws_context *context)
 {
 	struct lws_vhost *vh = context->vhost_list;
@@ -436,7 +462,7 @@ static const struct lws_protocols protocols_dummy[] = {
 #undef LWS_HAVE_GETENV
 #endif
 
-LWS_VISIBLE struct lws_vhost *
+struct lws_vhost *
 lws_create_vhost(struct lws_context *context,
 		 const struct lws_context_creation_info *info)
 {
@@ -448,10 +474,10 @@ lws_create_vhost(struct lws_context *context,
 	struct lws_plugin *plugin = context->plugin_list;
 #endif
 	struct lws_protocols *lwsp;
-	int m, f = !info->pvo, fx = 0, abs_pcol_count = 0;
+	int m, f = !info->pvo, fx = 0, abs_pcol_count = 0, sec_pcol_count = 0;
 	char buf[96];
-#if defined(LWS_CLIENT_HTTP_PROXYING) && \
-    defined(LWS_WITH_CLIENT) && defined(LWS_HAVE_GETENV)
+#if defined(LWS_CLIENT_HTTP_PROXYING) && defined(LWS_WITH_CLIENT) \
+	&& defined(LWS_HAVE_GETENV)
 	char *p;
 #endif
 #if defined(LWS_WITH_SYS_ASYNC_DNS)
@@ -573,6 +599,9 @@ lws_create_vhost(struct lws_context *context,
 #if defined(LWS_WITH_ABSTRACT)
 	abs_pcol_count = (int)LWS_ARRAY_SIZE(available_abstract_protocols) - 1;
 #endif
+#if defined(LWS_WITH_SECURE_STREAMS)
+	sec_pcol_count = (int)LWS_ARRAY_SIZE(available_secstream_protocols) - 1;
+#endif
 
 	/*
 	 * give the vhost a unified list of protocols including:
@@ -584,7 +613,7 @@ lws_create_vhost(struct lws_context *context,
 	 */
 	lwsp = lws_zalloc(sizeof(struct lws_protocols) *
 				(vh->count_protocols +
-				   abs_pcol_count +
+				   abs_pcol_count + sec_pcol_count +
 				   context->plugin_protocol_count +
 				   fx + 1),
 			  "vhost-specific plugin table");
@@ -621,6 +650,14 @@ lws_create_vhost(struct lws_context *context,
 	if (!context->vhost_list) {
 		memcpy(&lwsp[m++], &lws_async_dns_protocol,
 		       sizeof(struct lws_protocols));
+		vh->count_protocols++;
+	}
+#endif
+
+#if defined(LWS_WITH_SECURE_STREAMS)
+	for (n = 0; n < sec_pcol_count; n++) {
+		memcpy(&lwsp[m++], available_secstream_protocols[n],
+		       sizeof(*lwsp));
 		vh->count_protocols++;
 	}
 #endif
@@ -725,29 +762,20 @@ lws_create_vhost(struct lws_context *context,
 #endif
 	{
 #ifdef LWS_HAVE_GETENV
-		p = getenv("http_proxy");
+#if defined(__COVERITY__)
+		p = NULL;
+#else
+		p = getenv("http_proxy"); /* coverity[tainted_scalar] */
 		if (p) {
 			lws_strncpy(buf, p, sizeof(buf));
-			/* coverity[tainted_scalar] */
 			lws_set_proxy(vh, buf);
 		}
+#endif
 #endif
 	}
 #endif
 #if defined(LWS_WITH_SOCKS5)
-	/* socks proxy */
-	if (info->socks_proxy_address) {
-		/* override for backwards compatibility */
-		if (info->socks_proxy_port)
-			vh->socks_proxy_port = info->socks_proxy_port;
-		lws_set_socks(vh, info->socks_proxy_address);
-	} else {
-#ifdef LWS_HAVE_GETENV
-		p = getenv("socks_proxy");
-		if (p && strlen(p) > 0 && strlen(p) < 95)
-			lws_set_socks(vh, p);
-#endif
-	}
+	lws_socks5c_ads_server(vh, info);
 #endif
 
 	vh->ka_time = info->ka_time;
@@ -831,7 +859,7 @@ bail:
 	return NULL;
 }
 
-LWS_VISIBLE int
+int
 lws_init_vhost_client_ssl(const struct lws_context_creation_info *info,
 			  struct lws_vhost *vhost)
 {
@@ -843,13 +871,13 @@ lws_init_vhost_client_ssl(const struct lws_context_creation_info *info,
 	return lws_context_init_client_ssl(&i, vhost);
 }
 
-LWS_VISIBLE void
+void
 lws_cancel_service_pt(struct lws *wsi)
 {
 	lws_plat_pipe_signal(wsi);
 }
 
-LWS_VISIBLE void
+void
 lws_cancel_service(struct lws_context *context)
 {
 	struct lws_context_per_thread *pt = &context->pt[0];
@@ -878,9 +906,14 @@ lws_create_event_pipes(struct lws_context *context)
 	 * not bound to a vhost or protocol (both are NULL)
 	 */
 
+#if LWS_MAX_SMP > 1
 	for (n = 0; n < context->count_threads; n++) {
+#else
+	n = 0;
+	{
+#endif
 		if (context->pt[n].pipe_wsi)
-			continue;
+			return 0;
 
 		wsi = lws_zalloc(sizeof(*wsi), "event pipe wsi");
 		if (!wsi) {
@@ -897,7 +930,7 @@ lws_create_event_pipes(struct lws_context *context)
 		context->pt[n].pipe_wsi = wsi;
 		context->count_wsi_allocated++;
 
-		if (lws_plat_pipe_create(wsi))
+		if (!lws_plat_pipe_create(wsi)) {
 			/*
 			 * platform code returns 0 if it actually created pipes
 			 * and initialized pt->dummy_pipe_fds[].  If it used
@@ -906,19 +939,17 @@ lws_create_event_pipes(struct lws_context *context)
 			 * related to dummy_pipe_fds[], adding it to the fds,
 			 * etc.
 			 */
-			continue;
 
-		wsi->desc.sockfd = context->pt[n].dummy_pipe_fds[0];
-		lwsl_debug("event pipe fd %d\n", wsi->desc.sockfd);
+			wsi->desc.sockfd = context->pt[n].dummy_pipe_fds[0];
+			lwsl_debug("event pipe fd %d\n", wsi->desc.sockfd);
 
-#if !defined(LWS_AMAZON_RTOS)
-		if (context->event_loop_ops->accept)
-			if (context->event_loop_ops->accept(wsi))
+			if (context->event_loop_ops->sock_accept)
+				if (context->event_loop_ops->sock_accept(wsi))
+					return 1;
+
+			if (__insert_wsi_socket_into_fds(context, wsi))
 				return 1;
-#endif
-
-		if (__insert_wsi_socket_into_fds(context, wsi))
-			return 1;
+		}
 	}
 
 	return 0;
@@ -928,9 +959,12 @@ void
 lws_destroy_event_pipe(struct lws *wsi)
 {
 	lwsl_info("%s\n", __func__);
-	__remove_wsi_socket_from_fds(wsi);
 
-	if (wsi->context->event_loop_ops->wsi_logical_close) {
+	if (lws_socket_is_valid(wsi->desc.sockfd))
+		__remove_wsi_socket_from_fds(wsi);
+
+	if (!wsi->context->event_loop_ops->destroy_wsi &&
+	    wsi->context->event_loop_ops->wsi_logical_close) {
 		wsi->context->event_loop_ops->wsi_logical_close(wsi);
 		lws_plat_pipe_close(wsi);
 		return;
@@ -958,7 +992,6 @@ lws_vhost_destroy1(struct lws_vhost *vh)
 
 	lws_vhost_lock(vh); /* -------------- vh { */
 
-	vh->being_destroyed = 1;
 #if defined(LWS_WITH_NETWORK)
 	/*
 	 * PHASE 1: take down or reassign any listen wsi
@@ -1039,6 +1072,8 @@ __lws_vhost_destroy2(struct lws_vhost *vh)
 	struct lws_deferred_free *df;
 	struct lws wsi;
 	int n;
+
+	vh->being_destroyed = 0;
 
 #if defined(LWS_WITH_CLIENT)
 	/*
@@ -1268,7 +1303,7 @@ lws_check_deferred_free(struct lws_context *context, int tsi, int force)
 }
 
 
-LWS_VISIBLE void
+void
 lws_vhost_destroy(struct lws_vhost *vh)
 {
 	struct lws_deferred_free *df = lws_malloc(sizeof(*df), "deferred free");
@@ -1280,6 +1315,8 @@ lws_vhost_destroy(struct lws_vhost *vh)
 	lws_context_lock(context, __func__); /* ------ context { */
 
 	lws_vhost_destroy1(vh);
+
+	lwsl_debug("%s: count_bound_wsi %d\n", __func__, vh->count_bound_wsi);
 
 	if (!vh->count_bound_wsi) {
 		/*
@@ -1307,20 +1344,20 @@ out:
 }
 
 
-LWS_EXTERN void *
+void *
 lws_vhost_user(struct lws_vhost *vhost)
 {
 	return vhost->user;
 }
 
-LWS_VISIBLE LWS_EXTERN int
+int
 lws_get_vhost_listen_port(struct lws_vhost *vhost)
 {
 	return vhost->listen_port;
 }
 
 #if defined(LWS_WITH_SERVER)
-LWS_VISIBLE LWS_EXTERN void
+void
 lws_context_deprecate(struct lws_context *context, lws_reload_func cb)
 {
 	struct lws_vhost *vh = context->vhost_list, *vh1;
@@ -1389,11 +1426,28 @@ lws_get_vhost_by_name(struct lws_context *context, const char *name)
  */
 
 int
-lws_vhost_active_conns(struct lws *wsi, struct lws **nwsi)
+lws_vhost_active_conns(struct lws *wsi, struct lws **nwsi, const char *adsin)
 {
-	const char *adsin;
+	if (!lws_dll2_is_detached(&wsi->dll2_cli_txn_queue)) {
+		struct lws *w = lws_container_of(
+				wsi->dll2_cli_txn_queue.owner, struct lws,
+				dll2_cli_txn_queue_owner);
+		*nwsi = w;
 
-	adsin = lws_hdr_simple_ptr(wsi, _WSI_TOKEN_CLIENT_PEER_ADDRESS);
+		return ACTIVE_CONNS_QUEUED;
+	}
+
+#if defined(LWS_ROLE_H2) || defined(LWS_ROLE_MQTT)
+	if (wsi->mux.parent_wsi) {
+		/*
+		 * We already decided...
+		 */
+
+		*nwsi = wsi->mux.parent_wsi;
+
+		return ACTIVE_CONNS_MUXED;
+	}
+#endif
 
 	lws_vhost_lock(wsi->vhost); /* ----------------------------------- { */
 
@@ -1402,10 +1456,17 @@ lws_vhost_active_conns(struct lws *wsi, struct lws **nwsi)
 		struct lws *w = lws_container_of(d, struct lws,
 						 dll_cli_active_conns);
 
-		lwsl_debug("%s: check %s %s %d %d\n", __func__, adsin,
-			   w->cli_hostname_copy, wsi->c_port, w->c_port);
+		lwsl_debug("%s: check %p %p %s %s %d %d\n", __func__, wsi, w,
+			    adsin, w->cli_hostname_copy, wsi->c_port, w->c_port);
 
-		if (w != wsi && w->cli_hostname_copy &&
+		if (w != wsi &&
+		    /*
+		     * "same internet protocol"... this is a bit tricky,
+		     * since h2 start out as h1
+		     */
+		    (w->role_ops == wsi->role_ops ||
+		     (lwsi_role_http(w) && lwsi_role_http(wsi))) &&
+		    w->cli_hostname_copy &&
 		    !strcmp(adsin, w->cli_hostname_copy) &&
 #if defined(LWS_WITH_TLS)
 		    (wsi->tls.use_ssl & LCCSCF_USE_SSL) ==
@@ -1420,41 +1481,85 @@ lws_vhost_active_conns(struct lws *wsi, struct lws **nwsi)
 			 * connection that it doesn't support pipelining...
 			 */
 			if (w->keepalive_rejected) {
-				lwsl_info("defeating pipelining due to no "
+				lwsl_notice("defeating pipelining due to no "
 					  "keepalive on server\n");
 				goto solo;
 			}
-#if defined (LWS_WITH_HTTP2)
+
+#if defined(LWS_WITH_HTTP2)
 			/*
-			 * h2: in usable state already: just use it without
+			 * h2: if in usable state already: just use it without
 			 *     going through the queue
 			 */
-			if (w->client_h2_alpn &&
+			if (w->client_h2_alpn && w->client_mux_migrated &&
 			    (lwsi_state(w) == LRS_H2_WAITING_TO_SEND_HEADERS ||
-			     lwsi_state(w) == LRS_ESTABLISHED)) {
+			     lwsi_state(w) == LRS_ESTABLISHED ||
+			     lwsi_state(w) == LRS_IDLING)) {
 
-				lwsl_info("%s: just join h2 directly\n",
-						__func__);
+				lwsl_notice("%s: just join h2 directly 0x%x\n",
+						__func__, lwsi_state(w));
+
+				if (lwsi_state(w) == LRS_IDLING) {
+					// lwsi_set_state(w, LRS_ESTABLISHED);
+					_lws_generic_transaction_completed_active_conn(&w);
+				}
+
+				//lwsi_set_state(w, LRS_H1C_ISSUE_HANDSHAKE2);
 
 				wsi->client_h2_alpn = 1;
 				lws_wsi_h2_adopt(w, wsi);
 				lws_vhost_unlock(wsi->vhost); /* } ---------- */
 
+				*nwsi = w;
+
 				return ACTIVE_CONNS_MUXED;
 			}
 #endif
 
-			lwsl_info("apply %p to txn queue on %p state 0x%lx\n",
-				  wsi, w, (unsigned long)w->wsistate);
+#if defined(LWS_ROLE_MQTT)
 			/*
-			 * ...let's add ourselves to his transaction queue...
-			 * we are adding ourselves at the HEAD
+			 * MQTT: if in usable state already: just use it without
+			 *	 going through the queue
 			 */
-			lws_dll2_add_head(&wsi->dll2_cli_txn_queue,
-					  &w->dll2_cli_txn_queue_owner);
+
+			if (lwsi_role_mqtt(wsi) && w->client_mux_migrated &&
+			    lwsi_state(w) == LRS_ESTABLISHED) {
+
+				if (lws_wsi_mqtt_adopt(w, wsi)) {
+					lwsl_notice("%s: join mqtt directly\n", __func__);
+					lws_dll2_remove(&wsi->dll2_cli_txn_queue);
+					wsi->client_mux_substream = 1;
+
+					lws_vhost_unlock(wsi->vhost); /* } ---------- */
+
+
+					return ACTIVE_CONNS_MUXED;
+				}
+			}
+#endif
 
 			/*
-			 * h1: pipeline our headers out on him,
+			 * If the connection is viable but not yet in a usable
+			 * state, let's attach ourselves to it and wait for it
+			 * to get there or fail.
+			 */
+
+			lwsl_notice("%s: apply %p to txn queue on %p state 0x%lx\n",
+				  __func__, wsi, w, (unsigned long)w->wsistate);
+			/*
+			 * ...let's add ourselves to his transaction queue...
+			 * we are adding ourselves at the TAIL
+			 */
+			lws_dll2_add_tail(&wsi->dll2_cli_txn_queue,
+					  &w->dll2_cli_txn_queue_owner);
+
+			if (lwsi_state(w) == LRS_IDLING) {
+				// lwsi_set_state(w, LRS_ESTABLISHED);
+				_lws_generic_transaction_completed_active_conn(&w);
+			}
+
+			/*
+			 * For eg, h1 next we'd pipeline our headers out on him,
 			 * and wait for our turn at client transaction_complete
 			 * to take over parsing the rx.
 			 */

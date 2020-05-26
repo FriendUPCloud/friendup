@@ -22,7 +22,9 @@
  * IN THE SOFTWARE.
  */
 
+#if !defined(_GNU_SOURCE)
 #define _GNU_SOURCE
+#endif
 #include "private-lib-core.h"
 
 lws_usec_t
@@ -34,22 +36,30 @@ lws_now_usecs(void)
 	if (clock_gettime(CLOCK_MONOTONIC, &ts))
 		return 0;
 
-	return (ts.tv_sec * LWS_US_PER_SEC) + (ts.tv_nsec / LWS_NS_PER_US);
+	return (((lws_usec_t)ts.tv_sec) * LWS_US_PER_SEC) +
+			((lws_usec_t)ts.tv_nsec / LWS_NS_PER_US);
 #else
 	struct timeval now;
 
 	gettimeofday(&now, NULL);
-	return (now.tv_sec * 1000000ll) + now.tv_usec;
+	return (((lws_usec_t)now.tv_sec) * LWS_US_PER_SEC) +
+			(lws_usec_t)now.tv_usec;
 #endif
 }
 
-LWS_VISIBLE int
-lws_get_random(struct lws_context *context, void *buf, int len)
+size_t
+lws_get_random(struct lws_context *context, void *buf, size_t len)
 {
-	return read(context->fd_random, (char *)buf, len);
+#if defined(__COVERITY__)
+	memset(buf, 0, len);
+	return len;
+#else
+	/* coverity[tainted_scalar] */
+	return (size_t)read(context->fd_random, (char *)buf, len);
+#endif
 }
 
-LWS_VISIBLE void lwsl_emit_syslog(int level, const char *line)
+void lwsl_emit_syslog(int level, const char *line)
 {
 	int syslog_level = LOG_DEBUG;
 

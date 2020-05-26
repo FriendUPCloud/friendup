@@ -701,26 +701,28 @@ char* StringShellEscapeSize( const char* str, int *len )
 //
 //
 
-static inline void preKmp(char *x, int m, int kmpNext[]) {
+static inline void preKmp(char *x, int m, int *kmpNext )
+{
 	int i, j;
 
 	i = 0;
 	j = kmpNext[0] = -1;
-	while (i < m) 
+	
+	while( i < m ) 
 	{
-		while (j > -1 && x[i] != x[j])
+		while( j > -1 && x[i] != x[j] )
 		{
-			j = kmpNext[j];
+			j = kmpNext[ j ];
 		}
 		i++;
 		j++;
-		if (x[i] == x[j])
+		if( x[i] == x[j] )
 		{
-			kmpNext[i] = kmpNext[j];
+			kmpNext[ i ] = kmpNext[ j ];
 		}
 		else
 		{
-			kmpNext[i] = j;
+			kmpNext[ i ] = j;
 		}
 	}
 }
@@ -767,26 +769,31 @@ char *FindInBinary(char *x, int m, char *y, int n)
 //
 //
 
-FQUAD FindInBinaryPOS(char *x, int m, char *y, FQUAD n) 
+FQUAD FindInBinaryPOS( char *findString, int m, char *findIn, FQUAD n) 
 {
-	FQUAD i, j;
+	FQUAD j;
+	int i;
 	int kmpNext[ m ];
 
 	// Preprocessing 
-	preKmp(x, m, kmpNext);
+	preKmp( findString, m, kmpNext );
 
 	// Searching 
 	i = j = 0;
-	while (j < (FQUAD)n) 
+	while( j < (FQUAD)n ) 
 	{
 		//printf("find %d\n", j );
-		while (i > -1 && x[i] != y[j])
+		char fstr = findString[ i ];
+		
+		while( i > -1 && fstr != *findIn )
 		{
 			i = kmpNext[ i ];
 		}
 		i++;
 		j++;
-		if (i >= m) 
+		findIn++;
+		
+		if( i >= m )
 		{
 			return j-i;
 		}

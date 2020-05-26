@@ -150,10 +150,14 @@ scan_upload_dir(struct vhd_deaddrop *vhd)
 		de = readdir(dir[sp]);
 		if (!de) {
 			closedir(dir[sp]);
+#if !defined(__COVERITY__)
 			if (!sp)
+#endif
 				break;
+#if !defined(__COVERITY__)
 			sp--;
 			continue;
+#endif
 		}
 
 		p = filepath;
@@ -168,7 +172,10 @@ scan_upload_dir(struct vhd_deaddrop *vhd)
 		/* ignore temp files */
 		if (de->d_name[strlen(de->d_name) - 1] == '~')
 			continue;
-
+#if defined(__COVERITY__)
+		s.st_size = 0;
+		s.st_mtime = 0;
+#else
 		/* coverity[toctou] */
 		if (stat(filepath, &s))
 			continue;
@@ -193,6 +200,7 @@ scan_upload_dir(struct vhd_deaddrop *vhd)
 			}
 			continue;
 		}
+#endif
 
 		m = strlen(filepath + initial) + 1;
 		dire = lwsac_use(&lwsac_head, sizeof(*dire) + m, 0);
@@ -206,8 +214,10 @@ scan_upload_dir(struct vhd_deaddrop *vhd)
 		dire->size = s.st_size;
 		dire->mtime = s.st_mtime;
 		dire->user[0] = '\0';
+#if !defined(__COVERITY__)
 		if (sp)
 			lws_strncpy(dire->user, subdir[1], sizeof(dire->user));
+#endif
 
 		found++;
 
@@ -679,7 +689,7 @@ static const struct lws_protocols protocols[] = {
 	LWS_PLUGIN_PROTOCOL_DEADDROP
 };
 
-LWS_EXTERN LWS_VISIBLE int
+LWS_VISIBLE int
 init_protocol_deaddrop(struct lws_context *context,
 		       struct lws_plugin_capability *c)
 {
@@ -697,7 +707,7 @@ init_protocol_deaddrop(struct lws_context *context,
 	return 0;
 }
 
-LWS_EXTERN LWS_VISIBLE int
+LWS_VISIBLE int
 destroy_protocol_deaddrop(struct lws_context *context)
 {
 	return 0;

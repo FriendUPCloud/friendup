@@ -20,6 +20,37 @@ var FUI_MOUSEDOWN_PICKOBJ = 11;
 
 /* Done important flags for GUI elements ------------------------------------ */
 
+// Container of settings for virtual workspaces
+var virtualWorkspaces = [];
+function setVirtualWorkspaceInformation( num, flag, value )
+{
+	if( typeof( num ) == 'undefined' || num < 0 ) return;
+
+	if( typeof( virtualWorkspaces[ num ] ) == 'undefined' )
+	{
+		virtualWorkspaces[ num ] = {
+			'activeWindow': false
+		};
+	}
+	switch( flag.toLowerCase() )
+	{
+		case 'activewindow':
+			virtualWorkspaces[ num ].activeWindow = value;
+			break;
+	}
+}
+function cleanVirtualWorkspaceInformation()
+{
+	for( let a in virtualWorkspaces )
+	{
+		if( virtualWorkspaces[ a ].activeWindow && virtualWorkspaces[ a ].activeWindow.workspace != a )
+		{
+			virtualWorkspaces[ a ].activeWindow = null;
+		}
+	}
+}
+
+// Window information
 var movableHighestZindex = 99;
 var movableWindowCount = 0;
 var movableWindows = [];
@@ -35,7 +66,7 @@ var mousePointer =
 	{
 		if( !ge( 'MousePointer' ) )
 		{
-			var d = document.createElement( 'div' );
+			let d = document.createElement( 'div' );
 			d.id = 'MousePointer';
 			d.style.position = 'absolute';
 			d.style.zIndex = 10000;
@@ -48,7 +79,7 @@ var mousePointer =
 	move: function( e )
 	{
 		if ( !e ) e = window.event;
-		var tar = e.target ? e.target : e.srcElement;
+		let tar = e.target ? e.target : e.srcElement;
 		
 		// If we have elements, it means we have icons!
 		if ( this.elements.length )
@@ -57,8 +88,8 @@ var mousePointer =
 			CoverWindows();
 			
 			// Object moved over
-			var mover = false;
-			var moveWin = false;
+			let mover = false;
+			let moveWin = false;
 			
 			// Get mouse coords
 			if( window.isTablet || window.isMobile )
@@ -77,11 +108,11 @@ var mousePointer =
 				windowMouseY -= ge( 'DoorsScreen' ).screenOffsetTop;
 			
 			// Check move on window
-			var z = 0;
+			let z = 0;
 			for ( var a in movableWindows )
 			{
-				var wn = movableWindows[a];
-				var wnZ = parseInt ( wn.style.zIndex );
+				let wn = movableWindows[a];
+				let wnZ = parseInt ( wn.style.zIndex );
 				if ( 
 					wn.offsetTop < windowMouseY && 
 					wn.offsetLeft < windowMouseX &&
@@ -95,7 +126,7 @@ var mousePointer =
 					{
 						if( !wn.content.fileBrowser.dom.classList.contains( 'Hidden' ) )
 						{
-							var fb = wn.content.fileBrowser.dom;
+							let fb = wn.content.fileBrowser.dom;
 							if( windowMouseX < wn.offsetLeft + fb.offsetWidth && windowMouseY < wn.offsetTop + fb.offsetHeight )
 							{
 								moveWin = wn.content.fileBrowser;
@@ -130,8 +161,8 @@ var mousePointer =
 			}
 			
 			// Check screens and view windows
-			var screens = [];
-			var screenl = ge( 'Screens' );
+			let screens = [];
+			let screenl = ge( 'Screens' );
 			for( var a = 0; a < screenl.childNodes.length; a++ )
 			{
 				if( screenl.childNodes[a].tagName == 'DIV' && screenl.childNodes[a].classList && screenl.childNodes[a].classList.contains( 'Screen' ) )
@@ -139,22 +170,22 @@ var mousePointer =
 					screens.push( screenl.childNodes[a].screen._screen );
 				}
 			}
-			var ars = [];
+			let ars = [];
 			for( var a in movableWindows )
 				ars.push( movableWindows[a] );
 			ars = ars.concat( screens );
 		
 			for( var c in ars )
 			{
-				var isListView = false;
-				var isScreen = false;
-				var w = ars[c].icons ? ars[c] : ars[c].content;
+				let isListView = false;
+				let isScreen = false;
+				let w = ars[c].icons ? ars[c] : ars[c].content;
 				if( !w || !w.icons ) continue; // No icons? Skip!
 				
-				var sctop = 0;
+				let sctop = 0;
 
 				// Listview counts from a different element
-				var iconArea = w;
+				let iconArea = w;
 				if( w.directoryview && w.directoryview.listMode == 'listview' )
 				{
 					iconArea = w.querySelector( '.ScrollArea' );
@@ -174,7 +205,7 @@ var mousePointer =
 					}
 				}
 				
-				var scleft = 0;
+				let scleft = 0;
 				if( sctop && sctop.length ) 
 				{
 					scleft = sctop[0].scrollLeft;
@@ -182,28 +213,28 @@ var mousePointer =
 				}
 				else sctop = 0;
 			
-				var my = windowMouseY - GetElementTop( iconArea ) + sctop;
-				var mx = windowMouseX - GetElementLeft( iconArea ) + scleft;
+				let my = windowMouseY - GetElementTop( iconArea ) + sctop;
+				let mx = windowMouseX - GetElementLeft( iconArea ) + scleft;
 				
 				// Add file browser offset
 				if( w.fileBrowser && !isListView )
 				{
 					if( !w.fileBrowser.dom.classList.contains( 'Hidden' ) )
 					{
-						var fb = w.fileBrowser.dom;
+						let fb = w.fileBrowser.dom;
 						mx -= fb.offsetWidth;
 					}
 				}
 				
-				var hoverIcon = false;
+				let hoverIcon = false;
 				
 				for( var a = 0; a < w.icons.length; a++ )
 				{
-					var ic = w.icons[a].domNode;
-					var icon = w.icons[a];
+					let ic = w.icons[a].domNode;
+					let icon = w.icons[a];
 			
 					// Exclude elements dragged
-					var found = false;
+					let found = false;
 					for( var b = 0; b < this.dom.childNodes.length; b++ )
 					{
 						if( ic == this.dom.childNodes[b] )
@@ -245,7 +276,7 @@ var mousePointer =
 			// Register roll out!
 			for( var a in window.movableWindows )
 			{
-				var wd = window.movableWindows[a];
+				let wd = window.movableWindows[a];
 				if( ( !mover && wd.rollOut ) || ( wd != moveWin && wd.rollOut ) )
 					wd.rollOut( e );
 			}
@@ -265,7 +296,7 @@ var mousePointer =
 	{
 		for ( var a in window.movableWindows )
 		{
-			var wn = window.movableWindows[a];
+			let wn = window.movableWindows[a];
 			if ( wn.rollOut ) wn.rollOut ( e );
 		}
 	},
@@ -277,29 +308,29 @@ var mousePointer =
 	drop: function ( e )
 	{
 		if ( !e ) e = window.event;
-		var tar = e.target ? e.target : e.srcElement;
+		let tar = e.target ? e.target : e.srcElement;
 		if ( this.elements.length )
 		{
-			var dropper = false;
+			let dropper = false;
 			
 			// Check drop on tray icon
-			var titems = ge( 'Tray' ).childNodes;
+			let titems = ge( 'Tray' ).childNodes;
 			for( var a = 0; a < titems.length; a++ )
 			{
-				var tr = titems[a];
-				var l = GetElementLeft( tr ); // left
-				var t = GetElementTop( tr ); // bottom
-				var r = l + tr.offsetWidth; // right
-				var b = t + tr.offsetHeight; // bottom
+				let tr = titems[a];
+				let l = GetElementLeft( tr ); // left
+				let t = GetElementTop( tr ); // bottom
+				let r = l + tr.offsetWidth; // right
+				let b = t + tr.offsetHeight; // bottom
 				if( windowMouseX >= l && windowMouseX < r && windowMouseY >= t && windowMouseY < b )
 				{
 					dropper = tr;
-					var objs = [];
+					let objs = [];
 					for( var k = 0; k < this.elements.length; k++ )
 					{
-						var e = this.elements[k];
+						let e = this.elements[k];
 						if ( e.fileInfo.getDropInfo ) {
-							var info = e.fileInfo.getDropInfo();
+							let info = e.fileInfo.getDropInfo();
 							objs.push( info );
 						} 
 						else 
@@ -322,8 +353,8 @@ var mousePointer =
 			}
 
 			// Check screens and view windows
-			var screens = [];
-			var screenl = ge( 'Screens' );
+			let screens = [];
+			let screenl = ge( 'Screens' );
 			for( var a = 0; a < screenl.childNodes.length; a++ )
 			{
 				if( screenl.childNodes[a].tagName == 'DIV' && screenl.childNodes[a].classList && screenl.childNodes[a].classList.contains( 'Screen' ) )
@@ -331,27 +362,30 @@ var mousePointer =
 					screens.push( screenl.childNodes[a].screen._screen );
 				}
 			}
-			var ars = [];
+			let ars = [];
 			for( var a in movableWindows )
 			{
 				// Don't check minimized windows
 				if( movableWindows[a].parentNode.getAttribute( 'minimized' ) ) continue;
+				// Don't check windows on other workspaces
+				if( globalConfig.workspaceCurrent != movableWindows[a].workspace )
+					continue;
 				ars.push( movableWindows[a] );
 			}
 			ars = ars.concat( screens );
 			
-			var dropped = 0;
-			var dropWin = 0;
-			var skipDropCheck = false;
+			let dropped = 0;
+			let dropWin = 0;
+			let skipDropCheck = false;
 			
 			// Check drop on view
 			if( !dropper )
 			{
-				var z = 0;
+				let z = 0;
 				for ( var a in ars )
 				{
-					var wn = ars[a];
-					var wnZ = parseInt ( wn.style.zIndex );
+					let wn = ars[a];
+					let wnZ = parseInt ( wn.style.zIndex );
 					if( isNaN( wnZ ) ) wnZ = 0;
 					if ( 
 						wn.offsetTop < windowMouseY && wn.offsetLeft < windowMouseX &&
@@ -370,7 +404,7 @@ var mousePointer =
 					// Did we drop on a file browser?
 					if( dropWin.content && dropWin.content.fileBrowser )
 					{
-						var fb = dropWin.content.fileBrowser.dom;
+						let fb = dropWin.content.fileBrowser.dom;
 						if( windowMouseX < dropWin.offsetLeft + fb.offsetWidth && windowMouseY < dropWin.offsetTop + fb.offsetHeight )
 						{
 							dropper = dropWin.content.fileBrowser;
@@ -384,24 +418,26 @@ var mousePointer =
 				}
 			}
 			
+			let w = null;
+			
 			if( !skipDropCheck )
 			{
 				// Find what we dropped on
 				for( var c in ars )
 				{
-					var isListView = false;
-					var isScreen = false;
-					var w = ars[c].icons ? ars[c] : ars[c].content;
+					let isListView = false;
+					let isScreen = false;
+					w = ars[c].icons ? ars[c] : ars[c].content;
 					if( !w || !w.icons ) continue; // No icons? Skip!
 				
 					// If we have a dropped on view, skip icons on other views
 					if( dropper && ( w != dropper.content && w != dropper ) )
 						continue;
 				
-					var sctop = 0;
+					let sctop = 0;
 
 					// Listview counts from a different element
-					var iconArea = w;
+					let iconArea = w;
 					if( w.directoryview && w.directoryview.listMode == 'listview' )
 					{
 						iconArea = w.querySelector( '.ScrollArea' );
@@ -421,7 +457,7 @@ var mousePointer =
 						}
 					}
 				
-					var scleft = 0;
+					let scleft = 0;
 					if( sctop && sctop.length ) 
 					{
 						scleft = sctop[0].scrollLeft;
@@ -429,15 +465,15 @@ var mousePointer =
 					}
 					else sctop = 0;
 					
-					var my = windowMouseY - GetElementTop( iconArea ) + sctop;
-					var mx = windowMouseX - GetElementLeft( iconArea ) + scleft;
+					let my = windowMouseY - GetElementTop( iconArea ) + sctop;
+					let mx = windowMouseX - GetElementLeft( iconArea ) + scleft;
 				
 					// Add file browser offset
 					if( w.fileBrowser && !isListView )
 					{
 						if( !w.fileBrowser.dom.classList.contains( 'Hidden' ) )
 						{
-							var fb = w.fileBrowser.dom;
+							let fb = w.fileBrowser.dom;
 							mx -= fb.offsetWidth;
 						}
 					}
@@ -445,12 +481,12 @@ var mousePointer =
 					// Drop on icon
 					for ( var a = 0; a < w.icons.length; a++ )
 					{
-						var ic = w.icons[a].domNode;
+						let ic = w.icons[a].domNode;
 				
 						if( ic )
 						{
 							// Exclude elements dragged
-							var found = false;
+							let found = false;
 							for( var b = 0; b < this.dom.childNodes.length; b++ )
 							{
 								if( ic == this.dom.childNodes[b] )
@@ -459,7 +495,7 @@ var mousePointer =
 							if( found ) continue;
 							// Done exclude
 							
-							var icon = w.icons[a];
+							let icon = w.icons[a];
 							
 							// Hit icon!
 							if( 
@@ -478,12 +514,12 @@ var mousePointer =
 				// Check drop on desklet
 				if( !dropper || ( dropper.classList && dropper.classList.contains( 'ScreenContent' ) ) )
 				{
-					var z = 0;
-					var dropWin = 0;
+					let z = 0;
+					let dropWin = 0;
 					for( var a = 0; a < __desklets.length; a++ )
 					{
-						var wn = __desklets[a].dom;
-						var wnZ = parseInt ( wn.style.zIndex );
+						let wn = __desklets[a].dom;
+						let wnZ = parseInt ( wn.style.zIndex );
 						if( isNaN( wnZ ) ) wnZ = 0;
 						if ( 
 							wn.offsetTop < windowMouseY && wn.offsetLeft < windowMouseX &&
@@ -506,10 +542,12 @@ var mousePointer =
 				}
 			}
 			
+			let objs = [];
+			
 			if( dropper )
 			{
 				// Assume the drop was handled correctly
-				var dropResult = true;
+				let dropResult = true;
 				
 				// Check if dropper object has a drop method, and execute it
 				// with the supplied elements
@@ -527,15 +565,14 @@ var mousePointer =
 				}
 				else
 				{
-					var objs = [];
 					for( var k = 0; k < this.elements.length; k++ )
 					{
-						var e = this.elements[k];
+						let e = this.elements[k];
 						if( e.fileInfo )
 						{
 							if( e.fileInfo.getDropInfo )
 							{
-								var info = e.fileInfo.getDropInfo();
+								let info = e.fileInfo.getDropInfo();
 								objs.push( info );
 							}
 							else
@@ -566,13 +603,13 @@ var mousePointer =
 						window.currentMovable.content.refresh();
 				}
 				// We dropped on a screen
-				if( objs && dropper && dropper.classList.contains( 'ScreenContent' ) )
+				if( objs && dropper && dropper.classList && dropper.classList.contains( 'ScreenContent' ) )
 				{
 					// We dropped on the Workspace screen
 					if( dropper == Workspace.screen.contentDiv )
 					{
 						// Check if we can place desktop shortcuts
-						var files = [];
+						let files = [];
 						for( var a = 0; a < objs.length; a++ )
 						{
 							if( objs[ a ].Type == 'Executable' )
@@ -588,7 +625,7 @@ var mousePointer =
 						}
 						
 						// Create desktop shortcuts
-						var m = new Module( 'system' );
+						let m = new Module( 'system' );
 						m.onExecuted = function( e, d )
 						{
 							if( e == 'ok' )
@@ -617,7 +654,7 @@ var mousePointer =
 						this.elements[a].ondrop( dropper );
 					if( this.elements[a].oldParent )
 					{
-						var ea = this.elements[a];
+						let ea = this.elements[a];
 						ea.oldParent.appendChild( ea );
 						ea.style.top = ea.oldStyle.top;
 						ea.style.left = ea.oldStyle.left;
@@ -662,15 +699,15 @@ var mousePointer =
 		if( window.isMobile ) return;
 		
 		if( !e ) e = window.event;
-		var ctrl = e && ( e.ctrlKey || e.shiftKey || e.command );
+		let ctrl = e && ( e.ctrlKey || e.shiftKey || e.command );
 		
-		var target = false;
+		let target = false;
 		if( e ) target = e.target || e.srcElement;
 		
 		this.testPointer ();
 		
 		// Check multiple (pickup multiple)
-		var multiple = false;
+		let multiple = false;
 		if ( ele.window )
 		{
 			if( ele.window.windowObject && ele.window.windowObject.refreshing ) return;
@@ -679,12 +716,12 @@ var mousePointer =
 			
 			for( var a = 0; a < ele.window.icons.length; a++ )
 			{
-				var ic = ele.window.icons[a];
+				let ic = ele.window.icons[a];
 				if( !ic.domNode ) continue;
 				
 				if( ic.domNode.className.indexOf ( 'Selected' ) > 0 )
 				{
-					var el = ic.domNode;
+					let el = ic.domNode;
 					multiple = true;
 					el.oldStyle = {};
 					el.oldStyle.top = el.style.top;
@@ -705,9 +742,9 @@ var mousePointer =
 				}
 			}
 			// Align with top left corner
-			var maxx = 99999;
-			var maxy = 99999;
-			var elements = this.elements;
+			let maxx = 99999;
+			let maxy = 99999;
+			let elements = this.elements;
 			for( var a = 0; a < elements.length; a++ )
 			{
 				if( parseInt( elements[ a ].style.left ) < maxx )
@@ -768,9 +805,9 @@ var themeInfo = {
 	dynamicClasses: {
 		WindowSnapping: function( e )
 		{
-			var hh = Workspace && Workspace.screen ? ( Workspace.screen.getMaxViewHeight() + 'px' ) : '0';
-			var winw = window.innerWidth + 'px';
-			var ww = Math.floor( window.innerWidth * 0.5 ) + 'px';
+			let hh = Workspace && Workspace.screen ? ( Workspace.screen.getMaxViewHeight() + 'px' ) : '0';
+			let winw = window.innerWidth + 'px';
+			let ww = Math.floor( window.innerWidth * 0.5 ) + 'px';
 			return `
 html .View.SnapLeft
 {
@@ -796,7 +833,7 @@ html .View.SnapRight
 // This one is connected to the "securefiledrop" flag on windows
 function addSecureDropWidget( windowobject, objects )
 {
-	var w = new Widget( {
+	let w = new Widget( {
 		top: windowMouseY - 180,
 		left: windowMouseX - 150,
 		width: 300,
@@ -807,22 +844,22 @@ function addSecureDropWidget( windowobject, objects )
 	
 	windowobject.toFront();
 	
-	var f = new File( 'System:templates/securefiledrop.html' );
+	let f = new File( 'System:templates/securefiledrop.html' );
 	f.onLoad = function( data )
 	{
 		w.setContent( data, function()
 		{
 			for( var a = 0; a < objects.length; a++ )
 			{
-				var url = getImageUrl( objects[ a ].Path )
-				var im = new Image();
-				var o = objects[ a ];
+				let url = getImageUrl( objects[ a ].Path )
+				let im = new Image();
+				let o = objects[ a ];
 				fetch( url )
 				.then( res => res.blob() )
 				.then( blob => {
-					var fn = GetFilename( o.Path );
-					var fil = new File( [ blob ], fn, blob );
-					var ic = new FileIcon( o, { type: 'A', nativeDraggable: true } );
+					let fn = GetFilename( o.Path );
+					let fil = new File( [ blob ], fn, blob );
+					let ic = new FileIcon( o, { type: 'A', nativeDraggable: true } );
 					url = url.split( '/read' ).join( '/read/' + fn );
 					ic.file.id = 'directoryfile_draggable_' + a;
 					ic.file.setAttribute( 'data-downloadurl', url );
@@ -835,10 +872,10 @@ function addSecureDropWidget( windowobject, objects )
 					ic.file.addEventListener( 'dragstart', e => {
 						e.dataTransfer.dropEffect = 'copy';
 						e.dataTransfer.effectAllowed = 'copy';
-						var ext = 'bin';
+						let ext = 'bin';
 						if( fn.indexOf( '.' ) >= 0 )
 							ext = fn.split( '.' )[1].toUpperCase();
-						var ctype = 'application/octet-stream';
+						let ctype = 'application/octet-stream';
 						switch( ctype )
 						{
 							case 'jpg':
@@ -889,10 +926,10 @@ function checkForFriendApp()
 	{
 		// if this is mobile app we must register it
 		// if its already registered FC will not do it again
-		var version = null;
-		var platform = null;
-		var appToken = null;
-		var deviceID = null;
+		let version = null;
+		let platform = null;
+		let appToken = null;
+		let deviceID = null;
 		//var appToken = friendApp.appToken ? friendApp.appToken : false;
 
 		if( typeof friendApp.get_version == 'function' )
@@ -916,7 +953,7 @@ function checkForFriendApp()
 
 		console.log('call ' + Workspace.sessionId );
 
-		var l = new Library( 'system.library' );
+		let l = new Library( 'system.library' );
 		l.onExecuted = function( e, d )
 		{
 			if( e != 'ok' )
@@ -936,7 +973,7 @@ function checkForFriendApp()
 function RefreshDynamicClasses( e )
 {
 	if( !themeInfo.dynamicClasses ) return;
-	var str = '';
+	let str = '';
 	for( var a in themeInfo.dynamicClasses )
 	{
 		str += themeInfo.dynamicClasses[ a ]( e );
@@ -945,10 +982,10 @@ function RefreshDynamicClasses( e )
 }
 function InitDynamicClassSystem()
 {
-	var dynCss = document.createElement( 'style' );
+	let dynCss = document.createElement( 'style' );
 	document.body.appendChild( dynCss );
 	themeInfo.dynCssEle = dynCss;
-	var ls = [ 'resize', 'mousedown', 'mouseup', 'touchstart', 'touchend' ];
+	let ls = [ 'resize', 'mousedown', 'mouseup', 'touchstart', 'touchend' ];
 	for( var a = 0; a < ls.length; a++ )
 		window.addEventListener( ls[a], RefreshDynamicClasses );
 	RefreshDynamicClasses( {} );
@@ -961,7 +998,7 @@ function GetThemeInfo( property )
 	{
 		themeInfo.loaded = true;
 		// Flush old rules
-		var sheet = false;
+		let sheet = false;
 		for( var a = 0; a < document.styleSheets.length; a++ )
 		{
 			if( document.styleSheets[a].href && document.styleSheets[a].href.indexOf( 'theme' ) > 0 )
@@ -974,9 +1011,9 @@ function GetThemeInfo( property )
 		{
 			for( var a = 0; a < sheet.cssRules.length; a++ )
 			{
-				var rule = sheet.cssRules[a];
-				var key = false;
-				var qualifier = false; // What qualifies this as the final rule
+				let rule = sheet.cssRules[a];
+				let key = false;
+				let qualifier = false; // What qualifies this as the final rule
 				// TODO: Add all important keys here!
 				switch( rule.selectorText )
 				{
@@ -1008,7 +1045,7 @@ function GetThemeInfo( property )
 						break;
 				}
 				// Test if the theme info property has already qualified, and skip it if so
-				var qualifierTest = themeInfo[ key ] && ( 
+				let qualifierTest = themeInfo[ key ] && ( 
 					qualifier && 
 					typeof( themeInfo[ key ][ qualifier ] ) != 'undefined' && 
 					themeInfo[ key ][ qualifier ].length 
@@ -1056,8 +1093,8 @@ function ExposeWindows()
 function CoverScreens( sticky )
 {
 	// Disable all screen overlays
-	var screenc = ge ( 'Screens' );
-	var screens = screenc.getElementsByTagName( 'div' );
+	let screenc = ge ( 'Screens' );
+	let screens = screenc.getElementsByTagName( 'div' );
 	for( var a = 0; a < screens.length; a++ )
 	{
 		if( !screens[a].className ) continue;
@@ -1071,8 +1108,8 @@ function CoverScreens( sticky )
 function CoverOtherScreens()
 {
 	// Disable all screen overlays
-	var screenc = ge ( 'Screens' );
-	var screens = screenc.getElementsByTagName ( 'div' );
+	let screenc = ge ( 'Screens' );
+	let screens = screenc.getElementsByTagName ( 'div' );
 	for( var a = 0; a < screens.length; a++ )
 	{
 		if( !screens[a].className ) continue;
@@ -1088,8 +1125,8 @@ function CoverOtherScreens()
 function ExposeScreens()
 {
 	// Disable all screen overlays
-	var screenc = ge ( 'Screens' );
-	var screens = screenc.getElementsByTagName ( 'div' );
+	let screenc = ge ( 'Screens' );
+	let screens = screenc.getElementsByTagName ( 'div' );
 	for( var a = 0; a < screens.length; a++ )
 	{
 		if( !screens[a].className ) continue;
@@ -1118,7 +1155,7 @@ function FindWindowById ( id )
 
 function GuiCreate ( obj )
 {
-	var str = '';
+	let str = '';
 	for ( var a = 0; a < obj.length; a++ )
 	{
 		switch( typeof ( obj[a] ) )
@@ -1143,9 +1180,9 @@ function GuiCreate ( obj )
 
 function GuiColumns( data )
 {
-	var widths = data[0];
-	var content = data[1];
-	var str = '<table class="GuiColums"><tr>';
+	let widths = data[0];
+	let content = data[1];
+	let str = '<table class="GuiColums"><tr>';
 	for ( var a = 0; a < widths.length; a++ )
 	{
 		if ( widths[a].indexOf ( '%' ) < 0 && widths[a].indexOf ( 'px' ) < 0 )
@@ -1204,13 +1241,13 @@ function InitElementPopup( pdiv, actionurl, forceupdate, immediateDisplay )
 			}
 			else
 			{
-				var k = new cAjax ();
+				let k = new cAjax ();
 				k.open ( 'get', this.actionData, true );
 				k.pdiv = pdiv;				this.show ();
 
 				k.onload = function ( e )
 				{
-					var r = this.responseText ();
+					let r = this.responseText ();
 					if ( r.indexOf ( 'login.css' ) < 0 && r.length > 0 )
 					{
 						this.pdiv.setData ( r, this.pdiv.actionData );
@@ -1241,7 +1278,7 @@ function InitElementPopup( pdiv, actionurl, forceupdate, immediateDisplay )
 		}
 		pdiv.show = function ( e )
 		{
-			var d = this.checkElementPopup();
+			let d = this.checkElementPopup();
 			d.style.opacity = 1;
 			d.style.filter = 'alpha(opacity=100)';
 			d.style.visibility = 'visible';
@@ -1263,17 +1300,17 @@ function RepositionPopup( e, test )
 {
 	if ( !e ) e = window.event;
 	if ( !e ) return;
-	var l = 0; var t = 0;
-	var target = document.body;
-	var trg = _epObject.target; // wanted target
-	var mx = windowMouseX;
-	var my = windowMouseY;
+	let l = 0; var t = 0;
+	let target = document.body;
+	let trg = _epObject.target; // wanted target
+	let mx = windowMouseX;
+	let my = windowMouseY;
 
 	l = _epObject.l;
 	t = _epObject.t;
 	if ( e )
 	{
-		var ll = mx;
+		let ll = mx;
 		if ( !isNaN ( ll ) )
 		{
 			l = ll;
@@ -1290,19 +1327,19 @@ function RepositionPopup( e, test )
 	if( !el ) return;
 
 	// Get popup height
-	var height = false;
+	let height = false;
 	if ( !height ) height = el.height;
 	if ( !height ) return;
 	
-	var wh = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
-	var ww = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+	let wh = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+	let ww = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
 	wh -= __windowHeightMargin;
 	
-	var mdl = GetTitleBarG ();
-	var minTop = mdl ? mdl.offsetHeight : 0;
+	let mdl = GetTitleBarG ();
+	let minTop = mdl ? mdl.offsetHeight : 0;
 
-	var w = el.offsetWidth + 20;
-	var h = el.offsetHeight + 20;
+	let w = el.offsetWidth + 20;
+	let h = el.offsetHeight + 20;
 	l -= el.offsetWidth >> 1;
 	t -= height + 20;
 	
@@ -1313,7 +1350,7 @@ function RepositionPopup( e, test )
 	if ( t < minTop )
 		t = my + 20;
 
-	var st = document.body.scrollTop;
+	let st = document.body.scrollTop;
 	
 	if ( t < minTop && l == 0 )
 	{
@@ -1330,7 +1367,7 @@ function RepositionPopup( e, test )
 function ElementPopupMover ( e, init )
 {
 	if ( !e ) e = window.event;
-	var el = false; var target; var trg;
+	let el = false; var target; var trg;
 	if ( e )
 	{
 		target = e.target ? e.target : e.srcElement; // mouse target
@@ -1338,7 +1375,7 @@ function ElementPopupMover ( e, init )
 	}
 	if ( ( el = ge( 'ElementPopup' ) ) )
 	{
-		var isover = false; var test = target;
+		let isover = false; var test = target;
 		if ( !init )
 		{
 			while ( test != trg.parentNode && test != document.body  )
@@ -1371,7 +1408,7 @@ function ElementPopupMover ( e, init )
 
 function RemoveElementPopup( close )
 {
-	var e = ge('ElementPopup' );
+	let e = ge('ElementPopup' );
 	if ( !e ) return;
 	if ( e.tm ) clearTimeout ( e.tm );
 	e.tm = false;
@@ -1392,31 +1429,31 @@ function NewSelectBox ( divobj, height, multiple )
 {
 	if ( !divobj ) return false;
 	
-	var cont = document.createElement ( 'div' );
+	let cont = document.createElement ( 'div' );
 	cont.className = 'SelectBox';
 	
-	var table = document.createElement ( 'table' );
+	let table = document.createElement ( 'table' );
 	table.className = 'SelectBox ' + ( multiple ? 'Checkboxes' : 'Radioboxes' );
 	
-	var opts = divobj.getElementsByTagName ( 'div' );
-	var sw = 1;
+	let opts = divobj.getElementsByTagName ( 'div' );
+	let sw = 1;
 	
 	for ( var a = 0; a < opts.length; a++ )
 	{
-		var tr = document.createElement ( 'tr' );
+		let tr = document.createElement ( 'tr' );
 		tr.className = 'sw' + sw + ( opts[a].className ? ( ' ' + opts[a].className ) : '' );
 		if ( opts[a].title ) tr.title = opts[a].title;
 		
-		var spl = opts[a].innerHTML.split ( "\t" );
-		var inpid = divobj.id + '_input_'+(a+1);
+		let spl = opts[a].innerHTML.split ( "\t" );
+		let inpid = divobj.id + '_input_'+(a+1);
 		for ( var b = 0; b < spl.length; b++ )
 		{
-			var td = document.createElement ( 'td' );
+			let td = document.createElement ( 'td' );
 			td.innerHTML = '<label for="'+inpid+'">'+spl[b]+'</label>';
 			tr.appendChild ( td );
 		}
 		
-		var td = document.createElement ( 'td' );
+		let td = document.createElement ( 'td' );
 		
 		val = opts[a].getAttribute ( 'value' );
 		
@@ -1444,7 +1481,7 @@ function NewSelectBox ( divobj, height, multiple )
 	divobj.parentNode.replaceChild ( cont, divobj );
 	
 	// Adjust height
-	var rheight = 0;
+	let rheight = 0;
 	rheight = cont.getElementsByTagName ( 'td' )[0].offsetHeight;
 	cont.style.minHeight = rheight * height + 'px';
 	
@@ -1452,15 +1489,15 @@ function NewSelectBox ( divobj, height, multiple )
 
 function _NewSelectBoxCheck ( pid, ele )
 {
-	var pel
+	let pel
 	if ( typeof ( pid ) == 'string' )
 		pel = ge ( pid );
 	else pel = pid;
 	if ( !pel ) return false;
-	var els = pel.getElementsByTagName ( 'tr' );
+	let els = pel.getElementsByTagName ( 'tr' );
 	for ( var a = 0; a < els.length; a++ )
 	{
-		var inp = els[a].getElementsByTagName ( 'input' )[0];
+		let inp = els[a].getElementsByTagName ( 'input' )[0];
 		if ( inp.checked )
 			els[a].className = els[a].className.split ( ' checked' ).join ( '' ) + ' checked';
 		else els[a].className = els[a].className.split ( ' checked' ).join ( '' );
@@ -1480,11 +1517,11 @@ function forceScreenMaxHeight()
 function GetSelectBoxValue( pel )
 {
 	if ( !pel ) return false;
-	var inputs = pel.getElementsByTagName ( 'input' );
-	var table = pel.getElementsByTagName ( 'table' )[0];
+	let inputs = pel.getElementsByTagName ( 'input' );
+	let table = pel.getElementsByTagName ( 'table' )[0];
 	if ( table.className.indexOf ( 'Checkboxes' ) > 0 )
 	{
-		var res = new Array ();
+		let res = new Array ();
 		for ( var a = 0; a < inputs.length; a++ )
 		{
 			if ( inputs[a].checked )
@@ -1509,15 +1546,15 @@ function GetSelectBoxValue( pel )
 
 function _NewSelectBoxRadio ( pid, ele )
 {
-	var pel
+	let pel
 	if ( typeof ( pid ) == 'string' )
 		pel = ge ( pid );
 	else pel = pid;
 	if ( !pel ) return false;
-	var els = pel.getElementsByTagName ( 'tr' );
+	let els = pel.getElementsByTagName ( 'tr' );
 	for ( var a = 0; a < els.length; a++ )
 	{
-		var inp = els[a].getElementsByTagName ( 'input' )[0];
+		let inp = els[a].getElementsByTagName ( 'input' )[0];
 		if ( inp.checked )
 		{
 			els[a].className = els[a].className.split ( ' checked' ).join ( '' ) + ' checked';
@@ -1535,9 +1572,9 @@ var dragDistanceX = 0, dragDistanceY = 0;
 movableListener = function( e, data )
 {
 	if( !e ) e = window.event;
-	var ww = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-	var wh = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
-	var x, y;
+	let ww = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+	let wh = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+	let x, y;
 	if( ( typeof( e.touches ) != 'undefined' && typeof( e.touches[0] ) != 'undefined' ) && ( window.isTablet || window.isMobile || isTouchDevice() ) )
 	{
 		x = e.touches[0].pageX;
@@ -1548,7 +1585,7 @@ movableListener = function( e, data )
 		x = e.clientX ? e.clientX : e.pageX;
 		y = e.clientY ? e.clientY : e.pageY;
 	}
-	var sh = e.shiftKey || e.ctrlKey;
+	let sh = e.shiftKey || e.ctrlKey;
 	
 	// Injection
 	if( data )
@@ -1576,11 +1613,11 @@ movableListener = function( e, data )
 	else if( window.currentMovable )
 	{
 		// Some defaults
-		var minW = 160;
-		var minH = 100;
-		var maxW = 1000000;
-		var maxH = 1000000;
-		var st = document.body.scrollTop;
+		let minW = 160;
+		let minH = 100;
+		let maxW = 1000000;
+		let maxH = 1000000;
+		let st = document.body.scrollTop;
 		if ( window.currentMovable.content && window.currentMovable.windowObject.flags )
 		{
 			if ( window.currentMovable.windowObject.flags['min-width'] >= 100 )
@@ -1594,11 +1631,11 @@ movableListener = function( e, data )
 		}
 		
 		// Clicking on the window title
-		var mx = x - ( window.currentMovable.offx ? window.currentMovable.offx : 0 );
-		var my = y - ( window.currentMovable.offy ? window.currentMovable.offy : 0 );
+		let mx = x - ( window.currentMovable.offx ? window.currentMovable.offx : 0 );
+		let my = y - ( window.currentMovable.offy ? window.currentMovable.offy : 0 );
 		
-		var lockY = false;
-		var lockX = false;
+		let lockY = false;
+		let lockX = false;
 		
 		
 		// 8 px grid + snapping
@@ -1613,11 +1650,11 @@ movableListener = function( e, data )
 					if( currentMovable )
 					{
 						// Check current movable intersections
-						var directionY = windowMouseY - mousePointer.prevMouseY;
-						var directionX = windowMouseX - mousePointer.prevMouseX;
+						let directionY = windowMouseY - mousePointer.prevMouseY;
+						let directionX = windowMouseX - mousePointer.prevMouseX;
 						if( directionX != 0 || directionY != 0 )
 						{
-							var direction = directionX < 0 ? 'left' : 'right';
+							let direction = directionX < 0 ? 'left' : 'right';
 							if( Math.abs( directionY ) > Math.abs( directionX ) )
 							direction = directionY < 0 ? 'up' : 'down';
 				
@@ -1630,12 +1667,12 @@ movableListener = function( e, data )
 								dragDistanceY = cly - y;
 							}
 				
-							var curWinRight  = currentMovable.offsetLeft + currentMovable.offsetWidth;
-							var curWinLeft   = currentMovable.offsetLeft;
-							var curWinTop    = currentMovable.offsetTop;
-							var curWinBottom = currentMovable.offsetTop + currentMovable.offsetHeight;
+							let curWinRight  = currentMovable.offsetLeft + currentMovable.offsetWidth;
+							let curWinLeft   = currentMovable.offsetLeft;
+							let curWinTop    = currentMovable.offsetTop;
+							let curWinBottom = currentMovable.offsetTop + currentMovable.offsetHeight;
 							
-							var snapInfo = {
+							let snapInfo = {
 								view: false,
 								direction: false,
 								z: 0
@@ -1643,18 +1680,18 @@ movableListener = function( e, data )
 							
 							for( var z in movableWindows )
 							{
-								var mw = movableWindows[ z ];
+								let mw = movableWindows[ z ];
 
 								if( mw.snapObject ) continue; // Can't snap to snapped windows
 								if( mw == currentMovable ) continue;
 								if( mw.parentNode && mw.parentNode && mw.parentNode.getAttribute( 'minimized' ) == 'minimized' ) 
 									continue;
 						
-								var mWR = mw.offsetLeft + mw.offsetWidth;
-								var mWL = mw.offsetLeft;
-								var mWT = mw.offsetTop;
-								var mWB = mw.offsetTop + mw.offsetHeight;
-								var doSnap = false;
+								let mWR = mw.offsetLeft + mw.offsetWidth;
+								let mWL = mw.offsetLeft;
+								let mWT = mw.offsetTop;
+								let mWB = mw.offsetTop + mw.offsetHeight;
+								let doSnap = false;
 						
 								// Snap to the right
 								if( direction == 'right' && ( !currentMovable.snap || currentMovable.snap == 'right' ) )
@@ -1720,7 +1757,7 @@ movableListener = function( e, data )
 									currentMovable.shiftY = y;
 								}
 								
-								var mw = snapInfo.view;
+								let mw = snapInfo.view;
 								
 								if( snapInfo.direction == 'right' )
 								{
@@ -1778,8 +1815,8 @@ movableListener = function( e, data )
 								// Do we snap?
 								if( doSnap )
 								{
-									var cx = mw.offsetLeft - currentMovable.offsetLeft;
-									var cy = mw.offsetTop - currentMovable.offsetTop;
+									let cx = mw.offsetLeft - currentMovable.offsetLeft;
+									let cy = mw.offsetTop - currentMovable.offsetTop;
 									currentMovable.snapCoords = { 
 										x: cx,
 										y: cy,
@@ -1793,7 +1830,7 @@ movableListener = function( e, data )
 									}
 									else
 									{
-										var found = false;
+										let found = false;
 										for( var a in mw.attached )
 										{
 											if( mw.attached[ a ] == currentMovable )
@@ -1820,11 +1857,11 @@ movableListener = function( e, data )
 										// Clean up snap object attached list and detach
 										if( this.snapObject && this.snapObject.attached )
 										{
-											var o = [];
-											var left = right = up = down = false
+											let o = [];
+											let left = right = up = down = false
 											for( var a = 0; a < this.snapObject.attached.length; a++ )
 											{
-												var att = this.snapObject.attached[ a ];
+												let att = this.snapObject.attached[ a ];
 												if( att != this )
 												{
 						
@@ -1868,11 +1905,11 @@ movableListener = function( e, data )
 					
 					if( currentMovable.snapObject )
 					{
-						var mw = currentMovable.snapObject;
+						let mw = currentMovable.snapObject;
 						currentMovable.snapCoords.x = mw.offsetLeft - currentMovable.offsetLeft;
 						currentMovable.snapCoords.y = mw.offsetTop - currentMovable.offsetTop;
 					
-						var dir = currentMovable.snap;
+						let dir = currentMovable.snap;
 					
 						if( dir == 'right' || dir == 'left' )
 						{
@@ -1938,7 +1975,7 @@ movableListener = function( e, data )
 			if( ( !lockX && !lockY ) && currentMovable.snap && currentMovable.unsnap && currentMovable.shiftKey )
 				currentMovable.unsnap();
 			
-			var w = window.currentMovable;
+			let w = window.currentMovable;
 
 			// Make sure the inner overlay is over screens
 			if( window.currentScreen )
@@ -1953,11 +1990,11 @@ movableListener = function( e, data )
 				// Move sticky widgets!
 				if( w.windowObject && w.windowObject.widgets )
 				{
-					var wds = w.windowObject.widgets;
+					let wds = w.windowObject.widgets;
 					for( var z = 0; z < wds.length; z++ )
 					{
-						var vx = mx + ( isNaN( wds[z].tx ) ? 0 : wds[z].tx );
-						var vy = my + ( isNaN( wds[z].ty ) ? 0 : wds[z].ty );
+						let vx = mx + ( isNaN( wds[z].tx ) ? 0 : wds[z].tx );
+						let vy = my + ( isNaN( wds[z].ty ) ? 0 : wds[z].ty );
 						if( vx < 0 ) vx = 0;
 						else if( vx + wds[z].dom.offsetWidth >= wds[z].dom.parentNode.offsetWidth )
 							vx = wds[z].dom.parentNode.offsetWidth - wds[z].dom.offsetWidth;
@@ -1985,13 +2022,13 @@ movableListener = function( e, data )
 				// Do the snap!
 				if( !isMobile )
 				{
-					var tsX = w.offsetLeft;
-					var tsY = w.offsetTop;
+					let tsX = w.offsetLeft;
+					let tsY = w.offsetTop;
 					if( windowMouseY > 0 )
 					{
-						var snapOut = false;
-						var hw = window.innerWidth * 0.1;
-						var rhw = window.innerWidth - hw;
+						let snapOut = false;
+						let hw = window.innerWidth * 0.1;
+						let rhw = window.innerWidth - hw;
 						if( windowMouseX > hw && windowMouseX < rhw )
 						{
 							snapOut = true;
@@ -2027,7 +2064,7 @@ movableListener = function( e, data )
 						}
 						if( snapOut )
 						{
-							var cn = w.classList.contains( 'SnapLeft' ) || w.classList.contains( 'SnapRight' );
+							let cn = w.classList.contains( 'SnapLeft' ) || w.classList.contains( 'SnapRight' );
 							if( cn )
 							{
 								w.classList.remove( 'SnapLeft' );
@@ -2059,11 +2096,11 @@ movableListener = function( e, data )
 		else if( window.mouseDown == 2 )
 		{ 
 			
-			var w = window.currentMovable;
-			var r = w.resize;
-			var t = w.titleBar;
-			var l = w.leftbar;
-			var x = w.rightbar;
+			let w = window.currentMovable;
+			let r = w.resize;
+			let t = w.titleBar;
+			let l = w.leftbar;
+			let x = w.rightbar;
 			
 			// Set normal mode
 			r.mode = 'normal';
@@ -2071,8 +2108,8 @@ movableListener = function( e, data )
 			_removeWindowTiles( w );
 			// Done normal mode
 			
-			var rx = ( windowMouseX - r.offx ); // resizex
-			var ry = ( windowMouseY - r.offy ); // resizey
+			let rx = ( windowMouseX - r.offx ); // resizex
+			let ry = ( windowMouseY - r.offy ); // resizey
 			
 			// 8 px grid
 			if( e.shiftKey )
@@ -2084,8 +2121,8 @@ movableListener = function( e, data )
 			if( !w.getAttribute( 'moving' ) )
 				w.setAttribute( 'moving', 'moving' );
 			
-			var resizeX = r.wwid - w.marginHoriz + rx;
-			var resizeY = r.whei - w.marginVert + ry;
+			let resizeX = r.wwid - w.marginHoriz + rx;
+			let resizeY = r.whei - w.marginVert + ry;
 			
 			if( w.snap )
 			{
@@ -2122,7 +2159,7 @@ movableListener = function( e, data )
 		// Prime
 		if( window.regionWindow.directoryview )
 		{
-			var scrl = window.regionWindow.directoryview.scroller;
+			let scrl = window.regionWindow.directoryview.scroller;
 			if( !scrl.scrolling )
 			{
 				scrl.scrollTopStart  = scrl.scrollTop;
@@ -2142,23 +2179,23 @@ movableListener = function( e, data )
 // Draw the region selector with a possible offset!
 function DrawRegionSelector( e )
 {
-	var sh = e.shiftKey || e.ctrlKey;
+	let sh = e.shiftKey || e.ctrlKey;
 	
 	// Create region selector if it doesn't exist!
 	if( !ge( 'RegionSelector' ) )
 	{
-		var d = document.createElement( 'div' );
+		let d = document.createElement( 'div' );
 		d.id = 'RegionSelector';
 		window.regionWindow.appendChild( d );
 	}
 	
 	// Extra offset in content window
-	var mx = windowMouseX; var my = windowMouseY;
-	var diffx = 0;		   var diffy = 0; 
-	var ex = 0; var ey = 0;
-	var eh = 0; var ew = 0;
-	var rwc = window.regionWindow.classList;
-	var scrwn = window.regionWindow.directoryview ? window.regionWindow.directoryview.scroller : false;
+	let mx = windowMouseX; var my = windowMouseY;
+	let diffx = 0;		   var diffy = 0; 
+	let ex = 0; var ey = 0;
+	let eh = 0; var ew = 0;
+	let rwc = window.regionWindow.classList;
+	let scrwn = window.regionWindow.directoryview ? window.regionWindow.directoryview.scroller : false;
 	
 	// In icon windows or new screens
 	
@@ -2171,9 +2208,9 @@ function DrawRegionSelector( e )
 		// Some implications per theme accounted for
 		if( rwc.contains( 'Content' ) )
 		{
-			var top = window.regionWindow.windowObject;
+			let top = window.regionWindow.windowObject;
 			if( top ) ey -= window.regionWindow.windowObject._window.parentNode.titleBar.offsetHeight;
-			var bor = GetThemeInfo( 'ScreenContentMargins' );
+			let bor = GetThemeInfo( 'ScreenContentMargins' );
 			if( bor ) ey += parseInt( bor.top );
 		}
 		
@@ -2197,8 +2234,8 @@ function DrawRegionSelector( e )
 			diffx = scrwn.scrollLeftStart - scrwn.scrollLeft;
 		
 			// If mouse pointer is far down, do some scrolling
-			var ty = my - window.regionWindow.parentNode.offsetTop;
-			var tx = mx - window.regionWindow.parentNode.offsetLeft;
+			let ty = my - window.regionWindow.parentNode.offsetTop;
+			let tx = mx - window.regionWindow.parentNode.offsetLeft;
 			
 			if( ty < 40 )
 				scrwn.scrollTop -= 10;
@@ -2207,14 +2244,14 @@ function DrawRegionSelector( e )
 		}
 	}
 	
-	var d = ge( 'RegionSelector' );
+	let d = ge( 'RegionSelector' );
 	if( !d ) return;
 	
 	// Coordinate variables
-	var wx = mx,				   wy = my;
-	var dw = wx - window.regionX + ew - diffx; 
-	var dh = wy - window.regionY + eh - diffy;
-	var ox = diffx,				oy = diffy;
+	let wx = mx,				   wy = my;
+	let dw = wx - window.regionX + ew - diffx; 
+	let dh = wy - window.regionY + eh - diffy;
+	let ox = diffx,				oy = diffy;
 	
 	// If we're selecting leftwards
 	if ( dw < 0 )
@@ -2231,9 +2268,9 @@ function DrawRegionSelector( e )
 	if ( !dw || !dh ) return;
 	
 	// Set variables, all things considered!
-	var dx = window.regionX + ox + ex;
-	var dy = window.regionY + oy + ey;
-	var odx = dx, ody = dy;
+	let dx = window.regionX + ox + ex;
+	let dy = window.regionY + oy + ey;
+	let odx = dx, ody = dy;
 	
 	// Some offset in windows or screens
 	dy -= window.regionWindow.offsetTop;
@@ -2244,7 +2281,7 @@ function DrawRegionSelector( e )
 	{
 		if( window.regionWindow.windowObject.flags.screen )
 		{
-			var s = window.regionWindow.windowObject.flags.screen;
+			let s = window.regionWindow.windowObject.flags.screen;
 			if( s.div.screenOffsetTop )
 			{
 				dy -= s.div.screenOffsetTop;
@@ -2261,23 +2298,23 @@ function DrawRegionSelector( e )
 	// check icons
 	if ( window.regionWindow )
 	{
-		var imx = dx;
-		var imy = dy;
+		let imx = dx;
+		let imy = dy;
 		
 		// Scrolled window..
-		var scroller = regionWindow.directoryview.scroller;
+		let scroller = regionWindow.directoryview.scroller;
 		if ( scroller && scroller.style )
 		{
-			var scr = parseInt ( scroller.scrollTop );
+			let scr = parseInt ( scroller.scrollTop );
 			if ( isNaN ( scr )) scr = 0;
 			imy += scr;
 		}
 		
-		var icos = regionWindow.icons;
+		let icos = regionWindow.icons;
 		if ( icos )
 		{
-			var exOffx = 0;
-			var exOffy = 0;
+			let exOffx = 0;
+			let exOffy = 0;
 			
 			if( regionWindow.windowObject )
 			{
@@ -2292,31 +2329,31 @@ function DrawRegionSelector( e )
 			
 			for ( var a = 0; a < icos.length; a++ )
 			{
-				var ics = icos[a].domNode;
+				let ics = icos[a].domNode;
 				// Coords on icon
 				if( ics )
 				{
-					var ix1 = ics.offsetLeft + exOffx;
-					var iy1 = ics.offsetTop + exOffy;
-					var ix2 = ics.offsetWidth+ix1 + exOffx;
-					var iy2 = ics.offsetHeight+iy1 + exOffy;
+					let ix1 = ics.offsetLeft + exOffx;
+					let iy1 = ics.offsetTop + exOffy;
+					let ix2 = ics.offsetWidth+ix1 + exOffx;
+					let iy2 = ics.offsetHeight+iy1 + exOffy;
 			
 					// check overlapping icon
-					var overlapping = ix1 >= imx && iy1 >= imy && ix2 <= imx+dw && iy2 <= imy+dh;
+					let overlapping = ix1 >= imx && iy1 >= imy && ix2 <= imx+dw && iy2 <= imy+dh;
 					// check intersecting icon on a horizontal line
-					var intersecting1 = ix1 >= imx && ix2 <= imx+dw && ( ( imy >= iy1 && imy <= iy2 ) || ( imy+dh >= iy2 && imy <= iy2 ) );
+					let intersecting1 = ix1 >= imx && ix2 <= imx+dw && ( ( imy >= iy1 && imy <= iy2 ) || ( imy+dh >= iy2 && imy <= iy2 ) );
 					// check intersecting icon on a vertical line
-					var intersecting2 = iy1 >= imy && iy2 <= imy+dh && ( ( imx >= ix1 && imx <= ix2 ) || ( imx+dw >= ix2 && imx <= ix2 ) );
+					let intersecting2 = iy1 >= imy && iy2 <= imy+dh && ( ( imx >= ix1 && imx <= ix2 ) || ( imx+dw >= ix2 && imx <= ix2 ) );
 					// check top left corner
-					var intersecting3 = ix1 < imx && iy1 < imy && ix2 >= imx && iy2 >= imy;
+					let intersecting3 = ix1 < imx && iy1 < imy && ix2 >= imx && iy2 >= imy;
 					// check top right corner
-					var intersecting4 = ix1 < imx+dw && iy1 < imy+dh && ix2 > imx && iy2 >= imy+dh;
+					let intersecting4 = ix1 < imx+dw && iy1 < imy+dh && ix2 > imx && iy2 >= imy+dh;
 					// check bottom left corner
-					var intersecting5 = ix1 >= imx && ix2 >= imx+dw && iy2 <= imy+dh && ix1 <= imx+dw && iy2 >= imy;
+					let intersecting5 = ix1 >= imx && ix2 >= imx+dw && iy2 <= imy+dh && ix1 <= imx+dw && iy2 >= imy;
 					// check bottom right corner
-					var intersecting6 = ix1 >= imx && iy1 >= imy && ix2 >= imx+dw && iy2 >= imy+dh && ix1 < imx+dw && iy1 < imy+dh;
+					let intersecting6 = ix1 >= imx && iy1 >= imy && ix2 >= imx+dw && iy2 >= imy+dh && ix1 < imx+dw && iy1 < imy+dh;
 					// Combine all
-					var intersecting = intersecting1 || intersecting2 || intersecting3 || intersecting4 || intersecting5 || intersecting6;
+					let intersecting = intersecting1 || intersecting2 || intersecting3 || intersecting4 || intersecting5 || intersecting6;
 				
 					if( overlapping || intersecting )
 					{
@@ -2356,8 +2393,8 @@ function AbsolutePosition( div, left, top, width, height )
 // Make a table list with checkered bgs
 function MakeTableList( entries, headers )
 {
-	var str = '<table class="List" style="width: 100%">';
-	var cols = 0;
+	let str = '<table class="List" style="width: 100%">';
+	let cols = 0;
 	if ( headers )
 	{
 		str += '<tr>';
@@ -2370,7 +2407,7 @@ function MakeTableList( entries, headers )
 	}
 	if ( cols <= 0 )
 		cols = entries[0].length;
-	var sw = 1;
+	let sw = 1;
 	for ( var a = 0; a < entries.length; a++ )
 	{
 		str += '<tr class="sw' + sw + '">';
@@ -2410,7 +2447,7 @@ movableMouseUp = function( e )
 {
 	if( !e ) e = window.event;
 	
-	var target = e.target ? e.target : e.srcElement;
+	let target = e.target ? e.target : e.srcElement;
 	
 	// For mobile
 	if( isMobile )
@@ -2471,7 +2508,7 @@ movableMouseUp = function( e )
 	
 	for( var a in movableWindows )
 	{
-		var m = movableWindows[a];
+		let m = movableWindows[a];
 		m.removeAttribute( 'moving' );
 	}
 	
@@ -2509,7 +2546,7 @@ movableMouseUp = function( e )
 	
 	if( window.regionWindow && window.regionWindow.directoryview )
 	{
-		var scrl = window.regionWindow.directoryview.scroller;
+		let scrl = window.regionWindow.directoryview.scroller;
 		if( scrl )
 		{
 			scrl.scrolling = false;
@@ -2520,7 +2557,7 @@ movableMouseUp = function( e )
 // Remove all droptarget states
 function RemoveDragTargets()
 {
-	var s = ge( 'DoorsScreen' );
+	let s = ge( 'DoorsScreen' );
 	if( s )
 	{
 		// Make sure this is triggered to roll out of drop target
@@ -2535,7 +2572,7 @@ var _screenTitleTimeout = null;
 var prevScreen = prevWindow = false;
 function CheckScreenTitle( screen, force )
 {	
-	var testObject = screen ? screen : window.currentScreen;
+	let testObject = screen ? screen : window.currentScreen;
 	if( !testObject && !force ) return;
 	
 	// Orphan node!
@@ -2559,11 +2596,11 @@ function CheckScreenTitle( screen, force )
 	Friend.GUI.reorganizeResponsiveMinimized();
 	
 	// Set screen title
-	var csc = testObject.screenObject;
+	let csc = testObject.screenObject;
 	if( !csc ) return;
 	
 	// Set the screen title if we have a window with application name
-	var wo = window.currentMovable ? window.currentMovable.windowObject : false;
+	let wo = window.currentMovable ? window.currentMovable.windowObject : false;
 	// Fix screen
 	if( wo && !wo.screen && wo.flags.screen ) wo.screen = wo.flags.screen;
 	// Check screen
@@ -2575,9 +2612,9 @@ function CheckScreenTitle( screen, force )
 	if( wo && wo.parentNode && !wo.parentNode.parentNode )
 		wo = false;
 	
-	var hasScreen = ( !csc || ( wo && testObject.screenObject == wo.screen ) || ( wo && !wo.screen && isDoorsScreen ) );
+	let hasScreen = ( !csc || ( wo && testObject.screenObject == wo.screen ) || ( wo && !wo.screen && isDoorsScreen ) );
 	
-	var isDoorsScreen = testObject.id == 'DoorsScreen';	
+	let isDoorsScreen = testObject.id == 'DoorsScreen';	
 	
 	// Clear the delayed action
 	if( _screenTitleTimeout )
@@ -2590,7 +2627,7 @@ function CheckScreenTitle( screen, force )
 	// Get app title
 	if( wo && wo.applicationName && hasScreen )
 	{
-		var wnd = wo.applicationDisplayName ? wo.applicationDisplayName : wo.applicationName;
+		let wnd = wo.applicationDisplayName ? wo.applicationDisplayName : wo.applicationName;
 		if( !csc.originalTitle )
 		{
 			csc.originalTitle = csc.getFlag( 'title' );
@@ -2618,7 +2655,7 @@ function CheckScreenTitle( screen, force )
 	else if( csc.originalTitle && csc.getFlag( 'title' ) != csc.originalTitle )
 	{
 		csc.contentDiv.parentNode.classList.add( 'ChangingScreenTitle' );
-		var titl = csc.originalTitle;
+		let titl = csc.originalTitle;
 		_screenTitleTimeout = setTimeout( function()
 		{
 			setTitleAndMoveMenu( csc, titl );
@@ -2656,7 +2693,7 @@ function CheckScreenTitle( screen, force )
 			// Nudge workspace menu to right side of screen title 
 			if( !isMobile && ge( 'WorkspaceMenu' ) )
 			{
-				var t = currentScreen.screen._titleBar.querySelector( '.Info' );
+				let t = currentScreen.screen._titleBar.querySelector( '.Info' );
 				if( t ) 
 				{
 					ge( 'WorkspaceMenu' ).style.left = t.offsetWidth + t.offsetLeft + 10 + 'px';
@@ -2733,11 +2770,11 @@ function PollTaskbar( curr )
 	if( curr && !curr.parentNode )
 		return;
 	
-	var doorsScreen = ge( 'DoorsScreen' );
+	let doorsScreen = ge( 'DoorsScreen' );
 	if( !doorsScreen ) return;
 	pollingTaskbar = true;
 	
-	var baseElement = ge( 'Taskbar' );
+	let baseElement = ge( 'Taskbar' );
 	
 	// Placing the apps inside the dock and not using a normal taskbar
 	if( !isMobile )
@@ -2747,13 +2784,13 @@ function PollTaskbar( curr )
 			if( !ge( 'DockWindowList' ) )
 			{
 				// Find first desklet
-				var dlets = document.getElementsByClassName( 'Desklet' );
+				let dlets = document.getElementsByClassName( 'Desklet' );
 				if( dlets.length || dlets[ 0 ] )
 				{
 					ge( 'Statusbar' ).className = 'Docklist';
 				
-					var dlet = dlets[ 0 ];
-					var d = document.createElement( 'div' );
+					let dlet = dlets[ 0 ];
+					let d = document.createElement( 'div' );
 					d.id = 'DockWindowList';
 					d.className = 'WindowList';
 					dlet.appendChild( d );
@@ -2771,7 +2808,7 @@ function PollTaskbar( curr )
 					baseElement = d;
 				
 					// Add size here
-					var dock = d.parentNode.desklet;
+					let dock = d.parentNode.desklet;
 					if( dock.conf )
 						d.classList.add( 'Size' + dock.conf.size );
 				}
@@ -2794,10 +2831,10 @@ function PollTaskbar( curr )
 			}
 		
 			// Make into a HasWindowlist element
-			var dock = baseElement.parentNode.desklet;
+			let dock = baseElement.parentNode.desklet;
 			baseElement.parentNode.classList.add( 'HasWindowlist' );
 		
-			var dlength = Workspace.mainDock.iconListPixelLength;
+			let dlength = Workspace.mainDock.iconListPixelLength;
 		
 			if( baseElement.parentNode.classList.contains( 'Vertical' ) )
 			{
@@ -2806,7 +2843,7 @@ function PollTaskbar( curr )
 			}
 			else
 			{
-				var right = '0';
+				let right = '0';
 				baseElement.style.width = 'calc(100% - ' + dlength + 'px)';
 				baseElement.style.right = right + 'px';
 				baseElement.style.height = '100%';
@@ -2829,10 +2866,10 @@ function PollTaskbar( curr )
 		
 			if( baseElement.childNodes.length )
 			{
-				var lastTask = baseElement.childNodes[ baseElement.childNodes.length - 1 ];
+				let lastTask = baseElement.childNodes[ baseElement.childNodes.length - 1 ];
 				// Horizontal
 			
-				var taskWidth = lastTask.offsetLeft + lastTask.offsetWidth;
+				let taskWidth = lastTask.offsetLeft + lastTask.offsetWidth;
 				baseElement.style.left = '0px';
 				baseElement.style.top = 'auto';
 				baseElement.classList.add( 'Horizontal' );
@@ -2843,14 +2880,14 @@ function PollTaskbar( curr )
 			
 				baseElement.scrollFunc = function( e )
 				{
-					var l = baseElement.childNodes[ baseElement.childNodes.length - 1 ];
+					let l = baseElement.childNodes[ baseElement.childNodes.length - 1 ];
 					if( !l ) return;
 				
-					var off = e.clientX - baseElement.offsetLeft;
-					var scr = off / baseElement.offsetWidth;
+					let off = e.clientX - baseElement.offsetLeft;
+					let scr = off / baseElement.offsetWidth;
 					if( l.offsetLeft + l.offsetWidth > baseElement.offsetWidth )
 					{
-						var whole = l.offsetLeft + l.offsetWidth - baseElement.offsetWidth;
+						let whole = l.offsetLeft + l.offsetWidth - baseElement.offsetWidth;
 						baseElement.scroll( scr * whole, 0 );
 					}
 				}
@@ -2858,13 +2895,15 @@ function PollTaskbar( curr )
 			}
 		}
 	
+		let t = null;
+		
 		// If we have the 'Taskbar'
 		if( baseElement )
 		{
-			var whw = 0; // whole width
-			var swi = baseElement.offsetWidth;
+			let whw = 0; // whole width
+			let swi = baseElement.offsetWidth;
 		
-			var t = baseElement;
+			t = baseElement;
 		
 			// When activated normally
 		
@@ -2875,11 +2914,11 @@ function PollTaskbar( curr )
 					t.tasks = [];
 			
 				// Remove tasks on the taskbar that isn't represented by a view
-				var cleaner = [];
+				let cleaner = [];
 				for( var b = 0; b < t.tasks.length; b++ )
 				{
 					// Look if this task is registered with a view
-					var f = false;
+					let f = false;
 					for( var a in movableWindows )
 					{
 						// Skip snapped windows
@@ -2892,7 +2931,7 @@ function PollTaskbar( curr )
 					// If we already registered this task, add to cleaner
 					if( f )
 					{
-						var tt = t.tasks[ b ];
+						let tt = t.tasks[ b ];
 						if( !currentMovable && tt.dom.classList.contains( 'Active' ) )
 						{
 							// Remove active if there's no movable
@@ -2908,13 +2947,13 @@ function PollTaskbar( curr )
 			
 				for( var a in movableWindows )
 				{
-					var d = false;
+					let d = false;
 				
 					// Skip snapped windows
 					if( movableWindows[ a ].snap ) continue;
 				
 					// Movable windows
-					var pn = movableWindows[a];
+					let pn = movableWindows[a];
 				
 					// Skip hidden ones
 					if( pn.windowObject.flags.hidden == true )
@@ -2988,12 +3027,12 @@ function PollTaskbar( curr )
 							_ActivateWindow( this.window );
 							if( click )
 							{
-								var div = this.window;
+								let div = this.window;
 								div.viewContainer.setAttribute( 'minimized', '' );
 								div.windowObject.flags.minimized = false;
 								div.minimized = false;
 							
-								var app = _getAppByAppId( div.applicationId );
+								let app = _getAppByAppId( div.applicationId );
 								if( app )
 								{
 									app.sendMessage( {
@@ -3019,7 +3058,7 @@ function PollTaskbar( curr )
 											div.attached[ a ].windowObject.flags.minimized = false;
 											div.attached[ a ].viewContainer.removeAttribute( 'minimized' );
 										
-											var app = _getAppByAppId( div.attached[ a ].applicationId );
+											let app = _getAppByAppId( div.attached[ a ].applicationId );
 											if( app )
 											{
 												app.sendMessage( {
@@ -3063,11 +3102,11 @@ function PollTaskbar( curr )
 							this.mousedown = false;
 							
 							if ( !e ) e = window.event;
-							var targ = e ? ( e.target ? e.target : e.srcElement ) : false;
+							let targ = e ? ( e.target ? e.target : e.srcElement ) : false;
 							if( extarg ) targ = extarg;
 							for( var n = 0; n < t.childNodes.length; n++ )
 							{
-								var ch = t.childNodes[ n ];
+								let ch = t.childNodes[ n ];
 								if( !ch.className ) continue;
 								if( ch.className.indexOf( 'Task' ) < 0 ) continue;
 								if( this == ch )
@@ -3084,9 +3123,9 @@ function PollTaskbar( curr )
 										this.window.viewContainer.setAttribute( 'minimized', 'minimized' );
 										this.window.windowObject.flags.minimized = true;
 									
-										var div = this.window;
+										let div = this.window;
 									
-										var app = _getAppByAppId( div.applicationId );
+										let app = _getAppByAppId( div.applicationId );
 										if( app )
 										{
 											app.sendMessage( {
@@ -3108,7 +3147,7 @@ function PollTaskbar( curr )
 													div.attached[ a ].windowObject.minimized = true;
 													div.attached[ a ].viewContainer.setAttribute( 'minimized', 'minimized' );
 												
-													var app = _getAppByAppId( div.attached[ a ].applicationId );
+													let app = _getAppByAppId( div.attached[ a ].applicationId );
 													if( app )
 													{
 														app.sendMessage( {
@@ -3144,10 +3183,10 @@ function PollTaskbar( curr )
 						// Check if we opened a window with a task image
 						if( d.applicationId )
 						{
-							var running = ge( 'Tasks' ).getElementsByTagName( 'iframe' );
+							let running = ge( 'Tasks' ).getElementsByTagName( 'iframe' );
 							for( var a = 0; a < running.length; a++ )
 							{
-								var task = running[a];
+								let task = running[a];
 								// Find the window!
 								if( task.applicationId == d.applicationId )
 								{
@@ -3168,7 +3207,7 @@ function PollTaskbar( curr )
 				}
 				for( var c = 0; c < t.tasks.length; c++ )
 				{
-					var d = t.tasks[ c ].dom;
+					let d = t.tasks[ c ].dom;
 					if( d.window != curr )
 					{
 						d.setInactive();
@@ -3193,7 +3232,7 @@ function PollTaskbar( curr )
 		// Just check if the app represented on the desklet is running
 		for( var a = 0; a < __desklets.length; a++ )
 		{
-			var desklet = __desklets[a];
+			let desklet = __desklets[a];
 		
 			// Assume all launchers represent apps that are not running
 			for( var c = 0; c < desklet.dom.childNodes.length; c++ )
@@ -3206,7 +3245,7 @@ function PollTaskbar( curr )
 			{
 				if( movableWindows[b].windowObject )
 				{
-					var app = movableWindows[b].windowObject.applicationName;
+					let app = movableWindows[b].windowObject.applicationName;
 				
 					// Try to find the application if it is an application window
 					for( var c = 0; c < desklet.dom.childNodes.length; c++ )
@@ -3232,10 +3271,10 @@ function PollTaskbar( curr )
 		}
 	
 		// Final test, just flush suddenly invisible or hidden view windows
-		var out = [];
+		let out = [];
 		for( var a = 0; a < t.tasks.length; a++ )
 		{
-			var v = t.tasks[a].dom;
+			let v = t.tasks[a].dom;
 			if( v.view.windowObject.flags.hidden || v.view.windowObject.flags.invisible )
 			{
 				t.tasks[a].dom.parentNode.removeChild( t.tasks[a].dom );
@@ -3259,20 +3298,20 @@ function PollDockedTaskbar()
 	
 	for( var a = 0; a < __desklets.length; a++ )
 	{	
-		var desklet = __desklets[a];
+		let desklet = __desklets[a];
 		
-		var changed = false;
+		let changed = false;
 		
 		if( !desklet.viewList )
 		{
-			var wl = document.createElement( 'div' );
+			let wl = document.createElement( 'div' );
 			desklet.viewList = wl;
 			wl.className = 'ViewList';
 			desklet.dom.appendChild( wl );
 		}
 		
 		// Clear existing viewlist items that are removed
-		var remove = [];
+		let remove = [];
 		for( var y = 0; y < desklet.viewList.childNodes.length; y++ )
 		{
 			if( !movableWindows[desklet.viewList.childNodes[y].viewId] )
@@ -3288,10 +3327,10 @@ function PollDockedTaskbar()
 		// Clear views that are managed by launchers
 		for( var y = 0; y < desklet.dom.childNodes.length; y++ )
 		{
-			var dy = desklet.dom.childNodes[y];
+			let dy = desklet.dom.childNodes[y];
 			if( dy.views )
 			{
-				var out = [];
+				let out = [];
 				for( var o in dy.views )
 				{
 					if( movableWindows[o] )
@@ -3301,7 +3340,7 @@ function PollDockedTaskbar()
 			}
 		}
 		
-		var wl = desklet.viewList;
+		let wl = desklet.viewList;
 		
 		// Just check if the app represented on the desklet is running
 		for( var c = 0; c < desklet.dom.childNodes.length; c++ )
@@ -3327,15 +3366,15 @@ function PollDockedTaskbar()
 						continue;
 					}
 				
-					var app = movableWindows[ b ].windowObject.applicationName;
-					var win = b;
-					var wino = movableWindows[ b ];
-					var found = false;
+					let app = movableWindows[ b ].windowObject.applicationName;
+					let win = b;
+					let wino = movableWindows[ b ];
+					let found = false;
 				
 					// Try to find view in viewlist
 					for( var c = 0; c < desklet.viewList.childNodes.length; c++ )
 					{
-						var cn = desklet.viewList.childNodes[ c ];
+						let cn = desklet.viewList.childNodes[ c ];
 						if( cn.viewId == win )
 						{
 							found = wino;
@@ -3358,7 +3397,7 @@ function PollDockedTaskbar()
 					{
 						for( var c = 0; c < desklet.dom.childNodes.length; c++ )
 						{
-							var dof = desklet.dom.childNodes[ c ];
+							let dof = desklet.dom.childNodes[ c ];
 							if( dof.executable == app )
 							{
 								found = dof.executable;
@@ -3377,7 +3416,7 @@ function PollDockedTaskbar()
 						{
 							for( var c = 0; c < desklet.dom.childNodes.length; c++ )
 							{
-								var d = desklet.dom.childNodes[ c ];
+								let d = desklet.dom.childNodes[ c ];
 								if( !d.classList.contains( 'Launcher' ) ) continue;
 								if( d.executable == found )
 								{
@@ -3385,7 +3424,7 @@ function PollDockedTaskbar()
 									if( !d.views[ win ] ) d.views[ win ] = wino;
 								
 									// Clear non existing
-									var out = [];
+									let out = [];
 									for( var i in d.views )
 										if( movableWindows[ i ] ) out[ i ] = d.views[ i ];
 									d.views = out;
@@ -3395,17 +3434,17 @@ function PollDockedTaskbar()
 					}
 				
 					// Check for an app icon
-					var labelIcon = false;
+					let labelIcon = false;
 					if( app && ge( 'Tasks' ) )
 					{
-						var tk = ge( 'Tasks' ).getElementsByTagName( 'iframe' );
+						let tk = ge( 'Tasks' ).getElementsByTagName( 'iframe' );
 						for( var a1 = 0; a1 < tk.length; a1++ )
 						{
 							if( tk[a1].applicationName != app ) continue;
-							var f = tk[ a1 ].parentNode;
+							let f = tk[ a1 ].parentNode;
 							if( f.className && f.className == 'AppSandbox' )
 							{
-								var img = f.getElementsByTagName( 'div' );
+								let img = f.getElementsByTagName( 'div' );
 								for( var b1 = 0; b1 < img.length; b1++ )
 								{
 									if( img[ b1 ].style.backgroundImage )
@@ -3423,7 +3462,7 @@ function PollDockedTaskbar()
 					// Add the window list item into the desklet
 					if( !found )
 					{
-						var viewRep = document.createElement( 'div' );
+						let viewRep = document.createElement( 'div' );
 						viewRep.className = 'Launcher View MousePointer';
 					
 						if( labelIcon ) viewRep.appendChild( labelIcon );
@@ -3437,10 +3476,10 @@ function PollDockedTaskbar()
 							// TODO: Make sure we also have touch
 							if( !e || e.button != '0' ) return;
 						
-							var theView = movableWindows[ this.viewId ];
+							let theView = movableWindows[ this.viewId ];
 						
 							this.state = this.state == 'visible' ? 'hidden' : 'visible';
-							var wsp = theView.windowObject.workspace;
+							let wsp = theView.windowObject.workspace;
 							if( wsp != globalConfig.workspaceCurrent )
 							{
 								Workspace.switchWorkspace( wsp );
@@ -3457,7 +3496,7 @@ function PollDockedTaskbar()
 								theView.windowObject.flags.minimized = false;
 								_WindowToFront( theView );
 							}
-							var mv = theView;
+							let mv = theView;
 							if( mv && mv.windowObject )
 							{
 								theView.windowObject.setFlag( 'hidden', this.state == 'hidden' ? true : false );
@@ -3465,7 +3504,7 @@ function PollDockedTaskbar()
 								{
 									if( !this.elementCount )
 									{
-										var d = document.createElement( 'div' );
+										let d = document.createElement( 'div' );
 										d.className = 'ElementCount';
 										this.elementCount = d;
 										this.appendChild( d );
@@ -3521,7 +3560,7 @@ function GenerateViewListMenu( win )
 		_vlMenu.parentNode.removeChild( _vlMenu );
 	}
 	
-	var found = false;
+	let found = false;
 	for( var a in movableWindows )
 	{
 		//if( movableWindows[
@@ -3558,7 +3597,7 @@ function ClearSelectRegion()
 {
 	if( ge ( 'RegionSelector' ) )
 	{
-		var s = ge ( 'RegionSelector' );
+		let s = ge ( 'RegionSelector' );
 		s.parentNode.removeChild( s );
 	}
 	// Nullify initial settings
@@ -3587,12 +3626,12 @@ movableMouseDown = function ( e )
 	}
 	
 	// Menu trigger
-	var rc = 0;
+	let rc = 0;
 	if ( e.which ) rc = ( e.which == 3 );
 	else if ( e.button ) rc = ( e.button == 2 );
 	
 	// Get target
-	var tar = e.srcElement ? e.srcElement : e.target;
+	let tar = e.srcElement ? e.srcElement : e.target;
 	
 	if( ( window.isTablet || window.isMobile ) && Workspace.iconContextMenu )
 	{
@@ -3621,14 +3660,14 @@ movableMouseDown = function ( e )
 		 }
 	}
 	
-	var clickOnMenuItem = tar && tar.classList.contains( 'MenuItem' ) ? true : false;
+	let clickOnMenuItem = tar && tar.classList.contains( 'MenuItem' ) ? true : false;
 	
 	if( !clickOnMenuItem && Workspace.iconContextMenu )
 	{
 		Workspace.iconContextMenu.hide();
 	}
 	
-	var sh = e.shiftKey || e.ctrlKey;
+	let sh = e.shiftKey || e.ctrlKey;
 	
 	// Zero scroll
 	window.regionScrollLeft = 0;
@@ -3652,12 +3691,12 @@ movableMouseDown = function ( e )
 		tar = tar.parentNode;
 	}
 	// Check if we got a click on desktop
-	var clickonDesktop = tar.classList && ( 
+	let clickonDesktop = tar.classList && ( 
 		tar.classList.contains( 'ScreenContent' ) ||
 		tar.classList.contains( 'ScreenOverlay' ) 
 	);
 	
-	var clickOnView = tar.classList && tar.classList.contains( 'Content' ) && tar.parentNode.classList.contains ( 'View' ); 
+	let clickOnView = tar.classList && tar.classList.contains( 'Content' ) && tar.parentNode.classList.contains ( 'View' ); 
 	// Listview
 	if( !clickOnView && tar.classList.contains( 'Listview' ) )
 		clickOnView = true;
@@ -3691,8 +3730,8 @@ movableMouseDown = function ( e )
 			{
 				// Check if we clicked active window
 				// TODO: Cycle through all windows and check if we clicked on any, including widgets
-				var wl = GetElementLeft( currentMovable );
-				var wt = GetElementTop( currentMovable );
+				let wl = GetElementLeft( currentMovable );
+				let wt = GetElementTop( currentMovable );
 				if( 
 					windowMouseX >= wl && windowMouseX <= wl+currentMovable.offsetWidth &&
 					windowMouseY >= wt && windowMouseY <= wt+currentMovable.offsetHeight
@@ -3746,7 +3785,7 @@ function convertIconsToMultiple()
 {
 	if( currentMovable && currentMovable && currentMovable.content && currentMovable.content.icons )
 	{
-		var ics = currentMovable.content.icons;
+		let ics = currentMovable.content.icons;
 		for( var a = 0; a < ics.length; a++ )
 		{
 			if( ics[a].selected )
@@ -3767,25 +3806,25 @@ function clearRegionIcons( flags )
 	Friend.iconsSelectedCount = 0;
 
 	// Exception for icon deselection
-	var exception = null;
+	let exception = null;
 	if( flags && flags.exception )
 	{
 		exception = flags.exception;
 	}
 
-	var multipleCheck = flags && flags.force ? 'none' : 'multiple';
+	let multipleCheck = flags && flags.force ? 'none' : 'multiple';
 
 	// Clear all icons
 	for( var a in movableWindows )
 	{
-		var w = movableWindows[a];
+		let w = movableWindows[a];
 		if( w.content && w.content.icons )
 			w = w.content;
 		if ( w.icons )
 		{
 			for ( var a = 0; a < w.icons.length; a++ )
 			{
-				var ic = w.icons[a].domNode;
+				let ic = w.icons[a].domNode;
 				if( ic && ic.className )
 				{
 					if( exception != ic && ic.selected != multipleCheck )
@@ -3813,8 +3852,8 @@ function clearRegionIcons( flags )
 	{
 		for( var a = 0; a < Doors.screen.contentDiv.icons.length; a++ )
 		{
-			var icon = Doors.screen.contentDiv.icons[a];
-			var ic = icon.domNode;
+			let icon = Doors.screen.contentDiv.icons[a];
+			let ic = icon.domNode;
 			if( !ic ) continue;
 			if( exception != ic && ic.selected != multipleCheck )
 			{
@@ -3831,11 +3870,11 @@ function contextMenu( e )
 {
 	if( e.defaultBehavior ) return;
 	if ( !e ) e = window.event;
-	var tar = e.target ? e.target : e.srcEvent;
+	let tar = e.target ? e.target : e.srcEvent;
 	if ( !tar ) return;
 	
-	var mov, mov2, mov3;
-	var mdl = GetTitleBarG ();
+	let mov, mov2, mov3;
+	let mdl = GetTitleBarG ();
 	if ( tar.parentNode )
 		mov = tar.parentNode.className && tar.parentNode.className.indexOf ( ' View' ) >= 0;
 	if ( tar.parentNode && tar.parentNode.parentNode && tar.parentNode.parentNode.className )
@@ -3922,7 +3961,7 @@ function InitGuibaseEvents()
 			// Refresh the tray
 			PollTray();
 			
-			var viewObject = null;
+			let viewObject = null;
 			if( document.activeElement )
 			{
 				viewObject = document.activeElement;
@@ -3960,10 +3999,10 @@ function GetTitleBarG ()
 
 function ClearMenuItemStyling( par )
 {
-	var lis = par.getElementsByTagName( 'li' );
+	let lis = par.getElementsByTagName( 'li' );
 	for( var a = 0; a < lis.length; a++ ) 
 	{
-		var sp = lis[a].getElementsByTagName( 'span' );
+		let sp = lis[a].getElementsByTagName( 'span' );
 		if( sp && sp[0] ) sp[0].className = '';
 	}
 }
@@ -3984,7 +4023,7 @@ function FocusOnNothing()
 			movableWindows[a].windowObject.sendMessage( { command: 'blur' } );
 		}
 	}
-	var eles = document.getElementsByTagName( '*' );
+	let eles = document.getElementsByTagName( '*' );
 	for( var a = 0; a < eles.length; a++ )
 	{
 		eles[a].blur();
@@ -3997,7 +4036,7 @@ function FocusOnNothing()
 function AlertBox( title, desc, buttons, win )
 {
 	// New view
-	var w = new View( {
+	let w = new View( {
 		title: title,
 		width: 380,
 		height: 200,
@@ -4007,13 +4046,13 @@ function AlertBox( title, desc, buttons, win )
 	for( var a in buttons )
 		buttonml += '<button class="IconSmall ' + buttons[a].className + '">' + buttons[a].text + '</button>';
 	
-	var ml = '<div class="Dialog"><div class="DialogContent">' + desc + '</div><div class="DialogButtons">' + buttonml + '</div></div>';
+	let ml = '<div class="Dialog"><div class="DialogContent">' + desc + '</div><div class="DialogButtons">' + buttonml + '</div></div>';
 	
 	w.setContent( ml );
 	
 	// Collect added dom elements
-	var eles = w.content.getElementsByTagName( 'button' );
-	var dbuttons = [];
+	let eles = w.content.getElementsByTagName( 'button' );
+	let dbuttons = [];
 	for( var a = 0; a < eles.length; a++ )
 	{
 		// TODO: Make safer!
@@ -4081,14 +4120,14 @@ function UnlockColorProcessor()
 // Take an image and look for average color
 function FindImageColorProduct( img )
 {
-	var c = LockColorProcessor();
+	let c = LockColorProcessor();
 	if( c )
 	{
 		c.ctx.drawImage( img, 0, 0, 320, 200 );
-		var imgd = c.ctx.getImageData( 0, 0, 320, 200 );
-		var average = { r: 0, g: 0, b: 0 };
-		var steps = 8;
-		var increments = steps << 2; // * 4
+		let imgd = c.ctx.getImageData( 0, 0, 320, 200 );
+		let average = { r: 0, g: 0, b: 0 };
+		let steps = 8;
+		let increments = steps << 2; // * 4
 		for( var i = 0; i < imgd.data.length; i += increments )
 		{
 			average.r += imgd.data[ i   ];
@@ -4126,7 +4165,7 @@ function CreateHelpBubble( element, text, uniqueid, rules )
 		element.helpBubble.close();
 	}
 	
-	var helpBubble = {
+	let helpBubble = {
 		destroy: function()
 		{
 			if( helpBubble )
@@ -4157,15 +4196,15 @@ function CreateHelpBubble( element, text, uniqueid, rules )
 			}
 			
 			// Check parent
-			var positionClass = '';
-			var p = e.target ? e.target.parentNode : false;
+			let positionClass = '';
+			let p = e.target ? e.target.parentNode : false;
 			
 			// Also check parent
 			if( p )
 			{
 				for( var a = 0; a < 2; a++ )
 				{
-					var found = false;
+					let found = false;
 					if( p.getAttribute( 'position' ) )
 					{
 						switch( p.getAttribute( 'position' ) )
@@ -4199,12 +4238,12 @@ function CreateHelpBubble( element, text, uniqueid, rules )
 				}
 			}
 			
-			var mx = windowMouseX;
-			var my = windowMouseY;
-			var mt = GetElementTop( element ) - ( 50 + 10 );
+			let mx = windowMouseX;
+			let my = windowMouseY;
+			let mt = GetElementTop( element ) - ( 50 + 10 );
 			
-			var c = document.createElement( 'canvas' );
-			var d = c.getContext( '2d' );
+			let c = document.createElement( 'canvas' );
+			let d = c.getContext( '2d' );
 			d.font = '1em default';
 			
 			// Dynamic text
@@ -4212,8 +4251,8 @@ function CreateHelpBubble( element, text, uniqueid, rules )
 				text = rules.getText();
 			if( !text ) return;
 			
-			var mw = 0;
-			var mh = 0;
+			let mw = 0;
+			let mh = 0;
 			if( text.indexOf( "\n" ) > 0 )
 			{
 				text = text.split( "\n" );
@@ -4225,7 +4264,7 @@ function CreateHelpBubble( element, text, uniqueid, rules )
 				}
 				text = text.join ( "<br>" );
 			}
-			var textWidth = mw ? mw : d.measureText( text ).width;
+			let textWidth = mw ? mw : d.measureText( text ).width;
 			
 			// Normal operation
 			mx = GetElementLeft( element ) + ( GetElementWidth( element ) >> 1 ) - ( textWidth >> 1 ) - 30;
@@ -4274,9 +4313,9 @@ function CreateHelpBubble( element, text, uniqueid, rules )
 			
 			if( mt < 0 ) mt = 0;
 			
-			var lfeeds = text.split( '<br>' ).length;
+			let lfeeds = text.split( '<br>' ).length;
 			
-			var v = new Widget( {
+			let v = new Widget( {
 				left: mx,
 				top: mt,
 				width: 200,
@@ -4297,7 +4336,7 @@ function CreateHelpBubble( element, text, uniqueid, rules )
 			v.dom.classList.add( 'HelpBubble' );
 			
 			// Remove all position classes and add right one
-			var pcl = [ 'Left', 'Top', 'Right', 'Bottom' ];
+			let pcl = [ 'Left', 'Top', 'Right', 'Bottom' ];
 			if( rules && rules.positions )
 				pcl = rules.positions;
 			for( var z = 0; z < pcl.length; z++ )
@@ -4307,10 +4346,10 @@ function CreateHelpBubble( element, text, uniqueid, rules )
 				v.dom.classList.add( positionClass );
 			else if( positionClass ) v.dom.className = positionClass;
 			
-			var show = true;
+			let show = true;
 			if( pcl )
 			{
-				var f = false;
+				let f = false;
 				for( var a in pcl )
 				{
 					if( positionClass == pcl[ a ] )

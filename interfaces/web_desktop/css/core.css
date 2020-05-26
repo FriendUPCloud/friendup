@@ -3798,6 +3798,20 @@ html #Statusbar > #Taskbar .Task
 	box-sizing: border-box;
 }
 
+.Desklet.Left #DockWindowList, .Desklet.Right #DockWindowList
+{
+	mask-image: linear-gradient(180deg, transparent 0%, black 20px, black calc(100% - 20px), transparent 100%);
+	-moz-mask-image: linear-gradient(180deg, transparent 0%, black 20px, black calc(100% - 20px), transparent 100%);
+	-webkit-mask-image: linear-gradient(180deg, transparent 0%, black 20px, black calc(100% - 20px), transparent 100%);
+}
+
+.Desklet.Top #DockWindowList, .Desklet.Bottom #DockWindowList
+{
+	mask-image: linear-gradient(90deg, transparent 0%, black 30px, black calc(100% - 30px), transparent 100%);
+	-moz-mask-image: linear-gradient(90deg, transparent 0%, black 30px, black calc(100% - 30px), transparent 100%);
+	-webkit-mask-image: linear-gradient(90deg, transparent 0%, black 30px, black calc(100% - 30px), transparent 100%);
+}
+
 .Desklet #DockWindowList.Size32
 {
 	padding-top: 9px;

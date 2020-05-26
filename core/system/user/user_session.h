@@ -58,30 +58,30 @@ typedef struct UserSession
 {
 	MinNode					node;
 	
-	FULONG					us_ID;
+	FULONG					us_ID;						// User session ID
 	//WebsocketServerClient	*us_WSClients;
-	UserSessionWebsocket	*us_WSConnections;
-	pthread_mutex_t			us_Mutex;
+	UserSessionWebsocket	*us_WSConnections;			// Websocket connection
+	pthread_mutex_t			us_Mutex;					// User mutex
 	
-	FULONG					us_UserID;					//
-	char					*us_DeviceIdentity;	// device identity
-	char					*us_SessionID;			// session id
-	time_t					us_LoggedTime;		// last update from user
-	int						us_LoginStatus;			// login status
+	FULONG					us_UserID;					// ID of user to which session is attached
+	char					*us_DeviceIdentity;			// device identity
+	char					*us_SessionID;				// session id
+	time_t					us_LoggedTime;				// last update from user
+	int						us_LoginStatus;				// login status
 	
-	File					*us_OpenedFiles;		// opened files in user session
+	File					*us_OpenedFiles;			// opened files in user session
 	
 	User					*us_User;					// pointer to user structure
 	
-	void					*us_SB;   // pointer to systembase
+	void					*us_SB;						// pointer to systembase
 	
-	char					us_UserActionInfo[ 512 ];
-	char					us_Name[ 256 ];		// session name
-	int						us_InUseCounter;
-	WebsocketReqManager		*us_WSReqManager;
-	void					*us_DOSToken;
-	FULONG					us_MobileAppID;
-	UserMobileApp			*us_MobileApp;
+	char					us_UserActionInfo[ 512 ];	// last action called
+	char					us_Name[ 256 ];				// session name
+	int						us_InUseCounter;			// is session used counter
+	WebsocketReqManager		*us_WSReqManager;			// 
+	void					*us_DOSToken;				// 
+	FULONG					us_MobileAppID;				//
+	UserMobileApp			*us_MobileApp;				// 
 	//int						us_WebSocketStatus;	// status of websocket
 }UserSession;
 

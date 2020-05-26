@@ -148,7 +148,7 @@ UIntListEl *UILEParseString( char *str )
 
 StringListEl *SLEParseString( char *str )
 {
-	if( str == NULL )
+	if( str == NULL || str[ 0 ] == 0 )
 	{
 		return NULL;
 	}
@@ -157,6 +157,7 @@ StringListEl *SLEParseString( char *str )
 	char *curToken = str+1;
 	
 	StringListEl *rootEl = NULL;
+	DEBUG("SLEParseString: %s\n", str );
 	
 	while( TRUE )
 	{

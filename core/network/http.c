@@ -30,6 +30,7 @@
 #include <system/systembase.h>
 #include <arpa/inet.h>
 #include <linux/limits.h>
+#include <util/string.h>
 
 #ifndef INT_MAX
 #define INT_MAX (int) (0x7FFF/0x7FFFFFFF)
@@ -392,7 +393,7 @@ int HttpParseHeader( Http* http, const char* request, FQUAD fullReqLength )
 	
 	// we cannot parse whole big message, nothing is sending so big headers
 	unsigned int length = (int)fullReqLength;
-	int reqMaxLength = HTTP_MAX_MEM_CONTENT_SIZE;
+	int reqMaxLength = TUNABLE_LARGE_HTTP_REQUEST_SIZE;
 	if( fullReqLength > reqMaxLength )
 	{
 		fullReqLength = reqMaxLength;
@@ -432,7 +433,10 @@ int HttpParseHeader( Http* http, const char* request, FQUAD fullReqLength )
 					// Method -----------------------------------------------------------------------------------------
 					case 0:
 						http->http_Method = StringDuplicateN( ptr, ( r + i ) - ptr );
-						StringToUppercase( http->http_Method );
+						if( http->http_Method != NULL )
+						{
+							StringToUppercase( http->http_Method );
+						}
 
 						// TODO: Validate method
 						break;
@@ -1022,16 +1026,17 @@ Content-Type: application/octet-stream
 				
 				if( startOfFile != NULL )
 				{
-					DEBUG("START CONTENT TO START FILE %d\n", startOfFile - http->http_Content );
+					DEBUG("START CONTENT TO START FILE %ld\n", startOfFile - http->http_Content );
 
 					FQUAD res;
-					int divSize = strlen( http->http_PartDivider );
 
-					DEBUG("DIVSIZE %d\n", divSize );
-					res = FindInBinaryPOS( http->http_PartDivider, divSize, startOfFile, (http->http_SizeOfContent-(startOfFile-http->http_Content)) )-2;// + divSize;
-					//res = FindInBinaryPOS( http->http_PartDivider, strlen(http->http_PartDivider), startOfFile, http->http_SizeOfContent ) - 2;
+					DEBUG("DIVSIZE %d\n", http->http_PartDividerLen );
+					FQUAD multipartLen = (http->http_SizeOfContent-(startOfFile-http->http_Content) );
+					DEBUG("MULTIPART LEN %lu\n", multipartLen );
+					res = FindInBinaryPOS( http->http_PartDivider, http->http_PartDividerLen, startOfFile, multipartLen )-2;// + divSize;
+					//res = FindInBinaryPOS( http->http_PartDivider, divSize, startOfFile, multipartLen ) - 2;
 					
-					//res = (FQUAD )FindInBinarySimple( http->http_PartDivider, divSize, startOfFile, http->http_SizeOfContent )-2;
+					//res = (FQUAD )FindInBinarySimple( http->http_PartDivider, divSize, startOfFile, multipartLen )-2;
 					
 					char *endOfFile = startOfFile + res;
 					DEBUG("MULTI FOUND END OF FILE %p START %p LEN %lu\n", endOfFile, startOfFile, res );
@@ -1046,7 +1051,7 @@ Content-Type: application/octet-stream
 							
 							INFO("[Http] Found file - name %.*s  FILESIZE %lu  FIRST CHAR\n", 30, fname, size );
 
-							HttpFile *newFile = HttpFileNew( fname, fnamesize, startOfFile, size );
+							HttpFile *newFile = HttpFileNew( fname, fnamesize, startOfFile, size, FALSE );
 							if( newFile != NULL )
 							{
 								//FERROR("TEMP POS %p END POS %p   size %d\n", startOfFile, endOfFile, (int)( endOfFile-startOfFile ) );
@@ -1122,6 +1127,8 @@ Content-Type: application/octet-stream
 	return 0;
 }
 
+static const char *headerEnd = "\r\n\r\n";
+
 /**
  * Parse first part of the request
  *
@@ -1130,8 +1137,6 @@ Content-Type: application/octet-stream
  * @param length data length
  * @return 0 when success, otherwise error number
  */
-
-static const char *headerEnd = "\r\n\r\n";
 
 static inline int HttpParsePartialRequestChunked( Http* http, char* data, unsigned int length )
 {
@@ -1331,6 +1336,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 							munmap( http->http_Content, http->http_ContentLength );
 							http->http_Content = NULL;
 							unlink( http->http_TempContentFileName );
+							http->http_ContentFileHandle = 0;
 						}
 						else
 						{
@@ -1340,7 +1346,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 							}
 						}
 						
-						if( size > HTTP_MAX_MEM_CONTENT_SIZE )
+						if( size > TUNABLE_LARGE_HTTP_REQUEST_SIZE )
 						{
 							strcpy( http->http_TempContentFileName, HTTP_CONTENT_TEMP_NAME );
 							char *tfname = mktemp( http->http_TempContentFileName );
@@ -1430,7 +1436,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 							}
 						}
 						
-						if( size > HTTP_MAX_MEM_CONTENT_SIZE )
+						if( size > TUNABLE_LARGE_HTTP_REQUEST_SIZE )
 						{
 							strcpy( http->http_TempContentFileName, HTTP_CONTENT_TEMP_NAME );
 							char *tfname = mktemp( http->http_TempContentFileName );
@@ -1544,16 +1550,17 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 		{
 			if( http->http_ContentFileHandle > 0 )
 			{
-				int store = TUNABLE_LARGE_HTTP_REQUEST_SIZE;
+				int store = TUNABLE_LARGE_HTTP_REQUEST_COPY_SIZE;
 				
-				int wrote = write( http->http_ContentFileHandle, data, store );
-				/*
+				//int wrote = write( http->http_ContentFileHandle, data, length );
+				//int wrote = write( http->http_ContentFileHandle, data, store );
+				
 				FQUAD toWrite = length;
 				char *dataptr = data;
 				
 				if( toWrite < (FQUAD)store )
 				{
-					store = toWrite;
+					store = (int)toWrite;
 				}
 				
 				while( toWrite > 0 )
@@ -1564,12 +1571,13 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 					
 					DEBUG("UPLOAD writing data into buffer toWrite: %ld wrote: %d\n", toWrite, wrote );
 			
-					if( toWrite < (FQUAD)store )
+					if( toWrite < store )
 					{
-						store = toWrite;
+						store = (int)toWrite;
 					}
 				}
-				*/
+				
+				/*
 				DEBUG("-----------------------------------\n--------------------------------\n---------------------\n---------------------\n---------\n");
 				FQUAD z;
 				for( z=0 ; z < (length-8) ; z++ )
@@ -1579,6 +1587,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 						FERROR("HTTP.c END FILE FOUDN! in CONTENT\n");
 					}
 				}
+				*/
 				
 				DEBUG("UPLOAD writting done!\n");
 				//FQUAD = 
@@ -1590,22 +1599,20 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 			}
 			
 			char *endDivider = strstr( http->http_Content, "\r\n" );
-			memset( http->http_PartDivider, 0, sizeof( char ) << 8 );
-			
+
 			DEBUG("UPLOAD endDivider pointer: %p\n", endDivider );
+
 			if( endDivider != NULL )
 			{
-				int maxDivLen = sizeof( http->http_PartDivider ) - 1;
-				int divLen = endDivider-http->http_Content;
-				if(  divLen < maxDivLen )
-				{
-					maxDivLen = divLen;
-				}
-				strncpy( http->http_PartDivider, http->http_Content, maxDivLen );
+				int maxDivLen = endDivider-http->http_Content;
+				http->http_PartDivider = StringDuplicateN( http->http_Content, maxDivLen );
+				http->http_PartDividerLen = maxDivLen;
 			}
 			else
 			{
-				strcpy( http->http_PartDivider, "\n");
+				http->http_PartDivider = StringDuplicate( "\n" );
+				http->http_PartDividerLen = 1;
+				//strcpy( http->http_PartDivider, "\n");
 			}
 			DEBUG("[HttpParsePartialRequest] Purge... Divider: %s\n", http->http_PartDivider );
 		}
@@ -1855,6 +1862,11 @@ void HttpFree( Http* http )
 		curFile = ( HttpFile * )curFile->node.mln_Succ;
 		HttpFileDelete( remFile );
 	}
+	
+	if( http->http_PartDivider )
+	{
+		FFree( http->http_PartDivider );
+	}
 	//DEBUG("Free http\n");
 
 	FFree( http );
@@ -1911,6 +1923,7 @@ void HttpFreeRequest( Http* http )
 				munmap( http->http_Content, http->http_SizeOfContent );
 			}
 			close( http->http_ContentFileHandle );
+			http->http_ContentFileHandle = -1;
 			unlink( http->http_TempContentFileName );
 		}
 		else

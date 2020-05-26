@@ -932,10 +932,16 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				while( TRUE )
 				{
 					Log( FLOG_DEBUG, "PROTOCOL_WS: Check in use %d wsiptr %p fcws ptr %p\n", fcd->wsc_InUseCounter, wsi, fcd );
-					if( fcd->wsc_InUseCounter <= 0 )
+					
+					if( FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) ) == 0 )
 					{
-						Log( FLOG_INFO, "Closeing WS connection properly\n");
-						break;
+						if( fcd->wsc_InUseCounter <= 0 )
+						{
+							Log( FLOG_INFO, "Closeing WS connection properly\n");
+							FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
+							break;
+						}
+						FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
 					}
 					/*
 					if( val++ > 15 )
