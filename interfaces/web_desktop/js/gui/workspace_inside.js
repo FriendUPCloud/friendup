@@ -9901,6 +9901,11 @@ function ShowEula( accept, cbk )
 	f.onLoad = function( data )
 	{
 		d.innerHTML = data;
+		// Tell app we can show ourselves!
+		if( window.friendApp && window.friendApp.reveal )
+		{
+			friendApp.reveal();
+		}		
 	}
 	f.load();
 }
@@ -10068,13 +10073,16 @@ Workspace.receiveLive = function( viewId, jsonEvent ) {
 		json   : jsonEvent,
 		event  : event,
 	});
-	const appName = 'friendchat';
+	const appName = 'FriendChat';
 	// find friendchat app
 	let chat = null;
 	console.log( 'all apps', Workspace.applications );
 	Workspace.applications.some( app => {
-		console.log( 'looking for chat', app );
-		if ( app.applicationName != chat )
+		console.log( 'looking for chat', {
+			app  : app,
+			name : app.applicationName,
+		});
+		if ( app.applicationName != appName )
 			return false;
 		
 		chat = app;
@@ -10092,14 +10100,14 @@ Workspace.receiveLive = function( viewId, jsonEvent ) {
 		viewId : viewId,
 		data   : event,
 	};
-	app.contentWindow.postMessage( msg, '*' );
+	chat.contentWindow.postMessage( msg, '*' );
 }
 
 // Receive push notification (when a user clicks native push notification on phone)
 Workspace.receivePush = function( jsonMsg, ready )
 {
 	if( !isMobile ) return "mobile";
-	var msg = jsonMsg ? jsonMsg : ( window.friendApp ? friendApp.get_notification() : false );
+	var msg = jsonMsg ? jsonMsg : ( window.friendApp && typeof friendApp.get_notification == 'function' ? friendApp.get_notification() : false );
 
 	// we use 1 as special case for no push being here... to make it easier to know when to launch startup sequence... maybe not ideal, but works
 	if( msg == false || msg == 1 ) 
@@ -10220,6 +10228,10 @@ Workspace.receivePush = function( jsonMsg, ready )
 		{
 			var app = false;
 			var apps = Workspace.applications;
+			
+			//too early?
+			if( !apps ) return;
+			
 			for( var a = 0; a < apps.length; a++ )
 			{
 				// Found the application
@@ -10234,7 +10246,8 @@ Workspace.receivePush = function( jsonMsg, ready )
 			// TODO: Localize response!
 			if( !app )
 			{
-				Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
+				// no notification here... we got weird message in our new android app but everything worked...
+				//Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
 				if( Workspace.onReady ) Workspace.onReady();
 				return;
 			}
