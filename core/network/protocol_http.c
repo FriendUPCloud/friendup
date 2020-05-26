@@ -1007,8 +1007,6 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							{
 								FBOOL mountedWithoutUser = FALSE;
 								char *error = NULL;
-								// Immediately drop here..
-								SLIB->LibrarySQLDrop( SLIB, sqllib );
 
 								CacheFile *cf = NULL;
 
@@ -1020,9 +1018,17 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 								if( u != NULL )
 								{
 									rootDev = GetUserDeviceByFSysUserIDDevName( SLIB->sl_DeviceManager, sqllib, fsysID, fs_IDUser, fs_DeviceName, &error );
+									
+									// Immediately drop here..
+									SLIB->LibrarySQLDrop( SLIB, sqllib );
+									sqllib = NULL;
 								} // if user is not in memory (and his drives), we must mount drives only
 								else
 								{
+									// Immediately drop here..
+									SLIB->LibrarySQLDrop( SLIB, sqllib );
+									sqllib = NULL;
+								
 									struct TagItem tags[] = {
 										{FSys_Mount_Type, (FULONG)fs_Type },
 										{FSys_Mount_Name, (FULONG)fs_DeviceName },
