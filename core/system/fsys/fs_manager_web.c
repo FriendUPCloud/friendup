@@ -1261,7 +1261,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							
 								fp->f_Stream = request->http_Stream;
 								fp->f_Socket = request->http_Socket;
-								fp->f_WSocket =  request->http_WSocket;
+								fp->f_WSD =  request->http_WSocket;
 							
 								#define FS_READ_BUFFER 262144
 								FQUAD readbytes = 0;// FS_READ_BUFFER;
@@ -3128,7 +3128,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							
 									fp->f_Stream = request->http_Stream;
 									fp->f_Socket = request->http_Socket;
-									fp->f_WSocket =  request->http_WSocket;
+									fp->f_WSD =  request->http_WSocket;
 									fp->f_Raw = 1;
 							
 									#define FS_READ_BUFFER 262144

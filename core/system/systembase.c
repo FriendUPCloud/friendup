@@ -238,7 +238,7 @@ SystemBase *SystemInit( void )
 	l->LibraryImageDrop = LibraryImageDrop;
 	l->WebSocketSendMessage = WebSocketSendMessage;
 	l->WebSocketSendMessageInt = WebSocketSendMessageInt;
-	l->WebsocketWrite = WebsocketWrite;
+	l->WebsocketWrite = UserSessionWebsocketWrite;
 	l->SendProcessMessage = SendProcessMessage;
 	l->GetRootDeviceByName = GetRootDeviceByName;
 	l->SystemInitExternal = SystemInitExternal;
@@ -2538,20 +2538,13 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 		DEBUG("[SystemBase] Writing to websockets, string '%s' size %d\n",msg, len );
 		if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
 		{
-			UserSessionWebsocket *wsc = usersession->us_WSConnections;
-			while( wsc != NULL )
+			if( usersession->us_WSD != NULL )
 			{
-				DEBUG("[SystemBase] Writing to websockets, pointer to wsdata %p, ptr to ws: %p wscptr: %p\n", wsc->wusc_Data, usersession, wsc );
-
-				if( wsc->wusc_Data != NULL )
-				{
-					bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
-				}
-				else
-				{
-					FERROR("Cannot write to WS, WSI is NULL!\n");
-				}
-				wsc = (UserSessionWebsocket *)wsc->node.mln_Succ;
+				bytes += UserSessionWebsocketWrite( usersession , buf , len, LWS_WRITE_TEXT );
+			}
+			else
+			{
+				FERROR("Cannot write to WS, WSI is NULL!\n");
 			}
 			FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
 		}
@@ -2589,34 +2582,15 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len )
 		{
 			memcpy( buf, msg,  len );
 
-			if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
+			if( usersession->us_WSD != NULL && usersession->us_WebSocketStatus == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
 			{
-				UserSessionWebsocket *wsc = usersession->us_WSConnections;
-		
-				DEBUG("[SystemBase] Writing to websockets, string '%s' size %d ptr to websocket connection %p\n",msg, len, wsc );
-		
-				//if( usersession->us_WebSocketStatus == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
-				{
-					while( wsc != NULL )
-					{
-						//if(  )//&& wsc->wusc_Status == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
-						{
-							//WSCData *data = (WSCData *)wsc->wusc_Data;
-							if( wsc->wusc_Data != NULL && wsc->wusc_Status == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
-							{
-								bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
-							}
-							else
-							{
-								DEBUG("Websocket is disabled, dataptr: %p\n", wsc->wusc_Data );
-							}
-						}
-						wsc = (UserSessionWebsocket *)wsc->node.mln_Succ;
-					}
-				}
-				FFree( buf );
-				FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
+				bytes += UserSessionWebsocketWrite( usersession , buf , len, LWS_WRITE_TEXT );
 			}
+			else
+			{
+				DEBUG("Websocket is disabled, dataptr: %p\n", msg );
+			}
+			FFree( buf );
 		}
 		else
 		{

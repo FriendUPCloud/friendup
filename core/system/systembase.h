@@ -368,7 +368,7 @@ typedef struct SystemBase
 	
 	int								(*WebSocketSendMessageInt)( UserSession *usersession, char *msg, int len );
 	
-	int								(*WebsocketWrite)( UserSessionWebsocket *wscl, unsigned char *msgptr, int msglen, int type );
+	int								(*WebsocketWrite)( UserSession *wscl, unsigned char *msgptr, int msglen, int type );
 	
 	int								(*SendProcessMessage)( Http *request, char *data, int len );
 
