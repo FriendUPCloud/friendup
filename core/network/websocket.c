@@ -749,63 +749,6 @@ int DetachWebsocketFromSession( WSCData *data )
 		FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
 	}
 	Log( FLOG_DEBUG, "[WS] UnLock DetachWebsocketFromSession\n");
-	/*
-	//
-	UserSession *us = NULL;
-	DEBUG("[DeleteWebSocketConnection] Set NULL to WSI\n");
-	if( FRIEND_MUTEX_LOCK( &(wscl->wsc_Mutex) ) == 0 )
-	{
-		us = (UserSession *)wscl->wsc_UserSession;
-		if( us != NULL )
-		{
-			DEBUG("[DeleteWebSocketConnection] Set NULL to WSI, SESSIONPTR: %p SESSION NAME: %s WSI ptr: %p\n", us, us->us_SessionID, wscl->wsc_Wsi );
-			us->us_WSClients = NULL;
-		}
-		wscl->wsc_Wsi = NULL;
-		FRIEND_MUTEX_UNLOCK( &(wscl->wsc_Mutex) );
-	}
-	DEBUG("[DeleteWebSocketConnection] Remove UserSession from User list\n");
-	//
-	// if user session is attached, then we can remove WebSocketClient from UserSession, otherwise it was already removed from there
-	//
-    if( us != NULL )
-	{
-		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
-		{
-			WebsocketServerClient *actwsc = us->us_WSClients;
-			WebsocketServerClient *prvwsc = us->us_WSClients;
-			while( actwsc != NULL )
-			{
-				if( actwsc->wsc_WebsocketsData == data )
-				{
-					if( actwsc == us->us_WSClients )
-					{
-						us->us_WSClients = (WebsocketServerClient *)us->us_WSClients->node.mln_Succ;
-					}
-					else
-					{
-						prvwsc->node.mln_Succ = actwsc->node.mln_Succ;
-					}
-					DEBUG("[WS] Remove single connection  %p  session connections pointer %p\n", actwsc, us->us_WSClients );
-					break;
-				}
-					
-				prvwsc = actwsc;
-				actwsc = (WebsocketServerClient *)actwsc->node.mln_Succ;
-			}
-			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
-		}
-	}
-	else
-	{
-		FERROR("Cannot remove connection: Pointer to usersession is equal to NULL\n");
-	}
-	
-	DEBUG("[DeleteWebSocketConnection] Remove Queue\n");
-	FQDeInitFree( &(wscl->wsc_MsgQueue) );
-	
-	Log(FLOG_DEBUG, "[DeleteWebSocketConnection] WebsocketClient Remove session %p usersession %p\n", wscl, wscl->wsc_UserSession );
-	WebsocketServerClientDelete( wscl );
-	*/
+
     return 0;
 }

@@ -23,6 +23,9 @@
 #include <util/sha256.h>
 #include <iconv.h>
 
+// disable debug
+#undef __DEBUG
+
 #define KEEPALIVE_TIME_s 180 //ping time (10 before)
 #define ENABLE_MOBILE_APP_NOTIFICATION_TEST_SIGNAL 1
 

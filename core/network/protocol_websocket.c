@@ -925,18 +925,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 						}
 						FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
 					}
-					/*
-					if( val++ > 15 )
-					{
-						int i;
-						for( i=0 ; i < WS_CALLS_MAX ; i++ )
-						{
-							Log( FLOG_INFO, "POS: %d req: %s\n", fcd->wsc_DebugPos, fcd->wsc_DebugCalls[i] );
-						}
-						Log( FLOG_INFO, "Closeing WS connection\n");
-						break;
-					}
-					*/
+
 					sleep( 1 );
 					pthread_yield();
 				}
