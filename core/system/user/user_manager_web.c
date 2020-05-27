@@ -78,76 +78,79 @@ inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid 
 	
 	UserSession **toBeRemoved = NULL;
 	
-	FRIEND_MUTEX_LOCK( &u->u_Mutex );
-	UserSessListEntry *usl = u->u_SessionsList;
-	if( deviceid != NULL )
+	if( FRIEND_MUTEX_LOCK( &u->u_Mutex ) == 0 )
 	{
-		while( usl != NULL )
+		UserSessListEntry *usl = u->u_SessionsList;
+		if( deviceid != NULL )
 		{
-			UserSession *s = (UserSession *) usl->us;
-			if( s != NULL && s->us_DeviceIdentity != NULL && strcmp( s->us_DeviceIdentity, deviceid ) == 0 )
+			while( usl != NULL )
 			{
-				char tmpmsg[ 2048 ];
-				int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
+				UserSession *s = (UserSession *) usl->us;
+				if( s != NULL && s->us_DeviceIdentity != NULL && strcmp( s->us_DeviceIdentity, deviceid ) == 0 )
+				{
+					char tmpmsg[ 2048 ];
+					int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
 				
-				int msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
+					int msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
 
-				DEBUG("Bytes send: %d\n", msgsndsize );
+					DEBUG("Bytes send: %d\n", msgsndsize );
 			
-				break;
+					break;
+				}
+				usl = (UserSessListEntry *)usl->node.mln_Succ;
+				nrSessions++;
 			}
-			usl = (UserSessListEntry *)usl->node.mln_Succ;
-			nrSessions++;
 		}
-	}
-	else
-	{
-		while( usl != NULL )
+		else
 		{
-			UserSession *s = (UserSession *) usl->us;
-			if( s != NULL )
+			while( usl != NULL )
 			{
-				char tmpmsg[ 2048 ];
-				int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
+				UserSession *s = (UserSession *) usl->us;
+				if( s != NULL )
+				{
+					char tmpmsg[ 2048 ];
+					int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
 				
-				int msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
+					int msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
 
-				DEBUG("Bytes send: %d\n", msgsndsize );
+					DEBUG("Bytes send: %d\n", msgsndsize );
 			
-				break;
+					break;
+				}
+				usl = (UserSessListEntry *)usl->node.mln_Succ;
+				nrSessions++;
 			}
-			usl = (UserSessListEntry *)usl->node.mln_Succ;
-			nrSessions++;
 		}
-	}
 	
-	// assign UserSessions to temporary table
-	if( nrSessions > 0 )
-	{
-		toBeRemoved = FMalloc( nrSessions * sizeof(UserSession *) );
-		i = 0;
-		while( usl != NULL )
+		// assign UserSessions to temporary table
+		if( nrSessions > 0 )
 		{
-			toBeRemoved[ i ] = (UserSession *) usl->us;
-			usl = (UserSessListEntry *)usl->node.mln_Succ;
-			i++;
+			toBeRemoved = FMalloc( nrSessions * sizeof(UserSession *) );
+			i = 0;
+			while( usl != NULL )
+			{
+				toBeRemoved[ i ] = (UserSession *) usl->us;
+				usl = (UserSessListEntry *)usl->node.mln_Succ;
+				i++;
+			}
 		}
+		FRIEND_MUTEX_UNLOCK( &u->u_Mutex );
 	}
-	
-	FRIEND_MUTEX_UNLOCK( &u->u_Mutex );
 	
 	// remove sessions
 	for( i=0 ; i < nrSessions ; i++ )
 	{
 		UserSession *ses = toBeRemoved[ i ];
 		
-		FRIEND_MUTEX_LOCK( &(ses->us_Mutex) );
-		ses->us_InUseCounter--;
-		if( ses->us_WSConnections != NULL && ses->us_WSConnections->wusc_Data != NULL )
+		if( FRIEND_MUTEX_LOCK( &(ses->us_Mutex) ) == 0 )
 		{
-			ses->us_WSConnections->wusc_Status = WEBSOCKET_SERVER_CLIENT_TO_BE_KILLED;
+			ses->us_InUseCounter--;
+			if( ses->us_WSConnections != NULL && ses->us_WSConnections->wusc_Data != NULL )
+			{
+				ses->us_WSConnections->wusc_Status = WEBSOCKET_SERVER_CLIENT_TO_BE_KILLED;
+			}
+			FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
 		}
-		FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
 		
 		// wait till queue will be empty
 		while( TRUE )

@@ -2627,6 +2627,13 @@ File *GetUserDeviceByFSysUserIDDevName( DeviceManager *dm, SQLLibrary *sqllib, F
 	SystemBase *l = (SystemBase *)dm->dm_SB;
 	File *device = NULL;
 	char temptext[ 512 ];
+	FBOOL gotGlobalSQL = TRUE;
+	
+	if( sqllib == NULL )
+	{
+		gotGlobalSQL = FALSE;
+		sqllib = l->LibrarySQLGet( l );
+	}
 	
 	DEBUG("[GetUserDeviceByFSysUserIDDevName] start\n");
 	// if fsysid is provided we should try to find device by it
@@ -2659,7 +2666,8 @@ WHERE (`UserID`=%ld OR `GroupID` in( select GroupID from FUserToGroup where User
 	
 	int j = 0;
 	
-	while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
+	//while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
+	if( ( row = sqllib->FetchRow( sqllib, res ) ) != NULL )
 	{
 		// Id, UserId, Name, Type, ShrtDesc, Server, Port, Path, Username, Password, Mounted
 		//row = res->row[ j ];
@@ -2677,15 +2685,28 @@ WHERE (`UserID`=%ld OR `GroupID` in( select GroupID from FUserToGroup where User
 		// Done fetching sessionid =)
 		
 		char *masterSession = NULL;
+		
+		char *path = StringDuplicate( row[ 4 ] );
+		char *type = StringDuplicate( row[ 1 ] );
+		char *name = StringDuplicate( row[ 0 ] );
+		
+		sqllib->FreeResult( sqllib, res );
+	
+		// if library came as parameter do not release it
+		if( gotGlobalSQL == FALSE )
+		{
+			l->LibrarySQLDrop( l, sqllib );
+		}
+		
 		if( tuser != NULL )
 		{
 			masterSession = tuser->u_MainSessionID;
 			struct TagItem tags[] = {
-				{FSys_Mount_Path, (FULONG)row[ 4 ]},
+				{FSys_Mount_Path, (FULONG)path},
 				{FSys_Mount_Server, (FULONG)NULL},
 				{FSys_Mount_Port, (FULONG)NULL},
-				{FSys_Mount_Type, (FULONG)row[ 1 ]},
-				{FSys_Mount_Name, (FULONG)row[ 0 ]},
+				{FSys_Mount_Type, (FULONG)type},
+				{FSys_Mount_Name, (FULONG)name},
 				{FSys_Mount_User_SessionID, (FULONG)masterSession },
 				//{FSys_Mount_User_SessionID, (FULONG)tuser->u_ID },
 				{FSys_Mount_Owner, (FULONG)owner },
@@ -2716,9 +2737,11 @@ WHERE (`UserID`=%ld OR `GroupID` in( select GroupID from FUserToGroup where User
 		{
 			FERROR("User do not exist, cannot mount drive\n");
 		}
+		
+		if( path != NULL ) FFree( path );
+		if( type != NULL ) FFree( type );
+		if( name != NULL ) FFree( name );
 	}	// going through all rows
-
-	sqllib->FreeResult( sqllib, res );
 	
 	DEBUG( "[GetUserDeviceByUserID] Successfully freed.\n" );
 	

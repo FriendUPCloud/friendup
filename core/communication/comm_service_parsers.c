@@ -211,26 +211,27 @@ DataForm *ParseAndExecuteRequest( void *sb, FConnection *con, DataForm *df, FULO
 			User *usr = lsb->sl_UM->um_Users;
 			while( usr != NULL )
 			{
-				//DEBUG("Compare owner id's  session %ld  lock session %ld  deviceident %s\n", uses->us_ID, notification->dn_OwnerID, uses->us_DeviceIdentity );
-				if( strcmp( locuname, usr->u_Name) == 0 )
+				if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
 				{
-					UserSessListEntry *ul = usr->u_SessionsList;
-					
-					char tmpmsg[ 2048 ];
-					
-					while( ul != NULL )
+					if( strcmp( locuname, usr->u_Name) == 0 )
 					{
-						UserSession *session = (UserSession *)ul->us;
-						
-						int len = snprintf( tmpmsg, sizeof(tmpmsg), "{ \"type\":\"msg\", \"data\":{\"type\":\"filesystem-change\",\"data\":{\"deviceid\":\"%s\",\"devname\":\"%s\",\"path\":\"%s\",\"owner\":\"%s\" }}}", locdeviceid, locdevname, locpath, locuname  );
+						UserSessListEntry *ul = usr->u_SessionsList;
 					
-						//FERROR("[DoorNotificationCommunicateChanges] Send message %s function pointer %p sbpointer %p to sessiondevid: %s\n", tmpmsg, sb->WebSocketSendMessage, sb, session->us_DeviceIdentity );
-						lsb->WebSocketSendMessage( sb, session, tmpmsg, len );
+						char tmpmsg[ 2048 ];
+					
+						while( ul != NULL )
+						{
+							UserSession *session = (UserSession *)ul->us;
 						
-						ul = (UserSessListEntry *)ul->node.mln_Succ;
+							int len = snprintf( tmpmsg, sizeof(tmpmsg), "{ \"type\":\"msg\", \"data\":{\"type\":\"filesystem-change\",\"data\":{\"deviceid\":\"%s\",\"devname\":\"%s\",\"path\":\"%s\",\"owner\":\"%s\" }}}", locdeviceid, locdevname, locpath, locuname  );
+					
+							lsb->WebSocketSendMessage( sb, session, tmpmsg, len );
+						
+							ul = (UserSessListEntry *)ul->node.mln_Succ;
+						}
 					}
+					FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
 				}
-				
 				usr = (User *)usr->node.mln_Succ;
 			}
 			break;

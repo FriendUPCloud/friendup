@@ -1071,9 +1071,9 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
 							DEBUG("[USMSendDoorNotification] Send message %s function pointer %p sbpointer %p to sessiondevid: %s\n", tmpmsg, sb->WebSocketSendMessage, sb, uses->us_DeviceIdentity );
 				
 						
-							FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
+							//FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 							WebSocketSendMessage( sb, uses, tmpmsg, len );
-							FRIEND_MUTEX_LOCK( &(usr->u_Mutex) );
+							//FRIEND_MUTEX_LOCK( &(usr->u_Mutex) );
 
 							// send message to all remote users
 							RemoteUser *ruser = usr->u_RemoteUsers;
