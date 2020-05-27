@@ -1328,7 +1328,6 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							}
 							
 							if( usrSessionID != NULL ) FFree( usrSessionID );
-							SLIB->LibrarySQLDrop( SLIB, sqllib );
 						}
 					}
 
