@@ -277,7 +277,9 @@ class Mailer
 		if( !$mailer->send() )
 		{
 			$Logger->log( '[Mailserver.Class] Could not send emails: ' . $mailer->ErrorInfo );
+			return false;
 		}
+		return true;
 	}
 }
 
