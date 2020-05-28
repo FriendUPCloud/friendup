@@ -1605,12 +1605,14 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 			if( endDivider != NULL )
 			{
 				int maxDivLen = endDivider-http->http_Content;
-				http->http_PartDivider = StringDuplicateN( http->http_Content, maxDivLen );
+				//http->http_PartDivider = StringDuplicateN( http->http_Content, maxDivLen );
+				strncpy( http->http_PartDivider, http->http_Content, maxDivLen );
 				http->http_PartDividerLen = maxDivLen;
 			}
 			else
 			{
-				http->http_PartDivider = StringDuplicate( "\n" );
+				//http->http_PartDivider = StringDuplicate( "\n" );
+				strcpy( http->http_PartDivider, "\n" );
 				http->http_PartDividerLen = 1;
 				//strcpy( http->http_PartDivider, "\n");
 			}
@@ -1863,10 +1865,10 @@ void HttpFree( Http* http )
 		HttpFileDelete( remFile );
 	}
 	
-	if( http->http_PartDivider )
-	{
-		FFree( http->http_PartDivider );
-	}
+	//if( http->http_PartDivider )
+	//{
+	//	FFree( http->http_PartDivider );
+	//}
 	//DEBUG("Free http\n");
 
 	FFree( http );
