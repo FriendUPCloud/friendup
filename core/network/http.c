@@ -1608,11 +1608,13 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 				//http->http_PartDivider = StringDuplicateN( http->http_Content, maxDivLen );
 				strncpy( http->http_PartDivider, http->http_Content, maxDivLen );
 				http->http_PartDividerLen = maxDivLen;
+				DEBUG("Partial Divider: %s <<<<<<<<<<<<<<<<<\n", http->http_PartDivider );
 			}
 			else
 			{
 				//http->http_PartDivider = StringDuplicate( "\n" );
-				strcpy( http->http_PartDivider, "\n" );
+				http->http_PartDivider[ 0 ] = '\n';
+				http->http_PartDivider[ 1 ] = 0; 
 				http->http_PartDividerLen = 1;
 				//strcpy( http->http_PartDivider, "\n");
 			}
