@@ -31,9 +31,15 @@ class Mailer
 	var $recipients = [];
 	var $attachments = [];
 
-	function __construct()
+	function __construct( $extconfig = false )
 	{
-		global $Config;
+		global $Config, $configfilesettings;
+		if( $extconfig )
+			$this->config = $extconfig;
+		else if( isset( $configfilesettings ) )
+			$this->config = $configfilesettings;
+		else if( isset( $Config ) )
+			$this->config = $Config;
 	}
 	
 	// Just set the subject
@@ -180,7 +186,7 @@ class Mailer
 	// Send the email
 	function send()
 	{
-		global $Logger, $Config, $configfilesettings;
+		global $Logger;
 		
 		if( count( $this->recipients ) < 1 )
 		{
@@ -215,11 +221,11 @@ class Mailer
 			$mailer->isHTML( true );
 		
 		// Use the mail server setting for sending the e-mail
-		if( isset( $configfilesettings[ 'FriendMail' ] ) )
+		if( isset( $this->config[ 'FriendMail' ] ) )
 		{
-			$cnf = $configfilesettings[ 'FriendMail' ];
+			$cnf = $this->config[ 'FriendMail' ];
 			$mailer->isSMTP();
-			$mailer->SMTPDebug = 3;
+			$mailer->SMTPDebug = isset( $this->debug ) ? $this->debug : 0;
 			$mailer->SMTPAuth    = true;
 			$mailer->Username    = $cnf[ 'friendmail_user' ];
 			$mailer->Password    = $cnf[ 'friendmail_pass' ];
