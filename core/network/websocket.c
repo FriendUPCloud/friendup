@@ -464,33 +464,12 @@ static int callback_http( struct lws *wsi __attribute__((unused)), enum lws_call
 	char client_name[ 128 ];
 	char client_ip[ 128 ];
 	
-	WebSocket *ws =  (WebSocket *)in;//  lws_wsi_user(lws_get_parent(wsi));
-	//struct lws_pollargs *pa = (struct lws_pollargs *)in;
-	//lws_context_user ( wsi );
-	
+	WebSocket *ws =  (WebSocket *)in;
+
 	switch( reason ) 
 	{
 		case LWS_CALLBACK_HTTP:
 			DEBUG1( "[WS] serving HTTP URI %s\n", (char *)in );
-/*
-		if ( in && strcmp(in, "/favicon.ico") == 0 ) 
-		{
-			if (lws_serve_http_file( wsi,
-			     LOCAL_RESOURCE_PATH"/favicon.ico", "image/x-icon", 4) )
-			{
-				DEBUG1( "[WS]:Failed to send favicon\n");
-			}
-			break;
-		}
-
-		// send the script... when it runs it'll start websockets 
-
-		//n = lws_serve_http_file(wsi, buf, mimetype, other_headers, n);
-		if ( lws_serve_http_file( wsi, LOCAL_RESOURCE_PATH"/test.html", "text/html", 4) )
-		{
-			FERROR( "[WS]:Failed to send HTTP file\n");
-		}
-		*/
 		break;
 
 	//
@@ -670,17 +649,26 @@ int DetachWebsocketFromSession( void *d )
 	{
 		return 1;
 	}
-	UserSession *us = (UserSession *)data->wsc_UserSession;
-
-	Log( FLOG_DEBUG, "[WS] Lock DetachWebsocketFromSession\n");
-	if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+	
+	UserSession *us = NULL;
+	if( FRIEND_MUTEX_LOCK( &(data->wsc_Mutex) ) == 0 )
 	{
-		us->us_Wsi = NULL;
+		us = (UserSession *)data->wsc_UserSession;
 		data->wsc_UserSession = NULL;
 		data->wsc_Wsi = NULL;
-		FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+		FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
 	}
-	Log( FLOG_DEBUG, "[WS] UnLock DetachWebsocketFromSession\n");
-
+	
+	if( us != NULL )
+	{
+		Log( FLOG_DEBUG, "[WS] Lock DetachWebsocketFromSession\n");
+		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+		{
+			us->us_Wsi = NULL;
+		
+			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+		}
+		Log( FLOG_DEBUG, "[WS] UnLock DetachWebsocketFromSession\n");
+	}
     return 0;
 }

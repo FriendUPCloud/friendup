@@ -1721,15 +1721,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				//
 				// we found user which must be removed
 				//
-				/*
-				if( request->h_RequestSource == HTTP_SOURCE_WS )
-				{
-					HttpFree( response );
-					response = NULL;
-				}
-				
-				if( error == 0 && response != NULL )
-				*/
 				{
 					// !!! logout cannot send message via Websockets!!!!
 					// in this case return error < 0
