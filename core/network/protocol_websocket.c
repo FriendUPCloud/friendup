@@ -1301,28 +1301,41 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 
 									UserSession *s = NULL;
 									
-									if( fcd->wsc_UserSession != NULL )
+									if( FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) ) == 0 )
 									{
-										s = fcd->wsc_UserSession;
-									}
-									
-									if( s != NULL )
-									{
-										if( HashmapPut( http->http_ParsedPostContent, StringDuplicate( "sessionid" ), StringDuplicate( s->us_SessionID ) ) == MAP_OK )
+										if( fcd->wsc_UserSession != NULL )
 										{
-											//DEBUG1("[WS]:New values passed to POST %s\n", s->us_SessionID );
+											s = fcd->wsc_UserSession;
 										}
-										
-										if( s->us_UserActionInfo[ 0 ] == 0 )
+									
+										if( s != NULL )
 										{
-											int fd = lws_get_socket_fd( fcd->wsc_Wsi );
-											char add[ 256 ];
-											char rip[ 256 ];
+											FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
 											
-											lws_get_peer_addresses( fcd->wsc_Wsi, fd, add, sizeof(add), rip, sizeof(rip) );
-											//INFO("[WS]: WEBSOCKET call %s - %s\n", add, rip );
+											if( FRIEND_MUTEX_LOCK( &(s->us_Mutex) ) == 0 )
+											{
+												if( HashmapPut( http->http_ParsedPostContent, StringDuplicate( "sessionid" ), StringDuplicate( s->us_SessionID ) ) == MAP_OK )
+												{
+												//DEBUG1("[WS]:New values passed to POST %s\n", s->us_SessionID );
+												}
+										
+												if( s->us_UserActionInfo[ 0 ] == 0 )
+												{
+													int fd = lws_get_socket_fd( fcd->wsc_Wsi );
+													char add[ 256 ];
+													char rip[ 256 ];
 											
-											snprintf( s->us_UserActionInfo, sizeof( s->us_UserActionInfo ), "%s / %s", add, rip );
+													lws_get_peer_addresses( fcd->wsc_Wsi, fd, add, sizeof(add), rip, sizeof(rip) );
+													//INFO("[WS]: WEBSOCKET call %s - %s\n", add, rip );
+											
+													snprintf( s->us_UserActionInfo, sizeof( s->us_UserActionInfo ), "%s / %s", add, rip );
+												}
+												FRIEND_MUTEX_UNLOCK( &(s->us_Mutex) );
+											}
+										}
+										else
+										{
+											FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
 										}
 									}
 									
