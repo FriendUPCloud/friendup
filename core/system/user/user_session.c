@@ -291,18 +291,27 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 					
 					us->us_InUseCounter--;
 				
+					WSCData *wsd = us->us_WSD;
 					FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 					
-					if( us->us_Wsi != NULL )
+					if( us->us_WSD != NULL )
 					{
-						if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+						if( FRIEND_MUTEX_LOCK( &(wsd->wsc_Mutex) ) == 0 )
 						{
-							if( us->us_Wsi != NULL )
+							wsd->wsc_InUseCounter++;
+							FRIEND_MUTEX_UNLOCK( &(wsd->wsc_Mutex) );
+						
+							if( wsd->wsc_Wsi != NULL )
 							{
-								lws_callback_on_writable( us->us_Wsi );
-								lws_cancel_service_pt( us->us_Wsi );
+								lws_callback_on_writable( wsd->wsc_Wsi );
+								lws_cancel_service_pt( wsd->wsc_Wsi );
 							}
-							FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+						
+							if( FRIEND_MUTEX_LOCK( &(wsd->wsc_Mutex) ) == 0 )
+							{
+								wsd->wsc_InUseCounter--;
+								FRIEND_MUTEX_UNLOCK( &(wsd->wsc_Mutex) );
+							}
 						}
 					}
 				}
@@ -344,18 +353,28 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 				
 					us->us_InUseCounter--;
 				}
+				
+				WSCData *wsd = us->us_WSD;
 				FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 				
 				if( us->us_Wsi != NULL )
 				{
-					if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+					if( FRIEND_MUTEX_LOCK( &(wsd->wsc_Mutex) ) == 0 )
 					{
-						if( us->us_Wsi != NULL )
+						wsd->wsc_InUseCounter++;
+						FRIEND_MUTEX_UNLOCK( &(wsd->wsc_Mutex) );
+						
+						if( wsd->wsc_Wsi != NULL )
 						{
-							lws_callback_on_writable( us->us_Wsi );
-							lws_cancel_service_pt( us->us_Wsi );
+							lws_callback_on_writable( wsd->wsc_Wsi );
+							lws_cancel_service_pt( wsd->wsc_Wsi );
 						}
-						FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+						
+						if( FRIEND_MUTEX_LOCK( &(wsd->wsc_Mutex) ) == 0 )
+						{
+							wsd->wsc_InUseCounter--;
+							FRIEND_MUTEX_UNLOCK( &(wsd->wsc_Mutex) );
+						}
 					}
 				}
 			}
