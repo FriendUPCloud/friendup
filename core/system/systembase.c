@@ -2536,7 +2536,7 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 		memcpy( buf, msg, len );
 	
 		DEBUG("[SystemBase] Writing to websockets, string '%s' size %d\n",msg, len );
-		if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
+		//if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
 		{
 			if( usersession->us_WSD != NULL )
 			{
@@ -2546,7 +2546,7 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 			{
 				FERROR("Cannot write to WS, WSI is NULL!\n");
 			}
-			FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
+			//FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
 		}
 		DEBUG("[SystemBase] Writing to websockets done, stuff released\n");
 		
