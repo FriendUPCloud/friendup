@@ -790,9 +790,11 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				UserSession *us = (UserSession *)fcd->wsc_UserSession;
 				if( us != NULL )
 				{
-					FRIEND_MUTEX_LOCK( &(us->us_Mutex) );
-					us->us_LastPingTime = time( NULL );
-					FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+					if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+					{
+						us->us_LastPingTime = time( NULL );
+						FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+					}
 				}
 				
 				const size_t remaining = lws_remaining_packet_payload( wsi );
@@ -808,6 +810,13 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 							
 						BufStringDelete( fcd->wsc_Buffer );
 						fcd->wsc_Buffer = BufStringNew();
+					}
+					else
+					{
+						if( fcd->wsc_Buffer == NULL )
+						{
+							fcd->wsc_Buffer = BufStringNew();
+						}
 					}
 				}
 				else	// only fragment was received
