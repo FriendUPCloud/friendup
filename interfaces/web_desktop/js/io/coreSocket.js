@@ -47,10 +47,10 @@ FriendWebSocket = function( conf )
 
 	self.chunks = {};
 	self.allowReconnect = true;
-	//self.pingInterval = 1000 * 10;
-	//self.maxPingWait = 1000 * 5;
-	self.pingInterval = 1000 * 40;
-	self.maxPingWait = 1000 * 30;
+	self.pingInterval = 1000 * 10;
+	self.maxPingWait = 1000 * 5;
+	//self.pingInterval = 1000 * 40;
+	//self.maxPingWait = 1000 * 30;
 	self.pingCheck = 0;
 	self.reconnectDelay = 200; // ms
 	self.reconnectMaxDelay = 1000 * 30; // 30 sec max delay between reconnect attempts

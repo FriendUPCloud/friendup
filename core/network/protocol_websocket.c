@@ -156,15 +156,14 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 						//FQPushWithPriority( &(wscdata->wsc_MsgQueue), en );
 					}
 				}
+				FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 				
 				if( wscdata->wsc_Wsi != NULL )
 				{
 					lws_callback_on_writable( wscdata->wsc_Wsi );
 					lws_cancel_service_pt( wscdata->wsc_Wsi );
 				}
-				FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 			}
-			
 			FFree( encmsg );
 		}
 	}
@@ -202,12 +201,13 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 			
 			DEBUG("In use counter %d\n", us->us_InUseCounter );
 			
+			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+			
 			if( wscdata->wsc_Wsi != NULL )
 			{
 				lws_callback_on_writable( wscdata->wsc_Wsi );
 				lws_cancel_service_pt( wscdata->wsc_Wsi );
 			}
-			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
 	}
 
