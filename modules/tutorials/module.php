@@ -10,7 +10,10 @@
 *                                                                              *
 *****************************************************************************©*/
 
-if( $args->args->command == 'get' )
+include_once( 'php/friend.php' );
+include_once( 'php/classes/file.php' );
+
+if( $args->command == 'get' )
 {
 	$s = new dbIO( 'FSetting' );
 	$s->UserID = $User->ID;
@@ -21,9 +24,9 @@ if( $args->args->command == 'get' )
 		$s->Data = 1;
 		$s->Save();
 	}
-	else
+	else if( $s->Data < 1 )
 	{
-		$s->Data++;
+		$s->Data = 1;
 		$s->Save();
 	}
 	if( file_exists( 'modules/tutorials/data/' . $s->Data ) )

@@ -52,6 +52,7 @@ TutorialWidget.prototype.readTutorials = function()
 	{
 		if( e == 'ok' )
 		{
+			console.log( 'Reading tutorials!' );
 			try
 			{
 				self.init( JSON.parse( d ) );
@@ -59,6 +60,10 @@ TutorialWidget.prototype.readTutorials = function()
 			catch( e )
 			{
 			}
+		}
+		else
+		{
+			console.log( 'What\'s this?', e, d );
 		}
 	}
 	m.execute( 'get' );

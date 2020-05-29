@@ -1939,8 +1939,18 @@ html .Calendar div.HRow > .Current.Day:nth-child(even):hover
 {
 	opacity: 0;
 	pointer-events: none;
+	transform: rotatex(-10deg);
+	transition: transform,opacity 0.5s,0.25s;
+	background: white;
+	box-shadow: 0px 2px 10px rgba(0,0,0,0.4);
+	border-radius: 8px;
 }
 
+.TutorialWidget.Showing
+{
+	transform: rotatex(0deg);
+	opacity: 1;
+}
 
 /* Context Menu items ------------------------------------------------------- */
 

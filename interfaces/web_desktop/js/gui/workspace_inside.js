@@ -348,12 +348,6 @@ var WorkspaceInside = {
 	{
 		if( this.mode == 'vr' || isMobile ) return;
 		
-		// Initialize tutorials
-		let tuts = new TutorialWidget( {
-			x: 'right',
-			y: 'bottom'
-		} );
-		
 		if( globalConfig.workspacesInitialized )
 		{
 			globalConfig.workspacesInitialized = false;
