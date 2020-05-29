@@ -33,10 +33,26 @@ if( $args->command == 'get' )
 	{
 		if( file_exists( 'modules/tutorials/data/' . $s->Data . '/tutorial.html' ) )
 		{
-			die( 'ok<!--separate-->{"response":"Tutorial number ' . $s->Data . '","Data":"' . addslashes( base64_encode( file_get_contents( 'modules/tutorials/data/' . $s->Data . '/tutorial.html' ) ) ) . '"' );
+			$d = new stdClass();
+			$d->response = 'Tutorial number ' . $s->Data;
+			$d->data = base64_encode( file_get_contents( 'modules/tutorials/data/' . $s->Data . '/tutorial.html' ) );
+			die( 'ok<!--separate-->' . json_encode( $d ) );
 		}
 	}
 	die( 'fail<!--separate-->{"response":"404","message":"Out of tutorials."}' );
+}
+else if( $args->command == 'increment' )
+{
+	$s = new dbIO( 'FSetting' );
+	$s->UserID = $User->ID;
+	$s->Type = 'Tutorial';
+	$s->Key = 'Tutorial';
+	if( $s->Load() )
+	{
+		$s->Data = intval( $s->Data ) + 1;
+		$s->Save();
+	}
+	die( 'ok' );
 }
 
 // Catch all

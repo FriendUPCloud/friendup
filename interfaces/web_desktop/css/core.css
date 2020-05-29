@@ -1940,16 +1940,51 @@ html .Calendar div.HRow > .Current.Day:nth-child(even):hover
 	opacity: 0;
 	pointer-events: none;
 	transform: rotatex(-10deg);
-	transition: transform,opacity 0.5s,0.25s;
+	transition: transform,opacity,height 0.5s,0.25s,0.25s !important;
 	background: white;
-	box-shadow: 0px 2px 10px rgba(0,0,0,0.4);
+	box-shadow: 0px 2px 4px rgba(0,0,0,0.4);
 	border-radius: 8px;
+	position: absolute;
+	z-index: 5;
+	color: #202020;
+	box-sizing: border-box;
+}
+
+.TutorialWidget > .Content
+{
+	position: absolute;
+	top: 10px;
+	left: 10px;
+	right: 10px;
+	bottom: 10px;
+	overflow: hidden;
+}
+
+.TutorialWidget:after 
+{
+	content: " ";
+	display: block;
+	/* border-radius: 100%; */
+	background: white;
+	width: 50px;
+	height: 50px;
+	top: calc(100% - 25px);
+	left: calc(50% - 25px);
+	position: absolute;
+	transform: scaleX(0.4) scaleY(0.25) rotatez(45deg);
+}
+
+.TutorialWidget h2
+{
+	font-size: 1em;
+	font-weight: bold;
 }
 
 .TutorialWidget.Showing
 {
 	transform: rotatex(0deg);
 	opacity: 1;
+	pointer-events: all;
 }
 
 /* Context Menu items ------------------------------------------------------- */
