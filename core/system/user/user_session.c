@@ -327,9 +327,10 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 		{
 			if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 			{
+				WSCData *wsd = us->us_WSD;
 				// double check
 				DEBUG("[UserSessionWebsocketWrite] no chnked 1\n");
-				if( us->us_Wsi != NULL )
+				if( us->us_Wsi != NULL && us->us_WSD->wsc_Wsi != NULL )
 				{
 					us->us_InUseCounter++;
 					if( us->us_Wsi != NULL )
@@ -353,8 +354,7 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 				
 					us->us_InUseCounter--;
 				}
-				
-				WSCData *wsd = us->us_WSD;
+
 				FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 				
 				if( us->us_Wsi != NULL )

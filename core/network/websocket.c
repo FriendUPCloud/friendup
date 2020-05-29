@@ -606,6 +606,21 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
 		return -1;
 	}
 	
+	if( FRIEND_MUTEX_LOCK( &(actUserSess->us_Mutex) ) == 0 )
+	{
+		actUserSess->us_Wsi = wsi;
+		actUserSess->us_WSD = data;
+		
+		FRIEND_MUTEX_UNLOCK( &(actUserSess->us_Mutex) );
+		
+		if( FRIEND_MUTEX_LOCK( &(data->wsc_Mutex) ) == 0 )
+		{
+			data->wsc_UserSession = actUserSess;
+			data->wsc_Wsi = wsi;
+			FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
+		}
+	}
+	
 	// create and use new WebSocket connection
 
 	User *actUser = actUserSess->us_User;
@@ -618,16 +633,6 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
 	else
 	{
 		FERROR("User sessions %s is not attached to user %lu\n", actUserSess->us_SessionID, actUserSess->us_UserID );
-	}
-
-	if( FRIEND_MUTEX_LOCK( &(actUserSess->us_Mutex) ) == 0 )
-	{
-		actUserSess->us_Wsi = wsi;
-		actUserSess->us_WSD = data;
-		data->wsc_UserSession = actUserSess;
-		data->wsc_Wsi = wsi;
-		
-		FRIEND_MUTEX_UNLOCK( &(actUserSess->us_Mutex) );
 	}
 	
 	return 0;
