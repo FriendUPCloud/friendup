@@ -1933,6 +1933,15 @@ html .Calendar div.HRow > .Current.Day:nth-child(even):hover
 	list-style: none;
 }
 
+/* Tutorial widgets --------------------------------------------------------- */
+
+.TutorialWidget
+{
+	opacity: 0;
+	pointer-events: none;
+}
+
+
 /* Context Menu items ------------------------------------------------------- */
 
 .Widget
