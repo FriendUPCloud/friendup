@@ -896,7 +896,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					while( e = FQPop( q ) )
 					//if( ( e = FQPop( q ) ) != NULL )
 					{
-						FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+						//FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 						unsigned char *t = e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING;
 						t[ e->fq_Size+1 ] = 0;
 
@@ -915,11 +915,12 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 							FFree( e->fq_Data );
 							FFree( e );
 						}
-					}
-					else
-					{
+					//}
+					//else
+					//{
 						FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 					}
+					FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 				}
 			}
 
