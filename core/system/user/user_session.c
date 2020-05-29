@@ -330,7 +330,7 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 				WSCData *wsd = us->us_WSD;
 				// double check
 				DEBUG("[UserSessionWebsocketWrite] no chnked 1\n");
-				if( us->us_Wsi != NULL && us->us_WSD->wsc_Wsi != NULL )
+				if( us->us_Wsi != NULL && wsd->wsc_Wsi != NULL )
 				{
 					us->us_InUseCounter++;
 					if( us->us_Wsi != NULL )
