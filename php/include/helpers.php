@@ -25,7 +25,7 @@ function FriendCoreQuery( $command = '', $args = false, $method = 'POST', $heade
 		$host = 'localhost';
 	}
 	
-	$server = ( $conf->SSLEnable ? 'https://' : 'http://' ) . $conf->FCHost . ( $conf->FCHost == 'localhost' && $conf->FCPort ? ( ':' . $conf->FCPort ) : '' );
+	$server = ( $conf->SSLEnable ? 'https://' : 'http://' ) . $host . ( $host == 'localhost' && $conf->FCPort ? ( ':' . $conf->FCPort ) : '' );
 	
 	$url = ( $server . $command );
 	
