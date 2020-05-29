@@ -40,6 +40,9 @@ extern SystemBase *SLIB;
 
 //pthread_mutex_t WSThreadMutex;
 
+#define INCREASE_WS_THREADS()
+#define DECREASE_WS_THREADS()
+/*
 #define INCREASE_WS_THREADS() \
 FRIEND_MUTEX_LOCK( &(SLIB->fcm->fcm_WebSocket->ws_Mutex) ); \
 SLIB->fcm->fcm_WebSocket->ws_NumberCalls++; \
@@ -49,7 +52,7 @@ FRIEND_MUTEX_UNLOCK( &(SLIB->fcm->fcm_WebSocket->ws_Mutex) );
 FRIEND_MUTEX_LOCK( &(SLIB->fcm->fcm_WebSocket->ws_Mutex) ); \
 SLIB->fcm->fcm_WebSocket->ws_NumberCalls--; \
 FRIEND_MUTEX_UNLOCK( &(SLIB->fcm->fcm_WebSocket->ws_Mutex) );  
-
+*/
 typedef struct WSThreadData
 {
 	WSCData *fcd;
@@ -893,7 +896,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				{
 					FQueue *q = &(us->us_MsgQueue);
 					
-					while( e = FQPop( q ) )
+					while( ( e = FQPop( q ) ) != NULL )
 					//if( ( e = FQPop( q ) ) != NULL )
 					{
 						//FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
