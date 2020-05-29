@@ -215,11 +215,13 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 {
 	int retval = 0;
 
+	/*
 	if( us == NULL || us->us_WSD == NULL || us->us_Wsi == NULL )
 	{
 		DEBUG("[UserSessionWebsocketWrite] empty us %p wsd %p wsi %p\n", us, us->us_WSD, us->us_Wsi );
 		return 0;
 	}
+	*/
 
 	if( msglen > MAX_SIZE_WS_MESSAGE ) // message is too big, we must split data into chunks
 	{
@@ -237,7 +239,7 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 			
 			DEBUG("[UserSessionWebsocketWrite] Sending big message, size %d (%d chunks of max: %d)\n", msglen, totalChunk, MAX_SIZE_WS_MESSAGE );
 		
-			if( us->us_Wsi != NULL )
+			//if( us->us_Wsi != NULL )
 			{
 				if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 				{
@@ -323,7 +325,7 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 	else
 	{
 		DEBUG("[UserSessionWebsocketWrite] no chunked\n");
-		if( us->us_WSD != NULL )
+		//if( us->us_WSD != NULL )
 		{
 			if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 			{
