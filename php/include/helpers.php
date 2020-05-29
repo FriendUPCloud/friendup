@@ -19,6 +19,12 @@ function FriendCoreQuery( $command = '', $args = false, $method = 'POST', $heade
 	
 	$curl = curl_init();
 	
+	$host = $conf->FCHost;
+	if( isset( $Config[ 'FriendCore' ][ 'fconlocalhost' ] ) && $Config[ 'FriendCore' ][ 'fconlocalhost' ] == 1 )
+	{
+		$host = 'localhost';
+	}
+	
 	$server = ( $conf->SSLEnable ? 'https://' : 'http://' ) . $conf->FCHost . ( $conf->FCHost == 'localhost' && $conf->FCPort ? ':' . $conf->FCPort : '' );
 	
 	$url = ( $server . $command );
