@@ -399,7 +399,7 @@ typedef struct SystemBase
 	char							**l_ServerKeyValues;
 	int								l_ServerKeysNum;
 	
-	WebsocketAPNSConnector			*l_APNSConnection;
+	//WebsocketAPNSConnector			*l_APNSConnection;
 } SystemBase;
 
 

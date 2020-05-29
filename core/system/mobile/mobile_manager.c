@@ -57,6 +57,7 @@ MobileManager *MobileManagerNew( void *sb )
 			}
 		}
 		
+		/*
 		DEBUG("lsb->l_APNSConnection ptr %p\n", lsb->l_APNSConnection );
 		if( lsb->l_APNSConnection != NULL )
 		{
@@ -81,25 +82,10 @@ MobileManager *MobileManagerNew( void *sb )
 				}
 			
 			//'{"auth":"72e3e9ff5ac019cb41aed52c795d9f4c","action":"notify","payload":"hellooooo","sound":"default","token":"1f3b66d2d16e402b5235e1f6f703b7b2a7aacc265b5af526875551475a90e3fe","badge":1,"category":"whatever"}'
-			/*
-			DEBUG("[MobileManagerNew] create connection\n");
-			lma->uma_WSClient = WebsocketClientNew( sb->l_AppleServerHost, sb->l_AppleServerPort, NULL );
-			if( lma->uma_WSClient != NULL )
-			{
-				if( WebsocketClientConnect( lma->uma_WSClient ) > 0 )
-				{
-					DEBUG("[MobileManagerNew] connected\n");
-				}
-				else
-				{
-					DEBUG("[MobileManagerNew] not connected\n");
-				}
-			}
-			DEBUG("Going to next pointer %p\n", lma );
-			*/
 				lma = (UserMobileApp *)lma->node.mln_Succ;
 			}
 		}
+		*/
 	}
 	DEBUG("[MobileManagerNew] end\n");
 	return mm;

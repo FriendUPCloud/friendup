@@ -1318,23 +1318,6 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 	{
 		DEBUG("notif is equal to NULL\n");
 		return 1;
-		//notif = NotificationManagerGetTreeByNotifSentDB( sb->sl_NotificationManager, notifSentID );
-		// memory leak check
-		/*
-		if( notif != NULL )
-		{
-			NotificationSent *ln = notif->n_NotificationsSent;
-			while( ln != NULL )
-			{
-				if( notifSentID == ln->ns_ID )
-				{
-					notifSent = ln;
-					break;
-				}
-				ln = (NotificationSent *)ln->node.mln_Succ;
-			}
-		}
-		*/
 	}
 	
 	if( notif != NULL )
@@ -1380,9 +1363,7 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 		Log( FLOG_INFO, "Android (update) tokens which should get notification: %s", bs->bs_Buffer );
 		BufStringDelete( bs );
 	}
-	
-	//FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
-	
+
 	// message to user Android: "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\"}"
 	// message from example to APNS: /client.py '{"auth":"72e3e9ff5ac019cb41aed52c795d9f4c","action":"notify","payload":"hellooooo","sound":"default","token":"1f3b66d2d16e402b5235e1f6f703b7b2a7aacc265b5af526875551475a90e3fe","badge":1,"category":"whatever"}'
 	
@@ -1390,7 +1371,7 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 	
 	char *jsonMessageIOS;
 	int jsonMessageIosLength = reqLengith+512;
-	//if( sb->l_APNSConnection != NULL )&& sb->l_APNSConnection->wapns_Connection != NULL )
+
 	if( sb->sl_NotificationManager->nm_APNSCert != NULL )
 	{
 		FULONG userID = 0;
@@ -1424,8 +1405,6 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 					//NotificationManagerNotificationSendIOS( sb->sl_NotificationManager, notif->n_Title, notif->n_Content, "default", 1, notif->n_Application, notif->n_Extra, lma->uma_AppToken );
 					/*
 					int msgsize = snprintf( jsonMessageIOS, jsonMessageIosLength, "{\"auth\":\"%s\",\"action\":\"notify\",\"payload\":\"%s\",\"sound\":\"default\",\"token\":\"%s\",\"badge\":1,\"category\":\"whatever\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", sb->l_AppleKeyAPI, notif->n_Content, lma->uma_AppToken, notif->n_Application, lns->ns_ID );
-			
-					WebsocketClientSendMessage( sb->l_APNSConnection->wapns_Connection, jsonMessageIOS, msgsize );
 					*/
 					
 					NotificationSentDelete( lns );

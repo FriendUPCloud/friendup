@@ -966,10 +966,6 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 	default:
 		// disabled for test
 		//Log( FLOG_INFO, "[WS] Default Call, size: %d - reason: %d\n", (int)len, reason );
-		if( len > 0 && len < 500 && in != NULL )
-		{
-			//DEBUG1("[WS]: Default Call, message size %d : %.*s \n", len, len, in );
-		}
 		break;
 	}
 

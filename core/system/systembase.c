@@ -1058,11 +1058,13 @@ void SystemClose( SystemBase *l )
 		return;
 	}
 	
+	/*
 	if( l->l_APNSConnection != NULL )
 	{
 		WebsocketAPNSConnectorDelete( l->l_APNSConnection );
 		l->l_APNSConnection = NULL;
 	}
+	*/
 	
 	if( l->sl_MobileManager != NULL )
 	{
