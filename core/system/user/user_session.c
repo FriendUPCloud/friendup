@@ -332,23 +332,19 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 				WSCData *wsd = us->us_WSD;
 				// double check
 				DEBUG("[UserSessionWebsocketWrite] no chnked 1\n");
-				if( us->us_Wsi != NULL && wsd->wsc_Wsi != NULL )
+
+				us->us_InUseCounter++;
+
+				FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
+				if( en != NULL )
 				{
-					us->us_InUseCounter++;
-					if( us->us_Wsi != NULL )
-					{
-						FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
-						if( en != NULL )
-						{
-							en->fq_Data = FMalloc( msglen+10+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
-							memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msgptr, msglen );
-							en->fq_Size = msglen;
-							en->fq_Priority = 3;	// default priority
+					en->fq_Data = FMalloc( msglen+10+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
+					memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msgptr, msglen );
+					en->fq_Size = msglen;
+					en->fq_Priority = 3;	// default priority
 			
-							FQPushFIFO( &(us->us_MsgQueue), en );
-							retval += msglen;
-						}
-					}
+					FQPushFIFO( &(us->us_MsgQueue), en );
+					retval += msglen;
 			
 					DEBUG("[UserSessionWebsocketWrite] Send message to WSI, ptr: %p\n", us->us_Wsi );
 
