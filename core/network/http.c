@@ -37,7 +37,7 @@
 #endif
 
 //test
-#undef __DEBUG
+//#undef __DEBUG
 
 extern SystemBase *SLIB;
 
