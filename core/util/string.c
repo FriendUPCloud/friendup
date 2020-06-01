@@ -775,7 +775,7 @@ FQUAD FindInBinaryPOS( char *findString, int m, char *findIn, FQUAD n)
 	int i;
 	//int kmpNext[ m ];
 	int *kmpNext;
-	kmpNext = FMalloc( m );
+	kmpNext = FMalloc( m*sizeof(int) );
 	if( kmpNext == NULL )
 	{
 		DEBUG("Cannot allocate memory for kmpNext!\n");
