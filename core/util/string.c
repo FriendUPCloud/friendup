@@ -784,16 +784,14 @@ FQUAD FindInBinaryPOS( char *findString, int m, char *findIn, FQUAD n)
 
 	// Preprocessing 
 	preKmp( findString, m, kmpNext );
-	DEBUG("[String] FindInBinaryPOS, n %ld findstring: >>>%s<<<\n", n, findString );
-	DEBUG("[String] FindInBinaryPOS, findin: >>>%s<<<\n", findIn );
 
 	// Searching 
 	j = 0;
 	i = 0;
-	DEBUG("j %ld n %ld\n", j, n );
+
 	while( j < n ) 
 	{
-		printf("find j %ld i %d\n", j, i );
+		//printf("find j %ld i %d\n", j, i );
 		char fstr = findString[ i ];
 		
 		while( i > -1 && fstr != *findIn )
