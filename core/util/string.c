@@ -783,7 +783,8 @@ FQUAD FindInBinaryPOS( char *findString, int m, char *findIn, FQUAD n)
 	// Searching 
 	j = 0;
 	i = 0;
-	while( j < (FQUAD)n ) 
+	DEBUG("j %ld n %ld\n", j, n );
+	while( j < n ) 
 	{
 		printf("find j %ld i %d\n", j, i );
 		char fstr = findString[ i ];
