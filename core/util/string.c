@@ -777,7 +777,8 @@ FQUAD FindInBinaryPOS( char *findString, int m, char *findIn, FQUAD n)
 
 	// Preprocessing 
 	preKmp( findString, m, kmpNext );
-	DEBUG("[String] FindInBinaryPOS, findstring: %s\n", findString );
+	DEBUG("[String] FindInBinaryPOS, findstring: >>>%s<<<\n", findString );
+	DEBUG("[String] FindInBinaryPOS, findin: >>>%s<<<\n", findIn );
 
 	// Searching 
 	i = j = 0;
