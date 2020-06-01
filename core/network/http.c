@@ -1033,7 +1033,7 @@ Content-Type: application/octet-stream
 					DEBUG("DIVSIZE %d\n", http->http_PartDividerLen );
 					FQUAD multipartLen = (http->http_SizeOfContent-(startOfFile-http->http_Content) );
 					DEBUG("MULTIPART LEN %lu\n", multipartLen );
-					res = FindInBinaryPOS( http->http_PartDivider, http->http_PartDividerLen, startOfFile, multipartLen )-2;// + divSize;
+					res = FindInBinaryPOS( http->http_PartDivider, http->http_PartDividerLen, startOfFile, multipartLen+2 )-2;// + divSize;
 					//res = FindInBinaryPOS( http->http_PartDivider, divSize, startOfFile, multipartLen ) - 2;
 					
 					//res = (FQUAD )FindInBinarySimple( http->http_PartDivider, divSize, startOfFile, multipartLen )-2;
