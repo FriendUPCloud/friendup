@@ -773,11 +773,18 @@ FQUAD FindInBinaryPOS( char *findString, int m, char *findIn, FQUAD n)
 {
 	FQUAD j;
 	int i;
-	int kmpNext[ m ];
+	//int kmpNext[ m ];
+	int *kmpNext;
+	kmpNext = FMalloc( m );
+	if( kmpNext == NULL )
+	{
+		DEBUG("Cannot allocate memory for kmpNext!\n");
+		return -1;
+	}
 
 	// Preprocessing 
 	preKmp( findString, m, kmpNext );
-	DEBUG("[String] FindInBinaryPOS, findstring: >>>%s<<<\n", findString );
+	DEBUG("[String] FindInBinaryPOS, n %ld findstring: >>>%s<<<\n", n, findString );
 	DEBUG("[String] FindInBinaryPOS, findin: >>>%s<<<\n", findIn );
 
 	// Searching 
@@ -799,9 +806,11 @@ FQUAD FindInBinaryPOS( char *findString, int m, char *findIn, FQUAD n)
 		
 		if( i >= m )
 		{
+			FFree( kmpNext );
 			return j-i;
 		}
 	}
+	FFree( kmpNext );
 	return -1;
 }
 
