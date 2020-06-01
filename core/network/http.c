@@ -1040,7 +1040,7 @@ Content-Type: application/octet-stream
 					DEBUG("Res %ld\n", res );
 					if( res <= 0 )
 					{
-						res = (startOfFile - http->http_Content)-http->http_PartDividerLen;
+						res = multipartLen-http->http_PartDividerLen;
 					}
 					
 					char *endOfFile = startOfFile + res;
