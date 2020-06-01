@@ -1037,6 +1037,11 @@ Content-Type: application/octet-stream
 					//res = FindInBinaryPOS( http->http_PartDivider, divSize, startOfFile, multipartLen ) - 2;
 					
 					//res = (FQUAD )FindInBinarySimple( http->http_PartDivider, divSize, startOfFile, multipartLen )-2;
+					DEBUG("Res %ld\n", res );
+					if( res <= 0 )
+					{
+						res = (startOfFile - http->http_Content)-http->http_PartDividerLen;
+					}
 					
 					char *endOfFile = startOfFile + res;
 					DEBUG("MULTI FOUND END OF FILE %p START %p LEN %lu\n", endOfFile, startOfFile, res );
