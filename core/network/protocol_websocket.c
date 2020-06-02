@@ -522,7 +522,9 @@ void WSThread( void *d )
 		if( response != NULL )
 		{
 			unsigned char *buf;
-			char jsontemp[ 2048 ];
+			//char jsontemp[ 2048 ];
+#define JSON_TEMP_LEN 2048
+			char *jsontemp = FMalloc( JSON_TEMP_LEN );
 			
 			//Log( FLOG_INFO, "[WS] Trying to check response content..\n" );
 			
@@ -577,7 +579,7 @@ void WSThread( void *d )
 								// Always add escape chars on unescaped double quotes
 							case '"':
 								locptr[ znew++ ] = '\\';
-								locptr[ znew++ ] = '\\';
+								//locptr[ znew++ ] = '\\';
 								break;
 								// New line
 							case 10:
@@ -670,6 +672,8 @@ void WSThread( void *d )
 			
 			response->http_RequestSource = HTTP_SOURCE_WS;
 			HttpFree( response );
+			
+			FFree( jsontemp );
 		}
 		DEBUG1("[WS] SysWebRequest return\n"  );
 		Log( FLOG_INFO, "WS messages sent LOCKTEST\n");

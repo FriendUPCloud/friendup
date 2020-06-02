@@ -1645,7 +1645,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			{TAG_DONE, TAG_DONE}
 		};
 		
-		if( response != NULL ) FERROR("RESPONSE \n");
+		//if( response != NULL ) FERROR("RESPONSE \n");
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
 		DEBUG("[UMWebRequest] Logging out!!\n" );
