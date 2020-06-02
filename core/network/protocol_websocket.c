@@ -550,7 +550,7 @@ void WSThread( void *d )
 				);
 				
 				buf = (unsigned char *)FCalloc( 
-					jsonsize + ( SHIFT_LEFT( response->http_SizeOfContent, 1 ) ) + 1 + 
+					jsonsize + ( 2* response->http_SizeOfContent ) + 1 + 
 					END_CHAR_SIGNS + LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) 
 				);
 				
