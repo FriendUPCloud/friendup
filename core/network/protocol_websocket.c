@@ -921,9 +921,12 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 							FFree( e->fq_Data );
 							FFree( e );
 						}
-					//}
-					//else
-					//{
+					
+						if( fcd->wsc_UserSession == NULL )
+						{
+							break;
+						}
+					
 						FRIEND_MUTEX_LOCK( &(us->us_Mutex) );
 					}
 					FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
