@@ -362,7 +362,9 @@ void WSThread( void *d )
 		if( response != NULL )
 		{
 			unsigned char *buf;
-			char jsontemp[ 2048 ];
+			//char jsontemp[ 2048 ];
+#define JSON_TEMP_LEN 2048
+			char *jsontemp = FMalloc( JSON_TEMP_LEN );
 			
 			DEBUG("[WS] Response != NULL\n");
 			
@@ -372,6 +374,7 @@ void WSThread( void *d )
 			if( (response->http_Content != NULL && ( response->http_Content[ 0 ] != '[' && response->http_Content[ 0 ] != '{' ) ) || fileReadCall == TRUE )
 			{
 				//Log( FLOG_INFO, "[WS] Has NON JSON response content..\n" );
+				DEBUG("Protocol websocket response: %s\n", response->http_Content );
 				char *d = response->http_Content;
 				if( d[0] == 'f' && d[1] == 'a' && d[2] == 'i' && d[3] == 'l' )
 				{
@@ -392,7 +395,7 @@ void WSThread( void *d )
 				);
 				
 				buf = (unsigned char *)FCalloc( 
-					jsonsize + ( SHIFT_LEFT( response->http_SizeOfContent, 1 ) ) + 1 + 
+					jsonsize + ( 2* response->http_SizeOfContent ) + 1 + 
 					END_CHAR_SIGNS + LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) 
 				);
 				
@@ -420,7 +423,7 @@ void WSThread( void *d )
 								// Always add escape chars on unescaped double quotes
 							case '"':
 								locptr[ znew++ ] = '\\';
-								locptr[ znew++ ] = '\\';
+								//locptr[ znew++ ] = '\\';
 								break;
 								// New line
 							case 10:
@@ -443,6 +446,7 @@ void WSThread( void *d )
 					
 					//Log( FLOG_INFO, "[WS] NO JSON - Passed FOR loop..\n" );
 					
+					DEBUG("protocol websocket, before write: %s\n", locptr );
 					if( locptr[ znew-1 ] == 0 ) {znew--; DEBUG("ZNEW\n");}
 					memcpy( buf + jsonsize + znew, end, END_CHAR_SIGNS );
 
@@ -513,6 +517,8 @@ void WSThread( void *d )
 			
 			response->http_RequestSource = HTTP_SOURCE_WS;
 			HttpFree( response );
+			
+			FFree( jsontemp );
 		}
 		DEBUG1("[WS] SysWebRequest return\n"  );
 		Log( FLOG_INFO, "WS messages sent LOCKTEST\n");

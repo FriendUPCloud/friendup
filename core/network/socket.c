@@ -705,29 +705,47 @@ int SocketConnect( Socket* sock, const char *host )
 					switch( error )
 					{
 					case SSL_ERROR_NONE:
+					{
 						// NO error..
 						FERROR( "[SocketConnect] No error\n" );
 						break;
 						//return incoming;
+					}
 					case SSL_ERROR_ZERO_RETURN:
+					{
 						FERROR("[SocketConnect] SSL_ACCEPT error: Socket closed.\n" );
+						break;
+					}
 					case SSL_ERROR_WANT_READ:
+					{
 						FERROR( "[SocketConnect] Error want read, retrying\n" );
+						break;
+					}
 					case SSL_ERROR_WANT_WRITE:
+					{
 						FERROR( "[SocketConnect] Error want write, retrying\n" );
 						break;
+					}
 					case SSL_ERROR_WANT_ACCEPT:
+					{
 						FERROR( "[SocketConnect] Want accept\n" );
 						break;
+					}
 					case SSL_ERROR_WANT_X509_LOOKUP:
+					{
 						FERROR( "[SocketConnect] Want 509 lookup\n" );
 						break;
+					}
 					case SSL_ERROR_SYSCALL:
+					{
 						FERROR( "[SocketConnect] Error syscall!\n" );
 						return -2;
+					}
 					default:
+					{
 						FERROR( "[SocketConnect] Other error.\n" );
 						return -3;
+					}
 					}
 				}
 				return -1;
