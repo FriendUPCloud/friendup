@@ -1075,11 +1075,13 @@ Content-Type: application/octet-stream
 						}
 						//--------- BG-389 ---------
 						dataPtr = endOfFile;
+						DEBUG("Multipart, set end of file\n");
 						continue;
 						//--------------------------
 					}
 				}
 				
+				DEBUG("Multipart, move pos: %d\n", pos );
 				int pos = size;
 				if( size > 0 )
 				{
@@ -1319,7 +1321,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 				HttpParseHeader( http, data, length );
 			}
 			
-			//DEBUG("content length %ld\n", http->h_ContentLength );
+			DEBUG("content length %ld\n", http->h_ContentLength );
 			//if( (content = HttpGetHeaderFromTable( http, HTTP_HEADER_CONTENT_LENGTH ) ) )
 			//if( ( content = HttpGetHeader( http, "content-length", 0 ) ) )
 			if( http->http_ContentLength > 0 )
