@@ -1520,7 +1520,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 			else
 			{
 				DEBUG("NO MORE DATA\n");
-				HttpParseHeader( http, data, length );
+				//HttpParseHeader( http, data, length );
 				// No more data, we're done parsing
 				return result != 400;
 			}
