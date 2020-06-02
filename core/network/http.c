@@ -1081,8 +1081,8 @@ Content-Type: application/octet-stream
 					}
 				}
 				
-				DEBUG("Multipart, move pos: %d\n", pos );
 				int pos = size;
+				DEBUG("Multipart, move pos: %d\n", pos );
 				if( size > 0 )
 				{
 					dataPtr += pos;
