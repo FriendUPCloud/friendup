@@ -19,7 +19,13 @@ function FriendCoreQuery( $command = '', $args = false, $method = 'POST', $heade
 	
 	$curl = curl_init();
 	
-	$server = ( $conf->SSLEnable ? 'https://' : 'http://' ) . $conf->FCHost . ( $conf->FCHost == 'localhost' && $conf->FCPort ? ':' . $conf->FCPort : '' );
+	$host = $conf->FCHost;
+	if( isset( $Config[ 'FriendCore' ][ 'fconlocalhost' ] ) && $Config[ 'FriendCore' ][ 'fconlocalhost' ] == 1 )
+	{
+		$host = 'localhost';
+	}
+	
+	$server = ( $conf->SSLEnable ? 'https://' : 'http://' ) . $host . ( $host == 'localhost' && $conf->FCPort ? ( ':' . $conf->FCPort ) : '' );
 	
 	$url = ( $server . $command );
 	
@@ -85,17 +91,20 @@ function FriendCoreQuery( $command = '', $args = false, $method = 'POST', $heade
 	
 	if( $args )
 	{
-		if( is_object( $args ) )
+		if( !isset( $conf ) || !$conf->argtype )
 		{
-			$args = array(
-				'args' => urlencode( json_encode( $args ) )
-			);
-		}
-		else if( is_string( $args ) )
-		{
-			$args = array(
-				'args' => urlencode( $args )
-			);
+			if( is_object( $args ) )
+			{
+				$args = array(
+					'args' => urlencode( json_encode( $args ) )
+				);
+			}
+			else if( is_string( $args ) )
+			{
+				$args = array(
+					'args' => urlencode( $args )
+				);
+			}
 		}
 	
 		curl_setopt( $curl, CURLOPT_POST, true );

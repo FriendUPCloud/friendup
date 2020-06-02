@@ -5171,7 +5171,7 @@ var View = function( args )
 		
 		function setCameraMode( e )
 		{
-
+			let v = null;
 			console.log('setting camera mode!',e);
 			if( !self.cameraOptions )
 			{
@@ -5180,7 +5180,7 @@ var View = function( args )
 					currentDevice: false
 				};
 				// Add container
-				let v = document.createElement( 'div' );
+				v = document.createElement( 'div' );
 				v.className = 'FriendCameraContainer';
 				self.content.appendChild( v );
 				self.content.container = v;
