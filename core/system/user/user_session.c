@@ -199,7 +199,7 @@ void UserSessionDelete( UserSession *us )
 	}
 }
 
-#define MAX_SIZE_WS_MESSAGE WS_PROTOCOL_BUFFER_SIZE-2048
+#define MAX_SIZE_WS_MESSAGE (WS_PROTOCOL_BUFFER_SIZE-2048)
 
 /**
  * Write data to websockets
@@ -231,6 +231,7 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 		{
 			DEBUG("WebsocketWrite1\n");
 			char *msgToSend = encmsg;
+			//Sending big message, size 116244 (-2046 chunks of max: 63487)
 			int totalChunk = (msglen / MAX_SIZE_WS_MESSAGE)+1;
 			int actChunk = 0;
 			
