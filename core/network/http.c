@@ -1115,7 +1115,7 @@ Content-Type: application/octet-stream
 					
 				}
 				
-				//DEBUG("[Http] Parse multipart KEY: <%s> VALUE <%s>\n", key, value );
+				DEBUG("[Http] Parse multipart KEY: <%s> VALUE <%s>\n", key, value );
 				
 				int pos = ( int )( contentDisp - dataPtr ); 
 				dataPtr += pos + 20;
