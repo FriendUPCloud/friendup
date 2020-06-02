@@ -1321,7 +1321,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 				HttpParseHeader( http, data, length );
 			}
 			
-			DEBUG("content length %ld\n", http->h_ContentLength );
+			DEBUG("content length %ld\n", http->http_ContentLength );
 			//if( (content = HttpGetHeaderFromTable( http, HTTP_HEADER_CONTENT_LENGTH ) ) )
 			//if( ( content = HttpGetHeader( http, "content-length", 0 ) ) )
 			if( http->http_ContentLength > 0 )
