@@ -1075,12 +1075,14 @@ Content-Type: application/octet-stream
 						}
 						//--------- BG-389 ---------
 						dataPtr = endOfFile;
+						DEBUG("Multipart, set end of file\n");
 						continue;
 						//--------------------------
 					}
 				}
 				
 				int pos = size;
+				DEBUG("Multipart, move pos: %d\n", pos );
 				if( size > 0 )
 				{
 					dataPtr += pos;
@@ -1115,7 +1117,7 @@ Content-Type: application/octet-stream
 					
 				}
 				
-				//DEBUG("[Http] Parse multipart KEY: <%s> VALUE <%s>\n", key, value );
+				DEBUG("[Http] Parse multipart KEY: <%s> VALUE <%s>\n", key, value );
 				
 				int pos = ( int )( contentDisp - dataPtr ); 
 				dataPtr += pos + 20;
@@ -1299,7 +1301,8 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 	if( !http->http_PartialRequest )
 	{
 		http->http_PartialRequest = TRUE;
-		Log( FLOG_INFO,"INCOMING Request threads: %d length: %ld data: %.*s\n", nothreads, length, 512, data );
+		//Log( FLOG_INFO,"INCOMING Request threads: %d length: %ld data: %.*s\n", nothreads, length, 512, data );
+		Log( FLOG_INFO,"INCOMING Request threads: %d data: %s\n", nothreads, data );
 		
 		// Check if the recieved data exceeds the maximum header size. If it does, 404 dat bitch~
 		// TODO
@@ -1319,7 +1322,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 				HttpParseHeader( http, data, length );
 			}
 			
-			//DEBUG("content length %ld\n", http->h_ContentLength );
+			DEBUG("content length %ld\n", http->http_ContentLength );
 			//if( (content = HttpGetHeaderFromTable( http, HTTP_HEADER_CONTENT_LENGTH ) ) )
 			//if( ( content = HttpGetHeader( http, "content-length", 0 ) ) )
 			if( http->http_ContentLength > 0 )
@@ -1459,25 +1462,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 								}
 
 							}
-							
-							/*
-							if( incomingBufferPtr != NULL )
-						{
-							//DEBUG("incoming buffer already set? unmapping");
-							munmap( incomingBufferPtr, incomingBufferLength );
-							incomingBufferPtr = NULL;
-						}
-						//DEBUG( "mmaping" );
-						incomingBufferLength = lseek( tmpFileHandle, 0, SEEK_END);
-						DEBUG("->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ibl: %ld", incomingBufferLength );
-						incomingBufferPtr = mmap( 0, incomingBufferLength, PROT_READ | PROT_WRITE, MAP_SHARED, tmpFileHandle, 0);
-						
-						if( incomingBufferPtr == MAP_FAILED )
-						{
-							Log( FLOG_ERROR, "Cannot allocate memory for stream, length: %d\n", incomingBufferLength );
-							goto close_fcp;
-						}
-							*/
+
 							//int sizes = lseek( http->http_ContentFileHandle, 0, SEEK_END);
 							DEBUG("MMAP: HttpParsePartialRequest size: %lu\n", size );
 							http->http_Content = mmap( 0, size, PROT_READ | PROT_WRITE, MAP_SHARED, http->http_ContentFileHandle, 0/*offset*/);
@@ -1535,6 +1520,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 			else
 			{
 				DEBUG("NO MORE DATA\n");
+				//HttpParseHeader( http, data, length );
 				// No more data, we're done parsing
 				return result != 400;
 			}
@@ -1582,21 +1568,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 					}
 				}
 				
-				/*
-				DEBUG("-----------------------------------\n--------------------------------\n---------------------\n---------------------\n---------\n");
-				FQUAD z;
-				for( z=0 ; z < (length-8) ; z++ )
-				{
-					if( data[ z-8 ] == (char)0x00 && data[ z-7 ] == (char)0x00 && data[ z-6 ] == (char)0x9E && data[ z-5 ] == (char)0xCF && data[ z-4 ] == (char)0x04 && data[ z-3 ] == (char)0x01 && data[ z-2 ] == (char)0x00 && data[ z-1 ] == (char)0x00 )
-					{
-						FERROR("HTTP.c END FILE FOUDN! in CONTENT\n");
-					}
-				}
-				*/
-				
 				DEBUG("UPLOAD writting done!\n");
-				//FQUAD = 
-				//int wrote = write( http->http_ContentFileHandle, data, length );
 			}
 			else
 			{
@@ -1626,6 +1598,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 			DEBUG("[HttpParsePartialRequest] Purge... Divider: %s\n", http->http_PartDivider );
 		}
 	
+		DEBUG("Length %ld sizeof content %ld\n", length, http->http_SizeOfContent );
 		if( length == http->http_SizeOfContent )
 		{
 			if( http->http_ContentType == HTTP_CONTENT_TYPE_MULTIPART )
