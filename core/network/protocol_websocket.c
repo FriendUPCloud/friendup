@@ -88,7 +88,7 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 		return 0;
 	}
 
-	//DEBUG("WSCDATAptr %p clwsc_InUseCounter: %d msg: %s\n", wscdata, wscdata->wsc_InUseCounter, msgptr );
+	DEBUG("WSCDATAptr %p clwsc_InUseCounter: %d msg: %s\n", wscdata, wscdata->wsc_InUseCounter, msgptr );
 	
 	if( msglen > MAX_SIZE_WS_MESSAGE ) // message is too big, we must split data into chunks
 	{
@@ -112,54 +112,57 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 				FFree( encmsg );
 				return -1;
 			}
-		
-			if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+
+			for( actChunk = 0; actChunk < totalChunk ; actChunk++ )
 			{
-				DEBUG("lock created1\n");
-
-				for( actChunk = 0; actChunk < totalChunk ; actChunk++ )
+				unsigned char *queueMsg = FMalloc( WS_PROTOCOL_BUFFER_SIZE );
+				if( queueMsg != NULL )
 				{
-					unsigned char *queueMsg = FMalloc( WS_PROTOCOL_BUFFER_SIZE );
-					if( queueMsg != NULL )
-					{
-						unsigned char *queueMsgPtr = queueMsg + LWS_SEND_BUFFER_PRE_PADDING;
-						int queueMsgLen = 0;
-					
-						int txtmsgpos = sprintf( (char *)queueMsgPtr, "{\"type\":\"con\",\"data\":{\"type\":\"chunk\",\"data\":{\"id\":\"%p\",\"total\":\"%d\",\"part\":\"%d\",\"data\":\"", encmsg, totalChunk, actChunk );
-						int copysize = msglen;
-						if( copysize > MAX_SIZE_WS_MESSAGE )
-						{
-							copysize = MAX_SIZE_WS_MESSAGE;
-						}
-					
-						queueMsgLen = txtmsgpos;
-						queueMsgPtr += txtmsgpos;
-						// queue   |    PRE_PADDING  |  txtmsgpos   |  body  |  END_CHARS  | POST_PADDING
-
-						memcpy( queueMsgPtr, msgToSend, copysize );
-						queueMsgLen += copysize;
-						queueMsgPtr += copysize;
-					
-						memcpy( queueMsgPtr, end, END_CHAR_SIGNS );
-						queueMsgPtr += END_CHAR_SIGNS;
-						queueMsgLen += END_CHAR_SIGNS;
-						*queueMsgPtr = 0;	//end message with NULL
-					
-						msgToSend += copysize;
-						msglen -= MAX_SIZE_WS_MESSAGE;
-
-						DEBUG( "Determined chunk: %d\n", actChunk );
-					
-						FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
-						en->fq_Data = queueMsg;
-						en->fq_Size = queueMsgLen;
-						en->fq_Priority = prio;
+					unsigned char *queueMsgPtr = queueMsg + LWS_SEND_BUFFER_PRE_PADDING;
+					int queueMsgLen = 0;
 				
-						FQPushFIFO( &(us->us_MsgQueue), en );
-						//FQPushWithPriority( &(wscdata->wsc_MsgQueue), en );
+					int txtmsgpos = sprintf( (char *)queueMsgPtr, "{\"type\":\"con\",\"data\":{\"type\":\"chunk\",\"data\":{\"id\":\"%p\",\"total\":\"%d\",\"part\":\"%d\",\"data\":\"", encmsg, totalChunk, actChunk );
+					int copysize = msglen;
+					if( copysize > MAX_SIZE_WS_MESSAGE )
+					{
+						copysize = MAX_SIZE_WS_MESSAGE;
+					}
+					
+					queueMsgLen = txtmsgpos;
+					queueMsgPtr += txtmsgpos;
+					// queue   |    PRE_PADDING  |  txtmsgpos   |  body  |  END_CHARS  | POST_PADDING
+
+					memcpy( queueMsgPtr, msgToSend, copysize );
+					queueMsgLen += copysize;
+					queueMsgPtr += copysize;
+				
+					memcpy( queueMsgPtr, end, END_CHAR_SIGNS );
+					queueMsgPtr += END_CHAR_SIGNS;
+					queueMsgLen += END_CHAR_SIGNS;
+					*queueMsgPtr = 0;	//end message with NULL
+					
+					msgToSend += copysize;
+					msglen -= MAX_SIZE_WS_MESSAGE;
+
+					DEBUG( "Determined chunk: %d\n", actChunk );
+					
+					FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
+					en->fq_Data = queueMsg;
+					en->fq_Size = queueMsgLen;
+					en->fq_Priority = prio;
+			
+					if( wscdata->wsc_UserSession != NULL )
+					{
+						if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+						{
+							DEBUG("lock created1\n");
+							FQPushFIFO( &(us->us_MsgQueue), en );
+							//FQPushWithPriority( &(wscdata->wsc_MsgQueue), en );
+							FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+						}
 					}
 				}
-				FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+				
 				
 				if( wscdata->wsc_Wsi != NULL )
 				{
@@ -214,7 +217,7 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 		}
 	}
 
-	//DEBUG("ENDclwsc_InUseCounter: %d msg: %s\n", cl->wsc_InUseCounter, msgptr );
+	DEBUG("ENDclwsc_InUseCounter: %d msg: %s\n", wscdata->wsc_InUseCounter, msgptr );
 	
 	return result;
 }
