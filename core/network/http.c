@@ -1575,11 +1575,12 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 					{
 						HashmapFree( http->http_ParsedPostContent );
 					}
-					if( ( http->http_Content = FMalloc( length ) ) != NULL )
+					if( ( http->http_Content = FMalloc( length+1 ) ) != NULL )
 					{
 						http->http_SizeOfContent = length;
 						http->http_ContentLength = length;
 						memcpy( http->http_Content, data, length );
+						http->http_Content[ length ] = 0;
 						
 						DEBUG("[HttpParsePartialRequest] going to multipart, size %ld\n", length );
 						int ret = ParseMultipart( http );
