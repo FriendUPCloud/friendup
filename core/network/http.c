@@ -1522,7 +1522,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 				DEBUG("NO MORE DATA\n");
 				//HttpParseHeader( http, data, length );
 				// No more data, we're done parsing
-				return result != 400;
+				//return result != 400;
 			}
 		}
 		else
@@ -1531,6 +1531,10 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 			return 0;
 		}
 	}
+	
+	//http->http_ContentType = HTTP_CONTENT_TYPE_MULTIPART;
+	
+	DEBUG("[HttpParsePartialRequest] RECEIVE DATA, header %d body %d content %p\n", http->http_GotHeader, http->http_ExpectBody, http->http_Content );
 	
 	if( http->http_GotHeader && http->http_ExpectBody && http->http_Content )
 	{
