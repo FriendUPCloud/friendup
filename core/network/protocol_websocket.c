@@ -905,9 +905,12 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				{
 					FQueue *q = &(us->us_MsgQueue);
 					
-					while( ( e = FQPop( q ) ) != NULL )
+					//while( ( e = FQPop( q ) ) != NULL )
 					//if( ( e = FQPop( q ) ) != NULL )
+					if( q->fq_First != NULL )
 					{
+						e = FQPop( q );
+						
 						FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 						unsigned char *t = e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING;
 						t[ e->fq_Size+1 ] = 0;

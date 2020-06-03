@@ -627,7 +627,7 @@ int HttpParseHeader( Http* http, const char* request, FQUAD fullReqLength )
 												bstart++;
 										
 												DEBUG("[Http] BOUNDARY2! %s\n\n\n", bstart );
-												http->http_PartDivider = StringDuplicate( bstart );
+												strcpy( http->http_PartDivider, bstart );
 												http->http_PartDividerLen = strlen( bstart );
 												DEBUG("DIVIDER SET!! %s\n", http->http_PartDivider );
 											
