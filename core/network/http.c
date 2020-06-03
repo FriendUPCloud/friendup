@@ -1538,7 +1538,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 						http->http_ContentLength = length;
 						memcpy( http->http_Content, data, length );
 						
-						DEBUG("[HttpParsePartialRequest] going to multipart, size %ld\n", size );
+						DEBUG("[HttpParsePartialRequest] going to multipart, size %ld\n", length );
 						int ret = ParseMultipart( http );
 						return 0;
 					}
