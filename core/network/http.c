@@ -615,8 +615,11 @@ int HttpParseHeader( Http* http, const char* request, FQUAD fullReqLength )
 										char *bstart = strstr( boundary, "=" );
 										if( bstart != NULL )
 										{
-											*eptr = 0;
-										
+											eptr = strstr( bstart, "\r" );
+											if( eptr != NULL )
+											{
+												*eptr = 0;
+											}
 											bstart++;
 										
 											DEBUG("[Http] BOUNDARY2! %s\n\n\n", bstart );
