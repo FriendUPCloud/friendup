@@ -559,6 +559,7 @@ int HttpParseHeader( Http* http, const char* request, FQUAD fullReqLength )
 								http->http_RespHeaders[ HTTP_HEADER_CONTENT_TYPE ] = lineStartPtr;
 							
 								char *eptr = strstr( lineStartPtr + tokenLength, ";" );
+								char *boundary = eptr;
 								if( eptr == NULL )
 								{
 									eptr = strstr( lineStartPtr + tokenLength, "\r" );
@@ -569,7 +570,7 @@ int HttpParseHeader( Http* http, const char* request, FQUAD fullReqLength )
 									int toksize = eptr - (lineStartPtr + tokenLength);
 									char *app = NULL;
 									
-									DEBUG("[Http] \n\nBOUNDARY! %s\n\n\n", eptr );
+									DEBUG("[Http] \n\nBOUNDARY! %s\n\n\n", boundary );
 								
 									if( toksize > 0 )
 									{
@@ -608,9 +609,11 @@ int HttpParseHeader( Http* http, const char* request, FQUAD fullReqLength )
 									
 									// found bondary
 									
-									char *bstart = strstr( eptr, "=" );
+									char *bstart = strstr( boundary, "=" );
 									if( bstart != NULL )
 									{
+										*eptr = 0;
+										
 										bstart++;
 										char *bend = strstr( bstart, "\r" );
 										int divlen = (bend-bstart);
