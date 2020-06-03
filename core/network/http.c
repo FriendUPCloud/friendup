@@ -1522,6 +1522,18 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 				DEBUG("NO MORE DATA\n");
 				//HttpParseHeader( http, data, length );
 				// No more data, we're done parsing
+				
+				if( http->http_ContentType == HTTP_CONTENT_TYPE_MULTIPART )
+				{
+					DEBUG("[HttpParsePartialRequest] !!! multipart!\n");
+					if( http->http_ParsedPostContent )
+					{
+						HashmapFree( http->http_ParsedPostContent );
+					}
+					int ret = ParseMultipart( http );
+					return 0;
+				}
+				
 				return result != 400;
 			}
 		}
