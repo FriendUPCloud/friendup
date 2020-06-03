@@ -609,16 +609,18 @@ int HttpParseHeader( Http* http, const char* request, FQUAD fullReqLength )
 									
 									// found bondary
 									
-									DEBUG("bound + 2 :>%s<\n", boundary+2 );
+									//DEBUG("bound + 2 :>%s<\n", boundary+2 );
 									if( strncmp( boundary+2, "boundary", 8 ) == 0 )
 									{
 										char *bstart = strstr( boundary, "=" );
 										if( bstart != NULL )
 										{
-											eptr = strstr( bstart, "\r" );
-											if( eptr != NULL )
+											char *leptr = strstr( bstart, "\r" );
+											char tmp;
+											if( leptr != NULL )
 											{
-												*eptr = 0;
+												tmp = *leptr;
+												*leptr = 0;
 											}
 											bstart++;
 										
@@ -626,6 +628,11 @@ int HttpParseHeader( Http* http, const char* request, FQUAD fullReqLength )
 											http->http_PartDivider = StringDuplicate( bstart );
 											http->http_PartDividerLen = strlen( bstart );
 											DEBUG("DIVIDER SET!! %s\n", http->http_PartDivider );
+											
+											if( leptr != NULL )
+											{
+												*leptr = tmp;
+											}
 										}
 									}
 									
