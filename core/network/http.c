@@ -605,6 +605,23 @@ int HttpParseHeader( Http* http, const char* request, FQUAD fullReqLength )
 
 										FFree( app );
 									} // app != NULL
+									
+									// found bondary
+									
+									char *bstart = strstr( eptr, "=" );
+									if( bstart != NULL )
+									{
+										bstart++;
+										char *bend = strstr( bstart, "\r" );
+										int divlen = (bend-bstart);
+										if( divlen < 100 )
+										{
+											strncpy( http->http_PartDivider, bstart, divlen );
+											http->http_PartDividerLen = divlen;
+											DEBUG("DIVIDER SET!! %s\n", http->http_PartDivider );
+										}
+									}
+									
 								} //eptr != NULL
 								copyValue = TRUE;
 							} // if content-type
