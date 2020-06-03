@@ -1532,7 +1532,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 					{
 						HashmapFree( http->http_ParsedPostContent );
 					}
-					if( ( http->http_Content = FMalloc( size ) ) != NULL )
+					if( ( http->http_Content = FMalloc( length ) ) != NULL )
 					{
 						http->http_SizeOfContent = length;
 						http->http_ContentLength = length;
