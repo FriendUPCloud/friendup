@@ -615,14 +615,11 @@ int HttpParseHeader( Http* http, const char* request, FQUAD fullReqLength )
 										*eptr = 0;
 										
 										bstart++;
-										char *bend = strstr( bstart, "\r" );
-										int divlen = (bend-bstart);
-										if( divlen < 100 )
-										{
-											strncpy( http->http_PartDivider, bstart, divlen );
-											http->http_PartDividerLen = divlen;
-											DEBUG("DIVIDER SET!! %s\n", http->http_PartDivider );
-										}
+										
+										DEBUG("[Http] BOUNDARY2! %s\n\n\n", boundary );
+										strcpy( http->http_PartDivider, bstart );
+										http->http_PartDividerLen = strlen( bstart );
+										DEBUG("DIVIDER SET!! %s\n", http->http_PartDivider );
 									}
 									
 								} //eptr != NULL
