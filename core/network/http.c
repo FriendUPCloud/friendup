@@ -568,6 +568,8 @@ int HttpParseHeader( Http* http, const char* request, FQUAD fullReqLength )
 								{
 									int toksize = eptr - (lineStartPtr + tokenLength);
 									char *app = NULL;
+									
+									DEBUG("[Http] \n\nBOUNDARY! %s\n\n\n", eptr );
 								
 									if( toksize > 0 )
 									{
