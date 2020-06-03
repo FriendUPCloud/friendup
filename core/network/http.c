@@ -1054,6 +1054,7 @@ Content-Type: application/octet-stream
 		{
 			break;
 		}
+		DEBUG("%p eptr %p\n", dataPtr, eptr );
 		//DEBUG("[ParseMultipart] before contdisp %*.*s\n", 50, 50, dataPtr );
 	    if( ( contentDisp = strstr( dataPtr, "Content-Disposition: form-data; name=\"" ) ) != NULL )
 		{
@@ -1075,7 +1076,7 @@ Content-Type: application/octet-stream
 
 					DEBUG("[ParseMultipart] DIVSIZE %d\n", http->http_PartDividerLen );
 					FQUAD multipartLen = (http->http_SizeOfContent-(startOfFile-http->http_Content) );
-					DEBUG("[ParseMultipart] MULTIPART LEN %lu\n", multipartLen );
+					DEBUG("[ParseMultipart] MULTIPART LEN %lu  DIVIDER >%s<  IN >%s<\n", multipartLen, http->http_PartDivider, startOfFile );
 					res = FindInBinaryPOS( http->http_PartDivider, http->http_PartDividerLen, startOfFile, multipartLen )-2;// + divSize;
 					//res = FindInBinaryPOS( http->http_PartDivider, divSize, startOfFile, multipartLen ) - 2;
 					
