@@ -570,7 +570,7 @@ int HttpParseHeader( Http* http, const char* request, FQUAD fullReqLength )
 									int toksize = eptr - (lineStartPtr + tokenLength);
 									char *app = NULL;
 									
-									DEBUG("[Http] BOUNDARY! start string %s boundary %s\n\n\n", lineStartPtr + tokenLength, boundary );
+									//DEBUG("[Http] BOUNDARY! start string %s boundary %s\n\n\n", lineStartPtr + tokenLength, boundary );
 								
 									if( toksize > 0 )
 									{
@@ -619,7 +619,7 @@ int HttpParseHeader( Http* http, const char* request, FQUAD fullReqLength )
 										
 											bstart++;
 										
-											DEBUG("[Http] BOUNDARY2! %s\n\n\n", boundary );
+											DEBUG("[Http] BOUNDARY2! %s\n\n\n", bstart );
 											strcpy( http->http_PartDivider, bstart );
 											http->http_PartDividerLen = strlen( bstart );
 											DEBUG("DIVIDER SET!! %s\n", http->http_PartDivider );
