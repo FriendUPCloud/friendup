@@ -978,7 +978,7 @@ int ParseMultipart( Http* http )
 		return -1;
 	}
 	
-	DEBUG("Multipart parsing, content length %ld\n", http->http_ContentLength);
+	DEBUG("[ParseMultipart] Multipart parsing, content length %ld\n", http->http_ContentLength);
 	
 	
 	/*
@@ -1012,6 +1012,7 @@ Content-Type: application/octet-stream
 	char *dataPtr = http->http_Content;
 	while( TRUE )
 	{
+		DEBUG("[ParseMultipart] before contdisp\n");
 	    if( ( contentDisp = strstr( dataPtr, "Content-Disposition: form-data; name=\"" ) ) != NULL )
 		{
 			char *nameEnd = strchr( contentDisp + 38, '"' );
@@ -1026,25 +1027,25 @@ Content-Type: application/octet-stream
 				
 				if( startOfFile != NULL )
 				{
-					DEBUG("START CONTENT TO START FILE %ld\n", startOfFile - http->http_Content );
+					DEBUG("[ParseMultipart] START CONTENT TO START FILE %ld\n", startOfFile - http->http_Content );
 
 					FQUAD res;
 
-					DEBUG("DIVSIZE %d\n", http->http_PartDividerLen );
+					DEBUG("[ParseMultipart] DIVSIZE %d\n", http->http_PartDividerLen );
 					FQUAD multipartLen = (http->http_SizeOfContent-(startOfFile-http->http_Content) );
-					DEBUG("MULTIPART LEN %lu\n", multipartLen );
+					DEBUG("[ParseMultipart] MULTIPART LEN %lu\n", multipartLen );
 					res = FindInBinaryPOS( http->http_PartDivider, http->http_PartDividerLen, startOfFile, multipartLen )-2;// + divSize;
 					//res = FindInBinaryPOS( http->http_PartDivider, divSize, startOfFile, multipartLen ) - 2;
 					
 					//res = (FQUAD )FindInBinarySimple( http->http_PartDivider, divSize, startOfFile, multipartLen )-2;
-					DEBUG("Res %ld\n", res );
+					DEBUG("[ParseMultipart] Res %ld\n", res );
 					if( res <= 0 )
 					{
 						res = multipartLen-http->http_PartDividerLen;
 					}
 					
 					char *endOfFile = startOfFile + res;
-					DEBUG("MULTI FOUND END OF FILE %p START %p LEN %lu\n", endOfFile, startOfFile, res );
+					DEBUG("[ParseMultipart] MULTI FOUND END OF FILE %p START %p LEN %lu\n", endOfFile, startOfFile, res );
 					if( endOfFile != NULL )
 					{
 						char *fname = strstr( contentDisp, "filename=\"" ) + 10;
@@ -1054,7 +1055,7 @@ Content-Type: application/octet-stream
 							size = (FQUAD)(endOfFile - startOfFile);
 							int fnamesize = (int)(fnameend - fname);
 							
-							INFO("[Http] Found file - name %.*s  FILESIZE %lu  FIRST CHAR\n", 30, fname, size );
+							INFO("[ParseMultipart]  Found file - name %.*s  FILESIZE %lu  FIRST CHAR\n", 30, fname, size );
 
 							HttpFile *newFile = HttpFileNew( fname, fnamesize, startOfFile, size, FALSE );
 							if( newFile != NULL )
@@ -1075,14 +1076,14 @@ Content-Type: application/octet-stream
 						}
 						//--------- BG-389 ---------
 						dataPtr = endOfFile;
-						DEBUG("Multipart, set end of file\n");
+						DEBUG("[ParseMultipart] set end of file\n");
 						continue;
 						//--------------------------
 					}
 				}
 				
 				int pos = size;
-				DEBUG("Multipart, move pos: %d\n", pos );
+				DEBUG("[ParseMultipart] move pos: %d\n", pos );
 				if( size > 0 )
 				{
 					dataPtr += pos;
@@ -1117,19 +1118,19 @@ Content-Type: application/octet-stream
 					
 				}
 				
-				DEBUG("[Http] Parse multipart KEY: <%s> VALUE <%s>\n", key, value );
+				DEBUG("[ParseMultipart] Parse multipart KEY: <%s> VALUE <%s>\n", key, value );
 				
 				int pos = ( int )( contentDisp - dataPtr ); 
 				dataPtr += pos + 20;
 			}
 		}
 		else {
-			DEBUG("End of parsing");
+			DEBUG("[ParseMultipart] End of parsing");
 			break;
 		}
 	}
 	
-	DEBUG("Number of files in http request %d\n", numOfFiles );
+	DEBUG("[ParseMultipart] Number of files in http request %d\n", numOfFiles );
 	
 	return 0;
 }
@@ -1533,8 +1534,10 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 					if( ( http->http_Content = FMalloc( size ) ) != NULL )
 					{
 						http->http_SizeOfContent = size;
+						http->http_ContentLength = size;
 						memcpy( http->http_Content, data, length );
 						
+						DEBUG("[HttpParsePartialRequest] going to multipart, size %ld\n", size );
 						int ret = ParseMultipart( http );
 						return 0;
 					}
