@@ -1082,8 +1082,8 @@ Content-Type: application/octet-stream
 					}
 				}
 				
-				int pos = size;
-				DEBUG("[ParseMultipart] move pos: %d\n", pos );
+				FQUAD pos = size;
+				DEBUG("[ParseMultipart] move pos: %ld\n", pos );
 				if( size > 0 )
 				{
 					dataPtr += pos;
@@ -1120,11 +1120,12 @@ Content-Type: application/octet-stream
 				
 				DEBUG("[ParseMultipart] Parse multipart KEY: <%s> VALUE <%s>\n", key, value );
 				
-				int pos = ( int )( contentDisp - dataPtr ); 
+				FQUAD pos = ( FQUAD )( contentDisp - dataPtr ); 
 				dataPtr += pos + 20;
 			}
 		}
-		else {
+		else
+		{
 			DEBUG("[ParseMultipart] End of parsing");
 			break;
 		}
@@ -1533,8 +1534,8 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 					}
 					if( ( http->http_Content = FMalloc( size ) ) != NULL )
 					{
-						http->http_SizeOfContent = size;
-						http->http_ContentLength = size;
+						http->http_SizeOfContent = length;
+						http->http_ContentLength = length;
 						memcpy( http->http_Content, data, length );
 						
 						DEBUG("[HttpParsePartialRequest] going to multipart, size %ld\n", size );
