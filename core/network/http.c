@@ -609,7 +609,8 @@ int HttpParseHeader( Http* http, const char* request, FQUAD fullReqLength )
 									
 									// found bondary
 									
-									if( strcmp( lineStartPtr + tokenLength, "boundary" ) == 0 )
+									DEBUG("bound + 2 : %s\n", boundary+2 );
+									if( strcmp( boundary+2, "boundary" ) == 0 )
 									{
 										char *bstart = strstr( boundary, "=" );
 										if( bstart != NULL )
