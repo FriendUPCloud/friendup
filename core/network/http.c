@@ -1530,8 +1530,14 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 					{
 						HashmapFree( http->http_ParsedPostContent );
 					}
-					int ret = ParseMultipart( http );
-					return 0;
+					if( ( http->http_Content = FMalloc( size ) ) != NULL )
+					{
+						http->http_SizeOfContent = size;
+						memcpy( http->http_Content, data, length );
+						
+						int ret = ParseMultipart( http );
+						return 0;
+					}
 				}
 				
 				return result != 400;
