@@ -1043,9 +1043,15 @@ Content-Type: application/octet-stream
 	char *contentDisp = NULL;
 	int numOfFiles = 0;
 	char *dataPtr = http->http_Content;
+	char *eptr = dataPtr + http->http_ContentLength;
+	
 	while( TRUE )
 	{
-		DEBUG("[ParseMultipart] before contdisp %*.*s\n", 50, 50, dataPtr );
+		if( dataPtr >= eptr )
+		{
+			break;
+		}
+		//DEBUG("[ParseMultipart] before contdisp %*.*s\n", 50, 50, dataPtr );
 	    if( ( contentDisp = strstr( dataPtr, "Content-Disposition: form-data; name=\"" ) ) != NULL )
 		{
 			char *nameEnd = strchr( contentDisp + 38, '"' );
