@@ -1428,7 +1428,7 @@ int NotificationManagerNotificationSendFirebaseQueue( NotificationManager *nm, N
 	if( notif->n_Extra != NULL ){ msgSize += strlen( notif->n_Extra ); }
 	if( notif->n_Application != NULL ){ msgSize += (strlen( notif->n_Application )*2); }
 
-#define DEFAULT_BADGE_NUMBER 5		// to be changed
+#define DEFAULT_BADGE_NUMBER 0		// to be changed
 	
 	char *msg = FMalloc( msgSize );
 	if( msg != NULL )
