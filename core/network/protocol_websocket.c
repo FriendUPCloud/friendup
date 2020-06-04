@@ -867,6 +867,11 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 #endif
 				
 				DEBUG("[WS] Webcall finished!\n");
+				
+				if( us != NULL && us->us_MsgQueue.fq_First != NULL )
+				{
+					lws_callback_on_writable( wsi );
+				}
 			}
 			
 #ifndef INPUT_QUEUE
@@ -939,6 +944,11 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 						FRIEND_MUTEX_LOCK( &(us->us_Mutex) );
 					}
 					FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+					
+					if( q->fq_First != NULL )
+					{
+						lws_callback_on_writable( wsi );
+					}
 				}
 			}
 
