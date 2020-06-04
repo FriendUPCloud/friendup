@@ -99,9 +99,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 	var cfo_tmp = mode == 'view' ? dview.content.fileInfo : dview.object.file.fileInfo;
 	
 	// Make copy
-	var cfo = {};
-	for( let zz in cfo_tmp )
-		cfo[ zz ] = cfo_tmp[ zz ];
+	var cfo = JSON.parse( JSON.stringify( cfo_tmp ) );
 
 	var dragFromWindow = eles[0].window;
 
@@ -762,7 +760,10 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 								// Failed - alert user
 								else
 								{
-									Notify( { title: i18n( 'i18n_filecopy_error' ), text: i18n( 'i18n_could_not_make_dir' ) + ' (' + toPath + ')' } );
+									if( !fileCopyObject.stop )
+									{
+										Notify( { title: i18n( 'i18n_filecopy_error' ), text: i18n( 'i18n_could_not_make_dir' ) + ' (' + toPath + ')' } );
+									}
 									w.close();
 									sview.refresh();
 								}
