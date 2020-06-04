@@ -115,7 +115,7 @@ setup:
 	@echo "Setup in progress."
 	mkdir -p $(FRIEND_PATH)/docs/internal/webcalls
 	mkdir -p $(FRIEND_PATH)/docs/internal/core
-	mkdir -p $(FRIEND_HOME) $(FRIEND_PATH)/autostart $(FRIEND_PATH)/resources $(FRIEND_PATH)/resources/webclient $(FRIEND_PATH)/resources/repository $(FRIEND_PATH)/sqlupdatescripts
+	mkdir -p $(FRIEND_HOME) $(FRIEND_PATH)/autostart $(FRIEND_PATH)/resources $(FRIEND_PATH)/resources/webclient $(FRIEND_PATH)/resources/repository $(FRIEND_PATH)/sqlupdatescripts $(FRIEND_PATH)/repository $(FRIEND_PATH)/cfg/crt
 	make -C libs-ext setup CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
 	make -C libs-ext install CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
 	make -C core setup WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
