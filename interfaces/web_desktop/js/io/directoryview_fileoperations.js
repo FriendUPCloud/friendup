@@ -96,7 +96,12 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 	if( !dview.content && !dview.object.file )
 		return;
 	
-	var cfo = mode == 'view' ? dview.content.fileInfo : dview.object.file.fileInfo;
+	var cfo_tmp = mode == 'view' ? dview.content.fileInfo : dview.object.file.fileInfo;
+	
+	// Make copy
+	var cfo = {};
+	for( let zz in cfo_tmp )
+		cfo[ zz ] = cfo_tmp[ zz ];
 
 	var dragFromWindow = eles[0].window;
 
