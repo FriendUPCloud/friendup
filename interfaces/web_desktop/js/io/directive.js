@@ -392,7 +392,6 @@ function ExecuteApplication( app, args, callback )
 			}
 			else
 			{
-				console.log( 'What does the conf say?', conf );
 				ifr.src = sdomain + filepath + 'index.html?friendup=' + sdomain;
 			}
 
