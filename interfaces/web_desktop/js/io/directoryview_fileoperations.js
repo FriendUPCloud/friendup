@@ -706,8 +706,10 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 										title: i18n( 'i18n_filecopy_error' ),
 										text: i18n( 'i18n_could_not_copy_files' ) + '<br>' + fl.fileInfo.Path + ' to ' + toPath
 									} );
+									console.log( 'Copy error: ', toPath, result );
 									fob.stop = true;
 									CancelCajaxOnId( series );
+									w.close();
 									return;
 								}						
 								if( fob.stop ) return;
