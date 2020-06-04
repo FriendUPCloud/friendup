@@ -10067,7 +10067,17 @@ if( window.friendApp )
 // Friendchat / presence live events handler
 Workspace.receiveLive = function( viewId, jsonEvent ) {
 	const self = this;
-	const event = JSON.parse( jsonEvent );
+	let event = null;
+	try {
+		event = JSON.parse( jsonEvent );
+	} catch( ex ) {
+		console.log( 'Workspace.receiveLive - error parsing json', {
+			error     : ex,
+			jsonEvent : jsonEvent,
+		});
+		return;
+	}
+	
 	console.log( 'receiveLive', {
 		viewId : viewId,
 		json   : jsonEvent,

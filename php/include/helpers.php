@@ -85,17 +85,20 @@ function FriendCoreQuery( $command = '', $args = false, $method = 'POST', $heade
 	
 	if( $args )
 	{
-		if( is_object( $args ) )
+		if( !isset( $conf ) || !$conf->argtype )
 		{
-			$args = array(
-				'args' => urlencode( json_encode( $args ) )
-			);
-		}
-		else if( is_string( $args ) )
-		{
-			$args = array(
-				'args' => urlencode( $args )
-			);
+			if( is_object( $args ) )
+			{
+				$args = array(
+					'args' => urlencode( json_encode( $args ) )
+				);
+			}
+			else if( is_string( $args ) )
+			{
+				$args = array(
+					'args' => urlencode( $args )
+				);
+			}
 		}
 	
 		curl_setopt( $curl, CURLOPT_POST, true );
