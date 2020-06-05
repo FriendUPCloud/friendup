@@ -2000,7 +2000,7 @@ int UserDeviceMount( SystemBase *l, User *usr, int force, FBOOL unmountIfFail, c
 		return 0;
 	}
 	
-	sqllib =  l->LibrarySQLGet( l );
+	sqllib = l->LibrarySQLGet( l );
 	if( sqllib == NULL )
 	{
 		DEBUG("[UserDeviceMount] SQLlib = NULL\n");
@@ -2066,6 +2066,7 @@ usr->u_ID , usr->u_ID, usr->u_ID
 		DEBUG( "[UserDeviceMount] Device mounted for user %s\n\n", usr->u_Name );
 
 		sqllib->FreeResult( sqllib, res );
+		l->LibrarySQLDrop( l, sqllib );
 		FRIEND_MUTEX_UNLOCK( &l->sl_DeviceManager->dm_Mutex );
 		
 		// mount all devices
@@ -2100,6 +2101,7 @@ usr->u_ID , usr->u_ID, usr->u_ID
 			
 			int err = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &device, usr, mountError, usr->u_IsAdmin, notify );
 
+			sqllib = l->LibrarySQLGet( l );
 			// if there is error but error is not "device is already mounted"
 			if( err != 0 && err != FSys_Error_DeviceAlreadyMounted )
 			{
@@ -2149,6 +2151,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 			{
 				Log( FLOG_ERROR, "[UserDeviceMount] \tCannot set device mounted state. Device = NULL (%s).\n", remDev->dn_Table[ 0 ] );
 			}
+			l->LibrarySQLDrop( l, sqllib );
 			
 			if( remDev->dn_Table[ 0 ] != NULL ){ FFree( remDev->dn_Table[ 0 ] ); }
 			if( remDev->dn_Table[ 1 ] != NULL ){ FFree( remDev->dn_Table[ 1 ] ); }
@@ -2160,8 +2163,6 @@ AND LOWER(f.Name) = LOWER('%s')",
 
 		usr->u_InitialDevMount = TRUE;
 	}
-	
-	l->LibrarySQLDrop( l, sqllib );
 	
 	return 0;
 }
