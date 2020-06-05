@@ -2144,7 +2144,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								}
 
 								userAdded = TRUE;
-								
 							}
 						}
 						else

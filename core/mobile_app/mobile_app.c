@@ -233,28 +233,31 @@ int MobileAppAddNewUserConnection( MobileAppConnection *con, const char *usernam
 			
 			SQLLibrary *sqllib  = SLIB->LibrarySQLGet( SLIB );
 
-			userConnections->umac_UserID = 0;
 			if( sqllib != NULL )
 			{
-				char *qery = FMalloc( 1048 );
-				qery[ 1024 ] = 0;
-				sqllib->SNPrintF( sqllib, qery, 1024, "SELECT ID FROM FUser WHERE `Name`=\"%s\"", username );
-				void *res = sqllib->Query( sqllib, qery );
-				if( res != NULL )
+				userConnections->umac_UserID = 0;
+				if( sqllib != NULL )
 				{
-					char **row;
-					if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+					char *qery = FMalloc( 1048 );
+					qery[ 1024 ] = 0;
+					sqllib->SNPrintF( sqllib, qery, 1024, "SELECT ID FROM FUser WHERE `Name`=\"%s\"", username );
+					void *res = sqllib->Query( sqllib, qery );
+					if( res != NULL )
 					{
-						if( row[ 0 ] != NULL )
+						char **row;
+						if( ( row = sqllib->FetchRow( sqllib, res ) ) )
 						{
-							char *end;
-							userConnections->umac_UserID = strtoul( row[0], &end, 0 );
+							if( row[ 0 ] != NULL )
+							{
+								char *end;
+								userConnections->umac_UserID = strtoul( row[0], &end, 0 );
+							}
 						}
+						sqllib->FreeResult( sqllib, res );
 					}
-					sqllib->FreeResult( sqllib, res );
+					SLIB->LibrarySQLDrop( SLIB, sqllib );
+					FFree( qery );
 				}
-				SLIB->LibrarySQLDrop( SLIB, sqllib );
-				FFree( qery );
 			}
 
 			DEBUG("Will add entry to hashmap!\n");
