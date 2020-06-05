@@ -1034,20 +1034,20 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
 	// Go through logged users
 	//
     
-	//DEBUG("CHECK11\n");
+	DEBUG("CHECK11\n");
 	if( FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) ) == 0 )
 	{
 		User *usr = sb->sl_UM->um_Users;
 		while( usr != NULL )
 		{
 			// if notification should be addressed to user
-			//DEBUG("[USMSendDoorNotification] going through users, user: %lu\n", usr->u_ID );
+			DEBUG("[USMSendDoorNotification] going through users, user: %lu\n", usr->u_ID );
 			if( usr->u_ID == notification->dn_OwnerID )
 			{
 				char *uname = usr->u_Name;
 				int len = snprintf( tmpmsg, 2048, "{ \"type\":\"msg\", \"data\":{\"type\":\"filesystem-change\",\"data\":{\"deviceid\":\"%lu\",\"devname\":\"%s\",\"path\":\"%s\",\"owner\":\"%s\" }}}", device->f_ID, device->f_Name, path, uname  );
 			
-				//DEBUG("[USMSendDoorNotification] found ownerid %lu\n", usr->u_ID );
+				DEBUG("[USMSendDoorNotification] found ownerid %lu\n", usr->u_ID );
 			
 				FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 			
@@ -1071,20 +1071,20 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
 							DEBUG("[USMSendDoorNotification] Send message %s function pointer %p sbpointer %p to sessiondevid: %s\n", tmpmsg, sb->WebSocketSendMessage, sb, uses->us_DeviceIdentity );
 				
 						
-							FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
+							//FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 							WebSocketSendMessage( sb, uses, tmpmsg, len );
-							FRIEND_MUTEX_LOCK( &(usr->u_Mutex) );
+							//FRIEND_MUTEX_LOCK( &(usr->u_Mutex) );
 
 							// send message to all remote users
 							RemoteUser *ruser = usr->u_RemoteUsers;
 							while( ruser != NULL )
 							{
-								//DEBUG("[USMSendDoorNotification] Remote user connected: %s\n", ruser->ru_Name );
+								DEBUG("[USMSendDoorNotification] Remote user connected: %s\n", ruser->ru_Name );
 								RemoteDrive *rdrive = ruser->ru_RemoteDrives;
 				
 								while( rdrive != NULL )
 								{
-								//DEBUG("[USMSendDoorNotification] Remote drive connected: %s %lu\n", rdrive->rd_LocalName, rdrive->rd_DriveID );
+									DEBUG("[USMSendDoorNotification] Remote drive connected: %s %lu\n", rdrive->rd_LocalName, rdrive->rd_DriveID );
 					
 									if( rdrive->rd_DriveID == device->f_ID )
 									{
@@ -1142,6 +1142,8 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
 						le = (UserSessListEntry *)le->node.mln_Succ;
 					} // while loop, session
 					//FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+					
+					DEBUG("unlock user\n");
 					FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 				} // mutex lock
 			

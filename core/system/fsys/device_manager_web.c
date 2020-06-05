@@ -1539,95 +1539,99 @@ AND LOWER(f.Name) = LOWER('%s')",
 				// get information about user drives
 				//
 				
-				while( dev != NULL )
+				if( FRIEND_MUTEX_LOCK( &( curusr->u_Mutex ) ) == 0 )
 				{
-					FHandler *sys = (FHandler *)dev->f_FSys;
-					char *sysname = NULL;
-					if( sys != NULL )
+					while( dev != NULL )
 					{
-						sysname = sys->Name;
-					}
-					Filesystem *fsys = ( Filesystem *)dev->f_DOSDriver;
-					
-					EscapeConfigFromString( dev->f_Config, &configEscaped, &executeCmd );
-					
-					memset( tmp, '\0', TMP_SIZE );
-					
-					FBOOL isLimited = FALSE;
-					
-					if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == FALSE )
-					{
-						if( strcmp( dev->f_FSysName, "Local" ) == 0 )
+						FHandler *sys = (FHandler *)dev->f_FSys;
+						char *sysname = NULL;
+						if( sys != NULL )
 						{
-							isLimited = TRUE;
+							sysname = sys->Name;
 						}
-					}
+						Filesystem *fsys = ( Filesystem *)dev->f_DOSDriver;
 					
-					FillDeviceInfo( devnr, tmp, TMP_SIZE_MIN1, dev->f_Mounted, dev->f_Name, dev->f_FSysName, dev->f_Path, sysname, configEscaped, dev->f_Visible, executeCmd, isLimited, dev->f_DevServer, dev->f_DevPort, dev->f_UserGroupID );
+						EscapeConfigFromString( dev->f_Config, &configEscaped, &executeCmd );
 					
-					{
-						char inttmp[ 256 ];
-						int addlen = 0;
-						if( bsMountedDrives->bs_Size == 0 )
+						memset( tmp, '\0', TMP_SIZE );
+					
+						FBOOL isLimited = FALSE;
+					
+						if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == FALSE )
 						{
-							addlen = snprintf( inttmp, sizeof( inttmp ), "%lu", dev->f_ID );
+							if( strcmp( dev->f_FSysName, "Local" ) == 0 )
+							{
+								isLimited = TRUE;
+							}
+						}
+					
+						FillDeviceInfo( devnr, tmp, TMP_SIZE_MIN1, dev->f_Mounted, dev->f_Name, dev->f_FSysName, dev->f_Path, sysname, configEscaped, dev->f_Visible, executeCmd, isLimited, dev->f_DevServer, dev->f_DevPort, dev->f_UserGroupID );
+					
+						{
+							char inttmp[ 256 ];
+							int addlen = 0;
+							if( bsMountedDrives->bs_Size == 0 )
+							{
+								addlen = snprintf( inttmp, sizeof( inttmp ), "%lu", dev->f_ID );
+							}
+							else
+							{
+								addlen = snprintf( inttmp, sizeof( inttmp ), ",%lu", dev->f_ID );
+							}
+							BufStringAddSize( bsMountedDrives, inttmp, addlen );
+						}
+						/*
+						if( devnr == 0 )
+						{
+							snprintf( tmp, TMP_SIZE_MIN1, "{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\"}\n", 
+								dev->f_Name ? dev->f_Name : "", 
+								dev->f_FSysName ? dev->f_FSysName : "", 
+								dev->f_Path ? dev->f_Path : "",
+								sys && sys->Name ? sys->Name : "",
+								configEscaped ? configEscaped: "{}",
+								dev->f_Visible == 1 ? "true" : "false",
+								executeCmd != NULL && strlen( executeCmd ) ? executeCmd : "", 
+								isLimited,
+								dev->f_DevServer ? dev->f_DevServer : "",
+								dev->f_DevPort,
+								dev->f_UserGroupID
+							);
 						}
 						else
 						{
-							addlen = snprintf( inttmp, sizeof( inttmp ), ",%lu", dev->f_ID );
+							snprintf( tmp, TMP_SIZE_MIN1, ",{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\"}\n", 
+								dev->f_Name ? dev->f_Name : "",
+								dev->f_FSysName ? dev->f_FSysName : "", 
+								dev->f_Path ? dev->f_Path : "",
+								sys && sys->Name ? sys->Name : "",
+								configEscaped ? configEscaped: "{}",
+								dev->f_Visible == 1 ? "true" : "false",
+								executeCmd != NULL && strlen( executeCmd ) ? executeCmd : "",
+								isLimited,
+								dev->f_DevServer ? dev->f_DevServer : "",
+								dev->f_DevPort,
+								dev->f_UserGroupID
+							);
 						}
-						BufStringAddSize( bsMountedDrives, inttmp, addlen );
-					}
-					/*
-					if( devnr == 0 )
-					{
-						snprintf( tmp, TMP_SIZE_MIN1, "{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\"}\n", 
-							dev->f_Name ? dev->f_Name : "", 
-							dev->f_FSysName ? dev->f_FSysName : "", 
-							dev->f_Path ? dev->f_Path : "",
-							sys && sys->Name ? sys->Name : "",
-							configEscaped ? configEscaped: "{}",
-							dev->f_Visible == 1 ? "true" : "false",
-							executeCmd != NULL && strlen( executeCmd ) ? executeCmd : "", 
-							isLimited,
-							dev->f_DevServer ? dev->f_DevServer : "",
-							dev->f_DevPort,
-							dev->f_UserGroupID
-						);
-					}
-					else
-					{
-						snprintf( tmp, TMP_SIZE_MIN1, ",{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\"}\n", 
-							dev->f_Name ? dev->f_Name : "",
-							dev->f_FSysName ? dev->f_FSysName : "", 
-							dev->f_Path ? dev->f_Path : "",
-							sys && sys->Name ? sys->Name : "",
-							configEscaped ? configEscaped: "{}",
-							dev->f_Visible == 1 ? "true" : "false",
-							executeCmd != NULL && strlen( executeCmd ) ? executeCmd : "",
-							isLimited,
-							dev->f_DevServer ? dev->f_DevServer : "",
-							dev->f_DevPort,
-							dev->f_UserGroupID
-						);
-					}
-					*/
+						*/
 					
-					if( executeCmd )
-					{
-						FFree( executeCmd );
-						executeCmd = NULL;
-					}
-					if( configEscaped )
-					{
-						FFree( configEscaped );
-						configEscaped = NULL;
-					}
+						if( executeCmd )
+						{
+							FFree( executeCmd );
+							executeCmd = NULL;
+						}
+						if( configEscaped )
+						{
+							FFree( configEscaped );
+							configEscaped = NULL;
+						}
 					
-					BufStringAdd( bs, tmp );
+						BufStringAdd( bs, tmp );
 					
-					devnr++;
-					dev = (File *)dev->node.mln_Succ;
+						devnr++;
+						dev = (File *)dev->node.mln_Succ;
+					}
+					FRIEND_MUTEX_UNLOCK( &( curusr->u_Mutex ) );
 				}
 				
 				//

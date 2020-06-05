@@ -119,7 +119,7 @@ fsysssh2: system/fsysdyn/fsysssh2.c ../core/obj/buffered_string.o system/fsysdyn
 
 fsysphp: system/fsysdyn/fsysphp.c ../core/obj/buffered_string.o ../core/obj/string.o ../core/obj/list_string.o ../core/obj/newpopen.o ../core/obj/list.o system/fsysdyn/fsysphp.d
 	@echo "\033[34mCompile FSYSphp ...\033[0m"
-	$(CC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../core/  system/fsysdyn/fsysphp.c ../core/obj/buffered_string.o ../core/obj/string.o ../core/obj/list_string.o ../core/obj/list.o -o system/bin/fsys/php.fsys -shared -fPIC -lcrypto
+	$(CC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../core/  system/fsysdyn/fsysphp.c ../core/obj/buffered_string.o ../core/obj/buffered_string_disk.o ../core/obj/string.o ../core/obj/list_string.o ../core/obj/list.o -o system/bin/fsys/php.fsys -shared -fPIC -lcrypto
 
 fsysnode: system/fsysdyn/fsysnode.c ../core/obj/buffered_string.o ../core/obj/string.o ../core/obj/list_string.o ../core/obj/list.o system/fsysdyn/fsysnode.d
 	@echo "\033[34mCompile FSYSnode ...\033[0m"

@@ -3617,6 +3617,7 @@ html select, html select:hover
 html button:before, html button.IconSmall:before
 {
 	font-size: 1.1em;
+	margin-right: 4px;
 }
 
 /* Mouse pointers ----------------------------------------------------------- */

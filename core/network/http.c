@@ -37,7 +37,7 @@
 #endif
 
 //test
-#undef __DEBUG
+//#undef __DEBUG
 
 extern SystemBase *SLIB;
 
@@ -433,7 +433,10 @@ int HttpParseHeader( Http* http, const char* request, FQUAD fullReqLength )
 					// Method -----------------------------------------------------------------------------------------
 					case 0:
 						http->http_Method = StringDuplicateN( ptr, ( r + i ) - ptr );
-						StringToUppercase( http->http_Method );
+						if( http->http_Method != NULL )
+						{
+							StringToUppercase( http->http_Method );
+						}
 
 						// TODO: Validate method
 						break;
@@ -556,6 +559,7 @@ int HttpParseHeader( Http* http, const char* request, FQUAD fullReqLength )
 								http->http_RespHeaders[ HTTP_HEADER_CONTENT_TYPE ] = lineStartPtr;
 							
 								char *eptr = strstr( lineStartPtr + tokenLength, ";" );
+								char *boundary = eptr;
 								if( eptr == NULL )
 								{
 									eptr = strstr( lineStartPtr + tokenLength, "\r" );
@@ -565,6 +569,8 @@ int HttpParseHeader( Http* http, const char* request, FQUAD fullReqLength )
 								{
 									int toksize = eptr - (lineStartPtr + tokenLength);
 									char *app = NULL;
+									
+									//DEBUG("[Http] BOUNDARY! start string %s boundary %s\n\n\n", lineStartPtr + tokenLength, boundary );
 								
 									if( toksize > 0 )
 									{
@@ -600,6 +606,39 @@ int HttpParseHeader( Http* http, const char* request, FQUAD fullReqLength )
 
 										FFree( app );
 									} // app != NULL
+									
+									// found bondary
+									
+									//DEBUG("bound + 2 :>%s<\n", boundary+2 );
+									if( boundary != NULL )
+									{
+										if( strncmp( boundary+2, "boundary", 8 ) == 0 )
+										{
+											char *bstart = strstr( boundary, "=" );
+											if( bstart != NULL )
+											{
+												char *leptr = strstr( bstart, "\r" );
+												char tmp;
+												if( leptr != NULL )
+												{
+													tmp = *leptr;
+													*leptr = 0;
+												}
+												bstart++;
+										
+												DEBUG("[Http] BOUNDARY2! %s\n\n\n", bstart );
+												http->http_PartDivider = StringDuplicate( bstart );
+												http->http_PartDividerLen = strlen( bstart );
+												DEBUG("DIVIDER SET!! %s\n", http->http_PartDivider );
+											
+												if( leptr != NULL )
+												{
+													*leptr = tmp;
+												}
+											}
+										}
+									}
+									
 								} //eptr != NULL
 								copyValue = TRUE;
 							} // if content-type
@@ -975,7 +1014,7 @@ int ParseMultipart( Http* http )
 		return -1;
 	}
 	
-	DEBUG("Multipart parsing, content length %ld\n", http->http_ContentLength);
+	DEBUG("[ParseMultipart] Multipart parsing, content length %ld\n", http->http_ContentLength);
 	
 	
 	/*
@@ -1007,8 +1046,16 @@ Content-Type: application/octet-stream
 	char *contentDisp = NULL;
 	int numOfFiles = 0;
 	char *dataPtr = http->http_Content;
+	char *eptr = dataPtr + http->http_ContentLength;
+	
 	while( TRUE )
 	{
+		if( dataPtr >= eptr )
+		{
+			break;
+		}
+		DEBUG("%p eptr %p\n", dataPtr, eptr );
+		//DEBUG("[ParseMultipart] before contdisp %*.*s\n", 50, 50, dataPtr );
 	    if( ( contentDisp = strstr( dataPtr, "Content-Disposition: form-data; name=\"" ) ) != NULL )
 		{
 			char *nameEnd = strchr( contentDisp + 38, '"' );
@@ -1023,20 +1070,25 @@ Content-Type: application/octet-stream
 				
 				if( startOfFile != NULL )
 				{
-					DEBUG("START CONTENT TO START FILE %d\n", startOfFile - http->http_Content );
+					DEBUG("[ParseMultipart] START CONTENT TO START FILE %ld\n", startOfFile - http->http_Content );
 
 					FQUAD res;
 
-					DEBUG("DIVSIZE %d\n", http->http_PartDividerLen );
+					DEBUG("[ParseMultipart] DIVSIZE %d\n", http->http_PartDividerLen );
 					FQUAD multipartLen = (http->http_SizeOfContent-(startOfFile-http->http_Content) );
-					DEBUG("MULTIPART LEN %lu\n", multipartLen );
+					//DEBUG("[ParseMultipart] MULTIPART LEN %lu  DIVIDER >%s<  IN >%s<\n", multipartLen, http->http_PartDivider, startOfFile );
 					res = FindInBinaryPOS( http->http_PartDivider, http->http_PartDividerLen, startOfFile, multipartLen )-2;// + divSize;
 					//res = FindInBinaryPOS( http->http_PartDivider, divSize, startOfFile, multipartLen ) - 2;
 					
 					//res = (FQUAD )FindInBinarySimple( http->http_PartDivider, divSize, startOfFile, multipartLen )-2;
+					DEBUG("[ParseMultipart] Res %ld\n", res );
+					if( res <= 0 )
+					{
+						res = multipartLen-http->http_PartDividerLen;
+					}
 					
 					char *endOfFile = startOfFile + res;
-					DEBUG("MULTI FOUND END OF FILE %p START %p LEN %lu\n", endOfFile, startOfFile, res );
+					DEBUG("[ParseMultipart] MULTI FOUND END OF FILE %p START %p LEN %lu\n", endOfFile, startOfFile, res );
 					if( endOfFile != NULL )
 					{
 						char *fname = strstr( contentDisp, "filename=\"" ) + 10;
@@ -1046,7 +1098,7 @@ Content-Type: application/octet-stream
 							size = (FQUAD)(endOfFile - startOfFile);
 							int fnamesize = (int)(fnameend - fname);
 							
-							INFO("[Http] Found file - name %.*s  FILESIZE %lu  FIRST CHAR\n", 30, fname, size );
+							INFO("[ParseMultipart]  Found file - name %.*s  FILESIZE %lu  FIRST CHAR\n", 30, fname, size );
 
 							HttpFile *newFile = HttpFileNew( fname, fnamesize, startOfFile, size, FALSE );
 							if( newFile != NULL )
@@ -1067,12 +1119,14 @@ Content-Type: application/octet-stream
 						}
 						//--------- BG-389 ---------
 						dataPtr = endOfFile;
+						DEBUG("[ParseMultipart] set end of file\n");
 						continue;
 						//--------------------------
 					}
 				}
 				
-				int pos = size;
+				FQUAD pos = size;
+				DEBUG("[ParseMultipart] move pos: %ld\n", pos );
 				if( size > 0 )
 				{
 					dataPtr += pos;
@@ -1107,19 +1161,20 @@ Content-Type: application/octet-stream
 					
 				}
 				
-				//DEBUG("[Http] Parse multipart KEY: <%s> VALUE <%s>\n", key, value );
+				DEBUG("[ParseMultipart] Parse multipart KEY: <%s> VALUE <%s>\n", key, value );
 				
-				int pos = ( int )( contentDisp - dataPtr ); 
+				FQUAD pos = ( FQUAD )( contentDisp - dataPtr ); 
 				dataPtr += pos + 20;
 			}
 		}
-		else {
-			DEBUG("End of parsing");
+		else
+		{
+			DEBUG("[ParseMultipart] End of parsing");
 			break;
 		}
 	}
 	
-	DEBUG("Number of files in http request %d\n", numOfFiles );
+	DEBUG("[ParseMultipart] Number of files in http request %d\n", numOfFiles );
 	
 	return 0;
 }
@@ -1291,7 +1346,8 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 	if( !http->http_PartialRequest )
 	{
 		http->http_PartialRequest = TRUE;
-		Log( FLOG_INFO,"INCOMING Request threads: %d length: %ld data: %.*s\n", nothreads, length, 512, data );
+		//Log( FLOG_INFO,"INCOMING Request threads: %d length: %ld data: %.*s\n", nothreads, length, 512, data );
+		Log( FLOG_INFO,"INCOMING Request threads: %d data: %s\n", nothreads, data );
 		
 		// Check if the recieved data exceeds the maximum header size. If it does, 404 dat bitch~
 		// TODO
@@ -1311,7 +1367,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 				HttpParseHeader( http, data, length );
 			}
 			
-			//DEBUG("content length %ld\n", http->h_ContentLength );
+			DEBUG("content length %ld\n", http->http_ContentLength );
 			//if( (content = HttpGetHeaderFromTable( http, HTTP_HEADER_CONTENT_LENGTH ) ) )
 			//if( ( content = HttpGetHeader( http, "content-length", 0 ) ) )
 			if( http->http_ContentLength > 0 )
@@ -1451,25 +1507,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 								}
 
 							}
-							
-							/*
-							if( incomingBufferPtr != NULL )
-						{
-							//DEBUG("incoming buffer already set? unmapping");
-							munmap( incomingBufferPtr, incomingBufferLength );
-							incomingBufferPtr = NULL;
-						}
-						//DEBUG( "mmaping" );
-						incomingBufferLength = lseek( tmpFileHandle, 0, SEEK_END);
-						DEBUG("->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ibl: %ld", incomingBufferLength );
-						incomingBufferPtr = mmap( 0, incomingBufferLength, PROT_READ | PROT_WRITE, MAP_SHARED, tmpFileHandle, 0);
-						
-						if( incomingBufferPtr == MAP_FAILED )
-						{
-							Log( FLOG_ERROR, "Cannot allocate memory for stream, length: %d\n", incomingBufferLength );
-							goto close_fcp;
-						}
-							*/
+
 							//int sizes = lseek( http->http_ContentFileHandle, 0, SEEK_END);
 							DEBUG("MMAP: HttpParsePartialRequest size: %lu\n", size );
 							http->http_Content = mmap( 0, size, PROT_READ | PROT_WRITE, MAP_SHARED, http->http_ContentFileHandle, 0/*offset*/);
@@ -1527,7 +1565,29 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 			else
 			{
 				DEBUG("NO MORE DATA\n");
+				//HttpParseHeader( http, data, length );
 				// No more data, we're done parsing
+				
+				if( http->http_ContentType == HTTP_CONTENT_TYPE_MULTIPART )
+				{
+					DEBUG("[HttpParsePartialRequest] !!! multipart!\n");
+					if( http->http_ParsedPostContent )
+					{
+						HashmapFree( http->http_ParsedPostContent );
+					}
+					if( ( http->http_Content = FMalloc( length+1 ) ) != NULL )
+					{
+						http->http_SizeOfContent = length;
+						http->http_ContentLength = length;
+						memcpy( http->http_Content, data, length );
+						http->http_Content[ length ] = 0;
+						
+						DEBUG("[HttpParsePartialRequest] going to multipart, size %ld\n", length );
+						int ret = ParseMultipart( http );
+						return 0;
+					}
+				}
+				
 				return result != 400;
 			}
 		}
@@ -1537,6 +1597,10 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 			return 0;
 		}
 	}
+	
+	//http->http_ContentType = HTTP_CONTENT_TYPE_MULTIPART;
+	
+	DEBUG("[HttpParsePartialRequest] RECEIVE DATA, header %d body %d content %p\n", http->http_GotHeader, http->http_ExpectBody, http->http_Content );
 	
 	if( http->http_GotHeader && http->http_ExpectBody && http->http_Content )
 	{
@@ -1574,21 +1638,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 					}
 				}
 				
-				/*
-				DEBUG("-----------------------------------\n--------------------------------\n---------------------\n---------------------\n---------\n");
-				FQUAD z;
-				for( z=0 ; z < (length-8) ; z++ )
-				{
-					if( data[ z-8 ] == (char)0x00 && data[ z-7 ] == (char)0x00 && data[ z-6 ] == (char)0x9E && data[ z-5 ] == (char)0xCF && data[ z-4 ] == (char)0x04 && data[ z-3 ] == (char)0x01 && data[ z-2 ] == (char)0x00 && data[ z-1 ] == (char)0x00 )
-					{
-						FERROR("HTTP.c END FILE FOUDN! in CONTENT\n");
-					}
-				}
-				*/
-				
 				DEBUG("UPLOAD writting done!\n");
-				//FQUAD = 
-				//int wrote = write( http->http_ContentFileHandle, data, length );
 			}
 			else
 			{
@@ -1614,6 +1664,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 			DEBUG("[HttpParsePartialRequest] Purge... Divider: %s\n", http->http_PartDivider );
 		}
 	
+		DEBUG("Length %ld sizeof content %ld\n", length, http->http_SizeOfContent );
 		if( length == http->http_SizeOfContent )
 		{
 			if( http->http_ContentType == HTTP_CONTENT_TYPE_MULTIPART )

@@ -231,30 +231,12 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen, int type )
 {
 	int retval = 0;
-	/*
-	#5  0x00005580b006eae1 in addr2line (program_name=0x7ffe00631eeb "/home/friend/friendup/build/FriendCore", addr=0x5580b006e912 <crash_handler+240>, target_stream=0x7f2acc0bcd60)
-    at main.c:270
-#6  0x00005580b006e993 in crash_handler (sig=11) at main.c:227
-#7  <signal handler called>
-#8  0x00005580b008b2ad in WebsocketWrite (wsi=0x0, 
-    msgptr=0x7f2acc0cd7e0 "{\"type\":\"msg\",\"data\":{\"type\":\"response\",\"requestid\":\"fconn-req-0j1tp7nh-38o7rtzu-nzlw23eh\",\"data\":\"ok\"}}", msglen=104, type=0)
-    at network/protocol_websocket.c:233
-#9  0x00005580b008c437 in WSThread (d=0x7f2acc0bad20) at network/protocol_websocket.c:616
 
-	 */
 	if( wsi == NULL || wsi->wusc_Data == NULL || wsi->wusc_Data->wsc_Wsi == NULL )
 	{
 		return 0;
 	}
-	//rite: clwsc_InUseCounter: %d msg: %s wsiptr %p\n", wsi->wusc_Data->wsc_InUseCounter, msgptr, wsi->wusc_Data->wsc_Wsi );
-	/*
-	if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
-	{
-		
-		FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
-	}
-	*/
-	
+
 	if( msglen > MAX_SIZE_WS_MESSAGE ) // message is too big, we must split data into chunks
 	{
 		DEBUG("WebsocketWrite\n");
@@ -540,7 +522,9 @@ void WSThread( void *d )
 		if( response != NULL )
 		{
 			unsigned char *buf;
-			char jsontemp[ 2048 ];
+			//char jsontemp[ 2048 ];
+#define JSON_TEMP_LEN 2048
+			char *jsontemp = FMalloc( JSON_TEMP_LEN );
 			
 			//Log( FLOG_INFO, "[WS] Trying to check response content..\n" );
 			
@@ -548,6 +532,7 @@ void WSThread( void *d )
 			if( (response->http_Content != NULL && ( response->http_Content[ 0 ] != '[' && response->http_Content[ 0 ] != '{' ) ) || fileReadCall == TRUE )
 			{
 				//Log( FLOG_INFO, "[WS] Has NON JSON response content..\n" );
+				//DEBUG("Protocol websocket response: %s\n", response->http_Content );
 				char *d = response->http_Content;
 				if( d[0] == 'f' && d[1] == 'a' && d[2] == 'i' && d[3] == 'l' )
 				{
@@ -568,7 +553,7 @@ void WSThread( void *d )
 				);
 				
 				buf = (unsigned char *)FCalloc( 
-					jsonsize + ( SHIFT_LEFT( response->http_SizeOfContent, 1 ) ) + 1 + 
+					jsonsize + ( 2* response->http_SizeOfContent ) + 1 + 
 					END_CHAR_SIGNS + LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) 
 				);
 				
@@ -594,7 +579,7 @@ void WSThread( void *d )
 								// Always add escape chars on unescaped double quotes
 							case '"':
 								locptr[ znew++ ] = '\\';
-								locptr[ znew++ ] = '\\';
+								//locptr[ znew++ ] = '\\';
 								break;
 								// New line
 							case 10:
@@ -617,6 +602,7 @@ void WSThread( void *d )
 					
 					//Log( FLOG_INFO, "[WS] NO JSON - Passed FOR loop..\n" );
 					
+					DEBUG("protocol websocket, before write: %s\n", locptr );
 					if( locptr[ znew-1 ] == 0 ) {znew--; DEBUG("ZNEW\n");}
 					memcpy( buf + jsonsize + znew, end, END_CHAR_SIGNS );
 
@@ -686,6 +672,8 @@ void WSThread( void *d )
 			
 			response->http_RequestSource = HTTP_SOURCE_WS;
 			HttpFree( response );
+			
+			FFree( jsontemp );
 		}
 		DEBUG1("[WS] SysWebRequest return\n"  );
 		Log( FLOG_INFO, "WS messages sent LOCKTEST\n");
@@ -932,10 +920,16 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				while( TRUE )
 				{
 					Log( FLOG_DEBUG, "PROTOCOL_WS: Check in use %d wsiptr %p fcws ptr %p\n", fcd->wsc_InUseCounter, wsi, fcd );
-					if( fcd->wsc_InUseCounter <= 0 )
+					
+					if( FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) ) == 0 )
 					{
-						Log( FLOG_INFO, "Closeing WS connection properly\n");
-						break;
+						if( fcd->wsc_InUseCounter <= 0 )
+						{
+							Log( FLOG_INFO, "Closeing WS connection properly\n");
+							FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
+							break;
+						}
+						FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
 					}
 					/*
 					if( val++ > 15 )

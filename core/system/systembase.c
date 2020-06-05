@@ -131,6 +131,8 @@ SystemBase *SystemInit( void )
 	
 	PropertiesInterfaceInit( &(l->sl_PropertiesInterface) );
 	
+	UtilInterfaceInit( &(l->sl_UtilInterface) );
+	
 	LIBXML_TEST_VERSION;
 	
 	l->sl_RemoveSessionsAfterTime = 10800;
@@ -1858,8 +1860,8 @@ void CheckAndUpdateDB( struct SystemBase *l )
 							char *script;
 							if( ( script = FCalloc( fsize+1, sizeof(char) ) ) != NULL )
 							{
-								int readedbytes = 0;
-								if( ( readedbytes = fread( script, fsize, 1, fp ) ) > 0 )
+								int readbytes = 0;
+								if( ( readbytes = fread( script, fsize, 1, fp ) ) > 0 )
 								{
 									char *command = script;
 									int i;
@@ -2541,8 +2543,6 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 			{
 				DEBUG("[SystemBase] Writing to websockets, pointer to wsdata %p, ptr to ws: %p wscptr: %p\n", wsc->wusc_Data, usersession, wsc );
 
-				//if( FRIEND_MUTEX_LOCK( &(wsc->wsc_Mutex) ) == 0 )
-				
 				if( wsc->wusc_Data != NULL )
 				{
 					bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
@@ -2552,18 +2552,18 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 					FERROR("Cannot write to WS, WSI is NULL!\n");
 				}
 				wsc = (UserSessionWebsocket *)wsc->node.mln_Succ;
-				}
-				FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
 			}
-			DEBUG("[SystemBase] Writing to websockets done, stuff released\n");
-			
-			FFree( buf );
+			FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
 		}
-		else
-		{
-			Log( FLOG_ERROR,"Cannot allocate memory for message\n");
-			return 0;
-		}
+		DEBUG("[SystemBase] Writing to websockets done, stuff released\n");
+		
+		FFree( buf );
+	}
+	else
+	{
+		Log( FLOG_ERROR,"Cannot allocate memory for message\n");
+		return 0;
+	}
 	DEBUG("[SystemBase] WebSocketSendMessage end, wrote %d bytes\n", bytes );
 	
 	return bytes;

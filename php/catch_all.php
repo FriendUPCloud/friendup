@@ -31,6 +31,7 @@ if( isset( $argv ) && isset( $argv[1] ) )
 			}
 		}
 	}
+	
 	$GLOBALS['args'] = $kvdata;
 	$args = $GLOBALS['args'];
 	

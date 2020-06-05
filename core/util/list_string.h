@@ -20,6 +20,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <core/types.h>
 
 typedef struct ListString
 {

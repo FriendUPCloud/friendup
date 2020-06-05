@@ -1401,7 +1401,11 @@ Workspace = {
 				'webclient/js/gui/calendar.js;' +
 				'webclient/js/gui/colorpicker.js;' +
 				'webclient/js/gui/workspace_tray.js;' +
+<<<<<<< HEAD
 				'webclient/js/gui/workspace_sharing.js;' +
+=======
+				'webclient/js/gui/tutorial.js;' +
+>>>>>>> master-incoming
 				'webclient/js/media/audio.js;' +
 				'webclient/js/io/p2p.js;' +
 				'webclient/js/io/request.js;' +
