@@ -300,6 +300,14 @@ void WSThread( void *d )
 	}
 	
 	UserSession *ses = (UserSession *)fcd->wsc_UserSession;
+	if( fcd->wsc_UserSession != NULL )
+	{
+		if( FRIEND_MUTEX_LOCK( &(ses->us_Mutex) ) == 0 )
+		{
+			ses->us_InUseCounter++;
+			FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
+		}
+	}
 	
 	int returnError = 0; //this value must be returned to WSI!
 	
@@ -329,6 +337,14 @@ void WSThread( void *d )
 			FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
 			fcd->wsc_InUseCounter--;
 			FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
+			if( fcd->wsc_UserSession != NULL )
+			{
+				if( FRIEND_MUTEX_LOCK( &(ses->us_Mutex) ) == 0 )
+				{
+					ses->us_InUseCounter--;
+					FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
+				}
+			}
 			
 			releaseWSData( data );
 
@@ -557,6 +573,15 @@ void WSThread( void *d )
 	FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
 	fcd->wsc_InUseCounter--;
 	FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
+	
+	if( fcd->wsc_UserSession != NULL )
+	{
+		if( FRIEND_MUTEX_LOCK( &(ses->us_Mutex) ) == 0 )
+		{
+			ses->us_InUseCounter--;
+			FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
+		}
+	}
 	
 	releaseWSData( data );
 	
