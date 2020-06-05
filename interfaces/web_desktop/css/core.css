@@ -4721,7 +4721,8 @@ div.Orange, button.Orange
 	height: 2px;
 	top: calc(50% - 1px);
 	left: 0%;
-	background-image: linear-gradient(90deg, transparent 0%, #ffffff22 70%, transparent 100%); 
+	background-blend-mode: difference;
+	background-image: linear-gradient(90deg, transparent 0%, #88888844 70%, transparent 100%); 
 }
 
 .SliderElement.Vertical .SliderGauge

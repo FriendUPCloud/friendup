@@ -574,7 +574,7 @@ Application.receiveMessage = function( msg )
 				}
 				if( added > 0 )
 				{
-					this.receiveMessage( { command: 'playsong' } );
+					Application.receiveMessage( { command: 'playsong' } );
 					if( Application.playlistWindow )
 					{
 						Application.playlistWindow.sendMessage( {
