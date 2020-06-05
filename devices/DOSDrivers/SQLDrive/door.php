@@ -472,7 +472,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 								$len = filesize( $args->tmpfile );
 								
 								if( $len > 0 )
-								{							
+								{
 									$Logger->log( 'workaround?' );
 									// TODO: UGLY WORKAROUND, FIX IT!
 									//       We need to support base64 streams
@@ -511,8 +511,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 								}
 								else
 								{
-									$Logger->log( '[SqlWorkgroupDrive] Filesize is zero.' );
-									die( 'fail<!--separate-->Filesize is zero.' );
+									// Write a null byte file...
 								}
 							}
 							else

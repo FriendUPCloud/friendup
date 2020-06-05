@@ -516,8 +516,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 								}
 								else
 								{
-									$Logger->log( '[SqlWorkgroupDrive] Filesize is zero.' );
-									die( 'fail<!--separate-->Filesize is zero.' );
+									// Write a null byte file...
 								}
 							}
 							else
