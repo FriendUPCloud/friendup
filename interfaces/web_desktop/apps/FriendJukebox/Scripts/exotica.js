@@ -159,24 +159,24 @@ Application.redrawMenu = function()
 }
 
 // About exotica view window ---------------------------------------------------
+var ab = null;
 Application.openAbout = function()
 {
-	if( this.aboutWindow ) return this.aboutWindow.activate();
-	this.aboutWindow = new View( {
-		title: i18n( 'i18n_about_exotica' ),
+	if( ab ) return ab.activate();
+	ab = new View( {
+		title: i18n( 'i18n_about_exotica' ) + ' - v1.2.4',
 		width: 400,
 		height: 300
 	} );
-	var v = this.aboutWindow;
-	v.onClose = function()
+	ab.onClose = function()
 	{
-		Application.aboutWindow = false;
+		ab = null;
 	}
-	var f = new File( 'Progdir:Templates/about.html' );
+	let f = new File( 'Progdir:Templates/about.html' );
 	f.i18n();
 	f.onLoad = function( data )
 	{
-		v.setContent( data );
+		ab.setContent( data );
 	}
 	f.load();
 }
