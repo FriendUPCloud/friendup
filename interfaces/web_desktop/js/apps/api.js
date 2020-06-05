@@ -6414,8 +6414,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 	}
 	// Used cached data
-	else if( packet.cachedAppData )
-	{	
+	else if( packet.cachedAppData && packet.cachedAppData.js )
+	{
 		var style = document.createElement( 'style' );
 		style.innerHTML = packet.cachedAppData.css;
 		head.appendChild( style );

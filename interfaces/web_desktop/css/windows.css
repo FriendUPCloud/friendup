@@ -9,6 +9,9 @@
 	height: 0%;
 	transform: rotatez(0deg);
 	pointer-events: none;
+}
+body:not([sharedapp]) .ViewContainer
+{
 	perspective: 1000px;
 }
 body:not([mobile]) .ViewContainer

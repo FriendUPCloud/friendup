@@ -10304,7 +10304,7 @@ function mobileDebug( str, clear )
 // TODO: Test loading different themes
 
 _applicationBasics = {};
-function loadApplicationBasics()
+function loadApplicationBasics( callback )
 {
 	// Preload basic scripts
 	var a = new File( '/webclient/js/apps/api.js' );
@@ -10343,6 +10343,7 @@ function loadApplicationBasics()
 	j.onLoad = function( data )
 	{
 		_applicationBasics.js = data;
+		if( callback ) callback();
 	}
 	j.load();
 };
