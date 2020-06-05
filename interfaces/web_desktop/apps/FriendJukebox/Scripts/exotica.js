@@ -187,7 +187,7 @@ Application.editPlaylist = function()
 	if( this.playlistWindow ) return this.playlistWindow.activate();
 	this.playlistWindow = new View( {
 		title: i18n( 'i18n_edit_playlist' ),
-		width: 900,
+		width: 600,
 		height: 600
 	} );
 	var p = this.playlistWindow;
