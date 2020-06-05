@@ -1852,6 +1852,7 @@ AND f.Name = '%s'",
 						{
 							// Try to mount the device with all privileges
 
+							MountUnlock( dm, usr );
 							File *dstFile = NULL;
 							if( MountFSNoSubMount( dm, tl, &dstFile, tmpUser, mountError, calledByAdmin, notify ) != 0 )
 							{
@@ -1861,6 +1862,7 @@ AND f.Name = '%s'",
 									//filesys->Release( filesys, dstFile );
 								}
 							}
+							MountLock( dm, usr );
 							
 							// Tell user!
 							if( notify == TRUE )
