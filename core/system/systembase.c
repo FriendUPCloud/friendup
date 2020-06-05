@@ -2147,7 +2147,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 			}
 			else
 			{
-				Log( FLOG_ERROR, "[UserDeviceMount] \tCannot set device mounted state. Device = NULL (%s).\n", row[0] );
+				Log( FLOG_ERROR, "[UserDeviceMount] \tCannot set device mounted state. Device = NULL (%s).\n", remDev->dn_Table[ 0 ] );
 			}
 			
 			if( remDev->dn_Table[ 0 ] != NULL ){ FFree( remDev->dn_Table[ 0 ] ); }
