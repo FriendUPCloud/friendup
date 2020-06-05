@@ -21,7 +21,9 @@ Application.run = function( msg, iface )
 	
 	this.volume = 64;
 	
-	CreateSlider( ge( 'Volume' ) );
+	CreateSlider( ge( 'Volume' ), {
+		type: 'volume'
+	} );
 	
 	ge( 'scroll' ).innerHTML = 'You should put on a song :-)';
 	
