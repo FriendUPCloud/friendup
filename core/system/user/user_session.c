@@ -136,7 +136,7 @@ void UserSessionDelete( UserSession *us )
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
 		
-		if( data != NULL )
+		if( us->us_WSD != NULL )
 		{
 			if( FRIEND_MUTEX_LOCK( &(data->wsc_Mutex) ) == 0 )
 			{

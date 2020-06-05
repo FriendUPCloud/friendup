@@ -408,7 +408,10 @@ UserMobileApp *GetMobileAppByUserName( MobileManager *mmgr, SQLLibrary *sqllib, 
  */
 FULONG MobileManagerGetUMAIDByDeviceIDAndUserName( MobileManager *mmgr, SQLLibrary *sqllib, FULONG userID, const char *deviceid )
 {
-	UserMobileApp *root = NULL;
+	if( sqllib == NULL )
+	{
+		return 0;
+	}
 	char query[ 256 ];
 	FULONG tokID = 0;
 	
