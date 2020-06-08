@@ -133,6 +133,7 @@ void UserSessionDelete( UserSession *us )
 		{
 			us->us_Wsi = NULL;
 			data = (WSCData *)us->us_WSD;
+			us->us_WSD = NULL;
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
 		
@@ -149,7 +150,6 @@ void UserSessionDelete( UserSession *us )
 			}
 		}
 		
-		us->us_WSD = NULL;
 		FQDeInitFree( &(us->us_MsgQueue) );
 		//UserSessionWebsocketDeInit( &(us->us_Websockets) );
 
