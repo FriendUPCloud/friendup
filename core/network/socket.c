@@ -2233,7 +2233,8 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 	int locbuffersize = 8192;
 	char locbuffer[ locbuffersize ];
 	int fullPackageSize = 0;
-	unsigned int read = 0;
+	FQUAD read = 0;
+	int retries = 0;
 
 	BufString *bs = BufStringNew();
 
@@ -2256,29 +2257,12 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 				BufStringDelete( bs );
 				return NULL;
 			}
-			/*
-			if( ( n = select( sock->fd+1, &rset, NULL, NULL, &tv ) ) == 0 )
-			{
-				FERROR("[SocketReadTillEnd] Connection timeout\n");
-				//SocketSetBlocking( sock, FALSE );
-				//BufStringDelete( bs );
-				return NULL;
-
-			}
-			else if( n < 0 )
-			{
-				FERROR("[SocketReadTillEnd] Select error\n");
-			}
-			*/
 		}
-
-		//SocketSetBlocking( sock, FALSE );
 
 		if( sock->s_SSLEnabled == TRUE )
 		{
-			unsigned int read = 0;
 			int res = 0, err = 0;//, buf = length;
-			int retries = 0;
+			
 			DEBUG("[SocketReadTillEnd] SSL enabled\n");
 
 			if( fds->revents & EPOLLIN )
@@ -2289,9 +2273,9 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 				//if( read + buf > length ) buf = length - read;
 				if( ( res = SSL_read( sock->s_Ssl, locbuffer, locbuffersize ) ) >= 0 )
 				{
-					read += (unsigned int)res;
+					read += (FQUAD)res;
 
-					DEBUG("[SocketReadTillEnd] Read: %d\n", res );
+					DEBUG("[SocketReadTillEnd] Read: %d fullpackage: %d\n", res, fullPackageSize );
 					
 					FULONG *rdat = (FULONG *)locbuffer;
 					if( ID_FCRE == rdat[ 0 ] )
@@ -2300,12 +2284,12 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 					}
 					BufStringAddSize( bs, locbuffer, res );
 
-					if( fullPackageSize > 0 && read >= (unsigned int) fullPackageSize )
+					if( fullPackageSize > 0 && read >= (FQUAD) fullPackageSize )
 					{
 						return bs;
 					}
 				}
-				DEBUG("[SocketReadTillEnd] res2 : %d\n", res );
+				DEBUG("[SocketReadTillEnd] res2 : %d fullpackagesize %d\n", res, fullPackageSize );
 
 				if( res < 0 )
 				{
@@ -2358,7 +2342,7 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 
 		else
 		{
-			int retries = 0, res = 0;
+			int res = 0;
 
 			while( 1 )
 			{
@@ -2404,7 +2388,7 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 					DEBUG( "[SocketReadTillEnd] Read %d  res < 0/\n", read );
 					return bs;
 				}
-				DEBUG( "[SocketReadTillEnd] Read %d/\n", read );
+				DEBUG( "[SocketReadTillEnd] Read %d fullpackagesize %d\n", read, fullPackageSize );
 			}
 			DEBUG( "[SocketReadTillEnd] Done reading %d/ (errno: %d)\n", read, errno );
 		}
