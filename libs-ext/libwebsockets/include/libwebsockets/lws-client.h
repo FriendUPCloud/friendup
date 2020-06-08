@@ -44,8 +44,10 @@ enum lws_client_connect_ssl_connection_flags {
 	LCCSCF_H2_QUIRK_OVERFLOWS_TXCR		= (1 << 6),
 	LCCSCF_H2_AUTH_BEARER			= (1 << 7),
 	LCCSCF_H2_HEXIFY_AUTH_TOKEN		= (1 << 8),
-	LCCSCF_HTTP_MULTIPART_MIME		= (1 << 9),
-	LCCSCF_HTTP_X_WWW_FORM_URLENCODED	= (1 << 10),
+	LCCSCF_H2_MANUAL_RXFLOW			= (1 << 9),
+	LCCSCF_HTTP_MULTIPART_MIME		= (1 << 10),
+	LCCSCF_HTTP_X_WWW_FORM_URLENCODED	= (1 << 11),
+	LCCSCF_HTTP_NO_FOLLOW_REDIRECT		= (1 << 12),
 
 	LCCSCF_PIPELINE				= (1 << 16),
 		/**< Serialize / pipeline multiple client connections
@@ -144,6 +146,22 @@ struct lws_client_connect_info {
 	/**< optional retry and idle policy to apply to this connection.
 	 *   Currently only the idle parts are applied to the connection.
 	 */
+
+	int		manual_initial_tx_credit;
+	/**< if LCCSCF_H2_MANUAL_REFLOW is set, this becomes the initial tx
+	 * credit for the stream.
+	 */
+
+	uint8_t		sys_tls_client_cert;
+	/**< 0 means no client cert.  1+ means apply lws_system client cert 0+
+	 * to the client connection.
+	 */
+
+#if defined(LWS_ROLE_MQTT)
+	const lws_mqtt_client_connect_param_t *mqtt_cp;
+#else
+	void		*mqtt_cp;
+#endif
 
 	/* Add new things just above here ---^
 	 * This is part of the ABI, don't needlessly break compatibility
@@ -286,5 +304,20 @@ LWS_VISIBLE LWS_EXTERN int
 lws_client_http_multipart(struct lws *wsi, const char *name,
 			  const char *filename, const char *content_type,
 			  char **p, char *end);
+
+/**
+ * lws_http_basic_auth_gen() - helper to encode client basic auth string
+ *
+ * \param user: user name
+ * \param pw: password
+ * \param buf: where to store base64 result
+ * \param len: max usable size of buf
+ *
+ * Encodes a username and password in Basic Auth format for use with the
+ * Authorization header.  On return, buf is filled with something like
+ * "Basic QWxhZGRpbjpPcGVuU2VzYW1l".
+ */
+LWS_VISIBLE LWS_EXTERN int
+lws_http_basic_auth_gen(const char *user, const char *pw, char *buf, size_t len);
 
 ///@}

@@ -170,11 +170,13 @@ Workspace = {
 						'webclient/js/io/friendnetworkextension.js;' +
 						'webclient/js/io/friendnetworkdoor.js;' +
 						'webclient/js/io/friendnetworkapps.js;' +
+						'webclient/js/io/workspace_fileoperations.js;' + 
 						'webclient/js/io/DOS.js;' +
 						'webclient/3rdparty/favico.js/favico-0.3.10.min.js;' +
 						'webclient/js/gui/widget.js;' +
 						'webclient/js/gui/listview.js;' +
 						'webclient/js/gui/directoryview.js;' +
+						'webclient/js/io/directoryview_fileoperations.js;' +
 						'webclient/js/gui/menufactory.js;' +
 						'webclient/js/gui/workspace_menu.js;' +
 						'webclient/js/gui/deepestfield.js;' +
@@ -184,6 +186,7 @@ Workspace = {
 						'webclient/js/gui/calendar.js;' +
 						'webclient/js/gui/colorpicker.js;' +
 						'webclient/js/gui/workspace_tray.js;' +
+						'webclient/js/gui/tutorial.js;' +
 						'webclient/js/media/audio.js;' +
 						'webclient/js/io/p2p.js;' +
 						'webclient/js/io/request.js;' +
@@ -255,57 +258,60 @@ Workspace = {
 							
 							if( t.conf.app )
 							{
-								return ExecuteApplication( t.conf.app, GetUrlVar( 'data' ), function( result )
+								return loadApplicationBasics( function()
 								{
-									// Prevent loading twice...
-									if( document.body.loaded ) return;
-									document.body.loaded = true;
+									ExecuteApplication( t.conf.app, GetUrlVar( 'data' ), function( result )
+									{
+										// Prevent loading twice...
+										if( document.body.loaded ) return;
+										document.body.loaded = true;
 									
-									// Remove loading notice
-									if( loading )
-									{
-										loading.classList.remove( 'Loaded' );
-										setTimeout( function()
+										// Remove loading notice
+										if( loading )
 										{
-											if( loading )
+											loading.classList.remove( 'Loaded' );
+											setTimeout( function()
 											{
-												loading.parentNode.removeChild( loading );
-												loading = null;
-											}
-										}, 500 );
-									}
-									function showThankyou()
-									{
-										if( !ge( 'Thanks' ) )
-										{
-											// Wait till we have windows!
-											var count = 0;
-											for( var a in window.movableWindows ){ count++; }
-											if( count <= 0 )
-												return setTimeout( showThankyou, 500 );
-											
-											// Open the thank you template
-											var jo = new cAjax();
-											jo.open( 'get', '/webclient/templates/thankyou.html', true, false );
-											jo.onload = function()
-											{
-												if( ge( 'Thanks' ) ) return;
-												var ele = document.createElement( 'div' );
-												ele.id = 'Thanks';
-												ele.className = 'ThankYou Padding';
-												ele.innerHTML = this.responseText();
-												var s = GeByClass( 'ScreenContent' );
-												if( s )
+												if( loading )
 												{
-													if( s.length ) s = s[0];
-													s.appendChild( ele );
+													loading.parentNode.removeChild( loading );
+													loading = null;
 												}
-												else document.body.appendChild( s );
-											}
-											jo.send();
+											}, 500 );
 										}
-									}
-									showThankyou();
+										function showThankyou()
+										{
+											if( !ge( 'Thanks' ) )
+											{
+												// Wait till we have windows!
+												var count = 0;
+												for( var a in window.movableWindows ){ count++; }
+												if( count <= 0 )
+													return setTimeout( showThankyou, 500 );
+											
+												// Open the thank you template
+												var jo = new cAjax();
+												jo.open( 'get', '/webclient/templates/thankyou.html', true, false );
+												jo.onload = function()
+												{
+													if( ge( 'Thanks' ) ) return;
+													var ele = document.createElement( 'div' );
+													ele.id = 'Thanks';
+													ele.className = 'ThankYou Padding';
+													ele.innerHTML = this.responseText();
+													var s = GeByClass( 'ScreenContent' );
+													if( s )
+													{
+														if( s.length ) s = s[0];
+														s.appendChild( ele );
+													}
+													else document.body.appendChild( s );
+												}
+												jo.send();
+											}
+										}
+										showThankyou();
+									} );
 								} );
 							}
 						} );

@@ -17,56 +17,57 @@
  *  @date created 2016
  */
 
-#ifndef __APP_SESSION_MANAGER_H__
-#define __APP_SESSION_MANAGER_H__
+#ifndef __SYSTEM_SAS_SAS_MANAGER_H__
+#define __SYSTEM_SAS_SAS_MANAGER_H__
 
-#include <system/application/application.h>
-#include <system/application/app_session.h>
+#include <system/sas/sas_session.h>
 
 //
 // app session manager structure
 //
 
-typedef struct AppSessionManager
+typedef struct SASManager
 {
-	AppSession						*asm_AppSessions;
-	pthread_mutex_t					asm_Mutex;
-}AppSessionManager;
+	SASSession						*sasm_AppSessions;
+	pthread_mutex_t					sasm_Mutex;
+	void							*sasm_SB;
+}SASManager;
 
 //
 // functions
 //
 
-AppSessionManager *AppSessionManagerNew();
+SASManager *SASManagerNew( void *sb );
 
 //
 //
 //
 
-void AppSessionManagerDelete( AppSessionManager *asmm );
+void SASManagerDelete( SASManager *asmm );
 
 //
 //
 //
 
-int AppSessionManagerAddSession( AppSessionManager *asmm, AppSession *nas );
+int SASManagerAddSession( SASManager *asmm, SASSession *nas );
 
 //
 //
 //
 
-int AppSessionManagerRemSession( AppSessionManager *asmm, AppSession *nas );
+int SASManagerRemSession( SASManager *asmm, SASSession *nas );
 
 //
 //
 //
 
-int AppSessionManagerRemUserSession( AppSessionManager *asmm, UserSession *ses );
+int SASManagerRemUserSession( SASManager *asmm, UserSession *ses );
 
 //
 //
 //
 
-AppSession *AppSessionManagerGetSession( AppSessionManager *asmm, FUQUAD id );
+SASSession *SASManagerGetSession( SASManager *asmm, FUQUAD id );
 
-#endif // __APP_SESSION_MANAGER_H__
+
+#endif // __SYSTEM_SAS_SAS_MANAGER_H__

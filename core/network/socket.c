@@ -705,29 +705,47 @@ int SocketConnect( Socket* sock, const char *host )
 					switch( error )
 					{
 					case SSL_ERROR_NONE:
+					{
 						// NO error..
 						FERROR( "[SocketConnect] No error\n" );
 						break;
 						//return incoming;
+					}
 					case SSL_ERROR_ZERO_RETURN:
+					{
 						FERROR("[SocketConnect] SSL_ACCEPT error: Socket closed.\n" );
+						break;
+					}
 					case SSL_ERROR_WANT_READ:
+					{
 						FERROR( "[SocketConnect] Error want read, retrying\n" );
+						break;
+					}
 					case SSL_ERROR_WANT_WRITE:
+					{
 						FERROR( "[SocketConnect] Error want write, retrying\n" );
 						break;
+					}
 					case SSL_ERROR_WANT_ACCEPT:
+					{
 						FERROR( "[SocketConnect] Want accept\n" );
 						break;
+					}
 					case SSL_ERROR_WANT_X509_LOOKUP:
+					{
 						FERROR( "[SocketConnect] Want 509 lookup\n" );
 						break;
+					}
 					case SSL_ERROR_SYSCALL:
+					{
 						FERROR( "[SocketConnect] Error syscall!\n" );
 						return -2;
+					}
 					default:
+					{
 						FERROR( "[SocketConnect] Other error.\n" );
 						return -3;
+					}
 					}
 				}
 				return -1;
@@ -1436,7 +1454,7 @@ inline Socket* SocketAcceptPair( Socket* sock, struct AcceptPair *p )
  * @param data pointer to char table where data will be stored
  * @param length size of char table
  * @param expectedLength tells us how much exactly we know we need until we can stop reading (0 if unknown)
- * @return number of bytes readed from socket
+ * @return number of bytes read from socket
  */
 
 inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned int expectedLength )
@@ -1661,7 +1679,7 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
  * @param data pointer to char table where data will be stored
  * @param length size of char table
  * @param pass (obsolete?)
- * @return number of bytes readed from socket
+ * @return number of bytes read from socket
  */
 
 int SocketReadBlocked( Socket* sock, char* data, unsigned int length, unsigned int pass __attribute__((unused)))
@@ -1745,7 +1763,7 @@ int SocketReadBlocked( Socket* sock, char* data, unsigned int length, unsigned i
  * @param length size of char table
  * @param pass (obsolete?)
  * @param sec number of timeout seconds
- * @return number of bytes readed from socket
+ * @return number of bytes read from socket
  */
 
 int SocketWaitRead( Socket* sock, char* data, unsigned int length, unsigned int pass __attribute__((unused)), int sec __attribute__((unused)))
@@ -2115,7 +2133,7 @@ BufString *SocketReadPackage( Socket *sock )
 			}
 		}
 		while( TRUE );
-		DEBUG("[SocketReadPackage]  readed\n");
+		DEBUG("[SocketReadPackage] read\n");
 
 		return bs;
 	}
@@ -2197,24 +2215,17 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 	DEBUG2("[SocketReadTillEnd] Socket wait for message, blocked %d\n", sock->s_Blocked );
 
 	int n;
-	fd_set wset, rset;
 	struct timeval tv;
-	/*
-	 FD_ZERO( &(app->readfd) );
-			FD_ZERO( &(app->writefd) );
-			FD_SET( app->infd[0] , &(app->readfd) );
-			FD_SET( app->outfd[1] , &(app->writefd) );
-	 */
 
-	//if( FRIEND_MUTEX_LOCK( &sock->mutex ) == 0 )
-	{
-		FD_ZERO( &rset );
-		//FD_SET( 0,  &rset );
-		FD_SET( sock->fd,  &rset );
-		//wset = rset;
+	struct pollfd fds[2];
 
-		//FRIEND_MUTEX_UNLOCK( &sock->mutex );
-	}
+	// watch stdin for input 
+	fds[0].fd = sock->fd;// STDIN_FILENO;
+	fds[0].events = POLLIN;
+
+	// watch stdout for ability to write
+	fds[1].fd = STDOUT_FILENO;
+	fds[1].events = POLLOUT;
 
 	tv.tv_sec = sec;
 	tv.tv_usec = 0;
@@ -2230,7 +2241,22 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 	{
 		if( sock->s_Blocked == TRUE )
 		{
+			int ret = poll( fds, 2, 10 * 1000);
+			
 			DEBUG("Before select\n");
+			if( ret == 0 )
+			{
+				DEBUG("Timeout!\n");
+				BufStringDelete( bs );
+				return NULL;
+			}
+			else if(  ret < 0 )
+			{
+				DEBUG("Error\n");
+				BufStringDelete( bs );
+				return NULL;
+			}
+			/*
 			if( ( n = select( sock->fd+1, &rset, NULL, NULL, &tv ) ) == 0 )
 			{
 				FERROR("[SocketReadTillEnd] Connection timeout\n");
@@ -2243,6 +2269,7 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 			{
 				FERROR("[SocketReadTillEnd] Select error\n");
 			}
+			*/
 		}
 
 		//SocketSetBlocking( sock, FALSE );
@@ -2251,7 +2278,6 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 		{
 			unsigned int read = 0;
 			int res = 0, err = 0;//, buf = length;
-			fd_set rd_set, wr_set;
 			int retries = 0;
 
 			while( TRUE )
@@ -2275,18 +2301,12 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 					}
 				}
 
-				struct timeval timeout;
-				fd_set fds;
-
 				if( res < 0 )
 				{
 					err = SSL_get_error( sock->s_Ssl, res );
 					switch( err )
 					{
-					err = SSL_get_error( sock->s_Ssl, res );
 
-					switch( err )
-					{
 					// The TLS/SSL I/O operation completed.
 					case SSL_ERROR_NONE:
 						FERROR( "[SocketReadTillEnd] Completed successfully.\n" );
@@ -2297,91 +2317,24 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 						return bs;
 						// The operation did not complete. Call again.
 					case SSL_ERROR_WANT_READ:
-						/*
-						// no data available right now, wait a few seconds in case new data arrives...
-						//printf("SSL_ERROR_WANT_READ %i\n", count);
-
-						if( FRIEND_MUTEX_LOCK( &sock->mutex ) == 0 )
-						{
-							FD_ZERO( &fds );
-							FD_SET( sock->fd, &fds );
-
-							FRIEND_MUTEX_UNLOCK( &sock->mutex );
-						}
-
-						timeout.tv_sec = sock->s_Timeouts;
-						timeout.tv_usec = sock->s_Timeoutu;
-
-						err = select( sock->fd+1, &fds, NULL, NULL, &timeout );
-						if( err > 0 )
-						{
-							return NULL; // more data to read...
-						}
-
-						if( err == 0 ) 
-						{
-							FERROR("[SocketReadTillEnd] want read TIMEOUT....\n");
-							return bs;
-						}
-						else 
-						{
-							FERROR("[SocketReadTillEnd] want read everything read....\n");
-							return bs;
-						}
-						 */
-						FERROR("want read\n");
-						//return NULL;
-						// The operation did not complete. Call again.
+						return bs;
 
 					case SSL_ERROR_WANT_WRITE:
-						/*
-							FERROR( "[SocketReadTillEnd] Want write.\n" );
-
-							if( FRIEND_MUTEX_LOCK( &sock->mutex ) == 0 )
-							{
-								FD_ZERO( &fds );
-								FD_SET( sock->fd, &fds );
-
-								FRIEND_MUTEX_UNLOCK( &sock->mutex );
-							}
-
-							timeout.tv_sec = sock->s_Timeouts;
-							timeout.tv_usec = sock->s_Timeoutu;
-
-							err = select( sock->fd+1, &fds, NULL, NULL, &timeout );
-							if( err > 0 )
-							{
-								return NULL; // more data to read...
-							}
-
-							if( err == 0 ) 
-							{
-								FERROR("[SocketReadTillEnd] want read TIMEOUT....\n");
-								return bs;
-							}
-							else 
-							{
-								FERROR("[SocketReadTillEnd] want read everything read....\n");
-								return bs;
-							}
-						 */
-						//return read;
+						return bs;
 					case SSL_ERROR_SYSCALL:
 						return bs;
 					default:
 
-						usleep( 0 );
-						if( retries++ > 500 )
+						usleep( 50 );
+						if( retries++ > 15 )
 						{
 							return bs;
 						}
-						//return NULL;
-					}
 					}
 				}
 				else if( res == 0 )
 				{
-					if( retries++ > 500 )
+					if( retries++ > 15 )
 					{
 						return bs;
 					}
@@ -2499,17 +2452,8 @@ FLONG SocketWrite( Socket* sock, char* data, FLONG length )
 
 			res = SSL_write( sock->s_Ssl, data + written, bsize );
 
-			if( res < 0 )
+			if( res <= 0 )
 			{
-				// TODO: For select?
-				/*if( FRIEND_MUTEX_LOCK( &sock->mutex ) == 0 )
-				{
-					FD_ZERO( &fdstate );
-					FD_SET( sock->fd, &fdstate );
-
-					FRIEND_MUTEX_UNLOCK( &sock->mutex );
-				}*/
-
 				err = SSL_get_error( sock->s_Ssl, res );
 
 				switch( err )

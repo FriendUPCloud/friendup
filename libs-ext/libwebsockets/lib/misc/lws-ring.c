@@ -22,9 +22,10 @@
  * IN THE SOFTWARE.
  */
 
+#include <libwebsockets.h>
 #include "private-lib-core.h"
 
-LWS_VISIBLE LWS_EXTERN struct lws_ring *
+struct lws_ring *
 lws_ring_create(size_t element_len, size_t count,
 		void (*destroy_element)(void *))
 {
@@ -49,7 +50,7 @@ lws_ring_create(size_t element_len, size_t count,
 	return ring;
 }
 
-LWS_VISIBLE LWS_EXTERN void
+void
 lws_ring_destroy(struct lws_ring *ring)
 {
 	if (ring->destroy_element)
@@ -66,7 +67,7 @@ lws_ring_destroy(struct lws_ring *ring)
 	lws_free(ring);
 }
 
-LWS_VISIBLE LWS_EXTERN size_t
+size_t
 lws_ring_get_count_free_elements(struct lws_ring *ring)
 {
 	int f;
@@ -96,7 +97,7 @@ lws_ring_get_count_free_elements(struct lws_ring *ring)
 	return f / ring->element_len;
 }
 
-LWS_VISIBLE LWS_EXTERN size_t
+size_t
 lws_ring_get_count_waiting_elements(struct lws_ring *ring, uint32_t *tail)
 {	int f;
 
@@ -122,7 +123,7 @@ lws_ring_get_count_waiting_elements(struct lws_ring *ring, uint32_t *tail)
 	return f / ring->element_len;
 }
 
-LWS_VISIBLE LWS_EXTERN int
+int
 lws_ring_next_linear_insert_range(struct lws_ring *ring, void **start,
 				  size_t *bytes)
 {
@@ -147,13 +148,13 @@ lws_ring_next_linear_insert_range(struct lws_ring *ring, void **start,
 	return 0;
 }
 
-LWS_VISIBLE LWS_EXTERN void
+void
 lws_ring_bump_head(struct lws_ring *ring, size_t bytes)
 {
 	ring->head = (ring->head + (uint32_t)bytes) % ring->buflen;
 }
 
-LWS_VISIBLE LWS_EXTERN size_t
+size_t
 lws_ring_insert(struct lws_ring *ring, const void *src, size_t max_count)
 {
 	const uint8_t *osrc = src;
@@ -194,7 +195,7 @@ lws_ring_insert(struct lws_ring *ring, const void *src, size_t max_count)
 	return (((uint8_t *)src + n) - osrc) / ring->element_len;
 }
 
-LWS_VISIBLE LWS_EXTERN size_t
+size_t
 lws_ring_consume(struct lws_ring *ring, uint32_t *tail, void *dest,
 		 size_t max_count)
 {
@@ -250,7 +251,7 @@ lws_ring_consume(struct lws_ring *ring, uint32_t *tail, void *dest,
 	return (((uint8_t *)dest + n) - odest) / ring->element_len;
 }
 
-LWS_VISIBLE LWS_EXTERN const void *
+const void *
 lws_ring_get_element(struct lws_ring *ring, uint32_t *tail)
 {
 	if (!tail)
@@ -262,7 +263,7 @@ lws_ring_get_element(struct lws_ring *ring, uint32_t *tail)
 	return ((uint8_t *)ring->buf) + *tail;
 }
 
-LWS_VISIBLE LWS_EXTERN void
+void
 lws_ring_update_oldest_tail(struct lws_ring *ring, uint32_t tail)
 {
 	if (!ring->destroy_element) {
@@ -277,21 +278,21 @@ lws_ring_update_oldest_tail(struct lws_ring *ring, uint32_t tail)
 	}
 }
 
-LWS_VISIBLE LWS_EXTERN uint32_t
+uint32_t
 lws_ring_get_oldest_tail(struct lws_ring *ring)
 {
 	return ring->oldest_tail;
 }
 
-LWS_VISIBLE LWS_EXTERN void
+void
 lws_ring_dump(struct lws_ring *ring, uint32_t *tail)
 {
 	if (tail == NULL)
 		tail = &ring->oldest_tail;
 	lwsl_notice("ring %p: buflen %u, elem_len %u, head %u, oldest_tail %u\n"
 		    "     free_elems: %u; for tail %u, waiting elements: %u\n",
-		    ring, ring->buflen, ring->element_len, ring->head,
-		    ring->oldest_tail,
-		    (int)lws_ring_get_count_free_elements(ring), *tail,
+		    ring, (int)ring->buflen, (int)ring->element_len,
+		    (int)ring->head, (int)ring->oldest_tail,
+		    (int)lws_ring_get_count_free_elements(ring), (int)*tail,
 		    (int)lws_ring_get_count_waiting_elements(ring, tail));
 }

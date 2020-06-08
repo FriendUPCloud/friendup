@@ -68,7 +68,7 @@ lws_genec_confirm_curve_allowed_by_tls_id(const char *allowed, int id,
 				}
 				lwsl_info("match curve %s\n",
 					  lws_ec_curves[n].name);
-				len = strlen(lws_ec_curves[n].name);
+				len = (int)strlen(lws_ec_curves[n].name);
 				jwk->e[LWS_GENCRYPTO_EC_KEYEL_CRV].len = len;
 				jwk->e[LWS_GENCRYPTO_EC_KEYEL_CRV].buf =
 						lws_malloc(len + 1, "cert crv");
@@ -98,7 +98,7 @@ lws_genec_confirm_curve_allowed_by_tls_id(const char *allowed, int id,
 	return -1;
 }
 
-LWS_VISIBLE void
+void
 lws_genec_destroy_elements(struct lws_gencrypto_keyelem *el)
 {
 	int n;
@@ -110,7 +110,7 @@ lws_genec_destroy_elements(struct lws_gencrypto_keyelem *el)
 
 static const char *enames[] = { "crv", "x", "d", "y" };
 
-LWS_VISIBLE int
+int
 lws_genec_dump(struct lws_gencrypto_keyelem *el)
 {
 	int n;

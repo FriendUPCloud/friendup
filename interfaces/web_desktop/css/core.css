@@ -1933,6 +1933,60 @@ html .Calendar div.HRow > .Current.Day:nth-child(even):hover
 	list-style: none;
 }
 
+/* Tutorial widgets --------------------------------------------------------- */
+
+.TutorialWidget
+{
+	opacity: 0;
+	pointer-events: none;
+	transform: rotatex(-10deg);
+	transition: transform,opacity,height 0.5s,0.25s,0.25s !important;
+	background: white;
+	box-shadow: 0px 2px 4px rgba(0,0,0,0.4);
+	border-radius: 8px;
+	position: absolute;
+	z-index: 5;
+	color: #202020;
+	box-sizing: border-box;
+}
+
+.TutorialWidget > .Content
+{
+	position: absolute;
+	top: 10px;
+	left: 10px;
+	right: 10px;
+	bottom: 10px;
+	overflow: hidden;
+}
+
+.TutorialWidget:after 
+{
+	content: " ";
+	display: block;
+	/* border-radius: 100%; */
+	background: white;
+	width: 50px;
+	height: 50px;
+	top: calc(100% - 25px);
+	left: calc(50% - 25px);
+	position: absolute;
+	transform: scaleX(0.4) scaleY(0.25) rotatez(45deg);
+}
+
+.TutorialWidget h2
+{
+	font-size: 1em;
+	font-weight: bold;
+}
+
+.TutorialWidget.Showing
+{
+	transform: rotatex(0deg);
+	opacity: 1;
+	pointer-events: all;
+}
+
 /* Context Menu items ------------------------------------------------------- */
 
 .Widget
@@ -3798,6 +3852,20 @@ html #Statusbar > #Taskbar .Task
 	box-sizing: border-box;
 }
 
+.Desklet.Left #DockWindowList, .Desklet.Right #DockWindowList
+{
+	mask-image: linear-gradient(180deg, transparent 0%, black 20px, black calc(100% - 20px), transparent 100%);
+	-moz-mask-image: linear-gradient(180deg, transparent 0%, black 20px, black calc(100% - 20px), transparent 100%);
+	-webkit-mask-image: linear-gradient(180deg, transparent 0%, black 20px, black calc(100% - 20px), transparent 100%);
+}
+
+.Desklet.Top #DockWindowList, .Desklet.Bottom #DockWindowList
+{
+	mask-image: linear-gradient(90deg, transparent 0%, black 30px, black calc(100% - 30px), transparent 100%);
+	-moz-mask-image: linear-gradient(90deg, transparent 0%, black 30px, black calc(100% - 30px), transparent 100%);
+	-webkit-mask-image: linear-gradient(90deg, transparent 0%, black 30px, black calc(100% - 30px), transparent 100%);
+}
+
 .Desklet #DockWindowList.Size32
 {
 	padding-top: 9px;
@@ -4635,6 +4703,49 @@ div.Orange, button.Orange
 	box-sizing: border-box;
 }
 
+.SliderElement:not(.Vertical) .SliderGauge
+{
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	height: 100%;
+	width: 0px;
+}
+
+.SliderElement:not(.Vertical) .SliderGauge:after
+{
+	content: " ";
+	display: block;
+	position: absolute;
+	width: 100%;
+	height: 2px;
+	top: calc(50% - 1px);
+	left: 0%;
+	background-blend-mode: difference;
+	background-image: linear-gradient(90deg, transparent 0%, #88888844 70%, transparent 100%); 
+}
+
+.SliderElement.Vertical .SliderGauge
+{
+	position: absolute;
+	top: 100%;
+	left: 0px;
+	height: 0px;
+	width: 100%;
+}
+
+.SliderElement.Vertical .SliderGauge:after
+{
+	content: " ";
+	display: block;
+	position: absolute;
+	height: 100%;
+	width: 2px;
+	left: calc(50% - 1px);
+	bottom: 0%;
+	background-image: linear-gradient(0deg, transparent 0%, #ffffff22 70%, transparent 100%); 
+}
+
 .SliderElement .SliderGroove
 {
 	position: absolute;
@@ -4643,6 +4754,7 @@ div.Orange, button.Orange
 	border-radius: 4px;
 	background: rgba(0,0,0,0.1);
 	box-shadow: inset 0px 0px 10px rgba(0,0,0,0.1);
+	overflow: hidden;
 }
 
 .SliderElement:not(.Vertical) .SliderGroove .SliderButton

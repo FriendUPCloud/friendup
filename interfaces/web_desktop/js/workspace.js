@@ -24,6 +24,7 @@ Workspace = {
 	mode: 'default',
 	initialized: false,
 	protocol: _protocol,
+	protocolUrl: _protocol + '://',
 	menu: [],
 	diskNotificationList: [],
 	notifications: [],
@@ -1400,6 +1401,7 @@ Workspace = {
 				'webclient/js/gui/calendar.js;' +
 				'webclient/js/gui/colorpicker.js;' +
 				'webclient/js/gui/workspace_tray.js;' +
+				'webclient/js/gui/tutorial.js;' +
 				'webclient/js/media/audio.js;' +
 				'webclient/js/io/p2p.js;' +
 				'webclient/js/io/request.js;' +

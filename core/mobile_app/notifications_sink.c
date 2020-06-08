@@ -726,7 +726,7 @@ void ProcessSinkMessage( void *locd )
 									BufString *bs = BufStringNew();
 									//BufStringAddSize( bs, "{", 1 );
 								
-									User *usr = UMGetUserByUUIDDB( SLIB->sl_UM, uuid );
+									User *usr = UMGetUserByUUIDDB( SLIB->sl_UM, uuid, FALSE );
 									if( usr != NULL )
 									{
 										char udata[ 1024 ];
@@ -762,6 +762,8 @@ void ProcessSinkMessage( void *locd )
 										BufStringAddSize( bs, "]}", 2 );
 										
 										NotificationManagerSendEventToConnections( SLIB->sl_NotificationManager, NULL, NULL, reqid, NULL, NULL, NULL, bs->bs_Buffer );
+										
+										UserDelete( usr );
 									}
 									else
 									{

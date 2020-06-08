@@ -2,5 +2,6 @@
 	"type":    "SFTP",
 	"literal": "Server filesystem",
 	"group":   "User",
-	"sharing":  "0"
+	"sharing":  "0",
+	"icon": "logo.png"
 }

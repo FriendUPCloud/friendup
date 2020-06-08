@@ -167,8 +167,8 @@ typedef struct User
 	pthread_mutex_t				u_Mutex;						// User structure mutex
 	CacheUserFiles				*u_FileCache;					// internal file cache
 	
-	FLONG						u_MaxBytesStoredPerDevice;		// maximum bytes stored per device (0-unlimited)
-	FLONG						u_MaxBytesReadedPerDevice;		// maximum bytes readed per device
+	FLONG						u_MaxBytesStorPerDevice;		// maximum bytes stored per device (0-unlimited)
+	FLONG						u_MaxBytesReadPerDevice;		// maximum bytes read per device
 	
 	char						*u_UUID;						// unique ID
 } User;
@@ -207,7 +207,7 @@ int UserDeleteAll( User *usr );
 //
 //
 
-void UserRemoveSession( User *usr, void *s );
+int UserRemoveSession( User *usr, void *ls );
 
 //
 //
@@ -280,8 +280,8 @@ static FULONG UserDesc[] = {
 	SQLT_INT,     (FULONG)"CreatedTime", offsetof( struct User, u_CreatedTime ),
 	SQLT_INT,     (FULONG)"ModifyTime", offsetof( struct User, u_ModifyTime ),
 	SQLT_INT,     (FULONG)"LoginTime", offsetof( struct User, u_LoginTime ),
-	SQLT_INT,     (FULONG)"MaxStoredBytes", offsetof( struct User, u_MaxBytesStoredPerDevice ),
-	SQLT_INT,     (FULONG)"MaxReadedBytes", offsetof( struct User, u_MaxBytesReadedPerDevice ),
+	SQLT_INT,     (FULONG)"MaxStoredBytes", offsetof( struct User, u_MaxBytesStorPerDevice ),
+	SQLT_INT,     (FULONG)"MaxReadedBytes", offsetof( struct User, u_MaxBytesReadPerDevice ),
 	SQLT_INT,     (FULONG)"Status", offsetof( struct User, u_Status ),
 	SQLT_STR,     (FULONG)"UniqueID",    offsetof( struct User, u_UUID ),
 	SQLT_INIT_FUNCTION, (FULONG)"init", (FULONG)&UserInit,

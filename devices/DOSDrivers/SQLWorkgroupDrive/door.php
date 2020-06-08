@@ -155,6 +155,21 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				$volume = explode( ':', $path );
 				$volume = reset( $volume ) . ':';
 	
+				// Get workgroup users
+				$wuids = [];
+				if( $this->GroupID )
+				{
+					if( $ws = $SqlDatabase->FetchObjects( '
+						SELECT u.ID FROM FUser u, FUserGroup ug, FUserToGroup utg
+						WHERE
+							u.ID = utg.UserID AND ug.ID = utg.UserGroupID AND
+							ug.Type = "Workgroup" AND ug.ID = \'' . $this->GroupID . '\'
+					' ) )
+					{
+						foreach( $ws as $w ) $wuids[] = $w->ID;
+					}
+				}
+				
 				$out = [];
 				if( $entries = $SqlDatabase->FetchObjects( $q = '
 					SELECT * FROM
@@ -202,6 +217,13 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 							$entries[$k]->Shared = 'Private';
 						}
 					}
+					
+					// Add group user ids
+					if( count( $wuids ) )
+					{
+						foreach( $wuids as $w ) $userids[] = $w;
+					}
+					
 					if( $shared = $SqlDatabase->FetchObjects( $q = ( '
 						SELECT Path, UserID, ID, `Name`, `Hash` FROM FFileShared s
 						WHERE
@@ -217,7 +239,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 								// TODO: Make sure its always there!
 								if( !strstr( $entry->Path, ':' ) )
 									$entry->Path = $volume . $entry->Path;
-								if( isset( $entry->Path ) && isset( $sh->Path ) && $entry->Path == $sh->Path && $entry->UserID == $sh->UserID )
+								if( isset( $entry->Path ) && isset( $sh->Path ) && $entry->Path == $sh->Path && in_array( $sh->UserID, $userids ) )
 								{
 									$entries[$k]->Shared = 'Public';
 									
@@ -457,32 +479,44 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 							{
 								fclose( $file );
 								$len = filesize( $args->tmpfile );
-								
-								// TODO: UGLY WORKAROUND, FIX IT!
-								//       We need to support base64 streams
-								if( $fr = fopen( $args->tmpfile, 'r' ) )
+								if( $len > 0 )
 								{
-									$string = fread( $fr, 32 );
-									fclose( $fr );
-									if( substr( urldecode( $string ), 0, strlen( '<!--BASE64-->' ) ) == '<!--BASE64-->' )
+									// TODO: UGLY WORKAROUND, FIX IT!
+									//       We need to support base64 streams
+									if( $fr = fopen( $args->tmpfile, 'r' ) )
 									{
-										$fr = file_get_contents( $args->tmpfile );
-										$fr = base64_decode( end( explode( '<!--BASE64-->', urldecode( $fr ) ) ) );
-										if( $fo = fopen( $args->tmpfile, 'w' ) )
+										$string = fread( $fr, 32 );
+										fclose( $fr );
+										if( substr( urldecode( $string ), 0, strlen( '<!--BASE64-->' ) ) == '<!--BASE64-->' )
 										{
-											fwrite( $fo, $fr );
-											fclose( $fo );
+											// TODO: Add filesize limit!
+											$Logger->log( '[SQLWorkgroupDrive] Trying to read the temp file! May crash!' );
+											$fr = file_get_contents( $args->tmpfile );
+											$fr = base64_decode( end( explode( '<!--BASE64-->', urldecode( $fr ) ) ) );
+											if( $fo = fopen( $args->tmpfile, 'w' ) )
+											{
+												fwrite( $fo, $fr );
+												fclose( $fo );
+											}
+										}
+										else
+										{
+											$Logger->log( '[SqlWorkgroupDrive] Not reading temp file, because it\'s not base 64. Plain move commencing.' );
 										}
 									}
-								}
 
-								if( $total + $len < SQLWORKGROUPDRIVE_FILE_LIMIT )
-								{
-									rename( $args->tmpfile, $Config->FCUpload . $fn );
+									if( $total + $len < SQLWORKGROUPDRIVE_FILE_LIMIT )
+									{
+										rename( $args->tmpfile, $Config->FCUpload . $fn );
+									}
+									else
+									{
+										die( 'fail<!--separate-->Limit broken' );
+									}
 								}
 								else
 								{
-									die( 'fail<!--separate-->Limit broken' );
+									// Write a null byte file...
 								}
 							}
 							else
@@ -522,6 +556,8 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				
 				$fname = explode( ':', $args->path );
 				$fname = end( $fname );
+
+				set_time_limit( 0 );
 				
 				$subPath = $fname;
 				
@@ -562,7 +598,8 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 							$mime = $info['mime'];
 					
 						// Try to guess the mime type
-						if( !$mime && $ext = end( explode( '.', $fname ) ) )
+						$ext = explode( '.', $fname );
+						if( !$mime && $ext = end( $ext ) )
 						{
 							switch( strtolower( $ext ) )
 							{
@@ -582,6 +619,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 						{
 							//US-230 This is a memory friendly way to dump a file :-)
 							//Previously the download got broken at 94MB (or another file size depending on php.ini)
+							set_time_limit( 0 );
 							ob_end_clean(); 
 							readfile($fname);
 							die();

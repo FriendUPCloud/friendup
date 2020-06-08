@@ -112,7 +112,7 @@ lws_get_addresses(struct lws_vhost *vh, void *ads, char *name,
 }
 
 const char *
-lws_get_peer_simple_fd(int fd, char *name, int namelen)
+lws_get_peer_simple_fd(lws_sockfd_type fd, char *name, size_t namelen)
 {
 	lws_sockaddr46 sa46;
 	socklen_t len = sizeof(sa46);
@@ -129,14 +129,14 @@ lws_get_peer_simple_fd(int fd, char *name, int namelen)
 }
 
 const char *
-lws_get_peer_simple(struct lws *wsi, char *name, int namelen)
+lws_get_peer_simple(struct lws *wsi, char *name, size_t namelen)
 {
 	wsi = lws_get_network_wsi(wsi);
 	return lws_get_peer_simple_fd(wsi->desc.sockfd, name, namelen);
 }
 #endif
 
-LWS_VISIBLE void
+void
 lws_get_peer_addresses(struct lws *wsi, lws_sockfd_type fd, char *name,
 		       int name_len, char *rip, int rip_len)
 {
@@ -189,7 +189,7 @@ bail:
  * LWS_ITOSA_BUSY:       the port at the requested iface + port is already in use
  */
 
-LWS_EXTERN int
+int
 lws_socket_bind(struct lws_vhost *vhost, lws_sockfd_type sockfd, int port,
 		const char *iface, int ipv6_allowed)
 {
@@ -213,7 +213,7 @@ lws_socket_bind(struct lws_vhost *vhost, lws_sockfd_type sockfd, int port,
 	memset(&sin, 0, sizeof(sin));
 
 #if defined(LWS_WITH_UNIX_SOCK)
-	if (LWS_UNIX_SOCK_ENABLED(vhost)) {
+	if (!port && LWS_UNIX_SOCK_ENABLED(vhost)) {
 		v = (struct sockaddr *)&serv_unix;
 		n = sizeof(struct sockaddr_un);
 		memset(&serv_unix, 0, sizeof(serv_unix));
@@ -297,12 +297,14 @@ lws_socket_bind(struct lws_vhost *vhost, lws_sockfd_type sockfd, int port,
 	} else
 #endif
 	if (n < 0) {
+		int _lws_errno = LWS_ERRNO;
+
 		lwsl_err("ERROR on binding fd %d to port %d (%d %d)\n",
-			 sockfd, port, n, LWS_ERRNO);
+			 sockfd, port, n, _lws_errno);
 
 		/* if something already listening, tell caller to fail permanently */
 
-		if (LWS_ERRNO == LWS_EADDRINUSE)
+		if (_lws_errno == LWS_EADDRINUSE)
 			return LWS_ITOSA_BUSY;
 
 		/* otherwise ask caller to retry later */
@@ -311,7 +313,7 @@ lws_socket_bind(struct lws_vhost *vhost, lws_sockfd_type sockfd, int port,
 	}
 
 #if defined(LWS_WITH_UNIX_SOCK)
-	if (LWS_UNIX_SOCK_ENABLED(vhost)) {
+	if (!port && LWS_UNIX_SOCK_ENABLED(vhost)) {
 		uid_t uid = vhost->context->uid;
 		gid_t gid = vhost->context->gid;
 
@@ -399,7 +401,7 @@ lws_retry_get_delay_ms(struct lws_context *context,
 	if (retry && conceal)
 		*conceal = (int)*ctry <= retry->conceal_count;
 
-	return ms;
+	return (unsigned int)ms;
 }
 
 int
@@ -430,7 +432,7 @@ lws_retry_sul_schedule_retry_wsi(struct lws *wsi, lws_sorted_usec_list_t *sul,
 }
 
 #if defined(LWS_WITH_IPV6)
-LWS_EXTERN unsigned long
+unsigned long
 lws_get_addr_scope(const char *ipaddr)
 {
 	unsigned long scope = 0;
@@ -576,8 +578,9 @@ lws_parse_numeric_address(const char *ads, uint8_t *result, size_t max_len)
 {
 	struct lws_tokenize ts;
 	uint8_t *orig = result, temp[16];
-	int sects = 0, ipv6 = !!strchr(ads, ':'), skip_point = -1, dm = 0, n;
+	int sects = 0, ipv6 = !!strchr(ads, ':'), skip_point = -1, dm = 0;
 	char t[5];
+	size_t n;
 	long u;
 
 	lws_tokenize_init(&ts, ads, LWS_TOKENIZE_F_NO_INTEGERS |
@@ -616,7 +619,7 @@ lws_parse_numeric_address(const char *ads, uint8_t *result, size_t max_len)
 				u = strtol(t, NULL, 16);
 				if (u > 0xffff)
 					return -5;
-				*result++ = u >> 8;
+				*result++ = (uint8_t)(u >> 8);
 			} else {
 				if (ts.token_len > 3)
 					return -1;
@@ -644,7 +647,7 @@ lws_parse_numeric_address(const char *ads, uint8_t *result, size_t max_len)
 				/* back to back : */
 				*result++ = 0;
 				*result++ = 0;
-				skip_point = result - orig;
+				skip_point = lws_ptr_diff(result, orig);
 				break;
 			}
 			if (ipv6 && orig[2] == 0xff && orig[3] == 0xff &&
@@ -667,11 +670,11 @@ lws_parse_numeric_address(const char *ads, uint8_t *result, size_t max_len)
 
 		case LWS_TOKZE_ENDED:
 			if (!ipv6 && sects == 4)
-				return result - orig;
+				return lws_ptr_diff(result, orig);
 			if (ipv6 && sects == 8)
-				return result - orig;
+				return lws_ptr_diff(result, orig);
 			if (skip_point != -1) {
-				int ow = result - orig;
+				int ow = lws_ptr_diff(result, orig);
 				/*
 				 * contains ...::...
 				 */
@@ -730,7 +733,7 @@ lws_sa46_parse_numeric_address(const char *ads, lws_sockaddr46 *sa46)
 }
 
 int
-lws_write_numeric_address(const uint8_t *ads, int size, char *buf, int len)
+lws_write_numeric_address(const uint8_t *ads, int size, char *buf, size_t len)
 {
 	char c, elided = 0, soe = 0, zb = -1, n, ipv4 = 0;
 	const char *e = buf + len;
@@ -744,7 +747,7 @@ lws_write_numeric_address(const uint8_t *ads, int size, char *buf, int len)
 	if (size != 16)
 		return -1;
 
-	for (c = 0; c < size / 2; c++) {
+	for (c = 0; c < (char)size / 2; c++) {
 		uint16_t v = (ads[q] << 8) | ads[q + 1];
 
 		if (buf + 8 > e)
@@ -794,11 +797,11 @@ lws_write_numeric_address(const uint8_t *ads, int size, char *buf, int len)
 		*buf = '\0';
 	}
 
-	return buf - obuf;
+	return lws_ptr_diff(buf, obuf);
 }
 
 int
-lws_sa46_write_numeric_address(lws_sockaddr46 *sa46, char *buf, int len)
+lws_sa46_write_numeric_address(lws_sockaddr46 *sa46, char *buf, size_t len)
 {
 	*buf = '\0';
 #if defined(LWS_WITH_IPV6)

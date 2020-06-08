@@ -269,8 +269,10 @@ struct _lws_http_mode_related {
 #endif
 	unsigned int deferred_transaction_completed:1;
 	unsigned int content_length_explicitly_zero:1;
+	unsigned int content_length_given:1;
 	unsigned int did_stream_close:1;
 	unsigned int multipart:1;
+	unsigned int cgi_transaction_complete:1;
 	unsigned int multipart_issue_boundary:1;
 };
 
@@ -282,6 +284,8 @@ enum lws_chunk_parser {
 	ELCP_CONTENT,
 	ELCP_POST_CR,
 	ELCP_POST_LF,
+	ELCP_TRAILER_CR,
+	ELCP_TRAILER_LF
 };
 #endif
 
@@ -299,7 +303,7 @@ enum lws_check_basic_auth_results {
 };
 
 enum lws_check_basic_auth_results
-lws_check_basic_auth(struct lws *wsi, const char *basic_auth_login_file);
+lws_check_basic_auth(struct lws *wsi, const char *basic_auth_login_file, unsigned int auth_mode);
 
 int
 lws_unauthorised_basic_auth(struct lws *wsi);
@@ -322,3 +326,6 @@ lws_sul_http_ah_lifecheck(lws_sorted_usec_list_t *sul);
 
 uint8_t *
 lws_http_multipart_headers(struct lws *wsi, uint8_t *p);
+
+int
+lws_client_create_tls(struct lws *wsi, const char **pcce, int do_c1);

@@ -423,10 +423,10 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 				{
 					FHandler *actFS  =  f->f_RootDevice->f_FSys;
 					readsize = actFS->FileRead( f, buffer, size );
-					DEBUG2("[FSMRemoteWebRequest] Readed by native FS %d\n", readsize );
+					DEBUG2("[FSMRemoteWebRequest] Read by native FS %d\n", readsize );
 					if( readsize > 0 )
 					{
-						DEBUG2("[FSMRemoteWebRequest] Readed by native FS %d  last char %d\n", readsize, buffer[ readsize-1 ] );
+						DEBUG2("[FSMRemoteWebRequest] Read by native FS %d  last char %d\n", readsize, buffer[ readsize-1 ] );
 						if( streaming == FALSE )
 						{
 							HttpSetContent( response, buffer, readsize );

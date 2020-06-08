@@ -21,6 +21,7 @@
 #include <util/string.h>
 #include <system/systembase.h>
 #include <system/token/dos_token.h>
+#include <system/application/application_manager.h>
 
 extern SystemBase *SLIB;
 
@@ -72,6 +73,7 @@ void UserSessionDelete( UserSession *us )
 	{
 		Log( FLOG_DEBUG, "\nUserSessionDelete will be removed: %s\n\n", us->us_SessionID );
 		int count = 0;
+		int nrOfSessionsAttached = 0;
 
 		// we must wait till all tasks will be finished
 		while( TRUE )
@@ -108,10 +110,10 @@ void UserSessionDelete( UserSession *us )
 		
 		if( us->us_User != NULL )
 		{
-			UserRemoveSession( us->us_User, us );
+			nrOfSessionsAttached = UserRemoveSession( us->us_User, us );
 			us->us_User = NULL;
-        }
-        SystemBase *lsb = SLIB;//(SystemBase *)us->us_SB;
+		}
+		SystemBase *lsb = SLIB;//(SystemBase *)us->us_SB;
 
 		DEBUG("[UserSessionDelete] Remove session %p\n", us );
 
@@ -125,7 +127,10 @@ void UserSessionDelete( UserSession *us )
 			Log( FLOG_DEBUG, "AppSessionManager will be called\n");
 		}
 		
-		AppSessionManagerRemUserSession( lsb->sl_AppSessionManager, us );
+		// Remove session from SAS
+		//
+		
+		SASManagerRemUserSession( lsb->sl_SASManager, us );
 		
 		DEBUG("[UserSessionDelete] User removed from app session\n");
 		
@@ -136,6 +141,9 @@ void UserSessionDelete( UserSession *us )
 			Log( FLOG_DEBUG, "[UserSessionDelete] cl %p\n", us->us_WSConnections );
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
+		
+		// Disconnect session from Websockets
+		//
 		
 		if( nwsc != NULL )
 		{
@@ -182,6 +190,14 @@ void UserSessionDelete( UserSession *us )
 			WebsocketReqManagerDelete( wrm );
 		}
 		pthread_mutex_destroy( &(us->us_Mutex) );
+		
+		// lets remove application sessions from system
+		ApplicationManagerRemoveApplicationSessionByUserSessionID( lsb->sl_ApplicationManager, us->us_ID );
+		
+		//if( nrOfSessionsAttached <= 0 && us->us_UserID > 0 )
+		//{
+		//	ApplicationManagerRemoveApplicationSessionByUserID( lsb->sl_ApplicationManager, us->us_UserID );
+		//}
 	
 		FFree( us );
 		

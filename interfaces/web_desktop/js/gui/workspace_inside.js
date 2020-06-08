@@ -373,7 +373,7 @@ var WorkspaceInside = {
 				var wp = document.createElement( 'wp' );
 				var d = document.createElement( 'div' )
 				d.className = 'VirtualWorkspaces';
-				for( var a = 0; a < globalConfig.workspacecount; a++ )
+				for( let a = 0; a < globalConfig.workspacecount; a++ )
 				{
 					var w = document.createElement( 'div' );
 					w.className = 'Workspace';
@@ -384,7 +384,7 @@ var WorkspaceInside = {
 							// Create a text representing the content in the virtual workspace
 							var apps = {};
 							var str = '';
-							for( var a in movableWindows )
+							for( let a in movableWindows )
 							{
 								if( movableWindows[ a ].windowObject.workspace == num )
 								{
@@ -406,13 +406,21 @@ var WorkspaceInside = {
 								}
 							}
 							var o = '';
-							for( var a in apps )
+							for( let a in apps )
 								o += ( apps[ a ].string + ( apps[ a ].count > 1 ? ( ' (' + apps[ a ].count + ')' ) : '' ) ) + "\n";
 							return o + str;
 						} } );
 					} )( a );
 					if( a == globalConfig.workspaceCurrent ) w.className += ' Active';
-					if( globalConfig.workspace_labels && globalConfig.workspace_labels[ a ] && typeof( globalConfig.workspace_labels ) == 'object' )
+					
+					// Check if the label is an icon or a number
+					if( 
+						globalConfig.workspace_labels && 
+						typeof( globalConfig.workspace_labels ) == 'object' && 
+						globalConfig.workspace_labels[ a ] && 
+						globalConfig.workspace_labels[ a ] != '[' &&
+						globalConfig.workspace_labels[ a ] != ']'
+					)
 					{
 						w.innerHTML = '<span class="' + globalConfig.workspace_labels[ a ] + '"></span>';
 						w.className += ' WithIcon';
@@ -445,18 +453,33 @@ var WorkspaceInside = {
 						ge( 'DoorsScreen' ).screenObject.contentDiv.style.left = '-' + 100 * this.ind + '%';
 						
 						_DeactivateWindows();
-						// Activate next window on next screen
-						for( var c in movableWindows )
+						
+						// Check if we have a preset window that should be activated
+						var foundActive = false;
+						if( typeof( virtualWorkspaces[ this.ind ] ) != 'undefined' )
 						{
-							if( !movableWindows[c].windowObject ) continue;
-							
-							if( movableWindows[c].windowObject.workspace == this.ind )
+							if( virtualWorkspaces[ this.ind ].activeWindow )
 							{
-								var pn = movableWindows[c].parentNode;
-								if( pn.getAttribute( 'minimized' ) != 'minimized' )
+								_ActivateWindow( virtualWorkspaces[ this.ind ].activeWindow );
+								foundActive = true;
+							}
+						}
+						
+						// Activate next window on next screen
+						if( !foundActive )
+						{
+							for( var c in movableWindows )
+							{
+								if( !movableWindows[c].windowObject ) continue;
+							
+								if( movableWindows[c].windowObject.workspace == this.ind )
 								{
-									_ActivateWindow( movableWindows[c] );
-									break;
+									var pn = movableWindows[c].parentNode;
+									if( pn.getAttribute( 'minimized' ) != 'minimized' )
+									{
+										_ActivateWindow( movableWindows[c] );
+										break;
+									}
 								}
 							}
 						}
@@ -6468,7 +6491,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		var zipPath = currentMovable.content.fileInfo.Path;
 		
-		Notify( { title: i18n( 'i18n_zip_start' ), text: i18n( 'i18n_zip_startdesc' ) } );
 		var ic = currentMovable.content.icons;
 		var f = [];
 		var dest = false;
@@ -6483,6 +6505,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		if( dest && f.length )
 		{
+			Notify( { title: i18n( 'i18n_zip_start' ), text: i18n( 'i18n_zip_startdesc' ) } );
+			
 			// Files
 			if( dest.indexOf( '.' ) > 0 && dest.substr( dest.length - 1, 1 ) != '/' )
 			{
@@ -6540,11 +6564,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			
 			s.execute( 'file/compress', { source: zipPath, files: files, archiver: 'zip', destination: dest, path: lpath } );
 		}
+		else
+		{
+			Notify( { title: i18n( 'i18n_zip_start_none' ), text: i18n( 'i18n_zip_startdesc_none' ) } );
+		}
 	},
 	// Uncompress files
 	unzipFiles: function()
 	{
-		Notify( { title: i18n( 'i18n_unzip_start' ), text: i18n( 'i18n_unzip_startdesc' ) } );
 		var ic = currentMovable.content.icons;
 		var f = [];
 		for( var a = 0; a < ic.length; a++ )
@@ -6556,6 +6583,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		if( f.length )
 		{
+			Notify( { title: i18n( 'i18n_unzip_start' ), text: i18n( 'i18n_unzip_startdesc' ) } );
 			for( var a = 0; a < f.length; a++ )
 			{
 				var s = new Library( 'system.library' );
@@ -6599,6 +6627,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				s.execute( 'file/decompress', { path: f[a].Path, archiver: 'zip', detachtask : true } );
 			}
+		}
+		else
+		{
+			Notify( { title: i18n( 'i18n_unzip_start_none' ), text: i18n( 'i18n_unzip_startdesc_none' ) } );
 		}
 	},
 	// Refresh Doors menu recursively ------------------------------------------
@@ -8381,7 +8413,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			else if( e == 'fail' ) 
 			{
 				console.log( '[getsetting] Got "fail" response.' );
-				//console.trace();
 			}
 			
 			Workspace.serverIsThere = true;
@@ -9721,7 +9752,7 @@ function AboutFriendUP()
 {
 	if( !Workspace.sessionId ) return;
 	var v = new View( {
-		title: i18n( 'about_system' ) + ' v1.2.3',
+		title: i18n( 'about_system' ) + ' v1.2.4',
 		width: 540,
 		height: 560,
 		id: 'about_friendup'
@@ -9897,7 +9928,7 @@ function handleSASRequest( e )
 	function deny( sasid )
 	{
 		var dec = {
-			path : 'system.library/app/decline/',
+			path : 'system.library/sas/decline/',
 			data : {
 				sasid : sasid,
 			},
@@ -10273,7 +10304,7 @@ function mobileDebug( str, clear )
 // TODO: Test loading different themes
 
 _applicationBasics = {};
-function loadApplicationBasics()
+function loadApplicationBasics( callback )
 {
 	// Preload basic scripts
 	var a = new File( '/webclient/js/apps/api.js' );
@@ -10312,6 +10343,7 @@ function loadApplicationBasics()
 	j.onLoad = function( data )
 	{
 		_applicationBasics.js = data;
+		if( callback ) callback();
 	}
 	j.load();
 };

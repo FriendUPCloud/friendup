@@ -70,13 +70,7 @@ lws_poll_listen_fd(struct lws_pollfd *fd)
 }
 
 int
-lws_plat_check_connection_error(struct lws *wsi)
-{
-	return 0;
-}
-
-int
-lws_plat_set_nonblocking(int fd)
+lws_plat_set_nonblocking(lws_sockfd_type fd)
 {
 	return fcntl(fd, F_SETFL, O_NONBLOCK) < 0;
 }
@@ -250,7 +244,7 @@ lws_plat_if_up(const char *ifname, int fd, int up)
 }
 
 int
-lws_plat_BINDTODEVICE(int fd, const char *ifname)
+lws_plat_BINDTODEVICE(lws_sockfd_type fd, const char *ifname)
 {
 	lwsl_err("%s: UNIMPLEMENTED on this platform\n", __func__);
 

@@ -24,7 +24,6 @@
  * Included from lib/private-lib-core.h if LWS_PLAT_FREERTOS
  */
 
-#define MSG_NOSIGNAL 0
 #define SOMAXCONN 3
 
 #if defined(LWS_AMAZON_RTOS)
@@ -67,7 +66,9 @@ gai_strerror(int);
  #include <esp_task_wdt.h>
 #endif
 
+#if defined(LWS_WITH_ESP32)
 #include "lwip/apps/sntp.h"
+#endif
 
 #include <lwip/sockets.h>
 
@@ -92,6 +93,10 @@ gai_strerror(int);
    #include <sys/prctl.h>
   #endif
  #endif
+
+#if !defined(MSG_NOSIGNAL)
+#define MSG_NOSIGNAL 0
+#endif
 
 #define compatible_close(x) close(x)
 #define lws_plat_socket_offset() LWIP_SOCKET_OFFSET

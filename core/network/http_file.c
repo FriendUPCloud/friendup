@@ -31,10 +31,11 @@
  * @param fnamesize file name string length
  * @param data pointer to file data
  * @param size size of provided data
+ * @param allocate information if file contain pointer to data or data copy
  * @return HttpFile or NULL when error appear
  */
 
-HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, FQUAD size )
+HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, FQUAD size, FBOOL allocate )
 {
 	if( size <= 0 )
 	{
@@ -51,50 +52,59 @@ HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, FQUAD size )
 	
 	file->hf_FileHandle = -1;
 	
-	DEBUG("[HttpFileNew] File will be created, size: %ld\n", size );
-	if( size > TUNABLE_LARGE_HTTP_REQUEST_SIZE )
+	if( allocate == TRUE )
 	{
-		strcpy( file->hf_FileNameOnDisk, "/tmp/Friendup/Friend_File_XXXXXXXXXXXXXXXXX" );
-
-		//this is going to be a huge request, create a temporary file
-		//copy already received data to it and continue writing to the file
-		char *tmpFilename = mktemp( file->hf_FileNameOnDisk );
-		//DEBUG( "large upload will go to remporary file %s", tmp_filename );
-		if( strlen( file->hf_FileNameOnDisk ) == 0 )
+		file->hf_Allocated = TRUE;
+		
+		DEBUG("[HttpFileNew] File will be created, size: %ld\n", size );
+		if( size > TUNABLE_LARGE_HTTP_REQUEST_SIZE )
 		{
-			FERROR("mktemp failed!");
-			HttpFileDelete( file );
-			return NULL;
-		}
-		
-		file->hf_FileHandle = open( tmpFilename, O_RDWR | O_CREAT | O_EXCL, 0600/*permissions*/);
-		if( file->hf_FileHandle == -1 )
-		{
-			FERROR("temporary file open failed!");
-			HttpFileDelete( file );
-			return NULL;
-		}
-		
-		DEBUG("MMAP: HttpFileNew size: %lu\n", size );
-		//int sizes = lseek( file->hf_FileHandle, 0, SEEK_END);
-		//file->hf_Data = mmap( 0, sizes, PROT_READ | PROT_WRITE, MAP_SHARED, file->hf_FileHandle, 0/*offset*/);
-		file->hf_Data = mmap( 0, size, PROT_READ | PROT_WRITE, MAP_SHARED, file->hf_FileHandle, 0/*offset*/);
-		
-		int wrote = write( file->hf_FileHandle, data, size );
+			strcpy( file->hf_FileNameOnDisk, "/tmp/Friendup/Friend_File_XXXXXXXXXXXXXXXXX" );
 
-		DEBUG("[HttpFileNew] Store file END\n");
-		//printf("%02hhX", data[ z ] );   HEX DISPLAY
+			//this is going to be a huge request, create a temporary file
+			//copy already received data to it and continue writing to the file
+			char *tmpFilename = mktemp( file->hf_FileNameOnDisk );
+			//DEBUG( "large upload will go to remporary file %s", tmp_filename );
+			if( strlen( file->hf_FileNameOnDisk ) == 0 )
+			{
+				FERROR("mktemp failed!");
+				HttpFileDelete( file );
+				return NULL;
+			}
+		
+			file->hf_FileHandle = open( tmpFilename, O_RDWR | O_CREAT | O_EXCL, 0600/*permissions*/);
+			if( file->hf_FileHandle == -1 )
+			{
+				FERROR("temporary file open failed!");
+				HttpFileDelete( file );
+				return NULL;
+			}
+		
+			DEBUG("MMAP: HttpFileNew size: %lu\n", size );
+			//int sizes = lseek( file->hf_FileHandle, 0, SEEK_END);
+			//file->hf_Data = mmap( 0, sizes, PROT_READ | PROT_WRITE, MAP_SHARED, file->hf_FileHandle, 0/*offset*/);
+			file->hf_Data = mmap( 0, size, PROT_READ | PROT_WRITE, MAP_SHARED, file->hf_FileHandle, 0/*offset*/);
+		
+			int wrote = write( file->hf_FileHandle, data, size );
+
+			DEBUG("[HttpFileNew] Store file END\n");
+			//printf("%02hhX", data[ z ] );   HEX DISPLAY
+		}
+		else
+		{
+			char *locdata = FCalloc( size, sizeof( char ) );
+			if( locdata == NULL )
+			{
+				FERROR("Cannot allocate memory for HTTP file data\n");
+				return NULL;
+			}
+			memcpy( locdata, data, size );
+			file->hf_Data = locdata;
+		}
 	}
 	else
 	{
-		char *locdata = FCalloc( size, sizeof( char ) );
-		if( locdata == NULL )
-		{
-			FERROR("Cannot allocate memory for HTTP file data\n");
-			return NULL;
-		}
-		memcpy( locdata, data, size );
-		file->hf_Data = locdata;
+		file->hf_Data = data;
 	}
 	
 	strncpy( file->hf_FileName, filename, fnamesize );
@@ -115,20 +125,23 @@ void HttpFileDelete( HttpFile *f )
 {
 	if( f != NULL )
 	{
-		if( f->hf_FileHandle > 0 )
+		if( f->hf_Allocated == TRUE )	// if memory was allocated
 		{
-			if( f->hf_Data )
+			if( f->hf_FileHandle > 0 )
 			{
-				munmap( f->hf_Data, f->hf_FileSize );
+				if( f->hf_Data )
+				{
+					munmap( f->hf_Data, f->hf_FileSize );
+				}
+				close( f->hf_FileHandle );
+				unlink( f->hf_FileNameOnDisk );
 			}
-			close( f->hf_FileHandle );
-			unlink( f->hf_FileNameOnDisk );
-		}
-		else
-		{
-			if( f->hf_Data != NULL )
+			else
 			{
-				FFree( f->hf_Data );
+				if( f->hf_Data != NULL )
+				{
+					FFree( f->hf_Data );
+				}
 			}
 		}
 		

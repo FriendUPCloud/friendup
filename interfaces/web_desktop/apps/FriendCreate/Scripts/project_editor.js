@@ -281,6 +281,7 @@ function RemoveFiles( mode )
 }
 
 var priv = false;
+var lineSeed = 1;
 function AddPrivilege( pele )
 {
 	if( pele )
@@ -300,14 +301,15 @@ function AddPrivilege( pele )
 	}
 	if( !priv )
 	{
-		var sels = '<select class="FullWidth"><option value="Module">' + i18n( 'i18n_module' ) + '</option><option value="Library">' + i18n( 'i18n_library' ) + '</option><option value="Door">' + i18n( 'i18n_disk' ) + '</option></select>';
+		lineSeed++;
+		var sels = '<select class="FullWidth" onchange="evaluateOptions( this, ' + lineSeed + ' )"><option value="Module">' + i18n( 'i18n_module' ) + '</option><option value="Library">' + i18n( 'i18n_library' ) + '</option><option value="Door">' + i18n( 'i18n_disk' ) + '</option></select>';
 	
 		var p = document.createElement( 'div' );
 		var str = '';
-		str += '<div class="HRow BackgroundHeavier">';
+		str += '<div class="HRow BackgroundHeavier" id="Line' + ( lineSeed ) + '">';
 		str += '<div class="HContent30 Ellipsis FloatLeft PaddingSmall">' + sels + '</div>';
-		str += '<div class="HContent35 Ellipsis FloatLeft PaddingSmall"><input type="text" placeholder="' + i18n( 'i18n_named_item' ) + '" class="FullWidth"/></div>';
-		str += '<div class="HContent25 Ellipsis FloatLeft PaddingSmall"><input type="text" placeholder="' + i18n( 'i18n_options' ) + '" class="FullWidth"/></div>';
+		str += '<div class="HContent35 Ellipsis FloatLeft PaddingSmall"><input id="placeholderNamed' + lineSeed + '" type="text" placeholder="' + i18n( 'i18n_named_item' ) + '" class="FullWidth"/></div>';
+		str += '<div class="HContent25 Ellipsis FloatLeft PaddingSmall"><input id="placeholderOptions' + lineSeed + '" type="text" placeholder="' + i18n( 'i18n_options' ) + '" class="FullWidth"/></div>';
 		str += '<div class="HContent10 Ellipsis FloatLeft PaddingSmall"><button class="ImageButton IconSmall fa-check FullWidth" onclick="AddPrivilege(this)"></button></div>';
 		str += '</div>';
 		p.innerHTML = str;
@@ -316,6 +318,15 @@ function AddPrivilege( pele )
 	}
 	
 	priv.getElementsByTagName( 'input' )[0].focus();
+}
+
+function evaluateOptions( sel, line )
+{
+	if( sel.value == 'Door' )
+	{
+		ge( 'placeholderNamed' + line ).value = 'All';
+		ge( 'placeholderOptions' + line ).value = '';
+	}
 }
 
 function RemovePrivileges()

@@ -42,5 +42,5 @@ struct lws_event_loop_ops event_loop_ops_poll = {
 	/* destroy_pt */		NULL,
 	/* destroy wsi */		NULL,
 
-	/* periodic_events_available */	1,
+	/* flags */			LELOF_ISPOLL,
 };

@@ -22,7 +22,9 @@
  * IN THE SOFTWARE.
  */
 
+#if !defined(_GNU_SOURCE)
 #define _GNU_SOURCE
+#endif
 #include "private-lib-core.h"
 
 struct lws *
@@ -79,7 +81,7 @@ insert_wsi(const struct lws_context *context, struct lws *wsi)
 
 	/* confirm fd doesn't already exist */
 
-	while (p != done && (!*p || (*p && (*p)->desc.sockfd != wsi->desc.sockfd)))
+	while (p != done && (!*p || (*p)->desc.sockfd != wsi->desc.sockfd))
 		p++;
 
 	if (p != done) {
@@ -124,7 +126,7 @@ delete_from_fd(const struct lws_context *context, int fd)
 
 	/* find the match */
 
-	while (p != done && (!*p || (*p && (*p)->desc.sockfd != fd)))
+	while (p != done && (!*p || (*p)->desc.sockfd != fd))
 		p++;
 
 	if (p == done)
@@ -134,7 +136,7 @@ delete_from_fd(const struct lws_context *context, int fd)
 
 #if defined(_DEBUG)
 	p = context->lws_lookup;
-	while (p != done && (!*p || (*p && (*p)->desc.sockfd != fd)))
+	while (p != done && (!*p || (*p)->desc.sockfd != fd))
 		p++;
 
 	if (p != done) {

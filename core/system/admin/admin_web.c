@@ -555,49 +555,51 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 					User *usr = l->sl_UM->um_Users;
 					while( usr != NULL )
 					{
-						FRIEND_MUTEX_LOCK( &usr->u_Mutex );
-						UserSessListEntry  *usl = usr->u_SessionsList;
-						while( usl != NULL )
+						if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
 						{
-							UserSession *locses = (UserSession *)usl->us;
-							if( locses != NULL )
+							UserSessListEntry  *usl = usr->u_SessionsList;
+							while( usl != NULL )
 							{
-								DEBUG("[AdminWebRequest] Going through sessions, device: %s\n", locses->us_DeviceIdentity );
-						
-								if( ( (timestamp - locses->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) )
+								UserSession *locses = (UserSession *)usl->us;
+								if( locses != NULL )
 								{
-									char tmp[ 512 ];
-									int tmpsize = 0;
+									DEBUG("[AdminWebRequest] Going through sessions, device: %s\n", locses->us_DeviceIdentity );
+						
+									if( ( (timestamp - locses->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) )
+									{
+										char tmp[ 512 ];
+										int tmpsize = 0;
 								
-									if( pos == 0 )
-									{
-										tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\", \"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
-									}
-									else
-									{
-										tmpsize = snprintf( tmp, sizeof(tmp), ",{\"username\":\"%s\", \"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
-									}
+										if( pos == 0 )
+										{
+											tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\", \"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
+										}
+										else
+										{
+											tmpsize = snprintf( tmp, sizeof(tmp), ",{\"username\":\"%s\", \"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
+										}
 							
-									int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":{\"username\":\"%s\",\"message\":\"%s\"}}}", 
+										int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":{\"username\":\"%s\",\"message\":\"%s\"}}}", 
 										loggedSession->us_User->u_Name , msg );
 							
-									if( usersession != NULL && strcmp( usersession, locses->us_SessionID ) == 0 )
-									{
-										msgsndsize += WebSocketSendMessageInt( locses, sndbuffer, lenmsg );
-									}
-									else
-									{
-										msgsndsize += WebSocketSendMessageInt( locses, sndbuffer, lenmsg );
-									}
+										if( usersession != NULL && strcmp( usersession, locses->us_SessionID ) == 0 )
+										{
+											msgsndsize += WebSocketSendMessageInt( locses, sndbuffer, lenmsg );
+										}
+										else
+										{
+											msgsndsize += WebSocketSendMessageInt( locses, sndbuffer, lenmsg );
+										}
 							
-									BufStringAddSize( bs, tmp, tmpsize );
+										BufStringAddSize( bs, tmp, tmpsize );
 							
-									pos++;
+										pos++;
+									}
 								}
+								usl = (UserSessListEntry *)usl->node.mln_Succ;
 							}
-							usl = (UserSessListEntry *)usl->node.mln_Succ;
+							FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
 						}
-						FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
 						
 						usr = (User *)usr->node.mln_Succ;
 					}
@@ -618,32 +620,34 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 					User *usr = (User *)loggedSession->us_User;
 					if( usr != NULL )
 					{
-						FRIEND_MUTEX_LOCK( &usr->u_Mutex );
-						UserSessListEntry *usle = (UserSessListEntry *)usr->u_SessionsList;
-						int msgsndsize = 0;
-						while( usle != NULL )
+						if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
 						{
-							UserSession *ls = (UserSession *)usle->us;
-							if( ls != NULL )
+							UserSessListEntry *usle = (UserSessListEntry *)usr->u_SessionsList;
+							int msgsndsize = 0;
+							while( usle != NULL )
 							{
-								DEBUG("Going through all usersessions: %p, compare %s vs %s\n", ls->us_SessionID, usersession, ls->us_SessionID );
-								if( strcmp( usersession, ls->us_SessionID ) == 0 )
+								UserSession *ls = (UserSession *)usle->us;
+								if( ls != NULL )
 								{
-									DEBUG("Found same session, sending msg\n");
-									char tmp[ 512 ];
-									int tmpsize = 0;
+									DEBUG("Going through all usersessions: %p, compare %s vs %s\n", ls->us_SessionID, usersession, ls->us_SessionID );
+									if( strcmp( usersession, ls->us_SessionID ) == 0 )
+									{
+										DEBUG("Found same session, sending msg\n");
+										char tmp[ 512 ];
+										int tmpsize = 0;
 						
-									tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\", \"deviceidentity\":\"%s\"}", usr->u_Name, ls->us_DeviceIdentity );
+										tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\", \"deviceidentity\":\"%s\"}", usr->u_Name, ls->us_DeviceIdentity );
 							
-									int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":{\"username\":\"%s\",\"message\":\"%s\"}}}", 
-									loggedSession->us_User->u_Name , msg );
+										int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":{\"username\":\"%s\",\"message\":\"%s\"}}}", 
+										loggedSession->us_User->u_Name , msg );
 						
-									msgsndsize = WebSocketSendMessageInt( ls, sndbuffer, lenmsg );
+										msgsndsize = WebSocketSendMessageInt( ls, sndbuffer, lenmsg );
+									}
 								}
+								usle = (UserSessListEntry *)usle->node.mln_Succ;
 							}
-							usle = (UserSessListEntry *)usle->node.mln_Succ;
+							FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
 						}
-						FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
 					}
 					
 					//int status = MobileAppNotifyUser( SLIB, usr->u_Name, "test_app", "app_name", "title", "test message", MN_all_devices, NULL/*no extras*/, 0 );

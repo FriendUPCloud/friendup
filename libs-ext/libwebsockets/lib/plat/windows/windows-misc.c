@@ -68,10 +68,10 @@ time_t time(time_t *t)
 }
 #endif
 
-LWS_VISIBLE int
-lws_get_random(struct lws_context *context, void *buf, int len)
+size_t
+lws_get_random(struct lws_context *context, void *buf, size_t len)
 {
-	int n;
+	size_t n;
 	char *p = (char *)buf;
 
 	for (n = 0; n < len; n++)
@@ -81,7 +81,7 @@ lws_get_random(struct lws_context *context, void *buf, int len)
 }
 
 
-LWS_VISIBLE void
+void
 lwsl_emit_syslog(int level, const char *line)
 {
 	lwsl_emit_stderr(level, line);

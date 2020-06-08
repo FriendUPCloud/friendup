@@ -82,7 +82,7 @@ update(struct vhd *v)
 			close(fd);
 			if (n >= 0) {
 				contents[n] = '\0';
-				lws_json_purify(pure, contents, sizeof(pure));
+				lws_json_purify(pure, contents, sizeof(pure), NULL);
 			}
 		}
 
@@ -209,7 +209,7 @@ static const struct lws_protocols protocols[] = {
 	},
 };
 
-LWS_EXTERN LWS_VISIBLE int
+LWS_VISIBLE int
 init_protocol_lws_server_status(struct lws_context *context,
 				struct lws_plugin_capability *c)
 {
@@ -227,7 +227,7 @@ init_protocol_lws_server_status(struct lws_context *context,
 	return 0;
 }
 
-LWS_EXTERN LWS_VISIBLE int
+LWS_VISIBLE int
 destroy_protocol_lws_server_status(struct lws_context *context)
 {
 	return 0;

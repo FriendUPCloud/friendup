@@ -50,10 +50,10 @@ struct lws_dsh;
  * CARE: everything using cmake defines needs to be below here
  */
 
-#define LWS_US_PER_SEC 1000000
-#define LWS_MS_PER_SEC 1000
-#define LWS_US_PER_MS 1000
-#define LWS_NS_PER_US 1000
+#define LWS_US_PER_SEC ((lws_usec_t)1000000)
+#define LWS_MS_PER_SEC ((lws_usec_t)1000)
+#define LWS_US_PER_MS ((lws_usec_t)1000)
+#define LWS_NS_PER_US ((lws_usec_t)1000)
 
 #define LWS_KI (1024)
 #define LWS_MI (LWS_KI * 1024)
@@ -100,8 +100,6 @@ typedef unsigned long long lws_intptr_t;
 #else
 #define LWS_EXTERN extern __declspec(dllimport)
 #endif
-#else
-#define LWS_EXTERN
 #endif
 #endif
 
@@ -349,6 +347,11 @@ struct lws_pollfd {
 #define LWS_POLLHUP (FD_CLOSE)
 #define LWS_POLLIN (FD_READ | FD_ACCEPT)
 #define LWS_POLLOUT (FD_WRITE)
+
+#if !defined(pid_t)
+#define pid_t int
+#endif
+
 #else
 
 
@@ -545,6 +548,9 @@ struct lws;
 #include <libwebsockets/lws-protocols-plugins.h>
 #include <libwebsockets/lws-plugin-generic-sessions.h>
 #include <libwebsockets/lws-context-vhost.h>
+#if defined(LWS_ROLE_MQTT)
+#include <libwebsockets/lws-mqtt.h>
+#endif
 #include <libwebsockets/lws-client.h>
 #include <libwebsockets/lws-http.h>
 #include <libwebsockets/lws-spa.h>
@@ -570,10 +576,15 @@ struct lws;
 #include <libwebsockets/lws-fts.h>
 #include <libwebsockets/lws-diskcache.h>
 #include <libwebsockets/lws-sequencer.h>
+#include <libwebsockets/lws-secure-streams.h>
+#include <libwebsockets/lws-secure-streams-policy.h>
+#include <libwebsockets/lws-secure-streams-client.h>
 
+#if !defined(LWS_PLAT_FREERTOS)
 #include <libwebsockets/abstract/abstract.h>
 
 #include <libwebsockets/lws-test-sequencer.h>
+#endif
 #include <libwebsockets/lws-async-dns.h>
 
 #if defined(LWS_WITH_TLS)

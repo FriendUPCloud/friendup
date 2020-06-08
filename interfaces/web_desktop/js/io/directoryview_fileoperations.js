@@ -38,7 +38,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 		}
 		m.execute( 'installpackage', { path: fileInfo.Path } );
 	}
-
+	
 	// Check if this is a special view
 	if( this.fileInfo && this.fileInfo.Path && this.fileInfo.Path.indexOf( 'System:' ) == 0 )
 	{
@@ -96,7 +96,10 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 	if( !dview.content && !dview.object.file )
 		return;
 	
-	var cfo = mode == 'view' ? dview.content.fileInfo : dview.object.file.fileInfo;
+	var cfo_tmp = mode == 'view' ? dview.content.fileInfo : dview.object.file.fileInfo;
+	
+	// Make copy
+	var cfo = JSON.parse( JSON.stringify( cfo_tmp ) );
 
 	var dragFromWindow = eles[0].window;
 
@@ -680,7 +683,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						// Could be we have a just in time modified new path instead of path (in case of overwriting etc)
 						var destPath = fl.fileInfo.NewPath ? fl.fileInfo.NewPath : fl.fileInfo.Path;
 						
-						toPath = cfo.Path + p + destPath.split( eles[0].window.fileInfo.Path ).join( '' );
+						toPath = cfo.Path + p + destPath.split( dPath ).join( '' );
 						door = Workspace.getDoorByPath( fl.fileInfo.Path );
 						door.cancelId = series;
 
@@ -705,6 +708,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 									} );
 									fob.stop = true;
 									CancelCajaxOnId( series );
+									w.close();
 									return;
 								}						
 								if( fob.stop ) return;
@@ -734,7 +738,9 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 							p = '/';
 
 						var dir = this.directories.shift();
-						var toPath = cfo.Path + p + dir.fileInfo.Path.split(eles[0].window.fileInfo.Path).join('');
+						
+						var toPath = cfo.Path + p + dir.fileInfo.Path.split( dPath ).join( '' );
+						
 						var door = Workspace.getDoorByPath( cfo.Path );
 						door.cancelId = series;
 
@@ -757,11 +763,15 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 								// Failed - alert user
 								else
 								{
-									Notify( { title: i18n( 'i18n_filecopy_error' ), text: i18n( 'i18n_could_not_make_dir' ) + ' (' + toPath + ')' } );
+									// We stopped due to an error
+									if( !fileCopyObject.stop )
+									{
+										Notify( { title: i18n( 'i18n_filecopy_error' ), text: i18n( 'i18n_could_not_make_dir' ) + ' (' + toPath + ')' } );
+									}
 									w.close();
 									sview.refresh();
 								}
-							});
+							} );
 						}
 					
 						// If dir has infofile, copy it first
@@ -810,7 +820,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						var f = fileCopyObject.files;
 						var nf = [];
 						for( var b = this.stepsize; b < f.length; b++ )
-							nf.push( f[b] );
+							nf.push( f[ b ] );
 						fileCopyObject.files = nf;
 						fileCopyObject.copyFiles();
 					}
@@ -865,7 +875,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 										l.execute( 'file/notifychanges', { path: fob.files[0].fileInfo.Path } );
 										var l = new Library( 'system.library' );
 										l.cancelId = series;
-										l.execute( 'file/notifychanges', { path: eles[0].window.fileInfo.Path } );
+										l.execute( 'file/notifychanges', { path: dPath } );
 									}
 								} );
 							}
@@ -880,10 +890,13 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 							// Tell Friend Core something changed
 							var l = new Library( 'system.library' );
 							l.cancelId = series;
-							var p = winobj._window ? ( winobj._window.fileInfo.Path ? winobj._window.fileInfo.Path : winobj._window.fileInfo.Volume ) : false;
-							if( p )
+							if( typeof( winobj ) != 'undefined' && winobj )
 							{
-								l.execute( 'file/notifychanges', { path: p } );
+								var p = winobj._window ? ( winobj._window.fileInfo.Path ? winobj._window.fileInfo.Path : winobj._window.fileInfo.Volume ) : false;
+								if( p )
+								{
+									l.execute( 'file/notifychanges', { path: p } );
+								}
 							}
 						}
 						// Clean out
@@ -919,7 +932,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						// Set in directories and files
 						var alldirs = [];
 						var allfiles = [];
-						for(var i = 0; i < this.files.length; i++)
+						for( let i = 0; i < this.files.length; i++ )
 						{
 							if( this.files[i].fileInfo.Type == 'Directory' )
 							{

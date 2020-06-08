@@ -19,6 +19,7 @@
 #include <util/log/log.h>
 #include <util/list.h>
 #include <util/buffered_string.h>
+#include <util/buffered_string_disk.h>
 #include <util/list_string.h>
 #include <util/string.h>
 #include <sys/file.h>
@@ -189,11 +190,12 @@ char *GetFileName( const char *path )
 
 //#define PHP_READ_SIZE 262144
 //#define PHP_READ_SIZE 2048
-#define PHP_READ_SIZE 132144
+//#define PHP_READ_SIZE 132144
+#define PHP_READ_SIZE (1024 * 1024 * 2)
 #define USE_NPOPEN_POLL
 
 //
-// php call, send request, read answer
+// php call, send request, read answer (for big files
 //
 
 ListString *PHPCall( const char *command )
@@ -254,7 +256,6 @@ ListString *PHPCall( const char *command )
 		{
 			errCounter++;
 			DEBUG("ErrCounter: %d\n", errCounter );
-
 			break;
 		}
 	}
@@ -313,6 +314,176 @@ ListString *PHPCall( const char *command )
 	DEBUG( "[fsysphp] Finished PHP call...(%lu length)-\n", ls->ls_Size );
 	return ls;
 }
+
+//
+//
+//
+/*
+BufStringDisk *PHPCallDisk( const char *command )
+{
+	BufStringDisk *ls = BufStringDiskNew();
+	FILE *pipe = popen( command, "r" );
+	DEBUG("[PHPCallDisk]: popen done\n\n\n\n\ncommand: %s\n\n\n\n", command );
+	if( !pipe )
+	{
+#define PHP_READ_SIZE 65536
+		char *buf = FMalloc( PHP_READ_SIZE );
+		DEBUG("[PHPCallDisk]: Buffer allocated\n");
+		if( buf != NULL )
+		{
+			while( !feof( pipe ) )
+			{
+				// Make a new buffer and read
+				int size = fread( buf, sizeof(char), PHP_READ_SIZE, pipe );
+				DEBUG("[PHPCallDisk]: Data read %d\n", size );
+
+				if( size > 0 )
+				{
+					BufStringDiskAddSize( ls, buf, size );
+				}
+			}
+			FFree( buf );
+			DEBUG("[PHPCallDisk]: Buffer released\n");
+		}
+		else
+		{
+			FERROR("[PHPCallDisk]: calloc fail\n");
+		}
+		pclose( pipe  );
+		DEBUG("[PHPCallDisk]: pipe closed\n");
+	}
+	else
+	{
+		FERROR("[PHPCallDisk]: Popen fail\n");
+		FERROR("Error opening file unexist.ent: %s\n",strerror(errno) );
+	}
+	return ls;
+}
+*/
+
+
+
+//
+// php call, send request, read answer
+//
+
+BufStringDisk *PHPCallDisk( const char *command )
+{
+	DEBUG("[PHPCallDisk] run app: '%s'\n", command );
+    
+	NPOpenFD pofd;
+	int err = newpopen( command, &pofd );
+	if( err != 0 )
+	{
+		FERROR("[PHPCallDisk] cannot open pipe: %s\n", strerror( errno ) );
+		return NULL;
+	}
+	
+	char *buf = FMalloc( PHP_READ_SIZE+16 );
+	//ListString *ls = ListStringNew();
+	BufStringDisk *ls = BufStringDiskNew();
+	int errCounter = 0;
+	int size = 0;
+
+#ifdef USE_NPOPEN_POLL
+	struct pollfd fds[2];
+
+	// watch stdin for input 
+	fds[0].fd = pofd.np_FD[ NPOPEN_CONSOLE ];// STDIN_FILENO;
+	fds[0].events = POLLIN;
+
+	// watch stdout for ability to write
+	fds[1].fd = STDOUT_FILENO;
+	fds[1].events = POLLOUT;
+
+	while( TRUE )
+	{
+		int ret = poll( fds, 2, FILESYSTEM_MOD_TIMEOUT * 1000);
+
+		if( ret == 0 )
+		{
+			DEBUG("[PHPCallDisk] Timeout!\n");
+			break;
+		}
+		else if(  ret < 0 )
+		{
+			DEBUG("[PHPCallDisk] Error\n");
+			break;
+		}
+		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
+
+		DEBUG( "[PHPCallDisk] Adding %d of data\n", size );
+		if( size > 0 )
+		{
+			//DEBUG( "[PHPCallDisk] before adding to list\n");
+			BufStringDiskAddSize( ls, buf, size );
+			
+			//DEBUG( "[PHPCallDisk] after adding to list: %s\n", buf );
+			//res += size;
+		}
+		else
+		{
+			errCounter++;
+			DEBUG("[PHPCallDisk] ErrCounter: %d\n", errCounter );
+
+			break;
+		}
+	}
+#else
+	fd_set set;
+	struct timeval timeout;
+
+	// Initialize the timeout data structure. 
+	timeout.tv_sec = FILESYSTEM_MOD_TIMEOUT;
+	timeout.tv_usec = 0;
+
+	while( TRUE )
+	{
+		// Initialize the file descriptor set. 
+		FD_ZERO( &set );
+		FD_SET( pofd.np_FD[ NPOPEN_CONSOLE ], &set);
+		
+		int ret = select( pofd.np_FD[ NPOPEN_CONSOLE ]+1, &set, NULL, NULL, &timeout );
+		// Make a new buffer and read
+		if( ret == 0 )
+		{
+			DEBUG("Timeout!\n");
+			break;
+		}
+		else if(  ret < 0 )
+		{
+			DEBUG("FSYSPHP: SELECT Error\n");
+			break;
+		}
+		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
+		DEBUG("[PHPCallDisk] in loop, received: %d\n", size );
+
+		if( size > 0 )
+		{
+			//ListStringAdd( ls, buf, size );
+			BufStringDiskAddSize( ls, buf, size );
+		}
+		else
+		{
+			errCounter++;
+			if( errCounter > 30 )
+			{
+				//FERROR("Error in popen, Quit! Command: %s\n", command );
+				break;
+			}
+		}
+	}
+#endif
+	
+	FFree( buf );
+
+	// Free pipe if it's there
+	newpclose( &pofd );
+	
+	DEBUG( "[PHPCallDisk] Finished PHP call...(%lu length)-\n", ls->bsd_Size );
+	return ls;
+}
+
 
 //
 //
@@ -838,29 +1009,56 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		DEBUG( "[fsysphp] Getting data for tempfile, seen below as command:\n" );
 		DEBUG( "[fsysphp] %s\n", command );
 		
-		ListString *result = PHPCall( command );
+		BufStringDisk *result = PHPCallDisk( command );
+		//ListString *result = PHPCall( command );
 
 		// Open a file pointer
 		if( result )
 		{
-			if( result->ls_Data )
+			if( result->bsd_Buffer && result->bsd_Size> 0 )
+			//if( result->ls_Data )
 			{
-				if( strncmp( result->ls_Data, "fail", 4 ) == 0 )
+				//if( strncmp( result->ls_Data, "fail", 4 ) == 0 )
+				if( strncmp( result->bsd_Buffer, "fail", 4 ) == 0 )
 				{
 					FERROR( "[fsysphp] [FileOpen] Failed to get exclusive lock on lockfile. Fail returned.\n" );
 					FFree( command );
 					FFree( encodedcomm );
-					ListStringDelete( result );
+					BufStringDiskDelete( result );
+					//ListStringDelete( result );
 					close( lockf );
 					unlink( tmpfilename );
 					return NULL;
 				}
 				
 				// Write the buffer to the file
-				int written = write( lockf, ( void *)result->ls_Data, result->ls_Size );
+				char *dataptr = result->bsd_Buffer;
+				FQUAD toWrite = result->bsd_Size;
+				int store = PHP_READ_SIZE;
+				
+				if( ((FQUAD)store) > toWrite )
+				{
+					store = (int)toWrite;
+				}
+				
+				while( toWrite > 0 )
+				{
+					int rbytes = write( lockf, ( void *)dataptr, store );
+					dataptr += rbytes;
+					toWrite -= rbytes;
+					
+					if( ((FQUAD)store) > toWrite )
+					{
+						store = (int)toWrite;
+					}
+				}
+				
+				//int written = write( lockf, ( void *)result->bsd_Buffer, result->bsd_Size );
+				//int written = write( lockf, ( void *)result->ls_Data, result->ls_Size );
 	
 				// Clean out result
-				ListStringDelete( result ); result = NULL;
+				BufStringDiskDelete( result ); result = NULL;
+				//ListStringDelete( result ); result = NULL;
 
 				// Remove lock!
 				//fcntl( lockf, F_SETLKW ); // TODO: Why the hell was this here? :-D
@@ -915,7 +1113,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 			// Remove result with no data
 			else
 			{
-				ListStringDelete( result );
+				BufStringDiskDelete( result );
 			}
 		}
 		else
@@ -1078,16 +1276,16 @@ int FileClose( struct File *s, void *fp )
 						sprintf( command, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 						FFree( commandCnt );
 				
-						ListString *result = PHPCall( command );
+						BufStringDisk *result = PHPCallDisk( command );
 						if( result != NULL )
 						{
-							if( result->ls_Data[0] == 'f' && result->ls_Data[1] == 'a' && result->ls_Data[2] == 'i' && result->ls_Data[3] == 'l' )
+							if( result->bsd_Buffer[0] == 'f' && result->bsd_Buffer[1] == 'a' && result->bsd_Buffer[2] == 'i' && result->bsd_Buffer[3] == 'l' )
 							{
 								closeerr = 2;
 							}
 							
 							DEBUG( "[fsysphp] Closed file using PHP call.\n" );
-							ListStringDelete( result );
+							BufStringDiskDelete( result );
 						}
 					}
 					FFree( command );
