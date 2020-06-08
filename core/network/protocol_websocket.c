@@ -1012,7 +1012,38 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 	case LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER:
 		//Log( FLOG_INFO, "[WS] LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER\n");
 		break;
-
+	
+	case LWS_CALLBACK_PROTOCOL_DESTROY:
+		// protocol will be destroyed
+		if( fcd != NULL && fcd->wsc_Wsi != NULL )
+		{
+			while( TRUE )
+			{
+				if( fcd->wsc_InUseCounter <= 0 )
+				{
+					DEBUG("[WS] Callback closed!\n");
+					break;
+				}
+				DEBUG("[WS] Closing WS, number: %d\n", fcd->wsc_InUseCounter );
+				sleep( 1 );
+			}
+			DetachWebsocketFromSession( fcd );
+	
+			if( fcd->wsc_Buffer != NULL )
+			{
+				BufStringDelete( fcd->wsc_Buffer );
+			}
+	
+			lws_close_reason( wsi, LWS_CLOSE_STATUS_GOINGAWAY , NULL, 0 );
+		
+			pthread_mutex_destroy( &(fcd->wsc_Mutex) );
+	
+			Log( FLOG_DEBUG, "[WS] Callback LWS_CALLBACK_PROTOCOL_DESTROY\n");
+			
+			fcd->wsc_Wsi = NULL;
+		}
+		break;
+		
 	default:
 		// disabled for test
 		//Log( FLOG_INFO, "[WS] Default Call, size: %d - reason: %d\n", (int)len, reason );

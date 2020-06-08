@@ -149,6 +149,7 @@ void UserSessionDelete( UserSession *us )
 			}
 		}
 		
+		us->us_WSD = NULL;
 		FQDeInitFree( &(us->us_MsgQueue) );
 		//UserSessionWebsocketDeInit( &(us->us_Websockets) );
 
