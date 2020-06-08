@@ -16,63 +16,47 @@ Sections.accounts_workgroups = function( cmd, extra )
 	{
 		
 		case 'details':
-			
 			loading();
-			
 			break;
 		
 		case 'edit':
-			
 			if( extra && extra.id && extra._this )
 			{
 				edit( extra.id, extra._this );
 			}
-			
 			break;
 		
 		case 'create':
-			
 			create();
-			
 			break;
 		
 		case 'update':
-			
 			if( extra && extra.id && extra.value )
 			{
 				update( extra.id, extra.value );
 			}
-			
 			break;
 		
 		case 'update_role':
-			
 			if( extra && extra.rid && extra.groupid && extra._this )
 			{
 				updateRole( extra.rid, extra.groupid, extra._this );
 			}
-			
 			break;
 		
 		case 'remove':
-			
 			if( extra )
 			{
 				remove( extra );
 			}
-			
 			break;
 		
 		case 'refresh':
-			
 			initMain();
-			
 			break;
 		
 		default:
-			
 			initMain();
-			
 			break;
 		
 	}
@@ -816,31 +800,40 @@ Sections.accounts_workgroups = function( cmd, extra )
 					Notify( { title: i18n( 'i18n_disk_success' ), text: i18n( 'i18n_disk_edited' ) } );
 				}
 				
-				remountDisk( ( elems[ 'Name' ] && elems[ 'Name' ].current ? elems[ 'Name' ].current : data.Name ), data.Name, data.userid, function()
+				if( elems[ 'Name' ].hasAttribute('data-mount-state') && elems[ 'Name' ].getAttribute('data-mount-state') == '1' )
 				{
-					
-					// Refresh init.refresh();
-					
-					Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
-					
-					if( callback )
+					remountDisk( ( elems[ 'Name' ] && elems[ 'Name' ].current ? elems[ 'Name' ].current : data.Name ), data.Name, data.userid, function()
 					{
-						callback();
-					}
-					
-				} );
+						// Refresh init.refresh();
+						Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
+						if( callback )
+						{
+							callback();
+						}
+					} );					
+				}
+				else if( callback )
+				{
+					callback();
+				}
 			}
 			
 			console.log( data );
 			
-			// Edit?
-			if( diskid > 0 )
+			// if the disk is mounted, we need to unmount it based on its old name first.
+			if( elems[ 'Name' ].hasAttribute('data-stored-value') &&  elems[ 'Name' ].hasAttribute('data-mount-state') && elems[ 'Name' ].getAttribute('data-mount-state') == '1' )
+			{
+				unmountDisk( elems[ 'Name' ].getAttribute('data-stored-value'), userid, function( e, d )
+				{
+					data.ID = diskid;
+					m.execute( 'editfilesystem', data );
+				});
+			}
+			else if( diskid > 0 )
 			{
 				data.ID = diskid;
-			
 				m.execute( 'editfilesystem', data );
 			}
-			// Add new...
 			else
 			{
 				m.execute( 'addfilesystem', data );
@@ -2500,7 +2493,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 											free : readableBytes( ( size - used ), 0 ), 
 											prog : ( ( used / size * 100 ) > 100 ? 100 : ( used / size * 100 ) ), 
 											icon : '/iconthemes/friendup15/DriveLabels/FriendDisk.svg',
-											mont : sorted[b].Mounted
+											mount : sorted[b].Mounted
 										};
 			
 										if( Friend.dosDrivers[ storage.type ] && Friend.dosDrivers[ storage.type ].iconLabel )
@@ -2530,7 +2523,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 														d.style.opacity = '0.6';
 													}
 													return d;
-												}( storage.mont ),
+												}( storage.mount ),
 								
 												'child' : 
 												[ 
@@ -2691,7 +2684,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 												free : ( size - used ), 
 												prog : ( ( used / size * 100 ) > 100 ? 100 : ( used / size * 100 ) ), 
 												icon : '/iconthemes/friendup15/DriveLabels/FriendDisk.svg',
-												mont : js.Mounted
+												mount : js.Mounted
 											};
 											
 										}
@@ -2755,7 +2748,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																+ '		<strong>' + i18n( 'i18n_name' ) + ':</strong>'
 																+ '	</div>'
 																+ '	<div class="HContent70 FloatLeft Ellipsis">'
-																+ '		<input type="text" class="FullWidth" id="Name" value="' + storage.name + '" placeholder="Mydisk"/>'
+																+ '		<input type="text" class="FullWidth" id="Name" value="' + storage.name + '" data-stored-value="' + storage.name + '" data-mount-state="'+ storage.mount +'" placeholder="Mydisk"/>'
 																+ '	</div>';
 																return d;
 															}( storage )
@@ -3141,7 +3134,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																{
 																	var d = document.createElement( 'button' );
 																	d.className = 'IconSmall FloatLeft MarginRight';
-																	d.innerHTML = ( storage.mont > 0 ? 'Unmount disk' : 'Mount disk' );
+																	d.innerHTML = ( storage.mount > 0 ? i18n('i18n_unmount_disk') : i18n('i18n_mount_disk') );
 																	d.onclick = function ()
 																	{
 																	

@@ -166,7 +166,7 @@ Sections.accounts_roles = function( cmd, extra )
 				var d = document.createElement( 'div' );
 				d.className = 'PaddingSmallLeft PaddingSmallRight HContent' + ( types[ z ] ? types[ z ] : '-' ) + ' FloatLeft Ellipsis' + borders;
 				if( z == 'Edit' ) z = '&nbsp;';
-				d.innerHTML = '<strong' + ( z != '&nbsp;' ? '' : '' ) + '>' + ( z != '&nbsp;' ? i18n( 'i18n_header_' + z ) : '&nbsp;' ) + '</strong>';
+				d.innerHTML = '<strong' + ( z != '&nbsp;' ? '' : '' ) + '>' + ( z != '&nbsp;' ? i18n( 'i18n_header_role_' + z ) : '&nbsp;' ) + '</strong>';
 				headRow.appendChild( d );
 			}
 		
