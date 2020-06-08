@@ -2239,20 +2239,20 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 
 	while( quit != TRUE )
 	{
-		if( sock->s_Blocked == TRUE )
+		//if( sock->s_Blocked == TRUE )
 		{
-			int ret = poll( fds, 2, 10 * 1000);
+			int ret = poll( fds, 1, 10 * 1000);
 			
-			DEBUG("Before select\n");
+			DEBUG("[SocketReadTillEnd] Before select, ret: %d\n", ret );
 			if( ret == 0 )
 			{
-				DEBUG("Timeout!\n");
+				DEBUG("[SocketReadTillEnd] Timeout!\n");
 				BufStringDelete( bs );
 				return NULL;
 			}
-			else if(  ret < 0 )
+			else if( ret < 0 )
 			{
-				DEBUG("Error\n");
+				DEBUG("[SocketReadTillEnd] Error\n");
 				BufStringDelete( bs );
 				return NULL;
 			}
@@ -2279,15 +2279,20 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 			unsigned int read = 0;
 			int res = 0, err = 0;//, buf = length;
 			int retries = 0;
+			DEBUG("[SocketReadTillEnd] SSL enabled\n");
 
-			while( TRUE )
+			if( fds->revents & EPOLLIN )
+			//if( fds.revents & POLLIN )
+			//while( TRUE )
 			{
-				//DEBUG("Before read\n");
+				DEBUG("[SocketReadTillEnd] Before read\n");
 				//if( read + buf > length ) buf = length - read;
 				if( ( res = SSL_read( sock->s_Ssl, locbuffer, locbuffersize ) ) >= 0 )
 				{
 					read += (unsigned int)res;
 
+					DEBUG("[SocketReadTillEnd] Read: %d\n", res );
+					
 					FULONG *rdat = (FULONG *)locbuffer;
 					if( ID_FCRE == rdat[ 0 ] )
 					{
@@ -2300,10 +2305,12 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 						return bs;
 					}
 				}
+				DEBUG("[SocketReadTillEnd] res2 : %d\n", res );
 
 				if( res < 0 )
 				{
 					err = SSL_get_error( sock->s_Ssl, res );
+					DEBUG("[SocketReadTillEnd] err: %d\n", err );
 					switch( err )
 					{
 
@@ -2317,14 +2324,14 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 						return bs;
 						// The operation did not complete. Call again.
 					case SSL_ERROR_WANT_READ:
-						return bs;
+						break;
 
 					case SSL_ERROR_WANT_WRITE:
 						return bs;
 					case SSL_ERROR_SYSCALL:
 						return bs;
 					default:
-
+						DEBUG("default\n");
 						usleep( 50 );
 						if( retries++ > 15 )
 						{
@@ -2334,6 +2341,7 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 				}
 				else if( res == 0 )
 				{
+					DEBUG("res = 0\n");
 					if( retries++ > 15 )
 					{
 						return bs;
