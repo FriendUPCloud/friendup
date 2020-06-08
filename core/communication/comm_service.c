@@ -45,7 +45,7 @@
 #include <hardware/network.h>
 
 // disable debug
-#undef __DEBUG
+//#undef __DEBUG
 
 #define FLAGS S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH
 #define MAX_MSG 50

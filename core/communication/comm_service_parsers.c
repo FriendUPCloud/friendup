@@ -42,7 +42,7 @@
 #include <system/systembase.h>
 
 // disable debug
-#undef __DEBUG
+//#undef __DEBUG
 
 /**
  * Parse and run incomming Service messages

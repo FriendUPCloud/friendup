@@ -670,6 +670,7 @@ int DetachWebsocketFromSession( void *d )
 		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 		{
 			us->us_Wsi = NULL;
+			us->us_WSD = NULL;
 		
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
