@@ -513,7 +513,7 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
 							
 							actDataForm = DataFormNew( tags );
 							
-							DEBUG("[CommServiceRemote] Messsage received from systembase, responseid %lu\n", actDataForm[ 1 ].df_Size );
+							DEBUG("[CommServiceRemote] Messsage received from systembase, responseid %lu response: %s\n", actDataForm[ 1 ].df_Size, response->http_Content );
 							
 							HttpFree( response );
 						}
