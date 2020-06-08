@@ -10,6 +10,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
+/* Gets the device settings from FMetaData and returns it in a JSON structure */
+
 global $SqlDatabase, $User;
 
 // Single device

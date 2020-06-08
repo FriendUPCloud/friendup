@@ -5147,7 +5147,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						return;
 					} 
 
-					var sn = new Library( 'system.library' );
+					let sn = new Library( 'system.library' );
 					sn.onExecuted = function( returnCode, returnData )
 					{
 						// If we got an OK result, then parse the return data (json data)
@@ -5172,12 +5172,26 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								}
 							];
 						}
-						setInformation( rd );
+						let vi = new Module( 'system' );
+						vi.onExecuted = function( er, dr )
+						{
+							setInformation( rd, er == 'ok' ? dr : false );
+						}
+						vi.execute( 'devicesettings', { filesystem: dn } );
 					}
 					sn.execute( 'file/access', { devname: dn, path: pt } ); 
 
-					function setInformation( rd )
+					function setInformation( rd, vsettings )
 					{
+						if( vsettings )
+						{
+							try
+							{
+								vsettings = JSON.parse( vsettings );
+							}
+							catch( e ){};
+						}
+						
 						w.setContent( d.split( '!!' ).join( Workspace.seed ) );
 
 						Workspace.iconInfoDataField( w.getWindowElement(), true );
@@ -5195,6 +5209,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						var visibility = false;
 						var inp = w.getWindowElement().getElementsByTagName( 'input' );
 						var visval = icon.Config && icon.Config.visibility ? icon.Config.visibility : 'visible';
+						
+						if( visval == 'visible' )
+						{
+							// From settings
+							if( vsettings && vsettings.Visibility )
+								visval = vsettings.Visibility;
+						}
+						
 						for( var a = 0; a < inp.length; a++ )
 						{
 							if( inp[a].name == 'visibility' )
