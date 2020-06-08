@@ -4081,7 +4081,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								if( r.Visible != 'false' )
 									r.Visible = true;
 								else r.Visible = false;
-								if( typeof( visStruct[ nam ] ) != 'undefined' )
+								if( visStruct && typeof( visStruct[ nam ] ) != 'undefined' )
 									r.Visible = visStruct[ nam ].Visibility == 'visible' ? true : false;
 								
 								o = {
