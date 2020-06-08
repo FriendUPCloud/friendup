@@ -6414,8 +6414,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 	}
 	// Used cached data
-	else if( packet.cachedAppData )
-	{	
+	else if( packet.cachedAppData && packet.cachedAppData.js )
+	{
 		var style = document.createElement( 'style' );
 		style.innerHTML = packet.cachedAppData.css;
 		head.appendChild( style );
@@ -6469,9 +6469,19 @@ function CreateSlider( inputField, flags )
 	g.appendChild( b );
 	d.appendChild( g );
 	
+	var gauge = null;
+	
 	if( !flags ) flags = {};
-	if( !flags.min ) flags.min = 0;
-	if( !flags.max ) flags.max = 100;
+	if( !flags.min  ) flags.min = 0;
+	if( !flags.max  ) flags.max = 100;
+	if( !flags.type ) flags.type = 'default';
+	
+	if( flags.type == 'volume' )
+	{
+		gauge = document.createElement( 'div' );
+		gauge.className = 'SliderGauge';
+		g.appendChild( gauge );
+	}
 	
 	if( inputField.getAttribute( 'min' ) )
 		flags.min = parseInt( inputField.getAttribute( 'min' ) );
@@ -6498,10 +6508,18 @@ function CreateSlider( inputField, flags )
 		if( !flags || !flags.vertical )
 		{
 			b.style.left = Math.floor( ( ( val - flags.min ) / flags.max ) * ( GetElementWidth( g ) - b.offsetWidth ) ) + 'px';
+			if( gauge )
+			{
+				gauge.style.width = parseInt( b.style.left ) + 'px';
+			}
 		}
 		else
 		{
 			b.style.top = Math.floor( ( ( val - flags.min ) / flags.max ) * ( GetElementHeight( g ) - b.offsetHeight ) ) + 'px';
+			if( gauge )
+			{
+				gauge.style.height = parseInt( b.style.top ) + 'px';
+			}
 		}
 		if( inputField.getAttribute( 'onchange' ) )
 		{
@@ -6526,6 +6544,10 @@ function CreateSlider( inputField, flags )
 			else if( x + b.offsetWidth >= GetElementWidth( g ) )
 				x = GetElementWidth( g ) - b.offsetWidth;
 			b.style.left = x + 'px';
+			if( gauge )
+			{
+				gauge.style.width = x + 'px';
+			}
 			inputField.value = Math.floor( ( x / ( GetElementWidth( g ) - b.offsetWidth ) * ( flags.max - flags.min ) ) - flags.min ) + flags.min;
 		}
 		else
@@ -6535,6 +6557,10 @@ function CreateSlider( inputField, flags )
 			if( y + b.offsetHeight > GetElementHeight( g ) )
 				y = GetElementHeight( g ) - b.offsetHeight;
 			b.style.top = y + 'px';
+			if( gauge )
+			{
+				gauge.style.height = y + 'px';
+			}
 			inputField.value = Math.floor( ( y / ( GetElementHeight( g ) - b.offsetHeight ) * ( flags.max - flags.min ) ) - flags.min ) + flags.min;
 		}
 		if( inputField.getAttribute( 'onchange' ) )

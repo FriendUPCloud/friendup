@@ -457,7 +457,7 @@ html body.Loading #FriendScreenOverlay
 	color: #c92918;
 }
 
-.ViewContainer
+body:not([sharedapp]) .ViewContainer
 {
 	perspective: 1000px;
 }
