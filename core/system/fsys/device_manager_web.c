@@ -1412,16 +1412,8 @@ AND LOWER(f.Name) = LOWER('%s')",
 					{
 						DEBUG("[DeviceMWebRequest] Devices were not mounted for user. They will be mounted now\n");
 					
-						SQLLibrary *sqllib  = l->LibrarySQLGet( l );
-						if( sqllib != NULL )
-						{
-							UserDeviceMount( l, sqllib, user, 0, TRUE, &error, TRUE );
-							l->LibrarySQLDrop( l, sqllib );
-						}
-						else
-						{
-							FERROR("Cannot get sql.library slot\n");
-						}
+						UserDeviceMount( l, user, 0, TRUE, &error, TRUE );
+
 					}
 				
 					File *file = FCalloc( 1, sizeof( File ) );

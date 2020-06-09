@@ -772,7 +772,7 @@ char *SASSessionAddUsersByName( SASSession *as, UserSession *loggedSession, char
 								int err = 0;
 								char tmp[ 512 ];
 
-								if( usrses->us_WSConnections == NULL )
+								if( usrses->us_WSD == NULL )
 								{
 									int tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"deviceid\":\"%s\",\"result\":\"not invited\"}", usrses->us_User->u_Name, usrses->us_DeviceIdentity );
 									if( pos > 0  )
@@ -829,9 +829,9 @@ char *SASSessionAddUsersByName( SASSession *as, UserSession *loggedSession, char
 				{
 					UserSession *ses = (UserSession *)curgusr->usersession;
 					
-					DEBUG("[SASSessionAddUsersByName] Found user session %p wscon %p\n", ses, ses->us_WSConnections );
+					DEBUG("[SASSessionAddUsersByName] Found user session %p wscon %p\n", ses, ses->us_WSD );
 					
-					if( ses != NULL && ses->us_WSConnections != NULL && ses != loggedSession )
+					if( ses != NULL && ses->us_WSD != NULL && ses != loggedSession )
 					{
 						char tmp[ 512 ];
 						int tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"deviceid\":\"%s\",\"result\":\"invited\"}", ses->us_User->u_Name, ses->us_DeviceIdentity );
@@ -1063,6 +1063,7 @@ typedef struct RWSCon
 
 int SASSessionRemByWebSocket( SASSession *as,  void *lwsc )
 {
+	/*
 	UserSessionWebsocket *ws = (UserSessionWebsocket *) lwsc;
 	RWSCon *root = NULL;
 	RWSCon *rwsentr = NULL;
@@ -1151,22 +1152,6 @@ int SASSessionRemByWebSocket( SASSession *as,  void *lwsc )
 			{
 				int err = 0;
 				// *
-				/*
-				char tmpmsg[ 255 ];
-				int msgsize = snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"client-close\",\"data\":\"%s\"}", re->sasuentry->usersession->us_User->u_Name );
-			
-				DEBUG("[AppSession] Session found and will be removed\n");
-			
-				if( re->as->sas_UserSessionList == re->sasuentry )
-				{
-					err = AppSessionSendMessage( as, re->sasuentry->usersession, tmpmsg, msgsize, NULL );
-				}
-				else
-				{
-					err = AppSessionSendOwnerMessage( as, re->sasuentry->usersession, tmpmsg, msgsize );
-				}
-				//
-				*/
 			
 				err = SASSessionRemUserSession( re->as, re->sasuentry->usersession );
 			
@@ -1174,6 +1159,7 @@ int SASSessionRemByWebSocket( SASSession *as,  void *lwsc )
 			}
 		}
 	}	//  as == NULL
+	*/
 	/*
 	if( ws->wusc_Data != NULL )
 	{

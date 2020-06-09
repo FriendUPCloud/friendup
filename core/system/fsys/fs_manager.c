@@ -609,11 +609,6 @@ OR \
 			// remove old entries
 			//
 			
-			// DELETE `FPermLink` WHERE PermissionID in( SELECT * FROM `FFilePermission` WHERE Path = '%s'  )
-			
-			// DELETE `FFilePermission` WHERE Path = '%s' 
-			
-			//DELETE FROM `FPermLink` WHERE PermissionID in( SELECT ID FROM `FFilePermission` WHERE Path='stefkosdev:wallhaven-241962.jpg' AND DeviceID=6 )
 			if( permissionid > 0 )
 			{
 				DEBUG("[FSManagerProtect3] Found permission, remove old entries\n");
@@ -622,11 +617,6 @@ OR \
 			
 				sqllib->QueryWithoutResults( sqllib, tmpQuery );
 			}
-			
-			// there is no need to remove main entry from DB
-			//sqllib->SNPrintF( sqllib, tmpQuery, querysize,  " DELETE  FROM`FFilePermission` WHERE Path='%s' AND DeviceID=%lu", path, devid );
-			//sprintf( tmpQuery, " DELETE `FFilePermission` WHERE Path='%s' AND DeviceID=%lu", path, devid );
-			//sqllib->QueryWithoutResults( sqllib, tmpQuery );
 			
 			FFree( tmpQuery );
 		}
@@ -675,9 +665,7 @@ OR \
 			
 			UserGroupLink *ugl = usr->u_UserGroupLinks;
 			while( ugl != NULL )
-			//for( i=0 ; i <usr->u_GroupsNr ; i++ )
 			{
-				//UserGroup *ug = usr->u_Groups[ i ];
 				UserGroup *ug = ugl->ugl_Group;
 				if( ug != NULL )
 				{
@@ -1163,11 +1151,11 @@ OR \
 		}
 	}
 	
+	sb->LibrarySQLDrop( sb, sqlLib );
+	
 	BufStringAddSize( bsres, permPtrLast, ( &recv->bs_Buffer[ recv->bs_Size ] )-permPtrLast );
 	
 	BufStringDelete( recv );
-	
-	sb->LibrarySQLDrop( sb, sqlLib );
 	
 	return bsres;
 }

@@ -454,7 +454,7 @@ void *FriendCoreAcceptPhase2( void *d )
 	socklen_t clientLen = sizeof( client );
 	int fd = 0;
 	
-	//DEBUG("[FriendCoreAcceptPhase2] before accept4\n");
+	DEBUG("[FriendCoreAcceptPhase2] before accept4\n");
 	
 	while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) > 0 )
 	{
@@ -490,6 +490,7 @@ void *FriendCoreAcceptPhase2( void *d )
 					DEBUG("[AcceptPair] Accept return bad fd\n");
 					goto accerror;
 			}
+			DEBUG("[AcceptPair] Cannot create fd\n");
 			goto accerror;
 		}
 		
@@ -498,6 +499,7 @@ void *FriendCoreAcceptPhase2( void *d )
 		int prerr = getpeername( fd, (struct sockaddr *) &client, &clientLen );
 		if( prerr == -1 )
 		{
+			DEBUG("[AcceptPair]  gerpeername fail\n");
 			shutdown( fd, SHUT_RDWR );
 			close( fd );
 			goto accerror;
@@ -536,6 +538,7 @@ void *FriendCoreAcceptPhase2( void *d )
 			SSL_CTX_set_session_cache_mode( fc->fci_Sockets->s_Ctx, SSL_SESS_CACHE_CLIENT | SSL_SESS_CACHE_NO_INTERNAL_STORE);
 			
 			incoming->s_Ssl = SSL_new( fc->fci_Sockets->s_Ctx );
+			DEBUG("[AcceptPair] SSL done\n");
 
 			if( incoming->s_Ssl == NULL )
 			{
@@ -645,9 +648,9 @@ void *FriendCoreAcceptPhase2( void *d )
 		}
 		else
 		{
-			//DEBUG("No SSL\n");
+			DEBUG("No SSL\n");
 		}
-		//DEBUG("[FriendCoreAcceptPhase2] before getting incoming\n");
+		DEBUG("[FriendCoreAcceptPhase2] before getting incoming\n");
 		
 		// We got incoming!
 		if( incoming != NULL )

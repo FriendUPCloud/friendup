@@ -74,7 +74,7 @@
 //
 //
 
-extern int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
+extern int UserDeviceMount( SystemBase *l, User *usr, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
 
 
 /**
@@ -955,7 +955,11 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	
 	if( loginLogoutCalled == FALSE && loggedSession != NULL )
 	{
-		loggedSession->us_InUseCounter++;
+		if( FRIEND_MUTEX_LOCK( &(loggedSession->us_Mutex ) ) == 0 )
+		{
+			loggedSession->us_InUseCounter++;
+			FRIEND_MUTEX_UNLOCK( &(loggedSession->us_Mutex ) );
+		}
 	}
 	
 	/// @cond WEB_CALL_DOCUMENTATION
@@ -1805,13 +1809,14 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								{ 
 								
 								}
+								l->LibrarySQLDrop( l, sqlLib );
 							
 								UMAddUser( l->sl_UM, loggedSession->us_User );
 							
 								DEBUG("New user and session added\n");
 							
 								char *err = NULL;
-								UserDeviceMount( l, sqlLib, loggedSession->us_User, 0, TRUE, &err, TRUE );
+								UserDeviceMount( l, loggedSession->us_User, 0, TRUE, &err, TRUE );
 								if( err != NULL )
 								{
 									Log( FLOG_ERROR, "Login mount error. UserID: %lu Error: %s\n", loggedSession->us_User->u_ID, err );
@@ -1820,7 +1825,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							
 								DEBUG("Devices mounted\n");
 								userAdded = TRUE;
-								l->LibrarySQLDrop( l, sqlLib );
 							}
 							else
 							{
@@ -2124,13 +2128,15 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								{ 
 
 								}
+								l->LibrarySQLDrop( l, sqlLib );
+								
 								DEBUG("[SystembaseWeb] user login\n");
 
 								loggedSession->us_MobileAppID = umaID;
 								UMAddUser( l->sl_UM, loggedSession->us_User );
 
 								char *err = NULL;
-								UserDeviceMount( l, sqlLib, loggedSession->us_User, 0, TRUE, &err, TRUE );
+								UserDeviceMount( l, loggedSession->us_User, 0, TRUE, &err, TRUE );
 								if( err != NULL )
 								{
 									Log( FLOG_ERROR, "Login1 mount error. UserID: %lu Error: %s\n", loggedSession->us_User->u_ID, err );
@@ -2138,7 +2144,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								}
 
 								userAdded = TRUE;
-								l->LibrarySQLDrop( l, sqlLib );
 							}
 						}
 						else
@@ -2332,7 +2337,11 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	Log( FLOG_INFO, "\t\t\tWEB REQUEST FUNCTION func END: %s\n", urlpath[ 0 ] );
 	if( loginLogoutCalled == FALSE && loggedSession != NULL )
 	{
-		loggedSession->us_InUseCounter--;
+		if( FRIEND_MUTEX_LOCK( &(loggedSession->us_Mutex ) ) == 0 )
+		{
+			loggedSession->us_InUseCounter--;
+			FRIEND_MUTEX_UNLOCK( &(loggedSession->us_Mutex ) );
+		}
 	}
 	
 	FFree( sessionid );
@@ -2343,7 +2352,11 @@ error:
 	Log( FLOG_INFO, "\t\t\tWEB REQUEST FUNCTION func EERROR END: %s\n", urlpath[ 0 ] );
 	if( loginLogoutCalled == FALSE && loggedSession != NULL )
 	{
-		loggedSession->us_InUseCounter--;
+		if( FRIEND_MUTEX_LOCK( &(loggedSession->us_Mutex ) ) == 0 )
+		{
+			loggedSession->us_InUseCounter--;
+			FRIEND_MUTEX_UNLOCK( &(loggedSession->us_Mutex ) );
+		}
 	}
 
 	FFree( sessionid );

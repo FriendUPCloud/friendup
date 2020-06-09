@@ -238,7 +238,7 @@ SystemBase *SystemInit( void )
 	l->LibraryImageDrop = LibraryImageDrop;
 	l->WebSocketSendMessage = WebSocketSendMessage;
 	l->WebSocketSendMessageInt = WebSocketSendMessageInt;
-	l->WebsocketWrite = WebsocketWrite;
+	l->WebsocketWrite = UserSessionWebsocketWrite;
 	l->SendProcessMessage = SendProcessMessage;
 	l->GetRootDeviceByName = GetRootDeviceByName;
 	l->SystemInitExternal = SystemInitExternal;
@@ -1058,11 +1058,13 @@ void SystemClose( SystemBase *l )
 		return;
 	}
 	
+	/*
 	if( l->l_APNSConnection != NULL )
 	{
 		WebsocketAPNSConnectorDelete( l->l_APNSConnection );
 		l->l_APNSConnection = NULL;
 	}
+	*/
 	
 	if( l->sl_MobileManager != NULL )
 	{
@@ -1421,8 +1423,7 @@ int SystemInitExternal( SystemBase *l )
 	USMRemoveOldSessionsinDB( l );
 
 	DEBUG("[SystemBase] init users and all stuff connected to them\n");
-	SQLLibrary *sqllib  = l->LibrarySQLGet( l );
-	if( sqllib != NULL )
+	
 	{
 		//  get all users active
 	
@@ -1654,7 +1655,7 @@ int SystemInitExternal( SystemBase *l )
 		{
 			char *err = NULL;
 			DEBUG( "[SystemBase] FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
-			UserDeviceMount( l, sqllib, tmpUser, 1, TRUE, &err, FALSE );
+			UserDeviceMount( l, tmpUser, 1, TRUE, &err, FALSE );
 			if( err != NULL )
 			{
 				Log( FLOG_ERROR, "Initial system mount error. UserID: %lu Error: %s\n", tmpUser->u_ID, err );
@@ -1676,8 +1677,6 @@ int SystemInitExternal( SystemBase *l )
 		{
 			sentUser = l->sl_Sentinel->s_User;
 		}*/
-		
-		l->LibrarySQLDrop( l, sqllib );
 		
 		UGMMountDrives( l->sl_UGM );
 	}
@@ -1965,11 +1964,17 @@ void CheckAndUpdateDB( struct SystemBase *l )
 	Log( FLOG_INFO, "----------------------------------------------------\n");
 }
 
+
+typedef struct DevNode
+{
+	char				*dn_Table[ 10 ];
+	MinNode				node;
+}DevNode;
+
 /**
  * Load and mount all user doors
  *
  * @param l pointer to SystemBase
- * @param sqllib pointer to sql.library
  * @param usr pointer to user to which doors belong
  * @param force integer 0 = don't force 1 = force
  * @param unmountIfFail should be device unmounted in DB if mount will fail
@@ -1978,9 +1983,10 @@ void CheckAndUpdateDB( struct SystemBase *l )
  * @return 0 if everything went fine, otherwise error number
  */
 
-int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail, char **mountError, FBOOL notify )
+int UserDeviceMount( SystemBase *l, User *usr, int force, FBOOL unmountIfFail, char **mountError, FBOOL notify )
 {	
 	Log( FLOG_INFO,  "[UserDeviceMount] Mount user device from Database\n");
+	SQLLibrary *sqllib;
 	
 	if( usr == NULL )
 	{
@@ -1994,12 +2000,19 @@ int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FB
 		return 0;
 	}
 	
-	FRIEND_MUTEX_LOCK( &l->sl_DeviceManager->dm_Mutex );
+	sqllib = l->LibrarySQLGet( l );
+	if( sqllib == NULL )
+	{
+		DEBUG("[UserDeviceMount] SQLlib = NULL\n");
+		return 0;
+	}
 	
-	char temptext[ 1024 ];
+	if( FRIEND_MUTEX_LOCK( &l->sl_DeviceManager->dm_Mutex ) == 0 )
+	{
+		char temptext[ 1024 ];
 	//char *temptext = FCalloc( 1024, 1 );
 
-	sqllib->SNPrintF( sqllib, temptext, 1024 ,"\
+		sqllib->SNPrintF( sqllib, temptext, 1024 ,"\
 SELECT \
 `Name`, `Type`, `Server`, `Port`, `Path`, `Mounted`, `UserID`, `ID` \
 FROM `Filesystem` f \
@@ -2016,18 +2029,19 @@ ug.UserID = '%ld' \
 )AND ( (f.Owner='0' OR f.Owner IS NULL) AND f.Mounted=\'1\')", 
 usr->u_ID , usr->u_ID, usr->u_ID
 	);
-	DEBUG("[UserDeviceMount] Finding drives in DB\n");
-	void *res = sqllib->Query( sqllib, temptext );
-	if( res == NULL )
-	{
-		Log( FLOG_ERROR,  "[UserDeviceMount] UserDeviceMount fail: database results = NULL\n");
-		return 0;
-	}
-	DEBUG("[UserDeviceMount] Finding drives in DB no error during select:\n\n");
+		DEBUG("[UserDeviceMount] Finding drives in DB\n");
+		void *res = sqllib->Query( sqllib, temptext );
+		if( res == NULL )
+		{
+			Log( FLOG_ERROR,  "[UserDeviceMount] UserDeviceMount fail: database results = NULL\n");
+			l->LibrarySQLDrop( l, sqllib );
+			FRIEND_MUTEX_UNLOCK( &l->sl_DeviceManager->dm_Mutex );
+			return 0;
+		}
+		DEBUG("[UserDeviceMount] Finding drives in DB no error during select:\n\n");
 	
-	//if( FRIEND_MUTEX_LOCK( &l->sl_DeviceManager->dm_Mutex ) == 0 )
-	{
 		char **row;
+		DevNode *rootDev = NULL;
 
 		while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
 		{
@@ -2035,16 +2049,44 @@ usr->u_ID , usr->u_ID, usr->u_ID
 
 			DEBUG("[UserDeviceMount] \tFound database -> Name '%s' Type '%s', Server '%s', Port '%s', Path '%s', Mounted '%s'\n", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ], row[ 5 ] );
 		
-			int mount = atoi( row[ 5 ] );
-			int id = atol( row[ 7 ] );
-			User *owner = NULL;
+			// make a list of devices
+			DevNode *ne = FCalloc( 1, sizeof(DevNode ) );
+			if( ne != NULL )
+			{
+				ne->dn_Table[ 0 ] = StringDuplicate( row[0] );
+				ne->dn_Table[ 1 ] = StringDuplicate( row[1] );
+				ne->dn_Table[ 4 ] = StringDuplicate( row[4] );
+				ne->dn_Table[ 5 ] = StringDuplicate( row[5] );
+				ne->dn_Table[ 7 ] = StringDuplicate( row[7] );
+				
+				ne->node.mln_Succ = (MinNode *)rootDev;
+				rootDev = ne;
+			}
+		}	// going through all rows
+		DEBUG( "[UserDeviceMount] Device mounted for user %s\n\n", usr->u_Name );
 
+		sqllib->FreeResult( sqllib, res );
+		l->LibrarySQLDrop( l, sqllib );
+		FRIEND_MUTEX_UNLOCK( &l->sl_DeviceManager->dm_Mutex );
+		
+		// mount all devices
+		DevNode *actDev = rootDev;
+		DevNode *remDev = rootDev;
+		while( actDev != NULL )
+		{
+			remDev = actDev;
+			actDev = (DevNode *)actDev->node.mln_Succ;
+			
+			int mount = atoi( remDev->dn_Table[ 5 ] );
+			int id = atol( remDev->dn_Table[ 7 ] );
+			User *owner = NULL;
+			
 			struct TagItem tags[] = {
-				{ FSys_Mount_Path,    (FULONG)row[ 4 ] },
+				{ FSys_Mount_Path,    (FULONG)remDev->dn_Table[ 4 ] },
 				{ FSys_Mount_Server,  (FULONG)NULL },
 				{ FSys_Mount_Port,    (FULONG)NULL },
-				{ FSys_Mount_Type,    (FULONG)row[ 1 ] },
-				{ FSys_Mount_Name,    (FULONG)row[ 0 ] },
+				{ FSys_Mount_Type,    (FULONG)remDev->dn_Table[ 1 ] },
+				{ FSys_Mount_Name,    (FULONG)remDev->dn_Table[ 0 ] },
 				{ FSys_Mount_UserName, (FULONG)usr->u_Name },
 				{ FSys_Mount_Owner,   (FULONG)owner },
 				{ FSys_Mount_ID,      (FULONG)id },
@@ -2054,19 +2096,16 @@ usr->u_ID , usr->u_ID, usr->u_ID
 				{TAG_DONE, TAG_DONE}
 			};
 
-			FRIEND_MUTEX_UNLOCK( &l->sl_DeviceManager->dm_Mutex );
-
 			File *device = NULL;
 			DEBUG("[UserDeviceMount] Before mounting\n");
 			
 			int err = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &device, usr, mountError, usr->u_IsAdmin, notify );
 
-			FRIEND_MUTEX_LOCK( &l->sl_DeviceManager->dm_Mutex );
-
+			sqllib = l->LibrarySQLGet( l );
 			// if there is error but error is not "device is already mounted"
 			if( err != 0 && err != FSys_Error_DeviceAlreadyMounted )
 			{
-				Log( FLOG_ERROR,"[UserDeviceMount] \tCannot mount device, device '%s' will be unmounted. ERROR %d\n", row[ 0 ], err );
+				Log( FLOG_ERROR,"[UserDeviceMount] \tCannot mount device, device '%s' will be unmounted. ERROR %d\n", remDev->dn_Table[ 0 ], err );
 				// if unmountIfFail is set
 				// and if error is not equal to FSys_Error_CustomError which is returned when main drive is installed but not shareddrive (for other users)
 				if( unmountIfFail == TRUE && err != FSys_Error_CustomError )
@@ -2110,18 +2149,20 @@ AND LOWER(f.Name) = LOWER('%s')",
 			}
 			else
 			{
-				Log( FLOG_ERROR, "[UserDeviceMount] \tCannot set device mounted state. Device = NULL (%s).\n", row[0] );
+				Log( FLOG_ERROR, "[UserDeviceMount] \tCannot set device mounted state. Device = NULL (%s).\n", remDev->dn_Table[ 0 ] );
 			}
+			l->LibrarySQLDrop( l, sqllib );
 			
-			//FRIEND_MUTEX_UNLOCK( &l->sl_DeviceManager->dm_Mutex );
-		}	// going through all rows
-		DEBUG( "[UserDeviceMount] Device mounted for user %s\n\n", usr->u_Name );
-
-		sqllib->FreeResult( sqllib, res );
+			if( remDev->dn_Table[ 0 ] != NULL ){ FFree( remDev->dn_Table[ 0 ] ); }
+			if( remDev->dn_Table[ 1 ] != NULL ){ FFree( remDev->dn_Table[ 1 ] ); }
+			if( remDev->dn_Table[ 4 ] != NULL ){ FFree( remDev->dn_Table[ 4 ] ); }
+			if( remDev->dn_Table[ 5 ] != NULL ){ FFree( remDev->dn_Table[ 5 ] ); }
+			if( remDev->dn_Table[ 7 ] != NULL ){ FFree( remDev->dn_Table[ 7 ] ); }
+			FFree( remDev );
+		}
 
 		usr->u_InitialDevMount = TRUE;
 	}
-	FRIEND_MUTEX_UNLOCK( &l->sl_DeviceManager->dm_Mutex );
 	
 	return 0;
 }
@@ -2536,24 +2577,17 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 		memcpy( buf, msg, len );
 	
 		DEBUG("[SystemBase] Writing to websockets, string '%s' size %d\n",msg, len );
-		if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
+		//if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
 		{
-			UserSessionWebsocket *wsc = usersession->us_WSConnections;
-			while( wsc != NULL )
+			if( usersession->us_WSD != NULL )
 			{
-				DEBUG("[SystemBase] Writing to websockets, pointer to wsdata %p, ptr to ws: %p wscptr: %p\n", wsc->wusc_Data, usersession, wsc );
-
-				if( wsc->wusc_Data != NULL )
-				{
-					bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
-				}
-				else
-				{
-					FERROR("Cannot write to WS, WSI is NULL!\n");
-				}
-				wsc = (UserSessionWebsocket *)wsc->node.mln_Succ;
+				bytes += UserSessionWebsocketWrite( usersession , buf , len, LWS_WRITE_TEXT );
 			}
-			FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
+			else
+			{
+				FERROR("Cannot write to WS, WSI is NULL!\n");
+			}
+			//FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
 		}
 		DEBUG("[SystemBase] Writing to websockets done, stuff released\n");
 		
@@ -2589,34 +2623,15 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len )
 		{
 			memcpy( buf, msg,  len );
 
-			if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
+			if( usersession->us_WSD != NULL && usersession->us_WebSocketStatus == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
 			{
-				UserSessionWebsocket *wsc = usersession->us_WSConnections;
-		
-				DEBUG("[SystemBase] Writing to websockets, string '%s' size %d ptr to websocket connection %p\n",msg, len, wsc );
-		
-				//if( usersession->us_WebSocketStatus == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
-				{
-					while( wsc != NULL )
-					{
-						//if(  )//&& wsc->wusc_Status == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
-						{
-							//WSCData *data = (WSCData *)wsc->wusc_Data;
-							if( wsc->wusc_Data != NULL && wsc->wusc_Status == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
-							{
-								bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
-							}
-							else
-							{
-								DEBUG("Websocket is disabled, dataptr: %p\n", wsc->wusc_Data );
-							}
-						}
-						wsc = (UserSessionWebsocket *)wsc->node.mln_Succ;
-					}
-				}
-				FFree( buf );
-				FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
+				bytes += UserSessionWebsocketWrite( usersession , buf , len, LWS_WRITE_TEXT );
 			}
+			else
+			{
+				DEBUG("Websocket is disabled, dataptr: %p\n", msg );
+			}
+			FFree( buf );
 		}
 		else
 		{

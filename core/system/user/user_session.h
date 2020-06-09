@@ -59,8 +59,6 @@ typedef struct UserSession
 	MinNode					node;
 	
 	FULONG					us_ID;						// User session ID
-	//WebsocketServerClient	*us_WSClients;
-	UserSessionWebsocket	*us_WSConnections;			// Websocket connection
 	pthread_mutex_t			us_Mutex;					// User mutex
 	
 	FULONG					us_UserID;					// ID of user to which session is attached
@@ -82,7 +80,15 @@ typedef struct UserSession
 	void					*us_DOSToken;				// 
 	FULONG					us_MobileAppID;				//
 	UserMobileApp			*us_MobileApp;				// 
-	//int						us_WebSocketStatus;	// status of websocket
+	
+	// WEBSOCKETS
+	//UserSessionWebsocket	us_Websockets;
+	
+	int						us_WebSocketStatus;	// status of websocket
+	struct lws				*us_Wsi;				// pointer to WSI
+	FQueue					us_MsgQueue;			// message queue
+	time_t					us_LastPingTime;		// ping timestamp
+	void					*us_WSD;				// pointer to WebsocketData
 }UserSession;
 
 //
@@ -107,11 +113,9 @@ void UserSessionInit( UserSession *us );
 //
 //
 
-UserSessionWebsocket *UserSessionRemoveConnection( UserSession *us, UserSessionWebsocket *wscl );
+int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msglen, int type );
 
-//
-//
-//
+
 
 static FULONG UserSessionDesc[] = { 
     SQLT_TABNAME, (FULONG)"FUserSession",       

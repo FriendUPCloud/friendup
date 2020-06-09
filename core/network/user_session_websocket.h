@@ -36,12 +36,16 @@ enum
 //
 //
 //
-
+/*
 typedef struct UserSessionWebsocket
 {
-	struct MinNode 					node;
-	WSCData							*wusc_Data;
-	int								wusc_Status;	// moved to UserSession
+	int						usw_Status;	// moved to UserSession
+	int						usw_WebSocketStatus;	// status of websocket
+	struct lws				*usw_Wsi;				// pointer to WSI
+	int						usw_WSInUseCounter;		// what is current usage
+	FQueue					usw_MsgQueue;			// message queue
+	time_t					usw_LastPingTime;		// ping timestamp
+	void					*usw_WSD;				// pointer to WebsocketData
 }UserSessionWebsocket;
 
 
@@ -56,6 +60,19 @@ UserSessionWebsocket *UserSessionWebsocketNew();
 //
 
 void UserSessionWebsocketDelete( UserSessionWebsocket *cl );
+
+//
+//
+//
+
+void UserSessionWebsocketInit( UserSessionWebsocket *usw );
+
+//
+//
+//
+
+void UserSessionWebsocketDeInit( UserSessionWebsocket *usw );
+*/
 
 #endif // __NETWORK_USER_SESSION_WEBSOCKET__
 

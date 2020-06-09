@@ -27,6 +27,7 @@ extern SystemBase *SLIB;
  *
  * @return new UserSessionWebsocket structure when success, otherwise NULL
  */
+/*
 UserSessionWebsocket *UserSessionWebsocketNew()
 {
 	UserSessionWebsocket *cl = FCalloc( 1, sizeof(UserSessionWebsocket) );
@@ -36,25 +37,21 @@ UserSessionWebsocket *UserSessionWebsocketNew()
 	}
 	return cl;
 }
+*/
 
 /**
  * Delete UserSessionWebsocket
  *
  * @param cl pointer to UserSessionWebsocket which will be deleted
  */
+
+/*
 void UserSessionWebsocketDelete( UserSessionWebsocket *cl )
 {
 	if( cl != NULL )
 	{
 		DEBUG("[UserSessionWebsocketDelete] Close\n");
 		
-		// Disabled, connection should be removed when user session is closed
-		/*
-		if( SLIB != NULL && SLIB->sl_AppSessionManager != NULL )
-		{
-			AppSessionRemByWebSocket( SLIB->sl_AppSessionManager->sl_AppSessions, cl );
-		}
-		*/
 		
 		Log( FLOG_DEBUG, "[UserSessionWebsocketDelete] connection will be removed\n");
 		WSCData *data = (WSCData *)cl->wusc_Data;
@@ -88,15 +85,6 @@ void UserSessionWebsocketDelete( UserSessionWebsocket *cl )
 				}
 				usleep( 500 );
 			}
-			/*
-			if( FRIEND_MUTEX_LOCK( &(data->wsc_Mutex) ) == 0 )
-			{
-				data->wsc_WebsocketsServerClient = NULL;
-				data->wsc_UserSession = NULL;
-				
-				FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
-			}
-			*/
 			cl->wusc_Data = NULL;
 		}
 
@@ -104,4 +92,16 @@ void UserSessionWebsocketDelete( UserSessionWebsocket *cl )
 		DEBUG("[UserSessionWebsocketDelete]Done!\n");
 	}
 }
+*/
 
+/*
+void UserSessionWebsocketInit( UserSessionWebsocket *usw )
+{
+	FQInit( &(usw->usw_MsgQueue) );
+}
+
+void UserSessionWebsocketDeInit( UserSessionWebsocket *usw )
+{
+	FQDeInitFree( &(usw->usw_MsgQueue) );
+}
+*/

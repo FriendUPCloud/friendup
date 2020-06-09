@@ -333,7 +333,7 @@ typedef struct Http
 	FBOOL				http_GotHeader;
 	FBOOL				http_GotBody;
 	
-	char				*http_PartDivider;
+	char				http_PartDivider[ 256 ];
 	char				http_PartDividerLen;
 	FBOOL				http_ContentType;
 	FQUAD				http_ContentLength;
@@ -342,7 +342,7 @@ typedef struct Http
 	HttpFile			*http_FileList;
 	
 	FBOOL				http_Stream;			// stream
-	UserSessionWebsocket *http_WSocket;				// websocket context, if provided data should be delivered here
+	WSCData				*http_WSocket;				// websocket context, if provided data should be delivered here
 	Socket				*http_Socket;		// socket,  if != NULL  data should be delivered here
 	
 	int					http_WriteType;

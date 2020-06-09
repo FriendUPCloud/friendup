@@ -57,6 +57,7 @@ MobileManager *MobileManagerNew( void *sb )
 			}
 		}
 		
+		/*
 		DEBUG("lsb->l_APNSConnection ptr %p\n", lsb->l_APNSConnection );
 		if( lsb->l_APNSConnection != NULL )
 		{
@@ -81,25 +82,10 @@ MobileManager *MobileManagerNew( void *sb )
 				}
 			
 			//'{"auth":"72e3e9ff5ac019cb41aed52c795d9f4c","action":"notify","payload":"hellooooo","sound":"default","token":"1f3b66d2d16e402b5235e1f6f703b7b2a7aacc265b5af526875551475a90e3fe","badge":1,"category":"whatever"}'
-			/*
-			DEBUG("[MobileManagerNew] create connection\n");
-			lma->uma_WSClient = WebsocketClientNew( sb->l_AppleServerHost, sb->l_AppleServerPort, NULL );
-			if( lma->uma_WSClient != NULL )
-			{
-				if( WebsocketClientConnect( lma->uma_WSClient ) > 0 )
-				{
-					DEBUG("[MobileManagerNew] connected\n");
-				}
-				else
-				{
-					DEBUG("[MobileManagerNew] not connected\n");
-				}
-			}
-			DEBUG("Going to next pointer %p\n", lma );
-			*/
 				lma = (UserMobileApp *)lma->node.mln_Succ;
 			}
 		}
+		*/
 	}
 	DEBUG("[MobileManagerNew] end\n");
 	return mm;
@@ -422,7 +408,10 @@ UserMobileApp *GetMobileAppByUserName( MobileManager *mmgr, SQLLibrary *sqllib, 
  */
 FULONG MobileManagerGetUMAIDByDeviceIDAndUserName( MobileManager *mmgr, SQLLibrary *sqllib, FULONG userID, const char *deviceid )
 {
-	UserMobileApp *root = NULL;
+	if( sqllib == NULL )
+	{
+		return 0;
+	}
 	char query[ 256 ];
 	FULONG tokID = 0;
 	
@@ -1004,7 +993,17 @@ BufString *MobleManagerAppTokensByUserPlatformDB( MobileManager *mmgr, FULONG us
 		char *temp2= FMalloc( LOCAL_TMP_LEN );
 		if( qery != NULL && temp != NULL && temp2 != NULL )
 		{
-			lsqllib->SNPrintF( lsqllib, qery, 1024, "select uma.ID,uma.AppToken from FUserMobileApp uma where uma.Platform='%s' AND uma.Status=0 AND uma.UserID=%lu AND LENGTH( uma.AppToken ) > 0 GROUP BY uma.ID", mobileType, userID );
+			//lsqllib->SNPrintF( lsqllib, qery, 1024, "select uma.ID,uma.AppToken from FUserMobileApp uma where uma.Platform='%s' AND uma.Status=0 AND uma.UserID=%lu AND LENGTH( uma.AppToken ) > 0 GROUP BY uma.ID", mobileType, userID );
+			
+			if( type == MOBILE_APP_TYPE_FIREBASE )
+			{
+				lsqllib->SNPrintF( lsqllib, qery, LOCAL_TMP_LEN, "select uma.ID,uma.AppToken from FUserMobileApp uma where uma.Status=0 AND uma.UserID=%lu AND LENGTH( uma.AppToken ) > 0 GROUP BY uma.ID", userID );
+			}
+			else
+			{
+				lsqllib->SNPrintF( lsqllib, qery, LOCAL_TMP_LEN, "select uma.ID,uma.AppToken from FUserMobileApp uma where uma.Platform='%s' AND uma.Status=0 AND uma.UserID=%lu AND LENGTH( uma.AppToken ) > 0 GROUP BY uma.ID", mobileType, userID );
+			}
+			
 			void *res = lsqllib->Query( lsqllib, qery );
 			if( res != NULL )
 			{
@@ -1063,7 +1062,18 @@ BufString *MobleManagerAppTokensByUserPlatformDB( MobileManager *mmgr, FULONG us
 					BufStringDelete( sqlInsertBs );
 				}
 			}	// res != NULL
+		}
+		if( qery != NULL )
+		{
 			FFree( qery );
+		}
+		if( temp != NULL )
+		{
+			FFree( temp );
+		}
+		if( temp2 != NULL )
+		{
+			FFree( temp2 );
 		}
 		sb->LibrarySQLDrop( sb, lsqllib );
 	}

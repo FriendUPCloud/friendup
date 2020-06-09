@@ -60,7 +60,7 @@ typedef struct UserSessionApp
 	UserSession				*usa_UserSession;
 	FULONG					usa_ApplicationID;
 	Application				*usa_Application;
-	UserSessionWebsocket	*us_WSClients;
+	WSCData					*us_WSCD;
 	pthread_mutex_t			us_Mutex;
 	
 	char					*usa_DeviceIdentity;

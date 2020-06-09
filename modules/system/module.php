@@ -868,6 +868,10 @@ if( isset( $args->command ) )
 		case 'fileinfo':
 			require( 'modules/system/include/fileinfo.php' );
 			break;
+		// Get settings per device or all user related devices
+		case 'devicesettings';
+			require( 'modules/system/include/devicesettings.php' );
+			break;
 		// List available systems stored for the current user
 		case 'filesystem':
 			require( 'modules/system/include/filesystem.php' );
