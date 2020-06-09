@@ -14,27 +14,58 @@
 if( isset( $args->args->path ) && isset( $args->args->items ) )
 {
 	$saved = 0;
-	foreach( $args->args->items as $itm )
+	if( isset( $args->args->items->group ) && count( $args->args->items->group ) )
 	{
-		$d = new dbIO( 'FShared' );
-		$d->OwnerUserID = $User->ID;
-		$d->SharedType = $itm->type;
-		$d->SharedID = $itm->id;
-		$d->Data = $args->args->path;
-		// Defaults to read and write
-		$d->Mode = isset( $args->args->mode ) ? $args->args->mode : 'rw';
-		if( !$d->Load() )
+		$groups = $args->args->items->group;
+		foreach( $groups as $itm )
 		{
-			$d->DateModified = $d->DateCreated = date( 'Y-m-d H:i:s' );
+			$d = new dbIO( 'FShared' );
+			$d->OwnerUserID = $User->ID;
+			$d->SharedType = 'group';
+			$d->SharedID = $itm->id;
+			$d->Data = $args->args->path;
+			// Defaults to read and write
+			$d->Mode = isset( $args->args->mode ) ? $args->args->mode : 'rw';
+			if( !$d->Load() )
+			{
+				$d->DateTouched = $d->DateCreated = date( 'Y-m-d H:i:s' );
+			}
+			else
+			{
+				$d->DateTouched = date( 'Y-m-d H:i:s' );
+			}
+			$d->Save();
+			$saved++;
 		}
-		else
-		{
-			$d->DateModified = date( 'Y-m-d H:i:s' );
-		}
-		$d->Save();
-		$saved++;
 	}
-	die( 'ok<!--separate-->{"message":"Sharing info set","response":"1","count":"' . $saved . '"}' );
+	if( isset( $args->args->items->user ) && count( $args->args->items->user ) )
+	{
+		$users = $args->args->items->user;
+		foreach( $users as $itm )
+		{
+			$d = new dbIO( 'FShared' );
+			$d->OwnerUserID = $User->ID;
+			$d->SharedType = 'user';
+			$d->SharedID = $itm->id;
+			$d->Data = $args->args->path;
+			// Defaults to read and write
+			$d->Mode = isset( $args->args->mode ) ? $args->args->mode : 'rw';
+			if( !$d->Load() )
+			{
+				$d->DateTouched = $d->DateCreated = date( 'Y-m-d H:i:s' );
+			}
+			else
+			{
+				$d->DateTouched = date( 'Y-m-d H:i:s' );
+			}
+			$d->Save();
+			$saved++;
+		}
+	}
+	if( $saved )
+	{
+		die( 'ok<!--separate-->{"message":"Sharing info set","response":"1","count":"' . $saved . '"}' );
+	}
 }
 
 die( 'fail<!--separate-->{"message":"No file share info set.","response":"-1"}' );
