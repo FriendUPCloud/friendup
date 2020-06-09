@@ -50,7 +50,10 @@ Workspace.setSharingGui = function( viewObject )
 		if( Trim( this.value ) == '' )
 		{
 			dropDown.classList.remove( 'Showing' );
-			dropDown.innerHTML = '';
+			setTimeout( function()
+			{
+				dropDown.innerHTML = '';
+			}, 300 );
 			return;
 		}
 		let m = new Module( 'system' );

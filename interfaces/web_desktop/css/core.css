@@ -5013,15 +5013,18 @@ div.Orange, button.Orange
 .Dropdown
 {
 	position: absolute;
+	padding: 10px;
 	top: 0;
 	left: 0;
 	width: 100%;
 	opacity: 0;
-	height: 0;
+	height: 0px;
 	pointer-events: none;
-	transition: opacity,height 0.25s;
+	transition: opacity,height,box-shadow 0.25s,0.25s,0.25s;
 	border-radius: 0 0 3px 3px;
 	overflow: hidden;
+	box-shadow: 0 0 0 rgba(0,0,0,0);
+	box-sizing: border-box;
 }
 
 .Dropdown.Showing
@@ -5031,6 +5034,7 @@ div.Orange, button.Orange
 	max-height: auto;
 	overflow: auto;
 	pointer-events: all;
+	box-shadow: 0px 1px 4px rgba(0,0,0,0.4);
 }
 
 
