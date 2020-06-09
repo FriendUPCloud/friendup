@@ -10,6 +10,32 @@
 *                                                                              *
 *****************************************************************************©*/
 
+$users = $SqlDatabase->fetchObjects( '
+	SELECT u.ID as `id`, "user" as `type`, u.Fullname AS `name` FROM FShared s, FUser u WHERE
+		s.OwnerUserID=\'' . intval( $User->ID, 10 ) . '\' AND
+		s.ShareType = \'user\' AND
+		s.ShareID = u.ID AND
+		s.Data="' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->path ) . '"
+' );
+
+$groups = $SqlDatabase->fetchObjects( '
+	SELECT s.* FROM FShared s WHERE
+		SELECT g.ID as `id`, "group" as `type`, u.Name AS `name` FROM FShared s, FUserGroup u WHERE
+		s.OwnerUserID=\'' . intval( $User->ID, 10 ) . '\' AND
+		s.ShareType = \'group\' AND
+		s.ShareID = g.ID AND
+		s.Data="' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->path ) . '"
+' );
+
+if( $users || $groups )
+{
+	if( $users && $groups )
+		$rows = array_merge( $groups, $users );
+	else if( $users ) $rows = $users;
+	else if( $groups ) $rows = $groups;
+	die( 'ok<!--separate-->' . json_encode( $rows ) );
+}
+
 die( 'fail<!--separate-->{"message":"No file share info found.","response":"-1"}' );
 
 ?>
