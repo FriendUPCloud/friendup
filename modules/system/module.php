@@ -819,6 +819,14 @@ if( isset( $args->command ) )
 		case 'share':
 			require( 'modules/system/include/share.php' );
 			break;
+		// Share a file to members
+		case 'setfileshareinfo':
+			require( 'modules/system/include/setfileshareinfo.php' );
+			break;
+		// Get shared file members
+		case 'getfileshareinfo':
+			require( 'modules/system/include/getfileshareinfo.php' );
+			break;
 		// Get a list of mounted and unmounted devices
 		case 'mountlist':
 			require( 'modules/system/include/mountlist.php' );
