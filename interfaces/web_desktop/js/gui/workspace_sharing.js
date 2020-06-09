@@ -26,6 +26,13 @@ Workspace.viewSharingOptions = function( path )
 	v.uniqueId = uniqueId;
 	v.path = path;
 	v.dIndex = 0;
+	v.content.onclick = function( e )
+	{
+		if( v.dropDown )
+		{
+			v.dropDown.classList.remove( 'Showing' );
+		}
+	}
 	
 	function kdListen( e )
 	{
@@ -61,13 +68,29 @@ Workspace.setSharingGui = function( viewObject )
 	
 	let searchF = ge( 'dropdownfield_' + viewObject.uniqueId );
 	let dropDown = ge( 'dropdown_' + viewObject.uniqueId );
+	viewObject.dropDown = dropDown;
+	dropDown.onclick = function( e ){ return cancelBubble( e ); }
 	searchF.onkeyup = function( e )
 	{
 		// Arrow down/up
 		let eles = dropDown.getElementsByClassName( 'DropdownItem' );
-		if( eles.length && ( e.which == 40 || e.which == 38 ) )
+		if( eles.length && ( e.which == 40 || e.which == 38 || e.which == 13 ) )
 		{
-			if( e.which == 40 )
+			if( e.which == 13 )
+			{
+				if( eles[ viewObject.dIndex ] )
+				{
+					if( eles[ viewObject.dIndex ].classList.contains( 'Active' ) )
+					{
+						eles[ viewObject.dIndex ].classList.remove( 'Active' );
+					}
+					else
+					{
+						eles[ viewObject.dIndex ].classList.add( 'Active' );
+					}
+				}
+			}
+			else if( e.which == 40 )
 			{
 				viewObject.dIndex++;
 				if( viewObject.dIndex >= eles.length ) viewObject.dIndex = 0;
@@ -83,7 +106,7 @@ Workspace.setSharingGui = function( viewObject )
 				if( c == viewObject.dIndex )
 				{
 					eles[ c ].classList.add( 'Selected' );
-					dropDown.scrollTop = eles[ c ].offsetTop + eles[ c ].offsetHeight;
+					dropDown.scrollTop = ( eles[ c ].offsetTop + ( eles[ c ].offsetHeight >> 1 ) ) - ( dropDown.offsetHeight >> 1 ) ;
 				}
 				else
 				{
@@ -139,7 +162,7 @@ Workspace.setSharingGui = function( viewObject )
 			{
 				sw = sw == 1 ? 2 : 1;
 				str += '\
-				<div class="DropdownItem GroupEle Rounded Ellipsis PaddingSmall sw' + sw + '" onclick="Workspace.selectShareItem(this, \'GroupEle\', \'' + viewObject.uniqueId + '\')">\
+				<div class="MousePointer DropdownItem GroupEle Rounded Ellipsis PaddingSmall sw' + sw + '" onclick="Workspace.selectShareItem(this, \'GroupEle\', \'' + viewObject.uniqueId + '\')">\
 					' + workgroups[a].Name + '\
 				</div>';
 				items++;
@@ -152,7 +175,7 @@ Workspace.setSharingGui = function( viewObject )
 			{
 				sw = sw == 1 ? 2 : 1;
 				str += '\
-				<div class="DropdownItem UserEle Rounded Ellipsis PaddingSmall sw' + sw + '" onclick="Workspace.selectShareItem(this, \'UserEle\', \'' + viewObject.uniqueId + '\')">\
+				<div class="MousePointer DropdownItem UserEle Rounded Ellipsis PaddingSmall sw' + sw + '" onclick="Workspace.selectShareItem(this, \'UserEle\', \'' + viewObject.uniqueId + '\')">\
 					' + users[a].Fullname + '\
 				</div>';
 				items++;
@@ -161,6 +184,18 @@ Workspace.setSharingGui = function( viewObject )
 		if( dropDown && dropDown.parentNode )
 		{
 			dropDown.innerHTML = str;
+			let eles = dropDown.getElementsByClassName( 'DropdownItem' );
+			for( let c = 0; c < eles.length; c++ )
+			{
+				eles[ c ].onclick = function( e )
+				{
+					if( this.classList.contains( 'Active' ) )
+						this.classList.remove( 'Active' );
+					else
+						this.classList.add( 'Active' );
+					return cancelBubble( e );
+				}
+			}
 			dropDown.classList.add( 'Showing', 'BackgroundDefault', 'BordersDefault' );
 		}
 		else

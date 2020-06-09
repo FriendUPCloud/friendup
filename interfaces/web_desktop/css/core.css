@@ -5037,4 +5037,16 @@ div.Orange, button.Orange
 	box-shadow: 0px 1px 4px rgba(0,0,0,0.4);
 }
 
+.Dropdown .DropdownItem
+{
+	padding: 5px;
+	margin: 0 0 4px 0;
+	line-height: normal;
+}
+
+.Dropdown .DropdownItem.Active
+{
+	color: $ColorAction;
+	background-color: $ColorActionBg;
+}
 
