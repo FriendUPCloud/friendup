@@ -25,6 +25,22 @@ Workspace.viewSharingOptions = function( path )
 	let uniqueId = Math.round( Math.random() * 9999 ) + ( new Date() ).getTime();
 	v.uniqueId = uniqueId;
 	v.path = path;
+	v.dIndex = 0;
+	
+	function kdListen( e )
+	{
+		if( window.currentMovable && currentMovable.windowObject == v )
+		{
+			var eles = v.content.getElementsByClassName( 'DropdownItem' );
+		}
+	};
+	v.content.addEventListener( 'keydown', kdListen );
+	
+	v.onclose = function()
+	{
+		v.content.removeEventListener( 'keydown', kdListen );
+	}
+	
 	let f = new File( '/webclient/templates/iconinfo_sharing_options.html' );
 	f.replacements = {
 		uniqueId: uniqueId
@@ -47,6 +63,39 @@ Workspace.setSharingGui = function( viewObject )
 	let dropDown = ge( 'dropdown_' + viewObject.uniqueId );
 	searchF.onkeyup = function( e )
 	{
+		// Arrow down/up
+		let eles = dropDown.getElementsByClassName( 'DropdownItem' );
+		if( eles.length && ( e.which == 40 || e.which == 38 ) )
+		{
+			if( e.which == 40 )
+			{
+				viewObject.dIndex++;
+				if( viewObject.dIndex >= eles.length ) viewObject.dIndex = 0;
+			}
+			else if( e.which == 38 )
+			{
+				viewObject.dIndex--;
+				if( viewObject.dIndex < 0 ) viewObject.dIndex = eles.length - 1;
+			}
+		
+			for( let c = 0; c < eles.length; c++ )
+			{
+				if( c == viewObject.dIndex )
+				{
+					eles[ c ].classList.add( 'Selected' );
+					dropDown.scrollTop = eles[ c ].offsetTop + eles[ c ].offsetHeight;
+				}
+				else
+				{
+					eles[ c ].classList.remove( 'Selected' );
+				}
+			}
+			
+			viewObject.content.focus();
+			return cancelBubble( e );
+		}
+		// Done arrow down/up
+		
 		if( Trim( this.value ) == '' )
 		{
 			dropDown.classList.remove( 'Showing' );
@@ -90,7 +139,7 @@ Workspace.setSharingGui = function( viewObject )
 			{
 				sw = sw == 1 ? 2 : 1;
 				str += '\
-				<div class="GroupEle HContent30 Ellipsis PaddingSmall sw' + sw + '" onclick="Workspace.selectShareItem(this, \'GroupEle\', \'' + viewObject.uniqueId + '\')">\
+				<div class="DropdownItem GroupEle Rounded Ellipsis PaddingSmall sw' + sw + '" onclick="Workspace.selectShareItem(this, \'GroupEle\', \'' + viewObject.uniqueId + '\')">\
 					' + workgroups[a].Name + '\
 				</div>';
 				items++;
@@ -103,7 +152,7 @@ Workspace.setSharingGui = function( viewObject )
 			{
 				sw = sw == 1 ? 2 : 1;
 				str += '\
-				<div class="UserEle HContent30 Ellipsis PaddingSmall sw' + sw + '" onclick="Workspace.selectShareItem(this, \'UserEle\', \'' + viewObject.uniqueId + '\')">\
+				<div class="DropdownItem UserEle Rounded Ellipsis PaddingSmall sw' + sw + '" onclick="Workspace.selectShareItem(this, \'UserEle\', \'' + viewObject.uniqueId + '\')">\
 					' + users[a].Fullname + '\
 				</div>';
 				items++;
