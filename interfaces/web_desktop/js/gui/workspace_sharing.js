@@ -26,11 +26,37 @@ Workspace.viewSharingOptions = function( path )
 	v.uniqueId = uniqueId;
 	v.path = path;
 	v.dIndex = 0;
+	v.selectedItems = [];
 	v.content.onclick = function( e )
 	{
 		if( v.dropDown )
 		{
+			v.selectedItems = [];
+			let eles = v.dropDown.getElementsByClassName( 'DropdownItem' );
+			for( let c = 0; c < eles.length; c++ )
+			{
+				if( eles[ c ].classList.contains( 'Active' ) )
+				{
+					if( eles[ c ].classList.contains( 'UserEle' ) )
+					{
+						v.selectedItems.push( {
+							type: 'user',
+							id: eles[ c ].getAttribute( 'uid' ),
+							name: Trim( eles[ c ].innerHTML )
+						} );
+					}
+					else
+					{
+						v.selectedItems.push( {
+							type: 'group',
+							id: eles[ c ].getAttribute( 'gid' ),
+							name: Trim( eles[ c ].innerHTML )
+						} );
+					}
+				}
+			}
 			v.dropDown.classList.remove( 'Showing' );
+			Workspace.refreshShareInformation( v );
 		}
 	}
 	
@@ -162,7 +188,7 @@ Workspace.setSharingGui = function( viewObject )
 			{
 				sw = sw == 1 ? 2 : 1;
 				str += '\
-				<div class="MousePointer DropdownItem GroupEle Rounded Ellipsis PaddingSmall sw' + sw + '" onclick="Workspace.selectShareItem(this, \'GroupEle\', \'' + viewObject.uniqueId + '\')">\
+				<div class="MousePointer DropdownItem GroupEle Rounded Ellipsis PaddingSmall sw' + sw + '" gid="' + workgroups[a].Name + '">\
 					' + workgroups[a].Name + '\
 				</div>';
 				items++;
@@ -175,7 +201,7 @@ Workspace.setSharingGui = function( viewObject )
 			{
 				sw = sw == 1 ? 2 : 1;
 				str += '\
-				<div class="MousePointer DropdownItem UserEle Rounded Ellipsis PaddingSmall sw' + sw + '" onclick="Workspace.selectShareItem(this, \'UserEle\', \'' + viewObject.uniqueId + '\')">\
+				<div class="MousePointer DropdownItem UserEle Rounded Ellipsis PaddingSmall sw' + sw + '" uid="' + users[a].ID + '">\
 					' + users[a].Fullname + '\
 				</div>';
 				items++;
@@ -204,14 +230,36 @@ Workspace.setSharingGui = function( viewObject )
 		}
 	}
 };
-Workspace.selectShareItem = function( ele, type, uniqueId )
-{
-};
 Workspace.refreshShareInformation = function( viewObject )
 {
 	let list = ge( 'sharedList_' + viewObject.uniqueId );
+	
+	if( viewObject.selectedItems.length )
+	{
+		let str = '<div class="List">';
+		let mod = icmod = false;
+		let sw = 2;
+		for( let a = 0; a < viewObject.selectedItems.length; a++ )
+		{
+			sw = sw == 1 ? 2 : 1;
+			if( viewObject.selectedItems[ a ].type != mod )
+			{
+				mod = viewObject.selectedItems[ a ].type;
+				icmod = mod == 'user' ? 'IconSmall fa-user' : 'IconSmall fa-group';
+				str += '<div class="Header PaddingSmall BorderBottom">' + i18n( 'i18n_list_header_' + mod ) + ':</div>';
+				sw = 1;
+			}
+			str += '<div class="PaddingSmall sw' + sw + ' HRow ' + icmod + '">&nbsp;' + viewObject.selectedItems[ a ].name + '</div>';
+		}
+		str += '</div>';
+		list.innerHTML = str;
+	}
+	else
+	{
+		list.innerHTML = '<div class="HRow sw1 Padding">' + i18n( 'i18n_file_not_shared' ) + '</div>';
+	}
 
-	let m = new Module( 'system' );
+	/*let m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
 		if( e != 'ok' )
@@ -219,6 +267,6 @@ Workspace.refreshShareInformation = function( viewObject )
 			list.innerHTML = '<div class="HRow sw1 Padding">' + i18n( 'i18n_file_not_shared' ) + '</div>';
 		}
 	}
-	m.execute( 'getfileshareinfo', { path: viewObject.path } );
+	m.execute( 'getfileshareinfo', { path: viewObject.path } );*/
 	
 };

@@ -399,6 +399,9 @@ i18n_no_field_information               : Ingen attributtdata tilgjengelig.
 i18n_non_compatible_field_information   : Kan ikke vise forhåndsvisning.
 i18n_open_with                          : Åpne med
 
+i18n_list_header_group                  : Grupper
+i18n_list_header_user                   : Brukere
+
 #File dialogs ------------------------------------------------------------------
 
 file_load                               : Åpne
