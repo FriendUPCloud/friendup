@@ -893,8 +893,6 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 	// user not logged in, we must add it to session
 	// and mount shared device
 	
-	SQLLibrary *sqll = sb->LibrarySQLGet( sb );
-	if( sqll != NULL )
 	{
 		if( usr == NULL )
 		{
@@ -925,7 +923,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 					}
 				}
 				char *err = NULL;
-				sb->UserDeviceMount( sb, sqll, usr, 0, TRUE, &err, TRUE );
+				sb->UserDeviceMount( sb, usr, 0, TRUE, &err, TRUE );
 				if( err != NULL )
 				{
 					FERROR("UserDeviceMount returned: %s\n", err );
@@ -943,7 +941,6 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 				resp = HttpNewSimple( HTTP_401_UNAUTHORIZED,  tagsauth );
 				
 				sb->AuthModuleDrop( sb, ulib );
-				sb->LibrarySQLDrop( sb, sqll );
 			
 				char dictmsgbuf[ 256 ];
 				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", sb->sl_Dictionary->d_Msg[DICT_BAD_ERROR_OR_PASSWORD] , DICT_BAD_ERROR_OR_PASSWORD );
@@ -960,14 +957,13 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		else
 		{
 			char *err = NULL;
-			sb->UserDeviceMount( sb, sqll, usr, 0, TRUE, &err, TRUE );
+			sb->UserDeviceMount( sb, usr, 0, TRUE, &err, TRUE );
 			if( err != NULL )
 			{
 				FERROR("UserDeviceMount returned: %s\n", err );
 				FFree( err );
 			}
 		}
-		sb->LibrarySQLDrop( sb, sqll );
 	}
 	
 	if( usr == NULL )

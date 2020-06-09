@@ -302,10 +302,6 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 			ws->ws_KeyPath = lsb->RSA_SERVER_KEY;
 			
 			DEBUG1("[WS] server cert %s keycert %s\n", ws->ws_CertPath, ws->ws_KeyPath );
-		
-			//sprintf( ws->ws_CertPath, "%s%s", fhome, "/libwebsockets-test-server.pem" );
-			//sprintf( ws->ws_KeyPath, "%s%s", fhome, "/libwebsockets-test-server.key.pem" );
-			//ws->ws_Opts |= LWS_SERVER_OPTION_REDIRECT_HTTP_TO_HTTPS;
 		}
 		
 		if( ws->ws_AllowNonSSL == TRUE )
@@ -313,11 +309,6 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 			 //ws->ws_Opts |= LWS_SERVER_OPTION_ALLOW_NON_SSL_ON_SSL_PORT;
 		}
 		
-			/*
-		case 'k':
-			opts = LWS_SERVER_OPTION_DEFEAT_CLIENT_MASK;
-			break;
-			*/
 		ws->ws_Info.port = ws->ws_Port;
 		if( proto == 0 )
 		{
