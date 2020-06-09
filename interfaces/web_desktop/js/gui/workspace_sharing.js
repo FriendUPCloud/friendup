@@ -14,6 +14,8 @@
 *                                                                              *
 *******************************************************************************/
 
+Workspace.sharingDialogs = {};
+
 // Set up sharing on a disk
 Workspace.viewSharingOptions = function( path )
 {
@@ -23,6 +25,7 @@ Workspace.viewSharingOptions = function( path )
 		height: 380
 	} );
 	let uniqueId = Math.round( Math.random() * 9999 ) + ( new Date() ).getTime();
+	this.sharingDialogs[ uniqueId ] = v;
 	v.uniqueId = uniqueId;
 	v.path = path;
 	v.dIndex = 0;
@@ -72,6 +75,13 @@ Workspace.viewSharingOptions = function( path )
 	v.onclose = function()
 	{
 		v.content.removeEventListener( 'keydown', kdListen );
+		let out = {};
+		for( var a in Workspace.sharingDialogs )
+		{
+			if( a != uniqueId )
+				out[ a ] = Workspace.sharingDialogs[ a ];
+		}
+		Workspace.sharingDialogs = out;
 	}
 	
 	let f = new File( '/webclient/templates/iconinfo_sharing_options.html' );
@@ -87,6 +97,26 @@ Workspace.viewSharingOptions = function( path )
 		} );
 	}
 	f.load();
+};
+Workspace.saveFileShareInfo = function( uniqueId )
+{
+	if( !this.sharingDialogs[ uniqueId ] ) return;
+	let d = this.sharingDialogs[ uniqueId ];
+	
+	let o = new Module( 'system' );
+	o.onExecuted = function( e, d )
+	{
+		if( e == 'ok' )
+		{
+			Alert( 'Poo', 'Loof' );
+		}
+		else
+		{
+			Alert( 'Failed to set sharing info', 'The members you selected could not share your item.' );
+			return;
+		}
+	}
+	o.execute( 'setfileshareinfo', { path: d.path, items: d.finalItems } );
 };
 Workspace.setSharingGui = function( viewObject )
 {
@@ -233,40 +263,62 @@ Workspace.setSharingGui = function( viewObject )
 Workspace.refreshShareInformation = function( viewObject )
 {
 	let list = ge( 'sharedList_' + viewObject.uniqueId );
-	
-	if( viewObject.selectedItems.length )
-	{
-		let str = '<div class="List">';
-		let mod = icmod = false;
-		let sw = 2;
-		for( let a = 0; a < viewObject.selectedItems.length; a++ )
-		{
-			sw = sw == 1 ? 2 : 1;
-			if( viewObject.selectedItems[ a ].type != mod )
-			{
-				mod = viewObject.selectedItems[ a ].type;
-				icmod = mod == 'user' ? 'IconSmall fa-user' : 'IconSmall fa-group';
-				str += '<div class="Header PaddingSmall BorderBottom">' + i18n( 'i18n_list_header_' + mod ) + ':</div>';
-				sw = 1;
-			}
-			str += '<div class="PaddingSmall sw' + sw + ' HRow ' + icmod + '">&nbsp;' + viewObject.selectedItems[ a ].name + '</div>';
-		}
-		str += '</div>';
-		list.innerHTML = str;
-	}
-	else
-	{
-		list.innerHTML = '<div class="HRow sw1 Padding">' + i18n( 'i18n_file_not_shared' ) + '</div>';
-	}
-
-	/*let m = new Module( 'system' );
+	let items = {
+		group: [],
+		user: []
+	};
+	let m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
-		if( e != 'ok' )
+		// Try to parse existing members
+		if( e == 'ok' )
+		{
+			try
+			{
+				d = JSON.parse( d );
+				for( let c = 0; c < d.length; c++ )
+				{
+					items[ d[ c ].type ].push( d[ c ] );
+				}
+			}
+			catch( e ){};
+		}
+		
+		// Get current members
+		for( let c = 0; c < viewObject.selectedItems.length; c++ )
+		{
+			items[ viewObject.selectedItems[ c ].type ].push( viewObject.selectedItems[ c ] );
+		}
+	
+		// Set the final items..
+		viewObject.finalItems = items;
+	
+		if( items.group.length || items.user.length )
+		{
+			let str = '<div class="List">';
+			let mod = icmod = false;
+			for( let b in items )
+			{
+				if( items[ b ].length )
+				{
+					str += '<div class="Header PaddingSmall BorderBottom">' + i18n( 'i18n_list_header_' + b ) + ':</div>';
+					icmod = b == 'user' ? 'IconSmall fa-user' : 'IconSmall fa-group';
+					let sw = 2;
+					for( let a = 0; a < items[ b ].length; a++ )
+					{
+						sw = sw == 1 ? 2 : 1;
+						str += '<div class="PaddingSmall sw' + sw + ' HRow ' + icmod + '">&nbsp;' + items[ b ][ a ].name + '</div>';
+					}
+				}
+			}
+			str += '</div>';
+			list.innerHTML = str;
+		}
+		else
 		{
 			list.innerHTML = '<div class="HRow sw1 Padding">' + i18n( 'i18n_file_not_shared' ) + '</div>';
 		}
 	}
-	m.execute( 'getfileshareinfo', { path: viewObject.path } );*/
+	m.execute( 'getfileshareinfo', { path: viewObject.path } );
 	
 };
