@@ -242,6 +242,7 @@ menu_close_idle_connections             : Fjern nettverksprosesser
 menu_hide_hidden_files                  : Gjem skjulbare filer
 menu_show_hidden_files                  : Vis skjulte filer
 menu_new_window                         : Nytt vindu
+menu_share_file                         : Del fil
 
 menu_help                               : Hjelp
 menu_help_bug                           : Rapporter feil

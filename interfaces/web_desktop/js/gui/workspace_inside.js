@@ -7377,6 +7377,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 							else
 							{
+								// Add sharing
+								menu.push( {
+									name: i18n( 'menu_share_file' ),
+									command: function()
+									{
+										Workspace.viewSharingOptions( thisicon.fileInfo.Path );
+									}
+								} );
+								
 								var ext = thisicon.fileInfo.Filename.split( '.' ).pop();
 								if( ext )
 								{
