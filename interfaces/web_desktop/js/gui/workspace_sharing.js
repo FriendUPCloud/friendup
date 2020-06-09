@@ -45,7 +45,7 @@ Workspace.setSharingGui = function( viewObject )
 	
 	let searchF = ge( 'dropdownfield_' + viewObject.uniqueId );
 	let dropDown = ge( 'dropdown_' + viewObject.uniqueId );
-	searchF.onkeydown = function( e )
+	searchF.onkeyup = function( e )
 	{
 		if( Trim( this.value ) == '' )
 		{

@@ -5027,7 +5027,7 @@ div.Orange, button.Orange
 .Dropdown.Showing
 {
 	opacity: 1;
-	height: 100px;
+	height: 200px;
 	max-height: auto;
 	overflow: auto;
 	pointer-events: all;
