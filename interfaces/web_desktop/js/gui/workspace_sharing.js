@@ -184,6 +184,10 @@ Workspace.setSharingGui = function( viewObject )
 			}, 300 );
 			return;
 		}
+		
+		let keys = searchF.value.split( ',' ).join( ' ' ).split( ' ' );
+		for( let a in keys ) keys[ a ] = keys[ a ].toLowerCase();
+		
 		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
@@ -200,7 +204,40 @@ Workspace.setSharingGui = function( viewObject )
 				{
 					us = JSON.parse( d2 );
 				}
-				makeList( wrkg, us );
+				
+				let finw = [];
+				let finu = [];
+				
+				// Filter output..
+				for( let a in wrkg )
+				{
+					for( let c in keys )
+					{
+						if( !Trim( keys[ c ] ) ) continue;
+						
+						if( wrkg[ a ].Name.toLowerCase().indexOf( keys[ c ] ) >= 0 )
+						{
+							finw.push( wrkg[ a ] );
+							break;
+						}
+					}
+				}
+				for( let a in us )
+				{
+					for( let c in keys )
+					{
+						if( !Trim( keys[ c ] ) ) continue;
+						
+						if( ( us[ a ].Fullname && us[ a ].Fullname.toLowerCase().indexOf( keys[ c ] ) >= 0 ) || us[ a ].Name.toLowerCase().indexOf( keys[ c ] ) )
+						{
+							finu.push( us[ a ] );
+							break;
+						}
+					}
+				}
+				
+				// Add filtered list
+				makeList( finw, finu );
 			}
 			m2.execute( 'listconnectedusers' );
 		}

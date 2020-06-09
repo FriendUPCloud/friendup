@@ -5014,7 +5014,7 @@ div.Orange, button.Orange
 {
 	position: absolute;
 	padding: 10px;
-	top: 0;
+	top: -1px;
 	left: 0;
 	width: 100%;
 	opacity: 0;
