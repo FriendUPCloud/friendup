@@ -619,6 +619,15 @@ void WSThreadPing( void *p )
 	if( data == NULL || data->fcd == NULL )
 	{
 		DECREASE_WS_THREADS();
+		
+		if( data != NULL )
+		{
+			if( data->requestid != NULL )
+			{
+				FFree( data->requestid );
+			}
+			FFree( data );
+		}
 		return;
 	}
 	
