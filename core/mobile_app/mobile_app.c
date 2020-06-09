@@ -28,6 +28,7 @@
 
 #define KEEPALIVE_TIME_s 180 //ping time (10 before)
 #define ENABLE_MOBILE_APP_NOTIFICATION_TEST_SIGNAL 1
+#define USE_ONLY_FIREBASE		//use only firebase
 
 #define CKPT DEBUG("====== %d\n", __LINE__)
 
@@ -1003,7 +1004,7 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
  * @param channel_id number of channel
  * @param app application name
  * @param title title of message which will be send to user
- * @param message message which will be send to user
+ * @param content message which will be send to user
  * @param notification_type type of notification
  * @param extraString additional string which will be send to user
  * @param ctimestamp create message timestamp
@@ -1021,7 +1022,7 @@ typedef struct NotifRegMsg
 	char *channel_id;
 	char *app;
 	char *title;
-	char *message;
+	char *content;
 	MobileNotificationTypeT notification_type;
 	char *extraString;
 	FULONG ctimestamp;
@@ -1034,7 +1035,7 @@ typedef struct NotifRegMsg
 
 void ProcessMobileRegister( void *locd );
 
-int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *channel_id, const char *app, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extraString, FULONG ctimestamp )
+int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *channel_id, const char *app, const char *title, const char *content, MobileNotificationTypeT notification_type, const char *extraString, FULONG ctimestamp )
 {
 	NotifRegMsg *nrm = FCalloc( 1, sizeof(NotifRegMsg) );
 	if( nrm != NULL )
@@ -1044,7 +1045,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		nrm->channel_id = StringDuplicate( channel_id );
 		nrm->app = StringDuplicate( app );
 		nrm->title = StringDuplicate( title );
-		nrm->message = StringDuplicate( message );
+		nrm->message = StringDuplicate( content );
 		nrm->notification_type = notification_type;
 		nrm->extraString = StringDuplicate( extraString );
 		nrm->ctimestamp = ctimestamp;
@@ -1075,7 +1076,7 @@ void ProcessMobileRegister( void *locd )
 	pthread_detach( pthread_self() );
 	
 #else
-int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *channel_id, const char *app, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extraString, FULONG ctimestamp )
+int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *channel_id, const char *app, const char *title, const char *content, MobileNotificationTypeT notification_type, const char *extraString, FULONG ctimestamp )
 {
 #endif
 	SystemBase *sb = (SystemBase *)lsb;
@@ -1094,7 +1095,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	
 	char *escapedChannelId = json_escape_string(channel_id);
 	char *escapedTitle = json_escape_string(title);
-	char *escapedMessage = json_escape_string(message);
+	char *escapedContent = json_escape_string(content);
 	char *escapedApp = NULL;
 	char *escapedExtraString = NULL;
 	FULONG userID = 0;
@@ -1117,7 +1118,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		notif->n_Channel = escapedChannelId;
 		notif->n_UserName = StringDuplicate( username );
 		notif->n_Title = escapedTitle;
-		notif->n_Content = escapedMessage;
+		notif->n_Content = escapedContent;
 		notif->n_Extra = escapedExtraString;
 		notif->n_NotificationType = notification_type;
 		notif->n_Status = NOTIFY_ACTION_REGISTER;
@@ -1201,7 +1202,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		userID = UMGetUserIDByName( sb->sl_UM, username );
 	}
 	
-	Log( FLOG_INFO, "User: %s userid: %lu will get message: %s\n", username, userID, message );
+	Log( FLOG_INFO, "User: %s userid: %lu will get content: %s\n", username, userID, content );
 	
 	if( bytesSent > 0 )
 	{
@@ -1216,7 +1217,40 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	}
 	
 	DEBUG("NotificationRegister: get all connections by name: %s pointer: %p\n", username, userConnections );
+
+#ifdef USE_ONLY_FIREBASE
 	
+	BufString *bsMobileReceivedMessage = BufStringNew();
+	
+	if( wsMessageSent == FALSE )
+	{
+		DEBUG("Sending messages across Firebase devices\n");
+		
+		// android
+		
+		BufString *bs = MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_ANDROID, USER_MOBILE_APP_STATUS_APPROVED, notif->n_ID );
+		if( bs != NULL )
+		{
+			NotificationManagerNotificationSendFirebaseQueue( sb->sl_NotificationManager, notif, 1, "register", bs->bs_Buffer, MOBILE_APP_TYPE_ANDROID );
+			Log( FLOG_INFO, "Firebase tokens which should get notification: %s (Android)", bs->bs_Buffer );
+			BufStringDelete( bs );
+		}
+		
+		bs = MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_IOS, USER_MOBILE_APP_STATUS_APPROVED, notif->n_ID );
+		if( bs != NULL )
+		{
+			NotificationManagerNotificationSendFirebaseQueue( sb->sl_NotificationManager, notif, 1, "register", bs->bs_Buffer, MOBILE_APP_TYPE_IOS );
+			Log( FLOG_INFO, "Firebase tokens which should get notification: %s (IOS)", bs->bs_Buffer );
+			BufStringDelete( bs );
+		}
+	}
+	
+	/*				
+	// this way all of devices which were not avaiable during sending will get message
+	// they will not get them in one case, when Notification attached to it will be removed
+	 */
+	BufStringDelete( bsMobileReceivedMessage );
+#else
 	BufString *bsMobileReceivedMessage = BufStringNew();
 	
 	if( wsMessageSent == FALSE )
@@ -1244,7 +1278,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	// message from example to APNS: /client.py '{"auth":"72e3e9ff5ac019cb41aed52c795d9f4c","action":"notify","payload":"hellooooo","sound":"default","token":"1f3b66d2d16e402b5235e1f6f703b7b2a7aacc265b5af526875551475a90e3fe","badge":1,"category":"whatever"}'
 	
 	DEBUG("[MobileAppNotifyUserRegister] send message to other mobile apps, message was alerady sent? %d\n", wsMessageSent );
-	
+
 	if( wsMessageSent == FALSE && sb->sl_NotificationManager->nm_APNSCert != NULL )
 	{
 		char *tokens = MobleManagerGetIOSAppTokensDBm( sb->sl_MobileManager, userID );
@@ -1264,6 +1298,8 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	{
 		FERROR("Message was sent through websockets or there is no valid Apple APNS certyficate!\n");
 	}
+#endif
+
 	FFree( jsonMessage );
 	
 	// message was not sent via Websockets, there is no need to put it into queue
@@ -1357,6 +1393,27 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 	}
 
 	FULONG userID = UMGetUserIDByName( sb->sl_UM, username );
+	
+#ifdef USE_ONLY_FIREBASE
+	BufString *bs = MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_ANDROID, USER_MOBILE_APP_STATUS_APPROVED, notif->n_ID );
+	if( bs != NULL )
+	{
+		NotificationManagerNotificationSendFirebaseQueue( sb->sl_NotificationManager, notif, 1, "update", bs->bs_Buffer, MOBILE_APP_TYPE_ANDROID );
+		//NotificationManagerNotificationSendAndroid( sb->sl_NotificationManager, notif, 1, "update", bs->bs_Buffer );
+		//NotificationManagerNotificationSendAndroid( sb->sl_NotificationManager, notif, 1, "update", "\"fVpPVyTb6OY:APA91bGhIvzwL2kFEdjwQa1ToI147uydLdw0hsauNUtqDx7NoV1EJ6CWjwSCmHDeDw6C4GsZV3jEpnTwk8asplawkCdAmC1NfmVE7GSp-H4nk_HDoYtBrhNz3es2uq-1bHiYqg2punIg\"" );
+		Log( FLOG_INFO, "Android (update) tokens which should get notification: %s (Android)", bs->bs_Buffer );
+		BufStringDelete( bs );
+	}
+	bs = MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_IOS, USER_MOBILE_APP_STATUS_APPROVED, notif->n_ID );
+	if( bs != NULL )
+	{
+		NotificationManagerNotificationSendFirebaseQueue( sb->sl_NotificationManager, notif, 1, "update", bs->bs_Buffer, MOBILE_APP_TYPE_IOS );
+		//NotificationManagerNotificationSendAndroid( sb->sl_NotificationManager, notif, 1, "update", bs->bs_Buffer );
+		//NotificationManagerNotificationSendAndroid( sb->sl_NotificationManager, notif, 1, "update", "\"fVpPVyTb6OY:APA91bGhIvzwL2kFEdjwQa1ToI147uydLdw0hsauNUtqDx7NoV1EJ6CWjwSCmHDeDw6C4GsZV3jEpnTwk8asplawkCdAmC1NfmVE7GSp-H4nk_HDoYtBrhNz3es2uq-1bHiYqg2punIg\"" );
+		Log( FLOG_INFO, "Android (update) tokens which should get notification: %s (IOS)", bs->bs_Buffer );
+		BufStringDelete( bs );
+	}
+#else
 	BufString *bs= MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_ANDROID, USER_MOBILE_APP_STATUS_APPROVED, notif->n_ID );
 	if( bs != NULL )
 	{
@@ -1425,6 +1482,7 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 	{
 		INFO("[MobileAppNotifyUserUpdate]: No A!\n");
 	}
+#endif
 	
 	return 0;
 }

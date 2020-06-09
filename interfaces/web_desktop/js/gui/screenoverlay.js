@@ -37,7 +37,7 @@ var ScreenOverlay = {
 		if( this.debug )
 		{
 			this.enableDebug();
-		}
+		}	
 	},
 	// Trick hide
 	invisible: function()
