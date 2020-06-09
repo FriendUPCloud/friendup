@@ -883,18 +883,9 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			char buffer[ 256 ];
 			
 			DEBUG("[MobileWebRequest] setWS state to: %d\n", status );
-			if( loggedSession->us_WSConnections != NULL )
+			if( loggedSession->us_WSD != NULL )
 			{
-				//loggedSession->us_WebSocketStatus = status;
-				UserSessionWebsocket *cl = loggedSession->us_WSConnections;
-				
-				while( cl != NULL )
-				{
-					cl->wusc_Status = status;
-					
-					//DEBUG("[MobileWebRequest] connection %p set status to: %d\n", cl->wsc_Wsi, cl->wsc_Status );
-					cl = (UserSessionWebsocket *) cl->node.mln_Succ;
-				}
+				loggedSession->us_WebSocketStatus = status;
 			}
 			
 			snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"0\", \"set\":\"%d\" }", status );

@@ -627,7 +627,7 @@ int HttpParseHeader( Http* http, const char* request, FQUAD fullReqLength )
 												bstart++;
 										
 												DEBUG("[Http] BOUNDARY2! %s\n\n\n", bstart );
-												http->http_PartDivider = StringDuplicate( bstart );
+												strcpy( http->http_PartDivider, bstart );
 												http->http_PartDividerLen = strlen( bstart );
 												DEBUG("DIVIDER SET!! %s\n", http->http_PartDivider );
 											
@@ -1652,12 +1652,16 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 			if( endDivider != NULL )
 			{
 				int maxDivLen = endDivider-http->http_Content;
-				http->http_PartDivider = StringDuplicateN( http->http_Content, maxDivLen );
+				//http->http_PartDivider = StringDuplicateN( http->http_Content, maxDivLen );
+				strncpy( http->http_PartDivider, http->http_Content, maxDivLen );
 				http->http_PartDividerLen = maxDivLen;
+				DEBUG("Partial Divider: %s <<<<<<<<<<<<<<<<<\n", http->http_PartDivider );
 			}
 			else
 			{
-				http->http_PartDivider = StringDuplicate( "\n" );
+				//http->http_PartDivider = StringDuplicate( "\n" );
+				http->http_PartDivider[ 0 ] = '\n';
+				http->http_PartDivider[ 1 ] = 0; 
 				http->http_PartDividerLen = 1;
 				//strcpy( http->http_PartDivider, "\n");
 			}
@@ -1911,10 +1915,10 @@ void HttpFree( Http* http )
 		HttpFileDelete( remFile );
 	}
 	
-	if( http->http_PartDivider )
-	{
-		FFree( http->http_PartDivider );
-	}
+	//if( http->http_PartDivider )
+	//{
+	//	FFree( http->http_PartDivider );
+	//}
 	//DEBUG("Free http\n");
 
 	FFree( http );

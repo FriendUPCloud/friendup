@@ -93,7 +93,7 @@ typedef struct File
 	
 	FBOOL						f_Stream;			// is file streamed
 	Socket						*f_Socket;			// != NULL then data should be streamed
-	UserSessionWebsocket		*f_WSocket;			// websocket context, if provided data should be delivered here
+	WSCData						*f_WSD;			// Pointer to websocket context, if provided data should be delivered here
 	int							f_Operations;		// operation counter
 	
 	int							f_OperationMode;	// read, write, etc.

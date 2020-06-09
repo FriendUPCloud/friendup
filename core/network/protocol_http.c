@@ -51,6 +51,9 @@
 
 extern SystemBase *SLIB;
 
+// disable debug
+#undef __DEBUG
+
 // external
 
 char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL *arg );

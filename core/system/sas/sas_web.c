@@ -31,6 +31,9 @@
 #include <system/json/json_converter.h>
 #include "sas_web.h"
 
+// disable debug
+#undef __DEBUG
+
 //
 // How this thing is working
 //  user A call  app/register and then new appsession is created, user structure is filled by his app authid

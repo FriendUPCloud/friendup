@@ -304,45 +304,6 @@ int UserGroupMountWorkgroupDrives( DeviceManager *dm, User *usr, FULONG groupID 
 		// get drive details
 		// drive which have type 'Workgroup' and is attached to the user
 
-		/*
-		 (system/fsys/device_handling.c:316) 140366686701312 SQL : 'SELECT `Type`,`Path`,`Config`,f.`ID`,`Execute`,`StoredBytes`,`Name` FROM `Filesystem` f WHERE (f.UserID = '4' OR f.GroupID IN (SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g WHERE g.ID = ug.UserGroupID AND g.Type = 'Workgroup' AND ug.UserID = '4' ug.GroupID=4 ) ) AND f.Name = 'H�E�L���' and (f.Owner='0' OR f.Owner IS NULL)'
-  (mysqllibrary.c:1070) 140366686701312 Cannot run query: 'SELECT `Type`,`Path`,`Config`,f.`ID`,`Execute`,`StoredBytes`,`Name` FROM `Filesystem` f WHERE (f.UserID = '4' OR f.GroupID IN (SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g WHERE g.ID = ug.UserGroupID AND g.Type = 'Workgroup' AND ug.UserID = '4' ug.GroupID=4 ) ) AND f.Name = 'H�E�L���' and (f.Owner='0' OR f.Owner IS NULL)'
-  (mysqllibrary.c:1072) 140366686701312 You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'ug.GroupID=4 ) ) AND f.Name = 'H?E?L???' and (f.Owner='0' OR f.Owner IS NULL)' at line 1
-  (system/fsys/device_handling.c:319) 140366686701312 [MountSharedDrive] sql executed
-
-		 */
-		/*
-				sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
-"SELECT \
-`Type`,`Path`,`Config`,f.`ID`,`Execute`,`StoredBytes`,`Name` \
-FROM `Filesystem` f \
-WHERE \
-(\
-f.UserID = '%ld' OR \
-f.GroupID IN (\
-SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g \
-WHERE \
-g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND \
-ug.UserID = '%lu' ug.GroupID=%lu \
-) \
-) \
-AND f.Name = '%s' and (f.Owner='0' OR f.Owner IS NULL)",
-			usr->u_ID , usr->u_ID, groupID
-			);
-		 */
-	
-/*
-		sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
-"SELECT Type,Path,Config,ID,Execute,StoredBytes,Name FROM Filesystem WHERE GroupID IN (SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g WHERE g.ID = ug.UserGroupID AND g.Type='Workgroup' AND ug.UserID = '%lu' AND ug.UserGroupID=%lu ) and (f.Owner='0' OR f.Owner IS NULL)",
-			usr->u_ID, groupID
-			);
-*/
-/*
-		sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
-"SELECT Type,Path,Config,ID,Execute,StoredBytes,Name FROM Filesystem WHERE GroupID IN (SELECT ug.UserGroupID FROM FUserToGroup ug inner join FUserGroup g on g.ID=ug.UserGroupID WHERE g.Type='Workgroup' AND ug.UserID=%lu AND ug.UserGroupID=%lu ) and (Owner=0 OR Owner IS NULL)", usr->u_ID, groupID
-			);
-	*/
-
 		sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
 "SELECT Type,Path,Config,ID,Execute,StoredBytes,Name FROM Filesystem WHERE Type='SQLWorkgroupDrive' AND GroupID=%lu and (Owner=0 OR Owner IS NULL)", groupID );
 
@@ -422,36 +383,6 @@ AND f.Name = '%s' and (f.Owner='0' OR f.Owner IS NULL)",
 						{FSys_Mount_ID, (FULONG)id},
 						{TAG_DONE, TAG_DONE}
 					};
-					
-					// workgroup
-					// command=dosaction&action=mount&type=SQLWorkgroupDrive&devname=AdminNotMounted&path=&module=files&sessionid=42b34dddd6f5757077b675f91cb86239c2aba954';
-					// command=dosaction&action=mount&type=SQLWorkgroupDrive&devname=AdminNotMounted&path=&module=files&sessionid=42b34dddd6f5757077b675f91cb86239c2aba954'
-					
-					// command=dosaction&action=mount&type=SQLWorkgroupDrive&devname=AdminNotMounted&path=&module=files&sessionid=42b34dddd6f5757077b675f91cb86239c2aba954' - normal working call'
-					// command=dosaction&action=mount&type=SQLWorkgroupDrive&devname=AdminNotMounted&path=&module=files&sessionid=42b34dddd6f5757077b675f91cb86239c2aba954
-					
-					// home
-					// command=dosaction&action=mount&type=SQLDrive&devname=Home&path=&module=files&sessionid=42b34dddd6f5757077b675f91cb86239c2aba954';'
-					
-					/*
-								{FSys_Mount_Path, (FULONG)path},
-			{FSys_Mount_Server, (FULONG)server},
-			{FSys_Mount_Port, (FULONG)port},
-			{FSys_Mount_Type, (FULONG)type},
-			{FSys_Mount_Name, (FULONG)name},
-			{FSys_Mount_Owner,(FULONG)usr},
-			{FSys_Mount_LoginUser,(FULONG)uname},
-			{FSys_Mount_LoginPass,(FULONG)passwd},
-			{FSys_Mount_SysBase,(FULONG)l},
-			{FSys_Mount_Config,(FULONG)config},
-			{FSys_Mount_Visible,(FULONG)visible},
-			{FSys_Mount_UserName,(FULONG)pname},
-			//{FSys_Mount_Execute,(FULONG)execute},
-			{FSys_Mount_UserGroup, (FULONG)usrgrp},
-			{FSys_Mount_ID, (FULONG)id},
-			{FSys_Mount_AdminRights,(FULONG)calledByAdmin},
-			{TAG_DONE, TAG_DONE}
-					 */
 		
 					DEBUG( "[MountFS] Filesystem to mount now.\n" );
 		
@@ -2608,7 +2539,7 @@ ug.UserID = '%ld' \
 		sqllib->FreeResult( sqllib, res );
 
 		l->LibrarySQLDrop( l, sqllib );
-	}	
+	}
 	return 0;
 }
 
