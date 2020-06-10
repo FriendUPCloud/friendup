@@ -12,7 +12,28 @@
 
 /* Gets the device settings from FMetaData and returns it in a JSON structure */
 
-global $SqlDatabase, $User;
+global $SqlDatabase, $User, $Config;
+
+// Make sure the user has a shared disk
+$sh = new dbIO( 'Filesystem' );
+$sh->UserID = $User->ID;
+$sh->Name = 'Shared';
+$sh->Type = 'SharedDrive';
+if( !$sh->Load() )
+{
+	$sh->Save();
+}
+if( $sh->Mounted != 1 )
+{
+	$res = FriendCall( ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/device?sessionid=' . $User->SessionID, false,
+		array( 
+			'command'   => 'mount',
+			'type'      => $sh->Type,
+			'devname'   => $sh->Name
+		)
+	);
+	$Logger->log( 'Result: ' . $res );
+}
 
 // Single device
 if( isset( $args->args->filesystemid ) )
