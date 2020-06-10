@@ -2477,9 +2477,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 											size = size * 1024 * 1024 * 1024 * 1024;
 										}
 										var used = parseInt( sorted[b].StoredBytes );
-										if( isNaN( size ) ) size = 512 * 1024; // < Normally the default size
+										if( isNaN( size ) || size == 0 ) size = 512 * 1024; // < Normally the default size
 										if( !used && !size ) used = 0, size = 0;
-										if( !size ) size = 536870912;
 										if( !used ) used = 0;
 										if( used > size || ( used && !size ) ) size = used;
 			
