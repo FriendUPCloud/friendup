@@ -36,7 +36,11 @@ else
 	// Only check permissions if userid is defined ...
 	if( isset( $args->userid ) )
 	{
-		if( $perm = Permissions( 'write', 'application', ( 'AUTHID'.$args->authid ), [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ], 'user', ( isset( $args->userid ) ? $args->userid : $User->ID ) ) )
+		if( $perm = Permissions( 'write', 'application', ( 'AUTHID'.$args->authid ), [ 
+			'PERM_USER_CREATE_GLOBAL', 'PERM_USER_CREATE_IN_WORKGROUP', 
+			'PERM_USER_UPDATE_GLOBAL', 'PERM_USER_UPDATE_IN_WORKGROUP', 
+			'PERM_USER_GLOBAL',        'PERM_USER_WORKGROUP' 
+		], 'user', ( isset( $args->userid ) ? $args->userid : $User->ID ) ) )
 		{
 			if( is_object( $perm ) )
 			{

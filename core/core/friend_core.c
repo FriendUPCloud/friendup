@@ -83,44 +83,6 @@ int nothreads = 0;					/// threads coutner @todo to rewrite
 #define MAX_CALLHANDLER_THREADS 256			///< maximum number of simulatenous handlers
 
 /**
-* Mutex buffer for ssl locking
-*/
-
-static pthread_mutex_t *ssl_mutex_buf = NULL;
-
-/**
-* Static locking function.
-*
-* @param mode identifier of the mutex mode to use
-* @param n number of the mutex to use
-* @param file not used
-* @param line not used
-*/
-
-static void ssl_locking_function( int mode, int n, const char *file __attribute__((unused)), int line __attribute__((unused)))
-{ 
-	if( mode & CRYPTO_LOCK )
-	{
-		FRIEND_MUTEX_LOCK( &ssl_mutex_buf[ n ] );
-	}
-	else
-	{
-		FRIEND_MUTEX_UNLOCK( &ssl_mutex_buf[ n ] );
-	}
-}
-
-/**
-* Static ID function.
-*
-* @return function return thread ID as unsigned long
-*/
-
-static unsigned long ssl_id_function( void ) 
-{
-	return ( ( unsigned long )pthread_self() );
-}
-
-/**
 * Creates a new instance of Friend Core.
 *
 * @param sb pointer to SystemBase
@@ -140,30 +102,6 @@ FriendCoreInstance *FriendCoreNew( void *sb, int id, FBOOL ssl, int port, int ma
 	// Watch our threads
 	// TODO: make an array and use one for each friend core! (if multiple)
 	pthread_mutex_init( &maxthreadmut, NULL );
-	
-	// Static locks buffer
-	ssl_mutex_buf = FCalloc( CRYPTO_num_locks(), sizeof( pthread_mutex_t ) );
-	if( ssl_mutex_buf == NULL)
-	{ 
-		LOG( FLOG_PANIC, "[FriendCoreNew] Failed to allocate ssl mutex buffer.\n" );
-		return NULL; 
-	} 
-	{
-		int i; for( i = 0; i < CRYPTO_num_locks(); i++ )
-		{ 
-			pthread_mutex_init( &ssl_mutex_buf[ i ], NULL );
-		}
-	} 
-	// Setup static locking.
-	CRYPTO_set_locking_callback( ssl_locking_function );
-	CRYPTO_set_id_callback( ssl_id_function );
-	
-	OpenSSL_add_all_algorithms();
-	
-	// Load the error strings for SSL & CRYPTO APIs 
-	SSL_load_error_strings();
-	
-	RAND_load_file( "/dev/urandom", 1024 );
 	
 	// FOR DEBUG PURPOSES! -ht
 	_reads = 0;
@@ -216,12 +154,6 @@ void FriendCoreShutdown( FriendCoreInstance* fc )
 	{
 		LOG( FLOG_INFO, "[FriendCoreShutdown] Waiting for close\n" );
 		sleep( 1 );
-	}
-	
-	if( ssl_mutex_buf != NULL )
-	{
-		FFree( ssl_mutex_buf );
-		ssl_mutex_buf = NULL;
 	}
 	
 	// Destroy listen mutex

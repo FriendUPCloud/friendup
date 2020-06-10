@@ -86,7 +86,10 @@ else
 {
 	require_once( 'php/include/permissions.php' );
 	
-	if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ] ) )
+	if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), [ 
+		'PERM_USER_READ_GLOBAL', 'PERM_USER_READ_IN_WORKGROUP', 
+		'PERM_USER_GLOBAL',      'PERM_USER_WORKGROUP' 
+	] ) )
 	{
 		if( is_object( $perm ) )
 		{

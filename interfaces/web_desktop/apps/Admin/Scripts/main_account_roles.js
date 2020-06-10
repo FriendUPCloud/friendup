@@ -110,129 +110,160 @@ Sections.accounts_roles = function( cmd, extra )
 	
 	// Get the user list -------------------------------------------------------
 	
-	var m = new Module( 'system' );
-	m.onExecuted = function( e, d )
+	var checkedGlobal = Application.checkAppPermission( [ 'PERM_ROLE_READ_GLOBAL', 'PERM_ROLE_GLOBAL' ] );
+	var checkedWorkgr = Application.checkAppPermission( [ 'PERM_ROLE_READ_IN_WORKGROUP', 'PERM_ROLE_WORKGROUP' ] );
+	
+	if( checkedGlobal || checkedWorkgr )
 	{
-		//console.log( { e:e, d:d } );
 		
-		//if( e != 'ok' ) return;
-		var roleList = null;
-		try
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
 		{
-			roleList = JSON.parse( d );
-		}
-		catch( e )
-		{
-			//return;
-		}
+			//console.log( { e:e, d:d } );
 		
+			//if( e != 'ok' ) return;
+			var roleList = null;
+			try
+			{
+				roleList = JSON.parse( d );
+			}
+			catch( e )
+			{
+				//return;
+			}
+		
+			var o = ge( 'RoleList' );
+			o.innerHTML = '';
+		
+			// Types of listed fields
+			var types = {
+				Edit: '10',
+				Name: '80'
+			};
+		
+		
+			// List by level
+			var levels = [ 'User' ];
+		
+		
+			var h2 = document.createElement( 'h2' );
+			h2.innerHTML = i18n( 'i18n_roles' );
+			o.appendChild( h2 );
+		
+			// List headers
+			var header = document.createElement( 'div' );
+			header.className = 'List';
+			var headRow = document.createElement( 'div' );
+			headRow.className = 'HRow BackgroundNegativeAlt Negative PaddingTop PaddingBottom';
+			for( var z in types )
+			{
+				var borders = '';
+				var d = document.createElement( 'div' );
+				if( z != 'Edit' )
+					//borders += ' BorderRight';
+				if( a < roleList.length - a )
+					borders += ' BorderBottom';
+				var d = document.createElement( 'div' );
+				d.className = 'PaddingSmallLeft PaddingSmallRight HContent' + ( types[ z ] ? types[ z ] : '-' ) + ' FloatLeft Ellipsis' + borders;
+				if( z == 'Edit' ) z = '&nbsp;';
+				d.innerHTML = '<strong' + ( z != '&nbsp;' ? '' : '' ) + '>' + ( z != '&nbsp;' ? i18n( 'i18n_header_role_' + z ) : '&nbsp;' ) + '</strong>';
+				headRow.appendChild( d );
+			}
+		
+			if( Application.checkAppPermission( [ 
+				'PERM_ROLE_CREATE_GLOBAL', 'PERM_ROLE_CREATE_IN_WORKGROUP', 
+				'PERM_ROLE_GLOBAL',        'PERM_ROLE_WORKGROUP' 
+			] ) )
+			{
+				var d = document.createElement( 'div' );
+				d.className = 'PaddingSmall HContent' + '10' + ' TextCenter FloatLeft Ellipsis';
+			
+				d.innerHTML = '<button type="button" class="FullWidth IconSmall fa-plus NoBorders NoPadding IconButton Negative"> </button>';
+			
+				//d.innerHTML = '<button class="IconButton IconSmall ButtonSmall fa-plus-circle"></button>';
+		
+				d.onclick = function(){ Sections.userroleadd( 'Unnamed role' ) };
+				headRow.appendChild( d );
+			}
+		
+			header.appendChild( headRow );
+			o.appendChild( header );
+		
+			function setROnclick( r, uid )
+			{
+				if( Application.checkAppPermission( [ 
+					'PERM_ROLE_CREATE_GLOBAL', 'PERM_ROLE_CREATE_IN_WORKGROUP', 
+					'PERM_ROLE_UPDATE_GLOBAL', 'PERM_ROLE_UPDATE_IN_WORKGROUP', 
+					'PERM_ROLE_GLOBAL',        'PERM_ROLE_WORKGROUP' 
+				] ) )
+				{
+					r.onclick = function()
+					{
+						Sections.accounts_roles( 'edit', uid );
+					}
+				}
+			}
+		
+			// List out roles
+		
+			var list = document.createElement( 'div' );
+			list.className = 'List';
+			var sw = 2;
+			for( var b = 0; b < levels.length; b++ )
+			{
+				if( roleList )
+				{
+					for( var a = 0; a < roleList.length; a++ )
+					{
+						sw = sw == 2 ? 1 : 2;
+						var r = document.createElement( 'div' );
+						setROnclick( r, roleList[ a ].ID );
+						r.className = 'HRow ';
+			
+						var icon = '<span class="IconSmall fa-user"></span>';
+						roleList[ a ][ 'Edit' ] = icon;
+				
+						for( var z in types )
+						{
+							var borders = '';
+							var d = document.createElement( 'div' );
+							if( z != 'Edit' )
+							{
+								d.className = '';
+								//borders += ' BorderRight';
+							}
+							else d.className = 'TextCenter';
+							//if( a < roleList.length - a )
+							//	borders += ' BorderBottom';
+							d.className += ' HContent' + ( types[ z ] ? types[ z ] : '-' ) + ' FloatLeft PaddingSmall Ellipsis' + borders;
+							d.innerHTML = ( roleList[a][ z ] ? roleList[a][ z ] : '-' );
+							r.appendChild( d );
+						}
+			
+						// Add row
+						list.appendChild( r );
+					}
+				}
+			}
+		
+			o.appendChild( list );
+		
+			Friend.responsive.pageActive = ge( 'RoleList' );
+			Friend.responsive.reinit();
+		}
+		m.execute( 'userroleget', { authid: Application.authId } );
+		
+	}
+	else
+	{
 		var o = ge( 'RoleList' );
 		o.innerHTML = '';
 		
-		// Types of listed fields
-		var types = {
-			Edit: '10',
-			Name: '80'
-		};
-		
-		
-		// List by level
-		var levels = [ 'User' ];
-		
-		
 		var h2 = document.createElement( 'h2' );
-		h2.innerHTML = i18n( 'i18n_roles' );
+		h2.innerHTML = '{i18n_permission_denied}';
 		o.appendChild( h2 );
-		
-		// List headers
-		var header = document.createElement( 'div' );
-		header.className = 'List';
-		var headRow = document.createElement( 'div' );
-		headRow.className = 'HRow BackgroundNegativeAlt Negative PaddingTop PaddingBottom';
-		for( var z in types )
-		{
-			var borders = '';
-			var d = document.createElement( 'div' );
-			if( z != 'Edit' )
-				//borders += ' BorderRight';
-			if( a < roleList.length - a )
-				borders += ' BorderBottom';
-			var d = document.createElement( 'div' );
-			d.className = 'PaddingSmallLeft PaddingSmallRight HContent' + ( types[ z ] ? types[ z ] : '-' ) + ' FloatLeft Ellipsis' + borders;
-			if( z == 'Edit' ) z = '&nbsp;';
-			d.innerHTML = '<strong' + ( z != '&nbsp;' ? '' : '' ) + '>' + ( z != '&nbsp;' ? i18n( 'i18n_header_' + z ) : '&nbsp;' ) + '</strong>';
-			headRow.appendChild( d );
-		}
-		
-		var d = document.createElement( 'div' );
-		d.className = 'PaddingSmall HContent' + '10' + ' TextCenter FloatLeft Ellipsis';
-		
-		d.innerHTML = '<button type="button" class="FullWidth IconSmall fa-plus NoBorders NoPadding IconButton Negative"> </button>';
-		
-		//d.innerHTML = '<button class="IconButton IconSmall ButtonSmall fa-plus-circle"></button>';
-		
-		d.onclick = function(){ Sections.userroleadd( 'Unnamed role' ) };
-		headRow.appendChild( d );
-		
-		header.appendChild( headRow );
-		o.appendChild( header );
-		
-		function setROnclick( r, uid )
-		{
-			r.onclick = function()
-			{
-				Sections.accounts_roles( 'edit', uid );
-			}
-		}
-		
-		// List out roles
-		
-		var list = document.createElement( 'div' );
-		list.className = 'List';
-		var sw = 2;
-		for( var b = 0; b < levels.length; b++ )
-		{
-			if( roleList )
-			{
-				for( var a = 0; a < roleList.length; a++ )
-				{
-					sw = sw == 2 ? 1 : 2;
-					var r = document.createElement( 'div' );
-					setROnclick( r, roleList[ a ].ID );
-					r.className = 'HRow ';
-			
-					var icon = '<span class="IconSmall fa-user"></span>';
-					roleList[ a ][ 'Edit' ] = icon;
-				
-					for( var z in types )
-					{
-						var borders = '';
-						var d = document.createElement( 'div' );
-						if( z != 'Edit' )
-						{
-							d.className = '';
-							//borders += ' BorderRight';
-						}
-						else d.className = 'TextCenter';
-						//if( a < roleList.length - a )
-						//	borders += ' BorderBottom';
-						d.className += ' HContent' + ( types[ z ] ? types[ z ] : '-' ) + ' FloatLeft PaddingSmall Ellipsis' + borders;
-						d.innerHTML = ( roleList[a][ z ] ? roleList[a][ z ] : '-' );
-						r.appendChild( d );
-					}
-			
-					// Add row
-					list.appendChild( r );
-				}
-			}
-		}
-		
-		o.appendChild( list );
-		
-		Friend.responsive.pageActive = ge( 'RoleList' );
-		Friend.responsive.reinit();
 	}
-	m.execute( 'userroleget', { authid: Application.authId } );
+	
 };
 
 

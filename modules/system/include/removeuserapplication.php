@@ -10,7 +10,7 @@
 *                                                                              *
 *****************************************************************************©*/
 
-global $SqlDatabase, $Logger, $User;
+global $SqlDatabase;
 
 if( isset( $args->args->authid ) && !isset( $args->authid ) )
 {
@@ -19,22 +19,23 @@ if( isset( $args->args->authid ) && !isset( $args->authid ) )
 
 if( !isset( $args->authid ) )
 {
-	// Must be admin
-	if( $level != 'Admin' ) die( '404' );
+	$userid = ( $level == 'Admin' && isset( $args->args->userid ) ? $args->args->userid : $User->ID );
 }
 else
 {
 	require_once( 'php/include/permissions.php' );
-
-	if( $perm = Permissions( 'write', 'application', ( 'AUTHID'.$args->authid ), [ 
-		'PERM_ROLE_CREATE_GLOBAL', 'PERM_ROLE_CREATE_IN_WORKGROUP', 
-		'PERM_ROLE_GLOBAL',        'PERM_ROLE_WORKGROUP' 
+	
+	$userid = ( !isset( $args->args->userid ) ? $User->ID : 0 );
+	
+	if( $perm = Permissions( 'delete', 'application', ( 'AUTHID'.$args->authid ), [ 
+		'PERM_APPLICATION_DELETE_GLOBAL', 'PERM_APPLICATION_DELETE_IN_WORKGROUP', 
+		'PERM_APPLICATION_GLOBAL',        'PERM_APPLICATION_WORKGROUP' 
 	] ) )
 	{
 		if( is_object( $perm ) )
 		{
 			// Permission denied.
-		
+			
 			if( $perm->response == -1 )
 			{
 				//
@@ -42,30 +43,39 @@ else
 				die( 'fail<!--separate-->{"message":"'.$perm->message.'",'.($perm->reason?'"reason":"'.$perm->reason.'",':'').'"response":'.$perm->response.'}' );
 			}
 		
+			// Permission granted. GLOBAL or WORKGROUP specific ...
+		
+			if( $perm->response == 1 && isset( $perm->data->users ) && isset( $args->args->userid ) )
+			{
+			
+				// If user has GLOBAL or WORKGROUP access to this user
+			
+				if( $perm->data->users == '*' || strstr( ','.$perm->data->users.',', ','.$args->args->userid.',' ) )
+				{
+					$userid = intval( $args->args->userid );
+				}
+			
+			}
 		}
 	}
 }
 
 
 
-if( !isset( $args->args->name ) )
+if( isset( $args->args->application ) && $args->args->application )
 {
-	die( 'fail<!--separate-->{"message":"Please specify a name for your role.","response":-1}' );
+	$l = new DbIO( 'FApplication' );
+	$l->Name = $args->args->application;
+	$l->UserID = $userid;
+	if( $l->Load() )
+	{
+		if( $SqlDatabase->query( 'DELETE FROM `FUserApplication` WHERE `UserID`=\'' . $l->UserID . '\' AND `ApplicationID`=\'' . $l->ID . '\'' ) )
+		{
+			$l->Delete();
+		}
+		die( 'ok' );
+	}
 }
-	
-$d = new dbIO( 'FUserGroup' );
-$d->Type = 'Role';
-$d->Name = trim( $args->args->name );
-if( $d->Load() )
-{
-	die( 'fail<!--separate-->{"message":"Role already exists.","response":-1}' );
-}
-$d->Save();
-if( $d->ID > 0 )
-{
-	die( 'ok<!--separate-->{"message":"Role created.","response":1}' );
-}
-
 die( 'fail' );
 
 ?>

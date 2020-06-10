@@ -896,14 +896,14 @@ int Release( struct FHandler *s, void *f )
 			{
 				if( sdat->sftp_session != NULL )
 				{
-					//libssh2_sftp_shutdown( sdat->sftp_session );
+					libssh2_sftp_shutdown( sdat->sftp_session );
 					sdat->sftp_session = NULL;
 				}
-				//libssh2_session_disconnect( sdat->session,  "Normal Shutdown, Thank you for playing");
+				libssh2_session_disconnect( sdat->session,  "Normal Shutdown, Thank you for playing");
 				if( sdat->session != NULL )
 				{
-					//while( TRUE ){ if( libssh2_session_free( sdat->session ) != LIBSSH2_ERROR_EAGAIN ){ break; } usleep( 1000 ); }
-					//sdat->session = NULL;
+					while( TRUE ){ if( libssh2_session_free( sdat->session ) != LIBSSH2_ERROR_EAGAIN ){ break; } usleep( 1000 ); }
+					sdat->session = NULL;
 				}
 			}
 			

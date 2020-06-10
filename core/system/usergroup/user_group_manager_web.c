@@ -499,6 +499,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 	* @param groupname - (required) group name
 	* @param type - type of group. If parameter will miss default Workgroup name will be used.
 	* @param parentid - id of parent workgroup
+	* @param description - group description
 	* @param users - id's of users which will be assigned to group
 	* @return { "response": "sucess","id":<GROUP NUMBER> } when success, otherwise error with code
 	*/
@@ -526,6 +527,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		
 		char *authid = NULL;
 		char *args = NULL;
+		char *description = NULL;
 		el = HttpGetPOSTParameter( request, "authid" );
 		if( el != NULL )
 		{
@@ -545,6 +547,13 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			{
 				groupname = UrlDecodeToMem( (char *)el->hme_Data );
 				DEBUG( "[UMGWebRequest] Update groupname %s!!\n", groupname );
+			}
+			
+			el = HttpGetPOSTParameter( request, "description" );
+			if( el != NULL )
+			{
+				description = UrlDecodeToMem( (char *)el->hme_Data );
+				DEBUG( "[UMGWebRequest] Update description %s!!\n", description );
 			}
 			
 			el = HttpGetPOSTParameter( request, "type" );
@@ -632,11 +641,11 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						DEBUG("GroupCreate: new UserGroup will be created\n");
 						if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
 						{
-							ug = UserGroupNew( 0, groupname, 0, type );
+							ug = UserGroupNew( 0, groupname, 0, type, description );
 						}
 						else
 						{
-							ug = UserGroupNew( 0, groupname, loggedSession->us_User->u_ID, type );
+							ug = UserGroupNew( 0, groupname, loggedSession->us_User->u_ID, type, description );
 						}
 					}
 					
@@ -768,6 +777,10 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		if( users != NULL )
 		{
 			FFree( users );
+		}
+		if( description != NULL )
+		{
+			FFree( description );
 		}
 		//if( args != NULL )
 		//{
@@ -926,6 +939,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 	* @param id - (required) ID of group
 	* @param groupname - (required) group name
 	* @param type - type name
+	* @param description
 	* @param parentid - id of parent workgroup
 	* @param status - group status
 	* @param users - users which will be assigned to group. Remember! old users will be removed from group!
@@ -947,6 +961,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		char *type = NULL;
 		char *users = NULL;
 		char *usersSQL = NULL;
+		char *description = NULL;
 		FULONG parentID = 0;
 		FBOOL fParentID = FALSE;
 		FULONG groupID = 0;
@@ -984,6 +999,13 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			{
 				type = UrlDecodeToMem( (char *)el->hme_Data );
 				DEBUG( "[Group/Update] Update type %s!!\n", type );
+			}
+			
+			el = HttpGetPOSTParameter( request, "description" );
+			if( el != NULL )
+			{
+				description = UrlDecodeToMem( (char *)el->hme_Data );
+				DEBUG( "[Group/Update] Update description %s!!\n", description );
 			}
 			
 			el = HttpGetPOSTParameter( request, "id" );
@@ -1038,6 +1060,12 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 					{
 						FFree( fg->ug_Name );
 						fg->ug_Name = StringDuplicate( groupname );
+					}
+					
+					if( description != NULL )
+					{
+						FFree( fg->ug_Description );
+						fg->ug_Description = StringDuplicate( description );
 					}
 					
 					if( type != NULL )
@@ -1267,6 +1295,10 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		if( usersSQL != NULL )
 		{
 			FFree( usersSQL );
+		}
+		if( description != NULL )
+		{
+			FFree( description );
 		}
 
 		*result = 200;

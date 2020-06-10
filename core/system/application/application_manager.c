@@ -76,6 +76,7 @@ void ApplicationManagerDelete( ApplicationManager *asm )
 
 void ApplicationManagerRemoveApplicationSessionByUserID( ApplicationManager *asm, FUQUAD id )
 {
+	/*
 	if( asm != NULL )
 	{
 		SystemBase *sb = (SystemBase *)asm->am_SB;
@@ -95,6 +96,7 @@ void ApplicationManagerRemoveApplicationSessionByUserID( ApplicationManager *asm
 			sb->LibrarySQLDrop( sb, sqllib );
 		}
 	}
+	*/
 }
 
 /**
@@ -106,6 +108,7 @@ void ApplicationManagerRemoveApplicationSessionByUserID( ApplicationManager *asm
 
 void ApplicationManagerRemoveApplicationSessionByUserSessionID( ApplicationManager *asm, FUQUAD id )
 {
+	/*
 	if( asm != NULL )
 	{
 		SystemBase *sb = (SystemBase *)asm->am_SB;
@@ -125,6 +128,7 @@ void ApplicationManagerRemoveApplicationSessionByUserSessionID( ApplicationManag
 			sb->LibrarySQLDrop( sb, sqllib );
 		}
 	}
+	*/
 }
 
 /**
@@ -135,6 +139,7 @@ void ApplicationManagerRemoveApplicationSessionByUserSessionID( ApplicationManag
 
 void ApplicationManagerRemoveDetachedApplicationSession( ApplicationManager *asm )
 {
+	/*
 	if( asm != NULL )
 	{
 		SystemBase *sb = (SystemBase *)asm->am_SB;
@@ -153,6 +158,7 @@ void ApplicationManagerRemoveDetachedApplicationSession( ApplicationManager *asm
 			sb->LibrarySQLDrop( sb, sqllib );
 		}
 	}
+	*/
 }
 
 
