@@ -6186,7 +6186,37 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								
 								if( key && !callback )
 								{
-									if( permissions[ key ] )
+									if( Array.isArray( key ) )
+									{
+										var out = [];
+										
+										for( var i in key )
+										{
+											if( key[i] && permissions[ key[i] ] )
+											{
+												if( Array.isArray( permissions[ key[i] ] ) )
+												{
+													for( var ii in permissions[ key[i] ] )
+													{
+														if( permissions[ key[i] ][ ii ] )
+														{
+															out.push( permissions[ key[i] ][ ii ] );
+														}
+													}
+												}
+												else
+												{
+													out.push( permissions[ key[i] ] );
+												}
+											}
+										}
+										
+										if( out.length )
+										{
+											return out;
+										}
+									}
+									else if( permissions[ key ] )
 									{
 										return permissions[ key ];
 									}
@@ -6210,7 +6240,37 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										
 										if( callback )
 										{
-											if( permissions[ key ] )
+											if( key && Array.isArray( key ) )
+											{
+												var out = [];
+												
+												for( var i in key )
+												{
+													if( key[i] && permissions[ key[i] ] )
+													{
+														if( Array.isArray( permissions[ key[i] ] ) )
+														{
+															for( var ii in permissions[ key[i] ] )
+															{
+																if( permissions[ key[i] ][ ii ] )
+																{
+																	out.push( permissions[ key[i] ][ ii ] );
+																}
+															}
+														}
+														else
+														{
+															out.push( permissions[ key[i] ] );
+														}
+													}
+												}
+												
+												if( out.length )
+												{
+													return callback( out );
+												}
+											}
+											else if( permissions[ key ] )
 											{
 												return callback( permissions[ key ] );
 											}

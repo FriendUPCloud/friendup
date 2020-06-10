@@ -47,6 +47,7 @@ i18n_workgroups                        : Workgroups
 i18n_roles                             : Roles
 
 i18n_storage                           : Storage
+i18n_drives                            : Drives
 
 i18n_applications                      : Applications
 
@@ -200,6 +201,8 @@ i18n_header_Name                       : Username
 i18n_header_Level                      : Level
 i18n_header_Status                     : Status
 i18n_header_LoginTime                  : Last Login
+i18n_header_role_Name                  : Role
+
 
 i18n_user_updated                      : User updated
 i18n_user_updated_succ                 : The user was successfully updated.
@@ -247,30 +250,40 @@ i18n_name                         : Name
 i18n_type                         : Type
 i18n_size                         : Size
 
-i18n_SQLDrive                     : SQL drive
+#i18n_SQLDrive                    : SQL drive
+i18n_SQLDrive                     : Friend drive
 i18n_Server filesystem            : Server filesystem
 i18n_Local                        : Server filesystem
-i18n_FriendStore                  : Friend Store
-i18n_Samba	                      : Samba filesystem
+#i18n_FriendStore                 : Friend Store
+i18n_FriendStore                  : FriendStore drive
+#i18n_Samba	                      : Samba filesystem
+i18n_Samba	                      : Samba drive
 i18n_DropboxDrive                 : Dropbox drive
 i18n_GoogleDrive                  : Google drive
 i18n_Wordpress                    : WordPress drive
-i18n_SQLWorkgroupDrive            : MySQL Based Filesystem for workgroups
+#i18n_SQLWorkgroupDrive           : MySQL Based Filesystem for workgroups
+i18n_SQLWorkgroupDrive            : Friend Workgroup drive
 i18n_Treeroot                     : Treeroot drive
 i18n_ArenaCM                      : Arena CM drive
 i18n_Website                      : Website drive
 i18n_Assign                       : Assign drive
-i18n_INRam                        : INRam Drive
-i18n_FriendStoreDrive             : FriendStore Drive
-i18n_Remote                       : Remote Drive
-i18n_Node                         : Node network
-i18n_SFTP                         : SFTP
-i18n_CorvoDrive                   : Corvo Disk
-i18n_QuickNG                      : Sybase QuickNG DOS Driver
-i18n_NodeDrive                    : Node network
-i18n_SQLRODrive                   : SQL Read only disk
-i18n_IMAP                         : IMAP Disk
-i18n_IPFSDrive                    : IPFS disk
+i18n_INRam                        : INRam drive
+i18n_FriendStoreDrive             : FriendStore drive
+i18n_Remote                       : Remote drive
+i18n_Node                         : Node Network drive
+i18n_SFTP                         : SFTP drive
+#i18n_CorvoDrive                  : Corvo Disk
+i18n_CorvoDrive                   : Corvo drive
+#i18n_QuickNG                     : Sybase QuickNG DOS Driver
+i18n_QuickNG                      : Sybase QuickNG drive
+#i18n_NodeDrive                   : Node network
+i18n_NodeDrive                    : Node Network drive
+#i18n_SQLRODrive                  : SQL Read only disk
+i18n_SQLRODrive                   : Friend Read only drive
+#i18n_IMAP                        : IMAP Disk
+i18n_IMAP                         : IMAP drive
+#i18n_IPFSDrive                   : IPFS disk
+i18n_IPFSDrive                    : IPFS drive
 
 i18n_disk_error                      : Disk error
 i18n_failed_to_edit                  : Failed to edit disk volume.
@@ -304,6 +317,9 @@ i18n_update_disk                     : Update disk
 i18n_mount_disk                      : Mount disk
 i18n_unmount_disk                    : Unmount disk
 
+i18n_personal_drives                 : Personal drives
+i18n_workgroup_drives                : Workgroup drives
+
 i18n_this_will_remove                : This will remove the disk from the system.
 i18n_are_you_sure                    : Are you sure?
 
@@ -315,4 +331,7 @@ i18n_fail_mount                      : Failed to mount device
 i18n_fail_mount_more                 : Could not mount device.
 i18n_fail_unmount                    : Failed to unmount device
 i18n_fail_unmount_more               : Could not unmount device.
+
+i18n_cannot_edit_workgroup_drive     : Cannot edit Workgroup drive
+i18n_workgroup_drive_edit_in         : Edit Workgroup drive in "Workgroups" section
 

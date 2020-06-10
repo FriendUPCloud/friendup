@@ -254,17 +254,11 @@ static int auth_password( ssh_session session, const char *uname, const char *pa
 			
 			if( s->sshs_Usr != NULL )
 			{
-				SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
-				if( sqllib != NULL )
+				char *err = NULL;
+				UserDeviceMount( sb, s->sshs_Usr, 1, TRUE, &err, TRUE );
+				if( err != NULL )
 				{
-					char *err = NULL;
-					UserDeviceMount( sb, sqllib, s->sshs_Usr, 1, TRUE, &err, TRUE );
-					if( err != NULL )
-					{
-						FFree( err );
-					}
-					
-					sb->LibrarySQLDrop( sb, sqllib );
+					FFree( err );
 				}
 				
 				User *tmp = s->sshs_Usr;

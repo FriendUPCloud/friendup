@@ -25,12 +25,51 @@
 #include <hardware/network.h>
 #include <system/systembase.h>
 #include <hardware/machine_info.h>
+#include <openssl/rand.h>
 
 //
 // currently Friend can create only one core
 //
 
 void *FCM;
+
+/**
+* Mutex buffer for ssl locking
+*/
+
+static pthread_mutex_t *ssl_mutex_buf = NULL;
+
+/**
+* Static locking function.
+*
+* @param mode identifier of the mutex mode to use
+* @param n number of the mutex to use
+* @param file not used
+* @param line not used
+*/
+
+static void ssl_locking_function( int mode, int n, const char *file __attribute__((unused)), int line __attribute__((unused)))
+{ 
+	if( mode & CRYPTO_LOCK )
+	{
+		FRIEND_MUTEX_LOCK( &ssl_mutex_buf[ n ] );
+	}
+	else
+	{
+		FRIEND_MUTEX_UNLOCK( &ssl_mutex_buf[ n ] );
+	}
+}
+
+/**
+* Static ID function.
+*
+* @return function return thread ID as unsigned long
+*/
+
+static unsigned long ssl_id_function( void ) 
+{
+	return ( ( unsigned long )pthread_self() );
+}
 
 //
 // BTW we should have one instance of class what is makeing connection and then it should spread work to cores
@@ -50,6 +89,34 @@ FriendCoreManager *FriendCoreManagerNew()
 	if( ( fcm = FCalloc( 1, sizeof( struct FriendCoreManager ) ) ) != NULL )
 	{
 		FCM = fcm;
+		
+		
+		// Static locks callbacks
+		SSL_library_init();
+		// Static locks buffer
+		ssl_mutex_buf = FCalloc( CRYPTO_num_locks(), sizeof( pthread_mutex_t ) );
+		if( ssl_mutex_buf == NULL)
+		{ 
+			LOG( FLOG_PANIC, "[FriendCoreNew] Failed to allocate ssl mutex buffer.\n" );
+			return NULL; 
+		} 
+	
+		int i; for( i = 0; i < CRYPTO_num_locks(); i++ )
+		{ 
+			pthread_mutex_init( &ssl_mutex_buf[ i ], NULL );
+		}
+	 
+		// Setup static locking.
+		CRYPTO_set_locking_callback( ssl_locking_function );
+		CRYPTO_set_id_callback( ssl_id_function );
+	
+		OpenSSL_add_all_algorithms();
+	
+		// Load the error strings for SSL & CRYPTO APIs 
+		SSL_load_error_strings();
+	
+		RAND_load_file( "/dev/urandom", 1024 );
+		
 		//
 		// Create FriendCoreID
 		//
@@ -84,7 +151,6 @@ FriendCoreManager *FriendCoreManagerNew()
 			strcat( fcm->fcm_ID, "error" );
 		}
 
-		int i;
 		for( i=0 ; i<FRIEND_CORE_MANAGER_ID_SIZE; i++ )
 		{
 			if( fcm->fcm_ID[i ] == 0 )
@@ -218,9 +284,6 @@ int FriendCoreManagerInit( FriendCoreManager *fcm )
 {
 	if( fcm != NULL )
 	{
-		// Static locks callbacks
-		SSL_library_init();
-		
 		if( fcm->fcm_SSLEnabled == 1 )
 		{
 			// if http works on SSL, WS must work on SSL too
@@ -450,6 +513,23 @@ void FriendCoreManagerDelete( FriendCoreManager *fcm )
 		{
 			FFree( fcm->fcm_SSHDSAKey );
 		}
+			
+		if( ssl_mutex_buf != NULL )
+		{
+			FFree( ssl_mutex_buf );
+			ssl_mutex_buf = NULL;
+		}
+		
+		ERR_free_strings( );
+		
+		EVP_cleanup( );
+		SSL_COMP_free_compression_methods();
+		COMP_zlib_cleanup();
+		ERR_remove_state(0);
+		ERR_remove_thread_state(NULL);
+
+		ERR_free_strings();
+		CRYPTO_cleanup_all_ex_data();
 		
 		FFree( fcm );
 	}

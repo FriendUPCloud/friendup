@@ -16,63 +16,47 @@ Sections.accounts_workgroups = function( cmd, extra )
 	{
 		
 		case 'details':
-			
 			loading();
-			
 			break;
 		
 		case 'edit':
-			
 			if( extra && extra.id && extra._this )
 			{
 				edit( extra.id, extra._this );
 			}
-			
 			break;
 		
 		case 'create':
-			
 			create();
-			
 			break;
 		
 		case 'update':
-			
 			if( extra && extra.id && extra.value )
 			{
 				update( extra.id, extra.value );
 			}
-			
 			break;
 		
 		case 'update_role':
-			
 			if( extra && extra.rid && extra.groupid && extra._this )
 			{
 				updateRole( extra.rid, extra.groupid, extra._this );
 			}
-			
 			break;
 		
 		case 'remove':
-			
 			if( extra )
 			{
 				remove( extra );
 			}
-			
 			break;
 		
 		case 'refresh':
-			
 			initMain();
-			
 			break;
 		
 		default:
-			
 			initMain();
-			
 			break;
 		
 	}
@@ -96,6 +80,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 					'authid'  : Application.authId, 
 					'data'    : { 
 						'permission' : [ 
+							'PERM_WORKGROUP_READ_GLOBAL', 
+							'PERM_WORKGROUP_READ_IN_WORKGROUP', 
 							'PERM_WORKGROUP_GLOBAL', 
 							'PERM_WORKGROUP_WORKGROUP' 
 						]
@@ -147,6 +133,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 					'authid'  : Application.authId, 
 					'data'    : { 
 						'permission' : [ 
+							'PERM_WORKGROUP_READ_GLOBAL', 
+							'PERM_WORKGROUP_READ_IN_WORKGROUP', 
 							'PERM_WORKGROUP_GLOBAL', 
 							'PERM_WORKGROUP_WORKGROUP' 
 						]
@@ -192,6 +180,96 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 		return false;
 		
+	}
+	
+	function listStorage( callback, gid, sid, userid )
+	{
+		if( callback )
+		{
+			if( gid )
+			{
+				if( sid )
+				{
+					var m = new Module( 'system' );
+					m.onExecuted = function( e, d )
+					{
+						
+						var js = null;
+						
+						try
+						{
+							js = JSON.parse( d );
+						}
+						catch( e )
+						{
+							js = {};
+						}
+						
+						if( e == 'ok' )
+						{
+							return callback( true, js );
+						}
+						else
+						{
+							return callback( false, js );
+						}
+						
+					}
+					m.execute( 'filesystem', { id: sid, userid: ( userid ? userid : '0' ), authid: Application.authId } );
+				}
+				else
+				{
+					var m = new Module( 'system' );
+					m.onExecuted = function( e, d )
+					{
+					
+						var rows = null;
+					
+						try
+						{
+							rows = JSON.parse( d );
+						}
+						catch( e )
+						{
+							rows = [];
+						}
+					
+						return callback( true, rows );
+						
+					}
+					m.execute( 'mountlist', { groupid: gid, authid: Application.authId } );
+				}
+				
+				return true;
+			}
+			
+			return callback( false, {} );
+		}
+	}
+	
+	function dosdrivergui( storage, callback )
+	{
+		var ft = new Module( 'system' );
+		ft.onExecuted = function( e, d )
+		{
+			if( e == 'ok' )
+			{
+				i18nAddTranslations( d )
+			}
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				// return info that this is loaded.
+				
+				console.log( { e:e, d:d } );
+				
+				if( callback ) callback( storage );
+				
+				return;
+			}
+			m.execute( 'dosdrivergui', { type: storage.type, id: storage.id, authid: Application.authId } );
+		}
+		ft.execute( 'dosdrivergui', { component: 'locale', type: storage.type, language: Application.language, authid: Application.authId } );
 	}
 	
 	function refresh( id, _this )
@@ -272,6 +350,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 			'authid'  : Application.authId, 
 			'data'    : { 
 				'permission' : [ 
+					'PERM_WORKGROUP_CREATE_GLOBAL', 
+					'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
 					'PERM_WORKGROUP_GLOBAL', 
 					'PERM_WORKGROUP_WORKGROUP' 
 				]
@@ -378,6 +458,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 				'authid'  : Application.authId, 
 				'data'    : { 
 					'permission' : [ 
+						'PERM_WORKGROUP_CREATE_GLOBAL', 
+						'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+						'PERM_WORKGROUP_UPDATE_GLOBAL', 
+						'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
 						'PERM_WORKGROUP_GLOBAL', 
 						'PERM_WORKGROUP_WORKGROUP' 
 					]
@@ -497,6 +581,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 				'authid'  : Application.authId, 
 				'data'    : { 
 					'permission' : [ 
+						'PERM_WORKGROUP_CREATE_GLOBAL', 
+						'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+						'PERM_WORKGROUP_UPDATE_GLOBAL', 
+						'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
 						'PERM_WORKGROUP_GLOBAL', 
 						'PERM_WORKGROUP_WORKGROUP' 
 					]
@@ -538,6 +626,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 				'authid'  : Application.authId, 
 				'data'    : { 
 					'permission' : [ 
+						'PERM_WORKGROUP_DELETE_GLOBAL', 
+						'PERM_WORKGROUP_DELETE_IN_WORKGROUP', 
 						'PERM_WORKGROUP_GLOBAL', 
 						'PERM_WORKGROUP_WORKGROUP' 
 					]
@@ -562,6 +652,380 @@ Sections.accounts_workgroups = function( cmd, extra )
 				}
 			}
 			f.execute( 'group/removeusers', args );
+		}
+	}
+	
+	function saveStorage( diskid, userid, callback )
+	{
+		var elems = {};
+		
+		var inputs = ge( 'StorageGui' ).getElementsByTagName( 'input' );
+	
+		if( inputs.length > 0 )
+		{
+			for( var i in inputs )
+			{
+				if( inputs[i] && inputs[i].id )
+				{
+					elems[inputs[i].id] = inputs[i];
+				}
+			}
+		}
+	
+		var texts = ge( 'StorageGui' ).getElementsByTagName( 'textarea' );
+	
+		if( texts.length > 0 )
+		{
+			for( var t in texts )
+			{
+				if( texts[t] && texts[t].id )
+				{
+					elems[texts[t].id] = texts[t];
+				}
+			}
+		}
+	
+		var selects = ge( 'StorageGui' ).getElementsByTagName( 'select' );
+	
+		if( selects.length > 0 )
+		{
+			for( var s in selects )
+			{
+				if( selects[s] && selects[s].id )
+				{
+					elems[selects[s].id] = selects[s];
+				}
+			}
+		}
+		
+		console.log( { userid: ( userid ? userid : '0' ), diskid: diskid, elems: elems } );
+		
+		if( elems && elems[ 'Workgroup' ] && elems[ 'Workgroup' ].value )
+		{
+		
+			// New way of setting DiskSize so overwrite old method ...
+		
+			if( elems[ 'DiskSizeA' ] && elems[ 'DiskSizeA' ].value && elems[ 'DiskSizeB' ] && elems[ 'DiskSizeB' ].value )
+			{
+				elems[ 'conf.DiskSize' ] = { id: 'conf.DiskSize', value: ( elems[ 'DiskSizeA' ].value + elems[ 'DiskSizeB' ].value ) };
+			}
+		
+			var req = { 'Name' : i18n( 'i18n_disk_name_missing' ), 'Type' : i18n( 'i18n_disk_type_missing' ) };
+		
+			for( var r in req )
+			{
+				if( elems[r] && !elems[r].value )
+				{
+					elems[r].focus();
+				
+					Notify( { title: i18n( 'i18n_disk_error' ), text: req[r] } );
+				
+					return;
+				}
+			}
+		
+			
+		
+			var data = { Name: elems[ 'Name' ].value };
+		
+			if( elems[ 'Server'           ] ) data.Server           = elems[ 'Server'           ].value;
+			if( elems[ 'ShortDescription' ] ) data.ShortDescription = elems[ 'ShortDescription' ].value;
+			if( elems[ 'Port'             ] ) data.Port             = elems[ 'Port'             ].value;
+			if( elems[ 'Username'         ] ) data.Username         = elems[ 'Username'         ].value;
+			// Have password and password is not dummy
+			if( elems[ 'Password' ] && elems[ 'Password' ].value != '********' )
+			{
+				data.Password = elems[ 'Password' ].value;
+			}
+			// Have hashed password and password is not dummy
+			else if( elems[ 'HashedPassword' ] && elems[ 'HashedPassword' ].value != '********' )
+			{
+				data.Password = 'HASHED' + Sha256.hash( elems[ 'HashedPassword' ].value );
+			}
+			if( elems[ 'Path'          ] ) data.Path      = elems[ 'Path'      ].value;
+			if( elems[ 'Type'          ] ) data.Type      = elems[ 'Type'      ].value;
+			if( elems[ 'Workgroup'     ] ) data.Workgroup = elems[ 'Workgroup' ].value;
+			if( elems[ 'conf.Pollable' ] )
+			{
+				data.Pollable = elems[ 'conf.Pollable' ].checked ? 'yes' : 'no';
+				elems[ 'conf.Pollable' ].value = elems[ 'conf.Pollable' ].checked ? 'yes' : 'no';
+			}
+			if( elems[ 'conf.Invisible' ] )
+			{
+				data.Invisible = elems[ 'conf.Invisible' ].checked ? 'yes' : 'no';
+				elems[ 'conf.Invisible' ].value = elems[ 'conf.Invisible' ].checked ? 'yes' : 'no';
+			}
+			if( elems[ 'conf.Executable' ] )
+				data.Invisible = elems[ 'conf.Executable' ].value;
+	
+			if( elems[ 'PrivateKey'      ] )
+			{
+				data.PrivateKey = elems[ 'PrivateKey' ].value;
+			}
+			if( elems[ 'EncryptedKey'    ] )
+			{
+				data.EncryptedKey = elems[ 'EncryptedKey' ].value;
+			}
+			
+			// Custom fields
+			for( var a in elems )
+			{
+				if( elems[a] && elems[a].id.substr( 0, 5 ) == 'conf.' )
+				{
+					data[elems[a].id] = elems[a].value;
+				}
+			}
+			
+			// TODO: Change this to allow userid = 0 when pawel has support for mounting a workgroup disk with userid = 0 ...
+			
+			if( userid && userid > 0 )
+			{
+				data.userid = ( userid ? userid : '0' );
+			}
+			
+			data.authid = Application.authId;
+			
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, dat )
+			{
+				//console.log( 'Sections.user_disk_save ', { e:e, d:dat, args:data } );
+				
+				if( e != 'ok' ) 
+				{
+					Notify( { title: i18n( 'i18n_disk_error' ), text: i18n( 'i18n_failed_to_edit' ) } );
+					return;
+				}
+				else
+				{
+					Notify( { title: i18n( 'i18n_disk_success' ), text: i18n( 'i18n_disk_edited' ) } );
+				}
+				
+				if( !data.ID || ( elems[ 'Name' ].hasAttribute('data-mount-state') && elems[ 'Name' ].getAttribute('data-mount-state') == '1' ) )
+				{
+					remountDisk( ( elems[ 'Name' ] && elems[ 'Name' ].current ? elems[ 'Name' ].current : data.Name ), data.Name, data.userid, function()
+					{
+						// Refresh init.refresh();
+						Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
+						if( callback )
+						{
+							callback();
+						}
+					} );					
+				}
+				else if( callback )
+				{
+					callback();
+				}
+			}
+			
+			console.log( data );
+			
+			// if the disk is mounted, we need to unmount it based on its old name first.
+			if( elems[ 'Name' ].hasAttribute('data-stored-value') &&  elems[ 'Name' ].hasAttribute('data-mount-state') && elems[ 'Name' ].getAttribute('data-mount-state') == '1' )
+			{
+				unmountDisk( elems[ 'Name' ].getAttribute('data-stored-value'), userid, function( e, d )
+				{
+					data.ID = diskid;
+					m.execute( 'editfilesystem', data );
+				});
+			}
+			else if( diskid > 0 )
+			{
+				data.ID = diskid;
+				m.execute( 'editfilesystem', data );
+			}
+			else
+			{
+				m.execute( 'addfilesystem', data );
+			}
+		
+		}
+	}
+	
+	function mountStorage( devname, userid, _this, callback )
+	{
+		if( devname && _this )
+		{
+			if( _this.innerHTML.toLowerCase().indexOf( 'unmount' ) >= 0 )
+			{
+				unmountDisk( devname, userid, function( e, d )
+				{
+					console.log( 'unmountDrive( '+devname+', '+( userid ? userid : '0' )+' ) ', { e:e, d:d } );
+				
+					if( e == 'ok' )
+					{
+						Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
+						
+						console.log( 'Application.sendMessage( { type: \'system\', command: \'refreshdoors\' } );' );
+					
+						Notify( { title: i18n( 'i18n_unmounting' ) + ' ' + devname + ':', text: i18n( 'i18n_successfully_unmounted' ) } );
+						
+						// init.refresh() ...
+						
+						if(	callback )
+						{
+							callback();
+						}
+						
+						return;
+					}
+					else
+					{
+						Notify( { title: i18n( 'i18n_fail_unmount' ), text: i18n( 'i18n_fail_unmount_more' ) } );
+					}
+				
+				} );
+			}
+			else
+			{
+				mountDisk( devname, userid, function( e, d )
+				{
+					console.log( 'mountDrive( '+devname+', '+( userid ? userid : '0' )+' ) ', { e:e, d:d } );
+				
+					if( e == 'ok' )
+					{
+						Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
+					
+						console.log( 'Application.sendMessage( { type: \'system\', command: \'refreshdoors\' } );' );
+					
+						Notify( { title: i18n( 'i18n_mounting' ) + ' ' + devname + ':', text: i18n( 'i18n_successfully_mounted' ) } );
+						
+						// init.refresh() ...
+						
+						if(	callback )
+						{
+							callback();
+						}
+				
+						return;
+					}
+					else
+					{
+						Notify( { title: i18n( 'i18n_fail_mount' ), text: i18n( 'i18n_fail_mount_more' ) } );
+					}
+				
+				} );
+			}
+		}
+	}
+	
+	function mountDisk( devname, userid, callback )
+	{
+		if( devname )
+		{
+			var vars = { devname: devname };
+		
+			// Specific for Pawel's code ... He just wants to forward json ...
+			
+			// TODO: Needs to support mounting / unmounting of workgroup disk with userid = 0 or undefined.
+			
+			if( 1==1 || userid )
+			{
+				if( userid > 0 )
+				{
+					vars.userid = ( userid ? userid : '0' );
+				}
+				
+				vars.authid = Application.authId;
+			
+				vars.args = JSON.stringify( {
+					'type'    : 'write', 
+					'context' : 'application', 
+					'authid'  : Application.authId, 
+					'data'    : { 
+						'permission' : [ 
+							'PERM_STORAGE_CREATE_GLOBAL', 
+							'PERM_STORAGE_CREATE_IN_WORKGROUP', 
+							'PERM_STORAGE_UPDATE_GLOBAL', 
+							'PERM_STORAGE_UPDATE_IN_WORKGROUP', 
+							'PERM_STORAGE_GLOBAL', 
+							'PERM_STORAGE_WORKGROUP' 
+						]
+					}, 
+					'object'   : 'user', 
+					'objectid' : ( userid ? userid : '0' ) 
+				} );
+			}
+		
+			var f = new Library( 'system.library' );
+		
+			f.onExecuted = function( e, d )
+			{
+				console.log( 'mountDisk ( device/mount ) ', { vars: vars, e:e, d:d } );
+			
+				if( callback ) callback( e, d );
+			}
+		
+			f.execute( 'device/mount', vars );
+		}
+	}
+
+	function unmountDisk( devname, userid, callback )
+	{
+		if( devname )
+		{
+			var vars = { devname: devname };
+		
+			// Specific for Pawel's code ... He just wants to forward json ...
+			
+			// TODO: Needs to support mounting / unmounting of workgroup disk with userid = 0 or undefined.
+			
+			if( 1==1 || userid )
+			{
+				if( userid > 0 )
+				{
+					vars.userid = ( userid ? userid : '0' );
+				}
+				
+				vars.authid = Application.authId;
+				
+				vars.args = JSON.stringify( {
+					'type'    : 'write', 
+					'context' : 'application', 
+					'authid'  : Application.authId, 
+					'data'    : { 
+						'permission' : [ 
+							'PERM_STORAGE_CREATE_GLOBAL', 
+							'PERM_STORAGE_CREATE_IN_WORKGROUP', 
+							'PERM_STORAGE_UPDATE_GLOBAL', 
+							'PERM_STORAGE_UPDATE_IN_WORKGROUP', 
+							'PERM_STORAGE_GLOBAL', 
+							'PERM_STORAGE_WORKGROUP' 
+						]
+					}, 
+					'object'   : 'user', 
+					'objectid' : ( userid ? userid : '0' ) 
+				} );
+			}
+			
+			var f = new Library( 'system.library' );
+		
+			f.onExecuted = function( e, d )
+			{
+				console.log( 'unmountDisk ( device/unmount ) ', { vars: vars, e:e, d:d } );
+			
+				if( callback ) callback( e, d );
+			}
+		
+			f.execute( 'device/unmount', vars );
+		}
+	}
+	
+	function remountDisk( oldname, newname, userid, callback )
+	{
+		if( oldname && newname )
+		{
+			unmountDisk( oldname, userid, function( e, d )
+			{
+			
+				mountDisk( newname, userid, function( e, d )
+				{
+				
+					if( callback ) callback( e, d );
+				
+				} );
+			
+			} );
 		}
 	}
 	
@@ -612,6 +1076,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 						'authid'  : Application.authId, 
 						'data'    : { 
 							'permission' : [ 
+								'PERM_WORKGROUP_DELETE_GLOBAL', 
+								'PERM_WORKGROUP_DELETE_IN_WORKGROUP', 
 								'PERM_WORKGROUP_GLOBAL', 
 								'PERM_WORKGROUP_WORKGROUP' 
 							]
@@ -636,6 +1102,61 @@ Sections.accounts_workgroups = function( cmd, extra )
 			/*}
 		} );*/
 		
+	}
+	
+	function removeStorage( diskid, userid, devname, callback )
+	{
+		if( diskid && devname )
+		{
+			Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_this_will_remove' ), function( r )
+			{
+				if( r && r.data == true )
+				{
+					// This is the hard delete method, used by admins ...
+					
+					// TODO: Add the userid of the user that created the disk in all ...
+					
+					console.log( { diskid: diskid, userid: ( userid ? userid : '0' ), devname: devname } );
+					
+					unmountDrive( devname, false, function()
+					{
+						Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
+						
+						var m = new Module( 'system' );
+						m.onExecuted = function( e, d )
+						{
+							console.log( 'deletedoor', { id:diskid, e:e, d:d } );
+						
+							if( e == 'ok' )
+							{
+									
+								// refresh list ....
+								
+								if( callback )
+								{
+									callback();
+								}
+							}
+							try
+							{
+								var r = JSON.parse( d );						
+								Notify( { title: 'An error occured', text: r.message } );
+							}
+							catch( e )
+							{
+								Notify( { title: 'An error occured', text: 'Could not delete this disk.' } );
+							}
+							return;
+					
+						}
+						
+						m.execute( 'deletedoor', { id: diskid, userid: ( userid ? userid : '0' ), authid: Application.authId } );
+					
+					} );
+				
+				}
+			} );
+		}
 	}
 	
 	// helper functions --------------------------------------------------------------------------------------------- //
@@ -682,6 +1203,21 @@ Sections.accounts_workgroups = function( cmd, extra )
 		}
 		
 		return false;
+	}
+	
+	function readableBytes( bytes, decimals = 2, units = 1 ) 
+	{
+		if ( bytes == 0 ) return ( '' + ( units ? '0B' : '' ) );
+	
+		const k = 1024;
+		const dm = decimals < 0 ? 0 : decimals;
+		const sizes = [ 'B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB' ];
+	
+		const i = Math.floor( Math.log( bytes ) / Math.log( k ) );
+	
+		if( units === 2 ) return sizes[i];
+	
+		return parseFloat( ( bytes / Math.pow( k, i ) ).toFixed( dm ) ) + ( units ? ( sizes[i] ) : '' );
 	}
 	
 	function removeBtn( _this, args, callback )
@@ -922,6 +1458,21 @@ Sections.accounts_workgroups = function( cmd, extra )
 					
 				},
 				
+				// Get storage
+				function(  )
+				{
+					
+					listStorage( function( e, d )
+					{
+						
+						info.mountlist = d;
+						
+						loadingList[ ++loadingSlot ]( info );
+						
+					}, id );
+					
+				},
+				
 				// Get workgroup's roles
 			
 				function( info )
@@ -984,6 +1535,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 	{
 		var workgroup  = ( info.workgroup  ? info.workgroup  : {} );
 		var workgroups = ( info.workgroups ? info.workgroups : [] );
+		var mountlist  = ( info.mountlist  ? info.mountlist  : {} );
 		var roles      = ( info.roles      ? info.roles      : [] );
 		var users      = ( workgroup.users ? workgroup.users : [] );
 		var list       = ( info.users      ? info.users      : [] );
@@ -1012,6 +1564,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 			
 		}
 		
+		// Storage / disks
+		//var mlst = Sections.group_disk_refresh( mountlist, workgroup.groupid );
+		
 		// Roles
 		var rstr = '';
 		
@@ -1019,12 +1574,33 @@ Sections.accounts_workgroups = function( cmd, extra )
 		{
 			for( var a in roles )
 			{
+				
+				if( !roles[a].WorkgroupID && !Application.checkAppPermission( [ 
+					'PERM_ROLE_CREATE_GLOBAL', 'PERM_ROLE_CREATE_IN_WORKGROUP', 
+					'PERM_ROLE_READ_GLOBAL',   'PERM_ROLE_READ_IN_WORKGROUP', 
+					'PERM_ROLE_UPDATE_GLOBAL', 'PERM_ROLE_UPDATE_IN_WORKGROUP', 
+					'PERM_ROLE_GLOBAL',        'PERM_ROLE_WORKGROUP' 
+				] ) )
+				{
+					continue;
+				}
+				
 				rstr += '<div class="HRow">';
 				rstr += '<div class="PaddingSmall HContent80 FloatLeft Ellipsis">' + roles[a].Name + '</div>';
 				rstr += '<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
-				rstr += '<button onclick="Sections.accounts_workgroups(\'update_role\',{rid:'+roles[a].ID+',groupid:'+workgroup.groupid+',_this:this})" class="IconButton IconSmall ButtonSmall FloatRight' + ( roles[a].WorkgroupID ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+				
+				if( Application.checkAppPermission( [ 
+					'PERM_ROLE_CREATE_GLOBAL', 'PERM_ROLE_CREATE_IN_WORKGROUP', 
+					'PERM_ROLE_UPDATE_GLOBAL', 'PERM_ROLE_UPDATE_IN_WORKGROUP', 
+					'PERM_ROLE_GLOBAL',        'PERM_ROLE_WORKGROUP' 
+				] ) )
+				{
+					rstr += '<button onclick="Sections.accounts_workgroups(\'update_role\',{rid:'+roles[a].ID+',groupid:'+workgroup.groupid+',_this:this})" class="IconButton IconSmall ButtonSmall FloatRight' + ( roles[a].WorkgroupID ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+				}
+				
 				rstr += '</div>';
 				rstr += '</div>';
+				
 			}
 		}
 		
@@ -1039,6 +1615,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			workgroup_name        : ( workgroup.name        ? workgroup.name        : ''                           ),
 			workgroup_parent      : pstr,
 			workgroup_description : ( workgroup.description ? workgroup.description : ''                           ),
+			storage               : ''/*mlst*/,
 			roles                 : rstr
 		};
 		
@@ -1078,25 +1655,45 @@ Sections.accounts_workgroups = function( cmd, extra )
 					}
 				}
 				
-				ge( 'AdminUsersContainer' ).className = 'Open';
+				//ge( 'AdminUsersContainer' ).className = 'Open';
 			}
 			
 			var bg1  = ge( 'GroupSaveBtn' );
-			if( bg1 ) bg1.onclick = function( e )
+			if( bg1 ) 
 			{
-				// Save workgroup ...
-				
-				if( info.ID )
+				if( 
+				( info.ID && Application.checkAppPermission( [ 
+					'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+					'PERM_WORKGROUP_UPDATE_GLOBAL', 'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+					'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
+				] ) ) || 
+				( !info.ID && Application.checkAppPermission( [ 
+					'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+					'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
+				] ) ) 
+				)
 				{
-					console.log( '// save workgroup' );
+					bg1.onclick = function( e )
+					{
+						// Save workgroup ...
+				
+						if( info.ID )
+						{
+							console.log( '// save workgroup' );
 					
-					update( info.ID );
+							update( info.ID );
+						}
+						else
+						{
+							console.log( '// create workgroup' );
+					
+							create();
+						}
+					}
 				}
 				else
 				{
-					console.log( '// create workgroup' );
-					
-					create();
+					bg1.style.display = 'none';
 				}
 			}
 			var bg2  = ge( 'GroupCancelBtn' );
@@ -1118,24 +1715,37 @@ Sections.accounts_workgroups = function( cmd, extra )
 			}
 			
 			var bg4  = ge( 'GroupDeleteBtn' );
-			if( bg4 ) bg4.onclick = function( e )
+			if( bg4 )
 			{
-				
-				// Delete workgroup ...
-				
-				if( info.ID )
+				if( Application.checkAppPermission( [ 
+					'PERM_WORKGROUP_DELETE_GLOBAL', 'PERM_WORKGROUP_DELETE_IN_WORKGROUP', 
+					'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
+				] ) )
 				{
-					console.log( '// delete workgroup' );
-					
-					removeBtn( this, { id: info.ID, button_text: 'i18n_delete_workgroup', }, function ( args )
+					bg4.onclick = function( e )
 					{
-						
-						remove( args.id );
-						
-					} );
-					
-				}
 				
+						// Delete workgroup ...
+				
+						if( info.ID )
+						{
+							console.log( '// delete workgroup' );
+					
+							removeBtn( this, { id: info.ID, button_text: 'i18n_delete_workgroup', }, function ( args )
+							{
+						
+								remove( args.id );
+						
+							} );
+					
+						}
+				
+					}
+				}
+				else
+				{
+					bg4.style.display = 'none';
+				}
 			}
 			
 			
@@ -1414,41 +2024,48 @@ Sections.accounts_workgroups = function( cmd, extra )
 																{ 
 																	'element' : function( ids, id, func ) 
 																	{
-																		var b = document.createElement( 'button' );
-																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
-																		b.onclick = function(  )
+																		if( Application.checkAppPermission( [ 
+																			'PERM_USER_CREATE_GLOBAL', 'PERM_USER_CREATE_IN_WORKGROUP', 
+																			'PERM_USER_UPDATE_GLOBAL', 'PERM_USER_UPDATE_IN_WORKGROUP', 
+																			'PERM_USER_GLOBAL',        'PERM_USER_WORKGROUP' 
+																		] ) )
 																		{
-																			
-																			var pnt = this.parentNode.parentNode;
-																			
-																			removeBtn( this, { ids: ids, id: id, func: func, pnt: pnt }, function ( args )
+																			var b = document.createElement( 'button' );
+																			b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																			b.onclick = function(  )
 																			{
-																				
-																				console.log( 'removeUser( '+args.id+', '+info.ID+', callback, vars )' );
-																				
-																				removeUser( args.id, info.ID, function( e, d, vars )
-																				{
-																					
-																					if( e && vars )
-																					{
-																						vars.func.updateids( 'users', vars.uid, false );
-																						
-																						if( vars.pnt )
-																						{
-																							vars.pnt.innerHTML = '';
-																						}
-																					}
-																					else
-																					{
-																						console.log( { e:e, d:d, vars: vars } );
-																					}
-																					
-																				}, { uid: args.id, func: func, pnt: pnt } );
-																				
-																			} );
 																			
-																		};
-																		return b;
+																				var pnt = this.parentNode.parentNode;
+																			
+																				removeBtn( this, { ids: ids, id: id, func: func, pnt: pnt }, function ( args )
+																				{
+																				
+																					console.log( 'removeUser( '+args.id+', '+info.ID+', callback, vars )' );
+																				
+																					removeUser( args.id, info.ID, function( e, d, vars )
+																					{
+																					
+																						if( e && vars )
+																						{
+																							vars.func.updateids( 'users', vars.uid, false );
+																						
+																							if( vars.pnt )
+																							{
+																								vars.pnt.innerHTML = '';
+																							}
+																						}
+																						else
+																						{
+																							console.log( { e:e, d:d, vars: vars } );
+																						}
+																					
+																					}, { uid: args.id, func: func, pnt: pnt } );
+																				
+																				} );
+																			
+																			};
+																			return b;
+																		}
 																	}( this.ids, list[k].ID, this.func ) 
 																}
 															]
@@ -1714,28 +2331,39 @@ Sections.accounts_workgroups = function( cmd, extra )
 								var etn = ge( 'UsersEdit' );
 								if( etn )
 								{
-									etn.onclick = function( e )
+									if( Application.checkAppPermission( [ 
+										'PERM_USER_CREATE_GLOBAL', 'PERM_USER_CREATE_IN_WORKGROUP', 
+										'PERM_USER_UPDATE_GLOBAL', 'PERM_USER_UPDATE_IN_WORKGROUP', 
+										'PERM_USER_GLOBAL',        'PERM_USER_WORKGROUP' 
+									] ) )
 									{
-								
-										init.edit();
-								
-										// Hide add / edit button ...
-								
-										if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+										etn.onclick = function( e )
 										{
-											etn.classList.remove( 'Open' );
-											etn.classList.add( 'Closed' );
-										}
 								
-										// Show back button ...
+											init.edit();
 								
-										if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
-										{
-											btn.classList.remove( 'Closed' );
-											btn.classList.add( 'Open' );
-										}
+											// Hide add / edit button ...
+								
+											if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+											{
+												etn.classList.remove( 'Open' );
+												etn.classList.add( 'Closed' );
+											}
+								
+											// Show back button ...
+								
+											if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+											{
+												btn.classList.remove( 'Closed' );
+												btn.classList.add( 'Open' );
+											}
 										
-									};
+										};
+									}
+									else
+									{
+										etn.style.display = 'none';
+									}
 								}
 						
 								var btn = ge( 'UsersEditBack' );
@@ -1765,7 +2393,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 									};
 								}
 							
-								// Show listed dock ... 
+								// Show listed users ... 
 						
 								init.list();
 								
@@ -1773,16 +2401,929 @@ Sections.accounts_workgroups = function( cmd, extra )
 								
 						}
 						
-					}
+					},
 					
-					//
+					// Storage -----------------------------------------------------------------------------------------
+					
+					storage : function ( func )
+					{
+						
+						// Editing Storage
+						
+						var init =
+						{
+							
+							func : this,
+							
+							list : function ( rows )
+							{
+								
+								this.func.mode[ 'storage' ] = 'list';
+								
+								var o = ge( 'StorageGui' ); o.innerHTML = '';
+								
+								mountlist = ( rows ? rows : mountlist );
+								
+								console.log( 'init.list ', mountlist );
+								
+								if( mountlist && mountlist.length )
+								{
+									var sorted = {};
+		
+									for( var a = 0; a < mountlist.length; a++ )
+									{
+										if( mountlist[a].Mounted <= 0 )
+										{
+											sorted['1000'+a] = mountlist[a];
+										}
+										else
+										{
+											sorted[a] = mountlist[a];
+										}
+									}
+									
+									for( var b in sorted )
+									{
+										if( sorted[b] && !sorted[b].ID ) continue;
+			
+										try
+										{
+											sorted[b].Config = JSON.parse( sorted[b].Config );
+										}
+										catch( e )
+										{
+											sorted[b].Config = {};
+										}
+								
+										// Calculate disk usage
+										var size = ( sorted[b].Config.DiskSize ? sorted[b].Config.DiskSize : 0 );
+										var mode = ( size && size.length && size != 'undefined' ? size.match( /[a-z]+/i ) : [ '' ] );
+										size = parseInt( size );
+										var type = mode[0].toLowerCase();
+										if( type == 'kb' )
+										{
+											size = size * 1024;
+										}
+										else if( type == 'mb' )
+										{
+											size = size * 1024 * 1024;
+										}
+										else if( type == 'gb' )
+										{
+											size = size * 1024 * 1024 * 1024;
+										}
+										else if( type == 'tb' )
+										{
+											size = size * 1024 * 1024 * 1024 * 1024;
+										}
+										var used = parseInt( sorted[b].StoredBytes );
+										if( isNaN( size ) || size == 0 ) size = 512 * 1024; // < Normally the default size
+										if( !used && !size ) used = 0, size = 0;
+										if( !used ) used = 0;
+										if( used > size || ( used && !size ) ) size = used;
+			
+										var storage = {
+											id   : sorted[b].ID,
+											user : sorted[b].UserID,
+											name : sorted[b].Name,
+											type : sorted[b].Type,
+											size : readableBytes( size, 0 ), 
+											used : readableBytes( used, 0 ), 
+											free : readableBytes( ( size - used ), 0 ), 
+											prog : ( ( used / size * 100 ) > 100 ? 100 : ( used / size * 100 ) ), 
+											icon : '/iconthemes/friendup15/DriveLabels/FriendDisk.svg',
+											mount : sorted[b].Mounted
+										};
+			
+										if( Friend.dosDrivers[ storage.type ] && Friend.dosDrivers[ storage.type ].iconLabel )
+										{
+											storage.icon = 'data:image/svg+xml;base64,' + Friend.dosDrivers[ storage.type ].iconLabel;
+										}
+										if( storage.name == 'Home' )
+										{
+											storage.icon = '/iconthemes/friendup15/DriveLabels/Home.svg';
+										}
+										else if( storage.name == 'System' )
+										{
+											storage.icon = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
+										}
+								
+										
+								
+										var divs = appendChild( [
+											{
+								
+												'element' : function( mounted ) 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'HContent33 FloatLeft DiskContainer';
+													if( mounted <= 0 )
+													{
+														d.style.opacity = '0.6';
+													}
+													return d;
+												}( storage.mount ),
+								
+												'child' : 
+												[ 
+													{ 
+												
+														'element' : function( init, storage, groupid ) 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmall Ellipsis';
+															
+															if( Application.checkAppPermission( [ 
+																'PERM_STORAGE_CREATE_GLOBAL', 'PERM_STORAGE_CREATE_IN_WORKGROUP', 
+																'PERM_STORAGE_UPDATE_GLOBAL', 'PERM_STORAGE_UPDATE_IN_WORKGROUP', 
+																'PERM_STORAGE_GLOBAL',        'PERM_STORAGE_WORKGROUP' 
+															] ) )
+															{
+																d.onclick = function (  )
+																{
+																																
+																	init.edit( storage.id, storage.user );
+																
+																};
+															}
+															
+															d.innerHTML = ''
+															+ '	<div class="Col1 FloatLeft" id="Storage_' + storage.id + '">'
+															+ '		<div class="disk">'
+															+ '			<div class="label" style="background-image: url(\'' + storage.icon + '\')"></div>'
+															+ '		</div>'
+															+ '	</div>'
+															+ '	<div class="Col2 FloatLeft HContent100 Name Ellipsis">'
+															+ '		<div class="name" title="' + storage.name + '">' + storage.name + ':</div>'
+															+ '		<div class="type" title="' + i18n( 'i18n_' + storage.type ) + '">' + i18n( 'i18n_' + storage.type ) + '</div>'
+															+ '		<div class="rectangle">'
+															+ '			<div title="' + storage.used + ' used" style="width:' + storage.prog + '%"></div>'
+															+ '		</div>'
+															+ '		<div class="bytes">' + storage.free  + ' free of ' + storage.size + '</div>'
+															+ '	<div>';
+															return d;
+														}( this, storage, workgroup.groupid )
+												
+													}
+												]
+											}
+										] );
+								
+								
+								
+										if( divs )
+										{
+											for( var i in divs )
+											{
+												if( divs[i] && o )
+												{
+													o.appendChild( divs[i] );
+												}
+											}
+										}
+							
+									}
+							
+								}
+								else
+								{
+							
+									o.innerHTML = ''/*'<div class="HContent100">' + i18n( 'i18n_workgroup_mountlist_empty' ) + '</div>'*/;
+							
+								}
+						
+							},
+							
+							edit : function ( sid, uid )
+							{
+								
+								this.func.mode[ 'storage' ] = 'edit';
+								
+								var args = {
+									groupid   : ( sid ? workgroup.groupid : null ),
+									storageid : ( sid ? sid               : null ),
+									userid    : ( sid ? uid               : '0' )
+								};
+								
+								var n = new Module( 'system' );
+								n.onExecuted = function( ee, dat )
+								{
+									console.log( { e:ee, d:dat } );
+									
+									try
+									{
+										var da = JSON.parse( dat );
+									}
+									catch( e )
+									{
+										var da = {};
+									}
+			
+									if( !da.length ) return;
+									
+									
+									
+									listStorage( function( res, js )
+									{
+										
+										var storage = { id : '', user: '', name : '', type : 'SQLWorkgroupDrive', note: '', size : 512 };
+										
+										var units = [ 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB' ];
+										
+										console.log( { res:res, js:js } );
+										
+										if( res && js )
+										{
+											
+											try
+											{
+												js.Config = JSON.parse( js.Config );
+											}
+											catch( e )
+											{
+												js.Config = {};
+											}
+											
+											// Calculate disk usage
+											var size = ( js.Config.DiskSize ? js.Config.DiskSize : 0 );
+											var mode = ( size && size.length && size != 'undefined' ? size.match( /[a-z]+/i ) : [ '' ] );
+											size = parseInt( size );
+											var type = mode[0].toLowerCase();
+											if( type == 'kb' )
+											{
+												size = size * 1024;
+											}
+											else if( type == 'mb' )
+											{
+												size = size * 1024 * 1024;
+											}
+											else if( type == 'gb' )
+											{
+												size = size * 1024 * 1024 * 1024;
+											}
+											else if( type == 'tb' )
+											{
+												size = size * 1024 * 1024 * 1024 * 1024;
+											}
+											var used = parseInt( js.StoredBytes );
+											if( isNaN( size ) ) size = 512 * 1024; // < Normally the default size
+											if( !used && !size ) used = 0, size = 0;
+											if( !size ) size = 536870912;
+											if( !used ) used = 0;
+											if( used > size || ( used && !size ) ) size = used;
+			
+											storage = {
+												id   : js.ID,
+												user : js.UserID,
+												name : js.Name,
+												type : js.Type,
+												note : js.ShortDescription,
+												size : size, 
+												used : used, 
+												free : ( size - used ), 
+												prog : ( ( used / size * 100 ) > 100 ? 100 : ( used / size * 100 ) ), 
+												icon : '/iconthemes/friendup15/DriveLabels/FriendDisk.svg',
+												mount : js.Mounted
+											};
+											
+										}
+										
+										if( Friend.dosDrivers[ storage.type ] && Friend.dosDrivers[ storage.type ].iconLabel )
+										{
+											storage.icon = 'data:image/svg+xml;base64,' + Friend.dosDrivers[ storage.type ].iconLabel;
+										}
+										if( storage.name == 'Home' )
+										{
+											storage.icon = '/iconthemes/friendup15/DriveLabels/Home.svg';
+										}
+										else if( storage.name == 'System' )
+										{
+											storage.icon = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
+										}
+										
+										console.log( storage );
+										
+										dosdrivergui( storage, function( storage )
+										{
+											
+											var o = ge( 'StorageGui' ); o.innerHTML = '';
+											
+											var divs = appendChild( [
+												{
+								
+													'element' : function( storage ) 
+													{
+														var d = document.createElement( 'div' );
+														d.className = 'Col1 FloatLeft';
+														d.innerHTML = ''
+														+ '	<div class="disk">'
+														+ '		<div class="label" style="background-image: url(\'' + storage.icon + '\')"></div>'
+														+ '	</div>';
+														return d;
+													}( storage )
+													
+												},
+												
+												{
+													
+													'element' : function(  ) 
+													{
+														var d = document.createElement( 'div' );
+														d.className = 'Col2 FloatLeft';
+														return d;
+													}(  ), 
+													
+													'child' : 
+													[ 
+														
+														{ 
+															
+															'element' : function( storage ) 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'HRow MarginBottom';
+																d.innerHTML = ''
+																+ '	<div class="HContent30 FloatLeft Ellipsis">'
+																+ '		<strong>' + i18n( 'i18n_name' ) + ':</strong>'
+																+ '	</div>'
+																+ '	<div class="HContent70 FloatLeft Ellipsis">'
+																+ '		<input type="text" class="FullWidth" id="Name" value="' + storage.name + '" data-stored-value="' + storage.name + '" data-mount-state="'+ storage.mount +'" placeholder="Mydisk"/>'
+																+ '	</div>';
+																return d;
+															}( storage )
+															
+														},
+														
+														{
+															
+															'element' : function(  ) 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'HRow MarginBottom';
+																return d;
+															}(  ),
+															
+															'child' : 
+															[ 
+																
+																{ 
+																	
+																	'element' : function(  ) 
+																	{
+																		var d = document.createElement( 'div' );
+																		d.className = 'HContent30 FloatLeft Ellipsis';
+																		d.innerHTML = '<strong>' + i18n( 'i18n_type' ) + ':</strong>';
+																		return d;
+																	}(  )
+																	
+																},
+																
+																{
+																	
+																	'element' : function(  ) 
+																	{
+																		var d = document.createElement( 'div' );
+																		d.className = 'HContent70 FloatLeft Ellipsis';
+																		return d;
+																	}(  ),
+																	
+																	'child' : 
+																	[ 
+																
+																		{ 
+																			
+																			'element' : function( storage, da ) 
+																			{
+																				var d = document.createElement( 'select' );
+																				d.className = 'FullWidth';
+																				d.id = 'Type';
+																				d.disabled = true;
+																				d.innerHTML = '';
+																				if( da )
+																				{
+																					for( var i in da )
+																					{
+																						if( da[i].type && storage.type == da[i].type )
+																						{
+																							d.innerHTML += ''
+																							+ '<option value="' + da[i].type + '"' + ( storage.type == da[i].type ? ' selected="selected"' : '' ) + '>' 
+																							+ 	i18n( 'i18n_' + da[i].type ) 
+																							+ '</option>';
+																						}
+																					}
+																				}
+																				return d;
+																			}( storage, da )
+																			
+																		}
+																	]
+																	
+																}
+																
+															]
+															
+														},
+														
+														{
+															
+															'element' : function(  ) 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'HRow MarginBottom';
+																return d;
+															}(  ),
+															
+															'child' : 
+															[ 
+																
+																{ 
+																	
+																	'element' : function(  ) 
+																	{
+																		var d = document.createElement( 'div' );
+																		d.className = 'HContent30 FloatLeft Ellipsis';
+																		d.innerHTML = '<strong>' + i18n( 'i18n_size' ) + ':</strong>';
+																		return d;
+																	}(  )
+																	
+																},
+																
+																{
+																	
+																	'element' : function(  ) 
+																	{
+																		var d = document.createElement( 'div' );
+																		d.className = 'HContent35 FloatLeft Ellipsis PaddingRight';
+																		d.innerHTML = '<input type="text" class="FullWidth" id="DiskSizeA" value="' + readableBytes( storage.size, 0, 0 ) + '" placeholder="512"/>';
+																		return d;
+																	}(  )
+																	
+																},
+																
+																{
+																	
+																	'element' : function(  ) 
+																	{
+																		var d = document.createElement( 'div' );
+																		d.className = 'HContent35 FloatLeft Ellipsis PaddingLeft';
+																		return d;																		
+																	}(  ),
+																	
+																	'child' : 
+																	[ 
+																
+																		{ 
+																			
+																			'element' : function( storage, units ) 
+																			{
+																				var d = document.createElement( 'select' );
+																				d.className = 'FullWidth';
+																				d.id = 'DiskSizeB';
+																				d.innerHTML = '';
+																				if( units )
+																				{
+																					for( var a in units )
+																					{
+																						d.innerHTML += ''
+																						+ '<option' + ( storage.size && readableBytes( storage.size, 0, 2 ) == units[a] ? ' selected="selected"' : '' ) + '>' 
+																						+ 	units[a] 
+																						+ '</option>';
+																					}
+																				}
+																				return d;
+																			}( storage, units )
+																			
+																		}
+																	]
+																
+																}
+																
+															]
+															
+														},
+														
+														{
+															
+															'element' : function(  ) 
+															{
+																var d = document.createElement( 'div' );
+																d.id = 'DosDriverGui';
+																return d;
+															}(  ),
+															
+															// TODO: Check translations from DOS driver gui ...
+															
+															'child' : 
+															[ 
+												
+																{ 
+																	
+																	'element' : function(  ) 
+																	{
+																		var d = document.createElement( 'div' );
+																		d.className = 'MarginBottom HRow';
+																		return d;
+																	}(  ),
+																	
+																	'child' : 
+																	[ 
+												
+																		{
+																			
+																			'element' : function(  ) 
+																			{
+																				var d = document.createElement( 'div' );
+																				d.className = 'HContent30 FloatLeft';
+																				d.innerHTML = '<p class="Layout InputHeight"><strong>Workgroup:</strong></p>';
+																				return d;
+																			}(  )
+																			
+																		},
+																		
+																		{
+																			
+																			'element' : function( groupname ) 
+																			{
+																				var d = document.createElement( 'div' );
+																				d.className = 'HContent70 FloatLeft';
+																				d.innerHTML = ''
+																				+ '	<p class="Layout InputHeight" id="WorkgroupContainer">'
+																				+ '		<select id="Workgroup" class="FullWidth" disabled="true">'
+																				+ '			' + ( groupname ? '<option value="' + groupname + '">' + groupname + '</option>' : '' ) 
+																				+ '		</select>'
+																				+ '	</p>';
+																				return d;
+																			}( workgroup.name )
+																			
+																		}
+																		
+																	]
+																	
+																},
+																
+																{ 
+																	
+																	'element' : function(  ) 
+																	{
+																		var d = document.createElement( 'div' );
+																		d.className = 'MarginBottom HRow';
+																		return d;
+																	}(  ),
+																	
+																	'child' : 
+																	[ 
+												
+																		{
+																			
+																			'element' : function(  ) 
+																			{
+																				var d = document.createElement( 'div' );
+																				d.className = 'HContent30 FloatLeft';
+																				d.innerHTML = '<p class="Layout InputHeight"><strong>Notes:</strong></p>';
+																				return d;
+																			}(  )
+																			
+																		},
+																		
+																		{
+																			
+																			'element' : function( storage ) 
+																			{
+																				var d = document.createElement( 'div' );
+																				d.className = 'HContent70 FloatLeft';
+																				d.innerHTML = ''
+																				+ '	<p class="Layout InputHeight">'
+																				+ '		<input type="text" id="ShortDescription" class="FullWidth" value="' + storage.note + '" placeholder="Your notes...">'
+																				+ '	</p>';
+																				return d;
+																			}( storage )
+																			
+																		}
+																		
+																	]
+																	
+																}
+																
+															]
+															
+														}
+														
+													]
+													
+												},
+												
+												{
+													
+													'element' : function(  ) 
+													{
+														var d = document.createElement( 'div' );
+														d.className = 'HRow PaddingTop';
+														return d;
+													}(  ),
+													
+													'child' : 
+													[ 
+												
+														{ 
+															
+															'element' : function( groupid, storage, init ) 
+															{
+																if( Application.checkAppPermission( [ 
+																	'PERM_STORAGE_CREATE_GLOBAL', 'PERM_STORAGE_CREATE_IN_WORKGROUP', 
+																	'PERM_STORAGE_UPDATE_GLOBAL', 'PERM_STORAGE_UPDATE_IN_WORKGROUP', 
+																	'PERM_STORAGE_GLOBAL',        'PERM_STORAGE_WORKGROUP' 
+																] ) )
+																{
+																	var d = document.createElement( 'button' );
+																	d.className = 'IconSmall FloatRight MarginLeft';
+																	d.innerHTML = 'Save';
+																	d.onclick = function ()
+																	{
+																	
+																		saveStorage( storage.id, storage.user, function()
+																		{
+																		
+																			listStorage( function( res, js )
+																			{
+																			
+																				console.log( 'init.list(  ); ', { res: res, js:js } );
+																			
+																				if( res )
+																				{
+																					init.list( js );
+																				}
+																			
+																			}, groupid );
+																		
+																		} );
+																	
+																	};
+																	return d;
+																}
+															}( workgroup.groupid, storage, init )
+															
+														},
+														
+														{ 
+															
+															'element' : function( init ) 
+															{
+																var d = document.createElement( 'button' );
+																d.className = 'IconSmall FloatRight MarginLeft';
+																d.innerHTML = 'Cancel';
+																d.onclick = function ()
+																{
+																	
+																	init.list();
+																	
+																};
+																return d;
+															}( init )
+															
+														},
+														
+														{ 
+															
+															'element' : function( groupid, storage, init ) 
+															{
+																if( storage.id && Application.checkAppPermission( [ 
+																	'PERM_STORAGE_DELETE_GLOBAL', 'PERM_STORAGE_DELETE_IN_WORKGROUP', 
+																	'PERM_STORAGE_GLOBAL',        'PERM_STORAGE_WORKGROUP' 
+																] ) )
+																{
+																	var d = document.createElement( 'button' );
+																	d.className = 'IconSmall Danger FloatRight MarginLeft';
+																	d.innerHTML = 'Remove disk';
+																	d.onclick = function ()
+																	{
+																	
+																		removeStorage( storage.id, storage.user, storage.name, function()
+																		{
+																		
+																			listStorage( function( res, js )
+																			{
+																			
+																				console.log( 'init.list(  ); ', { res: res, js:js } );
+																			
+																				if( res )
+																				{
+																					init.list( js );
+																				}
+																			
+																			}, groupid );
+																		
+																		} );
+																	
+																	};
+																	return d;
+																}
+															}( workgroup.groupid, storage, init )
+															
+														},
+														
+														{ 
+															
+															'element' : function( groupid, storage, init ) 
+															{
+																if( storage.id && Application.checkAppPermission( [ 
+																	'PERM_STORAGE_CREATE_GLOBAL', 'PERM_STORAGE_CREATE_IN_WORKGROUP', 
+																	'PERM_STORAGE_UPDATE_GLOBAL', 'PERM_STORAGE_UPDATE_IN_WORKGROUP', 
+																	'PERM_STORAGE_GLOBAL',        'PERM_STORAGE_WORKGROUP' 
+																] ) )
+																{
+																	var d = document.createElement( 'button' );
+																	d.className = 'IconSmall FloatLeft MarginRight';
+																	d.innerHTML = ( storage.mount > 0 ? i18n('i18n_unmount_disk') : i18n('i18n_mount_disk') );
+																	d.onclick = function ()
+																	{
+																	
+																		mountStorage( storage.name, storage.user, this, function()
+																		{
+																		
+																			listStorage( function( res, js )
+																			{
+																			
+																				console.log( 'init.list(  ); ', { res: res, js:js } );
+																				
+																				if( res )
+																				{
+																					init.list( js );
+																				}
+																			
+																			}, groupid );
+																		
+																		} );
+																		
+																	};
+																	return d;
+																}
+															}( workgroup.groupid, storage, init )
+															
+														}
+														
+													]
+													
+												}
+												
+											] );
+											
+											
+											
+											if( divs )
+											{
+												for( var i in divs )
+												{
+													if( divs[i] && o )
+													{
+														o.appendChild( divs[i] );
+													}
+												}
+											}
+											
+											if( ge( 'Name' ) && storage.name )
+											{
+												
+												ge( 'Name' ).current = storage.name;
+												
+											}
+											
+										} );
+										
+									}, args.groupid, args.storageid, args.userid );
+									
+								}
+								n.execute( 'types', { mode: 'all', authid: Application.authId } );
+								
+							},
+							
+							refresh : function (  )
+							{
+								
+								switch( this.func.mode[ 'storage' ] )
+								{
+									
+									case 'list':
+										
+										this.list();
+										
+										break;
+										
+									case 'edit':
+										
+										this.edit();
+										
+										break;
+										
+								}
+								
+							}
+							
+						}
+						
+						switch( func )
+						{
+							
+							case 'list':
+								
+								init.list();
+								
+								break;
+								
+							case 'edit':
+								
+								init.edit();
+								
+								break;
+								
+							case 'refresh':
+								
+								init.refresh();
+								
+								break;
+							
+							default:
+								
+								var etn = ge( 'StorageEdit' );
+								if( etn )
+								{
+									if( Application.checkAppPermission( [ 
+										'PERM_STORAGE_CREATE_GLOBAL', 'PERM_STORAGE_CREATE_IN_WORKGROUP', 
+										'PERM_STORAGE_GLOBAL',        'PERM_STORAGE_WORKGROUP' 
+									] ) )
+									{
+										etn.onclick = function( e )
+										{
+								
+											init.edit();
+										
+										};
+									}
+									else
+									{
+										etn.style.display = 'none';
+									}
+								}
+								
+								// Show listed storage ... 
+						
+								init.list();
+								
+								break;
+								
+						}
+						
+					},
+					
+					// Permissions -------------------------------------------------------------------------------------
+					
+					permissions : function ( show )
+					{
+						// Check Permissions
+						
+						console.log( '// Check Permissions ', ( show ? show : [] ) );
+						
+						if( !show || show.indexOf( 'user' ) >= 0 )
+						{
+							if( Application.checkAppPermission( [ 
+								'PERM_USER_READ_GLOBAL', 'PERM_USER_READ_IN_WORKGROUP', 
+								'PERM_USER_GLOBAL',      'PERM_USER_WORKGROUP' 
+							] ) )
+							{
+								if( ge( 'AdminUsersContainer' ) ) ge( 'AdminUsersContainer' ).className = 'Open';
+							}
+						}
+						
+						if( !show || show.indexOf( 'storage' ) >= 0 )
+						{
+							if( Application.checkAppPermission( [ 
+								'PERM_STORAGE_READ_GLOBAL', 'PERM_STORAGE_READ_IN_WORKGROUP', 
+								'PERM_STORAGE_GLOBAL',      'PERM_STORAGE_WORKGROUP' 
+							] ) )
+							{
+								if( ge( 'AdminStorageContainer' ) ) ge( 'AdminStorageContainer' ).className = 'Open';
+							}
+						}
+						
+						if( !show || show.indexOf( 'role' ) >= 0 )
+						{
+							if( Application.checkAppPermission( [ 
+								'PERM_ROLE_READ_GLOBAL', 'PERM_ROLE_READ_IN_WORKGROUP', 
+								'PERM_ROLE_GLOBAL',      'PERM_ROLE_WORKGROUP' 
+							] ) )
+							{
+								if( ge( 'AdminRolesContainer' ) ) ge( 'AdminRolesContainer' ).className = 'Open';
+							}
+						}
+						
+					}
 					
 				};
 			
-			
+				
 				
 				func.users();
-				
+				func.storage();
+				func.permissions();
 				
 			
 			
@@ -1808,8 +3349,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 	
 	function initMain()
 	{
-		var checkedGlobal = Application.checkAppPermission( 'PERM_WORKGROUP_GLOBAL' );
-		var checkedWorkgr = Application.checkAppPermission( 'PERM_WORKGROUP_WORKGROUP' );
+		var checkedGlobal = Application.checkAppPermission( [ 'PERM_WORKGROUP_READ_GLOBAL', 'PERM_WORKGROUP_GLOBAL' ] );
+		var checkedWorkgr = Application.checkAppPermission( [ 'PERM_WORKGROUP_READ_IN_WORKGROUP', 'PERM_WORKGROUP_WORKGROUP' ] );
 		
 		if( checkedGlobal || checkedWorkgr )
 		{
@@ -1881,16 +3422,23 @@ Sections.accounts_workgroups = function( cmd, extra )
 					d.innerHTML = '<strong' + ( z != '&nbsp;' ? '' : '' ) + '>' + ( z != '&nbsp;' ? i18n( 'i18n_header_' + z ) : '&nbsp;' ) + '</strong>';
 					headRow.appendChild( d );
 				}
-			
-				var d = document.createElement( 'div' );
-				d.className = 'HContent' + '10' + ' TextCenter FloatLeft Ellipsis';
-				d.innerHTML = '<button class="IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle"></button>';
-				d.onclick = function()
+				
+				if( Application.checkAppPermission( [ 
+					'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+					'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
+				] ) )
 				{
-					//Sections.accounts_workgroups( 'create' );
-					edit(  );
-				};
-				headRow.appendChild( d );
+					var d = document.createElement( 'div' );
+					d.className = 'HContent' + '10' + ' TextCenter FloatLeft Ellipsis';
+					d.innerHTML = '<button class="IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle"></button>';
+					d.onclick = function()
+					{
+						//Sections.accounts_workgroups( 'create' );
+						edit(  );
+					};
+					headRow.appendChild( d );
+				}
+				
 			
 				header.appendChild( headRow );
 				o.appendChild( header );
@@ -1987,9 +3535,6 @@ Sections.accounts_workgroups = function( cmd, extra )
 	}
 	
 };
-
-
-
 
 
 

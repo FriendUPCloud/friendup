@@ -100,26 +100,74 @@ function refreshSidebar( show )
 				icon: 'fa-user-circle-o',
 				showing: isAdmin,
 				display: true,
-				permissions: [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ],
+				permissions: [ 
+					
+					// Old
+					
+					'PERM_USER_GLOBAL', 
+					'PERM_USER_WORKGROUP', 
+					
+					// New
+					
+					'PERM_USER_READ_GLOBAL', 
+					'PERM_USER_READ_IN_WORKGROUP' 
+					 
+				],
 				init: true
 			},
 			'Workgroups': {
 				icon: 'fa-users',
 				showing: isAdmin,
 				display: true,
-				permissions: [ 'PERM_WORKGROUP_GLOBAL', 'PERM_WORKGROUP_WORKGROUP' ]
+				permissions: [ 
+					
+					// Old
+					
+					'PERM_WORKGROUP_GLOBAL', 
+					'PERM_WORKGROUP_WORKGROUP', 
+					
+					// New
+					
+					'PERM_WORKGROUP_READ_GLOBAL', 
+					'PERM_WORKGROUP_READ_IN_WORKGROUP' 
+					
+				]
 			},
 			'Roles': {
 				icon: 'fa-user-secret',
 				showing: isAdmin,
 				display: true,
-				permissions: [ 'PERM_ROLE_GLOBAL', 'PERM_ROLE_WORKGROUP' ]
+				permissions: [ 
+					
+					// Old
+					
+					'PERM_ROLE_GLOBAL', 
+					'PERM_ROLE_WORKGROUP', 
+					
+					// New
+					
+					'PERM_ROLE_READ_GLOBAL', 
+					'PERM_ROLE_READ_IN_WORKGROUP' 
+					
+				]
 			},
 			'Templates': {
 				icon: 'fa-file-text',
 				showing: isAdmin,
 				display: true,
-				permissions: [ 'PERM_TEMPLATE_GLOBAL', 'PERM_TEMPLATE_WORKGROUP' ]
+				permissions: [ 
+					
+					// Old
+					
+					'PERM_TEMPLATE_GLOBAL', 
+					'PERM_TEMPLATE_WORKGROUP', 
+					
+					// New
+					
+					'PERM_TEMPLATE_READ_GLOBAL', 
+					'PERM_TEMPLATE_READ_IN_WORKGROUP' 
+					
+				]
 			}
 		}
 	};
@@ -129,122 +177,222 @@ function refreshSidebar( show )
 	var headings = {};
 	var mods = Application.mods;
 	
-	// Go through all modules
-	for( var a in mods )
+	// See if there are plugins ...
+	
+	getSystemSettings( function( data )
 	{
-		var found = false;
-		for( var b = 0; b < eles.length; b++ )
+		console.log( data );
+		
+		// add plugins if found ...
+		if( data )
 		{
-			if( eles[b].id == 'Heading_' + a )
+			for( var mod in mods )
 			{
-				headings[ a ] = eles[b];
-				found = true;
-				break;
-			}
-		}
-		
-		// Create header
-		if( !found )
-		{
-			headings[ a ] = document.createElement( 'div' );
-			headings[ a ].innerHTML = '<div class="PaddingLeft PaddingTop PaddingRight"><h3 class="Negative PaddingLeft PaddingRight"><strong>' + a + '</strong></h3></div>';
-			var elements = document.createElement( 'div' );
-			elements.className = 'Elements List';
-			headings[ a ].elements = headings[ a ].appendChild( elements );
-		}
-		
-		// Clear elements
-		headings[ a ].elements.innerHTML = '';
-		
-		var heading_children = 0;
-		
-		// Populate children
-		for( var b in mods[ a ] )
-		{
-			var ch = mods[ a ][ b ];
-			var ptag = document.createElement( 'div' );
-			var atag = document.createElement( 'a' );
-			atag.innerHTML = b;
-			//ptag.className = 'HRow BackgroundNegativeAlt PaddingLeft PaddingSmallTop PaddingRight PaddingSmallBottom';
-			ptag.className = 'HRow BackgroundNegative PaddingLeft PaddingSmallTop PaddingRight PaddingSmallBottom';
-			ptag.appendChild( atag );
-			
-			if( !ch.display ) continue;
-			
-			// If we have no showing check permissions
-			if( !ch.showing )
-			{
-				if( ch.permissions )
-				{
-					var access = false;
+				var found = {};
 				
-					for( var i in ch.permissions )
+				for( var key in data )
+				{
+					if( key.indexOf( '_' ) >= 0 )
 					{
-						if( ch.permissions[i] && Application.checkAppPermission( ch.permissions[i] ) )
+						var parts = key.split( '_' );
+						
+						if( parts.length >= 3 )
 						{
-							access = true;
+							if( parts[0] == mod.toLowerCase() )
+							{
+								if( !found[ mod.toLowerCase() ] || !found[ mod.toLowerCase() ][ parts[1] ] )
+								{
+									var plugin = null; 
+									
+									var obj = {
+										icon        : 'fa-info-circle',
+										showing     : isAdmin,
+										display     : true,
+										permissions : null,
+									};
+									
+									if( data[ mod.toLowerCase() + '_' + parts[1] + '_title_en' ] )
+									{
+										plugin = data[ mod.toLowerCase() + '_' + parts[1] + '_title_en' ];
+									}
+									if( data[ mod.toLowerCase() + '_' + parts[1] + '_icon' ] )
+									{
+										//obj[ 'icon' ] = data[ mod.toLowerCase() + '_' + parts[1] + '_icon' ];
+									}
+									if( data[ mod.toLowerCase() + '_' + parts[1] + '_action' ] )
+									{
+										obj[ 'action' ] = data[ mod.toLowerCase() + '_' + parts[1] + '_action' ];
+									}
+									
+									if( plugin && mods[mod] && !mods[mod][plugin] )
+									{
+										mods[mod][plugin] = obj;
+									}
+									
+									if( !found[ mod.toLowerCase() ] )
+									{
+										found[ mod.toLowerCase() ] = {};
+									}
+									
+									found[ mod.toLowerCase() ][ parts[1] ] = true;
+								}
+							}
 						}
 					}
-				
-					if( !access ) continue;
 				}
-				else continue;
 			}
-			if( ch.icon )
+		}
+		
+		// Go through all modules
+		for( var a in mods )
+		{
+			var found = false;
+			for( var b = 0; b < eles.length; b++ )
 			{
-				//atag.classList.add( 'IconMedium', ch.icon );
-				//atag.classList.add( 'IconSmall', ch.icon );
-				//atag.classList.add( 'Negative', ch.icon );
-				//atag.classList.add( 'PaddingLeft', ch.icon );
-				//atag.classList.add( 'PaddingRight', ch.icon );
-				atag.className = 'IconSmall ' + ch.icon + ' Negative PaddingLeft PaddingRight';
-				atag.innerHTML = '&nbsp;&nbsp;&nbsp;' + atag.innerHTML;
-				( function( module, sect, ch, ele )
+				if( eles[b].id == 'Heading_' + a )
 				{
-					ele.onclick = function()
+					headings[ a ] = eles[b];
+					found = true;
+					break;
+				}
+			}
+		
+			// Create header
+			if( !found )
+			{
+				headings[ a ] = document.createElement( 'div' );
+				headings[ a ].innerHTML = '<div class="PaddingLeft PaddingTop PaddingRight"><h3 class="Negative PaddingLeft PaddingRight"><strong>' + a + '</strong></h3></div>';
+				var elements = document.createElement( 'div' );
+				elements.className = 'Elements List';
+				headings[ a ].elements = headings[ a ].appendChild( elements );
+			}
+		
+			// Clear elements
+			headings[ a ].elements.innerHTML = '';
+		
+			var heading_children = 0;
+		
+			// Populate children
+			for( var b in mods[ a ] )
+			{
+				var ch = mods[ a ][ b ];
+				var ptag = document.createElement( 'div' );
+				var atag = document.createElement( 'a' );
+				atag.innerHTML = b;
+				//ptag.className = 'HRow BackgroundNegativeAlt PaddingLeft PaddingSmallTop PaddingRight PaddingSmallBottom';
+				ptag.className = 'HRow BackgroundNegative PaddingLeft PaddingSmallTop PaddingRight PaddingSmallBottom';
+				ptag.appendChild( atag );
+			
+				if( !ch.display ) continue;
+			
+				// If we have no showing check permissions
+				if( !ch.showing )
+				{
+					if( ch.permissions )
 					{
-						// Update latest changes to permissions before showing page ...
-						Application.checkAppPermission( false, function()
+						var access = false;
+				
+						for( var i in ch.permissions )
 						{
-							if( ge( 'GuiSidebar' ) )
+							if( ch.permissions[i] && Application.checkAppPermission( ch.permissions[i] ) )
 							{
-								var list = ge( 'GuiSidebar' ).getElementsByTagName( 'div' );
-								
-								if( list.length > 0 )
+								access = true;
+							}
+						}
+				
+						if( !access ) continue;
+					}
+					else continue;
+				}
+				if( ch.icon )
+				{
+					//atag.classList.add( 'IconMedium', ch.icon );
+					//atag.classList.add( 'IconSmall', ch.icon );
+					//atag.classList.add( 'Negative', ch.icon );
+					//atag.classList.add( 'PaddingLeft', ch.icon );
+					//atag.classList.add( 'PaddingRight', ch.icon );
+					atag.className = 'IconSmall ' + ch.icon + ' Negative PaddingLeft PaddingRight';
+					atag.innerHTML = '&nbsp;&nbsp;&nbsp;' + atag.innerHTML;
+					( function( module, sect, ch, ele, act )
+					{
+						ele.onclick = function()
+						{
+							// Update latest changes to permissions before showing page ...
+							Application.checkAppPermission( false, function()
+							{
+								if( ge( 'GuiSidebar' ) )
 								{
-									for( var a = 0; a < list.length; a++ )
+									var list = ge( 'GuiSidebar' ).getElementsByTagName( 'div' );
+								
+									if( list.length > 0 )
 									{
-										if( list[a] && list[a].className && list[a].className.indexOf( ' Selected' ) >= 0 )
+										for( var a = 0; a < list.length; a++ )
 										{
-											list[a].className = ( list[a].className.split( ' Selected' ).join( '' ) );
+											if( list[a] && list[a].className && list[a].className.indexOf( ' Selected' ) >= 0 )
+											{
+												list[a].className = ( list[a].className.split( ' Selected' ).join( '' ) );
+											}
 										}
 									}
 								}
-							}
 							
-							ele.parentNode.className = ( ele.parentNode.className.split( ' Selected' ).join( '' ) + ' Selected' );
+								ele.parentNode.className = ( ele.parentNode.className.split( ' Selected' ).join( '' ) + ' Selected' );
 							
-							setGUISection( module, sect );
-						} );
-					}
+								setGUISection( module, sect, act );
+							} );
+						}
 					
-					if( ch.init )
-					{
-						ele.onclick();
-					}
+						if( ch.init )
+						{
+							ele.onclick();
+						}
 					
-				} )( a, b, ch, atag );
+					} )( a, b, ch, atag, ch.action );
+				}
+				headings[ a ].elements.appendChild( ptag );
+				heading_children++;
 			}
-			headings[ a ].elements.appendChild( ptag );
-			heading_children++;
+		
+			// Add header with contents
+			if( !found && heading_children > 0 )
+			{
+				container.appendChild( headings[ a ] );
+			}
 		}
 		
-		// Add header with contents
-		if( !found && heading_children > 0 )
+	} );
+	
+	
+}
+
+function getSystemSettings( callback )
+{
+	var ms = new Module( 'system' );
+	ms.onExecuted = function( stat, resp )
+	{
+		var out = {};
+		
+		if( stat == 'ok' )
 		{
-			container.appendChild( headings[ a ] );
+			try
+			{
+				 resp = JSON.parse( resp );	
+				 resp = JSON.parse( resp[0].Data );
+				 
+				 if( resp )
+				 {
+				 	out = resp;
+				 }
+			}
+			catch( e ){  }
+		}
+		
+		if( callback )
+		{
+			return callback( out );
 		}
 	}
+	ms.execute( 'getsystemsetting', { 'type' : 'system', 'key' : 'adminapp' } );
 }
 
 // Refreshing general statistics
@@ -253,7 +401,7 @@ function refreshStatistics()
 }
 
 // Sets the gui for a section in the app
-function setGUISection( module, section )
+function setGUISection( module, section, action )
 {
 	var found = false;
 	if( typeof( Application.mods[ module ] ) != 'undefined' )
@@ -268,28 +416,58 @@ function setGUISection( module, section )
 	}
 	if( !found ) return;
 	
-	var sectPart = module.toLowerCase() + '_' + section.toLowerCase();
-	var f = new File( 'Progdir:Templates/' + sectPart + '.html' );
-	f.onLoad = function( data )
+	// Get custom plugin data from module
+	
+	if( action && action.indexOf( '/' ) >= 0 )
 	{
-		ge( 'GuiContent' ).innerHTML = data;
+		var action = action.split( '/' );
 		
-		// Temporary until search is fixed for users ...
-		
-		if( section.toLowerCase() == 'users' ) 
+		if( action[0] && action[1] )
 		{
-			//UsersSettings( 'maxlimit', 99999 );
-			
-			UsersSettings( 'reset', true );
+			ge( 'GuiContent' ).innerHTML = '...';
+			console.log( action );
+			var m = new Module( action[0] );
+			m.onExecuted = function( res, data )
+			{
+				ge( 'GuiContent' ).innerHTML = data;
+				
+				//
+				
+				// Reinitialize!
+				Friend.responsive.pageActive = ge( 'GuiContent' ).getElementsByClassName( 'Responsive-Page' )[0];
+				Friend.responsive.reinit();
+			}
+			m.execute( action[1] );
 		}
-		
-		Sections[ sectPart ]();
-		
-		// Reinitialize!
-		Friend.responsive.pageActive = ge( 'GuiContent' ).getElementsByClassName( 'Responsive-Page' )[0];
-		Friend.responsive.reinit();
 	}
-	f.load();
+	
+	// Default mode
+	
+	else
+	{
+		var sectPart = module.toLowerCase() + '_' + section.toLowerCase();
+		var f = new File( 'Progdir:Templates/' + sectPart + '.html' );
+		f.onLoad = function( data )
+		{
+			ge( 'GuiContent' ).innerHTML = data;
+		
+			// Temporary until search is fixed for users ...
+		
+			if( section.toLowerCase() == 'users' ) 
+			{
+				//UsersSettings( 'maxlimit', 99999 );
+			
+				UsersSettings( 'reset', true );
+			}
+		
+			Sections[ sectPart ]();
+		
+			// Reinitialize!
+			Friend.responsive.pageActive = ge( 'GuiContent' ).getElementsByClassName( 'Responsive-Page' )[0];
+			Friend.responsive.reinit();
+		}
+		f.load();
+	}
 }
 
 var Sections = {
