@@ -1065,6 +1065,7 @@ void UGMGetGroups( UserGroupManager *um, FULONG uid, BufString *bs, const char *
 				}
 			}
 			
+			DEBUG("[UGMGetGroups] name: %s type: %s\n", lg->ug_Name, lg->ug_Type );
 			if( type != NULL )
 			{
 				if( strcmp( type, lg->ug_Type ) != 0 )

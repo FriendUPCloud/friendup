@@ -588,6 +588,8 @@ f.Name ASC";
 				FULONG locid = (FLONG)strtol(( char *)el->hme_Data, &next, 0);
 				if( locid > 0 )
 				{
+					usrgrp = UGMGetGroupByID( l->sl_UGM, locid );
+					/*
 					UserGroup *lg = l->sl_UGM->ugm_UserGroups;
 					while( lg != NULL )
 					{
@@ -598,6 +600,7 @@ f.Name ASC";
 						}
 						lg = (UserGroup *)lg->node.mln_Succ;
 					}
+					*/
 				}
 			}
 			
@@ -1358,6 +1361,8 @@ AND LOWER(f.Name) = LOWER('%s')",
 				}
 			}
 			
+			usergroup = UGMGetGroupByName( l->sl_UGM, usergroupname );
+			/*
 			LIST_FOR_EACH( l->sl_UGM->ugm_UserGroups, usergroup, UserGroup * )
 			{
 				if( strcmp( usergroupname, usergroup->ug_Name ) == 0 )
@@ -1365,6 +1370,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 					break;
 				}
 			}
+			*/
 			
 			if( user == NULL )
 			{
