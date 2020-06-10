@@ -427,12 +427,14 @@ void WebSocketDelete( WebSocket* ws )
 		
 		pthread_mutex_destroy( &(ws->ws_Mutex) );
 		
-		Log( FLOG_DEBUG, "[WS] Thread closed\n");
+		Log( FLOG_DEBUG, "[WS] Thread closed, context: %p\n", ws->ws_Context );
 		
 		if( ws->ws_Context != NULL )
 		{
+			//lws_context_deprecate( ws->ws_Context, 0 );
 			lws_context_destroy( ws->ws_Context );
 			ws->ws_Context = NULL;
+			DEBUG( "[WS] context destroyed\n");
 		}
 		
 		if( ws->ws_CertPath != NULL )
