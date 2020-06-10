@@ -184,7 +184,6 @@ if( !class_exists( 'SharedDrive' ) )
 						)
 					' ) )
 					{
-						$Logger->log( 'Here: ' . print_r( $rows, 1 ) );
 						foreach( $rows as $row )
 						{
 							$s = new stdClass();
@@ -193,6 +192,7 @@ if( !class_exists( 'SharedDrive' ) )
 							$s->Type = 'Directory';
 							$s->MetaType = 'Directory';
 							$s->Permissions = '---------------';
+							$s->DateCreated = $s->DateModified = date( 'Y-m-d H:i:s' );
 							$s->Shared = '';
 							$s->SharedLink = '';
 							$s->Filesize = 0;
@@ -207,7 +207,6 @@ if( !class_exists( 'SharedDrive' ) )
 					if( $file->Type == 'File' )
 					{
 						$vol = explode( ':', $file->ExternPath );
-						//$res = file_get_contents( ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/file/info?sessionid=' . $file->ExternSession . '&devname=' . $vol[0] . '&path=' . $file->ExternPath );
 						$res = FriendCall( ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/file/info?sessionid=' . $file->ExternSession, false,
 							array( 
 								'devname'   => $vol[0],
