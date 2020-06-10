@@ -1489,8 +1489,8 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
 		int read_retries = 0;
 		struct timeval timeout;
 		fd_set fds;
-// Microseconds! I.e. 200 ms
-#define READTIMEOUT 200000
+// Microseconds! I.e. 400 ms
+#define READTIMEOUT 400000
 		if( expectedLength > 0 && length > expectedLength ) length = expectedLength;
 		struct timeval start, stop;
 		gettimeofday( &start, NULL );

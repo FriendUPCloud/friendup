@@ -75,96 +75,157 @@ if( !class_exists( 'SharedDrive' ) )
 				( isset( $args->command ) && $args->command == 'dosaction' && isset( $args->args->action ) && $args->args->action == 'dir' )
 			)
 			{
-				$out = [];
-				// Get my shared data
-				if( $rows = $SqlDatabase->fetchObjects( '
-					SELECT DISTINCT(`Data`) FROM FShared WHERE OwnerUserID=\'' . intval( $User->ID, 10 ) . '\' GROUP BY `Data`
-				' ) )
+				if( is_array( $path ) && count( $path ) > 1 && trim( $path[ 1 ] ) )
 				{
-					foreach( $rows as $row )
+					$out = [];	
+					// Get data shared by others
+					// TODO: Support groups
+					if( $rows = $SqlDatabase->fetchObjects( '
+						SELECT s.Data, s.OwnerUserID, u.SessionID FROM FShared s, FUser u 
+						WHERE 
+							u.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $path[ 1 ] ) . '\' AND
+							s.OwnerUserID != \'' . intval( $User->ID, 10 ) . '\' AND
+							s.SharedType = \'User\' AND 
+							s.SharedID = \'' . intval( $User->ID, 10 ) . '\' AND 
+							u.SessionID != "" AND 
+							u.ID = s.OwnerUserID
+					' ) )
 					{
-						$path = $row->Data;
-						$filename = explode( ':', $path ); 
-						$filename = $filename[1];
-						if( strstr( $filename, '/' ) )
+						foreach( $rows as $row )
 						{
-							$filename = explode( '/', $filename );
-							$filename = $filename[ count( $filename ) - 1 ];
+							$path = $row->Data;
+							$filename = explode( ':', $path ); 
+							$filename = $filename[1];
+							if( strstr( $filename, '/' ) )
+							{
+								$filename = explode( '/', $filename );
+								$filename = $filename[ count( $filename ) - 1 ];
+							}
+							$s = new stdClass();
+							$s->Filename = $filename;
+							$s->Path = $filename;
+							$s->Type = 'File';
+							$s->MetaType = 'File';
+							$s->Permissions = '-RWED-RWED-RWED';
+							$s->Shared = '';
+							$s->SharedLink = '';
+							$s->Filesize = 0;
+							$s->Owner = $row->OwnerUserID;
+							$s->ExternPath = $row->Data;
+							$s->ExternSession = $row->SessionID;
+							$out[] = $s;
 						}
-						$s = new stdClass();
-						$s->Filename = $filename;
-						$s->Path = $filename;
-						$s->Type = 'File';
-						$s->MetaType = 'File';
-						$s->Permissions = '-RWED-RWED-RWED';
-						$s->Shared = '';
-						$s->SharedLink = '';
-						$s->Filesize = 0;
-						$s->Owner = $User->ID;
-						$s->ExternPath = $row->Data;
-						$s->ExternSession = $User->SessionID;
-						$out[] = $s;
 					}
 				}
-				// Get data shared by others
-				if( $rows = $SqlDatabase->fetchObjects( '
-					SELECT s.Data, s.OwnerUserID, u.SessionID FROM FShared s, FUser u 
-					WHERE 
-						s.OwnerUserID != \'' . intval( $User->ID, 10 ) . '\' AND
-						s.SharedType = \'User\' AND 
-						s.SharedID = \'' . intval( $User->ID, 10 ) . '\' AND 
-						u.SessionID != "" AND 
-						u.ID = s.OwnerUserID
-				' ) )
+				else
 				{
-					foreach( $rows as $row )
+					$out = [];
+					// Get my shared data
+					if( $rows = $SqlDatabase->fetchObjects( '
+						SELECT DISTINCT(`Data`) FROM FShared WHERE OwnerUserID=\'' . intval( $User->ID, 10 ) . '\' GROUP BY `Data`
+					' ) )
 					{
-						$path = $row->Data;
-						$filename = explode( ':', $path ); 
-						$filename = $filename[1];
-						if( strstr( $filename, '/' ) )
+						foreach( $rows as $row )
 						{
-							$filename = explode( '/', $filename );
-							$filename = $filename[ count( $filename ) - 1 ];
+							$path = $row->Data;
+							$filename = explode( ':', $path ); 
+							$filename = $filename[1];
+							if( strstr( $filename, '/' ) )
+							{
+								$filename = explode( '/', $filename );
+								$filename = $filename[ count( $filename ) - 1 ];
+							}
+							$s = new stdClass();
+							$s->Filename = $filename;
+							$s->Path = $filename;
+							$s->Type = 'File';
+							$s->MetaType = 'File';
+							$s->Permissions = '-RWED-RWED-RWED';
+							$s->Shared = '';
+							$s->SharedLink = '';
+							$s->Filesize = 0;
+							$s->Owner = $User->ID;
+							$s->ExternPath = $row->Data;
+							$s->ExternSession = $User->SessionID;
+							$out[] = $s;
 						}
-						$s = new stdClass();
-						$s->Filename = $filename;
-						$s->Path = $filename;
-						$s->Type = 'File';
-						$s->MetaType = 'File';
-						$s->Permissions = '-RWED-RWED-RWED';
-						$s->Shared = '';
-						$s->SharedLink = '';
-						$s->Filesize = 0;
-						$s->Owner = $row->OwnerUserID;
-						$s->ExternPath = $row->Data;
-						$s->ExternSession = $row->SessionID;
-						$out[] = $s;
+					}
+				
+				
+					// My groups
+					$groups = $SqlDatabase->fetchObjects( '
+						SELECT * FROM
+							FUserToGroup
+						WHERE
+							UserID = \'' . intval( $User->ID, 10 ) . '\'
+					' );
+					$grs = []; foreach( $groups as $group ) $grs[] = $group->UserGroupID;
+					unset( $groups );
+				
+					// Get folders by other users or groups
+					if( $rows = $SqlDatabase->fetchObjects( $q = '
+						SELECT DISTINCT(`Name`) FROM (
+							SELECT u.Name FROM FShared s, FUser u 
+							WHERE
+								u.ID = s.OwnerUserID AND 
+								s.OwnerUserID != \'' . intval( $User->ID, 10 ) . '\' AND
+								s.SharedType = \'user\' AND
+								s.SharedID = \'' . intval( $User->ID, 10 ) . '\'
+						) z
+						UNION
+						(
+							SELECT g.Name FROM FShared s, FUserGroup g, FUserToGroup ug
+							WHERE 
+								s.OwnerUserID != \'' . intval( $User->ID, 10 ) . '\' AND
+								s.SharedType = \'group\' AND
+								s.SharedID = ug.UserGroupID AND
+								g.ID = ug.UserGroupID AND
+								ug.UserGroupID IN ( ' . implode( ', ', $grs ) . ' )
+						)
+					' ) )
+					{
+						$Logger->log( 'Here: ' . print_r( $rows, 1 ) );
+						foreach( $rows as $row )
+						{
+							$s = new stdClass();
+							$s->Filename = $row->Name;
+							$s->Path = $row->Name;
+							$s->Type = 'Directory';
+							$s->MetaType = 'Directory';
+							$s->Permissions = '---------------';
+							$s->Shared = '';
+							$s->SharedLink = '';
+							$s->Filesize = 0;
+							$out[] = $s;
+						}
 					}
 				}
 				
 				// Stat everything
 				foreach( $out as $k=>$file )
 				{
-					$vol = explode( ':', $file->ExternPath );
-					//$res = file_get_contents( ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/file/info?sessionid=' . $file->ExternSession . '&devname=' . $vol[0] . '&path=' . $file->ExternPath );
-					$res = FriendCall( ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/file/info?sessionid=' . $file->ExternSession, false,
-						array( 
-							'devname'   => $vol[0],
-							'path'      => $file->ExternPath
-						)
-					);
-					$code = explode( '<!--separate-->', $res );
-					if( $code[0] == 'ok' )
+					if( $file->Type == 'File' )
 					{
-						$info = json_decode( $code[1] );
-						$out[$k]->Filesize = $info->Filesize;
-						$out[$k]->DateCreated = $info->DateCreated;
-						$out[$k]->DateModified = $info->DateModified;
+						$vol = explode( ':', $file->ExternPath );
+						//$res = file_get_contents( ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/file/info?sessionid=' . $file->ExternSession . '&devname=' . $vol[0] . '&path=' . $file->ExternPath );
+						$res = FriendCall( ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/file/info?sessionid=' . $file->ExternSession, false,
+							array( 
+								'devname'   => $vol[0],
+								'path'      => $file->ExternPath
+							)
+						);
+						$code = explode( '<!--separate-->', $res );
+						if( $code[0] == 'ok' )
+						{
+							$info = json_decode( $code[1] );
+							$out[$k]->Filesize = $info->Filesize;
+							$out[$k]->DateCreated = $info->DateCreated;
+							$out[$k]->DateModified = $info->DateModified;
+						}
+						$out[$k]->Owner = '';
+						$out[$k]->ExternPath = '';
+						$out[$k]->ExternSession = '';
 					}
-					$out[$k]->Owner = '';
-					$out[$k]->ExternPath = '';
-					$out[$k]->ExternSession = '';
 				}
 				
 				// Get the output
@@ -178,82 +239,8 @@ if( !class_exists( 'SharedDrive' ) )
 			}
 			else if( $args->command == 'call' )
 			{
-				//
-				
-				if( strstr( $args->path, ':wisdom.library' ) )
-				{
-					
-					//
-					
-					$someOk = false;
-					$files = [];
-					$paths = [];
-					$res   = [];
-					
-					$context = false;
-					
-					if( $args->args )
-					{
-						$postdata = http_build_query(
-							array(
-								'args' => json_encode( $args->args )
-							)
-						);
-						
-						$opts = array( 'http' =>
-							array(
-								'method'  => 'POST', 
-								'header'  => 'Content-type: application/x-www-form-urlencoded', 
-								'content' => $postdata 
-							)
-						);
-						
-						$context  = stream_context_create( $opts );
-					}
-					
-					// TODO: combine the paths on PHP level instead of on the client
-					
-					// Get the path w/o the volume name
-					$requestPath = end( explode( ':', $args->path ) );
-					if( !$requestPath ) $requestPath = '';
-					
-					foreach( $this->paths as $lpath )
-					{
-						$subpath = end( explode( ':', $lpath ) );
-						$spathlen = strlen( $subpath );
-						$lpath .= $requestPath;
-						
-						$res[] = $p = file_get_contents( $paths[] = ( $this->rootPath . 'system.library/file/call?sessionid=' . $this->sessionid . '&path=' . $lpath ), false, $context );
-						list( $r, $d ) = explode( '<!--separate-->', $p );
-						if( $r == 'ok' )
-						{
-							$someOk = true;
-							$list = json_decode( $d );
-							if( count( $list ) )
-							{
-								foreach( $list as $k=>$v )
-								{
-									$list[$k]->Path = $this->Name . ':' . substr( $v->Path, $spathlen, strlen( $v->Path ) - $spathlen );
-								}
-								$files = array_merge( $files, $list );
-							}
-						}
-					}
-					
-					if( $someOk )
-					{
-						if( count( $files ) )
-						{
-							die( 'ok<!--separate-->' . json_encode( $files ) );
-						}
-						die( 'ok<!--separate-->[]' );
-					}
-					
-					// Invalid path
-					die( 'fail<!--separate-->{"response":"invalid path"}' );
-					//die( 'fail<!--separate-->Invalid path: ' . implode( ', ', $paths ) . ' || ' . implode( ', ', $res ) . ' || ' . print_r( $args,1 ) . ' || ' . print_r( $opts,1 ) );
-					
-				}
+				// Invalid path
+				die( 'fail<!--separate-->{"response":"invalid path"}' );
 				
 				die( 'fail' );
 			}
@@ -267,41 +254,7 @@ if( !class_exists( 'SharedDrive' ) )
 			}
 			else if( $args->command == 'read' )
 			{
-				// Get the path w/o the volume name
-				$requestPath = end( explode( ':', $args->path ) );
-				if( !$requestPath ) $requestPath = '';
-				$paths = '';
-				
-				foreach( $this->paths as $lpath )
-				{
-					$lpathlen = strlen( $lpath );
-					$lpath .= $requestPath;
-					if( $data = file_get_contents( $this->rootPath . 'system.library/file/info/?sessionid=' . $this->sessionid . '&path=' . $lpath, 'r' ) )
-					{
-						if( ( $jdata = reset( explode( '<!--separate-->', $data ) ) == 'ok' ) )
-						{
-							// If we're getting back JSON data...
-							/*if( $json = json_decode( $jdata ) )
-							{
-								// Error with data!
-								if( $json->Path == null ) continue;
-							}*/
-							if( $f = fopen( $this->rootPath . 'system.library/file/read/?sessionid=' . $this->sessionid . '&path=' . $lpath . '&mode=rs', 'r' ) )
-							{
-								while( $data = fread( $f, 512000 ) )
-								{
-									//$Logger->log( 'Reading bytes..' );
-									echo( $data );
-								}
-								fclose( $f );
-								die();
-							}
-						}
-					}
-				}
-				
 				return 'fail<!--separate-->{"response":"could not read file"}';
-				// Could not read file: ' . $Config->FCUpload . $fn . '<!--separate-->' . print_r( $f, 1 );
 			}
 			// Import sent files!
 			else if( $args->command == 'import' )
