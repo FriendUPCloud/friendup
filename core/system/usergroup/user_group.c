@@ -257,6 +257,7 @@ int UserGroupAddUser( UserGroup *ug, void *u )
 			}
 			au = (GroupUserLink *)au->node.mln_Succ;
 		}
+		FRIEND_MUTEX_UNLOCK( &locu->u_Mutex );
 	
 		// add link from group to user
 		if( ( au = (GroupUserLink *) FCalloc( 1, sizeof( GroupUserLink ) ) ) != NULL )
@@ -267,24 +268,26 @@ int UserGroupAddUser( UserGroup *ug, void *u )
 			{
 				ugl->ugl_Group = ug;
 				ugl->ugl_GroupID = ug->ug_ID;
-				ugl->node.mln_Succ = (MinNode *) locu->u_UserGroupLinks;
-				locu->u_UserGroupLinks = ugl;
+				if( FRIEND_MUTEX_LOCK( &locu->u_Mutex ) == 0 )
+				{
+					ugl->node.mln_Succ = (MinNode *) locu->u_UserGroupLinks;
+					locu->u_UserGroupLinks = ugl;
+					FRIEND_MUTEX_UNLOCK( &locu->u_Mutex );
+				}
 			}
-			FRIEND_MUTEX_UNLOCK( &locu->u_Mutex );
 			
 			au->ugau_UserID = locu->u_ID;
 			au->ugau_User = locu;
 			
-			if( FRIEND_MUTEX_LOCK( &ug->ug_Mutex ) == 0 )
+			if( FRIEND_MUTEX_LOCK( &(ug->ug_Mutex) ) == 0 )
 			{
 				au->node.mln_Succ = (MinNode *)ug->ug_UserList;
 				ug->ug_UserList = au;
-				FRIEND_MUTEX_UNLOCK( &ug->ug_Mutex );
+				FRIEND_MUTEX_UNLOCK( &(ug->ug_Mutex) );
 			}
 		}
 		else
 		{
-			FRIEND_MUTEX_UNLOCK( &locu->u_Mutex );
 			return 2;
 		}
 		

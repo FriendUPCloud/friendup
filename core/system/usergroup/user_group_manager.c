@@ -378,27 +378,27 @@ int UGMMountDrives( UserGroupManager *sm )
 /**
  * Assign User to his groups in FC
  *
- * @param smgr pointer to UserGroupManager
+ * @param ugm pointer to UserGroupManager
  * @param usr pointer to user structure to which groups will be assigned
  * @return 0 when success, otherwise error number
  */
 
 #define QUERY_SIZE 1024
 
-int UGMAssignGroupToUser( UserGroupManager *smgr, User *usr )
+int UGMAssignGroupToUser( UserGroupManager *ugm, User *usr )
 {
 	char *tmpQuery;
 	DEBUG("[UMAssignGroupToUser] Assign group to user\n");
 
 	//sprintf( tmpQuery, "SELECT UserGroupID FROM FUserToGroup WHERE UserID = '%lu'", usr->u_ID );
-	if( smgr == NULL )
+	if( ugm == NULL )
 	{
 		return 1;
 	}
 	
 	tmpQuery = (char *)FCalloc( QUERY_SIZE, sizeof(char) );
 	
-	SystemBase *sb = (SystemBase *)smgr->ugm_SB;
+	SystemBase *sb = (SystemBase *)ugm->ugm_SB;
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 
 	if( sqlLib != NULL )
@@ -437,9 +437,9 @@ int UGMAssignGroupToUser( UserGroupManager *smgr, User *usr )
 				
 					DEBUG("[UMAssignGroupToUser] User is in group %lu\n", gid  );
 				
-					if( FRIEND_MUTEX_LOCK( &(sb->sl_UGM->ugm_Mutex) ) == 0 )
+					if( FRIEND_MUTEX_LOCK( &(ugm->ugm_Mutex) ) == 0 )
 					{
-						UserGroup *g = sb->sl_UGM->ugm_UserGroups;
+						UserGroup *g = ugm->ugm_UserGroups;
 						while( g != NULL )
 						{
 							if( g->ug_ID == gid )
@@ -459,7 +459,7 @@ int UGMAssignGroupToUser( UserGroupManager *smgr, User *usr )
 							}
 							g  = (UserGroup *) g->node.mln_Succ;
 						}
-						FRIEND_MUTEX_UNLOCK( &(sb->sl_UGM->ugm_Mutex) );
+						FRIEND_MUTEX_UNLOCK( &(ugm->ugm_Mutex) );
 					}
 				}
 			}
@@ -478,17 +478,28 @@ int UGMAssignGroupToUser( UserGroupManager *smgr, User *usr )
 	return 0;
 }
 
+//
+//
+//
+
+typedef struct UTGEntry
+{
+	UserGroup		*ug;
+	User			*user;
+	MinNode			node;
+}UTGEntry;
+
 /**
  * Assign User to his groups in FC.
  * Groups are provided by string (comma is separator)
  *
- * @param um pointer to UserGroupManager
+ * @param ugm pointer to UserGroupManager
  * @param usr pointer to user structure to which groups will be assigned
  * @param level user level (Admin, User, etc.) 
  * @param workgroups provided as string, where comma is separator between group names
  * @return 0 when success, otherwise error number
  */
-int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level, char *workgroups )
+int UGMAssignGroupToUserByStringDB( UserGroupManager *ugm, User *usr, char *level, char *workgroups )
 {
 	if( level == NULL && workgroups == NULL )
 	{
@@ -499,7 +510,7 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 	
 	DEBUG("[UMAssignGroupToUserByStringDB] Assign group to user start NEW GROUPS: >%s< AND WORKGROUPS: >%s<\n", level, workgroups );
 	
-	SystemBase *sb = (SystemBase *)um->ugm_SB;
+	SystemBase *sb = (SystemBase *)ugm->ugm_SB;
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	
 	if( sqlLib == NULL )
@@ -515,13 +526,6 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 	UIntListEl *el = UILEParseString( workgroups );
 	
 	DEBUG("-----------------------> show groups at 0\n" );
-	
-	// function store ID's of groups to which user is assigned
-	///BufString *bsGroups = BufStringNew();
-	//pos = 0;
-	
-	//int tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "{\"userid\":\"%s\",\"groupids\":[", usr->u_UUID );
-	//BufStringAddSize( bsGroups, tmpQuery, tmplen );
 	
 	int tmplen = 0;
 	
@@ -592,7 +596,7 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 					}
 					gr = (UserGroup *) gr->node.mln_Succ;
 				}
-				FRIEND_MUTEX_UNLOCK( &(sb->sl_UGM->ugm_Mutex) );
+				FRIEND_MUTEX_UNLOCK( &(ugm->ugm_Mutex) );
 			}
 		
 			usr->u_IsAdmin = isAdmin;
@@ -626,16 +630,25 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 		
 				DEBUG("[UMAssignGroupToUserByStringDB] in loop %d\n", pos );
 		
-				if( FRIEND_MUTEX_LOCK( &(sb->sl_UGM->ugm_Mutex) ) == 0 )
+				if( FRIEND_MUTEX_LOCK( &(ugm->ugm_Mutex) ) == 0 )
 				{
-					UserGroup *gr = sb->sl_UGM->ugm_UserGroups;
+					UTGEntry *root = NULL;
+					
+					UserGroup *gr = ugm->ugm_UserGroups;
 					while( gr != NULL )
 					{
 						DEBUG("[UMAssignGroupToUserByStringDB] compare %s - %s\n", gr->ug_Name, gr->ug_Name );
 			
 						if( gr->ug_ID == rmEntry->i_Data )
 						{
-							UserGroupAddUser( gr, usr );
+							UTGEntry *ne = FCalloc( 1, sizeof( UTGEntry ) );
+							if( ne != NULL )
+							{
+								ne->ug = gr;
+								ne->user = usr;
+								ne->node.mln_Succ = (MinNode *)root;
+								root = ne;
+							}
 				
 							DEBUG("[UMAssignGroupToUserByStringDB] Group found %s will be added to user %s\n", gr->ug_Name, usr->u_Name );
 				
@@ -674,7 +687,18 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 						}
 						gr = (UserGroup *) gr->node.mln_Succ;
 					} // while group
-					FRIEND_MUTEX_UNLOCK( &(sb->sl_UGM->ugm_Mutex) );
+					FRIEND_MUTEX_UNLOCK( &(ugm->ugm_Mutex) );
+					
+					UTGEntry *ce = root;
+					UTGEntry *re = root;
+					while( ce != NULL )
+					{
+						re = ce;
+						ce = (UTGEntry *)ce->node.mln_Succ;
+						
+						UserGroupAddUser( re->ug, re->user );
+						FFree( re );
+					}
 				}
 				FFree( rmEntry );
 			}
@@ -706,10 +730,6 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 	{
 		BufStringDelete( bsInsert );
 	}
-	//if( bsGroups != NULL )
-	//{
-	//	BufStringDelete( bsGroups );
-	//}
 
 	sb->LibrarySQLDrop( sb, sqlLib );
 	DEBUG("[UMAssignGroupToUserByStringDB] Assign  groups to user end\n");
@@ -1020,9 +1040,9 @@ void UGMGetGroups( UserGroupManager *um, FULONG uid, BufString *bs, const char *
 {
 	SystemBase *l = (SystemBase *)um->ugm_SB;
 	
-	if( FRIEND_MUTEX_LOCK( &(l->sl_UGM->ugm_Mutex) ) == 0 )
+	if( FRIEND_MUTEX_LOCK( &(um->ugm_Mutex) ) == 0 )
 	{
-		UserGroup *lg = l->sl_UGM->ugm_UserGroups;
+		UserGroup *lg = um->ugm_UserGroups;
 		int pos = 0;
 		
 		while( lg != NULL )
@@ -1070,7 +1090,7 @@ void UGMGetGroups( UserGroupManager *um, FULONG uid, BufString *bs, const char *
 			}
 			lg = (UserGroup *)lg->node.mln_Succ;
 		}
-		FRIEND_MUTEX_UNLOCK( &(l->sl_UGM->ugm_Mutex) );
+		FRIEND_MUTEX_UNLOCK( &(um->ugm_Mutex) );
 	}
 }
 
