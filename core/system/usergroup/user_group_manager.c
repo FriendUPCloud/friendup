@@ -254,7 +254,7 @@ int UGMRemoveGroup( UserGroupManager *ugm, UserGroup *ug )
 						DEBUG("Its not root, prev %s current %s\n", prevug->ug_Name, actug->ug_Name );
 						prevug->node.mln_Succ = actug->node.mln_Succ;
 					}
-					UserGroupDelete( l, actug );
+
 					DEBUG("Data removed\n");
 					break;
 				}
@@ -263,6 +263,11 @@ int UGMRemoveGroup( UserGroupManager *ugm, UserGroup *ug )
 			}
 			DEBUG("Unlock\n");
 			FRIEND_MUTEX_UNLOCK( &ugm->ugm_Mutex );
+			
+			if( actug != NULL )
+			{
+				UserGroupDelete( l, actug );
+			}
 		}
 	}
 	return 0;
@@ -548,9 +553,9 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *ugm, User *usr, char *leve
 		else
 		{
 			// set proper user level
-			if( FRIEND_MUTEX_LOCK( &(sb->sl_UGM->ugm_Mutex) ) == 0 )
+			if( FRIEND_MUTEX_LOCK( &(ugm->ugm_Mutex) ) == 0 )
 			{
-				UserGroup *gr = sb->sl_UGM->ugm_UserGroups;
+				UserGroup *gr = ugm->ugm_UserGroups;
 				while( gr != NULL )
 				{
 					if( strcmp( gr->ug_Name, level ) == 0 )

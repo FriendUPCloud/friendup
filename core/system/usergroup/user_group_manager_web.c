@@ -630,7 +630,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						if( ug != NULL )
 						{
 							ug->ug_Status = USER_GROUP_STATUS_ACTIVE;
-							UGMAddGroup( l->sl_UGM, ug );
+							//UGMAddGroup( l->sl_UGM, ug );
 							ugFromDatabase = TRUE;
 						}
 						l->LibrarySQLDrop( l, sqlLib );

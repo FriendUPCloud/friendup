@@ -605,18 +605,6 @@ f.Name ASC";
 				if( locid > 0 )
 				{
 					usrgrp = UGMGetGroupByID( l->sl_UGM, locid );
-					/*
-					UserGroup *lg = l->sl_UGM->ugm_UserGroups;
-					while( lg != NULL )
-					{
-						if( locid == lg->ug_ID )
-						{
-							usrgrp = lg;
-							break;
-						}
-						lg = (UserGroup *)lg->node.mln_Succ;
-					}
-					*/
 				}
 			}
 			
@@ -1378,15 +1366,6 @@ AND LOWER(f.Name) = LOWER('%s')",
 			}
 			
 			usergroup = UGMGetGroupByName( l->sl_UGM, usergroupname );
-			/*
-			LIST_FOR_EACH( l->sl_UGM->ugm_UserGroups, usergroup, UserGroup * )
-			{
-				if( strcmp( usergroupname, usergroup->ug_Name ) == 0 )
-				{
-					break;
-				}
-			}
-			*/
 			
 			if( user == NULL )
 			{
