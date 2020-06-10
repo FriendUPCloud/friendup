@@ -1493,6 +1493,7 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
 #define READTIMEOUT 200000
 		if( expectedLength > 0 && length > expectedLength ) length = expectedLength;
 		struct timeval start, stop;
+		gettimeofday( &start, NULL );
 
 		while( 1 )
 		{
