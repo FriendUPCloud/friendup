@@ -1285,6 +1285,10 @@ inline Socket* SocketAccept( Socket* sock )
 		{
 			INFO( "Error: Could not get a certificate from: \n" );
 		}
+		else
+		{
+			X509_free( cert );
+		}
 	}
 
 #ifdef USE_SOCKET_REAPER
@@ -2304,7 +2308,7 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 						return bs;
 						// The TLS/SSL connection has been closed. Goodbye!
 					case SSL_ERROR_ZERO_RETURN:
-						FERROR( "[SocketReadTillEnd] The connection was closed, return %d\n", read );
+						FERROR( "[SocketReadTillEnd] The connection was closed, return %ld\n", read );
 						return bs;
 						// The operation did not complete. Call again.
 					case SSL_ERROR_WANT_READ:
@@ -2385,12 +2389,12 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 						//FERROR( "[SocketReadTillEnd] Resource temporarily unavailable.. Read %d/ (retries %d)\n", read, retries );
 						continue;
 					}
-					DEBUG( "[SocketReadTillEnd] Read %d  res < 0/\n", read );
+					DEBUG( "[SocketReadTillEnd] Read %ld  res < 0/\n", read );
 					return bs;
 				}
-				DEBUG( "[SocketReadTillEnd] Read %d fullpackagesize %d\n", read, fullPackageSize );
+				DEBUG( "[SocketReadTillEnd] Read %ld fullpackagesize %d\n", read, fullPackageSize );
 			}
-			DEBUG( "[SocketReadTillEnd] Done reading %d/ (errno: %d)\n", read, errno );
+			DEBUG( "[SocketReadTillEnd] Done reading %ld/ (errno: %d)\n", read, errno );
 		}
 	}	// QUIT != TRUE
 	return NULL;
