@@ -110,12 +110,29 @@ if( !class_exists( 'SharedDrive' ) )
 							$s->Shared = '';
 							$s->SharedLink = '';
 							$s->Filesize = 0;
-							$s->Owner = $row->OwnerUserID;
-							$s->ExternPath = $row->Data;
-							$s->ExternSession = $row->SessionID;
+							
+							$vol = explode( ':', $row->Data );
+							
+							$res = FriendCall( ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/file/info?sessionid=' . $row->SessionID, false,
+								array( 
+									'devname'   => $vol[0],
+									'path'      => $row->Data
+								)
+							);
+							$code = explode( '<!--separate-->', $res );
+							if( $code[0] == 'ok' )
+							{
+								$info = json_decode( $code[1] );
+								$s->Filesize = $info->Filesize;
+								$s->DateCreated = $info->DateCreated;
+								$s->DateModified = $info->DateModified;
+							}
+							
 							$out[] = $s;
 						}
+						die( 'ok<!--separate-->' . json_encode( $out ) );
 					}
+					die( 'ok<!--separate-->[]' );
 				}
 				else
 				{
@@ -170,7 +187,8 @@ if( !class_exists( 'SharedDrive' ) )
 								u.ID = s.OwnerUserID AND 
 								s.OwnerUserID != \'' . intval( $User->ID, 10 ) . '\' AND
 								s.SharedType = \'user\' AND
-								s.SharedID = \'' . intval( $User->ID, 10 ) . '\'
+								s.SharedID = \'' . intval( $User->ID, 10 ) . '\' AND
+								u.SessionID != ""
 						) z
 						UNION
 						(
