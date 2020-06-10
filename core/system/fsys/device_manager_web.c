@@ -144,6 +144,22 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 	SystemBase *l = (SystemBase *)m;
 	Http *response = NULL;
 	
+	// No urlpath..
+	// TODO: Give this a unique error message..
+	if( !urlpath || !urlpath[ 1 ] )
+	{
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( DEFAULT_CONTENT_TYPE ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
+		};
+		response = HttpNewSimple( HTTP_200_OK, tags );
+		char dictmsgbuf[ 256 ];
+		snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FUNCTION_NOT_FOUND], DICT_FUNCTION_NOT_FOUND );
+		HttpAddTextContent( response, dictmsgbuf );	
+		return response;
+	}
+	
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	* 
