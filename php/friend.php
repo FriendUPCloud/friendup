@@ -60,6 +60,7 @@ function FriendCall( $queryString = false, $flags = false, $post = false )
 		$queryString = ( $Config->SSLEnable ? 'https://' : 'http://' ) . ( $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost ) . ':' . $Config->FCPort;
 	curl_setopt( $ch, CURLOPT_URL, $queryString );
 	curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+	curl_setopt( $ch, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
 	
 	if( isset( $flags ) && $flags )
 	{

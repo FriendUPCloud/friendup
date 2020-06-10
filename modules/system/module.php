@@ -123,11 +123,13 @@ function curl_exec_follow( $cu, &$maxredirect = null )
 	if ( ini_get( 'open_basedir' ) == '' && ini_get( 'safe_mode' == 'Off' ) )
 	{
 		curl_setopt( $cu, CURLOPT_FOLLOWLOCATION, $mr > 0 );
+		curl_setopt( $cu, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
 		curl_setopt( $cu, CURLOPT_MAXREDIRS, $mr );
 	}
 	else
 	{
 		curl_setopt( $cu, CURLOPT_FOLLOWLOCATION, false );
+		curl_setopt( $cu, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
 
 		if ( $mr > 0 )
 		{
@@ -325,6 +327,7 @@ if( isset( $args->command ) )
 			{
 				$c = curl_init();
 				curl_setopt( $c, CURLOPT_URL, $args->args->url );
+				curl_setopt( $c, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
 				curl_setopt( $c, CURLOPT_FAILONERROR, true );
 				curl_setopt( $c, CURLOPT_NOBODY, true );
 				curl_setopt( $c, CURLOPT_RETURNTRANSFER, true );
@@ -389,6 +392,7 @@ if( isset( $args->command ) )
 					$fields[$k] = $v;
 				}
 				curl_setopt( $c, CURLOPT_POST, true );
+				curl_setopt( $c, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
 				curl_setopt( $c, CURLOPT_POSTFIELDS, http_build_query( $fields ) );
 				curl_setopt( $c, CURLOPT_RETURNTRANSFER, true );
 				curl_setopt( $c, CURLOPT_HTTPHEADER, array( 'Accept-charset: UTF-8' ) );

@@ -30,6 +30,7 @@ $postfields =   'sessionid=' . $args->sessionid .
 
 curl_setopt( $ch, CURLOPT_POST, 4 );
 curl_setopt( $ch, CURLOPT_POSTFIELDS, $postfields );
+curl_setopt( $ch, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
 curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
 
 // Execute query

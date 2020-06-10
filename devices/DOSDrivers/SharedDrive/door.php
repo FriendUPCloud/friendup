@@ -81,7 +81,6 @@ if( !class_exists( 'SharedDrive' ) )
 					SELECT DISTINCT(`Data`) FROM FShared WHERE OwnerUserID=\'' . intval( $User->ID, 10 ) . '\' GROUP BY `Data`
 				' ) )
 				{
-					$out = [];
 					foreach( $rows as $row )
 					{
 						$path = $row->Data;
@@ -103,16 +102,53 @@ if( !class_exists( 'SharedDrive' ) )
 						$s->Filesize = 0;
 						$s->Owner = $User->ID;
 						$s->ExternPath = $row->Data;
+						$s->ExternSession = $User->SessionID;
 						$out[] = $s;
 					}
 				}
 				// Get data shared by others
+				if( $rows = $SqlDatabase->fetchObjects( '
+					SELECT s.Data, s.OwnerUserID, u.SessionID FROM FShared s, FUser u 
+					WHERE 
+						s.OwnerUserID != \'' . intval( $User->ID, 10 ) . '\' AND
+						s.SharedType = \'User\' AND 
+						s.SharedID = \'' . intval( $User->ID, 10 ) . '\' AND 
+						u.SessionID != "" AND 
+						u.ID = s.OwnerUserID
+				' ) )
+				{
+					foreach( $rows as $row )
+					{
+						$path = $row->Data;
+						$filename = explode( ':', $path ); 
+						$filename = $filename[1];
+						if( strstr( $filename, '/' ) )
+						{
+							$filename = explode( '/', $filename );
+							$filename = $filename[ count( $filename ) - 1 ];
+						}
+						$s = new stdClass();
+						$s->Filename = $filename;
+						$s->Path = $filename;
+						$s->Type = 'File';
+						$s->MetaType = 'File';
+						$s->Permissions = '-RWED-RWED-RWED';
+						$s->Shared = '';
+						$s->SharedLink = '';
+						$s->Filesize = 0;
+						$s->Owner = $row->OwnerUserID;
+						$s->ExternPath = $row->Data;
+						$s->ExternSession = $row->SessionID;
+						$out[] = $s;
+					}
+				}
 				
 				// Stat everything
 				foreach( $out as $k=>$file )
 				{
 					$vol = explode( ':', $file->ExternPath );
-					$res = FriendCall( ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/file/info?sessionid=' . $User->SessionID, false,
+					//$res = file_get_contents( ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/file/info?sessionid=' . $file->ExternSession . '&devname=' . $vol[0] . '&path=' . $file->ExternPath );
+					$res = FriendCall( ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/file/info?sessionid=' . $file->ExternSession, false,
 						array( 
 							'devname'   => $vol[0],
 							'path'      => $file->ExternPath
@@ -128,6 +164,7 @@ if( !class_exists( 'SharedDrive' ) )
 					}
 					$out[$k]->Owner = '';
 					$out[$k]->ExternPath = '';
+					$out[$k]->ExternSession = '';
 				}
 				
 				// Get the output
