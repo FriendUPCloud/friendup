@@ -1052,11 +1052,14 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 	default:
 		{
 		// disabled for test
-			UserSession *us = (UserSession *)fcd->wsc_UserSession;
-
-			if( us != NULL && us->us_MsgQueue.fq_First != NULL )
+			if( fcd != NULL )
 			{
-				lws_callback_on_writable( wsi );
+				UserSession *us = (UserSession *)fcd->wsc_UserSession;
+
+				if( us != NULL && us->us_MsgQueue.fq_First != NULL )
+				{
+					lws_callback_on_writable( wsi );
+				}
 			}
 		}
 		break;
