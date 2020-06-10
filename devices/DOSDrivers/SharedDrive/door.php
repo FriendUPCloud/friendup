@@ -23,7 +23,9 @@ if( !class_exists( 'SharedDrive' ) )
 			global $args, $Config;
 			$this->fileInfo = isset( $args->fileInfo ) ? $args->fileInfo : new stdClass();
 			$this->assignRootpaths = []; // here we have all the rootpaths we're using
-			$this->paths = explode( ';', $this->Path );
+			if( isset( $this->Path ) )
+				$this->paths = explode( ';', $this->Path );
+			else $this->paths = '';
 			$this->rootPath = $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost;
 			$this->rootPath = ( $Config->SSLEnable ? 'https' : 'http' ) . '://' . $this->rootPath . ':' . $Config->FCPort . '/';
 			$this->sessionid = $GLOBALS[ 'args' ]->sessionid;
@@ -273,21 +275,21 @@ if( !class_exists( 'SharedDrive' ) )
 				{
 					case 'mount':
 						$Logger->log( 'Mounting not needed here.. Always succeed.' );
-						die( 'ok' );
+						die( 'ok<!--separate-->{"message":"Device mounted","response":"1"}' );
 					case 'unmount':
 						$Logger->log( 'Unmounting not needed here.. Always succeed.' );
 						die( 'ok' );
 					case 'rename':
-						die( 'fail<!--separate-->{"message":"Could not rename file.","Response":"-1"}' );
+						die( 'fail<!--separate-->{"message":"Could not rename file.","response":"-1"}' );
 						break;
 					case 'makedir':
-						die( 'fail<!--separate-->{"message":"Could not make directory.","Response":"-1"}' );
+						die( 'fail<!--separate-->{"message":"Could not make directory.","response":"-1"}' );
 						//die( 'fail<!--separate-->why: ' . print_r( $args, 1 ) . '(' . $path . ')' );
 						break;
 					case 'delete':
 						// Other combos not supported yet
 						// TODO: Perhaps just unshare the file on my side?
-						return 'fail<!--separate-->{"message":"Could not delete file.","Response":"-1"}' );
+						return 'fail<!--separate-->{"message":"Could not delete file.","response":"-1"}';
 					// Move files and folders or a whole volume to another door
 					case 'copy':
 						$from = isset( $args->from ) ? $args->from : ( isset( $args->args->from ) ? $args->args->from : false );

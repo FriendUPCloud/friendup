@@ -73,6 +73,11 @@ function FriendCall( $queryString = false, $flags = false, $post = false )
 		curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
 		curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
 	}
+	if( isset( $post ) && $post )
+	{
+		curl_setopt( $ch, CURLOPT_POST, true );
+		curl_setopt( $ch, CURLOPT_POSTFIELDS, $post );
+	}
 	$result = curl_exec( $ch );
 	curl_close( $ch );
 	return $result;

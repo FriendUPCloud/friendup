@@ -25,14 +25,16 @@ if( !$sh->Load() )
 }
 if( $sh->Mounted != 1 )
 {
-	$res = FriendCall( ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/device?sessionid=' . $User->SessionID, false,
+	$res = FriendCall( ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/device/mount?sessionid=' . $User->SessionID, false,
 		array( 
-			'command'   => 'mount',
-			'type'      => $sh->Type,
 			'devname'   => $sh->Name
 		)
 	);
 	$Logger->log( 'Result: ' . $res );
+}
+else
+{
+	$Logger->log( 'Is mounted.' );
 }
 
 // Single device
