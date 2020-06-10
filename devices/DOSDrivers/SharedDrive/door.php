@@ -75,46 +75,69 @@ if( !class_exists( 'SharedDrive' ) )
 				( isset( $args->command ) && $args->command == 'dosaction' && isset( $args->args->action ) && $args->args->action == 'dir' )
 			)
 			{
-				$someOk = false;
-				$files = [];
-				
-				// Get the path w/o the volume name
-				$requestPath = end( explode( ':', $args->path ) );
-				if( !$requestPath ) $requestPath = '';
-				
-				foreach( $this->paths as $lpath )
+				$out = [];
+				// Get my shared data
+				if( $rows = $SqlDatabase->fetchObjects( '
+					SELECT DISTINCT(`Data`) FROM FShared WHERE OwnerUserID=\'' . intval( $User->ID, 10 ) . '\' GROUP BY `Data`
+				' ) )
 				{
-					$subpath = end( explode( ':', $lpath ) );
-					$spathlen = strlen( $subpath );
-					$lpath .= $requestPath;
-					
-					$p = file_get_contents( $this->rootPath . 'system.library/file/dir/?sessionid=' . $this->sessionid . '&path=' . $lpath );
-					list( $r, $d ) = explode( '<!--separate-->', $p );
-					if( $r == 'ok' )
+					$out = [];
+					foreach( $rows as $row )
 					{
-						$someOk = true;
-						$list = json_decode( $d );
-						if( count( $list ) )
+						$path = $row->Data;
+						$filename = explode( ':', $path ); 
+						$filename = $filename[1];
+						if( strstr( $filename, '/' ) )
 						{
-							foreach( $list as $k=>$v )
-							{
-								$list[$k]->Path = $this->Name . ':' . substr( $v->Path, $spathlen, strlen( $v->Path ) - $spathlen );
-							}
-							$files = array_merge( $files, $list );
+							$filename = explode( '/', $filename );
+							$filename = $filename[ count( $filename ) - 1 ];
 						}
+						$s = new stdClass();
+						$s->Filename = $filename;
+						$s->Path = $filename;
+						$s->Type = 'File';
+						$s->MetaType = 'File';
+						$s->Permissions = '-RWED-RWED-RWED';
+						$s->Shared = '';
+						$s->SharedLink = '';
+						$s->Filesize = 0;
+						$s->Owner = $User->ID;
+						$s->ExternPath = $row->Data;
+						$out[] = $s;
 					}
+				}
+				// Get data shared by others
+				
+				// Stat everything
+				foreach( $out as $k=>$file )
+				{
+					$vol = explode( ':', $file->ExternPath );
+					$res = FriendCall( ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/file/info?sessionid=' . $User->SessionID, false,
+						array( 
+							'devname'   => $vol[0],
+							'path'      => $file->ExternPath
+						)
+					);
+					$code = explode( '<!--separate-->', $res );
+					if( $code[0] == 'ok' )
+					{
+						$info = json_decode( $code[1] );
+						$out[$k]->Filesize = $info->Filesize;
+						$out[$k]->DateCreated = $info->DateCreated;
+						$out[$k]->DateModified = $info->DateModified;
+					}
+					$out[$k]->Owner = '';
+					$out[$k]->ExternPath = '';
 				}
 				
-				if( $someOk )
+				// Get the output
+				if( count( $out ) )
 				{
-					if( count( $files ) )
-					{
-						die( 'ok<!--separate-->' . json_encode( $files ) );
-					}
-					die( 'ok<!--separate-->[]' );
+					die( 'ok<!--separate-->' . json_encode( $out ) );
 				}
-				// Invalid path
-				die( 'fail<!--separate-->' );
+				// Empty!
+				die( 'ok<!--separate-->[]' );
+				
 			}
 			else if( $args->command == 'call' )
 			{

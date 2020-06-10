@@ -30,11 +30,6 @@ if( $sh->Mounted != 1 )
 			'devname'   => $sh->Name
 		)
 	);
-	$Logger->log( 'Result: ' . $res );
-}
-else
-{
-	$Logger->log( 'Is mounted.' );
 }
 
 // Single device
