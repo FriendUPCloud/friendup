@@ -163,6 +163,14 @@ int UGMAddGroup( UserGroupManager *ugm, UserGroup *ug )
 		FERROR("Cannot add NULL to group!\n");
 		return 1;
 	}
+	
+	UserGroup *locg = UGMGetGroupByName( ugm, ug->ug_Name );
+	if( locg != NULL )
+	{
+		FERROR("Cannot add same group to list: %s\n", ug->ug_Name );
+		return 2;
+	}
+	
 	if( FRIEND_MUTEX_LOCK( &ugm->ugm_Mutex ) == 0 )
 	{
 		ug->node.mln_Succ = (MinNode *) ugm->ugm_UserGroups;
