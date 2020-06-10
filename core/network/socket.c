@@ -422,20 +422,20 @@ Socket* SocketNew( void *sb, FBOOL ssl, unsigned short port, int type )
 			INFO("Cache mode set to: ");
 			switch( cache )
 			{
-			case SSL_SESS_CACHE_OFF:
-				INFO("off\n");
-				break;
-			case SSL_SESS_CACHE_CLIENT:
-				INFO("client only\n");
-				break;
-			case SSL_SESS_CACHE_SERVER:
-				INFO("server only\n" );
-				break;
-			case SSL_SESS_CACHE_BOTH:
-				INFO("server and client\n");
-				break;
-			default:
-				INFO("undefined\n");
+				case SSL_SESS_CACHE_OFF:
+					INFO("off\n");
+					break;
+				case SSL_SESS_CACHE_CLIENT:
+					INFO("client only\n");
+					break;
+				case SSL_SESS_CACHE_SERVER:
+					INFO("server only\n" );
+					break;
+				case SSL_SESS_CACHE_BOTH:
+					INFO("server and client\n");
+					break;
+				default:
+					INFO("undefined\n");
 			}
 		}
 	}
@@ -1530,7 +1530,7 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
 					// The operation did not complete. Call again.
 				case SSL_ERROR_WANT_READ:
 					// NB: We used to retry 10000 times!
-					if( read == 0 && read_retries++ < retryCount )
+					if( read == 0 && read_retries++ < retryCount && expectedLength <= 0 )
 					{
 						// We are downloading a big file
 
