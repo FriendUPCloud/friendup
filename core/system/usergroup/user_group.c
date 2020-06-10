@@ -29,9 +29,10 @@
  * @param name of new UserGroup
  * @param uid id of user assigned to group
  * @param type type of group as string
+ * @param description
  * @return new UserGroup structure when success, otherwise NULL
  */
-UserGroup *UserGroupNew( FULONG id, char *name, FULONG uid, char *type )
+UserGroup *UserGroupNew( FULONG id, char *name, FULONG uid, char *type, char *description )
 {
 	UserGroup *ug = NULL;
 	
@@ -43,6 +44,7 @@ UserGroup *UserGroupNew( FULONG id, char *name, FULONG uid, char *type )
 		ug->ug_Name = StringDuplicate(name);
 		ug->ug_UserID = uid;
 		ug->ug_Type = StringDuplicate(type);
+		ug->ug_Description = StringDuplicate( description );
 		
 		UserGroupInit( ug );
 	}
@@ -115,6 +117,11 @@ int UserGroupDelete( void *sb, UserGroup *ug )
 		if( ug->ug_Type != NULL )
 		{
 			FFree( ug->ug_Type );
+		}
+		
+		if( ug->ug_Description != NULL )
+		{
+			FFree( ug->ug_Description );
 		}
 		
 		pthread_mutex_destroy( &(ug->ug_Mutex) );

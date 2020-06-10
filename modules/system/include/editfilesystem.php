@@ -19,6 +19,7 @@ if( isset( $args->args->authid ) && !isset( $args->authid ) )
 	$args->authid = $args->args->authid;
 }
 
+/* 1) check for permissions to execute stuff ==== --- ## ==== --- ## ==== --- ## ==== --- ## ==== --- ## ==== --- ## */
 if( !isset( $args->authid ) )
 {
 	if( $level == 'Admin' && $args->args->userid )
@@ -29,31 +30,26 @@ if( !isset( $args->authid ) )
 else
 {
 	require_once( 'php/include/permissions.php' );
-	
 	if( $perm = Permissions( 'write', 'application', ( 'AUTHID'.$args->authid ), [ 'PERM_STORAGE_GLOBAL', 'PERM_STORAGE_WORKGROUP' ], 'user', ( isset( $args->args->userid ) ? $args->args->userid : $userid ) ) )
 	{
 		if( is_object( $perm ) )
 		{
 			// Permission denied.
-		
 			if( $perm->response == -1 )
 			{
 				die('fail<!--separate-->{"response":"0","message":"unauthorised access attempt"}');
 			}
 		
 			// Permission granted. GLOBAL or WORKGROUP specific ...
-		
 			if( $perm->response == 1 )
 			{
 				// If user has GLOBAL or WORKGROUP access to this user
-			
-				if( isset( $args->args->userid ) && $args->args->userid )
+				if( isset( $args->args->userid ) )
 				{
 					$userid = intval( $args->args->userid );
 				}
 			
 				// If we have GLOBAL Access
-			
 				if( isset( $perm->data->users ) && $perm->data->users == '*' )
 				{
 					$level = 'Admin';
@@ -64,6 +60,8 @@ else
 }
 
 
+/* 2) check for valid input ==== --- ## ==== --- ## ==== --- ## ==== --- ## ==== --- ## ==== --- ## */
+
 // some checks for correctness of request before we do stuff...
 if( !isset( $obj->Type ) ) die('fail<!--separate-->{"response":"edit filesystem failed"}' );
 if( !file_exists( $fn = 'devices/DOSDrivers/' . $obj->Type . '/sysinfo.json' ) )	die('fail<!--seperate-->could not read config for chosen file system');
@@ -71,10 +69,12 @@ if( !file_exists( $fn = 'devices/DOSDrivers/' . $obj->Type . '/sysinfo.json' ) )
 $o = file_get_contents( $fn );
 if( !( $o = json_decode( $o ) ) ) die('fail<!--seperate-->could not read config for chosen file system');
 
+
 // Admin filesystems can only be added by admin..
 if( $o->group == 'Admin' && $level != 'Admin' )
 	die('fail<!--separate-->{"response":"0","message":"unauthorised access attempt"}');
 
+/* 3) execute change ==== --- ## ==== --- ## ==== --- ## ==== --- ## ==== --- ## ==== --- ## */
 if( isset( $obj->ID ) && $obj->ID > 0 )
 {
 	// Support workgroups
