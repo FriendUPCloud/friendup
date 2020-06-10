@@ -1017,10 +1017,6 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		// you could return non-zero here and kill the connection 
 		//Log( FLOG_INFO, "[WS] Filter protocol\n");
 		break;
-		
-	case LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER:
-		//Log( FLOG_INFO, "[WS] LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER\n");
-		break;
 	
 	case LWS_CALLBACK_PROTOCOL_DESTROY:
 		// protocol will be destroyed
@@ -1054,8 +1050,15 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		break;
 		
 	default:
+		{
 		// disabled for test
-		//Log( FLOG_INFO, "[WS] Default Call, size: %d - reason: %d\n", (int)len, reason );
+			UserSession *us = (UserSession *)fcd->wsc_UserSession;
+
+			if( us != NULL && us->us_MsgQueue.fq_First != NULL )
+			{
+				lws_callback_on_writable( wsi );
+			}
+		}
 		break;
 	}
 
