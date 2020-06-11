@@ -16,10 +16,12 @@ DirectoryView.prototype.ShowShareDialog = function( elements )
 	let out = [];
 	for( let c = 0; c < elements.length; c++ )
 	{
+		// Only allow to drop regular files
 		if( elements[ c ].fileInfo.Type == 'File' )
 			out.push( elements[ c ] );
 		else mixed = true;
 	}
+	// We have a list of files
 	if( out.length )
 	{
 		let d = null;
@@ -48,6 +50,7 @@ DirectoryView.prototype.ShowShareDialog = function( elements )
 			f.load();
 		}
 	}
+	// It's a mixed list without files..
 	else if( mixed )
 	{
 		Notify( { title: i18n( 'i18n_only_files_dropped' ), text: i18n( 'i18n_only_files_can_be_shared' ) } );
