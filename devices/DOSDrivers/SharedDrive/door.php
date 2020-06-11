@@ -45,7 +45,7 @@ if( !class_exists( 'SharedDrive' ) )
 		{
 			global $SqlDatabase, $User, $Config, $Logger;
 		
-			$delete = $read = null;
+			$delete = $read = $write = null;
 			
 			// TODO: This is a workaround, please fix in Friend Core!
 			//       Too much code for getting a real working path..
@@ -203,6 +203,16 @@ if( !class_exists( 'SharedDrive' ) )
 										fclose( $fp );
 									}
 									die();
+								}
+								else if( isset( $write ) && $pth == $s->Filename )
+								{
+									$s->ExternSessionID = $row->SessionID;
+									$s->ExternPath = $vol[0] . ':' . $p;
+									if( $info = $this->doWrite( $s, $args->tmpfile, $args->data ) )
+									{
+										die( 'ok<!--separate-->' . $info->Len . '<!--separate-->' );
+									}
+									die( 'fail<!--separate-->{"response":"-1","message":"Could not write file."}' );
 								}
 								$info = json_decode( $code[1] );
 								$s->Filesize = $info->Filesize;
@@ -372,6 +382,14 @@ if( !class_exists( 'SharedDrive' ) )
 								}
 								die();
 							}
+							else if( isset( $write ) && $pth == $file->Filename )
+							{
+								if( $info = $this->doWrite( $file, $args->tmpfile, $args->data ) )
+								{
+									die( 'ok<!--separate-->' . $info->Len . '<!--separate-->' );
+								}
+								die( 'fail<!--separate-->{"response":"-1","message":"Could not write file."}' );
+							}
 							$info = json_decode( $code[1] );
 							$out[$k]->Filesize = $info->Filesize;
 							$out[$k]->DateCreated = $info->DateCreated;
@@ -401,7 +419,9 @@ if( !class_exists( 'SharedDrive' ) )
 			}
 			else if( $args->command == 'info' )
 			{
-				die( 'fail<!--separate-->Could not find file!' );
+				$write = $args->path;
+				$path = '';
+				goto directory;
 			}
 			else if( $args->command == 'write' )
 			{
@@ -563,6 +583,30 @@ if( !class_exists( 'SharedDrive' ) )
 		function deleteFile( $path, $recursive = false )
 		{
 			global $Config, $User, $Logger;
+			return false;
+		}
+		
+		// Write a file with either a tmp file or data
+		function doWrite( $file, $tmpfile = false, $data = false )
+		{
+			$url = ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/';
+			$query = $url . 'file/write?sessionid=' . $file->ExternSessionID;
+			$o = array();
+			if( $tmpfile )
+				$o[ 'tmpfile' ] = $tmpfile;
+			else if( $data )
+				$o[ 'data' ] = $data;
+			if( $res = FriendCall( $query, false, $o ) )
+			{
+				$Logger->log( $res );
+				if( substr( $res, 0, 3 ) == 'ok<' )
+				{
+					$n = new stdClass();
+					$n->Len = 0;
+					$n->Response = 'ok';
+					return $n;
+				}
+			}
 			return false;
 		}
 	}

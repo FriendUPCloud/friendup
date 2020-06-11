@@ -522,7 +522,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						}
 						else
 						{
-							$Logger->log( 'is tmp file set, limit: ' . SQLDRIVE_FILE_LIMIT );
+							//$Logger->log( 'is tmp file set, limit: ' . SQLDRIVE_FILE_LIMIT );
 							if( $total + strlen( $args->data ) < SQLDRIVE_FILE_LIMIT )
 							{
 								$len = fwrite( $file, $args->data );
@@ -530,7 +530,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							}
 							else
 							{
-								$Logger->log( 'die!die!die! my darling! ' );
+								//$Logger->log( 'die!die!die! my darling! ' );
 								fclose( $file );
 								$Logger->log( 'fail<!--separate-->Limit broken ' . SQLDRIVE_FILE_LIMIT );
 								die( 'fail<!--separate-->Limit broken' );
