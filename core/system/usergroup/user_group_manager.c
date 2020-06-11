@@ -153,6 +153,36 @@ UserGroup *UGMGetGroupByName( UserGroupManager *ugm, const char *name )
 }
 
 /**
+ * Get UserGroup by Name from DB
+ *
+ * @param ugm pointer to UserManager structure
+ * @param name name of the group
+ * @return UserGroup structure if it exist, otherwise NULL
+ */
+
+UserGroup *UGMGetGroupByNameDB( UserGroupManager *ugm, const char *name )
+{
+	SystemBase *l = (SystemBase *)ugm->ugm_SB;
+	UserGroup *ug = NULL;
+	SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+	if( sqlLib != NULL )
+	{
+		// try to find if group is in DB, skip templates and roles
+		char where[ 512 ];
+		int size = snprintf( where, sizeof(where), "Name='%s' AND Type in('Workgroup','Level')", name );
+		int entries;
+	
+		ug = sqlLib->Load( sqlLib, UserGroupDesc, where, &entries );
+		if( ug != NULL )
+		{
+			ug->ug_Status = USER_GROUP_STATUS_ACTIVE;
+		}
+		l->LibrarySQLDrop( l, sqlLib );
+	}
+	return ug;
+}
+
+/**
  * Add UserGroup to list of groups
  *
  * @param ugm pointer to UserManager structure
