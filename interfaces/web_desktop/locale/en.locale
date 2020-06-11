@@ -529,6 +529,8 @@ i18n_FriendNetwork						: Friend Network
 i18n_connectionFailed					: Connection to the workgroup failed. Please check the password in your account settings.
 i18n_connectionAborted					: Connection to the workgroup aborted.
 i18n_password							: Password
+i18n_only_files_dropped                 : Wrong file types dropped
+i18n_only_files_can_be_shared           : Only regular files can be shared.
 
 
 i18n_paste_error                        : Paste error

@@ -8,10 +8,82 @@
 *                                                                              *
 *****************************************************************************©*/
 
-// -------------------------------------------------------------------------
+
+// Share dialog ----------------------------------------------------------------
+DirectoryView.prototype.ShowShareDialog = function( elements )
+{
+	let mixed = false;
+	let out = [];
+	for( let c = 0; c < elements.length; c++ )
+	{
+		if( elements[ c ].Type == 'File' )
+			out.push( elements[ c ] );
+		else mixed = true;
+	}
+	if( out.length )
+	{
+		let d = null;
+		if( !this.shareDialog )
+		{
+			this.shareDialog = d = document.createElement( 'div' );
+			d.className = 'ShareDialog BackgroundDefault';
+			this.window.appendChild( d );
+			setTimeout( function()
+			{
+				d.classList.add( 'Showing' );
+			}, 20 );
+		
+			var f = new File( 'Progdir:templates/sharing.html' );
+			f.onLoad = function( data )
+			{
+				let v = document.createElement( 'div' );
+				v.className = 'GuiInner';
+				v.innerHTML = data;
+				d.appendChild( v );
+				setTimeout( function()
+				{
+					v.classList.add( 'Showing' );
+				}, 20 );
+			}
+			f.load();
+		}
+	}
+	else if( mixed )
+	{
+		Notify( { title: i18n( 'i18n_only_files_dropped' ), text: i18n( 'i18n_only_files_can_be_shared' ) } );
+	}
+}
+
+// Share dialog, hide it -------------------------------------------------------
+DirectoryView.prototype.HideShareDialog = function( elements )
+{
+	let d = this;
+	if( d.shareDialog )
+	{
+		let v = d.shareDialog;
+		v.classList.remove( 'Showing' );
+		d.shareDialog = null;
+		setTimeout( function()
+		{
+			if( v.parentNode )
+				v.parentNode.remove( v );
+		}, 250 );
+	}
+}
+
 // Dropping an icon on a window or an icon!
 DirectoryView.prototype.doCopyOnElement = function( eles, e )
 {
+	// OOOH! Shared drive action!
+	if( this.content.fileInfo.Driver == 'SharedDrive' )
+	{
+		var s = this;
+		if( !this.ShowShareDialog )
+			s = s.content.directoryview;
+		s.ShowShareDialog( eles );
+		return;
+	}
+	
 	var dview = this; // The view in question
 	
 	var mode = 'view';
@@ -99,7 +171,15 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 	var cfo_tmp = mode == 'view' ? dview.content.fileInfo : dview.object.file.fileInfo;
 	
 	// Make copy
-	var cfo = JSON.parse( JSON.stringify( cfo_tmp ) );
+	var cfo;
+	try
+	{
+		cfo = JSON.parse( JSON.stringify( cfo_tmp ) );
+	}
+	catch( e )
+	{
+		return false;
+	}
 
 	var dragFromWindow = eles[0].window;
 

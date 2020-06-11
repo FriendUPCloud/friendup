@@ -516,6 +516,9 @@ i18n_what_you_share_with                : Hva du deler med
 i18n_mark_as_read                       : Merk som lest
 i18n_messages_sent                      : Meldingene ble sendt...
 i18n_notifications_sent                 : Varslene ble sendt...
+i18n_only_files_dropped                 : Kunne ikke dele
+i18n_only_files_can_be_shared           : Kun vanlige filer kan deles.
+
 
 i18n_pasted_file                        : Limer inn innhold
 i18n_pasted_to_downloads                : Ditt innhold ble limt inn i Downloads

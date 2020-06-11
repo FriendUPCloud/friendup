@@ -1626,7 +1626,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 		WorkspaceMenu.show();
 }
 
-// -------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 DirectoryView.prototype.GetTitleBar = function ()
 {
 	if ( window.currentScreen )
@@ -3990,6 +3990,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 		
 		we.refresh = function( callback )
 		{
+			this.directoryview.HideShareDialog();
 			this.directoryview.window.setAttribute( 'listmode', this.directoryview.listMode );
 			
 			// Refresh 1
@@ -4272,6 +4273,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 			
 			win.refresh = function( callback )
 			{
+				this.directoryview.HideShareDialog();
 				this.directoryview.window.setAttribute( 'listmode', this.directoryview.listMode );
 				
 				/*if( dv.cancelId )
@@ -4378,6 +4380,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 		{
 			win.refresh = function ( callback )
 			{	
+				this.directoryview.HideShareDialog();
 				this.directoryview.window.setAttribute( 'listmode', this.directoryview.listMode );
 				
 				// Refresh 3
