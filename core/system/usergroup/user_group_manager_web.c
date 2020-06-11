@@ -622,8 +622,9 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 					SQLLibrary *sqlLib = l->LibrarySQLGet( l );
 					if( sqlLib != NULL )
 					{
+						// try to find if group is in DB, skip templates and roles
 						char where[ 512 ];
-						int size = snprintf( where, sizeof(where), "Name='%s'", groupname );
+						int size = snprintf( where, sizeof(where), "Name='%s' AND Type in('Workgroup','Level')", groupname );
 						int entries;
 					
 						ug = sqlLib->Load( sqlLib, UserGroupDesc, where, &entries );
