@@ -16,7 +16,7 @@ DirectoryView.prototype.ShowShareDialog = function( elements )
 	let out = [];
 	for( let c = 0; c < elements.length; c++ )
 	{
-		if( elements[ c ].Type == 'File' )
+		if( elements[ c ].fileInfo.Type == 'File' )
 			out.push( elements[ c ] );
 		else mixed = true;
 	}
@@ -65,6 +65,7 @@ DirectoryView.prototype.HideShareDialog = function( elements )
 		d.shareDialog = null;
 		setTimeout( function()
 		{
+			console.log( 'What is this?', v.parentNode, v );
 			if( v.parentNode )
 				v.parentNode.remove( v );
 		}, 250 );
