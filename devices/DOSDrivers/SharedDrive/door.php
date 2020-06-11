@@ -94,6 +94,22 @@ if( !class_exists( 'SharedDrive' ) )
 						$pth = $pth[1];
 					}
 				}
+				else if( isset( $delete ) )
+				{
+					$pth = explode( ':', $delete );
+					if( strstr( $delete, '/' ) )
+					{
+						$vol = explode( ':', $delete );
+						$pth = explode( '/', $vol[1] );
+						$path = [ $vol[0] ];
+						$path = array_merge( $path, $pth );
+						$pth = $pth[ count( $pth ) - 1 ];
+					}
+					else
+					{
+						$pth = $pth[1];
+					}
+				}
 				
 				if( is_array( $path ) && count( $path ) > 1 && trim( $path[ 1 ] ) )
 				{
@@ -101,7 +117,7 @@ if( !class_exists( 'SharedDrive' ) )
 					// Get data shared by others
 					// TODO: Support groups
 					if( $rows = $SqlDatabase->fetchObjects( '
-						SELECT s.Data, s.OwnerUserID, u.SessionID FROM FShared s, FUser u 
+						SELECT s.ID, s.Data, s.OwnerUserID, u.SessionID FROM FShared s, FUser u 
 						WHERE 
 							u.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $path[ 1 ] ) . '\' AND
 							s.OwnerUserID != \'' . intval( $User->ID, 10 ) . '\' AND
@@ -113,6 +129,25 @@ if( !class_exists( 'SharedDrive' ) )
 					{
 						foreach( $rows as $row )
 						{
+							if( $delete )
+							{
+								$fn = explode( ':', $row->Data );
+								$fn = $fn[1];
+								if( strstr( $fn, '/' ) )
+								{
+									$fn = explode( '/', $fn );
+									$fn = $fn[ count( $fn ) - 1 ];
+								}
+								if( $fn == $pth )
+								{
+									$SqlDatabase->Query( '
+										DELETE FROM FShared WHERE ID=\'' . intval( $row->ID, 10 ) . '\'
+									' );
+									die( 'ok<!--separate-->{"message":"Unshared file.","response":"1"}' );
+								}
+								continue;
+							}
+							
 							$p = $row->Data;
 							$filename = explode( ':', $p ); 
 							$filename = $filename[1];
@@ -145,6 +180,7 @@ if( !class_exists( 'SharedDrive' ) )
 							
 							if( $code[0] == 'ok' )
 							{
+								// Read mode intercepts here
 								if( isset( $read ) && $pth == $s->Filename ) 
 								{
 									ob_clean();
@@ -173,6 +209,13 @@ if( !class_exists( 'SharedDrive' ) )
 							
 							$out[] = $s;
 						}
+						
+						// We couldn't if we reach here
+						if( $delete )
+						{
+							die( 'fail<!--separate-->{"message":"Failed to unshare file.","response":"-1"}' );
+						}
+						
 						die( 'ok<!--separate-->' . json_encode( $out ) );
 					}
 					die( 'ok<!--separate-->[]' );
@@ -187,6 +230,19 @@ if( !class_exists( 'SharedDrive' ) )
 					{
 						foreach( $rows as $row )
 						{
+							if( $delete )
+							{
+								$fn = explode( ':', $row->Data );
+								if( $fn[1] == $pth )
+								{
+									$SqlDatabase->Query( '
+										DELETE FROM FShared WHERE 
+											OwnerUserID=\'' . intval( $User->ID, 10 ) . '\' AND 
+											`Data`="' . mysqli_real_escape_string( $SqlDatabase->_link, $row->Data ) . '"
+									' );
+									die( 'ok<!--separate-->{"message":"Unshared file.","response":"1"}' );
+								}
+							}
 							$path = $row->Data;
 							$filename = explode( ':', $path ); 
 							$filename = $filename[1];
@@ -209,6 +265,11 @@ if( !class_exists( 'SharedDrive' ) )
 							$s->ExternSession = $User->SessionID;
 							$out[] = $s;
 						}
+					}
+					// In delete mode, we got this far - return false
+					if( $delete )
+					{
+						die( 'fail<!--separate-->{"message":"Failed to unshare file.","response":"-1"}' );
 					}
 				
 				
@@ -370,38 +431,32 @@ if( !class_exists( 'SharedDrive' ) )
 				switch( $action )
 				{
 					case 'mount':
-						$Logger->log( 'Mounting not needed here.. Always succeed.' );
 						die( 'ok<!--separate-->{"message":"Device mounted","response":"1"}' );
 					case 'unmount':
-						$Logger->log( 'Unmounting not needed here.. Always succeed.' );
-						die( 'ok' );
+						die( 'fail<!--separate-->{"message":"Shared drives can not be unmounted.","response":"-1"}' );
+					// Shared drive has no rename
 					case 'rename':
 						die( 'fail<!--separate-->{"message":"Could not rename file.","response":"-1"}' );
 						break;
+					// Shared drive has no makedir
 					case 'makedir':
 						die( 'fail<!--separate-->{"message":"Could not make directory.","response":"-1"}' );
 						//die( 'fail<!--separate-->why: ' . print_r( $args, 1 ) . '(' . $path . ')' );
 						break;
 					case 'delete':
-						// Other combos not supported yet
-						// TODO: Perhaps just unshare the file on my side?
-						return 'fail<!--separate-->{"message":"Could not delete file.","response":"-1"}';
-					// Move files and folders or a whole volume to another door
-					case 'copy':
-						$from = isset( $args->from ) ? $args->from : ( isset( $args->args->from ) ? $args->args->from : false );
-						$to   = isset( $args->to )   ? $args->to   : ( isset( $args->args->to )   ? $args->args->to   : false );
-						if( isset( $from ) && isset( $to ) )
+						if( substr( $args->path, -1, 1 ) == '/' )
 						{
-							if( $this->copyFile( $from, $to ) )
-							{
-								return 'ok';
-							}
+							return 'fail<!--separate-->{"message":"Could not unshare file - path is wrong.","response":"-1"}';
 						}
-						// Other combos not supported yet
-						return 'fail';
+						$delete = $args->path;
+						$path = '';
+						goto directory;
+					// Shared drive has no copy
+					case 'copy':
+						return 'fail<!--separate-->{"message":"Could not copy file.","response":"-1"}';
 				}
 			}
-			return 'fail<!--separate-->'; // . print_r( $args, 1 );
+			return 'fail<!--separate-->';
 		}
 		
 		// Gets a file by path!
