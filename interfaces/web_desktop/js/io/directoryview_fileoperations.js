@@ -8,7 +8,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-
 // Share dialog ----------------------------------------------------------------
 DirectoryView.prototype.ShowShareDialog = function( elements )
 {
@@ -36,20 +35,62 @@ DirectoryView.prototype.ShowShareDialog = function( elements )
 				d.classList.add( 'Showing' );
 			}, 20 );
 		
-			var f = new File( 'Progdir:templates/sharing.html' );
-			f.i18n();
-			f.onLoad = function( data )
+			// Get all workgroups
+			let w = new Module( 'system' );
+			w.onExecuted = function( we, wd )
 			{
-				let v = document.createElement( 'div' );
-				v.className = 'GuiInner';
-				v.innerHTML = data;
-				d.appendChild( v );
-				setTimeout( function()
+				let u = new Module( 'system' );
+				u.onExecuted = function( ue, ud )
 				{
-					v.classList.add( 'Showing' );
-				}, 20 );
+					let wstr = '';
+					if( we == 'ok' )
+					{
+						try
+						{
+							let workgroups = JSON.parse( wd );
+							for( let z = 0; z < workgroups.length; z++ )
+							{
+								wstr += '<div class="ShareItem Workgroup">' + workgroups[ z ].Name + '</div>';
+							}
+						}
+						catch( e ){}
+					}
+					let ustr = '';
+					if( ue == 'ok' )
+					{
+						try
+						{
+							let users = JSON.parse( ud );
+							for( let z = 0; z < users.length; z++ )
+							{
+								wstr += '<div class="ShareItem User">' + users[ z ].Fullname + '</div>';
+							}
+						}
+						catch( e ){};
+					}
+					
+					
+					var f = new File( 'Progdir:templates/sharing.html' );
+					f.replacements = {
+						'workgroups': wstr + ustr
+					};
+					f.i18n();
+					f.onLoad = function( data )
+					{
+						let v = document.createElement( 'div' );
+						v.className = 'GuiInner';
+						v.innerHTML = data;
+						d.appendChild( v );
+						setTimeout( function()
+						{
+							v.classList.add( 'Showing' );
+						}, 20 );
+					}
+					f.load();
+				}
+				u.execute( 'listconnectedusers' );
 			}
-			f.load();
+			w.execute( 'workgroups' );
 		}
 	}
 	// It's a mixed list without files..
@@ -75,6 +116,8 @@ DirectoryView.prototype.HideShareDialog = function( elements )
 		}, 250 );
 	}
 }
+
+// Done sharing stuff ----------------------------------------------------------
 
 // Dropping an icon on a window or an icon!
 DirectoryView.prototype.doCopyOnElement = function( eles, e )
