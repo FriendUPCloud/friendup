@@ -202,11 +202,11 @@ extern FlogFlags slg;
 
 #ifdef LOG_TIMESTAMP
 
-#define DEBUG(...) printf( "\x1B[32m (%s:%d) %ld Time: %lld ", __FILE__, __LINE__, currentTimestamp(), (long int)pthread_self() ); printf( FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
+#define DEBUG(...) printf( "\x1B[32m (%s:%d) %ld Time: %lld ", __FILE__, __LINE__, (long int)pthread_self(), currentTimestamp() ); printf( FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
 
-#define DEBUG1(...) printf( "\x1B[37m (%s:%d) %ld Time: %lld ", __FILE__, __LINE__, currentTimestamp(), (long int)pthread_self() ); printf( FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
+#define DEBUG1(...) printf( "\x1B[37m (%s:%d) %ld Time: %lld ", __FILE__, __LINE__, (long int)pthread_self(), currentTimestamp() ); printf( FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
 
-#define DEBUG2(...) printf( "\x1B[33m (%s:%d) %ld Time: %lld ", __FILE__, __LINE__, currentTimestamp(), (long int)pthread_self() ); printf( FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
+#define DEBUG2(...) printf( "\x1B[33m (%s:%d) %ld Time: %lld ", __FILE__, __LINE__, (long int)pthread_self(), currentTimestamp() ); printf( FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
 
 #else
 
