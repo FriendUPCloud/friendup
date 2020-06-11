@@ -3609,7 +3609,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 					// Remove prev
 					var v = eles[0].parentNode.getElementsByTagName( 'video' );
-					for( var z = 0; z < v.length; z++ ) eles[ 0 ].parentNode.removeChild( v[ z ] );
+					for( var z = 0; z < v.length; z++ ) 
+					{
+						v[ z ].parentNode.removeChild( v[ z ] );
+					}
 
 					// Check extension
 					switch( ext )

@@ -237,7 +237,13 @@ if( !class_exists( 'SharedDrive' ) )
 							if( $delete )
 							{
 								$fn = explode( ':', $row->Data );
-								if( $fn[1] == $pth )
+								if( strstr( $fn[1], '/' ) )
+								{
+									$fn = explode( '/', $fn[1] );
+									$fn = $fn[ count( $fn ) - 1 ];
+								}
+								else $fn = $fn[1];
+								if( $fn == $pth )
 								{
 									$SqlDatabase->Query( '
 										DELETE FROM FShared WHERE 
