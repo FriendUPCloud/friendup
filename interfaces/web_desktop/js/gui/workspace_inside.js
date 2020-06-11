@@ -6557,6 +6557,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		var shareIcon = null;
 		var downloadIcon = null;
 		var directoryIcon = false;
+		var sharableFile = false;
+		let fileIcon = false;
 		var shareCount = 0;
 		if( iconsSelected )
 		{
@@ -6573,8 +6575,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						{
 							volumeIcon = true;
 						}
+						
 						if ( ics[ a ].Type == 'File' || ics[ a ].Type == 'Directory' )
 						{
+							if( ics[ a ].Type == 'File' )
+							{
+								fileIcon = ics[ a ];
+								sharableFile = true;
+							}
+							else sharableFile = false;
+							
 							var drive = ics[ a ].Path.split( ':' )[ 0 ];
 						
 							// Share option only if Friend Network is on and not in the system disk
@@ -6604,6 +6614,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									cannotWrite = false;
 							}
 						}
+						
+						if( ics[ a ].Path.indexOf( 'Shared:' ) == 0 )
+							sharableFile = false;
+						
 						if( ics[a].Volume == 'System:' )
 						{
 							canUnmount = false;
@@ -6793,6 +6807,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						name:	i18n( 'menu_delete' ),
 						command: function() { Workspace.deleteFile(); },
 						disabled: ( !iconsSelected || volumeIcon ) || systemDrive || cannotWrite
+					},
+					// Add sharing
+					{
+						name: i18n( 'menu_share_file' ),
+						command: function()
+						{
+							Workspace.viewSharingOptions( fileIcon.Path );
+						},
+						disabled: sharableFile ? false : true
 					},
 					{
 						divider: true
@@ -7355,9 +7378,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					if( thisicon.fileInfo )
 					{
+						let sharedVolume = false;
+						if( thisicon.fileInfo.Path.indexOf( 'Shared:' ) == 0 )
+							sharedVolume = true;
+						
 						if( thisicon.fileInfo.Filename )
 						{
-							if( thisicon.fileInfo.Type == 'Directory' )
+							if( !sharedVolume && thisicon.fileInfo.Type == 'Directory' )
 							{
 								menu.push( {
 									name: i18n( 'menu_add_bookmark' ),
@@ -7380,15 +7407,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 							else
 							{
-								// Add sharing
-								menu.push( {
-									name: i18n( 'menu_share_file' ),
-									command: function()
-									{
-										Workspace.viewSharingOptions( thisicon.fileInfo.Path );
-									}
-								} );
-								
 								var ext = thisicon.fileInfo.Filename.split( '.' ).pop();
 								if( ext )
 								{

@@ -144,6 +144,10 @@ if( !class_exists( 'SharedDrive' ) )
 				
 				if( is_array( $path ) && count( $path ) > 1 && trim( $path[ 1 ] ) )
 				{
+					// No need for trailing
+					if( substr( $path[ 1 ], -1, 1 ) == '/' )
+						$path[ 1 ] = substr( $path[ 1 ], 0, strlen( $path[ 1 ] ) - 1 );
+					
 					$out = [];
 					// Get data shared by others
 					// TODO: Support groups
@@ -254,13 +258,11 @@ if( !class_exists( 'SharedDrive' ) )
 								{
 									$s->ExternSessionID = $row->SessionID;
 									$s->ExternPath = $vol[0] . ':' . $p;
-									$Logger->log( 'Found the file to write 1: ' . $s->Filename . ' | ' . isset( $args->tmpfile ) . ' | ' . isset( $args->data ) );
-									$Logger->log( 'Dopa' );
+
 									if( $info = $this->doWrite( $s, $args->tmpfile, $args->data ) )
 									{
 										die( 'ok<!--separate-->' . $info->Len . '<!--separate-->' );
 									}
-									$Logger->log( 'Doing doing.' );
 									die( 'fail<!--separate-->{"response":"-1","message":"Could not write file."}' );
 								}
 								$info = json_decode( $code[1] );
@@ -446,7 +448,6 @@ if( !class_exists( 'SharedDrive' ) )
 							}
 							else if( isset( $write ) && $pth == $file->Filename )
 							{
-								$Logger->log( 'Found the file to write 2: ' . $s->Filename . ' ' . isset( $args->tmpfile ) . ' ' . isset( $args->data ) );
 								if( $info = $this->doWrite( $file, $args->tmpfile, $args->data ) )
 								{
 									die( 'ok<!--separate-->' . $info->Len . '<!--separate-->' );
@@ -566,10 +567,6 @@ if( !class_exists( 'SharedDrive' ) )
 			$subPath = explode( '/', end( explode( ':', $path ) ) );
 			array_pop( $subPath );
 			$subPath = implode( '/', $subPath ) . '/';
-		
-			$Logger->log( 'Trying to get file.. ------------------->' );
-			$Logger->log( 'Path was: ' . $path );
-			$Logger->log( 'Sub path is therefore: ' . $subPath );
 		
 			return false;
 		}
