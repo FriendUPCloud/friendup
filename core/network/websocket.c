@@ -371,9 +371,6 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 		}
 		
 		INFO("[WS] NEW Websockets ptr %p context %p\n", ws, ws->ws_Context);
-
-		ws->ws_Buf[ LWS_SEND_BUFFER_PRE_PADDING ] = 'x';
-			
 	}
 	else
 	{
