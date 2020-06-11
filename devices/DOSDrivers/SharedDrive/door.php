@@ -46,9 +46,6 @@ if( !class_exists( 'SharedDrive' ) )
 			global $SqlDatabase, $User, $Config, $Logger;
 		
 			$delete = $read = null;
-		
-			//$Logger->log( 'Executing a dos action: ' . $args->command );
-			//$Logger->log( 'Pure args: ' . print_r( $args, 1 ) );
 			
 			// TODO: This is a workaround, please fix in Friend Core!
 			//       Too much code for getting a real working path..
@@ -368,7 +365,7 @@ if( !class_exists( 'SharedDrive' ) )
 								set_time_limit( 0 );
 								ob_end_clean();
 								
-								if( $fp = fopen( $url . 'file/read?sessionid=' . $file->ExternSession . '&path=' . $file->ExternPath . '&mode=rb', 'rb', false, $context ) )
+								if( $fp = fopen( $url . 'file/read?sessionid=' . $file->ExternSession . '&path=' . urlencode( $file->ExternPath ) . '&mode=rb', 'rb', false, $context ) )
 								{
 									fpassthru( $fp );
 									fclose( $fp );
