@@ -183,7 +183,6 @@ if( !class_exists( 'SharedDrive' ) )
 								// Read mode intercepts here
 								if( isset( $read ) && $pth == $s->Filename ) 
 								{
-									ob_clean();
 									// Don't require verification on localhost
 									$context = stream_context_create(
 										array(
@@ -194,7 +193,12 @@ if( !class_exists( 'SharedDrive' ) )
 											) 
 										) 
 									);
-									if( $fp = fopen( $url . 'file/read?sessionid=' . $row->SessionID . '&path=' . $vol[0] . ':' . $p . '&mode=rb', 'rb', false, $context ) )
+									
+									// Don't timeout!
+									set_time_limit( 0 );
+									ob_end_clean();
+									
+									if( $fp = fopen( $url . 'file/read?sessionid=' . $row->SessionID . '&path=' . urlencode( $vol[0] . ':' . $p ) . '&mode=rb', 'rb', false, $context ) )
 									{
 										fpassthru( $fp );
 										fclose( $fp );
@@ -341,7 +345,6 @@ if( !class_exists( 'SharedDrive' ) )
 						{
 							if( isset( $read ) && $pth == $file->Filename ) 
 							{
-								ob_clean();
 								// Don't require verification on localhost
 								$context = stream_context_create(
 									array(
@@ -352,6 +355,11 @@ if( !class_exists( 'SharedDrive' ) )
 										) 
 									) 
 								);
+								
+								// Don't timeout!
+								set_time_limit( 0 );
+								ob_end_clean();
+								
 								if( $fp = fopen( $url . 'file/read?sessionid=' . $file->ExternSession . '&path=' . $file->ExternPath . '&mode=rb', 'rb', false, $context ) )
 								{
 									fpassthru( $fp );
