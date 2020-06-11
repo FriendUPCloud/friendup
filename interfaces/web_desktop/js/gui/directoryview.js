@@ -3233,6 +3233,8 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			img = 'data:image/svg+xml;base64,' + Friend.dosDrivers[ driver.type ].iconLabel;
 		if( fileInfo.Title == 'Home' )
 			img = '/iconthemes/friendup15/DriveLabels/Home.svg';
+		else if( fileInfo.Title == 'Shared' )
+			img = '/iconthemes/friendup15/DriveLabels/Shared.svg';
 		else if( fileInfo.Title == 'System' )
 			img = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
 		

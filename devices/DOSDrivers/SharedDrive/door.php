@@ -75,9 +75,29 @@ if( !class_exists( 'SharedDrive' ) )
 				( isset( $args->command ) && $args->command == 'dosaction' && isset( $args->args->action ) && $args->args->action == 'dir' )
 			)
 			{
+				directory:
+				
+				// We jumped to read
+				if( isset( $read ) )
+				{
+					$pth = explode( ':', $read );
+					if( strstr( $read, '/' ) )
+					{
+						$vol = explode( ':', $read );
+						$pth = explode( '/', $vol[1] );
+						$path = [ $vol[0] ];
+						$path = array_merge( $path, $pth );
+						$pth = $pth[ count( $pth ) - 1 ];
+					}
+					else
+					{
+						$pth = $pth[1];
+					}
+				}
+				
 				if( is_array( $path ) && count( $path ) > 1 && trim( $path[ 1 ] ) )
 				{
-					$out = [];	
+					$out = [];
 					// Get data shared by others
 					// TODO: Support groups
 					if( $rows = $SqlDatabase->fetchObjects( '
@@ -93,17 +113,18 @@ if( !class_exists( 'SharedDrive' ) )
 					{
 						foreach( $rows as $row )
 						{
-							$path = $row->Data;
-							$filename = explode( ':', $path ); 
+							$p = $row->Data;
+							$filename = explode( ':', $p ); 
 							$filename = $filename[1];
 							if( strstr( $filename, '/' ) )
 							{
 								$filename = explode( '/', $filename );
 								$filename = $filename[ count( $filename ) - 1 ];
 							}
+							
 							$s = new stdClass();
+							$s->Path = $path[ 1 ] . '/' . $filename;
 							$s->Filename = $filename;
-							$s->Path = $filename;
 							$s->Type = 'File';
 							$s->MetaType = 'File';
 							$s->Permissions = '-RWED-RWED-RWED';
@@ -113,15 +134,37 @@ if( !class_exists( 'SharedDrive' ) )
 							
 							$vol = explode( ':', $row->Data );
 							
-							$res = FriendCall( ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/file/info?sessionid=' . $row->SessionID, false,
+							$url = ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/';
+							$res = FriendCall( $url . 'file/info?sessionid=' . $row->SessionID, false,
 								array( 
 									'devname'   => $vol[0],
 									'path'      => $row->Data
 								)
 							);
 							$code = explode( '<!--separate-->', $res );
+							
 							if( $code[0] == 'ok' )
 							{
+								if( isset( $read ) && $pth == $s->Filename ) 
+								{
+									ob_clean();
+									// Don't require verification on localhost
+									$context = stream_context_create(
+										array(
+											'ssl'=>array(
+												'verify_peer' => false,
+												'verify_peer_name' => false,
+												'allow_self_signed' => true,
+											) 
+										) 
+									);
+									if( $fp = fopen( $url . 'file/read?sessionid=' . $row->SessionID . '&path=' . $vol[0] . ':' . $p . '&mode=rb', 'rb', false, $context ) )
+									{
+										fpassthru( $fp );
+										fclose( $fp );
+									}
+									die();
+								}
 								$info = json_decode( $code[1] );
 								$s->Filesize = $info->Filesize;
 								$s->DateCreated = $info->DateCreated;
@@ -225,7 +268,8 @@ if( !class_exists( 'SharedDrive' ) )
 					if( $file->Type == 'File' )
 					{
 						$vol = explode( ':', $file->ExternPath );
-						$res = FriendCall( ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/file/info?sessionid=' . $file->ExternSession, false,
+						$url = ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/';
+						$res = FriendCall( $url . 'file/info?sessionid=' . $file->ExternSession, false,
 							array( 
 								'devname'   => $vol[0],
 								'path'      => $file->ExternPath
@@ -234,6 +278,26 @@ if( !class_exists( 'SharedDrive' ) )
 						$code = explode( '<!--separate-->', $res );
 						if( $code[0] == 'ok' )
 						{
+							if( isset( $read ) && $pth == $file->Filename ) 
+							{
+								ob_clean();
+								// Don't require verification on localhost
+								$context = stream_context_create(
+									array(
+										'ssl'=>array(
+											'verify_peer' => false,
+											'verify_peer_name' => false,
+											'allow_self_signed' => true,
+										) 
+									) 
+								);
+								if( $fp = fopen( $url . 'file/read?sessionid=' . $file->ExternSession . '&path=' . $file->ExternPath . '&mode=rb', 'rb', false, $context ) )
+								{
+									fpassthru( $fp );
+									fclose( $fp );
+								}
+								die();
+							}
 							$info = json_decode( $code[1] );
 							$out[$k]->Filesize = $info->Filesize;
 							$out[$k]->DateCreated = $info->DateCreated;
@@ -271,7 +335,9 @@ if( !class_exists( 'SharedDrive' ) )
 			}
 			else if( $args->command == 'read' )
 			{
-				return 'fail<!--separate-->{"response":"could not read file"}';
+				$read = $args->path;
+				$path = '';
+				goto directory;
 			}
 			// Import sent files!
 			else if( $args->command == 'import' )

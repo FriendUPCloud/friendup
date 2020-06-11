@@ -570,6 +570,8 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 								img = 'data:image/svg+xml;base64,' + Friend.dosDrivers[ driver ].iconLabel;
 							if( msg.list[a].Title == 'Home' )
 								img = '/iconthemes/friendup15/DriveLabels/Home.svg';
+							else if( msg.list[a].Title == 'Shared' )
+								img = '/iconthemes/friendup15/DriveLabels/Shared.svg';
 							else if( msg.list[a].Title == 'System' )
 								img = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
 							
