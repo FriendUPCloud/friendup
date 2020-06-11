@@ -45,6 +45,8 @@ if( !class_exists( 'SharedDrive' ) )
 		{
 			global $SqlDatabase, $User, $Config, $Logger;
 		
+			$delete = $read = null;
+		
 			//$Logger->log( 'Executing a dos action: ' . $args->command );
 			//$Logger->log( 'Pure args: ' . print_r( $args, 1 ) );
 			
