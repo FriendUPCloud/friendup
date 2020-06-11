@@ -4618,13 +4618,14 @@ var View = function( args )
 		_ActivateWindow( this._window.parentNode );
 	}
 	// Move window to front
-	this.toFront = function()
+	this.toFront = function( flags )
 	{
 		if( this.flags.minimized ) 
 		{
 			return;
 		}
-		_ActivateWindow( this._window.parentNode );
+		if( !( flags && flags.activate === false ) )
+			_ActivateWindow( this._window.parentNode );
 		_WindowToFront( this._window.parentNode );
 	}
 	// Close a view window

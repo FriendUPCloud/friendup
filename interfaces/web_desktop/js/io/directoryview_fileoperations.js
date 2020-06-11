@@ -27,6 +27,7 @@ DirectoryView.prototype.ShowShareDialog = function( elements )
 		let d = null;
 		if( !this.shareDialog )
 		{
+			this.window.windowObject.toFront( { activate: false } );
 			this.shareDialog = d = document.createElement( 'div' );
 			d.className = 'ShareDialog BackgroundDefault';
 			this.window.appendChild( d );
