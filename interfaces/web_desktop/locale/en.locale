@@ -531,6 +531,7 @@ i18n_connectionAborted					: Connection to the workgroup aborted.
 i18n_password							: Password
 i18n_only_files_dropped                 : Wrong file types dropped
 i18n_only_files_can_be_shared           : Only regular files can be shared.
+i18n_share_with_users_or_groups         : Share with users or groups
 
 
 i18n_paste_error                        : Paste error

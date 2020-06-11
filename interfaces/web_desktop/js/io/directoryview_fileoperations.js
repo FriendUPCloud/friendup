@@ -36,6 +36,7 @@ DirectoryView.prototype.ShowShareDialog = function( elements )
 			}, 20 );
 		
 			var f = new File( 'Progdir:templates/sharing.html' );
+			f.i18n();
 			f.onLoad = function( data )
 			{
 				let v = document.createElement( 'div' );
@@ -68,9 +69,8 @@ DirectoryView.prototype.HideShareDialog = function( elements )
 		d.shareDialog = null;
 		setTimeout( function()
 		{
-			console.log( 'What is this?', v.parentNode, v );
 			if( v.parentNode )
-				v.parentNode.remove( v );
+				v.parentNode.removeChild( v );
 		}, 250 );
 	}
 }
