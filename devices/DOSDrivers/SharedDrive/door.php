@@ -45,7 +45,7 @@ if( !class_exists( 'SharedDrive' ) )
 		{
 			global $SqlDatabase, $User, $Config, $Logger;
 		
-			$delete = $read = $write = null;
+			$delete = $read = $getinfo = $write = null;
 			
 			// TODO: This is a workaround, please fix in Friend Core!
 			//       Too much code for getting a real working path..
@@ -99,6 +99,38 @@ if( !class_exists( 'SharedDrive' ) )
 					if( strstr( $delete, '/' ) )
 					{
 						$vol = explode( ':', $delete );
+						$pth = explode( '/', $vol[1] );
+						$path = [ $vol[0] ];
+						$path = array_merge( $path, $pth );
+						$pth = $pth[ count( $pth ) - 1 ];
+					}
+					else
+					{
+						$pth = $pth[1];
+					}
+				}
+				else if( isset( $write ) )
+				{
+					$pth = explode( ':', $write );
+					if( strstr( $write, '/' ) )
+					{
+						$vol = explode( ':', $write );
+						$pth = explode( '/', $vol[1] );
+						$path = [ $vol[0] ];
+						$path = array_merge( $path, $pth );
+						$pth = $pth[ count( $pth ) - 1 ];
+					}
+					else
+					{
+						$pth = $pth[1];
+					}
+				}
+				else if( isset( $getinfo ) )
+				{
+					$pth = explode( ':', $getinfo );
+					if( strstr( $getinfo, '/' ) )
+					{
+						$vol = explode( ':', $getinfo );
 						$pth = explode( '/', $vol[1] );
 						$path = [ $vol[0] ];
 						$path = array_merge( $path, $pth );
@@ -179,8 +211,22 @@ if( !class_exists( 'SharedDrive' ) )
 							
 							if( $code[0] == 'ok' )
 							{
+								
+								if( isset( $getinfo ) && $pth == $s->Filename )
+								{
+									$info = json_decode( $code[1] );
+									$fInfo = new stdClass();
+									$fInfo->Type = 'File';
+									$fInfo->MetaType = $fInfo->Type;
+									$fInfo->Path = $s->Path;
+									$fInfo->Filesize = $info->Filesize;
+									$fInfo->Filename = $s->Filename;
+									$fInfo->DateCreated = $info->DateCreated;
+									$fInfo->DateModified = $info->DateModified;
+									die( 'ok<!--separate-->' . json_encode( $fInfo ) );
+								}
 								// Read mode intercepts here
-								if( isset( $read ) && $pth == $s->Filename ) 
+								else if( isset( $read ) && $pth == $s->Filename ) 
 								{
 									// Don't require verification on localhost
 									$context = stream_context_create(
@@ -208,10 +254,13 @@ if( !class_exists( 'SharedDrive' ) )
 								{
 									$s->ExternSessionID = $row->SessionID;
 									$s->ExternPath = $vol[0] . ':' . $p;
+									$Logger->log( 'Found the file to write 1: ' . $s->Filename . ' | ' . isset( $args->tmpfile ) . ' | ' . isset( $args->data ) );
+									$Logger->log( 'Dopa' );
 									if( $info = $this->doWrite( $s, $args->tmpfile, $args->data ) )
 									{
 										die( 'ok<!--separate-->' . $info->Len . '<!--separate-->' );
 									}
+									$Logger->log( 'Doing doing.' );
 									die( 'fail<!--separate-->{"response":"-1","message":"Could not write file."}' );
 								}
 								$info = json_decode( $code[1] );
@@ -358,7 +407,20 @@ if( !class_exists( 'SharedDrive' ) )
 						$code = explode( '<!--separate-->', $res );
 						if( $code[0] == 'ok' )
 						{
-							if( isset( $read ) && $pth == $file->Filename ) 
+							if( isset( $getinfo ) && $pth == $file->Filename )
+							{
+								$info = json_decode( $code[1] );
+								$fInfo = new stdClass();
+								$fInfo->Type = 'File';
+								$fInfo->MetaType = $fInfo->Type;
+								$fInfo->Path = $file->Path;
+								$fInfo->Filesize = $info->Filesize;
+								$fInfo->Filename = $file->Filename;
+								$fInfo->DateCreated = $info->DateCreated;
+								$fInfo->DateModified = $info->DateModified;
+								die( 'ok<!--separate-->' . json_encode( $fInfo ) );
+							}
+							else if( isset( $read ) && $pth == $file->Filename ) 
 							{
 								// Don't require verification on localhost
 								$context = stream_context_create(
@@ -384,6 +446,7 @@ if( !class_exists( 'SharedDrive' ) )
 							}
 							else if( isset( $write ) && $pth == $file->Filename )
 							{
+								$Logger->log( 'Found the file to write 2: ' . $s->Filename . ' ' . isset( $args->tmpfile ) . ' ' . isset( $args->data ) );
 								if( $info = $this->doWrite( $file, $args->tmpfile, $args->data ) )
 								{
 									die( 'ok<!--separate-->' . $info->Len . '<!--separate-->' );
@@ -419,13 +482,15 @@ if( !class_exists( 'SharedDrive' ) )
 			}
 			else if( $args->command == 'info' )
 			{
-				$write = $args->path;
+				$getinfo = $args->path;
 				$path = '';
 				goto directory;
 			}
 			else if( $args->command == 'write' )
 			{
-				return 'fail<!--separate-->Could not write file: ' . $Config->FCUpload . $fn;
+				$write = $args->path;
+				$path = '';
+				goto directory;
 			}
 			else if( $args->command == 'read' )
 			{
@@ -589,16 +654,20 @@ if( !class_exists( 'SharedDrive' ) )
 		// Write a file with either a tmp file or data
 		function doWrite( $file, $tmpfile = false, $data = false )
 		{
+			global $Logger, $Config;
 			$url = ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/';
-			$query = $url . 'file/write?sessionid=' . $file->ExternSessionID;
+			$query = $url . 'file/upload?sessionid=' . $file->ExternSessionID . '&mode=w&path=' . urlencode( $file->ExternPath );
 			$o = array();
-			if( $tmpfile )
-				$o[ 'tmpfile' ] = $tmpfile;
+			if( $tmpfile && file_exists( $tmpfile ) )
+			{
+				$cfile = curl_file_create( $tmpfile );
+				$o[ 'extra_info' ]    = filesize( $tmpfile );
+				$o[ 'file_contents' ] = $cfile;
+			}
 			else if( $data )
 				$o[ 'data' ] = $data;
 			if( $res = FriendCall( $query, false, $o ) )
 			{
-				$Logger->log( $res );
 				if( substr( $res, 0, 3 ) == 'ok<' )
 				{
 					$n = new stdClass();

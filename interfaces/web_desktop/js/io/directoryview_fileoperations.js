@@ -224,6 +224,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 	// Examine destination
 	var destinationFI = mode == 'view' ? dview.content.fileInfo : dview.object.file.fileInfo;
 	var sPath = destinationFI.Path; // set path
+	if( !eles[0].window ) return;
 	var dPath = eles[0].window.fileInfo ? eles[0].window.fileInfo.Path : false; // <- dropped path
 
 	// We can't copy to self!
