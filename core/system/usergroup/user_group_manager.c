@@ -46,7 +46,11 @@ UserGroupManager *UGMNew( void *sb )
 		if( sqlLib != NULL )
 		{
 			int entries;
-			sm->ugm_UserGroups = sqlLib->Load( sqlLib, UserGroupDesc, NULL, &entries );
+			char where[ 256 ];
+			
+			strcpy( where, " Type in( 'Workgroup','Level' )" );
+			
+			sm->ugm_UserGroups = sqlLib->Load( sqlLib, UserGroupDesc, where, &entries );
 			lsb->LibrarySQLDrop( lsb, sqlLib );
 		}
 		
