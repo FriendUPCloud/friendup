@@ -6557,7 +6557,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		var shareIcon = null;
 		var downloadIcon = null;
 		var directoryIcon = false;
-		var sharableFile = false;
+		let sharableFile = false;
+		let sharedVolume = false;
 		let fileIcon = false;
 		var shareCount = 0;
 		if( iconsSelected )
@@ -6616,7 +6617,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						}
 						
 						if( ics[ a ].Path.indexOf( 'Shared:' ) == 0 )
+						{
 							sharableFile = false;
+							sharedVolume = true;
+						}
 						
 						if( ics[a].Volume == 'System:' )
 						{
@@ -6766,17 +6770,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						name:	i18n( 'menu_paste' ),
 						command: function() { Workspace.pasteFiles(); },
-						disabled: !iconsInClipboard || systemDrive || cannotWrite
+						disabled: sharedVolume || !iconsInClipboard || systemDrive || cannotWrite
 					},
 					{
 						name:	i18n( 'menu_new_weblink' ),
 						command: function() { Workspace.weblink(); },
-						disabled: !iconsAvailable || systemDrive || dormant
+						disabled: sharedVolume || !iconsAvailable || systemDrive || dormant
 					},
 					{
 						name:	i18n( 'menu_new_directory' ),
 						command: function() { Workspace.newDirectory(); },
-						disabled: !iconsAvailable || systemDrive || cannotWrite
+						disabled: sharedVolume || !iconsAvailable || systemDrive || cannotWrite
 					},
 					{
 						name:	i18n( 'menu_show_icon_information' ),
@@ -6786,17 +6790,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						name:	i18n( 'menu_edit_filename' ),
 						command: function() { Workspace.renameFile(); },
-						disabled: ( !iconsSelected || volumeIcon || systemDrive || cannotWrite )
+						disabled: sharedVolume || ( !iconsSelected || volumeIcon || systemDrive || cannotWrite )
 					},
 					{
 						name:	i18n( 'menu_zip' ),
 						command: function() { Workspace.zipFiles(); },
-						disabled: ( !iconsSelected || volumeIcon || systemDrive || cannotWrite || dormant )
+						disabled: sharedVolume || ( !iconsSelected || volumeIcon || systemDrive || cannotWrite || dormant )
 					},
 					{
 						name:	i18n( 'menu_unzip' ),
 						command: function() { Workspace.unzipFiles(); },
-						disabled: !iconsSelected || !Workspace.selectedIconByType( 'zip' ) || systemDrive || cannotWrite || dormant
+						disabled: sharedVolume || !iconsSelected || !Workspace.selectedIconByType( 'zip' ) || systemDrive || cannotWrite || dormant
 					},
 					//{
 					//	name:	i18n( 'menu_openfolder' ),
@@ -6815,7 +6819,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						{
 							Workspace.viewSharingOptions( fileIcon.Path );
 						},
-						disabled: sharableFile ? false : true
+						disabled: !( sharableFile && !sharedVolume )
 					},
 					{
 						divider: true
