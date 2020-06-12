@@ -5061,9 +5061,8 @@ div.Orange, button.Orange
 	height: 0;
 	opacity: 0;
 	overflow: hidden;
-	background-color: rgba(0,0,0,0);
 	transition: height,background-color,opacity 0.25s,0.25s,0.25s;
-	z-index: 2;
+	z-index: 10;
 }
 
 .ShareDialog.Showing
@@ -5077,7 +5076,13 @@ div.Orange, button.Orange
 	position: absolute;
 	top: 0;
 	left: 0;
+	width: 100%;
 	height: 40px;
+}
+
+.ShareDialog .Absolute .Padding h3
+{
+	text-align: center;
 }
 
 .ShareDialog .Absolute .Workgroups_and_users
@@ -5088,6 +5093,7 @@ div.Orange, button.Orange
 	width: 100%;
 	height: calc(100% - 90px);
 	overflow: auto;
+	text-align: center;
 }
 
 .ShareDialog .Absolute .BottomBar
@@ -5097,5 +5103,110 @@ div.Orange, button.Orange
 	height: 50px;
 	width: 100%;
 	left: 0;
+}
+
+.ShareDialog .ShareFile.File,
+.ShareDialog .ShareItem
+{
+	width: 96px;
+	height: 96px;
+	text-align: left;
+	float: none;
+	display: inline-block;
+	margin: 0 8px 8px 0;
+	position: relative;
+	background-color: rgba(0,0,0,0.15);
+	transition: background-color 0.25s;
+}
+
+.ShareDialog .ShareItem:not(.File):not(.Selected):hover
+{
+	background-color: rgba(0,0,0,0.25);
+}
+
+.ShareDialog .ShareFile.File
+{
+	cursor: default;
+}
+
+.ShareDialog .ShareFile.File > .Icon
+{
+	margin-top: 5px;
+}
+
+.ShareDialog .ShareFile.File > .Title
+{
+	width: calc(100% - 10px);
+	left: 4px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.ShareDialog .ShareItem:after
+{
+	display: block;
+	content: " ";
+	position: absolute;
+	top: 12px;
+	left: calc(50% - 25px);
+	width: 50px;
+	height: 50px;
+	border-radius: 100%;
+	background-size: 40px 40px;
+	background-color: #444444;
+	background-position: center;
+	background-repeat: no-repeat;
+}
+
+.ShareDialog .ShareItem.Selected
+{
+	background-color: $ColorNotify;
+	color: $ColorNotifyBg;
+}
+
+.ShareDialog .ShareItem.Workgroup:before,
+.ShareDialog .ShareItem.User:before
+{
+	font-size: 1.5em;
+	text-align: center;
+	pointer-events: none;
+	position: absolute;
+	z-index: 2;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	line-height: 72px;
+}
+
+.ShareDialog .ShareItem.Workgroup:before
+{
+	color: #E8B975;
+}
+
+.ShareDialog .ShareItem.User:before
+{
+	color: #1abc9c;
+}
+
+.ShareDialog .ShareItem span
+{
+	position: absolute;
+	bottom: 10px;
+	width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	box-sizing: border-box;
+	padding: 0 10px;
+	text-align: center;
+	white-space: nowrap;
+}
+
+.ShareDialog .Absolute .Workgroups_and_users:after
+{
+	display: block;
+	content: " ";
+	clear: both;
 }
 

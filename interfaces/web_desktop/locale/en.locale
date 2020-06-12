@@ -236,6 +236,7 @@ menu_unzip                              : Decompress file(s)
 menu_looknfeel                          : Look and feel
 menu_backdrop                           : Show overview
 menu_share								: Share
+menu_share_info                         : Share info
 menu_download                           : Download
 i18n_could_not_download                 : Could not download
 i18n_file_cannot_be_downloaded          : The file is not of the correct type to download
@@ -532,6 +533,7 @@ i18n_password							: Password
 i18n_only_files_dropped                 : Wrong file types dropped
 i18n_only_files_can_be_shared           : Only regular files can be shared.
 i18n_share_with_users_or_groups         : Share with users or groups
+i18n_ok                                 : Ok
 
 
 i18n_paste_error                        : Paste error

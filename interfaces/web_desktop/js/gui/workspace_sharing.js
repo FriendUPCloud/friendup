@@ -255,7 +255,7 @@ Workspace.setSharingGui = function( viewObject )
 			{
 				sw = sw == 1 ? 2 : 1;
 				str += '\
-				<div class="MousePointer DropdownItem GroupEle Rounded Ellipsis PaddingSmall sw' + sw + '" gid="' + workgroups[a].Name + '">\
+				<div class="MousePointer DropdownItem GroupEle Rounded Ellipsis PaddingSmall sw' + sw + '" gid="' + workgroups[a].ID + '">\
 					' + workgroups[a].Name + '\
 				</div>';
 				items++;

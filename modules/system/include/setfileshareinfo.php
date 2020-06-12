@@ -13,6 +13,9 @@
 // Make sure we have a path and items!
 if( isset( $args->args->path ) && isset( $args->args->items ) )
 {
+	// Remove old!
+	$SqlDatabase->query( 'DELETE FROM FShared WHERE OwnerUserID=\'' . $User->ID . '\' AND `Data`="' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->path ) . '"' );
+
 	$saved = 0;
 	if( isset( $args->args->items->group ) && count( $args->args->items->group ) )
 	{

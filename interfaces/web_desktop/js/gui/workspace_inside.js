@@ -6821,6 +6821,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						},
 						disabled: !( sharableFile && !sharedVolume )
 					},
+					// Add sharing
+					{
+						name: i18n( 'menu_share_info' ),
+						command: function()
+						{
+							currentMovable.content.directoryview.ShowShareDialog( [ fileIcon.domNode ], 'shareinfo' );
+						},
+						disabled: ( sharableFile && !sharedVolume ) || volumeIcon || fileIcon.Type != 'File' || !fileIcon.ExternPath
+					},
 					{
 						divider: true
 					},

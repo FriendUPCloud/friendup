@@ -193,6 +193,7 @@ if( !class_exists( 'SharedDrive' ) )
 							}
 							
 							$s = new stdClass();
+							$s->ID = $row->ID;
 							$s->Path = $path[ 1 ] . '/' . $filename;
 							$s->Filename = $filename;
 							$s->Type = 'File';
@@ -221,6 +222,7 @@ if( !class_exists( 'SharedDrive' ) )
 									$info = json_decode( $code[1] );
 									$fInfo = new stdClass();
 									$fInfo->Type = 'File';
+									$fInfo->ID = $s->ID;
 									$fInfo->MetaType = $fInfo->Type;
 									$fInfo->Path = $s->Path;
 									$fInfo->Filesize = $info->Filesize;
@@ -459,9 +461,8 @@ if( !class_exists( 'SharedDrive' ) )
 							$out[$k]->DateCreated = $info->DateCreated;
 							$out[$k]->DateModified = $info->DateModified;
 						}
-						$out[$k]->Owner = '';
-						$out[$k]->ExternPath = '';
-						$out[$k]->ExternSession = '';
+						$out[$k]->Owner = null;
+						$out[$k]->ExternSession = null;
 					}
 				}
 				

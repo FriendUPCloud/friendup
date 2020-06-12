@@ -235,6 +235,7 @@ menu_looknfeel                          : Utseende
 menu_backdrop                           : Vis oversikt
 menu_buildwebapp                        : Bygg webapplikasjon
 menu_share				                : Del
+menu_share_info                         : Delingsinformasjon
 menu_download                           : Last ned
 i18n_could_not_download                 : Kunne ikke laste ned
 i18n_file_cannot_be_downloaded          : Filen er ikke av rett type for nedlastning
@@ -519,6 +520,7 @@ i18n_notifications_sent                 : Varslene ble sendt...
 i18n_only_files_dropped                 : Kunne ikke dele
 i18n_only_files_can_be_shared           : Kun vanlige filer kan deles.
 i18n_share_with_users_or_groups         : Del med brukere eller grupper
+i18n_ok                                 : Ok
 
 
 i18n_pasted_file                        : Limer inn innhold

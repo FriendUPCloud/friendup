@@ -9,8 +9,9 @@
 *****************************************************************************©*/
 
 // Share dialog ----------------------------------------------------------------
-DirectoryView.prototype.ShowShareDialog = function( elements )
+DirectoryView.prototype.ShowShareDialog = function( elements, mode )
 {
+	let self = this;
 	let mixed = false;
 	let out = [];
 	for( let c = 0; c < elements.length; c++ )
@@ -35,62 +36,176 @@ DirectoryView.prototype.ShowShareDialog = function( elements )
 				d.classList.add( 'Showing' );
 			}, 20 );
 		
-			// Get all workgroups
-			let w = new Module( 'system' );
-			w.onExecuted = function( we, wd )
+			// Existing fileshare info
+			if( mode && mode == 'shareinfo' )
 			{
-				let u = new Module( 'system' );
-				u.onExecuted = function( ue, ud )
+				let s = new Module( 'system' );
+				s.onExecuted = function( se, sd )
 				{
-					let wstr = '';
-					if( we == 'ok' )
+					let shareInfo = null;
+					try
 					{
-						try
-						{
-							let workgroups = JSON.parse( wd );
-							for( let z = 0; z < workgroups.length; z++ )
-							{
-								wstr += '<div class="ShareItem Workgroup">' + workgroups[ z ].Name + '</div>';
-							}
-						}
-						catch( e ){}
+						shareInfo = se == 'ok' ? JSON.parse( sd ) : false
 					}
-					let ustr = '';
-					if( ue == 'ok' )
-					{
-						try
-						{
-							let users = JSON.parse( ud );
-							for( let z = 0; z < users.length; z++ )
-							{
-								wstr += '<div class="ShareItem User">' + users[ z ].Fullname + '</div>';
-							}
-						}
-						catch( e ){};
-					}
-					
-					
-					var f = new File( 'Progdir:templates/sharing.html' );
-					f.replacements = {
-						'workgroups': wstr + ustr
-					};
-					f.i18n();
-					f.onLoad = function( data )
-					{
-						let v = document.createElement( 'div' );
-						v.className = 'GuiInner';
-						v.innerHTML = data;
-						d.appendChild( v );
-						setTimeout( function()
-						{
-							v.classList.add( 'Showing' );
-						}, 20 );
-					}
-					f.load();
+					catch( e ){};
+					getInfoAndDraw( shareInfo );
 				}
-				u.execute( 'listconnectedusers' );
+				s.execute( 'getfileshareinfo', { path: out[0].fileInfo.ExternPath } );
 			}
-			w.execute( 'workgroups' );
+			else
+			{
+				getInfoAndDraw();
+			}
+			
+			function getInfoAndDraw( shareInfo )
+			{
+				// Get all workgroups
+				let w = new Module( 'system' );
+				w.onExecuted = function( we, wd )
+				{
+					let u = new Module( 'system' );
+					u.onExecuted = function( ue, ud )
+					{
+						let wstr = '';
+					
+						let exGroups = {};
+						let exUsers = {};
+						if( shareInfo )
+						{
+							for( let c = 0; c < shareInfo.length; c++ )
+							{
+								if( shareInfo[ c ].type == 'user' )
+									exUsers[ shareInfo[ c ].id ] = true;
+								else exGroups[ shareInfo[ c ].id ] = true;
+							}
+						}
+					
+						for( let c = 0; c < elements.length; c++ )
+						{
+							wstr += '<div class="Rounded ShareFile File">' + elements[ c ].innerHTML + '</div>';
+						}
+						wstr += '<div class="BorderTop fa-arrow-down IconSmall TextCenter MarginTop MarginBottom" style="clear: both">&nbsp;</div>';
+					
+						if( we == 'ok' )
+						{
+							try
+							{
+								let workgroups = JSON.parse( wd );
+								for( let z = 0; z < workgroups.length; z++ )
+								{
+									let sel = '';
+									if( exGroups[ workgroups[ z ].ID ] )
+										sel = 'Selected ';
+									wstr += '<div class="' + sel + 'ShareItem MousePointer IconSmall fa-group Rounded Workgroup" gid="' + workgroups[ z ].ID + '"><span>' + workgroups[ z ].Name + '</span></div>';
+								}
+							}
+							catch( e ){}
+						}
+						let ustr = '';
+						if( ue == 'ok' )
+						{
+							try
+							{
+								let users = JSON.parse( ud );
+								for( let z = 0; z < users.length; z++ )
+								{
+									let sel = '';
+									if( exUsers[ users[ z ].ID ] )
+										sel = 'Selected ';
+									wstr += '<div class="' + sel + 'ShareItem MousePointer IconSmall fa-user Rounded User" uid="' + users[ z ].ID + '"><span>' + users[ z ].Fullname + '</span></div>';
+								}
+							}
+							catch( e ){};
+						}
+					
+					
+						var f = new File( 'Progdir:templates/sharing.html' );
+						f.replacements = {
+							'workgroups': wstr + ustr
+						};
+						f.i18n();
+						f.onLoad = function( data )
+						{
+							let v = document.createElement( 'div' );
+							v.className = 'GuiInner';
+							v.innerHTML = data;
+							d.appendChild( v );
+							setTimeout( function()
+							{
+								v.classList.add( 'Showing' );
+							}, 20 );
+						
+							// Cancel sharing
+							let eles = v.getElementsByClassName( 'CancelSharing' );
+							eles[0].onclick = function()
+							{
+								self.HideShareDialog();
+							}
+							// Apply current sharing info
+							eles = v.getElementsByClassName( 'DoShare' );
+							eles[0].onclick = function()
+							{
+								let itms = v.getElementsByClassName( 'ShareItem' );
+								let groups = [];
+								let users = [];
+								for( let h = 0; h < itms.length; h++ )
+								{
+									if( itms[ h ].classList.contains( 'Selected' ) )
+									{
+										if( itms[ h ].classList.contains( 'Workgroup' ) )
+										{
+											groups.push( {
+												id: itms[ h ].getAttribute( 'gid' )
+											} );
+										}
+										else
+										{
+											users.push( {
+												id: itms[ h ].getAttribute( 'uid' )
+											} );
+										}
+									}
+								}
+								let sharingLen = out.length;
+								for( let h = 0; h < out.length; h++ )
+								{
+									let sh = new Module( 'system' );
+									sh.onExecuted = function( she, shd )
+									{
+										sharingLen--;
+										if( sharingLen == 0 )
+										{
+											self.HideShareDialog();
+											self.window.refresh();
+										}
+									}
+									sh.execute( 'setfileshareinfo', { path: out[h].fileInfo.Path, items: { group: groups, user: users } } );
+								}
+							}
+						
+							eles = v.getElementsByClassName( 'ShareItem' );
+							for( let z = 0; z < eles.length; z++ )
+							{
+								eles[ z ].onclick = function()
+								{
+									if( this.classList.contains( 'Selected' ) )
+									{
+										this.classList.remove( 'Selected' );
+									}
+									else
+									{
+										this.classList.add( 'Selected' );
+									}
+								}
+							} 
+						
+						}
+						f.load();
+					}
+					u.execute( 'listconnectedusers' );
+				}
+				w.execute( 'workgroups' );
+			}
 		}
 	}
 	// It's a mixed list without files..
@@ -101,7 +216,7 @@ DirectoryView.prototype.ShowShareDialog = function( elements )
 }
 
 // Share dialog, hide it -------------------------------------------------------
-DirectoryView.prototype.HideShareDialog = function( elements )
+DirectoryView.prototype.HideShareDialog = function()
 {
 	let d = this;
 	if( d.shareDialog )
@@ -123,7 +238,7 @@ DirectoryView.prototype.HideShareDialog = function( elements )
 DirectoryView.prototype.doCopyOnElement = function( eles, e )
 {
 	// OOOH! Shared drive action!
-	if( this.content.fileInfo.Driver == 'SharedDrive' )
+	if( this.content && this.content.fileInfo && this.content.fileInfo.Driver == 'SharedDrive' )
 	{
 		var s = this;
 		if( !this.ShowShareDialog )
