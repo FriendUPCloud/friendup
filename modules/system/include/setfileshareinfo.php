@@ -13,6 +13,9 @@
 // Make sure we have a path and items!
 if( isset( $args->args->path ) && isset( $args->args->items ) )
 {
+	if( substr( $args->args->path, 0, 7 ) == 'Shared:' )
+		die( 'fail<!--separate-->{"message":"Unable to share a shared file.","response":"-1"}' );
+	
 	// Remove old!
 	$SqlDatabase->query( 'DELETE FROM FShared WHERE OwnerUserID=\'' . $User->ID . '\' AND `Data`="' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->path ) . '"' );
 

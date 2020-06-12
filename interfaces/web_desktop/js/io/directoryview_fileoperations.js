@@ -179,7 +179,7 @@ DirectoryView.prototype.ShowShareDialog = function( elements, mode )
 											self.window.refresh();
 										}
 									}
-									sh.execute( 'setfileshareinfo', { path: out[h].fileInfo.Path, items: { group: groups, user: users } } );
+									sh.execute( 'setfileshareinfo', { path: out[h].fileInfo.ExternPath ? out[h].fileInfo.ExternPath : out[h].fileInfo.Path, items: { group: groups, user: users } } );
 								}
 							}
 						
