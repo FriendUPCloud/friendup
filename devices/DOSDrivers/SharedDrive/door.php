@@ -149,18 +149,40 @@ if( !class_exists( 'SharedDrive' ) )
 						$path[ 1 ] = substr( $path[ 1 ], 0, strlen( $path[ 1 ] ) - 1 );
 					
 					$out = [];
+					
 					// Get data shared by others
-					// TODO: Support groups
-					if( $rows = $SqlDatabase->fetchObjects( '
+					if( !( $rows = $SqlDatabase->fetchObjects( '
 						SELECT s.ID, s.Data, s.OwnerUserID, u.SessionID FROM FShared s, FUser u 
 						WHERE 
 							u.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $path[ 1 ] ) . '\' AND
 							s.OwnerUserID != \'' . intval( $User->ID, 10 ) . '\' AND
-							s.SharedType = \'User\' AND 
+							s.SharedType = \'user\' AND 
 							s.SharedID = \'' . intval( $User->ID, 10 ) . '\' AND 
 							u.SessionID != "" AND 
 							u.ID = s.OwnerUserID
-					' ) )
+					' ) ) )
+					{
+						// Shared through groups
+						$rows = $SqlDatabase->fetchObjects( '
+							SELECT 
+								s.ID, s.Data, s.OwnerUserID, u.SessionID 
+							FROM 
+								FShared s, FUserGroup g, FUserToGroup ug, FUser u
+							WHERE 
+								g.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $path[ 1 ] ) . '\' AND
+								s.OwnerUserID != \'' . intval( $User->ID, 10 ) . '\' AND
+								s.SharedType = \'group\' AND 
+								s.SharedID = g.ID AND 
+								ug.UserGroupID = g.ID AND
+								ug.UserID = u.ID AND
+								u.SessionID != "" AND 
+								u.ID = s.OwnerUserID
+						' );
+					}
+					
+					// Get data shared by others
+					// TODO: Support groups
+					if( $rows )
 					{
 						foreach( $rows as $row )
 						{
