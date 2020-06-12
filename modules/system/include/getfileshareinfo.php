@@ -41,7 +41,7 @@ if( isset( $args->args->mode ) && $args->args->mode == 'sharepath' )
 
 		$groups = $SqlDatabase->fetchObjects( '
 			SELECT s.* FROM FShared s WHERE
-				SELECT g.ID as `id`, "group" as `type`, u.Name AS `name` FROM FShared s, FUserGroup u WHERE
+				SELECT g.ID as `id`, "group" as `type`, g.Name AS `name` FROM FShared s, FUserGroup g WHERE
 				s.OwnerUserID=\'' . intval( $User->ID, 10 ) . '\' AND
 				s.SharedType = \'group\' AND
 				s.SharedID = g.ID AND
@@ -64,13 +64,14 @@ else
 			s.Data="' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->path ) . '"
 	' );
 
-	$groups = $SqlDatabase->fetchObjects( '
-		SELECT g.ID as `id`, "group" as `type`, u.Name AS `name` FROM FShared s, FUserGroup u WHERE
+	$groups = $SqlDatabase->fetchObjects( $q = '
+		SELECT g.ID as `id`, "group" as `type`, g.Name AS `name` FROM FShared s, FUserGroup g WHERE
 			s.OwnerUserID=\'' . intval( $User->ID, 10 ) . '\' AND
 			s.SharedType = \'group\' AND
 			s.SharedID = g.ID AND
 			s.Data="' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->path ) . '"
 	' );
+	$Logger->log( $q );
 }
 
 if( $users || $groups )

@@ -3274,6 +3274,12 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		iconInner.className = GetIconClassByExtension( extension, fileInfo );
 	}
 	
+	// Add-on label
+	if( fileInfo.IconLabel )
+	{
+		iconInner.classList.add( fileInfo.IconLabel );
+	}
+	
 	// Check for thumbs
 	if( fileInfo.directoryview && ( fileInfo.directoryview.listMode == 'iconview' || fileInfo.directoryview.listMode == 'imageview' ) )
 	{

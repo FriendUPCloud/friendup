@@ -355,42 +355,51 @@ if( !class_exists( 'SharedDrive' ) )
 					$grs = []; foreach( $groups as $group ) $grs[] = $group->UserGroupID;
 					unset( $groups );
 				
-					// Get folders by other users or groups
-					if( $rows = $SqlDatabase->fetchObjects( $q = '
-						SELECT DISTINCT(`Name`) FROM (
-							SELECT u.Name FROM FShared s, FUser u 
-							WHERE
-								u.ID = s.OwnerUserID AND 
-								s.OwnerUserID != \'' . intval( $User->ID, 10 ) . '\' AND
-								s.SharedType = \'user\' AND
-								s.SharedID = \'' . intval( $User->ID, 10 ) . '\' AND
-								u.SessionID != ""
-						) z
-						UNION
-						(
-							SELECT g.Name FROM FShared s, FUserGroup g, FUserToGroup ug
+					$queries = new stdClass();
+					$queries->groups = 'SELECT g.Name, g.ID FROM FShared s, FUserGroup g, FUserToGroup ug
 							WHERE 
 								s.OwnerUserID != \'' . intval( $User->ID, 10 ) . '\' AND
 								s.SharedType = \'group\' AND
 								s.SharedID = ug.UserGroupID AND
 								g.ID = ug.UserGroupID AND
-								ug.UserGroupID IN ( ' . implode( ', ', $grs ) . ' )
-						)
-					' ) )
+								ug.UserGroupID IN ( ' . implode( ', ', $grs ) . ' )';
+					$queries->users = 'SELECT u.FullName, u.Name, u.ID FROM FShared s, FUser u 
+							WHERE
+								u.ID = s.OwnerUserID AND 
+								s.OwnerUserID != \'' . intval( $User->ID, 10 ) . '\' AND
+								s.SharedType = \'user\' AND
+								s.SharedID = \'' . intval( $User->ID, 10 ) . '\' AND
+								u.SessionID != ""';
+				
+					// Get folders by other users or groups
+					foreach( $queries as $k=>$q )
 					{
-						foreach( $rows as $row )
+						if( $rows = $SqlDatabase->fetchObjects( $q ) )
 						{
-							$s = new stdClass();
-							$s->Filename = $row->Name;
-							$s->Path = $row->Name;
-							$s->Type = 'Directory';
-							$s->MetaType = 'Directory';
-							$s->Permissions = '---------------';
-							$s->DateCreated = $s->DateModified = date( 'Y-m-d H:i:s' );
-							$s->Shared = '';
-							$s->SharedLink = '';
-							$s->Filesize = 0;
-							$out[] = $s;
+							// Remove duplicates
+							$out2 = [];
+							foreach( $rows as $row )
+							{
+								$out2[ $row->Filename ] = $row;
+							}
+							foreach( $out2 as $a=>$row )
+							{
+								$s = new stdClass();
+								$s->Filename = $row->Name;
+								if( isset( $row->FullName ) )
+									$s->Title = $row->FullName;
+								$s->ID = $row->ID;
+								$s->Path = $row->Name;
+								$s->Type = 'Directory';
+								$s->MetaType = 'Directory';
+								$s->IconLabel = $k == 'users' ? 'UserShare' : 'GroupShare';
+								$s->Permissions = '---------------';
+								$s->DateCreated = $s->DateModified = date( 'Y-m-d H:i:s' );
+								$s->Shared = '';
+								$s->SharedLink = '';
+								$s->Filesize = 0;
+								$out[] = $s;
+							}
 						}
 					}
 				}

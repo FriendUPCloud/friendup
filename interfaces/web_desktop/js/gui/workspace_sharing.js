@@ -101,14 +101,15 @@ Workspace.viewSharingOptions = function( path )
 Workspace.saveFileShareInfo = function( uniqueId )
 {
 	if( !this.sharingDialogs[ uniqueId ] ) return;
+	let self = this;
 	let d = this.sharingDialogs[ uniqueId ];
 	
 	let o = new Module( 'system' );
-	o.onExecuted = function( e, d )
+	o.onExecuted = function( e )
 	{
 		if( e == 'ok' )
 		{
-			Alert( 'Poo', 'Loof' );
+			d.close();
 		}
 		else
 		{
@@ -228,7 +229,7 @@ Workspace.setSharingGui = function( viewObject )
 					{
 						if( !Trim( keys[ c ] ) ) continue;
 						
-						if( ( us[ a ].Fullname && us[ a ].Fullname.toLowerCase().indexOf( keys[ c ] ) >= 0 ) || us[ a ].Name.toLowerCase().indexOf( keys[ c ] ) )
+						if( ( us[ a ].Fullname && us[ a ].Fullname.toLowerCase().indexOf( keys[ c ] ) >= 0 ) || us[ a ].Name.toLowerCase().indexOf( keys[ c ] ) >= 0 )
 						{
 							finu.push( us[ a ] );
 							break;

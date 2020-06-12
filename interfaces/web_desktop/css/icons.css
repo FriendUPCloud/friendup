@@ -491,6 +491,28 @@ html .File.Tiny, html .File.Tiny .Icon, html .File.Tiny .Icon > div
 {
 }
 
+.File .Icon .Directory.GroupShare:after
+{
+	font-family: fontawesome;
+	content: "\f0c0";
+	position: absolute;
+	top: 15px;
+	left: 0;
+	width: 100%;
+	text-align: center;
+}
+
+.File .Icon .Directory.UserShare:after
+{
+	font-family: fontawesome;
+	content: "\f007";
+	position: absolute;
+	top: 15px;
+	left: 0;
+	width: 100%;
+	text-align: center;
+}
+
 .File .Icon .NetworkDirectory
 {
 }
