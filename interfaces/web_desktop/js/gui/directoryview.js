@@ -3279,6 +3279,10 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	{
 		iconInner.classList.add( fileInfo.IconLabel );
 	}
+	if( fileInfo.SharedFile )
+	{
+		iconInner.classList.add( 'FileShared' );
+	}
 	
 	// Check for thumbs
 	if( fileInfo.directoryview && ( fileInfo.directoryview.listMode == 'iconview' || fileInfo.directoryview.listMode == 'imageview' ) )

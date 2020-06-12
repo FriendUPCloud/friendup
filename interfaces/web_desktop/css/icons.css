@@ -581,6 +581,26 @@ html .File.Tiny, html .File.Tiny .Icon, html .File.Tiny .Icon > div
 	color: black;
 }
 
+.File .Icon > .Shared.FileShared:before
+{
+	top: 25px;
+}
+
+.File .Icon > .FileShared:before
+{
+	display: block;
+	font-family: fontawesome;
+	font-size: 0.9em;
+	content: '\f1e0';
+	position: absolute;
+	right: 0;
+	top: 0;
+	background: rgba(255,255,255,0.9);
+	border-radius: 100%;
+	padding: 4px 4px;
+	color: black;
+}
+
 .File .Icon .TypeJPG, .File .Icon .TypeJPEG, .File .Icon .TypePNG, 
 .File .Icon .TypeGIF
 {

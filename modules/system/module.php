@@ -827,6 +827,9 @@ if( isset( $args->command ) )
 		case 'setfileshareinfo':
 			require( 'modules/system/include/setfileshareinfo.php' );
 			break;
+		case 'checksharedpaths':
+			require( 'modules/system/include/checksharedpaths.php' );
+			break;
 		// Get shared file members
 		case 'getfileshareinfo':
 			require( 'modules/system/include/getfileshareinfo.php' );
