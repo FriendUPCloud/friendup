@@ -3282,13 +3282,10 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	
 	let vol = fileInfo.Path.split( ':' )[0];
 	
+	// Indicate that this file has been shared
 	if( fileInfo.SharedFile || ( vol == 'Shared' && fileInfo.Owner == Workspace.userId ) )
 	{
 		iconInner.classList.add( 'FileShared' );
-	}
-	else
-	{
-		console.log( fileInfo );
 	}
 	
 	// Check for thumbs
