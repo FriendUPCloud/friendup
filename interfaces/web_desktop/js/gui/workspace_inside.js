@@ -5082,9 +5082,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			icon.Filesize = Friend.Utilities.humanFileSize( icon.Filesize );
 			
-
+			let shareFile = 'iconinfo.html';
+			if( icon.Path.indexOf( 'Shared:' ) == 0 )
+				shareFile = 'iconinfo_noshare.html';
+			
 			// Load template
-			var filt = ( icon.Type == 'Door' ? 'iconinfo_volume.html' : 'iconinfo.html' );
+			var filt = ( icon.Type == 'Door' ? 'iconinfo_volume.html' : shareFile );
 			if( icon.Path && icon.Path.split( ':' )[0] == 'System' )
 				filt = 'iconinfo_system.html';
 				

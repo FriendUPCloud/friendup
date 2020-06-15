@@ -497,6 +497,10 @@ if( !class_exists( 'SharedDrive' ) )
 				// Stat everything
 				foreach( $out as $k=>$file )
 				{
+					// If we're in other than directory mode, skip
+					// files we do not want
+					if( ( $delete || $read || $write || $getinfo ) && $pth != $file->Filename ) continue;
+					
 					if( $file->Type == 'File' )
 					{
 						$vol = explode( ':', $file->ExternPath );
