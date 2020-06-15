@@ -3279,42 +3279,50 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	{
 		iconInner.classList.add( fileInfo.IconLabel );
 	}
-	if( fileInfo.SharedFile )
+	
+	let vol = fileInfo.Path.split( ':' )[0];
+	
+	if( fileInfo.SharedFile || ( vol == 'Shared' && fileInfo.Owner == Workspace.userId ) )
 	{
 		iconInner.classList.add( 'FileShared' );
+	}
+	else
+	{
+		console.log( fileInfo );
 	}
 	
 	// Check for thumbs
 	if( fileInfo.directoryview && ( fileInfo.directoryview.listMode == 'iconview' || fileInfo.directoryview.listMode == 'imageview' ) )
 	{
-		switch( iconInner.className )
+		if( 
+			iconInner.classList.contains( 'TypeJPG' ) || 
+			iconInner.classList.contains( 'TypeJPEG' ) || 
+			iconInner.classList.contains( 'TypePNG' ) || 
+			iconInner.classList.contains( 'TypeGIF' ) 
+		)
 		{
-			case 'TypeJPG':
-			case 'TypeJPEG':
-			case 'TypePNG':
-			case 'TypeGIF':
-				let r = CryptoJS.SHA1( fileInfo.DateModified ).toString();
-				
-				let w = fileInfo.directoryview.listMode == 'imageview' ? 240 : 56;
-				let h = fileInfo.directoryview.listMode == 'imageview' ? 140 : 48;
-				let ur = '/system.library/module/?module=system&command=thumbnail&width=' + w + '&height=' + h + '&sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '&date=' + r;
-				
-				// Get from cache
-				let tmp = false;
-				if( tmp = this.getCache( ur, fileInfo.directoryview, fileInfo.DateModified ) )
-				{
-					ur = tmp;
-				}
-				
-				iconInner.style.backgroundImage = 'url(\'' + ur + '\')';
-				iconInner.className = 'Thumbnail';
-				
-				// Put in cache
-				if( !tmp )
-				{
-					this.setCache( ur, fileInfo.directoryview, fileInfo.DateModified );
-				}
-				break;
+			
+			let r = CryptoJS.SHA1( fileInfo.DateModified ).toString();
+			
+			let w = fileInfo.directoryview.listMode == 'imageview' ? 240 : 56;
+			let h = fileInfo.directoryview.listMode == 'imageview' ? 140 : 48;
+			let ur = '/system.library/module/?module=system&command=thumbnail&width=' + w + '&height=' + h + '&sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '&date=' + r;
+			
+			// Get from cache
+			let tmp = false;
+			if( tmp = this.getCache( ur, fileInfo.directoryview, fileInfo.DateModified ) )
+			{
+				ur = tmp;
+			}
+			
+			iconInner.style.backgroundImage = 'url(\'' + ur + '\')';
+			iconInner.classList.add( 'Thumbnail' );
+			
+			// Put in cache
+			if( !tmp )
+			{
+				this.setCache( ur, fileInfo.directoryview, fileInfo.DateModified );
+			}
 		}
 	}
 	
@@ -5361,6 +5369,9 @@ function GetIconClassByExtension( extension, fileInfo )
 			break;
 		case 'svg':
 			iconInner.className = 'TypeSVG';
+			break;
+		case 'drawio':
+			iconInner.className = 'TypeDRAWIO';
 			break;
 		case 'eps':
 			iconInner.className = 'TypeEPS';

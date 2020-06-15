@@ -570,7 +570,7 @@ html .File.Tiny, html .File.Tiny .Icon, html .File.Tiny .Icon > div
 {
 	display: block;
 	font-family: fontawesome;
-	font-size: 0.9em;
+	font-size: 0.7em;
 	content: '\f0c1';
 	position: absolute;
 	right: 0;
@@ -583,14 +583,14 @@ html .File.Tiny, html .File.Tiny .Icon, html .File.Tiny .Icon > div
 
 .File .Icon > .Shared.FileShared:before
 {
-	top: 25px;
+	top: 20px;
 }
 
 .File .Icon > .FileShared:before
 {
 	display: block;
 	font-family: fontawesome;
-	font-size: 0.9em;
+	font-size: 0.7em;
 	content: '\f1e0';
 	position: absolute;
 	right: 0;

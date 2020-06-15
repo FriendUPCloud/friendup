@@ -142,6 +142,7 @@ if( !class_exists( 'SharedDrive' ) )
 					}
 				}
 				
+				// We are looking in a sub-path
 				if( is_array( $path ) && count( $path ) > 1 && trim( $path[ 1 ] ) )
 				{
 					// No need for trailing
@@ -149,8 +150,9 @@ if( !class_exists( 'SharedDrive' ) )
 						$path[ 1 ] = substr( $path[ 1 ], 0, strlen( $path[ 1 ] ) - 1 );
 					
 					$out = [];
+					$rows = $own = $groupShare = false;
 					
-					// Get data shared by others
+					// Get data shared by others, and self
 					if( !( $rows = $SqlDatabase->fetchObjects( '
 						SELECT s.ID, s.Data, s.OwnerUserID, u.SessionID FROM FShared s, FUser u 
 						WHERE 
@@ -162,10 +164,10 @@ if( !class_exists( 'SharedDrive' ) )
 							u.ID = s.OwnerUserID
 					' ) ) )
 					{
-						// Shared through groups
+						// Shared through groups by others or self
 						$rows = $SqlDatabase->fetchObjects( '
 							SELECT 
-								s.ID, s.Data, s.OwnerUserID, u.SessionID 
+								s.ID, s.Data, s.OwnerUserID, u.SessionID
 							FROM 
 								FShared s, FUserGroup g, FUserToGroup ug, FUser u
 							WHERE 
@@ -178,6 +180,50 @@ if( !class_exists( 'SharedDrive' ) )
 								u.SessionID != "" AND 
 								u.ID = s.OwnerUserID
 						' );
+						// Add own files shared with group
+						if( $own = $SqlDatabase->fetchObjects( '
+							SELECT 
+								s.ID, s.Data, s.OwnerUserID, u.SessionID
+							FROM 
+								FShared s, FUserGroup g, FUserToGroup ug, FUser u
+							WHERE 
+								g.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $path[ 1 ] ) . '\' AND
+								s.OwnerUserID = \'' . intval( $User->ID, 10 ) . '\' AND
+								s.SharedType = \'group\' AND 
+								s.SharedID = g.ID AND 
+								ug.UserGroupID = g.ID AND
+								ug.UserID = u.ID AND
+								u.SessionID != "" AND 
+								u.ID = s.OwnerUserID
+						' ) )
+						{
+							if( $rows )
+							{
+								$rows = array_merge( $rows, $own );
+							}
+							else $rows = $own;
+						}
+						if( $rows )
+							$groupShare = true;
+					}
+					// Add own files shared with other user (we're not in group)
+					if( !$groupShare && $own = $SqlDatabase->fetchObjects( '
+						SELECT s.ID, s.Data, s.OwnerUserID, u.SessionID FROM FShared s, FUser u, FUser u2
+						WHERE 
+							u2.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $path[ 1 ] ) . '\' AND
+							s.SharedID = u2.ID AND
+							s.SharedID != \'' . intval( $User->ID, 10 ) . '\' AND 
+							s.SharedType = \'user\' AND 
+							u.SessionID != "" AND 
+							s.OwnerUserID = \'' . intval( $User->ID, 10 ) . '\' AND
+							u.ID = s.OwnerUserID
+					' ) )
+					{
+						if( $rows )
+						{
+							$rows = array_merge( $rows, $own );
+						}
+						else $rows = $own;
 					}
 					
 					// Get data shared by others
@@ -214,6 +260,10 @@ if( !class_exists( 'SharedDrive' ) )
 								$filename = $filename[ count( $filename ) - 1 ];
 							}
 							
+							// If we're in other than directory mode, skip
+							// files we do not want
+							if( ( $delete || $read || $write || $getinfo ) && $pth != $filename ) continue;
+							
 							$s = new stdClass();
 							$s->ID = $row->ID;
 							$s->Path = $path[ 1 ] . '/' . $filename;
@@ -224,18 +274,33 @@ if( !class_exists( 'SharedDrive' ) )
 							$s->Shared = '';
 							$s->SharedLink = '';
 							$s->Filesize = 0;
+							$s->Owner = $row->OwnerUserID;
 							
-							$vol = explode( ':', $row->Data );
+							// Own files and others' files have different paths
+							if( $s->Owner == $User->ID )
+							{
+								$s->ExternPath = $vol[0] . ':' . $filename;
+								$s->Path = $filename;
+								$subPath = $filename;
+							}
+							// Other user's file
+							else
+							{
+								$s->ExternPath = $row->Data;
+								$vol = explode( ':', $row->Data );
+								$subPath = $vol[1];
+							}							
 							
 							$url = ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/';
 							$res = FriendCall( $url . 'file/info?sessionid=' . $row->SessionID, false,
 								array( 
 									'devname'   => $vol[0],
-									'path'      => $row->Data
+									'path'      => $p
 								)
 							);
 							$code = explode( '<!--separate-->', $res );
 							
+							$Logger->log( 'Result: ' . $res );
 							if( $code[0] == 'ok' )
 							{
 								
@@ -251,11 +316,14 @@ if( !class_exists( 'SharedDrive' ) )
 									$fInfo->Filename = $s->Filename;
 									$fInfo->DateCreated = $info->DateCreated;
 									$fInfo->DateModified = $info->DateModified;
+									$fInfo->Owner = $s->OwnerUserID;
+									$fInfo->ExternPath = $s->ExternPath;
 									die( 'ok<!--separate-->' . json_encode( $fInfo ) );
 								}
 								// Read mode intercepts here
 								else if( isset( $read ) && $pth == $s->Filename ) 
 								{
+									$Logger->log( 'Found file: ' . $s->Filename );
 									// Don't require verification on localhost
 									$context = stream_context_create(
 										array(
@@ -271,7 +339,7 @@ if( !class_exists( 'SharedDrive' ) )
 									set_time_limit( 0 );
 									ob_end_clean();
 									
-									if( $fp = fopen( $url . 'file/read?sessionid=' . $row->SessionID . '&path=' . urlencode( $vol[0] . ':' . $p ) . '&mode=rb', 'rb', false, $context ) )
+									if( $fp = fopen( $url . 'file/read?sessionid=' . $row->SessionID . '&path=' . urlencode( $s->ExternPath ) . '&mode=rb', 'rb', false, $context ) )
 									{
 										fpassthru( $fp );
 										fclose( $fp );
@@ -281,7 +349,6 @@ if( !class_exists( 'SharedDrive' ) )
 								else if( isset( $write ) && $pth == $s->Filename )
 								{
 									$s->ExternSessionID = $row->SessionID;
-									$s->ExternPath = $vol[0] . ':' . $p;
 
 									if( $info = $this->doWrite( $s, $args->tmpfile, $args->data ) )
 									{
@@ -308,6 +375,7 @@ if( !class_exists( 'SharedDrive' ) )
 					}
 					die( 'ok<!--separate-->[]' );
 				}
+				// This is the root path
 				else
 				{
 					$out = [];
@@ -492,7 +560,7 @@ if( !class_exists( 'SharedDrive' ) )
 							$out[$k]->DateCreated = $info->DateCreated;
 							$out[$k]->DateModified = $info->DateModified;
 						}
-						$out[$k]->Owner = null;
+						$out[$k]->Owner = $User->ID;
 						$out[$k]->ExternSession = null;
 					}
 				}
