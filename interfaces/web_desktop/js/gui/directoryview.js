@@ -3280,7 +3280,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		iconInner.classList.add( fileInfo.IconLabel );
 	}
 	
-	let vol = fileInfo.Path.split( ':' )[0];
+	let vol = fileInfo.Volume ? fileInfo.Volume : ( fileInfo.Path ? fileInfo.Path.split( ':' )[0] : null );
 	
 	// Indicate that this file has been shared
 	if( fileInfo.SharedFile || ( vol == 'Shared' && fileInfo.Owner == Workspace.userId ) )

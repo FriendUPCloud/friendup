@@ -238,7 +238,7 @@ DirectoryView.prototype.HideShareDialog = function()
 DirectoryView.prototype.doCopyOnElement = function( eles, e )
 {
 	// OOOH! Shared drive action!
-	if( this.content && this.content.fileInfo && this.content.fileInfo.Driver == 'SharedDrive' )
+	if( this.content && this.content.fileInfo && this.content.fileInfo.Path.indexOf( 'Shared:' ) == 0 )
 	{
 		var s = this;
 		if( !this.ShowShareDialog )
