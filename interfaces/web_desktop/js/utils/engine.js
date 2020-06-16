@@ -2722,9 +2722,16 @@ function GetDeviceId()
 	//application token is needed for iOS push notifications
 	if( typeof( window.friendApp ) != 'undefined' )
 	{
-		if( typeof( window.friendApp.appToken ) != 'undefined' )
+		if( typeof( window.friendApp.get_app_token ) != 'undefined' )
 		{
-			r = id + '_ios_app_' + friendApp.appToken;
+			if( platform === 'iOS' )
+			{		
+				r = id + '_ios_app_' + friendApp.get_app_token();
+			}
+			else
+			{
+				r = id + '_android_app_' + friendApp.get_app_token();
+			}
 		}
 	}
 	// Store the cookie for later use
