@@ -521,7 +521,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		FULONG parentID = 0;
 		FULONG groupID = 0;
 		
-		DEBUG( "[UMWebRequest] Create user!!\n" );
+		DEBUG( "[UMGWebRequest] Create group!!\n" );
 		
 		HashmapElement *el = NULL;
 		
@@ -586,7 +586,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				// get information from DB if group already exist
 				UserGroup *ug = NULL;
 				UserGroup *fg = UGMGetGroupByName( l->sl_UGM, groupname );
-				DEBUG("GroupCreate: pointer to group from memory: %p\n", fg );
+				DEBUG("[UMWebRequest] GroupCreate: pointer to group from memory: %p\n", fg );
 				
 				if( fg != NULL )	// group already exist, there is no need to create double
 				{
@@ -616,29 +616,18 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				}
 				else	// group do not exist in memory
 				{
-					DEBUG("GroupCreate: group do not exist in memory\n");
+					DEBUG("[UMWebRequest] GroupCreate: group do not exist in memory\n");
 					FBOOL ugFromDatabase = FALSE;
 
-					SQLLibrary *sqlLib = l->LibrarySQLGet( l );
-					if( sqlLib != NULL )
+					ug = UGMGetGroupByNameDB( l->sl_UGM, groupname );
+					if( ug != NULL )
 					{
-						char where[ 512 ];
-						int size = snprintf( where, sizeof(where), "Name='%s'", groupname );
-						int entries;
-					
-						ug = sqlLib->Load( sqlLib, UserGroupDesc, where, &entries );
-						if( ug != NULL )
-						{
-							ug->ug_Status = USER_GROUP_STATUS_ACTIVE;
-							UGMAddGroup( l->sl_UGM, ug );
-							ugFromDatabase = TRUE;
-						}
-						l->LibrarySQLDrop( l, sqlLib );
+						ugFromDatabase = TRUE;
 					}
 					
 					if( ug == NULL )
 					{
-						DEBUG("GroupCreate: new UserGroup will be created\n");
+						DEBUG("[UMWebRequest] GroupCreate: new UserGroup will be created\n");
 						if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
 						{
 							ug = UserGroupNew( 0, groupname, 0, type, description );
@@ -655,18 +644,23 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						ug->ug_ParentID = parentID;
 						int error = UGMAddGroup( l->sl_UGM, ug );
 						
+						DEBUG("[UMWebRequest] GroupCreate: addgroup error: %d\n", error  );
+						
 						if( error == 0 )
 						{
 							SQLLibrary *sqlLib = l->LibrarySQLGet( l );
 							int val = 0;
 							if( sqlLib != NULL )
 							{
+								DEBUG("[UMWebRequest] GroupCreate: sqllib is available\n");
 								if( ugFromDatabase == TRUE )
 								{
+									DEBUG("[UMWebRequest] GroupCreate: group will be updated in DB\n");
 									val = sqlLib->Update( sqlLib, UserGroupDesc, ug );
 								}
 								else
 								{
+									DEBUG("[UMWebRequest] GroupCreate: group will be stored in DB\n");
 									val = sqlLib->Save( sqlLib, UserGroupDesc, ug );
 								}
 								
@@ -676,15 +670,13 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							
 							addUsers = TRUE;
 
-							{
-								char msg[ 512 ];
-								snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\",\"parentid\":%lu}", ug->ug_ID, ug->ug_Name, ug->ug_ParentID );
-								//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
-								NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "create", msg );
-							}
+							char msg[ 512 ];
+							snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\",\"parentid\":%lu}", ug->ug_ID, ug->ug_Name, ug->ug_ParentID );
+							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
+							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "create", msg );
 					
 							char buffer[ 256 ];
-							snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"sucess\",\"id\":%lu }", groupID );
+							snprintf( buffer, sizeof(buffer), "ok<!--separate-->{\"response\":\"success\",\"id\":%lu }", groupID );
 							HttpAddTextContent( response, buffer );
 						}
 						else

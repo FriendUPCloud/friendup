@@ -2740,6 +2740,15 @@ body:not([tablet]):not([mobile]) .Desklet .Launcher.Startmenu:hover
 	filter: drop-shadow(0 0 8px rgba(255,255,200,1) );
 }
 
+.DockSubMenu.MaskedOverflow
+{
+	-webkit-mask-image: linear-gradient(180deg, black 0%, black calc(100% - 25px), rgba(0,0,0,0.9) calc(100% - 0px), transparent 100%);
+	-moz-mask-image: linear-gradient(180deg, black 0%, black calc(100% - 25px), rgba(0,0,0,0.9) calc(100% - 0px), transparent 100%);
+	mask-image: linear-gradient(180deg, black 0%, black calc(100% - 25px), rgba(0,0,0,0.9) calc(100% - 0px), transparent 100%);
+	overflow: auto;
+}
+
+
 /* running apps */
 .Desklet[position=bottom_left] .Launcher.Running:after,
 .Desklet[position=bottom_center] .Launcher.Running:after,

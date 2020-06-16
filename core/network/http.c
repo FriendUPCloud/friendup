@@ -1536,8 +1536,11 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 						if( dataLength <= 0 )
 						{
 							DEBUG("dataLength <= 0\n" );
-							FFree( http->http_Content );
-							http->http_Content = NULL;
+							if( http->http_Content != NULL )
+							{
+								FFree( http->http_Content );
+								http->http_Content = NULL;
+							}
 							http->http_SizeOfContent = 0;
 							http->http_ExpectBody = FALSE;
 							return result != 400;
@@ -1545,8 +1548,11 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 						else if( dataLength != size && ( ( dataLength - 4 ) != size ) )
 						{
 							DEBUG("dataLength != size  %ld - %ld \n", dataLength, size );
-							FFree( http->http_Content );
-							http->http_Content = NULL;
+							if( http->http_Content != NULL )
+							{
+								FFree( http->http_Content );
+								http->http_Content = NULL;
+							}
 							http->http_SizeOfContent = 0;
 							http->http_ExpectBody = FALSE;
 							return result != 400;

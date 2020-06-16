@@ -657,6 +657,7 @@ if( isset( $args->command ) )
 			die( 'fail<!--separate-->{"response":"assign failed"}'  );
 			break;
 		case 'doorsupport':
+		
 			if( $dir = opendir( 'devices/DOSDrivers' ) )
 			{
 				$str = '';

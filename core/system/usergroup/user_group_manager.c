@@ -46,7 +46,11 @@ UserGroupManager *UGMNew( void *sb )
 		if( sqlLib != NULL )
 		{
 			int entries;
-			sm->ugm_UserGroups = sqlLib->Load( sqlLib, UserGroupDesc, NULL, &entries );
+			char where[ 256 ];
+			
+			strcpy( where, " Type in( 'Workgroup','Level' )" );
+			
+			sm->ugm_UserGroups = sqlLib->Load( sqlLib, UserGroupDesc, where, &entries );
 			lsb->LibrarySQLDrop( lsb, sqlLib );
 		}
 		
@@ -149,6 +153,36 @@ UserGroup *UGMGetGroupByName( UserGroupManager *ugm, const char *name )
 }
 
 /**
+ * Get UserGroup by Name from DB
+ *
+ * @param ugm pointer to UserManager structure
+ * @param name name of the group
+ * @return UserGroup structure if it exist, otherwise NULL
+ */
+
+UserGroup *UGMGetGroupByNameDB( UserGroupManager *ugm, const char *name )
+{
+	SystemBase *l = (SystemBase *)ugm->ugm_SB;
+	UserGroup *ug = NULL;
+	SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+	if( sqlLib != NULL )
+	{
+		// try to find if group is in DB, skip templates and roles
+		char where[ 512 ];
+		int size = snprintf( where, sizeof(where), "Name='%s' AND Type in('Workgroup','Level')", name );
+		int entries;
+	
+		ug = sqlLib->Load( sqlLib, UserGroupDesc, where, &entries );
+		if( ug != NULL )
+		{
+			ug->ug_Status = USER_GROUP_STATUS_ACTIVE;
+		}
+		l->LibrarySQLDrop( l, sqlLib );
+	}
+	return ug;
+}
+
+/**
  * Add UserGroup to list of groups
  *
  * @param ugm pointer to UserManager structure
@@ -163,6 +197,14 @@ int UGMAddGroup( UserGroupManager *ugm, UserGroup *ug )
 		FERROR("Cannot add NULL to group!\n");
 		return 1;
 	}
+	
+	UserGroup *locg = UGMGetGroupByName( ugm, ug->ug_Name );
+	if( locg != NULL )
+	{
+		FERROR("Cannot add same group to list: %s\n", ug->ug_Name );
+		return 2;
+	}
+	
 	if( FRIEND_MUTEX_LOCK( &ugm->ugm_Mutex ) == 0 )
 	{
 		ug->node.mln_Succ = (MinNode *) ugm->ugm_UserGroups;
@@ -254,7 +296,7 @@ int UGMRemoveGroup( UserGroupManager *ugm, UserGroup *ug )
 						DEBUG("Its not root, prev %s current %s\n", prevug->ug_Name, actug->ug_Name );
 						prevug->node.mln_Succ = actug->node.mln_Succ;
 					}
-					UserGroupDelete( l, actug );
+
 					DEBUG("Data removed\n");
 					break;
 				}
@@ -263,6 +305,11 @@ int UGMRemoveGroup( UserGroupManager *ugm, UserGroup *ug )
 			}
 			DEBUG("Unlock\n");
 			FRIEND_MUTEX_UNLOCK( &ugm->ugm_Mutex );
+			
+			if( actug != NULL )
+			{
+				UserGroupDelete( l, actug );
+			}
 		}
 	}
 	return 0;
@@ -548,9 +595,9 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *ugm, User *usr, char *leve
 		else
 		{
 			// set proper user level
-			if( FRIEND_MUTEX_LOCK( &(sb->sl_UGM->ugm_Mutex) ) == 0 )
+			if( FRIEND_MUTEX_LOCK( &(ugm->ugm_Mutex) ) == 0 )
 			{
-				UserGroup *gr = sb->sl_UGM->ugm_UserGroups;
+				UserGroup *gr = ugm->ugm_UserGroups;
 				while( gr != NULL )
 				{
 					if( strcmp( gr->ug_Name, level ) == 0 )
@@ -1065,6 +1112,7 @@ void UGMGetGroups( UserGroupManager *um, FULONG uid, BufString *bs, const char *
 				}
 			}
 			
+			DEBUG("[UGMGetGroups] name: %s type: %s\n", lg->ug_Name, lg->ug_Type );
 			if( type != NULL )
 			{
 				if( strcmp( type, lg->ug_Type ) != 0 )

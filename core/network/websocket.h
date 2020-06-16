@@ -58,8 +58,6 @@ typedef struct WebSocket
 	int									ws_DebugLevel;
 	int									ws_OldTime;
 	int									ws_Opts;
-	
-	unsigned char						ws_Buf[LWS_SEND_BUFFER_PRE_PADDING + 1024 + LWS_SEND_BUFFER_POST_PADDING];
 						  
 	// connection epoll
 	struct lws_pollfd					ws_Pollfds[ MAX_POLL_ELEMENTS ];
