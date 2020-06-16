@@ -38,7 +38,8 @@ function friend_json_decode( $string )
 function jsUrlEncode( $in )
 { 
 	$out = '';
-	for( $i = 0; $i < strlen( $in ); $i++ )
+	$len = strlen( $in );
+	for( $i = 0; $i < $len; $i++ )
 	{
 		$hex = dechex( ord( $in[ $i ] ) );
 		if( $hex == '' ) $out = $out . urlencode( $in[ $i ] );

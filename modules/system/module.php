@@ -221,17 +221,6 @@ if( isset( $args->command ) )
 {
 	switch( $args->command )
 	{
-		/*case 'copytest':
-			include_once( 'php/classes/door.php' );
-			$d = new Door( 'Home:' );
-			$t = new Door( 'Documents:' );
-			if( $f = $d->getFile( 'Home:FriendWorkspace.odt' ) )
-			{
-				$t->putFile( 'Documents:Telenor/FriendWorkspace.odt', $f );
-				die( 'ok<!--separate-->' );
-			}
-			die( 'fail<!--separate-->{"response":"failed"}'  );
-			break;*/			
 		case 'help':
 			$commands = array(
 				'ping', 'theme', 'systempath', 'software', 'save_external_file', 'proxycheck', 'proxyget',
