@@ -147,6 +147,7 @@ DirectoryView = function( winobj, extra )
 		if( winobj.fileInfo )
 		{
 			let path = winobj.fileInfo.Path;
+			
 			if( !Workspace.diskNotificationList[ path ] )
 			{
 				Workspace.diskNotificationList[ path ] = {
@@ -3692,6 +3693,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 
 				// Update on notifications
 				let ppath = obj.fileInfo.Path;
+				
 				if( !Workspace.diskNotificationList[ ppath ] )
 				{
 					Workspace.diskNotificationList[ ppath ] = {
@@ -3728,9 +3730,11 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 								Workspace.diskNotificationList[ ppath ] = false;
 							}
 							ff.execute( 'file/notificationremove' );
+							console.log( 'Notification remove: ' + ppath );
 						} );
 					}
 					f.execute( 'file/notificationstart' );
+					console.log( 'Notification start: ' + ppath );
 				}
 
 				// Open unique window!

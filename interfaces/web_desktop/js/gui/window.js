@@ -5917,36 +5917,44 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 		let eles = v._window.getElementsByTagName( 'button' );
 
 		// FL-6/06/2018: correction so that it does not take the relative position of OK/Cancel in the box 
-		for ( var e = 0; e < eles.length; e++ )
+		// US-792 - 2020: Correction to fix sending the same delete request multiple times
+		for( let el = 0; el < eles.length; el++ )
 		{
-			if ( eles[ e ].id == 'ok' )
+			( function( itm )
 			{
-				eles[ e ].onclick = function()
+				if( itm.id == 'ok' )
 				{
-					v.close();
-					okcallback( true );
-				}
-				eles[ e ].focus();
-			}
-			else if ( eles[ e ].id == 'cancel' )
-			{
-				eles[ e ].onclick = function()
-				{
-					v.close();
-					okcallback( false );
-				}
-			}
-			else
-			{
-				eles[ e ].onclick = function(e)
-				{
-					if(e && e.target && e.target.hasAttribute('data-returnvalue') )
-						okcallback( e.target.getAttribute('data-returnvalue') );
-					else
-						okcallback( e );
+					itm.onclick = function()
+					{
 						v.close();
+						okcallback( true );
+					}
+					itm.focus();
 				}
-			}
+				else if( itm.id == 'cancel' )
+				{
+					itm.onclick = function()
+					{
+						v.close();
+						okcallback( false );
+					}
+				}
+				else
+				{
+					itm.onclick = function( e )
+					{
+						if( e && e.target && e.target.hasAttribute( 'data-returnvalue' ) )
+						{
+							okcallback( e.target.getAttribute( 'data-returnvalue' ) );
+						}
+						else
+						{
+							okcallback( e );
+						}
+						v.close();
+					}
+				}
+			} )( eles[ el ] );
 		}
 		if( !window.isMobile )
 		{	

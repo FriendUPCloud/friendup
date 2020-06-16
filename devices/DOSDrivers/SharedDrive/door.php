@@ -300,7 +300,6 @@ if( !class_exists( 'SharedDrive' ) )
 							);
 							$code = explode( '<!--separate-->', $res );
 							
-							$Logger->log( 'Result: ' . $res );
 							if( $code[0] == 'ok' )
 							{
 								
@@ -323,7 +322,6 @@ if( !class_exists( 'SharedDrive' ) )
 								// Read mode intercepts here
 								else if( isset( $read ) && $pth == $s->Filename ) 
 								{
-									$Logger->log( 'Found file: ' . $s->Filename );
 									// Don't require verification on localhost
 									$context = stream_context_create(
 										array(
