@@ -2712,9 +2712,10 @@ function GetDeviceId()
 	if( !type ) type = ua.indexOf( 'phone' ) > 0 ? 'iphone' : false;
 	if( !type ) type = 'other';
 	if( ua.indexOf( 'ios' ) > 0 ) platform = 'iOS';
-	if( ua.indexOf( 'mac' ) > 0 ) platform = 'Apple';
-	if( ua.indexOf( 'windows' ) > 0 ) platform = 'Microsoft';
-	if( ua.indexOf( 'linux' ) > 0 ) platform = 'Linux';
+	else if( ua.indexOf( 'iPhone' ) > 0 ) platform = 'iOS';
+	else if( ua.indexOf( 'mac' ) > 0 ) platform = 'Apple';
+	else if( ua.indexOf( 'windows' ) > 0 ) platform = 'Microsoft';
+	else if( ua.indexOf( 'linux' ) > 0 ) platform = 'Linux';
 	if( !platform ) platform = 'Generic';
 	
 	var r = id + '_' + type + '_' + platform + '_' + __randDevId;
