@@ -619,22 +619,10 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 					DEBUG("[UMWebRequest] GroupCreate: group do not exist in memory\n");
 					FBOOL ugFromDatabase = FALSE;
 
-					SQLLibrary *sqlLib = l->LibrarySQLGet( l );
-					if( sqlLib != NULL )
+					ug = UGMGetGroupByNameDB( l->sl_UGM, groupname );
+					if( ug != NULL )
 					{
-						// try to find if group is in DB, skip templates and roles
-						char where[ 512 ];
-						int size = snprintf( where, sizeof(where), "Name='%s' AND Type in('Workgroup','Level')", groupname );
-						int entries;
-					
-						ug = sqlLib->Load( sqlLib, UserGroupDesc, where, &entries );
-						if( ug != NULL )
-						{
-							ug->ug_Status = USER_GROUP_STATUS_ACTIVE;
-							//UGMAddGroup( l->sl_UGM, ug );
-							ugFromDatabase = TRUE;
-						}
-						l->LibrarySQLDrop( l, sqlLib );
+						ugFromDatabase = TRUE;
 					}
 					
 					if( ug == NULL )
@@ -688,7 +676,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "create", msg );
 					
 							char buffer[ 256 ];
-							snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"sucess\",\"id\":%lu }", groupID );
+							snprintf( buffer, sizeof(buffer), "ok<!--separate-->{\"response\":\"success\",\"id\":%lu }", groupID );
 							HttpAddTextContent( response, buffer );
 						}
 						else

@@ -333,7 +333,7 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 		ws->ws_Info.timeout_secs_ah_idle = 90;
 		if( ws->ws_UseSSL == TRUE ) 
 		{
-			ws->ws_Info.options |= LWS_SERVER_OPTION_REDIRECT_HTTP_TO_HTTPS|LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
+			ws->ws_Info.options |= LWS_SERVER_OPTION_REDIRECT_HTTP_TO_HTTPS;
 		}
 		
 		ws->ws_Info.user = ws;
@@ -371,9 +371,6 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 		}
 		
 		INFO("[WS] NEW Websockets ptr %p context %p\n", ws, ws->ws_Context);
-
-		ws->ws_Buf[ LWS_SEND_BUFFER_PRE_PADDING ] = 'x';
-			
 	}
 	else
 	{
