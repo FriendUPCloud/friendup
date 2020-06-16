@@ -242,17 +242,41 @@ DirectoryView.prototype.HideShareDialog = function()
 // Dropping an icon on a window or an icon!
 DirectoryView.prototype.doCopyOnElement = function( eles, e )
 {
+	var dview = this; // The view in question
+	
 	// OOOH! Shared drive action!
 	if( this.content && this.content.fileInfo && this.content.fileInfo.Path.indexOf( 'Shared:' ) == 0 )
 	{
-		var s = this;
-		if( !this.ShowShareDialog )
-			s = s.content.directoryview;
-		s.ShowShareDialog( eles );
+		// Subfolder
+		let finf = this.content.fileInfo;
+		if( finf.IconLabel && ( finf.IconLabel == 'UserShare' || finf.IconLabel == 'GroupShare' ) )
+		{
+			let mode = finf.IconLabel == 'UserShare' ? 'user' : 'group';
+			let sharingLen = eles.length;
+			for( let h = 0; h < eles.length; h++ )
+			{
+				let sh = new Module( 'system' );
+				sh.onExecuted = function( she, shd )
+				{
+					sharingLen--;
+					if( sharingLen == 0 )
+					{
+						dview.content.refresh();
+					}
+				}
+				sh.execute( 'setfileshareinfo', { path: eles[h].fileInfo.Path, share: finf.Path, type: mode } );
+			}
+		}
+		// Directly on the shared drive
+		else
+		{
+			var s = this;
+			if( !this.ShowShareDialog )
+				s = s.content.directoryview;
+			s.ShowShareDialog( eles );
+		}
 		return;
 	}
-	
-	var dview = this; // The view in question
 	
 	var mode = 'view';
 	

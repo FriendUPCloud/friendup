@@ -3688,6 +3688,11 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 					Type: obj.fileInfo.Type,
 					Door: Workspace.getDoorByPath( path.join( ':' ) )
 				}
+				// May have meta information
+				if( obj.fileInfo.IconLabel )
+					fin.IconLabel = obj.fileInfo.IconLabel;
+				if( obj.fileInfo.MetaType )
+					fin.MetaType = obj.fileInfo.MetaType;
 				fin.Door.cancelId = dw.cancelId;
 				dw.addToHistory( fin );
 
