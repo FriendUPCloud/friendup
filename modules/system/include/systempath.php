@@ -110,8 +110,14 @@ if( isset( $args->args ) && substr( $args->args->path, 0, $len ) == 'System:Soft
 				foreach( $cats as $cat )
 				{
 					$cate = explode( '/', $cat );
+					
+					// We don't want to traverse deep into the system directory
+					if( count( $cate ) > 1 && $cate[0] == 'System' ) continue;
+					
 					foreach( $cate as $k=>$v )
+					{
 						$cate[$k] = ucfirst( $v );
+					}
 				
 					$o = new stdClass();
 					$o->Filename = $cate[count($cate)-1];
