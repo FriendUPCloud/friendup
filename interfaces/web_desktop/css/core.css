@@ -533,6 +533,16 @@ input.Required
 	cursor: wait;
 }
 
+div.Ghosted, .Ghosted *
+{
+	pointer-events: none !important;
+}
+
+.Ghosted *
+{
+	opacity: 0.4;
+}
+
 .Box, .BoxBlue
 {
 	border: $BorderBox;

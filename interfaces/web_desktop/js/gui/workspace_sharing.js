@@ -24,6 +24,7 @@ Workspace.viewSharingOptions = function( path )
 		width: 640,
 		height: 380
 	} );
+	
 	let uniqueId = Math.round( Math.random() * 9999 ) + ( new Date() ).getTime();
 	this.sharingDialogs[ uniqueId ] = v;
 	v.uniqueId = uniqueId;

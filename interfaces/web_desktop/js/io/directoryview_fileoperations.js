@@ -27,6 +27,9 @@ DirectoryView.prototype.ShowShareDialog = function( elements, mode )
 		let d = null;
 		if( !this.shareDialog )
 		{
+			if( this.toolbar )
+				this.toolbar.classList.add( 'Ghosted', 'BackgroundDefault' );
+			
 			this.window.windowObject.toFront( { activate: false } );
 			this.shareDialog = d = document.createElement( 'div' );
 			d.className = 'ShareDialog BackgroundDefault';
@@ -221,6 +224,8 @@ DirectoryView.prototype.HideShareDialog = function()
 	let d = this;
 	if( d.shareDialog )
 	{
+		if( this.toolbar )
+			this.toolbar.classList.remove( 'Ghosted', 'BackgroundDefault' );
 		let v = d.shareDialog;
 		v.classList.remove( 'Showing' );
 		d.shareDialog = null;

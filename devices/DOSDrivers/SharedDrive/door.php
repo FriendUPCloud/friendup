@@ -154,20 +154,20 @@ if( !class_exists( 'SharedDrive' ) )
 					
 					// Get data shared by others, and self
 					if( !( $rows = $SqlDatabase->fetchObjects( '
-						SELECT s.ID, s.Data, s.OwnerUserID, u.SessionID FROM FShared s, FUser u 
+						SELECT s.ID, s.Data, s.OwnerUserID, u.ServerToken FROM FShared s, FUser u 
 						WHERE 
 							u.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $path[ 1 ] ) . '\' AND
 							s.OwnerUserID != \'' . intval( $User->ID, 10 ) . '\' AND
 							s.SharedType = \'user\' AND 
 							s.SharedID = \'' . intval( $User->ID, 10 ) . '\' AND 
-							u.SessionID != "" AND 
+							u.ServerToken != "" AND 
 							u.ID = s.OwnerUserID
 					' ) ) )
 					{
 						// Shared through groups by others or self
 						$rows = $SqlDatabase->fetchObjects( '
 							SELECT 
-								s.ID, s.Data, s.OwnerUserID, u.SessionID
+								s.ID, s.Data, s.OwnerUserID, u.ServerToken
 							FROM 
 								FShared s, FUserGroup g, FUserToGroup ug, FUser u
 							WHERE 
@@ -177,13 +177,13 @@ if( !class_exists( 'SharedDrive' ) )
 								s.SharedID = g.ID AND 
 								ug.UserGroupID = g.ID AND
 								ug.UserID = u.ID AND
-								u.SessionID != "" AND 
+								u.ServerToken != "" AND 
 								u.ID = s.OwnerUserID
 						' );
 						// Add own files shared with group
 						if( $own = $SqlDatabase->fetchObjects( '
 							SELECT 
-								s.ID, s.Data, s.OwnerUserID, u.SessionID
+								s.ID, s.Data, s.OwnerUserID, u.ServerToken
 							FROM 
 								FShared s, FUserGroup g, FUserToGroup ug, FUser u
 							WHERE 
@@ -193,7 +193,7 @@ if( !class_exists( 'SharedDrive' ) )
 								s.SharedID = g.ID AND 
 								ug.UserGroupID = g.ID AND
 								ug.UserID = u.ID AND
-								u.SessionID != "" AND 
+								u.ServerToken != "" AND 
 								u.ID = s.OwnerUserID
 						' ) )
 						{
@@ -208,13 +208,13 @@ if( !class_exists( 'SharedDrive' ) )
 					}
 					// Add own files shared with other user (we're not in group)
 					if( !$groupShare && $own = $SqlDatabase->fetchObjects( '
-						SELECT s.ID, s.Data, s.OwnerUserID, u.SessionID FROM FShared s, FUser u, FUser u2
+						SELECT s.ID, s.Data, s.OwnerUserID, u.ServerToken FROM FShared s, FUser u, FUser u2
 						WHERE 
 							u2.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $path[ 1 ] ) . '\' AND
 							s.SharedID = u2.ID AND
 							s.SharedID != \'' . intval( $User->ID, 10 ) . '\' AND 
 							s.SharedType = \'user\' AND 
-							u.SessionID != "" AND 
+							u.ServerToken != "" AND 
 							s.OwnerUserID = \'' . intval( $User->ID, 10 ) . '\' AND
 							u.ID = s.OwnerUserID
 					' ) )
@@ -292,7 +292,7 @@ if( !class_exists( 'SharedDrive' ) )
 							}							
 							
 							$url = ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/';
-							$res = FriendCall( $url . 'file/info?sessionid=' . $row->SessionID, false,
+							$res = FriendCall( $url . 'file/info?servertoken=' . $row->ServerToken, false,
 								array( 
 									'devname'   => $vol[0],
 									'path'      => $p
@@ -337,7 +337,7 @@ if( !class_exists( 'SharedDrive' ) )
 									set_time_limit( 0 );
 									ob_end_clean();
 									
-									if( $fp = fopen( $url . 'file/read?sessionid=' . $row->SessionID . '&path=' . urlencode( $s->ExternPath ) . '&mode=rb', 'rb', false, $context ) )
+									if( $fp = fopen( $url . 'file/read?servertoken=' . $row->ServerToken . '&path=' . urlencode( $s->ExternPath ) . '&mode=rb', 'rb', false, $context ) )
 									{
 										fpassthru( $fp );
 										fclose( $fp );
@@ -346,7 +346,7 @@ if( !class_exists( 'SharedDrive' ) )
 								}
 								else if( isset( $write ) && $pth == $s->Filename )
 								{
-									$s->ExternSessionID = $row->SessionID;
+									$s->ExternServerToken = $row->ServerToken;
 
 									if( $info = $this->doWrite( $s, $args->tmpfile, $args->data ) )
 									{
@@ -422,7 +422,7 @@ if( !class_exists( 'SharedDrive' ) )
 							$s->Filesize = 0;
 							$s->Owner = $User->ID;
 							$s->ExternPath = $row->Data;
-							$s->ExternSession = $User->SessionID;
+							$s->ExternServerToken = $User->ServerToken;
 							$out[] = $s;
 						}
 					}
@@ -457,7 +457,7 @@ if( !class_exists( 'SharedDrive' ) )
 								s.OwnerUserID != \'' . intval( $User->ID, 10 ) . '\' AND
 								s.SharedType = \'user\' AND
 								s.SharedID = \'' . intval( $User->ID, 10 ) . '\' AND
-								u.SessionID != ""';
+								u.ServerToken != ""';
 				
 					// Get folders by other users or groups
 					foreach( $queries as $k=>$q )
@@ -503,7 +503,7 @@ if( !class_exists( 'SharedDrive' ) )
 					{
 						$vol = explode( ':', $file->ExternPath );
 						$url = ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/';
-						$res = FriendCall( $url . 'file/info?sessionid=' . $file->ExternSession, false,
+						$res = FriendCall( $url . 'file/info?servertoken=' . $file->ExternServerToken, false,
 							array( 
 								'devname'   => $vol[0],
 								'path'      => $file->ExternPath
@@ -542,7 +542,7 @@ if( !class_exists( 'SharedDrive' ) )
 								set_time_limit( 0 );
 								ob_end_clean();
 								
-								if( $fp = fopen( $url . 'file/read?sessionid=' . $file->ExternSession . '&path=' . urlencode( $file->ExternPath ) . '&mode=rb', 'rb', false, $context ) )
+								if( $fp = fopen( $url . 'file/read?servertoken=' . $file->ExternServerToken . '&path=' . urlencode( $file->ExternPath ) . '&mode=rb', 'rb', false, $context ) )
 								{
 									fpassthru( $fp );
 									fclose( $fp );
@@ -563,7 +563,7 @@ if( !class_exists( 'SharedDrive' ) )
 							$out[$k]->DateModified = $info->DateModified;
 						}
 						$out[$k]->Owner = $User->ID;
-						$out[$k]->ExternSession = null;
+						unset( $out[$k]->ExternServerToken );
 					}
 				}
 				
@@ -755,7 +755,7 @@ if( !class_exists( 'SharedDrive' ) )
 		{
 			global $Logger, $Config;
 			$url = ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/';
-			$query = $url . 'file/upload?sessionid=' . $file->ExternSessionID . '&mode=w&path=' . urlencode( $file->ExternPath );
+			$query = $url . 'file/upload?servertoken=' . $file->ExternServerToken . '&mode=w&path=' . urlencode( $file->ExternPath );
 			$o = array();
 			if( $tmpfile && file_exists( $tmpfile ) )
 			{
