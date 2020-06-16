@@ -393,7 +393,7 @@ function ExecuteApplication( app, args, callback, retries )
 						app + '&friendup=' + escape( Doors.runLevels[0].domain ), true );
 					j.onload = function()
 					{	
-						ws = this.rawData.split( 'src="/webclient/js/apps/api.js"' ).join( 'src="' + _applicationBasics.apiV1 + '"' );
+						let ws = this.rawData.split( 'src="/webclient/js/apps/api.js"' ).join( 'src="' + _applicationBasics.apiV1 + '"' );
 						ifr.src = URL.createObjectURL(new Blob([ws],{type:'text/html'}));
 					}
 					j.send();
@@ -401,7 +401,27 @@ function ExecuteApplication( app, args, callback, retries )
 			}
 			else
 			{
-				ifr.src = sdomain + filepath + 'index.html?friendup=' + sdomain;
+				// Same domain
+				if( sdomain == document.location.protocol + '//' + document.location.host )
+				{
+					// Quicker ajax implementation
+					var j = new cAjax();
+					j.open( 'GET', filepath + 'index.html', true );
+					j.onload = function()
+					{	
+						let ws = this.rawData.split( 'src="/webclient/js/apps/api.js"' ).join( 'src="' + _applicationBasics.apiV1 + '"' );
+						if( ws.indexOf( '<base' ) < 0 )
+						{
+							ws = ws.split( '<head>' ).join( '<head>\n\t\t<base href="' + sdomain + filepath + '"/>\t\n' );
+						}
+						ifr.src = URL.createObjectURL(new Blob([ws],{type:'text/html'}));
+					}
+					j.send();
+				}
+				else
+				{
+					ifr.src = sdomain + filepath + 'index.html?friendup=' + sdomain;
+				}
 			}
 
 			// Register name and ID

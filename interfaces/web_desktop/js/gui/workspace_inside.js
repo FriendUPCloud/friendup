@@ -4220,10 +4220,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					m.execute( 'device/list' );
 				}
-				vi.forceSend = true;
+				//vi.forceSend = true;
 				vi.execute( 'devicesettings' );
 			}
-			mo.forceSend = true;
+			//mo.forceSend = true;
 			mo.execute( 'workspaceshortcuts' );
 		}
 
@@ -8379,7 +8379,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		Workspace.serverHTTPCheckModule = m;
 		
-		m.forceSend = true;
+		//m.forceSend = true;
 		m.execute( 'getsetting', { setting: 'infowindow' } );
 		return setTimeout( 'Workspace.checkServerConnectionResponse();', 1000 );
 	},
@@ -9826,7 +9826,7 @@ function ShowEula( accept, cbk )
 		//call device refresh to make sure user get his devices...
 		var dl = new FriendLibrary( 'system.library' );
 		dl.addVar( 'visible', true );
-		dl.forceSend = true;
+		//dl.forceSend = true;
 		dl.onExecuted = function(e,d)
 		{
 			//console.log( 'First login. Device list refreshed.', e, d );
