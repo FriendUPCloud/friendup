@@ -565,6 +565,21 @@ if( !class_exists( 'SharedDrive' ) )
 						$out[$k]->Owner = $User->ID;
 						unset( $out[$k]->ExternServerToken );
 					}
+					else if( $file->Type == 'Directory' )
+					{
+						if( isset( $getinfo ) && $pth == $file->Filename )
+						{
+							$fInfo = new stdClass();
+							$fInfo->Type = 'Directory';
+							$fInfo->MetaType = $fInfo->Type;
+							$fInfo->Path = $file->Path;
+							$fInfo->Filesize = 0;
+							$fInfo->Filename = $file->Filename;
+							$fInfo->DateCreated = date( 'Y-m-d H:i:s' );
+							$fInfo->DateModified = date( 'Y-m-d H:i:s' );
+							die( 'ok<!--separate-->' . json_encode( $fInfo ) );
+						}
+					}
 				}
 				
 				// Get the output
