@@ -2711,11 +2711,11 @@ function GetDeviceId()
 	var platform = '';
 	if( !type ) type = ua.indexOf( 'phone' ) > 0 ? 'iphone' : false;
 	if( !type ) type = 'other';
-	if( ua.indexOf( 'ios' ) > 0 ) platform = 'iOS';
-	else if( ua.indexOf( 'iPhone' ) > 0 ) platform = 'iOS';
-	else if( ua.indexOf( 'mac' ) > 0 ) platform = 'Apple';
-	else if( ua.indexOf( 'windows' ) > 0 ) platform = 'Microsoft';
-	else if( ua.indexOf( 'linux' ) > 0 ) platform = 'Linux';
+	if( ua.indexOf( 'ios' ) > 0 ){ platform = 'iOS'; }
+	else if( ua.indexOf( 'iphone' ) > 0 ){ platform = 'iOS'; }
+	else if( ua.indexOf( 'mac' ) > 0 ){ platform = 'Apple'; }
+	else if( ua.indexOf( 'windows' ) > 0 ){ platform = 'Microsoft'; }
+	else if( ua.indexOf( 'linux' ) > 0 ){ platform = 'Linux'; }
 	if( !platform ) platform = 'Generic';
 	
 	var r = id + '_' + type + '_' + platform + '_' + __randDevId;
@@ -2725,7 +2725,7 @@ function GetDeviceId()
 	{
 		if( typeof( window.friendApp.get_app_token ) != 'undefined' )
 		{
-			if( platform === 'iOS' )
+			if( platform == 'iOS' )
 			{		
 				r = id + '_ios_app_' + friendApp.get_app_token();
 			}
