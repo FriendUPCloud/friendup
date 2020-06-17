@@ -785,10 +785,31 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 		if( action > 0 && notifid > 0 )	// register is not supported
 		{
 			char tmp[ 512 ];
+			char *userName = NULL;
 			
 			Notification *not = NotificationManagerRemoveNotification( l->sl_NotificationManager , notifid );
-			int err = MobileAppNotifyUserUpdate( l, loggedSession->us_User->u_Name, not, action );
-			Log( FLOG_INFO, "[Update notification] action %d uname: %s\n", action, loggedSession->us_User->u_Name );
+			if( FRIEND_MUTEX_LOCK( &(loggedSession->us_Mutex) ) == 0 )
+			{
+				loggedSession->us_InUseCounter++;
+				if( loggedSession->us_User != NULL )
+				{
+					userName = StringDuplicate( loggedSession->us_User->u_Name );
+				}
+				FRIEND_MUTEX_UNLOCK( &(loggedSession->us_Mutex) );
+			}
+			int err = MobileAppNotifyUserUpdate( l, userName, not, action );
+			Log( FLOG_INFO, "[Update notification] action %d uname: %s\n", action, userName );
+			
+			if( FRIEND_MUTEX_LOCK( &(loggedSession->us_Mutex) ) == 0 )
+			{
+				loggedSession->us_InUseCounter--;
+				if( userName != NULL )
+				{
+					FFree( userName );
+				}
+				FRIEND_MUTEX_UNLOCK( &(loggedSession->us_Mutex) );
+			}
+			
 			if( not != NULL )
 			{
 				NotificationDelete( not );
