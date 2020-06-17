@@ -285,7 +285,6 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 	// OOOH! Shared drive action!
 	if( this.content && this.content.fileInfo && this.content.fileInfo.Path.indexOf( 'Shared:' ) == 0 )
 	{
-		console.log( 'Pop' );
 		// Subfolder
 		let finf = this.content.fileInfo;
 		if( finf.IconLabel && ( finf.IconLabel == 'UserShare' || finf.IconLabel == 'GroupShare' ) )
@@ -397,21 +396,12 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 
 	// Window is the target
 	if( !dview.content && !dview.object.file )
+	{
 		return;
-	
-	var cfo_tmp = mode == 'view' ? dview.content.fileInfo : dview.object.file.fileInfo;
-	
-	// Make copy
-	var cfo;
-	try
-	{
-		cfo = JSON.parse( JSON.stringify( cfo_tmp ) );
 	}
-	catch( e )
-	{
-		return false;
-	}
-
+	
+	let cfo = getCleanFileInfo( mode == 'view' ? dview.content.fileInfo : dview.object.file.fileInfo );
+	
 	var dragFromWindow = eles[0].window;
 
 	// Can't drop stuff on myself!
