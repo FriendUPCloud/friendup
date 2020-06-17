@@ -2724,13 +2724,27 @@ function GetDeviceId()
 	{
 		if( typeof( window.friendApp.get_app_token ) != 'undefined' )
 		{
-			if( platform === 'iOS' )
-			{		
-				r = id + '_ios_app_' + friendApp.get_app_token();
+			if( typeof( window.friendApp.get_platform ) != 'undefined' )
+			{
+				if( window.friendApp.get_platform() == 'iOS' )
+				{
+					r = id + '_ios_app_' + friendApp.get_app_token();
+				}
+				else
+				{
+					r = id + '_android_app_' + friendApp.get_app_token();
+				}
 			}
 			else
 			{
-				r = id + '_android_app_' + friendApp.get_app_token();
+				if( platform === 'iOS' )
+				{		
+					r = id + '_ios_app_' + friendApp.get_app_token();
+				}
+				else
+				{
+					r = id + '_android_app_' + friendApp.get_app_token();
+				}
 			}
 		}
 	}
