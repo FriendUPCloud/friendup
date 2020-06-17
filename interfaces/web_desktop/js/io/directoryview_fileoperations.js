@@ -285,6 +285,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 	// OOOH! Shared drive action!
 	if( this.content && this.content.fileInfo && this.content.fileInfo.Path.indexOf( 'Shared:' ) == 0 )
 	{
+		console.log( 'Pop' );
 		// Subfolder
 		let finf = this.content.fileInfo;
 		if( finf.IconLabel && ( finf.IconLabel == 'UserShare' || finf.IconLabel == 'GroupShare' ) )
