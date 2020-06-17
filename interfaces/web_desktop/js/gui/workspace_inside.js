@@ -2285,16 +2285,43 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							var sub = this.querySelector( '.DockSubMenu' );
 							if( sub )
 							{
-								var sc = Workspace.screen.contentDiv.offsetHeight;
-								var t = GetElementTop( sub );
-								var h = sub.querySelector( '.DockMenuHeader' ).innerHTML;
+								let sc = Workspace.screen.contentDiv.offsetHeight;
+								let ct = GetElementTop( this );
+								let ch = sub.lastChild.offsetTop + sub.lastChild.offsetHeight;
+								let at = 0;
 								
-								if( t + sub.offsetHeight > sc )
+								// Popped bottom
+								if( ct + ch > sc )
 								{
-									sub.style.top = 0 - ( ( t + sub.offsetHeight ) - sc ) + 'px';
+									let diff = ( ct + ch ) - sc;
+									at -= diff;
+									ct -= diff;
 								}
+								
+								// Popped top
+								if( ct < 0 )
+								{
+									let diff = -ct;
+									at += diff;
+									ct += diff;
+								}
+								
+								// Popped bottom again
+								if( ct + ch > sc )
+								{
+									ch -= ( ct + ch ) - sc;
+									// Add scrolling!
+									sub.classList.add( 'MaskedOverflow', 'ScrollbarSmall', 'SmoothScrolling' );
+								}
+								else
+								{
+									sub.style.marginTop = 0;
+									sub.classList.remove( 'MaskedOverflow', 'ScrollbarSmall', 'SmoothScrolling' );
+								}
+								
+								sub.style.top = at + 'px';
+								sub.style.height = ch + 'px';
 							}
-							
 							
 							if( this.leaveTimeout )
 								clearTimeout( this.leaveTimeout );
@@ -2359,37 +2386,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								if( this.leaveTimeout )
 									clearTimeout( this.leaveTimeout );
 								return cancelBubble( e );
-							}
-							s.subMenu = s.getElementsByClassName( 'DockSubMenu' );
-							
-							// Watch dimensions! We need to support small screens
-							s.onmouseover = function()
-							{
-								if( this.subMenu && this.subMenu.length )
-								{
-									for( var z = 0; z < this.subMenu.length; z++ )
-									{
-										var sub = this.subMenu[z];
-										// Test top
-										var yTest = GetElementTop( sub );
-										if( yTest < 0 )
-										{
-											var top = sub.offsetTop + ( -yTest );
-											sub.style.top = top + 'px';
-										}
-										// Test height
-										if( sub.offsetHeight < sub.lastChild.offsetHeight + sub.lastChild.offsetTop )
-										{
-											sub.style.height = sub.lastChild.offsetHeight + sub.lastChild.offsetTop + 'px';
-										}
-										if( sub.offsetHeight >= Workspace.screen.contentDiv.offsetHeight )
-										{
-											sub.style.height = Workspace.screen.contentDiv.offsetHeight + 'px';
-											sub.style.overflow = 'auto';
-											sub.classList.add( 'ScrollBarSmall' );
-										}
-									}
-								}
 							}
 						}
 						else

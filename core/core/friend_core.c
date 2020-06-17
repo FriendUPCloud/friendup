@@ -504,6 +504,7 @@ void *FriendCoreAcceptPhase2( void *d )
 			
 			// setup SSL session
 			int err = 0;
+			int tr = 0;
 
 			while( 1 )
 			{
@@ -511,6 +512,14 @@ void *FriendCoreAcceptPhase2( void *d )
 				if( ( err = SSL_accept( incoming->s_Ssl ) ) == 1 )
 				{
 					break;
+				}
+				else if( err == 0 )
+				{
+					if( (tr++) > 3 )
+					{
+						break;
+					}
+					continue;
 				}
 
 				if( err <= 0 || err == 2 )
@@ -660,7 +669,7 @@ void *FriendCoreAcceptPhase2( void *d )
 	//pthread_exit( 0 );
 	return NULL;
 accerror:
-	DEBUG("ERROR\n");
+	DEBUG("SocketAccept ERROR\n");
 	FFree( pre );
 	DecreaseThreads();
 	//pthread_exit( 0 );
