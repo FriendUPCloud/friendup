@@ -2551,7 +2551,7 @@ var View = function( args )
 		resize.style.position = 'absolute';
 		resize.style.width = '14px';
 		resize.style.height = '14px';
-		resize.style.zIndex = '10';
+		resize.style.zIndex = '100';
 
 		let inDiv = document.createElement( 'div' );
 

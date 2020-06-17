@@ -144,6 +144,11 @@ DirectoryView.prototype.ShowShareDialog = function( elements, mode )
 							{
 								self.HideShareDialog();
 							}
+							eles = v.getElementsByClassName( 'SearchBarInput' );
+							eles[0].onkeyup = function()
+							{
+								filterShareItems( this.value );
+							}
 							// Apply current sharing info
 							eles = v.getElementsByClassName( 'DoShare' );
 							eles[0].onclick = function()
@@ -200,7 +205,40 @@ DirectoryView.prototype.ShowShareDialog = function( elements, mode )
 										this.classList.add( 'Selected' );
 									}
 								}
-							} 
+							}
+							
+							function filterShareItems( str )
+							{
+								if( str == '' || !Trim( str) )
+								{
+									for( let z = 0; z < eles.length; z++ )
+									{
+										eles[z].classList.remove( 'HiddenElement' );
+									}
+									return;
+								}
+								let ks = str.split( ' ' ).join( ',' ).split( ',' );
+								for( let z = 0; z < ks.length; z++ )
+									ks[z] = ks[z].toLowerCase();
+								for( let z = 0; z < eles.length; z++ )
+								{
+									let found = false;
+									for( let zz = 0; zz < ks.length; zz++ )
+									{
+										if( !Trim( ks[zz] ) ) continue;
+										if( eles[ z ].innerText.toLowerCase().indexOf( ks[zz] ) >= 0 )
+										{
+											found = true;
+											break;
+										}
+									}
+									if( !found )
+									{
+										eles[ z ].classList.add( 'HiddenElement' );
+									}
+									else eles[ z ].classList.remove( 'HiddenElement' );
+								}
+							}
 						
 						}
 						f.load();
@@ -358,21 +396,12 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 
 	// Window is the target
 	if( !dview.content && !dview.object.file )
+	{
 		return;
-	
-	var cfo_tmp = mode == 'view' ? dview.content.fileInfo : dview.object.file.fileInfo;
-	
-	// Make copy
-	var cfo;
-	try
-	{
-		cfo = JSON.parse( JSON.stringify( cfo_tmp ) );
 	}
-	catch( e )
-	{
-		return false;
-	}
-
+	
+	let cfo = getCleanFileInfo( mode == 'view' ? dview.content.fileInfo : dview.object.file.fileInfo );
+	
 	var dragFromWindow = eles[0].window;
 
 	// Can't drop stuff on myself!

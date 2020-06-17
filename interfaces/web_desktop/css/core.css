@@ -543,6 +543,11 @@ div.Ghosted, .Ghosted *
 	opacity: 0.4;
 }
 
+.HiddenElement
+{
+	display: none !important;
+}
+
 .Box, .BoxBlue
 {
 	border: $BorderBox;
@@ -5082,6 +5087,32 @@ div.Orange, button.Orange
 	overflow: hidden;
 	transition: height,background-color,opacity 0.25s,0.25s,0.25s;
 	z-index: 10;
+}
+
+.ShareDialog .SearchBar
+{
+	float: left;
+	position: relative;
+}
+
+.ShareDialog .SearchBar:before
+{
+	
+}
+
+.SearchBar::before
+{
+	position: absolute;
+	top: 5px;
+	left: 7px;
+	font-size: 0.9em;
+}
+
+.ShareDialog .SearchBar > input 
+{
+	padding-left: 24px;
+	height: 24px;
+	min-width: 200px;
 }
 
 .ShareDialog.Showing

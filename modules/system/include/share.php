@@ -91,7 +91,7 @@ if( isset( $args->args->type ) )
 				}
 			}
 			
-			$filePath = mysqli_real_escape_string( $args->args->path );
+			$filePath = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->path );
 			
 			$SqlDatabase->query( '
 				INSERT INTO `FShared`

@@ -5525,6 +5525,37 @@ function GetIconClassByExtension( extension, fileInfo )
 
 // End Friend Image Viewer! ----------------------------------------------------
 
+// Get a clean fileinfo from object
+function getCleanFileInfo( obj )
+{
+	let keys = [
+		'DateCreated',
+		'DateModified',
+		'Driver',
+		'Execute',
+		'Extension',
+		'Filename',
+		'Filesize',
+		'Handler',
+		'ID',
+		'MetaType',
+		'Mounted',
+		'Owner',
+		'Path',
+		'Permissions',
+		'SortPriority',
+		'Title',
+		'Type',
+		'Visible',
+		'Volume'
+	];
+	let r = {};
+	for( let i = 0; i < keys.length; i++ )
+		if( typeof( obj[ keys[ i ] ] ) != 'undefined' )
+			r[ keys[ i ] ] = obj[ keys[ i ] ];
+	return r;
+}
+
 
 // -----------------------------------------------------------------------------
 if( !window.isMobile )
