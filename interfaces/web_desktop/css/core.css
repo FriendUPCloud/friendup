@@ -2560,6 +2560,13 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 	border-radius: 100%;
 }
 
+/* Notification popups */
+.NotificationPopupElement p
+{
+	max-height: 38px;
+	overflow: hidden;
+}
+
 /* Various built-in icons */
 
 .TrayElement.Download:before
