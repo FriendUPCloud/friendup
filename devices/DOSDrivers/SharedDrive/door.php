@@ -164,23 +164,25 @@ if( !class_exists( 'SharedDrive' ) )
 							u.ID = s.OwnerUserID
 					' ) ) )
 					{
-						// Shared through groups by others or self
+						// Shared through groups by others
 						$rows = $SqlDatabase->fetchObjects( '
 							SELECT 
 								s.ID, s.Data, s.OwnerUserID, u.ServerToken
 							FROM 
-								FShared s, FUserGroup g, FUserToGroup ug, FUser u
+								FShared s, FUserGroup g, FUserToGroup ug, FUserToGroup ug2, FUser u
 							WHERE 
 								g.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $path[ 1 ] ) . '\' AND
 								s.OwnerUserID != \'' . intval( $User->ID, 10 ) . '\' AND
 								s.SharedType = \'group\' AND 
 								s.SharedID = g.ID AND 
 								ug.UserGroupID = g.ID AND
-								ug.UserID = u.ID AND
-								u.ServerToken != "" AND 
-								u.ID = s.OwnerUserID
+								ug.UserID = s.OwnerUserID AND
+								ug2.UserGroupID = g.ID AND
+								ug2.UserID = \'' . $User->ID . '\' AND
+								u.ID = ug.UserID AND
+								u.ServerToken != ""
 						' );
-						// Add own files shared with group
+						// Shared through groups by self
 						if( $own = $SqlDatabase->fetchObjects( '
 							SELECT 
 								s.ID, s.Data, s.OwnerUserID, u.ServerToken
@@ -280,7 +282,6 @@ if( !class_exists( 'SharedDrive' ) )
 							if( $s->Owner == $User->ID )
 							{
 								$s->ExternPath = $vol[0] . ':' . $filename;
-								$s->Path = $filename;
 								$subPath = $filename;
 							}
 							// Other user's file
@@ -336,7 +337,6 @@ if( !class_exists( 'SharedDrive' ) )
 									// Don't timeout!
 									set_time_limit( 0 );
 									ob_end_clean();
-									
 									if( $fp = fopen( $url . 'file/read?servertoken=' . $row->ServerToken . '&path=' . urlencode( $s->ExternPath ) . '&mode=rb', 'rb', false, $context ) )
 									{
 										fpassthru( $fp );
@@ -430,28 +430,27 @@ if( !class_exists( 'SharedDrive' ) )
 					if( $delete )
 					{
 						die( 'fail<!--separate-->{"message":"Failed to unshare file.","response":"-1"}' );
-					}
-				
-				
-					// My groups
-					$groups = $SqlDatabase->fetchObjects( '
-						SELECT * FROM
-							FUserToGroup
-						WHERE
-							UserID = \'' . intval( $User->ID, 10 ) . '\'
-					' );
-					$grs = []; foreach( $groups as $group ) $grs[] = $group->UserGroupID;
-					unset( $groups );
+					}				
 				
 					$queries = new stdClass();
-					$queries->groups = 'SELECT g.Name, g.ID FROM FShared s, FUserGroup g, FUserToGroup ug
+					// Select groupshares that has been shared in where I am member
+					$queries->groups = 'SELECT g.Name, g.ID, u.ID AS OwnerID, u.ServerToken
+							FROM 
+								FShared s, FUserGroup g, FUserToGroup ug, FUserToGroup ug2, FUser u
 							WHERE 
 								s.OwnerUserID != \'' . intval( $User->ID, 10 ) . '\' AND
 								s.SharedType = \'group\' AND
 								s.SharedID = ug.UserGroupID AND
 								g.ID = ug.UserGroupID AND
-								ug.UserGroupID IN ( ' . implode( ', ', $grs ) . ' )';
-					$queries->users = 'SELECT u.FullName, u.Name, u.ID FROM FShared s, FUser u 
+								g.ID = ug2.UserGroupID AND
+								ug2.UserID = \'' . $User->ID . '\' AND
+								u.ID = ug.UserID AND
+								u.ServerToken != ""
+					';
+					// Select usershares where I am shared with
+					$queries->users = 'SELECT u.FullName, u.Name, u.ID, u.ID AS OwnerID, u.ServerToken
+							FROM 
+								FShared s, FUser u 
 							WHERE
 								u.ID = s.OwnerUserID AND 
 								s.OwnerUserID != \'' . intval( $User->ID, 10 ) . '\' AND
@@ -468,7 +467,8 @@ if( !class_exists( 'SharedDrive' ) )
 							$out2 = [];
 							foreach( $rows as $row )
 							{
-								$out2[ $row->Filename ] = $row;
+								if( !isset( $out2[ $row->Filename ] ) )
+									$out2[ $row->Filename ] = $row;
 							}
 							foreach( $out2 as $a=>$row )
 							{
@@ -486,6 +486,7 @@ if( !class_exists( 'SharedDrive' ) )
 								$s->Shared = '';
 								$s->SharedLink = '';
 								$s->Filesize = 0;
+								$s->ExternServerToken = $row->ServerToken;
 								$out[] = $s;
 							}
 						}
