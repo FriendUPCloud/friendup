@@ -19,7 +19,7 @@ var WorkspaceInside = {
 	// Onready functions
 	onReadyList: [],
 	// Switch to workspace
-	getReadyToRun: function() { return ( this.readyToRun ? "true" : "false" ); },
+	getReadyToRun: function(){ return ( this.readyToRun ? 'true' : 'false' ); },
 	switchWorkspace: function( num )
 	{
 		if( this.mode == 'vr' ) return;
@@ -8561,7 +8561,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						return; // no endless loop please	
 					}
 				}
-				console.log( 'Downloading to folder!' );
 				Workspace.uploadFileToDownloadsFolder( file, newfilename );
 			}
 			else
