@@ -437,6 +437,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			description : ( ge( 'WorkgroupDescription' ) ? ge( 'WorkgroupDescription' ).value : ''             ),
 			parentid    : ( ge( 'WorkgroupParent'      ) ? ge( 'WorkgroupParent' ).value : 0                   ),
 			authid      : Application.authId,
+			type        : 'Workgroup',
 			args        : args
 		} );
 		
