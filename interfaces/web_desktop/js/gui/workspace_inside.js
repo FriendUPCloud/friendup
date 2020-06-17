@@ -6143,8 +6143,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			parent.ApplicationStorage.save( keys, { applicationName : 'Workspace' } );
 		}
 
+		let dologt = null;
+
 		SaveWindowStorage( function()
 		{
+			if( dologt != null )
+				clearTimeout( dologt );
+			
 			// Do external logout and then our internal one.
 			if( Workspace.logoutURL )
 			{
@@ -6155,20 +6160,22 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			var m = new cAjax();
 			Workspace.websocketsOffline = true;
 			m.open( 'get', '/system.library/user/logout/?sessionid=' + Workspace.sessionId, true );
-			m.onload = function()
-			{
-				if( typeof friendApp != 'undefined' && typeof friendApp.exit == 'function')
-				{
-					friendApp.exit();
-					return;
-				}
-				Workspace.sessionId = ''; 
-				document.location.href = window.location.href.split( '?' )[0]; //document.location.reload();
-			}
 			m.send();
 			Workspace.websocketsOffline = false;
-
+			setTimeout( doLogout, 500 );
 		} );
+		// Could be there will be no connection..
+		function doLogout()
+		{
+			if( typeof friendApp != 'undefined' && typeof friendApp.exit == 'function')
+			{
+				friendApp.exit();
+				return;
+			}
+			Workspace.sessionId = ''; 
+			document.location.href = window.location.href.split( '?' )[0]; //document.location.reload();
+		}
+		dologt = setTimeout( doLogout, 750 );
 	},
 	externalLogout: function()
 	{
