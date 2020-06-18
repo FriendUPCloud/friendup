@@ -515,9 +515,13 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					content: i18n( 'i18n_dir_btn_iconview' ),
 					onclick: function( e )
 					{
-						winobj.directoryview.listMode = 'iconview';
-						winobj.refresh();
-						this.parentNode.checkActive( this.value );
+						if( winobj.directoryview.listMode != 'iconview' )
+						{
+							winobj.directoryview.window.classList.add( 'LoadingIcons' );
+							winobj.directoryview.listMode = 'iconview';
+							winobj.refresh();
+							this.parentNode.checkActive( this.value );
+						}
 					}
 				},
 				{
@@ -527,9 +531,13 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					content: i18n( 'i18n_dir_btn_imageview' ),
 					onclick: function( e )
 					{
-						winobj.directoryview.listMode = 'imageview';
-						winobj.refresh();
-						this.parentNode.checkActive( this.value );
+						if( winobj.directoryview.listMode != 'imageview' )
+						{
+							winobj.directoryview.window.classList.add( 'LoadingIcons' );
+							winobj.directoryview.listMode = 'imageview';
+							winobj.refresh();
+							this.parentNode.checkActive( this.value );
+						}
 					}
 				},
 				{
@@ -539,9 +547,13 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					content: i18n( 'i18n_dir_btn_compact' ),
 					onclick: function( e )
 					{
-						winobj.directoryview.listMode = 'compact';
-						winobj.refresh();
-						this.parentNode.checkActive( this.value );
+						if( winobj.directoryview.listMode != 'compact' )
+						{
+							winobj.directoryview.window.classList.add( 'LoadingIcons' );
+							winobj.directoryview.listMode = 'compact';
+							winobj.refresh();
+							this.parentNode.checkActive( this.value );
+						}
 					}
 				},
 				{
@@ -551,9 +563,13 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					content: i18n( 'i18n_dir_btn_listview' ),
 					onclick: function( e )
 					{
-						winobj.directoryview.listMode = 'listview';
-						winobj.refresh();
-						this.parentNode.checkActive( this.value );
+						if( winobj.directoryview.listMode != 'listview' )
+						{
+							winobj.directoryview.window.classList.add( 'LoadingIcons' );
+							winobj.directoryview.listMode = 'listview';
+							winobj.refresh();
+							this.parentNode.checkActive( this.value );
+						}
 					}
 				}
 			]
@@ -1137,6 +1153,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 						let res = self.directoryview.RedrawIconView( self.directoryview.filearea, self.icons, direction, lm );
 						if( callback ) callback();
 						checkScrl();
+						self.directoryview.window.classList.remove( 'LoadingIcons' );
 						return res;
 					}
 					case 'listview':
@@ -1146,6 +1163,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 						let res = self.directoryview.RedrawListView( self.directoryview.filearea, self.icons, direction );
 						if( callback ) callback();
 						checkScrl();
+						self.directoryview.window.classList.remove( 'LoadingIcons' );
 						return res;
 					}
 					case 'columnview':
@@ -1155,10 +1173,12 @@ DirectoryView.prototype.InitWindow = function( winobj )
 						let res = self.directoryview.RedrawColumnView( self, self.icons, direction );
 						if( callback ) callback();
 						checkScrl();
+						self.directoryview.window.classList.remove( 'LoadingIcons' );
 						return res;
 					}
 				}
 				self.completeRedraw();
+				self.directoryview.window.classList.remove( 'LoadingIcons' );
 			}
 		}
 		return false;
