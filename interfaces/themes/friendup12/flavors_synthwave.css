@@ -2,7 +2,7 @@
 
 html > body.Synthwave,
 html > body.Synthwave.Inside,
-html .Content .Scroller:after
+html > body.Synthwave .Content .Scroller:after
 {
 	background: #461C64;
 }
