@@ -2611,13 +2611,13 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 						{
 							let p = ic.Permissions.split( ',' );
 							let perms = ['-','-','-','-','-'];
-							for( var b = 0; b < p.length; b++ )
+							for( let g = 0; g < p.length; g++ )
 							{
-								for( var cc = 0; cc < p[b].length; cc++ )
+								for( var cc = 0; cc < p[ g ].length; cc++ )
 								{
-									if( p[b].substr( cc, 1 ) != '-' && perms[cc] == '-' )
+									if( p[ g ].substr( cc, 1 ) != '-' && perms[cc] == '-' )
 									{
-										perms[cc] = p[b][cc];
+										perms[ cc ] = p[ g ][ cc ];
 									}
 								}
 							}
