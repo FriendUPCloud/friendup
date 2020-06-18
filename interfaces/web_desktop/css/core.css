@@ -3536,6 +3536,7 @@ html .DirectoryToolbar button.Search
 
 .Content .Scroller:after
 {
+	transform: translate3d(0,0,0);
 	display: block;
 	content: " ";
 	position: absolute;
