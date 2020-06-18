@@ -4943,6 +4943,8 @@ Friend.startImageViewer = function( iconObject, extra )
 		fullscreenenabled: true
 	} );
 	
+	console.log( 'Image information: ', iconObject );
+	
 	win.parentView = extra.parentView;
 	
 	win.onClose = function()
