@@ -6661,6 +6661,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			currentMovable.content;
 			if( cnt ) systemDrive = cnt && cnt.fileInfo && cnt.fileInfo.Volume == 'System:';
 		}
+		
+		if( iconsSelected )
+		{
+			console.log( iconsSelected );
+		}
 
 		// Setup Doors menu
 		this.menu = [

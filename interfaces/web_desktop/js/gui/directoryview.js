@@ -815,9 +815,10 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	{
 		let eles = this.getElementsByTagName( 'div' );
 		let selectedCount = 0;
+		console.log( 'Checking selected.' );
 		for( var a = 0; a < eles.length; a++ )
 		{
-			if( !eles[a].classList && !eles[a].classList.contains( 'Selected' ) )
+			if( !eles[a].classList || !eles[a].classList.contains( 'Selected' ) )
 				continue;
 			selectedCount++;
 		}
