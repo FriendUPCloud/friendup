@@ -5017,6 +5017,28 @@ Friend.startImageViewer = function( iconObject, extra )
 				repositionElement( win );
 			}
 		}
+		
+		image.onmousewheel = function( e )
+		{
+			if( e.wheelDeltaY > 0 )
+			{
+				image.offsetY += 50;
+			}
+			else if ( e.wheelDeltaY < 0 )
+			{
+				image.offsetY -= 50;
+			}
+			if( e.wheelDeltaX > 0 )
+			{
+				image.offsetX += 50;
+			}
+			else if ( e.wheelDeltaX < 0 )
+			{
+				image.offsetX -= 50;
+			}
+			repositionElement( win );
+		}
+		
 		// Done panning functions
 		
 		if( !image.originalDims || extra )
