@@ -584,9 +584,10 @@ div.Listview .File .Directory.UserShare:after
 	position: absolute;
 	right: 0;
 	top: 0;
-	background: rgba(255,255,255,0.9);
+	background: #f0f0f0;
+	border: 2px solid rgba(0,0,0,0.2);
 	border-radius: 100%;
-	padding: 4px 4px;
+	padding: 3px 3px;
 	color: black;
 }
 
@@ -596,10 +597,28 @@ div.Listview .File .Directory.UserShare:after
 }
 
 div.Columnview .File .Icon > .Shared.FileShared:before,
-div.Listview .File .Icon > .Shared.FileShared:before
+div.Listview .File .Icon > .Shared.FileShared:before,
+[listmode=compact] .File .Icon > .Shared.FileShared:before
 {
 	top: 10px;
-	right: 1px;
+	right: 0;
+	width: 5px;
+}
+html .File.ZoomX3 .Icon > .Shared.FileShared::before
+{
+	right: 24px;
+	top: 35px;
+}
+
+html .File.ZoomX3 .Icon > .Shared.FileShared::before,
+html .File.ZoomX3 .Icon > .Shared:after
+{
+	padding: 4px;
+}
+
+[listmode=compact] .File .Icon > .Shared.FileShared:before
+{
+	top: 15px;
 }
 
 .File .Icon > .FileShared:before
@@ -611,18 +630,22 @@ div.Listview .File .Icon > .Shared.FileShared:before
 	position: absolute;
 	right: 0;
 	top: 0;
-	background: rgba(255,255,255,0.9);
+	background: #f0f0f0;
+	border: 2px solid rgba(0,0,0,0.2);
 	border-radius: 100%;
-	padding: 4px 4px;
+	padding: 3px 3px;
 	color: black;
 }
 
 div.Columnview .File .Icon > .FileShared:before,
 div.Columnview .File .Icon > .Shared:after,
 div.Listview .File .Icon > .FileShared:before,
-div.Listview .File .Icon > .Shared:after
+div.Listview .File .Icon > .Shared:after,
+[listmode=compact] .File .Icon > .FileShared:before,
+[listmode=compact] .File .Icon > .Shared:after
 {
 	font-size: 0.3em;
+	width: 5px;
 }
 
 .File .Icon .TypeJPG, .File .Icon .TypeJPEG, .File .Icon .TypePNG, 
