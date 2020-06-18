@@ -5,5 +5,5 @@ CREATE TABLE IF NOT EXISTS `FFileInfo` (
   `FilesystemID` bigint(20) NOT NULL DEFAULT '0',
   `DateCreated` datetime NOT NULL,
   `DateModified` datetime NOT NULL,
-  `Data` json NOT NULL,
+  `Data` json NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
