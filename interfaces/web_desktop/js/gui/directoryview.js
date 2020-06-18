@@ -5304,6 +5304,7 @@ Friend.startImageViewer = function( iconObject, extra )
 			let i = new Image();
 			i.src = imageUrl;
 			i.className = 'DefaultContextMenu';
+			i.style.pointerEvents = 'all';
 			owin._window.getElementsByClassName( 'ImageViewerContent' )[0].appendChild( i );
 			i.onload = function()
 			{
