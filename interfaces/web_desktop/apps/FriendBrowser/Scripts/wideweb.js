@@ -16,8 +16,8 @@ Application.run = function( msg )
 {
 	var v = new View( {
 		title:  i18n( 'i18n_wideweb' ),
-		width:  1280,
-		height: 700
+		width:  1100,
+		height: 900
 	} );
 
 	v.setMenuItems( [
