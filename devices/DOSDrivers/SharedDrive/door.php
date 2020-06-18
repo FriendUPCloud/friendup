@@ -40,6 +40,69 @@ if( !class_exists( 'SharedDrive' ) )
 			return false;
 		}
 
+		function checkSharedFiles( &$entries )
+		{
+			global $SqlDatabase, $Config, $User;
+			
+			$files = [];
+			$paths = [];
+			$userids = [];
+			foreach( $entries as $k=>$entry )
+			{
+				if( $entry->Type == 'File' )
+				{
+					//$entries[$k]->Path = $subPath . $entry->Name . ( $entry->Type == 'Directory' ? '/' : '' );
+					// Add the path
+					// TODO: Eradicate later
+					if( !strstr( $entry->Path, ':' ) )
+						$paths[] = 'Shared:' . $entry->Path;
+					// Normal
+					else $paths[] = $entry->Path;
+					$files[] = $entry->ID;
+					$f = false;
+					foreach( $userids as $kk=>$v )
+					{
+						if( $v == $User->ID )
+						{
+							$f = true;
+							break;
+						}
+					}
+					if( !$f )
+						$userids[] = $User->ID;
+					$entries[$k]->Shared = 'Private';
+				}
+			}
+			
+			if( $shared = $SqlDatabase->FetchObjects( '
+				SELECT Path, UserID, ID, `Name`, `Hash` FROM FFileShared s
+				WHERE
+					s.DstUserSID = "Public" AND s.Path IN ( "' . implode( '", "', $paths ) . '" ) AND
+					s.UserID IN ( ' . implode( ', ', $userids ) . ' )
+			' ) )
+			{
+				foreach( $entries as $k=>$entry )
+				{
+					foreach( $shared as $sh )
+					{
+						// Add volume name to entry if it's not there
+						// TODO: Make sure its always there!
+						if( isset( $entry->Path ) && !strstr( $entry->Path, ':' ) )
+							$entry->Path = 'Shared:' . $entry->Path;
+						if( isset( $entry->Path ) && isset( $sh->Path ) && $entry->Path == $sh->Path && $User->ID == $sh->UserID )
+						{
+							$entries[$k]->Shared = 'Public';
+							
+							$link = ( $Config->SSLEnable == 1 ? 'https' : 'http' ) . '://';
+							$p = $Config->FCPort ? ( ':' . $Config->FCPort ) : '';
+							$link .= $Config->FCHost . $p . '/sharedfile/' . $sh->Hash . '/' . $sh->Name;
+							$entries[$k]->SharedLink = $link;
+						}
+					}
+				}
+			}
+		}
+
 		// Execute a dos command
 		function dosAction( $args )
 		{
@@ -369,6 +432,9 @@ if( !class_exists( 'SharedDrive' ) )
 							die( 'fail<!--separate-->{"message":"Failed to unshare file.","response":"-1"}' );
 						}
 						
+						// Check if files are shared
+						$this->checkSharedFiles( $out );
+						
 						die( 'ok<!--separate-->' . json_encode( $out ) );
 					}
 					die( 'ok<!--separate-->[]' );
@@ -586,6 +652,8 @@ if( !class_exists( 'SharedDrive' ) )
 				// Get the output
 				if( count( $out ) )
 				{
+					// Check if files are shared
+					$this->checkSharedFiles( $out );
 					die( 'ok<!--separate-->' . json_encode( $out ) );
 				}
 				// Empty!
