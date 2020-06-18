@@ -5200,9 +5200,17 @@ Friend.startImageViewer = function( iconObject, extra )
 			{
 				eles[a].onclick = function()
 				{
-					zoomSet = true;
-					zoomLevel = 1;
-					repositionElement( owin );
+					if( zoomLevel == 1 )
+					{
+						zoomSet = null;
+						repositionElement( owin );
+					}
+					else
+					{
+						zoomSet = true;
+						zoomLevel = 1;
+						repositionElement( owin );
+					}
 				}
 			}
 			else if( eles[a].classList.contains( 'ArrowLeft' ) )
