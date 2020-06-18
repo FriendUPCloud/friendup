@@ -99,7 +99,7 @@ DirectoryView.prototype.ShowShareDialog = function( elements, mode )
 									let sel = '';
 									if( exGroups[ workgroups[ z ].ID ] )
 										sel = 'Selected ';
-									wstr += '<div class="' + sel + 'ShareItem MousePointer IconSmall fa-group Rounded Workgroup" gid="' + workgroups[ z ].ID + '"><span>' + workgroups[ z ].Name + '</span></div>';
+									wstr += '<div class="' + sel + 'ShareItem MousePointer IconSmall fa-group Rounded Workgroup" title="' + workgroups[ z ].Name + '" gid="' + workgroups[ z ].ID + '"><span>' + workgroups[ z ].Name + '</span></div>';
 								}
 							}
 							catch( e ){}
@@ -115,7 +115,7 @@ DirectoryView.prototype.ShowShareDialog = function( elements, mode )
 									let sel = '';
 									if( exUsers[ users[ z ].ID ] )
 										sel = 'Selected ';
-									wstr += '<div class="' + sel + 'ShareItem MousePointer IconSmall fa-user Rounded User" uid="' + users[ z ].ID + '"><span>' + users[ z ].Fullname + '</span></div>';
+									wstr += '<div class="' + sel + 'ShareItem MousePointer IconSmall fa-user Rounded User" title="' + users[ z ].Fullname + '" uid="' + users[ z ].ID + '"><span>' + users[ z ].Fullname + '</span></div>';
 								}
 							}
 							catch( e ){};
