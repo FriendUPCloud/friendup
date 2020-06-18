@@ -4935,15 +4935,31 @@ Friend.startImageViewer = function( iconObject, extra )
 {
 	if( !extra ) extra = false;
 	
+	let title = iconObject.Title ? iconObject.Title : iconObject.Filename;
+	if( !title )
+	{
+		if( iconObject.Path )
+		{
+			if( iconObject.Path.indexOf( '/' ) > 0 )
+			{
+				title = iconObject.Path.split( '/' );
+				title = title[ title.length - 1 ];
+			}
+			else
+			{
+				title = iconObject.Path.split( ':' );
+				title = title[ 1 ];
+			}
+		}
+	}
+	
 	let win = new View ( {
-		title            : iconObject.Title ? iconObject.Title : iconObject.Filename,
+		title            : title,
 		width            : 650,
 		height           : 512,
 		memorize         : true,
 		fullscreenenabled: true
 	} );
-	
-	console.log( 'Image information: ', iconObject );
 	
 	win.parentView = extra.parentView;
 	
@@ -5138,6 +5154,7 @@ Friend.startImageViewer = function( iconObject, extra )
 		d.innerHTML = '\
 			<div class="ArrowLeft MousePointer"><span class="IconSmall fa-angle-left"></span></div>\
 			<div class="Fullscreen MousePointer"><span class="IconSmall fa-arrows-alt"></span></div>\
+			<div class="Original MousePointer"><span class="IconSmall fa-photo"></span></div>\
 			<div class="ZoomIn MousePointer"><span class="IconSmall fa-plus-circle"></span></div>\
 			<div class="ZoomOut MousePointer"><span class="IconSmall fa-minus-circle"></span></div>\
 			<div class="ArrowRight MousePointer"><span class="IconSmall fa-angle-right"></span></div>\
@@ -5155,6 +5172,15 @@ Friend.startImageViewer = function( iconObject, extra )
 					{
 						repositionElement( owin );
 					}, 250 );
+				}
+			}
+			else if( eles[a].classList.contains( 'Original' ) )
+			{
+				eles[a].onclick = function()
+				{
+					zoomSet = true;
+					zoomLevel = 1;
+					repositionElement( owin );
 				}
 			}
 			else if( eles[a].classList.contains( 'ArrowLeft' ) )
