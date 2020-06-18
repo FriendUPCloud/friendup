@@ -19,7 +19,7 @@ var WorkspaceInside = {
 	// Onready functions
 	onReadyList: [],
 	// Switch to workspace
-	getReadyToRun: function() { return ( this.readyToRun ? "true" : "false" ); },
+	getReadyToRun: function(){ return ( this.readyToRun ? 'true' : 'false' ); },
 	switchWorkspace: function( num )
 	{
 		if( this.mode == 'vr' ) return;
@@ -346,7 +346,7 @@ var WorkspaceInside = {
 	// Initialize virtual workspaces
 	initWorkspaces: function()
 	{
-		if( this.mode == 'vr' || isMobile ) return;
+		if( this.mode == 'vr' || isMobile || Workspace.isSingleTask ) return;
 		
 		if( globalConfig.workspacesInitialized )
 		{
@@ -1120,6 +1120,7 @@ var WorkspaceInside = {
 	refreshExtraWidgetContents: function()
 	{
 		if( this.mode == 'vr' ) return;
+		if( Workspace.isSingleTask ) return;
 		
 		var mo = new Library( 'system.library' );
 		mo.onExecuted = function( rc, sessionList )
@@ -1200,7 +1201,7 @@ var WorkspaceInside = {
 
 			// Mobile launches calendar in a different way, so this 
 			// functionality is only for desktops
-			if( !isMobile )
+			if( !isMobile && !Workspace.isSingleTask )
 			{
 				var wid = Workspace.widget ? Workspace.widget : m.widget;
 				if( wid )
@@ -1361,7 +1362,8 @@ var WorkspaceInside = {
 					}
 				}
 				
-				Workspace.mainDock.closeDesklet();
+				if( !Workspace.isSingleTask && Workspace.mainDock )
+					Workspace.mainDock.closeDesklet();
 				DefaultToWorkspaceScreen();
 				_DeactivateWindows();
 				Friend.GUI.reorganizeResponsiveMinimized();
@@ -1376,7 +1378,8 @@ var WorkspaceInside = {
 			appMenu.onclick = function()
 			{
 				// Turn off openlock
-				Workspace.mainDock.openLock = false;
+				if( Workspace.mainDock )
+					Workspace.mainDock.openLock = false;
 				window.focus();
 				
 				if( ge( 'WorkspaceMenu' ) )
@@ -1386,12 +1389,14 @@ var WorkspaceInside = {
 				}
 				if( document.body.classList.contains( 'AppsShowing' ) )
 				{
-					Workspace.mainDock.closeDesklet();
+					if( !Workspace.isSingleTask && Workspace.mainDock )
+						Workspace.mainDock.closeDesklet();
 					Friend.GUI.reorganizeResponsiveMinimized();
 				}
 				else
 				{
-					Workspace.mainDock.openDesklet();
+					if( !Workspace.isSingleTask && Workspace.mainDock )
+						Workspace.mainDock.openDesklet();
 				}
 			}
 		}
@@ -1399,25 +1404,28 @@ var WorkspaceInside = {
 	zapMobileAppMenu: function()
 	{
 		// Turn on openlock
-		Workspace.mainDock.openLock = true;
-		if( document.body.classList.contains( 'AppsShowing' ) )
+		if( Workspace.mainDock )
 		{
-			Workspace.mainDock.dom.style.display = 'none';
-			setTimeout( function()
+			Workspace.mainDock.openLock = true;
+			if( document.body.classList.contains( 'AppsShowing' ) )
 			{
-				Workspace.mainDock.dom.style.display = '';
-			}, 400 );
-			Workspace.mainDock.closeDesklet();
-			Workspace.mainDock.dom.classList.remove( 'Open' );
+				Workspace.mainDock.dom.style.display = 'none';
+				setTimeout( function()
+				{
+					Workspace.mainDock.dom.style.display = '';
+				}, 400 );
+				if( !Workspace.isSingleTask )
+					Workspace.mainDock.closeDesklet();
+				Workspace.mainDock.dom.classList.remove( 'Open' );
+			}
 		}
-		
 	},
 	// Close widgets and return to desktop..
 	goToMobileDesktop: function()
 	{
 		if( Workspace.widget )
 			Workspace.widget.slideUp();
-		if( Workspace.mainDock )
+		if( Workspace.mainDock && !Workspace.isSingleTask )
 			Workspace.mainDock.closeDesklet();
 		this.exitMobileMenu();
 	},
@@ -1846,6 +1854,23 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					if( !Workspace.startupSequenceRegistered )
 					{	
 						Workspace.startupSequenceRegistered = true;
+						
+						// In single tasking mode, we just skip
+						if( Workspace.isSingleTask )
+						{
+							// Oh! We wanted to start an application!
+							if( GetUrlVar( 'app' ) )
+							{
+								var args = false;
+								if( GetUrlVar( 'args' ) ) args = GetUrlVar( 'args' );
+								ExecuteApplication( GetUrlVar( 'app' ), args );
+							}
+							ScreenOverlay.hide();
+							return;
+						}
+						
+						/* We have a startup application! */
+						
 						Workspace.onReadyList.push( function()
 						{
 							var seq = dat.startupsequence;
@@ -1908,7 +1933,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 																ScreenOverlay.addDebug( 'Done ' + cmd );
 															}
 															l.func();
-															if( Workspace.mainDock )
+															if( Workspace.mainDock && !Workspace.isSingleTask )
 																Workspace.mainDock.closeDesklet();
 														} );
 													}
@@ -1956,7 +1981,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				if( callback && typeof( callback ) == 'function' ) callback();
 			}
-			initFriendWorkspace();
+			
+			// Load application cache's and then init workspace
+			loadApplicationBasics(
+				initFriendWorkspace()
+			);
 		}
 		m.execute( 'getsetting', { settings: [ 
 			'avatar', 'workspacemode', 'wallpaperdoors', 'wallpaperwindows', 'language', 
@@ -2061,21 +2090,25 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				this.smenu.dom.parentNode.removeChild( this.smenu.dom );
 			this.smenu.currentItem = false;
 			
-			var d = document.createElement( 'div' );
-			d.className = 'DockMenu';
-			Workspace.mainDock.dom.appendChild( d );
-			d.onclick = function( e )
+			if( Workspace.mainDock )
 			{
-				Workspace.toggleStartMenu( false );
-			};
-			this.smenu.dom = d;
-			this.smenu.dom.style.height = '0px';
-			this.smenu.dom.style.top = '0px';
+				var d = document.createElement( 'div' );
+				d.className = 'DockMenu';
+			
+				Workspace.mainDock.dom.appendChild( d );
+				d.onclick = function( e )
+				{
+					Workspace.toggleStartMenu( false );
+				};
+				this.smenu.dom = d;
+				this.smenu.dom.style.height = '0px';
+				this.smenu.dom.style.top = '0px';
 
-			d.addEventListener( 'contextmenu', function( e )
-			{
-				return cancelBubble( e );
-			}, false );
+				d.addEventListener( 'contextmenu', function( e )
+				{
+					return cancelBubble( e );
+				}, false );
+			}
 
 			// We don't show the menu at first, we need to build!
 			var delayedBuildTime = false;
@@ -2598,6 +2631,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Reload docks and readd launchers
 	reloadDocks: function()
 	{
+		if( !Workspace.mainDock ) return;
 		if( Workspace.mode == 'vr' ) return;
 		Workspace.docksReloading = true;
 		
@@ -2743,7 +2777,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									false, false, u
 								);
 							}
-							Workspace.mainDock.closeDesklet();
+							if( !Workspace.isSingleTask )
+								Workspace.mainDock.closeDesklet();
 						},
 						type: 'Executable',
 						displayname: i18n( 'i18n_files' ),
@@ -2771,7 +2806,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					// Open the main dock first
 					if( !Workspace.insideInitialized )
 					{
-						Workspace.mainDock.openDesklet();
+						if( !Workspace.isSingleTask )
+							Workspace.mainDock.openDesklet();
 						Workspace.insideInitialized = true;
 						forceScreenMaxHeight();
 					}
@@ -3130,8 +3166,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								{
 									clearInterval( Workspace.insideInterval );
 									Workspace.insideInterval = null;
-								
-									loadApplicationBasics();
 								
 									// Set right classes
 									document.body.classList.add( 'Inside' );
@@ -3571,7 +3605,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 					// Remove prev
 					var v = eles[0].parentNode.getElementsByTagName( 'video' );
-					for( var z = 0; z < v.length; z++ ) eles[ 0 ].parentNode.removeChild( v[ z ] );
+					for( var z = 0; z < v.length; z++ ) 
+					{
+						v[ z ].parentNode.removeChild( v[ z ] );
+					}
 
 					// Check extension
 					switch( ext )
@@ -4183,10 +4220,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					m.execute( 'device/list' );
 				}
-				vi.forceSend = true;
+				//vi.forceSend = true;
 				vi.execute( 'devicesettings' );
 			}
-			mo.forceSend = true;
+			//mo.forceSend = true;
 			mo.execute( 'workspaceshortcuts' );
 		}
 
@@ -4203,9 +4240,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	
 		// The desktop always uses the same fixed values :)
 		var wb = this.screen.contentDiv;
-		wb.onselectstart = function( e ) { return cancelBubble ( e ); };
-		wb.ondragstart = function( e ) { return cancelBubble ( e ); };
-		wb.redrawIcons( this.getIcons(), 'vertical' );
+		if( wb && wb.redrawIcons )
+		{
+			wb.onselectstart = function( e ) { return cancelBubble ( e ); };
+			wb.ondragstart = function( e ) { return cancelBubble ( e ); };
+			wb.redrawIcons( this.getIcons(), 'vertical' );
+		}
 		
 		if ( RefreshDesklets ) RefreshDesklets();
 		
@@ -4357,7 +4397,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			
 			var d;
 			
-			if( !window.isMobile )
+			if( !window.isMobile && !Workspace.isSingleTask )
 			{
 				d = new View( {
 					id: 'makedir',
@@ -4540,7 +4580,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				
 
 				var w;
-				if( window.isMobile )
+				if( window.isMobile || Workspace.isSingleTask )
 				{
 					w = new Widget( {
 						width: 'full',
@@ -5038,9 +5078,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			icon.Filesize = Friend.Utilities.humanFileSize( icon.Filesize );
 			
-
+			let shareFile = 'iconinfo.html';
+			if( icon.Path.indexOf( 'Shared:' ) == 0 )
+				shareFile = 'iconinfo_noshare.html';
+			
 			// Load template
-			var filt = ( icon.Type == 'Door' ? 'iconinfo_volume.html' : 'iconinfo.html' );
+			var filt = ( icon.Type == 'Door' ? 'iconinfo_volume.html' : shareFile );
 			if( icon.Path && icon.Path.split( ':' )[0] == 'System' )
 				filt = 'iconinfo_system.html';
 				
@@ -5112,6 +5155,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					iconnotes: icon.Notes ? icon.Notes : '',
 					sharename: i18n( 'i18n_sharename' ),
 					sharewith: i18n( 'i18n_sharewith'),
+					hideShares: icon.Type == 'File' ? '' : 'display: none',
 					public_disabled: '',
 					instance: ( icon.Filename ? icon.Filename : ( icon.Title.split( ':' )[0] ) ).split( /[^a-z]+/i ).join( '' ),
 					info_fields: fdt_out,
@@ -5572,198 +5616,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			console.log( i18n( 'please_choose_an_icon' ) );
 		}
-	},
-	// Set up sharing on a disk
-	viewSharingOptions: function( path )
-	{
-		var v = new View( {
-			title: i18n( 'i18n_sharing_options' ) + ' ' + path,
-			width: 640,
-			height: 380
-		} );
-		var uniqueId = Math.round( Math.random() * 9999 ) + ( new Date() ).getTime();
-		var f = new File( '/webclient/templates/iconinfo_sharing_options.html' );
-		f.replacements = {
-			uniqueId: uniqueId
-		};
-		f.i18n();
-		f.onLoad = function( data )
-		{
-			v.setContent( data );
-			
-			var elements = {};
-			
-			var ele = ge( 'element_' + uniqueId );
-			var el = ele.getElementsByTagName( 'input' );
-			for( var a = 0; a < el.length; a++ )
-			{
-				if( !el[ a ].getAttribute( 'name' ) ) continue;
-				elements[ el[ a ].getAttribute( 'name' ) ] = el[ a ];
-			}
-			el = ele.getElementsByTagName( 'button' );
-			for( var a = 0; a < el.length; a++ )
-			{
-				if( !el[ a ].getAttribute( 'name' ) ) continue;
-				elements[ el[ a ].getAttribute( 'name' ) ] = el[ a ];
-			}
-			elements.apply_sharing.onclick = function( e )
-			{
-				var devName = path.split( ':' )[0];
-				var l = new Library( 'system.library' );
-				l.onExecuted = function( e, d )
-				{
-					try
-					{
-						d = JSON.parse( d );
-					}
-					catch( e )
-					{
-					};
-					if( e == 'ok' )
-					{
-						l = new Library( 'system.library' );
-						l.onExecuted = function( e2, d2 )
-						{
-							if( e2 == 'ok' )
-							{
-								v.close();
-								Workspace.refreshDesktop( false, true );
-							}
-							else
-							{
-								try
-								{
-									d2 = JSON.parse( d2 );
-								}
-								catch( e4 ){};
-								Notify( { title: 'Error mounting', text: d2.response } );
-								Workspace.refreshDesktop( false, true );
-								// Just remount normally
-								l = new Library( 'system.library' );
-								l.onExecuted = function()
-								{
-									Workspace.refreshDesktop( false, true );
-								}
-								l.execute( 'device/mount', { devname: devName } );
-							}
-						}
-						l.execute( 'device/mount', { devname: devName, usergroupid: elements.sharing_with.getAttribute( 'wid' ) } );
-					}
-					else
-					{
-						Notify( { title: i18n( 'Error unmounting' ), text: d.response } );
-					}
-				}
-				l.execute( 'device/unmount', { devname: devName } );
-			}
-			elements.sharing_with.onkeydown = function( e )
-			{
-				var self = this;
-				var w = e.which ? e.which : e.keyCode;
-				if( w == 38 || w == 40 || w == 13 )
-				{
-					return;
-				}
-				// Typing something else? Break bond with wid
-				if( this.value != this.getAttribute( 'punch' ) )
-				{
-					this.setAttribute( 'wid', '' );
-					this.setAttribute( 'punch', '' );
-				}
-				
-				var m = new Module( 'system' );
-				m.onExecuted = function( e, d )
-				{
-					if( e != 'ok' )
-					{
-						ele.showDropdown( self, i18n( 'i18n_no_users_found' ) );
-						return;
-					}
-					var wList = null;
-					try
-					{
-						wList = JSON.parse( d );
-					}
-					catch( e )
-					{
-						ele.showDropdown( self, i18n( 'i18n_error_in_userlist' ) );
-						return;
-					}
-					var str = '';
-					for( var a = 0; a < wList.length; a++ )
-					{
-						if( wList[ a ].Name.indexOf( self.value ) >= 0 )
-						{
-							var wname = wList[ a ].Name.split( self.value ).join( '<em>' + self.value + '</em>' );
-							str += '<p class="MarginTop" wid="' + wList[ a ].ID + '">' + wname + '</p>';
-						}
-					}
-					if( !str )
-					{
-						str = i18n( 'i18n_no_users_found' );
-					}
-					ele.showDropdown( self, str, 'p' );
-				}
-				m.execute( 'workgroups' );
-			}
-			ele.showDropdown = function( trigger, content, tagSelector )
-			{
-				if( !ele.dropdown )
-				{
-					var d = document.createElement( 'div' );
-					ele.dropdown = d;
-					d.className = 'Padding Borders BackgroundHeavier Rounded';
-					ele.appendChild( d );
-					d.style.position = 'absolute';
-					d.style.top = trigger.offsetTop + trigger.offsetHeight + 'px';
-					d.style.left = trigger.offsetLeft + 'px';
-					d.style.width = trigger.offsetWidth + 'px';
-					d.style.maxHeight = '200px';
-					d.style.overflow = 'auto';
-					d.style.transition = 'opacity 0.25s';
-					d.style.opacity = 0;
-					setTimeout( function(){ d.style.opacity = 1; }, 50 );
-					d.onmouseout = function()
-					{
-						if( this.tm ) return;
-						d.style.opacity = 0;
-						this.tm = setTimeout( function()
-						{
-							ele.removeChild( d );
-							ele.dropdown = null;
-						}, 500 );
-					}
-					d.onmouseover = function()
-					{
-						d.style.opacity = 1;
-						clearTimeout( this.tm );
-						this.tm = null;
-					}
-					trigger.onblur = function()
-					{
-						d.onmouseout();
-					}
-				}
-				ele.dropdown.innerHTML = content;
-				if( tagSelector )
-				{
-					var eles = ele.dropdown.getElementsByTagName( tagSelector );
-					for( var a = 0; a < eles.length; a++ )
-					{
-						eles[ a ].onclick = function()
-						{
-							trigger.value = this.innerText;
-							trigger.setAttribute( 'wid', this.getAttribute( 'wid' ) );
-							trigger.setAttribute( 'punch', this.innerText );
-							ele.dropdown.onmouseout();
-							trigger.focus();
-							trigger.select();
-						}
-					}
-				}
-			}
-		}
-		f.load();
 	},
 	// Set data field on icon info select element
 	iconInfoDataField: function( selement, find )
@@ -6291,8 +6143,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			parent.ApplicationStorage.save( keys, { applicationName : 'Workspace' } );
 		}
 
+		let dologt = null;
+
 		SaveWindowStorage( function()
 		{
+			if( dologt != null )
+				clearTimeout( dologt );
+			
 			// Do external logout and then our internal one.
 			if( Workspace.logoutURL )
 			{
@@ -6303,20 +6160,22 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			var m = new cAjax();
 			Workspace.websocketsOffline = true;
 			m.open( 'get', '/system.library/user/logout/?sessionid=' + Workspace.sessionId, true );
-			m.onload = function()
-			{
-				if( typeof friendApp != 'undefined' && typeof friendApp.exit == 'function')
-				{
-					friendApp.exit();
-					return;
-				}
-				Workspace.sessionId = ''; 
-				document.location.href = window.location.href.split( '?' )[0]; //document.location.reload();
-			}
 			m.send();
 			Workspace.websocketsOffline = false;
-
+			setTimeout( doLogout, 500 );
 		} );
+		// Could be there will be no connection..
+		function doLogout()
+		{
+			if( typeof friendApp != 'undefined' && typeof friendApp.exit == 'function')
+			{
+				friendApp.exit();
+				return;
+			}
+			Workspace.sessionId = ''; 
+			document.location.href = window.location.href.split( '?' )[0]; //document.location.reload();
+		}
+		dologt = setTimeout( doLogout, 750 );
 	},
 	externalLogout: function()
 	{
@@ -6704,6 +6563,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		var shareIcon = null;
 		var downloadIcon = null;
 		var directoryIcon = false;
+		let sharableFile = false;
+		let sharedVolume = false;
+		let fileIcon = false;
 		var shareCount = 0;
 		if( iconsSelected )
 		{
@@ -6720,8 +6582,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						{
 							volumeIcon = true;
 						}
+						
 						if ( ics[ a ].Type == 'File' || ics[ a ].Type == 'Directory' )
 						{
+							if( ics[ a ].Type == 'File' )
+							{
+								fileIcon = ics[ a ];
+								sharableFile = true;
+							}
+							else sharableFile = false;
+							
 							var drive = ics[ a ].Path.split( ':' )[ 0 ];
 						
 							// Share option only if Friend Network is on and not in the system disk
@@ -6751,6 +6621,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									cannotWrite = false;
 							}
 						}
+						
+						if( ics[ a ].Path.indexOf( 'Shared:' ) == 0 )
+						{
+							sharableFile = false;
+							sharedVolume = true;
+						}
+						
 						if( ics[a].Volume == 'System:' )
 						{
 							canUnmount = false;
@@ -6783,6 +6660,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			currentMovable.content;
 			if( cnt ) systemDrive = cnt && cnt.fileInfo && cnt.fileInfo.Volume == 'System:';
+		}
+		
+		if( iconsSelected )
+		{
+			console.log( iconsSelected );
 		}
 
 		// Setup Doors menu
@@ -6899,17 +6781,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						name:	i18n( 'menu_paste' ),
 						command: function() { Workspace.pasteFiles(); },
-						disabled: !iconsInClipboard || systemDrive || cannotWrite
+						disabled: sharedVolume || !iconsInClipboard || systemDrive || cannotWrite
 					},
 					{
 						name:	i18n( 'menu_new_weblink' ),
 						command: function() { Workspace.weblink(); },
-						disabled: !iconsAvailable || systemDrive || dormant
+						disabled: sharedVolume || !iconsAvailable || systemDrive || dormant
 					},
 					{
 						name:	i18n( 'menu_new_directory' ),
 						command: function() { Workspace.newDirectory(); },
-						disabled: !iconsAvailable || systemDrive || cannotWrite
+						disabled: sharedVolume || !iconsAvailable || systemDrive || cannotWrite
 					},
 					{
 						name:	i18n( 'menu_show_icon_information' ),
@@ -6919,17 +6801,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						name:	i18n( 'menu_edit_filename' ),
 						command: function() { Workspace.renameFile(); },
-						disabled: ( !iconsSelected || volumeIcon || systemDrive || cannotWrite )
+						disabled: sharedVolume || ( !iconsSelected || volumeIcon || systemDrive || cannotWrite )
 					},
 					{
 						name:	i18n( 'menu_zip' ),
 						command: function() { Workspace.zipFiles(); },
-						disabled: ( !iconsSelected || volumeIcon || systemDrive || cannotWrite || dormant )
+						disabled: sharedVolume || ( !iconsSelected || volumeIcon || systemDrive || cannotWrite || dormant )
 					},
 					{
 						name:	i18n( 'menu_unzip' ),
 						command: function() { Workspace.unzipFiles(); },
-						disabled: !iconsSelected || !Workspace.selectedIconByType( 'zip' ) || systemDrive || cannotWrite || dormant
+						disabled: sharedVolume || !iconsSelected || !Workspace.selectedIconByType( 'zip' ) || systemDrive || cannotWrite || dormant
 					},
 					//{
 					//	name:	i18n( 'menu_openfolder' ),
@@ -6940,6 +6822,24 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						name:	i18n( 'menu_delete' ),
 						command: function() { Workspace.deleteFile(); },
 						disabled: ( !iconsSelected || volumeIcon ) || systemDrive || cannotWrite
+					},
+					// Add sharing
+					{
+						name: i18n( 'menu_share_file' ),
+						command: function()
+						{
+							Workspace.viewSharingOptions( fileIcon.Path );
+						},
+						disabled: !( sharableFile && !sharedVolume )
+					},
+					// Add sharing
+					{
+						name: i18n( 'menu_share_info' ),
+						command: function()
+						{
+							currentMovable.content.directoryview.ShowShareDialog( [ fileIcon.domNode ], 'shareinfo' );
+						},
+						disabled: ( sharableFile && !sharedVolume ) || volumeIcon || fileIcon.Type != 'File' || !fileIcon.ExternPath || fileIcon.Owner != Workspace.userId
 					},
 					{
 						divider: true
@@ -7502,9 +7402,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					if( thisicon.fileInfo )
 					{
+						let sharedVolume = false;
+						if( thisicon.fileInfo.Path.indexOf( 'Shared:' ) == 0 )
+							sharedVolume = true;
+						
 						if( thisicon.fileInfo.Filename )
 						{
-							if( thisicon.fileInfo.Type == 'Directory' )
+							if( !sharedVolume && thisicon.fileInfo.Type == 'Directory' )
 							{
 								menu.push( {
 									name: i18n( 'menu_add_bookmark' ),
@@ -8271,7 +8175,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				movableWindows[ a ].minimize.onclick();
 		}
 		PollTaskbar();
-		Workspace.mainDock.refresh();
+		if( Workspace.mainDock )
+			Workspace.mainDock.refresh();
 	},
 	//
 	hideInactiveViews: function()
@@ -8286,7 +8191,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 		}
 		PollTaskbar();
-		Workspace.mainDock.refresh();
+		if( Workspace.mainDock )
+			Workspace.mainDock.refresh();
 	},
 	// Force update
 	refreshDirectory: function()
@@ -8485,7 +8391,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		Workspace.serverHTTPCheckModule = m;
 		
-		m.forceSend = true;
+		//m.forceSend = true;
 		m.execute( 'getsetting', { setting: 'infowindow' } );
 		return setTimeout( 'Workspace.checkServerConnectionResponse();', 1000 );
 	},
@@ -8660,7 +8566,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						return; // no endless loop please	
 					}
 				}
-				console.log( 'Downloading to folder!' );
 				Workspace.uploadFileToDownloadsFolder( file, newfilename );
 			}
 			else
@@ -9932,7 +9837,7 @@ function ShowEula( accept, cbk )
 		//call device refresh to make sure user get his devices...
 		var dl = new FriendLibrary( 'system.library' );
 		dl.addVar( 'visible', true );
-		dl.forceSend = true;
+		//dl.forceSend = true;
 		dl.onExecuted = function(e,d)
 		{
 			//console.log( 'First login. Device list refreshed.', e, d );

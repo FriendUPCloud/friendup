@@ -147,6 +147,7 @@ DirectoryView = function( winobj, extra )
 		if( winobj.fileInfo )
 		{
 			let path = winobj.fileInfo.Path;
+			
 			if( !Workspace.diskNotificationList[ path ] )
 			{
 				Workspace.diskNotificationList[ path ] = {
@@ -814,9 +815,10 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	{
 		let eles = this.getElementsByTagName( 'div' );
 		let selectedCount = 0;
+		console.log( 'Checking selected.' );
 		for( var a = 0; a < eles.length; a++ )
 		{
-			if( !eles[a].classList && !eles[a].classList.contains( 'Selected' ) )
+			if( !eles[a].classList || !eles[a].classList.contains( 'Selected' ) )
 				continue;
 			selectedCount++;
 		}
@@ -1626,7 +1628,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 		WorkspaceMenu.show();
 }
 
-// -------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 DirectoryView.prototype.GetTitleBar = function ()
 {
 	if ( window.currentScreen )
@@ -3233,6 +3235,8 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			img = 'data:image/svg+xml;base64,' + Friend.dosDrivers[ driver.type ].iconLabel;
 		if( fileInfo.Title == 'Home' )
 			img = '/iconthemes/friendup15/DriveLabels/Home.svg';
+		else if( fileInfo.Title == 'Shared' )
+			img = '/iconthemes/friendup15/DriveLabels/Shared.svg';
 		else if( fileInfo.Title == 'System' )
 			img = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
 		
@@ -3272,37 +3276,52 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		iconInner.className = GetIconClassByExtension( extension, fileInfo );
 	}
 	
+	// Add-on label
+	if( fileInfo.IconLabel )
+	{
+		iconInner.classList.add( fileInfo.IconLabel );
+	}
+	
+	let vol = fileInfo.Volume ? fileInfo.Volume : ( fileInfo.Path ? fileInfo.Path.split( ':' )[0] : null );
+	
+	// Indicate that this file has been shared
+	if( fileInfo.SharedFile || ( vol == 'Shared' && fileInfo.Owner == Workspace.userId ) )
+	{
+		iconInner.classList.add( 'FileShared' );
+	}
+	
 	// Check for thumbs
 	if( fileInfo.directoryview && ( fileInfo.directoryview.listMode == 'iconview' || fileInfo.directoryview.listMode == 'imageview' ) )
 	{
-		switch( iconInner.className )
+		if( 
+			iconInner.classList.contains( 'TypeJPG' ) || 
+			iconInner.classList.contains( 'TypeJPEG' ) || 
+			iconInner.classList.contains( 'TypePNG' ) || 
+			iconInner.classList.contains( 'TypeGIF' ) 
+		)
 		{
-			case 'TypeJPG':
-			case 'TypeJPEG':
-			case 'TypePNG':
-			case 'TypeGIF':
-				let r = CryptoJS.SHA1( fileInfo.DateModified ).toString();
-				
-				let w = fileInfo.directoryview.listMode == 'imageview' ? 240 : 56;
-				let h = fileInfo.directoryview.listMode == 'imageview' ? 140 : 48;
-				let ur = '/system.library/module/?module=system&command=thumbnail&width=' + w + '&height=' + h + '&sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '&date=' + r;
-				
-				// Get from cache
-				let tmp = false;
-				if( tmp = this.getCache( ur, fileInfo.directoryview, fileInfo.DateModified ) )
-				{
-					ur = tmp;
-				}
-				
-				iconInner.style.backgroundImage = 'url(\'' + ur + '\')';
-				iconInner.className = 'Thumbnail';
-				
-				// Put in cache
-				if( !tmp )
-				{
-					this.setCache( ur, fileInfo.directoryview, fileInfo.DateModified );
-				}
-				break;
+			
+			let r = CryptoJS.SHA1( fileInfo.DateModified ).toString();
+			
+			let w = fileInfo.directoryview.listMode == 'imageview' ? 240 : 56;
+			let h = fileInfo.directoryview.listMode == 'imageview' ? 140 : 48;
+			let ur = '/system.library/module/?module=system&command=thumbnail&width=' + w + '&height=' + h + '&sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '&date=' + r;
+			
+			// Get from cache
+			let tmp = false;
+			if( tmp = this.getCache( ur, fileInfo.directoryview, fileInfo.DateModified ) )
+			{
+				ur = tmp;
+			}
+			
+			iconInner.style.backgroundImage = 'url(\'' + ur + '\')';
+			iconInner.classList.add( 'Thumbnail' );
+			
+			// Put in cache
+			if( !tmp )
+			{
+				this.setCache( ur, fileInfo.directoryview, fileInfo.DateModified );
+			}
 		}
 	}
 	
@@ -3670,11 +3689,17 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 					Type: obj.fileInfo.Type,
 					Door: Workspace.getDoorByPath( path.join( ':' ) )
 				}
+				// May have meta information
+				if( obj.fileInfo.IconLabel )
+					fin.IconLabel = obj.fileInfo.IconLabel;
+				if( obj.fileInfo.MetaType )
+					fin.MetaType = obj.fileInfo.MetaType;
 				fin.Door.cancelId = dw.cancelId;
 				dw.addToHistory( fin );
 
 				// Update on notifications
 				let ppath = obj.fileInfo.Path;
+				
 				if( !Workspace.diskNotificationList[ ppath ] )
 				{
 					Workspace.diskNotificationList[ ppath ] = {
@@ -3711,9 +3736,11 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 								Workspace.diskNotificationList[ ppath ] = false;
 							}
 							ff.execute( 'file/notificationremove' );
+							console.log( 'Notification remove: ' + ppath );
 						} );
 					}
 					f.execute( 'file/notificationstart' );
+					console.log( 'Notification start: ' + ppath );
 				}
 
 				// Open unique window!
@@ -3988,6 +4015,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 		
 		we.refresh = function( callback )
 		{
+			this.directoryview.HideShareDialog();
 			this.directoryview.window.setAttribute( 'listmode', this.directoryview.listMode );
 			
 			// Refresh 1
@@ -4270,6 +4298,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 			
 			win.refresh = function( callback )
 			{
+				this.directoryview.HideShareDialog();
 				this.directoryview.window.setAttribute( 'listmode', this.directoryview.listMode );
 				
 				/*if( dv.cancelId )
@@ -4376,6 +4405,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 		{
 			win.refresh = function ( callback )
 			{	
+				this.directoryview.HideShareDialog();
 				this.directoryview.window.setAttribute( 'listmode', this.directoryview.listMode );
 				
 				// Refresh 3
@@ -5347,6 +5377,9 @@ function GetIconClassByExtension( extension, fileInfo )
 		case 'svg':
 			iconInner.className = 'TypeSVG';
 			break;
+		case 'drawio':
+			iconInner.className = 'TypeDRAWIO';
+			break;
 		case 'eps':
 			iconInner.className = 'TypeEPS';
 			break;
@@ -5492,6 +5525,37 @@ function GetIconClassByExtension( extension, fileInfo )
 }
 
 // End Friend Image Viewer! ----------------------------------------------------
+
+// Get a clean fileinfo from object
+function getCleanFileInfo( obj )
+{
+	let keys = [
+		'DateCreated',
+		'DateModified',
+		'Driver',
+		'Execute',
+		'Extension',
+		'Filename',
+		'Filesize',
+		'Handler',
+		'ID',
+		'MetaType',
+		'Mounted',
+		'Owner',
+		'Path',
+		'Permissions',
+		'SortPriority',
+		'Title',
+		'Type',
+		'Visible',
+		'Volume'
+	];
+	let r = {};
+	for( let i = 0; i < keys.length; i++ )
+		if( typeof( obj[ keys[ i ] ] ) != 'undefined' )
+			r[ keys[ i ] ] = obj[ keys[ i ] ];
+	return r;
+}
 
 
 // -----------------------------------------------------------------------------

@@ -401,7 +401,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		this.proxy.responseType != 'arraybuffer' &&
 		Workspace.websocketState == 'open' &&
 		typeof( url ) == 'string' && 
-		url.indexOf( 'http' ) != 0 &&
+		url.indexOf( 'http' ) != 0 && 
 		url.indexOf( 'system.library' ) >= 0 &&
 		url.indexOf( '/file/read' ) < 0 &&
 		url.indexOf( '/file/write' ) < 0

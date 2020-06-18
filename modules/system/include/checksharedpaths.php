@@ -10,32 +10,22 @@
 *                                                                              *
 *****************************************************************************©*/
 
+if( isset( $args->args->paths ) )
+{
+	$fixed = [];
+	foreach( $args->args->paths as $p )
+	{
+		$fixed[] = mysqli_real_escape_string( $SqlDatabase->_link, $p );
+	}
+	if( $rows = $SqlDatabase->fetchObjects( '
+		SELECT DISTINCT(`Data`) FROM FShared WHERE `Data` IN ( "' . implode( '","', $fixed ) . '" ) AND OwnerUserID=\'' . $User->ID . '\'
+	' ) )
+	{
+		$out = []; foreach( $rows as $r ) $out[] = $r->Data;
+		die( 'ok<!--separate-->' . json_encode( $out ) );
+	}
+}
 
-
-// Setup post query using Curl
-$ch = curl_init();
-
-
-curl_setopt( $ch, CURLOPT_URL, 
-	'http' . ( $Config->SSLEnable == '1' ? 's' : '' ) . '://' . $Config->FCHost . ':' . $Config->FCPort . 
-		'/system.library/device/mount'
-);
-
-$fileInfo = $args->fileInfo;
-
-$postfields =   'sessionid=' . $args->sessionid . 
-				'devname=' . str_replace( ':', '', $fileInfo->Volume ) . 
-				'&path=' . ( $fileInfo->Path ? $fileInfo->Path : '/' ) . 
-				'&type=local';
-
-curl_setopt( $ch, CURLOPT_POST, 4 );
-curl_setopt( $ch, CURLOPT_POSTFIELDS, $postfields );
-curl_setopt( $ch, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
-curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-
-// Execute query
-$result = curl_exec( $ch );
-
-die( $result );
+die( 'fail<!--separate-->' );
 
 ?>

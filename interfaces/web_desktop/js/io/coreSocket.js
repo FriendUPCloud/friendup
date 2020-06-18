@@ -47,8 +47,8 @@ FriendWebSocket = function( conf )
 
 	self.chunks = {};
 	self.allowReconnect = true;
-	self.pingInterval = 1000 * 10;
-	self.maxPingWait = 1000 * 5;
+	self.pingInterval = 1000 * 20;
+	self.maxPingWait = 1000 * 10;
 	//self.pingInterval = 1000 * 40;
 	//self.maxPingWait = 1000 * 30;
 	self.pingCheck = 0;
@@ -775,15 +775,15 @@ FriendWebSocket.prototype.handlePong = function( timeSent )
 
 FriendWebSocket.prototype.handleChunk = function( chunk )
 {	
-	var self = this;
+	let self = this;
 	
 	//we received data... good. dont let some delayed ping create panic.
 	if( self.pingCheck ) { clearTimeout( self.pingCheck ); self.pingCheck = 0 }
 	
 	chunk.total = parseInt( chunk.total, 10 );
 	chunk.part = parseInt( chunk.part, 10 );
-	var cid = chunk.id;
-	var chunks = self.chunks[ cid ];
+	let cid = chunk.id;
+	let chunks = self.chunks[ cid ];
 	if ( !chunks )
 	{
 		chunks = Array( chunk.total );
@@ -791,37 +791,28 @@ FriendWebSocket.prototype.handleChunk = function( chunk )
 		self.chunks[ cid ] = chunks;
 	}
 	
-	var index = chunk.part;
+	let index = chunk.part;
 	chunks[ index ] = chunk.data;
 	if ( !hasAll( chunks, chunk.total ))
 		return;
 	
-	var event = rebuild( chunks );
+	let event = rebuild( chunks );
 	delete self.chunks[ cid ];
 	self.handleEvent( event );
 	
 	function hasAll( chunks, total ) {
-		var anyNull = chunks.some( isNull );
-		return !anyNull;
+		let anyNull = chunks.some( isNull );
+		return !anyNull;z
 		function isNull( item ) {
 			return null == item;
 		}
 	}
 	
 	function rebuild( chunks ) {
-		var whole = chunks.join( '' );
-
-		/* Re enable this to first attempt to parse json, then try base64 if it fails
-		
-		var parsed = friendUP.tool.objectify( whole );
-		if ( parsed )
-			return parsed; // if it was json ( aka not b64 ), this happens
-		
-		*/
-		
+		let whole = chunks.join( '' );
 		// well, then, try b64 decode
-		var notB64 = window.Base64alt ? Base64alt.decode( whole ) : atob( whole );
-		var parsed = friendUP.tool.objectify( notB64 );
+		let notB64 = window.Base64alt ? Base64alt.decode( whole ) : atob( whole );
+		let parsed = friendUP.tool.objectify( notB64 );
 		return parsed;
 	}
 }

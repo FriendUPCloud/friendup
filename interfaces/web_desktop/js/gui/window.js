@@ -2551,7 +2551,7 @@ var View = function( args )
 		resize.style.position = 'absolute';
 		resize.style.width = '14px';
 		resize.style.height = '14px';
-		resize.style.zIndex = '10';
+		resize.style.zIndex = '100';
 
 		let inDiv = document.createElement( 'div' );
 
@@ -4618,13 +4618,14 @@ var View = function( args )
 		_ActivateWindow( this._window.parentNode );
 	}
 	// Move window to front
-	this.toFront = function()
+	this.toFront = function( flags )
 	{
 		if( this.flags.minimized ) 
 		{
 			return;
 		}
-		_ActivateWindow( this._window.parentNode );
+		if( !( flags && flags.activate === false ) )
+			_ActivateWindow( this._window.parentNode );
 		_WindowToFront( this._window.parentNode );
 	}
 	// Close a view window
@@ -5556,6 +5557,16 @@ var View = function( args )
 
 	if( !args.id ) args.id = false;
 	
+	// Fullscreen single task
+	if( Workspace.isSingleTask )
+	{
+		args.width = 'max';
+		args.height = 'max';
+		args.left = 0;
+		args.top = 0;
+		args.resize = false;
+	}
+	
 	this.createDomElements( 'CREATE', args.title, args.width, args.height, args.id, args, args.applicationId );
 
 	if( !self._window || !self._window.parentNode ) return false;
@@ -5906,36 +5917,44 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 		let eles = v._window.getElementsByTagName( 'button' );
 
 		// FL-6/06/2018: correction so that it does not take the relative position of OK/Cancel in the box 
-		for ( var e = 0; e < eles.length; e++ )
+		// US-792 - 2020: Correction to fix sending the same delete request multiple times
+		for( let el = 0; el < eles.length; el++ )
 		{
-			if ( eles[ e ].id == 'ok' )
+			( function( itm )
 			{
-				eles[ e ].onclick = function()
+				if( itm.id == 'ok' )
 				{
-					v.close();
-					okcallback( true );
-				}
-				eles[ e ].focus();
-			}
-			else if ( eles[ e ].id == 'cancel' )
-			{
-				eles[ e ].onclick = function()
-				{
-					v.close();
-					okcallback( false );
-				}
-			}
-			else
-			{
-				eles[ e ].onclick = function(e)
-				{
-					if(e && e.target && e.target.hasAttribute('data-returnvalue') )
-						okcallback( e.target.getAttribute('data-returnvalue') );
-					else
-						okcallback( e );
+					itm.onclick = function()
+					{
 						v.close();
+						okcallback( true );
+					}
+					itm.focus();
 				}
-			}
+				else if( itm.id == 'cancel' )
+				{
+					itm.onclick = function()
+					{
+						v.close();
+						okcallback( false );
+					}
+				}
+				else
+				{
+					itm.onclick = function( e )
+					{
+						if( e && e.target && e.target.hasAttribute( 'data-returnvalue' ) )
+						{
+							okcallback( e.target.getAttribute( 'data-returnvalue' ) );
+						}
+						else
+						{
+							okcallback( e );
+						}
+						v.close();
+					}
+				}
+			} )( eles[ el ] );
 		}
 		if( !window.isMobile )
 		{	

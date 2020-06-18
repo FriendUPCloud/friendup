@@ -32,8 +32,17 @@ function RemoveFromExecutionQueue( app )
 }
 
 // Load a javascript application into a sandbox
-function ExecuteApplication( app, args, callback )
+function ExecuteApplication( app, args, callback, retries )
 {
+	// If we don't have any cached basics, wait a bit
+	if( typeof( _applicationBasics ) == 'undefined' || !_applicationBasics.js )
+	{
+		if( retries == 3 ) return console.log( 'Could not execute app: ' + app );
+		return setTimeout( function()
+		{
+			ExecuteApplication( app, args, callback, !retries ? 1 : retries++ );
+		}, 125 );
+	}
 	var appName = app;
 	if( app.indexOf( ':' ) > 0 )
 	{
@@ -384,7 +393,7 @@ function ExecuteApplication( app, args, callback )
 						app + '&friendup=' + escape( Doors.runLevels[0].domain ), true );
 					j.onload = function()
 					{	
-						ws = this.rawData.split( 'src="/webclient/js/apps/api.js"' ).join( 'src="' + _applicationBasics.apiV1 + '"' );
+						let ws = this.rawData.split( 'src="/webclient/js/apps/api.js"' ).join( 'src="' + _applicationBasics.apiV1 + '"' );
 						ifr.src = URL.createObjectURL(new Blob([ws],{type:'text/html'}));
 					}
 					j.send();
@@ -392,6 +401,7 @@ function ExecuteApplication( app, args, callback )
 			}
 			else
 			{
+				// Same domain
 				ifr.src = sdomain + filepath + 'index.html?friendup=' + sdomain;
 			}
 

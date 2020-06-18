@@ -3043,6 +3043,11 @@ html .File .Icon .TypeSVG
 	background-image: url(/iconthemes/friendup15/File_Vector.svg);
 }
 
+html .File .Icon .TypeDRAWIO
+{
+	background-image: url(/iconthemes/friendup15/File_Drawio.svg);
+}
+
 html .File .Icon .TypeEPS
 {
 	background-image: url(/iconthemes/friendup15/File_Vector.svg);
