@@ -2721,9 +2721,9 @@ function GetDeviceId()
 	var r = id + '_' + type + '_' + platform + '_' + __randDevId;
 
 	//application token is needed for iOS push notifications
-	if( typeof( window.friendApp ) != 'undefined' )
+	if( window.friendApp )
 	{
-		if( window.friendApp && window.friendApp.get_app_token )
+		if( window.friendApp.get_app_token )
 		{
 			if( window.friendApp.get_platform )
 			{
