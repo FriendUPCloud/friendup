@@ -769,25 +769,32 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		if( loggedSession == NULL && sst && strlen( sessionid ) > 0 )
 		{
 			DEBUG( "We asked for server token and have session: %s (%s)\n", sessionid, userName );
+			int userAdded = 0;
 			
 			// Server token reins supreme! Add the session
-			if( loggedSession = UserSessionNew( sessionid, "server" ) )
+			if( ( loggedSession = UserSessionNew( sessionid, "server" ) ) != NULL )
 			{
 				User *tmpusr = UMGetUserByName( l->sl_UM, userName );
 				if( !tmpusr )
 				{
 					tmpusr = UMUserGetByNameDB( l->sl_UM, userName );
 					UMAddUser( l->sl_UM,  tmpusr );
+					userAdded = 1;
 				}
 				if( tmpusr )
 				{
 					loggedSession->us_User = tmpusr;
-					char err[ 256 ];
+					char *err = NULL;
 					UserDeviceMount( l, loggedSession->us_User, 0, TRUE, &err, TRUE );
-					// TODO: Check error
+					if( err != NULL )
+					{
+						Log( FLOG_ERROR, "Login mount error. UserID: %lu Error: %s\n", loggedSession->us_User->u_ID, err );
+						FFree( err );
+					}
+					
 					USMUserSessionAddToList( l->sl_USM, loggedSession );
 				}
-			}	
+			}
 		}
 		
 		if( loggedSession == NULL )
