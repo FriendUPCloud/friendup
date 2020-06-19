@@ -5963,6 +5963,7 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 		}
 	}
 	f.load();
+	return v; // The window
 }
 
 function Alert( title, string, cancelstring, callback )
@@ -6041,6 +6042,7 @@ function Alert( title, string, cancelstring, callback )
 		}
 	}
 	f.load();
+	return v; // the window
 }
 
 // Initialize the events

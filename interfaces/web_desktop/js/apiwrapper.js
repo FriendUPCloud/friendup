@@ -3313,13 +3313,14 @@ function apiWrapper( event, force )
 						msg.callback = false;
 						break;
 					case 'alert':
-						Alert( msg.title, msg.string );
+						let alerv = Alert( msg.title, msg.string );
+						app.windows[ alerv.viewId ] = alerv;
 						break;
 					case 'confirm':
 						var nmsg = {};
-						for( var a in msg ) nmsg[ a ] = msg[ a ];
+						for( let a in msg ) nmsg[ a ] = msg[ a ];
 						//console.log('we confirm...',nmsg);
-						Confirm( 
+						let confv = Confirm( 
 							msg.title, 
 							msg.string, 
 							function( data )
@@ -3346,6 +3347,7 @@ function apiWrapper( event, force )
 							( nmsg.thirdButtonText ? nmsg.thirdButtonText : false ),
 							( nmsg.thirdButtonReturn ? nmsg.thirdButtonReturn : false )
 						);
+						app.windows[ confv.viewId ] = confv;
 						msg.callback = false;
 						break;
 
