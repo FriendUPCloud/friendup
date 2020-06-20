@@ -3493,6 +3493,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Just refresh the desktop ------------------------------------------------
 	refreshDesktop: function( callback, forceRefresh )
 	{
+		// Get those dynamic classes
+		RefreshDynamicClasses( {} );
+		
 		// Check some images we need to preload and preload them
 		if( !window.preloader )
 			window.preloader = [];
