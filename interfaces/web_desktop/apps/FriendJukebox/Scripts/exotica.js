@@ -25,10 +25,6 @@ Application.run = function( msg, iface )
 		title: 'Friend Jukebox',
 		width: 400,
 		height: 160,
-		'min-width': 400,
-		'max-width': 400,
-		'min-height': 160,
-		'max-height': 160,
 		resize: false
 	} );
 	
@@ -367,11 +363,7 @@ Application.receiveMessage = function( msg )
 			break;
 		// Redraw the mini playlist
 		case 'mini_playlist':
-			this.mainView.setFlag( 'resize', true );
-			this.mainView.setFlag( 'min-height', this.miniplaylist ? 360 : 160 );
-			this.mainView.setFlag( 'max-height', this.miniplaylist ? 360 : 160 );
 			this.mainView.setFlag( 'height', this.miniplaylist ? 360 : 160 );
-			this.mainView.setFlag( 'resize', false );
 			this.mainView.sendMessage( { command: 'miniplaylist', playlist: this.playlist, index: this.index, visibility: this.miniplaylist } );
 			break;
 		case 'about_exotica':
@@ -611,7 +603,7 @@ Application.receiveMessage = function( msg )
 				this.playlistWindow.close();
 			break;
 		case 'resizemainwindow':
-			this.mainView.setFlag( 'min-height', msg.size );
+			// This is here to dynamically resize
 			break;
 		case 'playsongindex':
 			this.index = msg.index;

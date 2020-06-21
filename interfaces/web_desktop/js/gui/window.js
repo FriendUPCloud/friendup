@@ -382,7 +382,6 @@ function ResizeWindow( div, wi, he, mode, depth )
 		t = div.windowObject.flags.top;
 		if( !l ) l = isWorkspaceScreen ? div.windowObject.workspace * window.innerWidth : 0;
 		if( !t ) t = 0;
-		console.log( 'L here: ' + l );
 	}
 	
 	// Maximized
@@ -4879,9 +4878,10 @@ var View = function( args )
 				break;
 			case 'width':
 			case 'height':
+				if( value == null ) value = 0;
 				this.flags[ flag ] = value;
 				if( viewdiv )
-				{
+				{	
 					if( value == 'max' )
 					{
 						if( flag == 'width' )
@@ -4893,6 +4893,7 @@ var View = function( args )
 							value = this.flags.screen.getMaxViewHeight();
 						}
 					}
+					
 					ResizeWindow( viewdiv, ( flag == 'width' ? value : null ), ( flag == 'height' ? value : null ) );
 					RefreshWindow( viewdiv );
 				}
@@ -5173,7 +5174,6 @@ var View = function( args )
 		function setCameraMode( e )
 		{
 			let v = null;
-			console.log('setting camera mode!',e);
 			if( !self.cameraOptions )
 			{
 				self.cameraOptions = {
@@ -5349,7 +5349,7 @@ var View = function( args )
 							
 							let switchbtn = document.createElement( 'button' );
 							switchbtn.className = 'IconButton IconSmall fa-refresh';
-							switchbtn.onclick = function() { console.log('switch camera...'); setCameraMode() };
+							switchbtn.onclick = function() { setCameraMode() };
 							self.content.container.appendChild( switchbtn );
 
 							//stop the video if the view is closed!

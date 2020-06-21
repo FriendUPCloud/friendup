@@ -1696,12 +1696,14 @@ function apiWrapper( event, force )
 							}
 							break;
 						case 'setFlag':
-							if( win ) win.setFlag( msg.data.flag, msg.data.value );
+							if( win )
+							{
+								win.setFlag( msg.data.flag, msg.data.value );
+							}
 							break;
 						case 'setFlags':
 							if( win )
 							{
-								console.log( '[apiwrapper] Got asked to set flags on view:', msg.data );
 								win.setFlags( msg.data );
 							}
 							break;

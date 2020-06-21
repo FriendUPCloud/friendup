@@ -2273,7 +2273,7 @@ function Widget( flags )
 
 function View( flags )
 {
-	var viewId = 'window_' + ( new Date() ).getTime() + '.' + Math.random();
+	let viewId = 'window_' + ( new Date() ).getTime() + '.' + Math.random();
 
 	// Proxy screens are virtual :)
 	if( flags.screen )
@@ -2283,7 +2283,7 @@ function View( flags )
 
 	this._flags = flags ? flags : {};
 
-	var msg = {
+	let msg = {
 		type:    'view',
 		data:    flags,
 		viewId: viewId

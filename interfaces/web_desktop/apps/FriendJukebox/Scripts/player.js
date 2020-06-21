@@ -26,7 +26,7 @@ Application.run = function( msg, iface )
 		type: 'volume'
 	} );
 	
-	ge( 'scroll' ).innerHTML = i18n( 'i18n_empty_playlist' );
+	ge( 'scroll' ).innerHTML = i18n( 'i18n_welcome' );
 	
 	if( window.isMobile )
 	{
@@ -37,6 +37,29 @@ Application.run = function( msg, iface )
 	}
 	
 	this.clearVisualizer( 50 );
+	miniplaylistVisibility();
+}
+
+function miniplaylistVisibility()
+{
+	if( Application.miniplaylist )
+	{
+		ge( 'MiniPlaylistContainer' ).style.bottom = '47px';
+		ge( 'MiniPlaylistContainer' ).style.top = '113px';
+		ge( 'MiniPlaylistContainer' ).style.visibility = 'visible';
+		ge( 'MiniPlaylistContainer' ).style.inputEvents = '';
+		ge( 'MiniPlaylistContainer' ).style.opacity = 1;
+	}
+	else
+	{
+		ge( 'Equalizer' ).style.height = 'auto';
+		ge( 'Equalizer' ).style.bottom = '47px';
+		ge( 'MiniPlaylistContainer' ).style.bottom = '';
+		ge( 'MiniPlaylistContainer' ).style.top = 'auto';
+		ge( 'MiniPlaylistContainer' ).style.visibility = 'hidden';
+		ge( 'MiniPlaylistContainer' ).style.opacity = 0;
+		ge( 'MiniPlaylistContainer' ).style.inputEvents = 'none';
+	}
 }
 
 Application.setVolume = function( vol )
@@ -103,13 +126,12 @@ Application.redrawMiniPlaylist = function()
 		}
 		else
 		{
-			ge( 'MiniPlaylist' ).innerHTML = '<div class="List"><div class="sw1">Playlist is empty.</div></div>';
+			ge( 'MiniPlaylist' ).innerHTML = '<div class="List"><div class="sw1 Padding">' + i18n( 'i18n_empty_playlist' ) + '</div></div>';
 		}
 		var h = GetElementHeight( ge( 'visualizer' ) );
 		h += GetElementHeight( tb );
 		h += GetElementHeight( ge( 'BottomButtons' ) );
 		if( h > 300 ) h = 300;
-		Application.sendMessage( { command: 'resizemainwindow', size: h } );
 	}
 }
 
@@ -140,25 +162,11 @@ Application.receiveMessage = function( msg )
 			if( this.miniplaylist )
 			{
 				ge( 'Equalizer' ).style.height = '113px';
-				ge( 'MiniPlaylistContainer' ).style.bottom = '47px';
-				ge( 'MiniPlaylistContainer' ).style.top = '113px';
-				ge( 'MiniPlaylistContainer' ).style.visibility = 'visible';
-				ge( 'MiniPlaylistContainer' ).style.inputEvents = '';
-				ge( 'MiniPlaylistContainer' ).style.opacity = 1;
 				this.index = msg.index;
 				this.playlist = msg.playlist;
 				this.redrawMiniPlaylist();
 			}
-			else
-			{
-				ge( 'Equalizer' ).style.height = 'auto';
-				ge( 'Equalizer' ).style.bottom = '47px';
-				ge( 'MiniPlaylistContainer' ).style.bottom = '';
-				ge( 'MiniPlaylistContainer' ).style.top = 'auto';
-				ge( 'MiniPlaylistContainer' ).style.visibility = 'hidden';
-				ge( 'MiniPlaylistContainer' ).style.opacity = 0;
-				ge( 'MiniPlaylistContainer' ).style.inputEvents = 'none';
-			}
+			miniplaylistVisibility();
 			break;
 		case 'play':
 			if( !msg.item ) return;
@@ -457,6 +465,10 @@ Application.initVisualizer = function()
 	let scrollDir = -1;
 	let waitTime = 0;
 	
+	// For flashing
+	let pcolor = 0;
+	let changeTime = 0;
+	
 	this.dr = function()
 	{
 		ana.getByteTimeDomainData( dataArray );
@@ -483,6 +495,19 @@ Application.initVisualizer = function()
 		ctx.beginPath();
 		let hh = h >> 1;
 		let sw = 1 / bufLength * w;
+		
+		
+		/* Drum flash (not working, disabled)
+		let start = dataArray[ bufLength - 1 ];
+		let cand = start > 220 ? '#8862B1' : '#000000';
+		if( pcolor != cand && changeTime == 0 )
+		{
+			ge( 'Flash' ).style.backgroundColor = cand;
+			pcolor = cand;
+			if( cand != '#000000' )
+				changeTime = 5;
+		}
+		if( changeTime > 0 ) changeTime--;*/
 		
 		// TODO: If amplitude is high, flash!
 		// TODO: Other visualizations
