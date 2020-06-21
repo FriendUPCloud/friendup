@@ -2444,6 +2444,10 @@ html body .List tr.sw1.Selected, html body .List div.sw1.Selected
 {
 	background-color: #34495e;
 }
+html body .List tr.sw2.Selected, html body .List div.sw2.Selected
+{
+	background-color: #304357;
+}
 
 /* Toolbar icons ------------------------------------------------------------ */
 

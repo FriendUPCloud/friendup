@@ -31,6 +31,21 @@ tr.Playing
 	-webkit-mask-image: linear-gradient(0deg, rgba(0,0,0,0.3) 0%, black 40px, black calc(100% - 40px), rgba(0,0,0,0.3) 100%);
 }
 
+html .ScrollArea > .List > .Selected
+{
+	font-weight: bold;
+	filter: contrast(1.5);
+}
+
+html .ScrollArea > .List > .Selected:before
+{
+	font-family: fontawesome;
+	content: "\f001";
+	font-weight: normal;
+	margin: 0 5px 0 0;
+	display: inline-block;
+}
+
 #visualizer
 {
 	position: absolute;

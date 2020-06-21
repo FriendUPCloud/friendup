@@ -8,11 +8,12 @@
 *                                                                              *
 *****************************************************************************©*/
 
-var pausebtn, playbtn;
+var pausebtn, playbtn, weran = false;
 
 // Initialize the GUI ----------------------------------------------------------
 Application.run = function( msg, iface )
 {
+	weran = true;
 	this.song = false;
 	pausebtn = ge( 'pausebutton' );
 	this.miniplaylist = false;
@@ -168,6 +169,13 @@ Application.receiveMessage = function( msg )
 			break;
 		case 'play':
 			if( !msg.item ) return;
+			if( !weran )
+			{
+				return setTimeout( function()
+				{
+					Application.receiveMessage( msg );
+				}, 50 );
+			}
 			var self = this;
 			
 			// We're already playing
@@ -402,6 +410,13 @@ Application.clearVisualizer = function( time )
 // Initialize player!!!
 Application.initVisualizer = function()
 {	
+	if( !this.song || !this.song.getContext )
+	{
+		return setTimeout( function()
+		{
+			Application.initVisualizer()
+		}, 50 );
+	}
 	let eq = ge( 'visualizer' ); let w = eq.offsetWidth, h = eq.offsetHeight;
 	eq.setAttribute( 'width', w ); eq.setAttribute( 'height', h );
 	
