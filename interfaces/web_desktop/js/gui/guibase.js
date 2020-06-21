@@ -2053,7 +2053,7 @@ movableListener = function( e, data )
 				);
 
 				// Do the snap!
-				if( !isMobile )
+				if( !isMobile && currentMovable.windowObject.flags.resize !== false )
 				{
 					let tsX = w.offsetLeft;
 					let tsY = w.offsetTop;
