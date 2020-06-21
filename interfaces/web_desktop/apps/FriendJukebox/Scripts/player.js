@@ -105,8 +105,8 @@ Application.redrawMiniPlaylist = function()
 		{
 			ge( 'MiniPlaylist' ).innerHTML = '';
 			ge( 'MiniPlaylist' ).appendChild( tb );
-			ge( 'MiniPlaylist' ).style.bottom = '45px';
-			ge( 'MiniPlaylist' ).style.height = GetElementHeight( tb );
+			ge( 'MiniPlaylistContainer' ).style.bottom = '45px';
+			ge( 'MiniPlaylistContainer' ).style.height = GetElementHeight( tb );
 		}
 		else
 		{
@@ -147,11 +147,11 @@ Application.receiveMessage = function( msg )
 			if( this.miniplaylist )
 			{
 				ge( 'Equalizer' ).style.height = '113px';
-				ge( 'MiniPlaylist' ).style.bottom = '47px';
-				ge( 'MiniPlaylist' ).style.top = '113px';
-				ge( 'MiniPlaylist' ).style.visibility = 'visible';
-				ge( 'MiniPlaylist' ).style.inputEvents = '';
-				ge( 'MiniPlaylist' ).style.opacity = 1;
+				ge( 'MiniPlaylistContainer' ).style.bottom = '47px';
+				ge( 'MiniPlaylistContainer' ).style.top = '113px';
+				ge( 'MiniPlaylistContainer' ).style.visibility = 'visible';
+				ge( 'MiniPlaylistContainer' ).style.inputEvents = '';
+				ge( 'MiniPlaylistContainer' ).style.opacity = 1;
 				this.index = msg.index;
 				this.playlist = msg.playlist;
 				this.redrawMiniPlaylist();
@@ -160,11 +160,11 @@ Application.receiveMessage = function( msg )
 			{
 				ge( 'Equalizer' ).style.height = 'auto';
 				ge( 'Equalizer' ).style.bottom = '47px';
-				ge( 'MiniPlaylist' ).style.bottom = '';
-				ge( 'MiniPlaylist' ).style.top = 'auto';
-				ge( 'MiniPlaylist' ).style.visibility = 'hidden';
-				ge( 'MiniPlaylist' ).style.opacity = 0;
-				ge( 'MiniPlaylist' ).style.inputEvents = 'none';
+				ge( 'MiniPlaylistContainer' ).style.bottom = '';
+				ge( 'MiniPlaylistContainer' ).style.top = 'auto';
+				ge( 'MiniPlaylistContainer' ).style.visibility = 'hidden';
+				ge( 'MiniPlaylistContainer' ).style.opacity = 0;
+				ge( 'MiniPlaylistContainer' ).style.inputEvents = 'none';
 			}
 			break;
 		case 'play':

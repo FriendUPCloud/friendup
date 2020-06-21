@@ -1,6 +1,6 @@
 
-	<div class="ContentFull BackgroundStBlueDark">
-		<div class="VContentTop BorderBottom" style="bottom: 47px" id="Equalizer">
+	<div class="ContentFull">
+		<div class="VContentTop BorderBottom BackgroundStBlueDark" style="bottom: 47px" id="Equalizer">
 			<canvas id="visualizer"></canvas>
 			<!--<iframe id="player" class="FullContent" style="border: 0"></iframe>-->
 			<audio id="player" class="ContentFull"></audio>
@@ -9,7 +9,9 @@
 			<div id="time"></div>
 			<div id="progress"></div>
 		</div>
-		<div class="VContentTop ScrollArea SmoothScrolling" id="MiniPlaylist"></div>
+		<div class="VContentTop" id="MiniPlaylistContainer">
+			<div class="ContentFull ScrollArea SmoothScrolling" id="MiniPlaylist"></div>
+		</div>
 		<div class="VContentBottom BackgroundLists BorderTop" style="height: 45px" id="BottomButtons">
 			<div class="HContent15 FloatRight">
 				<div class="HRow">

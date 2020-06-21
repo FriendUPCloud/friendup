@@ -22,10 +22,13 @@ tr.Playing
 	width: 100%;
 	margin-top: 4px;
 }
-#MiniPlaylist
+#MiniPlaylistContainer
 {
 	visibility: hidden;
 	opacity: 0;
+}
+#MiniPlaylist
+{
 	mask-image: linear-gradient(0deg, rgba(0,0,0,0.3) 0%, black 40px, black calc(100% - 40px), rgba(0,0,0,0.3) 100%);
 	-moz-mask-image: linear-gradient(0deg, rgba(0,0,0,0.3) 0%, black 40px, black calc(100% - 40px), rgba(0,0,0,0.3) 100%);
 	-webkit-mask-image: linear-gradient(0deg, rgba(0,0,0,0.3) 0%, black 40px, black calc(100% - 40px), rgba(0,0,0,0.3) 100%);
