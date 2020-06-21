@@ -61,10 +61,10 @@ Application.redrawMiniPlaylist = function()
 		var sw = 2;
 		var tb = document.createElement( 'div' );
 		tb.className = 'List NoPadding';
-		for( var a = 0; a < playlist.length; a++ )
+		for( let a = 0; a < playlist.length; a++ )
 		{
-			var tr = document.createElement( 'div' );
-			var sanitize = playlist[a].Filename;
+			let tr = document.createElement( 'div' );
+			let sanitize = playlist[a].Filename;
 			if( sanitize.indexOf( '.' ) > 0 )
 			{
 				sanitize = sanitize.split( '.' );
@@ -73,25 +73,18 @@ Application.redrawMiniPlaylist = function()
 			}
 			tr.innerHTML = sanitize;
 			sw = sw == 1 ? 2 : 1;
-			var c = '';
-			if( a == index )
+			let c = '';
+			if( playlist[ a ].UniqueID == songID )
 			{
-				c = ' Selected Playing';
+				c = ' Selected';
+				c += ' Playing';
 			}
+			tr.uniqueID = playlist[ a ].UniqueID;
 			tr.className = 'Tune Padding Ellipsis sw' + sw + c;
 			( function( ele, eles, index )
 			{
 				tr.onclick = function()
 				{
-					for( var u = 0; u < eles.childNodes.length; u++ )
-					{
-						if( eles.childNodes[u] != ele && eles.childNodes[u].classList )
-						{
-							eles.childNodes[u].classList.remove( 'Playing' );
-							eles.childNodes[u].classList.remove( 'Selected' );
-						}
-					}
-					ele.classList.add( 'Playing', 'Selected' );
 					if( Application.song )
 					{
 						Application.receiveMessage( { command: 'stop' } );
@@ -196,6 +189,11 @@ Application.receiveMessage = function( msg )
 				this.song.stop();
 				this.song.unload();
 			}
+			
+			// Update song id!
+			songID = msg.item.UniqueID;
+			this.redrawMiniPlaylist();
+			
 			this.song = new AudioObject( msg.item.Path, function( result, err )
 			{
 				if( !result )
@@ -224,19 +222,21 @@ Application.receiveMessage = function( msg )
 				var eles = ge( 'MiniPlaylist' ).getElementsByClassName( 'Ellipsis' );
 				for( var a = 0; a < eles.length; a++ )
 				{
-					if( a == msg.index )
+					if( eles[ a ].uniqueID == songID )
 					{
-						eles[a].classList.add( 'Selected', 'Playing' );
+						eles[a].classList.add( 'Selected' );
+						eles[a].classList.add( 'Playing' );
 					}
 					else
 					{
-						eles[a].classList.remove( 'Selected', 'Playing' );
+						eles[a].classList.remove( 'Selected' );
+						eles[a].classList.remove( 'Playing' );
 					}
 				}
 				this.index = msg.index;
 			}
 			this.song.onload = function()
-			{
+			{	
 				document.body.classList.remove( 'Paused' );
 				document.body.classList.add( 'Playing' );
 				

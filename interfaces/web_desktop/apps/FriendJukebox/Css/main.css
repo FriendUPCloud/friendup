@@ -40,7 +40,7 @@ html .ScrollArea > .List > .Selected
 	filter: contrast(1.5);
 }
 
-html .ScrollArea > .List > .Selected:before
+html .ScrollArea > .List > .Playing:before
 {
 	font-family: fontawesome;
 	content: "\f001";

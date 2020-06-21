@@ -276,7 +276,8 @@ Application.addToPlaylist = function( items )
 					{
 						Application.playlist.push( {
 							Filename: arr[a].Filename, 
-							Path: arr[a].Path
+							Path: arr[a].Path,
+							UniqueID: genUniqueId()
 						} );
 					}
 				}
@@ -294,6 +295,12 @@ Application.addToPlaylist = function( items )
 		return;
 	}
 	
+}
+
+function genUniqueId()
+{
+	let seed = ( Math.random() % 9999 ) + ( new Date() ).getTime() + ( Math.random() % 9999 ) + ( Math.random() % 9999 ) + '.';
+	return md5( seed );
 }
 
 // Receives events from OS and child windows -----------------------------------
@@ -319,7 +326,8 @@ Application.receiveMessage = function( msg )
 								{
 									Application.playlist.push( {
 										Filename: files[a].Filename,
-										Path: files[a].Path
+										Path: files[a].Path,
+										UniqueID: genUniqueId()
 									} );
 								}
 							}
@@ -334,7 +342,8 @@ Application.receiveMessage = function( msg )
 							{
 								Application.playlist.push( {
 									Filename: fn,
-									Path: pth
+									Path: pth,
+									UniqueID: genUniqueId()
 								} );
 							}
 						}
@@ -395,6 +404,7 @@ Application.receiveMessage = function( msg )
 				{
 					if( supportedFormat( msg.items[ a ] ) )
 					{
+						msg.items[ a ].UniqueID = genUniqueId();
 						Application.playlist.push( msg.items[a] );
 					}
 				}
@@ -490,7 +500,8 @@ Application.receiveMessage = function( msg )
 									{
 										Application.playlist.push( {
 											Filename: title,
-											Path: path
+											Path: path,
+											UniqueID: genUniqueId()
 										} );
 										ad++;
 									}
@@ -551,6 +562,7 @@ Application.receiveMessage = function( msg )
 											{
 												if( volume )
 													list[ a ].Path = volume + ':' + list[ a ].Path;
+												list[ a ].UniqueID = genUniqueId();
 												s.playlist.push( list[ a ] );
 											}
 										}
@@ -573,6 +585,7 @@ Application.receiveMessage = function( msg )
 						{
 							if( supportedFormat( it ) )
 							{
+								it.UniqueID = genUniqueId();
 								this.playlist.push( it );
 								added++;
 							}
