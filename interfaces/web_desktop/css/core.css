@@ -173,6 +173,14 @@ body > #FocusGrabber
 {
 	color: $ColorStBlueLight;
 }
+.BackgroundStBlueDark
+{
+	background-color: $ColorBgStBlueDark;
+}
+.ColorStBlueDark
+{
+	color: $ColorStBlueDark;
+}
 .BackgroundStGrayLight
 {
 	background-color: $ColorBgStGrayLight;
