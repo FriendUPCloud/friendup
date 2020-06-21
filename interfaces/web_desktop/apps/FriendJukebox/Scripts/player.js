@@ -93,7 +93,7 @@ Application.redrawMiniPlaylist = function()
 					ele.classList.add( 'Playing', 'Selected' );
 					if( Application.song )
 					{
-						Application.song.stop();
+						Application.receiveMessage( { command: 'stop' } );
 					}
 					Application.sendMessage( { command: 'playsongindex', index: index } );
 				}
@@ -169,13 +169,21 @@ Application.receiveMessage = function( msg )
 		case 'play':
 			if( !msg.item ) return;
 			var self = this;
-			//var src = '/system.library/file/read?mode=r&readraw=1' +
-			//	'&authid=' + Application.authId + '&path=' + msg.item.Path;
+			
+			// We're already playing
+			if( !msg.forcePlay )
+			{
+				if( document.body.classList.contains( 'Playing' ) )
+				{
+					return;
+				}
+			}
+			
 			ge( 'progress' ).style.opacity = 0;
 			ge( 'scroll' ).innerHTML = '<div>' + i18n( 'i18n_loading_song' ) + '...</div>';
+			
 			if( this.song ) 
 			{
-				var tmp = this.song.onfinished;
 				this.song.onfinished = function(){};
 				this.song.stop();
 				this.song.unload();

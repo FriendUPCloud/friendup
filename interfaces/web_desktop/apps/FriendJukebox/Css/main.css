@@ -26,9 +26,9 @@ tr.Playing
 {
 	visibility: hidden;
 	opacity: 0;
-	mask-image: linear-gradient(0deg, transparent 0%, black 40px, black calc(100% - 40px), rgba(0,0,0,0.05) 100%);
-	-moz-mask-image: linear-gradient(0deg, transparent 0%, black 40px, black calc(100% - 40px), rgba(0,0,0,0.05) 100%);
-	-webkit-mask-image: linear-gradient(0deg, transparent 0%, black 40px, black calc(100% - 40px), rgba(0,0,0,0.05) 100%);
+	mask-image: linear-gradient(0deg, rgba(0,0,0,0.3) 0%, black 40px, black calc(100% - 40px), rgba(0,0,0,0.3) 100%);
+	-moz-mask-image: linear-gradient(0deg, rgba(0,0,0,0.3) 0%, black 40px, black calc(100% - 40px), rgba(0,0,0,0.3) 100%);
+	-webkit-mask-image: linear-gradient(0deg, rgba(0,0,0,0.3) 0%, black 40px, black calc(100% - 40px), rgba(0,0,0,0.3) 100%);
 }
 
 #visualizer
@@ -115,7 +115,7 @@ tr.Playing
 	opacity: 0;
 	mix-blend-mode: soft-light;
 }
-#playbutton.active, #pausebutton.active
+#pausebutton.active
 {
 	-webkit-animation: flash 2s infinite;
 	-moz-animation:    flash 2s infinite;

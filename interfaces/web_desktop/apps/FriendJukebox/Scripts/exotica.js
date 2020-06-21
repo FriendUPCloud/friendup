@@ -14,6 +14,8 @@
 */
 Application.run = function( msg, iface )
 {
+	var self = this;
+	
 	// Start with empty playlist
 	this.playlist = [];
 	this.index = 0;
@@ -43,15 +45,18 @@ Application.run = function( msg, iface )
 	f.i18n();
 	f.onLoad = function( data )
 	{
-		w.setContent( data );
+		w.setContent( data, function()
+		{
+			// Started with arguments
+			if( msg.args )
+			{
+				self.handleFiles( msg.args );
+			}
+		} );
 	}
 	f.load();
 	
 	this.redrawMenu();
-	
-	// Started with arguments
-	if( msg.args )
-		this.handleFiles( msg.args );
 }
 
 // Add the files of as playlist ------------------------------------------------
@@ -96,7 +101,8 @@ Application.handleFiles = function( args )
 						fn = fn.split( '/' ).pop();
 					this.receiveMessage( {
 						command: 'append_to_playlist_and_play',
-						items: [ { Filename: fn, Path: args } ]
+						items: [ { Filename: fn, Path: args } ],
+						forcePlay: true
 					} );
 					break;
 				case 'pls':
@@ -439,14 +445,15 @@ Application.receiveMessage = function( msg )
 				index:    this.index
 			} );
 			break;
+		// Adds to the playlist and plays (if it's not already playing)
 		case 'append_to_playlist_and_play':
 			if( msg.items.length )
 			{
 				var added = 0;
-				this.index = this.playlist.length;
 				for( var a = 0; a < msg.items.length; a++ )
 				{
 					var it = msg.items[a];
+					// Playlist
 					if( it.Filename.substr( it.Filename.length - 4, 4 ).toLowerCase() == '.pls' )
 					{
 						var f = new File( it.Path );
@@ -492,7 +499,7 @@ Application.receiveMessage = function( msg )
 							// Yo!
 							if( ad > 0 )
 							{
-								Application.receiveMessage( { command: 'playsong' } );
+								Application.receiveMessage( { command: 'playsong', forcePlay: msg.forcePlay } );
 								if( Application.playlistWindow )
 								{
 									Application.playlistWindow.sendMessage( {
@@ -574,15 +581,15 @@ Application.receiveMessage = function( msg )
 				}
 				if( added > 0 )
 				{
-					Application.receiveMessage( { command: 'playsong' } );
 					if( Application.playlistWindow )
 					{
 						Application.playlistWindow.sendMessage( {
 							command: 'refresh',
 							items: Application.playlist
 						} );
-						Application.receiveMessage ( { command: 'get_playlist' } );
 					}
+					Application.receiveMessage ( { command: 'get_playlist' } );
+					Application.receiveMessage( { command: 'playsong', forcePlay: msg.forcePlay } );
 				}
 			}
 			break;
@@ -596,7 +603,7 @@ Application.receiveMessage = function( msg )
 		case 'playsongindex':
 			this.index = msg.index;
 		case 'playsong':
-			this.mainView.sendMessage( { command: 'play', index: this.index, item: this.playlist[this.index] } );
+			this.mainView.sendMessage( { command: 'play', index: this.index, item: this.playlist[this.index], forcePlay: msg.forcePlay } );
 			break;
 		case 'seek':
 			this.index += msg.dir;
