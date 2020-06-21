@@ -527,10 +527,11 @@ Application.initVisualizer = function()
 	
 }
 
-function PlaySong()
+function PlaySong( force )
 {
+	if( !force ) force = false;
 	ge( 'player' ).src = '';
-	Application.sendMessage( { command: 'playsong' } );
+	Application.sendMessage( { command: 'playsong', forcePlay: force } );
 }
 
 function PauseSong()
