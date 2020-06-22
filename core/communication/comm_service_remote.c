@@ -562,7 +562,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 		#endif
 		if( SocketListen( service->csr_Socket ) != 0 )
 		{
-			SocketDelete( service->csr_Socket );
+			service->csr_Socket->s_Interface->SocketDelete( service->csr_Socket );
 			FERROR("[CommServiceRemote]  Cannot listen on socket!\n");
 			return -1;
 		}
@@ -818,7 +818,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 						// Remove event
 						epoll_ctl( service->csr_Epollfd, EPOLL_CTL_DEL, sock->fd, NULL );
 
-						SocketDelete( sock );
+						sock->s_Interface->SocketDelete( sock );
 						sock = NULL;
 
 						DEBUG("[CommServiceRemote] socket closed\n");
@@ -832,7 +832,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 						{
 							FERROR("-=================RECEIVED========================-\n");
 							
-							incomming = SocketAccept( service->csr_Socket );
+							incomming = service->csr_Socket->s_Interface->SocketAccept( service->csr_Socket );
 							if( incomming == NULL )
 							{
 								// We have processed all incoming connections.
@@ -910,7 +910,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 						if( sock != NULL )
 						{
 							//bs = SocketReadPackage( sock );
-							bs = SocketReadTillEnd( sock, 0, 15 );
+							bs = sock->s_Interface->SocketReadTillEnd( sock, 0, 15 );
 						}
 						else
 						{
@@ -958,7 +958,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 										
 										if( isStream == FALSE )
 										{
-											wrote = SocketWrite( sock, (char *)recvDataForm, (FLONG)recvDataForm->df_Size );
+											wrote = sock->s_Interface->SocketWrite( sock, (char *)recvDataForm, (FLONG)recvDataForm->df_Size );
 										}
 										DEBUG2("[CommServiceRemote] Wrote bytes %d\n", wrote );
 										
@@ -982,7 +982,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 										
 										DEBUG2("[CommServiceRemote] Service, send message to socket, size %lu\n", tmpfrm->df_Size );
 										
-										SocketWrite( sock, (char *)tmpfrm, (FLONG)tmpfrm->df_Size );
+										sock->s_Interface->SocketWrite( sock, (char *)tmpfrm, (FLONG)tmpfrm->df_Size );
 										
 										DataFormDelete( tmpfrm );
 									}
@@ -1005,7 +1005,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 								}
 							}
 						}
-						SocketDelete( sock );
+						service->csr_Socket->s_Interface->SocketDelete( sock );
 					}
 				}//end for through events
 			} //end while
@@ -1031,7 +1031,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 		
 		#endif
 		
-		SocketDelete( service->csr_Socket );
+		service->csr_Socket->s_Interface->SocketDelete( service->csr_Socket );
 	}
 	else
 	{

@@ -2471,7 +2471,7 @@ void HttpWriteAndFree( Http* http, Socket *sock )
 	
 	if( http->http_WriteOnlyContent == TRUE )
 	{
-		SocketWrite( sock, http->http_Content, http->http_SizeOfContent );
+		sock->s_Interface->SocketWrite( sock, http->http_Content, http->http_SizeOfContent );
 	}
 	else
 	{
@@ -2480,7 +2480,7 @@ void HttpWriteAndFree( Http* http, Socket *sock )
 			if( HttpBuild( http ) != NULL )
 			{
 				// Write to the socket!
-				SocketWrite( sock, http->http_Response, http->http_ResponseLength );
+				sock->s_Interface->SocketWrite( sock, http->http_Response, http->http_ResponseLength );
 			}
 			else
 			{
@@ -2522,7 +2522,7 @@ void HttpWrite( Http* http, Socket *sock )
 			{ ID_RESP, (FULONG)0, (FULONG)0 }
 		};
 		
-		ret = SocketWrite( sock, (char *) tags, (FLONG)sizeof(tags) );
+		ret = sock->s_Interface->SocketWrite( sock, (char *) tags, (FLONG)sizeof(tags) );
 	}
 	else
 	{
@@ -2531,12 +2531,12 @@ void HttpWrite( Http* http, Socket *sock )
 		if( http->http_WriteOnlyContent == TRUE )
 		{
 			DEBUG("only content\n");
-			ret = SocketWrite( sock, http->http_Content, http->http_SizeOfContent );
+			ret = sock->s_Interface->SocketWrite( sock, http->http_Content, http->http_SizeOfContent );
 		}
 		else
 		{
 			DEBUG("response\n");
-			ret = SocketWrite( sock, http->http_Response, http->http_ResponseLength );
+			ret = sock->s_Interface->SocketWrite( sock, http->http_Response, http->http_ResponseLength );
 		}
 	}
 

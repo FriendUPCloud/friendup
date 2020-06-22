@@ -1356,15 +1356,14 @@ int FileRead( struct File *f, char *buffer, int rsize )
 			if( f->f_Socket )
 			{
 				char *ptr = strstr( buffer, "---http-headers-end---\n" );
-				SystemBase *sb = (SystemBase *)sd->sb;
-				
+
 				if( ptr != NULL && result > 23 )
 				{
-					sb->sl_SocketInterface.SocketWrite( f->f_Socket, (ptr+23), (FLONG)(result-23) );
+					f->f_Socket->s_Interface->SocketWrite( f->f_Socket, (ptr+23), (FLONG)(result-23) );
 				}
 				else
 				{
-					sb->sl_SocketInterface.SocketWrite( f->f_Socket, buffer, (FLONG)result );
+					f->f_Socket->s_Interface->SocketWrite( f->f_Socket, buffer, (FLONG)result );
 				}
 			}
 		}
