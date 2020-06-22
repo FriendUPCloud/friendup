@@ -522,6 +522,7 @@ i18n_only_files_dropped                 : Kunne ikke dele
 i18n_only_files_can_be_shared           : Kun vanlige filer kan deles.
 i18n_share_with_users_or_groups         : Del med brukere eller grupper
 i18n_ok                                 : Ok
+i18n_no_users_or_groups                 : Ingen brukere eller grupper å dele med.
 
 
 i18n_pasted_file                        : Limer inn innhold

@@ -215,7 +215,7 @@ if( !class_exists( 'SharedDrive' ) )
 					$out = [];
 					$rows = $own = $groupShare = false;
 					
-					// Get data shared by others, and self
+					// Get data shared by other users directly
 					if( !( $rows = $SqlDatabase->fetchObjects( '
 						SELECT s.ID, s.Data, s.OwnerUserID, u.ServerToken FROM FShared s, FUser u 
 						WHERE 
@@ -366,7 +366,6 @@ if( !class_exists( 'SharedDrive' ) )
 							
 							if( $code[0] == 'ok' )
 							{
-								
 								if( isset( $getinfo ) && $pth == $s->Filename )
 								{
 									$info = json_decode( $code[1] );
@@ -421,6 +420,12 @@ if( !class_exists( 'SharedDrive' ) )
 								$s->Filesize = $info->Filesize;
 								$s->DateCreated = $info->DateCreated;
 								$s->DateModified = $info->DateModified;
+							}
+							// This file does not exist!
+							else
+							{
+								$SqlDatabase->query( 'DELETE FROM FShared WHERE ID=\'' . $row->ID . '\' AND OwnerUserID=\'' . $User->ID . '\'' );
+								continue;
 							}
 							
 							$out[] = $s;
@@ -500,7 +505,7 @@ if( !class_exists( 'SharedDrive' ) )
 				
 					$queries = new stdClass();
 					// Select groupshares that has been shared in where I am member
-					$queries->groups = 'SELECT g.Name, g.ID, u.ID AS OwnerID, u.ServerToken
+					$queries->groups = 'SELECT s.ID AS ShareID, g.Name, g.ID, u.ID AS OwnerID, u.ServerToken
 							FROM 
 								FShared s, FUserGroup g, FUserToGroup ug, FUserToGroup ug2, FUser u
 							WHERE 
@@ -514,7 +519,7 @@ if( !class_exists( 'SharedDrive' ) )
 								u.ServerToken != ""
 					';
 					// Select usershares where I am shared with
-					$queries->users = 'SELECT u.FullName, u.Name, u.ID, u.ID AS OwnerID, u.ServerToken
+					$queries->users = 'SELECT s.ID AS ShareID, u.FullName, u.Name, u.ID, u.ID AS OwnerID, u.ServerToken
 							FROM 
 								FShared s, FUser u 
 							WHERE
@@ -533,8 +538,8 @@ if( !class_exists( 'SharedDrive' ) )
 							$out2 = [];
 							foreach( $rows as $row )
 							{
-								if( !isset( $out2[ $row->Filename ] ) )
-									$out2[ $row->Filename ] = $row;
+								if( !isset( $out2[ $row->Filename . '-' . $row->OwnerID ] ) )
+									$out2[ $row->Filename . '-' . $row->OwnerID ] = $row;
 							}
 							foreach( $out2 as $a=>$row )
 							{
@@ -553,6 +558,7 @@ if( !class_exists( 'SharedDrive' ) )
 								$s->SharedLink = '';
 								$s->Filesize = 0;
 								$s->ExternServerToken = $row->ServerToken;
+								$s->ShareID = $row->ShareID;
 								$out[] = $s;
 							}
 						}
@@ -629,7 +635,20 @@ if( !class_exists( 'SharedDrive' ) )
 							$out[$k]->DateCreated = $info->DateCreated;
 							$out[$k]->DateModified = $info->DateModified;
 						}
+						else
+						{
+							$SqlDatabase->Query( '
+							DELETE FROM 
+								FShared 
+							WHERE 
+								OwnerUserID=\'' . $User->ID . '\' AND 
+								`Data`="' . mysqli_real_escape_string( $SqlDatabase->_link, $file->ExternPath ) . '" LIMIT 1' 
+							);
+							continue;
+						}
 						$out[$k]->Owner = $User->ID;
+						if( isset( $out[$k]->ShareID ) )
+							unset( $out[$k]->ShareID );
 						unset( $out[$k]->ExternServerToken );
 					}
 					else if( $file->Type == 'Directory' )
@@ -647,6 +666,7 @@ if( !class_exists( 'SharedDrive' ) )
 							die( 'ok<!--separate-->' . json_encode( $fInfo ) );
 						}
 					}
+					unset( $out[$k]->ShareID );
 				}
 				
 				// Get the output
