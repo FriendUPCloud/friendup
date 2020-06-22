@@ -64,10 +64,10 @@ static inline char *GetFileNamePtr( char *path, int len )
 /**
  * Read a block of memory from LocFile
  *
- * @param file pointer to LocFile from which data will be readed
- * @param offset number of bytes from which data will be readed
+ * @param file pointer to LocFile from which data will be read
+ * @param offset number of bytes from which data will be read
  * @param size number of bytes to read
- * @return number of bytes readed from file
+ * @return number of bytes read from file
  */
 static inline int LocFileRead( LocFile* file, FILE *fp, long long offset, long long size )
 {

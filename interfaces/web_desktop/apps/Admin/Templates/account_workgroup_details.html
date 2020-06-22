@@ -89,7 +89,26 @@
 		</div>
 	</div>
 
-	<div id="AdminRolesContainer" class="Open">
+	<div id="AdminStorageContainer" class="Closed">
+		<!--<div class="HRow MarginTop BackgroundNegativeAlt Negative Padding">-->
+		<div class="HRow MarginTop BackgroundNegative Negative Padding">
+			<div class="HContent50 FloatLeft">
+				<h3 class="NoMargin">
+					<strong>{i18n_storage}</strong>
+				</h3>
+			</div>
+			<div class="HContent50 FloatLeft Relative">
+				<button class="IconButton IconSmall Negative FloatRight MarginRight fa-plus-circle" id="StorageEdit"></button>
+			</div>
+		</div>
+		<div class="Box Padding">
+			<div class="HRow" id="StorageGui">
+				{storage}
+			</div>
+		</div>
+	</div>
+
+	<div id="AdminRolesContainer" class="Closed">
 		<h2 class="MarginTop">
 			{i18n_roles}
 		</h2>

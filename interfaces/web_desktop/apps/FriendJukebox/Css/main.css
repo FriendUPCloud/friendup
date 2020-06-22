@@ -22,11 +22,43 @@ tr.Playing
 	width: 100%;
 	margin-top: 4px;
 }
-#MiniPlaylist
+#MiniPlaylistContainer
 {
 	visibility: hidden;
 	opacity: 0;
 }
+#MiniPlaylist
+{
+	mask-image: linear-gradient(0deg, rgba(0,0,0,0.3) 0%, black 40px, black calc(100% - 40px), rgba(0,0,0,0.3) 100%);
+	-moz-mask-image: linear-gradient(0deg, rgba(0,0,0,0.3) 0%, black 40px, black calc(100% - 40px), rgba(0,0,0,0.3) 100%);
+	-webkit-mask-image: linear-gradient(0deg, rgba(0,0,0,0.3) 0%, black 40px, black calc(100% - 40px), rgba(0,0,0,0.3) 100%);
+}
+
+html .ScrollArea > .List > .Selected
+{
+	font-weight: bold;
+	filter: contrast(1.5);
+}
+
+html .ScrollArea > .List > .Playing:before
+{
+	font-family: fontawesome;
+	content: "\f001";
+	font-weight: normal;
+	margin: 0 5px 0 0;
+	display: inline-block;
+}
+
+.VisualizerBg
+{
+	/*transition: background-color 0.1s;*/
+	background-color: #06051a;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 77px;
+}
+
 #visualizer
 {
 	position: absolute;
@@ -34,12 +66,11 @@ tr.Playing
 	left: 0;
 	width: 100%;
 	height: 77px;
-	background: #0F2336;
+	mask-image: linear-gradient(90deg, transparent, black 45%, black 55%, transparent);
+	-moz-mask-image: linear-gradient(90deg, transparent, black 45%, black 55%, transparent);
+	-webkit-mask-image: linear-gradient(90deg, transparent, black 45%, black 55%, transparent);
 }
-.Synthwave #visualizer
-{
-	background: #2d1a47;
-}
+
 #visualizer.Fullscreen
 {
 	height: 100%;
@@ -60,7 +91,6 @@ tr.Playing
 {
 	position: absolute;
 	bottom: 0;
-	background: #0f2336;
 	color: white;
 	text-shadow: 1px 1px 1px rgba(0,0,0,0.8);
 	box-shadow: inset 0px 0px 50px rgba(0,0,0,0.3);
@@ -108,15 +138,15 @@ tr.Playing
 }
 #progress
 {
-	background-color: #41185f;
+	background-color: rgba(24, 7, 38, 0.33);
 	width: 0;
 	transition-property: width, opacity;
 	transition-duration: 0.5s;
 	transition-timing-function: linear;
 	opacity: 0;
-	mix-blend-mode: screen;
+	mix-blend-mode: soft-light;
 }
-#playbutton.active, #pausebutton.active
+#pausebutton.active
 {
 	-webkit-animation: flash 2s infinite;
 	-moz-animation:    flash 2s infinite;

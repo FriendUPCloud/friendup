@@ -45,6 +45,7 @@ else
 	;
 	$ch = curl_init();
 	curl_setopt( $ch, CURLOPT_URL, $readUrl );
+	curl_setopt( $ch, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
 	curl_setopt( $ch, CURLOPT_PORT, $Config->FCPort );
 	curl_setopt( $ch, CURLOPT_POST, 5 );
 	curl_setopt( $ch, CURLOPT_POSTFIELDS, $postfields );

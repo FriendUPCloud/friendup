@@ -51,6 +51,9 @@
 
 extern SystemBase *SLIB;
 
+// disable debug
+#undef __DEBUG
+
 // external
 
 char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL *arg );
@@ -134,7 +137,7 @@ static inline ListString *RunPHPScript( const char *command )
 		}
 	}
 	
-	DEBUG("[RunPHPScript] File readed\n");
+	DEBUG("[RunPHPScript] File read\n");
 	
 #else
 	int errCounter = 0;
@@ -195,7 +198,7 @@ static inline ListString *RunPHPScript( const char *command )
 	
 #endif
 	FFree( buf );
-	DEBUG("[RunPHPScript] File readed\n");
+	DEBUG("[RunPHPScript] File read\n");
 	
 	// Free pipe if it's there
 	newpclose( &pofd );
@@ -405,7 +408,7 @@ static inline int ReadServerFile( Uri *uri __attribute__((unused)), char *locpat
 /**
  * Http protocol parser
  *
- * @param sock pointer to Socket from which request will readed and which will be used to return response
+ * @param sock pointer to Socket from which request will read and which will be used to return response
  * @param data pointer to already received data
  * @param length length of already received data
  * @return new Http structrure when success, otherwise NULL
@@ -899,14 +902,15 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 						if( sqllib != NULL )
 						{
 							FULONG fs_IDUser = 0;
+							FULONG fsysID = 0;
 							char *fs_DeviceName = NULL;
 							char *fs_Name = NULL;
 							char *fs_Type = NULL;
 							char *fs_Path = NULL;
 							char *usrSessionID = NULL;
+							FBOOL sessionIDGenerated = FALSE;
 							
-							sqllib->SNPrintF( sqllib, query, sizeof(query), "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,u.SessionID from FFileShared fs inner join Filesystem f on fs.Devname=f.Name AND fs.UserID=f.UserID inner join FUser u on fs.UserID=u.ID where `Hash`='%s'", path->parts[ 1 ] );
-							//sqllib->SNPrintF( sqllib, query, sizeof(query), " `Hash` = '%s'", path->parts[ 1 ] );
+							sqllib->SNPrintF( sqllib, query, sizeof(query), "SELECT fs.Name, fs.Devname, fs.Path, fs.UserID, f.Type, u.SessionID FROM FFileShared fs, Filesystem f, FUser u WHERE fs.Hash=\"%s\" AND u.ID = fs.UserID AND f.Name = fs.Devname", path->parts[ 1 ] );
 							
 							void *res = sqllib->Query( sqllib, query );
 							if( res != NULL )
@@ -935,12 +939,74 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 									{
 										fs_Type = StringDuplicate( row[ 4 ] );
 									}
-									if( row[ 5 ] != NULL )
+									if( row[ 5 ] != NULL && strlen( row[ 5 ] ) > 0 )
 									{
 										usrSessionID = StringDuplicate( row[ 5 ] );
 									}
+									if( row[ 6 ] != NULL )
+									{
+										char *end;
+										fsysID = strtoul( row[ 6 ], &end, 0 );
+									}
 								}
 								sqllib->FreeResult( sqllib, res );
+							}
+							
+							if( usrSessionID == NULL )// if res == NULL
+							{
+								DEBUG("First call releated to shared files did not return any results\n");
+								sqllib->SNPrintF( sqllib, query, sizeof(query), "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,u.SessionID,f.ID from FFileShared fs inner join Filesystem f on fs.FSID=f.ID inner join FUser u on fs.UserID=u.ID where `Hash`='%s'", path->parts[ 1 ] );
+							
+								res = sqllib->Query( sqllib, query );
+								if( res != NULL )
+								{
+									char **row;
+									if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+									{
+										if( row[ 0 ] != NULL )
+										{
+											fs_Name = StringDuplicate( row[ 0 ] );
+										}
+										if( row[ 1 ] != NULL )
+										{
+											fs_DeviceName = StringDuplicate( row[ 1 ] );
+										}
+										if( row[ 2 ] != NULL )
+										{
+											fs_Path = StringDuplicate( row[ 2 ] );
+										}
+										if( row[ 3 ] != NULL )
+										{
+											char *end;
+											fs_IDUser = strtoul( row[ 3 ], &end, 0 );
+										}
+										if( row[ 4 ] != NULL )
+										{
+											fs_Type = StringDuplicate( row[ 4 ] );
+										}
+										if( row[ 5 ] != NULL && strlen( row[ 5 ] ) > 0 )
+										{
+											usrSessionID = StringDuplicate( row[ 5 ] );
+										}
+										if( row[ 6 ] != NULL )
+										{
+											char *end;
+											fsysID = strtoul( row[ 6 ], &end, 0 );
+										}
+									}
+									sqllib->FreeResult( sqllib, res );
+								}
+							}
+							
+							// Immediately drop here..
+							SLIB->LibrarySQLDrop( SLIB, sqllib );
+							sqllib = NULL;
+							
+							// session was not found. Lets generate temporary one
+							if( usrSessionID == NULL )
+							{
+								sessionIDGenerated = TRUE;
+								usrSessionID = USMCreateTemporarySession( SLIB->sl_USM, sqllib, fs_IDUser, 0 );
 							}
 
 							//if( ( fs = sqllib->Load( sqllib, FileSharedTDesc, query, &entries ) ) != NULL )
@@ -948,8 +1014,6 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							{
 								FBOOL mountedWithoutUser = FALSE;
 								char *error = NULL;
-								// Immediately drop here..
-								SLIB->LibrarySQLDrop( SLIB, sqllib );
 
 								CacheFile *cf = NULL;
 
@@ -960,7 +1024,9 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 								User *u = UMGetUserByID( SLIB->sl_UM, fs_IDUser );
 								if( u != NULL )
 								{
-									rootDev = GetUserDeviceByUserID( SLIB->sl_DeviceManager, sqllib, fs_IDUser, fs_DeviceName, &error );
+									rootDev = GetUserDeviceByFSysUserIDDevName( SLIB->sl_DeviceManager, sqllib, fsysID, fs_IDUser, fs_DeviceName, &error );
+									
+									
 								} // if user is not in memory (and his drives), we must mount drives only
 								else
 								{
@@ -972,6 +1038,9 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 										{FSys_Mount_User_SessionID, (FULONG)usrSessionID },
 										{TAG_DONE, TAG_DONE}
 									};
+									
+									DEBUG("MountFSNoUser\n");
+									
 									int err = MountFSNoUser( SLIB->sl_DeviceManager, (struct TagItem *)&tags, &(rootDev), &error );
 									if( err != 0 )
 									{
@@ -1107,15 +1176,8 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 										if( tuser != NULL )
 										{
 											char *sess = USMUserGetFirstActiveSessionID( SLIB->sl_USM, tuser );
-											/*
-											if( sess && rootDev->f_SessionID )
-											{
-												FFree( rootDev->f_SessionID );
-												rootDev->f_SessionID = StringDuplicate( tuser->u_MainSessionID );
-												DEBUG("[ProtocolHttp] Session %s tusr ptr %p\n", sess, tuser );
-											}
-											*/
-											if( sess )
+
+											if( sess != NULL )
 											{
 												rootDev->f_SessionIDPTR = tuser->u_MainSessionID;
 												DEBUG("[ProtocolHttp] Session %s tusr ptr %p\n", sess, tuser );
@@ -1156,7 +1218,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 													DEBUG("tbuffer\n");
 													while( ( dataread = actFS->FileRead( fp, tbuffer, SHARING_BUFFER_SIZE ) ) != -1 )
 													{
-														DEBUG("inside of loop: readed %d\n", dataread );
+														DEBUG("inside of loop: read %d\n", dataread );
 														if( resp == 0 && dataread > 0 )
 														{
 															response = HttpNewSimple( HTTP_200_OK, tags );
@@ -1261,8 +1323,14 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							if( fs_Name != NULL ) FFree( fs_Name );
 							if( fs_Type != NULL ) FFree( fs_Type );
 							if( fs_Path != NULL ) FFree( fs_Path );
+							
+							// if temporary session was generated, we must remove it
+							if( sessionIDGenerated == TRUE )
+							{
+								USMDestroyTemporarySession( SLIB->sl_USM, sqllib, usrSessionID );
+							}
+							
 							if( usrSessionID != NULL ) FFree( usrSessionID );
-							SLIB->LibrarySQLDrop( SLIB, sqllib );
 						}
 					}
 
@@ -1955,7 +2023,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 													DEBUG("CatchALL 1621\n");
 													if( ( command = FCalloc( clen, sizeof(char) ) ) != NULL )
 													{
-														snprintf( command, clen, "php \"php/catch_all.php\" \"%s\";", uri->uri_Path->raw ); 
+														snprintf( command, clen, "php \"php/catch_all.php\" \"%s\" \"%s\";", uri->uri_Path->raw, request->http_Uri ? request->http_Uri->uri_QueryRaw : NULL );
 													
 														phpResp = RunPHPScript( command );
 														

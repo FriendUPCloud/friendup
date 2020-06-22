@@ -23,6 +23,7 @@
 #include <system/systembase.h>
 #include <system/user/user_manager.h>
 #include <system/fsys/door_notification.h>
+#include <util/session_id.h>
 
 /**
  * Create new User Session Manager
@@ -966,6 +967,12 @@ int USMRemoveOldSessions( void *lsb )
 	}
 	BufStringDelete( sqlreq );
 	
+	//
+	// now remove unused application sessions
+	//
+	
+	ApplicationManagerRemoveDetachedApplicationSession( sb->sl_ApplicationManager );
+	
 	return 0;
 }
 
@@ -1027,20 +1034,20 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
 	// Go through logged users
 	//
     
-	//DEBUG("CHECK11\n");
+	DEBUG("CHECK11\n");
 	if( FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) ) == 0 )
 	{
 		User *usr = sb->sl_UM->um_Users;
 		while( usr != NULL )
 		{
 			// if notification should be addressed to user
-			//DEBUG("[USMSendDoorNotification] going through users, user: %lu\n", usr->u_ID );
+			DEBUG("[USMSendDoorNotification] going through users, user: %lu\n", usr->u_ID );
 			if( usr->u_ID == notification->dn_OwnerID )
 			{
 				char *uname = usr->u_Name;
 				int len = snprintf( tmpmsg, 2048, "{ \"type\":\"msg\", \"data\":{\"type\":\"filesystem-change\",\"data\":{\"deviceid\":\"%lu\",\"devname\":\"%s\",\"path\":\"%s\",\"owner\":\"%s\" }}}", device->f_ID, device->f_Name, path, uname  );
 			
-				//DEBUG("[USMSendDoorNotification] found ownerid %lu\n", usr->u_ID );
+				DEBUG("[USMSendDoorNotification] found ownerid %lu\n", usr->u_ID );
 			
 				FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 			
@@ -1064,20 +1071,20 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
 							DEBUG("[USMSendDoorNotification] Send message %s function pointer %p sbpointer %p to sessiondevid: %s\n", tmpmsg, sb->WebSocketSendMessage, sb, uses->us_DeviceIdentity );
 				
 						
-							FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
+							//FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 							WebSocketSendMessage( sb, uses, tmpmsg, len );
-							FRIEND_MUTEX_LOCK( &(usr->u_Mutex) );
+							//FRIEND_MUTEX_LOCK( &(usr->u_Mutex) );
 
 							// send message to all remote users
 							RemoteUser *ruser = usr->u_RemoteUsers;
 							while( ruser != NULL )
 							{
-								//DEBUG("[USMSendDoorNotification] Remote user connected: %s\n", ruser->ru_Name );
+								DEBUG("[USMSendDoorNotification] Remote user connected: %s\n", ruser->ru_Name );
 								RemoteDrive *rdrive = ruser->ru_RemoteDrives;
 				
 								while( rdrive != NULL )
 								{
-								//DEBUG("[USMSendDoorNotification] Remote drive connected: %s %lu\n", rdrive->rd_LocalName, rdrive->rd_DriveID );
+									DEBUG("[USMSendDoorNotification] Remote drive connected: %s %lu\n", rdrive->rd_LocalName, rdrive->rd_DriveID );
 					
 									if( rdrive->rd_DriveID == device->f_ID )
 									{
@@ -1135,6 +1142,8 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
 						le = (UserSessListEntry *)le->node.mln_Succ;
 					} // while loop, session
 					//FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+					
+					DEBUG("unlock user\n");
 					FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 				} // mutex lock
 			
@@ -1161,24 +1170,94 @@ void USMCloseUnusedWebSockets( UserSessionManager *usm )
 	DEBUG("[USMCloseUnusedWebSockets] start\n");
 	if( FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) ) == 0 )
 	{
-		UserSession *ses = usm->usm_Sessions;
-		while( ses != NULL )
-		{
-			UserSessionWebsocket *cl = ses->us_WSConnections;
-			if( cl != NULL )
-			{
-				//TODO check maybe ws connections should be removed?
-				/*
-				if( ( actTime - cl->wsc_LastPingTime ) < 150 )		// if last call was done 150 secs ago, we can close it
-				{
-					lws_close_reason( cl->wsc_Wsi, LWS_CLOSE_STATUS_NORMAL, (unsigned char *)"CLOSE", 5 );
-					DEBUG("[USMCloseUnusedWebSockets] close WS connection\n");
-				}
-				*/
-			}
-			ses = (UserSession *)ses->node.mln_Succ;
-		}
+
 		FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 	}
 	DEBUG("[USMCloseUnusedWebSockets] end\n");
+}
+
+//
+
+//
+/**
+ * // Generate temporary session
+ *
+ * @param smgr pointer to UserSessionManager
+ * @param sqllib pointer to SQLLibrary. If you want to use it during one sql connection
+ * @param userID user ID to which user session will be assigned
+ * @param type type of session
+ * @return session ID when success, otherwise NULL
+ */
+char *USMCreateTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, FULONG userID, int type )
+{
+	char *sessionID = NULL;
+	FBOOL locSQLused = FALSE;
+	SystemBase *sb = NULL;
+
+	
+	SQLLibrary *locSqllib = sqllib;
+	if( sqllib == NULL )
+	{
+		sb = (SystemBase *)smgr->usm_SB;
+		locSqllib = sb->LibrarySQLGet( sb );
+		locSQLused = TRUE;
+	}
+	
+	sessionID = SessionIDGenerate( );
+	
+	if( locSqllib != NULL )
+	{
+		char temp[ 1024 ];
+	 
+		//INSERT INTO `FUserSession` ( `UserID`, `DeviceIdentity`, `SessionID`, `LoggedTime`) VALUES (0, 'tempsession','93623b68df9e390bc89eff7875d6b8407257d60d',0 )
+		snprintf( temp, sizeof(temp), "INSERT INTO `FUserSession` (`UserID`,`DeviceIdentity`,`SessionID`,`LoggedTime`) VALUES (%lu,'tempsession','%s',%lu)", userID, sessionID, time(NULL) );
+
+		DEBUG("USMCreateTemporarySession launched SQL: %s\n", temp );
+	
+		locSqllib->QueryWithoutResults( locSqllib, temp );
+	}
+	
+	if( locSQLused == TRUE )
+	{
+		sb->LibrarySQLDrop( sb, locSqllib );
+	}
+	
+	return sessionID;
+}
+
+/**
+ * Destroy temporary session
+ *
+ * @param smgr pointer to UserSessionManager
+ * @param sqllib pointer to SQLLibrary. If you want to use it during one sql connection
+ * @param sessionID session which will be deleted
+ */
+void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, char *sessionID )
+{
+	FBOOL locSQLused = FALSE;
+	SystemBase *sb = NULL;
+	
+	SQLLibrary *locSqllib = sqllib;
+	if( sqllib == NULL )
+	{
+		sb = (SystemBase *)smgr->usm_SB;
+		locSqllib = sb->LibrarySQLGet( sb );
+		locSQLused = TRUE;
+	}
+	
+	if( locSqllib != NULL )
+	{
+		char temp[ 1024 ];
+	 
+		snprintf( temp, sizeof(temp), "DELETE from `FUserSession` where 'SessionID'='%s' AND 'DeviceIdentity'='tempsession'", sessionID );
+
+		DEBUG("USMDestroyTemporarySession launched SQL: %s\n", temp );
+	
+		locSqllib->QueryWithoutResults( locSqllib, temp );
+	}
+	
+	if( locSQLused == TRUE )
+	{
+		sb->LibrarySQLDrop( sb, locSqllib );
+	}
 }

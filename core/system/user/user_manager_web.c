@@ -47,9 +47,9 @@ inline static int killUserSession( SystemBase *l, UserSession *ses )
 	// set flag to WS connection "te be killed"
 	FRIEND_MUTEX_LOCK( &(ses->us_Mutex) );
 	ses->us_InUseCounter--;
-	if( ses->us_WSConnections != NULL && ses->us_WSConnections->wusc_Data != NULL )
+	if( ses->us_WSD != NULL )
 	{
-		ses->us_WSConnections->wusc_Status = WEBSOCKET_SERVER_CLIENT_TO_BE_KILLED;
+		ses->us_WebSocketStatus = WEBSOCKET_SERVER_CLIENT_TO_BE_KILLED;
 	}
 	FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
 	
@@ -57,7 +57,7 @@ inline static int killUserSession( SystemBase *l, UserSession *ses )
 	while( TRUE )
 	{
 		FRIEND_MUTEX_LOCK( &(ses->us_Mutex) );
-		if( ses->us_WSConnections == NULL || ses->us_WSConnections->wusc_Data == NULL || ses->us_WSConnections->wusc_Data->wsc_MsgQueue.fq_First == NULL )
+		if( ses->us_WSD == NULL || ses->us_MsgQueue.fq_First == NULL )
 		{
 			FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
 			break;
@@ -78,81 +78,84 @@ inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid 
 	
 	UserSession **toBeRemoved = NULL;
 	
-	FRIEND_MUTEX_LOCK( &u->u_Mutex );
-	UserSessListEntry *usl = u->u_SessionsList;
-	if( deviceid != NULL )
+	if( FRIEND_MUTEX_LOCK( &u->u_Mutex ) == 0 )
 	{
-		while( usl != NULL )
+		UserSessListEntry *usl = u->u_SessionsList;
+		if( deviceid != NULL )
 		{
-			UserSession *s = (UserSession *) usl->us;
-			if( s != NULL && s->us_DeviceIdentity != NULL && strcmp( s->us_DeviceIdentity, deviceid ) == 0 )
+			while( usl != NULL )
 			{
-				char tmpmsg[ 2048 ];
-				int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
+				UserSession *s = (UserSession *) usl->us;
+				if( s != NULL && s->us_DeviceIdentity != NULL && strcmp( s->us_DeviceIdentity, deviceid ) == 0 )
+				{
+					char tmpmsg[ 2048 ];
+					int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
 				
-				int msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
+					int msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
 
-				DEBUG("Bytes send: %d\n", msgsndsize );
+					DEBUG("Bytes send: %d\n", msgsndsize );
 			
-				break;
+					break;
+				}
+				usl = (UserSessListEntry *)usl->node.mln_Succ;
+				nrSessions++;
 			}
-			usl = (UserSessListEntry *)usl->node.mln_Succ;
-			nrSessions++;
 		}
-	}
-	else
-	{
-		while( usl != NULL )
+		else
 		{
-			UserSession *s = (UserSession *) usl->us;
-			if( s != NULL )
+			while( usl != NULL )
 			{
-				char tmpmsg[ 2048 ];
-				int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
+				UserSession *s = (UserSession *) usl->us;
+				if( s != NULL )
+				{
+					char tmpmsg[ 2048 ];
+					int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
 				
-				int msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
+					int msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
 
-				DEBUG("Bytes send: %d\n", msgsndsize );
+					DEBUG("Bytes send: %d\n", msgsndsize );
 			
-				break;
+					break;
+				}
+				usl = (UserSessListEntry *)usl->node.mln_Succ;
+				nrSessions++;
 			}
-			usl = (UserSessListEntry *)usl->node.mln_Succ;
-			nrSessions++;
 		}
-	}
 	
-	// assign UserSessions to temporary table
-	if( nrSessions > 0 )
-	{
-		toBeRemoved = FMalloc( nrSessions * sizeof(UserSession *) );
-		i = 0;
-		while( usl != NULL )
+		// assign UserSessions to temporary table
+		if( nrSessions > 0 )
 		{
-			toBeRemoved[ i ] = (UserSession *) usl->us;
-			usl = (UserSessListEntry *)usl->node.mln_Succ;
-			i++;
+			toBeRemoved = FMalloc( nrSessions * sizeof(UserSession *) );
+			i = 0;
+			while( usl != NULL )
+			{
+				toBeRemoved[ i ] = (UserSession *) usl->us;
+				usl = (UserSessListEntry *)usl->node.mln_Succ;
+				i++;
+			}
 		}
+		FRIEND_MUTEX_UNLOCK( &u->u_Mutex );
 	}
-	
-	FRIEND_MUTEX_UNLOCK( &u->u_Mutex );
 	
 	// remove sessions
 	for( i=0 ; i < nrSessions ; i++ )
 	{
 		UserSession *ses = toBeRemoved[ i ];
 		
-		FRIEND_MUTEX_LOCK( &(ses->us_Mutex) );
-		ses->us_InUseCounter--;
-		if( ses->us_WSConnections != NULL && ses->us_WSConnections->wusc_Data != NULL )
+		if( FRIEND_MUTEX_LOCK( &(ses->us_Mutex) ) == 0 )
 		{
-			ses->us_WSConnections->wusc_Status = WEBSOCKET_SERVER_CLIENT_TO_BE_KILLED;
+			ses->us_InUseCounter--;
+			if( ses->us_WSD != NULL  )
+			{
+				ses->us_WebSocketStatus = WEBSOCKET_SERVER_CLIENT_TO_BE_KILLED;
+			}
+			FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
 		}
-		FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
 		
 		// wait till queue will be empty
 		while( TRUE )
 		{
-			if( ses->us_WSConnections ->wusc_Data->wsc_MsgQueue.fq_First == NULL )
+			if( ses->us_MsgQueue.fq_First == NULL )
 			{
 				break;
 			}
@@ -194,6 +197,7 @@ inline static void NotifyExtServices( SystemBase *l, Http *request, User *usr, c
 	
 	DEBUG("NotifyExtServices3: %s\n", bs->bs_Buffer );
 	
+	DEBUG("NotifyExtServices - send information to 3rd party services\n");
 	NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", action, bs->bs_Buffer );
 	
 	BufStringDelete( bs );
@@ -966,8 +970,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							UGMGetUserGroupsDB( l->sl_UGM, usr->u_ID, bs );
 							BufStringAddSize( bs, "]}", 2 );
 							
-							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
-							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "update", msg );
+							DEBUG("Updatestatus - send information to 3rd party services\n");
 							
 							BufStringDelete( bs );
 						}
@@ -1637,12 +1640,12 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	{
 		char *sessid = NULL;
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
-		if( response != NULL ) FERROR("RESPONSE \n");
+		//if( response != NULL ) FERROR("RESPONSE \n");
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
 		DEBUG("[UMWebRequest] Logging out!!\n" );
@@ -1718,15 +1721,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				//
 				// we found user which must be removed
 				//
-				/*
-				if( request->h_RequestSource == HTTP_SOURCE_WS )
-				{
-					HttpFree( response );
-					response = NULL;
-				}
-				
-				if( error == 0 && response != NULL )
-				*/
 				{
 					// !!! logout cannot send message via Websockets!!!!
 					// in this case return error < 0
@@ -1832,7 +1826,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							
 							if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 							{
-								if( us->us_WSConnections != NULL && ( (timestamp - us->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) )
+								if( us->us_WSD != NULL && ( (timestamp - us->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) )
 								{
 									int size = 0;
 									if( pos == 0 )
@@ -2062,7 +2056,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						FBOOL add = FALSE;
 						DEBUG("[UMWebRequest] Going through sessions, device: %s\n", locses->us_DeviceIdentity );
 						
-						if( ( (timestamp - locses->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) && locses->us_WSConnections != NULL )
+						if( ( (timestamp - locses->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) && locses->us_WSD != NULL )
 						{
 							add = TRUE;
 						}
@@ -2173,7 +2167,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						FBOOL add = FALSE;
 						//DEBUG("[UMWebRequest] Going through sessions, device: %s time %lu timeout time %lu WS ptr %p\n", locses->us_DeviceIdentity, (long unsigned int)(timestamp - locses->us_LoggedTime), l->sl_RemoveSessionsAfterTime, locses->us_WSClients );
 						
-						if( ( (timestamp - locses->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) && locses->us_WSConnections != NULL )
+						if( ( (timestamp - locses->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) && locses->us_WSD != NULL )
 						{
 							add = TRUE;
 						}

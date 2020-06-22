@@ -1,7 +1,7 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2020 Andy Green <andy@warmcat.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -52,9 +52,9 @@ lwsac_align(size_t length)
 }
 
 size_t
-lwsac_sizeof(void)
+lwsac_sizeof(int first)
 {
-	return sizeof(struct lwsac);
+	return sizeof(struct lwsac) + (first ? sizeof(struct lwsac_head) : 0);
 }
 
 size_t
@@ -69,40 +69,84 @@ lwsac_get_next(struct lwsac *lac)
 	return lac->next;
 }
 
-void *
-lwsac_use(struct lwsac **head, size_t ensure, size_t chunk_size)
+int
+lwsac_extend(struct lwsac *head, int amount)
 {
-	size_t ofs, alloc, al;
-	struct lwsac *bf = *head;
+	struct lwsac_head *lachead;
+	struct lwsac *bf;
+
+	assert(head);
+	lachead = (struct lwsac_head *)&head[1];
+
+	bf = lachead->curr;
+	assert(bf);
+
+	if (bf->alloc_size - bf->ofs < lwsac_align(amount))
+		return 1;
+
+	/* memset so constant folding never sees uninitialized data */
+
+	memset(((uint8_t *)bf) + bf->ofs, 0, lwsac_align(amount));
+	bf->ofs += lwsac_align(amount);
+
+	return 0;
+}
+
+static void *
+_lwsac_use(struct lwsac **head, size_t ensure, size_t chunk_size, char backfill)
+{
 	struct lwsac_head *lachead = NULL;
+	size_t ofs, alloc, al, hp;
+	struct lwsac *bf = *head;
 
 	if (bf)
 		lachead = (struct lwsac_head *)&bf[1];
 
-	/* check for something that can take it first */
+	al = lwsac_align(ensure);
 
-	while (bf) {
-		if (bf->alloc_size - bf->ofs >= ensure)
-			goto do_use;
+	/* backfill into earlier chunks if that is allowed */
 
-		bf = bf->next;
+	if (backfill)
+		/*
+		 * check if anything can take it, from the start
+		 */
+		while (bf) {
+			if (bf->alloc_size - bf->ofs >= ensure)
+				goto do_use;
+
+			bf = bf->next;
+		}
+	else {
+		/*
+		 * If there's a current chunk, just check if he can take it
+		 */
+		if (lachead && lachead->curr) {
+			bf = lachead->curr;
+			if (bf->alloc_size - bf->ofs >= ensure)
+				goto do_use;
+		}
 	}
 
 	/* nothing can currently take it... so we must allocate */
 
+	hp = sizeof(*bf); /* always need the normal header part... */
+	if (!*head)
+		hp += sizeof(struct lwsac_head);
+
 	if (!chunk_size)
-		alloc = LWSAC_CHUNK_SIZE + sizeof(*bf);
+		alloc = LWSAC_CHUNK_SIZE + hp;
 	else
-		alloc = chunk_size + sizeof(*bf);
+		alloc = chunk_size + hp;
 
 	/*
 	 * If we get asked for something outside our expectation,
 	 * increase the allocation to meet it
 	 */
 
-	if (ensure >= alloc - sizeof(*bf))
-		alloc = ensure + sizeof(*bf);
+	if (al >= alloc - hp)
+		alloc = al + hp;
 
+	lwsl_debug("%s: alloc %d for %d\n", __func__, (int)alloc, (int)ensure);
 	bf = malloc(alloc);
 	if (!bf) {
 		lwsl_err("%s: OOM trying to alloc %llud\n", __func__,
@@ -128,7 +172,8 @@ lwsac_use(struct lwsac **head, size_t ensure, size_t chunk_size)
 		lachead = (struct lwsac_head *)&bf[1];
 		memset(lachead, 0, sizeof(*lachead));
 	} else
-		lachead->curr->next = bf;
+		if (lachead->curr)
+			lachead->curr->next = bf;
 
 	lachead->curr = bf;
 	bf->head = *head;
@@ -142,7 +187,6 @@ do_use:
 
 	ofs = bf->ofs;
 
-	al = lwsac_align(ensure);
 	if (al > ensure)
 		/* zero down the alignment padding part */
 		memset((char *)bf + ofs + ensure, 0, al - ensure);
@@ -152,6 +196,18 @@ do_use:
 		bf->ofs = bf->alloc_size;
 
 	return (char *)bf + ofs;
+}
+
+void *
+lwsac_use(struct lwsac **head, size_t ensure, size_t chunk_size)
+{
+	return _lwsac_use(head, ensure, chunk_size, 0);
+}
+
+void *
+lwsac_use_backfill(struct lwsac **head, size_t ensure, size_t chunk_size)
+{
+	return _lwsac_use(head, ensure, chunk_size, 1);
 }
 
 uint8_t *
@@ -221,7 +277,7 @@ lwsac_free(struct lwsac **head)
 void
 lwsac_info(struct lwsac *head)
 {
-#if defined(_DEBUG)
+#if _LWS_ENABLED_LOGS & LLL_DEBUG
 	struct lwsac_head *lachead;
 
 	if (!head) {

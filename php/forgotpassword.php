@@ -83,7 +83,9 @@
 					include_once('3rdparty/phpmailer/class.phpmailer.php');
 					include_once('3rdparty/phpmailer/class.smtp.php');
 					$mail = new PHPMailer();
-					$mail->isSMTP();                                      // Set mailer to use SMTP
+					//$mail->SMTPDebug = SMTP::DEBUG_SERVER;
+					$mail->isSMTP();       // Set mailer to use SMTP
+					$mail->Port = isset( $cfg['Mail']['port'] ) ? intval( $cfg['Mail']['port'] ) :  587; 
 					$mail->Host = $cfg['Mail']['host']; 					 // Specify main and backup SMTP servers
 					$mail->SMTPAuth = true;                               // Enable SMTP authentication
 					$mail->Username = $cfg['Mail']['user'];                 // SMTP username
@@ -101,14 +103,25 @@
 					$mail->AltBody = strip_tags($mailtemplate);
 					
 					$mail->addAddress( $rs->Email );
-					if( $mail->send() )
-					{
-						die('ok');
+			
+			
+					try {
+						
+						if( $mail->send() )
+						{
+							die('ok');
+						}
+						else
+						{
+							die('done2'); // . $mail->ErrorInfo
+						}
+										
+					} catch (phpmailerException $e) {
+						echo $e->errorMessage(); //Pretty error messages from PHPMailer
+					} catch (Exception $e) {
+						echo $e->getMessage(); //Boring error messages from anything else!
 					}
-					else
-					{
-						die('done2');
-					}										
+					die();
 				}
 				die( 'done3' );
 			}
@@ -177,6 +190,7 @@
 				include_once('3rdparty/phpmailer/class.smtp.php');
 				$mail = new PHPMailer();
 				$mail->isSMTP();                                      // Set mailer to use SMTP
+				$mail->Port = isset( $cfg['Mail']['port'] ) ? intval( $cfg['Mail']['port'] ) :  587; 
 				$mail->Host = $cfg['Mail']['host']; 					 // Specify main and backup SMTP servers
 				$mail->SMTPAuth = true;                               // Enable SMTP authentication
 				$mail->Username = $cfg['Mail']['user'];                 // SMTP username

@@ -279,13 +279,16 @@ callback_dumb_increment(struct lws *wsi, enum lws_callback_reasons reason,
 	case LWS_CALLBACK_OPENSSL_LOAD_EXTRA_CLIENT_VERIFY_CERTS:
 		if (crl_path[0]) {
 			/* Enable CRL checking of the server certificate */
+			X509_STORE *store;
+			X509_LOOKUP *lookup;
+			int n;
 			X509_VERIFY_PARAM *param = X509_VERIFY_PARAM_new();
 			X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_CRL_CHECK);
 			SSL_CTX_set1_param((SSL_CTX*)user, param);
-			X509_STORE *store = SSL_CTX_get_cert_store((SSL_CTX*)user);
-			X509_LOOKUP *lookup = X509_STORE_add_lookup(store,
+			store = SSL_CTX_get_cert_store((SSL_CTX*)user);
+			lookup = X509_STORE_add_lookup(store,
 							X509_LOOKUP_file());
-			int n = X509_load_cert_crl_file(lookup, crl_path,
+			n = X509_load_cert_crl_file(lookup, crl_path,
 							X509_FILETYPE_PEM);
 			X509_VERIFY_PARAM_free(param);
 			if (n != 1) {
@@ -586,7 +589,7 @@ int main(int argc, char **argv)
 
 	memset(&info, 0, sizeof info);
 
-	lwsl_notice("libwebsockets test client - license LGPL2.1+SLE\n");
+	lwsl_notice("libwebsockets test client - license MIT\n");
 	lwsl_notice("(C) Copyright 2010-2018 Andy Green <andy@warmcat.com>\n");
 
 	if (argc < 2)

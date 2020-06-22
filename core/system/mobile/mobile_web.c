@@ -354,64 +354,76 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			deviceID = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		
-		SQLLibrary *sqllib  = l->LibrarySQLGet( l );
-		if( sqllib != NULL )
+		if( id > 0 || deviceID != NULL )
 		{
-			// looks like id parameter was not passed, checking additional parameters like deviceid
-			if( id == 0 )
+			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+			if( sqllib != NULL )
 			{
-				char query[ 512 ];
-			
-				DEBUG("Find entry for Device: %s\n", deviceID );
-			
-				snprintf( query, sizeof(query), "SELECT ID from `FUserMobileApp` where DeviceID='%s' AND UserID=%lu", deviceID, loggedSession->us_UserID );
-				void *res = sqllib->Query( sqllib, query );
-			
-				if( res != NULL )
+				FBOOL idFoundByDeviceID = FALSE;
+				// looks like id parameter was not passed, checking additional parameters like deviceid
+				if( deviceID != NULL && id == 0 )
 				{
-					char **row;
-					while( ( row = sqllib->FetchRow( sqllib, res ) ) )
+					char query[ 512 ];
+			
+					DEBUG("Find entry for Device: %s\n", deviceID );
+			
+					snprintf( query, sizeof(query), "SELECT ID from `FUserMobileApp` where DeviceID='%s' AND UserID=%lu", deviceID, loggedSession->us_UserID );
+					void *res = sqllib->Query( sqllib, query );
+			
+					if( res != NULL )
 					{
-						if( row[ 0 ] != NULL )
+						char **row;
+						while( ( row = sqllib->FetchRow( sqllib, res ) ) )
 						{
-							char *end;
-							id = strtoul( row[ 0 ], &end, 0 );
+							if( row[ 0 ] != NULL )
+							{
+								char *end;
+								id = strtoul( row[ 0 ], &end, 0 );
+								idFoundByDeviceID = TRUE;
+							}
 						}
+						sqllib->FreeResult( sqllib, res );
 					}
-					sqllib->FreeResult( sqllib, res );
 				}
-			}
 		
-			if( id > 0 )
-			{
-				char *tmpQuery = NULL;
-				int querysize = 1024;
-				
-				if( ( tmpQuery = FCalloc( querysize, sizeof(char) ) ) != NULL )
+				// deviceID was not delivered but id was. So lets remove it by id
+				if( id > 0 )
 				{
-					sprintf( tmpQuery, "DELETE FROM `FUserMobileApp` WHERE ID=%lu", id );
+					char *tmpQuery = NULL;
+					int querysize = 1024;
+				
+					if( ( tmpQuery = FCalloc( querysize, sizeof(char) ) ) != NULL )
+					{
+						sprintf( tmpQuery, "DELETE FROM `FUserMobileApp` WHERE ID=%lu", id );
 					
-					sqllib->QueryWithoutResults( sqllib, tmpQuery );
-					FFree( tmpQuery );
+						sqllib->QueryWithoutResults( sqllib, tmpQuery );
+						FFree( tmpQuery );
 					
-					HttpAddTextContent( response, "ok<!--separate-->{ \"Result\": \"success\"}" );
+						HttpAddTextContent( response, "ok<!--separate-->{ \"result\":\"success\"}" );
+					}
+					else
+					{
+						char buffer[ 256 ];
+						snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
+						HttpAddTextContent( response, buffer );
+					}
 				}
 				else
 				{
 					char buffer[ 256 ];
-					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
+					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_UMA_ENTRY_NOT_FOUND] , DICT_UMA_ENTRY_NOT_FOUND );
 					HttpAddTextContent( response, buffer );
 				}
+				l->LibrarySQLDrop( l, sqllib );
 			}
 			else
 			{
 				char buffer[ 256 ];
 				char buffer1[ 256 ];
 				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "id or deviceid" );
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
-			l->LibrarySQLDrop( l, sqllib );
 		}	// no DB connection
 		
 		if( deviceID != NULL )
@@ -737,7 +749,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 	*
 	* @param sessionid - (required) session id of logged user
 	* @param notifid - (required) mobile request ID
-	* @param action - (required) action ( NOTIFY_ACTION_REGISTER = 0, NOTIFY_ACTION_READED, NOTIFY_ACTION_TIMEOUT )
+	* @param action - (required) action ( NOTIFY_ACTION_REGISTER = 0, NOTIFY_ACTION_READ, NOTIFY_ACTION_TIMEOUT )
 	* @return { update: sucess, result: <ID> } when success, otherwise error with code
 	*/
 	/// @endcond
@@ -773,10 +785,31 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 		if( action > 0 && notifid > 0 )	// register is not supported
 		{
 			char tmp[ 512 ];
+			char *userName = NULL;
 			
 			Notification *not = NotificationManagerRemoveNotification( l->sl_NotificationManager , notifid );
-			int err = MobileAppNotifyUserUpdate( l, loggedSession->us_User->u_Name, not, action );
-			Log( FLOG_INFO, "[Update notification] action %d uname: %s\n", action, loggedSession->us_User->u_Name );
+			if( FRIEND_MUTEX_LOCK( &(loggedSession->us_Mutex) ) == 0 )
+			{
+				loggedSession->us_InUseCounter++;
+				if( loggedSession->us_User != NULL )
+				{
+					userName = StringDuplicate( loggedSession->us_User->u_Name );
+				}
+				FRIEND_MUTEX_UNLOCK( &(loggedSession->us_Mutex) );
+			}
+			int err = MobileAppNotifyUserUpdate( l, userName, not, action );
+			Log( FLOG_INFO, "[Update notification] action %d uname: %s\n", action, userName );
+			
+			if( FRIEND_MUTEX_LOCK( &(loggedSession->us_Mutex) ) == 0 )
+			{
+				loggedSession->us_InUseCounter--;
+				if( userName != NULL )
+				{
+					FFree( userName );
+				}
+				FRIEND_MUTEX_UNLOCK( &(loggedSession->us_Mutex) );
+			}
+			
 			if( not != NULL )
 			{
 				NotificationDelete( not );
@@ -871,18 +904,9 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			char buffer[ 256 ];
 			
 			DEBUG("[MobileWebRequest] setWS state to: %d\n", status );
-			if( loggedSession->us_WSConnections != NULL )
+			if( loggedSession->us_WSD != NULL )
 			{
-				//loggedSession->us_WebSocketStatus = status;
-				UserSessionWebsocket *cl = loggedSession->us_WSConnections;
-				
-				while( cl != NULL )
-				{
-					cl->wusc_Status = status;
-					
-					//DEBUG("[MobileWebRequest] connection %p set status to: %d\n", cl->wsc_Wsi, cl->wsc_Status );
-					cl = (UserSessionWebsocket *) cl->node.mln_Succ;
-				}
+				loggedSession->us_WebSocketStatus = status;
 			}
 			
 			snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"0\", \"set\":\"%d\" }", status );

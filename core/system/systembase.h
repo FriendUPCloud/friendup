@@ -51,7 +51,6 @@
 #include <system/cache/cache_manager.h>
 #include <libwebsockets.h>
 #include <system/invar/invar_manager.h>
-#include <system/application/app_session_manager.h>
 #include <system/user/user_session.h>
 #include <system/user/user_sessionmanager.h>
 #include <system/roles/role_manager.h>
@@ -72,6 +71,8 @@
 #include <system/calendar/calendar_manager.h>
 #include <system/notification/notification_manager.h>
 #include <system/security/security_manager.h>
+#include <system/sas/sas_manager.h>
+#include <system/application/application_manager.h>
 
 #include <interface/socket_interface.h>
 #include <interface/string_interface.h>
@@ -81,6 +82,7 @@
 #include <interface/comm_service_interface.h>
 #include <interface/comm_service_remote_interface.h>
 #include <interface/properties_interface.h>
+#include <interface/util_interface.h>
 #include <core/event_manager.h>
 #include <system/cache/cache_uf_manager.h>
 #include <db/sqllib.h>
@@ -231,7 +233,7 @@ typedef struct SystemBase
 
 	DeviceManager					*sl_DeviceManager;	// DeviceManager
 	WorkerManager					*sl_WorkerManager; ///< Worker Manager
-	AppSessionManager				*sl_AppSessionManager;		// application sessions
+	ApplicationManager				*sl_ApplicationManager;		// application
 	UserSessionManager				*sl_USM;			// user session manager
 	UserManager						*sl_UM;		// user manager
 	UserGroupManager				*sl_UGM;	// user group manager
@@ -252,6 +254,7 @@ typedef struct SystemBase
 	PermissionManager				*sl_PermissionManager;		// Permission Manager
 	RoleManager						*sl_RoleManager;	// Role Manager
 	SecurityManager					*sl_SecurityManager;	// Security Manager
+	SASManager						*sl_SASManager;			// SAS Manager
 
 	pthread_mutex_t 				sl_ResourceMutex;	// resource mutex
 	pthread_mutex_t					sl_InternalMutex;		// internal slib mutex
@@ -296,6 +299,7 @@ typedef struct SystemBase
 	CommServiceInterface			sl_CommServiceInterface;	// communication interface
 	CommServiceRemoteInterface		sl_CommServiceRemoteInterface;	// communication remote interface
 	PropertiesInterface				sl_PropertiesInterface;	// communication remote interface
+	UtilInterface					sl_UtilInterface; // util interface
 	
 	EModule							*sl_PHPModule;
 
@@ -352,7 +356,7 @@ typedef struct SystemBase
 
 	void							(*LibraryImageDrop)( struct SystemBase *sb, ImageLibrary *pl );
 	
-	int								(*UserDeviceMount)( struct SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
+	int								(*UserDeviceMount)( struct SystemBase *l, User *usr, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
 	
 	int								(*UserDeviceUnMount)( struct SystemBase *l, SQLLibrary *sqllib, User *usr );
 	
@@ -364,7 +368,7 @@ typedef struct SystemBase
 	
 	int								(*WebSocketSendMessageInt)( UserSession *usersession, char *msg, int len );
 	
-	int								(*WebsocketWrite)( UserSessionWebsocket *wscl, unsigned char *msgptr, int msglen, int type );
+	int								(*WebsocketWrite)( UserSession *wscl, unsigned char *msgptr, int msglen, int type );
 	
 	int								(*SendProcessMessage)( Http *request, char *data, int len );
 
@@ -395,7 +399,7 @@ typedef struct SystemBase
 	char							**l_ServerKeyValues;
 	int								l_ServerKeysNum;
 	
-	WebsocketAPNSConnector			*l_APNSConnection;
+	//WebsocketAPNSConnector			*l_APNSConnection;
 } SystemBase;
 
 
@@ -517,7 +521,7 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len );
 //
 //
 
-int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
+int UserDeviceMount( SystemBase *l, User *usr, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
 
 //
 //

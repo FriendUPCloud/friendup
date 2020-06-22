@@ -391,7 +391,7 @@ Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserS
 	
 	DEBUG("[ServiceManagerWebRequest] ---------------------------------%s----servicename %s servicename from service %s\n", urlpath[0], serviceName, selService->GetName() );
 	
-	selService->s_USW = request->http_WSocket;
+	selService->s_UserSession = loggedSession;//request->http_WSocket;
 	
 	DEBUG( "[ServiceManagerWebRequest]  Command OK %s !\n", urlpath[ ELEMENT_COMMAND ] );
 	

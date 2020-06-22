@@ -80,7 +80,7 @@ __lws_reset_wsi(struct lws *wsi)
 	 */
 	if (wsi->protocol && wsi->protocol->per_session_data_size &&
 	    wsi->user_space && !wsi->user_space_externally_allocated)
-		lws_free(wsi->user_space);
+		lws_free_set_NULL(wsi->user_space);
 
 	lws_buflist_destroy_all_segments(&wsi->buflist);
 	lws_buflist_destroy_all_segments(&wsi->buflist_out);
@@ -144,7 +144,6 @@ __lws_free_wsi(struct lws *wsi)
 		return;
 
 	__lws_reset_wsi(wsi);
-
 
 	if (wsi->context->event_loop_ops->destroy_wsi)
 		wsi->context->event_loop_ops->destroy_wsi(wsi);
@@ -235,8 +234,9 @@ __lws_close_free_wsi(struct lws *wsi, enum lws_close_status reason,
 		     const char *caller)
 {
 	struct lws_context_per_thread *pt;
-	struct lws *wsi1, *wsi2;
+	const struct lws_protocols *pro;
 	struct lws_context *context;
+	struct lws *wsi1, *wsi2;
 	int n, ccb;
 
 	lwsl_info("%s: %p: caller: %s\n", __func__, wsi, caller);
@@ -262,7 +262,7 @@ __lws_close_free_wsi(struct lws *wsi, enum lws_close_status reason,
 #endif
 
 #if defined(LWS_WITH_HTTP2)
-	if (wsi->h2_stream_immortal)
+	if (wsi->mux_stream_immortal)
 		lws_http_close_immortal(wsi);
 #endif
 
@@ -281,6 +281,7 @@ __lws_close_free_wsi(struct lws *wsi, enum lws_close_status reason,
 		wsi->child_list = NULL;
 	}
 
+#if defined(LWS_ROLE_RAW_FILE)
 	if (wsi->role_ops == &role_ops_raw_file) {
 		lws_remove_child_from_any_parent(wsi);
 		__remove_wsi_socket_from_fds(wsi);
@@ -289,13 +290,14 @@ __lws_close_free_wsi(struct lws *wsi, enum lws_close_status reason,
 					wsi->user_space, NULL, 0);
 		goto async_close;
 	}
+#endif
 
 	wsi->wsistate_pre_close = wsi->wsistate;
 
 #ifdef LWS_WITH_CGI
 	if (wsi->role_ops == &role_ops_cgi) {
 
-		// lwsl_debug("%s: closing stdwsi index %d\n", __func__, (int)wsi->cgi_channel);
+		// lwsl_debug("%s: closing stdwsi index %d\n", __func__, (int)wsi->lsp_channel);
 
 		/* we are not a network connection, but a handler for CGI io */
 		if (wsi->parent && wsi->parent->http.cgi) {
@@ -304,7 +306,8 @@ __lws_close_free_wsi(struct lws *wsi, enum lws_close_status reason,
 				lws_cgi_remove_and_kill(wsi->parent);
 
 			/* end the binding between us and master */
-			wsi->parent->http.cgi->stdwsi[(int)wsi->cgi_channel] =
+			if (wsi->parent->http.cgi)
+				wsi->parent->http.cgi->lsp->stdwsi[(int)wsi->lsp_channel] =
 									NULL;
 		}
 		wsi->socket_is_permanently_unusable = 1;
@@ -408,6 +411,12 @@ __lws_close_free_wsi(struct lws *wsi, enum lws_close_status reason,
 
 just_kill_connection:
 
+#if defined(LWS_WITH_FILE_OPS) && (defined(LWS_ROLE_H1) || defined(LWS_ROLE_H2))
+	if (lwsi_role_http(wsi) && lwsi_role_server(wsi) &&
+	    wsi->http.fop_fd != NULL)
+		lws_vfs_file_close(&wsi->http.fop_fd);
+#endif
+
 #if defined(LWS_WITH_SYS_ASYNC_DNS)
 	lws_async_dns_cancel(wsi);
 #endif
@@ -442,9 +451,12 @@ just_kill_connection:
 	if ((lwsi_state(wsi) == LRS_WAITING_SERVER_REPLY ||
 	     lwsi_state(wsi) == LRS_WAITING_DNS ||
 	     lwsi_state(wsi) == LRS_WAITING_CONNECT) &&
-	     !wsi->already_did_cce && wsi->protocol)
+	     !wsi->already_did_cce && wsi->protocol) {
+		static const char _reason[] = "closed before established";
+
 		lws_inform_client_conn_fail(wsi,
-				(void *)"closed before established", 24);
+			(void *)_reason, sizeof(_reason));
+	}
 #endif
 
 	/*
@@ -496,7 +508,7 @@ just_kill_connection:
 		if (!wsi->socket_is_permanently_unusable &&
 		    lws_socket_is_valid(wsi->desc.sockfd) &&
 		    lwsi_state(wsi) != LRS_SHUTDOWN &&
-		    context->event_loop_ops->periodic_events_available) {
+		    (context->event_loop_ops->flags & LELOF_ISPOLL)) {
 			__lws_change_pollfd(wsi, LWS_POLLOUT, LWS_POLLIN);
 			lwsi_set_state(wsi, LRS_SHUTDOWN);
 			__lws_set_timeout(wsi, PENDING_TIMEOUT_SHUTDOWN_FLUSH,
@@ -574,8 +586,15 @@ just_kill_connection:
 		 */
 		ccb = 1;
 
+	pro = wsi->protocol;
+
+#if defined(LWS_WITH_CLIENT)
+	if (!ccb && (lwsi_state_PRE_CLOSE(wsi) & LWSIFS_NOT_EST) &&
+			lwsi_role_client(wsi)) {
+		lws_inform_client_conn_fail(wsi, "Closed before conn", 18);
+	}
+#endif
 	if (ccb) {
-		const struct lws_protocols *pro = wsi->protocol;
 
 		if (!wsi->protocol && wsi->vhost && wsi->vhost->protocols)
 			pro = &wsi->vhost->protocols[0];
@@ -587,7 +606,9 @@ just_kill_connection:
 		wsi->told_user_closed = 1;
 	}
 
+#if defined(LWS_ROLE_RAW_FILE)
 async_close:
+#endif
 	lws_remove_child_from_any_parent(wsi);
 	wsi->socket_is_permanently_unusable = 1;
 
@@ -620,17 +641,7 @@ __lws_close_free_wsi_final(struct lws *wsi)
 
 #ifdef LWS_WITH_CGI
 	if (wsi->http.cgi) {
-
-		for (n = 0; n < 3; n++) {
-			if (wsi->http.cgi->pipe_fds[n][!!(n == 0)] == 0)
-				lwsl_err("ZERO FD IN CGI CLOSE");
-
-			if (wsi->http.cgi->pipe_fds[n][!!(n == 0)] >= 0) {
-				close(wsi->http.cgi->pipe_fds[n][!!(n == 0)]);
-				wsi->http.cgi->pipe_fds[n][!!(n == 0)] = LWS_SOCK_INVALID;
-			}
-		}
-
+		lws_spawn_piped_destroy(&wsi->http.cgi->lsp);
 		lws_free_set_NULL(wsi->http.cgi);
 	}
 #endif

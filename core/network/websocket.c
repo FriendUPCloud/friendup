@@ -302,10 +302,6 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 			ws->ws_KeyPath = lsb->RSA_SERVER_KEY;
 			
 			DEBUG1("[WS] server cert %s keycert %s\n", ws->ws_CertPath, ws->ws_KeyPath );
-		
-			//sprintf( ws->ws_CertPath, "%s%s", fhome, "/libwebsockets-test-server.pem" );
-			//sprintf( ws->ws_KeyPath, "%s%s", fhome, "/libwebsockets-test-server.key.pem" );
-			//ws->ws_Opts |= LWS_SERVER_OPTION_REDIRECT_HTTP_TO_HTTPS;
 		}
 		
 		if( ws->ws_AllowNonSSL == TRUE )
@@ -313,11 +309,6 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 			 //ws->ws_Opts |= LWS_SERVER_OPTION_ALLOW_NON_SSL_ON_SSL_PORT;
 		}
 		
-			/*
-		case 'k':
-			opts = LWS_SERVER_OPTION_DEFEAT_CLIENT_MASK;
-			break;
-			*/
 		ws->ws_Info.port = ws->ws_Port;
 		if( proto == 0 )
 		{
@@ -342,7 +333,7 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 		ws->ws_Info.timeout_secs_ah_idle = 90;
 		if( ws->ws_UseSSL == TRUE ) 
 		{
-			ws->ws_Info.options |= LWS_SERVER_OPTION_REDIRECT_HTTP_TO_HTTPS|LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
+			ws->ws_Info.options |= LWS_SERVER_OPTION_REDIRECT_HTTP_TO_HTTPS;
 		}
 		
 		ws->ws_Info.user = ws;
@@ -380,9 +371,6 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 		}
 		
 		INFO("[WS] NEW Websockets ptr %p context %p\n", ws, ws->ws_Context);
-
-		ws->ws_Buf[ LWS_SEND_BUFFER_PRE_PADDING ] = 'x';
-			
 	}
 	else
 	{
@@ -436,12 +424,14 @@ void WebSocketDelete( WebSocket* ws )
 		
 		pthread_mutex_destroy( &(ws->ws_Mutex) );
 		
-		Log( FLOG_DEBUG, "[WS] Thread closed\n");
+		Log( FLOG_DEBUG, "[WS] Thread closed, context: %p\n", ws->ws_Context );
 		
 		if( ws->ws_Context != NULL )
 		{
+			//lws_context_deprecate( ws->ws_Context, 0 );
 			lws_context_destroy( ws->ws_Context );
 			ws->ws_Context = NULL;
+			DEBUG( "[WS] context destroyed\n");
 		}
 		
 		if( ws->ws_CertPath != NULL )
@@ -464,33 +454,12 @@ static int callback_http( struct lws *wsi __attribute__((unused)), enum lws_call
 	char client_name[ 128 ];
 	char client_ip[ 128 ];
 	
-	WebSocket *ws =  (WebSocket *)in;//  lws_wsi_user(lws_get_parent(wsi));
-	//struct lws_pollargs *pa = (struct lws_pollargs *)in;
-	//lws_context_user ( wsi );
-	
+	WebSocket *ws =  (WebSocket *)in;
+
 	switch( reason ) 
 	{
 		case LWS_CALLBACK_HTTP:
 			DEBUG1( "[WS] serving HTTP URI %s\n", (char *)in );
-/*
-		if ( in && strcmp(in, "/favicon.ico") == 0 ) 
-		{
-			if (lws_serve_http_file( wsi,
-			     LOCAL_RESOURCE_PATH"/favicon.ico", "image/x-icon", 4) )
-			{
-				DEBUG1( "[WS]:Failed to send favicon\n");
-			}
-			break;
-		}
-
-		// send the script... when it runs it'll start websockets 
-
-		//n = lws_serve_http_file(wsi, buf, mimetype, other_headers, n);
-		if ( lws_serve_http_file( wsi, LOCAL_RESOURCE_PATH"/test.html", "text/html", 4) )
-		{
-			FERROR( "[WS]:Failed to send HTTP file\n");
-		}
-		*/
 		break;
 
 	//
@@ -568,7 +537,7 @@ static void dump_handshake_info(struct lws_tokens *lwst)
  * @param wsi pointer to libwebsockets
  * @param sessionid sessionid to which 
  * @param authid authentication id
- * @param data pointer to WCWSData
+ * @param data pointer to WSCData
  * @return 0 if connection was added without problems otherwise error number
  */
 
@@ -627,185 +596,75 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
 		return -1;
 	}
 	
-	// going through all user session WS connections
-	UserSessionWebsocket *listEntry = NULL;
-	
-	DEBUG("[WS] AddWSCon session pointer %p\n", actUserSess );
 	if( FRIEND_MUTEX_LOCK( &(actUserSess->us_Mutex) ) == 0 )
 	{
-		listEntry = actUserSess->us_WSConnections;
-		while( listEntry != NULL )
-		{
-			// if connection is empty or same as in WSCData
-			DEBUG("[WS] wsclientptr %p\n", listEntry );
-			if( listEntry->wusc_Data == NULL || listEntry->wusc_Data->wsc_Wsi == NULL || listEntry->wusc_Data->wsc_Wsi == wsi )
-			{
-				break;
-			}
-			listEntry = (UserSessionWebsocket *)listEntry->node.mln_Succ;
-		}
+		actUserSess->us_Wsi = wsi;
+		actUserSess->us_WSD = data;
+		
 		FRIEND_MUTEX_UNLOCK( &(actUserSess->us_Mutex) );
+		
+		if( FRIEND_MUTEX_LOCK( &(data->wsc_Mutex) ) == 0 )
+		{
+			data->wsc_UserSession = actUserSess;
+			data->wsc_Wsi = wsi;
+			FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
+		}
 	}
 	
-	DEBUG("[WS] AddWSCon entry found %p\n", listEntry );
-
 	// create and use new WebSocket connection
-	
-	UserSessionWebsocket *nwsc;
-	
-	if( listEntry != NULL )
+
+	User *actUser = actUserSess->us_User;
+	if( actUser != NULL )
 	{
-		INFO("[WS] User already have this websocket connection\n");
-		nwsc = listEntry;
+		Log( FLOG_INFO,"[WS] WebSocket connection set for user %s  sessionid %s\n", actUser->u_Name, actUserSess->us_SessionID );
+
+		INFO("[WS] ADD WEBSOCKET CONNECTION TO USER %s\n\n",  actUser->u_Name );
 	}
 	else
 	{
-		nwsc = UserSessionWebsocketNew();
+		FERROR("User sessions %s is not attached to user %lu\n", actUserSess->us_SessionID, actUserSess->us_UserID );
 	}
 	
-	if( nwsc != NULL )
-	{
-		Log(FLOG_DEBUG, "[WS] WebsocketClient new %p pointer to next %p\n", nwsc, nwsc->node.mln_Succ );
-		DEBUG("[WS] AddWSCon new connection created\n");
-		
-		User *actUser = actUserSess->us_User;
-		if( actUser != NULL )
-		{
-			Log( FLOG_INFO,"[WS] WebSocket connection set for user %s  sessionid %s\n", actUser->u_Name, actUserSess->us_SessionID );
-
-			INFO("[WS] ADD WEBSOCKET CONNECTION TO USER %s\n\n",  actUser->u_Name );
-		}
-		else
-		{
-			FERROR("User sessions %s is not attached to user %lu\n", actUserSess->us_SessionID, actUserSess->us_UserID );
-		}
-
-		data->wsc_WebsocketsServerClient = nwsc;
-		data->wsc_SystemBase = l;
-		nwsc->wusc_Data = data;
-		data->wsc_UserSession = actUserSess;
-		data->wsc_Wsi = wsi;
-		
-		if( listEntry == NULL )
-		{
-			// everything is set, we are adding new connection to list
-			if( FRIEND_MUTEX_LOCK( &(actUserSess->us_Mutex) ) == 0 )
-			{
-				nwsc->node.mln_Succ = (MinNode *)actUserSess->us_WSConnections;
-				actUserSess->us_WSConnections = nwsc;
-				
-				FRIEND_MUTEX_UNLOCK( &(actUserSess->us_Mutex) );
-			}
-		}
-		else
-		{
-			//actUserSess->us_WSClients = nwsc;
-		}
-			
-		Log(FLOG_DEBUG, "[WS] WebsocketClient new %p pointer to next %p actuser session %p = %s\n", nwsc, nwsc->node.mln_Succ, actUserSess, actUserSess->us_SessionID );
-		
-		if( listEntry != NULL )
-		{
-			return 1;
-		}
-	}
-	else
-	{
-		Log( FLOG_ERROR,"[WS] Cannot allocate memory for WebsocketClient\n");
-		return 2;
-	}
 	return 0;
 }
 
 /**
  * Delete websocket connection
  *
- * @param data pointer to FCWSData
+ * @param d pointer to FCWSData
  * @return 0 if connection was deleted without problems otherwise error number
  */
 
-int DetachWebsocketFromSession( WSCData *data )
+int DetachWebsocketFromSession( void *d )
 {
-    SystemBase *l = (SystemBase *)data->wsc_SystemBase;
-	if( data->wsc_WebsocketsServerClient == NULL )
+	WSCData *data = (WSCData *)d;
+	
+    SystemBase *l = (SystemBase *)SLIB;
+	if( data->wsc_UserSession == NULL )
 	{
 		return 1;
 	}
-
-	UserSessionWebsocket *wscl = (UserSessionWebsocket *)data->wsc_WebsocketsServerClient;
-	if( wscl == NULL )
-	{
-		return 0;
-	}
 	
-	// disabled for a moment, only logout should trigger that
-	//AppSessionRemByWebSocket( l->sl_AppSessionManager->sl_AppSessions, data->wsc_WebsocketsServerClient );
-	
-	Log( FLOG_DEBUG, "[WS] Lock DetachWebsocketFromSession\n");
+	UserSession *us = NULL;
 	if( FRIEND_MUTEX_LOCK( &(data->wsc_Mutex) ) == 0 )
 	{
-		wscl->wusc_Data = NULL;
-		data->wsc_WebsocketsServerClient = NULL;
+		us = (UserSession *)data->wsc_UserSession;
+		data->wsc_UserSession = NULL;
+		data->wsc_Wsi = NULL;
 		FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
 	}
-	Log( FLOG_DEBUG, "[WS] UnLock DetachWebsocketFromSession\n");
-	/*
-	//
-	UserSession *us = NULL;
-	DEBUG("[DeleteWebSocketConnection] Set NULL to WSI\n");
-	if( FRIEND_MUTEX_LOCK( &(wscl->wsc_Mutex) ) == 0 )
+	
+	if( us != NULL )
 	{
-		us = (UserSession *)wscl->wsc_UserSession;
-		if( us != NULL )
-		{
-			DEBUG("[DeleteWebSocketConnection] Set NULL to WSI, SESSIONPTR: %p SESSION NAME: %s WSI ptr: %p\n", us, us->us_SessionID, wscl->wsc_Wsi );
-			us->us_WSClients = NULL;
-		}
-		wscl->wsc_Wsi = NULL;
-		FRIEND_MUTEX_UNLOCK( &(wscl->wsc_Mutex) );
-	}
-	DEBUG("[DeleteWebSocketConnection] Remove UserSession from User list\n");
-	//
-	// if user session is attached, then we can remove WebSocketClient from UserSession, otherwise it was already removed from there
-	//
-    if( us != NULL )
-	{
+		Log( FLOG_DEBUG, "[WS] Lock DetachWebsocketFromSession\n");
 		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 		{
-			WebsocketServerClient *actwsc = us->us_WSClients;
-			WebsocketServerClient *prvwsc = us->us_WSClients;
-			while( actwsc != NULL )
-			{
-				if( actwsc->wsc_WebsocketsData == data )
-				{
-					if( actwsc == us->us_WSClients )
-					{
-						us->us_WSClients = (WebsocketServerClient *)us->us_WSClients->node.mln_Succ;
-					}
-					else
-					{
-						prvwsc->node.mln_Succ = actwsc->node.mln_Succ;
-					}
-					DEBUG("[WS] Remove single connection  %p  session connections pointer %p\n", actwsc, us->us_WSClients );
-					break;
-				}
-					
-				prvwsc = actwsc;
-				actwsc = (WebsocketServerClient *)actwsc->node.mln_Succ;
-			}
+			us->us_Wsi = NULL;
+			us->us_WSD = NULL;
+		
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
+		Log( FLOG_DEBUG, "[WS] UnLock DetachWebsocketFromSession\n");
 	}
-	else
-	{
-		FERROR("Cannot remove connection: Pointer to usersession is equal to NULL\n");
-	}
-	
-	DEBUG("[DeleteWebSocketConnection] Remove Queue\n");
-	FQDeInitFree( &(wscl->wsc_MsgQueue) );
-	
-	Log(FLOG_DEBUG, "[DeleteWebSocketConnection] WebsocketClient Remove session %p usersession %p\n", wscl, wscl->wsc_UserSession );
-	WebsocketServerClientDelete( wscl );
-	*/
     return 0;
 }

@@ -1,7 +1,7 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2020 Andy Green <andy@warmcat.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -95,10 +95,35 @@ lws_list_ptr_insert(lws_list_ptr *phead, lws_list_ptr *add,
  * whatever is necessary to return you a pointer to ensure bytes of memory
  * reserved for the caller.
  *
+ * This always allocates in the current chunk or a new chunk... see the
+ * lwsac_use_backfill() variant to try first to find space in earlier chunks.
+ *
  * Returns NULL if OOM.
  */
 LWS_VISIBLE LWS_EXTERN void *
 lwsac_use(struct lwsac **head, size_t ensure, size_t chunk_size);
+
+/**
+ * lwsac_use_backfill - allocate / use some memory from a lwsac
+ *
+ * \param head: pointer to the lwsac list object
+ * \param ensure: the number of bytes we want to use
+ * \param chunk_size: 0, or the size of the chunk to (over)allocate if
+ *			what we want won't fit in the current tail chunk.  If
+ *			0, the default value of 4000 is used. If ensure is
+ *			larger, it is used instead.
+ *
+ * This also serves to init the lwsac if *head is NULL.  Basically it does
+ * whatever is necessary to return you a pointer to ensure bytes of memory
+ * reserved for the caller.
+ *
+ * Also checks if earlier blocks have enough remaining space to take the
+ * allocation before making a new allocation.
+ *
+ * Returns NULL if OOM.
+ */
+LWS_VISIBLE LWS_EXTERN void *
+lwsac_use_backfill(struct lwsac **head, size_t ensure, size_t chunk_size);
 
 /**
  * lwsac_use - allocate / use some memory from a lwsac
@@ -173,6 +198,38 @@ lwsac_reference(struct lwsac *head);
 LWS_VISIBLE LWS_EXTERN void
 lwsac_unreference(struct lwsac **head);
 
+/**
+ * lwsac_extend() - try to increase the size of the last block
+ *
+ * \param head: pointer to the lwsac list object
+ * \param amount: amount to try to increase usage for
+ *
+ * This will either increase the usage reservation of the last allocated block
+ * by amount and return 0, or fail and return 1.
+ *
+ * This is very cheap to call and is designed to optimize usage after a static
+ * struct for vari-sized additional content which may flow into an additional
+ * block in a new chunk if necessary, but wants to make the most of the space
+ * in front of it first to try to avoid gaps and the new chunk if it can.
+ *
+ * The additional area if the call succeeds will have been memset to 0.
+ *
+ * To use it, the following must be true:
+ *
+ * - only the last lwsac use can be extended
+ *
+ * - if another use happens inbetween the use and extend, it will break
+ *
+ * - the use cannot have been using backfill
+ *
+ * - a user object must be tracking the current allocated size of the last use
+ *   (lwsac doesn't know it) and increment by amount if the extend call succeeds
+ *
+ * Despite these restrictions this can be an important optimization for some
+ * cases
+ */
+LWS_VISIBLE LWS_EXTERN int
+lwsac_extend(struct lwsac *head, int amount);
 
 /* helpers to keep a file cached in memory */
 
@@ -191,8 +248,9 @@ lwsac_cached_file(const char *filepath, lwsac_cached_file_t *cache,
 
 /* more advanced helpers */
 
+/* offset from lac to start of payload, first = 1 = first lac in chain */
 LWS_VISIBLE LWS_EXTERN size_t
-lwsac_sizeof(void);
+lwsac_sizeof(int first);
 
 LWS_VISIBLE LWS_EXTERN size_t
 lwsac_get_tail_pos(struct lwsac *lac);

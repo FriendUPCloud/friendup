@@ -60,7 +60,7 @@ function GetWindowById( id )
 // Save window storage to Friend Core
 function SaveWindowStorage( callback )
 {
-	var m = new Module( 'system' );
+	let m = new Module( 'system' );
 	m.execute( 'setsetting', { setting: 'windowstorage', data: JSON.stringify( jsonSafeObject( Friend.GUI.view.windowStorage ) ) } );
 	if( callback )
 	{
@@ -76,14 +76,14 @@ function LoadWindowStorage()
 {
 	if( !Friend.GUI.view.windowStorageLoaded )
 	{
-		var m = new Module( 'system' );
+		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
 			if( e == 'ok' )
 			{
 				try
 				{
-					var dob = JSON.parse( d );
+					let dob = JSON.parse( d );
 					Friend.GUI.view.windowStorage = dob.windowstorage ? dob.windowstorage : [];
 					if( typeof( Friend.GUI.view.windowStorage ) != 'object' )
 						Friend.GUI.view.windowStorage = [];
@@ -111,15 +111,15 @@ function LoadWindowStorage()
 // Find a movable window by title string
 function FindWindow( titleStr )
 {
-	var divs = document.getElementsByTagName ( 'div' );
+	let divs = document.getElementsByTagName ( 'div' );
 	for( var a = 0; a < divs.length; a++ )
 	{
 		if( divs[a].className.indexOf( ' View' ) >= 0 )
 		{
 			if( divs[a].childNodes.length && divs[a].childNodes[0].childNodes[0].childNodes[0].innerHTML == titleStr )
 			{
-				var divz = divs[a].getElementsByTagName( 'div' );
-				var cnt = divs[a];
+				let divz = divs[a].getElementsByTagName( 'div' );
+				let cnt = divs[a];
 				for( var za = 0; za < divz.length; za++ )
 				{
 					if( divz[za].className == 'Content' )
@@ -140,7 +140,7 @@ function RememberWindowDimensions( div )
 {
 	if( isMobile ) return;
 	
-	var wp = GetWindowStorage( div.uniqueId );
+	let wp = GetWindowStorage( div.uniqueId );
 	if ( wp )
 	{
 		return wp;
@@ -167,8 +167,8 @@ function RefreshWindow( div, noresize )
 		if( div.flags.hidden && div.flags.hidden === true ) return;
 		if( div.flags.invisible && div.flags.invisible === true ) return;
 
-		var flags = div.flags;
-		var winObj = div.parentNode;
+		let flags = div.flags;
+		let winObj = div.parentNode;
 		if( flags.resize == false )
 		{
 			winObj.resize.style.display = 'none';
@@ -209,8 +209,8 @@ function SetWindowTitle( div, titleStr )
 {
 	if( div.className == 'Content' ) div = div.parentNode;
 	if( !div || !div.getElementsByTagName ) return;
-	var divz = div.getElementsByTagName ( 'div' );
-	var title = false;
+	let divz = div.getElementsByTagName ( 'div' );
+	let title = false;
 	for( var a = 0; a < divz.length; a++ )
 	{
 		if( divz[a].classList.contains( 'Title' ) )
@@ -224,7 +224,7 @@ function SetWindowTitle( div, titleStr )
 	document.title = titleStr + ' - ' + Friend.windowBaseString;
 	
 	// Also check tasks
-	var baseElement = GetTaskbarElement();
+	let baseElement = GetTaskbarElement();
 	if( !baseElement ) return;
 	if( baseElement.tasks )
 	{
@@ -269,18 +269,18 @@ function ResizeWindow( div, wi, he, mode, depth )
 	// If it isn't found, escape!
 	if ( div == document.body ) return;
 	
-	var margins = GetViewDisplayMargins( div );
+	let margins = GetViewDisplayMargins( div );
 	
 	// Extra width height to calculate with
-	var frameWidth = 0;
-	var frameHeight = 0;
+	let frameWidth = 0;
+	let frameHeight = 0;
 	
-	var isWorkspaceScreen = div.windowObject.getFlag( 'screen' ) == Workspace.screen;
+	let isWorkspaceScreen = div.windowObject.getFlag( 'screen' ) == Workspace.screen;
 	
 	if( div.content && div.windowObject.flags )
 	{
-		var flags = div.windowObject.flags;
-		var ele = div.windowObject.content.parentNode;
+		let flags = div.windowObject.flags;
+		let ele = div.windowObject.content.parentNode;
 	
 		// When getting width and height from flags, and not in borderless
 		// mode, check also borders around the content and add those to get
@@ -313,9 +313,9 @@ function ResizeWindow( div, wi, he, mode, depth )
 		}
 	}
 	
-	var cl = document.body.classList.contains( 'Inside' );
+	let cl = document.body.classList.contains( 'Inside' );
 	
-	var maxVWidt, maxVHeig;
+	let maxVWidt, maxVHeig;
 	if( Workspace.mode != 'vr' )
 	{
 		maxVWidt = cl ? div.windowObject.flags.screen.getMaxViewWidth() : GetWindowWidth();
@@ -327,7 +327,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 		maxVHeig = window.innerHeight;
 	}
 
-	var maximized = div.getAttribute( 'maximized' ) == 'true' || 
+	let maximized = div.getAttribute( 'maximized' ) == 'true' || 
 		div.windowObject.flags.maximized;
 
 	if ( !wi || wi == 'false' ) wi = div.content ? div.content.offsetWidth  : div.offsetWidth;
@@ -336,8 +336,8 @@ function ResizeWindow( div, wi, he, mode, depth )
 	wi = parseInt( wi );
 	he = parseInt( he );
 
-	var divs = div.getElementsByTagName ( 'div' );
-	var cnt  = false;
+	let divs = div.getElementsByTagName ( 'div' );
+	let cnt  = false;
 	for( var a = 0; a < divs.length; a++ )
 	{
 		if( !cnt && divs[a].classList && divs[a].classList.contains( 'Content' ) )
@@ -350,9 +350,9 @@ function ResizeWindow( div, wi, he, mode, depth )
 
 	// TODO: Let a central resize code handle this (this one?)
 	// Maximum dimensions
-	var pheight = div.parentNode ? div.parentNode.offsetHeight : GetWindowHeight();
-	var maxWidth  = div.parentWindow ? div.parentWindow.getWindowElement().offsetWidth : maxVWidt;
-	var maxHeight = div.parentWindow ? div.parentWindow.getWindowElement().offsetHeight : maxVHeig;
+	let pheight = div.parentNode ? div.parentNode.offsetHeight : GetWindowHeight();
+	let maxWidth  = div.parentWindow ? div.parentWindow.getWindowElement().offsetWidth : maxVWidt;
+	let maxHeight = div.parentWindow ? div.parentWindow.getWindowElement().offsetHeight : maxVHeig;
 	
 	// Add margins
 	maxWidth -= margins.left + margins.right;
@@ -370,7 +370,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 	}
 	
 	// Make sure we don't go past screen limits
-	var l = t = 0;
+	let l = t = 0;
 	if( div.parentNode )
 	{
 		l = div.offsetLeft;
@@ -382,7 +382,6 @@ function ResizeWindow( div, wi, he, mode, depth )
 		t = div.windowObject.flags.top;
 		if( !l ) l = isWorkspaceScreen ? div.windowObject.workspace * window.innerWidth : 0;
 		if( !t ) t = 0;
-		console.log( 'L here: ' + l );
 	}
 	
 	// Maximized
@@ -393,7 +392,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 	}
 	
 	// Skew for calculating beyond workspace 1
-	var skewx = div.windowObject.workspace * window.innerWidth;
+	let skewx = div.windowObject.workspace * window.innerWidth;
 	if( !isWorkspaceScreen ) skewx = 0;
 	
 	if( l + wi > maxWidth + skewx + margins.left )
@@ -403,10 +402,10 @@ function ResizeWindow( div, wi, he, mode, depth )
 	// Done limits
 	
 	// Flag constraints
-	var fminw = div.windowObject.flags['min-width']  ? div.windowObject.flags['min-width']  : 0;
-	var fminh = div.windowObject.flags['min-height'] ? div.windowObject.flags['min-height'] : 0;
-	var fmaxw = div.windowObject.flags['max-width']  ? div.windowObject.flags['max-width']  : 999999;
-	var fmaxh = div.windowObject.flags['max-height'] ? div.windowObject.flags['max-height'] : 999999;
+	let fminw = div.windowObject.flags['min-width']  ? div.windowObject.flags['min-width']  : 0;
+	let fminh = div.windowObject.flags['min-height'] ? div.windowObject.flags['min-height'] : 0;
+	let fmaxw = div.windowObject.flags['max-width']  ? div.windowObject.flags['max-width']  : 999999;
+	let fmaxh = div.windowObject.flags['max-height'] ? div.windowObject.flags['max-height'] : 999999;
 	fminw += frameWidth;
 	fminh += frameHeight;
 
@@ -477,12 +476,12 @@ function ResizeWindow( div, wi, he, mode, depth )
 	// It will pop out of view if it's overlapped by other buttons
 	if( div.content.directoryview )
 	{
-		var t = div.getElementsByClassName( 'ToggleGroup' );
-		var r = div.getElementsByClassName( 'Reload' );
-		var m = div.getElementsByClassName( 'Makedir' );
+		let t = div.getElementsByClassName( 'ToggleGroup' );
+		let r = div.getElementsByClassName( 'Reload' );
+		let m = div.getElementsByClassName( 'Makedir' );
 		if( t.length > 0 && r.length > 0 )
 		{
-			var hideCondition = t[0].offsetLeft < r[0].offsetLeft + r[0].offsetWidth || 
+			let hideCondition = t[0].offsetLeft < r[0].offsetLeft + r[0].offsetWidth || 
 				( m && m[0] && t[0].offsetLeft + t[0].offsetWidth > m[0].offsetLeft );
 			if( hideCondition )
 			{
@@ -519,7 +518,7 @@ function GetStatusbarHeight( screen )
 			return screen.statusBarHeight;
 		
 		// Calculate
-		var eles = screen.div.getElementsByTagName( 'div' );
+		let eles = screen.div.getElementsByTagName( 'div' );
 		screen.statusBarHeight = 0;
 		for( var a = 0; a < eles.length; a++ )
 		{
@@ -554,10 +553,10 @@ function CascadeWindowPosition( obj )
 // Returns the display margins, taking into consideration the screen, dock etc
 function GetViewDisplayMargins( div )
 {
-	var wo = div.windowObject;
-	var sc = wo ? wo.getFlag( 'screen' ) : null;
+	let wo = div.windowObject;
+	let sc = wo ? wo.getFlag( 'screen' ) : null;
 	
-	var margins = {
+	let margins = {
 		top: 0,
 		left: 0,
 		right: 0,
@@ -574,11 +573,11 @@ function GetViewDisplayMargins( div )
 		return margins;
 	}
 	
-	var dockPosition = null;
+	let dockPosition = null;
 	
 	if( Workspace.mainDock )
 	{
-		var dockDom = Workspace.mainDock.dom;
+		let dockDom = Workspace.mainDock.dom;
 		if( dockDom.classList.contains( 'Top' ) )
 			dockPosition = 'Top';
 		else if( dockDom.classList.contains( 'Left' ) )
@@ -608,7 +607,7 @@ function GetViewDisplayMargins( div )
 	if( dockPosition != 'Bottom' && ge( 'Tray' ) && ge( 'Taskbar' ).offsetHeight )
 		margins.bottom += ge( 'Tray' ).offsetHeight;
 	
-	var inf = GetThemeInfo( 'ScreenContentMargins' );
+	let inf = GetThemeInfo( 'ScreenContentMargins' );
 	if( inf && inf.top )
 		margins.top += parseInt( inf.top );
 		
@@ -635,7 +634,7 @@ function ConstrainWindow( div, l, t, depth, caller )
 		div.removeAttribute( 'moving' );
 	}, 250 );
 	
-	var margins = GetViewDisplayMargins( div );
+	let margins = GetViewDisplayMargins( div );
 	
 	// Track caller
 	if( !caller ) caller = div;
@@ -645,8 +644,8 @@ function ConstrainWindow( div, l, t, depth, caller )
 	if( isNaN( t ) ) t = parseInt( t );
 	
 	// Get some information through flags
-	var sc = null;
-	var flagMaxWidth = flagMaxHeight = 0;
+	let sc = null;
+	let flagMaxWidth = flagMaxHeight = 0;
 	if( div.windowObject )
 	{
 		sc = div.windowObject.getFlag( 'screen' );
@@ -655,24 +654,24 @@ function ConstrainWindow( div, l, t, depth, caller )
 	}
 	if( !sc ) sc = Workspace.screen;
 	
-	var screenMaxWidth = sc ? sc.getMaxViewWidth() : document.body.offsetWidth;
-	var screenMaxHeight = sc ? sc.getMaxViewHeight() : document.body.offsetHeight;
+	let screenMaxWidth = sc ? sc.getMaxViewWidth() : document.body.offsetWidth;
+	let screenMaxHeight = sc ? sc.getMaxViewHeight() : document.body.offsetHeight;
 	
 	// If the view is inside another container (special case)
-	var specialNesting = div.content ? div : div.parentNode;
+	let specialNesting = div.content ? div : div.parentNode;
 	if( div.viewContainer && div.viewContainer.parentNode )
 	{
 		specialNesting = !div.viewContainer.parentNode.classList.contains( 'ScreenContent' );
 	}
 	else specialNesting = false;
-	var pn = div.parentWindow;
-	var win = pn ? pn.getWindowElement() : div;
-	var cn = win.content ? win.content : win;
+	let pn = div.parentWindow;
+	let win = pn ? pn.getWindowElement() : div;
+	let cn = win.content ? win.content : win;
 	
 	// Get maximum width / height
-	var maxWidth = pn ? pn.offsetWidth : 
+	let maxWidth = pn ? pn.offsetWidth : 
 		( specialNesting ? div.viewContainer.parentNode.offsetWidth : screenMaxWidth );
-	var maxHeight = pn ? pn.offsetHeight : 
+	let maxHeight = pn ? pn.offsetHeight : 
 		( specialNesting ? div.viewContainer.parentNode.offsetHeight : screenMaxHeight );
 	
 	// Subtract margins
@@ -690,17 +689,17 @@ function ConstrainWindow( div, l, t, depth, caller )
 		div.parentNode.style.maxHeight = maxHeight + 'px';
 	}
 
-	var mt = margins.top;
-	var ml = margins.left; // min left
-	var mw = maxWidth;
-	var mh = maxHeight;
+	let mt = margins.top;
+	let ml = margins.left; // min left
+	let mw = maxWidth;
+	let mh = maxHeight;
 	
-	var ww = div.offsetWidth;
-	var wh = div.offsetHeight;
+	let ww = div.offsetWidth;
+	let wh = div.offsetHeight;
 	if( ww <= 0 ) ww = div.content.windowObject.getFlag( 'width' );
 	if( wh <= 0 ) wh = div.content.windowObject.getFlag( 'height' );
-	var mvw = screenMaxWidth;
-	var mvh = screenMaxHeight;
+	let mvw = screenMaxWidth;
+	let mvh = screenMaxHeight;
 	
 	// TODO: See if we can move this dock dimension stuff inside getMax..()
 	if( Workspace.mainDock )
@@ -716,7 +715,7 @@ function ConstrainWindow( div, l, t, depth, caller )
 	}
 	
 	// For window cascading, start comparing (isNaN means not set)
-	var doCascade = false;
+	let doCascade = false;
 	if( !l )
 	{
 		l = parseInt( div.style.left );
@@ -791,7 +790,7 @@ function ConstrainWindow( div, l, t, depth, caller )
 		// Check attached window if we're attached to
 		if( div == caller && div.snapObject && div.snapObject != caller )
 		{
-			var ll = false, tt = false;
+			let ll = false, tt = false;
 			if( div.snap == 'up' )
 			{
 				ll = l + div.snapCoords.x;
@@ -829,9 +828,9 @@ function AutoResizeWindow( div )
 			div = div.parentNode;
 	}
 	if( div == document.body ) return;
-	var divs = div.getElementsByTagName( 'div' );
-	var cnt = false;
-	var title = false;
+	let divs = div.getElementsByTagName( 'div' );
+	let cnt = false;
+	let title = false;
 	for( var a = 0; a < divs.length; a++ )
 	{
 		if( !divs[a].classList ) continue;
@@ -844,8 +843,8 @@ function AutoResizeWindow( div )
 
 	div.autoResize = true;
 
-	var h = 0;
-	var eles = cnt.getElementsByTagName( '*' );
+	let h = 0;
+	let eles = cnt.getElementsByTagName( '*' );
 	for( var b = 0; b < eles.length; b++ )
 	{
 		if( eles[b].parentNode != cnt ) continue;
@@ -860,7 +859,7 @@ function SetScreenByWindowElement( div )
 {
 	// Set screen
 	if( !div ) return false;
-	var d = div;
+	let d = div;
 	while( d != document.body && d.parentNode )
 	{
 		d = d.parentNode;
@@ -890,19 +889,25 @@ function _ActivateWindowOnly( div )
 	
 	// Don't select other fields
 	if( !div.classList.contains( 'Active' ) )
-		FocusOnNothing();
+	{
+		let ae = document.activeElement;
+		if( ae.parentNode && ae.parentNode.parentNode != div )
+		{
+			FocusOnNothing();
+		}
+	}
 	
 	// Special case
-	var delayedDeactivation = true;
+	let delayedDeactivation = true;
 	
 	// Note we're having a current movable
 	currentMovable = div;
 	
 	// we use this one to calculate the max-height of the active window once its switched....
-	var newOffsetY = 0;
+	let newOffsetY = 0;
 	for( var a in movableWindows )
 	{
-		var m = movableWindows[a];
+		let m = movableWindows[a];
 
 		// No div selected or not the div we're looking for - do inactive!
 		if( !div || m != div )
@@ -940,6 +945,10 @@ function _ActivateWindowOnly( div )
 		// This is the div we are looking for!
 		else if( m == div )
 		{
+			// Record active window for this workspace
+			if( globalConfig.workspaceCurrent == div.workspace )
+				setVirtualWorkspaceInformation( div.workspace, 'activeWindow', div );
+			
 			if( div.content )
 				window.regionWindow = div.content;
 			else window.regionWindow = div;
@@ -966,6 +975,10 @@ function _ActivateWindowOnly( div )
 				
 				if( window._getAppByAppId )
 				{
+<<<<<<< HEAD
+=======
+					let app = _getAppByAppId( div.applicationId );
+>>>>>>> master-incoming
 					if( app )
 					{
 						if( m.windowObject != app.mainView )
@@ -1005,8 +1018,8 @@ function _ActivateWindowOnly( div )
 			{	
 				if( !div.notifyActivated )
 				{
-					var iftest = div.getElementsByTagName( _viewType );
-					var msg = {
+					let iftest = div.getElementsByTagName( _viewType );
+					let msg = {
 						type:    'system',
 						command: 'notify',
 						method:  'activateview',
@@ -1078,7 +1091,7 @@ function _ActivateWindow( div, nopoll, e )
 	{
 		if( window._getAppByAppId )
 		{
-			var app = _getAppByAppId( this.applicationId );
+			let app = _getAppByAppId( this.applicationId );
 			if( app )
 			{
 				app.displayedView = div;
@@ -1118,7 +1131,7 @@ function _ActivateWindow( div, nopoll, e )
 	// Activate all iframes
 	if( div.windowObject.content )
 	{
-		var fr = div.windowObject.content.getElementsByTagName( 'iframe' );
+		let fr = div.windowObject.content.getElementsByTagName( 'iframe' );
 		for( var a = 0; a < fr.length; a++ )
 		{
 			if( fr[ a ].oldSandbox )
@@ -1140,7 +1153,7 @@ function _ActivateWindow( div, nopoll, e )
 	}
 	
 	// Blur previous window
-	var changedActiveWindow = false;
+	let changedActiveWindow = false;
 	if( window.currentMovable && currentMovable.windowObject )
 	{
 		if( currentMovable != div )
@@ -1171,7 +1184,7 @@ function _ActivateWindow( div, nopoll, e )
 	}
 	
 	// Tell window manager we are activating window
-	var pn = div.parentNode;
+	let pn = div.parentNode;
 	
 	document.body.classList.add( 'Activating' );
 	pn.classList.add( 'Activating' );
@@ -1207,8 +1220,8 @@ function _ActivateWindow( div, nopoll, e )
 	{
 		if( div.windowObject && !div.notifyActivated )
 		{
-			var iftest = div.getElementsByTagName( _viewType );
-			var msg = {
+			let iftest = div.getElementsByTagName( _viewType );
+			let msg = {
 				type:    'system',
 				command: 'notify',
 				method:  'activateview',
@@ -1242,8 +1255,8 @@ function _ActivateWindow( div, nopoll, e )
 		// Make sure!
 		if( changedActiveWindow )
 		{
-			var clear = true;
-			var t = e ? e.target : false;
+			let clear = true;
+			let t = e ? e.target : false;
 			if( t )
 			{
 				while( t && t != document.body && !t.fileInfo )
@@ -1283,13 +1296,13 @@ function _setWindowTiles( div )
 		{
 			_removeWindowTiles( div );
 		}
-		var attachedCount = 1;
+		let attachedCount = 1;
 		for( var a in div.attached )
 		{
 			attachedCount++;
 		}
 		div.classList.add( 'TilingMode' + attachedCount );
-		var tile = 2;
+		let tile = 2;
 		for( var a in div.attached )
 		{
 			div.attached[a].classList.add( 'Tile' + tile++, 'TilingMode' + attachedCount );
@@ -1304,14 +1317,14 @@ function _removeWindowTiles( div )
 	// Check if we have windows attached
 	if( div.attached )
 	{
-		var attachedCount = 1;
+		let attachedCount = 1;
 		for( var a in div.attached )
 		{
 			attachedCount++;
 		}
 		while( div.className.indexOf( 'Til' ) >= 0 )
 		{
-			var ind = div.className.indexOf( 'Til' );
+			let ind = div.className.indexOf( 'Til' );
 			if( ind >= 0 )
 			{
 				for( var b = ind; div.className[b] != ' ' && b < div.className.length; b++ ){}
@@ -1320,10 +1333,10 @@ function _removeWindowTiles( div )
 		}
 		for( var a in div.attached )
 		{
-			var d = div.attached[ a ]
+			let d = div.attached[ a ]
 			while( d.className.indexOf( 'Til' ) >= 0 )
 			{
-				var ind = d.className.indexOf( 'Til' );
+				let ind = d.className.indexOf( 'Til' );
 				if( ind >= 0 )
 				{
 					for( var b = ind; d.className[b] != ' ' && b < d.className.length; b++ ){}
@@ -1336,7 +1349,7 @@ function _removeWindowTiles( div )
 
 function _DeactivateWindow( m, skipCleanUp )
 {
-	var ret = false;
+	let ret = false;
 	
 	if( m.className && m.classList.contains( 'Active' ) )
 	{
@@ -1347,8 +1360,8 @@ function _DeactivateWindow( m, skipCleanUp )
 		
 		if( m.windowObject && m.notifyActivated )
 		{
-			var iftest = m.getElementsByTagName( _viewType );
-			var msg = {
+			let iftest = m.getElementsByTagName( _viewType );
+			let msg = {
 				type: 'system',
 				command: 'notify',
 				method: 'deactivateview',
@@ -1365,7 +1378,7 @@ function _DeactivateWindow( m, skipCleanUp )
 			m.notifyActivated = false;
 			
 			// Deactivate all iframes
-			var fr = m.windowObject.content.getElementsByTagName( 'iframe' );
+			let fr = m.windowObject.content.getElementsByTagName( 'iframe' );
 			for( var a = 0; a < fr.length; a++ )
 			{
 				fr[ a ].oldSandbox = fr[ a ].getAttribute( 'sandbox' );
@@ -1401,8 +1414,8 @@ function _DeactivateWindow( m, skipCleanUp )
 		// See if we can activate a mainview
 		if( !currentMovable && !_activationTarget && m.windowObject )
 		{
-			var app = _getAppByAppId( m.windowObject.applicationId );
-			var hasActive = false;
+			let app = _getAppByAppId( m.windowObject.applicationId );
+			let hasActive = false;
 			for( var a in app.windows )
 			{
 				if( app.windows[ a ]._window.classList.contains( 'Active' ) )
@@ -1443,7 +1456,7 @@ function _removeMobileCloseButtons()
 {
 	for( var a in movableWindows )
 	{
-		var f = movableWindows[ a ];
+		let f = movableWindows[ a ];
 		if( f.viewIcon )
 		{
 			f.viewIcon.classList.remove( 'Remove' );
@@ -1457,7 +1470,7 @@ function _removeMobileCloseButtons()
 function _DeactivateWindows()
 {
 	clearRegionIcons();
-	var windowsDeactivated = 0;
+	let windowsDeactivated = 0;
 	window.currentMovable = null;
 
 	if( isMobile )
@@ -1465,10 +1478,10 @@ function _DeactivateWindows()
 		Friend.GUI.view.viewHistory = [];
 	}
 
-	var a = null;
+	let a = null;
 	for( a in movableWindows )
 	{
-		var m = movableWindows[a];
+		let m = movableWindows[a];
 		if( m.classList.contains( 'Active' ) )
 			windowsDeactivated += _DeactivateWindow( m, true );
 	}
@@ -1515,18 +1528,18 @@ function _WindowToFront( div, flags )
 		div = div.parentNode;
 
 	// 1. Find highest and lowest zindex
-	var low = 9999999;
-	var high = -1;
+	let low = 9999999;
+	let high = -1;
 	for( var a in movableWindows )
 	{
-		var m = movableWindows[a];
-		var zi = parseInt( m.viewContainer.style.zIndex );
+		let m = movableWindows[a];
+		let zi = parseInt( m.viewContainer.style.zIndex );
 		if( zi <= low  ) low  = zi;
 		if( zi >= high ) high = zi;
 	}
 
 	// 2. sort windows after zindex
-	var sorted = [];
+	let sorted = [];
 	for( var a = low; a <= high; a++ )
 	{
 		for( var b in movableWindows )
@@ -1539,7 +1552,7 @@ function _WindowToFront( div, flags )
 	}
 	
 	// 3. sort, and place current window to front
-	var sortedInd = 100;
+	let sortedInd = 100;
 	for( var a = 0; a < sorted.length; a++ )
 	{
 		sorted[ a ].viewContainer.style.zIndex = sortedInd++;
@@ -1583,7 +1596,7 @@ function _WindowToFront( div, flags )
 		{
 			for( var a = 0; a < div.attached.length; a++ )
 			{
-				var found = false;
+				let found = false;
 				for( var b = 0; b < flags.sourceElements.length; b++ )
 				{
 					if( flags.sourceElements[b] == div.attached[a] )
@@ -1624,15 +1637,15 @@ function GetWindowVariableByEvent( e, vari )
 	if( !e ) return;
 	try
 	{
-		var t = e.srcElement ? e.srcElement : e.target;
+		let t = e.srcElement ? e.srcElement : e.target;
 		while( t.className.indexOf( 'View' ) < 0 && t != document.body )
 		{
 			t = t.parentNode;
 		}
 		if( t.className.indexOf ( 'View' ) < 0 )
 			return;
-		var divs = document.getElementsByTagName ( 'div' );
-		var cnt = false;
+		let divs = document.getElementsByTagName ( 'div' );
+		let cnt = false;
 		for( var a = 0; a < divs.length; a++ )
 		{
 			if( divs[a].classList && divs[a].classList.contains( 'Content' ) )
@@ -1653,15 +1666,15 @@ function GetWindowVariableByEvent( e, vari )
 // Gets a variable on a movable window
 function GetWindowVariable( win, vari )
 {
-	var t = win;
+	let t = win;
 	while( t.className.indexOf ( 'View' ) < 0 && t != document.body )
 	{
 		t = t.parentNode;
 	}
 	if( t.className.indexOf ( 'View' ) < 0 )
 		return;
-	var divs = document.getElementsByTagName ( 'div' );
-	var cnt = false;
+	let divs = document.getElementsByTagName ( 'div' );
+	let cnt = false;
 	for( var a = 0; a < divs.length; a++ )
 	{
 		if( divs[a].classList && divs[a].classList.contains( 'Content' ) )
@@ -1677,7 +1690,7 @@ function GetWindowVariable( win, vari )
 
 function HasClassname( div, classname )
 {
-	var classes = div.className ? div.className.split( ' ' ) : [];
+	let classes = div.className ? div.className.split( ' ' ) : [];
 	for( var a in classes )
 	{
 		if( classes[a] == classname )
@@ -1713,9 +1726,20 @@ function CloseView( win, delayed )
 		if( win.parentNode == Friend.currentWindowHover )
 			Friend.currentWindowHover = null;
 		
-		var count = 0;
+		// Check virtual workspace information
+		if( win.workspace )
+		{
+			// Unset if the active window is this to be closed..
+			if( virtualWorkspaces[ win.workspace ] )
+			{
+				if( virtualWorkspaces[ win.workspace ].activeWindow == win )
+					virtualWorkspaces[ win.workspace ].activeWindow = null;
+			}
+		}
+		
+		let count = 0;
 
-		var isGroupMember = false;
+		let isGroupMember = false;
 		if( win.groupMember )
 			isGroupMember = true;
 
@@ -1725,7 +1749,7 @@ function CloseView( win, delayed )
 		}
 
 		// Clear view that is closed from view history
-		var out = [];
+		let out = [];
 		for( var a  = 0; a < Friend.GUI.view.viewHistory.length; a++ )
 		{
 			if( Friend.GUI.view.viewHistory[a] != win )
@@ -1733,7 +1757,7 @@ function CloseView( win, delayed )
 		}
 		Friend.GUI.view.viewHistory = out;
 
-		var div = win;
+		let div = win;
 
 		// Unsnap
 		if( win.unsnap ) win.unsnap();
@@ -1747,13 +1771,13 @@ function CloseView( win, delayed )
 			}
 		}
 		
-		var appId = win.windowObject ? win.windowObject.applicationId : false;
+		let appId = win.windowObject ? win.windowObject.applicationId : false;
 
 		// Clear reference
 		if ( window.regionWindow == div.content )
 			window.regionWindow = false;
 
-		var app = false;
+		let app = false;
 		if( div.applicationId )
 			app = _getAppByAppId( div.applicationId );
 
@@ -1800,7 +1824,7 @@ function CloseView( win, delayed )
 
 
 			// Do not click!
-			var ele = document.createElement( 'div' );
+			let ele = document.createElement( 'div' );
 			ele.style.position = 'absolute';
 			ele.style.top = '0'; ele.style.left = '0';
 			ele.style.width = '100%'; 
@@ -1812,7 +1836,7 @@ function CloseView( win, delayed )
 		}
 
 		// Activate latest activated view (not on mobile)
-		var nextActive = false;
+		let nextActive = false;
 		if( div.classList.contains( 'Active' ) )
 		{
 			if( Friend.GUI.view.viewHistory.length )
@@ -1827,7 +1851,7 @@ function CloseView( win, delayed )
 							// Only activate non minimized views
 							if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
 							{
-								var vh = Friend.GUI.view.viewHistory[ a ];
+								let vh = Friend.GUI.view.viewHistory[ a ];
 								_ActivateWindow( vh );
 								if( vh.content && vh.content.refresh )
 									vh.content.refresh();
@@ -1846,7 +1870,7 @@ function CloseView( win, delayed )
 							// Only activate non minimized views
 							if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
 							{
-								var vh = Friend.GUI.view.viewHistory[ a ];
+								let vh = Friend.GUI.view.viewHistory[ a ];
 								_ActivateWindow( vh );
 								if( vh.content && vh.content.refresh )
 									vh.content.refresh();
@@ -1862,7 +1886,7 @@ function CloseView( win, delayed )
 		if( div )
 		{
 			// Clean up ids
-			var o = [];
+			let o = [];
 			for( var b in movableWindows )
 			{
 				if( movableWindows[b] != div && movableWindows[b].parentNode )
@@ -1954,7 +1978,7 @@ CloseWindow = CloseView;
 function CancelWindowScrolling( e )
 {
 	if ( !e ) e = window.event;
-	var t = e.target ? e.target : e.srcElement;
+	let t = e.target ? e.target : e.srcElement;
 	if ( window.currentMovable && window.currentMovable.offsetHeight )
 		window.scrollTo ( 0, window.lastScrollPosition ? window.lastScrollPosition : 0 );
 	else window.lastScrollPosition = document.body.scrollTop;
@@ -1968,9 +1992,9 @@ else window.attachEvent( 'onscroll', CancelWindowScrolling, true );
 function WindowScrolling( e )
 {
 	if( !e ) e = window.event;
-	var dlt = e.detail ? (e.detail*-120) : e.wheelDelta;
-	var tr = e.srcElement ? e.srcElement : e.target;
-	var win = false;
+	let dlt = e.detail ? (e.detail*-120) : e.wheelDelta;
+	let tr = e.srcElement ? e.srcElement : e.target;
+	let win = false;
 	while( tr != document.body )
 	{
 		if( tr.className && tr.className.indexOf ( 'View' ) > 0 )
@@ -1988,11 +2012,11 @@ function WindowScrolling( e )
 Friend.GUI.view.create = View;
 Friend.GUI.view.removeScriptsFromData = function( data )
 {
-	var r = false;
-	var assets = [];
+	let r = false;
+	let assets = [];
 	while( r = data.match( /\<script id\=\"([^"]*?)\" type\=\"text\/html\"[^>]*?\>([\w\W]*?)\<\/script[^>]*?\>/i ) )
 	{
-		var asset = '<script id="' + r[1] + '" type="text/html">' + r[2] + '</script>';
+		let asset = '<script id="' + r[1] + '" type="text/html">' + r[2] + '</script>';
 		data = data.split( r[0] ).join( '' );
 	}
 	// Remove scripts
@@ -2031,7 +2055,7 @@ Friend.GUI.view.cleanHTMLData = function( data )
  */
 var View = function( args )
 {
-	var self = this;
+	let self = this;
 	
 	// Windows on own screen ignores the virtual workspaces
 	if( args.screen && args.screen != Workspace.screen )
@@ -2063,7 +2087,7 @@ var View = function( args )
 		if( this.flags.screen && this.flags.screen != Workspace.screen ) return;
 		if( globalConfig.workspacecount > 1 )
 		{
-			var ws = this.getFlag( 'left' );
+			let ws = this.getFlag( 'left' );
 			ws = parseInt( ws ) / window.innerWidth;
 			this.workspace = Math.floor( ws );
 		}
@@ -2095,12 +2119,13 @@ var View = function( args )
 
 		// If we're making a movable window with a unique id, the make sure
 		// it doesn't exist, in case, just return the existing window
-		var contentscreen = false;
-		var parentWindow = false;
-		var titleStr = '';
-		var transparent = false;
+		let contentscreen = false;
+		let parentWindow = false;
+		if( !titleStr )
+			titleStr = '';
+		let transparent = false;
 
-		var filter = [
+		let filter = [
 			'min-width', 'min-height', 'width', 'height', 'id', 'title', 
 			'screen', 'parentView', 'transparent', 'minimized'
 		];
@@ -2113,10 +2138,10 @@ var View = function( args )
 		// This needs to be set immediately!
 		self.parseFlags( flags, filter );
 		
-		var app = false;
+		let app = false;
 		if( window._getAppByAppId )
 		{
-			var app = _getAppByAppId( div.applicationId );
+			let app = _getAppByAppId( div.applicationId );
 		}
 		
 		// Set a parent relation to main view
@@ -2160,8 +2185,8 @@ var View = function( args )
 			id = titleStr.split( /[^a-z0-9]+/i ).join( '_' );
 			if( id.substr( 0, 1 ) == '_' )
 				id = 'win' + id;
-			var tmp = id;
-			var num = 2;
+			let tmp = id;
+			let num = 2;
 			while( typeof ( movableWindows[ tmp ] ) != 'undefined' )
 			{
 				tmp = id + '_' + (num++);
@@ -2177,12 +2202,13 @@ var View = function( args )
 		}
 
 		// Make a unique id
-		var uniqueId = id;
+		let uniqueId = id;
 		uniqueId = uniqueId.split( /[ |:]/i ).join ( '_' );
 
 		// Where to add div..
-		var divParent = false;
-		var iconSpan;
+		let divParent = false;
+		let iconSpan;
+		let viewContainer = null;
 
 		if( id )
 		{
@@ -2192,7 +2218,7 @@ var View = function( args )
 				return false;
 			}
 			// Make a container to put the view div inside of
-			var viewContainer = document.createElement( 'div' );
+			viewContainer = document.createElement( 'div' );
 			viewContainer.className = 'ViewContainer';
 			viewContainer.style.display = 'none';
 			
@@ -2205,7 +2231,7 @@ var View = function( args )
 					{
 						if( Workspace.applications[a].icon )
 						{
-							var ic = Workspace.applications[a].icon;
+							let ic = Workspace.applications[a].icon;
 							iconSpan = document.createElement( 'span' );
 							iconSpan.classList.add( 'ViewIcon' );
 							iconSpan.style.backgroundImage = 'url(\'' + ic + '\')';
@@ -2218,14 +2244,14 @@ var View = function( args )
 				// Add mobile back button
 				if( isMobile )
 				{
-					var md = document.createElement( 'div' );
+					let md = document.createElement( 'div' );
 					md.className = 'MobileBack';
 					self.mobileBack = md;
 					md.ontouchstart =function( e )
 					{
 						if( window._getAppByAppId )
 						{
-							var app = _getAppByAppId( div.applicationId );
+							let app = _getAppByAppId( div.applicationId );
 							if( app.mainView )
 							{
 								FocusOnNothing();
@@ -2250,14 +2276,14 @@ var View = function( args )
 				// Add mobile back button
 				if( isMobile )
 				{
-					var md = document.createElement( 'div' );
+					let md = document.createElement( 'div' );
 					md.className = 'MobileBack';
 					self.mobileBack = md;
 					md.ontouchstart =function( e )
 					{
 						if( window._getAppByAppId )
 						{
-							var app = _getAppByAppId( div.applicationId );
+							let app = _getAppByAppId( div.applicationId );
 							if( app.mainView )
 							{
 								FocusOnNothing();
@@ -2338,8 +2364,8 @@ var View = function( args )
 			}
 
 			// ID must be unique
-			var num = 0;
-			var oid = id;
+			let num = 0;
+			let oid = id;
 			while( ge( id ) )
 				id = oid + '_' + ++num;
 
@@ -2359,10 +2385,10 @@ var View = function( args )
 		// Check to set mainview
 		if( window._getAppByAppId )
 		{
-			var app = _getAppByAppId( this.applicationId );
+			let app = _getAppByAppId( this.applicationId );
 			if( app )
 			{
-				var l = 0; for( var k in app.windows ) l++;
+				let l = 0; for( var k in app.windows ) l++;
 				// If we only have one window - it's probably the main window
 				if( l == 0 )
 				{
@@ -2414,10 +2440,10 @@ var View = function( args )
 			div.style.transform = 'translate3d(0, 0, 0)';
 		}
 
-		var zoom; // for use later - zoom gadget
+		let zoom; // for use later - zoom gadget
 
-		var html = div.innerHTML;
-		var contn = document.createElement( 'div' );
+		let html = div.innerHTML;
+		let contn = document.createElement( 'div' );
 		contn.windowObject = this;
 		div.windowObject = this;
 		this._window = contn;
@@ -2437,7 +2463,7 @@ var View = function( args )
 		self.content = contn;
 		
 		// Title
-		var titleSpan = document.createElement ( 'span' );
+		let titleSpan = document.createElement ( 'span' );
 		titleSpan.innerHTML = titleStr ? titleStr : '- unnamed -';
 
 		contn.applicationId = applicationId;
@@ -2486,8 +2512,8 @@ var View = function( args )
 		if ( !div.id )
 		{
 			// ID must be unique
-			var num = 0;
-			var oid = id;
+			let num = 0;
+			let oid = id;
 			while( ge( id ) )
 				id = oid + '_' + ++num;
 			div.id = id;
@@ -2497,7 +2523,7 @@ var View = function( args )
 		// Volume gauge
 		if( flags.volume && flags.volume != false )
 		{
-			var gauge = document.createElement( 'div' );
+			let gauge = document.createElement( 'div' );
 			gauge.className = 'VolumeGauge';
 			gauge.innerHTML = '<div class="Inner"><div class="Pct"></div></div>';
 			div.appendChild( gauge );
@@ -2505,13 +2531,13 @@ var View = function( args )
 		}
 
 		// Snap elements
-		var snap = document.createElement( 'div' );
+		let snap = document.createElement( 'div' );
 		snap.className = 'Snap';
 		snap.innerHTML = '<div class="SnapLeft"></div><div class="SnapRight"></div>' +
 			'<div class="SnapUp"></div><div class="SnapDown"></div>';
 
 		// Moveoverlay
-		var molay = document.createElement ( 'div' );
+		let molay = document.createElement ( 'div' );
 		molay.className = 'MoveOverlay';
 		molay.onmouseup = function()
 		{
@@ -2522,20 +2548,20 @@ var View = function( args )
 		Friend.GUI.view.cleanWindowArray( div );
 
 		// Title
-		var title = document.createElement ( 'div' );
+		let title = document.createElement ( 'div' );
 		title.className = 'Title';
 		if( flags.resize == false )
 			title.className += ' NoResize';
 
 		// Resize
-		var resize = document.createElement ( 'div' );
+		let resize = document.createElement ( 'div' );
 		resize.className = 'Resize';
 		resize.style.position = 'absolute';
 		resize.style.width = '14px';
 		resize.style.height = '14px';
-		resize.style.zIndex = '10';
+		resize.style.zIndex = '100';
 
-		var inDiv = document.createElement( 'div' );
+		let inDiv = document.createElement( 'div' );
 
 		title.appendChild( inDiv );
 
@@ -2554,7 +2580,7 @@ var View = function( args )
 				// Use correct button
 				if( e.button != 0 && !mode ) return cancelBubble( e );
 
-				var x, y;
+				let x, y;
 				if( isTablet || isTouchDevice() )
 				{
 					x = e.touches[0].pageX;
@@ -2588,7 +2614,7 @@ var View = function( args )
 				{
 					if( !self.titleClickElement )
 					{
-						var d = document.createElement( 'input' );
+						let d = document.createElement( 'input' );
 						d.type = 'text';
 						d.className = 'BackgroundHeavier NoMargins Absolute';
 						d.style.position = 'absolute';
@@ -2616,8 +2642,8 @@ var View = function( args )
 						}
 						d.onchange = function( e )
 						{
-							var t = this;
-							var f = ( new Door() ).get( this.value );
+							let t = this;
+							let f = ( new Door() ).get( this.value );
 							if( f )
 							{
 								f.getIcons( this.value, function( items )
@@ -2657,10 +2683,10 @@ var View = function( args )
 				{
 					if( isMobile )
 					{
-						var target = this;
+						let target = this;
 						if( window._getAppByAppId )
 						{
-							var app = _getAppByAppId( this.applicationId );
+							let app = _getAppByAppId( this.applicationId );
 							if( app && app.displayedView )
 							{
 								target = app.displayedView;
@@ -2677,7 +2703,7 @@ var View = function( args )
 		// Tablets and mobile
 		div.ontouchstart = function( e )
 		{
-			var self = this;
+			let self = this;
 			
 			if( isMobile && !self.parentNode.classList.contains( 'OnWorkspace' ) )
 				return;
@@ -2695,7 +2721,7 @@ var View = function( args )
 			// Only removable after 300 ms
 			this.touchInterval = setInterval( function()
 			{
-				var t = ( new Date() ).getTime();
+				let t = ( new Date() ).getTime();
 				if( self.clickOffset )
 				{
 					if( t - self.clickOffset.time > 100 )
@@ -2740,7 +2766,7 @@ var View = function( args )
 		}
 
 		// Depth gadget
-		var depth = document.createElement( 'div' );
+		let depth = document.createElement( 'div' );
 		depth.className = 'Depth';
 		depth.onmousedown = function( e ) { return e.stopPropagation(); }
 		depth.ondragstart = function( e ) { return e.stopPropagation(); }
@@ -2751,13 +2777,13 @@ var View = function( args )
 			if( !window.isTablet && e.button != 0 ) return;
 			
 			// Calculate lowest and highest z-index
-			var low = 99999999;	var high = 0;
+			let low = 99999999;	let high = 0;
 			for( var a in movableWindows )
 			{
-				var maxm = movableWindows[a].getAttribute( 'maximized' );
+				let maxm = movableWindows[a].getAttribute( 'maximized' );
 				if( maxm && maxm.length )
 					continue;
-				var ind = parseInt( movableWindows[a].viewContainer.style.zIndex );
+				let ind = parseInt( movableWindows[a].viewContainer.style.zIndex );
 				if( ind < low ) low = ind;
 				if( ind > high ) high = ind;
 			}
@@ -2773,7 +2799,7 @@ var View = function( args )
 			else
 			{
 				this.window.viewContainer.style.zIndex = 100;
-				var highest = 0;
+				let highest = 0;
 				for( var a in movableWindows )
 				{
 					if( movableWindows[a] != this.window )
@@ -2795,15 +2821,15 @@ var View = function( args )
 		}
 
 		// Bottom of the window
-		var bottombar = document.createElement ( 'div' );
+		let bottombar = document.createElement ( 'div' );
 		bottombar.className = 'BottomBar';
 
 		// Left border of window
-		var leftbar = document.createElement ( 'div' );
+		let leftbar = document.createElement ( 'div' );
 		leftbar.className = 'LeftBar';
 
 		// Left border of window
-		var rightbar = document.createElement ( 'div' );
+		let rightbar = document.createElement ( 'div' );
 		rightbar.className = 'RightBar';
 
 		// Zoom gadget
@@ -2845,7 +2871,7 @@ var View = function( args )
 					// Tell app
 					if( window._getAppByAppId )
 					{
-						var app = _getAppByAppId( div.applicationId );
+						let app = _getAppByAppId( div.applicationId );
 						if( app )
 						{
 							app.sendMessage( {
@@ -2859,7 +2885,7 @@ var View = function( args )
 					}
 					
 					// Store it just in case
-					var d = GetWindowStorage( div.id );
+					let d = GetWindowStorage( div.id );
 					if( !d ) d = {};
 					d.maximized = true;
 					SetWindowStorage( div.id, d );
@@ -2872,11 +2898,11 @@ var View = function( args )
 						this.prevHeight = this.window.offsetHeight;
 						this.window.style.top = '0px';
 						this.window.style.left = '0px';
-						var wid = 0; var hei = 0;
+						let wid = 0; var hei = 0;
 						if( self.flags.screen )
 						{
-							var cnt2 = this.window.content;
-							var sbar = 0;
+							let cnt2 = this.window.content;
+							let sbar = 0;
 							if( self.flags.screen.div == Ge( 'DoorsScreen' ) )
 								sbar = GetStatusbarHeight( self.flags.screen );
 							wid = self.flags.screen.div.offsetWidth;
@@ -2894,7 +2920,7 @@ var View = function( args )
 					_removeWindowTiles( div );
 					
 					// Store it just in case
-					var d = GetWindowStorage( div.id );
+					let d = GetWindowStorage( div.id );
 					if( !d ) d = {};
 					d.maximized = false;
 					SetWindowStorage( div.id, d );
@@ -2909,7 +2935,7 @@ var View = function( args )
 					// Tell application if any
 					if( window._getAppByAppId )
 					{
-						var app = _getAppByAppId( div.applicationId );
+						let app = _getAppByAppId( div.applicationId );
 						if( app )
 						{
 							app.sendMessage( {
@@ -2970,17 +2996,17 @@ var View = function( args )
 		div.memorize = function ()
 		{
 			if( isMobile ) return;
-			var wenable = this.content && self.flags && self.flags.resize ? true : false;
+			let wenable = this.content && self.flags && self.flags.resize ? true : false;
 
 			// True if we're to enable memory
 			if ( self.flags && self.flags.memorize )
 				wenable = true;
 
-			var wwi = div.offsetWidth;
-			var hhe = div.offsetHeight;
+			let wwi = div.offsetWidth;
+			let hhe = div.offsetHeight;
 
 			// Update information in the window storage object
-			var d = GetWindowStorage( this.uniqueId );
+			let d = GetWindowStorage( this.uniqueId );
 			
 			if( !div.getAttribute( 'maximized' ) )
 			{
@@ -2998,7 +3024,7 @@ var View = function( args )
 			SetWindowStorage( this.uniqueId, d );
 		}
 
-		var minimize = document.createElement ( 'div' );
+		let minimize = document.createElement ( 'div' );
 		minimize.className = 'Minimize';
 		minimize.onmousedown = function ( e ) { return cancelBubble ( e ); }
 		minimize.ondragstart = function ( e ) { return cancelBubble ( e ); }
@@ -3034,14 +3060,14 @@ var View = function( args )
 				{
 					// Only on real events
 					_ActivateWindow( div, false, e );
-					var escapeFlag = 0;
+					let escapeFlag = 0;
 					if( 
 						div.windowObject && 
 						( !globalConfig.viewList || globalConfig.viewList == 'separate' ) && 
 						ge( 'Taskbar' )
 					)
 					{
-						var t = ge( 'Taskbar' );
+						let t = ge( 'Taskbar' );
 						for( var tel = 0; tel < t.childNodes.length; tel++ )
 						{
 							if( t.childNodes[tel].window == div )
@@ -3055,7 +3081,7 @@ var View = function( args )
 					}
 					else if( ge( 'DockWindowList' ) )
 					{
-						var t = ge( 'DockWindowList' );
+						let t = ge( 'DockWindowList' );
 						for( var tel = 0; tel < t.childNodes.length; tel++ )
 						{
 							if( t.childNodes[tel].window == div )
@@ -3076,13 +3102,13 @@ var View = function( args )
 						{
 							for( var u = 0; u < Workspace.mainDock.dom.childNodes.length; u++ )
 							{
-								var ch = Workspace.mainDock.dom.childNodes[ u ];
+								let ch = Workspace.mainDock.dom.childNodes[ u ];
 								// Check the view list
 								if( ch.classList.contains( 'ViewList' ) )
 								{
 									for( var z = 0; z < ch.childNodes.length; z++ )
 									{
-										var cj = ch.childNodes[ z ];
+										let cj = ch.childNodes[ z ];
 										if( cj.viewId && movableWindows[ cj.viewId ] == div )
 										{
 											cj.mousedown = true;
@@ -3099,7 +3125,7 @@ var View = function( args )
 									{
 										for( var r = 0; escapeFlag == 0 && r < Workspace.applications.length; r++ )
 										{
-											var app = Workspace.applications[ r ];
+											let app = Workspace.applications[ r ];
 											if( app.applicationName == ch.executable )
 											{
 												if( app.windows )
@@ -3127,7 +3153,7 @@ var View = function( args )
 				{
 					for( var a = 0; a < div.attached.length; a++ )
 					{
-						var app = _getAppByAppId( div.attached[ a ].applicationId );
+						let app = _getAppByAppId( div.attached[ a ].applicationId );
 						if( app )
 						{
 							app.sendMessage( {
@@ -3149,7 +3175,7 @@ var View = function( args )
 			{
 				if( !isMobile )
 				{
-					var app = _getAppByAppId( div.applicationId );
+					let app = _getAppByAppId( div.applicationId );
 					if( app.mainView && div != app.mainView )
 						_ActivateWindow( app.mainView.content.parentNode );
 				}
@@ -3158,7 +3184,7 @@ var View = function( args )
 			
 			if( window._getAppByAppId )
 			{
-				var app = _getAppByAppId( div.applicationId );
+				let app = _getAppByAppId( div.applicationId );
 				if( app )
 				{
 					app.sendMessage( {
@@ -3174,14 +3200,14 @@ var View = function( args )
 		minimize.onclick = div.doMinimize;
 
 		// Mobile has extra close button
-		var mclose = false;
+		let mclose = false;
 		if( isMobile )
 		{
 			mclose = document.createElement( 'div' );
 			mclose.className = 'MobileClose';
 			mclose.ontouchstart = function( e )
 			{
-				var wo = div.windowObject;
+				let wo = div.windowObject;
 				for( var a = 0; a < wo.childWindows.length; a++ )
 				{
 					if( wo.childWindows[a]._window )
@@ -3202,7 +3228,7 @@ var View = function( args )
 			}
 		}
 
-		var close = document.createElement( 'div' );
+		let close = document.createElement( 'div' );
 		close.className = 'Close';
 		close.onmousedown = function( e ) { return cancelBubble( e ); }
 		close.ondragstart = function( e ) { return cancelBubble( e ); }
@@ -3228,7 +3254,7 @@ var View = function( args )
 				viewContainer.classList.add( 'Closing' );
 				if( div.windowObject )
 				{
-					var wo = div.windowObject;
+					let wo = div.windowObject;
 					for( var a = 0; a < wo.childWindows.length; a++ )
 					{
 						if( wo.childWindows[a]._window )
@@ -3293,24 +3319,24 @@ var View = function( args )
 		div.appendChild( molay ); // Add move overlay
 
 		// View groups
-		var contentArea = false;
+		let contentArea = false;
 		self.viewGroups = {};
 		if( self.flags.viewGroups )
 		{
-			var validGroups = false;
+			let validGroups = false;
 			self.viewGroups = [];
-			var groups = self.flags.viewGroups;
+			let groups = self.flags.viewGroups;
 			for( var a = 0; a < groups.length; a++ )
 			{
-				var group = groups[ a ];
+				let group = groups[ a ];
 				if( group.id )
 				{
-					var g = document.createElement( 'div' );
+					let g = document.createElement( 'div' );
 					g.className = 'ViewGroup';
 					
 					if( group.mode == 'horizontalTabs' )
 					{
-						var t = document.createElement( 'div' );
+						let t = document.createElement( 'div' );
 						t.className = 'ViewGroupTabsHorizontal';
 						g.className += ' TabsHorizontal';
 						g.appendChild( t );
@@ -3335,7 +3361,7 @@ var View = function( args )
 					{
 						if( group.width.indexOf && group.width.indexOf( '%' ) > 0 )
 						{
-							var ex = parseInt( 
+							let ex = parseInt( 
 								group.xposition == 'left' ? 
 								GetThemeInfo( 'ViewLeftBar' ).width : 
 								GetThemeInfo( 'ViewRightBar' ).width
@@ -3348,7 +3374,7 @@ var View = function( args )
 					{
 						if( group.height.indexOf && group.height.indexOf( '%' ) > 0 )
 						{
-							var ex = parseInt( GetThemeInfo( 'ViewBottom' ).height ) + parseInt( GetThemeInfo( 'ViewTitle' ).height );
+							let ex = parseInt( GetThemeInfo( 'ViewBottom' ).height ) + parseInt( GetThemeInfo( 'ViewTitle' ).height );
 							group.height = 'calc(' + group.height + ' - ' + ex + 'px)';
 						}
 						g.style.height = group.height;
@@ -3362,8 +3388,8 @@ var View = function( args )
 				div.classList.add( 'HasViewGroups' );
 		}
 		// Max width and height
-		var ww = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-		var hh = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+		let ww = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+		let hh = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
 
 		movableWindowCount++; // Iterate global count of view windows
 		
@@ -3390,8 +3416,8 @@ var View = function( args )
 		div.content.RemoveEvent = function( event, func )
 		{
 			if( typeof( this.events[event] ) == 'undefined' ) return false;
-			var o = [];
-			var found = false;
+			let o = [];
+			let found = false;
 			for( var a in this.events[event] )
 			{
 				if( this.events[event][a] != func )
@@ -3413,12 +3439,12 @@ var View = function( args )
 		div.content.viewId = div.id;
 		div.content.uniqueId = uniqueId;
 
-		var windowResized = false;
+		let windowResized = false;
 
-		var leftSet = false;
-		var topSet = false;
-		var wp = GetWindowStorage( div.uniqueId );
-		var leftTopSpecial = flags.top == 'center' || flags.left == 'center'; // Check for special flags
+		let leftSet = false;
+		let topSet = false;
+		let wp = GetWindowStorage( div.uniqueId );
+		let leftTopSpecial = flags.top == 'center' || flags.left == 'center'; // Check for special flags
 		if( wp && ( wp.top >= 0 || wp.width >= 0 ) && !leftTopSpecial )
 		{
 			if( window.isMobile )
@@ -3432,7 +3458,7 @@ var View = function( args )
 			}
 			else
 			{
-				var sw = self.flags.screen && self.flags.screen.div ? self.flags.screen.div.offsetWidth : document.body.offsetWidth;
+				let sw = self.flags.screen && self.flags.screen.div ? self.flags.screen.div.offsetWidth : document.body.offsetWidth;
 				
 				if( wp.maximized )
 				{
@@ -3442,7 +3468,7 @@ var View = function( args )
 					// Tell application if any
 					if( window._getAppByAppId )
 					{
-						var app = _getAppByAppId( div.applicationId );
+						let app = _getAppByAppId( div.applicationId );
 						if( app )
 						{
 							app.sendMessage( {
@@ -3458,7 +3484,7 @@ var View = function( args )
 				
 				if( wp.top >= 0 && wp.top < hh )
 				{
-					var wt = wp.top;
+					let wt = wp.top;
 					div.style.top = wt + 'px';
 					topSet = true;
 				}
@@ -3479,7 +3505,7 @@ var View = function( args )
 		}
 		
 		// Let's find the center!
-		var mvw = 0, mvh = 0;
+		let mvw = 0, mvh = 0;
 		if( Workspace && Workspace.screen )
 		{
 			mvw = Workspace.screen.getMaxViewWidth();
@@ -3487,7 +3513,7 @@ var View = function( args )
 			
 			if( ge( 'desklet_0' ) )
 			{
-				var att = ge( 'desklet_0' ).getAttribute( 'position' );
+				let att = ge( 'desklet_0' ).getAttribute( 'position' );
 				if( att && ( att.indexOf( 'bottom' ) >= 0 || att.indexOf( 'top' ) >= 0 ) )
 					mvh -= ge( 'desklet_0' ).offsetHeight;
 			}
@@ -3551,7 +3577,7 @@ var View = function( args )
 			// Tell application if any
 			if( window._getAppByAppId )
 			{
-				var app = _getAppByAppId( div.applicationId );
+				let app = _getAppByAppId( div.applicationId );
 				if( app )
 				{
 					app.sendMessage( {
@@ -3595,12 +3621,12 @@ var View = function( args )
 		div.setAttribute( 'created', 'created' );
 		
 		// Insert into existing viewgroup
-		var inGroup = false;
+		let inGroup = false;
 		if( self.flags.viewGroup )
 		{
 			for( var a in movableWindows )
 			{
-				var w = movableWindows[ a ].windowObject;
+				let w = movableWindows[ a ].windowObject;
 				if( w.viewId == self.flags.viewGroup.view )
 				{
 					if( w.viewGroups[ self.flags.viewGroup.viewGroup ] )
@@ -3612,7 +3638,7 @@ var View = function( args )
 						// Add tab
 						if( divParent.tabs )
 						{
-							var tab = document.createElement( 'div' );
+							let tab = document.createElement( 'div' );
 							tab.className = divParent.tabs.childNodes.length > 0 ? 'Tab' : 'TabActive';
 							if( !divParent.activeTab ) divParent.activeTab = tab;
 							tab.innerHTML = self.flags.title;
@@ -3713,8 +3739,8 @@ var View = function( args )
 			}
 
 			// Resize touch events.... -----------------------------------------
-			var winTouchStart = [ 0, 0 ];
-			var winTouchDowned = winTouchEnd = 0;
+			let winTouchStart = [ 0, 0 ];
+			let winTouchDowned = winTouchEnd = 0;
 			resize.addEventListener('touchstart', function( evt )
 			{
 				cancelBubble( evt );
@@ -3774,7 +3800,7 @@ var View = function( args )
 		{
 			if( !evt.target.offH ) evt.target.offH = evt.target.offsetParent.clientHeight;
 			//not too small and not too high...
-			var newHeight = Math.min(
+			let newHeight = Math.min(
 				Workspace.screenDiv.clientHeight -
 					72 - evt.target.offsetParent.offsetTop,
 				Math.max(80,evt.touches[0].clientY - evt.target.offsetParent.offsetTop )
@@ -3786,7 +3812,7 @@ var View = function( args )
 			// Only tablets can move
 			if( window.isTablet )
 			{
-				var newWidth = Math.min(
+				let newWidth = Math.min(
 					Workspace.screenDiv.clientWidth -
 						evt.target.offsetParent.offsetLeft,
 					evt.touches[0].clientX - evt.target.offsetParent.offsetLeft
@@ -3799,8 +3825,8 @@ var View = function( args )
 		
 		function touchMoveWindow( evt )
 		{
-			var nx = evt.touches[0].clientX;
-			var ny = evt.touches[0].clientY;
+			let nx = evt.touches[0].clientX;
+			let ny = evt.touches[0].clientY;
 			
 			window.mouseDown = 1;
 			movableListener( evt, { mouseX: nx, mouseY: ny } );
@@ -3850,7 +3876,7 @@ var View = function( args )
 				// Tell application if any
 				if( window._getAppByAppId )
 				{
-					var app = _getAppByAppId( div.applicationId );
+					let app = _getAppByAppId( div.applicationId );
 					if( app )
 					{
 						app.sendMessage( {
@@ -3915,16 +3941,18 @@ var View = function( args )
 		
 		if( wsnum < 0 || wsnum > globalConfig.workspacecount - 1 )
 			return; 
-		var wn = this._window.parentNode;
-		var pn = wn.parentNode;
+		let wn = this._window.parentNode;
+		let pn = wn.parentNode;
 		
 		// Move the viewcontainer
 		wn.viewContainer.style.left = ( Workspace.screen.getMaxViewWidth() * wsnum ) + 'px';
+		wn.workspace = wsnum;
+		cleanVirtualWorkspaceInformation(); // Just clean the workspace info
 		
 		// Done moving
 		if( this.flags.screen )
 		{
-			var maxViewWidth = this.flags.screen.getMaxViewWidth();
+			let maxViewWidth = this.flags.screen.getMaxViewWidth();
 			this.workspace = wsnum;
 			_DeactivateWindow( this._window.parentNode );
 			PollTaskbar();
@@ -3944,7 +3972,7 @@ var View = function( args )
 		{
 			this.setFlag( 'fullscreenenabled', val );
 		}
-		var fullscreen = this.getFlag( 'fullscreenenabled' );
+		let fullscreen = this.getFlag( 'fullscreenenabled' );
 		if( fullscreen )
 		{
 			if( this.iframe )
@@ -3997,7 +4025,7 @@ var View = function( args )
 		// Make sure scripts can be run after all resources has loaded
 		if( content && content.match )
 		{
-			var r;
+			let r;
 			while( r = content.match( /\<script([^>]*?)\>([\w\W]*?)\<\/script\>/i ) )
 				content = content.split( r[0] ).join( '<friendscript' + r[1] + '>' + r[2] + '</friendscript>' );
 		}
@@ -4006,13 +4034,13 @@ var View = function( args )
 			content = '';
 		}
 
-		var c = this._window;
+		let c = this._window;
 		if( c && c.content ) c = c.content;
 		if( c )
 		{
 			c.innerHTML = '';
 		}
-		var ifr = document.createElement( _viewType );
+		let ifr = document.createElement( _viewType );
 		ifr.applicationId = self.applicationId;
 		ifr.authId = self.authId;
 		ifr.applicationName = self.applicationName;
@@ -4029,7 +4057,7 @@ var View = function( args )
 		ifr.id = 'sandbox_' + this.viewId;
 		ifr.src = domain;
 
-		var view = this;
+		let view = this;
 		this.iframe = ifr;
 		
 		ifr.onfocus = function( e )
@@ -4050,21 +4078,21 @@ var View = function( args )
 			// Assign views to each other to allow cross window scripting
 			// TODO: This could be a security hazard! Remember to use security
 			//       domains!
-			var parentIframeId = false;
-			var instance = Math.random() % 100;
+			let parentIframeId = false;
+			let instance = Math.random() % 100;
 			if( ifr.applicationId )
 			{
-				for( var a = 0; a < Workspace.applications.length; a++ )
+				for( let a = 0; a < Workspace.applications.length; a++ )
 				{
-					var app = Workspace.applications[a];
+					let app = Workspace.applications[a];
 					if( app.applicationId == ifr.applicationId )
 					{
-						for( var b in app.windows )
+						for( let b in app.windows )
 						{
 							// Ah we found our parent view
 							if( self.parentViewId == b )
 							{
-								var win = app.windows[b];
+								let win = app.windows[b];
 								parentIframeId = 'sandbox_' + b;
 								break;
 							}
@@ -4079,7 +4107,7 @@ var View = function( args )
 				}
 			}
 
-			var msg = {}; if( packet ) for( var a in packet ) msg[a] = packet[a];
+			let msg = {}; if( packet ) for( let a in packet ) msg[a] = packet[a];
 			msg.command = 'setbodycontent';
 			msg.cachedAppData = _applicationBasics;
 			msg.dosDrivers = Friend.dosDrivers;
@@ -4128,7 +4156,7 @@ var View = function( args )
 	{
 		if( this.iframe )
 		{
-			var msg = {}; if( packet ) for( var a in packet ) msg[a] = packet[a];
+			let msg = {}; if( packet ) for( var a in packet ) msg[a] = packet[a];
 			msg.command = 'setcontentbyid';
 			this.iframe.contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + this.iframe.src.split( '//' )[1].split( '/' )[0] );
 		}
@@ -4137,16 +4165,16 @@ var View = function( args )
 	// old hello function
 	this.setSandboxedUrl = function( conf )
 	{
-		var self = this;
-		var appName = self.applicationName;
-		var origin = '*'; // TODO: Should be this Doors.runLevels[ 0 ].domain;
-		var domain = Doors.runLevels[ 1 ].domain;
+		let self = this;
+		let appName = self.applicationName;
+		let origin = '*'; // TODO: Should be this Doors.runLevels[ 0 ].domain;
+		let domain = Doors.runLevels[ 1 ].domain;
 		domain = domain.split( '://' )[1];
-		var appBase = '/webclient/apps/' + appName + '/';
-		var protocol = Workspace.protocol + '://';
-		var filePath =  protocol + domain + appBase + conf.filePath;
-		var container = self._window.content || self._window;
-		var iframe = document.createElement( _viewType );
+		let appBase = '/webclient/apps/' + appName + '/';
+		let protocol = Workspace.protocol + '://';
+		let filePath =  protocol + domain + appBase + conf.filePath;
+		let container = self._window.content || self._window;
+		let iframe = document.createElement( _viewType );
 		iframe.applicationId = self.applicationId;
 		iframe.authId = self.authId;
 		iframe.applicationName = self.applicationName;
@@ -4160,7 +4188,7 @@ var View = function( args )
 		container.innerHTML = '';
 		container.appendChild( iframe );
 
-		var src = filePath
+		let src = filePath
 			+ '?base=' + appBase
 			+ '&id=' + self.viewId
 			+ '&applicationId=' + self.applicationId
@@ -4182,8 +4210,8 @@ var View = function( args )
 		
 		// Rich content still can't have any scripts!
 		content = this.removeScriptsFromData( content );
-		var eles = this._window.getElementsByTagName( _viewType );
-		var ifr = false;
+		let eles = this._window.getElementsByTagName( _viewType );
+		let ifr = false;
 		if( eles[0] )
 			ifr = eles[0];
 		else
@@ -4212,11 +4240,11 @@ var View = function( args )
 	// Sets rich content in a safe iframe
 	this.setJSXContent = function( content, appName )
 	{
-		var w = this;
+		let w = this;
 
-		var eles = this._window.getElementsByTagName( _viewType );
-		var ifr = false;
-		var appended = false;
+		let eles = this._window.getElementsByTagName( _viewType );
+		let ifr = false;
+		let appended = false;
 
 		if( eles[0] )
 			ifr = eles[0];
@@ -4250,13 +4278,13 @@ var View = function( args )
 		ifr.onload = function()
 		{
 			// Get document
-			var doc = ifr.contentWindow.document;
+			let doc = ifr.contentWindow.document;
 
-			var jsx = doc.createElement( 'script' );
+			let jsx = doc.createElement( 'script' );
 			jsx.innerHTML = content;
 			ifr.contentWindow.document.getElementsByTagName( 'head' )[0].appendChild( jsx );
 
-			var msg = {
+			let msg = {
 				command:       'initappframe',
 				base:          '/',
 				applicationId: ifr.applicationId,
@@ -4286,14 +4314,14 @@ var View = function( args )
 	// Sets rich content in a safe iframe
 	this.setRichContentUrl = function( url, base, appId, filePath, callback )
 	{
-		var view = this;
+		let view = this;
 
 		if( !base )
 			base = '/';
 
-		var eles = this._window.getElementsByTagName( _viewType );
-		var ifr = false;
-		var w = this;
+		let eles = this._window.getElementsByTagName( _viewType );
+		let ifr = false;
+		let w = this;
 		if( eles[0] ) ifr = eles[0];
 		else
 		{
@@ -4308,7 +4336,7 @@ var View = function( args )
 		ifr.applicationDisplayName = self.applicationDisplayName;
 		ifr.authId = self.authId;
 
-		var conf = this.flags || {};
+		let conf = this.flags || {};
 		if( this.flags && this.flags.allowScrolling )
 		{
 			ifr.setAttribute( 'scrolling', 'yes' );
@@ -4339,13 +4367,13 @@ var View = function( args )
 		// Fix url
 		if( url.indexOf( 'http' ) != 0 )
 		{
-			var t = document.location.href.match( /(http[s]{0,1}\:\/\/)(.*?)\//i );
+			let t = document.location.href.match( /(http[s]{0,1}\:\/\/)(.*?)\//i );
 			url = t[1] + t[2] + url;
 		}
 		
-		var targetP = url.match( /(http[s]{0,1}\:\/\/.*?)\//i );
-		var friendU = document.location.href.match( /http[s]{0,1}\:\/\/(.*?)\//i );
-		var targetU = url.match( /http[s]{0,1}\:\/\/(.*?)\//i );
+		let targetP = url.match( /(http[s]{0,1}\:\/\/.*?)\//i );
+		let friendU = document.location.href.match( /http[s]{0,1}\:\/\/(.*?)\//i );
+		let targetU = url.match( /http[s]{0,1}\:\/\/(.*?)\//i );
 		if( friendU && friendU.length > 1 ) friendU = friendU[1];
 		if( targetU && targetU.length > 1 )
 		{
@@ -4358,11 +4386,11 @@ var View = function( args )
 			ifr.sandbox = DEFAULT_SANDBOX_ATTRIBUTES;
 
 		// Allow sandbox flags
-		var sbx = ifr.getAttribute( 'sandbox' ) ? ifr.getAttribute( 'sandbox' ) : '';
+		let sbx = ifr.getAttribute( 'sandbox' ) ? ifr.getAttribute( 'sandbox' ) : '';
 		sbx = ('' + sbx).split( ' ' );
 		if( this.flags && this.flags.allowPopups )
 		{
-			var found = false;
+			let found = false;
 			for( var a = 0; a < sbx.length; a++ )
 			{
 				if( sbx[a] == 'allow-popups' )
@@ -4378,7 +4406,7 @@ var View = function( args )
 		{
 			if( friendU && ( friendU == targetU || !targetU ) )
 			{
-				var msg = {
+				let msg = {
 					command           : 'initappframe',
 					base              : base,
 					applicationId     : appId,
@@ -4415,7 +4443,7 @@ var View = function( args )
 		
 		/*if( this.conf && url.indexOf( Workspace.protocol + '://' ) != 0 )
 		{
-			var cnf = this.conf;
+			let cnf = this.conf;
 			if( typeof( this.conf ) == 'object' ) cnf = '';
 			ifr.src = '/system.library/module/?module=system&command=sandbox' +
 				'&sessionid=' + Workspace.sessionId +
@@ -4465,13 +4493,13 @@ var View = function( args )
 		// Check if the iframe is ready to receive a message
 		if( this.iframe && this.iframe.loaded && this.iframe.contentWindow )
 		{
-			var u = Workspace.protocol + '://' + 
+			let u = Workspace.protocolUrl + 
 				this.iframe.src.split( '//' )[1].split( '/' )[0];
 			
-			var origin = event && 
-				event.origin && event.origin != 'null' && event.origin.indexOf( 'wss:' ) != 0 ? event.origin : '*'; // * used to be u;
+			//let origin = event && 
+			//	event.origin && event.origin != 'null' && event.origin.indexOf( 'wss:' ) != 0 ? event.origin : '*'; // * used to be u;
 			// TODO: Fix this with security
-			origin = '*';
+			let origin = '*';
 			
 			if( !dataObject.applicationId && this.iframe.applicationId )
 			{
@@ -4507,9 +4535,9 @@ var View = function( args )
 
 		if( this.executingSendQueue || !this.iframe ) return;
 		this.executingSendQueue = true;
-		for( var a = 0; a < this.sendQueue.length; a++ )
+		for( let a = 0; a < this.sendQueue.length; a++ )
 		{
-			var msg = this.sendQueue[ a ];
+			let msg = this.sendQueue[ a ];
 			this.sendMessage( msg );
 		}
 		this.sendQueue = [];
@@ -4528,19 +4556,19 @@ var View = function( args )
 	// Focus on an able element
 	this.focusOnElement = function( identifier, flag )
 	{
-		var ele = this.getSubContent( identifier, flag );
+		let ele = this.getSubContent( identifier, flag );
 		if( ele && ele.focus ) ele.focus();
 	}
 	// Get some subcontent (.class or #id)
 	this.getContentById = function( identifier, flag )
 	{
-		var node = this.getContentElement();
+		let node = this.getContentElement();
 		if( !node ) return false;
-		var ele = node.getElementsByTagName( '*' );
-		var cnt = false;
-		var idn = identifier.substr( 0, 1 );
-		var key = identifier.substr( 1, identifier.length - 1 );
-		var results = [];
+		let ele = node.getElementsByTagName( '*' );
+		let cnt = false;
+		let idn = identifier.substr( 0, 1 );
+		let key = identifier.substr( 1, identifier.length - 1 );
+		let results = [];
 		if( idn == '.' )
 		{
 			for( var a = 0; a < ele.length; a++ )
@@ -4553,7 +4581,7 @@ var View = function( args )
 		}
 		else
 		{
-			var fn = key;
+			let fn = key;
 			if( idn != '#' ) fn = identifier;
 			for( var a = 0; a < ele.length; a++ )
 			{
@@ -4573,7 +4601,7 @@ var View = function( args )
 	// TODO: Deprecated! Remove completely!
 	this.setSubContent = function( identifier, flag, content )
 	{
-		var cnt = this.getSubContent( identifier, flag );
+		let cnt = this.getSubContent( identifier, flag );
 		if( !cnt ) return;
 		// Safe content without any scripts or styles!
 		cnt.innerHTML = this.cleanHTMLData( content );
@@ -4583,7 +4611,7 @@ var View = function( args )
 	{
 		if( this.iframe )
 		{
-			var msg = {}; if( packet ) for( var a in packet ) msg[a] = packet[a];
+			let msg = {}; if( packet ) for( var a in packet ) msg[a] = packet[a];
 			msg.command = 'setattributebyid';
 			this.iframe.contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + this.iframe.src.split( '//' )[1].split( '/' )[0] );
 		}
@@ -4598,13 +4626,14 @@ var View = function( args )
 		_ActivateWindow( this._window.parentNode );
 	}
 	// Move window to front
-	this.toFront = function()
+	this.toFront = function( flags )
 	{
 		if( this.flags.minimized ) 
 		{
 			return;
 		}
-		_ActivateWindow( this._window.parentNode );
+		if( !( flags && flags.activate === false ) )
+			_ActivateWindow( this._window.parentNode );
 		_WindowToFront( this._window.parentNode );
 	}
 	// Close a view window
@@ -4613,7 +4642,7 @@ var View = function( args )
 		if( isMobile )
 			Workspace.exitMobileMenu();
 		
-		var c = this._window;
+		let c = this._window;
 		if( c && c.content )
 			c = c.content;
 
@@ -4632,13 +4661,13 @@ var View = function( args )
 		if( !force && this._window && this._window.applicationId )
 		{
 			// Send directly to the view
-			var app = this._window.applicationId ? findApplication( this._window.applicationId ) : false;
+			let app = this._window.applicationId ? findApplication( this._window.applicationId ) : false;
 			if( c.getElementsByTagName( _viewType ).length )
 			{
-				var twindow = this;
+				let twindow = this;
 
 				// Notify application
-				var msg = {
+				let msg = {
 					type: 'system',
 					command: 'notify',
 					method: 'closeview',
@@ -4668,10 +4697,10 @@ var View = function( args )
 			}
 			else if( this.parentViewId )
 			{
-				var v = GetWindowById( this.parentViewId );
+				let v = GetWindowById( this.parentViewId );
 				if( v && v.windowObject )
 				{
-					var msg = {
+					let msg = {
 						type: 'system',
 						command: 'notify',
 						method: 'closeview',
@@ -4685,7 +4714,7 @@ var View = function( args )
 			else if( app )
 			{
 				// Notify application
-				var msg = {
+				let msg = {
 					type: 'system',
 					command: 'notify',
 					method: 'closeview',
@@ -4719,7 +4748,7 @@ var View = function( args )
 		if( !window._getAppByAppId )
 			return;
 			
-		var app = _getAppByAppId( this.applicationId );
+		let app = _getAppByAppId( this.applicationId );
 		if( !app ) return;
 		
 		this.flags.mainView = set;
@@ -4762,7 +4791,7 @@ var View = function( args )
 	this.setFlag = function( flag, value )
 	{	
 		// References to the view window
-		var content = viewdiv = false;
+		let content = viewdiv = false;
 		if( this._window )
 		{
 			content = this._window;
@@ -4858,9 +4887,10 @@ var View = function( args )
 				break;
 			case 'width':
 			case 'height':
+				if( value == null ) value = 0;
 				this.flags[ flag ] = value;
 				if( viewdiv )
-				{
+				{	
 					if( value == 'max' )
 					{
 						if( flag == 'width' )
@@ -4872,6 +4902,7 @@ var View = function( args )
 							value = this.flags.screen.getMaxViewHeight();
 						}
 					}
+					
 					ResizeWindow( viewdiv, ( flag == 'width' ? value : null ), ( flag == 'height' ? value : null ) );
 					RefreshWindow( viewdiv );
 				}
@@ -4989,7 +5020,7 @@ var View = function( args )
 			return;
 		for( var a = 0; a < Workspace.applications.length; a++ )
 		{
-			var app = Workspace.applications[a];
+			let app = Workspace.applications[a];
 			if( app.applicationId == viewdiv.applicationId )
 			{
 				app.contentWindow.postMessage( JSON.stringify( {
@@ -5012,7 +5043,7 @@ var View = function( args )
 			// Just parse by filter
 			if( filter )
 			{
-				var fnd = false;
+				let fnd = false;
 				for( var b in filter )
 				{
 					if( a == filter[b] )
@@ -5043,19 +5074,24 @@ var View = function( args )
 			switch( flag )
 			{
 				case 'top':
-					var f = this.flags[ flag ];
-					f += '';
-					if( f.indexOf( '%' ) > 0 ) return f;
-					else return parseInt( f );
+				{
+					let fg = this.flags[ flag ];
+					fg += '';
+					if( fg.indexOf( '%' ) > 0 ) return fg;
+					else return parseInt( fg );
 					break;
+				}
 				case 'left':
-					var f = this.flags[ flag ];
-					f += '';
-					if( f.indexOf( '%' ) > 0 ) return f;
-					else return parseInt( f );
+				{
+					let fg = this.flags[ flag ];
+					fg += '';
+					if( fg.indexOf( '%' ) > 0 ) return fg;
+					else return parseInt( fg );
 					break;
+				}
 				case 'width':
-					var fl = this.flags[flag];
+				{
+					let fl = this.flags[flag];
 					if( fl.indexOf && fl.indexOf( '%' ) > 0 )
 						return fl;
 					if( fl == 'max' && this.flags.screen )
@@ -5063,8 +5099,10 @@ var View = function( args )
 						fl = this.flags.screen.getMaxViewWidth();
 					}
 					return fl;
+				}
 				case 'height':
-					var fl = this.flags[flag];
+				{
+					let fl = this.flags[flag];
 					if( fl.indexOf && fl.indexOf( '%' ) > 0 )
 						return fl;
 					if( fl == 'max' && this.flags.screen )
@@ -5072,13 +5110,14 @@ var View = function( args )
 						fl = this.flags.screen.getMaxViewHeight();
 					}
 					return fl;
+				}
 			}
 			return this.flags[flag];
 		}
 		// No flags set.. just get the raw data if possible, and defaults
 		else if( this._window )
 		{
-			var w = this._window.parentNode;
+			let w = this._window.parentNode;
 			switch( flag )
 			{
 				case 'left':
@@ -5096,7 +5135,7 @@ var View = function( args )
 	this.openCamera = function( flags, callback )
 	{
 		
-		var self = this;
+		let self = this;
 		
 		// Just get the available devices
 		function getAvailableDevices( cbk )
@@ -5122,8 +5161,8 @@ var View = function( args )
 		
 			ele.ontouchend = function( e )
 			{
-				var diff = e.changedTouches[0].clientX - this.offX;
-				var difftime = ( new Date() ).getTime() - this.timeStamp;
+				let diff = e.changedTouches[0].clientX - this.offX;
+				let difftime = ( new Date() ).getTime() - this.timeStamp;
 				if( difftime > 200 )
 				{
 					return;
@@ -5143,8 +5182,7 @@ var View = function( args )
 		
 		function setCameraMode( e )
 		{
-
-			console.log('setting camera mode!',e);
+			let v = null;
 			if( !self.cameraOptions )
 			{
 				self.cameraOptions = {
@@ -5152,7 +5190,7 @@ var View = function( args )
 					currentDevice: false
 				};
 				// Add container
-				var v = document.createElement( 'div' );
+				v = document.createElement( 'div' );
 				v.className = 'FriendCameraContainer';
 				self.content.appendChild( v );
 				self.content.container = v;
@@ -5163,11 +5201,11 @@ var View = function( args )
 			}
 			
 			// Find video devices
-			var initial = false;
-			var devs = [];
+			let initial = false;
+			let devs = [];
 			for( var a in self.cameraOptions.devices )
 			{
-				var dev = self.cameraOptions.devices[ a ];
+				let dev = self.cameraOptions.devices[ a ];
 				if( dev.kind == 'videoinput' )
 				{
 					//we want back facing camera as default...
@@ -5193,7 +5231,7 @@ var View = function( args )
 			// Initial pass over, now just choose next device
 			if( !initial )
 			{
-				var found = nextfound = false;
+				let found = nextfound = false;
 				for( var a = 0; a < devs.length; a++ )
 				{
 					if( devs[a].deviceId == self.cameraOptions.currentDevice.deviceId )
@@ -5214,18 +5252,18 @@ var View = function( args )
 					self.cameraOptions.currentDevice = devs[0];
 				}
 			}
-			var constraints = {
+			let constraints = {
 				video: {
 					deviceId: { exact: self.cameraOptions.currentDevice.deviceId }
 				}
 			};
 			
-			var ue = navigator.userAgent.toLowerCase();
+			let ue = navigator.userAgent.toLowerCase();
 			
 			if( navigator.gm ) { 
 				
 				//check if we should stop stuff before we try again...
-				var dd = self.content.container.camera;
+				let dd = self.content.container.camera;
 				if(dd && dd.srcObject)
 				{
 					dd.srcObject.getTracks().forEach(track => track.stop())
@@ -5251,7 +5289,7 @@ var View = function( args )
 					{
 						// Remove old video object
 						//might be too late here? at least on mobile? moved this check up a couple of lines..
-						var oldCam = self.content.container.camera;
+						let oldCam = self.content.container.camera;
 						if( oldCam && oldCam.srcObject )
 						{
 							oldCam.srcObject.getTracks().forEach( track => track.stop() );
@@ -5260,7 +5298,7 @@ var View = function( args )
 						else
 						{
 							// New element!
-							var vi = document.createElement( 'video' );
+							let vi = document.createElement( 'video' );
 							vi.setAttribute( 'autoplay', 'autoplay' );
 							vi.setAttribute( 'playinline', 'playinline' );
 							vi.className = 'FriendCameraElement';
@@ -5278,18 +5316,18 @@ var View = function( args )
 						// Add the record + switch button
 						if( !self.content.container.button )
 						{
-							var btn = document.createElement( 'button' );
+							let btn = document.createElement( 'button' );
 							btn.className = 'IconButton IconSmall fa-camera';
 							btn.onclick = function( e )
 							{
-								var dd = self.content.container.camera;
-								var canv = document.createElement( 'canvas' );
+								let dd = self.content.container.camera;
+								let canv = document.createElement( 'canvas' );
 								canv.setAttribute( 'width', dd.videoWidth );
 								canv.setAttribute( 'height', dd.videoHeight );
 								v.appendChild( canv );
-								var ctx = canv.getContext( '2d' );
+								let ctx = canv.getContext( '2d' );
 								ctx.drawImage( dd, 0, 0, dd.videoWidth, dd.videoHeight );
-								var dt = canv.toDataURL( 'image/jpeg', 0.95 );
+								let dt = canv.toDataURL( 'image/jpeg', 0.95 );
 						
 								// Stop taking video
 								dd.srcObject.getTracks().forEach(track => track.stop())
@@ -5318,14 +5356,14 @@ var View = function( args )
 							self.content.container.appendChild( btn );
 							
 							
-							var switchbtn = document.createElement( 'button' );
+							let switchbtn = document.createElement( 'button' );
 							switchbtn.className = 'IconButton IconSmall fa-refresh';
-							switchbtn.onclick = function() { console.log('switch camera...'); setCameraMode() };
+							switchbtn.onclick = function() { setCameraMode() };
 							self.content.container.appendChild( switchbtn );
 
 							//stop the video if the view is closed!
 							self.addEvent('systemclose', function() {
-								var dd = self.content.container.camera;
+								let dd = self.content.container.camera;
 								if(dd && dd.srcObject )
 								{
 									dd.srcObject.getTracks().forEach(track => track.stop())
@@ -5360,10 +5398,10 @@ var View = function( args )
 				v.removeChild( d );
 			
 				// Add fallback
-				var fb = document.createElement( 'div' );
+				let fb = document.createElement( 'div' );
 				fb.className = 'FriendCameraFallback';
 				v.appendChild( fb );
-				var mediaElement = document.createElement( 'input' );
+				let mediaElement = document.createElement( 'input' );
 				mediaElement.type = 'file';
 				mediaElement.accept = 'image/*';
 				mediaElement.className = 'FriendCameraInput';
@@ -5378,11 +5416,11 @@ var View = function( args )
 			
 				mediaElement.onchange = function( e )
 				{
-					var reader = new FileReader();
+					let reader = new FileReader();
 					reader.onload = function( e )
 					{
 						
-						var dataURL = e.target.result;
+						let dataURL = e.target.result;
 						v.classList.remove( 'Showing' );
 						setTimeout( function()
 						{
@@ -5421,13 +5459,13 @@ var View = function( args )
 	// Get elements by class
 	this.getByClass = function ( classn )
 	{
-		var el = this._window.getElementsByTagName ( '*' );
-		var out = [];
+		let el = this._window.getElementsByTagName ( '*' );
+		let out = [];
 		for( var a = 0; a < el.length; a++ )
 		{
 			if( el[a].className )
 			{
-				var cls = el[a].className.split ( ' ' );
+				let cls = el[a].className.split ( ' ' );
 				for( var b = 0; b < cls.length; b++ )
 				{
 					if ( cls[b] == classn )
@@ -5468,7 +5506,7 @@ var View = function( args )
 	// Add an event on a sub element
 	this.addEventByClass = function( className, event, func )
 	{
-		var ele = this.getSubContent( '.' + className );
+		let ele = this.getSubContent( '.' + className );
 		if( ele )
 		{
 			if( ele.addEventListener )
@@ -5528,6 +5566,16 @@ var View = function( args )
 
 	if( !args.id ) args.id = false;
 	
+	// Fullscreen single task
+	if( Workspace.isSingleTask )
+	{
+		args.width = 'max';
+		args.height = 'max';
+		args.left = 0;
+		args.top = 0;
+		args.resize = false;
+	}
+	
 	this.createDomElements( 'CREATE', args.title, args.width, args.height, args.id, args, args.applicationId );
 
 	if( !self._window || !self._window.parentNode ) return false;
@@ -5549,8 +5597,8 @@ var View = function( args )
 
 Friend.GUI.view.cleanWindowArray = function( ele )
 {
-	var out = [];
-	var found = true;
+	let out = [];
+	let found = true;
 	for( var a in movableWindows )
 	{
 		if( a != ele.id && movableWindows[ a ] != ele )
@@ -5579,32 +5627,32 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 		return;
 	}
 	
-	var boxWidth = 96;  // Window width when minimized
-	var boxHeight = 80; // Window height when minimized
+	let boxWidth = 96;  // Window width when minimized
+	let boxHeight = 80; // Window height when minimized
 	
-	var marginX = 12; // Minimum margin
-	var marginY = 42;
+	let marginX = 12; // Minimum margin
+	let marginY = 42;
 	
-	var pageW  = Workspace.screen.contentDiv.parentNode.offsetWidth;
-	var pageH  = Workspace.screen.contentDiv.offsetHeight;
+	let pageW  = Workspace.screen.contentDiv.parentNode.offsetWidth;
+	let pageH  = Workspace.screen.contentDiv.offsetHeight;
 	
 	// Maximum widths in page
-	var maxCount = Math.floor( pageW / ( boxWidth + marginX ) );
+	let maxCount = Math.floor( pageW / ( boxWidth + marginX ) );
 	// Calculate optimum horiz margin (adds right margin with +1)
 	marginX = ( pageW - ( boxWidth * maxCount ) ) / ( maxCount + 1 );
 	
-	var startY = 12;
-	var page = 0;
-	var pageX2 = pageW;
-	var iconHeight = false;
-	var pageX1 = 0;
-	var gridX = marginX;
-	var gridY = startY;
+	let startY = 12;
+	let page = 0;
+	let pageX2 = pageW;
+	let iconHeight = false;
+	let pageX1 = 0;
+	let gridX = marginX;
+	let gridY = startY;
 	
 	for( var a in movableWindows )
 	{
-		var v = movableWindows[ a ];
-		var c = v.parentNode; // ViewContainer
+		let v = movableWindows[ a ];
+		let c = v.parentNode; // ViewContainer
 		if( c.classList.contains( 'Active' ) )
 		{
 			// These views are handled by css...
@@ -5687,7 +5735,7 @@ else if ( document.addEventListener ) //WC3 browsers
 // TODO: Block other windows!
 function Ac2Alert ( msg, title )
 {
-	var v = new View( {
+	let v = new View( {
 		'title'  : !title ? i18n('Alert') : title,
 		'width'  : 400,
 		'height' : 120
@@ -5711,7 +5759,7 @@ function _kresponse( e )
 {
 	if( window.currentMovable )
 	{
-		var win = window.currentMovable.windowObject;
+		let win = window.currentMovable.windowObject;
 		if( !win ) return;
 
 		win.ctrlKey = false;
@@ -5721,8 +5769,8 @@ function _kresponse( e )
 
 		if( win.handleKeys )
 		{
-			var abort = false;
-			var k = e.which ? e.which : e.keyCode;
+			let abort = false;
+			let k = e.which ? e.which : e.keyCode;
 			if( e.ctrlKey )
 			{
 				switch ( k )
@@ -5747,7 +5795,7 @@ function _kresponse( e )
 		{
 			// Send the message to the window, giving it an opportunity to
 			// respond
-			var k = e.which ? e.which : e.keyCode;
+			let k = e.which ? e.which : e.keyCode;
 			win.sendMessage( { command: 'handlekeys', key: k, ctrlKey: true, shiftKey: e.shiftKey } );
 			return cancelBubble( e );
 		}*/
@@ -5758,7 +5806,7 @@ function _kresponseup( e )
 {
 	if ( window.currentMovable )
 	{
-		var win = window.currentMovable.windowObject;
+		let win = window.currentMovable.windowObject;
 
 		/*if ( ( e.ctrlKey || e.shiftKey ) && typeof ( win.handkeKeys ) )
 		{
@@ -5802,7 +5850,7 @@ function _kresize( e, depth )
 	if( depth == 0 )
 	{
 		// ios fix
-		var nav = navigator.userAgent.toLowerCase();
+		let nav = navigator.userAgent.toLowerCase();
 		if( nav.indexOf( 'iphone' ) >= 0 || nav.indexOf( 'ipad' ) >= 0 )
 		{
 			setTimeout( function()
@@ -5815,16 +5863,16 @@ function _kresize( e, depth )
 
 function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext, extrabuttonreturn )
 {
-	var d = document.createElement( 'div' );
+	let d = document.createElement( 'div' );
 	d.style.position = 'absolute';
 	d.style.left = '-10000px';
 	d.style.width = '400px';
 	d.innerHTML = string;
 	document.body.appendChild( d );
 
-	var curr = window.currentMovable;
+	let curr = window.currentMovable;
 
-	var v;
+	let v;
 	if( !window.isMobile )
 	{
 		v = new View( {
@@ -5855,9 +5903,9 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 
 	d.parentNode.removeChild( d );
 
-	var f = new File( 'System:templates/confirm.html' );
+	let f = new File( 'System:templates/confirm.html' );
 	
-	var thirdbutton = '';
+	let thirdbutton = '';
 	/* check for third button values */
 	if( extrabuttontext && extrabuttonreturn )
 	{
@@ -5875,39 +5923,47 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 	f.onLoad = function( data )
 	{
 		v.setContent( data );
-		var eles = v._window.getElementsByTagName( 'button' );
+		let eles = v._window.getElementsByTagName( 'button' );
 
 		// FL-6/06/2018: correction so that it does not take the relative position of OK/Cancel in the box 
-		for ( var e = 0; e < eles.length; e++ )
+		// US-792 - 2020: Correction to fix sending the same delete request multiple times
+		for( let el = 0; el < eles.length; el++ )
 		{
-			if ( eles[ e ].id == 'ok' )
+			( function( itm )
 			{
-				eles[ e ].onclick = function()
+				if( itm.id == 'ok' )
 				{
-					v.close();
-					okcallback( true );
-				}
-				eles[ e ].focus();
-			}
-			else if ( eles[ e ].id == 'cancel' )
-			{
-				eles[ e ].onclick = function()
-				{
-					v.close();
-					okcallback( false );
-				}
-			}
-			else
-			{
-				eles[ e ].onclick = function(e)
-				{
-					if(e && e.target && e.target.hasAttribute('data-returnvalue') )
-						okcallback( e.target.getAttribute('data-returnvalue') );
-					else
-						okcallback( e );
+					itm.onclick = function()
+					{
 						v.close();
+						okcallback( true );
+					}
+					itm.focus();
 				}
-			}
+				else if( itm.id == 'cancel' )
+				{
+					itm.onclick = function()
+					{
+						v.close();
+						okcallback( false );
+					}
+				}
+				else
+				{
+					itm.onclick = function( e )
+					{
+						if( e && e.target && e.target.hasAttribute( 'data-returnvalue' ) )
+						{
+							okcallback( e.target.getAttribute( 'data-returnvalue' ) );
+						}
+						else
+						{
+							okcallback( e );
+						}
+						v.close();
+					}
+				}
+			} )( eles[ el ] );
 		}
 		if( !window.isMobile )
 		{	
@@ -5916,6 +5972,7 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 		}
 	}
 	f.load();
+	return v; // The window
 }
 
 function Alert( title, string, cancelstring, callback )
@@ -5923,7 +5980,7 @@ function Alert( title, string, cancelstring, callback )
 
 	if(!title) title = 'Untitled';
 
-	var d = document.createElement( 'div' );
+	let d = document.createElement( 'div' );
 	d.style.position = 'absolute';
 	d.style.left = '-10000px';
 	d.style.width = '400px';
@@ -5931,16 +5988,16 @@ function Alert( title, string, cancelstring, callback )
 	document.body.appendChild( d );
 
 	// Register current movable
-	var curr = window.currentMovable;
+	let curr = window.currentMovable;
 
-	var minContentHeight = 100;
+	let minContentHeight = 100;
 	if( d.offsetHeight > minContentHeight )
 		minContentHeight = d.offsetHeight;
 	
-	var themeTitle = GetThemeInfo( 'ViewTitle' ).height;
-	var themeBottom = GetThemeInfo( 'ViewBottom' ).height;
+	let themeTitle = GetThemeInfo( 'ViewTitle' ).height;
+	let themeBottom = GetThemeInfo( 'ViewBottom' ).height;
 	
-	var v;
+	let v;
 	if( !window.isMobile )
 	{
 		v = new View( {
@@ -5971,7 +6028,7 @@ function Alert( title, string, cancelstring, callback )
 
 	d.parentNode.removeChild( d );
 
-	var f = new File( 'System:templates/alert.html' );
+	let f = new File( 'System:templates/alert.html' );
 	f.replacements = {
 		'string': string,
 		'understood': cancelstring ? cancelstring : i18n( 'i18n_understood' )
@@ -5980,7 +6037,7 @@ function Alert( title, string, cancelstring, callback )
 	f.onLoad = function( data )
 	{
 		v.setContent( data );
-		var eles = v._window.getElementsByTagName( 'button' );
+		let eles = v._window.getElementsByTagName( 'button' );
 		eles[0].onclick = function()
 		{
 			v.close();
@@ -5994,6 +6051,7 @@ function Alert( title, string, cancelstring, callback )
 		}
 	}
 	f.load();
+	return v; // the window
 }
 
 // Initialize the events
@@ -6020,7 +6078,7 @@ Friend.GUI.checkWindowState = function( state )
 {
 	if( !window.currentMovable ) return false;
 	if( !currentMovable.windowObject ) return false;
-	var wo = window.currentMovable.windowObject;
+	let wo = window.currentMovable.windowObject;
 	if( wo.states[ state ] )
 	{
 		return true;

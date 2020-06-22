@@ -82,8 +82,8 @@ char crl_path[1024] = "";
 #include "../plugins/protocol_lws_mirror.c"
 #include "../plugins/protocol_lws_status.c"
 #include "../plugins/protocol_dumb_increment.c"
-#include "../plugins/protocol_post_demo.c"
 #endif
+#include "../plugins/protocol_post_demo.c"
 
 static int
 lws_callback_http(struct lws *wsi, enum lws_callback_reasons reason, void *user,
@@ -155,8 +155,8 @@ static struct lws_protocols protocols[] = {
 	LWS_PLUGIN_PROTOCOL_DUMB_INCREMENT,
 	LWS_PLUGIN_PROTOCOL_MIRROR,
 	LWS_PLUGIN_PROTOCOL_LWS_STATUS,
-	LWS_PLUGIN_PROTOCOL_POST_DEMO,
 #endif
+	LWS_PLUGIN_PROTOCOL_POST_DEMO,
 	{ NULL, NULL, 0, 0 } /* terminator */
 };
 
@@ -475,7 +475,7 @@ int main(int argc, char **argv)
 	/* tell the library what debug level to emit and to send it to stderr */
 	lws_set_log_level(debug_level, NULL);
 
-	lwsl_notice("libwebsockets test server - license LGPL2.1+SLE\n");
+	lwsl_notice("libwebsockets test server - license MIT\n");
 	lwsl_notice("(C) Copyright 2010-2018 Andy Green <andy@warmcat.com>\n");
 
 	printf("Using resource path \"%s\"\n", resource_path);

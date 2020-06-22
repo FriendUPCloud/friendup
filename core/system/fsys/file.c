@@ -443,7 +443,7 @@ int FileUploadFileOrDirectory( Http *request, void *us, const char *dst, const c
  * @param srcdev pointer to source Friend root File
  * @param dst pointer to destination path
  * @param src pointer to source path
- * @param cutPos point to place from which source path should be readed
+ * @param cutPos point to place from which source path should be read
  * @param fod file or directory flag. When you know if you want to process file or directory place values 1 for File and 2 for Directory
  * @return 0 when success, otherwise error number
  */
@@ -651,8 +651,6 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 											{
 												char dbuf[ 32768 ];
 												
-												//DEBUG("\n\n\n\n--->STOREFILE srcdev  : %s changed: %s NEWDST %s\n\n", src, &src[ cutPos ], newdst );
-											
 												File *srcfp = (File *)fsys->FileOpen( srcdev, newsrc, "rb" );
 												if( srcfp != NULL )
 												{

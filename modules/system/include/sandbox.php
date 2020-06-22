@@ -155,6 +155,7 @@ if( isset( $args->conf ) )
 		{
 			$c = curl_init();
 			curl_setopt( $c, CURLOPT_URL, $u . urldecode( $args->url ) );
+			curl_setopt( $c, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
 			curl_setopt( $c, CURLOPT_RETURNTRANSFER, 1 );
 			if( $Config->SSLEnable )
 			{

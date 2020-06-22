@@ -2,6 +2,7 @@
 
 LIB_DIR = libwebsockets 
 
+-include ../Config.defs
 -include ../Config
 
 ALL: compile

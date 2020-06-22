@@ -116,7 +116,16 @@ static const char *HEADERS[] = {
 #define HTTP_HEADER_MAX_SIZE 16384+16 // 16 KiB (16 from stefkos)
 #define HTTP_ENTITY_MAX_SIZE 1048576 // 1 MiB
 #define HTTP_ENABLE_DEBUG 1
-#define HTTP_MAX_MEM_CONTENT_SIZE (INT_MAX/4)
+//#define HTTP_MAX_MEM_CONTENT_SIZE (INT_MAX/4)
+
+/* HTTP requests above this thresholds are saved to temporary files
+* and mmap'ed for later use. This conserves RAM during large
+* file uploads. (TK-628)
+*/
+#define TUNABLE_LARGE_HTTP_REQUEST_SIZE (10*1024*1024) //10MB
+// max bytes wrote by one write() function in one call
+#define TUNABLE_LARGE_HTTP_REQUEST_COPY_SIZE (INT_MAX/8)
+
 
 #define HTTP_CONTENT_TEMP_NAME "/tmp/Friendup/FriendHTTP_CONTENT_XXXXXXXXXXXXXXXXXX"
 
@@ -224,12 +233,6 @@ if( !request->errorCode && request->queryMap )
 
 HttpFreeRequest( request );*/
 
-/* HTTP requests above this thresholds are saved to temporary files
-* and mmap'ed for later use. This conserves RAM during large
-* file uploads. (TK-628)
-*/
-#define TUNABLE_LARGE_HTTP_REQUEST_SIZE (10*1024*1024) //10MB
-
 //
 // HTTP CONTENT TYPE
 //
@@ -330,7 +333,8 @@ typedef struct Http
 	FBOOL				http_GotHeader;
 	FBOOL				http_GotBody;
 	
-	char				http_PartDivider[ 512 ];
+	char				http_PartDivider[ 256 ];
+	char				http_PartDividerLen;
 	FBOOL				http_ContentType;
 	FQUAD				http_ContentLength;
 	FQUAD				http_ExpectedLength;
@@ -338,7 +342,7 @@ typedef struct Http
 	HttpFile			*http_FileList;
 	
 	FBOOL				http_Stream;			// stream
-	UserSessionWebsocket *http_WSocket;				// websocket context, if provided data should be delivered here
+	WSCData				*http_WSocket;				// websocket context, if provided data should be delivered here
 	Socket				*http_Socket;		// socket,  if != NULL  data should be delivered here
 	
 	int					http_WriteType;

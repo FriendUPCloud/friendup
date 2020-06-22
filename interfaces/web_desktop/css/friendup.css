@@ -457,3 +457,34 @@ html body.Loading #FriendScreenOverlay
 	color: #c92918;
 }
 
+body:not([sharedapp]) .ViewContainer
+{
+	perspective: 1000px;
+}
+
+html body:not([mobile]).Login #Login.View
+{
+	transition: transform,opacity 1s,0.5s !important;
+	opacity: 0;
+	transform: rotatex(0deg) translate3d(0px,-40px,0) !important;
+	border-radius: 3px;
+    overflow: hidden;
+    box-shadow: 0px 2px 20px rgba(0,0,0,0.2);
+    animation: doit 1s;
+    animation-iteration-count: 1;
+}
+
+@keyframes doit
+{
+	from
+	{
+		opacity: 0;
+		transform: rotatex(20deg) translate3d(0px,0px,-100px);
+	}
+	to
+	{
+		opacity: 1;
+		transform: rotatex(0deg) translate3d(0px,-40px,0px);
+	}
+}
+

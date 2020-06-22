@@ -123,11 +123,13 @@ function curl_exec_follow( $cu, &$maxredirect = null )
 	if ( ini_get( 'open_basedir' ) == '' && ini_get( 'safe_mode' == 'Off' ) )
 	{
 		curl_setopt( $cu, CURLOPT_FOLLOWLOCATION, $mr > 0 );
+		curl_setopt( $cu, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
 		curl_setopt( $cu, CURLOPT_MAXREDIRS, $mr );
 	}
 	else
 	{
 		curl_setopt( $cu, CURLOPT_FOLLOWLOCATION, false );
+		curl_setopt( $cu, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
 
 		if ( $mr > 0 )
 		{
@@ -219,17 +221,6 @@ if( isset( $args->command ) )
 {
 	switch( $args->command )
 	{
-		/*case 'copytest':
-			include_once( 'php/classes/door.php' );
-			$d = new Door( 'Home:' );
-			$t = new Door( 'Documents:' );
-			if( $f = $d->getFile( 'Home:FriendWorkspace.odt' ) )
-			{
-				$t->putFile( 'Documents:Telenor/FriendWorkspace.odt', $f );
-				die( 'ok<!--separate-->' );
-			}
-			die( 'fail<!--separate-->{"response":"failed"}'  );
-			break;*/
 		case 'help':
 			$commands = array(
 				'ping', 'theme', 'systempath', 'software', 'save_external_file', 'proxycheck', 'proxyget',
@@ -247,7 +238,7 @@ if( isset( $args->command ) )
 				'usersetup', 'usersetupadd', 'usersetupapply', 'usersetupsave', 'usersetupdelete',
 				'usersetupget', 'userwallpaperset', 'workgroups', 'workgroupadd', 'workgroupupdate', 'workgroupdelete',
 				'workgroupget', 'setsetting', 'getsetting', 'getavatar', 'listlibraries', 'listmodules',
-				'listuserapplications', 'getmimetypes',  'setmimetype', 'setmimetypes', 'deletemimetypes',
+				'listuserapplications', 'adduserapplication', 'removeuserapplication', 'getmimetypes',  'setmimetype', 'setmimetypes', 'deletemimetypes',
 				'deletecalendarevent', 'getcalendarevents', 'addcalendarevent',
 				'listappcategories', 'systempath', 'listthemes', 'settheme', /* DEPRECATED - look for comment below 'userdelete',*/'userunblock',
 				'usersettings', 'listsystemsettings', 'savestate', 'getsystemsetting',
@@ -325,6 +316,7 @@ if( isset( $args->command ) )
 			{
 				$c = curl_init();
 				curl_setopt( $c, CURLOPT_URL, $args->args->url );
+				curl_setopt( $c, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
 				curl_setopt( $c, CURLOPT_FAILONERROR, true );
 				curl_setopt( $c, CURLOPT_NOBODY, true );
 				curl_setopt( $c, CURLOPT_RETURNTRANSFER, true );
@@ -389,6 +381,7 @@ if( isset( $args->command ) )
 					$fields[$k] = $v;
 				}
 				curl_setopt( $c, CURLOPT_POST, true );
+				curl_setopt( $c, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
 				curl_setopt( $c, CURLOPT_POSTFIELDS, http_build_query( $fields ) );
 				curl_setopt( $c, CURLOPT_RETURNTRANSFER, true );
 				curl_setopt( $c, CURLOPT_HTTPHEADER, array( 'Accept-charset: UTF-8' ) );
@@ -653,6 +646,7 @@ if( isset( $args->command ) )
 			die( 'fail<!--separate-->{"response":"assign failed"}'  );
 			break;
 		case 'doorsupport':
+		
 			if( $dir = opendir( 'devices/DOSDrivers' ) )
 			{
 				$str = '';
@@ -815,6 +809,21 @@ if( isset( $args->command ) )
 			}
 			die( 'fail<!--separate-->' );
 			break;
+		// Share something!
+		case 'share':
+			require( 'modules/system/include/share.php' );
+			break;
+		// Share a file to members
+		case 'setfileshareinfo':
+			require( 'modules/system/include/setfileshareinfo.php' );
+			break;
+		case 'checksharedpaths':
+			require( 'modules/system/include/checksharedpaths.php' );
+			break;
+		// Get shared file members
+		case 'getfileshareinfo':
+			require( 'modules/system/include/getfileshareinfo.php' );
+			break;
 		// Get a list of mounted and unmounted devices
 		case 'mountlist':
 			require( 'modules/system/include/mountlist.php' );
@@ -867,6 +876,10 @@ if( isset( $args->command ) )
 			break;
 		case 'fileinfo':
 			require( 'modules/system/include/fileinfo.php' );
+			break;
+		// Get settings per device or all user related devices
+		case 'devicesettings';
+			require( 'modules/system/include/devicesettings.php' );
 			break;
 		// List available systems stored for the current user
 		case 'filesystem':
@@ -1618,6 +1631,12 @@ if( isset( $args->command ) )
 			break;
 		case 'listuserapplications':
 			require( 'modules/system/include/listuserapplications.php' );
+			break;
+		case 'adduserapplication':
+			require( 'modules/system/include/adduserapplication.php' );
+			break;
+		case 'removeuserapplication':
+			require( 'modules/system/include/removeuserapplication.php' );
 			break;
 		case 'getapplicationpreview':
 			require( 'modules/system/include/getapplicationpreview.php' );

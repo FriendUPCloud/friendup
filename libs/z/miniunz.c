@@ -690,7 +690,7 @@ int UnpackZip( const char *zipfilename, const char *dirname, const char *passwor
     if (uf == NULL)
     {
         DEBUG("Cannot open %s\n", zipfilename);
-        return 1;
+        return -1;
     }
 
     DEBUG("%s opened\n", zipfilename);

@@ -82,7 +82,8 @@ lws_ntpc_retry_conn(struct lws_sorted_usec_list *sul)
 
 	v->retry_count_write = 0;
 	v->wsi_udp = lws_create_adopt_udp(v->vhost, v->ntp_server_ads, 123, 0,
-					  v->protocol->name, NULL, &bo2);
+					  v->protocol->name, NULL, NULL, NULL,
+					  &bo2);
 	lwsl_debug("%s: created wsi_udp: %p\n", __func__, v->wsi_udp);
 	if (!v->wsi_udp) {
 		lwsl_err("%s: unable to create udp skt\n", __func__);
@@ -125,7 +126,6 @@ callback_ntpc(struct lws *wsi, enum lws_callback_reasons reason, void *user,
 			lws_protocol_vh_priv_get(lws_get_vhost(wsi),
 						 lws_get_protocol(wsi));
 	uint8_t pkt[LWS_PRE + 48];
-	lws_system_arg_t arg;
 	uint64_t ns;
 
 	switch (reason) {
@@ -134,7 +134,7 @@ callback_ntpc(struct lws *wsi, enum lws_callback_reasons reason, void *user,
 		if (v)
 			break;
 
-		lwsl_debug("%s: LWS_CALLBACK_PROTOCOL_INIT\n", __func__);
+		lwsl_debug("%s: LWS_CALLBACK_PROTOCOL_INIT:\n", __func__);
 		lws_protocol_vh_priv_zalloc(wsi->vhost, wsi->protocol,
 					    sizeof(*v));
 		v = (struct vhd_ntpc *)lws_protocol_vh_priv_get(wsi->vhost,
@@ -157,11 +157,10 @@ callback_ntpc(struct lws *wsi, enum lws_callback_reasons reason, void *user,
 		v->notify_link.name = "ntpclient";
 		lws_state_reg_notifier(&wsi->context->mgr_system, &v->notify_link);
 
-		if (lws_system_get_info(wsi->context, LWS_SYSI_HRS_NTP_SERVER,
-					&arg))
-			v->ntp_server_ads = "pool.ntp.org";
-		else
-			v->ntp_server_ads = arg.u.hrs;
+		v->ntp_server_ads = "pool.ntp.org";
+		lws_system_blob_get_single_ptr(lws_system_get_blob(
+				v->context, LWS_SYSBLOB_TYPE_NTP_SERVER, 0),
+				(const uint8_t **)&v->ntp_server_ads);
 
 		lws_ntpc_retry_conn(&v->sul_conn);
 		break;
@@ -171,6 +170,7 @@ callback_ntpc(struct lws *wsi, enum lws_callback_reasons reason, void *user,
 			break;
 		if (v->wsi_udp)
 			lws_set_timeout(v->wsi_udp, 1, LWS_TO_KILL_ASYNC);
+		lws_state_reg_deregister(&v->notify_link);
 		v->wsi_udp = NULL;
 		goto cancel_conn_timer;
 
@@ -182,8 +182,12 @@ callback_ntpc(struct lws *wsi, enum lws_callback_reasons reason, void *user,
 		break;
 
         case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
+		lwsl_info("%s: CONNECTION_ERROR\n", __func__);
+		goto do_close;
+
 	case LWS_CALLBACK_RAW_CLOSE:
 		lwsl_debug("%s: LWS_CALLBACK_RAW_CLOSE\n", __func__);
+do_close:
 		v->wsi_udp = NULL;
 
 		/* cancel any pending write retry */

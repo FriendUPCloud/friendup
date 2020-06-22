@@ -41,7 +41,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 //
 //
 
-int WebsocketWrite( UserSessionWebsocket *cl, unsigned char *msgptr, int msglen, int type );
+int WebsocketWrite( UserSession *cl, unsigned char *msgptr, int msglen, int type );
 
 
 #endif // __NETWORK_PROTOCOL_WEBDAV_H__

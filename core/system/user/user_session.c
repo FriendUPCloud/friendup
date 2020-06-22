@@ -21,6 +21,7 @@
 #include <util/string.h>
 #include <system/systembase.h>
 #include <system/token/dos_token.h>
+#include <system/application/application_manager.h>
 
 extern SystemBase *SLIB;
 
@@ -58,6 +59,8 @@ void UserSessionInit( UserSession *us )
 		pthread_mutex_init( &us->us_Mutex, NULL );
 		
 		us->us_WSReqManager = WebsocketReqManagerNew();
+		
+		FQDeInit( &(us->us_MsgQueue) );
 	}
 }
 
@@ -72,6 +75,7 @@ void UserSessionDelete( UserSession *us )
 	{
 		Log( FLOG_DEBUG, "\nUserSessionDelete will be removed: %s\n\n", us->us_SessionID );
 		int count = 0;
+		int nrOfSessionsAttached = 0;
 
 		// we must wait till all tasks will be finished
 		while( TRUE )
@@ -108,50 +112,46 @@ void UserSessionDelete( UserSession *us )
 		
 		if( us->us_User != NULL )
 		{
-			UserRemoveSession( us->us_User, us );
+			nrOfSessionsAttached = UserRemoveSession( us->us_User, us );
 			us->us_User = NULL;
-        }
-        SystemBase *lsb = SLIB;//(SystemBase *)us->us_SB;
+		}
+		SystemBase *lsb = SLIB;//(SystemBase *)us->us_SB;
 
 		DEBUG("[UserSessionDelete] Remove session %p\n", us );
 
-		// copy connection poiner to remove possibility of using it
-		UserSessionWebsocket *nwsc = us->us_WSConnections;
-
-		// We must do that here, becaouse lock on session is made in this function
+		// Remove session from SAS
+		//
 		
-		if( count > 50 )
-		{
-			Log( FLOG_DEBUG, "AppSessionManager will be called\n");
-		}
-		
-		AppSessionManagerRemUserSession( lsb->sl_AppSessionManager, us );
+		SASManagerRemUserSession( lsb->sl_SASManager, us );
 		
 		DEBUG("[UserSessionDelete] User removed from app session\n");
 		
+		WSCData *data = NULL;
+
+		Log( FLOG_DEBUG, "[UserSessionDelete] Lock DetachWebsocketFromSession\n");
 		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 		{
-			us->us_WSConnections = NULL;
-		
-			Log( FLOG_DEBUG, "[UserSessionDelete] cl %p\n", us->us_WSConnections );
+			us->us_Wsi = NULL;
+			data = (WSCData *)us->us_WSD;
+			us->us_WSD = NULL;
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
 		
-		if( nwsc != NULL )
+		if( us->us_WSD != NULL )
 		{
-			Log( FLOG_DEBUG, "[UserSessionDelete] cl != NULL\n");
-
-			UserSessionWebsocket *rws = nwsc;
-			Log( FLOG_DEBUG, "[UserSessionDelete] nwsc %p\n", nwsc );
-			while( nwsc != NULL )
+			if( FRIEND_MUTEX_LOCK( &(data->wsc_Mutex) ) == 0 )
 			{
-				rws = nwsc;
-				nwsc = (UserSessionWebsocket *)nwsc->node.mln_Succ;
-
-				UserSessionWebsocketDelete( rws );
-				//rws->wusc_Data = NULL;
+				if( us->us_WSD != NULL )
+				{
+					data->wsc_UserSession = NULL;
+					data->wsc_Wsi = NULL;
+				}
+				FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
 			}
 		}
+		
+		FQDeInitFree( &(us->us_MsgQueue) );
+		//UserSessionWebsocketDeInit( &(us->us_Websockets) );
 
 		DEBUG("[UserSessionDelete] Session released  sessid: %s device: %s \n", us->us_SessionID, us->us_DeviceIdentity );
 
@@ -182,6 +182,14 @@ void UserSessionDelete( UserSession *us )
 			WebsocketReqManagerDelete( wrm );
 		}
 		pthread_mutex_destroy( &(us->us_Mutex) );
+		
+		// lets remove application sessions from system
+		ApplicationManagerRemoveApplicationSessionByUserSessionID( lsb->sl_ApplicationManager, us->us_ID );
+		
+		//if( nrOfSessionsAttached <= 0 && us->us_UserID > 0 )
+		//{
+		//	ApplicationManagerRemoveApplicationSessionByUserID( lsb->sl_ApplicationManager, us->us_UserID );
+		//}
 	
 		FFree( us );
 		
@@ -192,72 +200,190 @@ void UserSessionDelete( UserSession *us )
 	}
 }
 
+#define MAX_SIZE_WS_MESSAGE (WS_PROTOCOL_BUFFER_SIZE-2048)
+
 /**
- * Remove Websocket connection from UserSession
+ * Write data to websockets
+ * If message is bigger then WS buffer then message is encoded, splitted and send
  *
- * @param us pointer to UserSession from which connection will be removed
- * @param wscl pointer to WebsocketServerClient connection which will be detached from connections list
- * @return pointer to removed connection when success or NULL when connection was not on the list
+ * @param us pointer to UserSession
+ * @param msgptr pointer to message
+ * @param msglen length of the messsage
+ * @param type type of websocket message which will be send
+ * @return number of bytes sent
  */
-UserSessionWebsocket *UserSessionRemoveConnection( UserSession *us, UserSessionWebsocket *wscl )
+int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msglen, int type )
 {
-	if( us == NULL )
-	{
-		return NULL;
-	}
+	int retval = 0;
+
 	/*
-	DEBUG("[UserSessionRemoveConnection] Set NULL to WSI\n");
-	if( FRIEND_MUTEX_LOCK( &(wscl->wsc_Mutex) ) == 0 )
+	if( us == NULL || us->us_WSD == NULL || us->us_Wsi == NULL )
 	{
-		us = (UserSession *)wscl->wsc_UserSession;
-		if( us != NULL )
-		{
-			DEBUG("[UserSessionRemoveConnection] Set NULL to WSI, SESSIONPTR: %p SESSION NAME: %s WSI ptr: %p\n", us, us->us_SessionID, wscl->wsc_Wsi );
-			us->us_WSClients = NULL;
-		}
-		wscl->wsc_Wsi = NULL;
-		FRIEND_MUTEX_UNLOCK( &(wscl->wsc_Mutex) );
+		DEBUG("[UserSessionWebsocketWrite] empty us %p wsd %p wsi %p\n", us, us->us_WSD, us->us_Wsi );
+		return 0;
 	}
-	DEBUG("[UserSessionRemoveConnection] Remove UserSession from User list\n");
-	//
-	// if user session is attached, then we can remove WebSocketClient from UserSession, otherwise it was already removed from there
-	//
-    if( us != NULL )
+	*/
+
+	if( msglen > MAX_SIZE_WS_MESSAGE ) // message is too big, we must split data into chunks
 	{
-		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+		DEBUG("[UserSessionWebsocketWrite] WebsocketWrite\n");
+		char *encmsg = Base64Encode( (const unsigned char *)msgptr, msglen, &msglen );
+		if( encmsg != NULL )
 		{
-			WebsocketServerClient *actwsc = us->us_WSClients;
-			WebsocketServerClient *prvwsc = us->us_WSClients;
-			while( actwsc != NULL )
+			DEBUG("WebsocketWrite1\n");
+			char *msgToSend = encmsg;
+			//Sending big message, size 116244 (-2046 chunks of max: 63487)
+			int totalChunk = (msglen / MAX_SIZE_WS_MESSAGE)+1;
+			int actChunk = 0;
+			
+			int END_CHAR_SIGNS = 4;
+			char *end = "\"}}}";
+			
+			DEBUG("[UserSessionWebsocketWrite] Sending big message, size %d (%d chunks of max: %d)\n", msglen, totalChunk, MAX_SIZE_WS_MESSAGE );
+		
+			//if( us->us_Wsi != NULL )
 			{
-				if( actwsc == wscl )
+				if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 				{
-					if( actwsc == us->us_WSClients )
+					us->us_InUseCounter++;
+					for( actChunk = 0; actChunk < totalChunk ; actChunk++ )
 					{
-						us->us_WSClients = (WebsocketServerClient *)us->us_WSClients->node.mln_Succ;
-					}
-					else
-					{
-						prvwsc->node.mln_Succ = actwsc->node.mln_Succ;
-					}
-					DEBUG("[UserSessionRemoveConnection] Remove single connection  %p  session connections pointer %p\n", actwsc, us->us_WSClients );
+						unsigned char *queueMsg = FMalloc( WS_PROTOCOL_BUFFER_SIZE );
+						if( queueMsg != NULL )
+						{
+							unsigned char *queueMsgPtr = queueMsg + LWS_SEND_BUFFER_PRE_PADDING;
+							int queueMsgLen = 0;
 					
+							int txtmsgpos = sprintf( (char *)queueMsgPtr, "{\"type\":\"con\",\"data\":{\"type\":\"chunk\",\"data\":{\"id\":\"%p\",\"total\":\"%d\",\"part\":\"%d\",\"data\":\"", encmsg, totalChunk, actChunk );
+							int copysize = msglen;
+							if( copysize > MAX_SIZE_WS_MESSAGE )
+							{
+								copysize = MAX_SIZE_WS_MESSAGE;
+							}
+					
+							queueMsgLen = txtmsgpos;
+							queueMsgPtr += txtmsgpos;
+							// queue   |    PRE_PADDING  |  txtmsgpos   |  body  |  END_CHARS  | POST_PADDING
+
+							memcpy( queueMsgPtr, msgToSend, copysize );
+							queueMsgLen += copysize;
+							queueMsgPtr += copysize;
+					
+							memcpy( queueMsgPtr, end, END_CHAR_SIGNS );
+							queueMsgPtr += END_CHAR_SIGNS;
+							queueMsgLen += END_CHAR_SIGNS;
+							*queueMsgPtr = 0;	//end message with NULL
+							
+							retval += msglen;
+					
+							msgToSend += copysize;
+							msglen -= MAX_SIZE_WS_MESSAGE;
+
+							DEBUG( "[UserSessionWebsocketWrite] Determined chunk: %d\n", actChunk );
+					
+							FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
+							en->fq_Data = queueMsg;
+							en->fq_Size = queueMsgLen;
+							en->fq_Priority = 3;	// default priority
+				
+							//DEBUG("FQPush: %p\n 
+							FQPushFIFO( &(us->us_MsgQueue), en );
+
+						// callback writeable was here
+						}
+					}
+					
+					us->us_InUseCounter--;
+				
+					WSCData *wsd = us->us_WSD;
 					FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
-					return actwsc;
-				}
 					
-				prvwsc = actwsc;
-				actwsc = (WebsocketServerClient *)actwsc->node.mln_Succ;
+					if( us->us_WSD != NULL )
+					{
+						/*
+						if( FRIEND_MUTEX_LOCK( &(wsd->wsc_Mutex) ) == 0 )
+						{
+							wsd->wsc_InUseCounter++;
+							FRIEND_MUTEX_UNLOCK( &(wsd->wsc_Mutex) );
+						*/
+							if( wsd->wsc_Wsi != NULL )
+							{
+								lws_callback_on_writable( wsd->wsc_Wsi );
+								lws_cancel_service_pt( wsd->wsc_Wsi );
+							}
+						/*
+							if( FRIEND_MUTEX_LOCK( &(wsd->wsc_Mutex) ) == 0 )
+							{
+								wsd->wsc_InUseCounter--;
+								FRIEND_MUTEX_UNLOCK( &(wsd->wsc_Mutex) );
+							}
+						}*/
+					}
+				}
 			}
-			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+
+			FFree( encmsg );
 		}
 	}
 	else
 	{
-		FERROR("Cannot remove connection: Pointer to usersession is equal to NULL\n");
-	}
-	*/
-	DEBUG("[UserSessionRemoveConnection] Remove Queue\n");
+		DEBUG("[UserSessionWebsocketWrite] no chunked\n");
+		//if( us->us_WSD != NULL )
+		{
+			if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+			{
+				WSCData *wsd = us->us_WSD;
+				// double check
+				DEBUG("[UserSessionWebsocketWrite] no chnked 1\n");
 
-	return NULL;
+				us->us_InUseCounter++;
+
+				FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
+				if( en != NULL )
+				{
+					en->fq_Data = FMalloc( msglen+10+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
+					memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msgptr, msglen );
+					en->fq_Size = msglen;
+					en->fq_Priority = 3;	// default priority
+			
+					FQPushFIFO( &(us->us_MsgQueue), en );
+					retval += msglen;
+			
+					DEBUG("[UserSessionWebsocketWrite] Send message to WSI, ptr: %p\n", us->us_Wsi );
+
+					DEBUG("[UserSessionWebsocketWrite] In use counter %d\n", us->us_InUseCounter );
+				
+					us->us_InUseCounter--;
+				}
+
+				FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+				
+				if( us->us_Wsi != NULL )
+				{
+					/*
+					if( FRIEND_MUTEX_LOCK( &(wsd->wsc_Mutex) ) == 0 )
+					{
+						wsd->wsc_InUseCounter++;
+						FRIEND_MUTEX_UNLOCK( &(wsd->wsc_Mutex) );
+						*/
+						if( wsd->wsc_Wsi != NULL )
+						{
+							lws_callback_on_writable( wsd->wsc_Wsi );
+							lws_cancel_service_pt( wsd->wsc_Wsi );
+						}
+						/*
+						if( FRIEND_MUTEX_LOCK( &(wsd->wsc_Mutex) ) == 0 )
+						{
+							wsd->wsc_InUseCounter--;
+							FRIEND_MUTEX_UNLOCK( &(wsd->wsc_Mutex) );
+						}
+						
+					}*/
+				}
+			}
+		}
+	}
+
+	return retval;
 }
+

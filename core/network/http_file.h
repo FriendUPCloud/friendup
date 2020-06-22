@@ -38,8 +38,9 @@ typedef struct HttpFile
 	char			hf_FileNameOnDisk[ 128 ];
 	char 			*hf_Data;
 	FQUAD			hf_FileSize;		// file size
-	FILE			*hf_FP;			// when file is stored on server disk
-	int				hf_FileHandle;
+	FILE			*hf_FP;				// when file is stored on server disk
+	int				hf_FileHandle;		// pointer to file
+	FBOOL			hf_Allocated;		// if memory for file data was allocated, otherwise only pointer is there
 	struct MinNode 	node;
 }HttpFile;
 
@@ -47,7 +48,7 @@ typedef struct HttpFile
 // upload file
 //
 
-HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, FQUAD size );
+HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, FQUAD size, FBOOL allocate );
 
 //
 //

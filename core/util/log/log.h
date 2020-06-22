@@ -24,6 +24,18 @@
 #include <time.h>
 #include <pthread.h>
 
+#ifdef LOG_TIMESTAMP
+#include <sys/time.h>
+
+static inline long long currentTimestamp() {
+    struct timeval te; 
+    gettimeofday(&te, NULL); // get current time
+    long long milliseconds = te.tv_sec*1000LL + te.tv_usec/1000; // calculate milliseconds
+    // printf("milliseconds: %lld\n", milliseconds);
+    return milliseconds;
+}
+#endif // LOG_TIMESTAMP
+
 #define LOG_ALL		0
 #define LOG_WARN	1
 #define LOG_INFO	2
@@ -188,12 +200,22 @@ extern FlogFlags slg;
 //#define DEBUG( x, ...) printf( " (%s:%d) " x, __FILE__, __LINE__, __VA_ARGS__ );
 #define DEBUGNA( x ) printf(  x, __FILE__, __LINE__ );
 
+#ifdef LOG_TIMESTAMP
+
+#define DEBUG(...) printf( "\x1B[32m (%s:%d) %ld Time: %lld ", __FILE__, __LINE__, (long int)pthread_self(), currentTimestamp() ); printf( FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
+
+#define DEBUG1(...) printf( "\x1B[37m (%s:%d) %ld Time: %lld ", __FILE__, __LINE__, (long int)pthread_self(), currentTimestamp() ); printf( FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
+
+#define DEBUG2(...) printf( "\x1B[33m (%s:%d) %ld Time: %lld ", __FILE__, __LINE__, (long int)pthread_self(), currentTimestamp() ); printf( FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
+
+#else
+
 #define DEBUG(...) printf( "\x1B[32m (%s:%d) %ld ", __FILE__, __LINE__, (long int)pthread_self() ); printf( FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
 
 #define DEBUG1(...) printf( "\x1B[37m (%s:%d) %ld ", __FILE__, __LINE__, (long int)pthread_self() ); printf( FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
 
 #define DEBUG2(...) printf( "\x1B[33m (%s:%d) %ld ", __FILE__, __LINE__, (long int)pthread_self() ); printf( FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
-
+#endif
 
 #else
 #define DEBUGNA( x )

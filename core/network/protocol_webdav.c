@@ -441,7 +441,7 @@ int isError( char *val )
  *
  * @param lsb pointer to SystemBase
  * @param req pointer to Http request
- * @param data pointer to data readed by sockets
+ * @param data pointer to data read by sockets
  * @param len size of provided data
  * 
  * @return new Http structure is returned
@@ -893,8 +893,6 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 	// user not logged in, we must add it to session
 	// and mount shared device
 	
-	SQLLibrary *sqll = sb->LibrarySQLGet( sb );
-	if( sqll != NULL )
 	{
 		if( usr == NULL )
 		{
@@ -925,7 +923,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 					}
 				}
 				char *err = NULL;
-				sb->UserDeviceMount( sb, sqll, usr, 0, TRUE, &err, TRUE );
+				sb->UserDeviceMount( sb, usr, 0, TRUE, &err, TRUE );
 				if( err != NULL )
 				{
 					FERROR("UserDeviceMount returned: %s\n", err );
@@ -943,7 +941,6 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 				resp = HttpNewSimple( HTTP_401_UNAUTHORIZED,  tagsauth );
 				
 				sb->AuthModuleDrop( sb, ulib );
-				sb->LibrarySQLDrop( sb, sqll );
 			
 				char dictmsgbuf[ 256 ];
 				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", sb->sl_Dictionary->d_Msg[DICT_BAD_ERROR_OR_PASSWORD] , DICT_BAD_ERROR_OR_PASSWORD );
@@ -960,14 +957,13 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		else
 		{
 			char *err = NULL;
-			sb->UserDeviceMount( sb, sqll, usr, 0, TRUE, &err, TRUE );
+			sb->UserDeviceMount( sb, usr, 0, TRUE, &err, TRUE );
 			if( err != NULL )
 			{
 				FERROR("UserDeviceMount returned: %s\n", err );
 				FFree( err );
 			}
 		}
-		sb->LibrarySQLDrop( sb, sqll );
 	}
 	
 	if( usr == NULL )
@@ -1244,7 +1240,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 								if( futbytes > req->http_RangeMax )
 								{
 									storeBytes -= (futbytes-req->http_RangeMax);
-									DEBUG("More bytes readed then max\n");
+									DEBUG("More bytes read then max\n");
 								}
 							}
 							
@@ -1285,7 +1281,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 				
 				while( ( dataread = actFS->FileRead( fp, dataBuffer, FS_READ_BUFFER ) ) != -1 )
 				{
-					DEBUG("Readed %d\n", dataread );
+					DEBUG("Read %d\n", dataread );
 					//BufStringAddSize( bs, dataBuffer, dataread );
 				}
 				

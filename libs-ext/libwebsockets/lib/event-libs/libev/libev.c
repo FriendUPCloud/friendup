@@ -32,7 +32,7 @@ lws_ev_hrtimer_cb(struct ev_loop *loop, struct ev_timer *watcher, int revents)
 	lws_usec_t us;
 
 	lws_pt_lock(pt, __func__);
-	us = __lws_sul_check(&pt->pt_sul_owner, lws_now_usecs());
+	us = __lws_sul_service_ripe(&pt->pt_sul_owner, lws_now_usecs());
 	if (us) {
 		ev_timer_set(&pt->ev.hrtimer, ((float)us) / 1000000.0, 0);
 		ev_timer_start(pt->ev.io_loop, &pt->ev.hrtimer);
@@ -46,6 +46,7 @@ lws_ev_idle_cb(struct ev_loop *loop, struct ev_idle *handle, int revents)
 	struct lws_context_per_thread *pt = lws_container_of(handle,
 					struct lws_context_per_thread, ev.idle);
 	lws_usec_t us;
+	int reschedule = 0;
 
 	lws_service_do_ripe_rxflow(pt);
 
@@ -54,12 +55,12 @@ lws_ev_idle_cb(struct ev_loop *loop, struct ev_idle *handle, int revents)
 	 */
 	if (!lws_service_adjust_timeout(pt->context, 1, pt->tid))
 		/* -1 timeout means just do forced service */
-		_lws_plat_service_forced_tsi(pt->context, pt->tid);
+		reschedule = _lws_plat_service_forced_tsi(pt->context, pt->tid);
 
 	/* account for hrtimer */
 
 	lws_pt_lock(pt, __func__);
-	us = __lws_sul_check(&pt->pt_sul_owner, lws_now_usecs());
+	us = __lws_sul_service_ripe(&pt->pt_sul_owner, lws_now_usecs());
 	if (us) {
 		ev_timer_set(&pt->ev.hrtimer, ((float)us) / 1000000.0, 0);
 		ev_timer_start(pt->ev.io_loop, &pt->ev.hrtimer);
@@ -67,16 +68,20 @@ lws_ev_idle_cb(struct ev_loop *loop, struct ev_idle *handle, int revents)
 	lws_pt_unlock(pt);
 
 	/* there is nobody who needs service forcing, shut down idle */
-	ev_idle_stop(loop, handle);
+	if (!reschedule)
+		ev_idle_stop(loop, handle);
+
+	if (pt->destroy_self)
+		lws_context_destroy(pt->context);
 }
 
 static void
 lws_accept_cb(struct ev_loop *loop, struct ev_io *watcher, int revents)
 {
-	struct lws_context_per_thread *pt;
 	struct lws_io_watcher *lws_io = lws_container_of(watcher,
 					struct lws_io_watcher, ev.watcher);
 	struct lws_context *context = lws_io->context;
+	struct lws_context_per_thread *pt;
 	struct lws_pollfd eventfd;
 	struct lws *wsi;
 
@@ -104,7 +109,7 @@ lws_accept_cb(struct ev_loop *loop, struct ev_io *watcher, int revents)
 	ev_idle_start(pt->ev.io_loop, &pt->ev.idle);
 }
 
-LWS_VISIBLE void
+void
 lws_ev_sigint_cb(struct ev_loop *loop, struct ev_signal *watcher, int revents)
 {
 	struct lws_context *context = watcher->data;
@@ -122,9 +127,9 @@ elops_init_pt_ev(struct lws_context *context, void *_loop, int tsi)
 {
 	struct lws_context_per_thread *pt = &context->pt[tsi];
 	struct ev_signal *w_sigint = &context->pt[tsi].w_sigint.ev.watcher;
+	struct ev_loop *loop = (struct ev_loop *)_loop;
 	struct lws_vhost *vh = context->vhost_list;
 	const char *backend_name;
-	struct ev_loop *loop = (struct ev_loop *)_loop;
 	int status = 0;
 	int backend;
 
@@ -178,7 +183,17 @@ elops_init_pt_ev(struct lws_context *context, void *_loop, int tsi)
 	case EVBACKEND_EPOLL:
 		backend_name = "epoll";
 		break;
-	case EVBACKEND_KQUEUE:
+#if defined(LWS_HAVE_EVBACKEND_LINUXAIO)
+       case EVBACKEND_LINUXAIO:
+               backend_name = "Linux AIO";
+               break;
+#endif
+#if defined(LWS_HAVE_EVBACKEND_IOURING)
+       case EVBACKEND_IOURING:
+               backend_name = "Linux io_uring";
+               break;
+#endif
+       case EVBACKEND_KQUEUE:
 		backend_name = "kqueue";
 		break;
 	case EVBACKEND_DEVPOLL:
@@ -220,11 +235,8 @@ elops_destroy_pt_ev(struct lws_context *context, int tsi)
 	ev_timer_stop(pt->ev.io_loop, &pt->ev.hrtimer);
 	ev_idle_stop(pt->ev.io_loop, &pt->ev.idle);
 
-	if (!pt->event_loop_foreign) {
+	if (!pt->event_loop_foreign)
 		ev_signal_stop(pt->ev.io_loop, &pt->w_sigint.ev.watcher);
-
-		ev_loop_destroy(pt->ev.io_loop);
-	}
 }
 
 static int
@@ -265,7 +277,7 @@ elops_io_ev(struct lws *wsi, int flags)
 {
 	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
 
-	if (!pt->ev.io_loop)
+	if (!pt->ev.io_loop || pt->is_destroyed)
 		return;
 
 	assert((flags & (LWS_EV_START | LWS_EV_STOP)) &&
@@ -282,6 +294,9 @@ elops_io_ev(struct lws *wsi, int flags)
 		if (flags & LWS_EV_READ)
 			ev_io_stop(pt->ev.io_loop, &wsi->w_read.ev.watcher);
 	}
+
+	if (pt->destroy_self)
+		lws_context_destroy(pt->context);
 }
 
 static void
@@ -374,5 +389,5 @@ struct lws_event_loop_ops event_loop_ops_ev = {
 	/* destroy_pt */		elops_destroy_pt_ev,
 	/* destroy wsi */		elops_destroy_wsi_ev,
 
-	/* periodic_events_available */	0,
+	/* flags */			0,
 };

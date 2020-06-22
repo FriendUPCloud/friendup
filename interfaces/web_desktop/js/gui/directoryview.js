@@ -21,7 +21,7 @@ function _nameFix( wt )
 	}
 	else
 	{
-		var end = wt[1].split( '/' );
+		let end = wt[1].split( '/' );
 		if( end[ end.length - 1 ] == '' )
 			end = end[ end.length - 2 ];
 		else end = end[ end.length - 1 ];
@@ -33,9 +33,9 @@ function _nameFix( wt )
 function _getBase64Image( img, type )
 {
 	if( !type ) type = 'image/png';
-	var canvas = document.createElement( 'canvas' );
+	let canvas = document.createElement( 'canvas' );
 	canvas.width = img.width; canvas.height = img.height;
-	var ctx = canvas.getContext( '2d' );
+	let ctx = canvas.getContext( '2d' );
 	ctx.drawImage( img, 0, 0 );
 	return canvas.toDataURL( type );
 }
@@ -55,7 +55,7 @@ if( !Friend.iconCache )
 // DirectoryView class ---------------------------------------------------------
 DirectoryView = function( winobj, extra )
 {	
-	var ws = GetWindowStorage( winobj.uniqueId );
+	let ws = GetWindowStorage( winobj.uniqueId );
 	
 	// Use this for all file operations to cancel operations later
 	this.cancelId = UniqueHash();
@@ -146,24 +146,25 @@ DirectoryView = function( winobj, extra )
 	{
 		if( winobj.fileInfo )
 		{
-			var path = winobj.fileInfo.Path;
+			let path = winobj.fileInfo.Path;
+			
 			if( !Workspace.diskNotificationList[ path ] )
 			{
 				Workspace.diskNotificationList[ path ] = {
 					type: 'directory',
 					view: winobj
 				};
-				var f = new Library( 'system.library' );
+				let f = new Library( 'system.library' );
 				f.addVar( 'sessionid', Workspace.sessionId );
 				f.addVar( 'path', path );
 				f.onExecuted = function( e, d )
 				{
 					if( e == 'ok' )
 					{
-						var j = JSON.parse( d );
+						let j = JSON.parse( d );
 						winobj.parentNode.windowObject.addEvent( 'systemclose', function()
 						{
-							var ff = new Library( 'system.library' );
+							let ff = new Library( 'system.library' );
 							ff.addVar( 'sessionid', Workspace.sessionId );
 							ff.addVar( 'path', path );
 							ff.addVar( 'id', j.Result );
@@ -199,16 +200,16 @@ DirectoryView.prototype.checkSuffix = function( fn )
 		fn = fn.Filename;
 	if( typeof( this.suffix ) == 'string' )
 	{
-		var suf = '.' + this.suffix;
+		let suf = '.' + this.suffix;
 		if( fn.toLowerCase().substr( fn.length - suf.length, suf.length ) != suf )
 			return false;
 	}
 	else
 	{
-		var found = false;
-		for( var a in this.suffix )
+		let found = false;
+		for( let a in this.suffix )
 		{
-			var suf = '.' + this.suffix[a];
+			let suf = '.' + this.suffix[a];
 			if( fn.toLowerCase().substr( fn.length - suf.length, suf.length ) == suf )
 			{
 				found = true;
@@ -226,15 +227,15 @@ DirectoryView.prototype.addToHistory = function( info )
 	if( !this.window ) return;
 	
 	// Make a copy
-	var ele = {};
-	for( var a in info ) ele[ a ] = info[ a ];
+	let ele = {};
+	for( let a in info ) ele[ a ] = info[ a ];
 	
 	
-	var his = [];
-	for( var a = 0; a < this.pathHistory.length; a++ )
+	let his = [];
+	for( let a = 0; a < this.pathHistory.length; a++ )
 	{
-		var el = {};
-		for( var b in this.pathHistory[ a ] )
+		let el = {};
+		for( let b in this.pathHistory[ a ] )
 			el[ b ] = this.pathHistory[ a ];
 		his.push( el );
 	}
@@ -256,17 +257,17 @@ DirectoryView.prototype.addToHistory = function( info )
 		else
 		{
 			this.pathHistoryIndex = this.pathHistory.length - 1;
-			var el = this.pathHistory[ this.pathHistoryIndex];
-			var f = {};
-			for( var a in el ) f[ a ] = el[ a ];
+			let el = this.pathHistory[ this.pathHistoryIndex];
+			let f = {};
+			for( let a in el ) f[ a ] = el[ a ];
 			ele = f;
 		}
 	}
 	// Insert into path history (cuts history)
 	else
 	{
-		var out = [];
-		for( var a = 0; a < this.pathHistory.length; a++ )
+		let out = [];
+		for( let a = 0; a < this.pathHistory.length; a++ )
 		{
 			out.push( this.pathHistory[ a ] );
 			if( a == this.pathHistoryIndex )
@@ -318,9 +319,9 @@ DirectoryView.prototype.initToolbar = function( winobj )
 	// Create toolbar
 	if( !winobj.parentNode.leftbar ) return;
 
-	var dw = this;
+	let dw = this;
 
-	var t = document.createElement( 'div' );
+	let t = document.createElement( 'div' );
 	t.className = 'DirectoryToolbar';
 
 	// Assign it so we remember
@@ -341,13 +342,13 @@ DirectoryView.prototype.initToolbar = function( winobj )
 		t.style.right = GetElementWidth( winobj.parentNode.rightbar ) + 'px';
 	}
 
-	var rpath = winobj.fileInfo.Path ? winobj.fileInfo.Path : ( winobj.fileInfo.Volume );
+	let rpath = winobj.fileInfo.Path ? winobj.fileInfo.Path : ( winobj.fileInfo.Volume );
 	if ( rpath.indexOf( ':' < 0 ) )
 		rpath += ':';
 
-	var lmode = this.listMode;
+	let lmode = this.listMode;
 
-	var buttons = [
+	let buttons = [
 		// Go up a level
 		{
 			element: 'button',
@@ -355,13 +356,13 @@ DirectoryView.prototype.initToolbar = function( winobj )
 			content: i18n( 'i18n_dir_btn_up' ),
 			onclick: function( e )
 			{
-				var test = winobj.fileInfo.Path;
+				let test = winobj.fileInfo.Path;
 				if( ( !winobj.directoryview.hasSidebar && !winobj.directoryview.filedialog ) && test.substr( test.length - 1, 1 ) == ':' )
 				{
 					return;
 				}
 				
-				var volu = path = '';
+				let volu = path = fnam = '';
 				
 				if( ( winobj.directoryview.hasSidebar || winobj.directoryview.filedialog ) && test != 'Mountlist:' && test.substr( test.length - 1, 1 ) == ':' )
 				{
@@ -371,17 +372,16 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				else
 				{
 					// Fetch path again
-					var rpath2 = winobj.fileInfo.Path ? winobj.fileInfo.Path : ( winobj.fileInfo.Volume );
+					let rpath2 = winobj.fileInfo.Path ? winobj.fileInfo.Path : ( winobj.fileInfo.Volume );
 
 					if ( rpath2.indexOf( ':' < 0 ) )
 						rpath2 += ':';
-					var path = rpath2.split( ':' );
+					path = rpath2.split( ':' );
 
 					volu = path[0];
 					path = path[1];
 					if( path.substr( path.length - 1, 1 ) == '/' )
 						path = path.substr( 0, path.length - 1 );
-					var fnam = '';
 
 					if( path.indexOf( '/' ) > 0 )
 					{
@@ -397,11 +397,11 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					}
 					path = volu + ':' + path;
 
-					var lp = path.substr( path.length - 1, 1 )
+					let lp = path.substr( path.length - 1, 1 )
 					if( lp != ':' && lp != '/' ) path += '/';
 				}
 
-				var fin = {
+				let fin = {
 					Volume: volu + ':',
 					Path: path,
 					Filename: fnam,
@@ -420,7 +420,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					if( winobj.slideAnimation )
 						winobj.slideAnimation.parentNode.removeChild( winobj.slideAnimation );
 					
-					var n = document.createElement( 'div' );
+					let n = document.createElement( 'div' );
 					n.className = 'Content SlideAnimation';
 					n.style.willChange = 'transform';
 					n.style.transition = 'transform 0.4s';
@@ -464,7 +464,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				// If we're not at the top of the history array, go back
 				if( dw.pathHistoryIndex > 0 )
 				{
-					var fin = dw.pathHistoryRewind();
+					let fin = dw.pathHistoryRewind();
 					dw.window.fileInfo = fin;
 					
 					if( !isMobile && winobj.fileBrowser )
@@ -484,7 +484,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				// If we're not at the end of the history array, go forward
 				if( dw.pathHistoryIndex < dw.pathHistory.length - 1 )
 				{
-					var fin = dw.pathHistoryForward();
+					let fin = dw.pathHistoryForward();
 					dw.window.fileInfo = fin;
 					
 					if( !isMobile && winobj.fileBrowser )
@@ -515,9 +515,13 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					content: i18n( 'i18n_dir_btn_iconview' ),
 					onclick: function( e )
 					{
-						winobj.directoryview.listMode = 'iconview';
-						winobj.refresh();
-						this.parentNode.checkActive( this.value );
+						if( winobj.directoryview.listMode != 'iconview' )
+						{
+							winobj.directoryview.window.classList.add( 'LoadingIcons' );
+							winobj.directoryview.listMode = 'iconview';
+							winobj.refresh();
+							this.parentNode.checkActive( this.value );
+						}
 					}
 				},
 				{
@@ -527,9 +531,13 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					content: i18n( 'i18n_dir_btn_imageview' ),
 					onclick: function( e )
 					{
-						winobj.directoryview.listMode = 'imageview';
-						winobj.refresh();
-						this.parentNode.checkActive( this.value );
+						if( winobj.directoryview.listMode != 'imageview' )
+						{
+							winobj.directoryview.window.classList.add( 'LoadingIcons' );
+							winobj.directoryview.listMode = 'imageview';
+							winobj.refresh();
+							this.parentNode.checkActive( this.value );
+						}
 					}
 				},
 				{
@@ -539,9 +547,13 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					content: i18n( 'i18n_dir_btn_compact' ),
 					onclick: function( e )
 					{
-						winobj.directoryview.listMode = 'compact';
-						winobj.refresh();
-						this.parentNode.checkActive( this.value );
+						if( winobj.directoryview.listMode != 'compact' )
+						{
+							winobj.directoryview.window.classList.add( 'LoadingIcons' );
+							winobj.directoryview.listMode = 'compact';
+							winobj.refresh();
+							this.parentNode.checkActive( this.value );
+						}
 					}
 				},
 				{
@@ -551,9 +563,13 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					content: i18n( 'i18n_dir_btn_listview' ),
 					onclick: function( e )
 					{
-						winobj.directoryview.listMode = 'listview';
-						winobj.refresh();
-						this.parentNode.checkActive( this.value );
+						if( winobj.directoryview.listMode != 'listview' )
+						{
+							winobj.directoryview.window.classList.add( 'LoadingIcons' );
+							winobj.directoryview.listMode = 'listview';
+							winobj.refresh();
+							this.parentNode.checkActive( this.value );
+						}
 					}
 				}
 			]
@@ -594,31 +610,31 @@ DirectoryView.prototype.initToolbar = function( winobj )
 
 	function renderButton( btn, par )
 	{
-		var d = document.createElement( btn.element );
+		let d = document.createElement( btn.element );
 		if( btn.content )
 			d.innerHTML = btn.content;
 		d.className = btn.className + ' ' + btn.icon;
 		d.onclick = btn.onclick;
 		if( btn.value )
 			d.value = btn.value;
-		d.addEventListener( 'touchstart', d.onclick, false );
+		d.addEventListener( 'touchstart', d.onclick, true );
 		par.appendChild( d );
 	}
 
 	// Process!
-	for( var a in buttons )
+	for( let a in buttons )
 	{
 		if( !buttons[a] ) continue;
 		if( buttons[a].element == 'toggle-group' )
 		{
-			var ele = document.createElement( 'div' );
+			let ele = document.createElement( 'div' );
 			buttons[a].domElement = ele;
 			ele.className = 'ToggleGroup';
 			ele.className += ' ' + buttons[a].align;
 			ele.checkActive = function( value )
 			{
-				var eles = this.getElementsByTagName( 'button' );
-				for( var z = 0; z < eles.length; z++ )
+				let eles = this.getElementsByTagName( 'button' );
+				for( let z = 0; z < eles.length; z++ )
 				{
 					if( eles[z].value == value )
 					{
@@ -627,9 +643,9 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					else eles[z].classList.remove( 'Active' );
 				}
 			}
-			for( var b in buttons[a].buttons )
+			for( let b in buttons[a].buttons )
 			{
-				var bt = buttons[a].buttons[b];
+				let bt = buttons[a].buttons[b];
 				renderButton( bt, ele );
 			}
 			t.appendChild( ele );
@@ -644,7 +660,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 	winobj.style.top = ( GetElementHeight( t ) + parseInt( t.style.top.split( 'px' ).join( '' ) ) ) + 'px';
 	if( winobj.parentNode.volumeGauge )
 	{
-		var g = winobj.parentNode.volumeGauge.parentNode;
+		let g = winobj.parentNode.volumeGauge.parentNode;
 		g.style.top = winobj.style.top;
 	}
 }
@@ -660,16 +676,16 @@ DirectoryView.prototype.ShowFileBrowser = function()
 		return;
 	}
 	
-	var self = this;
+	let self = this;
 	
 	// Create the file browser
-	var winobj = this.windowObject;
+	let winobj = this.windowObject;
 	
-	var isShowing = winobj.fileBrowserDom && winobj.fileBrowserDom.parentNode;
+	let isShowing = winobj.fileBrowserDom && winobj.fileBrowserDom.parentNode;
 	
 	if( !isShowing && winobj.classList.contains( 'Content' ) )
 	{
-		var d = document.createElement( 'div' );
+		let d = document.createElement( 'div' );
 		if( this.sidebarbackground )
 		{
 			d.className = 'FileBrowserContainer BackgroundHeavier ScrollBarSmall SmoothScrolling';
@@ -681,7 +697,7 @@ DirectoryView.prototype.ShowFileBrowser = function()
 		}
 		
 		// Figure out where to place the bookmarks
-		var bm = this.bookmarks;
+		let bm = this.bookmarks;
 		if( !bm )
 		{
 			bm = winobj;
@@ -711,7 +727,7 @@ DirectoryView.prototype.ShowFileBrowser = function()
 			},
 			folderOpen( path, event, flags )
 			{
-				var vol = path.split( ':' )[0];
+				let vol = path.split( ':' )[0];
 			
 				winobj.fileInfo = {
 					Path: path,
@@ -719,17 +735,17 @@ DirectoryView.prototype.ShowFileBrowser = function()
 					Door: ( new Door( vol + ':' ) )
 				};
 				winobj.fileInfo.Door.cancelId = self.cancelId;
-				var lockH = flags && flags.lockHistory;
+				let lockH = flags && flags.lockHistory;
 				if( !lockH )
 				{
-					var vol = path.split( ':' )[0];
+					let vol = path.split( ':' )[0];
 					self.addToHistory( winobj.fileInfo );
 				}
 				winobj.refresh( false, false, false, false, false, event );
 			},
 			folderClose( path, event, flags )
 			{
-				var vol = path.split( ':' )[0];
+				let vol = path.split( ':' )[0];
 				
 				winobj.fileInfo = {
 					Path: path,
@@ -738,10 +754,10 @@ DirectoryView.prototype.ShowFileBrowser = function()
 				};
 				winobj.fileInfo.Door.cancelId = self.cancelId;
 				
-				var lockH = flags && flags.lockHistory;
+				let lockH = flags && flags.lockHistory;
 				if( !lockH )
 				{
-					var vol = path.split( ':' )[0];
+					let vol = path.split( ':' )[0];
 					self.addToHistory( winobj.fileInfo );
 				}
 				winobj.refresh( false, false, false, false, false, event );
@@ -772,7 +788,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	if( !winobj.oldContextMenuEvent ) winobj.oldContextMenuEvent = winobj.oncontextmenu;
 	winobj.addEventListener( 'contextmenu', function( e )
 	{
-		var tr = e.target ? e.target : e.srcObject;
+		let tr = e.target ? e.target : e.srcObject;
 		// Enable default behavior on the context menu instead
 		if( tr.classList && tr.classList.contains( 'DefaultContextMenu' ) )
 		{
@@ -813,11 +829,12 @@ DirectoryView.prototype.InitWindow = function( winobj )
 
 	winobj.checkSelected = function ()
 	{
-		var eles = this.getElementsByTagName( 'div' );
-		var selectedCount = 0;
+		let eles = this.getElementsByTagName( 'div' );
+		let selectedCount = 0;
+
 		for( var a = 0; a < eles.length; a++ )
 		{
-			if( !eles[a].classList && !eles[a].classList.contains( 'Selected' ) )
+			if( !eles[a].classList || !eles[a].classList.contains( 'Selected' ) )
 				continue;
 			selectedCount++;
 		}
@@ -840,7 +857,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	// When resizing the window
 	winobj.redrawIcons = function( icons, direction, callback )
 	{
-		var dirv = this.directoryview;
+		let dirv = this.directoryview;
 		
 		if( dirv.window.fileBrowser )
 		{
@@ -858,7 +875,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 		
 		// When we have a toolbar and no file browser, remove up on root paths
 		
-		var dormantDrive = winobj.fileInfo && (
+		let dormantDrive = winobj.fileInfo && (
 			winobj.fileInfo.Path.indexOf( 'System:' ) == 0 ||
 			winobj.fileInfo.Dormant ||
 			( winobj.fileInfo.Door && winobj.fileInfo.Door.dormantDoor )
@@ -866,7 +883,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 		
 		if( dirv.toolbar && dormantDrive )
 		{
-			var upb = dirv.toolbar.querySelector( '.Up' );
+			let upb = dirv.toolbar.querySelector( '.Up' );
 			if( upb )
 			{
 				if( winobj.fileInfo && winobj.fileInfo.Path.substr( winobj.fileInfo.Path.length - 1, 1 ) == ':' )
@@ -892,7 +909,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 		{
 			// Enforce icon view for mobile
 			dirv.listMode = 'iconview';
-			var changed = false;
+			let changed = false;
 			if( !this._redrawPath || !winobj.fileInfo || this._redrawPath != winobj.fileInfo.Path )
 			{
 				changed = true;
@@ -985,8 +1002,8 @@ DirectoryView.prototype.InitWindow = function( winobj )
 		if( direction ) this.direction = direction;
 
 		// Clean icons
-		var out = [];
-		var loaded = 1;
+		let out = [];
+		let loaded = 1;
 		if( typeof this.noRun == 'undefined' )
 		{
 			this.noRun = 0;
@@ -998,8 +1015,8 @@ DirectoryView.prototype.InitWindow = function( winobj )
 		{
 			for( var a = 0; a < this.icons.length; a++ )
 			{
-				var i = this.icons[a];
-				var o = {};
+				let i = this.icons[a];
+				let o = {};
 				for( var t in i )
 				{
 					switch( t )
@@ -1049,9 +1066,9 @@ DirectoryView.prototype.InitWindow = function( winobj )
 				out.push( o );
 			}
 
-			var self = this;
-			var handle;
-			var timeOfStart = new Date().getTime();
+			let self = this;
+			let handle;
+			let timeOfStart = new Date().getTime();
 			
 			if( loaded == 0 )
 				handle = setInterval( checkIcons, 500 );
@@ -1124,7 +1141,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 				}
 
 				// Check directory listmode
-				var lm = self.directoryview.listMode;
+				let lm = self.directoryview.listMode;
 				switch( lm )
 				{
 					case 'compact':
@@ -1133,31 +1150,35 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					{
 						setTimeout( function(){ self.completeRedraw(); }, 250 );
 						CheckScreenTitle();
-						var res = self.directoryview.RedrawIconView( self.directoryview.filearea, self.icons, direction, lm );
+						let res = self.directoryview.RedrawIconView( self.directoryview.filearea, self.icons, direction, lm );
 						if( callback ) callback();
 						checkScrl();
+						self.directoryview.window.classList.remove( 'LoadingIcons' );
 						return res;
 					}
 					case 'listview':
 					{
 						setTimeout( function(){ self.completeRedraw(); }, 25 ); // to help with column resizing, lower resize timeout
 						CheckScreenTitle();
-						var res = self.directoryview.RedrawListView( self.directoryview.filearea, self.icons, direction );
+						let res = self.directoryview.RedrawListView( self.directoryview.filearea, self.icons, direction );
 						if( callback ) callback();
 						checkScrl();
+						self.directoryview.window.classList.remove( 'LoadingIcons' );
 						return res;
 					}
 					case 'columnview':
 					{
 						setTimeout( function(){ self.completeRedraw(); }, 250 );
 						CheckScreenTitle();
-						var res = self.directoryview.RedrawColumnView( self, self.icons, direction );
+						let res = self.directoryview.RedrawColumnView( self, self.icons, direction );
 						if( callback ) callback();
 						checkScrl();
+						self.directoryview.window.classList.remove( 'LoadingIcons' );
 						return res;
 					}
 				}
 				self.completeRedraw();
+				self.directoryview.window.classList.remove( 'LoadingIcons' );
 			}
 		}
 		return false;
@@ -1198,12 +1219,12 @@ DirectoryView.prototype.InitWindow = function( winobj )
 		// formatted is used to handle a formatted, recursive list
 		function handleHostFileSelect( e )
 		{	
-			var hasDownload = false;
+			let hasDownload = false;
 			
 			function makeTransferDirectory()
 			{
 				// Check the destination
-				var d = new Door( 'Home:' );
+				let d = new Door( 'Home:' );
 				d.cancelId = winobj.directoryview.cancelId;
 				d.getIcons( 'Home:', function( items )
 				{
@@ -1245,8 +1266,8 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			// When everything is ready start the transfer
 			function doTheTransfer()
 			{
-				var permItems = e.dataTransfer ? e.dataTransfer.items : null;
-				var files = e.dataTransfer.files || e.target.files;
+				let permItems = e.dataTransfer ? e.dataTransfer.items : null;
+				let files = e.dataTransfer.files || e.target.files;
 
 				if( files.length < 1 ) 
 				{
@@ -1254,9 +1275,9 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					return;
 				}
 			
-				var di = winobj;
+				let di = winobj;
 			
-				var info = false;
+				let info = false;
 				if( files && !di.content && ( di.classList.contains( 'Screen' ) || di.classList.contains( 'ScreenContent' ) ) )
 				{
 					info = {
@@ -1283,7 +1304,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 				}
 			
 				// Setup a file copying worker
-				var uworker = new Worker( 'js/io/filetransfer.js' );
+				let uworker = new Worker( 'js/io/filetransfer.js' );
 			
 				// Try recursion!
 				// TODO: Enable again when safe!!
@@ -1292,12 +1313,12 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					info.files = [];
 					info.queued = true;
 				
-					var num = 0;
-					var finalElements = [];
+					let num = 0;
+					let finalElements = [];
 				
 					// Wait till the elements are all counted
-					var isBusy = true;
-					var busyTimeout = null;
+					let isBusy = true;
+					let busyTimeout = null;
 					function busyChecker()
 					{
 						if( busyTimeout || hasDownload == false || hasDownload == 'aborted' )
@@ -1340,7 +1361,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 						{
 							itm.file( function( f )
 							{
-								var ic = new FileIcon(); ic.delCache( itm.fullPath );
+								let ic = new FileIcon(); ic.delCache( itm.fullPath );
 								uworker.postMessage( { recursiveUpdate: true, item: f, fullPath: itm.fullPath, size: f.size, session: Workspace.sessionId } );
 							} );
 						}
@@ -1355,9 +1376,9 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					{
 						if( entry.isDirectory )
 						{
-							var dirReader = entry.createReader();
-							var num = 0;
-							var readEntries = function()
+							let dirReader = entry.createReader();
+							let num = 0;
+							let readEntries = function()
 							{
 								dirReader.readEntries( function( results )
 								{
@@ -1381,12 +1402,12 @@ DirectoryView.prototype.InitWindow = function( winobj )
 
 					function countItem( item )
 					{
-						var entry = item.getAsEntry || item.webkitGetAsEntry();
+						let entry = item.getAsEntry || item.webkitGetAsEntry();
 						if( entry.isDirectory )
 						{
-							var dirReader = entry.createReader();
-							var num = 0;
-							var readEntries = function()
+							let dirReader = entry.createReader();
+							let num = 0;
+							let readEntries = function()
 							{
 								dirReader.readEntries( function( results )
 								{
@@ -1420,16 +1441,16 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					}
 
 					// Open window
-					var w = new View( {
+					let w = new View( {
 						title:  i18n( 'i18n_copying_files' ),
 						width:  320,
 						height: 100
 					} );
 
-					var uprogress = new File( 'templates/file_operation.html' ); 
+					let uprogress = new File( 'templates/file_operation.html' ); 
 					uprogress.connectedworker = uworker;
 					
-					var groove = false, bar = false, frame = false, progressbar = false, progress = false;
+					let groove = false, bar = false, frame = false, progressbar = false, progress = false;
 
 
 					uprogress.onLoad = function( data )
@@ -1447,12 +1468,12 @@ DirectoryView.prototype.InitWindow = function( winobj )
 						uprogress.myview = w;
 
 						// Setup progress bar
-						var eled = w.getWindowElement().getElementsByTagName( 'div' );
+						let eled = w.getWindowElement().getElementsByTagName( 'div' );
 						for( var a = 0; a < eled.length; a++ )
 						{
 							if( eled[a].className )
 							{
-								var types = [ 'ProgressBar', 'Groove', 'Frame', 'Bar', 'Info', 'Progress' ];
+								let types = [ 'ProgressBar', 'Groove', 'Frame', 'Bar', 'Info', 'Progress' ];
 								for( var b = 0; b < types.length; b++ )
 								{
 									if( eled[a].className.indexOf( types[b] ) == 0 )
@@ -1474,7 +1495,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 
 
 						//activate cancel button... we assume we only hav eone button in the template
-						var cb = w.getWindowElement().getElementsByTagName( 'button' )[0];
+						let cb = w.getWindowElement().getElementsByTagName( 'button' )[0];
 
 						cb.mywindow = w;
 						cb.onclick = function( e )
@@ -1572,7 +1593,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 
 								Notify( { title: i18n( 'i18n_upload_completed' ), 'text':i18n('i18n_uploaded') }, false, function()
 								{
-									OpenWindowByFileinfo( { Title: 'Downloads', Path: 'Home:Downloads/', Type: 'Directory', MetaType: 'Directory' } );
+									OpenWindowByFileinfo( { Title: 'Downloads', Path: info.targetPath ? info.targetPath : 'Home:Downloads/', Type: 'Directory', MetaType: 'Directory' } );
 								} );
 								return true;
 							}
@@ -1627,7 +1648,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 		WorkspaceMenu.show();
 }
 
-// -------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 DirectoryView.prototype.GetTitleBar = function ()
 {
 	if ( window.currentScreen )
@@ -1640,7 +1661,7 @@ DirectoryView.prototype.GetTitleBar = function ()
 // Redraw the iconview mode ----------------------------------------------------
 DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, option, flags )
 {
-	var self = this;
+	let self = this;
 		
 	if( this.rendering ) return;
 	this.rendering = true;
@@ -1668,12 +1689,12 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		this.ShowFileBrowser();
 	
 	// Remember scroll top
-	var stop = 0;
-	var slef = 0;
+	let stop = 0;
+	let slef = 0;
 	
-	var sc = this.scroller;
+	let sc = this.scroller;
 	
-	var er = obj.getElementsByClassName( 'loadError' )
+	let er = obj.getElementsByClassName( 'loadError' )
 	if( er.length )
 	{
 		obj.removeChild( er[0] );
@@ -1711,12 +1732,12 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	// Remove loading animation
 	if( obj.getElementsByClassName( 'LoadingAnimation' ).length )
 	{
-		var la = obj.getElementsByClassName( 'LoadingAnimation' )[0];
+		let la = obj.getElementsByClassName( 'LoadingAnimation' )[0];
 		la.parentNode.removeChild( la );
 	}
 
-	var windowWidth = this.scroller.offsetWidth;
-	var windowHeight = this.scroller.offsetHeight - 80;
+	let windowWidth = this.scroller.offsetWidth;
+	let windowHeight = this.scroller.offsetHeight - 80;
 	
 	// If we resized, recalculate all
 	if( this.prevWidth != windowWidth || this.prevHeight != windowHeight )
@@ -1727,7 +1748,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 			// Remove placeholder
 			if( this.scroller )
 			{
-				var pl = this.scroller.getElementsByClassName( 'Placeholder' );
+				let pl = this.scroller.getElementsByClassName( 'Placeholder' );
 				if( pl.length )
 				{
 					pl[0].parentNode.removeChild( pl[0] );
@@ -1756,13 +1777,13 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	
 	if ( !icons ) return;
 
-	var dummyIcon = document.createElement( 'div' );
+	let dummyIcon = document.createElement( 'div' );
 	dummyIcon.className = 'File';
 	document.body.appendChild( dummyIcon );
 
 	// Adapt to device width
-	var mobIW = 110;
-	var mobIH = 110;
+	let mobIW = 110;
+	let mobIH = 110;
 	
 	if( window.innerWidth <= 320 )
 	{
@@ -1770,8 +1791,8 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		mobIH = 88;
 	}
 
-	var gridX = window.isMobile ? mobIW : 120;
-	var gridY = window.isMobile ? mobIH : 110;
+	let gridX = window.isMobile ? mobIW : 120;
+	let gridY = window.isMobile ? mobIH : 110;
 	
 	if( option == 'compact' )
 	{
@@ -1785,40 +1806,40 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	}
 	
 	// Get display frame
-	var display = {
+	let display = {
 		top: this.scroller.scrollTop - this.scroller.offsetHeight,
 		bottom: this.scroller.scrollTop + ( this.scroller.offsetHeight << 1 ),
 		width: windowWidth
 	};
 	
-	var marginTop = icons[0] && icons[0].Handler ? 10 : 0;
-	var marginLeft = 20;
-	var marginRight = window.innerWidth - gridX + 20 - 1;
+	let marginTop = icons[0] && icons[0].Handler ? 10 : 0;
+	let marginLeft = 20;
+	let marginRight = window.innerWidth - gridX + 20 - 1;
 	
-	var marginBottom = 5;
+	let marginBottom = 5;
 	
 	if( window.isMobile )
 	{
 		marginBottom = 25;
 	}
 
-	var ue = navigator.userAgent.toLowerCase();
+	let ue = navigator.userAgent.toLowerCase();
 
 	// Calculate marginLeft to center icons on mobile
 	if( isMobile )
 	{
-		var whWidth = windowWidth;
-		var columns = Math.floor( whWidth / mobIW );
+		let whWidth = windowWidth;
+		let columns = Math.floor( whWidth / mobIW );
 		marginLeft = Math.floor( whWidth - ( mobIW * columns ) ) >> 1;
 	}
 	
-	var iy  = marginTop; 
-	var ix  = marginLeft;
-	var shy = marginTop;
-	var shx = marginRight - parseInt( sc.parentNode.paddingRight );
+	let iy  = marginTop; 
+	let ix  = marginLeft;
+	let shy = marginTop;
+	let shx = marginRight - parseInt( sc.parentNode.paddingRight );
 	
-	var column = 0;
-	var start = false;
+	let column = 0;
+	let start = false;
 	
 	// Clear the window
 	if ( this.scroller )
@@ -1829,7 +1850,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	// Create scroller
 	else
 	{
-		var o = document.createElement( 'div' );
+		let o = document.createElement( 'div' );
 		o.className = 'Scroller';
 		obj.appendChild( o );
 		this.scroller = o;
@@ -1841,7 +1862,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	// Add the placeholder real fast
 	if( flags && flags.addPlaceholderFirst )
 	{
-		var d = document.createElement( 'div' );
+		let d = document.createElement( 'div' );
 		d.style.position = 'absolute';
 		d.style.top = flags.addPlaceholderFirst + 'px';
 		d.style.pointerEvents = 'none';
@@ -1852,23 +1873,23 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	}
 
 	// Start column
-	var coldom = document.createElement( 'div' );
+	let coldom = document.createElement( 'div' );
 	coldom.className = 'Coldom';
 	this.scroller.appendChild ( coldom );
 	
 	obj.icons = [];
 
 	// Avoid duplicate filenames..
-	var filenameBuf = [];
+	let filenameBuf = [];
 
 	// Loop through icons (if list of objects)
 	if( typeof( icons[0] ) == 'object' )
 	{
 		// TODO: Lets try to make directories first optional
-		var dirs = [];
-		var files = [];
+		let dirs = [];
+		let files = [];
 		
-		var orphanInfoFile = {};
+		let orphanInfoFile = {};
 
 		for( var a = 0; a < icons.length; a++ )
 		{
@@ -1888,11 +1909,11 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 					files.push( icons[a] );
 			}
 
-			var i = icons[a];
+			let i = icons[a];
 			if( i.Filename )
 			{
 				// Check .info
-				var mInfoname = i.Filename.toLowerCase().indexOf( '.info' ) > 0 ?
+				let mInfoname = i.Filename.toLowerCase().indexOf( '.info' ) > 0 ?
 					i.Filename.substr( 0, i.Filename.length - 5 ) : false;
 				// Check .dirinfo
 				if( !mInfoname )
@@ -1915,11 +1936,11 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 
 		icons = dirs.concat( files );
 
-		var heightAttrs = [ 'height', 'paddingTop', 'paddingBottom' ];
-		var infoIcons = {};
+		let heightAttrs = [ 'height', 'paddingTop', 'paddingBottom' ];
+		let infoIcons = {};
 		for( var a = 0; a < icons.length; a++ )
 		{
-			var fn = icons[a].Filename ? icons[a].Filename : icons[a].Title;
+			let fn = icons[a].Filename ? icons[a].Filename : icons[a].Title;
 			
 			// Skip dot files
 			if( !self.showHiddenFiles && fn.substr( 0, 1 ) == '.' ) continue;
@@ -1940,7 +1961,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		
 		if( this.window.classList.contains( 'ScreenContent' ) )
 		{
-			var ti = GetThemeInfo( 'ScreenContentMargins' );
+			let ti = GetThemeInfo( 'ScreenContentMargins' );
 			if( ti.top )
 			{
 				marginTop += parseInt( ti.top );
@@ -1948,18 +1969,18 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 			}
 		}
 		
-		var contentMode = this.window.classList.contains( 'ScreenContent' ) ? 'screen' : 'view';
+		let contentMode = this.window.classList.contains( 'ScreenContent' ) ? 'screen' : 'view';
 		
 		// Draw icons
-		var iterations = 0;
+		let iterations = 0;
 		for( var a = 0; a < icons.length; a++ )
 		{
 			// Special mode
 			if( icons[a].Type == 'File' && self.ignoreFiles ) continue;
 			
-			var r = icons[a];
+			let r = icons[a];
 			
-			var type = icons[a].MetaType;
+			let type = icons[a].MetaType;
 			
 			if( r.Visible === false || ( r.Config && r.Config.Invisible && r.Config.Invisible.toLowerCase() == 'yes' ) )
 			{
@@ -1967,7 +1988,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 			}
 
 			// TODO: Show hidden files if we _must_
-		 	var fn = {
+		 	let fn = {
 		 		Filename: icons[a].Filename ? icons[a].Filename : icons[a].Title,
 		 		Type: icons[a].Type
 		 	};
@@ -1996,7 +2017,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 			}
 
 			// Skip duplicates
-			var fnd = false;
+			let fnd = false;
 			for( var z = 0; z < filenameBuf.length; z++ )
 			{
 				if( filenameBuf[z].Filename == fn.Filename && filenameBuf[z].Type == fn.Type )
@@ -2071,14 +2092,14 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 			{
 				if ( icons[a].Toolbar )
 				{
-					var t = document.createElement ( 'div' );
+					let t = document.createElement ( 'div' );
 					t.className = 'Toolbar';
 					for( var q = 0; q < icons[a].Toolbar.length; q++ )
 					{
-						var barP = icons[a].Toolbar[q];
-						var bar = document.createElement( 'div' );
-						var icon = document.createElement( 'img' );
-						var label = document.createElement( 'span' );
+						let barP = icons[a].Toolbar[q];
+						let bar = document.createElement( 'div' );
+						let icon = document.createElement( 'img' );
+						let label = document.createElement( 'span' );
 						for( var v in barP )
 						{
 							switch( v )
@@ -2105,7 +2126,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 				}
 				continue;
 			}
-			var file;
+			let file;
 			if( icons[a].position )
 			{
 				// TODO: Read position rules and place absolutely
@@ -2150,9 +2171,9 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 				coldom.appendChild( file );
 				
 				// Make sure the icon has bounds
-				var ic = file.getElementsByClassName( 'Icon' );
-				var c = window.getComputedStyle( ic[0], null );
-				var title = file.getElementsByClassName( 'Title' );
+				let ic = file.getElementsByClassName( 'Icon' );
+				let c = window.getComputedStyle( ic[0], null );
+				let title = file.getElementsByClassName( 'Title' );
 				title[0].style.overflow = 'hidden';
 
 				// Usually drawing from top to bottom
@@ -2171,7 +2192,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 						else iy += gridY;
 					}
 
-					var cond = type == 'Shortcut' ? shy : iy;
+					let cond = type == 'Shortcut' ? shy : iy;
 					if( !( globalConfig.scrolldesktopicons == 1 && this.mode == 'Volumes' ) && cond + gridY > windowHeight )
 					{
 						if( type == 'Shortcut' )
@@ -2230,7 +2251,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	this.innerHeight = iy + gridY;
 	
 	// Force scrolling
-	var d = this.scroller.querySelector( '.Placeholder' );
+	let d = this.scroller.querySelector( '.Placeholder' );
 	if( !d )
 	{
 		d = document.createElement( 'div' );
@@ -2297,8 +2318,8 @@ DirectoryView.prototype.ResizeToFit = function( obj )
 	// Better size if possible
 	if( obj.windowObject )
 	{
-		var windId = obj.windowObject.getViewId();
-		var storage = GetWindowStorage( windId );
+		let windId = obj.windowObject.getViewId();
+		let storage = GetWindowStorage( windId );
 		if( this.innerHeight > obj.offsetHeight && !storage )
 		{
 			obj.windowObject.setFlag( 'height', this.innerHeight );
@@ -2312,7 +2333,7 @@ DirectoryView.prototype.SelectAll = function()
 {
 	if( this.multiple )
 	{
-		var ics = this.window.icons;
+		let ics = this.window.icons;
 		for( var a = 0; a < ics.length; a++ )
 		{
 			ics[a].selected = 'multiple';
@@ -2343,22 +2364,23 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 	
 	this.viewMode = 'listview';
 
-	var self = this;
+	let self = this;
 	
 	// TODO: Direction not needed here
 	obj.direction = direction ? direction : 'horizontal';
 	icons = icons ? icons : obj.icons;
 
-	var dv = this;
+	let dv = this;
 
 	obj.window = this.window;
+
+	let dirs = [];
+	let files = [];
 
 	// Fill the list (TODO: Repopulate existing listview to reduce flicker)
 	if( typeof( icons[0] ) == 'object' )
 	{
 		// TODO: Lets try to make directories first optional
-		var dirs = [];
-		var files = [];
 		for( var a = 0; a < icons.length; a++ )
 		{
 			if( icons[a].Type == 'Directory' ) dirs.push( icons[a] );
@@ -2368,8 +2390,8 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 	}
 
 	// Have we rendered before?
-	var changed = true;
-	var r = false;
+	let changed = true;
+	let r = false;
 	
 	// If this isn't changed explicitly, look for minute changes
 	// this.changed is an external notification of changes
@@ -2393,12 +2415,12 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 	// Remove loading animation
 	if( obj.getElementsByClassName( 'LoadingAnimation' ).length )
 	{
-		var la = obj.getElementsByClassName( 'LoadingAnimation' )[0];
+		let la = obj.getElementsByClassName( 'LoadingAnimation' )[0];
 		la.parentNode.removeChild( la );
 	}
 
 	// Make sure we have a listview columns header bar
-	var headers = {
+	let headers = {
 		'filename' : i18n( 'i18n_filename' ),
 		'size'     : i18n( 'i18n_size' ),
 		'date'     : i18n( 'i18n_date' ),
@@ -2407,7 +2429,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 	};
 
 	// Default widths
-	var defwidths = {
+	let defwidths = {
 		'filename' : '29%',
 		'size'     : '12%',
 		'date'     : '25%',
@@ -2422,18 +2444,18 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 		{
 			this.ShowFileBrowser();
 		
-			var divs = [];
+			let divs = [];
 
 			// Setup the listview for the first time
 		
-			var lvie = document.createElement( 'div' );
+			let lvie = document.createElement( 'div' );
 			lvie.className = 'Listview';
 		
-			var head = document.createElement( 'div' );
+			let head = document.createElement( 'div' );
 			head.className = 'Headers';
 			for( var a in headers )
 			{
-				var d = document.createElement( 'div' );
+				let d = document.createElement( 'div' );
 				d.className = 'Header Ellipsis MousePointer';
 				d.innerHTML = headers[a];
 				if( dv.sortColumn == a )
@@ -2460,18 +2482,18 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			obj.head = head;
 
 			// Add icon container
-			var cicn = document.createElement( 'div' );
+			let cicn = document.createElement( 'div' );
 			cicn.className = 'ScrollArea Icons';
 			lvie.appendChild( cicn );
 
 			// Add icon content container
-			var icnt = document.createElement( 'div' );
+			let icnt = document.createElement( 'div' );
 			icnt.className = 'Scroller';
 			obj.scroller = icnt;
 			cicn.appendChild ( icnt );
 
 			// Add footer
-			var foot = document.createElement( 'div' );
+			let foot = document.createElement( 'div' );
 			foot.className = 'Footer';
 			lvie.foot = foot;
 			lvie.appendChild ( foot );
@@ -2492,15 +2514,15 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 		// Turn off smooth scrolling on redraw
 		obj.scroller.style.scrollBehavior = 'unset';
 		
-		var icnt = obj.scroller;
-		var bts = 0;
-		var foot = this.listView.foot;
-		var head = this.head;
+		let icnt = obj.scroller;
+		let bts = 0;
+		let foot = this.listView.foot;
+		let head = this.head;
 
 		obj.iconsCache = icons;
 		obj.icons = [];
 		
-		var orphanInfoFile = {};
+		let orphanInfoFile = {};
 
 		for( var a = 0; a < icons.length; a++ )
 		{
@@ -2511,11 +2533,11 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			else 
 				files.push( icons[a] );
 
-			var i = icons[a];
+			let i = icons[a];
 			if( i.Filename )
 			{
 				// Check .info
-				var mInfoname = i.Filename.toLowerCase().indexOf( '.info' ) > 0 ?
+				let mInfoname = i.Filename.toLowerCase().indexOf( '.info' ) > 0 ?
 					i.Filename.substr( 0, i.Filename.length - 5 ) : false;
 				// Check .dirinfo
 				if( !mInfoname )
@@ -2536,16 +2558,16 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			}
 		}
 		
-		var swi = 2;
+		let swi = 2;
 
-		var listed = 0;
+		let listed = 0;
 
 		for( var a = 0; a < icons.length; a++ )
 		{
 			if( icons[a].Type == 'File' && self.ignoreFiles ) continue;
 			
-			var t = icons[a].Title ? icons[a].Title : icons[a].Filename;
-			var ic = icons[a];
+			let t = icons[a].Title ? icons[a].Title : icons[a].Filename;
+			let ic = icons[a];
 
 			// Skipping
 			// Skip dot files
@@ -2575,7 +2597,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			r.className = 'Row MousePointer';
 			for( var b in headers )
 			{
-				var c = document.createElement ( 'div' );
+				let c = document.createElement ( 'div' );
 				switch( b )
 				{
 					case 'filename':
@@ -2594,28 +2616,28 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 						break;
 					case 'type':
 						/*var fn = icons[a].Title ? icons[a].Title : icons[a].Filename;
-						var ext = fn.split( '.' ); ext = ext[ext.length-1].toLowerCase();
+						let ext = fn.split( '.' ); ext = ext[ext.length-1].toLowerCase();
 						ext = ext.split( '#' ).join( '' );*/
-						var ext = ic.Extension.split( '#' )[0];
-						var tp = i18n( ic.Type == 'Directory' ? 'i18n_directory' : 'i18n_filetype_' + ext );
+						let ext = ic.Extension.split( '#' )[0];
+						let tp = i18n( ic.Type == 'Directory' ? 'i18n_directory' : 'i18n_filetype_' + ext );
 						if( tp.substr( 0, 5 ) == 'i18n_' )
 							tp = i18n( 'i18n_driver_handled' );
 						c.innerHTML = tp;
 						c.style.textAlign = 'left';
 						break;
 					case 'permissions':
-						var pr = '-rwed';
+						let pr = '-rwed';
 						if( ic.Permissions )
 						{
-							var p = ic.Permissions.split( ',' );
-							var perms = ['-','-','-','-','-'];
-							for( var b = 0; b < p.length; b++ )
+							let p = ic.Permissions.split( ',' );
+							let perms = ['-','-','-','-','-'];
+							for( let g = 0; g < p.length; g++ )
 							{
-								for( var cc = 0; cc < p[b].length; cc++ )
+								for( var cc = 0; cc < p[ g ].length; cc++ )
 								{
-									if( p[b].substr( cc, 1 ) != '-' && perms[cc] == '-' )
+									if( p[ g ].substr( cc, 1 ) != '-' && perms[cc] == '-' )
 									{
-										perms[cc] = p[b][cc];
+										perms[ cc ] = p[ g ][ cc ];
 									}
 								}
 							}
@@ -2638,7 +2660,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			if ( swi == 1 ) r.className += ' Odd';
 
 			// Create icon object to extract FileInfo
-			var f = CreateIcon( ic, this );
+			let f = CreateIcon( ic, this );
 			f.directoryView = this;
 			r.className += ' File';
 			//RemoveIconEvents( f ); // Strip events
@@ -2647,7 +2669,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			// Overwrite doubleclick
 			if( ic.Type == 'File' && this.doubleclickfiles )
 			{
-				var cl = this.doubleclickfiles;
+				let cl = this.doubleclickfiles;
 				r.ondblclick = function( e )
 				{
 					cl( this.file, e );
@@ -2663,9 +2685,9 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			}
 
 			// Create the icon..
-			var icon = document.createElement( 'div' );
+			let icon = document.createElement( 'div' );
 			icon.className = 'Icon';
-			var inne = document.createElement( 'div' );
+			let inne = document.createElement( 'div' );
 			inne.className = f.iconInner.className;
 			icon.appendChild( inne );
 			r.appendChild( icon );
@@ -2719,7 +2741,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 						return;
 					}
 					
-					var p = icnt;
+					let p = icnt;
 				
 					// We have an external event
 					if( dv.clickfile )
@@ -2730,8 +2752,8 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					// Range
 					if( dv.multiple && e.shiftKey )
 					{
-						var other = self = false;
-						var top = bottom = false;
+						let other = self = false;
+						let top = bottom = false;
 
 						// Find range from to
 						if( dv.lastListItem && dv.lastListItem.classList.contains( 'Selected' ) )
@@ -2786,7 +2808,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					}
 					else
 					{
-						var sh = e.shiftKey || e.ctrlKey;
+						let sh = e.shiftKey || e.ctrlKey;
 						if( !sh ) 
 						{
 							if( !Workspace.contextMenuShowing || !Workspace.contextMenuShowing.shown )
@@ -2854,7 +2876,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 				r.ontouchstart = function( e )
 				{
 					this.click = true;
-					var self = this;
+					let self = this;
 					this.listSelectTimeout = setTimeout( function()
 					{
 						self.click = false;
@@ -2895,15 +2917,15 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					if( !this.touchPos )
 						return;
 						
-					var current = {
+					let current = {
 						x: e.touches[0].pageX,
 						y: e.touches[0].pageY
 					};
 			
-					var diffx = current.x - this.touchPos.x;
-					var diffy = current.y - this.touchPos.y;
+					let diffx = current.x - this.touchPos.x;
+					let diffy = current.y - this.touchPos.y;
 			
-					var distance = Math.sqrt(
+					let distance = Math.sqrt(
 						Math.pow( diffx, 2 ) + Math.pow( diffy, 2 )
 					);
 				
@@ -2970,8 +2992,8 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 		}
 
 		// Position the rows
-		var t = 0;
-		var ds = icnt.getElementsByTagName ( 'div' );
+		let t = 0;
+		let ds = icnt.getElementsByTagName ( 'div' );
 		for( var a = 0; a < ds.length; a++ )
 		{
 			if( ds[a].className.substr ( 0, 3 ) == 'Row' )
@@ -2981,7 +3003,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			}
 		}
 
-		var filesize = humanFilesize ( bts );
+		let filesize = humanFilesize ( bts );
 		foot.innerHTML = listed + ' ' + i18n( 'i18n_total_listed' ) + ' ' + filesize + '.';
 	}
 	else
@@ -2998,20 +3020,20 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 		}
 	}
 	
-	var icnt = obj.scroller;
-	var foot = this.listView.foot;
-	var head = this.head;
+	let icnt = obj.scroller;
+	let foot = this.listView.foot;
+	let head = this.head;
 
 	// Align headers
 	if( head && icnt.childNodes.length )
 	{
-		var childr = icnt.childNodes[icnt.childNodes.length - 1].childNodes;
-		var wh = head.offsetWidth;
+		let childr = icnt.childNodes[icnt.childNodes.length - 1].childNodes;
+		let wh = head.offsetWidth;
 		for( var b = 0; b < head.childNodes.length; b++ )
 		{
 			if( r.childNodes[b].nodeName != 'DIV' ) continue;
 
-			var cw = GetElementWidth( childr[b] );
+			let cw = GetElementWidth( childr[b] );
 			if( b == head.childNodes.length - 1 )
 				cw = wh;
 			wh -= cw;
@@ -3034,7 +3056,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 // Create a directoryview on a div / Window (shortcut func (deprecated?))
 function CreateDirectoryView( winobj, extra )
 {
-	var w = new DirectoryView( winobj, extra );
+	let w = new DirectoryView( winobj, extra );
 	return w;
 }
 
@@ -3065,18 +3087,18 @@ FileIcon.prototype.setCache = function( path, directoryview, date )
 {
 	if( directoryview && directoryview.window && directoryview.window.fileInfo )
 	{
-		var dir = directoryview.window.fileInfo.Path;
+		let dir = directoryview.window.fileInfo.Path;
 		if( !Friend.iconCache[ dir ] )
 			Friend.iconCache[ dir ] = {};
 		if( !Friend.iconCache[ dir ][ path ] )
 		{
-			var currentIndex = Friend.iconCache.index++;
+			let currentIndex = Friend.iconCache.index++;
 			// Wrap around
 			if( currentIndex > Friend.iconCache.maxCount )
 			{
 				currentIndex = Friend.iconCache.index = 0;
 			}
-			var i = new Image();
+			let i = new Image();
 			i.src = path;
 			i.date = date;
 			i.onload = function()
@@ -3085,8 +3107,8 @@ FileIcon.prototype.setCache = function( path, directoryview, date )
 				// Overwriting?
 				if( Friend.iconCache.seenList[ currentIndex ] )
 				{
-					var dd = Friend.iconCache.seenList[ currentIndex ].dir;
-					var pp = Friend.iconCache.seenList[ currentIndex ].path;
+					let dd = Friend.iconCache.seenList[ currentIndex ].dir;
+					let pp = Friend.iconCache.seenList[ currentIndex ].path;
 					delete Friend.iconCache[ dd ][ pp ];
 				}
 				// Write new
@@ -3104,10 +3126,10 @@ FileIcon.prototype.getCache = function( path, directoryview, date )
 {
 	if( directoryview && directoryview.window && directoryview.window.fileInfo )
 	{
-		var dir = directoryview.window.fileInfo.Path;
+		let dir = directoryview.window.fileInfo.Path;
 		if( !Friend.iconCache[ dir ] ) return false;
 		if( !Friend.iconCache[ dir ][ path ] ) return false;
-		var i = Friend.iconCache[ dir ][ path ];
+		let i = Friend.iconCache[ dir ][ path ];
 		if( i.date != date )
 		{
 			Friend.iconCache[ dir ][ path ] = null;
@@ -3121,7 +3143,7 @@ FileIcon.prototype.getCache = function( path, directoryview, date )
 // Remove an image from cache
 FileIcon.prototype.delCache = function( dir )
 {
-	var path = '/system.library/module/?module=system&command=thumbnail&sessionid=' + Workspace.sessionId + '&path=' + dir;
+	let path = '/system.library/module/?module=system&command=thumbnail&sessionid=' + Workspace.sessionId + '&path=' + dir;
 	
 	// remove filename from subpath
 	if( dir.indexOf( '/' ) > 0 )
@@ -3146,7 +3168,7 @@ FileIcon.prototype.delCache = function( dir )
 // -----------------------------------------------------------------------------
 FileIcon.prototype.Init = function( fileInfo, flags )
 {
-	var self = this;
+	let self = this;
 	
 	function _createIconTitle( str )
 	{
@@ -3156,12 +3178,12 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 
 	this.flags = flags ? flags : {};
 	
-	var type = 'div';
+	let type = 'div';
 	if( flags && flags.type ) type = flags.type;
 	
 	// Create the file icon div
 	this.file = document.createElement( type );
-	var file = this.file;
+	let file = this.file;
 	file.className = 'File';
 	file.style.position = 'absolute';
 
@@ -3185,7 +3207,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	file.object = this;
 
 	// Get the file extension, if any
-	var extension = fileInfo.Filename ? fileInfo.Filename.split('.') : false;
+	let extension = fileInfo.Filename ? fileInfo.Filename.split('.') : false;
 	if( fileInfo.MetaType == 'MetaFile' )
 	{
 		extension = 'info';
@@ -3206,7 +3228,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	{
 		if( fileInfo.SharedLink && fileInfo.SharedLink.length )
 		{
-			var df = document.createElement( 'div' );
+			let df = document.createElement( 'div' );
 			df.className = 'Label Shared IconSmall MousePointer fa-share-alt';
 			icon.appendChild( df );
 		}
@@ -3224,15 +3246,17 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	
 	if( ( fileInfo.Type == 'Dormant' || fileInfo.Type == 'Door' ) && Friend.dosDrivers && Friend.dosDrivers[ fileInfo.Driver ] )
 	{
-		var driver = Friend.dosDrivers[ fileInfo.Driver ];
+		let driver = Friend.dosDrivers[ fileInfo.Driver ];
 							
 		// Find correct image
-		var img = '/iconthemes/friendup15/DriveLabels/FriendDisk.svg';
+		let img = '/iconthemes/friendup15/DriveLabels/FriendDisk.svg';
 		
 		if( Friend.dosDrivers[ driver.type ] && Friend.dosDrivers[ driver.type ].iconLabel )
 			img = 'data:image/svg+xml;base64,' + Friend.dosDrivers[ driver.type ].iconLabel;
 		if( fileInfo.Title == 'Home' )
 			img = '/iconthemes/friendup15/DriveLabels/Home.svg';
+		else if( fileInfo.Title == 'Shared' )
+			img = '/iconthemes/friendup15/DriveLabels/Shared.svg';
 		else if( fileInfo.Title == 'System' )
 			img = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
 		
@@ -3246,7 +3270,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		iconInner.className = 'Drive';
 		if( img )
 		{
-			var label = document.createElement( 'div' );
+			let label = document.createElement( 'div' );
 			label.className = 'Label';
 			label.style.backgroundImage = 'url("' + img + '")';
 			iconInner.appendChild( label );
@@ -3272,37 +3296,52 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		iconInner.className = GetIconClassByExtension( extension, fileInfo );
 	}
 	
+	// Add-on label
+	if( fileInfo.IconLabel )
+	{
+		iconInner.classList.add( fileInfo.IconLabel );
+	}
+	
+	let vol = fileInfo.Volume ? fileInfo.Volume : ( fileInfo.Path ? fileInfo.Path.split( ':' )[0] : null );
+	
+	// Indicate that this file has been shared
+	if( fileInfo.SharedFile || ( vol == 'Shared' && fileInfo.Owner == Workspace.userId ) )
+	{
+		iconInner.classList.add( 'FileShared' );
+	}
+	
 	// Check for thumbs
 	if( fileInfo.directoryview && ( fileInfo.directoryview.listMode == 'iconview' || fileInfo.directoryview.listMode == 'imageview' ) )
 	{
-		switch( iconInner.className )
+		if( 
+			iconInner.classList.contains( 'TypeJPG' ) || 
+			iconInner.classList.contains( 'TypeJPEG' ) || 
+			iconInner.classList.contains( 'TypePNG' ) || 
+			iconInner.classList.contains( 'TypeGIF' ) 
+		)
 		{
-			case 'TypeJPG':
-			case 'TypeJPEG':
-			case 'TypePNG':
-			case 'TypeGIF':
-				var r = CryptoJS.SHA1( fileInfo.DateModified ).toString();
-				
-				var w = fileInfo.directoryview.listMode == 'imageview' ? 240 : 56;
-				var h = fileInfo.directoryview.listMode == 'imageview' ? 140 : 48;
-				var ur = '/system.library/module/?module=system&command=thumbnail&width=' + w + '&height=' + h + '&sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '&date=' + r;
-				
-				// Get from cache
-				var tmp = false;
-				if( tmp = this.getCache( ur, fileInfo.directoryview, fileInfo.DateModified ) )
-				{
-					ur = tmp;
-				}
-				
-				iconInner.style.backgroundImage = 'url(\'' + ur + '\')';
-				iconInner.className = 'Thumbnail';
-				
-				// Put in cache
-				if( !tmp )
-				{
-					this.setCache( ur, fileInfo.directoryview, fileInfo.DateModified );
-				}
-				break;
+			
+			let r = CryptoJS.SHA1( fileInfo.DateModified ).toString();
+			
+			let w = fileInfo.directoryview.listMode == 'imageview' ? 240 : 56;
+			let h = fileInfo.directoryview.listMode == 'imageview' ? 140 : 48;
+			let ur = '/system.library/module/?module=system&command=thumbnail&width=' + w + '&height=' + h + '&sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '&date=' + r;
+			
+			// Get from cache
+			let tmp = false;
+			if( tmp = this.getCache( ur, fileInfo.directoryview, fileInfo.DateModified ) )
+			{
+				ur = tmp;
+			}
+			
+			iconInner.style.backgroundImage = 'url(\'' + ur + '\')';
+			iconInner.classList.add( 'Thumbnail' );
+			
+			// Put in cache
+			if( !tmp )
+			{
+				this.setCache( ur, fileInfo.directoryview, fileInfo.DateModified );
+			}
 		}
 	}
 	
@@ -3316,7 +3355,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		file.classList.add( 'Shortcut' );
 		if( fileInfo.Filename.substr( 0, 1 ) == ':' )
 		{
-			var fn = fileInfo.Filename.substr( 1, fileInfo.Filename.length - 1 );
+			let fn = fileInfo.Filename.substr( 1, fileInfo.Filename.length - 1 );
 			iconInner.style.backgroundImage = 'url(\'apps/' + fn + '/icon.png\')';
 		}
 	}
@@ -3324,7 +3363,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	// Create the title
 	title = document.createElement( 'a' );
 	title.className = 'Title';
-	var tl = ( fileInfo.Title ? fileInfo.Title :
+	let tl = ( fileInfo.Title ? fileInfo.Title :
 		( fileInfo.Filename ? fileInfo.Filename : 'Uten navn' ) );
 	title.innerHTML = tl;
 	title.title = tl;
@@ -3398,7 +3437,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		
 			if( this.window )
 			{
-				var rc = 0;
+				let rc = 0;
 				if( e.which ) rc = ( e.which == 3 );
 				else if( e.button ) rc = ( e.button == 2 );
 				if( !rc )
@@ -3432,9 +3471,9 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 							name: i18n( 'i18n_delete_shortcut' ),
 							command: function( e )
 							{
-								var files = [];
-								var eles = found.fileInfo.directoryview.window.getElementsByTagName( 'div' );
-								var selectedCount = 0;
+								let files = [];
+								let eles = found.fileInfo.directoryview.window.getElementsByTagName( 'div' );
+								let selectedCount = 0;
 								for( var a = 0; a < eles.length; a++ )
 								{
 									if( !eles[a].classList.contains( 'File' ) )
@@ -3446,7 +3485,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 									files.push( eles[a].fileInfo.Path );
 								}
 								
-								var m = new Module( 'system' );
+								let m = new Module( 'system' );
 								m.onExecuted = function( e, d )
 								{
 									Workspace.refreshDesktop( false, true );
@@ -3493,7 +3532,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 					return cancelBubble( e );
 				}
 
-				var sh = e.shiftKey || e.ctrlKey;
+				let sh = e.shiftKey || e.ctrlKey;
 				if( !sh ) 
 				{
 					if( !Workspace.contextMenuShowing || !Workspace.contextMenuShowing.shown )
@@ -3568,7 +3607,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			// File extension
 			if( obj.fileInfo && obj.fileInfo.Path && obj.fileInfo.Path.indexOf( '.' ) > 0 )
 			{
-				var ext = obj.fileInfo.Path.split( '.' );
+				let ext = obj.fileInfo.Path.split( '.' );
 				if( ext.length > 1 )
 				{
 					ext = '.' + ext[ext.length-1].toLowerCase();
@@ -3576,7 +3615,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 					// Check mimetypes
 					for( var a in Workspace.mimeTypes )
 					{
-						var mt = Workspace.mimeTypes[a];
+						let mt = Workspace.mimeTypes[a];
 						for( var b in mt.types )
 						{
 							// Make sure we have a valid executable
@@ -3596,8 +3635,8 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 
 			// Normal folders etc
 			// Open unique windows if we're in toolbar mode and are double clicking a disk
-			var uniqueView = false;
-			var dv = obj.directoryView ? obj.directoryView : obj.fileInfo.directoryview;
+			let uniqueView = false;
+			let dv = obj.directoryView ? obj.directoryView : obj.fileInfo.directoryview;
 			if( ( obj.fileInfo.Type == 'Door' || obj.fileInfo.Type == 'Dormant' ) && dv.navMode == 'toolbar' )
 			{
 				uniqueView = true;
@@ -3614,7 +3653,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			{
 				if( obj.fileInfo.Type == 'Directory' )
 				{
-					var o = {};
+					let o = {};
 					for( var a in obj.fileInfo )
 						o[ a ] = obj.fileInfo[ a ];
 					o.MetaType = 'Directory';
@@ -3628,10 +3667,10 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				else
 				{
 					// No mime type? Ask Friend Core
-					var mim = new Module( 'system' );
+					let mim = new Module( 'system' );
 					mim.onExecuted = function( me, md )
 					{
-						var js = null;
+						let js = null;
 						try
 						{
 							js = JSON.parse( md );
@@ -3657,31 +3696,37 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			else if( obj.fileInfo.Type == 'Directory' && dv.navMode == 'toolbar' )
 			{
 				// Set a new path and record the old one!
-				var we = dv.windowObject;
-				var dw = dv;
+				let we = dv.windowObject;
+				let dw = dv;
 
 				// Add current and set it to end of history
-				var path = obj.fileInfo.Path.split( ':' );
+				let path = obj.fileInfo.Path.split( ':' );
 			
-				var fin = {
+				let fin = {
 					Volume: path[0] + ':',
 					Path: obj.fileInfo.Path,
 					Title: path[0],
 					Type: obj.fileInfo.Type,
 					Door: Workspace.getDoorByPath( path.join( ':' ) )
 				}
+				// May have meta information
+				if( obj.fileInfo.IconLabel )
+					fin.IconLabel = obj.fileInfo.IconLabel;
+				if( obj.fileInfo.MetaType )
+					fin.MetaType = obj.fileInfo.MetaType;
 				fin.Door.cancelId = dw.cancelId;
 				dw.addToHistory( fin );
 
 				// Update on notifications
-				var ppath = obj.fileInfo.Path;
+				let ppath = obj.fileInfo.Path;
+				
 				if( !Workspace.diskNotificationList[ ppath ] )
 				{
 					Workspace.diskNotificationList[ ppath ] = {
 						type: 'directory',
 						view: we
 					};
-					var f = new Library( 'system.library' );
+					let f = new Library( 'system.library' );
 					f.addVar( 'sessionid', Workspace.sessionId );
 					f.addVar( 'path', ppath );
 					f.onExecuted = function( e, d )
@@ -3689,7 +3734,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 						if( e != 'ok' )
 							return;
 					
-						var j;
+						let j;
 						try
 						{
 							j = JSON.parse( d );
@@ -3701,7 +3746,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 						}
 						we.windowObject.addEvent( 'systemclose', function()
 						{
-							var ff = new Library( 'system.library' );
+							let ff = new Library( 'system.library' );
 							ff.addVar( 'sessionid', Workspace.sessionId );
 							ff.addVar( 'path', ppath );
 							ff.addVar( 'id', j.Result );
@@ -3711,9 +3756,11 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 								Workspace.diskNotificationList[ ppath ] = false;
 							}
 							ff.execute( 'file/notificationremove' );
+							console.log( 'Notification remove: ' + ppath );
 						} );
 					}
 					f.execute( 'file/notificationstart' );
+					console.log( 'Notification start: ' + ppath );
 				}
 
 				// Open unique window!
@@ -3724,7 +3771,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 					if( dv.windowObject.slideAnimation )
 						dv.windowObject.slideAnimation.parentNode.removeChild( dv.windowObject.slideAnimation );
 				
-					var n = document.createElement( 'div' );
+					let n = document.createElement( 'div' );
 					n.className = 'Content SlideAnimation';
 					n.style.willChange = 'transform';
 					n.style.transition = 'transform 0.4s';
@@ -3761,10 +3808,10 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			else
 			{	
 				// No mime type? Ask Friend Core
-				var mim = new Module( 'system' );
+				let mim = new Module( 'system' );
 				mim.onExecuted = function( me, md )
 				{
-					var js = null;
+					let js = null;
 					try
 					{
 						js = JSON.parse( md );
@@ -3811,7 +3858,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	// Notice: Door and Dormant with isMobile overwrites onclick
 	if( !self.flags || ( self.flags && !self.flags.nativeDraggable ) )
 	{
-		var eventName = ( window.isMobile && ( fileInfo.Type == 'Door' || fileInfo.Type == 'Dormant' ) ) ? 'onclick' : 'ondblclick';
+		let eventName = ( window.isMobile && ( fileInfo.Type == 'Door' || fileInfo.Type == 'Dormant' ) ) ? 'onclick' : 'ondblclick';
 		file[ eventName ] = launchIcon;
 	}
 	
@@ -3821,7 +3868,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		if( self.flags && self.flags.nativeDraggable )
 			return;
 		
-		var t = this;
+		let t = this;
 		div.onclick = function( e ) { t.onclick( e ); };
 		div.onmouseup = function( e ) { t.onmouseup( e ); };
 		div.onmousedown = function( e ) { t.onmousedown( e ); };
@@ -3830,7 +3877,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		div.ondblclick = function( e ) { t.ondblclick( e ) };
 	}
 
-	var obj = fileInfo.directoryview;
+	let obj = fileInfo.directoryview;
 
 	// Let's make it possible also for touch interfaces -----------------------
 	if( !( self.flags && self.flags.nativeDraggable ) )
@@ -3881,7 +3928,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				this.touchPos = false;
 
 				// When single clicking (under a second) click the file!
-				var time = ( new Date() ).getTime() - file.clickedTime;
+				let time = ( new Date() ).getTime() - file.clickedTime;
 				if( time < 250 && window.clickElement )
 				{
 					setTimeout( function()
@@ -3916,14 +3963,14 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView )
 {
 	// Make a copy of fileinfo
-	var fileInfo = {};
+	let fileInfo = {};
 	for( var a in oFileInfo )
 		fileInfo[ a ] = oFileInfo[ a ];
 
 	//console.log('OpenWindowByFileinfo fileInfo is ',fileInfo);
 	if( !iconObject )
 	{
-		var ext = fileInfo.Path ? fileInfo.Path.split( '.' ) : ( fileInfo.Filename ? fileInfo.Filename.split( '.' ) : fileInfo.Title.split( '.' ) );
+		let ext = fileInfo.Path ? fileInfo.Path.split( '.' ) : ( fileInfo.Filename ? fileInfo.Filename.split( '.' ) : fileInfo.Title.split( '.' ) );
 		ext = ext[ext.length-1];
 
 		iconObject = {
@@ -3944,18 +3991,18 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 	}
 	else if( fileInfo.Type == 'Dormant' )
 	{
-		var command = fileInfo.Command ? ( 'command=' + fileInfo.Command ) : '';
-		var fid = typeof( fileInfo.ID ) != 'undefined' ? fileInfo.ID : '1';
+		let command = fileInfo.Command ? ( 'command=' + fileInfo.Command ) : '';
+		let fid = typeof( fileInfo.ID ) != 'undefined' ? fileInfo.ID : '1';
 
-		var wt =  fileInfo.Path ? fileInfo.Path : ( fileInfo.Filename ? fileInfo.Filename : fileInfo.Title );
+		let wt =  fileInfo.Path ? fileInfo.Path : ( fileInfo.Filename ? fileInfo.Filename : fileInfo.Title );
 
-		var wid = fileInfo.Path ? fileInfo.Path : fileInfo.Title;
+		let wid = fileInfo.Path ? fileInfo.Path : fileInfo.Title;
 
 		// Toolbar mode demands unique windows
 		if( unique && movableWindows[wid] )
 			wid += Math.random() * 9999 + ( Math.random() * 9999 ) + ( new Date() ).getTime();
 
-		var win = new View( {
+		let win = new View( {
 			'title'     : wt,
 			'width'     : 800,
 			'min-width' : 340,
@@ -3977,7 +4024,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 
 		win.setContent( '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" class="LoadingAnimation"></div>' );
 		
-		var we = win.getWindowElement();
+		let we = win.getWindowElement();
 		we.parentFile = iconObject;
 		we.parentWindow = iconObject.window;
 		we.fileInfo = fileInfo;
@@ -3988,6 +4035,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 		
 		we.refresh = function( callback )
 		{
+			this.directoryview.HideShareDialog();
 			this.directoryview.window.setAttribute( 'listmode', this.directoryview.listMode );
 			
 			// Refresh 1
@@ -3998,15 +4046,15 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 				this.refreshCallback = callback;
 			}
 			
-			var self = this;
+			let self = this;
 			self.win.refreshing = true;
 			
-			var fi = this.fileInfo ? this.fileInfo : iconObject;
-			var wt = fi.Path ? fi.Path : ( fi.Title ? fi.Title : fi.Volume );
+			let fi = this.fileInfo ? this.fileInfo : iconObject;
+			let wt = fi.Path ? fi.Path : ( fi.Title ? fi.Title : fi.Volume );
 			
 			this.windowObject.setFlag( 'title', _nameFix( wt ) );
 
-			var t = fi && fi.Path ? fi.Path : ( fi.Volume ? fi.Volume : fi.Title );
+			let t = fi && fi.Path ? fi.Path : ( fi.Volume ? fi.Volume : fi.Title );
 
 			if( this.refreshTimeout ) clearTimeout( this.refreshTimeout );
 			
@@ -4037,16 +4085,16 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 	}
 	else if( iconObject.extension == 'mp3' || iconObject.extension == 'ogg' )
 	{
-		var rr = iconObject;
+		let rr = iconObject;
 
-		var win = new View ( {
+		let win = new View ( {
 			title    : iconObject.Title ? iconObject.Title : iconObject.Filename,
 			width    : 320,
 			height   : 100,
 			memorize : true
 		} );
 		
-		var urlsrc = ( fileInfo.Path.substr(0, 4) == 'http' ? fileInfo.Path : '/system.library/file/read?mode=rs&sessionid=' + Workspace.sessionId + '&path=' + encodeURIComponent( fileInfo.Path ) ); 
+		let urlsrc = ( fileInfo.Path.substr(0, 4) == 'http' ? fileInfo.Path : '/system.library/file/read?mode=rs&sessionid=' + Workspace.sessionId + '&path=' + encodeURIComponent( fileInfo.Path ) ); 
 		
 		win.setContent( '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%" class="LoadingAnimation"><iframe style="border: 0; position: absolute; top: 0; left: 0; height: 100%; width: 100%" src="' + urlsrc + '"></iframe></div>' );
 		
@@ -4055,12 +4103,12 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 	// Web bookmarks
 	else if( iconObject.extension == 'url' )
 	{
-		var f = new File( fileInfo.Path );
+		let f = new File( fileInfo.Path );
 		f.onLoad = function( data )
 		{
 			try
 			{
-				var d = JSON.parse( data );
+				let d = JSON.parse( data );
 
 				Alert( i18n( 'i18n_follow_link' ), '<p class="Layout">' + ( d.notes.length ? d.notes : i18n( 'i18n_follow_link_desc' ) ) + ':</p>' + '<p class="LineHeight TextCenter Rounded Padding BackgroundNegative Negative"><strong>' + i18n( 'i18n_open_link' ) + ': <a onmouseup="CloseView()" href="' + d.link + '" target="_blank" class="Negative">' + d.name + '</a></strong></p>', i18n( 'i18n_cancel' ) );
 
@@ -4095,25 +4143,25 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 	// Run scripts in new shell
 	else if( iconObject.Extension && iconObject.Extension == 'application' )
 	{
-		var jsx = iconObject.Path + iconObject.folderInfo.jsx;
+		let jsx = iconObject.Path + iconObject.folderInfo.jsx;
 		return ExecuteApplication( 'FriendShell', "execute " + jsx );
 	}
 	else if( iconObject.extension == 'ogv' || iconObject.extension == 'mov' || iconObject.extension == 'avi' || iconObject.extension == 'mp4' || iconObject.extension == 'mpg' )
 	{
-		var rr = iconObject;
+		let rr = iconObject;
 
-		var win = new View ( {
+		let win = new View ( {
 			title    : iconObject.Title ? iconObject.Title : iconObject.Filename,
 			width    : 650,
 			height   : 512,
 			memorize : true
 		} );
 
-		var num = ( Math.random() * 1000 ) + ( ( new Date() ).getTime() ) + ( Math.random() * 1000 );
-		var newWin = win;
+		let num = ( Math.random() * 1000 ) + ( ( new Date() ).getTime() ) + ( Math.random() * 1000 );
+		let newWin = win;
 		GetURLFromPath( fileInfo.Path, function( url )
 		{
-			var urlsrc = ( fileInfo.Path.substr(0, 4) == 'http' ? fileInfo.Path : url ); 
+			let urlsrc = ( fileInfo.Path.substr(0, 4) == 'http' ? fileInfo.Path : url ); 
 			
 			newWin.setContent( '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%" class="LoadingAnimation"><video id="target_' + num + '" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" src="' + urlsrc + '" controls="controls" autoplay="autoplay" ondblclick="Workspace.fullscreen( this )" ontouchstart="touchDoubleClick( this, function( ele ){ Workspace.fullscreen( ele ); } )"></video></div>' );
 		}, '&mode=rs' );
@@ -4122,12 +4170,12 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 	// Executing executable javascript
 	else if( iconObject.extension == 'jsx' )
 	{
-		var f = new File( fileInfo.Path );
+		let f = new File( fileInfo.Path );
 		f.fileInfo = fileInfo;
 		f.path = fileInfo.Path;
 		f.onLoad = function( data )
 		{
-			var title = fileInfo.Title ? fileInfo.Title :
+			let title = fileInfo.Title ? fileInfo.Title :
 				( fileInfo.Filename ? fileInfo.Filename : fileInfo.Path );
 
 			// Run as a normal app
@@ -4138,7 +4186,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 			// Run in a window
 			else
 			{
-				var w = new View( {
+				let w = new View( {
 					title: title,
 					width:  640,
 					height: 480
@@ -4151,10 +4199,10 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 	// We've clicked on a directory!
 	else if( fileInfo.MetaType == 'Directory' || fileInfo.MetaType == 'Door' )
 	{
-		var extra = null;
-		var wt = fileInfo.Path ? fileInfo.Path : ( fileInfo.Filename ? fileInfo.Filename : fileInfo.Title );
+		let extra = null;
+		let wt = fileInfo.Path ? fileInfo.Path : ( fileInfo.Filename ? fileInfo.Filename : fileInfo.Title );
 
-		var id = fileInfo.Type + '_' + wt.split( /[^a-z0-9]+/i ).join( '_' );
+		let id = fileInfo.Type + '_' + wt.split( /[^a-z0-9]+/i ).join( '_' );
 
 		if ( fileInfo.Type == 'Directory' && wt.substr( wt.length - 1, 1 ) != ':' && wt.substr( wt.length - 1, 1 ) != '/' )
 			wt += '/';
@@ -4165,17 +4213,17 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 			id += Math.random() * 9999 + ( Math.random() * 9999 ) + ( new Date() ).getTime();
 
 		// Is this a volume?
-		var isVolume = wt.substr( wt.length - 1, 1 ) == ':' ? true : false;
+		let isVolume = wt.substr( wt.length - 1, 1 ) == ':' ? true : false;
 
-		var stored = GetWindowStorage( id );
+		let stored = GetWindowStorage( id );
 		
 		// Reuse or not?
-		var w;
+		let w;
 		if( targetView )
 		{
 			w = targetView.windowObject;
 			
-			var win = w.getWindowElement();
+			let win = w.getWindowElement();
 			win.parentFile = iconObject;
 			win.parentWindow = iconObject.window;
 			win.fileInfo = fileInfo;
@@ -4211,7 +4259,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 				_ActivateWindow( movableWindows[id], false, event );
 				_WindowToFront( movableWindows[id] );
 			}
-			var wo = movableWindows[id];
+			let wo = movableWindows[id];
 			if( wo.content )
 				wo = wo.content;
 			wo.refresh();
@@ -4219,7 +4267,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 		}
 
 		// Get legacy win element
-		var win = w.getWindowElement();
+		let win = w.getWindowElement();
 		
 		// Special case - a mobile opens a mountlist
 		if( isMobile && fileInfo.Path == 'Mountlist:' )
@@ -4227,7 +4275,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 			extra = {};
 			fileInfo.Path = 'Home:';
 			iconObject.Path = 'Home:';
-			var t = document.createElement( 'div' );
+			let t = document.createElement( 'div' );
 			t.className = 'MobileFileBrowser BackgroundDefault ScrollArea ScrollBarSmall';
 			win.parentNode.appendChild( t );
 			extra.leftpanel = t;
@@ -4252,13 +4300,13 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 		}
 
 		// Create a directory view on window
-		var dv = CreateDirectoryView( win, extra );
+		let dv = CreateDirectoryView( win, extra );
 		w.setFlag( 'hidden', false );
 
 		// Special case - the fileInfo object has a door!
 		if( fileInfo.Door )
 		{
-			var dr = fileInfo.Door;
+			let dr = fileInfo.Door;
 			if( !dr.getIcons ) return;
 
 			// Connect winbdow and door together
@@ -4266,10 +4314,11 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 			win.Door = fileInfo.Door;
 			win.fileInfo = fileInfo;
 			
-			var winDoor = win.Door;
+			let winDoor = win.Door;
 			
 			win.refresh = function( callback )
 			{
+				this.directoryview.HideShareDialog();
 				this.directoryview.window.setAttribute( 'listmode', this.directoryview.listMode );
 				
 				/*if( dv.cancelId )
@@ -4286,9 +4335,9 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 				
 				w.refreshing = true;
 				
-				var self = this;
+				let self = this;
 				
-				var timer = 0;
+				let timer = 0;
 				if( this.refreshTimeout )
 				{
 					clearTimeout( this.refreshTimeout );
@@ -4297,10 +4346,10 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 				
 				this.refreshTimeout = setTimeout( function()
 				{
-					var wt = self.fileInfo.Path ? self.fileInfo.Path : ( self.fileInfo.Title ? self.fileInfo.Title : self.fileInfo.Volume );
+					let wt = self.fileInfo.Path ? self.fileInfo.Path : ( self.fileInfo.Title ? self.fileInfo.Title : self.fileInfo.Volume );
 					
 					w.setFlag( 'title', _nameFix( wt ) );
-					var fi = self.fileInfo;
+					let fi = self.fileInfo;
 					
 					// TODO: Figure out something..
 					dr.getIcons( fi, function( icons, something, response )
@@ -4339,7 +4388,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 						{
 							try
 							{
-								var dw = self.directoryview;
+								let dw = self.directoryview;
 								Notify( {
 									title: i18n( 'i18n_illegal_path' ),
 									text: i18n( 'i18n_illegal_path_desc' )
@@ -4347,7 +4396,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 								// If we're not at the top of the history array, go back
 								if( dw.pathHistoryIndex > 0 )
 								{
-									var fin = dw.pathHistoryRewind();
+									let fin = dw.pathHistoryRewind();
 									dw.window.fileInfo = fin;
 				
 									if( !isMobile && dw.window.fileBrowser )
@@ -4376,6 +4425,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 		{
 			win.refresh = function ( callback )
 			{	
+				this.directoryview.HideShareDialog();
 				this.directoryview.window.setAttribute( 'listmode', this.directoryview.listMode );
 				
 				// Refresh 3
@@ -4386,10 +4436,10 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 					this.refreshCallback = callback;
 				}
 				
-				var self = this;
+				let self = this;
 				w.refreshing = true;
 				
-				var wt = this.fileInfo.Path ? this.fileInfo.Path : ( this.fileInfo.Title ? this.fileInfo.Title : this.fileInfo.Volume );
+				let wt = this.fileInfo.Path ? this.fileInfo.Path : ( this.fileInfo.Title ? this.fileInfo.Title : this.fileInfo.Volume );
 				
 				w.setFlag( 'title', _nameFix( wt ) );
 				
@@ -4400,9 +4450,9 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 					return;
 				}
 				
-				var j = new cAjax ();
+				let j = new cAjax ();
 
-				var updateurl = '/system.library/file/dir?wr=1'
+				let updateurl = '/system.library/file/dir?wr=1'
 				updateurl += '&path=' + encodeURIComponent( self.fileInfo.Path );
 				updateurl += '&sessionid=' + encodeURIComponent( Workspace.sessionId );
 
@@ -4419,7 +4469,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 						this.win.refreshTimeout = false;
 					}
 
-					var content;
+					let content;
 					
 					// New mode
 					if( this.returnCode == 'ok' )
@@ -4427,7 +4477,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 						try
 						{
 							// TODO: Fix this bug with null
-							var iterations = 0;
+							let iterations = 0;
 							while( this.returnData.charCodeAt( this.returnData.length - 1 ) == 0 && iterations++ < 10 )
 								this.returnData = this.returnData.substr( 0, this.returnData.length - 1 );
 							content = JSON.parse( this.returnData || "null" );
@@ -4459,7 +4509,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 							}
 						}
 					
-						var ww = this.win;
+						let ww = this.win;
 
 						ww.redrawIcons( content, ww.direction );
 						ww.file = this.file;
@@ -4473,11 +4523,11 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 					{
 						try
 						{
-							var js = JSON.parse( this.returnData );
+							let js = JSON.parse( this.returnData );
 							// Erroneous path
 							if( js.message == 'Path error.' )
 							{
-								var dw = this.win.directoryview;
+								let dw = this.win.directoryview;
 								Notify( {
 									title: i18n( 'i18n_illegal_path' ),
 									text: i18n( 'i18n_illegal_path_desc' )
@@ -4485,7 +4535,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 								// If we're not at the top of the history array, go back
 								if( dw.pathHistoryIndex > 0 )
 								{
-									var fin = dw.pathHistoryRewind();
+									let fin = dw.pathHistoryRewind();
 									dw.window.fileInfo = fin;
 					
 									if( !isMobile && dw.window.fileBrowser )
@@ -4514,7 +4564,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 		// If we're busy, delay!
 		if( win.refreshTimeout )
 		{
-			var owp = win;
+			let owp = win;
 			clearTimeout( win.refreshTimeout );
 			win.refreshTimeout = setTimeout( function()
 			{
@@ -4542,10 +4592,10 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 		{
 	
 			// No mime type? Ask Friend Core
-			var mim = new Module( 'system' );
+			let mim = new Module( 'system' );
 			mim.onExecuted = function( me, md )
 			{
-				var js = null;
+				let js = null;
 				try
 				{
 					js = JSON.parse( md );
@@ -4558,14 +4608,14 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 				}
 				else
 				{
-					var fid = typeof ( fileInfo.ID ) != 'undefined' ?
+					let fid = typeof ( fileInfo.ID ) != 'undefined' ?
 						fileInfo.ID : fileInfo.Filename;
-					var cmd = ( typeof ( fileInfo.Command ) != 'undefined' && fileInfo.Command != 'undefined' ) ?
+					let cmd = ( typeof ( fileInfo.Command ) != 'undefined' && fileInfo.Command != 'undefined' ) ?
 						fileInfo.Command : 'file';
 			
 					if( cmd == 'file' )
 					{
-						var dliframe = document.createElement('iframe');
+						let dliframe = document.createElement('iframe');
 						dliframe.setAttribute('class', 'hidden');
 						dliframe.setAttribute('src', fileInfo.downloadhref );
 						dliframe.setAttribute('id', 'downloadFrame' + fileInfo.ID );
@@ -4588,7 +4638,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 					}
 			
 			
-					var win = new View ( {
+					let win = new View ( {
 						'title'    : iconObject.Title ? iconObject.Title : iconObject.Filename,
 						'width'    : 800,
 						'height'   : 600,
@@ -4600,7 +4650,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 						src="/system.library/file/read?sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '&mode=rs"></iframe>' );*/
 					win.parentFile = iconObject;
 					win.parentWindow = iconObject.window;			
-					var newWin = win;
+					let newWin = win;
 					win = null;
 					GetURLFromPath( fileInfo.Path, function( url )
 					{
@@ -4616,7 +4666,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 	}
 	else if ( fileInfo.MetaType == 'DiskHandled' )
 	{
-		var tmp = fileInfo.Path.split(':');
+		let tmp = fileInfo.Path.split(':');
 		ExecuteJSXByPath( tmp[0] + ':index.jsx', fileInfo.Path );
 	}
 
@@ -4628,7 +4678,7 @@ function CreateIcon( fileInfo, directoryview )
 {
 	if( directoryview )
 		fileInfo.directoryview = directoryview;
-	var c = new FileIcon( fileInfo );
+	let c = new FileIcon( fileInfo );
 	return c.file;
 }
 
@@ -4650,13 +4700,13 @@ function RemoveIconEvents( i )
 function CheckDoorsKeys( e )
 {
 	if ( !e ) e = window.event;
-	var k = e.which | e.keyCode;
-	var cycle = false;
+	let k = e.which | e.keyCode;
+	let cycle = false;
 	
 	if( !Workspace.editing )
 	{
 		// No normal dirmode when editing a filename
-		var dirMode = window.regionWindow && window.regionWindow.directoryview && window.regionWindow.windowObject &&
+		let dirMode = window.regionWindow && window.regionWindow.directoryview && window.regionWindow.windowObject &&
 			( !window.regionWindow.windowObject.flags || !window.regionWindow.windowObject.flags.editing );
 		
 		switch( k )
@@ -4725,14 +4775,14 @@ function CheckDoorsKeys( e )
 		!e.ctrlKey
 	)
 	{
-		var rw = window.regionWindow.icons;
+		let rw = window.regionWindow.icons;
 		if( rw )
 		{
 			// cycle!
 			if( cycle )
 			{
-				var scroll = false;
-				var found = false;
+				let scroll = false;
+				let found = false;
 				for( var a = 0; a < rw.length; a++ )
 				{
 					if( rw[ a ].selected )
@@ -4764,11 +4814,11 @@ function CheckDoorsKeys( e )
 			}
 			else
 			{
-				var out = [];
-				var found = false;
+				let out = [];
+				let found = false;
 				for( var a = 0; a < rw.length; a++ )
 				{
-					var f = rw[a].Title ? rw[a].Title : rw[a].Filename;
+					let f = rw[a].Title ? rw[a].Title : rw[a].Filename;
 					if( f.toUpperCase().charCodeAt(0) == k )
 					{
 						out.push( rw[a] );
@@ -4830,7 +4880,7 @@ Frameloader = function( auth, pelement )
 	this.url = '';
 	this.vars = [];
 
-	var i = document.createElement( 'iframe' );
+	let i = document.createElement( 'iframe' );
 	i.className = 'Frameloader';
 	this.pelement.appendChild( i );
 	this.frame = i;
@@ -4845,8 +4895,8 @@ Frameloader = function( auth, pelement )
 	}
 	this.load = function()
 	{
-		var u = this.url;
-		var s = '?';
+		let u = this.url;
+		let s = '?';
 		if ( u.indexOf( '?' ) > 0 ) s = '&';
 		for( var a in this.vars )
 		{
@@ -4864,7 +4914,7 @@ Imageloader = function( auth, pelement )
 	this.url = '';
 	this.vars = [];
 
-	var i = document.createElement( 'div' );
+	let i = document.createElement( 'div' );
 	i.className = 'Scroller';
 	this.pelement.appendChild( i );
 	this.scroller = i;
@@ -4879,8 +4929,8 @@ Imageloader = function( auth, pelement )
 	}
 	this.load = function()
 	{
-		var u = this.url;
-		var s = '?';
+		let u = this.url;
+		let s = '?';
 		if ( u.indexOf( '?' ) > 0 ) s = '&';
 		for( var a in this.vars )
 		{
@@ -4905,8 +4955,26 @@ Friend.startImageViewer = function( iconObject, extra )
 {
 	if( !extra ) extra = false;
 	
-	var win = new View ( {
-		title            : iconObject.Title ? iconObject.Title : iconObject.Filename,
+	let title = iconObject.Title ? iconObject.Title : iconObject.Filename;
+	if( !title )
+	{
+		if( iconObject.Path )
+		{
+			if( iconObject.Path.indexOf( '/' ) > 0 )
+			{
+				title = iconObject.Path.split( '/' );
+				title = title[ title.length - 1 ];
+			}
+			else
+			{
+				title = iconObject.Path.split( ':' );
+				title = title[ 1 ];
+			}
+		}
+	}
+	
+	let win = new View ( {
+		title            : title,
 		width            : 650,
 		height           : 512,
 		memorize         : true,
@@ -4926,18 +4994,18 @@ Friend.startImageViewer = function( iconObject, extra )
 	// Use system default
 	win.content.defaultContextMenu = true;
 	
-	var owin = win;
+	let owin = win;
 
-	var zoomLevel = 1;
-	var zoomImage = null;
-	var position = 'centered';
-	var zoomSet = false;
+	let zoomLevel = 1;
+	let zoomImage = null;
+	let position = 'centered';
+	let zoomSet = false;
 
-	var checkers = '<div class="DefaultContextMenu" style="filter:brightness(0.3);position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url(\'/webclient/gfx/checkers.png\'); background-position: center center;"></div>';
+	let checkers = '<div class="DefaultContextMenu" style="filter:brightness(0.3);position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url(\'/webclient/gfx/checkers.png\'); background-position: center center;"></div>';
 
 	function repositionElement( win, pos, extra )
 	{		
-		var image = win._window.getElementsByTagName( 'img' );
+		let image = win._window.getElementsByTagName( 'img' );
 		if( !image.length )
 			return;
 		
@@ -4952,10 +5020,10 @@ Friend.startImageViewer = function( iconObject, extra )
 		// Enable panning image
 		image.onmousedown = function( e )
 		{
-			var offx = e.clientX;
-			var offy = e.clientY;
-			var px = image.offsetX;
-			var py = image.offsetY;
+			let offx = e.clientX;
+			let offy = e.clientY;
+			let px = image.offsetX;
+			let py = image.offsetY;
 			image.classList.add( 'Panning' );
 			window.mouseDown = image;
 			window.mouseReleaseFunc = function()
@@ -4969,6 +5037,28 @@ Friend.startImageViewer = function( iconObject, extra )
 				repositionElement( win );
 			}
 		}
+		
+		image.onmousewheel = function( e )
+		{
+			if( e.wheelDeltaY > 0 )
+			{
+				image.offsetY += 50;
+			}
+			else if ( e.wheelDeltaY < 0 )
+			{
+				image.offsetY -= 50;
+			}
+			if( e.wheelDeltaX > 0 )
+			{
+				image.offsetX += 50;
+			}
+			else if ( e.wheelDeltaX < 0 )
+			{
+				image.offsetX -= 50;
+			}
+			repositionElement( win );
+		}
+		
 		// Done panning functions
 		
 		if( !image.originalDims || extra )
@@ -4994,7 +5084,7 @@ Friend.startImageViewer = function( iconObject, extra )
 		{
 			if( image.offsetWidth > image.offsetHeight )
 			{
-				var h = Math.round( image.originalDims.h / image.originalDims.w * window.innerWidth );
+				let h = Math.round( image.originalDims.h / image.originalDims.w * window.innerWidth );
 				image.style.height = h + 'px';
 				image.style.width = window.innerWidth + 'px';
 				image.style.top = ( document.body.offsetHeight >> 1 ) - Math.round( h >> 1 ) + 'px';
@@ -5002,7 +5092,7 @@ Friend.startImageViewer = function( iconObject, extra )
 			}
 			else
 			{
-				var w = Math.round( image.originalDims.w / image.originalDims.h * window.innerHeight );
+				let w = Math.round( image.originalDims.w / image.originalDims.h * window.innerHeight );
 				image.style.width = w + 'px';
 				image.style.height = window.innerHeight + 'px';
 				image.style.top = 0;
@@ -5013,11 +5103,11 @@ Friend.startImageViewer = function( iconObject, extra )
 		
 		if( !zoomSet )
 		{
-			var w = image.originalDims.w;
-			var h = image.originalDims.h;
+			let w = image.originalDims.w;
+			let h = image.originalDims.h;
 
-			var winWidth = win.getFlag( 'width' );
-			var winHeight = win.getFlag( 'height' );
+			let winWidth = win.getFlag( 'width' );
+			let winHeight = win.getFlag( 'height' );
 
 			if( w > h )
 			{
@@ -5037,25 +5127,25 @@ Friend.startImageViewer = function( iconObject, extra )
 
 		if( !pos ) pos = position;
 		
-		var container = image.parentNode;		
+		let container = image.parentNode;		
 		
 		if( pos == 'centered' || pos == 'default' )
 		{
-			var width = image.originalDims.w * zoomLevel;
-			var height = image.originalDims.h * zoomLevel;
+			let width = image.originalDims.w * zoomLevel;
+			let height = image.originalDims.h * zoomLevel;
 			
-			var ileft = ( container.offsetWidth >> 1 ) - ( width >> 1 );
-			var itop  = ( container.offsetHeight >> 1 ) - ( height >> 1 );
+			let ileft = ( container.offsetWidth >> 1 ) - ( width >> 1 );
+			let itop  = ( container.offsetHeight >> 1 ) - ( height >> 1 );
 			
-			var tx = Math.floor( ileft + image.offsetX );
-			var ty = Math.floor( itop + image.offsetY );
+			let tx = Math.floor( ileft + image.offsetX );
+			let ty = Math.floor( itop + image.offsetY );
 			
 			// Panning >>
-			var scrollWidth = container.offsetWidth;
-			var scrollHeight = container.offsetHeight;
+			let scrollWidth = container.offsetWidth;
+			let scrollHeight = container.offsetHeight;
 			
-			var dx = width - scrollWidth;
-			var dy = height - scrollHeight;
+			let dx = width - scrollWidth;
+			let dy = height - scrollHeight;
 
 			if( dx <= 0 ) tx = ileft;
 			else
@@ -5101,17 +5191,18 @@ Friend.startImageViewer = function( iconObject, extra )
 	function renderToolbar( eparent )
 	{
 		if( eparent.toolbar ) return;
-		var d = document.createElement( 'div' );
+		let d = document.createElement( 'div' );
 		d.className = 'ImageViewerToolbar';
 		d.innerHTML = '\
 			<div class="ArrowLeft MousePointer"><span class="IconSmall fa-angle-left"></span></div>\
 			<div class="Fullscreen MousePointer"><span class="IconSmall fa-arrows-alt"></span></div>\
+			<div class="Original MousePointer"><span class="IconSmall fa-photo"></span></div>\
 			<div class="ZoomIn MousePointer"><span class="IconSmall fa-plus-circle"></span></div>\
 			<div class="ZoomOut MousePointer"><span class="IconSmall fa-minus-circle"></span></div>\
 			<div class="ArrowRight MousePointer"><span class="IconSmall fa-angle-right"></span></div>\
 		';
 		eparent.appendChild( d );
-		var eles = d.getElementsByTagName( 'div' );
+		let eles = d.getElementsByTagName( 'div' );
 		for( var a = 0; a < eles.length; a++ )
 		{
 			if( eles[a].classList.contains( 'Fullscreen' ) )
@@ -5123,6 +5214,23 @@ Friend.startImageViewer = function( iconObject, extra )
 					{
 						repositionElement( owin );
 					}, 250 );
+				}
+			}
+			else if( eles[a].classList.contains( 'Original' ) )
+			{
+				eles[a].onclick = function()
+				{
+					if( zoomLevel == 1 )
+					{
+						zoomSet = null;
+						repositionElement( owin );
+					}
+					else
+					{
+						zoomSet = true;
+						zoomLevel = 1;
+						repositionElement( owin );
+					}
 				}
 			}
 			else if( eles[a].classList.contains( 'ArrowLeft' ) )
@@ -5166,7 +5274,7 @@ Friend.startImageViewer = function( iconObject, extra )
 		}
 	}
 
-	var num = ( Math.random() * 1000 ) + ( ( new Date() ).getTime() ) + ( Math.random() * 1000 );
+	let num = ( Math.random() * 1000 ) + ( ( new Date() ).getTime() ) + ( Math.random() * 1000 );
 	
 	if( iconObject.extension.toLowerCase() == 'pdf' )
 	{
@@ -5179,7 +5287,7 @@ Friend.startImageViewer = function( iconObject, extra )
 		
 		GetURLFromPath( iconObject.Path, function( imageUrl )
 		{
-			var urlsrc = ( iconObject.Path.substr(0, 4) == 'http' ? iconObject.Path : imageUrl ); 
+			let urlsrc = ( iconObject.Path.substr(0, 4) == 'http' ? iconObject.Path : imageUrl ); 
 			owin.setContent( '<iframe class="DefaultContextMenu ImageViewerContent" src="' + urlsrc + '" style="position: absolute; margin: 0; border: 0; top: 0; left: 0; width: 100%; height: 100%; background-color: black"></iframe>' );
 		} );
 	}
@@ -5190,12 +5298,13 @@ Friend.startImageViewer = function( iconObject, extra )
 	
 		GetURLFromPath( iconObject.Path, function( imageUrl )
 		{
-			var urlsrc = ( iconObject.Path.substr(0, 4) == 'http' ? iconObject.Path : imageUrl ); 
+			let urlsrc = ( iconObject.Path.substr(0, 4) == 'http' ? iconObject.Path : imageUrl ); 
 			
 			owin.setContent( '<div class="ImageViewerContent" style="white-space: nowrap; position: absolute; top: 0px; left: 0px; width: 100%; height: 100%; background-position: center; background-size: contain; background-repeat: no-repeat; z-index: 1;">' + checkers + '</div>' );
-			var i = new Image();
+			let i = new Image();
 			i.src = imageUrl;
 			i.className = 'DefaultContextMenu';
+			i.style.pointerEvents = 'all';
 			owin._window.getElementsByClassName( 'ImageViewerContent' )[0].appendChild( i );
 			i.onload = function()
 			{
@@ -5208,27 +5317,27 @@ Friend.startImageViewer = function( iconObject, extra )
 	{
 		if( dir != 0 )
 		{
-			var d = new Door().get( iconObject.Path );
+			let d = new Door().get( iconObject.Path );
 			if( !d || !d.getIcons )
 			{
 				return;
 			}
-			var path = iconObject.Path.substr( 0, iconObject.Path.length - iconObject.Filename.length );
-			var f = {}; for( var a in iconObject ) f[a] = iconObject[a];
+			let path = iconObject.Path.substr( 0, iconObject.Path.length - iconObject.Filename.length );
+			let f = {}; for( var a in iconObject ) f[a] = iconObject[a];
 			f.Path = path;
 			d.getIcons( f, function( data )
 			{
-				var prev = '';
-				var curr = '';
-				var prevPath = currPath = '';
+				let prev = '';
+				let curr = '';
+				let prevPath = currPath = '';
 				for( var a = 0; a < data.length; a++ )
 				{
 					// Skip directories
 					if( data[ a ].Type == 'Directory' ) continue;
 					
 					// Skip non-image files
-					var last = data[a].Filename.split( '.' );
-					var ext = last[ last.length - 1 ].toLowerCase();
+					let last = data[a].Filename.split( '.' );
+					let ext = last[ last.length - 1 ].toLowerCase();
 					if( !( ext == 'jpg' || ext == 'jpeg' || ext == 'png' || ext == 'gif' ) )
 						continue;
 						
@@ -5245,12 +5354,12 @@ Friend.startImageViewer = function( iconObject, extra )
 						iconObject.Path = prevPath;
 						GetURLFromPath( prevPath, function( imageUrl )
 						{
-							var imgElement = owin._window.getElementsByTagName( 'img' )[0];
-							var i = new Image();
+							let imgElement = owin._window.getElementsByTagName( 'img' )[0];
+							let i = new Image();
 							i.src = imageUrl;
 							i.onload = function()
 							{ 
-								var extra = {
+								let extra = {
 									w: i.width,
 									h: i.height
 								};
@@ -5269,12 +5378,12 @@ Friend.startImageViewer = function( iconObject, extra )
 						iconObject.Path = currPath;
 						GetURLFromPath( currPath, function( imageUrl )
 						{
-							var imgElement = owin._window.getElementsByTagName( 'img' )[0];
-							var i = new Image();
+							let imgElement = owin._window.getElementsByTagName( 'img' )[0];
+							let i = new Image();
 							i.src = imageUrl;
 							i.onload = function()
 							{ 
-								var extra = {
+								let extra = {
 									w: i.width,
 									h: i.height
 								};
@@ -5299,7 +5408,7 @@ Friend.startImageViewer = function( iconObject, extra )
 
 function GetIconClassByExtension( extension, fileInfo )
 {
-	var iconInner = { className: '' };
+	let iconInner = { className: '' };
 	switch( extension )
 	{
 		case 'info':
@@ -5346,6 +5455,9 @@ function GetIconClassByExtension( extension, fileInfo )
 			break;
 		case 'svg':
 			iconInner.className = 'TypeSVG';
+			break;
+		case 'drawio':
+			iconInner.className = 'TypeDRAWIO';
 			break;
 		case 'eps':
 			iconInner.className = 'TypeEPS';
@@ -5492,6 +5604,37 @@ function GetIconClassByExtension( extension, fileInfo )
 }
 
 // End Friend Image Viewer! ----------------------------------------------------
+
+// Get a clean fileinfo from object
+function getCleanFileInfo( obj )
+{
+	let keys = [
+		'DateCreated',
+		'DateModified',
+		'Driver',
+		'Execute',
+		'Extension',
+		'Filename',
+		'Filesize',
+		'Handler',
+		'ID',
+		'MetaType',
+		'Mounted',
+		'Owner',
+		'Path',
+		'Permissions',
+		'SortPriority',
+		'Title',
+		'Type',
+		'Visible',
+		'Volume'
+	];
+	let r = {};
+	for( let i = 0; i < keys.length; i++ )
+		if( typeof( obj[ keys[ i ] ] ) != 'undefined' )
+			r[ keys[ i ] ] = obj[ keys[ i ] ];
+	return r;
+}
 
 
 // -----------------------------------------------------------------------------
