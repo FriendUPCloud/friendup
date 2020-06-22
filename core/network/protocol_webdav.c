@@ -690,7 +690,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		SocketSetBlocking( req->http_Socket, FALSE );
 		while( TRUE )
 		{
-			rs = SocketRead( req->http_Socket, buf, 10000, 0 );
+			rs = req->http_Socket->s_Interface->SocketRead( req->http_Socket, buf, 10000, 0 );
 			if( rs > 0 )
 			{
 				printf("------------------------%s\n", buf );

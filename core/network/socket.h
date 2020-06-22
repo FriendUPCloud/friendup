@@ -102,13 +102,19 @@ typedef enum {
 	socket_state_wait_for_payload,
 } socket_state_t;
 
+//
+// Socket interface will lead to socket functions (SSL or not SSL)
+//
+
+typedef struct LSocketInterface LSocketInterface_t;
+
+//
+//
+//
+
 typedef struct Socket
 {
 	int							fd;              // Unix file descriptor for the socket.
-
-	pthread_mutex_t				mutex; /* This mutex is used for changing the blocking state of the socket,
-	                                    * some TLS stuff and changing of 'state' field.
-	                                    */
 
 	FBOOL						listen;         // Is this a listening socket? SocketAccept can only be used on these kinds of sockets.
 	int							port;// Yup. The port. What else?
@@ -150,8 +156,25 @@ typedef struct Socket
 	int							s_AcceptFlags;
 	int							(*VerifyPeer)( int ok, X509_STORE_CTX* ctx );
 
+	struct LSocketInterface_t	*s_Interface;
 	MinNode						node;
 } Socket;
+
+struct LSocketInterface_t
+{
+int					(*SocketListen)( Socket* s );
+int					(*SocketConnect)( Socket* sock, const char *host );
+Socket				*(*SocketAccept)( Socket* s );
+Socket				*(*SocketAcceptPair)( Socket* sock, struct AcceptPair *p );
+int					(*SocketSetBlocking)( Socket* s, FBOOL block );
+int					(*SocketRead)( Socket* sock, char* data, unsigned int length, unsigned int pass );
+int					(*SocketReadBlocked)( Socket* sock, char* data, unsigned int length, unsigned int pass );
+int					(*SocketWaitRead)( Socket* sock, char* data, unsigned int length, unsigned int pass, int sec );
+BufString			*(*SocketReadTillEnd)( Socket* sock, unsigned int pass, int sec );
+FLONG				(*SocketWrite)( Socket* s, char* data, FLONG length );
+void				(*SocketDelete)( Socket* s );
+BufString			*(*SocketReadPackage)( Socket *sock );
+};
 
 #ifdef USE_SOCKET_REAPER
 void socket_init_once(void);
@@ -175,7 +198,8 @@ int SocketListen( Socket* s );
 // Open a connection to a remote host
 //
 
-int SocketConnect( Socket* sock, const char *host );
+int SocketConnectNOSSL( Socket* sock, const char *host );
+int SocketConnectSSL( Socket* sock, const char *host );
 
 //
 // Open new connection to host + create socket
@@ -193,61 +217,64 @@ int SocketSetBlocking( Socket* s, FBOOL block );
 // Accept incomming connections if listening
 //
 
-extern Socket* SocketAcceptPair( Socket* sock, struct AcceptPair *p );
+Socket* SocketAcceptPairNOSSL( Socket* sock, struct AcceptPair *p );
+Socket* SocketAcceptPairSSL( Socket* sock, struct AcceptPair *p );
 
 //
 //
 //
 
-extern Socket* SocketAccept( Socket* s );
+Socket* SocketAcceptNOSSL( Socket* s );
+Socket* SocketAcceptSSL( Socket* s );
 
 //
 // Read from the socket
 //
 
-extern int SocketRead( Socket* sock, char* data, unsigned int length, unsigned int pass );
+int SocketReadNOSSL( Socket* sock, char* data, unsigned int length, unsigned int pass );
+int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int pass );
 
 //
 //
 //
 
 
-int SocketReadBlocked( Socket* sock, char* data, unsigned int length, unsigned int pass );
+int SocketReadBlockedNOSSL( Socket* sock, char* data, unsigned int length, unsigned int pass );
+int SocketReadBlockedSSL( Socket* sock, char* data, unsigned int length, unsigned int pass );
 
 //
 // Wait and Read from the socket
 //
 
-int SocketWaitRead( Socket* sock, char* data, unsigned int length, unsigned int pass, int sec );
+int SocketWaitReadNOSSL( Socket* sock, char* data, unsigned int length, unsigned int pass, int sec );
+int SocketWaitReadSSL( Socket* sock, char* data, unsigned int length, unsigned int pass, int sec );
 
 //
 // Read till end of stream
 //
 
-BufString *SocketReadTillEnd( Socket* sock, unsigned int pass, int sec );
+BufString *SocketReadTillEndNOSSL( Socket* sock, unsigned int pass, int sec );
+BufString *SocketReadTillEndSSL( Socket* sock, unsigned int pass, int sec );
 
 //
 // Write to the socket, or queue data for writing if non-blocking socket
 //
 
-FLONG SocketWrite( Socket* s, char* data, FLONG length );
+FLONG SocketWriteNOSSL( Socket* s, char* data, FLONG length );
+FLONG SocketWriteSSL( Socket* s, char* data, FLONG length );
 
 //
 // Request the socket to be closed (Acceptable if the other end also has closed the socket)
 //
 
-void SocketDelete( Socket* s );
+void SocketDeleteNOSSL( Socket* s );
+void SocketDeleteSSL( Socket* s );
 
 //
 //
 //
 
-//void SocketFree( Socket *s );
-
-//
-//
-//
-
-BufString *SocketReadPackage( Socket *sock );
+BufString *SocketReadPackageNOSSL( Socket *sock );
+BufString *SocketReadPackageSSL( Socket *sock );
 
 #endif

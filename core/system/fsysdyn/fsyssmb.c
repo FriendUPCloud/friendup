@@ -687,7 +687,7 @@ int FileRead( struct File *f, char *buffer, int rsize )
 		
 		if( f->f_Stream == TRUE )
 		{
-			sd->sb->sl_SocketInterface.SocketWrite( f->f_Socket, buffer, (FLONG)result );
+			f->f_Socket->s_Interface->SocketWrite( f->f_Socket, buffer, (FLONG)result );
 		}
 		
 		if( result == 0 )	// if smb return 0 then its the end of the file

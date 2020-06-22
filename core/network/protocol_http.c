@@ -1131,7 +1131,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 														resp = 1;
 													}
 													dataread = fread( tbuffer, 1, SHARING_BUFFER_SIZE, cf->cf_Fp );
-													SocketWrite( request->http_Socket, tbuffer, dataread );
+													request->http_Socket->s_Interface->SocketWrite( request->http_Socket, tbuffer, dataread );
 												}
 												FFree( tbuffer );
 											}
@@ -1225,11 +1225,11 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 															HttpWrite( response, request->http_Socket );
 															resp = 1;
 															
-															SocketWrite( request->http_Socket, tbuffer, dataread );
+															request->http_Socket->s_Interface->SocketWrite( request->http_Socket, tbuffer, dataread );
 														}
 														else
 														{
-															SocketWrite( request->http_Socket, tbuffer, dataread );
+															request->http_Socket->s_Interface->SocketWrite( request->http_Socket, tbuffer, dataread );
 														}
 														
 														if( cffp != NULL )
@@ -2096,7 +2096,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 													response->http_WriteType = FREE_ONLY;
 
-													SocketWrite( sock, resp, (FLONG)(phpResp->ls_Size - (resp - phpResp->ls_Data)) );
+													sock->s_Interface->SocketWrite( sock, resp, (FLONG)(phpResp->ls_Size - (resp - phpResp->ls_Data)) );
 
 													if( cntype != NULL ) FFree( cntype );
 													if( code != NULL ) FFree( code );

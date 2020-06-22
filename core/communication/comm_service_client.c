@@ -124,7 +124,7 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 			//SocketSetBlocking( con->fc_Socket, TRUE );
 	
 			// send request
-			writebytes = SocketWrite( con->fc_Socket, (char *)df, (FLONG)df->df_Size );
+			writebytes = con->fc_Socket->s_Interface->SocketWrite( con->fc_Socket, (char *)df, (FLONG)df->df_Size );
 		}
 		else
 		{
@@ -493,7 +493,7 @@ void FConnectionDelete( FConnection *con )
 		
 		if( con->fc_Socket != NULL )
 		{
-			SocketDelete( con->fc_Socket );
+			con->fc_Socket->s_Interface->SocketDelete( con->fc_Socket );
 			con->fc_Socket = NULL;
 		}
 		
@@ -596,7 +596,7 @@ FConnection *ConnectToServer( CommService *s, char *conname )
 			
 			DataForm * df = DataFormNew( tags );
 
-			SocketWrite( newsock, (char *)df, (FLONG)df->df_Size );
+			newsock->s_Interface->SocketWrite( newsock, (char *)df, (FLONG)df->df_Size );
 			
 			DataFormDelete( df );
 			
@@ -628,7 +628,7 @@ FConnection *ConnectToServer( CommService *s, char *conname )
 	{
 		if( newsock != NULL )
 		{
-			SocketDelete( newsock );
+			newsock->s_Interface->SocketDelete( newsock );
 		}
 	}
 	else
