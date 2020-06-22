@@ -215,7 +215,7 @@ if( !class_exists( 'SharedDrive' ) )
 					$out = [];
 					$rows = $own = $groupShare = false;
 					
-					// Get data shared by others, and self
+					// Get data shared by other users directly
 					if( !( $rows = $SqlDatabase->fetchObjects( '
 						SELECT s.ID, s.Data, s.OwnerUserID, u.ServerToken FROM FShared s, FUser u 
 						WHERE 
@@ -533,8 +533,8 @@ if( !class_exists( 'SharedDrive' ) )
 							$out2 = [];
 							foreach( $rows as $row )
 							{
-								if( !isset( $out2[ $row->Filename ] ) )
-									$out2[ $row->Filename ] = $row;
+								if( !isset( $out2[ $row->Filename . '-' . $row->OwnerID ] ) )
+									$out2[ $row->Filename . '-' . $row->OwnerID ] = $row;
 							}
 							foreach( $out2 as $a=>$row )
 							{
