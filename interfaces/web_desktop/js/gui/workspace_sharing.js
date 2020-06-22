@@ -114,7 +114,7 @@ Workspace.saveFileShareInfo = function( uniqueId )
 		}
 		else
 		{
-			Alert( 'Failed to set sharing info', 'The members you selected could not share your item.' );
+			Alert( i18n( 'i18n_nothing_shared' ), i18n( 'i18n_please_select_users_groups' ) );                                                                                                                                                                                                                                        
 			return;
 		}
 	}
