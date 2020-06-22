@@ -60,7 +60,13 @@ Workspace.viewSharingOptions = function( path )
 				}
 			}
 			v.dropDown.classList.remove( 'Showing' );
-			Workspace.refreshShareInformation( v );
+			Workspace.refreshShareInformation( v, function()
+			{
+				if( v.doApply )
+				{
+					Workspace.saveFileShareInfo( v.uniqueId );
+				}
+			} );
 		}
 	}
 	
@@ -104,6 +110,16 @@ Workspace.saveFileShareInfo = function( uniqueId )
 	if( !this.sharingDialogs[ uniqueId ] ) return;
 	let self = this;
 	let d = this.sharingDialogs[ uniqueId ];
+	
+	let drp = null;
+	if( drp = d._window.getElementsByClassName( 'Dropdown' ) )
+	{
+		if( drp[0].classList.contains( 'Showing' ) )
+		{
+			d.doApply = true;
+			return;
+		}
+	}
 	
 	let o = new Module( 'system' );
 	o.onExecuted = function( e )
@@ -299,7 +315,7 @@ Workspace.setSharingGui = function( viewObject )
 		}
 	}
 };
-Workspace.refreshShareInformation = function( viewObject )
+Workspace.refreshShareInformation = function( viewObject, callback )
 {
 	let list = ge( 'sharedList_' + viewObject.uniqueId );
 	let items = {
@@ -343,20 +359,47 @@ Workspace.refreshShareInformation = function( viewObject )
 					str += '<div class="Header PaddingSmall BorderBottom">' + i18n( 'i18n_list_header_' + b ) + ':</div>';
 					icmod = b == 'user' ? 'IconSmall fa-user' : 'IconSmall fa-group';
 					let sw = 2;
+					let idt = b == 'user' ? 'uid' : 'gid';
 					for( let a = 0; a < items[ b ].length; a++ )
 					{
+						let idn = items[ b ][ a ].id;
 						sw = sw == 1 ? 2 : 1;
-						str += '<div class="PaddingSmall sw' + sw + ' HRow ' + icmod + '">&nbsp;' + items[ b ][ a ].name + '</div>';
+						str += '<div ' + idt + '="' + idn + '" class="PaddingSmall sw' + sw + ' HRow ' + icmod + '"><button class="IconSmall IconButton fa-remove FloatRight">&nbsp;</button>&nbsp;' + items[ b ][ a ].name + '</div>';
 					}
 				}
 			}
 			str += '</div>';
 			list.innerHTML = str;
+			let buttons = list.getElementsByTagName( 'button' );
+			for( let c = 0; c < buttons.length; c++ )
+			{
+				( function( bt )
+				{
+					bt.onclick = function()
+					{
+						let n = null;
+						let m = new Module( 'system' );
+						m.onExecuted = function( me, md )
+						{
+							Workspace.refreshShareInformation( viewObject );
+						}
+						if( n = this.parentNode.getAttribute( 'uid' ) )
+						{
+							m.execute( 'removefileshareinfo', { userid: n, path: viewObject.path } );
+						}
+						else if( n = this.parentNode.getAttribute( 'gid' ) )
+						{
+							m.execute( 'removefileshareinfo', { groupid: n, path: viewObject.path } );
+						}
+					}
+				} )( buttons[ c ] );
+			}
 		}
 		else
 		{
 			list.innerHTML = '<div class="HRow sw1 Padding">' + i18n( 'i18n_file_not_shared' ) + '</div>';
 		}
+		if( callback ) callback();
 	}
 	m.execute( 'getfileshareinfo', { path: viewObject.path } );
 	
