@@ -5104,17 +5104,6 @@ div.Orange, button.Orange
 .Dropdown
 {
 	position: absolute;
-<<<<<<< HEAD
-	top: 0;
-	left: 0;
-	width: 100%;
-	opacity: 0;
-	height: 0;
-	pointer-events: none;
-	transition: opacity,height 0.25s;
-	border-radius: 0 0 3px 3px;
-	overflow: hidden;
-=======
 	padding: 10px;
 	top: -1px;
 	left: 0;
@@ -5127,18 +5116,11 @@ div.Orange, button.Orange
 	overflow: hidden;
 	box-shadow: 0 0 0 rgba(0,0,0,0);
 	box-sizing: border-box;
->>>>>>> master-incoming
 }
 
 .Dropdown.Showing
 {
 	opacity: 1;
-<<<<<<< HEAD
-	height: 100px;
-	max-height: auto;
-	overflow: auto;
-	pointer-events: all;
-=======
 	z-index: 2;
 	height: 200px;
 	max-height: auto;

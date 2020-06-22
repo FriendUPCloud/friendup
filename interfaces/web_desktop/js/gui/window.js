@@ -975,10 +975,6 @@ function _ActivateWindowOnly( div )
 				
 				if( window._getAppByAppId )
 				{
-<<<<<<< HEAD
-=======
-					let app = _getAppByAppId( div.applicationId );
->>>>>>> master-incoming
 					if( app )
 					{
 						if( m.windowObject != app.mainView )

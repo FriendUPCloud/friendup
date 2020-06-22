@@ -1120,11 +1120,10 @@ var WorkspaceInside = {
 	refreshExtraWidgetContents: function()
 	{
 		if( this.mode == 'vr' ) return;
-<<<<<<< HEAD
+
 		var self = this;
-=======
+
 		if( Workspace.isSingleTask ) return;
->>>>>>> master-incoming
 		
 		var mo = new Library( 'system.library' );
 		mo.onExecuted = function( rc, sessionList )
@@ -3998,15 +3997,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							callback( t.icons );
 						}
 
-<<<<<<< HEAD
-					// Check for new events
-					t.checkDesktopEvents();
-=======
 						// Check for new events
 						t.checkDesktopEvents();
 					}
 					m.execute( 'device/list' );
->>>>>>> master-incoming
 				}
 				//vi.forceSend = true;
 				vi.execute( 'devicesettings' );
