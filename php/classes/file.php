@@ -178,6 +178,7 @@ class File
 			curl_setopt( $ch, CURLOPT_URL, $url    );
 			curl_setopt( $ch, CURLOPT_POSTFIELDS, $postfields );
 			curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+			curl_setopt( $ch, CURLOPT_HTTPHEADER, array('Expect:'));
 			if( $Config->SSLEnable == 1 )
 			{
 				curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
@@ -222,6 +223,8 @@ class File
 		curl_setopt( $c, CURLOPT_SSL_VERIFYHOST, false               );
 		curl_setopt( $c, CURLOPT_URL,            $url                );
 		curl_setopt( $c, CURLOPT_RETURNTRANSFER, true                );
+		curl_setopt( $c, CURLOPT_HTTPHEADER, array('Expect:'));
+	
 		$r = curl_exec( $c );
 		curl_close( $c );
 		
