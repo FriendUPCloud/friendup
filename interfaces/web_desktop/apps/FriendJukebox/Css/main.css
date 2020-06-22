@@ -22,13 +22,41 @@ tr.Playing
 	width: 100%;
 	margin-top: 4px;
 }
-#MiniPlaylist
+#MiniPlaylistContainer
 {
 	visibility: hidden;
 	opacity: 0;
-	mask-image: linear-gradient(0deg, transparent 0%, black 40px, black calc(100% - 40px), rgba(0,0,0,0.05) 100%);
-	-moz-mask-image: linear-gradient(0deg, transparent 0%, black 40px, black calc(100% - 40px), rgba(0,0,0,0.05) 100%);
-	-webkit-mask-image: linear-gradient(0deg, transparent 0%, black 40px, black calc(100% - 40px), rgba(0,0,0,0.05) 100%);
+}
+#MiniPlaylist
+{
+	mask-image: linear-gradient(0deg, rgba(0,0,0,0.3) 0%, black 40px, black calc(100% - 40px), rgba(0,0,0,0.3) 100%);
+	-moz-mask-image: linear-gradient(0deg, rgba(0,0,0,0.3) 0%, black 40px, black calc(100% - 40px), rgba(0,0,0,0.3) 100%);
+	-webkit-mask-image: linear-gradient(0deg, rgba(0,0,0,0.3) 0%, black 40px, black calc(100% - 40px), rgba(0,0,0,0.3) 100%);
+}
+
+html .ScrollArea > .List > .Selected
+{
+	font-weight: bold;
+	filter: contrast(1.5);
+}
+
+html .ScrollArea > .List > .Playing:before
+{
+	font-family: fontawesome;
+	content: "\f001";
+	font-weight: normal;
+	margin: 0 5px 0 0;
+	display: inline-block;
+}
+
+.VisualizerBg
+{
+	/*transition: background-color 0.1s;*/
+	background-color: #06051a;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 77px;
 }
 
 #visualizer
@@ -38,6 +66,9 @@ tr.Playing
 	left: 0;
 	width: 100%;
 	height: 77px;
+	mask-image: linear-gradient(90deg, transparent, black 45%, black 55%, transparent);
+	-moz-mask-image: linear-gradient(90deg, transparent, black 45%, black 55%, transparent);
+	-webkit-mask-image: linear-gradient(90deg, transparent, black 45%, black 55%, transparent);
 }
 
 #visualizer.Fullscreen
@@ -115,7 +146,7 @@ tr.Playing
 	opacity: 0;
 	mix-blend-mode: soft-light;
 }
-#playbutton.active, #pausebutton.active
+#pausebutton.active
 {
 	-webkit-animation: flash 2s infinite;
 	-moz-animation:    flash 2s infinite;

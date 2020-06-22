@@ -1489,12 +1489,11 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
 		int read_retries = 0;
 		struct timeval timeout;
 		fd_set fds;
-#define MINIMUMRETRY 30000
-		int retryCount = expectedLength > 0 ? MINIMUMRETRY : 3000; // User do be 3000
+// Microseconds! I.e. 400 ms
+#define READTIMEOUT 400000
 		if( expectedLength > 0 && length > expectedLength ) length = expectedLength;
-		int startTime = time( NULL );
-
-		//DEBUG("SOCKREAD %p\n", sock );
+		struct timeval start, stop;
+		gettimeofday( &start, NULL );
 
 		while( 1 )
 		{
@@ -1518,107 +1517,84 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
 
 				switch( err )
 				{
-				// The TLS/SSL I/O operation completed.
-				case SSL_ERROR_NONE:
-					FERROR( "[SocketRead] Completed successfully.\n" );
-					return read;
-					// The TLS/SSL connection has been closed. Goodbye!
-				case SSL_ERROR_ZERO_RETURN:
-					FERROR( "[SocketRead] The connection was closed.\n" );
-					//return SOCKET_CLOSED_STATE;
-					return -1;
-					// The operation did not complete. Call again.
-				case SSL_ERROR_WANT_READ:
-					// NB: We used to retry 10000 times!
-					if( read == 0 && read_retries++ < retryCount )
-					{
-						// We are downloading a big file
-
-						// TODO: This usleep is the old code (before usleep(1))
-						usleep( read_retries < 100 ? 0 : ( read_retries < 200 ? 1 : ( retryCount << 1 ) ) );
-
-						/*int blocked = sock->s_Blocked;
+					// The TLS/SSL I/O operation completed.
+					case SSL_ERROR_NONE:
+						FERROR( "[SocketRead] Completed successfully.\n" );
+						return read;
+						// The TLS/SSL connection has been closed. Goodbye!
+					case SSL_ERROR_ZERO_RETURN:
+						FERROR( "[SocketRead] The connection was closed.\n" );
+						//return SOCKET_CLOSED_STATE;
+						return -1;
+						// The operation did not complete. Call again.
+					case SSL_ERROR_WANT_READ:
+						// NB: We used to retry 10000 times!
+						if( read == 0 )
+						{
+							gettimeofday( &stop, NULL );	
+							if( stop.tv_usec - start.tv_usec < READTIMEOUT )
+							{
+								continue;
+							}
+						}
+						return read;
+						// The operation did not complete. Call again.
+					case SSL_ERROR_WANT_WRITE:
+						//if( pthread_mutex_lock( &sock->mutex ) == 0 )
+						{
+							FERROR( "[SocketRead] Want write.\n" );
 							FD_ZERO( &fds );
 							FD_SET( sock->fd, &fds );
 
-							timeout.tv_sec = 0;
-							timeout.tv_usec = read_retries << 2;
-
-							select( sock->fd+1, &fds, NULL, NULL, &timeout );
-
-							int flags = fcntl( sock->fd, F_GETFL, 0 );
-							if( !blocked )
-							{
-								flags |= O_NONBLOCK;
-							}
-							else
-							{
-								flags &= ~O_NONBLOCK;
-							}
-
-							sock->s_Blocked = blocked;
-							fcntl( sock->fd, F_SETFL, flags );
-						 */
-						continue;
-					}
-					return read;
-					// The operation did not complete. Call again.
-				case SSL_ERROR_WANT_WRITE:
-					//if( pthread_mutex_lock( &sock->mutex ) == 0 )
-					{
-						FERROR( "[SocketRead] Want write.\n" );
-						FD_ZERO( &fds );
-						FD_SET( sock->fd, &fds );
-
-						//pthread_mutex_unlock( &sock->mutex );
-					}
-					timeout.tv_sec = sock->s_Timeouts;
-					timeout.tv_usec = sock->s_Timeoutu;
-
-					err = select( sock->fd + 1, NULL, &fds, NULL, &timeout );
-
-					if( err > 0 )
-					{
-						usleep( 50000 );
-						FERROR("[SocketRead] want write\n");
-						continue; // more data to read...
-					}
-					else if( err == 0 )
-					{
-						FERROR("[SocketRead] want write TIMEOUT....\n");
-						return read;
-					}
-					FERROR("[SocketRead] want write everything read....\n");
-					return read;
-				case SSL_ERROR_SYSCALL:
-
-					//DEBUG("SSLERR : err : %d res: %d\n", err, res );
-					
-					FERROR("[SocketRead] Error syscall, bufsize = %d.\n", buf );
-					if( err > 0 )
-					{
-						if( errno == 0 )
-						{
-							FERROR(" [SocketRead] Connection reset by peer.\n" );
-							return -1;
-							//return SOCKET_CLOSED_STATE;
+							//pthread_mutex_unlock( &sock->mutex );
 						}
-						else 
+						timeout.tv_sec = sock->s_Timeouts;
+						timeout.tv_usec = sock->s_Timeoutu;
+
+						err = select( sock->fd + 1, NULL, &fds, NULL, &timeout );
+
+						if( err > 0 )
 						{
-							FERROR( "[SocketRead] Error syscall error: %s\n", strerror( errno ) );
+							usleep( 50000 );
+							FERROR("[SocketRead] want write\n");
+							continue; // more data to read...
 						}
-					}
-					else if( err == 0 )
-					{
-						FERROR( "[SocketRead] Error syscall no error? return.\n" );
+						else if( err == 0 )
+						{
+							FERROR("[SocketRead] want write TIMEOUT....\n");
+							return read;
+						}
+						FERROR("[SocketRead] want write everything read....\n");
 						return read;
-					}
+					case SSL_ERROR_SYSCALL:
+
+						//DEBUG("SSLERR : err : %d res: %d\n", err, res );
 					
-					FERROR( "[SocketRead] Error syscall other error. return.\n" );
-					return read;
-					// Don't retry, just return read
-				default:
-					return read;
+						FERROR("[SocketRead] Error syscall, bufsize = %d.\n", buf );
+						if( err > 0 )
+						{
+							if( errno == 0 )
+							{
+								FERROR(" [SocketRead] Connection reset by peer.\n" );
+								return -1;
+								//return SOCKET_CLOSED_STATE;
+							}
+							else 
+							{
+								FERROR( "[SocketRead] Error syscall error: %s\n", strerror( errno ) );
+							}
+						}
+						else if( err == 0 )
+						{
+							FERROR( "[SocketRead] Error syscall no error? return.\n" );
+							return read;
+						}
+					
+						FERROR( "[SocketRead] Error syscall other error. return.\n" );
+						return read;
+						// Don't retry, just return read
+					default:
+						return read;
 				}
 			}
 		}

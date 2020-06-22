@@ -382,7 +382,6 @@ function ResizeWindow( div, wi, he, mode, depth )
 		t = div.windowObject.flags.top;
 		if( !l ) l = isWorkspaceScreen ? div.windowObject.workspace * window.innerWidth : 0;
 		if( !t ) t = 0;
-		console.log( 'L here: ' + l );
 	}
 	
 	// Maximized
@@ -2551,7 +2550,7 @@ var View = function( args )
 		resize.style.position = 'absolute';
 		resize.style.width = '14px';
 		resize.style.height = '14px';
-		resize.style.zIndex = '10';
+		resize.style.zIndex = '100';
 
 		let inDiv = document.createElement( 'div' );
 
@@ -4618,13 +4617,14 @@ var View = function( args )
 		_ActivateWindow( this._window.parentNode );
 	}
 	// Move window to front
-	this.toFront = function()
+	this.toFront = function( flags )
 	{
 		if( this.flags.minimized ) 
 		{
 			return;
 		}
-		_ActivateWindow( this._window.parentNode );
+		if( !( flags && flags.activate === false ) )
+			_ActivateWindow( this._window.parentNode );
 		_WindowToFront( this._window.parentNode );
 	}
 	// Close a view window
@@ -4878,9 +4878,10 @@ var View = function( args )
 				break;
 			case 'width':
 			case 'height':
+				if( value == null ) value = 0;
 				this.flags[ flag ] = value;
 				if( viewdiv )
-				{
+				{	
 					if( value == 'max' )
 					{
 						if( flag == 'width' )
@@ -4892,6 +4893,7 @@ var View = function( args )
 							value = this.flags.screen.getMaxViewHeight();
 						}
 					}
+					
 					ResizeWindow( viewdiv, ( flag == 'width' ? value : null ), ( flag == 'height' ? value : null ) );
 					RefreshWindow( viewdiv );
 				}
@@ -5172,7 +5174,6 @@ var View = function( args )
 		function setCameraMode( e )
 		{
 			let v = null;
-			console.log('setting camera mode!',e);
 			if( !self.cameraOptions )
 			{
 				self.cameraOptions = {
@@ -5348,7 +5349,7 @@ var View = function( args )
 							
 							let switchbtn = document.createElement( 'button' );
 							switchbtn.className = 'IconButton IconSmall fa-refresh';
-							switchbtn.onclick = function() { console.log('switch camera...'); setCameraMode() };
+							switchbtn.onclick = function() { setCameraMode() };
 							self.content.container.appendChild( switchbtn );
 
 							//stop the video if the view is closed!
@@ -5555,6 +5556,16 @@ var View = function( args )
 	self.applicationDisplayName = args.applicationDisplayName;
 
 	if( !args.id ) args.id = false;
+	
+	// Fullscreen single task
+	if( Workspace.isSingleTask )
+	{
+		args.width = 'max';
+		args.height = 'max';
+		args.left = 0;
+		args.top = 0;
+		args.resize = false;
+	}
 	
 	this.createDomElements( 'CREATE', args.title, args.width, args.height, args.id, args, args.applicationId );
 
@@ -5906,36 +5917,44 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 		let eles = v._window.getElementsByTagName( 'button' );
 
 		// FL-6/06/2018: correction so that it does not take the relative position of OK/Cancel in the box 
-		for ( var e = 0; e < eles.length; e++ )
+		// US-792 - 2020: Correction to fix sending the same delete request multiple times
+		for( let el = 0; el < eles.length; el++ )
 		{
-			if ( eles[ e ].id == 'ok' )
+			( function( itm )
 			{
-				eles[ e ].onclick = function()
+				if( itm.id == 'ok' )
 				{
-					v.close();
-					okcallback( true );
-				}
-				eles[ e ].focus();
-			}
-			else if ( eles[ e ].id == 'cancel' )
-			{
-				eles[ e ].onclick = function()
-				{
-					v.close();
-					okcallback( false );
-				}
-			}
-			else
-			{
-				eles[ e ].onclick = function(e)
-				{
-					if(e && e.target && e.target.hasAttribute('data-returnvalue') )
-						okcallback( e.target.getAttribute('data-returnvalue') );
-					else
-						okcallback( e );
+					itm.onclick = function()
+					{
 						v.close();
+						okcallback( true );
+					}
+					itm.focus();
 				}
-			}
+				else if( itm.id == 'cancel' )
+				{
+					itm.onclick = function()
+					{
+						v.close();
+						okcallback( false );
+					}
+				}
+				else
+				{
+					itm.onclick = function( e )
+					{
+						if( e && e.target && e.target.hasAttribute( 'data-returnvalue' ) )
+						{
+							okcallback( e.target.getAttribute( 'data-returnvalue' ) );
+						}
+						else
+						{
+							okcallback( e );
+						}
+						v.close();
+					}
+				}
+			} )( eles[ el ] );
 		}
 		if( !window.isMobile )
 		{	
@@ -5944,6 +5963,7 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 		}
 	}
 	f.load();
+	return v; // The window
 }
 
 function Alert( title, string, cancelstring, callback )
@@ -6022,6 +6042,7 @@ function Alert( title, string, cancelstring, callback )
 		}
 	}
 	f.load();
+	return v; // the window
 }
 
 // Initialize the events

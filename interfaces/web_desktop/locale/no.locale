@@ -72,6 +72,7 @@ i18n_open_sharing_options            : Åpne delingsalternativer
 i18n_choose_disk                     : Velg disk
 i18n_run_application                 : Start app
 i18n_shared_with                     : Delt med
+i18n_find_users_groups               : Finn brukere og grupper...
 i18n_find_workgroup_user             : Finn bruker...
 i18n_no_users_found                  : Ingen brukere funnet...
 i18n_error_in_userlist               : Feil i brukerlisten...
@@ -150,7 +151,12 @@ documentation_on                        : Dokumentasjon om
 i18n_sharewith                          : Del med
 i18n_sharename                          : Del navn
 i18n_share_with_workgroup               : Del i en arbeidsgruppe
+i18n_share_file                     	: Del filen
+i18n_sharing_options                    : Del med bruker/arbeidsgruppe
 i18n_no_workgroup_sharing               : Ikke del med arbeidsgruppe
+i18n_file_not_shared                    : Denne filen er ikke delt.
+i18n_workgroups                         : Arbeidsgrupper
+i18n_users                              : Brukere
 my_account                              : Min konto
 i18n_account_setup                      : Min konto - oppsett
 
@@ -229,7 +235,8 @@ menu_unzip                              : Dekomprimer fil(er)
 menu_looknfeel                          : Utseende
 menu_backdrop                           : Vis oversikt
 menu_buildwebapp                        : Bygg webapplikasjon
-menu_share				: Del
+menu_share				                : Del
+menu_share_info                         : Delingsinformasjon
 menu_download                           : Last ned
 i18n_could_not_download                 : Kunne ikke laste ned
 i18n_file_cannot_be_downloaded          : Filen er ikke av rett type for nedlastning
@@ -237,6 +244,7 @@ menu_close_idle_connections             : Fjern nettverksprosesser
 menu_hide_hidden_files                  : Gjem skjulbare filer
 menu_show_hidden_files                  : Vis skjulte filer
 menu_new_window                         : Nytt vindu
+menu_share_file                         : Deling
 
 menu_help                               : Hjelp
 menu_help_bug                           : Rapporter feil
@@ -393,6 +401,9 @@ i18n_no_field_information               : Ingen attributtdata tilgjengelig.
 i18n_non_compatible_field_information   : Kan ikke vise forhåndsvisning.
 i18n_open_with                          : Åpne med
 
+i18n_list_header_group                  : Grupper
+i18n_list_header_user                   : Brukere
+
 #File dialogs ------------------------------------------------------------------
 
 file_load                               : Åpne
@@ -507,6 +518,11 @@ i18n_what_you_share_with                : Hva du deler med
 i18n_mark_as_read                       : Merk som lest
 i18n_messages_sent                      : Meldingene ble sendt...
 i18n_notifications_sent                 : Varslene ble sendt...
+i18n_only_files_dropped                 : Kunne ikke dele
+i18n_only_files_can_be_shared           : Kun vanlige filer kan deles.
+i18n_share_with_users_or_groups         : Del med brukere eller grupper
+i18n_ok                                 : Ok
+
 
 i18n_pasted_file                        : Limer inn innhold
 i18n_pasted_to_downloads                : Ditt innhold ble limt inn i Downloads

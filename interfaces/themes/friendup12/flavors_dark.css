@@ -1,7 +1,8 @@
 /* Dark --------------------------------------------------------------------- */
 
 html > body.Dark,
-html > body.Dark.Inside
+html > body.Dark.Inside,
+html > body.Dark .Content .Scroller:after
 {
 	background: #34495E;
 }

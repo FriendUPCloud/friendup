@@ -14,6 +14,8 @@
 */
 Application.run = function( msg, iface )
 {
+	var self = this;
+	
 	// Start with empty playlist
 	this.playlist = [];
 	this.index = 0;
@@ -23,10 +25,6 @@ Application.run = function( msg, iface )
 		title: 'Friend Jukebox',
 		width: 400,
 		height: 160,
-		'min-width': 400,
-		'max-width': 400,
-		'min-height': 160,
-		'max-height': 160,
 		resize: false
 	} );
 	
@@ -43,15 +41,18 @@ Application.run = function( msg, iface )
 	f.i18n();
 	f.onLoad = function( data )
 	{
-		w.setContent( data );
+		w.setContent( data, function()
+		{
+			// Started with arguments
+			if( msg.args )
+			{
+				self.handleFiles( msg.args );
+			}
+		} );
 	}
 	f.load();
 	
 	this.redrawMenu();
-	
-	// Started with arguments
-	if( msg.args )
-		this.handleFiles( msg.args );
 }
 
 // Add the files of as playlist ------------------------------------------------
@@ -96,7 +97,8 @@ Application.handleFiles = function( args )
 						fn = fn.split( '/' ).pop();
 					this.receiveMessage( {
 						command: 'append_to_playlist_and_play',
-						items: [ { Filename: fn, Path: args } ]
+						items: [ { Filename: fn, Path: args } ],
+						forcePlay: true
 					} );
 					break;
 				case 'pls':
@@ -270,7 +272,8 @@ Application.addToPlaylist = function( items )
 					{
 						Application.playlist.push( {
 							Filename: arr[a].Filename, 
-							Path: arr[a].Path
+							Path: arr[a].Path,
+							UniqueID: genUniqueId()
 						} );
 					}
 				}
@@ -288,6 +291,12 @@ Application.addToPlaylist = function( items )
 		return;
 	}
 	
+}
+
+function genUniqueId()
+{
+	let seed = ( Math.random() % 9999 ) + ( new Date() ).getTime() + ( Math.random() % 9999 ) + ( Math.random() % 9999 ) + '.';
+	return md5( seed );
 }
 
 // Receives events from OS and child windows -----------------------------------
@@ -313,7 +322,8 @@ Application.receiveMessage = function( msg )
 								{
 									Application.playlist.push( {
 										Filename: files[a].Filename,
-										Path: files[a].Path
+										Path: files[a].Path,
+										UniqueID: genUniqueId()
 									} );
 								}
 							}
@@ -328,7 +338,8 @@ Application.receiveMessage = function( msg )
 							{
 								Application.playlist.push( {
 									Filename: fn,
-									Path: pth
+									Path: pth,
+									UniqueID: genUniqueId()
 								} );
 							}
 						}
@@ -352,11 +363,7 @@ Application.receiveMessage = function( msg )
 			break;
 		// Redraw the mini playlist
 		case 'mini_playlist':
-			this.mainView.setFlag( 'resize', true );
-			this.mainView.setFlag( 'min-height', this.miniplaylist ? 360 : 160 );
-			this.mainView.setFlag( 'max-height', this.miniplaylist ? 360 : 160 );
 			this.mainView.setFlag( 'height', this.miniplaylist ? 360 : 160 );
-			this.mainView.setFlag( 'resize', false );
 			this.mainView.sendMessage( { command: 'miniplaylist', playlist: this.playlist, index: this.index, visibility: this.miniplaylist } );
 			break;
 		case 'about_exotica':
@@ -389,6 +396,7 @@ Application.receiveMessage = function( msg )
 				{
 					if( supportedFormat( msg.items[ a ] ) )
 					{
+						msg.items[ a ].UniqueID = genUniqueId();
 						Application.playlist.push( msg.items[a] );
 					}
 				}
@@ -439,14 +447,15 @@ Application.receiveMessage = function( msg )
 				index:    this.index
 			} );
 			break;
+		// Adds to the playlist and plays (if it's not already playing)
 		case 'append_to_playlist_and_play':
 			if( msg.items.length )
 			{
 				var added = 0;
-				this.index = this.playlist.length;
 				for( var a = 0; a < msg.items.length; a++ )
 				{
 					var it = msg.items[a];
+					// Playlist
 					if( it.Filename.substr( it.Filename.length - 4, 4 ).toLowerCase() == '.pls' )
 					{
 						var f = new File( it.Path );
@@ -483,7 +492,8 @@ Application.receiveMessage = function( msg )
 									{
 										Application.playlist.push( {
 											Filename: title,
-											Path: path
+											Path: path,
+											UniqueID: genUniqueId()
 										} );
 										ad++;
 									}
@@ -492,7 +502,7 @@ Application.receiveMessage = function( msg )
 							// Yo!
 							if( ad > 0 )
 							{
-								Application.receiveMessage( { command: 'playsong' } );
+								Application.receiveMessage( { command: 'playsong', forcePlay: msg.forcePlay } );
 								if( Application.playlistWindow )
 								{
 									Application.playlistWindow.sendMessage( {
@@ -544,6 +554,7 @@ Application.receiveMessage = function( msg )
 											{
 												if( volume )
 													list[ a ].Path = volume + ':' + list[ a ].Path;
+												list[ a ].UniqueID = genUniqueId();
 												s.playlist.push( list[ a ] );
 											}
 										}
@@ -566,6 +577,7 @@ Application.receiveMessage = function( msg )
 						{
 							if( supportedFormat( it ) )
 							{
+								it.UniqueID = genUniqueId();
 								this.playlist.push( it );
 								added++;
 							}
@@ -574,15 +586,15 @@ Application.receiveMessage = function( msg )
 				}
 				if( added > 0 )
 				{
-					Application.receiveMessage( { command: 'playsong' } );
 					if( Application.playlistWindow )
 					{
 						Application.playlistWindow.sendMessage( {
 							command: 'refresh',
 							items: Application.playlist
 						} );
-						Application.receiveMessage ( { command: 'get_playlist' } );
 					}
+					Application.receiveMessage ( { command: 'get_playlist' } );
+					Application.receiveMessage( { command: 'playsong', forcePlay: msg.forcePlay } );
 				}
 			}
 			break;
@@ -591,12 +603,12 @@ Application.receiveMessage = function( msg )
 				this.playlistWindow.close();
 			break;
 		case 'resizemainwindow':
-			this.mainView.setFlag( 'min-height', msg.size );
+			// This is here to dynamically resize
 			break;
 		case 'playsongindex':
 			this.index = msg.index;
 		case 'playsong':
-			this.mainView.sendMessage( { command: 'play', index: this.index, item: this.playlist[this.index] } );
+			this.mainView.sendMessage( { command: 'play', index: this.index, item: this.playlist[this.index], forcePlay: msg.forcePlay } );
 			break;
 		case 'seek':
 			this.index += msg.dir;

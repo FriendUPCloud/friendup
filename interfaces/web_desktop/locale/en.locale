@@ -73,6 +73,7 @@ i18n_open_sharing_options            : Open sharing options
 i18n_choose_disk                     : Choose disk
 i18n_run_application                 : Run application
 i18n_shared_with                     : Shared with
+i18n_find_users_groups               : Find users and groups...
 i18n_find_workgroup_user             : Find user...
 i18n_no_users_found                  : No users found...
 i18n_error_in_userlist               : Error in userlist...
@@ -152,7 +153,12 @@ documentation_on                        : Documentation on
 i18n_sharewith                          : Share with
 i18n_sharename                          : Share name
 i18n_share_with_workgroup               : Share with workgroup
+i18n_share_file                     	: Share file with user/workgroup
+i18n_sharing_options                    : Sharing options
 i18n_no_workgroup_sharing               : Do not share with a workgroup
+i18n_file_not_shared                    : This file is not shared.
+i18n_workgroups                         : Workgroups
+i18n_users                              : Users
 my_account                              : My account
 i18n_account_setup                      : My account - setup
 
@@ -231,6 +237,7 @@ menu_unzip                              : Decompress file(s)
 menu_looknfeel                          : Look and feel
 menu_backdrop                           : Show overview
 menu_share								: Share
+menu_share_info                         : Share info
 menu_download                           : Download
 i18n_could_not_download                 : Could not download
 i18n_file_cannot_be_downloaded          : The file is not of the correct type to download
@@ -238,6 +245,7 @@ menu_close_idle_connections             : Close idle connections
 menu_hide_hidden_files                  : Hide hidden files
 menu_show_hidden_files                  : Show hidden files
 menu_new_window                         : New window
+menu_share_file                         : Sharing
 
 menu_help                               : Help
 menu_help_bug                           : Report a bug
@@ -396,6 +404,8 @@ i18n_no_field_information               : No attribute data available.
 i18n_non_compatible_field_information   : Can not preview field data.
 i18n_open_with                          : Open with
 
+i18n_list_header_group                  : Groups
+i18n_list_header_user                   : Users
 
 #File dialogs ------------------------------------------------------------------
 
@@ -521,6 +531,10 @@ i18n_FriendNetwork						: Friend Network
 i18n_connectionFailed					: Connection to the workgroup failed. Please check the password in your account settings.
 i18n_connectionAborted					: Connection to the workgroup aborted.
 i18n_password							: Password
+i18n_only_files_dropped                 : Wrong file types dropped
+i18n_only_files_can_be_shared           : Only regular files can be shared.
+i18n_share_with_users_or_groups         : Share with users or groups
+i18n_ok                                 : Ok
 
 
 i18n_paste_error                        : Paste error

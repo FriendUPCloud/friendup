@@ -2696,8 +2696,8 @@ var __randDevId = false;
 function GetDeviceId()
 {
 	// Try to get the device id from cookie
-	var ck = GetCookie( 'deviceId' );
-	if( ck ) return ck;
+	/*var ck = GetCookie( 'deviceId' );
+	if( ck ) return ck;*/
 	
 	if( !__randDevId )
 	{
@@ -2721,22 +2721,36 @@ function GetDeviceId()
 	var r = id + '_' + type + '_' + platform + '_' + __randDevId;
 
 	//application token is needed for iOS push notifications
-	if( typeof( window.friendApp ) != 'undefined' )
+	if( window.friendApp )
 	{
-		if( typeof( window.friendApp.get_app_token ) != 'undefined' )
+		if( window.friendApp.get_app_token )
 		{
-			if( platform == 'iOS' )
-			{		
-				r = id + '_ios_app_' + friendApp.get_app_token();
+			if( window.friendApp.get_platform )
+			{
+				if( friendApp.get_platform() == 'iOS' )
+				{
+					r = id + '_ios_app_' + friendApp.get_app_token();
+				}
+				else
+				{
+					r = id + '_android_app_' + friendApp.get_app_token();
+				}
 			}
 			else
 			{
-				r = id + '_android_app_' + friendApp.get_app_token();
+				if( platform === 'iOS' )
+				{		
+					r = id + '_ios_app_' + friendApp.get_app_token();
+				}
+				else
+				{
+					r = id + '_android_app_' + friendApp.get_app_token();
+				}
 			}
 		}
 	}
 	// Store the cookie for later use
-	SetCookie( 'deviceId', r );
+	//SetCookie( 'deviceId', r );
 	
 	return r;
 }

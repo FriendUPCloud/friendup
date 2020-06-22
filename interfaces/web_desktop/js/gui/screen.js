@@ -444,7 +444,7 @@ Screen = function ( flags, initObject )
 		var t = e.target ? e.target : e.srcElement;
 		
 		// Clicking on the extra widget
-		if( t.classList && t.classList.contains( 'Extra' ) )
+		if( t.classList && t.classList.contains( 'Extra' ) && ( !window.Workspace || !window.Workspace.isSingleTask ) )
 		{
 			Workspace.calendarClickEvent();
 		}

@@ -21,7 +21,7 @@ Application.run = function( msg )
 
 	if( !ge( 'StartupCommand' ).value )
 	{
-		ge( 'BrowserBox' ).src = getImageUrl( 'Progdir:Templates/about.html' );
+		ge( 'BrowserBox' ).src = 'https://friendos.com/'; //getImageUrl( 'Progdir:Templates/about.html' );
 		this.registerUrl( ge( 'BrowserBox' ).src );
 	}
 

@@ -1,7 +1,8 @@
 /* Charcoal ----------------------------------------------------------------- */
 
 html > body.Charcoal,
-html > body.Charcoal.Inside
+html > body.Charcoal.Inside,
+html > body.Charcoal .Content .Scroller:after
 {
 	background: #303030;
 }

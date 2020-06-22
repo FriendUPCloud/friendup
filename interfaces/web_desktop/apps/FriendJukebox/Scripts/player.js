@@ -8,11 +8,12 @@
 *                                                                              *
 *****************************************************************************©*/
 
-var pausebtn, playbtn;
+var pausebtn, playbtn, weran = false;
 
 // Initialize the GUI ----------------------------------------------------------
 Application.run = function( msg, iface )
 {
+	weran = true;
 	this.song = false;
 	pausebtn = ge( 'pausebutton' );
 	this.miniplaylist = false;
@@ -25,7 +26,7 @@ Application.run = function( msg, iface )
 		type: 'volume'
 	} );
 	
-	ge( 'scroll' ).innerHTML = i18n( 'i18n_empty_playlist' );
+	ge( 'scroll' ).innerHTML = i18n( 'i18n_welcome' );
 	
 	if( window.isMobile )
 	{
@@ -36,6 +37,29 @@ Application.run = function( msg, iface )
 	}
 	
 	this.clearVisualizer( 50 );
+	miniplaylistVisibility();
+}
+
+function miniplaylistVisibility()
+{
+	if( Application.miniplaylist )
+	{
+		ge( 'MiniPlaylistContainer' ).style.bottom = '47px';
+		ge( 'MiniPlaylistContainer' ).style.top = '113px';
+		ge( 'MiniPlaylistContainer' ).style.visibility = 'visible';
+		ge( 'MiniPlaylistContainer' ).style.inputEvents = '';
+		ge( 'MiniPlaylistContainer' ).style.opacity = 1;
+	}
+	else
+	{
+		ge( 'Equalizer' ).style.height = 'auto';
+		ge( 'Equalizer' ).style.bottom = '47px';
+		ge( 'MiniPlaylistContainer' ).style.bottom = '';
+		ge( 'MiniPlaylistContainer' ).style.top = 'auto';
+		ge( 'MiniPlaylistContainer' ).style.visibility = 'hidden';
+		ge( 'MiniPlaylistContainer' ).style.opacity = 0;
+		ge( 'MiniPlaylistContainer' ).style.inputEvents = 'none';
+	}
 }
 
 Application.setVolume = function( vol )
@@ -60,10 +84,10 @@ Application.redrawMiniPlaylist = function()
 		var sw = 2;
 		var tb = document.createElement( 'div' );
 		tb.className = 'List NoPadding';
-		for( var a = 0; a < playlist.length; a++ )
+		for( let a = 0; a < playlist.length; a++ )
 		{
-			var tr = document.createElement( 'div' );
-			var sanitize = playlist[a].Filename;
+			let tr = document.createElement( 'div' );
+			let sanitize = playlist[a].Filename;
 			if( sanitize.indexOf( '.' ) > 0 )
 			{
 				sanitize = sanitize.split( '.' );
@@ -72,28 +96,21 @@ Application.redrawMiniPlaylist = function()
 			}
 			tr.innerHTML = sanitize;
 			sw = sw == 1 ? 2 : 1;
-			var c = '';
-			if( a == index )
+			let c = '';
+			if( playlist[ a ].UniqueID == songID )
 			{
-				c = ' Selected Playing';
+				c = ' Selected';
+				c += ' Playing';
 			}
+			tr.uniqueID = playlist[ a ].UniqueID;
 			tr.className = 'Tune Padding Ellipsis sw' + sw + c;
 			( function( ele, eles, index )
 			{
 				tr.onclick = function()
 				{
-					for( var u = 0; u < eles.childNodes.length; u++ )
-					{
-						if( eles.childNodes[u] != ele && eles.childNodes[u].classList )
-						{
-							eles.childNodes[u].classList.remove( 'Playing' );
-							eles.childNodes[u].classList.remove( 'Selected' );
-						}
-					}
-					ele.classList.add( 'Playing', 'Selected' );
 					if( Application.song )
 					{
-						Application.song.stop();
+						Application.receiveMessage( { command: 'stop' } );
 					}
 					Application.sendMessage( { command: 'playsongindex', index: index } );
 				}
@@ -104,18 +121,17 @@ Application.redrawMiniPlaylist = function()
 		{
 			ge( 'MiniPlaylist' ).innerHTML = '';
 			ge( 'MiniPlaylist' ).appendChild( tb );
-			ge( 'MiniPlaylist' ).style.bottom = '45px';
-			ge( 'MiniPlaylist' ).style.height = GetElementHeight( tb );
+			ge( 'MiniPlaylistContainer' ).style.bottom = '45px';
+			ge( 'MiniPlaylistContainer' ).style.height = GetElementHeight( tb );
 		}
 		else
 		{
-			ge( 'MiniPlaylist' ).innerHTML = '<div class="List"><div class="sw1">Playlist is empty.</div></div>';
+			ge( 'MiniPlaylist' ).innerHTML = '<div class="List"><div class="sw1 Padding">' + i18n( 'i18n_empty_playlist' ) + '</div></div>';
 		}
 		var h = GetElementHeight( ge( 'visualizer' ) );
 		h += GetElementHeight( tb );
 		h += GetElementHeight( ge( 'BottomButtons' ) );
 		if( h > 300 ) h = 300;
-		Application.sendMessage( { command: 'resizemainwindow', size: h } );
 	}
 }
 
@@ -146,40 +162,46 @@ Application.receiveMessage = function( msg )
 			if( this.miniplaylist )
 			{
 				ge( 'Equalizer' ).style.height = '113px';
-				ge( 'MiniPlaylist' ).style.bottom = '47px';
-				ge( 'MiniPlaylist' ).style.top = '113px';
-				ge( 'MiniPlaylist' ).style.visibility = 'visible';
-				ge( 'MiniPlaylist' ).style.inputEvents = '';
-				ge( 'MiniPlaylist' ).style.opacity = 1;
 				this.index = msg.index;
 				this.playlist = msg.playlist;
 				this.redrawMiniPlaylist();
 			}
-			else
-			{
-				ge( 'Equalizer' ).style.height = 'auto';
-				ge( 'Equalizer' ).style.bottom = '47px';
-				ge( 'MiniPlaylist' ).style.bottom = '';
-				ge( 'MiniPlaylist' ).style.top = 'auto';
-				ge( 'MiniPlaylist' ).style.visibility = 'hidden';
-				ge( 'MiniPlaylist' ).style.opacity = 0;
-				ge( 'MiniPlaylist' ).style.inputEvents = 'none';
-			}
+			miniplaylistVisibility();
 			break;
 		case 'play':
 			if( !msg.item ) return;
+			if( !weran )
+			{
+				return setTimeout( function()
+				{
+					Application.receiveMessage( msg );
+				}, 50 );
+			}
 			var self = this;
-			//var src = '/system.library/file/read?mode=r&readraw=1' +
-			//	'&authid=' + Application.authId + '&path=' + msg.item.Path;
+			
+			// We're already playing
+			if( !msg.forcePlay )
+			{
+				if( document.body.classList.contains( 'Playing' ) )
+				{
+					return;
+				}
+			}
+			
 			ge( 'progress' ).style.opacity = 0;
 			ge( 'scroll' ).innerHTML = '<div>' + i18n( 'i18n_loading_song' ) + '...</div>';
+			
 			if( this.song ) 
 			{
-				var tmp = this.song.onfinished;
 				this.song.onfinished = function(){};
 				this.song.stop();
 				this.song.unload();
 			}
+			
+			// Update song id!
+			songID = msg.item.UniqueID;
+			this.redrawMiniPlaylist();
+			
 			this.song = new AudioObject( msg.item.Path, function( result, err )
 			{
 				if( !result )
@@ -208,19 +230,21 @@ Application.receiveMessage = function( msg )
 				var eles = ge( 'MiniPlaylist' ).getElementsByClassName( 'Ellipsis' );
 				for( var a = 0; a < eles.length; a++ )
 				{
-					if( a == msg.index )
+					if( eles[ a ].uniqueID == songID )
 					{
-						eles[a].classList.add( 'Selected', 'Playing' );
+						eles[a].classList.add( 'Selected' );
+						eles[a].classList.add( 'Playing' );
 					}
 					else
 					{
-						eles[a].classList.remove( 'Selected', 'Playing' );
+						eles[a].classList.remove( 'Selected' );
+						eles[a].classList.remove( 'Playing' );
 					}
 				}
 				this.index = msg.index;
 			}
 			this.song.onload = function()
-			{
+			{	
 				document.body.classList.remove( 'Paused' );
 				document.body.classList.add( 'Playing' );
 				
@@ -394,6 +418,13 @@ Application.clearVisualizer = function( time )
 // Initialize player!!!
 Application.initVisualizer = function()
 {	
+	if( !this.song || !this.song.getContext )
+	{
+		return setTimeout( function()
+		{
+			Application.initVisualizer()
+		}, 50 );
+	}
 	let eq = ge( 'visualizer' ); let w = eq.offsetWidth, h = eq.offsetHeight;
 	eq.setAttribute( 'width', w ); eq.setAttribute( 'height', h );
 	
@@ -434,6 +465,10 @@ Application.initVisualizer = function()
 	let scrollDir = -1;
 	let waitTime = 0;
 	
+	// For flashing
+	let pcolor = 0;
+	let changeTime = 0;
+	
 	this.dr = function()
 	{
 		ana.getByteTimeDomainData( dataArray );
@@ -460,6 +495,19 @@ Application.initVisualizer = function()
 		ctx.beginPath();
 		let hh = h >> 1;
 		let sw = 1 / bufLength * w;
+		
+		
+		/* Drum flash (not working, disabled)
+		let start = dataArray[ bufLength - 1 ];
+		let cand = start > 220 ? '#8862B1' : '#000000';
+		if( pcolor != cand && changeTime == 0 )
+		{
+			ge( 'Flash' ).style.backgroundColor = cand;
+			pcolor = cand;
+			if( cand != '#000000' )
+				changeTime = 5;
+		}
+		if( changeTime > 0 ) changeTime--;*/
 		
 		// TODO: If amplitude is high, flash!
 		// TODO: Other visualizations
@@ -519,10 +567,11 @@ Application.initVisualizer = function()
 	
 }
 
-function PlaySong()
+function PlaySong( force )
 {
+	if( !force ) force = false;
 	ge( 'player' ).src = '';
-	Application.sendMessage( { command: 'playsong' } );
+	Application.sendMessage( { command: 'playsong', forcePlay: force } );
 }
 
 function PauseSong()

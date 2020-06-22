@@ -805,21 +805,54 @@ var themeInfo = {
 	dynamicClasses: {
 		WindowSnapping: function( e )
 		{
+			if( !Workspace.screen || !Workspace.screen.contentDiv.directoryview ) return;
 			let hh = Workspace && Workspace.screen ? ( Workspace.screen.getMaxViewHeight() + 'px' ) : '0';
-			let winw = window.innerWidth + 'px';
-			let ww = Math.floor( window.innerWidth * 0.5 ) + 'px';
+			
+			let winw = Workspace.screen.contentDiv.directoryview;
+			if( !winw.scroller ) return;
+			
+			let leftx = 0;
+			let topy = 0;
+			let dockWidth = 0;
+			
+			if( Workspace.mainDock )
+			{
+				switch( Workspace.mainDock.dom.getAttribute( 'position' ) )
+				{
+					case 'left_center':
+					case 'left_top':
+					case 'left_bottom':
+						leftx = Workspace.mainDock.dom.offsetWidth + 'px';
+						dockWidth = Workspace.mainDock.dom.offsetWidth;
+						break;
+					case 'right_center':
+					case 'right_top':
+					case 'right_bottom':
+						dockWidth = Workspace.mainDock.dom.offsetWidth;
+						break;
+					case 'top_left':
+					case 'top_center':
+					case 'top_right':
+						topy = Workspace.mainDock.dom.offsetHeight + 'px';
+						break;
+				}
+			}
+			
+			winw = window.innerWidth - dockWidth;
+			let ww = Math.floor( winw >> 1 ) + 'px';
+			
 			return `
 html .View.SnapLeft
 {
-	left: 0 !important;
-	top: 0;
+	left: ${leftx} !important;
+	top: ${topy} !important;
 	height: ${hh} !important;
 	width: ${ww} !important;
 }
 html .View.SnapRight
 {
-	left: calc(${winw} - ${ww}) !important;
-	top: 0;
+	left: calc(${leftx} + ${ww}) !important;
+	top: ${topy} !important;
 	height: ${hh} !important;
 	width: ${ww} !important;
 }
@@ -2020,22 +2053,35 @@ movableListener = function( e, data )
 				);
 
 				// Do the snap!
-				if( !isMobile )
+				if( !isMobile && currentMovable.windowObject.flags.resize !== false )
 				{
 					let tsX = w.offsetLeft;
 					let tsY = w.offsetTop;
-					if( windowMouseY > 0 )
+					
+					let screenLeftEdge = screenRightEdge = 0;
+					
+					let dv = Workspace.screen.contentDiv.directoryview;
+					if( dv && dv.scroller )
+					{
+						dv = dv.scroller;
+						screenLeftEdge = dv.offsetLeft;
+						screenRightEdge = window.innerWidth - ( Workspace.screen.contentDiv.offsetWidth - dv.offsetWidth );
+					}
+					
+					// Give some space from the title bar
+					if( windowMouseY > 40 )
 					{
 						let snapOut = false;
-						let hw = window.innerWidth * 0.1;
-						let rhw = window.innerWidth - hw;
+						let hw = 128;
+						let rhw = screenRightEdge - 128;
+						
 						if( windowMouseX > hw && windowMouseX < rhw )
 						{
 							snapOut = true;
 						}
 						else
 						{
-							if( tsX == 0 )
+							if( tsX <= screenLeftEdge )
 							{
 								w.classList.remove( 'SnapRight' );
 								if( !w.classList.contains( 'SnapLeft' ) )
@@ -2046,7 +2092,7 @@ movableListener = function( e, data )
 										w.content.refresh();
 								}
 							}
-							else if( tsX + w.offsetWidth == window.innerWidth )
+							else if( tsX + w.offsetWidth >= screenRightEdge )
 							{
 								w.classList.remove( 'SnapLeft' );
 								if( !w.classList.contains( 'SnapRight' ) )

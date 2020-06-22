@@ -330,14 +330,53 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 					if( typeof( list ) == 'object' && list.length )
 					{
 						// Fix paths
+						let sef = this;
+						let sharedCheck = [];
 						for( var a = 0; a < list.length; a++ )
 						{
 							if( list[a].Path.indexOf( ':' ) < 0 )
 								list[a].Path = deviceName + list[a].Path;
+							if( list[a].Path.substr( -1, 1 ) != '/' && deviceName != 'Shared:' )
+							{
+								sharedCheck.push( list[a].Path );
+							}
 						}
-						var pth = list[0].Path.substr( 0, t.fileInfo.Path.length );
-						callback( list, t.fileInfo.Path, pth );
-						this.parseQueue( list, t.fileInfo.Path, pth );
+						if( sharedCheck.length )
+						{
+							let ch = new Module( 'system' );
+							ch.onExecuted = function( che, chd )
+							{
+								if( che == 'ok' )
+								{
+									try
+									{
+										chd = JSON.parse( chd );
+										for( let z = 0; z < list.length; z++ )
+										{
+											for( let c = 0; c < chd.length; c++ )
+											{
+												if( chd[c] == list[z].Path )
+												{
+													list[ z ].SharedFile = true;
+													break;
+												}
+											}
+										}
+									}
+									catch( e ){};
+								}
+								var pth = list[0].Path.substr( 0, t.fileInfo.Path.length );
+								callback( list, t.fileInfo.Path, pth );
+								sef.parseQueue( list, t.fileInfo.Path, pth );
+							}
+							ch.execute( 'checksharedpaths', { paths: sharedCheck } );
+						}
+						else
+						{
+							var pth = list[0].Path.substr( 0, t.fileInfo.Path.length );
+							callback( list, t.fileInfo.Path, pth );
+							sef.parseQueue( list, t.fileInfo.Path, pth );
+						}
 					}
 					else
 					{
