@@ -33,7 +33,7 @@ Workspace.viewSharingOptions = function( path )
 	v.selectedItems = [];
 	v.content.onclick = function( e )
 	{
-		if( v.dropDown )
+		if( v.dropDown && v.dropDown.classList.contains( 'Showing' ) )
 		{
 			v.selectedItems = [];
 			let eles = v.dropDown.getElementsByClassName( 'DropdownItem' );
@@ -318,10 +318,14 @@ Workspace.setSharingGui = function( viewObject )
 Workspace.refreshShareInformation = function( viewObject, callback )
 {
 	let list = ge( 'sharedList_' + viewObject.uniqueId );
-	let items = {
-		group: [],
-		user: []
-	};
+	if( !viewObject.finalItems )
+	{
+		viewObject.finalItems = {
+			user: [],
+			group: []
+		};
+	}
+	let items = viewObject.finalItems;
 	let m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
@@ -331,19 +335,45 @@ Workspace.refreshShareInformation = function( viewObject, callback )
 			try
 			{
 				d = JSON.parse( d );
+				let adders = [];
 				for( let c = 0; c < d.length; c++ )
 				{
-					items[ d[ c ].type ].push( d[ c ] );
+					// Duplicate test
+					let found = false;
+					for( let cc = 0; cc < items[ d[ c ].type ].length; cc++ )
+					{
+						if( items[ d[ c ].type ][ cc ].id == d[ c ].id )
+						{
+							found = true;
+						}
+					}
+					if( !found )
+					{
+						items[ d[ c ].type ].push( d[ c ] );
+					}
 				}
 			}
 			catch( e ){};
 		}
 		
-		// Get current members
+		// Get current new selected members
 		for( let c = 0; c < viewObject.selectedItems.length; c++ )
 		{
-			items[ viewObject.selectedItems[ c ].type ].push( viewObject.selectedItems[ c ] );
+			// Only add them if they are not found!
+			let found = false;
+			let type = viewObject.selectedItems[ c ].type;
+			for( let cc = 0; cc < items[ type ].length; cc++ )
+			{
+				if( items[ type ][ cc ].id == viewObject.selectedItems[ c ].id )
+				{
+					found = true;
+					break;
+				}
+			}
+			if( !found )
+				items[ viewObject.selectedItems[ c ].type ].push( viewObject.selectedItems[ c ] );
 		}
+		viewObject.selectedItems = [];
 	
 		// Set the final items..
 		viewObject.finalItems = items;
@@ -364,7 +394,7 @@ Workspace.refreshShareInformation = function( viewObject, callback )
 					{
 						let idn = items[ b ][ a ].id;
 						sw = sw == 1 ? 2 : 1;
-						str += '<div ' + idt + '="' + idn + '" class="PaddingSmall sw' + sw + ' HRow ' + icmod + '"><button class="IconSmall IconButton fa-remove FloatRight">&nbsp;</button>&nbsp;' + items[ b ][ a ].name + '</div>';
+						str += '<div ' + idt + '="' + idn + '" class="PaddingSmall sw' + sw + ' HRow ' + icmod + '"><button class="IconSmall IconButton fa-remove FloatRight"></button>&nbsp;' + items[ b ][ a ].name + '</div>';
 					}
 				}
 			}
@@ -385,12 +415,33 @@ Workspace.refreshShareInformation = function( viewObject, callback )
 						}
 						if( n = this.parentNode.getAttribute( 'uid' ) )
 						{
+							// Quick remove
+							let uout = [];
+							let ushr = viewObject.finalItems.user;
+							for( let z = 0; z < ushr.length; z++ )
+							{
+								if( parseInt( ushr[ z ].id ) != parseInt( n ) )
+									uout.push( ushr[ z ] );
+							}
+							viewObject.finalItems.user = uout;
+							// Try to permanently remove from db
 							m.execute( 'removefileshareinfo', { userid: n, path: viewObject.path } );
 						}
 						else if( n = this.parentNode.getAttribute( 'gid' ) )
 						{
+							// Quick remove
+							let uout = [];
+							let ushr = viewObject.finalItems.group;
+							for( let z = 0; z < ushr.length; z++ )
+							{
+								if( parseInt( ushr[ z ].id ) != parseInt( n ) )
+									uout.push( ushr[ z ] );
+							}
+							viewObject.finalItems.group = uout;
+							// Try to permanently remove from db
 							m.execute( 'removefileshareinfo', { groupid: n, path: viewObject.path } );
 						}
+						Workspace.refreshShareInformation( viewObject );
 					}
 				} )( buttons[ c ] );
 			}
