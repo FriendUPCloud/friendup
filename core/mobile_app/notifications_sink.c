@@ -483,7 +483,7 @@ void ProcessSinkMessage( void *locd )
 							//char *username = NULL;
 							char *channel_id = NULL;
 							char *title = NULL;
-							char *message = NULL;
+							char *content = NULL;
 							char *application = NULL;
 							char *extra = NULL;
 							FULONG timecreated = 0;
@@ -552,7 +552,7 @@ void ProcessSinkMessage( void *locd )
 								else if( strncmp( data + t[p].start, "message", size) == 0) 
 								{
 									p++;
-									message = StringDuplicateN( data + t[p].start, t[p].end - t[p].start );
+									content = StringDuplicateN( data + t[p].start, t[p].end - t[p].start );
 								}
 								else if( strncmp( data + t[p].start, "application", size) == 0) 
 								{
@@ -580,9 +580,9 @@ void ProcessSinkMessage( void *locd )
 							
 							if( notification_type >= 0 )
 							{
-								if( ulistroot == NULL || channel_id == NULL || title == NULL || message == NULL )
+								if( ulistroot == NULL || channel_id == NULL || title == NULL || content == NULL )
 								{
-									DEBUG( "channel_id: %s title: %s message: %s\n", channel_id, title , message );
+									DEBUG( "channel_id: %s title: %s content: %s\n", channel_id, title , content );
 									UMsg *le = ulistroot;
 									while( le != NULL )
 									{
@@ -597,7 +597,7 @@ void ProcessSinkMessage( void *locd )
 									}
 									if( channel_id != NULL ) FFree( channel_id );
 									if( title != NULL ) FFree( title );
-									if( message != NULL ) FFree( message );
+									if( content != NULL ) FFree( content );
 									if( application != NULL ) FFree( application );
 									if( extra != NULL ) FFree( extra );
 									ReplyError( d, WS_NOTIF_SINK_ERROR_PARAMETERS_NOT_FOUND );
@@ -630,7 +630,7 @@ void ProcessSinkMessage( void *locd )
 								{
 									if( le->usrname != NULL )
 									{
-										int status = MobileAppNotifyUserRegister( SLIB, (char *)le->usrname, channel_id, application, title, message, (MobileNotificationTypeT)notification_type, extra, timecreated );
+										int status = MobileAppNotifyUserRegister( SLIB, (char *)le->usrname, channel_id, application, title, content, (MobileNotificationTypeT)notification_type, extra, timecreated );
 
 										if( status != 0 )
 										{
@@ -671,7 +671,7 @@ void ProcessSinkMessage( void *locd )
 							//if( username != NULL ) FFree( username );
 							if( channel_id != NULL ) FFree( channel_id );
 							if( title != NULL ) FFree( title );
-							if( message != NULL ) FFree( message );
+							if( content != NULL ) FFree( content );
 							if( application != NULL ) FFree( application );
 							if( extra != NULL ) FFree( extra );
 						}
@@ -726,7 +726,7 @@ void ProcessSinkMessage( void *locd )
 									BufString *bs = BufStringNew();
 									//BufStringAddSize( bs, "{", 1 );
 								
-									User *usr = UMGetUserByUUIDDB( SLIB->sl_UM, uuid );
+									User *usr = UMGetUserByUUIDDB( SLIB->sl_UM, uuid, FALSE );
 									if( usr != NULL )
 									{
 										char udata[ 1024 ];
@@ -762,6 +762,8 @@ void ProcessSinkMessage( void *locd )
 										BufStringAddSize( bs, "]}", 2 );
 										
 										NotificationManagerSendEventToConnections( SLIB->sl_NotificationManager, NULL, NULL, reqid, NULL, NULL, NULL, bs->bs_Buffer );
+										
+										UserDelete( usr );
 									}
 									else
 									{

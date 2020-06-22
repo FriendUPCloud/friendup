@@ -162,6 +162,7 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 			$u .= ( $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost ) . ':' . $Config->FCPort;
 			$c = curl_init();
 			curl_setopt( $c, CURLOPT_URL, $u . '/system.library/device/mount/?devname=Home&sessionid=' . $User->SessionID );
+			curl_setopt( $c, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
 			curl_setopt( $c, CURLOPT_RETURNTRANSFER, 1 );
 			if( $Config->SSLEnable )
 			{

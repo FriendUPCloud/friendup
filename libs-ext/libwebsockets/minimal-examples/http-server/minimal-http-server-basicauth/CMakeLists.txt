@@ -1,3 +1,4 @@
+project(lws-minimal-http-server-basicauth)
 cmake_minimum_required(VERSION 2.8)
 include(CheckCSourceCompiles)
 
@@ -64,6 +65,7 @@ ENDMACRO()
 set(requirements 1)
 require_lws_config(LWS_ROLE_H1 1 requirements)
 require_lws_config(LWS_WITH_SERVER 1 requirements)
+require_lws_config(LWS_WITH_HTTP_BASIC_AUTH 1 requirements)
 
 if (requirements)
 	add_executable(${SAMP} ${SRCS})

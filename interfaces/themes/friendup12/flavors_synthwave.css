@@ -1,7 +1,8 @@
 /* Synthwave ---------------------------------------------------------------- */
 
 html > body.Synthwave,
-html > body.Synthwave.Inside
+html > body.Synthwave.Inside,
+html > body.Synthwave .Content .Scroller:after
 {
 	background: #461C64;
 }

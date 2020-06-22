@@ -31,9 +31,9 @@
 #include <libwebsockets.h>
 #include <core/thread.h>
 #include <time.h>
-//#include <network/websocket_server_client.h>
 #include <util/buffered_string.h>
 #include <util/friendqueue.h>
+//#include <system/user/user_session.h>
 
 #define MAX_MESSAGE_QUEUE 64
 
@@ -58,8 +58,6 @@ typedef struct WebSocket
 	int									ws_DebugLevel;
 	int									ws_OldTime;
 	int									ws_Opts;
-	
-	unsigned char						ws_Buf[LWS_SEND_BUFFER_PRE_PADDING + 1024 + LWS_SEND_BUFFER_POST_PADDING];
 						  
 	// connection epoll
 	struct lws_pollfd					ws_Pollfds[ MAX_POLL_ELEMENTS ];
@@ -87,6 +85,16 @@ typedef struct WebSocket
 
 typedef struct WSCData
 {
+	void							*wsc_UserSession;
+	struct lws				 		*wsc_Wsi;
+	BufString						*wsc_Buffer;
+	pthread_mutex_t					wsc_Mutex;
+	int								wsc_InUseCounter;
+}WSCData;
+
+/*
+typedef struct WSCData
+{
 	void							*wsc_SystemBase;
 	struct lws				 		*wsc_Wsi;
 	int								wsc_InUseCounter;
@@ -104,6 +112,7 @@ typedef struct WSCData
 	char							wsc_DebugCalls[ WS_CALLS_MAX ][ 256 ];
 #endif
 }WSCData;
+*/
 
 //
 //
@@ -127,13 +136,13 @@ int WebSocketStart( WebSocket *ws );
 //
 //
 
-int AttachWebsocketToSession( void *l, struct lws *wsi, const char *sessionid, const char *authid, WSCData *data );
+int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessionid, const char *authid, WSCData *data );
 
 //
 //
 //
 
-int DetachWebsocketFromSession( WSCData *data );
+int DetachWebsocketFromSession( void *us );
 
 #endif // __NETWORK_WEBSOCKET_H__
 

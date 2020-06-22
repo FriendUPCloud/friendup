@@ -156,8 +156,7 @@ lws_generate_client_ws_handshake(struct lws *wsi, char *p, const char *conn1)
 	/*
 	 * create the random key
 	 */
-	n = lws_get_random(wsi->context, hash, 16);
-	if (n != 16) {
+	if (lws_get_random(wsi->context, hash, 16) != 16) {
 		lwsl_err("Unable to read from random dev %s\n",
 			 SYSTEM_RANDOM_FILEPATH);
 		return NULL;
@@ -257,7 +256,7 @@ lws_client_ws_upgrade(struct lws *wsi, const char **cce)
 		wsi->detlat.earliest_write_req_pre_write = 0;
 #endif
 
-	if (wsi->client_h2_substream) {/* !!! client ws-over-h2 not there yet */
+	if (wsi->client_mux_substream) {/* !!! client ws-over-h2 not there yet */
 		lwsl_warn("%s: client ws-over-h2 upgrade not supported yet\n",
 			  __func__);
 		*cce = "HS: h2 / ws upgrade unsupported";
@@ -304,9 +303,10 @@ lws_client_ws_upgrade(struct lws *wsi, const char **cce)
 
 	lws_tokenize_init(&ts, buf, LWS_TOKENIZE_F_COMMA_SEP_LIST |
 				    LWS_TOKENIZE_F_MINUS_NONTERM);
-	ts.len = lws_hdr_copy(wsi, buf, sizeof(buf) - 1, WSI_TOKEN_CONNECTION);
-	if (ts.len <= 0) /* won't fit, or absent */
+	n = lws_hdr_copy(wsi, buf, sizeof(buf) - 1, WSI_TOKEN_CONNECTION);
+	if (n <= 0) /* won't fit, or absent */
 		goto bad_conn_format;
+	ts.len = n;
 
 	do {
 		e = lws_tokenize(&ts);
@@ -658,16 +658,6 @@ check_accept:
 		goto bail2;
 	}
 	wsi->ws->rx_ubuf_alloc = n;
-	lwsl_info("Allocating client RX buffer %d\n", n);
-
-#if !defined(LWS_PLAT_FREERTOS)
-	if (setsockopt(wsi->desc.sockfd, SOL_SOCKET, SO_SNDBUF,
-		       (const char *)&n, sizeof n)) {
-		lwsl_warn("Failed to set SNDBUF to %d", n);
-		*cce = "HS: SO_SNDBUF failed";
-		goto bail3;
-	}
-#endif
 
 	lwsl_debug("handshake OK for protocol %s\n", wsi->protocol->name);
 

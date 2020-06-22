@@ -12,6 +12,8 @@
 
 global $SqlDatabase, $Logger, $User;
 
+// TODO: For scaling, allow search parameters!
+
 // Get own workgroups
 if( $workgroups = $SqlDatabase->FetchObjects( '
 	SELECT ug.ID FROM FUserGroup ug, FUserToGroup fug 

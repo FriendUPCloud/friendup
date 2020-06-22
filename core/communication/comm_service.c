@@ -44,6 +44,9 @@
 #include <util/time.h>
 #include <hardware/network.h>
 
+// disable debug
+//#undef __DEBUG
+
 #define FLAGS S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH
 #define MAX_MSG 50
 
@@ -825,7 +828,7 @@ int CommServiceThreadServer( FThread *ptr )
 						{
 							count = (int)bs->bs_Size;
 							
-							DEBUG2("[COMMSERV] Readed from socket %lu\n", (unsigned long)bs->bs_Size );
+							DEBUG2("[COMMSERV] Read from socket %lu\n", (unsigned long)bs->bs_Size );
 							
 							DataForm *df = (DataForm *)bs->bs_Buffer;
 							
@@ -1880,6 +1883,12 @@ void CommServicePING( CommService* s )
 			pthread_create( &t, NULL, &InternalPINGThread, con );
 			pthread_detach( t );
 		}
+		
+		if( fcm->fcm_Shutdown == TRUE )
+		{
+			break;
+		}
+		
 		con = (FConnection *)con->node.mln_Succ;
 	}
 	

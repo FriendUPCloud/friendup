@@ -39,7 +39,7 @@ typedef struct FilesystemActivity
 	struct tm			fsa_ToDate;         // till what date this entry will be used
 	time_t				fsa_ToDateTimeT;
 	FQUAD				fsa_StoredBytesLeft;  // how many bytes user can store, this entry is updated each month
-	FQUAD				fsa_ReadedBytesLeft;  // how many bytes user can read, this entry is updated each month
+	FQUAD				fsa_ReadBytesLeft;  // how many bytes user can read, this entry is updated each month
 } FilesystemActivity;
 
 static const FULONG FilesystemActivityDesc[] = { 
@@ -48,7 +48,7 @@ static const FULONG FilesystemActivityDesc[] = {
 	SQLT_INT,     (FULONG)"FilesystemID",          offsetof( struct FilesystemActivity, fsa_FilesystemID ), 
 	SQLT_DATE,    (FULONG)"ToDate", offsetof( struct FilesystemActivity, fsa_ToDate ),
 	SQLT_INT,     (FULONG)"StoredBytesLeft", offsetof( struct FilesystemActivity, fsa_StoredBytesLeft ),
-	SQLT_INT,     (FULONG)"ReadedBytesLeft", offsetof( struct FilesystemActivity, fsa_ReadedBytesLeft ),
+	SQLT_INT,     (FULONG)"ReadedBytesLeft", offsetof( struct FilesystemActivity, fsa_ReadBytesLeft ),
 	SQLT_NODE,    (FULONG)"node",        offsetof( struct FilesystemActivity, node ),
 	SQLT_END 
 };

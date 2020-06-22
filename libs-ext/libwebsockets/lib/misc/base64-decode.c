@@ -36,6 +36,8 @@
  * of libwebsockets
  */
 
+#include <libwebsockets.h>
+
 #include <stdio.h>
 #include <string.h>
 #include "private-lib-core.h"
@@ -52,9 +54,7 @@ _lws_b64_encode_string(const char *encode, const char *in, int in_len,
 		       char *out, int out_size)
 {
 	unsigned char triple[3];
-	int i;
-	int line = 0;
-	int done = 0;
+	int i, done = 0;
 
 	while (in_len) {
 		int len = 0;
@@ -78,7 +78,6 @@ _lws_b64_encode_string(const char *encode, const char *in, int in_len,
 		*out++ = (len > 2 ? encode[triple[2] & 0x3f] : '=');
 
 		done += 4;
-		line += 4;
 	}
 
 	if (done + 1 >= out_size)
@@ -89,13 +88,13 @@ _lws_b64_encode_string(const char *encode, const char *in, int in_len,
 	return done;
 }
 
-LWS_VISIBLE int
+int
 lws_b64_encode_string(const char *in, int in_len, char *out, int out_size)
 {
 	return _lws_b64_encode_string(encode_orig, in, in_len, out, out_size);
 }
 
-LWS_VISIBLE int
+int
 lws_b64_encode_string_url(const char *in, int in_len, char *out, int out_size)
 {
 	return _lws_b64_encode_string(encode_url, in, in_len, out, out_size);
@@ -182,14 +181,14 @@ lws_b64_decode_stateful(struct lws_b64state *s, const char *in, size_t *in_len,
  * the first NUL in the input.
  */
 
-static int
+static size_t
 _lws_b64_decode_string(const char *in, int in_len, char *out, int out_size)
 {
 	struct lws_b64state state;
-	size_t il = in_len, ol = out_size;
+	size_t il = (size_t)in_len, ol = out_size;
 
 	if (in_len == -1)
-		il = in_len = strlen(in);
+		il = strlen(in);
 
 	lws_b64_decode_state_init(&state);
 	lws_b64_decode_stateful(&state, in, &il, (uint8_t *)out, &ol, 1);
@@ -200,16 +199,16 @@ _lws_b64_decode_string(const char *in, int in_len, char *out, int out_size)
 	return ol;
 }
 
-LWS_VISIBLE int
+int
 lws_b64_decode_string(const char *in, char *out, int out_size)
 {
-	return _lws_b64_decode_string(in, -1, out, out_size);
+	return (int)_lws_b64_decode_string(in, -1, out, out_size);
 }
 
-LWS_VISIBLE int
+int
 lws_b64_decode_string_len(const char *in, int in_len, char *out, int out_size)
 {
-	return _lws_b64_decode_string(in, in_len, out, out_size);
+	return (int)_lws_b64_decode_string(in, in_len, out, out_size);
 }
 
 #if 0

@@ -66,6 +66,7 @@ switch( $args->command )
 				curl_setopt( $c, CURLOPT_URL,            $vurl               );
 				curl_setopt( $c, CURLOPT_POSTFIELDS,     $vars               );
 				curl_setopt( $c, CURLOPT_RETURNTRANSFER, true                );
+				curl_setopt( $c, CURLOPT_EXPECT_100_TIMEOUT_MS, false        );
 				$fc = curl_exec( $c );
 				curl_close( $c );
 				

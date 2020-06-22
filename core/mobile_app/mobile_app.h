@@ -59,6 +59,7 @@ enum {
 	MOBILE_APP_TYPE_ANDROID,
 	MOBILE_APP_TYPE_IOS,
 	MOBILE_APP_TYPE_WINDOWS,
+	MOBILE_APP_TYPE_FIREBASE,
 	MOBILE_APP_TYPE_MAX
 };
 
@@ -67,7 +68,8 @@ static char *MobileAppType[] =
 	"None",
 	"Android",
 	"iOS",
-	"Windows"
+	"Windows",
+	"Firebase"
 };
 
 #define WEBSOCKET_SINK_SEND_QUEUE

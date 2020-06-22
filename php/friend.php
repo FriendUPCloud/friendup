@@ -38,7 +38,8 @@ function friend_json_decode( $string )
 function jsUrlEncode( $in )
 { 
 	$out = '';
-	for( $i = 0; $i < strlen( $in ); $i++ )
+	$len = strlen( $in );
+	for( $i = 0; $i < $len; $i++ )
 	{
 		$hex = dechex( ord( $in[ $i ] ) );
 		if( $hex == '' ) $out = $out . urlencode( $in[ $i ] );
@@ -60,6 +61,7 @@ function FriendCall( $queryString = false, $flags = false, $post = false )
 		$queryString = ( $Config->SSLEnable ? 'https://' : 'http://' ) . ( $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost ) . ':' . $Config->FCPort;
 	curl_setopt( $ch, CURLOPT_URL, $queryString );
 	curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+	curl_setopt( $ch, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
 	
 	if( isset( $flags ) && $flags )
 	{
@@ -72,6 +74,11 @@ function FriendCall( $queryString = false, $flags = false, $post = false )
 	{
 		curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
 		curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
+	}
+	if( isset( $post ) && $post )
+	{
+		curl_setopt( $ch, CURLOPT_POST, true );
+		curl_setopt( $ch, CURLOPT_POSTFIELDS, $post );
 	}
 	$result = curl_exec( $ch );
 	curl_close( $ch );

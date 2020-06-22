@@ -10,6 +10,10 @@
 	transform: rotatez(0deg);
 	pointer-events: none;
 }
+body:not([sharedapp]) .ViewContainer
+{
+	perspective: 1000px;
+}
 body:not([mobile]) .ViewContainer
 {
 	transition: opacity 0.2s;
@@ -43,6 +47,25 @@ body:not([mobile]) .View
 	transition-duration: 0.25s, 0.25s, 0.25s, 0.25s;
 	-moz-transition-duration: 0.25s, 0.25s, 0.3s, 0.25s;
 	-webkit-transition-duration: 0.25s, 0.25s, 0.25s, 0.25s;
+}
+
+html body[singletask] .View,
+html body[singletask] .View > .Title
+{
+	border-radius: 0;
+	box-shadow: none;
+}
+html body[singletask] .View > .Title
+{
+	border-top: 1px solid rgba(255,255,255,0.05);
+}
+html body[singletask] .View > .Content
+{
+	border-radius: 0;
+}
+html body[singletask] .View > .Title > div > .Minimize
+{
+	display: none;
 }
 
 .ViewContainer.Activating > .View > .Content, 
@@ -996,6 +1019,12 @@ html body:not([mobile]) .Screen.ChangingScreenTitle > .TitleBar .Info,
 html body:not([mobile]) .Screen.ChangingScreenTitle #WorkspaceMenu
 {
 	opacity: 0;
+}
+
+html [singletask] .Screen > .TitleBar
+{
+	box-shadow: none;
+	border-bottom: 1px solid rgba(0,0,0,0.1);
 }
 
 html .Screen > .TitleBar.Busy:after

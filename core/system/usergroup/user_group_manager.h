@@ -75,6 +75,12 @@ UserGroup *UGMGetGroupByID( UserGroupManager *smgr, FULONG id );
 UserGroup *UGMGetGroupByName( UserGroupManager *smgr, const char *name );
 
 //
+// Get UserGroup by Name from database
+//
+
+UserGroup *UGMGetGroupByNameDB( UserGroupManager *ugm, const char *name );
+
+//
 // Remove drive from UserGroup
 //
 

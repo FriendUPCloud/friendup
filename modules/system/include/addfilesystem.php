@@ -47,7 +47,7 @@ else
 			{
 				// If user has GLOBAL or WORKGROUP access to this user
 			
-				if( isset( $args->args->userid ) && $args->args->userid )
+				if( isset( $args->args->userid ) )
 				{
 					$userid = intval( $args->args->userid );
 				}

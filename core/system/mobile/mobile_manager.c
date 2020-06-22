@@ -57,6 +57,7 @@ MobileManager *MobileManagerNew( void *sb )
 			}
 		}
 		
+		/*
 		DEBUG("lsb->l_APNSConnection ptr %p\n", lsb->l_APNSConnection );
 		if( lsb->l_APNSConnection != NULL )
 		{
@@ -81,25 +82,10 @@ MobileManager *MobileManagerNew( void *sb )
 				}
 			
 			//'{"auth":"72e3e9ff5ac019cb41aed52c795d9f4c","action":"notify","payload":"hellooooo","sound":"default","token":"1f3b66d2d16e402b5235e1f6f703b7b2a7aacc265b5af526875551475a90e3fe","badge":1,"category":"whatever"}'
-			/*
-			DEBUG("[MobileManagerNew] create connection\n");
-			lma->uma_WSClient = WebsocketClientNew( sb->l_AppleServerHost, sb->l_AppleServerPort, NULL );
-			if( lma->uma_WSClient != NULL )
-			{
-				if( WebsocketClientConnect( lma->uma_WSClient ) > 0 )
-				{
-					DEBUG("[MobileManagerNew] connected\n");
-				}
-				else
-				{
-					DEBUG("[MobileManagerNew] not connected\n");
-				}
-			}
-			DEBUG("Going to next pointer %p\n", lma );
-			*/
 				lma = (UserMobileApp *)lma->node.mln_Succ;
 			}
 		}
+		*/
 	}
 	DEBUG("[MobileManagerNew] end\n");
 	return mm;
@@ -422,7 +408,10 @@ UserMobileApp *GetMobileAppByUserName( MobileManager *mmgr, SQLLibrary *sqllib, 
  */
 FULONG MobileManagerGetUMAIDByDeviceIDAndUserName( MobileManager *mmgr, SQLLibrary *sqllib, FULONG userID, const char *deviceid )
 {
-	UserMobileApp *root = NULL;
+	if( sqllib == NULL )
+	{
+		return 0;
+	}
 	char query[ 256 ];
 	FULONG tokID = 0;
 	
@@ -858,7 +847,6 @@ char *MobleManagerGetIOSAppTokensDBm( MobileManager *mmgr, FULONG userID )
 			lsqllib->FreeResult( lsqllib, res );
 		}
 		
-		
 		FFree( query );
 		sb->LibrarySQLDrop( sb, lsqllib );
 	}
@@ -997,84 +985,96 @@ BufString *MobleManagerAppTokensByUserPlatformDB( MobileManager *mmgr, FULONG us
 	SQLLibrary *lsqllib = sb->LibrarySQLGet( sb );
 	if( lsqllib != NULL )
 	{
+		
+#define LOCAL_TMP_LEN 512
 		BufString *sqlInsertBs = NULL;
 		char *qery = FMalloc( 1048 );
-		qery[ 1024 ] = 0;
-		lsqllib->SNPrintF( lsqllib, qery, 1024, "select uma.ID,uma.AppToken from FUserMobileApp uma where uma.Platform='%s' AND uma.Status=0 AND uma.UserID=%lu AND LENGTH( uma.AppToken ) > 0 GROUP BY uma.ID", mobileType, userID );
-		void *res = lsqllib->Query( lsqllib, qery );
-		if( res != NULL )
+		char *temp = FMalloc( LOCAL_TMP_LEN );
+		char *temp2= FMalloc( LOCAL_TMP_LEN );
+		if( qery != NULL && temp != NULL && temp2 != NULL )
 		{
-			if( notifID > 0 )
+			//lsqllib->SNPrintF( lsqllib, qery, 1024, "select uma.ID,uma.AppToken from FUserMobileApp uma where uma.Platform='%s' AND uma.Status=0 AND uma.UserID=%lu AND LENGTH( uma.AppToken ) > 0 GROUP BY uma.ID", mobileType, userID );
+			
+			if( type == MOBILE_APP_TYPE_FIREBASE )
 			{
-				sqlInsertBs = BufStringNew();
+				lsqllib->SNPrintF( lsqllib, qery, LOCAL_TMP_LEN, "select uma.ID,uma.AppToken from FUserMobileApp uma where uma.Status=0 AND uma.UserID=%lu AND LENGTH( uma.AppToken ) > 0 GROUP BY uma.ID", userID );
 			}
-
-			int pos = 0;
-			char **row;
-			while( ( row = lsqllib->FetchRow( lsqllib, res ) ) )
+			else
 			{
-				char temp[ 512 ];
-				char temp2[ 512 ];
-				int sizeAdd = 0;
-				int temp2size = 0;
-				
-				if( pos == 0 )
-				{
-					sizeAdd = snprintf( temp, sizeof(temp), "\"%s\"", row[1] );
-					if( notifID > 0 )
-					{
-						temp2size = snprintf( temp2, sizeof(temp2), "INSERT INTO FNotificationSent (NotificationID,RequestID,UserMobileAppID,Target,Status) VALUES ( %lu, 0, %s, 1, 1)", notifID, row[0] );
-					}
-				}
-				else
-				{
-					sizeAdd = snprintf( temp, sizeof(temp), ",\"%s\"", row[1] );
-					if( notifID > 0 )
-					{
-						temp2size = snprintf( temp2, sizeof(temp2), ",( %lu, 0, %s, 1, 1)", notifID, row[0] );
-					}
-				}
-				
-				// if notifID was provided then we create SQL which will store sent messages in FNotificationSent table
+				lsqllib->SNPrintF( lsqllib, qery, LOCAL_TMP_LEN, "select uma.ID,uma.AppToken from FUserMobileApp uma where uma.Platform='%s' AND uma.Status=0 AND uma.UserID=%lu AND LENGTH( uma.AppToken ) > 0 GROUP BY uma.ID", mobileType, userID );
+			}
+			
+			void *res = lsqllib->Query( lsqllib, qery );
+			if( res != NULL )
+			{
 				if( notifID > 0 )
 				{
-					/*
-					NOTIFICATION_SENT_STATUS_REGISTERED = 0,
-	NOTIFICATION_SENT_STATUS_RECEIVED,
-	NOTIFICATION_SENT_STATUS_READ,
-	NOTIFICATION_SENT_STATUS_END,
-	NOTIFICATION_SENT_STATUS_MAX
-					 */ 
-					//int temp2size = snprintf( temp2, sizeof(temp2), "INSERT INTO FNotificationSent (NotificationID,RequestID,UserMobileAppID,Target,Status) VALUES ( %lu, 0, %s, 1, 1);", notifID, row[0] );
-					
-					//lsqllib->QueryWithoutResults( lsqllib, temp2 );
-					
-					BufStringAddSize( sqlInsertBs, temp2, temp2size );
+					sqlInsertBs = BufStringNew();
 				}
-				
-				pos++;
-				if( bs == NULL )
+
+				int pos = 0;
+				char **row;
+				while( ( row = lsqllib->FetchRow( lsqllib, res ) ) )
 				{
-					bs = BufStringNew();
+					int sizeAdd = 0;
+					int temp2size = 0;
+				
+					if( pos == 0 )
+					{
+						sizeAdd = snprintf( temp, LOCAL_TMP_LEN, "\"%s\"", row[1] );
+						if( notifID > 0 )
+						{
+							temp2size = snprintf( temp2, LOCAL_TMP_LEN, "INSERT INTO FNotificationSent (NotificationID,RequestID,UserMobileAppID,Target,Status) VALUES ( %lu, 0, %s, 1, 1)", notifID, row[0] );
+						}
+					}
+					else
+					{
+						sizeAdd = snprintf( temp, LOCAL_TMP_LEN, ",\"%s\"", row[1] );
+						if( notifID > 0 )
+						{
+							temp2size = snprintf( temp2, LOCAL_TMP_LEN, ",( %lu, 0, %s, 1, 1)", notifID, row[0] );
+						}
+					}
+				
+					// if notifID was provided then we create SQL which will store sent messages in FNotificationSent table
+					if( notifID > 0 )
+					{
+						BufStringAddSize( sqlInsertBs, temp2, temp2size );
+					}
+				
+					pos++;
+					if( bs == NULL )
+					{
+						bs = BufStringNew();
+					}
+					BufStringAddSize( bs, temp, sizeAdd );
+				}	// while
+				lsqllib->FreeResult( lsqllib, res );
+		
+				if( notifID > 0 )
+				{
+					DEBUG("Insert NotificationSent into database\n");
+					if( sqlInsertBs->bs_Size > 0 )
+					{
+						BufStringAddSize( sqlInsertBs, ";", 1 );
+						lsqllib->QueryWithoutResults( lsqllib, sqlInsertBs->bs_Buffer );
+					}
+					BufStringDelete( sqlInsertBs );
 				}
-				BufStringAddSize( bs, temp, sizeAdd );
-			}
-			lsqllib->FreeResult( lsqllib, res );
+			}	// res != NULL
 		}
-		
-		if( notifID > 0 )
+		if( qery != NULL )
 		{
-			DEBUG("Insert NotificationSent into database\n");
-			if( sqlInsertBs->bs_Size > 0 )
-			{
-				BufStringAddSize( sqlInsertBs, ";", 1 );
-				lsqllib->QueryWithoutResults( lsqllib, sqlInsertBs->bs_Buffer );
-			}
-			BufStringDelete( sqlInsertBs );
+			FFree( qery );
 		}
-		
-		FFree( qery );
-		
+		if( temp != NULL )
+		{
+			FFree( temp );
+		}
+		if( temp2 != NULL )
+		{
+			FFree( temp2 );
+		}
 		sb->LibrarySQLDrop( sb, lsqllib );
 	}
 	return bs;

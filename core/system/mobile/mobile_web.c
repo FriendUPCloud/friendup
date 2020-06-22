@@ -749,7 +749,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 	*
 	* @param sessionid - (required) session id of logged user
 	* @param notifid - (required) mobile request ID
-	* @param action - (required) action ( NOTIFY_ACTION_REGISTER = 0, NOTIFY_ACTION_READED, NOTIFY_ACTION_TIMEOUT )
+	* @param action - (required) action ( NOTIFY_ACTION_REGISTER = 0, NOTIFY_ACTION_READ, NOTIFY_ACTION_TIMEOUT )
 	* @return { update: sucess, result: <ID> } when success, otherwise error with code
 	*/
 	/// @endcond
@@ -785,10 +785,31 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 		if( action > 0 && notifid > 0 )	// register is not supported
 		{
 			char tmp[ 512 ];
+			char *userName = NULL;
 			
 			Notification *not = NotificationManagerRemoveNotification( l->sl_NotificationManager , notifid );
-			int err = MobileAppNotifyUserUpdate( l, loggedSession->us_User->u_Name, not, action );
-			Log( FLOG_INFO, "[Update notification] action %d uname: %s\n", action, loggedSession->us_User->u_Name );
+			if( FRIEND_MUTEX_LOCK( &(loggedSession->us_Mutex) ) == 0 )
+			{
+				loggedSession->us_InUseCounter++;
+				if( loggedSession->us_User != NULL )
+				{
+					userName = StringDuplicate( loggedSession->us_User->u_Name );
+				}
+				FRIEND_MUTEX_UNLOCK( &(loggedSession->us_Mutex) );
+			}
+			int err = MobileAppNotifyUserUpdate( l, userName, not, action );
+			Log( FLOG_INFO, "[Update notification] action %d uname: %s\n", action, userName );
+			
+			if( FRIEND_MUTEX_LOCK( &(loggedSession->us_Mutex) ) == 0 )
+			{
+				loggedSession->us_InUseCounter--;
+				if( userName != NULL )
+				{
+					FFree( userName );
+				}
+				FRIEND_MUTEX_UNLOCK( &(loggedSession->us_Mutex) );
+			}
+			
 			if( not != NULL )
 			{
 				NotificationDelete( not );
@@ -883,18 +904,9 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			char buffer[ 256 ];
 			
 			DEBUG("[MobileWebRequest] setWS state to: %d\n", status );
-			if( loggedSession->us_WSConnections != NULL )
+			if( loggedSession->us_WSD != NULL )
 			{
-				//loggedSession->us_WebSocketStatus = status;
-				UserSessionWebsocket *cl = loggedSession->us_WSConnections;
-				
-				while( cl != NULL )
-				{
-					cl->wusc_Status = status;
-					
-					//DEBUG("[MobileWebRequest] connection %p set status to: %d\n", cl->wsc_Wsi, cl->wsc_Status );
-					cl = (UserSessionWebsocket *) cl->node.mln_Succ;
-				}
+				loggedSession->us_WebSocketStatus = status;
 			}
 			
 			snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"0\", \"set\":\"%d\" }", status );

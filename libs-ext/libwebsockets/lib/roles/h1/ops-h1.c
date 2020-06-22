@@ -80,8 +80,12 @@ lws_read_h1(struct lws *wsi, unsigned char *buf, lws_filepos_t len)
 			goto bail;
 
 		/* we might have transitioned to RAW */
-		if (wsi->role_ops == &role_ops_raw_skt ||
-		    wsi->role_ops == &role_ops_raw_file)
+		if (wsi->role_ops == &role_ops_raw_skt
+#if defined(LWS_ROLE_RAW_FILE)
+				||
+		    wsi->role_ops == &role_ops_raw_file
+#endif
+		    )
 			 /* we gave the read buffer to RAW handler already */
 			goto read_ok;
 
@@ -140,7 +144,7 @@ http_postbody:
 				struct lws_cgi_args args;
 
 				args.ch = LWS_STDIN;
-				args.stdwsi = &wsi->http.cgi->stdwsi[0];
+				args.stdwsi = &wsi->http.cgi->lsp->stdwsi[0];
 				args.data = buf;
 				args.len = body_chunk_len;
 
@@ -212,7 +216,7 @@ postbody_completion:
 				if (n)
 					goto bail;
 
-				if (wsi->http2_substream)
+				if (wsi->mux_substream)
 					lwsi_set_state(wsi, LRS_ESTABLISHED);
 			}
 
@@ -250,6 +254,9 @@ ws_mode:
 		break;
 
 	case LRS_SSL_ACK_PENDING:
+		break;
+
+	case LRS_FLUSHING_BEFORE_CLOSE:
 		break;
 
 	case LRS_DEAD_SOCKET:
@@ -352,7 +359,9 @@ lws_h1_server_socket_service(struct lws *wsi, struct lws_pollfd *pollfd)
 		 * exhausted and we tried to do a read of some kind.
 		 */
 
-		buffered = lws_buflist_aware_read(pt, wsi, &ebuf, __func__);
+		ebuf.token = NULL;
+		ebuf.len = 0;
+		buffered = lws_buflist_aware_read(pt, wsi, &ebuf, 0, __func__);
 		switch (ebuf.len) {
 		case 0:
 			lwsl_info("%s: read 0 len a\n", __func__);
@@ -628,7 +637,7 @@ rops_handle_POLLIN_h1(struct lws_context_per_thread *pt, struct lws *wsi,
 		int n;
 
 		lwsl_debug("%s: %p: wsistate 0x%x\n", __func__, wsi,
-			   wsi->wsistate);
+			   (int)wsi->wsistate);
 		n = lws_h1_server_socket_service(wsi, pollfd);
 		if (n != LWS_HPI_RET_HANDLED)
 			return n;
@@ -686,7 +695,7 @@ rops_handle_POLLIN_h1(struct lws_context_per_thread *pt, struct lws *wsi,
 		return LWS_HPI_RET_PLEASE_CLOSE_ME;
 	}
 
-	if (lws_client_socket_service(wsi, pollfd, NULL))
+	if (lws_client_socket_service(wsi, pollfd))
 		return LWS_HPI_RET_WSI_ALREADY_DIED;
 #endif
 
@@ -766,7 +775,7 @@ rops_write_role_protocol_h1(struct lws *wsi, unsigned char *buf, size_t len,
 #if defined(LWS_WITH_HTTP_STREAM_COMPRESSION)
 	if (wsi->http.lcs && (((*wp) & 0x1f) == LWS_WRITE_HTTP_FINAL ||
 			      ((*wp) & 0x1f) == LWS_WRITE_HTTP)) {
-		unsigned char mtubuf[1400 + LWS_PRE +
+		unsigned char mtubuf[1500 + LWS_PRE +
 				     LWS_HTTP_CHUNK_HDR_MAX_SIZE +
 				     LWS_HTTP_CHUNK_TRL_MAX_SIZE],
 			      *out = mtubuf + LWS_PRE +
@@ -925,7 +934,7 @@ rops_adoption_bind_h1(struct lws *wsi, int type, const char *vh_prot_name)
 #if defined(LWS_WITH_CLIENT)
 
 static const char * const http_methods[] = {
-	"GET", "POST", "OPTIONS", "PUT", "PATCH", "DELETE", "CONNECT"
+	"GET", "POST", "OPTIONS", "HEAD", "PUT", "PATCH", "DELETE", "CONNECT"
 };
 
 static int
@@ -982,8 +991,12 @@ rops_client_bind_h1(struct lws *wsi, const struct lws_client_connect_info *i)
 
 	/*
 	 * Clients that want to be h1, h2, or ws all start out as h1
-	 * (we don't yet know if the server supports h2 or ws)
+	 * (we don't yet know if the server supports h2 or ws), unless their
+	 * alpn is only "h2"
 	 */
+
+//	if (i->alpn && !strcmp(i->alpn, "h2"))
+//		return 0; /* we are h1, he only wants h2 */
 
 	if (!i->method) { /* websockets */
 #if defined(LWS_ROLE_WS)
@@ -1089,16 +1102,14 @@ static int
 rops_close_kill_connection_h1(struct lws *wsi, enum lws_close_status reason)
 {
 #if defined(LWS_WITH_HTTP_PROXY)
-	struct lws *wsi_eff = lws_client_wsi_effective(wsi);
-
-	if (!wsi_eff->http.proxy_clientside)
+	if (!wsi->http.proxy_clientside)
 		return 0;
 
-	wsi_eff->http.proxy_clientside = 0;
+	wsi->http.proxy_clientside = 0;
 
-	if (user_callback_handle_rxflow(wsi_eff->protocol->callback, wsi_eff,
+	if (user_callback_handle_rxflow(wsi->protocol->callback, wsi,
 					LWS_CALLBACK_COMPLETED_CLIENT_HTTP,
-					wsi_eff->user_space, NULL, 0))
+					wsi->user_space, NULL, 0))
 		return 0;
 #endif
 	return 0;
@@ -1127,7 +1138,7 @@ rops_pt_init_destroy_h1(struct lws_context *context,
 	return 0;
 }
 
-struct lws_role_ops role_ops_h1 = {
+const struct lws_role_ops role_ops_h1 = {
 	/* role name */			"h1",
 	/* alpn id */			"http/1.1",
 	/* check_upgrades */		NULL,

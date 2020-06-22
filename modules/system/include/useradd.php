@@ -22,7 +22,10 @@ if( isset( $args->authid ) )
 {
 	require_once( 'php/include/permissions.php' );
 	
-	if( $perm = Permissions( 'write', 'application', ( 'AUTHID' . $args->authid ), [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ] ) )
+	if( $perm = Permissions( 'write', 'application', ( 'AUTHID' . $args->authid ), [ 
+		'PERM_USER_CREATE_GLOBAL', 'PERM_USER_CREATE_IN_WORKGROUP', 
+		'PERM_USER_GLOBAL',        'PERM_USER_WORKGROUP' 
+	] ) )
 	{
 		if( is_object( $perm ) )
 		{
@@ -120,7 +123,10 @@ if( $level == 'Admin' )
 						$nestedArgs->context = 'application';
 						$nestedArgs->authid = $args->authid;
 						$nestedArgs->data = new stdClass();
-						$nestedArgs->data->permission = Array( 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' );
+						$nestedArgs->data->permission = [ 
+							'PERM_USER_CREATE_GLOBAL', 'PERM_USER_CREATE_IN_WORKGROUP', 
+							'PERM_USER_GLOBAL',        'PERM_USER_WORKGROUP' 
+						];
 						$nestedArgs->object = 'workgroup';
 						$nestedArgs->objectid = $gid;
 						
@@ -229,6 +235,7 @@ function fc_query( $command = '', $args = false, $method = 'POST', $headers = fa
 	}
 
 	curl_setopt( $curl, CURLOPT_URL, $url );
+	curl_setopt( $curl, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
 
 	if( $headers )
 	{

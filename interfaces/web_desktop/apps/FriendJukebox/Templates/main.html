@@ -1,7 +1,9 @@
 
 	<div class="ContentFull">
-		<div class="VContentTop BackgroundLists BorderBottom" style="bottom: 47px" id="Equalizer">
-			<canvas id="visualizer"></canvas>
+		<div class="VContentTop BorderBottom BackgroundStBlueDark" style="bottom: 47px" id="Equalizer">
+			<div class="ContentFull VisualizerBg" id="Flash">
+				<canvas id="visualizer"></canvas>
+			</div>
 			<!--<iframe id="player" class="FullContent" style="border: 0"></iframe>-->
 			<audio id="player" class="ContentFull"></audio>
 			<div id="scrollbg"></div>
@@ -9,7 +11,9 @@
 			<div id="time"></div>
 			<div id="progress"></div>
 		</div>
-		<div class="VContentTop ScrollArea BackgroundLists" id="MiniPlaylist"></div>
+		<div class="VContentTop" id="MiniPlaylistContainer">
+			<div class="ContentFull ScrollArea SmoothScrolling" id="MiniPlaylist"></div>
+		</div>
 		<div class="VContentBottom BackgroundLists BorderTop" style="height: 45px" id="BottomButtons">
 			<div class="HContent15 FloatRight">
 				<div class="HRow">
@@ -27,7 +31,7 @@
 					</button>
 					<button type="button" class="HContent10 IconButton IconSmall fa-stop BtnStop FloatLeft NoMargins" onclick="StopSong()">
 					</button>
-					<button id="playbutton" type="button" class="HContent10 IconButton IconSmall fa-play BtnPlay FloatLeft NoMargins" onclick="PlaySong()">
+					<button id="playbutton" type="button" class="HContent10 IconButton IconSmall fa-play BtnPlay FloatLeft NoMargins" onclick="PlaySong( true )">
 					</button>
 					<button id="pausebutton" type="button" class="HContent10 IconButton IconSmall fa-pause BtnPause FloatLeft NoMargins" onclick="PauseSong()">
 					</button>

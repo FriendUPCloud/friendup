@@ -15,6 +15,47 @@ $mode = false;
 if( $args->args->mode )
 	$mode = $args->args->mode;
 
+
+
+if( isset( $args->args->authid ) && !isset( $args->authid ) )
+{
+	$args->authid = $args->args->authid;
+}
+
+if( isset( $args->authid ) ) 
+{
+	require_once( 'php/include/permissions.php' );
+	
+	if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), [ 
+		'PERM_APPLICATION_READ_GLOBAL', 'PERM_APPLICATION_READ_IN_WORKGROUP', 
+		'PERM_APPLICATION_GLOBAL',      'PERM_APPLICATION_WORKGROUP' 
+	] ) )
+	{
+		if( is_object( $perm ) )
+		{
+			// Permission denied.
+			
+			if( $perm->response == -1 )
+			{
+				//
+				
+				
+			}
+			
+			// Permission granted. GLOBAL or WORKGROUP specific ...
+			
+			if( $perm->response == 1 )
+			{
+				//
+				
+				$level = 'Admin';
+			}
+		}
+	}
+}
+
+
+
 // Fetch installed applications
 $installed = $SqlDatabase->fetchObjects( 'SELECT * FROM FApplication WHERE UserID=\'' . $User->ID . '\'' );
 $byName = [];

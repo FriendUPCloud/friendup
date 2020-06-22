@@ -226,7 +226,7 @@ bail:
 	return -9;
 }
 
-LWS_VISIBLE int
+int
 lws_genecdh_create(struct lws_genec_ctx *ctx, struct lws_context *context,
 		   const struct lws_ec_curves *curve_table)
 {
@@ -239,7 +239,7 @@ lws_genecdh_create(struct lws_genec_ctx *ctx, struct lws_context *context,
 	return 0;
 }
 
-LWS_VISIBLE int
+int
 lws_genecdsa_create(struct lws_genec_ctx *ctx, struct lws_context *context,
 		    const struct lws_ec_curves *curve_table)
 {
@@ -252,7 +252,7 @@ lws_genecdsa_create(struct lws_genec_ctx *ctx, struct lws_context *context,
 	return 0;
 }
 
-LWS_VISIBLE int
+int
 lws_genecdh_set_key(struct lws_genec_ctx *ctx, struct lws_gencrypto_keyelem *el,
 		    enum enum_lws_dh_side side)
 {
@@ -262,7 +262,7 @@ lws_genecdh_set_key(struct lws_genec_ctx *ctx, struct lws_gencrypto_keyelem *el,
 	return lws_genec_keypair_import(ctx, ctx->curve_table, &ctx->ctx[side], el);
 }
 
-LWS_VISIBLE int
+int
 lws_genecdsa_set_key(struct lws_genec_ctx *ctx,
 		     struct lws_gencrypto_keyelem *el)
 {
@@ -286,7 +286,7 @@ lws_genec_keypair_destroy(EVP_PKEY_CTX **pctx)
 	*pctx = NULL;
 }
 
-LWS_VISIBLE void
+void
 lws_genec_destroy(struct lws_genec_ctx *ctx)
 {
 	if (ctx->ctx[0])
@@ -366,7 +366,7 @@ lws_genec_new_keypair(struct lws_genec_ctx *ctx, enum enum_lws_dh_side side,
 		goto bail2;
 	}
 
-	el[LWS_GENCRYPTO_EC_KEYEL_CRV].len = strlen(curve_name) + 1;
+	el[LWS_GENCRYPTO_EC_KEYEL_CRV].len = (uint32_t)strlen(curve_name) + 1;
 	el[LWS_GENCRYPTO_EC_KEYEL_CRV].buf =
 			lws_malloc(el[LWS_GENCRYPTO_EC_KEYEL_CRV].len, "ec");
 	if (!el[LWS_GENCRYPTO_EC_KEYEL_CRV].buf) {
@@ -403,7 +403,7 @@ bail:
 	return ret;
 }
 
-LWS_VISIBLE int
+int
 lws_genecdh_new_keypair(struct lws_genec_ctx *ctx, enum enum_lws_dh_side side,
 			const char *curve_name,
 			struct lws_gencrypto_keyelem *el)
@@ -414,7 +414,7 @@ lws_genecdh_new_keypair(struct lws_genec_ctx *ctx, enum enum_lws_dh_side side,
 	return lws_genec_new_keypair(ctx, side, curve_name, el);
 }
 
-LWS_VISIBLE int
+int
 lws_genecdsa_new_keypair(struct lws_genec_ctx *ctx, const char *curve_name,
 			 struct lws_gencrypto_keyelem *el)
 {
@@ -425,7 +425,7 @@ lws_genecdsa_new_keypair(struct lws_genec_ctx *ctx, const char *curve_name,
 }
 
 #if 0
-LWS_VISIBLE LWS_EXTERN int
+int
 lws_genecdsa_hash_sign(struct lws_genec_ctx *ctx, const uint8_t *in,
 		       enum lws_genhash_types hash_type,
 		       uint8_t *sig, size_t sig_len)
@@ -471,7 +471,7 @@ bail:
 }
 #endif
 
-LWS_VISIBLE LWS_EXTERN int
+int
 lws_genecdsa_hash_sign_jws(struct lws_genec_ctx *ctx, const uint8_t *in,
 			   enum lws_genhash_types hash_type, int keybits,
 			   uint8_t *sig, size_t sig_len)
@@ -516,7 +516,7 @@ lws_genecdsa_hash_sign_jws(struct lws_genec_ctx *ctx, const uint8_t *in,
 	 * 4.  The resulting 64-octet sequence is the JWS Signature value.
 	 */
 
-	ecdsasig = ECDSA_do_sign(in, lws_genhash_size(hash_type), eckey);
+	ecdsasig = ECDSA_do_sign(in, (int)lws_genhash_size(hash_type), eckey);
 	EC_KEY_free(eckey);
 	if (!ecdsasig) {
 		lwsl_notice("%s: ECDSA_do_sign fail\n", __func__);
@@ -553,13 +553,13 @@ bail:
 
 /* in is the JWS Signing Input hash */
 
-LWS_VISIBLE LWS_EXTERN int
+int
 lws_genecdsa_hash_sig_verify_jws(struct lws_genec_ctx *ctx, const uint8_t *in,
 				 enum lws_genhash_types hash_type, int keybits,
 				 const uint8_t *sig, size_t sig_len)
 {
 	int ret = -1, n, keybytes = lws_gencrypto_bits_to_bytes(keybits),
-	    hlen = lws_genhash_size(hash_type);
+	    hlen = (int)lws_genhash_size(hash_type);
 	ECDSA_SIG *ecsig = ECDSA_SIG_new();
 	BIGNUM *r = NULL, *s = NULL;
 	EC_KEY *eckey;

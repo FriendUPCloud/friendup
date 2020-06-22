@@ -83,44 +83,6 @@ int nothreads = 0;					/// threads coutner @todo to rewrite
 #define MAX_CALLHANDLER_THREADS 256			///< maximum number of simulatenous handlers
 
 /**
-* Mutex buffer for ssl locking
-*/
-
-static pthread_mutex_t *ssl_mutex_buf = NULL;
-
-/**
-* Static locking function.
-*
-* @param mode identifier of the mutex mode to use
-* @param n number of the mutex to use
-* @param file not used
-* @param line not used
-*/
-
-static void ssl_locking_function( int mode, int n, const char *file __attribute__((unused)), int line __attribute__((unused)))
-{ 
-	if( mode & CRYPTO_LOCK )
-	{
-		FRIEND_MUTEX_LOCK( &ssl_mutex_buf[ n ] );
-	}
-	else
-	{
-		FRIEND_MUTEX_UNLOCK( &ssl_mutex_buf[ n ] );
-	}
-}
-
-/**
-* Static ID function.
-*
-* @return function return thread ID as unsigned long
-*/
-
-static unsigned long ssl_id_function( void ) 
-{
-	return ( ( unsigned long )pthread_self() );
-}
-
-/**
 * Creates a new instance of Friend Core.
 *
 * @param sb pointer to SystemBase
@@ -140,30 +102,6 @@ FriendCoreInstance *FriendCoreNew( void *sb, int id, FBOOL ssl, int port, int ma
 	// Watch our threads
 	// TODO: make an array and use one for each friend core! (if multiple)
 	pthread_mutex_init( &maxthreadmut, NULL );
-	
-	// Static locks buffer
-	ssl_mutex_buf = FCalloc( CRYPTO_num_locks(), sizeof( pthread_mutex_t ) );
-	if( ssl_mutex_buf == NULL)
-	{ 
-		LOG( FLOG_PANIC, "[FriendCoreNew] Failed to allocate ssl mutex buffer.\n" );
-		return NULL; 
-	} 
-	{
-		int i; for( i = 0; i < CRYPTO_num_locks(); i++ )
-		{ 
-			pthread_mutex_init( &ssl_mutex_buf[ i ], NULL );
-		}
-	} 
-	// Setup static locking.
-	CRYPTO_set_locking_callback( ssl_locking_function );
-	CRYPTO_set_id_callback( ssl_id_function );
-	
-	OpenSSL_add_all_algorithms();
-	
-	// Load the error strings for SSL & CRYPTO APIs 
-	SSL_load_error_strings();
-	
-	RAND_load_file( "/dev/urandom", 1024 );
 	
 	// FOR DEBUG PURPOSES! -ht
 	_reads = 0;
@@ -216,12 +154,6 @@ void FriendCoreShutdown( FriendCoreInstance* fc )
 	{
 		LOG( FLOG_INFO, "[FriendCoreShutdown] Waiting for close\n" );
 		sleep( 1 );
-	}
-	
-	if( ssl_mutex_buf != NULL )
-	{
-		FFree( ssl_mutex_buf );
-		ssl_mutex_buf = NULL;
 	}
 	
 	// Destroy listen mutex
@@ -454,7 +386,7 @@ void *FriendCoreAcceptPhase2( void *d )
 	socklen_t clientLen = sizeof( client );
 	int fd = 0;
 	
-	//DEBUG("[FriendCoreAcceptPhase2] before accept4\n");
+	DEBUG("[FriendCoreAcceptPhase2] before accept4\n");
 	
 	while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) > 0 )
 	{
@@ -490,6 +422,7 @@ void *FriendCoreAcceptPhase2( void *d )
 					DEBUG("[AcceptPair] Accept return bad fd\n");
 					goto accerror;
 			}
+			DEBUG("[AcceptPair] Cannot create fd\n");
 			goto accerror;
 		}
 		
@@ -498,6 +431,7 @@ void *FriendCoreAcceptPhase2( void *d )
 		int prerr = getpeername( fd, (struct sockaddr *) &client, &clientLen );
 		if( prerr == -1 )
 		{
+			DEBUG("[AcceptPair]  gerpeername fail\n");
 			shutdown( fd, SHUT_RDWR );
 			close( fd );
 			goto accerror;
@@ -536,6 +470,7 @@ void *FriendCoreAcceptPhase2( void *d )
 			SSL_CTX_set_session_cache_mode( fc->fci_Sockets->s_Ctx, SSL_SESS_CACHE_CLIENT | SSL_SESS_CACHE_NO_INTERNAL_STORE);
 			
 			incoming->s_Ssl = SSL_new( fc->fci_Sockets->s_Ctx );
+			DEBUG("[AcceptPair] SSL done\n");
 
 			if( incoming->s_Ssl == NULL )
 			{
@@ -569,6 +504,7 @@ void *FriendCoreAcceptPhase2( void *d )
 			
 			// setup SSL session
 			int err = 0;
+			int tr = 0;
 
 			while( 1 )
 			{
@@ -576,6 +512,14 @@ void *FriendCoreAcceptPhase2( void *d )
 				if( ( err = SSL_accept( incoming->s_Ssl ) ) == 1 )
 				{
 					break;
+				}
+				else if( err == 0 )
+				{
+					if( (tr++) > 3 )
+					{
+						break;
+					}
+					continue;
 				}
 
 				if( err <= 0 || err == 2 )
@@ -645,9 +589,9 @@ void *FriendCoreAcceptPhase2( void *d )
 		}
 		else
 		{
-			//DEBUG("No SSL\n");
+			DEBUG("No SSL\n");
 		}
-		//DEBUG("[FriendCoreAcceptPhase2] before getting incoming\n");
+		DEBUG("[FriendCoreAcceptPhase2] before getting incoming\n");
 		
 		// We got incoming!
 		if( incoming != NULL )
@@ -725,7 +669,7 @@ void *FriendCoreAcceptPhase2( void *d )
 	//pthread_exit( 0 );
 	return NULL;
 accerror:
-	DEBUG("ERROR\n");
+	DEBUG("SocketAccept ERROR\n");
 	FFree( pre );
 	DecreaseThreads();
 	//pthread_exit( 0 );
@@ -1147,6 +1091,7 @@ void FriendCoreProcess( void *fcv )
 					}
 					//DEBUG("mmaping");
 					incomingBufferLength = lseek( tmpFileHandle, 0, SEEK_END);
+					DEBUG("MMAP: friendcore size: %lu\n", incomingBufferLength );
 					incomingBufferPtr = mmap(0, incomingBufferLength, PROT_READ | PROT_WRITE, MAP_SHARED, tmpFileHandle, 0 );// offset);
 					//DEBUG("mmap status %p", incomingBufferPtr);
 					
@@ -1162,6 +1107,7 @@ void FriendCoreProcess( void *fcv )
 				}
 				
 				DEBUG("------------>>>>>>>>>>>>>>>>>>>>>>>>>. incomingBufferLength: %ld\n", incomingBufferLength );
+				DEBUG("MMAP_CHECK: %c > %c\n", incomingBufferPtr[0], incomingBufferPtr[ incomingBufferLength-1 ] );
 
 				// ------------------------------------------------------- 
 				Http *resp = ProtocolHttp( th->sock, incomingBufferPtr, incomingBufferLength );
@@ -1641,7 +1587,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 						pthread_attr_setstacksize( &attr, stacksize );
 						
 						// Make sure we keep the number of threads under the limit
-						if( pthread_create( &pre->thread, &attr, &FriendCoreProcess, ( void *)pre ) != 0 )
+						if( pthread_create( &pre->thread, &attr, (void *(*) (void *))&FriendCoreProcess, ( void *)pre ) != 0 )
 						{
 							FFree( pre );
 						}

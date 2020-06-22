@@ -37,7 +37,7 @@ var ScreenOverlay = {
 		if( this.debug )
 		{
 			this.enableDebug();
-		}
+		}	
 	},
 	// Trick hide
 	invisible: function()
@@ -95,6 +95,12 @@ var ScreenOverlay = {
 				
 				// Make sure we update screen title and tray/tasks
 				PollTaskbar();
+				
+				// Initialize tutorials
+				/*let tuts = new TutorialWidget( {
+					x: 'right',
+					y: 'bottom'
+				} );*/
 				
 				// Tell app we can show ourselves!
 				if( window.friendApp && window.friendApp.reveal )

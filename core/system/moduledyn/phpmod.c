@@ -231,7 +231,7 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 		}
 	}
 	
-	DEBUG("[PHPmod] File readed\n");
+	DEBUG("[PHPmod] File read\n");
 	
 	// Free pipe if it's there
 	newpclose( &pofd );
@@ -303,7 +303,7 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 		}
 	}
 	
-	DEBUG("[PHPmod] File readed\n");
+	DEBUG("[PHPmod] File read\n");
 	
 	// Free pipe if it's there
 	newpclose( &pofd );
@@ -624,7 +624,7 @@ const char *GetSuffix()
 		printf("[PHPmod] Closing busniess\n");
 	}
 	
-	printf("[PHPmod] Before free app ----readed %ld\n", res );
+	printf("[PHPmod] Before free app ----read %ld\n", res );
 	*length = (int)res;
 	
 	free( app );
