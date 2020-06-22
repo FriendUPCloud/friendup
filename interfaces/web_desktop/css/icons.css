@@ -511,6 +511,13 @@ div.Listview .File .Directory.UserShare:after
 	font-size: 0.7em;
 }
 
+div .File.ZoomX3 .Icon .Directory.GroupShare:after,
+div .File.ZoomX3 .Icon .Directory.UserShare:after
+{
+	top: 62px;
+    font-size: 2em;
+}
+
 .File .Icon .Directory.UserShare:after
 {
 	font-family: fontawesome;
