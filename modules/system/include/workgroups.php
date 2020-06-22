@@ -78,7 +78,7 @@ if( isset( $args->authid ) )
 $userConn = 'LEFT'; // <- show all workgroups
 
 // Just show connected groups?
-if( isset( $args->args->connected ) )
+if( isset( $args->args->connected ) || $level != 'admin' )
 {
 	$userConn = 'RIGHT';
 }

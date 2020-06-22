@@ -192,18 +192,32 @@ DirectoryView.prototype.ShowShareDialog = function( elements, mode )
 							}
 						
 							eles = v.getElementsByClassName( 'ShareItem' );
-							for( let z = 0; z < eles.length; z++ )
+							if( eles.length )
 							{
-								eles[ z ].onclick = function()
+								for( let z = 0; z < eles.length; z++ )
 								{
-									if( this.classList.contains( 'Selected' ) )
+									eles[ z ].onclick = function()
 									{
-										this.classList.remove( 'Selected' );
+										if( this.classList.contains( 'Selected' ) )
+										{
+											this.classList.remove( 'Selected' );
+										}
+										else
+										{
+											this.classList.add( 'Selected' );
+										}
 									}
-									else
-									{
-										this.classList.add( 'Selected' );
-									}
+								}
+							}
+							else
+							{
+								console.log( 'Fopa' );
+								let dm = v.getElementsByClassName( 'Workgroups_and_users' );
+								if( dm )
+								{
+									let p = document.createElement( 'p' );
+									p.innerHTML = i18n( 'i18n_no_users_or_groups' );
+									dm[0].appendChild( p );
 								}
 							}
 							
