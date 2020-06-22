@@ -524,7 +524,7 @@ i18n_share_with_users_or_groups         : Del med brukere eller grupper
 i18n_ok                                 : Ok
 i18n_no_users_or_groups                 : Ingen brukere eller grupper å dele med.
 i18n_nothing_shared                     : Ingen brukere eller grupper valgt
-i18n_please_select_users_groups         : Du må velge en eller flere brukere eller grupper for å dele.
+i18n_please_select_users_groups         : Ingenting ble delt da du ikke valgte brukere eller grupper.
 
 
 i18n_pasted_file                        : Limer inn innhold
