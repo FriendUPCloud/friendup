@@ -211,7 +211,6 @@ DirectoryView.prototype.ShowShareDialog = function( elements, mode )
 							}
 							else
 							{
-								console.log( 'Fopa' );
 								let dm = v.getElementsByClassName( 'Workgroups_and_users' );
 								if( dm )
 								{
