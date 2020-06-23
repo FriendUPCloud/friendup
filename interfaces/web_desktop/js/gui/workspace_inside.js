@@ -7534,7 +7534,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							v.hide();
 						}, 150 );
 						Workspace.contextMenuShowing = false;
-						console.log( 'Not showing' );
 						return cancelBubble( event );
 					}
 					// Mouse up on context menus has timeout
@@ -7546,7 +7545,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							{ 
 								if( !v.shown ) return;
 								Workspace.contextMenuShowing = false;
-								console.log( 'Showing is no!' );
 								if( this.cmd && typeof( this.cmd ) == 'function' )
 								{
 									this.cmd( event );
