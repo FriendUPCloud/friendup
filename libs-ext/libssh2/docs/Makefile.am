@@ -1,6 +1,6 @@
 # $Id: Makefile.am,v 1.37 2009/03/26 15:41:15 bagder Exp $
 
-EXTRA_DIST = template.3 BINDINGS INSTALL_AUTOTOOLS INSTALL_CMAKE HACKING TODO	\
+EXTRA_DIST = template.3 BINDINGS INSTALL_AUTOTOOLS INSTALL_CMAKE.md HACKING TODO \
  AUTHORS CMakeLists.txt HACKING.CRYPTO SECURITY.md
 
 dist_man_MANS = \
@@ -8,8 +8,10 @@ dist_man_MANS = \
 	libssh2_agent_disconnect.3 \
 	libssh2_agent_free.3 \
 	libssh2_agent_get_identity.3 \
+	libssh2_agent_get_identity_path.3 \
 	libssh2_agent_init.3 \
 	libssh2_agent_list_identities.3 \
+	libssh2_agent_set_identity_path.3 \
 	libssh2_agent_userauth.3 \
 	libssh2_banner_set.3 \
 	libssh2_base64_decode.3 \
