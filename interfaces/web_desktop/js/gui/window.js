@@ -878,7 +878,9 @@ function SetScreenByWindowElement( div )
 function _ActivateWindowOnly( div )
 {
 	if( Workspace.contextMenuShowing && Workspace.contextMenuShowing.shown )
+	{
 		return;
+	}
 	
 	// Blocker
 	if( !isMobile && div.content && div.content.blocker )
@@ -1038,7 +1040,9 @@ var _activationTarget = null;
 function _ActivateWindow( div, nopoll, e )
 {
 	if( Workspace.contextMenuShowing && Workspace.contextMenuShowing.shown )
+	{
 		return;
+	}
 
 	if( !e ) e = window.event;
 	
@@ -2572,7 +2576,7 @@ var View = function( args )
 				if( e.button != 0 && !mode ) return cancelBubble( e );
 
 				let x, y;
-				if( isTablet || isTouchDevice() )
+				if( e.touches && ( isTablet || isTouchDevice() ) )
 				{
 					x = e.touches[0].pageX;
 					y = e.touches[0].pageY;
@@ -2724,8 +2728,11 @@ var View = function( args )
 						clearInterval( self.touchInterval );
 						self.touchInterval = null;
 					
-						self.viewIcon.classList.add( 'Remove' );
-						self.classList.add( 'Remove' );
+						if( !isTablet )
+						{
+							self.viewIcon.classList.add( 'Remove' );
+							self.classList.add( 'Remove' );
+						}
 					}
 				}
 			}, 150 );

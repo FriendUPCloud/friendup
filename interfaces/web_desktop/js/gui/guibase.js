@@ -3761,6 +3761,7 @@ movableMouseDown = function ( e )
 			{
 				clearRegionIcons( { force: true } );
 			}
+			Workspace.contextMenuShowing = null;
 		}
 		
 		window.mouseDown = 4;
