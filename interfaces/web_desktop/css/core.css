@@ -5163,7 +5163,18 @@ div.Orange, button.Orange
 {
 	padding-left: 24px;
 	height: 24px;
-	min-width: 200px;
+	min-width: 175px;
+	max-width: 175px;
+}
+
+[mobile] .ShareDialog .SearchBar > input
+{
+	height: 28px;
+}
+
+[mobile] .SearchBar::before
+{
+	top: 8px;
 }
 
 .ShareDialog.Showing
