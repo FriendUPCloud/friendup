@@ -1161,4 +1161,18 @@ body[mobile=mobile] #DeepestField > div > #Netconnections
 	display: none !important;
 }
 
+/* Launcher ----------------------------------------------------------------- */
+
+[mobile] #launcherview .Content > .Padding
+{
+	position: absolute;
+	width: 100%;
+	top: calc(50% - 60px);
+	left: 0;
+}
+
+[mobile] #launcherview .Content
+{
+	box-shadow: inset 0 0 120px rgba(0,0,0,0.2);
+}
 
