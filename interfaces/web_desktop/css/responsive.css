@@ -454,6 +454,44 @@ html #WorkspaceMenu .Menu
 	content: "\f00d";
 }
 
+html > body[mobile=mobile] .Widget .MenuItems
+{
+	position: absolute;
+	left: -100% !important;
+	width: 100% !important;
+	transition: left 0.25s;
+	background-color: rgba(0,0,0,0.95);
+}
+
+html > body[mobile=mobile] .Widget.Hiding
+{
+	visibility: visible !important;
+}
+
+html > body[mobile=mobile] .Widget.Raised.Hiding .MenuItems.Open
+{
+	left: -100% !important;
+}
+
+html > body[mobile=mobile] .Widget.Raised
+{
+	position: fixed !important;
+	top: 0 !important;
+	left: 0 !important;
+	width: 85% !important;
+	height: 100% !important;
+	border-radius: 0;
+	font-size: 1.1em;
+	/* text-align: center; */
+	z-index: 2000000000;
+}
+
+html > body[mobile=mobile] .Widget.Raised .MenuItems.Open
+{
+	height: 100% !important;
+	left: 0 !important;
+}
+
 /*[mobile]:not(.ViewMaximized) #WorkspaceMenu
 {
 	opacity: 0;

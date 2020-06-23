@@ -3915,13 +3915,12 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				if( window.fileMenuElement )
 				{
 					file.onmousedown();
-					console.log( 'Down!' );
 					window.fileMenuElement = null;
 					window.clickElement = null;
 				}
 			}, 100 );
 
-			if( !window.isMobile )
+			if( window.isMobile )
 			{		
 				file.contextMenuTimeout = setTimeout( function()
 				{

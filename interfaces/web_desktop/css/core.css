@@ -2107,7 +2107,7 @@ html body.WindowMenu .Widget
 	text-shadow: 0px 1px 1px rgba(0,0,0,0.6);
 }
 
-.Widget .MenuItems .MenuItem:hover
+body:not([mobile]):not([tablet]) .Widget .MenuItems .MenuItem:hover
 {
 	background: rgba(255,255,255,0.2);
 	color: white;
