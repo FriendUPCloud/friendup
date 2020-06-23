@@ -2698,6 +2698,9 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			{
 				if( !e ) e = window.event ? window.event : {};
 			
+				if( isTablet )
+					dv.multiple = e.shiftKey = true;
+			
 				// This means we are adding
 				if( e.shiftKey || e.ctrlKey )
 				{
@@ -2880,23 +2883,15 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					this.listSelectTimeout = setTimeout( function()
 					{
 						self.click = false;
-						if( self.classList.contains( 'Selected' ) )
-						{
-							clearRegionIcons();
-						}
-						else
-						{
-							clearRegionIcons();
-							self.classList.add( 'Selected' );
-							self.selected = true;
-							this.icon.selected = true;
-							self.fileInfo.selected = true;
-							self.touchPos = {
-								x: e.touches[0].pageX,
-								y: e.touches[0].pageY
-							};
-							self.touchMode = 0;
-						}
+						self.classList.add( 'Selected' );
+						self.selected = true;
+						this.icon.selected = true;
+						self.fileInfo.selected = true;
+						self.touchPos = {
+							x: e.touches[0].pageX,
+							y: e.touches[0].pageY
+						};
+						self.touchMode = 0;
 					}, 100 );
 					
 					if( window.isTablet )
@@ -2954,7 +2949,6 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			{
 				r.ontouchend = function( e )
 				{
-					console.log( 'Fopa' );
 					if( this.click )
 					{
 						this.ondblclick( e );
@@ -2981,7 +2975,10 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			{
 				if( !e.ctrlKey && !e.shiftKey && !e.command && !ge( 'RegionSelector' ) )
 				{
-					clearRegionIcons( { exception: this, force: true } );
+					if( !isMobile && !isTablet )
+					{
+						clearRegionIcons( { exception: this, force: true } );
+					}
 				}
 			}
 
@@ -3538,7 +3535,10 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				{
 					if( !Workspace.contextMenuShowing || !Workspace.contextMenuShowing.shown )
 					{
-						clearRegionIcons( { exception: this } );
+						if( !isMobile && !isTablet )
+						{
+							clearRegionIcons( { exception: this } );
+						}
 					}
 				}
 
@@ -3593,7 +3593,10 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			}
 			if( !e.ctrlKey && !e.shiftKey && !e.command && !ge( 'RegionSelector' ) )
 			{
-				clearRegionIcons( { exception: this, force: true } );
+				if( !isMobile && !isTablet )
+				{
+					clearRegionIcons( { exception: this, force: true } );
+				}
 			}
 			window.targetMovable = false;
 		}
@@ -3887,6 +3890,14 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		{
 			if( this.directoryView.filedialog )
 				return;
+				
+			// On mobile and tablet, don't click other icons when showing the context menu
+			if( ( isMobile || isTablet ) && Workspace.contextMenuShowing ) 
+			{
+				Workspace.contextMenuShowing.hide()
+				Workspace.contextMenuShowing = false;
+				return cancelBubble( event );
+			}
 			
 			window.fileMenuElement = file;
 			window.clickElement = file;
@@ -3904,6 +3915,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				if( window.fileMenuElement )
 				{
 					file.onmousedown();
+					console.log( 'Down!' );
 					window.fileMenuElement = null;
 					window.clickElement = null;
 				}
@@ -3914,7 +3926,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				file.contextMenuTimeout = setTimeout( function()
 				{
 					Workspace.showContextMenu( false, event );
-				}, 800 );
+				}, 1000 );
 			}
 			//return cancelBubble( event );
 		}, false );
@@ -3923,11 +3935,18 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		{
 			if( this.directoryView.filedialog )
 				return;
-			
 			if( Workspace.contextMenuShowing ) 
 			{
 				return cancelBubble( event );
 			}
+			
+			// No need
+			if( file.menuTimeout )
+				clearTimeout( file.menuTimeout );
+			file.menuTimeout = false;
+			if( file.contextMenuTimeout )
+				clearTimeout( file.contextMenuTimeout );
+			file.contextMenuTimeout = false;
 			
 			if( window.clickElement == this )
 			{
@@ -3935,7 +3954,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 
 				// When single clicking (under a second) click the file!
 				let time = ( new Date() ).getTime() - file.clickedTime;
-				if( time < 250 && window.clickElement )
+				if( time < 500 && window.clickElement )
 				{
 					setTimeout( function()
 					{
@@ -3946,15 +3965,9 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 					}, 100 );
 				}
 
-				if( file.menuTimeout )
-					clearTimeout( file.menuTimeout );
-				file.menuTimeout = false;
-				if( file.contextMenuTimeout )
-					clearTimeout( file.contextMenuTimeout );
-				file.contextMenuTimeout = false;
 				window.clickElement = null;
-				return cancelBubble( event );
 			}
+		 	return cancelBubble( event );
 		} );
 	}
 }

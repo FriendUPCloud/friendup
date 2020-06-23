@@ -696,7 +696,7 @@ var mousePointer =
 	pickup: function ( ele, e )
 	{
 		// Do not allow pickup for mobile
-		if( window.isMobile ) return;
+		if( window.isMobile || window.isTablet ) return;
 		
 		if( !e ) e = window.event;
 		let ctrl = e && ( e.ctrlKey || e.shiftKey || e.command );
@@ -3681,7 +3681,7 @@ movableMouseDown = function ( e )
 	// Get target
 	let tar = e.srcElement ? e.srcElement : e.target;
 	
-	if( ( window.isTablet || window.isMobile ) && Workspace.iconContextMenu )
+	if( ( window.isTablet || window.isMobile ) && Workspace.contextMenuShowing )
 	{
 		Workspace.iconContextMenu.hide();
 		Workspace.contextMenuShowing = null;

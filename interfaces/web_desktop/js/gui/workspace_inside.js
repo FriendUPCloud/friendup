@@ -7293,8 +7293,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					t = t.parentNode;
 				}
 			}
-			if( t.checkSelected )
-				t.checkSelected();
+			if( t )
+			{
+				if( t.checkSelected )
+					t.checkSelected();
+			}
 			
 			Workspace.refreshMenu( true );
 			for( var z = 0; z < Workspace.menu.length; z++ )
