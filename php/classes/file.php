@@ -10,6 +10,9 @@
 *                                                                              *
 *****************************************************************************©*/
 
+include_once( 'door.php' );
+
+
 class File
 {
 	var $_content = '';
@@ -111,21 +114,13 @@ class File
 	{
 		global $Config, $User, $Logger;
 		
-		$url = $this->GetUrl( $this->path . '.info', false, true );
-
-		$c = curl_init();
-		
-		curl_setopt( $c, CURLOPT_SSL_VERIFYPEER, false               );
-		curl_setopt( $c, CURLOPT_SSL_VERIFYHOST, false               );
-		curl_setopt( $c, CURLOPT_URL,            $url                );
-		curl_setopt( $c, CURLOPT_RETURNTRANSFER, true                );
-		$r = curl_exec( $c );
-		curl_close( $c );
-		
-		if( $r != false )
+		$fd = new Door( reset( explode( ':', $this->path ) ) . ':' );
+		$d = new dbIO( 'FFileInfo' );
+		$d->Path = $filepath;
+		$d->FilesystemID = $fd->ID;
+		if( $d->Load() )
 		{
-			$this->_fileinfo = $r;
-			
+			$this->_fileinfo = $d->Data;
 			return $this->_fileinfo;
 		}
 		else
@@ -183,6 +178,7 @@ class File
 			curl_setopt( $ch, CURLOPT_URL, $url    );
 			curl_setopt( $ch, CURLOPT_POSTFIELDS, $postfields );
 			curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+			curl_setopt( $ch, CURLOPT_HTTPHEADER, array('Expect:'));
 			if( $Config->SSLEnable == 1 )
 			{
 				curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
@@ -227,6 +223,8 @@ class File
 		curl_setopt( $c, CURLOPT_SSL_VERIFYHOST, false               );
 		curl_setopt( $c, CURLOPT_URL,            $url                );
 		curl_setopt( $c, CURLOPT_RETURNTRANSFER, true                );
+		curl_setopt( $c, CURLOPT_HTTPHEADER, array('Expect:'));
+	
 		$r = curl_exec( $c );
 		curl_close( $c );
 		
