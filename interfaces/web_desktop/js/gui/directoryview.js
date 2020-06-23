@@ -5028,7 +5028,7 @@ Friend.startImageViewer = function( iconObject, extra )
 		{
 			let offx = offy = 0;
 			
-			if( e.touches[0] )
+			if( e.touches )
 			{
 				offx = e.touches[0].pageX;
 				offy = e.touches[0].pageY;
@@ -5052,7 +5052,7 @@ Friend.startImageViewer = function( iconObject, extra )
 			{
 				let cx, cy = 0;
 				
-				if( e2.touches[0] )
+				if( e2.touches )
 				{
 					cx = e2.touches[0].pageX;
 					cy = e2.touches[0].pageY;

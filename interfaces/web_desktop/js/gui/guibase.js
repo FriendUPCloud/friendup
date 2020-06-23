@@ -3753,10 +3753,10 @@ movableMouseDown = function ( e )
 		!isMobile && ( clickonDesktop || clickOnView )
 	)
 	{
-		if( !sh && ( e.button === 0 || e.touches[0] ) )
+		if( !sh && ( e.button === 0 || e.touches ) )
 		{
 			// Don't count scrollbar
-			let px = e.touches[0] ? e.touches[0].pageX : e.clientX;
+			let px = e.touches ? e.touches[0].pageX : e.clientX;
 			if( ( ( px - GetElementLeft( tar ) ) < tar.offsetWidth - 16 ) )
 			{
 				clearRegionIcons( { force: true } );
