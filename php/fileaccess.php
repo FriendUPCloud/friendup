@@ -145,7 +145,7 @@ function handleFileCallback( $user, $filepath, $requestjson, $authid = false, $w
 function tellApplication( $command, $user, $windowid, $authid )
 {
 
-	faLog( 'tellApplication' . $command . ' :: ' . $user);
+	faLog( 'tellApplication ' . $command . ' :: ' . $user);
 
 	global $SqlDatabase, $Config, $User;
 	
@@ -163,8 +163,14 @@ function tellApplication( $command, $user, $windowid, $authid )
 	curl_setopt( $c, CURLOPT_SSL_VERIFYHOST, false               );
 	curl_setopt( $c, CURLOPT_URL,            $url                );
 	curl_setopt( $c, CURLOPT_RETURNTRANSFER, true                );
+	curl_setopt( $c, CURLOPT_HTTPHEADER, array('Expect:'));
+	
 	$r = curl_exec( $c );
 	curl_close( $c );
+
+	faLog( 'we plinged this ' . $url );
+	faLog( 'got a result? ' . print_r( $r,1 ) . ' :: ' . print_r( $c,1 ));
+
 
 	return false;
 }
