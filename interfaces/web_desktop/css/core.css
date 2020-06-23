@@ -5204,6 +5204,8 @@ div.Orange, button.Orange
 	height: 50px;
 	width: 100%;
 	left: 0;
+	visibility: visible !important;
+	pointer-events: all !important;
 }
 
 .ShareDialog .ShareFile.File,
