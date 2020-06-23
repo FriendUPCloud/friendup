@@ -505,7 +505,7 @@ if( !class_exists( 'SharedDrive' ) )
 				
 					$queries = new stdClass();
 					// Select groupshares that has been shared in where I am member
-					$queries->groups = 'SELECT s.ID AS ShareID, g.Name, g.ID, u.ID AS OwnerID, u.ServerToken
+					$queries->groups = 'SELECT s.ID AS ShareID, g.Name, g.ID, u.ID AS OwnerID, u.ServerToken, "group" AS `Type`
 							FROM 
 								FShared s, FUserGroup g, FUserToGroup ug, FUserToGroup ug2, FUser u
 							WHERE 
@@ -519,7 +519,7 @@ if( !class_exists( 'SharedDrive' ) )
 								u.ServerToken != ""
 					';
 					// Select usershares where I am shared with
-					$queries->users = 'SELECT s.ID AS ShareID, u.FullName, u.Name, u.ID, u.ID AS OwnerID, u.ServerToken
+					$queries->users = 'SELECT s.ID AS ShareID, u.FullName, u.Name, u.ID, u.ID AS OwnerID, u.ServerToken, "user" AS `Type`
 							FROM 
 								FShared s, FUser u 
 							WHERE
@@ -538,8 +538,8 @@ if( !class_exists( 'SharedDrive' ) )
 							$out2 = [];
 							foreach( $rows as $row )
 							{
-								if( !isset( $out2[ $row->Filename . '-' . $row->OwnerID ] ) )
-									$out2[ $row->Filename . '-' . $row->OwnerID ] = $row;
+								if( !isset( $out2[ $row->Name . '-' . $row->Type ] ) )
+									$out2[ $row->Name . '-' . $row->Type ] = $row;
 							}
 							foreach( $out2 as $a=>$row )
 							{

@@ -1,3 +1,5 @@
+#ifndef __LIBSSH2_LIBGCRYPT_H
+#define __LIBSSH2_LIBGCRYPT_H
 /*
  * Copyright (C) 2008, 2009, 2010 Simon Josefsson
  * Copyright (C) 2006, 2007, The Written Word, Inc.
@@ -204,11 +206,16 @@
 #define _libssh2_bn_ctx_new() 0
 #define _libssh2_bn_ctx_free(bnctx) ((void)0)
 #define _libssh2_bn_init() gcry_mpi_new(0)
-#define _libssh2_bn_init_from_bin() NULL /* because gcry_mpi_scan() creates a new bignum */
+#define _libssh2_bn_init_from_bin() NULL /* because gcry_mpi_scan() creates a
+                                            new bignum */
 #define _libssh2_bn_set_word(bn, val) gcry_mpi_set_ui(bn, val)
-#define _libssh2_bn_from_bin(bn, len, val) gcry_mpi_scan(&((bn)), GCRYMPI_FMT_USG, val, len, NULL)
-#define _libssh2_bn_to_bin(bn, val) gcry_mpi_print (GCRYMPI_FMT_USG, val, _libssh2_bn_bytes(bn), NULL, bn)
-#define _libssh2_bn_bytes(bn) (gcry_mpi_get_nbits (bn) / 8 + ((gcry_mpi_get_nbits (bn) % 8 == 0) ? 0 : 1))
+#define _libssh2_bn_from_bin(bn, len, val)                      \
+    gcry_mpi_scan(&((bn)), GCRYMPI_FMT_USG, val, len, NULL)
+#define _libssh2_bn_to_bin(bn, val)                                     \
+    gcry_mpi_print(GCRYMPI_FMT_USG, val, _libssh2_bn_bytes(bn), NULL, bn)
+#define _libssh2_bn_bytes(bn)                                           \
+    (gcry_mpi_get_nbits (bn) / 8 +                                      \
+     ((gcry_mpi_get_nbits (bn) % 8 == 0) ? 0 : 1))
 #define _libssh2_bn_bits(bn) gcry_mpi_get_nbits (bn)
 #define _libssh2_bn_free(bn) gcry_mpi_release(bn)
 
@@ -227,3 +234,4 @@ extern int _libssh2_dh_secret(_libssh2_dh_ctx *dhctx, _libssh2_bn *secret,
                               _libssh2_bn *f, _libssh2_bn *p);
 extern void _libssh2_dh_dtor(_libssh2_dh_ctx *dhctx);
 
+#endif /* __LIBSSH2_LIBGCRYPT_H */
