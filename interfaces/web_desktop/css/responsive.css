@@ -645,6 +645,7 @@ body.ViewMaximized .ViewContainer[childview]:not(.DelayedDeactivation).Initializ
 {
 	transition: none !important;
 	left: 100% !important;
+	will-change: transform;
 }
 
 body.ViewMaximized .ViewContainer[childview]:not(.DelayedDeactivation).Activating .View,
@@ -678,6 +679,7 @@ body.ViewMaximized .ViewContainer.Activated .View
 {
 	opacity: 1 !important;
 	overflow: hidden;
+	will-change: transform;
 }
 
 .ViewContainer.Closing .View .Title
