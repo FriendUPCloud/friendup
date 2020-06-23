@@ -7197,7 +7197,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		var el = tr;
 		if( el )
 		{
-			while( el != document.body )
+			while( el != document.body && el )
 			{
 				if( el.classList && el.classList.contains( 'Content' ) )
 					break;
@@ -7288,13 +7288,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				t = iconWindow;
 			else
 			{
-				while( !( t.classList && t.classList.contains( 'Content' ) ) && t.parentNode != document.body )
+				while( t && !( t.classList && t.classList.contains( 'Content' ) ) && t.parentNode != document.body )
 				{
 					t = t.parentNode;
 				}
 			}
-			if( t.checkSelected )
-				t.checkSelected();
+			if( t )
+			{
+				if( t.checkSelected )
+					t.checkSelected();
+			}
 			
 			Workspace.refreshMenu( true );
 			for( var z = 0; z < Workspace.menu.length; z++ )
@@ -7484,7 +7487,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 			}
 			
-			for( var z = 0; z < menu.length; z++ )
+			let menuitemCount = 0;
+			for( let z = 0; z < menu.length; z++ )
 			{
 				if( menu[z].divider ) continue;
 				var p = document.createElement( 'p' );
@@ -7495,6 +7499,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				else
 				{
+					menuitemCount++;
 					if( extra && extra.applicationId )
 					{
 						( function( m ){
@@ -7561,14 +7566,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				p.innerHTML = menu[z].name;
 				menuout.appendChild( p );
 			}
-			v.dom.appendChild( menuout );
+			if( menuitemCount )
+			{
+				v.dom.appendChild( menuout );
 			
-			// Show the thing
-			v.setFlag( 'height', v.dom.lastChild.offsetHeight + v.dom.lastChild.offsetTop );
-			v.setFlag( 'left', flg.left );
-			v.setFlag( 'top', flg.top );
-			v.raise();
-			v.show();
+				// Show the thing
+				v.setFlag( 'height', v.dom.lastChild.offsetHeight + v.dom.lastChild.offsetTop );
+				v.setFlag( 'left', flg.left );
+				v.setFlag( 'top', flg.top );
+				v.raise();
+				v.show();
+			}
 		}
 		return true;
 	},

@@ -696,7 +696,7 @@ var mousePointer =
 	pickup: function ( ele, e )
 	{
 		// Do not allow pickup for mobile
-		if( window.isMobile ) return;
+		if( window.isMobile || window.isTablet ) return;
 		
 		if( !e ) e = window.event;
 		let ctrl = e && ( e.ctrlKey || e.shiftKey || e.command );
@@ -2200,12 +2200,13 @@ movableListener = function( e, data )
 		}
 	}
 	// Mouse down on desktop (regions)
-	if( !window.isMobile && window.mouseDown == 4 && window.regionWindow )
+	if( !window.isTablet && !window.isMobile && window.mouseDown == 4 && window.regionWindow )
 	{
 		// Prime
 		if( window.regionWindow.directoryview )
 		{
 			let scrl = window.regionWindow.directoryview.scroller;
+			
 			if( !scrl.scrolling )
 			{
 				scrl.scrollTopStart  = scrl.scrollTop;
@@ -2586,6 +2587,7 @@ movableMouseUp = function( e )
 			setTimeout( function()
 			{
 				Workspace.iconContextMenu.hide();
+				Workspace.contextMenuShowing = null;
 			}, 150 );
 		}
 	}
@@ -3679,9 +3681,10 @@ movableMouseDown = function ( e )
 	// Get target
 	let tar = e.srcElement ? e.srcElement : e.target;
 	
-	if( ( window.isTablet || window.isMobile ) && Workspace.iconContextMenu )
+	if( ( window.isTablet || window.isMobile ) && Workspace.contextMenuShowing )
 	{
 		Workspace.iconContextMenu.hide();
+		Workspace.contextMenuShowing = null;
 		if( !isMobile )
 			DefaultToWorkspaceScreen( tar );
 	}
@@ -3711,6 +3714,7 @@ movableMouseDown = function ( e )
 	if( !clickOnMenuItem && Workspace.iconContextMenu )
 	{
 		Workspace.iconContextMenu.hide();
+		Workspace.contextMenuShowing = null;
 	}
 	
 	let sh = e.shiftKey || e.ctrlKey;
@@ -3752,10 +3756,11 @@ movableMouseDown = function ( e )
 		!isMobile && ( clickonDesktop || clickOnView )
 	)
 	{
-		if( !sh && e.button === 0 )
+		if( !sh && ( e.button === 0 || e.touches ) )
 		{
 			// Don't count scrollbar
-			if( ( ( e.clientX - GetElementLeft( tar ) ) < tar.offsetWidth - 16 ) )
+			let px = e.touches ? e.touches[0].pageX : e.clientX;
+			if( ( ( px - GetElementLeft( tar ) ) < tar.offsetWidth - 16 ) )
 			{
 				clearRegionIcons( { force: true } );
 			}

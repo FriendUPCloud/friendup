@@ -442,6 +442,14 @@ html body #Toolbar button.IconButton:not(:hover), html body #Toolbar .Button.Ico
 	z-index: 4;
 }
 
+[mobile] #StatusMessage
+{
+	left: auto;
+	right: 70px;
+	width: 110px;
+	pointer-events: none;
+}
+
 [mobile] #CodeArea .ace_editor
 {
 	right: 0 !important;
@@ -466,5 +474,6 @@ html body #Toolbar button.IconButton:not(:hover), html body #Toolbar .Button.Ico
 #MobileButtons
 {
 	margin-top: 4px;
+	padding: 1px 8px;
 }
 
