@@ -31,7 +31,8 @@ Workspace.viewSharingOptions = function( path )
 	v.path = path;
 	v.dIndex = 0;
 	v.selectedItems = [];
-	v.content.onclick = function( e )
+	let intype = window.isTablet || window.isMobile ? 'ontouchstart' : 'onclick';
+	v.content[ intype ] = function( e )
 	{
 		if( v.dropDown && v.dropDown.classList.contains( 'Showing' ) )
 		{
@@ -143,7 +144,8 @@ Workspace.setSharingGui = function( viewObject )
 	let searchF = ge( 'dropdownfield_' + viewObject.uniqueId );
 	let dropDown = ge( 'dropdown_' + viewObject.uniqueId );
 	viewObject.dropDown = dropDown;
-	dropDown.onclick = function( e ){ return cancelBubble( e ); }
+	let intype = window.isTablet || window.isMobile ? 'ontouchstart' : 'onclick';
+	dropDown[ intype ] = function( e ){ return cancelBubble( e ); }
 	searchF.onkeyup = function( e )
 	{
 		// Arrow down/up
@@ -296,9 +298,10 @@ Workspace.setSharingGui = function( viewObject )
 		{
 			dropDown.innerHTML = str;
 			let eles = dropDown.getElementsByClassName( 'DropdownItem' );
+			let intype = window.isTablet || window.isMobile ? 'ontouchstart' : 'onclick';
 			for( let c = 0; c < eles.length; c++ )
 			{
-				eles[ c ].onclick = function( e )
+				eles[ c ][ intype ] = function( e )
 				{
 					if( this.classList.contains( 'Active' ) )
 						this.classList.remove( 'Active' );
@@ -400,12 +403,13 @@ Workspace.refreshShareInformation = function( viewObject, callback )
 			}
 			str += '</div>';
 			list.innerHTML = str;
+			let intype = window.isTablet || window.isMobile ? 'ontouchstart' : 'onclick';
 			let buttons = list.getElementsByTagName( 'button' );
 			for( let c = 0; c < buttons.length; c++ )
 			{
 				( function( bt )
 				{
-					bt.onclick = function()
+					bt[ intype ] = function()
 					{
 						let n = null;
 						let m = new Module( 'system' );
