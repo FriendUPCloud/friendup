@@ -153,6 +153,7 @@ if( isset( $args->command ) )
 			{
 				$q = ( 'DELETE FROM DockItem WHERE UserID=\'' . $userid . '\' AND `Application`="' . $s . '" AND `Type`="' . ( isset( $args->args->type ) ? '' : 'executable' ) . '" LIMIT 1' );
 			}
+			$Logger->log( 'Removing from dock.: ' . $q );
 			if( $SqlDatabase->Query( $q ) )
 			{
 				die( 'ok<!--separate-->{"response":1,"message":"Dock item(s) removed","item":"' . $s . '"}' );
