@@ -457,10 +457,22 @@ html #WorkspaceMenu .Menu
 html > body[mobile=mobile] .Widget .MenuItems
 {
 	position: absolute;
-	left: -100% !important;
+	left: -110% !important;
 	width: 100% !important;
 	transition: left 0.15s;
 	background-color: rgba(0,0,0,0.95);
+	border-radius: 0;
+}
+
+html > body[mobile=mobile] .Widget .MenuItems > p
+{
+	height: 40px;
+	line-height: 40px;
+	width: 100%;
+	box-sizing: border-box;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	padding: 8px 20px;
 }
 
 html > body[mobile=mobile] .Widget.Hiding
@@ -470,7 +482,7 @@ html > body[mobile=mobile] .Widget.Hiding
 
 html > body[mobile=mobile] .Widget.Raised.Hiding .MenuItems.Open
 {
-	left: -100% !important;
+	left: -110% !important;
 	padding: 10px;
 	border-radius: 0;
 }
@@ -480,10 +492,10 @@ html > body[mobile=mobile] .Widget.Raised
 	position: fixed !important;
 	top: 0 !important;
 	left: 0 !important;
-	width: 80% !important;
+	width: 70% !important;
 	height: 100% !important;
 	border-radius: 0;
-	font-size: 1.2em;
+	font-size: 1.1em;
 	/* text-align: center; */
 	z-index: 2000000000;
 }
