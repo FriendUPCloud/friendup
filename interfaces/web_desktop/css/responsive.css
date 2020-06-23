@@ -459,7 +459,7 @@ html > body[mobile=mobile] .Widget .MenuItems
 	position: absolute;
 	left: -100% !important;
 	width: 100% !important;
-	transition: left 0.25s;
+	transition: left 0.15s;
 	background-color: rgba(0,0,0,0.95);
 }
 
