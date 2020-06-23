@@ -481,19 +481,19 @@ int SocketListen( Socket *sock )
 
 static inline int LoadCertificates( SSL_CTX* ctx, char* CertFile, char* KeyFile)
 {
-	/* set the local certificate from CertFile */
+	// set the local certificate from CertFile
 	if ( SSL_CTX_use_certificate_file(ctx, CertFile, SSL_FILETYPE_PEM) <= 0 )
 	{
 		ERR_print_errors_fp(stderr);
 		return 1;
 	}
-	/* set the private key from KeyFile (may be the same as CertFile) */
+	// set the private key from KeyFile (may be the same as CertFile) 
 	if ( SSL_CTX_use_PrivateKey_file(ctx, KeyFile, SSL_FILETYPE_PEM) <= 0 )
 	{
 		ERR_print_errors_fp(stderr);
 		return 2;
 	}
-	/* verify private key */
+	// verify private key 
 	if ( !SSL_CTX_check_private_key(ctx) )
 	{
 		FERROR( "Private key does not match the public certificate\n");
@@ -585,15 +585,13 @@ int SocketConnectClient(const char *hostname, int port, int family __attribute__
 	int rc = connect( sockfd,(struct sockaddr *)&sin, sizeof(sin) );
 	if( (rc == -1) && (errno != EINPROGRESS) ) 
 	{
-		printf("Error: %s\n", strerror(errno));
+		FERROR("[Socket] Error: %s\n", strerror(errno));
 		close( sockfd );
 		return -1;
 	}
 
 	if( rc == 0 )
 	{
-		// connection has succeeded immediately
-		//clock_gettime(CLOCK_MONOTONIC, &tend);
 		return sockfd;
 	}
 
@@ -737,7 +735,6 @@ int SocketConnectSSL( Socket* sock, const char *host )
 					// NO error..
 					FERROR( "[SocketConnect] No error\n" );
 					break;
-					//return incoming;
 				}
 				case SSL_ERROR_ZERO_RETURN:
 				{
@@ -859,9 +856,6 @@ Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port 
 	if( sock->s_SSLEnabled == TRUE )
 	{
 		sock->s_Interface = &(lsb->l_SocketISSL);
-		//SocketSetBlocking( sock, TRUE );
-		//OpenSSL_add_all_algorithms();
-		//OpenSSL_add_all_ciphers();
 
 		DEBUG("All algo and ciphers added\n");
 		//sock->s_BIO = BIO_new(BIO_s_mem());
@@ -974,7 +968,6 @@ Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port 
 					}
 					//FERROR( "[SocketConnect] Error want read, retrying\n" );
 					case SSL_ERROR_WANT_WRITE:
-						//FERROR( "[SocketConnect] Error want write, retrying\n" );
 						break;
 					case SSL_ERROR_WANT_ACCEPT:
 						FERROR( "[SocketConnect] Want accept\n" );
@@ -992,8 +985,6 @@ Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port 
 						return NULL;
 					}
 				}
-				//SocketClose( sock );
-				//return NULL;
 			}
 			else
 			{
@@ -1647,11 +1638,10 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 	}
 	unsigned int read = 0;
 	int res = 0, err = 0, buf = length;
-	fd_set rd_set, wr_set;
 	int retries = 0;
 	int read_retries = 0;
 	struct timeval timeout;
-	fd_set fds;
+
 // Microseconds! I.e. 400 ms
 #define READTIMEOUT 400000
 	if( expectedLength > 0 && length > expectedLength ) length = expectedLength;
@@ -1703,32 +1693,33 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 					return read;
 					// The operation did not complete. Call again.
 				case SSL_ERROR_WANT_WRITE:
-					//if( pthread_mutex_lock( &sock->mutex ) == 0 )
 					{
-						FERROR( "[SocketRead] Want write.\n" );
-						FD_ZERO( &fds );
-						FD_SET( sock->fd, &fds );
+						struct pollfd fds[2];
 
-						//pthread_mutex_unlock( &sock->mutex );
-					}
-					timeout.tv_sec = sock->s_Timeouts;
-					timeout.tv_usec = sock->s_Timeoutu;
+						// watch stdin for input 
+						fds[0].fd = sock->fd;// STDIN_FILENO;
+						fds[0].events = POLLIN;
 
-					err = select( sock->fd + 1, NULL, &fds, NULL, &timeout );
+						// watch stdout for ability to write
+						fds[1].fd = STDOUT_FILENO;
+						fds[1].events = POLLOUT;
 
-					if( err > 0 )
-					{
-						usleep( 50000 );
-						FERROR("[SocketRead] want write\n");
-						continue; // more data to read...
-					}
-					else if( err == 0 )
-					{
-						FERROR("[SocketRead] want write TIMEOUT....\n");
+						int err = poll( fds, 1, sock->s_Timeouts * 1000);
+
+						if( err > 0 )
+						{
+							usleep( 50000 );
+							FERROR("[SocketRead] want write\n");
+							continue; // more data to read...
+						}
+						else if( err == 0 )
+						{
+							FERROR("[SocketRead] want write TIMEOUT....\n");
+							return read;
+						}
+						FERROR("[SocketRead] want write everything read....\n");
 						return read;
 					}
-					FERROR("[SocketRead] want write everything read....\n");
-					return read;
 				case SSL_ERROR_SYSCALL:
 
 					//DEBUG("SSLERR : err : %d res: %d\n", err, res );
@@ -1790,13 +1781,6 @@ int SocketReadBlockedNOSSL( Socket* sock, char* data, unsigned int length, unsig
 		return 0;
 	}
 
-	/*
-	char c[10];
-    ssize_t x = recv( sock->fd, &c, 10, MSG_PEEK);
-	if( x  < 1 )
-	{
-		return x;
-	}*/
 	int count;
 	ioctl( sock->fd, FIONREAD, &count);
 	DEBUG("recv %d\n", count );
@@ -1805,18 +1789,17 @@ int SocketReadBlockedNOSSL( Socket* sock, char* data, unsigned int length, unsig
 		return 0;
 	}
 
-	struct timeval timeout;
-	fd_set fds;
+	struct pollfd fds[2];
 
-	FD_ZERO( &fds );
-	FD_SET( sock->fd, &fds );
+	// watch stdin for input 
+	fds[0].fd = sock->fd;// STDIN_FILENO;
+	fds[0].events = POLLIN;
 
-	timeout.tv_sec = 5;//sock->s_Timeouts;
-	timeout.tv_usec = 5000;//sock->s_Timeoutu;
+	// watch stdout for ability to write
+	fds[1].fd = STDOUT_FILENO;
+	fds[1].events = POLLOUT;
 
-	//DEBUG("\n\n\n\n\ntimeout.tv_sec %lu timeout.tv_usec %lu\n\n\n\n", timeout.tv_sec, timeout.tv_usec );
-
-	int err = select( sock->fd+1, &fds, NULL, NULL, &timeout );
+	int err = poll( fds, 1, 5 * 1000);
 	if( err <= 0 )
 	{
 		DEBUG("Timeout or there is no data in socket\n");
@@ -1859,16 +1842,17 @@ int SocketReadBlockedSSL( Socket* sock, char* data, unsigned int length, unsigne
 		return 0;
 	}
 
-	struct timeval timeout;
-	fd_set fds;
+	struct pollfd fds[2];
 
-	FD_ZERO( &fds );
-	FD_SET( sock->fd, &fds );
+	// watch stdin for input 
+	fds[0].fd = sock->fd;// STDIN_FILENO;
+	fds[0].events = POLLIN;
 
-	timeout.tv_sec = 5;//sock->s_Timeouts;
-	timeout.tv_usec = 5000;//sock->s_Timeoutu;
+	// watch stdout for ability to write
+	fds[1].fd = STDOUT_FILENO;
+	fds[1].events = POLLOUT;
 
-	int err = select( sock->fd+1, &fds, NULL, NULL, &timeout );
+	int err = poll( fds, 1, 5 * 1000);
 	if( err <= 0 )
 	{
 		DEBUG("Timeout or there is no data in socket\n");
@@ -1911,18 +1895,20 @@ int SocketWaitReadNOSSL( Socket* sock, char* data, unsigned int length, unsigned
 	DEBUG2("[SocketWaitRead] Socket wait for message\n");
 
 	int n;
-	fd_set wset, rset;
-	struct timeval tv;
-
-	FD_ZERO( &rset );
-	FD_SET( sock->fd,  &rset );
 
 	SocketSetBlocking( sock, TRUE );
 
-	tv.tv_sec = sec;
-	tv.tv_usec = 0;
+	struct pollfd fds[2];
 
-	if( ( n = select( sock->fd+1, &rset, NULL, NULL, &tv ) ) == 0 )
+	// watch stdin for input 
+	fds[0].fd = sock->fd;// STDIN_FILENO;
+	fds[0].events = POLLIN;
+
+	// watch stdout for ability to write
+	fds[1].fd = STDOUT_FILENO;
+	fds[1].events = POLLOUT;
+
+	if( ( n = poll( fds, 1, sec * 1000) ) == 0 )
 	{
 		FERROR("[SocketWaitRead] Connection timeout\n");
 		SocketSetBlocking( sock, FALSE );
@@ -1999,20 +1985,20 @@ int SocketWaitReadSSL( Socket* sock, char* data, unsigned int length, unsigned i
 	DEBUG2("[SocketWaitRead] Socket wait for message\n");
 
 	int n;
-	fd_set wset, rset;
-	struct timeval tv;
-
-	FD_ZERO( &rset );
-	//FD_SET( 0,  &rset );
-	FD_SET( sock->fd,  &rset );
-	//wset = rset;
 
 	SocketSetBlocking( sock, TRUE );
 
-	tv.tv_sec = sec;
-	tv.tv_usec = 0;
+	struct pollfd fds[2];
 
-	if( ( n = select( sock->fd+1, &rset, NULL, NULL, &tv ) ) == 0 )
+	// watch stdin for input 
+	fds[0].fd = sock->fd;// STDIN_FILENO;
+	fds[0].events = POLLIN;
+
+	// watch stdout for ability to write
+	fds[1].fd = STDOUT_FILENO;
+	fds[1].events = POLLOUT;
+
+	if( ( n = poll( fds, 1, sec * 1000) ) == 0 )
 	{
 		FERROR("[SocketWaitRead] Connection timeout\n");
 		SocketSetBlocking( sock, FALSE );
@@ -2058,7 +2044,6 @@ int SocketWaitReadSSL( Socket* sock, char* data, unsigned int length, unsigned i
 		}
 
 		struct timeval timeout;
-		fd_set fds;
 
 		if( res <= 0 )
 		{
@@ -2075,16 +2060,18 @@ int SocketWaitReadSSL( Socket* sock, char* data, unsigned int length, unsigned i
 				return SOCKET_CLOSED_STATE;
 				// The operation did not complete. Call again.
 			case SSL_ERROR_WANT_READ:
+			{
 				// no data available right now, wait a few seconds in case new data arrives...
-				//printf("SSL_ERROR_WANT_READ %i\n", count);
+				struct pollfd lfds[2];
+				// watch stdin for input 
+				lfds[0].fd = sock->fd;// STDIN_FILENO;
+				lfds[0].events = POLLIN;
 
-				FD_ZERO( &fds );
-				FD_SET( sock->fd, &fds );
+				// watch stdout for ability to write
+				lfds[1].fd = STDOUT_FILENO;
+				lfds[1].events = POLLOUT;
 
-				timeout.tv_sec = sock->s_Timeouts;
-				timeout.tv_usec = sock->s_Timeoutu;
-
-				err = select( sock->fd+1, &fds, NULL, NULL, &timeout );
+				int err = poll( lfds, 1, sock->s_Timeouts * 1000);
 				if( err > 0 )
 				{
 					continue; // more data to read...
@@ -2105,17 +2092,22 @@ int SocketWaitReadSSL( Socket* sock, char* data, unsigned int length, unsigned i
 				//usleep( 0 );
 				FERROR("want read\n");
 				continue;
+			}
 				// The operation did not complete. Call again.
 			case SSL_ERROR_WANT_WRITE:
+			{
 				FERROR( "[SocketWaitRead] Want write.\n" );
 
-				FD_ZERO( &fds );
-				FD_SET( sock->fd, &fds );
+				struct pollfd lfds[2];
+				// watch stdin for input 
+				lfds[0].fd = sock->fd;// STDIN_FILENO;
+				lfds[0].events = POLLIN;
 
-				timeout.tv_sec = sock->s_Timeouts;
-				timeout.tv_usec = sock->s_Timeoutu;
+				// watch stdout for ability to write
+				lfds[1].fd = STDOUT_FILENO;
+				lfds[1].events = POLLOUT;
 
-				err = select( sock->fd+1, &fds, NULL, NULL, &timeout );
+				int err = poll( lfds, 1, sock->s_Timeouts * 1000);
 				if( err > 0 )
 				{
 					continue; // more data to read...
@@ -2131,7 +2123,7 @@ int SocketWaitReadSSL( Socket* sock, char* data, unsigned int length, unsigned i
 					FERROR("[SocketWaitRead] want read everything read....\n");
 					return read;
 				}
-				//return read;
+			}
 			case SSL_ERROR_SYSCALL:
 				return read;
 			default:
@@ -2235,7 +2227,6 @@ BufString *SocketReadPackageSSL( Socket *sock )
 	DEBUG2("[SocketReadPackage] Socket message appear , sock ptr %p\n", sock );
 
 	int res = 0, err = 0;//, buf = length;
-	fd_set rd_set, wr_set;
 	int retries = 0;
 
 	do
@@ -2260,9 +2251,6 @@ BufString *SocketReadPackageSSL( Socket *sock )
 			}
 		}
 
-		struct timeval timeout;
-		fd_set fds;
-
 		if( res <= 0 )
 		{
 			err = SSL_get_error( sock->s_Ssl, res );
@@ -2278,16 +2266,19 @@ BufString *SocketReadPackageSSL( Socket *sock )
 				return bs;
 				// The operation did not complete. Call again.
 			case SSL_ERROR_WANT_READ:
+			{
 				// no data available right now, wait a few seconds in case new data arrives...
-				//printf("SSL_ERROR_WANT_READ %i\n", count);
 
-				FD_ZERO( &fds );
-				FD_SET( sock->fd, &fds );
+				struct pollfd lfds[2];
+				// watch stdin for input 
+				lfds[0].fd = sock->fd;// STDIN_FILENO;
+				lfds[0].events = POLLIN;
 
-				timeout.tv_sec = sock->s_Timeouts;
-				timeout.tv_usec = sock->s_Timeoutu;
+				// watch stdout for ability to write
+				lfds[1].fd = STDOUT_FILENO;
+				lfds[1].events = POLLOUT;
 
-				err = select( sock->fd+1, &fds, NULL, NULL, &timeout );
+				int err = poll( lfds, 1, sock->s_Timeouts * 1000);
 				if( err > 0 )
 				{
 					return NULL; // more data to read...
@@ -2306,16 +2297,21 @@ BufString *SocketReadPackageSSL( Socket *sock )
 
 				FERROR("want read\n");
 				return NULL;
+			}
 				// The operation did not complete. Call again.
 			case SSL_ERROR_WANT_WRITE:
+			{
 				FERROR( "[SocketReadPackage] Want write.\n" );
-				FD_ZERO( &fds );
-				FD_SET( sock->fd, &fds );
+				struct pollfd lfds[2];
+				// watch stdin for input 
+				lfds[0].fd = sock->fd;// STDIN_FILENO;
+				lfds[0].events = POLLIN;
 
-				timeout.tv_sec = sock->s_Timeouts;
-				timeout.tv_usec = sock->s_Timeoutu;
+				// watch stdout for ability to write
+				lfds[1].fd = STDOUT_FILENO;
+				lfds[1].events = POLLOUT;
 
-				err = select( sock->fd+1, &fds, NULL, NULL, &timeout );
+				int err = poll( lfds, 1, sock->s_Timeouts * 1000);
 				if( err > 0 )
 				{
 					return NULL; // more data to read...
@@ -2331,7 +2327,7 @@ BufString *SocketReadPackageSSL( Socket *sock )
 					FERROR("[SocketReadPackage] want read everything read....\n");
 					return bs;
 				}
-				//return read;
+			}
 			case SSL_ERROR_SYSCALL:
 				return bs;
 			default:
@@ -2484,7 +2480,6 @@ BufString *SocketReadTillEndSSL( Socket* sock, unsigned int pass __attribute__((
 
 	DEBUG2("[SocketReadTillEnd] Socket wait for message, blocked %d\n", sock->s_Blocked );
 
-	int n;
 	struct timeval tv;
 
 	struct pollfd fds[2];
@@ -2681,10 +2676,6 @@ FLONG SocketWriteSSL( Socket* sock, char* data, FLONG length )
 	FLONG bsize = left;
 
 	int err = 0;		
-	// Prepare to get fd state
-	//struct timeval timeoutValue = { 1, 0 }; // TODO: For select?
-	// int sResult = 0;  // TODO: For select?
-	// fd_set fdstate;  // TODO: For select?
 	int counter = 0;
 
 	while( written < length )
