@@ -358,7 +358,7 @@ function saveUserFile( $username, $filePath, $json, $windowid = false, $authid =
 		if( $file )
 		{
 			$fileinfo = $file->GetFileInfo();
-			faLog( 'Fileinfo here is ' . $fileinfo );
+			//faLog( 'Fileinfo here is ' . $fileinfo );
 			if( $fileinfo )
 			{
 				$infojson = '';
@@ -376,12 +376,13 @@ function saveUserFile( $username, $filePath, $json, $windowid = false, $authid =
 					
 					if( !in_array($username, $infojson->active_lock_user) )
 					{
-						faLog( 'Elvis has left the building. Find a new one ' . $username . ' : ' .  $infojson->active_lock_user[0] );
+						//faLog( 'Elvis has left the building. Find a new one ' . $username . ' : ' .  $infojson->active_lock_user[0] );
 						
 						$username = $infojson->active_lock_user[0];
 						faConnectDB( $username );
 
 						$file = getUserFile( $username, $filePath );
+						if(isset($infojson->active_lock_user_windows->{$username})) $windowid = $infojson->active_lock_user_windows->{$username};
 					}
 				}
 			}
@@ -407,7 +408,6 @@ function saveUserFile( $username, $filePath, $json, $windowid = false, $authid =
 			}
 			else
 			{
-				//faLog( 'File saved FAILED!' . $filePath . '!' . print_r( $file,1 ) );
 				die( '{"error":1}');					
 			}
 
