@@ -2894,13 +2894,10 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 						self.touchMode = 0;
 					}, 100 );
 					
-					if( window.isTablet )
+					this.contextMenuTimeout = setTimeout( function()
 					{
-						this.contextMenuTimeout = setTimeout( function()
-						{
-							Workspace.showContextMenu( false, e );
-						}, 1000 );
-					}
+						Workspace.showContextMenu( false, e );
+					}, 1000 );
 					
 					return cancelBubble( e );
 				}
@@ -2963,7 +2960,10 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 							this.contextMenuTimeout = false;
 						}
 					}
+					clearTimeout( this.contextMenuTimeout );
+					this.contextMenuTimeout = null;
 					this.touchPos = false;
+					return cancelBubble( e );
 				}
 				
 				r.onclick = null;
@@ -3920,13 +3920,11 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				}
 			}, 100 );
 
-			if( window.isMobile )
-			{		
-				file.contextMenuTimeout = setTimeout( function()
-				{
-					Workspace.showContextMenu( false, event );
-				}, 1000 );
-			}
+
+			file.contextMenuTimeout = setTimeout( function()
+			{
+				Workspace.showContextMenu( false, event );
+			}, 1000 );
 			//return cancelBubble( event );
 		}, false );
 
