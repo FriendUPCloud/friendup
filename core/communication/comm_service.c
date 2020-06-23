@@ -325,7 +325,7 @@ void ParseCallThread( void *tdata )
 		
 		if( isStream == FALSE )
 		{
-			wrote = SocketWrite( fcmsg->fccm_Socket, (char *)recvDataForm, (FLONG)recvDataForm->df_Size );
+			wrote = fcmsg->fccm_Socket->s_Interface->SocketWrite( fcmsg->fccm_Socket, (char *)recvDataForm, (FLONG)recvDataForm->df_Size );
 		}
 		DEBUG2("[COMMSERV] Wrote bytes %d\n", wrote );
 		
@@ -471,7 +471,7 @@ Create outgoing connections\n \
 					
 					if( loccon->fc_Socket != NULL )
 					{
-						SocketDelete( loccon->fc_Socket );
+						loccon->fc_Socket->s_Interface->SocketDelete( loccon->fc_Socket );
 						loccon->fc_Socket = newsock;
 					}
 					loccon->fc_Status = CONNECTION_STATUS_CONNECTED;
@@ -595,7 +595,7 @@ int CommServiceThreadServer( FThread *ptr )
 		
 		if( SocketListen( service->s_Socket ) != 0 )
 		{
-			SocketDelete( service->s_Socket );
+			service->s_Socket->s_Interface->SocketDelete( service->s_Socket );
 			FERROR("[COMMSERV]  Cannot listen on socket!\n");
 			return -1;
 		}
@@ -738,7 +738,7 @@ int CommServiceThreadServer( FThread *ptr )
 						{
 							FERROR("-=================RECEIVED========================-\n");
 							
-							Socket *incomming = SocketAccept( service->s_Socket );
+							Socket *incomming = service->s_Socket->s_Interface->SocketAccept( service->s_Socket );
 							if( incomming == NULL )
 							{
 								// We have processed all incoming connections.
@@ -817,7 +817,7 @@ int CommServiceThreadServer( FThread *ptr )
 						if( sock != NULL )
 						{
 							//bs = SocketReadPackage( sock );
-							bs = SocketReadTillEnd( sock, 0, 15 );
+							bs = sock->s_Interface->SocketReadTillEnd( sock, 0, 15 );
 						}
 						else
 						{
@@ -986,7 +986,7 @@ int CommServiceThreadServer( FThread *ptr )
 											DEBUG("[COMMSERV] DataForm Created size %lu\n", dfresp->df_Size );
 											
 											// FC send his own id in response
-											int sbytes = SocketWrite( sock, (char *)dfresp, (FLONG)dfresp->df_Size );
+											int sbytes = sock->s_Interface->SocketWrite( sock, (char *)dfresp, (FLONG)dfresp->df_Size );
 
 											DataFormDelete( dfresp );
 											
@@ -1010,7 +1010,7 @@ int CommServiceThreadServer( FThread *ptr )
 									}
 									else
 									{
-										SocketDelete( sock );
+										sock->s_Interface->SocketDelete( sock );
 										sock = NULL;
 										FERROR( "[COMMSERV] Closing incoming!\n" );
 									}
@@ -1041,7 +1041,7 @@ int CommServiceThreadServer( FThread *ptr )
 										DEBUG("[COMMSERV] Response idreq %lu\n", reqid );
 									
 										// FC send his own id in response
-										int sbytes = SocketWrite( sock, (char *)responsedf, (FLONG)responsedf->df_Size );
+										int sbytes = sock->s_Interface->SocketWrite( sock, (char *)responsedf, (FLONG)responsedf->df_Size );
 
 										DEBUG("[COMMSERV] WROTE to sock %d\n", sbytes );
 									
@@ -1073,7 +1073,7 @@ int CommServiceThreadServer( FThread *ptr )
 											DEBUG("[COMMSERV] Response idreq %lu\n", reqid );
 									
 											// FC send his own id in response
-											int sbytes = SocketWrite( sock, (char *)responsedf, (FLONG)responsedf->df_Size );
+											int sbytes = sock->s_Interface->SocketWrite( sock, (char *)responsedf, (FLONG)responsedf->df_Size );
 
 											DEBUG("[COMMSERV] WROTE to sock %d\n", sbytes );
 									
@@ -1140,7 +1140,7 @@ int CommServiceThreadServer( FThread *ptr )
 		shutdown( service->s_Epollfd, SHUT_RDWR );
 		close( service->s_Epollfd );
 		
-		SocketDelete( service->s_Socket );
+		service->s_Socket->s_Interface->SocketDelete( service->s_Socket );
 	}
 	else
 	{
@@ -1278,11 +1278,11 @@ FConnection *CommServiceAddConnection( CommService* s, Socket* socket, char *nam
 		
 			DataForm * df = DataFormNew( tags );
 		
-			int64_t sbytes = SocketWrite( socket, (char *)df, (FLONG)df->df_Size );
+			int64_t sbytes = socket->s_Interface->SocketWrite( socket, (char *)df, (FLONG)df->df_Size );
 		
 			DataFormDelete( df );
 		
-			BufString *result = SocketReadTillEnd( socket, 0, 15 );
+			BufString *result = socket->s_Interface->SocketReadTillEnd( socket, 0, 15 );
 			if( result != NULL )
 			{
 				if( result->bs_Size > 0 )
@@ -1439,7 +1439,7 @@ FConnection *CommServiceAddConnection( CommService* s, Socket* socket, char *nam
 		if( cfcn->fc_Socket != NULL )
 		{
 			DEBUG("Closing new socket\n");
-			SocketDelete( socket );
+			cfcn->fc_Socket->s_Interface->SocketDelete( socket );
 			socket = NULL;
 		}
 		else
@@ -1564,7 +1564,7 @@ FConnection *CommServiceAddConnectionByAddr( CommService* s, char *addr )
 	char id[ 256 ];
 	memset( id, 0, sizeof(id) );
 	
-	BufString *result = SocketReadTillEnd( newsock, 0, 15 );
+	BufString *result = newsock->s_Interface->SocketReadTillEnd( newsock, 0, 15 );
 	if( result != NULL )
 	{
 		if( result->bs_Size > 0 )
@@ -1640,7 +1640,7 @@ int CommServiceDelConnection( CommService* s, FConnection *loccon, Socket *sock 
 				
 				epoll_ctl( s->s_Epollfd, EPOLL_CTL_DEL, remsocket->fd, NULL );
 				DEBUG("[COMMSERV] I want close socket\n");
-				SocketDelete( remsocket );
+				remsocket->s_Interface->SocketDelete( remsocket );
 				DEBUG("[COMMSERV] Socket closed\n");
 			}
 			con->fc_Socket = NULL;
@@ -1677,7 +1677,7 @@ int CommServiceDelConnection( CommService* s, FConnection *loccon, Socket *sock 
 			if( c != NULL )
 			{
 				epoll_ctl( s->s_Epollfd, EPOLL_CTL_DEL, c->fd, NULL );
-				SocketDelete( c );
+				c->s_Interface->SocketDelete( c );
 			}
 		}
 		
@@ -1828,7 +1828,7 @@ void *InternalPINGThread( void *d )
 			{
 				//DEBUG("[CommServicePING] Connection reestabilished\n");
 				
-				SocketDelete( con->fc_Socket );
+				con->fc_Socket->s_Interface->SocketDelete( con->fc_Socket );
 				con->fc_Socket = newsock;
 				newsock->s_Data = con;
 				

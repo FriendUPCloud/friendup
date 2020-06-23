@@ -1276,7 +1276,7 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 		User *user = NULL;
 
 		int entries;
-		user = sqlLib->Load( sqlLib, UserDesc, "Name = 'apiuser'", &entries );
+		user = sqlLib->Load( sqlLib, UserDesc, "Name='apiuser' LIMIT 1", &entries );
 
 		if( user != NULL )
 		{

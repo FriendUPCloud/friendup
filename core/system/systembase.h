@@ -399,7 +399,8 @@ typedef struct SystemBase
 	char							**l_ServerKeyValues;
 	int								l_ServerKeysNum;
 	
-	//WebsocketAPNSConnector			*l_APNSConnection;
+	struct LSocketInterface_t		l_SocketISSL;
+	struct LSocketInterface_t		l_SocketINOSSL;
 } SystemBase;
 
 

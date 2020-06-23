@@ -449,8 +449,7 @@ void *FriendCoreAcceptPhase2( void *d )
 			incoming->ip = client.sin6_addr;
 			incoming->s_SSLEnabled = fc->fci_Sockets->s_SSLEnabled;
 			incoming->s_SB = fc->fci_Sockets->s_SB;
-
-			pthread_mutex_init( &incoming->mutex, NULL );
+			incoming->s_Interface = fc->fci_Sockets->s_Interface;
 		}
 		else
 		{
@@ -477,7 +476,6 @@ void *FriendCoreAcceptPhase2( void *d )
 				FERROR("[SocketAcceptPair] Cannot accept SSL connection\n");
 				shutdown( fd, SHUT_RDWR );
 				close( fd );
-				pthread_mutex_destroy( &incoming->mutex );
 				FFree( incoming );
 				goto accerror;
 			}
@@ -495,7 +493,6 @@ void *FriendCoreAcceptPhase2( void *d )
 				FERROR( "[SocketAcceptPair] Could not set fd, error: %d fd: %d\n", error, incoming->fd );
 				shutdown( fd, SHUT_RDWR );
 				close( fd );
-				pthread_mutex_destroy( &incoming->mutex );
 				SSL_free( incoming->s_Ssl );
 				FFree( incoming );
 				goto accerror;
@@ -534,7 +531,7 @@ void *FriendCoreAcceptPhase2( void *d )
 						break;
 						case SSL_ERROR_ZERO_RETURN:
 							FERROR("[SocketAcceptPair] SSL_ACCEPT error: Socket closed.\n" );
-							SocketDelete( incoming );
+							incoming->s_Interface->SocketDelete( incoming );
 							goto accerror;
 						case SSL_ERROR_WANT_READ:
 							lbreak = 2;
@@ -544,15 +541,15 @@ void *FriendCoreAcceptPhase2( void *d )
 						break;
 						case SSL_ERROR_WANT_ACCEPT:
 							FERROR( "[SocketAcceptPair] Want accept\n" );
-							SocketDelete( incoming );
+							incoming->s_Interface->SocketDelete( incoming );
 							goto accerror;
 						case SSL_ERROR_WANT_X509_LOOKUP:
 							FERROR( "[SocketAcceptPair] Want 509 lookup\n" );
-							SocketDelete( incoming );
+							incoming->s_Interface->SocketDelete( incoming );
 							goto accerror;
 						case SSL_ERROR_SYSCALL:
 							FERROR( "[SocketAcceptPair] Error syscall. Goodbye! %s.\n", ERR_error_string( ERR_get_error(), NULL ) );
-							SocketDelete( incoming );
+							incoming->s_Interface->SocketDelete( incoming );
 							goto accerror;
 						case SSL_ERROR_SSL:
 						{
@@ -567,7 +564,7 @@ void *FriendCoreAcceptPhase2( void *d )
 							}
 							else
 							{
-								SocketDelete( incoming );
+								incoming->s_Interface->SocketDelete( incoming );
 								goto accerror;
 							}
 							break;
@@ -641,7 +638,7 @@ void *FriendCoreAcceptPhase2( void *d )
 			if( error )
 			{
 				FERROR("\n************************************** epoll_ctl failure **************************************\n\n");
-				SocketDelete(incoming);
+				incoming->s_Interface->SocketDelete( incoming );
 				goto accerror;
 			}
 
@@ -799,7 +796,7 @@ void FriendCoreProcess( void *fcv )
 					headerLength + bodyLength - count :
 					0;
 
-				res = SocketRead( th->sock, locBuffer, bufferSize, expected );
+				res = th->sock->s_Interface->SocketRead( th->sock, locBuffer, bufferSize, expected );
 				if( res > 0 )
 				{
 					//DEBUG("----------------------> tmpFileHandle: %d read: %ld\n", tmpFileHandle, res );
@@ -1146,7 +1143,7 @@ void FriendCoreProcess( void *fcv )
 	close_fcp:
 	
 	DEBUG( "Closing socket %d.\n", th->sock->fd );
-	SocketDelete( th->sock );
+	th->sock->s_Interface->SocketDelete( th->sock );
 	th->sock = NULL;
 
 	// Free the pair
@@ -1512,7 +1509,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 				{
 					DEBUG("[FriendCoreEpoll] FD %d\n", sock->fd );
 					epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_DEL, sock->fd, NULL );
-					SocketDelete( sock );
+					sock->s_Interface->SocketDelete( sock );
 					sock = NULL;
 				}
 			}
@@ -1653,7 +1650,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	DEBUG("[FriendCore] Shutting down.\n");
 	if( fc->fci_Sockets )
 	{
-		SocketDelete( fc->fci_Sockets );
+		fc->fci_Sockets->s_Interface->SocketDelete( fc->fci_Sockets );
 		fc->fci_Sockets = NULL;
 	}
 	
@@ -1725,7 +1722,7 @@ int FriendCoreRun( FriendCoreInstance* fc )
 	if( SocketSetBlocking( fc->fci_Sockets, FALSE ) == -1 )
 	{
 		FERROR("Cannot set socket to blocking state!\n");
-		SocketDelete( fc->fci_Sockets );
+		fc->fci_Sockets->s_Interface->SocketDelete( fc->fci_Sockets );
 		fc->fci_Closed = TRUE;
 		return -1;
 	}
@@ -1733,7 +1730,7 @@ int FriendCoreRun( FriendCoreInstance* fc )
 	if( SocketListen( fc->fci_Sockets ) != 0 )
 	{
 		FERROR("Cannot setup socket!\nCheck if port: %d\n", fc->fci_Port );
-		SocketDelete( fc->fci_Sockets );
+		fc->fci_Sockets->s_Interface->SocketDelete( fc->fci_Sockets );
 		fc->fci_Closed= TRUE;
 		return -1;
 	}
@@ -1751,7 +1748,7 @@ int FriendCoreRun( FriendCoreInstance* fc )
 	if( fc->fci_Epollfd == -1 )
 	{
 		FERROR( "[FriendCore] epoll_create\n" );
-		SocketDelete( fc->fci_Sockets );
+		fc->fci_Sockets->s_Interface->SocketDelete( fc->fci_Sockets );
 		fc->fci_Closed = TRUE;
 		return -1;
 	}
@@ -1765,7 +1762,7 @@ int FriendCoreRun( FriendCoreInstance* fc )
 	if( epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_ADD, fc->fci_Sockets->fd, &event ) == -1 )
 	{
 		LOG( FLOG_ERROR, "[FriendCore] epoll_ctl\n" );
-		SocketDelete( fc->fci_Sockets );
+		fc->fci_Sockets->s_Interface->SocketDelete( fc->fci_Sockets );
 		fc->fci_Closed = TRUE;
 		return -1;
 	}

@@ -461,7 +461,7 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 			
 			if( streaming == TRUE )
 			{
-				SocketWrite( request->http_Socket, sizec, sizei );
+				request->http_Socket->s_Interface->SocketWrite( request->http_Socket, sizec, sizei );
 			}
 			else
 			{

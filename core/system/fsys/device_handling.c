@@ -1415,6 +1415,7 @@ AND f.Name = '%s'",
 				
 				if( row[ 7 ] != NULL ){ char *end; id = strtoul( (char *)row[ 7 ],  &end, 0 ); }
 				
+				if( execute != NULL ){FFree( execute );}
 				if( row[ 8 ] != NULL ) execute = StringDuplicate( row[ 8 ] );
 				
 				if( row[ 9 ] != NULL ){ char *end; storedBytes = strtoul( (char *)row[ 9 ],  &end, 0 ); }

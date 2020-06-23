@@ -718,6 +718,7 @@ int SSHThread( FThread *ptr )
 		r = ssh_bind_accept( sshbind , session );
 		if( r==SSH_ERROR )
 		{
+			ssh_free( session );
 			FERROR("error accepting a connection : %s\n",ssh_get_error(sshbind));
 			continue;
 		}
