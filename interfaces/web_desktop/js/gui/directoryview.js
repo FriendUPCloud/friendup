@@ -2904,7 +2904,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 						this.contextMenuTimeout = setTimeout( function()
 						{
 							Workspace.showContextMenu( false, e );
-						}, 800 );
+						}, 1000 );
 					}
 					
 					return cancelBubble( e );

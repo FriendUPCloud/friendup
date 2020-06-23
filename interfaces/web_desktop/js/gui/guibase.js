@@ -2587,6 +2587,7 @@ movableMouseUp = function( e )
 			setTimeout( function()
 			{
 				Workspace.iconContextMenu.hide();
+				Workspace.contextMenuShowing = null;
 			}, 150 );
 		}
 	}
@@ -3683,6 +3684,7 @@ movableMouseDown = function ( e )
 	if( ( window.isTablet || window.isMobile ) && Workspace.iconContextMenu )
 	{
 		Workspace.iconContextMenu.hide();
+		Workspace.contextMenuShowing = null;
 		if( !isMobile )
 			DefaultToWorkspaceScreen( tar );
 	}
@@ -3712,6 +3714,7 @@ movableMouseDown = function ( e )
 	if( !clickOnMenuItem && Workspace.iconContextMenu )
 	{
 		Workspace.iconContextMenu.hide();
+		Workspace.contextMenuShowing = null;
 	}
 	
 	let sh = e.shiftKey || e.ctrlKey;
@@ -3761,7 +3764,6 @@ movableMouseDown = function ( e )
 			{
 				clearRegionIcons( { force: true } );
 			}
-			Workspace.contextMenuShowing = null;
 		}
 		
 		window.mouseDown = 4;
