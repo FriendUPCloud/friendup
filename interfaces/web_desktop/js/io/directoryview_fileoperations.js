@@ -145,9 +145,11 @@ DirectoryView.prototype.ShowShareDialog = function( elements, mode )
 								self.HideShareDialog();
 							}
 							eles = v.getElementsByClassName( 'SearchBarInput' );
-							eles[0].onkeyup = function()
+							
+							eles[0].onkeyup = function( e )
 							{
 								filterShareItems( this.value );
+								return cancelBubble( e );
 							}
 							// Apply current sharing info
 							eles = v.getElementsByClassName( 'DoShare' );

@@ -45,6 +45,8 @@ var gui = {
 			if( Application.checkFileType( path ) )
 			{
 				( new EditorFile( path ) );
+				if( isMobile )
+					SetMobileMode( 'Edit' );
 			}
 			return true;
 		},
@@ -52,6 +54,8 @@ var gui = {
 		loadFile( path )
 		{
 			( new EditorFile( path ) );
+			if( isMobile )
+				SetMobileMode( 'Edit' );
 		},
 		// Do we permit?
 		permitFiletype( path )
@@ -873,7 +877,10 @@ function OpenFile( path )
 {
 	if( path && path.indexOf( '.' ) > 0 )
 	{
-		return new EditorFile( path );
+		let f = new EditorFile( path );
+		if( isMobile )
+			SetMobileMode( 'Edit' );
+		return f;
 	}
 	
 	( new Filedialog( {
@@ -1860,11 +1867,11 @@ function CheckMobileButtons()
 		return;
 	if( Application.editMode == 'Edit' )
 	{
-		ge( 'MobileButtons' ).innerHTML = '<button type="button" onclick="SetMobileMode(\'Project\')" class="Button IconSmall fa-folder"> ' + i18n( 'i18n_browse' ) + '</button>';
+		ge( 'MobileButtons' ).innerHTML = '<button type="button" ontouchstart="SetMobileMode(\'Project\')" class="Button IconSmall fa-folder"> ' + i18n( 'i18n_browse' ) + '</button>';
 	}
 	else
 	{
-		ge( 'MobileButtons' ).innerHTML = '<button type="button" onclick="SetMobileMode(\'Edit\')" class="Button IconSmall fa-folder"> ' + i18n( 'i18n_edit_files' ) + '</button>';
+		ge( 'MobileButtons' ).innerHTML = '<button type="button" ontouchstart="SetMobileMode(\'Edit\')" class="Button IconSmall fa-folder"> ' + i18n( 'i18n_edit_files' ) + '</button>';
 	}
 }
 
