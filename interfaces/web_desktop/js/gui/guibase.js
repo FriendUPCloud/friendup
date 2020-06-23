@@ -3762,7 +3762,17 @@ movableMouseDown = function ( e )
 			let px = e.touches ? e.touches[0].pageX : e.clientX;
 			if( ( ( px - GetElementLeft( tar ) ) < tar.offsetWidth - 16 ) )
 			{
-				clearRegionIcons( { force: true } );
+				setTimeout( function()
+				{
+					if( tar.directoryview )
+					{
+						if( tar.directoryview.refreshScrollTimeout )
+						{
+							return;
+						}
+					}
+					clearRegionIcons( { force: true } );
+				}, 100 );
 			}
 		}
 		

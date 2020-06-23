@@ -3899,6 +3899,22 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				return cancelBubble( event );
 			}
 			
+			// Only click icons!
+			if( 
+				!event.target.parentNode.classList.contains( 'Icon' ) && 
+				!event.target.parentNode.classList.contains( 'Drive' )  )
+			{
+				return;
+			}
+			else
+			{
+				event.target.parentNode.style.filter = 'invert(1)';
+				setTimeout( function()
+				{
+					event.target.parentNode.style.filter = '';
+				}, 50 );
+			}
+			
 			window.fileMenuElement = file;
 			window.clickElement = file;
 
