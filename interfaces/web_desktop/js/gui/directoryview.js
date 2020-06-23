@@ -3912,7 +3912,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				setTimeout( function()
 				{
 					event.target.parentNode.style.filter = '';
-				}, 50 );
+				}, 30 );
 			}
 			
 			window.fileMenuElement = file;
