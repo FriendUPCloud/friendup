@@ -3908,7 +3908,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			}
 			else
 			{
-				event.target.parentNode.style.filter = 'invert(1)';
+				event.target.parentNode.style.filter = 'hue-rotate(45deg) drop-shadow(0px 0px 2px rgba(255,240,0,0.5))';
 				setTimeout( function()
 				{
 					event.target.parentNode.style.filter = '';
