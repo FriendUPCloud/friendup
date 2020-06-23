@@ -5020,10 +5020,22 @@ Friend.startImageViewer = function( iconObject, extra )
 		// Enable panning image
 		image.onmousedown = function( e )
 		{
-			let offx = e.clientX;
-			let offy = e.clientY;
+			let offx = offy = 0;
+			
+			if( e.touches[0] )
+			{
+				offx = e.touches[0].pageX;
+				offy = e.touches[0].pageY;
+			}
+			else
+			{		
+				offx = e.clientX;
+				offy = e.clientY;
+			}
+			
 			let px = image.offsetX;
 			let py = image.offsetY;
+			
 			image.classList.add( 'Panning' );
 			window.mouseDown = image;
 			window.mouseReleaseFunc = function()
@@ -5032,11 +5044,26 @@ Friend.startImageViewer = function( iconObject, extra )
 			}
 			window.mouseMoveFunc = function( e2 )
 			{
-				image.offsetX = px + ( e2.clientX - offx );
-				image.offsetY = py + ( e2.clientY - offy );
+				let cx, cy = 0;
+				
+				if( e2.touches[0] )
+				{
+					cx = e2.touches[0].pageX;
+					cy = e2.touches[0].pageY;
+				}
+				else
+				{		
+					cx = e2.clientX;
+					cy = e2.clientY;
+				}
+				
+				image.offsetX = px + ( cx - offx );
+				image.offsetY = py + ( cy - offy );
 				repositionElement( win );
 			}
 		}
+		
+		image.ontouchstart = image.onmousedown;
 		
 		image.onmousewheel = function( e )
 		{
