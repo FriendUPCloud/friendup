@@ -2119,10 +2119,20 @@ html body.WindowMenu .Widget
 	font-weight: bold;
 	display: block;
 	margin: 0;
-	padding: 10px 10px 5px 10px;
+	padding: 5px 10px 5px 10px;
 	border-bottom: 1px solid rgba(0,0,0,0.6);
 	color: white;
 	text-shadow: 0px 1px 1px rgba(0,0,0,0.6);
+}
+
+[tablet] .Widget .MenuItems .MenuHeader:after 
+{
+    font-family: fontawesome;
+    content: "\f00d";
+    display: block;
+    float: right;
+    font-weight: normal;
+    margin: 2px 0 0 0;
 }
 
 .Widget .MenuItems .MenuItem:last-child

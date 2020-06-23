@@ -795,7 +795,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			e.defaultBehavior = true;
 			return;
 		}
-		if( !window.isMobile )
+		if( !window.isMobile && !window.isTablet )
 		{
 			Workspace.showContextMenu( false, e );
 		}
@@ -2284,7 +2284,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	// Handle scrolling
 	this.refreshScrollTimeout = false;
 	this.scroller.onscroll = function( e )
-	{
+	{	
 		// Only handle scroll if it changed
 		if( !self.scrollerTop || self.scrollerTop != self.scroller.scrollTop )
 		{
@@ -2954,6 +2954,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			{
 				r.ontouchend = function( e )
 				{
+					console.log( 'Fopa' );
 					if( this.click )
 					{
 						this.ondblclick( e );
@@ -3922,6 +3923,11 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		{
 			if( this.directoryView.filedialog )
 				return;
+			
+			if( Workspace.contextMenuShowing ) 
+			{
+				return cancelBubble( event );
+			}
 			
 			if( window.clickElement == this )
 			{

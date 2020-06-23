@@ -7197,7 +7197,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		var el = tr;
 		if( el )
 		{
-			while( el != document.body )
+			while( el != document.body && el )
 			{
 				if( el.classList && el.classList.contains( 'Content' ) )
 					break;
@@ -7288,7 +7288,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				t = iconWindow;
 			else
 			{
-				while( !( t.classList && t.classList.contains( 'Content' ) ) && t.parentNode != document.body )
+				while( t && !( t.classList && t.classList.contains( 'Content' ) ) && t.parentNode != document.body )
 				{
 					t = t.parentNode;
 				}
