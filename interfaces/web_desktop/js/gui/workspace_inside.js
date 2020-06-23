@@ -6818,7 +6818,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					//},
 					{
 						name:	sharedVolume ? i18n( 'menu_unshare' ) : i18n( 'menu_delete' ),
-						command: function() { Workspace.deleteFile( 'unshare' ); },
+						command: function() { Workspace.deleteFile( sharedVolume ? 'unshare' : false ); },
 						disabled: ( !iconsSelected || volumeIcon ) || systemDrive || cannotWrite
 					},
 					// Add sharing
