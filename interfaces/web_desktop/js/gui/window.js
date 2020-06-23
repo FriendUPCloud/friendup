@@ -2728,7 +2728,7 @@ var View = function( args )
 						clearInterval( self.touchInterval );
 						self.touchInterval = null;
 					
-						if( !isTablet )
+						if( !isTablet || isMobile )
 						{
 							self.viewIcon.classList.add( 'Remove' );
 							self.classList.add( 'Remove' );
