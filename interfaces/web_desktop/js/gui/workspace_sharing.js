@@ -34,6 +34,10 @@ Workspace.viewSharingOptions = function( path )
 	let intype = window.isTablet || window.isMobile ? 'ontouchstart' : 'onclick';
 	v.content[ intype ] = function( e )
 	{
+		v.clickIt();
+	}
+	v.clickIt = function()
+	{
 		if( v.dropDown && v.dropDown.classList.contains( 'Showing' ) )
 		{
 			v.selectedItems = [];
@@ -61,13 +65,7 @@ Workspace.viewSharingOptions = function( path )
 				}
 			}
 			v.dropDown.classList.remove( 'Showing' );
-			Workspace.refreshShareInformation( v, function()
-			{
-				if( v.doApply )
-				{
-					Workspace.saveFileShareInfo( v.uniqueId );
-				}
-			} );
+			Workspace.refreshShareInformation( v );
 		}
 	}
 	
@@ -106,19 +104,23 @@ Workspace.viewSharingOptions = function( path )
 	}
 	f.load();
 };
-Workspace.saveFileShareInfo = function( uniqueId )
+Workspace.saveFileShareInfo = function( uniqueId, noclose )
 {
 	if( !this.sharingDialogs[ uniqueId ] ) return;
+	if( !noclose ) noclose = false;
 	let self = this;
 	let d = this.sharingDialogs[ uniqueId ];
-	
 	let drp = null;
 	if( drp = d._window.getElementsByClassName( 'Dropdown' ) )
 	{
 		if( drp[0].classList.contains( 'Showing' ) )
 		{
-			d.doApply = true;
-			return;
+			d.clickIt();
+			return Workspace.refreshShareInformation( d, function()
+			{
+				drp[0].classList.remove( 'Showing' );
+				Workspace.saveFileShareInfo( uniqueId, true );
+			} );
 		}
 	}
 	
@@ -127,7 +129,8 @@ Workspace.saveFileShareInfo = function( uniqueId )
 	{
 		if( e == 'ok' )
 		{
-			d.close();
+			if( !noclose )
+				d.close();
 		}
 		else
 		{
