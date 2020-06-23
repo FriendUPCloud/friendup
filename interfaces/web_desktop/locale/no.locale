@@ -21,6 +21,9 @@ i18n_language                        : Språk
 i18n_bookmarks                       : Bokmerker
 i18n_upload_a_file                   : Last opp fil
 i18n_deleting_files                  : Sletter filer
+i18n_sure_unshare                    : Ønsker du å fjerne deling?
+i18n_sure_unshdesc                   : Når du fjerner delte filer er de ikke tilgjengelig for andre.
+i18n_unsharing_files                 : Fjerner deling
 i18n_bookmarks_add                   : Legg til
 i18n_bookmarks_close                 : Lukk
 i18n_bookmarks_select                : Velg
@@ -236,6 +239,7 @@ menu_looknfeel                          : Utseende
 menu_backdrop                           : Vis oversikt
 menu_buildwebapp                        : Bygg webapplikasjon
 menu_share				                : Del
+menu_unshare                            : Fjern deling
 menu_share_info                         : Delingsinformasjon
 menu_download                           : Last ned
 i18n_could_not_download                 : Kunne ikke laste ned

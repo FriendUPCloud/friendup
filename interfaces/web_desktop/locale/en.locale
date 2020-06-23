@@ -24,6 +24,9 @@ i18n_upload_a_file                   : Upload file
 i18n_selected_files                  : Selected files
 i18n_in_total                        : In total
 i18n_deleting_files                  : Deleting files
+i18n_sure_unshare                    : Are you sure you want to unshare?
+i18n_sure_unshdesc                   : The files you unshare will not be available to others.
+i18n_unsharing_files                 : Unsharing files
 i18n_bookmarks_add                   : Add
 i18n_bookmarks_close                 : Close
 i18n_bookmarks_select                : Select
@@ -237,6 +240,7 @@ menu_unzip                              : Decompress file(s)
 menu_looknfeel                          : Look and feel
 menu_backdrop                           : Show overview
 menu_share								: Share
+menu_unshare                            : Unshare
 menu_share_info                         : Share info
 menu_download                           : Download
 i18n_could_not_download                 : Could not download
