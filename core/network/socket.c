@@ -1707,7 +1707,8 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 						{
 							//usleep( 50000 );
 							FERROR("[SocketReadSSL] time to read new data\n");
-							continue; // more data to read...
+							//continue; // more data to read...
+							return read;
 						}
 						else if( err == 0 )
 						{

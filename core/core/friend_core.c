@@ -519,8 +519,6 @@ void *FriendCoreAcceptPhase2( void *d )
 					}
 					continue;
 				}
-				
-				SocketSetBlocking( incoming, TRUE );
 
 				if( err <= 0 || err == 2 )
 				{
@@ -734,6 +732,9 @@ void FriendCoreProcess( void *fcv )
 	char *locBuffer = FMalloc( bufferSizeAlloc );
 	char *firstLocBuffer = locBuffer;
 	
+	//blocked sockets
+	//SocketSetBlocking( th->sock, TRUE );
+	
 	if( locBuffer != NULL )
 	{
 		incomingBufferPtr = resultString->bs_Buffer;
@@ -799,10 +800,13 @@ void FriendCoreProcess( void *fcv )
 					headerLength + bodyLength - count :
 					0;
 
+				/*
+				// blocking soeckets
 				res = th->sock->s_Interface->SocketReadBlocked( th->sock, locBuffer, bufferSize, expected );
 				if( res >= 0 )
-				//res = th->sock->s_Interface->SocketRead( th->sock, locBuffer, bufferSize, expected );
-				//if( res > 0 )
+				*/
+				res = th->sock->s_Interface->SocketRead( th->sock, locBuffer, bufferSize, expected );
+				if( res > 0 )
 				{
 					DEBUG("----------------------> tmpFileHandle: %d read: %ld\n", tmpFileHandle, res );
 					if( tmpFileHandle >= 0 )
@@ -835,12 +839,14 @@ void FriendCoreProcess( void *fcv )
 					// How much data did we read?
 					count += res;
 					joints++;
+					/*
 					DEBUG("Count: %d Pass: %d BLength: %lld\n", count, pass, bodyLength );
 					// blocking sockets
 					if( res == 0 )
 					{
 						break;
 					}
+					*/
 
 					// Break get posts after header
 					if( pass == 0 )
