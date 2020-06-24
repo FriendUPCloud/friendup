@@ -1689,6 +1689,7 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 					//usleep( read_retries < 100 ? 0 : ( read_retries < 200 ? 1 : ( retryCount << 1 ) ) );
 					//usleep( 500 );
 					//continue;
+					/*
 					struct pollfd fds[2];
 
 						// watch stdin for input 
@@ -1714,7 +1715,7 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 						}
 						FERROR("[SocketReadSSL] want write everything read....\n");
 						return read;
-					/*
+					*/
 					// NB: We used to retry 10000 times!
 					if( read == 0 )
 					{
@@ -1725,7 +1726,7 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 						}
 					}
 					return read;
-					*/
+					
 					// The operation did not complete. Call again.
 				case SSL_ERROR_WANT_WRITE:
 					{
