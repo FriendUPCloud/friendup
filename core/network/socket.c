@@ -1637,10 +1637,10 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 		return 0;
 	}
 	unsigned int read = 0;
-	int res = 0, err = 0, buf = length;
+	int res = 0, err = 0, bufCapacity = length;
 	int retries = 0;
 	int read_retries = 0;
-	struct timeval timeout;
+	int oldRes = 0;
 
 // Microseconds! I.e. 400 ms
 #define READTIMEOUT 400000
@@ -1648,19 +1648,25 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 	struct timeval start, stop;
 	gettimeofday( &start, NULL );
 
-	while( TRUE )
+	int read_blocked_on_write=0;
+	int read_blocked=0;
+	
+	//while( TRUE )
+	do
 	{
-		if( (read + buf) > length )
-		{
-			buf = length - read;
-		}
-		DEBUG("[SocketReadSSL] socket read, fd %d\n", sock->fd );
+		read_blocked_on_write=0;
+		read_blocked=0;
 		
-		if( ( res = SSL_read( sock->s_Ssl, data + read, buf ) ) > 0 )
+		if( (read + bufCapacity) > length )
 		{
-#ifndef NO_VALGRIND_STUFF	
-			VALGRIND_MAKE_MEM_DEFINED( data + read, res );
-#endif
+			bufCapacity = length - read;
+			DEBUG("capacity too big?\n");
+		}
+		DEBUG("[SocketReadSSL] socket read: %d, fd %d\n", read, sock->fd );
+		
+		if( ( res = SSL_read( sock->s_Ssl, data + read, bufCapacity ) ) > 0 )
+		{
+			oldRes = res;
 			read += res;
 			read_retries = retries = 0;
 			DEBUG("[SocketReadSSL] read: %d\n", read );
@@ -1671,6 +1677,7 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 		}
 		else
 		{
+			DEBUG("error: res %d oldres %d\n", res, oldRes );
 			err = SSL_get_error( sock->s_Ssl, res );
 			
 			switch( err )
@@ -1686,9 +1693,11 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 					return -1;
 					// The operation did not complete. Call again.
 				case SSL_ERROR_WANT_READ:
-					DEBUG("[SocketReadSSL] SSL_ERROR_WANT_READ, pointer to context: %p\n" , sock->s_Ctx );
-					//usleep( read_retries < 100 ? 0 : ( read_retries < 200 ? 1 : ( retryCount << 1 ) ) );
-					usleep( 50 );
+					DEBUG("[SocketReadSSL] SSL_ERROR_WANT_READ, read: %d\n" , read );
+					//usleep( read_retries < 100 ? 0 : ( read_retries < 200 ? 1 : ( (retryCount++) << 1 ) ) );
+					//return read;
+					//usleep( 50 );
+					read_blocked=1;
 					continue;
 					
 					/*
@@ -1742,6 +1751,8 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 					// The operation did not complete. Call again.
 				case SSL_ERROR_WANT_WRITE:
 					{
+						read_blocked_on_write=1;
+						
 						struct pollfd fds[2];
 
 						// watch stdin for input 
@@ -1772,7 +1783,7 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 
 					//DEBUG("SSLERR : err : %d res: %d\n", err, res );
 				
-					FERROR("[SocketReadSSL] Error syscall, bufsize = %d.\n", buf );
+					FERROR("[SocketReadSSL] Error syscall, bufsize = %d.\n", bufCapacity );
 					if( err > 0 )
 					{
 						if( errno == 0 )
@@ -1795,14 +1806,17 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 					FERROR( "[SocketReadSSL] Error syscall other error. return.\n" );
 					return read;
 					// Don't retry, just return read
+					
+				case SSL_ERROR_SSL:
+					DEBUG("ERROR_SSL\n");
+					continue;
 				default:
 					return read;
 			}
 		}
-	}
-		return read;
-
-	return 0;
+	}while( SSL_pending( sock->s_Ssl ) && !read_blocked );
+	
+	return read;
 }
 
 /**
