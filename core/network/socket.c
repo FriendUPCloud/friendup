@@ -1663,6 +1663,7 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 			read += res;
 			read_retries = retries = 0;
 			if( read >= length ) break;
+			
 		}
 		else
 		{
@@ -1681,6 +1682,8 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 					return -1;
 					// The operation did not complete. Call again.
 				case SSL_ERROR_WANT_READ:
+					continue;
+					/*
 					// NB: We used to retry 10000 times!
 					if( read == 0 )
 					{
@@ -1691,6 +1694,7 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 						}
 					}
 					return read;
+					*/
 					// The operation did not complete. Call again.
 				case SSL_ERROR_WANT_WRITE:
 					{
