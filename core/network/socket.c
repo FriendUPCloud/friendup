@@ -1701,7 +1701,7 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 						fds[1].fd = STDOUT_FILENO;
 						fds[1].events = POLLOUT;
 
-						int err = poll( fds, 1, 100);
+						int err = poll( fds, 1, 10000);
 
 						if( err > 0 )
 						{
