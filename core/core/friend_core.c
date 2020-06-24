@@ -483,6 +483,7 @@ void *FriendCoreAcceptPhase2( void *d )
 			//DEBUG("[FriendCoreAcceptPhase2] set fd\n");
 			srl = SSL_set_fd( incoming->s_Ssl, incoming->fd );
 			SSL_set_accept_state( incoming->s_Ssl );
+			//SSL_CTX_set_mode( fc->fci_Sockets->s_Ctx, SSL_MODE_AUTO_RETRY );
 			
 			//DEBUG("[FriendCoreAcceptPhase2] state accepted\n");
 

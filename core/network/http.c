@@ -1536,10 +1536,15 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 						if( dataLength <= 0 )
 						{
 							DEBUG("dataLength <= 0\n" );
-							if( http->http_Content != NULL )
+							if( http->http_ContentFileHandle > 0 )
+							{
+								munmap( http->http_Content, http->http_ContentLength );
+								http->http_Content = NULL;
+								unlink( http->http_TempContentFileName );
+							}
+							else
 							{
 								FFree( http->http_Content );
-								http->http_Content = NULL;
 							}
 							http->http_SizeOfContent = 0;
 							http->http_ExpectBody = FALSE;
@@ -1548,10 +1553,15 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 						else if( dataLength != size && ( ( dataLength - 4 ) != size ) )
 						{
 							DEBUG("dataLength != size  %ld - %ld \n", dataLength, size );
-							if( http->http_Content != NULL )
+							if( http->http_ContentFileHandle > 0 )
+							{
+								munmap( http->http_Content, http->http_ContentLength );
+								http->http_Content = NULL;
+								unlink( http->http_TempContentFileName );
+							}
+							else
 							{
 								FFree( http->http_Content );
-								http->http_Content = NULL;
 							}
 							http->http_SizeOfContent = 0;
 							http->http_ExpectBody = FALSE;
