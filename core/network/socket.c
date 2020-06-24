@@ -1648,12 +1648,12 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 	struct timeval start, stop;
 	gettimeofday( &start, NULL );
 
-	while( 1 )
+	while( TRUE )
 	{
-		//pthread_yield();
-		//DEBUG("aa read %d length %d\n", read, length );
-
-		if( read + buf > length ) buf = length - read;
+		if( (read + buf) > length )
+		{
+			buf = length - read;
+		}
 		//DEBUG("socket read %d\n", sock->fd );
 		if( ( res = SSL_read( sock->s_Ssl, data + read, buf ) ) > 0 )
 		{
@@ -1673,15 +1673,17 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 			{
 				// The TLS/SSL I/O operation completed.
 				case SSL_ERROR_NONE:
-					FERROR( "[SocketRead] Completed successfully.\n" );
+					FERROR( "[SocketReadSSL] Completed successfully.\n" );
 					return read;
 					// The TLS/SSL connection has been closed. Goodbye!
 				case SSL_ERROR_ZERO_RETURN:
-					FERROR( "[SocketRead] The connection was closed.\n" );
+					FERROR( "[SocketReadSSL] The connection was closed.\n" );
 					//return SOCKET_CLOSED_STATE;
 					return -1;
 					// The operation did not complete. Call again.
 				case SSL_ERROR_WANT_READ:
+					DEBUG("[SocketReadSSL] Continue\n");
+					usleep( 50 );
 					continue;
 					/*
 					// NB: We used to retry 10000 times!
@@ -1713,42 +1715,42 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 						if( err > 0 )
 						{
 							usleep( 50000 );
-							FERROR("[SocketRead] want write\n");
+							FERROR("[SocketReadSSL] want write\n");
 							continue; // more data to read...
 						}
 						else if( err == 0 )
 						{
-							FERROR("[SocketRead] want write TIMEOUT....\n");
+							FERROR("[SocketReadSSL] want write TIMEOUT....\n");
 							return read;
 						}
-						FERROR("[SocketRead] want write everything read....\n");
+						FERROR("[SocketReadSSL] want write everything read....\n");
 						return read;
 					}
 				case SSL_ERROR_SYSCALL:
 
 					//DEBUG("SSLERR : err : %d res: %d\n", err, res );
 				
-					FERROR("[SocketRead] Error syscall, bufsize = %d.\n", buf );
+					FERROR("[SocketReadSSL] Error syscall, bufsize = %d.\n", buf );
 					if( err > 0 )
 					{
 						if( errno == 0 )
 						{
-							FERROR(" [SocketRead] Connection reset by peer.\n" );
+							FERROR(" [SocketReadSSL] Connection reset by peer.\n" );
 							return -1;
 							//return SOCKET_CLOSED_STATE;
 						}
 						else 
 						{
-							FERROR( "[SocketRead] Error syscall error: %s\n", strerror( errno ) );
+							FERROR( "[SocketReadSSL] Error syscall error: %s\n", strerror( errno ) );
 						}
 					}
 					else if( err == 0 )
 					{
-						FERROR( "[SocketRead] Error syscall no error? return.\n" );
+						FERROR( "[SocketReadSSL] Error syscall no error? return.\n" );
 						return read;
 					}
 				
-					FERROR( "[SocketRead] Error syscall other error. return.\n" );
+					FERROR( "[SocketReadSSL] Error syscall other error. return.\n" );
 					return read;
 					// Don't retry, just return read
 				default:
