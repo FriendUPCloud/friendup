@@ -1654,7 +1654,8 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 		{
 			buf = length - read;
 		}
-		//DEBUG("socket read %d\n", sock->fd );
+		DEBUG("socket read %d\n", sock->fd );
+		
 		if( ( res = SSL_read( sock->s_Ssl, data + read, buf ) ) > 0 )
 		{
 #ifndef NO_VALGRIND_STUFF	
