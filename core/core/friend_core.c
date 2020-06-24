@@ -804,7 +804,7 @@ void FriendCoreProcess( void *fcv )
 				//res = th->sock->s_Interface->SocketRead( th->sock, locBuffer, bufferSize, expected );
 				//if( res > 0 )
 				{
-					//DEBUG("----------------------> tmpFileHandle: %d read: %ld\n", tmpFileHandle, res );
+					DEBUG("----------------------> tmpFileHandle: %d read: %ld\n", tmpFileHandle, res );
 					if( tmpFileHandle >= 0 )
 					{
 						int wrote = write( tmpFileHandle, locBuffer, res );
@@ -835,6 +835,7 @@ void FriendCoreProcess( void *fcv )
 					// How much data did we read?
 					count += res;
 					joints++;
+					DEBUG("Count: %d Pass: %d BLength: %lld\n", count, pass, bodyLength );
 
 					// Break get posts after header
 					if( pass == 0 )
@@ -845,6 +846,7 @@ void FriendCoreProcess( void *fcv )
 						if( partialDivider >= 4 || strstr( locBuffer, dividerStr ) )
 						{
 							// We have a divider! Great!
+							DEBUG("divider found, break\n");
 							break;
 						}
 						// Does it end with this? Perhaps it's a partial divider
