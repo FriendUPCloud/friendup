@@ -184,7 +184,7 @@ static char *dividerStr = "\r\n\r\n";
 //
 // Decrease number of threads
 //
-
+/*
 static void DecreaseThreads()
 {
 	if( FRIEND_MUTEX_LOCK( &maxthreadmut ) == 0 )
@@ -208,7 +208,7 @@ static void IncreaseThreads()
 		FRIEND_MUTEX_UNLOCK( &maxthreadmut );
 	}
 }
-
+*/
 //
 // Current Friend Core instance
 //
@@ -376,7 +376,7 @@ void *FriendCoreAcceptPhase2( void *d )
 	//DEBUG("[FriendCoreAcceptPhase2] detached\n");
 	pthread_detach( pthread_self() );
 
-	IncreaseThreads();
+	//IncreaseThreads();
 	
 	struct fcThreadInstance *pre = (struct fcThreadInstance *)d;
 	FriendCoreInstance *fc = (FriendCoreInstance *)pre->fc;
@@ -663,13 +663,13 @@ void *FriendCoreAcceptPhase2( void *d )
 	}	// while accept
 	
 	FFree( pre );
-	DecreaseThreads();
+	//DecreaseThreads();
 	//pthread_exit( 0 );
 	return NULL;
 accerror:
 	DEBUG("SocketAccept ERROR\n");
 	FFree( pre );
-	DecreaseThreads();
+	//DecreaseThreads();
 	//pthread_exit( 0 );
 
 	return NULL;
@@ -684,11 +684,11 @@ void FriendCoreProcess( void *fcv )
 #ifdef USE_PTHREAD
 	pthread_detach( pthread_self() );
 #endif 
-	IncreaseThreads();
+	//IncreaseThreads();
 
 	if( fcv == NULL )
 	{
-		DecreaseThreads();
+		//DecreaseThreads();
 #ifdef USE_PTHREAD
 		pthread_exit( 0 );
 #endif
@@ -699,7 +699,7 @@ void FriendCoreProcess( void *fcv )
 
 	if( th->sock == NULL )
 	{
-		DecreaseThreads();
+// 		DecreaseThreads();
 		FFree( th );
 #ifdef USE_PTHREAD
 		pthread_exit( 0 );
@@ -778,7 +778,7 @@ void FriendCoreProcess( void *fcv )
 						FERROR("mktemp failed!");
 						//break; //drop the connection, rest of this function will do the cleanup
 						BufStringDelete( resultString );
-						DecreaseThreads();
+						//DecreaseThreads();
 						return;
 					}
 					else
@@ -1187,7 +1187,7 @@ void FriendCoreProcess( void *fcv )
 	}
 
 	// No more threads
-	DecreaseThreads();
+	//DecreaseThreads();
 
 #ifdef USE_PTHREAD
 	pthread_exit( 0 );
