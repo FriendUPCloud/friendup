@@ -1691,6 +1691,13 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 					//usleep( 500 );
 					//continue;
 					
+					 if( SSL_pending( sock->s_Ssl ) > 0 )
+					 {
+						continue; 
+					 }
+					 return read;
+					
+					/*
 					struct pollfd fds[2];
 
 						// watch stdin for input 
@@ -1717,7 +1724,7 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 						}
 						FERROR("[SocketReadSSL] want write everything read....\n");
 						return read;
-					
+					*/
 					// NB: We used to retry 10000 times!
 					/*
 					if( read == 0 )
