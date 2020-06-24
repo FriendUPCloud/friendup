@@ -1662,8 +1662,10 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 #endif
 			read += res;
 			read_retries = retries = 0;
-			if( read >= length ) break;
-			
+			if( read >= length )
+			{
+				break;
+			}
 		}
 		else
 		{
@@ -1683,8 +1685,34 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 					// The operation did not complete. Call again.
 				case SSL_ERROR_WANT_READ:
 					DEBUG("[SocketReadSSL] Continue\n");
-					usleep( 50 );
-					continue;
+					//usleep( read_retries < 100 ? 0 : ( read_retries < 200 ? 1 : ( retryCount << 1 ) ) );
+					//usleep( 500 );
+					//continue;
+					struct pollfd fds[2];
+
+						// watch stdin for input 
+						fds[0].fd = sock->fd;// STDIN_FILENO;
+						fds[0].events = POLLIN;
+
+						// watch stdout for ability to write
+						fds[1].fd = STDOUT_FILENO;
+						fds[1].events = POLLOUT;
+
+						int err = poll( fds, 1, sock->s_Timeouts * 1000);
+
+						if( err > 0 )
+						{
+							usleep( 50000 );
+							FERROR("[SocketReadSSL] want write\n");
+							continue; // more data to read...
+						}
+						else if( err == 0 )
+						{
+							FERROR("[SocketReadSSL] want write TIMEOUT....\n");
+							return read;
+						}
+						FERROR("[SocketReadSSL] want write everything read....\n");
+						return read;
 					/*
 					// NB: We used to retry 10000 times!
 					if( read == 0 )
