@@ -1688,14 +1688,16 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 				case SSL_ERROR_WANT_READ:
 					DEBUG("[SocketReadSSL] SSL_ERROR_WANT_READ, pointer to context: %p\n" , sock->s_Ctx );
 					//usleep( read_retries < 100 ? 0 : ( read_retries < 200 ? 1 : ( retryCount << 1 ) ) );
-					//usleep( 500 );
-					//continue;
+					usleep( 50 );
+					continue;
 					
-					 if( SSL_has_pending( sock->s_Ssl ) > 0 )
-					 {
+					/*
+					if( SSL_has_pending( sock->s_Ssl ) > 0 )
+					{
 						continue; 
-					 }
-					 return read;
+					}
+					return read;
+					*/
 					
 					/*
 					struct pollfd fds[2];
