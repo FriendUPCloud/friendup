@@ -386,6 +386,9 @@ void *FriendCoreAcceptPhase2( void *d )
 	socklen_t clientLen = sizeof( client );
 	int fd = 0;
 	
+	SSL_CTX						*s_Ctx = NULL;
+	SSL							*s_Ssl = NULL;
+	
 	DEBUG("[FriendCoreAcceptPhase2] before accept4\n");
 	
 	while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) > 0 )
@@ -436,28 +439,8 @@ void *FriendCoreAcceptPhase2( void *d )
 			close( fd );
 			goto accerror;
 		}
-		
-		// Get incoming
-		Socket *incoming = NULL;
-		int error = 0;
 	
-		incoming = ( Socket *)FCalloc( 1, sizeof( Socket ) );
-		if( incoming != NULL )
-		{
-			incoming->fd = fd;
-			incoming->port = ntohs( client.sin6_port );
-			incoming->ip = client.sin6_addr;
-			incoming->s_SSLEnabled = fc->fci_Sockets->s_SSLEnabled;
-			incoming->s_SB = fc->fci_Sockets->s_SB;
-			incoming->s_Interface = fc->fci_Sockets->s_Interface;
-		}
-		else
-		{
-			FERROR("Cannot allocate memory for socket!\n");
-			shutdown( fd, SHUT_RDWR );
-			close( fd );
-			goto accerror;
-		}
+		
 		//DEBUG("[FriendCoreAcceptPhase2] socket initialized\n");
 		
 		int lbreak = 0;
@@ -468,34 +451,28 @@ void *FriendCoreAcceptPhase2( void *d )
 			
 			SSL_CTX_set_session_cache_mode( fc->fci_Sockets->s_Ctx, SSL_SESS_CACHE_CLIENT | SSL_SESS_CACHE_NO_INTERNAL_STORE);
 			
-			incoming->s_Ssl = SSL_new( fc->fci_Sockets->s_Ctx );
+			s_Ssl = SSL_new( fc->fci_Sockets->s_Ctx );
 			DEBUG("[AcceptPair] SSL done\n");
 
-			if( incoming->s_Ssl == NULL )
+			if( s_Ssl == NULL )
 			{
 				FERROR("[SocketAcceptPair] Cannot accept SSL connection\n");
 				shutdown( fd, SHUT_RDWR );
 				close( fd );
-				FFree( incoming );
 				goto accerror;
 			}
 
-			//DEBUG("[FriendCoreAcceptPhase2] set fd\n");
-			srl = SSL_set_fd( incoming->s_Ssl, incoming->fd );
-			SSL_set_accept_state( incoming->s_Ssl );
-			//SSL_CTX_set_mode( fc->fci_Sockets->s_Ctx, SSL_MODE_AUTO_RETRY );
-			
-			//DEBUG("[FriendCoreAcceptPhase2] state accepted\n");
-
+			srl = SSL_set_fd( s_Ssl, fd );
+			SSL_set_accept_state( s_Ssl );
+			DEBUG("before set accept state, fd: %d\n", fd );
+				
 			if( srl != 1 )
 			{
-				int error = SSL_get_error( incoming->s_Ssl, srl );
+				int error = SSL_get_error( s_Ssl, srl );
 
-				FERROR( "[SocketAcceptPair] Could not set fd, error: %d fd: %d\n", error, incoming->fd );
+				FERROR( "[SocketAcceptPair] Could not set fd, error: %d fd: %d\n", error, fd );
 				shutdown( fd, SHUT_RDWR );
 				close( fd );
-				SSL_free( incoming->s_Ssl );
-				FFree( incoming );
 				goto accerror;
 			}
 			//DEBUG("[FriendCoreAcceptPhase2] before while\n");
@@ -506,13 +483,16 @@ void *FriendCoreAcceptPhase2( void *d )
 
 			while( 1 )
 			{
-				DEBUG("before accept\n");
-				if( ( err = SSL_accept( incoming->s_Ssl ) ) == 1 )
+				DEBUG("before accept: fd %d\n", fd );
+				if( ( err = SSL_accept( s_Ssl ) ) == 1 )
 				{
+					DEBUG("SSL_Accepted\n");
+					lbreak =1;
 					break;
 				}
 				else if( err == 0 )
 				{
+					DEBUG("SSL_Accepted err=0\n");
 					//if( (tr++) > 3 )
 					//{
 						break;
@@ -522,7 +502,8 @@ void *FriendCoreAcceptPhase2( void *d )
 
 				if( err <= 0 || err == 2 )
 				{
-					int error = SSL_get_error( incoming->s_Ssl, err );
+					int error = SSL_get_error( s_Ssl, err );
+					DEBUG("SSL get error: %d\n", error );
 					switch( error )
 					{
 						case SSL_ERROR_NONE:
@@ -532,7 +513,6 @@ void *FriendCoreAcceptPhase2( void *d )
 						break;
 						case SSL_ERROR_ZERO_RETURN:
 							FERROR("[SocketAcceptPair] SSL_ACCEPT error: Socket closed.\n" );
-							incoming->s_Interface->SocketDelete( incoming );
 							goto accerror;
 						case SSL_ERROR_WANT_READ:
 							lbreak = 2;
@@ -542,15 +522,13 @@ void *FriendCoreAcceptPhase2( void *d )
 						break;
 						case SSL_ERROR_WANT_ACCEPT:
 							FERROR( "[SocketAcceptPair] Want accept\n" );
-							incoming->s_Interface->SocketDelete( incoming );
 							goto accerror;
 						case SSL_ERROR_WANT_X509_LOOKUP:
 							FERROR( "[SocketAcceptPair] Want 509 lookup\n" );
-							incoming->s_Interface->SocketDelete( incoming );
 							goto accerror;
 						case SSL_ERROR_SYSCALL:
 							FERROR( "[SocketAcceptPair] Error syscall. Goodbye! %s.\n", ERR_error_string( ERR_get_error(), NULL ) );
-							incoming->s_Interface->SocketDelete( incoming );
+							
 							goto accerror;
 						case SSL_ERROR_SSL:
 						{
@@ -565,7 +543,6 @@ void *FriendCoreAcceptPhase2( void *d )
 							}
 							else
 							{
-								incoming->s_Interface->SocketDelete( incoming );
 								goto accerror;
 							}
 							break;
@@ -574,6 +551,7 @@ void *FriendCoreAcceptPhase2( void *d )
 				}
 				if( lbreak >= 1 )
 				{
+					DEBUG("lbreak=1\n");
 					break;
 				}
 				usleep( 0 );
@@ -589,14 +567,61 @@ void *FriendCoreAcceptPhase2( void *d )
 		{
 			DEBUG("No SSL\n");
 		}
-		DEBUG("[FriendCoreAcceptPhase2] before getting incoming\n");
+		DEBUG("[FriendCoreAcceptPhase2] before getting incoming fd: %d\n", fd );
 		
-		// We got incoming!
+		if( lbreak >= 1 )
+				{
+					DEBUG("lbreak=1\n");
+					break;
+				}
+		
+		if( fc->fci_Shutdown == TRUE )
+		{
+			if( fd > 0 )
+			{
+				close( fd );
+			}
+			break;
+		}
+		//DEBUG("[FriendCoreAcceptPhase2] in accept loop\n");
+	}	// while accept
+	
+	
+			// Get incoming
+		Socket *incoming = NULL;
+		int error = 0;
+		
+		incoming = ( Socket *)FCalloc( 1, sizeof( Socket ) );
 		if( incoming != NULL )
 		{
-			// Add instance reference
+			incoming->fd = fd;
+			incoming->port = ntohs( client.sin6_port );
+			incoming->ip = client.sin6_addr;
+			incoming->s_SSLEnabled = fc->fci_Sockets->s_SSLEnabled;
+			incoming->s_SB = fc->fci_Sockets->s_SB;
+			incoming->s_Interface = fc->fci_Sockets->s_Interface;
 			incoming->s_Data = fc;
-		#ifdef USE_SELECT
+			
+			if( fc->fci_Sockets->s_SSLEnabled == TRUE )
+			{
+				incoming->s_Ssl = s_Ssl;
+				incoming->s_Ctx = s_Ctx;
+				
+			//DEBUG("[FriendCoreAcceptPhase2] set fd\n");
+				
+				//SSL_CTX_set_mode( fc->fci_Sockets->s_Ctx, SSL_MODE_AUTO_RETRY );
+			
+				//DEBUG("[FriendCoreAcceptPhase2] state accepted\n");
+			}
+		}
+		else
+		{
+			FERROR("Cannot allocate memory for socket!\n");
+			shutdown( fd, SHUT_RDWR );
+			close( fd );
+			goto accerror;
+		}
+	#ifdef USE_SELECT
 			struct fcThreadInstance *pre = FCalloc( 1, sizeof( struct fcThreadInstance ) );
 			if( pre != NULL )
 			{
@@ -628,7 +653,7 @@ void *FriendCoreAcceptPhase2( void *d )
 			event.data.ptr = incoming;
 			event.events = EPOLLIN| EPOLLET;
 			//event.events = EPOLLIN| EPOLLET| EPOLLHUP | EPOLLERR;
-			//DEBUG("[FriendCoreAcceptPhase2] epoll_add\n");
+			DEBUG("[FriendCoreAcceptPhase2] epoll_add: %d\n", incoming->fd );
 
 			error = epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_ADD, incoming->fd, &event );
 			DEBUG("EPOLL_ADD: %d\n", incoming->fd );
@@ -639,29 +664,12 @@ void *FriendCoreAcceptPhase2( void *d )
 			
 			if( error )
 			{
-				FERROR("\n************************************** epoll_ctl failure **************************************\n\n");
+				FERROR("\n************************************** epoll_ctl failure ************************************** fd: %d\n\n", incoming->fd );
 				incoming->s_Interface->SocketDelete( incoming );
 				goto accerror;
 			}
 
 		#endif // USE_SELECT
-		}
-		// Miss?
-		else
-		{
-			DEBUG( "[FriendCoreAccept] Could not get an incoming..\n" );
-		}
-		
-		if( fc->fci_Shutdown == TRUE )
-		{
-			if( fd > 0 )
-			{
-				close( fd );
-			}
-			break;
-		}
-		//DEBUG("[FriendCoreAcceptPhase2] in accept loop\n");
-	}	// while accept
 	
 	FFree( pre );
 	//DecreaseThreads();
@@ -672,6 +680,7 @@ accerror:
 	FFree( pre );
 	//DecreaseThreads();
 	//pthread_exit( 0 );
+	//incoming->s_Interface->SocketDelete( incoming );
 
 	return NULL;
 }
