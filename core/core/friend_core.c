@@ -836,6 +836,11 @@ void FriendCoreProcess( void *fcv )
 					count += res;
 					joints++;
 					DEBUG("Count: %d Pass: %d BLength: %lld\n", count, pass, bodyLength );
+					// blocking sockets
+					if( res == 0 )
+					{
+						break;
+					}
 
 					// Break get posts after header
 					if( pass == 0 )
