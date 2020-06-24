@@ -12,7 +12,6 @@
 
 include_once( 'door.php' );
 
-
 class File
 {
 	var $_content = '';
@@ -116,7 +115,7 @@ class File
 		
 		$fd = new Door( reset( explode( ':', $this->path ) ) . ':' );
 		$d = new dbIO( 'FFileInfo' );
-		$d->Path = $filepath;
+		$d->Path = $this->path;
 		$d->FilesystemID = $fd->ID;
 		if( $d->Load() )
 		{

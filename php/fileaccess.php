@@ -45,13 +45,19 @@ if( $argv[1] )
 		case 'callback':
 			if( strtolower( $tmp[3] ) == 'file' )
 			{
+
+				faLog('callback! 1a' );
+
 				
 				/* SECURITY HOLE! WE MIGHT CIRCUMVENT ALL SECURITY HERE */
 				$filepath = rawurldecode( $tmp[4] );
 				$user = isset( $tmp[6] ) ? $tmp[6]  : false;
 				$authID = isset( $tmp[7] ) ? $tmp[7]  : false;
 				$windowID = isset( $tmp[8] ) ? $tmp[8]  : false; 
+				
+				faLog('callback! 1b' );
 				if( $user ) handleFileCallback( $user, $filepath, ( isset( $argv[2] ) ? $argv[2] : false ), $authID, $windowID );
+				faLog('callback! 1c' );
 			}
 			break;
 			
@@ -73,7 +79,7 @@ die('500 - unable to process your request');
 function handleFileCallback( $user, $filepath, $requestjson, $authid = false, $windowid = false )
 {	
 	
-	//faLog('handleFileCallback' .  $user . ' :: ' .  $filepath . ':: ' . print_r( $requestjson, 1) );
+	faLog('handleFileCallback' .  $user . ' :: ' .  $filepath . ':: ' . print_r( $requestjson, 1) );
 	
 	if( $requestjson == false )
 	{
@@ -207,13 +213,7 @@ function getUserFile( $username, $filePath )
 	}
 	
 	faConnectDB( $username );
-	
 
-	
-	include_once( 'classes/file.php' );
-	include_once( 'classes/door.php' );
-
-	
 	$f = new File( getOriginalFilePath( $filePath ) );
 	
 	if( $f->Load() )
@@ -354,6 +354,8 @@ function saveUserFile( $username, $filePath, $json, $windowid = false, $authid =
 		
 		$file = getUserFile( $username, $filePath );
 		
+		faLog( 'We got a file with this path: ' . $file->path );
+		
 		//check that we have a user tha tis still editing the docsument... check the info file.
 		if( $file )
 		{
@@ -380,10 +382,13 @@ function saveUserFile( $username, $filePath, $json, $windowid = false, $authid =
 						
 						$username = $infojson->active_lock_user[0];
 						faConnectDB( $username );
-
+						
 						$file = getUserFile( $username, $filePath );
-						if(isset($infojson->active_lock_user_windows->{$username})) $windowid = $infojson->active_lock_user_windows->{$username};
 					}
+				}
+				else
+				{
+					faLog( 'No users? WTF?');
 				}
 			}
 		}
@@ -399,7 +404,10 @@ function saveUserFile( $username, $filePath, $json, $windowid = false, $authid =
 			if( $result )
 			{
 				//faLog( 'File saved :) ' . $filePath . '!' . $result );
-				if( !$Config ) faConnectDB( $username );		
+
+				if( !$Config ) faConnectDB( $username );	
+				
+				if(isset($infojson->active_lock_user_windows->{$username})) $windowid = $infojson->active_lock_user_windows->{$username};
 				if( $windowid )
 				{
 					tellApplication( 'file_saved', $username, $windowid, $authid);
@@ -588,6 +596,9 @@ function faConnectDB( $username )
 	if( $configfilesettings && isset( $configfilesettings['DatabaseUser'] ) )
 	{
 		include_once( 'classes/dbio.php' );
+		include_once( 'classes/file.php' );
+		include_once( 'classes/door.php' );							
+
 		$SqlDatabase = new SqlDatabase();
 		if( !$SqlDatabase->Open( $configfilesettings['DatabaseUser']['host'], $configfilesettings['DatabaseUser']['login'], $configfilesettings['DatabaseUser']['password'] ) )
 		{
