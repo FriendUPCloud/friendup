@@ -389,7 +389,6 @@ void *FriendCoreAcceptPhase2( void *d )
 	DEBUG("[FriendCoreAcceptPhase2] before accept4\n");
 	
 	while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) > 0 )
-	//if( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) > 0 )
 	{
 		if( fd == -1 )
 		{
@@ -505,7 +504,7 @@ void *FriendCoreAcceptPhase2( void *d )
 			int err = 0;
 			int tr = 0;
 
-			//while( 1 )
+			while( 1 )
 			{
 				DEBUG("before accept\n");
 				if( ( err = SSL_accept( incoming->s_Ssl ) ) == 1 )
@@ -573,11 +572,11 @@ void *FriendCoreAcceptPhase2( void *d )
 						}
 					}
 				}
-				//if( lbreak >= 1 )
+				if( lbreak >= 1 )
 				{
-				//	break;
+					break;
 				}
-				//usleep( 0 );
+				usleep( 0 );
 				
 				if( fc->fci_Shutdown == TRUE )
 				{
@@ -633,9 +632,9 @@ void *FriendCoreAcceptPhase2( void *d )
 
 			error = epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_ADD, incoming->fd, &event );
 			DEBUG("EPOLL_ADD: %d\n", incoming->fd );
-	
+			break;
 			//DEBUG("[FriendCoreAcceptPhase2] before yield\n");
-			pthread_yield();
+			//pthread_yield();
 			//DEBUG("[FriendCoreAcceptPhase2] after yield\n");
 			
 			if( error )
@@ -644,7 +643,6 @@ void *FriendCoreAcceptPhase2( void *d )
 				incoming->s_Interface->SocketDelete( incoming );
 				goto accerror;
 			}
-			break;
 
 		#endif // USE_SELECT
 		}
