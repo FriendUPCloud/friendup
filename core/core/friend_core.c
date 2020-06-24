@@ -800,8 +800,9 @@ void FriendCoreProcess( void *fcv )
 					0;
 
 				res = th->sock->s_Interface->SocketReadBlocked( th->sock, locBuffer, bufferSize, expected );
+				if( res >= 0 )
 				//res = th->sock->s_Interface->SocketRead( th->sock, locBuffer, bufferSize, expected );
-				if( res > 0 )
+				//if( res > 0 )
 				{
 					//DEBUG("----------------------> tmpFileHandle: %d read: %ld\n", tmpFileHandle, res );
 					if( tmpFileHandle >= 0 )
