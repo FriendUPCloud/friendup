@@ -1745,7 +1745,7 @@ int FriendCoreRun( FriendCoreInstance* fc )
 		return -1;
 	}
 	
-	//SSL_CTX_get_read_ahead( fc->fci_Sockets->s_Ctx );
+	SSL_CTX_get_read_ahead( fc->fci_Sockets->s_Ctx );
 	
 	if( SocketListen( fc->fci_Sockets ) != 0 )
 	{

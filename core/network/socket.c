@@ -1807,14 +1807,22 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 					return read;
 					// Don't retry, just return read
 					
-				case SSL_ERROR_SSL:
-					DEBUG("ERROR_SSL\n");
-					continue;
+				//case SSL_ERROR_SSL:
+				//	DEBUG("ERROR_SSL\n");
+					
+				//	continue;
 				default:
 					return read;
 			}
 		}
-	}while( SSL_pending( sock->s_Ssl ) && !read_blocked );
+		DEBUG("before while\n");
+		int sslpend = SSL_pending( sock->s_Ssl );
+		if( sslpend == 0 && read_blocked == 0 )
+		{
+			break;
+		}
+	}while(TRUE);//( ( SSL_pending( sock->s_Ssl ) && read_blocked ) );
+	DEBUG("SocketRead, pending and readblocked failed: %d\n", read_blocked );
 	
 	return read;
 }
