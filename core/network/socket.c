@@ -1698,17 +1698,17 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 						fds[1].fd = STDOUT_FILENO;
 						fds[1].events = POLLOUT;
 
-						int err = poll( fds, 1, sock->s_Timeouts * 1000);
+						int err = poll( fds, 1, 5 * 1000);
 
 						if( err > 0 )
 						{
 							usleep( 50000 );
-							FERROR("[SocketReadSSL] want write\n");
+							FERROR("[SocketReadSSL] want read\n");
 							continue; // more data to read...
 						}
 						else if( err == 0 )
 						{
-							FERROR("[SocketReadSSL] want write TIMEOUT....\n");
+							FERROR("[SocketReadSSL] want read TIMEOUT....\n");
 							return read;
 						}
 						FERROR("[SocketReadSSL] want write everything read....\n");
