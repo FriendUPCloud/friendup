@@ -632,7 +632,7 @@ void *FriendCoreAcceptPhase2( void *d )
 
 			error = epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_ADD, incoming->fd, &event );
 			DEBUG("EPOLL_ADD: %d\n", incoming->fd );
-			break;
+			//break;
 			//DEBUG("[FriendCoreAcceptPhase2] before yield\n");
 			//pthread_yield();
 			//DEBUG("[FriendCoreAcceptPhase2] after yield\n");
@@ -1572,11 +1572,15 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 				{
 					pre->fc = fc;
 					DEBUG("Thread create pointer: %p friendcore: %p\n", pre, fc );
+					
+					FriendCoreAcceptPhase2( pre );
+					/*
 					if( pthread_create( &pre->thread, NULL, &FriendCoreAcceptPhase2, ( void *)pre ) != 0 )
 					{
 						DEBUG("Pthread create fail\n");
 						FFree( pre );
 					}
+					*/
 				}
 				DEBUG("Accept done\n");
 			}
