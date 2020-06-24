@@ -884,7 +884,7 @@ void *FriendCoreAcceptPhase2( void *d )
 		}
 		//DEBUG("[FriendCoreAcceptPhase2] in accept loop\n");
 	}	// while accept
-
+	FFree( pre );
 		
 	return NULL;
 accerror:
