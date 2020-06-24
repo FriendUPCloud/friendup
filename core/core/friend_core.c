@@ -388,7 +388,8 @@ void *FriendCoreAcceptPhase2( void *d )
 	
 	DEBUG("[FriendCoreAcceptPhase2] before accept4\n");
 	
-	while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) > 0 )
+	//while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) > 0 )
+	if( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) > 0 )
 	{
 		if( fd == -1 )
 		{
@@ -513,11 +514,11 @@ void *FriendCoreAcceptPhase2( void *d )
 				}
 				else if( err == 0 )
 				{
-					if( (tr++) > 3 )
-					{
+					//if( (tr++) > 3 )
+					//{
 						break;
-					}
-					continue;
+					//}
+					//continue;
 				}
 
 				if( err <= 0 || err == 2 )
@@ -631,6 +632,7 @@ void *FriendCoreAcceptPhase2( void *d )
 			//DEBUG("[FriendCoreAcceptPhase2] epoll_add\n");
 
 			error = epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_ADD, incoming->fd, &event );
+			DEBUG("EPOLL_ADD: %d\n", incoming->fd );
 	
 			//DEBUG("[FriendCoreAcceptPhase2] before yield\n");
 			pthread_yield();
@@ -657,7 +659,7 @@ void *FriendCoreAcceptPhase2( void *d )
 			{
 				close( fd );
 			}
-			break;
+			//break;
 		}
 		//DEBUG("[FriendCoreAcceptPhase2] in accept loop\n");
 	}	// while accept
