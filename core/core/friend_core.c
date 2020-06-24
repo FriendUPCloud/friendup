@@ -519,6 +519,8 @@ void *FriendCoreAcceptPhase2( void *d )
 					}
 					continue;
 				}
+				
+				SocketSetBlocking( incoming, TRUE );
 
 				if( err <= 0 || err == 2 )
 				{
