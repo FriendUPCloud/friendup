@@ -388,8 +388,8 @@ void *FriendCoreAcceptPhase2( void *d )
 	
 	DEBUG("[FriendCoreAcceptPhase2] before accept4\n");
 	
-	//while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) > 0 )
-	if( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) > 0 )
+	while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) > 0 )
+	//if( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) > 0 )
 	{
 		if( fd == -1 )
 		{
@@ -505,7 +505,7 @@ void *FriendCoreAcceptPhase2( void *d )
 			int err = 0;
 			int tr = 0;
 
-			while( 1 )
+			//while( 1 )
 			{
 				DEBUG("before accept\n");
 				if( ( err = SSL_accept( incoming->s_Ssl ) ) == 1 )
@@ -573,11 +573,11 @@ void *FriendCoreAcceptPhase2( void *d )
 						}
 					}
 				}
-				if( lbreak >= 1 )
+				//if( lbreak >= 1 )
 				{
-					break;
+				//	break;
 				}
-				usleep( 0 );
+				//usleep( 0 );
 				
 				if( fc->fci_Shutdown == TRUE )
 				{
@@ -644,6 +644,7 @@ void *FriendCoreAcceptPhase2( void *d )
 				incoming->s_Interface->SocketDelete( incoming );
 				goto accerror;
 			}
+			break;
 
 		#endif // USE_SELECT
 		}
@@ -659,7 +660,7 @@ void *FriendCoreAcceptPhase2( void *d )
 			{
 				close( fd );
 			}
-			//break;
+			break;
 		}
 		//DEBUG("[FriendCoreAcceptPhase2] in accept loop\n");
 	}	// while accept
