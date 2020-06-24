@@ -1691,7 +1691,7 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 					//usleep( 500 );
 					//continue;
 					
-					 if( SSL_pending( sock->s_Ssl ) > 0 )
+					 if( SSL_has_pending( sock->s_Ssl ) > 0 )
 					 {
 						continue; 
 					 }
