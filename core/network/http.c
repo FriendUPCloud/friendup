@@ -1331,7 +1331,7 @@ static inline int HttpParsePartialRequestChunked( Http* http, char* data, unsign
 	return 0;
 }
 
-inline void HttpReleaseContent( Http *http )
+inline static void HttpReleaseContent( Http *http )
 {
 	if( http->http_Content )
 	{
