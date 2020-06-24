@@ -799,7 +799,8 @@ void FriendCoreProcess( void *fcv )
 					headerLength + bodyLength - count :
 					0;
 
-				res = th->sock->s_Interface->SocketRead( th->sock, locBuffer, bufferSize, expected );
+				res = th->sock->s_Interface->SocketReadBlocked( th->sock, locBuffer, bufferSize, expected );
+				//res = th->sock->s_Interface->SocketRead( th->sock, locBuffer, bufferSize, expected );
 				if( res > 0 )
 				{
 					//DEBUG("----------------------> tmpFileHandle: %d read: %ld\n", tmpFileHandle, res );
