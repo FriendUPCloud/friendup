@@ -1905,6 +1905,12 @@ int SocketReadBlockedSSL( Socket* sock, char* data, unsigned int length, unsigne
 		len = SSL_read( sock->s_Ssl, data, length );
 	
 		DEBUG("SocketReadBlocked %p, read: %d\n", sock, len );
+		
+		if( len <= )
+		{
+			err = SSL_get_error( sock->s_Ssl, res );
+			DEBUG("SocketBlocked Error: %d\n", err );
+		}
 	}
 	else if( fds.revents & POLLHUP )
 	{
