@@ -1634,14 +1634,22 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 				while( toWrite > 0 )
 				{
 					int wrote = write( http->http_ContentFileHandle, dataptr, store );
-					dataptr += wrote;
-					toWrite -= wrote;
-					
-					DEBUG("UPLOAD writing data into buffer toWrite: %ld wrote: %d\n", toWrite, wrote );
-			
-					if( toWrite < store )
+					if( wrote > 0 )
 					{
-						store = (int)toWrite;
+						dataptr += wrote;
+						toWrite -= wrote;
+					
+						DEBUG("UPLOAD writing data into buffer toWrite: %ld wrote: %d\n", toWrite, wrote );
+			
+						if( toWrite < store )
+						{
+							store = (int)toWrite;
+						}
+					}
+					else
+					{
+						DEBUG("UPLOAD Cannot write file! write failed!\n");
+						break;
 					}
 				}
 				

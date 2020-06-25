@@ -53,6 +53,7 @@
 #include <util/log/log.h>
 #include <system/services/service_manager.h>
 #include <util/buffered_string.h>
+#include <util/buffered_string_disk.h>
 #include <util/http_string.h>
 #include <openssl/rand.h>
 
@@ -372,304 +373,6 @@ static inline void moveToHttps( Socket *sock )
 * @param d pointer to fcThreadInstance
 */
 
-
-/*
-void *FriendCoreAcceptPhase2( void *d )
-{
-	//DEBUG("[FriendCoreAcceptPhase2] detached\n");
-	//pthread_detach( pthread_self() );
-
-	struct fcThreadInstance *pre = (struct fcThreadInstance *)d;
-	FriendCoreInstance *fc = (FriendCoreInstance *)pre->fc;
-
-	// Accept
-	struct sockaddr_in6 client;
-	socklen_t clientLen = sizeof( client );
-	int fd = 0;
-	
-	SSL_CTX						*s_Ctx = NULL;
-	SSL							*s_Ssl = NULL;
-	
-	DEBUG("[FriendCoreAcceptPhase2] before accept4\n");
-	
-	//while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) > 0 )
-	if( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, 0 ) ) > 0 )
-	{
-		if( fd == -1 )
-		{
-			// Get some info about failure..
-			switch( errno )
-			{
-				case EAGAIN:
-					break;
-				case EBADF:
-					DEBUG( "[AcceptPair] The socket argument is not a valid file descriptor.\n" );
-					goto accerror;
-				case ECONNABORTED:
-					DEBUG( "[AcceptPair] A connection has been aborted.\n" );
-					goto accerror;
-				case EINTR:
-					DEBUG( "[AcceptPair] The accept() function was interrupted by a signal that was caught before a valid connection arrived.\n" );
-					goto accerror;
-				case EINVAL:
-					DEBUG( "[AcceptPair] The socket is not accepting connections.\n" );
-					goto accerror;
-				case ENFILE:
-					DEBUG( "[AcceptPair] The maximum number of file descriptors in the system are already open.\n" );
-					goto accerror;
-				case ENOTSOCK:
-					DEBUG( "[AcceptPair] The socket argument does not refer to a socket.\n" );
-					goto accerror;
-				case EOPNOTSUPP:
-					DEBUG( "[AcceptPair] The socket type of the specified socket does not support accepting connections.\n" );
-					goto accerror;
-				default: 
-					DEBUG("[AcceptPair] Accept return bad fd\n");
-					goto accerror;
-			}
-			DEBUG("[AcceptPair] Cannot create fd\n");
-			goto accerror;
-		}
-		
-		//DEBUG("[FriendCoreAcceptPhase2] before get peer name, fd: %d\n", fd );
-		// Create socket object
-		int prerr = getpeername( fd, (struct sockaddr *) &client, &clientLen );
-		if( prerr == -1 )
-		{
-			DEBUG("[AcceptPair]  gerpeername fail\n");
-			shutdown( fd, SHUT_RDWR );
-			close( fd );
-			goto accerror;
-		}
-	
-		
-		//DEBUG("[FriendCoreAcceptPhase2] socket initialized\n");
-		
-		int lbreak = 0;
-		
-		if( fc->fci_Sockets->s_SSLEnabled == TRUE )
-		{
-			int srl;
-			
-			SSL_CTX_set_session_cache_mode( fc->fci_Sockets->s_Ctx, SSL_SESS_CACHE_CLIENT | SSL_SESS_CACHE_NO_INTERNAL_STORE);
-			
-			s_Ssl = SSL_new( fc->fci_Sockets->s_Ctx );
-			DEBUG("[AcceptPair] SSL done\n");
-
-			if( s_Ssl == NULL )
-			{
-				FERROR("[SocketAcceptPair] Cannot accept SSL connection\n");
-				shutdown( fd, SHUT_RDWR );
-				close( fd );
-				goto accerror;
-			}
-
-			srl = SSL_set_fd( s_Ssl, fd );
-			SSL_set_accept_state( s_Ssl );
-			DEBUG("before set accept state, fd: %d\n", fd );
-				
-			if( srl != 1 )
-			{
-				int error = SSL_get_error( s_Ssl, srl );
-
-				FERROR( "[SocketAcceptPair] Could not set fd, error: %d fd: %d\n", error, fd );
-				shutdown( fd, SHUT_RDWR );
-				close( fd );
-				goto accerror;
-			}
-
-			// setup SSL session
-			int err = 0;
-
-			while( 1 )
-			{
-				DEBUG("before accept: fd %d\n", fd );
-				if( ( err = SSL_accept( s_Ssl ) ) == 1 )
-				{
-					DEBUG("SSL_Accepted\n");
-					lbreak =1;
-					break;
-				}
-
-				if( err <= 0 || err == 2 )
-				{
-					int error = SSL_get_error( s_Ssl, err );
-					DEBUG("SSL get error: %d\n", error );
-					switch( error )
-					{
-						case SSL_ERROR_NONE:
-							// NO error..
-							FERROR( "[SocketAcceptPair] No error\n" );
-							lbreak = 1;
-						break;
-						case SSL_ERROR_ZERO_RETURN:
-							FERROR("[SocketAcceptPair] SSL_ACCEPT error: Socket closed.\n" );
-							goto accerror;
-						case SSL_ERROR_WANT_READ:
-							//lbreak = 2;
-							continue;
-							//goto mcreate;
-						break;
-						case SSL_ERROR_WANT_WRITE:
-							lbreak = 2;
-						break;
-						case SSL_ERROR_WANT_ACCEPT:
-							FERROR( "[SocketAcceptPair] Want accept\n" );
-							goto accerror;
-						case SSL_ERROR_WANT_X509_LOOKUP:
-							FERROR( "[SocketAcceptPair] Want 509 lookup\n" );
-							goto accerror;
-						case SSL_ERROR_SYSCALL:
-							//FERROR( "[SocketAcceptPair] Error syscall. Goodbye! %s.\n", ERR_error_string( ERR_get_error(), NULL ) );
-							//lbreak = 2;
-							//goto accerror;
-							//continue;
-							goto mcreate;
-						case SSL_ERROR_SSL:
-						{
-							int enume = ERR_get_error();
-							FERROR( "[SocketAcceptPair] SSL_ERROR_SSL: %s.\n", ERR_error_string( enume, NULL ) );
-							lbreak = 2;
-							
-							// HTTP to HTTPS redirection code
-							if( enume == 336027804 ) // http redirect
-							{
-								moveToHttp( fd );
-							}
-							else
-							{
-								goto accerror;
-							}
-							break;
-						}
-					}
-				}
-				if( lbreak >= 1 )
-				{
-					DEBUG("lbreak=1\n");
-					break;
-				}
-				usleep( 0 );
-				
-				if( fc->fci_Shutdown == TRUE )
-				{
-					FINFO("Accept socket process will be stopped, becaouse Shutdown is in progress\n");
-					break;
-				}
-			}
-		}
-		else
-		{
-			DEBUG("No SSL\n");
-		}
-		DEBUG("[FriendCoreAcceptPhase2] before getting incoming fd: %d\n", fd );
-
-		//DEBUG("[FriendCoreAcceptPhase2] in accept loop\n");
-	}
-	else
-	{
-		return NULL;
-	}
-	
-	mcreate:
-	{
-			// Get incoming
-		Socket *incoming = NULL;
-		int error = 0;
-		
-		incoming = ( Socket *)FCalloc( 1, sizeof( Socket ) );
-		if( incoming != NULL )
-		{
-			incoming->fd = fd;
-			incoming->port = ntohs( client.sin6_port );
-			incoming->ip = client.sin6_addr;
-			incoming->s_SSLEnabled = fc->fci_Sockets->s_SSLEnabled;
-			incoming->s_SB = fc->fci_Sockets->s_SB;
-			incoming->s_Interface = fc->fci_Sockets->s_Interface;
-			incoming->s_Data = fc;
-			
-			if( fc->fci_Sockets->s_SSLEnabled == TRUE )
-			{
-				incoming->s_Ssl = s_Ssl;
-				incoming->s_Ctx = s_Ctx;
-				
-			//DEBUG("[FriendCoreAcceptPhase2] set fd\n");
-				
-				//SSL_CTX_set_mode( fc->fci_Sockets->s_Ctx, SSL_MODE_AUTO_RETRY );
-			
-				//DEBUG("[FriendCoreAcceptPhase2] state accepted\n");
-			}
-		}
-		else
-		{
-			FERROR("Cannot allocate memory for socket!\n");
-			shutdown( fd, SHUT_RDWR );
-			close( fd );
-			goto accerror;
-		}
-	#ifdef USE_SELECT
-			struct fcThreadInstance *pre = FCalloc( 1, sizeof( struct fcThreadInstance ) );
-			if( pre != NULL )
-			{
-				pre->fc = fc; pre->sock = incoming;
-
-				size_t stacksize = 16777216; //16 * 1024 * 1024;
-				pthread_attr_t attr;
-				pthread_attr_init( &attr );
-				pthread_attr_setstacksize( &attr, stacksize );
-			
-				SystemBase *locsb = (SystemBase *)fc->fci_SB;
-				if( WorkerManagerRun( locsb->sl_WorkerManager,  FriendCoreProcess, pre, NULL, "Incoming") != 0 )
-				{
-					SocketClose( incoming );
-				}
-			
-			// Make sure we keep the number of threads under the limit
-			//if( pthread_create( &pre->thread, &attr, &FriendCoreProcess, ( void *)pre ) != 0 )
-			//{
-			//	FFree( pre );
-			//}
-			
-		}
-		#else
-
-		struct fcThreadInstance *pre = FCalloc( 1, sizeof( struct fcThreadInstance ) );
-					if( pre != NULL )
-					{
-						pre->fc = fc; pre->sock = incoming;
-					
-#ifdef USE_PTHREAD
-						size_t stacksize = 16777216; //16 * 1024 * 1024;
-						pthread_attr_t attr;
-						pthread_attr_init( &attr );
-						pthread_attr_setstacksize( &attr, stacksize );
-						
-						// Make sure we keep the number of threads under the limit
-						if( pthread_create( &pre->thread, &attr, (void *(*) (void *))&FriendCoreProcess, ( void *)pre ) != 0 )
-						{
-							FFree( pre );
-						}
-					}
-#endif
-
-		#endif // USE_SELECT
-	}
-	
-	FFree( pre );
-	//DecreaseThreads();
-	//pthread_exit( 0 );
-	return NULL;
-accerror:
-	DEBUG("SocketAccept ERROR\n");
-	FFree( pre );
-	//DecreaseThreads();
-	//pthread_exit( 0 );
-	//incoming->s_Interface->SocketDelete( incoming );
-
-	return NULL;
-}
-*/
-
 void *FriendCoreAcceptPhase2( void *d )
 {
 	//DEBUG("[FriendCoreAcceptPhase2] detached\n");
@@ -895,6 +598,372 @@ accerror:
 
 	return NULL;
 }
+
+//
+//
+//
+
+void FriendCoreProcessSockBlock( void *fcv )
+{
+#ifdef USE_PTHREAD
+	pthread_detach( pthread_self() );
+#endif 
+
+	if( fcv == NULL )
+	{
+#ifdef USE_PTHREAD
+		pthread_exit( 0 );
+#endif
+		return;
+	}
+
+	struct fcThreadInstance *th = ( struct fcThreadInstance *)fcv;
+
+	if( th->sock == NULL )
+	{
+		FFree( th );
+#ifdef USE_PTHREAD
+		pthread_exit( 0 );
+#endif
+		return;
+	}
+
+	// Let's go!
+
+	FQUAD bufferSize = HTTP_READ_BUFFER_DATA_SIZE;
+	FQUAD bufferSizeAlloc = HTTP_READ_BUFFER_DATA_SIZE_ALLOC;
+
+	BufStringDisk *resultString = BufStringDiskNewSize( bufferSizeAlloc*2 );
+
+	char *locBuffer = FMalloc( bufferSizeAlloc );
+
+	FQUAD expectedLength = 0;
+	FBOOL headerFound = FALSE;
+	int headerLen = 0;
+	
+	SocketSetBlocking( th->sock, TRUE );
+	
+	DEBUG("\n\n\nFriendCoreProcessSockBlock\n\n\n");
+	
+	if( locBuffer != NULL )
+	{
+		int retryContentNotFull = 0;
+		
+		while( TRUE )
+		{
+			int res = th->sock->s_Interface->SocketReadBlocked( th->sock, locBuffer, bufferSize, bufferSize );
+			if( res > 0 )
+			{
+				DEBUG("[FriendCoreProcessSockBlock] received bytes: %d\n", res );
+				
+				int err = BufStringDiskAddSize( resultString, locBuffer, res );
+				
+				/*
+				39728593565440: INCOMING Request threads: 0 data: POST /system.library/file/upload HTTP/1.1
+Host: 192.168.86.130:6502
+Connection: keep-alive
+Content-Length: 60312206
+Method: POST /system.library/file/upload HTTP/1.1
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36
+Content-Type: multipart/form-data;
+Accept: 
+Origin: https://192.168.86.130:6502
+Sec-Fetch-Site: same-origin
+Sec-Fetch-Mode: cors
+Sec-Fetch-Dest: empty
+Referer: https://192.168.86.130:6502/webclient/js/io/filetransfer.js
+Accept-Encoding: gzip, deflate, br
+Accept-Language: pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7
+
+------WebKitFormBoundaryW9MCHQmhktdgStsI
+Content-Disposition: form-data; name="sessionid"
+
+956f29ed0b4e2cfb9865c560679bb294a5c34a5d
+------WebKitFormBoundaryW9MCHQmhktdgStsI
+Content-Disposition: form-data; name="module"
+
+files
+------WebKitFormBoundaryW9MCHQmhktdgStsI
+Content-Disposition: form-data; name="command"
+
+uploadfile
+------WebKitFormBoundaryW9MCHQmhktdgStsI
+Content-Disposition: form-data; name="path"
+
+Home:
+------WebKitFormBoundaryW9MCHQmhktdgStsI
+Content-Disposition: form-data; name="file"; filename="VBoxGuestAdditions_5.2.0_RC1.iso"
+Content-Type: application/octet-stream
+
+				 */
+				
+				if( headerFound == FALSE )
+				{
+					// find end of header
+					char *headEnd = strstr( resultString->bsd_Buffer, "\r\n\r\n" );
+					if(  headEnd != NULL )
+					{
+						// get length of header
+						headerLen = ((headEnd+4) - resultString->bsd_Buffer);
+						
+						char *conLen = strstr( resultString->bsd_Buffer, "Content-Length:" );
+						DEBUG("Pointer to conLen %p headerLen %d\n", conLen, headerLen );
+						if( conLen != NULL )
+						{
+							DEBUG("Conlen is not empty!\n");
+							conLen += 16;
+							char *conLenEnd = strstr( conLen, "\r\n" );
+							if( conLenEnd != NULL )
+							{
+								char *end;
+								expectedLength = strtoll( conLen,  &end, 0 ) + headerLen;
+								DEBUG("Expected len %ld\n", expectedLength );
+							}
+						}
+						DEBUG("Header found!\n");
+						headerFound = TRUE;
+					}
+				}
+			}
+			else
+			{
+				if( expectedLength > 0 )
+				{
+					if( retryContentNotFull++ > 5 )
+					{
+						break;
+					}
+					else	// we check size and try again
+					{
+						if( resultString->bsd_Size >= expectedLength )
+						{
+							DEBUG("We have everything!\n");
+						}
+						else
+						{
+							// buffer is not equal to what should come
+							continue;
+						}
+					}
+				}
+				DEBUG("No more data in sockets!\n");
+				break;
+			}
+		}
+
+		DEBUG( "[FriendCoreProcess] Exited headers loop. Now freeing up.\n" );
+
+		if( resultString->bsd_Size > 0 )
+		{
+			Http *resp = ProtocolHttp( th->sock, resultString->bsd_Buffer, resultString->bsd_Size );
+
+			if( resp != NULL )
+			{
+				if( resp->http_WriteType == FREE_ONLY )
+				{
+					HttpFree( resp );
+				}
+				else
+				{
+					HttpWriteAndFree( resp, th->sock );
+				}
+			}
+		}
+
+		// Free up buffers
+		if( locBuffer )
+		{
+			FFree( locBuffer );
+		}
+	}
+
+	// Shortcut!
+	close_fcp:
+	
+	DEBUG( "Closing socket %d.\n", th->sock->fd );
+	th->sock->s_Interface->SocketDelete( th->sock );
+	th->sock = NULL;
+
+	// Free the pair
+	if( th != NULL )
+	{
+		FFree( th );
+		th = NULL;
+	}
+
+	BufStringDiskDelete( resultString );
+
+#ifdef USE_PTHREAD
+	pthread_exit( 0 );
+#endif
+	return;
+}
+
+
+
+
+
+void FriendCoreProcessSockNonBlock( void *fcv )
+{
+#ifdef USE_PTHREAD
+	pthread_detach( pthread_self() );
+#endif 
+
+	if( fcv == NULL )
+	{
+#ifdef USE_PTHREAD
+		pthread_exit( 0 );
+#endif
+		return;
+	}
+
+	struct fcThreadInstance *th = ( struct fcThreadInstance *)fcv;
+
+	if( th->sock == NULL )
+	{
+		FFree( th );
+#ifdef USE_PTHREAD
+		pthread_exit( 0 );
+#endif
+		return;
+	}
+
+	// Let's go!
+
+	FQUAD bufferSize = HTTP_READ_BUFFER_DATA_SIZE;
+	FQUAD bufferSizeAlloc = HTTP_READ_BUFFER_DATA_SIZE_ALLOC;
+
+	BufStringDisk *resultString = BufStringDiskNewSize( bufferSizeAlloc*2 );
+
+	char *locBuffer = FMalloc( bufferSizeAlloc );
+
+	FQUAD expectedLength = 0;
+	FBOOL headerFound = FALSE;
+	int headerLen = 0;
+	
+	DEBUG("\n\n\nFriendCoreProcessSockBlock\n\n\n");
+	
+	if( locBuffer != NULL )
+	{
+		int retryContentNotFull = 0;
+		
+		while( TRUE )
+		{
+			int res = th->sock->s_Interface->SocketRead( th->sock, locBuffer, bufferSize, bufferSize );
+			if( res > 0 )
+			{
+				DEBUG("[FriendCoreProcessSockBlock] received bytes: %d\n", res );
+				
+				int err = BufStringDiskAddSize( resultString, locBuffer, res );
+				
+				if( headerFound == FALSE )
+				{
+					// find end of header
+					char *headEnd = strstr( resultString->bsd_Buffer, "\r\n\r\n" );
+					if(  headEnd != NULL )
+					{
+						// get length of header
+						headerLen = ((headEnd+4) - resultString->bsd_Buffer);
+						
+						char *conLen = strstr( resultString->bsd_Buffer, "Content-Length:" );
+						DEBUG("Pointer to conLen %p headerLen %d\n", conLen, headerLen );
+						if( conLen != NULL )
+						{
+							DEBUG("Conlen is not empty!\n");
+							conLen += 16;
+							char *conLenEnd = strstr( conLen, "\r\n" );
+							if( conLenEnd != NULL )
+							{
+								char *end;
+								expectedLength = strtoll( conLen,  &end, 0 ) + headerLen;
+								DEBUG("Expected len %ld\n", expectedLength );
+							}
+						}
+						DEBUG("Header found!\n");
+						headerFound = TRUE;
+					}
+				}
+			}
+			else
+			{
+				if( expectedLength > 0 )
+				{
+					DEBUG("Retry: %d\n", retryContentNotFull );
+					if( retryContentNotFull++ > 500 )
+					{
+						break;
+					}
+					else	// we check size and try again
+					{
+						if( resultString->bsd_Size >= expectedLength )
+						{
+							DEBUG("We have everything!\n");
+						}
+						else
+						{
+							// buffer is not equal to what should come
+							continue;
+						}
+					}
+				}
+				DEBUG("No more data in sockets!\n");
+				break;
+			}
+		}
+
+		DEBUG( "[FriendCoreProcess] Exited headers loop. Now freeing up.\n" );
+
+		if( resultString->bsd_Size > 0 )
+		{
+			Http *resp = ProtocolHttp( th->sock, resultString->bsd_Buffer, resultString->bsd_Size );
+
+			if( resp != NULL )
+			{
+				if( resp->http_WriteType == FREE_ONLY )
+				{
+					HttpFree( resp );
+				}
+				else
+				{
+					HttpWriteAndFree( resp, th->sock );
+				}
+			}
+		}
+
+		// Free up buffers
+		if( locBuffer )
+		{
+			FFree( locBuffer );
+		}
+	}
+
+	// Shortcut!
+	close_fcp:
+	
+	DEBUG( "Closing socket %d.\n", th->sock->fd );
+	th->sock->s_Interface->SocketDelete( th->sock );
+	th->sock = NULL;
+
+	// Free the pair
+	if( th != NULL )
+	{
+		FFree( th );
+		th = NULL;
+	}
+
+	BufStringDiskDelete( resultString );
+
+#ifdef USE_PTHREAD
+	pthread_exit( 0 );
+#endif
+	return;
+}
+
+
+
+
+
+
 
 //
 //
@@ -1807,7 +1876,8 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 						pthread_attr_setstacksize( &attr, stacksize );
 						
 						// Make sure we keep the number of threads under the limit
-						if( pthread_create( &pre->thread, &attr, (void *(*) (void *))&FriendCoreProcess, ( void *)pre ) != 0 )
+						if( pthread_create( &pre->thread, &attr, (void *(*) (void *))&FriendCoreProcessSockNonBlock, ( void *)pre ) != 0 )
+						//if( pthread_create( &pre->thread, &attr, (void *(*) (void *))&FriendCoreProcessSockBlock, ( void *)pre ) != 0 )
 						{
 							FFree( pre );
 						}
