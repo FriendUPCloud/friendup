@@ -654,6 +654,7 @@ void FriendCoreProcessSockBlock( void *fcv )
 			int res = th->sock->s_Interface->SocketReadBlocked( th->sock, locBuffer, bufferSize, bufferSize );
 			if( res > 0 )
 			{
+				retryContentNotFull = 0;	// we must reset error
 				DEBUG("[FriendCoreProcessSockBlock] received bytes: %d\n", res );
 				
 				int err = BufStringDiskAddSize( resultString, locBuffer, res );
@@ -729,7 +730,7 @@ Content-Type: application/octet-stream
 			{
 				if( expectedLength > 0 )
 				{
-					if( retryContentNotFull++ > 5 )
+					if( retryContentNotFull++ > 10 )
 					{
 						break;
 					}
