@@ -827,6 +827,7 @@ void FriendCoreProcessSockNonBlock( void *fcv )
 			int res = th->sock->s_Interface->SocketRead( th->sock, locBuffer, bufferSize, bufferSize );
 			if( res > 0 )
 			{
+				retryContentNotFull = 0;
 				DEBUG("[FriendCoreProcessSockBlock] received bytes: %d\n", res );
 				
 				int err = BufStringDiskAddSize( resultString, locBuffer, res );
