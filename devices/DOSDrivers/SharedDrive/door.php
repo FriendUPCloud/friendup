@@ -378,7 +378,7 @@ if( !class_exists( 'SharedDrive' ) )
 									$fInfo->Filename = $s->Filename;
 									$fInfo->DateCreated = $info->DateCreated;
 									$fInfo->DateModified = $info->DateModified;
-									$fInfo->Owner = $s->OwnerUserID;
+									$fInfo->Owner = $s->Owner;
 									$fInfo->ExternPath = $s->ExternPath;
 									die( 'ok<!--separate-->' . json_encode( $fInfo ) );
 								}
