@@ -884,7 +884,7 @@ void *FriendCoreAcceptPhase2( void *d )
 		}
 		//DEBUG("[FriendCoreAcceptPhase2] in accept loop\n");
 	}	// while accept
-
+	FFree( pre );
 		
 	return NULL;
 accerror:
@@ -905,11 +905,9 @@ void FriendCoreProcess( void *fcv )
 #ifdef USE_PTHREAD
 	pthread_detach( pthread_self() );
 #endif 
-	//IncreaseThreads();
 
 	if( fcv == NULL )
 	{
-		//DecreaseThreads();
 #ifdef USE_PTHREAD
 		pthread_exit( 0 );
 #endif
@@ -920,7 +918,6 @@ void FriendCoreProcess( void *fcv )
 
 	if( th->sock == NULL )
 	{
-// 		DecreaseThreads();
 		FFree( th );
 #ifdef USE_PTHREAD
 		pthread_exit( 0 );
@@ -993,13 +990,10 @@ void FriendCoreProcess( void *fcv )
 					//this is going to be a huge request, create a temporary file
 					//copy already received data to it and continue writing to the file
 					tmpFilename = mktemp( tmpFileNameTemplate );
-					//DEBUG( "large upload will go to remporary file %s", tmp_filename );
 					if( strlen( tmpFilename ) == 0 )
 					{
 						FERROR("mktemp failed!");
-						//break; //drop the connection, rest of this function will do the cleanup
 						BufStringDelete( resultString );
-						//DecreaseThreads();
 						return;
 					}
 					else
@@ -1039,7 +1033,6 @@ void FriendCoreProcess( void *fcv )
 						int err = BufStringAddSize( resultString, locBuffer, res );
 						incomingBufferPtr = resultString->bs_Buffer; //buffer can be in a different place after resize
 						incomingBufferLength = resultString->bs_Size;
-						//DEBUG( "Data added : %d res: %d count: %d received %d\n", err, res, count, count + res );
 					}
 				
 					if( pass == 0 && partialDivider != 0 )
@@ -1298,7 +1291,6 @@ void FriendCoreProcess( void *fcv )
 					{
 						// No content length
 						prevBufSize += count;
-						//DEBUG("\n\n prevBufSize %d count %d\n\n\n", prevBufSize, count );
 						break;
 					}
 					// Determine if we need pass 2
@@ -1310,7 +1302,6 @@ void FriendCoreProcess( void *fcv )
 
 		//DEBUG( "[FriendCoreProcess] Exited headers loop. Now freeing up.\n" );
 
-		// Free up
 		if( incomingBufferPtr != NULL )
 		{
 			if( incomingBufferLength > 0 )
@@ -1321,15 +1312,12 @@ void FriendCoreProcess( void *fcv )
 				{
 					if( incomingBufferPtr )
 					{
-						//DEBUG("incoming buffer already set? unmapping");
 						munmap( incomingBufferPtr, incomingBufferLength );
 						incomingBufferPtr = NULL;
 					}
-					//DEBUG("mmaping");
 					incomingBufferLength = lseek( tmpFileHandle, 0, SEEK_END);
 					DEBUG("MMAP: friendcore size: %lu\n", incomingBufferLength );
 					incomingBufferPtr = mmap(0, incomingBufferLength, PROT_READ | PROT_WRITE, MAP_SHARED, tmpFileHandle, 0 );// offset);
-					//DEBUG("mmap status %p", incomingBufferPtr);
 					
 					if( incomingBufferPtr == MAP_FAILED )
 					{
@@ -1341,11 +1329,7 @@ void FriendCoreProcess( void *fcv )
 				{
 					DEBUG( "regular processing" );
 				}
-				
-				DEBUG("------------>>>>>>>>>>>>>>>>>>>>>>>>>. incomingBufferLength: %ld\n", incomingBufferLength );
-				DEBUG("MMAP_CHECK: %c > %c\n", incomingBufferPtr[0], incomingBufferPtr[ incomingBufferLength-1 ] );
 
-				// ------------------------------------------------------- 
 				Http *resp = ProtocolHttp( th->sock, incomingBufferPtr, incomingBufferLength );
 
 				if( resp != NULL )
@@ -1368,8 +1352,6 @@ void FriendCoreProcess( void *fcv )
 				DEBUG( "[FriendCoreProcess] No buffer to write, so just free!\n" );
 			}
 		}
-
-		//DEBUG("Removing string\n");
 
 		// Free up buffers
 		if( locBuffer )
@@ -1406,9 +1388,6 @@ void FriendCoreProcess( void *fcv )
 	{
 		BufStringDelete( resultString );
 	}
-
-	// No more threads
-	//DecreaseThreads();
 
 #ifdef USE_PTHREAD
 	pthread_exit( 0 );
