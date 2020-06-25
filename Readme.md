@@ -47,7 +47,7 @@ Before compiling, check the dependencies equivalent to these packages (e.g. Ubun
 
 ```
 sudo apt install -y libsmbclient-dev libssh2-1-dev libssh-dev libssl-dev \
-libaio-dev mysql-server php7.2-cli php7.2-gd php7.2-imap \
+libaio-dev mysql-server php7.2-cli php7.2-gd php7.2-imap php-mysql php-curl \
 php7.2-mysql php7.2-curl libmysqlclient-dev build-essential \
 libmatheval-dev libmagic-dev libgd-dev libwebsockets-dev \
 rsync valgrind-dbg libxml2-dev php7.2-readline \
