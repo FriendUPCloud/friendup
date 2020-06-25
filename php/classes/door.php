@@ -9,6 +9,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
+require_once( 'dbio.php' );
+
 if( !defined( 'DOOR_SLASH_REPLACEMENT' ) )
 {
 	// To fix names
@@ -18,6 +20,10 @@ if( !defined( 'DOOR_SLASH_REPLACEMENT' ) )
 
 class Door extends dbIO
 {	
+	// How to authenticate?
+	var $_authcontext = null; // authentication key (e.g. sessionid)
+	var $_authdata = null; // authentication data (e.g. a sessionid hash)
+	
 	// Construct a Door object
 	function __construct( $path = false )
 	{
@@ -37,6 +43,96 @@ class Door extends dbIO
 		{
 			$this->onConstruct();
 		}
+		
+		$this->GetAuthContextComponent();
+	}
+	
+	// Get the auth mechanism
+	function GetAuthContext()
+	{
+		return $this->_authcontext;
+	}
+	
+	// Set the correct authentication mechanism
+	function SetAuthContext( $context, $authdata )
+	{
+		switch( $context )
+		{
+			case 'sessionid':
+				$this->_authcontext = 'sessionid';
+				$this->_authdata = $authdata;
+				return true;
+			case 'authid':
+				$this->_authcontext = 'authid';
+				$this->_authdata = $authdata;
+				return true;
+			case 'servertoken':
+				$this->_authcontext = 'servertoken';
+				$this->_authdata = $authdata;
+				return true;
+			case 'user':
+				$this->_authcontext = 'user';
+				$this->_authdata = $authdata;
+				break;
+		}
+		return false;
+	}
+	
+	// Get the right component to add to the server calls
+	// $userInfo is optional, and will pull that user's SessionID
+	function GetAuthContextComponent( $userInfo = false )
+	{
+		switch( $this->_authcontext )
+		{
+			case 'sessionid':
+				return 'sessionid=' . $this->_authdata;
+			case 'authid':
+				return 'authid=' . $this->_authdata;
+			case 'servertoken':
+				return 'servertoken=' . $this->_authdata;
+			default:
+				if( isset( $GLOBALS[ 'args' ]->sessionid ) )
+				{
+					$this->_authcontext = 'sessionid';
+					$this->_authdata = $GLOBALS[ 'args' ]->sessionid;
+				}
+				else if( isset( $GLOBALS[ 'args' ]->authid ) )
+				{
+					$this->_authcontext = 'authid';
+					$this->_authdata = $GLOBALS[ 'args' ]->authid;
+				}
+				else if( isset( $GLOBALS[ 'args' ]->servertoken ) )
+				{
+					$this->_authcontext = 'servertoken';
+					$this->_authdata = $GLOBALS[ 'args' ]->servertoken;
+				}
+				else if( $userInfo && isset( $userInfo->SessionID ) )
+				{
+					$this->_authcontext = 'sessionid';
+					$this->_authdata = $userInfo->SessionID;
+				}
+				return $this->GetAuthContextComponent();
+		}
+		return false;
+		
+	}
+	
+	// Get an object which includes the key and data for authentication
+	function GetAuthContextObject( $userInfo = false )
+	{
+		if( $str = $this->GetAuthContextComponent( $userInfo ) )
+		{
+			$data = explode( '=', $str );
+			if( isset( $data[1] ) )
+			{
+				$data[0] = substr( $data[0], 1, strlen( $data[0] ) - 1 );
+				$key = new stdClass();
+				$key->Key = $data[0];
+				$key->Data = $data[1];
+				return $key;
+			}
+		}
+		return false;
 	}
 	
 	// Gets the correct identifier to extract a filesystem
@@ -147,13 +243,29 @@ class Door extends dbIO
 	{
 		global $Config, $User, $SqlDatabase, $Logger;
 		
-		if( !strstr( $query, '?' ) )
+		// Support auth context
+		if( isset( $this->_authdata ) )
 		{
-			$query .= '?sessionid=' . $User->SessionID;
+			if( !strstr( $query, '?' ) )
+			{
+				$query .= '?' . $this->GetAuthContextComponent();
+			}
+			else
+			{
+				$query .= '&' . $this->GetAuthContextComponent();
+			}
 		}
+		// Default
 		else
 		{
-			$query .= '&sessionid=' . $User->SessionID;
+			if( !strstr( $query, '?' ) )
+			{
+				$query .= '?sessionid=' . $User->SessionID;
+			}
+			else
+			{
+				$query .= '&sessionid=' . $User->SessionID;
+			}
 		}
 		
 		$u = $Config->SSLEnable ? 'https://' : 'http://';
