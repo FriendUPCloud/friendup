@@ -691,7 +691,7 @@ void FriendCoreProcessSockBlock( void *fcv )
 			{
 				if( expectedLength > 0 )
 				{
-					if( retryContentNotFull++ > 10 )
+					if( retryContentNotFull++ > 500 )
 					{
 						break;
 					}
@@ -710,8 +710,11 @@ void FriendCoreProcessSockBlock( void *fcv )
 						}
 					}
 				}
-				DEBUG("No more data in sockets!\n");
-				break;
+				else
+				{
+					DEBUG("No more data in sockets!\n");
+					break;
+				}
 			}
 		}
 
