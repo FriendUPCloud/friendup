@@ -658,46 +658,7 @@ void FriendCoreProcessSockBlock( void *fcv )
 				DEBUG("[FriendCoreProcessSockBlock] received bytes: %d\n", res );
 				
 				int err = BufStringDiskAddSize( resultString, locBuffer, res );
-				
-				/*
-				39728593565440: INCOMING Request threads: 0 data: POST /system.library/file/upload HTTP/1.1
-Host: 192.168.86.130:6502
-Connection: keep-alive
-Content-Length: 60312206
-Method: POST /system.library/file/upload HTTP/1.1
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36
-Content-Type: multipart/form-data;
-Accept: 
-Origin: https://192.168.86.130:6502
-Sec-Fetch-Site: same-origin
-Sec-Fetch-Mode: cors
-Sec-Fetch-Dest: empty
-Referer: https://192.168.86.130:6502/webclient/js/io/filetransfer.js
-Accept-Encoding: gzip, deflate, br
-Accept-Language: pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7
 
-------WebKitFormBoundaryW9MCHQmhktdgStsI
-Content-Disposition: form-data; name="sessionid"
-
-956f29ed0b4e2cfb9865c560679bb294a5c34a5d
-------WebKitFormBoundaryW9MCHQmhktdgStsI
-Content-Disposition: form-data; name="module"
-
-files
-------WebKitFormBoundaryW9MCHQmhktdgStsI
-Content-Disposition: form-data; name="command"
-
-uploadfile
-------WebKitFormBoundaryW9MCHQmhktdgStsI
-Content-Disposition: form-data; name="path"
-
-Home:
-------WebKitFormBoundaryW9MCHQmhktdgStsI
-Content-Disposition: form-data; name="file"; filename="VBoxGuestAdditions_5.2.0_RC1.iso"
-Content-Type: application/octet-stream
-
-				 */
-				
 				if( headerFound == FALSE )
 				{
 					// find end of header
@@ -736,12 +697,14 @@ Content-Type: application/octet-stream
 					}
 					else	// we check size and try again
 					{
+						usleep( 20 );
 						if( resultString->bsd_Size >= expectedLength )
 						{
 							DEBUG("We have everything!\n");
 						}
 						else
 						{
+							DEBUG("Continue, resultString->bsd_Size %ld expectedLength %ld\n", resultString->bsd_Size, expectedLength );
 							// buffer is not equal to what should come
 							continue;
 						}
