@@ -445,6 +445,13 @@ void *FriendCoreAcceptPhase2( void *d )
 				close( fd );
 				goto accerror;
 			}
+			
+			BIO *bio = SSL_get_rbio( s_Ssl );
+			if( bio != NULL )
+			{
+				DEBUG("Read buffer will be changed!\n");
+				BIO_set_read_buffer_size( bio, 81920 );
+			}
 
 			srl = SSL_set_fd( s_Ssl, fd );
 			SSL_set_accept_state( s_Ssl );
