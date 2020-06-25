@@ -25,11 +25,19 @@ class Door extends dbIO
 	var $_authdata = null; // authentication data (e.g. a sessionid hash)
 	
 	// Construct a Door object
-	function __construct( $path = false )
+	function __construct( $path = false, $authcontext = false, $authdata = false )
 	{
 		global $SqlDatabase, $Logger;
 		
 		$this->dbTable( 'Filesystem' );
+		
+		// We may wanna do this in the constructor
+		if( isset( $authcontext ) && isset( $authdata ) )
+		{
+			$this->SetAuthContext( $authcontext, $authdata );
+		}
+		
+		$this->GetAuthContextComponent();
 		
 		if( $q = $this->getQuery( $path ) )
 		{
@@ -44,7 +52,6 @@ class Door extends dbIO
 			$this->onConstruct();
 		}
 		
-		$this->GetAuthContextComponent();
 	}
 	
 	// Get the auth mechanism

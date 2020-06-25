@@ -193,7 +193,7 @@ class File
 	{
 		global $Config, $User, $Logger;
 		
-		$fd = new Door( reset( explode( ':', $this->path ) ) . ':' );
+		$fd = new Door( reset( explode( ':', $this->path ) ) . ':', $this->_authcontext, $this->_authdata );
 		$d = new dbIO( 'FFileInfo' );
 		$d->Path = $filepath;
 		$d->FilesystemID = $fd->ID;
