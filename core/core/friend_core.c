@@ -701,6 +701,7 @@ void FriendCoreProcessSockBlock( void *fcv )
 						if( resultString->bsd_Size >= expectedLength )
 						{
 							DEBUG("We have everything!\n");
+							break;
 						}
 						else
 						{
