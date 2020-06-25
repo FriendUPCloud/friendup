@@ -704,7 +704,6 @@ void FriendCoreProcessSockBlock( void *fcv )
 					}
 					else	// we check size and try again
 					{
-						usleep( 200 );
 						if( resultString->bsd_Size >= expectedLength )
 						{
 							DEBUG("We have everything!\n");
@@ -712,6 +711,7 @@ void FriendCoreProcessSockBlock( void *fcv )
 						}
 						else
 						{
+							usleep( 2000 );
 							DEBUG("Continue, resultString->bsd_Size %ld expectedLength %ld\n", resultString->bsd_Size, expectedLength );
 							// buffer is not equal to what should come
 							continue;
