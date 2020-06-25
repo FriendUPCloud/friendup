@@ -1636,17 +1636,18 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 		FERROR( "Problem with SSL!\n" );
 		return 0;
 	}
+	
 	unsigned int read = 0;
 	int res = 0, err = 0, buf = length;
+	fd_set rd_set, wr_set;
 	int retries = 0;
 	int read_retries = 0;
 	struct timeval timeout;
-
-// Microseconds! I.e. 400 ms
-#define READTIMEOUT 400000
+	fd_set fds;
+#define MINIMUMRETRY 30000
+	int retryCount = expectedLength > 0 ? MINIMUMRETRY : 3000; // User do be 3000
 	if( expectedLength > 0 && length > expectedLength ) length = expectedLength;
-	struct timeval start, stop;
-	gettimeofday( &start, NULL );
+	int startTime = time( NULL );
 
 	while( TRUE )
 	{
@@ -1658,9 +1659,6 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 		
 		if( ( res = SSL_read( sock->s_Ssl, data + read, buf ) ) > 0 )
 		{
-#ifndef NO_VALGRIND_STUFF	
-			VALGRIND_MAKE_MEM_DEFINED( data + read, res );
-#endif
 			read += res;
 			read_retries = retries = 0;
 			if( read >= length )
@@ -1685,49 +1683,39 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 					return -1;
 					// The operation did not complete. Call again.
 				case SSL_ERROR_WANT_READ:
-					DEBUG("[SocketReadSSL] Continue\n");
-					//usleep( read_retries < 100 ? 0 : ( read_retries < 200 ? 1 : ( retryCount << 1 ) ) );
-					//usleep( 500 );
-					//continue;
-					/*
-					struct pollfd fds[2];
-
-						// watch stdin for input 
-						fds[0].fd = sock->fd;// STDIN_FILENO;
-						fds[0].events = POLLIN;
-
-						// watch stdout for ability to write
-						fds[1].fd = STDOUT_FILENO;
-						fds[1].events = POLLOUT;
-
-						int err = poll( fds, 1, 5 * 1000);
-
-						if( err > 0 )
-						{
-							//usleep( 50000 );
-							FERROR("[SocketReadSSL] want read\n");
-							continue; // more data to read...
-						}
-						else if( err == 0 )
-						{
-							FERROR("[SocketReadSSL] want read TIMEOUT....\n");
-							return read;
-						}
-						FERROR("[SocketReadSSL] want write everything read....\n");
-						return read;
-					*/
 					// NB: We used to retry 10000 times!
-					if( read == 0 )
+					if( read == 0 && read_retries++ < retryCount )
 					{
-						gettimeofday( &stop, NULL );	
-						if( stop.tv_usec - start.tv_usec < READTIMEOUT )
-						{
-							continue;
-						}
+						// We are downloading a big file
+
+						// TODO: This usleep is the old code (before usleep(1))
+						usleep( read_retries < 100 ? 0 : ( read_retries < 200 ? 1 : ( retryCount << 1 ) ) );
+
+						/*int blocked = sock->s_Blocked;
+							FD_ZERO( &fds );
+							FD_SET( sock->fd, &fds );
+
+							timeout.tv_sec = 0;
+							timeout.tv_usec = read_retries << 2;
+
+							select( sock->fd+1, &fds, NULL, NULL, &timeout );
+
+							int flags = fcntl( sock->fd, F_GETFL, 0 );
+							if( !blocked )
+							{
+								flags |= O_NONBLOCK;
+							}
+							else
+							{
+								flags &= ~O_NONBLOCK;
+							}
+
+							sock->s_Blocked = blocked;
+							fcntl( sock->fd, F_SETFL, flags );
+						 */
+						continue;
 					}
 					return read;
-					
-					// The operation did not complete. Call again.
 				case SSL_ERROR_WANT_WRITE:
 					{
 						struct pollfd fds[2];
@@ -1792,6 +1780,219 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 
 	return 0;
 }
+
+/*
+int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int expectedLength )
+{
+	if( sock == NULL )
+	{
+		FERROR("Cannot read from socket, socket = NULL!\n");
+		return 0;
+	}
+
+	if( data == NULL )
+	{
+		FERROR( "Can not read into empty buffer.\n" );
+		return 0;
+	}
+
+	if( !sock->s_Ssl )
+	{
+		FERROR( "Problem with SSL!\n" );
+		return 0;
+	}
+	unsigned int read = 0;
+	int res = 0, err = 0, bufCapacity = length;
+	int retries = 0;
+	int read_retries = 0;
+	int oldRes = 0;
+
+// Microseconds! I.e. 400 ms
+#define READTIMEOUT 400000
+	if( expectedLength > 0 && length > expectedLength ) length = expectedLength;
+	struct timeval start, stop;
+	gettimeofday( &start, NULL );
+
+	int read_blocked_on_write=0;
+	int read_blocked=0;
+	
+	//while( TRUE )
+	do
+	{
+		read_blocked_on_write=0;
+		read_blocked=0;
+		
+		if( (read + bufCapacity) > length )
+		{
+			bufCapacity = length - read;
+			DEBUG("capacity too big?\n");
+		}
+		DEBUG("[SocketReadSSL] socket read: %d, fd %d\n", read, sock->fd );
+		
+		if( ( res = SSL_read( sock->s_Ssl, data + read, bufCapacity ) ) > 0 )
+		{
+			oldRes = res;
+			read += res;
+			read_retries = retries = 0;
+			DEBUG("[SocketReadSSL] read: %d\n", read );
+			if( read >= length )
+			{
+				break;
+			}
+		}
+		else
+		{
+			DEBUG("error: res %d oldres %d\n", res, oldRes );
+			err = SSL_get_error( sock->s_Ssl, res );
+			
+			switch( err )
+			{
+				// The TLS/SSL I/O operation completed.
+				case SSL_ERROR_NONE:
+					FERROR( "[SocketReadSSL] Completed successfully.\n" );
+					return read;
+					// The TLS/SSL connection has been closed. Goodbye!
+				case SSL_ERROR_ZERO_RETURN:
+					FERROR( "[SocketReadSSL] The connection was closed.\n" );
+					//return SOCKET_CLOSED_STATE;
+					return -1;
+					// The operation did not complete. Call again.
+				case SSL_ERROR_WANT_READ:
+					DEBUG("[SocketReadSSL] SSL_ERROR_WANT_READ, read: %d\n" , read );
+					//usleep( read_retries < 100 ? 0 : ( read_retries < 200 ? 1 : ( (retryCount++) << 1 ) ) );
+					//return read;
+					usleep( 50 );
+					read_blocked=1;
+					//continue;
+					
+					
+					//if( SSL_has_pending( sock->s_Ssl ) > 0 )
+					//{
+					//	continue; 
+					//}
+					//return read;
+					
+					
+					
+					struct pollfd fds[2];
+
+						// watch stdin for input 
+						fds[0].fd = sock->fd;// STDIN_FILENO;
+						fds[0].events = POLLIN;
+
+						// watch stdout for ability to write
+						fds[1].fd = STDOUT_FILENO;
+						fds[1].events = POLLOUT;
+
+						int err = poll( fds, 1, 10000);
+
+						if( err > 0 )
+						{
+							//usleep( 50 );
+							FERROR("[SocketReadSSL] time to read new data\n");
+							continue; // more data to read...
+							//return read;
+						}
+						else if( err == 0 )
+						{
+							FERROR("[SocketReadSSL] want read TIMEOUT....\n");
+							return read;
+						}
+						FERROR("[SocketReadSSL] want write everything read....\n");
+						return read;
+					
+					// NB: We used to retry 10000 times!
+					
+					//if( read == 0 )
+					//{
+					//	gettimeofday( &stop, NULL );	
+					//	if( stop.tv_usec - start.tv_usec < READTIMEOUT )
+					//	{
+					//		continue;
+					//	}
+					//}
+					//return read;
+					
+					// The operation did not complete. Call again.
+				case SSL_ERROR_WANT_WRITE:
+					{
+						read_blocked_on_write=1;
+						
+						struct pollfd fds[2];
+
+						// watch stdin for input 
+						fds[0].fd = sock->fd;// STDIN_FILENO;
+						fds[0].events = POLLIN;
+
+						// watch stdout for ability to write
+						fds[1].fd = STDOUT_FILENO;
+						fds[1].events = POLLOUT;
+
+						int err = poll( fds, 1, sock->s_Timeouts * 1000);
+
+						if( err > 0 )
+						{
+							usleep( 50000 );
+							FERROR("[SocketReadSSL] want write\n");
+							continue; // more data to read...
+						}
+						else if( err == 0 )
+						{
+							FERROR("[SocketReadSSL] want write TIMEOUT....\n");
+							return read;
+						}
+						FERROR("[SocketReadSSL] want write everything read....\n");
+						return read;
+					}
+				case SSL_ERROR_SYSCALL:
+
+					//DEBUG("SSLERR : err : %d res: %d\n", err, res );
+				
+					FERROR("[SocketReadSSL] Error syscall, bufsize = %d.\n", bufCapacity );
+					if( err > 0 )
+					{
+						if( errno == 0 )
+						{
+							FERROR(" [SocketReadSSL] Connection reset by peer.\n" );
+							return -1;
+							//return SOCKET_CLOSED_STATE;
+						}
+						else 
+						{
+							FERROR( "[SocketReadSSL] Error syscall error: %s\n", strerror( errno ) );
+						}
+					}
+					else if( err == 0 )
+					{
+						FERROR( "[SocketReadSSL] Error syscall no error? return.\n" );
+						return read;
+					}
+				
+					FERROR( "[SocketReadSSL] Error syscall other error. return.\n" );
+					return read;
+					//continue;
+					// Don't retry, just return read
+					
+				//case SSL_ERROR_SSL:
+				//	DEBUG("ERROR_SSL\n");
+					
+				//	continue;
+				default:
+					return read;
+			}
+		}
+		DEBUG("before while\n");
+		int sslpend = SSL_pending( sock->s_Ssl );
+		if( sslpend == 0 && read_blocked == 0 )
+		{
+			break;
+		}
+	}while(TRUE);//( ( SSL_pending( sock->s_Ssl ) && read_blocked ) );
+	DEBUG("SocketRead, pending and readblocked failed: %d\n", read_blocked );
+	
+	return read;
+}
+*/
 
 /**
  * Read data from socket (blocked) (NOSSL)
