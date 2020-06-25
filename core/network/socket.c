@@ -1906,9 +1906,9 @@ int SocketReadBlockedSSL( Socket* sock, char* data, unsigned int length, unsigne
 	
 		DEBUG("SocketReadBlocked %p, read: %d\n", sock, len );
 		
-		if( len <= )
+		if( len <= 0 )
 		{
-			err = SSL_get_error( sock->s_Ssl, res );
+			err = SSL_get_error( sock->s_Ssl, len );
 			DEBUG("SocketBlocked Error: %d\n", err );
 		}
 	}
