@@ -48,6 +48,12 @@
 void SocketFree( Socket *sock );
 
 #define SOCKET_STATE_MAX_ACCEPTED_TIME_s 5 //socket has N seconds to send the first byte
+#define READ_TILL_END_BUFFER_SIZE 256000	//8192
+#define READ_TILL_END_SOCKET_TIMEOUT (10 *1000)
+#define READ_PACKAGE_BUFFER_SIZE 128000
+
+static int ssl_session_ctx_id = 1;
+static int ssl_sockopt_on = 1;
 
 /**
  * Open new socket on specified port
@@ -2090,133 +2096,129 @@ BufString *SocketReadPackageNOSSL( Socket *sock )
 BufString *SocketReadPackageSSL( Socket *sock )
 {
 	BufString *bs = BufStringNew();
-	int locbuffersize = 8192;
-	char locbuffer[ locbuffersize ];
-	int fullPackageSize = 0;
-	unsigned int read = 0;
-
-	DEBUG2("[SocketReadPackage] Socket message appear , sock ptr %p\n", sock );
-
-	int res = 0, err = 0;//, buf = length;
-	int retries = 0;
-
-	do
+	char *locbuffer = FMalloc( READ_PACKAGE_BUFFER_SIZE );
+	if( locbuffer != NULL )
 	{
-		INFO( "[SocketReadPackage] Start of the voyage.. %p\n", sock );
-		//if( read + buf > length ) buf = length - read;
-		if( ( res = SSL_read( sock->s_Ssl, locbuffer, locbuffersize ) ) >= 0 )
+		int fullPackageSize = 0;
+		unsigned int read = 0;
+		
+		DEBUG2("[SocketReadPackageSSL] Socket message appear , sock ptr %p\n", sock );
+		int res = 0, err = 0;//, buf = length;
+		int retries = 0;
+		
+		do
 		{
-			read += (unsigned int)res;
-
-			FULONG *rdat = (FULONG *)locbuffer;
-			if( ID_FCRE == rdat[ 0 ] )
+			INFO( "[SocketReadPackageSSL] Start of the voyage.. %p\n", sock );
+			//if( read + buf > length ) buf = length - read;
+			if( ( res = SSL_read( sock->s_Ssl, locbuffer, READ_PACKAGE_BUFFER_SIZE ) ) >= 0 )
 			{
-				fullPackageSize = rdat[ 1 ];
-			}
-
-			BufStringAddSize( bs, locbuffer, res );
-
-			if( fullPackageSize > 0 && read >= (unsigned int) fullPackageSize )
-			{
-				return bs;
-			}
-		}
-
-		if( res <= 0 )
-		{
-			err = SSL_get_error( sock->s_Ssl, res );
-			switch( err )
-			{
-			// The TLS/SSL I/O operation completed.
-			case SSL_ERROR_NONE:
-				FERROR( "[SocketReadPackage] Completed successfully.\n" );
-				return bs;
-				// The TLS/SSL connection has been closed. Goodbye!
-			case SSL_ERROR_ZERO_RETURN:
-				FERROR( "[SocketReadPackage] The connection was closed, return %d\n", read );
-				return bs;
-				// The operation did not complete. Call again.
-			case SSL_ERROR_WANT_READ:
-			{
-				// no data available right now, wait a few seconds in case new data arrives...
-
-				struct pollfd lfds[2];
-				// watch stdin for input 
-				lfds[0].fd = sock->fd;// STDIN_FILENO;
-				lfds[0].events = POLLIN;
-
-				// watch stdout for ability to write
-				lfds[1].fd = STDOUT_FILENO;
-				lfds[1].events = POLLOUT;
-
-				int err = poll( lfds, 1, sock->s_Timeouts * 1000);
-				if( err > 0 )
+				read += (unsigned int)res;
+				
+				FULONG *rdat = (FULONG *)locbuffer;
+				if( ID_FCRE == rdat[ 0 ] )
 				{
-					return NULL; // more data to read...
-				}
-
-				if( err == 0 )
-				{
-					FERROR("[SocketReadPackage] want read TIMEOUT....\n");
-					return bs;
-				}
-				else
-				{
-					FERROR("[SocketReadPackage] want read everything read....\n");
-					return bs;
-				}
-
-				FERROR("want read\n");
-				return NULL;
-			}
-				// The operation did not complete. Call again.
-			case SSL_ERROR_WANT_WRITE:
-			{
-				FERROR( "[SocketReadPackage] Want write.\n" );
-				struct pollfd lfds[2];
-				// watch stdin for input 
-				lfds[0].fd = sock->fd;// STDIN_FILENO;
-				lfds[0].events = POLLIN;
-
-				// watch stdout for ability to write
-				lfds[1].fd = STDOUT_FILENO;
-				lfds[1].events = POLLOUT;
-
-				int err = poll( lfds, 1, sock->s_Timeouts * 1000);
-				if( err > 0 )
-				{
-					return NULL; // more data to read...
+					fullPackageSize = rdat[ 1 ];
 				}
 				
-				if( err == 0 )
+				BufStringAddSize( bs, locbuffer, res );
+				
+				if( fullPackageSize > 0 && read >= (unsigned int) fullPackageSize )
 				{
-					FERROR("[SocketReadPackage] want read TIMEOUT....\n");
-					return bs;
-				}
-				else
-				{
-					FERROR("[SocketReadPackage] want read everything read....\n");
+					FFree( locbuffer );
 					return bs;
 				}
 			}
-			case SSL_ERROR_SYSCALL:
-				return bs;
-			default:
 
-				usleep( 0 );
-				if( retries++ > 500 )
+			if( res <= 0 )
+			{
+				err = SSL_get_error( sock->s_Ssl, res );
+				switch( err )
 				{
+				// The TLS/SSL I/O operation completed.
+				case SSL_ERROR_NONE:
+					FERROR( "[SocketReadPackageSSL] Completed successfully.\n" );
 					return bs;
+				// The TLS/SSL connection has been closed. Goodbye!
+				case SSL_ERROR_ZERO_RETURN:
+					FERROR( "[SocketReadPackageSSL] The connection was closed, return %d\n", read );
+					return bs;
+				// The operation did not complete. Call again.
+				case SSL_ERROR_WANT_READ:
+				{
+					// no data available right now, wait a few seconds in case new data arrives...
+
+					struct pollfd lfds;
+					// watch stdin for input 
+					lfds.fd = sock->fd;
+					lfds.events = POLLIN;
+
+					int err = poll( &lfds, 1, sock->s_Timeouts * 1000);
+					if( err > 0 )
+					{
+						FFree( locbuffer );
+						return NULL; // more data to read...
+					}
+					
+					if( err == 0 )
+					{
+						FERROR("[SocketReadPackageSSL] want read TIMEOUT....\n");
+						FFree( locbuffer );
+						return bs;
+					}
+					else
+					{
+						FERROR("[SocketReadPackageSSL] want read everything read....\n");
+						FFree( locbuffer );
+						return bs;
+					}
 				}
-				return NULL;
+				// The operation did not complete. Call again.
+				case SSL_ERROR_WANT_WRITE:
+				{
+					FERROR( "[SocketReadPackageSSL] Want write.\n" );
+					struct pollfd lfds;
+					// watch stdin for input 
+					lfds.fd = sock->fd;// STDIN_FILENO;
+					lfds.events = POLLIN;
+
+					int err = poll( &lfds, 1, sock->s_Timeouts * 1000);
+					if( err > 0 )
+					{
+						FFree( locbuffer );
+						return NULL; // more data to read...
+					}
+				
+					if( err == 0 )
+					{
+						FERROR("[SocketReadPackageSSL] want read TIMEOUT....\n");
+						FFree( locbuffer );
+						return bs;
+					}
+					else
+					{
+						FERROR("[SocketReadPackageSSL] want read everything read....\n");
+						FFree( locbuffer );
+						return bs;
+					}
+				}
+				case SSL_ERROR_SYSCALL:
+					FFree( locbuffer );
+					return bs;
+				default:
+					usleep( 0 );
+					if( retries++ > 500 )
+					{
+						return bs;
+					}
+					return NULL;
+				}
 			}
 		}
+		while( TRUE );
+		DEBUG("[SocketReadPackageSSL] read\n");
+		FFree( locbuffer );
 	}
-	while( TRUE );
-	DEBUG("[SocketReadPackage] read\n");
-
 	return bs;
-
 }
 
 /**
@@ -2232,11 +2234,11 @@ BufString *SocketReadTillEndNOSSL( Socket* sock, unsigned int pass __attribute__
 {
 	if( sock == NULL )
 	{
-		FERROR("[SocketReadTillEnd] Cannot read from socket, socket = NULL!\n");
+		FERROR("[SocketReadTillEndNOSSL] Cannot read from socket, socket = NULL!\n");
 		return NULL;
 	}
 
-	DEBUG2("[SocketReadTillEnd] Socket wait for message, blocked %d\n", sock->s_Blocked );
+	DEBUG2("[SocketReadTillEndNOSSL] Socket wait for message, blocked %d\n", sock->s_Blocked );
 
 	int n;
 	struct timeval tv;
@@ -2254,81 +2256,88 @@ BufString *SocketReadTillEndNOSSL( Socket* sock, unsigned int pass __attribute__
 	tv.tv_sec = sec;
 	tv.tv_usec = 0;
 	FBOOL quit = FALSE;
-	int locbuffersize = 8192;
-	char locbuffer[ locbuffersize ];
-	int fullPackageSize = 0;
-	FQUAD read = 0;
-	int retries = 0;
-
-	BufString *bs = BufStringNew();
-
-	while( quit != TRUE )
+	
+	char *locbuffer = FMalloc( READ_TILL_END_BUFFER_SIZE );
+	if( locbuffer != NULL )
 	{
-		int ret = poll( fds, 1, 10 * 1000);
+		int fullPackageSize = 0;
+		FQUAD read = 0;
+		int retries = 0;
+
+		BufString *bs = BufStringNew();
+
+		while( quit != TRUE )
+		{
+			int ret = poll( fds, 1, 10 * 1000);
 		
-		DEBUG("[SocketReadTillEnd] Before select, ret: %d\n", ret );
-		if( ret == 0 )
-		{
-			DEBUG("[SocketReadTillEnd] Timeout!\n");
-			BufStringDelete( bs );
-			return NULL;
-		}
-		else if( ret < 0 )
-		{
-			DEBUG("[SocketReadTillEnd] Error\n");
-			BufStringDelete( bs );
-			return NULL;
-		}
-		int res = 0;
-
-		while( 1 )
-		{
-			res = recv( sock->fd, locbuffer, locbuffersize, MSG_DONTWAIT );
-
-			if( res > 0 )
+			DEBUG("[SocketReadTillEndNOSSL] Before select, ret: %d\n", ret );
+			if( ret == 0 )
 			{
-				read += res;
-				retries = 0;
+				DEBUG("[SocketReadTillEndNOSSL] Timeout!\n");
+				BufStringDelete( bs );
+				FFree( locbuffer );
+				return NULL;
+			}
+			else if( ret < 0 )
+			{
+				DEBUG("[SocketReadTillEndNOSSL] Error\n");
+				BufStringDelete( bs );
+				FFree( locbuffer );
+				return NULL;
+			}
+			int res = 0;
 
-				FULONG *rdat = (FULONG *)locbuffer;
-				if( ID_FCRE == rdat[ 0 ] )
+			while( 1 )
+			{
+				res = recv( sock->fd, locbuffer, READ_TILL_END_BUFFER_SIZE, MSG_DONTWAIT );
+
+				if( res > 0 )
 				{
-					fullPackageSize = rdat[ 1 ];
-					DEBUG("[SocketReadTillEnd] package size %d  - long %lu\n", fullPackageSize, rdat[ 1 ] );
+					read += res;
+					retries = 0;
+
+					FULONG *rdat = (FULONG *)locbuffer;
+					if( ID_FCRE == rdat[ 0 ] )
+					{
+						fullPackageSize = rdat[ 1 ];
+						DEBUG("[SocketReadTillEndNOSSL] package size %d  - long %lu\n", fullPackageSize, rdat[ 1 ] );
+					}
+
+					BufStringAddSize( bs, locbuffer, res );
+
+					if( fullPackageSize > 0 && read >= (unsigned int)fullPackageSize )
+					{
+						DEBUG("[SocketReadTillEndNOSSL] got full package\n");
+						FFree( locbuffer );
+						return bs;
+					}
 				}
-
-				BufStringAddSize( bs, locbuffer, res );
-
-				if( fullPackageSize > 0 && read >= (unsigned int)fullPackageSize )
+				else if( res == 0 )
 				{
-					DEBUG("[SocketReadTillEnd] got full package\n");
-
+					DEBUG("[SocketReadTillEndNOSSL] Timeout\n");
+					FFree( locbuffer );
 					return bs;
 				}
-			}
-			else if( res == 0 )
-			{
-				DEBUG("[SocketReadTillEnd] Timeout\n");
-				return bs;
-			}
-			// Error
-			else if( res < 0 )
-			{
-				if( errno == EAGAIN && retries++ < 2500 )
+				// Error
+				else if( res < 0 )
 				{
-					usleep( 500 );
-					//DEBUG("RETR\n");
-					// Approx successful header
-					//FERROR( "[SocketReadTillEnd] Resource temporarily unavailable.. Read %d/ (retries %d)\n", read, retries );
-					continue;
+					if( errno == EAGAIN && retries++ < 2500 )
+					{
+						usleep( 500 );
+						//DEBUG("RETR\n");
+						// Approx successful header
+						//FERROR( "[SocketReadTillEnd] Resource temporarily unavailable.. Read %d/ (retries %d)\n", read, retries );
+						continue;
+					}
+					DEBUG( "[SocketReadTillEndNOSSL] Read %ld  res < 0/\n", read );
+					FFree( locbuffer );
+					return bs;
 				}
-				DEBUG( "[SocketReadTillEnd] Read %ld  res < 0/\n", read );
-				return bs;
-			}
-			DEBUG( "[SocketReadTillEnd] Read %ld fullpackagesize %d\n", read, fullPackageSize );
-		}
-		DEBUG( "[SocketReadTillEnd] Done reading %ld/ (errno: %d)\n", read, errno );
-	}	// QUIT != TRUE
+				DEBUG( "[SocketReadTillEndNOSSL] Read %ld fullpackagesize %d\n", read, fullPackageSize );
+			}	// while( 1 )
+			DEBUG( "[SocketReadTillEndNOSSL] Done reading %ld/ (errno: %d)\n", read, errno );
+		}	// QUIT != TRUE
+	}
 	return NULL;
 }
 
@@ -2345,130 +2354,126 @@ BufString *SocketReadTillEndSSL( Socket* sock, unsigned int pass __attribute__((
 {
 	if( sock == NULL )
 	{
-		FERROR("[SocketReadTillEnd] Cannot read from socket, socket = NULL!\n");
+		FERROR("[SocketReadTillEndSSL] Cannot read from socket, socket = NULL!\n");
 		return NULL;
 	}
 
-	DEBUG2("[SocketReadTillEnd] Socket wait for message, blocked %d\n", sock->s_Blocked );
+	DEBUG2("[SocketReadTillEndSSL] Socket wait for message, blocked %d\n", sock->s_Blocked );
 
 	struct timeval tv;
 
-	struct pollfd fds[2];
+	struct pollfd fds;
 
 	// watch stdin for input 
-	fds[0].fd = sock->fd;// STDIN_FILENO;
-	fds[0].events = POLLIN;
-
-	// watch stdout for ability to write
-	fds[1].fd = STDOUT_FILENO;
-	fds[1].events = POLLOUT;
+	fds.fd = sock->fd;// STDIN_FILENO;
+	fds.events = POLLIN;
 
 	tv.tv_sec = sec;
 	tv.tv_usec = 0;
 	FBOOL quit = FALSE;
-	int locbuffersize = 8192;
-	char locbuffer[ locbuffersize ];
-	int fullPackageSize = 0;
-	FQUAD read = 0;
-	int retries = 0;
-
-	BufString *bs = BufStringNew();
-
-	while( quit != TRUE )
+	
+	char *locbuffer = FMalloc( READ_TILL_END_BUFFER_SIZE );
+	if( locbuffer != NULL )
 	{
-		//if( sock->s_Blocked == TRUE )
+		int fullPackageSize = 0;
+		FQUAD read = 0;
+		int retries = 0;
+		
+		BufString *bs = BufStringNew();
+		
+		while( quit != TRUE )
 		{
-			int ret = poll( fds, 1, 10 * 1000);
+			int ret = poll( &fds, 1, READ_TILL_END_SOCKET_TIMEOUT );
 			
-			DEBUG("[SocketReadTillEnd] Before select, ret: %d\n", ret );
+			DEBUG("[SocketReadTillEndSSL] Before select, ret: %d\n", ret );
 			if( ret == 0 )
 			{
-				DEBUG("[SocketReadTillEnd] Timeout!\n");
+				DEBUG("[SocketReadTillEndSSL] Timeout!\n");
 				BufStringDelete( bs );
+				FFree( locbuffer );
 				return NULL;
 			}
 			else if( ret < 0 )
 			{
-				DEBUG("[SocketReadTillEnd] Error\n");
+				DEBUG("[SocketReadTillEndSSL] Error\n");
 				BufStringDelete( bs );
+				FFree( locbuffer );
 				return NULL;
 			}
-		}
 
-		int res = 0, err = 0;//, buf = length;
+			int res = 0, err = 0;//, buf = length;
 		
-		DEBUG("[SocketReadTillEnd] SSL enabled\n");
+			DEBUG("[SocketReadTillEndSSL] SSL enabled\n");
 
-		if( fds->revents & EPOLLIN )
-		//if( fds.revents & POLLIN )
-		//while( TRUE )
-		{
-			DEBUG("[SocketReadTillEnd] Before read\n");
-			//if( read + buf > length ) buf = length - read;
-			if( ( res = SSL_read( sock->s_Ssl, locbuffer, locbuffersize ) ) >= 0 )
+			if( fds.revents & EPOLLIN )
 			{
-				read += (FQUAD)res;
-
-				DEBUG("[SocketReadTillEnd] Read: %d fullpackage: %d\n", res, fullPackageSize );
-				
-				FULONG *rdat = (FULONG *)locbuffer;
-				if( ID_FCRE == rdat[ 0 ] )
+				DEBUG("[SocketReadTillEndSSL] Before read\n");
+				//if( read + buf > length ) buf = length - read;
+				if( ( res = SSL_read( sock->s_Ssl, locbuffer, READ_TILL_END_BUFFER_SIZE ) ) >= 0 )
 				{
-					fullPackageSize = rdat[ 1 ];
-				}
-				BufStringAddSize( bs, locbuffer, res );
-
-				if( fullPackageSize > 0 && read >= (FQUAD) fullPackageSize )
-				{
-					return bs;
-				}
-			}
-			DEBUG("[SocketReadTillEnd] res2 : %d fullpackagesize %d\n", res, fullPackageSize );
-
-			if( res < 0 )
-			{
-				err = SSL_get_error( sock->s_Ssl, res );
-				DEBUG("[SocketReadTillEnd] err: %d\n", err );
-				switch( err )
-				{
-
-				// The TLS/SSL I/O operation completed.
-				case SSL_ERROR_NONE:
-					FERROR( "[SocketReadTillEnd] Completed successfully.\n" );
-					return bs;
-					// The TLS/SSL connection has been closed. Goodbye!
-				case SSL_ERROR_ZERO_RETURN:
-					FERROR( "[SocketReadTillEnd] The connection was closed, return %ld\n", read );
-					return bs;
-					// The operation did not complete. Call again.
-				case SSL_ERROR_WANT_READ:
-					break;
+					read += (FQUAD)res;
 					
-				case SSL_ERROR_WANT_WRITE:
-					return bs;
-				case SSL_ERROR_SYSCALL:
-					return bs;
-				default:
-					DEBUG("default\n");
-					usleep( 50 );
-					if( retries++ > 15 )
+					DEBUG("[SocketReadTillEndSSL] Read: %d fullpackage: %d\n", res, fullPackageSize );
+				
+					FULONG *rdat = (FULONG *)locbuffer;
+					if( ID_FCRE == rdat[ 0 ] )
 					{
+						fullPackageSize = rdat[ 1 ];
+					}
+					BufStringAddSize( bs, locbuffer, res );
+
+					if( fullPackageSize > 0 && read >= (FQUAD) fullPackageSize )
+					{
+						FFree( locbuffer );
 						return bs;
 					}
 				}
-			}
-			else if( res == 0 )
-			{
-				DEBUG("res = 0\n");
-				if( retries++ > 15 )
+				DEBUG("[SocketReadTillEndSSL] res2 : %d fullpackagesize %d\n", res, fullPackageSize );
+
+				if( res < 0 )
 				{
-					return bs;
+					err = SSL_get_error( sock->s_Ssl, res );
+					DEBUG("[SocketReadTillEndSSL] err: %d\n", err );
+					switch( err )
+					{
+					// The TLS/SSL I/O operation completed.
+					case SSL_ERROR_NONE:
+						FERROR( "[SocketReadTillEndSSL] Completed successfully.\n" );
+						return bs;
+						// The TLS/SSL connection has been closed. Goodbye!
+					case SSL_ERROR_ZERO_RETURN:
+						FERROR( "[SocketReadTillEndSSL] The connection was closed, return %ld\n", read );
+						return bs;
+						// The operation did not complete. Call again.
+					case SSL_ERROR_WANT_READ:
+						break;
+					case SSL_ERROR_WANT_WRITE:
+						return bs;
+					case SSL_ERROR_SYSCALL:
+						return bs;
+					default:
+						DEBUG("[SocketReadTillEndSSL] default error\n");
+						usleep( 50 );
+						if( retries++ > 15 )
+						{
+							FFree( locbuffer );
+							return bs;
+						}
+					}
 				}
-				//DEBUG("[SocketReadTillEnd] There is nothing to read\n");
-				//return bs;
-			}
-		} // while
-	}	// QUIT != TRUE
+				else if( res == 0 )
+				{
+					DEBUG("[SocketReadTillEndSSL] res = 0\n");
+					if( retries++ > 15 )
+					{
+						FFree( locbuffer );
+						return bs;
+					}
+				}
+			}	// if EPOLLIN
+		}	// QUIT != TRUE
+		FFree( locbuffer );
+	}
 	return NULL;
 }
 
@@ -2482,7 +2487,7 @@ BufString *SocketReadTillEndSSL( Socket* sock, unsigned int pass __attribute__((
  */
 FLONG SocketWriteNOSSL( Socket* sock, char* data, FLONG length )
 {
-	if( sock == NULL || length < 1 )
+	if( length < 1 )
 	{
 		//FERROR("Socket is NULL or length < 1: %lu\n", length );
 		return -1;
@@ -2510,7 +2515,7 @@ FLONG SocketWriteNOSSL( Socket* sock, char* data, FLONG length )
 				if( ++retries > 10 ) usleep( 20000 );
 				continue;
 			}
-			FERROR( "Failed to write: %d, %s\n", errno, strerror( errno ) );
+			FERROR( "[SocketWriteNOSSL] Failed to write: %d, %s\n", errno, strerror( errno ) );
 			//socket can not be closed here, because http.c:1504 will fail
 			//we have to rely on the reaper thread to release stale sockets
 			break;
@@ -2518,7 +2523,7 @@ FLONG SocketWriteNOSSL( Socket* sock, char* data, FLONG length )
 	}
 	while( written < length );
 
-	DEBUG("end write %d/%ld (had %d retries)\n", written, length, retries );
+	DEBUG("[SocketWriteNOSSL] end write %d/%ld (had %d retries)\n", written, length, retries );
 	return written;
 }
 
@@ -2532,13 +2537,10 @@ FLONG SocketWriteNOSSL( Socket* sock, char* data, FLONG length )
  */
 FLONG SocketWriteSSL( Socket* sock, char* data, FLONG length )
 {
-	if( sock == NULL || length < 1 )
+	if( length < 1 )
 	{
-		//FERROR("Socket is NULL or length < 1: %lu\n", length );
 		return -1;
 	}
-
-	//INFO( "SSL Write length: %d (sock: %p)\n", length, sock );
 
 	FLONG left = length;
 	FLONG written = 0;
@@ -2552,11 +2554,10 @@ FLONG SocketWriteSSL( Socket* sock, char* data, FLONG length )
 	while( written < length )
 	{
 		if( (bsize + written) > length ) bsize = length - written;
-		// if( bsize > 12288 ){ bsize = 12288; }
 
 		if( sock->s_Ssl == NULL )
 		{
-			FERROR( "[ERROR] The ssl connection was dropped on this file descriptor!\n" );
+			FERROR( "[SocketWriteSSL] The ssl connection was dropped on this file descriptor!\n" );
 			break;
 		}
 
@@ -2571,39 +2572,22 @@ FLONG SocketWriteSSL( Socket* sock, char* data, FLONG length )
 			// The operation did not complete. Call again.
 			case SSL_ERROR_WANT_WRITE:
 			{
-				// TODO: For select?
-				/*sResult = select( sock->fd + 1, NULL, &fdstate, NULL, &timeoutValue );
-					int ch = FD_ISSET( sock->fd, &fdstate );
-					// We're not gonna write now..
-					if( ch == 0 )
-					{
-						//DEBUG("CH = 0\n");
-						usleep( 2000 );
-						//counter++;
-					}*/
 				break;
 			}
 			case SSL_ERROR_SSL:
-				FERROR("Cannot write. Error %d stringerr: %s wanted to sent: %ld fullsize: %ld\n", err, strerror( err ), bsize, length );
+				FERROR("[SocketWriteSSL] Cannot write. Error %d stringerr: %s wanted to sent: %ld fullsize: %ld\n", err, strerror( err ), bsize, length );
 				if( counter++ > 3 )
 				{
 					return 0;
 				}
 				break;
 			default:
-				FERROR("Cannot write. Error %d stringerr: %s wanted to sent: %ld fullsize: %ld\n", err, strerror( err ), bsize, length );
+				FERROR("[SocketWriteSSL] Cannot write. Error %d stringerr: %s wanted to sent: %ld fullsize: %ld\n", err, strerror( err ), bsize, length );
 				return 0;
 			}
-			// TODO: For select?
-			/*if( counter > 1200 )
-			{
-				DEBUG("Cannot send message\n");
-				break;
-			}*/
 		}
 		else
 		{	
-			//retries = 0;  // TODO: For select?
 			written += res;
 		}
 	}
@@ -2655,10 +2639,9 @@ void SocketDeleteNOSSL( Socket* sock )
 		shutdown( sock->fd, SHUT_RDWR );
 
 		e = close( sock->fd );
-		DEBUG("socked closed: %d\n", sock->fd );
+		DEBUG("[SocketDeleteNOSSL] socked closed: %d\n", sock->fd );
 		sock->fd = 0;
 	}
-
 	FFree( sock );
 }
 
@@ -2675,11 +2658,11 @@ void SocketDeleteSSL( Socket* sock )
 		return;
 	}
 
-	DEBUG("[SocketClose] ssl\n");
+	DEBUG("[SocketDeleteSSL] ssl\n");
 	if( sock->s_Ssl )
 	{
 		int ret, ssl_r;
-		unsigned long err;
+		int err;
 		ERR_clear_error();
 		switch( ( ret = SSL_shutdown( sock->s_Ssl ) ) )
 		{
@@ -2711,7 +2694,7 @@ void SocketDeleteSSL( Socket* sock )
 					{
 						do
 						{
-							//log_error_write(srv, __FILE__, __LINE__, "sdds",  "SSL:", ssl_r, ret, ERR_error_string(err, NULL));
+							FERROR( "[SocketDeleteSSL] SSL_ERROR_SYSCALL err: %d error message: %s\n", err, ERR_error_string(err, NULL) );
 						}while( ( err = ERR_get_error() ) );
 					}
 					else if( errno != 0 )
@@ -2722,7 +2705,7 @@ void SocketDeleteSSL( Socket* sock )
 						case ECONNRESET:
 							break;
 						default:
-							//log_error_write(srv, __FILE__, __LINE__, "sddds", "SSL (error):", ssl_r, ret, errno, strerror(errno));
+							FERROR( "[SocketDeleteSSL] SSL_ERROR_SYSCALL errno != 0 err: %d error message: %s\n", err, ERR_error_string(err, NULL) );
 							break;
 						}
 					}
@@ -2730,33 +2713,14 @@ void SocketDeleteSSL( Socket* sock )
 				default:
 					while( ( err = ERR_get_error() ) )
 					{
-						//					log_error_write(srv, __FILE__, __LINE__, "sdds","SSL:", ssl_r, ret, ERR_error_string(err, NULL));
+						FERROR( "[SocketDeleteSSL] default err: %d error message: %s\n", err, ERR_error_string(err, NULL) );
 					}
 					break;
 				}
-			}
-			
-
-			SSL_free( sock->s_Ssl );
-			sock->s_Ssl = NULL;
-
-			//int ret;
-			//SSL_shutdown( sock->s_Ssl );
-			/*
-			while( ( ret = SSL_shutdown( sock->s_Ssl ) ) == 0 )
-			{
-				usleep( 1000 );
-				DEBUG("[SocketClose] shutdown in progress\n");
-				if( ret == -1 )
-				{
-					int error = SSL_get_error( sock->s_Ssl, ret );
-					FERROR("SSL_ERROR: %d\n", error );
-				}
-			}*/
-
-			//DEBUG("[SocketClose] before ssl clear\n");
-			
-			//DEBUG("[SocketClose] ssl released\n");
+		}
+		
+		SSL_free( sock->s_Ssl );
+		sock->s_Ssl = NULL;
 	}
 
 	if( sock->s_Ctx )
@@ -2788,9 +2752,8 @@ void SocketDeleteSSL( Socket* sock )
 		shutdown( sock->fd, SHUT_RDWR );
 
 		e = close( sock->fd );
-		DEBUG("socked closed: %d\n", sock->fd );
+		DEBUG("[SocketDeleteSSL] socked closed: %d\n", sock->fd );
 		sock->fd = 0;
 	}
-
 	FFree( sock );
 }
