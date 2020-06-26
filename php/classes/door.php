@@ -23,6 +23,7 @@ class Door extends dbIO
 	// How to authenticate?
 	var $_authcontext = null; // authentication key (e.g. sessionid)
 	var $_authdata = null; // authentication data (e.g. a sessionid hash)
+	var $_user = null; // override user
 	
 	// Construct a Door object
 	function __construct( $path = false, $authcontext = false, $authdata = false )
@@ -74,9 +75,17 @@ class Door extends dbIO
 				$this->_authdata = $authdata;
 				return true;
 			case 'servertoken':
-				$this->_authcontext = 'servertoken';
-				$this->_authdata = $authdata;
-				return true;
+				$u = new dbIO( 'FUser' );
+				$u->ServerToken = $authdata;
+				// Only succeed if we can load the user
+				if( $u->Load() )
+				{
+					$this->_user = $u;
+					$this->_authcontext = 'servertoken';
+					$this->_authdata = $authdata;
+					return true;
+				}
+				break;
 			case 'user':
 				$this->_authcontext = 'user';
 				$this->_authdata = $authdata;
@@ -146,10 +155,13 @@ class Door extends dbIO
 	function getQuery( $path = false )
 	{
 		global $args, $User, $Logger, $SqlDatabase;
-		if( !isset( $User->ID ) ) 
+		if( !isset( $User->ID ) && !isset( $this->_user ) ) 
 		{
 			return false;
 		}
+		
+		// For whom are we calling?
+		$activeUser = isset( $this->_user ) ? $this->_user : $User;
 		
 		$identifier = false;
 		
@@ -210,12 +222,12 @@ class Door extends dbIO
 				SELECT * FROM `Filesystem` f 
 				WHERE 
 					(
-						f.UserID=\'' . $User->ID . '\' OR
+						f.UserID=\'' . $activeUser->ID . '\' OR
 						f.GroupID IN (
 							SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
 							WHERE 
 								g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-								ug.UserID = \'' . $User->ID . '\'
+								ug.UserID = \'' . $activeUser->ID . '\'
 						)
 					)
 					AND ' . $identifier . ' LIMIT 1';
@@ -230,12 +242,12 @@ class Door extends dbIO
 				SELECT * FROM `Filesystem` f 
 				WHERE 
 					(
-						f.UserID=\'' . $User->ID . '\' OR
+						f.UserID=\'' . $activeUser->ID . '\' OR
 						f.GroupID IN (
 							SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
 							WHERE 
 								g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-								ug.UserID = \'' . $User->ID . '\'
+								ug.UserID = \'' . $activeUser->ID . '\'
 						)
 					)
 					AND
@@ -249,6 +261,8 @@ class Door extends dbIO
 	function dosQuery( $query )
 	{
 		global $Config, $User, $SqlDatabase, $Logger;
+		
+		$activeUser = isset( $this->_user ) ? $this->user : $User;
 		
 		// Support auth context
 		if( isset( $this->_authdata ) )
@@ -267,11 +281,11 @@ class Door extends dbIO
 		{
 			if( !strstr( $query, '?' ) )
 			{
-				$query .= '?sessionid=' . $User->SessionID;
+				$query .= '?sessionid=' . $activeUser->SessionID;
 			}
 			else
 			{
-				$query .= '&sessionid=' . $User->SessionID;
+				$query .= '&sessionid=' . $activeUser->SessionID;
 			}
 		}
 		
@@ -637,6 +651,8 @@ class Door extends dbIO
 	{
 		global $User, $Logger;
 		
+		$activeUser = isset( $this->_user ) ? $this->_user : $User;
+		
 		// 1. Get the filesystem objects
 		$ph = explode( ':', $delpath );
 		$ph = $ph[0];
@@ -648,7 +664,7 @@ class Door extends dbIO
 		}
 		
 		$fs = new dbIO( 'Filesystem' );
-		$fs->UserID = $User->ID;
+		$fs->UserID = $activeUser->ID;
 		$fs->Name   = $ph;
 		$fs->Load();
 		
@@ -711,6 +727,8 @@ class Door extends dbIO
 	{
 		global $User, $Logger;
 		
+		$activeUser = isset( $this->_user ) ? $this->_user : $User;
+		
 		// 1. Get the filesystem objects
 		$from = explode( ':', $pathFrom ); $from = $from[0];
 		$to   = explode( ':', $pathTo   ); $to = $to[0];
@@ -730,7 +748,7 @@ class Door extends dbIO
 		else
 		{
 			$fsFrom = new dbIO( 'Filesystem' );
-			$fsFrom->UserID = $User->ID;
+			$fsFrom->UserID = $activeUser->ID;
 			$fsFrom->Name   = $from;
 			$fsFrom->Load();
 			$this->cacheFrom = $fsFrom;
@@ -742,7 +760,7 @@ class Door extends dbIO
 		else
 		{
 			$fsTo = new dbIO( 'Filesystem' ); 
-			$fsTo->UserID = $User->ID;
+			$fsTo->UserID = $activeUser->ID;
 			$fsTo->Name   = $to;
 			$fsTo->Load();
 			$this->cacheTo = $fsTo;
