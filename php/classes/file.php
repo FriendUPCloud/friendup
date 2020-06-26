@@ -118,7 +118,7 @@ class File
 			$data = explode( '=', $str );
 			if( isset( $data[1] ) )
 			{
-				$data[0] = substr( $data[0], 1, strlen( $data[0] ) - 1 );
+				//$data[0] = substr( $data[0], 1, strlen( $data[0] ) - 1 );
 				$key = new stdClass();
 				$key->Key = $data[0];
 				$key->Data = $data[1];
@@ -261,7 +261,9 @@ class File
 					'data' => $curlFile
 				);
 		
-				//$Logger->log( '[File::Save] Trying to save content in: ' . $url . ' with path ' . $this->path );
+				$Logger->log( '[File::Save] Trying to save content in: ' . $url . ' with path ' . $this->path );
+				$Logger->log( '[File::Save] POSTFIELDS ' . print_r($postfields,1) );
+
 			
 				$ch = curl_init();
 				curl_setopt( $ch, CURLOPT_URL, $url    );
