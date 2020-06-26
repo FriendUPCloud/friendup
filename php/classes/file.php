@@ -261,8 +261,8 @@ class File
 					'data' => $curlFile
 				);
 		
-				$Logger->log( '[File::Save] Trying to save content in: ' . $url . ' with path ' . $this->path );
-				$Logger->log( '[File::Save] POSTFIELDS ' . print_r($postfields,1) );
+				//$Logger->log( '[File::Save] Trying to save content in: ' . $url . ' with path ' . $this->path );
+				//$Logger->log( '[File::Save] POSTFIELDS ' . print_r($postfields,1) );
 
 			
 				$ch = curl_init();
