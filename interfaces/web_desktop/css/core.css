@@ -3575,6 +3575,12 @@ html .DirectoryToolbar button.Search
 	pointer-events: all;
 }
 
+.Content.LoadingIcons .File .Icon > .FileShared:before,
+.Content.LoadingIcons .File .Icon > .Shared:after
+{
+	opacity: 0;
+}
+
 /* Listview directory view -------------------------------------------------- */
 
 div.Listview
