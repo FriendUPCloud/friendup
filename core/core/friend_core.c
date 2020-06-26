@@ -183,34 +183,6 @@ static char *dividerStr = "\r\n\r\n";
 #define NO_WORKERS
 
 //
-// Decrease number of threads
-//
-/*
-static void DecreaseThreads()
-{
-	if( FRIEND_MUTEX_LOCK( &maxthreadmut ) == 0 )
-	{
-		nothreads--;
-#ifdef __DEBUG
-		//LOG( FLOG_DEBUG,"DecreaseThreadsDecreaseThreadsDecreaseThreads %d %d\n", pthread_self(), nothreads );
-#endif
-		FRIEND_MUTEX_UNLOCK( &maxthreadmut );
-	}
-}
-
-static void IncreaseThreads()
-{
-	if( FRIEND_MUTEX_LOCK( &maxthreadmut ) == 0 )
-	{
-		nothreads++;
-#ifdef __DEBUG
-		//LOG( FLOG_DEBUG,"IncreaseThreadsIncreaseThreadsIncreaseThreads %d %d\n", pthread_self(), nothreads );
-#endif
-		FRIEND_MUTEX_UNLOCK( &maxthreadmut );
-	}
-}
-*/
-//
 // Current Friend Core instance
 //
 
@@ -327,23 +299,6 @@ static inline void moveToHttp( int fd )
 static inline void moveToHttps( Socket *sock )
 {
 	Http *response;
-	
-	char buf[ 1024 ];
-	int re = 0;
-	
-	/*
-	while( TRUE )
-	{
-		int r = recv( fd, buf, 1024, 0 );
-		if( r  <= 0 )
-		{
-			break;
-		}
-		re += r;
-		DEBUG("Received from socket '%s' size %d\n", buf, re );
-		sleep( 1 );
-	}
-	*/
 	
 	struct TagItem tags[] = {
 		{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
@@ -576,13 +531,13 @@ void *FriendCoreAcceptPhase2( void *d )
 					close( fd );
 					goto accerror;
 				}
-		
+				
 				/// Add to epoll
 				// TODO: Check return of epoll ctl
 				struct epoll_event event;
 				event.data.ptr = incoming;
 				event.events = EPOLLIN| EPOLLET;
-
+				
 				int error = epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_ADD, fd, &event );
 			
 				if( error )
@@ -640,7 +595,7 @@ void FriendCoreProcessSockBlock( void *fcv )
 	FQUAD bufferSize = HTTP_READ_BUFFER_DATA_SIZE;
 	FQUAD bufferSizeAlloc = HTTP_READ_BUFFER_DATA_SIZE_ALLOC;
 
-	BufStringDisk *resultString = BufStringDiskNewSize( bufferSizeAlloc*2 );
+	BufStringDisk *resultString = BufStringDiskNewSize( TUNABLE_LARGE_HTTP_REQUEST_SIZE );
 
 	char *locBuffer = FMalloc( bufferSizeAlloc );
 
@@ -661,9 +616,11 @@ void FriendCoreProcessSockBlock( void *fcv )
 			int res = th->sock->s_Interface->SocketReadBlocked( th->sock, locBuffer, bufferSize, bufferSize );
 			if( res > 0 )
 			{
-				retryContentNotFull = 0;	// we must reset error
+				retryContentNotFull = 0;	// we must reset error counter
 				DEBUG("[FriendCoreProcessSockBlock] received bytes: %d\n", res );
 				
+				// add received string to buffer.
+				// If 
 				int err = BufStringDiskAddSize( resultString, locBuffer, res );
 
 				if( headerFound == FALSE )
@@ -808,7 +765,7 @@ void FriendCoreProcessSockNonBlock( void *fcv )
 	FQUAD bufferSize = HTTP_READ_BUFFER_DATA_SIZE;
 	FQUAD bufferSizeAlloc = HTTP_READ_BUFFER_DATA_SIZE_ALLOC;
 
-	BufStringDisk *resultString = BufStringDiskNewSize( bufferSizeAlloc*2 );
+	BufStringDisk *resultString = BufStringDiskNewSize( TUNABLE_LARGE_HTTP_REQUEST_SIZE );
 
 	char *locBuffer = FMalloc( bufferSizeAlloc );
 
@@ -817,6 +774,11 @@ void FriendCoreProcessSockNonBlock( void *fcv )
 	int headerLen = 0;
 	
 	DEBUG("\n\n\nFriendCoreProcessSockBlock\n\n\n");
+	
+	int a = 65535;
+	if (setsockopt( th->sock->fd, SOL_SOCKET, SO_RCVBUF, &a, sizeof(int)) == -1) {
+		fprintf(stderr, "Error setting socket opts: %s\n", strerror(errno));
+	}
 	
 	if( locBuffer != NULL )
 	{

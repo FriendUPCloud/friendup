@@ -45,136 +45,9 @@
 //#undef DEBUG1
 //#define DEBUG1( ...)
 
-//#define USE_SOCKET_REAPER
-
 void SocketFree( Socket *sock );
 
 #define SOCKET_STATE_MAX_ACCEPTED_TIME_s 5 //socket has N seconds to send the first byte
-
-static int ssl_session_ctx_id = 1;
-static int ssl_sockopt_on = 1;
-
-static Socket* *_socket_array; //array of pointers to all active Socket objects
-static pthread_mutex_t _socket_array_mutex;
-static unsigned int _max_sockets;
-static pthread_t _socket_reaper_thread_handle;
-
-#ifdef USE_SOCKET_REAPER
-static void* _socket_reaper_thread(void *a);
-static void _socket_add_to_reaper(Socket *sock);
-static void _socket_remove_from_reaper(const Socket *sock);
-
-/** Initializes internal socket management structs. Call once at startup
- */
-void socket_init_once( void )
-{
-	struct rlimit limit;
-	int status = getrlimit(RLIMIT_NOFILE, &limit);
-	if( status != 0 )
-	{
-		FERROR("Can not get maximum amount of sockets! Socket reaper will not start\n");
-		return;
-	}
-	_max_sockets = limit.rlim_cur;
-	_socket_array = FCalloc(_max_sockets, sizeof(Socket*) );
-	if (_socket_array == NULL){
-		FERROR("Can not alocate socket table! Socket reaper will not start\n");
-		return;
-	}
-	DEBUG("Maximum number of sockets %d", _max_sockets);
-
-	pthread_mutex_init(&_socket_array_mutex, NULL);
-
-	pthread_create(&_socket_reaper_thread_handle, NULL/*default attributes*/, _socket_reaper_thread, NULL/*extra args*/);
-}
-
-static void* _socket_reaper_thread(void *a __attribute__((unused)))
-{
-	while( TRUE )
-	{
-		//DEBUG("reaper\n");
-		for( unsigned int i = 0; i < _max_sockets; i++ )
-		{
-			if( _socket_array[i] != NULL )
-			{ //there is probably a socket here...
-				FRIEND_MUTEX_LOCK( &_socket_array_mutex );
-				FBOOL unlock_mutex = TRUE;
-				
-				if( _socket_array[i] != NULL )
-				{ //there is still a socket here, let's have a look!
-					unsigned int state_persistance_time_s = time(NULL) - _socket_array[i]->state_update_timestamp;
-					DEBUG("Socket [%d] is at %p, state %d, time %d\n",
-							i,
-							_socket_array[i],
-							_socket_array[i]->state,
-							state_persistance_time_s);
-
-					if( ((int)_socket_array[i]->state) == SOCKET_STATE_MAX_ACCEPTED_TIME_s )
-					{
-					//switch (_socket_array[i]->state){
-					//case socket_state_accepted:
-						if (state_persistance_time_s > SOCKET_STATE_MAX_ACCEPTED_TIME_s){
-
-							DEBUG("Socket [%d] is too long (%ds) in accept state. Closing.\n",
-									i,
-									state_persistance_time_s);
-							Socket* tmp = _socket_array[i];
-							_socket_array[i] = NULL;
-							FRIEND_MUTEX_UNLOCK(&_socket_array_mutex); //release mutex, otherwise _socket_remove_from_reaper called from SocketFree will block
-							unlock_mutex = false;
-							close( tmp->fd ); //brutally the socket here, rest of error handling will happen in the epoll function
-						}
-						//break;
-					} //end of switch / if
-				}
-				if (unlock_mutex){
-					FRIEND_MUTEX_UNLOCK(&_socket_array_mutex);
-				}
-			}
-		} //end of loop
-
-		sleep(5);
-	}
-	return NULL;
-}
-
-static void _socket_add_to_reaper( Socket *sock )
-{
-	sock->state_update_timestamp = time(NULL);
-	FRIEND_MUTEX_LOCK(&_socket_array_mutex);
-	//find a place in the global table to hold pointer to new socket
-	for( unsigned int i = 0; i < _max_sockets; i++ )
-	{
-		if( _socket_array[i] == NULL )
-		{
-			_socket_array[i] = sock;
-			break;
-		}
-	}
-	FRIEND_MUTEX_UNLOCK(&_socket_array_mutex);
-}
-
-static void _socket_remove_from_reaper(const Socket *sock)
-{
-	FRIEND_MUTEX_LOCK(&_socket_array_mutex);
-	//find a place in the global table to hold pointer to new socket
-	for (unsigned int i = 0; i < _max_sockets; i++){
-		if (_socket_array[i] == sock){
-			_socket_array[i] = NULL;
-			break;
-		}
-	}
-	FRIEND_MUTEX_UNLOCK(&_socket_array_mutex);
-}
-
-void socket_update_state( Socket *sock, socket_state_t state )
-{
-	FRIEND_MUTEX_LOCK(&sock->mutex);
-	sock->state = state;
-	sock->state_update_timestamp = time(NULL);
-	FRIEND_MUTEX_UNLOCK(&sock->mutex);
-}
-#endif
 
 /**
  * Open new socket on specified port
@@ -1647,7 +1520,6 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 #define MINIMUMRETRY 30000
 	int retryCount = expectedLength > 0 ? MINIMUMRETRY : 3000; // User do be 3000
 	if( expectedLength > 0 && length > expectedLength ) length = expectedLength;
-	int startTime = time( NULL );
 
 	while( TRUE )
 	{
@@ -1688,28 +1560,28 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 					// NB: We used to retry 10000 times!
 				{
 					struct pollfd fds;
-	int len = 0;
+					int len = 0;
 
-	// watch stdin for input 
-	fds.fd = sock->fd;// STDIN_FILENO;
-	fds.events = POLLIN;
+					// watch stdin for input 
+					fds.fd = sock->fd;// STDIN_FILENO;
+					fds.events = POLLIN;
 
-	int err = poll( &fds, 1, 20);
-	if( err <= 0 )
-	{
-		DEBUG("Timeout or there is no data in socket\n");
-		return read;
-	}
-	if( fds.revents & POLLIN )
-	{
-		DEBUG("Got data!!\n");
+					int err = poll( &fds, 1, 20);
+					if( err <= 0 )
+					{
+						DEBUG("Timeout or there is no data in socket\n");
+						return read;
+					}
+					if( fds.revents & POLLIN )
+					{
+						DEBUG("Got data!! Calling SSL_Read\n");
 	
-		continue;
-	}
-	else if( fds.revents & POLLHUP )
-	{
-		DEBUG("Disconnected!\n");
-	}
+						continue;
+					}
+					else if( fds.revents & POLLHUP )
+					{
+						DEBUG("Disconnected!\n");
+					}
 				}
 					/*
 					// this works fine for all cases
@@ -1739,7 +1611,7 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 
 						if( err > 0 )
 						{
-							usleep( 50000 );
+							usleep( 500 ); // 50000
 							FERROR("[SocketReadSSL] want write\n");
 							continue; // more data to read...
 						}
@@ -1818,17 +1690,13 @@ int SocketReadBlockedNOSSL( Socket* sock, char* data, unsigned int length, unsig
 		return 0;
 	}
 
-	struct pollfd fds[2];
+	struct pollfd fds;
 
 	// watch stdin for input 
-	fds[0].fd = sock->fd;// STDIN_FILENO;
-	fds[0].events = POLLIN;
+	fds.fd = sock->fd;
+	fds.events = POLLIN;
 
-	// watch stdout for ability to write
-	fds[1].fd = STDOUT_FILENO;
-	fds[1].events = POLLOUT;
-
-	int err = poll( fds, 1, 5 * 1000);
+	int err = poll( &fds, 1, 5 * 1000);
 	if( err <= 0 )
 	{
 		DEBUG("Timeout or there is no data in socket\n");
@@ -1837,11 +1705,6 @@ int SocketReadBlockedNOSSL( Socket* sock, char* data, unsigned int length, unsig
 
 	unsigned int bufLength = length, read = 0;
 	return (int)recv( sock->fd, data + read, bufLength - read, 0 ); //, MSG_DONTWAIT );
-}
-
-int fd_is_valid(int fd)
-{
-    return fcntl(fd, F_GETFD) != -1 || errno != EBADF;
 }
 
 /**
@@ -1861,30 +1724,6 @@ int SocketReadBlockedSSL( Socket* sock, char* data, unsigned int length, unsigne
 		FERROR("Cannot read from socket, socket = NULL!\n");
 		return 0;
 	}
-/*
-	if( data == NULL )
-	{
-		FERROR( "Can not read into empty buffer.\n" );
-		return 0;
-	}
-*/
-/*
-	int count;
-	ioctl( sock->fd, FIONREAD, &count);
-	DEBUG("recv %d\n", count );
-	if( count == 0 )
-	{
-		return 0;
-	}
-	*/
-
-	/*
-	if( fd_is_valid( sock->fd ) == 0 )
-	{
-		DEBUG("Socket is not valid anymore\n");
-		return 0;
-	}
-	*/
 
 	struct pollfd fds;
 	int len = 0;
@@ -1893,7 +1732,7 @@ int SocketReadBlockedSSL( Socket* sock, char* data, unsigned int length, unsigne
 	fds.fd = sock->fd;// STDIN_FILENO;
 	fds.events = POLLIN;
 
-	int err = poll( &fds, 1, 200);
+	int err = poll( &fds, 1, 20 );	//200
 	if( err <= 0 )
 	{
 		DEBUG("Timeout or there is no data in socket\n");
@@ -1918,14 +1757,8 @@ int SocketReadBlockedSSL( Socket* sock, char* data, unsigned int length, unsigne
 		return 0;
 	}
 	
-
-//int millisec = 1000; // 1 second
-//setsockopt(sock->fd , SOL_SOCKET, SO_RCVTIMEO, (char*)&millisec, sizeof(int));
-
 	DEBUG("SocketReadBlocked %p\n", sock );
 
-	
-	
 	return len;
 }
 
@@ -1955,17 +1788,13 @@ int SocketWaitReadNOSSL( Socket* sock, char* data, unsigned int length, unsigned
 
 	SocketSetBlocking( sock, TRUE );
 
-	struct pollfd fds[2];
+	struct pollfd fds;
 
 	// watch stdin for input 
-	fds[0].fd = sock->fd;// STDIN_FILENO;
-	fds[0].events = POLLIN;
+	fds.fd = sock->fd;
+	fds.events = POLLIN;
 
-	// watch stdout for ability to write
-	fds[1].fd = STDOUT_FILENO;
-	fds[1].events = POLLOUT;
-
-	if( ( n = poll( fds, 1, sec * 1000) ) == 0 )
+	if( ( n = poll( &fds, 1, sec * 1000) ) == 0 )
 	{
 		FERROR("[SocketWaitRead] Connection timeout\n");
 		SocketSetBlocking( sock, FALSE );
@@ -2045,17 +1874,13 @@ int SocketWaitReadSSL( Socket* sock, char* data, unsigned int length, unsigned i
 
 	SocketSetBlocking( sock, TRUE );
 
-	struct pollfd fds[2];
+	struct pollfd fds;
 
 	// watch stdin for input 
-	fds[0].fd = sock->fd;// STDIN_FILENO;
-	fds[0].events = POLLIN;
+	fds.fd = sock->fd;// STDIN_FILENO;
+	fds.events = POLLIN;
 
-	// watch stdout for ability to write
-	fds[1].fd = STDOUT_FILENO;
-	fds[1].events = POLLOUT;
-
-	if( ( n = poll( fds, 1, sec * 1000) ) == 0 )
+	if( ( n = poll( &fds, 1, sec * 1000) ) == 0 )
 	{
 		FERROR("[SocketWaitRead] Connection timeout\n");
 		SocketSetBlocking( sock, FALSE );
@@ -2095,7 +1920,6 @@ int SocketWaitReadSSL( Socket* sock, char* data, unsigned int length, unsigned i
 			}
 			else
 			{
-
 				return res;
 			}
 		}
@@ -2119,16 +1943,12 @@ int SocketWaitReadSSL( Socket* sock, char* data, unsigned int length, unsigned i
 			case SSL_ERROR_WANT_READ:
 			{
 				// no data available right now, wait a few seconds in case new data arrives...
-				struct pollfd lfds[2];
+				struct pollfd lfds;
 				// watch stdin for input 
-				lfds[0].fd = sock->fd;// STDIN_FILENO;
-				lfds[0].events = POLLIN;
+				lfds.fd = sock->fd;
+				lfds.events = POLLIN;
 
-				// watch stdout for ability to write
-				lfds[1].fd = STDOUT_FILENO;
-				lfds[1].events = POLLOUT;
-
-				int err = poll( lfds, 1, sock->s_Timeouts * 1000);
+				int err = poll( &lfds, 1, sock->s_Timeouts * 1000);
 				if( err > 0 )
 				{
 					continue; // more data to read...
@@ -2145,8 +1965,6 @@ int SocketWaitReadSSL( Socket* sock, char* data, unsigned int length, unsigned i
 					return read;
 				}
 
-				//if( read > 0 ) return read;
-				//usleep( 0 );
 				FERROR("want read\n");
 				continue;
 			}
@@ -2155,16 +1973,12 @@ int SocketWaitReadSSL( Socket* sock, char* data, unsigned int length, unsigned i
 			{
 				FERROR( "[SocketWaitRead] Want write.\n" );
 
-				struct pollfd lfds[2];
+				struct pollfd lfds;
 				// watch stdin for input 
-				lfds[0].fd = sock->fd;// STDIN_FILENO;
-				lfds[0].events = POLLIN;
+				lfds.fd = sock->fd;// STDIN_FILENO;
+				lfds.events = POLLIN;
 
-				// watch stdout for ability to write
-				lfds[1].fd = STDOUT_FILENO;
-				lfds[1].events = POLLOUT;
-
-				int err = poll( lfds, 1, sock->s_Timeouts * 1000);
+				int err = poll( &lfds, 1, sock->s_Timeouts * 1000);
 				if( err > 0 )
 				{
 					continue; // more data to read...
