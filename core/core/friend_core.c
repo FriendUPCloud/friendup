@@ -73,7 +73,6 @@
 //#define USE_PTHREAD_ACCEPT
 
 extern void *FCM;			// FriendCoreManager
-pthread_mutex_t maxthreadmut;
 
 struct AcceptPair *DoAccept( Socket *sock );
 void FriendCoreProcess( void *fcv );
@@ -100,10 +99,6 @@ FriendCoreInstance *FriendCoreNew( void *sb, int id, FBOOL ssl, int port, int ma
 {
 	LOG( FLOG_INFO, "[FriendCoreNew] Starting friend core\n" );
 	
-	// Watch our threads
-	// TODO: make an array and use one for each friend core! (if multiple)
-	pthread_mutex_init( &maxthreadmut, NULL );
-	
 	// FOR DEBUG PURPOSES! -ht
 	_reads = 0;
 	_writes = 0;
@@ -126,14 +121,11 @@ FriendCoreInstance *FriendCoreNew( void *sb, int id, FBOOL ssl, int port, int ma
 	}
 	else
 	{
-		LOG( FLOG_PANIC, "Cannot allocate memory for FriendCore instance\n");
+		LOG( FLOG_PANIC, "[FriendCoreNew] Cannot allocate memory for FriendCore instance\n");
 		return NULL;
 	}
 	
-	// Init listen mutex
-	pthread_mutex_init( &fc->fci_ListenMutex, NULL );
-	
-	LOG( FLOG_INFO,"[FriendCore] WorkerManager started\n");
+	LOG( FLOG_INFO,"[FriendCoreNew] WorkerManager started\n");
 	
 	return fc;
 }
@@ -146,9 +138,6 @@ FriendCoreInstance *FriendCoreNew( void *sb, int id, FBOOL ssl, int port, int ma
 
 void FriendCoreShutdown( FriendCoreInstance* fc )
 {	
-	// Clear watchdog
-	pthread_mutex_destroy( &maxthreadmut );
-
 	DEBUG("[FriendCoreShutdown] On exit, we have %d idle threads.\n", nothreads );
 
 	while( fc->fci_Closed != TRUE )
@@ -156,15 +145,7 @@ void FriendCoreShutdown( FriendCoreInstance* fc )
 		LOG( FLOG_INFO, "[FriendCoreShutdown] Waiting for close\n" );
 		sleep( 1 );
 	}
-	
-	// Destroy listen mutex
-	//DEBUG("[FriendCoreShutdown] Waiting for listen mutex\n" );
-	if( FRIEND_MUTEX_LOCK( &fc->fci_ListenMutex ) == 0 )
-	{
-		FRIEND_MUTEX_UNLOCK( &fc->fci_ListenMutex );
-		pthread_mutex_destroy( &fc->fci_ListenMutex );
-	}
-	
+
 	FFree( fc );
 	
 	LOG( FLOG_INFO,"FriendCore shutdown!\n");
@@ -195,7 +176,7 @@ struct FriendCoreInstance *fci;
 */
 void SignalHandler( int signal __attribute__((unused)) )
 {
-	DEBUG("[FriendCoreShutdown] Quit signal sent\n");
+	DEBUG("[SignalHandler] Quit signal sent\n");
 #ifdef USE_SELECT
 	
 #endif
@@ -210,13 +191,13 @@ void SignalHandler( int signal __attribute__((unused)) )
 */
 struct fcThreadInstance 
 { 
-	FriendCoreInstance *fc;
-	pthread_t thread;
-	struct epoll_event *event;
-	Socket *sock;
+	FriendCoreInstance		*fc;
+	pthread_t				thread;
+	struct epoll_event		*event;
+	Socket					*sock;
 	
 	// Incoming from accept
-	struct AcceptPair *acceptPair;
+	struct AcceptPair		*acceptPair;
 };
 
 #endif
@@ -264,7 +245,7 @@ static inline void moveToHttp( int fd )
 
 	strcat( redirectURL, "/webclient/index.html" );
 	
-	Log( FLOG_DEBUG, "[ProtocolHttp] Redirect : '%s'\n", redirectURL );
+	Log( FLOG_DEBUG, "[moveToHttp] Redirect : '%s'\n", redirectURL );
 	struct TagItem tags[] = {
 		{ HTTP_HEADER_LOCATION, (FULONG)StringDuplicateN( redirectURL, strlen( redirectURL ) ) },
 		{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
