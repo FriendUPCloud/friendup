@@ -74,13 +74,13 @@
 
 extern void *FCM;			// FriendCoreManager
 
-struct AcceptPair *DoAccept( Socket *sock );
 void FriendCoreProcess( void *fcv );
 
 int accept4(int sockfd, struct sockaddr *addr,            socklen_t *addrlen, int flags);
 
 int nothreads = 0;					/// threads coutner @todo to rewrite
 #define MAX_CALLHANDLER_THREADS 256			///< maximum number of simulatenous handlers
+//#define USE_BLOCKED_SOCKETS_TO_READ_HTTP
 
 /**
 * Creates a new instance of Friend Core.
@@ -335,21 +335,21 @@ void *FriendCoreAcceptPhase2( void *d )
 			switch( errno )
 			{
 				case EAGAIN: break;
-				case EBADF:DEBUG( "[AcceptPair] The socket argument is not a valid file descriptor.\n" );
+				case EBADF:DEBUG( "[FriendCoreAcceptPhase2] The socket argument is not a valid file descriptor.\n" );
 					goto accerror;
-				case ECONNABORTED:DEBUG( "[AcceptPair] A connection has been aborted.\n" );
+				case ECONNABORTED:DEBUG( "[FriendCoreAcceptPhase2] A connection has been aborted.\n" );
 					goto accerror;
-				case EINTR:DEBUG( "[AcceptPair] The accept() function was interrupted by a signal that was caught before a valid connection arrived.\n" );
+				case EINTR:DEBUG( "[FriendCoreAcceptPhase2] The accept() function was interrupted by a signal that was caught before a valid connection arrived.\n" );
 					goto accerror;
-				case EINVAL:DEBUG( "[AcceptPair] The socket is not accepting connections.\n" );
+				case EINVAL:DEBUG( "[FriendCoreAcceptPhase2] The socket is not accepting connections.\n" );
 					goto accerror;
-				case ENFILE:DEBUG( "[AcceptPair] The maximum number of file descriptors in the system are already open.\n" );
+				case ENFILE:DEBUG( "[FriendCoreAcceptPhase2] The maximum number of file descriptors in the system are already open.\n" );
 					goto accerror;
-				case ENOTSOCK:DEBUG( "[AcceptPair] The socket argument does not refer to a socket.\n" );
+				case ENOTSOCK:DEBUG( "[FriendCoreAcceptPhase2] The socket argument does not refer to a socket.\n" );
 					goto accerror;
-				case EOPNOTSUPP:DEBUG( "[AcceptPair] The socket type of the specified socket does not support accepting connections.\n" );
+				case EOPNOTSUPP:DEBUG( "[FriendCoreAcceptPhase2] The socket type of the specified socket does not support accepting connections.\n" );
 					goto accerror;
-				default: DEBUG("[AcceptPair] Accept return bad fd\n");
+				default: DEBUG("[FriendCoreAcceptPhase2] Accept return bad fd\n");
 					goto accerror;
 			}
 			goto accerror;
@@ -370,13 +370,11 @@ void *FriendCoreAcceptPhase2( void *d )
 		{
 			int srl;
 			
-			SSL_CTX_set_session_cache_mode( fc->fci_Sockets->s_Ctx, SSL_SESS_CACHE_CLIENT | SSL_SESS_CACHE_NO_INTERNAL_STORE);
-			
 			s_Ssl = SSL_new( fc->fci_Sockets->s_Ctx );
 
 			if( s_Ssl == NULL )
 			{
-				FERROR("[SocketAcceptPair] Cannot accept SSL connection\n");
+				FERROR("[FriendCoreAcceptPhase2] Cannot accept SSL connection\n");
 				shutdown( fd, SHUT_RDWR );
 				close( fd );
 				goto accerror;
@@ -385,7 +383,7 @@ void *FriendCoreAcceptPhase2( void *d )
 			BIO *bio = SSL_get_rbio( s_Ssl );
 			if( bio != NULL )
 			{
-				DEBUG("Read buffer will be changed!\n");
+				DEBUG("[FriendCoreAcceptPhase2] Read buffer will be changed!\n");
 				BIO_set_read_buffer_size( bio, 81920 );
 			}
 
@@ -394,7 +392,7 @@ void *FriendCoreAcceptPhase2( void *d )
 			if( srl != 1 )
 			{
 				int error = SSL_get_error( s_Ssl, srl );
-				FERROR( "[SocketAcceptPair] Could not set fd, error: %d fd: %d\n", error, fd );
+				FERROR( "[FriendCoreAcceptPhase2] Could not set fd, error: %d fd: %d\n", error, fd );
 				shutdown( fd, SHUT_RDWR );
 				close( fd );
 				SSL_free( s_Ssl );
@@ -405,7 +403,7 @@ void *FriendCoreAcceptPhase2( void *d )
 			// we must be sure that SSL Accept is working
 			while( 1 )
 			{
-				DEBUG("before accept\n");
+				DEBUG("[FriendCoreAcceptPhase2] before accept\n");
 				if( ( err = SSL_accept( s_Ssl ) ) == 1 )
 				{
 					break;
@@ -418,11 +416,11 @@ void *FriendCoreAcceptPhase2( void *d )
 					{
 						case SSL_ERROR_NONE:
 							// NO error..
-							FERROR( "[SocketAcceptPair] No error\n" );
+							FERROR( "[FriendCoreAcceptPhase2] No error\n" );
 							lbreak = 1;
 						break;
 						case SSL_ERROR_ZERO_RETURN:
-							FERROR("[SocketAcceptPair] SSL_ACCEPT error: Socket closed.\n" );
+							FERROR("[FriendCoreAcceptPhase2] SSL_ACCEPT error: Socket closed.\n" );
 							goto accerror;
 						case SSL_ERROR_WANT_READ:
 							lbreak = 2;
@@ -431,20 +429,20 @@ void *FriendCoreAcceptPhase2( void *d )
 							lbreak = 2;
 						break;
 						case SSL_ERROR_WANT_ACCEPT:
-							FERROR( "[SocketAcceptPair] Want accept\n" );
+							FERROR( "[FriendCoreAcceptPhase2] Want accept\n" );
 							goto accerror;
 						case SSL_ERROR_WANT_X509_LOOKUP:
-							FERROR( "[SocketAcceptPair] Want 509 lookup\n" );
+							FERROR( "[FriendCoreAcceptPhase2] Want 509 lookup\n" );
 							goto accerror;
 						case SSL_ERROR_SYSCALL:
-							FERROR( "[SocketAcceptPair] Error syscall. Goodbye! %s.\n", ERR_error_string( ERR_get_error(), NULL ) );
+							FERROR( "[FriendCoreAcceptPhase2] Error syscall. Goodbye! %s.\n", ERR_error_string( ERR_get_error(), NULL ) );
 							//goto accerror;
 							//lbreak = 2;
 							break;
 						case SSL_ERROR_SSL:
 						{
 							int enume = ERR_get_error();
-							FERROR( "[SocketAcceptPair] SSL_ERROR_SSL: %s.\n", ERR_error_string( enume, NULL ) );
+							FERROR( "[FriendCoreAcceptPhase2] SSL_ERROR_SSL: %s.\n", ERR_error_string( enume, NULL ) );
 							lbreak = 2;
 							
 							// HTTP to HTTPS redirection code
@@ -468,7 +466,7 @@ void *FriendCoreAcceptPhase2( void *d )
 				
 				if( fc->fci_Shutdown == TRUE )
 				{
-					FINFO("Accept socket process will be stopped, becaouse Shutdown is in progress\n");
+					FINFO("[FriendCoreAcceptPhase2] Accept socket process will be stopped, becaouse Shutdown is in progress\n");
 					break;
 				}
 			}
@@ -507,7 +505,7 @@ void *FriendCoreAcceptPhase2( void *d )
 				}
 				else
 				{
-					FERROR("Cannot allocate memory for socket!\n");
+					FERROR("[FriendCoreAcceptPhase2] Cannot allocate memory for socket!\n");
 					shutdown( fd, SHUT_RDWR );
 					close( fd );
 					goto accerror;
@@ -523,7 +521,7 @@ void *FriendCoreAcceptPhase2( void *d )
 			
 				if( error )
 				{
-					FERROR("\n************************************** epoll_ctl failure **************************************\n\n");
+					FERROR("[FriendCoreAcceptPhase2] epoll_ctl failure **************************************\n\n");
 					//goto accerror;
 				}
 			}
@@ -534,7 +532,7 @@ void *FriendCoreAcceptPhase2( void *d )
 		
 	return NULL;
 accerror:
-	DEBUG("ERROR\n");
+	DEBUG("[FriendCoreAcceptPhase2] ERROR\n");
 	FFree( pre );
 
 	//pthread_exit( 0 );
@@ -586,7 +584,7 @@ void FriendCoreProcessSockBlock( void *fcv )
 	
 	SocketSetBlocking( th->sock, TRUE );
 	
-	DEBUG("\n\n\nFriendCoreProcessSockBlock\n\n\n");
+	DEBUG("[FriendCoreProcessSockBlock] start");
 	
 	if( locBuffer != NULL )
 	{
@@ -614,20 +612,20 @@ void FriendCoreProcessSockBlock( void *fcv )
 						headerLen = ((headEnd+4) - resultString->bsd_Buffer);
 						
 						char *conLen = strstr( resultString->bsd_Buffer, "Content-Length:" );
-						DEBUG("Pointer to conLen %p headerLen %d\n", conLen, headerLen );
+						DEBUG("[FriendCoreProcessSockBlock] Pointer to conLen %p headerLen %d\n", conLen, headerLen );
 						if( conLen != NULL )
 						{
-							DEBUG("Conlen is not empty!\n");
+							DEBUG("[FriendCoreProcessSockBlock] Conlen is not empty!\n");
 							conLen += 16;
 							char *conLenEnd = strstr( conLen, "\r\n" );
 							if( conLenEnd != NULL )
 							{
 								char *end;
 								expectedLength = strtoll( conLen,  &end, 0 ) + headerLen;
-								DEBUG("Expected len %ld\n", expectedLength );
+								DEBUG("[FriendCoreProcessSockBlock] Expected len %ld\n", expectedLength );
 							}
 						}
-						DEBUG("Header found!\n");
+						DEBUG("[FriendCoreProcessSockBlock] Header found!\n");
 						headerFound = TRUE;
 					}
 				}
@@ -644,13 +642,13 @@ void FriendCoreProcessSockBlock( void *fcv )
 					{
 						if( resultString->bsd_Size >= expectedLength )
 						{
-							DEBUG("We have everything!\n");
+							DEBUG("[FriendCoreProcessSockBlock] We have everything!\n");
 							break;
 						}
 						else
 						{
 							usleep( 2000 );
-							DEBUG("Continue, resultString->bsd_Size %ld expectedLength %ld\n", resultString->bsd_Size, expectedLength );
+							DEBUG("[FriendCoreProcessSockBlock] Continue, resultString->bsd_Size %ld expectedLength %ld\n", resultString->bsd_Size, expectedLength );
 							// buffer is not equal to what should come
 							continue;
 						}
@@ -658,13 +656,13 @@ void FriendCoreProcessSockBlock( void *fcv )
 				}
 				else
 				{
-					DEBUG("No more data in sockets!\n");
+					DEBUG("[FriendCoreProcessSockBlock] No more data in sockets!\n");
 					break;
 				}
 			}
 		}
 
-		DEBUG( "[FriendCoreProcess] Exited headers loop. Now freeing up.\n" );
+		DEBUG( "[FriendCoreProcessSockBlock] Exited headers loop. Now freeing up.\n" );
 
 		if( resultString->bsd_Size > 0 )
 		{
@@ -693,7 +691,7 @@ void FriendCoreProcessSockBlock( void *fcv )
 	// Shortcut!
 	close_fcp:
 	
-	DEBUG( "Closing socket %d.\n", th->sock->fd );
+	DEBUG( "[FriendCoreProcessSockBlock] Closing socket %d.\n", th->sock->fd );
 	th->sock->s_Interface->SocketDelete( th->sock );
 	th->sock = NULL;
 
@@ -754,11 +752,11 @@ void FriendCoreProcessSockNonBlock( void *fcv )
 	FBOOL headerFound = FALSE;
 	int headerLen = 0;
 	
-	DEBUG("\n\n\nFriendCoreProcessSockBlock\n\n\n");
+	DEBUG("[FriendCoreProcessSockNonBlock] start");
 	
 	int a = 65535;
 	if (setsockopt( th->sock->fd, SOL_SOCKET, SO_RCVBUF, &a, sizeof(int)) == -1) {
-		fprintf(stderr, "Error setting socket opts: %s\n", strerror(errno));
+		fprintf(stderr, "[FriendCoreProcessSockNonBlock] Error setting socket opts: %s\n", strerror(errno));
 	}
 	
 	if( locBuffer != NULL )
@@ -771,7 +769,7 @@ void FriendCoreProcessSockNonBlock( void *fcv )
 			if( res > 0 )
 			{
 				retryContentNotFull = 0;
-				DEBUG("[FriendCoreProcessSockBlock] received bytes: %d\n", res );
+				DEBUG("[FriendCoreProcessSockNonBlock] received bytes: %d\n", res );
 				
 				int err = BufStringDiskAddSize( resultString, locBuffer, res );
 				
@@ -785,20 +783,20 @@ void FriendCoreProcessSockNonBlock( void *fcv )
 						headerLen = ((headEnd+4) - resultString->bsd_Buffer);
 						
 						char *conLen = strstr( resultString->bsd_Buffer, "Content-Length:" );
-						DEBUG("Pointer to conLen %p headerLen %d\n", conLen, headerLen );
+						DEBUG("[FriendCoreProcessSockNonBlock] Pointer to conLen %p headerLen %d\n", conLen, headerLen );
 						if( conLen != NULL )
 						{
-							DEBUG("Conlen is not empty!\n");
+							DEBUG("[FriendCoreProcessSockNonBlock] Conlen is not empty!\n");
 							conLen += 16;
 							char *conLenEnd = strstr( conLen, "\r\n" );
 							if( conLenEnd != NULL )
 							{
 								char *end;
 								expectedLength = strtoll( conLen,  &end, 0 ) + headerLen;
-								DEBUG("Expected len %ld\n", expectedLength );
+								DEBUG("[FriendCoreProcessSockNonBlock] Expected len %ld\n", expectedLength );
 							}
 						}
-						DEBUG("Header found!\n");
+						DEBUG("[FriendCoreProcessSockNonBlock] Header found!\n");
 						headerFound = TRUE;
 					}
 				}
@@ -807,7 +805,7 @@ void FriendCoreProcessSockNonBlock( void *fcv )
 			{
 				if( expectedLength > 0 )
 				{
-					DEBUG("Retry: %d\n", retryContentNotFull );
+					DEBUG("[FriendCoreProcessSockNonBlock] Retry: %d\n", retryContentNotFull );
 					if( retryContentNotFull++ > 500 )
 					{
 						break;
@@ -816,7 +814,7 @@ void FriendCoreProcessSockNonBlock( void *fcv )
 					{
 						if( resultString->bsd_Size >= expectedLength )
 						{
-							DEBUG("We have everything!\n");
+							DEBUG("[FriendCoreProcessSockNonBlock] We have everything!\n");
 						}
 						else
 						{
@@ -825,12 +823,12 @@ void FriendCoreProcessSockNonBlock( void *fcv )
 						}
 					}
 				}
-				DEBUG("No more data in sockets!\n");
+				DEBUG("[FriendCoreProcessSockNonBlock] No more data in sockets!\n");
 				break;
 			}
 		}
 
-		DEBUG( "[FriendCoreProcess] Exited headers loop. Now freeing up.\n" );
+		DEBUG( "[FriendCoreProcessSockNonBlock] Exited headers loop. Now freeing up.\n" );
 
 		if( resultString->bsd_Size > 0 )
 		{
@@ -859,7 +857,7 @@ void FriendCoreProcessSockNonBlock( void *fcv )
 	// Shortcut!
 	close_fcp:
 	
-	DEBUG( "Closing socket %d.\n", th->sock->fd );
+	DEBUG( "[FriendCoreProcessSockNonBlock] Closing socket %d.\n", th->sock->fd );
 	th->sock->s_Interface->SocketDelete( th->sock );
 	th->sock = NULL;
 
@@ -1383,82 +1381,6 @@ void FriendCoreProcess( void *fcv )
 	return;
 }
 
-
-/**
-* Return an accept pair from accept
-*
-* @param sock pointer to associated socket
-* @return accepted pair
-* @return NULL in case of failure
-*/
-struct AcceptPair *DoAccept( Socket *sock )
-{
-	// Accept
-	struct sockaddr_in6 client;
-	socklen_t clientLen = sizeof( client );
-	
-	if( sock == NULL )
-	{
-		return NULL;
-	}
-	
-	int fd = accept( sock->fd, ( struct sockaddr* )&client, &clientLen );
-	
-	if( fd == -1 ) 
-	{
-		// Get some info about failure..
-		switch( errno )
-		{
-			case EAGAIN:
-				break;
-			case EBADF:
-				DEBUG( "[AcceptPair] The socket argument is not a valid file descriptor.\n" );
-				break;
-			case ECONNABORTED:
-				DEBUG( "[AcceptPair] A connection has been aborted.\n" );
-				break;
-			case EINTR:
-				DEBUG( "[AcceptPair] The accept() function was interrupted by a signal that was caught before a valid connection arrived.\n" );
-				break;
-			case EINVAL:
-				DEBUG( "[AcceptPair] The socket is not accepting connections.\n" );
-				break;
-			case ENFILE:
-				DEBUG( "[AcceptPair] The maximum number of file descriptors in the system are already open.\n" );
-				break;
-			case ENOTSOCK:
-				DEBUG( "[AcceptPair] The socket argument does not refer to a socket.\n" );
-				break;
-			case EOPNOTSUPP:
-				DEBUG( "[AcceptPair] The socket type of the specified socket does not support accepting connections.\n" );
-				break;
-			default: 
-				DEBUG("[AcceptPair] Accept return bad fd\n");
-				break;
-		}
-		return NULL;
-	}
-	
-	// Create socket object
-	int prerr = getpeername( fd, (struct sockaddr *) &client, &clientLen );
-	if( prerr == -1 )
-	{
-		shutdown( fd, SHUT_RDWR );
-		close( fd );
-		return NULL;
-	}
-
-	// Return copy
-	struct AcceptPair *p = FCalloc( 1, sizeof( struct AcceptPair ) );
-	if( p != NULL )
-	{
-		p->fd = fd;
-		memcpy( &p->client, &client, sizeof( struct sockaddr_in6 ) );
-	}
-
-	return p;
-}
-
 pthread_t thread;
 
 #ifdef USE_SELECT
@@ -1633,21 +1555,16 @@ static inline void FriendCoreSelect( FriendCoreInstance* fc )
 static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 {
 	int eventCount = 0;
-	int retval;
-	int i, ii;
+	int i;
 	struct epoll_event *currentEvent;
 	struct epoll_event *events = FCalloc( fc->fci_MaxPoll, sizeof( struct epoll_event ) );
-	ssize_t count;
-	Socket *sock = NULL;
-	
-	// Read buffer
-	char buffer[ fc->fci_BufferSize ];
-	
+
+
 	// add communication ReadCommPipe		
 	int pipefds[2] = {}; struct epoll_event piev = { 0 };	
 	if (pipe( pipefds ) != 0)
 	{
-		FERROR("pipe call failed");
+		FERROR("[FriendCoreEpoll] pipe call failed");
 		exit(5);
 	}
 	fc->fci_ReadCorePipe = pipefds[ 0 ]; fc->fci_WriteCorePipe = pipefds[ 1 ];
@@ -1656,7 +1573,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	int err = epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_ADD, fc->fci_ReadCorePipe, &piev );
 	if( err != 0 )
 	{
-		LOG( FLOG_PANIC,"Cannot add main event %d\n", err );
+		LOG( FLOG_PANIC,"[FriendCoreEpoll] Cannot add main event %d\n", err );
 	}
 
 	// Handle signals and block while going on!
@@ -1679,9 +1596,9 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	while( !fc->fci_Shutdown )
 	{
 		// Wait for something to happen on any of the sockets we're listening on
-		DEBUG("Before epollwait\n");
+		DEBUG("[FriendCoreEpoll] Before epollwait\n");
 		eventCount = epoll_pwait( fc->fci_Epollfd, events, fc->fci_MaxPoll, -1, &curmask );
-		DEBUG("Epollwait, eventcount: %d\n", eventCount );
+		DEBUG("[FriendCoreEpoll] Epollwait, eventcount: %d\n", eventCount );
 
 		for( i = 0; i < eventCount; i++ )
 		{
@@ -1691,7 +1608,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 			{
 				//FERROR("epoll event %d sock %p fd %d - listen %d\n", currentEvent->events, sock, sock->fd, fc->fci_Sockets->fd );
 				
-				FERROR("epoll event %d - listen %d\n", currentEvent->events, fc->fci_Sockets->fd );
+				FERROR("[FriendCoreEpoll] epoll event %d - listen %d\n", currentEvent->events, fc->fci_Sockets->fd );
 			}
 			
 			// Ok, we have a problem with our connection
@@ -1730,7 +1647,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 				char ch;
 				int result = 1;
 					
-				//DEBUG("[FriendCoreEpoll] FC Reads from pipe!\n");
+				//DEBUG("[[FriendCoreEpoll] FC Reads from pipe!\n");
 				
 				while( result > 0 )
 				{
@@ -1752,36 +1669,36 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 			// Accept incoming connections - if the socket fd is out listening socket fd
 			else if( ((Socket*)currentEvent->data.ptr)->fd == fc->fci_Sockets->fd && !fc->fci_Shutdown )
 			{
-				DEBUG("=====================before calling FriendCoreAcceptPhase2\n");
+				DEBUG("[FriendCoreEpoll] =====================before calling FriendCoreAcceptPhase2\n");
 
 				struct fcThreadInstance *pre = FCalloc( 1, sizeof( struct fcThreadInstance ) );
 				if( pre != NULL )
 				{
 					pre->fc = fc;
-					DEBUG("Thread create pointer: %p friendcore: %p\n", pre, fc );
+					DEBUG("[FriendCoreEpoll] Thread create pointer: %p friendcore: %p\n", pre, fc );
 					
 					//FriendCoreAcceptPhase2( pre );
 					
 					if( pthread_create( &pre->thread, NULL, &FriendCoreAcceptPhase2, ( void *)pre ) != 0 )
 					{
-						DEBUG("Pthread create fail\n");
+						DEBUG("[FriendCoreEpoll] Pthread create fail\n");
 						FFree( pre );
 					}
 					
 				}
-				DEBUG("Accept done\n");
+				DEBUG("[FriendCoreEpoll] Accept done\n");
 			}
 			// Get event that are incoming!
 			else if( currentEvent->events & EPOLLIN )
 			{
 				// Stop listening here..
 				epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_DEL, sock->fd, NULL );
-				INFO("Socket fd: %d removed from epoll\n", sock->fd );
+				INFO("[FriendCoreEpoll] Socket fd: %d removed from epoll\n", sock->fd );
 				
 				// Process
 				if( !fc->fci_Shutdown )
 				{
-					DEBUG("EPOLLIN\n");
+					DEBUG("[FriendCoreEpoll] EPOLLIN\n");
 					
 					struct fcThreadInstance *pre = FCalloc( 1, sizeof( struct fcThreadInstance ) );
 					if( pre != NULL )
@@ -1789,27 +1706,32 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 						pre->fc = fc; pre->sock = sock;
 					
 #ifdef USE_PTHREAD
-						size_t stacksize = 16777216; //16 * 1024 * 1024;
-						pthread_attr_t attr;
-						pthread_attr_init( &attr );
-						pthread_attr_setstacksize( &attr, stacksize );
+						//size_t stacksize = 16777216; //16 * 1024 * 1024;
+						//pthread_attr_t attr;
+						//pthread_attr_init( &attr );
+						//pthread_attr_setstacksize( &attr, stacksize );
 						
 						// Make sure we keep the number of threads under the limit
-						if( pthread_create( &pre->thread, &attr, (void *(*) (void *))&FriendCoreProcessSockNonBlock, ( void *)pre ) != 0 )
-						//if( pthread_create( &pre->thread, &attr, (void *(*) (void *))&FriendCoreProcessSockBlock, ( void *)pre ) != 0 )
+						
+						//change NULL to &attr
+#ifdef USE_BLOCKED_SOCKETS_TO_READ_HTTP
+						if( pthread_create( &pre->thread, NULL, (void *(*) (void *))&FriendCoreProcessSockBlock, ( void *)pre ) != 0 )
+#else
+						if( pthread_create( &pre->thread, NULL, (void *(*) (void *))&FriendCoreProcessSockNonBlock, ( void *)pre ) != 0 )
+#endif
 						{
 							FFree( pre );
 						}
 #else
 #ifdef USE_WORKERS
-						DEBUG("Worker will be launched\n");
+						DEBUG("[FriendCoreEpoll] Worker will be launched\n");
 						SystemBase *locsb = (SystemBase *)fc->fci_SB;
 						if( WorkerManagerRun( locsb->sl_WorkerManager,  FriendCoreProcess, pre, NULL, "FriendCoreProcess" ) != 0 )
 						{
 							SocketDelete( sock );
 							sock = NULL;
 						}
-						DEBUG("Worker launched\n");
+						DEBUG("[FriendCoreEpoll] Worker launched\n");
 						//WorkerManagerRun( fc->fci_WorkerManager,  FriendCoreProcess, pre );
 #else
 						int pid = fork();
@@ -1854,12 +1776,12 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	
 	if( epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_DEL, fc->fci_Sockets->fd, &event ) == -1 )
 	{
-		LOG( FLOG_ERROR, "[FriendCore] epoll_ctl can not remove connection!\n" );
+		LOG( FLOG_ERROR, "[FriendCoreEpoll] epoll_ctl can not remove connection!\n" );
 	}
 #endif
 	
 	// Server is shutting down
-	DEBUG("[FriendCore] Shutting down.\n");
+	DEBUG("[FriendCoreEpoll] Shutting down.\n");
 	if( fc->fci_Sockets )
 	{
 		fc->fci_Sockets->s_Interface->SocketDelete( fc->fci_Sockets );
@@ -1925,7 +1847,7 @@ int FriendCoreRun( FriendCoreInstance* fc )
 	
 	if( fc->fci_Sockets == NULL )
 	{
-		FERROR("Cannot create socket on port: %d!\n", fc->fci_Port );
+		FERROR("[FriendCoreRun] Cannot create socket on port: %d!\n", fc->fci_Port );
 		fc->fci_Closed = TRUE;
 		return -1;
 	}
@@ -1933,17 +1855,19 @@ int FriendCoreRun( FriendCoreInstance* fc )
 	// Non blocking listening!
 	if( SocketSetBlocking( fc->fci_Sockets, FALSE ) == -1 )
 	{
-		FERROR("Cannot set socket to blocking state!\n");
+		FERROR("[FriendCoreRun] Cannot set socket to blocking state!\n");
 		fc->fci_Sockets->s_Interface->SocketDelete( fc->fci_Sockets );
 		fc->fci_Closed = TRUE;
 		return -1;
 	}
 	
 	SSL_CTX_get_read_ahead( fc->fci_Sockets->s_Ctx );
+	SSL_CTX_set_session_cache_mode( fc->fci_Sockets->s_Ctx, SSL_SESS_CACHE_CLIENT | SSL_SESS_CACHE_NO_INTERNAL_STORE);
+			
 	
 	if( SocketListen( fc->fci_Sockets ) != 0 )
 	{
-		FERROR("Cannot setup socket!\nCheck if port: %d\n", fc->fci_Port );
+		FERROR("[FriendCoreRun] Cannot setup socket!\nCheck if port: %d\n", fc->fci_Port );
 		fc->fci_Sockets->s_Interface->SocketDelete( fc->fci_Sockets );
 		fc->fci_Closed= TRUE;
 		return -1;
@@ -1961,7 +1885,7 @@ int FriendCoreRun( FriendCoreInstance* fc )
 	fc->fci_Epollfd = epoll_create1( EPOLL_CLOEXEC );
 	if( fc->fci_Epollfd == -1 )
 	{
-		FERROR( "[FriendCore] epoll_create\n" );
+		FERROR( "[FriendCoreRun] epoll_create\n" );
 		fc->fci_Sockets->s_Interface->SocketDelete( fc->fci_Sockets );
 		fc->fci_Closed = TRUE;
 		return -1;
@@ -1975,13 +1899,13 @@ int FriendCoreRun( FriendCoreInstance* fc )
 	
 	if( epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_ADD, fc->fci_Sockets->fd, &event ) == -1 )
 	{
-		LOG( FLOG_ERROR, "[FriendCore] epoll_ctl\n" );
+		LOG( FLOG_ERROR, "[FriendCoreRun] epoll_ctl\n" );
 		fc->fci_Sockets->s_Interface->SocketDelete( fc->fci_Sockets );
 		fc->fci_Closed = TRUE;
 		return -1;
 	}
 
-	DEBUG("[FriendCore] Listening.\n");
+	DEBUG("[FriendCoreRun] Listening.\n");
 	FriendCoreEpoll( fc );
 #endif
 	
@@ -1995,7 +1919,7 @@ int FriendCoreRun( FriendCoreInstance* fc )
 		HashmapElement* e = NULL;
 		while( ( e = HashmapIterate( fc->fci_Libraries, &iterator ) ) != NULL )
 		{
-			DEBUG( "[FriendCore] Closing library at address %lld\n", ( long long int )e->hme_Data );
+			DEBUG( "[FriendCoreRun] Closing library at address %lld\n", ( long long int )e->hme_Data );
 			LibraryClose( (Library*)e->hme_Data );
 			e->hme_Data = NULL;
 			FFree( e->hme_Key );
@@ -2011,7 +1935,7 @@ int FriendCoreRun( FriendCoreInstance* fc )
 	// Close this
 	if( fc->fci_Epollfd )
 	{
-		LOG( FLOG_INFO, "Closing Epoll file descriptor\n");
+		LOG( FLOG_INFO, "[FriendCoreRun] Closing Epoll file descriptor\n");
 		close( fc->fci_Epollfd );
 	}
 #endif
@@ -2021,7 +1945,7 @@ int FriendCoreRun( FriendCoreInstance* fc )
 	close( fc->fci_RecvPipe[0] );
 	close( fc->fci_RecvPipe[1] );
 	
-	LOG( FLOG_INFO, "[FriendCore] Goodbye.\n");
+	LOG( FLOG_INFO, "[FriendCoreRun] Goodbye.\n");
 	return 0;
 }
 
