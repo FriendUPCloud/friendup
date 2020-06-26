@@ -195,7 +195,7 @@ class File
 		global $Config, $User, $Logger;
 		
 		$fd = new Door( reset( explode( ':', $this->path ) ) . ':', $this->_authcontext, $this->_authdata );
-		$Logger->log( '[File.class] ' . $this->_authcontext . ' -> ' . $this->_authdata );
+		//$Logger->log( '[File.class] ' . $this->_authcontext . ' -> ' . $this->_authdata );
 		$d = new dbIO( 'FFileInfo' );
 		$d->Path = $this->path;
 		$d->FilesystemID = $fd->ID;
