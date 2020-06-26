@@ -7045,6 +7045,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				name: i18n( 'menu_help' ),
 				items: [
 					{
+						name: i18n( 'menu_help_tutorials' ),
+						command: function(){ ShowAllTutorials(); }
+					},
+					{
 						name: i18n( 'menu_help_bug' ),
 						command: function(){ window.open( 'https://github.com/FriendUPCloud/friendup/issues', '', '' ); }
 					},
@@ -10363,7 +10367,16 @@ function loadApplicationBasics( callback )
 	j.onLoad = function( data )
 	{
 		_applicationBasics.js = data;
-		if( callback ) callback();
+		if( callback )
+		{
+			try
+			{
+				callback();
+			}
+			catch( e )
+			{
+			}
+		}
 	}
 	j.load();
 };
