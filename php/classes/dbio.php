@@ -490,6 +490,8 @@ class DbIO extends DbTable
 	// Save data back into object
 	function Save()
 	{
+		global $Logger;
+		
 		if( !$this->_database )
 		{
 			$this->_lastError = 'No database connection.';

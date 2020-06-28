@@ -4933,7 +4933,7 @@ Authenticate = {
 	{
 		var self = this;
 		if ( self.listeners[ event ]) {
-			console.log( { event : event, listeners : self.listeners });
+			//console.log( { event : event, listeners : self.listeners });
 			throw new Error( 'FConn.on - event already registered' );
 		}
 
@@ -8560,10 +8560,6 @@ GuiDesklet = function()
 				force : self.forceid
 			}
 		};
-		
-
-		console.log('register client... ' + self.sessiontype);
-		
 		if( self.sessiontype == 'open' )
 		{
 			accept.path = self.regPath;

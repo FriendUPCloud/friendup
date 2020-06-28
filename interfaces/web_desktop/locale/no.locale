@@ -251,6 +251,7 @@ menu_new_window                         : Nytt vindu
 menu_share_file                         : Deling
 
 menu_help                               : Hjelp
+menu_help_tutorials                     : Veiledning
 menu_help_bug                           : Rapporter feil
 menu_help_manual                        : Brukerveiledning
 

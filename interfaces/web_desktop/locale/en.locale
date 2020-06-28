@@ -252,6 +252,7 @@ menu_new_window                         : New window
 menu_share_file                         : Sharing
 
 menu_help                               : Help
+menu_help_tutorials                     : Tutorials
 menu_help_bug                           : Report a bug
 menu_help_manual                        : User manual
 

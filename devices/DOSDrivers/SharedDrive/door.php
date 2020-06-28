@@ -596,6 +596,8 @@ if( !class_exists( 'SharedDrive' ) )
 								$fInfo->Filename = $file->Filename;
 								$fInfo->DateCreated = $info->DateCreated;
 								$fInfo->DateModified = $info->DateModified;
+								$fInfo->Owner = $file->Owner;
+								$fInfo->ExternPath = $file->ExternPath;
 								die( 'ok<!--separate-->' . json_encode( $fInfo ) );
 							}
 							else if( isset( $read ) && $pth == $file->Filename ) 
