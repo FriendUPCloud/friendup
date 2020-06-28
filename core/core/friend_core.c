@@ -1707,17 +1707,18 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 					
 #ifdef USE_PTHREAD
 						//size_t stacksize = 16777216; //16 * 1024 * 1024;
-						//pthread_attr_t attr;
-						//pthread_attr_init( &attr );
-						//pthread_attr_setstacksize( &attr, stacksize );
+						size_t stacksize = 8777216;	// half of previous stack
+						pthread_attr_t attr;
+						pthread_attr_init( &attr );
+						pthread_attr_setstacksize( &attr, stacksize );
 						
 						// Make sure we keep the number of threads under the limit
 						
 						//change NULL to &attr
 #ifdef USE_BLOCKED_SOCKETS_TO_READ_HTTP
-						if( pthread_create( &pre->thread, NULL, (void *(*) (void *))&FriendCoreProcessSockBlock, ( void *)pre ) != 0 )
+						if( pthread_create( &pre->thread, &attr, (void *(*) (void *))&FriendCoreProcessSockBlock, ( void *)pre ) != 0 )
 #else
-						if( pthread_create( &pre->thread, NULL, (void *(*) (void *))&FriendCoreProcessSockNonBlock, ( void *)pre ) != 0 )
+						if( pthread_create( &pre->thread, &attr, (void *(*) (void *))&FriendCoreProcessSockNonBlock, ( void *)pre ) != 0 )
 #endif
 						{
 							FFree( pre );
