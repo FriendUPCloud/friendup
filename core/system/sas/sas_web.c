@@ -57,7 +57,28 @@
 /// endif
 Http* SASWebRequest( SystemBase *l, char **urlpath, Http* request, UserSession *loggedSession )
 {
-	Log( FLOG_DEBUG, "SASWebRequest %s  CALLED BY: %s\n", urlpath[ 0 ], loggedSession->us_User->u_Name );
+	if( urlpath[ 0 ] == NULL )
+	{
+		Http* response = NULL;
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
+			{TAG_DONE, TAG_DONE}
+		};
+		
+		response = HttpNewSimple( HTTP_200_OK,  tags );
+		
+		HttpAddTextContent( response, "urlpath[0] is NULL\n" );
+		return response;
+	}
+	if( loggedSession != NULL && loggedSession->us_User != NULL )
+	{
+		Log( FLOG_DEBUG, "SASWebRequest %s  CALLED BY user: %s\n", urlpath[ 0 ], loggedSession->us_User->u_Name );
+	}
+	else
+	{
+		Log( FLOG_DEBUG, "SASWebRequest %s  CALLED BY sessionID: %s\n", urlpath[ 0 ], loggedSession->us_SessionID );
+	}
 	
 	// DEBUG disabled
 	/*
