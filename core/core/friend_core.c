@@ -754,10 +754,10 @@ void FriendCoreProcessSockNonBlock( void *fcv )
 	
 	DEBUG("[FriendCoreProcessSockNonBlock] start");
 	
-	int a = 65535;
-	if (setsockopt( th->sock->fd, SOL_SOCKET, SO_RCVBUF, &a, sizeof(int)) == -1) {
-		fprintf(stderr, "[FriendCoreProcessSockNonBlock] Error setting socket opts: %s\n", strerror(errno));
-	}
+	//int a = 65535;
+	//if (setsockopt( th->sock->fd, SOL_SOCKET, SO_RCVBUF, &a, sizeof(int)) == -1) {
+	//	fprintf(stderr, "[FriendCoreProcessSockNonBlock] Error setting socket opts: %s\n", strerror(errno));
+	//}
 	
 	if( locBuffer != NULL )
 	{
