@@ -740,6 +740,7 @@ Application.checkDocumentSession = function( sasID = null )
 					
 					//if( ( entry = AppSessionAddUsersBySession( as, loggedSession, loggedSession->us_SessionID, "system", NULL ) ) != NULL )
 					{
+						char tmpmsg[ 255 ];
 						// just accept connection
 						entry->status = SASID_US_ACCEPTED;
 						DEBUG("SAS/register Connection accepted\n");
@@ -749,8 +750,18 @@ Application.checkDocumentSession = function( sasID = null )
 						
 						as->sas_UserNumber++;
 						
-						char tmpmsg[ 255 ];
-						int msgsize = snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"client-accept\",\"data\":\"%s\"}", loggedSession->us_User->u_Name );
+						
+						int msgsize = 0;
+						
+						DEBUG("[SASWebRequest] loggedSession->us_User : %p\n", loggedSession->us_User );
+						if( loggedSession->us_User == NULL )
+						{
+							snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"client-accept\",\"data\":\"%s\"}", "unknown" );
+						}
+						else
+						{
+							snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"client-accept\",\"data\":\"%s\"}", loggedSession->us_User->u_Name );
+						}
 						
 						int err = SASSessionSendMessage( as, loggedSession, tmpmsg, msgsize, NULL );
 						//int err = AppSessionSendOwnerMessage( as, loggedSession, tmpmsg, msgsize );
