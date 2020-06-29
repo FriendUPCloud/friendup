@@ -312,7 +312,7 @@ static inline void moveToHttps( Socket *sock )
 void *FriendCoreAcceptPhase2( void *d )
 {
 	//DEBUG("[FriendCoreAcceptPhase2] detached\n");
-	pthread_detach( pthread_self() );
+	//pthread_detach( pthread_self() );
 
 	struct fcThreadInstance *pre = (struct fcThreadInstance *)d;
 	FriendCoreInstance *fc = (FriendCoreInstance *)pre->fc;
@@ -1677,13 +1677,15 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 					pre->fc = fc;
 					DEBUG("[FriendCoreEpoll] Thread create pointer: %p friendcore: %p\n", pre, fc );
 					
-					//FriendCoreAcceptPhase2( pre );
+					FriendCoreAcceptPhase2( pre );
 					
+					/*
 					if( pthread_create( &pre->thread, NULL, &FriendCoreAcceptPhase2, ( void *)pre ) != 0 )
 					{
 						DEBUG("[FriendCoreEpoll] Pthread create fail\n");
 						FFree( pre );
 					}
+					*/
 					
 				}
 				DEBUG("[FriendCoreEpoll] Accept done\n");
