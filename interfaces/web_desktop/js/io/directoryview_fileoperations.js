@@ -18,7 +18,39 @@ DirectoryView.prototype.ShowShareDialog = function( elements, mode )
 	{
 		// Only allow to drop regular files
 		if( elements[ c ].fileInfo.Type == 'File' )
-			out.push( elements[ c ] );
+		{
+			let l = document.createElement( 'div' );
+			l.fileInfo = elements[ c ].fileInfo;
+			l.className = 'File';
+			l.setAttribute( 'title', elements[ c ].getAttribute( 'title' ) );
+			
+			let g = elements[ c ].getElementsByClassName( 'Column' );
+			if( g.length )
+			{
+				g = g[0];
+			}
+			else
+			{
+				g = elements[ c ].getElementsByClassName( 'Title' );
+				g = g[0];
+			}
+			
+			let ii = elements[ c ].getElementsByClassName( 'Icon' );
+			if( ii.length )
+			{
+				let i = document.createElement( 'div' );
+				i.className = 'Icon';
+				i.innerHTML = ii[0].innerHTML;
+				l.appendChild( i );
+			}
+			
+			let t = document.createElement( 'a' );
+			t.className = 'Title';
+			t.innerHTML = g.innerHTML;
+			l.appendChild( t );
+			
+			out.push( l );
+		}
 		else mixed = true;
 	}
 	// We have a list of files
@@ -83,9 +115,9 @@ DirectoryView.prototype.ShowShareDialog = function( elements, mode )
 							}
 						}
 					
-						for( let c = 0; c < elements.length; c++ )
+						for( let c = 0; c < out.length; c++ )
 						{
-							wstr += '<div class="Rounded ShareFile File">' + elements[ c ].innerHTML + '</div>';
+							wstr += '<div class="Rounded ShareFile File">' + out[ c ].innerHTML + '</div>';
 						}
 						wstr += '<div class="BorderTop fa-arrow-down IconSmall TextCenter MarginTop MarginBottom" style="clear: both">&nbsp;</div>';
 					
