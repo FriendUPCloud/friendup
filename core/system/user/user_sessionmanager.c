@@ -176,7 +176,7 @@ UserSession *USMGetSessionBySessionIDFromDB( UserSessionManager *smgr, char *id 
  */
 UserSession *USMGetSessionByDeviceIDandUser( UserSessionManager *usm, char *devid, FULONG uid )
 {
-	DEBUG("[USMGetSessionByDeviceIDandUser] new\n");
+	DEBUG("[USMGetSessionByDeviceIDandUser] new, deviceid: >%s<\n", devid );
  	if( FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) ) == 0 )
 	{
 		UserSession *us = usm->usm_Sessions;
