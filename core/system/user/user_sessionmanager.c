@@ -182,6 +182,7 @@ UserSession *USMGetSessionByDeviceIDandUser( UserSessionManager *usm, char *devi
 		UserSession *us = usm->usm_Sessions;
 		while( us != NULL )
 		{
+			DEBUG("[USMGetSessionByDeviceIDandUser] userid >%ld< devidentity >%s<\n", us->us_UserID, us->us_DeviceIdentity );
 			if( us->us_UserID == uid && us->us_DeviceIdentity != NULL && strcmp( devid, us->us_DeviceIdentity ) == 0 )
 			{
 				DEBUG("[USMGetSessionByDeviceIDandUser] found user by deviceid: %s\n", devid );
