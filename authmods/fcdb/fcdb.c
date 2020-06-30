@@ -540,6 +540,17 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 		}
 		
 		//
+		//
+		//
+		
+		DEBUG("[FCDB] Get session by deviceid: %s\n", devname );
+		if( tmpusr != NULL )
+		{
+			uses = sb->sl_UserSessionManagerInterface.USMGetSessionByDeviceIDandUser( sb->sl_USM, devname, tmpusr->u_ID );
+			DEBUG("[FCBD] pointer to user session: %p by devname: %s userid: %ld\n", uses, devname, tmpusr->u_ID );
+		}
+		
+		//
 		// if session is not provided we must create one
 		//
 		
