@@ -8,7 +8,7 @@
 *                                                                              *
 *****************************************************************************©*/
 
-var pausebtn, playbtn, weran = songID, false;
+var pausebtn, playbtn, weran, songID = false;
 
 // Initialize the GUI ----------------------------------------------------------
 Application.run = function( msg, iface )
