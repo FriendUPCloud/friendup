@@ -388,9 +388,7 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 			{
 				int error = SSL_get_error( s_Ssl, srl );
 				FERROR( "[FriendCoreAcceptPhase2] Could not set fd, error: %d fd: %d\n", error, fd );
-				
-				SSL_free( s_Ssl );
-				s_Ssl = NULL;
+
 				goto accerror;
 			}
 
@@ -430,14 +428,20 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 							FERROR( "[FriendCoreAcceptPhase2] Want 509 lookup\n" );
 							goto accerror;
 						case SSL_ERROR_SYSCALL:
-							FERROR( "[FriendCoreAcceptPhase2] Error syscall. Goodbye! %s.\n", ERR_error_string( ERR_get_error(), NULL ) );
-							//goto accerror;
+						{
+							int enume = ERR_get_error();
+							FERROR( "[FriendCoreAcceptPhase2] Error syscall. Goodbye! %s.\n", ERR_error_string( enume, NULL ), enume );
+							if( enume == 0 )
+							{
+								goto accerror;
+							}
 							//lbreak = 2;
 							break;
+						}
 						case SSL_ERROR_SSL:
 						{
 							int enume = ERR_get_error();
-							FERROR( "[FriendCoreAcceptPhase2] SSL_ERROR_SSL: %s.\n", ERR_error_string( enume, NULL ) );
+							FERROR( "[FriendCoreAcceptPhase2] SSL_ERROR_SSL: %s. enume: %d\n", ERR_error_string( enume, NULL ), enume );
 							lbreak = 2;
 							
 							// HTTP to HTTPS redirection code
