@@ -520,7 +520,23 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 				if( error == -1 )
 				{
 					Log( FLOG_ERROR, "[FriendCoreAcceptPhase2] epoll_ctl failure, cannot add fd: %d to epoll, errno %d\n", fd, errno );
-					goto accerror;
+					//goto accerror;
+					if( fd > 0 )
+					{
+						if( incoming != NULL )
+						{
+							if( fc->fci_Sockets->s_SSLEnabled == TRUE )
+							{
+								if( s_Ssl != NULL )
+								{
+									SSL_free( s_Ssl );
+								}
+							}
+							FFree( incoming );
+						}
+						shutdown( fd, SHUT_RDWR );
+						close( fd );
+					}
 				}
 			}
 		}
@@ -531,6 +547,7 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 accerror:
 	if( fd > 0 )
 	{
+		/*
 		if( incoming != NULL )
 		{
 			if( fc->fci_Sockets->s_SSLEnabled == TRUE )
@@ -542,6 +559,7 @@ accerror:
 			}
 			FFree( incoming );
 		}
+		*/
 		shutdown( fd, SHUT_RDWR );
 		close( fd );
 	}
