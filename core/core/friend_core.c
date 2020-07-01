@@ -325,6 +325,7 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 	SSL							*s_Ssl = NULL;
 	DEBUG("[FriendCoreAcceptPhase2] before accept4\n");
 	
+	//if( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) > 0 )
 	while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) > 0 )
 	{
 		if( fd <= 0 )
@@ -534,13 +535,16 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 						{
 							if( fc->fci_Sockets->s_SSLEnabled == TRUE )
 							{
-								if( s_Ssl != NULL )
-								{
-									SSL_free( s_Ssl );
-								}
+								
 							}
 							FFree( incoming );
 						}
+						
+						if( s_Ssl != NULL )
+						{
+							SSL_free( s_Ssl );
+						}
+						
 						shutdown( fd, SHUT_RDWR );
 						close( fd );
 					}
