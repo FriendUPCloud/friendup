@@ -439,6 +439,21 @@ var WorkspaceInside = {
 				
 				Workspace.checkWorkspaceWallpapers();
 				
+				// Keep windows in the right place
+				for( let c in movableWindows )
+				{
+					if( movableWindows[ c ].windowObject.workspace > globalConfig.workspacecount - 1 )
+					{
+						movableWindows[ c ].windowObject.sendToWorkspace( globalConfig.workspacecount - 1 );
+					}
+				}
+				
+				// We don't wanna show offscreen
+				if( globalConfig.workspaceCurrent > globalConfig.workspacecount - 1 )
+				{
+					Workspace.setWorkspace( globalConfig.workspacecount - 1 );
+				}
+				
 				PollTrayPosition();
 			}
 			// Put all on workspace 1
@@ -461,8 +476,16 @@ var WorkspaceInside = {
 		// No need for change
 		if( index == globalConfig.workspaceCurrent )
 		{
-			console.log( 'Already on current workspace.' );
 			return;
+		}
+		
+		if( !workspaceButtons )
+		{
+			let eles = ge( 'DoorsScreen' ).getElementsByClassName( 'VirtualWorkspaces' );
+			if( eles.length )
+			{
+				workspaceButtons = eles[0];
+			}
 		}
 		
 		// Out of bounds!

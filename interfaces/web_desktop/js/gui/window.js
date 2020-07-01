@@ -3939,6 +3939,7 @@ var View = function( args )
 		
 		if( wsnum != 0 && ( wsnum < 0 || wsnum > globalConfig.workspacecount - 1 ) )
 		{
+			console.log( 'Out of bounds: ' + wsnum + ' ' + ( globalConfig.workspacecount - 1 ) );
 			return;
 		}
 		let wn = this._window.parentNode;
