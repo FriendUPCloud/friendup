@@ -375,108 +375,112 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 				
 				goto accerror;
 			}
-			
-			BIO *bio = SSL_get_rbio( s_Ssl );
-			if( bio != NULL )
+			else
 			{
-				DEBUG("[FriendCoreAcceptPhase2] Read buffer will be changed!\n");
-				BIO_set_read_buffer_size( bio, 81920 );
-			}
-
-			srl = SSL_set_fd( s_Ssl, fd );
-			SSL_set_accept_state( s_Ssl );
-			if( srl != 1 )
-			{
-				int error = SSL_get_error( s_Ssl, srl );
-				FERROR( "[FriendCoreAcceptPhase2] Could not set fd, error: %d fd: %d\n", error, fd );
-
-				goto accerror;
-			}
-
-			int err = 0;
-			// we must be sure that SSL Accept is working
-			while( 1 )
-			{
-				DEBUG("[FriendCoreAcceptPhase2] before accept\n");
-				if( ( err = SSL_accept( s_Ssl ) ) == 1 )
+				/*
+				BIO *bio = SSL_get_rbio( s_Ssl );
+				if( bio != NULL )
 				{
-					lbreak = 1;
-					break;
+					DEBUG("[FriendCoreAcceptPhase2] Read buffer will be changed!\n");
+					BIO_set_read_buffer_size( bio, 81920 );
 				}
-				DEBUG("[FriendCoreAcceptPhase2] after accept, err: %d\n", err );
-				if( err <= 0 || err == 2 )
+				*/
+
+				srl = SSL_set_fd( s_Ssl, fd );
+				SSL_set_accept_state( s_Ssl );
+				if( srl != 1 )
 				{
-					int error = SSL_get_error( s_Ssl, err );
-					switch( error )
-					{
-						case SSL_ERROR_NONE:
-							// NO error..
-							FERROR( "[FriendCoreAcceptPhase2] No error\n" );
-							lbreak = 1;
-						break;
-						case SSL_ERROR_ZERO_RETURN:
-							FERROR("[FriendCoreAcceptPhase2] SSL_ACCEPT error: Socket closed.\n" );
-							goto accerror;
-						case SSL_ERROR_WANT_READ:
-							lbreak = 2;
-						break;
-						case SSL_ERROR_WANT_WRITE:
-							lbreak = 2;
-						break;
-						case SSL_ERROR_WANT_ACCEPT:
-							FERROR( "[FriendCoreAcceptPhase2] Want accept\n" );
-							goto accerror;
-						case SSL_ERROR_WANT_X509_LOOKUP:
-							FERROR( "[FriendCoreAcceptPhase2] Want 509 lookup\n" );
-							goto accerror;
-						case SSL_ERROR_SYSCALL:
-						{
-							int enume = ERR_get_error();
-							FERROR( "[FriendCoreAcceptPhase2] Error syscall. Goodbye! %s. Enume: %d\n", ERR_error_string( enume, NULL ), enume );
-							if( enume == 0 )
-							{
-								goto accerror;
-							}
-							//lbreak = 2;
-							break;
-						}
-						case SSL_ERROR_SSL:
-						{
-							int enume = ERR_get_error();
-							FERROR( "[FriendCoreAcceptPhase2] SSL_ERROR_SSL: %s. enume: %d\n", ERR_error_string( enume, NULL ), enume );
-							lbreak = 2;
-							
-							// HTTP to HTTPS redirection code
-							if( enume == 336027804 ) // http redirect
-							{
-								moveToHttp( fd );
-							}
-							else
-							{
-								goto accerror;
-							}
-							break;
-						}
-						default:
-						{
-							int enume = ERR_get_error();
-							FERROR( "[FriendCoreAcceptPhase2] default: %s. enume: %d error: %d\n", ERR_error_string( enume, NULL ), enume, error );
-						}
-						break;
-					}
-				}
-				if( lbreak >= 1 )
-				{
-					break;
-				}
-				//usleep( 0 );
-				
-				if( fc->fci_Shutdown == TRUE )
-				{
-					FINFO("[FriendCoreAcceptPhase2] Accept socket process will be stopped, becaouse Shutdown is in progress\n");
+					int error = SSL_get_error( s_Ssl, srl );
+					FERROR( "[FriendCoreAcceptPhase2] Could not set fd, error: %d fd: %d\n", error, fd );
+
 					goto accerror;
 				}
-			}
+
+				int err = 0;
+				// we must be sure that SSL Accept is working
+				while( 1 )
+				{
+					DEBUG("[FriendCoreAcceptPhase2] before accept\n");
+					if( ( err = SSL_accept( s_Ssl ) ) == 1 )
+					{
+						lbreak = 1;
+						break;
+					}
+					DEBUG("[FriendCoreAcceptPhase2] after accept, err: %d\n", err );
+					if( err <= 0 || err == 2 )
+					{
+						int error = SSL_get_error( s_Ssl, err );
+						switch( error )
+						{
+							case SSL_ERROR_NONE:
+								// NO error..
+								FERROR( "[FriendCoreAcceptPhase2] No error\n" );
+								lbreak = 1;
+							break;
+							case SSL_ERROR_ZERO_RETURN:
+								FERROR("[FriendCoreAcceptPhase2] SSL_ACCEPT error: Socket closed.\n" );
+								goto accerror;
+							case SSL_ERROR_WANT_READ:
+								lbreak = 2;
+							break;
+							case SSL_ERROR_WANT_WRITE:
+								lbreak = 2;
+							break;
+							case SSL_ERROR_WANT_ACCEPT:
+								FERROR( "[FriendCoreAcceptPhase2] Want accept\n" );
+								goto accerror;
+							case SSL_ERROR_WANT_X509_LOOKUP:
+								FERROR( "[FriendCoreAcceptPhase2] Want 509 lookup\n" );
+								goto accerror;
+							case SSL_ERROR_SYSCALL:
+							{
+								int enume = ERR_get_error();
+								FERROR( "[FriendCoreAcceptPhase2] Error syscall. Goodbye! %s. Enume: %d\n", ERR_error_string( enume, NULL ), enume );
+								if( enume == 0 )
+								{
+									goto accerror;
+								}
+								//lbreak = 2;
+								break;
+							}
+							case SSL_ERROR_SSL:
+							{
+								int enume = ERR_get_error();
+								FERROR( "[FriendCoreAcceptPhase2] SSL_ERROR_SSL: %s. enume: %d\n", ERR_error_string( enume, NULL ), enume );
+								lbreak = 2;
+							
+								// HTTP to HTTPS redirection code
+								if( enume == 336027804 ) // http redirect
+								{
+									moveToHttp( fd );
+								}
+								else
+								{
+									goto accerror;
+								}
+								break;
+							}
+							default:
+							{
+								int enume = ERR_get_error();
+								FERROR( "[FriendCoreAcceptPhase2] default: %s. enume: %d error: %d\n", ERR_error_string( enume, NULL ), enume, error );
+							}
+							break;
+						}
+					}
+					if( lbreak >= 1 )
+					{
+						break;
+					}
+					//usleep( 0 );
+				
+					if( fc->fci_Shutdown == TRUE )
+					{
+						FINFO("[FriendCoreAcceptPhase2] Accept socket process will be stopped, becaouse Shutdown is in progress\n");
+						goto accerror;
+					}
+				}	// while( 1 )
+			}	// if SSL
 		}
 
 		DEBUG("[FriendCoreAcceptPhase2] before getting incoming: fd %d\n", fd );
@@ -571,6 +575,12 @@ accerror:
 			FFree( incoming );
 		}
 		*/
+		
+		if( s_Ssl != NULL )
+				{
+					SSL_free( s_Ssl );
+				}
+		
 		shutdown( fd, SHUT_RDWR );
 		close( fd );
 	}
