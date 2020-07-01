@@ -431,7 +431,7 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 						case SSL_ERROR_SYSCALL:
 						{
 							int enume = ERR_get_error();
-							FERROR( "[FriendCoreAcceptPhase2] Error syscall. Goodbye! %s.\n", ERR_error_string( enume, NULL ), enume );
+							FERROR( "[FriendCoreAcceptPhase2] Error syscall. Goodbye! %s. Enume: %d\n", ERR_error_string( enume, NULL ), enume );
 							if( enume == 0 )
 							{
 								goto accerror;
@@ -456,6 +456,12 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 							}
 							break;
 						}
+						default:
+						{
+							int enume = ERR_get_error();
+							FERROR( "[FriendCoreAcceptPhase2] default: %s. enume: %d error: %d\n", ERR_error_string( enume, NULL ), enume, error );
+						}
+						break;
 					}
 				}
 				if( lbreak >= 1 )
@@ -489,6 +495,7 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 				incoming = ( Socket *)FCalloc( 1, sizeof( Socket ) );
 				if( incoming != NULL )
 				{
+					DEBUG("[FriendCoreAcceptPhase2] memory for socket allocated: %d\n", fd );
 					incoming->s_Data = fc;
 					incoming->fd = fd;
 					incoming->port = ntohs( client.sin6_port );
