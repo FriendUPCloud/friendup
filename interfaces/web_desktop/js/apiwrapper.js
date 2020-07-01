@@ -1612,6 +1612,8 @@ function apiWrapper( event, force )
 							{
 								win.iframe.classList.remove( 'Loading' );
 							}
+							// Clean blocker
+							RemoveFromExecutionQueue( app.applicationName );
 							break;
 						// Pass a message to actual window
 						case 'sendMessage':
@@ -3042,7 +3044,7 @@ function apiWrapper( event, force )
 					// End task bar stuff
 					case 'setsingleinstance':
 						// Add to single instances
-						if( app && msg.value == true && ( !Friend.singleInstanceApps[ app.applicationName ] || Friend.singleInstanceApps[ app.applicationName ] === true ) )
+						if( app && msg.value == true && !Friend.singleInstanceApps[ app.applicationName ] )
 						{
 							Friend.singleInstanceApps[ app.applicationName ] = app;
 						}
