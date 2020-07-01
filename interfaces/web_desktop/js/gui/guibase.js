@@ -714,9 +714,15 @@ var mousePointer =
 			if( !ele.window.parentNode.classList.contains( 'Active'  ))
 				_ActivateWindowOnly( ele.window.parentNode );
 			
+			if( ele.window && ele.window.directoryview && ele.window.directoryview.filedialog )
+			{
+				return false;
+			}
+			
 			for( var a = 0; a < ele.window.icons.length; a++ )
 			{
 				let ic = ele.window.icons[a];
+
 				if( !ic.domNode ) continue;
 				
 				if( ic.domNode.className.indexOf ( 'Selected' ) > 0 )

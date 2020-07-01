@@ -335,7 +335,11 @@ DirectoryView.prototype.HideShareDialog = function()
 // Dropping an icon on a window or an icon!
 DirectoryView.prototype.doCopyOnElement = function( eles, e )
 {
-	var dview = this; // The view in question
+	// Can't handle file dialogs!
+	if( this.filedialog ) return false;
+	if( this.directoryView && this.directoryView.filedialog ) return false;
+	
+	let dview = this; // The view in question
 	
 	// OOOH! Shared drive action!
 	if( this.content && this.content.fileInfo && this.content.fileInfo.Path.indexOf( 'Shared:' ) == 0 )

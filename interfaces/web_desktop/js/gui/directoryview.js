@@ -764,6 +764,7 @@ DirectoryView.prototype.ShowFileBrowser = function()
 			}
 		} );
 		winobj.fileBrowser.cancelId = winobj.directoryview.cancelId;
+		winobj.fileBrowser.directoryView = this;
 		winobj.fileBrowser.render();
 	}
 }
@@ -3847,6 +3848,8 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		file.onmouseout = function( e )
 		{
 			if ( !e ) e = window.event;
+			if( this.directoryView.filedialog ) return;
+			
 			if ( window.mouseDown == this )
 			{
 				mousePointer.pickup( this );
