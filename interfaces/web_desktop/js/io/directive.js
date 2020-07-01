@@ -34,6 +34,9 @@ function RemoveFromExecutionQueue( app )
 // Load a javascript application into a sandbox
 function ExecuteApplication( app, args, callback, retries )
 {
+	// Just nothing.
+	if( !app ) return;
+	
 	// If we don't have any cached basics, wait a bit
 	if( typeof( _applicationBasics ) == 'undefined' || !_applicationBasics.js )
 	{
@@ -257,7 +260,6 @@ function ExecuteApplication( app, args, callback, retries )
 					if( hideView )
 					{
 						InstallApplication( app );
-
 					}
 				}
 				f.load();
