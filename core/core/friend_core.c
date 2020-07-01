@@ -390,6 +390,7 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 				FERROR( "[FriendCoreAcceptPhase2] Could not set fd, error: %d fd: %d\n", error, fd );
 				
 				SSL_free( s_Ssl );
+				s_Ssl = NULL;
 				goto accerror;
 			}
 
@@ -529,9 +530,9 @@ accerror:
 		{
 			if( fc->fci_Sockets->s_SSLEnabled == TRUE )
 			{
-				if( incoming->s_Ssl != NULL )
+				if( s_Ssl != NULL )
 				{
-					SSL_free( incoming->s_Ssl );
+					SSL_free( s_Ssl );
 				}
 			}
 			FFree( incoming );
