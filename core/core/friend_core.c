@@ -327,7 +327,7 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 	
 	while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) > 0 )
 	{
-		if( fd == -1 )
+		if( fd <= 0 )
 		{
 			// Get some info about failure..
 			switch( errno )
@@ -356,8 +356,6 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 		int prerr = getpeername( fd, (struct sockaddr *) &client, &clientLen );
 		if( prerr == -1 )
 		{
-			shutdown( fd, SHUT_RDWR );
-			close( fd );
 			goto accerror;
 		}
 		
@@ -373,8 +371,7 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 			if( s_Ssl == NULL )
 			{
 				FERROR("[FriendCoreAcceptPhase2] Cannot accept SSL connection\n");
-				shutdown( fd, SHUT_RDWR );
-				close( fd );
+				
 				goto accerror;
 			}
 			
@@ -391,8 +388,7 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 			{
 				int error = SSL_get_error( s_Ssl, srl );
 				FERROR( "[FriendCoreAcceptPhase2] Could not set fd, error: %d fd: %d\n", error, fd );
-				shutdown( fd, SHUT_RDWR );
-				close( fd );
+				
 				SSL_free( s_Ssl );
 				goto accerror;
 			}
@@ -460,12 +456,12 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 				{
 					break;
 				}
-				usleep( 0 );
+				//usleep( 0 );
 				
 				if( fc->fci_Shutdown == TRUE )
 				{
 					FINFO("[FriendCoreAcceptPhase2] Accept socket process will be stopped, becaouse Shutdown is in progress\n");
-					break;
+					goto accerror;
 				}
 			}
 		}
@@ -476,7 +472,7 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 		{
 			if( fd > 0 )
 			{
-				close( fd );
+				goto accerror;
 			}
 			break;
 		}
@@ -504,13 +500,11 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 				else
 				{
 					FERROR("[FriendCoreAcceptPhase2] Cannot allocate memory for socket!\n");
-					shutdown( fd, SHUT_RDWR );
-					close( fd );
+					
 					goto accerror;
 				}
 				
 				/// Add to epoll
-				// TODO: Check return of epoll ctl
 				struct epoll_event event;
 				event.data.ptr = incoming;
 				event.events = EPOLLIN| EPOLLET;
@@ -519,8 +513,8 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 			
 				if( error )
 				{
-					FERROR("[FriendCoreAcceptPhase2] epoll_ctl failure **************************************\n\n");
-					//goto accerror;
+					Log( FLOG_ERROR, "[FriendCoreAcceptPhase2] epoll_ctl failure, cannot add fd: %d to epoll\n", fd );
+					goto accerror;
 				}
 			}
 		}
@@ -529,6 +523,22 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 
 	return NULL;
 accerror:
+	if( fd > 0 )
+	{
+		if( incoming != NULL )
+		{
+			if( fc->fci_Sockets->s_SSLEnabled == TRUE )
+			{
+				if( incoming->s_Ssl != NULL )
+				{
+					SSL_free( incoming->s_Ssl );
+				}
+			}
+			FFree( incoming );
+		}
+		shutdown( fd, SHUT_RDWR );
+		close( fd );
+	}
 	DEBUG("[FriendCoreAcceptPhase2] ERROR\n");
 	return NULL;
 }
