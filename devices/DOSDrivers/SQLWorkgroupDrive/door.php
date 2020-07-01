@@ -374,7 +374,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				$total = 0;
 				if( $sum = $SqlDatabase->FetchObject( '
 					SELECT SUM(u.Filesize) z FROM FSFile u
-					WHERE AND FilesystemID = \'' . $this->ID . '\'
+					WHERE FilesystemID = \'' . $this->ID . '\'
 				' ) )
 				{
 					$total = $sum->z;
