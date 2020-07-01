@@ -66,7 +66,7 @@ function ExecuteApplication( app, args, callback, retries )
 	_executionQueue[ appName ] = true;
 	
 	// Presume single instance (will be removed if not in apiwrapper)
-	Friend.singleInstanceApps[ app ];
+	Friend.singleInstanceApps[ app ] = true;
 
 	if( isMobile )
 	{

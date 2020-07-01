@@ -3042,7 +3042,7 @@ function apiWrapper( event, force )
 					// End task bar stuff
 					case 'setsingleinstance':
 						// Add to single instances
-						if( app && msg.value == true && !Friend.singleInstanceApps[ app.applicationName ] )
+						if( app && msg.value == true && ( !Friend.singleInstanceApps[ app.applicationName ] || Friend.singleInstanceApps[ app.applicationName ] === true ) )
 						{
 							Friend.singleInstanceApps[ app.applicationName ] = app;
 						}
