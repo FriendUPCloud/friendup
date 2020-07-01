@@ -399,6 +399,7 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 				DEBUG("[FriendCoreAcceptPhase2] before accept\n");
 				if( ( err = SSL_accept( s_Ssl ) ) == 1 )
 				{
+					lbreak = 1;
 					break;
 				}
 
