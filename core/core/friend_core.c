@@ -402,7 +402,7 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 					lbreak = 1;
 					break;
 				}
-
+				DEBUG("[FriendCoreAcceptPhase2] after accept, err: %d\n", err );
 				if( err <= 0 || err == 2 )
 				{
 					int error = SSL_get_error( s_Ssl, err );
@@ -517,9 +517,9 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 				
 				int error = epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_ADD, fd, &event );
 			
-				if( error )
+				if( error == -1 )
 				{
-					Log( FLOG_ERROR, "[FriendCoreAcceptPhase2] epoll_ctl failure, cannot add fd: %d to epoll\n", fd );
+					Log( FLOG_ERROR, "[FriendCoreAcceptPhase2] epoll_ctl failure, cannot add fd: %d to epoll, errno %d\n", fd, errno );
 					goto accerror;
 				}
 			}
