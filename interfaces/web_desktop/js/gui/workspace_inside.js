@@ -10061,9 +10061,8 @@ InitDynamicClassSystem();
 
 document.addEventListener( 'paste', function( evt )
 {
-	//console.log('paste event received',evt);
 	Workspace.handlePasteEvent( evt );
-});
+} );
 
 // Push notification integration and other app events --------------------------
 if( window.friendApp )
@@ -10084,13 +10083,17 @@ if( window.friendApp )
 Workspace.receiveLive = function( viewId, jsonEvent ) {
 	const self = this;
 	let event = null;
-	try {
+	
+	try 
+	{
 		event = JSON.parse( jsonEvent );
-	} catch( ex ) {
+	}
+	catch( ex )
+	{
 		console.log( 'Workspace.receiveLive - error parsing json', {
 			error     : ex,
 			jsonEvent : jsonEvent,
-		});
+		} );
 		return;
 	}
 	
@@ -10098,24 +10101,29 @@ Workspace.receiveLive = function( viewId, jsonEvent ) {
 		viewId : viewId,
 		json   : jsonEvent,
 		event  : event,
-	});
+	} );
+	
 	const appName = 'FriendChat';
+	
 	// find friendchat app
 	let chat = null;
+	
 	console.log( 'all apps', Workspace.applications );
+	
 	Workspace.applications.some( app => {
 		console.log( 'looking for chat', {
 			app  : app,
 			name : app.applicationName,
-		});
+		} );
 		if ( app.applicationName != appName )
 			return false;
 		
 		chat = app;
 		return true;
-	});
+	} );
 	
-	if ( !chat ) {
+	if( !chat )
+	{
 		console.log( 'receiveLive - chat not found' );
 		return;
 	}
@@ -10132,14 +10140,14 @@ Workspace.receiveLive = function( viewId, jsonEvent ) {
 // Receive push notification (when a user clicks native push notification on phone)
 Workspace.receivePush = function( jsonMsg, ready )
 {
-	if( !isMobile ) return "mobile";
+	if( !isMobile ) return 'mobile';
 	var msg = jsonMsg ? jsonMsg : ( window.friendApp && typeof friendApp.get_notification == 'function' ? friendApp.get_notification() : false );
 
 	// we use 1 as special case for no push being here... to make it easier to know when to launch startup sequence... maybe not ideal, but works
 	if( msg == false || msg == 1 ) 
 	{
 		if( !ready && this.onReady ) this.onReady();
-		return "nomsg";
+		return 'nomsg';
 	}
 	try
 	{
@@ -10153,7 +10161,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 	if( !msg ) 
 	{
 		if( !ready && this.onReady ) this.onReady();
-		return "nomsg";
+		return 'nomsg';
 	}
 		
 	// Clear the notifications now... (race cond?)
@@ -10273,8 +10281,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 			// TODO: Localize response!
 			if( !app )
 			{
-				// no notification here... we got weird message in our new android app but everything worked...
-				//Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
+				// No notification here... we got weird message in our new android app but everything worked...
 				if( Workspace.onReady ) Workspace.onReady();
 				return;
 			}
@@ -10334,7 +10341,7 @@ if( document.hidden )
 {
 	Workspace.updateViewState( 'inactive' );
 }
-else 
+else
 {
 	Workspace.updateViewState( 'active' );
 }
