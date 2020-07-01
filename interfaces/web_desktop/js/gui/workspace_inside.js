@@ -10195,10 +10195,11 @@ Workspace.receivePush = function( jsonMsg, ready )
 			{}
 		}
 	
-		for( var a = 0; a < Workspace.applications.length; a++ )
+		// Check existing applications
+		for( let a = 0; a < Workspace.applications.length; a++ )
 		{
-			if( Workspace.applications[a].applicationName == msg.application )
-			{	
+			if( Workspace.applications[ a ].applicationName == msg.application )
+			{
 				// Need a "message id" to be able to update notification
 				// on the Friend Core side
 				if( msg.id )
@@ -10218,7 +10219,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 			
 				mobileDebug( ' Sendtoapp2: ' + JSON.stringify( msg ), true );
 			
-				var app = Workspace.applications[a];
+				let app = Workspace.applications[a];
 				app.contentWindow.postMessage( JSON.stringify( { 
 					type: 'system',
 					method: 'pushnotification',
@@ -10238,7 +10239,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 			if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
 			{
 				messageRead = true;
-				var l = new Library( 'system.library' );
+				let l = new Library( 'system.library' );
 				l.onExecuted = function(){};
 				l.execute( 'mobile/updatenotification', { 
 					notifid: msg.id, 
@@ -10252,13 +10253,13 @@ Workspace.receivePush = function( jsonMsg, ready )
 		// Send message to app once it has started...
 		function appMessage()
 		{
-			var app = false;
-			var apps = Workspace.applications;
+			let app = false;
+			let apps = Workspace.applications;
 			
 			//too early?
 			if( !apps ) return;
 			
-			for( var a = 0; a < apps.length; a++ )
+			for( let a = 0; a < apps.length; a++ )
 			{
 				// Found the application
 				if( apps[ a ].applicationName == msg.application )
@@ -10339,7 +10340,7 @@ else
 }
 
 /*  Debug blob: */
-/*if( isMobile  )
+if( isMobile  )
 {
 	var debug = document.createElement( 'div' );
 	debug.style.backgroundColor = 'rgba(255,255,255,0.5)';
@@ -10354,7 +10355,7 @@ else
 	debug.innerHTML = '<span>thomasdebug v01</span>';
 	window.debugDiv = debug;
 	document.body.appendChild( debug );
-}*/
+}
 
 var mobileDebugTime = null;
 function mobileDebug( str, clear )
