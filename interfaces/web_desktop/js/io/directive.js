@@ -675,11 +675,6 @@ function ExecuteApplication( app, args, callback, retries )
 	var eo = { application: app, args: args };
 	if( Workspace.conf && Workspace.conf.authid )
 		eo.authid = Workspace.conf.authid;
-	m.onQueue = function()
-	{
-		// Clean blocker
-		RemoveFromExecutionQueue( appName );
-	}
 	m.execute( 'friendapplication', eo );
 	// console.log( 'Test3: Executing application: ' + app );
 }
