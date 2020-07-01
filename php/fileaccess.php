@@ -17,13 +17,26 @@
 
 //faLog( 'all data we got ' . print_r( $argv, 1 ) );
 
+global $Logger;
+if( !$Logger && !class_exists('Logger'))
+{
+	class Logger
+	{
+		function log( $string )
+		{
+			faLog( $string );
+		}
+	}
+	$Logger = new Logger();
+}
+
 if( $argv[1] )
 {
 	$tmp = explode( '/', $argv[ 1 ] );
 
 	if( !isset( $tmp[1] ) ) { friend404(); } // dies...
 	
-	faLog('complete request: ' .  print_r( $tmp,1  ) );
+	//faLog('complete request: ' .  print_r( $tmp,1  ) );
 	
 	ob_clean();
 	switch( strtolower( $tmp[2] ) ) 
@@ -45,19 +58,12 @@ if( $argv[1] )
 		case 'callback':
 			if( strtolower( $tmp[3] ) == 'file' )
 			{
-
-				faLog('callback! 1a' );
-
-				
 				/* SECURITY HOLE! WE MIGHT CIRCUMVENT ALL SECURITY HERE */
 				$filepath = rawurldecode( $tmp[4] );
 				$user = isset( $tmp[6] ) ? $tmp[6]  : false;
 				$authID = isset( $tmp[7] ) ? $tmp[7]  : false;
 				$windowID = isset( $tmp[8] ) ? $tmp[8]  : false; 
-				
-				faLog('callback! 1b' );
 				if( $user ) handleFileCallback( $user, $filepath, ( isset( $argv[2] ) ? $argv[2] : false ), $authID, $windowID );
-				faLog('callback! 1c' );
 			}
 			break;
 			
@@ -79,8 +85,7 @@ die('500 - unable to process your request');
 function handleFileCallback( $user, $filepath, $requestjson, $authid = false, $windowid = false )
 {	
 	
-	faLog('handleFileCallback' .  $user . ' :: ' .  $filepath . ':: ' . print_r( $requestjson, 1) );
-	
+	//faLog('handleFileCallback :: ' .  $user . ' :: ' .  $filepath . ':: ' . print_r( $requestjson, 1) );
 	if( $requestjson == false )
 	{
 		die( '{"error":0}');
@@ -96,8 +101,6 @@ function handleFileCallback( $user, $filepath, $requestjson, $authid = false, $w
 		$requestjson = substr( $requestjson, 11 );
 	}
 	
-	//faLog('request json is' . $requestjson );
-	
 	try
 	{
 		$json = json_decode($requestjson);
@@ -106,6 +109,7 @@ function handleFileCallback( $user, $filepath, $requestjson, $authid = false, $w
 	{
 		die( '{"error":1}');
 	}
+	//faLog('request json is' . print_r($json,1) );
 	
 	if( !isset( $json->status ) ) die( '{"error":1}');
 
@@ -151,7 +155,7 @@ function handleFileCallback( $user, $filepath, $requestjson, $authid = false, $w
 function tellApplication( $command, $user, $windowid, $authid )
 {
 
-	faLog( 'tellApplication ' . $command . ' :: ' . $user);
+	//faLog( 'tellApplication ' . $command . ' :: ' . $user);
 
 	global $SqlDatabase, $Config, $User;
 	
@@ -173,10 +177,6 @@ function tellApplication( $command, $user, $windowid, $authid )
 	
 	$r = curl_exec( $c );
 	curl_close( $c );
-
-	faLog( 'we plinged this ' . $url );
-	faLog( 'got a result? ' . print_r( $r,1 ) . ' :: ' . print_r( $c,1 ));
-
 
 	return false;
 }
@@ -214,6 +214,37 @@ function getUserFile( $username, $filePath )
 	
 	faConnectDB( $username );
 
+	//virtual fs check
+	if( strpos($filePath,'::' ) !== false )
+	{
+		$tmp = explode('::', $filePath );
+		$owner = $tmp[0];
+		$path = $tmp[1];
+		
+		//now we load the owner and try to get his servertoken and then establish a file object with th correct auth context
+		$ru = new dbIO('FUser');
+		$ru->ID = $owner;
+
+		if( $ru->Load() && $ru->ServerToken )
+		{
+			$f = new File( $path );
+			$f->SetAuthContext( 'servertoken', $ru->ServerToken );
+			if( $f->Load( $path ) )
+			{
+				return $f;
+			}
+			else
+			{
+				die('fail<!--separate-->{"message":"virtual file seems corrupt"}');
+			}
+		}
+		else
+		{
+			die('fail<!--separate-->{"message":"user shared and has no servertoken; something is fishy"}');
+		}
+	}
+	// end of virtual FS check
+
 	$f = new File( getOriginalFilePath( $filePath ) );
 	
 	if( $f->Load() )
@@ -250,7 +281,6 @@ function getOriginalFilePath( $inpath )
 */
 function loadUserFile( $username, $filePath )
 {
-	//faLog( "Running getUserFile( $username, $filePath );" );
 	$file = getUserFile( $username, $filePath );
 	
 	// New file?
@@ -354,7 +384,6 @@ function saveUserFile( $username, $filePath, $json, $windowid = false, $authid =
 		
 		$file = getUserFile( $username, $filePath );
 		
-		faLog( 'We got a file with this path: ' . $file->path );
 		
 		//check that we have a user tha tis still editing the docsument... check the info file.
 		if( $file )
@@ -395,7 +424,7 @@ function saveUserFile( $username, $filePath, $json, $windowid = false, $authid =
 		
 		if( !$fc )
 		{
-			//faLog( 'Could not find load file from document server : ' . print_r($json,1) .  '!' . print_r( $c ,1 ) );
+			faLog( 'Could not find load file from document server : ' . print_r($json,1) .  '!' . print_r( $c ,1 ) );
 			die( '{"error":1}');
 		}
 		if( $file )
@@ -403,10 +432,7 @@ function saveUserFile( $username, $filePath, $json, $windowid = false, $authid =
 			$result = $file->Save( $fc );
 			if( $result )
 			{
-				//faLog( 'File saved :) ' . $filePath . '!' . $result );
-
 				if( !$Config ) faConnectDB( $username );	
-				
 				if(isset($infojson->active_lock_user_windows->{$username})) $windowid = $infojson->active_lock_user_windows->{$username};
 				if( $windowid )
 				{
@@ -416,16 +442,18 @@ function saveUserFile( $username, $filePath, $json, $windowid = false, $authid =
 			}
 			else
 			{
+				faLog( 'ERROR 1 LINE 411' );
 				die( '{"error":1}');					
 			}
 
 		}
 		else
 		{
-			//faLog( 'Could not find file : ' . $filePath . '!' );
+			faLog( 'Could not find file : ' . $filePath . '!' );
 			die( '{"error":1}');
 		}
 	}
+	faLog( 'ERROR 1 LINE 421' );
 	die( '{"error":1}');
 }
 

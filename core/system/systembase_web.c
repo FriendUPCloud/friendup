@@ -1787,7 +1787,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			el = HttpGetPOSTParameter( *request, "deviceid" );
 			if( el != NULL )
 			{
-				deviceid = (char *)el->hme_Data;
+				//deviceid = (char *)el->hme_Data;
+				deviceid = UrlDecodeToMem( el->hme_Data );
 				DEBUG("\t\t\t\tDEVICEID PARAMETER: %s\n", deviceid );
 			}
 			
@@ -2331,6 +2332,11 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				char buffer[ 256 ];
 				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_PASS_DEV_REQUIRED] , DICT_USER_PASS_DEV_REQUIRED );
 				HttpAddTextContent( response, buffer );
+			}
+			
+			if( deviceid != NULL )
+			{
+				FFree( deviceid );
 			}
 			
 			if( usrname != NULL )
