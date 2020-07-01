@@ -3937,8 +3937,10 @@ var View = function( args )
 		// Windows on own screen ignores the virtual workspaces
 		if( this.flags.screen && this.flags.screen != Workspace.screen ) return;
 		
-		if( wsnum < 0 || wsnum > globalConfig.workspacecount - 1 )
-			return; 
+		if( wsnum != 0 && ( wsnum < 0 || wsnum > globalConfig.workspacecount - 1 ) )
+		{
+			return;
+		}
 		let wn = this._window.parentNode;
 		let pn = wn.parentNode;
 		

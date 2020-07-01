@@ -2660,9 +2660,10 @@ function CheckScreenTitle( screen, force )
 	if( wo && wo.parentNode && !wo.parentNode.parentNode )
 		wo = false;
 	
+	let isDoorsScreen = testObject.id == 'DoorsScreen';	
+
 	let hasScreen = ( !csc || ( wo && testObject.screenObject == wo.screen ) || ( wo && !wo.screen && isDoorsScreen ) );
 	
-	let isDoorsScreen = testObject.id == 'DoorsScreen';	
 	
 	// Clear the delayed action
 	if( _screenTitleTimeout )

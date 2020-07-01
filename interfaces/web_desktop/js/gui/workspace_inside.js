@@ -39,10 +39,9 @@ var WorkspaceInside = {
 				{
 					if( b == num )
 					{
-						wsp[a].onmousedown();
+						Workspace.setWorkspace( b, eles[0] );
 						if( ge( 'InputGrabber' ) )
 							ge( 'InputGrabber' ).blur();
-						return;
 					}
 					b++; 
 				}
@@ -432,58 +431,7 @@ var WorkspaceInside = {
 					w.ind = a;
 					w.onmousedown = function( e )
 					{
-						// No need for change
-						if( this.ind == globalConfig.workspaceCurrent )
-							return;
-							
-						var cnt = 0;
-						for( var z = 0; z < d.childNodes.length; z++ )
-						{
-							if( d.childNodes[z].className && d.childNodes[z].classList.contains( 'Workspace' ) )
-							{
-								if( d.childNodes[z] == this )
-								{
-									globalConfig.workspaceCurrent = cnt;
-									d.childNodes[z].classList.add( 'Active' );
-								}
-								else d.childNodes[z].classList.remove( 'Active' );
-								cnt++;
-							}
-						}
-						ge( 'DoorsScreen' ).screenObject.contentDiv.style.left = '-' + 100 * this.ind + '%';
-						
-						_DeactivateWindows();
-						
-						// Check if we have a preset window that should be activated
-						var foundActive = false;
-						if( typeof( virtualWorkspaces[ this.ind ] ) != 'undefined' )
-						{
-							if( virtualWorkspaces[ this.ind ].activeWindow )
-							{
-								_ActivateWindow( virtualWorkspaces[ this.ind ].activeWindow );
-								foundActive = true;
-							}
-						}
-						
-						// Activate next window on next screen
-						if( !foundActive )
-						{
-							for( var c in movableWindows )
-							{
-								if( !movableWindows[c].windowObject ) continue;
-							
-								if( movableWindows[c].windowObject.workspace == this.ind )
-								{
-									var pn = movableWindows[c].parentNode;
-									if( pn.getAttribute( 'minimized' ) != 'minimized' )
-									{
-										_ActivateWindow( movableWindows[c] );
-										break;
-									}
-								}
-							}
-						}
-						return cancelBubble( e );
+						Workspace.setWorkspace( this.ind, d, e );
 					}
 					d.appendChild( w );
 				}
@@ -493,9 +441,89 @@ var WorkspaceInside = {
 				
 				PollTrayPosition();
 			}
+			// Put all on workspace 1
+			else
+			{
+				for( let c in movableWindows )
+				{
+					movableWindows[ c ].windowObject.sendToWorkspace( 0 );
+				}
+				Workspace.setWorkspace( 0 );
+			}
 		}
 		// Refresh our dynamic classes now..
 		RefreshDynamicClasses();
+	},
+	setWorkspace: function( index, workspaceButtons, e )
+	{
+		if( !e ) e = window.event;
+		
+		// No need for change
+		if( index == globalConfig.workspaceCurrent )
+		{
+			console.log( 'Already on current workspace.' );
+			return;
+		}
+		
+		// Out of bounds!
+		if( index != 0 && ( index < 0 || index >= globalConfig.workspacecount ) )
+		{
+			return;
+		}
+		
+		globalConfig.workspaceCurrent = index;
+		
+		var cnt = 0;
+		let d = workspaceButtons;
+		if( d )
+		{
+			for( var z = 0; z < d.childNodes.length; z++ )
+			{
+				if( d.childNodes[z].className && d.childNodes[z].classList.contains( 'Workspace' ) )
+				{
+					if( cnt == index )
+					{
+						d.childNodes[z].classList.add( 'Active' );
+					}
+					else d.childNodes[z].classList.remove( 'Active' );
+					cnt++;
+				}
+			}
+		}
+		ge( 'DoorsScreen' ).screenObject.contentDiv.style.left = '-' + ( 100 * index ) + '%';
+		
+		_DeactivateWindows();
+		
+		// Check if we have a preset window that should be activated
+		var foundActive = false;
+		if( typeof( virtualWorkspaces[ index ] ) != 'undefined' )
+		{
+			if( virtualWorkspaces[ index ].activeWindow )
+			{
+				_ActivateWindowOnly( virtualWorkspaces[ index ].activeWindow );
+				foundActive = true;
+			}
+		}
+		
+		// Activate next window on next screen
+		if( !foundActive )
+		{
+			for( var c in movableWindows )
+			{
+				if( !movableWindows[c].windowObject ) continue;
+			
+				if( movableWindows[c].windowObject.workspace == index )
+				{
+					var pn = movableWindows[c].parentNode;
+					if( pn.getAttribute( 'minimized' ) != 'minimized' )
+					{
+						_ActivateWindow( movableWindows[c] );
+						break;
+					}
+				}
+			}
+		}
+		return cancelBubble( e );
 	},
 	// Reposition and size
 	repositionWorkspaceWallpapers: function()
