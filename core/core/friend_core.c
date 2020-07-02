@@ -1657,9 +1657,9 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	
 	// add communication ReadCommPipe		
 	int pipefds[2] = {}; struct epoll_event piev = { 0 };	
-	if (pipe( pipefds ) != 0)
+	if( pipe( pipefds ) != 0 )
 	{
-		FERROR("pipe call failed");
+		Log( FLOG_ERROR, "[FriendCoreEpoll] pipe call failed\n");
 		exit(5);
 	}
 	fc->fci_ReadCorePipe = pipefds[ 0 ]; fc->fci_WriteCorePipe = pipefds[ 1 ];
@@ -1936,7 +1936,7 @@ int FriendCoreRun( FriendCoreInstance* fc )
 	
 	if( fc->fci_Sockets == NULL )
 	{
-		FERROR("Cannot create socket on port: %d!\n", fc->fci_Port );
+		Log( FLOG_ERROR, "[FriendCoreEpoll] Cannot create socket on port: %d!\n", fc->fci_Port );
 		fc->fci_Closed = TRUE;
 		return -1;
 	}
@@ -1944,7 +1944,7 @@ int FriendCoreRun( FriendCoreInstance* fc )
 	// Non blocking listening!
 	if( SocketSetBlocking( fc->fci_Sockets, FALSE ) == -1 )
 	{
-		FERROR("Cannot set socket to blocking state!\n");
+		Log( FLOG_ERROR, "[FriendCoreEpoll] Cannot set socket to blocking state!\n");
 		fc->fci_Sockets->s_Interface->SocketDelete( fc->fci_Sockets );
 		fc->fci_Closed = TRUE;
 		return -1;
@@ -1954,7 +1954,7 @@ int FriendCoreRun( FriendCoreInstance* fc )
 	
 	if( SocketListen( fc->fci_Sockets ) != 0 )
 	{
-		FERROR("Cannot setup socket!\nCheck if port: %d\n", fc->fci_Port );
+		Log( FLOG_ERROR, "[FriendCoreEpoll] Cannot setup socket!\nCheck if port: %d\n", fc->fci_Port );
 		fc->fci_Sockets->s_Interface->SocketDelete( fc->fci_Sockets );
 		fc->fci_Closed= TRUE;
 		return -1;
@@ -1972,7 +1972,7 @@ int FriendCoreRun( FriendCoreInstance* fc )
 	fc->fci_Epollfd = epoll_create1( EPOLL_CLOEXEC );
 	if( fc->fci_Epollfd == -1 )
 	{
-		FERROR( "[FriendCore] epoll_create\n" );
+		Log( FLOG_ERROR, "[FriendCore] epoll_create\n" );
 		fc->fci_Sockets->s_Interface->SocketDelete( fc->fci_Sockets );
 		fc->fci_Closed = TRUE;
 		return -1;
@@ -1986,7 +1986,7 @@ int FriendCoreRun( FriendCoreInstance* fc )
 	
 	if( epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_ADD, fc->fci_Sockets->fd, &event ) == -1 )
 	{
-		LOG( FLOG_ERROR, "[FriendCore] epoll_ctl\n" );
+		Log( FLOG_ERROR, "[FriendCore] epoll_ctl fail\n" );
 		fc->fci_Sockets->s_Interface->SocketDelete( fc->fci_Sockets );
 		fc->fci_Closed = TRUE;
 		return -1;

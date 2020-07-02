@@ -192,7 +192,7 @@ SystemBase *SystemInit( void )
 		
 		if( getcwd( l->sl_AutotaskPath, PATH_MAX ) == NULL )
 		{
-			FERROR("getcwd failed!");
+			Log( FLOG_ERROR, "[SystemInit] getcwd failed!");
 			exit(5);
 		}
 		strcat( l->sl_AutotaskPath, "/autostart/");
@@ -240,7 +240,7 @@ SystemBase *SystemInit( void )
 	if( getcwd( tempString, PATH_MAX ) == NULL )
 	{
 		FFree( tempString );
-		FERROR("getcwd failed!");
+		Log( FLOG_ERROR, "[SystemInit] getcwd failed!");
 		exit(5);
 	}
 	l->handle = dlopen( 0, RTLD_LAZY );
@@ -664,7 +664,7 @@ SystemBase *SystemInit( void )
 	l->zlib = (ZLibrary *)LibraryOpen( l, "z.library", 0 );
 	if( l->zlib == NULL )
 	{
-		FERROR("[ERROR]: CANNOT OPEN z.library!\n");
+		Log( FLOG_ERROR, "[ERROR]: CANNOT OPEN z.library!\n");
 	}
 	
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
@@ -749,7 +749,7 @@ SystemBase *SystemInit( void )
 	if (getcwd( tempString, PATH_MAX ) == NULL)
 	{
 		FFree( tempString );
-		FERROR("getcwd failed!");
+		Log( FLOG_ERROR, "[SystemInit] getcwd failed!");
 		exit(5);
 	}
 	
@@ -886,7 +886,7 @@ SystemBase *SystemInit( void )
 	}
 	else
 	{
-		FERROR("Cannot open magic shared lib\n");
+		Log( FLOG_ERROR, "[SystemInit] Cannot open magic shared lib\n");
 	}
 	
 	//
@@ -1082,7 +1082,7 @@ void SystemClose( SystemBase *l )
 {
 	if( l == NULL )
 	{
-		FERROR("SystemBase is NULL\n");
+		Log( FLOG_ERROR, "[SystemClose] SystemBase is NULL\n");
 		return;
 	}
 	
