@@ -77,6 +77,19 @@ else if( $args->command == 'gettutorial' )
 		}
 	}
 }
+else if( $args->command == 'getimage' )
+{
+	if( isset( $args->number ) )
+	{
+		$filename = 'modules/tutorials/data/' . $args->number . '/image.jpg';
+		if( file_exists( $filename ) )
+		{
+			FriendHeader( 'Content-type', 'image/jpeg' );
+			readfile( $filename );
+			die();
+		} 
+	}
+}
 else if( $args->command == 'increment' )
 {
 	$s = new dbIO( 'FSetting' );
