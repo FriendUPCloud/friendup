@@ -5262,6 +5262,7 @@ Friend.startImageViewer = function( iconObject, extra )
 			<div class="ZoomIn MousePointer"><span class="IconSmall fa-plus-circle"></span></div>\
 			<div class="ZoomOut MousePointer"><span class="IconSmall fa-minus-circle"></span></div>\
 			<div class="ArrowRight MousePointer"><span class="IconSmall fa-angle-right"></span></div>\
+			<div class="Close MousePointer"><span class="IconSmall fa-remove"></span></div>\
 		';
 		eparent.appendChild( d );
 		let eles = d.getElementsByTagName( 'div' );
@@ -5331,6 +5332,13 @@ Friend.startImageViewer = function( iconObject, extra )
 					if( zoomLevel < 0.1 )
 						zoomLevel = 0.1;
 					repositionElement( owin );
+				}
+			}
+			else if( eles[a].classList.contains( 'Close' ) )
+			{
+				eles[ a ].onclick = function( e )
+				{
+					CloseView();
 				}
 			}
 		}
