@@ -133,52 +133,91 @@ function ShowAllTutorials()
 	let f = new File( 'System:templates/tutorials.html' );
 	f.onLoad = function( data )
 	{
-		let m = new Module( 'tutorials' );
-		m.onExecuted = function( e, d )
+		tLoad( data );
+		function tLoad( da )
 		{
-			if( e == 'ok' )
+			tutWind._window.classList.remove( 'Big' );
+			let m = new Module( 'tutorials' );
+			m.onExecuted = function( e, d )
 			{
-				let ht = null;
-				try
+				if( e == 'ok' )
 				{
-					ht = JSON.parse( d );
-					data = data.split( '{tutorials}' ).join( atob( ht.data ) );
-					tutWind.setContent( data, function()
+					let ht = null;
+					try
 					{
-						let tuts = tutWind._window.getElementsByClassName( 'Tutorial' );
-						for( let c = 0; c < tuts.length; c++ )
+						ht = JSON.parse( d );
+						let dt = da.split( '{tutorials}' ).join( atob( ht.data ) );
+						tutWind.setContent( dt, function()
 						{
-							tuts[c].onclick = function()
+							tutWind._window.classList.remove( 'Phase' );
+							let tuts = tutWind._window.getElementsByClassName( 'Tutorial' );
+							for( let c = 0; c < tuts.length; c++ )
 							{
-								for( let d = 0; d < tuts.length; d++ )
+								tuts[c].onclick = function()
 								{
-									if( tuts[ d ] == this )
+									if( this.classList.contains( 'Big' ) )
 									{
-										this.classList.add( 'Big' );
+										setTimeout( function()
+										{										
+											// Load tutorials
+											tLoad( da );
+											return;
+										}, 150 );
+										tutWind._window.classList.add( 'Phase' );
 									}
-									else
+									for( let d = 0; d < tuts.length; d++ )
 									{
-										tuts[ d ].classList.remove( 'Big' );
+										if( tuts[ d ] == this )
+										{
+											( function( num, se, list )
+											{
+												se.classList.add( 'Big', 'Loading' );
+												let t = new Module( 'tutorials' );
+												t.onExecuted = function( te, td )
+												{
+													if( te == 'ok' )
+													{
+														let dd = null;
+														try
+														{
+															dd = JSON.parse( td );
+															DisplayTutorial( atob( dd.data ), se );
+															return;
+														}
+														catch( e )
+														{
+														}
+													}
+													se.classList.remove( 'Big', 'Loading' );
+													list.classList.remove( 'Big' );
+												}
+												t.execute( 'gettutorial', { number: num + 2 } ); // + 2 (num starts 0, should be 1, skip tutorial 1 means use + 2)
+											} )( c, this, tutWind._window );
+										}
+										else
+										{
+											tuts[ d ].classList.remove( 'Big' );
+										}
 									}
+									tutWind._window.classList.add( 'Big' );
 								}
-								tutWind._window.classList.add( 'Big' );
 							}
-						}
-					} );
+						} );
+					}
+					catch( e )
+					{
+						tutWind.close();
+						console.log( '[tutorials] Could not read tutorial overview.' );
+					}
 				}
-				catch( e )
+				else
 				{
 					tutWind.close();
-					console.log( '[tutorials] Could not read tutorial overview.' );
+					console.log( '[tutorials] Found no tutorial overview.' );
 				}
 			}
-			else
-			{
-				tutWind.close();
-				console.log( '[tutorials] Found no tutorial overview.' );
-			}
+			m.execute( 'gettutorials' );
 		}
-		m.execute( 'gettutorials' );
 	}
 	f.load();
 	CloseTutorial();
@@ -187,4 +226,11 @@ function ShowAllTutorials()
 		tutWind = null;
 	}
 }
+
+function DisplayTutorial( str, ele )
+{
+	ele.innerHTML = str.split( '{session}' ).join( Workspace.sessionId );
+	ele.classList.remove( 'Loading' );
+}
+
 

@@ -39,10 +39,9 @@ var WorkspaceInside = {
 				{
 					if( b == num )
 					{
-						wsp[a].onmousedown();
+						Workspace.setWorkspace( b, eles[0] );
 						if( ge( 'InputGrabber' ) )
 							ge( 'InputGrabber' ).blur();
-						return;
 					}
 					b++; 
 				}
@@ -432,58 +431,7 @@ var WorkspaceInside = {
 					w.ind = a;
 					w.onmousedown = function( e )
 					{
-						// No need for change
-						if( this.ind == globalConfig.workspaceCurrent )
-							return;
-							
-						var cnt = 0;
-						for( var z = 0; z < d.childNodes.length; z++ )
-						{
-							if( d.childNodes[z].className && d.childNodes[z].classList.contains( 'Workspace' ) )
-							{
-								if( d.childNodes[z] == this )
-								{
-									globalConfig.workspaceCurrent = cnt;
-									d.childNodes[z].classList.add( 'Active' );
-								}
-								else d.childNodes[z].classList.remove( 'Active' );
-								cnt++;
-							}
-						}
-						ge( 'DoorsScreen' ).screenObject.contentDiv.style.left = '-' + 100 * this.ind + '%';
-						
-						_DeactivateWindows();
-						
-						// Check if we have a preset window that should be activated
-						var foundActive = false;
-						if( typeof( virtualWorkspaces[ this.ind ] ) != 'undefined' )
-						{
-							if( virtualWorkspaces[ this.ind ].activeWindow )
-							{
-								_ActivateWindow( virtualWorkspaces[ this.ind ].activeWindow );
-								foundActive = true;
-							}
-						}
-						
-						// Activate next window on next screen
-						if( !foundActive )
-						{
-							for( var c in movableWindows )
-							{
-								if( !movableWindows[c].windowObject ) continue;
-							
-								if( movableWindows[c].windowObject.workspace == this.ind )
-								{
-									var pn = movableWindows[c].parentNode;
-									if( pn.getAttribute( 'minimized' ) != 'minimized' )
-									{
-										_ActivateWindow( movableWindows[c] );
-										break;
-									}
-								}
-							}
-						}
-						return cancelBubble( e );
+						Workspace.setWorkspace( this.ind, d, e );
 					}
 					d.appendChild( w );
 				}
@@ -491,11 +439,114 @@ var WorkspaceInside = {
 				
 				Workspace.checkWorkspaceWallpapers();
 				
+				// Keep windows in the right place
+				for( let c in movableWindows )
+				{
+					if( movableWindows[ c ].windowObject.workspace > globalConfig.workspacecount - 1 )
+					{
+						movableWindows[ c ].windowObject.sendToWorkspace( globalConfig.workspacecount - 1 );
+					}
+				}
+				
+				// We don't wanna show offscreen
+				if( globalConfig.workspaceCurrent > globalConfig.workspacecount - 1 )
+				{
+					Workspace.setWorkspace( globalConfig.workspacecount - 1 );
+				}
+				
 				PollTrayPosition();
+			}
+			// Put all on workspace 1
+			else
+			{
+				for( let c in movableWindows )
+				{
+					movableWindows[ c ].windowObject.sendToWorkspace( 0 );
+				}
+				Workspace.setWorkspace( 0 );
 			}
 		}
 		// Refresh our dynamic classes now..
 		RefreshDynamicClasses();
+	},
+	setWorkspace: function( index, workspaceButtons, e )
+	{
+		if( !e ) e = window.event;
+		
+		// No need for change
+		if( index == globalConfig.workspaceCurrent )
+		{
+			return;
+		}
+		
+		if( !workspaceButtons )
+		{
+			let eles = ge( 'DoorsScreen' ).getElementsByClassName( 'VirtualWorkspaces' );
+			if( eles.length )
+			{
+				workspaceButtons = eles[0];
+			}
+		}
+		
+		// Out of bounds!
+		if( index != 0 && ( index < 0 || index >= globalConfig.workspacecount ) )
+		{
+			return;
+		}
+		
+		globalConfig.workspaceCurrent = index;
+		
+		var cnt = 0;
+		let d = workspaceButtons;
+		if( d )
+		{
+			for( var z = 0; z < d.childNodes.length; z++ )
+			{
+				if( d.childNodes[z].className && d.childNodes[z].classList.contains( 'Workspace' ) )
+				{
+					if( cnt == index )
+					{
+						d.childNodes[z].classList.add( 'Active' );
+					}
+					else d.childNodes[z].classList.remove( 'Active' );
+					cnt++;
+				}
+			}
+		}
+		ge( 'DoorsScreen' ).screenObject.contentDiv.style.left = '-' + ( 100 * index ) + '%';
+		
+		_DeactivateWindows();
+		
+		// Check if we have a preset window that should be activated
+		var foundActive = false;
+		if( typeof( virtualWorkspaces[ index ] ) != 'undefined' )
+		{
+			if( virtualWorkspaces[ index ].activeWindow )
+			{
+				_ActivateWindowOnly( virtualWorkspaces[ index ].activeWindow );
+				foundActive = true;
+			}
+		}
+		
+		// Activate next window on next screen
+		if( !foundActive )
+		{
+			for( var c in movableWindows )
+			{
+				if( !movableWindows[c].windowObject ) continue;
+			
+				if( movableWindows[c].windowObject.workspace == index )
+				{
+					var pn = movableWindows[c].parentNode;
+					if( pn.getAttribute( 'minimized' ) != 'minimized' )
+					{
+						_ActivateWindow( movableWindows[c] );
+						break;
+					}
+				}
+			}
+		}
+		return cancelBubble( e );
 	},
 	// Reposition and size
 	repositionWorkspaceWallpapers: function()
@@ -10010,9 +10061,8 @@ InitDynamicClassSystem();
 
 document.addEventListener( 'paste', function( evt )
 {
-	//console.log('paste event received',evt);
 	Workspace.handlePasteEvent( evt );
-});
+} );
 
 // Push notification integration and other app events --------------------------
 if( window.friendApp )
@@ -10033,13 +10083,17 @@ if( window.friendApp )
 Workspace.receiveLive = function( viewId, jsonEvent ) {
 	const self = this;
 	let event = null;
-	try {
+	
+	try 
+	{
 		event = JSON.parse( jsonEvent );
-	} catch( ex ) {
+	}
+	catch( ex )
+	{
 		console.log( 'Workspace.receiveLive - error parsing json', {
 			error     : ex,
 			jsonEvent : jsonEvent,
-		});
+		} );
 		return;
 	}
 	
@@ -10047,24 +10101,29 @@ Workspace.receiveLive = function( viewId, jsonEvent ) {
 		viewId : viewId,
 		json   : jsonEvent,
 		event  : event,
-	});
+	} );
+	
 	const appName = 'FriendChat';
+	
 	// find friendchat app
 	let chat = null;
+	
 	console.log( 'all apps', Workspace.applications );
+	
 	Workspace.applications.some( app => {
 		console.log( 'looking for chat', {
 			app  : app,
 			name : app.applicationName,
-		});
+		} );
 		if ( app.applicationName != appName )
 			return false;
 		
 		chat = app;
 		return true;
-	});
+	} );
 	
-	if ( !chat ) {
+	if( !chat )
+	{
 		console.log( 'receiveLive - chat not found' );
 		return;
 	}
@@ -10081,14 +10140,14 @@ Workspace.receiveLive = function( viewId, jsonEvent ) {
 // Receive push notification (when a user clicks native push notification on phone)
 Workspace.receivePush = function( jsonMsg, ready )
 {
-	if( !isMobile ) return "mobile";
+	if( !isMobile ) return 'mobile';
 	var msg = jsonMsg ? jsonMsg : ( window.friendApp && typeof friendApp.get_notification == 'function' ? friendApp.get_notification() : false );
 
 	// we use 1 as special case for no push being here... to make it easier to know when to launch startup sequence... maybe not ideal, but works
 	if( msg == false || msg == 1 ) 
 	{
 		if( !ready && this.onReady ) this.onReady();
-		return "nomsg";
+		return 'nomsg';
 	}
 	try
 	{
@@ -10102,7 +10161,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 	if( !msg ) 
 	{
 		if( !ready && this.onReady ) this.onReady();
-		return "nomsg";
+		return 'nomsg';
 	}
 		
 	// Clear the notifications now... (race cond?)
@@ -10144,10 +10203,11 @@ Workspace.receivePush = function( jsonMsg, ready )
 			{}
 		}
 	
-		for( var a = 0; a < Workspace.applications.length; a++ )
+		// Check existing applications
+		for( let a = 0; a < Workspace.applications.length; a++ )
 		{
-			if( Workspace.applications[a].applicationName == msg.application )
-			{	
+			if( Workspace.applications[ a ].applicationName == msg.application )
+			{
 				// Need a "message id" to be able to update notification
 				// on the Friend Core side
 				if( msg.id )
@@ -10167,7 +10227,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 			
 				mobileDebug( ' Sendtoapp2: ' + JSON.stringify( msg ), true );
 			
-				var app = Workspace.applications[a];
+				let app = Workspace.applications[a];
 				app.contentWindow.postMessage( JSON.stringify( { 
 					type: 'system',
 					method: 'pushnotification',
@@ -10187,7 +10247,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 			if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
 			{
 				messageRead = true;
-				var l = new Library( 'system.library' );
+				let l = new Library( 'system.library' );
 				l.onExecuted = function(){};
 				l.execute( 'mobile/updatenotification', { 
 					notifid: msg.id, 
@@ -10201,13 +10261,13 @@ Workspace.receivePush = function( jsonMsg, ready )
 		// Send message to app once it has started...
 		function appMessage()
 		{
-			var app = false;
-			var apps = Workspace.applications;
+			let app = false;
+			let apps = Workspace.applications;
 			
 			//too early?
 			if( !apps ) return;
 			
-			for( var a = 0; a < apps.length; a++ )
+			for( let a = 0; a < apps.length; a++ )
 			{
 				// Found the application
 				if( apps[ a ].applicationName == msg.application )
@@ -10221,8 +10281,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 			// TODO: Localize response!
 			if( !app )
 			{
-				// no notification here... we got weird message in our new android app but everything worked...
-				//Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
+				// No notification here... we got weird message in our new android app but everything worked...
 				if( Workspace.onReady ) Workspace.onReady();
 				return;
 			}
@@ -10282,7 +10341,7 @@ if( document.hidden )
 {
 	Workspace.updateViewState( 'inactive' );
 }
-else 
+else
 {
 	Workspace.updateViewState( 'active' );
 }

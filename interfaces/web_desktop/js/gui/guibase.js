@@ -714,9 +714,15 @@ var mousePointer =
 			if( !ele.window.parentNode.classList.contains( 'Active'  ))
 				_ActivateWindowOnly( ele.window.parentNode );
 			
+			if( ele.window && ele.window.directoryview && ele.window.directoryview.filedialog )
+			{
+				return false;
+			}
+			
 			for( var a = 0; a < ele.window.icons.length; a++ )
 			{
 				let ic = ele.window.icons[a];
+
 				if( !ic.domNode ) continue;
 				
 				if( ic.domNode.className.indexOf ( 'Selected' ) > 0 )
@@ -2063,9 +2069,22 @@ movableListener = function( e, data )
 					let dv = Workspace.screen.contentDiv.directoryview;
 					if( dv && dv.scroller )
 					{
-						dv = dv.scroller;
-						screenLeftEdge = dv.offsetLeft;
-						screenRightEdge = window.innerWidth - ( Workspace.screen.contentDiv.offsetWidth - dv.offsetWidth );
+						screenRightEdge = window.innerWidth;
+						screenLeftEdge = 0;
+						
+						let dock = Workspace.mainDock ? Workspace.mainDock.dom : false;
+						if( dock )
+						{
+							if( dock.classList.contains( 'Left' ) )
+							{
+								screenLeftEdge += dock.offsetWidth;
+							}
+							else if( dock.classList.contains( 'Right' ) )
+							{
+								screenRightEdge -= dock.offsetWidth;
+							}
+						}
+						
 					}
 					
 					// Give some space from the title bar
@@ -2660,9 +2679,10 @@ function CheckScreenTitle( screen, force )
 	if( wo && wo.parentNode && !wo.parentNode.parentNode )
 		wo = false;
 	
+	let isDoorsScreen = testObject.id == 'DoorsScreen';	
+
 	let hasScreen = ( !csc || ( wo && testObject.screenObject == wo.screen ) || ( wo && !wo.screen && isDoorsScreen ) );
 	
-	let isDoorsScreen = testObject.id == 'DoorsScreen';	
 	
 	// Clear the delayed action
 	if( _screenTitleTimeout )

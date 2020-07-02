@@ -65,6 +65,31 @@ else if( $args->command == 'gettutorials' )
 		die( 'ok<!--separate-->{"data":"' . base64_encode( $str ) . '"}' );
 	}
 }
+else if( $args->command == 'gettutorial' )
+{
+	if( isset( $args->args->number ) )
+	{
+		$filename = 'modules/tutorials/data/' . $args->args->number . '/tutorial_large.html';
+		if( file_exists( $filename ) )
+		{
+			$str = file_get_contents( $filename );
+			die( 'ok<!--separate-->{"data":"' . base64_encode( $str ) . '"}' );
+		}
+	}
+}
+else if( $args->command == 'getimage' )
+{
+	if( isset( $args->number ) )
+	{
+		$filename = 'modules/tutorials/data/' . $args->number . '/image.jpg';
+		if( file_exists( $filename ) )
+		{
+			FriendHeader( 'Content-type', 'image/jpeg' );
+			readfile( $filename );
+			die();
+		} 
+	}
+}
 else if( $args->command == 'increment' )
 {
 	$s = new dbIO( 'FSetting' );

@@ -284,6 +284,8 @@ i18n_SQLRODrive                   : Friend Read only drive
 i18n_IMAP                         : IMAP drive
 #i18n_IPFSDrive                   : IPFS disk
 i18n_IPFSDrive                    : IPFS drive
+i18n_SharedDrive                  : Shared
+
 
 i18n_disk_error                      : Disk error
 i18n_failed_to_edit                  : Failed to edit disk volume.

@@ -2053,6 +2053,12 @@ html .Calendar div.HRow > .Current.Day:nth-child(even):hover
 	-webkit-mask-image: linear-gradient(180deg,black 0%, black calc(100% - 20px), transparent 100%);
 	-moz-mask-image: linear-gradient(180deg,black 0%, black calc(100% - 20px), transparent 100%);
 	mask-image: linear-gradient(180deg,black 0%, black calc(100% - 20px), transparent 100%);
+	cursor: pointer;
+}
+
+body:not([mobile]):not([tablet]) #Available_tutorials .Tutorial > div:hover
+{
+	filter: invert(0.2);
 }
 
 #Available_tutorials .Tutorial h2
@@ -2060,6 +2066,22 @@ html .Calendar div.HRow > .Current.Day:nth-child(even):hover
 	display: block;
 	font-size: 1em;
 	font-weight: bold;
+}
+
+#Available_tutorials .Content.Big
+{
+	overflow: hidden !important;
+}
+
+#Available_tutorials .Content.Big .Tutorial.Big
+{
+	overflow: auto !important;
+}
+
+#Available_tutorials .Tutorial.Big img
+{
+    max-width: 100%;
+    border-radius: 3px;
 }
 
 #Available_tutorials .VContentTop:after
@@ -2081,6 +2103,22 @@ html .Calendar div.HRow > .Current.Day:nth-child(even):hover
 	z-index: 2;
 }
 
+#Available_tutorials
+{
+	overflow: hidden;
+}
+
+#Available_tutorials .Content
+{
+	opacity: 1;
+	transition: opacity 0.15s;
+}
+
+#Available_tutorials .Content.Phase
+{
+	opacity: 0;
+}
+
 #Available_tutorials .Big .Big
 {
 	position: absolute;
@@ -2090,11 +2128,24 @@ html .Calendar div.HRow > .Current.Day:nth-child(even):hover
 	height: calc(100% - 40px);
 	z-index: 3;
 	margin: 0;
+	padding: 20px;
+	cursor: default;
+}
+
+#Available_tutorials .Tutorial.Big > div
+{
+	transition: opacity 0.15s;
+	opacity: 1;
+}
+
+#Available_tutorials .Tutorial.Big.Loading > div
+{
+	opacity: 0;
 }
 
 #Available_tutorials .Big .Tutorial:not(.Big)
 {
-	filter: blur(3px);
+	opacity: 0;
 }
 
 /* Context Menu items ------------------------------------------------------- */
