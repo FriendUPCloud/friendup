@@ -14,6 +14,12 @@
 	border-radius: 0;
 }
 
+.ViewContainer[minimized]
+{
+	visibility: hidden;
+	pointer-events: none;
+}
+
 #DoorsScreen > .ScreenContent
 {
 	overflow: hidden;
