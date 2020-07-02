@@ -7764,7 +7764,7 @@ Sections.user_disk_refresh = function( mountlist, userid )
 				
 				for( var b in rows )
 				{
-					
+					if( rows[b].Type == 'SharedDrive' ) continue;
 					try
 					{
 						rows[b].Config = JSON.parse( rows[b].Config );
