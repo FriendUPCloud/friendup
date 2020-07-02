@@ -1946,7 +1946,8 @@ function CloseView( win, delayed )
 		{
 			for( var a in app.windows )
 			{
-				app.windows[ a ].activate( 'force' );
+				if( app.windows[ a ].activate )
+					app.windows[ a ].activate( 'force' );
 				break;
 			}
 		}

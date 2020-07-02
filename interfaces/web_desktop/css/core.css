@@ -2012,7 +2012,7 @@ html .Calendar div.HRow > .Current.Day:nth-child(even):hover
 
 #Available_tutorials .VContentTop
 {
-	padding-left: 5px;
+    padding: 5px 0 10px 5px;
 	bottom: 50px;
 }
 
@@ -2028,7 +2028,7 @@ html .Calendar div.HRow > .Current.Day:nth-child(even):hover
 	margin: 10px 5px 5px 5px;
 	float: left;
 	border: 1px solid rgba(128,128,128,0.5);
-	border-radius: 4px;
+	border-radius: 2px;
 	box-sizing: border-box;
 	height: 200px;
 	overflow: hidden;

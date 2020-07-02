@@ -51,6 +51,7 @@ i18n_affirmative                     : Ok
 i18n_negative                        : No
 i18n_yes                             : Yes
 i18n_cancel                          : Cancel
+i18n_back                            : Back
 i18n_accept                          : Accept
 i18n_understood                      : Understood
 i18n_your_devices                    : Disks
