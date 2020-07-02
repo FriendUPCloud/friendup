@@ -191,7 +191,7 @@ function ShowAllTutorials()
 													se.classList.remove( 'Big', 'Loading' );
 													list.classList.remove( 'Big' );
 												}
-												t.execute( 'gettutorial', { number: num + 1 } );
+												t.execute( 'gettutorial', { number: num + 2 } ); // + 2 (num starts 0, should be 1, skip tutorial 1 means use + 2)
 											} )( c, this, tutWind._window );
 										}
 										else
@@ -229,7 +229,7 @@ function ShowAllTutorials()
 
 function DisplayTutorial( str, ele )
 {
-	ele.innerHTML = str;
+	ele.innerHTML = str.split( '{session}' ).join( Workspace.sessionId );
 	ele.classList.remove( 'Loading' );
 }
 
