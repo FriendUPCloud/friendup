@@ -76,7 +76,11 @@ extern void *FCM;			// FriendCoreManager
 
 void FriendCoreProcess( void *fcv );
 
-int accept4(int sockfd, struct sockaddr *addr,            socklen_t *addrlen, int flags);
+int accept4(int sockfd, struct sockaddr *addr,            socklen_t *addrlen, int flags );
+
+void FriendCoreProcessSockBlock( void *fcv );
+
+void FriendCoreProcessSockNonBlock( void *fcv );
 
 int nothreads = 0;					/// threads coutner @todo to rewrite
 #define MAX_CALLHANDLER_THREADS 256			///< maximum number of simulatenous handlers
@@ -546,7 +550,33 @@ void *FriendCoreAcceptPhase2( void *data )
 					
 						goto accerror;
 					}
-				
+					
+					struct fcThreadInstance *pre = FCalloc( 1, sizeof( struct fcThreadInstance ) );
+					if( pre != NULL )
+					{
+						pre->fc = fc; pre->sock = incoming;
+					
+#ifdef USE_PTHREAD
+						//size_t stacksize = 16777216; //16 * 1024 * 1024;
+						size_t stacksize = 8777216;	// half of previous stack
+						pthread_attr_t attr;
+						pthread_attr_init( &attr );
+						pthread_attr_setstacksize( &attr, stacksize );
+						
+						// Make sure we keep the number of threads under the limit
+						
+						//change NULL to &attr
+#ifdef USE_BLOCKED_SOCKETS_TO_READ_HTTP
+						if( pthread_create( &pre->thread, &attr, (void *(*) (void *))&FriendCoreProcessSockBlock, ( void *)pre ) != 0 )
+#else
+						if( pthread_create( &pre->thread, &attr, (void *(*) (void *))&FriendCoreProcessSockNonBlock, ( void *)pre ) != 0 )
+#endif
+						{
+							FFree( pre );
+						}
+#endif
+					}
+				/*
 					/// Add to epoll
 					struct epoll_event event;
 					event.data.ptr = incoming;
@@ -578,6 +608,7 @@ void *FriendCoreAcceptPhase2( void *data )
 							close( fd );
 						}
 					}
+					*/
 				}
 			}
 			//DEBUG("[FriendCoreAcceptPhase2] in accept loop\n");
@@ -1687,8 +1718,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	while( !fc->fci_Shutdown )
 	{
 #ifdef ACCEPT_IN_THREAD
-		epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_MOD, fc->fci_Sockets->fd, &(fc->fci_EpollEvent) );
-//		epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_MOD, fc->fci_Sockets->fd, {EPOLLIN|EPOLLONESHOT|EPOLLET, {u32=161, u64=4294967457}}) = 0
+		//epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_MOD, fc->fci_Sockets->fd, &(fc->fci_EpollEvent) );
 #endif
 		
 		// Wait for something to happen on any of the sockets we're listening on
@@ -2004,7 +2034,7 @@ int FriendCoreRun( FriendCoreInstance* fc )
 	
 	memset( &(fc->fci_EpollEvent), 0, sizeof( fc->fci_EpollEvent ) );
 	fc->fci_EpollEvent.data.ptr = fc->fci_Sockets;
-	fc->fci_EpollEvent.events = EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP | EPOLLERR | EPOLLONESHOT ;// | EPOLLEXCLUSIVE ; //all flags are necessary, otherwise epoll may not deliver disconnect events and socket descriptors will leak
+	fc->fci_EpollEvent.events = EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP | EPOLLERR;// | EPOLLONESHOT ;// | EPOLLEXCLUSIVE ; //all flags are necessary, otherwise epoll may not deliver disconnect events and socket descriptors will leak
 	
 	if( epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_ADD, fc->fci_Sockets->fd, &(fc->fci_EpollEvent) ) == -1 )
 	{
