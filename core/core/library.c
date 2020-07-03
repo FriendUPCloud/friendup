@@ -46,7 +46,7 @@ void *LibraryOpen( void *sb, const char *name, long version )
 {
 	if( !name )
 	{
-		FERROR("Cannot open library with empty name!\n");
+		Log( FLOG_ERROR, "Cannot open library with empty name!\n");
 		return NULL;
 	}
 	DEBUG("Lib open\n");
@@ -78,7 +78,7 @@ void *LibraryOpen( void *sb, const char *name, long version )
 	// there is no need to multiply by sizeof(char)
 	if (getcwd( currentDirectory, sizeof ( currentDirectory ) ) == NULL)
 	{
-		FERROR("getcwd failed!");
+		Log( FLOG_ERROR, "[LibraryOpen] getcwd failed!");
 		exit(5);
 	}
 	//DEBUG( "[LibraryOpen] Current directory %s\n", currentDirectory );
@@ -163,7 +163,7 @@ void *LibraryOpen( void *sb, const char *name, long version )
 		char* error = dlerror();
 		if( error )
 		{
-			FERROR( "[LibraryOpen] Library error: %s  DYNAMIC LINK ERROR\n", error );
+			Log( FLOG_ERROR, "[LibraryOpen] Library error: %s  DYNAMIC LINK ERROR\n", error );
 		}
 	}
 

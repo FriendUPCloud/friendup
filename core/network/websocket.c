@@ -204,7 +204,7 @@ int WebsocketThread( FThread *data )
 	WebSocket *ws = (WebSocket *)data->t_Data;
 	if( ws->ws_Context == NULL )
 	{
-		FERROR("[WS] WsContext is empty\n");
+		Log( FLOG_ERROR, "[WebsocketThread] WsContext is empty\n");
 		return 0;
 	}
 	
@@ -365,7 +365,7 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 		ws->ws_Context = lws_create_context( &ws->ws_Info );
 		if( ws->ws_Context == NULL )
 		{
-			FERROR( "Libwebsocket init failed, cannot create context\n" );
+			Log( FLOG_ERROR, "[WebSocketNew] Libwebsocket init failed, cannot create context\n" );
 			FFree( ws );
 			return NULL;
 		}
@@ -374,7 +374,7 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 	}
 	else
 	{
-		FERROR("[WS] Cannot allocate memory for WebSocket\n");
+		Log( FLOG_ERROR, "[WebSocketNew] Cannot allocate memory for WebSocket\n");
 	}
 	
 	DEBUG1("[WS] Websocket created\n");

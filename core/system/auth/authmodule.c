@@ -61,19 +61,19 @@ AuthMod *AuthModNew( void *lsb, const char *path, const char* name, long version
 {
 	if( name == NULL )
 	{
-		FERROR("Cannot open login module with empty name!\n");
+		Log( FLOG_ERROR, "[AuthModNew] Cannot open login module with empty name!\n");
 		return NULL;
 	}
 	
 	if( !lsb )
 	{
-		FERROR("Cannot open login module with SysBase.library pointer!\n");
+		Log( FLOG_ERROR, "[AuthModNew] Cannot open login module with SysBase.library pointer!\n");
 		//return NULL;
 	}
 		
 	if( name == NULL )
 	{
-		FERROR("Name parameter is null\n");
+		Log( FLOG_ERROR, "[AuthModNew] Name parameter is null\n");
 		return NULL;
 	}
 	
@@ -123,7 +123,7 @@ AuthMod *AuthModNew( void *lsb, const char *path, const char* name, long version
 	char* error = dlerror();
 	if( error )
 	{
-		FERROR( "[AuthMod] Library error: %s  DYNAMIC LINK ERROR\n", error );
+		Log( FLOG_ERROR, "[AuthMod] Library error: %s  DYNAMIC LINK ERROR\n", error );
 	}
 
 	if( loaded == FALSE )

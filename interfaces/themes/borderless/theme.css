@@ -1,13 +1,15 @@
 @font-face {
-    font-family: 'lato';
-    src: url('/webclient/theme/fonts/lato-regular-webfont.eot');
-    src: url('/webclient/theme/fonts/lato-regular-webfont.eot?#iefix') format('embedded-opentype'),
-         url('/webclient/theme/fonts/lato-regular-webfont.woff2') format('woff2'),
-         url('/webclient/theme/fonts/lato-regular-webfont.woff') format('woff'),
-         url('/webclient/theme/fonts/lato-regular-webfont.ttf') format('truetype'),
-         url('/webclient/theme/fonts/lato-regular-webfont.svg#latoregular') format('svg');
+    font-family: 'assistant';
+    src: url('/themes/friendup12/fonts/Assistant-Regular.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
+}
+
+@font-face {
+    font-family: 'assistant';
+    src: url('/themes/friendup12/fonts/Assistant-SemiBold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: bold;
 }
 
 @font-face
@@ -128,7 +130,7 @@
 	$FontWeightButtonActive: bold;
 
 	/* Default face */
-	$FontFaceNormal:         lato, sans serif;
+	$FontFaceNormal:         assistant, sans serif;
 
 	/* Font transforms */
 	$FontTransformThList:    uppercase;
