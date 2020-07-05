@@ -25,6 +25,8 @@ require_once( 'php/classes/dbio.php' );
 require_once( 'php/classes/door.php' );
 require_once( 'php/classes/file.php' );
 
+$Logger->log( 'Here are all args: ' . print_r( $args, 1 ) );
+
 if( !function_exists( 'findInSearchPaths' ) )
 {
 	function findInSearchPaths( $app )
