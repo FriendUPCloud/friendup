@@ -26,7 +26,7 @@ Application.run = function( msg, iface )
 	// On set flag
 	w.onSetFlag = function( flag, value )
 	{
-		if( flag == 'minimized' )
+		/*if( flag == 'minimized' )
 		{
 			if( value )
 			{
@@ -36,7 +36,7 @@ Application.run = function( msg, iface )
 			{
 				Application.hideWidget();
 			}
-		}
+		}*/
 	}
 	
 	w.onClose = function( closeWindow )
