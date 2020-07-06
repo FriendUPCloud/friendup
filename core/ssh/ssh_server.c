@@ -33,8 +33,8 @@ clients must be made or how a client should react.
 
 #ifdef ENABLE_SSH
 #include <libssh/libssh.h>
-#endif
 #include <libssh/server.h>
+#endif
 #include <system/auth/authmodule.h>
 #include <system/systembase.h>
 
