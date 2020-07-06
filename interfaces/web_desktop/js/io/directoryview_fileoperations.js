@@ -338,6 +338,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 	// Can't handle file dialogs!
 	if( this.filedialog ) return false;
 	if( this.directoryView && this.directoryView.filedialog ) return false;
+	if( this.content && this.content.directoryview && this.content.directoryview.filedialog ) return false;
 	
 	let dview = this; // The view in question
 	
