@@ -119,7 +119,7 @@ $(DSP): win32/msvcproj.head win32/msvcproj.foot Makefile.am
 	for file in $$sorted_hdrs; do \
 		echo "# Begin Source File"; \
 		echo ""; \
-		if [ "$$file" == "libssh2_config.h" ]; \
+		if [ "$$file" = "libssh2_config.h" ]; \
 		then \
 			echo "SOURCE=.\\"$$file; \
 		else \
@@ -147,3 +147,6 @@ $(VCPROJ): win32/vc8proj.head win32/vc8proj.foot Makefile.am
 	done; \
 	cat $(srcdir)/vc8proj.foot) | \
 	awk '{printf("%s\r\n", gensub("\r", "", "g"))}' > $@ )
+
+checksrc:
+	perl src/checksrc.pl -i4 -m79 -ASIZEOFNOPAREN -ASNPRINTF -ACOPYRIGHT -AFOPENMODE -Wsrc/libssh2_config.h src/*.[ch] include/*.h example/*.c

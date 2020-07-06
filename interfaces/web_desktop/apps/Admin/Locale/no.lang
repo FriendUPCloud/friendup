@@ -126,6 +126,9 @@ i18n_user_updated_succ                 : Brukeren ble oppdatert i databasen.
 i18n_user_update_fail                  : Feil ved oppdatering
 i18n_user_update_failed                : Kunne ikke oppdatere brukeren.
 
+i18n_SharedDrive                 	   : Delt
+
+
 #Workgroup related
 
 i18n_header_name                       : Navn

@@ -9,6 +9,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
+require_once( 'dbio.php' );
+
 if( !defined( 'DOOR_SLASH_REPLACEMENT' ) )
 {
 	// To fix names
@@ -18,12 +20,25 @@ if( !defined( 'DOOR_SLASH_REPLACEMENT' ) )
 
 class Door extends dbIO
 {	
+	// How to authenticate?
+	var $_authcontext = null; // authentication key (e.g. sessionid)
+	var $_authdata = null; // authentication data (e.g. a sessionid hash)
+	var $_user = null; // override user
+	
 	// Construct a Door object
-	function __construct( $path = false )
+	function __construct( $path = false, $authcontext = false, $authdata = false )
 	{
 		global $SqlDatabase, $Logger;
 		
 		$this->dbTable( 'Filesystem' );
+		
+		// We may wanna do this in the constructor
+		if( isset( $authcontext ) && isset( $authdata ) )
+		{
+			$this->SetAuthContext( $authcontext, $authdata );
+		}
+		
+		$this->GetAuthContextComponent();
 		
 		if( $q = $this->getQuery( $path ) )
 		{
@@ -37,16 +52,116 @@ class Door extends dbIO
 		{
 			$this->onConstruct();
 		}
+		
+	}
+	
+	// Get the auth mechanism
+	function GetAuthContext()
+	{
+		return $this->_authcontext;
+	}
+	
+	// Set the correct authentication mechanism
+	function SetAuthContext( $context, $authdata )
+	{
+		switch( $context )
+		{
+			case 'sessionid':
+				$this->_authcontext = 'sessionid';
+				$this->_authdata = $authdata;
+				return true;
+			case 'authid':
+				$this->_authcontext = 'authid';
+				$this->_authdata = $authdata;
+				return true;
+			case 'servertoken':
+				$u = new dbIO( 'FUser' );
+				$u->ServerToken = $authdata;
+				// Only succeed if we can load the user
+				if( $u->Load() )
+				{
+					$this->_user = $u;
+					$this->_authcontext = 'servertoken';
+					$this->_authdata = $authdata;
+					return true;
+				}
+				break;
+			case 'user':
+				$this->_authcontext = 'user';
+				$this->_authdata = $authdata;
+				break;
+		}
+		return false;
+	}
+	
+	// Get the right component to add to the server calls
+	// $userInfo is optional, and will pull that user's SessionID
+	function GetAuthContextComponent( $userInfo = false )
+	{
+		switch( $this->_authcontext )
+		{
+			case 'sessionid':
+				return 'sessionid=' . $this->_authdata;
+			case 'authid':
+				return 'authid=' . $this->_authdata;
+			case 'servertoken':
+				return 'servertoken=' . $this->_authdata;
+			default:
+				if( isset( $GLOBALS[ 'args' ]->sessionid ) )
+				{
+					$this->_authcontext = 'sessionid';
+					$this->_authdata = $GLOBALS[ 'args' ]->sessionid;
+				}
+				else if( isset( $GLOBALS[ 'args' ]->authid ) )
+				{
+					$this->_authcontext = 'authid';
+					$this->_authdata = $GLOBALS[ 'args' ]->authid;
+				}
+				else if( isset( $GLOBALS[ 'args' ]->servertoken ) )
+				{
+					$this->_authcontext = 'servertoken';
+					$this->_authdata = $GLOBALS[ 'args' ]->servertoken;
+				}
+				else if( $userInfo && isset( $userInfo->SessionID ) )
+				{
+					$this->_authcontext = 'sessionid';
+					$this->_authdata = $userInfo->SessionID;
+				}
+				return $this->GetAuthContextComponent();
+		}
+		return false;
+		
+	}
+	
+	// Get an object which includes the key and data for authentication
+	function GetAuthContextObject( $userInfo = false )
+	{
+		if( $str = $this->GetAuthContextComponent( $userInfo ) )
+		{
+			$data = explode( '=', $str );
+			if( isset( $data[1] ) )
+			{
+				$data[0] = substr( $data[0], 1, strlen( $data[0] ) - 1 );
+				$key = new stdClass();
+				$key->Key = $data[0];
+				$key->Data = $data[1];
+				return $key;
+			}
+		}
+		return false;
 	}
 	
 	// Gets the correct identifier to extract a filesystem
 	function getQuery( $path = false )
 	{
 		global $args, $User, $Logger, $SqlDatabase;
-		if( !isset( $User->ID ) ) 
+		if( !isset( $User->ID ) && !isset( $this->_user ) ) 
 		{
 			return false;
 		}
+		
+		// For whom are we calling?
+		$activeUser = isset( $this->_user ) ? $this->_user : $User;
 		
 		$identifier = false;
 		
@@ -107,12 +222,12 @@ class Door extends dbIO
 				SELECT * FROM `Filesystem` f 
 				WHERE 
 					(
-						f.UserID=\'' . $User->ID . '\' OR
+						f.UserID=\'' . $activeUser->ID . '\' OR
 						f.GroupID IN (
 							SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
 							WHERE 
 								g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-								ug.UserID = \'' . $User->ID . '\'
+								ug.UserID = \'' . $activeUser->ID . '\'
 						)
 					)
 					AND ' . $identifier . ' LIMIT 1';
@@ -127,12 +242,12 @@ class Door extends dbIO
 				SELECT * FROM `Filesystem` f 
 				WHERE 
 					(
-						f.UserID=\'' . $User->ID . '\' OR
+						f.UserID=\'' . $activeUser->ID . '\' OR
 						f.GroupID IN (
 							SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
 							WHERE 
 								g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-								ug.UserID = \'' . $User->ID . '\'
+								ug.UserID = \'' . $activeUser->ID . '\'
 						)
 					)
 					AND
@@ -147,13 +262,31 @@ class Door extends dbIO
 	{
 		global $Config, $User, $SqlDatabase, $Logger;
 		
-		if( !strstr( $query, '?' ) )
+		$activeUser = isset( $this->_user ) ? $this->user : $User;
+		
+		// Support auth context
+		if( isset( $this->_authdata ) )
 		{
-			$query .= '?sessionid=' . $User->SessionID;
+			if( !strstr( $query, '?' ) )
+			{
+				$query .= '?' . $this->GetAuthContextComponent();
+			}
+			else
+			{
+				$query .= '&' . $this->GetAuthContextComponent();
+			}
 		}
+		// Default
 		else
 		{
-			$query .= '&sessionid=' . $User->SessionID;
+			if( !strstr( $query, '?' ) )
+			{
+				$query .= '?sessionid=' . $activeUser->SessionID;
+			}
+			else
+			{
+				$query .= '&sessionid=' . $activeUser->SessionID;
+			}
 		}
 		
 		$u = $Config->SSLEnable ? 'https://' : 'http://';
@@ -518,6 +651,8 @@ class Door extends dbIO
 	{
 		global $User, $Logger;
 		
+		$activeUser = isset( $this->_user ) ? $this->_user : $User;
+		
 		// 1. Get the filesystem objects
 		$ph = explode( ':', $delpath );
 		$ph = $ph[0];
@@ -529,7 +664,7 @@ class Door extends dbIO
 		}
 		
 		$fs = new dbIO( 'Filesystem' );
-		$fs->UserID = $User->ID;
+		$fs->UserID = $activeUser->ID;
 		$fs->Name   = $ph;
 		$fs->Load();
 		
@@ -592,6 +727,8 @@ class Door extends dbIO
 	{
 		global $User, $Logger;
 		
+		$activeUser = isset( $this->_user ) ? $this->_user : $User;
+		
 		// 1. Get the filesystem objects
 		$from = explode( ':', $pathFrom ); $from = $from[0];
 		$to   = explode( ':', $pathTo   ); $to = $to[0];
@@ -611,7 +748,7 @@ class Door extends dbIO
 		else
 		{
 			$fsFrom = new dbIO( 'Filesystem' );
-			$fsFrom->UserID = $User->ID;
+			$fsFrom->UserID = $activeUser->ID;
 			$fsFrom->Name   = $from;
 			$fsFrom->Load();
 			$this->cacheFrom = $fsFrom;
@@ -623,7 +760,7 @@ class Door extends dbIO
 		else
 		{
 			$fsTo = new dbIO( 'Filesystem' ); 
-			$fsTo->UserID = $User->ID;
+			$fsTo->UserID = $activeUser->ID;
 			$fsTo->Name   = $to;
 			$fsTo->Load();
 			$this->cacheTo = $fsTo;

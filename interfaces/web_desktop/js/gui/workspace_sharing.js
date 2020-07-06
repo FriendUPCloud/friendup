@@ -31,9 +31,14 @@ Workspace.viewSharingOptions = function( path )
 	v.path = path;
 	v.dIndex = 0;
 	v.selectedItems = [];
-	v.content.onclick = function( e )
+	let intype = window.isTablet || window.isMobile ? 'ontouchstart' : 'onclick';
+	v.content[ intype ] = function( e )
 	{
-		if( v.dropDown )
+		v.clickIt();
+	}
+	v.clickIt = function()
+	{
+		if( v.dropDown && v.dropDown.classList.contains( 'Showing' ) )
 		{
 			v.selectedItems = [];
 			let eles = v.dropDown.getElementsByClassName( 'DropdownItem' );
@@ -99,22 +104,37 @@ Workspace.viewSharingOptions = function( path )
 	}
 	f.load();
 };
-Workspace.saveFileShareInfo = function( uniqueId )
+Workspace.saveFileShareInfo = function( uniqueId, noclose )
 {
 	if( !this.sharingDialogs[ uniqueId ] ) return;
+	if( !noclose ) noclose = false;
 	let self = this;
 	let d = this.sharingDialogs[ uniqueId ];
+	let drp = null;
+	if( drp = d._window.getElementsByClassName( 'Dropdown' ) )
+	{
+		if( drp[0].classList.contains( 'Showing' ) )
+		{
+			d.clickIt();
+			return Workspace.refreshShareInformation( d, function()
+			{
+				drp[0].classList.remove( 'Showing' );
+				Workspace.saveFileShareInfo( uniqueId, true );
+			} );
+		}
+	}
 	
 	let o = new Module( 'system' );
 	o.onExecuted = function( e )
 	{
 		if( e == 'ok' )
 		{
-			d.close();
+			if( !noclose )
+				d.close();
 		}
 		else
 		{
-			Alert( 'Failed to set sharing info', 'The members you selected could not share your item.' );
+			Alert( i18n( 'i18n_nothing_shared' ), i18n( 'i18n_please_select_users_groups' ) );                                                                                                                                                                                                                                        
 			return;
 		}
 	}
@@ -127,7 +147,8 @@ Workspace.setSharingGui = function( viewObject )
 	let searchF = ge( 'dropdownfield_' + viewObject.uniqueId );
 	let dropDown = ge( 'dropdown_' + viewObject.uniqueId );
 	viewObject.dropDown = dropDown;
-	dropDown.onclick = function( e ){ return cancelBubble( e ); }
+	let intype = window.isTablet || window.isMobile ? 'ontouchstart' : 'onclick';
+	dropDown[ intype ] = function( e ){ return cancelBubble( e ); }
 	searchF.onkeyup = function( e )
 	{
 		// Arrow down/up
@@ -280,9 +301,10 @@ Workspace.setSharingGui = function( viewObject )
 		{
 			dropDown.innerHTML = str;
 			let eles = dropDown.getElementsByClassName( 'DropdownItem' );
+			let intype = window.isTablet || window.isMobile ? 'ontouchstart' : 'onclick';
 			for( let c = 0; c < eles.length; c++ )
 			{
-				eles[ c ].onclick = function( e )
+				eles[ c ][ intype ] = function( e )
 				{
 					if( this.classList.contains( 'Active' ) )
 						this.classList.remove( 'Active' );
@@ -299,13 +321,17 @@ Workspace.setSharingGui = function( viewObject )
 		}
 	}
 };
-Workspace.refreshShareInformation = function( viewObject )
+Workspace.refreshShareInformation = function( viewObject, callback )
 {
 	let list = ge( 'sharedList_' + viewObject.uniqueId );
-	let items = {
-		group: [],
-		user: []
-	};
+	if( !viewObject.finalItems )
+	{
+		viewObject.finalItems = {
+			user: [],
+			group: []
+		};
+	}
+	let items = viewObject.finalItems;
 	let m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
@@ -315,19 +341,45 @@ Workspace.refreshShareInformation = function( viewObject )
 			try
 			{
 				d = JSON.parse( d );
+				let adders = [];
 				for( let c = 0; c < d.length; c++ )
 				{
-					items[ d[ c ].type ].push( d[ c ] );
+					// Duplicate test
+					let found = false;
+					for( let cc = 0; cc < items[ d[ c ].type ].length; cc++ )
+					{
+						if( items[ d[ c ].type ][ cc ].id == d[ c ].id )
+						{
+							found = true;
+						}
+					}
+					if( !found )
+					{
+						items[ d[ c ].type ].push( d[ c ] );
+					}
 				}
 			}
 			catch( e ){};
 		}
 		
-		// Get current members
+		// Get current new selected members
 		for( let c = 0; c < viewObject.selectedItems.length; c++ )
 		{
-			items[ viewObject.selectedItems[ c ].type ].push( viewObject.selectedItems[ c ] );
+			// Only add them if they are not found!
+			let found = false;
+			let type = viewObject.selectedItems[ c ].type;
+			for( let cc = 0; cc < items[ type ].length; cc++ )
+			{
+				if( items[ type ][ cc ].id == viewObject.selectedItems[ c ].id )
+				{
+					found = true;
+					break;
+				}
+			}
+			if( !found )
+				items[ viewObject.selectedItems[ c ].type ].push( viewObject.selectedItems[ c ] );
 		}
+		viewObject.selectedItems = [];
 	
 		// Set the final items..
 		viewObject.finalItems = items;
@@ -343,20 +395,69 @@ Workspace.refreshShareInformation = function( viewObject )
 					str += '<div class="Header PaddingSmall BorderBottom">' + i18n( 'i18n_list_header_' + b ) + ':</div>';
 					icmod = b == 'user' ? 'IconSmall fa-user' : 'IconSmall fa-group';
 					let sw = 2;
+					let idt = b == 'user' ? 'uid' : 'gid';
 					for( let a = 0; a < items[ b ].length; a++ )
 					{
+						let idn = items[ b ][ a ].id;
 						sw = sw == 1 ? 2 : 1;
-						str += '<div class="PaddingSmall sw' + sw + ' HRow ' + icmod + '">&nbsp;' + items[ b ][ a ].name + '</div>';
+						str += '<div ' + idt + '="' + idn + '" class="PaddingSmall sw' + sw + ' HRow ' + icmod + '"><button class="IconSmall IconButton fa-remove FloatRight"></button>&nbsp;' + items[ b ][ a ].name + '</div>';
 					}
 				}
 			}
 			str += '</div>';
 			list.innerHTML = str;
+			let intype = window.isTablet || window.isMobile ? 'ontouchstart' : 'onclick';
+			let buttons = list.getElementsByTagName( 'button' );
+			for( let c = 0; c < buttons.length; c++ )
+			{
+				( function( bt )
+				{
+					bt[ intype ] = function()
+					{
+						let n = null;
+						let m = new Module( 'system' );
+						m.onExecuted = function( me, md )
+						{
+							Workspace.refreshShareInformation( viewObject );
+						}
+						if( n = this.parentNode.getAttribute( 'uid' ) )
+						{
+							// Quick remove
+							let uout = [];
+							let ushr = viewObject.finalItems.user;
+							for( let z = 0; z < ushr.length; z++ )
+							{
+								if( parseInt( ushr[ z ].id ) != parseInt( n ) )
+									uout.push( ushr[ z ] );
+							}
+							viewObject.finalItems.user = uout;
+							// Try to permanently remove from db
+							m.execute( 'removefileshareinfo', { userid: n, path: viewObject.path } );
+						}
+						else if( n = this.parentNode.getAttribute( 'gid' ) )
+						{
+							// Quick remove
+							let uout = [];
+							let ushr = viewObject.finalItems.group;
+							for( let z = 0; z < ushr.length; z++ )
+							{
+								if( parseInt( ushr[ z ].id ) != parseInt( n ) )
+									uout.push( ushr[ z ] );
+							}
+							viewObject.finalItems.group = uout;
+							// Try to permanently remove from db
+							m.execute( 'removefileshareinfo', { groupid: n, path: viewObject.path } );
+						}
+						Workspace.refreshShareInformation( viewObject );
+					}
+				} )( buttons[ c ] );
+			}
 		}
 		else
 		{
 			list.innerHTML = '<div class="HRow sw1 Padding">' + i18n( 'i18n_file_not_shared' ) + '</div>';
 		}
+		if( callback ) callback();
 	}
 	m.execute( 'getfileshareinfo', { path: viewObject.path } );
 	

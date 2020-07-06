@@ -696,7 +696,7 @@ var mousePointer =
 	pickup: function ( ele, e )
 	{
 		// Do not allow pickup for mobile
-		if( window.isMobile ) return;
+		if( window.isMobile || window.isTablet ) return;
 		
 		if( !e ) e = window.event;
 		let ctrl = e && ( e.ctrlKey || e.shiftKey || e.command );
@@ -714,9 +714,15 @@ var mousePointer =
 			if( !ele.window.parentNode.classList.contains( 'Active'  ))
 				_ActivateWindowOnly( ele.window.parentNode );
 			
+			if( ele.window && ele.window.directoryview && ele.window.directoryview.filedialog )
+			{
+				return false;
+			}
+			
 			for( var a = 0; a < ele.window.icons.length; a++ )
 			{
 				let ic = ele.window.icons[a];
+
 				if( !ic.domNode ) continue;
 				
 				if( ic.domNode.className.indexOf ( 'Selected' ) > 0 )
@@ -2063,9 +2069,22 @@ movableListener = function( e, data )
 					let dv = Workspace.screen.contentDiv.directoryview;
 					if( dv && dv.scroller )
 					{
-						dv = dv.scroller;
-						screenLeftEdge = dv.offsetLeft;
-						screenRightEdge = window.innerWidth - ( Workspace.screen.contentDiv.offsetWidth - dv.offsetWidth );
+						screenRightEdge = window.innerWidth;
+						screenLeftEdge = 0;
+						
+						let dock = Workspace.mainDock ? Workspace.mainDock.dom : false;
+						if( dock )
+						{
+							if( dock.classList.contains( 'Left' ) )
+							{
+								screenLeftEdge += dock.offsetWidth;
+							}
+							else if( dock.classList.contains( 'Right' ) )
+							{
+								screenRightEdge -= dock.offsetWidth;
+							}
+						}
+						
 					}
 					
 					// Give some space from the title bar
@@ -2200,12 +2219,13 @@ movableListener = function( e, data )
 		}
 	}
 	// Mouse down on desktop (regions)
-	if( !window.isMobile && window.mouseDown == 4 && window.regionWindow )
+	if( !window.isTablet && !window.isMobile && window.mouseDown == 4 && window.regionWindow )
 	{
 		// Prime
 		if( window.regionWindow.directoryview )
 		{
 			let scrl = window.regionWindow.directoryview.scroller;
+			
 			if( !scrl.scrolling )
 			{
 				scrl.scrollTopStart  = scrl.scrollTop;
@@ -2586,6 +2606,7 @@ movableMouseUp = function( e )
 			setTimeout( function()
 			{
 				Workspace.iconContextMenu.hide();
+				Workspace.contextMenuShowing = null;
 			}, 150 );
 		}
 	}
@@ -2658,9 +2679,10 @@ function CheckScreenTitle( screen, force )
 	if( wo && wo.parentNode && !wo.parentNode.parentNode )
 		wo = false;
 	
+	let isDoorsScreen = testObject.id == 'DoorsScreen';	
+
 	let hasScreen = ( !csc || ( wo && testObject.screenObject == wo.screen ) || ( wo && !wo.screen && isDoorsScreen ) );
 	
-	let isDoorsScreen = testObject.id == 'DoorsScreen';	
 	
 	// Clear the delayed action
 	if( _screenTitleTimeout )
@@ -3679,9 +3701,10 @@ movableMouseDown = function ( e )
 	// Get target
 	let tar = e.srcElement ? e.srcElement : e.target;
 	
-	if( ( window.isTablet || window.isMobile ) && Workspace.iconContextMenu )
+	if( ( window.isTablet || window.isMobile ) && Workspace.contextMenuShowing )
 	{
 		Workspace.iconContextMenu.hide();
+		Workspace.contextMenuShowing = null;
 		if( !isMobile )
 			DefaultToWorkspaceScreen( tar );
 	}
@@ -3711,6 +3734,7 @@ movableMouseDown = function ( e )
 	if( !clickOnMenuItem && Workspace.iconContextMenu )
 	{
 		Workspace.iconContextMenu.hide();
+		Workspace.contextMenuShowing = null;
 	}
 	
 	let sh = e.shiftKey || e.ctrlKey;
@@ -3752,12 +3776,23 @@ movableMouseDown = function ( e )
 		!isMobile && ( clickonDesktop || clickOnView )
 	)
 	{
-		if( !sh && e.button === 0 )
+		if( !sh && ( e.button === 0 || e.touches ) )
 		{
 			// Don't count scrollbar
-			if( ( ( e.clientX - GetElementLeft( tar ) ) < tar.offsetWidth - 16 ) )
+			let px = e.touches ? e.touches[0].pageX : e.clientX;
+			if( ( ( px - GetElementLeft( tar ) ) < tar.offsetWidth - 16 ) )
 			{
-				clearRegionIcons( { force: true } );
+				setTimeout( function()
+				{
+					if( tar.directoryview )
+					{
+						if( tar.directoryview.refreshScrollTimeout )
+						{
+							return;
+						}
+					}
+					clearRegionIcons( { force: true } );
+				}, 100 );
 			}
 		}
 		

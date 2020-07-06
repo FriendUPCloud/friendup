@@ -502,13 +502,33 @@ html .File.Tiny, html .File.Tiny .Icon, html .File.Tiny .Icon > div
 	text-align: center;
 }
 
+.File .Icon > .FileShared:before,
+.File .Icon > .Shared:after
+{
+	opacity: 1;
+	transition: opacity 0.15s;
+}
+
+[listmode=iconview] .File .Icon > .FileShared:before,
+[listmode=iconview] .File .Icon > .Shared:after
+{
+	min-width: 8px;
+}
+
 div.Columnview .File .Directory.GroupShare:after,
 div.Columnview .File .Directory.UserShare:after,
 div.Listview .File .Directory.GroupShare:after,
 div.Listview .File .Directory.UserShare:after
 {
 	top: 10px;
-	font-size: 0.7em;
+	font-size: 0.6em;
+}
+
+div .File.ZoomX3 .Icon .Directory.GroupShare:after,
+div .File.ZoomX3 .Icon .Directory.UserShare:after
+{
+	top: 62px;
+    font-size: 2em;
 }
 
 .File .Icon .Directory.UserShare:after
@@ -579,7 +599,7 @@ div.Listview .File .Directory.UserShare:after
 {
 	display: block;
 	font-family: fontawesome;
-	font-size: 0.7em;
+	font-size: 0.6em;
 	content: '\f0c1';
 	position: absolute;
 	right: 0;
@@ -625,7 +645,7 @@ html .File.ZoomX3 .Icon > .Shared:after
 {
 	display: block;
 	font-family: fontawesome;
-	font-size: 0.7em;
+	font-size: 0.6em;
 	content: '\f1e0';
 	position: absolute;
 	right: 0;

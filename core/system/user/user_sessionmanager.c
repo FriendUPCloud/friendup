@@ -176,21 +176,22 @@ UserSession *USMGetSessionBySessionIDFromDB( UserSessionManager *smgr, char *id 
  */
 UserSession *USMGetSessionByDeviceIDandUser( UserSessionManager *usm, char *devid, FULONG uid )
 {
-	DEBUG("CHECK5\n");
+	DEBUG("[USMGetSessionByDeviceIDandUser] new, deviceid: >%s<\n", devid );
  	if( FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) ) == 0 )
 	{
 		UserSession *us = usm->usm_Sessions;
 		while( us != NULL )
 		{
+			DEBUG("[USMGetSessionByDeviceIDandUser] userid >%ld< devidentity >%s<\n", us->us_UserID, us->us_DeviceIdentity );
 			if( us->us_UserID == uid && us->us_DeviceIdentity != NULL && strcmp( devid, us->us_DeviceIdentity ) == 0 )
 			{
-				DEBUG("CHECK5END\n");
+				DEBUG("[USMGetSessionByDeviceIDandUser] found user by deviceid: %s\n", devid );
 				FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 				return us;
 			}
 			us = (UserSession *) us->node.mln_Succ;
 		}
-		DEBUG("CHECK5END\n");
+		DEBUG("[USMGetSessionByDeviceIDandUser] end\n");
 		FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 	}
 	return NULL;

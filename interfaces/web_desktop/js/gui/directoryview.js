@@ -764,6 +764,7 @@ DirectoryView.prototype.ShowFileBrowser = function()
 			}
 		} );
 		winobj.fileBrowser.cancelId = winobj.directoryview.cancelId;
+		winobj.fileBrowser.directoryView = this;
 		winobj.fileBrowser.render();
 	}
 }
@@ -795,7 +796,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			e.defaultBehavior = true;
 			return;
 		}
-		if( !window.isMobile )
+		if( !window.isMobile && !window.isTablet )
 		{
 			Workspace.showContextMenu( false, e );
 		}
@@ -2284,7 +2285,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	// Handle scrolling
 	this.refreshScrollTimeout = false;
 	this.scroller.onscroll = function( e )
-	{
+	{	
 		// Only handle scroll if it changed
 		if( !self.scrollerTop || self.scrollerTop != self.scroller.scrollTop )
 		{
@@ -2698,6 +2699,9 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			{
 				if( !e ) e = window.event ? window.event : {};
 			
+				if( isTablet )
+					dv.multiple = e.shiftKey = true;
+			
 				// This means we are adding
 				if( e.shiftKey || e.ctrlKey )
 				{
@@ -2880,32 +2884,21 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					this.listSelectTimeout = setTimeout( function()
 					{
 						self.click = false;
-						if( self.classList.contains( 'Selected' ) )
-						{
-							clearRegionIcons();
-						}
-						else
-						{
-							clearRegionIcons();
-							self.classList.add( 'Selected' );
-							self.selected = true;
-							this.icon.selected = true;
-							self.fileInfo.selected = true;
-							self.touchPos = {
-								x: e.touches[0].pageX,
-								y: e.touches[0].pageY
-							};
-							self.touchMode = 0;
-						}
+						self.classList.add( 'Selected' );
+						self.selected = true;
+						this.icon.selected = true;
+						self.fileInfo.selected = true;
+						self.touchPos = {
+							x: e.touches[0].pageX,
+							y: e.touches[0].pageY
+						};
+						self.touchMode = 0;
 					}, 100 );
 					
-					if( window.isTablet )
+					this.contextMenuTimeout = setTimeout( function()
 					{
-						this.contextMenuTimeout = setTimeout( function()
-						{
-							Workspace.showContextMenu( false, e );
-						}, 800 );
-					}
+						Workspace.showContextMenu( false, e );
+					}, 1000 );
 					
 					return cancelBubble( e );
 				}
@@ -2968,7 +2961,10 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 							this.contextMenuTimeout = false;
 						}
 					}
+					clearTimeout( this.contextMenuTimeout );
+					this.contextMenuTimeout = null;
 					this.touchPos = false;
+					return cancelBubble( e );
 				}
 				
 				r.onclick = null;
@@ -2980,7 +2976,10 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			{
 				if( !e.ctrlKey && !e.shiftKey && !e.command && !ge( 'RegionSelector' ) )
 				{
-					clearRegionIcons( { exception: this, force: true } );
+					if( !isMobile && !isTablet )
+					{
+						clearRegionIcons( { exception: this, force: true } );
+					}
 				}
 			}
 
@@ -3537,7 +3536,10 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				{
 					if( !Workspace.contextMenuShowing || !Workspace.contextMenuShowing.shown )
 					{
-						clearRegionIcons( { exception: this } );
+						if( !isMobile && !isTablet )
+						{
+							clearRegionIcons( { exception: this } );
+						}
 					}
 				}
 
@@ -3592,7 +3594,10 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			}
 			if( !e.ctrlKey && !e.shiftKey && !e.command && !ge( 'RegionSelector' ) )
 			{
-				clearRegionIcons( { exception: this, force: true } );
+				if( !isMobile && !isTablet )
+				{
+					clearRegionIcons( { exception: this, force: true } );
+				}
 			}
 			window.targetMovable = false;
 		}
@@ -3843,6 +3848,8 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		file.onmouseout = function( e )
 		{
 			if ( !e ) e = window.event;
+			if( this.directoryView.filedialog ) return;
+			
 			if ( window.mouseDown == this )
 			{
 				mousePointer.pickup( this );
@@ -3886,6 +3893,30 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		{
 			if( this.directoryView.filedialog )
 				return;
+				
+			// On mobile and tablet, don't click other icons when showing the context menu
+			if( ( isMobile || isTablet ) && Workspace.contextMenuShowing ) 
+			{
+				Workspace.contextMenuShowing.hide()
+				Workspace.contextMenuShowing = false;
+				return cancelBubble( event );
+			}
+			
+			// Only click icons!
+			if( 
+				!event.target.parentNode.classList.contains( 'Icon' ) && 
+				!event.target.parentNode.classList.contains( 'Drive' )  )
+			{
+				return;
+			}
+			else
+			{
+				event.target.parentNode.style.filter = 'hue-rotate(45deg) drop-shadow(0px 0px 2px rgba(255,240,0,0.5))';
+				setTimeout( function()
+				{
+					event.target.parentNode.style.filter = '';
+				}, 30 );
+			}
 			
 			window.fileMenuElement = file;
 			window.clickElement = file;
@@ -3908,13 +3939,11 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				}
 			}, 100 );
 
-			if( !window.isMobile )
-			{		
-				file.contextMenuTimeout = setTimeout( function()
-				{
-					Workspace.showContextMenu( false, event );
-				}, 800 );
-			}
+
+			file.contextMenuTimeout = setTimeout( function()
+			{
+				Workspace.showContextMenu( false, event );
+			}, 1000 );
 			//return cancelBubble( event );
 		}, false );
 
@@ -3922,6 +3951,18 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		{
 			if( this.directoryView.filedialog )
 				return;
+			if( Workspace.contextMenuShowing ) 
+			{
+				return cancelBubble( event );
+			}
+			
+			// No need
+			if( file.menuTimeout )
+				clearTimeout( file.menuTimeout );
+			file.menuTimeout = false;
+			if( file.contextMenuTimeout )
+				clearTimeout( file.contextMenuTimeout );
+			file.contextMenuTimeout = false;
 			
 			if( window.clickElement == this )
 			{
@@ -3929,7 +3970,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 
 				// When single clicking (under a second) click the file!
 				let time = ( new Date() ).getTime() - file.clickedTime;
-				if( time < 250 && window.clickElement )
+				if( time < 500 && window.clickElement )
 				{
 					setTimeout( function()
 					{
@@ -3940,15 +3981,9 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 					}, 100 );
 				}
 
-				if( file.menuTimeout )
-					clearTimeout( file.menuTimeout );
-				file.menuTimeout = false;
-				if( file.contextMenuTimeout )
-					clearTimeout( file.contextMenuTimeout );
-				file.contextMenuTimeout = false;
 				window.clickElement = null;
-				return cancelBubble( event );
 			}
+		 	return cancelBubble( event );
 		} );
 	}
 }
@@ -5020,10 +5055,22 @@ Friend.startImageViewer = function( iconObject, extra )
 		// Enable panning image
 		image.onmousedown = function( e )
 		{
-			let offx = e.clientX;
-			let offy = e.clientY;
+			let offx = offy = 0;
+			
+			if( e.touches )
+			{
+				offx = e.touches[0].pageX;
+				offy = e.touches[0].pageY;
+			}
+			else
+			{		
+				offx = e.clientX;
+				offy = e.clientY;
+			}
+			
 			let px = image.offsetX;
 			let py = image.offsetY;
+			
 			image.classList.add( 'Panning' );
 			window.mouseDown = image;
 			window.mouseReleaseFunc = function()
@@ -5032,11 +5079,26 @@ Friend.startImageViewer = function( iconObject, extra )
 			}
 			window.mouseMoveFunc = function( e2 )
 			{
-				image.offsetX = px + ( e2.clientX - offx );
-				image.offsetY = py + ( e2.clientY - offy );
+				let cx, cy = 0;
+				
+				if( e2.touches )
+				{
+					cx = e2.touches[0].pageX;
+					cy = e2.touches[0].pageY;
+				}
+				else
+				{		
+					cx = e2.clientX;
+					cy = e2.clientY;
+				}
+				
+				image.offsetX = px + ( cx - offx );
+				image.offsetY = py + ( cy - offy );
 				repositionElement( win );
 			}
 		}
+		
+		image.ontouchstart = image.onmousedown;
 		
 		image.onmousewheel = function( e )
 		{
@@ -5200,6 +5262,7 @@ Friend.startImageViewer = function( iconObject, extra )
 			<div class="ZoomIn MousePointer"><span class="IconSmall fa-plus-circle"></span></div>\
 			<div class="ZoomOut MousePointer"><span class="IconSmall fa-minus-circle"></span></div>\
 			<div class="ArrowRight MousePointer"><span class="IconSmall fa-angle-right"></span></div>\
+			<div class="Close MousePointer"><span class="IconSmall fa-remove"></span></div>\
 		';
 		eparent.appendChild( d );
 		let eles = d.getElementsByTagName( 'div' );
@@ -5269,6 +5332,13 @@ Friend.startImageViewer = function( iconObject, extra )
 					if( zoomLevel < 0.1 )
 						zoomLevel = 0.1;
 					repositionElement( owin );
+				}
+			}
+			else if( eles[a].classList.contains( 'Close' ) )
+			{
+				eles[ a ].onclick = function( e )
+				{
+					CloseView();
 				}
 			}
 		}

@@ -170,6 +170,9 @@ banner_receive(LIBSSH2_SESSION * session)
     if(!banner_len)
         return LIBSSH2_ERROR_BANNER_RECV;
 
+    if(session->remote.banner)
+        LIBSSH2_FREE(session, session->remote.banner);
+
     session->remote.banner = LIBSSH2_ALLOC(session, banner_len + 1);
     if(!session->remote.banner) {
         return _libssh2_error(session, LIBSSH2_ERROR_ALLOC,
@@ -510,9 +513,11 @@ libssh2_session_init_ex(LIBSSH2_ALLOC_FUNC((*my_alloc)),
  * Set (or reset) a callback function
  * Returns the prior address
  *
- * FIXME: this function relies on that we can typecast function pointers
+ * ALERT: this function relies on that we can typecast function pointers
  * to void pointers, which isn't allowed in ISO C!
  */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
 LIBSSH2_API void *
 libssh2_session_callback_set(LIBSSH2_SESSION * session,
                              int cbtype, void *callback)
@@ -555,10 +560,12 @@ libssh2_session_callback_set(LIBSSH2_SESSION * session,
         session->recv = callback;
         return oldcb;
     }
-    _libssh2_debug(session, LIBSSH2_TRACE_TRANS, "Setting Callback %d", cbtype);
+    _libssh2_debug(session, LIBSSH2_TRACE_TRANS, "Setting Callback %d",
+                   cbtype);
 
     return NULL;
 }
+#pragma GCC diagnostic pop
 
 /*
  * _libssh2_wait_socket()
@@ -582,7 +589,7 @@ int _libssh2_wait_socket(LIBSSH2_SESSION *session, time_t start_time)
     session->err_code = LIBSSH2_ERROR_NONE;
 
     rc = libssh2_keepalive_send(session, &seconds_to_next);
-    if(rc < 0)
+    if(rc)
         return rc;
 
     ms_to_next = seconds_to_next * 1000;
@@ -775,8 +782,14 @@ session_startup(LIBSSH2_SESSION *session, libssh2_socket_t sock)
         if(rc)
             return rc;
 
+        if(session->startup_data_len < 5) {
+            return _libssh2_error(session, LIBSSH2_ERROR_PROTO,
+                                  "Unexpected packet length");
+        }
+
         session->startup_service_length =
             _libssh2_ntohu32(session->startup_data + 1);
+
 
         if((session->startup_service_length != (sizeof("ssh-userauth") - 1))
             || strncmp("ssh-userauth", (char *) session->startup_data + 5,
@@ -849,7 +862,8 @@ session_free(LIBSSH2_SESSION *session)
     int packets_left = 0;
 
     if(session->free_state == libssh2_NB_state_idle) {
-        _libssh2_debug(session, LIBSSH2_TRACE_TRANS, "Freeing session resource",
+        _libssh2_debug(session, LIBSSH2_TRACE_TRANS,
+                       "Freeing session resource",
                        session->remote.banner);
 
         session->free_state = libssh2_NB_state_created;
@@ -1072,7 +1086,8 @@ session_free(LIBSSH2_SESSION *session)
     }
 
     /* error string */
-    if(session->err_msg && ((session->err_flags & LIBSSH2_ERR_FLAG_DUP) != 0)) {
+    if(session->err_msg &&
+       ((session->err_flags & LIBSSH2_ERR_FLAG_DUP) != 0)) {
         LIBSSH2_FREE(session, (char *)session->err_msg);
     }
 
@@ -1156,7 +1171,7 @@ libssh2_session_disconnect_ex(LIBSSH2_SESSION *session, int reason,
                               const char *desc, const char *lang)
 {
     int rc;
-
+    session->state &= ~LIBSSH2_STATE_EXCHANGING_KEYS;
     BLOCK_ADJUST(rc, session,
                  session_disconnect(session, reason, desc, lang));
 
@@ -1424,6 +1439,11 @@ libssh2_poll_channel_read(LIBSSH2_CHANNEL *channel, int extended)
     packet = _libssh2_list_first(&session->packets);
 
     while(packet) {
+        if(packet->data_len < 5) {
+            return _libssh2_error(session, LIBSSH2_ERROR_BUFFER_TOO_SMALL,
+                                  "Packet too small");
+        }
+
         if(channel->local.id == _libssh2_ntohu32(packet->data + 1)) {
             if(extended == 1 &&
                 (packet->data[0] == SSH_MSG_CHANNEL_EXTENDED_DATA
@@ -1678,7 +1698,8 @@ libssh2_poll(LIBSSH2_POLLFD * fds, unsigned int nfds, long timeout)
                 switch(fds[i].type) {
                 case LIBSSH2_POLLFD_SOCKET:
                     fds[i].revents = sockets[i].revents;
-                    sockets[i].revents = 0; /* In case we loop again, be nice */
+                    sockets[i].revents = 0; /* In case we loop again, be
+                                               nice */
                     if(fds[i].revents) {
                         active_fds++;
                     }
@@ -1686,8 +1707,9 @@ libssh2_poll(LIBSSH2_POLLFD * fds, unsigned int nfds, long timeout)
                 case LIBSSH2_POLLFD_CHANNEL:
                     if(sockets[i].events & POLLIN) {
                         /* Spin session until no data available */
-                        while(_libssh2_transport_read(fds[i].fd.channel->session)
-                               > 0);
+                        while(_libssh2_transport_read(fds[i].fd.
+                                                      channel->session)
+                              > 0);
                     }
                     if(sockets[i].revents & POLLHUP) {
                         fds[i].revents |=
@@ -1699,8 +1721,9 @@ libssh2_poll(LIBSSH2_POLLFD * fds, unsigned int nfds, long timeout)
                 case LIBSSH2_POLLFD_LISTENER:
                     if(sockets[i].events & POLLIN) {
                         /* Spin session until no data available */
-                        while(_libssh2_transport_read(fds[i].fd.listener->session)
-                               > 0);
+                        while(_libssh2_transport_read(fds[i].fd.
+                                                      listener->session)
+                              > 0);
                     }
                     if(sockets[i].revents & POLLHUP) {
                         fds[i].revents |=
@@ -1750,10 +1773,12 @@ libssh2_poll(LIBSSH2_POLLFD * fds, unsigned int nfds, long timeout)
                     break;
 
                 case LIBSSH2_POLLFD_CHANNEL:
-                    if(FD_ISSET(fds[i].fd.channel->session->socket_fd, &rfds)) {
+                    if(FD_ISSET(fds[i].fd.channel->session->socket_fd,
+                                &rfds)) {
                         /* Spin session until no data available */
-                        while(_libssh2_transport_read(fds[i].fd.channel->session)
-                               > 0);
+                        while(_libssh2_transport_read(fds[i].fd.
+                                                      channel->session)
+                              > 0);
                     }
                     break;
 
@@ -1761,8 +1786,9 @@ libssh2_poll(LIBSSH2_POLLFD * fds, unsigned int nfds, long timeout)
                     if(FD_ISSET
                         (fds[i].fd.listener->session->socket_fd, &rfds)) {
                         /* Spin session until no data available */
-                        while(_libssh2_transport_read(fds[i].fd.listener->session)
-                               > 0);
+                        while(_libssh2_transport_read(fds[i].fd.
+                                                      listener->session)
+                              > 0);
                     }
                     break;
                 }

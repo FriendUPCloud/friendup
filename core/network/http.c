@@ -1331,6 +1331,25 @@ static inline int HttpParsePartialRequestChunked( Http* http, char* data, unsign
 	return 0;
 }
 
+inline static void HttpReleaseContent( Http *http )
+{
+	if( http->http_Content )
+	{
+		if( http->http_ContentFileHandle > 0 )
+		{
+			munmap( http->http_Content, http->http_ContentLength );
+			http->http_Content = NULL;
+			unlink( http->http_TempContentFileName );
+			http->http_ContentFileHandle = 0;
+		}
+		else
+		{
+			FFree( http->http_Content );
+			http->http_Content = NULL;
+		}
+	}
+}
+
 // we need this information in Log
 extern int nothreads;
 
@@ -1475,19 +1494,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 						http->http_ExpectBody = TRUE;
 						DEBUG("Size %ld\n", size );
 				
-						if( http->http_Content )
-						{
-							if( http->http_ContentFileHandle > 0 )
-							{
-								munmap( http->http_Content, http->http_ContentLength );
-								http->http_Content = NULL;
-								unlink( http->http_TempContentFileName );
-							}
-							else
-							{
-								FFree( http->http_Content );
-							}
-						}
+						HttpReleaseContent( http );
 						
 						if( size > TUNABLE_LARGE_HTTP_REQUEST_SIZE )
 						{
@@ -1536,11 +1543,8 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 						if( dataLength <= 0 )
 						{
 							DEBUG("dataLength <= 0\n" );
-							if( http->http_Content != NULL )
-							{
-								FFree( http->http_Content );
-								http->http_Content = NULL;
-							}
+							HttpReleaseContent( http );
+							
 							http->http_SizeOfContent = 0;
 							http->http_ExpectBody = FALSE;
 							return result != 400;
@@ -1548,11 +1552,8 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 						else if( dataLength != size && ( ( dataLength - 4 ) != size ) )
 						{
 							DEBUG("dataLength != size  %ld - %ld \n", dataLength, size );
-							if( http->http_Content != NULL )
-							{
-								FFree( http->http_Content );
-								http->http_Content = NULL;
-							}
+							HttpReleaseContent( http );
+							
 							http->http_SizeOfContent = 0;
 							http->http_ExpectBody = FALSE;
 							return result != 400;
@@ -2471,7 +2472,7 @@ void HttpWriteAndFree( Http* http, Socket *sock )
 	
 	if( http->http_WriteOnlyContent == TRUE )
 	{
-		SocketWrite( sock, http->http_Content, http->http_SizeOfContent );
+		sock->s_Interface->SocketWrite( sock, http->http_Content, http->http_SizeOfContent );
 	}
 	else
 	{
@@ -2480,7 +2481,7 @@ void HttpWriteAndFree( Http* http, Socket *sock )
 			if( HttpBuild( http ) != NULL )
 			{
 				// Write to the socket!
-				SocketWrite( sock, http->http_Response, http->http_ResponseLength );
+				sock->s_Interface->SocketWrite( sock, http->http_Response, http->http_ResponseLength );
 			}
 			else
 			{
@@ -2522,7 +2523,7 @@ void HttpWrite( Http* http, Socket *sock )
 			{ ID_RESP, (FULONG)0, (FULONG)0 }
 		};
 		
-		ret = SocketWrite( sock, (char *) tags, (FLONG)sizeof(tags) );
+		ret = sock->s_Interface->SocketWrite( sock, (char *) tags, (FLONG)sizeof(tags) );
 	}
 	else
 	{
@@ -2531,12 +2532,12 @@ void HttpWrite( Http* http, Socket *sock )
 		if( http->http_WriteOnlyContent == TRUE )
 		{
 			DEBUG("only content\n");
-			ret = SocketWrite( sock, http->http_Content, http->http_SizeOfContent );
+			ret = sock->s_Interface->SocketWrite( sock, http->http_Content, http->http_SizeOfContent );
 		}
 		else
 		{
 			DEBUG("response\n");
-			ret = SocketWrite( sock, http->http_Response, http->http_ResponseLength );
+			ret = sock->s_Interface->SocketWrite( sock, http->http_Response, http->http_ResponseLength );
 		}
 	}
 

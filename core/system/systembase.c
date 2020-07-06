@@ -126,6 +126,34 @@ SystemBase *SystemInit( void )
 		return NULL;
 	}
 	
+	// init socket interfaces
+	
+	l->l_SocketISSL.SocketListen = SocketListen;
+	l->l_SocketISSL.SocketConnect = SocketConnectSSL;
+	l->l_SocketISSL.SocketAccept = SocketAcceptSSL;
+	l->l_SocketISSL.SocketAcceptPair = SocketAcceptPairSSL;
+	l->l_SocketISSL.SocketSetBlocking = SocketSetBlocking;
+	l->l_SocketISSL.SocketRead = SocketReadSSL;
+	l->l_SocketISSL.SocketReadBlocked = SocketReadBlockedSSL;
+	l->l_SocketISSL.SocketWaitRead = SocketWaitReadSSL;
+	l->l_SocketISSL.SocketReadTillEnd = SocketReadTillEndSSL;
+	l->l_SocketISSL.SocketWrite = SocketWriteSSL;
+	l->l_SocketISSL.SocketDelete = SocketDeleteSSL;
+	l->l_SocketISSL.SocketReadPackage = SocketReadPackageSSL;
+
+	l->l_SocketINOSSL.SocketListen = SocketListen;
+	l->l_SocketINOSSL.SocketConnect = SocketConnectNOSSL;
+	l->l_SocketINOSSL.SocketAccept = SocketAcceptNOSSL;
+	l->l_SocketINOSSL.SocketAcceptPair = SocketAcceptPairNOSSL;
+	l->l_SocketINOSSL.SocketSetBlocking = SocketSetBlocking;
+	l->l_SocketINOSSL.SocketRead = SocketReadNOSSL;
+	l->l_SocketINOSSL.SocketReadBlocked = SocketReadBlockedNOSSL;
+	l->l_SocketINOSSL.SocketWaitRead = SocketWaitReadNOSSL;
+	l->l_SocketINOSSL.SocketReadTillEnd = SocketReadTillEndNOSSL;
+	l->l_SocketINOSSL.SocketWrite = SocketWriteNOSSL;
+	l->l_SocketINOSSL.SocketDelete = SocketDeleteNOSSL;
+	l->l_SocketINOSSL.SocketReadPackage = SocketReadPackageNOSSL;
+
 	// uptime
 	l->l_UptimeStart = time( NULL );
 	
@@ -164,7 +192,7 @@ SystemBase *SystemInit( void )
 		
 		if( getcwd( l->sl_AutotaskPath, PATH_MAX ) == NULL )
 		{
-			FERROR("getcwd failed!");
+			Log( FLOG_ERROR, "[SystemInit] getcwd failed!");
 			exit(5);
 		}
 		strcat( l->sl_AutotaskPath, "/autostart/");
@@ -212,7 +240,7 @@ SystemBase *SystemInit( void )
 	if( getcwd( tempString, PATH_MAX ) == NULL )
 	{
 		FFree( tempString );
-		FERROR("getcwd failed!");
+		Log( FLOG_ERROR, "[SystemInit] getcwd failed!");
 		exit(5);
 	}
 	l->handle = dlopen( 0, RTLD_LAZY );
@@ -636,7 +664,7 @@ SystemBase *SystemInit( void )
 	l->zlib = (ZLibrary *)LibraryOpen( l, "z.library", 0 );
 	if( l->zlib == NULL )
 	{
-		FERROR("[ERROR]: CANNOT OPEN z.library!\n");
+		Log( FLOG_ERROR, "[ERROR]: CANNOT OPEN z.library!\n");
 	}
 	
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
@@ -721,7 +749,7 @@ SystemBase *SystemInit( void )
 	if (getcwd( tempString, PATH_MAX ) == NULL)
 	{
 		FFree( tempString );
-		FERROR("getcwd failed!");
+		Log( FLOG_ERROR, "[SystemInit] getcwd failed!");
 		exit(5);
 	}
 	
@@ -858,7 +886,7 @@ SystemBase *SystemInit( void )
 	}
 	else
 	{
-		FERROR("Cannot open magic shared lib\n");
+		Log( FLOG_ERROR, "[SystemInit] Cannot open magic shared lib\n");
 	}
 	
 	//
@@ -1054,7 +1082,7 @@ void SystemClose( SystemBase *l )
 {
 	if( l == NULL )
 	{
-		FERROR("SystemBase is NULL\n");
+		Log( FLOG_ERROR, "[SystemClose] SystemBase is NULL\n");
 		return;
 	}
 	

@@ -45,7 +45,7 @@ if( isset( $args->authid ) )
 
 
 
-if( !isset( $args->args->type ) ) die( 'fail<!--separate-->{"response":"dos driver gui failed"}'  );
+if( !isset( $args->args->type ) ) die( 'fail<!--separate-->{"response":"invalid request"}'  );
 if( isset( $args->args->component ) && isset( $args->args->language ) )
 {
 	if( $args->args->component == 'locale' )

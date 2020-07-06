@@ -21,6 +21,9 @@ i18n_language                        : Språk
 i18n_bookmarks                       : Bokmerker
 i18n_upload_a_file                   : Last opp fil
 i18n_deleting_files                  : Sletter filer
+i18n_sure_unshare                    : Ønsker du å fjerne deling?
+i18n_sure_unshdesc                   : Når du fjerner delte filer er de ikke tilgjengelig for andre.
+i18n_unsharing_files                 : Fjerner deling
 i18n_bookmarks_add                   : Legg til
 i18n_bookmarks_close                 : Lukk
 i18n_bookmarks_select                : Velg
@@ -50,6 +53,7 @@ i18n_negative                        : Nei
 i18n_looknfeel                       : Utseende
 i18n_startup_sequence                : Oppstartsekvens
 i18n_cancel                          : Avbryt
+i18n_back                            : Tilbake
 i18n_accept                          : Aksepter
 i18n_understood                      : Forstått
 i18n_your_devices                    : Disker
@@ -236,6 +240,7 @@ menu_looknfeel                          : Utseende
 menu_backdrop                           : Vis oversikt
 menu_buildwebapp                        : Bygg webapplikasjon
 menu_share				                : Del
+menu_unshare                            : Fjern deling
 menu_share_info                         : Delingsinformasjon
 menu_download                           : Last ned
 i18n_could_not_download                 : Kunne ikke laste ned
@@ -247,6 +252,7 @@ menu_new_window                         : Nytt vindu
 menu_share_file                         : Deling
 
 menu_help                               : Hjelp
+menu_help_tutorials                     : Veiledning
 menu_help_bug                           : Rapporter feil
 menu_help_manual                        : Brukerveiledning
 
@@ -523,6 +529,8 @@ i18n_only_files_can_be_shared           : Kun vanlige filer kan deles.
 i18n_share_with_users_or_groups         : Del med brukere eller grupper
 i18n_ok                                 : Ok
 i18n_no_users_or_groups                 : Ingen brukere eller grupper å dele med.
+i18n_nothing_shared                     : Ingen brukere eller grupper valgt
+i18n_please_select_users_groups         : Ingenting ble delt da du ikke valgte brukere eller grupper.
 
 
 i18n_pasted_file                        : Limer inn innhold

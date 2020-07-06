@@ -7684,10 +7684,8 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 					str += '</div>';
 				
 					str += '</div>';
-			
+
 					ge( 'StorageGui' ).innerHTML = str;
-				
-					//console.log( { e:e, d:(js?js:d) } );
 				
 				} );
 			}
@@ -7764,7 +7762,7 @@ Sections.user_disk_refresh = function( mountlist, userid )
 				
 				for( var b in rows )
 				{
-					
+					if( rows[b].Type == 'SharedDrive' ) continue;
 					try
 					{
 						rows[b].Config = JSON.parse( rows[b].Config );
@@ -7994,9 +7992,6 @@ function StorageForm( storage, callback )
 		m.onExecuted = function( e, d )
 		{
 			// return info that this is loaded.
-			
-			//console.log( { e:e, d:d } );
-			
 			if( callback ) callback( storage );
 			
 			var scripts = [];
@@ -8027,7 +8022,7 @@ function StorageForm( storage, callback )
 				d = '';
 			}
 			
-			d = i18nReplace( d, [ 'i18n_port', 'i18n_key' ] );
+			if( d != '' ) d = i18nReplace( d, [ 'i18n_port', 'i18n_key' ] );
 			
 			if( ge( 'DosDriverGui' ) )
 			{
@@ -8203,6 +8198,7 @@ function LoadDOSDriverGUI( _this )
 					{
 						d = d.split( '{' + a + '}' ).join( f.replacements[a] );
 					}
+					
 					ge( 'DosDriverGui' ).innerHTML = d;
 				
 					// Run scripts at the end ...

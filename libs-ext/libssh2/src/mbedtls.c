@@ -250,7 +250,7 @@ _libssh2_mbedtls_bignum_init(void)
 void
 _libssh2_mbedtls_bignum_free(_libssh2_bn *bn)
 {
-    if (bn) {
+    if(bn) {
         mbedtls_mpi_free(bn);
         mbedtls_free(bn);
     }
@@ -267,21 +267,23 @@ _libssh2_mbedtls_bignum_random(_libssh2_bn *bn, int bits, int top, int bottom)
         return -1;
 
     len = (bits + 7) >> 3;
-    err = mbedtls_mpi_fill_random(bn, len, mbedtls_ctr_drbg_random, &_libssh2_mbedtls_ctr_drbg);
+    err = mbedtls_mpi_fill_random(bn, len, mbedtls_ctr_drbg_random,
+                                  &_libssh2_mbedtls_ctr_drbg);
     if(err)
         return -1;
 
-    /* Zero unsued bits above the most significant bit*/
+    /* Zero unused bits above the most significant bit*/
     for(i = len*8 - 1; bits <= i; --i) {
         err = mbedtls_mpi_set_bit(bn, i, 0);
         if(err)
             return -1;
     }
 
-    /* If `top` is -1, the most significant bit of the random number can be zero.
-       If top is 0, the most significant bit of the random number is set to 1,
-       and if top is 1, the two most significant bits of the number will be set
-       to 1, so that the product of two such random numbers will always have 2*bits length.
+    /* If `top` is -1, the most significant bit of the random number can be
+       zero.  If top is 0, the most significant bit of the random number is
+       set to 1, and if top is 1, the two most significant bits of the number
+       will be set to 1, so that the product of two such random numbers will
+       always have 2*bits length.
     */
     for(i = 0; i <= top; ++i) {
         err = mbedtls_mpi_set_bit(bn, bits-i-1, 1);
@@ -351,7 +353,8 @@ _libssh2_mbedtls_rsa_new(libssh2_rsa_ctx **rsa,
            (ret = mbedtls_mpi_read_binary(&(ctx->Q), qdata, qlen) ) != 0 ||
            (ret = mbedtls_mpi_read_binary(&(ctx->DP), e1data, e1len) ) != 0 ||
            (ret = mbedtls_mpi_read_binary(&(ctx->DQ), e2data, e2len) ) != 0 ||
-           (ret = mbedtls_mpi_read_binary(&(ctx->QP), coeffdata, coefflen) ) != 0) {
+           (ret = mbedtls_mpi_read_binary(&(ctx->QP), coeffdata, coefflen) )
+           != 0) {
             ret = -1;
         }
         ret = mbedtls_rsa_check_privkey(ctx);
@@ -411,15 +414,31 @@ _libssh2_mbedtls_rsa_new_private_frommemory(libssh2_rsa_ctx **rsa,
     int ret;
     mbedtls_pk_context pkey;
     mbedtls_rsa_context *pk_rsa;
+    void *filedata_nullterm;
+    size_t pwd_len;
 
     *rsa = (libssh2_rsa_ctx *) mbedtls_calloc(1, sizeof(libssh2_rsa_ctx));
     if(*rsa == NULL)
         return -1;
 
+    /*
+    mbedtls checks in "mbedtls/pkparse.c:1184" if "key[keylen - 1] != '\0'"
+    private-key from memory will fail if the last byte is not a null byte
+    */
+    filedata_nullterm = mbedtls_calloc(filedata_len + 1, 1);
+    if(filedata_nullterm == NULL) {
+        return -1;
+    }
+    memcpy(filedata_nullterm, filedata, filedata_len);
+
     mbedtls_pk_init(&pkey);
 
-    ret = mbedtls_pk_parse_key(&pkey, (unsigned char *)filedata,
-                              filedata_len, NULL, 0);
+    pwd_len = passphrase != NULL ? strlen((const char *)passphrase) : 0;
+    ret = mbedtls_pk_parse_key(&pkey, (unsigned char *)filedata_nullterm,
+                               filedata_len + 1,
+                               passphrase, pwd_len);
+    _libssh2_mbedtls_safe_free(filedata_nullterm, filedata_len);
+
     if(ret != 0 || mbedtls_pk_get_type(&pkey) != MBEDTLS_PK_RSA) {
         mbedtls_pk_free(&pkey);
         mbedtls_rsa_free(*rsa);
@@ -450,7 +469,8 @@ _libssh2_mbedtls_rsa_sha1_verify(libssh2_rsa_ctx *rsa,
         return -1; /* failure */
 
     ret = mbedtls_rsa_pkcs1_verify(rsa, NULL, NULL, MBEDTLS_RSA_PUBLIC,
-                                   MBEDTLS_MD_SHA1, SHA_DIGEST_LENGTH, hash, sig);
+                                   MBEDTLS_MD_SHA1, SHA_DIGEST_LENGTH,
+                                   hash, sig);
 
     return (ret == 0) ? 0 : -1;
 }
@@ -631,10 +651,28 @@ _libssh2_mbedtls_pub_priv_keyfilememory(LIBSSH2_SESSION *session,
     mbedtls_pk_context pkey;
     char buf[1024];
     int ret;
+    void *privatekeydata_nullterm;
+    size_t pwd_len;
+
+    /*
+    mbedtls checks in "mbedtls/pkparse.c:1184" if "key[keylen - 1] != '\0'"
+    private-key from memory will fail if the last byte is not a null byte
+    */
+    privatekeydata_nullterm = mbedtls_calloc(privatekeydata_len + 1, 1);
+    if(privatekeydata_nullterm == NULL) {
+        return -1;
+    }
+    memcpy(privatekeydata_nullterm, privatekeydata, privatekeydata_len);
 
     mbedtls_pk_init(&pkey);
-    ret = mbedtls_pk_parse_key(&pkey, (unsigned char *)privatekeydata,
-                              privatekeydata_len, NULL, 0);
+
+    pwd_len = passphrase != NULL ? strlen((const char *)passphrase) : 0;
+    ret = mbedtls_pk_parse_key(&pkey,
+                               (unsigned char *)privatekeydata_nullterm,
+                               privatekeydata_len + 1,
+                               (const unsigned char *)passphrase, pwd_len);
+    _libssh2_mbedtls_safe_free(privatekeydata_nullterm, privatekeydata_len);
+
     if(ret != 0) {
         mbedtls_strerror(ret, (char *)buf, sizeof(buf));
         mbedtls_pk_free(&pkey);
@@ -688,7 +726,7 @@ _libssh2_dh_secret(_libssh2_dh_ctx *dhctx, _libssh2_bn *secret,
 void
 _libssh2_dh_dtor(_libssh2_dh_ctx *dhctx)
 {
-    mbedtls_mpi_free(*dhctx);
+    _libssh2_mbedtls_bignum_free(*dhctx);
     *dhctx = NULL;
 }
 

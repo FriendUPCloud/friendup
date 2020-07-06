@@ -126,17 +126,20 @@ function storageForm( type, id, data )
 				d = '';
 			}
 		
-			d = i18nReplace( d, [ 'i18n_port', 'i18n_key' ] );
+			if( d )
+			{
+				d = i18nReplace( d, [ 'i18n_port', 'i18n_key' ] );
 		
-			if( ge( 'mode' ).value == 'edit' )
-			{
-				ge( 'FormHeading' ).innerHTML = '<h2 class="MarginBottom PaddingBottom BorderBottom">' + 
-					i18n( 'i18n_edit_storage' ) + '</h2>' ;
-			}
-			else
-			{
-				ge( 'FormHeading' ).innerHTML = '<h2 class="MarginBottom PaddingBottom BorderBottom">' + 
-					i18n( 'i18n_add_a' ) + ' ' + type + ' ' + i18n( 'i18n_disk' ) + '</h2>' ;
+				if( ge( 'mode' ).value == 'edit' )
+				{
+					ge( 'FormHeading' ).innerHTML = '<h2 class="MarginBottom PaddingBottom BorderBottom">' + 
+						i18n( 'i18n_edit_storage' ) + '</h2>' ;
+				}
+				else
+				{
+					ge( 'FormHeading' ).innerHTML = '<h2 class="MarginBottom PaddingBottom BorderBottom">' + 
+						i18n( 'i18n_add_a' ) + ' ' + type + ' ' + i18n( 'i18n_disk' ) + '</h2>' ;
+				}
 			}
 			
 			ge( 'GUI' ).innerHTML = d + '<input type="hidden" id="Type" value="' + type + '"/>';

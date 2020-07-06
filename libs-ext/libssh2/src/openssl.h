@@ -1,3 +1,5 @@
+#ifndef __LIBSSH2_OPENSSL_H
+#define __LIBSSH2_OPENSSL_H
 /* Copyright (C) 2009, 2010 Simon Josefsson
  * Copyright (C) 2006, 2007 The Written Word, Inc.  All rights reserved.
  *
@@ -81,7 +83,10 @@
 #if OPENSSL_VERSION_NUMBER >= 0x10101000L && \
 !defined(LIBRESSL_VERSION_NUMBER)
 # define LIBSSH2_ED25519 1
+#else
+# define LIBSSH2_ED25519 0
 #endif
+
 
 #ifdef OPENSSL_NO_MD5
 # define LIBSSH2_MD5 0
@@ -175,7 +180,8 @@ int _libssh2_sha256_init(libssh2_sha256_ctx *ctx);
                                            EVP_MD_CTX_free(ctx); \
                                        } while(0)
 #else
-#define libssh2_sha256_update(ctx, data, len) EVP_DigestUpdate(&(ctx), data, len)
+#define libssh2_sha256_update(ctx, data, len) \
+    EVP_DigestUpdate(&(ctx), data, len)
 #define libssh2_sha256_final(ctx, out) EVP_DigestFinal(&(ctx), out, NULL)
 #endif
 int _libssh2_sha256(const unsigned char *message, unsigned long len,
@@ -198,7 +204,8 @@ int _libssh2_sha384_init(libssh2_sha384_ctx *ctx);
                                             EVP_MD_CTX_free(ctx); \
                                        } while(0)
 #else
-#define libssh2_sha384_update(ctx, data, len) EVP_DigestUpdate(&(ctx), data, len)
+#define libssh2_sha384_update(ctx, data, len)   \
+    EVP_DigestUpdate(&(ctx), data, len)
 #define libssh2_sha384_final(ctx, out) EVP_DigestFinal(&(ctx), out, NULL)
 #endif
 int _libssh2_sha384(const unsigned char *message, unsigned long len,
@@ -221,7 +228,8 @@ int _libssh2_sha512_init(libssh2_sha512_ctx *ctx);
                                             EVP_MD_CTX_free(ctx); \
                                        } while(0)
 #else
-#define libssh2_sha512_update(ctx, data, len) EVP_DigestUpdate(&(ctx), data, len)
+#define libssh2_sha512_update(ctx, data, len)   \
+    EVP_DigestUpdate(&(ctx), data, len)
 #define libssh2_sha512_final(ctx, out) EVP_DigestFinal(&(ctx), out, NULL)
 #endif
 int _libssh2_sha512(const unsigned char *message, unsigned long len,
@@ -308,7 +316,7 @@ extern void _libssh2_openssl_crypto_exit(void);
 typedef enum {
     LIBSSH2_EC_CURVE_NISTP256 = NID_X9_62_prime256v1,
     LIBSSH2_EC_CURVE_NISTP384 = NID_secp384r1,
-    LIBSSH2_EC_CURVE_NISTP521 = NID_secp521r1,
+    LIBSSH2_EC_CURVE_NISTP521 = NID_secp521r1
 }
 libssh2_curve_type;
 #else
@@ -316,25 +324,11 @@ libssh2_curve_type;
 #endif /* LIBSSH2_ECDSA */
 
 #if LIBSSH2_ED25519
+#define libssh2_ed25519_ctx EVP_PKEY
+#define libssh2_x25519_ctx EVP_PKEY
 
-typedef struct {
-    EVP_PKEY *public_key;
-    EVP_PKEY *private_key;
-} libssh2_curve25519_keys;
-
-#define libssh2_ed25519_ctx libssh2_curve25519_keys
-#define libssh2_x25519_ctx libssh2_curve25519_keys
-
-#define _libssh2_ed25519_free(ctx) do { \
- if(ctx) { \
-  if(ctx->public_key) EVP_PKEY_free(ctx->public_key); \
-  if(ctx->private_key) EVP_PKEY_free(ctx->private_key); \
-  free(ctx); \
- } \
-} while(0)
-
-#define _libssh2_x25519_free(ctx) _libssh2_ed25519_free(ctx)
-
+#define _libssh2_ed25519_free(ctx) EVP_PKEY_free(ctx)
+#define _libssh2_x25519_free(ctx) EVP_PKEY_free(ctx)
 #endif /* ED25519 */
 
 #define _libssh2_cipher_type(name) const EVP_CIPHER *(*name)(void)
@@ -389,7 +383,8 @@ typedef struct {
 #define libssh2_dh_dtor(dhctx) _libssh2_dh_dtor(dhctx)
 extern void _libssh2_dh_init(_libssh2_dh_ctx *dhctx);
 extern int _libssh2_dh_key_pair(_libssh2_dh_ctx *dhctx, _libssh2_bn *public,
-                                _libssh2_bn *g, _libssh2_bn *p, int group_order,
+                                _libssh2_bn *g, _libssh2_bn *p,
+                                int group_order,
                                 _libssh2_bn_ctx *bnctx);
 extern int _libssh2_dh_secret(_libssh2_dh_ctx *dhctx, _libssh2_bn *secret,
                               _libssh2_bn *f, _libssh2_bn *p,
@@ -399,3 +394,5 @@ extern void _libssh2_dh_dtor(_libssh2_dh_ctx *dhctx);
 const EVP_CIPHER *_libssh2_EVP_aes_128_ctr(void);
 const EVP_CIPHER *_libssh2_EVP_aes_192_ctr(void);
 const EVP_CIPHER *_libssh2_EVP_aes_256_ctr(void);
+
+#endif /* __LIBSSH2_OPENSSL_H */

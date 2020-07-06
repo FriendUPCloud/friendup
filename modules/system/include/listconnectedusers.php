@@ -14,32 +14,19 @@ global $SqlDatabase, $Logger, $User;
 
 // TODO: For scaling, allow search parameters!
 
-// Get own workgroups
-if( $workgroups = $SqlDatabase->FetchObjects( '
-	SELECT ug.ID FROM FUserGroup ug, FUserToGroup fug 
-	WHERE 
-		    fug.UserID=\'' . $User->ID . '\'
-		AND fug.UserGroupID = ug.ID
+// List all users by connection to workgroup
+if( $rows = $SqlDatabase->FetchObjects( '
+	SELECT 
+		u.ID, u.Name, u.Fullname, u.Email FROM FUser u, FUserToGroup utg1, FUserToGroup utg2
+	WHERE
+		utg1.UserID = \'' . $User->ID . '\' AND
+		utg2.UserID = u.ID AND
+		utg1.UserGroupID = utg2.UserGroupID AND
+		u.ID != utg1.UserID
+	GROUP BY u.ID
 ' ) )
 {
-	$ids = [];
-	foreach( $workgroups as $wg )
-	{
-		$ids[] = $wg->ID;
-	}
-
-	// List all users by connection to workgroup
-	if( $rows = $SqlDatabase->FetchObjects( '
-		SELECT 
-			u.ID, u.Name, u.Fullname, u.Email FROM FUser u
-		WHERE
-			u.ID IN ( 
-				SELECT i.UserID FROM FUserToGroup i, FUserGroup ug WHERE ug.Type = "Workgroup" AND ug.ID IN ( ' . implode( ',', $ids ) . ' )
-			)
-	' ) )
-	{
-		die( 'ok<!--separate-->' . json_encode( $rows ) );
-	}
+	die( 'ok<!--separate-->' . json_encode( $rows ) );
 }
 die( 'fail<!--separate-->{"response":-1,"message":"No workgroup related users connected to you."}' );
 

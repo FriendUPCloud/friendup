@@ -1612,6 +1612,8 @@ function apiWrapper( event, force )
 							{
 								win.iframe.classList.remove( 'Loading' );
 							}
+							// Clean blocker
+							RemoveFromExecutionQueue( app.applicationName );
 							break;
 						// Pass a message to actual window
 						case 'sendMessage':

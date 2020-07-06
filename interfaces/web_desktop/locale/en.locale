@@ -24,6 +24,9 @@ i18n_upload_a_file                   : Upload file
 i18n_selected_files                  : Selected files
 i18n_in_total                        : In total
 i18n_deleting_files                  : Deleting files
+i18n_sure_unshare                    : Are you sure you want to unshare?
+i18n_sure_unshdesc                   : The files you unshare will not be available to others.
+i18n_unsharing_files                 : Unsharing files
 i18n_bookmarks_add                   : Add
 i18n_bookmarks_close                 : Close
 i18n_bookmarks_select                : Select
@@ -48,6 +51,7 @@ i18n_affirmative                     : Ok
 i18n_negative                        : No
 i18n_yes                             : Yes
 i18n_cancel                          : Cancel
+i18n_back                            : Back
 i18n_accept                          : Accept
 i18n_understood                      : Understood
 i18n_your_devices                    : Disks
@@ -237,6 +241,7 @@ menu_unzip                              : Decompress file(s)
 menu_looknfeel                          : Look and feel
 menu_backdrop                           : Show overview
 menu_share								: Share
+menu_unshare                            : Unshare
 menu_share_info                         : Share info
 menu_download                           : Download
 i18n_could_not_download                 : Could not download
@@ -248,6 +253,7 @@ menu_new_window                         : New window
 menu_share_file                         : Sharing
 
 menu_help                               : Help
+menu_help_tutorials                     : Tutorials
 menu_help_bug                           : Report a bug
 menu_help_manual                        : User manual
 
@@ -536,6 +542,8 @@ i18n_only_files_can_be_shared           : Only regular files can be shared.
 i18n_share_with_users_or_groups         : Share with users or groups
 i18n_ok                                 : Ok
 i18n_no_users_or_groups                 : No users or groups to share with.
+i18n_nothing_shared                     : No share target(s) selected
+i18n_please_select_users_groups         : Did not share because no user(s) or group(s) were selected.
 
 
 i18n_paste_error                        : Paste error

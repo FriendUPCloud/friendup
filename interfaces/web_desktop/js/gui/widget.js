@@ -337,6 +337,7 @@ Widget.prototype.show = function( callback )
 			self.dom.classList.add( 'Fadein' );
 		}, 5 );
 	}
+	this.dom.classList.remove( 'Hiding' );
 	this.dom.style.visibility = 'visible';
 	this.dom.style.pointerEvents = 'all';
 	if( callback ) callback();
@@ -348,6 +349,7 @@ Widget.prototype.hide = function( callback )
 	function doHide()
 	{
 		self.shown = false;
+		self.dom.classList.add( 'Hiding' );
 		self.dom.style.visibility = 'hidden';
 		self.dom.style.pointerEvents = 'none';
 		if( callback ) callback();

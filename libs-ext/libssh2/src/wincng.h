@@ -1,5 +1,7 @@
+#ifndef __LIBSSH2_WINCNG_H
+#define __LIBSSH2_WINCNG_H
 /*
- * Copyright (C) 2013-2015 Marc Hoersken <info@marc-hoersken.de>
+ * Copyright (C) 2013-2020 Marc Hoersken <info@marc-hoersken.de>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms,
@@ -101,7 +103,7 @@ struct _libssh2_wincng_ctx {
     BCRYPT_ALG_HANDLE hAlg3DES_CBC;
 };
 
-struct _libssh2_wincng_ctx _libssh2_wincng;
+extern struct _libssh2_wincng_ctx _libssh2_wincng;
 
 
 /*******************************************************************/
@@ -310,7 +312,8 @@ struct _libssh2_wincng_cipher_ctx {
 struct _libssh2_wincng_cipher_type {
     BCRYPT_ALG_HANDLE *phAlg;
     unsigned long dwKeyLength;
-    int useIV;      /* TODO: Convert to bool when a C89 compatible bool type is defined */
+    int useIV;      /* TODO: Convert to bool when a C89 compatible bool type
+                       is defined */
     int ctrMode;
 };
 
@@ -568,3 +571,5 @@ _libssh2_dh_secret(_libssh2_dh_ctx *dhctx, _libssh2_bn *secret,
                    _libssh2_bn *f, _libssh2_bn *p);
 extern void
 _libssh2_dh_dtor(_libssh2_dh_ctx *dhctx);
+
+#endif /* __LIBSSH2_WINCNG_H */

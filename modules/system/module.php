@@ -814,6 +814,10 @@ if( isset( $args->command ) )
 			require( 'modules/system/include/share.php' );
 			break;
 		// Share a file to members
+		case 'removefileshareinfo':
+			require( 'modules/system/include/removefileshareinfo.php' );
+			break;
+		// Share a file to members
 		case 'setfileshareinfo':
 			require( 'modules/system/include/setfileshareinfo.php' );
 			break;

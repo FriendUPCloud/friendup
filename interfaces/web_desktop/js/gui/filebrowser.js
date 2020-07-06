@@ -478,12 +478,14 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				let foundElements = [];
 				let foundStructures = [];
 				let removers = [];
-				for( var a = 0; a < eles.length; a++ )
+				for( let a = 0; a < eles.length; a++ )
 				{
 					let elFound = false;
-					for( var b = 0; b < msg.list.length; b++ )
+					for( let b = 0; b < msg.list.length; b++ )
 					{
 						if( msg.list[ b ].Volume == 'System:' ) continue;
+						if( self.directoryView && self.directoryView.filedialog && msg.list[ b ].Volume == 'Shared:' )
+							continue;
 						
 						if( eles[a].id == 'diskitem_' + msg.list[b].Title )
 						{
@@ -507,7 +509,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				}
 				if( removers.length )
 				{
-					for( var a = 0; a < removers.length; a++ )
+					for( let a = 0; a < removers.length; a++ )
 					{
 						rootElement.removeChild( removers[a] );
 					}
@@ -515,10 +517,12 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				}
 				
 				// Iterate through the resulting list
-				for( var a = 0; a < msg.list.length; a++ )
+				for( let a = 0; a < msg.list.length; a++ )
 				{
 					// Skip system drive
 					if( msg.list[a].Volume == 'System:' ) continue;
+					if( self.directoryView && self.directoryView.filedialog && msg.list[ a ].Volume == 'Shared:' )
+						continue;
 					
 					// Add the bookmark header if it doesn't exist
 					if( self.flags.bookmarks && msg.list[a].Type && msg.list[a].Type == 'header' && !self.bookmarksHeader )
@@ -828,8 +832,9 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						d.className = msg.list[a].Type == 'Directory' ? 'FolderItem' : 'FileItem';
 						let ext = msg.list[a].Filename.split( '.' ).pop().toLowerCase();
 						let icon = d.className == 'FolderItem' ? 'IconFolder' : ( 'IconFile ' + ext );
+						let title = msg.list[a].Title ? msg.list[a].Title : msg.list[a].Filename;
 						d.id = 'fileitem_' + msg.list[a].Filename.split( ' ' ).join( '' );
-						d.innerHTML = '<div style="padding-left: ' + ( d13 ) + 'px" class="Name IconSmall ' + icon + '"><span> ' + msg.list[a].Filename + '</span></div><div class="SubItems"></div>';
+						d.innerHTML = '<div style="padding-left: ' + ( d13 ) + 'px" class="Name IconSmall ' + icon + '"><span> ' + title + '</span></div><div class="SubItems"></div>';
 						rootElement.appendChild( d );
 						let fn = msg.list[a].Filename;
 						if( msg.list[a].Type == 'Directory' )
