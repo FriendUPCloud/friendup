@@ -41,7 +41,7 @@
 #include <sys/resource.h>
 #include <pthread.h>
 
-//#undef DEBUG
+#undef __DEBUG
 //#define DEBUG( ...)
 //#undef DEBUG1
 //#define DEBUG1( ...)
