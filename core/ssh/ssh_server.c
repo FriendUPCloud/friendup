@@ -48,7 +48,9 @@ clients must be made or how a client should react.
 #include <netdb.h>
 #include <unistd.h>
 #include <sys/select.h>
+#ifdef ENABLE_SSH
 #include <libssh/callbacks.h>
+#endif
 #include <signal.h>
 #include <core/friend_core.h>
 #include <util/sha256.h>
