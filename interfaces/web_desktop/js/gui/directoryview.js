@@ -1781,6 +1781,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	// If we resized, recalculate all
 	if( this.prevWidth != windowWidth || this.prevHeight != windowHeight )
 	{
+		this.changed = true;
 		if( flags )
 		{
 			flags.addPlaceholderFirst = false;
