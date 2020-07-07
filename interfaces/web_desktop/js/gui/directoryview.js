@@ -4139,6 +4139,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 					if( self.win.revent ) self.win.removeEvent( 'resize', self.win.revent );
 					self.win.revent = self.win.addEvent( 'resize', function( cbk )
 					{
+						self.directoryview.changed = true;
 						self.redrawIcons( self.win.icons, self.direction, cbk );
 					} );
 					self.refreshTimeout = null;
@@ -4454,6 +4455,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 								if( w.revent ) w.removeEvent( 'resize', w.revent );
 								w.revent = w.addEvent( 'resize', function( cbk )
 								{
+									win.directoryview.changed = true;
 									self.redrawIcons( false, self.direction, cbk );
 								} );
 								
@@ -4592,6 +4594,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 						if( w.revent ) ww.RemoveEvent( 'resize', ww.revent );
 						ww.revent = ww.AddEvent ( 'resize', function ( cbk )
 						{
+							win.directoryview.changed = true;
 							ww.redrawIcons( null, ww.direction, cbk );
 						} );
 					}
