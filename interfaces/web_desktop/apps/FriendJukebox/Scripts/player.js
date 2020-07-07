@@ -244,7 +244,8 @@ Application.receiveMessage = function( msg )
 				this.index = msg.index;
 			}
 			this.song.onload = function()
-			{	
+			{
+				if( this.stopped ) return;
 				document.body.classList.remove( 'Paused' );
 				document.body.classList.add( 'Playing' );
 				
