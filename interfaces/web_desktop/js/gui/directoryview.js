@@ -85,6 +85,7 @@ DirectoryView = function( winobj, extra )
 	// Read in extra stuff
 	if( extra )
 	{
+		this.oldExtra = extra;
 		if( extra.startPath )
 			this.startPath = extra.startPath;
 		if( extra.filedialog )
@@ -3761,11 +3762,11 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 								Workspace.diskNotificationList[ ppath ] = false;
 							}
 							ff.execute( 'file/notificationremove' );
-							console.log( 'Notification remove: ' + ppath );
+							//console.log( 'Notification remove: ' + ppath );
 						} );
 					}
 					f.execute( 'file/notificationstart' );
-					console.log( 'Notification start: ' + ppath );
+					//console.log( 'Notification start: ' + ppath );
 				}
 
 				// Open unique window!
@@ -4002,7 +4003,6 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 	for( var a in oFileInfo )
 		fileInfo[ a ] = oFileInfo[ a ];
 
-	//console.log('OpenWindowByFileinfo fileInfo is ',fileInfo);
 	if( !iconObject )
 	{
 		let ext = fileInfo.Path ? fileInfo.Path.split( '.' ) : ( fileInfo.Filename ? fileInfo.Filename.split( '.' ) : fileInfo.Title.split( '.' ) );
@@ -4234,7 +4234,9 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 	// We've clicked on a directory!
 	else if( fileInfo.MetaType == 'Directory' || fileInfo.MetaType == 'Door' )
 	{
-		let extra = null;
+		// Try to reuse the directoryview extra flags
+		let extra = fileInfo.directoryview ? fileInfo.directoryview.oldExtra : null;
+		
 		let wt = fileInfo.Path ? fileInfo.Path : ( fileInfo.Filename ? fileInfo.Filename : fileInfo.Title );
 
 		let id = fileInfo.Type + '_' + wt.split( /[^a-z0-9]+/i ).join( '_' );
@@ -4307,7 +4309,8 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 		// Special case - a mobile opens a mountlist
 		if( isMobile && fileInfo.Path == 'Mountlist:' )
 		{
-			extra = {};
+			// Try to reuse the old directoryview flags
+			extra = fileInfo.directoryview ? fileInfo.directoryview.oldExtra : {};
 			fileInfo.Path = 'Home:';
 			iconObject.Path = 'Home:';
 			let t = document.createElement( 'div' );

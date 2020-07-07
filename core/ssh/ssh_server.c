@@ -31,8 +31,10 @@ clients must be made or how a client should react.
 
 //#include "config.h"
 
+#ifdef ENABLE_SSH
 #include <libssh/libssh.h>
 #include <libssh/server.h>
+#endif
 #include <system/auth/authmodule.h>
 #include <system/systembase.h>
 
@@ -46,7 +48,9 @@ clients must be made or how a client should react.
 #include <netdb.h>
 #include <unistd.h>
 #include <sys/select.h>
+#ifdef ENABLE_SSH
 #include <libssh/callbacks.h>
+#endif
 #include <signal.h>
 #include <core/friend_core.h>
 #include <util/sha256.h>

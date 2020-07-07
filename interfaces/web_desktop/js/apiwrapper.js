@@ -4294,6 +4294,19 @@ function GetContentWindowById( app, id )
 	return false;
 }
 
+// Just get the iframe object
+function _getAppByAppId( appid )
+{
+	var t = ge( 'Tasks' );
+	for( var a = 0; a < t.childNodes.length; a++ )
+	{
+		if( !t.childNodes[a].ifr ) continue;
+		if( t.childNodes[a].ifr.applicationId == appid )
+			return t.childNodes[a].ifr;
+	}
+	return false;
+}
+
 // Add Css by url
 function AddCSSByUrl( csspath, callback )
 {
