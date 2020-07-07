@@ -1279,6 +1279,8 @@ int FileClose( struct File *s, void *fp )
 						BufStringDisk *result = PHPCallDisk( command );
 						if( result != NULL )
 						{
+							DEBUG("[fsysphp] : phpcalldisk result: %s\n", result->bsd_Buffer );
+							
 							if( result->bsd_Buffer[0] == 'f' && result->bsd_Buffer[1] == 'a' && result->bsd_Buffer[2] == 'i' && result->bsd_Buffer[3] == 'l' )
 							{
 								closeerr = 2;
@@ -1293,7 +1295,7 @@ int FileClose( struct File *s, void *fp )
 				
 				if( encPath ) FFree( encPath );
 				
-				remove( sd->fname );
+				//remove( sd->fname );
 			}
 			
 			if ( sd->fname != NULL ){ FFree( sd->fname ); sd->fname = NULL; }
