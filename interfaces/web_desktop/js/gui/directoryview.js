@@ -4455,7 +4455,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 								if( w.revent ) w.removeEvent( 'resize', w.revent );
 								w.revent = w.addEvent( 'resize', function( cbk )
 								{
-									dv.directoryview.changed = true;
+									dv.changed = true;
 									self.redrawIcons( false, self.direction, cbk );
 								} );
 								
