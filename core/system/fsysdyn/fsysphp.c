@@ -311,7 +311,7 @@ ListString *PHPCall( const char *command )
 	
 	ListStringJoin( ls );		//we join all string into one buffer
 
-	DEBUG( "[fsysphp] Finished PHP call...(%lu length)-\n", ls->ls_Size );
+	DEBUG( "[fsysphp] Finished PHP call...(%lu length, %s)-\n", ls->ls_Size, ls->ls_Data );
 	return ls;
 }
 
