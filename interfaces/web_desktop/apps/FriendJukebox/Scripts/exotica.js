@@ -617,6 +617,15 @@ Application.receiveMessage = function( msg )
 				this.index = 0;
 			this.mainView.sendMessage( { command: 'play', item: this.playlist[this.index], index: this.index } );
 			break;
+		case 'addplaylists':
+			if( msg.items && msg.items.length )
+			{
+				for( let a = 0; a < msg.items.length; a++ )
+				{
+					Application.addPlaylist( msg.items[ a ].Path );
+				}
+			}
+			break;
 		case 'quit':
 			Application.quit();
 			break;
