@@ -566,11 +566,11 @@ void *FriendCoreAcceptPhase2( void *data )
 						// Make sure we keep the number of threads under the limit
 						
 						//change NULL to &attr
-#ifdef USE_BLOCKED_SOCKETS_TO_READ_HTTP
+//#ifdef USE_BLOCKED_SOCKETS_TO_READ_HTTP
 						if( pthread_create( &pre->thread, &attr, (void *(*) (void *))&FriendCoreProcessSockBlock, ( void *)pre ) != 0 )
-#else
-						if( pthread_create( &pre->thread, &attr, (void *(*) (void *))&FriendCoreProcessSockNonBlock, ( void *)pre ) != 0 )
-#endif
+//#else
+//						if( pthread_create( &pre->thread, &attr, (void *(*) (void *))&FriendCoreProcessSockNonBlock, ( void *)pre ) != 0 )
+//#endif
 						{
 							FFree( pre );
 						}
