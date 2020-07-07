@@ -861,18 +861,49 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	{
 		let dirv = this.directoryview;
 		
-		if( dirv.window.fileBrowser )
-		{
-			// Correct file browser
-			dirv.window.fileBrowser.setPath( winobj.fileInfo.Path );
-		}
-		
 		// Assign icons now
 		// Store
 		if( icons )
 		{
+			// Check if the icons haven't changed!
+			if( this.icons && this.allIcons.length )
+			{
+				let changed = false;
+				for( let a = 0; a < icons.length; a++ )
+				{
+					// We found a different icon
+					if( icons[a].Path != this.allIcons[a].Path )
+					{
+						changed = true;
+						break;
+					}
+				}
+				if( this.icons.length )
+				{
+					for( let a = 0; a < this.icons.length; a++ )
+					{
+						if( this.icons[ a ].selected )
+						{
+							changed = true;
+							break;
+						}
+					}
+				}
+				if( !changed ) 
+				{
+					return;
+				}
+			}
+			
+			// If stuff has changed - set the new icons.
 			this.icons = icons;
 			this.allIcons = icons;
+		}
+		
+		if( dirv.window.fileBrowser )
+		{
+			// Correct file browser
+			dirv.window.fileBrowser.setPath( winobj.fileInfo.Path );
 		}
 		
 		// When we have a toolbar and no file browser, remove up on root paths
