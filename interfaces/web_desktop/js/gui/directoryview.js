@@ -502,6 +502,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 			content: i18n( 'i18n_dir_btn_reload' ),
 			onclick: function( e )
 			{
+				winobj.directoryview.changed = true;
 				winobj.refresh();
 			}
 		},
@@ -520,6 +521,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 						{
 							winobj.directoryview.window.classList.add( 'LoadingIcons' );
 							winobj.directoryview.listMode = 'iconview';
+							winobj.directoryview.changed = true;
 							winobj.refresh();
 							this.parentNode.checkActive( this.value );
 						}
@@ -536,6 +538,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 						{
 							winobj.directoryview.window.classList.add( 'LoadingIcons' );
 							winobj.directoryview.listMode = 'imageview';
+							winobj.directoryview.changed = true;
 							winobj.refresh();
 							this.parentNode.checkActive( this.value );
 						}
@@ -552,6 +555,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 						{
 							winobj.directoryview.window.classList.add( 'LoadingIcons' );
 							winobj.directoryview.listMode = 'compact';
+							winobj.directoryview.changed = true;
 							winobj.refresh();
 							this.parentNode.checkActive( this.value );
 						}
@@ -568,6 +572,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 						{
 							winobj.directoryview.window.classList.add( 'LoadingIcons' );
 							winobj.directoryview.listMode = 'listview';
+							winobj.directoryview.changed = true;
 							winobj.refresh();
 							this.parentNode.checkActive( this.value );
 						}
@@ -863,10 +868,10 @@ DirectoryView.prototype.InitWindow = function( winobj )
 		
 		// Assign icons now
 		// Store
-		if( icons )
+		if( icons && icons.length )
 		{
 			// Check if the icons haven't changed!
-			if( this.icons && this.allIcons.length )
+			if( this.icons && this.allIcons.length && !dirv.changed )
 			{
 				let changed = false;
 				for( let a = 0; a < icons.length; a++ )
@@ -893,12 +898,13 @@ DirectoryView.prototype.InitWindow = function( winobj )
 				{
 					return;
 				}
-			}
-			
-			// If stuff has changed - set the new icons.
-			this.icons = icons;
-			this.allIcons = icons;
+			}			
 		}
+
+		// If stuff has changed - set the new icons.
+		this.icons = icons;
+		this.allIcons = icons;
+		dirv.changed = false; // We changed it..
 		
 		if( dirv.window.fileBrowser )
 		{
