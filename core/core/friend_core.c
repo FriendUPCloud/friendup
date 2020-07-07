@@ -153,20 +153,6 @@ void FriendCoreShutdown( FriendCoreInstance* fc )
 		sleep( 1 );
 	}
 	
-	fc->fci_AcceptQuit = TRUE;
-	
-	if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
-	{
-		pthread_cond_broadcast( &(fc->fci_AcceptCond) );
-		FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
-	}
-	
-	while( fc->fci_AcceptThreadDestroyed != TRUE )
-	{
-		DEBUG("[FriendCoreShutdown] Time to kill accept thread\n");
-		sleep( 1 );
-	}
-	
 	pthread_cond_destroy( &(fc->fci_AcceptCond) );
 	pthread_mutex_destroy( &(fc->fci_AcceptMutex) );
 
@@ -1918,6 +1904,20 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 		LOG( FLOG_ERROR, "[FriendCoreEpoll] epoll_ctl can not remove connection!\n" );
 	}
 #endif
+
+	fc->fci_AcceptQuit = TRUE;
+	
+	if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
+	{
+		pthread_cond_broadcast( &(fc->fci_AcceptCond) );
+		FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
+	}
+	
+	while( fc->fci_AcceptThreadDestroyed != TRUE )
+	{
+		DEBUG("[FriendCoreShutdown] Time to kill accept thread\n");
+		sleep( 1 );
+	}
 	
 	// Server is shutting down
 	DEBUG("[FriendCoreEpoll] Shutting down.\n");
