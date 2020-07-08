@@ -502,6 +502,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 			content: i18n( 'i18n_dir_btn_reload' ),
 			onclick: function( e )
 			{
+				winobj.directoryview.toChange = true;
 				winobj.refresh();
 			}
 		},
@@ -520,6 +521,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 						{
 							winobj.directoryview.window.classList.add( 'LoadingIcons' );
 							winobj.directoryview.listMode = 'iconview';
+							winobj.directoryview.toChange = true;
 							winobj.refresh();
 							this.parentNode.checkActive( this.value );
 						}
@@ -536,6 +538,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 						{
 							winobj.directoryview.window.classList.add( 'LoadingIcons' );
 							winobj.directoryview.listMode = 'imageview';
+							winobj.directoryview.toChange = true;
 							winobj.refresh();
 							this.parentNode.checkActive( this.value );
 						}
@@ -552,6 +555,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 						{
 							winobj.directoryview.window.classList.add( 'LoadingIcons' );
 							winobj.directoryview.listMode = 'compact';
+							winobj.directoryview.toChange = true;
 							winobj.refresh();
 							this.parentNode.checkActive( this.value );
 						}
@@ -568,6 +572,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 						{
 							winobj.directoryview.window.classList.add( 'LoadingIcons' );
 							winobj.directoryview.listMode = 'listview';
+							winobj.directoryview.toChange = true;
 							winobj.refresh();
 							this.parentNode.checkActive( this.value );
 						}
@@ -861,18 +866,56 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	{
 		let dirv = this.directoryview;
 		
-		if( dirv.window.fileBrowser )
-		{
-			// Correct file browser
-			dirv.window.fileBrowser.setPath( winobj.fileInfo.Path );
-		}
-		
 		// Assign icons now
 		// Store
+		// If we're told it hasn't changed - don't do this
+		if( icons && icons.length && !dirv.toChange )
+		{
+			// Check if the icons haven't changed!
+			if( this.icons && this.allIcons.length )
+			{
+				let changed = false;
+				for( let a = 0; a < icons.length; a++ )
+				{
+					// We found a different icon
+					if( icons[a].Path != this.allIcons[a].Path )
+					{
+						changed = true;
+						break;
+					}
+				}
+				if( this.icons.length )
+				{
+					for( let a = 0; a < this.icons.length; a++ )
+					{
+						if( this.icons[ a ].selected )
+						{
+							changed = true;
+							break;
+						}
+					}
+				}
+				if( !changed ) 
+				{
+					return;
+				}
+			}
+		}
+
+		// If stuff has changed - set the new icons.
 		if( icons )
 		{
 			this.icons = icons;
 			this.allIcons = icons;
+		}
+		
+		// We don't need no force change (toChange passes the changed check)
+		dirv.toChange = false;
+		
+		if( dirv.window.fileBrowser )
+		{
+			// Correct file browser
+			dirv.window.fileBrowser.setPath( winobj.fileInfo.Path );
 		}
 		
 		// When we have a toolbar and no file browser, remove up on root paths
@@ -1012,7 +1055,6 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			this.noRunPath = '';
 		}
 		
-		// Filter icons
 		if( this.icons )
 		{
 			for( var a = 0; a < this.icons.length; a++ )
@@ -1120,8 +1162,9 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					}
 				}
 
-				self.directoryview.changed = true;
-
+				// And we know it changed now..
+				dirv.changed = true;
+				
 				// Make sure the menu is refreshed due to icon selection
 				if( self.parentNode && ( self.parentNode == currentMovable || ( !currentMovable && self.parentNode == currentScreen ) ) )
 				{
@@ -1183,6 +1226,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 				self.directoryview.window.classList.remove( 'LoadingIcons' );
 			}
 		}
+		this.redrawing = false;
 		return false;
 	}
 
@@ -1744,6 +1788,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	// If we resized, recalculate all
 	if( this.prevWidth != windowWidth || this.prevHeight != windowHeight )
 	{
+		this.toChange = true;
 		if( flags )
 		{
 			flags.addPlaceholderFirst = false;
@@ -4101,6 +4146,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 					if( self.win.revent ) self.win.removeEvent( 'resize', self.win.revent );
 					self.win.revent = self.win.addEvent( 'resize', function( cbk )
 					{
+						self.directoryview.toChange = true;
 						self.redrawIcons( self.win.icons, self.direction, cbk );
 					} );
 					self.refreshTimeout = null;
@@ -4416,6 +4462,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 								if( w.revent ) w.removeEvent( 'resize', w.revent );
 								w.revent = w.addEvent( 'resize', function( cbk )
 								{
+									dv.toChange = true;
 									self.redrawIcons( false, self.direction, cbk );
 								} );
 								
@@ -4554,6 +4601,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 						if( w.revent ) ww.RemoveEvent( 'resize', ww.revent );
 						ww.revent = ww.AddEvent ( 'resize', function ( cbk )
 						{
+							win.directoryview.toChange = true;
 							ww.redrawIcons( null, ww.direction, cbk );
 						} );
 					}

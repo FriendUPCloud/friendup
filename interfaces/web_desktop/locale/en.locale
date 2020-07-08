@@ -315,6 +315,7 @@ menu_open_parent_directory              : Open parent directory
 menu_show_as                            : Show as
 menu_show_as_icons                      : Icons
 menu_show_as_compact                    : Compact
+menu_show_as_gallery                    : Gallery
 menu_show_as_list                       : List
 menu_show_as_columns                    : Columns
 menu_close_window                       : Close window
@@ -588,6 +589,7 @@ i18n_diskspace                          : Diskspace
 i18n_dir_btn_iconview                   : Normal
 i18n_dir_btn_compact                    : Compact
 i18n_dir_btn_listview                   : List
+i18n_dir_btn_imageview                  : Gallery
 
 #Sessions ----------------------------------------------------------------------
 
