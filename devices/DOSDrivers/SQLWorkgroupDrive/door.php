@@ -726,6 +726,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 					$o->Volume = $this->Name . ':';
 					$o->Used = $row->FZ;
 					$o->Filesize = SQLWORKGROUPDRIVE_FILE_LIMIT;
+					$Logger->log( 'This is the result: ' . print_r( $o, 1 ) );
 					die( 'ok<!--separate-->' . json_encode( $o ) );
 				}
 				die( 'fail' );
