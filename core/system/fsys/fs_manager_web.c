@@ -2124,27 +2124,18 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									
 									LOG( FLOG_DEBUG, "UPLOAD FINISHED\n");
 									
-									int err = actFS->FileClose( actDev, fp );
-									
-									if( err == 0 )
+									int closeResponse = actFS->FileClose( actDev, fp );
+								
+									int addSize = 0;
+									if( uploadedFiles == 0 )
 									{
-										int addSize = 0;
-										if( uploadedFiles == 0 )
-										{
-											addSize = snprintf( tmpFileData, sizeof( tmpFileData ), "{\"name\":\"%s\",\"bytesexpected\":%ld,\"bytesstored\":%ld}", file->hf_FileName, file->hf_FileSize, storedBytes );
-										}
-										else
-										{
-											addSize = snprintf( tmpFileData, sizeof( tmpFileData ), ",{\"name\":\"%s\",\"bytesexpected\":%ld,\"bytesstored\":%ld}", file->hf_FileName, file->hf_FileSize, storedBytes );
-										}
-										BufStringAddSize( uploadedFilesBS, tmpFileData, addSize );
+										addSize = snprintf( tmpFileData, sizeof( tmpFileData ), "{\"name\":\"%s\",\"bytesexpected\":%ld,\"bytesstored\":%ld,\"responseCode\":%d}", file->hf_FileName, file->hf_FileSize, storedBytes, closeResponse );
 									}
 									else
 									{
-										char tmp[ 256 ];
-										sprintf( tmp, "fail<!--separate-->{\"uploaded files\":\"%d\",\"error\":%d}", uploadedFiles, err );
-										HttpAddTextContent( response, tmp );
+										addSize = snprintf( tmpFileData, sizeof( tmpFileData ), ",{\"name\":\"%s\",\"bytesexpected\":%ld,\"bytesstored\":%ld}", file->hf_FileName, file->hf_FileSize, storedBytes );
 									}
+									BufStringAddSize( uploadedFilesBS, tmpFileData, addSize );
 								
 									uploadedFiles++;
 								}
