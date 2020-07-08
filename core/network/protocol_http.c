@@ -1559,7 +1559,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 													FFree( mime );
 												}
 												
-												DEBUG("Multifile content: %s\n\n\n", bs->bs_Buffer );
+												//DEBUG("Multifile content: %s\n\n\n", bs->bs_Buffer );
 
 												bs->bs_Buffer = NULL;
 
