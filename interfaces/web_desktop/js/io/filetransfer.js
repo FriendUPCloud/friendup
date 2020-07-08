@@ -77,7 +77,7 @@ self.checkVolume = function()
 					self.postMessage( { 'error': 1, 'errormessage': 'Illegal server response.' } ); return; 
 				}
 				
-				var diskspace = BigInt( tmp.Filesize ) - BigInt( tmp.Used ? tmp.Used : 0 );
+				var diskspace = parseInt( tmp.Filesize ) - parseInt( tmp.Used ? tmp.Used : 0 );
 				
 				for( var f in self.files )
 				{
