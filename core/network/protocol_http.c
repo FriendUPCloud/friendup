@@ -1553,6 +1553,10 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 															LocFileDelete( nlf );
 														}
 													}
+													else
+													{
+														LocFileDelete( nlf );
+													}
 												}
 												else
 												{

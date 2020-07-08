@@ -319,8 +319,9 @@ static inline void moveToHttps( Socket *sock )
 * @param d pointer to fcThreadInstance
 */
 
+#define SINGLE_SHOT
 #define ACCEPT_IN_EPOLL
-#define ACCEPT_IN_THREAD
+//#define ACCEPT_IN_THREAD
 
 #ifdef ACCEPT_IN_THREAD
 
@@ -350,7 +351,9 @@ void *FriendCoreAcceptPhase2( void *data )
 			FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
 		}
 		
-		while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) > 0 )
+		if( ( fd = accept( fc->fci_Sockets->fd, ( struct sockaddr* )&(client), &clientLen ) ) > 0 )
+		//while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, 0 ) ) > 0 )
+		//while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) > 0 )
 		{
 			if( fd <= 0 )
 			{
@@ -837,6 +840,32 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 					goto accerror;
 				}
 				
+				struct fcThreadInstance *pre = FCalloc( 1, sizeof( struct fcThreadInstance ) );
+					if( pre != NULL )
+					{
+						pre->fc = fc; pre->sock = incoming;
+					
+#ifdef USE_PTHREAD
+						//size_t stacksize = 16777216; //16 * 1024 * 1024;
+						size_t stacksize = 8777216;	// half of previous stack
+						pthread_attr_t attr;
+						pthread_attr_init( &attr );
+						pthread_attr_setstacksize( &attr, stacksize );
+						
+						// Make sure we keep the number of threads under the limit
+						
+						//change NULL to &attr
+//#ifdef USE_BLOCKED_SOCKETS_TO_READ_HTTP
+						if( pthread_create( &pre->thread, &attr, (void *(*) (void *))&FriendCoreProcessSockBlock, ( void *)pre ) != 0 )
+//#else
+//						if( pthread_create( &pre->thread, &attr, (void *(*) (void *))&FriendCoreProcessSockNonBlock, ( void *)pre ) != 0 )
+//#endif
+						{
+							FFree( pre );
+						}
+#endif
+					}
+				/*
 				/// Add to epoll
 				struct epoll_event event;
 				event.data.ptr = incoming;
@@ -868,6 +897,7 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 						close( fd );
 					}
 				}
+				*/
 			}
 		}
 		//DEBUG("[FriendCoreAcceptPhase2] in accept loop\n");
@@ -877,24 +907,10 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 accerror:
 	if( fd > 0 )
 	{
-		/*
-		if( incoming != NULL )
-		{
-			if( fc->fci_Sockets->s_SSLEnabled == TRUE )
-			{
-				if( s_Ssl != NULL )
-				{
-					SSL_free( s_Ssl );
-				}
-			}
-			FFree( incoming );
-		}
-		*/
-		
 		if( s_Ssl != NULL )
-				{
-					SSL_free( s_Ssl );
-				}
+		{
+			SSL_free( s_Ssl );
+		}
 		
 		shutdown( fd, SHUT_RDWR );
 		close( fd );
@@ -1184,7 +1200,7 @@ void FriendCoreProcessSockBlock( void *fcv )
 	
 	SocketSetBlocking( th->sock, TRUE );
 	
-	DEBUG("[FriendCoreProcessSockBlock] start");
+	DEBUG("[FriendCoreProcessSockBlock] start\n");
 	
 	if( locBuffer != NULL )
 	{
@@ -1703,7 +1719,8 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	// All incoming network events go through here
 	while( !fc->fci_Shutdown )
 	{
-#ifdef ACCEPT_IN_THREAD
+
+#ifdef SINGLE_SHOT
 		epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_MOD, fc->fci_Sockets->fd, &(fc->fci_EpollEvent) );
 #endif
 		
@@ -1905,6 +1922,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	}
 #endif
 
+#ifdef ACCEPT_IN_THREAD
 	fc->fci_AcceptQuit = TRUE;
 	
 	if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
@@ -1918,6 +1936,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 		DEBUG("[FriendCoreShutdown] Time to kill accept thread\n");
 		sleep( 1 );
 	}
+#endif
 	
 	// Server is shutting down
 	DEBUG("[FriendCoreEpoll] Shutting down.\n");
@@ -1992,6 +2011,7 @@ int FriendCoreRun( FriendCoreInstance* fc )
 	}
 	
 	// Non blocking listening!
+	//if( SocketSetBlocking( fc->fci_Sockets, TRUE ) == -1 )
 	if( SocketSetBlocking( fc->fci_Sockets, FALSE ) == -1 )
 	{
 		Log( FLOG_ERROR, "[FriendCoreEpoll] Cannot set socket to blocking state!\n");
@@ -2034,7 +2054,11 @@ int FriendCoreRun( FriendCoreInstance* fc )
 	
 	memset( &(fc->fci_EpollEvent), 0, sizeof( fc->fci_EpollEvent ) );
 	fc->fci_EpollEvent.data.ptr = fc->fci_Sockets;
-	fc->fci_EpollEvent.events = EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP | EPOLLERR;// | EPOLLONESHOT ;// | EPOLLEXCLUSIVE ; //all flags are necessary, otherwise epoll may not deliver disconnect events and socket descriptors will leak
+#ifdef SINGLE_SHOT
+	fc->fci_EpollEvent.events = EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP | EPOLLERR | EPOLLONESHOT ;// | EPOLLEXCLUSIVE ; //all flags are necessary, otherwise epoll may not deliver disconnect events and socket descriptors will leak
+#else
+	fc->fci_EpollEvent.events = EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP | EPOLLERR;// | EPOLLEXCLUSIVE ; //all flags are necessary, otherwise epoll may not deliver disconnect events and socket descriptors will leak
+#endif
 	
 	if( epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_ADD, fc->fci_Sockets->fd, &(fc->fci_EpollEvent) ) == -1 )
 	{
