@@ -59,7 +59,6 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 					}
 					if( $nn <= 0 ) $nn = $defaultDiskspace;
 					define( 'SQLWORKGROUPDRIVE_FILE_LIMIT', $nn );
-					$Logger->log( 'checking disksize ' . $nn . ' or ' . ( $nn + 1 ) );
 				}
 				else
 				{
