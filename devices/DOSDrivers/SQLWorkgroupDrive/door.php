@@ -698,7 +698,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 			{
 				if( !$this->ID )
 				{
-					if( $d = $SqlDatabase->FetchObject( '
+					if( $d = $SqlDatabase->FetchObject( $q = '
 						SELECT f.* FROM `Filesystem` f
 						WHERE 
 							LOWER(f.Name) = LOWER("' . reset( explode( ':', $args->path ) ) . '") AND
@@ -727,6 +727,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 					$o->Used = $row->FZ;
 					$o->Filesize = SQLWORKGROUPDRIVE_FILE_LIMIT;
 					$Logger->log( 'This is the result: ' . print_r( $o, 1 ) );
+					$Logger->log( $q );
 					die( 'ok<!--separate-->' . json_encode( $o ) );
 				}
 				die( 'fail' );
