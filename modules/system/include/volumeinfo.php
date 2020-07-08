@@ -97,6 +97,7 @@ if( $row = $SqlDatabase->FetchObject( '
 			$v->Volume = $row->Name . ':';
 			$v->Used = $row->StoredBytes;
 			$v->Filesize = $nn;
+			$Logger->log( 'checking ' . $row->Name . ': with used: ' . $v->User . ' and size: ' . $v->Filesize );
 			die( 'ok<!--separate-->' . json_encode( $v ) );
 		}
 		else 
