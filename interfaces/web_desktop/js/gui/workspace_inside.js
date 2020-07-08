@@ -9775,7 +9775,7 @@ function AboutFriendUP()
 {
 	if( !Workspace.sessionId ) return;
 	var v = new View( {
-		title: i18n( 'about_system' ) + ' v1.2.4',
+		title: i18n( 'i18n_title_about_friendos' ) + ' Hydrogen',
 		width: 540,
 		height: 560,
 		id: 'about_friendup'
