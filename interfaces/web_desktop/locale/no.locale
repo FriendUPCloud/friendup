@@ -306,6 +306,7 @@ menu_open_parent_directory              : Åpne overliggende vindu
 menu_show_as                            : Vis som
 menu_show_as_icons                      : Ikoner
 menu_show_as_compact                    : Kompakt
+menu_show_as_gallery                    : Bildegalleri
 menu_show_as_list                       : Liste
 menu_show_as_columns                    : Kolonner
 menu_close_window                       : Lukk

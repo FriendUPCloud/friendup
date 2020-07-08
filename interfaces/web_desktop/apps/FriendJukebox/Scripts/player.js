@@ -244,7 +244,8 @@ Application.receiveMessage = function( msg )
 				this.index = msg.index;
 			}
 			this.song.onload = function()
-			{	
+			{
+				if( this.stopped ) return;
 				document.body.classList.remove( 'Paused' );
 				document.body.classList.add( 'Playing' );
 				
@@ -371,17 +372,39 @@ Application.receiveMessage = function( msg )
 			if( msg.data )
 			{
 				var items = [];
+				var plistitems = [];
 				for( var a in msg.data )
 				{
-					items.push( {
-						Path: msg.data[a].Path, 
-						Filename: msg.data[a].Filename
+					if( msg.data[a].Filename.indexOf( '.' ) < 0 ) continue;
+					if( msg.data[a].Filename.split( '.' ).pop().toLowerCase() == 'pls' )
+					{
+						plistitems.push( {
+							Path: msg.data[a].Path, 
+							Filename: msg.data[a].Filename
+						} );
+					}
+					else
+					{
+						items.push( {
+							Path: msg.data[a].Path, 
+							Filename: msg.data[a].Filename
+						} );
+					}
+				}
+				if( items.length )
+				{
+					Application.sendMessage( {
+						command: 'append_to_playlist_and_play',
+						items: items
 					} );
 				}
-				Application.sendMessage( {
-					command: 'append_to_playlist_and_play',
-					items: items
-				} );
+				if( plistitems.length )
+				{
+					Application.sendMessage( {
+						command: 'addplaylists',
+						items: plistitems
+					} );
+				}
 			}
 			break;
 	}

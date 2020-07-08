@@ -7066,6 +7066,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								command: function(){ Workspace.viewDirectory( 'compact' ); }
 							},
 							{
+								name:	 i18n( 'menu_show_as_gallery' ),
+								command: function(){ Workspace.viewDirectory( 'imageview' ); }
+							},
+							{
 								name:	 i18n( 'menu_show_as_list' ),
 								command: function(){ Workspace.viewDirectory( 'listview' ); }
 							}/*,
@@ -7213,7 +7217,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		
 		SetWindowStorage( uid, d );
-		window.currentMovable.content.redrawIcons();
+		window.currentMovable.content.refresh();
 	},
 	showContextMenu: function( menu, e, extra )
 	{
