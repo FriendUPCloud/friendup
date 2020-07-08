@@ -29,7 +29,6 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 			if( isset( $this->Config ) && strlen( $this->Config) > 3 )
 			{
 				$this->configObject = json_decode( $this->Config );
-				$Logger->Log( 'SQL Drive size: ' . print_r( $this->configObject, 1 ) );
 				if( isset( $this->configObject->DiskSize ) )
 				{
 					$ds = strtolower( $this->configObject->DiskSize . '' );
@@ -698,7 +697,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 			{
 				if( !$this->ID )
 				{
-					if( $d = $SqlDatabase->FetchObject( $q = '
+					if( $d = $SqlDatabase->FetchObject( '
 						SELECT f.* FROM `Filesystem` f
 						WHERE 
 							LOWER(f.Name) = LOWER("' . reset( explode( ':', $args->path ) ) . '") AND
@@ -726,8 +725,6 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 					$o->Volume = $this->Name . ':';
 					$o->Used = $row->FZ;
 					$o->Filesize = SQLWORKGROUPDRIVE_FILE_LIMIT;
-					$Logger->log( 'This is the result: ' . print_r( $o, 1 ) );
-					$Logger->log( $q );
 					die( 'ok<!--separate-->' . json_encode( $o ) );
 				}
 				die( 'fail' );

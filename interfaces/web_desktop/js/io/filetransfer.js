@@ -98,6 +98,8 @@ self.checkVolume = function()
 					}
 				}
 				
+				console.log( 'Estimated space: ' + diskspace + ' and in progress ' + bytesInProgress );
+				
 				if( diskspace < bytesInProgress )
 				{ 
 					self.postMessage({'error':1,'errormessage':'Not enough space left on volume.'}); return; 
