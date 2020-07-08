@@ -878,7 +878,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 				for( let a = 0; a < icons.length; a++ )
 				{
 					// We found a different icon
-					if( icons[a].Path != this.allIcons[a].Path )
+					if( !this.allIcons[a] || icons[a].Path != this.allIcons[a].Path )
 					{
 						changed = true;
 						break;
@@ -888,6 +888,12 @@ DirectoryView.prototype.InitWindow = function( winobj )
 				{
 					for( let a = 0; a < this.icons.length; a++ )
 					{
+						// Missing dom node!
+						if( this.icons[ a ].domNode && !this.icons[ a ].domNode.parentNode )
+						{
+							changed = true;
+							break;
+						}
 						if( this.icons[ a ].selected )
 						{
 							changed = true;
@@ -1635,7 +1641,9 @@ DirectoryView.prototype.InitWindow = function( winobj )
 							{
 								w.close();
 								if( winobj && winobj.refresh )
+								{
 									winobj.refresh();
+								}
 
 								Notify( { title: i18n( 'i18n_upload_completed' ), 'text':i18n('i18n_uploaded') }, false, function()
 								{
@@ -2519,6 +2527,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 						dv.sortOrder = dv.sortOrder == 'ascending' ? 'descending' : 'ascending';
 					}
 					dv.sortColumn = this.sortColumn;
+					dv.toChange = true;
 					dv.window.refresh();
 				}
 				head.appendChild ( d );
