@@ -23,12 +23,13 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 		*/
 		function onConstruct()
 		{
-			global $args;
+			global $args, $Logger;
 			$this->fileInfo = isset( $args->fileInfo ) ? $args->fileInfo : new stdClass();
 			$defaultDiskspace = 536870912;
 			if( isset( $this->Config ) && strlen( $this->Config) > 3 )
 			{
 				$this->configObject = json_decode( $this->Config );
+				$Logger->Log( 'SQL Drive size: ' . print_r( $this->configObject, 1 ) );
 				if( isset( $this->configObject->DiskSize ) )
 				{
 					$ds = strtolower( $this->configObject->DiskSize . '' );
@@ -511,7 +512,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 									}
 									else
 									{
-										die( 'fail<!--separate-->Limit broken' );
+										die( 'fail<!--separate-->{"response":"-1","message":"Limit broken"}' );
 									}
 								}
 								else
@@ -521,7 +522,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 							}
 							else
 							{
-								die( 'fail<!--separate-->Tempfile does not exist!' );
+								die( 'fail<!--separate-->{"response","-1","message":"Tempfile does not exist"}' );
 							}
 						}
 						else
@@ -534,7 +535,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 							else
 							{
 								fclose( $file );
-								die( 'fail<!--separate-->Limit broken' );
+								die( 'fail<!--separate-->{"response":"-1","message":"Limit broken"}' );
 							}
 						}
 						
@@ -697,7 +698,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 			{
 				if( !$this->ID )
 				{
-					if( $d = $SqlDatabase->FetchObject( '
+					if( $d = $SqlDatabase->FetchObject( $q = '
 						SELECT f.* FROM `Filesystem` f
 						WHERE 
 							LOWER(f.Name) = LOWER("' . reset( explode( ':', $args->path ) ) . '") AND
@@ -725,6 +726,8 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 					$o->Volume = $this->Name . ':';
 					$o->Used = $row->FZ;
 					$o->Filesize = SQLWORKGROUPDRIVE_FILE_LIMIT;
+					$Logger->log( 'This is the result: ' . print_r( $o, 1 ) );
+					$Logger->log( $q );
 					die( 'ok<!--separate-->' . json_encode( $o ) );
 				}
 				die( 'fail' );

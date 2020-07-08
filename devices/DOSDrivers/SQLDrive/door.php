@@ -506,7 +506,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 									else
 									{
 										$Logger->log( 'fail<!--separate-->Limit broken' );
-										die( 'fail<!--separate-->Limit broken' );
+										die( 'fail<!--separate-->{"response":"-1","message":"Limit broken"}' );
 									}
 								}
 								else
@@ -517,12 +517,11 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							else
 							{
 								$Logger->log( 'fail<!--separate-->Tempfile does not exist!' );
-								die( 'fail<!--separate-->Tempfile does not exist!' );
+								die( 'fail<!--separate-->{"response","-1","message":"Tempfile does not exist"}' );
 							}
 						}
 						else
 						{
-							$Logger->log( 'is tmp file set, limit: ' . SQLDRIVE_FILE_LIMIT );
 							if( $total + strlen( $args->data ) < SQLDRIVE_FILE_LIMIT )
 							{
 								$len = fwrite( $file, $args->data );
@@ -530,10 +529,8 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							}
 							else
 							{
-								$Logger->log( 'die!die!die! my darling! ' );
 								fclose( $file );
-								$Logger->log( 'fail<!--separate-->Limit broken ' . SQLDRIVE_FILE_LIMIT );
-								die( 'fail<!--separate-->Limit broken' );
+								die( 'fail<!--separate-->{"response":"-1","message":"Limit broken"}' );
 							}
 						}
 					
@@ -722,6 +719,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					$o->Volume = $this->Name . ':';
 					$o->Used = $row->FZ;
 					$o->Filesize = SQLDRIVE_FILE_LIMIT;
+					$Logger->log( 'This is the result: ' . print_r( $o, 1 ) );
 					die( 'ok<!--separate-->' . json_encode( $o ) );
 				}
 				die( 'fail' );

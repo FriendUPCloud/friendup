@@ -1072,6 +1072,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 							{
 								if( result.substr( 0, 3 ) != 'ok<' )
 								{
+									console.log( 'ERROR COPY ' + result );
 									Notify( {
 										title: i18n( 'i18n_filecopy_error' ),
 										text: i18n( 'i18n_could_not_copy_files' ) + '<br>' + fl.fileInfo.Path + ' to ' + toPath
