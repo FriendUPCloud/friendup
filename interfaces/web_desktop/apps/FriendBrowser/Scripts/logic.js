@@ -292,7 +292,7 @@ function setUrl( uri, move )
 		console.log( 'Setting browser uri: ' + uri );
 	}
 	
-	ge( 'uri' ).value = uri;
+	ge( 'uri' ).innerHTML = uri;
 
 	// Cap historyLog
 	if( !move )
@@ -427,7 +427,7 @@ function displayFNetPage( doorName, hostName, appName, community, path )
 		{
 			// Set the title
 			var uri = 'friend://' + hostName + '@' + community + '/' + parentPath + filename;
-			ge( 'uri' ).value = uri;
+			ge( 'uri' ).innerHTML = uri;
 			Application.sendMessage( { command: 'setcontent', url: uri } );
 
 			// Add to history
