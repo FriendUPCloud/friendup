@@ -831,6 +831,10 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 					{
 						incoming->s_Ssl = s_Ssl;
 						incoming->s_Ctx = s_Ctx;
+						
+						s_Ssl = NULL;
+						s_Ctx = NULL;
+						fd = 0;
 					}
 				}
 				else
@@ -862,6 +866,10 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 //#endif
 						{
 							FFree( pre );
+						}
+						else
+						{
+							
 						}
 #endif
 					}
