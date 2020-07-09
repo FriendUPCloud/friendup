@@ -3339,9 +3339,13 @@ function apiWrapper( event, force )
 									var cw = GetContentWindowByAppMessage( app, msg );
 	
 									// Pass window id down
-									if( nmsg.viewId )
+									if( msg.viewId )
 									{
 										nmsg.viewId = msg.viewId;
+									}
+									if( msg.widgetId )
+									{
+										nmsg.widgetId = msg.viewId;
 									}
 									if( cw ) cw.postMessage( JSON.stringify( nmsg ), '*' );
 								}
