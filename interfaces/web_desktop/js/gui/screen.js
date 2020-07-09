@@ -487,6 +487,7 @@ Screen = function ( flags, initObject )
 			
 		var t = e.target ? e.target : e.srcElement;
 		console.log( 'What is this?', t );
+		console.trace();
 	
 		// We are registering a click inside
 		if( !( t != scrn.contentDiv && t != scrn.contentDiv.parentNode ) )
