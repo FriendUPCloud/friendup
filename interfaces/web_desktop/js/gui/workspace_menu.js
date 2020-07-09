@@ -408,69 +408,70 @@ var WorkspaceMenu =
 				Friend.currentMenuItems = test;
 				menudiv.innerHTML = '';
 			}
-		}
-		
-		if( isMobile && ( appid || ( currentMovable && currentMovable.content.directoryview ) ) )
-		{
-			var found = false;
-			for( var z = 0; z < menuItems.length; z++ )
+			
+			if( isMobile && ( appid || ( currentMovable && currentMovable.content.directoryview ) ) )
 			{
-				if( menuItems[z].name == i18n( 'i18n_quit' ) )
+				var found = false;
+				for( var z = 0; z < menuItems.length; z++ )
 				{
-					found = true;
-					break;
-				}
-			}
-			if( !found )
-			{
-				// Clear quit for this - and add back buttons
-				let quitItem = null;
-				function clearQuit( men )
-				{
-					var out = [];
-					for( var a = 0; a < men.length; a++ )
+					if( menuItems[z].name == i18n( 'i18n_quit' ) )
 					{
-						if( men[a].name && men[a].name == i18n( 'i18n_quit' ) )
-						{
-							quitItem = men[a];
-							continue;
-						}
-						if( men[a].items )
-						{
-							men[a].items = clearQuit( men[a].items );
-						}
-						out.push( men[a] );
+						found = true;
+						break;
 					}
-					return out;
 				}
-				menuItems = clearQuit( menuItems );
-				
-				// Add option to quit application
-				if( currentMovable && currentMovable.content.directoryview )
+				if( !found )
 				{
-					menuItems.push( {
-						name: i18n( 'i18n_close' ),
-						command: 'close'
-					} );
-				}
-				else
-				{
-					if( quitItem )
+					// Clear quit for this - and add back buttons
+					let quitItem = null;
+					function clearQuit( men )
 					{
-						console.log( 'Adding quit item' );
-						menuItems.push( quitItem );
+						var out = [];
+						for( var a = 0; a < men.length; a++ )
+						{
+							if( men[a].name && men[a].name == i18n( 'i18n_quit' ) )
+							{
+								quitItem = men[a];
+								continue;
+							}
+							if( men[a].items )
+							{
+								men[a].items = clearQuit( men[a].items );
+							}
+							out.push( men[a] );
+						}
+						return out;
+					}
+					menuItems = clearQuit( menuItems );
+				
+					// Add option to quit application
+					if( currentMovable && currentMovable.content.directoryview )
+					{
+						menuItems.push( {
+							name: i18n( 'i18n_close' ),
+							command: 'close'
+						} );
 					}
 					else
 					{
-						console.log( 'Adding new quit' );
-						menuItems.push( {
-							name: i18n( 'i18n_quit' ),
-							command: 'quit'
-						} );
+						if( quitItem )
+						{
+							console.log( 'Adding quit item' );
+							menuItems.push( quitItem );
+						}
+						else
+						{
+							console.log( 'Adding new quit' );
+							menuItems.push( {
+								name: i18n( 'i18n_quit' ),
+								command: 'quit'
+							} );
+						}
 					}
 				}
 			}
 		}
+		
 		
 		for( var i in menuItems )
 		{
