@@ -440,16 +440,12 @@ var Application =
 	{
 		if( this.hasQuit )
 			return;
+		this.hasQuit = true;
 
 		if( Application.onQuit )
 		{
-			// Only quit if 
-			if( !Application.onQuit() ) return false;
+			Application.onQuit();
 		}
-		
-		console.log( 'Quitting now.' );
-		
-		this.hasQuit = true;
 
 		// Clear single instance
 		this.setSingleInstance( false );
