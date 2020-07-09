@@ -444,8 +444,10 @@ var Application =
 		if( Application.onQuit )
 		{
 			// Only quit if 
-			if( !Application.onQuit() ) return;
+			if( !Application.onQuit() ) return false;
 		}
+		
+		console.log( 'Quitting now.' );
 		
 		this.hasQuit = true;
 
