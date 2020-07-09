@@ -343,7 +343,6 @@ var WorkspaceMenu =
 		{
 			// Sends command to application
 			let mode = ( isTablet || isMobile ) ? 'ontouchend' : 'onmouseup';
-			console.log( 'Setting up an item: ', item, 'with the method: ' + mode );
 			item[mode] = function( e ) 
 			{
 				if( WorkspaceMenu.scrolling ) 
@@ -373,7 +372,6 @@ var WorkspaceMenu =
 							applicationId: appid,
 							command: this.command + ""
 						};
-						console.log( 'Sending message: ' + mmsg.command );
 						if( this.scope )
 						{
 							// Has the scope on the view|screen
