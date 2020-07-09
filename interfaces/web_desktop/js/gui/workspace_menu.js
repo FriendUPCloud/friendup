@@ -342,7 +342,8 @@ var WorkspaceMenu =
 		function setMenuItemAction( item, appid )
 		{
 			// Sends command to application
-			var mode = ( isTablet || isMobile ) ? 'ontouchend' : 'onmouseup';
+			let mode = ( isTablet || isMobile ) ? 'ontouchend' : 'onmouseup';
+			console.log( 'Setting up an item: ', item, 'with the method: ' + mode );
 			item[mode] = function( e ) 
 			{
 				if( WorkspaceMenu.scrolling ) 
@@ -363,10 +364,10 @@ var WorkspaceMenu =
 			
 				if( appid )
 				{
-					var app = findApplication( appid );
+					let app = findApplication( appid );
 					if( app )
 					{
-						var mmsg = {
+						let mmsg = {
 							applicationId: appid,
 							command: this.command + ""
 						};
@@ -375,7 +376,7 @@ var WorkspaceMenu =
 							// Has the scope on the view|screen
 							if( this.scope == 'local' && viewId )
 							{
-								var c = GetContentWindowById( app, viewId );
+								let c = GetContentWindowById( app, viewId );
 								if( c )
 								{
 									mmsg.destinationViewId = viewId;
@@ -571,6 +572,7 @@ var WorkspaceMenu =
 				}
 				else if( menuItems[ i ].name == i18n( 'i18n_quit' ) )
 				{
+					console.log( 'Found a strange item: ', menuItems[i] );
 					n.command = menuItems[ i ].command;
 					n.scope = menuItems[ i ].scope;
 					setMenuItemAction( n, appid );
