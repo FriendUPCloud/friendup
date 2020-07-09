@@ -692,6 +692,8 @@ function FlushSingleApplicationLock( app )
 // Kill an app by name or PID
 KillApplication = function ( n, level )
 {
+	console.log( 'djskao' );
+	
 	if( isMobile )
 	{
 		Workspace.goToMobileDesktop();

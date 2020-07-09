@@ -486,7 +486,6 @@ Screen = function ( flags, initObject )
 				return cancelBubble( e );
 			
 		var t = e.target ? e.target : e.srcElement;
-		console.log( 'What is this?', t );
 	
 		// We are registering a click inside
 		if( !( t != scrn.contentDiv && t != scrn.contentDiv.parentNode ) )
