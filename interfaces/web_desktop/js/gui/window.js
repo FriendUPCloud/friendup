@@ -1797,8 +1797,11 @@ function CloseView( win, delayed )
 					{
 						if( app.windows[ a ] != div.windowObject )
 						{
-							console.log( app.windows[ a ]._window.parentNode.parentNode.className );
-							app.windows[ a ]._window.parentNode.parentNode.style.display = 'none';
+							let elef = app.windows[ a ]._window.parentNode.parentNode;
+							if( elef.classList && elef.classList.contains( 'View' ) || elef.classList.contains( 'ViewContainer' ) )
+							{
+								app.windows[ a ]._window.parentNode.parentNode.style.display = 'none';
+							}
 						}
 					}
 				}
