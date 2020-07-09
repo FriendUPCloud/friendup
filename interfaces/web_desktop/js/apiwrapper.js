@@ -3499,6 +3499,7 @@ function apiWrapper( event, force )
 						m.execute( 'savestate', { state: msg.state, authId: msg.authId } );
 						break;
 					case 'quit':
+						console.trace();
 						if( app ) app.quit( msg.force ? msg.force : false );
 						if( PollTray ) PollTray();
 						break;

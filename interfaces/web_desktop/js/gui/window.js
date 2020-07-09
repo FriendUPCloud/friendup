@@ -1707,7 +1707,6 @@ function HasClassname( div, classname )
 // Could one day be moved to the View class...
 function CloseView( win, delayed )
 {
-	console.trace();
 	if( !win && window.currentMovable )
 		win = window.currentMovable;
 		
@@ -1803,7 +1802,6 @@ function CloseView( win, delayed )
 								let elef = app.windows[ a ]._window.parentNode.parentNode;
 								if( elef.classList && elef.classList.contains( 'View' ) || elef.classList.contains( 'ViewContainer' ) )
 								{
-									console.log( 'Hiding window.' );
 									app.windows[ a ]._window.parentNode.parentNode.style.display = 'none';
 								}
 							}
