@@ -3337,15 +3337,11 @@ function apiWrapper( event, force )
 	
 									// Module calls should remain in their view context
 									var cw = GetContentWindowByAppMessage( app, msg );
-	
+									console.log( 'The call back.' );
 									// Pass window id down
-									if( msg.viewId )
+									if( nmsg.viewId )
 									{
 										nmsg.viewId = msg.viewId;
-									}
-									if( msg.widgetId )
-									{
-										nmsg.widgetId = msg.viewId;
 									}
 									if( cw ) cw.postMessage( JSON.stringify( nmsg ), '*' );
 								}
