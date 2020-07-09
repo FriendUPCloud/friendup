@@ -513,7 +513,7 @@ var WorkspaceMenu =
 					}
 					continue;
 				}
-				else
+				else if( menuItems[ i ].name == i18n( 'i18n_quit' ) )
 				{
 					console.log( 'what is this strange one?', menuItems[ i ] );
 				}
