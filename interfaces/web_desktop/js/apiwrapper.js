@@ -3352,7 +3352,16 @@ function apiWrapper( event, force )
 							( nmsg.thirdButtonReturn ? nmsg.thirdButtonReturn : false )
 						);
 						console.log( 'Confirm: ', confv );
-						app.windows[ confv.viewId ] = confv;
+						if( confv.viewId )
+						{
+							console.log( 'view' );
+							app.windows[ confv.viewId ] = confv;
+						}
+						else if( confv.widgetId )
+						{
+							console.log( 'widget' );
+							app.widgets[ confv.widgetId ] = confgv;
+						}
 						msg.callback = false;
 						break;
 
