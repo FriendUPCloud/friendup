@@ -351,6 +351,8 @@ var WorkspaceMenu =
 					WorkspaceMenu.scrolling = false;
 					return;
 				}
+				
+				this.classList.remove( 'Open' );
 			
 				// Set appid from current movable..
 				if( !appid && currentMovable.windowObject && currentMovable.windowObject.applicationId )
@@ -572,10 +574,11 @@ var WorkspaceMenu =
 				}
 				else if( menuItems[ i ].name == i18n( 'i18n_quit' ) )
 				{
-					console.log( 'Found a strange item: ', menuItems[i] );
 					n.command = menuItems[ i ].command;
 					n.scope = menuItems[ i ].scope;
+					n.classList.add( 'Empty' );
 					setMenuItemAction( n, appid );
+					continue;
 				}
 			}
 			// Object members
@@ -701,7 +704,7 @@ var WorkspaceMenu =
 		var menus = wm.getElementsByTagName( 'div' );
 		for ( var a = 0; a < menus.length; a++ )
 		{
-			if( !menus[a].classList.contains( 'Menu' ) )
+			if( !menus[a].classList.contains( 'Menu' ) || menus[ a ].classList.contains( 'Empty' ) )
 				continue;
 			// For mobile, create a close button
 			
