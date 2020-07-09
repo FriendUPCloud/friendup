@@ -5879,6 +5879,7 @@ function _kresize( e, depth )
 
 function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext, extrabuttonreturn )
 {
+	return;
 	let d = document.createElement( 'div' );
 	d.style.position = 'absolute';
 	d.style.left = '-10000px';
