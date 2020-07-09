@@ -454,6 +454,7 @@ var Application =
 				if( Application.windows[a].close() === false )
 				{
 					// Aborted until forced!
+					console.log( 'Aborted close!' );
 					return false;
 				}
 			}
