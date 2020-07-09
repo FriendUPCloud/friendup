@@ -438,11 +438,13 @@ var Application =
 	// Send quit up in hierarchy
 	quit: function( skipSendMessage )
 	{
+		console.log( 'Wants to quit' );
 		if( this.hasQuit )
 			return;
 
 		if( Application.onQuit )
 		{
+			console.log( 'checking onquit' );
 			// Only quit if 
 			if( !Application.onQuit() ) return false;
 		}
