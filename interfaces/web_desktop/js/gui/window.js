@@ -5936,6 +5936,7 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 	{
 		v.setContent( data );
 		let eles = v._window.getElementsByTagName( 'button' );
+		console.log( 'Ladida: ', eles, v );
 		if( !eles && v.dom )
 		{
 			eles = v.dom.getElementsByTagName( 'button' );
