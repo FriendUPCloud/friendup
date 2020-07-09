@@ -445,6 +445,8 @@ var Application =
 		{
 			Application.onQuit();
 		}
+		
+		console.log( 'We are quitting!' );
 
 		// Try to close all windows
 		if( Application.windows )
@@ -2633,7 +2635,8 @@ function View( flags )
 		if( this.closed ) return;
 		if( this.onClose )
 		{
-			this.onClose();
+			if( this.onClose() === false )
+				return false;
 		}
 
 		if( this.preventClosing ) return;
