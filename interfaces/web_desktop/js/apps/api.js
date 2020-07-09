@@ -446,7 +446,12 @@ var Application =
 		{
 			console.log( 'checking onquit' );
 			// Only quit if 
-			if( !Application.onQuit() ) return false;
+			if( !Application.onQuit() ) 
+			{
+				console.log( 'Quit aborted' );
+				return false;
+			}
+			console.log( 'Quitting' );
 		}
 		
 		console.log( 'Quitting now.' );
