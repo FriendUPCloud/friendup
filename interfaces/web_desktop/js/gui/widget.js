@@ -32,6 +32,8 @@ Widget.prototype.init = function( flags, target )
 	this._window = this.dom;
 	this.flags = flags;
 	
+	this.widgetId = MD5( Math.random() * 9999 + ( Math.random() * 9999 ) + ( Math.random() * 9999 ) + ( new Date() ).getTime() + "" );
+	
 	// Dimensions
 	for( var a in this.flags ) this.setFlag( a, this.flags[a] );
 	
