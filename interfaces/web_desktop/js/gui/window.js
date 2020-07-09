@@ -2300,6 +2300,7 @@ var View = function( args )
 								FocusOnNothing();
 								_ActivateWindow( app.mainView.content.parentNode );
 								self.close();
+								console.log( 'Pong 1' );
 								return cancelBubble( e );
 							}
 						}
@@ -3229,6 +3230,8 @@ var View = function( args )
 						if( wo.childWindows[a]._window.windowObject )
 						{
 							wo.childWindows[a]._window.windowObject.close();
+							console.log( 'Pong 2' );
+							console.trace();
 						}
 						else CloseView( wo.childWindows[a]._window );
 					}
@@ -3238,6 +3241,8 @@ var View = function( args )
 					}
 				}
 				wo.close();
+				console.log( 'Pong 3' );
+				console.trace();
 				return cancelBubble( e );
 			}
 		}
@@ -3251,6 +3256,9 @@ var View = function( args )
 		{
 			if( !isMobile && !window.isTablet )
 				if( e.button != 0 ) return;
+			
+			console.log( 'Pong 4' );
+			console.trace();
 			
 			// On mobile, you get a window menu instead
 			if( window.isMobile && !window.isTablet )
@@ -5879,7 +5887,6 @@ function _kresize( e, depth )
 
 function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext, extrabuttonreturn )
 {
-	return;
 	let d = document.createElement( 'div' );
 	d.style.position = 'absolute';
 	d.style.left = '-10000px';
