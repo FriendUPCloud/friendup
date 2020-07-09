@@ -338,6 +338,62 @@ var WorkspaceMenu =
 	// Generates menu html, sets up events and chooses menu container element
 	generate: function( menudiv, menuItems, depth, appid )
 	{
+		// Sets a menu item action (helper function for code below)
+		function setMenuItemAction( item )
+		{
+			// Sends command to application
+			var mode = ( isTablet || isMobile ) ? 'ontouchend' : 'onmouseup';
+			item[mode] = function( e ) 
+			{
+				if( WorkspaceMenu.scrolling ) 
+				{
+					WorkspaceMenu.scrolling = false;
+					return;
+				}
+			
+				// Set appid from current movable..
+				if( !appid && currentMovable.windowObject && currentMovable.windowObject.applicationId )
+					appid = currentMovable.windowObject.applicationId;
+		
+				var viewId = false;
+				if( currentMovable && typeof( currentMovable.windowObject._window.menuViewId ) != 'undefined' )
+					viewId = currentMovable.windowObject._window.menuViewId;
+				else if( currentScreen && typeof( currentScreen.menuScreenId ) != 'undefined' )
+					viewId = currentScreen.menuScreenId; // TODO: Check this one out!
+			
+				if( appid )
+				{
+					var app = findApplication( appid );
+					if( app )
+					{
+						var mmsg = {
+							applicationId: appid,
+							command: this.command + ""
+						};
+						if( this.scope )
+						{
+							// Has the scope on the view|screen
+							if( this.scope == 'local' && viewId )
+							{
+								var c = GetContentWindowById( app, viewId );
+								if( c )
+								{
+									mmsg.destinationViewId = viewId;
+									c.postMessage( JSON.stringify( mmsg ), '*' );
+									WorkspaceMenu.close();
+									return;
+								}
+							}
+						}
+						app.contentWindow.postMessage( JSON.stringify( mmsg ), '*' );
+						WorkspaceMenu.close();
+					}
+				}
+				return cancelBubble( e );
+			};
+		}
+		
+		
 		WorkspaceMenu.scrolling = false;
 		
 		// Add to body so we can style whether we have a menu or not
@@ -515,7 +571,7 @@ var WorkspaceMenu =
 				}
 				else if( menuItems[ i ].name == i18n( 'i18n_quit' ) )
 				{
-					console.log( 'what is this strange one?', menuItems[ i ] );
+					setMenuItemAction( n );
 				}
 			}
 			// Object members
@@ -554,56 +610,7 @@ var WorkspaceMenu =
 						li.command = it.command;
 						li.scope = it.scope;
 					
-						// Sends command to application
-						var mode = ( isTablet || isMobile ) ? 'ontouchend' : 'onmouseup';
-						li[mode] = function( e ) 
-						{
-							if( WorkspaceMenu.scrolling ) 
-							{
-								WorkspaceMenu.scrolling = false;
-								return;
-							}
-							
-							// Set appid from current movable..
-							if( !appid && currentMovable.windowObject && currentMovable.windowObject.applicationId )
-								appid = currentMovable.windowObject.applicationId;
-						
-							var viewId = false;
-							if( currentMovable && typeof( currentMovable.windowObject._window.menuViewId ) != 'undefined' )
-								viewId = currentMovable.windowObject._window.menuViewId;
-							else if( currentScreen && typeof( currentScreen.menuScreenId ) != 'undefined' )
-								viewId = currentScreen.menuScreenId; // TODO: Check this one out!
-							
-							if( appid )
-							{
-								var app = findApplication( appid );
-								if( app )
-								{
-									var mmsg = {
-										applicationId: appid,
-										command: this.command + ""
-									};
-									if( this.scope )
-									{
-										// Has the scope on the view|screen
-										if( this.scope == 'local' && viewId )
-										{
-											var c = GetContentWindowById( app, viewId );
-											if( c )
-											{
-												mmsg.destinationViewId = viewId;
-												c.postMessage( JSON.stringify( mmsg ), '*' );
-												WorkspaceMenu.close();
-												return;
-											}
-										}
-									}
-									app.contentWindow.postMessage( JSON.stringify( mmsg ), '*' );
-									WorkspaceMenu.close();
-								}
-							}
-							return cancelBubble( e );
-						};
+						setMenuItemAction( li );
 					}
 					// A runnable function
 					else if( it.command )
