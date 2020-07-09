@@ -3360,7 +3360,7 @@ function apiWrapper( event, force )
 						else if( confv.widgetId )
 						{
 							console.log( 'widget' );
-							app.widgets[ confv.widgetId ] = confgv;
+							app.widgets[ confv.widgetId ] = confv;
 						}
 						msg.callback = false;
 						break;
