@@ -1786,6 +1786,8 @@ function CloseView( win, delayed )
 		if( app && div == app.displayedView )
 			app.displayedView = null;
 
+		console.trace();
+
 		if( !isGroupMember && div.parentNode )
 		{
 			// Immediately kill child views for mobile!
@@ -1802,6 +1804,7 @@ function CloseView( win, delayed )
 								let elef = app.windows[ a ]._window.parentNode.parentNode;
 								if( elef.classList && elef.classList.contains( 'View' ) || elef.classList.contains( 'ViewContainer' ) )
 								{
+									console.log( 'Hiding window.' );
 									app.windows[ a ]._window.parentNode.parentNode.style.display = 'none';
 								}
 							}
