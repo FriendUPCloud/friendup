@@ -692,8 +692,6 @@ function FlushSingleApplicationLock( app )
 // Kill an app by name or PID
 KillApplication = function ( n, level )
 {
-	console.log( 'djskao' );
-	
 	if( isMobile )
 	{
 		Workspace.goToMobileDesktop();
@@ -1227,6 +1225,7 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 			// Quit the application
 			ifr.quit = function( level )
 			{
+				console.trace();
 				if( this.windows )
 				{
 					for( var a in this.windows )
