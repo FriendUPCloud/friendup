@@ -424,13 +424,17 @@ var WorkspaceMenu =
 			if( !found )
 			{
 				// Clear quit for this - and add back buttons
+				let quitItem = null;
 				function clearQuit( men )
 				{
 					var out = [];
 					for( var a = 0; a < men.length; a++ )
 					{
-						if( men[a].command && men[a].command == 'quit' )
+						if( men[a].name && men[a].name == i18n( 'i18n_quit' ) )
+						{
+							quitItem = men[a];
 							continue;
+						}
 						if( men[a].items )
 						{
 							men[a].items = clearQuit( men[a].items );
@@ -451,10 +455,17 @@ var WorkspaceMenu =
 				}
 				else
 				{
-					menuItems.push( {
-						name: i18n( 'i18n_quit' ),
-						command: 'quit'
-					} );
+					if( quitItem )
+					{
+						menuItems.push( quitItem );
+					}
+					else
+					{
+						menuItems.push( {
+							name: i18n( 'i18n_quit' ),
+							command: 'quit'
+						} );
+					}
 				}
 			}
 		}
