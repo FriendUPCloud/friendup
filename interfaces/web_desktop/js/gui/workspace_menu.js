@@ -373,6 +373,7 @@ var WorkspaceMenu =
 							applicationId: appid,
 							command: this.command + ""
 						};
+						console.log( 'Sending message: ' + mmsg.command );
 						if( this.scope )
 						{
 							// Has the scope on the view|screen
