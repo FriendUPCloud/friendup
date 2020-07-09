@@ -529,12 +529,12 @@ Screen = function ( flags, initObject )
 			}
 		}
 	
-		// Make clicking work!
+		/*// Make clicking work!
 		if( t.onclick )
 		{
 			t.onclick( e );
 			return cancelBubble( e );
-		}
+		}*/
 	
 	}, true );
 	
