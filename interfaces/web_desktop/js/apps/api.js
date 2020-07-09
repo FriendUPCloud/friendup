@@ -440,31 +440,12 @@ var Application =
 	{
 		if( this.hasQuit )
 			return;
+		this.hasQuit = true;
 
 		if( Application.onQuit )
 		{
-			if( Application.onQuit() === false )
-			{
-				console.log( 'Aborted quit!' );
-				return;
-			}
+			Application.onQuit();
 		}
-
-		// Try to close all windows
-		if( Application.windows )
-		{
-			for( var a in Application.windows )
-			{
-				if( Application.windows[a].close() === false )
-				{
-					// Aborted until forced!
-					console.log( 'Aborted close!' );
-					return false;
-				}
-			}
-		}
-		
-		this.hasQuit = true;
 
 		// Clear single instance
 		this.setSingleInstance( false );
@@ -474,6 +455,15 @@ var Application =
 		{
 			for( var a in DormantMaster.doors )
 				DormantMaster.delAppDoor( DormantMaster.doors[a] );
+		}
+
+		// Close all windows
+		if( Application.windows )
+		{
+			for( var a in Application.windows )
+			{
+				Application.windows[a].close();
+			}
 		}
 
 		// Close all widgets
@@ -2637,8 +2627,7 @@ function View( flags )
 		if( this.closed ) return;
 		if( this.onClose )
 		{
-			if( this.onClose() === false )
-				return false;
+			this.onClose();
 		}
 
 		if( this.preventClosing ) return;
