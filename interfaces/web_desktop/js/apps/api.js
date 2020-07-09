@@ -443,11 +443,22 @@ var Application =
 
 		if( Application.onQuit )
 		{
-			let res = Application.onQuit();
-			// Abort!
-			if( res === false ) return false;
+			Application.onQuit();
 		}
 
+		// Try to close all windows
+		if( Application.windows )
+		{
+			for( var a in Application.windows )
+			{
+				if( Application.windows[a].close() === false )
+				{
+					// Aborted until forced!
+					return false;
+				}
+			}
+		}
+		
 		this.hasQuit = true;
 
 		// Clear single instance
@@ -458,15 +469,6 @@ var Application =
 		{
 			for( var a in DormantMaster.doors )
 				DormantMaster.delAppDoor( DormantMaster.doors[a] );
-		}
-
-		// Close all windows
-		if( Application.windows )
-		{
-			for( var a in Application.windows )
-			{
-				Application.windows[a].close();
-			}
 		}
 
 		// Close all widgets
