@@ -339,7 +339,7 @@ var WorkspaceMenu =
 	generate: function( menudiv, menuItems, depth, appid )
 	{
 		// Sets a menu item action (helper function for code below)
-		function setMenuItemAction( item )
+		function setMenuItemAction( item, appid )
 		{
 			// Sends command to application
 			var mode = ( isTablet || isMobile ) ? 'ontouchend' : 'onmouseup';
@@ -571,8 +571,9 @@ var WorkspaceMenu =
 				}
 				else if( menuItems[ i ].name == i18n( 'i18n_quit' ) )
 				{
-					setMenuItemAction( n );
-					continue;
+					n.command = menuItems[ i ].command;
+					n.scope = menuItems[ i ].scope;
+					setMenuItemAction( n, appid );
 				}
 			}
 			// Object members
