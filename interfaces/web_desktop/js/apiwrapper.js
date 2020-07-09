@@ -3337,7 +3337,7 @@ function apiWrapper( event, force )
 	
 									// Module calls should remain in their view context
 									var cw = GetContentWindowByAppMessage( app, msg );
-									console.log( 'The call back.' );
+	
 									// Pass window id down
 									if( nmsg.viewId )
 									{
@@ -3351,18 +3351,7 @@ function apiWrapper( event, force )
 							( nmsg.thirdButtonText ? nmsg.thirdButtonText : false ),
 							( nmsg.thirdButtonReturn ? nmsg.thirdButtonReturn : false )
 						);
-						console.log( 'Confirm: ', confv );
-						console.trace();
-						if( confv.viewId )
-						{
-							if( !app.windows ) app.windows = {};
-							app.windows[ confv.viewId ] = confv;
-						}
-						else if( confv.widgetId )
-						{
-							if( !app.widgets ) app.widgets = {};
-							app.widgets[ confv.widgetId ] = confv;
-						}
+						app.windows[ confv.viewId ] = confv;
 						msg.callback = false;
 						break;
 
