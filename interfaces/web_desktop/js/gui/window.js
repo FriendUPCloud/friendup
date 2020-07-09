@@ -5936,6 +5936,10 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 	{
 		v.setContent( data );
 		let eles = v._window.getElementsByTagName( 'button' );
+		if( !eles && v.dom )
+		{
+			eles = v.dom.getElementsByTagName( 'button' );
+		}
 
 		// FL-6/06/2018: correction so that it does not take the relative position of OK/Cancel in the box 
 		// US-792 - 2020: Correction to fix sending the same delete request multiple times
