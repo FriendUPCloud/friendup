@@ -529,10 +529,16 @@ Screen = function ( flags, initObject )
 			}
 		}
 	
-		// Make clicking work!
-		if( t.onclick )
+		// Make clicking work! (and don't doubleclick)
+		if( t.onclick && !t.clicked )
 		{
 			t.onclick( e );
+			// Prevent doubleclicking
+			t.clicked = true;
+			setTimeout( function()
+			{
+				t.clicked = false;
+			}, 250 );
 			return cancelBubble( e );
 		}
 	
