@@ -3343,7 +3343,6 @@ function apiWrapper( event, force )
 									{
 										nmsg.viewId = msg.viewId;
 									}
-									console.log( 'What to do with callback?' );
 									if( cw ) cw.postMessage( JSON.stringify( nmsg ), '*' );
 								}
 							},

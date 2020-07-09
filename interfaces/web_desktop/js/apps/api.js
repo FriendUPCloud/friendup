@@ -2627,7 +2627,10 @@ function View( flags )
 		if( this.closed ) return;
 		if( this.onClose )
 		{
-			this.onClose();
+			let result = this.onClose();
+			// Abort closing
+			if( result === false )
+				return;
 		}
 
 		if( this.preventClosing ) return;
