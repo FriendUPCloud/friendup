@@ -415,7 +415,7 @@ var WorkspaceMenu =
 			var found = false;
 			for( var z = 0; z < menuItems.length; z++ )
 			{
-				if( menuItems[z].command == 'quit' )
+				if( menuItems[z].name == i18n( 'i18n_quit' ) )
 				{
 					found = true;
 					break;
@@ -457,10 +457,12 @@ var WorkspaceMenu =
 				{
 					if( quitItem )
 					{
+						console.log( 'Adding quit item' );
 						menuItems.push( quitItem );
 					}
 					else
 					{
+						console.log( 'Adding new quit' );
 						menuItems.push( {
 							name: i18n( 'i18n_quit' ),
 							command: 'quit'
