@@ -441,13 +441,6 @@ var Application =
 		if( this.hasQuit )
 			return;
 
-		if( Application.onQuit )
-		{
-			Application.onQuit();
-		}
-		
-		console.log( 'We are quitting!' );
-
 		// Try to close all windows
 		if( Application.windows )
 		{
@@ -460,6 +453,11 @@ var Application =
 					return false;
 				}
 			}
+		}
+
+		if( Application.onQuit )
+		{
+			Application.onQuit();
 		}
 		
 		this.hasQuit = true;
