@@ -1797,10 +1797,13 @@ function CloseView( win, delayed )
 					{
 						if( app.windows[ a ] != div.windowObject )
 						{
-							let elef = app.windows[ a ]._window.parentNode.parentNode;
-							if( elef.classList && elef.classList.contains( 'View' ) || elef.classList.contains( 'ViewContainer' ) )
+							if( app.windows[ a ]._window.parentNode && app.windows[ a ]._window.parentNode.parentNode )
 							{
-								app.windows[ a ]._window.parentNode.parentNode.style.display = 'none';
+								let elef = app.windows[ a ]._window.parentNode.parentNode;
+								if( elef.classList && elef.classList.contains( 'View' ) || elef.classList.contains( 'ViewContainer' ) )
+								{
+									app.windows[ a ]._window.parentNode.parentNode.style.display = 'none';
+								}
 							}
 						}
 					}
