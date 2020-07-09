@@ -426,8 +426,8 @@ var WorkspaceMenu =
 					let quitItem = null;
 					function clearQuit( men )
 					{
-						var out = [];
-						for( var a = 0; a < men.length; a++ )
+						let out = [];
+						for( let a = 0; a < men.length; a++ )
 						{
 							if( men[a].name && men[a].name == i18n( 'i18n_quit' ) )
 							{
@@ -456,12 +456,10 @@ var WorkspaceMenu =
 					{
 						if( quitItem )
 						{
-							console.log( 'Adding quit item' );
 							menuItems.push( quitItem );
 						}
 						else
 						{
-							console.log( 'Adding new quit' );
 							menuItems.push( {
 								name: i18n( 'i18n_quit' ),
 								command: 'quit'
@@ -472,8 +470,8 @@ var WorkspaceMenu =
 			}
 		}
 		
-		
-		for( var i in menuItems )
+		// Activate menu items
+		for( let i in menuItems )
 		{
 			if( menuItems[i] == false ) continue;
 			var d = menudiv;
@@ -517,11 +515,11 @@ var WorkspaceMenu =
 				}
 				else
 				{
-					console.log( 'Got an uncought item!', menuItems[ i ] );
+					console.log( 'what is this strange one?', menuItems[ i ] );
 				}
 			}
 			// Object members
-			if( menuItems[i].items )
+			if( menuItems[ i ].items && menuItems[ i ].items.length )
 			{
 				var ul = document.createElement ( 'ul' );
 				ul.classList.add( 'SmoothScrolling' );
@@ -541,7 +539,7 @@ var WorkspaceMenu =
 				var depth2 = depth + 1;
 		
 			
-				for ( var j in menuItems[i].items )
+				for( let j in menuItems[i].items )
 				{
 					if( menuItems[i].items[j] == false ) continue;
 					var li = document.createElement( 'li' );
