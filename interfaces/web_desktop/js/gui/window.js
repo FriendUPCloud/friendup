@@ -1797,6 +1797,7 @@ function CloseView( win, delayed )
 					{
 						if( app.windows[ a ] != div.windowObject )
 						{
+							console.trace();
 							app.windows[ a ]._window.parentNode.parentNode.style.display = 'none';
 						}
 					}
@@ -5676,6 +5677,7 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 		}
 		else if( c.style.display == 'none' || v.style.display == 'none' )
 		{
+			console.trace();
 			continue;
 		}
 		
