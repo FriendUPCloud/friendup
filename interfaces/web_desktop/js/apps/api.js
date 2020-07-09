@@ -2253,20 +2253,6 @@ function Widget( flags )
 	}
 	this.close = function()
 	{
-		// Don't double close!
-		if( this.closed ) return;
-		if( this.onClose )
-		{
-			let result = this.onClose();
-			// Abort closing
-			if( result === false )
-				return;
-		}
-		
-		if( this.preventClosing ) return;
-		
-		this.closed = true;
-		
 		Application.sendMessage( {
 			type:    'widget',
 			method:  'close',
@@ -2641,10 +2627,7 @@ function View( flags )
 		if( this.closed ) return;
 		if( this.onClose )
 		{
-			let result = this.onClose();
-			// Abort closing
-			if( result === false )
-				return;
+			this.onClose();
 		}
 
 		if( this.preventClosing ) return;
