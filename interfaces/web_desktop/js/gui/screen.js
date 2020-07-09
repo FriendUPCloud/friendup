@@ -532,6 +532,7 @@ Screen = function ( flags, initObject )
 		// Make clicking work! (and don't doubleclick)
 		if( t.onclick && !t.clicked )
 		{
+			console.log( 'What did we click? ', t, t.innerHTML );
 			t.onclick( e );
 			// Prevent doubleclicking
 			t.clicked = true;
