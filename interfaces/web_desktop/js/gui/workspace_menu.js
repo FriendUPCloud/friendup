@@ -411,7 +411,7 @@ var WorkspaceMenu =
 			
 			if( isMobile && ( appid || ( currentMovable && currentMovable.content.directoryview ) ) )
 			{
-				var found = false;
+				let found = false;
 				for( var z = 0; z < menuItems.length; z++ )
 				{
 					if( menuItems[z].name == i18n( 'i18n_quit' ) )
@@ -692,8 +692,6 @@ var WorkspaceMenu =
 			if( !menus[a].classList.contains( 'Menu' ) )
 				continue;
 			// For mobile, create a close button
-
-			
 			
 			// Normal operation (tablet and desktop)
 			menus[a].menus = menus;
@@ -823,7 +821,7 @@ var WorkspaceMenu =
 				// close all others
 				for ( var a = 0; a < this.items.length; a++ )
 				{
-					var found = false;
+					let found = false;
 					for( var b = 0; b < sublis.length; b++ )
 					{
 						if( this.items[a] == sublis[b] )
