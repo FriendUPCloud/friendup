@@ -3355,11 +3355,13 @@ function apiWrapper( event, force )
 						if( confv.viewId )
 						{
 							console.log( 'view' );
+							if( !app.windows ) app.windows = {};
 							app.windows[ confv.viewId ] = confv;
 						}
 						else if( confv.widgetId )
 						{
 							console.log( 'widget' );
+							if( !app.widgets ) app.widgets = {};
 							app.widgets[ confv.widgetId ] = confv;
 						}
 						msg.callback = false;
