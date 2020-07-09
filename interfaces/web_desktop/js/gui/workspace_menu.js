@@ -515,8 +515,11 @@ var WorkspaceMenu =
 					}
 					continue;
 				}
+				else
+				{
+					console.log( 'Got an uncought item!', menuItems[ i ] );
+				}
 			}
-			
 			// Object members
 			if( menuItems[i].items )
 			{
