@@ -442,8 +442,6 @@ var Application =
 			return;
 		this.hasQuit = true;
 
-		console.log( 'Quitting' );
-
 		if( Application.onQuit )
 		{
 			Application.onQuit();

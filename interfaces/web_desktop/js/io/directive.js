@@ -1225,7 +1225,6 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 			// Quit the application
 			ifr.quit = function( level )
 			{
-				console.trace();
 				if( this.windows )
 				{
 					for( var a in this.windows )

@@ -3351,6 +3351,7 @@ function apiWrapper( event, force )
 							( nmsg.thirdButtonText ? nmsg.thirdButtonText : false ),
 							( nmsg.thirdButtonReturn ? nmsg.thirdButtonReturn : false )
 						);
+						console.log( 'Confirm: ', confv );
 						app.windows[ confv.viewId ] = confv;
 						msg.callback = false;
 						break;
