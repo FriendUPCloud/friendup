@@ -3352,15 +3352,14 @@ function apiWrapper( event, force )
 							( nmsg.thirdButtonReturn ? nmsg.thirdButtonReturn : false )
 						);
 						console.log( 'Confirm: ', confv );
+						console.trace();
 						if( confv.viewId )
 						{
-							console.log( 'view' );
 							if( !app.windows ) app.windows = {};
 							app.windows[ confv.viewId ] = confv;
 						}
 						else if( confv.widgetId )
 						{
-							console.log( 'widget' );
 							if( !app.widgets ) app.widgets = {};
 							app.widgets[ confv.widgetId ] = confv;
 						}
