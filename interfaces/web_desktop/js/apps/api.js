@@ -446,6 +446,8 @@ var Application =
 		{
 			Application.onQuit();
 		}
+		
+		console.log( 'quitting' );
 
 		// Clear single instance
 		this.setSingleInstance( false );
