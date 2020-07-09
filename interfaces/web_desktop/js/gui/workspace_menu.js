@@ -572,6 +572,7 @@ var WorkspaceMenu =
 				else if( menuItems[ i ].name == i18n( 'i18n_quit' ) )
 				{
 					setMenuItemAction( n );
+					continue;
 				}
 			}
 			// Object members
