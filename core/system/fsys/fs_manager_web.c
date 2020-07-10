@@ -2124,12 +2124,12 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									
 									LOG( FLOG_DEBUG, "UPLOAD FINISHED\n");
 									
-									actFS->FileClose( actDev, fp );
+									int closeResponse = actFS->FileClose( actDev, fp );
 									
 									int addSize = 0;
 									if( uploadedFiles == 0 )
 									{
-										addSize = snprintf( tmpFileData, sizeof( tmpFileData ), "{\"name\":\"%s\",\"bytesexpected\":%ld,\"bytesstored\":%ld}", file->hf_FileName, file->hf_FileSize, storedBytes );
+										addSize = snprintf( tmpFileData, sizeof( tmpFileData ), "{\"name\":\"%s\",\"bytesexpected\":%ld,\"bytesstored\":%ld,\"responseCode\":%d}", file->hf_FileName, file->hf_FileSize, storedBytes, closeResponse );
 									}
 									else
 									{

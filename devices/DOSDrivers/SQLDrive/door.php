@@ -506,7 +506,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 									else
 									{
 										$Logger->log( 'fail<!--separate-->Limit broken' );
-										die( 'fail<!--separate-->Limit broken' );
+										die( 'fail<!--separate-->{"response":"-1","message":"Limit broken"}' );
 									}
 								}
 								else
@@ -517,7 +517,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							else
 							{
 								$Logger->log( 'fail<!--separate-->Tempfile does not exist!' );
-								die( 'fail<!--separate-->Tempfile does not exist!' );
+								die( 'fail<!--separate-->{"response","-1","message":"Tempfile does not exist"}' );
 							}
 						}
 						else
@@ -533,7 +533,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 								$Logger->log( 'die!die!die! my darling! ' );
 								fclose( $file );
 								$Logger->log( 'fail<!--separate-->Limit broken ' . SQLDRIVE_FILE_LIMIT );
-								die( 'fail<!--separate-->Limit broken' );
+								die( 'fail<!--separate-->{"response":"-1","message":"Limit broken"}' );
 							}
 						}
 					

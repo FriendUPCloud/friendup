@@ -511,7 +511,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 									}
 									else
 									{
-										die( 'fail<!--separate-->Limit broken' );
+										die( 'fail<!--separate-->{"response":"-1","message":"Limit broken"}' );
 									}
 								}
 								else
@@ -521,7 +521,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 							}
 							else
 							{
-								die( 'fail<!--separate-->Tempfile does not exist!' );
+								die( 'fail<!--separate-->{"response","-1","message":"Tempfile does not exist"}' );
 							}
 						}
 						else
@@ -534,7 +534,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 							else
 							{
 								fclose( $file );
-								die( 'fail<!--separate-->Limit broken' );
+								die( 'fail<!--separate-->{"response":"-1","message":"Limit broken"}' );
 							}
 						}
 						
