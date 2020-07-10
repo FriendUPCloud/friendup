@@ -1649,7 +1649,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 					else
 					{
 						DEBUG("UPLOAD Cannot write file! write failed!\n");
-						break;
+						return -3;	// upload file, probably not enough space
 					}
 				}
 				
