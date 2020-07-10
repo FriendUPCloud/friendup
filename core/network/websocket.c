@@ -652,12 +652,12 @@ int DetachWebsocketFromSession( void *d )
 		data->wsc_UserSession = NULL;
 		data->wsc_Wsi = NULL;
 		FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
-		
+		/*
 		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 		{
 			us->us_InUseCounter++;
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
-		}
+		}*/
 	}
 	
 	if( us != NULL )
@@ -668,7 +668,7 @@ int DetachWebsocketFromSession( void *d )
 		{
 			us->us_Wsi = NULL;
 			us->us_WSD = NULL;
-			us->us_InUseCounter--;
+			//us->us_InUseCounter--;
 		
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
