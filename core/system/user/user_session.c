@@ -352,8 +352,6 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 					DEBUG("[UserSessionWebsocketWrite] Send message to WSI, ptr: %p\n", us->us_Wsi );
 
 					DEBUG("[UserSessionWebsocketWrite] In use counter %d\n", us->us_InUseCounter );
-				
-					us->us_InUseCounter--;
 				}
 
 				FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
@@ -379,6 +377,13 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 						}
 						
 					}*/
+				}
+				
+				// we have to be sure that us->us_Wsi is not equal to NULL
+				if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+				{
+					us->us_InUseCounter--;
+					FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 				}
 			}
 		}

@@ -277,17 +277,21 @@ void WSThread( void *d )
 
 	struct lws *wsi = fcd->wsc_Wsi;
 	
-	FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
-	fcd->wsc_InUseCounter++;
-	FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
+	if( FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) ) == 0 )
+	{
+		fcd->wsc_InUseCounter++;
+		FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
+	}
 	
 	if( fcd->wsc_Wsi == NULL || fcd->wsc_UserSession == NULL )
 	{
 		FERROR("Error session is NULL : wsi: %p usersession: %p\n", fcd->wsc_Wsi, fcd->wsc_UserSession );
 
-		FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
-		fcd->wsc_InUseCounter--;
-		FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
+		if( FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) ) == 0 )
+		{
+			fcd->wsc_InUseCounter--;
+			FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
+		}
 		
 		releaseWSData( data );
 		
@@ -334,9 +338,8 @@ void WSThread( void *d )
 			
 			DECREASE_WS_THREADS();
 			
-			FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
-			fcd->wsc_InUseCounter--;
-			FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
+			// mutex was here before
+			
 			if( fcd->wsc_UserSession != NULL )
 			{
 				if( FRIEND_MUTEX_LOCK( &(ses->us_Mutex) ) == 0 )
@@ -344,6 +347,12 @@ void WSThread( void *d )
 					ses->us_InUseCounter--;
 					FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
 				}
+			}
+			
+			if( FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) ) == 0 )
+			{
+				fcd->wsc_InUseCounter--;
+				FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
 			}
 			
 			releaseWSData( data );
@@ -570,9 +579,11 @@ void WSThread( void *d )
 		Log( FLOG_INFO, "WS no response end LOCKTEST\n");
 	}
 	
-	FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
-	fcd->wsc_InUseCounter--;
-	FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
+	if( FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) ) == 0 )
+	{
+		fcd->wsc_InUseCounter--;
+		FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
+	}
 	
 	if( fcd->wsc_UserSession != NULL )
 	{
@@ -667,9 +678,11 @@ void WSThreadPing( void *p )
 	
 		DECREASE_WS_THREADS();
 	
-		FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
-		fcd->wsc_InUseCounter--;
-		FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
+		if( FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) ) == 0 )
+		{
+			fcd->wsc_InUseCounter--;
+			FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
+		}
 	}
 	
 #if USE_PTHREAD_PING == 1
