@@ -531,6 +531,8 @@ void *FriendCoreAcceptPhase2( void *data )
 						{
 							incoming->s_Ssl = s_Ssl;
 							incoming->s_Ctx = s_Ctx;
+							s_Ssl = NULL;
+							s_Ctx = NULL;
 						}
 					}
 					else
