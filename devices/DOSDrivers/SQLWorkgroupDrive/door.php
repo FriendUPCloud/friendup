@@ -380,7 +380,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 					WHERE FilesystemID = \'' . $this->ID . '\'
 				' ) )
 				{
-					$total = $sum->z;
+					$total = intval( $sum->z, 10 );
 				}
 				
 				// Create a file object
