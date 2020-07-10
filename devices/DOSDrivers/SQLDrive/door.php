@@ -351,6 +351,8 @@ if( !class_exists( 'DoorSQLDrive' ) )
 			}
 			else if( $args->command == 'write' )
 			{
+				set_time_limit( 0 );
+			
 				// We need to check how much is in our database first
 				$deletable = false;
 				$total = 0;
@@ -359,7 +361,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					WHERE u.UserID=\'' . $User->ID . '\' AND FilesystemID = \'' . $this->ID . '\'
 				' ) )
 				{
-					$total = $sum->z;
+					$total = intval( $sum->z, 10 );
 				}
 				
 				// Create a file object
