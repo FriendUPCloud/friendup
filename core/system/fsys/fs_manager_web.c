@@ -2125,7 +2125,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									LOG( FLOG_DEBUG, "UPLOAD FINISHED\n");
 									
 									int closeResponse = actFS->FileClose( actDev, fp );
-									
+								
 									int addSize = 0;
 									if( uploadedFiles == 0 )
 									{
@@ -2166,7 +2166,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						char *ttmp = FMalloc( 256 + uploadedFilesBS->bs_Size );
 						if( ttmp != NULL )
 						{
-							int spsize = sprintf( ttmp, "ok<!--separate-->{\"uploaded\":%d,\"files\":%s}", uploadedFiles, uploadedFilesBS->bs_Buffer );
+							int spsize = sprintf( ttmp, "ok<!--separate-->{\"uploaded files\":%d,\"files\":%s}", uploadedFiles, uploadedFilesBS->bs_Buffer );
 							HttpSetContent( response, ttmp, spsize );
 							*result = 200;
 							// there is no need to release ttmp, it will be released with HttpFree
@@ -2174,7 +2174,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						else
 						{
 							char tmp[ 256 ];
-							sprintf( tmp, "ok<!--separate-->{\"Uploaded files\":\"%d\"}", uploadedFiles );
+							sprintf( tmp, "ok<!--separate-->{\"uploaded files\":\"%d\"}", uploadedFiles );
 							HttpAddTextContent( response, tmp );
 							*result = 200;
 						}
@@ -2182,7 +2182,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					else
 					{
 						char tmp[ 256 ];
-						sprintf( tmp, "fail<!--separate-->{\"Uploaded files\":\"%d\"}", uploadedFiles );
+						sprintf( tmp, "fail<!--separate-->{\"uploaded files\":\"%d\"}", uploadedFiles );
 						HttpAddTextContent( response, tmp );
 						*result = 200;
 					}

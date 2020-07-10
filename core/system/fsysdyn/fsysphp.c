@@ -311,7 +311,7 @@ ListString *PHPCall( const char *command )
 	
 	ListStringJoin( ls );		//we join all string into one buffer
 
-	DEBUG( "[fsysphp] Finished PHP call...(%lu length)-\n", ls->ls_Size );
+	DEBUG( "[fsysphp] Finished PHP call...(%lu length, %s)-\n", ls->ls_Size, ls->ls_Data );
 	return ls;
 }
 
@@ -1279,6 +1279,8 @@ int FileClose( struct File *s, void *fp )
 						BufStringDisk *result = PHPCallDisk( command );
 						if( result != NULL )
 						{
+							DEBUG("[fsysphp] : phpcalldisk result: %s\n", result->bsd_Buffer );
+							
 							if( result->bsd_Buffer[0] == 'f' && result->bsd_Buffer[1] == 'a' && result->bsd_Buffer[2] == 'i' && result->bsd_Buffer[3] == 'l' )
 							{
 								closeerr = 2;

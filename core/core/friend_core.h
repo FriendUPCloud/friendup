@@ -74,9 +74,14 @@ typedef struct FriendCoreInstance
 	int						fci_ReadCorePipe, fci_WriteCorePipe; // pointers to read/write pipes
 	
 	FThread					*fci_Thread;		/// FC instance internal thread
-	pthread_mutex_t			fci_ListenMutex;
 	
 	void 					*fci_SB;							//pointer to systembase
+	
+	pthread_cond_t			fci_AcceptCond;
+	pthread_mutex_t			fci_AcceptMutex;
+	FBOOL					fci_AcceptQuit;
+	FBOOL					fci_AcceptThreadDestroyed;
+	struct epoll_event		fci_EpollEvent;
 	
 } FriendCoreInstance;
 

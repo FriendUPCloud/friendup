@@ -1797,7 +1797,14 @@ function CloseView( win, delayed )
 					{
 						if( app.windows[ a ] != div.windowObject )
 						{
-							app.windows[ a ]._window.parentNode.parentNode.style.display = 'none';
+							if( app.windows[ a ]._window.parentNode && app.windows[ a ]._window.parentNode.parentNode )
+							{
+								let elef = app.windows[ a ]._window.parentNode.parentNode;
+								if( elef.classList && elef.classList.contains( 'View' ) || elef.classList.contains( 'ViewContainer' ) )
+								{
+									app.windows[ a ]._window.parentNode.parentNode.style.display = 'none';
+								}
+							}
 						}
 					}
 				}
@@ -5932,6 +5939,10 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 	{
 		v.setContent( data );
 		let eles = v._window.getElementsByTagName( 'button' );
+		if( !eles && v.dom )
+		{
+			eles = v.dom.getElementsByTagName( 'button' );
+		}
 
 		// FL-6/06/2018: correction so that it does not take the relative position of OK/Cancel in the box 
 		// US-792 - 2020: Correction to fix sending the same delete request multiple times

@@ -1546,7 +1546,14 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 													DEBUG("[ProtocolHttp] File created %s size %lu\n", nlf->lf_Path, nlf->lf_FileSize );
 
-													if( CacheManagerFilePut( SLIB->cm, nlf ) != 0 )
+													if( SLIB->sl_CacheFiles == TRUE )
+													{
+														if( CacheManagerFilePut( SLIB->cm, nlf ) != 0 )
+														{
+															LocFileDelete( nlf );
+														}
+													}
+													else
 													{
 														LocFileDelete( nlf );
 													}
@@ -1555,6 +1562,8 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 												{
 													FFree( mime );
 												}
+												
+												//DEBUG("Multifile content: %s\n\n\n", bs->bs_Buffer );
 
 												bs->bs_Buffer = NULL;
 

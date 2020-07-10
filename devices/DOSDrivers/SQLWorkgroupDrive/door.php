@@ -23,7 +23,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 		*/
 		function onConstruct()
 		{
-			global $args;
+			global $args, $Logger;
 			$this->fileInfo = isset( $args->fileInfo ) ? $args->fileInfo : new stdClass();
 			$defaultDiskspace = 536870912;
 			if( isset( $this->Config ) && strlen( $this->Config) > 3 )

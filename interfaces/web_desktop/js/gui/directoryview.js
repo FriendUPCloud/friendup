@@ -871,39 +871,42 @@ DirectoryView.prototype.InitWindow = function( winobj )
 		// If we're told it hasn't changed - don't do this
 		if( icons && icons.length && !dirv.toChange )
 		{
-			// Check if the icons haven't changed!
-			if( this.icons && this.allIcons.length )
+			if( !window.isMobile || ( window.isMobile && !winobj.parentNode.classList.contains( 'Mountlist' ) ) )
 			{
-				let changed = false;
-				for( let a = 0; a < icons.length; a++ )
+				// Check if the icons haven't changed!
+				if( this.icons && this.allIcons.length )
 				{
-					// We found a different icon
-					if( !this.allIcons[a] || icons[a].Path != this.allIcons[a].Path )
+					let changed = false;
+					for( let a = 0; a < icons.length; a++ )
 					{
-						changed = true;
-						break;
-					}
-				}
-				if( this.icons.length )
-				{
-					for( let a = 0; a < this.icons.length; a++ )
-					{
-						// Missing dom node!
-						if( this.icons[ a ].domNode && !this.icons[ a ].domNode.parentNode )
-						{
-							changed = true;
-							break;
-						}
-						if( this.icons[ a ].selected )
+						// We found a different icon
+						if( !this.allIcons[a] || icons[a].Path != this.allIcons[a].Path )
 						{
 							changed = true;
 							break;
 						}
 					}
-				}
-				if( !changed ) 
-				{
-					return;
+					if( this.icons.length )
+					{
+						for( let a = 0; a < this.icons.length; a++ )
+						{
+							// Missing dom node!
+							if( this.icons[ a ].domNode && !this.icons[ a ].domNode.parentNode )
+							{
+								changed = true;
+								break;
+							}
+							if( this.icons[ a ].selected )
+							{
+								changed = true;
+								break;
+							}
+						}
+					}
+					if( !changed ) 
+					{
+						return;
+					}
 				}
 			}
 		}

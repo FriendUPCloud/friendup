@@ -55,24 +55,20 @@ Application.run = function( msg )
 			name: i18n( 'i18n_bookmarks' ),
 			items: [
 				{
-					name: 'Friend Browser Home',
+					name: 'Friend OS Home',
+					command: 'navto:https://friendos.com/'
+				},
+				{
+					name: 'Your personal page',
 					command: 'navto:about:blank'
 				},
 				{
-					name: 'FriendUP',
-					command: 'navto:https://friendup.cloud/'
+					name: 'Friend Nexus Forum',
+					command: 'navto:https://friend-nexus.com/'
 				},
 				{
-					name: 'FriendUP Developers',
-					command: 'navto:https://developers.friendup.cloud/'
-				},
-				{
-					name: 'Friend Software Corporation',
-					command: 'navto:https://friendsoftware.cloud/'
-				},
-				{
-					name: 'Slashdot.org',
-					command: 'navto:https://slashdot.org/'
+					name: 'DTube',
+					command: 'navto:https://d.tube/'
 				}
 			]
 		}/*,
