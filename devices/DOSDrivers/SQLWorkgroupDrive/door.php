@@ -369,6 +369,9 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 			}
 			else if( $args->command == 'write' )
 			{
+				set_time_limit( 0 );
+				
+				
 				// We need to check how much is in our database first
 				$deletable = false;
 				$total = 0;
@@ -507,10 +510,12 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 
 									if( $total + $len < SQLWORKGROUPDRIVE_FILE_LIMIT )
 									{
+										$Logger->log( '[SqlWorkgroupDrive] Moving tmp file ' . $args->tmpfile . ' to ' . $wname . $fn . ' because ' . ( $total + $len ) . ' < ' . SQLDRIVE_FILE_LIMIT );
 										rename( $args->tmpfile, $Config->FCUpload . $fn );
 									}
 									else
 									{
+										$Logger->log( '[SqlWorkgroupDrive] fail<!--separate-->Limit broken' );
 										die( 'fail<!--separate-->{"response":"-1","message":"Limit broken"}' );
 									}
 								}
