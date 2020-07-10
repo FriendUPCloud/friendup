@@ -503,7 +503,15 @@ if( !class_exists( 'DoorSQLDrive' ) )
 									if( $total + $len < SQLDRIVE_FILE_LIMIT )
 									{
 										$Logger->log( '[SqlDrive] Moving tmp file ' . $args->tmpfile . ' to ' . $wname . $fn . ' because ' . ( $total + $len ) . ' < ' . SQLDRIVE_FILE_LIMIT );
-										rename( $args->tmpfile, $wname . $fn );
+										
+										$cmd = 'mv "' . $args->tmpfile . '" "' . $wname . $fn . '"';
+										exec( $cmd, $output, $return_val );
+										
+										if( $return_val != 0 )
+										{
+											$Logger->log( '[SqlWorkgroupDrive] Failed to move file.' );
+											die( 'fail<!--separate-->{"response":"-1","message":"Failed to move temp file."}' );
+										}
 									}
 									else
 									{
