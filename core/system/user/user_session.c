@@ -133,7 +133,7 @@ void UserSessionDelete( UserSession *us )
 		{
 			us->us_Wsi = NULL;
 			data = (WSCData *)us->us_WSD;
-			us->us_WSD = NULL;
+			//us->us_WSD = NULL;
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
 		
@@ -148,6 +148,12 @@ void UserSessionDelete( UserSession *us )
 				}
 				FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
 			}
+		}
+		
+		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+		{
+			us->us_WSD = NULL;
+			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
 		
 		FQDeInitFree( &(us->us_MsgQueue) );
