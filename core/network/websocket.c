@@ -652,6 +652,7 @@ int DetachWebsocketFromSession( void *d )
 		{
 			us = (UserSession *)data->wsc_UserSession;
 		
+			/*
 			if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 			{
 				us->us_Wsi = NULL;
@@ -660,9 +661,10 @@ int DetachWebsocketFromSession( void *d )
 		
 				FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 			}
+			*/
 		}
 		
-		data->wsc_UserSession = NULL;
+		//data->wsc_UserSession = NULL;
 		data->wsc_Wsi = NULL;
 		FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
 		/*
@@ -673,8 +675,7 @@ int DetachWebsocketFromSession( void *d )
 		}*/
 	}
 	
-	/*
-	if( us != NULL )
+	if( data->wsc_UserSession != NULL && us != NULL )
 	{
 		DEBUG("[WS] mutex val: %d\n", us->us_Mutex );
 		//Log( FLOG_DEBUG, "[WS] Lock DetachWebsocketFromSession\n");
@@ -687,6 +688,8 @@ int DetachWebsocketFromSession( void *d )
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
 		Log( FLOG_DEBUG, "[WS] UnLock DetachWebsocketFromSession\n");
-	}*/
+	}
+	data->wsc_UserSession = NULL;
+	
     return 0;
 }
