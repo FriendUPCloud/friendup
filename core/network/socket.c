@@ -1674,7 +1674,7 @@ int SocketReadBlockedSSL( Socket* sock, char* data, unsigned int length, unsigne
 	fds.fd = sock->fd;// STDIN_FILENO;
 	fds.events = POLLIN;
 
-	int err = poll( &fds, 1, 20 );	//200
+	int err = poll( &fds, 1, 100 );	//200
 	if( err <= 0 )
 	{
 		DEBUG("[SocketReadBlockedSSL] Timeout or there is no data in socket\n");
