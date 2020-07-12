@@ -21,7 +21,7 @@ Application.run = function( msg )
 
 	if( !ge( 'StartupCommand' ).value )
 	{
-		ge( 'BrowserBox' ).src = 'https://friendos.com/'; //getImageUrl( 'Progdir:Templates/about.html' );
+		ge( 'BrowserBox' ).src = 'https://friendos.com/';
 		this.registerUrl( ge( 'BrowserBox' ).src );
 	}
 
@@ -289,7 +289,6 @@ function setUrl( uri, move )
 	{
 		skiploading = true;
 		ge( 'BrowserBox' ).src = uri;
-		console.log( 'Setting browser uri: ' + uri );
 	}
 	
 	ge( 'uri' ).innerHTML = uri;
