@@ -1262,6 +1262,7 @@ void FriendCoreProcessSockBlock( void *fcv )
 				{
 					if( retryContentNotFull++ > 500 )
 					{
+						//DEBUG("[FriendCoreProcessSockBlock] We are retrying: %d\n", retryContentNotFull - 1 );
 						break;
 					}
 					else	// we check size and try again
