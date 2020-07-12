@@ -25,6 +25,8 @@ menu_design_dark                  : Dark
 
 i18n_root_directory               : Notes
 
+i18n_unnamed                      : Unnamed
+
 i18n_list                         : List
 i18n_uncategorized                : Uncategorized
 i18n_categories                   : Categories
