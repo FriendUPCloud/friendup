@@ -55,12 +55,12 @@ Application.run = function( msg )
 			name: i18n( 'i18n_bookmarks' ),
 			items: [
 				{
-					name: 'Friend OS Home',
-					command: 'navto:https://friendos.com/'
-				},
-				{
 					name: 'Your personal page',
 					command: 'navto:about:blank'
+				},
+				{
+					name: 'Friend OS Home',
+					command: 'navto:https://friendos.com/'
 				},
 				{
 					name: 'Friend Nexus Forum',
@@ -161,7 +161,7 @@ Application.receiveMessage = function( msg )
 				width: 300,
 				height: 400
 			} );
-			var f = new File( 'Progdir:Templates/about.html' );
+			var f = new File( 'Progdir:Templates/about_application.html' );
 			f.onLoad = function( data )
 			{
 				Application.ab.setContent( data );
