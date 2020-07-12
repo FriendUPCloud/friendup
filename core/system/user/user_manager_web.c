@@ -2344,8 +2344,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	else if( strcmp( urlpath[ 1 ], "updatekey" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -2354,7 +2354,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		//UserSession *usrses = l->sl_USM->usm_Sessions;
 		FULONG keyid = 0;
 		
-		DEBUG( "[UMWebRequest] update key" );
+		DEBUG( "[UMWebRequest] update key\n" );
 		
 		HashmapElement *el = HttpGetPOSTParameter( request, "keyid" );
 		if( el != NULL )
@@ -2389,5 +2389,53 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			HttpAddTextContent( response, dictmsgbuf );
 		}
 	}
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/user/ping</H2>Ping
+	* @todo this function receive ping and send pong with same timestamp
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param time - (required) current time
+	* @return { time: <time> } when success, otherwise error code
+	*/
+	/// @endcond
+	else if( strcmp( urlpath[ 1 ], "ping" ) == 0 )
+	{
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
+			{TAG_DONE, TAG_DONE}
+		};
+		
+		response = HttpNewSimple( HTTP_200_OK,  tags );
+		
+		//UserSession *usrses = l->sl_USM->usm_Sessions;
+		char *time = NULL;
+		
+		DEBUG( "[UMWebRequest] ping\n" );
+		
+		HashmapElement *el = HttpGetPOSTParameter( request, "ping" );
+		if( el != NULL )
+		{
+			time = ( (char *)el->hme_Data;
+		}
+		
+		if( time != NULL )
+		{
+			char resp[ 256 ];
+			snprintf( resp, sizeof(resp), "ok<!--separate-->{\"time\":\"%s\"}", time );
+			HttpAddTextContent( response, resp );
+		}
+		else
+		{
+			char dictmsgbuf[ 256 ];
+			char dictmsgbuf1[ 196 ];
+			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "keyid" );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+			HttpAddTextContent( response, dictmsgbuf );
+		}
+	}
+	
 	return response;
 }
