@@ -1686,6 +1686,16 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	}
 	
 	//
+	// Remote USB
+	//
+	
+	else if( strcmp( urlpath[ 0 ], "usbremote" ) == 0 )
+	{
+		DEBUG("USBRemote function %p  libptr %p\n", l, l->ilib );
+		response = USBRemoteManagerWebRequest( l,  &(urlpath[ 1 ]), *request, loggedSession );
+	}
+	
+	//
 	// Printers
 	//
 	

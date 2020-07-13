@@ -783,7 +783,7 @@ OR
 // internal funciton
 //
 
-inline static int GenerateServiceMessage( char *dstMsg, char *reqID, char *path, char *params, UserSession *us )
+inline static int GenerateServiceMessage( char *dstMsg, char *reqID, const char *path, const char *params, UserSession *us )
 {
 	int dstsize = 0;
 	

@@ -935,6 +935,12 @@ SystemBase *SystemInit( void )
 		Log( FLOG_ERROR, "Cannot initialize USBManagerNew\n");
 	}
 	
+	l->sl_USBRemoteManager = USBRemoteManagerNew( l );
+	if( l->sl_USBRemoteManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize USBRemoteManagerNew\n");
+	}
+	
 	l->sl_USM = USMNew( l );
 	if( l->sl_USM == NULL )
 	{
@@ -1196,6 +1202,10 @@ void SystemClose( SystemBase *l )
 	if( l->sl_FSM != NULL )
 	{
 		FSManagerDelete(  l->sl_FSM );
+	}
+	if( l->sl_USBRemoteManager != NULL )
+	{
+		USBRemoteManagerDelete( l->sl_USBRemoteManager );
 	}
 	if( l->sl_USB != NULL )
 	{

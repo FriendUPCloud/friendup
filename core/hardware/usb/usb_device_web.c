@@ -258,8 +258,7 @@ Http* USBManagerWebRequest( void *lb, char **urlpath, Http* request, UserSession
 			{ TAG_DONE, TAG_DONE }
 		};
 		char *port = NULL;
-		char *description = NULL;
-		
+		char *username = NULL;
 		response = HttpNewSimple(HTTP_200_OK, tags);
 		
 		HashmapElement *el = HttpGetPOSTParameter(request, "port");
@@ -268,14 +267,18 @@ Http* USBManagerWebRequest( void *lb, char **urlpath, Http* request, UserSession
 			port = (char *)el->hme_Data;
 		}
 		
-		char buffer[512];
+		el = HttpGetPOSTParameter(request, "username");
+		if (el != NULL)
+		{
+			username = UrlDecodeToMem( (char *)el->hme_Data );
+		}
 		
-		if (port != NULL)
+		if( port != NULL )
 		{
 			int err = USBManagerAddNewPort( l->sl_USB, port );
 			
 			char buffer[512];
-			int size = sprintf(buffer, "{ \"code\": \"%d\" }", err );
+			int size = sprintf(buffer, "{\"code\":\"%d\"}", err );
 			HttpAddTextContent(response, buffer);
 		}
 		else
@@ -285,6 +288,11 @@ Http* USBManagerWebRequest( void *lb, char **urlpath, Http* request, UserSession
 			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "port" );
 			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, dictmsgbuf );
+		}
+		
+		if( username != NULL )
+		{
+			FFree( username );
 		}
 	}
 	

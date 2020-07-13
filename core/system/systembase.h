@@ -60,6 +60,8 @@
 #include <system/fsys/fs_manager.h>
 #include <hardware/usb/usb_manager.h>
 #include <hardware/usb/usb_device_web.h>
+#include <hardware/usb/usb_remote_manager.h>
+#include <hardware/usb/usb_remote_device_web.h>
 #include <hardware/printer/printer_manager.h>
 #include <hardware/printer/printer_web.h>
 #include <core/pid_thread_manager.h>
@@ -239,6 +241,7 @@ typedef struct SystemBase
 	UserGroupManager				*sl_UGM;	// user group manager
 	FSManager						*sl_FSM;		// filesystem manager
 	USBManager						*sl_USB;		// usb manager
+	USBRemoteManager				*sl_USBRemoteManager; // usb remote manager
 	PrinterManager					*sl_PrinterM;		// printer manager
 	EventManager					*sl_EventManager;								///< Manager of events
 	PIDThreadManager				*sl_PIDTM;			// PIDThreadManager
