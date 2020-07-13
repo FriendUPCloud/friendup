@@ -2418,7 +2418,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		HashmapElement *el = HttpGetPOSTParameter( request, "ping" );
 		if( el != NULL )
 		{
-			time = ( (char *)el->hme_Data;
+			time = (char *)el->hme_Data;
 		}
 		
 		if( time != NULL )
