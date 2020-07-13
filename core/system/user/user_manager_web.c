@@ -2415,7 +2415,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		
 		DEBUG( "[UMWebRequest] ping\n" );
 		
-		HashmapElement *el = HttpGetPOSTParameter( request, "ping" );
+		HashmapElement *el = HttpGetPOSTParameter( request, "time" );
 		if( el != NULL )
 		{
 			time = (char *)el->hme_Data;
@@ -2431,7 +2431,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		{
 			char dictmsgbuf[ 256 ];
 			char dictmsgbuf1[ 196 ];
-			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "keyid" );
+			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "time" );
 			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, dictmsgbuf );
 		}
