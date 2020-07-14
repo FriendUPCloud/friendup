@@ -1,5 +1,5 @@
-Friend Unifying Platform version 1.2.3
-======================================
+Friend Unifying Platform version 1.2.4, "Hydrogen"
+==================================================
 
 *NB*: For extended functionality and related Friend projects such as the Android app refer [here](https://github.com/FriendSoftwareLabs).
 
