@@ -62,7 +62,7 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 		response = HttpNewSimple(HTTP_200_OK, tags);
 
 		HttpAddTextContent(response, \
-			"add - add usb remote device" \
+			"create - create usb remote device" \
 			"delete - delete usb remote device" \
 			"list - list of usb remote devices" \
 			");" );
@@ -71,13 +71,14 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	* 
-	* <HR><H2>system.library/usbremote/add</H2>List all available usb ports
+	* <HR><H2>system.library/usbremote/create</H2>List all available usb ports
 	*
 	* @param sessionid - (required) session id of logged user
+	* @param username - (required) user name which points to user to which usb remote device will be attached
 	* @return return information about avaiable usb ports in JSON format when success, otherwise error code
 	*/
 	/// @endcond
-	else if( strcmp(urlpath[0], "add" ) == 0 )
+	else if( strcmp(urlpath[0], "create" ) == 0 )
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate("text/html") },
@@ -89,7 +90,7 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 
 		char *username = NULL;
 		
-		HashmapElement *el = HttpGetPOSTParameter( request, "id" );
+		HashmapElement *el = HttpGetPOSTParameter( request, "username" );
 		if (el != NULL)
 		{
 			username = UrlDecodeToMem( (char *)el->hme_Data );
@@ -105,11 +106,12 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 				char buffer[ 512 ];
 				
 				/*
-					char						*usbrd_Name;
-	int							usbrd_IPPort;				// ip port
-	char						*usbrd_Login;				// login and password (if set)
-	char						*usbrd_Password;
-	char						*usbrd_NetworkAddress;		// internet address
+				 SELECT Data FROM FSetting s WHERE s.UserID = '-1' AND s.Type = 'mitra' AND s.Key = 'database';
+				  {"host":"localhost","username":"guac","password":"IkkeHeltStabile2000","database":"guacamole"}
+				 * 
+				 select * from FSetting where Type='MitraApp';
+{"type":"RDP","name":"Francois Server","full address":"35.156.138.140","server port":"3389","remoteapplicationprogram":"","remote-app-dir":"francoisserver","saml_accessgroups":"","icon":"","executable_path":"","security":"any","alternate shell":"","remoteapp_parameters":"","remoteapp_working_dir":"","performance_wallpaper":"1","performance_theming":"1","performance_cleartype":"1","performance_windowdrag":"1","performance_aero":"1","performance_menuanimations":"1"} |
+
 				 */
 
 				int size = sprintf( buffer, "{\"deviceid\":\"%lu\",\"address\":\"%s\",\"port\":%d,\"uname\":\"%s\",\"password\":\"%s\"}", actdev->usbrd_ID, actdev->usbrd_NetworkAddress, actdev->usbrd_IPPort, actdev->usbrd_Login, actdev->usbrd_Password );
@@ -144,6 +146,8 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 	* <HR><H2>system.library/usbremote/delete</H2>Query FriendCore for avaiable usb port
 	*
 	* @param sessionid - (required) session id of logged user
+	* @param username - (required) user name which points to user from which usb remote device will be dettached
+	* @param id - (required) id of device which will be deleted
 	* @return { USBDeviceID: <number> } when success, otherwise error code
 	*/
 	/// @endcond
@@ -157,18 +161,51 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 
 		response = HttpNewSimple(HTTP_200_OK, tags);
 
-		char buffer[512];
-
-		USBDevice *dev = USBManagerLockPort(l->sl_USB, loggedSession);
-		if (dev != NULL)
+		char *username = NULL;
+		FULONG id = 0;
+		
+		HashmapElement *el = HttpGetPOSTParameter( request, "username" );
+		if (el != NULL)
 		{
-			int size = sprintf(buffer, "{ \"USBDeviceID\": \"%lu\" }", dev->usbd_ID );
-			HttpAddTextContent(response, buffer);
+			username = UrlDecodeToMem( (char *)el->hme_Data );
+		}
+		
+		el = HttpGetPOSTParameter( request, "id" );
+		if (el != NULL)
+		{
+			char *next;
+			id = (FLONG)strtol((char *)el->hme_Data, &next, 0);
+		}
+		
+		if( username != NULL && id > 0 )
+		{
+			int error = 0;
+			
+			error = USBRemoteManagerDeletePort( l->sl_USBRemoteManager, username, id );
+			if( error == 0 )
+			{
+				HttpAddTextContent( response, "ok<!--separate-->{ \"result\": \"sucess\" }" );
+			}
+			else
+			{
+				char dictmsgbuf[ 256 ];
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\",\"error\":%d}", l->sl_Dictionary->d_Msg[DICT_USB_REMOTE_CANNOT_BE_CREATED] , DICT_USB_REMOTE_CANNOT_BE_CREATED, error );
+				HttpAddTextContent( response, dictmsgbuf );
+				
+			}
 		}
 		else
 		{
-			int size = sprintf(buffer, "{ \"response\": \"%s\" }", "All ports are busy");
-			HttpAddTextContent(response, buffer);
+			char dictmsgbuf[ 256 ];
+			char dictmsgbuf1[ 196 ];
+			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "username, id" );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+			HttpAddTextContent( response, dictmsgbuf );
+		}
+		
+		if( username != NULL )
+		{
+			FFree( username );
 		}
 	}
 	
@@ -194,56 +231,79 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 
 		response = HttpNewSimple(HTTP_200_OK, tags);
 
-		HashmapElement *el = HttpGetPOSTParameter( request, "id" );
+		char *username = NULL;
+
+		HashmapElement *el = HttpGetPOSTParameter( request, "username" );
+		if (el != NULL)
+		{
+			username = UrlDecodeToMem( (char *)el->hme_Data );
+		}
+		el = HttpGetPOSTParameter( request, "id" );
 		if (el != NULL)
 		{
 			char *next;
 			id = (FLONG)strtol((char *)el->hme_Data, &next, 0);
 		}
 		
-		BufString *bs = BufStringNew();
-		if (bs != NULL)
+		if( username != NULL && id > 0 )
 		{
-			int pos = 0;
-
-			BufStringAdd(bs, " { \"USBPorts\": [");
-			
-			for( pos = 0; pos < l->sl_USB->usbm_MaxPort ; pos++ )
+			BufString *bs = BufStringNew();
+			if (bs != NULL)
 			{
-				USBDevice *dev =  l->sl_USB->usbm_Ports[ pos ];
-				
-				if( dev != NULL )
+				int pos = 0;
+			
+				UserUSBRemoteDevices *ususbdev = USBRemoteManagerGetPorts( l->sl_USBRemoteManager, username );
+			
+				BufStringAdd( bs, " {\"usbports\": [");
+			
+				for( pos = 0; pos < MAX_REMOTE_USB_DEVICES_PER_USER ; pos++ )
 				{
-					char tempBuffer[ 1024 ];
-
-					if (pos > 0)
+					USBRemoteDevice *actdev =  ususbdev->uusbrd_Devices[ pos ];
+				
+					if( actdev != NULL )
 					{
-						BufStringAdd(bs, ", ");
-					}
+						char tempBuffer[ 1024 ];
+						if( pos > 0)
+						{
+							BufStringAdd( bs, ", ");
+						}
 				
-					int msgsize = snprintf(tempBuffer, sizeof(tempBuffer), "\"Name\":\"%s\",\"Port\":\"%s\",\"Connected\":\"%d\"", dev->usbd_Name, dev->usbd_NetworkAddress, dev->usbd_State );
+						int msgsize = snprintf( tempBuffer, sizeof( tempBuffer ), "{\"deviceid\":\"%lu\",\"address\":\"%s\",\"port\":%d,\"uname\":\"%s\",\"password\":\"%s\"}", actdev->usbrd_ID, actdev->usbrd_NetworkAddress, actdev->usbrd_IPPort, actdev->usbrd_Login, actdev->usbrd_Password );
 
-					BufStringAddSize(bs, tempBuffer, msgsize);
+						BufStringAddSize( bs, tempBuffer, msgsize );
+					}
+					else
+					{
+						FERROR("USBPort not found\n");
+					}
 				}
-				else
-				{
-					FERROR("USBPort not found\n");
-				}
+
+				BufStringAdd( bs, "]}" );
+
+				INFO("USBPORTS JSON INFO: %s\n", bs->bs_Buffer);
+
+				HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
+				bs->bs_Buffer = NULL;
+
+				BufStringDelete( bs );
 			}
-			//INFO("JSON INFO 2: %s\n", bs->bs_Buffer );
-
-			BufStringAdd(bs, "  ]}");
-
-			INFO("USBPORTS JSON INFO: %s\n", bs->bs_Buffer);
-
-			HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
-			bs->bs_Buffer = NULL;
-
-			BufStringDelete(bs);
+			else
+			{
+				FERROR("ERROR: Cannot allocate memory for BufferString\n");
+			}
 		}
 		else
 		{
-			FERROR("ERROR: Cannot allocate memory for BufferString\n");
+			char dictmsgbuf[ 256 ];
+			char dictmsgbuf1[ 196 ];
+			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "username, id" );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+			HttpAddTextContent( response, dictmsgbuf );
+		}
+		
+		if( username != NULL )
+		{
+			FFree( username );
 		}
 	}
 	
