@@ -519,7 +519,7 @@ var WorkspaceInside = {
 		
 		// Check if we have a preset window that should be activated
 		var foundActive = false;
-		if( typeof( virtualWorkspaces[ index ] ) != 'undefined' )
+		if( typeof( virtualWorkspaces ) != 'undefined' && typeof( virtualWorkspaces[ index ] ) != 'undefined' )
 		{
 			if( virtualWorkspaces[ index ].activeWindow )
 			{
