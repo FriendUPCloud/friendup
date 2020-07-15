@@ -511,10 +511,9 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 									if( $total + $len < SQLWORKGROUPDRIVE_FILE_LIMIT )
 									{
 										$Logger->log( '[SqlWorkgroupDrive] Moving tmp file ' . $args->tmpfile . ' to ' . $Config->FCUpload . $fn . ' because ' . ( $total + $len ) . ' < ' . SQLDRIVE_FILE_LIMIT );
-										$cmd = 'mv "' . $args->tmpfile . '" "' . $Config->FCUpload . $fn . '"';
-										exec( $cmd, $output, $return_val );
+										$res = rename( $args->tmpfile, $Config->FCUpload . $fn );
 										
-										if( $return_val != 0 )
+										if( !$res )
 										{
 											$Logger->log( '[SqlWorkgroupDrive] Failed to move file.' );
 											die( 'fail<!--separate-->{"response":"-1","message":"Failed to move temp file."}' );
