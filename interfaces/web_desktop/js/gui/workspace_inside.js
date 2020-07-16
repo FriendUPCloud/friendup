@@ -1837,6 +1837,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						globalConfig.hiddenSystem = dat.hiddensystem;
 					}
+					
+					globalConfig.hiddenSystem = true;
+					
 					if( window.isMobile )
 					{
 						globalConfig.viewList = 'separate';
@@ -3270,19 +3273,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 											Workspace.upgradeWorkspaceSettings( function(){
 												setTimeout( function()
 												{
-													var n = Notify( 
-														{ 
-															title: 'Your Workspace has been upgraded', 
-															text: 'We have updated your settings to match the default profile of the latest update of Friend. This only happens on each major upgrade of the Friend Workspace.', 
-															sticky: true
-														}, 
-														false, 
-														function()
-														{
-															CloseNotification( n );
-														} 
-													);
-												}, 1000 );
+													ExecuteApplication('Welcome');
+												}, 3000 );
 											} );
 										}
 									}
@@ -9885,6 +9877,7 @@ function ShowEula( accept, cbk )
 		{
 			if( e == 'ok' )
 			{
+				ge( 'FriendScreenOverlay' ).classList.remove( 'EULA' );
 				var eles = document.getElementsByTagName( 'div' );
 				for( var a = 0; a < eles.length; a++ )
 				{
@@ -9924,11 +9917,14 @@ function ShowEula( accept, cbk )
 	f.onLoad = function( data )
 	{
 		d.innerHTML = data;
+
+		ge( 'FriendScreenOverlay' ).classList.add( 'EULA' );
+
 		// Tell app we can show ourselves!
 		if( window.friendApp && window.friendApp.reveal )
 		{
 			friendApp.reveal();
-		}		
+		}
 	}
 	f.load();
 }

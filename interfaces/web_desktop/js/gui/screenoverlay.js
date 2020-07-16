@@ -23,10 +23,11 @@ var ScreenOverlay = {
 		document.body.appendChild( this.div );
 	},
 	// Show self
-	show: function()
+	show: function( force )
 	{
 		var self = this;
-		if( this.visibility || !this.div ) return;
+		if( !force )
+			if( this.visibility || !this.div ) return;
 		this.visibility = true;
 		this.div.classList.remove( 'Hidden' );
 		this.div.classList.add( 'Visible' );
@@ -37,14 +38,14 @@ var ScreenOverlay = {
 		if( this.debug )
 		{
 			this.enableDebug();
-		}	
+		}
 	},
 	// Trick hide
 	invisible: function()
 	{
 		if( this.debug ) return;
 		var self = this;
-		if( !this.visibility ) return;
+		if( !this.visibility || this.eula ) return;
 		this.div.classList.add( 'Hiding' );
 		setTimeout( function()
 		{
@@ -65,16 +66,40 @@ var ScreenOverlay = {
 	// Hide self
 	hide: function()
 	{
-		if( this.debug ) return;
 		var self = this;
-		if( !this.visibility ) return;
-		this.div.classList.add( 'Hiding' );
-		setTimeout( function()
+		if( this.debug ) return;
+		if( this.eula )
 		{
-			self.div.classList.remove( 'Showing' );
-			self.div.classList.remove( 'Hiding' );
-			setTimeout( function()
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
 			{
+				if( e != 'ok' )
+				{
+					return self.showEula();
+				}
+				return theHider();
+			}
+			m.forceHTTP = true;
+			m.execute( 'getsetting', { setting: 'eula_accepted' } );
+			self.show( true );
+			return;
+		}
+		function theHider()
+		{
+			if( !self.visibility ) return false;
+			self.div.classList.add( 'Hiding' );
+			self.hidertime1 = setTimeout( function()
+			{
+				self.div.classList.remove( 'Showing' );
+				self.div.classList.remove( 'Hiding' );
+				self.hidertime2 = setTimeout( function()
+				{
+					self.div.classList.add( 'Hidden' );
+					self.div.classList.remove( 'Visible' );
+					self.visibility = false; // Done hiding!
+					self.clearContent();
+					self.done = true;
+				}, 250 );
 				self.div.classList.add( 'Hidden' );
 				self.div.classList.remove( 'Visible' );
 				self.visibility = false; // Done hiding!
@@ -90,8 +115,7 @@ var ScreenOverlay = {
 							Workspace.applications[ a ].startupsequence = false;
 						}
 					}
-				}, 1000 );
-				
+				}, 4000 );
 				
 				// Make sure we update screen title and tray/tasks
 				PollTaskbar();
@@ -110,9 +134,48 @@ var ScreenOverlay = {
 				{
 					friendApp.reveal();
 				}
-				
 			}, 250 );
-		}, 250 );
+			return true;
+		}
+		return theHider();
+	},
+	showEula: function()
+	{
+		this.div.classList.add( 'EULA' );
+		var d = document.createElement( 'div' );
+		d.className = 'SmoothScrolling EULA Loading';
+		this.div.appendChild( d );
+		var f = new File( 'System:templates/eula.html' );
+		f.onLoad = function( data )
+		{
+			d.innerHTML = data;
+			d.classList.remove( 'Loading' );
+			
+			// Tell app we can show ourselves!
+            if( window.friendApp && window.friendApp.reveal )
+            {
+                friendApp.reveal();
+            }
+			
+		}
+		f.load();
+	},
+	acceptEula: function( mod )
+	{
+		var self = this;
+		if( !mod ) return;
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( e == 'ok' )
+			{
+				self.div.classList.remove( 'EULA' );
+				self.hide();
+				self.eula = false;
+			}
+		}
+		m.forceHTTP = true;
+		m.execute( 'setsetting', { setting: 'eula_accepted', data: 'accepted' } );
 	},
 	setMode: function( mode )
 	{

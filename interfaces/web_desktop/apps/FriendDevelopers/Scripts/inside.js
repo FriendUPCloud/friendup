@@ -1,4 +1,0 @@
-Application.run = function( msg )
-{
-}
-

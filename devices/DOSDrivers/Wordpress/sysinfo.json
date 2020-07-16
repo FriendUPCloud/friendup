@@ -1,7 +1,0 @@
-{
-	"type":    "Wordpress",
-	"literal": "Wordpress Based Filesystem",
-	"group":   "Admin",
-	"sharing": "1",
-	"icon": "icon.png"
-}
