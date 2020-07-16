@@ -42,18 +42,18 @@ typedef struct UserUSBRemoteDevices
 //
 //
 
-UserUSBRemoteDevices *UserUSBRemoteDeviceNew( char *username, char *realName );
+UserUSBRemoteDevices *UserUSBRemoteDevicesNew( char *username, char *realName );
 
 //
 //
 //
 
-void UserUSBRemoteDeviceDelete( UserUSBRemoteDevices *dev );
+void UserUSBRemoteDevicesDelete( UserUSBRemoteDevices *dev );
 
 //
 //
 //
 
-int UserUSBRemoteDeviceDeletePort( UserUSBRemoteDevices *dev, FULONG id );
+int UserUSBRemoteDevicesDeletePort( UserUSBRemoteDevices *dev, FULONG id );
 
 #endif // __CORE_USB_REMOTE_USB_DEVICE_H__

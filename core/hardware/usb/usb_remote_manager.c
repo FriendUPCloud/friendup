@@ -65,7 +65,7 @@ void USBRemoteManagerDelete( USBRemoteManager *usbm )
 			UserUSBRemoteDevices *remd = dev;
 			dev = (UserUSBRemoteDevices *)dev->node.mln_Succ;
 
-			UserUSBRemoteDeviceDelete( remd );
+			UserUSBRemoteDevicesDelete( remd );
 		}
 
 		pthread_mutex_destroy( &(usbm->usbrm_Mutex) );
@@ -82,8 +82,8 @@ void USBRemoteManagerDelete( USBRemoteManager *usbm )
  */
 USBRemoteDevice *USBRemoteManagerCreatePort( USBRemoteManager *usbm, char *username, int *error )
 {
-	USBRemoteDevices *retdev = NULL;
-	UserUSBRemoteDevice *actdev = NULL;
+	USBRemoteDevice *retdev = NULL;
+	UserUSBRemoteDevices *actdev = NULL;
 	*error = 0;
 	
 	if( usbm != NULL && username != NULL )
@@ -121,7 +121,7 @@ USBRemoteDevice *USBRemoteManagerCreatePort( USBRemoteManager *usbm, char *usern
 		else
 		{
 			// username, windows user name, internet address
-			actdev = UserUSBRemoteDeviceNew( username, NULL, NULL );
+			actdev = UserUSBRemoteDevicesNew( username, NULL );
 			if( ( FRIEND_MUTEX_LOCK( &(usbm->usbrm_Mutex ) ) ) == 0 )
 			{
 				// add user devices to list
@@ -169,7 +169,7 @@ int USBRemoteManagerDeletePort( USBRemoteManager *usbm, char *username, FULONG i
 		
 		if( actdev != NULL )
 		{
-			UserUSBRemoteDeviceDeletePort( actdev, id );
+			UserUSBRemoteDevicesDeletePort( actdev, id );
 		}
 	}
 	else

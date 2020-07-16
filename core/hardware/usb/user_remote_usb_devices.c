@@ -15,17 +15,17 @@
  *  @date created 13/07/2020
  */
 
-#include "user_usb_remote_device.h"
+#include "user_usb_remote_devices.h"
 #include "usb_remote_device.h"
 
 /**
- * Create USB remote device
+ * Create USB remote devices
  *
  * @param username user name to which devices are attached
  * @param remoteName remote user name to which devices are attached on destination server
  * @return return new UserUSBRemoteDevices structure when success, otherwise NULL
  */
-UserUSBRemoteDevices *UserUSBRemoteDeviceNew( char *username, char *remoteName )
+UserUSBRemoteDevices *UserUSBRemoteDevicesNew( char *username, char *remoteName )
 {
 	UserUSBRemoteDevices *udev = NULL;
 	if( ( udev = FCalloc( 1, sizeof(UserUSBRemoteDevices) ) ) != NULL )
@@ -41,7 +41,7 @@ UserUSBRemoteDevices *UserUSBRemoteDeviceNew( char *username, char *remoteName )
  *
  * @param udev pointer to UserUSBRemoteDevices
  */
-void UserUSBRemoteDeviceDelete( UserUSBRemoteDevices *udev )
+void UserUSBRemoteDevicesDelete( UserUSBRemoteDevices *udev )
 {
 	if( udev != NULL )
 	{
@@ -62,17 +62,13 @@ void UserUSBRemoteDeviceDelete( UserUSBRemoteDevices *udev )
 		{
 			FFree( udev->uusbrd_RemoteUserName );
 		}
-		if( udev->uusbrd_NetworkAddress != NULL )
-		{
-			FFree( udev->uusbrd_NetworkAddress );
-		}
 		
 		FFree( udev );
 	}
 }
 
 
-int UserUSBRemoteDeviceDeletePort( UserUSBRemoteDevices *dev, FULONG id )
+int UserUSBRemoteDevicesDeletePort( UserUSBRemoteDevices *udev, FULONG id )
 {
 	if( udev != NULL )
 	{
@@ -87,5 +83,6 @@ int UserUSBRemoteDeviceDeletePort( UserUSBRemoteDevices *dev, FULONG id )
 			}
 		}
 	}
+	return 0;
 }
 

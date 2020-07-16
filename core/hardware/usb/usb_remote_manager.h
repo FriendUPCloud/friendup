@@ -21,7 +21,7 @@
 #include <core/types.h>
 #include "usb_device.h"
 #include <network/http.h>
-#include "user_usb_remote_device.h"
+#include "user_usb_remote_devices.h"
 
 //
 // USB Remote Manager
@@ -51,7 +51,7 @@ void USBRemoteManagerDelete( USBRemoteManager *usbm );
 //
 //
 
-USBRemoteDevice *USBRemoteManagerCreatePort( USBRemoteManager *usbm, char *username, int *error ;
+USBRemoteDevice *USBRemoteManagerCreatePort( USBRemoteManager *usbm, char *username, int *error );
 
 //
 //
