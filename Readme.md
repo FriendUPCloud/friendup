@@ -9,7 +9,7 @@ The Friend OS leverages the computing power of the Internet to offer many of the
 
 The FriendOS liberates you from Big Tech:  It gives you control to create, collaborate, store and share information, data and content across all your devices in a secure private environment and access it anywhere on any device.
 
-![FriendUP Workspace](https://cdn-images-1.medium.com/max/800/1*Ma4ZrbNC2aWsuU18NRc7LA.png "FriendUP Workspace")
+![FriendUP Workspace](https://evaluate.friendup.cloud/wp-content/uploads/2020/07/hydrogen-fulldesktop.jpg "Friend OS Hydrogen")
 
 Across devices
 --------------
