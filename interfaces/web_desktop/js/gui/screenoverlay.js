@@ -14,6 +14,7 @@ var ScreenOverlay = {
 	mode: false,
 	done: false,
 	debug: false,
+	eula: true,
 	list: [],
 	// Public methods ----------------------------------------------------------
 	init: function()
