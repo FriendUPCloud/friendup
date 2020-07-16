@@ -1990,50 +1990,24 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					FBOOL isUserSentinel = FALSE;
 					
 					DEBUG("CHECK2\n");
-					FRIEND_MUTEX_LOCK( &(l->sl_USM->usm_Mutex) );
-					
-					tusers = l->sl_USM->usm_Sessions;
-					
+
 					if( deviceid == NULL )
 					{
-						while( tusers != NULL )
+						User *tuser = NULL;
+						
+						if( FRIEND_MUTEX_LOCK( &(l->sl_USM->usm_Mutex) ) == 0 )
 						{
-							User *tuser = tusers->us_User;
-							// Check both username and password
+							tusers = l->sl_USM->usm_Sessions;
 
-							if( strcmp(tuser->u_Name, usrname ) == 0 )
+							while( tusers != NULL )
 							{
-								FBOOL isUserSentinel = FALSE;
+								tuser = tusers->us_User;
+								// Check both username and password
+
+								if( strcmp( tuser->u_Name, usrname ) == 0 )
+								{
+									FBOOL isUserSentinel = FALSE;
 							
-								Sentinel *sent = l->GetSentinelUser( l );
-								if( sent != NULL )
-								{
-									if( tuser == sent->s_User )
-									{
-										isUserSentinel = TRUE;
-									}
-								}
-								if( isUserSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, tuser, pass, &blockedTime ) == TRUE )
-								{
-									dstusrsess = tusers;
-									DEBUG("Found user session  id %s\n", tusers->us_SessionID );
-									break;
-								}
-							}
-							tusers = (UserSession *)tusers->node.mln_Succ;
-						}
-					}
-					else	// deviceid != NULL
-					{
-						while( tusers != NULL )
-						{
-							User *tuser = tusers->us_User;
-							// Check both username and password
-
-							if( tusers->us_DeviceIdentity != NULL && tuser != NULL )
-							{
-								if( strcmp( tusers->us_DeviceIdentity, deviceid ) == 0 && strcmp( tuser->u_Name, usrname ) == 0 )
-								{
 									Sentinel *sent = l->GetSentinelUser( l );
 									if( sent != NULL )
 									{
@@ -2041,23 +2015,67 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 										{
 											isUserSentinel = TRUE;
 										}
-										DEBUG("Same identity, same user name, is sentinel %d  userptr %p sentinelptr %p\n", isUserSentinel, tuser, sent->s_User );
 									}
+									break;
+								}
+								tusers = (UserSession *)tusers->node.mln_Succ;
+							}
+							FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
+						}
+						
+						if( tuser != NULL )
+						{
+							if( isUserSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, tuser, pass, &blockedTime ) == TRUE )
+							{
+								dstusrsess = tusers;
+								DEBUG("Found user session  id %s\n", tusers->us_SessionID );
+							}
+						}
+					}
+					else	// deviceid != NULL
+					{
+						
+						if( FRIEND_MUTEX_LOCK( &(l->sl_USM->usm_Mutex) ) == 0 )
+						{
+							User *tuser = NULL;
+							
+							tusers = l->sl_USM->usm_Sessions;
+							while( tusers != NULL )
+							{
+								User *tuser = tusers->us_User;
+								// Check both username and password
 
-									if( isUserSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, tuser, pass, &blockedTime ) == TRUE )
+								if( tusers->us_DeviceIdentity != NULL && tuser != NULL )
+								{
+									if( strcmp( tusers->us_DeviceIdentity, deviceid ) == 0 && strcmp( tuser->u_Name, usrname ) == 0 )
 									{
-										dstusrsess = tusers;
-										DEBUG("Found user session  id %s\n", tusers->us_SessionID );
-										
-										//UMStoreLoginAttempt( l->sl_UM, usrname,  "Login success: on list or Sentinel", NULL );
+										Sentinel *sent = l->GetSentinelUser( l );
+										if( sent != NULL )
+										{
+											if( tuser == sent->s_User )
+											{
+												isUserSentinel = TRUE;
+											}
+											DEBUG("Same identity, same user name, is sentinel %d  userptr %p sentinelptr %p\n", isUserSentinel, tuser, sent->s_User );
+										}
 										break;
 									}
 								}
+								tusers = (UserSession *)tusers->node.mln_Succ;
 							}
-							tusers = (UserSession *)tusers->node.mln_Succ;
+							FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
+							
+							if( tuser != NULL )
+							{
+								if( isUserSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, tuser, pass, &blockedTime ) == TRUE )
+								{
+									dstusrsess = tusers;
+									DEBUG("Found user session  id %s\n", tusers->us_SessionID );
+								}
+							}
 						}
 					}
-					FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
+					
 					DEBUG("CHECK2END\n");
 					
 					if( dstusrsess == NULL )
