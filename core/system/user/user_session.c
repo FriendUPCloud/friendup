@@ -306,24 +306,24 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 					
 					if( us->us_WSD != NULL )
 					{
-						/*
+						
 						if( FRIEND_MUTEX_LOCK( &(wsd->wsc_Mutex) ) == 0 )
 						{
 							wsd->wsc_InUseCounter++;
 							FRIEND_MUTEX_UNLOCK( &(wsd->wsc_Mutex) );
-						*/
+						
 							if( wsd->wsc_Wsi != NULL )
 							{
 								lws_callback_on_writable( wsd->wsc_Wsi );
 								lws_cancel_service_pt( wsd->wsc_Wsi );
 							}
-						/*
+						
 							if( FRIEND_MUTEX_LOCK( &(wsd->wsc_Mutex) ) == 0 )
 							{
 								wsd->wsc_InUseCounter--;
 								FRIEND_MUTEX_UNLOCK( &(wsd->wsc_Mutex) );
 							}
-						}*/
+						}
 					}
 				}
 			}
@@ -364,25 +364,21 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 				
 				if( us->us_Wsi != NULL )
 				{
-					/*
 					if( FRIEND_MUTEX_LOCK( &(wsd->wsc_Mutex) ) == 0 )
 					{
 						wsd->wsc_InUseCounter++;
 						FRIEND_MUTEX_UNLOCK( &(wsd->wsc_Mutex) );
-						*/
 						if( wsd->wsc_Wsi != NULL )
 						{
 							lws_callback_on_writable( wsd->wsc_Wsi );
 							lws_cancel_service_pt( wsd->wsc_Wsi );
 						}
-						/*
 						if( FRIEND_MUTEX_LOCK( &(wsd->wsc_Mutex) ) == 0 )
 						{
 							wsd->wsc_InUseCounter--;
 							FRIEND_MUTEX_UNLOCK( &(wsd->wsc_Mutex) );
 						}
-						
-					}*/
+					}
 				}
 				
 				// we have to be sure that us->us_Wsi is not equal to NULL
