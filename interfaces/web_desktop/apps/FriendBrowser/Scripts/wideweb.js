@@ -59,15 +59,15 @@ Application.run = function( msg )
 					command: 'navto:https://friendos.com/'
 				},
 				{
-					name: 'Your personal page',
-					command: 'navto:about:blank'
+					name: 'Friend User Docs',
+					command: 'navto:https://docs.friendos.com/docs/end-user-documentation/'
 				},
 				{
 					name: 'Friend Nexus Forum',
 					command: 'navto:https://friend-nexus.com/'
 				},
 				{
-					name: 'DTube',
+					name: 'DTube Videos',
 					command: 'navto:https://d.tube/'
 				}
 			]
@@ -159,9 +159,9 @@ Application.receiveMessage = function( msg )
 			this.ab = new View( {
 				title: i18n( 'i18n_about_wideweb' ),
 				width: 300,
-				height: 400
+				height: 300
 			} );
-			var f = new File( 'Progdir:Templates/about.html' );
+			var f = new File( 'Progdir:Templates/about_application.html' );
 			f.onLoad = function( data )
 			{
 				Application.ab.setContent( data );

@@ -3447,6 +3447,7 @@ function AudioObject( sample, callback )
 
 	this.pause = function()
 	{
+		if( !this.loader ) return;
 		this.paused = this.loader.audioGraph.pause();
 		if( !this.paused )
 		{
@@ -3475,14 +3476,18 @@ function AudioObject( sample, callback )
 
 	this.unload = function()
 	{
-		this.loader.audioGraph.source = null;
-		this.loader.audioGraph = null;
-		this.loader = null;
+		if( this.loader )
+		{
+			this.loader.audioGraph.source = null;
+			this.loader.audioGraph = null;
+			this.loader = null;
+		}
 	}
 
 	this.stop = function()
 	{
-		this.loader.audioGraph.stop();
+		if( this.loader )
+			this.loader.audioGraph.stop();
 		this.stopped = true;
 		if( this.interval )
 		{

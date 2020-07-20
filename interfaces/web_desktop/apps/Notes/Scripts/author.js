@@ -617,6 +617,11 @@ Application.receiveMessage = function( msg )
 		case 'print_remote':
 			this.print();
 			break;
+		case 'new_blank':
+			this.fileName = i18n( 'i18n_unnamed' );
+			this.wholeFilename = this.path + this.fileName;
+			this.setCorrectTitle();
+			break;
 		case 'remembercontent':
 			this.sessionObject.content = msg.data;
 			this.sessionObject.scrollTop = msg.scrollTop;
