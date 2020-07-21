@@ -275,7 +275,7 @@ void WSThread( void *d )
 	{
 		if( FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) ) == 0 )
 		{
-			fcd->wsc_UserSession--;
+			fcd->wsc_InUseCounter--;
 			FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
 		}
 		releaseWSData( data );
@@ -285,7 +285,7 @@ void WSThread( void *d )
 	if( FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) ) == 0 )
 	{
 		ses = (UserSession *)fcd->wsc_UserSession;
-		fcd->wsc_UserSession--;
+		fcd->wsc_InUseCounter--;
 		FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
 	}
 	
@@ -1594,7 +1594,7 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 									
 									if( FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) ) == 0 )
 									{
-										fcd->wsc_UserSession++;
+										fcd->wsc_InUseCounter++;
 										FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
 									}
 									
