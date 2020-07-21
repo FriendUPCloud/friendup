@@ -268,6 +268,8 @@ void WSThread( void *d )
 	int error = 0;
 	BufString *queryrawbs = data->queryrawbs;
 	WSCData *fcd = data->fcd;
+	
+	UserSession *ses = NULL;
 
 	if( fcd->wsc_Wsi == NULL || fcd->wsc_UserSession == NULL )
 	{
@@ -280,7 +282,13 @@ void WSThread( void *d )
 		return;
 	}
 	
-	UserSession *ses = (UserSession *)fcd->wsc_UserSession;
+	if( FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) ) == 0 )
+	{
+		ses = (UserSession *)fcd->wsc_UserSession;
+		fcd->wsc_UserSession--;
+		FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
+	}
+	
 	if( fcd->wsc_UserSession != NULL )
 	{
 		if( FRIEND_MUTEX_LOCK( &(ses->us_Mutex) ) == 0 )
@@ -290,11 +298,7 @@ void WSThread( void *d )
 		}
 	}
 	
-	if( FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) ) == 0 )
-	{
-		fcd->wsc_UserSession--;
-		FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
-	}
+	
 	
 	int returnError = 0; //this value must be returned to WSI!
 	
