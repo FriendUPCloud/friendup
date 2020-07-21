@@ -338,6 +338,8 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 		{
 			if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 			{
+				DEBUG("[UserSessionWebsocketWrite] pointer usersession %p msglen %d\n", us, msglen );
+				DEBUG("[UserSessionWebsocketWrite] pointer us_WSD %p\n", us->us_WSD );
 				WSCData *wsd = us->us_WSD;
 				// double check
 				DEBUG("[UserSessionWebsocketWrite] no chnked 1\n");
@@ -352,7 +354,7 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 					en->fq_Size = msglen;
 					en->fq_Priority = 3;	// default priority
 			
-					DEBUG("\n");
+					DEBUG("us->us_MsgQueue.fq_First: %p\n", us->us_MsgQueue.fq_First );
 					if( us->us_MsgQueue.fq_First == NULL )
 					{
 						us->us_MsgQueue.fq_First = en;

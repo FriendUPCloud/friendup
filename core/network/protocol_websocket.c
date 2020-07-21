@@ -373,7 +373,7 @@ void WSThread( void *d )
 			if( (response->http_Content != NULL && ( response->http_Content[ 0 ] != '[' && response->http_Content[ 0 ] != '{' ) ) || fileReadCall == TRUE )
 			{
 				//Log( FLOG_INFO, "[WS] Has NON JSON response content..\n" );
-				//DEBUG("Protocol websocket response: %s\n", response->http_Content );
+				DEBUG("Protocol websocket response: %s\n", response->http_Content );
 				char *d = response->http_Content;
 				if( d[0] == 'f' && d[1] == 'a' && d[2] == 'i' && d[3] == 'l' )
 				{
@@ -393,10 +393,10 @@ void WSThread( void *d )
 					data->requestid 
 				);
 				
-				buf = (unsigned char *)FCalloc( 
-					jsonsize + ( 2* response->http_SizeOfContent ) + 1 + 
-					END_CHAR_SIGNS + LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) 
-				);
+				int msgLen = jsonsize + ( 2* response->http_SizeOfContent ) + 1 + 
+					END_CHAR_SIGNS + LWS_SEND_BUFFER_POST_PADDING + 128;
+					
+				buf = (unsigned char *)FCalloc( msgLen , sizeof( char ) );
 				
 				DEBUG("[WS] buf %p\n", buf );
 				
@@ -446,12 +446,16 @@ void WSThread( void *d )
 					//Log( FLOG_INFO, "[WS] NO JSON - Passed FOR loop..\n" );
 					
 					DEBUG("protocol websocket, before write: %s\n", locptr );
-					if( locptr[ znew-1 ] == 0 ) {znew--; DEBUG("ZNEW\n");}
+					if( locptr[ znew-1 ] == 0 )
+					{
+						znew--;
+						DEBUG("ZNEW\n");
+					}
 					memcpy( buf + jsonsize + znew, end, END_CHAR_SIGNS );
 
 					//Log( FLOG_INFO, "[WS] NO JSON - Passed memcpy..\n" );
 
-					DEBUG("[WS] user session ptr %p\n", ses );
+					DEBUG("[WS] user session ptr %p message len %d\n", ses, msgLen );
 
 					//fcd->wsc_WebsocketsServerClient;
 					//Log( FLOG_INFO, "[WS] NO JSON - WRITING..\n" );
