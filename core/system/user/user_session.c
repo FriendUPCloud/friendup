@@ -153,10 +153,10 @@ void UserSessionDelete( UserSession *us )
 		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 		{
 			us->us_WSD = NULL;
+			FQDeInitFree( &(us->us_MsgQueue) );
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
 		
-		FQDeInitFree( &(us->us_MsgQueue) );
 		//UserSessionWebsocketDeInit( &(us->us_Websockets) );
 
 		DEBUG("[UserSessionDelete] Session released  sessid: %s device: %s \n", us->us_SessionID, us->us_DeviceIdentity );
@@ -352,7 +352,19 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 					en->fq_Size = msglen;
 					en->fq_Priority = 3;	// default priority
 			
-					FQPushFIFO( &(us->us_MsgQueue), en );
+					DEBUG("\n");
+					if( us->us_MsgQueue.fq_First == NULL )
+					{
+						us->us_MsgQueue.fq_First = en;
+						us->us_MsgQueue.fq_Last = en;
+					}
+					else
+					{
+						us->us_MsgQueue.fq_Last->node.mln_Succ = (MinNode *)en;
+						us->us_MsgQueue.fq_Last = en;
+					}
+			//#define FQPushFIFO( qroot, q ) if( (qroot)->fq_First == NULL ){ (qroot)->fq_First = q; (qroot)->fq_Last = q; }else{ (qroot)->fq_Last->node.mln_Succ = (MinNode *)q; (qroot)->fq_Last = q; } 
+					//FQPushFIFO( &(us->us_MsgQueue), en );
 					retval += msglen;
 			
 					DEBUG("[UserSessionWebsocketWrite] Send message to WSI, ptr: %p\n", us->us_Wsi );
