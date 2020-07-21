@@ -271,6 +271,11 @@ void WSThread( void *d )
 
 	if( fcd->wsc_Wsi == NULL || fcd->wsc_UserSession == NULL )
 	{
+		if( FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) ) == 0 )
+		{
+			fcd->wsc_UserSession--;
+			FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
+		}
 		releaseWSData( data );
 		return;
 	}
@@ -283,6 +288,12 @@ void WSThread( void *d )
 			ses->us_InUseCounter++;
 			FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
 		}
+	}
+	
+	if( FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) ) == 0 )
+	{
+		fcd->wsc_UserSession--;
+		FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
 	}
 	
 	int returnError = 0; //this value must be returned to WSI!
@@ -1572,6 +1583,13 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 									//wstdata->wsi = wsi;
 									wstdata->fcd = fcd;
 									wstdata->queryrawbs = queryrawbs;
+									
+									if( FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) ) == 0 )
+									{
+										fcd->wsc_UserSession++;
+										FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
+									}
+									
 									WSThread( wstdata );
 #endif
 								}
