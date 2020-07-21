@@ -269,37 +269,9 @@ void WSThread( void *d )
 	BufString *queryrawbs = data->queryrawbs;
 	WSCData *fcd = data->fcd;
 
-	if( fcd->wsc_Wsi == NULL )
-	{
-		releaseWSData( data );
-		return;
-	}
-
-	struct lws *wsi = fcd->wsc_Wsi;
-	
-	if( FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) ) == 0 )
-	{
-		fcd->wsc_InUseCounter++;
-		FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
-	}
-	
 	if( fcd->wsc_Wsi == NULL || fcd->wsc_UserSession == NULL )
 	{
-		FERROR("Error session is NULL : wsi: %p usersession: %p\n", fcd->wsc_Wsi, fcd->wsc_UserSession );
-
-		if( FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) ) == 0 )
-		{
-			fcd->wsc_InUseCounter--;
-			FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
-		}
-		
 		releaseWSData( data );
-		
-		 //lws_close_reason( fcd->wsc_Wsi, LWS_CLOSE_STATUS_GOINGAWAY , NULL, 0 );
-		
-#ifdef USE_PTHREAD
-		pthread_exit( 0 );
-#endif
 		return;
 	}
 	
@@ -340,19 +312,10 @@ void WSThread( void *d )
 			
 			// mutex was here before
 			
-			if( fcd->wsc_UserSession != NULL )
+			if( FRIEND_MUTEX_LOCK( &(ses->us_Mutex) ) == 0 )
 			{
-				if( FRIEND_MUTEX_LOCK( &(ses->us_Mutex) ) == 0 )
-				{
-					ses->us_InUseCounter--;
-					FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
-				}
-			}
-			
-			if( FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) ) == 0 )
-			{
-				fcd->wsc_InUseCounter--;
-				FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
+				ses->us_InUseCounter--;
+				FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
 			}
 			
 			releaseWSData( data );
@@ -477,14 +440,12 @@ void WSThread( void *d )
 
 					//Log( FLOG_INFO, "[WS] NO JSON - Passed memcpy..\n" );
 
-					DEBUG("[WS] user session ptr %p\n", fcd->wsc_UserSession );
-					if( fcd->wsc_UserSession != NULL )
-					{
-						//fcd->wsc_WebsocketsServerClient;
-						//Log( FLOG_INFO, "[WS] NO JSON - WRITING..\n" );
-						//WebsocketWriteInline( fcd, buf, znew + jsonsize + END_CHAR_SIGNS, LWS_WRITE_TEXT );
-						UserSessionWebsocketWrite( fcd->wsc_UserSession, buf, znew + jsonsize + END_CHAR_SIGNS, LWS_WRITE_TEXT );
-					}
+					DEBUG("[WS] user session ptr %p\n", ses );
+
+					//fcd->wsc_WebsocketsServerClient;
+					//Log( FLOG_INFO, "[WS] NO JSON - WRITING..\n" );
+					//WebsocketWriteInline( fcd, buf, znew + jsonsize + END_CHAR_SIGNS, LWS_WRITE_TEXT );
+					UserSessionWebsocketWrite( ses, buf, znew + jsonsize + END_CHAR_SIGNS, LWS_WRITE_TEXT );
 					
 					FFree( buf );
 				}
@@ -510,11 +471,9 @@ void WSThread( void *d )
 						memcpy( buf+jsonsize, response->http_Content, response->http_SizeOfContent );
 						memcpy( buf+jsonsize+response->http_SizeOfContent, end, END_CHAR_SIGNS );
 						
-						if( fcd->wsc_UserSession != NULL )
-						{
-							//WebsocketWriteInline( fcd, buf , response->sizeOfContent+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
-							UserSessionWebsocketWrite( fcd->wsc_UserSession, buf , response->http_SizeOfContent+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
-						}
+						//WebsocketWriteInline( fcd, buf , response->sizeOfContent+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
+						UserSessionWebsocketWrite( ses, buf , response->http_SizeOfContent+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
+
 						FFree( buf );
 					}
 				}
@@ -530,11 +489,10 @@ void WSThread( void *d )
 						memcpy( buf, jsontemp, jsonsize );
 						memcpy( buf+jsonsize, end, END_CHAR_SIGNS );
 						
-						if( fcd->wsc_UserSession != NULL )
-						{
-							//WebsocketWriteInline( fcd, buf, jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
-							UserSessionWebsocketWrite( fcd->wsc_UserSession, buf, jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
-						}
+
+						//WebsocketWriteInline( fcd, buf, jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
+						UserSessionWebsocketWrite( ses, buf, jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
+						
 						FFree( buf );
 					}
 				}
@@ -569,29 +527,18 @@ void WSThread( void *d )
 			memcpy( buf+jsonsize, response,  resplen );
 			memcpy( buf+jsonsize+resplen, end,  END_CHAR_SIGNS );
 			
-			if( fcd->wsc_UserSession != NULL )
-			{
-				//WebsocketWriteInline( fcd, buf, resplen+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
-				UserSessionWebsocketWrite( fcd->wsc_UserSession, buf, resplen+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
-			}
+			//WebsocketWriteInline( fcd, buf, resplen+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
+			UserSessionWebsocketWrite( ses, buf, resplen+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
+			
 			FFree( buf );
 		}
 		Log( FLOG_INFO, "WS no response end LOCKTEST\n");
 	}
 	
-	if( FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) ) == 0 )
+	if( FRIEND_MUTEX_LOCK( &(ses->us_Mutex) ) == 0 )
 	{
-		fcd->wsc_InUseCounter--;
-		FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
-	}
-	
-	if( fcd->wsc_UserSession != NULL )
-	{
-		if( FRIEND_MUTEX_LOCK( &(ses->us_Mutex) ) == 0 )
-		{
-			ses->us_InUseCounter--;
-			FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
-		}
+		ses->us_InUseCounter--;
+		FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
 	}
 	
 	releaseWSData( data );
