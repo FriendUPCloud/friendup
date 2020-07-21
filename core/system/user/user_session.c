@@ -360,6 +360,7 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 					}
 					else
 					{
+						DEBUG("========pointer to US: %p pointer to LAST %p\n", us, us->us_MsgQueue.fq_Last );
 						us->us_MsgQueue.fq_Last->node.mln_Succ = (MinNode *)en;
 						us->us_MsgQueue.fq_Last = en;
 					}
