@@ -287,6 +287,13 @@ void WSThread( void *d )
 		ses = (UserSession *)fcd->wsc_UserSession;
 		fcd->wsc_InUseCounter--;
 		FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
+		
+		if( ses == NULL )
+		{
+			FERROR("[WSThread] Session is equal to NULL!\n");
+			releaseWSData( data );
+			return;
+		}
 	}
 	
 	if( fcd->wsc_UserSession != NULL )
@@ -297,8 +304,6 @@ void WSThread( void *d )
 			FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
 		}
 	}
-	
-	
 	
 	int returnError = 0; //this value must be returned to WSI!
 	
@@ -683,6 +688,7 @@ static inline int jsoneqin(const char *json, const jsmntok_t *tok, const char *s
 typedef struct InputMsg
 {
 	WSCData			*im_FCD;
+	//UserSession		*im_UserSession;
 	char			*im_Msg;
 	size_t			im_Len;
 	pthread_t		im_Thread;
@@ -860,17 +866,20 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				InputMsg *imsg = FCalloc( 1, sizeof( InputMsg ) );
 				if( imsg != NULL )
 				{
-					// threads
-					//pthread_t thread;
 					memset( &(imsg->im_Thread), 0, sizeof( pthread_t ) );
 					
 					DEBUG("[WS] Pass fcd to thread: %p\n", fcd );
 					imsg->im_FCD = fcd;
 					imsg->im_Msg = in;
 					imsg->im_Len = len;
+					//imsg->im_UserSession = fc-
 
 					//WorkerManagerRun( SLIB->sl_WorkerManager, ParseAndCallThread, imsg, NULL, "ProtocolWebsocket.c: line 1030" );
-					// Multithread mode
+					
+					//
+					// Using Websocket thread to read/write messages, rest should happen in userspace
+					//
+					
 					if( pthread_create( &(imsg->im_Thread), NULL,  (void *(*)(void *))ParseAndCallThread, ( void *)imsg ) != 0 )
 					{
 					}
@@ -923,8 +932,6 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				{
 					FQueue *q = &(us->us_MsgQueue);
 					
-					//while( ( e = FQPop( q ) ) != NULL )
-					//if( ( e = FQPop( q ) ) != NULL )
 					if( q->fq_First != NULL )
 					{
 						e = FQPop( q );
