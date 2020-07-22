@@ -2360,7 +2360,10 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
 				INFO( "[LibraryMYSQLGet] We found mysql library on slot %d.\n", l->MsqLlibCounter );
 			
 				// Increment and check
-				if( ++l->MsqLlibCounter >= l->sqlpoolConnections ) l->MsqLlibCounter = 0;
+				if( ++l->MsqLlibCounter >= l->sqlpoolConnections )
+				{
+					l->MsqLlibCounter = 0;
+				}
 				FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
 				break;
 			}
