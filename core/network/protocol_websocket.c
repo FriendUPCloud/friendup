@@ -110,7 +110,7 @@ void WSThreadPing( void *p )
 	int n = 0;
 	UserSession *us = data->wstd_WSD->wsc_UserSession;//data->wstd_UserSession;
 	
-	if( data == NULL || us->us_WSD == NULL )
+	if( data == NULL || us == NULL || us->us_WSD == NULL )
 	{
 		if( data != NULL )
 		{
