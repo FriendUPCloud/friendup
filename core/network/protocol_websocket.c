@@ -1033,9 +1033,9 @@ int ParseAndCall( WSThreadData *wstd )
 					{
 						if( strncmp( "request",  in + t[ 6 ].start, t[ 6 ].end-t[ 6 ].start ) == 0 )
 						{
-							WSThreadData *wstdata = FCalloc( 1, sizeof(WSThreadData) );
+							//WSThreadData *wstdata = FCalloc( 1, sizeof(WSThreadData) );
 							
-							if( wstdata != NULL )
+							if( locus != NULL && wstd != NULL )
 							{
 								DEBUG("[WS] Request received\n");
 								char *requestid = NULL;
@@ -1088,7 +1088,7 @@ int ParseAndCall( WSThreadData *wstd )
 									int i, i1;
 									
 									//thread
-									char **pathParts = wstdata->wstd_PathParts;
+									char **pathParts = wstd->wstd_PathParts;
 
 									BufString *queryrawbs = BufStringNewSize( 2048 );
 									
@@ -1101,8 +1101,8 @@ int ParseAndCall( WSThreadData *wstd )
 										if( jsoneqin( in, &t[i], "requestid") == 0) 
 										{
 											// threads
-											wstdata->wstd_Requestid = StringDuplicateN(  (char *)(in + t[i1].start), (int)(t[i1].end-t[i1].start) );
-											requestid = wstdata->wstd_Requestid;
+											wstd->wstd_Requestid = StringDuplicateN(  (char *)(in + t[i1].start), (int)(t[i1].end-t[i1].start) );
+											requestid = wstd->wstd_Requestid;
 											
 											if( HashmapPut( http->http_ParsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
 											{
@@ -1118,8 +1118,8 @@ int ParseAndCall( WSThreadData *wstd )
 											if( path == NULL )
 											{
 												// threads
-												wstdata->wstd_Path = StringDuplicateN(  in + t[i1].start,t[i1].end-t[i1].start );
-												path = wstdata->wstd_Path;//in + t[i1].start;
+												wstd->wstd_Path = StringDuplicateN(  in + t[i1].start,t[i1].end-t[i1].start );
+												path = wstd->wstd_Path;//in + t[i1].start;
 												paths = t[i1].end-t[i1].start;
 												
 												if( http->http_Uri != NULL )
@@ -1217,8 +1217,8 @@ int ParseAndCall( WSThreadData *wstd )
 									} // end of going through json
 
 									//static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, Http *http, char **pathParts, BufString *queryrawbs )
-									wstdata->wstd_Http = http;
-									WSSystemLibraryCall( wstdata, locus, http, pathParts, queryrawbs );
+									wstd->wstd_Http = http;
+									WSSystemLibraryCall( wstd, locus, http, pathParts, queryrawbs );
 								}
 							}
 						}
