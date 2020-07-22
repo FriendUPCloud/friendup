@@ -624,7 +624,7 @@ var WorkspaceInside = {
 		
 		if( !Workspace.sessionId && Workspace.userLevel )
 		{
-			return Workspace.relogin();
+			return Friend.User.ReLogin();
 		}
 		
 		if( !Workspace.sessionId )
@@ -6186,53 +6186,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Simple logout..
 	logout: function()
 	{
-		// FIXME: implement
-		window.localStorage.removeItem( 'WorkspaceUsername' );
-		window.localStorage.removeItem( 'WorkspacePassword' );
-		window.localStorage.removeItem( 'WorkspaceSessionID' );
-
-		var keys = parent.ApplicationStorage.load( { applicationName : 'Workspace' } );
-
-		if( keys )
-		{
-			keys.username = '';
-
-			parent.ApplicationStorage.save( keys, { applicationName : 'Workspace' } );
-		}
-
-		let dologt = null;
-
-		SaveWindowStorage( function()
-		{
-			if( dologt != null )
-				clearTimeout( dologt );
-			
-			// Do external logout and then our internal one.
-			if( Workspace.logoutURL )
-			{
-				Workspace.externalLogout();
-				return;
-			}
-
-			var m = new cAjax();
-			Workspace.websocketsOffline = true;
-			m.open( 'get', '/system.library/user/logout/?sessionid=' + Workspace.sessionId, true );
-			m.send();
-			Workspace.websocketsOffline = false;
-			setTimeout( doLogout, 500 );
-		} );
-		// Could be there will be no connection..
-		function doLogout()
-		{
-			if( typeof friendApp != 'undefined' && typeof friendApp.exit == 'function')
-			{
-				friendApp.exit();
-				return;
-			}
-			Workspace.sessionId = ''; 
-			document.location.href = window.location.href.split( '?' )[0]; //document.location.reload();
-		}
-		dologt = setTimeout( doLogout, 750 );
+		Friend.User.Logout();
 	},
 	externalLogout: function()
 	{
@@ -8417,14 +8371,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				var js = JSON.parse( d );
 				if( js.code && ( parseInt( js.code ) == 11 || parseInt( js.code ) == 3 ) )
 				{
-					Workspace.relogin(); // Try login using local storage
+					Friend.User.ReLogin(); // Try login using local storage
 				}
 			}
 			catch( b )
 			{
 				if( e == null && d == null )
 				{
-					Workspace.relogin();
+					Friend.User.ReLogin();
 				}
 			}
 			
@@ -8886,7 +8840,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				Workspace.loginCall.destroy();
 				Workspace.loginCall = null;
 			}
-			Workspace.relogin();
+			Friend.User.ReLogin();
 			return; 
 		}
 		

@@ -4178,7 +4178,7 @@ if( window.addEventListener )
 
 			if( args.sessionid )
 			{
-				Workspace.loginSessionId( args.sessionid, args.callbac, args.event );
+				Friend.User.LoginWithSessionId( args.sessionid, args.callbac, args.event );
 			}
 
 			if( typeof( args.username ) != 'undefined' )

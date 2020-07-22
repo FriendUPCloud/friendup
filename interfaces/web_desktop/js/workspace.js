@@ -19,7 +19,6 @@ var _protocol = document.location.href.split( '://' )[0];
 
 Workspace = {
 	icons: [],
-	reloginAttempts: 0,
 	menuMode: 'pear', // 'miga', 'fensters' (alternatives)
 	mode: 'default',
 	initialized: false,
@@ -102,7 +101,7 @@ Workspace = {
 		}
 
 		// Show the login prompt if we're not logged in!
-		this.login();
+		Friend.User.Login();
 	},
 	// Ready after init
 	// NB: This is where we go towards workspace_inside.js
@@ -725,529 +724,12 @@ Workspace = {
 	},
 	flushSession: function()
 	{
-		this.sessionId = '';
-		localStorage.removeItem( 'WorkspaceSessionID' );
-	},
-	// When session times out, use log in again...
-	relogin: function( callback )
-	{
-		// While relogging in or in a real login() call, just skip
-		if( this.reloginInProgress || this.loginCall ) return;
-		
-		// Kill all http connections that would block
-		_cajax_http_connections = 0;
-		
-		//console.log( 'Test2: Relogin in progress' );
-		
-		var self = this;
-		
-		function killConn()
-		{
-			if( Workspace.conn )
-			{
-				try
-				{
-					Workspace.conn.ws.close();
-				}
-				catch( e )
-				{
-					//console.log( 'Could not close conn.' );
-				}
-				delete Workspace.conn;
-			}
-		}
-		
-		function executeCleanRelogin()
-		{	
-			killConn();
-			
-			if( Workspace.loginUsername && Workspace.loginPassword )
-			{
-				// // console.log( 'Test2: Regular login with user and pass' );
-				var u = typeof( Workspace.loginUsername ) == 'undefined' ? false : Workspace.loginUsername;
-				var p = typeof( Workspace.loginPassword ) == 'undefined' ? false : Workspace.loginPassword;
-				if( !( !!u && !!p ) )
-					Workspace.flushSession();
-				Workspace.login( u, p, false, Workspace.initWebSocket );
-			}
-			// Friend app waits some more
-			else if( window.friendApp )
-			{
-				// // console.log( 'Test2: Just return - we have nothing to go on. Try executing normal login' );
-				Workspace.reloginInProgress = false;
-				return Workspace.login();
-			}
-			// Just exit to login screen
-			else
-			{
-				// We're exiting!
-				Workspace.logout();
-				Workspace.reloginInProgress = false;
-			}
-		}
-		
-		this.reloginAttempts = true;
-		
-		// See if we are alive!
-		// Cancel relogin context
-		CancelCajaxOnId( 'relogin' );
-		
-		var m = new Module( 'system' );
-		m.cancelId = 'relogin';
-		m.onExecuted = function( e, d )
-		{
-			//console.log( 'Test2: Got back: ', e, d );
-			
-			self.reloginAttempts = false;
-			Workspace.reloginInProgress = true;
-			
-			if( e == 'ok' )
-			{
-				// We have a successful login. Clear call blockers and update sessions, execute ajax queue
-				Workspace.reloginInProgress = false;
-				Workspace.loginCall = false;
-				Workspace.renewAllSessionIds();
-				// // console.log( 'Test2: Yeah! All good!' );
-				return;
-			}
-			else
-			{
-				if( d )
-				{					
-					try
-					{
-						var js = JSON.parse( d );
-						// Session authentication failed
-						if( parseInt( js.code ) == 3 || parseInt( js.code ) == 11 )
-						{
-							// console.log( 'Test2: Flush session' );
-							Workspace.flushSession();
-							Workspace.reloginInProgress = false;
-							return executeCleanRelogin();
-						}
-					}
-					catch( n )
-					{
-						killConn();
-						console.log( 'Error running relogin.', n, d );
-					}
-				}
-				else
-				{
-					Workspace.flushSession();
-					Workspace.reloginInProgress = false;
-					return executeCleanRelogin();
-				}
-			}
-			if( Workspace.serverIsThere )
-			{
-				// console.log( 'Test2: Clean relogin' );
-				executeCleanRelogin();
-			}
-			else
-			{
-				killConn();
-				// // console.log( 'Test2: Wait a second before you can log in again.' );
-				// Wait a second before trying again
-				setTimeout( function()
-				{
-					Workspace.reloginInProgress = false;
-				}, 1000 );
-			}
-		}
-		m.forceHTTP = true;
-		m.forceSend = true;
-		m.execute( 'usersettings' );
-		// console.log( 'Test2: Getting usersettings.' );
-	},
-	// Renews session ids for cajax and executes ajax queue!
-	renewAllSessionIds: function( session )
-	{
-		if( session )
-			this.sessionId = session;
-		
-		// Reset this in this case
-		_cajax_http_connections = 0;
-		
-		// Check if there's a queue of objects waiting to run
-		if( Friend.cajax && Friend.cajax.length )
-		{
-			for( var a = 0; a < Friend.cajax.length; a++ )
-			{
-				Friend.cajax[a].send();
-			}
-			Friend.cajax = [];
-		}
-	},
-	loginSessionId: function( sessionid, callback, ev )
-	{
-		if( sessionid )
-		{
-			//console.log( 'Test2: Logging in with sessionid.' );
-			
-			var _this = this;
-			
-			var m = new FriendLibrary( 'system' );
-			m.addVar( 'sessionid', sessionid );
-			m.addVar( 'deviceid', this.deviceid );
-			m.onExecuted = function( json, serveranswer )
-			{
-				if( typeof( json ) != 'object' )
-				{
-					try
-					{
-						var to = JSON.parse( json );
-						if( to.result && to.sessionid )
-							json = to;
-					}
-					catch( e )
-					{
-						json = { result: -1 };
-					}
-				}
-
-				if( !json && serveranswer )
-				{
-					if( typeof( serveranswer ) == 'string' && serveranswer.indexOf( '{' ) >= 0 )
-					{
-						json = JSON.parse( serveranswer );
-					}
-					else
-					{
-						json = serveranswer;
-					}
-				}
-				
-				var hasSessionID = null;
-				var hasLoginID = null;
-
-				try
-				{
-					Workspace.userLevel = json.level;
-					hasSessionID = ( typeof( json.sessionid ) != 'undefined' && json.sessionid && json.sessionid.length > 1 );
-					hasLoginID = ( typeof( json.loginid ) != 'undefined' && json.loginid && json.loginid.length > 1 );
-				}
-				catch( e )
-				{
-					Workspace.userLevel = false;
-				}
-				
-				if( !Workspace.loginUsername && json.username ) Workspace.loginUsername = json.username;
-
-				
-				
-				if( json && ( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 ) )
-				{
-					// Successful login, clear blockers and execute ajax queue
-					Workspace.reloginInProgress = false;
-					Workspace.loginCall = false;
-					Workspace.renewAllSessionIds( hasSessionID ? json.sessionid : false );
-				
-					// console.log( 'Test2: Success! Logged in with sessionid.' );
-					
-					return Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), ev )
-				}
-				else
-				{
-					if( _this.loginPrompt )
-					{
-						_this.loginPrompt.sendMessage( { command: 'error', other: 'test' } );
-					}
-					if( callback && typeof( callback ) == 'function' ) callback( false, serveranswer );
-
-				}
-				document.body.className = 'Login';
-			}
-			m.execute( 'login' );
-		}
-
-		// Show it
-		this.showDesktop();
-
-		return 0;
-
+		Friend.User.FlushSession();
 	},
 	login: function( u, p, r, callback, ev )
 	{
-		var self = this;
-		
-		//console.log( 'Test2: Normal login.' );
-		
-		// Test if we have a stored session
-		var sess = localStorage.getItem( 'WorkspaceSessionID' );
-		if( sess && sess.length )
-		{
-			this.sessionId = sess;
-		}
-	
-		// TODO: If we have sessionid - verify it through ajax.
-
-		if( this.sessionId )
-		{
-			if( callback && typeof( callback ) == 'function' ) callback( true );
-			Workspace.reloginInProgress = false;
-			return true;
-		}
-		
-		// Close conn here - new login regenerates sessionid
-		if( Workspace.conn )
-		{
-			try
-			{
-				Workspace.conn.ws.close();
-			}
-			catch( e )
-			{
-				console.log( 'Could not close conn.' );
-			}
-			delete Workspace.conn;
-		}
-		
-		// Check local storage
-		var ru = window.localStorage.getItem( 'WorkspaceUsername' );
-		var rp = window.localStorage.getItem( 'WorkspacePassword' );
-		if( ru && rp && typeof( ru ) != 'undefined' )
-		{
-			u = ru;
-			p = rp;
-			r = true;
-		}
-
-		// Require username and pw to login
-		if( !u || !p || typeof( u ) == 'undefined' )
-		{
-			//console.log( 'Test3: Doing the login test.', u, p );
-			// Login by url vars
-			var gu = GetUrlVar( 'username' );
-			var gp = GetUrlVar( 'password' );
-			if( gu && gp && typeof( gu ) != 'undefined' )
-			{
-				return Workspace.login( decodeURIComponent( GetUrlVar( 'username' ) ), decodeURIComponent( GetUrlVar( 'password' ) ) );
-			}
-			else if( GetUrlVar( 'sessionid' ) )
-			{
-				return Workspace.loginSessionId( GetUrlVar( 'sessionid' ), callback, ev );
-			}
-			Workspace.reloginInProgress = false;
-			if( callback && typeof( callback ) == 'function' ) callback( false );
-			return this.showLoginPrompt();
-		}
-
-		var t = this;
-		
-		// p and u needs trushy true! :-)
-		if( !!p & !!u )
-		{
-			this.loginUsername = u;
-
-			if( p.indexOf( 'HASHED' ) == 0 )
-			{
-				this.loginPassword = p;
-				//console.log( 'SET LOGIN PASSWORD = ' + p );
-			}
-			else
-			{
-				this.loginPassword = 'HASHED' + Sha256.hash( p );
-				//console.log( 'SET HASHED PASSWORD = ' + p );
-			}
-		}
-
-		if( typeof( this.loginUsername ) != 'undefined' && this.loginUsername && this.loginPassword )
-		{
-			// FIXME: Speed this up for the Edge browser
-			this.encryption.setKeys( this.loginUsername, this.loginPassword );
-			
-			/*
-				r = remember me set....
-			*/
-			if( r )
-			{
-				Workspace.rememberKeys();
-			}
-
-			// Avoid queue!
-			if( this.loginCall )
-			{
-				this.loginCall.destroy();
-			}
-
-			// Create a new library call object
-			var m = new FriendLibrary( 'system' );
-			this.loginCall = m;
-
-			var triedWithSession = false;
-	
-			if( this.loginUsername && typeof( this.loginUsername ) != 'undefined' )
-			{
-				m.addVar( 'username', this.loginUsername );
-				m.addVar( 'password', this.loginPassword );
-				//console.log( 'Adding U and P: ', this.loginUsername, this.loginPassword );
-			}
-			else if( this.sessionId )
-			{
-				m.addVar( 'sessionid', this.sessionId );
-				triedWithSession = true;
-			}
-			
-			m.addVar( 'deviceid', GetDeviceId() );
-
-			m.onExecuted = function( json, serveranswer )
-			{
-				//console.log( 'Test2: We executed a login query', json, serveranswer );
-				
-				if( typeof( json ) != 'object' )
-				{
-					try
-					{
-						var to = JSON.parse( json );
-						if( to.result && to.sessionid )
-							json = to;
-					}
-					catch( e )
-					{
-						json = { result: -1 };
-					}
-				}
-
-				if( !json && serveranswer )
-				{
-					if( typeof( serveranswer ) == 'string' && serveranswer.indexOf( '{' ) >= 0 )
-					{
-						json = JSON.parse( serveranswer );
-					}
-					else
-					{
-						json = serveranswer;
-					}
-				}
-
-				var hasSessionID = null;
-				var hasLoginID = null;
-
-				try
-				{
-					Workspace.userLevel = json.level;
-					hasSessionID = ( typeof( json.sessionid ) != 'undefined' && json.sessionid && json.sessionid.length > 1 );
-					hasLoginID = ( typeof( json.loginid ) != 'undefined' && json.loginid && json.loginid.length > 1 );
-				}
-				catch( e )
-				{
-					Workspace.userLevel = false;
-				}
-
-
-				if( json && ( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 ) )
-				{
-					// // console.log( 'Test2: We got a login.' );
-					
-					// See if we can start host integration
-					if( typeof( FriendBook ) != 'undefined' )
-						FriendBook.init();
-					
-					// Store username and password in local storage
-					if( r && typeof( self.loginUsername ) != 'undefined' && self.loginUsername && self.loginPassword )
-					{
-						// // console.log( 'Test2: Setting localstorage username/pass' );
-						
-						window.localStorage.setItem( 'WorkspaceUsername', self.loginUsername );
-						window.localStorage.setItem( 'WorkspacePassword', self.loginPassword );
-					}
-
-					Workspace.reloginInProgress = false;
-					Workspace.serverIsThere = true;
-					Workspace.workspaceIsDisconnected = false;
-					
-					var cl = function()
-					{
-						// console.log( 'Test2: Running callback.' );
-						t.loginCall = null;
-						if( callback && typeof( callback ) == 'function' )
-							callback( true, serveranswer );
-					}
-					
-					// // console.log( 'Test2: Initializing user workspace.' );
-					
-					return Workspace.initUserWorkspace( json, cl, ev );
-				}
-				// Could not log in
-				else
-				{
-					// // console.log( 'Test2: Removing WorkspaceUsername/Password from local storage.' );
-					
-					// Remove from localstorage
-					window.localStorage.removeItem( 'WorkspaceUsername' );
-					window.localStorage.removeItem( 'WorkspacePassword' );
-					
-					// Session is totally dead - go back to login screen
-					if( triedWithSession )
-					{
-						console.log( '[Workspace] Logged out due to expired session and erroneous username and password.' );
-						if( window.friendApp && friendApp.exit )
-							friendApp.exit();
-						else Workspace.logout();
-						return;
-					}
-					
-					Workspace.reloginInProgress = false;
-					
-					if( t.loginPrompt )
-					{
-						t.loginPrompt.sendMessage( { command: 'error', other: 'test' } );
-					}
-					else
-					{
-						//Alert( 'Test1: We are dead in the water.', 'Dead dead dead.' );
-					}
-					
-					if( callback && typeof( callback ) == 'function' ) callback( false, serveranswer );
-
-				}
-				document.body.classList.add( 'Login' );
-			}
-			m.forceHTTP = true;
-			m.forceSend = true;
-			m.execute( 'login' );
-			
-			// Timeout login request
-			if( Workspace.workspaceInside )
-			{
-				m.loginTimeout = setTimeout( function()
-				{
-					if( Workspace.reloginInProgress )
-					{
-						m.destroy();
-						Workspace.reloginInProgress = false;
-					}
-					m.loginTimeout = false;
-				}, 2500 );
-			}
-		}
-
-		// Show it
-		this.showDesktop();
-
-		return 0;
-	},
-	rememberKeys: function()
-	{
-		if( this.encryption.keys.client )
-		{
-			//console.log( 'Remembering.' );
-			ApplicationStorage.save( 
-				{
-					privatekey  : this.encryption.keys.client.privatekey,
-					publickey   : this.encryption.keys.client.publickey,
-					recoverykey : this.encryption.keys.client.recoverykey
-				},
-				{
-					applicationName : 'Workspace' 
-				} 
-			);
-			if( window.ScreenOverlay )
-				ScreenOverlay.addDebug( 'Keys remembered' );
-			return true;
-		}
-		return false;
+		// Wrap to user object
+		return Friend.User.Login( u, p, r, callback, ev );
 	},
 	showDesktop: function()
 	{
@@ -1281,20 +763,17 @@ Workspace = {
 			// Relogin fix
 			document.body.classList.remove( 'Loading' );
 
-			/*
-				after a user has logged in we want to prepare the workspace for him.
-			*/
-
-			// Store user data in localstorage for later verification
-
+			// After a user has logged in we want to prepare the workspace for him.
+			
+			// Store user data in localstorage for later verification encrypted
 			var userdata = ApplicationStorage.load( { applicationName : 'Workspace' } );
 
 			if( userdata )
 			{
-				userdata.sessionId = _this.sessionId;
-				userdata.userId    = _this.userId;
-				userdata.loginUsername    = _this.loginUsername;
-				userdata.fullName  = _this.fullName;
+				userdata.sessionId     = _this.sessionId;
+				userdata.userId        = _this.userId;
+				userdata.loginUsername = _this.loginUsername;
+				userdata.fullName      = _this.fullName;
 
 				ApplicationStorage.save( userdata, { applicationName : 'Workspace' } );
 			}
@@ -1310,7 +789,7 @@ Workspace = {
 				// console.log( 'Test2: Renewing all sessions.' );
 				
 				// We have renewed our session, make sure to set it and run ajax queue
-				_this.renewAllSessionIds( _this.sessionId );
+				Friend.User.renewAllSessionIds( _this.sessionId );
 
 				// Call back!
 				if( cb ) cb();
@@ -1605,18 +1084,6 @@ Workspace = {
 			return 1;
 		}
 		/* done here. workspace is shown. */
-	},
-	resetPassword: function( username, callback )
-	{
-		var passWordResetURL = '/forgotpassword/username/' + encodeURIComponent( username );
-		var xhttp = new XMLHttpRequest();
-		xhttp.onreadystatechange = function() {
-		    if (this.readyState == 4 && this.status == 200) {
-		    	if(typeof callback == 'function') callback( this.responseText );
-			}
-		};
-		xhttp.open( 'GET', passWordResetURL, true);
-		xhttp.send();
 	},
 	//set an additional URL to call on logout
 	setLogoutURL: function( logoutURL )
