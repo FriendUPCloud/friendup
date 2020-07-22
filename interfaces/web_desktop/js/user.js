@@ -21,19 +21,10 @@ Friend.User = {
     // Vars --------------------------------------------------------------------
     
     State: 'offline', 			// online, offline, login
-    NetworkState: 'offline', 	// online, offline, connecting, error
-    WebsocketState: 'offline', 	// online, offline, connecting, error 
+    ServerIsThere: false,
     Username: '',               // Holds the user's username
     AccessToken: null,          // Holds the user's access token
-    ReloginAttempts: 0,         // How many relogin attempts were made
-    
-    // Old stuff
-    // this.encryption.setKeys( this.loginUsername, this.loginPassword );			
-	// r = remember me set....
-	// if( r )
-	// {
-	// 	Workspace.rememberKeys();
-	//}
+    ConnectionAttempts: 0,         // How many relogin attempts were made
     
     // Methods -----------------------------------------------------------------
     
@@ -63,6 +54,7 @@ Friend.User = {
 		
 		if( username && password )
 		{
+			Workspace.encryption.setKeys( username, password );
 			this.SendLoginCall( {
 				username: username,
 				password: password,
@@ -118,8 +110,12 @@ Friend.User = {
 		let m = new FriendLibrary( 'system' );
 		if( info.username && info.password )
 		{
+			Workspace.sessionId = '';
 			m.addVar( 'username', info.username );
 			m.addVar( 'password', 'HASHED' + Sha256.hash( info.password ) );
+			
+			let enc = parent.Workspace.encryption;
+			parent.Workspace.loginPassword = enc.encrypt( info.password, enc.getKeys().publickey );
 		}
 		else if( info.sessionid )
 		{
@@ -136,18 +132,32 @@ Friend.User = {
 		{
 			try
 			{
-				Workspace.sessionId = json.sessionid;
-				Workspace.loginUsername = json.username;
-				Workspace.loginUserId = json.userid;
-				Workspace.loginid = json.loginid;
-				Workspace.userLevel = json.level;
-				Workspace.fullName = json.fullname;
-				Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), event );
+				let enc = Workspace.encryption;
 				
-				if( info.remember )
-					User.rememberKeys();
+				if( json.username )
+				{
+					Workspace.sessionId = json.sessionid;
+					Workspace.loginUsername = json.username;
+					Workspace.loginUserId = json.userid;
+					Workspace.loginid = json.loginid;
+					Workspace.userLevel = json.level;
+					Workspace.fullName = json.fullname;
+					Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), event );
+				
+					// Remember login info for next login
+					// But removed for security
+					// TODO: Figure out a better way!
+					if( info.remember )
+					{
+						// Nothing
+					}
 					
-				Friend.User.State = 'online';
+					Friend.User.SetUserConnectionState( 'online' );
+				}
+				else
+				{
+					Friend.User.SetUserConnectionState( 'offline' );
+				}
 			}	
 			catch( e )
 			{
@@ -161,134 +171,48 @@ Friend.User = {
 	// When session times out, use log in again...
 	ReLogin: function( callback )
 	{
-		// While relogging in or in a real login() call, just skip
-		if( this.reloginInProgress || this.loginCall ) return;
+    	this.State = 'login';
+    	
+    	if( !event ) event = window.event;
+    	
+    	let self = this;
+    	let info = {};
+    	
+    	if( Workspace.loginUsername && Workspace.loginPassword )
+    	{
+    		info.username = Workspace.loginUsername;
+    		let enc = Workspace.encryption;
+    		info.password = enc.decrypt( Workspace.loginPassword, enc.getKeys().privatekey );
+    	}
+    	else if( Workspace.sessionId )
+    	{
+    		info.sessionid = Workspace.sessionId;
+    	}
 		
-		// Kill all http connections that would block
-		_cajax_http_connections = 0;
-		
-		//console.log( 'Test2: Relogin in progress' );
-		
-		let self = this;
-		
-		function killConn()
+		// Close conn here - new login regenerates sessionid
+		if( Workspace.conn )
 		{
-			if( Workspace.conn )
+			try
 			{
-				try
-				{
-					Workspace.conn.ws.close();
-				}
-				catch( e )
-				{
-					//console.log( 'Could not close conn.' );
-				}
-				delete Workspace.conn;
+				Workspace.conn.ws.close();
 			}
+			catch( e )
+			{
+				console.log( 'Could not close conn.' );
+			}
+			delete Workspace.conn;
 		}
 		
-		function executeCleanRelogin()
-		{	
-			killConn();
-			
-			if( Workspace.loginUsername && Workspace.loginPassword )
-			{
-				// // console.log( 'Test2: Regular login with user and pass' );
-				let u = typeof( Workspace.loginUsername ) == 'undefined' ? false : Workspace.loginUsername;
-				let p = typeof( Workspace.loginPassword ) == 'undefined' ? false : Workspace.loginPassword;
-				if( !( !!u && !!p ) )
-					Workspace.flushSession();
-				Workspace.login( u, p, false, Workspace.initWebSocket );
-			}
-			// Friend app waits some more
-			else if( window.friendApp )
-			{
-				// // console.log( 'Test2: Just return - we have nothing to go on. Try executing normal login' );
-				Workspace.reloginInProgress = false;
-				return Workspace.login();
-			}
-			// Just exit to login screen
-			else
-			{
-				// We're exiting!
-				Workspace.logout();
-				Workspace.reloginInProgress = false;
-			}
-		}
-		
-		this.reloginAttempts = true;
-		
-		// See if we are alive!
-		// Cancel relogin context
-		CancelCajaxOnId( 'relogin' );
-		
-		let m = new Module( 'system' );
-		m.cancelId = 'relogin';
-		m.onExecuted = function( e, d )
+		if( info.username || info.sessionid )
 		{
-			//console.log( 'Test2: Got back: ', e, d );
-			
-			self.reloginAttempts = false;
-			Workspace.reloginInProgress = true;
-			
-			if( e == 'ok' )
-			{
-				// We have a successful login. Clear call blockers and update sessions, execute ajax queue
-				Workspace.reloginInProgress = false;
-				Workspace.loginCall = false;
-				Workspace.renewAllSessionIds();
-				// // console.log( 'Test2: Yeah! All good!' );
-				return;
-			}
-			else
-			{
-				if( d )
-				{					
-					try
-					{
-						let js = JSON.parse( d );
-						// Session authentication failed
-						if( parseInt( js.code ) == 3 || parseInt( js.code ) == 11 )
-						{
-							// console.log( 'Test2: Flush session' );
-							Workspace.flushSession();
-							Workspace.reloginInProgress = false;
-							return executeCleanRelogin();
-						}
-					}
-					catch( n )
-					{
-						killConn();
-						console.log( 'Error running relogin.', n, d );
-					}
-				}
-				else
-				{
-					Workspace.flushSession();
-					Workspace.reloginInProgress = false;
-					return executeCleanRelogin();
-				}
-			}
-			if( Workspace.serverIsThere )
-			{
-				// console.log( 'Test2: Clean relogin' );
-				executeCleanRelogin();
-			}
-			else
-			{
-				killConn();
-				// // console.log( 'Test2: Wait a second before you can log in again.' );
-				// Wait a second before trying again
-				setTimeout( function()
-				{
-					Workspace.reloginInProgress = false;
-				}, 1000 );
-			}
+			this.SendLoginCall( info, callback );
 		}
-		m.forceHTTP = true;
-		m.forceSend = true;
-		m.execute( 'usersettings' );
-		// console.log( 'Test2: Getting usersettings.' );
+		else
+		{
+			Workspace.showLoginPrompt();
+		}
+		
+		return 0;
     },
     Logout: function()
     {
@@ -343,13 +267,13 @@ Friend.User = {
     },
     RememberKeys: function()
 	{
-		if( this.encryption.keys.client )
+		if( Workspace.encryption.keys.client )
 		{
 			ApplicationStorage.save( 
 				{
-					privatekey : this.encryption.keys.client.privatekey,
-					publickey  : this.encryption.keys.client.publickey,
-					recoverykey: this.encryption.keys.client.recoverykey
+					privatekey : Workspace.encryption.keys.client.privatekey,
+					publickey  : Workspace.encryption.keys.client.publickey,
+					recoverykey: Workspace.encryption.keys.client.recoverykey
 				},
 				{
 					applicationName: 'Workspace' 
@@ -396,5 +320,85 @@ Friend.User = {
 	{
 		// Clear Workspace session
 		Workspace.sessionId = '';
+	},
+	Init: function()
+	{
+		this.ServerIsThere = true;
+		this.checkInterval = setInterval( 'Friend.User.CheckServerConnection()', 10000 );
+	},
+	CheckServerConnection: function( useAjax )
+	{
+		let serverCheck = new Module( 'system' );
+		serverCheck.onExecuted = function( q, s )
+		{
+			// Check missing session
+			let missSess = ( s && s.indexOf( 'sessionid or authid parameter is missing' ) > 0 );
+			if( !missSess && ( s && s.indexOf( 'User session not found' ) > 0 ) )
+				missSess = true;
+			if( !missSess && q == null && s == null )
+				missSess = true;
+			
+			if( ( q == 'fail' && !s ) || ( !q && !s ) || ( q == 'error' && !s ) || missSess )
+			{
+				if( missSess )
+				{
+					Friend.User.ReLogin();
+				}
+				Friend.User.SetUserConnectionState( 'offline' );
+			}
+			else
+			{
+				if( !Friend.User.ServerIsThere )
+				{
+					Friend.User.SetUserConnectionState( 'online' );
+				}
+				Friend.User.ConnectionAttempts = 0;
+			}
+		}
+		if( !useAjax )
+			serverCheck.forceHTTP = true;
+		serverCheck.forceSend = true;
+		try
+		{
+			serverCheck.execute( 'getsetting', { setting: 'friendversion' } );
+		}
+		catch( e )
+		{
+			Friend.User.SetUserConnectionState( 'offline' );
+		}
+	},
+	SetUserConnectionState: function( mode )
+	{
+		if( mode == 'offline' )
+		{
+			if( this.State != 'offline' )
+			{
+				this.ServerIsThere = false;
+				this.State = 'offline';
+				Workspace.workspaceIsDisconnected = true;
+				document.body.classList.add( 'Offline' );
+				if( Workspace.screen )
+					Workspace.screen.displayOfflineMessage();
+				Workspace.workspaceIsDisconnected = true;
+				if( Workspace.nudgeWorkspacesWidget )
+					Workspace.nudgeWorkspacesWidget();
+			}
+		}
+		else
+		{
+			this.ServerIsThere = true;
+			this.State = 'online';
+			document.body.classList.remove( 'Offline' );
+			if( Workspace.screen )
+				Workspace.screen.hideOfflineMessage();
+			Workspace.workspaceIsDisconnected = false;
+			if( Workspace.nudgeWorkspacesWidget )
+				Workspace.nudgeWorkspacesWidget();
+			// Just remove this by force
+			document.body.classList.remove( 'Busy' );
+			// Just refresh it
+			if( Workspace.refreshDesktop )
+				Workspace.refreshDesktop( true, false );
+		}
 	}
 };

@@ -34,7 +34,6 @@ Workspace = {
 	themeOverride: false,
 	systemInfo: false,
 	websocketsOffline: true,
-	workspaceIsDisconnected: false,
 	lastfileSystemChangeMessage: false,
 	serverIsThere: false,
 	runLevels: [
@@ -287,7 +286,7 @@ Workspace = {
 					ex.appendChild( t );
 					ex.time = t;
 				}
-				if( Workspace.workspaceIsDisconnected )
+				if( !Friend.User.ServerIsThere )
 				{
 					if( !ex.offline )
 					{
@@ -1094,11 +1093,11 @@ Workspace = {
 
 window.onoffline = function()
 {
-	Workspace.workspaceIsDisconnected = true;
+	Friend.User.SetUserConnectionState( 'offline' );
 }
 window.ononline = function()
 {
-	Workspace.workspaceIsDisconnected = false;
+	Friend.User.CheckServerConnection();
 }
 
 

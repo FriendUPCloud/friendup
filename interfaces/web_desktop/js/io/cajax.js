@@ -40,7 +40,7 @@ function AddToCajaxQueue( ele )
 	ele.queued = true;
 	
 	// Don't add to queue if we are offline
-	if( !Workspace.serverIsThere || Workspace.workspaceIsDisconnected )
+	if( !Friend.User.ServerIsThere )
 	{
 		if( ele.onload )
 		{
@@ -706,12 +706,11 @@ cAjax.prototype.send = function( data, callback )
 							self.onload( false, false );
 							self.destroy();
 						}
-						if( window.Workspace && Workspace.checkServerConnectionResponse )
-							Workspace.checkServerConnectionResponse();
+
+						Friend.User.CheckServerConnection();
 					}
 				} ).catch( function( err )
 				{
-					console.log( 'Caught an error.', err );
 					if( err == 'error' )
 					{
 						if( callback )

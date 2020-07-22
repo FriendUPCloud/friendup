@@ -351,7 +351,7 @@ Workspace = {
 				ex.appendChild( t );
 				ex.time = t;
 			}
-			if( Workspace.workspaceIsDisconnected )
+			if( !Friend.User.ServerIsThere )
 			{
 				if( !ex.offline )
 				{

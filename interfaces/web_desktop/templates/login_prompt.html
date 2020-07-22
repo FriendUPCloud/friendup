@@ -42,14 +42,14 @@
 								<button id="loginButton" class="IconSmall fa-unlock" tabindex="4" onclick="Application.doLogin()">
 									Sign in
 								</button>
-								<div id="RememberMe">
+								<!--<div id="RememberMe">
 									<p class="Layout HideForPass" style="float: right; position: relative; top: 5px">
 										<label id="rememberLabel" for="remember">Remember me</label>
 									</p>
 									<p class="Layout HideForPass" style="float: right; position: relative; top: 7px">
 										<input type="checkbox" id="remember" tabindex="3"/>
 									</p>
-								</div>
+								</div>-->
 								<div id="invalidLogin" class="Padding"><p>&nbsp;</p></div>
 							</div>
 						</div>
@@ -105,7 +105,10 @@
 					
 					// Track user's login
 					if( typeof ga == 'function' ) ga( 'send', 'event', 'userloginattempt', Trim( ge( 'Username' ).value ) );
-					parent.Friend.User.Login( Trim( ge( 'Username' ).value ), Trim( ge( 'Password' ).value ), ge( 'remember' ).checked, function( result, answer )
+					parent.Friend.User.Init();
+					let us = Trim( ge( 'Username' ).value );
+					let pw = Trim( ge( 'Password' ).value )
+					parent.Friend.User.Login( us, pw, false /*ge( 'remember' ).checked */, function( result, answer )
 					{
 						let tmp = null;
 						if( answer )
@@ -148,7 +151,7 @@
 							//track users login..
 							if( typeof ga == 'function' )
 							{
-								ga( 'send', 'event', 'userloginsuccess', Trim( ge( 'Username' ).value ) );	
+								ga( 'send', 'event', 'userloginsuccess', us );	
 							}
 							parent.Workspace.showDesktop();
 							Application.busy = false;
@@ -224,7 +227,9 @@
 				if( typeof( GetCookie ) == 'undefined' ) return setTimeout( loginNow, 50 );
 				
 				Application.applicationId = 'loginprompt';
-				if( parent.GetCookie( 'loginUsername' ) && parent.GetCookie( 'loginPassword' ) )
+				
+				
+				/*if( parent.GetCookie( 'loginUsername' ) && parent.GetCookie( 'loginPassword' ) )
 				{
 					ge( 'Username' ).value = parent.GetCookie( 'loginUsername' );
 					ge( 'Password' ).value = parent.GetCookie( 'loginPassword' );
@@ -235,10 +240,10 @@
 					return setTimeout( loginNow, 50 );
 				}
 				else
-				{
+				{*/
 					document.getElementById('LoginElement').style.visibility = 'visible';
 					document.getElementById('Username').focus(); 
-				}
+				//}
 			}
 		</script>
 		<script type="text/javascript">
