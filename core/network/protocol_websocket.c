@@ -1218,6 +1218,7 @@ int ParseAndCall( WSThreadData *wstd )
 
 									//static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, Http *http, char **pathParts, BufString *queryrawbs )
 									wstd->wstd_Http = http;
+									wstd->wstd_Queryrawbs = queryrawbs;
 									WSSystemLibraryCall( wstd, locus, http, pathParts, queryrawbs );
 								}
 							}
