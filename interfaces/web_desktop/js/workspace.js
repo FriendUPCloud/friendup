@@ -427,6 +427,9 @@ Workspace = {
 		
 		// console.log( 'Test2: Done post init.' );
 	},
+	rememberKeys: {
+		return false;
+	},
 	encryption: {
 
 		fcrypt: fcrypt,
