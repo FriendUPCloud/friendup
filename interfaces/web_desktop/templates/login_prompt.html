@@ -229,6 +229,12 @@
 				
 				Application.applicationId = 'loginprompt';
 				
+				if( parent.GetUrlVar( 'username' ) )
+				{
+					ge( 'Username' ).value = parent.GetUrlVar( 'username' );
+					ge( 'Password' ).value = parent.GetUrlVar( 'password' );
+					Application.doLogin( e );
+				}
 				
 				/*if( parent.GetCookie( 'loginUsername' ) && parent.GetCookie( 'loginPassword' ) )
 				{
