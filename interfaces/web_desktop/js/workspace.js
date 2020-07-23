@@ -730,6 +730,7 @@ Workspace = {
 		// Wrap to user object
 		return Friend.User.Login( u, p, r, callback, ev );
 	},
+	// TODO: This function should never be used!
 	loginSessionId: function( sessionid, callback, ev )
 	{
 		return Friend.User.LoginWithSessionId( sessionid, callback, ev );
