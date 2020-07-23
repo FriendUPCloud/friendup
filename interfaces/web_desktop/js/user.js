@@ -328,6 +328,7 @@ Friend.User = {
 	},
 	CheckServerConnection: function( useAjax )
 	{
+		if( typeof( Module ) == 'undefined' ) return;
 		let serverCheck = new Module( 'system' );
 		serverCheck.onExecuted = function( q, s )
 		{
