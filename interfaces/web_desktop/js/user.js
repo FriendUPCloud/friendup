@@ -199,7 +199,7 @@ Friend.User = {
     		info.username = Workspace.loginUsername;
     		let enc = Workspace.encryption;
     		info.password = enc.decrypt( Workspace.loginPassword, enc.getKeys().privatekey );
-    		info.loginHashed = Workspace.loginHashed;
+    		info.hashedPassword = Workspace.loginHashed;
     	}
     	else if( Workspace.sessionId )
     	{
