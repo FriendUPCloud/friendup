@@ -730,6 +730,10 @@ Workspace = {
 		// Wrap to user object
 		return Friend.User.Login( u, p, r, callback, ev );
 	},
+	loginSessionId: function( sessionid, callback, ev )
+	{
+		return Friend.User.LoginWithSessionId( sessionid, callback, ev );
+	},
 	showDesktop: function()
 	{
 		// View desktop
