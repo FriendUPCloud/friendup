@@ -29,7 +29,7 @@ Friend.User = {
     // Methods -----------------------------------------------------------------
     
     // Log into Friend Core
-    Login: function( username, password, remember, callback, event )
+    Login: function( username, password, remember, callback, event, flags )
     {
     	if( this.State == 'online' ) return;
     	this.State = 'login';
@@ -58,7 +58,8 @@ Friend.User = {
 			this.SendLoginCall( {
 				username: username,
 				password: password,
-				remember: remember
+				remember: remember,
+				hashedPassword: flags.hashedPassword
 			}, callback );
 		}
 		else
@@ -114,7 +115,7 @@ Friend.User = {
 		{
 			Workspace.sessionId = '';
 			m.addVar( 'username', info.username );
-			m.addVar( 'password', 'HASHED' + Sha256.hash( info.password ) );
+			m.addVar( 'password', info.hashedPassword ? info.password : ( 'HASHED' + Sha256.hash( info.password ) ) );
 			
 			let enc = parent.Workspace.encryption;
 			parent.Workspace.loginPassword = enc.encrypt( info.password, enc.getKeys().publickey );

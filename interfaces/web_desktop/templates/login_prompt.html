@@ -72,7 +72,6 @@
 				},
 				doLogin: function( e )
 				{
-					console.log( 'Test' );
 					/*
 						In password recivery mode we do stuff a bit differently...
 					*/
@@ -157,7 +156,7 @@
 							parent.Workspace.showDesktop();
 							Application.busy = false;
 						}
-					}, e );
+					}, e, { hashedPassword: ge( 'Password' ).hashed ? true : false } );
 				},
 				checkKeys: function( e )
 				{
@@ -233,24 +232,12 @@
 				{
 					ge( 'Username' ).value = parent.GetUrlVar( 'username' );
 					ge( 'Password' ).value = parent.GetUrlVar( 'password' );
+					ge( 'Password' ).hashed = true;
 					Application.doLogin( e );
 				}
 				
-				/*if( parent.GetCookie( 'loginUsername' ) && parent.GetCookie( 'loginPassword' ) )
-				{
-					ge( 'Username' ).value = parent.GetCookie( 'loginUsername' );
-					ge( 'Password' ).value = parent.GetCookie( 'loginPassword' );
-					Application.doLogin( e );
-				}
-				else if( document.body.className == 'Loading' )
-				{
-					return setTimeout( loginNow, 50 );
-				}
-				else
-				{*/
-					document.getElementById('LoginElement').style.visibility = 'visible';
-					document.getElementById('Username').focus(); 
-				//}
+				document.getElementById('LoginElement').style.visibility = 'visible';
+				document.getElementById('Username').focus();
 			}
 		</script>
 		<script type="text/javascript">
