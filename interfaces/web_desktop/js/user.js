@@ -159,11 +159,14 @@ Friend.User = {
 				else
 				{
 					Friend.User.SetUserConnectionState( 'offline' );
+					
+					if( callback ) callback( false, serveranswer );
 				}
 			}	
 			catch( e )
 			{
 				console.log( 'Failed to understand server response.', e );
+				if( callback ) callback( false, serveranswer );
 			};
 		}
 		m.forceHTTP = true;
