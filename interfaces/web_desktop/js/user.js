@@ -36,6 +36,12 @@ Friend.User = {
     	
     	if( !event ) event = window.event;
     	
+    	if( !username && !password && GetUrlVar( 'username' ) )
+    	{
+    		username = GetUrlVar( 'username' );
+    		password = GetUrlVar( 'password' );
+    	}
+    	
     	let self = this;
 		
 		// Close conn here - new login regenerates sessionid
