@@ -68,6 +68,7 @@ Friend.User = {
 		
 		return 0;
     },
+    // Login using a session id
     LoginWithSessionId: function( sessionid, callback, event )
     {
     	if( this.State == 'online' ) return;
@@ -104,6 +105,7 @@ Friend.User = {
 		
 		return 0;
     },
+    // Send the actual login call
     SendLoginCall: function( info, callback )
     {
     	// Create a new library call object
@@ -214,9 +216,10 @@ Friend.User = {
 		
 		return 0;
     },
+    // Log out
     Logout: function()
     {
-        // FIXME: implement
+        // FIXME: Remove this - it is not used anymore
 		window.localStorage.removeItem( 'WorkspaceUsername' );
 		window.localStorage.removeItem( 'WorkspacePassword' );
 		window.localStorage.removeItem( 'WorkspaceSessionID' );
@@ -265,6 +268,7 @@ Friend.User = {
 		dologt = setTimeout( doLogout, 750 );
 		return true;
     },
+    // Remember keys
     RememberKeys: function()
 	{
 		if( Workspace.encryption.keys.client )
@@ -304,6 +308,7 @@ Friend.User = {
 			Friend.cajax = [];
 		}
 	},
+	// Reset the password
 	ResetPassword: function( username, callback )
 	{
 		var passWordResetURL = '/forgotpassword/username/' + encodeURIComponent( username );
@@ -316,16 +321,19 @@ Friend.User = {
 		xhttp.open( 'GET', passWordResetURL, true);
 		xhttp.send();
 	},
+	// Flush previous session
 	FlushSession: function()
 	{
 		// Clear Workspace session
 		Workspace.sessionId = '';
 	},
+	// Initialize this object
 	Init: function()
 	{
 		this.ServerIsThere = true;
 		this.checkInterval = setInterval( 'Friend.User.CheckServerConnection()', 10000 );
 	},
+	// Check if the server is alive
 	CheckServerConnection: function( useAjax )
 	{
 		if( typeof( Module ) == 'undefined' ) return;
@@ -368,6 +376,7 @@ Friend.User = {
 			Friend.User.SetUserConnectionState( 'offline' );
 		}
 	},
+	// Set the user state (offline / online etc)
 	SetUserConnectionState: function( mode )
 	{
 		if( mode == 'offline' )
