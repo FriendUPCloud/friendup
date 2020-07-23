@@ -427,6 +427,7 @@ Workspace = {
 		
 		// console.log( 'Test2: Done post init.' );
 	},
+	// Just a stub - this isn't used anymore
 	rememberKeys: {
 		return false;
 	},
