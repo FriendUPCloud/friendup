@@ -651,7 +651,10 @@ f.Name ASC";
 			}
 			else
 			{
-				userID = usr->u_ID;
+				if( usr != NULL )
+				{
+					userID = usr->u_ID;
+				}
 			}
 			
 			/*

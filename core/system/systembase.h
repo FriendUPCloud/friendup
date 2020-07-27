@@ -118,6 +118,16 @@ enum {
 };
 
 //
+// Login/Logout calls
+//
+
+enum {
+	LL_NONE = 0,
+	LL_LOGIN,
+	LL_LOGOUT
+};
+
+//
 // Devices
 //
 

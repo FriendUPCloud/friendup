@@ -38,189 +38,23 @@ extern SystemBase *SLIB;
 // enabled for development/IDE
 //#define ENABLE_WEBSOCKETS_THREADS 1
 
-//pthread_mutex_t WSThreadMutex;
-
-#define INCREASE_WS_THREADS()
-#define DECREASE_WS_THREADS()
-/*
-#define INCREASE_WS_THREADS() \
-FRIEND_MUTEX_LOCK( &(SLIB->fcm->fcm_WebSocket->ws_Mutex) ); \
-SLIB->fcm->fcm_WebSocket->ws_NumberCalls++; \
-FRIEND_MUTEX_UNLOCK( &(SLIB->fcm->fcm_WebSocket->ws_Mutex) );
-
-#define DECREASE_WS_THREADS() \
-FRIEND_MUTEX_LOCK( &(SLIB->fcm->fcm_WebSocket->ws_Mutex) ); \
-SLIB->fcm->fcm_WebSocket->ws_NumberCalls--; \
-FRIEND_MUTEX_UNLOCK( &(SLIB->fcm->fcm_WebSocket->ws_Mutex) );  
-*/
 typedef struct WSThreadData
 {
-	WSCData *fcd;
-	Http *http;
-	char *pathParts[ 1024 ];
-	BufString *queryrawbs;
-	//struct lws *wsi;
-	char *requestid;
-	char *path;
-	char *request;
-	int requestLen;
+	WSCData						*wstd_WSD;
+	//UserSession					*wstd_UserSession;		// session should be taken from WSCData
+	Http						*wstd_Http;
+	char						*wstd_PathParts[ 1024 ];
+	BufString					*wstd_Queryrawbs;
+	char 						*wstd_Requestid;
+	char						*wstd_Path;
+	char						*wstd_Request;
+	int							wstd_RequestLen;
+	char						*wstd_Msg;
+	size_t						wstd_Len;
+	pthread_t					wstd_Thread;
 }WSThreadData;
 
 static int MAX_SIZE_WS_MESSAGE = WS_PROTOCOL_BUFFER_SIZE-2048;
-
-/**
- * Write data to websockets, inline function
- * If message is bigger then WS buffer then message is encoded, splitted and send
- *
- * @param wscdata pointer to websocket structure
- * @param msgptr pointer to message
- * @param msglen length of the messsage
- * @param type type of websocket message which will be send
- * @param prio priority of message
- * @return number of bytes sent
- */
-int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, int type, int prio )
-{
-	int result = 0;
-	
-	if( wscdata->wsc_Wsi == NULL )
-	{
-		return 0;
-	}
-
-	DEBUG("WSCDATAptr %p clwsc_InUseCounter: %d msg: %s\n", wscdata, wscdata->wsc_InUseCounter, msgptr );
-	
-	if( msglen > MAX_SIZE_WS_MESSAGE ) // message is too big, we must split data into chunks
-	{
-		DEBUG("Before encode\n");
-		char *encmsg = Base64Encode( (const unsigned char *)msgptr, msglen, &msglen );
-		if( encmsg != NULL )
-		{
-			char *msgToSend = encmsg;
-			int totalChunk = (msglen / MAX_SIZE_WS_MESSAGE)+1;
-			int actChunk = 0;
-			
-			int END_CHAR_SIGNS = 4;
-			char *end = "\"}}}";
-			
-			DEBUG("[WS] Sending big message, size %d (%d chunks of max: %d)\n", msglen, totalChunk, MAX_SIZE_WS_MESSAGE );
-			
-			UserSession *us = wscdata->wsc_UserSession;
-			
-			if( wscdata->wsc_UserSession == NULL )
-			{
-				FFree( encmsg );
-				return -1;
-			}
-
-			for( actChunk = 0; actChunk < totalChunk ; actChunk++ )
-			{
-				unsigned char *queueMsg = FMalloc( WS_PROTOCOL_BUFFER_SIZE );
-				if( queueMsg != NULL )
-				{
-					unsigned char *queueMsgPtr = queueMsg + LWS_SEND_BUFFER_PRE_PADDING;
-					int queueMsgLen = 0;
-				
-					int txtmsgpos = sprintf( (char *)queueMsgPtr, "{\"type\":\"con\",\"data\":{\"type\":\"chunk\",\"data\":{\"id\":\"%p\",\"total\":\"%d\",\"part\":\"%d\",\"data\":\"", encmsg, totalChunk, actChunk );
-					int copysize = msglen;
-					if( copysize > MAX_SIZE_WS_MESSAGE )
-					{
-						copysize = MAX_SIZE_WS_MESSAGE;
-					}
-					
-					queueMsgLen = txtmsgpos;
-					queueMsgPtr += txtmsgpos;
-					// queue   |    PRE_PADDING  |  txtmsgpos   |  body  |  END_CHARS  | POST_PADDING
-
-					memcpy( queueMsgPtr, msgToSend, copysize );
-					queueMsgLen += copysize;
-					queueMsgPtr += copysize;
-				
-					memcpy( queueMsgPtr, end, END_CHAR_SIGNS );
-					queueMsgPtr += END_CHAR_SIGNS;
-					queueMsgLen += END_CHAR_SIGNS;
-					*queueMsgPtr = 0;	//end message with NULL
-					
-					msgToSend += copysize;
-					msglen -= MAX_SIZE_WS_MESSAGE;
-
-					DEBUG( "Determined chunk: %d\n", actChunk );
-					
-					FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
-					en->fq_Data = queueMsg;
-					en->fq_Size = queueMsgLen;
-					en->fq_Priority = prio;
-			
-					if( wscdata->wsc_UserSession != NULL )
-					{
-						if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
-						{
-							DEBUG("lock created1\n");
-							FQPushFIFO( &(us->us_MsgQueue), en );
-							//FQPushWithPriority( &(wscdata->wsc_MsgQueue), en );
-							FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
-						}
-					}
-				}
-				
-				
-				if( wscdata->wsc_Wsi != NULL )
-				{
-					lws_callback_on_writable( wscdata->wsc_Wsi );
-					lws_cancel_service_pt( wscdata->wsc_Wsi );
-				}
-			}
-			FFree( encmsg );
-		}
-	}
-	else
-	{
-		UserSession *us = wscdata->wsc_UserSession;
-		
-		if( wscdata->wsc_UserSession == NULL )
-		{
-			return -1;
-		}
-			
-		DEBUG("no encode\n");
-		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
-		{
-			DEBUG("lock created\n");
-
-			if( wscdata->wsc_Wsi != NULL && wscdata->wsc_UserSession != NULL )
-			{
-				FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
-				if( en != NULL )
-				{
-					en->fq_Data = FMalloc( msglen+10+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
-					memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msgptr, msglen );
-					en->fq_Size = msglen;
-					en->fq_Priority = prio;
-			
-					FQPushFIFO( &(us->us_MsgQueue), en );
-				}
-			}
-			
-			DEBUG("Send message to WSI, ptr: %p\n", wscdata->wsc_Wsi );
-
-			struct lws *wsi = wscdata->wsc_Wsi;
-			
-			DEBUG("In use counter %d\n", us->us_InUseCounter );
-			
-			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
-			
-			if( wscdata->wsc_Wsi != NULL )
-			{
-				lws_callback_on_writable( wscdata->wsc_Wsi );
-				lws_cancel_service_pt( wscdata->wsc_Wsi );
-			}
-		}
-	}
-
-	DEBUG("ENDclwsc_InUseCounter: %d msg: %s\n", wscdata->wsc_InUseCounter, msgptr );
-	
-	return result;
-}
 
 /**
  * Release WSThread data
@@ -228,8 +62,12 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 
 void releaseWSData( WSThreadData *data )
 {
-	Http *http = data->http;
-	BufString *queryrawbs = data->queryrawbs;
+	if( data == NULL )
+	{
+		return;
+	}
+	Http *http = data->wstd_Http;
+	BufString *queryrawbs = data->wstd_Queryrawbs;
 	if( http != NULL )
 	{
 		UriFree( http->http_Uri );
@@ -242,341 +80,18 @@ void releaseWSData( WSThreadData *data )
 		HttpFree( http );
 	}
 	
-	FFree( data->requestid );
-	FFree( data->path );
+	if( data->wstd_Msg != NULL )
+	{
+		FFree( data->wstd_Msg );
+	}
+	
+	FFree( data->wstd_Requestid );
+	FFree( data->wstd_Path );
 	
 	BufStringDelete( queryrawbs );
 	
 	FFree( data );
 }
-
-/**
- * Websocket request thread
- *
- * @param d pointer to WSThreadData
- */
-
-void WSThread( void *d )
-{
-	WSThreadData *data = (WSThreadData *)d;
-#ifdef USE_PTHREAD
-	pthread_detach( pthread_self() );
-#endif
-
-	Http *http = data->http;
-	char **pathParts = data->pathParts;
-	int error = 0;
-	BufString *queryrawbs = data->queryrawbs;
-	WSCData *fcd = data->fcd;
-	
-	UserSession *ses = NULL;
-
-	if( fcd->wsc_Wsi == NULL || fcd->wsc_UserSession == NULL )
-	{
-		if( FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) ) == 0 )
-		{
-			fcd->wsc_InUseCounter--;
-			FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
-		}
-		releaseWSData( data );
-		return;
-	}
-	
-	if( FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) ) == 0 )
-	{
-		ses = (UserSession *)fcd->wsc_UserSession;
-		fcd->wsc_InUseCounter--;
-		FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
-		
-		if( ses == NULL )
-		{
-			FERROR("[WSThread] Session is equal to NULL!\n");
-			releaseWSData( data );
-			return;
-		}
-	}
-	
-	if( fcd->wsc_UserSession != NULL )
-	{
-		if( FRIEND_MUTEX_LOCK( &(ses->us_Mutex) ) == 0 )
-		{
-			ses->us_InUseCounter++;
-			FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
-		}
-	}
-	
-	int returnError = 0; //this value must be returned to WSI!
-	
-	if( strcmp( pathParts[ 0 ], "system.library" ) == 0 && error == 0 )
-	{
-		http->http_WSocket = fcd;
-		
-		struct timeval start, stop;
-		gettimeofday(&start, NULL);
-		
-		http->http_Content = queryrawbs->bs_Buffer;
-		queryrawbs->bs_Buffer = NULL;
-		
-		http->http_ShutdownPtr = &(SLIB->fcm->fcm_Shutdown);
-		
-		int respcode = 0;
-		Http *response = SLIB->SysWebRequest( SLIB, &(pathParts[ 1 ]), &http, ses, &respcode );
-		
-		if( respcode == -666 )
-		{
-			INFO("Logout function called.");
-			
-			HttpFree( response );
-			
-			DECREASE_WS_THREADS();
-			
-			// mutex was here before
-			
-			if( FRIEND_MUTEX_LOCK( &(ses->us_Mutex) ) == 0 )
-			{
-				ses->us_InUseCounter--;
-				FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
-			}
-			
-			releaseWSData( data );
-
-#ifdef USE_PTHREAD
-			pthread_exit(0);
-#endif
-			return;
-		}
-		
-		gettimeofday(&stop, NULL);
-		double secs = (double)(stop.tv_usec - start.tv_usec) / 1000000 + (double)(stop.tv_sec - start.tv_sec);
-		FBOOL fileReadCall = FALSE;
-		
-		if( response != NULL && pathParts[1] != NULL && pathParts[2] != NULL )
-		{
-			if( strcmp( pathParts[1], "file" ) == 0 && strcmp( pathParts[2], "read" ) == 0 )
-			{
-				Log( FLOG_INFO, "[WS] A. SysWebRequest took %f seconds, err: %d response: '%.*s'\n" , secs, response->http_ErrorCode, 200, response->http_Content );
-				fileReadCall = TRUE;
-			}
-			else
-			{	// we also dont want to have large responses in logs
-				Log( FLOG_INFO, "[WS] B. SysWebRequest took %f seconds, err: %d response: '%.*s'\n" , secs, response->http_ErrorCode, 200, response->http_Content );
-			}
-		}
-		else
-		{
-			Log( FLOG_INFO, "[WS] C. SysWebRequest took %f seconds\n" , secs );
-		}
-		
-		if( response != NULL )
-		{
-			unsigned char *buf;
-			//char jsontemp[ 2048 ];
-#define JSON_TEMP_LEN 2048
-			char *jsontemp = FMalloc( JSON_TEMP_LEN );
-			
-			DEBUG("[WS] Response != NULL\n");
-			
-			//Log( FLOG_INFO, "[WS] Trying to check response content..\n" );
-			
-			// If it is not JSON!
-			if( (response->http_Content != NULL && ( response->http_Content[ 0 ] != '[' && response->http_Content[ 0 ] != '{' ) ) || fileReadCall == TRUE )
-			{
-				//Log( FLOG_INFO, "[WS] Has NON JSON response content..\n" );
-				DEBUG("Protocol websocket response length: %ld\n", response->http_SizeOfContent );
-				
-				char *d = response->http_Content;
-				if( d[0] == 'f' && d[1] == 'a' && d[2] == 'i' && d[3] == 'l' )
-				{
-					char *code = strstr( d, "\"code\":");
-
-					if( code != NULL && 0 == strncmp( code, "\"code\":\"11\"", 11 ) )
-					{
-						returnError = -1;
-					}
-				}
-
-				static int END_CHAR_SIGNS = 3;
-				char *end = "\"}}";
-				
-				int jsonsize = sprintf( jsontemp, 
-					"{\"type\":\"msg\",\"data\":{\"type\":\"response\",\"requestid\":\"%s\",\"data\":\"",
-					data->requestid 
-				);
-				
-				int msgLen = jsonsize + ( 2* response->http_SizeOfContent ) + 1 + 
-					END_CHAR_SIGNS + LWS_SEND_BUFFER_POST_PADDING + 128;
-					
-				buf = (unsigned char *)FCalloc( msgLen , sizeof( char ) );
-				
-				DEBUG("[WS] buf %p\n", buf );
-				
-				if( buf != NULL )
-				{
-					memcpy( buf, jsontemp, jsonsize );
-					
-					char *locptr = (char *) buf+jsonsize;
-					int z = 0;
-					int znew = 0;
-					int len = (int)response->http_SizeOfContent;
-					unsigned char car;
-					
-					// Add escape characters to single and double quotes!
-					for( ; z < len; z++ )
-					{
-						car = response->http_Content[ z ];
-						switch( car )
-						{
-							case '\\':
-								locptr[ znew++ ] = '\\';
-								break;
-								// Always add escape chars on unescaped double quotes
-							case '"':
-								locptr[ znew++ ] = '\\';
-								//locptr[ znew++ ] = '\\';
-								break;
-								// New line
-							case 10:
-								locptr[ znew++ ] = '\\';
-								car = 'n';
-								break;
-								// Line feed
-							case 13:
-								locptr[ znew++ ] = '\\'; 
-								car = 'r';
-								break;
-								// Tab
-							case 9:
-								locptr[ znew++ ] = '\\';
-								car = 't';
-								break;
-						}
-						locptr[ znew++ ] = car;
-					}
-					
-					//Log( FLOG_INFO, "[WS] NO JSON - Passed FOR loop..\n" );
-					
-					DEBUG("protocol websocket, before write: %s\n", locptr );
-					if( locptr[ znew-1 ] == 0 )
-					{
-						znew--;
-						DEBUG("ZNEW\n");
-					}
-					memcpy( buf + jsonsize + znew, end, END_CHAR_SIGNS );
-
-					//Log( FLOG_INFO, "[WS] NO JSON - Passed memcpy..\n" );
-
-					DEBUG("[WS] user session ptr %p message len %d\n", ses, msgLen );
-
-					//fcd->wsc_WebsocketsServerClient;
-					//Log( FLOG_INFO, "[WS] NO JSON - WRITING..\n" );
-					//WebsocketWriteInline( fcd, buf, znew + jsonsize + END_CHAR_SIGNS, LWS_WRITE_TEXT );
-					UserSessionWebsocketWrite( ses, buf, znew + jsonsize + END_CHAR_SIGNS, LWS_WRITE_TEXT );
-					
-					FFree( buf );
-				}
-			}
-			else
-			{
-				if( response->http_Content != NULL )
-				{
-					if( strcmp( response->http_Content, "{\"response\":\"user session not found\"}" )  == 0 )
-					{
-						returnError = -1;
-					}
-					
-					int END_CHAR_SIGNS = response->http_SizeOfContent > 0 ? 2 : 4;
-					char *end = response->http_SizeOfContent > 0 ? "}}" : "\"\"}}";
-					int jsonsize = sprintf( jsontemp, "{ \"type\":\"msg\", \"data\":{ \"type\":\"response\", \"requestid\":\"%s\",\"data\":", data->requestid );
-					
-					buf = (unsigned char *)FCalloc( jsonsize + response->http_SizeOfContent + END_CHAR_SIGNS + 128, sizeof( char ) );
-					if( buf != NULL )
-					{
-						//unsigned char buf[ response->sizeOfContent +LWS_SEND_BUFFER_POST_PADDING ];
-						memcpy( buf, jsontemp,  jsonsize );
-						memcpy( buf+jsonsize, response->http_Content, response->http_SizeOfContent );
-						memcpy( buf+jsonsize+response->http_SizeOfContent, end, END_CHAR_SIGNS );
-						
-						//WebsocketWriteInline( fcd, buf , response->sizeOfContent+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
-						UserSessionWebsocketWrite( ses, buf , response->http_SizeOfContent+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
-
-						FFree( buf );
-					}
-				}
-				else		// content == NULL
-				{
-					int END_CHAR_SIGNS = response->http_SizeOfContent > 0 ? 2 : 4;
-					char *end = response->http_SizeOfContent > 0 ? "}}" : "\"\"}}";
-					int jsonsize = sprintf( jsontemp, "{ \"type\":\"msg\", \"data\":{ \"type\":\"response\", \"requestid\":\"%s\",\"data\":", data->requestid );
-					
-					buf = (unsigned char *)FCalloc( jsonsize + END_CHAR_SIGNS + 128, sizeof( char ) );
-					if( buf != NULL )
-					{
-						memcpy( buf, jsontemp, jsonsize );
-						memcpy( buf+jsonsize, end, END_CHAR_SIGNS );
-						
-
-						//WebsocketWriteInline( fcd, buf, jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
-						UserSessionWebsocketWrite( ses, buf, jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
-						
-						FFree( buf );
-					}
-				}
-			}
-			
-			response->http_RequestSource = HTTP_SOURCE_WS;
-			HttpFree( response );
-			
-			FFree( jsontemp );
-		}
-		DEBUG1("[WS] SysWebRequest return\n"  );
-		Log( FLOG_INFO, "WS messages sent LOCKTEST\n");
-	}
-	else
-	{
-		Log( FLOG_INFO, "[WS] No response at all..\n" );
-		char response[ 1024 ];
-		char dictmsgbuf1[ 196 ];
-		snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), SLIB->sl_Dictionary->d_Msg[DICT_CANNOT_PARSE_COMMAND_OR_NE_LIB], pathParts[ 0 ] );
-		
-		int resplen = sprintf( response, "{\"response\":\"%s\"}", dictmsgbuf1 );
-
-		char jsontemp[ 1024 ];
-		static int END_CHAR_SIGNS = 2;
-		char *end = "}}";
-		int jsonsize = sprintf( jsontemp, "{ \"type\":\"msg\", \"data\":{ \"type\":\"response\", \"requestid\":\"%s\",\"data\":", data->requestid );
-		
-		unsigned char * buf = (unsigned char *)FCalloc( jsonsize + resplen + END_CHAR_SIGNS + 128, sizeof( char ) );
-		if( buf != NULL )
-		{
-			memcpy( buf, jsontemp,  jsonsize );
-			memcpy( buf+jsonsize, response,  resplen );
-			memcpy( buf+jsonsize+resplen, end,  END_CHAR_SIGNS );
-			
-			//WebsocketWriteInline( fcd, buf, resplen+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
-			UserSessionWebsocketWrite( ses, buf, resplen+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
-			
-			FFree( buf );
-		}
-		Log( FLOG_INFO, "WS no response end LOCKTEST\n");
-	}
-	
-	if( FRIEND_MUTEX_LOCK( &(ses->us_Mutex) ) == 0 )
-	{
-		ses->us_InUseCounter--;
-		FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
-	}
-	
-	releaseWSData( data );
-	
-	Log( FLOG_INFO, "WS END mutexes unlocked\n");
-	
-#ifdef USE_PTHREAD
-	pthread_exit( 0 );
-#endif
-	return;
-}
-
-#if USE_PTHREAD_PING == 1
 
 /**
  * Websocket ping thread
@@ -587,27 +102,21 @@ void WSThread( void *d )
 void WSThreadPing( void *p )
 {
 	WSThreadData *data = (WSThreadData *)p;
-#if USE_PTHREAD_PING == 1
-	pthread_detach( pthread_self() );
-#endif
 	if( data == NULL )
 	{
 		return;
 	}
-	INCREASE_WS_THREADS();
 	
 	int n = 0;
-	WSCData *fcd = data->fcd;
+	UserSession *us = data->wstd_WSD->wsc_UserSession;//data->wstd_UserSession;
 	
-	if( data == NULL || data->fcd == NULL )
+	if( data == NULL || us == NULL || us->us_WSD == NULL )
 	{
-		DECREASE_WS_THREADS();
-		
 		if( data != NULL )
 		{
-			if( data->requestid != NULL )
+			if( data->wstd_Requestid != NULL )
 			{
-				FFree( data->requestid );
+				FFree( data->wstd_Requestid );
 			}
 			FFree( data );
 		}
@@ -615,56 +124,30 @@ void WSThreadPing( void *p )
 	}
 	
 	unsigned char *answer = FCalloc( 1024, sizeof(char) );
-	int answersize = snprintf( (char *)answer, 1024, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%s\"}}", data->requestid );
+	int answersize = snprintf( (char *)answer, 1024, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%s\"}}", data->wstd_Requestid );
 	
-	if( fcd->wsc_UserSession == NULL )
+	if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 	{
-		DECREASE_WS_THREADS();
-		FFree( answer );
-		FFree( data->requestid );
-		FFree( data );
-		return;
-	}
+		us->us_InUseCounter++;
+		FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+
+		us->us_LoggedTime = time( NULL );
 	
-	if( FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) ) == 0 )
-	{
-		fcd->wsc_InUseCounter++;
-		FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
-	
-		struct lws *wsi = fcd->wsc_Wsi;
-	
-		UserSession *ses = fcd->wsc_UserSession;
-		if( ses != NULL )
-		{
-			ses->us_LoggedTime = time( NULL );
-	
-			if( fcd->wsc_UserSession != NULL )
-			{
-				WebsocketWriteInline( fcd, answer, answersize, LWS_WRITE_TEXT, 1 );
-			}
-		}
+		UserSessionWebsocketWrite( us, answer, answersize, LWS_WRITE_TEXT );
 	
 		FFree( answer );
-		FFree( data->requestid );
-		FFree( data );
 	
-		DECREASE_WS_THREADS();
-	
-		if( FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) ) == 0 )
+		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 		{
-			fcd->wsc_InUseCounter--;
-			FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
+			us->us_InUseCounter--;
+			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
 	}
 	
-#if USE_PTHREAD_PING == 1
-	DEBUG("[Protocol_websocket] pthread_exit\n");
-	//pthread_exit( 0 );
-#endif
+	releaseWSData( data );
+
 	return;
 }
-#endif // #if USE_PTHREAD_PING == 1
-
 
 static inline int jsoneqin(const char *json, const jsmntok_t *tok, const char *s) {
 	if (tok->type == JSMN_STRING && (int) strlen(s) == tok->end - tok->start &&
@@ -684,22 +167,9 @@ static inline int jsoneqin(const char *json, const jsmntok_t *tok, const char *s
 			} \
 		}
 
-#ifdef INPUT_QUEUE
-
-typedef struct InputMsg
-{
-	WSCData			*im_FCD;
-	//UserSession		*im_UserSession;
-	char			*im_Msg;
-	size_t			im_Len;
-	pthread_t		im_Thread;
-}InputMsg;
-
 void ParseAndCallThread( void *d );
-int ParseAndCall( WSCData *fcd, char *in, size_t len );
-#else
-int ParseAndCall( WSCData *fcd, char *in, size_t len );
-#endif
+//int ParseAndCall( InputMsg *im );
+int ParseAndCall( WSThreadData *wstd );
 
 /**
  * Main FriendCore websocket callback
@@ -713,13 +183,11 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len );
  */
 int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, void *tin, ssize_t len)
 {
-	WSCData *fcd =  (WSCData *) user;// lws_context_user ( this );
+	WSCData *wsd =  (WSCData *) user;// lws_context_user ( this );
 	int returnError = 0;
 	
 	DEBUG("FC_Callback: reason: %d wsiptr %p fcwdptr %p\n", reason, wsi, user );
-	
-	INCREASE_WS_THREADS();
-	
+
 	char *in = NULL;
 
 	//TK-1220 - sometimes there is junk at the end of the string.
@@ -747,7 +215,6 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 			{
 				FFree( in );
 			}
-			DECREASE_WS_THREADS();
 			return 0;
 		}
 		DEBUG("[WS] set end to 0\n");
@@ -758,7 +225,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 	switch( reason )
 	{
 		case LWS_CALLBACK_ESTABLISHED:
-			pthread_mutex_init( &(fcd->wsc_Mutex), NULL );
+			pthread_mutex_init( &(wsd->wsc_Mutex), NULL );
 		break;
 		
 		case LWS_CALLBACK_WS_PEER_INITIATED_CLOSE:
@@ -769,24 +236,24 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 			{
 				while( TRUE )
 				{
-					if( fcd->wsc_InUseCounter <= 0 )
+					if( wsd->wsc_InUseCounter <= 0 )
 					{
 						DEBUG("[WS] Callback closed!\n");
 						break;
 					}
-					DEBUG("[WS] Closing WS, number: %d\n", fcd->wsc_InUseCounter );
+					DEBUG("[WS] Closing WS, number: %d\n", wsd->wsc_InUseCounter );
 					sleep( 1 );
 				}
-				DetachWebsocketFromSession( fcd );
+				DetachWebsocketFromSession( wsd );
 			
-				if( fcd->wsc_Buffer != NULL )
+				if( wsd->wsc_Buffer != NULL )
 				{
-					BufStringDelete( fcd->wsc_Buffer );
+					BufStringDelete( wsd->wsc_Buffer );
 				}
 			
 				lws_close_reason( wsi, LWS_CLOSE_STATUS_GOINGAWAY , NULL, 0 );
 				
-				pthread_mutex_destroy( &(fcd->wsc_Mutex) );
+				pthread_mutex_destroy( &(wsd->wsc_Mutex) );
 			
 				Log( FLOG_DEBUG, "[WS] Callback session closed\n");
 			}
@@ -796,30 +263,11 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 			INFO("[WS] Destroy WSI!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 			break;
 
-		//
-		// in this protocol, we just use the broadcast action as the chance to
-		// send our own connection-specific data and ignore the broadcast info
-		// that is available in the 'in' parameter
-		//
-
-		//Not supported in current websocket lib
-		/*
-		case LWS_CALLBACK_BROADCAST:
-			n = sprintf((char *)p, "%d", pss->number++);
-			n = INVARGroup(wsi, p, n, LWS_WRITE_TEXT);
-			if (n < 0) 
-			{
-				fprintf(stderr, "FERROR writing to socket");
-				return 1;
-			}
-		break;
-		*/
-
 		case LWS_CALLBACK_RECEIVE:
 			{
-				fcd->wsc_Wsi = wsi;
+				wsd->wsc_Wsi = wsi;
 
-				UserSession *us = (UserSession *)fcd->wsc_UserSession;
+				UserSession *us = (UserSession *)wsd->wsc_UserSession;
 				if( us != NULL )
 				{
 					if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
@@ -832,30 +280,29 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				const size_t remaining = lws_remaining_packet_payload( wsi );
 				if( !remaining && lws_is_final_fragment( wsi ) )
 				{
-					if( fcd->wsc_Buffer != NULL && fcd->wsc_Buffer->bs_Size > 0 )
+					if( wsd->wsc_Buffer != NULL && wsd->wsc_Buffer->bs_Size > 0 )
 					{
-						BufStringAddSize( fcd->wsc_Buffer, in, len );
+						BufStringAddSize( wsd->wsc_Buffer, in, len );
 						FFree( in );
-						in = fcd->wsc_Buffer->bs_Buffer;
-						len = fcd->wsc_Buffer->bs_Size;
-						fcd->wsc_Buffer->bs_Buffer = NULL;
+						in = wsd->wsc_Buffer->bs_Buffer;
+						len = wsd->wsc_Buffer->bs_Size;
+						wsd->wsc_Buffer->bs_Buffer = NULL;
 							
-						BufStringDelete( fcd->wsc_Buffer );
-						fcd->wsc_Buffer = BufStringNew();
+						BufStringDelete( wsd->wsc_Buffer );
+						wsd->wsc_Buffer = BufStringNew();
 					}
 					else
 					{
-						if( fcd->wsc_Buffer == NULL )
+						if( wsd->wsc_Buffer == NULL )
 						{
-							fcd->wsc_Buffer = BufStringNew();
+							wsd->wsc_Buffer = BufStringNew();
 						}
 					}
 				}
 				else	// only fragment was received
 				{
-					BufStringAddSize( fcd->wsc_Buffer, in, len );
+					BufStringAddSize( wsd->wsc_Buffer, in, len );
 					FFree( in );
-					DECREASE_WS_THREADS();
 					return 0;
 				}
 				
@@ -864,29 +311,26 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				DEBUG1("[WS] Callback receive: %s\n", in );
 				
 #ifdef INPUT_QUEUE
-				InputMsg *imsg = FCalloc( 1, sizeof( InputMsg ) );
-				if( imsg != NULL )
+				WSThreadData *wstd = FCalloc( 1, sizeof( WSThreadData ) );
+				if( wstd != NULL )
 				{
-					memset( &(imsg->im_Thread), 0, sizeof( pthread_t ) );
+					memset( &(wstd->wstd_Thread), 0, sizeof( pthread_t ) );
 					
-					DEBUG("[WS] Pass fcd to thread: %p\n", fcd );
-					imsg->im_FCD = fcd;
-					imsg->im_Msg = in;
-					imsg->im_Len = len;
-					//imsg->im_UserSession = fc-
+					DEBUG("[WS] Pass wsd to thread: %p\n", wsd );
+					wstd->wstd_WSD = wsd;
+					wstd->wstd_Msg = in;
+					wstd->wstd_Len = len;
 
-					//WorkerManagerRun( SLIB->sl_WorkerManager, ParseAndCallThread, imsg, NULL, "ProtocolWebsocket.c: line 1030" );
-					
 					//
 					// Using Websocket thread to read/write messages, rest should happen in userspace
 					//
 					
-					if( pthread_create( &(imsg->im_Thread), NULL,  (void *(*)(void *))ParseAndCallThread, ( void *)imsg ) != 0 )
+					if( pthread_create( &(wstd->wstd_Thread), NULL,  (void *(*)(void *))ParseAndCall, ( void *)wstd ) != 0 )
 					{
 					}
 				}
 #else
-				ParseAndCall( fcd, in, len );
+				ParseAndCall( wsd, in, len );
 #endif
 				
 				DEBUG("[WS] Webcall finished!\n");
@@ -909,20 +353,19 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		case LWS_CALLBACK_SERVER_WRITEABLE:
 			DEBUG1("[WS] LWS_CALLBACK_SERVER_WRITEABLE\n");
 			
-			if( fcd->wsc_UserSession == NULL || fcd->wsc_Wsi == NULL )
+			if( wsd->wsc_UserSession == NULL || wsd->wsc_Wsi == NULL )
 			{
 				if( in != NULL )
 				{
 					FFree( in );
 				}
-				DEBUG("[WS] Cannot write message, WS Client is equal to NULL, fcwd %p wsiptr %p\n", fcd, wsi );
-				DECREASE_WS_THREADS();
+				DEBUG("[WS] Cannot write message, WS Client is equal to NULL, fcwd %p wsiptr %p\n", wsd, wsi );
 				return 0;
 			}
 
 			FQEntry *e = NULL;
 
-			UserSession *us = (UserSession *)fcd->wsc_UserSession;
+			UserSession *us = (UserSession *)wsd->wsc_UserSession;
 			if( us != NULL )
 			{
 				//
@@ -957,7 +400,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 							FFree( e );
 						}
 					
-						if( fcd->wsc_UserSession == NULL )
+						if( wsd->wsc_UserSession == NULL )
 						{
 							break;
 						}
@@ -973,7 +416,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				}
 			}
 
-			DEBUG("[WS] Writable END, wsi ptr %p fcwsptr %p\n", wsi, fcd );
+			DEBUG("[WS] Writable END, wsi ptr %p fcwsptr %p\n", wsi, wsd );
 
 			break;
 		
@@ -1007,41 +450,41 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 	
 	case LWS_CALLBACK_PROTOCOL_DESTROY:
 		// protocol will be destroyed
-		if( fcd != NULL && fcd->wsc_Wsi != NULL )
+		if( wsd != NULL && wsd->wsc_Wsi != NULL )
 		{
 			while( TRUE )
 			{
-				if( fcd->wsc_InUseCounter <= 0 )
+				if( wsd->wsc_InUseCounter <= 0 )
 				{
 					DEBUG("[WS] Callback closed!\n");
 					break;
 				}
-				DEBUG("[WS] Closing WS, number: %d\n", fcd->wsc_InUseCounter );
+				DEBUG("[WS] Closing WS, number: %d\n", wsd->wsc_InUseCounter );
 				sleep( 1 );
 			}
-			DetachWebsocketFromSession( fcd );
+			DetachWebsocketFromSession( wsd );
 	
-			if( fcd->wsc_Buffer != NULL )
+			if( wsd->wsc_Buffer != NULL )
 			{
-				BufStringDelete( fcd->wsc_Buffer );
+				BufStringDelete( wsd->wsc_Buffer );
 			}
 	
 			lws_close_reason( wsi, LWS_CLOSE_STATUS_GOINGAWAY , NULL, 0 );
 		
-			pthread_mutex_destroy( &(fcd->wsc_Mutex) );
+			pthread_mutex_destroy( &(wsd->wsc_Mutex) );
 	
 			Log( FLOG_DEBUG, "[WS] Callback LWS_CALLBACK_PROTOCOL_DESTROY\n");
 			
-			fcd->wsc_Wsi = NULL;
+			wsd->wsc_Wsi = NULL;
 		}
 		break;
 		
 	default:
 		{
 		// disabled for test
-			if( fcd != NULL )
+			if( wsd != NULL )
 			{
-				UserSession *us = (UserSession *)fcd->wsc_UserSession;
+				UserSession *us = (UserSession *)wsd->wsc_UserSession;
 
 				if( us != NULL && us->us_MsgQueue.fq_First != NULL )
 				{
@@ -1053,15 +496,6 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 	}
 
 	DEBUG("[WS] END of callback\n");
-	
-	DECREASE_WS_THREADS();
-	
-#ifndef INPUT_QUEUE	// do not deallocate memory if command is going to thread
-	if( in != NULL )
-	{
-		FFree( in );
-	}
-#endif
 
 	return returnError;
 }
@@ -1069,53 +503,294 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 //
 //
 //
-#ifdef INPUT_QUEUE
-void ParseAndCallThread( void *d )
-{
-	pthread_detach( pthread_self() );
-	InputMsg *im = (InputMsg *)d;
-	
-	DEBUG("[ParseAndCallThread] FCD %p\n", im->im_FCD );
-	ParseAndCall( im->im_FCD, im->im_Msg, im->im_Len );
-	
-	if( im != NULL )
-	{
-		if( im->im_Msg != NULL )
-		{
-			FFree( im->im_Msg );
-		}
-		FFree( im );
-	}
-	// do not use with worker!!!
-	pthread_exit( 0 );
-}
-#endif
 
-int ParseAndCall( WSCData *fcd, char *in, size_t len )
+static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, Http *http, char **pathParts, BufString *queryrawbs )
+{
+		//char **pathParts = data->wstd_PathParts;
+	int error = 0;
+	
+	int returnError = 0; //this value must be returned to WSI!
+	
+	if( strcmp( pathParts[ 0 ], "system.library" ) == 0 && error == 0 )
+	{
+		http->http_WSocket = wstd->wstd_WSD;
+		
+		struct timeval start, stop;
+		gettimeofday(&start, NULL);
+		
+		http->http_Content = queryrawbs->bs_Buffer;
+		queryrawbs->bs_Buffer = NULL;
+		
+		http->http_ShutdownPtr = &(SLIB->fcm->fcm_Shutdown);
+		
+		int respcode = 0;
+		Http *response = SLIB->SysWebRequest( SLIB, &(pathParts[ 1 ]), &http, locus, &respcode );
+		
+		if( respcode == -666 )
+		{
+			INFO("Logout function called.");
+			
+			HttpFree( response );
+
+		}
+		else
+		{
+			gettimeofday(&stop, NULL);
+			double secs = (double)(stop.tv_usec - start.tv_usec) / 1000000 + (double)(stop.tv_sec - start.tv_sec);
+			FBOOL fileReadCall = FALSE;
+		
+			if( response != NULL && pathParts[1] != NULL && pathParts[2] != NULL )
+			{
+				if( strcmp( pathParts[1], "file" ) == 0 && strcmp( pathParts[2], "read" ) == 0 )
+				{
+					Log( FLOG_INFO, "[WS] A. SysWebRequest took %f seconds, err: %d response: '%.*s'\n" , secs, response->http_ErrorCode, 200, response->http_Content );
+					fileReadCall = TRUE;
+				}
+				else
+				{	// we also dont want to have large responses in logs
+					Log( FLOG_INFO, "[WS] B. SysWebRequest took %f seconds, err: %d response: '%.*s'\n" , secs, response->http_ErrorCode, 200, response->http_Content );
+				}
+			}
+			else
+			{
+				Log( FLOG_INFO, "[WS] C. SysWebRequest took %f seconds\n" , secs );
+			}
+		
+			if( response != NULL )
+			{
+				unsigned char *buf;
+				//char jsontemp[ 2048 ];
+#define JSON_TEMP_LEN 2048
+				char *jsontemp = FMalloc( JSON_TEMP_LEN );
+			
+				DEBUG("[WS] Response != NULL\n");
+			
+				//Log( FLOG_INFO, "[WS] Trying to check response content..\n" );
+			
+				// If it is not JSON!
+				if( (response->http_Content != NULL && ( response->http_Content[ 0 ] != '[' && response->http_Content[ 0 ] != '{' ) ) || fileReadCall == TRUE )
+				{
+					//Log( FLOG_INFO, "[WS] Has NON JSON response content..\n" );
+					DEBUG("Protocol websocket response length: %ld\n", response->http_SizeOfContent );
+				
+					char *d = response->http_Content;
+					if( d[0] == 'f' && d[1] == 'a' && d[2] == 'i' && d[3] == 'l' )
+					{
+						char *code = strstr( d, "\"code\":");
+
+						if( code != NULL && 0 == strncmp( code, "\"code\":\"11\"", 11 ) )
+						{
+							returnError = -1;
+						}
+					}
+
+					static int END_CHAR_SIGNS = 3;
+					char *end = "\"}}";
+				
+					int jsonsize = sprintf( jsontemp, 
+						"{\"type\":\"msg\",\"data\":{\"type\":\"response\",\"requestid\":\"%s\",\"data\":\"",
+						wstd->wstd_Requestid 
+					);
+				
+					int msgLen = jsonsize + ( 2* response->http_SizeOfContent ) + 1 + END_CHAR_SIGNS + LWS_SEND_BUFFER_POST_PADDING + 128;
+					
+					buf = (unsigned char *)FCalloc( msgLen , sizeof( char ) );
+				
+					DEBUG("[WS] buf %p\n", buf );
+				
+					if( buf != NULL )
+					{
+						memcpy( buf, jsontemp, jsonsize );
+					
+						char *locptr = (char *) buf+jsonsize;
+						int z = 0;
+						int znew = 0;
+						int len = (int)response->http_SizeOfContent;
+						unsigned char car;
+					
+						// Add escape characters to single and double quotes!
+						for( ; z < len; z++ )
+						{
+							car = response->http_Content[ z ];
+							switch( car )
+							{
+							case '\\':
+								locptr[ znew++ ] = '\\';
+								break;
+								// Always add escape chars on unescaped double quotes
+							case '"':
+								locptr[ znew++ ] = '\\';
+								//locptr[ znew++ ] = '\\';
+								break;
+								// New line
+							case 10:
+								locptr[ znew++ ] = '\\';
+								car = 'n';
+								break;
+								// Line feed
+							case 13:
+								locptr[ znew++ ] = '\\'; 
+								car = 'r';
+								break;
+								// Tab
+							case 9:
+								locptr[ znew++ ] = '\\';
+								car = 't';
+								break;
+							}
+							locptr[ znew++ ] = car;
+						}
+					
+						//Log( FLOG_INFO, "[WS] NO JSON - Passed FOR loop..\n" );
+					
+						DEBUG("protocol websocket, before write: %s\n", locptr );
+						if( locptr[ znew-1 ] == 0 )
+						{
+							znew--;
+							DEBUG("ZNEW\n");
+						}
+						memcpy( buf + jsonsize + znew, end, END_CHAR_SIGNS );
+						
+						//Log( FLOG_INFO, "[WS] NO JSON - Passed memcpy..\n" );
+						DEBUG("[WS] user session ptr %p message len %d\n", locus, msgLen );
+						//fcd->wsc_WebsocketsServerClient;
+						//Log( FLOG_INFO, "[WS] NO JSON - WRITING..\n" );
+						//WebsocketWriteInline( fcd, buf, znew + jsonsize + END_CHAR_SIGNS, LWS_WRITE_TEXT );
+						UserSessionWebsocketWrite( locus, buf, znew + jsonsize + END_CHAR_SIGNS, LWS_WRITE_TEXT );
+					
+						FFree( buf );
+					}
+				}
+				else
+				{
+					if( response->http_Content != NULL )
+					{
+						if( strcmp( response->http_Content, "{\"response\":\"user session not found\"}" )  == 0 )
+						{
+							returnError = -1;
+						}
+					
+						int END_CHAR_SIGNS = response->http_SizeOfContent > 0 ? 2 : 4;
+						char *end = response->http_SizeOfContent > 0 ? "}}" : "\"\"}}";
+						int jsonsize = sprintf( jsontemp, "{ \"type\":\"msg\", \"data\":{ \"type\":\"response\", \"requestid\":\"%s\",\"data\":", wstd->wstd_Requestid );
+					
+						buf = (unsigned char *)FCalloc( jsonsize + response->http_SizeOfContent + END_CHAR_SIGNS + 128, sizeof( char ) );
+						if( buf != NULL )
+						{
+							//unsigned char buf[ response->sizeOfContent +LWS_SEND_BUFFER_POST_PADDING ];
+							memcpy( buf, jsontemp,  jsonsize );
+							memcpy( buf+jsonsize, response->http_Content, response->http_SizeOfContent );
+							memcpy( buf+jsonsize+response->http_SizeOfContent, end, END_CHAR_SIGNS );
+						
+							//WebsocketWriteInline( fcd, buf , response->sizeOfContent+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
+							UserSessionWebsocketWrite( locus, buf , response->http_SizeOfContent+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
+							
+							FFree( buf );
+						}
+					}
+					else		// content == NULL
+					{
+						int END_CHAR_SIGNS = response->http_SizeOfContent > 0 ? 2 : 4;
+						char *end = response->http_SizeOfContent > 0 ? "}}" : "\"\"}}";
+						int jsonsize = sprintf( jsontemp, "{ \"type\":\"msg\", \"data\":{ \"type\":\"response\", \"requestid\":\"%s\",\"data\":", wstd->wstd_Requestid );
+					
+						buf = (unsigned char *)FCalloc( jsonsize + END_CHAR_SIGNS + 128, sizeof( char ) );
+						if( buf != NULL )
+						{
+							memcpy( buf, jsontemp, jsonsize );
+							memcpy( buf+jsonsize, end, END_CHAR_SIGNS );
+							
+							//WebsocketWriteInline( fcd, buf, jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
+							UserSessionWebsocketWrite( locus, buf, jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
+						
+							FFree( buf );
+						}
+					}
+				}
+			
+				response->http_RequestSource = HTTP_SOURCE_WS;
+				HttpFree( response );
+			
+				FFree( jsontemp );
+			}
+			DEBUG1("[WS] SysWebRequest return\n"  );
+			Log( FLOG_INFO, "WS messages sent LOCKTEST\n");
+		}	// respcode == -666
+	}
+	else
+	{
+		Log( FLOG_INFO, "[WS] No response at all..\n" );
+		char response[ 1024 ];
+		char dictmsgbuf1[ 196 ];
+		snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), SLIB->sl_Dictionary->d_Msg[DICT_CANNOT_PARSE_COMMAND_OR_NE_LIB], pathParts[ 0 ] );
+		
+		int resplen = sprintf( response, "{\"response\":\"%s\"}", dictmsgbuf1 );
+
+		char jsontemp[ 1024 ];
+		static int END_CHAR_SIGNS = 2;
+		char *end = "}}";
+		int jsonsize = sprintf( jsontemp, "{ \"type\":\"msg\", \"data\":{ \"type\":\"response\", \"requestid\":\"%s\",\"data\":", wstd->wstd_Requestid );
+		
+		unsigned char * buf = (unsigned char *)FCalloc( jsonsize + resplen + END_CHAR_SIGNS + 128, sizeof( char ) );
+		if( buf != NULL )
+		{
+			memcpy( buf, jsontemp,  jsonsize );
+			memcpy( buf+jsonsize, response,  resplen );
+			memcpy( buf+jsonsize+resplen, end,  END_CHAR_SIGNS );
+			
+			//WebsocketWriteInline( fcd, buf, resplen+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
+			UserSessionWebsocketWrite( locus, buf, resplen+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
+			
+			FFree( buf );
+		}
+		Log( FLOG_INFO, "WS no response end LOCKTEST\n");
+	}
+	
+	Log( FLOG_INFO, "WS END mutexes unlocked\n");
+	return 0;
+}
+
+//
+//
+//
+
+int ParseAndCall( WSThreadData *wstd )
 {
 	int i, i1;
 	int r;
 	jsmn_parser p;
-	//jsmntok_t t[128]; // We expect no more than 128 tokens
 	jsmntok_t *t;
+	
+	pthread_detach( pthread_self() );
+	
+	UserSession *locus = wstd->wstd_WSD->wsc_UserSession;
+	if( locus != NULL )
+	{
+		if( FRIEND_MUTEX_LOCK( &(locus->us_Mutex) ) == 0 )
+		{
+			locus->us_InUseCounter++;
+			FRIEND_MUTEX_UNLOCK( &(locus->us_Mutex) );
+		}
+	}
+	
+	char *in = wstd->wstd_Msg;
+	size_t len = wstd->wstd_Len;
 	
 	t = FCalloc( 256, sizeof(jsmntok_t) );
 	jsmn_init( &p );
 	r = jsmn_parse( &p, in, len, t, 256 );
-
+	
 	// Assume the top-level element is an object 
-	if (r > 1 && t[0].type == JSMN_OBJECT) 
+	if( r > 1 && t[0].type == JSMN_OBJECT )
 	{
 		FBOOL eq = FALSE;
 		
-		if (t[1].type == JSMN_STRING )
+		if( t[1].type == JSMN_STRING )
 		{
 			if( (int) strlen( "type" ) == t[1].end - t[1].start )
 			{
-				//printf("TEST2\n");
 				if( strncmp(in + t[1].start, "type", t[1].end - t[1].start) == 0) 
 				{
-					//printf("TEST3\n");
 					eq = TRUE;
 				}
 			}
@@ -1167,24 +842,57 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 							
 							DEBUG("[WS] Chunk received\n");
 							
-							if( part > 0 && total > 0 && data > 0 && fcd->wsc_UserSession != NULL )
+							if( part > 0 && total > 0 && data > 0 && wstd->wstd_WSD->wsc_UserSession != NULL )
 							{
 								//DEBUG("[WS] Got chunked message: %d\n\n\n%.*s\n\n\n", t[ data ].end-t[ data ].start, t[ data ].end-t[ data ].start, (char *)(in + t[ data ].start) );
 								char *idc = StringDuplicateN( in + t[ id ].start, (int)(t[ id ].end-t[ id ].start) );
 								part = StringNToInt( in + t[ part ].start, (int)(t[ part ].end-t[ part ].start) );
 								total = StringNToInt( in + t[ total ].start, (int)(t[ total ].end-t[ total ].start) );
 								
-								if( fcd->wsc_UserSession != NULL )
+								//if( us != NULL )
 								{
-									UserSession *ses = (UserSession *)fcd->wsc_UserSession;
-									WebsocketReq *wsreq = WebsocketReqManagerPutChunk( ses->us_WSReqManager, idc, part, total, (char *)(in + t[ data ].start), (int)(t[ data ].end-t[ data ].start) );
+									WebsocketReq *wsreq = WebsocketReqManagerPutChunk( locus->us_WSReqManager, idc, part, total, (char *)(in + t[ data ].start), (int)(t[ data ].end-t[ data ].start) );
 									if( wsreq != NULL )
 									{
 										//DEBUG("\n\n\n\nFINAL MESSAGE %s %lu\n\n\n", wsreq->wr_Message, wsreq->wr_MessageSize );
 										if( wsreq->wr_Message != NULL && wsreq->wr_MessageSize > 0 && wsreq->wr_IsBroken == 0 )
 										{
 											DEBUG("[WS] Callback will be called again!\n");
-											ParseAndCall( fcd, wsreq->wr_Message, wsreq->wr_MessageSize );
+											if( wstd->wstd_Msg != NULL )
+											{
+												FFree( wstd->wstd_Msg );
+											}
+											wstd->wstd_Msg = wsreq->wr_Message;
+											wstd->wstd_Len = wsreq->wr_MessageSize;
+											
+											if( wstd->wstd_Http != NULL )
+											{
+												UriFree( wstd->wstd_Http->http_Uri );
+		
+												if( wstd->wstd_Http->http_RawRequestPath != NULL )
+												{
+													FFree( wstd->wstd_Http->http_RawRequestPath );
+													wstd->wstd_Http->http_RawRequestPath = NULL;
+												}
+
+												HttpFree( wstd->wstd_Http );
+												wstd->wstd_Http = NULL;
+											}
+	
+											if( wstd->wstd_Requestid != NULL )
+											{
+												FFree( wstd->wstd_Requestid );
+												wstd->wstd_Requestid = NULL;
+											}
+											if( wstd->wstd_Path != NULL )
+											{
+												FFree( wstd->wstd_Path );
+												wstd->wstd_Path = NULL;
+											}
+	
+											BufStringDelete( wstd->wstd_Queryrawbs );
+											
+											ParseAndCall( wstd );
 											//FC_Callback( wsi, reason, user, wsreq->wr_Message, wsreq->wr_MessageSize );
 											DEBUG("[WS] Callback was called again!\n");
 										}
@@ -1229,9 +937,9 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 								memset( session, 0, DEFAULT_SESSION_ID_SIZE );
 						
 								strncpy( session, in + t[ i1 ].start, t[i1 ].end-t[ i1 ].start );
-							
+
 								// We could connect? If so, then just send back a pong..
-								if( AttachWebsocketToSession( SLIB, fcd->wsc_Wsi, session, NULL, fcd ) >= 0 )
+								if( AttachWebsocketToSession( SLIB, wstd->wstd_WSD->wsc_Wsi, session, NULL, wstd->wstd_WSD ) >= 0 )
 								{
 									INFO("[WS] Websocket communication set with user (sessionid) %s\n", session );
 									
@@ -1247,11 +955,10 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 									if( buf != NULL )
 									{
 										memcpy( buf, answer,  len );
-										INFO("[WS] Writeline %p\n", fcd->wsc_UserSession );
-										if( fcd->wsc_UserSession != NULL )
-										{
-											WebsocketWriteInline( fcd, buf, len, LWS_WRITE_TEXT, 2 );
-										}
+										INFO("[WS] pointer to UserSession %p\n", locus );
+										
+										UserSessionWebsocketWrite( locus, buf, len, LWS_WRITE_TEXT );
+										
 										FFree( buf );
 									}
 								}
@@ -1262,10 +969,8 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 								char authid[ DEFAULT_SESSION_ID_SIZE ];
 								memset( authid, 0, DEFAULT_SESSION_ID_SIZE );
 						
-								//strncpy( authid, in + t[ i1 ].start, t[ i1 ].end-t[ i1 ].start );
-								
 								// We could connect? If so, then just send back a pong..
-								if( AttachWebsocketToSession( SLIB, fcd->wsc_Wsi, NULL, authid, fcd ) >= 0 )
+								if( AttachWebsocketToSession( SLIB, wstd->wstd_WSD->wsc_Wsi, NULL, authid, wstd->wstd_WSD ) >= 0 )
 								{
 									//INFO("[WS] Websocket communication set with user (authid) %s\n", authid );
 								
@@ -1280,11 +985,10 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 										//unsigned char buf[ LWS_SEND_BUFFER_PRE_PADDING + response->sizeOfContent +LWS_SEND_BUFFER_POST_PADDING ];
 										memcpy( buf, answer,  len );
 
-										DEBUG("[WS] Writeline1 %p\n", fcd->wsc_UserSession );
-										if( fcd->wsc_UserSession != NULL )
-										{
-											WebsocketWriteInline( fcd, buf, len, LWS_WRITE_TEXT, 2 );
-										}
+										DEBUG("[WS] Writeline1 %p\n", locus );
+										
+										UserSessionWebsocketWrite( locus, buf, len, LWS_WRITE_TEXT );
+										
 									FFree( buf );
 									}
 								}
@@ -1298,56 +1002,19 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 						// simple PING
 						if( tsize > 0 && strncmp( "ping",  in + t[ 6 ].start, tsize ) == 0 && r > 8 )
 						{
-#if (ENABLE_WEBSOCKETS_THREADS == 1) || ( USE_PTHREAD_PING == 1 )
-							WSThreadData *wstdata = FCalloc( 1, sizeof( WSThreadData ) );
+							//WSThreadData *wstdata = FCalloc( 1, sizeof( WSThreadData ) );
 							// threads
 							pthread_t thread;
 							memset( &thread, 0, sizeof( pthread_t ) );
 
-							//wstdata->wsi = wsi;
-							wstdata->fcd = fcd;
-							wstdata->requestid = StringDuplicateN( (char *)(in + t[ 8 ].start), t[ 8 ].end-t[ 8 ].start );
+							wstd->wstd_Requestid = StringDuplicateN( (char *)(in + t[ 8 ].start), t[ 8 ].end-t[ 8 ].start );
 
-#if USE_PTHREAD_PING == 1
 							// Multithread mode
-							if( pthread_create( &thread, NULL,  (void *(*)(void *))WSThreadPing, ( void *)wstdata ) != 0 )
+							if( pthread_create( &thread, NULL,  (void *(*)(void *))WSThreadPing, ( void *)wstd ) != 0 )
 							{
 							}
-#else // USE_PTHREAD_PING = 1
-							//SystemBase *lsb = (SystemBase *)fcd->fcd_SystemBase;
-							WorkerManagerRun( SLIB->sl_WorkerManager,  WSThreadPing, wstdata, NULL, "Websocket: PING" );
-#endif
-											
-#else // ENABLE_WEBSOCKETS_THREADS OR USE_PTHREAD_PING
-							char answer[ 2048 ];
-							snprintf( answer, 2048, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%.*s\"}}",t[ 8 ].end-t[ 8 ].start, (char *)(in + t[ 8 ].start) );
 							
-							UserSession *ses = (UserSession *)fcd->fcd_ActiveSession;
-							if( ses != NULL )
-							{
-								ses->us_LoggedTime = time( NULL );
-								
-								int len = strlen( answer );
-								WebsocketWriteInline( fcd, answer, len, LWS_WRITE_TEXT );
-							
-								SQLLibrary *sqllib  = SLIB->LibrarySQLGet( SLIB );
-								if( sqllib != NULL )
-								{
-									char *tmpQuery = FCalloc( 1024, 1 );
-									if( tmpQuery )
-									{
-										if( fcd->fcd_ActiveSession != NULL )
-										{
-											UserSession *us = (UserSession *)fcd->fcd_ActiveSession;
-											sqllib->SNPrintF( sqllib, tmpQuery, 1024, "UPDATE FUserSession SET `LoggedTime` = '%ld' WHERE `SessionID` = '%s'", time(NULL), us->us_SessionID );
-											sqllib->SelectWithoutResults( sqllib, tmpQuery );
-										}
-										FFree( tmpQuery );
-									}
-									SLIB->LibrarySQLDrop( SLIB, sqllib );
-								}
-							} // if( ses != NULL
-#endif
+							wstd = NULL;
 						}
 					}
 				}
@@ -1366,9 +1033,9 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 					{
 						if( strncmp( "request",  in + t[ 6 ].start, t[ 6 ].end-t[ 6 ].start ) == 0 )
 						{
-							WSThreadData *wstdata = FCalloc( 1, sizeof(WSThreadData) );
+							//WSThreadData *wstdata = FCalloc( 1, sizeof(WSThreadData) );
 							
-							if( wstdata != NULL )
+							if( locus != NULL && wstd != NULL )
 							{
 								DEBUG("[WS] Request received\n");
 								char *requestid = NULL;
@@ -1384,27 +1051,21 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 									http->http_ParsedPostContent = HashmapNew();
 									http->http_Uri = UriNew();
 
-									UserSession *s = NULL;
-									
+									if( HashmapPut( http->http_ParsedPostContent, StringDuplicate( "sessionid" ), StringDuplicate( locus->us_SessionID ) ) == MAP_OK )
+									{
+										//DEBUG1("[WS]:New values passed to POST %s\n", s->us_SessionID );
+									}
+									/*
 									if( FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) ) == 0 )
 									{
-										if( fcd->wsc_UserSession != NULL )
-										{
-											s = fcd->wsc_UserSession;
-										}
-									
-										if( s != NULL )
-										{
-											FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
-											
-											if( FRIEND_MUTEX_LOCK( &(s->us_Mutex) ) == 0 )
+											if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 											{
-												if( HashmapPut( http->http_ParsedPostContent, StringDuplicate( "sessionid" ), StringDuplicate( s->us_SessionID ) ) == MAP_OK )
+												if( HashmapPut( http->http_ParsedPostContent, StringDuplicate( "sessionid" ), StringDuplicate( us->us_SessionID ) ) == MAP_OK )
 												{
 												//DEBUG1("[WS]:New values passed to POST %s\n", s->us_SessionID );
 												}
 										
-												if( s->us_UserActionInfo[ 0 ] == 0 )
+												if( us->us_UserActionInfo[ 0 ] == 0 )
 												{
 													int fd = lws_get_socket_fd( fcd->wsc_Wsi );
 													char add[ 256 ];
@@ -1413,21 +1074,21 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 													lws_get_peer_addresses( fcd->wsc_Wsi, fd, add, sizeof(add), rip, sizeof(rip) );
 													//INFO("[WS]: WEBSOCKET call %s - %s\n", add, rip );
 											
-													snprintf( s->us_UserActionInfo, sizeof( s->us_UserActionInfo ), "%s / %s", add, rip );
+													snprintf( us->us_UserActionInfo, sizeof( us->us_UserActionInfo ), "%s / %s", add, rip );
 												}
 												FRIEND_MUTEX_UNLOCK( &(s->us_Mutex) );
-											}
 										}
 										else
 										{
 											FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
 										}
 									}
+									*/
 									
 									int i, i1;
 									
 									//thread
-									char **pathParts = wstdata->pathParts;
+									char **pathParts = wstd->wstd_PathParts;
 
 									BufString *queryrawbs = BufStringNewSize( 2048 );
 									
@@ -1440,8 +1101,8 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 										if( jsoneqin( in, &t[i], "requestid") == 0) 
 										{
 											// threads
-											wstdata->requestid = StringDuplicateN(  (char *)(in + t[i1].start), (int)(t[i1].end-t[i1].start) );
-											requestid = wstdata->requestid;
+											wstd->wstd_Requestid = StringDuplicateN(  (char *)(in + t[i1].start), (int)(t[i1].end-t[i1].start) );
+											requestid = wstd->wstd_Requestid;
 											
 											if( HashmapPut( http->http_ParsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
 											{
@@ -1457,8 +1118,8 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 											if( path == NULL )
 											{
 												// threads
-												wstdata->path = StringDuplicateN(  in + t[i1].start,t[i1].end-t[i1].start );
-												path = wstdata->path;//in + t[i1].start;
+												wstd->wstd_Path = StringDuplicateN(  in + t[i1].start,t[i1].end-t[i1].start );
+												path = wstd->wstd_Path;//in + t[i1].start;
 												paths = t[i1].end-t[i1].start;
 												
 												if( http->http_Uri != NULL )
@@ -1554,60 +1215,10 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 											}
 										}
 									} // end of going through json
-									
-#ifndef INPUT_QUEUE
-#if (ENABLE_WEBSOCKETS_THREADS == 1) || ( USE_PTHREAD == 1 )
-									// threads
-									pthread_t thread;
-									memset( &thread, 0, sizeof( pthread_t ) );
-									wstdata->http = http;
-									//wstdata->wsi = wsi;
-									wstdata->fcd = fcd;
-									wstdata->queryrawbs = queryrawbs;
-									// Multithread mode
-#if USE_PTHREAD == 1
-									if( pthread_create( &thread, NULL, (void *(*)(void *))WSThread, ( void *)wstdata ) != 0 )
-									{
-									}
-#endif
-#if USE_WORKERS == 1
-									SystemBase *lsb = (SystemBase *)fcd->wsc_SystemBase;
-									
-									DEBUG("[WS] Message parsed, sending\n");
-									
-									if( fcd->wsc_WebsocketsServerClient != NULL )//&& fcd->fcd_WSClient->wsc_ToBeRemoved == FALSE )
-									{
-										if( http->uri != NULL )
-										{
-											WorkerManagerRun( lsb->sl_WorkerManager,  WSThread, wstdata, http, http->uri->queryRaw );
-										}
-										else
-										{
-											WorkerManagerRun( lsb->sl_WorkerManager,  WSThread, wstdata, http, "ProtocolWebsocket.c: line 1220" );
-										}
-									}
-									else
-									{
-										releaseWSData( wstdata );
-									}
-#endif	// USE_WORKERS
 
-
-#endif // (ENABLE_WEBSOCKETS_THREADS == 1) || ( USE_PTHREAD == 1 )
-#else // INPUT_QUEUE
-									wstdata->http = http;
-									//wstdata->wsi = wsi;
-									wstdata->fcd = fcd;
-									wstdata->queryrawbs = queryrawbs;
-									
-									if( FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) ) == 0 )
-									{
-										fcd->wsc_InUseCounter++;
-										FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
-									}
-									
-									WSThread( wstdata );
-#endif
+									//static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, Http *http, char **pathParts, BufString *queryrawbs )
+									wstd->wstd_Http = http;
+									WSSystemLibraryCall( wstd, locus, http, pathParts, queryrawbs );
 								}
 							}
 						}
@@ -1633,13 +1244,13 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 									http->http_ParsedPostContent = HashmapNew();
 									http->http_Uri = UriNew();
 									
-									UserSession *s = fcd->wsc_UserSession;
-									if( s != NULL )
+									UserSession *ses = wstd->wstd_WSD->wsc_UserSession;
+									//if( s != NULL )
 									{
-										DEBUG("[WS] Session ptr %p  session %p\n", s, s->us_SessionID );
-										if( HashmapPut( http->http_ParsedPostContent, StringDuplicate( "sessionid" ), StringDuplicate( s->us_SessionID ) ) == MAP_OK )
+										DEBUG("[WS] Session ptr %p  session %p\n", ses, ses->us_SessionID );
+										if( HashmapPut( http->http_ParsedPostContent, StringDuplicate( "sessionid" ), StringDuplicate( ses->us_SessionID ) ) == MAP_OK )
 										{
-											DEBUG1("[WS] New values passed to POST %s\n", s->us_SessionID );
+											DEBUG1("[WS] New values passed to POST %s\n", ses->us_SessionID );
 										}
 									
 										int i, i1;
@@ -1767,8 +1378,8 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 										
 										if( strcmp( pathParts[ 0 ], "system.library" ) == 0)
 										{
-											UserSession *us = (UserSession *)fcd->wsc_UserSession;
-											http->http_WSocket = us->us_WSD;
+											//UserSession *us = (UserSession *)fcd->wsc_UserSession;
+											//http->http_WSocket = us->us_WSD;
 											
 											struct timeval start, stop;
 											gettimeofday(&start, NULL);
@@ -1780,7 +1391,7 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 											
 											int respcode = 0;
 											
-											Http *response = SLIB->SysWebRequest( SLIB, &(pathParts[ 1 ]), &http, fcd->wsc_UserSession, &respcode );
+											Http *response = SLIB->SysWebRequest( SLIB, &(pathParts[ 1 ]), &http, wstd->wstd_WSD->wsc_UserSession, &respcode );
 										
 											gettimeofday(&stop, NULL);
 											double secs = (double)(stop.tv_usec - start.tv_usec) / 1000000 + (double)(stop.tv_sec - start.tv_sec);
@@ -1824,10 +1435,12 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 										HttpFree( http );
 									}
 								} // session != NULL
+								/*
 								else
 								{
 									FERROR("[WS] User session is NULL\n");
 								}
+								*/
 							}
 						}
 					}	// type not found
@@ -1860,19 +1473,21 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 		int locmsgsize = snprintf( locmsg, sizeof(locmsg), "{\"type\":\"msg\",\"data\":{\"type\":\"error\",\"data\":{\"requestid\":\"%s\"}}}", reqid );
 		
 		strcpy( (char *)(buf), locmsg );
-		
-		if( fcd->wsc_UserSession != NULL ) //ORDER IS IMPORTANT
-		{
-			WebsocketWriteInline( fcd, buf, locmsgsize, LWS_WRITE_TEXT, 3 );
-		}
-		
-		if( in != NULL )
-		{
-		//	FFree( in );
-		}
-		
+		UserSessionWebsocketWrite( locus, buf, locmsgsize, LWS_WRITE_TEXT );
+
 		FERROR("[WS] Object expected\n");
 	}
+	
+	if( locus != NULL )
+	{
+		if( FRIEND_MUTEX_LOCK( &(locus->us_Mutex) ) == 0 )
+		{
+			locus->us_InUseCounter--;
+			FRIEND_MUTEX_UNLOCK( &(locus->us_Mutex) );
+		}
+	}
+	
+	releaseWSData( wstd );
 	
 	FFree( t );
 	

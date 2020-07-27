@@ -212,10 +212,10 @@ inline static void NotifyExtServices( SystemBase *l, Http *request, User *usr, c
  * @param request http request
  * @param loggedSession pointer to UserSession which called this function
  * @param result pointer to result value
- * @param sessionRemoved pointer to FBOOL where information about logout will be stored
+ * @param sessionRemoved pointer to int where information about logout will be stored
  * @return response as Http structure, otherwise NULL
  */
-Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedSession, int *result, FBOOL *sessionRemoved )
+Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedSession, int *result, int *sessionRemoved )
 {
 	SystemBase *l = (SystemBase *)m;
 	Http *response = NULL;
@@ -1716,7 +1716,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					
 					error = USMUserSessionRemove( l->sl_USM, sess );
 					
-					*sessionRemoved = TRUE;
+					*sessionRemoved = LL_LOGOUT;
 				}
 				//
 				// we found user which must be removed
