@@ -201,7 +201,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 			if( ( in = FMalloc( len+128 ) ) != NULL )	// 16 should be ok
 			{
 				memcpy( in, tin, len );
-				in[len ] = '\0';
+				in[ len ] = '\0';
 			}
 		}
 		
