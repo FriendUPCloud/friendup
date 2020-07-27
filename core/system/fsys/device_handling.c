@@ -3320,7 +3320,7 @@ File *GetRootDeviceByName( User *usr, char *devname )
 
 	File *lDev = NULL;
 	File *actDev = NULL;
-	if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
+	if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
 	{
 		lDev = usr->u_MountedDevs;
 	

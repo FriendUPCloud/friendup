@@ -99,7 +99,13 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 	
 	//fprintf( log, " CONTENT : %s\n\n\n\n\n", request->content );
 	
-	INFO("\t\t--->request->content %s raw %s \n\n", request->http_Content, request->http_Uri->uri_QueryRaw );
+	INFO("\t\t--->request->content %s raw %s len %d\n\n", request->http_Content, request->http_Uri->uri_QueryRaw, size );
+	
+	if( size <= 0 )
+	{
+		FERROR("No content or uri!\n");
+		return NULL;
+	}
 	
 	int fullsize = size + ( both ? 2 : 1 );
 	
