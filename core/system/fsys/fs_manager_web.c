@@ -25,8 +25,6 @@
 #include <system/cache/cache_manager.h>
 #include <system/fsys/fsys_activity.h>
 
-#define CPU_THROTTLE_TIME 50
-
 #define CHECK_BAD_CHARS( PTH, INT, RETVAL ) \
 if( PTH[ INT ] == '/' || PTH[ INT ] == ':' || PTH[ INT ] == '\'' ) \
 { \
@@ -1287,9 +1285,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 											continue;
 										}
 										readbytes += dataread;
-										
-										// Give it some space
-										usleep( CPU_THROTTLE_TIME );
 									}	// end of reading part or whole file
 									FFree( dataBuffer );
 								}
@@ -1379,9 +1374,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 												readbytes = bytesint;
 											}
 											totalBytes += readbytes;
-											
-											// Give it some space
-											usleep( CPU_THROTTLE_TIME );
 										}
 										
 										if( dataBuffer )
@@ -1428,8 +1420,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 											{
 												break;
 											}
-											// Give it some space
-											usleep( CPU_THROTTLE_TIME );
 										}
 										FFree( dataBuffer );
 									}
@@ -1852,8 +1842,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 																break;
 															}
 														}
-														// Give it some space
-														usleep( CPU_THROTTLE_TIME );
 													}
 													FFree( dataBuffer );
 												}
@@ -2132,8 +2120,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 										{
 											store = sizeLeft;
 										}
-										// Give it some space
-										usleep( CPU_THROTTLE_TIME );
 									}
 									
 									LOG( FLOG_DEBUG, "UPLOAD FINISHED\n");
