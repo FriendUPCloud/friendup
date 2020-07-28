@@ -2347,6 +2347,8 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
 					// Increment and check
 					if( ++l->MsqLlibCounter >= l->sqlpoolConnections ) l->MsqLlibCounter = 0;
 					FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
+					// Give some grace time..
+					usleep( 5000 );
 					continue;
 				}
 				
@@ -2374,6 +2376,7 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
 		}
 		
 		timer++;
+		// We got too many connections, give grace time
 		if( timer >= l->sqlpoolConnections )
 		{
 			timer = 0;

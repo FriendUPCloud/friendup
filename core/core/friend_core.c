@@ -1225,7 +1225,7 @@ void FriendCoreProcessSockBlock( void *fcv )
 			}
 			else if( retryContentNotFull > 1 )
 			{
-				th->sock->s_SocketBlockTimeout = 200;
+				th->sock->s_SocketBlockTimeout = 250;
 			}
 			
 			// Read from socket
