@@ -163,7 +163,7 @@ Friend.User = {
 					{
 						callback( true, serveranswer );
 						// Make sure we didn't lose websocket!
-						if( !Workspace.conn )
+						if( !Workspace.conn && Workspace.initWebSocket )
 						{
 							Workspace.initWebSocket();
 						}
