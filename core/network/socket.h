@@ -153,6 +153,8 @@ typedef struct Socket
 	int							s_Timeoutu;
 	int							s_Users;        // How many use it right now?
 	
+	int                         s_SocketBlockTimeout; // How long to block on Blocking Sockets
+	
 	int							s_AcceptFlags;
 	int							(*VerifyPeer)( int ok, X509_STORE_CTX* ctx );
 

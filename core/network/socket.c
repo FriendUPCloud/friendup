@@ -1675,7 +1675,7 @@ int SocketReadBlockedSSL( Socket* sock, char* data, unsigned int length, unsigne
 	fds.events = POLLIN;
 
 	// A timeout here on 50 seems to be a sweet spot - less may break connection
-	int err = poll( &fds, 1, 50 );	//200
+	int err = poll( &fds, 1, sock->s_SocketBlockTimeout > 0 ? sock->s_SocketBlockTimeout : 50 );	//200
 	if( err <= 0 )
 	{
 		DEBUG("[SocketReadBlockedSSL] Timeout or there is no data in socket\n");

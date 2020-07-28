@@ -1218,6 +1218,17 @@ void FriendCoreProcessSockBlock( void *fcv )
 		
 		while( TRUE )
 		{
+			// Increase timeouts in retries
+			if( retryContentNotFull == 1 )
+			{
+				th->sock->s_SocketBlockTimeout = 100;
+			}
+			else if( retryContentNotFull > 1 )
+			{
+				th->sock->s_SocketBlockTimeout = 200;
+			}
+			
+			// Read from socket
 			int res = th->sock->s_Interface->SocketReadBlocked( th->sock, locBuffer, bufferSize, bufferSize );
 			if( res > 0 )
 			{
