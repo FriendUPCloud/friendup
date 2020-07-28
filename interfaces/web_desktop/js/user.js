@@ -155,7 +155,19 @@ Friend.User = {
 					Workspace.loginid = json.loginid;
 					Workspace.userLevel = json.level;
 					Workspace.fullName = json.fullname;
-					Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), event );
+					if( !Workspace.userWorkspaceInitialized )
+					{
+						Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), event );
+					}
+					else
+					{
+						callback( true, serveranswer );
+						// Make sure we didn't lose websocket!
+						if( !Workspace.conn )
+						{
+							Workspace.initWebSocket();
+						}
+					}
 				
 					// Remember login info for next login
 					// But removed for security
