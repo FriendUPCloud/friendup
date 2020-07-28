@@ -201,7 +201,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 			if( ( in = FMalloc( len+128 ) ) != NULL )	// 16 should be ok
 			{
 				memcpy( in, tin, len );
-				in[len ] = '\0';
+				in[ len ] = '\0';
 			}
 		}
 		
@@ -1218,6 +1218,7 @@ int ParseAndCall( WSThreadData *wstd )
 
 									//static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, Http *http, char **pathParts, BufString *queryrawbs )
 									wstd->wstd_Http = http;
+									wstd->wstd_Queryrawbs = queryrawbs;
 									WSSystemLibraryCall( wstd, locus, http, pathParts, queryrawbs );
 								}
 							}
