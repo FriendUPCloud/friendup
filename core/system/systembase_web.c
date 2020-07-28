@@ -324,7 +324,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	Http *response = NULL;
 	FBOOL userAdded = FALSE;
 	FBOOL detachTask = FALSE;
-	FBOOL loginLogoutCalled = FALSE;
+	int loginLogoutCalled = LL_NONE;
 	
 	Log( FLOG_INFO, "\t\t\tWEB REQUEST FUNCTION func: %s\n", urlpath[ 0 ] );
 	
@@ -2372,7 +2372,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	}
 	
 	Log( FLOG_INFO, "\t\t\tWEB REQUEST FUNCTION func END: %s\n", urlpath[ 0 ] );
-	if( loginLogoutCalled == FALSE && loggedSession != NULL )
+	if( loginLogoutCalled != LL_LOGOUT && loggedSession != NULL )
 	{
 		if( FRIEND_MUTEX_LOCK( &(loggedSession->us_Mutex ) ) == 0 )
 		{
