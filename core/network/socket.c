@@ -41,8 +41,6 @@
 #include <sys/resource.h>
 #include <pthread.h>
 
-#define CPU_THROTTLE_TIME 50
-
 //#undef __DEBUG
 //#define DEBUG( ...)
 //#undef DEBUG1
@@ -648,8 +646,6 @@ int SocketConnectSSL( Socket* sock, const char *host )
 		{
 			break;
 		}
-		// Give it some space
-		usleep( CPU_THROTTLE_TIME );
 	}
 
 	cert = SSL_get_peer_certificate( sock->s_Ssl );
@@ -862,8 +858,6 @@ Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port 
 				INFO("[SocketConnectHost] Socket connected to: %s\n", host );
 				break;
 			}
-			// Give it some space
-			usleep( CPU_THROTTLE_TIME );
 		}
 
 		SocketSetBlocking( sock, blocked );
@@ -1182,8 +1176,7 @@ Socket* SocketAcceptSSL( Socket* sock )
 				return NULL;
 			}
 		}
-		// Give it some space
-		usleep( CPU_THROTTLE_TIME );
+		usleep( 0 );
 	}
 
 	X509                *cert = NULL;
@@ -1378,8 +1371,7 @@ Socket* SocketAcceptPairSSL( Socket* sock, struct AcceptPair *p )
 				return NULL;
 			}
 		}
-		// Give it some space
-		usleep( CPU_THROTTLE_TIME );
+		usleep( 0 );
 	}
 
 	// Return socket
@@ -1445,8 +1437,6 @@ int SocketReadNOSSL( Socket* sock, char* data, unsigned int length, unsigned int
 				return SOCKET_CLOSED_STATE;
 			}
 		}
-		// Give it some space
-		usleep( CPU_THROTTLE_TIME );
 	}
 	return read;
 }
@@ -1618,8 +1608,6 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 					return read;
 			}	// err switch
 		}	// SSL_Read else
-		// Give it some space
-		usleep( CPU_THROTTLE_TIME );
 	}	// while( TRUE );
 	return read;
 }
@@ -1794,8 +1782,6 @@ int SocketWaitReadNOSSL( Socket* sock, char* data, unsigned int length, unsigned
 			return read;
 		}
 		DEBUG( "[SocketWaitReadNOSSL] Read %d/%d\n", read, length );
-		// Give it some space
-		usleep( CPU_THROTTLE_TIME );
 	}
 	DEBUG( "[SocketWaitReadNOSSL] Done reading %d/%d (errno: %d)\n", read, length, errno );
 	return read;
@@ -1945,8 +1931,6 @@ int SocketWaitReadSSL( Socket* sock, char* data, unsigned int length, unsigned i
 				continue;
 			}
 		}
-		// Give it some space
-		usleep( CPU_THROTTLE_TIME );
 	}
 	while( read < length );
 
@@ -2017,8 +2001,6 @@ BufString *SocketReadPackageNOSSL( Socket *sock )
 				return bs;
 			}
 			DEBUG( "[SocketReadPackageNOSSL] Read %d/\n", read );
-			// Give it some space
-			usleep( CPU_THROTTLE_TIME );
 		}
 		DEBUG( "[SocketReadPackageNOSSL] Done reading %d/ (errno: %d)\n", read, errno );
 		FFree( locbuffer );
@@ -2153,8 +2135,6 @@ BufString *SocketReadPackageSSL( Socket *sock )
 					return NULL;
 				}
 			}
-			// Give it some space
-			usleep( CPU_THROTTLE_TIME );
 		}
 		while( TRUE );
 		DEBUG("[SocketReadPackageSSL] read\n");
@@ -2276,8 +2256,6 @@ BufString *SocketReadTillEndNOSSL( Socket* sock, unsigned int pass __attribute__
 					return bs;
 				}
 				DEBUG( "[SocketReadTillEndNOSSL] Read %ld fullpackagesize %d\n", read, fullPackageSize );
-				// Give it some space
-				usleep( CPU_THROTTLE_TIME );
 			}	// while( 1 )
 			DEBUG( "[SocketReadTillEndNOSSL] Done reading %ld/ (errno: %d)\n", read, errno );
 		}	// QUIT != TRUE
@@ -2415,8 +2393,6 @@ BufString *SocketReadTillEndSSL( Socket* sock, unsigned int pass __attribute__((
 					}
 				}
 			}	// if EPOLLIN
-			// Give it some space
-			usleep( CPU_THROTTLE_TIME );
 		}	// QUIT != TRUE
 		FFree( locbuffer );
 	}
@@ -2466,8 +2442,6 @@ FLONG SocketWriteNOSSL( Socket* sock, char* data, FLONG length )
 			//we have to rely on the reaper thread to release stale sockets
 			break;
 		}
-		// Give it some space
-		usleep( CPU_THROTTLE_TIME );
 	}
 	while( written < length );
 
@@ -2538,8 +2512,6 @@ FLONG SocketWriteSSL( Socket* sock, char* data, FLONG length )
 		{	
 			written += res;
 		}
-		// Give it some space
-		usleep( CPU_THROTTLE_TIME );
 	}
 	return written;
 }
@@ -2645,8 +2617,6 @@ void SocketDeleteSSL( Socket* sock )
 						do
 						{
 							FERROR( "[SocketDeleteSSL] SSL_ERROR_SYSCALL err: %d error message: %s\n", err, ERR_error_string(err, NULL) );
-							// Give it some space
-							usleep( CPU_THROTTLE_TIME );
 						}while( ( err = ERR_get_error() ) );
 					}
 					else if( errno != 0 )
@@ -2666,8 +2636,6 @@ void SocketDeleteSSL( Socket* sock )
 					while( ( err = ERR_get_error() ) )
 					{
 						FERROR( "[SocketDeleteSSL] default err: %d error message: %s\n", err, ERR_error_string(err, NULL) );
-						// Give it some space
-						usleep( CPU_THROTTLE_TIME );
 					}
 					break;
 				}
