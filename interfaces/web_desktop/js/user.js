@@ -166,7 +166,8 @@ Friend.User = {
 					}
 					else
 					{
-						callback( true, serveranswer );
+						if( typeof( callback ) == 'function' )
+							callback( true, serveranswer );
 						// Make sure we didn't lose websocket!
 						if( !Workspace.conn && Workspace.initWebSocket )
 						{
@@ -188,7 +189,7 @@ Friend.User = {
 				{
 					Friend.User.SetUserConnectionState( 'offline' );
 					
-					if( callback ) callback( false, serveranswer );
+					if( typeof( callback ) == 'function' ) callback( false, serveranswer );
 				}
 			}	
 			catch( e )
