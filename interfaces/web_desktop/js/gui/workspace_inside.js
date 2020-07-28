@@ -613,7 +613,7 @@ var WorkspaceInside = {
 		if( Workspace.readyToRun ) return Workspace.websocketState;
 		return "false";
 	},
-	initWebSocket: function()
+	initWebSocket: function( callback )
 	{	
 		// We're already open
 		if( Workspace.websocketState == 'open' ) return;
@@ -748,6 +748,11 @@ var WorkspaceInside = {
 					//       a slight delay
 					setTimeout( function()
 					{
+						if( callback )
+						{
+							callback();
+							callback = null;
+						}
 						Workspace.websocketState = 'open';
 					}, 150 );
 				}

@@ -2832,7 +2832,11 @@ function apiWrapper( event, force )
 			case 'fconn':
 				if( !Workspace.conn )
 				{
-					console.log( 'Workspace.conn - websocket not enabled, aborting' );
+					Workspace.initWebSocket( function()
+					{
+						apiWrapper( event, force );
+					} );
+					console.log( 'Workspace.conn - websocket not enabled, reinitializing' );
 					return;
 				}
 
