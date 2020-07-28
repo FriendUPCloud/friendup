@@ -276,6 +276,8 @@ i18n_upload_failed                      : Opplastning feilet.
 i18n_upload_completed_description       : Din fil ble lastet opp til målmappen.
 i18n_upload_failed_description          : Din fil kunne ikke lastes opp.
 i18n_select_local_files                 : Velg lokale filer
+i18n_not_upload_target                  : Kan ikke laste opp her
+i18n_not_upload_target_desc             : Shared disken støtter ikke opplastning.
 
 
 i18n_unzip_completed                    : Ferdig å pakke ut.
