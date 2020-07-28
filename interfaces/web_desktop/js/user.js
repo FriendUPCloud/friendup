@@ -143,6 +143,11 @@ Friend.User = {
 		m.addVar( 'deviceid', GetDeviceId() );
 		m.onExecuted = function( json, serveranswer )
 		{
+			// We got a real error
+			if( json == null )
+			{
+				return Friend.User.ReLogin();
+			}
 			try
 			{
 				let enc = Workspace.encryption;
