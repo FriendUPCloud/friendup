@@ -86,10 +86,13 @@ USBRemoteDevice *USBRemoteManagerCreatePort( USBRemoteManager *usbm, char *usern
 	UserUSBRemoteDevices *actdev = NULL;
 	*error = 0;
 	
+	DEBUG("[USBRemoteManagerCreatePort] username: %s\n", username );
+	
 	if( usbm != NULL && username != NULL )
 	{
 		if( ( FRIEND_MUTEX_LOCK( &(usbm->usbrm_Mutex ) ) ) == 0 )
 		{
+			DEBUG("[USBRemoteManagerCreatePort] Trying to find user\n");
 			actdev = usbm->usbrm_UserDevices;
 			while( actdev != NULL )
 			{
@@ -104,6 +107,7 @@ USBRemoteDevice *USBRemoteManagerCreatePort( USBRemoteManager *usbm, char *usern
 		}
 		// try to find devices attached to user
 		
+		DEBUG("[USBRemoteManagerCreatePort] User to which device will be mounted found: %p\n", actdev );
 		// device found
 		if( actdev != NULL )
 		{
@@ -114,6 +118,7 @@ USBRemoteDevice *USBRemoteManagerCreatePort( USBRemoteManager *usbm, char *usern
 				if( actdev->uusbrd_Devices[ i ] == NULL )
 				{
 					*error = 0;	// we found empty place
+					retdev = actdev->uusbrd_Devices[ i ];
 					break;
 				}
 			}
@@ -121,7 +126,9 @@ USBRemoteDevice *USBRemoteManagerCreatePort( USBRemoteManager *usbm, char *usern
 		else
 		{
 			// username, windows user name, internet address
+			DEBUG("[USBRemoteManagerCreatePort] Create new user devices\n");
 			actdev = UserUSBRemoteDevicesNew( username, NULL );
+			DEBUG("[USBRemoteManagerCreatePort] device created: %p\n", actdev );
 			if( ( FRIEND_MUTEX_LOCK( &(usbm->usbrm_Mutex ) ) ) == 0 )
 			{
 				// add user devices to list
