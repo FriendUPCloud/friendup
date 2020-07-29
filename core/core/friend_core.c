@@ -1157,7 +1157,6 @@ void *FriendCoreAcceptPhase2( void *d )
 			}
 		}
 		//DEBUG("[FriendCoreAcceptPhase2] in accept loop\n");
-		usleep( 5000 );
 	}	// while accept
 	FFree( pre );
 		
