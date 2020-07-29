@@ -84,7 +84,7 @@ void FriendCoreProcessSockNonBlock( void *fcv );
 
 int nothreads = 0;					/// threads coutner @todo to rewrite
 #define MAX_CALLHANDLER_THREADS 256			///< maximum number of simulatenous handlers
-//#define USE_BLOCKED_SOCKETS_TO_READ_HTTP
+#define USE_BLOCKED_SOCKETS_TO_READ_HTTP
 
 /**
 * Creates a new instance of Friend Core.
@@ -1157,6 +1157,7 @@ void *FriendCoreAcceptPhase2( void *d )
 			}
 		}
 		//DEBUG("[FriendCoreAcceptPhase2] in accept loop\n");
+		usleep( 5000 );
 	}	// while accept
 	FFree( pre );
 		
@@ -1755,8 +1756,6 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	// All incoming network events go through here
 	while( !fc->fci_Shutdown )
 	{
-		usleep( 50 );
-
 #ifdef SINGLE_SHOT
 		epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_MOD, fc->fci_Sockets->fd, &(fc->fci_EpollEvent) );
 #endif
@@ -1926,6 +1925,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 				}
 			}
 		}
+		usleep( 500 );
 	}
 	
 	//DEBUG("End main loop\n");
