@@ -1854,7 +1854,14 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 				{
 					pre->fc = fc;
 					pre->IncomingFD = dup( fc->fci_Sockets->fd );
-					fcntl( pre->IncomingFD, F_SETFL, ~O_NONBLOCK );
+					
+					int flags = fcntl( pre->IncomingFD, F_GETFL, 0 );
+					if( flags != -1 )
+					{
+						flags &= ~O_NONBLOCK;
+						fcntl( pre->IncomingFD, F_SETFL, flags );
+					}
+					
 					DEBUG("[FriendCoreEpoll] Thread create pointer: %p friendcore: %p\n", pre, fc );
 					
 					if( pthread_create( &pre->thread, NULL, &FriendCoreAcceptPhase2, ( void *)pre ) != 0 )
