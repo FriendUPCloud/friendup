@@ -610,10 +610,6 @@ void *FriendCoreAcceptPhase2( void *data )
 			}
 			//DEBUG("[FriendCoreAcceptPhase2] in accept loop\n");
 		}	// while accept
-		else
-		{
-			DEBUG( "[FriendCoreAcceptPhase2] FAILED TO GET FD! %d\n", fd );
-		}
 
 		FBOOL ok = TRUE;
 		//return NULL;
