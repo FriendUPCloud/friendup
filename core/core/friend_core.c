@@ -380,6 +380,10 @@ void *FriendCoreAcceptPhase2( void *data )
 				}
 				goto accerror;
 			}
+			else
+			{
+				DEBUG( "[FriendCoreAcceptPhase2] Got cool fd: %d\n", fd );
+			}
 		
 			int prerr = getpeername( fd, (struct sockaddr *) &client, &clientLen );
 			if( prerr == -1 )
@@ -2105,33 +2109,7 @@ int FriendCoreRun( FriendCoreInstance* fc )
 
 	DEBUG("[FriendCoreRun] Listening.\n");
 	
-	pthread_mutex_init( &(fc->fci_epollMutex ), NULL );
-	fc->fci_epollInstances = 0;
-	
-	pthread_t t1;
-	pthread_t t2;
-	pthread_t t3;
-	
-	pthread_create( &t1, NULL, &FriendCoreEpoll, ( void *)fc );
-	pthread_create( &t2, NULL, &FriendCoreEpoll, ( void *)fc );
-	pthread_create( &t3, NULL, &FriendCoreEpoll, ( void *)fc );
-	
-	for( ;; )
-	{
-		if( FRIEND_MUTEX_LOCK( &fc->fci_epollMutex ) == 0 )
-		{
-			if( fc->fci_epollInstances == 0 )
-			{
-				FRIEND_MUTEX_UNLOCK( &fc->fci_epollMutex );
-				break;
-			}
-			FRIEND_MUTEX_UNLOCK( &fc->fci_epollMutex );
-		}
-	}
-	
-	pthread_mutex_destroy( &(fc->fci_epollMutex ) );
-	
-	//FriendCoreEpoll( fc );
+	FriendCoreEpoll( fc );
 #endif
 	
 	fc->fci_Sockets = NULL;
