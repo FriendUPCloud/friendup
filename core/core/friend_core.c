@@ -1688,6 +1688,13 @@ static inline void FriendCoreSelect( FriendCoreInstance* fc )
 */
 static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 {
+	// Increase instances
+	if( FRIEND_MUTEX_LOCK( &fc->fci_epollMutex ) == 0 )
+	{
+		fc->fci_epollInstances++;
+		FRIEND_MUTEX_UNLOCK( &fc->fci_epollMutex );
+	}
+	
 	int eventCount = 0;
 	int i;
 	struct epoll_event *currentEvent;
@@ -1978,6 +1985,13 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	close( fc->fci_WriteCorePipe );
 	
 	fc->fci_Closed = TRUE;
+	
+	// Increase instances
+	if( FRIEND_MUTEX_LOCK( &fc->fci_epollMutex ) == 0 )
+	{
+		fc->fci_epollInstances++;
+		FRIEND_MUTEX_UNLOCK( &fc->fci_epollMutex );
+	}
 }
 #endif
 
@@ -2090,7 +2104,34 @@ int FriendCoreRun( FriendCoreInstance* fc )
 	}
 
 	DEBUG("[FriendCoreRun] Listening.\n");
-	FriendCoreEpoll( fc );
+	
+	pthread_mutex_init( &(fc->fci_epollMutex ), NULL );
+	fc->fci_epollInstances = 0;
+	
+	pthread_t t1;
+	pthread_t t2;
+	pthread_t t3;
+	
+	pthread_create( &t1, NULL, &FriendCoreEpoll, ( void *)fc );
+	pthread_create( &t2, NULL, &FriendCoreEpoll, ( void *)fc );
+	pthread_create( &t3, NULL, &FriendCoreEpoll, ( void *)fc );
+	
+	for( ;; )
+	{
+		if( FRIEND_MUTEX_LOCK( &fc->fci_epollMutex ) == 0 )
+		{
+			if( fc->fci_epollInstances == 0 )
+			{
+				FRIEND_MUTEX_UNLOCK( &fc->fci_epollMutex );
+				break;
+			}
+			FRIEND_MUTEX_UNLOCK( &fc->fci_epollMutex );
+		}
+	}
+	
+	pthread_mutex_destroy( &(fc->fci_epollMutex ) );
+	
+	//FriendCoreEpoll( fc );
 #endif
 	
 	fc->fci_Sockets = NULL;
