@@ -942,7 +942,7 @@ accerror:
 void *FriendCoreAcceptPhase2( void *d )
 {
 	//DEBUG("[FriendCoreAcceptPhase2] detached\n");
-	//pthread_detach( pthread_self() );
+	pthread_detach( pthread_self() );
 
 	struct fcThreadInstance *pre = (struct fcThreadInstance *)d;
 	FriendCoreInstance *fc = (FriendCoreInstance *)pre->fc;
@@ -1165,7 +1165,7 @@ accerror:
 	DEBUG("[FriendCoreAcceptPhase2] ERROR\n");
 	FFree( pre );
 
-	//pthread_exit( 0 );
+	pthread_exit( 0 );
 
 	return NULL;
 }
