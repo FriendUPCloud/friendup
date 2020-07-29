@@ -957,7 +957,7 @@ void *FriendCoreAcceptPhase2( void *d )
 	SSL							*s_Ssl = NULL;
 	DEBUG("[FriendCoreAcceptPhase2] before accept4\n");
 	
-	while( ( fd = accept4( pre->IncomingFD, ( struct sockaddr* )&client, &clientLen, SOCK_CLOEXEC ) ) > 0 )
+	if( ( fd = accept4( pre->IncomingFD, ( struct sockaddr* )&client, &clientLen, SOCK_CLOEXEC ) ) > 0 )
 	{
 		if( fd == -1 )
 		{
