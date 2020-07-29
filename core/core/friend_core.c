@@ -343,7 +343,7 @@ void *FriendCoreAcceptPhase2( void *data )
 	
 	while( fc->fci_AcceptQuit != TRUE )
 	{
-		DEBUG("Going to accept!\n");
+		DEBUG("[FriendCoreAcceptPhase2] Going to accept!\n");
 
 		if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
 		{
@@ -351,11 +351,13 @@ void *FriendCoreAcceptPhase2( void *data )
 			FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
 		}
 		
+		DEBUG( "[FriendCoreAcceptPhase2] WOKE UP!" );
+		
 		if( ( fd = accept( fc->fci_Sockets->fd, ( struct sockaddr* )&(client), &clientLen ) ) > 0 )
 		//while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, 0 ) ) > 0 )
 		//while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) > 0 )
 		{
-			if( fd <= 0 )
+			if( fd == 0 )
 			{
 				// Get some info about failure..
 				switch( errno )
@@ -608,6 +610,10 @@ void *FriendCoreAcceptPhase2( void *data )
 			}
 			//DEBUG("[FriendCoreAcceptPhase2] in accept loop\n");
 		}	// while accept
+		else
+		{
+			DEBUG( "[FriendCoreAcceptPhase2] FAILED TO GET FD! %d\n", fd );
+		}
 
 		FBOOL ok = TRUE;
 		//return NULL;
@@ -1751,6 +1757,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	// All incoming network events go through here
 	while( !fc->fci_Shutdown )
 	{
+		usleep( 50 );
 
 #ifdef SINGLE_SHOT
 		epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_MOD, fc->fci_Sockets->fd, &(fc->fci_EpollEvent) );
