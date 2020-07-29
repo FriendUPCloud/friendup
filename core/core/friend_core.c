@@ -299,7 +299,7 @@ static inline void moveToHttps( Socket *sock )
 	
 	if( response != NULL )
 	{
-		HttpAddTextContent( response, StringDuplicate("<html>please change to https!</html>") );
+		HttpAddTextContent( response, StringDuplicate("<html>Please change protocol to HTTPS!</html>") );
 		
 		if( HttpBuild( response ) != NULL )
 		{
