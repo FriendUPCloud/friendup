@@ -1110,7 +1110,6 @@ void *FriendCoreAcceptPhase2( void *d )
 			{
 				close( fd );
 			}
-			break;
 		}
 		else
 		{
