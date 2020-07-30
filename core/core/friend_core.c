@@ -1305,7 +1305,7 @@ void FriendCoreProcessSockBlock( void *fcv )
 						}
 					}
 				}
-				else
+				else if( retryContentNotFull++ < 2 )
 				{
 					DEBUG("[FriendCoreProcessSockBlock] No more data in sockets!\n");
 					break;
