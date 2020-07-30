@@ -647,7 +647,7 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 	DEBUG("[FriendCoreAcceptPhase2] before accept4\n");
 	
 	//if( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) > 0 )
-	while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, NULL ) ) > 0 )
+	while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, 0 ) ) > 0 )
 	{
 		if( fd <= 0 )
 		{
@@ -863,7 +863,8 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 						
 						//change NULL to &attr
 //#ifdef USE_BLOCKED_SOCKETS_TO_READ_HTTP
-						if( pthread_create( &pre->thread, &attr, (void *(*) (void *))&FriendCoreProcessSockBlock, ( void *)pre ) != 0 )
+						FriendCoreProcessSockBlock( pre );
+						/*if( pthread_create( &pre->thread, &attr, (void *(*) (void *))&FriendCoreProcessSockBlock, ( void *)pre ) != 0 )
 //#else
 //						if( pthread_create( &pre->thread, &attr, (void *(*) (void *))&FriendCoreProcessSockNonBlock, ( void *)pre ) != 0 )
 //#endif
@@ -873,7 +874,7 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 						else
 						{
 							
-						}
+						}*/
 #endif
 					}
 				/*
