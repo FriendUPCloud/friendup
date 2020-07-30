@@ -863,8 +863,7 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 						
 						//change NULL to &attr
 //#ifdef USE_BLOCKED_SOCKETS_TO_READ_HTTP
-						FriendCoreProcessSockBlock( pre );
-						/*if( pthread_create( &pre->thread, &attr, (void *(*) (void *))&FriendCoreProcessSockBlock, ( void *)pre ) != 0 )
+						if( pthread_create( &pre->thread, &attr, (void *(*) (void *))&FriendCoreProcessSockBlock, ( void *)pre ) != 0 )
 //#else
 //						if( pthread_create( &pre->thread, &attr, (void *(*) (void *))&FriendCoreProcessSockNonBlock, ( void *)pre ) != 0 )
 //#endif
@@ -874,7 +873,7 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 						else
 						{
 							
-						}*/
+						}
 #endif
 					}
 				/*
