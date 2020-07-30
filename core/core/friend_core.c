@@ -1223,6 +1223,9 @@ void FriendCoreProcessSockBlock( void *fcv )
 	
 	DEBUG("[FriendCoreProcessSockBlock] start\n");
 	
+	// Always assume this first..
+	th->sock->s_SocketBlockTimeout = 0;
+	
 	if( locBuffer != NULL )
 	{
 		int retryContentNotFull = 0;
