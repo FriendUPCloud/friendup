@@ -84,7 +84,7 @@ void FriendCoreProcessSockNonBlock( void *fcv );
 
 int nothreads = 0;					/// threads coutner @todo to rewrite
 #define MAX_CALLHANDLER_THREADS 256			///< maximum number of simulatenous handlers
-#define USE_BLOCKED_SOCKETS_TO_READ_HTTP
+//#define USE_BLOCKED_SOCKETS_TO_READ_HTTP
 
 /**
 * Creates a new instance of Friend Core.
@@ -205,7 +205,6 @@ struct fcThreadInstance
 	pthread_t				thread;
 	struct epoll_event		*event;
 	Socket					*sock;
-	int                     IncomingFD;
 	
 	// Incoming from accept
 	struct AcceptPair		*acceptPair;
@@ -300,7 +299,7 @@ static inline void moveToHttps( Socket *sock )
 	
 	if( response != NULL )
 	{
-		HttpAddTextContent( response, StringDuplicate("<html>Please change protocol to HTTPS!</html>") );
+		HttpAddTextContent( response, StringDuplicate("<html>please change to https!</html>") );
 		
 		if( HttpBuild( response ) != NULL )
 		{
@@ -322,7 +321,7 @@ static inline void moveToHttps( Socket *sock )
 
 #define SINGLE_SHOT
 //#define ACCEPT_IN_EPOLL
-//#define ACCEPT_IN_THREAD
+#define ACCEPT_IN_THREAD
 
 #ifdef ACCEPT_IN_THREAD
 
@@ -344,7 +343,7 @@ void *FriendCoreAcceptPhase2( void *data )
 	
 	while( fc->fci_AcceptQuit != TRUE )
 	{
-		DEBUG("[FriendCoreAcceptPhase2] Going to accept!\n");
+		DEBUG("Going to accept!\n");
 
 		if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
 		{
@@ -352,13 +351,11 @@ void *FriendCoreAcceptPhase2( void *data )
 			FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
 		}
 		
-		DEBUG( "[FriendCoreAcceptPhase2] WOKE UP!" );
-		
-		//if( ( fd = accept( fc->fci_Sockets->fd, ( struct sockaddr* )&(client), &clientLen ) ) > 0 )
+		if( ( fd = accept( fc->fci_Sockets->fd, ( struct sockaddr* )&(client), &clientLen ) ) > 0 )
 		//while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, 0 ) ) > 0 )
-		while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) > 0 )
+		//while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) > 0 )
 		{
-			if( fd == 0 )
+			if( fd <= 0 )
 			{
 				// Get some info about failure..
 				switch( errno )
@@ -382,10 +379,6 @@ void *FriendCoreAcceptPhase2( void *data )
 						goto accerror;
 				}
 				goto accerror;
-			}
-			else
-			{
-				DEBUG( "[FriendCoreAcceptPhase2] Got cool fd: %d\n", fd );
 			}
 		
 			int prerr = getpeername( fd, (struct sockaddr *) &client, &clientLen );
@@ -938,11 +931,10 @@ accerror:
 
 #else
 
-/* Pthread based accept... */
 void *FriendCoreAcceptPhase2( void *d )
 {
 	//DEBUG("[FriendCoreAcceptPhase2] detached\n");
-	pthread_detach( pthread_self() );
+	//pthread_detach( pthread_self() );
 
 	struct fcThreadInstance *pre = (struct fcThreadInstance *)d;
 	FriendCoreInstance *fc = (FriendCoreInstance *)pre->fc;
@@ -957,7 +949,7 @@ void *FriendCoreAcceptPhase2( void *d )
 	SSL							*s_Ssl = NULL;
 	DEBUG("[FriendCoreAcceptPhase2] before accept4\n");
 	
-	if( ( fd = accept4( pre->IncomingFD, ( struct sockaddr* )&client, &clientLen, SOCK_CLOEXEC ) ) > 0 )
+	while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) > 0 )
 	{
 		if( fd == -1 )
 		{
@@ -1110,6 +1102,7 @@ void *FriendCoreAcceptPhase2( void *d )
 			{
 				close( fd );
 			}
+			break;
 		}
 		else
 		{
@@ -1164,7 +1157,7 @@ accerror:
 	DEBUG("[FriendCoreAcceptPhase2] ERROR\n");
 	FFree( pre );
 
-	pthread_exit( 0 );
+	//pthread_exit( 0 );
 
 	return NULL;
 }
@@ -1695,13 +1688,6 @@ static inline void FriendCoreSelect( FriendCoreInstance* fc )
 */
 static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 {
-	// Increase instances
-	if( FRIEND_MUTEX_LOCK( &fc->fci_epollMutex ) == 0 )
-	{
-		fc->fci_epollInstances++;
-		FRIEND_MUTEX_UNLOCK( &fc->fci_epollMutex );
-	}
-	
 	int eventCount = 0;
 	int i;
 	struct epoll_event *currentEvent;
@@ -1754,6 +1740,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	// All incoming network events go through here
 	while( !fc->fci_Shutdown )
 	{
+
 #ifdef SINGLE_SHOT
 		epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_MOD, fc->fci_Sockets->fd, &(fc->fci_EpollEvent) );
 #endif
@@ -1782,7 +1769,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 				!( currentEvent->events & EPOLLIN ) 
 			)
 			{
-				if( ( ( Socket* )currentEvent->data.ptr )->fd == fc->fci_Sockets->fd )
+				if( ((Socket*)currentEvent->data.ptr)->fd == fc->fci_Sockets->fd )
 				{
 					// Oups! We have gone away!
 					DEBUG( "[FriendCoreEpoll] Socket went away!\n" );
@@ -1851,15 +1838,6 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 				if( pre != NULL )
 				{
 					pre->fc = fc;
-					pre->IncomingFD = dup( fc->fci_Sockets->fd );
-					
-					int flags = fcntl( pre->IncomingFD, F_GETFL, 0 );
-					if( flags != -1 )
-					{
-						flags &= ~O_NONBLOCK;
-						fcntl( pre->IncomingFD, F_SETFL, flags );
-					}
-					
 					DEBUG("[FriendCoreEpoll] Thread create pointer: %p friendcore: %p\n", pre, fc );
 					
 					if( pthread_create( &pre->thread, NULL, &FriendCoreAcceptPhase2, ( void *)pre ) != 0 )
@@ -1931,7 +1909,6 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 				}
 			}
 		}
-		usleep( 500 );
 	}
 	
 	//DEBUG("End main loop\n");
@@ -2001,13 +1978,6 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	close( fc->fci_WriteCorePipe );
 	
 	fc->fci_Closed = TRUE;
-	
-	// Increase instances
-	if( FRIEND_MUTEX_LOCK( &fc->fci_epollMutex ) == 0 )
-	{
-		fc->fci_epollInstances++;
-		FRIEND_MUTEX_UNLOCK( &fc->fci_epollMutex );
-	}
 }
 #endif
 
@@ -2120,7 +2090,6 @@ int FriendCoreRun( FriendCoreInstance* fc )
 	}
 
 	DEBUG("[FriendCoreRun] Listening.\n");
-	
 	FriendCoreEpoll( fc );
 #endif
 	

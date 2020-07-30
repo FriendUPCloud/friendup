@@ -77,9 +77,6 @@ typedef struct FriendCoreInstance
 	
 	void 					*fci_SB;							//pointer to systembase
 	
-	int                     fci_epollInstances;     // 
-	pthread_mutex_t         fci_epollMutex;
-	
 	pthread_cond_t			fci_AcceptCond;
 	pthread_mutex_t			fci_AcceptMutex;
 	FBOOL					fci_AcceptQuit;
