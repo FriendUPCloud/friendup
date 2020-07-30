@@ -999,7 +999,7 @@ int USMRemoveOldSessionsinDB( void *lsb )
 	 {
 		char temp[ 1024 ];
 	 
-		// we remove old entries older $sl_RemoveSessionAfterTime seconds (look in systembase.c where it is defined)
+		// we remove old entries older then sl_RemoveSessionsAfterTime (look in systembase.c)
 		snprintf( temp, sizeof(temp), "DELETE from `FUserSession` WHERE LoggedTime != '' AND (%lu-LoggedTime)>%lu", acttime, sb->sl_RemoveSessionsAfterTime );
 		DEBUG("USMRemoveOldSessionsDB launched SQL: %s\n", temp );
 	 
