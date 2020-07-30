@@ -957,7 +957,7 @@ void *FriendCoreAcceptPhase2( void *d )
 		// Lock accept to mutex
 		if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
 		{
-			fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, 0 );
+			fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK );
 			FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
 		
 			if( !fd ) break;
