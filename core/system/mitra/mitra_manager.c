@@ -178,8 +178,9 @@ char *MitraManagerGetUserData( MitraManager *mmgr, char *username )
 	
 	if( mmgr->mm_Sqllib != NULL )
 	{
-		char sqlTmp[ 1024 ];
-		snprintf( sqlTmp, sizeof(sqlTmp), "select parameter_value from guacamole_connection_parameter where parameter_name='username' AND connection_id=(select connection_id from guacamole_connection_permission where entity_id in (select entity_id from guacamole_entity where name='mitra_%s') limit 1) union select parameter_value from guacamole_connection_parameter where parameter_name='domain' AND connection_id=(select connection_id from guacamole_connection_permission where entity_id in (select entity_id from guacamole_entity where name='mitra_%s') limit 1) union select parameter_value from guacamole_connection_parameter where parameter_name='password' AND connection_id=(select connection_id from guacamole_connection_permission where entity_id in (select entity_id from guacamole_entity where name='mitra_%s') limit 1)", username, username, username );
+		char *sqlTmp = FMalloc( 1024  );
+		
+		snprintf( sqlTmp, 1024, "select parameter_value from guacamole_connection_parameter where parameter_name='username' AND connection_id=(select connection_id from guacamole_connection_permission where entity_id in (select entity_id from guacamole_entity where name='mitra_%s') limit 1) union select parameter_value from guacamole_connection_parameter where parameter_name='domain' AND connection_id=(select connection_id from guacamole_connection_permission where entity_id in (select entity_id from guacamole_entity where name='mitra_%s') limit 1) union select parameter_value from guacamole_connection_parameter where parameter_name='password' AND connection_id=(select connection_id from guacamole_connection_permission where entity_id in (select entity_id from guacamole_entity where name='mitra_%s') limit 1)", username, username, username );
 		//snprintf( sqlTmp, sizeof(sqlTmp), "SELECT * FROM guacamole_connection_parameter gcp WHERE gcp.connection_id IN ( SELECT connection_id FROM guacamole_connection_permission WHERE entity_id IN ( SELECT entity_id FROM guacamole_user WHERE user_id='SELECT gu.user_id FROM guacamole_user gu WHERE gu.username='mitra_%s' OR gu.username='mitra_frienduser_%s') )", username, username ); // AND connection_id = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->data->connection ) . '\')"
 		void *res = mmgr->mm_Sqllib->Query( mmgr->mm_Sqllib, sqlTmp );
 		char **row;
@@ -203,7 +204,7 @@ char *MitraManagerGetUserData( MitraManager *mmgr, char *username )
 			int plen = 0;
 			if( row[ 2 ] != NULL )	// password
 			{
-				DEBUG("ROW2 >%s<\n", row[ 2 ] );
+				DEBUG("ROW2 >>>%s<<<\n", row[ 2 ] );
 				if( row[ 2 ][ 0 ] != 0 )
 				{
 					plen = strlen( row[ 2 ] );
@@ -220,7 +221,10 @@ char *MitraManagerGetUserData( MitraManager *mmgr, char *username )
 			DEBUG("[MitraManagerGetUserData] user found: %s\n", retValue );
 			break;
 		}
-
+		if( sqlTmp != NULL )
+		{
+			FFree( sqlTmp );
+		}
 	}
 	DEBUG("[MitraManagerGetUserData] end\n");
 	return retValue;
