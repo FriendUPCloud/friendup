@@ -382,7 +382,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 						
 						FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 						unsigned char *t = e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING;
-						t[ e->fq_Size+1 ] = 0;
+						t[ e->fq_Size ] = 0;
 
 						lws_write( wsi, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, e->fq_Size, LWS_WRITE_TEXT );
 				
@@ -585,7 +585,7 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 					}
 
 					static int END_CHAR_SIGNS = 3;
-					char *end = "\"}}\0";
+					char *end = "\"}}";
 				
 					int jsonsize = sprintf( jsontemp, 
 						"{\"type\":\"msg\",\"data\":{\"type\":\"response\",\"requestid\":\"%s\",\"data\":\"",
