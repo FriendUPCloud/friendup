@@ -935,7 +935,9 @@ accerror:
 void *FriendCoreAcceptPhase2( void *d )
 {
 	//DEBUG("[FriendCoreAcceptPhase2] detached\n");
-	//pthread_detach( pthread_self() );
+#ifdef USE_PTHREAD
+	pthread_detach( pthread_self() );
+#endif
 
 	struct fcThreadInstance *pre = (struct fcThreadInstance *)d;
 	FriendCoreInstance *fc = (FriendCoreInstance *)pre->fc;
@@ -1162,13 +1164,19 @@ void *FriendCoreAcceptPhase2( void *d )
 	}	// while accept
 
 	FFree( pre );
+
+#ifdef USE_PTHREAD
+	pthread_exit( 0 );
+#endif
 		
 	return NULL;
 accerror:
 	DEBUG("[FriendCoreAcceptPhase2] ERROR\n");
 	FFree( pre );
 
-	//pthread_exit( 0 );
+#ifdef USE_PTHREAD
+	pthread_exit( 0 );
+#endif
 
 	return NULL;
 }
@@ -1228,7 +1236,7 @@ void FriendCoreProcessSockBlock( void *fcv )
 	
 	if( locBuffer != NULL )
 	{
-		int retryContentNotFull = 0;
+		int retryContentNotFull = 500;
 		
 		while( TRUE )
 		{
@@ -1305,7 +1313,7 @@ void FriendCoreProcessSockBlock( void *fcv )
 						}
 					}
 				}
-				else if( retryContentNotFull++ < 2 )
+				else
 				{
 					DEBUG("[FriendCoreProcessSockBlock] No more data in sockets!\n");
 					break;
