@@ -203,8 +203,11 @@ char *MitraManagerGetUserData( MitraManager *mmgr, char *username )
 			int plen = 0;
 			if( row[ 2 ] != NULL )	// password
 			{
-				DEBUG("ROW2 %s\n", row[ 2 ] );
-				plen = strlen( row[ 2 ] );
+				DEBUG("ROW2 >%s<\n", row[ 2 ] );
+				if( row[ 2 ][ 0 ] != 0 )
+				{
+					plen = strlen( row[ 2 ] );
+				}
 			}
 			int len = ulen + dlen + plen + 256;
 			
