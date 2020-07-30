@@ -178,13 +178,11 @@ char *MitraManagerGetUserData( MitraManager *mmgr, char *username )
 	
 	if( mmgr->mm_Sqllib != NULL )
 	{
-		char sqlTmp[ 512 ];
-		snprintf( sqlTmp, sizeof(sqlTmp), "SELECT * FROM guacamole_connection_parameter gcp WHERE gcp.connection_id IN ( SELECT connection_id FROM guacamole_connection_permission WHERE entity_id IN ( SELECT entity_id FROM guacamole_user WHERE user_id='SELECT gu.user_id FROM guacamole_user gu WHERE gu.username='mitra_%s' OR gu.username='mitra_frienduser_%s') )", username, username ); // AND connection_id = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->data->connection ) . '\')"
+		char sqlTmp[ 1024 ];
+		snprintf( sqlTmp, sizeof(sqlTmp), "select parameter_value from guacamole_connection_parameter where parameter_name='username' AND connection_id=(select connection_id from guacamole_connection_permission where entity_id in (select entity_id from guacamole_entity where name='mitra_%s') limit 1) union select parameter_value from guacamole_connection_parameter where parameter_name='domain' AND connection_id=(select connection_id from guacamole_connection_permission where entity_id in (select entity_id from guacamole_entity where name='mitra_%s') limit 1) union select parameter_value from guacamole_connection_parameter where parameter_name='password' AND connection_id=(select connection_id from guacamole_connection_permission where entity_id in (select entity_id from guacamole_entity where name='mitra_%s') limit 1)", username, username, username );
+		//snprintf( sqlTmp, sizeof(sqlTmp), "SELECT * FROM guacamole_connection_parameter gcp WHERE gcp.connection_id IN ( SELECT connection_id FROM guacamole_connection_permission WHERE entity_id IN ( SELECT entity_id FROM guacamole_user WHERE user_id='SELECT gu.user_id FROM guacamole_user gu WHERE gu.username='mitra_%s' OR gu.username='mitra_frienduser_%s') )", username, username ); // AND connection_id = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->data->connection ) . '\')"
 		void *res = mmgr->mm_Sqllib->Query( mmgr->mm_Sqllib, sqlTmp );
 		char **row;
-		
-		char *username = NULL;
-		char *domain = NULL;
 		
 		DEBUG("[MitraManagerGetUserData] sql ready: %s\n", sqlTmp );
 		
@@ -192,40 +190,33 @@ char *MitraManagerGetUserData( MitraManager *mmgr, char *username )
 		
 		while( ( row = mmgr->mm_Sqllib->FetchRow( mmgr->mm_Sqllib, res ) ) ) 
 		{
-			if( row[ 0 ] != NULL && row[ 1 ] != NULL )
+			int ulen = 0;
+			if( row[ 0 ] != NULL )	// username
 			{
-				if( strcmp( row[ 0 ], "username" ) == 0 )
-				{
-					if( username == NULL )
-					{
-						username = StringDuplicate( row[ 1 ] );
-					}
-				}
-				else if( strcmp( row[ 0 ], "domain" ) == 0 )
-				{
-					if( domain == NULL )
-					{
-						domain = StringDuplicate( row[ 1 ] );
-					}
-				}
-				
-				if( username != NULL && domain != NULL )
-				{
-					int ulen = strlen( username );
-					int len = ulen + strlen( domain );
-					retValue = FMalloc( len+2 );
-					if( retValue != NULL )
-					{
-						strcpy( retValue, username );
-						retValue[ ulen ] = ',';
-						strcpy( &(retValue[ ulen+1 ]), domain );
-					}
-					
-					DEBUG("[MitraManagerGetUserData] user found: %s\n", retValue );
-					break;
-				}
+				ulen = strlen( row[ 0 ] );
 			}
+			int dlen = 0;
+			if( row[ 1 ] != NULL )	// domain
+			{
+				dlen = strlen( row[ 1 ] );
+			}
+			int plen = 0;
+			if( row[ 2 ] != NULL )	// password
+			{
+				plen = strlen( row[ 2 ] );
+			}
+			int len = ulen + dlen + plen + 256;
+			
+			retValue = FMalloc( len );
+			if( retValue != NULL )
+			{
+				snprintf( retValue, len, "\"username\":\"%s\",\"domain\":\"%s\",\"password\":\"%s\"", row[ 0 ], row[ 1 ], row[ 2 ] );
+			}
+			
+			DEBUG("[MitraManagerGetUserData] user found: %s\n", retValue );
+			break;
 		}
+
 	}
 	DEBUG("[MitraManagerGetUserData] end\n");
 	return retValue;
