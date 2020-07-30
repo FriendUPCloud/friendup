@@ -526,7 +526,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 #endif
 		
 		/* Count List */
-		{
+		/*{
 			UserSession *counts = SLIB->sl_USM->usm_Sessions;
 			int count = 0;
 			while( counts != NULL )
@@ -535,7 +535,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 				count++;
 			}
 			DEBUG( "[ProtocolHttp] We have %d sessions now.\n", count );
-		}
+		}*/
 		
 		
 		Log( FLOG_DEBUG, "[ProtocolHttp] Request parsed without problems.\n");
