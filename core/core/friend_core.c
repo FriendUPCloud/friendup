@@ -950,16 +950,15 @@ void *FriendCoreAcceptPhase2( void *d )
 	SSL							*s_Ssl = NULL;
 	DEBUG("[FriendCoreAcceptPhase2] before accept4\n");
 	
-	int mlocked = 0;
-	
-	if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
+	for( ; ; )
 	{
-		mlocked = 1;
-		while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) > 0 )
+		if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
 		{
+			fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK );
 			FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
-			mlocked = 0;
-			
+		
+			if( !fd ) break;
+		
 			if( fd == -1 )
 			{
 				// Get some info about failure..
@@ -985,7 +984,7 @@ void *FriendCoreAcceptPhase2( void *d )
 				}
 				goto accerror;
 			}
-		
+	
 			int prerr = getpeername( fd, (struct sockaddr *) &client, &clientLen );
 			if( prerr == -1 )
 			{
@@ -993,14 +992,14 @@ void *FriendCoreAcceptPhase2( void *d )
 				close( fd );
 				goto accerror;
 			}
-		
+	
 			// Get incoming
 			int lbreak = 0;
-		
+	
 			if( fc->fci_Sockets->s_SSLEnabled == TRUE )
 			{
 				int srl;
-			
+		
 				s_Ssl = SSL_new( fc->fci_Sockets->s_Ctx );
 
 				if( s_Ssl == NULL )
@@ -1010,7 +1009,7 @@ void *FriendCoreAcceptPhase2( void *d )
 					close( fd );
 					goto accerror;
 				}
-			
+		
 				BIO *bio = SSL_get_rbio( s_Ssl );
 				if( bio != NULL )
 				{
@@ -1075,7 +1074,7 @@ void *FriendCoreAcceptPhase2( void *d )
 								int enume = ERR_get_error();
 								FERROR( "[FriendCoreAcceptPhase2] SSL_ERROR_SSL: %s.\n", ERR_error_string( enume, NULL ) );
 								lbreak = 2;
-							
+						
 								// HTTP to HTTPS redirection code
 								if( enume == 336027804 ) // http redirect
 								{
@@ -1094,7 +1093,7 @@ void *FriendCoreAcceptPhase2( void *d )
 						break;
 					}
 					usleep( 0 );
-				
+			
 					if( fc->fci_Shutdown == TRUE )
 					{
 						FINFO("[FriendCoreAcceptPhase2] Accept socket process will be stopped, becaouse Shutdown is in progress\n");
@@ -1104,7 +1103,7 @@ void *FriendCoreAcceptPhase2( void *d )
 			}
 
 			DEBUG("[FriendCoreAcceptPhase2] before getting incoming: fd %d\n", fd );
-		
+	
 			if( fc->fci_Shutdown == TRUE )
 			{
 				if( fd > 0 )
@@ -1127,7 +1126,7 @@ void *FriendCoreAcceptPhase2( void *d )
 						incoming->s_SSLEnabled = fc->fci_Sockets->s_SSLEnabled;
 						incoming->s_SB = fc->fci_Sockets->s_SB;
 						incoming->s_Interface = fc->fci_Sockets->s_Interface;
-			
+		
 						if( fc->fci_Sockets->s_SSLEnabled == TRUE )
 						{
 							incoming->s_Ssl = s_Ssl;
@@ -1141,15 +1140,15 @@ void *FriendCoreAcceptPhase2( void *d )
 						close( fd );
 						goto accerror;
 					}
-				
+			
 					/// Add to epoll
 					// TODO: Check return of epoll ctl
 					struct epoll_event event;
 					event.data.ptr = incoming;
 					event.events = EPOLLIN| EPOLLET;
-				
-					int error = epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_ADD, fd, &event );
 			
+					int error = epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_ADD, fd, &event );
+		
 					if( error )
 					{
 						FERROR("[FriendCoreAcceptPhase2] epoll_ctl failure **************************************\n\n");
@@ -1157,11 +1156,10 @@ void *FriendCoreAcceptPhase2( void *d )
 					}
 				}
 			}
-			//DEBUG("[FriendCoreAcceptPhase2] in accept loop\n");
-		}	// while accept
-		if( mlocked != 0 )
-			FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
-	}
+		}
+		//DEBUG("[FriendCoreAcceptPhase2] in accept loop\n");
+	}	// while accept
+
 	FFree( pre );
 		
 	return NULL;
