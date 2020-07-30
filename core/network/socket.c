@@ -48,9 +48,9 @@
 
 void SocketFree( Socket *sock );
 
-#define SOCKET_STATE_MAX_ACCEPTED_TIME_s 5 //socket has N seconds to send the first byte
+#define SOCKET_STATE_MAX_ACCEPTED_TIME_s 10 //socket has N seconds to send the first byte
 #define READ_TILL_END_BUFFER_SIZE 256000	//8192
-#define READ_TILL_END_SOCKET_TIMEOUT (10 *1000)
+#define READ_TILL_END_SOCKET_TIMEOUT (10 * 1000)
 #define READ_PACKAGE_BUFFER_SIZE 128000
 
 static int ssl_session_ctx_id = 1;
@@ -2190,7 +2190,7 @@ BufString *SocketReadTillEndNOSSL( Socket* sock, unsigned int pass __attribute__
 
 		while( quit != TRUE )
 		{
-			int ret = poll( fds, 1, 10 * 1000);
+			int ret = poll( fds, 1, 10000 );
 		
 			DEBUG("[SocketReadTillEndNOSSL] Before select, ret: %d\n", ret );
 			if( ret == 0 )
