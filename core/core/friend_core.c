@@ -320,8 +320,8 @@ static inline void moveToHttps( Socket *sock )
 */
 
 #define SINGLE_SHOT
-//#define ACCEPT_IN_EPOLL
-#define ACCEPT_IN_THREAD
+#define ACCEPT_IN_EPOLL
+//#define ACCEPT_IN_THREAD
 
 #ifdef ACCEPT_IN_THREAD
 
