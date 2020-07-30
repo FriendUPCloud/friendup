@@ -490,7 +490,7 @@ void *FriendCoreAcceptPhase2( void *data )
 						{
 							break;
 						}
-						//usleep( 0 );
+						usleep( 0 );
 				
 						if( fc->fci_Shutdown == TRUE )
 						{
@@ -603,6 +603,7 @@ void *FriendCoreAcceptPhase2( void *data )
 				}
 			}
 			//DEBUG("[FriendCoreAcceptPhase2] in accept loop\n");
+			usleep( 0 );
 		}	// while accept
 
 		FBOOL ok = TRUE;
