@@ -2359,7 +2359,7 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
 					l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib->con.sql_Recconect = FALSE;
 				}
 			
-				INFO( "[LibraryMYSQLGet] We found mysql library on slot %d.\n", l->MsqLlibCounter );
+				INFO( "[LibraryMYSQLGet] We found mysql library on slot %d (library %p).\n", l->MsqLlibCounter, l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib );
 			
 				// Increment and check
 				if( ++l->MsqLlibCounter >= l->sqlpoolConnections )
@@ -2430,12 +2430,12 @@ void LibrarySQLDrop( SystemBase *l, SQLLibrary *mclose )
 		
 	if( mclose->l_InUse != FALSE )
 	{
-		DEBUG( "[SystemBase] Mysql slot %d is still in use\n", i );
+		DEBUG( "[SystemBase] Mysql library %p is still in use\n", mclose );
 	}
 	
 	if( closed != -1 )
 	{
-		INFO( "[SystemBase] MYSQL slot %d was closed properly.\n", closed );
+		INFO( "[SystemBase] MYSQL library %p was closed properly.\n", mclose );
 	}
 }
 

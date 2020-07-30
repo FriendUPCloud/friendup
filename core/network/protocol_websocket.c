@@ -637,6 +637,8 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 								locptr[ znew++ ] = '\\';
 								car = 't';
 								break;
+							case 65533:
+								continue;
 							}
 							locptr[ znew++ ] = car;
 						}
