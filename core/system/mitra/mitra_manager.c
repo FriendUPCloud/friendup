@@ -195,11 +195,13 @@ char *MitraManagerGetUserData( MitraManager *mmgr, char *username )
 			if( row[ 0 ] != NULL )	// username
 			{
 				ulen = strlen( row[ 0 ] );
+				DEBUG("[MitraManagerGetUserData] username: %s\n", row[ 0 ] );
 			}
 			int dlen = 0;
 			if( row[ 1 ] != NULL )	// domain
 			{
 				dlen = strlen( row[ 1 ] );
+				DEBUG("[MitraManagerGetUserData] domain: %s\n", row[ 0 ] );
 			}
 			int plen = 0;
 			if( row[ 2 ] != NULL )	// password
