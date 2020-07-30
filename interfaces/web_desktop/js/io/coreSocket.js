@@ -47,7 +47,7 @@ FriendWebSocket = function( conf )
 
 	self.chunks = {};
 	self.allowReconnect = true;
-	self.pingInterval = 1000 * 20;
+	self.pingInterval = 1000 * 10;
 	self.maxPingWait = 1000 * 10;
 	//self.pingInterval = 1000 * 40;
 	//self.maxPingWait = 1000 * 30;
@@ -771,6 +771,11 @@ FriendWebSocket.prototype.handlePong = function( timeSent )
 
 	if( self.pingCheck ) { clearTimeout( self.pingCheck ); self.pingCheck = 0 }
 	self.setState( 'ping', pingTime );
+	if( Friend.User )
+	{
+		// Reinit user!
+		Friend.User.Init();
+	}
 }
 
 FriendWebSocket.prototype.handleChunk = function( chunk )

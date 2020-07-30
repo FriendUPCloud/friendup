@@ -364,7 +364,9 @@ Friend.User = {
 	Init: function()
 	{
 		this.ServerIsThere = true;
-		this.checkInterval = setInterval( 'Friend.User.CheckServerConnection()', 10000 );
+		if( this.checkInterval )
+			clearInterval( this.checkInterval );
+		this.checkInterval = setInterval( 'Friend.User.CheckServerConnection()', 12500 );
 	},
 	// Check if the server is alive
 	CheckServerConnection: function( useAjax )
