@@ -115,6 +115,13 @@ MitraManager *MitraManagerNew( void *sb )
 				{
 					FERROR("[MitraManagerNew] There is a problem with guacamole DB connection\n");
 				}
+				else
+				{
+					INFO("[MitraManagerNew] Connection with DB set\n");
+					
+					char *uname = MitraManagerGetUserData( mm, "pawel" );
+					DEBUG("[MitraManagerNew] username: %s for user %s found\n", uname , "pawel" );
+				}
 			}
 		
 			if( host != NULL )
@@ -150,6 +157,7 @@ void MitraManagerDelete( MitraManager *mmgr )
 	{
 		if( mmgr->mm_Sqllib != NULL )
 		{
+			mmgr->mm_Sqllib->Disconnect( mmgr->mm_Sqllib );
 			LibraryClose( mmgr->mm_Sqllib );
 		}
 		FFree( mmgr );
