@@ -75,6 +75,7 @@
 #include <system/security/security_manager.h>
 #include <system/sas/sas_manager.h>
 #include <system/application/application_manager.h>
+#include <system/mitra/mitra_manager.h>
 
 #include <interface/socket_interface.h>
 #include <interface/string_interface.h>
@@ -258,6 +259,7 @@ typedef struct SystemBase
 	RoleManager						*sl_RoleManager;	// Role Manager
 	SecurityManager					*sl_SecurityManager;	// Security Manager
 	SASManager						*sl_SASManager;			// SAS Manager
+	MitraManager					*sl_MitraManager;		// Mitra Manager
 
 	pthread_mutex_t 				sl_ResourceMutex;	// resource mutex
 	pthread_mutex_t					sl_InternalMutex;		// internal slib mutex

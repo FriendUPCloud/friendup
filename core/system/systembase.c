@@ -1000,7 +1000,7 @@ SystemBase *SystemInit( void )
 	l->sl_SASManager = SASManagerNew( l );
 	if( l->sl_SASManager == NULL )
 	{
-		Log( FLOG_ERROR, "Cannot initialize l_SASManager\n");
+		Log( FLOG_ERROR, "Cannot initialize SASManager\n");
 	}
 	
 	l->sl_DOSTM = DOSTokenManagerNew( l );
@@ -1013,6 +1013,12 @@ SystemBase *SystemInit( void )
 	if( l->sl_CalendarManager == NULL )
 	{
 		Log( FLOG_ERROR, "Cannot initialize sl_MobileManager\n");
+	}
+	
+	l->sl_MitraManager = MitraManagerNew( l );
+	if( l->sl_MitraManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize Mitra Manager\n");
 	}
 	
 	FriendCoreManagerInitServices( l->fcm );
@@ -1258,6 +1264,10 @@ void SystemClose( SystemBase *l )
 	if( l->sl_SASManager != NULL )
 	{
 		SASManagerDelete( l->sl_SASManager );
+	}
+	if( l->sl_MitraManager != NULL )
+	{
+		MitraManagerDelete( l->sl_MitraManager );
 	}
 	
 	// Remove sentinel from active memory
