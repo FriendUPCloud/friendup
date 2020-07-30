@@ -369,8 +369,8 @@ Friend.User = {
 	// Check if the server is alive
 	CheckServerConnection: function( useAjax )
 	{
-		if( typeof( Module ) == 'undefined' ) return;
-		let serverCheck = new Module( 'system' );
+		if( typeof( Library ) == 'undefined' ) return;
+		let serverCheck = new Library( 'system' );
 		serverCheck.onExecuted = function( q, s )
 		{
 			// Check missing session
@@ -402,7 +402,7 @@ Friend.User = {
 		serverCheck.forceSend = true;
 		try
 		{
-			serverCheck.execute( 'getsetting', { setting: 'friendversion' } );
+			serverCheck.execute( 'validate' );
 		}
 		catch( e )
 		{
