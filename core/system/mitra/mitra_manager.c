@@ -240,10 +240,9 @@ char *MitraManagerGetUserData( MitraManager *mmgr, char *username )
 		// we must find username
 		while( ( row = mmgr->mm_Sqllib->FetchRow( mmgr->mm_Sqllib, res ) ) ) 
 		{
-			int ulen = 0;
 			if( row[ 0 ] != NULL )	// username
 			{
-				ulen = strlen( row[ 0 ] );
+				uname = StringDuplicate( row[ 0 ] );
 				DEBUG("[MitraManagerGetUserData] username: %s\n", row[ 0 ] );
 			}
 			break;
@@ -257,10 +256,9 @@ char *MitraManagerGetUserData( MitraManager *mmgr, char *username )
 		// we must find domain
 		while( ( row = mmgr->mm_Sqllib->FetchRow( mmgr->mm_Sqllib, res ) ) ) 
 		{
-			int ulen = 0;
 			if( row[ 0 ] != NULL )	// domain
 			{
-				ulen = strlen( row[ 0 ] );
+				domain = StringDuplicate( row[ 0 ] );
 				DEBUG("[MitraManagerGetUserData] domain: %s\n", row[ 0 ] );
 			}
 			break;
@@ -274,10 +272,9 @@ char *MitraManagerGetUserData( MitraManager *mmgr, char *username )
 		// we must find password
 		while( ( row = mmgr->mm_Sqllib->FetchRow( mmgr->mm_Sqllib, res ) ) ) 
 		{
-			int ulen = 0;
 			if( row[ 0 ] != NULL )	// password
 			{
-				ulen = strlen( row[ 0 ] );
+				pass = StringDuplicate( row[ 0 ] );
 				DEBUG("[MitraManagerGetUserData] password: %s\n", row[ 0 ] );
 			}
 			break;
