@@ -585,7 +585,7 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 					}
 
 					static int END_CHAR_SIGNS = 3;
-					char *end = "\"}}";
+					char *end = "\"}}\0";
 				
 					int jsonsize = sprintf( jsontemp, 
 						"{\"type\":\"msg\",\"data\":{\"type\":\"response\",\"requestid\":\"%s\",\"data\":\"",
@@ -636,9 +636,6 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 							case 9:
 								locptr[ znew++ ] = '\\';
 								car = 't';
-								break;
-							case 65533:
-								car = 0;
 								break;
 							}
 							locptr[ znew++ ] = car;
