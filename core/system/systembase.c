@@ -1073,6 +1073,18 @@ SystemBase *SystemInit( void )
 }
 
 /**
+ * Just get milliseconds since 1 Jan 1970
+ * 
+ */
+
+int GetUnixTime()
+{
+	struct timeval tp;
+	gettimeofday( &tp, NULL );
+	return tp.tv_sec * 1000 + tp.tv_usec / 1000;
+}
+
+/**
  * SystemBase close function
  * @param l pointer to SystemBase
  * 

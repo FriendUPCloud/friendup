@@ -431,19 +431,22 @@ Friend.User = {
 		}
 		else
 		{
-			this.ServerIsThere = true;
-			this.State = 'online';
-			document.body.classList.remove( 'Offline' );
-			if( Workspace.screen )
-				Workspace.screen.hideOfflineMessage();
-			Workspace.workspaceIsDisconnected = false;
-			if( Workspace.nudgeWorkspacesWidget )
-				Workspace.nudgeWorkspacesWidget();
-			// Just remove this by force
-			document.body.classList.remove( 'Busy' );
-			// Just refresh it
-			if( Workspace.refreshDesktop )
-				Workspace.refreshDesktop( true, false );
+			if( this.State != 'online' )
+			{
+				this.ServerIsThere = true;
+				this.State = 'online';
+				document.body.classList.remove( 'Offline' );
+				if( Workspace.screen )
+					Workspace.screen.hideOfflineMessage();
+				Workspace.workspaceIsDisconnected = false;
+				if( Workspace.nudgeWorkspacesWidget )
+					Workspace.nudgeWorkspacesWidget();
+				// Just remove this by force
+				document.body.classList.remove( 'Busy' );
+				// Just refresh it
+				if( Workspace.refreshDesktop )
+					Workspace.refreshDesktop( true, false );
+			}
 		}
 	}
 };

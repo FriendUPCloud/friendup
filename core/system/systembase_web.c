@@ -320,6 +320,9 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 
 Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession *loggedSession, int *result )
 {
+	// Just calculate when
+	int requestStart = GetUnixTime();
+
 	*result = 0;
 	Http *response = NULL;
 	FBOOL userAdded = FALSE;
@@ -1116,6 +1119,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								char *fname = allArgsNew + MODULE_FILE_CALL_STRING_LEN;
 								remove( fname );
 							}
+							
+							Log( FLOG_INFO, "Module request took %d milliseconds.", GetUnixTime() - requestStart );
 						}
 					}
 					else

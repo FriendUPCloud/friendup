@@ -427,6 +427,12 @@ SystemBase *SystemInit( void );
 UserGroup *LoadGroups( struct SystemBase *sb );
 
 //
+// Just get unixtime now
+//
+
+int GetUnixTime();
+
+//
 //
 //
 
