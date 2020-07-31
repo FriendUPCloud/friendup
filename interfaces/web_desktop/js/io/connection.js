@@ -175,6 +175,7 @@ FriendConnection.prototype.connectWebSocket = function()
 		onstate : onState,
 		onend : onEnd,
 	};
+	
 	self.ws = new FriendWebSocket( conf );
 	
 	function onMessage( e ) { self.onWsMessage( e ); }

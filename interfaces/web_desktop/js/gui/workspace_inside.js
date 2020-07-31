@@ -672,7 +672,7 @@ var WorkspaceInside = {
 
 		var conf = {
 			onstate: onState,
-			onend  : onEnd,
+			onend  : onEnd
 		};
 
         //we assume we are being proxied - set the websocket to use the same port as we do
