@@ -175,10 +175,6 @@ Friend.User = {
 						if( typeof( callback ) == 'function' )
 							callback( true, serveranswer );
 						// Make sure we didn't lose websocket!
-						if( !Workspace.conn && Workspace.initWebSocket )
-						{
-							Workspace.initWebSocket();
-						}
 					}
 				
 					// Remember login info for next login
@@ -444,6 +440,7 @@ Friend.User = {
 						console.log( 'Could not close conn.' );
 					}
 					delete Workspace.conn;
+					console.log( 'Removed websocket.' );
 				}
 			}
 		}
@@ -464,6 +461,11 @@ Friend.User = {
 				// Just refresh it
 				if( Workspace.refreshDesktop )
 					Workspace.refreshDesktop( true, false );
+				// Try to reboot the websocket
+				if( !Workspace.conn && Workspace.initWebSocket )
+				{
+					Workspace.initWebSocket();
+				}
 			}
 		}
 	}

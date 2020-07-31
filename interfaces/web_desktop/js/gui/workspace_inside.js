@@ -654,7 +654,6 @@ var WorkspaceInside = {
 		// Not ready
 		if( !Workspace.sessionId )
 		{
-			console.log( 'IIIK' );
 			return setTimeout( function(){ Workspace.initWebSocket( callback ); }, 1000 );
 		}
 
@@ -8714,26 +8713,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			Workspace.nudgeWorkspacesWidget();
 			
 			document.body.classList.add( 'ViewStateActive' );
-			// TODO: Remove the uncommented thing, it isn't working
-			// TODO: Check with pawel..
-			/*if( isMobile )
-			{
-				//mobileDebug( 'Trying to init websocket.' );
-				Workspace.initWebSocket();
 
-				var setwsstate = setTimeout( function()
-				{
-					if( Workspace.conn && Workspace.conn.ws )
-						Workspace.conn.ws.close();
-				}, 1500 );
-				var dl = new FriendLibrary( 'system.library' );
-				dl.addVar( 'status', 0 );
-				dl.onExecuted = function(e,d)
-				{
-					clearTimeout( setwsstate );
-				};
-				dl.execute( 'mobile/setwsstate' );
-			}*/
 			// Tell all windows
 			if( window.friendApp )
 			{
