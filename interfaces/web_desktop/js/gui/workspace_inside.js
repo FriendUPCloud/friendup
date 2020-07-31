@@ -707,12 +707,9 @@ var WorkspaceInside = {
 
 		function onState( e )
 		{
-			if( !Workspace.conn ) 
-			{
-				console.log( 'No such thing as conn.' );
-				return;
-			}
-			//console.log( 'Worspace.conn.onState', e );
+			
+			console.log( 'Worspace.conn.onState', e, 'State: ' + Workspace.websocketState );
+			
 			if( e.type == 'error' || e.type == 'close' )
 			{
 				if( e.type == 'close' )
