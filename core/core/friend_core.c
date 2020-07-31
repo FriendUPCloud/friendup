@@ -1750,8 +1750,6 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	
 #ifdef ACCEPT_IN_THREAD
 	pthread_t thread;
-	
-	//epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_DISABLE, fc->fci_Sockets->fd, NULL );
 
 	if( pthread_create( &thread, NULL, &FriendCoreAcceptPhase2, ( void *)fc ) != 0 )
 	{
@@ -1764,7 +1762,11 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	{
 
 #ifdef SINGLE_SHOT
-		epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_MOD, fc->fci_Sockets->fd, &(fc->fci_EpollEvent) );
+		if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
+		{
+			epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_MOD, fc->fci_Sockets->fd, &(fc->fci_EpollEvent) );
+			FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
+		}
 #endif
 		
 		// Wait for something to happen on any of the sockets we're listening on
