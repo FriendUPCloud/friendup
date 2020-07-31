@@ -79,6 +79,13 @@ FriendWebSocket.prototype.reconnect = function()
 {
 	var self = this;
 	self.allowReconnect = true;
+	
+	// We're pre reconnect - wait..
+	if( window.Friend && Friend.User && Friend.User.State == 'login' )
+	{
+		return;
+	}
+	
 	self.doReconnect();
 }
 
@@ -224,6 +231,12 @@ FriendWebSocket.prototype.clearHandlers = function()
 
 FriendWebSocket.prototype.doReconnect = function()
 {
+	// We're pre reconnect - wait..
+	if( window.Friend && Friend.User && Friend.User.State == 'login' )
+	{
+		return;
+	}
+	
 	var self = this;
 	if ( !reconnectAllowed() ) {
 		if ( self.onend )
