@@ -757,24 +757,21 @@ var WorkspaceInside = {
 			{
 				if( e.type == 'open' )
 				{
-					// TODO: Fix this!! Whenthe state is open, ws should 
-					//       immediately be able to handle requests, now its
-					//       a slight delay
-					setTimeout( function()
+					if( callback )
 					{
-						if( callback )
-						{
-							callback();
-							callback = null;
-						}
-						Workspace.websocketState = 'open';
-					}, 150 );
+						callback();
+						callback = null;
+					}
+					Workspace.websocketState = 'open';
 				}
 				else if( e.type == 'connecting' )
 				{
 					Workspace.websocketState = 'connecting';
 				}
-				if( e.type != 'connecting' && e.type != 'open' ) console.log( e );
+				if( e.type != 'connecting' && e.type != 'open' )
+				{
+					console.log( 'Strange onState: ', e );
+				}
 			}
 		}
 
