@@ -233,13 +233,6 @@ FriendWebSocket.prototype.clearHandlers = function()
 
 FriendWebSocket.prototype.doReconnect = function()
 {
-	// We're pre reconnect - wait..
-	if( window.Friend && Friend.User && Friend.User.State != 'online' )
-	{
-		console.log( 'Cannot doreconnect - Friend User is not online.' );
-		return;
-	}
-	
 	var self = this;
 	if ( !reconnectAllowed() ) {
 		if ( self.onend )
@@ -271,6 +264,12 @@ FriendWebSocket.prototype.doReconnect = function()
 	
 	function reconnectAllowed()
 	{
+		// We're pre reconnect - wait..
+		if( window.Friend && Friend.User && Friend.User.State != 'online' )
+		{
+			return false;
+		}
+		
 		var checks = {
 			allow        : self.allowReconnect,
 			hasTriesLeft : !tooManyTries(),
