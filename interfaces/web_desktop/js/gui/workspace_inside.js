@@ -719,19 +719,6 @@ var WorkspaceInside = {
 			}
 			else if( e.type == 'ping' )
 			{
-				// Ignite queue on ping
-				let time = ( new Date() ).getTime() - _cajax_http_last_time;
-				if( time > 10000 && window.Friend )
-				{
-					// Ignite queue
-					_cajax_http_connections = 0;
-					if( Friend.cajax.length > 0 )
-					{
-						Friend.cajax[0].forceSend = true;
-						Friend.cajax[0].send();
-					}
-				}
-				
 				if( Workspace.websocketState != 'open' )
 				{
 					// Refresh mountlist
