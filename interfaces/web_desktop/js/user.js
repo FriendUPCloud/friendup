@@ -162,6 +162,10 @@ Friend.User = {
 					Workspace.loginid = json.loginid;
 					Workspace.userLevel = json.level;
 					Workspace.fullName = json.fullname;
+					
+					// We are now online!
+					Friend.User.SetUserConnectionState( 'online' );
+					
 					if( !Workspace.userWorkspaceInitialized )
 					{
 						Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), event );
@@ -184,8 +188,6 @@ Friend.User = {
 					{
 						// Nothing
 					}
-					
-					Friend.User.SetUserConnectionState( 'online' );
 				}
 				else
 				{

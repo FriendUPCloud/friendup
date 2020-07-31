@@ -151,6 +151,7 @@ FriendConnection.prototype.init = function()
 	// self.wsPort - hardcoded in constructor, set it here when its from config
 	
 	self.connectWebSocket();
+	console.trace();
 }
 
 FriendConnection.prototype.connectWebSocket = function()
@@ -158,12 +159,6 @@ FriendConnection.prototype.connectWebSocket = function()
 	var self = this;
 	if ( self.ws )
 		self.releaseWebSocket();
-	
-	// We're pre reconnect - wait..
-	if( window.Friend && Friend.User && Friend.User.State != 'online' )
-	{
-		return false;
-	}
 	
 	var url = self.wsProtocol + self.host;
 	if ( self.wsPort )
