@@ -623,18 +623,11 @@ var WorkspaceInside = {
 			{
 				try
 				{
-					self.conn.ws.close();
+					self.conn.ws.cleanup();
 				}
 				catch( ez )
 				{
-					try
-					{
-						self.conn.ws.cleanup();
-					}
-					catch( ez2 )
-					{
-						console.log( 'Conn is dead.', ez, ez2 );
-					}
+					console.log( 'Conn is dead.', ez, ez2 );
 				}
 				delete self.conn;
 			}
