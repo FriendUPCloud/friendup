@@ -3328,7 +3328,7 @@ body:not([mobile]).ShowTasks #TaskSwitcher .Current .Close
 	opacity: 0; 
 	pointer-events: none; 
 	z-index: 2147483647; 
-	transition: opacity 0.25s; 
+	transition: opacity 0.75s; 
 	top: 0;
 	left: 0;
 	height: 100%;
