@@ -715,7 +715,6 @@ var WorkspaceInside = {
 				{
 					console.log( '[onState] We got an error.' );
 					Workspace.websocketState = 'error';
-					Friend.User.CheckServerConnection();
 				}
 			}
 			else if( e.type == 'ping' )
