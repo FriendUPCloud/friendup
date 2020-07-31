@@ -615,11 +615,37 @@ var WorkspaceInside = {
 	},
 	initWebSocket: function( callback )
 	{	
+		let self = this;
+		function closeConn()
+		{
+			// Clean up previous
+			if( self.conn )
+			{
+				try
+				{
+					self.conn.ws.close();
+				}
+				catch( ez )
+				{
+					try
+					{
+						self.conn.ws.cleanup();
+					}
+					catch( ez2 )
+					{
+						console.log( 'Conn is dead.', ez, ez2 );
+					}
+				}
+				delete self.conn;
+			}
+		}
+	
 		// We're already open
 		if( Workspace.websocketState == 'open' ) return;
 		if( window.Friend && Friend.User && Friend.User.State != 'online' ) 
 		{
 			console.log( 'Cannot initialize web socket - user is offline.' );
+			closeConn();
 			return;
 		}
 		
@@ -655,26 +681,7 @@ var WorkspaceInside = {
             //console.log('webproxy set to be tunneled as well.');
         }
 		
-		// Clean up previous
-		if( this.conn )
-		{
-			try
-			{
-				this.conn.ws.close();
-			}
-			catch( ez )
-			{
-				try
-				{
-					this.conn.ws.cleanup();
-				}
-				catch( ez2 )
-				{
-					console.log( 'Conn is dead.', ez, ez2 );
-				}
-			}
-			delete this.conn;
-		}
+		closeConn();
 		
 		if( typeof FriendConnection == 'undefined' )
 		{
@@ -700,6 +707,11 @@ var WorkspaceInside = {
 
 		function onState( e )
 		{
+			if( !Workspace.conn ) 
+			{
+				console.log( 'No such thing as conn.' );
+				return;
+			}
 			//console.log( 'Worspace.conn.onState', e );
 			if( e.type == 'error' || e.type == 'close' )
 			{
