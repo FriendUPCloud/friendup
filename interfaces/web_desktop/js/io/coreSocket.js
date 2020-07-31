@@ -83,7 +83,7 @@ FriendWebSocket.prototype.reconnect = function()
 	// We're pre reconnect - wait..
 	if( window.Friend && Friend.User && Friend.User.State != 'online' )
 	{
-		console.log( 'Cannot reconnect - Friend User is not online.' );
+		//console.log( 'Cannot reconnect - Friend User is not online.' );
 		return;
 	}
 	
@@ -145,7 +145,7 @@ FriendWebSocket.prototype.connect = function()
 {
 	if( window.Friend && Friend.User && Friend.User.State == 'offline' )
 	{
-		console.log( 'Friend says the user is offline. Bye.' );
+		// console.log( 'Friend says the user is offline. Bye.' );
 		return;
 	}
 	
@@ -154,7 +154,7 @@ FriendWebSocket.prototype.connect = function()
 	{
 		if( self.pConf )
 		{
-			console.log( 'We have a previous config. Trying the url there.', self.pConf.url );
+			// console.log( 'We have a previous config. Trying the url there.', self.pConf.url );
 			self.url = self.pConf.url;
 			return self.connect();
 		}
@@ -163,13 +163,13 @@ FriendWebSocket.prototype.connect = function()
 	
 	if( self.state == 'open' ) 
 	{
-		console.log( 'We are already open.' );
+		// console.log( 'We are already open.' );
 		return;
 	}
 	
 	if( self.state == 'connecting' ) 
 	{
-		console.log('ongoing connect. we will wait for this to finish.');
+		// console.log('ongoing connect. we will wait for this to finish.');
 		return;
 	}
 	
@@ -301,7 +301,7 @@ FriendWebSocket.prototype.doReconnect = function()
 		
 		if ( !allow )
 		{
-			console.log( 'not allowed to reconnect', checks )
+			// console.log( 'not allowed to reconnect', checks )
 			// Try to do a module call
 			return false;
 		}

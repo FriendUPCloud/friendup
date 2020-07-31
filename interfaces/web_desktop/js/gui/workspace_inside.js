@@ -756,7 +756,7 @@ var WorkspaceInside = {
 
 		function onEnd( e )
 		{
-			console.log( 'Workspace.conn.onEnd', e );
+			//console.log( 'Workspace.conn.onEnd', e );
 			Workspace.websocketState = 'closed';
 		}
 
