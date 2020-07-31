@@ -109,6 +109,8 @@ Friend.User = {
     // Send the actual login call
     SendLoginCall: function( info, callback )
     {
+    	this.State = 'Login';
+    	
     	// Create a new library call object
 		let m = new FriendLibrary( 'system' );
 		if( info.username && info.password )
