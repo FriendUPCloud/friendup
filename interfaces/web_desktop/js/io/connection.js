@@ -155,6 +155,13 @@ FriendConnection.prototype.init = function()
 
 FriendConnection.prototype.connectWebSocket = function()
 {
+	// We're pre reconnect - wait..
+	if( window.Friend && Friend.User && Friend.User.State == 'login' )
+	{
+		return false;
+	}
+	
+	
 	var self = this;
 	if ( self.ws )
 		self.releaseWebSocket();
@@ -166,7 +173,7 @@ FriendConnection.prototype.connectWebSocket = function()
 
 	url += '/fcws';
 
-console.log("Connect : " + url );
+	console.log("Connect : " + url );
 
 	var conf = {
 		url : url,
