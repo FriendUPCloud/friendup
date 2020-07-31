@@ -43,7 +43,7 @@ Friend.User = {
 		{
 			try
 			{
-				Workspace.conn.ws.close();
+				Workspace.conn.ws.cleanup();
 			}
 			catch( e )
 			{
@@ -84,7 +84,7 @@ Friend.User = {
 		{
 			try
 			{
-				Workspace.conn.ws.close();
+				Workspace.conn.ws.cleanup();
 			}
 			catch( e )
 			{
