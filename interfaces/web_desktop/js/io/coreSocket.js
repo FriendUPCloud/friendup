@@ -409,6 +409,7 @@ FriendWebSocket.prototype.handleSocketMessage = function( e )
 		{
 			Notify( { title: i18n( 'i18n_session_expired' ), text: i18n( 'i18n_session_expired_desc' ) } );
 			this.handleClose();
+			console.log( 'What, we need to log in now?' );
 			Friend.User.ReLogin();
 			return;
 		}
