@@ -143,6 +143,12 @@ FriendWebSocket.prototype.init = function()
 
 FriendWebSocket.prototype.connect = function()
 {
+	if( window.Friend && Friend.User && Friend.User.State == 'offline' )
+	{
+		console.log( 'Friend says the user is offline. Bye.' );
+		return;
+	}
+	
 	let self = this;
 	if ( !self.url || !self.url.length )
 	{
@@ -153,6 +159,12 @@ FriendWebSocket.prototype.connect = function()
 			return self.connect();
 		}
 		throw new Error( 'no url provided for socket' );
+	}
+	
+	if( self.state == 'open' ) 
+	{
+		console.log( 'We are already open.' );
+		return;
 	}
 	
 	if( self.state == 'connecting' ) 
