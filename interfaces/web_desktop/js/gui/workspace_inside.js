@@ -701,7 +701,7 @@ var WorkspaceInside = {
 
 		function onState( e )
 		{
-			console.log( 'Worspace.conn.onState', e, 'State: ' + Workspace.websocketState );
+			//console.log( 'Worspace.conn.onState', e, 'State: ' + Workspace.websocketState );
 			
 			if( e.type == 'error' || e.type == 'close' )
 			{
