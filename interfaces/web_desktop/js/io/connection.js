@@ -155,16 +155,15 @@ FriendConnection.prototype.init = function()
 
 FriendConnection.prototype.connectWebSocket = function()
 {
+	var self = this;
+	if ( self.ws )
+		self.releaseWebSocket();
+	
 	// We're pre reconnect - wait..
 	if( window.Friend && Friend.User && Friend.User.State != 'online' )
 	{
 		return false;
 	}
-	
-	
-	var self = this;
-	if ( self.ws )
-		self.releaseWebSocket();
 	
 	var url = self.wsProtocol + self.host;
 	if ( self.wsPort )
