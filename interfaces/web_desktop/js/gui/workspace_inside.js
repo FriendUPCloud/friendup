@@ -641,7 +641,7 @@ var WorkspaceInside = {
 		}
 	
 		// We're already open or connecting
-		if( Workspace.websocketState == 'open' || Workspace.websocketState == 'connecting' ) return;
+		if( Workspace.websocketState == 'open' ) return;
 		
 		if( window.Friend && Friend.User && Friend.User.State != 'online' ) 
 		{
@@ -650,7 +650,7 @@ var WorkspaceInside = {
 			return;
 		}
 		
-		if( Workspace.reloginInProgress || Workspace.websocketState == 'connecting' )
+		if( Workspace.websocketState == 'connecting' )
 			return;
 		
 		if( !Workspace.sessionId && Workspace.userLevel )
@@ -658,9 +658,11 @@ var WorkspaceInside = {
 			return Friend.User.ReLogin();
 		}
 		
+		// Not ready
 		if( !Workspace.sessionId )
 		{
-			setTimeout( Workspace.initWebSocket, 1000 );
+			console.log( 'IIIK' );
+			return setTimeout( function(){ Workspace.initWebSocket( callback ); }, 1000 );
 		}
 
 		// Force connecting ws state (we will close it!)
@@ -670,7 +672,7 @@ var WorkspaceInside = {
 		// Just remove this by force
 		document.body.classList.remove( 'Busy' );
 
-		var conf = {
+		let conf = {
 			onstate: onState,
 			onend  : onEnd
 		};
@@ -686,8 +688,7 @@ var WorkspaceInside = {
 		
 		if( typeof FriendConnection == 'undefined' )
 		{
-			setTimeout( Workspace.initWebSocket, 250 );
-			return;
+			return setTimeout( function(){ Workspace.initWebSocket( callback ); }, 250 );
 		}
 		
 		this.conn = new FriendConnection( conf );
@@ -704,7 +705,7 @@ var WorkspaceInside = {
 		this.conn.on( 'notification', handleNotifications );
 		
 		// Reference for handler
-		var selfConn = this.conn;
+		let selfConn = this.conn;
 
 		function onState( e )
 		{
@@ -727,7 +728,7 @@ var WorkspaceInside = {
 			else if( e.type == 'ping' )
 			{
 				// Ignite queue on ping
-				var time = ( new Date() ).getTime() - _cajax_http_last_time;
+				let time = ( new Date() ).getTime() - _cajax_http_last_time;
 				if( time > 10000 && window.Friend )
 				{
 					// Ignite queue
@@ -794,18 +795,18 @@ var WorkspaceInside = {
 			// Clear cache
 			if( msg && msg.devname && msg.path )
 			{
-				var ext4 = msg.path.substr( msg.path.length - 5, 5 );
-				var ext3 = msg.path.substr( msg.path.length - 4, 4 );
+				let ext4 = msg.path.substr( msg.path.length - 5, 5 );
+				let ext3 = msg.path.substr( msg.path.length - 4, 4 );
 				ext4 = ext4.toLowerCase();
 				ext3 = ext3.toLowerCase();
 				if( ext4 == '.jpeg' || ext3 == '.jpg' || ext3 == '.gif' || ext3 == '.png' )
 				{
-					var ic = new FileIcon();
+					let ic = new FileIcon();
 					ic.delCache( msg.devname + ':' + msg.path );
 				}
 			}
 			
-			var t = msg.devname + ( msg.path ? msg.path : '' );
+			let t = msg.devname + ( msg.path ? msg.path : '' );
 			if( Workspace.filesystemChangeTimeouts[ t ] )
 			{
 				clearTimeout( Workspace.filesystemChangeTimeouts[ t ] );
@@ -820,7 +821,7 @@ var WorkspaceInside = {
 			{
 				if( msg.path || msg.devname )
 				{
-					var p = '';
+					let p = '';
 					// check if path contain device
 					if( msg.path.indexOf( ':' ) > 0 )
 					{
@@ -850,15 +851,15 @@ var WorkspaceInside = {
 						// Check if we need to handle events for apps
 						if( Workspace.appFilesystemEvents[ 'filesystem-change' ] )
 						{
-							var evList = Workspace.appFilesystemEvents[ 'filesystem-change' ];
-							var outEvents = [];
-							for( var a = 0; a < evList.length; a++ )
+							let evList = Workspace.appFilesystemEvents[ 'filesystem-change' ];
+							let outEvents = [];
+							for( let a = 0; a < evList.length; a++ )
 							{
-								var found = false;
+								let found = false;
 								if( evList[a].applicationId )
 								{
 									found = evList[a];
-									var app = findApplication( evList[a].applicationId );
+									let app = findApplication( evList[a].applicationId );
 									if( app )
 									{
 										if( evList[a].viewId && app.windows[ evList[a].viewId ] )

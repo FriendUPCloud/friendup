@@ -547,7 +547,7 @@ cAjax.prototype.send = function( data, callback )
 		this.cachedData = data;
 
 	// Wait in case of relogin
-	if( window.Workspace && Workspace.reloginInProgress && !this.forceSend )
+	if( window.Workspace && Friend.User.State == 'offline' && !this.forceSend )
 	{
 		AddToCajaxQueue( self );
 		return;
