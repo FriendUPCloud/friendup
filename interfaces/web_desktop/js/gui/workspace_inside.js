@@ -617,6 +617,11 @@ var WorkspaceInside = {
 	{	
 		// We're already open
 		if( Workspace.websocketState == 'open' ) return;
+		if( window.Friend && Friend.User && Friend.User.State != 'online' ) 
+		{
+			console.log( 'Cannot initialize web socket - user is offline.' );
+			return;
+		}
 		
 		if( Workspace.reloginInProgress || Workspace.websocketState == 'connecting' )
 			return;

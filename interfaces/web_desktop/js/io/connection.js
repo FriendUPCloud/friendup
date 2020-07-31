@@ -151,7 +151,6 @@ FriendConnection.prototype.init = function()
 	// self.wsPort - hardcoded in constructor, set it here when its from config
 	
 	self.connectWebSocket();
-	console.trace();
 }
 
 FriendConnection.prototype.connectWebSocket = function()

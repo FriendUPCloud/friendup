@@ -83,6 +83,7 @@ FriendWebSocket.prototype.reconnect = function()
 	// We're pre reconnect - wait..
 	if( window.Friend && Friend.User && Friend.User.State != 'online' )
 	{
+		console.log( 'Cannot reconnect - Friend User is not online.' );
 		return;
 	}
 	
@@ -154,7 +155,8 @@ FriendWebSocket.prototype.connect = function()
 		throw new Error( 'no url provided for socket' );
 	}
 	
-	if( self.state == 'connecting' ) {
+	if( self.state == 'connecting' ) 
+	{
 		console.log('ongoing connect. we will wait for this to finish.');
 		return;
 	}
@@ -234,6 +236,7 @@ FriendWebSocket.prototype.doReconnect = function()
 	// We're pre reconnect - wait..
 	if( window.Friend && Friend.User && Friend.User.State != 'online' )
 	{
+		console.log( 'Cannot doreconnect - Friend User is not online.' );
 		return;
 	}
 	
