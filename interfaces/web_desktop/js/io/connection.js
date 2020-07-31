@@ -167,6 +167,7 @@ FriendConnection.prototype.connectWebSocket = function()
 	url += '/fcws';
 
 	console.log("Connect: " + url + ' with ' + Friend.User.State );
+	console.trace();
 
 	let conf = {
 		url : url,

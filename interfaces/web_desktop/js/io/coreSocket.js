@@ -241,6 +241,11 @@ FriendWebSocket.prototype.clearHandlers = function()
 	self.ws.onclose = null;
 	self.ws.onerror = null;
 	self.ws.onmessage = null;
+	if( self.reconnectTimer )
+	{
+		clearTimeout( self.reconnectTimer )
+		self.reconnectTimer = null;
+	}
 }
 
 FriendWebSocket.prototype.doReconnect = function()
