@@ -431,6 +431,20 @@ Friend.User = {
 				Workspace.workspaceIsDisconnected = true;
 				if( Workspace.nudgeWorkspacesWidget )
 					Workspace.nudgeWorkspacesWidget();
+				
+				// Try to close the websocket
+				if( Workspace.conn )
+				{
+					try
+					{
+						Workspace.conn.ws.cleanup();
+					}
+					catch( e )
+					{
+						console.log( 'Could not close conn.' );
+					}
+					delete Workspace.conn;
+				}
 			}
 		}
 		else
