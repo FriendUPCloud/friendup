@@ -891,6 +891,8 @@ FriendWebSocket.prototype.cleanup = function()
 	self.stopKeepAlive();
 	self.clearHandlers();
 	self.wsClose();
+	if( window.Workspace )
+		Workspace.websocketState = 'offline';
 	delete self.ws;
 }
 
