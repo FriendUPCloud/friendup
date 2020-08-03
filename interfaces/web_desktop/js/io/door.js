@@ -536,10 +536,7 @@ Door.prototype.write = function( filename, data, mode, extraData )
 	if( this.cancelId )
 		jax.cancelId = this.cancelId;
 	
-	//var old = Workspace.websocketsOffline;
-	//Workspace.websocketsOffline = true;
 	j.open( 'post', '/system.library/file/write', true, true );
-	//Workspace.websocketsOffline = false;
 	if( Workspace.conf && Workspace.conf.authId )
 		j.addVar( 'authid', Workspace.conf.authId );
 	else j.addVar( 'sessionid', Workspace.sessionId );

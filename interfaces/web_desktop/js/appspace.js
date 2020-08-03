@@ -500,7 +500,6 @@ Workspace = {
 	],
 	directoryView: false,
 	conn: null,
-	websocketsOffline: true,
 	//set an additional URL to call on logout
 	setLogoutURL: function( logoutURL )
 	{

@@ -659,7 +659,6 @@ var WorkspaceInside = {
 
 		// Force connecting ws state (we will close it!)
 		Workspace.websocketState = 'connecting';
-		Workspace.websocketsOffline = false;
 		
 		// Just remove this by force
 		document.body.classList.remove( 'Busy' );

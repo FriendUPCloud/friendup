@@ -281,10 +281,9 @@ Friend.User = {
 			}
 
 			let m = new cAjax();
-			Workspace.websocketsOffline = true;
 			m.open( 'get', '/system.library/user/logout/?sessionid=' + Workspace.sessionId, true );
+			m.forceHTTP = true;
 			m.send();
-			Workspace.websocketsOffline = false;
 			setTimeout( doLogout, 500 );
 		} );
 		// Could be there will be no connection..

@@ -33,7 +33,6 @@ Workspace = {
 	menuState: '',
 	themeOverride: false,
 	systemInfo: false,
-	websocketsOffline: true,
 	lastfileSystemChangeMessage: false,
 	serverIsThere: false,
 	runLevels: [
@@ -50,7 +49,6 @@ Workspace = {
 	],
 	directoryView: false,
 	conn: null,
-	websocketsOffline: true,
 	pouchManager: null,
 	deviceid: GetDeviceId(),
 
