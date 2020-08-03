@@ -102,11 +102,13 @@ static inline ListString *RunPHPScript( const char *command )
 	fds[1].fd = STDOUT_FILENO;
 	fds[1].events = POLLOUT;
 
+	int waitLen = MOD_TIMEOUT * 1000;
+	
 	while( TRUE )
 	{
 		DEBUG("[RunPHPScript] in loop\n");
 		
-		int ret = poll( fds, 2, MOD_TIMEOUT * 1000);
+		int ret = poll( fds, 2, waitLen );
 
 		if( ret == 0 )
 		{
@@ -667,14 +669,18 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							{
 								if( tst->hme_Data != NULL )
 								{
-									session = SLIB->sl_USM->usm_Sessions;
-									while( session != NULL )
+									if( FRIEND_MUTEX_LOCK( &(SLIB->sl_USM->usm_Mutex) ) == 0 )
 									{
-										if(  strcmp( session->us_SessionID, (char *)tst->hme_Data ) == 0 )
+										session = SLIB->sl_USM->usm_Sessions;
+										while( session != NULL )
 										{
-											break;
+											if(  strcmp( session->us_SessionID, (char *)tst->hme_Data ) == 0 )
+											{
+												break;
+											}
+											session = (UserSession *)session->node.mln_Succ;
 										}
-										session = (UserSession *)session->node.mln_Succ;
+										FRIEND_MUTEX_UNLOCK( &(SLIB->sl_USM->usm_Mutex) );
 									}
 								}
 							}
@@ -1357,14 +1363,18 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 						{
 							if( tst->hme_Data != NULL )
 							{
-								session = SLIB->sl_USM->usm_Sessions;
-								while( session != NULL )
+								if( FRIEND_MUTEX_LOCK( &(SLIB->sl_USM->usm_Mutex) ) == 0 )
 								{
-									if(  strcmp( session->us_SessionID, (char *)tst->hme_Data ) == 0 )
+									session = SLIB->sl_USM->usm_Sessions;
+									while( session != NULL )
 									{
-										break;
+										if(  strcmp( session->us_SessionID, (char *)tst->hme_Data ) == 0 )
+										{
+											break;
+										}
+										session = (UserSession *)session->node.mln_Succ;
 									}
-									session = (UserSession *)session->node.mln_Succ;
+									FRIEND_MUTEX_UNLOCK( &(SLIB->sl_USM->usm_Mutex) );
 								}
 							}
 						}
@@ -1778,7 +1788,6 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 												freeFile = TRUE;
 											}
 											FFree( decoded );
-											DEBUG("Resource mutex released\n");
 										}
 										if( file != NULL )
 										{

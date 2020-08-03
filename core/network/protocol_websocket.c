@@ -406,10 +406,11 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 						{
 							break;
 						}
-					
-						FRIEND_MUTEX_LOCK( &(us->us_Mutex) );
 					}
-					FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+					else
+					{
+						FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+					}
 					
 					if( q->fq_First != NULL )
 					{

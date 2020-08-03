@@ -84,18 +84,20 @@ void USMDelete( UserSessionManager *smgr )
 User *USMGetUserBySessionID( UserSessionManager *usm, char *sessionid )
 {
 	DEBUG("CHECK3\n");
-	FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
-	UserSession *us = usm->usm_Sessions;
-	while( us != NULL )
+	if( FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) ) == 0 )
 	{
-		if( strcmp( sessionid, us->us_SessionID ) == 0 )
+		UserSession *us = usm->usm_Sessions;
+		while( us != NULL )
 		{
-			FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
-			return us->us_User;
+			if( strcmp( sessionid, us->us_SessionID ) == 0 )
+			{
+				FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+				return us->us_User;
+			}
+			us = (UserSession *) us->node.mln_Succ;
 		}
-		us = (UserSession *) us->node.mln_Succ;
+		FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 	}
-	FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 	return NULL;
 }
 
@@ -247,20 +249,23 @@ UserSession *USMGetSessionByDeviceIDandUserDB( UserSessionManager *smgr, char *d
 UserSession *USMGetSessionByUserID( UserSessionManager *usm, FULONG id )
 {
 	DEBUG("CHECK6\n");
-	//  we  will take only first session of that user
-	FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
-	UserSession *us = usm->usm_Sessions;
-	while( us != NULL )
+	// We will take only first session of that user
+	// protect in mutex
+	if( FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) ) == 0 )
 	{
-		if( us->us_User  != NULL  && us->us_User->u_ID == id )
+		UserSession *us = usm->usm_Sessions;
+		while( us != NULL )
 		{
-			if( us->us_User->u_SessionsList != NULL )
+			if( us->us_User  != NULL  && us->us_User->u_ID == id )
 			{
-				FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
-				return us->us_User->u_SessionsList->us;
+				if( us->us_User->u_SessionsList != NULL )
+				{
+					FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+					return us->us_User->u_SessionsList->us;
+				}
 			}
+			us = (UserSession *) us->node.mln_Succ;
 		}
-		us = (UserSession *) us->node.mln_Succ;
 	}
 	FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 	return NULL;
