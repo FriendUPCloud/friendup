@@ -955,10 +955,10 @@ void *FriendCoreAcceptPhase2( void *d )
 	for( ; ; )
 	{
 		// Lock accept to mutex
-		//if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
+		if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
 		{
 			fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK );
-			//FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
+			FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
 		
 			if( !fd ) break;
 		
@@ -1762,11 +1762,11 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	{
 
 #ifdef SINGLE_SHOT
-		//if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
-		//{
+		if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
+		{
 			epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_MOD, fc->fci_Sockets->fd, &(fc->fci_EpollEvent) );
-			//FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
-		//}
+			FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
+		}
 #endif
 		
 		// Wait for something to happen on any of the sockets we're listening on
