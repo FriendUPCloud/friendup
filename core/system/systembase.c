@@ -65,6 +65,7 @@
 #define LIB_REVISION		0
 #define CONFIG_DIRECTORY	"cfg/"
 
+//#define USE_WORKERS 1
 
 //
 // global structure
@@ -613,7 +614,12 @@ SystemBase *SystemInit( void )
 	
 	l->fcm = FriendCoreManagerNew();
 
+#ifdef USE_WORKERS
 	l->sl_WorkerManager = WorkerManagerNew( l->sl_WorkersNumber );
+#else
+	l->sl_WorkerManager = NULL;
+#endif
+
 	if( FriendCoreManagerInit( l->fcm ) != 0 )
 	{
 		FriendCoreInstance *fci = l->fcm->fcm_FriendCores;
