@@ -266,8 +266,8 @@ UserSession *USMGetSessionByUserID( UserSessionManager *usm, FULONG id )
 			}
 			us = (UserSession *) us->node.mln_Succ;
 		}
+		FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 	}
-	FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 	return NULL;
 }
 
@@ -902,46 +902,47 @@ int USMRemoveOldSessions( void *lsb )
 	UserSession **remsessions = FCalloc( nr, sizeof(UserSession *) );
 	if( remsessions != NULL )
 	{
-		FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) );
-        
-		UserSession *actSession = smgr->usm_Sessions;
-		UserSession *remSession = actSession;
-		nr = 0;
-	
-		while( actSession != NULL )
+		if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) == 0 )
 		{
-			FBOOL canDelete = TRUE;
-			remSession = actSession;
-		
-			if( sb->sl_Sentinel != NULL )
+			UserSession *actSession = smgr->usm_Sessions;
+			UserSession *remSession = actSession;
+			nr = 0;
+	
+			while( actSession != NULL )
 			{
-				if( remSession->us_User == sb->sl_Sentinel->s_User && strcmp( remSession->us_DeviceIdentity, "remote" ) == 0 )
-				{
-					DEBUG("Sentinel REMOTE session I cannot remove it\n");
-					canDelete = FALSE;
-				}
-			}
-			actSession = (UserSession *)actSession->node.mln_Succ;
+				FBOOL canDelete = TRUE;
+				remSession = actSession;
 		
-			if( canDelete == TRUE && ( ( acttime -  remSession->us_LoggedTime ) > sb->sl_RemoveSessionsAfterTime ) )
-			{
-				int size = 0;
-				if( temp[ 0 ] == 0 )
+				if( sb->sl_Sentinel != NULL )
 				{
-					size = snprintf( temp, sizeof(temp), "%s", remSession->us_SessionID );
+					if( remSession->us_User == sb->sl_Sentinel->s_User && strcmp( remSession->us_DeviceIdentity, "remote" ) == 0 )
+					{
+						DEBUG("Sentinel REMOTE session I cannot remove it\n");
+						canDelete = FALSE;
+					}
 				}
-				else
+				actSession = (UserSession *)actSession->node.mln_Succ;
+		
+				if( canDelete == TRUE && ( ( acttime -  remSession->us_LoggedTime ) > sb->sl_RemoveSessionsAfterTime ) )
 				{
-					size = snprintf( temp, sizeof(temp), ",%s", remSession->us_SessionID );
-				}
-				BufStringAddSize( sqlreq, temp, size );
+					int size = 0;
+					if( temp[ 0 ] == 0 )
+					{
+						size = snprintf( temp, sizeof(temp), "%s", remSession->us_SessionID );
+					}
+					else
+					{
+						size = snprintf( temp, sizeof(temp), ",%s", remSession->us_SessionID );
+					}
+					BufStringAddSize( sqlreq, temp, size );
 			
-				remsessions[ nr++ ] = remSession;
+					remsessions[ nr++ ] = remSession;
+				}
 			}
-		}
-		BufStringAddSize( sqlreq, ")", 1 );
+			BufStringAddSize( sqlreq, ")", 1 );
 		
-        FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
+		    FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
+		}
         
 		int i;
 		for( i=0 ; i < nr ; i++ )
@@ -1058,106 +1059,107 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
 			
 				DEBUG("[USMSendDoorNotification] found ownerid %lu\n", usr->u_ID );
 			
-				FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
-			
-				if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
+				if( FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) ) == 0 )
 				{
-					// go through all User Sessions and send message
-					UserSessListEntry *le = usr->u_SessionsList;
-					while( le != NULL )
+					if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
 					{
-						UserSession *uses = (UserSession *)le->us;
+						// go through all User Sessions and send message
+						UserSessListEntry *le = usr->u_SessionsList;
+						while( le != NULL )
+						{
+							UserSession *uses = (UserSession *)le->us;
 					
-						// do not send message to sender
-						FBOOL sendNotif = TRUE;
-						if( uses == NULL )
-						{
-							sendNotif = FALSE;
-						}
-			
-						if( sendNotif == TRUE )
-						{
-							DEBUG("[USMSendDoorNotification] Send message %s function pointer %p sbpointer %p to sessiondevid: %s\n", tmpmsg, sb->WebSocketSendMessage, sb, uses->us_DeviceIdentity );
-				
-						
-							//FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
-							WebSocketSendMessage( sb, uses, tmpmsg, len );
-							//FRIEND_MUTEX_LOCK( &(usr->u_Mutex) );
-
-							// send message to all remote users
-							RemoteUser *ruser = usr->u_RemoteUsers;
-							while( ruser != NULL )
+							// do not send message to sender
+							FBOOL sendNotif = TRUE;
+							if( uses == NULL )
 							{
-								DEBUG("[USMSendDoorNotification] Remote user connected: %s\n", ruser->ru_Name );
-								RemoteDrive *rdrive = ruser->ru_RemoteDrives;
-				
-								while( rdrive != NULL )
-								{
-									DEBUG("[USMSendDoorNotification] Remote drive connected: %s %lu\n", rdrive->rd_LocalName, rdrive->rd_DriveID );
-					
-									if( rdrive->rd_DriveID == device->f_ID )
-									{
-										int fnamei;
-										int fpathi;
-										int funamei;
-										int fdriveid;
-						
-										char *fname =  createParameter( "devname", rdrive->rd_RemoteName, &fnamei );
-										char *fpath =  createParameter( "path", path, &fpathi );
-										char *funame =  createParameter( "usrname", ruser->ru_Name, &funamei );
-										char *fdeviceid = createParameterFULONG( "deviceid", rdrive->rd_RemoteID, &fdriveid );
-						
-										MsgItem tags[] = {
-											{ ID_FCRE,  (FULONG)0, (FULONG)MSG_GROUP_START },
-											{ ID_FCID,  (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)sb->fcm->fcm_ID },
-											{ ID_FRID, (FULONG)0 , MSG_INTEGER_VALUE },
-											{ ID_CMMD, (FULONG)0, MSG_INTEGER_VALUE },
-											{ ID_FNOT, (FULONG)0 , MSG_INTEGER_VALUE },
-											{ ID_PARM, (FULONG)0, MSG_GROUP_START },
-											{ ID_PRMT, (FULONG) fnamei, (FULONG)fname },
-											{ ID_PRMT, (FULONG) fpathi, (FULONG)fpath },
-											{ ID_PRMT, (FULONG) funamei, (FULONG)funame },
-											{ ID_PRMT, (FULONG) fdriveid, (FULONG)fdeviceid },
-											{ MSG_GROUP_END, 0,  0 },
-											{ TAG_DONE, TAG_DONE, TAG_DONE }
-										};
-						
-										DataForm *df = DataFormNew( tags );
-										if( df != NULL )
-										{
-											//DEBUG("[USMSendDoorNotification] Register device, send notification\n");
-							
-											BufString *result = SendMessageAndWait( ruser->ru_Connection, df );
-											if( result != NULL )
-											{
-												//DEBUG("[USMSendDoorNotification] Received response\n");
-												BufStringDelete( result );
-											}
-											DataFormDelete( df );
-										}
-						
-										FFree( fdeviceid );
-										FFree( fname );
-										FFree( fpath );
-										FFree( funame );
-										break;
-									} // if driveID = deviceID
-									rdrive = (RemoteDrive *)rdrive->node.mln_Succ;
-								} // while remote drives
-								ruser = (RemoteUser *)ruser->node.mln_Succ;
-							} // while remote users
-						} // sendNotif == TRUE
-				
-						le = (UserSessListEntry *)le->node.mln_Succ;
-					} // while loop, session
-					//FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
-					
-					DEBUG("unlock user\n");
-					FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
-				} // mutex lock
+								sendNotif = FALSE;
+							}
 			
-				DEBUG("CHECK12\n");
-				FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
+							if( sendNotif == TRUE )
+							{
+								DEBUG("[USMSendDoorNotification] Send message %s function pointer %p sbpointer %p to sessiondevid: %s\n", tmpmsg, sb->WebSocketSendMessage, sb, uses->us_DeviceIdentity );
+				
+						
+								//FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
+								WebSocketSendMessage( sb, uses, tmpmsg, len );
+								//FRIEND_MUTEX_LOCK( &(usr->u_Mutex) );
+
+								// send message to all remote users
+								RemoteUser *ruser = usr->u_RemoteUsers;
+								while( ruser != NULL )
+								{
+									DEBUG("[USMSendDoorNotification] Remote user connected: %s\n", ruser->ru_Name );
+									RemoteDrive *rdrive = ruser->ru_RemoteDrives;
+				
+									while( rdrive != NULL )
+									{
+										DEBUG("[USMSendDoorNotification] Remote drive connected: %s %lu\n", rdrive->rd_LocalName, rdrive->rd_DriveID );
+					
+										if( rdrive->rd_DriveID == device->f_ID )
+										{
+											int fnamei;
+											int fpathi;
+											int funamei;
+											int fdriveid;
+						
+											char *fname =  createParameter( "devname", rdrive->rd_RemoteName, &fnamei );
+											char *fpath =  createParameter( "path", path, &fpathi );
+											char *funame =  createParameter( "usrname", ruser->ru_Name, &funamei );
+											char *fdeviceid = createParameterFULONG( "deviceid", rdrive->rd_RemoteID, &fdriveid );
+						
+											MsgItem tags[] = {
+												{ ID_FCRE,  (FULONG)0, (FULONG)MSG_GROUP_START },
+												{ ID_FCID,  (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)sb->fcm->fcm_ID },
+												{ ID_FRID, (FULONG)0 , MSG_INTEGER_VALUE },
+												{ ID_CMMD, (FULONG)0, MSG_INTEGER_VALUE },
+												{ ID_FNOT, (FULONG)0 , MSG_INTEGER_VALUE },
+												{ ID_PARM, (FULONG)0, MSG_GROUP_START },
+												{ ID_PRMT, (FULONG) fnamei, (FULONG)fname },
+												{ ID_PRMT, (FULONG) fpathi, (FULONG)fpath },
+												{ ID_PRMT, (FULONG) funamei, (FULONG)funame },
+												{ ID_PRMT, (FULONG) fdriveid, (FULONG)fdeviceid },
+												{ MSG_GROUP_END, 0,  0 },
+												{ TAG_DONE, TAG_DONE, TAG_DONE }
+											};
+						
+											DataForm *df = DataFormNew( tags );
+											if( df != NULL )
+											{
+												//DEBUG("[USMSendDoorNotification] Register device, send notification\n");
+							
+												BufString *result = SendMessageAndWait( ruser->ru_Connection, df );
+												if( result != NULL )
+												{
+													//DEBUG("[USMSendDoorNotification] Received response\n");
+													BufStringDelete( result );
+												}
+												DataFormDelete( df );
+											}
+						
+											FFree( fdeviceid );
+											FFree( fname );
+											FFree( fpath );
+											FFree( funame );
+											break;
+										} // if driveID = deviceID
+										rdrive = (RemoteDrive *)rdrive->node.mln_Succ;
+									} // while remote drives
+									ruser = (RemoteUser *)ruser->node.mln_Succ;
+								} // while remote users
+							} // sendNotif == TRUE
+				
+							le = (UserSessListEntry *)le->node.mln_Succ;
+						} // while loop, session
+						//FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+					
+						DEBUG("unlock user\n");
+						FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
+					} // mutex lock
+			
+					DEBUG("CHECK12\n");
+					FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
+				}
 			}
 			usr = (User *)usr->node.mln_Succ;
 		}
@@ -1177,11 +1179,11 @@ void USMCloseUnusedWebSockets( UserSessionManager *usm )
 {
 	time_t actTime = time( NULL );
 	DEBUG("[USMCloseUnusedWebSockets] start\n");
-	if( FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) ) == 0 )
+	/*if( FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) ) == 0 )
 	{
 
 		FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
-	}
+	}*/
 	DEBUG("[USMCloseUnusedWebSockets] end\n");
 }
 
