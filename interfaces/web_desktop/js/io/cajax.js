@@ -397,8 +397,8 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		window.Workspace &&
 		Workspace.conn && 
 		Workspace.conn.ws && 
-		this.proxy.responseType != 'arraybuffer' &&
 		Workspace.websocketState == 'open' &&
+		this.proxy.responseType != 'arraybuffer' &&
 		typeof( url ) == 'string' && 
 		url.indexOf( 'http' ) != 0 && 
 		url.indexOf( 'system.library' ) >= 0 &&
