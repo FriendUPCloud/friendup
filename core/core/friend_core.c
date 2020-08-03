@@ -1793,12 +1793,12 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 				!( currentEvent->events & EPOLLIN ) 
 			)
 			{
-				if( ((Socket*)currentEvent->data.ptr)->fd == fc->fci_Sockets->fd )
+				/*if( ((Socket*)currentEvent->data.ptr)->fd == fc->fci_Sockets->fd )
 				{
 					// Oups! We have gone away!
 					DEBUG( "[FriendCoreEpoll] Socket went away!\n" );
 					break;
-				}
+				}*/
 								
 				// Remove it
 				LOG( FLOG_ERROR, "[FriendCoreEpoll] Socket had errors.\n" );
