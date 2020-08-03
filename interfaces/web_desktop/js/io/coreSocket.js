@@ -55,7 +55,7 @@ FriendWebSocket = function( conf )
 	self.reconnectDelay = 200; // ms
 	self.reconnectMaxDelay = 1000 * 30; // 30 sec max delay between reconnect attempts
 	self.reconnectAttempt = 0; // delay is multiplied with attempts to find how long the next delay is
-	self.reconnectMaxAttempts = 0; // 0 to keep hammering
+	self.reconnectMaxAttempts = 3; // 0 to keep hammering
 	self.reconnectScale = {
 		min: 5,
 		max: 8
@@ -875,6 +875,8 @@ FriendWebSocket.prototype.wsClose = function( code, reason )
 	
 	try {
 		console.log('closing websocket',code,reason);
+		if( window.Friend && Friend.User )
+			Friend.User.CheckServerNow();
 		self.ws.close( code, reason );
 	} catch (e)
 	{
