@@ -1070,7 +1070,7 @@ void *FriendCoreAcceptPhase2( void *d )
 							case SSL_ERROR_SYSCALL:
 								FERROR( "[FriendCoreAcceptPhase2] Error syscall. Goodbye! %s.\n", ERR_error_string( ERR_get_error(), NULL ) );
 								//goto accerror;
-								//lbreak = 2;
+								lbreak = 2;
 								break;
 							case SSL_ERROR_SSL:
 							{
