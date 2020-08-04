@@ -955,10 +955,10 @@ void *FriendCoreAcceptPhase2( void *d )
 	for( ; ; )
 	{
 		// Lock accept to mutex
-		if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
-		{
+		//if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
+		//{
 			fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK );
-			FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
+			//FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
 		
 			if( !fd ) break;
 		
@@ -1159,7 +1159,7 @@ void *FriendCoreAcceptPhase2( void *d )
 					}
 				}
 			}
-		}
+		//}
 		//DEBUG("[FriendCoreAcceptPhase2] in accept loop\n");
 	}	// while accept
 
@@ -1760,8 +1760,8 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	// All incoming network events go through here
 	while( !fc->fci_Shutdown )
 	{
-		if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
-		{
+		//if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
+		//{
 
 #ifdef SINGLE_SHOT
 			epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_MOD, fc->fci_Sockets->fd, &(fc->fci_EpollEvent) );
@@ -1771,8 +1771,8 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 			DEBUG("[FriendCoreEpoll] Before epollwait\n");
 			eventCount = epoll_pwait( fc->fci_Epollfd, events, fc->fci_MaxPoll, -1, &curmask );
 			DEBUG("[FriendCoreEpoll] Epollwait, eventcount: %d\n", eventCount );
-			FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
-		}
+			//FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
+		//}
 
 		for( i = 0; i < eventCount; i++ )
 		{
