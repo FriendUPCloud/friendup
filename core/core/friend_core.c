@@ -1760,19 +1760,19 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	// All incoming network events go through here
 	while( !fc->fci_Shutdown )
 	{
-
-#ifdef SINGLE_SHOT
 		if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
 		{
+
+#ifdef SINGLE_SHOT
 			epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_MOD, fc->fci_Sockets->fd, &(fc->fci_EpollEvent) );
-			FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
-		}
 #endif
 		
 		// Wait for something to happen on any of the sockets we're listening on
-		DEBUG("[FriendCoreEpoll] Before epollwait\n");
-		eventCount = epoll_pwait( fc->fci_Epollfd, events, fc->fci_MaxPoll, -1, &curmask );
-		DEBUG("[FriendCoreEpoll] Epollwait, eventcount: %d\n", eventCount );
+			DEBUG("[FriendCoreEpoll] Before epollwait\n");
+			eventCount = epoll_pwait( fc->fci_Epollfd, events, fc->fci_MaxPoll, -1, &curmask );
+			DEBUG("[FriendCoreEpoll] Epollwait, eventcount: %d\n", eventCount );
+			FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
+		}
 
 		for( i = 0; i < eventCount; i++ )
 		{
