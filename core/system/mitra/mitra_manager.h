@@ -32,6 +32,9 @@
 
 typedef struct MitraManager
 {
+	char								*mm_AuthToken;
+	char								*mm_WindowsHost;
+	int									mm_WindowsPort;
 	void								*mm_SB;
 	SQLLibrary							*mm_Sqllib;	// pointer to library
 }MitraManager;
@@ -53,11 +56,19 @@ void MitraManagerDelete( MitraManager *smgr );
 //
 //
 
-char * MitraManagerGetUserData( MitraManager *rmgr, char *username );
+void MitraManagerCheckAndAddToken( MitraManager *mm );
 
 //
 //
 //
+
+int MitraManagerGetUserData( MitraManager *mmgr, char *username, char **uname, char **domain, char **pass, char **host );
+
+//
+//
+//
+
+BufString *MitraManagerCall( MitraManager *mm, char *path, int *errCode );
 
 #endif //__SYSTEM_MITRA_MITRA_MANAGER_H__
 

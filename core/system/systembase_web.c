@@ -2101,6 +2101,13 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					
 					if( loggedSession != NULL )
 					{
+						// check if connected device is webmed device
+						
+						if( deviceid != NULL && strncmp( deviceid, "medclient-", 10 ) == 0 )
+						{
+							MitraManagerCheckAndAddToken( l->sl_MitraManager );
+						}
+						
 						DEBUG("session loaded session id %s\n", loggedSession->us_SessionID );
 						if( ( loggedSession = USMUserSessionAdd( l->sl_USM, loggedSession ) ) != NULL )
 						{

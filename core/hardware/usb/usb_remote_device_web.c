@@ -78,7 +78,7 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 	* @return return information about avaiable usb ports in JSON format when success, otherwise error code
 	*/
 	/// @endcond
-	else if( strcmp(urlpath[0], "create" ) == 0 )
+	else if( strcmp( urlpath[0], "create" ) == 0 )
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate("text/html") },
@@ -103,7 +103,67 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 			USBRemoteDevice *actdev = USBRemoteManagerCreatePort( l->sl_USBRemoteManager, username, &error );
 			if( actdev != NULL )
 			{
-				char buffer[ 512 ];
+				char *uname, *domain, *pass, *host;
+				char *buffer;
+				char path[ 512 ];
+				//snprintf( tmp, sizeof(tmp), "/%s/", geoFormat );
+				
+				if( loggedSession->us_User != NULL )
+				{
+					MitraManagerGetUserData( l->sl_MitraManager, loggedSession->us_User->u_Name, &uname, &domain, &pass, &host );
+				}
+				
+				// generate password for usb device
+				
+				char *usbPassword = MakeString( 255 );
+				sprintf( usbPassword, "%ld%s%d", time(NULL), loggedSession->us_SessionID, ( rand() % 999 ) + ( rand() % 999 ) + ( rand() % 999 ) );
+				HashedString( &usbPassword );
+				
+				actdev->usbrd_Password = usbPassword;
+				
+				/*
+ Open port
+ 
+ curl -X POST "http://localhost:5000/Usb/Open?windowsUser=Pawel&password=pegasos1232" -H  "accept: **" -H  "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6ImphbkBrb3dhbHNraS5wbCIsImdpdmVuX25hbWUiOiJKYW4iLCJmYW1pbHlfbmFtZSI6Iktvd2Fsc2tpIiwibmJmIjoxNTk2NDgzMDk4LCJleHAiOjE1OTY0ODMzOTgsImlhdCI6MTU5NjQ4MzA5OCwiaXNzIjoiaXNzdWVyIiwiYXVkIjoiYXVkaWVuY2UifQ._e2w4UvqwgWi4J2LF0s4OvO8GLD4GbqnsM8Ze7ZIdas" -d ""
+ */
+				snprintf( path, sizeof(path), "/Usb/Open?windowsUser=%s\\%s&password=%s", domain, uname, usbPassword );
+				
+				int bufLen = 256;
+				int errorCode;
+				
+				BufString *rsp = MitraManagerCall( l->sl_MitraManager, path, &errorCode );
+				if( rsp != NULL )
+				{
+					//  { Port = port, WindowsUser = windowsUser }
+					
+					char *in = (char *)rsp->bs_Buffer;
+					jsmn_parser p;
+					jsmntok_t t[128]; // We expect no more than 128 tokens
+					
+					bufLen += rsp->bs_Size;
+				
+					jsmn_init( &p );
+					int r = jsmn_parse( &p, rsp->bs_Buffer , rsp->bs_Size, t, 256 );
+
+					// Assume the top-level element is an object 
+					if( r > 1 && t[0].type == JSMN_OBJECT )
+					{
+						//{"host":"localhost","username":"guac","password":"IkkeHeltStabile2000","database":"guacamole"} 
+				
+						char *port = StringDuplicateN( in + t[ 2 ].start, (int)(t[ 2 ].end-t[ 2 ].start) );
+						//char *winUser = StringDuplicateN( in + t[ 4 ].start, (int)(t[ 4 ].end-t[ 4 ].start) );
+						
+						if( port != NULL )
+						{
+							char *end;
+							actdev->usbrd_IPPort = strtoll( port,  &end, 0 );
+							FFree( port );
+						}
+
+					}
+					BufStringDelete( rsp );
+				}
+				
 				
 				/*
 				 SELECT Data FROM FSetting s WHERE s.UserID = '-1' AND s.Type = 'mitra' AND s.Key = 'database';
@@ -111,11 +171,31 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 				 * 
 				 select * from FSetting where Type='MitraApp';
 {"type":"RDP","name":"Francois Server","full address":"35.156.138.140","server port":"3389","remoteapplicationprogram":"","remote-app-dir":"francoisserver","saml_accessgroups":"","icon":"","executable_path":"","security":"any","alternate shell":"","remoteapp_parameters":"","remoteapp_working_dir":"","performance_wallpaper":"1","performance_theming":"1","performance_cleartype":"1","performance_windowdrag":"1","performance_aero":"1","performance_menuanimations":"1"} |
-
 				 */
 
-				int size = sprintf( buffer, "{\"deviceid\":\"%lu\",\"address\":\"%s\",\"port\":%d,\"uname\":\"%s\",\"password\":\"%s\"}", actdev->usbrd_ID, actdev->usbrd_NetworkAddress, actdev->usbrd_IPPort, actdev->usbrd_Login, actdev->usbrd_Password );
-				HttpAddTextContent(response, buffer);
+				if( ( buffer = FMalloc( bufLen ) ) != NULL )
+				{
+					int size = sprintf( buffer, "{\"deviceid\":\"%lu\",\"address\":\"%s\",\"port\":%d,\"uname\":\"%s\",\"password\":\"%s\"}", actdev->usbrd_ID, actdev->usbrd_NetworkAddress, actdev->usbrd_IPPort, actdev->usbrd_Login, actdev->usbrd_Password );
+					//HttpAddTextContent(response, buffer);
+					HttpSetContent( response, buffer, size );
+				}
+				
+				if( uname != NULL )
+				{
+					FFree( uname );
+				}
+				if( domain != NULL )
+				{
+					FFree( domain );
+				}
+				if( pass != NULL )
+				{
+					FFree( pass );
+				}
+				if( host != NULL )
+				{
+					FFree( host );
+				}
 			}
 			else
 			{
