@@ -235,7 +235,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		
 		case LWS_CALLBACK_CLOSED:
 			{
-				int tr = 5;
+				int tr = 8;
 				
 				while( TRUE )
 				{
@@ -245,7 +245,8 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 						break;
 					}
 					DEBUG("[WS] Closing WS, number: %d\n", wsd->wsc_InUseCounter );
-					sleep( 1 );
+					//sleep( 1 );
+					usleep( 350000 );	// 0.35 seconds
 					
 					if( tr-- <= 0 )
 					{
