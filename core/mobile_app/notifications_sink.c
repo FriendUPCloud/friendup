@@ -180,6 +180,7 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 					FFree( d );
 				}	
 				man->man_Data = NULL;
+				DEBUG("[NotificationSink] CLOSE, connection closed\n");
 			}
 		}
 		break;
