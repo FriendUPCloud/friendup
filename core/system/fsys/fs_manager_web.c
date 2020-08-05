@@ -811,9 +811,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									char *data = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", command, &dataLength );
 									if( data != NULL )
 									{
-										if( strncmp( data, "ok", 2 ) == 0 )
+										/*if( strncmp( data, "ok", 2 ) == 0 )
 										{
-										}
+										}*/
 										FFree( data );
 									}
 									FFree( command );
@@ -932,9 +932,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								char *data = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", command, &dataLength );
 								if( data != NULL )
 								{
-									if( strncmp( data, "ok", 2 ) == 0 )
+									/*if( strncmp( data, "ok", 2 ) == 0 )
 									{
-									}
+									}*/
 									FFree( data );
 								}
 								FFree( command );
@@ -1911,9 +1911,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 										char *data = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", command, &dataLength );
 										if( data != NULL )
 										{
-											if( strncmp( data, "ok", 2 ) == 0 )
+											/*if( strncmp( data, "ok", 2 ) == 0 )
 											{
-											}
+											}*/
 											FFree( data );
 										}
 										FFree( command );
