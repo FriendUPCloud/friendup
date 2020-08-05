@@ -765,7 +765,7 @@ int ParseAndCall( WSThreadData *wstd )
 	jsmn_parser p;
 	jsmntok_t *t;
 	
-	pthread_detach( pthread_self() );
+	//pthread_detach( pthread_self() );
 	
 	UserSession *locus = NULL;
 	
