@@ -196,11 +196,14 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	fds[1].fd = STDOUT_FILENO;
 	fds[1].events = POLLOUT;
 
+	int ret = 0;
+	int timeout = MOD_TIMEOUT * 1000;
+
 	while( TRUE )
 	{
 		DEBUG("[PHPmod] in loop\n");
 		
-		int ret = poll( fds, 2, MOD_TIMEOUT * 1000);
+		ret = poll( fds, 2, timeout );
 
 		if( ret == 0 )
 		{
@@ -319,9 +322,10 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 		return NULL;
 	}
 	
+	int reads = 0;
 	while( !feof( pipe ) )
 	{
-		int reads = fread( buf, sizeof( char ), PHP_READ_SIZE, pipe );
+		reads = fread( buf, sizeof( char ), PHP_READ_SIZE, pipe );
 		if( reads > 0 )
 		{
 			//BufStringAddSize( bs, buf, reads );

@@ -189,9 +189,9 @@ char *GetFileName( const char *path )
 }
 
 //#define PHP_READ_SIZE 262144
-//#define PHP_READ_SIZE 2048
+#define PHP_READ_SIZE 4096
 //#define PHP_READ_SIZE 132144
-#define PHP_READ_SIZE (1024 * 1024 * 2)
+//#define PHP_READ_SIZE (1024 * 1024 * 2)
 #define USE_NPOPEN_POLL
 
 //
@@ -225,12 +225,15 @@ ListString *PHPCall( const char *command )
 	// watch stdout for ability to write
 	fds[1].fd = STDOUT_FILENO;
 	fds[1].events = POLLOUT;
+	
+	int ret = 0;
+	int timeout = FILESYSTEM_MOD_TIMEOUT * 1000;
 
 	while( TRUE )
 	{
 		DEBUG("[PHPFsys] in loop\n");
 		
-		int ret = poll( fds, 2, FILESYSTEM_MOD_TIMEOUT * 1000);
+		ret = poll( fds, 2, timeout );
 
 		if( ret == 0 )
 		{
@@ -396,9 +399,12 @@ BufStringDisk *PHPCallDisk( const char *command )
 	fds[1].fd = STDOUT_FILENO;
 	fds[1].events = POLLOUT;
 
+	int ret = 0;
+	int timeout = FILESYSTEM_MOD_TIMEOUT * 1000;
+
 	while( TRUE )
 	{
-		int ret = poll( fds, 2, FILESYSTEM_MOD_TIMEOUT * 1000);
+		ret = poll( fds, 2, timeout );
 
 		if( ret == 0 )
 		{
@@ -1041,9 +1047,10 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 					store = (int)toWrite;
 				}
 				
+				int rbytes = 0;
 				while( toWrite > 0 )
 				{
-					int rbytes = write( lockf, ( void *)dataptr, store );
+					rbytes = write( lockf, ( void *)dataptr, store );
 					dataptr += rbytes;
 					toWrite -= rbytes;
 					
