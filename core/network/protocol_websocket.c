@@ -767,7 +767,19 @@ int ParseAndCall( WSThreadData *wstd )
 	
 	pthread_detach( pthread_self() );
 	
-	UserSession *locus = wstd->wstd_WSD->wsc_UserSession;
+	UserSession *locus = NULL;
+	
+	if( wstd->wstd_WSD != NULL )
+	{
+		if( FRIEND_MUTEX_LOCK( &(wstd->wstd_WSD->wsc_Mutex) ) == 0 )
+		{
+			wstd->wstd_WSD->wsc_InUseCounter++;
+			locus = wstd->wstd_WSD->wsc_UserSession;
+			
+			FRIEND_MUTEX_UNLOCK( &(wstd->wstd_WSD->wsc_Mutex) );
+		}
+	}
+	
 	if( locus != NULL )
 	{
 		if( locus->us_WSD == NULL )
@@ -1494,6 +1506,16 @@ int ParseAndCall( WSThreadData *wstd )
 		{
 			locus->us_InUseCounter--;
 			FRIEND_MUTEX_UNLOCK( &(locus->us_Mutex) );
+		}
+	}
+	
+	if( wstd->wstd_WSD != NULL )
+	{
+		if( FRIEND_MUTEX_LOCK( &(wstd->wstd_WSD->wsc_Mutex) ) == 0 )
+		{
+			wstd->wstd_WSD->wsc_InUseCounter--;
+
+			FRIEND_MUTEX_UNLOCK( &(wstd->wstd_WSD->wsc_Mutex) );
 		}
 	}
 	
