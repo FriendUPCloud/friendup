@@ -44,7 +44,7 @@ function initRoleDetails( info )
 									if( roleperm[r].Permission == perm[i].AppPermissions[ii].split( 'App ' )[1].trim() )
 									{
 										//console.log( perm[i] );
-										console.log( roleperm[r] );
+										if( ShowLog ) console.log( roleperm[r] );
 										
 										perm[i].AppPermissions[ii] = {
 											id          : perm[i].AppPermissions[ii].split( 'App ' )[1].trim(), 
@@ -53,7 +53,7 @@ function initRoleDetails( info )
 											data        : roleperm[r].Data
 										};
 										
-										console.log( '[1]', perm[i].AppPermissions[ii] );
+										if( ShowLog ) console.log( '[1]', perm[i].AppPermissions[ii] );
 										
 										// New method ----
 										
@@ -84,11 +84,11 @@ function initRoleDetails( info )
 										if( typeof perm[i].AppPermissions[ii].data == 'undefined' )
 										{
 											//console.log( perm[i] );
-											console.log( roleperm[r] );
+											if( ShowLog ) console.log( roleperm[r] );
 										
 											perm[i].AppPermissions[ii].data = roleperm[r].Data;
 										
-											console.log( '[2]', perm[i].AppPermissions[ii] );
+											if( ShowLog ) console.log( '[2]', perm[i].AppPermissions[ii] );
 										}
 										
 										// New method ----
@@ -123,7 +123,7 @@ function initRoleDetails( info )
 		}
 	}
 	
-	console.log( perm );
+	if( ShowLog ) console.log( perm );
 	
 	apl = '';
 	

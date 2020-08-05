@@ -136,7 +136,7 @@ Sections.accounts_users = function( cmd, extra )
 				var apps              = ( info.applications ? info.applications : {} );
 				var dock              = ( info.dock ? info.dock : {} );
 				
-				console.log( 'initUsersDetails( info ) ', info );		
+				if( ShowLog ) console.log( 'initUsersDetails( info ) ', info );		
 				
 				var func = {
 					
@@ -2000,7 +2000,7 @@ Sections.accounts_users = function( cmd, extra )
 																									}
 																									else
 																									{
-																										console.log( { e:e, d:d, vars: vars } );
+																										if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
 																									}
 																					
 																								}, { pnt: args.pnt, func: args.func } );
@@ -2180,7 +2180,7 @@ Sections.accounts_users = function( cmd, extra )
 																								}
 																								else
 																								{
-																									console.log( { e:e, d:d, vars: vars } );
+																									if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
 																								}
 																					
 																							}, { _this: this, func: func } );
@@ -2208,7 +2208,7 @@ Sections.accounts_users = function( cmd, extra )
 																								}
 																								else
 																								{
-																									console.log( { e:e, d:d, vars: vars } );
+																									if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
 																								}
 																					
 																							}, { _this: this, func: func } );
@@ -3718,7 +3718,7 @@ Sections.accounts_users = function( cmd, extra )
 							{
 								// Check Permissions
 								
-								console.log( '// Check Permissions ', show );
+								if( ShowLog ) console.log( '// Check Permissions ', show );
 								
 								if( !show || show.indexOf( 'workgroup' ) >= 0 )
 								{
@@ -3975,7 +3975,7 @@ Sections.accounts_users = function( cmd, extra )
 						
 						loadingInfo.userInfo = userInfo;
 						
-						console.log( '// 0 | Load userinfo' );
+						if( ShowLog ) console.log( '// 0 | Load userinfo' );
 						
 						initUsersDetails( loadingInfo, [  ], true );
 						
@@ -4005,7 +4005,7 @@ Sections.accounts_users = function( cmd, extra )
 						if( e != 'ok' ) wgroups = '404';
 						loadingInfo.workgroups = wgroups;
 						
-						console.log( '// 3 | Get user\'s workgroups' );
+						if( ShowLog ) console.log( '// 3 | Get user\'s workgroups' );
 						
 						initUsersDetails( loadingInfo, [ 'workgroup' ] );
 					}
@@ -4038,7 +4038,7 @@ Sections.accounts_users = function( cmd, extra )
 						//console.log( 'userroleget ', { e:e, d:uroles } );
 						if( e != 'ok' ) loadingInfo.roles = '404';
 						
-						console.log( '// 4 | Get user\'s roles' );
+						if( ShowLog ) console.log( '// 4 | Get user\'s roles' );
 						
 						initUsersDetails( loadingInfo, [ 'role' ] );
 					}
@@ -4104,7 +4104,7 @@ Sections.accounts_users = function( cmd, extra )
 							if( e != 'ok' ) rows = '404';
 							loadingInfo.mountlist = rows;
 							
-							console.log( '// 5 | Get storage' );
+							if( ShowLog ) console.log( '// 5 | Get storage' );
 							
 							initUsersDetails( loadingInfo, [ 'storage' ] );
 							
@@ -4185,7 +4185,7 @@ Sections.accounts_users = function( cmd, extra )
 						
 						loadingInfo.applications = dat;
 						
-						console.log( '// 6 | Get all applications' );
+						if( ShowLog ) console.log( '// 6 | Get all applications' );
 						
 						initUsersDetails( loadingInfo, [ 'application', 'looknfeel' ] );
 						
@@ -4216,7 +4216,7 @@ Sections.accounts_users = function( cmd, extra )
 						
 						loadingInfo.dock = dat;
 						
-						console.log( '// 7 | Get user dock' );
+						if( ShowLog ) console.log( '// 7 | Get user dock' );
 						
 						initUsersDetails( loadingInfo, [ 'dock' ] );
 						
@@ -4246,7 +4246,7 @@ Sections.accounts_users = function( cmd, extra )
 						if( e != 'ok' ) settings = '404';
 						loadingInfo.settings = settings;
 						
-						console.log( '// 8 | Load user settings' );
+						if( ShowLog ) console.log( '// 8 | Load user settings' );
 						
 						initUsersDetails( loadingInfo, [  ] );
 						
@@ -4281,7 +4281,7 @@ Sections.accounts_users = function( cmd, extra )
 							if( e != 'ok' ) workspacesettings = '404';
 							loadingInfo.workspaceSettings = workspacesettings;
 							
-							console.log( '// 9 | Get more user setting' );
+							if( ShowLog ) console.log( '// 9 | Get more user setting' );
 							
 							initUsersDetails( loadingInfo, [  ]/*, true*/ );
 						}
@@ -4301,7 +4301,7 @@ Sections.accounts_users = function( cmd, extra )
 				// 7 | init
 				function(  )
 				{
-					console.log( '// 10 | init' );
+					if( ShowLog ) console.log( '// 10 | init' );
 					
 					initUsersDetails( loadingInfo, [ 'workgroup', 'role', 'storage', 'dock', /*'application', */'looknfeel' ] );
 				}
@@ -4752,7 +4752,7 @@ Sections.accounts_users = function( cmd, extra )
 										wgroups = null;
 									}
 									
-									console.log( 'workgroups ', { e:e , d:(wgroups?wgroups:d), args: args } );
+									if( ShowLog ) console.log( 'workgroups ', { e:e , d:(wgroups?wgroups:d), args: args } );
 									
 									if( wgroups.groups )
 									{
@@ -4804,7 +4804,7 @@ Sections.accounts_users = function( cmd, extra )
 									
 									var workgroups = userInfo.Workgroup;
 									
-									console.log( 'userinfo ', { e:e, d:(userInfo?userInfo:d) } );
+									if( ShowLog ) console.log( 'userinfo ', { e:e, d:(userInfo?userInfo:d) } );
 									
 									if( userInfo && workgroups )
 									{
@@ -4825,7 +4825,7 @@ Sections.accounts_users = function( cmd, extra )
 						GetUserWorkgroups( function( workgroups )
 						{
 							
-							console.log( 'workgroups: ', workgroups );
+							if( ShowLog ) console.log( 'workgroups: ', workgroups );
 							
 							groups = {};
 						
@@ -4837,7 +4837,7 @@ Sections.accounts_users = function( cmd, extra )
 								
 								var wgroups = false;
 								
-								console.log( 'userlevel ', { adminlevel: adminlevel, userlevel: userlevel } );
+								if( ShowLog ) console.log( 'userlevel ', { adminlevel: adminlevel, userlevel: userlevel } );
 								
 								if( !adminlevel && userlevel )
 								{
@@ -5485,7 +5485,7 @@ Sections.accounts_users = function( cmd, extra )
 			}, ( users ? users.join(',') : false ) );
 			
 			
-			console.log( 'new users added to list: ' + i + '/' + tot + ' total ['+total+']' );
+			if( ShowLog ) console.log( 'new users added to list: ' + i + '/' + tot + ' total ['+total+']' );
 			
 			
 			
@@ -5570,7 +5570,7 @@ Sections.accounts_users = function( cmd, extra )
 					
 							if( json )
 							{
-								console.log( 'listuserapplications ', { e:e, d:json } );
+								if( ShowLog ) console.log( 'listuserapplications ', { e:e, d:json } );
 								
 								return callback( true, json );
 							}
@@ -5578,7 +5578,7 @@ Sections.accounts_users = function( cmd, extra )
 						catch( e ){ } 
 					}
 					
-					console.log( 'listuserapplications ', { e:e, d:d } );
+					if( ShowLog ) console.log( 'listuserapplications ', { e:e, d:d } );
 					
 					return callback( false, false );
 				}
@@ -5597,7 +5597,7 @@ Sections.accounts_users = function( cmd, extra )
 					
 							if( json )
 							{
-								console.log( 'software ', { e:e, d:json } );
+								if( ShowLog ) console.log( 'software ', { e:e, d:json } );
 								
 								return callback( true, json );
 							}
@@ -5605,7 +5605,7 @@ Sections.accounts_users = function( cmd, extra )
 						catch( e ){ } 
 					}
 					
-					console.log( 'software ', { e:e, d:d } );
+					if( ShowLog ) console.log( 'software ', { e:e, d:d } );
 					
 					return callback( false, false );
 				}
@@ -5624,7 +5624,7 @@ Sections.accounts_users = function( cmd, extra )
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( 'adduserapplication ', { e:e, d:d } );
+			if( ShowLog ) console.log( 'adduserapplication ', { e:e, d:d } );
 			
 			if( e == 'ok' )
 			{
@@ -5643,14 +5643,14 @@ Sections.accounts_users = function( cmd, extra )
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( 'removeApplication ', { e:e, d:d } );
+			if( ShowLog ) console.log( 'removeApplication ', { e:e, d:d } );
 			
 			if( e == 'ok' )
 			{
 				
 				removeDockItem( appName, userId, function( ee, dd )
 				{
-					console.log( 'removeDockItem ', { ee:ee, dd:dd } );
+					if( ShowLog ) console.log( 'removeDockItem ', { ee:ee, dd:dd } );
 					
 					if( callback ) callback( true, d, vars );
 					
@@ -5672,7 +5672,7 @@ Sections.accounts_users = function( cmd, extra )
 			var m = new Module( 'mitra' );
 			m.onExecuted = function( e, d )
 			{
-				console.log( 'mitraApps( callback, id ) ', { e:e, d:d } );
+				if( ShowLog ) console.log( 'mitraApps( callback, id ) ', { e:e, d:d } );
 				
 				if( callback ) return callback( { e:e, d:d } );
 			}
@@ -5720,13 +5720,13 @@ Sections.accounts_users = function( cmd, extra )
 			
 			if( e == 'ok' && data )
 			{
-				console.log( 'getDockItems ', { e:e, d:data } );
+				if( ShowLog ) console.log( 'getDockItems ', { e:e, d:data } );
 				
 				if( callback ) callback( true, data );
 			}
 			else
 			{
-				console.log( 'getDockItems ', { e:e, d:d } );
+				if( ShowLog ) console.log( 'getDockItems ', { e:e, d:d } );
 				
 				if( callback ) callback( false, false );
 			}
@@ -6791,7 +6791,7 @@ function CheckUserlistSize( firstrun )
 					
 						UsersSettings( 'limit', true );
 						
-						console.log( '[2] GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) + ' (' + UsersSettings( 'intervals' ) + ')' ); 
+						if( ShowLog ) console.log( '[2] GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) + ' (' + UsersSettings( 'intervals' ) + ')' ); 
 					
 						getUserlist( function( res, data, key )
 						{
@@ -6854,7 +6854,7 @@ function CheckUserlistSize( firstrun )
 				{
 					//RequestQueue.Set( function() {
 						
-						console.log( '[1] GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) + ' (' + UsersSettings( 'intervals' ) + ')' ); 
+						if( ShowLog ) console.log( '[1] GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) + ' (' + UsersSettings( 'intervals' ) + ')' ); 
 						
 						Sections.accounts_users(); 
 						
@@ -6893,7 +6893,7 @@ function Init()
 		
 			UsersSettings( 'limit', true );
 			
-			console.log( '[3] GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) + ' (' + UsersSettings( 'intervals' ) + ')' ); 
+			if( ShowLog ) console.log( '[3] GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) + ' (' + UsersSettings( 'intervals' ) + ')' ); 
 			
 			getUserlist( function( res, data, key )
 			{
@@ -8641,7 +8641,7 @@ function saveUser( uid, cb, newuser )
 						{
 							if( e != 'ok' )
 							{
-								console.log( 'Avatar saving failed.' );
+								if( ShowLog ) console.log( 'Avatar saving failed.' );
 						
 								if( callback ) callback( false );
 							}

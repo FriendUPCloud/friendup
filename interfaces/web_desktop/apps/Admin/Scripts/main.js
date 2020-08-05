@@ -8,6 +8,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
+var ShowLog = false;
+
 // Start!
 Application.run = function( msg )
 { 
@@ -40,6 +42,8 @@ function initGui()
 function refreshSidebar( show )
 {
 	console.log( 'to show whole list use: refreshSidebar( true );' );
+	
+	console.log( 'ShowLog = true; to show debug console.log output' );
 	
 	var isAdmin = Application.getUserLevel() == 'admin' ? true : false;
 
@@ -181,7 +185,7 @@ function refreshSidebar( show )
 	
 	getSystemSettings( function( data )
 	{
-		console.log( data );
+		if( ShowLog ) console.log( data );
 		
 		// add plugins if found ...
 		if( data )
@@ -425,7 +429,7 @@ function setGUISection( module, section, action )
 		if( action[0] && action[1] )
 		{
 			ge( 'GuiContent' ).innerHTML = '...';
-			console.log( action );
+			if( ShowLog ) console.log( action );
 			var m = new Module( action[0] );
 			m.onExecuted = function( res, data )
 			{
@@ -520,7 +524,7 @@ var Sections = {
 				}
 			}
 			
-			console.log( 'system_permissions() ', { e:e, d:d } );
+			if( ShowLog ) console.log( 'system_permissions() ', { e:e, d:d } );
 		}
 		m.execute( 'getsystempermissions', { authid: Application.authId } );
 	},
@@ -535,7 +539,7 @@ function Toggle( _this, callback, on )
 {
 	if( callback )
 	{
-		console.log( _this.className );
+		if( ShowLog ) console.log( _this.className );
 		if( _this.className.indexOf( 'fa-toggle-off' ) >= 0 )
 		{
 			_this.className = _this.className.split( ' fa-toggle-off' ).join( '' ) + ' fa-toggle-on';
@@ -703,7 +707,7 @@ function CheckScroll( ele )
 {
 	if( !ele ) return;
 	
-	console.log( ele.clientHeight + ' ... '  );
+	if( ShowLog ) console.log( ele.clientHeight + ' ... '  );
 	
 	ele.style.border = '1px solid blue';
 	
@@ -825,7 +829,7 @@ function initTest()
 				catch( e ){  }
 			}
 		
-			console.log( 'initTest('+this.i+') ' + "\r\n" + JSON.stringify( args[this.i] ) + "\r\n", { e:e, result:d } );
+			if( ShowLog ) console.log( 'initTest('+this.i+') ' + "\r\n" + JSON.stringify( args[this.i] ) + "\r\n", { e:e, result:d } );
 		}
 		m.execute( 'permissions', args[i] );
 	}

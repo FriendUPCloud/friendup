@@ -94,7 +94,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				var f = new Library( 'system.library' );
 				f.onExecuted = function( e, d )
 				{
-					console.log( { e:e , d:d, args: args } );
+					if( ShowLog ) console.log( { e:e , d:d, args: args } );
 					
 					if( e == 'ok' && d )
 					{
@@ -104,7 +104,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 							
 							// Workaround for now .... until rolepermissions is correctly implemented in C ...
 							
-							console.log( '[2] ', data );
+							if( ShowLog ) console.log( '[2] ', data );
 							
 							if( data && data.data && data.data.details && data.data.details.group )
 							{
@@ -145,7 +145,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				var f = new Library( 'system.library' );
 				f.onExecuted = function( e, d )
 				{
-					console.log( { e:e , d:d, args: args } );
+					if( ShowLog ) console.log( { e:e , d:d, args: args } );
 				
 					if( e == 'ok' && d )
 					{
@@ -155,7 +155,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 							
 							// Workaround for now .... until rolepermissions is correctly implemented in C ...
 							
-							console.log( '[1] ', data );
+							if( ShowLog ) console.log( '[1] ', data );
 							
 							if( data && data.data && data.data.details && data.data.details.groups )
 							{
@@ -261,7 +261,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			{
 				// return info that this is loaded.
 				
-				console.log( { e:e, d:d } );
+				if( ShowLog ) console.log( { e:e, d:d } );
 				
 				if( callback ) callback( storage );
 				
@@ -314,7 +314,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 	function cancel()
 	{
 		
-		console.log( 'cancel(  ) ' );
+		if( ShowLog ) console.log( 'cancel(  ) ' );
 
 		if( ge( 'WorkgroupDetails' ) )
 		{
@@ -369,7 +369,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			}
 			catch( e ) {  }
 			
-			console.log( 'create() ', { e:e, d:(data?data:d), args: args } );
+			if( ShowLog ) console.log( 'create() ', { e:e, d:(data?data:d), args: args } );
 			
 			if( e == 'ok' && d )
 			{
@@ -484,7 +484,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				}
 				catch( e ) {  }
 				
-				console.log( { e:e, d:(data?data:d), args: {
+				if( ShowLog ) console.log( { e:e, d:(data?data:d), args: {
 					id          : ( id                                                                     ), 
 					groupname   : ( ge( 'WorkgroupName'   ).value                                          ), 
 					parentid    : ( ge( 'WorkgroupParent' ).value                                          ), 
@@ -598,7 +598,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			var f = new Library( 'system.library' );
 			f.onExecuted = function( e, d )
 			{
-				console.log( { e:e, d:d } );
+				if( ShowLog ) console.log( { e:e, d:d } );
 			
 				if( e == 'ok' )
 				{
@@ -641,7 +641,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			var f = new Library( 'system.library' );
 			f.onExecuted = function( e, d )
 			{
-				console.log( { e:e, d:d } );
+				if( ShowLog ) console.log( { e:e, d:d } );
 			
 				if( e == 'ok' )
 				{
@@ -699,7 +699,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			}
 		}
 		
-		console.log( { userid: ( userid ? userid : '0' ), diskid: diskid, elems: elems } );
+		if( ShowLog ) console.log( { userid: ( userid ? userid : '0' ), diskid: diskid, elems: elems } );
 		
 		if( elems && elems[ 'Workgroup' ] && elems[ 'Workgroup' ].value )
 		{
@@ -819,7 +819,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				}
 			}
 			
-			console.log( data );
+			if( ShowLog ) console.log( data );
 			
 			// if the disk is mounted, we need to unmount it based on its old name first.
 			if( elems[ 'Name' ].hasAttribute('data-stored-value') &&  elems[ 'Name' ].hasAttribute('data-mount-state') && elems[ 'Name' ].getAttribute('data-mount-state') == '1' )
@@ -851,13 +851,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 			{
 				unmountDisk( devname, userid, function( e, d )
 				{
-					console.log( 'unmountDrive( '+devname+', '+( userid ? userid : '0' )+' ) ', { e:e, d:d } );
+					if( ShowLog ) console.log( 'unmountDrive( '+devname+', '+( userid ? userid : '0' )+' ) ', { e:e, d:d } );
 				
 					if( e == 'ok' )
 					{
 						Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 						
-						console.log( 'Application.sendMessage( { type: \'system\', command: \'refreshdoors\' } );' );
+						if( ShowLog ) console.log( 'Application.sendMessage( { type: \'system\', command: \'refreshdoors\' } );' );
 					
 						Notify( { title: i18n( 'i18n_unmounting' ) + ' ' + devname + ':', text: i18n( 'i18n_successfully_unmounted' ) } );
 						
@@ -881,13 +881,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 			{
 				mountDisk( devname, userid, function( e, d )
 				{
-					console.log( 'mountDrive( '+devname+', '+( userid ? userid : '0' )+' ) ', { e:e, d:d } );
+					if( ShowLog ) console.log( 'mountDrive( '+devname+', '+( userid ? userid : '0' )+' ) ', { e:e, d:d } );
 				
 					if( e == 'ok' )
 					{
 						Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 					
-						console.log( 'Application.sendMessage( { type: \'system\', command: \'refreshdoors\' } );' );
+						if( ShowLog ) console.log( 'Application.sendMessage( { type: \'system\', command: \'refreshdoors\' } );' );
 					
 						Notify( { title: i18n( 'i18n_mounting' ) + ' ' + devname + ':', text: i18n( 'i18n_successfully_mounted' ) } );
 						
@@ -952,7 +952,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 			f.onExecuted = function( e, d )
 			{
-				console.log( 'mountDisk ( device/mount ) ', { vars: vars, e:e, d:d } );
+				if( ShowLog ) console.log( 'mountDisk ( device/mount ) ', { vars: vars, e:e, d:d } );
 			
 				if( callback ) callback( e, d );
 			}
@@ -1003,7 +1003,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 			f.onExecuted = function( e, d )
 			{
-				console.log( 'unmountDisk ( device/unmount ) ', { vars: vars, e:e, d:d } );
+				if( ShowLog ) console.log( 'unmountDisk ( device/unmount ) ', { vars: vars, e:e, d:d } );
 			
 				if( callback ) callback( e, d );
 			}
@@ -1048,7 +1048,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			var m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{
-				console.log( { e:e, d:d } );
+				if( ShowLog ) console.log( { e:e, d:d } );
 			}
 			m.execute( 'userroleupdate', { id: rid, groupid: groupid, data: data, authid: Application.authId } );
 		}
@@ -1090,7 +1090,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					var f = new Library( 'system.library' );
 					f.onExecuted = function( e, d )
 					{
-						console.log( { e:e, d:d, args: args } );
+						if( ShowLog ) console.log( { e:e, d:d, args: args } );
 					
 						//Sections.accounts_workgroups( 'refresh' ); 
 					
@@ -1117,7 +1117,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					
 					// TODO: Add the userid of the user that created the disk in all ...
 					
-					console.log( { diskid: diskid, userid: ( userid ? userid : '0' ), devname: devname } );
+					if( ShowLog ) console.log( { diskid: diskid, userid: ( userid ? userid : '0' ), devname: devname } );
 					
 					unmountDrive( devname, false, function()
 					{
@@ -1126,7 +1126,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 						var m = new Module( 'system' );
 						m.onExecuted = function( e, d )
 						{
-							console.log( 'deletedoor', { id:diskid, e:e, d:d } );
+							if( ShowLog ) console.log( 'deletedoor', { id:diskid, e:e, d:d } );
 						
 							if( e == 'ok' )
 							{
@@ -1263,7 +1263,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 	
 	function editMode( close )
 	{
-		console.log( 'editMode() ', ge( 'GroupEditButtons' ) );
+		if( ShowLog ) console.log( 'editMode() ', ge( 'GroupEditButtons' ) );
 		
 		if( ge( 'GroupEditButtons' ) )
 		{
@@ -1378,7 +1378,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 	
 	function loading( id )
 	{
-		console.log( 'loading( '+id+' )' );
+		if( ShowLog ) console.log( 'loading( '+id+' )' );
 		
 		if( id )
 		{
@@ -1442,7 +1442,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					m.onExecuted = function( e, d )
 					{
 						info.users = null;
-						console.log( { e:e, d:d } );
+						if( ShowLog ) console.log( { e:e, d:d } );
 						if( e == 'ok' )
 						{
 							try
@@ -1451,7 +1451,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 							}
 							catch( e ){ }
 							
-							console.log( 'info.users ', info.users );
+							if( ShowLog ) console.log( 'info.users ', info.users );
 						}
 						loadingList[ ++loadingSlot ]( info );
 					}
@@ -1482,7 +1482,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					u.onExecuted = function( e, d )
 					{
 						info.roles = null;
-						console.log( { e:e, d:d } );
+						if( ShowLog ) console.log( { e:e, d:d } );
 						if( e == 'ok' )
 						{
 							try
@@ -1541,7 +1541,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 		var users      = ( workgroup.users ? workgroup.users : [] );
 		var list       = ( info.users      ? info.users      : [] );
 		
-		console.log( 'initDetails() ', info );
+		if( ShowLog ) console.log( 'initDetails() ', info );
 		
 		// Workgroups
 		var pstr = '';
@@ -1680,13 +1680,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 				
 						if( info.ID )
 						{
-							console.log( '// save workgroup' );
+							if( ShowLog ) console.log( '// save workgroup' );
 					
 							update( info.ID );
 						}
 						else
 						{
-							console.log( '// create workgroup' );
+							if( ShowLog ) console.log( '// create workgroup' );
 					
 							create();
 						}
@@ -1730,7 +1730,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				
 						if( info.ID )
 						{
-							console.log( '// delete workgroup' );
+							if( ShowLog ) console.log( '// delete workgroup' );
 					
 							removeBtn( this, { id: info.ID, button_text: 'i18n_delete_workgroup', }, function ( args )
 							{
@@ -1836,7 +1836,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								
 								this.func.updateids( 'users' );
 								
-								console.log( 'userids: ', this.ids );
+								if( ShowLog ) console.log( 'userids: ', this.ids );
 								
 								var divs = appendChild( [ 
 									{ 
@@ -2041,7 +2041,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																				removeBtn( this, { ids: ids, id: id, func: func, pnt: pnt }, function ( args )
 																				{
 																				
-																					console.log( 'removeUser( '+args.id+', '+info.ID+', callback, vars )' );
+																					if( ShowLog ) console.log( 'removeUser( '+args.id+', '+info.ID+', callback, vars )' );
 																				
 																					removeUser( args.id, info.ID, function( e, d, vars )
 																					{
@@ -2057,7 +2057,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																						}
 																						else
 																						{
-																							console.log( { e:e, d:d, vars: vars } );
+																							if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
 																						}
 																					
 																					}, { uid: args.id, func: func, pnt: pnt } );
@@ -2205,7 +2205,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																			if( this.classList.contains( 'fa-toggle-off' ) )
 																			{
 																				
-																				console.log( 'addUser( '+id+', '+info.ID+', callback, vars )' );
+																				if( ShowLog ) console.log( 'addUser( '+id+', '+info.ID+', callback, vars )' );
 																				
 																				addUser( id, info.ID, function( e, d, vars )
 																				{
@@ -2219,7 +2219,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																					}
 																					else
 																					{
-																						console.log( { e:e, d:d, vars: vars } );
+																						if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
 																					}
 																					
 																				}, { uid: id, func: func, _this: this } );
@@ -2228,7 +2228,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																			else
 																			{
 																				
-																				console.log( 'removeUser( '+id+', '+info.ID+', callback, vars )' );
+																				if( ShowLog ) console.log( 'removeUser( '+id+', '+info.ID+', callback, vars )' );
 																				
 																				removeUser( id, info.ID, function( e, d, vars )
 																				{
@@ -2242,7 +2242,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																					}
 																					else
 																					{
-																						console.log( { e:e, d:d, vars: vars } );
+																						if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
 																					}
 																					
 																				}, { uid: id, func: func, _this: this } );
@@ -2425,7 +2425,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								
 								mountlist = ( rows ? rows : mountlist );
 								
-								console.log( 'init.list ', mountlist );
+								if( ShowLog ) console.log( 'init.list ', mountlist );
 								
 								if( mountlist && mountlist.length )
 								{
@@ -2609,7 +2609,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								var n = new Module( 'system' );
 								n.onExecuted = function( ee, dat )
 								{
-									console.log( { e:ee, d:dat } );
+									if( ShowLog ) console.log( { e:ee, d:dat } );
 									
 									try
 									{
@@ -2631,7 +2631,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 										
 										var units = [ 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB' ];
 										
-										console.log( { res:res, js:js } );
+										if( ShowLog ) console.log( { res:res, js:js } );
 										
 										if( res && js )
 										{
@@ -2702,7 +2702,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 											storage.icon = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
 										}
 										
-										console.log( storage );
+										if( ShowLog ) console.log( storage );
 										
 										dosdrivergui( storage, function( storage )
 										{
@@ -3047,7 +3047,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																			listStorage( function( res, js )
 																			{
 																			
-																				console.log( 'init.list(  ); ', { res: res, js:js } );
+																				if( ShowLog ) console.log( 'init.list(  ); ', { res: res, js:js } );
 																			
 																				if( res )
 																				{
@@ -3104,7 +3104,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																			listStorage( function( res, js )
 																			{
 																			
-																				console.log( 'init.list(  ); ', { res: res, js:js } );
+																				if( ShowLog ) console.log( 'init.list(  ); ', { res: res, js:js } );
 																			
 																				if( res )
 																				{
@@ -3144,7 +3144,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																			listStorage( function( res, js )
 																			{
 																			
-																				console.log( 'init.list(  ); ', { res: res, js:js } );
+																				if( ShowLog ) console.log( 'init.list(  ); ', { res: res, js:js } );
 																				
 																				if( res )
 																				{
@@ -3281,7 +3281,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					{
 						// Check Permissions
 						
-						console.log( '// Check Permissions ', ( show ? show : [] ) );
+						if( ShowLog ) console.log( '// Check Permissions ', ( show ? show : [] ) );
 						
 						if( !show || show.indexOf( 'user' ) >= 0 )
 						{
@@ -3359,7 +3359,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			// Get the user list
 			list( function( e, d )
 			{
-				console.log( 'initMain() ', { e:e, d:d } );
+				if( ShowLog ) console.log( 'initMain() ', { e:e, d:d } );
 				
 				//if( e != 'ok' ) return;
 				var userList = null;
