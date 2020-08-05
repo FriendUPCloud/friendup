@@ -783,7 +783,7 @@ int ParseAndCall( WSThreadData *wstd )
 	//pthread_detach( pthread_self() );
 	
 	UserSession *locus = NULL;
-	
+	/*
 	if( wstd->wstd_WSD != NULL )
 	{
 		if( FRIEND_MUTEX_LOCK( &(wstd->wstd_WSD->wsc_Mutex) ) == 0 )
@@ -794,7 +794,8 @@ int ParseAndCall( WSThreadData *wstd )
 			FRIEND_MUTEX_UNLOCK( &(wstd->wstd_WSD->wsc_Mutex) );
 		}
 	}
-	
+	*/
+	locus = wstd->wstd_WSD->wsc_UserSession;
 	if( locus != NULL )
 	{
 		if( locus->us_WSD == NULL )
@@ -802,7 +803,7 @@ int ParseAndCall( WSThreadData *wstd )
 			FERROR("[ParseAndCall] There is no WS connection attached to mutex!\n");
 			return 1;
 		}
-		if( FRIEND_MUTEX_LOCK( &(locus->us_Mutex) ) == 0 )
+		if( wstd->wstd_WSD->wsc_UserSession != NULL &&  FRIEND_MUTEX_LOCK( &(locus->us_Mutex) ) == 0 )
 		{
 			locus->us_InUseCounter++;
 			FRIEND_MUTEX_UNLOCK( &(locus->us_Mutex) );
@@ -1524,6 +1525,7 @@ int ParseAndCall( WSThreadData *wstd )
 		}
 	}
 	
+	/*
 	if( wstd != NULL && wstd->wstd_WSD != NULL )
 	{
 		if( FRIEND_MUTEX_LOCK( &(wstd->wstd_WSD->wsc_Mutex) ) == 0 )
@@ -1533,6 +1535,7 @@ int ParseAndCall( WSThreadData *wstd )
 			FRIEND_MUTEX_UNLOCK( &(wstd->wstd_WSD->wsc_Mutex) );
 		}
 	}
+	*/
 	
 	releaseWSData( wstd );
 	
