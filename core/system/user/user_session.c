@@ -143,7 +143,7 @@ void UserSessionDelete( UserSession *us )
 			{
 				if( us->us_WSD != NULL )
 				{
-					data->wsc_InUseCounter--;
+					data->wsc_InUseCounter=0;
 					data->wsc_UserSession = NULL;
 					data->wsc_Wsi = NULL;
 				}
