@@ -235,6 +235,8 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		
 		case LWS_CALLBACK_CLOSED:
 			{
+				int tr = 15;
+				
 				while( TRUE )
 				{
 					if( wsd->wsc_InUseCounter <= 0 )
@@ -244,6 +246,12 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					}
 					DEBUG("[WS] Closing WS, number: %d\n", wsd->wsc_InUseCounter );
 					sleep( 1 );
+					
+					if( tr-- <= 0 )
+					{
+						DEBUG("[WS] Quit after 15\n");
+						break;
+					}
 				}
 				DetachWebsocketFromSession( wsd );
 			
