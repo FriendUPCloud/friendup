@@ -1153,6 +1153,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						
 						if( ( fdir = opendir( path ) ) != NULL )
 						{
+							int hasExt, dlen, ie, extlen, md, typec;
 							while( ( fdirent = readdir( fdir ) ) )
 							{
 								char component[ 10 ];
@@ -1161,9 +1162,10 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 
 								if( strcmp( component, "module" ) == 0 )
 								{
-									int hasExt = 0;
-									int dlen = strlen( fdirent->d_name );
-									int ie = 0;
+									hasExt = 0;
+									dlen = strlen( fdirent->d_name );
+									ie = 0;
+									
 									for( ; ie < dlen; ie++ )
 									{
 										if( fdirent->d_name[ie] == '.' )
@@ -1174,13 +1176,13 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 									// Has extension!
 									if( hasExt > 0 )
 									{
-										int extlen = dlen - 7;
+										extlen = dlen - 7;
 										if( modType )
 										{
 											FFree( modType );
 										}
 										modType = FCalloc( extlen + 1, sizeof( char ) );
-										ie = 0; int md = 0, typec = 0;
+										ie = 0; md = 0, typec = 0;
 										for( ; ie < dlen; ie++ )
 										{
 											if( md == 0 && fdirent->d_name[ie] == '.' )
@@ -1192,6 +1194,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 												modType[typec++] = fdirent->d_name[ie];
 											}
 										}
+										break;
 									}
 								}
 							}
