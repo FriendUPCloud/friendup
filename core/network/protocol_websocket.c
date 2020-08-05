@@ -767,7 +767,15 @@ int ParseAndCall( WSThreadData *wstd )
 	
 	pthread_detach( pthread_self() );
 	
-	UserSession *locus = wstd->wstd_WSD->wsc_UserSession;
+	UserSession *locus = wstd->wstd_WSD->wsc_UserSession;//data->wstd_UserSession;
+	
+	if( wstd == NULL || locus == NULL || locus->us_WSD == NULL || wstd->wstd_WSD->wsc_UserSession == NULL )
+	{
+		FERROR("[ParseAndCall] data NULL!\n");
+		return 1;
+	}
+	
+	locus = wstd->wstd_WSD->wsc_UserSession;
 	if( locus != NULL )
 	{
 		if( FRIEND_MUTEX_LOCK( &(locus->us_Mutex) ) == 0 )
