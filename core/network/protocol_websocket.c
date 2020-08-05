@@ -1509,7 +1509,7 @@ int ParseAndCall( WSThreadData *wstd )
 		}
 	}
 	
-	if( wstd->wstd_WSD != NULL )
+	if( wstd != NULL && wstd->wstd_WSD != NULL )
 	{
 		if( FRIEND_MUTEX_LOCK( &(wstd->wstd_WSD->wsc_Mutex) ) == 0 )
 		{
