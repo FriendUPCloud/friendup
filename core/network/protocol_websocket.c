@@ -253,6 +253,12 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 						DEBUG("[WS] Quit after 5\n");
 						break;
 					}
+					
+					if( wsd->wsc_UserSession == NULL )
+					{
+						DEBUG("[WS] wsc_UserSession is equal to NULL\n");
+						break;
+					}
 				}
 				DetachWebsocketFromSession( wsd );
 			
