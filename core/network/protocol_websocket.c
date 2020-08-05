@@ -110,7 +110,7 @@ void WSThreadPing( void *p )
 	int n = 0;
 	UserSession *us = data->wstd_WSD->wsc_UserSession;//data->wstd_UserSession;
 	
-	if( data == NULL || us == NULL || us->us_WSD == NULL )
+	if( data == NULL || us == NULL || us->us_WSD == NULL || data->wstd_WSD->wsc_UserSession == NULL )
 	{
 		if( data != NULL )
 		{
@@ -126,7 +126,8 @@ void WSThreadPing( void *p )
 	unsigned char *answer = FCalloc( 1024, sizeof(char) );
 	int answersize = snprintf( (char *)answer, 1024, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%s\"}}", data->wstd_Requestid );
 	
-	if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+	us = data->wstd_WSD->wsc_UserSession;
+	if( data->wstd_WSD->wsc_UserSession != NULL && FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 	{
 		us->us_InUseCounter++;
 		FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
