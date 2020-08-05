@@ -84,7 +84,7 @@ void FriendCoreProcessSockNonBlock( void *fcv );
 
 int nothreads = 0;					/// threads coutner @todo to rewrite
 #define MAX_CALLHANDLER_THREADS 256			///< maximum number of simulatenous handlers
-#define USE_BLOCKED_SOCKETS_TO_READ_HTTP
+//#define USE_BLOCKED_SOCKETS_TO_READ_HTTP
 
 /**
 * Creates a new instance of Friend Core.
