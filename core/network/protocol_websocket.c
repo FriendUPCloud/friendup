@@ -235,7 +235,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		
 		case LWS_CALLBACK_CLOSED:
 			{
-				int tr = 15;
+				int tr = 5;
 				
 				while( TRUE )
 				{
@@ -249,7 +249,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					
 					if( tr-- <= 0 )
 					{
-						DEBUG("[WS] Quit after 15\n");
+						DEBUG("[WS] Quit after 5\n");
 						break;
 					}
 				}
