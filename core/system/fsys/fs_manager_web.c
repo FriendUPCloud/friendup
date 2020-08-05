@@ -1809,6 +1809,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 										
 													FQUAD dataread = 0;
 													int readTr = 0;
+													int bytes = 0;
 
 													while( ( dataread = actFS->FileRead( rfp, dataBuffer, 524288 ) ) > 0 )
 													{
@@ -1821,7 +1822,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 													
 														if( dataread > 0 )
 														{
-															int bytes = 0;
+															bytes = 0;
 														
 															dataread = FileSystemActivityCheckAndUpdate( l, &(dstrootf->f_Activity), dataread );
 
