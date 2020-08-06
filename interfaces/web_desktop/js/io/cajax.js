@@ -571,32 +571,6 @@ cAjax.prototype.send = function( data, callback )
 	{
 		this.mode = '';
 	}
-	
-	// Only if successful
-	function successfulSend( addBusy )
-	{
-		if( !addBusy ) return;
-		
-		// Update process count and set loading
-		if( ge( 'Screens' ) )
-		{
-			if( _cajax_process_count > 0 )
-			{
-				let titleBars = document.getElementsByClassName( 'TitleBar' );
-				for( let b = 0; b < titleBars.length; b++ )
-				{
-					if( !titleBars[b].classList.contains( 'Busy' ) )
-					{
-						titleBars[b].classList.add( 'Busy' );
-					}
-				}
-				if( !document.body.classList.contains( 'Busy' ) )
-				{
-					document.body.classList.add( 'Busy' );
-				}
-			}
-		}
-	}
 
 	// Check if we can use websockets
 	if( self.mode == 'websocket' && window.Workspace && Workspace.conn && Workspace.conn.ws && Workspace.websocketState == 'open' )
@@ -644,13 +618,6 @@ cAjax.prototype.send = function( data, callback )
         
         self.wsRequestID = reqID;
 		
-		// Not for module calls
-		let addBusy = true;
-		if( self.url.indexOf( 'module/' ) < 0 ) 
-		{
-			addBusy = false;
-		}
-		successfulSend( addBusy );
 		return;
 	}
 
@@ -717,7 +684,7 @@ cAjax.prototype.send = function( data, callback )
 					}
 					else if( err == 'success' );
 					{
-						successfulSend();
+						// success
 					}
 				} );
 			}
@@ -742,11 +709,6 @@ cAjax.prototype.send = function( data, callback )
 			{ 
 				res = this.proxy.send( NULL ); 
 			}
-		}
-		
-		if( res )
-		{
-			successfulSend();
 		}
 		
 		// New life

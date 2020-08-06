@@ -659,9 +659,6 @@ var WorkspaceInside = {
 
 		// Force connecting ws state (we will close it!)
 		Workspace.websocketState = 'connecting';
-		
-		// Just remove this by force
-		document.body.classList.remove( 'Busy' );
 
 		let conf = {
 			onstate: onState,
