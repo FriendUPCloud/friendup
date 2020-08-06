@@ -452,7 +452,7 @@ BufString *MitraManagerCall( MitraManager *mm, char *path, int *errCode )
 	snprintf( headers, sizeof(headers), "Accept: */*\nContent-type: application/json\nAuthorization: Bearer %s", mm->mm_AuthToken );
 	
 	// POST, HTTP2, PATH, HEADERS, CONTENT
-	HttpClient *c = HttpClientNew( TRUE, FALSE, tmp, headers, NULL );
+	HttpClient *c = HttpClientNew( FALSE, FALSE, tmp, headers, NULL );
 	if( c != NULL )
 	{
 		bs = HttpClientCall( c, mm->mm_WindowsHost, mm->mm_WindowsPort, FALSE );
