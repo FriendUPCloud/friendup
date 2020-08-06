@@ -936,7 +936,7 @@ void *FriendCoreAcceptPhase2( void *d )
 {
 	//DEBUG("[FriendCoreAcceptPhase2] detached\n");
 #ifdef USE_PTHREAD
-	pthread_detach( pthread_self() );
+	//pthread_detach( pthread_self() );		// using workers atm
 #endif
 
 	struct fcThreadInstance *pre = (struct fcThreadInstance *)d;
@@ -1166,7 +1166,7 @@ void *FriendCoreAcceptPhase2( void *d )
 	FFree( pre );
 
 #ifdef USE_PTHREAD
-	pthread_exit( 0 );
+	//pthread_exit( 0 );	// temporary disabled
 #endif
 		
 	return NULL;
@@ -1175,7 +1175,7 @@ accerror:
 	FFree( pre );
 
 #ifdef USE_PTHREAD
-	pthread_exit( 0 );
+	//pthread_exit( 0 );	// temporary disabled
 #endif
 
 	return NULL;
@@ -1714,7 +1714,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	int i;
 	struct epoll_event *currentEvent;
 	struct epoll_event *events = FCalloc( fc->fci_MaxPoll, sizeof( struct epoll_event ) );
-
+	SystemBase *sb = (SystemBase *)fc->fci_SB;
 
 	// add communication ReadCommPipe		
 	int pipefds[2] = {}; struct epoll_event piev = { 0 };	
@@ -1864,11 +1864,18 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 					pre->fc = fc;
 					DEBUG("[FriendCoreEpoll] Thread create pointer: %p friendcore: %p\n", pre, fc );
 					
+					if( WorkerManagerRun( sb->sl_WorkerManager, FriendCoreAcceptPhase2, pre, NULL, "FriendAcceptThread" ) != 0 )
+					{
+						FFree( pre );
+					}
+					
+					/*
 					if( pthread_create( &pre->thread, NULL, &FriendCoreAcceptPhase2, ( void *)pre ) != 0 )
 					{
 						DEBUG("[FriendCoreEpoll] Pthread create fail\n");
 						FFree( pre );
 					}
+					*/
 				}
 #endif
 #endif // ACCEPT_IN_THREAD

@@ -322,6 +322,7 @@ BufString *FriendCoreInfoGet( FriendcoreInfo *fci )
 			{
 				maxWorkers = sb->sl_WorkerManager->wm_MaxWorkers;
 			}
+			
 			snprintf( temp, 2048, "%d", maxWorkers );
 		
 			//strcpy( temp, "\"0\"" );
