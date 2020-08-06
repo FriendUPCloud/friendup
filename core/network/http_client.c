@@ -180,7 +180,7 @@ BufString *HttpClientCall( HttpClient *c, char *host, int port, FBOOL secured )
 			FERROR("[HttpClientCall] Cannot reach server: %s\n", host );
 			goto client_error;
 		}
-		DEBUG("Before connect\n");
+		DEBUG("Before connect, host: %s port: %d\n", host, port );
 
 		memset( &serv_addr, 0, sizeof(serv_addr) );
 		serv_addr.sin_family = AF_INET;
