@@ -954,6 +954,7 @@ void *FriendCoreAcceptPhase2( void *d )
 	
 	for( ; ; )
 	{
+		s_Ssl = NULL;
 		// Lock accept to mutex
 		//if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
 		//{
