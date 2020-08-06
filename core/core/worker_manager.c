@@ -120,8 +120,8 @@ static inline int WorkerRunCommand( Worker *w, void (*foo)( void *), void *d )
 				pthread_cond_signal( &(w->w_Cond) );
 				FRIEND_MUTEX_UNLOCK( &(w->w_Mut) );
 			}
-			int wait = 0;
 			/*
+			int wait = 0;
 			while( TRUE )
 			{
 				if( w->w_State == W_STATE_WAITING || w->w_State == W_STATE_COMMAND_CALLED )
@@ -167,6 +167,8 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 {
 	int i = 0;
 	int max = 0;
+	int lw = 0;
+	int z = 0;
 	Worker *wrk = NULL;
 	
 	if( wm == NULL )
@@ -222,7 +224,7 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 
 		// Safely test the state of the worker
 		{
-			int lw = wm->wm_LastWorker;
+			lw = wm->wm_LastWorker;
 			Worker *w1 = wm->wm_Workers[ lw ];
 			
 			if( FRIEND_MUTEX_LOCK( &(wm->wm_Workers[ wm->wm_LastWorker ]->w_Mut) ) == 0 )
@@ -280,8 +282,7 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 				//sleep( 2 );
 				
 				Log( FLOG_DEBUG, "Workers dump!" );
-				int z;
-				for( z=0 ; z < wm->wm_MaxWorkers ; z++ )
+				for( z = 0; z < wm->wm_MaxWorkers; z++ )
 				{
 					if( wm->wm_Workers[ z ]->w_FunctionString[0] == 0 )
 					{
