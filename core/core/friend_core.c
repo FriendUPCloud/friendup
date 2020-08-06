@@ -84,7 +84,7 @@ void FriendCoreProcessSockNonBlock( void *fcv );
 
 int nothreads = 0;					/// threads coutner @todo to rewrite
 #define MAX_CALLHANDLER_THREADS 256			///< maximum number of simulatenous handlers
-#define USE_BLOCKED_SOCKETS_TO_READ_HTTP
+//#define USE_BLOCKED_SOCKETS_TO_READ_HTTP
 
 /**
 * Creates a new instance of Friend Core.
@@ -1878,7 +1878,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 					
 					if( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) != -1 )
 					{
-						pre->fd = fd;					
+						pre->fd = fd;
 										
 						DEBUG("[FriendCoreEpoll] Thread create pointer: %p friendcore: %p\n", pre, fc );
 					
