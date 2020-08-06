@@ -1908,7 +1908,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 					if( WorkerManagerRun( sb->sl_WorkerManager, FriendCoreAcceptPhase2, pre, NULL, "FriendAcceptThread" ) != 0 )
 					{
 						if( pre->fds )
-							FreeWithData( pre->fds );
+							ListFreeWithData( pre->fds );
 						FFree( pre );
 					}
 					
