@@ -1813,7 +1813,8 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 				( ( currentEvent->events & EPOLLERR ) ||
 				( currentEvent->events & EPOLLRDHUP ) ||
 				( currentEvent->events & EPOLLHUP ) ) || 
-				!( currentEvent->events & EPOLLIN ) 
+				!( currentEvent->events & EPOLLIN ) ||
+				!currentEvent->events
 			)
 			{
 				/*if( ((Socket*)currentEvent->data.ptr)->fd == fc->fci_Sockets->fd )
