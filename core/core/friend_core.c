@@ -1813,17 +1813,9 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 				( ( currentEvent->events & EPOLLERR ) ||
 				( currentEvent->events & EPOLLRDHUP ) ||
 				( currentEvent->events & EPOLLHUP ) ) || 
-				!( currentEvent->events & EPOLLIN ) ||
-				!currentEvent->events
+				!( currentEvent->events & EPOLLIN )
 			)
-			{
-				/*if( ((Socket*)currentEvent->data.ptr)->fd == fc->fci_Sockets->fd )
-				{
-					// Oups! We have gone away!
-					DEBUG( "[FriendCoreEpoll] Socket went away!\n" );
-					break;
-				}*/
-								
+			{					
 				// Remove it
 				LOG( FLOG_ERROR, "[FriendCoreEpoll] Socket had errors.\n" );
 				if( sock != NULL )
@@ -1901,9 +1893,6 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 						AddToList( pre->fds, ( void *)fdi );
 					}
 					
-					currentEvent->events = NULL;
-					
-					
 					DEBUG("[FriendCoreEpoll] Thread create pointer: %p friendcore: %p\n", pre, fc );
 					
 					if( WorkerManagerRun( sb->sl_WorkerManager, FriendCoreAcceptPhase2, pre, NULL, "FriendAcceptThread" ) != 0 )
@@ -1924,7 +1913,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 				DEBUG("[FriendCoreEpoll] Accept done\n");
 			}
 			// Get event that are incoming!
-			else if( currentEvent->events & EPOLLIN )
+			else
 			{
 				// Stop listening here..
 				epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_DEL, sock->fd, NULL );
