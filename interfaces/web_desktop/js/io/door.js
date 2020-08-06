@@ -343,7 +343,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 						}
 						if( sharedCheck.length )
 						{
-							let ch = new Module( 'system' );
+							let ch = new Library( 'system' );
 							ch.onExecuted = function( che, chd )
 							{
 								if( che == 'ok' )
@@ -369,7 +369,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 								callback( list, t.fileInfo.Path, pth );
 								sef.parseQueue( list, t.fileInfo.Path, pth );
 							}
-							ch.execute( 'checksharedpaths', { paths: sharedCheck } );
+							ch.execute( 'file/checksharedpaths', { paths: sharedCheck, path: deviceName } );
 						}
 						else
 						{

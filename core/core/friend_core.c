@@ -2114,9 +2114,10 @@ int FriendCoreRun( FriendCoreInstance* fc )
 	memset( &(fc->fci_EpollEvent), 0, sizeof( fc->fci_EpollEvent ) );
 	fc->fci_EpollEvent.data.ptr = fc->fci_Sockets;
 #ifdef SINGLE_SHOT
-	fc->fci_EpollEvent.events = EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP | EPOLLERR | EPOLLONESHOT ;// | EPOLLEXCLUSIVE ; //all flags are necessary, otherwise epoll may not deliver disconnect events and socket descriptors will leak
+	// TODO: We removed EPOLLET as a test! It seems to make accept() crazy
+	fc->fci_EpollEvent.events = EPOLLIN | /*EPOLLET |*/ EPOLLRDHUP | EPOLLHUP | EPOLLERR | EPOLLONESHOT ;// | EPOLLEXCLUSIVE ; //all flags are necessary, otherwise epoll may not deliver disconnect events and socket descriptors will leak
 #else
-	fc->fci_EpollEvent.events = EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP | EPOLLERR;// | EPOLLEXCLUSIVE ; //all flags are necessary, otherwise epoll may not deliver disconnect events and socket descriptors will leak
+	fc->fci_EpollEvent.events = EPOLLIN | /*EPOLLET |*/ EPOLLRDHUP | EPOLLHUP | EPOLLERR;// | EPOLLEXCLUSIVE ; //all flags are necessary, otherwise epoll may not deliver disconnect events and socket descriptors will leak
 #endif
 	
 	if( epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_ADD, fc->fci_Sockets->fd, &(fc->fci_EpollEvent) ) == -1 )
