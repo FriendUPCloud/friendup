@@ -141,7 +141,7 @@ BufString *HttpClientCall( HttpClient *c, char *host, int port, FBOOL secured )
 	BufString *bs = BufStringNew();
 	if( bs != NULL )
 	{
-		DEBUG("Connection will be secured: %d\n", secured );
+		DEBUG("[HttpClientCall] Connection will be secured: %d\n", secured );
 		if( secured == TRUE )
 		{
 			BIO_METHOD *biofile = BIO_s_file();
@@ -157,7 +157,7 @@ BufString *HttpClientCall( HttpClient *c, char *host, int port, FBOOL secured )
 			if ( (ctx = SSL_CTX_new(method)) == NULL)
 			{
 				BIO_destroy_bio_pair( certbio );
-				DEBUG("ssl context was not created\n");
+				DEBUG("[HttpClientCall] ssl context was not created\n");
 				ERR_print_errors_fp(stderr);
 				return bs;
 			}
@@ -169,7 +169,7 @@ BufString *HttpClientCall( HttpClient *c, char *host, int port, FBOOL secured )
 		sockfd = socket(AF_INET, SOCK_STREAM, 0);
 		if( sockfd < 0 )
 		{
-			DEBUG("Cannot create socket\n");
+			DEBUG("[HttpClientCall] Cannot create socket\n");
 			goto client_error;
 		}
 
@@ -180,6 +180,7 @@ BufString *HttpClientCall( HttpClient *c, char *host, int port, FBOOL secured )
 			FERROR("[HttpClientCall] Cannot reach server: %s\n", host );
 			goto client_error;
 		}
+		DEBUG("Before connect\n");
 
 		memset( &serv_addr, 0, sizeof(serv_addr) );
 		serv_addr.sin_family = AF_INET;
@@ -188,7 +189,7 @@ BufString *HttpClientCall( HttpClient *c, char *host, int port, FBOOL secured )
 
 		if( connect( sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr) ) < 0 )
 		{
-			FERROR("ERROR connecting");
+			FERROR("[HttpClientCall] ERROR connecting");
 			goto client_error;
 		}
 		else
@@ -199,7 +200,7 @@ BufString *HttpClientCall( HttpClient *c, char *host, int port, FBOOL secured )
 			int messageSize = 512;
 			int addsize = 0;
 			
-			DEBUG("Connected\n");
+			DEBUG("[HttpClientCall] Connected\n");
 			
 			/*
 			POST /fcm/send HTTP/2
@@ -271,12 +272,12 @@ User-Agent: Friend/1.0.0
 
 				if ( SSL_connect( ssl ) != 1 )
 				{
-					DEBUG("Error: Could not build a SSL session to: %s.\n", host );
+					DEBUG("[HttpClientCall] Error: Could not build a SSL session to: %s.\n", host );
 					goto client_error;
 				}
 				else
 				{
-					DEBUG("Successfully enabled SSL/TLS session to: %s.\n", host );
+					DEBUG("[HttpClientCall] Successfully enabled SSL/TLS session to: %s.\n", host );
 				}
 				
 				DEBUG("[HttpClientCall] get cert\n");
@@ -284,19 +285,19 @@ User-Agent: Friend/1.0.0
 				cert = SSL_get_peer_certificate( ssl );
 				if( cert == NULL )
 				{
-					DEBUG( "Error: Could not get a certificate from: %s.\n", host);
+					DEBUG( "[HttpClientCall] Error: Could not get a certificate from: %s.\n", host);
 				}
 				else
 				{
-					DEBUG("Retrieved the server's certificate from: %s.\n", host);
+					DEBUG("[HttpClientCall] Retrieved the server's certificate from: %s.\n", host);
 				}
 
 				//certname = X509_NAME_new();
 				certname = X509_get_subject_name(cert);
 
-				DEBUG("Displaying the certificate subject data:\n");
+				DEBUG("[HttpClientCall] Displaying the certificate subject data:\n");
 				X509_NAME_print_ex(outbio, certname, 0, 0);
-				DEBUG( "WRITE MESSAGE VIA HTTP/S : %s\n", message );
+				DEBUG( "[HttpClientCall] WRITE MESSAGE VIA HTTP/S : %s\n", message );
 				
 				bytes = SSL_write( ssl, message, addsize );
 				
@@ -313,7 +314,7 @@ User-Agent: Friend/1.0.0
 					{
 						received += bytes;
 						BufStringAddSize( bs, response, bytes );
-						DEBUG("Bytes received: %d, response: %s\n", bytes, response );
+						DEBUG("[HttpClientCall] Bytes received: %d, response: %s\n", bytes, response );
 						break;
 					}
 					else
@@ -326,12 +327,12 @@ User-Agent: Friend/1.0.0
 						
 						// The TLS/SSL I/O operation completed.
 						case SSL_ERROR_NONE:
-							FERROR( "[SocketRead] Completed successfully.\n" );
+							FERROR( "[HttpClientCall] Completed successfully.\n" );
 							break;;
 						
 						// The TLS/SSL connection has been closed. Goodbye!
 						case SSL_ERROR_ZERO_RETURN:
-							FERROR( "[SocketRead] The connection was closed.\n" );
+							FERROR( "[HttpClientCall] The connection was closed.\n" );
 							//return SOCKET_CLOSED_STATE;
 							break;
 						
@@ -344,7 +345,7 @@ User-Agent: Friend/1.0.0
 						// The operation did not complete. Call again.
 						case SSL_ERROR_WANT_WRITE:
 						//if( pthread_mutex_lock( &sock->mutex ) == 0 )
-							FERROR( "[SocketRead] Want write.\n" );
+							FERROR( "[HttpClientCall] Want write.\n" );
 							break;
 
 						case SSL_ERROR_SYSCALL:
@@ -352,21 +353,21 @@ User-Agent: Friend/1.0.0
 							{
 								if( errno == 0 )
 								{
-									FERROR(" [SocketRead] Connection reset by peer.\n" );
+									FERROR(" [HttpClientCall] Connection reset by peer.\n" );
 									break;
 								}
 								else 
 								{
-									FERROR( "[SocketRead] Error syscall error: %s\n", strerror( errno ) );
+									FERROR( "[HttpClientCall] Error syscall error: %s\n", strerror( errno ) );
 								}
 							}
 							else if( err == 0 )
 							{
-								FERROR( "[SocketRead] Error syscall no error? return.\n" );
+								FERROR( "[HttpClientCall] Error syscall no error? return.\n" );
 								break;
 							}
 					
-							FERROR( "[SocketRead] Error syscall other error. return.\n" );
+							FERROR( "[HttpClientCall] Error syscall other error. return.\n" );
 
 					// Don't retry, just return read
 						default:
@@ -392,6 +393,8 @@ User-Agent: Friend/1.0.0
 				timeout.tv_usec = 0;
 
 				if( setsockopt( sockfd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout) ) < 0 ) {}
+				
+				DEBUG("[HttpClientCall] Before while\n");
 		
 				while( TRUE ) 
 				{
@@ -409,6 +412,8 @@ User-Agent: Friend/1.0.0
 					received += bytes;
 					BufStringAddSize( bs, response, bytes );
 				}
+				
+				DEBUG("[HttpClientCall] After while\n");
 			}
 			if( message != NULL )
 			{
