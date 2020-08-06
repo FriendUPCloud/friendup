@@ -104,8 +104,8 @@ char *FilterPHPVar( char *line )
 	return line;
 }
 
-#define USE_NPOPEN
-#define USE_NPOPEN_POLL
+//#define USE_NPOPEN
+//#define USE_NPOPEN_POLL
 
 /**
  * @brief Run a PHP module with arguments
