@@ -1900,7 +1900,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 						AddToList( pre->fds, ( void *)fdi );
 					}
 					
-					currentEvent->events = EPOLLIN | EPOLLET;
+					currentEvent->events = NULL;
 					
 					
 					DEBUG("[FriendCoreEpoll] Thread create pointer: %p friendcore: %p\n", pre, fc );
