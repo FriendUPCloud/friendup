@@ -295,12 +295,12 @@ int FriendCoreManagerInit( FriendCoreManager *fcm )
 		Log(FLOG_INFO, "-----FC id: %128s\n", fcm->fcm_ID  );
 		Log(FLOG_INFO, "-----FC launched with options\n");
 		Log(FLOG_INFO, "-----Cache files: %d\n", SLIB->sl_CacheFiles );
+		Log(FLOG_INFO, "-----Workers: %d\n", SLIB->sl_WorkerManager->wm_MaxWorkers );
 		Log(FLOG_INFO, "-----HTTP SSL enabled: %d\n", fcm->fcm_SSLEnabled );
 		Log(FLOG_INFO, "-----WS SSL enabled: %d\n", fcm->fcm_WSSSLEnabled );
 		Log(FLOG_INFO, "-----Communication SSL enabled: %d\n", fcm->fcm_SSLEnabledCommuncation );
 		Log(FLOG_INFO, "-----FCPort: %d\n", fcm->fcm_FCPort );
 		Log(FLOG_INFO, "-----WSPort: %d\n", fcm->fcm_WSPort );
-		Log(FLOG_INFO, "-----WSMobilePort: %d\n", fcm->fcm_WSMobilePort );
 		Log(FLOG_INFO, "-----WSNotificationPort: %d\n", fcm->fcm_WSNotificationPort );
 		Log(FLOG_INFO, "-----CommPort: %d\n", fcm->fcm_ComPort );
 		Log(FLOG_INFO, "-----CommRemotePort: %d\n", fcm->fcm_ComRemotePort );
