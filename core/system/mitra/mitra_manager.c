@@ -70,7 +70,7 @@ MitraManager *MitraManagerNew( void *sb )
 		prop = plib->Open( path );
 		if( prop != NULL)
 		{
-			mm->mm_WindowsHost = plib->ReadStringNCS( prop, "windows:host", NULL );
+			mm->mm_WindowsHost = StringDuplicate( plib->ReadStringNCS( prop, "windows:host", NULL ) );
 			mm->mm_WindowsPort = plib->ReadIntNCS( prop, "windows:port", 5000 );
 		
 			plib->Close( prop );
@@ -212,6 +212,7 @@ void MitraManagerCheckAndAddToken( MitraManager *mm)
 {
 	if( mm != NULL && mm->mm_AuthToken == NULL )
 	{
+		DEBUG("[MitraManagerCheckAndAddToken] start\n");
 		// curl -X POST "http://localhost:5000/Token" -H  "accept: */*" -H  "Content-Type: application/json" -d "{\"username\":\"string\",\"password\":\"string\"}"
 		
 		char tmp[ 256 ];
@@ -221,6 +222,8 @@ void MitraManagerCheckAndAddToken( MitraManager *mm)
 		
 		char headers[ 512 ];
 		snprintf( headers, sizeof(headers), "Content-type: application/json\nAuthorization: Bearer %s", "xxx" );
+		
+		DEBUG("[MitraManagerCheckAndAddToken] connect to: %s\n", mm->mm_WindowsHost );
 		
 		// POST, HTTP2, PATH, HEADERS, CONTENT
 		HttpClient *c = HttpClientNew( TRUE, FALSE, tmp, headers, NULL );
