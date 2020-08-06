@@ -54,7 +54,7 @@
 #define FRIEND_COMMUNICATION_REMOTE_PORT 6504
 #endif
 #ifndef WORKERS_MAX
-#define WORKERS_MAX 256
+#define WORKERS_MAX 64
 #endif
 #ifndef WORKERS_MIN
 #define WORKERS_MIN 8
