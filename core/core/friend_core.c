@@ -954,6 +954,7 @@ void *FriendCoreAcceptPhase2( void *d )
 	
 	for( ; ; )
 	{
+		s_Ssl = NULL;
 		// Lock accept to mutex
 		//if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
 		//{
@@ -1008,8 +1009,6 @@ void *FriendCoreAcceptPhase2( void *d )
 				if( s_Ssl == NULL )
 				{
 					FERROR("[FriendCoreAcceptPhase2] Cannot accept SSL connection\n");
-					shutdown( fd, SHUT_RDWR );
-					close( fd );
 					goto accerror;
 				}
 		
@@ -1026,9 +1025,7 @@ void *FriendCoreAcceptPhase2( void *d )
 				{
 					int error = SSL_get_error( s_Ssl, srl );
 					FERROR( "[FriendCoreAcceptPhase2] Could not set fd, error: %d fd: %d\n", error, fd );
-					shutdown( fd, SHUT_RDWR );
-					close( fd );
-					SSL_free( s_Ssl );
+					
 					goto accerror;
 				}
 
@@ -1139,8 +1136,6 @@ void *FriendCoreAcceptPhase2( void *d )
 					else
 					{
 						FERROR("[FriendCoreAcceptPhase2] Cannot allocate memory for socket!\n");
-						shutdown( fd, SHUT_RDWR );
-						close( fd );
 						goto accerror;
 					}
 			
@@ -1155,7 +1150,8 @@ void *FriendCoreAcceptPhase2( void *d )
 					if( error )
 					{
 						FERROR("[FriendCoreAcceptPhase2] epoll_ctl failure **************************************\n\n");
-						//goto accerror;
+						incoming->s_Interface->SocketDelete( incoming );
+						goto accerror;
 					}
 				}
 			}
@@ -1173,6 +1169,16 @@ void *FriendCoreAcceptPhase2( void *d )
 accerror:
 	DEBUG("[FriendCoreAcceptPhase2] ERROR\n");
 	FFree( pre );
+	
+	if( fd >= 0 )
+	{
+		shutdown( fd, SHUT_RDWR );
+		close( fd );
+	}
+	if( s_Ssl != NULL )
+	{
+		SSL_free( s_Ssl );
+	}
 
 #ifdef USE_PTHREAD
 	//pthread_exit( 0 );	// temporary disabled

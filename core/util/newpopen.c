@@ -124,6 +124,9 @@ int newpopen(const char *cmd, NPOpenFD *po )
 int newpclose( NPOpenFD *po )
 {
 	int ret, status;
+	
+	DEBUG("[newpclose] start\n");
+	
 	close( po->np_FD[0] );
 	close( po->np_FD[1] );
 	close( po->np_FD[2] );
@@ -131,8 +134,9 @@ int newpclose( NPOpenFD *po )
 	ret = waitpid( po->npo_PID, &status, 0);
 	if( ret == 0 )
 	{
+		DEBUG("[newpclose] end ret = 0\n");
 		return status;
 	}
-	
+	DEBUG("[newpclose] end ret\n");
 	return ret;
 }
