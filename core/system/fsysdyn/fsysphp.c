@@ -226,6 +226,9 @@ ListString *PHPCall( const char *command )
 	fds[1].fd = STDOUT_FILENO;
 	fds[1].events = POLLOUT;
 	
+	// Set to non block
+	fcntl( fds[1].fd, F_SETFL, O_NONBLOCK );
+	
 	int ret = 0;
 	int timeout = FILESYSTEM_MOD_TIMEOUT * 1000;
 

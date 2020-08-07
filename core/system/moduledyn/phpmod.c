@@ -195,6 +195,9 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	// watch stdout for ability to write
 	fds[1].fd = STDOUT_FILENO;
 	fds[1].events = POLLOUT;
+	
+	// Set to non block
+	fcntl( fds[1].fd, F_SETFL, O_NONBLOCK );
 
 	int ret = 0;
 	int timeout = MOD_TIMEOUT * 1000;
