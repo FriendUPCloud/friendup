@@ -758,16 +758,18 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							}
 							else
 							{
+								// TODO: Add error code
 								char dictmsgbuf[ 256 ];
-								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"not implemented yet\", \"code\":\"-1\" }" );
+								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"No shared files in directory\", \"code\":\"-1\" }" );
 								HttpAddTextContent( response, dictmsgbuf );
 							}
 							BufStringDelete( result );
 						}
 						else
 						{
+							// TODO: Add error code
 							char dictmsgbuf[ 256 ];
-							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"paths not given in array format\", \"code\":\"-1\" }" );
+							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"Paths not given in array format\", \"code\":\"-1\" }" );
 							HttpAddTextContent( response, dictmsgbuf );
 						}							
 					
@@ -778,8 +780,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					// Fail
 					else
 					{
+						// TODO: Add error code
 						char dictmsgbuf[ 256 ];
-						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"args not found\", \"code\":\"-1\" }" );
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"Args not found\", \"code\":\"-1\" }" );
 						HttpAddTextContent( response, dictmsgbuf );
 					}
 				}
