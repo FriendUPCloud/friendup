@@ -104,8 +104,8 @@ char *FilterPHPVar( char *line )
 	return line;
 }
 
-//#define USE_NPOPEN
-//#define USE_NPOPEN_POLL
+#define USE_NPOPEN
+#define USE_NPOPEN_POLL
 
 /**
  * @brief Run a PHP module with arguments
@@ -208,7 +208,7 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	{
 		DEBUG("[PHPmod] in loop\n");
 		
-		ret = poll( fds, 2, 25 ); // HT - set it to 25 ms..
+		ret = poll( fds, 2, 250 ); // HT - set it to 250 ms..
 
 		if( ret == 0 )
 		{
