@@ -1241,7 +1241,7 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, int nu
 			}
 		}
 		
-		free( query );
+		FFree( query );
 		
 		sb->LibrarySQLDrop( sb, sqlLib );
 	}
