@@ -1190,7 +1190,7 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, int nu
 	{
 		DEBUG("[UMGetLoginPossibilityLastLogins] username %s\n", name );
 		// temporary solution, using MYSQL connection
-		char *query = calloc( 2048 );
+		char *query = FCalloc( 1, 2048 );
 		time_t tm = time( NULL );
 		
 		// we are checking failed logins in last hour
