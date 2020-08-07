@@ -137,7 +137,7 @@ int newpclose( NPOpenFD *po )
 	close( po->np_FD[1] );
 	close( po->np_FD[2] );
 	
-	ret = waitpid( po->npo_PID, &status, 0);
+	ret = waitpid( po->npo_PID, &status, WNOHANG | WUNTRACED );
 	if( ret == 0 )
 	{
 		DEBUG("[newpclose] end ret = 0\n");
