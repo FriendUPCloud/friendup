@@ -236,7 +236,7 @@ ListString *PHPCall( const char *command )
 	{
 		DEBUG("[PHPFsys] in loop\n");
 		
-		ret = poll( fds, 2, timeout );
+		ret = poll( fds, 2, 250 );
 
 		if( ret == 0 )
 		{

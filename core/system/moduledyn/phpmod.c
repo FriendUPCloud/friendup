@@ -206,7 +206,7 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	{
 		DEBUG("[PHPmod] in loop\n");
 		
-		ret = poll( fds, 2, timeout );
+		ret = poll( fds, 2, 250 ); // HT - set it to 250 ms..
 
 		if( ret == 0 )
 		{
