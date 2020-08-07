@@ -795,7 +795,7 @@ Workspace = {
 				// console.log( 'Test2: Renewing all sessions.' );
 				
 				// We have renewed our session, make sure to set it and run ajax queue
-				Friend.User.renewAllSessionIds( _this.sessionId );
+				Friend.User.RenewAllSessionIds( _this.sessionId );
 
 				// Call back!
 				if( cb ) cb();

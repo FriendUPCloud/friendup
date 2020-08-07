@@ -233,6 +233,8 @@ SystemBase *SystemInit( void )
 	l->AppLibCounter = 0;
 	l->PropLibCounter = 0;
 	l->ZLibCounter = 0;
+
+	l->sl_AvailableModules = CreateList();
 	
 	// Set mutex
 	pthread_mutex_init( &l->sl_InternalMutex, NULL );
@@ -1177,6 +1179,22 @@ void SystemClose( SystemBase *l )
 	
 	// Close image library
 	l->LibraryImageDrop( l, l->ilib );
+	
+	// Clear available modules
+	List *ls = l->sl_AvailableModules;
+	while( ls )
+	{
+		if( ls->l_Data )
+		{
+			struct ModuleSet *set = ( struct ModuleSet *)ls->l_Data;
+			if( set->name )
+				FFree( set->name );
+			if( set->extension )
+				FFree( set->extension );
+			FFree( ls->l_Data );
+		}
+	}
+	FreeList( l->sl_AvailableModules );
 	
 	// release and free all modules
 	EModule *lmod = l->sl_Modules;
@@ -2366,7 +2384,7 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
 					if( ++l->MsqLlibCounter >= l->sqlpoolConnections ) l->MsqLlibCounter = 0;
 					FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
 					// Give some grace time..
-					usleep( 5000 );
+					usleep( 0 );
 					continue;
 				}
 				
@@ -2398,7 +2416,7 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
 		if( timer >= l->sqlpoolConnections )
 		{
 			timer = 0;
-			usleep( 5000 );
+			usleep( 0 );
 		}
 		
 		l->MsqLlibCounter++;

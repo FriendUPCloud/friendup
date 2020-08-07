@@ -104,8 +104,8 @@ char *FilterPHPVar( char *line )
 	return line;
 }
 
-#define USE_NPOPEN
-#define USE_NPOPEN_POLL
+//#define USE_NPOPEN
+//#define USE_NPOPEN_POLL
 
 /**
  * @brief Run a PHP module with arguments
@@ -202,23 +202,25 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	int ret = 0;
 	int timeout = MOD_TIMEOUT * 1000;
 
+	int time = GetUnixTime();
+
 	while( TRUE )
 	{
 		DEBUG("[PHPmod] in loop\n");
 		
-		ret = poll( fds, 2, 250 ); // HT - set it to 250 ms..
+		ret = poll( fds, 2, 25 ); // HT - set it to 25 ms..
 
 		if( ret == 0 )
 		{
 			DEBUG("Timeout!\n");
 			break;
 		}
-		else if(  ret < 0 )
+		else if( ret < 0 )
 		{
 			DEBUG("Error\n");
 			break;
 		}
-		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
+		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, 4096 );
 
 		DEBUG( "[PHPmod] Adding %d of data\n", size );
 		if( size > 0 )
@@ -235,9 +237,10 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 
 			break;
 		}
+		usleep( 0 );
 	}
 	
-	DEBUG("[PHPmod] File read\n");
+	DEBUG("[PHPmod] File read - took %d ms\n", GetUnixTime() - time );
 	
 	// Free pipe if it's there
 	newpclose( &pofd );

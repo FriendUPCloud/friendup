@@ -252,6 +252,8 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 				if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 				{
 					us->us_InUseCounter++;
+					FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+					
 					for( actChunk = 0; actChunk < totalChunk ; actChunk++ )
 					{
 						unsigned char *queueMsg = FMalloc( WS_PROTOCOL_BUFFER_SIZE );
@@ -293,20 +295,27 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 							en->fq_Priority = 3;	// default priority
 				
 							//DEBUG("FQPush: %p\n 
-							FQPushFIFO( &(us->us_MsgQueue), en );
-
+							if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+							{
+								FQPushFIFO( &(us->us_MsgQueue), en );
+								FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+							}
 						// callback writeable was here
 						}
 					}
 					
-					us->us_InUseCounter--;
+					WSCData *wsd = NULL;
+					
+					if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+					{
+						us->us_InUseCounter--;
 				
-					WSCData *wsd = us->us_WSD;
-					FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+						wsd = us->us_WSD;
+						FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+					}
 					
 					if( us->us_WSD != NULL )
 					{
-						
 						if( FRIEND_MUTEX_LOCK( &(wsd->wsc_Mutex) ) == 0 )
 						{
 							wsd->wsc_InUseCounter++;

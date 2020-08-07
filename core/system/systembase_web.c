@@ -1091,9 +1091,10 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		{
 			char *module = (char *)he->hme_Data;
 			int size = 0;
+			
 			if( ( size = strlen( module ) ) > 4 )
 			{
-				if( module[ size-4 ] == '.' &&module[ size-3 ] == 'p'  &&module[ size-2 ] == 'h'  &&module[ size-1 ] == 'p' \
+				if( module[ size-4 ] == '.' &&module[ size-3 ] == 'p'  &&module[ size-2 ] == 'h'  &&module[ size-1 ] == 'p' 
 					&& l->sl_PHPModule != NULL )
 				{
 					char runfile[ 512 ];
@@ -1135,115 +1136,158 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		{
 			if( S_ISDIR( f.st_mode ) )
 			{
-				// 2. Check if module folder exists in modules/
-
 				if( he != NULL )
 				{
-					char *module = ( char *)he->hme_Data;
+					// 2. Check if module folder exists in modules/
 					char path[ 512 ];
-					snprintf( path, sizeof(path), "modules/%s", module );
-					path[ 511 ] = 0;
+					char *modType = NULL;
 					
-					if( stat( path, &f ) != -1 )
+					// Caching!
+					List *checkAvail = l->sl_AvailableModules;
+					int found = 0;
+					while( checkAvail != NULL )
 					{
-						// 3. Determine interpreter (or native code)
-						DIR *fdir = NULL;
-						struct dirent *fdirent = NULL;
-						char *modType = NULL;
-						
-						if( ( fdir = opendir( path ) ) != NULL )
+						if( checkAvail->l_Data )
 						{
-							int hasExt, dlen, ie, extlen, md, typec;
-							while( ( fdirent = readdir( fdir ) ) )
+							struct ModuleSet *mp = ( struct ModuleSet * )checkAvail->l_Data;
+							if( strcmp( ( char *)he->hme_Data, mp->name ) == 0 )
 							{
-								char component[ 10 ];
-
-								sprintf( component, "%.*s", 6, fdirent->d_name );
-
-								if( strcmp( component, "module" ) == 0 )
+								found = 1;
+								modType = StringDuplicate( mp->extension );
+								snprintf( path, sizeof( path ), "modules/%s", mp->name );
+								path[ 511 ] = 0;
+								DEBUG( "FOUND! %s", mp->name );
+								break;
+							}
+						}
+						checkAvail = checkAvail->next;
+					}
+					
+					char *module = ( char *)he->hme_Data;
+					
+					if( found == 0 )
+					{
+						DEBUG( "Module %s not found!\n", module );
+						snprintf( path, sizeof(path), "modules/%s", module );
+						path[ 511 ] = 0;
+					
+						if( stat( path, &f ) != -1 )
+						{
+							// 3. Determine interpreter (or native code)
+							DIR *fdir = NULL;
+							struct dirent *fdirent = NULL;
+						
+						
+							if( ( fdir = opendir( path ) ) != NULL )
+							{
+								int hasExt, dlen, ie, extlen, md, typec;
+								while( ( fdirent = readdir( fdir ) ) )
 								{
-									hasExt = 0;
-									dlen = strlen( fdirent->d_name );
-									ie = 0;
+									char component[ 10 ];
+
+									sprintf( component, "%.*s", 6, fdirent->d_name );
+
+									if( strcmp( component, "module" ) == 0 )
+									{
+										hasExt = 0;
+										dlen = strlen( fdirent->d_name );
+										ie = 0;
 									
-									for( ; ie < dlen; ie++ )
-									{
-										if( fdirent->d_name[ie] == '.' )
-										{
-											hasExt = ie;
-										}
-									}
-									// Has extension!
-									if( hasExt > 0 )
-									{
-										extlen = dlen - 7;
-										if( modType )
-										{
-											FFree( modType );
-										}
-										modType = FCalloc( extlen + 1, sizeof( char ) );
-										ie = 0; md = 0, typec = 0;
 										for( ; ie < dlen; ie++ )
 										{
-											if( md == 0 && fdirent->d_name[ie] == '.' )
+											if( fdirent->d_name[ie] == '.' )
 											{
-												md = 1;
-											}
-											else if ( md == 1 )
-											{
-												modType[typec++] = fdirent->d_name[ie];
+												hasExt = ie;
 											}
 										}
-										break;
+										// Has extension!
+										if( hasExt > 0 )
+										{
+											extlen = dlen - 7;
+											if( modType )
+											{
+												FFree( modType );
+											}
+											modType = FCalloc( extlen + 1, sizeof( char ) );
+											ie = 0; md = 0, typec = 0;
+											for( ; ie < dlen; ie++ )
+											{
+												if( md == 0 && fdirent->d_name[ie] == '.' )
+												{
+													md = 1;
+												}
+												else if ( md == 1 )
+												{
+													modType[typec++] = fdirent->d_name[ie];
+												}
+											}
+											break;
+										}
 									}
 								}
+								closedir( fdir );
 							}
-							closedir( fdir );
 						}
+					}
+					
 		
-						// 4. Execute with interpreter (or execute native code)
+					// 4. Execute with interpreter (or execute native code)
+					if( modType != NULL )
+					{
+						if( found == 0 )
+						{
+							// Add for book keeping!
+							DEBUG( "Adding to list %s\n", modType );
+							struct ModuleSet *ms = FCalloc( 1, sizeof( struct ModuleSet ) );
+							ms->name = StringDuplicate( module );
+							ms->extension = StringDuplicate( modType );
+							if( FRIEND_MUTEX_LOCK( &(l->sl_InternalMutex) ) == 0 )
+							{
+								AddToList( l->sl_AvailableModules, ( void *)ms );
+								FRIEND_MUTEX_UNLOCK( &( l->sl_InternalMutex ) );
+							}
+						}
+											
+						// Look if it's in list
+						DEBUG( "[MODULE] Executing %s module! path %s\n", modType, path );
+						char *modulePath = FCalloc( MODULE_PATH_LENGTH, sizeof( char ) );
+						snprintf( modulePath, MODULE_PATH_LENGTH-1, "%s/module.%s", path, modType );
+						if( 
+							strcmp( modType, "php" ) == 0 || 
+							strcmp( modType, "jar" ) == 0 ||
+							strcmp( modType, "py" ) == 0
+						)
+						{
+							FBOOL isFile;
+							char *allArgsNew = GetArgsAndReplaceSession( *request, loggedSession, &isFile );
+							
+							DEBUG("Calling module '%s' allargs '%s'\n", modulePath, allArgsNew );
+
+							// Execute
+							data = l->RunMod( l, modType, modulePath, allArgsNew, &dataLength );
+							
+							// We don't use them now
+							if( allArgsNew != NULL )
+							{
+								if( isFile )
+								{
+									//"file<!--separate-->%s"
+									char *fname = allArgsNew + MODULE_FILE_CALL_STRING_LEN;
+									remove( fname );
+								}
+								FFree( allArgsNew );
+							}
+						}
+						if( modulePath )
+						{
+							FFree( modulePath );
+							modulePath = NULL;
+						}
+						
 						if( modType != NULL )
 						{
-							DEBUG( "[MODULE] Executing %s module! path %s\n", modType, path );
-							char *modulePath = FCalloc( MODULE_PATH_LENGTH, sizeof( char ) );
-							snprintf( modulePath, MODULE_PATH_LENGTH-1, "%s/module.%s", path, modType );
-							if( 
-								strcmp( modType, "php" ) == 0 || 
-								strcmp( modType, "jar" ) == 0 ||
-								strcmp( modType, "py" ) == 0
-							)
-							{
-								FBOOL isFile;
-								char *allArgsNew = GetArgsAndReplaceSession( *request, loggedSession, &isFile );
-								
-								DEBUG("Calling module '%s' allargs '%s'\n", modulePath, allArgsNew );
-
-								// Execute
-								data = l->RunMod( l, modType, modulePath, allArgsNew, &dataLength );
-								
-								// We don't use them now
-								if( allArgsNew != NULL )
-								{
-									if( isFile )
-									{
-										//"file<!--separate-->%s"
-										char *fname = allArgsNew + MODULE_FILE_CALL_STRING_LEN;
-										remove( fname );
-									}
-									FFree( allArgsNew );
-								}
-							}
-							if( modulePath )
-							{
-								FFree( modulePath );
-								modulePath = NULL;
-							}
-							
-							if( modType != NULL )
-							{
-								FFree( modType );
-								modType = NULL;
-							}
+							FFree( modType );
+							modType = NULL;
 						}
 					}
 				}

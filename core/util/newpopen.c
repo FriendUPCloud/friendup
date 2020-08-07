@@ -70,7 +70,6 @@ int newpopen(const char *cmd, NPOpenFD *po )
 		close( in[0] );
 		close( out[1] );
 		close( err[1] );
-		
 		po->np_FD[0] = in[1];
 		po->np_FD[1] = out[0];
 		po->np_FD[2] = err[0];
@@ -86,13 +85,7 @@ int newpopen(const char *cmd, NPOpenFD *po )
 		dup2( out[1], 1 );
 		dup2( err[1], 2 );
 
-		// Set to non block
-		fcntl( in[0], F_SETFL, O_NONBLOCK );
-		fcntl( out[1], F_SETFL, O_NONBLOCK );
-		fcntl( err[1], F_SETFL, O_NONBLOCK );
-
 		// do same thing as popen
-		
 		struct sigaction sa;
 		sa.sa_handler = &handle_sigchld;
 		sigemptyset(&sa.sa_mask);
@@ -102,8 +95,8 @@ int newpopen(const char *cmd, NPOpenFD *po )
 			perror(0);
 		}
 		
-		execl("/bin/sh", "sh", "-c", cmd, NULL);
-		//exit( EXIT_FAILURE );
+		execl("/bin/sh", "sh", "-c", cmd, NULL );
+		exit(0);
 	}
 	else
 	{
@@ -131,16 +124,16 @@ int newpclose( NPOpenFD *po )
 {
 	int ret, status;
 	
-	DEBUG("[newpclose] start\n");
+	DEBUG("[newpclose] start, %d\n", po->npo_PID);
 	
 	close( po->np_FD[0] );
 	close( po->np_FD[1] );
 	close( po->np_FD[2] );
-	
-	ret = waitpid( po->npo_PID, &status, WNOHANG | WUNTRACED );
+	ret = waitpid( po->npo_PID, &status, WNOHANG );
 	if( ret == 0 )
 	{
-		DEBUG("[newpclose] end ret = 0\n");
+		kill( po->npo_PID, SIGKILL );
+		DEBUG("[newpclose] KILL! end ret = 0\n");
 		return status;
 	}
 	DEBUG("[newpclose] end ret\n");
