@@ -236,7 +236,7 @@ ListString *PHPCall( const char *command )
 	{
 		DEBUG("[PHPFsys] in loop\n");
 		
-		ret = poll( fds, 2, 250 );
+		ret = poll( fds, 2, 250 ); // HT Small timeout
 
 		if( ret == 0 )
 		{
@@ -407,7 +407,7 @@ BufStringDisk *PHPCallDisk( const char *command )
 
 	while( TRUE )
 	{
-		ret = poll( fds, 2, timeout );
+		ret = poll( fds, 2, 250 ); // HT Small timeout
 
 		if( ret == 0 )
 		{
