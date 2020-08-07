@@ -70,6 +70,7 @@ int newpopen(const char *cmd, NPOpenFD *po )
 		close( in[0] );
 		close( out[1] );
 		close( err[1] );
+		
 		po->np_FD[0] = in[1];
 		po->np_FD[1] = out[0];
 		po->np_FD[2] = err[0];
@@ -84,6 +85,11 @@ int newpopen(const char *cmd, NPOpenFD *po )
 		dup2( in[0], 0 );
 		dup2( out[1], 1 );
 		dup2( err[1], 2 );
+
+		// Set to non block
+		fcntl( in[0], F_SETFL, O_NONBLOCK );
+		fcntl( out[1], F_SETFL, O_NONBLOCK );
+		fcntl( err[1], F_SETFL, O_NONBLOCK );
 
 		// do same thing as popen
 		

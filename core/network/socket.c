@@ -2491,21 +2491,25 @@ FLONG SocketWriteSSL( Socket* sock, char* data, FLONG length )
 
 			switch( err )
 			{
-			// The operation did not complete. Call again.
-			case SSL_ERROR_WANT_WRITE:
-			{
-				break;
-			}
-			case SSL_ERROR_SSL:
-				FERROR("[SocketWriteSSL] Cannot write. Error %d stringerr: %s wanted to sent: %ld fullsize: %ld\n", err, strerror( err ), bsize, length );
-				if( counter++ > 3 )
+				// The operation did not complete. Call again.
+				case SSL_ERROR_WANT_WRITE:
 				{
+					break;
+				}
+				case SSL_ERROR_SSL:
+				{
+					FERROR("[SocketWriteSSL] Cannot write. Error %d stringerr: %s wanted to sent: %ld fullsize: %ld\n", err, strerror( err ), bsize, length );
+					if( counter++ > 3 )
+					{
+						return 0;
+					}
+					break;
+				}
+				default:
+				{
+					FERROR("[SocketWriteSSL] Cannot write. Error %d stringerr: %s wanted to sent: %ld fullsize: %ld\n", err, strerror( err ), bsize, length );
 					return 0;
 				}
-				break;
-			default:
-				FERROR("[SocketWriteSSL] Cannot write. Error %d stringerr: %s wanted to sent: %ld fullsize: %ld\n", err, strerror( err ), bsize, length );
-				return 0;
 			}
 		}
 		else
