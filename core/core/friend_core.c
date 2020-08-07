@@ -551,7 +551,8 @@ void *FriendCoreAcceptPhase2( void *data )
 					
 #ifdef USE_PTHREAD
 						//size_t stacksize = 16777216; //16 * 1024 * 1024;
-						size_t stacksize = 4194304;	// half of previous stack
+						size_t stacksize = 8388608;	// half of previous stack
+						//size_t stacksize = 4194304;	// half of previous stack
 						pthread_attr_t attr;
 						pthread_attr_init( &attr );
 						pthread_attr_setstacksize( &attr, stacksize );
@@ -856,7 +857,8 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 					
 #ifdef USE_PTHREAD
 						//size_t stacksize = 16777216; //16 * 1024 * 1024;
-						size_t stacksize = 4194304;	// half of previous stack
+						size_t stacksize = 8388608;	// half of previous stack
+						//size_t stacksize = 4194304;	// half of previous stack
 						pthread_attr_t attr;
 						pthread_attr_init( &attr );
 						pthread_attr_setstacksize( &attr, stacksize );
@@ -1933,8 +1935,8 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 					
 #ifdef USE_PTHREAD
 						//size_t stacksize = 16777216; //16 * 1024 * 1024;
-						//size_t stacksize = 8777216;	// half of previous stack
-						size_t stacksize = 4194304; //512 * 1024;
+						size_t stacksize = 8388608;	// half of previous stack
+						//size_t stacksize = 4194304; //512 * 1024;
 						pthread_attr_t attr;
 						pthread_attr_init( &attr );
 						pthread_attr_setstacksize( &attr, stacksize );
