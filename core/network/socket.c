@@ -597,47 +597,47 @@ int SocketConnectSSL( Socket* sock, const char *host )
 				FERROR( "[SocketConnectSSL] We experienced an error %d.\n", error );
 				switch( error )
 				{
-				case SSL_ERROR_NONE:
-				{
-					// NO error..
-					FERROR( "[SocketConnectSSL] No error\n" );
-					break;
-				}
-				case SSL_ERROR_ZERO_RETURN:
-				{
-					FERROR("[SocketConnectSSL] SSL_ACCEPT error: Socket closed.\n" );
-					break;
-				}
-				case SSL_ERROR_WANT_READ:
-				{
-					FERROR( "[SocketConnectSSL] Error want read, retrying\n" );
-					break;
-				}
-				case SSL_ERROR_WANT_WRITE:
-				{
-					FERROR( "[SocketConnectSSL] Error want write, retrying\n" );
-					break;
-				}
-				case SSL_ERROR_WANT_ACCEPT:
-				{
-					FERROR( "[SocketConnectSSL] Want accept\n" );
-					break;
-				}
-				case SSL_ERROR_WANT_X509_LOOKUP:
-				{
-					FERROR( "[SocketConnectSSL] Want 509 lookup\n" );
-					break;
-				}
-				case SSL_ERROR_SYSCALL:
-				{
-					FERROR( "[SocketConnectSSL] Error syscall!\n" );
-					return -2;
-				}
-				default:
-				{
-					FERROR( "[SocketConnectSSL] Other error.\n" );
-					return -3;
-				}
+					case SSL_ERROR_NONE:
+					{
+						// NO error..
+						FERROR( "[SocketConnectSSL] No error\n" );
+						break;
+					}
+					case SSL_ERROR_ZERO_RETURN:
+					{
+						FERROR("[SocketConnectSSL] SSL_ACCEPT error: Socket closed.\n" );
+						break;
+					}
+					case SSL_ERROR_WANT_READ:
+					{
+						FERROR( "[SocketConnectSSL] Error want read, retrying\n" );
+						break;
+					}
+					case SSL_ERROR_WANT_WRITE:
+					{
+						FERROR( "[SocketConnectSSL] Error want write, retrying\n" );
+						break;
+					}
+					case SSL_ERROR_WANT_ACCEPT:
+					{
+						FERROR( "[SocketConnectSSL] Want accept\n" );
+						break;
+					}
+					case SSL_ERROR_WANT_X509_LOOKUP:
+					{
+						FERROR( "[SocketConnectSSL] Want 509 lookup\n" );
+						break;
+					}
+					case SSL_ERROR_SYSCALL:
+					{
+						FERROR( "[SocketConnectSSL] Error syscall!\n" );
+						return -2;
+					}
+					default:
+					{
+						FERROR( "[SocketConnectSSL] Other error.\n" );
+						return -3;
+					}
 				}
 			}
 			return -1;
@@ -1922,7 +1922,6 @@ int SocketWaitReadSSL( Socket* sock, char* data, unsigned int length, unsigned i
 			case SSL_ERROR_SYSCALL:
 				return read;
 			default:
-				//return read;
 				usleep( 0 );
 				if( retries++ > 500 )
 				{
@@ -2433,8 +2432,12 @@ FLONG SocketWriteNOSSL( Socket* sock, char* data, FLONG length )
 			// Error, temporarily unavailable..
 			if( errno == 11 )
 			{
+				retries++;
 				usleep( 400 ); // Perhaps allow full throttle?
-				if( ++retries > 10 ) usleep( 20000 );
+				if( retries > 10 ) 
+					usleep( 20000 );
+				else if( retries > 250 )
+					break;
 				continue;
 			}
 			FERROR( "[SocketWriteNOSSL] Failed to write: %d, %s\n", errno, strerror( errno ) );

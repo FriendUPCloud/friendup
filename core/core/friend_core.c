@@ -1910,7 +1910,21 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 					if( WorkerManagerRun( sb->sl_WorkerManager, FriendCoreAcceptPhase2, pre, NULL, "FriendAcceptThread" ) != 0 )
 					{
 						if( pre->fds )
+						{
+							// Close up!
+							List *failed = ( List *)pre->fds;
+							while( failed )
+							{
+								if( failed->l_Data )
+								{
+									fd = *( int *)failed->l_Data;
+									shutdown( sock->fd, SHUT_RDWR );
+									close( sock->fd );
+								}
+								failed = failed->next;
+							}
 							ListFreeWithData( pre->fds );
+						}
 						FFree( pre );
 					}
 					
@@ -1981,6 +1995,10 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 						}
 #endif
 #endif
+					}
+					else if( sock != NULL )
+					{
+						SocketDelete( sock );
 					}
 					//DEBUG("EPOLLIN end\n");
 				}
