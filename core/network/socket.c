@@ -2554,12 +2554,11 @@ void SocketDeleteNOSSL( Socket* sock )
 		fcntl( sock->fd, F_SETFD, FD_CLOEXEC );
 		
 		int optval;
-		socklen_t optlen = sizeof(optval);
+		socklen_t optlen = sizeof( optval );
 		optval = 0;
 		optlen = sizeof(optval);
-		if( setsockopt(sock->fd, SOL_SOCKET, SO_KEEPALIVE, &optval, optlen) < 0 ) 
-		{
-		}
+		
+		setsockopt( sock->fd, SOL_SOCKET, SO_KEEPALIVE, &optval, optlen );
 		
 		int e = 0;
 		shutdown( sock->fd, SHUT_RDWR );
@@ -2610,38 +2609,42 @@ void SocketDeleteSSL( Socket* sock )
 			default:
 				switch( ( ssl_r = SSL_get_error( sock->s_Ssl, ret) ) )
 				{
-				case SSL_ERROR_ZERO_RETURN:
-					break;
-				case SSL_ERROR_WANT_WRITE:
-				case SSL_ERROR_WANT_READ:
-					break;
-				case SSL_ERROR_SYSCALL:
-					if( 0 != (err = ERR_get_error() ) )
-					{
-						do
+					case SSL_ERROR_ZERO_RETURN:
+						break;
+					case SSL_ERROR_WANT_WRITE:
+					case SSL_ERROR_WANT_READ:
+						break;
+					case SSL_ERROR_SYSCALL:
+						if( 0 != (err = ERR_get_error() ) )
 						{
-							FERROR( "[SocketDeleteSSL] SSL_ERROR_SYSCALL err: %d error message: %s\n", err, ERR_error_string(err, NULL) );
-						}while( ( err = ERR_get_error() ) );
-					}
-					else if( errno != 0 )
-					{
-						switch( errno )
-						{
-						case EPIPE:
-						case ECONNRESET:
-							break;
-						default:
-							FERROR( "[SocketDeleteSSL] SSL_ERROR_SYSCALL errno != 0 err: %d error message: %s\n", err, ERR_error_string(err, NULL) );
+							// TODO: Why have this?
+							/*do
+							{
+								FERROR( "[SocketDeleteSSL] SSL_ERROR_SYSCALL err: %d error message: %s\n", err, ERR_error_string(err, NULL) );
+							}
+							while( ( err = ERR_get_error() ) );*/
 							break;
 						}
-					}
-					break;
-				default:
-					while( ( err = ERR_get_error() ) )
-					{
-						FERROR( "[SocketDeleteSSL] default err: %d error message: %s\n", err, ERR_error_string(err, NULL) );
-					}
-					break;
+						else if( errno != 0 )
+						{
+							switch( errno )
+							{
+								case EPIPE:
+								case ECONNRESET:
+									break;
+								default:
+									FERROR( "[SocketDeleteSSL] SSL_ERROR_SYSCALL errno != 0 err: %d error message: %s\n", err, ERR_error_string(err, NULL) );
+									break;
+							}
+						}
+						break;
+					default:
+						// TODO: Why do we have this?
+						/*while( ( err = ERR_get_error() ) )
+						{
+							FERROR( "[SocketDeleteSSL] default err: %d error message: %s\n", err, ERR_error_string(err, NULL) );
+						}*/
+						break;
 				}
 		}
 		
@@ -2667,12 +2670,10 @@ void SocketDeleteSSL( Socket* sock )
 		fcntl( sock->fd, F_SETFD, FD_CLOEXEC );
 		
 		int optval;
-		socklen_t optlen = sizeof(optval);
+		socklen_t optlen = sizeof( optval );
 		optval = 0;
-		optlen = sizeof(optval);
-		if( setsockopt(sock->fd, SOL_SOCKET, SO_KEEPALIVE, &optval, optlen) < 0 ) 
-		{
-		}
+		optlen = sizeof( optval );
+		setsockopt( sock->fd, SOL_SOCKET, SO_KEEPALIVE, &optval, optlen );
 		
 		int e = 0;
 		shutdown( sock->fd, SHUT_RDWR );
@@ -2683,3 +2684,4 @@ void SocketDeleteSSL( Socket* sock )
 	}
 	FFree( sock );
 }
+
