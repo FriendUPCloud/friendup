@@ -1192,6 +1192,7 @@ accerror:
 		{
 			if( toDelete->l_Data )
 			{
+				shutdown( *( int *)toDelete->l_Data, SHUT_RDWR );
 				close( *( int *)toDelete->l_Data );
 			}
 		}
@@ -1982,7 +1983,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 						SystemBase *locsb = (SystemBase *)fc->fci_SB;
 						if( WorkerManagerRun( locsb->sl_WorkerManager,  FriendCoreProcess, pre, NULL, "FriendCoreProcess" ) != 0 )
 						{
-							SocketDelete( sock );
+							sock->s_Interface->SocketDelete( sock );
 							sock = NULL;
 						}
 						DEBUG("[FriendCoreEpoll] Worker launched\n");
@@ -1998,7 +1999,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 					}
 					else if( sock != NULL )
 					{
-						SocketDelete( sock );
+						sock->s_Interface->SocketDelete( sock );
 					}
 					//DEBUG("EPOLLIN end\n");
 				}
