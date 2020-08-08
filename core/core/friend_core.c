@@ -1174,6 +1174,15 @@ void *FriendCoreAcceptPhase2( void *d )
 
 	if( pre->fds )
 	{
+		List *toDelete = ( List *)pre->fds;
+		while( toDelete )
+		{
+			if( toDelete->l_Data )
+			{
+				shutdown( *( int *)toDelete->l_Data, SHUT_RDWR );
+				close( *( int *)toDelete->l_Data );
+			}
+		}
 		ListFreeWithData( pre->fds );
 	}
 	FFree( pre );
