@@ -214,7 +214,7 @@ void WorkerThread( void *w )
 		}
 
 		// Let others come to..
-		usleep( 10 );
+		usleep( 1 );
 	}
 	
 	wrk->w_Function = NULL;
