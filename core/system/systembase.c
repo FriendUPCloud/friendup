@@ -1180,22 +1180,6 @@ void SystemClose( SystemBase *l )
 	// Close image library
 	l->LibraryImageDrop( l, l->ilib );
 	
-	// Clear available modules
-	List *ls = l->sl_AvailableModules;
-	while( ls )
-	{
-		if( ls->l_Data )
-		{
-			struct ModuleSet *set = ( struct ModuleSet *)ls->l_Data;
-			if( set->name )
-				FFree( set->name );
-			if( set->extension )
-				FFree( set->extension );
-			FFree( ls->l_Data );
-		}
-	}
-	FreeList( l->sl_AvailableModules );
-	
 	// release and free all modules
 	EModule *lmod = l->sl_Modules;
 	Log( FLOG_INFO,  "[SystemBase] Release modules\n");
@@ -1411,6 +1395,27 @@ void SystemClose( SystemBase *l )
 	if( l->sl_ModuleNames != NULL )
 	{
 		FFree( l->sl_ModuleNames );
+	}
+	
+	// Clear available modules
+	if( FRIEND_MUTEX_LOCK( &l->sl_InternalMutex ) == 0 )
+	{
+		List *ls = l->sl_AvailableModules;
+		while( ls )
+		{
+			if( ls->l_Data )
+			{
+				struct ModuleSet *set = ( struct ModuleSet *)ls->l_Data;
+				if( set->name )
+					FFree( set->name );
+				if( set->extension )
+					FFree( set->extension );
+				FFree( ls->l_Data );
+			}
+		}
+		FreeList( l->sl_AvailableModules );
+		l->sl_AvailableModules = NULL;
+		FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
 	}
 	
 	// Destroy mutex

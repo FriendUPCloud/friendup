@@ -26,7 +26,10 @@
 #include <util/newpopen.h>
 
 #define SUFFIX "php"
+
 #define LBUFFER_SIZE 8192
+#define PHP_READ_SIZE 4096
+//#define PHP_READ_SIZE 65536
 
 //
 // app structure
@@ -163,8 +166,6 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	
 	DEBUG( "[PHPmod] run app: %s\n", command );
 	
-#define PHP_READ_SIZE 65536
-	
 	char *buf = FMalloc( PHP_READ_SIZE+16 );
 	
 	ListString *ls = ListStringNew();
@@ -220,7 +221,7 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 			DEBUG("Error\n");
 			break;
 		}
-		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, 4096 );
+		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE );
 
 		DEBUG( "[PHPmod] Adding %d of data\n", size );
 		if( size > 0 )
