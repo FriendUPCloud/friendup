@@ -937,7 +937,7 @@ accerror:
 #else
 
 // HT
-int FriendCoreAcceptPhase3( int fd, FriendCoreInstance *fc )
+static inline int FriendCoreAcceptPhase3( int fd, FriendCoreInstance *fc )
 {	
 	if( fd == -1 )
 	{
