@@ -967,12 +967,12 @@ void *FriendCoreAcceptPhase2( void *d )
 		// Get socket!
 		DEBUG( "[FriendCoreAcceptPhase2] Using stored fds!\n" );
 		
-		if( !l->l_Data ) break;
+		if( !l->l_Data ) continue;
 		fd = *( int *)l->l_Data;
 		free( l->l_Data );
 		l->l_Data = NULL; // Clear it out
 	
-		if( !fd ) break;
+		if( !fd ) continue;
 	
 		if( fd == -1 )
 		{
