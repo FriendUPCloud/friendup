@@ -1006,8 +1006,6 @@ void *FriendCoreAcceptPhase2( void *d )
 		int prerr = getpeername( fd, (struct sockaddr *) &client, &clientLen );
 		if( prerr == -1 )
 		{
-			shutdown( fd, SHUT_RDWR );
-			close( fd );
 			goto accerror;
 		}
 
@@ -1175,7 +1173,9 @@ void *FriendCoreAcceptPhase2( void *d )
 	}	// while accept
 
 	if( pre->fds )
+	{
 		ListFreeWithData( pre->fds );
+	}
 	FFree( pre );
 
 #ifdef USE_PTHREAD
@@ -1186,7 +1186,17 @@ void *FriendCoreAcceptPhase2( void *d )
 accerror:
 	DEBUG("[FriendCoreAcceptPhase2] ERROR\n");
 	if( pre->fds )
+	{
+		List *toDelete = ( List *)pre->fds;
+		while( toDelete )
+		{
+			if( toDelete->l_Data )
+			{
+				close( *( int *)toDelete->l_Data );
+			}
+		}
 		ListFreeWithData( pre->fds );
+	}
 	FFree( pre );
 	
 	if( fd >= 0 )
