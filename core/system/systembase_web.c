@@ -1156,7 +1156,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								modType = StringDuplicate( mp->extension );
 								snprintf( path, sizeof( path ), "modules/%s", mp->name );
 								path[ 511 ] = 0;
-								DEBUG( "FOUND! %s", mp->name );
 								break;
 							}
 						}

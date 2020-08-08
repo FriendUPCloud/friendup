@@ -235,6 +235,7 @@ SystemBase *SystemInit( void )
 	l->ZLibCounter = 0;
 
 	l->sl_AvailableModules = CreateList();
+	l->sl_AvailableModules->l_Data = NULL;
 	
 	// Set mutex
 	pthread_mutex_init( &l->sl_InternalMutex, NULL );

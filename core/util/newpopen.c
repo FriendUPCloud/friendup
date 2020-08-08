@@ -96,7 +96,7 @@ int newpopen(const char *cmd, NPOpenFD *po )
 		}
 		
 		execl("/bin/sh", "sh", "-c", cmd, NULL );
-		exit(0);
+		//exit(0);
 	}
 	else
 	{
