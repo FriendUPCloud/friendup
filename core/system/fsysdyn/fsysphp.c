@@ -385,7 +385,7 @@ BufStringDisk *PHPCallDisk( const char *command )
 		return NULL;
 	}
 	
-	char *buf = FMalloc( PHP_READ_SIZE+16 );
+	char *buf = FMalloc( PHP_READ_SIZE + 16 );
 	//ListString *ls = ListStringNew();
 	BufStringDisk *ls = BufStringDiskNew();
 	int errCounter = 0;
@@ -403,7 +403,6 @@ BufStringDisk *PHPCallDisk( const char *command )
 	fds[1].events = POLLOUT;
 
 	int ret = 0;
-	int timeout = FILESYSTEM_MOD_TIMEOUT * 1000;
 
 	while( TRUE )
 	{
@@ -2043,7 +2042,7 @@ BufString *Dir( File *s, const char *path )
 			
 			DEBUG("[PHPFS] dir path : %s\n", comm );
 			// Encoded path
-			char *encComm = MarkAndBase64EncodeString( comm );
+			char *encComm      = MarkAndBase64EncodeString( comm );
 			strcat( comm, "/" );
 			char *encPathSlash = MarkAndBase64EncodeString( comm );
 			if( !encComm ) encComm = comm;

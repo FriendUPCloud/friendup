@@ -80,9 +80,9 @@ static inline ListString *RunPHPScript( const char *command )
 		return NULL;
 	}
 	
-#define PHP_READ_SIZE 65536	
+#define PHP_READ_SIZE 4096	
 	
-	char *buf = FMalloc( PHP_READ_SIZE+16 );
+	char *buf = FMalloc( PHP_READ_SIZE + 16 );
 	ListString *ls = ListStringNew();
 	
 #ifdef USE_NPOPEN_POLL
@@ -101,14 +101,12 @@ static inline ListString *RunPHPScript( const char *command )
 	// watch stdout for ability to write
 	fds[1].fd = STDOUT_FILENO;
 	fds[1].events = POLLOUT;
-
-	int waitLen = MOD_TIMEOUT * 1000;
 	
 	while( TRUE )
 	{
 		DEBUG("[RunPHPScript] in loop\n");
 		
-		int ret = poll( fds, 2, waitLen );
+		int ret = poll( fds, 2, 250 );
 
 		if( ret == 0 )
 		{

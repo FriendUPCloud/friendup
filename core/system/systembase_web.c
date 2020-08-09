@@ -1292,7 +1292,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				}
 			}
 		}
-		DEBUG("Module executed...\n");
+		DEBUG("Module executed in %dms...\n", GetUnixTime() - requestStart );
 		
 		if( data != NULL )
 		{
@@ -1447,6 +1447,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		}
 		
 		Log( FLOG_INFO, "Module call end: %p\n", pthread_self() );
+		DEBUG("Module call completed in %dms...\n", GetUnixTime() - requestStart );
 	}
 	
 	//
@@ -2445,6 +2446,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			FRIEND_MUTEX_UNLOCK( &(loggedSession->us_Mutex ) );
 		}
 	}
+	
+	DEBUG( "Systembase web request completed: %dms\n", GetUnixTime() - requestStart );
 	
 	FFree( sessionid );
 	return response;
