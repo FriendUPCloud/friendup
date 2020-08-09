@@ -1062,9 +1062,6 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 						store = (int)toWrite;
 					}
 				}
-				
-				//int written = write( lockf, ( void *)result->bsd_Buffer, result->bsd_Size );
-				//int written = write( lockf, ( void *)result->ls_Data, result->ls_Size );
 	
 				// Clean out result
 				BufStringDiskDelete( result ); result = NULL;
@@ -1143,11 +1140,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		char tmpfilename[ 712 ];
 
 		// Make sure we can make the tmp file unique
-		//do
-		//{
 		snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/Friendup/%s_write_%d%d%d%d", s->f_SessionIDPTR, rand()%9999, rand()%9999, rand()%9999, rand()%9999 );
-		//}
-		//while( access( tmpfilename, F_OK ) != -1 );
 
 		DEBUG("[fsysphp] WRITE FILE %s\n", tmpfilename );
 

@@ -201,7 +201,6 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	fcntl( fds[1].fd, F_SETFL, O_NONBLOCK );
 
 	int ret = 0;
-	int timeout = MOD_TIMEOUT * 1000;
 
 	int time = GetUnixTime();
 
