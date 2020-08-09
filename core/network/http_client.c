@@ -45,22 +45,22 @@ HttpClient *HttpClientNew( FBOOL post, FBOOL http2, char *param, char *headers, 
 		{
 			if( post == TRUE )
 			{
-				size = snprintf( temp, 2048, "POST %s HTTP/2\n", param );
+				size = snprintf( temp, 2048, "POST %s HTTP/2\r\n", param );
 			}
 			else
 			{
-				size = snprintf( temp, 2048, "GET %s HTTP/2\n", param );
+				size = snprintf( temp, 2048, "GET %s HTTP/2\r\n", param );
 			}
 		}
 		else
 		{
 			if( post == TRUE )
 			{
-				size = snprintf( temp, 2048, "POST %s HTTP/1.1\n", param );
+				size = snprintf( temp, 2048, "POST %s HTTP/1.1\r\n", param );
 			}
 			else
 			{
-				size = snprintf( temp, 2048, "GET %s HTTP/1.1\n", param );
+				size = snprintf( temp, 2048, "GET %s HTTP/1.1\r\n", param );
 			}
 		}
 		
@@ -226,20 +226,20 @@ User-Agent: Friend/1.0.0
 			if( c->hc_Headers == NULL && c->hc_Content == NULL )
 			{
 				message = FMalloc( messageSize );
-				addsize = snprintf( message, messageSize, "%sHost: %s\nAccept: */*\nUser-Agent: Friend/1.0.0\r\n\r\n", c->hc_MainLine, host );
+				addsize = snprintf( message, messageSize, "%sHost: %s\r\nAccept: */*\r\nUser-Agent: Friend/1.0.0\r\n\r\n", c->hc_MainLine, host );
 			}
 			else if( c->hc_Headers == NULL )
 			{
 				int conlen = strlen( c->hc_Content );
 				messageSize += conlen;
 				message = FMalloc( messageSize );
-				addsize = snprintf( message, messageSize, "%sHost: %s\nAccept: */*\nContent-Length: %d\nUser-Agent: Friend/1.0.0\r\n\r\n%s", c->hc_MainLine, host, conlen, c->hc_Content );
+				addsize = snprintf( message, messageSize, "%sHost: %s\r\nAccept: */*\r\nContent-Length: %d\r\nUser-Agent: Friend/1.0.0\r\n\r\n%s", c->hc_MainLine, host, conlen, c->hc_Content );
 			}
 			else if( c->hc_Content == NULL )
 			{
 				messageSize += strlen( c->hc_Headers );
 				message = FMalloc( messageSize );
-				addsize = snprintf( message, messageSize, "%sHost: %s\nAccept: */*\n%s\nUser-Agent: Friend/1.0.0\r\n\r\n", c->hc_MainLine, host, c->hc_Headers );
+				addsize = snprintf( message, messageSize, "%sHost: %s\r\nAccept: */*\r\n%s\r\nUser-Agent: Friend/1.0.0\r\n\r\n", c->hc_MainLine, host, c->hc_Headers );
 			}
 			else
 			{
@@ -249,7 +249,7 @@ User-Agent: Friend/1.0.0
 				
 				//conlen = 546;
 				//printf("--->headerlen %lu conlen %lu\n\n\n\n\n\n", strlen( c->hc_Headers ), strlen( c->hc_Content ) );
-				addsize = snprintf( message, messageSize, "%sHost: %s\nAccept: */*\nContent-Length: %d\nUser-Agent: curl/7.63.0\n%s\r\n\r\n%s", c->hc_MainLine, host, conlen, c->hc_Headers, c->hc_Content );
+				addsize = snprintf( message, messageSize, "%sHost: %s:%d\r\nAccept: */*\r\nContent-Length: %d\r\nUser-Agent: curl/7.63.0\r\n%s\r\n\r\n%s", c->hc_MainLine, host, port, conlen, c->hc_Headers, c->hc_Content );
 			}
 			//int addsize = snprintf( message, sizeof(message), "GET /xml/ HTTP/1.1\nHost: freegeoip.net\nUser-Agent: curl/7.52.1\nAccept: */*\r\n\r\n" );
 
@@ -380,7 +380,11 @@ User-Agent: Friend/1.0.0
 			{
 				DEBUG("[HttpClientCall] not secured send\n");
 				
+				//char *loc = "POST /Token HTTP/1.1\r\nHost: 81.0.147.244:17010\r\nUser-Agent: curl/7.63.0\r\naccept: */*\r\nContent-Type: application/json\r\nContent-Length: 52\r\n\r\n{\"username\":\"jan@kowalski.pl\",\"password\":\"password\"}";
+				//DEBUG(">>>>>>>>>>>>>>>>>>>>>>%s\n", loc );
+				
 				bytes = send( sockfd, message, addsize, 0 );
+				//bytes = send( sockfd, loc, strlen( loc ), 0 );
 				
 				DEBUG("[HttpClientCall] sent bytes: %d\n", bytes );
 
@@ -388,16 +392,56 @@ User-Agent: Friend/1.0.0
 				memset( response, 0, sizeof(response) );
 				received = 0;
 		
-				struct timeval timeout;      
-				timeout.tv_sec = HTTP_CLIENT_TIMEOUT;
-				timeout.tv_usec = 0;
+				//struct timeval timeout;      
+				//timeout.tv_sec = HTTP_CLIENT_TIMEOUT;
+				//timeout.tv_usec = 0;
 
-				if( setsockopt( sockfd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout) ) < 0 ) {}
+				//if( setsockopt( sockfd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout) ) < 0 ) {}
 				
 				DEBUG("[HttpClientCall] Before while\n");
-		
-				while( TRUE ) 
+				int tr=5;
+				int timeou = 10000;
+				while( TRUE )
 				{
+					struct pollfd fds;
+					// watch stdin for input 
+					fds.fd = sockfd;// STDIN_FILENO;
+					fds.events = POLLIN;
+
+					int err = poll( &fds, 1, (HTTP_CLIENT_TIMEOUT*timeou) );	// 10 seconds
+					if( err <= 0 )
+					{
+						DEBUG("[HttpClientCall] Timeout or there is no data in socket\n");
+						break;
+					}
+					
+					if( fds.revents & POLLIN )
+					{
+						//numBytesRecv = recv(sock, replyMessage, BUFSIZE, 0);
+						bytes = recv( sockfd, response, sizeof(response), 0 );
+						DEBUG("[HttpClientCall] Got data!! read: %d\n", bytes );
+						
+						timeou = 50;	// seems we got some data, we can decrease timeout value
+						
+						if( bytes <= 0 )
+						{
+							if( tr-- <= 0 )
+							{
+								break;
+							}
+						}
+						else
+						{
+							received += bytes;
+							BufStringAddSize( bs, response, bytes );
+						}
+					}
+					else if( fds.revents & POLLHUP )
+					{
+						DEBUG("[HttpClientCall] Disconnected!\n");
+						break;
+					}
+					/*
 					bytes = read( sockfd, response, sizeof(response) );
 					if( bytes < 0 )
 					{
@@ -409,11 +453,10 @@ User-Agent: Friend/1.0.0
 						FERROR("ERROR received bytes 0\n");
 						break;
 					}
-					received += bytes;
-					BufStringAddSize( bs, response, bytes );
+					*/
 				}
 				
-				DEBUG("[HttpClientCall] After while\n");
+				DEBUG("[HttpClientCall] After while, resp size: %lu response: %s\n", bs->bs_Size, bs->bs_Buffer );
 			}
 			if( message != NULL )
 			{

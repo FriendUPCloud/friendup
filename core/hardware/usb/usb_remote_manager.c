@@ -146,7 +146,7 @@ USBRemoteDevice *USBRemoteManagerCreatePort( USBRemoteManager *usbm, char *usern
 }
 
 /**
- * Delete USB port
+ * Delete USB port by ID
  *
  * @param usbm pointer to USBRemoteManager
  * @param username user to which device belong
@@ -177,6 +177,47 @@ int USBRemoteManagerDeletePort( USBRemoteManager *usbm, char *username, FULONG i
 		if( actdev != NULL )
 		{
 			UserUSBRemoteDevicesDeletePort( actdev, id );
+		}
+	}
+	else
+	{
+		return 1;
+	}
+	return 0;
+}
+
+/**
+ * Delete USB port (by port number)
+ *
+ * @param usbm pointer to USBRemoteManager
+ * @param username user to which device belong
+ * @param port usb port number
+ * @return return 0 when success, otherwise error number is returned
+ */
+int USBRemoteManagerDeletePortByPort( USBRemoteManager *usbm, char *username, FULONG port )
+{
+	if( usbm != NULL && username != NULL )
+	{
+		UserUSBRemoteDevices *actdev = NULL;
+		
+		if( ( FRIEND_MUTEX_LOCK( &(usbm->usbrm_Mutex ) ) ) == 0 )
+		{
+			actdev = usbm->usbrm_UserDevices;
+			while( actdev != NULL )
+			{
+				if( strcmp( actdev->uusbrd_UserName, username ) == 0 )
+				{
+					// found user devices
+					break;
+				}
+				actdev = (UserUSBRemoteDevices *)actdev->node.mln_Succ;
+			}
+			FRIEND_MUTEX_UNLOCK( &(usbm->usbrm_Mutex ) );
+		}
+		
+		if( actdev != NULL )
+		{
+			UserUSBRemoteDevicesDeletePortByPort( actdev, port );
 		}
 	}
 	else

@@ -56,4 +56,10 @@ void UserUSBRemoteDevicesDelete( UserUSBRemoteDevices *dev );
 
 int UserUSBRemoteDevicesDeletePort( UserUSBRemoteDevices *dev, FULONG id );
 
+//
+//
+//
+
+int UserUSBRemoteDevicesDeletePortByPort( UserUSBRemoteDevices *dev, FULONG port );
+
 #endif // __CORE_USB_REMOTE_USB_DEVICE_H__

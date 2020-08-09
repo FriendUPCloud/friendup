@@ -260,8 +260,20 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 		if( username != NULL && id > 0 )
 		{
 			int error = 0;
+			char  path[ 128 ];
 			
-			error = USBRemoteManagerDeletePort( l->sl_USBRemoteManager, username, id );
+			snprintf( path, sizeof(path), "/Usb/Close?port=%lu", id );	// lets recognize port by
+			
+			int bufLen = 256;
+			int errorCode;
+			
+			BufString *rsp = MitraManagerCall( l->sl_MitraManager, path, &errorCode );
+			if( rsp != NULL )
+			{
+				
+			}
+			
+			error = USBRemoteManagerDeletePortByPort( l->sl_USBRemoteManager, username, id );
 			if( error == 0 )
 			{
 				HttpAddTextContent( response, "ok<!--separate-->{ \"result\": \"sucess\" }" );

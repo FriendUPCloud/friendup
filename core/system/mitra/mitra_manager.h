@@ -34,6 +34,8 @@ typedef struct MitraManager
 {
 	char								*mm_AuthToken;
 	char								*mm_WindowsHost;
+	char								*mm_ServiceLogin;
+	char								*mm_ServicePassword;
 	int									mm_WindowsPort;
 	void								*mm_SB;
 	SQLLibrary							*mm_Sqllib;	// pointer to library

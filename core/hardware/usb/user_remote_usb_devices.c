@@ -67,7 +67,13 @@ void UserUSBRemoteDevicesDelete( UserUSBRemoteDevices *udev )
 	}
 }
 
-
+/**
+ * Delete USB port by ID
+ * 
+ * @param udev pointer to UserUSBRemoteDevices
+ * @param id id of device
+ * @return 0 when success, otherwise error number
+ */
 int UserUSBRemoteDevicesDeletePort( UserUSBRemoteDevices *udev, FULONG id )
 {
 	if( udev != NULL )
@@ -86,3 +92,27 @@ int UserUSBRemoteDevicesDeletePort( UserUSBRemoteDevices *udev, FULONG id )
 	return 0;
 }
 
+/**
+ * Delete USB port by ID
+ * 
+ * @param udev pointer to UserUSBRemoteDevices
+ * @param port port number
+ * @return 0 when success, otherwise error number
+ */
+int UserUSBRemoteDevicesDeletePortByPort( UserUSBRemoteDevices *udev, FULONG port )
+{
+	if( udev != NULL )
+	{
+		int i;
+		for( i = 0 ; i < MAX_REMOTE_USB_DEVICES_PER_USER ; i++ )
+		{
+			if( udev->uusbrd_Devices[ i ] != NULL && udev->uusbrd_Devices[ i ]->usbrd_IPPort == port )
+			{
+				USBRemoteDeviceDelete( udev->uusbrd_Devices[ i ] );
+				udev->uusbrd_Devices[ i ] = NULL;
+				break;
+			}
+		}
+	}
+	return 0;
+}

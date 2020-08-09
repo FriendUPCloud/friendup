@@ -72,6 +72,8 @@ MitraManager *MitraManagerNew( void *sb )
 		{
 			mm->mm_WindowsHost = StringDuplicate( plib->ReadStringNCS( prop, "windows:host", NULL ) );
 			mm->mm_WindowsPort = plib->ReadIntNCS( prop, "windows:port", 5000 );
+			mm->mm_ServiceLogin = StringDuplicate( plib->ReadStringNCS( prop, "windows:login", NULL ) );
+			mm->mm_ServicePassword = StringDuplicate( plib->ReadStringNCS( prop, "windows:password", NULL ) );
 		
 			plib->Close( prop );
 		}
@@ -168,6 +170,23 @@ MitraManager *MitraManagerNew( void *sb )
 	
 	MitraManagerCheckAndAddToken( mm );
 	
+	// test
+	// or domain WEBMED_POC
+	
+	
+	char path[ 256 ];
+	snprintf( path, sizeof(path), "Usb/Open?windowsUser=%s%%5C%s&password=%s", "webmed.poc", "friend1", "Abc123456" );
+
+	int bufLen = 256;
+	int errorCode;
+	
+	BufString *rsp = MitraManagerCall( mm, path, &errorCode );
+	if( rsp != NULL )
+	{
+		DEBUG("REsponse from usbmount: %s\n", rsp->bs_Buffer );
+	}
+	DEBUG("ERROR code %d\n", errorCode );
+	
 	return mm;
 }
 
@@ -197,6 +216,16 @@ void MitraManagerDelete( MitraManager *mmgr )
 			FFree( mmgr->mm_WindowsHost );
 		}
 		
+		if( mmgr->mm_ServiceLogin != NULL )
+		{
+			FFree( mmgr->mm_ServiceLogin );
+		}
+		
+		if( mmgr->mm_ServicePassword != NULL )
+		{
+			FFree( mmgr->mm_ServicePassword );
+		}
+		
 		FFree( mmgr );
 	}
 	DEBUG("[MitraManagerDelete] end\n");
@@ -220,16 +249,23 @@ void MitraManagerCheckAndAddToken( MitraManager *mm)
 		snprintf( tmp, sizeof(tmp), "/Token" );
 		// "Authorization: Bearer mytoken123"
 		
-		char headers[ 512 ];
-		snprintf( headers, sizeof(headers), "Content-type: application/json\nAuthorization: Bearer %s", "xxx" );
+		char headers[ 64 ];
+		snprintf( headers, sizeof(headers), "Content-Type: application/json" );
 		
 		DEBUG("[MitraManagerCheckAndAddToken] connect to: %s\n", mm->mm_WindowsHost );
+		char content[ 256 ];
+		
+		// After while, response: HTTP/1.1 400 Bad Request
+
+		snprintf( content, sizeof(content), "{\"username\":\"%s\",\"password\":\"%s\"}\r\n\r\n", mm->mm_ServiceLogin, mm->mm_ServicePassword );
+		//strcpy( content, "{\"username\":\"jan@kowalski.pl\",\"password\":\"password\"}" );
 		
 		// POST, HTTP2, PATH, HEADERS, CONTENT
-		HttpClient *c = HttpClientNew( TRUE, FALSE, tmp, headers, NULL );
+		HttpClient *c = HttpClientNew( TRUE, FALSE, tmp, headers, content );
 		if( c != NULL )
 		{
 			BufString *bs = HttpClientCall( c, mm->mm_WindowsHost, mm->mm_WindowsPort, FALSE );
+			
 			if( bs != NULL )
 			{
 				/*
@@ -240,31 +276,51 @@ void MitraManagerCheckAndAddToken( MitraManager *mm)
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6ImphbkBrb3dhbHNraS5wbCIsImdpdmVuX25hbWUiOiJKYW4iLCJmYW1pbHlfbmFtZSI6Iktvd2Fsc2tpIiwibmJmIjoxNTk2NDc0MzE2LCJleHAiOjE1OTY0NzQ2MTUsImlhdCI6MTU5NjQ3NDMxNiwiaXNzIjoiaXNzdWVyIiwiYXVkIjoiYXVkaWVuY2UifQ.lNImLi_N11f5iGu7iTQIZyzMJAOU19zuMe7SRELZQQo"
 }
 				 */
-				char *in = (char *)bs->bs_Buffer;
-				jsmn_parser p;
-				jsmntok_t t[128]; // We expect no more than 128 tokens
 				
-				jsmn_init( &p );
-				int r = jsmn_parse( &p, bs->bs_Buffer , bs->bs_Size, t, 256 );
-
-				// Assume the top-level element is an object 
-				if( r > 1 && t[0].type == JSMN_OBJECT )
+				DEBUG("[MitraManagerCheckAndAddToken] ClientCall != NULL. Resp len: %lu\n", bs->bs_Size );
+				
+				char *headEnd = strstr( bs->bs_Buffer, "\r\n\r\n" );
+				if( headEnd != NULL )
 				{
-					//{"host":"localhost","username":"guac","password":"IkkeHeltStabile2000","database":"guacamole"} 
+					char *in = (char *)headEnd+4;
+					char *tmpin = strstr( headEnd, "{" );	// somehow content contain number, but we want to get json
+					if( tmpin != NULL )
+					{
+						in = tmpin;
+					}
+					
+					jsmn_parser p;
+					jsmntok_t t[128]; // We expect no more than 128 tokens
 				
-					//firstName = StringDuplicateN( in + t[ 2 ].start, (int)(t[ 2 ].end-t[ 2 ].start) );
-					//lastName = StringDuplicateN( in + t[ 4 ].start, (int)(t[ 4 ].end-t[ 4 ].start) );
-					//userName = StringDuplicateN( in + t[ 6 ].start, (int)(t[ 6 ].end-t[ 6 ].start) );
-					mm->mm_AuthToken = StringDuplicateN( in + t[ 8 ].start, (int)(t[ 8 ].end-t[ 8 ].start) );
+					jsmn_init( &p );
+					int r = jsmn_parse( &p, in , bs->bs_Size - (headEnd - bs->bs_Buffer), t, 256 );
+				
+					DEBUG("[MitraManagerCheckAndAddToken] response: %s - parser: %d type: %d\n", in, r, t[0].type );
+				
+					// Assume the top-level element is an object 
+					if( r > 1 && t[0].type == JSMN_OBJECT )
+					{
+						//{"host":"localhost","username":"guac","password":"IkkeHeltStabile2000","database":"guacamole"} 
+				
+						//firstName = StringDuplicateN( in + t[ 2 ].start, (int)(t[ 2 ].end-t[ 2 ].start) );
+						//lastName = StringDuplicateN( in + t[ 4 ].start, (int)(t[ 4 ].end-t[ 4 ].start) );
+						//userName = StringDuplicateN( in + t[ 6 ].start, (int)(t[ 6 ].end-t[ 6 ].start) );
+						mm->mm_AuthToken = StringDuplicateN( in + t[ 8 ].start, (int)(t[ 8 ].end-t[ 8 ].start) );
+						DEBUG("[MitraManagerCheckAndAddToken] Authentication token set: %s\n", mm->mm_AuthToken );
+					}
 				}
-				
 				BufStringDelete( bs );
+			}
+			else
+			{
+				DEBUG("[MitraManagerCheckAndAddToken] response is empty!\n");
 			}
 			HttpClientDelete( c );
 		}
 		
 		//mm->mm_AuthToken = StringDuplicate( token );
 	}
+	DEBUG("[MitraManagerCheckAndAddToken] end!\n");
 }
 
 /**
@@ -440,6 +496,16 @@ int MitraManagerGetUserData( MitraManager *mmgr, char *username, char **uname, c
  curl -X POST "http://localhost:5000/Usb/Open?windowsUser=Pawel&password=pegasos1232" -H  "accept: **" -H  "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6ImphbkBrb3dhbHNraS5wbCIsImdpdmVuX25hbWUiOiJKYW4iLCJmYW1pbHlfbmFtZSI6Iktvd2Fsc2tpIiwibmJmIjoxNTk2NDgzMDk4LCJleHAiOjE1OTY0ODMzOTgsImlhdCI6MTU5NjQ4MzA5OCwiaXNzIjoiaXNzdWVyIiwiYXVkIjoiYXVkaWVuY2UifQ._e2w4UvqwgWi4J2LF0s4OvO8GLD4GbqnsM8Ze7ZIdas" -d ""
  */
 
+/*
+POST /Usb/Open?windowsUser=webmed.poc%5Cfriend&password=webmedpoc HTTP/1.1
+> Host: 81.0.147.244:17010
+> User-Agent: curl/7.63.0
+> accept: **
+> Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6ImphbkBrb3dhbHNraS5wbCIsImdpdmVuX25hbWUiOiJKYW4iLCJmYW1pbHlfbmFtZSI6Iktvd2Fsc2tpIiwibmJmIjoxNTk2OTIwNDIyLCJleHAiOjE1OTY5MjA3MjIsImlhdCI6MTU5NjkyMDQyMiwiaXNzIjoiaXNzdWVyIiwiYXVkIjoiYXVkaWVuY2UifQ.sKgr3eS44kcx1m0tsajozoJbKbQgo7X3YA82pyA47Gw
+> Content-Length: 0
+> Content-Type: application/x-www-form-urlencoded
+*/
+
 BufString *MitraManagerCall( MitraManager *mm, char *path, int *errCode )
 {
 	BufString *bs = NULL;
@@ -449,10 +515,10 @@ BufString *MitraManagerCall( MitraManager *mm, char *path, int *errCode )
 	// "Authorization: Bearer mytoken123"
 	
 	char headers[ 512 ];
-	snprintf( headers, sizeof(headers), "Accept: */*\nContent-type: application/json\nAuthorization: Bearer %s", mm->mm_AuthToken );
+	snprintf( headers, sizeof(headers), "Content-type: application/x-www-form-urlencoded\r\nContent-Length: 0\r\nAuthorization: Bearer %s", mm->mm_AuthToken );
 	
 	// POST, HTTP2, PATH, HEADERS, CONTENT
-	HttpClient *c = HttpClientNew( FALSE, FALSE, tmp, headers, NULL );
+	HttpClient *c = HttpClientNew( TRUE, FALSE, tmp, headers, NULL );
 	if( c != NULL )
 	{
 		bs = HttpClientCall( c, mm->mm_WindowsHost, mm->mm_WindowsPort, FALSE );
