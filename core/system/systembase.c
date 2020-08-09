@@ -1402,7 +1402,7 @@ void SystemClose( SystemBase *l )
 	if( FRIEND_MUTEX_LOCK( &l->sl_InternalMutex ) == 0 )
 	{
 		List *ls = l->sl_AvailableModules;
-		while( ls )
+		while( ls != NULL )
 		{
 			if( ls->l_Data )
 			{
@@ -1413,6 +1413,7 @@ void SystemClose( SystemBase *l )
 					FFree( set->extension );
 				FFree( ls->l_Data );
 			}
+			ls = ls->next;
 		}
 		FreeList( l->sl_AvailableModules );
 		l->sl_AvailableModules = NULL;
