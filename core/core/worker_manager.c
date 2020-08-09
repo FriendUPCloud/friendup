@@ -179,93 +179,63 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 	
 	while( TRUE )
 	{
-		/*
 		wrk = NULL;
 
-		FRIEND_MUTEX_LOCK( &wm->wm_Mutex );
-		max++; wm->wm_LastWorker++;
-		if( wm->wm_LastWorker >= wm->wm_MaxWorkers )
-		{ 
-			wm->wm_LastWorker = 0; 
-		}
-		FRIEND_MUTEX_UNLOCK( &wm->wm_Mutex );
-		
-		FRIEND_MUTEX_LOCK( &(wm->wm_Workers[ wm->wm_LastWorker ])->w_Mut );
-		
-		if( wm->w_AverageWorkSeconds == 0 )
+		if( FRIEND_MUTEX_LOCK( &wm->wm_Mutex ) == 0 )
 		{
-			wm->w_AverageWorkSeconds = wm->wm_Workers[ wm->wm_LastWorker ]->w_WorkSeconds;
-		}
-		else
-		{
-			wm->w_AverageWorkSeconds += wm->wm_Workers[ wm->wm_LastWorker ]->w_WorkSeconds;
-			wm->w_AverageWorkSeconds /= 2;
-		}
-		wm->wm_Workers[ wm->wm_LastWorker ]->w_Request = wrkinfo;
-		
-		strncpy( wm->wm_Workers[ wm->wm_LastWorker ]->w_FunctionString, path, WORKER_FUNCTION_STRING_SIZE_MIN1 );
-		wm->wm_Workers[ wm->wm_LastWorker ]->w_State = W_STATE_RUNNING;
-		//FRIEND_MUTEX_UNLOCK( &wm->wm_Mutex );
-		//FRIEND_MUTEX_UNLOCK( &wrk->w_Mut );
-		
-		WorkerRunCommand( wm->wm_Workers[ wm->wm_LastWorker ], foo, d );
-		testquit = 0;
-		
-		FRIEND_MUTEX_UNLOCK( &(wm->wm_Workers[ wm->wm_LastWorker ])->w_Mut );
-		*/
-		wrk = NULL;
-
-		FRIEND_MUTEX_LOCK( &wm->wm_Mutex );
-		max++; wm->wm_LastWorker++;
-		if( wm->wm_LastWorker >= wm->wm_MaxWorkers )
-		{ 
-			wm->wm_LastWorker = 0; 
-		}
-
-		// Safely test the state of the worker
-		{
-			lw = wm->wm_LastWorker;
-			Worker *w1 = wm->wm_Workers[ lw ];
-			
-			if( FRIEND_MUTEX_LOCK( &(wm->wm_Workers[ wm->wm_LastWorker ]->w_Mut) ) == 0 )
-			{
-				if( w1->w_State == W_STATE_WAITING )
-				{
-					wrk = wm->wm_Workers[ wm->wm_LastWorker ];
-					wrk->w_State = W_STATE_LOCKED;
-				}
-				FRIEND_MUTEX_UNLOCK( &(wm->wm_Workers[ wm->wm_LastWorker ]->w_Mut) );
+			max++; 
+			wm->wm_LastWorker++;
+						
+			if( wm->wm_LastWorker >= wm->wm_MaxWorkers )
+			{ 
+				wm->wm_LastWorker = 0; 
 			}
-		}
-	
-		if( wrk != NULL )
-		{
-			if( wm->w_AverageWorkSeconds == 0 )
+
+			// Safely test the state of the worker
 			{
-				wm->w_AverageWorkSeconds = wrk->w_WorkSeconds;
+				lw = wm->wm_LastWorker;
+				Worker *w1 = wm->wm_Workers[ lw ];
+			
+				if( FRIEND_MUTEX_LOCK( &(wm->wm_Workers[ wm->wm_LastWorker ]->w_Mut) ) == 0 )
+				{
+					if( w1->w_State == W_STATE_WAITING )
+					{
+						wrk = wm->wm_Workers[ wm->wm_LastWorker ];
+						wrk->w_State = W_STATE_LOCKED;
+					}
+					FRIEND_MUTEX_UNLOCK( &(wm->wm_Workers[ wm->wm_LastWorker ]->w_Mut) );
+				}
+			}
+	
+			if( wrk != NULL )
+			{
+				if( wm->w_AverageWorkSeconds == 0 )
+				{
+					wm->w_AverageWorkSeconds = wrk->w_WorkSeconds;
+				}
+				else
+				{
+					wm->w_AverageWorkSeconds += wrk->w_WorkSeconds;
+					wm->w_AverageWorkSeconds /= 2;
+				}
+				wrk->w_Request = wrkinfo;
+			
+				strncpy( wrk->w_FunctionString, path, WORKER_FUNCTION_STRING_SIZE_MIN1 );
+				wrk->w_State = W_STATE_RUNNING;
+				FRIEND_MUTEX_UNLOCK( &wm->wm_Mutex );
+			
+				WorkerRunCommand( wrk, foo, d );
+				testquit = 0;
+				wrk->w_Request = NULL;
+			
+				break;
 			}
 			else
 			{
-				wm->w_AverageWorkSeconds += wrk->w_WorkSeconds;
-				wm->w_AverageWorkSeconds /= 2;
+				FRIEND_MUTEX_UNLOCK( &wm->wm_Mutex );
+				Log( FLOG_INFO, "[WorkManagerRun] Worker is busy, waiting\n");
+				usleep( 10 );
 			}
-			wrk->w_Request = wrkinfo;
-			
-			strncpy( wrk->w_FunctionString, path, WORKER_FUNCTION_STRING_SIZE_MIN1 );
-			wrk->w_State = W_STATE_RUNNING;
-			FRIEND_MUTEX_UNLOCK( &wm->wm_Mutex );
-			
-			WorkerRunCommand( wrk, foo, d );
-			testquit = 0;
-			wrk->w_Request = NULL;
-			
-			break;
-		}
-		else
-		{
-			FRIEND_MUTEX_UNLOCK( &wm->wm_Mutex );
-			Log( FLOG_INFO, "[WorkManagerRun] Worker is busy, waiting\n");
-			usleep( 1000 );
 		}
 		
 		if( max > wm->wm_MaxWorkers )
@@ -295,7 +265,7 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 				
 				return -1;
 			}
-			usleep( 100 );
+			usleep( 10 );
 			max = 0;
 			//return -1;
 		}
