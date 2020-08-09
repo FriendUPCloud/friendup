@@ -1520,7 +1520,7 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 					fds.fd = sock->fd;// STDIN_FILENO;
 					fds.events = POLLIN;
 
-					int err = poll( &fds, 1, 20);
+					int err = poll( &fds, 1, 50 );
 					if( err <= 0 )
 					{
 						DEBUG("[SocketReadSSL] Timeout or there is no data in socket\n");
@@ -1561,11 +1561,21 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 						fds[1].fd = STDOUT_FILENO;
 						fds[1].events = POLLOUT;
 
-						int err = poll( fds, 1, sock->s_Timeouts * 1000);
+						int timeout = 0;
+						switch( read_retries )
+						{
+							case 0: break;
+							case 1: timeout = 50; break;
+							case 2: timeout = 150; break;
+							default: timeout = 250; break;
+						}
+
+						int err = poll( fds, 1, timeout );
 
 						if( err > 0 )
 						{
-							usleep( 500 ); // 50000
+							read_retries++;
+							usleep( 1 ); // 50000
 							FERROR("[SocketReadSSL] want write\n");
 							continue; // more data to read...
 						}
