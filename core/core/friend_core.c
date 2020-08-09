@@ -1266,7 +1266,7 @@ void FriendCoreProcessSockBlock( void *fcv )
 		
 		while( TRUE )
 		{
-			// Increase timeouts in retries
+			// Only increases timeouts in retries
 			if( retryContentNotFull == 1 )
 			{
 				th->sock->s_SocketBlockTimeout = 100;
@@ -1332,7 +1332,7 @@ void FriendCoreProcessSockBlock( void *fcv )
 						}
 						else
 						{
-							usleep( 2000 );
+							usleep( 10 );
 							DEBUG("[FriendCoreProcessSockBlock] Continue, resultString->bsd_Size %ld expectedLength %ld\n", resultString->bsd_Size, expectedLength );
 							// buffer is not equal to what should come
 							continue;
