@@ -182,11 +182,20 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 {"type":"RDP","name":"Francois Server","full address":"35.156.138.140","server port":"3389","remoteapplicationprogram":"","remote-app-dir":"francoisserver","saml_accessgroups":"","icon":"","executable_path":"","security":"any","alternate shell":"","remoteapp_parameters":"","remoteapp_working_dir":"","performance_wallpaper":"1","performance_theming":"1","performance_cleartype":"1","performance_windowdrag":"1","performance_aero":"1","performance_menuanimations":"1"} |
 				 */
 
-				if( ( buffer = FMalloc( bufLen ) ) != NULL )
+				if( actdev->usbrd_IPPort >= 0 )
 				{
-					int size = sprintf( buffer, "{\"deviceid\":\"%lu\",\"address\":\"%s\",\"port\":%d,\"uname\":\"%s\",\"password\":\"%s\"}", actdev->usbrd_ID, actdev->usbrd_NetworkAddress, actdev->usbrd_IPPort, actdev->usbrd_Login, actdev->usbrd_Password );
-					//HttpAddTextContent(response, buffer);
-					HttpSetContent( response, buffer, size );
+					if( ( buffer = FMalloc( bufLen ) ) != NULL )
+					{
+						int size = sprintf( buffer, "{\"deviceid\":\"%lu\",\"address\":\"%s\",\"port\":%d,\"uname\":\"%s\",\"password\":\"%s\"}", actdev->usbrd_ID, actdev->usbrd_NetworkAddress, actdev->usbrd_IPPort, actdev->usbrd_Login, actdev->usbrd_Password );
+						//HttpAddTextContent(response, buffer);
+						HttpSetContent( response, buffer, size );
+					}
+				}
+				else
+				{
+					char dictmsgbuf[ 256 ];
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\",\"error\":%d}", l->sl_Dictionary->d_Msg[DICT_USB_REMOTE_CANNOT_BE_CREATED] , DICT_USB_REMOTE_CANNOT_BE_CREATED, error );
+					HttpAddTextContent( response, dictmsgbuf );
 				}
 				
 				if( uname != NULL )
@@ -211,7 +220,6 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 				char dictmsgbuf[ 256 ];
 				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\",\"error\":%d}", l->sl_Dictionary->d_Msg[DICT_USB_REMOTE_CANNOT_BE_CREATED] , DICT_USB_REMOTE_CANNOT_BE_CREATED, error );
 				HttpAddTextContent( response, dictmsgbuf );
-				
 			}
 		}
 		else

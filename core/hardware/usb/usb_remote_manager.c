@@ -136,6 +136,7 @@ USBRemoteDevice *USBRemoteManagerCreatePort( USBRemoteManager *usbm, char *usern
 				usbm->usbrm_UserDevices = actdev;
 				FRIEND_MUTEX_UNLOCK( &(usbm->usbrm_Mutex ) );
 			}
+			retdev = actdev;
 		}
 	}
 	else
