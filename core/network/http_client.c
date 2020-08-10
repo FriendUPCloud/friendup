@@ -599,7 +599,7 @@ client_error:
 	
 	if( bs != NULL )
 	{
-		DEBUG("------------Firebase response\n %s\n", bs->bs_Buffer );
+		DEBUG("------------Http client response\n %s\n", bs->bs_Buffer );
 		BufStringDelete( bs );
 		bs = NULL;
 	}

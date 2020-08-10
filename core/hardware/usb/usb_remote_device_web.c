@@ -145,6 +145,8 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 					jsmn_parser p;
 					jsmntok_t t[128]; // We expect no more than 128 tokens
 					
+					DEBUG("[usbremotecreate] parse response: %s\n", rsp->bs_Buffer );
+					
 					bufLen += rsp->bs_Size;
 				
 					jsmn_init( &p );
