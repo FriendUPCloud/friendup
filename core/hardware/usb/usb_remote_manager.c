@@ -115,8 +115,10 @@ USBRemoteDevice *USBRemoteManagerCreatePort( USBRemoteManager *usbm, char *usern
 			*error = 1;	// all ports used
 			for( i=0 ; i < MAX_REMOTE_USB_DEVICES_PER_USER ; i++ )
 			{
+				DEBUG("[USBRemoteManagerCreatePort] going through all devices\n");
 				if( actdev->uusbrd_Devices[ i ] == NULL )
 				{
+					DEBUG("[USBRemoteManagerCreatePort] found empty slot!\n");
 					*error = 0;	// we found empty place
 					retdev = actdev->uusbrd_Devices[ i ];
 					break;
@@ -138,6 +140,7 @@ USBRemoteDevice *USBRemoteManagerCreatePort( USBRemoteManager *usbm, char *usern
 			}
 			retdev = actdev;
 		}
+		DEBUG("[USBRemoteManagerCreatePort] retdev pointer: %p\n", retdev );
 	}
 	else
 	{
