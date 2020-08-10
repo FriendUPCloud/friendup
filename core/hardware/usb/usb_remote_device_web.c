@@ -108,6 +108,7 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 				char *buffer;
 				char path[ 512 ];
 				
+				actuserdev->uusbrd_Devices[ entry ] = USBRemoteDeviceNew();
 				USBRemoteDevice *actdev = actuserdev->uusbrd_Devices[ entry ];
 				
 				//snprintf( tmp, sizeof(tmp), "/%s/", geoFormat );
