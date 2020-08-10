@@ -1297,12 +1297,12 @@ void FriendCoreProcessSockBlock( void *fcv )
 	else if( err == 0 )
 	{
 		FERROR("[FriendCoreProcessSockBlock] want read TIMEOUT....\n");
-		return;
+		goto close_fcp;
 	}
 	else
 	{
 		FERROR("[FriendCoreProcessSockBlock] other....\n");
-		return;
+		goto close_fcp;
 	}
 	SocketSetBlocking( th->sock, TRUE );
 

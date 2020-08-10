@@ -234,7 +234,7 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 			{
 				FRIEND_MUTEX_UNLOCK( &wm->wm_Mutex );
 				Log( FLOG_INFO, "[WorkManagerRun] Worker is busy, waiting\n");
-				usleep( 10 );
+				usleep( 2000 );
 			}
 		}
 		
@@ -254,10 +254,7 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 				Log( FLOG_DEBUG, "Workers dump!" );
 				for( z = 0; z < wm->wm_MaxWorkers; z++ )
 				{
-					if( wm->wm_Workers[ z ]->w_FunctionString[0] == 0 )
-					{
-					}
-					else
+					if( wm->wm_Workers[ z ]->w_FunctionString[0] != 0 )
 					{
 						Log( FLOG_DEBUG, "Worker: %d func: %s", z, wm->wm_Workers[ z ]->w_FunctionString );
 					}
@@ -265,7 +262,7 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 				
 				return -1;
 			}
-			usleep( 10 );
+			usleep( 2000 );
 			max = 0;
 			//return -1;
 		}

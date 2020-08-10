@@ -234,28 +234,28 @@ ListString *PHPCall( const char *command )
 
 	while( TRUE )
 	{
-		DEBUG("[PHPFsys] in loop\n");
+		//DEBUG("[PHPFsys] in loop\n");
 		
 		ret = poll( fds, 2, 250 ); // HT Small timeout
 
 		if( ret == 0 )
 		{
-			DEBUG("Timeout!\n");
+			//DEBUG("Timeout!\n");
 			break;
 		}
 		else if(  ret < 0 )
 		{
-			DEBUG("Error\n");
+			//DEBUG("Error\n");
 			break;
 		}
 		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
 
-		DEBUG( "[PHPFsys] Adding %d of data\n", size );
+		//DEBUG( "[PHPFsys] Adding %d of data\n", size );
 		if( size > 0 )
 		{
-			DEBUG( "[PHPFsys] before adding to list\n");
+			//DEBUG( "[PHPFsys] before adding to list\n");
 			ListStringAdd( ls, buf, size );
-			DEBUG( "[PHPFsys] after adding to list\n");
+			//DEBUG( "[PHPFsys] after adding to list\n");
 			//res += size;
 		}
 		else
