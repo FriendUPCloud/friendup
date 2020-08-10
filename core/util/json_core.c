@@ -182,7 +182,7 @@ JSONData* JSONParse( char* str, unsigned int length )
 	{
 		char c = i < length ? str[i] : '\n';
 
-		DEBUG("\nChar: %c (0x%.2X, %d)\n", c, c, i);
+		//DEBUG("\nChar: %c (0x%.2X, %d)\n", c, c, i);
 
 		column++;
 
@@ -433,7 +433,7 @@ JSONData* JSONParse( char* str, unsigned int length )
 				{
 					expect = nextExpect;
 
-					DEBUG( "Now expecting: %.8X (%s) (%s:%d)\n", expect, JSONGetExpectedErrorString( expect ), __FILE__, __LINE__ );
+					//DEBUG( "Now expecting: %.8X (%s) (%s:%d)\n", expect, JSONGetExpectedErrorString( expect ), __FILE__, __LINE__ );
 				}
 
 				break;
@@ -647,7 +647,7 @@ JSONData* JSONParse( char* str, unsigned int length )
 			// Add to array
 			else if( ( level && ( stack[level - 1]->type & JSON_TYPE_ARRAY ) ) )
 			{
-				DEBUG("Added to array (level %d), type: %s\n", level, JSONGetExpectedErrorString(currentNode->type) );
+				//DEBUG("Added to array (level %d), type: %s\n", level, JSONGetExpectedErrorString(currentNode->type) );
 			
 				// Get the parent object
 				JSONData* d = stack[level - 1];
@@ -680,7 +680,7 @@ JSONData* JSONParse( char* str, unsigned int length )
 				
 				nextExpect = JSON_TYPE_NONE;
 
-				DEBUG( "Now expecting: %.8X (%s) (%s:%d)\n", expect, JSONGetExpectedErrorString( expect ), __FILE__, __LINE__ );
+				//DEBUG( "Now expecting: %.8X (%s) (%s:%d)\n", expect, JSONGetExpectedErrorString( expect ), __FILE__, __LINE__ );
 
 			}
 

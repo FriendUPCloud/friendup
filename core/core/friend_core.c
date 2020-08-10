@@ -1127,6 +1127,38 @@ static inline int FriendCoreAcceptPhase3( int fd, FriendCoreInstance *fc )
 				goto accerror3;
 			}
 	
+	
+			struct fcThreadInstance *pre = FCalloc( 1, sizeof( struct fcThreadInstance ) );
+			if( pre != NULL )
+			{
+				pre->fc = fc; pre->sock = incoming;
+
+				//size_t stacksize = 16777216; //16 * 1024 * 1024;
+				size_t stacksize = 8388608;	// half of previous stack
+				//size_t stacksize = 4194304; //512 * 1024;
+				pthread_attr_t attr;
+				pthread_attr_init( &attr );
+				pthread_attr_setstacksize( &attr, stacksize );
+				
+				// Make sure we keep the number of threads under the limit
+				
+				if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
+				{
+					fc->FDCount++;
+					FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
+				}
+				
+				DEBUG("[FriendCoreAcceptPhase3] create process friendcoreprocessosckblock\n");
+				//change NULL to &attr
+				if( pthread_create( &pre->thread, &attr, (void *(*) (void *))&FriendCoreProcessSockBlock, ( void *)pre ) != 0 )
+				{
+					FFree( pre );
+				}
+
+			}
+			//DEBUG("EPOLLIN end\n");
+	
+	/*
 			/// Add to epoll
 			// TODO: Check return of epoll ctl
 			struct epoll_event event;
@@ -1141,6 +1173,7 @@ static inline int FriendCoreAcceptPhase3( int fd, FriendCoreInstance *fc )
 				incoming->s_Interface->SocketDelete( incoming );
 				goto accerror3;
 			}
+			*/
 		}
 	}
 	
@@ -1964,6 +1997,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 			// Get event that are incoming!
 			else
 			{
+				/*
 				// Stop listening here..
 				epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_DEL, sock->fd, NULL );
 				INFO("[FriendCoreEpoll] Socket fd: %d removed from epoll\n", sock->fd );
@@ -2029,6 +2063,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 					}
 					//DEBUG("EPOLLIN end\n");
 				}
+				*/
 			}
 		}
 	}
