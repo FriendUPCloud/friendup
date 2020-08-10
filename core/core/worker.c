@@ -181,7 +181,10 @@ void WorkerThread( void *w )
 			
 			if( wrk->w_Function != NULL && wrk->w_Data != NULL )
 			{
-				wrk->w_Function( wrk->w_Data );
+				// Copy a pointer to the function and data
+				void ( *func )( void *) = wrk->w_Function;
+				void *data = wrk->w_Data;
+				
 				DEBUG("Function finished\n");
 
 				if( FRIEND_MUTEX_LOCK( &(wrk->w_Mut) ) == 0 )
@@ -193,6 +196,9 @@ void WorkerThread( void *w )
  					DEBUG("W_STATE_COMMAND_CALLED\n");
 					FRIEND_MUTEX_UNLOCK( &(wrk->w_Mut) );				
 				}
+				
+				// Run!
+				func( data );
 			}
 			else
 			{
