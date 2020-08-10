@@ -115,6 +115,65 @@ void HttpClientDelete( HttpClient *c )
 #define h_addr h_addr_list[0]
 #define HTTP_CLIENT_TIMEOUT 3
 
+//
+// Connect with timeout
+//
+
+int ConnectTimeout( int sockno, struct sockaddr * addr, size_t addrlen, int timeout )
+{
+	int res, opt;
+	// get socket flags
+	if( (opt = fcntl (sockno, F_GETFL, NULL ) ) < 0 )
+	{
+		return -1;
+	}
+
+	// set socket non-blocking
+	if( fcntl (sockno, F_SETFL, opt | O_NONBLOCK) < 0 )
+	{
+		return -1;
+	}
+
+	// try to connect
+	if( ( res = connect( sockno, addr, addrlen ) ) < 0 )
+	{
+		if( errno == EINPROGRESS )
+		{
+			struct pollfd fds;
+
+			// watch stdin for input 
+			fds.fd = sockno;// STDIN_FILENO;
+			fds.events = POLLOUT;
+
+			int err = poll( &fds, 1, timeout );
+			if( err <= 0 )
+			{
+				DEBUG("[ConnectTimeout] Timeout or there is no data in socket\n");
+			}
+			if( fds.revents & POLLIN )
+			{
+				DEBUG("[ConnectTimeout] Got data!! Calling SSL_Read\n");
+			}
+			else if( fds.revents & POLLHUP )
+			{
+				DEBUG("[ConnectTimeout] Disconnected!\n");
+			}
+		}
+	}
+	// connection was successful immediately
+	else
+	{
+		res = 1;
+	}
+
+	// reset socket flags
+	if( fcntl (sockno, F_SETFL, opt) < 0 )
+	{
+		return -1;
+	}
+	return res;
+}
+
 /**
  * Function calls other server by using HTTP call
  *
@@ -187,6 +246,12 @@ BufString *HttpClientCall( HttpClient *c, char *host, int port, FBOOL secured )
 		serv_addr.sin_port = htons( port );	// default http port
 		memcpy( &serv_addr.sin_addr.s_addr, server->h_addr, server->h_length );
 
+		struct timeval timeout;
+		timeout.tv_sec  = 7;  // after 7 seconds connect() will timeout
+		timeout.tv_usec = 0;
+		setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
+		
+		//if( ConnectTimeout( sockfd, (struct sockaddr *)&serv_addr,sizeof(serv_addr), 15 ) < 0 )
 		if( connect( sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr) ) < 0 )
 		{
 			FERROR("[HttpClientCall] ERROR connecting");
@@ -400,7 +465,7 @@ User-Agent: Friend/1.0.0
 				
 				DEBUG("[HttpClientCall] Before while\n");
 				int tr=5;
-				int timeou = 100;//10 seconds
+				int timeou = 10000;
 				while( TRUE )
 				{
 					struct pollfd fds;
@@ -408,7 +473,7 @@ User-Agent: Friend/1.0.0
 					fds.fd = sockfd;// STDIN_FILENO;
 					fds.events = POLLIN;
 
-					int err = poll( &fds, 1, (timeou*100) );	// 10 seconds
+					int err = poll( &fds, 1, (HTTP_CLIENT_TIMEOUT*timeou) );	// 10 seconds
 					if( err <= 0 )
 					{
 						DEBUG("[HttpClientCall] Timeout or there is no data in socket\n");
