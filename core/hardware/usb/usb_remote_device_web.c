@@ -193,7 +193,7 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 				{
 					if( ( buffer = FMalloc( bufLen ) ) != NULL )
 					{
-						int size = sprintf( buffer, "{\"deviceid\":\"%lu\",\"address\":\"%s\",\"port\":%d,\"uname\":\"%s\",\"password\":\"%s\"}", actdev->usbrd_ID, actdev->usbrd_NetworkAddress, actdev->usbrd_IPPort, actdev->usbrd_Login, actdev->usbrd_Password );
+						int size = sprintf( buffer, "{\"deviceid\":\"%lu\",\"address\":\"%s\",\"port\":%d,\"uname\":\"%s\",\"password\":\"%s\"}", actdev->usbrd_ID, l->sl_MitraManager->mm_HostForClient, actdev->usbrd_IPPort, actdev->usbrd_Login, actdev->usbrd_Password );
 						//HttpAddTextContent(response, buffer);
 						HttpSetContent( response, buffer, size );
 					}

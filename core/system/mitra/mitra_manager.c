@@ -74,6 +74,7 @@ MitraManager *MitraManagerNew( void *sb )
 			mm->mm_WindowsPort = plib->ReadIntNCS( prop, "windows:port", 5000 );
 			mm->mm_ServiceLogin = StringDuplicate( plib->ReadStringNCS( prop, "windows:login", NULL ) );
 			mm->mm_ServicePassword = StringDuplicate( plib->ReadStringNCS( prop, "windows:password", NULL ) );
+			mm->mm_HostForClient = StringDuplicate( plib->ReadStringNCS( prop, "windows:hostforclient", NULL ) );
 		
 			plib->Close( prop );
 		}
@@ -224,6 +225,10 @@ void MitraManagerDelete( MitraManager *mmgr )
 		if( mmgr->mm_ServicePassword != NULL )
 		{
 			FFree( mmgr->mm_ServicePassword );
+		}
+		if( mmgr->mm_HostForClient != NULL )
+		{
+			FFree( mmgr->mm_HostForClient );
 		}
 		
 		FFree( mmgr );
