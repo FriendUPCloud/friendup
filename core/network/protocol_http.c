@@ -2031,16 +2031,16 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 														
 															FFree( runFile );
 														}
-													}
+														
+														if( isFile )
+														{
+															//"file<!--separate-->%s"
+															char *fname = allArgsNew + MODULE_FILE_CALL_STRING_LEN;
+															remove( fname );
+														}
 													
-													if( isFile )
-													{
-														//"file<!--separate-->%s"
-														char *fname = allArgsNew + MODULE_FILE_CALL_STRING_LEN;
-														remove( fname );
+														FFree( allArgsNew );
 													}
-													
-													FFree( allArgsNew );
 												}
 												
 												if( phpResp == NULL )
