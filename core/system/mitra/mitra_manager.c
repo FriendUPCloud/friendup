@@ -173,7 +173,7 @@ MitraManager *MitraManagerNew( void *sb )
 	// test
 	// or domain WEBMED_POC
 	
-	
+	/*
 	char path[ 256 ];
 	snprintf( path, sizeof(path), "Usb/Open?windowsUser=%s%%5C%s&password=%s", "webmed.poc", "friend1", "Abc123456" );
 
@@ -186,7 +186,7 @@ MitraManager *MitraManagerNew( void *sb )
 		DEBUG("REsponse from usbmount: %s\n", rsp->bs_Buffer );
 	}
 	DEBUG("ERROR code %d\n", errorCode );
-	
+	*/
 	return mm;
 }
 

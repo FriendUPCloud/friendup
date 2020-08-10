@@ -126,7 +126,7 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
  
  curl -X POST "http://localhost:5000/Usb/Open?windowsUser=Pawel&password=pegasos1232" -H  "accept: **" -H  "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6ImphbkBrb3dhbHNraS5wbCIsImdpdmVuX25hbWUiOiJKYW4iLCJmYW1pbHlfbmFtZSI6Iktvd2Fsc2tpIiwibmJmIjoxNTk2NDgzMDk4LCJleHAiOjE1OTY0ODMzOTgsImlhdCI6MTU5NjQ4MzA5OCwiaXNzIjoiaXNzdWVyIiwiYXVkIjoiYXVkaWVuY2UifQ._e2w4UvqwgWi4J2LF0s4OvO8GLD4GbqnsM8Ze7ZIdas" -d ""
  */
-				snprintf( path, sizeof(path), "/Usb/Open?windowsUser=%s\\%s&password=%s", domain, uname, usbPassword );
+				snprintf( path, sizeof(path), "Usb/Open?windowsUser=%s%%5C%s&password=%s", domain, uname, usbPassword );
 				
 				int bufLen = 256;
 				int errorCode;
@@ -262,7 +262,7 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 			int error = 0;
 			char  path[ 128 ];
 			
-			snprintf( path, sizeof(path), "/Usb/Close?port=%lu", id );	// lets recognize port by
+			snprintf( path, sizeof(path), "Usb/Close?port=%lu", id );	// lets recognize port by
 			
 			int bufLen = 256;
 			int errorCode;
