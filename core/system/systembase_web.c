@@ -1121,6 +1121,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								remove( fname );
 							}
 							
+							FFree( allArgsNew );
+							
 							Log( FLOG_INFO, "Module request took %d milliseconds.", GetUnixTime() - requestStart );
 						}
 					}
