@@ -169,7 +169,7 @@ MitraManager *MitraManagerNew( void *sb )
 		}	// res != NULL
 	}
 	
-	MitraManagerCheckAndAddToken( mm );
+	MitraManagerCheckAndAddToken( mm, TRUE );
 	
 	// test
 	// or domain WEBMED_POC
@@ -240,11 +240,12 @@ void MitraManagerDelete( MitraManager *mmgr )
  * Function is trying to set auth token. Token is changed only when connection was lost.
  *
  * @param mm pointer to MitraManager structure which will be deleted
+ * @param force force to change authid
  */
 
-void MitraManagerCheckAndAddToken( MitraManager *mm)
+void MitraManagerCheckAndAddToken( MitraManager *mm, FBOOL force )
 {
-	if( mm != NULL && mm->mm_AuthToken == NULL )
+	if( mm != NULL && (mm->mm_AuthToken == NULL || force == TRUE ) )
 	{
 		DEBUG("[MitraManagerCheckAndAddToken] start\n");
 		// curl -X POST "http://localhost:5000/Token" -H  "accept: */*" -H  "Content-Type: application/json" -d "{\"username\":\"string\",\"password\":\"string\"}"

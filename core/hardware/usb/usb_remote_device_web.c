@@ -142,6 +142,19 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 				
 				DEBUG("[usbremotecreate] calling mitra server\n");
 				BufString *rsp = MitraManagerCall( l->sl_MitraManager, path, &errorCode );
+				
+				// ask for key again
+				DEBUG("[USBRemoteWEB] error code: %d\n", errorCode );
+				if( errorCode == 401 )
+				{
+					MitraManagerCheckAndAddToken( l->sl_MitraManager, TRUE );
+					if( rsp != NULL )
+					{
+						BufStringDelete( rsp );
+					}
+					rsp = MitraManagerCall( l->sl_MitraManager, path, &errorCode );
+				}
+				
 				if( rsp != NULL )
 				{
 					//  { Port = port, WindowsUser = windowsUser }
@@ -293,13 +306,22 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 			
 			snprintf( path, sizeof(path), "Usb/Close?port=%lu", port );	// lets recognize port by
 			
-			int bufLen = 256;
 			int errorCode;
 			
 			BufString *rsp = MitraManagerCall( l->sl_MitraManager, path, &errorCode );
 			if( rsp != NULL )
 			{
-				
+				// ask for key again
+				DEBUG("[USBRemoteWEB] error code: %d\n", errorCode );
+				if( errorCode == 401 )
+				{
+					MitraManagerCheckAndAddToken( l->sl_MitraManager, TRUE );
+					if( rsp != NULL )
+					{
+						BufStringDelete( rsp );
+					}
+					rsp = MitraManagerCall( l->sl_MitraManager, path, &errorCode );
+				}
 			}
 			
 			error = USBRemoteManagerDeletePortByPort( l->sl_USBRemoteManager, username, port );

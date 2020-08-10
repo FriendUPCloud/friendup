@@ -59,7 +59,7 @@ void MitraManagerDelete( MitraManager *smgr );
 //
 //
 
-void MitraManagerCheckAndAddToken( MitraManager *mm );
+void MitraManagerCheckAndAddToken( MitraManager *mm, FBOOL force );
 
 //
 //
