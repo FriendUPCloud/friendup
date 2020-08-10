@@ -400,7 +400,7 @@ User-Agent: Friend/1.0.0
 				
 				DEBUG("[HttpClientCall] Before while\n");
 				int tr=5;
-				int timeou = 1000;
+				int timeou = 100;
 				while( TRUE )
 				{
 					struct pollfd fds;
