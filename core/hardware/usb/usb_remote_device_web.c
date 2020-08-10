@@ -99,13 +99,17 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 		if( username != NULL )
 		{
 			int error = 0;
+			int entry = -1;
 			
-			USBRemoteDevice *actdev = USBRemoteManagerCreatePort( l->sl_USBRemoteManager, username, &error );
-			if( actdev != NULL )
+			UserUSBRemoteDevices *actuserdev = USBRemoteManagerCreatePort( l->sl_USBRemoteManager, username, &entry, &error );
+			if( ( entry >= 0 && entry < 5 ) && actuserdev != NULL )
 			{
 				char *uname, *domain, *pass, *host;
 				char *buffer;
 				char path[ 512 ];
+				
+				USBRemoteDevice *actdev = actuserdev->uusbrd_Devices[ entry ];
+				
 				//snprintf( tmp, sizeof(tmp), "/%s/", geoFormat );
 				
 				DEBUG("[usbremotecreate] getting data from mitradb\n");

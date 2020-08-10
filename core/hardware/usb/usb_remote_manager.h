@@ -51,7 +51,7 @@ void USBRemoteManagerDelete( USBRemoteManager *usbm );
 //
 //
 
-USBRemoteDevice *USBRemoteManagerCreatePort( USBRemoteManager *usbm, char *username, int *error );
+UserUSBRemoteDevices *USBRemoteManagerCreatePort( USBRemoteManager *usbm, char *username, int *entry, int *error );
 
 //
 //

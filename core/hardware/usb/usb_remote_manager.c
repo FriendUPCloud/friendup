@@ -77,14 +77,15 @@ void USBRemoteManagerDelete( USBRemoteManager *usbm )
  *
  * @param usbm pointer to USBRemoteManager
  * @param username name of user to which new port will be attached
+ * @param entry pointer to entry id where new port should be created
  * @param error pointer to integer value where error number will be stored
  * @return return pointer to USBRemoteDevice structure when success, otherwise NULL
  */
-USBRemoteDevice *USBRemoteManagerCreatePort( USBRemoteManager *usbm, char *username, int *error )
+UserUSBRemoteDevices *USBRemoteManagerCreatePort( USBRemoteManager *usbm, char *username, int *entry, int *error )
 {
-	USBRemoteDevice *retdev = NULL;
 	UserUSBRemoteDevices *actdev = NULL;
 	*error = 0;
+	*entry = -1;
 	
 	DEBUG("[USBRemoteManagerCreatePort] username: %s\n", username );
 	
@@ -120,7 +121,7 @@ USBRemoteDevice *USBRemoteManagerCreatePort( USBRemoteManager *usbm, char *usern
 				{
 					DEBUG("[USBRemoteManagerCreatePort] found empty slot!\n");
 					*error = 0;	// we found empty place
-					retdev = actdev->uusbrd_Devices[ i ];
+					*entry = i;
 					break;
 				}
 			}
@@ -138,15 +139,15 @@ USBRemoteDevice *USBRemoteManagerCreatePort( USBRemoteManager *usbm, char *usern
 				usbm->usbrm_UserDevices = actdev;
 				FRIEND_MUTEX_UNLOCK( &(usbm->usbrm_Mutex ) );
 			}
-			retdev = actdev;
+			*entry = 0;
 		}
-		DEBUG("[USBRemoteManagerCreatePort] retdev pointer: %p\n", retdev );
+		DEBUG("[USBRemoteManagerCreatePort] actdev pointer: %p\n", actdev );
 	}
 	else
 	{
 		return NULL;
 	}
-	return retdev;
+	return actdev;
 }
 
 /**
