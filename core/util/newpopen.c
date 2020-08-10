@@ -55,6 +55,8 @@ int newpopen(const char *cmd, NPOpenFD *po )
 		return ret;
 	}
 	
+	fflush( NULL );
+	
 	pid = fork();
 	
 	if( pid == 0 )
