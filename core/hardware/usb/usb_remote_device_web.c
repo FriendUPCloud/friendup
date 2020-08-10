@@ -150,12 +150,12 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 					jsmn_parser p;
 					jsmntok_t t[128]; // We expect no more than 128 tokens
 					
-					DEBUG("[usbremotecreate] parse response: %s\n", rsp->bs_Buffer );
+					DEBUG("[usbremotecreate] parse response: %s\n", in );
 					
 					bufLen += rsp->bs_Size;
 				
 					jsmn_init( &p );
-					int r = jsmn_parse( &p, rsp->bs_Buffer , rsp->bs_Size, t, 256 );
+					int r = jsmn_parse( &p, in , rsp->bs_Size, t, 256 );
 
 					// Assume the top-level element is an object 
 					if( r > 1 && t[0].type == JSMN_OBJECT )
