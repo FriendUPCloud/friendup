@@ -1770,9 +1770,12 @@ Sections.accounts_users = function( cmd, extra )
 									
 									head : function (  )
 									{
-								
+										
+										var inp = ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0];
+										inp.value = '';
+										
 										var o = ge( 'ApplicationGui' ); if( o ) o.innerHTML = '<input type="hidden" id="TempApplications">';
-								
+										
 										this.func.updateids( 'applications' );
 								
 										var divs = appendChild( [ 
@@ -1935,7 +1938,7 @@ Sections.accounts_users = function( cmd, extra )
 																		'element' : function() 
 																		{
 																			var d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
+																			d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis name';
 																			d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
 																			return d;
 																		}() 
@@ -1944,7 +1947,7 @@ Sections.accounts_users = function( cmd, extra )
 																		'element' : function() 
 																		{
 																			var d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
+																			d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis category';
 																			d.innerHTML = '<span>' + apps[k].Category + '</span>';
 																			return d;
 																		}() 
@@ -2091,11 +2094,14 @@ Sections.accounts_users = function( cmd, extra )
 																		{ 
 																			'element' : function() 
 																			{
-																				var d = document.createElement( 'div' );
+																				var d = document.createElement( 'span' );
+																				d.setAttribute( 'Name', apps[k].Name );
+																				d.setAttribute( 'Category', apps[k].Category );
 																				d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																				d.style.backgroundSize = 'contain';
 																				d.style.width = '24px';
 																				d.style.height = '24px';
+																				d.style.display = 'block';
 																				return d;
 																			}(), 
 																			 'child' : 
@@ -2122,7 +2128,7 @@ Sections.accounts_users = function( cmd, extra )
 																	'element' : function() 
 																	{
 																		var d = document.createElement( 'div' );
-																		d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
+																		d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis name';
 																		d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
 																		return d;
 																	}() 
@@ -2131,7 +2137,7 @@ Sections.accounts_users = function( cmd, extra )
 																	'element' : function() 
 																	{
 																		var d = document.createElement( 'div' );
-																		d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
+																		d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis category';
 																		d.innerHTML = '<span>' + apps[k].Category + '</span>';
 																		return d;
 																	}() 
@@ -2242,6 +2248,60 @@ Sections.accounts_users = function( cmd, extra )
 									
 										}
 								
+									},
+									
+									searchapps : function ( filter, server )
+									{
+										
+										if( ge( 'ApplicationInner' ) )
+										{
+											var list = ge( 'ApplicationInner' ).getElementsByTagName( 'div' );
+	
+											if( list.length > 0 )
+											{
+												for( var a = 0; a < list.length; a++ )
+												{
+													if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+				
+													var span = list[a].getElementsByTagName( 'span' )[0];
+				
+													if( span )
+													{
+														var param = [
+															( " " + span.getAttribute( 'name' ).toLowerCase() + " " ), 
+															( " " + span.getAttribute( 'category' ).toLowerCase() + " " )
+														];
+														
+														if( !filter || filter == ''  
+														|| span.getAttribute( 'name' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+														|| span.getAttribute( 'category' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+														)
+														{
+															list[a].style.display = '';
+						
+															var div = list[a].getElementsByTagName( 'div' );
+						
+															if( div.length )
+															{
+																for( var i in div )
+																{
+																	if( div[i] && div[i].className && ( div[i].className.indexOf( 'name' ) >= 0 || div[i].className.indexOf( 'category' ) >= 0 ) )
+																	{
+																		// TODO: Make text searched for ...
+																	}
+																}
+															}
+														}
+														else
+														{
+															list[a].style.display = 'none';
+														}
+													}
+												}
+			
+											}
+										}
+										
 									},
 									
 									sortapps : function ( sortby )
@@ -2433,7 +2493,13 @@ Sections.accounts_users = function( cmd, extra )
 								
 											};
 										}
-						
+										
+										var inp = ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0];
+										inp.onkeyup = function( e )
+										{
+											init.searchapps( this.value );
+										}
+										
 										// Show listed applications ... 
 										
 										init.list();
