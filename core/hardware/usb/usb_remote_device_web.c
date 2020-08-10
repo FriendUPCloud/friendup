@@ -108,10 +108,14 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 				char path[ 512 ];
 				//snprintf( tmp, sizeof(tmp), "/%s/", geoFormat );
 				
+				DEBUG("[usbremotecreate] getting data from mitradb\n");
+				
 				if( loggedSession->us_User != NULL )
 				{
 					MitraManagerGetUserData( l->sl_MitraManager, loggedSession->us_User->u_Name, &uname, &domain, &pass, &host );
 				}
+				
+				DEBUG("[usbremotecreate] received user data from mitradb. User: %s Domain: %s\n", uname, domain );
 				
 				// generate password for usb device
 				
@@ -131,6 +135,7 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 				int bufLen = 256;
 				int errorCode;
 				
+				DEBUG("[usbremotecreate] calling mitra server\n");
 				BufString *rsp = MitraManagerCall( l->sl_MitraManager, path, &errorCode );
 				if( rsp != NULL )
 				{
@@ -162,6 +167,10 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 
 					}
 					BufStringDelete( rsp );
+				}
+				else
+				{
+					FERROR("[usbremotecreate] Cannot call mitra server\n");
 				}
 				
 				

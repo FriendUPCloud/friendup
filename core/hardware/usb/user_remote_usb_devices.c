@@ -15,7 +15,7 @@
  *  @date created 13/07/2020
  */
 
-#include "user_usb_remote_devices.h"
+#include "user_remote_usb_devices.h"
 #include "usb_remote_device.h"
 
 /**
