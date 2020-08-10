@@ -939,6 +939,13 @@ accerror:
 // HT
 static inline int FriendCoreAcceptPhase3( int fd, FriendCoreInstance *fc )
 {	
+	if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
+	{
+		fc->FDCount--;
+		FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
+	}
+	
+	
 	if( fd == -1 )
 	{
 		// Get some info about failure..
@@ -1377,6 +1384,13 @@ void FriendCoreProcessSockBlock( void *fcv )
 	close_fcp:
 	
 	DEBUG( "[FriendCoreProcessSockBlock] Closing socket %d.\n", th->sock->fd );
+	
+	if( FRIEND_MUTEX_LOCK( &(th->fc->fci_AcceptMutex) ) == 0 )
+	{
+		th->fc->FDCount--;
+		FRIEND_MUTEX_UNLOCK( &(th->fc->fci_AcceptMutex) );
+	}
+	
 	th->sock->s_Interface->SocketDelete( th->sock );
 	th->sock = NULL;
 
@@ -1742,6 +1756,9 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	struct epoll_event *events = FCalloc( fc->fci_MaxPoll, sizeof( struct epoll_event ) );
 	SystemBase *sb = (SystemBase *)fc->fci_SB;
 
+	// Track fds.
+	fc->FDCount = 0;
+
 	// add communication ReadCommPipe		
 	int pipefds[2] = {}; struct epoll_event piev = { 0 };	
 	if( pipe( pipefds ) != 0 )
@@ -1774,6 +1791,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 
 	events->events = EPOLLIN;
 	
+	
 #ifdef ACCEPT_IN_THREAD
 	pthread_t thread;
 
@@ -1786,19 +1804,20 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	// All incoming network events go through here
 	while( !fc->fci_Shutdown )
 	{
-		//if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
-		//{
-
 #ifdef SINGLE_SHOT
 			epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_MOD, fc->fci_Sockets->fd, &(fc->fci_EpollEvent) );
 #endif
 		
 		// Wait for something to happen on any of the sockets we're listening on
-			DEBUG("[FriendCoreEpoll] Before epollwait\n");
-			eventCount = epoll_pwait( fc->fci_Epollfd, events, fc->fci_MaxPoll, -1, &curmask );
-			DEBUG("[FriendCoreEpoll] Epollwait, eventcount: %d\n", eventCount );
-			//FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
-		//}
+		DEBUG("[FriendCoreEpoll] Before epollwait\n");
+		eventCount = epoll_pwait( fc->fci_Epollfd, events, fc->fci_MaxPoll, -1, &curmask );
+		DEBUG("[FriendCoreEpoll] Epollwait, eventcount: %d\n", eventCount );
+
+		if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
+		{
+			DEBUG( "Current fds: %d\n", fc->FDCount );
+			FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
+		}
 
 		for( i = 0; i < eventCount; i++ )
 		{
@@ -1894,6 +1913,12 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 						int *fdi = malloc( sizeof( int ) );
 						*fdi = fd;
 						AddToList( pre->fds, ( void *)fdi );
+						
+						if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
+						{
+							fc->FDCount++;
+							FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
+						}
 					}
 					
 					DEBUG("[FriendCoreEpoll] Thread create pointer: %p friendcore: %p\n", pre, fc );
@@ -1911,6 +1936,11 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 									fd = *( int *)failed->l_Data;
 									shutdown( sock->fd, SHUT_RDWR );
 									close( sock->fd );
+									if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
+									{
+										fc->FDCount--;
+										FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
+									}
 								}
 								failed = failed->next;
 							}
@@ -1957,6 +1987,12 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 						pthread_attr_setstacksize( &attr, stacksize );
 						
 						// Make sure we keep the number of threads under the limit
+						
+						if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
+						{
+							fc->FDCount++;
+							FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
+						}
 						
 						//change NULL to &attr
 #ifdef USE_BLOCKED_SOCKETS_TO_READ_HTTP
