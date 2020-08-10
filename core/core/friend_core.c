@@ -1289,7 +1289,7 @@ void FriendCoreProcessSockBlock( void *fcv )
 	lfds.fd = th->sock->fd;// STDIN_FILENO;
 	lfds.events = POLLIN;
 
-	int err = poll( &lfds, 1, 10 * 1000);
+	int err = poll( &lfds, 1, 10000 );
 	if( err > 0 )
 	{
 		
