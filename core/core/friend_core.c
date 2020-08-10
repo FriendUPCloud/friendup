@@ -1281,6 +1281,30 @@ void FriendCoreProcessSockBlock( void *fcv )
 	}
 
 	// Let's go!
+	
+	
+	
+	struct pollfd lfds;
+	// watch stdin for input 
+	lfds.fd = th->sock->fd;// STDIN_FILENO;
+	lfds.events = POLLIN;
+
+	int err = poll( &lfds, 1, 10 * 1000);
+	if( err > 0 )
+	{
+		
+	}
+	else if( err == 0 )
+	{
+		FERROR("[FriendCoreProcessSockBlock] want read TIMEOUT....\n");
+		return;
+	}
+	else
+	{
+		FERROR("[FriendCoreProcessSockBlock] other....\n");
+		return;
+	}
+	SocketSetBlocking( th->sock, TRUE );
 
 	FQUAD bufferSize = HTTP_READ_BUFFER_DATA_SIZE;
 	FQUAD bufferSizeAlloc = HTTP_READ_BUFFER_DATA_SIZE_ALLOC;
@@ -1292,8 +1316,6 @@ void FriendCoreProcessSockBlock( void *fcv )
 	FQUAD expectedLength = 0;
 	FBOOL headerFound = FALSE;
 	int headerLen = 0;
-	
-	SocketSetBlocking( th->sock, TRUE );
 	
 	DEBUG("[FriendCoreProcessSockBlock] start\n");
 	
