@@ -256,7 +256,7 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 	*
 	* @param sessionid - (required) session id of logged user
 	* @param username - (required) user name which points to user from which usb remote device will be dettached
-	* @param id - (required) id of device which will be deleted
+	* @param port - (required) port of device which will be deleted
 	* @return { USBDeviceID: <number> } when success, otherwise error code
 	*/
 	/// @endcond
@@ -271,7 +271,7 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 		response = HttpNewSimple(HTTP_200_OK, tags);
 
 		char *username = NULL;
-		FULONG id = 0;
+		FULONG port = 0;
 		
 		HashmapElement *el = HttpGetPOSTParameter( request, "username" );
 		if (el != NULL)
@@ -279,19 +279,19 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 			username = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		
-		el = HttpGetPOSTParameter( request, "id" );
+		el = HttpGetPOSTParameter( request, "port" );
 		if (el != NULL)
 		{
 			char *next;
-			id = (FLONG)strtol((char *)el->hme_Data, &next, 0);
+			port = (FLONG)strtol((char *)el->hme_Data, &next, 0);
 		}
 		
-		if( username != NULL && id > 0 )
+		if( username != NULL && port > 0 )
 		{
 			int error = 0;
 			char  path[ 128 ];
 			
-			snprintf( path, sizeof(path), "Usb/Close?port=%lu", id );	// lets recognize port by
+			snprintf( path, sizeof(path), "Usb/Close?port=%lu", port );	// lets recognize port by
 			
 			int bufLen = 256;
 			int errorCode;
@@ -302,7 +302,7 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 				
 			}
 			
-			error = USBRemoteManagerDeletePortByPort( l->sl_USBRemoteManager, username, id );
+			error = USBRemoteManagerDeletePortByPort( l->sl_USBRemoteManager, username, port );
 			if( error == 0 )
 			{
 				HttpAddTextContent( response, "ok<!--separate-->{ \"result\": \"sucess\" }" );
