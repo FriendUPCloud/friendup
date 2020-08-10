@@ -18,6 +18,7 @@
 \******************************************************************************/
 
 ob_start();
+flush();
 
 set_time_limit( 10 ); // Replace this one later in the script if you need to!
 
