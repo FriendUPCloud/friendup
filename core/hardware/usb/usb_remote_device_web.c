@@ -140,8 +140,13 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 				if( rsp != NULL )
 				{
 					//  { Port = port, WindowsUser = windowsUser }
-					
 					char *in = (char *)rsp->bs_Buffer;
+					char *tmpbuf = NULL;
+					if( ( tmpbuf = strstr( in, "{" ) ) != NULL )
+					{
+						in = tmpbuf;
+					}
+					
 					jsmn_parser p;
 					jsmntok_t t[128]; // We expect no more than 128 tokens
 					
