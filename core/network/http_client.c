@@ -400,7 +400,7 @@ User-Agent: Friend/1.0.0
 				
 				DEBUG("[HttpClientCall] Before while\n");
 				int tr=5;
-				int timeou = 100;
+				int timeou = 100;//10 seconds
 				while( TRUE )
 				{
 					struct pollfd fds;
@@ -408,7 +408,7 @@ User-Agent: Friend/1.0.0
 					fds.fd = sockfd;// STDIN_FILENO;
 					fds.events = POLLIN;
 
-					int err = poll( &fds, 1, (HTTP_CLIENT_TIMEOUT*timeou) );	// 10 seconds
+					int err = poll( &fds, 1, (timeou*100) );	// 10 seconds
 					if( err <= 0 )
 					{
 						DEBUG("[HttpClientCall] Timeout or there is no data in socket\n");
