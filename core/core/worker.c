@@ -171,42 +171,38 @@ void WorkerThread( void *w )
 			FRIEND_MUTEX_UNLOCK( &(wrk->w_Mut) );
 		}
 
+		void ( *func )( void *);
+		void *data;
+		
 		if( FRIEND_MUTEX_LOCK( &(wrk->w_Mut) ) == 0 )
 		{
 			DEBUG("Before condition\n");
 			pthread_cond_wait( &(wrk->w_Cond), &(wrk->w_Mut) );
 			DEBUG("Got cond call\n");
 			wrk->w_State = W_STATE_COMMAND_CALLED;
-			FRIEND_MUTEX_UNLOCK( &(wrk->w_Mut) );
 			
 			if( wrk->w_Function != NULL && wrk->w_Data != NULL )
 			{
 				// Copy a pointer to the function and data
-				void ( *func )( void *) = wrk->w_Function;
-				void *data = wrk->w_Data;
+				func = wrk->w_Function;
+				data = wrk->w_Data;
 				
-				DEBUG("Function finished\n");
-
-				if( FRIEND_MUTEX_LOCK( &(wrk->w_Mut) ) == 0 )
-				{
-					
-					wrk->w_Data = NULL;
-					wrk->w_Function = NULL;
-					
- 					DEBUG("W_STATE_COMMAND_CALLED\n");
-					FRIEND_MUTEX_UNLOCK( &(wrk->w_Mut) );				
-				}
+				wrk->w_Data = NULL;
+				wrk->w_Function = NULL;
+				
+				DEBUG("W_STATE_COMMAND_CALLED\n");
+				
+				FRIEND_MUTEX_UNLOCK( &(wrk->w_Mut) );
 				
 				// Run!
 				func( data );
+				DEBUG("Function finished\n");
 			}
 			else
 			{
-				if( FRIEND_MUTEX_LOCK( &(wrk->w_Mut) ) == 0 )
-				{
-					DEBUG("W_STATE_COMMAND_CALLED\n");
-					FRIEND_MUTEX_UNLOCK( &(wrk->w_Mut) );				
-				}
+				
+				DEBUG("W_STATE_COMMAND_CALLED\n");
+				FRIEND_MUTEX_UNLOCK( &(wrk->w_Mut) );				
 			}
 		}
 		else
