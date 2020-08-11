@@ -111,8 +111,15 @@ Friend.User = {
     {
     	this.State = 'Login';
     	
+    	if( this.lastLogin && this.lastLogin.currentRequest )
+    	{
+    		this.lastLogin.currentRequest.destroy();
+    	}
+    	
     	// Create a new library call object
 		let m = new FriendLibrary( 'system' );
+		this.lastLogin = m;
+		
 		if( info.username && info.password )
 		{
 			Workspace.sessionId = '';
@@ -371,55 +378,63 @@ Friend.User = {
 	// Check if the server is alive
 	CheckServerConnection: function( useAjax )
 	{
-		console.log( 'Checking server connection.' );
 		if( typeof( Library ) == 'undefined' ) return;
 		if( typeof( MD5 ) == 'undefined' ) return;
 		let exf = function()
 		{
-			Friend.User.serverCheckId = null;
-			let serverCheck = new Library( 'system' );
-			serverCheck.onExecuted = function( q, s )
+			Friend.User.serverCheck = null;
+			if( Friend.User.State != 'offline' )
 			{
-				// Check missing session
-				let missSess = ( s && s.indexOf( 'sessionid or authid parameter is missing' ) > 0 );
-				if( !missSess && ( s && s.indexOf( 'User session not found' ) > 0 ) )
-					missSess = true;
-				if( !missSess && q == null && s == null )
-					missSess = true;
-			
-				if( ( q == 'fail' && !s ) || ( !q && !s ) || ( q == 'error' && !s ) || missSess )
+				let serverCheck = new Library( 'system' );
+				serverCheck.onExecuted = function( q, s )
 				{
-					if( missSess )
+					// Check missing session
+					let missSess = ( s && s.indexOf( 'sessionid or authid parameter is missing' ) > 0 );
+					if( !missSess && ( s && s.indexOf( 'User session not found' ) > 0 ) )
+						missSess = true;
+					if( !missSess && q == null && s == null )
+						missSess = true;
+			
+					if( ( q == 'fail' && !s ) || ( !q && !s ) || ( q == 'error' && !s ) || missSess )
 					{
-						Friend.User.ReLogin();
+						if( missSess )
+						{
+							Friend.User.ReLogin();
+						}
+						Friend.User.SetUserConnectionState( 'offline' );
 					}
+					else
+					{
+						if( !Friend.User.ServerIsThere )
+						{
+							Friend.User.SetUserConnectionState( 'online' );
+						}
+						Friend.User.ConnectionAttempts = 0;
+					}
+				};
+			
+				if( !useAjax )
+					serverCheck.forceHTTP = true;
+				serverCheck.forceSend = true;
+			
+				try
+				{
+					// Cancel previous call if it's still in pipe
+					if( Friend.User.serverCheck && Friend.User.serverCheck.currentRequest )
+					{
+						Friend.User.serverCheck.currentRequest.destroy();
+					}
+					serverCheck.execute( 'validate' );
+					Friend.User.serverCheck = serverCheck;
+				}
+				catch( e )
+				{
 					Friend.User.SetUserConnectionState( 'offline' );
 				}
-				else
-				{
-					if( !Friend.User.ServerIsThere )
-					{
-						Friend.User.SetUserConnectionState( 'online' );
-					}
-					Friend.User.ConnectionAttempts = 0;
-				}
-			};
-			
-			if( !useAjax )
-				serverCheck.forceHTTP = true;
-			serverCheck.forceSend = true;
-			serverCheck.uniqueId = MD5( Math.random() * 9999 + 'ajax' + ( new Date() ).getTime() );
-			try
-			{
-				// Cancel previous call if it's still in pipe
-				if( Friend.User.serverCheckId )
-					CancelCajaxOnId( Friend.User.serverCheckId );
-				serverCheck.execute( 'validate' );
-				Friend.User.serverCheckId = serverCheck.uniqueId;
 			}
-			catch( e )
+			else
 			{
-				Friend.User.SetUserConnectionState( 'offline' );
+				Friend.User.ReLogin();
 			}
 		};
 		// Check now!

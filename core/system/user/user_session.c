@@ -372,11 +372,17 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 							us->us_MsgQueue.fq_First = en;
 							us->us_MsgQueue.fq_Last = en;
 						}
-						else
+						else if( us->us_MsgQueue.fq_Last )
 						{
 							DEBUG("========pointer to US: %p pointer to LAST %p\n", us, us->us_MsgQueue.fq_Last );
 							us->us_MsgQueue.fq_Last->node.mln_Succ = (MinNode *)en;
 							us->us_MsgQueue.fq_Last = en;
+						}
+						// HT - Something bad happened!
+						else
+						{
+							FFree( en->fq_Data );
+							FFree( en );
 						}
 					
 						DEBUG("[UserSessionWebsocketWrite] Send message to WSI, ptr: %p\n", us->us_Wsi );
