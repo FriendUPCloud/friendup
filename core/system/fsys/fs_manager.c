@@ -374,7 +374,6 @@ OR \
 ( ObjectID = %lu and Type = 0 ) \
 OR \
 ( Type = 2 ) \
-) \
 ", newPath, parentPath, devid, usr->u_ID, usr->u_ID );
 				
 				FFree( parentPath );

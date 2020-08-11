@@ -99,7 +99,7 @@ else
 	
 	if( !isset( $args->authid ) )
 	{
-		if( $level == 'Admin' && $args->args->userid )
+		if( $level == 'Admin' && isset( $args->args->userid ) )
 		{
 			$userid = $args->args->userid;
 		}

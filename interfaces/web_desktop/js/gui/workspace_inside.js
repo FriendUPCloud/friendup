@@ -5219,9 +5219,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						return;
 					} 
 
+
+					console.log( 'Running system library call.' );
 					let sn = new Library( 'system.library' );
 					sn.onExecuted = function( returnCode, returnData )
 					{
+						console.log( 'Test: ', returnCode, returnData );
 						// If we got an OK result, then parse the return data (json data)
 						var rd = false;
 						if( returnCode == 'ok' )
