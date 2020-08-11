@@ -120,18 +120,6 @@ static inline int WorkerRunCommand( Worker *w, void (*foo)( void *), void *d )
 				pthread_cond_signal( &(w->w_Cond) );
 				FRIEND_MUTEX_UNLOCK( &(w->w_Mut) );
 			}
-			/*
-			int wait = 0;
-			while( TRUE )
-			{
-				if( w->w_State == W_STATE_WAITING || w->w_State == W_STATE_COMMAND_CALLED )
-				{
-					break;
-				}
-				DEBUG("[WorkerRunCommand] --------waiting for running state: %d, wait: %d\n", w->w_State, wait++ );
-				usleep( 100 );
-			}
-			*/
 		}
 		else
 		{
@@ -222,6 +210,7 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 			
 				strncpy( wrk->w_FunctionString, path, WORKER_FUNCTION_STRING_SIZE_MIN1 );
 				wrk->w_State = W_STATE_RUNNING;
+				
 				FRIEND_MUTEX_UNLOCK( &wm->wm_Mutex );
 			
 				WorkerRunCommand( wrk, foo, d );
