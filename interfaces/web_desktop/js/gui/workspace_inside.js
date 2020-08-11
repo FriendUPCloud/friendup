@@ -5219,8 +5219,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						return;
 					} 
 
-
-					console.log( 'Running system library call.' );
 					let sn = new Library( 'system.library' );
 					sn.onExecuted = function( returnCode, returnData )
 					{
