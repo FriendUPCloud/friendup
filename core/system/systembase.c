@@ -65,7 +65,7 @@
 #define LIB_REVISION		0
 #define CONFIG_DIRECTORY	"cfg/"
 
-#define USE_WORKERS
+//#define USE_WORKERS
 
 //
 // global structure
