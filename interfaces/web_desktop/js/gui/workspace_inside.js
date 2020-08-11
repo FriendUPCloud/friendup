@@ -754,6 +754,7 @@ var WorkspaceInside = {
 		{
 			//console.log( 'Workspace.conn.onEnd', e );
 			Workspace.websocketState = 'closed';
+			Friend.User.SetUserConnectionState( 'offline' );
 		}
 
 		function handleIconChange( e ){ console.log( 'icon-change event', e ); }

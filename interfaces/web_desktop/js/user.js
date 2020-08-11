@@ -363,23 +363,20 @@ Friend.User = {
 	Init: function()
 	{
 		this.ServerIsThere = true;
-		if( this.checkInterval )
-			clearInterval( this.checkInterval );
-		this.checkInterval = setInterval( 'Friend.User.CheckServerConnection()', 15000 );
 	},
 	CheckServerNow: function()
 	{
-		if( this.checkInterval ) clearInterval( this.checkInterval );
-		this.checkInterval = setInterval( 'Friend.User.CheckServerConnection()', 15000 );
 		this.CheckServerConnection();
 	},
 	// Check if the server is alive
 	CheckServerConnection: function( useAjax )
 	{
+		console.log( 'Checking server connection.' );
 		if( typeof( Library ) == 'undefined' ) return;
+		if( typeof( MD5 ) == 'undefined' ) return;
 		let exf = function()
 		{
-			Friend.User.checkServerTimeo = null;
+			Friend.User.serverCheckId = null;
 			let serverCheck = new Library( 'system' );
 			serverCheck.onExecuted = function( q, s )
 			{
@@ -411,25 +408,22 @@ Friend.User = {
 			if( !useAjax )
 				serverCheck.forceHTTP = true;
 			serverCheck.forceSend = true;
+			serverCheck.uniqueId = MD5( Math.random() * 9999 + 'ajax' + ( new Date() ).getTime() );
 			try
 			{
+				// Cancel previous call if it's still in pipe
+				if( Friend.User.serverCheckId )
+					CancelCajaxOnId( Friend.User.serverCheckId );
 				serverCheck.execute( 'validate' );
+				Friend.User.serverCheckId = serverCheck.uniqueId;
 			}
 			catch( e )
 			{
 				Friend.User.SetUserConnectionState( 'offline' );
 			}
 		};
-		// We are running in timeout already, queue 5s
-		if( this.checkServerTimeo )
-		{
-			return;
-		}
-		// Just execute within 500ms
-		else
-		{
-			this.checkServerTimeo = setTimeout( exf, 500 );
-		}
+		// Check now!
+		exf();
 	},
 	// Set the user state (offline / online etc)
 	SetUserConnectionState: function( mode )
@@ -462,10 +456,21 @@ Friend.User = {
 					delete Workspace.conn;
 					console.log( 'Removed websocket.' );
 				}
+				
+				if( this.checkInterval )
+					clearInterval( this.checkInterval );
+				this.checkInterval = setInterval( 'Friend.User.CheckServerConnection()', 2500 );
 			}
 		}
 		else
 		{
+			// We're online again
+			if( this.checkInterval )
+			{
+				clearInterval( this.checkInterval );
+				this.checkInterval = null;
+			}
+			
 			if( this.State != 'online' )
 			{
 				this.ServerIsThere = true;

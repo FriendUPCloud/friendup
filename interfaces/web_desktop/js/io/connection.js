@@ -288,11 +288,8 @@ FriendConnection.prototype.onWsEnd = function( e )
 	
 }
 
-FriendConnection.prototype.releaseWebSocket = function() {
-	
-	if( window.Friend && Friend.User )
-		Friend.User.CheckServerNow();
-	
+FriendConnection.prototype.releaseWebSocket = function() 
+{	
 	let self = this;
 	if ( !self.ws )
 		return;
