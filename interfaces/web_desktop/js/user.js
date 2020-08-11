@@ -377,43 +377,58 @@ Friend.User = {
 	CheckServerConnection: function( useAjax )
 	{
 		if( typeof( Library ) == 'undefined' ) return;
-		let serverCheck = new Library( 'system' );
-		serverCheck.onExecuted = function( q, s )
+		let exf = function()
 		{
-			// Check missing session
-			let missSess = ( s && s.indexOf( 'sessionid or authid parameter is missing' ) > 0 );
-			if( !missSess && ( s && s.indexOf( 'User session not found' ) > 0 ) )
-				missSess = true;
-			if( !missSess && q == null && s == null )
-				missSess = true;
-			
-			if( ( q == 'fail' && !s ) || ( !q && !s ) || ( q == 'error' && !s ) || missSess )
+			Friend.User.checkServerTimeo = null;
+			let serverCheck = new Library( 'system' );
+			serverCheck.onExecuted = function( q, s )
 			{
-				if( missSess )
+				// Check missing session
+				let missSess = ( s && s.indexOf( 'sessionid or authid parameter is missing' ) > 0 );
+				if( !missSess && ( s && s.indexOf( 'User session not found' ) > 0 ) )
+					missSess = true;
+				if( !missSess && q == null && s == null )
+					missSess = true;
+			
+				if( ( q == 'fail' && !s ) || ( !q && !s ) || ( q == 'error' && !s ) || missSess )
 				{
-					Friend.User.ReLogin();
+					if( missSess )
+					{
+						Friend.User.ReLogin();
+					}
+					Friend.User.SetUserConnectionState( 'offline' );
 				}
+				else
+				{
+					if( !Friend.User.ServerIsThere )
+					{
+						Friend.User.SetUserConnectionState( 'online' );
+					}
+					Friend.User.ConnectionAttempts = 0;
+				}
+			};
+			
+			if( !useAjax )
+				serverCheck.forceHTTP = true;
+			serverCheck.forceSend = true;
+			try
+			{
+				serverCheck.execute( 'validate' );
+			}
+			catch( e )
+			{
 				Friend.User.SetUserConnectionState( 'offline' );
 			}
-			else
-			{
-				if( !Friend.User.ServerIsThere )
-				{
-					Friend.User.SetUserConnectionState( 'online' );
-				}
-				Friend.User.ConnectionAttempts = 0;
-			}
-		}
-		if( !useAjax )
-			serverCheck.forceHTTP = true;
-		serverCheck.forceSend = true;
-		try
+		};
+		// We are running in timeout already, queue 5s
+		if( this.checkServerTimeo )
 		{
-			serverCheck.execute( 'validate' );
+			return;
 		}
-		catch( e )
+		// Just execute within 500ms
+		else
 		{
-			Friend.User.SetUserConnectionState( 'offline' );
+			this.checkServerTimeo = setTimeout( exf, 500 );
 		}
 	},
 	// Set the user state (offline / online etc)
@@ -471,6 +486,8 @@ Friend.User = {
 				{
 					Workspace.initWebSocket();
 				}
+				// Clear execution queue
+				_executionQueue = {};
 			}
 		}
 	}

@@ -1396,7 +1396,7 @@ int FileRead( struct File *f, char *buffer, int rsize )
 				{
 					//DEBUG("[PHPFsys] in loop\n");
 		
-					ret = poll( fds, 2, 20000 ); // HT Small timeout
+					ret = poll( fds, 2, 10000 ); // HT Small timeout
 
 					if( ret == 0 )
 					{
@@ -1418,13 +1418,13 @@ int FileRead( struct File *f, char *buffer, int rsize )
 					{
 						size += readSize;
 						rsize -= readSize;
-						DEBUG( "Read %d/%d (%d)\n", readSize, wholeSize, size );
+						//DEBUG( "Read %d/%d (%d)\n", readSize, wholeSize, size );
 						//DEBUG( "[PHPFsys] before adding to list\n");
 					}
 					else
 					{
 						errCounter++;
-						DEBUG("ErrCounter: %d (read %dbytes/%dbytes)\n", errCounter, size, rsize );
+						//DEBUG("ErrCounter: %d (read %dbytes/%dbytes)\n", errCounter, size, rsize );
 						if( size == 0 ) return -1;
 						break;
 					}
