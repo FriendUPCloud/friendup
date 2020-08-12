@@ -2351,7 +2351,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		//UserSession *usrses = l->sl_USM->usm_Sessions;
 		FULONG keyid = 0;
 		
 		DEBUG( "[UMWebRequest] update key" );

@@ -84,6 +84,7 @@ void UserSessionDelete( UserSession *us )
 			{
 				break;
 			}
+#ifdef USE_WORKERS
 			else
 			{
 				count++;
@@ -95,6 +96,7 @@ void UserSessionDelete( UserSession *us )
 					break;
 				}
 			}
+#endif
 			usleep( 100 );
 		}
 		
@@ -115,7 +117,7 @@ void UserSessionDelete( UserSession *us )
 			nrOfSessionsAttached = UserRemoveSession( us->us_User, us );
 			us->us_User = NULL;
 		}
-		SystemBase *lsb = SLIB;//(SystemBase *)us->us_SB;
+		SystemBase *lsb = SLIB;
 
 		DEBUG("[UserSessionDelete] Remove session %p\n", us );
 
