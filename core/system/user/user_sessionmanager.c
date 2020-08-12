@@ -876,7 +876,7 @@ int USMRemoveOldSessions( void *lsb )
 	DEBUG("USMRemoveOldSessions\n" );
 
 	BufString *sqlreq = BufStringNew();
-	BufStringAdd( sqlreq,  "DELETE from `FUserSession` WHERE SessionID in(" );
+	BufStringAdd( sqlreq,  "DELETE from `FUserSession` WHERE SessionID in(\"" );
 	char temp[ 512 ];
 	temp[ 0 ] = 0;
 	
@@ -939,7 +939,7 @@ int USMRemoveOldSessions( void *lsb )
 					remsessions[ nr++ ] = remSession;
 				}
 			}
-			BufStringAddSize( sqlreq, ")", 1 );
+			BufStringAddSize( sqlreq, "\")", 2 );
 		
 		    FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
 		}
