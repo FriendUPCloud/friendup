@@ -343,6 +343,8 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					
 					if( pthread_create( &(wstd->wstd_Thread), NULL,  (void *(*)(void *))ParseAndCall, ( void *)wstd ) != 0 )
 					{
+						// Failed!
+						FFree( wstd );
 					}
 				}
 #else
@@ -1283,7 +1285,7 @@ int ParseAndCall( WSThreadData *wstd )
 									http->http_Uri = UriNew();
 									
 									UserSession *ses = wstd->wstd_WSD->wsc_UserSession;
-									//if( s != NULL )
+									if( ses != NULL )
 									{
 										DEBUG("[WS] Session ptr %p  session %p\n", ses, ses->us_SessionID );
 										if( HashmapPut( http->http_ParsedPostContent, StringDuplicate( "sessionid" ), StringDuplicate( ses->us_SessionID ) ) == MAP_OK )
@@ -1473,12 +1475,10 @@ int ParseAndCall( WSThreadData *wstd )
 										HttpFree( http );
 									}
 								} // session != NULL
-								/*
 								else
 								{
 									FERROR("[WS] User session is NULL\n");
 								}
-								*/
 							}
 						}
 					}	// type not found
