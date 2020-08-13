@@ -1881,13 +1881,16 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 #endif
 		
 		// Wait for something to happen on any of the sockets we're listening on
-		DEBUG("[FriendCoreEpoll] Before epollwait\n");
-		eventCount = epoll_pwait( fc->fci_Epollfd, events, fc->fci_MaxPoll, -1, &curmask );
-		DEBUG("[FriendCoreEpoll] Epollwait, eventcount: %d\n", eventCount );
+		//DEBUG("[FriendCoreEpoll] Before epollwait\n");
+		eventCount = epoll_pwait( fc->fci_Epollfd, events, fc->fci_MaxPoll, 250, &curmask );
+		//DEBUG("[FriendCoreEpoll] Epollwait, eventcount: %d\n", eventCount );
 
 		if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
 		{
-			DEBUG( "Current fds: %d\n", fc->FDCount );
+			if( fc->FDCount > 0 )
+			{
+				DEBUG( "Current fds: %d\n", fc->FDCount );
+			}
 			FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
 		}
 
