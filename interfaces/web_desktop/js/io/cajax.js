@@ -40,7 +40,7 @@ function AddToCajaxQueue( ele )
 	ele.queued = true;
 	
 	// Don't add to queue if we are offline
-	if( !Workspace.serverIsThere || Workspace.workspaceIsDisconnected )
+	if( !Friend.User.ServerIsThere )
 	{
 		if( ele.onload )
 		{
@@ -232,7 +232,7 @@ cAjax = function()
 								
 								// Add to queue
 								AddToCajaxQueue( jax );
-								return Workspace.relogin();
+								return Friend.User.ReLogin();
 							}
 						}
 					}
@@ -264,7 +264,7 @@ cAjax = function()
 							{
 								// Add to queue
 								AddToCajaxQueue( jax );
-								return Workspace.relogin();
+								return Friend.User.ReLogin();
 							}
 						}
 					}
@@ -634,7 +634,7 @@ cAjax.prototype.send = function( data, callback )
         if( typeof( reqID ) != 'undefined' && !reqID )
         {
         	AddToCajaxQueue( self );
-			return Workspace.relogin();
+			return Friend.User.ReLogin();
         }
         else if( typeof( reqID ) == 'undefined' )
         {
@@ -706,12 +706,11 @@ cAjax.prototype.send = function( data, callback )
 							self.onload( false, false );
 							self.destroy();
 						}
-						if( window.Workspace && Workspace.checkServerConnectionResponse )
-							Workspace.checkServerConnectionResponse();
+
+						Friend.User.CheckServerConnection();
 					}
 				} ).catch( function( err )
 				{
-					console.log( 'Caught an error.', err );
 					if( err == 'error' )
 					{
 						if( callback )
@@ -804,7 +803,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		{
 			// Add to queue
 			AddToCajaxQueue( self );
-			return Workspace.relogin();
+			return Friend.User.ReLogin();
 		}
 		self.destroy();
 		return;
@@ -876,7 +875,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 				{
 					// Add to queue
 					AddToCajaxQueue( self );
-					return Workspace.relogin();
+					return Friend.User.ReLogin();
 				}
 			}
 		}
@@ -905,7 +904,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 				if( window.Workspace )
 					Workspace.flushSession();
 				AddToCajaxQueue( self );
-				return Workspace.relogin();
+				return Friend.User.ReLogin();
 			}
 		}
 		catch( e )

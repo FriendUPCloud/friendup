@@ -964,6 +964,8 @@ function _ActivateWindowOnly( div )
 			m.classList.add( 'Active' );
 			m.viewContainer.classList.add( 'Active' );
 
+			var app = _getAppByAppId( div.applicationId );
+
 			// Extra force!
 			if( isMobile )
 			{	
@@ -976,6 +978,7 @@ function _ActivateWindowOnly( div )
 				if( window._getAppByAppId )
 				{
 					let app = _getAppByAppId( div.applicationId );
+
 					if( app )
 					{
 						if( m.windowObject != app.mainView )
@@ -986,14 +989,6 @@ function _ActivateWindowOnly( div )
 						{
 							m.parentNode.removeAttribute( 'childview' );
 						}
-						
-						app.sendMessage( {
-							'command': 'notify',
-							'method': 'setviewflag',
-							'flag': 'minimized',
-							'viewId': div.windowObject.viewId,
-							'value': false
-						} );
 					}
 				}
 				
@@ -1005,6 +1000,18 @@ function _ActivateWindowOnly( div )
 			{
 				m.viewContainer.removeAttribute( 'minimized' );
 				m.minimized = false;
+			}
+			
+			// Notify app
+			if( app )
+			{
+				app.sendMessage( {
+					'command': 'notify',
+					'method': 'setviewflag',
+					'flag': 'minimized',
+					'viewId': div.windowObject.viewId,
+					'value': false
+				} );
 			}
 			
 			if( div.windowObject )
@@ -1790,7 +1797,14 @@ function CloseView( win, delayed )
 					{
 						if( app.windows[ a ] != div.windowObject )
 						{
-							app.windows[ a ]._window.parentNode.parentNode.style.display = 'none';
+							if( app.windows[ a ]._window.parentNode && app.windows[ a ]._window.parentNode.parentNode )
+							{
+								let elef = app.windows[ a ]._window.parentNode.parentNode;
+								if( elef.classList && elef.classList.contains( 'View' ) || elef.classList.contains( 'ViewContainer' ) )
+								{
+									app.windows[ a ]._window.parentNode.parentNode.style.display = 'none';
+								}
+							}
 						}
 					}
 				}
@@ -1946,7 +1960,8 @@ function CloseView( win, delayed )
 		{
 			for( var a in app.windows )
 			{
-				app.windows[ a ].activate( 'force' );
+				if( app.windows[ a ].activate )
+					app.windows[ a ].activate( 'force' );
 				break;
 			}
 		}
@@ -5924,6 +5939,10 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 	{
 		v.setContent( data );
 		let eles = v._window.getElementsByTagName( 'button' );
+		if( !eles && v.dom )
+		{
+			eles = v.dom.getElementsByTagName( 'button' );
+		}
 
 		// FL-6/06/2018: correction so that it does not take the relative position of OK/Cancel in the box 
 		// US-792 - 2020: Correction to fix sending the same delete request multiple times

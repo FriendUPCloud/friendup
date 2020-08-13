@@ -338,6 +338,64 @@ var WorkspaceMenu =
 	// Generates menu html, sets up events and chooses menu container element
 	generate: function( menudiv, menuItems, depth, appid )
 	{
+		// Sets a menu item action (helper function for code below)
+		function setMenuItemAction( item, appid )
+		{
+			// Sends command to application
+			let mode = ( isTablet || isMobile ) ? 'ontouchend' : 'onmouseup';
+			item[mode] = function( e ) 
+			{
+				if( WorkspaceMenu.scrolling ) 
+				{
+					WorkspaceMenu.scrolling = false;
+					return;
+				}
+				
+				this.classList.remove( 'Open' );
+			
+				// Set appid from current movable..
+				if( !appid && currentMovable.windowObject && currentMovable.windowObject.applicationId )
+					appid = currentMovable.windowObject.applicationId;
+		
+				var viewId = false;
+				if( currentMovable && typeof( currentMovable.windowObject._window.menuViewId ) != 'undefined' )
+					viewId = currentMovable.windowObject._window.menuViewId;
+				else if( currentScreen && typeof( currentScreen.menuScreenId ) != 'undefined' )
+					viewId = currentScreen.menuScreenId; // TODO: Check this one out!
+			
+				if( appid )
+				{
+					let app = findApplication( appid );
+					if( app )
+					{
+						let mmsg = {
+							applicationId: appid,
+							command: this.command + ""
+						};
+						if( this.scope )
+						{
+							// Has the scope on the view|screen
+							if( this.scope == 'local' && viewId )
+							{
+								let c = GetContentWindowById( app, viewId );
+								if( c )
+								{
+									mmsg.destinationViewId = viewId;
+									c.postMessage( JSON.stringify( mmsg ), '*' );
+									WorkspaceMenu.close();
+									return;
+								}
+							}
+						}
+						app.contentWindow.postMessage( JSON.stringify( mmsg ), '*' );
+						WorkspaceMenu.close();
+					}
+				}
+				return cancelBubble( e );
+			};
+		}
+		
+		
 		WorkspaceMenu.scrolling = false;
 		
 		// Add to body so we can style whether we have a menu or not
@@ -408,58 +466,70 @@ var WorkspaceMenu =
 				Friend.currentMenuItems = test;
 				menudiv.innerHTML = '';
 			}
-		}
-		
-		if( isMobile && ( appid || ( currentMovable && currentMovable.content.directoryview ) ) )
-		{
-			var found = false;
-			for( var z = 0; z < menuItems.length; z++ )
+			
+			if( isMobile && ( appid || ( currentMovable && currentMovable.content.directoryview ) ) )
 			{
-				if( menuItems[z].command == 'quit' )
+				let found = false;
+				for( var z = 0; z < menuItems.length; z++ )
 				{
-					found = true;
-					break;
-				}
-			}
-			if( !found )
-			{
-				// Clear quit for this - and add back buttons
-				function clearQuit( men )
-				{
-					var out = [];
-					for( var a = 0; a < men.length; a++ )
+					if( menuItems[z].name == i18n( 'i18n_quit' ) )
 					{
-						if( men[a].command && men[a].command == 'quit' )
-							continue;
-						if( men[a].items )
-						{
-							men[a].items = clearQuit( men[a].items );
-						}
-						out.push( men[a] );
+						found = true;
+						break;
 					}
-					return out;
 				}
-				menuItems = clearQuit( menuItems );
+				if( !found )
+				{
+					// Clear quit for this - and add back buttons
+					let quitItem = null;
+					function clearQuit( men )
+					{
+						let out = [];
+						for( let a = 0; a < men.length; a++ )
+						{
+							if( men[a].name && men[a].name == i18n( 'i18n_quit' ) )
+							{
+								quitItem = men[a];
+								continue;
+							}
+							if( men[a].items )
+							{
+								men[a].items = clearQuit( men[a].items );
+							}
+							out.push( men[a] );
+						}
+						return out;
+					}
+					menuItems = clearQuit( menuItems );
 				
-				// Add option to quit application
-				if( currentMovable && currentMovable.content.directoryview )
-				{
-					menuItems.push( {
-						name: i18n( 'i18n_close' ),
-						command: 'close'
-					} );
-				}
-				else
-				{
-					menuItems.push( {
-						name: i18n( 'i18n_quit' ),
-						command: 'quit'
-					} );
+					// Add option to quit application
+					if( currentMovable && currentMovable.content.directoryview )
+					{
+						menuItems.push( {
+							name: i18n( 'i18n_close' ),
+							command: 'close'
+						} );
+					}
+					else
+					{
+						if( quitItem )
+						{
+							menuItems.push( quitItem );
+						}
+						else
+						{
+							menuItems.push( {
+								name: i18n( 'i18n_quit' ),
+								command: 'quit'
+							} );
+						}
+					}
 				}
 			}
 		}
 		
-		for( var i in menuItems )
+		// Activate menu items
+		for( let i in menuItems )
 		{
 			if( menuItems[i] == false ) continue;
 			var d = menudiv;
@@ -501,10 +571,17 @@ var WorkspaceMenu =
 					}
 					continue;
 				}
+				else if( menuItems[ i ].name == i18n( 'i18n_quit' ) )
+				{
+					n.command = menuItems[ i ].command;
+					n.scope = menuItems[ i ].scope;
+					n.classList.add( 'Empty' );
+					setMenuItemAction( n, appid );
+					continue;
+				}
 			}
-			
 			// Object members
-			if( menuItems[i].items )
+			if( menuItems[ i ].items && menuItems[ i ].items.length )
 			{
 				var ul = document.createElement ( 'ul' );
 				ul.classList.add( 'SmoothScrolling' );
@@ -524,7 +601,7 @@ var WorkspaceMenu =
 				var depth2 = depth + 1;
 		
 			
-				for ( var j in menuItems[i].items )
+				for( let j in menuItems[i].items )
 				{
 					if( menuItems[i].items[j] == false ) continue;
 					var li = document.createElement( 'li' );
@@ -539,56 +616,7 @@ var WorkspaceMenu =
 						li.command = it.command;
 						li.scope = it.scope;
 					
-						// Sends command to application
-						var mode = ( isTablet || isMobile ) ? 'ontouchend' : 'onmouseup';
-						li[mode] = function( e ) 
-						{
-							if( WorkspaceMenu.scrolling ) 
-							{
-								WorkspaceMenu.scrolling = false;
-								return;
-							}
-							
-							// Set appid from current movable..
-							if( !appid && currentMovable.windowObject && currentMovable.windowObject.applicationId )
-								appid = currentMovable.windowObject.applicationId;
-						
-							var viewId = false;
-							if( currentMovable && typeof( currentMovable.windowObject._window.menuViewId ) != 'undefined' )
-								viewId = currentMovable.windowObject._window.menuViewId;
-							else if( currentScreen && typeof( currentScreen.menuScreenId ) != 'undefined' )
-								viewId = currentScreen.menuScreenId; // TODO: Check this one out!
-							
-							if( appid )
-							{
-								var app = findApplication( appid );
-								if( app )
-								{
-									var mmsg = {
-										applicationId: appid,
-										command: this.command + ""
-									};
-									if( this.scope )
-									{
-										// Has the scope on the view|screen
-										if( this.scope == 'local' && viewId )
-										{
-											var c = GetContentWindowById( app, viewId );
-											if( c )
-											{
-												mmsg.destinationViewId = viewId;
-												c.postMessage( JSON.stringify( mmsg ), '*' );
-												WorkspaceMenu.close();
-												return;
-											}
-										}
-									}
-									app.contentWindow.postMessage( JSON.stringify( mmsg ), '*' );
-									WorkspaceMenu.close();
-								}
-							}
-							return cancelBubble( e );
-						};
+						setMenuItemAction( li );
 					}
 					// A runnable function
 					else if( it.command )
@@ -675,11 +703,9 @@ var WorkspaceMenu =
 		var menus = wm.getElementsByTagName( 'div' );
 		for ( var a = 0; a < menus.length; a++ )
 		{
-			if( !menus[a].classList.contains( 'Menu' ) )
+			if( !menus[a].classList.contains( 'Menu' ) || menus[ a ].classList.contains( 'Empty' ) )
 				continue;
 			// For mobile, create a close button
-
-			
 			
 			// Normal operation (tablet and desktop)
 			menus[a].menus = menus;
@@ -809,7 +835,7 @@ var WorkspaceMenu =
 				// close all others
 				for ( var a = 0; a < this.items.length; a++ )
 				{
-					var found = false;
+					let found = false;
 					for( var b = 0; b < sublis.length; b++ )
 					{
 						if( this.items[a] == sublis[b] )

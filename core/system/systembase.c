@@ -163,7 +163,7 @@ SystemBase *SystemInit( void )
 	
 	LIBXML_TEST_VERSION;
 	
-	l->sl_RemoveSessionsAfterTime = 10800;
+	l->sl_RemoveSessionsAfterTime = 60; //10800;
 	
 	//
 	// sl_Autotask
@@ -192,7 +192,7 @@ SystemBase *SystemInit( void )
 		
 		if( getcwd( l->sl_AutotaskPath, PATH_MAX ) == NULL )
 		{
-			FERROR("getcwd failed!");
+			Log( FLOG_ERROR, "[SystemInit] getcwd failed!");
 			exit(5);
 		}
 		strcat( l->sl_AutotaskPath, "/autostart/");
@@ -240,7 +240,7 @@ SystemBase *SystemInit( void )
 	if( getcwd( tempString, PATH_MAX ) == NULL )
 	{
 		FFree( tempString );
-		FERROR("getcwd failed!");
+		Log( FLOG_ERROR, "[SystemInit] getcwd failed!");
 		exit(5);
 	}
 	l->handle = dlopen( 0, RTLD_LAZY );
@@ -664,7 +664,7 @@ SystemBase *SystemInit( void )
 	l->zlib = (ZLibrary *)LibraryOpen( l, "z.library", 0 );
 	if( l->zlib == NULL )
 	{
-		FERROR("[ERROR]: CANNOT OPEN z.library!\n");
+		Log( FLOG_ERROR, "[ERROR]: CANNOT OPEN z.library!\n");
 	}
 	
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
@@ -749,7 +749,7 @@ SystemBase *SystemInit( void )
 	if (getcwd( tempString, PATH_MAX ) == NULL)
 	{
 		FFree( tempString );
-		FERROR("getcwd failed!");
+		Log( FLOG_ERROR, "[SystemInit] getcwd failed!");
 		exit(5);
 	}
 	
@@ -886,7 +886,7 @@ SystemBase *SystemInit( void )
 	}
 	else
 	{
-		FERROR("Cannot open magic shared lib\n");
+		Log( FLOG_ERROR, "[SystemInit] Cannot open magic shared lib\n");
 	}
 	
 	//
@@ -1034,7 +1034,7 @@ SystemBase *SystemInit( void )
 	#define DAYS5 5*24*MINS60
 
 	EventAdd( l->sl_EventManager, "DoorNotificationRemoveEntries", DoorNotificationRemoveEntries, l, time( NULL )+MINS30, MINS30, -1 );
-	EventAdd( l->sl_EventManager, "USMRemoveOldSessions", USMRemoveOldSessions, l, time( NULL )+MINS360, MINS360, -1 );
+	EventAdd( l->sl_EventManager, "USMRemoveOldSessions", USMRemoveOldSessions, l, time( NULL )+MINS1, MINS1, -1 );
 	// test, to remove
 	EventAdd( l->sl_EventManager, "PIDThreadManagerRemoveThreads", PIDThreadManagerRemoveThreads, l->sl_PIDTM, time( NULL )+MINS60, MINS60, -1 );
 	EventAdd( l->sl_EventManager, "CacheUFManagerRefresh", CacheUFManagerRefresh, l->sl_CacheUFM, time( NULL )+DAYS5, DAYS5, -1 );
@@ -1082,7 +1082,7 @@ void SystemClose( SystemBase *l )
 {
 	if( l == NULL )
 	{
-		FERROR("SystemBase is NULL\n");
+		Log( FLOG_ERROR, "[SystemClose] SystemBase is NULL\n");
 		return;
 	}
 	
@@ -2347,6 +2347,8 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
 					// Increment and check
 					if( ++l->MsqLlibCounter >= l->sqlpoolConnections ) l->MsqLlibCounter = 0;
 					FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
+					// Give some grace time..
+					usleep( 5000 );
 					continue;
 				}
 				
@@ -2360,7 +2362,10 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
 				INFO( "[LibraryMYSQLGet] We found mysql library on slot %d.\n", l->MsqLlibCounter );
 			
 				// Increment and check
-				if( ++l->MsqLlibCounter >= l->sqlpoolConnections ) l->MsqLlibCounter = 0;
+				if( ++l->MsqLlibCounter >= l->sqlpoolConnections )
+				{
+					l->MsqLlibCounter = 0;
+				}
 				FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
 				break;
 			}
@@ -2371,6 +2376,7 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
 		}
 		
 		timer++;
+		// We got too many connections, give grace time
 		if( timer >= l->sqlpoolConnections )
 		{
 			timer = 0;

@@ -204,7 +204,7 @@ int WebsocketThread( FThread *data )
 	WebSocket *ws = (WebSocket *)data->t_Data;
 	if( ws->ws_Context == NULL )
 	{
-		FERROR("[WS] WsContext is empty\n");
+		Log( FLOG_ERROR, "[WebsocketThread] WsContext is empty\n");
 		return 0;
 	}
 	
@@ -365,7 +365,7 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 		ws->ws_Context = lws_create_context( &ws->ws_Info );
 		if( ws->ws_Context == NULL )
 		{
-			FERROR( "Libwebsocket init failed, cannot create context\n" );
+			Log( FLOG_ERROR, "[WebSocketNew] Libwebsocket init failed, cannot create context\n" );
 			FFree( ws );
 			return NULL;
 		}
@@ -374,7 +374,7 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 	}
 	else
 	{
-		FERROR("[WS] Cannot allocate memory for WebSocket\n");
+		Log( FLOG_ERROR, "[WebSocketNew] Cannot allocate memory for WebSocket\n");
 	}
 	
 	DEBUG1("[WS] Websocket created\n");
@@ -648,23 +648,51 @@ int DetachWebsocketFromSession( void *d )
 	UserSession *us = NULL;
 	if( FRIEND_MUTEX_LOCK( &(data->wsc_Mutex) ) == 0 )
 	{
-		us = (UserSession *)data->wsc_UserSession;
-		data->wsc_UserSession = NULL;
+		if( data->wsc_UserSession != NULL )
+		{
+			us = (UserSession *)data->wsc_UserSession;
+		
+			/*
+			if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+			{
+				us->us_Wsi = NULL;
+				us->us_WSD = NULL;
+				//us->us_InUseCounter--;
+		
+				FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+			}
+			*/
+		}
+		
+		//data->wsc_UserSession = NULL;
 		data->wsc_Wsi = NULL;
 		FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
+		/*
+		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+		{
+			us->us_InUseCounter++;
+			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+		}*/
 	}
 	
-	if( us != NULL )
+	if( data->wsc_UserSession != NULL && us != NULL )
 	{
-		Log( FLOG_DEBUG, "[WS] Lock DetachWebsocketFromSession\n");
+		//Log( FLOG_DEBUG, "[WS] Lock DetachWebsocketFromSession\n");
 		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 		{
 			us->us_Wsi = NULL;
 			us->us_WSD = NULL;
+			//us->us_InUseCounter--;
 		
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
 		Log( FLOG_DEBUG, "[WS] UnLock DetachWebsocketFromSession\n");
+	}
+	
+	if( FRIEND_MUTEX_LOCK( &(data->wsc_Mutex) ) == 0 )
+	{
+		data->wsc_UserSession = NULL;
+		FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
 	}
     return 0;
 }

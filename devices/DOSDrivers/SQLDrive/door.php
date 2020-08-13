@@ -351,6 +351,8 @@ if( !class_exists( 'DoorSQLDrive' ) )
 			}
 			else if( $args->command == 'write' )
 			{
+				set_time_limit( 0 );
+			
 				// We need to check how much is in our database first
 				$deletable = false;
 				$total = 0;
@@ -359,7 +361,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					WHERE u.UserID=\'' . $User->ID . '\' AND FilesystemID = \'' . $this->ID . '\'
 				' ) )
 				{
-					$total = $sum->z;
+					$total = intval( $sum->z, 10 );
 				}
 				
 				// Create a file object
@@ -501,12 +503,19 @@ if( !class_exists( 'DoorSQLDrive' ) )
 									if( $total + $len < SQLDRIVE_FILE_LIMIT )
 									{
 										$Logger->log( '[SqlDrive] Moving tmp file ' . $args->tmpfile . ' to ' . $wname . $fn . ' because ' . ( $total + $len ) . ' < ' . SQLDRIVE_FILE_LIMIT );
-										rename( $args->tmpfile, $wname . $fn );
+										
+										$res = rename( $args->tmpfile, $wname . $fn );
+										
+										if( !$res )
+										{
+											$Logger->log( '[SqlDrive] Failed to move file.' );
+											die( 'fail<!--separate-->{"response":"-1","message":"Failed to move temp file."}' );
+										}
 									}
 									else
 									{
 										$Logger->log( 'fail<!--separate-->Limit broken' );
-										die( 'fail<!--separate-->Limit broken' );
+										die( 'fail<!--separate-->{"response":"-1","message":"Limit broken"}' );
 									}
 								}
 								else
@@ -517,12 +526,11 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							else
 							{
 								$Logger->log( 'fail<!--separate-->Tempfile does not exist!' );
-								die( 'fail<!--separate-->Tempfile does not exist!' );
+								die( 'fail<!--separate-->{"response","-1","message":"Tempfile does not exist"}' );
 							}
 						}
 						else
 						{
-							$Logger->log( 'is tmp file set, limit: ' . SQLDRIVE_FILE_LIMIT );
 							if( $total + strlen( $args->data ) < SQLDRIVE_FILE_LIMIT )
 							{
 								$len = fwrite( $file, $args->data );
@@ -530,10 +538,8 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							}
 							else
 							{
-								$Logger->log( 'die!die!die! my darling! ' );
 								fclose( $file );
-								$Logger->log( 'fail<!--separate-->Limit broken ' . SQLDRIVE_FILE_LIMIT );
-								die( 'fail<!--separate-->Limit broken' );
+								die( 'fail<!--separate-->{"response":"-1","message":"Limit broken"}' );
 							}
 						}
 					

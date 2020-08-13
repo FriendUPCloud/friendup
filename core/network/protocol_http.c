@@ -287,7 +287,6 @@ static inline int ReadServerFile( Uri *uri __attribute__((unused)), char *locpat
 	FBOOL freeFile = FALSE;
 
 	LocFile* file = NULL;
-	//if( FRIEND_MUTEX_LOCK( &SLIB->sl_ResourceMutex ) == 0 )
 	{
 		if( SLIB->sl_CacheFiles == 1 )
 		{
@@ -338,7 +337,6 @@ static inline int ReadServerFile( Uri *uri __attribute__((unused)), char *locpat
 				freeFile = TRUE;
 			}
 		}
-		//FRIEND_MUTEX_UNLOCK( &SLIB->sl_ResourceMutex );
 	}
 
 	// Send reply
@@ -1546,7 +1544,14 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 													DEBUG("[ProtocolHttp] File created %s size %lu\n", nlf->lf_Path, nlf->lf_FileSize );
 
-													if( CacheManagerFilePut( SLIB->cm, nlf ) != 0 )
+													if( SLIB->sl_CacheFiles == TRUE )
+													{
+														if( CacheManagerFilePut( SLIB->cm, nlf ) != 0 )
+														{
+															LocFileDelete( nlf );
+														}
+													}
+													else
 													{
 														LocFileDelete( nlf );
 													}
@@ -1555,6 +1560,8 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 												{
 													FFree( mime );
 												}
+												
+												//DEBUG("Multifile content: %s\n\n\n", bs->bs_Buffer );
 
 												bs->bs_Buffer = NULL;
 
@@ -1706,7 +1713,6 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 									{
 										LocFile* file = NULL;
 
-										//if( FRIEND_MUTEX_LOCK( &SLIB->sl_ResourceMutex ) == 0 )
 										{
 											char *decoded = UrlDecodeToMem( completePath->raw );
 											if( SLIB->sl_CacheFiles == 1 )
@@ -1760,7 +1766,6 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 											}
 											FFree( decoded );
 											DEBUG("Resource mutex released\n");
-											//FRIEND_MUTEX_UNLOCK( &SLIB->sl_ResourceMutex );
 										}
 										if( file != NULL )
 										{

@@ -127,7 +127,7 @@ function ShowAllTutorials()
 	if( tutWind ) tutWind.focus();
 	tutWind = new View( {
 		title: 'Available tutorials',
-		width: 600,
+		width: 800,
 		height: 600
 	} );
 	let f = new File( 'System:templates/tutorials.html' );
@@ -151,19 +151,25 @@ function ShowAllTutorials()
 						{
 							tutWind._window.classList.remove( 'Phase' );
 							let tuts = tutWind._window.getElementsByClassName( 'Tutorial' );
+							
+							function doBack()
+							{
+								setTimeout( function()
+								{										
+									// Load tutorials
+									tLoad( da );
+									return;
+								}, 150 );
+								tutWind._window.classList.add( 'Phase' );
+							}
+							
 							for( let c = 0; c < tuts.length; c++ )
 							{
 								tuts[c].onclick = function()
 								{
 									if( this.classList.contains( 'Big' ) )
 									{
-										setTimeout( function()
-										{										
-											// Load tutorials
-											tLoad( da );
-											return;
-										}, 150 );
-										tutWind._window.classList.add( 'Phase' );
+										return;								
 									}
 									for( let d = 0; d < tuts.length; d++ )
 									{
@@ -181,7 +187,7 @@ function ShowAllTutorials()
 														try
 														{
 															dd = JSON.parse( td );
-															DisplayTutorial( atob( dd.data ), se );
+															DisplayTutorial( atob( dd.data ), se, doBack );
 															return;
 														}
 														catch( e )
@@ -191,7 +197,7 @@ function ShowAllTutorials()
 													se.classList.remove( 'Big', 'Loading' );
 													list.classList.remove( 'Big' );
 												}
-												t.execute( 'gettutorial', { number: num + 1 } );
+												t.execute( 'gettutorial', { number: num + 2 } ); // + 2 (num starts 0, should be 1, skip tutorial 1 means use + 2)
 											} )( c, this, tutWind._window );
 										}
 										else
@@ -227,10 +233,20 @@ function ShowAllTutorials()
 	}
 }
 
-function DisplayTutorial( str, ele )
+function DisplayTutorial( str, ele, backF )
 {
-	ele.innerHTML = str;
+	ele.innerHTML = str.split( '{session}' ).join( Workspace.sessionId );
 	ele.classList.remove( 'Loading' );
+	
+	let bottom = ge( 'Available_tutorials' ).getElementsByClassName( 'BottomBar Padding' );
+	if( !bottom.length ) return;
+	let back = bottom[0].getElementsByClassName( 'Back' );
+	if( back.length ) return;
+	back = document.createElement( 'button' );
+	back.className = 'Button Back fa-caret-left IconSmall FloatLeft';
+	back.innerHTML = i18n( 'i18n_back' );
+	back.onclick = backF;
+	bottom[0].appendChild( back );
 }
 
 

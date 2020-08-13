@@ -115,20 +115,23 @@ UserSession *USMGetSessionBySessionID( UserSessionManager *usm, char *sessionid 
         return NULL;
     }
     DEBUG("CHECK4\n");
-	FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
-	UserSession *us = usm->usm_Sessions;
-	while( us != NULL )
+	
+	if( FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) ) == 0 )
 	{
-		if( strcmp( sessionid, us->us_SessionID ) == 0 )
+		UserSession *us = usm->usm_Sessions;
+		while( us != NULL )
 		{
-			DEBUG("CHECK4END\n");
-			FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
-			return us;
+			if( strcmp( sessionid, us->us_SessionID ) == 0 )
+			{
+				DEBUG("CHECK4END\n");
+				FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+				return us;
+			}
+			us = (UserSession *) us->node.mln_Succ;
 		}
-		us = (UserSession *) us->node.mln_Succ;
+		DEBUG("CHECK4END\n");
+		FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 	}
-	DEBUG("CHECK4END\n");
-	FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 	return NULL;
 }
 
@@ -996,7 +999,7 @@ int USMRemoveOldSessionsinDB( void *lsb )
 	 {
 		char temp[ 1024 ];
 	 
-		// we remove old entries older then 6 hours 43200
+		// we remove old entries older then sl_RemoveSessionsAfterTime (look in systembase.c)
 		snprintf( temp, sizeof(temp), "DELETE from `FUserSession` WHERE LoggedTime != '' AND (%lu-LoggedTime)>%lu", acttime, sb->sl_RemoveSessionsAfterTime );
 		DEBUG("USMRemoveOldSessionsDB launched SQL: %s\n", temp );
 	 

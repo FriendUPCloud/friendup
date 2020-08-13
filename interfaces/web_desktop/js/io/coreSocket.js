@@ -377,7 +377,7 @@ FriendWebSocket.prototype.handleSocketMessage = function( e )
 		{
 			Notify( { title: i18n( 'i18n_session_expired' ), text: i18n( 'i18n_session_expired_desc' ) } );
 			this.handleClose();
-			Workspace.relogin();
+			Friend.User.ReLogin();
 			return;
 		}
 	}

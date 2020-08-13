@@ -525,8 +525,8 @@ void FriendCoreManagerDelete( FriendCoreManager *fcm )
 		EVP_cleanup( );
 		SSL_COMP_free_compression_methods();
 		COMP_zlib_cleanup();
-		ERR_remove_state(0);
-		ERR_remove_thread_state(NULL);
+		//ERR_remove_state(0);
+		//ERR_remove_thread_state(NULL);
 
 		ERR_free_strings();
 		CRYPTO_cleanup_all_ex_data();

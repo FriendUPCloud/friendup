@@ -51,6 +51,7 @@ i18n_affirmative                     : Ok
 i18n_negative                        : No
 i18n_yes                             : Yes
 i18n_cancel                          : Cancel
+i18n_back                            : Back
 i18n_accept                          : Accept
 i18n_understood                      : Understood
 i18n_your_devices                    : Disks
@@ -147,6 +148,7 @@ i18n_your_command                       : Your command
 i18n_door_home                          : Home
 
 please_choose_an_icon                   : Please choose icon(s).
+i18n_title_about_friendos               : About Friend OS
 about_system                            : About system
 information                             : Information & updates
 documentation_central                   : Documentation central
@@ -275,6 +277,8 @@ i18n_upload_failed                      : Upload failed.
 i18n_upload_completed_description       : The upload process completed successfully.
 i18n_upload_failed_description          : Could not upload your file.
 i18n_select_local_files                 : Select local files
+i18n_not_upload_target                  : Not an upload target
+i18n_not_upload_target_desc             : You can not upload to the Shared drive.
 
 i18n_unzip_completed                    : Uncompressing completed.
 i18n_unzip_comdesc                      : Uncompressing a file(s) completed successfully
@@ -314,6 +318,7 @@ menu_open_parent_directory              : Open parent directory
 menu_show_as                            : Show as
 menu_show_as_icons                      : Icons
 menu_show_as_compact                    : Compact
+menu_show_as_gallery                    : Gallery
 menu_show_as_list                       : List
 menu_show_as_columns                    : Columns
 menu_close_window                       : Close window
@@ -587,6 +592,7 @@ i18n_diskspace                          : Diskspace
 i18n_dir_btn_iconview                   : Normal
 i18n_dir_btn_compact                    : Compact
 i18n_dir_btn_listview                   : List
+i18n_dir_btn_imageview                  : Gallery
 
 #Sessions ----------------------------------------------------------------------
 

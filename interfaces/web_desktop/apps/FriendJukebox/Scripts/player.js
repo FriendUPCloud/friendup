@@ -110,7 +110,7 @@ Application.redrawMiniPlaylist = function()
 				{
 					if( Application.song )
 					{
-						Application.receiveMessage( { command: 'stop' } );
+						Application.receiveMessage( { command: 'stop', temporary: true } );
 					}
 					Application.sendMessage( { command: 'playsongindex', index: index } );
 				}
@@ -172,10 +172,14 @@ Application.receiveMessage = function( msg )
 			if( !msg.item ) return;
 			if( !weran )
 			{
-				return setTimeout( function()
+				if( this.playtimeo )
+					clearTimeout( this.playtimeo );
+				this.playtimeo = setTimeout( function()
 				{
+					Application.playtimeo = null;
 					Application.receiveMessage( msg );
 				}, 50 );
+				return this.playtimeo;
 			}
 			var self = this;
 			
@@ -193,9 +197,7 @@ Application.receiveMessage = function( msg )
 			
 			if( this.song ) 
 			{
-				this.song.onfinished = function(){};
-				this.song.stop();
-				this.song.unload();
+				this.receiveMessage( { command: 'stop', temporary: true } );
 			}
 			
 			// Update song id!
@@ -210,11 +212,7 @@ Application.receiveMessage = function( msg )
 					{
 						return;
 					}
-					// Try the next song
-					setTimeout( function()
-					{
-						Seek( 1 );
-					}, 500 );
+					ge( 'scroll' ).innerHTML = i18n( 'i18n_could_not_load_song' );
 				}
 				else
 				{
@@ -244,7 +242,8 @@ Application.receiveMessage = function( msg )
 				this.index = msg.index;
 			}
 			this.song.onload = function()
-			{	
+			{
+				if( this.stopped ) return;
 				document.body.classList.remove( 'Paused' );
 				document.body.classList.add( 'Playing' );
 				
@@ -355,7 +354,12 @@ Application.receiveMessage = function( msg )
 			document.body.classList.remove( 'Paused' );
 			document.body.classList.remove( 'Playing' );
 			
+			s.onfinished = function(){};
 			s.stop();
+			s.unload();
+			
+			if( !msg.temporary )
+				ge( 'scroll' ).innerHTML = i18n( 'i18n_stopped' );
 			
 			Application.clearVisualizer( 50 );
 			
@@ -371,20 +375,73 @@ Application.receiveMessage = function( msg )
 			if( msg.data )
 			{
 				var items = [];
+				var plistitems = [];
 				for( var a in msg.data )
 				{
-					items.push( {
-						Path: msg.data[a].Path, 
-						Filename: msg.data[a].Filename
+					if( msg.data[ a ].Type == 'Directory' )
+					{
+						loadRecursiveFolder( msg.data[a].Path );
+					}
+					if( msg.data[a].Filename.indexOf( '.' ) < 0 ) continue;
+					if( msg.data[a].Filename.split( '.' ).pop().toLowerCase() == 'pls' )
+					{
+						plistitems.push( {
+							Path: msg.data[a].Path, 
+							Filename: msg.data[a].Filename
+						} );
+					}
+					else
+					{
+						items.push( {
+							Path: msg.data[a].Path, 
+							Filename: msg.data[a].Filename
+						} );
+					}
+				}
+				if( items.length )
+				{
+					Application.sendMessage( {
+						command: 'append_to_playlist_and_play',
+						items: items
 					} );
 				}
-				Application.sendMessage( {
-					command: 'append_to_playlist_and_play',
-					items: items
-				} );
+				if( plistitems.length )
+				{
+					Application.sendMessage( {
+						command: 'addplaylists',
+						items: plistitems
+					} );
+				}
 			}
 			break;
 	}
+}
+
+function loadRecursiveFolder( path )
+{
+	var d = new Door( path );
+	d.getDirectory( function( items )
+	{
+		let out = [];
+		for( let z = 0; z < items.length; z++ )
+		{
+			if( items[ z ].Type == 'Directory' )
+			{
+				loadRecursiveFolder( items[ z ].Path );
+			}
+			else
+			{
+				out.push( items[ z ] );
+			}
+		}
+		if( out.length )
+		{
+			Application.sendMessage( {
+				command: 'append_to_playlist_and_play',
+				items: out
+			} );
+		}
+	} );
 }
 
 Application.clearVisualizer = function( time )

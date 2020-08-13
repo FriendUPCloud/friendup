@@ -26,6 +26,8 @@ menu_design_dark                  : Mørkt
 
 i18n_root_directory               : Notater
 
+i18n_unnamed                      : Uten navn
+
 i18n_list                         : Liste
 i18n_uncategorized                : Ukategorisert
 i18n_categories                   : Kategorier

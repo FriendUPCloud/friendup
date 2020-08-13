@@ -10,7 +10,6 @@ var WorkspaceInside = {
 	websocketDisconnectTime: 0,
 	websocketState: null,
 	currentViewState: 'inactive',
-	serverIsThere: true, // Assume we have a server!
 	// Did we load the wallpaper?
 	wallpaperLoaded: false,
 	// We only initialize once
@@ -519,7 +518,7 @@ var WorkspaceInside = {
 		
 		// Check if we have a preset window that should be activated
 		var foundActive = false;
-		if( typeof( virtualWorkspaces[ index ] ) != 'undefined' )
+		if( typeof( virtualWorkspaces ) != 'undefined' && typeof( virtualWorkspaces[ index ] ) != 'undefined' )
 		{
 			if( virtualWorkspaces[ index ].activeWindow )
 			{
@@ -614,7 +613,7 @@ var WorkspaceInside = {
 		if( Workspace.readyToRun ) return Workspace.websocketState;
 		return "false";
 	},
-	initWebSocket: function()
+	initWebSocket: function( callback )
 	{	
 		// We're already open
 		if( Workspace.websocketState == 'open' ) return;
@@ -624,7 +623,7 @@ var WorkspaceInside = {
 		
 		if( !Workspace.sessionId && Workspace.userLevel )
 		{
-			return Workspace.relogin();
+			return Friend.User.ReLogin();
 		}
 		
 		if( !Workspace.sessionId )
@@ -708,22 +707,8 @@ var WorkspaceInside = {
 				{
 					console.log( '[onState] We got an error.' );
 					Workspace.websocketState = 'error';
-					var serverCheck = new Module( 'system' );
-					serverCheck.onExecuted = function( q, s )
-					{
-						if( ( q == 'fail' && !s ) || ( !q && !s ) )
-						{
-							Workspace.serverIsThere = false;
-							Workspace.workspaceIsDisconnected = true;
-							Workspace.checkServerConnectionResponse();
-						}
-					}
-					serverCheck.execute( 'getsetting', { setting: 'infowindow' } );
+					Friend.User.CheckServerConnection();
 				}
-				// After such an error, always try reconnect
-				if( Workspace.httpCheckConnectionInterval )
-					clearInterval( Workspace.httpCheckConnectionInterval );
-				Workspace.httpCheckConnectionInterval = setInterval( 'Workspace.checkServerConnectionHTTP()', 10000 );
 			}
 			else if( e.type == 'ping' )
 			{
@@ -740,19 +725,13 @@ var WorkspaceInside = {
 					}
 				}
 				
-				//if we get a ping we have a websocket.... no need to do the http server check
-				clearInterval( Workspace.httpCheckConnectionInterval );
-				Workspace.httpCheckConnectionInterval = false;
 				if( Workspace.websocketState != 'open' )
 				{
 					// Refresh mountlist
 					Workspace.refreshDesktop( false, true );
 				}
 
-				if( Workspace.screen ) Workspace.screen.hideOfflineMessage();
-				document.body.classList.remove( 'Offline' );
-				Workspace.workspaceIsDisconnected = false;
-				Workspace.websocketDisconnectTime = 0;
+				Friend.User.SetUserConnectionState( 'online' );
 				
 				// Reattach
 				if( !Workspace.conn && selfConn )
@@ -769,6 +748,11 @@ var WorkspaceInside = {
 					//       a slight delay
 					setTimeout( function()
 					{
+						if( callback )
+						{
+							callback();
+							callback = null;
+						}
 						Workspace.websocketState = 'open';
 					}, 150 );
 				}
@@ -3609,6 +3593,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		this.getMountlist( function( data )
 		{
+			// Something went wrong - don't show an empty workspace
+			// We always have one entry, the system disk
+			if( data.length <= 1 )
+			{
+				return;
+			}
+			
 			if( callback && typeof( callback ) == 'function' ) callback( data );
 
 			// make drive list behave like a desklet... copy paste som code back and forth ;)
@@ -4298,6 +4289,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			wb.onselectstart = function( e ) { return cancelBubble ( e ); };
 			wb.ondragstart = function( e ) { return cancelBubble ( e ); };
+			wb.directoryview.toChange = true;
 			wb.redrawIcons( this.getIcons(), 'vertical' );
 		}
 		
@@ -6053,12 +6045,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								}
 							}
 						
+							console.log( 'UPLOAD COMPLETED ' + ee, dd );
 							Notify( { title: i18n( 'i18n_upload_completed' ), text: i18n( 'i18n_upload_completed_description' ) } );
 							if( typeof Workspace.uploadWindow.close == 'function' ) Workspace.uploadWindow.close();
 							Workspace.refreshWindowByPath( uppath );
 						}
 						else
 						{
+							console.log( 'ERROR UPLOAD ' + dd );
 							Notify( { title: i18n( 'i18n_upload_failed' ), text: i18n( 'i18n_upload_failed_description' ) } );
 						}
 					
@@ -6183,53 +6177,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Simple logout..
 	logout: function()
 	{
-		// FIXME: implement
-		window.localStorage.removeItem( 'WorkspaceUsername' );
-		window.localStorage.removeItem( 'WorkspacePassword' );
-		window.localStorage.removeItem( 'WorkspaceSessionID' );
-
-		var keys = parent.ApplicationStorage.load( { applicationName : 'Workspace' } );
-
-		if( keys )
-		{
-			keys.username = '';
-
-			parent.ApplicationStorage.save( keys, { applicationName : 'Workspace' } );
-		}
-
-		let dologt = null;
-
-		SaveWindowStorage( function()
-		{
-			if( dologt != null )
-				clearTimeout( dologt );
-			
-			// Do external logout and then our internal one.
-			if( Workspace.logoutURL )
-			{
-				Workspace.externalLogout();
-				return;
-			}
-
-			var m = new cAjax();
-			Workspace.websocketsOffline = true;
-			m.open( 'get', '/system.library/user/logout/?sessionid=' + Workspace.sessionId, true );
-			m.send();
-			Workspace.websocketsOffline = false;
-			setTimeout( doLogout, 500 );
-		} );
-		// Could be there will be no connection..
-		function doLogout()
-		{
-			if( typeof friendApp != 'undefined' && typeof friendApp.exit == 'function')
-			{
-				friendApp.exit();
-				return;
-			}
-			Workspace.sessionId = ''; 
-			document.location.href = window.location.href.split( '?' )[0]; //document.location.reload();
-		}
-		dologt = setTimeout( doLogout, 750 );
+		Friend.User.Logout();
 	},
 	externalLogout: function()
 	{
@@ -7066,6 +7014,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								command: function(){ Workspace.viewDirectory( 'compact' ); }
 							},
 							{
+								name:	 i18n( 'menu_show_as_gallery' ),
+								command: function(){ Workspace.viewDirectory( 'imageview' ); }
+							},
+							{
 								name:	 i18n( 'menu_show_as_list' ),
 								command: function(){ Workspace.viewDirectory( 'listview' ); }
 							}/*,
@@ -7213,7 +7165,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		
 		SetWindowStorage( uid, d );
-		window.currentMovable.content.redrawIcons();
+		window.currentMovable.content.refresh();
 	},
 	showContextMenu: function( menu, e, extra )
 	{
@@ -8358,125 +8310,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		Workspace.sessionId = '';
 	},
-	//try to run a call and if does not get back display offline message....
-	checkServerConnectionHTTP: function()
-	{	
-		var self = this;
-		// Too early
-		if( !Workspace.postInitialized || !Workspace.sessionId || Workspace.reloginInProgress ) return;
-		if( window.ScreenOverlay && ScreenOverlay.visibility )
-		{
-			if( Workspace.onReady )
-				Workspace.onReady( false, true );
-			return;
-		}
-		
-		// No home disk? Try to refresh the desktop
-		// Limit two times..
-		if( Workspace.icons.length <= 1 && Workspace.refreshDesktopIconsRetries < 2 )
-		{
-			Workspace.refreshDesktopIconsRetries++;
-			Workspace.refreshDesktop( function()
-			{
-				Workspace.redrawIcons();
-			}, true );
-		}
-		
-		// Just make sure we don't pile on somehow...
-		if( Workspace.serverHTTPCheckModule )
-		{
-			Workspace.serverHTTPCheckModule.destroy();
-			Workspace.serverHTTPCheckModule = null;
-		}
-		
-		CancelCajaxOnId( 'checkserverconnection' );
-		
-		var inactiveTimeout = false;
-		
-		var m = new Module('system');
-		
-		m.forceSend = true;
-		m.cancelId = 'checkserverconnection';
-		
-		// This one is executed when we get a response from the server
-		m.onExecuted = function( e, d )
-		{
-			if( inactiveTimeout )
-				clearTimeout( inactiveTimeout );
-			inactiveTimeout = false;
-			
-			try
-			{
-				var js = JSON.parse( d );
-				if( js.code && ( parseInt( js.code ) == 11 || parseInt( js.code ) == 3 ) )
-				{
-					Workspace.relogin(); // Try login using local storage
-				}
-			}
-			catch( b )
-			{
-				if( e == null && d == null )
-				{
-					Workspace.relogin();
-				}
-			}
-			
-			//console.log( 'Response from connection checker: ', e, d );
-			if( e == 'error' )
-			{
-				// Just die!
-				return;
-			}
-			else if( e == 'fail' ) 
-			{
-				console.log( '[getsetting] Got "fail" response.' );
-			}
-			
-			Workspace.serverIsThere = true;
-			Workspace.workspaceIsDisconnected = false;
-			
-			// If we have no conn, and we have waited five cycles, force reconnect
-			// the websocket...
-			if( Workspace.websocketState != 'open' )
-			{
-				Workspace.initWebSocket();
-			}
-			else
-			{
-				// Just remove this by force
-				document.body.classList.remove( 'Busy' );
-			}
-		}
-		// Only set serverIsThere if we don't have a response from the server
-		inactiveTimeout = setTimeout( function(){ Workspace.serverIsThere = false; }, 1000 );
-		
-		Workspace.serverHTTPCheckModule = m;
-		
-		//m.forceSend = true;
-		m.execute( 'getsetting', { setting: 'infowindow' } );
-		return setTimeout( 'Workspace.checkServerConnectionResponse();', 1000 );
-	},
-	checkServerConnectionResponse: function()
-	{
-		if( Workspace.serverIsThere == false )
-		{
-			document.body.classList.add( 'Offline' );
-			if( Workspace.screen )
-				Workspace.screen.displayOfflineMessage();
-			Workspace.workspaceIsDisconnected = true;
-			Workspace.nudgeWorkspacesWidget();
-		}
-		else
-		{
-			document.body.classList.remove( 'Offline' );
-			if( Workspace.screen )
-				Workspace.screen.hideOfflineMessage();
-			Workspace.workspaceIsDisconnected = false;
-			Workspace.nudgeWorkspacesWidget();
-			// Just remove this by force
-			document.body.classList.remove( 'Busy' );
-		}
-	},
 	// Upgrade settings (for new versions)
 	upgradeWorkspaceSettings: function( cb )
 	{
@@ -8879,7 +8712,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				Workspace.loginCall.destroy();
 				Workspace.loginCall = null;
 			}
-			Workspace.relogin();
+			Friend.User.ReLogin();
 			return; 
 		}
 		
@@ -9741,11 +9574,6 @@ function InitWorkspaceNetwork()
 	{
 		wsp.initWebSocket();
 	}
-	
-	// After such an error, always try reconnect
-	if( Workspace.httpCheckConnectionInterval )
-		clearInterval( Workspace.httpCheckConnectionInterval );
-	Workspace.httpCheckConnectionInterval = setInterval( 'Workspace.checkServerConnectionHTTP()', 10000 );
 
 	wsp.checkFriendNetwork();
 	
@@ -9768,7 +9596,7 @@ function AboutFriendUP()
 {
 	if( !Workspace.sessionId ) return;
 	var v = new View( {
-		title: i18n( 'about_system' ) + ' v1.2.4',
+		title: i18n( 'i18n_title_about_friendos' ) + ' Hydrogen',
 		width: 540,
 		height: 560,
 		id: 'about_friendup'
@@ -10186,7 +10014,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 	
 	function handleClick()
 	{
-		if( !msg.application ) 
+		if( !msg.application || msg.application == 'null' ) 
 		{
 			if( !ready && Workspace.onReady ) Workspace.onReady();
 			return 'noapp';

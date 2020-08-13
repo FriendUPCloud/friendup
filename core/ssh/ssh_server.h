@@ -28,7 +28,10 @@
 #include <unistd.h>
 #include <sys/select.h>
 
+
+#ifdef ENABLE_SSH
 #include <libssh/libssh.h>
+#endif
 #include <system/systembase.h>
 #include <system/auth/authmodule.h>
 
@@ -54,8 +57,10 @@ typedef struct SSHSession		// single session structure
 	int						sshs_Authenticated;		// is user authenticated
 	int 					sshs_Tries;				// check user login times
 	int 					sshs_Error;				// error
+#ifdef ENABLE_SSH
 	ssh_channel 			sshs_Chan;				// session channel
 	ssh_session 			sshs_Session;			// session
+#endif
 	User 					*sshs_Usr;				// logged user
 	char 					*sshs_DispText;			// display text for user
 	char 					*sshs_Path;				// user path

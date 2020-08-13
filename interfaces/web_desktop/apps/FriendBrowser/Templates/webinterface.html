@@ -14,7 +14,7 @@
 						<button type="button" class="IconButton IconSmall fa-refresh" onclick="reload()"></button>
 					</td>
 					<td>
-						<input class="FullWidth" type="text" id="uri" placeholder="friend://" value="about:blank" onchange="setUrl(this.value)"/>
+						<div id="uri"></div>
 					</td>
 					<td width="42px" class="Icon">
 						<img src="/webclient/apps/FriendBrowser/icon.png" width="24" height="24"/>
@@ -49,6 +49,15 @@
 		{
 			margin: 3px 0 0 5px;
 			border-radius: 100%;
+		}
+		
+		#uri
+		{
+			box-sizing: border-box;
+			padding: 5px;
+			border-radius: 2px;
+			background: rgba(0,0,0,0.8);
+			color: white;
 		}
 		
 	</style>

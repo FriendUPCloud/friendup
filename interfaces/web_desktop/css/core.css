@@ -2012,7 +2012,7 @@ html .Calendar div.HRow > .Current.Day:nth-child(even):hover
 
 #Available_tutorials .VContentTop
 {
-	padding-left: 5px;
+    padding: 5px 0 10px 5px;
 	bottom: 50px;
 }
 
@@ -2028,7 +2028,7 @@ html .Calendar div.HRow > .Current.Day:nth-child(even):hover
 	margin: 10px 5px 5px 5px;
 	float: left;
 	border: 1px solid rgba(128,128,128,0.5);
-	border-radius: 4px;
+	border-radius: 2px;
 	box-sizing: border-box;
 	height: 200px;
 	overflow: hidden;
@@ -2053,6 +2053,12 @@ html .Calendar div.HRow > .Current.Day:nth-child(even):hover
 	-webkit-mask-image: linear-gradient(180deg,black 0%, black calc(100% - 20px), transparent 100%);
 	-moz-mask-image: linear-gradient(180deg,black 0%, black calc(100% - 20px), transparent 100%);
 	mask-image: linear-gradient(180deg,black 0%, black calc(100% - 20px), transparent 100%);
+	cursor: pointer;
+}
+
+body:not([mobile]):not([tablet]) #Available_tutorials .Tutorial > div:hover
+{
+	filter: invert(0.2);
 }
 
 #Available_tutorials .Tutorial h2
@@ -2060,6 +2066,22 @@ html .Calendar div.HRow > .Current.Day:nth-child(even):hover
 	display: block;
 	font-size: 1em;
 	font-weight: bold;
+}
+
+#Available_tutorials .Content.Big
+{
+	overflow: hidden !important;
+}
+
+#Available_tutorials .Content.Big .Tutorial.Big
+{
+	overflow: auto !important;
+}
+
+#Available_tutorials .Tutorial.Big img
+{
+    max-width: 100%;
+    border-radius: 3px;
 }
 
 #Available_tutorials .VContentTop:after
@@ -2107,6 +2129,7 @@ html .Calendar div.HRow > .Current.Day:nth-child(even):hover
 	z-index: 3;
 	margin: 0;
 	padding: 20px;
+	cursor: default;
 }
 
 #Available_tutorials .Tutorial.Big > div
@@ -3296,6 +3319,60 @@ body:not([mobile]).ShowTasks #TaskSwitcher .Current .Close
 	opacity: 0.5;
 	pointer-events: none;
 	z-index: 1;*/
+}
+
+#OfflineMessage
+{
+	position: absolute;
+	visibility: hidden; 
+	opacity: 0; 
+	pointer-events: none; 
+	z-index: 2147483647; 
+	transition: opacity 0.25s; 
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
+	background: rgba(0,0,0,0.85);
+	color: white;
+}
+
+body.Offline #OfflineMessage
+{
+	visibility: visible;
+	opacity: 1;
+	pointer-events: all;
+}
+
+#OfflineMessage > div
+{
+	position: absolute;
+	top: 30%;
+	left: 30%;
+	width: 40%;
+}
+
+[mobile] #OfflineMessage > div
+{
+	top: 20%;
+	left: 20%;
+	width: 60%;
+}
+
+#OfflineMessage > div:before
+{
+	font-size: 1.5em;
+	display: inline-block;
+}
+
+#OfflineMessage > div h1
+{
+	display: inline-block;
+}
+
+#OfflineMessage > div p
+{
+	font-size: 1.3em;
 }
 
 .Screen, .Screen > .ScreenContent

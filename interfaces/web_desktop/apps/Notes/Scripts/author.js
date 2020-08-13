@@ -23,8 +23,25 @@ Application.run = function( msg, iface )
 	
 	this.mainView = w;
 	
+	// On set flag
+	w.onSetFlag = function( flag, value )
+	{
+		/*if( flag == 'minimized' )
+		{
+			if( value )
+			{
+				Application.showWidget();
+			}
+			else
+			{
+				Application.hideWidget();
+			}
+		}*/
+	}
+	
 	w.onClose = function( closeWindow )
 	{
+		Application.destroyWidget();
 		Application.quit();
 		return false;
 	}
@@ -430,6 +447,40 @@ Application.setCorrectTitle = function()
 	}
 }
 
+Application.showWidget = function()
+{
+	if( this.widget ) return this.widget.show();
+	
+	var w = new Widget( {
+		width: 800,
+		height: 800,
+		top: 38,
+		left: 220,
+		transparent: true,
+		'border-radius': 3,
+		scrolling: false,
+		below: true
+	} );
+	this.widget = w;
+	
+	var f = new File( 'Progdir:Templates/widget.html' );
+	f.onLoad = function( data )
+	{
+		if( Application.widget ) w.setContent( data );
+	}
+	f.load();
+}
+
+Application.hideWidget = function()
+{
+	if( this.widget ) this.widget.hide();
+}
+
+Application.destroyWidget = function()
+{
+	if( this.widget ) this.widget.close();
+}
+
 Application.receiveMessage = function( msg )
 {
 	if( !msg.command ) return;
@@ -565,6 +616,11 @@ Application.receiveMessage = function( msg )
 			break;
 		case 'print_remote':
 			this.print();
+			break;
+		case 'new_blank':
+			this.fileName = i18n( 'i18n_unnamed' );
+			this.wholeFilename = this.path + this.fileName;
+			this.setCorrectTitle();
 			break;
 		case 'remembercontent':
 			this.sessionObject.content = msg.data;

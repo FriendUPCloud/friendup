@@ -69,7 +69,7 @@ var AjaxWorker = {
 									return;
 								// Add to queue
 								Friend.cajax.push( jax );
-								return Workspace.relogin();
+								return Friend.User.ReLogin();
 							}
 						}
 					}
@@ -80,7 +80,7 @@ var AjaxWorker = {
 							if( Workspace )
 							{
 								Friend.cajax.push( jax );
-								return Workspace.relogin();
+								return Friend.User.ReLogin();
 							}
 						}
 					}
@@ -95,7 +95,7 @@ var AjaxWorker = {
 						if( res == 'user session not found' )
 						{
 							Friend.cajax.push( jax );
-							return Workspace.relogin();
+							return Friend.User.ReLogin();
 						}
 					}
 					catch( e )

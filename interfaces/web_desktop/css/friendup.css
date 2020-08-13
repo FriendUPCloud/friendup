@@ -20,7 +20,7 @@ body
 
 body.Login
 {
-	background-image: url('/graphics/dew.jpg');
+	background-image: url('/graphics/release_loginimage.jpg');
 	background-size: cover;
 	background-position: center;
 	background-repeat: no-repeat;
@@ -49,6 +49,14 @@ body > #FocusGrabber
 {
 	position: fixed;
 	top: 100%;
+}
+
+#OfflineMessage
+{ 
+	position: absolute;
+	visibility: hidden; 
+	opacity: 0; 
+	pointer-events: none; 
 }
 
 /* Helper classes ----------------------------------------------------------- */

@@ -651,7 +651,6 @@ NetworkSocket.prototype.doReconnect = function()
 			Workspace.checkServerConnectionHTTP();
 		}
 		
-		console.log( 'reconnect' );
 		self.reconnectTimer = null;
 		self.connect();
 	}
@@ -672,7 +671,7 @@ NetworkSocket.prototype.doReconnect = function()
 		
 		if ( !allow )
 		{
-			// TODO: Here, we should do something - but not using Workspace.relogin()
+			Friend.User.ReLogin();
 			return false;
 		}
 		return true;
