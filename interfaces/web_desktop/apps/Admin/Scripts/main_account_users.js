@@ -2539,7 +2539,7 @@ Sections.accounts_users = function( cmd, extra )
 												}
 										
 												// Sort default by Name ASC
-												this.sortapps( 'Name' );
+												this.sortapps( 'Name', 'ASC' );
 										
 											}
 									
@@ -2746,7 +2746,10 @@ Sections.accounts_users = function( cmd, extra )
 														}
 													}
 												}
-									
+												
+												// Sort default by Name ASC
+												this.sortapps( 'Name', 'ASC' );
+												
 											}
 									
 										}
@@ -2822,7 +2825,7 @@ Sections.accounts_users = function( cmd, extra )
 										
 									},
 									
-									sortapps : function ( sortby )
+									sortapps : function ( sortby, orderby )
 									{
 		
 										//
@@ -2831,8 +2834,8 @@ Sections.accounts_users = function( cmd, extra )
 		
 										if( _this )
 										{
-											var orderby = ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' );
-			
+											orderby = ( orderby ? orderby : ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' ) );
+											
 											var list = _this.getElementsByTagName( 'div' );
 			
 											if( list.length > 0 )
