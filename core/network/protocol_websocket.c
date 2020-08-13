@@ -978,6 +978,15 @@ int ParseAndCall( WSThreadData *wstd )
 								// We could connect? If so, then just send back a pong..
 								if( AttachWebsocketToSession( SLIB, wstd->wstd_WSD->wsc_Wsi, session, NULL, wstd->wstd_WSD ) >= 0 )
 								{
+									if( wstd->wstd_WSD->wsc_UserSession != NULL )
+									{
+										locus = wstd->wstd_WSD->wsc_UserSession;
+										if( wstd->wstd_WSD->wsc_UserSession != NULL &&  FRIEND_MUTEX_LOCK( &(locus->us_Mutex) ) == 0 )
+										{
+											locus->us_InUseCounter++;
+											FRIEND_MUTEX_UNLOCK( &(locus->us_Mutex) );
+										}
+									}
 									INFO("[WS] Websocket communication set with user (sessionid) %s\n", session );
 									
 									//login = TRUE;
@@ -1009,6 +1018,15 @@ int ParseAndCall( WSThreadData *wstd )
 								// We could connect? If so, then just send back a pong..
 								if( AttachWebsocketToSession( SLIB, wstd->wstd_WSD->wsc_Wsi, NULL, authid, wstd->wstd_WSD ) >= 0 )
 								{
+									if( wstd->wstd_WSD->wsc_UserSession != NULL )
+									{
+										locus = wstd->wstd_WSD->wsc_UserSession;
+										if( wstd->wstd_WSD->wsc_UserSession != NULL &&  FRIEND_MUTEX_LOCK( &(locus->us_Mutex) ) == 0 )
+										{
+											locus->us_InUseCounter++;
+											FRIEND_MUTEX_UNLOCK( &(locus->us_Mutex) );
+										}
+									}
 									//INFO("[WS] Websocket communication set with user (authid) %s\n", authid );
 								
 									char answer[ 2048 ];

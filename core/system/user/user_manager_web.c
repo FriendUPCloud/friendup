@@ -45,24 +45,28 @@ inline static int killUserSession( SystemBase *l, UserSession *ses )
 	DEBUG("[UMWebRequest] user %s session %s will be removed by user %s msglength %d\n", uname, ses->us_SessionID, uname, msgsndsize );
 	
 	// set flag to WS connection "te be killed"
-	FRIEND_MUTEX_LOCK( &(ses->us_Mutex) );
-	ses->us_InUseCounter--;
-	if( ses->us_WSD != NULL )
+	if( FRIEND_MUTEX_LOCK( &(ses->us_Mutex) ) == 0 )
 	{
-		ses->us_WebSocketStatus = WEBSOCKET_SERVER_CLIENT_TO_BE_KILLED;
+		ses->us_InUseCounter--;
+		if( ses->us_WSD != NULL )
+		{
+			ses->us_WebSocketStatus = WEBSOCKET_SERVER_CLIENT_TO_BE_KILLED;
+		}
+		FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
 	}
-	FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
 	
 	// wait till queue will be empty
 	while( TRUE )
 	{
-		FRIEND_MUTEX_LOCK( &(ses->us_Mutex) );
-		if( ses->us_WSD == NULL || ses->us_MsgQueue.fq_First == NULL )
+		if( FRIEND_MUTEX_LOCK( &(ses->us_Mutex) ) == 0 )
 		{
+			if( ses->us_WSD == NULL || ses->us_MsgQueue.fq_First == NULL )
+			{
+				FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
+				break;
+			}
 			FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
-			break;
 		}
-		FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
 		usleep( 1000 );
 	}
 	
