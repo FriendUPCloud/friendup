@@ -2646,7 +2646,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					BufString *bs = FSManagerGetAccess( l->sl_FSM, filepath, actDev->f_ID, loggedSession->us_User );
 					if( bs != NULL )
 					{
-						HttpSetContent( response,  bs->bs_Buffer, bs->bs_Size );
+						HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
 						bs->bs_Buffer = NULL;
 						BufStringDelete( bs );
 					}

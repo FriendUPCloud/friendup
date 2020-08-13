@@ -82,11 +82,11 @@ if( isset( $args->command ) )
 	switch( $args->command )
 	{
 		case 'items':
-			if( $args->args->userID && $args->args->userID != $User->ID )
+			if( isset( $args->args->userID ) && $args->args->userID != $User->ID )
 			{
 				if( $level != 'Admin' ) die('fail<!--separate-->not authorized to sort dockitems');
 			}
-			$userid = ( $args->args->userID ? intval( $args->args->userID ) : $User->ID );
+			$userid = ( isset( $args->args->userID ) ? intval( $args->args->userID ) : $User->ID );
 			// Load root items if nothing else is requested
 			if( $rows = $SqlDatabase->FetchObjects( '
 				SELECT d.* FROM

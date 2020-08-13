@@ -58,7 +58,8 @@ if( !class_exists( 'SharedDrive' ) )
 						$paths[] = 'Shared:' . $entry->Path;
 					// Normal
 					else $paths[] = $entry->Path;
-					$files[] = $entry->ID;
+					if( isset( $entry->id ) )
+						$files[] = $entry->ID;
 					$f = false;
 					foreach( $userids as $kk=>$v )
 					{

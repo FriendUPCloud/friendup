@@ -578,66 +578,71 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				
 				if( uname != NULL && uname->hme_Data != NULL  )
 				{
-					UserSession *curusrsess = l->sl_USM->usm_Sessions;
-					while( curusrsess != NULL )
+					if( FRIEND_MUTEX_LOCK( &(l->sl_USM->usm_Mutex) ) == 0 )
 					{
-						if( curusrsess != NULL )
+						UserSession *curusrsess = l->sl_USM->usm_Sessions;
+					
+						while( curusrsess != NULL )
 						{
-							if( FRIEND_MUTEX_LOCK( &(curusrsess->us_Mutex) ) == 0 )
+							if( curusrsess != NULL )
 							{
-								curusrsess->us_InUseCounter++;
-								FRIEND_MUTEX_UNLOCK( &(curusrsess->us_Mutex) );
-							}
-						}
-						User *curusr = curusrsess->us_User;
-						
-						if( curusr != NULL )
-						{
-							DEBUG("CHECK remote user: %s pass %s  provided pass %s uname param: %s\n", curusr->u_Name, curusr->u_Password, (char *)lpass, (char *)uname->hme_Data );
-						
-							if( strcasecmp( curusr->u_Name, (char *)uname->hme_Data ) == 0 )
-							{
-								FBOOL isUserSentinel = FALSE;
-							
-								Sentinel *sent = l->GetSentinelUser( l );
-								if( sent != NULL )
+								if( FRIEND_MUTEX_LOCK( &(curusrsess->us_Mutex) ) == 0 )
 								{
-									if( curusr == sent->s_User )
-									{
-										isUserSentinel = TRUE;
-									}
+									curusrsess->us_InUseCounter++;
+									FRIEND_MUTEX_UNLOCK( &(curusrsess->us_Mutex) );
 								}
-							
-								if( isUserSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, curusr, (char *)passwd->hme_Data, &blockedTime ) == TRUE )
+							}
+							User *curusr = curusrsess->us_User;
+						
+							if( curusr != NULL )
+							{
+								DEBUG("CHECK remote user: %s pass %s  provided pass %s uname param: %s\n", curusr->u_Name, curusr->u_Password, (char *)lpass, (char *)uname->hme_Data );
+						
+								if( strcasecmp( curusr->u_Name, (char *)uname->hme_Data ) == 0 )
 								{
-									//snprintf( sessionid, sizeof(sessionid), "%lu", curusrsess->us_User->u_ID );
-									//strcpy( sessionid, curusrsess->us_User->u_MainSessionID );
-
-									loggedSession =  curusrsess;
-									userAdded = TRUE;		// there is no need to free resources
-									
-									if( curusrsess != NULL )
+									FBOOL isUserSentinel = FALSE;
+							
+									Sentinel *sent = l->GetSentinelUser( l );
+									if( sent != NULL )
 									{
-										if( FRIEND_MUTEX_LOCK( &(curusrsess->us_Mutex) ) == 0 )
+										if( curusr == sent->s_User )
 										{
-											curusrsess->us_InUseCounter--;
-											FRIEND_MUTEX_UNLOCK( &(curusrsess->us_Mutex) );
+											isUserSentinel = TRUE;
 										}
 									}
+							
+									if( isUserSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, curusr, (char *)passwd->hme_Data, &blockedTime ) == TRUE )
+									{
+										//snprintf( sessionid, sizeof(sessionid), "%lu", curusrsess->us_User->u_ID );
+										//strcpy( sessionid, curusrsess->us_User->u_MainSessionID );
 
-									break;
-								}	// compare password
-							}		// compare user name
-						}	//if usr != NULL
-						if( curusrsess != NULL )
-						{
-							if( FRIEND_MUTEX_LOCK( &(curusrsess->us_Mutex) ) == 0 )
+										loggedSession =  curusrsess;
+										userAdded = TRUE;		// there is no need to free resources
+									
+										if( curusrsess != NULL )
+										{
+											if( FRIEND_MUTEX_LOCK( &(curusrsess->us_Mutex) ) == 0 )
+											{
+												curusrsess->us_InUseCounter--;
+												FRIEND_MUTEX_UNLOCK( &(curusrsess->us_Mutex) );
+											}
+										}
+
+										break;
+									}	// compare password
+								}		// compare user name
+							}	//if usr != NULL
+							if( curusrsess != NULL )
 							{
-								curusrsess->us_InUseCounter--;
-								FRIEND_MUTEX_UNLOCK( &(curusrsess->us_Mutex) );
+								if( FRIEND_MUTEX_LOCK( &(curusrsess->us_Mutex) ) == 0 )
+								{
+									curusrsess->us_InUseCounter--;
+									FRIEND_MUTEX_UNLOCK( &(curusrsess->us_Mutex) );
+								}
 							}
+							curusrsess = (UserSession *)curusrsess->node.mln_Succ;
 						}
-						curusrsess = (UserSession *)curusrsess->node.mln_Succ;
+						FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
 					}
 				}
 			}
@@ -1120,6 +1125,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								char *fname = allArgsNew + MODULE_FILE_CALL_STRING_LEN;
 								remove( fname );
 							}
+							
+							FFree( allArgsNew );
 							
 							Log( FLOG_INFO, "Module request took %d milliseconds.", GetUnixTime() - requestStart );
 						}

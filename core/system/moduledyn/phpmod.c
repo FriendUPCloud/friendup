@@ -212,22 +212,22 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 
 		if( ret == 0 )
 		{
-			DEBUG("Timeout!\n");
+			//DEBUG("Timeout!\n");
 			break;
 		}
 		else if( ret < 0 )
 		{
-			DEBUG("Error\n");
+			//DEBUG("Error\n");
 			break;
 		}
 		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE );
 
-		DEBUG( "[PHPmod] Adding %d of data\n", size );
+		//DEBUG( "[PHPmod] Adding %d of data\n", size );
 		if( size > 0 )
 		{
-			DEBUG( "[PHPmod] before adding to list\n");
+			//DEBUG( "[PHPmod] before adding to list\n");
 			ListStringAdd( ls, buf, size );
-			DEBUG( "[PHPmod] after adding to list\n");
+			//DEBUG( "[PHPmod] after adding to list\n");
 			res += size;
 		}
 		else

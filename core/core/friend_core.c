@@ -945,6 +945,23 @@ static inline int FriendCoreAcceptPhase3( int fd, FriendCoreInstance *fc )
 		FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
 	}
 	
+	// Prepare ssl
+	SSL                 *s_Ssl    = NULL;
+	
+	struct pollfd lfds; // watch stdin for input 
+	lfds.fd = fd; // STDIN_FILENO;
+	lfds.events = POLLIN;
+	int err = poll( &lfds, 1, 250 );
+	if( err == 0 )
+	{
+		FERROR("[FriendCoreProcessSockBlock] want read TIMEOUT....\n");
+		goto accerror3;
+	}
+	else if( err < 0 )
+	{
+		FERROR("[FriendCoreProcessSockBlock] other....\n");
+		goto accerror3;
+	}
 	
 	if( fd == -1 )
 	{
@@ -978,7 +995,6 @@ static inline int FriendCoreAcceptPhase3( int fd, FriendCoreInstance *fc )
 	socklen_t           clientLen = sizeof( client );
 	Socket              *incoming = NULL;
 	SSL_CTX             *s_Ctx    = NULL;
-	SSL                 *s_Ssl    = NULL;
 
 	int prerr = getpeername( fd, (struct sockaddr *) &client, &clientLen );
 	if( prerr == -1 )
@@ -1229,6 +1245,7 @@ void *FriendCoreAcceptPhase2( void *d )
 		free( l->l_Data );
 		l->l_Data = NULL; // Clear it out
 	
+		// TODO: HT - Perhaps put in the worker thread
 		FriendCoreAcceptPhase3( fd, fc );
 		
 		l = l->next;
@@ -1289,7 +1306,7 @@ void FriendCoreProcessSockBlock( void *fcv )
 	lfds.fd = th->sock->fd;// STDIN_FILENO;
 	lfds.events = POLLIN;
 
-	int err = poll( &lfds, 1, 10 * 1000);
+	int err = poll( &lfds, 1, 10000 );
 	if( err > 0 )
 	{
 		
@@ -1297,12 +1314,12 @@ void FriendCoreProcessSockBlock( void *fcv )
 	else if( err == 0 )
 	{
 		FERROR("[FriendCoreProcessSockBlock] want read TIMEOUT....\n");
-		return;
+		goto close_fcp;
 	}
 	else
 	{
 		FERROR("[FriendCoreProcessSockBlock] other....\n");
-		return;
+		goto close_fcp;
 	}
 	SocketSetBlocking( th->sock, TRUE );
 
@@ -1860,7 +1877,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	while( !fc->fci_Shutdown )
 	{
 #ifdef SINGLE_SHOT
-			epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_MOD, fc->fci_Sockets->fd, &(fc->fci_EpollEvent) );
+		epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_MOD, fc->fci_Sockets->fd, &(fc->fci_EpollEvent) );
 #endif
 		
 		// Wait for something to happen on any of the sockets we're listening on
@@ -1978,7 +1995,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 					
 					DEBUG("[FriendCoreEpoll] Thread create pointer: %p friendcore: %p\n", pre, fc );
 					
-					if( WorkerManagerRun( sb->sl_WorkerManager, FriendCoreAcceptPhase2, pre, NULL, "FriendAcceptThread" ) != 0 )
+					/*if( WorkerManagerRun( sb->sl_WorkerManager, FriendCoreAcceptPhase2, pre, NULL, "FriendAcceptThread" ) != 0 )
 					{
 						if( pre->fds )
 						{
@@ -2002,15 +2019,34 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 							ListFreeWithData( pre->fds );
 						}
 						FFree( pre );
-					}
+					}*/
 					
-					/*
 					if( pthread_create( &pre->thread, NULL, &FriendCoreAcceptPhase2, ( void *)pre ) != 0 )
 					{
 						DEBUG("[FriendCoreEpoll] Pthread create fail\n");
+						if( pre->fds )
+						{
+							// Close up!
+							List *failed = ( List *)pre->fds;
+							while( failed )
+							{
+								if( failed->l_Data )
+								{
+									fd = *( int *)failed->l_Data;
+									shutdown( sock->fd, SHUT_RDWR );
+									close( sock->fd );
+									if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
+									{
+										fc->FDCount--;
+										FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
+									}
+								}
+								failed = failed->next;
+							}
+							ListFreeWithData( pre->fds );
+						}
 						FFree( pre );
 					}
-					*/
 				}
 #endif
 #endif // ACCEPT_IN_THREAD

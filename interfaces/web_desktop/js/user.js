@@ -111,8 +111,15 @@ Friend.User = {
     {
     	this.State = 'Login';
     	
+    	if( this.lastLogin && this.lastLogin.currentRequest )
+    	{
+    		this.lastLogin.currentRequest.destroy();
+    	}
+    	
     	// Create a new library call object
 		let m = new FriendLibrary( 'system' );
+		this.lastLogin = m;
+		
 		if( info.username && info.password )
 		{
 			Workspace.sessionId = '';
@@ -363,58 +370,75 @@ Friend.User = {
 	Init: function()
 	{
 		this.ServerIsThere = true;
-		if( this.checkInterval )
-			clearInterval( this.checkInterval );
-		this.checkInterval = setInterval( 'Friend.User.CheckServerConnection()', 15000 );
 	},
 	CheckServerNow: function()
 	{
-		if( this.checkInterval ) clearInterval( this.checkInterval );
-		this.checkInterval = setInterval( 'Friend.User.CheckServerConnection()', 15000 );
 		this.CheckServerConnection();
 	},
 	// Check if the server is alive
 	CheckServerConnection: function( useAjax )
 	{
 		if( typeof( Library ) == 'undefined' ) return;
-		let serverCheck = new Library( 'system' );
-		serverCheck.onExecuted = function( q, s )
+		if( typeof( MD5 ) == 'undefined' ) return;
+		let exf = function()
 		{
-			// Check missing session
-			let missSess = ( s && s.indexOf( 'sessionid or authid parameter is missing' ) > 0 );
-			if( !missSess && ( s && s.indexOf( 'User session not found' ) > 0 ) )
-				missSess = true;
-			if( !missSess && q == null && s == null )
-				missSess = true;
-			
-			if( ( q == 'fail' && !s ) || ( !q && !s ) || ( q == 'error' && !s ) || missSess )
+			Friend.User.serverCheck = null;
+			if( Friend.User.State != 'offline' )
 			{
-				if( missSess )
+				let serverCheck = new Library( 'system' );
+				serverCheck.onExecuted = function( q, s )
 				{
-					Friend.User.ReLogin();
+					// Check missing session
+					let missSess = ( s && s.indexOf( 'sessionid or authid parameter is missing' ) > 0 );
+					if( !missSess && ( s && s.indexOf( 'User session not found' ) > 0 ) )
+						missSess = true;
+					if( !missSess && q == null && s == null )
+						missSess = true;
+			
+					if( ( q == 'fail' && !s ) || ( !q && !s ) || ( q == 'error' && !s ) || missSess )
+					{
+						if( missSess )
+						{
+							Friend.User.ReLogin();
+						}
+						Friend.User.SetUserConnectionState( 'offline' );
+					}
+					else
+					{
+						if( !Friend.User.ServerIsThere )
+						{
+							Friend.User.SetUserConnectionState( 'online' );
+						}
+						Friend.User.ConnectionAttempts = 0;
+					}
+				};
+			
+				if( !useAjax )
+					serverCheck.forceHTTP = true;
+				serverCheck.forceSend = true;
+			
+				try
+				{
+					// Cancel previous call if it's still in pipe
+					if( Friend.User.serverCheck && Friend.User.serverCheck.currentRequest )
+					{
+						Friend.User.serverCheck.currentRequest.destroy();
+					}
+					serverCheck.execute( 'validate' );
+					Friend.User.serverCheck = serverCheck;
 				}
-				Friend.User.SetUserConnectionState( 'offline' );
+				catch( e )
+				{
+					Friend.User.SetUserConnectionState( 'offline' );
+				}
 			}
 			else
 			{
-				if( !Friend.User.ServerIsThere )
-				{
-					Friend.User.SetUserConnectionState( 'online' );
-				}
-				Friend.User.ConnectionAttempts = 0;
+				Friend.User.ReLogin();
 			}
-		}
-		if( !useAjax )
-			serverCheck.forceHTTP = true;
-		serverCheck.forceSend = true;
-		try
-		{
-			serverCheck.execute( 'validate' );
-		}
-		catch( e )
-		{
-			Friend.User.SetUserConnectionState( 'offline' );
-		}
+		};
+		// Check now!
+		exf();
 	},
 	// Set the user state (offline / online etc)
 	SetUserConnectionState: function( mode )
@@ -447,10 +471,21 @@ Friend.User = {
 					delete Workspace.conn;
 					console.log( 'Removed websocket.' );
 				}
+				
+				if( this.checkInterval )
+					clearInterval( this.checkInterval );
+				this.checkInterval = setInterval( 'Friend.User.CheckServerConnection()', 2500 );
 			}
 		}
 		else
 		{
+			// We're online again
+			if( this.checkInterval )
+			{
+				clearInterval( this.checkInterval );
+				this.checkInterval = null;
+			}
+			
 			if( this.State != 'online' )
 			{
 				this.ServerIsThere = true;
@@ -471,6 +506,8 @@ Friend.User = {
 				{
 					Workspace.initWebSocket();
 				}
+				// Clear execution queue
+				_executionQueue = {};
 			}
 		}
 	}

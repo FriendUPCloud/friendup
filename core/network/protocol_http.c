@@ -524,20 +524,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 #ifdef __PERF_MEAS
 		stime = GetCurrentTimestampD();
 #endif
-		
-		/* Count List */
-		/*{
-			UserSession *counts = SLIB->sl_USM->usm_Sessions;
-			int count = 0;
-			while( counts != NULL )
-			{
-				counts = (UserSession *)counts->node.mln_Succ;
-				count++;
-			}
-			DEBUG( "[ProtocolHttp] We have %d sessions now.\n", count );
-		}*/
-		
-		
+				
 		Log( FLOG_DEBUG, "[ProtocolHttp] Request parsed without problems.\n");
 		Uri *uri = request->http_Uri;
 		Path *path = NULL;
@@ -672,7 +659,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 										session = SLIB->sl_USM->usm_Sessions;
 										while( session != NULL )
 										{
-											if(  strcmp( session->us_SessionID, (char *)tst->hme_Data ) == 0 )
+											if( strcmp( session->us_SessionID, (char *)tst->hme_Data ) == 0 )
 											{
 												break;
 											}
@@ -1366,7 +1353,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 									session = SLIB->sl_USM->usm_Sessions;
 									while( session != NULL )
 									{
-										if(  strcmp( session->us_SessionID, (char *)tst->hme_Data ) == 0 )
+										if( strcmp( session->us_SessionID, (char *)tst->hme_Data ) == 0 )
 										{
 											break;
 										}
@@ -2031,16 +2018,16 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 														
 															FFree( runFile );
 														}
-													}
+														
+														if( isFile )
+														{
+															//"file<!--separate-->%s"
+															char *fname = allArgsNew + MODULE_FILE_CALL_STRING_LEN;
+															remove( fname );
+														}
 													
-													if( isFile )
-													{
-														//"file<!--separate-->%s"
-														char *fname = allArgsNew + MODULE_FILE_CALL_STRING_LEN;
-														remove( fname );
+														FFree( allArgsNew );
 													}
-													
-													FFree( allArgsNew );
 												}
 												
 												if( phpResp == NULL )

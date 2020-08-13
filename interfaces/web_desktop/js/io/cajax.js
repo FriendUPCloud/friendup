@@ -159,6 +159,8 @@ cAjax = function()
 		this.proxy = new ActiveXObject( 'Microsoft.XMLHTTP' );
 	else this.proxy = new XMLHttpRequest();
 	
+	this.proxy.timeout = 8000;
+	
 	// State call
 	let jax = this;
 	this.proxy.onreadystatechange = function()
@@ -366,8 +368,14 @@ cAjax.prototype.destroy = function()
 		//console.log( 'Should never happen.' );
 		this.onload( null, null );
 		this.onload = null;
-		if( this.jax )
-			this.jax.close();
+		if( this.proxy )
+		{
+			this.proxy.abort();
+		}
+	}
+	else
+	{
+		this.proxy.abort();
 	}
 
 	// Clean out possible queue and replenish

@@ -90,12 +90,15 @@ void UserSessionDelete( UserSession *us )
 				if( count > 50 )
 				{
 					Log( FLOG_INFO, "UserSessionDelete: number of working functions on user session: %d  sessionid: %s\n", us->us_InUseCounter, us->us_SessionID );
+#ifdef USE_WORKERS
 					WorkerManagerDebug( SLIB );
+#endif
 					count = 0;
 					break;
 				}
 			}
-			usleep( 100 );
+			DEBUG( "[UserSessionDelete] Trying to wait for use counter to be <= 0\n" );
+			usleep( 10000 );
 		}
 		
 		DOSToken *dosToken = (DOSToken *)us->us_DOSToken;
@@ -115,7 +118,7 @@ void UserSessionDelete( UserSession *us )
 			nrOfSessionsAttached = UserRemoveSession( us->us_User, us );
 			us->us_User = NULL;
 		}
-		SystemBase *lsb = SLIB;//(SystemBase *)us->us_SB;
+		SystemBase *lsb = SLIB;
 
 		DEBUG("[UserSessionDelete] Remove session %p\n", us );
 
@@ -143,7 +146,7 @@ void UserSessionDelete( UserSession *us )
 			{
 				if( us->us_WSD != NULL )
 				{
-					data->wsc_InUseCounter=0;
+					data->wsc_InUseCounter = 0;
 					data->wsc_UserSession = NULL;
 					data->wsc_Wsi = NULL;
 				}
@@ -371,11 +374,17 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 							us->us_MsgQueue.fq_First = en;
 							us->us_MsgQueue.fq_Last = en;
 						}
-						else
+						else if( us->us_MsgQueue.fq_Last )
 						{
 							DEBUG("========pointer to US: %p pointer to LAST %p\n", us, us->us_MsgQueue.fq_Last );
 							us->us_MsgQueue.fq_Last->node.mln_Succ = (MinNode *)en;
 							us->us_MsgQueue.fq_Last = en;
+						}
+						// HT - Something bad happened!
+						else
+						{
+							FFree( en->fq_Data );
+							FFree( en );
 						}
 					
 						DEBUG("[UserSessionWebsocketWrite] Send message to WSI, ptr: %p\n", us->us_Wsi );
