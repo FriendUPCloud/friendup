@@ -103,7 +103,7 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 			UserUSBRemoteDevices *actuserdev = USBRemoteManagerCreatePort( l->sl_USBRemoteManager, username, &error );
 			if( actuserdev != NULL )
 			{
-				char *uname, *domain, *pass, *host;
+				char *uname = NULL, *domain = NULL, *pass = NULL, *host = NULL;
 				char *buffer;
 				char path[ 512 ];
 				
