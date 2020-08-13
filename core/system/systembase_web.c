@@ -2105,7 +2105,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						
 						if( deviceid != NULL && strncmp( deviceid, "medclient-", 10 ) == 0 )
 						{
-							MitraManagerCheckAndAddToken( l->sl_MitraManager );
+							MitraManagerCheckAndAddToken( l->sl_MitraManager, TRUE );
 						}
 						
 						DEBUG("session loaded session id %s\n", loggedSession->us_SessionID );
