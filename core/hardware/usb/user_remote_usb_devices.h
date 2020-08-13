@@ -23,7 +23,7 @@
 #include <system/user/user_session.h>
 #include "usb_remote_device.h"
 
-#define MAX_REMOTE_USB_DEVICES_PER_USER 5
+//#define MAX_REMOTE_USB_DEVICES_PER_USER 5
 
 //
 //
@@ -33,7 +33,7 @@ typedef struct UserUSBRemoteDevices
 {
 	char						*uusbrd_UserName;			// user name
 	char						*uusbrd_RemoteUserName;		// user name used by remote device
-	USBRemoteDevice				*uusbrd_Devices[ MAX_REMOTE_USB_DEVICES_PER_USER ];
+	USBRemoteDevice				*uusbrd_Devices;
 	pthread_mutex_t				uusbrd_Mutex;
 	MinNode						node;
 }UserUSBRemoteDevices;
@@ -54,12 +54,12 @@ void UserUSBRemoteDevicesDelete( UserUSBRemoteDevices *dev );
 //
 //
 
-int UserUSBRemoteDevicesDeletePort( UserUSBRemoteDevices *dev, FULONG id );
+int UserUSBRemoteDevicesAddPort( UserUSBRemoteDevices *udev, USBRemoteDevice *dev );
 
 //
 //
 //
 
-int UserUSBRemoteDevicesDeletePortByPort( UserUSBRemoteDevices *dev, FULONG port );
+int UserUSBRemoteDevicesDeletePort( UserUSBRemoteDevices *dev, int port );
 
 #endif // __CORE_USB_REMOTE_USB_DEVICE_H__

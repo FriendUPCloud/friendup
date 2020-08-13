@@ -33,6 +33,16 @@ USBRemoteDevice *USBRemoteDeviceNew( )
 }
 
 /**
+ * Init USB remote device
+ *
+ * @param d usb remote device pointer
+ */
+void USBRemoteDeviceInit( USBRemoteDevice *d )
+{
+	
+}
+
+/**
  * Delete USB Remote device
  *
  * @param dev pointer to USBRemoteDevice

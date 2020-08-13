@@ -77,15 +77,13 @@ void USBRemoteManagerDelete( USBRemoteManager *usbm )
  *
  * @param usbm pointer to USBRemoteManager
  * @param username name of user to which new port will be attached
- * @param entry pointer to entry id where new port should be created
  * @param error pointer to integer value where error number will be stored
  * @return return pointer to USBRemoteDevice structure when success, otherwise NULL
  */
-UserUSBRemoteDevices *USBRemoteManagerCreatePort( USBRemoteManager *usbm, char *username, int *entry, int *error )
+UserUSBRemoteDevices *USBRemoteManagerCreatePort( USBRemoteManager *usbm, char *username, int *error )
 {
 	UserUSBRemoteDevices *actdev = NULL;
 	*error = 0;
-	*entry = -1;
 	
 	DEBUG("[USBRemoteManagerCreatePort] username: %s\n", username );
 	
@@ -110,23 +108,7 @@ UserUSBRemoteDevices *USBRemoteManagerCreatePort( USBRemoteManager *usbm, char *
 		
 		DEBUG("[USBRemoteManagerCreatePort] User to which device will be mounted found: %p\n", actdev );
 		// device found
-		if( actdev != NULL )
-		{
-			int i;
-			*error = 1;	// all ports used
-			for( i=0 ; i < MAX_REMOTE_USB_DEVICES_PER_USER ; i++ )
-			{
-				DEBUG("[USBRemoteManagerCreatePort] going through all devices\n");
-				if( actdev->uusbrd_Devices[ i ] == NULL )
-				{
-					DEBUG("[USBRemoteManagerCreatePort] found empty slot!\n");
-					*error = 0;	// we found empty place
-					*entry = i;
-					break;
-				}
-			}
-		}
-		else
+		if( actdev == NULL )
 		{
 			// username, windows user name, internet address
 			DEBUG("[USBRemoteManagerCreatePort] Create new user devices\n");
@@ -139,7 +121,6 @@ UserUSBRemoteDevices *USBRemoteManagerCreatePort( USBRemoteManager *usbm, char *
 				usbm->usbrm_UserDevices = actdev;
 				FRIEND_MUTEX_UNLOCK( &(usbm->usbrm_Mutex ) );
 			}
-			*entry = 0;
 		}
 		DEBUG("[USBRemoteManagerCreatePort] actdev pointer: %p\n", actdev );
 	}
@@ -222,7 +203,7 @@ int USBRemoteManagerDeletePortByPort( USBRemoteManager *usbm, char *username, FU
 		
 		if( actdev != NULL )
 		{
-			UserUSBRemoteDevicesDeletePortByPort( actdev, port );
+			UserUSBRemoteDevicesDeletePort( actdev, port );
 		}
 	}
 	else

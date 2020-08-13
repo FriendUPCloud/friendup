@@ -99,17 +99,16 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 		if( username != NULL )
 		{
 			int error = 0;
-			int entry = -1;
 			
-			UserUSBRemoteDevices *actuserdev = USBRemoteManagerCreatePort( l->sl_USBRemoteManager, username, &entry, &error );
-			if( ( entry >= 0 && entry < 5 ) && actuserdev != NULL )
+			UserUSBRemoteDevices *actuserdev = USBRemoteManagerCreatePort( l->sl_USBRemoteManager, username, &error );
+			if( actuserdev != NULL )
 			{
 				char *uname, *domain, *pass, *host;
 				char *buffer;
 				char path[ 512 ];
 				
-				actuserdev->uusbrd_Devices[ entry ] = USBRemoteDeviceNew();
-				USBRemoteDevice *actdev = actuserdev->uusbrd_Devices[ entry ];
+				USBRemoteDevice *actdev = USBRemoteDeviceNew();
+				UserUSBRemoteDevicesAddPort( actuserdev, actdev );
 				
 				//snprintf( tmp, sizeof(tmp), "/%s/", geoFormat );
 				
@@ -128,6 +127,7 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 				sprintf( usbPassword, "%ld%s%d", time(NULL), loggedSession->us_SessionID, ( rand() % 999 ) + ( rand() % 999 ) + ( rand() % 999 ) );
 				HashedString( &usbPassword );
 				
+				actdev->usbrd_Name = StringDuplicate( username );
 				actdev->usbrd_Password = usbPassword;
 				
 				/*
@@ -284,7 +284,7 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 		response = HttpNewSimple(HTTP_200_OK, tags);
 
 		char *username = NULL;
-		FULONG port = 0;
+		FLONG port = 0;
 		
 		HashmapElement *el = HttpGetPOSTParameter( request, "username" );
 		if (el != NULL)
@@ -302,29 +302,60 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 		if( username != NULL && port > 0 )
 		{
 			int error = 0;
-			char  path[ 128 ];
+			char  portString[ 128 ];
 			
-			snprintf( path, sizeof(path), "Usb/Close?port=%lu", port );	// lets recognize port by
+			snprintf( portString, sizeof(portString), "Usb/Close?port=%lu", port );	// lets recognize port by
 			
 			int errorCode;
 			
-			BufString *rsp = MitraManagerCall( l->sl_MitraManager, path, &errorCode );
-			if( rsp != NULL )
+			if( port == -1 )	// remove all user devices
 			{
-				// ask for key again
-				DEBUG("[USBRemoteWEB] error code: %d\n", errorCode );
-				if( errorCode == 401 )
+				UserUSBRemoteDevices *userusbdevices = USBRemoteManagerGetPorts( l->sl_USBRemoteManager, username );
+				USBRemoteDevice *dev = userusbdevices->uusbrd_Devices;
+				while( dev != NULL )
 				{
-					MitraManagerCheckAndAddToken( l->sl_MitraManager, TRUE );
+					// send request to windows that we want to remove user port after port
+					snprintf( portString, sizeof(portString), "Usb/Close?port=%d", dev->usbrd_IPPort );	// lets recognize port by
+					
+					BufString *rsp = MitraManagerCall( l->sl_MitraManager, portString, &errorCode );
 					if( rsp != NULL )
 					{
-						BufStringDelete( rsp );
+						// ask for key again
+						DEBUG("[USBRemoteWEB] error code: %d\n", errorCode );
+						if( errorCode == 401 )
+						{
+							MitraManagerCheckAndAddToken( l->sl_MitraManager, TRUE );
+							if( rsp != NULL )
+							{
+								BufStringDelete( rsp );
+							}
+							rsp = MitraManagerCall( l->sl_MitraManager, portString, &errorCode );
+						}
 					}
-					rsp = MitraManagerCall( l->sl_MitraManager, path, &errorCode );
+					dev = (USBRemoteDevice *) dev->node.mln_Succ;
 				}
 			}
+			else
+			{
+				BufString *rsp = MitraManagerCall( l->sl_MitraManager, portString, &errorCode );
+				if( rsp != NULL )
+				{
+					// ask for key again
+					DEBUG("[USBRemoteWEB] error code: %d\n", errorCode );
+					if( errorCode == 401 )
+					{
+						MitraManagerCheckAndAddToken( l->sl_MitraManager, TRUE );
+						if( rsp != NULL )
+						{
+							BufStringDelete( rsp );
+						}
+						rsp = MitraManagerCall( l->sl_MitraManager, portString, &errorCode );
+					}
+				}
 			
-			error = USBRemoteManagerDeletePortByPort( l->sl_USBRemoteManager, username, port );
+				error = USBRemoteManagerDeletePortByPort( l->sl_USBRemoteManager, username, port );
+			}
+			
 			if( error == 0 )
 			{
 				HttpAddTextContent( response, "ok<!--separate-->{ \"result\": \"sucess\" }" );
@@ -399,26 +430,30 @@ Http* USBRemoteManagerWebRequest( void *lb, char **urlpath, Http* request, UserS
 			
 				BufStringAdd( bs, " {\"usbports\": [");
 			
-				for( pos = 0; pos < MAX_REMOTE_USB_DEVICES_PER_USER ; pos++ )
+				if( FRIEND_MUTEX_LOCK( &(ususbdev->uusbrd_Mutex) ) == 0 )
 				{
-					USBRemoteDevice *actdev =  ususbdev->uusbrd_Devices[ pos ];
-				
-					if( actdev != NULL )
+					USBRemoteDevice *actdev =  ususbdev->uusbrd_Devices;
+					while( actdev )
 					{
-						char tempBuffer[ 1024 ];
-						if( pos > 0)
+						if( actdev != NULL )
 						{
-							BufStringAdd( bs, ", ");
-						}
+							char tempBuffer[ 1024 ];
+							if( pos > 0)
+							{
+								BufStringAdd( bs, ", ");
+							}
 				
-						int msgsize = snprintf( tempBuffer, sizeof( tempBuffer ), "{\"deviceid\":\"%lu\",\"address\":\"%s\",\"port\":%d,\"uname\":\"%s\",\"password\":\"%s\"}", actdev->usbrd_ID, actdev->usbrd_NetworkAddress, actdev->usbrd_IPPort, actdev->usbrd_Login, actdev->usbrd_Password );
+							int msgsize = snprintf( tempBuffer, sizeof( tempBuffer ), "{\"deviceid\":\"%lu\",\"address\":\"%s\",\"port\":%d,\"uname\":\"%s\",\"password\":\"%s\"}", actdev->usbrd_ID, actdev->usbrd_NetworkAddress, actdev->usbrd_IPPort, actdev->usbrd_Login, actdev->usbrd_Password );
 
-						BufStringAddSize( bs, tempBuffer, msgsize );
+							BufStringAddSize( bs, tempBuffer, msgsize );
+						}
+						else
+						{
+							FERROR("USBPort not found\n");
+						}
+						actdev = (USBRemoteDevice *)actdev->node.mln_Succ;
 					}
-					else
-					{
-						FERROR("USBPort not found\n");
-					}
+					FRIEND_MUTEX_UNLOCK( &(ususbdev->uusbrd_Mutex) );
 				}
 
 				BufStringAdd( bs, "]}" );

@@ -51,13 +51,19 @@ void USBRemoteManagerDelete( USBRemoteManager *usbm );
 //
 //
 
-UserUSBRemoteDevices *USBRemoteManagerCreatePort( USBRemoteManager *usbm, char *username, int *entry, int *error );
+UserUSBRemoteDevices *USBRemoteManagerCreatePort( USBRemoteManager *usbm, char *username, int *error );
 
 //
 //
 //
 
 int USBRemoteManagerDeletePort( USBRemoteManager *usbm, char *username, FULONG id );
+
+//
+//
+//
+
+int USBRemoteManagerDeletePortByPort( USBRemoteManager *usbm, char *username, FULONG port );
 
 //
 //
