@@ -2318,6 +2318,16 @@ Sections.accounts_templates = function( cmd, extra )
 							
 							head : function ( hidecol )
 							{
+								
+								var inp = ge( 'AdminDockContainer' ).getElementsByTagName( 'input' )[0];
+								inp.value = '';
+								
+								if( ge( 'DockSearchCancelBtn' ) && ge( 'DockSearchCancelBtn' ).classList.contains( 'Open' ) )
+								{
+									ge( 'DockSearchCancelBtn' ).classList.remove( 'Open' );
+									ge( 'DockSearchCancelBtn' ).classList.add( 'Closed' );
+								}
+								
 								var o = ge( 'DockGui' ); o.innerHTML = '';
 								
 								this.func.updateids( 'dock' );
@@ -2334,22 +2344,32 @@ Sections.accounts_templates = function( cmd, extra )
 										'child' : 
 										[ 
 											{ 
-												'element' : function() 
+												'element' : function( _this ) 
 												{
 													var d = document.createElement( 'div' );
 													d.className = 'PaddingSmall HContent40 FloatLeft';
 													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+													d.ele = this;
+													d.onclick = function(  )
+													{
+														_this.sortdock( 'Name' );
+													};
 													return d;
-												}() 
+												}( this ) 
 											}, 
 											{ 
-												'element' : function() 
+												'element' : function( _this )  
 												{
 													var d = document.createElement( 'div' );
 													d.className = 'PaddingSmall HContent25 FloatLeft Relative';
 													d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
+													d.ele = this;
+													d.onclick = function(  )
+													{
+														_this.sortdock( 'Category' );
+													};
 													return d;
-												}()
+												}( this )
 											},
 											{ 
 												'element' : function() 
@@ -2447,11 +2467,14 @@ Sections.accounts_templates = function( cmd, extra )
 																	{ 
 																		'element' : function() 
 																		{
-																			var d = document.createElement( 'div' );
+																			var d = document.createElement( 'span' );
+																			d.setAttribute( 'Name', apps[k].Name );
+																			d.setAttribute( 'Category', apps[k].Category );
 																			d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																			d.style.backgroundSize = 'contain';
 																			d.style.width = '24px';
 																			d.style.height = '24px';
+																			d.style.display = 'block';
 																			return d;
 																		}(), 
 																		 'child' : 
@@ -2671,18 +2694,21 @@ Sections.accounts_templates = function( cmd, extra )
 																{
 																	var d = document.createElement( 'div' );
 																	d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
-																	return d;;
+																	return d;
 																}(),
 																 'child' : 
 																[ 
 																	{ 
 																		'element' : function() 
 																		{
-																			var d = document.createElement( 'div' );
+																			var d = document.createElement( 'span' );
+																			d.setAttribute( 'Name', apps[k].Name );
+																			d.setAttribute( 'Category', apps[k].Category );
 																			d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																			d.style.backgroundSize = 'contain';
 																			d.style.width = '24px';
 																			d.style.height = '24px';
+																			d.style.display = 'block';
 																			return d;
 																		}(), 
 																		 'child' : 
@@ -2814,10 +2840,151 @@ Sections.accounts_templates = function( cmd, extra )
 											}
 									
 										}
+										
+										// Sort default by Name ASC
+										this.sortdock( 'Name', 'ASC' );
+										
 									}
 									
 								}
 								
+							},
+							
+							searchdock : function ( filter, server )
+							{
+								
+								if( ge( 'DockInner' ) )
+								{
+									var list = ge( 'DockInner' ).getElementsByTagName( 'div' );
+
+									if( list.length > 0 )
+									{
+										for( var a = 0; a < list.length; a++ )
+										{
+											if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+		
+											var span = list[a].getElementsByTagName( 'span' )[0];
+		
+											if( span )
+											{
+												var param = [
+													( " " + span.getAttribute( 'name' ).toLowerCase() + " " ), 
+													( " " + span.getAttribute( 'category' ).toLowerCase() + " " )
+												];
+												
+												if( !filter || filter == ''  
+												|| span.getAttribute( 'name' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+												|| span.getAttribute( 'category' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+												)
+												{
+													list[a].style.display = '';
+				
+													var div = list[a].getElementsByTagName( 'div' );
+				
+													if( div.length )
+													{
+														for( var i in div )
+														{
+															if( div[i] && div[i].className && ( div[i].className.indexOf( 'name' ) >= 0 || div[i].className.indexOf( 'category' ) >= 0 ) )
+															{
+																// TODO: Make text searched for ...
+															}
+														}
+													}
+												}
+												else
+												{
+													list[a].style.display = 'none';
+												}
+											}
+										}
+	
+									}
+									
+									if( ge( 'DockSearchCancelBtn' ) )
+									{
+										if( !filter && ( ge( 'DockSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'DockSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+										{
+											ge( 'DockSearchCancelBtn' ).classList.remove( 'Open' );
+											ge( 'DockSearchCancelBtn' ).classList.add( 'Closed' );
+										}
+										
+										else if( filter != '' && ( ge( 'DockSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'DockSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+										{
+											ge( 'DockSearchCancelBtn' ).classList.remove( 'Closed' );
+											ge( 'DockSearchCancelBtn' ).classList.add( 'Open' );
+										}
+									}
+								}
+								
+							},
+							
+							sortdock : function ( sortby, orderby )
+							{
+
+								//
+
+								var _this = ge( 'DockInner' );
+
+								if( _this )
+								{
+									orderby = ( orderby ? orderby : ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' ) );
+									
+									var list = _this.getElementsByTagName( 'div' );
+	
+									if( list.length > 0 )
+									{
+										var output = [];
+		
+										var callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
+		
+										for( var a = 0; a < list.length; a++ )
+										{
+											if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+			
+											var span = list[a].getElementsByTagName( 'span' )[0];
+			
+											if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' )
+											{
+												var obj = { 
+													sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
+													content : list[a]
+												};
+			
+												output.push( obj );
+											}
+										}
+		
+										if( output.length > 0 )
+										{
+											// Sort ASC default
+			
+											output.sort( callback );
+			
+											// Sort DESC
+			
+											if( orderby == 'DESC' ) 
+											{ 
+												output.reverse();  
+											}
+			
+											_this.innerHTML = '';
+			
+											_this.setAttribute( 'orderby', orderby );
+			
+											for( var key in output )
+											{
+												if( output[key] && output[key].content )
+												{
+													// Add row
+													_this.appendChild( output[key].content );
+												}
+											}
+										}
+									}
+								}
+
+								//console.log( output );
 							},
 							
 							refresh : function (  )
@@ -3066,7 +3233,18 @@ Sections.accounts_templates = function( cmd, extra )
 										
 									};
 								}
-							
+								
+								var inp = ge( 'AdminDockContainer' ).getElementsByTagName( 'input' )[0];
+								inp.onkeyup = function( e )
+								{
+									init.searchdock( this.value );
+								}
+								ge( 'DockSearchCancelBtn' ).onclick = function( e )
+								{
+									init.searchdock( false );
+									inp.value = '';
+								}
+								
 								// Show listed dock ... 
 						
 								init.list();

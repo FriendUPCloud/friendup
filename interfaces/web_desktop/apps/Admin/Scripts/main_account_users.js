@@ -3198,7 +3198,7 @@ Sections.accounts_users = function( cmd, extra )
 																		{
 																			var d = document.createElement( 'div' );
 																			d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
-																			return d;;
+																			return d;
 																		}(),
 																		 'child' : 
 																		[ 
@@ -3605,6 +3605,10 @@ Sections.accounts_users = function( cmd, extra )
 													}
 									
 												}
+												
+												// Sort default by Name ASC
+												this.sortdock( 'Name', 'ASC' );
+												
 											}
 									
 										}
@@ -3680,7 +3684,7 @@ Sections.accounts_users = function( cmd, extra )
 										
 									},
 									
-									sortdock : function ( sortby )
+									sortdock : function ( sortby, orderby )
 									{
 		
 										//
@@ -3689,8 +3693,8 @@ Sections.accounts_users = function( cmd, extra )
 		
 										if( _this )
 										{
-											var orderby = ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' );
-			
+											orderby = ( orderby ? orderby : ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' ) );
+											
 											var list = _this.getElementsByTagName( 'div' );
 			
 											if( list.length > 0 )
