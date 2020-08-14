@@ -101,9 +101,12 @@ void releaseWSData( WSThreadData *data )
 
 void WSThreadPing( void *p )
 {
+	pthread_detach( pthread_self() );
+	
 	WSThreadData *data = (WSThreadData *)p;
 	if( data == NULL )
 	{
+		pthread_exit( NULL );
 		return;
 	}
 	
@@ -120,6 +123,7 @@ void WSThreadPing( void *p )
 			}
 			FFree( data );
 		}
+		pthread_exit( NULL );
 		return;
 	}
 	
@@ -147,6 +151,7 @@ void WSThreadPing( void *p )
 	
 	releaseWSData( data );
 
+	pthread_exit( NULL );
 	return;
 }
 

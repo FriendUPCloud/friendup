@@ -1058,9 +1058,12 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 
 void ProcessMobileRegister( void *locd )
 {
+	pthread_detach( pthread_self() );
+
 	NotifRegMsg *notregmsg = (NotifRegMsg *)locd;
 	if( notregmsg == NULL )
 	{
+		pthread_exit( NULL );
 		return;
 	}
 	void *lsb = notregmsg->lsb;
@@ -1316,7 +1319,9 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	if( title != NULL ) FFree( title );
 	if( message != NULL ) FFree( message );
 	if( extraString != NULL ) FFree( extraString );
+	pthread_exit( NULL );
 #else
+	pthread_exit( NULL );
 	return 0;
 #endif
 }

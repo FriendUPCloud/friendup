@@ -303,8 +303,9 @@ void ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 #else
 void ProcessSinkMessage( void *locd )
 {
-	SinkProcessMessage *spm = (SinkProcessMessage *)locd;
 	pthread_detach( pthread_self() );
+	
+	SinkProcessMessage *spm = (SinkProcessMessage *)locd;
 	if( spm == NULL )
 	{
 		return;
@@ -893,6 +894,8 @@ error_point:
 		FFree( data );
 	}
 #endif
+	
+	pthread_exit( NULL );
 	
 	return;
 }

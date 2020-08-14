@@ -545,6 +545,8 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
  */
 int CommServiceRemoteThreadServer( FThread *ptr )
 {
+	pthread_detach( pthread_self() );
+	
 	CommServiceRemote *service = (CommServiceRemote *)ptr->t_Data;
 	
 	DEBUG("[CommServiceRemote]  Start\n");
@@ -564,6 +566,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 		{
 			service->csr_Socket->s_Interface->SocketDelete( service->csr_Socket );
 			FERROR("[CommServiceRemote]  Cannot listen on socket!\n");
+			pthread_exit( NULL );
 			return -1;
 		}
 		
@@ -735,6 +738,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 		if( service->csr_Epollfd == -1 )
 		{
 			FERROR( "[CommServiceRemote]  poll_create\n" );
+			pthread_exit( NULL );
 			return -1;
 		}
 		
@@ -747,6 +751,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 		if( epoll_ctl( service->csr_Epollfd, EPOLL_CTL_ADD, service->csr_Socket->fd, &mevent ) == -1 )
 		{
 			FERROR( "[CommServiceRemote]  epoll_ctl" );
+			pthread_exit( NULL );
 			return -1;
 		}
 		
@@ -1042,6 +1047,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 	
 	ptr->t_Launched = FALSE;
 	
+	pthread_exit( NULL );
 	return 0;
 }
 

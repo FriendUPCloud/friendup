@@ -456,6 +456,8 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 
 void NotificationIOSSendingThread( FThread *data )
 {
+	pthread_detach( pthread_self() );
+	
 	data->t_Launched = TRUE;
 	NotificationManager *nm = (NotificationManager *)data->t_Data;
 	SSL_CTX *ctx;
@@ -474,6 +476,7 @@ void NotificationIOSSendingThread( FThread *data )
 	if( !ctx )
 	{
 		FERROR("NotificationIOSSendingThread: SSL_CTX_new()...failed\n");
+		pthread_exit( NULL );
 		return;
 	}
     
@@ -482,6 +485,7 @@ void NotificationIOSSendingThread( FThread *data )
 		SSL_CTX_free( ctx );
 		ERR_print_errors_fp( stderr );
 		FERROR("NotificationIOSSendingThread: verify location fail\n");
+		pthread_exit( NULL );
 		return;
 	}
     
@@ -490,6 +494,7 @@ void NotificationIOSSendingThread( FThread *data )
 		SSL_CTX_free( ctx );
 		ERR_print_errors_fp( stderr );
 		FERROR("NotificationIOSSendingThread: certyficate empty\n");
+		pthread_exit( NULL );
 		return;
 	}
 	
@@ -498,6 +503,7 @@ void NotificationIOSSendingThread( FThread *data )
 		SSL_CTX_free( ctx );
 		ERR_print_errors_fp( stderr );
 		FERROR("NotificationIOSSendingThread: use certyficate fail\n");
+		pthread_exit( NULL );
 		return;
 	}
     
@@ -506,6 +512,7 @@ void NotificationIOSSendingThread( FThread *data )
 		SSL_CTX_free( ctx );
 		ERR_print_errors_fp( stderr );
 		FERROR("NotificationIOSSendingThread: use private key fail\n");
+		pthread_exit( NULL );
 		return;
 	}
     
@@ -514,6 +521,7 @@ void NotificationIOSSendingThread( FThread *data )
 		SSL_CTX_free( ctx );
 		ERR_print_errors_fp( stderr );
 		FERROR("NotificationIOSSendingThread: check private key\n");
+		pthread_exit( NULL );
 		return;
 	}
 	
@@ -675,6 +683,8 @@ void NotificationIOSSendingThread( FThread *data )
 	SSL_CTX_free( ctx );
 	
 	data->t_Launched = FALSE;
+	
+	pthread_exit( NULL );
 }
 
 /**

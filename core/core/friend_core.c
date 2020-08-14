@@ -1005,7 +1005,7 @@ static inline int FriendCoreAcceptPhase3( int fd, FriendCoreInstance *fc )
 	// Get incoming
 	int lbreak = 0;
 
-	if( fc->fci_Sockets->s_SSLEnabled == TRUE )
+	if( fc->fci_Sockets && fc->fci_Sockets->s_SSLEnabled == TRUE )
 	{
 		int srl = 0;
 
@@ -1476,7 +1476,7 @@ void FriendCoreProcessSockBlock( void *fcv )
 	BufStringDiskDelete( resultString );
 
 #ifdef USE_PTHREAD
-	pthread_exit( 0 );
+	pthread_exit( NULL );
 #endif
 	return;
 }
@@ -1494,7 +1494,7 @@ void FriendCoreProcessSockNonBlock( void *fcv )
 	if( fcv == NULL )
 	{
 #ifdef USE_PTHREAD
-		pthread_exit( 0 );
+		pthread_exit( NULL );
 #endif
 		return;
 	}
@@ -1505,7 +1505,7 @@ void FriendCoreProcessSockNonBlock( void *fcv )
 	{
 		FFree( th );
 #ifdef USE_PTHREAD
-		pthread_exit( 0 );
+		pthread_exit( NULL );
 #endif
 		return;
 	}
@@ -1642,7 +1642,7 @@ void FriendCoreProcessSockNonBlock( void *fcv )
 	BufStringDiskDelete( resultString );
 
 #ifdef USE_PTHREAD
-	pthread_exit( 0 );
+	pthread_exit( NULL );
 #endif
 	return;
 }

@@ -132,6 +132,8 @@ int PIDThreadManagerRemoveThreads( PIDThreadManager *ptm )
 
 void PIDThreadThread( FThread *t )
 {
+	pthread_detach( pthread_self() );
+	
 	DEBUG("[PIDThreadManager] thread start\n");
 	PIDThread *pidt = (PIDThread *)t->t_Data;
 	if( pidt != NULL )
@@ -157,7 +159,7 @@ void PIDThreadThread( FThread *t )
 	DEBUG("[PIDThreadManager] thread end\n");
 	t->t_Launched = FALSE;
 	
-	pthread_exit( 0 );
+	pthread_exit( NULL );
 }
 
 /**
