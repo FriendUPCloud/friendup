@@ -939,12 +939,6 @@ accerror:
 // HT
 static inline int FriendCoreAcceptPhase3( int fd, FriendCoreInstance *fc )
 {	
-	if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
-	{
-		fc->FDCount--;
-		FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
-	}
-	
 	// Prepare ssl
 	SSL                 *s_Ssl    = NULL;
 	
@@ -1157,13 +1151,6 @@ static inline int FriendCoreAcceptPhase3( int fd, FriendCoreInstance *fc )
 				pthread_attr_setstacksize( &attr, stacksize );
 				
 				// Make sure we keep the number of threads under the limit
-				
-				if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
-				{
-					fc->FDCount++;
-					FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
-				}
-				
 				DEBUG("[FriendCoreAcceptPhase3] create process friendcoreprocessosckblock\n");
 				//change NULL to &attr
 				if( pthread_create( &pre->thread, &attr, (void *(*) (void *))&FriendCoreProcessSockBlock, ( void *)pre ) != 0 )
@@ -1240,13 +1227,30 @@ void *FriendCoreAcceptPhase2( void *d )
 		// Get socket!
 		DEBUG( "[FriendCoreAcceptPhase2] Using stored fds!\n" );
 		
-		if( !l->l_Data ) continue;
+		if( !l->l_Data ) 
+		{
+			// We are not in use!
+			if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
+			{
+				fc->FDCount--;
+				FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
+			}
+			continue;
+		}
+		
 		fd = *( int *)l->l_Data;
 		free( l->l_Data );
 		l->l_Data = NULL; // Clear it out
 	
 		// TODO: HT - Perhaps put in the worker thread
 		FriendCoreAcceptPhase3( fd, fc );
+		
+		// We are not in use!
+		if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
+		{
+			fc->FDCount--;
+			FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
+		}
 		
 		l = l->next;
 	}	// while accept
@@ -1288,18 +1292,21 @@ void FriendCoreProcessSockBlock( void *fcv )
 
 	struct fcThreadInstance *th = ( struct fcThreadInstance *)fcv;
 
+	BufStringDisk *resultString = NULL;
+
+	// We are now in use!
+	if( FRIEND_MUTEX_LOCK( &(th->fc->fci_AcceptMutex) ) == 0 )
+	{
+		th->fc->FDCount++;
+		FRIEND_MUTEX_UNLOCK( &(th->fc->fci_AcceptMutex) );
+	}
+
 	if( th->sock == NULL )
 	{
-		FFree( th );
-#ifdef USE_PTHREAD
-		pthread_exit( NULL );
-#endif
-		return;
+		goto close_fcp;
 	}
 
 	// Let's go!
-	
-	
 	
 	struct pollfd lfds;
 	// watch stdin for input 
@@ -1321,12 +1328,13 @@ void FriendCoreProcessSockBlock( void *fcv )
 		FERROR("[FriendCoreProcessSockBlock] other....\n");
 		goto close_fcp;
 	}
+	
 	SocketSetBlocking( th->sock, TRUE );
 
 	FQUAD bufferSize = HTTP_READ_BUFFER_DATA_SIZE;
 	FQUAD bufferSizeAlloc = HTTP_READ_BUFFER_DATA_SIZE_ALLOC;
 
-	BufStringDisk *resultString = BufStringDiskNewSize( TUNABLE_LARGE_HTTP_REQUEST_SIZE );
+	resultString = BufStringDiskNewSize( TUNABLE_LARGE_HTTP_REQUEST_SIZE );
 
 	char *locBuffer = FMalloc( bufferSizeAlloc );
 
@@ -1345,6 +1353,7 @@ void FriendCoreProcessSockBlock( void *fcv )
 		
 		while( TRUE )
 		{
+			DEBUG( "Waiting!!\n" );
 			// Only increases timeouts in retries
 			if( retryContentNotFull == 1 )
 			{
@@ -1400,6 +1409,7 @@ void FriendCoreProcessSockBlock( void *fcv )
 				{
 					if( retryContentNotFull++ > 500 )
 					{
+						DEBUG( "Done trying\n" );
 						break;
 					}
 					else	// we check size and try again
@@ -1455,16 +1465,20 @@ void FriendCoreProcessSockBlock( void *fcv )
 	// Shortcut!
 	close_fcp:
 	
-	DEBUG( "[FriendCoreProcessSockBlock] Closing socket %d.\n", th->sock->fd );
-	
+	// We are not in use!
 	if( FRIEND_MUTEX_LOCK( &(th->fc->fci_AcceptMutex) ) == 0 )
 	{
 		th->fc->FDCount--;
 		FRIEND_MUTEX_UNLOCK( &(th->fc->fci_AcceptMutex) );
 	}
 	
-	th->sock->s_Interface->SocketDelete( th->sock );
-	th->sock = NULL;
+	DEBUG( "[FriendCoreProcessSockBlock] Closing socket %d.\n", th->sock->fd );
+	
+	if( th->sock )
+	{
+		th->sock->s_Interface->SocketDelete( th->sock );
+		th->sock = NULL;
+	}
 
 	// Free the pair
 	if( th != NULL )
@@ -1473,7 +1487,8 @@ void FriendCoreProcessSockBlock( void *fcv )
 		th = NULL;
 	}
 
-	BufStringDiskDelete( resultString );
+	if( resultString )
+		BufStringDiskDelete( resultString );
 
 #ifdef USE_PTHREAD
 	pthread_exit( NULL );
@@ -1885,6 +1900,95 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 		eventCount = epoll_pwait( fc->fci_Epollfd, events, fc->fci_MaxPoll, 250, &curmask );
 		//DEBUG("[FriendCoreEpoll] Epollwait, eventcount: %d\n", eventCount );
 
+		// Something strange happened - handle closing listening socket!
+		if( eventCount <= 0 )
+		{
+			if( errno == EBADF || errno == EINVAL )
+			{
+				if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
+				{
+					while( fc->FDCount > 0 )
+					{
+						DEBUG( "[FriendCoreEpoll] Waiting, current fds: %d\n", fc->FDCount );
+						FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
+						usleep( 200 );
+						FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) );
+					}
+					FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
+				}
+			
+				DEBUG( "[FriendCoreEpoll] Kill myself!\n" );
+			
+				fc->fci_Sockets->s_Interface->SocketDelete( fc->fci_Sockets );
+			
+				// Make a new listening socket
+				SystemBase *lsb = (SystemBase *)fc->fci_SB;
+				fc->fci_Sockets = SocketNew( lsb, fc->fci_SSLEnabled, fc->fci_Port, SOCKET_TYPE_SERVER );
+
+				if( fc->fci_Sockets == NULL )
+				{
+					Log( FLOG_ERROR, "[FriendCoreEpoll] New, cannot create socket on port: %d!\n", fc->fci_Port );
+					fc->fci_Closed = TRUE;
+					fc->fci_Shutdown = TRUE;
+					continue;
+				}
+
+				// Non blocking listening!
+				//if( SocketSetBlocking( fc->fci_Sockets, TRUE ) == -1 )
+				if( SocketSetBlocking( fc->fci_Sockets, FALSE ) == -1 )
+				{
+					Log( FLOG_ERROR, "[FriendCoreEpoll] New, cannot set socket to blocking state!\n");
+					fc->fci_Sockets->s_Interface->SocketDelete( fc->fci_Sockets );
+					fc->fci_Closed = TRUE;
+					fc->fci_Shutdown = TRUE;
+					continue;
+				}
+
+				SSL_CTX_get_read_ahead( fc->fci_Sockets->s_Ctx );
+				SSL_CTX_set_session_cache_mode( fc->fci_Sockets->s_Ctx, SSL_SESS_CACHE_CLIENT | SSL_SESS_CACHE_NO_INTERNAL_STORE);
+
+				if( SocketListen( fc->fci_Sockets ) != 0 )
+				{
+					Log( FLOG_ERROR, "[FriendCoreEpoll] New, cannot setup socket!\nCheck if port: %d\n", fc->fci_Port );
+					fc->fci_Sockets->s_Interface->SocketDelete( fc->fci_Sockets );
+					fc->fci_Closed= TRUE;
+					continue;
+				}
+			
+				fc->fci_Epollfd = epoll_create1( EPOLL_CLOEXEC );
+				if( fc->fci_Epollfd == -1 )
+				{
+					Log( FLOG_ERROR, "[FriendCore] New, epoll_create\n" );
+					fc->fci_Sockets->s_Interface->SocketDelete( fc->fci_Sockets );
+					fc->fci_Closed = TRUE;
+					continue;
+				}
+
+				// Register for events
+
+				memset( &(fc->fci_EpollEvent), 0, sizeof( fc->fci_EpollEvent ) );
+				fc->fci_EpollEvent.data.ptr = fc->fci_Sockets;
+	#ifdef SINGLE_SHOT
+				fc->fci_EpollEvent.events = EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP | EPOLLERR | EPOLLONESHOT ;// | EPOLLEXCLUSIVE ; //all flags are necessary, otherwise epoll may not deliver disconnect events and socket descriptors will leak
+	#else
+				fc->fci_EpollEvent.events = EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP | EPOLLERR;// | EPOLLEXCLUSIVE ; //all flags are necessary, otherwise epoll may not deliver disconnect events and socket descriptors will leak
+	#endif
+			
+				if( epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_ADD, fc->fci_Sockets->fd, &(fc->fci_EpollEvent) ) == -1 )
+				{
+					Log( FLOG_ERROR, "[FriendCoreEpoll] epoll_ctl fail\n" );
+					fc->fci_Shutdown = TRUE;
+				}
+				else
+				{
+					DEBUG( "[FriendCoreEpoll] Just Continued.\n" );
+				}
+				continue;
+			}
+		}
+		
+		/*
+		This is only used to track fds....
 		if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
 		{
 			if( fc->FDCount > 0 )
@@ -1892,7 +1996,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 				DEBUG( "Current fds: %d\n", fc->FDCount );
 			}
 			FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
-		}
+		}*/
 
 		for( i = 0; i < eventCount; i++ )
 		{
@@ -1989,6 +2093,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 						*fdi = fd;
 						AddToList( pre->fds, ( void *)fdi );
 						
+						// We are now in use!
 						if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
 						{
 							fc->FDCount++;
@@ -1997,32 +2102,6 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 					}
 					
 					DEBUG("[FriendCoreEpoll] Thread create pointer: %p friendcore: %p\n", pre, fc );
-					
-					/*if( WorkerManagerRun( sb->sl_WorkerManager, FriendCoreAcceptPhase2, pre, NULL, "FriendAcceptThread" ) != 0 )
-					{
-						if( pre->fds )
-						{
-							// Close up!
-							List *failed = ( List *)pre->fds;
-							while( failed )
-							{
-								if( failed->l_Data )
-								{
-									fd = *( int *)failed->l_Data;
-									shutdown( sock->fd, SHUT_RDWR );
-									close( sock->fd );
-									if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
-									{
-										fc->FDCount--;
-										FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
-									}
-								}
-								failed = failed->next;
-							}
-							ListFreeWithData( pre->fds );
-						}
-						FFree( pre );
-					}*/
 					
 					if( pthread_create( &pre->thread, NULL, &FriendCoreAcceptPhase2, ( void *)pre ) != 0 )
 					{
@@ -2038,12 +2117,15 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 									fd = *( int *)failed->l_Data;
 									shutdown( sock->fd, SHUT_RDWR );
 									close( sock->fd );
-									if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
-									{
-										fc->FDCount--;
-										FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
-									}
 								}
+								
+								// We are not in use!
+								if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
+								{
+									fc->FDCount--;
+									FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
+								}
+								
 								failed = failed->next;
 							}
 							ListFreeWithData( pre->fds );
