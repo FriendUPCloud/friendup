@@ -1222,7 +1222,7 @@ void *FriendCoreAcceptPhase2( void *d )
 {
 	//DEBUG("[FriendCoreAcceptPhase2] detached\n");
 #ifdef USE_PTHREAD
-	//pthread_detach( pthread_self() );		// using workers atm
+	pthread_detach( pthread_self() );		// using workers atm
 #endif
 
 	struct fcThreadInstance *pre = (struct fcThreadInstance *)d;
@@ -1258,7 +1258,7 @@ void *FriendCoreAcceptPhase2( void *d )
 	FFree( pre );
 
 #ifdef USE_PTHREAD
-	//pthread_exit( 0 );	// temporary disabled
+	pthread_exit( NULL );	// temporary disabled
 #endif
 		
 	return NULL;
@@ -1281,7 +1281,7 @@ void FriendCoreProcessSockBlock( void *fcv )
 	if( fcv == NULL )
 	{
 #ifdef USE_PTHREAD
-		pthread_exit( 0 );
+		pthread_exit( NULL );
 #endif
 		return;
 	}
@@ -1292,7 +1292,7 @@ void FriendCoreProcessSockBlock( void *fcv )
 	{
 		FFree( th );
 #ifdef USE_PTHREAD
-		pthread_exit( 0 );
+		pthread_exit( NULL );
 #endif
 		return;
 	}

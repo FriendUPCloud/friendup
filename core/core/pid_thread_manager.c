@@ -86,7 +86,7 @@ void PIDThreadManagerDelete( PIDThreadManager *ptm )
  */
 int PIDThreadManagerRemoveThreads( PIDThreadManager *ptm )
 {
-	//pthread_detach( pthread_self() );
+	pthread_detach( pthread_self() );
 
 	PIDThread *thr = ptm->ptm_Threads;
 	PIDThread *thrdel;
@@ -120,6 +120,8 @@ int PIDThreadManagerRemoveThreads( PIDThreadManager *ptm )
 	FRIEND_MUTEX_UNLOCK( &ptm->ptm_Mutex );
 	
 	DEBUG("[PIDThreadManager] RemoteThreads end\n");
+	
+	pthread_exit( NULL );
 	
 	return 0;
 }

@@ -777,12 +777,13 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 
 int ParseAndCall( WSThreadData *wstd )
 {
+	pthread_detach( pthread_self() );
+
 	int i, i1;
 	int r;
 	jsmn_parser p;
 	jsmntok_t *t;
 	
-	//pthread_detach( pthread_self() );
 	
 	UserSession *locus = NULL;
 	/*
@@ -803,6 +804,7 @@ int ParseAndCall( WSThreadData *wstd )
 		if( locus->us_WSD == NULL )
 		{
 			FERROR("[ParseAndCall] There is no WS connection attached to mutex!\n");
+			pthread_exit( NULL );
 			return 1;
 		}
 		if( wstd->wstd_WSD->wsc_UserSession != NULL &&  FRIEND_MUTEX_LOCK( &(locus->us_Mutex) ) == 0 )
@@ -1558,6 +1560,8 @@ int ParseAndCall( WSThreadData *wstd )
 	releaseWSData( wstd );
 	
 	FFree( t );
+	
+	pthread_exit( NULL );
 	
 	return 0;
 }
