@@ -667,7 +667,7 @@ int CommServiceThreadServer( FThread *ptr )
 				// All incomming network events go through here :)
 				// Wait for something to happen on any of the sockets we're listening on
 				
-				#define EPOLL_TIMEOUT 25
+				#define EPOLL_TIMEOUT 3000
 				
 				eventCount = epoll_wait( service->s_Epollfd, events, service->s_MaxEvents, EPOLL_TIMEOUT );
 				
@@ -708,22 +708,24 @@ int CommServiceThreadServer( FThread *ptr )
 						
 							if( loccon != NULL )
 							{
-								FRIEND_MUTEX_LOCK( &loccon->fc_Mutex );
-								/*
-								if( 0 == CommServiceDelConnection( service, loccon, sock ) )
+								if( FRIEND_MUTEX_LOCK( &loccon->fc_Mutex ) == 0 )
 								{
-									INFO("Socket connection removed\n");
-								}
-								else
-								{
-									FERROR("Cannot remove socket connection\n");
-								}
-								*/
-								sock->s_Data = NULL;
-								loccon->fc_Socket = NULL;
-								loccon->fc_Status = CONNECTION_STATUS_DISCONNECTED;
+									/*
+									if( 0 == CommServiceDelConnection( service, loccon, sock ) )
+									{
+										INFO("Socket connection removed\n");
+									}
+									else
+									{
+										FERROR("Cannot remove socket connection\n");
+									}
+									*/
+									sock->s_Data = NULL;
+									loccon->fc_Socket = NULL;
+									loccon->fc_Status = CONNECTION_STATUS_DISCONNECTED;
 								
-								FRIEND_MUTEX_UNLOCK( &loccon->fc_Mutex );
+									FRIEND_MUTEX_UNLOCK( &loccon->fc_Mutex );
+								}
 							}
 							//SocketClose( sock );
 						}
@@ -870,22 +872,24 @@ int CommServiceThreadServer( FThread *ptr )
 								{
 									DEBUG("[COMMSERV] Response received!\n");
 									
-									FRIEND_MUTEX_LOCK( &service->s_Mutex );
-									DEBUG("[COMMSERV] lock set\n");
-									CommRequest *cr = service->s_Requests;
-									while( cr != NULL )
+									if( FRIEND_MUTEX_LOCK( &service->s_Mutex ) == 0 )
 									{
-										DEBUG("[COMMSERV] Going through requests %ld find %ld\n", df->df_Size, cr->cr_RequestID );
-										if( cr->cr_RequestID == df->df_Size )
+										DEBUG("[COMMSERV] lock set\n");
+										CommRequest *cr = service->s_Requests;
+										while( cr != NULL )
 										{
-											cr->cr_Bs = bs;
-											DEBUG("[COMMSERV] Message found by id\n");
-											pthread_cond_broadcast( &service->s_DataReceivedCond );
-											break;
+											DEBUG("[COMMSERV] Going through requests %ld find %ld\n", df->df_Size, cr->cr_RequestID );
+											if( cr->cr_RequestID == df->df_Size )
+											{
+												cr->cr_Bs = bs;
+												DEBUG("[COMMSERV] Message found by id\n");
+												pthread_cond_broadcast( &service->s_DataReceivedCond );
+												break;
+											}
+											cr = (CommRequest *) cr->node.mln_Succ;
 										}
-										cr = (CommRequest *) cr->node.mln_Succ;
+										FRIEND_MUTEX_UNLOCK( &service->s_Mutex );
 									}
-									FRIEND_MUTEX_UNLOCK( &service->s_Mutex );
 								}
 								
 								// Another FC is trying to connect
