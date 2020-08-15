@@ -1654,7 +1654,7 @@ int SocketReadBlockedNOSSL( Socket* sock, char* data, unsigned int length, unsig
 	fds.fd = sock->fd;
 	fds.events = POLLIN;
 
-	int err = poll( &fds, 1, 5 * 1000);
+	int err = poll( &fds, 1, 10000 );
 	if( err <= 0 )
 	{
 		DEBUG("[SocketReadBlockedNOSSL] Timeout or there is no data in socket\n");
@@ -1741,7 +1741,7 @@ int SocketWaitReadNOSSL( Socket* sock, char* data, unsigned int length, unsigned
 	fds.fd = sock->fd;
 	fds.events = POLLIN;
 	
-	if( ( n = poll( &fds, 1, sec * 1000) ) == 0 )
+	if( ( n = poll( &fds, 1, READ_TILL_END_SOCKET_TIMEOUT ) ) == 0 )
 	{
 		FERROR("[SocketWaitReadNOSSL] Connection timeout\n");
 		SocketSetBlocking( sock, FALSE );
@@ -1823,7 +1823,7 @@ int SocketWaitReadSSL( Socket* sock, char* data, unsigned int length, unsigned i
 	fds.fd = sock->fd;
 	fds.events = POLLIN;
 
-	if( ( n = poll( &fds, 1, sec * 1000) ) == 0 )
+	if( ( n = poll( &fds, 1, READ_TILL_END_SOCKET_TIMEOUT ) ) == 0 )
 	{
 		FERROR("[SocketWaitReadSSL] Connection timeout\n");
 		SocketSetBlocking( sock, FALSE );
@@ -1886,7 +1886,7 @@ int SocketWaitReadSSL( Socket* sock, char* data, unsigned int length, unsigned i
 				lfds.fd = sock->fd;
 				lfds.events = POLLIN;
 
-				int err = poll( &lfds, 1, sock->s_Timeouts * 1000);
+				int err = poll( &lfds, 1, sock->s_Timeouts > 0 ? sock->s_Timeouts : READ_TILL_END_SOCKET_TIMEOUT );
 				if( err > 0 )
 				{
 					continue; // more data to read...
@@ -1913,7 +1913,7 @@ int SocketWaitReadSSL( Socket* sock, char* data, unsigned int length, unsigned i
 				lfds.fd = sock->fd;// STDIN_FILENO;
 				lfds.events = POLLIN;
 
-				int err = poll( &lfds, 1, sock->s_Timeouts * 1000);
+				int err = poll( &lfds, 1, sock->s_Timeouts > 0 ? sock->s_Timeouts : READ_TILL_END_SOCKET_TIMEOUT );
 				if( err > 0 )
 				{
 					continue; // more data to read...
@@ -2084,7 +2084,7 @@ BufString *SocketReadPackageSSL( Socket *sock )
 					lfds.fd = sock->fd;
 					lfds.events = POLLIN;
 
-					int err = poll( &lfds, 1, sock->s_Timeouts * 1000);
+					int err = poll( &lfds, 1, sock->s_Timeouts > 0 ? sock->s_Timeouts : READ_TILL_END_SOCKET_TIMEOUT );
 					if( err > 0 )
 					{
 						FFree( locbuffer );
@@ -2113,7 +2113,7 @@ BufString *SocketReadPackageSSL( Socket *sock )
 					lfds.fd = sock->fd;// STDIN_FILENO;
 					lfds.events = POLLIN;
 
-					int err = poll( &lfds, 1, sock->s_Timeouts * 1000);
+					int err = poll( &lfds, 1, sock->s_Timeouts > 0 ? sock->s_Timeouts : READ_TILL_END_SOCKET_TIMEOUT );
 					if( err > 0 )
 					{
 						FFree( locbuffer );
@@ -2200,7 +2200,7 @@ BufString *SocketReadTillEndNOSSL( Socket* sock, unsigned int pass __attribute__
 
 		while( quit != TRUE )
 		{
-			int ret = poll( fds, 1, 10000 );
+			int ret = poll( fds, 1, READ_TILL_END_SOCKET_TIMEOUT );
 		
 			DEBUG("[SocketReadTillEndNOSSL] Before select, ret: %d\n", ret );
 			if( ret == 0 )
