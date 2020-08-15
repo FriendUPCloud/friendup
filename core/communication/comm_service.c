@@ -667,7 +667,7 @@ int CommServiceThreadServer( FThread *ptr )
 				// All incomming network events go through here :)
 				// Wait for something to happen on any of the sockets we're listening on
 				
-				#define EPOLL_TIMEOUT 3000
+				#define EPOLL_TIMEOUT 250
 				
 				eventCount = epoll_wait( service->s_Epollfd, events, service->s_MaxEvents, EPOLL_TIMEOUT );
 				
