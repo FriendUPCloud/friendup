@@ -1235,6 +1235,7 @@ void *FriendCoreAcceptPhase2( void *d )
 				fc->FDCount--;
 				FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
 			}
+			l = l->next;
 			continue;
 		}
 		
