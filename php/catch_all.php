@@ -188,18 +188,8 @@ if( isset( $argv ) && isset( $argv[1] ) )
 					
 					$url = ($ar['SSLEnable']?'https://':'http://') . ( $ar['fconlocalhost'] ? 'localhost' : $ar['fchost'] ) . ':' . $ar['fcport'] . '/system.library/file/read/';
 					// Potential new code
-					/*readfile( $url . '?devname=' . urlencode( $devname ) . '&path=' . urlencode( $base . $path ) . '&mode=rs&sessionid=' . urlencode( $auth ? $auth : $session ) );
-					die();*/
-					if( $f = fopen( $url . '?devname=' . urlencode( $devname ) . '&path=' . urlencode( $base . $path ) . '&mode=rs&sessionid=' . urlencode( $auth ? $auth : $session ), 'r' ) )
-					{
-						while( $data = fread( $f, 131072 ) )
-						{
-							echo( $data );
-						}
-						fclose( $f );
-						die();
-					}
-					
+					readfile( $url . '?devname=' . urlencode( $devname ) . '&path=' . urlencode( $base . $path ) . '&mode=rs&sessionid=' . urlencode( $auth ? $auth : $session ) );
+					die();
 				}	
 			}
 		}

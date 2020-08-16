@@ -29,6 +29,8 @@
 
 void NotificationAndroidSendingThread( FThread *data )
 {
+	pthread_detach( pthread_self() );
+	
 	data->t_Launched = TRUE;
 	NotificationManager *nm = (NotificationManager *)data->t_Data;
 	
@@ -118,6 +120,7 @@ void NotificationAndroidSendingThread( FThread *data )
 	//HttpClientDelete( nm->nm_AndroidSendHttpClient );
 	
 	data->t_Launched = FALSE;
+	pthread_exit( NULL );
 }
 
 /**

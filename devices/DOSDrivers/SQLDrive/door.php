@@ -296,15 +296,19 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					// Create a file object
 					$f = new dbIO( 'FSFile' );
 					$f->FilesystemID = $this->ID;
-					$fname = end( explode( ':', $args->path ) );
-					$fname = end( explode( '/', $fname ) );
+					$fname = explode( ':', $args->path );
+					$fname = end( $fname );
+					$fname = explode( '/', $fname );
+					$fname = end( $fname );
 					$f->Filename = $fname;
 					//$f->UserID = $User->ID; // TODO: Add for security!
 					$f->FolderID = '0';
 					$fn = '';
 	
 					// Can we get sub folder?
-					if( isset( $args->path ) && $subPath = trim( end( explode( ':', $args->path ) ) ) )
+					$test = explode( ':', $args->path );
+					$test = end( $test );
+					if( isset( $args->path ) && $subPath = trim( $test ) )
 					{	
 						// Remove filename
 						if( substr( $subPath, -1, 1 ) != '/' && strstr( $subPath, '/' ) )

@@ -128,6 +128,15 @@ enum {
 };
 
 //
+// Registered modules have each a module set
+//
+
+struct ModuleSet {
+	char *name;
+	char *extension;
+};
+
+//
 // Devices
 //
 
@@ -273,6 +282,7 @@ typedef struct SystemBase
 	AuthMod							*sl_ActiveAuthModule;	// active login module
 	AuthMod							*sl_DefaultAuthModule;  //
 	char 							*sl_ModuleNames;		// name of modules which will be used
+	List                            *sl_AvailableModules;   // available modules with extension
 	char 							*sl_ActiveModuleName;	// name of active module
 	char							*sl_DefaultDBLib;		// default DB library name
 	time_t							sl_RemoveSessionsAfterTime;	// time after which session will be removed
@@ -425,6 +435,12 @@ SystemBase *SystemInit( void );
 //
 
 UserGroup *LoadGroups( struct SystemBase *sb );
+
+//
+// Just get unixtime now
+//
+
+int GetUnixTime();
 
 //
 //

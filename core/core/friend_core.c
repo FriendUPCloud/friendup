@@ -84,7 +84,7 @@ void FriendCoreProcessSockNonBlock( void *fcv );
 
 int nothreads = 0;					/// threads coutner @todo to rewrite
 #define MAX_CALLHANDLER_THREADS 256			///< maximum number of simulatenous handlers
-//#define USE_BLOCKED_SOCKETS_TO_READ_HTTP
+#define USE_BLOCKED_SOCKETS_TO_READ_HTTP
 
 /**
 * Creates a new instance of Friend Core.
@@ -205,6 +205,8 @@ struct fcThreadInstance
 	pthread_t				thread;
 	struct epoll_event		*event;
 	Socket					*sock;
+	// HT - Added for new implementation
+	List                     *fds;
 	
 	// Incoming from accept
 	struct AcceptPair		*acceptPair;
@@ -321,7 +323,7 @@ static inline void moveToHttps( Socket *sock )
 
 #define SINGLE_SHOT
 //#define ACCEPT_IN_EPOLL
-#define ACCEPT_IN_THREAD
+//#define ACCEPT_IN_THREAD
 
 #ifdef ACCEPT_IN_THREAD
 
@@ -490,7 +492,7 @@ void *FriendCoreAcceptPhase2( void *data )
 						{
 							break;
 						}
-						//usleep( 0 );
+						usleep( 0 );
 				
 						if( fc->fci_Shutdown == TRUE )
 						{
@@ -549,7 +551,8 @@ void *FriendCoreAcceptPhase2( void *data )
 					
 #ifdef USE_PTHREAD
 						//size_t stacksize = 16777216; //16 * 1024 * 1024;
-						size_t stacksize = 8777216;	// half of previous stack
+						size_t stacksize = 8388608;	// half of previous stack
+						//size_t stacksize = 4194304;	// half of previous stack
 						pthread_attr_t attr;
 						pthread_attr_init( &attr );
 						pthread_attr_setstacksize( &attr, stacksize );
@@ -603,6 +606,7 @@ void *FriendCoreAcceptPhase2( void *data )
 				}
 			}
 			//DEBUG("[FriendCoreAcceptPhase2] in accept loop\n");
+			usleep( 0 );
 		}	// while accept
 
 		FBOOL ok = TRUE;
@@ -853,7 +857,8 @@ inline static void *FriendCoreAcceptPhase2( FriendCoreInstance *fc )
 					
 #ifdef USE_PTHREAD
 						//size_t stacksize = 16777216; //16 * 1024 * 1024;
-						size_t stacksize = 8777216;	// half of previous stack
+						size_t stacksize = 8388608;	// half of previous stack
+						//size_t stacksize = 4194304;	// half of previous stack
 						pthread_attr_t attr;
 						pthread_attr_init( &attr );
 						pthread_attr_setstacksize( &attr, stacksize );
@@ -931,234 +936,335 @@ accerror:
 
 #else
 
+// HT
+static inline int FriendCoreAcceptPhase3( int fd, FriendCoreInstance *fc )
+{	
+	// Prepare ssl
+	SSL                 *s_Ssl    = NULL;
+	
+	struct pollfd lfds; // watch stdin for input 
+	lfds.fd = fd; // STDIN_FILENO;
+	lfds.events = POLLIN;
+	int err = poll( &lfds, 1, 250 );
+	if( err == 0 )
+	{
+		FERROR("[FriendCoreProcessSockBlock] want read TIMEOUT....\n");
+		goto accerror3;
+	}
+	else if( err < 0 )
+	{
+		FERROR("[FriendCoreProcessSockBlock] other....\n");
+		goto accerror3;
+	}
+	
+	if( fd == -1 )
+	{
+		// Get some info about failure..
+		switch( errno )
+		{
+			case EAGAIN: break;
+			case EBADF:DEBUG( "[FriendCoreAcceptPhase3] The socket argument is not a valid file descriptor.\n" );
+				goto accerror3;
+			case ECONNABORTED:DEBUG( "[FriendCoreAcceptPhase3] A connection has been aborted.\n" );
+				goto accerror3;
+			case EINTR:DEBUG( "[FriendCoreAcceptPhase3] The accept() function was interrupted by a signal that was caught before a valid connection arrived.\n" );
+				goto accerror3;
+			case EINVAL:DEBUG( "[FriendCoreAcceptPhase3] The socket is not accepting connections.\n" );
+				goto accerror3;
+			case ENFILE:DEBUG( "[FriendCoreAcceptPhase3] The maximum number of file descriptors in the system are already open.\n" );
+				goto accerror3;
+			case ENOTSOCK:DEBUG( "[FriendCoreAcceptPhase3] The socket argument does not refer to a socket.\n" );
+				goto accerror3;
+			case EOPNOTSUPP:DEBUG( "[FriendCoreAcceptPhase3] The socket type of the specified socket does not support accepting connections.\n" );
+				goto accerror3;
+			default: DEBUG("[FriendCoreAcceptPhase3] Accept return bad fd\n");
+				goto accerror3;
+		}
+		return -1;
+	}
+
+	DEBUG( "[FriendCoreAcceptPhase3] Using file descr: %d\n", fd );
+
+	struct sockaddr_in6 client;
+	socklen_t           clientLen = sizeof( client );
+	Socket              *incoming = NULL;
+	SSL_CTX             *s_Ctx    = NULL;
+
+	int prerr = getpeername( fd, (struct sockaddr *) &client, &clientLen );
+	if( prerr == -1 )
+	{
+		goto accerror3;
+	}
+
+	// Get incoming
+	int lbreak = 0;
+
+	if( fc->fci_Sockets && fc->fci_Sockets->s_SSLEnabled == TRUE )
+	{
+		int srl = 0;
+
+		s_Ssl = SSL_new( fc->fci_Sockets->s_Ctx );
+
+		if( s_Ssl == NULL )
+		{
+			FERROR("[FriendCoreAcceptPhase3] Cannot accept SSL connection\n");
+			goto accerror3;
+		}
+
+		BIO *bio = SSL_get_rbio( s_Ssl );
+		if( bio != NULL )
+		{
+			DEBUG("[FriendCoreAcceptPhase3] Read buffer will be changed!\n");
+			BIO_set_read_buffer_size( bio, 81920 );
+		}
+
+		srl = SSL_set_fd( s_Ssl, fd );
+		SSL_set_accept_state( s_Ssl );
+		if( srl != 1 )
+		{
+			int error = SSL_get_error( s_Ssl, srl );
+			FERROR( "[FriendCoreAcceptPhase3] Could not set fd, error: %d fd: %d\n", error, fd );
+			
+			goto accerror3;
+		}
+
+		int err = 0;
+		// we must be sure that SSL Accept is working
+		while( 1 )
+		{
+			DEBUG("[FriendCoreAcceptPhase3] before accept\n");
+			if( ( err = SSL_accept( s_Ssl ) ) == 1 )
+			{
+				break;
+			}
+
+			if( err <= 0 || err == 2 )
+			{
+				int error = SSL_get_error( s_Ssl, err );
+				switch( error )
+				{
+					case SSL_ERROR_NONE:
+						// NO error..
+						FERROR( "[FriendCoreAcceptPhase3] No error\n" );
+						lbreak = 1;
+					break;
+					case SSL_ERROR_ZERO_RETURN:
+						FERROR("[FriendCoreAcceptPhase3] SSL_ACCEPT error: Socket closed.\n" );
+						goto accerror3;
+					case SSL_ERROR_WANT_READ:
+						lbreak = 2;
+					break;
+					case SSL_ERROR_WANT_WRITE:
+						lbreak = 2;
+					break;
+					case SSL_ERROR_WANT_ACCEPT:
+						FERROR( "[FriendCoreAcceptPhase3] Want accept\n" );
+						goto accerror3;
+					case SSL_ERROR_WANT_X509_LOOKUP:
+						FERROR( "[FriendCoreAcceptPhase3] Want 509 lookup\n" );
+						goto accerror3;
+					case SSL_ERROR_SYSCALL:
+						FERROR( "[FriendCoreAcceptPhase3] Error syscall. Goodbye! %s.\n", ERR_error_string( ERR_get_error(), NULL ) );
+						//goto accerror;
+						lbreak = 2;
+						break;
+					case SSL_ERROR_SSL:
+					{
+						int enume = ERR_get_error();
+						FERROR( "[FriendCoreAcceptPhase3] SSL_ERROR_SSL: %s.\n", ERR_error_string( enume, NULL ) );
+						lbreak = 2;
+				
+						// HTTP to HTTPS redirection code
+						if( enume == 336027804 ) // http redirect
+						{
+							moveToHttp( fd );
+						}
+						else
+						{
+							goto accerror3;
+						}
+						break;
+					}
+				}
+			}
+			if( lbreak >= 1 )
+			{
+				break;
+			}
+			usleep( 0 );
+	
+			if( fc->fci_Shutdown == TRUE )
+			{
+				FINFO("[FriendCoreAcceptPhase3] Accept socket process will be stopped, becaouse Shutdown is in progress\n");
+				break;
+			}
+		}
+	}
+
+	DEBUG("[FriendCoreAcceptPhase3] before getting incoming: fd %d\n", fd );
+
+	if( fc->fci_Shutdown == TRUE )
+	{
+		if( fd > 0 )
+		{
+			close( fd );
+		}
+	}
+	else
+	{
+		if( fd > 0 )
+		{
+			incoming = ( Socket *)FCalloc( 1, sizeof( Socket ) );
+			if( incoming != NULL )
+			{
+				incoming->s_Data = fc;
+				incoming->fd = fd;
+				incoming->port = ntohs( client.sin6_port );
+				incoming->ip = client.sin6_addr;
+				incoming->s_SSLEnabled = fc->fci_Sockets->s_SSLEnabled;
+				incoming->s_SB = fc->fci_Sockets->s_SB;
+				incoming->s_Interface = fc->fci_Sockets->s_Interface;
+
+				if( fc->fci_Sockets->s_SSLEnabled == TRUE )
+				{
+					incoming->s_Ssl = s_Ssl;
+					incoming->s_Ctx = s_Ctx;
+				}
+			}
+			else
+			{
+				FERROR("[FriendCoreAcceptPhase3] Cannot allocate memory for socket!\n");
+				goto accerror3;
+			}
+	
+	
+			struct fcThreadInstance *pre = FCalloc( 1, sizeof( struct fcThreadInstance ) );
+			if( pre != NULL )
+			{
+				pre->fc = fc; pre->sock = incoming;
+
+				//size_t stacksize = 16777216; //16 * 1024 * 1024;
+				size_t stacksize = 8388608;	// half of previous stack
+				//size_t stacksize = 4194304; //512 * 1024;
+				pthread_attr_t attr;
+				pthread_attr_init( &attr );
+				pthread_attr_setstacksize( &attr, stacksize );
+				
+				// Make sure we keep the number of threads under the limit
+				DEBUG("[FriendCoreAcceptPhase3] create process friendcoreprocessosckblock\n");
+				//change NULL to &attr
+				if( pthread_create( &pre->thread, &attr, (void *(*) (void *))&FriendCoreProcessSockBlock, ( void *)pre ) != 0 )
+				{
+					FFree( pre );
+				}
+
+			}
+			//DEBUG("EPOLLIN end\n");
+	
+	/*
+			/// Add to epoll
+			// TODO: Check return of epoll ctl
+			struct epoll_event event;
+			event.data.ptr = incoming;
+			event.events = EPOLLIN| EPOLLET;
+	
+			int error = epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_ADD, fd, &event );
+
+			if( error )
+			{
+				FERROR("[FriendCoreAcceptPhase3] epoll_ctl failure **************************************\n\n");
+				incoming->s_Interface->SocketDelete( incoming );
+				goto accerror3;
+			}
+			*/
+		}
+	}
+	
+	DEBUG("[FriendCoreAcceptPhase3] in accept loop - success\n");
+	
+	return 0;
+	
+	accerror3:
+	DEBUG("[FriendCoreAcceptPhase3] ERROR\n");
+	
+	
+	if( fd >= 0 )
+	{
+		shutdown( fd, SHUT_RDWR );
+		close( fd );
+	}
+	
+	if( s_Ssl != NULL )
+	{
+		SSL_free( s_Ssl );
+	}
+
+	return -1;
+}
+
+
+// HT
+
 void *FriendCoreAcceptPhase2( void *d )
 {
 	//DEBUG("[FriendCoreAcceptPhase2] detached\n");
-	//pthread_detach( pthread_self() );
+#ifdef USE_PTHREAD
+	pthread_detach( pthread_self() );		// using workers atm
+#endif
 
 	struct fcThreadInstance *pre = (struct fcThreadInstance *)d;
 	FriendCoreInstance *fc = (FriendCoreInstance *)pre->fc;
 
 	// Accept
-	struct sockaddr_in6 client;
-	socklen_t clientLen = sizeof( client );
 	int fd = 0;
 	
-	Socket *incoming = NULL;
-	SSL_CTX						*s_Ctx = NULL;
-	SSL							*s_Ssl = NULL;
 	DEBUG("[FriendCoreAcceptPhase2] before accept4\n");
 	
-	while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) > 0 )
-	{
-		if( fd == -1 )
+	List *l = pre->fds;
+	
+	while( l )
+	{	
+		// Get socket!
+		DEBUG( "[FriendCoreAcceptPhase2] Using stored fds!\n" );
+		
+		if( !l->l_Data ) 
 		{
-			// Get some info about failure..
-			switch( errno )
+			// We are not in use!
+			if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
 			{
-				case EAGAIN: break;
-				case EBADF:DEBUG( "[FriendCoreAcceptPhase2] The socket argument is not a valid file descriptor.\n" );
-					goto accerror;
-				case ECONNABORTED:DEBUG( "[FriendCoreAcceptPhase2] A connection has been aborted.\n" );
-					goto accerror;
-				case EINTR:DEBUG( "[FriendCoreAcceptPhase2] The accept() function was interrupted by a signal that was caught before a valid connection arrived.\n" );
-					goto accerror;
-				case EINVAL:DEBUG( "[FriendCoreAcceptPhase2] The socket is not accepting connections.\n" );
-					goto accerror;
-				case ENFILE:DEBUG( "[FriendCoreAcceptPhase2] The maximum number of file descriptors in the system are already open.\n" );
-					goto accerror;
-				case ENOTSOCK:DEBUG( "[FriendCoreAcceptPhase2] The socket argument does not refer to a socket.\n" );
-					goto accerror;
-				case EOPNOTSUPP:DEBUG( "[FriendCoreAcceptPhase2] The socket type of the specified socket does not support accepting connections.\n" );
-					goto accerror;
-				default: DEBUG("[FriendCoreAcceptPhase2] Accept return bad fd\n");
-					goto accerror;
+				fc->FDCount--;
+				FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
 			}
-			goto accerror;
+			continue;
 		}
 		
-		int prerr = getpeername( fd, (struct sockaddr *) &client, &clientLen );
-		if( prerr == -1 )
+		fd = *( int *)l->l_Data;
+		free( l->l_Data );
+		l->l_Data = NULL; // Clear it out
+	
+		// TODO: HT - Perhaps put in the worker thread
+		FriendCoreAcceptPhase3( fd, fc );
+		
+		// We are not in use!
+		if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
 		{
-			shutdown( fd, SHUT_RDWR );
-			close( fd );
-			goto accerror;
+			fc->FDCount--;
+			FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
 		}
 		
-		// Get incoming
-		int lbreak = 0;
-		
-		if( fc->fci_Sockets->s_SSLEnabled == TRUE )
-		{
-			int srl;
-			
-			s_Ssl = SSL_new( fc->fci_Sockets->s_Ctx );
-
-			if( s_Ssl == NULL )
-			{
-				FERROR("[FriendCoreAcceptPhase2] Cannot accept SSL connection\n");
-				shutdown( fd, SHUT_RDWR );
-				close( fd );
-				goto accerror;
-			}
-			
-			BIO *bio = SSL_get_rbio( s_Ssl );
-			if( bio != NULL )
-			{
-				DEBUG("[FriendCoreAcceptPhase2] Read buffer will be changed!\n");
-				BIO_set_read_buffer_size( bio, 81920 );
-			}
-
-			srl = SSL_set_fd( s_Ssl, fd );
-			SSL_set_accept_state( s_Ssl );
-			if( srl != 1 )
-			{
-				int error = SSL_get_error( s_Ssl, srl );
-				FERROR( "[FriendCoreAcceptPhase2] Could not set fd, error: %d fd: %d\n", error, fd );
-				shutdown( fd, SHUT_RDWR );
-				close( fd );
-				SSL_free( s_Ssl );
-				goto accerror;
-			}
-
-			int err = 0;
-			// we must be sure that SSL Accept is working
-			while( 1 )
-			{
-				DEBUG("[FriendCoreAcceptPhase2] before accept\n");
-				if( ( err = SSL_accept( s_Ssl ) ) == 1 )
-				{
-					break;
-				}
-
-				if( err <= 0 || err == 2 )
-				{
-					int error = SSL_get_error( s_Ssl, err );
-					switch( error )
-					{
-						case SSL_ERROR_NONE:
-							// NO error..
-							FERROR( "[FriendCoreAcceptPhase2] No error\n" );
-							lbreak = 1;
-						break;
-						case SSL_ERROR_ZERO_RETURN:
-							FERROR("[FriendCoreAcceptPhase2] SSL_ACCEPT error: Socket closed.\n" );
-							goto accerror;
-						case SSL_ERROR_WANT_READ:
-							lbreak = 2;
-						break;
-						case SSL_ERROR_WANT_WRITE:
-							lbreak = 2;
-						break;
-						case SSL_ERROR_WANT_ACCEPT:
-							FERROR( "[FriendCoreAcceptPhase2] Want accept\n" );
-							goto accerror;
-						case SSL_ERROR_WANT_X509_LOOKUP:
-							FERROR( "[FriendCoreAcceptPhase2] Want 509 lookup\n" );
-							goto accerror;
-						case SSL_ERROR_SYSCALL:
-							FERROR( "[FriendCoreAcceptPhase2] Error syscall. Goodbye! %s.\n", ERR_error_string( ERR_get_error(), NULL ) );
-							//goto accerror;
-							//lbreak = 2;
-							break;
-						case SSL_ERROR_SSL:
-						{
-							int enume = ERR_get_error();
-							FERROR( "[FriendCoreAcceptPhase2] SSL_ERROR_SSL: %s.\n", ERR_error_string( enume, NULL ) );
-							lbreak = 2;
-							
-							// HTTP to HTTPS redirection code
-							if( enume == 336027804 ) // http redirect
-							{
-								moveToHttp( fd );
-							}
-							else
-							{
-								goto accerror;
-							}
-							break;
-						}
-					}
-				}
-				if( lbreak >= 1 )
-				{
-					break;
-				}
-				usleep( 0 );
-				
-				if( fc->fci_Shutdown == TRUE )
-				{
-					FINFO("[FriendCoreAcceptPhase2] Accept socket process will be stopped, becaouse Shutdown is in progress\n");
-					break;
-				}
-			}
-		}
-
-		DEBUG("[FriendCoreAcceptPhase2] before getting incoming: fd %d\n", fd );
-		
-		if( fc->fci_Shutdown == TRUE )
-		{
-			if( fd > 0 )
-			{
-				close( fd );
-			}
-			break;
-		}
-		else
-		{
-			if( fd > 0 )
-			{
-				incoming = ( Socket *)FCalloc( 1, sizeof( Socket ) );
-				if( incoming != NULL )
-				{
-					incoming->s_Data = fc;
-					incoming->fd = fd;
-					incoming->port = ntohs( client.sin6_port );
-					incoming->ip = client.sin6_addr;
-					incoming->s_SSLEnabled = fc->fci_Sockets->s_SSLEnabled;
-					incoming->s_SB = fc->fci_Sockets->s_SB;
-					incoming->s_Interface = fc->fci_Sockets->s_Interface;
-			
-					if( fc->fci_Sockets->s_SSLEnabled == TRUE )
-					{
-						incoming->s_Ssl = s_Ssl;
-						incoming->s_Ctx = s_Ctx;
-					}
-				}
-				else
-				{
-					FERROR("[FriendCoreAcceptPhase2] Cannot allocate memory for socket!\n");
-					shutdown( fd, SHUT_RDWR );
-					close( fd );
-					goto accerror;
-				}
-				
-				/// Add to epoll
-				// TODO: Check return of epoll ctl
-				struct epoll_event event;
-				event.data.ptr = incoming;
-				event.events = EPOLLIN| EPOLLET;
-				
-				int error = epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_ADD, fd, &event );
-			
-				if( error )
-				{
-					FERROR("[FriendCoreAcceptPhase2] epoll_ctl failure **************************************\n\n");
-					//goto accerror;
-				}
-			}
-		}
-		//DEBUG("[FriendCoreAcceptPhase2] in accept loop\n");
+		l = l->next;
 	}	// while accept
+
+	if( pre->fds )
+	{
+		ListFreeWithData( pre->fds );
+	}
 	FFree( pre );
+
+#ifdef USE_PTHREAD
+	pthread_exit( NULL );	// temporary disabled
+#endif
 		
-	return NULL;
-accerror:
-	DEBUG("[FriendCoreAcceptPhase2] ERROR\n");
-	FFree( pre );
-
-	//pthread_exit( 0 );
-
 	return NULL;
 }
 
@@ -1179,28 +1285,56 @@ void FriendCoreProcessSockBlock( void *fcv )
 	if( fcv == NULL )
 	{
 #ifdef USE_PTHREAD
-		pthread_exit( 0 );
+		pthread_exit( NULL );
 #endif
 		return;
 	}
 
 	struct fcThreadInstance *th = ( struct fcThreadInstance *)fcv;
 
+	BufStringDisk *resultString = NULL;
+
+	// We are now in use!
+	if( FRIEND_MUTEX_LOCK( &(th->fc->fci_AcceptMutex) ) == 0 )
+	{
+		th->fc->FDCount++;
+		FRIEND_MUTEX_UNLOCK( &(th->fc->fci_AcceptMutex) );
+	}
+
 	if( th->sock == NULL )
 	{
-		FFree( th );
-#ifdef USE_PTHREAD
-		pthread_exit( 0 );
-#endif
-		return;
+		goto close_fcp;
 	}
 
 	// Let's go!
+	
+	struct pollfd lfds;
+	// watch stdin for input 
+	lfds.fd = th->sock->fd;// STDIN_FILENO;
+	lfds.events = POLLIN;
+
+	int err = poll( &lfds, 1, 10000 );
+	if( err > 0 )
+	{
+		
+	}
+	else if( err == 0 )
+	{
+		FERROR("[FriendCoreProcessSockBlock] want read TIMEOUT....\n");
+		goto close_fcp;
+	}
+	else
+	{
+		FERROR("[FriendCoreProcessSockBlock] other....\n");
+		goto close_fcp;
+	}
+	
+	SocketSetBlocking( th->sock, TRUE );
 
 	FQUAD bufferSize = HTTP_READ_BUFFER_DATA_SIZE;
 	FQUAD bufferSizeAlloc = HTTP_READ_BUFFER_DATA_SIZE_ALLOC;
 
-	BufStringDisk *resultString = BufStringDiskNewSize( TUNABLE_LARGE_HTTP_REQUEST_SIZE );
+	resultString = BufStringDiskNewSize( TUNABLE_LARGE_HTTP_REQUEST_SIZE );
 
 	char *locBuffer = FMalloc( bufferSizeAlloc );
 
@@ -1208,9 +1342,10 @@ void FriendCoreProcessSockBlock( void *fcv )
 	FBOOL headerFound = FALSE;
 	int headerLen = 0;
 	
-	SocketSetBlocking( th->sock, TRUE );
-	
 	DEBUG("[FriendCoreProcessSockBlock] start\n");
+	
+	// Always assume this first..
+	th->sock->s_SocketBlockTimeout = 0;
 	
 	if( locBuffer != NULL )
 	{
@@ -1218,7 +1353,8 @@ void FriendCoreProcessSockBlock( void *fcv )
 		
 		while( TRUE )
 		{
-			// Increase timeouts in retries
+			DEBUG( "Waiting!!\n" );
+			// Only increases timeouts in retries
 			if( retryContentNotFull == 1 )
 			{
 				th->sock->s_SocketBlockTimeout = 100;
@@ -1273,6 +1409,7 @@ void FriendCoreProcessSockBlock( void *fcv )
 				{
 					if( retryContentNotFull++ > 500 )
 					{
+						DEBUG( "Done trying\n" );
 						break;
 					}
 					else	// we check size and try again
@@ -1284,7 +1421,7 @@ void FriendCoreProcessSockBlock( void *fcv )
 						}
 						else
 						{
-							usleep( 2000 );
+							usleep( 10 );
 							DEBUG("[FriendCoreProcessSockBlock] Continue, resultString->bsd_Size %ld expectedLength %ld\n", resultString->bsd_Size, expectedLength );
 							// buffer is not equal to what should come
 							continue;
@@ -1328,9 +1465,20 @@ void FriendCoreProcessSockBlock( void *fcv )
 	// Shortcut!
 	close_fcp:
 	
+	// We are not in use!
+	if( FRIEND_MUTEX_LOCK( &(th->fc->fci_AcceptMutex) ) == 0 )
+	{
+		th->fc->FDCount--;
+		FRIEND_MUTEX_UNLOCK( &(th->fc->fci_AcceptMutex) );
+	}
+	
 	DEBUG( "[FriendCoreProcessSockBlock] Closing socket %d.\n", th->sock->fd );
-	th->sock->s_Interface->SocketDelete( th->sock );
-	th->sock = NULL;
+	
+	if( th->sock )
+	{
+		th->sock->s_Interface->SocketDelete( th->sock );
+		th->sock = NULL;
+	}
 
 	// Free the pair
 	if( th != NULL )
@@ -1339,10 +1487,11 @@ void FriendCoreProcessSockBlock( void *fcv )
 		th = NULL;
 	}
 
-	BufStringDiskDelete( resultString );
+	if( resultString )
+		BufStringDiskDelete( resultString );
 
 #ifdef USE_PTHREAD
-	pthread_exit( 0 );
+	pthread_exit( NULL );
 #endif
 	return;
 }
@@ -1360,7 +1509,7 @@ void FriendCoreProcessSockNonBlock( void *fcv )
 	if( fcv == NULL )
 	{
 #ifdef USE_PTHREAD
-		pthread_exit( 0 );
+		pthread_exit( NULL );
 #endif
 		return;
 	}
@@ -1371,7 +1520,7 @@ void FriendCoreProcessSockNonBlock( void *fcv )
 	{
 		FFree( th );
 #ifdef USE_PTHREAD
-		pthread_exit( 0 );
+		pthread_exit( NULL );
 #endif
 		return;
 	}
@@ -1508,7 +1657,7 @@ void FriendCoreProcessSockNonBlock( void *fcv )
 	BufStringDiskDelete( resultString );
 
 #ifdef USE_PTHREAD
-	pthread_exit( 0 );
+	pthread_exit( NULL );
 #endif
 	return;
 }
@@ -1692,7 +1841,10 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	int i;
 	struct epoll_event *currentEvent;
 	struct epoll_event *events = FCalloc( fc->fci_MaxPoll, sizeof( struct epoll_event ) );
+	SystemBase *sb = (SystemBase *)fc->fci_SB;
 
+	// Track fds.
+	fc->FDCount = 0;
 
 	// add communication ReadCommPipe		
 	int pipefds[2] = {}; struct epoll_event piev = { 0 };	
@@ -1726,10 +1878,9 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 
 	events->events = EPOLLIN;
 	
+	
 #ifdef ACCEPT_IN_THREAD
 	pthread_t thread;
-	
-	//epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_DISABLE, fc->fci_Sockets->fd, NULL );
 
 	if( pthread_create( &thread, NULL, &FriendCoreAcceptPhase2, ( void *)fc ) != 0 )
 	{
@@ -1740,15 +1891,112 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	// All incoming network events go through here
 	while( !fc->fci_Shutdown )
 	{
-
 #ifdef SINGLE_SHOT
 		epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_MOD, fc->fci_Sockets->fd, &(fc->fci_EpollEvent) );
 #endif
 		
 		// Wait for something to happen on any of the sockets we're listening on
-		DEBUG("[FriendCoreEpoll] Before epollwait\n");
-		eventCount = epoll_pwait( fc->fci_Epollfd, events, fc->fci_MaxPoll, -1, &curmask );
-		DEBUG("[FriendCoreEpoll] Epollwait, eventcount: %d\n", eventCount );
+		//DEBUG("[FriendCoreEpoll] Before epollwait\n");
+		eventCount = epoll_pwait( fc->fci_Epollfd, events, fc->fci_MaxPoll, 250, &curmask );
+		//DEBUG("[FriendCoreEpoll] Epollwait, eventcount: %d\n", eventCount );
+
+		// Something strange happened - handle closing listening socket!
+		if( eventCount <= 0 )
+		{
+			if( errno == EBADF || errno == EINVAL )
+			{
+				if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
+				{
+					while( fc->FDCount > 0 )
+					{
+						DEBUG( "[FriendCoreEpoll] Waiting, current fds: %d\n", fc->FDCount );
+						FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
+						usleep( 200 );
+						FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) );
+					}
+					FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
+				}
+			
+				DEBUG( "[FriendCoreEpoll] Kill myself!\n" );
+			
+				fc->fci_Sockets->s_Interface->SocketDelete( fc->fci_Sockets );
+			
+				// Make a new listening socket
+				SystemBase *lsb = (SystemBase *)fc->fci_SB;
+				fc->fci_Sockets = SocketNew( lsb, fc->fci_SSLEnabled, fc->fci_Port, SOCKET_TYPE_SERVER );
+
+				if( fc->fci_Sockets == NULL )
+				{
+					Log( FLOG_ERROR, "[FriendCoreEpoll] New, cannot create socket on port: %d!\n", fc->fci_Port );
+					fc->fci_Closed = TRUE;
+					fc->fci_Shutdown = TRUE;
+					continue;
+				}
+
+				// Non blocking listening!
+				//if( SocketSetBlocking( fc->fci_Sockets, TRUE ) == -1 )
+				if( SocketSetBlocking( fc->fci_Sockets, FALSE ) == -1 )
+				{
+					Log( FLOG_ERROR, "[FriendCoreEpoll] New, cannot set socket to blocking state!\n");
+					fc->fci_Sockets->s_Interface->SocketDelete( fc->fci_Sockets );
+					fc->fci_Closed = TRUE;
+					fc->fci_Shutdown = TRUE;
+					continue;
+				}
+
+				SSL_CTX_get_read_ahead( fc->fci_Sockets->s_Ctx );
+				SSL_CTX_set_session_cache_mode( fc->fci_Sockets->s_Ctx, SSL_SESS_CACHE_CLIENT | SSL_SESS_CACHE_NO_INTERNAL_STORE);
+
+				if( SocketListen( fc->fci_Sockets ) != 0 )
+				{
+					Log( FLOG_ERROR, "[FriendCoreEpoll] New, cannot setup socket!\nCheck if port: %d\n", fc->fci_Port );
+					fc->fci_Sockets->s_Interface->SocketDelete( fc->fci_Sockets );
+					fc->fci_Closed= TRUE;
+					continue;
+				}
+			
+				fc->fci_Epollfd = epoll_create1( EPOLL_CLOEXEC );
+				if( fc->fci_Epollfd == -1 )
+				{
+					Log( FLOG_ERROR, "[FriendCore] New, epoll_create\n" );
+					fc->fci_Sockets->s_Interface->SocketDelete( fc->fci_Sockets );
+					fc->fci_Closed = TRUE;
+					continue;
+				}
+
+				// Register for events
+
+				memset( &(fc->fci_EpollEvent), 0, sizeof( fc->fci_EpollEvent ) );
+				fc->fci_EpollEvent.data.ptr = fc->fci_Sockets;
+	#ifdef SINGLE_SHOT
+				fc->fci_EpollEvent.events = EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP | EPOLLERR | EPOLLONESHOT ;// | EPOLLEXCLUSIVE ; //all flags are necessary, otherwise epoll may not deliver disconnect events and socket descriptors will leak
+	#else
+				fc->fci_EpollEvent.events = EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP | EPOLLERR;// | EPOLLEXCLUSIVE ; //all flags are necessary, otherwise epoll may not deliver disconnect events and socket descriptors will leak
+	#endif
+			
+				if( epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_ADD, fc->fci_Sockets->fd, &(fc->fci_EpollEvent) ) == -1 )
+				{
+					Log( FLOG_ERROR, "[FriendCoreEpoll] epoll_ctl fail\n" );
+					fc->fci_Shutdown = TRUE;
+				}
+				else
+				{
+					DEBUG( "[FriendCoreEpoll] Just Continued.\n" );
+				}
+				continue;
+			}
+		}
+		
+		/*
+		This is only used to track fds....
+		if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
+		{
+			if( fc->FDCount > 0 )
+			{
+				DEBUG( "Current fds: %d\n", fc->FDCount );
+			}
+			FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
+		}*/
 
 		for( i = 0; i < eventCount; i++ )
 		{
@@ -1766,16 +2014,9 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 				( ( currentEvent->events & EPOLLERR ) ||
 				( currentEvent->events & EPOLLRDHUP ) ||
 				( currentEvent->events & EPOLLHUP ) ) || 
-				!( currentEvent->events & EPOLLIN ) 
+				!( currentEvent->events & EPOLLIN )
 			)
-			{
-				if( ((Socket*)currentEvent->data.ptr)->fd == fc->fci_Sockets->fd )
-				{
-					// Oups! We have gone away!
-					DEBUG( "[FriendCoreEpoll] Socket went away!\n" );
-					break;
-				}
-								
+			{					
 				// Remove it
 				LOG( FLOG_ERROR, "[FriendCoreEpoll] Socket had errors.\n" );
 				if( sock != NULL )
@@ -1838,11 +2079,57 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 				if( pre != NULL )
 				{
 					pre->fc = fc;
+					
+					// HT - Just keep them coming!
+					pre->fds = CreateList();
+					int fd = 0;
+					struct sockaddr_in6 client;
+					socklen_t clientLen = sizeof( client );
+					
+					while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) != -1 )
+					{
+						DEBUG( "[FriendCoreEpoll] Adding the damned thing %d.\n", fd );
+						int *fdi = malloc( sizeof( int ) );
+						*fdi = fd;
+						AddToList( pre->fds, ( void *)fdi );
+						
+						// We are now in use!
+						if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
+						{
+							fc->FDCount++;
+							FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
+						}
+					}
+					
 					DEBUG("[FriendCoreEpoll] Thread create pointer: %p friendcore: %p\n", pre, fc );
 					
 					if( pthread_create( &pre->thread, NULL, &FriendCoreAcceptPhase2, ( void *)pre ) != 0 )
 					{
 						DEBUG("[FriendCoreEpoll] Pthread create fail\n");
+						if( pre->fds )
+						{
+							// Close up!
+							List *failed = ( List *)pre->fds;
+							while( failed )
+							{
+								if( failed->l_Data )
+								{
+									fd = *( int *)failed->l_Data;
+									shutdown( sock->fd, SHUT_RDWR );
+									close( sock->fd );
+								}
+								
+								// We are not in use!
+								if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
+								{
+									fc->FDCount--;
+									FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
+								}
+								
+								failed = failed->next;
+							}
+							ListFreeWithData( pre->fds );
+						}
 						FFree( pre );
 					}
 				}
@@ -1851,8 +2138,9 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 				DEBUG("[FriendCoreEpoll] Accept done\n");
 			}
 			// Get event that are incoming!
-			else if( currentEvent->events & EPOLLIN )
+			else
 			{
+				/*
 				// Stop listening here..
 				epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_DEL, sock->fd, NULL );
 				INFO("[FriendCoreEpoll] Socket fd: %d removed from epoll\n", sock->fd );
@@ -1869,12 +2157,19 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 					
 #ifdef USE_PTHREAD
 						//size_t stacksize = 16777216; //16 * 1024 * 1024;
-						size_t stacksize = 8777216;	// half of previous stack
+						size_t stacksize = 8388608;	// half of previous stack
+						//size_t stacksize = 4194304; //512 * 1024;
 						pthread_attr_t attr;
 						pthread_attr_init( &attr );
 						pthread_attr_setstacksize( &attr, stacksize );
 						
 						// Make sure we keep the number of threads under the limit
+						
+						if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
+						{
+							fc->FDCount++;
+							FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
+						}
 						
 						//change NULL to &attr
 #ifdef USE_BLOCKED_SOCKETS_TO_READ_HTTP
@@ -1891,7 +2186,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 						SystemBase *locsb = (SystemBase *)fc->fci_SB;
 						if( WorkerManagerRun( locsb->sl_WorkerManager,  FriendCoreProcess, pre, NULL, "FriendCoreProcess" ) != 0 )
 						{
-							SocketDelete( sock );
+							sock->s_Interface->SocketDelete( sock );
 							sock = NULL;
 						}
 						DEBUG("[FriendCoreEpoll] Worker launched\n");
@@ -1905,8 +2200,13 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 #endif
 #endif
 					}
+					else if( sock != NULL )
+					{
+						sock->s_Interface->SocketDelete( sock );
+					}
 					//DEBUG("EPOLLIN end\n");
 				}
+				*/
 			}
 		}
 	}

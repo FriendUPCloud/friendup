@@ -43,7 +43,7 @@ Friend.User = {
 		{
 			try
 			{
-				Workspace.conn.ws.close();
+				Workspace.conn.ws.cleanup();
 			}
 			catch( e )
 			{
@@ -84,7 +84,7 @@ Friend.User = {
 		{
 			try
 			{
-				Workspace.conn.ws.close();
+				Workspace.conn.ws.cleanup();
 			}
 			catch( e )
 			{
@@ -109,8 +109,17 @@ Friend.User = {
     // Send the actual login call
     SendLoginCall: function( info, callback )
     {
+    	this.State = 'Login';
+    	
+    	if( this.lastLogin && this.lastLogin.currentRequest )
+    	{
+    		this.lastLogin.currentRequest.destroy();
+    	}
+    	
     	// Create a new library call object
 		let m = new FriendLibrary( 'system' );
+		this.lastLogin = m;
+		
 		if( info.username && info.password )
 		{
 			Workspace.sessionId = '';
@@ -160,6 +169,10 @@ Friend.User = {
 					Workspace.loginid = json.loginid;
 					Workspace.userLevel = json.level;
 					Workspace.fullName = json.fullname;
+					
+					// We are now online!
+					Friend.User.SetUserConnectionState( 'online' );
+					
 					if( !Workspace.userWorkspaceInitialized )
 					{
 						Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), event );
@@ -169,10 +182,6 @@ Friend.User = {
 						if( typeof( callback ) == 'function' )
 							callback( true, serveranswer );
 						// Make sure we didn't lose websocket!
-						if( !Workspace.conn && Workspace.initWebSocket )
-						{
-							Workspace.initWebSocket();
-						}
 					}
 				
 					// Remember login info for next login
@@ -182,8 +191,6 @@ Friend.User = {
 					{
 						// Nothing
 					}
-					
-					Friend.User.SetUserConnectionState( 'online' );
 				}
 				else
 				{
@@ -229,7 +236,7 @@ Friend.User = {
 		{
 			try
 			{
-				Workspace.conn.ws.close();
+				Workspace.conn.ws.cleanup();
 			}
 			catch( e )
 			{
@@ -281,10 +288,9 @@ Friend.User = {
 			}
 
 			let m = new cAjax();
-			Workspace.websocketsOffline = true;
 			m.open( 'get', '/system.library/user/logout/?sessionid=' + Workspace.sessionId, true );
+			m.forceHTTP = true;
 			m.send();
-			Workspace.websocketsOffline = false;
 			setTimeout( doLogout, 500 );
 		} );
 		// Could be there will be no connection..
@@ -364,50 +370,75 @@ Friend.User = {
 	Init: function()
 	{
 		this.ServerIsThere = true;
-		this.checkInterval = setInterval( 'Friend.User.CheckServerConnection()', 10000 );
+	},
+	CheckServerNow: function()
+	{
+		this.CheckServerConnection();
 	},
 	// Check if the server is alive
 	CheckServerConnection: function( useAjax )
 	{
-		if( typeof( Module ) == 'undefined' ) return;
-		let serverCheck = new Module( 'system' );
-		serverCheck.onExecuted = function( q, s )
+		if( typeof( Library ) == 'undefined' ) return;
+		if( typeof( MD5 ) == 'undefined' ) return;
+		let exf = function()
 		{
-			// Check missing session
-			let missSess = ( s && s.indexOf( 'sessionid or authid parameter is missing' ) > 0 );
-			if( !missSess && ( s && s.indexOf( 'User session not found' ) > 0 ) )
-				missSess = true;
-			if( !missSess && q == null && s == null )
-				missSess = true;
-			
-			if( ( q == 'fail' && !s ) || ( !q && !s ) || ( q == 'error' && !s ) || missSess )
+			Friend.User.serverCheck = null;
+			if( Friend.User.State != 'offline' )
 			{
-				if( missSess )
+				let serverCheck = new Library( 'system' );
+				serverCheck.onExecuted = function( q, s )
 				{
-					Friend.User.ReLogin();
+					// Check missing session
+					let missSess = ( s && s.indexOf( 'sessionid or authid parameter is missing' ) > 0 );
+					if( !missSess && ( s && s.indexOf( 'User session not found' ) > 0 ) )
+						missSess = true;
+					if( !missSess && q == null && s == null )
+						missSess = true;
+			
+					if( ( q == 'fail' && !s ) || ( !q && !s ) || ( q == 'error' && !s ) || missSess )
+					{
+						if( missSess )
+						{
+							Friend.User.ReLogin();
+						}
+						Friend.User.SetUserConnectionState( 'offline' );
+					}
+					else
+					{
+						if( !Friend.User.ServerIsThere )
+						{
+							Friend.User.SetUserConnectionState( 'online' );
+						}
+						Friend.User.ConnectionAttempts = 0;
+					}
+				};
+			
+				if( !useAjax )
+					serverCheck.forceHTTP = true;
+				serverCheck.forceSend = true;
+			
+				try
+				{
+					// Cancel previous call if it's still in pipe
+					if( Friend.User.serverCheck && Friend.User.serverCheck.currentRequest )
+					{
+						Friend.User.serverCheck.currentRequest.destroy();
+					}
+					serverCheck.execute( 'validate' );
+					Friend.User.serverCheck = serverCheck;
 				}
-				Friend.User.SetUserConnectionState( 'offline' );
+				catch( e )
+				{
+					Friend.User.SetUserConnectionState( 'offline' );
+				}
 			}
 			else
 			{
-				if( !Friend.User.ServerIsThere )
-				{
-					Friend.User.SetUserConnectionState( 'online' );
-				}
-				Friend.User.ConnectionAttempts = 0;
+				Friend.User.ReLogin();
 			}
-		}
-		if( !useAjax )
-			serverCheck.forceHTTP = true;
-		serverCheck.forceSend = true;
-		try
-		{
-			serverCheck.execute( 'getsetting', { setting: 'friendversion' } );
-		}
-		catch( e )
-		{
-			Friend.User.SetUserConnectionState( 'offline' );
-		}
+		};
+		// Check now!
+		exf();
 	},
 	// Set the user state (offline / online etc)
 	SetUserConnectionState: function( mode )
@@ -425,23 +456,59 @@ Friend.User = {
 				Workspace.workspaceIsDisconnected = true;
 				if( Workspace.nudgeWorkspacesWidget )
 					Workspace.nudgeWorkspacesWidget();
+				
+				// Try to close the websocket
+				if( Workspace.conn )
+				{
+					try
+					{
+						Workspace.conn.ws.cleanup();
+					}
+					catch( e )
+					{
+						console.log( 'Could not close conn.' );
+					}
+					delete Workspace.conn;
+					console.log( 'Removed websocket.' );
+				}
+				
+				if( this.checkInterval )
+					clearInterval( this.checkInterval );
+				this.checkInterval = setInterval( 'Friend.User.CheckServerConnection()', 2500 );
 			}
 		}
 		else
 		{
-			this.ServerIsThere = true;
-			this.State = 'online';
-			document.body.classList.remove( 'Offline' );
-			if( Workspace.screen )
-				Workspace.screen.hideOfflineMessage();
-			Workspace.workspaceIsDisconnected = false;
-			if( Workspace.nudgeWorkspacesWidget )
-				Workspace.nudgeWorkspacesWidget();
-			// Just remove this by force
-			document.body.classList.remove( 'Busy' );
-			// Just refresh it
-			if( Workspace.refreshDesktop )
-				Workspace.refreshDesktop( true, false );
+			// We're online again
+			if( this.checkInterval )
+			{
+				clearInterval( this.checkInterval );
+				this.checkInterval = null;
+			}
+			
+			if( this.State != 'online' )
+			{
+				this.ServerIsThere = true;
+				this.State = 'online';
+				document.body.classList.remove( 'Offline' );
+				if( Workspace.screen )
+					Workspace.screen.hideOfflineMessage();
+				Workspace.workspaceIsDisconnected = false;
+				if( Workspace.nudgeWorkspacesWidget )
+					Workspace.nudgeWorkspacesWidget();
+				// Just remove this by force
+				document.body.classList.remove( 'Busy' );
+				// Just refresh it
+				if( Workspace.refreshDesktop )
+					Workspace.refreshDesktop( true, false );
+				// Try to reboot the websocket
+				if( !Workspace.conn && Workspace.initWebSocket )
+				{
+					Workspace.initWebSocket();
+				}
+				// Clear execution queue
+				_executionQueue = {};
+			}
 		}
 	}
 };

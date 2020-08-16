@@ -4619,7 +4619,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 						if( w.revent ) ww.RemoveEvent( 'resize', ww.revent );
 						ww.revent = ww.AddEvent ( 'resize', function ( cbk )
 						{
-							win.directoryview.toChange = true;
+							ww.directoryview.toChange = true;
 							ww.redrawIcons( null, ww.direction, cbk );
 						} );
 					}

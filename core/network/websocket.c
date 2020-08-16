@@ -200,11 +200,13 @@ void hand(int s )
  */
 int WebsocketThread( FThread *data )
 {
+	pthread_detach( pthread_self() );
 	int cnt = 0;
 	WebSocket *ws = (WebSocket *)data->t_Data;
 	if( ws->ws_Context == NULL )
 	{
 		Log( FLOG_ERROR, "[WebsocketThread] WsContext is empty\n");
+		pthread_exit( NULL );
 		return 0;
 	}
 	
@@ -222,7 +224,7 @@ int WebsocketThread( FThread *data )
 
 	while( TRUE )
 	{
-		int n = lws_service( ws->ws_Context, 50 );
+		int n = lws_service( ws->ws_Context, 500 );
 		
 		if( ws->ws_Quit == TRUE && ws->ws_NumberCalls <= 0 )
 		{
@@ -245,6 +247,7 @@ int WebsocketThread( FThread *data )
 
 done:
 	data->t_Launched = FALSE;
+	pthread_exit( NULL );
 	return 0;
 }
 

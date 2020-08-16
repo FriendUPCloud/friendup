@@ -1258,6 +1258,8 @@ void NotificationSendThread( FThread *data )
 
 void NotificationManagerTimeoutThread( FThread *data )
 {
+	pthread_detach( pthread_self() );
+	
 	data->t_Launched = TRUE;
 	NotificationManager *nm = (NotificationManager *)data->t_Data;
 	int counter = 0;		// responsible for launching Notifcation checker
@@ -1380,6 +1382,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 		}
 	}
 	data->t_Launched = FALSE;
+	pthread_exit( NULL );
 }
 
 #ifndef _LOCCOMP3

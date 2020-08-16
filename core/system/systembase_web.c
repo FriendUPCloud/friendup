@@ -320,6 +320,9 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 
 Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession *loggedSession, int *result )
 {
+	// Just calculate when
+	int requestStart = GetUnixTime();
+
 	*result = 0;
 	Http *response = NULL;
 	FBOOL userAdded = FALSE;
@@ -575,66 +578,71 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				
 				if( uname != NULL && uname->hme_Data != NULL  )
 				{
-					UserSession *curusrsess = l->sl_USM->usm_Sessions;
-					while( curusrsess != NULL )
+					if( FRIEND_MUTEX_LOCK( &(l->sl_USM->usm_Mutex) ) == 0 )
 					{
-						if( curusrsess != NULL )
+						UserSession *curusrsess = l->sl_USM->usm_Sessions;
+					
+						while( curusrsess != NULL )
 						{
-							if( FRIEND_MUTEX_LOCK( &(curusrsess->us_Mutex) ) == 0 )
+							if( curusrsess != NULL )
 							{
-								curusrsess->us_InUseCounter++;
-								FRIEND_MUTEX_UNLOCK( &(curusrsess->us_Mutex) );
-							}
-						}
-						User *curusr = curusrsess->us_User;
-						
-						if( curusr != NULL )
-						{
-							DEBUG("CHECK remote user: %s pass %s  provided pass %s uname param: %s\n", curusr->u_Name, curusr->u_Password, (char *)lpass, (char *)uname->hme_Data );
-						
-							if( strcasecmp( curusr->u_Name, (char *)uname->hme_Data ) == 0 )
-							{
-								FBOOL isUserSentinel = FALSE;
-							
-								Sentinel *sent = l->GetSentinelUser( l );
-								if( sent != NULL )
+								if( FRIEND_MUTEX_LOCK( &(curusrsess->us_Mutex) ) == 0 )
 								{
-									if( curusr == sent->s_User )
-									{
-										isUserSentinel = TRUE;
-									}
+									curusrsess->us_InUseCounter++;
+									FRIEND_MUTEX_UNLOCK( &(curusrsess->us_Mutex) );
 								}
-							
-								if( isUserSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, curusr, (char *)passwd->hme_Data, &blockedTime ) == TRUE )
+							}
+							User *curusr = curusrsess->us_User;
+						
+							if( curusr != NULL )
+							{
+								DEBUG("CHECK remote user: %s pass %s  provided pass %s uname param: %s\n", curusr->u_Name, curusr->u_Password, (char *)lpass, (char *)uname->hme_Data );
+						
+								if( strcasecmp( curusr->u_Name, (char *)uname->hme_Data ) == 0 )
 								{
-									//snprintf( sessionid, sizeof(sessionid), "%lu", curusrsess->us_User->u_ID );
-									//strcpy( sessionid, curusrsess->us_User->u_MainSessionID );
-
-									loggedSession =  curusrsess;
-									userAdded = TRUE;		// there is no need to free resources
-									
-									if( curusrsess != NULL )
+									FBOOL isUserSentinel = FALSE;
+							
+									Sentinel *sent = l->GetSentinelUser( l );
+									if( sent != NULL )
 									{
-										if( FRIEND_MUTEX_LOCK( &(curusrsess->us_Mutex) ) == 0 )
+										if( curusr == sent->s_User )
 										{
-											curusrsess->us_InUseCounter--;
-											FRIEND_MUTEX_UNLOCK( &(curusrsess->us_Mutex) );
+											isUserSentinel = TRUE;
 										}
 									}
+							
+									if( isUserSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, curusr, (char *)passwd->hme_Data, &blockedTime ) == TRUE )
+									{
+										//snprintf( sessionid, sizeof(sessionid), "%lu", curusrsess->us_User->u_ID );
+										//strcpy( sessionid, curusrsess->us_User->u_MainSessionID );
 
-									break;
-								}	// compare password
-							}		// compare user name
-						}	//if usr != NULL
-						if( curusrsess != NULL )
-						{
-							if( FRIEND_MUTEX_LOCK( &(curusrsess->us_Mutex) ) == 0 )
+										loggedSession =  curusrsess;
+										userAdded = TRUE;		// there is no need to free resources
+									
+										if( curusrsess != NULL )
+										{
+											if( FRIEND_MUTEX_LOCK( &(curusrsess->us_Mutex) ) == 0 )
+											{
+												curusrsess->us_InUseCounter--;
+												FRIEND_MUTEX_UNLOCK( &(curusrsess->us_Mutex) );
+											}
+										}
+
+										break;
+									}	// compare password
+								}		// compare user name
+							}	//if usr != NULL
+							if( curusrsess != NULL )
 							{
-								curusrsess->us_InUseCounter--;
-								FRIEND_MUTEX_UNLOCK( &(curusrsess->us_Mutex) );
+								if( FRIEND_MUTEX_LOCK( &(curusrsess->us_Mutex) ) == 0 )
+								{
+									curusrsess->us_InUseCounter--;
+									FRIEND_MUTEX_UNLOCK( &(curusrsess->us_Mutex) );
+								}
 							}
+							curusrsess = (UserSession *)curusrsess->node.mln_Succ;
 						}
-						curusrsess = (UserSession *)curusrsess->node.mln_Succ;
+						FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
 					}
 				}
 			}
@@ -984,7 +992,21 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	*/
 	/// @endcond
 	
-	if( strcmp( urlpath[ 0 ], "help" ) == 0 )
+	if( strcmp( urlpath[ 0 ], "validate" ) == 0 )
+	{
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{TAG_DONE, TAG_DONE}
+		};
+		
+		response = HttpNewSimple( HTTP_200_OK,  tags );
+		
+		HttpAddTextContent( response, "ok<!--separate-->{\"response\":\"true\"}" );
+		
+		*result = 200;
+	}
+	else if( strcmp( urlpath[ 0 ], "help" ) == 0 )
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
@@ -1074,9 +1096,10 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		{
 			char *module = (char *)he->hme_Data;
 			int size = 0;
+			
 			if( ( size = strlen( module ) ) > 4 )
 			{
-				if( module[ size-4 ] == '.' &&module[ size-3 ] == 'p'  &&module[ size-2 ] == 'h'  &&module[ size-1 ] == 'p' \
+				if( module[ size-4 ] == '.' &&module[ size-3 ] == 'p'  &&module[ size-2 ] == 'h'  &&module[ size-1 ] == 'p' 
 					&& l->sl_PHPModule != NULL )
 				{
 					char runfile[ 512 ];
@@ -1102,6 +1125,10 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								char *fname = allArgsNew + MODULE_FILE_CALL_STRING_LEN;
 								remove( fname );
 							}
+							
+							FFree( allArgsNew );
+							
+							Log( FLOG_INFO, "Module request took %d milliseconds.", GetUnixTime() - requestStart );
 						}
 					}
 					else
@@ -1116,118 +1143,163 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		{
 			if( S_ISDIR( f.st_mode ) )
 			{
-				// 2. Check if module folder exists in modules/
-
 				if( he != NULL )
 				{
-					char *module = ( char *)he->hme_Data;
+					// 2. Check if module folder exists in modules/
 					char path[ 512 ];
-					snprintf( path, sizeof(path), "modules/%s", module );
-					path[ 511 ] = 0;
+					char *modType = NULL;
 					
-					if( stat( path, &f ) != -1 )
+					// Caching!
+					List *checkAvail = l->sl_AvailableModules;
+					int found = 0;
+					while( checkAvail != NULL )
 					{
-						// 3. Determine interpreter (or native code)
-						DIR *fdir = NULL;
-						struct dirent *fdirent = NULL;
-						char *modType = NULL;
-						
-						if( ( fdir = opendir( path ) ) != NULL )
+						if( checkAvail->l_Data )
 						{
-							while( ( fdirent = readdir( fdir ) ) )
+							struct ModuleSet *mp = ( struct ModuleSet * )checkAvail->l_Data;
+							if( strcmp( ( char *)he->hme_Data, mp->name ) == 0 )
 							{
-								char component[ 10 ];
-
-								sprintf( component, "%.*s", 6, fdirent->d_name );
-
-								if( strcmp( component, "module" ) == 0 )
+								found = 1;
+								modType = StringDuplicate( mp->extension );
+								snprintf( path, sizeof( path ), "modules/%s", mp->name );
+								path[ 511 ] = 0;
+								break;
+							}
+						}
+						checkAvail = checkAvail->next;
+					}
+					
+					char *module = ( char *)he->hme_Data;
+					
+					if( found == 0 )
+					{
+						DEBUG( "Module %s not found!\n", module );
+						snprintf( path, sizeof(path), "modules/%s", module );
+						path[ 511 ] = 0;
+					
+						if( stat( path, &f ) != -1 )
+						{
+							// 3. Determine interpreter (or native code)
+							DIR *fdir = NULL;
+							struct dirent *fdirent = NULL;
+						
+						
+							if( ( fdir = opendir( path ) ) != NULL )
+							{
+								int hasExt, dlen, ie, extlen, md, typec;
+								while( ( fdirent = readdir( fdir ) ) )
 								{
-									int hasExt = 0;
-									int dlen = strlen( fdirent->d_name );
-									int ie = 0;
-									for( ; ie < dlen; ie++ )
+									char component[ 10 ];
+
+									sprintf( component, "%.*s", 6, fdirent->d_name );
+
+									if( strcmp( component, "module" ) == 0 )
 									{
-										if( fdirent->d_name[ie] == '.' )
-										{
-											hasExt = ie;
-										}
-									}
-									// Has extension!
-									if( hasExt > 0 )
-									{
-										int extlen = dlen - 7;
-										if( modType )
-										{
-											FFree( modType );
-										}
-										modType = FCalloc( extlen + 1, sizeof( char ) );
-										ie = 0; int md = 0, typec = 0;
+										hasExt = 0;
+										dlen = strlen( fdirent->d_name );
+										ie = 0;
+									
 										for( ; ie < dlen; ie++ )
 										{
-											if( md == 0 && fdirent->d_name[ie] == '.' )
+											if( fdirent->d_name[ie] == '.' )
 											{
-												md = 1;
+												hasExt = ie;
 											}
-											else if ( md == 1 )
+										}
+										// Has extension!
+										if( hasExt > 0 )
+										{
+											extlen = dlen - 7;
+											if( modType )
 											{
-												modType[typec++] = fdirent->d_name[ie];
+												FFree( modType );
 											}
+											modType = FCalloc( extlen + 1, sizeof( char ) );
+											ie = 0; md = 0, typec = 0;
+											for( ; ie < dlen; ie++ )
+											{
+												if( md == 0 && fdirent->d_name[ie] == '.' )
+												{
+													md = 1;
+												}
+												else if ( md == 1 )
+												{
+													modType[typec++] = fdirent->d_name[ie];
+												}
+											}
+											break;
 										}
 									}
 								}
+								closedir( fdir );
 							}
-							closedir( fdir );
 						}
+					}
+					
 		
-						// 4. Execute with interpreter (or execute native code)
+					// 4. Execute with interpreter (or execute native code)
+					if( modType != NULL )
+					{
+						if( found == 0 )
+						{
+							// Add for book keeping!
+							DEBUG( "Adding to list %s\n", modType );
+							struct ModuleSet *ms = FCalloc( 1, sizeof( struct ModuleSet ) );
+							ms->name = StringDuplicate( module );
+							ms->extension = StringDuplicate( modType );
+							if( FRIEND_MUTEX_LOCK( &(l->sl_InternalMutex) ) == 0 )
+							{
+								AddToList( l->sl_AvailableModules, ( void *)ms );
+								FRIEND_MUTEX_UNLOCK( &( l->sl_InternalMutex ) );
+							}
+						}
+											
+						// Look if it's in list
+						DEBUG( "[MODULE] Executing %s module! path %s\n", modType, path );
+						char *modulePath = FCalloc( MODULE_PATH_LENGTH, sizeof( char ) );
+						snprintf( modulePath, MODULE_PATH_LENGTH-1, "%s/module.%s", path, modType );
+						if( 
+							strcmp( modType, "php" ) == 0 || 
+							strcmp( modType, "jar" ) == 0 ||
+							strcmp( modType, "py" ) == 0
+						)
+						{
+							FBOOL isFile;
+							char *allArgsNew = GetArgsAndReplaceSession( *request, loggedSession, &isFile );
+							
+							DEBUG("Calling module '%s' allargs '%s'\n", modulePath, allArgsNew );
+
+							// Execute
+							data = l->RunMod( l, modType, modulePath, allArgsNew, &dataLength );
+							
+							// We don't use them now
+							if( allArgsNew != NULL )
+							{
+								if( isFile )
+								{
+									//"file<!--separate-->%s"
+									char *fname = allArgsNew + MODULE_FILE_CALL_STRING_LEN;
+									remove( fname );
+								}
+								FFree( allArgsNew );
+							}
+						}
+						if( modulePath )
+						{
+							FFree( modulePath );
+							modulePath = NULL;
+						}
+						
 						if( modType != NULL )
 						{
-							DEBUG( "[MODULE] Executing %s module! path %s\n", modType, path );
-							char *modulePath = FCalloc( MODULE_PATH_LENGTH, sizeof( char ) );
-							snprintf( modulePath, MODULE_PATH_LENGTH-1, "%s/module.%s", path, modType );
-							if( 
-								strcmp( modType, "php" ) == 0 || 
-								strcmp( modType, "jar" ) == 0 ||
-								strcmp( modType, "py" ) == 0
-							)
-							{
-								FBOOL isFile;
-								char *allArgsNew = GetArgsAndReplaceSession( *request, loggedSession, &isFile );
-								
-								DEBUG("Calling module '%s' allargs '%s'\n", modulePath, allArgsNew );
-
-								// Execute
-								data = l->RunMod( l, modType, modulePath, allArgsNew, &dataLength );
-								
-								// We don't use them now
-								if( allArgsNew != NULL )
-								{
-									if( isFile )
-									{
-										//"file<!--separate-->%s"
-										char *fname = allArgsNew + MODULE_FILE_CALL_STRING_LEN;
-										remove( fname );
-									}
-									FFree( allArgsNew );
-								}
-							}
-							if( modulePath )
-							{
-								FFree( modulePath );
-								modulePath = NULL;
-							}
-							
-							if( modType != NULL )
-							{
-								FFree( modType );
-								modType = NULL;
-							}
+							FFree( modType );
+							modType = NULL;
 						}
 					}
 				}
 			}
 		}
-		DEBUG("Module executed...\n");
+		DEBUG("Module executed in %dms...\n", GetUnixTime() - requestStart );
 		
 		if( data != NULL )
 		{
@@ -1382,6 +1454,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		}
 		
 		Log( FLOG_INFO, "Module call end: %p\n", pthread_self() );
+		DEBUG("Module call completed in %dms...\n", GetUnixTime() - requestStart );
 	}
 	
 	//
@@ -2380,6 +2453,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			FRIEND_MUTEX_UNLOCK( &(loggedSession->us_Mutex ) );
 		}
 	}
+	
+	DEBUG( "Systembase web request completed: %dms\n", GetUnixTime() - requestStart );
 	
 	FFree( sessionid );
 	return response;

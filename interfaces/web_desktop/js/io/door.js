@@ -343,7 +343,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 						}
 						if( sharedCheck.length )
 						{
-							let ch = new Module( 'system' );
+							let ch = new Library( 'system' );
 							ch.onExecuted = function( che, chd )
 							{
 								if( che == 'ok' )
@@ -369,7 +369,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 								callback( list, t.fileInfo.Path, pth );
 								sef.parseQueue( list, t.fileInfo.Path, pth );
 							}
-							ch.execute( 'checksharedpaths', { paths: sharedCheck } );
+							ch.execute( 'file/checksharedpaths', { paths: sharedCheck, path: deviceName } );
 						}
 						else
 						{
@@ -536,10 +536,7 @@ Door.prototype.write = function( filename, data, mode, extraData )
 	if( this.cancelId )
 		jax.cancelId = this.cancelId;
 	
-	//var old = Workspace.websocketsOffline;
-	//Workspace.websocketsOffline = true;
 	j.open( 'post', '/system.library/file/write', true, true );
-	//Workspace.websocketsOffline = false;
 	if( Workspace.conf && Workspace.conf.authId )
 		j.addVar( 'authid', Workspace.conf.authId );
 	else j.addVar( 'sessionid', Workspace.sessionId );
