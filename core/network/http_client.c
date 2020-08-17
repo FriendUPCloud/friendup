@@ -481,6 +481,7 @@ client_error:
 
 	if( sockfd != 0 )
 	{
+		shutdown( sockfd, SHUT_RDWR );
 		close( sockfd );
 	}
 	

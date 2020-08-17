@@ -106,6 +106,8 @@ void WebsocketAPNSConnectorDelete( WebsocketAPNSConnector *wr )
 
 void WebsocketAPNSConnectorThread( FThread *data )
 {
+	pthread_detach( pthread_self() );
+	
 	WebsocketAPNSConnector *con = (WebsocketAPNSConnector *)data->t_Data;
 	int delayTillNextAction = 0;
 	
@@ -179,4 +181,5 @@ void WebsocketAPNSConnectorThread( FThread *data )
 		}
 	}
 	data->t_Launched = FALSE;
+	pthread_exit( NULL );
 }

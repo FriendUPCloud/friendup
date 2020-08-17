@@ -80,11 +80,11 @@
 //
 
 /**
- * Contains the definition of each instance of the core Friend server
- *
- * Note: Preferably, the contents of this structure should
- * never be modified after the server has been started.
- */
+* Contains the definition of each instance of the core Friend server
+*
+* Note: Preferably, the contents of this structure should
+* never be modified after the server has been started.
+*/
 
 typedef struct FriendCoreManager
 {

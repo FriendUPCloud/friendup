@@ -615,10 +615,35 @@ var WorkspaceInside = {
 	},
 	initWebSocket: function( callback )
 	{	
-		// We're already open
+		let self = this;
+		function closeConn()
+		{
+			// Clean up previous
+			if( self.conn )
+			{
+				try
+				{
+					self.conn.ws.cleanup();
+				}
+				catch( ez )
+				{
+					console.log( 'Conn is dead.', ez, ez2 );
+				}
+				delete self.conn;
+			}
+		}
+	
+		// We're already open or connecting
 		if( Workspace.websocketState == 'open' ) return;
 		
-		if( Workspace.reloginInProgress || Workspace.websocketState == 'connecting' )
+		if( window.Friend && Friend.User && Friend.User.State != 'online' ) 
+		{
+			console.log( 'Cannot initialize web socket - user is offline.' );
+			closeConn();
+			return;
+		}
+		
+		if( Workspace.websocketState == 'connecting' )
 			return;
 		
 		if( !Workspace.sessionId && Workspace.userLevel )
@@ -626,21 +651,18 @@ var WorkspaceInside = {
 			return Friend.User.ReLogin();
 		}
 		
+		// Not ready
 		if( !Workspace.sessionId )
 		{
-			setTimeout( Workspace.initWebSocket, 1000 );
+			return setTimeout( function(){ Workspace.initWebSocket( callback ); }, 1000 );
 		}
 
 		// Force connecting ws state (we will close it!)
 		Workspace.websocketState = 'connecting';
-		Workspace.websocketsOffline = false;
-		
-		// Just remove this by force
-		document.body.classList.remove( 'Busy' );
 
-		var conf = {
+		let conf = {
 			onstate: onState,
-			onend  : onEnd,
+			onend  : onEnd
 		};
 
         //we assume we are being proxied - set the websocket to use the same port as we do
@@ -650,31 +672,11 @@ var WorkspaceInside = {
             //console.log('webproxy set to be tunneled as well.');
         }
 		
-		// Clean up previous
-		if( this.conn )
-		{
-			try
-			{
-				this.conn.ws.close();
-			}
-			catch( ez )
-			{
-				try
-				{
-					this.conn.ws.cleanup();
-				}
-				catch( ez2 )
-				{
-					console.log( 'Conn is dead.', ez, ez2 );
-				}
-			}
-			delete this.conn;
-		}
+		closeConn();
 		
 		if( typeof FriendConnection == 'undefined' )
 		{
-			setTimeout( Workspace.initWebSocket, 250 );
-			return;
+			return setTimeout( function(){ Workspace.initWebSocket( callback ); }, 250 );
 		}
 		
 		this.conn = new FriendConnection( conf );
@@ -691,11 +693,12 @@ var WorkspaceInside = {
 		this.conn.on( 'notification', handleNotifications );
 		
 		// Reference for handler
-		var selfConn = this.conn;
+		let selfConn = this.conn;
 
 		function onState( e )
 		{
-			//console.log( 'Worspace.conn.onState', e );
+			//console.log( 'Worspace.conn.onState', e, 'State: ' + Workspace.websocketState );
+			
 			if( e.type == 'error' || e.type == 'close' )
 			{
 				if( e.type == 'close' )
@@ -707,24 +710,10 @@ var WorkspaceInside = {
 				{
 					console.log( '[onState] We got an error.' );
 					Workspace.websocketState = 'error';
-					Friend.User.CheckServerConnection();
 				}
 			}
 			else if( e.type == 'ping' )
 			{
-				// Ignite queue on ping
-				var time = ( new Date() ).getTime() - _cajax_http_last_time;
-				if( time > 10000 && window.Friend )
-				{
-					// Ignite queue
-					_cajax_http_connections = 0;
-					if( Friend.cajax.length > 0 )
-					{
-						Friend.cajax[0].forceSend = true;
-						Friend.cajax[0].send();
-					}
-				}
-				
 				if( Workspace.websocketState != 'open' )
 				{
 					// Refresh mountlist
@@ -743,31 +732,29 @@ var WorkspaceInside = {
 			{
 				if( e.type == 'open' )
 				{
-					// TODO: Fix this!! Whenthe state is open, ws should 
-					//       immediately be able to handle requests, now its
-					//       a slight delay
-					setTimeout( function()
+					if( callback )
 					{
-						if( callback )
-						{
-							callback();
-							callback = null;
-						}
-						Workspace.websocketState = 'open';
-					}, 150 );
+						callback();
+						callback = null;
+					}
+					Workspace.websocketState = 'open';
 				}
 				else if( e.type == 'connecting' )
 				{
 					Workspace.websocketState = 'connecting';
 				}
-				if( e.type != 'connecting' && e.type != 'open' ) console.log( e );
+				if( e.type != 'connecting' && e.type != 'open' )
+				{
+					console.log( 'Strange onState: ', e );
+				}
 			}
 		}
 
 		function onEnd( e )
 		{
-			console.log( 'Workspace.conn.onEnd', e );
+			//console.log( 'Workspace.conn.onEnd', e );
 			Workspace.websocketState = 'closed';
+			Friend.User.SetUserConnectionState( 'offline' );
 		}
 
 		function handleIconChange( e ){ console.log( 'icon-change event', e ); }
@@ -783,18 +770,18 @@ var WorkspaceInside = {
 			// Clear cache
 			if( msg && msg.devname && msg.path )
 			{
-				var ext4 = msg.path.substr( msg.path.length - 5, 5 );
-				var ext3 = msg.path.substr( msg.path.length - 4, 4 );
+				let ext4 = msg.path.substr( msg.path.length - 5, 5 );
+				let ext3 = msg.path.substr( msg.path.length - 4, 4 );
 				ext4 = ext4.toLowerCase();
 				ext3 = ext3.toLowerCase();
 				if( ext4 == '.jpeg' || ext3 == '.jpg' || ext3 == '.gif' || ext3 == '.png' )
 				{
-					var ic = new FileIcon();
+					let ic = new FileIcon();
 					ic.delCache( msg.devname + ':' + msg.path );
 				}
 			}
 			
-			var t = msg.devname + ( msg.path ? msg.path : '' );
+			let t = msg.devname + ( msg.path ? msg.path : '' );
 			if( Workspace.filesystemChangeTimeouts[ t ] )
 			{
 				clearTimeout( Workspace.filesystemChangeTimeouts[ t ] );
@@ -809,7 +796,7 @@ var WorkspaceInside = {
 			{
 				if( msg.path || msg.devname )
 				{
-					var p = '';
+					let p = '';
 					// check if path contain device
 					if( msg.path.indexOf( ':' ) > 0 )
 					{
@@ -839,15 +826,15 @@ var WorkspaceInside = {
 						// Check if we need to handle events for apps
 						if( Workspace.appFilesystemEvents[ 'filesystem-change' ] )
 						{
-							var evList = Workspace.appFilesystemEvents[ 'filesystem-change' ];
-							var outEvents = [];
-							for( var a = 0; a < evList.length; a++ )
+							let evList = Workspace.appFilesystemEvents[ 'filesystem-change' ];
+							let outEvents = [];
+							for( let a = 0; a < evList.length; a++ )
 							{
-								var found = false;
+								let found = false;
 								if( evList[a].applicationId )
 								{
 									found = evList[a];
-									var app = findApplication( evList[a].applicationId );
+									let app = findApplication( evList[a].applicationId );
 									if( app )
 									{
 										if( evList[a].viewId && app.windows[ evList[a].viewId ] )
@@ -8723,26 +8710,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			Workspace.nudgeWorkspacesWidget();
 			
 			document.body.classList.add( 'ViewStateActive' );
-			// TODO: Remove the uncommented thing, it isn't working
-			// TODO: Check with pawel..
-			/*if( isMobile )
-			{
-				//mobileDebug( 'Trying to init websocket.' );
-				Workspace.initWebSocket();
 
-				var setwsstate = setTimeout( function()
-				{
-					if( Workspace.conn && Workspace.conn.ws )
-						Workspace.conn.ws.close();
-				}, 1500 );
-				var dl = new FriendLibrary( 'system.library' );
-				dl.addVar( 'status', 0 );
-				dl.onExecuted = function(e,d)
-				{
-					clearTimeout( setwsstate );
-				};
-				dl.execute( 'mobile/setwsstate' );
-			}*/
 			// Tell all windows
 			if( window.friendApp )
 			{
@@ -8789,18 +8757,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			document.body.classList.remove( 'ViewStateActive' );
 			document.body.classList.remove( 'Activating' );
-			/*
-			TODO: Remove. But check with pawel. Not required anymore
-			if( isMobile )
+			
+			if( !Workspace.conn || !Workspace.conn.ws )
 			{
-				var dl = new FriendLibrary( 'system.library' );
-				dl.addVar( 'status', 1 );
-				dl.onExecuted = function(e,d)
-				{
-					//mobileDebug( 'setwsstate inactive: ' + e );
-				};
-				dl.execute( 'mobile/setwsstate' );
-			}*/
+				Workspace.initWebSocket();
+			}
 		}
 		this.sleepTimeout();
 		this.currentViewState = newState;

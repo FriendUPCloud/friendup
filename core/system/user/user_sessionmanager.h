@@ -31,6 +31,7 @@ typedef struct UserSessionManager
 {
 	void							*usm_SB;
 	UserSession						*usm_Sessions;							// user sessions
+	UserSession						*usm_SessionsToBeRemoved;				// sessions which must be removed
 	int								usm_SessionCounter;
 	void 							*usm_UM;
 	

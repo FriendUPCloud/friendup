@@ -158,7 +158,7 @@ void EventLaunch( CoreEvent *ptr )
 	ptr->ce_Launched = FALSE;
 	
 	DEBUG("[EventLaunch] quit\n");
-	pthread_exit( 0 );
+	pthread_exit( NULL );
 }
 
 //
@@ -176,6 +176,8 @@ void EventLaunch( CoreEvent *ptr )
  */
 void *EventManagerLoopThread( FThread *ptr )
 {
+	pthread_detach( pthread_self() );
+	
 	EventManager *ce = (EventManager *)ptr->t_Data;
 	SystemBase *lsb = (SystemBase *)ce->em_SB;
 	//const unsigned long long nano = 1000000000;
@@ -217,7 +219,7 @@ void *EventManagerLoopThread( FThread *ptr )
 	
 	ptr->t_Launched = FALSE;
 	
-	//pthread_exit( 0 );
+	//pthread_exit( NULL );
 	/*
 	clock_t time = clock();
 
@@ -260,6 +262,8 @@ void *EventManagerLoopThread( FThread *ptr )
 		printf( "delay: %ld\n", ( t2 - t1 ) / 1000 );
 
 	}*/
+	
+	pthread_exit( NULL );
 	return NULL;
 }
 

@@ -80,9 +80,9 @@ static inline ListString *RunPHPScript( const char *command )
 		return NULL;
 	}
 	
-#define PHP_READ_SIZE 65536	
+#define PHP_READ_SIZE 4096	
 	
-	char *buf = FMalloc( PHP_READ_SIZE+16 );
+	char *buf = FMalloc( PHP_READ_SIZE + 16 );
 	ListString *ls = ListStringNew();
 	
 #ifdef USE_NPOPEN_POLL
@@ -101,12 +101,12 @@ static inline ListString *RunPHPScript( const char *command )
 	// watch stdout for ability to write
 	fds[1].fd = STDOUT_FILENO;
 	fds[1].events = POLLOUT;
-
+	
 	while( TRUE )
 	{
 		DEBUG("[RunPHPScript] in loop\n");
 		
-		int ret = poll( fds, 2, MOD_TIMEOUT * 1000);
+		int ret = poll( fds, 2, 250 );
 
 		if( ret == 0 )
 		{
@@ -524,7 +524,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 #ifdef __PERF_MEAS
 		stime = GetCurrentTimestampD();
 #endif
-		
+				
 		Log( FLOG_DEBUG, "[ProtocolHttp] Request parsed without problems.\n");
 		Uri *uri = request->http_Uri;
 		Path *path = NULL;
@@ -654,14 +654,18 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							{
 								if( tst->hme_Data != NULL )
 								{
-									session = SLIB->sl_USM->usm_Sessions;
-									while( session != NULL )
+									if( FRIEND_MUTEX_LOCK( &(SLIB->sl_USM->usm_Mutex) ) == 0 )
 									{
-										if(  strcmp( session->us_SessionID, (char *)tst->hme_Data ) == 0 )
+										session = SLIB->sl_USM->usm_Sessions;
+										while( session != NULL )
 										{
-											break;
+											if( strcmp( session->us_SessionID, (char *)tst->hme_Data ) == 0 )
+											{
+												break;
+											}
+											session = (UserSession *)session->node.mln_Succ;
 										}
-										session = (UserSession *)session->node.mln_Succ;
+										FRIEND_MUTEX_UNLOCK( &(SLIB->sl_USM->usm_Mutex) );
 									}
 								}
 							}
@@ -1344,14 +1348,18 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 						{
 							if( tst->hme_Data != NULL )
 							{
-								session = SLIB->sl_USM->usm_Sessions;
-								while( session != NULL )
+								if( FRIEND_MUTEX_LOCK( &(SLIB->sl_USM->usm_Mutex) ) == 0 )
 								{
-									if(  strcmp( session->us_SessionID, (char *)tst->hme_Data ) == 0 )
+									session = SLIB->sl_USM->usm_Sessions;
+									while( session != NULL )
 									{
-										break;
+										if( strcmp( session->us_SessionID, (char *)tst->hme_Data ) == 0 )
+										{
+											break;
+										}
+										session = (UserSession *)session->node.mln_Succ;
 									}
-									session = (UserSession *)session->node.mln_Succ;
+									FRIEND_MUTEX_UNLOCK( &(SLIB->sl_USM->usm_Mutex) );
 								}
 							}
 						}
@@ -1765,7 +1773,6 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 												freeFile = TRUE;
 											}
 											FFree( decoded );
-											DEBUG("Resource mutex released\n");
 										}
 										if( file != NULL )
 										{
@@ -2011,16 +2018,16 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 														
 															FFree( runFile );
 														}
-													}
+														
+														if( isFile )
+														{
+															//"file<!--separate-->%s"
+															char *fname = allArgsNew + MODULE_FILE_CALL_STRING_LEN;
+															remove( fname );
+														}
 													
-													if( isFile )
-													{
-														//"file<!--separate-->%s"
-														char *fname = allArgsNew + MODULE_FILE_CALL_STRING_LEN;
-														remove( fname );
+														FFree( allArgsNew );
 													}
-													
-													FFree( allArgsNew );
 												}
 												
 												if( phpResp == NULL )

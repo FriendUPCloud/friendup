@@ -362,14 +362,14 @@ BufString *FSManagerGetAccess( FSManager *fm, const char *path, FULONG devid, Us
 				 )", newPath, parentPath, devid, usr->u_ID, usr->u_ID );
 				 */
 				
-				sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where \
-PermissionID in( \
+				sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID FROM `FPermLink` WHERE \
+PermissionID IN ( \
 SELECT ID FROM `FFilePermission` WHERE \
 ( Path = '%s' OR Path = '%s' ) \
 AND DeviceID = %lu \
 ) \
 AND ( \
-( ObjectID in( select UserGroupID from `FUserToGroup` where UserID = %lu ) and Type = 1 ) \
+( ObjectID IN ( SELECT UserGroupID FROM `FUserToGroup` WHERE UserID = %lu ) AND Type = 1 ) \
 OR \
 ( ObjectID = %lu and Type = 0 ) \
 OR \
@@ -493,6 +493,11 @@ OR \
 			FFree( newPath );
 			return NULL;
 		}
+	}
+	// Empty list
+	else
+	{
+		BufStringAdd( bs, "[]" );
 	}
 	
 	FFree( newPath );

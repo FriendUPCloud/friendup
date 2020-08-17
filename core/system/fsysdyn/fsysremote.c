@@ -699,7 +699,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 			
 			while( fcm->fcm_CommServiceRemote == NULL )
 			{
-				sleep( 1 );
+				usleep( 5000 );
 				if( (tr--) <= 0 )
 				{
 					break;

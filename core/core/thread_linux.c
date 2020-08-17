@@ -116,10 +116,10 @@ void ThreadCancel( FThread *ft, FBOOL wait )
 {
 	pthread_cancel( ft->t_Thread );
 	
-	if( wait == TRUE && ft->t_Launched != FALSE )
-	{
-		pthread_join( ft->t_Thread, NULL);
-	}
+	//if( wait == TRUE && ft->t_Launched != FALSE )
+	//{
+		//pthread_join( ft->t_Thread, NULL);
+	//}
 }
 
 /**
@@ -134,9 +134,9 @@ void ThreadDelete( FThread *t )
 		t->t_Quit = TRUE;
 		
 		//if( t->t_Launched == TRUE )
-		{
-			pthread_join( t->t_Thread, NULL );
-		}
+		//{
+			//pthread_join( t->t_Thread, NULL );
+		//}
 		
 		DEBUG("[ThreadDelete] Thread finished work (%p)..\n", t );
 		

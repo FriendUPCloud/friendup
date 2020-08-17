@@ -101,16 +101,19 @@ void releaseWSData( WSThreadData *data )
 
 void WSThreadPing( void *p )
 {
+	pthread_detach( pthread_self() );
+	
 	WSThreadData *data = (WSThreadData *)p;
 	if( data == NULL )
 	{
+		pthread_exit( NULL );
 		return;
 	}
 	
 	int n = 0;
 	UserSession *us = data->wstd_WSD->wsc_UserSession;//data->wstd_UserSession;
 	
-	if( data == NULL || us == NULL || us->us_WSD == NULL )
+	if( data == NULL || us == NULL || us->us_WSD == NULL || data->wstd_WSD->wsc_UserSession == NULL )
 	{
 		if( data != NULL )
 		{
@@ -120,13 +123,15 @@ void WSThreadPing( void *p )
 			}
 			FFree( data );
 		}
+		pthread_exit( NULL );
 		return;
 	}
 	
 	unsigned char *answer = FCalloc( 1024, sizeof(char) );
 	int answersize = snprintf( (char *)answer, 1024, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%s\"}}", data->wstd_Requestid );
 	
-	if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+	us = data->wstd_WSD->wsc_UserSession;
+	if( data->wstd_WSD->wsc_UserSession != NULL && FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 	{
 		us->us_InUseCounter++;
 		FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
@@ -146,6 +151,7 @@ void WSThreadPing( void *p )
 	
 	releaseWSData( data );
 
+	pthread_exit( NULL );
 	return;
 }
 
@@ -234,6 +240,8 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		
 		case LWS_CALLBACK_CLOSED:
 			{
+				int tr = 8;
+				
 				while( TRUE )
 				{
 					if( wsd->wsc_InUseCounter <= 0 )
@@ -242,7 +250,20 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 						break;
 					}
 					DEBUG("[WS] Closing WS, number: %d\n", wsd->wsc_InUseCounter );
-					sleep( 1 );
+					//sleep( 1 );
+					usleep( 350000 );	// 0.35 seconds
+					
+					if( tr-- <= 0 )
+					{
+						DEBUG("[WS] Quit after 5\n");
+						break;
+					}
+					
+					if( wsd->wsc_UserSession == NULL )
+					{
+						DEBUG("[WS] wsc_UserSession is equal to NULL\n");
+						break;
+					}
 				}
 				DetachWebsocketFromSession( wsd );
 			
@@ -327,6 +348,8 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					
 					if( pthread_create( &(wstd->wstd_Thread), NULL,  (void *(*)(void *))ParseAndCall, ( void *)wstd ) != 0 )
 					{
+						// Failed!
+						FFree( wstd );
 					}
 				}
 #else
@@ -382,7 +405,9 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 						
 						FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 						unsigned char *t = e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING;
-						t[ e->fq_Size+1 ] = 0;
+						
+						// Previously was t[ e->fq_Size + 1 ] = 0, but seemed to corrupt the last character
+						t[ e->fq_Size ] = 0;
 
 						lws_write( wsi, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, e->fq_Size, LWS_WRITE_TEXT );
 				
@@ -404,10 +429,11 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 						{
 							break;
 						}
-					
-						FRIEND_MUTEX_LOCK( &(us->us_Mutex) );
 					}
-					FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+					else
+					{
+						FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+					}
 					
 					if( q->fq_First != NULL )
 					{
@@ -756,17 +782,37 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 
 int ParseAndCall( WSThreadData *wstd )
 {
+	pthread_detach( pthread_self() );
+
 	int i, i1;
 	int r;
 	jsmn_parser p;
 	jsmntok_t *t;
 	
-	pthread_detach( pthread_self() );
 	
-	UserSession *locus = wstd->wstd_WSD->wsc_UserSession;
+	UserSession *locus = NULL;
+	/*
+	if( wstd->wstd_WSD != NULL )
+	{
+		if( FRIEND_MUTEX_LOCK( &(wstd->wstd_WSD->wsc_Mutex) ) == 0 )
+		{
+			wstd->wstd_WSD->wsc_InUseCounter++;
+			locus = wstd->wstd_WSD->wsc_UserSession;
+			
+			FRIEND_MUTEX_UNLOCK( &(wstd->wstd_WSD->wsc_Mutex) );
+		}
+	}
+	*/
+	locus = wstd->wstd_WSD->wsc_UserSession;
 	if( locus != NULL )
 	{
-		if( FRIEND_MUTEX_LOCK( &(locus->us_Mutex) ) == 0 )
+		if( locus->us_WSD == NULL )
+		{
+			FERROR("[ParseAndCall] There is no WS connection attached to mutex!\n");
+			pthread_exit( NULL );
+			return 1;
+		}
+		if( wstd->wstd_WSD->wsc_UserSession != NULL &&  FRIEND_MUTEX_LOCK( &(locus->us_Mutex) ) == 0 )
 		{
 			locus->us_InUseCounter++;
 			FRIEND_MUTEX_UNLOCK( &(locus->us_Mutex) );
@@ -941,6 +987,15 @@ int ParseAndCall( WSThreadData *wstd )
 								// We could connect? If so, then just send back a pong..
 								if( AttachWebsocketToSession( SLIB, wstd->wstd_WSD->wsc_Wsi, session, NULL, wstd->wstd_WSD ) >= 0 )
 								{
+									if( wstd->wstd_WSD->wsc_UserSession != NULL )
+									{
+										locus = wstd->wstd_WSD->wsc_UserSession;
+										if( wstd->wstd_WSD->wsc_UserSession != NULL &&  FRIEND_MUTEX_LOCK( &(locus->us_Mutex) ) == 0 )
+										{
+											locus->us_InUseCounter++;
+											FRIEND_MUTEX_UNLOCK( &(locus->us_Mutex) );
+										}
+									}
 									INFO("[WS] Websocket communication set with user (sessionid) %s\n", session );
 									
 									//login = TRUE;
@@ -972,6 +1027,15 @@ int ParseAndCall( WSThreadData *wstd )
 								// We could connect? If so, then just send back a pong..
 								if( AttachWebsocketToSession( SLIB, wstd->wstd_WSD->wsc_Wsi, NULL, authid, wstd->wstd_WSD ) >= 0 )
 								{
+									if( wstd->wstd_WSD->wsc_UserSession != NULL )
+									{
+										locus = wstd->wstd_WSD->wsc_UserSession;
+										if( wstd->wstd_WSD->wsc_UserSession != NULL &&  FRIEND_MUTEX_LOCK( &(locus->us_Mutex) ) == 0 )
+										{
+											locus->us_InUseCounter++;
+											FRIEND_MUTEX_UNLOCK( &(locus->us_Mutex) );
+										}
+									}
 									//INFO("[WS] Websocket communication set with user (authid) %s\n", authid );
 								
 									char answer[ 2048 ];
@@ -1246,7 +1310,7 @@ int ParseAndCall( WSThreadData *wstd )
 									http->http_Uri = UriNew();
 									
 									UserSession *ses = wstd->wstd_WSD->wsc_UserSession;
-									//if( s != NULL )
+									if( ses != NULL )
 									{
 										DEBUG("[WS] Session ptr %p  session %p\n", ses, ses->us_SessionID );
 										if( HashmapPut( http->http_ParsedPostContent, StringDuplicate( "sessionid" ), StringDuplicate( ses->us_SessionID ) ) == MAP_OK )
@@ -1436,12 +1500,10 @@ int ParseAndCall( WSThreadData *wstd )
 										HttpFree( http );
 									}
 								} // session != NULL
-								/*
 								else
 								{
 									FERROR("[WS] User session is NULL\n");
 								}
-								*/
 							}
 						}
 					}	// type not found
@@ -1488,9 +1550,23 @@ int ParseAndCall( WSThreadData *wstd )
 		}
 	}
 	
+	/*
+	if( wstd != NULL && wstd->wstd_WSD != NULL )
+	{
+		if( FRIEND_MUTEX_LOCK( &(wstd->wstd_WSD->wsc_Mutex) ) == 0 )
+		{
+			wstd->wstd_WSD->wsc_InUseCounter--;
+
+			FRIEND_MUTEX_UNLOCK( &(wstd->wstd_WSD->wsc_Mutex) );
+		}
+	}
+	*/
+	
 	releaseWSData( wstd );
 	
 	FFree( t );
+	
+	pthread_exit( NULL );
 	
 	return 0;
 }

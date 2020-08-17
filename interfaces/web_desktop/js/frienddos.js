@@ -1553,7 +1553,7 @@ window.Shell = function( appObject )
 		// Handle scripts!
 		else if( cmd[0] == 'version' )
 		{
-			callback( true, { response: 'Friend Shell version 1.2rc1' } );
+			callback( true, { response: 'Friend Shell version 1.2.4' } );
 			return this.evaluateInput( input, index + 1, callback, mode );
 		}
 		// Handle gotos!

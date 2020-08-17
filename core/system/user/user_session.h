@@ -35,7 +35,8 @@ enum
 {
 	USER_SESSION_STATUS_NONE = 0,
 	USER_SESSION_STATUS_AUTHORIZING,
-	USER_SESSION_STATUS_AUTHORIZED
+	USER_SESSION_STATUS_AUTHORIZED,
+	USER_SESSION_STATUS_TO_REMOVE
 };
 
 /*
@@ -65,7 +66,7 @@ typedef struct UserSession
 	char					*us_DeviceIdentity;			// device identity
 	char					*us_SessionID;				// session id
 	time_t					us_LoggedTime;				// last update from user
-	int						us_LoginStatus;				// login status
+	int						us_Status;					// session status
 	
 	File					*us_OpenedFiles;			// opened files in user session
 	

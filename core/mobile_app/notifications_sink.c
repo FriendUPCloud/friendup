@@ -153,10 +153,15 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 			MobileAppNotif *man = (MobileAppNotif *)user;
 			if( man != NULL && man->man_Data != NULL )
 			{
+				int tr = 15;
 				while( man->man_InUse > 0 )
 				{
-					
-					usleep( 500 );
+					if( tr-- <= 0 )
+					{
+						DEBUG("[NotificationSink] CLOSE, in_use: %d\n", tr );
+						break;
+					}
+					usleep( 25000 );
 				}
 				
 				DataQWSIM *d = (DataQWSIM *)man->man_Data;
@@ -175,6 +180,7 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 					FFree( d );
 				}	
 				man->man_Data = NULL;
+				DEBUG("[NotificationSink] CLOSE, connection closed\n");
 			}
 		}
 		break;
@@ -297,8 +303,9 @@ void ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 #else
 void ProcessSinkMessage( void *locd )
 {
-	SinkProcessMessage *spm = (SinkProcessMessage *)locd;
 	pthread_detach( pthread_self() );
+	
+	SinkProcessMessage *spm = (SinkProcessMessage *)locd;
 	if( spm == NULL )
 	{
 		return;
@@ -887,6 +894,8 @@ error_point:
 		FFree( data );
 	}
 #endif
+	
+	pthread_exit( NULL );
 	
 	return;
 }

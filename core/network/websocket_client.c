@@ -156,6 +156,8 @@ static struct lws_protocols protocols[] =
 
 void WebsocketClientLoop( void *data )
 {
+	pthread_detach( pthread_self() );
+	
 	FThread *th = (FThread *)data;
 	WebsocketClient *cl = (WebsocketClient *)th->t_Data;
 	DEBUG("[WebsocketClientLoop] start\n" );
@@ -191,6 +193,7 @@ void WebsocketClientLoop( void *data )
 	}
 	th->t_Launched = FALSE;
 	DEBUG("[WebsocketClientLoop] end\n" );
+	pthread_exit( NULL );
 }
 
 /* // example

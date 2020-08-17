@@ -90,12 +90,15 @@ void UserSessionDelete( UserSession *us )
 				if( count > 50 )
 				{
 					Log( FLOG_INFO, "UserSessionDelete: number of working functions on user session: %d  sessionid: %s\n", us->us_InUseCounter, us->us_SessionID );
+#ifdef USE_WORKERS
 					WorkerManagerDebug( SLIB );
+#endif
 					count = 0;
 					break;
 				}
 			}
-			usleep( 100 );
+			DEBUG( "[UserSessionDelete] Trying to wait for use counter to be <= 0\n" );
+			usleep( 10000 );
 		}
 		
 		DOSToken *dosToken = (DOSToken *)us->us_DOSToken;
@@ -115,7 +118,7 @@ void UserSessionDelete( UserSession *us )
 			nrOfSessionsAttached = UserRemoveSession( us->us_User, us );
 			us->us_User = NULL;
 		}
-		SystemBase *lsb = SLIB;//(SystemBase *)us->us_SB;
+		SystemBase *lsb = SLIB;
 
 		DEBUG("[UserSessionDelete] Remove session %p\n", us );
 
@@ -143,6 +146,7 @@ void UserSessionDelete( UserSession *us )
 			{
 				if( us->us_WSD != NULL )
 				{
+					data->wsc_InUseCounter = 0;
 					data->wsc_UserSession = NULL;
 					data->wsc_Wsi = NULL;
 				}
@@ -153,6 +157,7 @@ void UserSessionDelete( UserSession *us )
 		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 		{
 			us->us_WSD = NULL;
+
 			FQDeInitFree( &(us->us_MsgQueue) );
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
@@ -250,6 +255,8 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 				if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 				{
 					us->us_InUseCounter++;
+					FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+					
 					for( actChunk = 0; actChunk < totalChunk ; actChunk++ )
 					{
 						unsigned char *queueMsg = FMalloc( WS_PROTOCOL_BUFFER_SIZE );
@@ -291,20 +298,27 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 							en->fq_Priority = 3;	// default priority
 				
 							//DEBUG("FQPush: %p\n 
-							FQPushFIFO( &(us->us_MsgQueue), en );
-
+							if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+							{
+								FQPushFIFO( &(us->us_MsgQueue), en );
+								FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+							}
 						// callback writeable was here
 						}
 					}
 					
-					us->us_InUseCounter--;
+					WSCData *wsd = NULL;
+					
+					if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+					{
+						us->us_InUseCounter--;
 				
-					WSCData *wsd = us->us_WSD;
-					FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+						wsd = us->us_WSD;
+						FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+					}
 					
 					if( us->us_WSD != NULL )
 					{
-						
 						if( FRIEND_MUTEX_LOCK( &(wsd->wsc_Mutex) ) == 0 )
 						{
 							wsd->wsc_InUseCounter++;
@@ -335,13 +349,14 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 		{
 			if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 			{
+				us->us_InUseCounter++;
 				DEBUG("[UserSessionWebsocketWrite] pointer usersession %p msglen %d\n", us, msglen );
 				DEBUG("[UserSessionWebsocketWrite] pointer us_WSD %p\n", us->us_WSD );
 				WSCData *wsd = us->us_WSD;
 				// double check
 				DEBUG("[UserSessionWebsocketWrite] no chnked 1\n");
 
-				us->us_InUseCounter++;
+				FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 
 				FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 				if( en != NULL )
@@ -351,28 +366,38 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 					en->fq_Size = msglen;
 					en->fq_Priority = 3;	// default priority
 			
-					DEBUG("us->us_MsgQueue.fq_First: %p\n", us->us_MsgQueue.fq_First );
-					if( us->us_MsgQueue.fq_First == NULL )
+					if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 					{
-						us->us_MsgQueue.fq_First = en;
-						us->us_MsgQueue.fq_Last = en;
+						DEBUG("us->us_MsgQueue.fq_First: %p\n", us->us_MsgQueue.fq_First );
+						if( us->us_MsgQueue.fq_First == NULL )
+						{
+							us->us_MsgQueue.fq_First = en;
+							us->us_MsgQueue.fq_Last = en;
+						}
+						else if( us->us_MsgQueue.fq_Last )
+						{
+							DEBUG("========pointer to US: %p pointer to LAST %p\n", us, us->us_MsgQueue.fq_Last );
+							us->us_MsgQueue.fq_Last->node.mln_Succ = (MinNode *)en;
+							us->us_MsgQueue.fq_Last = en;
+						}
+						// HT - Something bad happened!
+						else
+						{
+							FFree( en->fq_Data );
+							FFree( en );
+						}
+					
+						DEBUG("[UserSessionWebsocketWrite] Send message to WSI, ptr: %p\n", us->us_Wsi );
+
+						DEBUG("[UserSessionWebsocketWrite] In use counter %d\n", us->us_InUseCounter );
+					
+						FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 					}
-					else
-					{
-						DEBUG("========pointer to US: %p pointer to LAST %p\n", us, us->us_MsgQueue.fq_Last );
-						us->us_MsgQueue.fq_Last->node.mln_Succ = (MinNode *)en;
-						us->us_MsgQueue.fq_Last = en;
-					}
+					
 			//#define FQPushFIFO( qroot, q ) if( (qroot)->fq_First == NULL ){ (qroot)->fq_First = q; (qroot)->fq_Last = q; }else{ (qroot)->fq_Last->node.mln_Succ = (MinNode *)q; (qroot)->fq_Last = q; } 
 					//FQPushFIFO( &(us->us_MsgQueue), en );
 					retval += msglen;
-			
-					DEBUG("[UserSessionWebsocketWrite] Send message to WSI, ptr: %p\n", us->us_Wsi );
-
-					DEBUG("[UserSessionWebsocketWrite] In use counter %d\n", us->us_InUseCounter );
 				}
-
-				FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 				
 				if( us->us_Wsi != NULL )
 				{
