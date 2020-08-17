@@ -1043,14 +1043,16 @@ Sections.accounts_users = function( cmd, extra )
 										//console.log( groups );
 									}
 									
-									
-									var inp = ge( 'AdminWorkgroupContainer' ).getElementsByTagName( 'input' )[0];
-									inp.value = '';
-									
-									if( ge( 'WorkgroupSearchCancelBtn' ) && ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Open' ) )
+									if( ge( 'AdminWorkgroupContainer' ) )
 									{
-										ge( 'WorkgroupSearchCancelBtn' ).classList.remove( 'Open' );
-										ge( 'WorkgroupSearchCancelBtn' ).classList.add( 'Closed' );
+										var inp = ge( 'AdminWorkgroupContainer' ).getElementsByTagName( 'input' )[0];
+										inp.value = '';
+									
+										if( ge( 'WorkgroupSearchCancelBtn' ) && ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Open' ) )
+										{
+											ge( 'WorkgroupSearchCancelBtn' ).classList.remove( 'Open' );
+											ge( 'WorkgroupSearchCancelBtn' ).classList.add( 'Closed' );
+										}
 									}
 									
 									
@@ -1138,7 +1140,7 @@ Sections.accounts_users = function( cmd, extra )
 														
 														str += '<div class="HRow">';
 														str += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">';
-														str += '		<span class="IconSmall ' + ( groups[a].groups[aa].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>';
+														str += '		<span name="' + groups[a].groups[aa].Name + '" class="IconSmall ' + ( groups[a].groups[aa].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>';
 														str += '	</div>';
 														str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 														
@@ -1179,7 +1181,7 @@ Sections.accounts_users = function( cmd, extra )
 																
 																str += '<div class="HRow">';
 																str += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">';
-																str += '		<span class="IconSmall">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>';
+																str += '		<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconSmall">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>';
 																str += '	</div>';
 																str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 																
@@ -1694,8 +1696,14 @@ Sections.accounts_users = function( cmd, extra )
 													)
 													{
 														list[a].style.display = '';
+														
+														if( list[a].parentNode.parentNode && list[a].parentNode.parentNode.parentNode && list[a].parentNode.parentNode.parentNode.className.indexOf( 'HRow' ) >= 0 )
+														{
+															list[a].parentNode.style.display = '';
+															list[a].parentNode.parentNode.style.display = '';
+														}
 													}
-													else
+													else if( list[a].parentNode && list[a].parentNode.className )
 													{
 														list[a].style.display = 'none';
 													}
@@ -1749,14 +1757,17 @@ Sections.accounts_users = function( cmd, extra )
 												
 												var span = list[a].getElementsByTagName( 'span' )[0];
 												
-												if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' )
+												if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' && span.getAttribute( sortby.toLowerCase() ) )
 												{
-													var obj = { 
-														sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
-														content : list[a].parentNode
-													};
+													if( !list[a].parentNode.className )
+													{
+														var obj = { 
+															sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
+															content : list[a].parentNode
+														};
 													
-													output.push( obj );
+														output.push( obj );
+													}
 												}
 											}
 											
@@ -1793,15 +1804,18 @@ Sections.accounts_users = function( cmd, extra )
 								
 								// .................
 								
-								var inp = ge( 'AdminWorkgroupContainer' ).getElementsByTagName( 'input' )[0];
-								inp.onkeyup = function( e )
+								if( ge( 'AdminWorkgroupContainer' ) )
 								{
-									searchgroups( this.value );
-								}
-								ge( 'WorkgroupSearchCancelBtn' ).onclick = function( e )
-								{
-									searchgroups( false );
-									inp.value = '';
+									var inp = ge( 'AdminWorkgroupContainer' ).getElementsByTagName( 'input' )[0];
+									inp.onkeyup = function( e )
+									{
+										searchgroups( this.value );
+									}
+									ge( 'WorkgroupSearchCancelBtn' ).onclick = function( e )
+									{
+										searchgroups( false );
+										inp.value = '';
+									}
 								}
 								
 							},
@@ -2268,13 +2282,16 @@ Sections.accounts_users = function( cmd, extra )
 									head : function (  )
 									{
 										
-										var inp = ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0];
-										inp.value = '';
-										
-										if( ge( 'ApplicationSearchCancelBtn' ) && ge( 'ApplicationSearchCancelBtn' ).classList.contains( 'Open' ) )
+										if( ge( 'AdminApplicationContainer' ) )
 										{
-											ge( 'ApplicationSearchCancelBtn' ).classList.remove( 'Open' );
-											ge( 'ApplicationSearchCancelBtn' ).classList.add( 'Closed' );
+											var inp = ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0];
+											inp.value = '';
+										
+											if( ge( 'ApplicationSearchCancelBtn' ) && ge( 'ApplicationSearchCancelBtn' ).classList.contains( 'Open' ) )
+											{
+												ge( 'ApplicationSearchCancelBtn' ).classList.remove( 'Open' );
+												ge( 'ApplicationSearchCancelBtn' ).classList.add( 'Closed' );
+											}
 										}
 										
 										var o = ge( 'ApplicationGui' ); if( o ) o.innerHTML = '<input type="hidden" id="TempApplications">';
@@ -3015,15 +3032,18 @@ Sections.accounts_users = function( cmd, extra )
 											};
 										}
 										
-										var inp = ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0];
-										inp.onkeyup = function( e )
+										if( ge( 'AdminApplicationContainer' ) )
 										{
-											init.searchapps( this.value );
-										}
-										ge( 'ApplicationSearchCancelBtn' ).onclick = function( e )
-										{
-											init.searchapps( false );
-											inp.value = '';
+											var inp = ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0];
+											inp.onkeyup = function( e )
+											{
+												init.searchapps( this.value );
+											}
+											ge( 'ApplicationSearchCancelBtn' ).onclick = function( e )
+											{
+												init.searchapps( false );
+												inp.value = '';
+											}
 										}
 										
 										// Show listed applications ... 
@@ -3053,13 +3073,16 @@ Sections.accounts_users = function( cmd, extra )
 									head : function ( hidecol )
 									{
 										
-										var inp = ge( 'AdminDockContainer' ).getElementsByTagName( 'input' )[0];
-										inp.value = '';
-										
-										if( ge( 'DockSearchCancelBtn' ) && ge( 'DockSearchCancelBtn' ).classList.contains( 'Open' ) )
+										if( ge( 'AdminDockContainer' ) )
 										{
-											ge( 'DockSearchCancelBtn' ).classList.remove( 'Open' );
-											ge( 'DockSearchCancelBtn' ).classList.add( 'Closed' );
+											var inp = ge( 'AdminDockContainer' ).getElementsByTagName( 'input' )[0];
+											inp.value = '';
+										
+											if( ge( 'DockSearchCancelBtn' ) && ge( 'DockSearchCancelBtn' ).classList.contains( 'Open' ) )
+											{
+												ge( 'DockSearchCancelBtn' ).classList.remove( 'Open' );
+												ge( 'DockSearchCancelBtn' ).classList.add( 'Closed' );
+											}
 										}
 										
 										var o = ge( 'DockGui' ); if( o ) o.innerHTML = '';
@@ -3109,7 +3132,7 @@ Sections.accounts_users = function( cmd, extra )
 														'element' : function() 
 														{
 															var d = document.createElement( 'div' );
-															d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
+															d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
 															d.innerHTML = '<strong>' + i18n( 'i18n_order' ) + '</strong>';
 															return d;
 														}()
@@ -3118,7 +3141,7 @@ Sections.accounts_users = function( cmd, extra )
 														'element' : function() 
 														{
 															var d = document.createElement( 'div' );
-															d.className = 'PaddingSmall HContent15 FloatLeft Relative';
+															d.className = 'PaddingSmall HContent10 FloatLeft Relative';
 															return d;
 														}()
 													}
@@ -3257,7 +3280,7 @@ Sections.accounts_users = function( cmd, extra )
 																		'element' : function() 
 																		{
 																			var d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Ellipsis';
+																			d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Ellipsis';
 																			return d;
 																		}(),
 																		'child' : 
@@ -3334,7 +3357,7 @@ Sections.accounts_users = function( cmd, extra )
 																		'element' : function() 
 																		{
 																			var d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+																			d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
 																			return d;
 																
 																		}(),
@@ -4030,15 +4053,18 @@ Sections.accounts_users = function( cmd, extra )
 											};
 										}
 										
-										var inp = ge( 'AdminDockContainer' ).getElementsByTagName( 'input' )[0];
-										inp.onkeyup = function( e )
+										if( ge( 'AdminDockContainer' ) )
 										{
-											init.searchdock( this.value );
-										}
-										ge( 'DockSearchCancelBtn' ).onclick = function( e )
-										{
-											init.searchdock( false );
-											inp.value = '';
+											var inp = ge( 'AdminDockContainer' ).getElementsByTagName( 'input' )[0];
+											inp.onkeyup = function( e )
+											{
+												init.searchdock( this.value );
+											}
+											ge( 'DockSearchCancelBtn' ).onclick = function( e )
+											{
+												init.searchdock( false );
+												inp.value = '';
+											}
 										}
 										
 										// Show listed dock ... 
@@ -4488,7 +4514,7 @@ Sections.accounts_users = function( cmd, extra )
 							{
 								// Check Permissions
 								
-								if( ShowLog ) console.log( '// Check Permissions ', show );
+								if( 1==1 || ShowLog ) console.log( '// Check Permissions ', show );
 								
 								if( !show || show.indexOf( 'workgroup' ) >= 0 )
 								{
@@ -4498,6 +4524,10 @@ Sections.accounts_users = function( cmd, extra )
 									] ) )
 									{
 										if( ge( 'AdminWorkgroupContainer' ) ) ge( 'AdminWorkgroupContainer' ).className = 'Open';
+									}
+									else
+									{
+										console.log( '// No Permission = workgroup' );
 									}
 								}
 								
@@ -4510,6 +4540,10 @@ Sections.accounts_users = function( cmd, extra )
 									{
 										if( ge( 'AdminRoleContainer' ) ) ge( 'AdminRoleContainer' ).className = 'Open';
 									}
+									else
+									{
+										console.log( '// No Permission = role' );
+									}
 								}
 								
 								if( !show || show.indexOf( 'storage' ) >= 0 )
@@ -4521,6 +4555,10 @@ Sections.accounts_users = function( cmd, extra )
 									{
 										if( ge( 'AdminStorageContainer' ) ) ge( 'AdminStorageContainer' ).className = 'Open';
 									}
+									else
+									{
+										console.log( '// No Permission = storage' );
+									}
 								}
 								
 								if( !show || show.indexOf( 'application' ) >= 0 )
@@ -4530,8 +4568,11 @@ Sections.accounts_users = function( cmd, extra )
 										'PERM_APPLICATION_GLOBAL',      'PERM_APPLICATION_WORKGROUP' 
 									] ) )
 									{
-										// TODO: Implement Save support in a PHP module first ...
 										if( ge( 'AdminApplicationContainer' ) ) ge( 'AdminApplicationContainer' ).className = 'Open';
+									}
+									else
+									{
+										console.log( '// No Permission = application' );
 									}
 								}
 								
@@ -4542,8 +4583,11 @@ Sections.accounts_users = function( cmd, extra )
 										'PERM_APPLICATION_GLOBAL',      'PERM_APPLICATION_WORKGROUP' 
 									] ) )
 									{
-										// TODO: Implement Save support in a PHP module first ...
 										if( ge( 'AdminDockContainer' ) ) ge( 'AdminDockContainer' ).className = 'Open';
+									}
+									else
+									{
+										console.log( '// No Permission = dock' );
 									}
 								}
 								
@@ -4555,6 +4599,10 @@ Sections.accounts_users = function( cmd, extra )
 									] ) )
 									{
 										if( ge( 'AdminLooknfeelContainer' ) ) ge( 'AdminLooknfeelContainer' ).className = 'Open';
+									}
+									else
+									{
+										console.log( '// No Permission = looknfeel' );
 									}
 								}
 							}
@@ -5024,6 +5072,7 @@ Sections.accounts_users = function( cmd, extra )
 						loadingList[ ++loadingSlot ](  );
 					}
 					u.execute( 'usersettings', { userid: extra, authid: Application.authId } );
+					
 				},
 				
 				// 9 | Get more user settings
@@ -5073,7 +5122,7 @@ Sections.accounts_users = function( cmd, extra )
 				{
 					if( ShowLog ) console.log( '// 10 | init' );
 					
-					initUsersDetails( loadingInfo, [ 'workgroup', 'role', 'storage', 'dock', /*'application', */'looknfeel' ] );
+					initUsersDetails( loadingInfo, [ 'workgroup', 'role', 'storage', 'dock', 'application', 'looknfeel' ] );
 				}
 				
 			];
@@ -5680,10 +5729,10 @@ Sections.accounts_users = function( cmd, extra )
 									var found = false;
 									
 									str += '<div>';
-								
+									
 									str += '<div class="HRow">\
 										<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
-											<span class="IconSmall NegativeAlt ' + ( groups[a].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;' + groups[a].Name + '</span>\
+											<span name="' + groups[a].Name + '" class="IconSmall NegativeAlt ' + ( groups[a].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;' + groups[a].Name + '</span>\
 										</div>\
 										<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
 											<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
@@ -5700,7 +5749,7 @@ Sections.accounts_users = function( cmd, extra )
 											
 											str += '<div class="HRow">\
 												<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
-													<span class="IconSmall NegativeAlt ' + ( groups[a].groups[aa].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>\
+													<span name="' + groups[a].groups[aa].Name + '" class="IconSmall NegativeAlt ' + ( groups[a].groups[aa].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>\
 												</div>\
 												<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
 													<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
@@ -5717,7 +5766,7 @@ Sections.accounts_users = function( cmd, extra )
 													
 													str += '<div class="HRow">\
 														<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
-															<span class="IconSmall NegativeAlt">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>\
+															<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconSmall NegativeAlt">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>\
 														</div>\
 														<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
 															<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
@@ -5745,11 +5794,82 @@ Sections.accounts_users = function( cmd, extra )
 								
 							}
 							
-							ge( 'WorkgroupGui' ).innerHTML = '<input type="hidden" id="usWorkgroups">' + str;
+							
+							
+							var o = ge( 'WorkgroupGui' ); if( o ) o.innerHTML = '';
+							
+							var divs = appendChild( [ 
+								{ 
+									'element' : function() 
+									{
+										var d = document.createElement( 'div' );
+										d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
+										return d;
+									}(),
+									'child' : 
+									[ 
+										{ 
+											'element' : function(  ) 
+											{
+												var d = document.createElement( 'div' );
+												d.className = 'PaddingSmall HContent40 FloatLeft';
+												d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+												d.ele = this;
+												d.onclick = function(  )
+												{
+													sortgroups( 'Name' );
+												};
+												return d;
+											}(  ) 
+										}, 
+										{ 
+											'element' : function( _this ) 
+											{
+												var d = document.createElement( 'div' );
+												d.className = 'PaddingSmall HContent45 FloatLeft Relative';
+												d.innerHTML = '<strong></strong>';
+												return d;
+											}( this )
+										},
+										{ 
+											'element' : function() 
+											{
+												var d = document.createElement( 'div' );
+												d.className = 'PaddingSmall HContent15 FloatLeft Relative';
+												return d;
+											}()
+										}
+									]
+								},
+								{
+									'element' : function() 
+									{
+										var d = document.createElement( 'div' );
+										d.className = 'HRow Box Padding';
+										d.id = 'WorkgroupInner';
+										return d;
+									}()
+								}
+							] );
+			
+							if( divs )
+							{
+								for( var i in divs )
+								{
+									if( divs[i] && o )
+									{
+										o.appendChild( divs[i] );
+									}
+								}
+							}
+							
+							
+							
+							ge( 'WorkgroupInner' ).innerHTML = '<input type="hidden" id="usWorkgroups">' + str;
 							
 							// Toggle arrow function, put into function that can be reused some time ...
 									
-							var workArr = ge( 'WorkgroupGui' ).getElementsByTagName( 'span' );
+							var workArr = ge( 'WorkgroupInner' ).getElementsByTagName( 'span' );
 							
 							if( workArr )
 							{
@@ -5823,7 +5943,7 @@ Sections.accounts_users = function( cmd, extra )
 								}
 							}
 							
-							var workBtns = ge( 'WorkgroupGui' ).getElementsByTagName( 'button' );
+							var workBtns = ge( 'WorkgroupInner' ).getElementsByTagName( 'button' );
 							
 							if( workBtns )
 							{
@@ -5915,6 +6035,154 @@ Sections.accounts_users = function( cmd, extra )
 											
 										}
 									} )( workBtns[ a ] );
+								}
+							}
+							
+							// Search ...............
+							
+							var searchgroups = function ( filter, server )
+							{
+								
+								if( ge( 'WorkgroupInner' ) )
+								{
+									var list = ge( 'WorkgroupInner' ).getElementsByTagName( 'div' );
+									
+									if( list.length > 0 )
+									{
+										for( var a = 0; a < list.length; a++ )
+										{
+											if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+											
+											var strong = list[a].getElementsByTagName( 'strong' )[0];
+											var span = list[a].getElementsByTagName( 'span' )[0];
+											
+											if( strong || span )
+											{
+												if( !filter || filter == '' 
+												|| strong && strong.innerHTML.toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+												|| span && span.innerHTML.toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+												)
+												{
+													list[a].style.display = '';
+													
+													if( list[a].parentNode.parentNode && list[a].parentNode.parentNode.parentNode && list[a].parentNode.parentNode.parentNode.className.indexOf( 'HRow' ) >= 0 )
+													{
+														list[a].parentNode.style.display = '';
+														list[a].parentNode.parentNode.style.display = '';
+													}
+												}
+												else if( list[a].parentNode && list[a].parentNode.className )
+												{
+													list[a].style.display = 'none';
+												}
+											}
+										}
+	
+									}
+									
+									if( ge( 'WorkgroupSearchCancelBtn' ) )
+									{
+										if( !filter && ( ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+										{
+											ge( 'WorkgroupSearchCancelBtn' ).classList.remove( 'Open' );
+											ge( 'WorkgroupSearchCancelBtn' ).classList.add( 'Closed' );
+										}
+										
+										else if( filter != '' && ( ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+										{
+											ge( 'WorkgroupSearchCancelBtn' ).classList.remove( 'Closed' );
+											ge( 'WorkgroupSearchCancelBtn' ).classList.add( 'Open' );
+										}
+									}
+								}
+								
+							};
+							
+							// Sort .............
+							
+							var sortgroups = function ( sortby )
+							{
+								
+								//
+								
+								var _this = ge( 'WorkgroupInner' );
+								
+								if( _this )
+								{
+									var orderby = ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' );
+									
+									var list = _this.getElementsByTagName( 'div' );
+									
+									if( list.length > 0 )
+									{
+										var output = [];
+										
+										var callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
+										
+										for( var a = 0; a < list.length; a++ )
+										{
+											if( !list[a].className || ( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) ) continue;
+											
+											var span = list[a].getElementsByTagName( 'span' )[0];
+											
+											if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' && span.getAttribute( sortby.toLowerCase() ) )
+											{
+												if( !list[a].parentNode.className )
+												{
+													var obj = { 
+														sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
+														content : list[a].parentNode
+													};
+												
+													output.push( obj );
+												}
+											}
+										}
+										
+										if( output.length > 0 )
+										{
+											// Sort ASC default
+											
+											output.sort( callback );
+											
+											// Sort DESC
+											
+											if( orderby == 'DESC' ) 
+											{ 
+												output.reverse();  
+											}
+											
+											_this.innerHTML = '';
+											
+											_this.setAttribute( 'orderby', orderby );
+											
+											for( var key in output )
+											{
+												if( output[key] && output[key].content )
+												{
+													// Add row
+													_this.appendChild( output[key].content );
+												}
+											}
+										}
+									}
+								}
+								
+							};
+							
+							// .................
+							
+							if( ge( 'AdminWorkgroupContainer' ) )
+							{
+								var inp = ge( 'AdminWorkgroupContainer' ).getElementsByTagName( 'input' )[0];
+								inp.onkeyup = function( e )
+								{
+									searchgroups( this.value );
+								}
+								ge( 'WorkgroupSearchCancelBtn' ).onclick = function( e )
+								{
+									searchgroups( false );
+									inp.value = '';
 								}
 							}
 							

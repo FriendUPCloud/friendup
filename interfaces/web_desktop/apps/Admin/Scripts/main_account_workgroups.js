@@ -1644,7 +1644,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 			{
 				ge( 'GroupDeleteBtn' ).style.display = 'none';
 				
-				
+				ge( 'AdminUsersContainer'   ).style.display = 'none';
+				ge( 'AdminStorageContainer' ).style.display = 'none';
+				ge( 'AdminRolesContainer'   ).style.display = 'none';
 			}
 			else
 			{
@@ -3313,7 +3315,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 														
 														{ 
 															
-															'element' : function( init ) 
+															'element' : function( groupid, init ) 
 															{
 																var d = document.createElement( 'button' );
 																d.className = 'IconSmall FloatRight MarginLeft';
@@ -3321,11 +3323,21 @@ Sections.accounts_workgroups = function( cmd, extra )
 																d.onclick = function ()
 																{
 																	
-																	init.list();
+																	listStorage( function( res, js )
+																	{
+																		
+																		if( ShowLog ) console.log( 'init.list(  ); ', { res: res, js:js } );
+																		
+																		if( res )
+																		{
+																			init.list( js );
+																		}
+																		
+																	}, groupid );
 																	
 																};
 																return d;
-															}( init )
+															}( workgroup.groupid, init )
 															
 														},
 														

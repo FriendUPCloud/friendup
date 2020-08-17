@@ -2375,7 +2375,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
+													d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
 													d.innerHTML = '<strong>' + i18n( 'i18n_order' ) + '</strong>';
 													return d;
 												}()
@@ -2384,7 +2384,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent15 FloatLeft Relative';
+													d.className = 'PaddingSmall HContent10 FloatLeft Relative';
 													return d;
 												}()
 											}
@@ -2519,7 +2519,7 @@ Sections.accounts_templates = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Ellipsis';
+																	d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Ellipsis';
 																	return d;
 																}(),
 																'child' : 
@@ -2568,7 +2568,7 @@ Sections.accounts_templates = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+																	d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
 																	return d;
 																
 																}(),
@@ -3308,7 +3308,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
+													d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
 													d.innerHTML = '<strong>' + i18n( 'i18n_order' ) + '</strong>';
 													return d;
 												}()
@@ -3317,7 +3317,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent15 FloatLeft Relative';
+													d.className = 'PaddingSmall HContent10 FloatLeft Relative';
 													return d;
 												}()
 											}
@@ -3464,7 +3464,7 @@ Sections.accounts_templates = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Ellipsis';
+																	d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Ellipsis';
 																	return d;
 																}(),
 																'child' : 
@@ -3517,7 +3517,7 @@ Sections.accounts_templates = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+																	d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
 																	return d;
 																
 																}(),
