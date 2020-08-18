@@ -272,6 +272,57 @@ Sections.accounts_workgroups = function( cmd, extra )
 		ft.execute( 'dosdrivergui', { component: 'locale', type: storage.type, language: Application.language, authid: Application.authId } );
 	}
 	
+	function listUsers( callback, obj )
+	{
+		var args = { 
+			/*query   : UsersSettings( 'searchquery' ), 
+			sortby  : UsersSettings( 'sortby'      ), 
+			orderby : UsersSettings( 'orderby'     ), 
+			limit   : UsersSettings( 'limit'       ), */
+			count   : true, 
+			authid  : Application.authId 
+		};
+		
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			var users = null;
+			
+			if( e == 'ok' )
+			{
+				try
+				{
+					users = JSON.parse( d );
+					
+					if( users )
+					{
+						for( var k in users )
+						{
+							if( users[ k ].ID )
+							{
+								users[ k ].Avatar = '/system.library/module/?module=system&command=getavatar&userid=' + users[ k ].ID + ( users[ k ].Image ? '&image=' + users[ k ].Image : '' ) + '&width=30&height=30&authid=' + Application.authId;
+							}
+						}
+					}
+				}
+				catch( e )
+				{
+					console.log( { e:e, d:d, args:args } );
+				}
+			}
+			
+			console.log( 'listUsers( callback, obj ) ', { e:e, d:(users?users:d), args:args } );
+			
+			if( callback )
+			{
+				return callback( e, users, obj );
+			}
+			
+			return users;
+		}
+		m.execute( 'listusers', args );
+	}
+	
 	function refresh( id, _this )
 	{
 		
@@ -1438,35 +1489,16 @@ Sections.accounts_workgroups = function( cmd, extra )
 				function()
 				{
 					
-					var m = new Module( 'system' );
-					m.onExecuted = function( e, d )
+					listUsers( function( e, d )
 					{
-						info.users = null;
-						if( ShowLog ) console.log( { e:e, d:d } );
-						if( e == 'ok' )
-						{
-							try
-							{
-								info.users = JSON.parse( d );
-								
-								if( info.users )
-								{
-									for( var k in info.users )
-									{
-										if( info.users[ k ].ID )
-										{
-											info.users[ k ].Avatar = '/system.library/module/?module=system&command=getavatar&userid=' + info.users[ k ].ID + ( info.users[ k ].Image ? '&image=' + info.users[ k ].Image : '' ) + '&width=30&height=30&authid=' + Application.authId;
-										}
-									}
-								}
-							}
-							catch( e ){ }
-							
-							if( ShowLog ) console.log( 'info.users ', info.users );
-						}
+						
+						info.users = d;
+						
+						if( ShowLog ) console.log( 'info.users ', info.users );
+						
 						loadingList[ ++loadingSlot ]( info );
-					}
-					m.execute( 'listusers', { authid: Application.authId } );
+						
+					} );
 					
 				},
 				
@@ -1954,13 +1986,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 							list : function (  )
 							{
 								
-								this.func.mode[ 'users' ] = 'list';
-								
 								if( list )
 								{
 									this.head();
 									
 									var o = ge( 'UsersInner' ); o.innerHTML = '';
+									
+									this.func.mode[ 'users' ] = 'list';
 									
 									for( var k in list )
 									{
@@ -1983,6 +2015,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 													{
 														var d = document.createElement( 'div' );
 														d.className = 'HRow ' + status[ ( list[k].Status ? list[k].Status : 0 ) ];
+														d.id = ( 'UserListID_' + list[k].ID );
 														return d;
 													}(),
 													'child' : 
@@ -2143,215 +2176,256 @@ Sections.accounts_workgroups = function( cmd, extra )
 									}
 									
 								}
+								
+								var inp = ge( 'AdminUsersContainer' ).getElementsByTagName( 'input' )[0];
+								inp.onkeyup = function( e )
+								{
+									init.searchusers( this.value );
+								}
+								ge( 'UsersSearchCancelBtn' ).onclick = function( e )
+								{
+									init.searchusers( false );
+									inp.value = '';
+								}
 									
 							},
 							
 							edit : function (  )
 							{
 								
-								this.func.mode[ 'users' ] = 'edit';
+								// TODO: Make support for populating the users list based on new server data on the go, like on users main ...
 								
 								if( list )
 								{
 									this.head( true );
 									
-									var o = ge( 'UsersInner' ); o.innerHTML = '';
+									var o = ge( 'UsersInner' ); if( this.func.mode[ 'users' ] != 'edit' ) o.innerHTML = '';
+									
+									this.func.mode[ 'users' ] = 'edit';
 									
 									for( var k in list )
 									{
 										if( list[k] && list[k].ID )
 										{
-											var toggle = false;
-											
-											if( this.ids && this.ids[ list[k].ID ] )
+											if( !ge( 'UserListID_' + list[k].ID ) )
 											{
-												toggle = true;
-											}
+												
+												var toggle = false;
 											
-											//if( list[k].Status == 1 ) continue;
-											
-											var status = [ 'Active', 'Disabled', 'Locked' ];
-											
-											var divs = appendChild( [
-												{ 
-													'element' : function() 
-													{
-														var d = document.createElement( 'div' );
-														d.className = 'HRow ' + status[ ( list[k].Status ? list[k].Status : 0 ) ];
-														return d;
-													}(),
-													'child' : 
-													[ 
-														{ 
-															'element' : function() 
-															{
-																var d = document.createElement( 'div' );
-																d.className = 'TextCenter PaddingSmall HContent10 FloatLeft Ellipsis';
-																return d;;
-															}(),
-															 'child' : 
-															[ 
-																{ 
-																	'element' : function() 
-																	{
-																		var d = document.createElement( 'span' );
-																		d.setAttribute( 'FullName', list[k].FullName );
-																		d.setAttribute( 'Name', list[k].Name );
-																		d.setAttribute( 'Status', status[ ( list[k].Status ? list[k].Status : 0 ) ] );
-																		//d.className = 'IconSmall NegativeAlt fa-user-circle-o avatar';
-																		d.className = 'IconSmall fa-user-circle-o avatar';
-																		//d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
-																		//d.style.backgroundSize = 'contain';
-																		//d.style.width = '24px';
-																		//d.style.height = '24px';
-																		//d.style.display = 'block';
-																		d.style.position = 'relative';
-																		return d;
-																	}(), 
-																	 'child' : 
-																	[ 
-																		{
-																			'element' : function() 
-																			{
-																				var d = document.createElement( 'div' );
-																				if( list[k].Avatar )
-																				{
-																					d.style.backgroundImage = 'url(\'' + list[k].Avatar + '\')';
-																					d.style.backgroundSize = 'contain';
-																					d.style.backgroundPosition = 'center center';
-																					d.style.backgroundRepeat = 'no-repeat';
-																					d.style.position = 'absolute';
-																					d.style.top = '0';
-																					d.style.left = '0';
-																					d.style.width = '100%'/*'24px'*/;
-																					d.style.height = '100%'/*'24px'*/;
-																				}
-																				return d;
-																			}()
-																		}
-																	]
-																}
-															] 
-														},
-														{ 
-															'element' : function() 
-															{
-																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
-																d.innerHTML = '<span>' + ( list[k].FullName ? list[k].FullName : 'n/a' ) + '</span>';
-																return d;
-															}() 
-														}, 
-														{ 
-															'element' : function() 
-															{
-																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent25 FloatLeft Ellipsis';
-																d.innerHTML = '<span>' + ( list[k].Name ? list[k].Name : '' ) + '</span>';
-																return d;
-															}() 
-														},
-														{ 
-															'element' : function() 
-															{
-																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Ellipsis';
-																d.innerHTML = '<span>' + ( status[ ( list[k].Status ? list[k].Status : 0 ) ] ) + '</span>';
-																return d;
-															}() 
-														}, 
-														{ 
-															'element' : function() 
-															{
-																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
-																return d;
-															}(),
-															'child' : 
-															[ 
-																{ 
-																	'element' : function( ids, id, func ) 
-																	{
-																		var b = document.createElement( 'button' );
-																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( toggle ? 'on' : 'off' );
-																		b.onclick = function(  )
-																		{
-																			if( this.classList.contains( 'fa-toggle-off' ) )
-																			{
-																				
-																				if( ShowLog ) console.log( 'addUser( '+id+', '+info.ID+', callback, vars )' );
-																				
-																				addUser( id, info.ID, function( e, d, vars )
-																				{
-																					
-																					if( e && vars )
-																					{
-																						vars.func.updateids( 'users', vars.uid, true );
-																						
-																						vars._this.classList.remove( 'fa-toggle-off' );
-																						vars._this.classList.add( 'fa-toggle-on' );
-																					}
-																					else
-																					{
-																						if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
-																					}
-																					
-																				}, { uid: id, func: func, _this: this } );
-																				
-																			}
-																			else
-																			{
-																				
-																				if( ShowLog ) console.log( 'removeUser( '+id+', '+info.ID+', callback, vars )' );
-																				
-																				removeUser( id, info.ID, function( e, d, vars )
-																				{
-																					
-																					if( e && vars )
-																					{
-																						vars.func.updateids( 'users', vars.uid, false );
-																						
-																						vars._this.classList.remove( 'fa-toggle-on' );
-																						vars._this.classList.add( 'fa-toggle-off' );
-																					}
-																					else
-																					{
-																						if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
-																					}
-																					
-																				}, { uid: id, func: func, _this: this } );
-																				
-																			}
-																		};
-																		return b;
-																	}( this.ids, list[k].ID, this.func ) 
-																}
-															]
-														}
-													]
-												}
-											] );
-											
-											if( divs )
-											{
-												for( var i in divs )
+												if( this.ids && this.ids[ list[k].ID ] )
 												{
-													if( divs[i] && o )
+													toggle = true;
+												}
+											
+												//if( list[k].Status == 1 ) continue;
+											
+												var status = [ 'Active', 'Disabled', 'Locked' ];
+											
+												var divs = appendChild( [
+													{ 
+														'element' : function() 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'HRow ' + status[ ( list[k].Status ? list[k].Status : 0 ) ];
+															d.id = ( 'UserListID_' + list[k].ID );
+															return d;
+														}(),
+														'child' : 
+														[ 
+															{ 
+																'element' : function() 
+																{
+																	var d = document.createElement( 'div' );
+																	d.className = 'TextCenter PaddingSmall HContent10 FloatLeft Ellipsis';
+																	return d;;
+																}(),
+																 'child' : 
+																[ 
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'span' );
+																			d.setAttribute( 'FullName', list[k].FullName );
+																			d.setAttribute( 'Name', list[k].Name );
+																			d.setAttribute( 'Status', status[ ( list[k].Status ? list[k].Status : 0 ) ] );
+																			//d.className = 'IconSmall NegativeAlt fa-user-circle-o avatar';
+																			d.className = 'IconSmall fa-user-circle-o avatar';
+																			//d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
+																			//d.style.backgroundSize = 'contain';
+																			//d.style.width = '24px';
+																			//d.style.height = '24px';
+																			//d.style.display = 'block';
+																			d.style.position = 'relative';
+																			return d;
+																		}(), 
+																		 'child' : 
+																		[ 
+																			{
+																				'element' : function() 
+																				{
+																					var d = document.createElement( 'div' );
+																					if( list[k].Avatar )
+																					{
+																						d.style.backgroundImage = 'url(\'' + list[k].Avatar + '\')';
+																						d.style.backgroundSize = 'contain';
+																						d.style.backgroundPosition = 'center center';
+																						d.style.backgroundRepeat = 'no-repeat';
+																						d.style.position = 'absolute';
+																						d.style.top = '0';
+																						d.style.left = '0';
+																						d.style.width = '100%'/*'24px'*/;
+																						d.style.height = '100%'/*'24px'*/;
+																					}
+																					return d;
+																				}()
+																			}
+																		]
+																	}
+																] 
+															},
+															{ 
+																'element' : function() 
+																{
+																	var d = document.createElement( 'div' );
+																	d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
+																	d.innerHTML = '<span>' + ( list[k].FullName ? list[k].FullName : 'n/a' ) + '</span>';
+																	return d;
+																}() 
+															}, 
+															{ 
+																'element' : function() 
+																{
+																	var d = document.createElement( 'div' );
+																	d.className = 'PaddingSmall HContent25 FloatLeft Ellipsis';
+																	d.innerHTML = '<span>' + ( list[k].Name ? list[k].Name : '' ) + '</span>';
+																	return d;
+																}() 
+															},
+															{ 
+																'element' : function() 
+																{
+																	var d = document.createElement( 'div' );
+																	d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Ellipsis';
+																	d.innerHTML = '<span>' + ( status[ ( list[k].Status ? list[k].Status : 0 ) ] ) + '</span>';
+																	return d;
+																}() 
+															}, 
+															{ 
+																'element' : function() 
+																{
+																	var d = document.createElement( 'div' );
+																	d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+																	return d;
+																}(),
+																'child' : 
+																[ 
+																	{ 
+																		'element' : function( ids, id, func ) 
+																		{
+																			var b = document.createElement( 'button' );
+																			b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( toggle ? 'on' : 'off' );
+																			b.onclick = function(  )
+																			{
+																				if( this.classList.contains( 'fa-toggle-off' ) )
+																				{
+																				
+																					if( ShowLog ) console.log( 'addUser( '+id+', '+info.ID+', callback, vars )' );
+																				
+																					addUser( id, info.ID, function( e, d, vars )
+																					{
+																					
+																						if( e && vars )
+																						{
+																							vars.func.updateids( 'users', vars.uid, true );
+																						
+																							vars._this.classList.remove( 'fa-toggle-off' );
+																							vars._this.classList.add( 'fa-toggle-on' );
+																						}
+																						else
+																						{
+																							if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+																						}
+																					
+																					}, { uid: id, func: func, _this: this } );
+																				
+																				}
+																				else
+																				{
+																				
+																					if( ShowLog ) console.log( 'removeUser( '+id+', '+info.ID+', callback, vars )' );
+																				
+																					removeUser( id, info.ID, function( e, d, vars )
+																					{
+																					
+																						if( e && vars )
+																						{
+																							vars.func.updateids( 'users', vars.uid, false );
+																						
+																							vars._this.classList.remove( 'fa-toggle-on' );
+																							vars._this.classList.add( 'fa-toggle-off' );
+																						}
+																						else
+																						{
+																							if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+																						}
+																					
+																					}, { uid: id, func: func, _this: this } );
+																				
+																				}
+																			};
+																			return b;
+																		}( this.ids, list[k].ID, this.func ) 
+																	}
+																]
+															}
+														]
+													}
+												] );
+											
+												if( divs )
+												{
+													for( var i in divs )
 													{
-														o.appendChild( divs[i] );
+														if( divs[i] && o )
+														{
+															o.appendChild( divs[i] );
+														}
 													}
 												}
 											}
+											else
+											{
+												// Add to the field that is allready there ... But we also gotto consider sorting the list by default or defined sorting ...
+												
+												
+											}
+											
 										}
 									
 									}
 									
 								}
 								
+								var inp = ge( 'AdminUsersContainer' ).getElementsByTagName( 'input' )[0];
+								inp.onkeyup = function( e )
+								{
+									init.searchusers( this.value, true );
+								}
+								ge( 'UsersSearchCancelBtn' ).onclick = function( e )
+								{
+									init.searchusers( false );
+									inp.value = '';
+								}
+								
 							},
 							
 							searchusers : function ( filter, server )
 							{
+								
+								if( !filter )
+								{
+									UsersSettings( 'searchquery', filter );
+								}
 								
 								if( ge( 'UsersInner' ) )
 								{
@@ -2416,6 +2490,38 @@ Sections.accounts_workgroups = function( cmd, extra )
 										}
 									}
 								}
+								
+								if( filter.length < 3 || filter.length < UsersSettings( 'searchquery' ).length || filter == UsersSettings( 'searchquery' ) || !server ) return;
+								
+								UsersSettings( 'reset', true );
+								
+								UsersSettings( 'searchquery', filter );
+								
+								console.log( 'try getting server data ... ', { filter:filter, searchquery:UsersSettings( 'searchquery' ) } );
+								
+								
+								
+								RequestQueue.Set( function( callback, key )
+								{
+									//console.log( filter + ' < ' + UsersSettings( 'searchquery' ) );
+			
+									if( filter.length < UsersSettings( 'searchquery' ).length )
+									{
+										if( callback ) callback( key );
+				
+										return;
+									}
+									
+									listUsers( function( res, users, key )
+									{
+				
+										if( callback ) callback( key );
+				
+										console.log( 'search users ', users );
+				
+									}, key );
+			
+								} );
 								
 							},
 							
@@ -2629,17 +2735,6 @@ Sections.accounts_workgroups = function( cmd, extra )
 										}
 										
 									};
-								}
-								
-								var inp = ge( 'AdminUsersContainer' ).getElementsByTagName( 'input' )[0];
-								inp.onkeyup = function( e )
-								{
-									init.searchusers( this.value );
-								}
-								ge( 'UsersSearchCancelBtn' ).onclick = function( e )
-								{
-									init.searchusers( false );
-									inp.value = '';
 								}
 								
 								// Show listed users ... 

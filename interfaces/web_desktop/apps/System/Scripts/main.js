@@ -457,7 +457,7 @@ function setGUISection( module, section, action )
 		
 			// Temporary until search is fixed for users ...
 		
-			if( section.toLowerCase() == 'users' ) 
+			if( section.toLowerCase() == 'users' || section.toLowerCase() == 'workgroups' ) 
 			{
 				//UsersSettings( 'maxlimit', 99999 );
 			
