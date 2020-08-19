@@ -22,6 +22,12 @@ extern SystemBase *SLIB;
 //static Hashmap *globalSocketAuthMap; //maps websockets to boolean values that are true then the websocket is authenticated
 //static char *_auth_key;
 
+/*
+	Explanation of this file:
+	This implements a websocket connection to external applications like
+	Friend Chat's Presence server - in other words, services.
+*/
+
 #define WEBSOCKET_SEND_QUEUE
 
 static FBOOL VerifyAuthKey( const char *key_name, const char *key_to_verify );
@@ -308,6 +314,7 @@ void ProcessSinkMessage( void *locd )
 	SinkProcessMessage *spm = (SinkProcessMessage *)locd;
 	if( spm == NULL )
 	{
+		pthread_exit( NULL );
 		return;
 	}
 	if( FRIEND_MUTEX_LOCK( &(spm->d->d_Mutex) ) == 0 )
@@ -888,15 +895,13 @@ error_point:
 		FFree( spm->data );
 	}
 	FFree( spm );
+	pthread_exit( NULL );
 #else	
 	if( data )
 	{
 		FFree( data );
 	}
-#endif
-	
-	pthread_exit( NULL );
-	
+#endif	
 	return;
 }
 

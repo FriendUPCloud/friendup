@@ -238,7 +238,7 @@ cAjax = function()
 					{
 						if( !jax.rawData )
 						{
-							//console.log( '[cAjax] Can not understand server response: ', jax.rawData );
+							console.log( '[cAjax] Can not understand server response: ', jax.rawData );
 							jax.destroy();
 							return;
 						}
