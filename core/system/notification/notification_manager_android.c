@@ -212,6 +212,7 @@ int NotificationManagerNotificationSendAndroidQueue( NotificationManager *nm, No
 	SystemBase *sb = (SystemBase *)nm->nm_SB;
 	char *host = FIREBASE_HOST;
 	
+	DEBUG("[NotificationManagerNotificationSendAndroidQueue] start\n");
 	
 	int msgSize = 512;
 	
@@ -227,6 +228,8 @@ int NotificationManagerNotificationSendAndroidQueue( NotificationManager *nm, No
 	{
 		int len = snprintf( msg, msgSize, "{\"registration_ids\":[%s],\"notification\": {},\"data\":{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"%s\",\"id\":%lu,\"notifid\":%lu,\"source\":\"notification\",\"createtime\":%lu},\"android\":{\"priority\":\"high\"}}", tokens, notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, action, ID , notif->n_ID, notif->n_OriginalCreateT );
 	
+		DEBUG("[NotificationManagerNotificationSendAndroidQueue] send message\n");
+		
 		FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 		if( en != NULL )
 		{
@@ -237,6 +240,7 @@ int NotificationManagerNotificationSendAndroidQueue( NotificationManager *nm, No
 			{
 				FQPushFIFO( &(nm->nm_AndroidSendMessages), en );
 				
+				DEBUG("[NotificationManagerNotificationSendAndroidQueue] signal triggered\n");
 				pthread_cond_signal( &(nm->nm_AndroidSendCond) );
 				FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
 			}
@@ -249,6 +253,7 @@ int NotificationManagerNotificationSendAndroidQueue( NotificationManager *nm, No
 		DEBUG("Cannot allocate memory for message\n");
 		return -1;
 	}
+	DEBUG("[NotificationManagerNotificationSendAndroidQueue] end\n");
 	
 	return 0;
 }
