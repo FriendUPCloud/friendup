@@ -10178,8 +10178,7 @@ function mobileDebug( str, clear )
 _applicationBasics = {};
 function loadApplicationBasics( callback )
 {
-	if( _applicationBasics.state ) return;
-	_applicationBasics.state = 'loading';
+	if( Workspace.loginPrompt ) return;
 	// Preload basic scripts
 	let a_ = new File( '/webclient/js/apps/api.js' );
 	a_.onLoad = function( data )
@@ -10215,16 +10214,9 @@ function loadApplicationBasics( callback )
 	'js/io/coreSocket.js',
 	'js/gui/treeview.js' ].join( ';/webclient/' );
 	let j_ = new File( js );
-	j_.ondestroy = function()
-	{
-		console.trace();
-		console.log( 'I am being destroyed!' );
-	}
 	j_.onLoad = function( data )
 	{
 		_applicationBasics.js = data;
-		_applicationBasics.state = 'loaded';
-		console.log( 'This is the data: ', data );
 		if( callback )
 		{
 			try
@@ -10236,8 +10228,5 @@ function loadApplicationBasics( callback )
 			}
 		}
 	}
-	console.log( 'Senting' );
-	j_.forceHTTP = true;
-	j_.forceSend = true;
 	j_.load();
 };
