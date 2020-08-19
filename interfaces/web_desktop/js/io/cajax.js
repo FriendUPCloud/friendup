@@ -362,6 +362,12 @@ cAjax.prototype.destroy = function()
 {
 	this.destroy = function(){};
 	
+	// We can use this for tracing
+	if( this.ondestroy )
+	{
+		this.ondestroy();
+	}
+	
 	// Terminate with onload
 	if( this.onload )
 	{
