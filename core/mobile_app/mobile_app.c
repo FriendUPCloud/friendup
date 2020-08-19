@@ -1137,6 +1137,8 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	
 	char *jsonMessage = FMalloc( reqLengith );
 	
+	DEBUG("[MobileAppNotifyUserRegister] start\n");
+	
 	// inform user there is notification for him
 	// if there is no connection it means user cannot get message
 	// then send him notification via mobile devices
@@ -1321,7 +1323,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	if( extraString != NULL ) FFree( extraString );
 	pthread_exit( NULL );
 #else
-	pthread_exit( NULL );
+	//pthread_exit( NULL );
 	return 0;
 #endif
 }
