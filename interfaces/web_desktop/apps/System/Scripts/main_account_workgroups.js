@@ -272,16 +272,20 @@ Sections.accounts_workgroups = function( cmd, extra )
 		ft.execute( 'dosdrivergui', { component: 'locale', type: storage.type, language: Application.language, authid: Application.authId } );
 	}
 	
-	function listUsers( callback, obj )
+	function listUsers( callback, obj, showall )
 	{
-		var args = { 
-			/*query   : UsersSettings( 'searchquery' ), 
-			sortby  : UsersSettings( 'sortby'      ), 
-			orderby : UsersSettings( 'orderby'     ), 
-			limit   : UsersSettings( 'limit'       ), */
+		var args = {  
 			count   : true, 
 			authid  : Application.authId 
 		};
+		
+		if( !showall )
+		{
+			args.query   = UsersSettings( 'searchquery' ); 
+			args.sortby  = UsersSettings( 'sortby'      ); 
+			args.orderby = UsersSettings( 'orderby'     ); 
+			args.limit   = UsersSettings( 'limit'       );
+		}
 		
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
@@ -1498,7 +1502,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 						
 						loadingList[ ++loadingSlot ]( info );
 						
-					} );
+					}, false, true );
 					
 				},
 				
@@ -1662,6 +1666,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			workgroup_name        : ( workgroup.name        ? workgroup.name        : ''                           ),
 			workgroup_parent      : pstr,
 			workgroup_description : ( workgroup.description ? workgroup.description : ''                           ),
+			users_count           : ( list && list.Count ? '(' + list.Count + ')' : '(0)' ),
 			storage               : ''/*mlst*/,
 			roles                 : ''/*rstr*/
 		};
@@ -1983,8 +1988,14 @@ Sections.accounts_workgroups = function( cmd, extra )
 								
 							},
 							
-							list : function (  )
+							list : function ( users )
 							{
+								
+								// TODO: Refresh and list only added users to workgroups because of server search ...
+								
+								if( users ) console.log( 'users list: ', users );
+								
+								var ii = 0;
 								
 								if( list )
 								{
@@ -2171,10 +2182,17 @@ Sections.accounts_workgroups = function( cmd, extra )
 													}
 												}
 											}
+											
+											ii++;
 										}
 									
 									}
 									
+								}
+								
+								if( ge( 'AdminUsersCount' ) )
+								{
+									ge( 'AdminUsersCount' ).innerHTML = '(' + ii + ')';
 								}
 								
 								var inp = ge( 'AdminUsersContainer' ).getElementsByTagName( 'input' )[0];
@@ -2190,14 +2208,21 @@ Sections.accounts_workgroups = function( cmd, extra )
 									
 							},
 							
-							edit : function (  )
+							edit : function ( users )
 							{
 								
 								// TODO: Make support for populating the users list based on new server data on the go, like on users main ...
 								
+								if( users ) console.log( 'users edit: ', users );
+								
+								list = ( users ? users : list );
+								
 								if( list )
 								{
-									this.head( true );
+									
+									// TODO: Find a way to only list head if not listed before, don't add multiple times, because of server search feature ...
+									
+									if( !users ) this.head( true );
 									
 									var o = ge( 'UsersInner' ); if( this.func.mode[ 'users' ] != 'edit' ) o.innerHTML = '';
 									
@@ -2406,6 +2431,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 									
 								}
 								
+								if( ge( 'AdminUsersCount' ) )
+								{
+									ge( 'AdminUsersCount' ).innerHTML = ( list && list.Count ? '(' + list.Count + ')' : '(0)' );
+								}
+								
+								// TODO: No need to keep adding every time ...
+								
 								var inp = ge( 'AdminUsersContainer' ).getElementsByTagName( 'input' )[0];
 								inp.onkeyup = function( e )
 								{
@@ -2501,26 +2533,22 @@ Sections.accounts_workgroups = function( cmd, extra )
 								
 								
 								
-								RequestQueue.Set( function( callback, key )
+								//console.log( filter + ' < ' + UsersSettings( 'searchquery' ) );
+		
+								if( filter.length < UsersSettings( 'searchquery' ).length )
 								{
-									//console.log( filter + ' < ' + UsersSettings( 'searchquery' ) );
-			
-									if( filter.length < UsersSettings( 'searchquery' ).length )
-									{
-										if( callback ) callback( key );
-				
-										return;
-									}
+									return;
+								}
+								
+								listUsers( function( res, users )
+								{
 									
-									listUsers( function( res, users, key )
-									{
-				
-										if( callback ) callback( key );
-				
-										console.log( 'search users ', users );
-				
-									}, key );
-			
+									console.log( 'search users ', users );
+									
+									// TODO: Finish before implementing
+									
+									//init.refresh( users );
+									
 								} );
 								
 							},
@@ -2619,7 +2647,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								//console.log( output );
 							},
 							
-							refresh : function (  )
+							refresh : function ( users )
 							{
 								
 								switch( this.func.mode[ 'users' ] )
@@ -2627,13 +2655,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 									
 									case 'list':
 										
-										this.list();
+										this.list( users );
 										
 										break;
 										
 									case 'edit':
 										
-										this.edit();
+										this.edit( users );
 										
 										break;
 										

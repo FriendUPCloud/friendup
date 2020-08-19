@@ -5181,7 +5181,7 @@ Sections.accounts_users = function( cmd, extra )
 				
 				tr.innerHTML = '\
 					<div class="HContent20 FloatLeft">\
-						<h3><strong>' + i18n( 'i18n_users' ) + '</strong></h3>\
+						<h3><strong>' + i18n( 'i18n_users' ) + ' </strong><span id="AdminUsersCount">' + (userList&&userList['Count']?'('+userList['Count']+')':'(0)')+'</span></h3>\
 					</div>\
 					<div class="HContent70 FloatLeft Relative">\
 						' + extr + '\
@@ -6428,6 +6428,11 @@ Sections.accounts_users = function( cmd, extra )
 				}
 				
 			}
+		}
+		
+		if( ge( 'AdminUsersCount' ) )
+		{
+			ge( 'AdminUsersCount' ).innerHTML = ( userList && userList['Count'] ? '(' + userList['Count'] + ')' : '(0)' );
 		}
 		
 		if( output.length > 0 )
