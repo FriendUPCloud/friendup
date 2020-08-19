@@ -10178,7 +10178,9 @@ function mobileDebug( str, clear )
 _applicationBasics = {};
 function loadApplicationBasics( callback )
 {
+	// Don't do in login
 	if( Workspace.loginPrompt ) return;
+	
 	// Preload basic scripts
 	let a_ = new File( '/webclient/js/apps/api.js' );
 	a_.onLoad = function( data )
