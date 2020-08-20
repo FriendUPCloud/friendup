@@ -229,48 +229,45 @@ if( !class_exists( 'SharedDrive' ) )
 					' ) ) )
 					{
 						// Shared through groups by others
-						$rows = $SqlDatabase->fetchObjects( '
-							SELECT 
-								s.ID, s.Data, s.OwnerUserID, u.ServerToken
-							FROM 
-								FShared s, FUserGroup g, FUserToGroup ug, FUserToGroup ug2, FUser u
-							WHERE 
-								g.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $path[ 1 ] ) . '\' AND
-								s.OwnerUserID != \'' . intval( $User->ID, 10 ) . '\' AND
-								s.SharedType = \'group\' AND 
-								s.SharedID = g.ID AND 
-								ug.UserGroupID = g.ID AND
-								ug.UserID = s.OwnerUserID AND
-								ug2.UserGroupID = g.ID AND
-								ug2.UserID = \'' . $User->ID . '\' AND
-								u.ID = ug.UserID AND
-								u.ServerToken != ""
-						' );
-						// Shared through groups by self
-						if( $own = $SqlDatabase->fetchObjects( '
-							SELECT 
-								s.ID, s.Data, s.OwnerUserID, u.ServerToken
-							FROM 
-								FShared s, FUserGroup g, FUserToGroup ug, FUser u
-							WHERE 
-								g.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $path[ 1 ] ) . '\' AND
-								s.OwnerUserID = \'' . intval( $User->ID, 10 ) . '\' AND
-								s.SharedType = \'group\' AND 
-								s.SharedID = g.ID AND 
-								ug.UserGroupID = g.ID AND
-								ug.UserID = u.ID AND
-								u.ServerToken != "" AND 
-								u.ID = s.OwnerUserID
+						// Second in union is own files
+						if( $rows = $SqlDatabase->fetchObjects( '
+							(
+								SELECT 
+									s.ID, s.Data, s.OwnerUserID, u.ServerToken
+								FROM 
+									FShared s, FUserGroup g, FUserToGroup ug, FUserToGroup ug2, FUser u
+								WHERE 
+									g.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $path[ 1 ] ) . '\' AND
+									s.OwnerUserID != \'' . intval( $User->ID, 10 ) . '\' AND
+									s.SharedType = \'group\' AND 
+									s.SharedID = g.ID AND 
+									ug.UserGroupID = g.ID AND
+									ug.UserID = s.OwnerUserID AND
+									ug2.UserGroupID = g.ID AND
+									ug2.UserID = \'' . $User->ID . '\' AND
+									u.ID = ug.UserID AND
+									u.ServerToken != ""
+							)
+							UNION
+							(
+								SELECT 
+									s.ID, s.Data, s.OwnerUserID, u.ServerToken
+								FROM 
+									FShared s, FUserGroup g, FUserToGroup ug, FUser u
+								WHERE 
+									g.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $path[ 1 ] ) . '\' AND
+									s.OwnerUserID = \'' . intval( $User->ID, 10 ) . '\' AND
+									s.SharedType = \'group\' AND 
+									s.SharedID = g.ID AND 
+									ug.UserGroupID = g.ID AND
+									ug.UserID = u.ID AND
+									u.ServerToken != "" AND 
+									u.ID = s.OwnerUserID
+							)
 						' ) )
 						{
-							if( $rows )
-							{
-								$rows = array_merge( $rows, $own );
-							}
-							else $rows = $own;
-						}
-						if( $rows )
 							$groupShare = true;
+						}
 					}
 					// Add own files shared with other user (we're not in group)
 					if( !$groupShare && $own = $SqlDatabase->fetchObjects( '

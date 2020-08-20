@@ -307,7 +307,7 @@ cAjax = function()
 			// tell our caller...
 			if( jax.onload ) 
 			{
-				jax.onload( 'error', false );
+				jax.onload( 'error', '' );
 			}
 			jax.destroy();
 		}
@@ -857,8 +857,8 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 	// No return code and perhaps raw data
 	else if( self.rawData )
 	{
-		self.returnCode = false;
-		self.returnData = self.rawData;
+		self.returnCode = 'error';
+		self.returnData = '';
 	}
 	// This is a fail (no error code..)
 	else
