@@ -293,6 +293,10 @@ if( !class_exists( 'SharedDrive' ) )
 					// TODO: Support groups
 					if( $rows )
 					{
+						// Use multi!
+						$multiArray = array();
+						$master = curl_multi_init();
+						
 						foreach( $rows as $row )
 						{
 							if( $delete )
@@ -354,79 +358,100 @@ if( !class_exists( 'SharedDrive' ) )
 							}							
 							
 							$url = ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/';
-							$res = FriendCall( $url . 'file/info?servertoken=' . $row->ServerToken, false,
+							$s->multi = FriendCall( $url . 'file/info?servertoken=' . $row->ServerToken, false,
 								array( 
 									'devname'   => $vol[0],
 									'path'      => $p
-								)
+								), true
 							);
-							$code = explode( '<!--separate-->', $res );
-							
-							if( $code[0] == 'ok' )
+							$multiArray[] = $s;
+							curl_multi_add_handle( $master, $s->multi );
+						}
+						
+						// Wait for curl to finish
+						if( count( $multiArray ) )
+						{
+							do
 							{
-								if( isset( $getinfo ) && $pth == $s->Filename )
+								$running = 0;
+								curl_multi_exec( $master, $running );
+							}
+							while( $running > 0 );
+					
+							for( $a = 0; $a < count( $multiArray ); $a++ )
+							{
+								$file = $multiArray[ $a ];
+						
+								$res = curl_multi_getcontent( $file->multi );
+						
+								$code = explode( '<!--separate-->', $res );
+							
+								if( $code[0] == 'ok' )
 								{
-									$info = json_decode( $code[1] );
-									$fInfo = new stdClass();
-									$fInfo->Type = 'File';
-									$fInfo->ID = $s->ID;
-									$fInfo->MetaType = $fInfo->Type;
-									$fInfo->Path = $s->Path;
-									$fInfo->Filesize = $info->Filesize;
-									$fInfo->Filename = $s->Filename;
-									$fInfo->DateCreated = $info->DateCreated;
-									$fInfo->DateModified = $info->DateModified;
-									$fInfo->Owner = $s->Owner;
-									$fInfo->ExternPath = $s->ExternPath;
-									die( 'ok<!--separate-->' . json_encode( $fInfo ) );
-								}
-								// Read mode intercepts here
-								else if( isset( $read ) && $pth == $s->Filename ) 
-								{
-									// Don't require verification on localhost
-									$context = stream_context_create(
-										array(
-											'ssl'=>array(
-												'verify_peer' => false,
-												'verify_peer_name' => false,
-												'allow_self_signed' => true,
+									if( isset( $getinfo ) && $pth == $s->Filename )
+									{
+										$info = json_decode( $code[1] );
+										$fInfo = new stdClass();
+										$fInfo->Type = 'File';
+										$fInfo->ID = $s->ID;
+										$fInfo->MetaType = $fInfo->Type;
+										$fInfo->Path = $s->Path;
+										$fInfo->Filesize = $info->Filesize;
+										$fInfo->Filename = $s->Filename;
+										$fInfo->DateCreated = $info->DateCreated;
+										$fInfo->DateModified = $info->DateModified;
+										$fInfo->Owner = $s->Owner;
+										$fInfo->ExternPath = $s->ExternPath;
+										die( 'ok<!--separate-->' . json_encode( $fInfo ) );
+									}
+									// Read mode intercepts here
+									else if( isset( $read ) && $pth == $s->Filename ) 
+									{
+										// Don't require verification on localhost
+										$context = stream_context_create(
+											array(
+												'ssl'=>array(
+													'verify_peer' => false,
+													'verify_peer_name' => false,
+													'allow_self_signed' => true,
+												) 
 											) 
-										) 
-									);
+										);
 									
-									// Don't timeout!
-									set_time_limit( 0 );
-									ob_end_clean();
-									if( $fp = fopen( $url . 'file/read?servertoken=' . $row->ServerToken . '&path=' . urlencode( $s->ExternPath ) . '&mode=rb', 'rb', false, $context ) )
-									{
-										fpassthru( $fp );
-										fclose( $fp );
+										// Don't timeout!
+										set_time_limit( 0 );
+										ob_end_clean();
+										if( $fp = fopen( $url . 'file/read?servertoken=' . $row->ServerToken . '&path=' . urlencode( $s->ExternPath ) . '&mode=rb', 'rb', false, $context ) )
+										{
+											fpassthru( $fp );
+											fclose( $fp );
+										}
+										die();
 									}
-									die();
-								}
-								else if( isset( $write ) && $pth == $s->Filename )
-								{
-									$s->ExternServerToken = $row->ServerToken;
+									else if( isset( $write ) && $pth == $s->Filename )
+									{
+										$s->ExternServerToken = $row->ServerToken;
 
-									if( $info = $this->doWrite( $s, $args->tmpfile, $args->data ) )
-									{
-										die( 'ok<!--separate-->' . $info->Len . '<!--separate-->' );
+										if( $info = $this->doWrite( $s, $args->tmpfile, $args->data ) )
+										{
+											die( 'ok<!--separate-->' . $info->Len . '<!--separate-->' );
+										}
+										die( 'fail<!--separate-->{"response":"-1","message":"Could not write file."}' );
 									}
-									die( 'fail<!--separate-->{"response":"-1","message":"Could not write file."}' );
+									$info = json_decode( $code[1] );
+									$file->Filesize = $info->Filesize;
+									$file->DateCreated = $info->DateCreated;
+									$file->DateModified = $info->DateModified;
+									$file->multi = null;
+									$out[] = $file;
 								}
-								$info = json_decode( $code[1] );
-								$s->Filesize = $info->Filesize;
-								$s->DateCreated = $info->DateCreated;
-								$s->DateModified = $info->DateModified;
+								// This file does not exist!
+								else
+								{
+									$SqlDatabase->query( 'DELETE FROM FShared WHERE ID=\'' . $row->ID . '\' AND OwnerUserID=\'' . $User->ID . '\'' );
+									continue;
+								}
 							}
-							// This file does not exist!
-							else
-							{
-								$SqlDatabase->query( 'DELETE FROM FShared WHERE ID=\'' . $row->ID . '\' AND OwnerUserID=\'' . $User->ID . '\'' );
-								continue;
-							}
-							
-							$out[] = $s;
 						}
 						
 						// We couldn't if we reach here
@@ -564,8 +589,7 @@ if( !class_exists( 'SharedDrive' ) )
 					}
 				}
 				
-				// TODO: Use curl_multi_init(); to speed this up!
-				
+				// Use multi!
 				$multiArray = array();
 				$master = curl_multi_init();
 				
@@ -580,7 +604,7 @@ if( !class_exists( 'SharedDrive' ) )
 					{
 						$vol = explode( ':', $file->ExternPath );
 						$url = ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/';
-						$file->multi= FriendCall( $url . 'file/info?servertoken=' . $file->ExternServerToken, false,
+						$file->multi = FriendCall( $url . 'file/info?servertoken=' . $file->ExternServerToken, false,
 							array( 
 								'devname'   => $vol[0],
 								'path'      => $file->ExternPath
