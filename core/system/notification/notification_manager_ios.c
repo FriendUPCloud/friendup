@@ -7,6 +7,9 @@
 * found in the file license_mit.txt.                                           *
 *                                                                              *
 *****************************************************************************©*/
+
+// NOTICE: - this file is deprecated and will be removed!, 20/08/2020, HT
+
 /** @file
  * 
  *  Notification Manager IOS
@@ -249,7 +252,7 @@ FBOOL SendPayload( NotificationManager *nm, SSL *sslPtr, char *deviceTokenBinary
 
 int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char *title, const char *content, const char *sound, int badge, const char *app, const char *extras, char *tokens )
 {
-	char *startToken = tokens;
+	/*char *startToken = tokens;
 	char *curToken = tokens+1;
 	SSL_CTX *ctx;
 	SSL *ssl;
@@ -446,7 +449,7 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 	{
 		FFree( encmsg );
 	}
-	
+	*/
 	return 0;
 }
 
@@ -456,7 +459,7 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 
 void NotificationIOSSendingThread( FThread *data )
 {
-	pthread_detach( pthread_self() );
+	/*pthread_detach( pthread_self() );
 	
 	data->t_Launched = TRUE;
 	NotificationManager *nm = (NotificationManager *)data->t_Data;
@@ -525,32 +528,32 @@ void NotificationIOSSendingThread( FThread *data )
 		return;
 	}
 	
-	/*
-	if( nm->nm_APNSSandBox )
-	{
-		he = gethostbyname( APNS_SANDBOX_HOST );
-	}
-	else
-	{
-		he = gethostbyname( APNS_HOST );
-	}
-    
-	if( !he )
-	{
-		SSL_CTX_free( ctx );
-		FERROR("NotificationIOSSendingThread: get host fail\n");
-		return;
-	}
 	
-	if( nm->nm_APNSSandBox )
-	{
-		sinPort = htons(APNS_SANDBOX_PORT);
-	}
-	else
-	{
-		sinPort = htons(APNS_PORT);
-	}
-	*/
+	//if( nm->nm_APNSSandBox )
+	//{
+	//	he = gethostbyname( APNS_SANDBOX_HOST );
+	//}
+	//else
+	//{
+	//	he = gethostbyname( APNS_HOST );
+	//}
+    
+	//if( !he )
+	//{
+	//	SSL_CTX_free( ctx );
+	//	FERROR("NotificationIOSSendingThread: get host fail\n");
+	//	return;
+	//}
+	//
+	//if( nm->nm_APNSSandBox )
+	//{
+	//	sinPort = htons(APNS_SANDBOX_PORT);
+	//}
+	//else
+	//{
+	//	sinPort = htons(APNS_PORT);
+	//}
+	
 	
 	DEBUG("NotificationIOSSendingThread: starting main loop\n");
 	while( data->t_Quit != TRUE )
@@ -684,7 +687,7 @@ void NotificationIOSSendingThread( FThread *data )
 	
 	data->t_Launched = FALSE;
 	
-	pthread_exit( NULL );
+	pthread_exit( NULL );*/
 }
 
 /**
@@ -703,7 +706,7 @@ void NotificationIOSSendingThread( FThread *data )
 
 int NotificationManagerNotificationSendIOSQueue( NotificationManager *nm, const char *title, const char *content, const char *sound, int badge, const char *app, const char *extras, char *tokens )
 {
-	if( tokens == NULL || strlen( tokens ) < 6 )
+	/*if( tokens == NULL || strlen( tokens ) < 6 )
 	{
 		return 21;
 	}
@@ -724,7 +727,7 @@ int NotificationManagerNotificationSendIOSQueue( NotificationManager *nm, const 
 	
 	char *pushContent = FCalloc( MAXPAYLOAD_SIZE, sizeof(char) );
 	if( pushContent != NULL )
-	{
+	{*/
 		/*
 		StringListEl *curToken = SLEParseString( tokens );
 		while( curToken != NULL )
@@ -831,7 +834,7 @@ int NotificationManagerNotificationSendIOSQueue( NotificationManager *nm, const 
 		*/
 		//StringListEl *curToken = SLEParseString( tokens );
 		//while( curToken != NULL )
-		{
+		/*{
 			char *tok = NULL;
 			int toksize;
 			
@@ -931,6 +934,6 @@ int NotificationManagerNotificationSendIOSQueue( NotificationManager *nm, const 
 	{
 		FFree( encmsg );
 	}
-	
+	*/
 	return 0;
 }

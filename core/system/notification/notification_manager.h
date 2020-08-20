@@ -65,12 +65,6 @@ typedef struct NotificationManager
 	Notification				*nm_Notifications;
 	pthread_mutex_t				nm_Mutex;
 	
-	FThread						*nm_IOSSendThread;
-	pthread_mutex_t				nm_IOSSendMutex;
-	pthread_cond_t				nm_IOSSendCond;
-	FQueue						nm_IOSSendMessages;
-	int							nm_IOSSendInUse;
-	
 	FThread						*nm_AndroidSendThread;
 	pthread_mutex_t				nm_AndroidSendMutex;
 	pthread_cond_t				nm_AndroidSendCond;

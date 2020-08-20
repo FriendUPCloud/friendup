@@ -96,7 +96,7 @@ NotificationManager *NotificationManagerNew( void *sb )
 			FQInit( &(nm->nm_ExtServiceMessage) );
 			
 			//
-			// run android send thread
+			// run android/ios send thread
 			
 			pthread_mutex_init( &(nm->nm_AndroidSendMutex), NULL );
 			pthread_cond_init( &(nm->nm_AndroidSendCond), NULL );
@@ -105,24 +105,11 @@ NotificationManager *NotificationManagerNew( void *sb )
 			nm->nm_AndroidSendThread = ThreadNew( NotificationAndroidSendingThread, nm, TRUE, NULL );
 			
 			//
-			// run ios send thread
-			
-			pthread_mutex_init( &(nm->nm_IOSSendMutex), NULL );
-			pthread_cond_init( &(nm->nm_IOSSendCond), NULL );
-			FQInit( &(nm->nm_IOSSendMessages) );
-			
-			nm->nm_IOSSendThread = ThreadNew( NotificationIOSSendingThread, nm, TRUE, NULL );
-			
-			//
 			// run main thread
 			
 			nm->nm_TimeoutThread = ThreadNew( NotificationManagerTimeoutThread, nm, TRUE, NULL );
 			
-			// test
-			//NotificationManagerNotificationSendAndroid( nm, NULL, NULL, NULL, 0, NULL, NULL, NULL );
 		} // plib and plib->open != NULL
-
-		//nm_APNSNotificationTimeout_expirationDate = time(NULL) + 86400; // default expiration date set to 1 day
 	}	// calloc
 	DEBUG("[NotificationManagerNew] end\n");
 	return nm;
@@ -190,49 +177,12 @@ void NotificationManagerDelete( NotificationManager *nm )
 			ThreadDelete( nm->nm_AndroidSendThread );
 		}
 		DEBUG("[NotificationManagerDelete] delete done\n");
+		
 		pthread_cond_destroy( &(nm->nm_AndroidSendCond) );
 		pthread_mutex_destroy( &(nm->nm_AndroidSendMutex) );
 		FQDeInit( &(nm->nm_AndroidSendMessages) );
+		
 		DEBUG("[NotificationManagerDelete] delete android all stuff released\n");
-		
-		// remove IOS sending thread
-		
-		// kill launched thread with messages to be send
-		
-		if( nm->nm_IOSSendThread != NULL )
-		{
-			int tr = 0;
-			DEBUG("[NotificationManagerDelete] set quit to IOS thread\n");
-			nm->nm_IOSSendThread->t_Quit = TRUE;
-			if( FRIEND_MUTEX_LOCK( &(nm->nm_IOSSendMutex) ) == 0 )
-			{
-				pthread_cond_signal( &(nm->nm_IOSSendCond) ); // <- wake up!!
-				FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
-			}
-			DEBUG("[NotificationManagerDelete] before while\n");
-			while( TRUE )
-			{
-				DEBUG("[NotificationManagerDelete] killing ios in use: %d\n", nm->nm_IOSSendInUse );
-				if( nm->nm_IOSSendInUse <= 0 || ((tr++)> 30 ) )
-				{
-					break;
-				}
-				usleep( 500 );
-				if( FRIEND_MUTEX_LOCK( &(nm->nm_IOSSendMutex) ) == 0 )
-				{
-					pthread_cond_signal( &(nm->nm_IOSSendCond) ); // <- wake up!!
-					FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
-				}
-			}
-		
-			DEBUG("[NotificationManagerDelete] delete IOS thread\n");
-			ThreadDelete( nm->nm_IOSSendThread );
-		}
-		pthread_cond_destroy( &(nm->nm_IOSSendCond) );
-		pthread_mutex_destroy( &(nm->nm_IOSSendMutex) );
-		FQDeInit( &(nm->nm_IOSSendMessages) );
-		
-		DEBUG("[NotificationManagerDelete] all threads deleted\n");
 		
 		//
 		// delete external services
@@ -1493,8 +1443,10 @@ int NotificationManagerNotificationSendFirebaseQueue( NotificationManager *nm, N
 				FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
 			}
 		}
-
-		//FFree( msg ); // do not release message if its going to queue
+		else
+		{
+			FFree( msg ); // do not release message if its going to queue
+		}
 	}
 	else
 	{
