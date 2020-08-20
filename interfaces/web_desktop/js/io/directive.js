@@ -41,10 +41,10 @@ function ExecuteApplication( app, args, callback, retries )
 	if( typeof( _applicationBasics ) == 'undefined' || !_applicationBasics.js )
 	{
 		if( retries == 3 ) return console.log( 'Could not execute app: ' + app );
-		return setTimeout( function()
+		loadApplicationBasics( function()
 		{
 			ExecuteApplication( app, args, callback, !retries ? 1 : retries++ );
-		}, 125 );
+		} );
 	}
 	var appName = app;
 	if( app.indexOf( ':' ) > 0 )
