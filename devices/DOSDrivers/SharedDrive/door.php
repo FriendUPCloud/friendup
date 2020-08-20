@@ -501,9 +501,13 @@ if( !class_exists( 'SharedDrive' ) )
 						die( 'fail<!--separate-->{"message":"Failed to unshare file.","response":"-1"}' );
 					}				
 				
-					$queries = new stdClass();
 					// Select groupshares that has been shared in where I am member
-					$queries->groups = 'SELECT s.ID AS ShareID, g.Name, g.ID, u.ID AS OwnerID, u.ServerToken, "group" AS `Type`
+					// First in union is; Get folders by other users or groups
+					// Second one is: Select usershares where I am shared with
+					
+					if( $rows = $SqlDatabase->fetchObjects( '
+					(
+						SELECT s.ID AS ShareID, "" as FullName, g.Name, g.ID, u.ID AS OwnerID, u.ServerToken, "group" AS `Type`
 							FROM 
 								FShared s, FUserGroup g, FUserToGroup ug, FUserToGroup ug2, FUser u
 							WHERE 
@@ -515,9 +519,10 @@ if( !class_exists( 'SharedDrive' ) )
 								ug2.UserID = \'' . $User->ID . '\' AND
 								u.ID = ug.UserID AND
 								u.ServerToken != ""
-					';
-					// Select usershares where I am shared with
-					$queries->users = 'SELECT s.ID AS ShareID, u.FullName, u.Name, u.ID, u.ID AS OwnerID, u.ServerToken, "user" AS `Type`
+					)
+					UNION
+					(
+						SELECT s.ID AS ShareID, u.FullName, u.Name, u.ID, u.ID AS OwnerID, u.ServerToken, "user" AS `Type`
 							FROM 
 								FShared s, FUser u 
 							WHERE
@@ -525,40 +530,36 @@ if( !class_exists( 'SharedDrive' ) )
 								s.OwnerUserID != \'' . intval( $User->ID, 10 ) . '\' AND
 								s.SharedType = \'user\' AND
 								s.SharedID = \'' . intval( $User->ID, 10 ) . '\' AND
-								u.ServerToken != ""';
-				
-					// Get folders by other users or groups
-					foreach( $queries as $k=>$q )
+								u.ServerToken != ""
+					)
+					' ) )
 					{
-						if( $rows = $SqlDatabase->fetchObjects( $q ) )
+						// Remove duplicates
+						$out2 = [];
+						foreach( $rows as $row )
 						{
-							// Remove duplicates
-							$out2 = [];
-							foreach( $rows as $row )
-							{
-								if( !isset( $out2[ $row->Name . '-' . $row->Type ] ) )
-									$out2[ $row->Name . '-' . $row->Type ] = $row;
-							}
-							foreach( $out2 as $a=>$row )
-							{
-								$s = new stdClass();
-								$s->Filename = $row->Name;
-								if( isset( $row->FullName ) )
-									$s->Title = $row->FullName;
-								$s->ID = $row->ID;
-								$s->Path = $row->Name;
-								$s->Type = 'Directory';
-								$s->MetaType = 'Directory';
-								$s->IconLabel = $k == 'users' ? 'UserShare' : 'GroupShare';
-								$s->Permissions = '---------------';
-								$s->DateCreated = $s->DateModified = date( 'Y-m-d H:i:s' );
-								$s->Shared = '';
-								$s->SharedLink = '';
-								$s->Filesize = 0;
-								$s->ExternServerToken = $row->ServerToken;
-								$s->ShareID = $row->ShareID;
-								$out[] = $s;
-							}
+							if( !isset( $out2[ $row->Name . '-' . $row->Type ] ) )
+								$out2[ $row->Name . '-' . $row->Type ] = $row;
+						}
+						foreach( $out2 as $a=>$row )
+						{
+							$s = new stdClass();
+							$s->Filename = $row->Name;
+							if( isset( $row->FullName ) )
+								$s->Title = $row->FullName;
+							$s->ID = $row->ID;
+							$s->Path = $row->Name;
+							$s->Type = 'Directory';
+							$s->MetaType = 'Directory';
+							$s->IconLabel = $k == 'users' ? 'UserShare' : 'GroupShare';
+							$s->Permissions = '---------------';
+							$s->DateCreated = $s->DateModified = date( 'Y-m-d H:i:s' );
+							$s->Shared = '';
+							$s->SharedLink = '';
+							$s->Filesize = 0;
+							$s->ExternServerToken = $row->ServerToken;
+							$s->ShareID = $row->ShareID;
+							$out[] = $s;
 						}
 					}
 				}
