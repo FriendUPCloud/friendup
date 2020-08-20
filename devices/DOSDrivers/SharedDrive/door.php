@@ -507,7 +507,7 @@ if( !class_exists( 'SharedDrive' ) )
 					
 					if( $rows = $SqlDatabase->fetchObjects( '
 					(
-						SELECT s.ID AS ShareID, "" as FullName, g.Name, g.ID, u.ID AS OwnerID, u.ServerToken, "group" AS `Type`
+						SELECT s.ID AS ShareID, "" as FullName, g.Name, g.ID, u.ID AS OwnerID, u.ServerToken, DateTouched AS DateModified, DateCreated, "group" AS `Type`
 							FROM 
 								FShared s, FUserGroup g, FUserToGroup ug, FUserToGroup ug2, FUser u
 							WHERE 
@@ -522,7 +522,7 @@ if( !class_exists( 'SharedDrive' ) )
 					)
 					UNION
 					(
-						SELECT s.ID AS ShareID, u.FullName, u.Name, u.ID, u.ID AS OwnerID, u.ServerToken, "user" AS `Type`
+						SELECT s.ID AS ShareID, u.FullName, u.Name, u.ID, u.ID AS OwnerID, u.ServerToken, DateTouched AS DateModified, DateCreated, "user" AS `Type`
 							FROM 
 								FShared s, FUser u 
 							WHERE
@@ -563,6 +563,8 @@ if( !class_exists( 'SharedDrive' ) )
 						}
 					}
 				}
+				
+				// TODO: Use curl_multi_init(); to speed this up!
 				
 				// Stat everything
 				foreach( $out as $k=>$file )
