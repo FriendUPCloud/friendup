@@ -1341,7 +1341,9 @@ var WorkspaceInside = {
 					}
 				}
 				if( wid )
+				{
 					wid.autosize();
+				}
 				PollTrayPosition();
 			}
 		}
