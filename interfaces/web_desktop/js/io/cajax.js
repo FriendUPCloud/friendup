@@ -860,10 +860,11 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		self.returnCode = false;
 		self.returnData = self.rawData;
 	}
-	// Just forget
+	// This is a fail (no error code..)
 	else
 	{
-		return;
+		self.returnCode = '';
+		self.returnData = '';
 	}
 		
 	// TODO: This error is general

@@ -210,7 +210,7 @@ FriendConnection.prototype.onWsMessage = function( msg )
 	}
 	
 	function handleEvent( msg )
-	{
+	{	
 		let event = msg.type;
 		let lIds = self.listeners[ event ];
 		if( !lIds )
