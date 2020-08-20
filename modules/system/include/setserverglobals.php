@@ -156,7 +156,7 @@ $s->Save();
 $targets = [
 	'resources/webclient/templates/eula_short.html',
 	'resources/webclient/templates/eula.html',
-	'resources/graphics/logoblue.png',
+	'resources/graphics/release_logo.png',
 	'resources/graphics/release_loginimage.jpg',
 	'resources/webclient/css/extraLoginCSS.css',
 	'resources/webclient/templates/aboutTemplate.html'
@@ -174,7 +174,7 @@ $backups = [
 $sources = [
 	'cfg/serverglobals/eulashort.html',
 	'cfg/serverglobals/eulalong.html',
-	'cfg/serverglobals/logoimage.png',
+	'cfg/serverglobals/release_logo.png',
 	'cfg/serverglobals/release_loginimage.jpg',
 	'cfg/serverglobals/extraLoginCSS.css',
 	'cfg/serverglobals/aboutTemplate.html'
