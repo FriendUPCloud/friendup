@@ -55,34 +55,38 @@ void USMDelete( UserSessionManager *smgr )
 {
 	if( smgr != NULL )
 	{
-		DEBUG("[USMDelete] Remove sessions\n");
-		UserSession  *ls = smgr->usm_Sessions;
-		while( ls != NULL )
+		if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) == 0 )
 		{
-			UserSession *rem =  ls;
-			ls = (UserSession *) ls->node.mln_Succ;
+			DEBUG("[USMDelete] Remove sessions\n");
+			UserSession  *ls = smgr->usm_Sessions;
+			while( ls != NULL )
+			{
+				UserSession *rem =  ls;
+				ls = (UserSession *) ls->node.mln_Succ;
 			
-			DEBUG("[USMDelete] \t\tRemove session : %s uid %lu\n", rem->us_SessionID, rem->us_UserID );
+				DEBUG("[USMDelete] \t\tRemove session : %s uid %lu\n", rem->us_SessionID, rem->us_UserID );
 			
-			UserSessionDelete( rem );
+				UserSessionDelete( rem );
+			}
+		
+			ls = smgr->usm_SessionsToBeRemoved;
+			while( ls != NULL )
+			{
+				UserSession *rem =  ls;
+				ls = (UserSession *) ls->node.mln_Succ;
+			
+				DEBUG("[USMDelete] \t\tRemove session from remove list: %s uid %lu\n", rem->us_SessionID, rem->us_UserID );
+			
+				UserSessionDelete( rem );
+			}
+		
+			smgr->usm_Sessions = NULL;
+		
+			pthread_mutex_destroy( &(smgr->usm_Mutex) );
+		
+			FFree( smgr );
+			FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
 		}
-		
-		ls = smgr->usm_SessionsToBeRemoved;
-		while( ls != NULL )
-		{
-			UserSession *rem =  ls;
-			ls = (UserSession *) ls->node.mln_Succ;
-			
-			DEBUG("[USMDelete] \t\tRemove session from remove list: %s uid %lu\n", rem->us_SessionID, rem->us_UserID );
-			
-			UserSessionDelete( rem );
-		}
-		
-		smgr->usm_Sessions = NULL;
-		
-		pthread_mutex_destroy( &(smgr->usm_Mutex) );
-		
-		FFree( smgr );
 	}
 }
 
@@ -720,7 +724,7 @@ int USMUserSessionRemove( UserSessionManager *smgr, UserSession *remsess )
 	if( sessionRemoved == TRUE )
 	{
 		USMGetSessionsDeleteDB( smgr, remsess->us_SessionID );
-		//UserSessionDelete( remsess );
+		
 		// we do not delete session, untill it is used
 		if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) == 0 )
 		{

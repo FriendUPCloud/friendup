@@ -566,6 +566,9 @@ if( !class_exists( 'SharedDrive' ) )
 				
 				// TODO: Use curl_multi_init(); to speed this up!
 				
+				$multiArray = array();
+				$master = curl_multi_init();
+				
 				// Stat everything
 				foreach( $out as $k=>$file )
 				{
@@ -577,12 +580,49 @@ if( !class_exists( 'SharedDrive' ) )
 					{
 						$vol = explode( ':', $file->ExternPath );
 						$url = ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/';
-						$res = FriendCall( $url . 'file/info?servertoken=' . $file->ExternServerToken, false,
+						$file->multi= FriendCall( $url . 'file/info?servertoken=' . $file->ExternServerToken, false,
 							array( 
 								'devname'   => $vol[0],
 								'path'      => $file->ExternPath
-							)
-						);
+							), true );
+						$file->key = $k;
+						$multiArray[] = $file;
+						curl_multi_add_handle( $master, $file->multi );
+					}
+					else if( $file->Type == 'Directory' )
+					{
+						if( isset( $getinfo ) && $pth == $file->Filename )
+						{
+							$fInfo = new stdClass();
+							$fInfo->Type = 'Directory';
+							$fInfo->MetaType = $fInfo->Type;
+							$fInfo->Path = $file->Path;
+							$fInfo->Filesize = 0;
+							$fInfo->Filename = $file->Filename;
+							$fInfo->DateCreated = date( 'Y-m-d H:i:s' );
+							$fInfo->DateModified = date( 'Y-m-d H:i:s' );
+							die( 'ok<!--separate-->' . json_encode( $fInfo ) );
+						}
+					}
+					unset( $out[$k]->ShareID );
+				}
+				
+				// Wait for curl to finish
+				if( count( $multiArray ) )
+				{
+					do
+					{
+						$running = 0;
+						curl_multi_exec( $master, $running );
+					}
+					while( $running > 0 );
+					
+					for( $a = 0; $a < count( $multiArray ); $a++ )
+					{
+						$file = $multiArray[ $a ];
+						
+						$k = $file->key;
+						$res = curl_multi_getcontent( $file->multi );
 						$code = explode( '<!--separate-->', $res );
 						if( $code[0] == 'ok' )
 						{
@@ -653,23 +693,9 @@ if( !class_exists( 'SharedDrive' ) )
 						if( isset( $out[$k]->ShareID ) )
 							unset( $out[$k]->ShareID );
 						unset( $out[$k]->ExternServerToken );
+						unset( $out[$k]->key );
+						unset( $out[$k]->multi );
 					}
-					else if( $file->Type == 'Directory' )
-					{
-						if( isset( $getinfo ) && $pth == $file->Filename )
-						{
-							$fInfo = new stdClass();
-							$fInfo->Type = 'Directory';
-							$fInfo->MetaType = $fInfo->Type;
-							$fInfo->Path = $file->Path;
-							$fInfo->Filesize = 0;
-							$fInfo->Filename = $file->Filename;
-							$fInfo->DateCreated = date( 'Y-m-d H:i:s' );
-							$fInfo->DateModified = date( 'Y-m-d H:i:s' );
-							die( 'ok<!--separate-->' . json_encode( $fInfo ) );
-						}
-					}
-					unset( $out[$k]->ShareID );
 				}
 				
 				// Get the output
