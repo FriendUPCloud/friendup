@@ -104,14 +104,14 @@ void WSThreadPing( void *p )
 	pthread_detach( pthread_self() );
 	
 	WSThreadData *data = (WSThreadData *)p;
-	if( data == NULL )
+	if( data == NULL || !data->wstd_WSD )
 	{
 		pthread_exit( NULL );
 		return;
 	}
 	
 	int n = 0;
-	UserSession *us = data->wstd_WSD->wsc_UserSession;//data->wstd_UserSession;
+	UserSession *us = data->wstd_WSD->wsc_UserSession;
 	
 	if( data == NULL || us == NULL || us->us_WSD == NULL || data->wstd_WSD->wsc_UserSession == NULL )
 	{
@@ -748,7 +748,7 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 		Log( FLOG_INFO, "[WS] No response at all..\n" );
 		char response[ 1024 ];
 		char dictmsgbuf1[ 196 ];
-		snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), SLIB->sl_Dictionary->d_Msg[DICT_CANNOT_PARSE_COMMAND_OR_NE_LIB], pathParts[ 0 ] );
+		snprintf( dictmsgbuf1, 196, SLIB->sl_Dictionary->d_Msg[DICT_CANNOT_PARSE_COMMAND_OR_NE_LIB], pathParts[ 0 ] );
 		
 		int resplen = sprintf( response, "{\"response\":\"%s\"}", dictmsgbuf1 );
 
@@ -1533,7 +1533,7 @@ int ParseAndCall( WSThreadData *wstd )
 		FERROR("[WS] Failed to parse JSON: %d\n", r);
 		unsigned char buf[ 256 ];
 		char locmsg[ 256 ];
-		int locmsgsize = snprintf( locmsg, sizeof(locmsg), "{\"type\":\"msg\",\"data\":{\"type\":\"error\",\"data\":{\"requestid\":\"%s\"}}}", reqid );
+		int locmsgsize = snprintf( locmsg, 256, "{\"type\":\"msg\",\"data\":{\"type\":\"error\",\"data\":{\"requestid\":\"%s\"}}}", reqid );
 		
 		strcpy( (char *)(buf), locmsg );
 		UserSessionWebsocketWrite( locus, buf, locmsgsize, LWS_WRITE_TEXT );

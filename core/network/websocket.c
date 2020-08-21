@@ -567,7 +567,7 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
 		{
 			char qery[ 1024 ];
 			
-			sqllib->SNPrintF( sqllib, qery,  sizeof(qery), \
+			sqllib->SNPrintF( sqllib, qery, 1024, \
 				 "SELECT * FROM ( ( SELECT u.SessionID FROM FUserSession u, FUserApplication a WHERE a.AuthID=\"%s\" AND a.UserID = u.UserID LIMIT 1 ) \
 				UNION ( SELECT u2.SessionID FROM FUserSession u2, Filesystem f WHERE f.Config LIKE \"%s%s%s\" AND u2.UserID = f.UserID LIMIT 1 ) ) z LIMIT 1",
 				( char *)authid, "%", ( char *)authid, "%"
@@ -581,7 +581,7 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
 				char **row;
 				if( ( row = sqllib->FetchRow( sqllib, res ) ) )
 				{
-					snprintf( lsessionid, sizeof(lsessionid), "%s", row[ 0 ] );
+					snprintf( lsessionid, DEFAULT_SESSION_ID_SIZE, "%s", row[ 0 ] );
 					sessionid = lsessionid;
 				}
 				sqllib->FreeResult( sqllib, res );
