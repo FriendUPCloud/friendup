@@ -321,7 +321,7 @@ static inline void moveToHttps( Socket *sock )
 * @param d pointer to fcThreadInstance
 */
 
-// #define SINGLE_SHOT
+#define SINGLE_SHOT
 //#define ACCEPT_IN_EPOLL
 //#define ACCEPT_IN_THREAD
 
@@ -551,8 +551,8 @@ void *FriendCoreAcceptPhase2( void *data )
 					
 #ifdef USE_PTHREAD
 						//size_t stacksize = 16777216; //16 * 1024 * 1024;
-						size_t stacksize = 8388608;	// half of previous stack
-						//size_t stacksize = 4194304;	// half of previous stack
+						//size_t stacksize = 8388608;	// half of previous stack
+						size_t stacksize = 1048576;	// A meg
 						pthread_attr_t attr;
 						pthread_attr_init( &attr );
 						pthread_attr_setstacksize( &attr, stacksize );
@@ -1144,8 +1144,8 @@ static inline int FriendCoreAcceptPhase3( int fd, FriendCoreInstance *fc )
 				pre->fc = fc; pre->sock = incoming;
 
 				//size_t stacksize = 16777216; //16 * 1024 * 1024;
-				size_t stacksize = 8388608;	// half of previous stack
-				//size_t stacksize = 4194304; //512 * 1024;
+				//size_t stacksize = 8388608;	// half of previous stack
+				size_t stacksize = 1048576; // A meg
 				pthread_attr_t attr;
 				pthread_attr_init( &attr );
 				pthread_attr_setstacksize( &attr, stacksize );
@@ -1988,17 +1988,6 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 			}
 		}
 		
-		/*
-		This is only used to track fds....
-		if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
-		{
-			if( fc->FDCount > 0 )
-			{
-				DEBUG( "Current fds: %d\n", fc->FDCount );
-			}
-			FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
-		}*/
-
 		for( i = 0; i < eventCount; i++ )
 		{
 			currentEvent = &events[i];
