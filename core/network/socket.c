@@ -259,8 +259,6 @@ Socket* SocketNew( void *sb, FBOOL ssl, unsigned short port, int type )
 
 			sock->s_BIO = BIO_new(BIO_s_mem());
 
-			//			SSL_library_init();
-
 			sock->s_Meth = SSLv23_client_method();
 			if( sock->s_Meth  == NULL )
 			{
