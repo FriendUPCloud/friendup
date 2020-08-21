@@ -62,7 +62,7 @@ char* UriGetScheme( char* str, unsigned int strLen, char** next )
 			break;
 		}
 		// Check for disallowed characters in the scheme
-		else if( !( CharIsAlpha( c ) || CharIsDigit( c ) || c == '+' || c == '-' || c == '.' ) )
+		else if( c == '+' || c == '-' || c == '.' || !( CharIsAlpha( c ) || CharIsDigit( c ) ) )
 		{
 			// We found a disallowed character, this is not a scheme.
 			return 0;
