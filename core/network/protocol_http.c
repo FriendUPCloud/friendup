@@ -1853,14 +1853,13 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 											char *url = FCalloc( 2048, sizeof(char) );
 											
-											//char url[ 2048 ]; 
-											//memset( url, '\0', 2048 );
 											int hasUrl = 0;
 											if( sqllib != NULL )
 											{
 												char *qery = FMalloc( 1048 );
-												//char qery[ 1048 ];
+												
 												qery[ 1024 ] = 0;
+												
 												sqllib->SNPrintF( sqllib, qery, 1024, "SELECT Source FROM FTinyUrl WHERE `Hash`=\"%s\"", hash ? hash : "-" );
 												void *res = sqllib->Query( sqllib, qery );
 												if( res != NULL )
@@ -2014,6 +2013,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 															//snprintf( runFile, argssize + 512, "php \"php/catch_all.php\" \"%s\";", allArgsNew );
 															DEBUG("MODRUNPHP '%s'\n", runFile );
 															
+															Log( FLOG_DEBUG, "[ProtocolHttp] Executing RunPHPScript\n");
 															phpResp = RunPHPScript( runFile );
 														
 															FFree( runFile );
@@ -2037,6 +2037,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 													{
 														snprintf( command, clen, "php \"php/catch_all.php\" \"%s\" \"%s\";", uri->uri_Path->raw, request->http_Uri ? request->http_Uri->uri_QueryRaw : NULL );
 													
+														Log( FLOG_DEBUG, "[ProtocolHttp] Executing php/catch_all.php\n");
 														phpResp = RunPHPScript( command );
 														
 														FFree( command );

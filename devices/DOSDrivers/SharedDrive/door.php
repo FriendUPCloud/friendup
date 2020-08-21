@@ -576,7 +576,7 @@ if( !class_exists( 'SharedDrive' ) )
 							$s->Path = $row->Name;
 							$s->Type = 'Directory';
 							$s->MetaType = 'Directory';
-							$s->IconLabel = $k == 'users' ? 'UserShare' : 'GroupShare';
+							$s->IconLabel = $row->Type == 'user' ? 'UserShare' : 'GroupShare';
 							$s->Permissions = '---------------';
 							$s->DateCreated = $s->DateModified = date( 'Y-m-d H:i:s' );
 							$s->Shared = '';
@@ -634,6 +634,7 @@ if( !class_exists( 'SharedDrive' ) )
 				// Wait for curl to finish
 				if( count( $multiArray ) )
 				{
+					set_time_limit( 0 );
 					do
 					{
 						$running = 0;

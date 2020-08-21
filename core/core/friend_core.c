@@ -321,7 +321,7 @@ static inline void moveToHttps( Socket *sock )
 * @param d pointer to fcThreadInstance
 */
 
-#define SINGLE_SHOT
+// #define SINGLE_SHOT
 //#define ACCEPT_IN_EPOLL
 //#define ACCEPT_IN_THREAD
 

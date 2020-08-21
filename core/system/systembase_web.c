@@ -92,14 +92,14 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 	// Send both get and post
 	int size = 0;
 
-	FBOOL both = request->http_Content && request->http_Uri->uri_QueryRaw ? TRUE : FALSE;
+	FBOOL both = request->http_Content && request->http_Uri && request->http_Uri->uri_QueryRaw ? TRUE : FALSE;
 	if( request->http_Content != NULL ) size += strlen( request->http_Content );
-	if( request->http_Uri->uri_QueryRaw != NULL ) size += strlen( request->http_Uri->uri_QueryRaw );
+	if( request->http_Uri && request->http_Uri->uri_QueryRaw != NULL ) size += strlen( request->http_Uri->uri_QueryRaw );
 	char *allArgsNew = NULL;
 	
 	//fprintf( log, " CONTENT : %s\n\n\n\n\n", request->content );
 	
-	INFO("\t\t--->request->content %s raw %s len %d\n\n", request->http_Content, request->http_Uri->uri_QueryRaw, size );
+	INFO("\t\t--->request->content %s raw %s len %d\n\n", request->http_Content, request->http_Uri ? request->http_Uri->uri_QueryRaw : "", size );
 	
 	if( size <= 0 )
 	{
@@ -117,7 +117,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 	char *allArgs = FCallocAlign( fullsize, sizeof(char) );
 	if( allArgs != NULL )
 	{
-		allArgsNew = FCallocAlign( fullsize+100, sizeof(char) );
+		allArgsNew = FCallocAlign( fullsize + 100, sizeof(char) );
 	
 		if( both == TRUE )
 		{
@@ -343,7 +343,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	// This part of code check required information
 	//
 	
-	char *sessionid = FCalloc( DEFAULT_SESSION_ID_SIZE+1, sizeof(char) );
+	char *sessionid = FCalloc( DEFAULT_SESSION_ID_SIZE + 1, sizeof(char) );
 	char userName[ 256 ];
 	//char sessionid[ DEFAULT_SESSION_ID_SIZE ];
 	//sessionid[ 0 ] = 0;
@@ -393,7 +393,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			response = HttpNewSimple( HTTP_200_OK, tags );
 			
 			char buffer[ 256 ];
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SESSIONID_AUTH_MISSING] , DICT_SESSIONID_AUTH_MISSING );
+			snprintf( buffer, sizeof( buffer ), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SESSIONID_AUTH_MISSING] , DICT_SESSIONID_AUTH_MISSING );
 			HttpAddTextContent( response, buffer );
 			FERROR( "login function miss parameter sessionid or authid\n" );
 			FFree( sessionid );
@@ -452,18 +452,22 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						SASSession *as = SASManagerGetSession( l->sl_SASManager, asval );
 						if( as != NULL )
 						{
-							SASUList *alist = as->sas_UserSessionList;
-							while( alist != NULL )
+							if( FRIEND_MUTEX_LOCK( &as->sas_SessionsMut ) == 0 )
 							{
-								//DEBUG("Authid check %s user %s\n", alist->authid, alist->usersession->us_User->u_Name );
-								if( strcmp( alist->authid, authid ) ==  0 )
+								SASUList *alist = as->sas_UserSessionList;
+								while( alist != NULL )
 								{
-									loggedSession = alist->usersession;
-									sprintf( sessionid, "%s", loggedSession->us_SessionID ); // Overwrite sessionid
-									DEBUG("Found user %s\n", loggedSession->us_User->u_Name );
-									break;
+									//DEBUG("Authid check %s user %s\n", alist->authid, alist->usersession->us_User->u_Name );
+									if( strcmp( alist->authid, authid ) ==  0 )
+									{
+										loggedSession = alist->usersession;
+										sprintf( sessionid, "%s", loggedSession->us_SessionID ); // Overwrite sessionid
+										DEBUG("Found user %s\n", loggedSession->us_User->u_Name );
+										break;
+									}
+									alist = (SASUList *)alist->node.mln_Succ;
 								}
-								alist = (SASUList *)alist->node.mln_Succ;
+								FRIEND_MUTEX_UNLOCK( &as->sas_SessionsMut );
 							}
 						}
 						FFree( authid );

@@ -203,7 +203,7 @@ int WebsocketThread( FThread *data )
 	pthread_detach( pthread_self() );
 	int cnt = 0;
 	WebSocket *ws = (WebSocket *)data->t_Data;
-	if( ws->ws_Context == NULL )
+	if( ws == NULL || ws->ws_Context == NULL )
 	{
 		Log( FLOG_ERROR, "[WebsocketThread] WsContext is empty\n");
 		pthread_exit( NULL );
