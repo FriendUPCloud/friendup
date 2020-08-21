@@ -654,28 +654,11 @@ int DetachWebsocketFromSession( void *d )
 		if( data->wsc_UserSession != NULL )
 		{
 			us = (UserSession *)data->wsc_UserSession;
-		
-			/*
-			if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
-			{
-				us->us_Wsi = NULL;
-				us->us_WSD = NULL;
-				//us->us_InUseCounter--;
-		
-				FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
-			}
-			*/
 		}
 		
 		//data->wsc_UserSession = NULL;
 		data->wsc_Wsi = NULL;
 		FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
-		/*
-		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
-		{
-			us->us_InUseCounter++;
-			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
-		}*/
 	}
 	
 	if( data->wsc_UserSession != NULL && us != NULL )
@@ -685,7 +668,6 @@ int DetachWebsocketFromSession( void *d )
 		{
 			us->us_Wsi = NULL;
 			us->us_WSD = NULL;
-			//us->us_InUseCounter--;
 		
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
