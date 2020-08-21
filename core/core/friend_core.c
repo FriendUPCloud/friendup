@@ -1370,7 +1370,7 @@ void FriendCoreProcessSockBlock( void *fcv )
 			if( res > 0 )
 			{
 				retryContentNotFull = 0;	// we must reset error counter
-				DEBUG("[FriendCoreProcessSockBlock] received bytes: %d buffer size: %lu\n", res, resultString->bsd_Size );
+				DEBUG("[FriendCoreProcessSockBlock] received bytes: %d, current buffer size: %lu\n", res, resultString->bsd_Size );
 				
 				// add received string to buffer.
 				// If 
