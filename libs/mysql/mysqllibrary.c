@@ -1814,8 +1814,10 @@ int SNPrintF( struct SQLLibrary *l, char *str, size_t stringSize, const char *fm
 		escapedString = NULL;
 	}
 	
-	if (str[stringSize-2] != '\0'){ //leak occured - clean up the whole query to avoid SQL injection
+	if (str[stringSize-2] != '\0')
+	{ //leak occured - clean up the whole query to avoid SQL injection
 		memset(str, 0, stringSize);
+		DEBUG( "LEAK OCCURED!\n" );
 		return 0;
 	}
 

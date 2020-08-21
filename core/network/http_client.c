@@ -70,6 +70,10 @@ HttpClient *HttpClientNew( FBOOL post, FBOOL http2, char *param, char *headers, 
 		{
 			c->hc_Content = StringDuplicate( content );
 		}
+		else
+		{
+			c->hc_Content = NULL;
+		}
 	}
 	
 	return c;

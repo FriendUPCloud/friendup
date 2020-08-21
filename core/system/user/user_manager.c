@@ -1194,7 +1194,7 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, int nu
 		time_t tm = time( NULL );
 		
 		// we are checking failed logins in last hour
-		sqlLib->SNPrintF( sqlLib, query, sizeof(query), "SELECT `LoginTime`,`Failed` FROM `FUserLogin` WHERE `Login`='%s' AND (`LoginTime` > %lu AND `LoginTime` <= %lu) ORDER BY `LoginTime` DESC", name, tm-(3600l), tm );
+		sqlLib->SNPrintF( sqlLib, query, 2048, "SELECT `LoginTime`,`Failed` FROM `FUserLogin` WHERE `Login`='%s' AND (`LoginTime` > %lu AND `LoginTime` <= %lu) ORDER BY `LoginTime` DESC", name, tm-(3600l), tm );
 		
 		void *result = sqlLib->Query( sqlLib, query );
 		if( result != NULL )

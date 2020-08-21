@@ -198,7 +198,10 @@ void UserSessionDelete( UserSession *us )
 		
 		
 		// lets remove application sessions from system
-		ApplicationManagerRemoveApplicationSessionByUserSessionID( lsb->sl_ApplicationManager, us->us_ID );
+		if( nrOfSessionsAttached <= 0 && us->us_UserID > 0 )
+		{
+			ApplicationManagerRemoveApplicationSessionByUserSessionID( lsb->sl_ApplicationManager, us->us_ID );
+		}
 
 		FFree( us );
 			

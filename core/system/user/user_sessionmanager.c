@@ -1189,7 +1189,6 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
 				
 							le = (UserSessListEntry *)le->node.mln_Succ;
 						} // while loop, session
-						//FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 					
 						DEBUG("unlock user\n");
 						FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
@@ -1217,11 +1216,6 @@ void USMCloseUnusedWebSockets( UserSessionManager *usm )
 {
 	time_t actTime = time( NULL );
 	DEBUG("[USMCloseUnusedWebSockets] start\n");
-	/*if( FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) ) == 0 )
-	{
-
-		FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
-	}*/
 	DEBUG("[USMCloseUnusedWebSockets] end\n");
 }
 

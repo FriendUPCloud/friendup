@@ -82,6 +82,7 @@ Http *HttpNew( )
 		Log( FLOG_FATAL,"Cannot allocate memory for Http\n");
 		return NULL;
 	}
+	
 	h->http_Headers = HashmapNew();
 	
 	if( SLIB->sl_XFrameOption != NULL )
