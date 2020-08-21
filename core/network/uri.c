@@ -460,10 +460,11 @@ Hashmap* UriParseQuery( char* query )
 			}
 			
 			char *c = StringDuplicateN( &(query[spos]), i-spos );
-			if( HashmapPut( map, StringDuplicate("post_json_tab"), c ) == MAP_OK )
+			HashmapPut( map, StringDuplicate("post_json_tab"), c );
+			/*if( HashmapPut( map, StringDuplicate("post_json_tab"), c ) == MAP_OK )
 			{
 				DEBUG("POSTJSON1 - %s -\n", c );
-			}
+			}*/
 			i++;
 		}
 		
