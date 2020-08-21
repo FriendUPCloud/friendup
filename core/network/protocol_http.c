@@ -912,7 +912,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							char *usrSessionID = NULL;
 							FBOOL sessionIDGenerated = FALSE;
 							
-							sqllib->SNPrintF( sqllib, query, sizeof(query), "SELECT fs.Name, fs.Devname, fs.Path, fs.UserID, f.Type, u.SessionID FROM FFileShared fs, Filesystem f, FUser u WHERE fs.Hash=\"%s\" AND u.ID = fs.UserID AND f.Name = fs.Devname", path->parts[ 1 ] );
+							sqllib->SNPrintF( sqllib, query, 1024, "SELECT fs.Name, fs.Devname, fs.Path, fs.UserID, f.Type, u.SessionID FROM FFileShared fs, Filesystem f, FUser u WHERE fs.Hash=\"%s\" AND u.ID = fs.UserID AND f.Name = fs.Devname", path->parts[ 1 ] );
 							
 							void *res = sqllib->Query( sqllib, query );
 							if( res != NULL )
@@ -957,7 +957,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							if( usrSessionID == NULL )// if res == NULL
 							{
 								DEBUG("First call releated to shared files did not return any results\n");
-								sqllib->SNPrintF( sqllib, query, sizeof(query), "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,u.SessionID,f.ID from FFileShared fs inner join Filesystem f on fs.FSID=f.ID inner join FUser u on fs.UserID=u.ID where `Hash`='%s'", path->parts[ 1 ] );
+								sqllib->SNPrintF( sqllib, query, 1024, "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,u.SessionID,f.ID from FFileShared fs inner join Filesystem f on fs.FSID=f.ID inner join FUser u on fs.UserID=u.ID where `Hash`='%s'", path->parts[ 1 ] );
 							
 								res = sqllib->Query( sqllib, query );
 								if( res != NULL )
@@ -1611,11 +1611,11 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 								char *newUrl = NULL;
 								FBOOL fromUrl = FALSE;
 
-								if( strcmp( path->parts[ 0 ], "webclient" ) == 0 &&
-									path->parts[ 1 ] != NULL && strcmp( path->parts[ 1 ], "index.html" ) == 0 
+								if( SLIB->fcm->fcm_ClusterMaster
 									&&
-									
-									SLIB->fcm->fcm_ClusterMaster )
+									strcmp( path->parts[ 0 ], "webclient" ) == 0 &&
+									path->parts[ 1 ] != NULL && strcmp( path->parts[ 1 ], "index.html" ) == 0 
+								)
 								{
 									//DEBUG("\n\n\n\n===========================\n\n");
 									DEBUG("Checking connections, number sessions %d\n", SLIB->sl_USM->usm_SessionCounter );
@@ -1670,11 +1670,11 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
  Attempting to redirect to <a href=\"https://%s/webclient/index.html\">https://%s</a>.</body></html>", newUrl, newUrl, newUrl ); */
 										if( fromUrl == TRUE )
 										{
-											redsize = snprintf( redirect, sizeof( redirect ), "https://%s/webclient/index.html", newUrl );
+											redsize = snprintf( redirect, 1024, "https://%s/webclient/index.html", newUrl );
 										}
 										else
 										{
-											redsize = snprintf( redirect, sizeof( redirect ), "https://%s:6502/webclient/index.html", newUrl );
+											redsize = snprintf( redirect, 1024, "https://%s:6502/webclient/index.html", newUrl );
 										}
 									}
 									else
