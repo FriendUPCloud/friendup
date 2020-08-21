@@ -209,6 +209,7 @@ DOSToken *DOSTokenManagerGetDOSToken( DOSTokenManager *d, const char *tokenID )
 							{
 								if( us->us_User == NULL )
 								{
+									// Do nothing
 								}
 							}
 							FRIEND_MUTEX_LOCK( &d->dtm_Mutex );
