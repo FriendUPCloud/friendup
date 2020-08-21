@@ -723,134 +723,138 @@ char *SASSessionAddUsersByName( SASSession *as, UserSession *loggedSession, char
 
 			for( i = 0 ; i < usersi ; i++ )
 			{
-				UserSession *usrses = l->sl_USM->usm_Sessions;
-
-				//
-				// we must check if  user is already in application session
-				//
-
-				SASUList *curgusr = NULL;
-				DEBUG("[SASSessionAddUsersByName] locking as sessionmut96\n");
-				if( FRIEND_MUTEX_LOCK( &as->sas_SessionsMut ) == 0 )
+				if( FRIEND_MUTEX_LOCK( &(l->sl_USM->usm_Mutex) ) == 0 )
 				{
-					SASUList *curgusr = as->sas_UserSessionList;
-					while( curgusr != NULL )
+					UserSession *usrses = l->sl_USM->usm_Sessions;
+
+					//
+					// we must check if  user is already in application session
+					//
+
+					SASUList *curgusr = NULL;
+					DEBUG("[SASSessionAddUsersByName] locking as sessionmut96\n");
+					if( FRIEND_MUTEX_LOCK( &as->sas_SessionsMut ) == 0 )
 					{
-						//DEBUG("[SASSessionAddUsersByName] Check users  '%s'='%s'\n", upositions[ i ], curgusr->usersession->us_User->u_Name );
-						if( strcmp( upositions[ i ], curgusr->usersession->us_User->u_Name  ) == 0  )
+						SASUList *curgusr = as->sas_UserSessionList;
+						while( curgusr != NULL )
 						{
-							if( curgusr->status == SASID_US_STATUS_NEW )
+							//DEBUG("[SASSessionAddUsersByName] Check users  '%s'='%s'\n", upositions[ i ], curgusr->usersession->us_User->u_Name );
+							if( strcmp( upositions[ i ], curgusr->usersession->us_User->u_Name  ) == 0  )
 							{
-								curgusr->status = SASID_US_INVITED;
-							}
-							break;
-						}
-						curgusr = (SASUList *) curgusr->node.mln_Succ;
-					}
-					FRIEND_MUTEX_UNLOCK( &as->sas_SessionsMut );
-					DEBUG("[SASSessionAddUsersByName] unlocking as sessionmut96\n");
-				}
-				
-				//
-				// user was not added  we must find it in system sessions
-				//
-
-				if( curgusr == NULL )
-				{
-					while( usrses != NULL )
-					{
-						// if user is not logged in he will not get invitation
-						DEBUG("[SASSessionAddUsersByName] Going throug sessions userptr %p\n", usrses->us_User );
-
-						//FRIEND_MUTEX_LOCK( &usrses->us_Mutex );
-						if( usrses->us_User != NULL )
-						{
-							DEBUG("[SASSessionAddUsersByName] share user name %s --- ptr to list %p\n", usrses->us_User->u_Name, usrses );
-
-							if( strcmp( upositions[ i ], usrses->us_User->u_Name ) == 0 )
-							{
-								int err = 0;
-								char tmp[ 512 ];
-
-								if( usrses->us_WSD == NULL )
+								if( curgusr->status == SASID_US_STATUS_NEW )
 								{
-									int tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"deviceid\":\"%s\",\"result\":\"not invited\"}", usrses->us_User->u_Name, usrses->us_DeviceIdentity );
-									if( pos > 0  )
-									{
-										strcat( userlistadded, "," );
-									}
-
-									strcat( userlistadded, tmp );
-									pos++;
+									curgusr->status = SASID_US_INVITED;
 								}
+								break;
+							}
+							curgusr = (SASUList *) curgusr->node.mln_Succ;
+						}
+						FRIEND_MUTEX_UNLOCK( &as->sas_SessionsMut );
+						DEBUG("[SASSessionAddUsersByName] unlocking as sessionmut96\n");
+					}
+				
+					//
+					// user was not added  we must find it in system sessions
+					//
 
-								//
-								// no working websockets
-								//
+					if( curgusr == NULL )
+					{
+						while( usrses != NULL )
+						{
+							// if user is not logged in he will not get invitation
+							DEBUG("[SASSessionAddUsersByName] Going throug sessions userptr %p\n", usrses->us_User );
 
-								else
+							//FRIEND_MUTEX_LOCK( &usrses->us_Mutex );
+							if( usrses->us_User != NULL )
+							{
+								DEBUG("[SASSessionAddUsersByName] share user name %s --- ptr to list %p\n", usrses->us_User->u_Name, usrses );
+
+								if( strcmp( upositions[ i ], usrses->us_User->u_Name ) == 0 )
 								{
-									SASUList *sli = SASSessionAddUser( as, usrses, NULL );
+									int err = 0;
+									char tmp[ 512 ];
 
-									DEBUG("[SASSessionAddUsersByName] newsession will be added %p\n", usrses );
-
-									if( sli != NULL )
+									if( usrses->us_WSD == NULL )
 									{
-										int tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"deviceid\":\"%s\",\"result\":\"invited\"}", usrses->us_User->u_Name, usrses->us_DeviceIdentity );
-
+										int tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"deviceid\":\"%s\",\"result\":\"not invited\"}", usrses->us_User->u_Name, usrses->us_DeviceIdentity );
 										if( pos > 0  )
 										{
 											strcat( userlistadded, "," );
 										}
 
-										DEBUG("[SASSessionAddUsersByName] New entry will be added: %s , currentlist size %d\n", tmp, (int)strlen(userlistadded ) );
-
 										strcat( userlistadded, tmp );
 										pos++;
+									}
 
-										char tmpmsg[ 2048 ];
-										int len = sprintf( tmpmsg, "{ \"type\":\"msg\", \"data\":{\"type\":\"sasid-request\",\"data\":{\"sasid\":\"%lu\",\"message\":\"%s\",\"owner\":\"%s\" ,\"appname\":\"%s\"}}}", as->sas_SASID, msg, loggedSession->us_User->u_Name , appname );
+									//
+									// no working websockets
+									//
 
-										WebSocketSendMessageInt( usrses, tmpmsg, len );
+									else
+									{
+										SASUList *sli = SASSessionAddUser( as, usrses, NULL );
+
+										DEBUG("[SASSessionAddUsersByName] newsession will be added %p\n", usrses );
+
+										if( sli != NULL )
+										{
+											int tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"deviceid\":\"%s\",\"result\":\"invited\"}", usrses->us_User->u_Name, usrses->us_DeviceIdentity );
+
+											if( pos > 0  )
+											{
+												strcat( userlistadded, "," );
+											}
+
+											DEBUG("[SASSessionAddUsersByName] New entry will be added: %s , currentlist size %d\n", tmp, (int)strlen(userlistadded ) );
+
+											strcat( userlistadded, tmp );
+											pos++;
+
+											char tmpmsg[ 2048 ];
+											int len = sprintf( tmpmsg, "{ \"type\":\"msg\", \"data\":{\"type\":\"sasid-request\",\"data\":{\"sasid\":\"%lu\",\"message\":\"%s\",\"owner\":\"%s\" ,\"appname\":\"%s\"}}}", as->sas_SASID, msg, loggedSession->us_User->u_Name , appname );
+
+											WebSocketSendMessageInt( usrses, tmpmsg, len );
+										}
 									}
 								}
-							}
 							
-							//FRIEND_MUTEX_UNLOCK( &usrses->us_Mutex );
-						}
-						else
-						{
-							DEBUG("[SASSessionAddUsersByName] Usersession is nott connected to user '%s' userid %lu\n", usrses->us_SessionID, usrses->us_UserID );
-						}
-						usrses  = (UserSession *)usrses->node.mln_Succ;
-					}	//while lusr
-				}// if userfound
-				else
-				{
-					UserSession *ses = (UserSession *)curgusr->usersession;
-					
-					DEBUG("[SASSessionAddUsersByName] Found user session %p wscon %p\n", ses, ses->us_WSD );
-					
-					if( ses != NULL && ses->us_WSD != NULL && ses != loggedSession )
+								//FRIEND_MUTEX_UNLOCK( &usrses->us_Mutex );
+							}
+							else
+							{
+								DEBUG("[SASSessionAddUsersByName] Usersession is nott connected to user '%s' userid %lu\n", usrses->us_SessionID, usrses->us_UserID );
+							}
+							usrses  = (UserSession *)usrses->node.mln_Succ;
+						}	//while lusr
+					}// if userfound
+					else
 					{
-						char tmp[ 512 ];
-						int tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"deviceid\":\"%s\",\"result\":\"invited\"}", ses->us_User->u_Name, ses->us_DeviceIdentity );
+						UserSession *ses = (UserSession *)curgusr->usersession;
 					
-						if( pos > 0  )
+						DEBUG("[SASSessionAddUsersByName] Found user session %p wscon %p\n", ses, ses->us_WSD );
+					
+						if( ses != NULL && ses->us_WSD != NULL && ses != loggedSession )
 						{
-							strcat( userlistadded, "," );
+							char tmp[ 512 ];
+							int tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"deviceid\":\"%s\",\"result\":\"invited\"}", ses->us_User->u_Name, ses->us_DeviceIdentity );
+					
+							if( pos > 0  )
+							{
+								strcat( userlistadded, "," );
+							}
+					
+							DEBUG("[SASSessionAddUsersByName] Old entry will be updated: %s , currentlist size %d\n", tmp, (int)strlen(userlistadded ) );
+					
+							strcat( userlistadded, tmp );
+							pos++;
+					
+							char tmpmsg[ 2048 ];
+							int len = sprintf( tmpmsg, "{ \"type\":\"msg\", \"data\":{\"type\":\"sasid-request\",\"data\":{\"sasid\":\"%lu\",\"message\":\"%s\",\"owner\":\"%s\" ,\"appname\":\"%s\"}}}", as->sas_SASID, msg, loggedSession->us_User->u_Name , appname );
+					
+							WebSocketSendMessageInt( ses, tmpmsg, len );
 						}
-					
-						DEBUG("[SASSessionAddUsersByName] Old entry will be updated: %s , currentlist size %d\n", tmp, (int)strlen(userlistadded ) );
-					
-						strcat( userlistadded, tmp );
-						pos++;
-					
-						char tmpmsg[ 2048 ];
-						int len = sprintf( tmpmsg, "{ \"type\":\"msg\", \"data\":{\"type\":\"sasid-request\",\"data\":{\"sasid\":\"%lu\",\"message\":\"%s\",\"owner\":\"%s\" ,\"appname\":\"%s\"}}}", as->sas_SASID, msg, loggedSession->us_User->u_Name , appname );
-					
-						WebSocketSendMessageInt( ses, tmpmsg, len );
 					}
+					FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
 				}
 			} // for usersi
 			strcat( userlistadded,  "]}" );

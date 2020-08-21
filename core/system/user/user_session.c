@@ -89,7 +89,7 @@ void UserSessionDelete( UserSession *us )
 				count++;
 				if( count > 50 )
 				{
-					Log( FLOG_INFO, "UserSessionDelete: number of working functions on user session: %d  sessionid: %s\n", us->us_InUseCounter, us->us_SessionID );
+					//Log( FLOG_INFO, "UserSessionDelete: number of working functions on user session: %d  sessionid: %s\n", us->us_InUseCounter, us->us_SessionID );
 #ifdef USE_WORKERS
 					WorkerManagerDebug( SLIB );
 #endif
@@ -98,7 +98,7 @@ void UserSessionDelete( UserSession *us )
 				}
 			}
 			DEBUG( "[UserSessionDelete] Trying to wait for use counter to be <= 0\n" );
-			usleep( 10000 );
+			usleep( 100 );
 		}
 		
 		DOSToken *dosToken = (DOSToken *)us->us_DOSToken;
@@ -115,6 +115,7 @@ void UserSessionDelete( UserSession *us )
 		
 		if( us->us_User != NULL )
 		{
+			
 			nrOfSessionsAttached = UserRemoveSession( us->us_User, us );
 			us->us_User = NULL;
 		}
@@ -194,16 +195,13 @@ void UserSessionDelete( UserSession *us )
 		}
 		pthread_mutex_destroy( &(us->us_Mutex) );
 		
+		
+		
 		// lets remove application sessions from system
 		ApplicationManagerRemoveApplicationSessionByUserSessionID( lsb->sl_ApplicationManager, us->us_ID );
-		
-		//if( nrOfSessionsAttached <= 0 && us->us_UserID > 0 )
-		//{
-		//	ApplicationManagerRemoveApplicationSessionByUserID( lsb->sl_ApplicationManager, us->us_UserID );
-		//}
-	
+
 		FFree( us );
-		
+			
 		if( count > 50 )
 		{
 			Log( FLOG_DEBUG, "Session removed\n");
