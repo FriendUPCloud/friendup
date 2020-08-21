@@ -3118,7 +3118,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		// Only on force or first time
 		if( this.themeRefreshed && !update )
+		{
 			return;
+		}
 
 		// Check url var
 		if( GetUrlVar( 'fullscreenapp' ) )
@@ -3586,6 +3588,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// We always have one entry, the system disk
 			if( data.length <= 1 )
 			{
+				console.log( 'No stuff!' );
 				return;
 			}
 			
@@ -10181,7 +10184,12 @@ _applicationBasics = {};
 function loadApplicationBasics( callback )
 {
 	// Don't do in login
-	if( Workspace.loginPrompt ) return;
+	if( Workspace.loginPrompt )
+	{
+		if( callback )
+			callback();
+		return;
+	}
 	
 	// Preload basic scripts
 	let a_ = new File( '/webclient/js/apps/api.js' );

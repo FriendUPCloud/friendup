@@ -3468,7 +3468,7 @@ function apiWrapper( event, force )
 						break;
 					case 'savewallpaperimage':
 						var m = new Module( 'system' );
-						m.onExecuted = function( e )
+						m.onExecuted = function( e, d )
 						{
 							if( e == 'ok' )
 							{

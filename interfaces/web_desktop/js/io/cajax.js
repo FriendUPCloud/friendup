@@ -857,7 +857,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 	// No return code and perhaps raw data
 	else if( self.rawData )
 	{
-		self.returnCode = 'error';
+		self.returnCode = self.rawData;
 		self.returnData = '';
 	}
 	// This is a fail (no error code..)
