@@ -2658,7 +2658,7 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 		{
 			if( usersession->us_WSD != NULL )
 			{
-				bytes += UserSessionWebsocketWrite( usersession , buf , len, LWS_WRITE_TEXT );
+				bytes += UserSessionWebsocketWrite( usersession, buf , len, LWS_WRITE_TEXT );
 			}
 			else
 			{

@@ -234,6 +234,14 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 		DEBUG("[UserSessionWebsocketWrite] empty us %p\n", us );
 		return 0;
 	}
+	
+	// Decrease use internal
+	if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+	{
+		us->us_InUseCounter++;
+		DEBUG("[UserSessionWebsocketWrite] Increase, in use counter %d\n", us->us_InUseCounter );
+		FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+	}
 
 	if( msglen > MAX_SIZE_WS_MESSAGE ) // message is too big, we must split data into chunks
 	{
@@ -253,90 +261,82 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 			DEBUG("[UserSessionWebsocketWrite] Sending big message, size %d (%d chunks of max: %d)\n", msglen, totalChunk, MAX_SIZE_WS_MESSAGE );
 		
 			//if( us->us_Wsi != NULL )
-			{
+			{	
+				for( actChunk = 0; actChunk < totalChunk ; actChunk++ )
+				{
+					unsigned char *queueMsg = FMalloc( WS_PROTOCOL_BUFFER_SIZE );
+					if( queueMsg != NULL )
+					{
+						unsigned char *queueMsgPtr = queueMsg + LWS_SEND_BUFFER_PRE_PADDING;
+						int queueMsgLen = 0;
+				
+						int txtmsgpos = sprintf( (char *)queueMsgPtr, "{\"type\":\"con\",\"data\":{\"type\":\"chunk\",\"data\":{\"id\":\"%p\",\"total\":\"%d\",\"part\":\"%d\",\"data\":\"", encmsg, totalChunk, actChunk );
+						int copysize = msglen;
+						if( copysize > MAX_SIZE_WS_MESSAGE )
+						{
+							copysize = MAX_SIZE_WS_MESSAGE;
+						}
+				
+						queueMsgLen = txtmsgpos;
+						queueMsgPtr += txtmsgpos;
+						// queue   |    PRE_PADDING  |  txtmsgpos   |  body  |  END_CHARS  | POST_PADDING
+
+						memcpy( queueMsgPtr, msgToSend, copysize );
+						queueMsgLen += copysize;
+						queueMsgPtr += copysize;
+				
+						memcpy( queueMsgPtr, end, END_CHAR_SIGNS );
+						queueMsgPtr += END_CHAR_SIGNS;
+						queueMsgLen += END_CHAR_SIGNS;
+						*queueMsgPtr = 0;	//end message with NULL
+						
+						retval += msglen;
+				
+						msgToSend += copysize;
+						msglen -= MAX_SIZE_WS_MESSAGE;
+
+						DEBUG( "[UserSessionWebsocketWrite] Determined chunk: %d\n", actChunk );
+				
+						FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
+						en->fq_Data = queueMsg;
+						en->fq_Size = queueMsgLen;
+						en->fq_Priority = 3;	// default priority
+			
+						//DEBUG("FQPush: %p\n 
+						if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+						{
+							FQPushFIFO( &(us->us_MsgQueue), en );
+							FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+						}
+					// callback writeable was here
+					}
+				}
+				
+				WSCData *wsd = NULL;
+				
 				if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 				{
-					us->us_InUseCounter++;
+					wsd = us->us_WSD;
 					FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
-					
-					for( actChunk = 0; actChunk < totalChunk ; actChunk++ )
+				}
+				
+				if( us->us_WSD != NULL )
+				{
+					if( FRIEND_MUTEX_LOCK( &(wsd->wsc_Mutex) ) == 0 )
 					{
-						unsigned char *queueMsg = FMalloc( WS_PROTOCOL_BUFFER_SIZE );
-						if( queueMsg != NULL )
+						wsd->wsc_InUseCounter++;
+						FRIEND_MUTEX_UNLOCK( &(wsd->wsc_Mutex) );
+					
+						if( wsd->wsc_Wsi != NULL )
 						{
-							unsigned char *queueMsgPtr = queueMsg + LWS_SEND_BUFFER_PRE_PADDING;
-							int queueMsgLen = 0;
-					
-							int txtmsgpos = sprintf( (char *)queueMsgPtr, "{\"type\":\"con\",\"data\":{\"type\":\"chunk\",\"data\":{\"id\":\"%p\",\"total\":\"%d\",\"part\":\"%d\",\"data\":\"", encmsg, totalChunk, actChunk );
-							int copysize = msglen;
-							if( copysize > MAX_SIZE_WS_MESSAGE )
-							{
-								copysize = MAX_SIZE_WS_MESSAGE;
-							}
-					
-							queueMsgLen = txtmsgpos;
-							queueMsgPtr += txtmsgpos;
-							// queue   |    PRE_PADDING  |  txtmsgpos   |  body  |  END_CHARS  | POST_PADDING
-
-							memcpy( queueMsgPtr, msgToSend, copysize );
-							queueMsgLen += copysize;
-							queueMsgPtr += copysize;
-					
-							memcpy( queueMsgPtr, end, END_CHAR_SIGNS );
-							queueMsgPtr += END_CHAR_SIGNS;
-							queueMsgLen += END_CHAR_SIGNS;
-							*queueMsgPtr = 0;	//end message with NULL
-							
-							retval += msglen;
-					
-							msgToSend += copysize;
-							msglen -= MAX_SIZE_WS_MESSAGE;
-
-							DEBUG( "[UserSessionWebsocketWrite] Determined chunk: %d\n", actChunk );
-					
-							FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
-							en->fq_Data = queueMsg;
-							en->fq_Size = queueMsgLen;
-							en->fq_Priority = 3;	// default priority
-				
-							//DEBUG("FQPush: %p\n 
-							if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
-							{
-								FQPushFIFO( &(us->us_MsgQueue), en );
-								FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
-							}
-						// callback writeable was here
+							lws_callback_on_writable( wsd->wsc_Wsi );
+							lws_cancel_service_pt( wsd->wsc_Wsi );
 						}
-					}
 					
-					WSCData *wsd = NULL;
-					
-					if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
-					{
-						us->us_InUseCounter--;
-				
-						wsd = us->us_WSD;
-						FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
-					}
-					
-					if( us->us_WSD != NULL )
-					{
 						if( FRIEND_MUTEX_LOCK( &(wsd->wsc_Mutex) ) == 0 )
 						{
-							wsd->wsc_InUseCounter++;
+							wsd->wsc_InUseCounter--;
 							FRIEND_MUTEX_UNLOCK( &(wsd->wsc_Mutex) );
-						
-							if( wsd->wsc_Wsi != NULL )
-							{
-								lws_callback_on_writable( wsd->wsc_Wsi );
-								lws_cancel_service_pt( wsd->wsc_Wsi );
-							}
-						
-							if( FRIEND_MUTEX_LOCK( &(wsd->wsc_Mutex) ) == 0 )
-							{
-								wsd->wsc_InUseCounter--;
-								FRIEND_MUTEX_UNLOCK( &(wsd->wsc_Mutex) );
-							}
 						}
 					}
 				}
@@ -351,7 +351,6 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 		{
 			if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 			{
-				us->us_InUseCounter++;
 				DEBUG("[UserSessionWebsocketWrite] pointer usersession %p msglen %d\n", us, msglen );
 				DEBUG("[UserSessionWebsocketWrite] pointer us_WSD %p\n", us->us_WSD );
 				WSCData *wsd = us->us_WSD;
@@ -390,8 +389,6 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 						}
 					
 						DEBUG("[UserSessionWebsocketWrite] Send message to WSI, ptr: %p\n", us->us_Wsi );
-
-						DEBUG("[UserSessionWebsocketWrite] In use counter %d\n", us->us_InUseCounter );
 					
 						FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 					}
@@ -419,15 +416,16 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 						}
 					}
 				}
-				
-				// we have to be sure that us->us_Wsi is not equal to NULL
-				if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
-				{
-					us->us_InUseCounter--;
-					FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
-				}
 			}
 		}
+	}
+	
+	// Decrease use
+	if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+	{
+		us->us_InUseCounter--;
+		DEBUG("[UserSessionWebsocketWrite] Decrease, in use counter %d\n", us->us_InUseCounter );
+		FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 	}
 
 	return retval;

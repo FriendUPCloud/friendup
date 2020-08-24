@@ -47,7 +47,6 @@ inline static int killUserSession( SystemBase *l, UserSession *ses )
 	// set flag to WS connection "te be killed"
 	if( FRIEND_MUTEX_LOCK( &(ses->us_Mutex) ) == 0 )
 	{
-		ses->us_InUseCounter--;
 		if( ses->us_WSD != NULL )
 		{
 			ses->us_WebSocketStatus = WEBSOCKET_SERVER_CLIENT_TO_BE_KILLED;
@@ -142,13 +141,12 @@ inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid 
 	}
 	
 	// remove sessions
-	for( i=0 ; i < nrSessions ; i++ )
+	for( i=0 ; i < nrSessions; i++ )
 	{
 		UserSession *ses = toBeRemoved[ i ];
 		
 		if( FRIEND_MUTEX_LOCK( &(ses->us_Mutex) ) == 0 )
 		{
-			ses->us_InUseCounter--;
 			if( ses->us_WSD != NULL  )
 			{
 				ses->us_WebSocketStatus = WEBSOCKET_SERVER_CLIENT_TO_BE_KILLED;
@@ -1707,11 +1705,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						}
 						l->LibrarySQLDrop( l, sqlLib );
 					}
-					
-					// Logout must be last action called on UserSession
-					FRIEND_MUTEX_LOCK( &(sess->us_Mutex) );
-					sess->us_InUseCounter--;
-					FRIEND_MUTEX_UNLOCK( &(sess->us_Mutex) );
 					
 					if( l->sl_ActiveAuthModule != NULL )
 					{

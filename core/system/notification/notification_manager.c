@@ -1082,7 +1082,7 @@ int NotificationManagerDeleteOldNotificationDB( NotificationManager *nm )
 	time_t diff = 60 * 60 * 24 * 14; //1209600 = 14 days in seconds
 	t -= diff;		// time when entry was created < time minus diff
 	
-	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	
+	if( nm && FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	
 	{
 		snprintf( temp, 1024, "DELETE from `FNotification` WHERE Created>%lu", t );
 	
@@ -1326,6 +1326,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 			// 86400 - one day in seconds , 3600 *24
 			if( cleanCoutner > 17280 )	// 86400 seconds / 10 second interval * 2 days
 			{
+			
 				NotificationManagerDeleteOldNotificationDB( nm );
 				cleanCoutner = 0;
 			}

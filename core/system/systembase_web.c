@@ -978,15 +978,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		}
 	}
 	
-	if( loginLogoutCalled == FALSE && loggedSession != NULL )
-	{
-		if( FRIEND_MUTEX_LOCK( &(loggedSession->us_Mutex ) ) == 0 )
-		{
-			loggedSession->us_InUseCounter++;
-			FRIEND_MUTEX_UNLOCK( &(loggedSession->us_Mutex ) );
-		}
-	}
-	
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	*
@@ -2453,14 +2444,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	}
 	
 	Log( FLOG_INFO, "\t\t\tWEB REQUEST FUNCTION func END: %s\n", urlpath[ 0 ] );
-	if( loginLogoutCalled != LL_LOGOUT && loggedSession != NULL )
-	{
-		if( FRIEND_MUTEX_LOCK( &(loggedSession->us_Mutex ) ) == 0 )
-		{
-			loggedSession->us_InUseCounter--;
-			FRIEND_MUTEX_UNLOCK( &(loggedSession->us_Mutex ) );
-		}
-	}
 	
 	DEBUG( "Systembase web request completed: %dms\n", GetUnixTime() - requestStart );
 	
@@ -2470,15 +2453,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 error:
 	
 	Log( FLOG_INFO, "\t\t\tWEB REQUEST FUNCTION func EERROR END: %s\n", urlpath[ 0 ] );
-	if( loginLogoutCalled == FALSE && loggedSession != NULL )
-	{
-		if( FRIEND_MUTEX_LOCK( &(loggedSession->us_Mutex ) ) == 0 )
-		{
-			loggedSession->us_InUseCounter--;
-			FRIEND_MUTEX_UNLOCK( &(loggedSession->us_Mutex ) );
-		}
-	}
-
+	
 	FFree( sessionid );
 	return response;
 }
