@@ -320,8 +320,6 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				WSThreadData *wstd = FCalloc( 1, sizeof( WSThreadData ) );
 				if( wstd != NULL )
 				{
-					memset( &(wstd->wstd_Thread), 0, sizeof( pthread_t ) );
-					
 					DEBUG("[WS] Pass wsd to thread: %p\n", wsd );
 					wstd->wstd_WSD = wsd;
 					wstd->wstd_Msg = in;
@@ -342,7 +340,11 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 						}
 					}
 					
-					if( pthread_create( &(wstd->wstd_Thread), NULL, (void *(*)(void *))ParseAndCall, ( void *)wstd ) != 0 )
+					pthread_t t;
+					memset( &t, 0, sizeof( pthread_t ) );
+					if( pthread_create( &t, NULL, (void *(*)(void *))ParseAndCall, ( void *)wstd ) != 0 )
+					//memset( &(wstd->wstd_Thread), 0, sizeof( pthread_t ) );
+					//if( pthread_create( &(wstd->wstd_Thread), NULL, (void *(*)(void *))ParseAndCall, ( void *)wstd ) != 0 )
 					{
 						// Failed!
 						FFree( wstd );
@@ -949,8 +951,11 @@ int ParseAndCall( WSThreadData *wstd )
 											}
 											
 											// Run in thread
-											memset( &(wstd->wstd_Thread), 0, sizeof( pthread_t ) );
-											if( pthread_create( &(wstd->wstd_Thread), NULL, (void *(*)(void *))ParseAndCall, ( void *)wstd ) != 0 )
+											pthread_t t;
+											memset( &t, 0, sizeof( pthread_t ) );
+											if( pthread_create( &t, NULL, (void *(*)(void *))ParseAndCall, ( void *)wstd ) != 0 )
+											//memset( &(wstd->wstd_Thread), 0, sizeof( pthread_t ) );
+											//if( pthread_create( &(wstd->wstd_Thread), NULL, (void *(*)(void *))ParseAndCall, ( void *)wstd ) != 0 )
 											{
 												// Failed!
 												FFree( wstd );
