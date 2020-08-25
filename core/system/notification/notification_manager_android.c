@@ -74,6 +74,7 @@ void NotificationAndroidSendingThread( FThread *data )
 						c->hc_Content = (char *)e->fq_Data;
 						Log( FLOG_INFO, "Send message to android device: %s<\n", c->hc_Content );
 						BufString *bs = HttpClientCall( c, FIREBASE_HOST, 443, TRUE );
+						Log( FLOG_INFO, "Sent message to android device.\n" );
 						
 						if( bs != NULL )
 						{

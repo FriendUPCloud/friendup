@@ -1566,7 +1566,8 @@ int ParseAndCall( WSThreadData *wstd )
 		}
 	}
 	
-	releaseWSData( wstd );
+	if( wstd != NULL )
+		releaseWSData( wstd );
 	
 	FFree( t );
 	
