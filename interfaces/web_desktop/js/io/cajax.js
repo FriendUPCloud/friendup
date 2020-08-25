@@ -238,7 +238,7 @@ cAjax = function()
 					{
 						if( !jax.rawData )
 						{
-							//console.log( '[cAjax] Can not understand server response: ', jax.rawData );
+							console.log( '[cAjax] Can not understand server response: ', jax.rawData );
 							jax.destroy();
 							return;
 						}
@@ -307,7 +307,7 @@ cAjax = function()
 			// tell our caller...
 			if( jax.onload ) 
 			{
-				jax.onload( 'error', false );
+				jax.onload( 'error', '' );
 			}
 			jax.destroy();
 		}
@@ -361,6 +361,12 @@ cAjax.prototype.destroySilent = function()
 cAjax.prototype.destroy = function()
 {
 	this.destroy = function(){};
+	
+	// We can use this for tracing
+	if( this.ondestroy )
+	{
+		this.ondestroy();
+	}
 	
 	// Terminate with onload
 	if( this.onload )
@@ -851,13 +857,14 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 	// No return code and perhaps raw data
 	else if( self.rawData )
 	{
-		self.returnCode = false;
-		self.returnData = self.rawData;
+		self.returnCode = self.rawData;
+		self.returnData = '';
 	}
-	// Just forget
+	// This is a fail (no error code..)
 	else
 	{
-		return;
+		self.returnCode = '';
+		self.returnData = '';
 	}
 		
 	// TODO: This error is general

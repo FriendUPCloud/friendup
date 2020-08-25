@@ -28,7 +28,7 @@ $files = new stdClass();
 $files->eulaShortText = 'eulashort.html';
 $files->eulaLongText = 'eulalong.html';
 $files->logoImage = 'logoimage.png';
-$files->backgroundImage = 'dew.jpg';
+$files->backgroundImage = 'release_loginimage.jpg';
 $files->aboutTemplate = 'aboutTemplate.html';
 $files->extraLoginCSS = 'extraLoginCSS.css';
 
@@ -156,8 +156,8 @@ $s->Save();
 $targets = [
 	'resources/webclient/templates/eula_short.html',
 	'resources/webclient/templates/eula.html',
-	'resources/graphics/logoblue.png',
-	'resources/graphics/dew.jpg',
+	'resources/graphics/release_logo.png',
+	'resources/graphics/release_loginimage.jpg',
 	'resources/webclient/css/extraLoginCSS.css',
 	'resources/webclient/templates/aboutTemplate.html'
 ];
@@ -174,8 +174,8 @@ $backups = [
 $sources = [
 	'cfg/serverglobals/eulashort.html',
 	'cfg/serverglobals/eulalong.html',
-	'cfg/serverglobals/logoimage.png',
-	'cfg/serverglobals/dew.jpg',
+	'cfg/serverglobals/release_logo.png',
+	'cfg/serverglobals/release_loginimage.jpg',
 	'cfg/serverglobals/extraLoginCSS.css',
 	'cfg/serverglobals/aboutTemplate.html'
 ];
@@ -209,11 +209,15 @@ for( $k = 0; $k < 6; $k++ )
 	if( $possibilities->{$kk} )
 	{
 		// Make sure we have a backup
+		// If the default login image was changed, make sure to delete the backup image when updating!
 		if( !file_exists( $backup ) )
 		{
 			if( !( copy( $target, $backup ) ) )
 			{
 				die( 'fail<!--separate-->{"message":"Could not write ' . $backup . ' backup.","response":-1}' );
+			}
+			else
+			{
 			}
 		}
 		if( file_exists( $source ) )

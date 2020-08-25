@@ -104,14 +104,14 @@ void WSThreadPing( void *p )
 	pthread_detach( pthread_self() );
 	
 	WSThreadData *data = (WSThreadData *)p;
-	if( data == NULL )
+	if( data == NULL || !data->wstd_WSD )
 	{
 		pthread_exit( NULL );
 		return;
 	}
 	
 	int n = 0;
-	UserSession *us = data->wstd_WSD->wsc_UserSession;//data->wstd_UserSession;
+	UserSession *us = data->wstd_WSD->wsc_UserSession;
 	
 	if( data == NULL || us == NULL || us->us_WSD == NULL || data->wstd_WSD->wsc_UserSession == NULL )
 	{
@@ -133,20 +133,12 @@ void WSThreadPing( void *p )
 	us = data->wstd_WSD->wsc_UserSession;
 	if( data->wstd_WSD->wsc_UserSession != NULL && FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 	{
-		us->us_InUseCounter++;
+		us->us_LoggedTime = time( NULL );
 		FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 
-		us->us_LoggedTime = time( NULL );
-	
 		UserSessionWebsocketWrite( us, answer, answersize, LWS_WRITE_TEXT );
 	
 		FFree( answer );
-	
-		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
-		{
-			us->us_InUseCounter--;
-			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
-		}
 	}
 	
 	releaseWSData( data );
@@ -289,14 +281,6 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				wsd->wsc_Wsi = wsi;
 
 				UserSession *us = (UserSession *)wsd->wsc_UserSession;
-				if( us != NULL )
-				{
-					if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
-					{
-						us->us_LastPingTime = time( NULL );
-						FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
-					}
-				}
 				
 				const size_t remaining = lws_remaining_packet_payload( wsi );
 				if( !remaining && lws_is_final_fragment( wsi ) )
@@ -346,10 +330,29 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					// Using Websocket thread to read/write messages, rest should happen in userspace
 					//
 					
-					if( pthread_create( &(wstd->wstd_Thread), NULL,  (void *(*)(void *))ParseAndCall, ( void *)wstd ) != 0 )
+					if( us != NULL )
+					{
+						if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+						{
+							us->us_LastPingTime = time( NULL );
+							us->us_InUseCounter++; // Increase use (parseandcall)
+							DEBUG( "[WS] Increase for parse and call: %d\n", us->us_InUseCounter );
+							FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+						}
+					}
+					
+					if( pthread_create( &(wstd->wstd_Thread), NULL, (void *(*)(void *))ParseAndCall, ( void *)wstd ) != 0 )
 					{
 						// Failed!
 						FFree( wstd );
+						if( us != NULL )
+						{
+							if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+							{
+								us->us_InUseCounter--;
+								FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+							}
+						}
 					}
 				}
 #else
@@ -682,6 +685,7 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 						//fcd->wsc_WebsocketsServerClient;
 						//Log( FLOG_INFO, "[WS] NO JSON - WRITING..\n" );
 						//WebsocketWriteInline( fcd, buf, znew + jsonsize + END_CHAR_SIGNS, LWS_WRITE_TEXT );
+						
 						UserSessionWebsocketWrite( locus, buf, znew + jsonsize + END_CHAR_SIGNS, LWS_WRITE_TEXT );
 					
 						FFree( buf );
@@ -748,7 +752,7 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 		Log( FLOG_INFO, "[WS] No response at all..\n" );
 		char response[ 1024 ];
 		char dictmsgbuf1[ 196 ];
-		snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), SLIB->sl_Dictionary->d_Msg[DICT_CANNOT_PARSE_COMMAND_OR_NE_LIB], pathParts[ 0 ] );
+		snprintf( dictmsgbuf1, 196, SLIB->sl_Dictionary->d_Msg[DICT_CANNOT_PARSE_COMMAND_OR_NE_LIB], pathParts[ 0 ] );
 		
 		int resplen = sprintf( response, "{\"response\":\"%s\"}", dictmsgbuf1 );
 
@@ -791,31 +795,23 @@ int ParseAndCall( WSThreadData *wstd )
 	
 	
 	UserSession *locus = NULL;
-	/*
-	if( wstd->wstd_WSD != NULL )
-	{
-		if( FRIEND_MUTEX_LOCK( &(wstd->wstd_WSD->wsc_Mutex) ) == 0 )
-		{
-			wstd->wstd_WSD->wsc_InUseCounter++;
-			locus = wstd->wstd_WSD->wsc_UserSession;
-			
-			FRIEND_MUTEX_UNLOCK( &(wstd->wstd_WSD->wsc_Mutex) );
-		}
-	}
-	*/
+	UserSession *orig;
+	
 	locus = wstd->wstd_WSD->wsc_UserSession;
-	if( locus != NULL )
+	orig = locus;
+	if( orig != NULL )
 	{
-		if( locus->us_WSD == NULL )
+		if( orig->us_WSD == NULL )
 		{
 			FERROR("[ParseAndCall] There is no WS connection attached to mutex!\n");
+			// Decrease use for external call
+			if( FRIEND_MUTEX_LOCK( &(orig->us_Mutex) ) == 0 )
+			{
+				orig->us_InUseCounter--;
+				FRIEND_MUTEX_UNLOCK( &(orig->us_Mutex) );
+			}
 			pthread_exit( NULL );
 			return 1;
-		}
-		if( wstd->wstd_WSD->wsc_UserSession != NULL &&  FRIEND_MUTEX_LOCK( &(locus->us_Mutex) ) == 0 )
-		{
-			locus->us_InUseCounter++;
-			FRIEND_MUTEX_UNLOCK( &(locus->us_Mutex) );
 		}
 	}
 	
@@ -938,7 +934,34 @@ int ParseAndCall( WSThreadData *wstd )
 	
 											BufStringDelete( wstd->wstd_Queryrawbs );
 											
-											ParseAndCall( wstd );
+											// Increase use for external (parseandcall)
+											UserSession *uc = ( UserSession *)wstd->wstd_WSD->wsc_UserSession;
+											if( uc != NULL )
+											{
+												if( FRIEND_MUTEX_LOCK( &(uc->us_Mutex) ) == 0 )
+												{
+													uc->us_InUseCounter++;
+													DEBUG( "[ws] For non-thread parse and call %d\n", uc->us_InUseCounter );
+													FRIEND_MUTEX_UNLOCK( &(uc->us_Mutex) );
+												}
+											}
+											
+											// Run in thread
+											memset( &(wstd->wstd_Thread), 0, sizeof( pthread_t ) );
+											if( pthread_create( &(wstd->wstd_Thread), NULL, (void *(*)(void *))ParseAndCall, ( void *)wstd ) != 0 )
+											{
+												// Failed!
+												FFree( wstd );
+												if( uc != NULL )
+												{
+													if( FRIEND_MUTEX_LOCK( &(uc->us_Mutex) ) == 0 )
+													{
+														uc->us_InUseCounter--;
+														FRIEND_MUTEX_UNLOCK( &(uc->us_Mutex) );
+													}
+												}
+											}
+											
 											//FC_Callback( wsi, reason, user, wsreq->wr_Message, wsreq->wr_MessageSize );
 											DEBUG("[WS] Callback was called again!\n");
 										}
@@ -990,11 +1013,6 @@ int ParseAndCall( WSThreadData *wstd )
 									if( wstd->wstd_WSD->wsc_UserSession != NULL )
 									{
 										locus = wstd->wstd_WSD->wsc_UserSession;
-										if( wstd->wstd_WSD->wsc_UserSession != NULL &&  FRIEND_MUTEX_LOCK( &(locus->us_Mutex) ) == 0 )
-										{
-											locus->us_InUseCounter++;
-											FRIEND_MUTEX_UNLOCK( &(locus->us_Mutex) );
-										}
 									}
 									INFO("[WS] Websocket communication set with user (sessionid) %s\n", session );
 									
@@ -1030,11 +1048,6 @@ int ParseAndCall( WSThreadData *wstd )
 									if( wstd->wstd_WSD->wsc_UserSession != NULL )
 									{
 										locus = wstd->wstd_WSD->wsc_UserSession;
-										if( wstd->wstd_WSD->wsc_UserSession != NULL &&  FRIEND_MUTEX_LOCK( &(locus->us_Mutex) ) == 0 )
-										{
-											locus->us_InUseCounter++;
-											FRIEND_MUTEX_UNLOCK( &(locus->us_Mutex) );
-										}
 									}
 									//INFO("[WS] Websocket communication set with user (authid) %s\n", authid );
 								
@@ -1053,7 +1066,7 @@ int ParseAndCall( WSThreadData *wstd )
 										
 										UserSessionWebsocketWrite( locus, buf, len, LWS_WRITE_TEXT );
 										
-									FFree( buf );
+										FFree( buf );
 									}
 								}
 							}
@@ -1533,7 +1546,7 @@ int ParseAndCall( WSThreadData *wstd )
 		FERROR("[WS] Failed to parse JSON: %d\n", r);
 		unsigned char buf[ 256 ];
 		char locmsg[ 256 ];
-		int locmsgsize = snprintf( locmsg, sizeof(locmsg), "{\"type\":\"msg\",\"data\":{\"type\":\"error\",\"data\":{\"requestid\":\"%s\"}}}", reqid );
+		int locmsgsize = snprintf( locmsg, 256, "{\"type\":\"msg\",\"data\":{\"type\":\"error\",\"data\":{\"requestid\":\"%s\"}}}", reqid );
 		
 		strcpy( (char *)(buf), locmsg );
 		UserSessionWebsocketWrite( locus, buf, locmsgsize, LWS_WRITE_TEXT );
@@ -1541,26 +1554,15 @@ int ParseAndCall( WSThreadData *wstd )
 		FERROR("[WS] Object expected\n");
 	}
 	
-	if( locus != NULL )
+	if( orig != NULL )
 	{
-		if( FRIEND_MUTEX_LOCK( &(locus->us_Mutex) ) == 0 )
+		if( FRIEND_MUTEX_LOCK( &(orig->us_Mutex) ) == 0 )
 		{
-			locus->us_InUseCounter--;
-			FRIEND_MUTEX_UNLOCK( &(locus->us_Mutex) );
+			orig->us_InUseCounter--; // Decrease for internal increase
+			DEBUG( "[WS] Decreased. %d\n", orig->us_InUseCounter );
+			FRIEND_MUTEX_UNLOCK( &(orig->us_Mutex) );
 		}
 	}
-	
-	/*
-	if( wstd != NULL && wstd->wstd_WSD != NULL )
-	{
-		if( FRIEND_MUTEX_LOCK( &(wstd->wstd_WSD->wsc_Mutex) ) == 0 )
-		{
-			wstd->wstd_WSD->wsc_InUseCounter--;
-
-			FRIEND_MUTEX_UNLOCK( &(wstd->wstd_WSD->wsc_Mutex) );
-		}
-	}
-	*/
 	
 	releaseWSData( wstd );
 	

@@ -54,7 +54,7 @@ function jsUrlEncode( $in )
 }
 
 // Connects to friend core! You must build the whole query after the fc path
-function FriendCall( $queryString = false, $flags = false, $post = false )
+function FriendCall( $queryString = false, $flags = false, $post = false, $returnCurl = false )
 {
 	global $Config;
 	$ch = curl_init();
@@ -81,6 +81,10 @@ function FriendCall( $queryString = false, $flags = false, $post = false )
 		curl_setopt( $ch, CURLOPT_POST, true );
 		curl_setopt( $ch, CURLOPT_POSTFIELDS, $post );
 	}
+	
+	if( $returnCurl )
+		return $ch;
+		
 	$result = curl_exec( $ch );
 	curl_close( $ch );
 	return $result;

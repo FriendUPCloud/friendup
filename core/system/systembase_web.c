@@ -92,14 +92,14 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 	// Send both get and post
 	int size = 0;
 
-	FBOOL both = request->http_Content && request->http_Uri->uri_QueryRaw ? TRUE : FALSE;
+	FBOOL both = request->http_Content && request->http_Uri && request->http_Uri->uri_QueryRaw ? TRUE : FALSE;
 	if( request->http_Content != NULL ) size += strlen( request->http_Content );
-	if( request->http_Uri->uri_QueryRaw != NULL ) size += strlen( request->http_Uri->uri_QueryRaw );
+	if( request->http_Uri && request->http_Uri->uri_QueryRaw != NULL ) size += strlen( request->http_Uri->uri_QueryRaw );
 	char *allArgsNew = NULL;
 	
 	//fprintf( log, " CONTENT : %s\n\n\n\n\n", request->content );
 	
-	INFO("\t\t--->request->content %s raw %s len %d\n\n", request->http_Content, request->http_Uri->uri_QueryRaw, size );
+	INFO("\t\t--->request->content %s raw %s len %d\n\n", request->http_Content, request->http_Uri ? request->http_Uri->uri_QueryRaw : "", size );
 	
 	if( size <= 0 )
 	{
@@ -117,7 +117,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 	char *allArgs = FCallocAlign( fullsize, sizeof(char) );
 	if( allArgs != NULL )
 	{
-		allArgsNew = FCallocAlign( fullsize+100, sizeof(char) );
+		allArgsNew = FCallocAlign( fullsize + 100, sizeof(char) );
 	
 		if( both == TRUE )
 		{
@@ -343,7 +343,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	// This part of code check required information
 	//
 	
-	char *sessionid = FCalloc( DEFAULT_SESSION_ID_SIZE+1, sizeof(char) );
+	char *sessionid = FCalloc( DEFAULT_SESSION_ID_SIZE + 1, sizeof(char) );
 	char userName[ 256 ];
 	//char sessionid[ DEFAULT_SESSION_ID_SIZE ];
 	//sessionid[ 0 ] = 0;
@@ -393,7 +393,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			response = HttpNewSimple( HTTP_200_OK, tags );
 			
 			char buffer[ 256 ];
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SESSIONID_AUTH_MISSING] , DICT_SESSIONID_AUTH_MISSING );
+			snprintf( buffer, sizeof( buffer ), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SESSIONID_AUTH_MISSING] , DICT_SESSIONID_AUTH_MISSING );
 			HttpAddTextContent( response, buffer );
 			FERROR( "login function miss parameter sessionid or authid\n" );
 			FFree( sessionid );
@@ -452,18 +452,22 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						SASSession *as = SASManagerGetSession( l->sl_SASManager, asval );
 						if( as != NULL )
 						{
-							SASUList *alist = as->sas_UserSessionList;
-							while( alist != NULL )
+							if( FRIEND_MUTEX_LOCK( &as->sas_SessionsMut ) == 0 )
 							{
-								//DEBUG("Authid check %s user %s\n", alist->authid, alist->usersession->us_User->u_Name );
-								if( strcmp( alist->authid, authid ) ==  0 )
+								SASUList *alist = as->sas_UserSessionList;
+								while( alist != NULL )
 								{
-									loggedSession = alist->usersession;
-									sprintf( sessionid, "%s", loggedSession->us_SessionID ); // Overwrite sessionid
-									DEBUG("Found user %s\n", loggedSession->us_User->u_Name );
-									break;
+									//DEBUG("Authid check %s user %s\n", alist->authid, alist->usersession->us_User->u_Name );
+									if( strcmp( alist->authid, authid ) ==  0 )
+									{
+										loggedSession = alist->usersession;
+										sprintf( sessionid, "%s", loggedSession->us_SessionID ); // Overwrite sessionid
+										DEBUG("Found user %s\n", loggedSession->us_User->u_Name );
+										break;
+									}
+									alist = (SASUList *)alist->node.mln_Succ;
 								}
-								alist = (SASUList *)alist->node.mln_Succ;
+								FRIEND_MUTEX_UNLOCK( &as->sas_SessionsMut );
 							}
 						}
 						FFree( authid );
@@ -971,15 +975,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		else
 		{
 			UserLoggerStore( l->sl_ULM, loggedSession, (*request)->http_RawRequestPath, (*request)->http_UserActionInfo );
-		}
-	}
-	
-	if( loginLogoutCalled == FALSE && loggedSession != NULL )
-	{
-		if( FRIEND_MUTEX_LOCK( &(loggedSession->us_Mutex ) ) == 0 )
-		{
-			loggedSession->us_InUseCounter++;
-			FRIEND_MUTEX_UNLOCK( &(loggedSession->us_Mutex ) );
 		}
 	}
 	
@@ -2257,6 +2252,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						}
 
 						char tmp[ 512 ];
+						int tmpset = 0;
 						User *loggedUser = NULL;
 						if( loggedSession != NULL )
 						{
@@ -2281,6 +2277,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 									snprintf( tmp, sizeof(tmp) ,
 										"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"username\":\"%s\"}",
 										loggedUser->u_Error, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedUser->u_ID, loggedUser->u_FullName,  loggedSession->us_SessionID, loggedSession->us_User->u_Name );	// check user.library to display errors
+									tmpset++;
 								}
 							}
 							else
@@ -2312,6 +2309,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 									snprintf( tmp, 512, "{\"response\":\"%d\",\"sessionid\":\"%s\",\"authid\":\"%s\"}",
 									loggedUser->u_Error, loggedUser->u_MainSessionID, authid
 									);
+									tmpset++;
 								}
 							}	// else to appname
 						} //else to logginsession == NULL
@@ -2321,7 +2319,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							char buffer[ 256 ];
 							snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_AUTHMOD_NOT_SELECTED] , DICT_AUTHMOD_NOT_SELECTED );
 						}
-						HttpAddTextContent( response, tmp );
+						if( tmpset != 0 )
+							HttpAddTextContent( response, tmp );
 					}
 					else
 					{
@@ -2445,14 +2444,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	}
 	
 	Log( FLOG_INFO, "\t\t\tWEB REQUEST FUNCTION func END: %s\n", urlpath[ 0 ] );
-	if( loginLogoutCalled != LL_LOGOUT && loggedSession != NULL )
-	{
-		if( FRIEND_MUTEX_LOCK( &(loggedSession->us_Mutex ) ) == 0 )
-		{
-			loggedSession->us_InUseCounter--;
-			FRIEND_MUTEX_UNLOCK( &(loggedSession->us_Mutex ) );
-		}
-	}
 	
 	DEBUG( "Systembase web request completed: %dms\n", GetUnixTime() - requestStart );
 	
@@ -2462,15 +2453,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 error:
 	
 	Log( FLOG_INFO, "\t\t\tWEB REQUEST FUNCTION func EERROR END: %s\n", urlpath[ 0 ] );
-	if( loginLogoutCalled == FALSE && loggedSession != NULL )
-	{
-		if( FRIEND_MUTEX_LOCK( &(loggedSession->us_Mutex ) ) == 0 )
-		{
-			loggedSession->us_InUseCounter--;
-			FRIEND_MUTEX_UNLOCK( &(loggedSession->us_Mutex ) );
-		}
-	}
-
+	
 	FFree( sessionid );
 	return response;
 }

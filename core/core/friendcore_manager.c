@@ -105,15 +105,15 @@ FriendCoreManager *FriendCoreManagerNew()
 		{ 
 			pthread_mutex_init( &ssl_mutex_buf[ i ], NULL );
 		}
-	 
-		// Setup static locking.
-		CRYPTO_set_locking_callback( ssl_locking_function );
-		CRYPTO_set_id_callback( ssl_id_function );
 	
 		OpenSSL_add_all_algorithms();
 	
 		// Load the error strings for SSL & CRYPTO APIs 
 		SSL_load_error_strings();
+		
+		// Setup static locking.
+		CRYPTO_set_locking_callback( ssl_locking_function );
+		CRYPTO_set_id_callback( ssl_id_function );
 	
 		RAND_load_file( "/dev/urandom", 1024 );
 		

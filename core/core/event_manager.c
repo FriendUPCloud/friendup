@@ -96,6 +96,7 @@ void EventManagerDelete( EventManager *em )
 		
 		// waiting till all functions died
 		
+		int retries = 20;
 		while( TRUE )
 		{
 			if( threadsNo <= 0 )
@@ -103,7 +104,12 @@ void EventManagerDelete( EventManager *em )
 				break;
 			}
 			DEBUG("[EventManager] Not all threads were closed properly, waiting. ThreadsNo: %d\n", threadsNo );
-			usleep( 500 );
+			usleep( 50000 );
+			if( retries-- == 0 )
+			{
+				DEBUG( "[EventManager] We waited long enough.\n" );
+				break;
+			}
 		}
 		
 		CoreEvent *locnce = em->em_EventList;

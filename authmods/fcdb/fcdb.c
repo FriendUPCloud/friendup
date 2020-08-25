@@ -663,7 +663,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 	// next request, if session id exist then user is logged in
 	
 loginok:
-	DEBUG("[FCDB] Login ok Stored\n");
+	DEBUG("[FCDB] Login ok Stored %p\n", uses);
 	sb->sl_UserManagerInterface.UMStoreLoginAttempt( sb->sl_UM, name, "Login success", NULL );
 	return uses;
 	

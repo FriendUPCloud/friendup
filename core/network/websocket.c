@@ -203,7 +203,7 @@ int WebsocketThread( FThread *data )
 	pthread_detach( pthread_self() );
 	int cnt = 0;
 	WebSocket *ws = (WebSocket *)data->t_Data;
-	if( ws->ws_Context == NULL )
+	if( ws == NULL || ws->ws_Context == NULL )
 	{
 		Log( FLOG_ERROR, "[WebsocketThread] WsContext is empty\n");
 		pthread_exit( NULL );
@@ -567,7 +567,7 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
 		{
 			char qery[ 1024 ];
 			
-			sqllib->SNPrintF( sqllib, qery,  sizeof(qery), \
+			sqllib->SNPrintF( sqllib, qery, 1024, \
 				 "SELECT * FROM ( ( SELECT u.SessionID FROM FUserSession u, FUserApplication a WHERE a.AuthID=\"%s\" AND a.UserID = u.UserID LIMIT 1 ) \
 				UNION ( SELECT u2.SessionID FROM FUserSession u2, Filesystem f WHERE f.Config LIKE \"%s%s%s\" AND u2.UserID = f.UserID LIMIT 1 ) ) z LIMIT 1",
 				( char *)authid, "%", ( char *)authid, "%"
@@ -581,7 +581,7 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
 				char **row;
 				if( ( row = sqllib->FetchRow( sqllib, res ) ) )
 				{
-					snprintf( lsessionid, sizeof(lsessionid), "%s", row[ 0 ] );
+					snprintf( lsessionid, DEFAULT_SESSION_ID_SIZE, "%s", row[ 0 ] );
 					sessionid = lsessionid;
 				}
 				sqllib->FreeResult( sqllib, res );
@@ -654,28 +654,11 @@ int DetachWebsocketFromSession( void *d )
 		if( data->wsc_UserSession != NULL )
 		{
 			us = (UserSession *)data->wsc_UserSession;
-		
-			/*
-			if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
-			{
-				us->us_Wsi = NULL;
-				us->us_WSD = NULL;
-				//us->us_InUseCounter--;
-		
-				FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
-			}
-			*/
 		}
 		
 		//data->wsc_UserSession = NULL;
 		data->wsc_Wsi = NULL;
 		FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
-		/*
-		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
-		{
-			us->us_InUseCounter++;
-			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
-		}*/
 	}
 	
 	if( data->wsc_UserSession != NULL && us != NULL )
@@ -685,7 +668,6 @@ int DetachWebsocketFromSession( void *d )
 		{
 			us->us_Wsi = NULL;
 			us->us_WSD = NULL;
-			//us->us_InUseCounter--;
 		
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}

@@ -354,7 +354,7 @@ var WorkspaceMenu =
 				this.classList.remove( 'Open' );
 			
 				// Set appid from current movable..
-				if( !appid && currentMovable.windowObject && currentMovable.windowObject.applicationId )
+				if( !appid && window.currentMovable && currentMovable.windowObject && currentMovable.windowObject.applicationId )
 					appid = currentMovable.windowObject.applicationId;
 		
 				var viewId = false;

@@ -551,8 +551,8 @@ void *FriendCoreAcceptPhase2( void *data )
 					
 #ifdef USE_PTHREAD
 						//size_t stacksize = 16777216; //16 * 1024 * 1024;
-						size_t stacksize = 8388608;	// half of previous stack
-						//size_t stacksize = 4194304;	// half of previous stack
+						//size_t stacksize = 8388608;	// half of previous stack
+						size_t stacksize = 1048576;	// A meg
 						pthread_attr_t attr;
 						pthread_attr_init( &attr );
 						pthread_attr_setstacksize( &attr, stacksize );
@@ -1144,8 +1144,8 @@ static inline int FriendCoreAcceptPhase3( int fd, FriendCoreInstance *fc )
 				pre->fc = fc; pre->sock = incoming;
 
 				//size_t stacksize = 16777216; //16 * 1024 * 1024;
-				size_t stacksize = 8388608;	// half of previous stack
-				//size_t stacksize = 4194304; //512 * 1024;
+				//size_t stacksize = 8388608;	// half of previous stack
+				size_t stacksize = 1048576; // A meg
 				pthread_attr_t attr;
 				pthread_attr_init( &attr );
 				pthread_attr_setstacksize( &attr, stacksize );
@@ -1370,7 +1370,7 @@ void FriendCoreProcessSockBlock( void *fcv )
 			if( res > 0 )
 			{
 				retryContentNotFull = 0;	// we must reset error counter
-				DEBUG("[FriendCoreProcessSockBlock] received bytes: %d buffer size: %lu\n", res, resultString->bsd_Size );
+				DEBUG("[FriendCoreProcessSockBlock] received bytes: %d, current buffer size: %lu\n", res, resultString->bsd_Size );
 				
 				// add received string to buffer.
 				// If 
@@ -1988,17 +1988,6 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 			}
 		}
 		
-		/*
-		This is only used to track fds....
-		if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
-		{
-			if( fc->FDCount > 0 )
-			{
-				DEBUG( "Current fds: %d\n", fc->FDCount );
-			}
-			FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
-		}*/
-
 		for( i = 0; i < eventCount; i++ )
 		{
 			currentEvent = &events[i];
