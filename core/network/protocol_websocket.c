@@ -71,6 +71,7 @@ void releaseWSData( WSThreadData *data )
 	if( http != NULL )
 	{
 		UriFree( http->http_Uri );
+		http->http_Uri = NULL;
 		
 		if( http->http_RawRequestPath != NULL )
 		{
@@ -910,6 +911,7 @@ int ParseAndCall( WSThreadData *wstd )
 											if( wstd->wstd_Http != NULL )
 											{
 												UriFree( wstd->wstd_Http->http_Uri );
+												wstd->wstd_Http->http_Uri = NULL;
 		
 												if( wstd->wstd_Http->http_RawRequestPath != NULL )
 												{

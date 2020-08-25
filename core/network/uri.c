@@ -701,7 +701,7 @@ void UriTest()
  */
 void UriFree( Uri* uri )
 {
-	if( !uri )
+	if( uri == NULL )
 	{
 		return;
 	}
