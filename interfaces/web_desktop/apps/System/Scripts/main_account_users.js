@@ -1699,6 +1699,12 @@ Sections.accounts_users = function( cmd, extra )
 														
 														if( list[a].parentNode.parentNode && list[a].parentNode.parentNode.parentNode && list[a].parentNode.parentNode.parentNode.className.indexOf( 'HRow' ) >= 0 )
 														{
+															if( list[a].parentNode.classList.contains( 'Closed' ) )
+															{
+																list[a].parentNode.classList.remove( 'Closed' );
+																list[a].parentNode.classList.add( 'Open' );
+															}
+															
 															list[a].parentNode.style.display = '';
 															list[a].parentNode.parentNode.style.display = '';
 														}
@@ -1718,6 +1724,18 @@ Sections.accounts_users = function( cmd, extra )
 											{
 												ge( 'WorkgroupSearchCancelBtn' ).classList.remove( 'Open' );
 												ge( 'WorkgroupSearchCancelBtn' ).classList.add( 'Closed' );
+												
+												if( list.length > 0 )
+												{
+													for( var a = 0; a < list.length; a++ )
+													{
+														if( list[a].classList.contains( 'Open' ) )
+														{
+															list[a].classList.remove( 'Open' );
+															list[a].classList.add( 'Closed' );
+														}
+													}
+												}
 											}
 											
 											else if( filter != '' && ( ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
