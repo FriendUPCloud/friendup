@@ -963,6 +963,7 @@ int ParseAndCall( WSThreadData *wstd )
 													}
 												}
 											}
+											wstd = NULL;
 											
 											//FC_Callback( wsi, reason, user, wsreq->wr_Message, wsreq->wr_MessageSize );
 											DEBUG("[WS] Callback was called again!\n");
