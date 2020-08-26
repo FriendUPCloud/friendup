@@ -2791,7 +2791,7 @@ function GetDeviceId()
 	if( platform != 'iOS' )
 	{
 		while( r.indexOf( 'android_app_touch_android_app_' ) >= 0 ) 
-			r = r.split( 'android_app_touch_android_app_' ).join( 'ios_app_' );
+			r = r.split( 'android_app_touch_android_app_' ).join( 'android_app_' );
 	}
 	else
 	{
