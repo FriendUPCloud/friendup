@@ -2725,26 +2725,59 @@ function GetDeviceId()
 	{
 		if( window.friendApp.get_app_token )
 		{
+			let oldToken = friendApp.get_app_token();
 			if( window.friendApp.get_platform )
 			{
 				if( friendApp.get_platform() == 'iOS' )
 				{
-					r = id + '_ios_app_' + friendApp.get_app_token();
+					// Already has a token
+					if( oldToken.indexOf( '_ios_app_' ) > 0 )
+					{
+						r = friendApp.get_app_token();
+					}
+					else
+					{
+						r = id + '_ios_app_' + friendApp.get_app_token();
+					}
 				}
 				else
 				{
-					r = id + '_android_app_' + friendApp.get_app_token();
+					// Already has a token
+					if( oldToken.indexOf( '_android_app_' ) > 0 )
+					{
+						r = friendApp.get_app_token();
+					}
+					else
+					{
+						r = id + '_android_app_' + friendApp.get_app_token();
+					}
 				}
 			}
 			else
 			{
 				if( platform === 'iOS' )
-				{		
-					r = id + '_ios_app_' + friendApp.get_app_token();
+				{	
+					// Already has a token
+					if( oldToken.indexOf( '_ios_app_' ) > 0 )
+					{
+						r = friendApp.get_app_token();
+					}
+					else
+					{	
+						r = id + '_ios_app_' + friendApp.get_app_token();
+					}
 				}
 				else
 				{
-					r = id + '_android_app_' + friendApp.get_app_token();
+					// Already has a token
+					if( oldToken.indexOf( '_android_app_' ) > 0 )
+					{
+						r = friendApp.get_app_token();
+					}
+					else
+					{
+						r = id + '_android_app_' + friendApp.get_app_token();
+					}
 				}
 			}
 		}
