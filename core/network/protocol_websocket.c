@@ -121,39 +121,44 @@ void WSThreadPing( void *p )
 			us->us_LoggedTime = time( NULL );
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
-	}
 	
-	if( data == NULL || us == NULL || us->us_WSD == NULL || data->wstd_WSD->wsc_UserSession == NULL )
-	{
-		if( data != NULL )
+		if( data == NULL || us->us_WSD == NULL || data->wstd_WSD->wsc_UserSession == NULL )
 		{
-			if( data->wstd_Requestid != NULL )
+			if( data != NULL )
 			{
-				FFree( data->wstd_Requestid );
+				if( data->wstd_Requestid != NULL )
+				{
+					FFree( data->wstd_Requestid );
+				}
+				FFree( data );
 			}
-			FFree( data );
+			// Decrease counter
+			if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+			{
+				us->us_InUseCounter--;
+				FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+			}
+			pthread_exit( NULL );
+			return;
 		}
+	
+		unsigned char *answer = FMalloc( 1024 );
+		int answersize = snprintf( (char *)answer, 1024, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%s\"}}", data->wstd_Requestid );
+		UserSessionWebsocketWrite( us, answer, answersize, LWS_WRITE_TEXT );	
+		FFree( answer );
+		releaseWSData( data );
+
 		// Decrease counter
 		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 		{
 			us->us_InUseCounter--;
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
-		pthread_exit( NULL );
-		return;
 	}
-	
-	unsigned char *answer = FMalloc( 1024 );
-	int answersize = snprintf( (char *)answer, 1024, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%s\"}}", data->wstd_Requestid );
-	UserSessionWebsocketWrite( us, answer, answersize, LWS_WRITE_TEXT );	
-	FFree( answer );
-	releaseWSData( data );
-
-	// Decrease counter
-	if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+	// Just free the data
+	else
 	{
-		us->us_InUseCounter--;
-		FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+		releaseWSData( data );
 	}
 
 	pthread_exit( NULL );

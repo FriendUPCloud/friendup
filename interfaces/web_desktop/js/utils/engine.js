@@ -2718,7 +2718,7 @@ function GetDeviceId()
 	else if( ua.indexOf( 'linux' ) > 0 ){ platform = 'Linux'; }
 	if( !platform ) platform = 'Generic';
 	
-	var r = id + '_' + type + '_' + platform + '_' + __randDevId;
+	let r = id + '_' + type + '_' + platform + '_' + __randDevId;
 
 	//application token is needed for iOS push notifications
 	if( window.friendApp )
@@ -2730,6 +2730,7 @@ function GetDeviceId()
 			{
 				if( friendApp.get_platform() == 'iOS' )
 				{
+					platform = 'iOS';
 					// Already has a token
 					if( oldToken.indexOf( '_ios_app_' ) > 0 )
 					{
@@ -2742,6 +2743,7 @@ function GetDeviceId()
 				}
 				else
 				{
+					platform = 'Android';
 					// Already has a token
 					if( oldToken.indexOf( '_android_app_' ) > 0 )
 					{
@@ -2757,6 +2759,7 @@ function GetDeviceId()
 			{
 				if( platform === 'iOS' )
 				{	
+					platform = 'iOS';
 					// Already has a token
 					if( oldToken.indexOf( '_ios_app_' ) > 0 )
 					{
@@ -2769,6 +2772,7 @@ function GetDeviceId()
 				}
 				else
 				{
+					platform = 'Android';
 					// Already has a token
 					if( oldToken.indexOf( '_android_app_' ) > 0 )
 					{
@@ -2782,6 +2786,19 @@ function GetDeviceId()
 			}
 		}
 	}
+	
+	// Avoid duplicates
+	if( platform != 'iOS' )
+	{
+		while( r.indexOf( 'android_app_touch_android_app_' ) >= 0 ) 
+			r = r.split( 'android_app_touch_android_app_' ).join( 'android_app_' );
+	}
+	else
+	{
+		while( r.indexOf( 'ios_app_touch_ios_app_' ) >= 0 ) 
+			r = r.split( 'ios_app_touch_ios_app_' ).join( 'ios_app_' );
+	}
+	
 	// Store the cookie for later use
 	//SetCookie( 'deviceId', r );
 	
