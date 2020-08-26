@@ -135,6 +135,7 @@ void WSThreadPing( void *p )
 	if( data->wstd_WSD->wsc_UserSession != NULL && FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 	{
 		us->us_LoggedTime = time( NULL );
+		us->us_InUseCounter++;
 		FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 
 		UserSessionWebsocketWrite( us, answer, answersize, LWS_WRITE_TEXT );
@@ -143,6 +144,15 @@ void WSThreadPing( void *p )
 	}
 	
 	releaseWSData( data );
+
+	if( us != NULL )
+	{
+		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+		{
+			us->us_InUseCounter--;
+			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+		}
+	}
 
 	pthread_exit( NULL );
 	return;
