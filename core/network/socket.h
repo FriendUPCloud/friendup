@@ -50,9 +50,9 @@
 #define SOCKET_CLOSED_STATE -2
 
 // For debug
-int _writes;
-int _reads;
-int _sockets;
+//int _writes;
+//int _reads;
+//int _sockets;
 
 // Forward declarations
 

@@ -104,9 +104,9 @@ FriendCoreInstance *FriendCoreNew( void *sb, int id, FBOOL ssl, int port, int ma
 	LOG( FLOG_INFO, "[FriendCoreNew] Starting friend core\n" );
 	
 	// FOR DEBUG PURPOSES! -ht
-	_reads = 0;
-	_writes = 0;
-	_sockets = 0;
+	//_reads = 0;
+	//_writes = 0;
+	//_sockets = 0;
 	
 	FriendCoreInstance *fc = FCalloc( sizeof(FriendCoreInstance) , 1 );
 
@@ -2036,7 +2036,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 					if( ch == 'q' )
 					{
 						fc->fci_Shutdown = TRUE;
-						DEBUG("[FriendCoreEpoll] FC Closing all socket connections. Current reads: %d, writes: %d!\n", _reads, _writes );
+						//DEBUG("[FriendCoreEpoll] FC Closing all socket connections. Current reads: %d, writes: %d!\n", _reads, _writes );
 						break;
 					}
 				}
