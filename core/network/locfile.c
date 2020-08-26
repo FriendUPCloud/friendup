@@ -151,10 +151,11 @@ LocFile* LocFileNew( char* path, unsigned int flags )
 		
 		memcpy(  &(fo->lf_Info),  &st, sizeof( struct stat) );
 
-		fseek( fp, 0, SEEK_END );
-		long fsize = ftell( fp );
-		fseek( fp, 0, SEEK_SET );  //same as rewind(f);
-		fo->lf_FileSize = fsize;// st.st_size; //ftell( fp );
+		// Use big file compliant seek/tell functions
+		fseeko( fp, 0, SEEK_END );
+		off_t fsize = ftello( fp );
+		fseeko( fp, 0, SEEK_SET );  //same as rewind(f);
+		fo->lf_FileSize = ( long )fsize;// st.st_size; //ftell( fp );
 
 		if( flags & FILE_READ_NOW )
 		{
