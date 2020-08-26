@@ -71,7 +71,7 @@
 // global structure
 //
 
-struct SystemBase *SLIB;
+extern struct SystemBase *SLIB;
 
 //
 // definitions
