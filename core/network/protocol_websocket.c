@@ -155,6 +155,11 @@ void WSThreadPing( void *p )
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
 	}
+	// Just free the data
+	else
+	{
+		releaseWSData( data );
+	}
 
 	pthread_exit( NULL );
 	return;
