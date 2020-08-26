@@ -143,7 +143,7 @@ void WSThreadPing( void *p )
 		return;
 	}
 	
-	unsigned char *answer = FMalloc( 1024, sizeof(char) );
+	unsigned char *answer = FMalloc( 1024 );
 	int answersize = snprintf( (char *)answer, 1024, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%s\"}}", data->wstd_Requestid );
 	UserSessionWebsocketWrite( us, answer, answersize, LWS_WRITE_TEXT );	
 	FFree( answer );
