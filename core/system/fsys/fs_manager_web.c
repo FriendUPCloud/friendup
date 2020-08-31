@@ -704,6 +704,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 													break;
 												}
 											}
+											
 											if( data != NULL && failed == 0 )
 											{
 												BufStringAdd( sql, data );
@@ -711,8 +712,13 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 											// Done security test
 											
 											if( i < j->size - 1 )
+											{
 												BufStringAdd( sql, "\"," );
-											else BufStringAdd( sql, "\"" );
+											}
+											else
+											{
+												BufStringAdd( sql, "\"" );
+											}
 										}
 									}
 								}
@@ -737,7 +743,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 										if( row[ 0 ] != NULL )
 										{
 											if( resultCount > 0 )
+											{
 												BufStringAdd( result, "," );
+											}
 											BufStringAdd( result, "\"" );
 											BufStringAdd( result, row[ 0 ] );
 											BufStringAdd( result, "\"" );
@@ -771,7 +779,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							char dictmsgbuf[ 256 ];
 							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"Paths not given in array format\", \"code\":\"-1\" }" );
 							HttpAddTextContent( response, dictmsgbuf );
-						}							
+						}
 					
 						JSONFree( j );
 					}
