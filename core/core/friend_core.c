@@ -1245,49 +1245,7 @@ void *FriendCoreAcceptPhase2( void *d )
 		}
 		FFree( rem );
 	}
-	/*
-	List *l = pre->fds;
-	
-	while( l )
-	{
-		// Get socket!
-		DEBUG( "[FriendCoreAcceptPhase2] Using stored fds!\n" );
-		
-		if( !l->l_Data ) 
-		{
-			// We are not in use!
-			if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
-			{
-				fc->FDCount--;
-				FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
-			}
-			l = l->next;
-			continue;
-		}
-		
-		fd = *( int *)l->l_Data;
-		free( l->l_Data );
-		l->l_Data = NULL; // Clear it out
-	
-		// TODO: HT - Perhaps put in the worker thread
-		FriendCoreAcceptPhase3( fd, fc );
-		
-		// We are not in use!
-		if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
-		{
-			fc->FDCount--;
-			FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
-		}
-		
-		l = l->next;
-	}	// while accept
 
-	
-	if( pre->fds )
-	{
-		ListFreeWithData( pre->fds );
-	}
-	*/
 	FFree( pre );
 
 #ifdef USE_PTHREAD
@@ -2149,29 +2107,6 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 									FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
 								}
 							}
-							/*
-							// Close up!
-							List *failed = ( List *)pre->fds;
-							while( failed )
-							{
-								if( failed->l_Data )
-								{
-									fd = *( int *)failed->l_Data;
-									shutdown( sock->fd, SHUT_RDWR );
-									close( sock->fd );
-								}
-								
-								// We are not in use!
-								if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
-								{
-									fc->FDCount--;
-									FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
-								}
-								
-								failed = failed->next;
-							}
-							ListFreeWithData( pre->fds );
-							*/
 						}
 						FFree( pre );
 					}
@@ -2183,73 +2118,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 			// Get event that are incoming!
 			else
 			{
-				/*
-				// Stop listening here..
-				epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_DEL, sock->fd, NULL );
-				INFO("[FriendCoreEpoll] Socket fd: %d removed from epoll\n", sock->fd );
-				
-				// Process
-				if( !fc->fci_Shutdown )
-				{
-					DEBUG("[FriendCoreEpoll] EPOLLIN\n");
-					
-					struct fcThreadInstance *pre = FCalloc( 1, sizeof( struct fcThreadInstance ) );
-					if( pre != NULL )
-					{
-						pre->fc = fc; pre->sock = sock;
-					
-#ifdef USE_PTHREAD
-						//size_t stacksize = 16777216; //16 * 1024 * 1024;
-						size_t stacksize = 8388608;	// half of previous stack
-						//size_t stacksize = 4194304; //512 * 1024;
-						pthread_attr_t attr;
-						pthread_attr_init( &attr );
-						pthread_attr_setstacksize( &attr, stacksize );
-						
-						// Make sure we keep the number of threads under the limit
-						
-						if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
-						{
-							fc->FDCount++;
-							FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
-						}
-						
-						//change NULL to &attr
-#ifdef USE_BLOCKED_SOCKETS_TO_READ_HTTP
-						if( pthread_create( &pre->thread, &attr, (void *(*) (void *))&FriendCoreProcessSockBlock, ( void *)pre ) != 0 )
-#else
-						if( pthread_create( &pre->thread, &attr, (void *(*) (void *))&FriendCoreProcessSockNonBlock, ( void *)pre ) != 0 )
-#endif
-						{
-							FFree( pre );
-						}
-#else
-#ifdef USE_WORKERS
-						DEBUG("[FriendCoreEpoll] Worker will be launched\n");
-						SystemBase *locsb = (SystemBase *)fc->fci_SB;
-						if( WorkerManagerRun( locsb->sl_WorkerManager,  FriendCoreProcess, pre, NULL, "FriendCoreProcess" ) != 0 )
-						{
-							sock->s_Interface->SocketDelete( sock );
-							sock = NULL;
-						}
-						DEBUG("[FriendCoreEpoll] Worker launched\n");
-						//WorkerManagerRun( fc->fci_WorkerManager,  FriendCoreProcess, pre );
-#else
-						int pid = fork();
-						if( pid == 0 )
-						{
-							FriendCoreProcess( pre );
-						}
-#endif
-#endif
-					}
-					else if( sock != NULL )
-					{
-						sock->s_Interface->SocketDelete( sock );
-					}
-					//DEBUG("EPOLLIN end\n");
-				}
-				*/
+			
 			}
 		}
 	}

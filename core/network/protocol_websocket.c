@@ -689,10 +689,7 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 						
 						//Log( FLOG_INFO, "[WS] NO JSON - Passed memcpy..\n" );
 						DEBUG("[WS] user session ptr %p message len %d\n", locus, msgLen );
-						//fcd->wsc_WebsocketsServerClient;
-						//Log( FLOG_INFO, "[WS] NO JSON - WRITING..\n" );
-						//WebsocketWriteInline( fcd, buf, znew + jsonsize + END_CHAR_SIGNS, LWS_WRITE_TEXT );
-						
+
 						UserSessionWebsocketWrite( locus, buf, znew + jsonsize + END_CHAR_SIGNS, LWS_WRITE_TEXT );
 					
 						FFree( buf );
@@ -1090,42 +1087,10 @@ int ParseAndCall( WSThreadData *wstd )
 						// simple PING
 						if( tsize > 0 && strncmp( "ping",  in + t[ 6 ].start, tsize ) == 0 && r > 8 )
 						{
-							//WSThreadData *wstdata = FCalloc( 1, sizeof( WSThreadData ) );
-							// threads
-							//pthread_t thread;
-							//memset( &thread, 0, sizeof( pthread_t ) );
-
 							wstd->wstd_Requestid = StringDuplicateN( (char *)(in + t[ 8 ].start), t[ 8 ].end-t[ 8 ].start );
-/*
-							UserSession *lus = wstd->wstd_WSD->wsc_UserSession;
-							if( lus != NULL )
-							{
-								// Set timestamp and increase counter
-								if( FRIEND_MUTEX_LOCK( &(lus->us_Mutex) ) == 0 )
-								{
-									lus->us_InUseCounter++;
-									lus->us_LoggedTime = time( NULL );
-									FRIEND_MUTEX_UNLOCK( &(lus->us_Mutex) );
-								}
-							}
-							*/
+
 							WSThreadPing( wstd );
-							/*
-							// Multithread mode
-							if( pthread_create( &thread, NULL,  (void *(*)(void *))WSThreadPing, ( void *)wstd ) != 0 )
-							{
-								if( lus != NULL )
-								{
-									// Set timestamp and increase counter
-									if( FRIEND_MUTEX_LOCK( &(lus->us_Mutex) ) == 0 )
-									{
-										lus->us_InUseCounter--;
-										lus->us_LoggedTime = time( NULL );
-										FRIEND_MUTEX_UNLOCK( &(lus->us_Mutex) );
-									}
-								}
-							}
-							*/
+
 							wstd = NULL;
 						}
 					}

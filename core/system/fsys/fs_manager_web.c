@@ -694,11 +694,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 											char *data = ( char *)dt->data;
 											
 											// TODO: Replace this with mysql_escape_string!
-											int test = 0; 
+											unsigned int test = 0; 
 											int failed = 0;
 											for( ; test < strlen( data ); test++ )
 											{
-												if( data[ test ] == ";" || data[ test ] == "\"" )
+												if( data[ test ] == ';' || data[ test ] == '\"' )
 												{
 													failed = 1;
 													break;
