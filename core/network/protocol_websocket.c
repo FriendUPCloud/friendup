@@ -136,9 +136,10 @@ void WSThreadPing( void *p )
 					{
 						FFree( data->wstd_Requestid );
 					}
+					
+					FRIEND_MUTEX_UNLOCK( &(data->wstd_WSD->wsc_Mutex) );
 					FFree( data );
 				}
-				FRIEND_MUTEX_UNLOCK( &(data->wstd_WSD->wsc_Mutex) );
 				
 				// Decrease counter
 				if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )

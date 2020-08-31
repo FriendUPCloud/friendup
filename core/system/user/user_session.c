@@ -84,6 +84,7 @@ void UserSessionDelete( UserSession *us )
 			{
 				break;
 			}
+			/*
 			else
 			{
 				count++;
@@ -97,8 +98,9 @@ void UserSessionDelete( UserSession *us )
 					break;
 				}
 			}
+			*/
 			DEBUG( "[UserSessionDelete] Trying to wait for use counter to be <= 0\n" );
-			usleep( 100 );
+			usleep( 1000 );
 		}
 		
 		DOSToken *dosToken = (DOSToken *)us->us_DOSToken;
