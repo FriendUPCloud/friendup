@@ -173,6 +173,8 @@ switch( $args->args->mode )
 	
 	default:
 		
+		$out = [];
+		
 		if( $users = $SqlDatabase->FetchObjects( $q = '
 			SELECT 
 				u.*, g.Name AS `Level`, "0" AS `LoginTime` 
@@ -215,7 +217,7 @@ switch( $args->args->mode )
 			' : '' ) . '
 		' ) )
 		{
-			$out = [];
+			
 			foreach( $users as $u )
 			{
 				$keys = [ 'ID', 'Name', 'Password', 'FullName', 'Email', 'CreatedTime', 'LoginTime', 'Image', 'Level', 'UniqueID', 'Status' ];
@@ -235,6 +237,14 @@ switch( $args->args->mode )
 			
 			die( 'ok<!--separate-->' . json_encode( $out ) );
 		}
+		
+		/*if( isset( $args->args->count ) && $args->args->count )
+		{
+			$count = $SqlDatabase->FetchObject( 'SELECT COUNT( DISTINCT( u.ID ) ) AS Num FROM FUser u, FUserToGroup tg WHERE u.ID = tg.UserID ' );
+			$out['Count'] = ( $count ? $count->Num : 0 );
+			
+			die( 'ok<!--separate-->' . json_encode( $out ) );
+		}*/
 		
 		break;
 	

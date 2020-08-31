@@ -6451,11 +6451,11 @@ Sections.accounts_users = function( cmd, extra )
 			}
 		}
 		
-		console.log( "userList['Count'] " + userList['Count'] );
+		console.log( "userList['Count'] ", { count: userList['Count'], userlist: userList } );
 		
 		if( ge( 'AdminUsersCount' ) )
 		{
-			ge( 'AdminUsersCount' ).innerHTML = ( userList && userList['Count'] ? '(' + userList['Count'] + ')' : '(0)' );
+			ge( 'AdminUsersCount' ).innerHTML = ( userList && userList['Count'] ? '(' + userList['Count'] + ')' : ( ge( 'AdminUsersCount' ).innerHTML ? ge( 'AdminUsersCount' ).innerHTML : '(0)' ) );
 		}
 		
 		if( output.length > 0 )
@@ -7609,7 +7609,7 @@ function getUserlist( callback, obj )
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
-		//console.log( { e:e, d:d } );
+		console.log( { e:e, d:d, args: args } );
 		
 		var userList = null;
 		
@@ -9856,7 +9856,7 @@ function firstLogin( userid, callback )
 	}
 }
 
-function removeUser( id )
+function removeUser( id, callback )
 {
 	if( id )
 	{
@@ -9898,7 +9898,33 @@ function removeUser( id )
 			    	ge( 'UserListID_' + id ).parentNode.removeChild( ge( 'UserListID_' + id ) );
 			    }
 			    
-			    cancelUser(  );
+			    if( ge( 'AdminUsersCount' ) )
+				{
+					if( ge( 'AdminUsersCount' ).innerHTML )
+					{
+						var count = ge( 'AdminUsersCount' ).innerHTML.split( '(' ).join( '' ).split( ')' ).join( '' );
+						
+						if( count && count > 0 )
+						{
+							var result = ( count - 1 );
+							
+							if( result && result >= 0 )
+							{
+								ge( 'AdminUsersCount' ).innerHTML = '(' + result + ')';
+							}
+						}
+					}
+					
+				}
+			    
+			    if( callback )
+			    {
+			    	callback( true );
+			    }
+			    else
+			    { 
+			   		cancelUser(  );
+			    }
 			}
 			else
 			{
