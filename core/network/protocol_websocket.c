@@ -100,32 +100,12 @@ void releaseWSData( WSThreadData *data )
  * @param p pointer to WSThreadData
  */
 
-void WSThreadPing( void *p )
+void WSThreadPing( WSThreadData *data )
 {
-	//pthread_detach( pthread_self() );
-	
-	WSThreadData *data = (WSThreadData *)p;
-	/*
-	if( data == NULL || !data->wstd_WSD )
-	{
-		pthread_exit( NULL );
-		return;
-	}
-	*/
-	
 	UserSession *us = data->wstd_WSD->wsc_UserSession;
 	if( us != NULL )
 	{
 		unsigned char *answer = NULL;
-		/*
-		// Set timestamp and increase counter
-		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
-		{
-			us->us_InUseCounter++;
-			us->us_LoggedTime = time( NULL );
-			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
-		}
-		*/
 	
 		if( FRIEND_MUTEX_LOCK( &(data->wstd_WSD->wsc_Mutex) ) == 0 )
 		{
@@ -161,13 +141,6 @@ void WSThreadPing( void *p )
 			FFree( answer );
 		}
 		releaseWSData( data );
-
-		// Decrease counter
-		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
-		{
-			us->us_InUseCounter--;
-			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
-		}
 	}
 	// Just free the data
 	else
@@ -1120,11 +1093,11 @@ int ParseAndCall( WSThreadData *wstd )
 						{
 							//WSThreadData *wstdata = FCalloc( 1, sizeof( WSThreadData ) );
 							// threads
-							pthread_t thread;
-							memset( &thread, 0, sizeof( pthread_t ) );
+							//pthread_t thread;
+							//memset( &thread, 0, sizeof( pthread_t ) );
 
 							wstd->wstd_Requestid = StringDuplicateN( (char *)(in + t[ 8 ].start), t[ 8 ].end-t[ 8 ].start );
-
+/*
 							UserSession *lus = wstd->wstd_WSD->wsc_UserSession;
 							if( lus != NULL )
 							{
@@ -1136,7 +1109,7 @@ int ParseAndCall( WSThreadData *wstd )
 									FRIEND_MUTEX_UNLOCK( &(lus->us_Mutex) );
 								}
 							}
-							
+							*/
 							WSThreadPing( wstd );
 							/*
 							// Multithread mode
