@@ -669,7 +669,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						
 						free( decoded );
 					
-						if( j->type && j->type == JSON_TYPE_ARRAY|JSON_TYPE_ARRAY_LIST )
+						if( j->type && j->type == (JSON_TYPE_ARRAY|JSON_TYPE_ARRAY_LIST) )
 						{
 							// Build SQL query
 							BufString *sql = BufStringNew();
