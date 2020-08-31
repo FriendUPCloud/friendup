@@ -105,44 +105,73 @@ void WSThreadPing( void *p )
 	pthread_detach( pthread_self() );
 	
 	WSThreadData *data = (WSThreadData *)p;
+	
 	if( data == NULL || !data->wstd_WSD )
 	{
 		pthread_exit( NULL );
 		return;
 	}
 	
-	int n = 0;
 	UserSession *us = data->wstd_WSD->wsc_UserSession;
-	
-	if( data == NULL || us == NULL || us->us_WSD == NULL || data->wstd_WSD->wsc_UserSession == NULL )
+	if( us != NULL )
 	{
-		if( data != NULL )
+		unsigned char *answer = NULL;
+		/*
+		// Set timestamp and increase counter
+		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 		{
-			if( data->wstd_Requestid != NULL )
-			{
-				FFree( data->wstd_Requestid );
-			}
-			FFree( data );
+			us->us_InUseCounter++;
+			us->us_LoggedTime = time( NULL );
+			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
-		pthread_exit( NULL );
-		return;
-	}
+		*/
 	
-	unsigned char *answer = FCalloc( 1024, sizeof(char) );
-	int answersize = snprintf( (char *)answer, 1024, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%s\"}}", data->wstd_Requestid );
+		if( FRIEND_MUTEX_LOCK( &(data->wstd_WSD->wsc_Mutex) ) == 0 )
+		{
+			if( data == NULL || us->us_WSD == NULL || data->wstd_WSD->wsc_UserSession == NULL )
+			{
+				if( data != NULL )
+				{
+					if( data->wstd_Requestid != NULL )
+					{
+						FFree( data->wstd_Requestid );
+					}
+					FFree( data );
+				}
+				FRIEND_MUTEX_UNLOCK( &(data->wstd_WSD->wsc_Mutex) );
+				
+				// Decrease counter
+				if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+				{
+					us->us_InUseCounter--;
+					FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+				}
+				pthread_exit( NULL );
+				return;
+			}
+			FRIEND_MUTEX_UNLOCK( &(data->wstd_WSD->wsc_Mutex) );
+		}
 	
-	us = data->wstd_WSD->wsc_UserSession;
-	if( data->wstd_WSD->wsc_UserSession != NULL && FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
-	{
-		us->us_LoggedTime = time( NULL );
-		FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+		if( ( answer = FMalloc( 1024 ) ) != NULL )
+		{
+			int answersize = snprintf( (char *)answer, 1024, "{\"type\":\"con\",\"data\" :{\"type\":\"pong\",\"data\":\"%s\"}}", data->wstd_Requestid );
+			UserSessionWebsocketWrite( us, answer, answersize, LWS_WRITE_TEXT );	
+			FFree( answer );
+		}
+		releaseWSData( data );
 
-		UserSessionWebsocketWrite( us, answer, answersize, LWS_WRITE_TEXT );
-	
-		FFree( answer );
+		// Decrease counter
+		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+		{
+			us->us_InUseCounter--;
+			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+		}
 	}
-	
-	releaseWSData( data );
+	// Just free the data
+	else
+	{
+		releaseWSData( data );
+	}
 
 	pthread_exit( NULL );
 	return;
@@ -320,8 +349,6 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				WSThreadData *wstd = FCalloc( 1, sizeof( WSThreadData ) );
 				if( wstd != NULL )
 				{
-					memset( &(wstd->wstd_Thread), 0, sizeof( pthread_t ) );
-					
 					DEBUG("[WS] Pass wsd to thread: %p\n", wsd );
 					wstd->wstd_WSD = wsd;
 					wstd->wstd_Msg = in;
@@ -342,7 +369,11 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 						}
 					}
 					
-					if( pthread_create( &(wstd->wstd_Thread), NULL, (void *(*)(void *))ParseAndCall, ( void *)wstd ) != 0 )
+					pthread_t t;
+					memset( &t, 0, sizeof( pthread_t ) );
+					if( pthread_create( &t, NULL, (void *(*)(void *))ParseAndCall, ( void *)wstd ) != 0 )
+					//memset( &(wstd->wstd_Thread), 0, sizeof( pthread_t ) );
+					//if( pthread_create( &(wstd->wstd_Thread), NULL, (void *(*)(void *))ParseAndCall, ( void *)wstd ) != 0 )
 					{
 						// Failed!
 						FFree( wstd );
@@ -949,8 +980,11 @@ int ParseAndCall( WSThreadData *wstd )
 											}
 											
 											// Run in thread
-											memset( &(wstd->wstd_Thread), 0, sizeof( pthread_t ) );
-											if( pthread_create( &(wstd->wstd_Thread), NULL, (void *(*)(void *))ParseAndCall, ( void *)wstd ) != 0 )
+											pthread_t t;
+											memset( &t, 0, sizeof( pthread_t ) );
+											if( pthread_create( &t, NULL, (void *(*)(void *))ParseAndCall, ( void *)wstd ) != 0 )
+											//memset( &(wstd->wstd_Thread), 0, sizeof( pthread_t ) );
+											//if( pthread_create( &(wstd->wstd_Thread), NULL, (void *(*)(void *))ParseAndCall, ( void *)wstd ) != 0 )
 											{
 												// Failed!
 												FFree( wstd );
@@ -963,6 +997,7 @@ int ParseAndCall( WSThreadData *wstd )
 													}
 												}
 											}
+											wstd = NULL;
 											
 											//FC_Callback( wsi, reason, user, wsreq->wr_Message, wsreq->wr_MessageSize );
 											DEBUG("[WS] Callback was called again!\n");
@@ -1088,9 +1123,30 @@ int ParseAndCall( WSThreadData *wstd )
 
 							wstd->wstd_Requestid = StringDuplicateN( (char *)(in + t[ 8 ].start), t[ 8 ].end-t[ 8 ].start );
 
+							UserSession *lus = wstd->wstd_WSD->wsc_UserSession;
+							if( lus != NULL )
+							{
+								// Set timestamp and increase counter
+								if( FRIEND_MUTEX_LOCK( &(lus->us_Mutex) ) == 0 )
+								{
+									lus->us_InUseCounter++;
+									lus->us_LoggedTime = time( NULL );
+									FRIEND_MUTEX_UNLOCK( &(lus->us_Mutex) );
+								}
+							}
 							// Multithread mode
 							if( pthread_create( &thread, NULL,  (void *(*)(void *))WSThreadPing, ( void *)wstd ) != 0 )
 							{
+								if( lus != NULL )
+								{
+									// Set timestamp and increase counter
+									if( FRIEND_MUTEX_LOCK( &(lus->us_Mutex) ) == 0 )
+									{
+										lus->us_InUseCounter--;
+										lus->us_LoggedTime = time( NULL );
+										FRIEND_MUTEX_UNLOCK( &(lus->us_Mutex) );
+									}
+								}
 							}
 							
 							wstd = NULL;
@@ -1566,7 +1622,8 @@ int ParseAndCall( WSThreadData *wstd )
 		}
 	}
 	
-	releaseWSData( wstd );
+	if( wstd != NULL )
+		releaseWSData( wstd );
 	
 	FFree( t );
 	

@@ -294,9 +294,24 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 		spm->data = data;
 		spm->len = len;
 		spm->udata = udata;
+		
+		if( FRIEND_MUTEX_LOCK( &(spm->d->d_Mutex) ) == 0 )
+		{
+			MobileAppNotif *man = (MobileAppNotif *)spm->udata;
+			man->man_InUse++;
+			FRIEND_MUTEX_UNLOCK( &spm->d->d_Mutex );
+		}
 
 		pthread_t tmpThread;
-		pthread_create( &tmpThread, NULL, (void *)( void * )ProcessSinkMessage, spm );
+		if( pthread_create( &tmpThread, NULL, (void *)( void * )ProcessSinkMessage, spm ) != 0 )
+		{
+			if( FRIEND_MUTEX_LOCK( &(spm->d->d_Mutex) ) == 0 )
+			{
+				MobileAppNotif *man = (MobileAppNotif *)spm->udata;
+				man->man_InUse--;
+				FRIEND_MUTEX_UNLOCK( &spm->d->d_Mutex );
+			}
+		}
 
 	}
 	return 0;
@@ -314,14 +329,14 @@ void ProcessSinkMessage( void *locd )
 	SinkProcessMessage *spm = (SinkProcessMessage *)locd;
 	if( spm == NULL )
 	{
+		if( FRIEND_MUTEX_LOCK( &(spm->d->d_Mutex) ) == 0 )
+		{
+			MobileAppNotif *man = (MobileAppNotif *)spm->udata;
+			man->man_InUse--;
+			FRIEND_MUTEX_UNLOCK( &spm->d->d_Mutex );
+		}
 		pthread_exit( NULL );
 		return;
-	}
-	if( FRIEND_MUTEX_LOCK( &(spm->d->d_Mutex) ) == 0 )
-	{
-		MobileAppNotif *man = (MobileAppNotif *)spm->udata;
-		man->man_InUse++;
-		FRIEND_MUTEX_UNLOCK( &spm->d->d_Mutex );
 	}
 	
 	DataQWSIM *d = spm->d;

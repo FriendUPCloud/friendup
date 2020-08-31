@@ -733,6 +733,10 @@ DirectoryView.prototype.ShowFileBrowser = function()
 			},
 			folderOpen( path, event, flags )
 			{
+				// Only does something when the user clicked
+				let buttonClick = ( event ? ( ( event.button === 0 || event.button > 0 ) ? true : false ) : false );
+				if( !buttonClick ) return;
+				
 				let vol = path.split( ':' )[0];
 			
 				winobj.fileInfo = {
@@ -751,6 +755,10 @@ DirectoryView.prototype.ShowFileBrowser = function()
 			},
 			folderClose( path, event, flags )
 			{
+				// Only does something when the user clicked
+				let buttonClick = ( event ? ( ( event.button === 0 || event.button > 0 ) ? true : false ) : false );
+				if( !buttonClick ) return;
+				
 				let vol = path.split( ':' )[0];
 				
 				winobj.fileInfo = {
