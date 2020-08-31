@@ -100,31 +100,12 @@ void releaseWSData( WSThreadData *data )
  * @param p pointer to WSThreadData
  */
 
-void WSThreadPing( void *p )
+void WSThreadPing( WSThreadData *data )
 {
-	pthread_detach( pthread_self() );
-	
-	WSThreadData *data = (WSThreadData *)p;
-	
-	if( data == NULL || !data->wstd_WSD )
-	{
-		pthread_exit( NULL );
-		return;
-	}
-	
 	UserSession *us = data->wstd_WSD->wsc_UserSession;
 	if( us != NULL )
 	{
 		unsigned char *answer = NULL;
-		/*
-		// Set timestamp and increase counter
-		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
-		{
-			us->us_InUseCounter++;
-			us->us_LoggedTime = time( NULL );
-			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
-		}
-		*/
 	
 		if( FRIEND_MUTEX_LOCK( &(data->wstd_WSD->wsc_Mutex) ) == 0 )
 		{
@@ -136,9 +117,10 @@ void WSThreadPing( void *p )
 					{
 						FFree( data->wstd_Requestid );
 					}
+					
+					FRIEND_MUTEX_UNLOCK( &(data->wstd_WSD->wsc_Mutex) );
 					FFree( data );
 				}
-				FRIEND_MUTEX_UNLOCK( &(data->wstd_WSD->wsc_Mutex) );
 				
 				// Decrease counter
 				if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
@@ -146,7 +128,7 @@ void WSThreadPing( void *p )
 					us->us_InUseCounter--;
 					FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 				}
-				pthread_exit( NULL );
+				//pthread_exit( NULL );
 				return;
 			}
 			FRIEND_MUTEX_UNLOCK( &(data->wstd_WSD->wsc_Mutex) );
@@ -159,13 +141,6 @@ void WSThreadPing( void *p )
 			FFree( answer );
 		}
 		releaseWSData( data );
-
-		// Decrease counter
-		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
-		{
-			us->us_InUseCounter--;
-			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
-		}
 	}
 	// Just free the data
 	else
@@ -173,7 +148,7 @@ void WSThreadPing( void *p )
 		releaseWSData( data );
 	}
 
-	pthread_exit( NULL );
+	//pthread_exit( NULL );
 	return;
 }
 
@@ -825,6 +800,8 @@ int ParseAndCall( WSThreadData *wstd )
 	jsmn_parser p;
 	jsmntok_t *t;
 	
+	char *in = wstd->wstd_Msg;
+	size_t len = wstd->wstd_Len;
 	
 	UserSession *locus = NULL;
 	UserSession *orig;
@@ -846,9 +823,6 @@ int ParseAndCall( WSThreadData *wstd )
 			return 1;
 		}
 	}
-	
-	char *in = wstd->wstd_Msg;
-	size_t len = wstd->wstd_Len;
 	
 	t = FCalloc( 256, sizeof(jsmntok_t) );
 	jsmn_init( &p );
@@ -1118,11 +1092,11 @@ int ParseAndCall( WSThreadData *wstd )
 						{
 							//WSThreadData *wstdata = FCalloc( 1, sizeof( WSThreadData ) );
 							// threads
-							pthread_t thread;
-							memset( &thread, 0, sizeof( pthread_t ) );
+							//pthread_t thread;
+							//memset( &thread, 0, sizeof( pthread_t ) );
 
 							wstd->wstd_Requestid = StringDuplicateN( (char *)(in + t[ 8 ].start), t[ 8 ].end-t[ 8 ].start );
-
+/*
 							UserSession *lus = wstd->wstd_WSD->wsc_UserSession;
 							if( lus != NULL )
 							{
@@ -1134,6 +1108,9 @@ int ParseAndCall( WSThreadData *wstd )
 									FRIEND_MUTEX_UNLOCK( &(lus->us_Mutex) );
 								}
 							}
+							*/
+							WSThreadPing( wstd );
+							/*
 							// Multithread mode
 							if( pthread_create( &thread, NULL,  (void *(*)(void *))WSThreadPing, ( void *)wstd ) != 0 )
 							{
@@ -1148,7 +1125,7 @@ int ParseAndCall( WSThreadData *wstd )
 									}
 								}
 							}
-							
+							*/
 							wstd = NULL;
 						}
 					}

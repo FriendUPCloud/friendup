@@ -72,6 +72,14 @@
 //#define USE_WORKERS
 //#define USE_PTHREAD_ACCEPT
 
+
+typedef struct AcceptStruct
+{
+	int fd;
+	MinNode node;
+}AcceptStruct;
+
+
 extern void *FCM;			// FriendCoreManager
 
 void FriendCoreProcess( void *fcv );
@@ -206,8 +214,8 @@ struct fcThreadInstance
 	struct epoll_event		*event;
 	Socket					*sock;
 	// HT - Added for new implementation
-	List                     *fds;
-	
+	//List                     *fds;
+	AcceptStruct			*afd;
 	// Incoming from accept
 	struct AcceptPair		*acceptPair;
 };
@@ -1220,10 +1228,28 @@ void *FriendCoreAcceptPhase2( void *d )
 	
 	DEBUG("[FriendCoreAcceptPhase2] before accept4\n");
 	
+	AcceptStruct *act = pre->afd;
+	AcceptStruct *rem = pre->afd;
+	while( act != NULL )
+	{
+		rem = act;
+		act = (AcceptStruct *)act->node.mln_Succ;
+		
+		FriendCoreAcceptPhase3( rem->fd, fc );
+		
+		// We are not in use!
+		if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
+		{
+			fc->FDCount--;
+			FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
+		}
+		FFree( rem );
+	}
+	/*
 	List *l = pre->fds;
 	
 	while( l )
-	{	
+	{
 		// Get socket!
 		DEBUG( "[FriendCoreAcceptPhase2] Using stored fds!\n" );
 		
@@ -1256,10 +1282,12 @@ void *FriendCoreAcceptPhase2( void *d )
 		l = l->next;
 	}	// while accept
 
+	
 	if( pre->fds )
 	{
 		ListFreeWithData( pre->fds );
 	}
+	*/
 	FFree( pre );
 
 #ifdef USE_PTHREAD
@@ -2071,7 +2099,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 					pre->fc = fc;
 					
 					// HT - Just keep them coming!
-					pre->fds = CreateList();
+					//pre->fds = CreateList();
 					int fd = 0;
 					struct sockaddr_in6 client;
 					socklen_t clientLen = sizeof( client );
@@ -2079,9 +2107,14 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 					while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) != -1 )
 					{
 						DEBUG( "[FriendCoreEpoll] Adding the damned thing %d.\n", fd );
-						int *fdi = malloc( sizeof( int ) );
-						*fdi = fd;
-						AddToList( pre->fds, ( void *)fdi );
+						
+						AcceptStruct *as = FCalloc( 1, sizeof( AcceptStruct ) );
+						//int *fdi = malloc( sizeof( int ) );
+						//*fdi = fd;
+						//AddToList( pre->fds, ( void *)fdi );
+						as->fd = fd;
+						as->node.mln_Succ = (MinNode *)pre->afd;
+						pre->afd = as;
 						
 						// We are now in use!
 						if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
@@ -2096,8 +2129,27 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 					if( pthread_create( &pre->thread, NULL, &FriendCoreAcceptPhase2, ( void *)pre ) != 0 )
 					{
 						DEBUG("[FriendCoreEpoll] Pthread create fail\n");
-						if( pre->fds )
+						//if( pre->fds )
+						if( pre->afd )
 						{
+							AcceptStruct *act = pre->afd;
+							AcceptStruct *rem = pre->afd;
+							while( act != NULL )
+							{
+								rem = act;
+								act = (AcceptStruct *)act->node.mln_Succ;
+								
+								shutdown( rem->fd, SHUT_RDWR );
+								close( rem->fd );
+								
+								// We are not in use!
+								if( FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) ) == 0 )
+								{
+									fc->FDCount--;
+									FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
+								}
+							}
+							/*
 							// Close up!
 							List *failed = ( List *)pre->fds;
 							while( failed )
@@ -2119,6 +2171,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 								failed = failed->next;
 							}
 							ListFreeWithData( pre->fds );
+							*/
 						}
 						FFree( pre );
 					}
