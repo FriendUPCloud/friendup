@@ -367,7 +367,7 @@ Sections.accounts_users = function( cmd, extra )
 						
 						// Storage / disks
 						var mlst = Sections.user_disk_refresh( mountlist, userInfo.ID );
-					
+						
 						return mlst;
 					},
 					
@@ -4936,7 +4936,7 @@ Sections.accounts_users = function( cmd, extra )
 							
 							
 							
-							//console.log( '[2] mountlist ', { e:e, d:(rows?rows:d) } );
+							console.log( '[2] mountlist ', { e:e, d:(rows?rows:d), args: { userid: extra, authid: Application.authId } } );
 							if( e != 'ok' ) rows = '404';
 							loadingInfo.mountlist = rows;
 							
@@ -8438,13 +8438,15 @@ Sections.user_disk_cancel = function( userid )
 			ul = null;
 		}
 		
+		console.log( '[3] mountlist ', { e:e, d:(ul?ul:d), args: { userid: userid+"", authid: Application.authId } } );
+		
 		ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid );
 		
 		//console.log( 'Application.sendMessage( { type: \'system\', command: \'refreshdoors\' } );' );
 		
 		Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 	}
-	u.execute( 'mountlist', { userid: userid, authid: Application.authId } );
+	u.execute( 'mountlist', { userid: userid+"", authid: Application.authId } );
 	
 };
 
@@ -8831,7 +8833,15 @@ Sections.user_disk_refresh = function( mountlist, userid )
 					if( rows[b].Type == 'SharedDrive' ) continue;
 					try
 					{
-						rows[b].Config = JSON.parse( rows[b].Config );
+						if( typeof rows[b].Config != "object" )
+						{
+							var conf = JSON.parse( rows[b].Config );
+						
+							if( conf )
+							{
+								rows[b].Config = conf;
+							}
+						}
 					}
 					catch( e )
 					{

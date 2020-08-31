@@ -2820,7 +2820,15 @@ Sections.accounts_workgroups = function( cmd, extra )
 			
 										try
 										{
-											sorted[b].Config = JSON.parse( sorted[b].Config );
+											if( typeof sorted[b].Config != "object" )
+											{
+												var conf = JSON.parse( sorted[b].Config );
+											
+												if( conf )
+												{
+													sorted[b].Config = conf;
+												}
+											}
 										}
 										catch( e )
 										{
