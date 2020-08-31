@@ -114,6 +114,7 @@ void WSThreadPing( void *p )
 	UserSession *us = data->wstd_WSD->wsc_UserSession;
 	if( us != NULL )
 	{
+		/*
 		// Set timestamp and increase counter
 		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 		{
@@ -121,6 +122,7 @@ void WSThreadPing( void *p )
 			us->us_LoggedTime = time( NULL );
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
+		*/
 	
 		if( data == NULL || us->us_WSD == NULL || data->wstd_WSD->wsc_UserSession == NULL )
 		{
@@ -1111,9 +1113,30 @@ int ParseAndCall( WSThreadData *wstd )
 
 							wstd->wstd_Requestid = StringDuplicateN( (char *)(in + t[ 8 ].start), t[ 8 ].end-t[ 8 ].start );
 
+							UserSession *lus = wstd->wstd_WSD->wsc_UserSession;
+							if( lus != NULL )
+							{
+								// Set timestamp and increase counter
+								if( FRIEND_MUTEX_LOCK( &(lus->us_Mutex) ) == 0 )
+								{
+									lus->us_InUseCounter++;
+									lus->us_LoggedTime = time( NULL );
+									FRIEND_MUTEX_UNLOCK( &(lus->us_Mutex) );
+								}
+							}
 							// Multithread mode
 							if( pthread_create( &thread, NULL,  (void *(*)(void *))WSThreadPing, ( void *)wstd ) != 0 )
 							{
+								if( lus != NULL )
+								{
+									// Set timestamp and increase counter
+									if( FRIEND_MUTEX_LOCK( &(lus->us_Mutex) ) == 0 )
+									{
+										lus->us_InUseCounter--;
+										lus->us_LoggedTime = time( NULL );
+										FRIEND_MUTEX_UNLOCK( &(lus->us_Mutex) );
+									}
+								}
 							}
 							
 							wstd = NULL;
