@@ -102,15 +102,16 @@ void releaseWSData( WSThreadData *data )
 
 void WSThreadPing( void *p )
 {
-	pthread_detach( pthread_self() );
+	//pthread_detach( pthread_self() );
 	
 	WSThreadData *data = (WSThreadData *)p;
-	
+	/*
 	if( data == NULL || !data->wstd_WSD )
 	{
 		pthread_exit( NULL );
 		return;
 	}
+	*/
 	
 	UserSession *us = data->wstd_WSD->wsc_UserSession;
 	if( us != NULL )
@@ -147,7 +148,7 @@ void WSThreadPing( void *p )
 					us->us_InUseCounter--;
 					FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 				}
-				pthread_exit( NULL );
+				//pthread_exit( NULL );
 				return;
 			}
 			FRIEND_MUTEX_UNLOCK( &(data->wstd_WSD->wsc_Mutex) );
@@ -174,7 +175,7 @@ void WSThreadPing( void *p )
 		releaseWSData( data );
 	}
 
-	pthread_exit( NULL );
+	//pthread_exit( NULL );
 	return;
 }
 
@@ -1135,6 +1136,9 @@ int ParseAndCall( WSThreadData *wstd )
 									FRIEND_MUTEX_UNLOCK( &(lus->us_Mutex) );
 								}
 							}
+							
+							WSThreadPing( wstd );
+							/*
 							// Multithread mode
 							if( pthread_create( &thread, NULL,  (void *(*)(void *))WSThreadPing, ( void *)wstd ) != 0 )
 							{
@@ -1149,7 +1153,7 @@ int ParseAndCall( WSThreadData *wstd )
 									}
 								}
 							}
-							
+							*/
 							wstd = NULL;
 						}
 					}
