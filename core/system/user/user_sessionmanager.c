@@ -82,10 +82,11 @@ void USMDelete( UserSessionManager *smgr )
 		
 			smgr->usm_Sessions = NULL;
 		
+			FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
+			
 			pthread_mutex_destroy( &(smgr->usm_Mutex) );
 		
 			FFree( smgr );
-			FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
 		}
 	}
 }
