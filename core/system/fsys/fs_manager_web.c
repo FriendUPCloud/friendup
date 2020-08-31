@@ -774,8 +774,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						}							
 					
 						JSONFree( j );
-					
-						
 					}
 					// Fail
 					else
