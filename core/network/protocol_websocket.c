@@ -800,6 +800,8 @@ int ParseAndCall( WSThreadData *wstd )
 	jsmn_parser p;
 	jsmntok_t *t;
 	
+	char *in = wstd->wstd_Msg;
+	size_t len = wstd->wstd_Len;
 	
 	UserSession *locus = NULL;
 	UserSession *orig;
@@ -821,9 +823,6 @@ int ParseAndCall( WSThreadData *wstd )
 			return 1;
 		}
 	}
-	
-	char *in = wstd->wstd_Msg;
-	size_t len = wstd->wstd_Len;
 	
 	t = FCalloc( 256, sizeof(jsmntok_t) );
 	jsmn_init( &p );
