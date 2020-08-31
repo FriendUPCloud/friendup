@@ -5381,13 +5381,16 @@ Sections.accounts_users = function( cmd, extra )
 							{
 								bg1.onclick = function( e )
 								{
+									
 									if( ge( 'usUsername' ).value )
 									{
+										
 										saveUser( false, function( uid )
 										{
-							
+											
 											if( uid )
 											{
+												
 												// Refresh whole users list ...
 									
 												Sections.accounts_users(  );
@@ -6447,6 +6450,8 @@ Sections.accounts_users = function( cmd, extra )
 				
 			}
 		}
+		
+		console.log( "userList['Count'] " + userList['Count'] );
 		
 		if( ge( 'AdminUsersCount' ) )
 		{
@@ -9428,6 +9433,8 @@ function addUser( callback, username )
 		
 	}
 	
+	if( ShowLog ) console.log( 'addUser( callback, username ) ', args );
+	
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
@@ -9438,7 +9445,7 @@ function addUser( callback, username )
 		}
 		catch( e ) {  }
 		
-		//console.log( 'addUser() ', { e:e, d:d, args: args } );
+		if( ShowLog ) console.log( 'addUser() ', { e:e, d:d, args: args } );
 		
 		if( e == 'ok' && d )
 		{
@@ -9541,8 +9548,12 @@ function saveUser( uid, cb, newuser )
 	// If there's no uid, it means that this is a new user - add it.
 	if( !uid )
 	{
+		if( ShowLog ) console.log( args );
+		
 		addUser( function( res, dat )
 		{
+			if( ShowLog ) console.log( 'addUser( function( res, dat ) ', { res: res, dat: dat } );
+			
 			if( res )
 			{
 				// The user was added, now save the rest of the information
