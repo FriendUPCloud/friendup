@@ -105,6 +105,7 @@ void WSThreadPing( void *p )
 	pthread_detach( pthread_self() );
 	
 	WSThreadData *data = (WSThreadData *)p;
+	
 	if( data == NULL || !data->wstd_WSD )
 	{
 		pthread_exit( NULL );
@@ -114,6 +115,7 @@ void WSThreadPing( void *p )
 	UserSession *us = data->wstd_WSD->wsc_UserSession;
 	if( us != NULL )
 	{
+		unsigned char *answer = NULL;
 		/*
 		// Set timestamp and increase counter
 		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
@@ -124,30 +126,38 @@ void WSThreadPing( void *p )
 		}
 		*/
 	
-		if( data == NULL || us->us_WSD == NULL || data->wstd_WSD->wsc_UserSession == NULL )
+		if( FRIEND_MUTEX_LOCK( &(data->wstd_WSD->wsc_Mutex) ) == 0 )
 		{
-			if( data != NULL )
+			if( data == NULL || us->us_WSD == NULL || data->wstd_WSD->wsc_UserSession == NULL )
 			{
-				if( data->wstd_Requestid != NULL )
+				if( data != NULL )
 				{
-					FFree( data->wstd_Requestid );
+					if( data->wstd_Requestid != NULL )
+					{
+						FFree( data->wstd_Requestid );
+					}
+					FFree( data );
 				}
-				FFree( data );
+				FRIEND_MUTEX_UNLOCK( &(data->wstd_WSD->wsc_Mutex) );
+				
+				// Decrease counter
+				if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+				{
+					us->us_InUseCounter--;
+					FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+				}
+				pthread_exit( NULL );
+				return;
 			}
-			// Decrease counter
-			if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
-			{
-				us->us_InUseCounter--;
-				FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
-			}
-			pthread_exit( NULL );
-			return;
+			FRIEND_MUTEX_UNLOCK( &(data->wstd_WSD->wsc_Mutex) );
 		}
 	
-		unsigned char *answer = FMalloc( 1024 );
-		int answersize = snprintf( (char *)answer, 1024, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%s\"}}", data->wstd_Requestid );
-		UserSessionWebsocketWrite( us, answer, answersize, LWS_WRITE_TEXT );	
-		FFree( answer );
+		if( ( answer = FMalloc( 1024 ) ) != NULL )
+		{
+			int answersize = snprintf( (char *)answer, 1024, "{\"type\":\"con\",\"data\" :{\"type\":\"pong\",\"data\":\"%s\"}}", data->wstd_Requestid );
+			UserSessionWebsocketWrite( us, answer, answersize, LWS_WRITE_TEXT );	
+			FFree( answer );
+		}
 		releaseWSData( data );
 
 		// Decrease counter
