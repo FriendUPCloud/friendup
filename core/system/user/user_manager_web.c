@@ -322,7 +322,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						UserSession *uses = (UserSession *) ses->us;
 						if( strcmp( sessionid, uses->us_SessionID ) == 0 )
 						{
-							strncpy( uses->us_Name, name, sizeof( uses->us_Name ) );
 							nameSet = TRUE;
 						}
 						ses = (UserSessListEntry *)ses->node.mln_Succ;
@@ -331,7 +330,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				}
 				else
 				{
-					strncpy( loggedSession->us_Name, name, sizeof( loggedSession->us_Name )  );
 					nameSet = TRUE;
 				}
 				
@@ -1828,11 +1826,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 									int size = 0;
 									if( pos == 0 )
 									{
-										size = snprintf( temp, 2047, "{ \"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\",\"name\":\"%s\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LoggedTime, us->us_Name );
+										size = snprintf( temp, 2047, "{ \"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LoggedTime );
 									}
 									else
 									{
-										size = snprintf( temp, 2047, ",{ \"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\",\"name\":\"%s\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LoggedTime, us->us_Name );
+										size = snprintf( temp, 2047, ",{ \"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LoggedTime );
 									}
 									BufStringAddSize( bs, temp, size );
 							
@@ -2076,11 +2074,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 
 							if( pos == 0 )
 							{
-								tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\", \"deviceidentity\":\"%s\",\"name\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity, locses->us_Name );
+								tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\", \"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
 							}
 							else
 							{
-								tmpsize = snprintf( tmp, sizeof(tmp), ",{\"username\":\"%s\", \"deviceidentity\":\"%s\",\"name\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity , locses->us_Name );
+								tmpsize = snprintf( tmp, sizeof(tmp), ",{\"username\":\"%s\", \"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
 							}
 							
 							BufStringAddSize( bs, tmp, tmpsize );
@@ -2187,11 +2185,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							
 							if( pos == 0 )
 							{
-								tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\", \"deviceidentity\":\"%s\",\"name\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity, locses->us_Name );
+								tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\", \"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
 							}
 							else
 							{
-								tmpsize = snprintf( tmp, sizeof(tmp), ",{\"username\":\"%s\", \"deviceidentity\":\"%s\",\"name\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity, locses->us_Name );
+								tmpsize = snprintf( tmp, sizeof(tmp), ",{\"username\":\"%s\", \"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
 							}
 							
 							BufStringAddSize( bs, tmp, tmpsize );

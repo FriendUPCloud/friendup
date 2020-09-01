@@ -364,9 +364,12 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 				FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 				if( en != NULL )
 				{
-					en->fq_Data = FMalloc( msglen+10+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
-					memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msgptr, msglen );
-					en->fq_Size = msglen;
+					en->fq_Data = FMalloc( msglen+32+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
+					if( en->fq_Data != NULL )
+					{
+						memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msgptr, msglen );
+						en->fq_Size = msglen;
+					}
 					en->fq_Priority = 3;	// default priority
 			
 					if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
