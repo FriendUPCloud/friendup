@@ -690,6 +690,7 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 						//Log( FLOG_INFO, "[WS] NO JSON - Passed memcpy..\n" );
 						DEBUG("[WS] user session ptr %p message len %d\n", locus, msgLen );
 
+						locus->us_LoggedTime = time( NULL );
 						UserSessionWebsocketWrite( locus, buf, znew + jsonsize + END_CHAR_SIGNS, LWS_WRITE_TEXT );
 					
 						FFree( buf );
@@ -1089,6 +1090,10 @@ int ParseAndCall( WSThreadData *wstd )
 						{
 							wstd->wstd_Requestid = StringDuplicateN( (char *)(in + t[ 8 ].start), t[ 8 ].end-t[ 8 ].start );
 
+							if( locus != NULL )
+							{
+								locus->us_LoggedTime = time( NULL );
+							}
 							WSThreadPing( wstd );
 
 							wstd = NULL;

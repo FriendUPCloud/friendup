@@ -915,7 +915,7 @@ int USMRemoveOldSessions( void *lsb )
 	
 	time_t acttime = time( NULL );
 	
-	DEBUG("USMRemoveOldSessions\n" );
+	DEBUG("[USMRemoveOldSessions] start\n" );
 
 	BufString *sqlreq = BufStringNew();
 	BufStringAdd( sqlreq,  "DELETE from `FUserSession` WHERE SessionID in(\"" );
@@ -924,13 +924,13 @@ int USMRemoveOldSessions( void *lsb )
 	
 	// remove sessions from memory
 	UserSessionManager *smgr = sb->sl_USM;
-	int nr = 0;
+	//int nr = 0;
 	// we are conting maximum number of sessions
 	//FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) );
-	DEBUG("CHECK10\n");
+	DEBUG("[USMRemoveOldSessions] CHECK10\n");
+	/*
 	if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) == 0 )
 	{
-		
 		UserSession *cntses = smgr->usm_Sessions;
 		while( cntses != NULL )
 		{
@@ -939,16 +939,16 @@ int USMRemoveOldSessions( void *lsb )
 		}
 		FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
 	}
+	*/
 	// now we are adding entries  which will be removed to array
 	
-	UserSession **remsessions = FCalloc( nr, sizeof(UserSession *) );
-	if( remsessions != NULL )
+	//UserSession **remsessions = FCalloc( nr, sizeof(UserSession *) );
+	//if( remsessions != NULL )
 	{
 		if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) == 0 )
 		{
 			UserSession *actSession = smgr->usm_Sessions;
 			UserSession *remSession = actSession;
-			nr = 0;
 	
 			while( actSession != NULL )
 			{
@@ -978,7 +978,8 @@ int USMRemoveOldSessions( void *lsb )
 					}
 					BufStringAddSize( sqlreq, temp, size );
 			
-					remsessions[ nr++ ] = remSession;
+					remSession->node.mln_Succ = (MinNode *) smgr->usm_SessionsToBeRemoved;
+					smgr->usm_SessionsToBeRemoved = remSession;
 				}
 			}
 			BufStringAddSize( sqlreq, "\")", 2 );
@@ -986,6 +987,7 @@ int USMRemoveOldSessions( void *lsb )
 		    FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
 		}
         
+        /*
 		int i;
 		for( i=0 ; i < nr ; i++ )
 		{
@@ -1003,6 +1005,7 @@ int USMRemoveOldSessions( void *lsb )
 		}
 		
 		FFree( remsessions );
+		*/
 	}
 	
 	if( temp[ 0 ] != 0 )
