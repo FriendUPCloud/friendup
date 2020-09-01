@@ -905,45 +905,18 @@ void USMDebugSessions( UserSessionManager *smgr )
 int USMRemoveOldSessions( void *lsb )
 {
 	SystemBase *sb = (SystemBase *)lsb;
-	/*
-	FULONG sentID = 0;
-	if( sb->sl_Sentinel != NULL && sb->sl_Sentinel->s_User != NULL )
-	{
-		sentID = sb->sl_Sentinel->s_User->u_ID;
-	}
-	*/
-	
+
 	time_t acttime = time( NULL );
 	
 	DEBUG("[USMRemoveOldSessions] start\n" );
 
-	BufString *sqlreq = BufStringNew();
-	BufStringAdd( sqlreq,  "DELETE from `FUserSession` WHERE SessionID in(\"" );
-	char temp[ 512 ];
-	temp[ 0 ] = 0;
-	
 	// remove sessions from memory
 	UserSessionManager *smgr = sb->sl_USM;
 	//int nr = 0;
 	// we are conting maximum number of sessions
 	//FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) );
 	DEBUG("[USMRemoveOldSessions] CHECK10\n");
-	/*
-	if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) == 0 )
-	{
-		UserSession *cntses = smgr->usm_Sessions;
-		while( cntses != NULL )
-		{
-			nr++;
-			cntses = (UserSession *)cntses->node.mln_Succ;
-		}
-		FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
-	}
-	*/
-	// now we are adding entries  which will be removed to array
-	
-	//UserSession **remsessions = FCalloc( nr, sizeof(UserSession *) );
-	//if( remsessions != NULL )
+
 	{
 		if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) == 0 )
 		{
@@ -967,61 +940,15 @@ int USMRemoveOldSessions( void *lsb )
 		
 				if( canDelete == TRUE && ( ( acttime -  remSession->us_LoggedTime ) > sb->sl_RemoveSessionsAfterTime ) )
 				{
-					int size = 0;
-					if( temp[ 0 ] == 0 )
-					{
-						size = snprintf( temp, sizeof(temp), "%s", remSession->us_SessionID );
-					}
-					else
-					{
-						size = snprintf( temp, sizeof(temp), ",%s", remSession->us_SessionID );
-					}
-					BufStringAddSize( sqlreq, temp, size );
-			
 					remSession->node.mln_Succ = (MinNode *) smgr->usm_SessionsToBeRemoved;
 					smgr->usm_SessionsToBeRemoved = remSession;
 				}
 			}
-			BufStringAddSize( sqlreq, "\")", 2 );
-		
 		    FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
 		}
         
-        /*
-		int i;
-		for( i=0 ; i < nr ; i++ )
-		{
-			if( remsessions[ i ] != NULL )
-			{
-				char tmpmsg[ 2048 ];
-				int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session timeout\"}}" );
-				
-				int msgsndsize = WebSocketSendMessageInt( remsessions[ i ], tmpmsg, lenmsg );
-				
-				USMUserSessionRemove( smgr, remsessions[ i ] );
-				
-				smgr->usm_SessionCounter--;
-			}
-		}
-		
-		FFree( remsessions );
-		*/
+        USMRemoveOldSessionsinDB( sb );
 	}
-	
-	if( temp[ 0 ] != 0 )
-	{
-		SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
-		if( sqllib != NULL )
-		{
-			DEBUG("USMRemoveOldSessionsInDB launched\n");
-		
-			sqllib->QueryWithoutResults( sqllib, sqlreq->bs_Buffer );
-		
-			sb->LibrarySQLDrop( sb, sqllib );
-		}
-	}
-	BufStringDelete( sqlreq );
-	
 	//
 	// now remove unused application sessions
 	//
