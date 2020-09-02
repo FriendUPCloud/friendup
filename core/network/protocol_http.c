@@ -654,7 +654,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							{
 								if( tst->hme_Data != NULL )
 								{
-									session = USMGetSessionBySessionID( SLIB->sl_USM, (char *)tst->hme_Data ) );
+									session = USMGetSessionBySessionID( SLIB->sl_USM, (char *)tst->hme_Data );
 									/*
 									if( FRIEND_MUTEX_LOCK( &(SLIB->sl_USM->usm_Mutex) ) == 0 )
 									{

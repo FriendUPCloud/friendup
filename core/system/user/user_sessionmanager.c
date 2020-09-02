@@ -1291,7 +1291,7 @@ void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, c
  * @param isSentinel set flag to TRUE if user is Sentinel user
  * @return User to which session is attached or NULL
  */
-User *USMIsSentinel( UserSessionManager *usm, char *username, FBOOL *isSentinel )
+User *USMIsSentinel( UserSessionManager *usm, char *username, UserSession **rus, FBOOL *isSentinel )
 {
 	User *tuser = NULL;
 	SystemBase *sb = (SystemBase *)usm->usm_SB;
@@ -1318,6 +1318,7 @@ User *USMIsSentinel( UserSessionManager *usm, char *username, FBOOL *isSentinel 
 						isUserSentinel = TRUE;
 					}
 				}
+				*rus = tusers;
 				break;
 			}
 			tusers = (UserSession *)tusers->node.mln_Succ;

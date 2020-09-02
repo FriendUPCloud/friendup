@@ -2001,7 +2001,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 
 					if( deviceid == NULL )
 					{
-						User *tuser = USMIsSentinel( l->sl_USM, usrname, &isUserSentinel );
+						User *tuser = USMIsSentinel( l->sl_USM, usrname, &tusers, &isUserSentinel );
 						
 						if( tuser != NULL )
 						{
@@ -2017,7 +2017,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						
 						//if( FRIEND_MUTEX_LOCK( &(l->sl_USM->usm_Mutex) ) == 0 )
 						{
-							User *tuser = USMIsSentinel( l->sl_USM, usrname, &isUserSentinel );
+							User *tuser = USMIsSentinel( l->sl_USM, usrname, &tusers, &isUserSentinel );
 						
 							/*
 							tusers = l->sl_USM->usm_Sessions;
