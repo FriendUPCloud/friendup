@@ -970,12 +970,13 @@ int USMRemoveOldSessions( void *lsb )
 		{
 			UserSession *actSession = smgr->usm_Sessions;
 			UserSession *remSession = actSession;
+			UserSession *newRoot = NULL;
 	
 			while( actSession != NULL )
 			{
 				FBOOL canDelete = TRUE;
 				remSession = actSession;
-		
+				
 				if( sb->sl_Sentinel != NULL )
 				{
 					if( remSession->us_User == sb->sl_Sentinel->s_User && strcmp( remSession->us_DeviceIdentity, "remote" ) == 0 )
@@ -993,15 +994,24 @@ int USMRemoveOldSessions( void *lsb )
 				
 				actSession = (UserSession *)actSession->node.mln_Succ;
 				
+				// we delete session
 				if( canDelete == TRUE && ( ( acttime -  remSession->us_LoggedTime ) > sb->sl_RemoveSessionsAfterTime ) )
 				{
-					if( remSession != (MinNode *) smgr->usm_SessionsToBeRemoved )
+					if( remSession != (UserSession *) smgr->usm_SessionsToBeRemoved )
 					{
 						remSession->node.mln_Succ = (MinNode *) smgr->usm_SessionsToBeRemoved;
 						smgr->usm_SessionsToBeRemoved = remSession;
 					}
 				}
+				else // or create new root of working sessions
+				{
+					remSession->node.mln_Succ = (MinNode *)newRoot;
+					newRoot = remSession;
+				}
 			}
+			
+			smgr->usm_Sessions = newRoot;
+			
 		    FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
 		}
         
