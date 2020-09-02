@@ -972,7 +972,15 @@ int USMRemoveOldSessions( void *lsb )
 						canDelete = FALSE;
 					}
 				}
+				
+				if( actSession == (UserSession *)actSession->node.mln_Succ )
+				{
+					DEBUG( "DOUBLE ACTSESSION\n" );
+					break;
+				}
+				
 				actSession = (UserSession *)actSession->node.mln_Succ;
+				
 		
 				if( canDelete == TRUE && ( ( acttime -  remSession->us_LoggedTime ) > sb->sl_RemoveSessionsAfterTime ) )
 				{
