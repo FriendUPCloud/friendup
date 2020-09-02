@@ -558,16 +558,12 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 		if( uses == NULL )
 		{
 			DEBUG("[FCDB] Create new session\n");
-			//USMGetSessionByDeviceIDandUser()
 			createNewSession = TRUE;
 			
 		}
 		else
 		{
 			DEBUG("[FCDB] Found old session, using it %s\n", uses->us_SessionID );
-			if( uses->us_User->u_MainSessionID != NULL )
-			{
-			}
 		}
 		
 		//USMSessionSaveDB( sb->sl_USM, uses );

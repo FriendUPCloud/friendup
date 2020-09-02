@@ -591,7 +591,7 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 		if( ses ==  NULL )
 		{
 			INFO("[USMUserSessionAdd] Add UserSession to User. SessionID: %s usptr: %p\n", us->us_SessionID, us );
-	/*
+
 			UserSession *sessPtr =  smgr->usm_Sessions;
 			while( sessPtr != NULL )
 			{
@@ -603,7 +603,6 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 			}
 			
 			if( sessPtr == NULL )
-				*/
 			{
 				us->node.mln_Succ = (MinNode *)smgr->usm_Sessions;
 				smgr->usm_Sessions = us;
