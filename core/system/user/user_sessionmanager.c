@@ -204,10 +204,10 @@ UserSession *USMGetSessionByDeviceIDandUser( UserSessionManager *usm, char *devi
 		UserSession *us = usm->usm_Sessions;
 		while( us != NULL )
 		{
-			DEBUG("[USMGetSessionByDeviceIDandUser] userid >%ld< devidentity >%s<\n", us->us_UserID, us->us_DeviceIdentity );
+			DEBUG("[USMGetSessionByDeviceIDandUser] userid >%ld< devidentity >%s< compare to UID %ld and DEVID %s\n", us->us_UserID, us->us_DeviceIdentity, uid, devid );
 			if( us->us_UserID == uid && us->us_DeviceIdentity != NULL && strcmp( devid, us->us_DeviceIdentity ) == 0 )
 			{
-				DEBUG("[USMGetSessionByDeviceIDandUser] found user by deviceid: %s\n", devid );
+				DEBUG("[USMGetSessionByDeviceIDandUser] found user by deviceid: %s sessionID: %s\n", devid, us->us_SessionID );
 				FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 				return us;
 			}
@@ -591,7 +591,7 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 		if( ses ==  NULL )
 		{
 			INFO("[USMUserSessionAdd] Add UserSession to User. SessionID: %s usptr: %p\n", us->us_SessionID, us );
-	
+	/*
 			UserSession *sessPtr =  smgr->usm_Sessions;
 			while( sessPtr != NULL )
 			{
@@ -603,6 +603,7 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 			}
 			
 			if( sessPtr == NULL )
+				*/
 			{
 				us->node.mln_Succ = (MinNode *)smgr->usm_Sessions;
 				smgr->usm_Sessions = us;
@@ -993,7 +994,6 @@ int USMRemoveOldSessions( void *lsb )
 				
 				actSession = (UserSession *)actSession->node.mln_Succ;
 				
-		
 				if( canDelete == TRUE && ( ( acttime -  remSession->us_LoggedTime ) > sb->sl_RemoveSessionsAfterTime ) )
 				{
 					remSession->node.mln_Succ = (MinNode *) smgr->usm_SessionsToBeRemoved;
@@ -1034,7 +1034,7 @@ int USMRemoveOldSessionsinDB( void *lsb )
 		char temp[ 1024 ];
 	 
 		// we remove old entries older then sl_RemoveSessionsAfterTime (look in systembase.c)
-		snprintf( temp, sizeof(temp), "DELETE from `FUserSession` WHERE LoggedTime != '' AND (%lu-LoggedTime)>%lu", acttime, sb->sl_RemoveSessionsAfterTime );
+		snprintf( temp, sizeof(temp), "DELETE from `FUserSession` WHERE LoggedTime>0 AND (%lu-LoggedTime)>%lu", acttime, sb->sl_RemoveSessionsAfterTime );
 		DEBUG("USMRemoveOldSessionsDB launched SQL: %s\n", temp );
 	 
 		sqllib->QueryWithoutResults( sqllib, temp );
