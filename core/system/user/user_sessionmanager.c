@@ -470,6 +470,7 @@ UserSession *USMUserSessionAddToList( UserSessionManager *smgr, UserSession *s )
 			FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
 			return s;
 		}
+		// Add next usersession
 		s->node.mln_Succ = (MinNode *)smgr->usm_Sessions;
 		smgr->usm_Sessions = s;
 		smgr->usm_SessionCounter++;
@@ -749,6 +750,7 @@ int USMUserSessionRemove( UserSessionManager *smgr, UserSession *remsess )
 			
 				if( sess != NULL && sess == remsess )
 				{
+					// Remove usersession from list
 					prev->node.mln_Succ = sess->node.mln_Succ;
 					DEBUG("[USMUserSessionRemove] Session removed from list\n");
 					sessionRemoved = TRUE;
