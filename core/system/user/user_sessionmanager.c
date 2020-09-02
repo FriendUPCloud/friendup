@@ -66,6 +66,7 @@ void USMDelete( UserSessionManager *smgr )
 			
 				DEBUG("[USMDelete] \t\tRemove session : %s uid %lu\n", rem->us_SessionID, rem->us_UserID );
 			
+				USMGetSessionsDeleteDB( smgr, rem->us_SessionID );
 				UserSessionDelete( rem );
 			}
 		
@@ -77,6 +78,7 @@ void USMDelete( UserSessionManager *smgr )
 			
 				DEBUG("[USMDelete] \t\tRemove session from remove list: %s uid %lu\n", rem->us_SessionID, rem->us_UserID );
 			
+				USMGetSessionsDeleteDB( smgr, rem->us_SessionID );
 				UserSessionDelete( rem );
 			}
 		
@@ -496,6 +498,7 @@ UserSession *USMUserSessionAddToList( UserSessionManager *smgr, UserSession *s )
 			remSess = actSess;
 			actSess = (UserSession *)actSess->node.mln_Succ;
 			
+			USMGetSessionsDeleteDB( smgr, remSess->us_SessionID );
 			UserSessionDelete( remSess );
 		}
 	}
@@ -1014,8 +1017,6 @@ int USMRemoveOldSessions( void *lsb )
 			
 		    FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
 		}
-        
-        USMRemoveOldSessionsinDB( sb );
 	}
 	//
 	// now remove unused application sessions
