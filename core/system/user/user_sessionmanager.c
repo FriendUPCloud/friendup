@@ -462,9 +462,14 @@ UserSession *USMUserSessionAddToList( UserSessionManager *smgr, UserSession *s )
 {
 	DEBUG("[USMUserSessionAddToList] start\n");
 	
-	DEBUG("CHECK7\n");
 	if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) == 0 )
 	{
+		if( smgr->usm_Sessions == s )
+		{
+			DEBUG("[USMUserSessionAddToList] stop adding same session!\n");
+			FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
+			return s;
+		}
 		s->node.mln_Succ = (MinNode *)smgr->usm_Sessions;
 		smgr->usm_Sessions = s;
 		smgr->usm_SessionCounter++;
