@@ -65,6 +65,16 @@
 #define LIB_REVISION		0
 #define CONFIG_DIRECTORY	"cfg/"
 
+#define MINS1 60
+#define MINS5 300
+#define MINS6 460
+#define MINS30 1800
+#define MINS60 MINS6*10
+#define MINS360 6*MINS60
+#define HOUR12 12*MINS60
+#define DAYS1 24*MINS60
+#define DAYS5 5*24*MINS60
+
 //#define USE_WORKERS
 
 //
@@ -317,6 +327,8 @@ SystemBase *SystemInit( void )
 	strcpy( l->RSA_CLIENT_KEY_PEM, "/home/stefkos/development/friendup/build/testkeys/client.pem" );
 	l->RSA_CLIENT_KEY_PEM[ 0 ] = 0;
 	
+	l->sl_RemoveOldSessionTimeout = 0;
+	
 	if( plib != NULL && plib->Open != NULL )
 	{
 		char *ptr = getenv("FRIEND_HOME");
@@ -369,6 +381,8 @@ SystemBase *SystemInit( void )
 			DEBUG("[SystemBase] connections read %d\n", l->sqlpoolConnections );
 			options = plib->ReadStringNCS( prop, "databaseuser:options", NULL );
 			DEBUG("[SystemBase] options %s\n",options );
+			
+			l->sl_RemoveOldSessionTimeout = plib->ReadIntNCS( prop, "user:timeout", MINS60 );
 			
 			l->sl_CacheFiles = plib->ReadIntNCS( prop, "Options:CacheFiles", 1 );
 			l->sl_UnMountDevicesInDB = plib->ReadIntNCS( prop, "Options:UnmountInDB", 1 );
@@ -1031,19 +1045,9 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	Log( FLOG_INFO, "[SystemBase] Register Events\n");
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
-	
-	#define MINS1 60
-	#define MINS5 300
-	#define MINS6 460
-	#define MINS30 1800
-	#define MINS60 MINS6*10
-	#define MINS360 6*MINS60
-	#define HOUR12 12*MINS60
-	#define DAYS1 24*MINS60
-	#define DAYS5 5*24*MINS60
 
 	EventAdd( l->sl_EventManager, "DoorNotificationRemoveEntries", DoorNotificationRemoveEntries, l, time( NULL )+MINS30, MINS30, -1 );
-	EventAdd( l->sl_EventManager, "USMRemoveOldSessions", USMRemoveOldSessions, l, time( NULL )+MINS60, MINS60, -1 );
+	EventAdd( l->sl_EventManager, "USMRemoveOldSessions", USMRemoveOldSessions, l, time( NULL )+l->sl_RemoveOldSessionTimeout, l->sl_RemoveOldSessionTimeout, -1 );	// default 60mins
 	// test, to remove
 	EventAdd( l->sl_EventManager, "PIDThreadManagerRemoveThreads", PIDThreadManagerRemoveThreads, l->sl_PIDTM, time( NULL )+MINS60, MINS60, -1 );
 	EventAdd( l->sl_EventManager, "CacheUFManagerRefresh", CacheUFManagerRefresh, l->sl_CacheUFM, time( NULL )+DAYS5, DAYS5, -1 );
