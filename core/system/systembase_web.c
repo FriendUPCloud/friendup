@@ -2001,35 +2001,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 
 					if( deviceid == NULL )
 					{
-						User *tuser = NULL;
-						
-						if( FRIEND_MUTEX_LOCK( &(l->sl_USM->usm_Mutex) ) == 0 )
-						{
-							tusers = l->sl_USM->usm_Sessions;
-
-							while( tusers != NULL )
-							{
-								tuser = tusers->us_User;
-								// Check both username and password
-
-								if( strcmp( tuser->u_Name, usrname ) == 0 )
-								{
-									FBOOL isUserSentinel = FALSE;
-							
-									Sentinel *sent = l->GetSentinelUser( l );
-									if( sent != NULL )
-									{
-										if( tuser == sent->s_User )
-										{
-											isUserSentinel = TRUE;
-										}
-									}
-									break;
-								}
-								tusers = (UserSession *)tusers->node.mln_Succ;
-							}
-							FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
-						}
+						User *tuser = USMIsSentinel( l->sl_USM, usrname, &isUserSentinel );
 						
 						if( tuser != NULL )
 						{
@@ -2043,10 +2015,11 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					else	// deviceid != NULL
 					{
 						
-						if( FRIEND_MUTEX_LOCK( &(l->sl_USM->usm_Mutex) ) == 0 )
+						//if( FRIEND_MUTEX_LOCK( &(l->sl_USM->usm_Mutex) ) == 0 )
 						{
-							User *tuser = NULL;
-							
+							User *tuser = USMIsSentinel( l->sl_USM, usrname, &isUserSentinel );
+						
+							/*
 							tusers = l->sl_USM->usm_Sessions;
 							while( tusers != NULL )
 							{
@@ -2072,6 +2045,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								tusers = (UserSession *)tusers->node.mln_Succ;
 							}
 							FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
+							*/
 							
 							if( tuser != NULL )
 							{

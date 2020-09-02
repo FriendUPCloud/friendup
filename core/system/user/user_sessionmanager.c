@@ -519,57 +519,71 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 	FBOOL userHaveMoreSessions = FALSE;
 	FBOOL duplicateMasterSession = FALSE;
 	
-	DEBUG("CHECK8\n");
+	if( us == NULL )
+	{
+		FERROR("Cannot add NULL session!\n");
+		return NULL;
+	}
+	
+	if( FRIEND_MUTEX_LOCK( &us->us_Mutex ) == 0 )
+	{
+		us->us_InUseCounter++;
+		FRIEND_MUTEX_UNLOCK( &us->us_Mutex );
+	}
+	
+	DEBUG("[USMUserSessionAdd] CHECK8\n");
 	if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) == 0 )
 	{
-		DEBUG("CHECK8 LOCKED\n");
+		DEBUG("[USMUserSessionAdd] CHECK8 LOCKED\n");
 		UserSession *ses =  smgr->usm_Sessions;
 		while( ses != NULL )
 		{
 			FBOOL quit = FALSE;
-			DEBUG("inside session\n");
+			DEBUG("[USMUserSessionAdd] inside session\n");
 			
-			if( FRIEND_MUTEX_LOCK( &us->us_Mutex ) == 0 )
+			DEBUG("[USMUserSessionAdd] Session locked, compare: %s vs %s\n", us->us_SessionID, ses->us_SessionID );
+			
+			if( us->us_SessionID != NULL && ses->us_SessionID != NULL && strncmp( us->us_SessionID, ses->us_SessionID, 256 ) == 0 )
 			{
-				DEBUG("Session locked, compare: %s vs %s\n", us->us_SessionID, ses->us_SessionID );
+				DEBUG("Found session with same sessionID, return!\n");
 				
-				if( us->us_SessionID != NULL && ses->us_SessionID != NULL && strncmp( us->us_SessionID, ses->us_SessionID, 256 ) == 0 )
+				FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
+				
+				if( FRIEND_MUTEX_LOCK( &us->us_Mutex ) == 0 )
 				{
-					DEBUG("Found session with same sessionID, return!\n");
+					us->us_InUseCounter--;
 					FRIEND_MUTEX_UNLOCK( &us->us_Mutex );
-					FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
-					return ses;
 				}
-				
-				if( ses->us_DeviceIdentity != NULL )
-				{
-					if( us->us_UserID == ses->us_UserID && strcmp( us->us_DeviceIdentity, ses->us_DeviceIdentity ) ==  0 )
-					{
-						DEBUG("[USMUserSessionAdd] Session found, no need to create new  one %lu devid %s\n", ses->us_UserID, ses->us_DeviceIdentity );
-						quit = TRUE;
-					}
-				}
-				else
-				{
-					if( ses->us_DeviceIdentity == us->us_DeviceIdentity )
-					{
-						DEBUG("[USMUserSessionAdd] Found session with empty deviceid\n");
-						quit = TRUE;
-					}
-				}
-				FRIEND_MUTEX_UNLOCK( &us->us_Mutex );
+				return ses;
 			}
 			
+			if( ses->us_DeviceIdentity != NULL )
+			{
+				if( us->us_UserID == ses->us_UserID && strcmp( us->us_DeviceIdentity, ses->us_DeviceIdentity ) ==  0 )
+				{
+					DEBUG("[USMUserSessionAdd] Session found, no need to create new  one %lu devid %s\n", ses->us_UserID, ses->us_DeviceIdentity );
+					quit = TRUE;
+				}
+			}
+			else
+			{
+				if( ses->us_DeviceIdentity == us->us_DeviceIdentity )
+				{
+					DEBUG("[USMUserSessionAdd] Found session with empty deviceid\n");
+					quit = TRUE;
+				}
+			}
+
 			if( quit == TRUE )
 			{
-				DEBUG("Break\n");
+				DEBUG("[USMUserSessionAdd] Break\n");
 				break;
 			}
 		
-			DEBUG("inside session 2 id: %s\n", us->us_SessionID );
+			DEBUG("[USMUserSessionAdd] inside session 2 id: %s\n", us->us_SessionID );
 			ses = (UserSession *)ses->node.mln_Succ;
 		}
-		DEBUG("CHECK8 after while\n");
+		DEBUG("[USMUserSessionAdd] CHECK8 after while\n");
 
 		// if session doesnt exist in memory we must add it to the list
 	
@@ -577,16 +591,19 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 		{
 			INFO("[USMUserSessionAdd] Add UserSession to User. SessionID: %s usptr: %p\n", us->us_SessionID, us );
 	
-			us->node.mln_Succ = (MinNode *)smgr->usm_Sessions;
-			smgr->usm_Sessions = us;
+			if( us != smgr->usm_Sessions )
+			{
+				us->node.mln_Succ = (MinNode *)smgr->usm_Sessions;
+				smgr->usm_Sessions = us;
+			}
 		}
 		else
 		{
 			duplicateMasterSession = TRUE;
 			us = ses;
-			DEBUG("User session was overwritten, ptr %p\n", us );
+			DEBUG("[USMUserSessionAdd] User session was overwritten, ptr %p\n", us );
 		}
-		DEBUG("CHECK8END\n");
+		DEBUG("[USMUserSessionAdd] CHECK8END\n");
 		FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
 	}
 	
@@ -623,6 +640,11 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 		if( locusr == NULL )
 		{
 			Log( FLOG_ERROR, "Cannot get user by ID\n");
+			if( FRIEND_MUTEX_LOCK( &us->us_Mutex ) == 0 )
+			{
+				us->us_InUseCounter--;
+				FRIEND_MUTEX_UNLOCK( &us->us_Mutex );
+			}
 			return NULL;
 		}
 		else
@@ -641,10 +663,7 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 				if( locusr != NULL && locusr->u_IsAPI == FALSE )
 				{
 					// we cannot regenerate session because drives are using this sessionid
-					//if( locusr->u_MainSessionID == NULL )
-					{
-						UserRegenerateSessionID( locusr, NULL );
-					}
+					UserRegenerateSessionID( locusr, NULL );
 				}
 				
 				DEBUG("[USMUserSessionAdd] SessionID will be overwriten\n");
@@ -654,8 +673,20 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 	else
 	{
 		FERROR("Couldnt find user with ID %lu\n", us->us_UserID );
+		if( FRIEND_MUTEX_LOCK( &us->us_Mutex ) == 0 )
+		{
+			us->us_InUseCounter--;
+			FRIEND_MUTEX_UNLOCK( &us->us_Mutex );
+		}
 		return NULL;
 	}
+	
+	if( FRIEND_MUTEX_LOCK( &us->us_Mutex ) == 0 )
+	{
+		us->us_InUseCounter--;
+		FRIEND_MUTEX_UNLOCK( &us->us_Mutex );
+	}
+	
 	return us;
 }
 
@@ -1242,4 +1273,48 @@ void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, c
 	{
 		sb->LibrarySQLDrop( sb, locSqllib );
 	}
+}
+
+/**
+ * Check if UserSession is attached to Sentinel
+ *
+ * @param usm pointer to UserSessionManager
+ * @param username name of the User
+ * @param isSentinel set flag to TRUE if user is Sentinel user
+ * @return User to which session is attached or NULL
+ */
+User *USMIsSentinel( UserSessionManager *usm, char *username, FBOOL *isSentinel )
+{
+	User *tuser = NULL;
+	SystemBase *sb = (SystemBase *)usm->usm_SB;
+	FBOOL isUserSentinel = FALSE;
+	
+	if( FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) ) == 0 )
+	{
+		UserSession *tusers = usm->usm_Sessions;
+
+		while( tusers != NULL )
+		{
+			tuser = tusers->us_User;
+			// Check both username and password
+
+			if( strcmp( tuser->u_Name, username ) == 0 )
+			{
+				FBOOL isUserSentinel = FALSE;
+				
+				Sentinel *sent = sb->GetSentinelUser( sb );
+				if( sent != NULL )
+				{
+					if( tuser == sent->s_User )
+					{
+						isUserSentinel = TRUE;
+					}
+				}
+				break;
+			}
+			tusers = (UserSession *)tusers->node.mln_Succ;
+		}
+		FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+	}
+	return tuser;
 }

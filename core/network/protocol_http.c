@@ -654,6 +654,8 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							{
 								if( tst->hme_Data != NULL )
 								{
+									session = USMGetSessionBySessionID( SLIB->sl_USM, (char *)tst->hme_Data ) );
+									/*
 									if( FRIEND_MUTEX_LOCK( &(SLIB->sl_USM->usm_Mutex) ) == 0 )
 									{
 										session = SLIB->sl_USM->usm_Sessions;
@@ -667,6 +669,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 										}
 										FRIEND_MUTEX_UNLOCK( &(SLIB->sl_USM->usm_Mutex) );
 									}
+									*/
 								}
 							}
 							UserLoggerStore( SLIB->sl_ULM, session, request->http_RawRequestPath, request->http_UserActionInfo );
