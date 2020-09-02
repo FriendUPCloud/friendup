@@ -659,6 +659,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 
 					while( curusrsess != NULL )
 					{
+						/*
 						if( curusrsess != NULL )
 						{
 							if( FRIEND_MUTEX_LOCK( &(curusrsess->us_Mutex) ) == 0 )
@@ -667,11 +668,11 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								FRIEND_MUTEX_UNLOCK( &(curusrsess->us_Mutex) );
 							}
 						}
+						*/
 						if( curusrsess->us_SessionID != NULL && curusrsess->us_User && curusrsess->us_User->u_MainSessionID != NULL )
 						{
 							if(  (strcmp( curusrsess->us_SessionID, sessionid ) == 0 || strcmp( curusrsess->us_User->u_MainSessionID, sessionid ) == 0 ) )
 							{
-
 								loggedSession = curusrsess;
 								userAdded = TRUE;		// there is no need to free resources
 								User *curusr = curusrsess->us_User;
@@ -679,6 +680,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								{
 									DEBUG("FOUND user: %s session sessionid %s provided session %s\n", curusr->u_Name, curusrsess->us_SessionID, sessionid );
 								}
+								/*
 								if( curusrsess != NULL )
 								{
 									if( FRIEND_MUTEX_LOCK( &(curusrsess->us_Mutex) ) == 0 )
@@ -687,9 +689,11 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 										FRIEND_MUTEX_UNLOCK( &(curusrsess->us_Mutex) );
 									}
 								}
+								*/
 								break;
 							}
 						}
+						/*
 						if( curusrsess != NULL )
 						{
 							if( FRIEND_MUTEX_LOCK( &(curusrsess->us_Mutex) ) == 0 )
@@ -698,6 +702,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								FRIEND_MUTEX_UNLOCK( &(curusrsess->us_Mutex) );
 							}
 						}
+						*/
 						curusrsess = (UserSession *)curusrsess->node.mln_Succ;
 					}
 					FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
