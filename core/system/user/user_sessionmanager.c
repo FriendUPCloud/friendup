@@ -1330,7 +1330,7 @@ User *USMIsSentinel( UserSessionManager *usm, char *username, UserSession **rus,
 			tuser = tusers->us_User;
 			// Check both username and password
 
-			if( strcmp( tuser->u_Name, username ) == 0 )
+			if( tuser != NULL && strcmp( tuser->u_Name, username ) == 0 )
 			{
 				FBOOL isUserSentinel = FALSE;
 				

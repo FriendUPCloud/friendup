@@ -1093,6 +1093,8 @@ int ParseAndCall( WSThreadData *wstd )
 							if( locus != NULL )
 							{
 								locus->us_LoggedTime = time( NULL );
+								
+								//sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime=%lld,SessionID='%s',UMA_ID=%lu WHERE `DeviceIdentity` = '%s' AND `UserID`=%lu", (long long)loggedSession->us_LoggedTime, loggedSession->us_SessionID, umaID, deviceid,  loggedSession->us_UserID );
 							}
 							WSThreadPing( wstd );
 
