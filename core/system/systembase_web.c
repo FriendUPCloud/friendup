@@ -2052,7 +2052,10 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								if( isUserSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, tuser, pass, &blockedTime ) == TRUE )
 								{
 									dstusrsess = tusers;
-									DEBUG("Found user session  id %s\n", tusers->us_SessionID );
+									if( tusers != NULL )
+									{
+										DEBUG("Found user session  id %s\n", tusers->us_SessionID );
+									}
 								}
 							}
 						}
