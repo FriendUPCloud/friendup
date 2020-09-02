@@ -655,21 +655,6 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 								if( tst->hme_Data != NULL )
 								{
 									session = USMGetSessionBySessionID( SLIB->sl_USM, (char *)tst->hme_Data );
-									/*
-									if( FRIEND_MUTEX_LOCK( &(SLIB->sl_USM->usm_Mutex) ) == 0 )
-									{
-										session = SLIB->sl_USM->usm_Sessions;
-										while( session != NULL )
-										{
-											if( strcmp( session->us_SessionID, (char *)tst->hme_Data ) == 0 )
-											{
-												break;
-											}
-											session = (UserSession *)session->node.mln_Succ;
-										}
-										FRIEND_MUTEX_UNLOCK( &(SLIB->sl_USM->usm_Mutex) );
-									}
-									*/
 								}
 							}
 							UserLoggerStore( SLIB->sl_ULM, session, request->http_RawRequestPath, request->http_UserActionInfo );
@@ -1351,19 +1336,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 						{
 							if( tst->hme_Data != NULL )
 							{
-								if( FRIEND_MUTEX_LOCK( &(SLIB->sl_USM->usm_Mutex) ) == 0 )
-								{
-									session = SLIB->sl_USM->usm_Sessions;
-									while( session != NULL )
-									{
-										if( strcmp( session->us_SessionID, (char *)tst->hme_Data ) == 0 )
-										{
-											break;
-										}
-										session = (UserSession *)session->node.mln_Succ;
-									}
-									FRIEND_MUTEX_UNLOCK( &(SLIB->sl_USM->usm_Mutex) );
-								}
+								session = USMGetSessionBySessionID( SLIB->sl_USM, (char *)tst->hme_Data );
 							}
 						}
 						UserLoggerStore( SLIB->sl_ULM, session, request->http_RawRequestPath, request->http_UserActionInfo );
