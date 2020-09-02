@@ -995,8 +995,11 @@ int USMRemoveOldSessions( void *lsb )
 				
 				if( canDelete == TRUE && ( ( acttime -  remSession->us_LoggedTime ) > sb->sl_RemoveSessionsAfterTime ) )
 				{
-					remSession->node.mln_Succ = (MinNode *) smgr->usm_SessionsToBeRemoved;
-					smgr->usm_SessionsToBeRemoved = remSession;
+					if( remSession != (MinNode *) smgr->usm_SessionsToBeRemoved )
+					{
+						remSession->node.mln_Succ = (MinNode *) smgr->usm_SessionsToBeRemoved;
+						smgr->usm_SessionsToBeRemoved = remSession;
+					}
 				}
 			}
 		    FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
