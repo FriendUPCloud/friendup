@@ -869,21 +869,27 @@ int ParseAndCall( WSThreadData *wstd )
 							int total = 0;
 							int data = 0;
 							
+							unsigned long int intstart = 0;
+							unsigned long int tendstrt = 0;
+							
 							for( i = 9; i < r ; i++ )
 							{
-								if( strncmp( "id",  in + t[ i ].start, t[ i ].end-t[ i ].start ) == 0 )
+								intstart = in + t[ i ].start;
+								tendstrt = t[ i ].end - t[ i ].start;
+								
+								if( strncmp( "id", intstart, tendstrt ) == 0 )
 								{
 									id = i+1;
 								}
-								else if( strncmp( "part",  in + t[ i ].start, t[ i ].end-t[ i ].start ) == 0 )
+								else if( strncmp( "part", intstart, tendstrt ) == 0 )
 								{
 									part = i+1;
 								}
-								else if( strncmp( "total",  in + t[ i ].start, t[ i ].end-t[ i ].start ) == 0 )
+								else if( strncmp( "total", intstart, tendstrt ) == 0 )
 								{
 									total = i+1;
 								}
-								else if( strncmp( "data",  in + t[ i ].start, t[ i ].end-t[ i ].start ) == 0 )
+								else if( strncmp( "data", intstart, tendstrt ) == 0 )
 								{
 									data = i+1;
 								}
@@ -894,9 +900,9 @@ int ParseAndCall( WSThreadData *wstd )
 							if( part > 0 && total > 0 && data > 0 && wstd->wstd_WSD->wsc_UserSession != NULL )
 							{
 								//DEBUG("[WS] Got chunked message: %d\n\n\n%.*s\n\n\n", t[ data ].end-t[ data ].start, t[ data ].end-t[ data ].start, (char *)(in + t[ data ].start) );
-								char *idc = StringDuplicateN( in + t[ id ].start, (int)(t[ id ].end-t[ id ].start) );
-								part = StringNToInt( in + t[ part ].start, (int)(t[ part ].end-t[ part ].start) );
-								total = StringNToInt( in + t[ total ].start, (int)(t[ total ].end-t[ total ].start) );
+								char *idc = StringDuplicateN( in + t[ id ].start,    (int)(t[ id ].end - t[ id ].start) );
+								part = StringNToInt(          in + t[ part ].start,  (int)(t[ part ].end - t[ part ].start) );
+								total = StringNToInt(         in + t[ total ].start, (int)(t[ total ].end - t[ total ].start) );
 								
 								//if( us != NULL )
 								{
@@ -958,8 +964,6 @@ int ParseAndCall( WSThreadData *wstd )
 											pthread_t t;
 											memset( &t, 0, sizeof( pthread_t ) );
 											if( pthread_create( &t, NULL, (void *(*)(void *))ParseAndCall, ( void *)wstd ) != 0 )
-											//memset( &(wstd->wstd_Thread), 0, sizeof( pthread_t ) );
-											//if( pthread_create( &(wstd->wstd_Thread), NULL, (void *(*)(void *))ParseAndCall, ( void *)wstd ) != 0 )
 											{
 												// Failed!
 												FFree( wstd );
@@ -1007,12 +1011,18 @@ int ParseAndCall( WSThreadData *wstd )
 					}
 					else	// connection message
 					{
+						unsigned long int intstart = 0;
+						unsigned long int tendstrt = 0;
+						
 						for( i = 4; i < r ; i++ )
 						{
 							i1 = i + 1;
+							
+							intstart = in + t[ i ].start;
+							tendstrt = t[ i ].end-t[ i ].start;
 						
 							// Incoming connection is authenticating with sessionid (the Workspace probably)
-							if( strncmp( "sessionId",  in + t[ i ].start, t[ i ].end-t[ i ].start ) == 0 )
+							if( strncmp( "sessionId",  intstart, tendstrt ) == 0 )
 							{
 								char session[ DEFAULT_SESSION_ID_SIZE ];
 								memset( session, 0, DEFAULT_SESSION_ID_SIZE );
@@ -1031,7 +1041,7 @@ int ParseAndCall( WSThreadData *wstd )
 									//login = TRUE;
 								
 									char answer[ 1024 ];
-									int len = snprintf( answer, 1024, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%.*s\"}}",t[ i1 ].end-t[ i1 ].start, (char *) (in + t[ i1 ].start) );
+									int len = snprintf( answer, 1024, "{\"type\":\"con\",\"data\":{\"type\":\"pong\",\"data\":\"%.*s\"}}",t[ i1 ].end-t[ i1 ].start, (char *) (in + t[ i1 ].start) );
 								
 									unsigned char *buf;
 									//int len = strlen( answer );
@@ -1049,7 +1059,7 @@ int ParseAndCall( WSThreadData *wstd )
 								}
 							}
 							// Incoming connection is authenticating with authid (from an application or an FS)
-							else if( strncmp( "authid",  in + t[ i ].start, t[ i ].end-t[ i ].start ) == 0 )
+							else if( strncmp( "authid",  intstart, tendstrt ) == 0 )
 							{
 								char authid[ DEFAULT_SESSION_ID_SIZE ];
 								memset( authid, 0, DEFAULT_SESSION_ID_SIZE );

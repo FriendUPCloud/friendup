@@ -262,8 +262,8 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 			
 			DEBUG("[UserSessionWebsocketWrite] Sending big message, size %d (%d chunks of max: %d)\n", msglen, totalChunk, MAX_SIZE_WS_MESSAGE );
 		
-			//if( us->us_Wsi != NULL )
-			{	
+			if( us->us_Wsi != NULL )
+			{
 				for( actChunk = 0; actChunk < totalChunk ; actChunk++ )
 				{
 					unsigned char *queueMsg = FMalloc( WS_PROTOCOL_BUFFER_SIZE );
@@ -310,7 +310,7 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 							FQPushFIFO( &(us->us_MsgQueue), en );
 							FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 						}
-					// callback writeable was here
+						// callback writeable was here
 					}
 				}
 				
