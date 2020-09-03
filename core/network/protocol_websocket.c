@@ -344,6 +344,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					
 					pthread_t t;
 					memset( &t, 0, sizeof( pthread_t ) );
+					
 					if( pthread_create( &t, NULL, (void *(*)(void *))ParseAndCall, ( void *)wstd ) != 0 )
 					//memset( &(wstd->wstd_Thread), 0, sizeof( pthread_t ) );
 					//if( pthread_create( &(wstd->wstd_Thread), NULL, (void *(*)(void *))ParseAndCall, ( void *)wstd ) != 0 )
@@ -815,6 +816,10 @@ int ParseAndCall( WSThreadData *wstd )
 				orig->us_InUseCounter--;
 				FRIEND_MUTEX_UNLOCK( &(orig->us_Mutex) );
 			}
+			// Free websocket thread data
+			FFree( wstd );
+			
+			// And exit
 			pthread_exit( NULL );
 			return 1;
 		}
@@ -1571,6 +1576,7 @@ int ParseAndCall( WSThreadData *wstd )
 	
 	if( wstd != NULL )
 		releaseWSData( wstd );
+	
 	
 	FFree( t );
 	
