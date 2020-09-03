@@ -1149,6 +1149,11 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		userID = usr->u_ID;
 		time_t timestamp = time( NULL );
 		//
+		if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
+		{
+			usr->u_InUse++;
+			FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
+		}
 		
 		{
 			UserSessListEntry  *usl = usr->u_SessionsList;
@@ -1163,7 +1168,6 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 						FRIEND_MUTEX_UNLOCK( &locses->us_Mutex );
 					}
 					
-					//WSCData *data = (WSCData *)us_WSConnections;
 					DEBUG("[AdminWebRequest] Send Message through websockets: %s clients: %p timestamptrue: %d\n", locses->us_DeviceIdentity, locses->us_WSD, ( ( (timestamp - locses->us_LoggedTime) < sb->sl_RemoveSessionsAfterTime ) ) );
 				
 					if( ( ( (timestamp - locses->us_LoggedTime) < sb->sl_RemoveSessionsAfterTime ) ) && locses->us_WSD != NULL )
@@ -1211,7 +1215,12 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 				} // locses = NULL
 				usl = (UserSessListEntry *)usl->node.mln_Succ;
 			}
-			//FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
+		}
+		
+		if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
+		{
+			usr->u_InUse--;
+			FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
 		}
 	}	// usr != NULL
 	else
