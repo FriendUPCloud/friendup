@@ -118,9 +118,9 @@ void WSThreadPing( WSThreadData *data )
 						FFree( data->wstd_Requestid );
 					}
 					
-					FRIEND_MUTEX_UNLOCK( &(data->wstd_WSD->wsc_Mutex) );
 					FFree( data );
 				}
+				FRIEND_MUTEX_UNLOCK( &(data->wstd_WSD->wsc_Mutex) );
 				
 				// Decrease counter
 				if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
@@ -128,7 +128,6 @@ void WSThreadPing( WSThreadData *data )
 					us->us_InUseCounter--;
 					FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 				}
-				//pthread_exit( NULL );
 				return;
 			}
 			FRIEND_MUTEX_UNLOCK( &(data->wstd_WSD->wsc_Mutex) );
@@ -148,7 +147,6 @@ void WSThreadPing( WSThreadData *data )
 		releaseWSData( data );
 	}
 
-	//pthread_exit( NULL );
 	return;
 }
 
