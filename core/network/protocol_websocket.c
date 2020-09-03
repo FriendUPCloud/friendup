@@ -265,6 +265,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				if( wsd->wsc_Buffer != NULL )
 				{
 					BufStringDelete( wsd->wsc_Buffer );
+					wsd->wsc_Buffer = NULL;
 				}
 			
 				lws_close_reason( wsi, LWS_CLOSE_STATUS_GOINGAWAY , NULL, 0 );
@@ -310,6 +311,10 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				}
 				else // only fragment was received
 				{
+					if( wsd->wsc_Buffer == NULL )
+					{
+						wsd->wsc_Buffer = BufStringNew();
+					}
 					DEBUG1("[WS] Only received: %s\n", in );
 					BufStringAddSize( wsd->wsc_Buffer, in, len );
 					FFree( in );
@@ -502,6 +507,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 			if( wsd->wsc_Buffer != NULL )
 			{
 				BufStringDelete( wsd->wsc_Buffer );
+				wsd->wsc_Buffer = NULL;
 			}
 	
 			lws_close_reason( wsi, LWS_CLOSE_STATUS_GOINGAWAY , NULL, 0 );
