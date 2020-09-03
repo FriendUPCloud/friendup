@@ -217,11 +217,16 @@ if( isset( $argv ) && isset( $argv[1] ) )
 		/*
 			special case for large amount of data in request; Friend Core creates a file for us to read and parse here
 		*/
-		if( count( $args ) == 1 && array_shift( explode('=',$args[0]) ) == 'friendrequestparameters')
+		if( count( $args ) == 1 )
 		{
-			$dataset = file_get_contents( end( explode( '=' , $args[0] ) ) );
-			$args = explode( '&', $dataset );
-			//$Logger->log( 'Date from that file: ' . print_r($newargs,1) );
+			$argso = explode( '=', $args[ 0 ] );
+			$args1 = $argso;
+			if( array_shift( $argso ) == 'friendrequestparameters' )
+			{
+				$dataset = file_get_contents( end( $args1 ) );
+				$args = explode( '&', $dataset );
+				//$Logger->log( 'Date from that file: ' . print_r($newargs,1) );
+			}
 		}
 
 		$num = 0;

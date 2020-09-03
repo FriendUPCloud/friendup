@@ -306,17 +306,17 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 							wsd->wsc_Buffer = BufStringNew();
 						}
 					}
+					DEBUG1("[WS] Callback receive (no remaining): %s\n", in );
 				}
-				else	// only fragment was received
+				else // only fragment was received
 				{
+					DEBUG1("[WS] Only received: %s\n", in );
 					BufStringAddSize( wsd->wsc_Buffer, in, len );
 					FFree( in );
 					return 0;
 				}
 				
 				// if we want to move full calls to WS threads
-				
-				DEBUG1("[WS] Callback receive: %s\n", in );
 				
 #ifdef INPUT_QUEUE
 				WSThreadData *wstd = FCalloc( 1, sizeof( WSThreadData ) );
@@ -1074,7 +1074,7 @@ int ParseAndCall( WSThreadData *wstd )
 									//INFO("[WS] Websocket communication set with user (authid) %s\n", authid );
 								
 									char answer[ 2048 ];
-									snprintf( answer, 2048, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%.*s\"}}",t[ i1 ].end-t[ i1 ].start, (char *) (in + t[ i1 ].start) );
+									snprintf( answer, 2048, "{\"type\":\"con\",\"data\":{\"type\":\"pong\",\"data\":\"%.*s\"}}",t[ i1 ].end-t[ i1 ].start, (char *) (in + t[ i1 ].start) );
 								
 									unsigned char *buf;
 									int len = strlen( answer );
@@ -1108,10 +1108,9 @@ int ParseAndCall( WSThreadData *wstd )
 								locus->us_LoggedTime = time( NULL );
 								
 								//sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime=%lld,SessionID='%s',UMA_ID=%lu WHERE `DeviceIdentity` = '%s' AND `UserID`=%lu", (long long)loggedSession->us_LoggedTime, loggedSession->us_SessionID, umaID, deviceid,  loggedSession->us_UserID );
+								WSThreadPing( wstd );
+								wstd = NULL;
 							}
-							WSThreadPing( wstd );
-
-							wstd = NULL;
 						}
 					}
 				}
