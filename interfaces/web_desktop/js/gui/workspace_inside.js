@@ -720,7 +720,8 @@ var WorkspaceInside = {
 					Workspace.refreshDesktop( false, true );
 				}
 
-				Friend.User.SetUserConnectionState( 'online' );
+				if( Friend.User )
+					Friend.User.SetUserConnectionState( 'online' );
 				
 				// Reattach
 				if( !Workspace.conn && selfConn )
