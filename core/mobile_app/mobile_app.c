@@ -1083,8 +1083,6 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 {
 #endif
 	SystemBase *sb = (SystemBase *)lsb;
-	UserMobileAppConnections *userConnections = NULL;
-	MobileManager *mm = sb->sl_MobileManager;
 	Notification *notif = NULL;
 	FBOOL wsMessageSent = FALSE;
 	
@@ -1096,9 +1094,9 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	
 	// if value was not passed, create new Notification
 	
-	char *escapedChannelId = json_escape_string(channel_id);
-	char *escapedTitle = json_escape_string(title);
-	char *escapedContent = json_escape_string(content);
+	char *escapedChannelId = json_escape_string( channel_id );
+	char *escapedTitle = json_escape_string( title );
+	char *escapedContent = json_escape_string( content );
 	char *escapedApp = NULL;
 	char *escapedExtraString = NULL;
 	FULONG userID = 0;
@@ -1114,6 +1112,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		reqLengith += strlen( escapedExtraString );
 	}
 	
+	// Create notification structure in memory
 	notif = NotificationNew();
 	if( notif != NULL )
 	{
@@ -1125,10 +1124,10 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		notif->n_Extra = escapedExtraString;
 		notif->n_NotificationType = notification_type;
 		notif->n_Status = NOTIFY_ACTION_REGISTER;
-		notif->n_Created = time(NULL);
 		notif->n_OriginalCreateT = ctimestamp;
 	}
 	
+	// store notification in DB
 	NotificationManagerAddNotificationDB( sb->sl_NotificationManager, notif );
 	
 	reqLengith += strlen( notif->n_Channel ) + strlen( notif->n_Content ) + strlen( notif->n_Title ) + LWS_PRE + 512/*some slack*/;
@@ -1151,7 +1150,6 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		time_t timestamp = time( NULL );
 		//
 		
-		if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
 		{
 			UserSessListEntry  *usl = usr->u_SessionsList;
 			while( usl != NULL )
@@ -1159,6 +1157,12 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 				UserSession *locses = (UserSession *)usl->us;
 				if( locses != NULL )
 				{
+					if( FRIEND_MUTEX_LOCK( &locses->us_Mutex ) == 0 )
+					{
+						locses->us_InUseCounter++;
+						FRIEND_MUTEX_UNLOCK( &locses->us_Mutex );
+					}
+					
 					//WSCData *data = (WSCData *)us_WSConnections;
 					DEBUG("[AdminWebRequest] Send Message through websockets: %s clients: %p timestamptrue: %d\n", locses->us_DeviceIdentity, locses->us_WSD, ( ( (timestamp - locses->us_LoggedTime) < sb->sl_RemoveSessionsAfterTime ) ) );
 				
@@ -1170,6 +1174,8 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 						lns->ns_RequestID = locses->us_ID;
 						lns->ns_Target = MOBILE_APP_TYPE_NONE;	// none means WS
 						lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
+						
+						// store notification for user session in database
 						NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 					
 						if( notif->n_Extra )
@@ -1196,10 +1202,16 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 						lns->node.mln_Succ = (MinNode *)notif->n_NotificationsSent;
 						notif->n_NotificationsSent = lns;
 					}
+					
+					if( FRIEND_MUTEX_LOCK( &locses->us_Mutex ) == 0 )
+					{
+						locses->us_InUseCounter--;
+						FRIEND_MUTEX_UNLOCK( &locses->us_Mutex );
+					}
 				} // locses = NULL
 				usl = (UserSessListEntry *)usl->node.mln_Succ;
 			}
-			FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
+			//FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
 		}
 	}	// usr != NULL
 	else
@@ -1221,7 +1233,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		NotificationManagerAddToList( sb->sl_NotificationManager, notif );
 	}
 	
-	DEBUG("NotificationRegister: get all connections by name: %s pointer: %p\n", username, userConnections );
+	DEBUG("NotificationRegister: get all connections by name: %s\n", username );
 
 #ifdef USE_ONLY_FIREBASE
 	

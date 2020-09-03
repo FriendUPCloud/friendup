@@ -278,7 +278,10 @@ static void crash_handler(int sig __attribute__((unused))){
 			system( buffer );
 		}
 	}
-	if (messages) { free(messages); }
+	if( messages )
+	{
+		free(messages);
+	}
 
 	printf("\n\n"
 			"#######################################################\n"

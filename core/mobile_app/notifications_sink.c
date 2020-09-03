@@ -61,28 +61,22 @@ char **globalServerEntries = NULL;
 
 static inline int WriteMessageSink( DataQWSIM *d, unsigned char *msg, int len )
 {
-	//MobileAppNotif *man = (MobileAppNotif *) mac->user_data;
-	//if( man != NULL )
+	DEBUG("WriteMessageSink\n"); 
+	FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
+	if( en != NULL )
 	{
-		DEBUG("WriteMessageSink\n"); 
-		FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
-		if( en != NULL )
+		DEBUG("Message added to queue: '%s'\n", msg );
+		en->fq_Data = FMalloc( len+64+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
+		memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msg, len );
+		
+		en->fq_Size = len;
+
+		if( FRIEND_MUTEX_LOCK( &d->d_Mutex ) == 0 )
 		{
-			DEBUG("Message added to queue: '%s'\n", msg );
-			en->fq_Data = FMalloc( len+64+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
-			memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msg, len );
+			FQPushFIFO( &(d->d_Queue), en );
+			FRIEND_MUTEX_UNLOCK( &(d->d_Mutex) );
 			
-			en->fq_Size = len;
-			//FERROR("\t\t\t\t\t\t\t\t\t\t\tSENDMESSSAGE\n<%s> size: %d\n\n\n\n", msg, len );
-	
-			//FQPushFIFO( &(man->man_Queue), en );
-			//lws_callback_on_writable( mac->websocket_ptr );
-			if( FRIEND_MUTEX_LOCK( &d->d_Mutex ) == 0 )
-			{
-				FQPushFIFO( &(d->d_Queue), en );
-				lws_callback_on_writable( d->d_Wsi );
-				FRIEND_MUTEX_UNLOCK( &(d->d_Mutex) );
-			}
+			lws_callback_on_writable( d->d_Wsi );
 		}
 	}
 	return len;
@@ -115,7 +109,7 @@ int WriteMessageToServers( DataQWSIM *d, unsigned char *msg, int len )
 int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, void* in, ssize_t len)
 {
 	MobileAppNotif *man = (MobileAppNotif *)user;
-	//DEBUG("notifications websocket callback, reason %d, len %zu, wsi %p lenasint %d\n", reason, len, wsi, (int) len);
+
 	DEBUG("notifications websocket callback, reason %d, len %ld, wsi %p lenasint %d is bigger then 0: %d\n", reason, len, wsi, (int) len,  (len > 0)  );
 	char *buf = NULL;
 	if( reason == LWS_CALLBACK_RECEIVE && in != NULL && (len > 0) )
@@ -509,7 +503,6 @@ void ProcessSinkMessage( void *locd )
 							DEBUG( "\n\nnotification \\o/\n" );
 							int p;
 							int notification_type = -1;
-							//char *username = NULL;
 							char *channel_id = NULL;
 							char *title = NULL;
 							char *content = NULL;
@@ -624,11 +617,11 @@ void ProcessSinkMessage( void *locd )
 										}
 										FFree( dme );
 									}
-									if( channel_id != NULL ) FFree( channel_id );
-									if( title != NULL ) FFree( title );
-									if( content != NULL ) FFree( content );
-									if( application != NULL ) FFree( application );
-									if( extra != NULL ) FFree( extra );
+									if( channel_id != NULL ){ FFree( channel_id ); channel_id = NULL; }
+									if( title != NULL ){ FFree( title ); title = NULL; }
+									if( content != NULL ){ FFree( content ); content = NULL; }
+									if( application != NULL ){ FFree( application ); application = NULL; }
+									if( extra != NULL ){ FFree( extra ); extra = NULL; }
 									ReplyError( d, WS_NOTIF_SINK_ERROR_PARAMETERS_NOT_FOUND );
 									goto error_point;
 								}
@@ -697,7 +690,6 @@ void ProcessSinkMessage( void *locd )
 								FFree( dme );
 							}
 							
-							//if( username != NULL ) FFree( username );
 							if( channel_id != NULL ) FFree( channel_id );
 							if( title != NULL ) FFree( title );
 							if( content != NULL ) FFree( content );
@@ -717,9 +709,7 @@ void ProcessSinkMessage( void *locd )
 								{
 									reqid = StringDuplicateN( data + t[14].start, t[14].end - t[14].start );
 								}
-							
-								//DEBUG("Check1: %.*s\n", 10, data + t[15].start );
-							
+
 								if( reqid != NULL )
 								{
 									BufString *bs = BufStringNew();
@@ -800,7 +790,7 @@ void ProcessSinkMessage( void *locd )
 										int udatalen = snprintf( udata, sizeof(udata), "{\"type\":\"reply\",\"data\":{\"requestid\":\"%s\",\"error\":\"%s\"}}", \
 											reqid, "User not found"
 										);
-										//BufStringAddSize( bs, udata, udatalen );
+
 										WriteMessageSink( d, (unsigned char *)(udata)+LWS_PRE, udatalen );
 									}
 								
@@ -864,7 +854,6 @@ void ProcessSinkMessage( void *locd )
 							//{"type":"service","data":{"type":"room","data":{"requestId":"bladdibla","response":null,"error":"ERR_NO_OWNER"}}}
 							//pos 13: error":"ERR_NO_OWNER"}}}
 							//14: ERR_NO_OWNER"}}}
-
 							
 							DEBUG("External service incoming: room notification\npos 9: %s\npos 13: %s\n14: %s\n", data + t[9].start, data + t[13].start, data + t[14].start );
 							
