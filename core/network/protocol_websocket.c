@@ -712,7 +712,7 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 					
 						int END_CHAR_SIGNS = response->http_SizeOfContent > 0 ? 2 : 4;
 						char *end = response->http_SizeOfContent > 0 ? "}}" : "\"\"}}";
-						int jsonsize = sprintf( jsontemp, "{ \"type\":\"msg\", \"data\":{ \"type\":\"response\", \"requestid\":\"%s\",\"data\":", wstd->wstd_Requestid );
+						int jsonsize = sprintf( jsontemp, "{\"type\":\"msg\",\"data\":{ \"type\":\"response\",\"requestid\":\"%s\",\"data\":", wstd->wstd_Requestid );
 					
 						buf = (unsigned char *)FCalloc( jsonsize + response->http_SizeOfContent + END_CHAR_SIGNS + 128, sizeof( char ) );
 						if( buf != NULL )
@@ -732,7 +732,7 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 					{
 						int END_CHAR_SIGNS = response->http_SizeOfContent > 0 ? 2 : 4;
 						char *end = response->http_SizeOfContent > 0 ? "}}" : "\"\"}}";
-						int jsonsize = sprintf( jsontemp, "{ \"type\":\"msg\", \"data\":{ \"type\":\"response\", \"requestid\":\"%s\",\"data\":", wstd->wstd_Requestid );
+						int jsonsize = sprintf( jsontemp, "{\"type\":\"msg\",\"data\":{\"type\":\"response\",\"requestid\":\"%s\",\"data\":", wstd->wstd_Requestid );
 					
 						buf = (unsigned char *)FCalloc( jsonsize + END_CHAR_SIGNS + 128, sizeof( char ) );
 						if( buf != NULL )
@@ -769,7 +769,7 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 		char jsontemp[ 1024 ];
 		static int END_CHAR_SIGNS = 2;
 		char *end = "}}";
-		int jsonsize = sprintf( jsontemp, "{ \"type\":\"msg\", \"data\":{ \"type\":\"response\", \"requestid\":\"%s\",\"data\":", wstd->wstd_Requestid );
+		int jsonsize = sprintf( jsontemp, "{\"type\":\"msg\",\"data\":{\"type\":\"response\",\"requestid\":\"%s\",\"data\":", wstd->wstd_Requestid );
 		
 		unsigned char * buf = (unsigned char *)FCalloc( jsonsize + resplen + END_CHAR_SIGNS + 128, sizeof( char ) );
 		if( buf != NULL )
