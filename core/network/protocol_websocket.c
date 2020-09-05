@@ -193,6 +193,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 
 	//TK-1220 - sometimes there is junk at the end of the string.
 	//The string is not guaranteed to be null terminated where it supposed to.
+	/*
 	char *c = in;
 	if ( reason == LWS_CALLBACK_RECEIVE && len>0)
 	{
@@ -220,7 +221,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		}
 		DEBUG("[WS] set end to 0\n");
 	}
-
+	*/
 	DEBUG("[WS] before switch\n");
 	
 	switch( reason )
@@ -286,13 +287,19 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 
 				UserSession *us = (UserSession *)wsd->wsc_UserSession;
 				
+				if( wsd->wsc_Buffer == NULL )
+				{
+					wsd->wsc_Buffer = BufStringNew();
+				}
+				
 				const size_t remaining = lws_remaining_packet_payload( wsi );
+				// if nothing left and this is last message
 				if( !remaining && lws_is_final_fragment( wsi ) )
 				{
-					if( wsd->wsc_Buffer != NULL && wsd->wsc_Buffer->bs_Size > 0 )
+					BufStringAddSize( wsd->wsc_Buffer, tin, len );
+					
+					if( wsd->wsc_Buffer->bs_Size > 0 )
 					{
-						BufStringAddSize( wsd->wsc_Buffer, in, len );
-						FFree( in );
 						in = wsd->wsc_Buffer->bs_Buffer;
 						len = wsd->wsc_Buffer->bs_Size;
 						wsd->wsc_Buffer->bs_Buffer = NULL;
@@ -300,24 +307,13 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 						BufStringDelete( wsd->wsc_Buffer );
 						wsd->wsc_Buffer = BufStringNew();
 					}
-					else
-					{
-						if( wsd->wsc_Buffer == NULL )
-						{
-							wsd->wsc_Buffer = BufStringNew();
-						}
-					}
+
 					DEBUG1("[WS] Callback receive (no remaining): %s\n", in );
 				}
 				else // only fragment was received
 				{
-					if( wsd->wsc_Buffer == NULL )
-					{
-						wsd->wsc_Buffer = BufStringNew();
-					}
-					DEBUG1("[WS] Only received: %s\n", in );
-					BufStringAddSize( wsd->wsc_Buffer, in, len );
-					FFree( in );
+					DEBUG1("[WS] Only received: %s\n", tin );
+					BufStringAddSize( wsd->wsc_Buffer, tin, len );
 					return 0;
 				}
 				
@@ -367,7 +363,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					}
 				}
 #else
-				ParseAndCall( wsd, in, len );
+				ParseAndCall( wsd, tin, len );
 #endif
 				
 				DEBUG("[WS] Webcall finished!\n");
@@ -379,11 +375,13 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 			}
 			
 #ifndef INPUT_QUEUE
+			/*
 			if( len > 0 )
 			{
-				char *c = (char *)in;
+				char *c = (char *)tin;
 				c[ 0 ] = 0;
 			}
+			*/
 #endif
 		break;
 		
@@ -392,10 +390,6 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 			
 			if( wsd->wsc_UserSession == NULL || wsd->wsc_Wsi == NULL )
 			{
-				if( in != NULL )
-				{
-					FFree( in );
-				}
 				DEBUG("[WS] Cannot write message, WS Client is equal to NULL, fcwd %p wsiptr %p\n", wsd, wsi );
 				return 0;
 			}
