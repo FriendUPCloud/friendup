@@ -2019,34 +2019,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						{
 							User *tuser = USMIsSentinel( l->sl_USM, usrname, &tusers, &isUserSentinel );
 						
-							/*
-							tusers = l->sl_USM->usm_Sessions;
-							while( tusers != NULL )
-							{
-								User *tuser = tusers->us_User;
-								// Check both username and password
-
-								if( tusers->us_DeviceIdentity != NULL && tuser != NULL )
-								{
-									if( strcmp( tusers->us_DeviceIdentity, deviceid ) == 0 && strcmp( tuser->u_Name, usrname ) == 0 )
-									{
-										Sentinel *sent = l->GetSentinelUser( l );
-										if( sent != NULL )
-										{
-											if( tuser == sent->s_User )
-											{
-												isUserSentinel = TRUE;
-											}
-											DEBUG("Same identity, same user name, is sentinel %d  userptr %p sentinelptr %p\n", isUserSentinel, tuser, sent->s_User );
-										}
-										break;
-									}
-								}
-								tusers = (UserSession *)tusers->node.mln_Succ;
-							}
-							FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
-							*/
-							
 							if( tuser != NULL )
 							{
 								if( isUserSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, tuser, pass, &blockedTime ) == TRUE )
