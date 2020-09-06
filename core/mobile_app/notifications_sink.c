@@ -202,7 +202,9 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 				{
 					FRIEND_MUTEX_UNLOCK( &d->d_Mutex );
 					unsigned char *t = e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING;
-					t[ e->fq_Size+1 ] = 0;
+					
+					// Previously was t[ e->fq_Size + 1 ] = 0, but seemed to corrupt the last character
+					t[ e->fq_Size ] = 0;
 
 					//INFO("\t\t\t\t\t\t\t\t\t\t\tSENDMESSSAGE\n<%s> size: %d\n\n\n\n", e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, e->fq_Size );
 					int res = lws_write( wsi, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, e->fq_Size, LWS_WRITE_TEXT );
