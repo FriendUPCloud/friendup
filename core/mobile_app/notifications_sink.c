@@ -120,7 +120,7 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 		memcpy( buf, in, s );
 		buf[ s ] = 0;
 	}
-	Log( FLOG_INFO, "[WebsocketNotificationsSinkCallback] incoming msg, reason: %d msg len: %d\n", reason, len );
+	//Log( FLOG_INFO, "[WebsocketNotificationsSinkCallback] incoming msg, reason: %d msg len: %d\n", reason, len );
 	
 	switch( reason )
 	{
