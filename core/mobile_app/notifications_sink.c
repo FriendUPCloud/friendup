@@ -239,6 +239,9 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 		}
 		break;
 		
+		case LWS_CALLBACK_GET_THREAD_ID:
+			return (uint64_t)pthread_self();
+		
 		case LWS_CALLBACK_RECEIVE:
 		{
 			MobileAppNotif *man = (MobileAppNotif *)user;
@@ -256,7 +259,7 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 	{
 		FFree( buf );
 	}
-
+	
 	return 0;
 }
 

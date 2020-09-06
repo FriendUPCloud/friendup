@@ -514,6 +514,9 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		}
 		break;
 		
+	case LWS_CALLBACK_GET_THREAD_ID:
+		return (uint64_t)pthread_self();
+		
 	default:
 		{
 		// disabled for test
