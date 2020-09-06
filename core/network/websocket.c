@@ -242,6 +242,9 @@ int WebsocketThread( FThread *data )
 				cnt = 0;
 			}
 		}
+		
+		// Sleep 2ms
+		usleep( 2000 );
 	}
 	Log( FLOG_INFO, "[WS] Service stopped\n" );
 
