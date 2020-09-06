@@ -531,7 +531,6 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 	}
 
 	DEBUG("[WS] END of callback\n");
-	lws_cancel_service_pt( wsi );
 
 	return returnError;
 }
