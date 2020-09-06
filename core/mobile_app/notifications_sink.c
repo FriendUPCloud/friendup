@@ -257,6 +257,9 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 		FFree( buf );
 	}
 	
+	// Cancel service
+	lws_cancel_service_pt( wsi );
+	
 	return 0;
 }
 
