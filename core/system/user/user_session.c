@@ -332,7 +332,6 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 						if( wsd->wsc_Wsi != NULL )
 						{
 							lws_callback_on_writable( wsd->wsc_Wsi );
-							//lws_cancel_service_pt( wsd->wsc_Wsi ); // May not be thread safe...
 						}
 					
 						if( FRIEND_MUTEX_LOCK( &(wsd->wsc_Mutex) ) == 0 )
@@ -412,7 +411,6 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 						if( wsd->wsc_Wsi != NULL )
 						{
 							lws_callback_on_writable( wsd->wsc_Wsi );
-							// lws_cancel_service_pt( wsd->wsc_Wsi ); // May not be thread safe
 						}
 						if( FRIEND_MUTEX_LOCK( &(wsd->wsc_Mutex) ) == 0 )
 						{
