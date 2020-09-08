@@ -262,8 +262,8 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 			
 			DEBUG("[UserSessionWebsocketWrite] Sending big message, size %d (%d chunks of max: %d)\n", msglen, totalChunk, MAX_SIZE_WS_MESSAGE );
 		
-			//if( us->us_Wsi != NULL )
-			{	
+			if( us->us_Wsi != NULL )
+			{
 				for( actChunk = 0; actChunk < totalChunk ; actChunk++ )
 				{
 					unsigned char *queueMsg = FMalloc( WS_PROTOCOL_BUFFER_SIZE );
@@ -310,7 +310,7 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 							FQPushFIFO( &(us->us_MsgQueue), en );
 							FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 						}
-					// callback writeable was here
+						// callback writeable was here
 					}
 				}
 				
@@ -332,7 +332,6 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 						if( wsd->wsc_Wsi != NULL )
 						{
 							lws_callback_on_writable( wsd->wsc_Wsi );
-							lws_cancel_service_pt( wsd->wsc_Wsi );
 						}
 					
 						if( FRIEND_MUTEX_LOCK( &(wsd->wsc_Mutex) ) == 0 )
@@ -364,9 +363,12 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 				FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 				if( en != NULL )
 				{
-					en->fq_Data = FMalloc( msglen+10+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
-					memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msgptr, msglen );
-					en->fq_Size = msglen;
+					en->fq_Data = FMalloc( msglen+32+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
+					if( en->fq_Data != NULL )
+					{
+						memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msgptr, msglen );
+						en->fq_Size = msglen;
+					}
 					en->fq_Priority = 3;	// default priority
 			
 					if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
@@ -409,7 +411,6 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 						if( wsd->wsc_Wsi != NULL )
 						{
 							lws_callback_on_writable( wsd->wsc_Wsi );
-							lws_cancel_service_pt( wsd->wsc_Wsi );
 						}
 						if( FRIEND_MUTEX_LOCK( &(wsd->wsc_Mutex) ) == 0 )
 						{

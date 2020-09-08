@@ -669,7 +669,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						
 						free( decoded );
 					
-						if( j->type && j->type == JSON_TYPE_ARRAY|JSON_TYPE_ARRAY_LIST )
+						if( j->type && j->type == (JSON_TYPE_ARRAY|JSON_TYPE_ARRAY_LIST) )
 						{
 							// Build SQL query
 							BufString *sql = BufStringNew();
@@ -694,16 +694,17 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 											char *data = ( char *)dt->data;
 											
 											// TODO: Replace this with mysql_escape_string!
-											int test = 0; 
+											unsigned int test = 0; 
 											int failed = 0;
 											for( ; test < strlen( data ); test++ )
 											{
-												if( data[ test ] == ";" || data[ test ] == "\"" )
+												if( data[ test ] == ';' || data[ test ] == '\"' )
 												{
 													failed = 1;
 													break;
 												}
 											}
+											
 											if( data != NULL && failed == 0 )
 											{
 												BufStringAdd( sql, data );
@@ -711,8 +712,13 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 											// Done security test
 											
 											if( i < j->size - 1 )
+											{
 												BufStringAdd( sql, "\"," );
-											else BufStringAdd( sql, "\"" );
+											}
+											else
+											{
+												BufStringAdd( sql, "\"" );
+											}
 										}
 									}
 								}
@@ -737,7 +743,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 										if( row[ 0 ] != NULL )
 										{
 											if( resultCount > 0 )
+											{
 												BufStringAdd( result, "," );
+											}
 											BufStringAdd( result, "\"" );
 											BufStringAdd( result, row[ 0 ] );
 											BufStringAdd( result, "\"" );
@@ -771,7 +779,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							char dictmsgbuf[ 256 ];
 							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"Paths not given in array format\", \"code\":\"-1\" }" );
 							HttpAddTextContent( response, dictmsgbuf );
-						}							
+						}
 					
 						JSONFree( j );
 					}

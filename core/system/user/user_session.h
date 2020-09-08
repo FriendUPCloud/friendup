@@ -75,21 +75,18 @@ typedef struct UserSession
 	void					*us_SB;						// pointer to systembase
 	
 	char					us_UserActionInfo[ 512 ];	// last action called
-	char					us_Name[ 256 ];				// session name
+	//char					us_Name[ 256 ];				// session name
 	int						us_InUseCounter;			// is session used counter
 	WebsocketReqManager		*us_WSReqManager;			// 
 	void					*us_DOSToken;				// 
 	FULONG					us_MobileAppID;				//
-	UserMobileApp			*us_MobileApp;				// 
 	
 	// WEBSOCKETS
-	//UserSessionWebsocket	us_Websockets;
-	
 	int						us_WebSocketStatus;	// status of websocket
 	struct lws				*us_Wsi;				// pointer to WSI
-	FQueue					us_MsgQueue;			// message queue
 	time_t					us_LastPingTime;		// ping timestamp
 	void					*us_WSD;				// pointer to WebsocketData
+	FQueue					us_MsgQueue;			// message queue
 }UserSession;
 
 //

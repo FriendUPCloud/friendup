@@ -288,6 +288,7 @@ typedef struct SystemBase
 	time_t							sl_RemoveSessionsAfterTime;	// time after which session will be removed
 	int								sl_MaxLogsInMB;			// Maximum size of logs in log folder in MB ( if > then old ones will be removed)
 	char							*sl_MasterServer;		// FriendCore master server
+	int								sl_RemoveOldSessionTimeout;	// Time in seconds after which old sessions will be removed
 	
 	//
 	// 60 seconds
