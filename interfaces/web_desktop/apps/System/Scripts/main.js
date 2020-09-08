@@ -67,7 +67,7 @@ function refreshSidebar( show )
 			'Printers': {
 				icon: 'fa-print',
 				showing: isAdmin,
-				display: /*( show ? */true/* : false )*/
+				display: ( show ? true : false )
 			},
 			'Backup': {
 				icon: 'fa-cloud-download',
@@ -96,7 +96,7 @@ function refreshSidebar( show )
 			'Liberator': {
 				icon: 'fa-info-circle',
 				showing: isAdmin,
-				display: /*( show ? */true/* : false )*/
+				display: ( show ? true : false )
 			}
 		},
 		'Accounts': {
