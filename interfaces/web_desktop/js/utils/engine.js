@@ -1814,21 +1814,22 @@ function jsonSafeObject ( o, depth )
 // Helpers
 function humanFilesize( bts )
 {
-	if ( bts > 1000000000000 )
+	let bmax = 1073741824 * 1024
+	if ( bts > bmax )
 	{
-		filesize = ( Math.round ( bts / 1000000000000 * 100 ) / 100 ) + 'tb';
+		filesize = ( Math.round ( bts / bmax * 100 ) / 100 ) + 'tb';
 	}
 	else if ( bts > 1000000000 )
 	{
-		filesize = ( Math.round ( bts / 1000000000 * 100 ) / 100 ) + 'gb';
+		filesize = ( Math.round ( bts / 1073741824 * 100 ) / 100 ) + 'gb';
 	}
 	else if ( bts > 1000000 )
 	{
-		filesize = ( Math.round ( bts / 1000000 * 100 ) / 100 ) + 'mb';
+		filesize = ( Math.round ( bts / 1048576 * 100 ) / 100 ) + 'mb';
 	}
-	else if ( bts > 1000 )
+	else if ( bts > 1024 )
 	{
-		filesize = ( Math.round ( bts / 1000 * 100 ) / 100 ) + 'kb';
+		filesize = ( Math.round ( bts / 1024 * 100 ) / 100 ) + 'kb';
 	}
 	else
 	{
