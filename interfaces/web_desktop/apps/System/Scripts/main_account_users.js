@@ -8597,7 +8597,7 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 						size = parseInt( size );
 						
 						var csize = size;
-						var cunit = ( mode[0] ? mode[0] : 'B' );
+						var cunit = ( mode[0] ? mode[0] : 'MB' );
 						
 						var type = mode[0].toLowerCase();
 						if( type == 'kb' )
@@ -8623,7 +8623,7 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 						if( !used ) used = 0;
 						if( used > size || ( used && !size ) ) size = used;
 						
-						csize = ( !csize ? size : csize );
+						csize = ( !csize ? 512 : csize );
 						
 						storage = {
 							id    : js.ID,
@@ -8898,7 +8898,7 @@ Sections.user_disk_refresh = function( mountlist, userid )
 					size = parseInt( size );
 					
 					var csize = size;
-					var cunit = ( mode[0] ? mode[0] : 'B' );
+					var cunit = ( mode[0] ? mode[0] : 'MB' );
 					
 					var type = mode[0].toLowerCase();
 					if( type == 'kb' )
@@ -8924,7 +8924,7 @@ Sections.user_disk_refresh = function( mountlist, userid )
 					if( !used ) used = 0;
 					if( used > size || ( used && !size ) ) size = used;
 					
-					csize = ( !csize ? size : csize );
+					csize = ( !csize ? 512 : csize );
 					
 					var storage = {
 						id    : rows[b].ID,
@@ -8954,7 +8954,7 @@ Sections.user_disk_refresh = function( mountlist, userid )
 						storage.icon = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
 					}
 			
-					//console.log( storage );
+					console.log( storage );
 			
 					mlst += '<div class="HContent33 FloatLeft DiskContainer"' + ( storage.mont <= 0 ? ' style="opacity:0.6"' : '' ) + '>';
 			
