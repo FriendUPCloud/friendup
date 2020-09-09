@@ -697,6 +697,30 @@ function FormatBytes( bytes, decimals = 2, units = 1 )
 {
     if ( bytes == 0 ) return ( '' + ( units ? '0B' : '' ) );
 	
+	// Using the same function that is used for fileInfo
+	//var humanFS = Friend.Utilities.humanFileSize( bytes );
+	var humanFS = HumanFileSize( bytes );
+	
+	if( humanFS )
+	{
+		var size = humanFS.split( ' ' )[0];
+		var unit = humanFS.split( ' ' ).pop();
+		
+		//console.log( 'humanFS: ' + humanFS );
+		//console.log( 'size: ' + size );
+		//console.log( 'unit: ' + unit );
+		
+		if( units === 2 ) return unit;
+		
+		// Decimals are set to fixed = 1 ...
+		
+		return ( !units ? size : ( size + unit ) );
+	}
+	
+	return ( !units ? '' : '0B' );
+	
+	// Old method ...
+	
     const k = 1024;
     const dm = decimals < 0 ? 0 : decimals;
     const sizes = [ 'B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB' ];
@@ -705,7 +729,30 @@ function FormatBytes( bytes, decimals = 2, units = 1 )
 	
 	if( units === 2 ) return sizes[i];
 	
-    return parseFloat( ( bytes / Math.pow( k, i ) ).toFixed( dm ) ) + ( units ? ( sizes[i] ) : '' );
+    return parseFloat( ( bytes / Math.pow( k, i ) ).toFixed( dm ) ) + ( units ? ( ' ' + sizes[i] ) : '' );
+}
+
+// Couldn't include the function Friend.Utilities.humanFileSize() from interfaces/web_desktop/js/utils/utilities.js it wasn't enabled in the Application API so copied it, if changed, change also here ...
+
+// TODO: look at this function why for example 500MB becomes 524.3MB
+
+function HumanFileSize( bytes, si )
+{
+	if( si !== false ) si = true;
+	
+    var thresh = si ? 1000 : 1024;
+    if(Math.abs(bytes) < thresh) {
+        return bytes + ' B';
+    }
+    var units = si
+        ? ['kB','MB','GB','TB','PB','EB','ZB','YB']
+        : ['KiB','MiB','GiB','TiB','PiB','EiB','ZiB','YiB'];
+    var u = -1;
+    do {
+        bytes /= thresh;
+        ++u;
+    } while(Math.abs(bytes) >= thresh && u < units.length - 1);
+    return bytes.toFixed(1)+' '+units[u];
 }
 
 function CheckScroll( ele )

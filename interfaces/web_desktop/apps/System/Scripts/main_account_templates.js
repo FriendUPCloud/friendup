@@ -1743,7 +1743,7 @@ Sections.accounts_templates = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+																	d.className = 'PaddingSmall HContent15 FloatLeft';
 																	return d;
 																}(),
 																'child' : 
@@ -2568,7 +2568,7 @@ Sections.accounts_templates = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																	d.className = 'PaddingSmall HContent10 FloatLeft';
 																	return d;
 																
 																}(),
@@ -3517,7 +3517,7 @@ Sections.accounts_templates = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																	d.className = 'PaddingSmall HContent10 FloatLeft';
 																	return d;
 																
 																}(),
@@ -4555,7 +4555,7 @@ Sections.accounts_templates = function( cmd, extra )
 											'element' : function()
 											{
 												var d = document.createElement( 'div' );
-												d.className = 'HContent10 FloatLeft PaddingSmall Ellipsis';
+												d.className = 'HContent10 FloatLeft PaddingSmall';
 												return d;
 											}()/*,
 											'child' : 

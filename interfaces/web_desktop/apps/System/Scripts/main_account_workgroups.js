@@ -2151,6 +2151,24 @@ Sections.accounts_workgroups = function( cmd, extra )
 																							{
 																								vars.pnt.innerHTML = '';
 																							}
+																							
+																							if( ge( 'AdminUsersCount' ) )
+																							{
+																								if( ge( 'AdminUsersCount' ).innerHTML )
+																								{
+																									var count = ge( 'AdminUsersCount' ).innerHTML.split( '(' ).join( '' ).split( ')' ).join( '' );
+																									
+																									if( count && count > 0 )
+																									{
+																										var result = ( count - 1 );
+							
+																										if( result && result >= 0 )
+																										{
+																											ge( 'AdminUsersCount' ).innerHTML = '(' + result + ')';
+																										}
+																									}
+																								}
+																							}
 																						}
 																						else
 																						{
@@ -2388,6 +2406,24 @@ Sections.accounts_workgroups = function( cmd, extra )
 																						
 																							vars._this.classList.remove( 'fa-toggle-on' );
 																							vars._this.classList.add( 'fa-toggle-off' );
+																							
+																							if( ge( 'AdminUsersCount' ) )
+																							{
+																								if( ge( 'AdminUsersCount' ).innerHTML )
+																								{
+																									var count = ge( 'AdminUsersCount' ).innerHTML.split( '(' ).join( '' ).split( ')' ).join( '' );
+																									
+																									if( count && count > 0 )
+																									{
+																										var result = ( count - 1 );
+							
+																										if( result && result >= 0 )
+																										{
+																											ge( 'AdminUsersCount' ).innerHTML = '(' + result + ')';
+																										}
+																									}
+																								}
+																							}
 																						}
 																						else
 																						{

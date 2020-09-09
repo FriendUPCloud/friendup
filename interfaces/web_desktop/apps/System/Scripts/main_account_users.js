@@ -2494,7 +2494,7 @@ Sections.accounts_users = function( cmd, extra )
 																		'element' : function() 
 																		{
 																			var d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+																			d.className = 'PaddingSmall HContent15 FloatLeft';
 																			return d;
 																		}(),
 																		'child' : 
@@ -3375,7 +3375,7 @@ Sections.accounts_users = function( cmd, extra )
 																		'element' : function() 
 																		{
 																			var d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																			d.className = 'PaddingSmall HContent10 FloatLeft';
 																			return d;
 																
 																		}(),
@@ -6088,6 +6088,12 @@ Sections.accounts_users = function( cmd, extra )
 													
 													if( list[a].parentNode.parentNode && list[a].parentNode.parentNode.parentNode && list[a].parentNode.parentNode.parentNode.className.indexOf( 'HRow' ) >= 0 )
 													{
+														if( list[a].parentNode.classList.contains( 'Closed' ) )
+														{
+															list[a].parentNode.classList.remove( 'Closed' );
+															list[a].parentNode.classList.add( 'Open' );
+														}
+														
 														list[a].parentNode.style.display = '';
 														list[a].parentNode.parentNode.style.display = '';
 													}
@@ -6107,6 +6113,18 @@ Sections.accounts_users = function( cmd, extra )
 										{
 											ge( 'WorkgroupSearchCancelBtn' ).classList.remove( 'Open' );
 											ge( 'WorkgroupSearchCancelBtn' ).classList.add( 'Closed' );
+											
+											if( list.length > 0 )
+											{
+												for( var a = 0; a < list.length; a++ )
+												{
+													if( list[a].classList.contains( 'Open' ) )
+													{
+														list[a].classList.remove( 'Open' );
+														list[a].classList.add( 'Closed' );
+													}
+												}
+											}
 										}
 										
 										else if( filter != '' && ( ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
@@ -6118,6 +6136,8 @@ Sections.accounts_users = function( cmd, extra )
 								}
 								
 							};
+							
+
 							
 							// Sort .............
 							
@@ -8545,8 +8565,8 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 			{
 				//console.log( 'user_disk_update ', { e:e, d:d } );
 				
-				var storage = { id : '', name : '', type : '', size : 512, user : user };
-			
+				var storage = { id : '', name : '', type : '', csize : 512, cunit : 'MB', user : user };
+				
 				var units = [ 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB' ];
 		
 				if( e == 'ok' )
@@ -8575,6 +8595,10 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 						var size = ( js.Config.DiskSize ? js.Config.DiskSize : 0 );
 						var mode = ( size && size.length && size != 'undefined' ? size.match( /[a-z]+/i ) : [ '' ] );
 						size = parseInt( size );
+						
+						var csize = size;
+						var cunit = ( mode[0] ? mode[0] : 'B' );
+						
 						var type = mode[0].toLowerCase();
 						if( type == 'kb' )
 						{
@@ -8598,21 +8622,25 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 						if( !size ) size = 536870912;
 						if( !used ) used = 0;
 						if( used > size || ( used && !size ) ) size = used;
-				
+						
+						csize = ( !csize ? size : csize );
+						
 						storage = {
-							id   : js.ID,
-							user : js.UserID,
-							name : js.Name,
-							type : js.Type,
-							size : size, 
-							used : used, 
-							free : ( size - used ), 
-							prog : ( ( used / size * 100 ) > 100 ? 100 : ( used / size * 100 ) ), 
-							icon : '/iconthemes/friendup15/DriveLabels/FriendDisk.svg',
-							mont : js.Mounted,
-							data : js
+							id    : js.ID,
+							user  : js.UserID,
+							name  : js.Name,
+							type  : js.Type,
+							csize : csize,
+							cunit : cunit,
+							size  : size, 
+							used  : used, 
+							free  : ( size - used ), 
+							prog  : ( ( used / size * 100 ) > 100 ? 100 : ( used / size * 100 ) ), 
+							icon  : '/iconthemes/friendup15/DriveLabels/FriendDisk.svg',
+							mont  : js.Mounted,
+							data  : js
 						};
-				
+						
 						if( Friend.dosDrivers[ storage.type ] && Friend.dosDrivers[ storage.type ].iconLabel )
 						{
 							storage.icon = 'data:image/svg+xml;base64,' + Friend.dosDrivers[ storage.type ].iconLabel;
@@ -8693,7 +8721,7 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 					str += '<strong>' + i18n( 'i18n_size' ) + ':</strong>';
 					str += '</div>';
 					str += '<div class="HContent35 FloatLeft Ellipsis PaddingRight">';
-					str += '<input type="text" class="FullWidth" id="DiskSizeA" value="' + FormatBytes( storage.size, 0, 0 ) + '" placeholder="512"/>';
+					str += '<input type="text" class="FullWidth" id="DiskSizeA" value="' + storage.csize + '" placeholder="512"/>';
 					str += '</div>';
 					str += '<div class="HContent35 FloatLeft Ellipsis PaddingLeft">';
 					str += '<select class="FullWidth" id="DiskSizeB">';
@@ -8702,7 +8730,7 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 					{
 						for( var a in units )
 						{
-							str += '<option' + ( storage.size && FormatBytes( storage.size, 0, 2 ) == units[a] ? ' selected="selected"' : '' ) + '>' + units[a] + '</option>';
+							str += '<option' + ( storage.csize && storage.cunit == units[a] ? ' selected="selected"' : '' ) + '>' + units[a] + '</option>';
 						}
 					}
 			
@@ -8861,11 +8889,17 @@ Sections.user_disk_refresh = function( mountlist, userid )
 					//if( rows[b] && rows[b].Mounted < 0 ) continue;
 			
 					//console.log( rows[b] );
-			
+					
+					// TODO: Add support decimals ...
+					
 					// Calculate disk usage
 					var size = ( rows[b].Config.DiskSize ? rows[b].Config.DiskSize : 0 );
 					var mode = ( size && size.length && size != 'undefined' ? size.match( /[a-z]+/i ) : [ '' ] );
 					size = parseInt( size );
+					
+					var csize = size;
+					var cunit = ( mode[0] ? mode[0] : 'B' );
+					
 					var type = mode[0].toLowerCase();
 					if( type == 'kb' )
 					{
@@ -8889,20 +8923,24 @@ Sections.user_disk_refresh = function( mountlist, userid )
 					if( !size ) size = 536870912;
 					if( !used ) used = 0;
 					if( used > size || ( used && !size ) ) size = used;
-			
+					
+					csize = ( !csize ? size : csize );
+					
 					var storage = {
-						id   : rows[b].ID,
-						user : rows[b].UserID,
-						name : rows[b].Name,
-						type : rows[b].Type,
-						size : size, 
-						used : used, 
-						free : ( size - used ), 
-						prog : ( ( used / size * 100 ) > 100 ? 100 : ( used / size * 100 ) ), 
-						icon : '/iconthemes/friendup15/DriveLabels/FriendDisk.svg',
-						mont : rows[b].Mounted
+						id    : rows[b].ID,
+						user  : rows[b].UserID,
+						name  : rows[b].Name,
+						type  : rows[b].Type,
+						csize : csize,
+						cunit : cunit,
+						size  : size, 
+						used  : used, 
+						free  : ( size - used ), 
+						prog  : ( ( used / size * 100 ) > 100 ? 100 : ( used / size * 100 ) ), 
+						icon  : '/iconthemes/friendup15/DriveLabels/FriendDisk.svg',
+						mont  : rows[b].Mounted
 					};
-			
+					
 					if( Friend.dosDrivers[ storage.type ] && Friend.dosDrivers[ storage.type ].iconLabel )
 					{
 						storage.icon = 'data:image/svg+xml;base64,' + Friend.dosDrivers[ storage.type ].iconLabel;
@@ -8945,8 +8983,8 @@ Sections.user_disk_refresh = function( mountlist, userid )
 					mlst += '<div class="Col2 FloatLeft HContent100 Name Ellipsis">';
 					mlst += '<div class="name Ellipsis" title="' + storage.name + '">' + storage.name + ':</div>';
 					mlst += '<div class="type Ellipsis" title="' + i18n( 'i18n_' + storage.type ) + '">' + i18n( 'i18n_' + storage.type ) + '</div>';
-					mlst += '<div class="rectangle"><div title="' + FormatBytes( storage.used, 0 ) + ' used" style="width:' + storage.prog + '%"></div></div>';
-					mlst += '<div class="bytes Ellipsis">' + FormatBytes( storage.free, 0 )  + ' free of ' + FormatBytes( storage.size, 0 ) + '</div>';
+					mlst += '<div class="rectangle" title="' + FormatBytes( storage.used, 0 ) + ' used"><div style="width:' + storage.prog + '%"></div></div>';
+					mlst += '<div class="bytes Ellipsis" title="'+ FormatBytes( storage.free, 0 )  + ' free of ' + FormatBytes( storage.size, 0 ) + '">' + FormatBytes( storage.free, 0 )  + ' free of ' + FormatBytes( storage.size, 0 ) + '</div>';
 					mlst += '</div>';
 					mlst += '</div>';
 					mlst += '</div>';

@@ -560,6 +560,31 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						$Logger->log( '[SQLDRIVE] WRITING store in DB' );
 						$f->Save();
 						$Logger->log( '[SQLDRIVE] WRITING stored in db - recordID is ' . $f->ID . ' (Err: ' . $f->_lastError . ')' . ' -> ' . $f->_lastQuery );
+						
+						// Update latest StoredBytes for this Filesystem
+						if( $this->ID > 0 && $User->ID > 0 )
+						{
+							$sbytes = 0;
+							if( $sum = $SqlDatabase->FetchObject( '
+								SELECT SUM(u.Filesize) z FROM FSFile u 
+								WHERE u.UserID=\'' . $User->ID . '\' AND FilesystemID = \'' . $this->ID . '\'
+							' ) )
+							{
+								$sbytes = intval( $sum->z, 10 );
+							
+								$fs = new dbIO( 'Filesystem' );
+								$fs->ID     = $this->ID;
+								$fs->UserID = $User->ID;
+								if( $fs->Load() && $sbytes > 0 )
+								{
+									$Logger->log( '[SQLDRIVE] WRITING StoredBytes (' . $sbytes . ') to Filesystem DB' );
+									
+									$fs->StoredBytes = $sbytes;
+									$fs->Save();
+								}
+							}
+						}
+						
 						return 'ok<!--separate-->' . $len . '<!--separate-->' . $f->ID;
 					}
 				}
@@ -900,6 +925,30 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						{
 							if( $this->deleteFile( $path, true ) )
 							{
+								// Update latest StoredBytes for this Filesystem
+								if( $this->ID > 0 && $User->ID > 0 )
+								{
+									$sbytes = 0;
+									if( $sum = $SqlDatabase->FetchObject( '
+										SELECT SUM(u.Filesize) z FROM FSFile u 
+										WHERE u.UserID=\'' . $User->ID . '\' AND FilesystemID = \'' . $this->ID . '\'
+									' ) )
+									{
+										$sbytes = intval( $sum->z, 10 );
+									}
+									
+									$fs = new dbIO( 'Filesystem' );
+									$fs->ID     = $this->ID;
+									$fs->UserID = $User->ID;
+									if( $fs->Load() )
+									{
+										$Logger->log( '[SQLDRIVE] WRITING StoredBytes (' . $sbytes . ') to Filesystem DB' );
+								
+										$fs->StoredBytes = $sbytes;
+										$fs->Save();
+									}
+								}
+								
 								return 'ok';
 							}
 						}
