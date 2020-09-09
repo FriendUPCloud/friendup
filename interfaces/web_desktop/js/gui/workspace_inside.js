@@ -5023,10 +5023,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		m.execute( 'setmimetype', { type: ext, executable: executable } );
 	},
 	// Show file info dialog
-	fileInfo: function( icon )
+	fileInfo: function( iconOriginal )
 	{
-		if( !icon ) icon = this.getActiveIcon();
-
+		if( !iconOriginal ) iconOriginal = this.getActiveIcon();
+		
+		let icon = {};
+		for( let c in iconOriginal )
+			icon[ c ] = iconOriginal[ c ];
+	
+		
 		if( icon )
 		{
 			// Check volume icon

@@ -9,7 +9,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
-
+// Set it to empty
+$path = '';
 
 // Get arguments from argv
 if( isset( $argv ) && isset( $argv[1] ) )
