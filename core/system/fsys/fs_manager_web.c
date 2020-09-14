@@ -1600,10 +1600,10 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 										if( ptr != NULL )
 										{
 											// With the diff, move offset and set correct size
-											int diff = ( ptr - finalBuffer ) + 23;
-											totalBytes = (int)( ( (FULONG)finalBuffer) - diff) + 1;
-											outputBuf = FCalloc( totalBytes, sizeof( char ) );
-											memcpy( outputBuf, ptr + 23, totalBytes );
+											int headerlength = ( ptr - finalBuffer ) + 23;
+											int datalength = strlen( finalBuffer ) - headerlength;
+											outputBuf = FCalloc( datalength + 1, sizeof( char ) );
+											sprintf( outputBuf, finalBuffer + headerlength, datalength );
 											FFree( finalBuffer );
 										}
 								
