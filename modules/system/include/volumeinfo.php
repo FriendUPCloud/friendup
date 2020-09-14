@@ -9,7 +9,88 @@
 *                                                                              *
 *****************************************************************************©*/
 
-global $SqlDatabase, $User, $Config;
+global $SqlDatabase, $User, $Config, $Logger;
+
+
+// TODO: Look at this function and see if it's possible to to somehow login to another session as admin and get stuff, shouldn't be done on client side I suppose, will have to be reviewed how admin gets access to other people's stuff without exposing passwords, secrets, sessionid's, etc that potentially is a major security breach ...
+
+$servertoken = false;
+
+$userid = ( !isset( $args->args->userid ) ? $User->ID : 0 );
+
+if( isset( $args->args->authid ) && !isset( $args->authid ) )
+{
+	$args->authid = $args->args->authid;
+}
+
+if( !isset( $args->authid ) )
+{
+	if( $level == 'Admin' && isset( $args->args->userid ) )
+	{
+		$userid = $args->args->userid;
+	}
+}
+else
+{
+	require_once( 'php/include/permissions.php' );
+
+	if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), [ 
+		'PERM_STORAGE_READ_GLOBAL', 'PERM_STORAGE_READ_IN_WORKGROUP', 
+		'PERM_STORAGE_GLOBAL',      'PERM_STORAGE_WORKGROUP' 
+	] ) )
+	{
+		if( is_object( $perm ) )
+		{
+			// Permission denied.
+	
+			if( $perm->response == -1 )
+			{
+				
+			}
+			
+			// Permission granted. GLOBAL or WORKGROUP specific ...
+	
+			if( $perm->response == 1 && isset( $perm->data->users ) && isset( $args->args->userid ) )
+			{
+		
+				// If user has GLOBAL or WORKGROUP access to this user
+		
+				if( $perm->data->users == '*' || strstr( ','.$perm->data->users.',', ','.$args->args->userid.',' ) )
+				{
+					$userid = intval( $args->args->userid );
+					
+					// TODO: Overwrite the users sessionid with a sort of token to get correct disk info returned for this user as admin ... 
+					
+					if( $User->ID != $userid )
+					{
+						
+						if( $usr = $SqlDatabase->FetchObject( '
+							SELECT u.ID, u.Name, u.ServerToken 
+							FROM FUser u 
+							WHERE u.ID = \'' . $userid . '\' 
+							LIMIT 1 
+						' ) )
+						{
+							if( $usr->ServerToken )
+							{
+								$servertoken = $usr->ServerToken;
+							}
+							
+							if( !$servertoken )
+							{
+								die( 'fail<!--separate-->{"response":"0","message":"Can\'t login as ['.$usr->ID.'] '.$usr->Name.' missing ServerToken in FUser db table ..."}' );
+							}
+						}
+						
+					}
+				}
+		
+			}
+		}
+	}
+}
+
+
 
 $p = explode( ':', strtolower( $args->args->path ) );
 if( $p[0] == 'system' )
@@ -26,19 +107,32 @@ if( $row = $SqlDatabase->FetchObject( '
 	WHERE 
 		f.Name=\'' . reset( $expl ) . '\' AND
 		( 
-			f.UserID=\'' . $User->ID . '\' OR
+			f.UserID=\'' . $userid . '\' OR
 			f.GroupID IN (
 				SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
 				WHERE 
 					g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-					ug.UserID = \'' . $User->ID . '\'
+					ug.UserID = \'' . $userid . '\'
 			) 
 		)
 	LIMIT 1
 ' ) )
 {
-	if( file_exists( $f = ( 'devices/DOSDrivers/' . $row->Type . '/door.php' ) ) )
+	
+	// TODO: Check this for other disks. the other users sessionid is required right? ...
+	
+	$Logger->log( '[1.0] [volumeinfo] : devices/DOSDrivers/' . $row->Type . '/door.php args: ' . print_r( $args,1 ) );
+	
+	if( $userid == $User->ID && file_exists( $f = ( 'devices/DOSDrivers/' . $row->Type . '/door.php' ) ) )
 	{
+		$Logger->log( '[1.1] [volumeinfo] : devices/DOSDrivers/' . $row->Type . '/door.php ' );
+		
+		include( $f ); $door->dosAction( $args );
+	}
+	else if( $userid == $User->ID && file_exists( $f = ( 'devices/Storage/' . $row->Type . '/door.php' ) ) )
+	{
+		$Logger->log( '[1.2] [volumeinfo] : devices/Storage/' . $row->Type . '/door.php ' );
+		
 		include( $f ); $door->dosAction( $args );
 	}
 	// Experimental, trying to get volume info directly from FriendCore
@@ -62,8 +156,14 @@ if( $row = $SqlDatabase->FetchObject( '
 			'Assign', 'ArenaCM', 'FriendStoreDrive' 
 		);
 		
-		if( array_search( $row->Type, $LocalTypes ) )
+		// TODO: This method will never work, use in_array() instead, but for backwards compatibility I will keep it as is for now ...
+		
+		if( !$servertoken && array_search( $row->Type, $LocalTypes ) )
 		{
+			$Logger->log( '[2] [volumeinfo] : devices/DOSDrivers/' . $row->Type . '/door.php args: ' . print_r( $args,1 ) );
+			
+			// TODO: Sometimes disk_free_space() returns nothing if there is no config data in db ...
+			
 			$nn = disk_free_space( $row->Path );
 			if( $o = json_decode( $row->Config ) )
 			{
@@ -97,10 +197,18 @@ if( $row = $SqlDatabase->FetchObject( '
 			$v->Volume = $row->Name . ':';
 			$v->Used = $row->StoredBytes;
 			$v->Filesize = $nn;
+			
 			die( 'ok<!--separate-->' . json_encode( $v ) );
 		}
 		else 
 		{
+			// If we have servertoken for another user use that as a sessionid, login server side, not safe to login from client side ...
+			
+			if( $servertoken )
+			{
+				$sessionid = $servertoken;
+			}
+			
 			$flags = new stdClass();
 			$flags->{CURLOPT_FOLLOWLOCATION} = false;
 			
@@ -109,6 +217,9 @@ if( $row = $SqlDatabase->FetchObject( '
 				'&path=' . urlencode( $args->args->path );
 			
 			$res = FriendCall( $url, $flags );
+			
+			$Logger->log( '[3] [volumeinfo] : devices/DOSDrivers/' . $row->Type . '/door.php url: ' . $url . ' res: ' . $res . ' args: ' . print_r( $args, 1 ) );
+			
 			if( $sep = explode( '<!--separate-->', $res ) )
 			{
 				if( $sep[0] == 'ok' )

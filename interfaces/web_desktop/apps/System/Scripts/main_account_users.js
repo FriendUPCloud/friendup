@@ -366,7 +366,7 @@ Sections.accounts_users = function( cmd, extra )
 						}
 						
 						// Storage / disks
-						var mlst = Sections.user_disk_refresh( mountlist, userInfo.ID );
+						var mlst = Sections.user_disk_refresh( mountlist, userInfo.ID, Sections.user_volumeinfo_refresh( mountlist, userInfo.ID ) );
 						
 						return mlst;
 					},
@@ -4935,6 +4935,29 @@ Sections.accounts_users = function( cmd, extra )
 							}*/
 							
 							
+							// TODO: Add call to volumeinfo for each disk in the list ...
+							
+							// make a sub queue for all these disks ...
+							
+							//if( rows )
+							//{
+								//for( var a in rows )
+								//{
+									
+									//if( rows[a].ID && rows[a].Name && rows[a].UserID )
+									//{
+										//getStorageInfo( rows[a].Name + ':', rows[a].UserID, function( res, dat )
+										//{
+											
+											//
+											
+											//console.log( 'getStorageInfo ', { res: res, dat: dat } );
+											
+										//} );
+									//}
+									
+								//}
+							//}
 							
 							console.log( '[2] mountlist ', { e:e, d:(rows?rows:d), args: { userid: extra, authid: Application.authId } } );
 							if( e != 'ok' ) rows = '404';
@@ -6638,6 +6661,50 @@ Sections.accounts_users = function( cmd, extra )
 		
 	}
 	
+	function getStorageInfo( path, id, args, callback )
+	{
+		// TODO: Had to move this function out of this section to get access to it outside in another function, look at this mess some other time ...
+		
+		// TODO: So we need to get server token as admin for this user and then use that as a sessionid ???
+		
+		if( path && id && callback )
+		{
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				var json = null;
+				
+				if( d )
+				{
+					try
+					{
+						var json = JSON.parse( d );
+					} 
+					catch( e ){ }
+				}
+				
+				if( e == 'ok' && d )
+				{
+					if( json )
+					{
+						if( ShowLog ) console.log( '[ok] volumeinfo ', { e:e, d:json, args: { path: path, userid: id, authid: Application.authId } } );
+						
+						return callback( true, json, args );
+					}
+				}
+				
+				console.log( '[fail] volumeinfo ', { e:e, d:(json?json:d), args: { path: path, userid: id, authid: Application.authId } } );
+				
+				return callback( false, ( json ? json : false ), args );
+			}
+			m.execute( 'volumeinfo', { path: path, userid: id, authid: Application.authId } );
+			
+			return true;
+		}
+		
+		return false;
+	}
+	
 	function applications( callback, id )
 	{
 		
@@ -7692,6 +7759,60 @@ function getLastLoginlist( callback, users )
 	}
 }
 
+function getStorageInfo( path, id, args, callback )
+{
+	// TODO: Had to move this function out of this section to get access to it outside in another function, look at this mess some other time ...
+	
+	// TODO: So we need to get server token as admin for this user and then use that as a sessionid ???
+	
+	if( path && id && callback )
+	{
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			var json = null;
+			
+			if( d )
+			{
+				try
+				{
+					var json = JSON.parse( d );
+				} 
+				catch( e ){ }
+			}
+			
+			if( e == 'ok' && d )
+			{
+				if( json )
+				{
+					if( ShowLog ) console.log( '[ok] volumeinfo ', { e:e, d:json, args: { path: path, userid: id, authid: Application.authId } } );
+					
+					return callback( true, json, args );
+				}
+			}
+			
+			// Show error message if there is any ...
+			
+			if( d )
+			{
+				console.log( '[fail] volumeinfo ', { e:e, d:(json?json:d), args: { path: path, userid: id, authid: Application.authId } } );
+			}
+			else
+			{
+				console.log( '[fail] volumeinfo not support in DOSDriver ... ', { path: path, userid: id, authid: Application.authId } );
+			}
+			
+			return callback( false, ( json ? json : false ), args );
+		}
+		m.execute( 'volumeinfo', { path: path, userid: id, authid: Application.authId } );
+		
+		return true;
+	}
+	
+	return false;
+}
+
+
 
 function SubMenu( _this, close )
 {
@@ -8413,7 +8534,7 @@ Sections.user_disk_save = function( userid, did )
 						ul = null;
 					}
 				
-					ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid );
+					ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid, Sections.user_volumeinfo_refresh( ul, userid ) );
 				
 					Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 				}
@@ -8460,7 +8581,7 @@ Sections.user_disk_cancel = function( userid )
 		
 		console.log( '[3] mountlist ', { e:e, d:(ul?ul:d), args: { userid: userid+"", authid: Application.authId } } );
 		
-		ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid );
+		ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid, Sections.user_volumeinfo_refresh( ul, userid ) );
 		
 		//console.log( 'Application.sendMessage( { type: \'system\', command: \'refreshdoors\' } );' );
 		
@@ -8507,7 +8628,7 @@ Sections.user_disk_remove = function( devname, did, userid )
 									ul = null;
 								}
 							
-								ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid );
+								ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid, Sections.user_volumeinfo_refresh( ul, userid ) );
 							}
 							u.execute( 'mountlist', { userid: userid, authid: Application.authId } );
 						
@@ -8799,7 +8920,7 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 	}
 };
 
-Sections.user_disk_refresh = function( mountlist, userid )
+Sections.user_disk_refresh = function( mountlist, userid, func )
 {
 	// Mountlist
 	var mlst = '';
@@ -8954,10 +9075,10 @@ Sections.user_disk_refresh = function( mountlist, userid )
 						storage.icon = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
 					}
 			
-					console.log( storage );
-			
-					mlst += '<div class="HContent33 FloatLeft DiskContainer"' + ( storage.mont <= 0 ? ' style="opacity:0.6"' : '' ) + '>';
-			
+					//console.log( storage );
+					
+					mlst += '<div id="StorageWrapper_' + storage.id + '" class="HContent33 FloatLeft DiskContainer"' + ( storage.mont <= 0 ? ' style="opacity:0.6"' : '' ) + '>';
+					
 					// If "SQLWorkgroupDrive" handle the edit in Workgroups ...
 					
 					if( !Application.checkAppPermission( [ 
@@ -8980,7 +9101,7 @@ Sections.user_disk_refresh = function( mountlist, userid )
 					mlst += '<div class="Col1 FloatLeft" id="Storage_' + storage.id + '">';
 					mlst += '<div class="disk"><div class="label" style="background-image: url(\'' + storage.icon + '\')"></div></div>';
 					mlst += '</div>';
-					mlst += '<div class="Col2 FloatLeft HContent100 Name Ellipsis">';
+					mlst += '<div class="Col2 FloatLeft HContent100 Name Ellipsis" id="StorageInfo_' + storage.id + '">';
 					mlst += '<div class="name Ellipsis" title="' + storage.name + '">' + storage.name + ':</div>';
 					mlst += '<div class="type Ellipsis" title="' + i18n( 'i18n_' + storage.type ) + '">' + i18n( 'i18n_' + storage.type ) + '</div>';
 					mlst += '<div class="rectangle" title="' + FormatBytes( storage.used, 0 ) + ' used"><div style="width:' + storage.prog + '%"></div></div>';
@@ -8992,6 +9113,14 @@ Sections.user_disk_refresh = function( mountlist, userid )
 			}
 		}
 		mlst += '</div>';
+		
+		// Run delayed function if defined ...
+		
+		if( func )
+		{
+			func();
+		}
+		
 	}
 	else
 	{
@@ -9000,6 +9129,76 @@ Sections.user_disk_refresh = function( mountlist, userid )
 	
 	return mlst;
 };
+
+Sections.user_volumeinfo_refresh = function( mountlist, userid )
+{
+	// Temporary complicated function until list of volumeinfo per user per disks can be combined without sessionid dependency, or mountlist can be used with out wrong StoredBytes data from db ...
+	
+	if( mountlist && userid )
+	{
+		for( var i in mountlist )
+		{
+			if( mountlist[i].ID && mountlist[i].Name && mountlist[i].UserID )
+			{
+				getStorageInfo( mountlist[i].Name + ':', mountlist[i].UserID, mountlist[i], function( res, dat, args )
+				{
+					
+					//
+					
+					// Update even if there is an error so we can see what is missing ServerToken etc other stuff in console ...
+						
+					if( ge( 'StorageInfo_' + args.ID ) && ge( 'StorageInfo_' + args.ID ).className.indexOf( 'Updated' ) < 0 )
+					{
+						
+						var size = 0;
+						var used = 0;
+						
+						try
+						{
+							if( dat )
+							{
+								size = ( dat.Filesize ? dat.Filesize : 0 );
+								used = ( dat.Used ? dat.Used : 0 );
+							}
+						}
+						catch( e ){  }
+						
+						
+						
+						var storage = {
+							id    : args.ID,
+							user  : args.UserID,
+							name  : args.Name,
+							type  : args.Type,
+							size  : size, 
+							used  : used, 
+							free  : ( size - used ), 
+							prog  : ( ( used / size * 100 ) > 100 ? 100 : ( !used && !size ? 0 : ( used / size * 100 ) ) )
+						};
+						
+						if( ShowLog ) console.log( storage );
+						
+						var mlst = '';
+						
+						mlst += '<div class="name Ellipsis" title="' + storage.name + '">' + storage.name + ':</div>';
+						mlst += '<div class="type Ellipsis" title="' + i18n( 'i18n_' + storage.type ) + '">' + i18n( 'i18n_' + storage.type ) + '</div>';
+						mlst += '<div class="rectangle" title="' + FormatBytes( storage.used, 0 ) + ' used"><div style="width:' + storage.prog + '%"></div></div>';
+						mlst += '<div class="bytes Ellipsis" title="'+ FormatBytes( storage.free, 0 )  + ' free of ' + FormatBytes( storage.size, 0 ) + '">' + FormatBytes( storage.free, 0 )  + ' free of ' + FormatBytes( storage.size, 0 ) + '</div>';
+						
+						//console.log( mlst );
+						
+						ge( 'StorageInfo_' + args.ID ).classList.add( 'Updated' );
+						
+						ge( 'StorageInfo_' + args.ID ).innerHTML = mlst;
+						
+					}
+					
+				} );
+			}
+		}	
+	}
+	
+}
 
 Sections.user_disk_mount = function( devname, userid, _this )
 {
@@ -9034,7 +9233,8 @@ Sections.user_disk_mount = function( devname, userid, _this )
 							ul = null;
 						}
 					
-						ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid );
+						ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid, Sections.user_volumeinfo_refresh( ul, userid ) );
+						
 					}
 					u.execute( 'mountlist', { userid: userid, authid: Application.authId } );
 				
@@ -9076,7 +9276,7 @@ Sections.user_disk_mount = function( devname, userid, _this )
 							ul = null;
 						}
 					
-						ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid );
+						ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid, Sections.user_volumeinfo_refresh( ul, userid ) );
 					}
 					u.execute( 'mountlist', { userid: userid, authid: Application.authId } );
 				
