@@ -44,7 +44,11 @@ i18n_workspaces                        : Workspaces
 
 i18n_workgroups                        : Workgroups
 
+i18n_user_workgroups_empty             : User workgroups empty.
+
 i18n_roles                             : Roles
+
+i18n_user_roles_empty                  : User roles empty.
 
 i18n_storage                           : Storage
 i18n_drives                            : Drives

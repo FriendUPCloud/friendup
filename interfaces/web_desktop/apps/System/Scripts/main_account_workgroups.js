@@ -247,6 +247,63 @@ Sections.accounts_workgroups = function( cmd, extra )
 		}
 	}
 	
+	function getStorageInfo( path, id, args, callback )
+	{
+		// TODO: Had to move this function out of this section to get access to it outside in another function, look at this mess some other time ...
+	
+		// TODO: So we need to get server token as admin for this user and then use that as a sessionid ???
+	
+		if( path && id && callback )
+		{
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				var json = null;
+			
+				if( d )
+				{
+					try
+					{
+						var json = JSON.parse( d );
+					} 
+					catch( e ){ }
+				}
+			
+				if( e == 'ok' && d )
+				{
+					if( json )
+					{
+						if( ShowLog ) console.log( '[ok] volumeinfo ', { e:e, d:json, args: { path: path, userid: id, authid: Application.authId } } );
+					
+						return callback( true, json, args );
+					}
+				}
+			
+				// Show error message if there is any ...
+			
+				if( d )
+				{
+					//console.log( '[fail] volumeinfo ', { e:e, d:(json?json:d), args: { path: path, userid: id, authid: Application.authId } } );
+				
+					args.Errors = { text: '[fail] volumeinfo ', content: { e:e, d:(json?json:d), args: { path: path, userid: id, authid: Application.authId } } };
+				}
+				else
+				{
+					//console.log( '[fail] volumeinfo not support in DOSDriver ... ', { path: path, userid: id, authid: Application.authId } );
+				
+					args.Errors = { text: '[fail] volumeinfo not support in DOSDriver ... ', content: { path: path, userid: id, authid: Application.authId } };
+				}
+			
+				return callback( false, ( json ? json : false ), args );
+			}
+			m.execute( 'volumeinfo', { path: path, userid: id, authid: Application.authId } );
+		
+			return true;
+		}
+	
+		return false;
+	}
+	
 	function dosdrivergui( storage, callback )
 	{
 		var ft = new Module( 'system' );
@@ -1264,7 +1321,26 @@ Sections.accounts_workgroups = function( cmd, extra )
 	function readableBytes( bytes, decimals = 2, units = 1 ) 
 	{
 		if ( bytes == 0 ) return ( '' + ( units ? '0B' : '' ) );
+		
+		// Using the same function that is used for fileInfo
+		var humanFS = HumanFileSize( bytes );
 	
+		if( humanFS )
+		{
+			var size = humanFS.split( ' ' )[0];
+			var unit = humanFS.split( ' ' ).pop();
+		
+			if( units === 2 ) return unit;
+		
+			// Decimals are set to fixed = 1 ...
+		
+			return ( !units ? size : ( size + unit ) );
+		}
+	
+		return ( !units ? '' : '0B' );
+	
+		// Old method ...
+		
 		const k = 1024;
 		const dm = decimals < 0 ? 0 : decimals;
 		const sizes = [ 'B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB' ];
@@ -2878,22 +2954,22 @@ Sections.accounts_workgroups = function( cmd, extra )
 										var type = mode[0].toLowerCase();
 										if( type == 'kb' )
 										{
-											size = size * 1024;
+											size = size * 1000;
 										}
 										else if( type == 'mb' )
 										{
-											size = size * 1024 * 1024;
+											size = size * 1000 * 1000;
 										}
 										else if( type == 'gb' )
 										{
-											size = size * 1024 * 1024 * 1024;
+											size = size * 1000 * 1000 * 1000;
 										}
 										else if( type == 'tb' )
 										{
-											size = size * 1024 * 1024 * 1024 * 1024;
+											size = size * 1000 * 1000 * 1000 * 1000;
 										}
 										var used = parseInt( sorted[b].StoredBytes );
-										if( isNaN( size ) || size == 0 ) size = 512 * 1024; // < Normally the default size
+										if( isNaN( size ) || size == 0 ) size = 500 * 1000; // < Normally the default size
 										if( !used && !size ) used = 0, size = 0;
 										if( !used ) used = 0;
 										if( used > size || ( used && !size ) ) size = used;
@@ -2969,13 +3045,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 															+ '			<div class="label" style="background-image: url(\'' + storage.icon + '\')"></div>'
 															+ '		</div>'
 															+ '	</div>'
-															+ '	<div class="Col2 FloatLeft HContent100 Name Ellipsis">'
+															+ '	<div class="Col2 FloatLeft HContent100 Name Ellipsis" id="StorageInfo_' + storage.id + '">'
 															+ '		<div class="name" title="' + storage.name + '">' + storage.name + ':</div>'
 															+ '		<div class="type" title="' + i18n( 'i18n_' + storage.type ) + '">' + i18n( 'i18n_' + storage.type ) + '</div>'
-															+ '		<div class="rectangle">'
-															+ '			<div title="' + storage.used + ' used" style="width:' + storage.prog + '%"></div>'
+															+ '		<div class="rectangle" title="' + storage.used + ' used">'
+															+ '			<div style="width:' + storage.prog + '%"></div>'
 															+ '		</div>'
-															+ '		<div class="bytes">' + storage.free  + ' free of ' + storage.size + '</div>'
+															+ '		<div class="bytes" title="' + storage.free  + ' free of ' + storage.size + '">' + storage.free  + ' free of ' + storage.size + '</div>'
 															+ '	<div>';
 															return d;
 														}( this, storage, workgroup.groupid )
@@ -2984,9 +3060,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 												]
 											}
 										] );
-								
-								
-								
+										
+										
+										
 										if( divs )
 										{
 											for( var i in divs )
@@ -2997,7 +3073,70 @@ Sections.accounts_workgroups = function( cmd, extra )
 												}
 											}
 										}
-							
+										
+										
+										
+										getStorageInfo( sorted[b].Name + ':', sorted[b].UserID, sorted[b], function( res, dat, args )
+										{
+					
+											//
+					
+											// Update even if there is an error so we can see what is missing ServerToken etc other stuff in console ...
+					
+											if( ge( 'StorageInfo_' + args.ID ) && ge( 'StorageInfo_' + args.ID ).className.indexOf( 'Updated' ) < 0 )
+											{
+						
+												var size = 0;
+												var used = 0;
+						
+												try
+												{
+													if( dat )
+													{
+														size = ( dat.Filesize ? dat.Filesize : 0 );
+														used = ( dat.Used ? dat.Used : 0 );
+													}
+												}
+												catch( e ){  }
+						
+						
+						
+												var storage = {
+													id    : args.ID,
+													user  : args.UserID,
+													name  : args.Name,
+													type  : args.Type,
+													size  : size, 
+													used  : used, 
+													free  : ( size - used ), 
+													prog  : ( ( used / size * 100 ) > 100 ? 100 : ( !used && !size ? 0 : ( used / size * 100 ) ) )
+												};
+						
+												if( ShowLog ) console.log( storage );
+						
+												var mlst = '';
+						
+												mlst += '<div class="name Ellipsis" title="' + storage.name + '">' + storage.name + ':</div>';
+												mlst += '<div class="type Ellipsis" title="' + i18n( 'i18n_' + storage.type ) + '">' + i18n( 'i18n_' + storage.type ) + '</div>';
+												mlst += '<div class="rectangle" title="' + readableBytes( storage.used, 0 ) + ' used"><div style="width:' + storage.prog + '%"></div></div>';
+												mlst += '<div class="bytes Ellipsis" title="'+ readableBytes( storage.free, 0 )  + ' free of ' + readableBytes( storage.size, 0 ) + '">' + readableBytes( storage.free, 0 )  + ' free of ' + readableBytes( storage.size, 0 ) + '</div>';
+						
+												//console.log( mlst );
+						
+												ge( 'StorageInfo_' + args.ID ).classList.add( 'Updated' );
+						
+												ge( 'StorageInfo_' + args.ID ).innerHTML = mlst;
+						
+												// Show errors if there is any ...
+						
+												if( args.Errors ) console.log( args.Errors.text, args.Errors.content );
+						
+											}
+					
+										} );
+										
+										
+										
 									}
 							
 								}
@@ -3042,7 +3181,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 									listStorage( function( res, js )
 									{
 										
-										var storage = { id : '', user: '', name : '', type : 'SQLWorkgroupDrive', note: '', size : 512 };
+										var storage = { id : '', user: '', name : '', type : 'SQLWorkgroupDrive', note: '', csize : 500, cunit : 'MB' };
 										
 										var units = [ 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB' ];
 										
@@ -3064,41 +3203,49 @@ Sections.accounts_workgroups = function( cmd, extra )
 											var size = ( js.Config.DiskSize ? js.Config.DiskSize : 0 );
 											var mode = ( size && size.length && size != 'undefined' ? size.match( /[a-z]+/i ) : [ '' ] );
 											size = parseInt( size );
+											
+											var csize = size;
+											var cunit = ( mode[0] ? mode[0] : 'MB' );
+											
 											var type = mode[0].toLowerCase();
 											if( type == 'kb' )
 											{
-												size = size * 1024;
+												size = size * 1000;
 											}
 											else if( type == 'mb' )
 											{
-												size = size * 1024 * 1024;
+												size = size * 1000 * 1000;
 											}
 											else if( type == 'gb' )
 											{
-												size = size * 1024 * 1024 * 1024;
+												size = size * 1000 * 1000 * 1000;
 											}
 											else if( type == 'tb' )
 											{
-												size = size * 1024 * 1024 * 1024 * 1024;
+												size = size * 1000 * 1000 * 1000 * 1000;
 											}
 											var used = parseInt( js.StoredBytes );
-											if( isNaN( size ) ) size = 512 * 1024; // < Normally the default size
+											if( isNaN( size ) ) size = 500 * 1000; // < Normally the default size
 											if( !used && !size ) used = 0, size = 0;
-											if( !size ) size = 536870912;
+											if( !size ) size = 500000000;
 											if( !used ) used = 0;
 											if( used > size || ( used && !size ) ) size = used;
-			
+											
+											csize = ( !csize ? 500 : csize );
+											
 											storage = {
-												id   : js.ID,
-												user : js.UserID,
-												name : js.Name,
-												type : js.Type,
-												note : js.ShortDescription,
-												size : size, 
-												used : used, 
-												free : ( size - used ), 
-												prog : ( ( used / size * 100 ) > 100 ? 100 : ( used / size * 100 ) ), 
-												icon : '/iconthemes/friendup15/DriveLabels/FriendDisk.svg',
+												id    : js.ID,
+												user  : js.UserID,
+												name  : js.Name,
+												type  : js.Type,
+												csize : csize,
+												cunit : cunit,
+												note  : js.ShortDescription,
+												size  : size, 
+												used  : used, 
+												free  : ( size - used ), 
+												prog  : ( ( used / size * 100 ) > 100 ? 100 : ( used / size * 100 ) ), 
+												icon  : '/iconthemes/friendup15/DriveLabels/FriendDisk.svg',
 												mount : js.Mounted
 											};
 											
@@ -3270,7 +3417,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																	{
 																		var d = document.createElement( 'div' );
 																		d.className = 'HContent35 FloatLeft Ellipsis PaddingRight';
-																		d.innerHTML = '<input type="text" class="FullWidth" id="DiskSizeA" value="' + readableBytes( storage.size, 0, 0 ) + '" placeholder="512"/>';
+																		d.innerHTML = '<input type="text" class="FullWidth" id="DiskSizeA" value="' + storage.csize + '" placeholder="500"/>';
 																		return d;
 																	}(  )
 																	
@@ -3301,7 +3448,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																					for( var a in units )
 																					{
 																						d.innerHTML += ''
-																						+ '<option' + ( storage.size && readableBytes( storage.size, 0, 2 ) == units[a] ? ' selected="selected"' : '' ) + '>' 
+																						+ '<option' + ( storage.csize && storage.cunit == units[a] ? ' selected="selected"' : '' ) + '>' 
 																						+ 	units[a] 
 																						+ '</option>';
 																					}
@@ -3612,6 +3759,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 												ge( 'Name' ).current = storage.name;
 												
 											}
+											
+											
+											
+											
 											
 										} );
 										

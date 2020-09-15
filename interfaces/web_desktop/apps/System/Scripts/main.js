@@ -738,7 +738,7 @@ function FormatBytes( bytes, decimals = 2, units = 1 )
 
 function HumanFileSize( bytes, si )
 {
-	if( si !== false ) si = true;
+	if( typeof( si ) == 'undefined' || si !== false ) si = true;
 	
     var thresh = si ? 1000 : 1024;
     if(Math.abs(bytes) < thresh) {

@@ -346,6 +346,10 @@ Sections.accounts_users = function( cmd, extra )
 								rstr += '</div>';
 							}
 						}
+						else
+						{
+							rstr += '<div class="HRow"><div class="HContent100">' + i18n( 'i18n_user_roles_empty' ) + '</div></div>';
+						}
 						
 						
 						
@@ -1214,6 +1218,12 @@ Sections.accounts_users = function( cmd, extra )
 											
 											
 										}
+										else
+										{
+											str += '<div class="HRow"><div class="HContent100">' + i18n( 'i18n_user_workgroups_empty' ) + '</div></div>';
+										}
+										
+										
 										ge( 'WorkgroupInner' ).innerHTML = str;
 										
 										// Hide add / edit button ...
@@ -4532,96 +4542,101 @@ Sections.accounts_users = function( cmd, extra )
 							{
 								// Check Permissions
 								
-								if( 1==1 || ShowLog ) console.log( '// Check Permissions ', show );
+								if( ShowLog || 1==1 ) console.log( '// Check Permissions ', show );
 								
-								if( !show || show.indexOf( 'workgroup' ) >= 0 )
+								if( show )
 								{
-									if( Application.checkAppPermission( [ 
-										'PERM_WORKGROUP_READ_GLOBAL', 'PERM_WORKGROUP_READ_IN_WORKGROUP', 
-										'PERM_WORKGROUP_GLOBAL',      'PERM_WORKGROUP_WORKGROUP' 
-									] ) )
+									
+									if( /*!show || */show.indexOf( 'workgroup' ) >= 0 || show.indexOf( '*' ) >= 0 )
 									{
-										if( ge( 'AdminWorkgroupContainer' ) ) ge( 'AdminWorkgroupContainer' ).className = 'Open';
+										if( Application.checkAppPermission( [ 
+											'PERM_WORKGROUP_READ_GLOBAL', 'PERM_WORKGROUP_READ_IN_WORKGROUP', 
+											'PERM_WORKGROUP_GLOBAL',      'PERM_WORKGROUP_WORKGROUP' 
+										] ) )
+										{
+											if( ge( 'AdminWorkgroupContainer' ) ) ge( 'AdminWorkgroupContainer' ).className = 'Open';
+										}
+										else
+										{
+											console.log( '// No Permission = workgroup' );
+										}
 									}
-									else
-									{
-										console.log( '// No Permission = workgroup' );
-									}
-								}
 								
-								if( !show || show.indexOf( 'role' ) >= 0 )
-								{
-									if( Application.checkAppPermission( [ 
-										'PERM_ROLE_READ_GLOBAL', 'PERM_ROLE_READ_IN_WORKGROUP', 
-										'PERM_ROLE_GLOBAL',      'PERM_ROLE_WORKGROUP' 
-									] ) )
+									if( /*!show || */show.indexOf( 'role' ) >= 0 || show.indexOf( '*' ) >= 0 )
 									{
-										if( ge( 'AdminRoleContainer' ) ) ge( 'AdminRoleContainer' ).className = 'Open';
+										if( Application.checkAppPermission( [ 
+											'PERM_ROLE_READ_GLOBAL', 'PERM_ROLE_READ_IN_WORKGROUP', 
+											'PERM_ROLE_GLOBAL',      'PERM_ROLE_WORKGROUP' 
+										] ) )
+										{
+											if( ge( 'AdminRoleContainer' ) ) ge( 'AdminRoleContainer' ).className = 'Open';
+										}
+										else
+										{
+											console.log( '// No Permission = role' );
+										}
 									}
-									else
-									{
-										console.log( '// No Permission = role' );
-									}
-								}
 								
-								if( !show || show.indexOf( 'storage' ) >= 0 )
-								{
-									if( Application.checkAppPermission( [ 
-										'PERM_STORAGE_READ_GLOBAL', 'PERM_STORAGE_READ_IN_WORKGROUP', 
-										'PERM_STORAGE_GLOBAL',      'PERM_STORAGE_WORKGROUP' 
-									] ) )
+									if( /*!show || */show.indexOf( 'storage' ) >= 0 || show.indexOf( '*' ) >= 0 )
 									{
-										if( ge( 'AdminStorageContainer' ) ) ge( 'AdminStorageContainer' ).className = 'Open';
+										if( Application.checkAppPermission( [ 
+											'PERM_STORAGE_READ_GLOBAL', 'PERM_STORAGE_READ_IN_WORKGROUP', 
+											'PERM_STORAGE_GLOBAL',      'PERM_STORAGE_WORKGROUP' 
+										] ) )
+										{
+											if( ge( 'AdminStorageContainer' ) ) ge( 'AdminStorageContainer' ).className = 'Open';
+										}
+										else
+										{
+											console.log( '// No Permission = storage' );
+										}
 									}
-									else
-									{
-										console.log( '// No Permission = storage' );
-									}
-								}
 								
-								if( !show || show.indexOf( 'application' ) >= 0 )
-								{
-									if( Application.checkAppPermission( [ 
-										'PERM_APPLICATION_READ_GLOBAL', 'PERM_APPLICATION_READ_IN_WORKGROUP', 
-										'PERM_APPLICATION_GLOBAL',      'PERM_APPLICATION_WORKGROUP' 
-									] ) )
+									if( /*!show || */show.indexOf( 'application' ) >= 0 || show.indexOf( '*' ) >= 0 )
 									{
-										if( ge( 'AdminApplicationContainer' ) ) ge( 'AdminApplicationContainer' ).className = 'Open';
+										if( Application.checkAppPermission( [ 
+											'PERM_APPLICATION_READ_GLOBAL', 'PERM_APPLICATION_READ_IN_WORKGROUP', 
+											'PERM_APPLICATION_GLOBAL',      'PERM_APPLICATION_WORKGROUP' 
+										] ) )
+										{
+											if( ge( 'AdminApplicationContainer' ) ) ge( 'AdminApplicationContainer' ).className = 'Open';
+										}
+										else
+										{
+											console.log( '// No Permission = application' );
+										}
 									}
-									else
-									{
-										console.log( '// No Permission = application' );
-									}
-								}
 								
-								if( !show || show.indexOf( 'dock' ) >= 0 )
-								{
-									if( Application.checkAppPermission( [ 
-										'PERM_APPLICATION_READ_GLOBAL', 'PERM_APPLICATION_READ_IN_WORKGROUP', 
-										'PERM_APPLICATION_GLOBAL',      'PERM_APPLICATION_WORKGROUP' 
-									] ) )
+									if( /*!show || */show.indexOf( 'dock' ) >= 0 || show.indexOf( '*' ) >= 0 )
 									{
-										if( ge( 'AdminDockContainer' ) ) ge( 'AdminDockContainer' ).className = 'Open';
+										if( Application.checkAppPermission( [ 
+											'PERM_APPLICATION_READ_GLOBAL', 'PERM_APPLICATION_READ_IN_WORKGROUP', 
+											'PERM_APPLICATION_GLOBAL',      'PERM_APPLICATION_WORKGROUP' 
+										] ) )
+										{
+											if( ge( 'AdminDockContainer' ) ) ge( 'AdminDockContainer' ).className = 'Open';
+										}
+										else
+										{
+											console.log( '// No Permission = dock' );
+										}
 									}
-									else
-									{
-										console.log( '// No Permission = dock' );
-									}
-								}
 								
-								if( !show || show.indexOf( 'looknfeel' ) >= 0 )
-								{
-									if( Application.checkAppPermission( [ 
-										'PERM_LOOKNFEEL_READ_GLOBAL', 'PERM_LOOKNFEEL_READ_IN_WORKGROUP', 
-										'PERM_LOOKNFEEL_GLOBAL',      'PERM_LOOKNFEEL_WORKGROUP' 
-									] ) )
+									if( /*!show || */show.indexOf( 'looknfeel' ) >= 0 || show.indexOf( '*' ) >= 0 )
 									{
-										if( ge( 'AdminLooknfeelContainer' ) ) ge( 'AdminLooknfeelContainer' ).className = 'Open';
+										if( Application.checkAppPermission( [ 
+											'PERM_LOOKNFEEL_READ_GLOBAL', 'PERM_LOOKNFEEL_READ_IN_WORKGROUP', 
+											'PERM_LOOKNFEEL_GLOBAL',      'PERM_LOOKNFEEL_WORKGROUP' 
+										] ) )
+										{
+											if( ge( 'AdminLooknfeelContainer' ) ) ge( 'AdminLooknfeelContainer' ).className = 'Open';
+										}
+										else
+										{
+											console.log( '// No Permission = looknfeel' );
+										}
 									}
-									else
-									{
-										console.log( '// No Permission = looknfeel' );
-									}
+									
 								}
 							}
 							
@@ -4778,6 +4793,7 @@ Sections.accounts_users = function( cmd, extra )
 			// Go through all data gathering until stop
 			var loadingSlot = 0;
 			var loadingInfo = {};
+			var loadingBoxs = [ 'workgroup', 'role', 'storage', 'dock', 'application', 'looknfeel' ];
 			var loadingList = [
 				
 				// 0 | Load userinfo
@@ -4809,6 +4825,8 @@ Sections.accounts_users = function( cmd, extra )
 						
 						userInfo.avatar = '/system.library/module/?module=system&command=getavatar&userid=' + userInfo.ID + ( userInfo.Image ? '&image=' + userInfo.Image : '' ) + '&width=256&height=256&authid=' + Application.authId;
 						
+						//userInfo.Workgroup = '';
+						
 						loadingInfo.userInfo = userInfo;
 						
 						if( ShowLog ) console.log( '// 0 | Load userinfo' );
@@ -4838,7 +4856,7 @@ Sections.accounts_users = function( cmd, extra )
 							wgroups = null;
 						}
 						//console.log( 'workgroups ', { e:e, d:d } );
-						if( e != 'ok' ) wgroups = '404';
+						if( e != 'ok' ) wgroups = ''/*'404'*/;
 						loadingInfo.workgroups = wgroups;
 						
 						if( ShowLog ) console.log( '// 3 | Get user\'s workgroups' );
@@ -4871,8 +4889,8 @@ Sections.accounts_users = function( cmd, extra )
 							}
 							loadingInfo.roles = uroles;
 						}
-						//console.log( 'userroleget ', { e:e, d:uroles } );
-						if( e != 'ok' ) loadingInfo.roles = '404';
+						console.log( 'userroleget ', { e:e, d:uroles } );
+						if( e != 'ok' ) loadingInfo.roles = ''/*'404'*/;
 						
 						if( ShowLog ) console.log( '// 4 | Get user\'s roles' );
 						
@@ -4959,8 +4977,8 @@ Sections.accounts_users = function( cmd, extra )
 								//}
 							//}
 							
-							console.log( '[2] mountlist ', { e:e, d:(rows?rows:d), args: { userid: extra, authid: Application.authId } } );
-							if( e != 'ok' ) rows = '404';
+							//console.log( '[2] mountlist ', { e:e, d:(rows?rows:d), args: { userid: extra, authid: Application.authId } } );
+							if( e != 'ok' ) rows = ''/*'404'*/;
 							loadingInfo.mountlist = rows;
 							
 							if( ShowLog ) console.log( '// 5 | Get storage' );
@@ -6494,7 +6512,7 @@ Sections.accounts_users = function( cmd, extra )
 			}
 		}
 		
-		console.log( "userList['Count'] ", { count: userList['Count'], userlist: userList } );
+		//console.log( "userList['Count'] ", { count: userList['Count'], userlist: userList } );
 		
 		if( ge( 'AdminUsersCount' ) )
 		{
@@ -6664,16 +6682,16 @@ Sections.accounts_users = function( cmd, extra )
 	function getStorageInfo( path, id, args, callback )
 	{
 		// TODO: Had to move this function out of this section to get access to it outside in another function, look at this mess some other time ...
-		
+	
 		// TODO: So we need to get server token as admin for this user and then use that as a sessionid ???
-		
+	
 		if( path && id && callback )
 		{
 			var m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{
 				var json = null;
-				
+			
 				if( d )
 				{
 					try
@@ -6682,26 +6700,39 @@ Sections.accounts_users = function( cmd, extra )
 					} 
 					catch( e ){ }
 				}
-				
+			
 				if( e == 'ok' && d )
 				{
 					if( json )
 					{
 						if( ShowLog ) console.log( '[ok] volumeinfo ', { e:e, d:json, args: { path: path, userid: id, authid: Application.authId } } );
-						
+					
 						return callback( true, json, args );
 					}
 				}
+			
+				// Show error message if there is any ...
+			
+				if( d )
+				{
+					//console.log( '[fail] volumeinfo ', { e:e, d:(json?json:d), args: { path: path, userid: id, authid: Application.authId } } );
 				
-				console.log( '[fail] volumeinfo ', { e:e, d:(json?json:d), args: { path: path, userid: id, authid: Application.authId } } );
+					args.Errors = { text: '[fail] volumeinfo ', content: { e:e, d:(json?json:d), args: { path: path, userid: id, authid: Application.authId } } };
+				}
+				else
+				{
+					//console.log( '[fail] volumeinfo not support in DOSDriver ... ', { path: path, userid: id, authid: Application.authId } );
 				
+					args.Errors = { text: '[fail] volumeinfo not support in DOSDriver ... ', content: { path: path, userid: id, authid: Application.authId } };
+				}
+			
 				return callback( false, ( json ? json : false ), args );
 			}
 			m.execute( 'volumeinfo', { path: path, userid: id, authid: Application.authId } );
-			
+		
 			return true;
 		}
-		
+	
 		return false;
 	}
 	
@@ -7696,7 +7727,7 @@ function getUserlist( callback, obj )
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
-		console.log( { e:e, d:d, args: args } );
+		//console.log( { e:e, d:d, args: args } );
 		
 		var userList = null;
 		
@@ -7795,11 +7826,15 @@ function getStorageInfo( path, id, args, callback )
 			
 			if( d )
 			{
-				console.log( '[fail] volumeinfo ', { e:e, d:(json?json:d), args: { path: path, userid: id, authid: Application.authId } } );
+				//console.log( '[fail] volumeinfo ', { e:e, d:(json?json:d), args: { path: path, userid: id, authid: Application.authId } } );
+				
+				args.Errors = { text: '[fail] volumeinfo ', content: { e:e, d:(json?json:d), args: { path: path, userid: id, authid: Application.authId } } };
 			}
 			else
 			{
-				console.log( '[fail] volumeinfo not support in DOSDriver ... ', { path: path, userid: id, authid: Application.authId } );
+				//console.log( '[fail] volumeinfo not support in DOSDriver ... ', { path: path, userid: id, authid: Application.authId } );
+				
+				args.Errors = { text: '[fail] volumeinfo not support in DOSDriver ... ', content: { path: path, userid: id, authid: Application.authId } };
 			}
 			
 			return callback( false, ( json ? json : false ), args );
@@ -8579,7 +8614,7 @@ Sections.user_disk_cancel = function( userid )
 			ul = null;
 		}
 		
-		console.log( '[3] mountlist ', { e:e, d:(ul?ul:d), args: { userid: userid+"", authid: Application.authId } } );
+		//console.log( '[3] mountlist ', { e:e, d:(ul?ul:d), args: { userid: userid+"", authid: Application.authId } } );
 		
 		ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid, Sections.user_volumeinfo_refresh( ul, userid ) );
 		
@@ -8686,7 +8721,7 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 			{
 				//console.log( 'user_disk_update ', { e:e, d:d } );
 				
-				var storage = { id : '', name : '', type : '', csize : 512, cunit : 'MB', user : user };
+				var storage = { id : '', name : '', type : '', csize : 500, cunit : 'MB', user : user };
 				
 				var units = [ 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB' ];
 		
@@ -8723,28 +8758,28 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 						var type = mode[0].toLowerCase();
 						if( type == 'kb' )
 						{
-							size = size * 1024;
+							size = size * 1000;
 						}
 						else if( type == 'mb' )
 						{
-							size = size * 1024 * 1024;
+							size = size * 1000 * 1000;
 						}
 						else if( type == 'gb' )
 						{
-							size = size * 1024 * 1024 * 1024;
+							size = size * 1000 * 1000 * 1000;
 						}
 						else if( type == 'tb' )
 						{
-							size = size * 1024 * 1024 * 1024 * 1024;
+							size = size * 1000 * 1000 * 1000 * 1000;
 						}
 						var used = parseInt( js.StoredBytes );
-						if( isNaN( size ) ) size = 512 * 1024; // < Normally the default size
+						if( isNaN( size ) ) size = 500 * 1000; // < Normally the default size
 						if( !used && !size ) used = 0, size = 0;
-						if( !size ) size = 536870912;
+						if( !size ) size = 500000000;
 						if( !used ) used = 0;
 						if( used > size || ( used && !size ) ) size = used;
 						
-						csize = ( !csize ? 512 : csize );
+						csize = ( !csize ? 500 : csize );
 						
 						storage = {
 							id    : js.ID,
@@ -9024,28 +9059,28 @@ Sections.user_disk_refresh = function( mountlist, userid, func )
 					var type = mode[0].toLowerCase();
 					if( type == 'kb' )
 					{
-						size = size * 1024;
+						size = size * 1000;
 					}
 					else if( type == 'mb' )
 					{
-						size = size * 1024 * 1024;
+						size = size * 1000 * 1000;
 					}
 					else if( type == 'gb' )
 					{
-						size = size * 1024 * 1024 * 1024;
+						size = size * 1000 * 1000 * 1000;
 					}
 					else if( type == 'tb' )
 					{
-						size = size * 1024 * 1024 * 1024 * 1024;
+						size = size * 1000 * 1000 * 1000 * 1000;
 					}
 					var used = parseInt( rows[b].StoredBytes );
-					if( isNaN( size ) ) size = 512 * 1024; // < Normally the default size
+					if( isNaN( size ) ) size = 500 * 1000; // < Normally the default size
 					if( !used && !size ) used = 0, size = 0;
-					if( !size ) size = 536870912;
+					if( !size ) size = 500000000;
 					if( !used ) used = 0;
 					if( used > size || ( used && !size ) ) size = used;
 					
-					csize = ( !csize ? 512 : csize );
+					csize = ( !csize ? 500 : csize );
 					
 					var storage = {
 						id    : rows[b].ID,
@@ -9146,7 +9181,7 @@ Sections.user_volumeinfo_refresh = function( mountlist, userid )
 					//
 					
 					// Update even if there is an error so we can see what is missing ServerToken etc other stuff in console ...
-						
+					
 					if( ge( 'StorageInfo_' + args.ID ) && ge( 'StorageInfo_' + args.ID ).className.indexOf( 'Updated' ) < 0 )
 					{
 						
@@ -9190,6 +9225,10 @@ Sections.user_volumeinfo_refresh = function( mountlist, userid )
 						ge( 'StorageInfo_' + args.ID ).classList.add( 'Updated' );
 						
 						ge( 'StorageInfo_' + args.ID ).innerHTML = mlst;
+						
+						// Show errors if there is any ...
+						
+						if( args.Errors ) console.log( args.Errors.text, args.Errors.content );
 						
 					}
 					

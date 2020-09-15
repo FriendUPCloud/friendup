@@ -71,6 +71,16 @@ else
 							LIMIT 1 
 						' ) )
 						{
+						
+							if( $userid != $User->ID )
+							{
+								$TempUser = $User;
+	
+								$GLOBALS[ 'User' ] = new dbIO( 'FUser' );
+								$User =& $GLOBALS[ 'User' ];
+								$User->Load( $userid );
+							}
+							
 							if( $usr->ServerToken )
 							{
 								$servertoken = $usr->ServerToken;
@@ -78,7 +88,7 @@ else
 							
 							if( !$servertoken )
 							{
-								die( 'fail<!--separate-->{"response":"0","message":"Can\'t login as ['.$usr->ID.'] '.$usr->Name.' missing ServerToken in FUser db table ..."}' );
+								//die( 'fail<!--separate-->{"response":"0","message":"Can\'t login as ['.$usr->ID.'] '.$usr->Name.' missing ServerToken in FUser db table ..."}' );
 							}
 						}
 						
@@ -121,23 +131,27 @@ if( $row = $SqlDatabase->FetchObject( '
 	
 	// TODO: Check this for other disks. the other users sessionid is required right? ...
 	
-	$Logger->log( '[1.0] [volumeinfo] : devices/DOSDrivers/' . $row->Type . '/door.php args: ' . print_r( $args,1 ) );
+	//$Logger->log( '[1.0] [volumeinfo] : devices/DOSDrivers/' . $row->Type . '/door.php args: ' . print_r( $args,1 ) );
 	
-	if( $userid == $User->ID && file_exists( $f = ( 'devices/DOSDrivers/' . $row->Type . '/door.php' ) ) )
+	if( $userid == $User->ID && file_exists( $f = ( 'devices/Storage/' . $row->Type . '/door.php' ) ) )
 	{
-		$Logger->log( '[1.1] [volumeinfo] : devices/DOSDrivers/' . $row->Type . '/door.php ' );
+		//$Logger->log( '[1.2] [volumeinfo] : devices/Storage/' . $row->Type . '/door.php ' );
 		
 		include( $f ); $door->dosAction( $args );
 	}
-	else if( $userid == $User->ID && file_exists( $f = ( 'devices/Storage/' . $row->Type . '/door.php' ) ) )
+	else if( $userid == $User->ID && file_exists( $f = ( 'devices/DOSDrivers/' . $row->Type . '/door.php' ) ) )
 	{
-		$Logger->log( '[1.2] [volumeinfo] : devices/Storage/' . $row->Type . '/door.php ' );
+		//$Logger->log( '[1.1] [volumeinfo] : devices/DOSDrivers/' . $row->Type . '/door.php ' );
 		
 		include( $f ); $door->dosAction( $args );
 	}
 	// Experimental, trying to get volume info directly from FriendCore
 	else
 	{
+		// Switch back global User from temporary variable
+		if( isset( $TempUser ) )
+			$User = $TempUser;
+		
 		//---------------------- TK-634 ----------------------
 		$sessionid = '';
 		if( isset( $args->args->sessionid ) )
@@ -151,16 +165,16 @@ if( $row = $SqlDatabase->FetchObject( '
 		
 		// Define local device types
 		$LocalTypes = array( 
-			'SQLDrive', 'SQLRODrive', 'SQLWorkgroupDrive', 'Local', 
+			'SQLDrive', 'SQLRODrive', 'SQLWorkgroupDrive', 
 			'NodeDrive', 'QuickNG', 'Treeroot', 'Website', 'Wordpress', 
 			'Assign', 'ArenaCM', 'FriendStoreDrive' 
 		);
 		
 		// TODO: This method will never work, use in_array() instead, but for backwards compatibility I will keep it as is for now ...
 		
-		if( !$servertoken && array_search( $row->Type, $LocalTypes ) )
+		if( in_array( $row->Type, $LocalTypes ) )
 		{
-			$Logger->log( '[2] [volumeinfo] : devices/DOSDrivers/' . $row->Type . '/door.php args: ' . print_r( $args,1 ) );
+			//$Logger->log( '[2] [volumeinfo] : devices/DOSDrivers/' . $row->Type . '/door.php args: ' . print_r( $args,1 ) );
 			
 			// TODO: Sometimes disk_free_space() returns nothing if there is no config data in db ...
 			
@@ -173,19 +187,19 @@ if( $row = $SqlDatabase->FetchObject( '
 					{
 						case 'kb':
 							$nn = substr( $ds, 0, strlen( $ds ) - 2 );
-							$nn = intval( $nn, 10 ) * 1024;
+							$nn = intval( $nn, 10 ) * 1000;
 							break;
 						case 'mb':
 							$nn = substr( $ds, 0, strlen( $ds ) - 2 );
-							$nn = intval( $nn, 10 ) * 1024 * 1024;
+							$nn = intval( $nn, 10 ) * 1000 * 1000;
 							break;
 						case 'gb':
 							$nn = substr( $ds, 0, strlen( $ds ) - 2 );
-							$nn = intval( $nn, 10 ) * 1024 * 1024 * 1024;
+							$nn = intval( $nn, 10 ) * 1000 * 1000 * 1000;
 							break;
 						case 'tb':
 							$nn = substr( $ds, 0, strlen( $ds ) - 2 );
-							$nn = intval( $nn, 10 ) * 1024 * 1024 * 1024 * 1024;
+							$nn = intval( $nn, 10 ) * 1000 * 1000 * 1000 * 1000;
 							break;
 						default:
 							$nn = intval( $ds, 10 );
@@ -202,29 +216,24 @@ if( $row = $SqlDatabase->FetchObject( '
 		}
 		else 
 		{
-			// If we have servertoken for another user use that as a sessionid, login server side, not safe to login from client side ...
-			
-			if( $servertoken )
-			{
-				$sessionid = $servertoken;
-			}
-			
+					
 			$flags = new stdClass();
 			$flags->{CURLOPT_FOLLOWLOCATION} = false;
 			
 			$url = ( $Config->SSLEnable ? 'https://' : 'http://' ) .
-				$Config->FCHost . ':' . $Config->FCPort . '/system.library/file/diskinfo/?sessionid=' . $sessionid .
+				$Config->FCHost . ':' . $Config->FCPort . '/system.library/file/diskinfo/?' . 
+				( $servertoken ? 'servertoken=' . $servertoken : 'sessionid=' . $sessionid ) .
 				'&path=' . urlencode( $args->args->path );
 			
 			$res = FriendCall( $url, $flags );
 			
-			$Logger->log( '[3] [volumeinfo] : devices/DOSDrivers/' . $row->Type . '/door.php url: ' . $url . ' res: ' . $res . ' args: ' . print_r( $args, 1 ) );
+			//$Logger->log( '[3] [volumeinfo] : devices/DOSDrivers/' . $row->Type . '/door.php url: ' . $url . ' res: ' . $res . ' args: ' . print_r( $args, 1 ) );
 			
 			if( $sep = explode( '<!--separate-->', $res ) )
 			{
 				if( $sep[0] == 'ok' )
 				{
-					$d = json_decode( $res );
+					$d = ( json_decode( $res ) ? json_decode( $res ) : json_decode( $sep[1] ) );
 					$d->Volume = $row->Name;
 					die( 'ok<!--separate-->' . json_encode( $d ) );
 				}
