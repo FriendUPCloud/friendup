@@ -63,6 +63,10 @@ Screen = function ( flags, initObject )
 	{
 		switch( flag.toLowerCase() )
 		{
+			// Floating screens behave like windows!
+			case 'floating':
+				this._flags[ flag ] = value;
+				break;
 			case 'title':
 				this._flags[ flag ] = value;
 				var e = this.div.screenTitle.getElementsByClassName( 'Info' )[0]; 
@@ -162,7 +166,24 @@ Screen = function ( flags, initObject )
 		"</div>" +
 		statusbar +
 		"<div class=\"ScreenOverlay\"></div>";
-		ge( 'Screens' ).appendChild( div );
+		
+		if( this._flags[ 'floating' ] )
+		{
+			self.windowObject = new View( { 
+				title: this._flags[ 'title' ] ? this._flags[ 'title' ] : 'Unnamed',
+				width: this._flags[ 'width' ] ? this._flags[ 'width' ] : 640,
+				height: this._flags[ 'height' ] ? this._flags[ 'height' ] : 640
+			} );
+			self.windowObject.content.appendChild( div );
+			self.windowObject.onClose = function()
+			{
+				self.close();
+			}
+		}
+		else
+		{
+			ge( 'Screens' ).appendChild( div );
+		}
 		
 		// FIXME: Hack - this should be better calculated, and it's not resize friendly
 		var cnt = false;
