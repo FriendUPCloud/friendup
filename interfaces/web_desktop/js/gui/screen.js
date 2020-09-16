@@ -331,10 +331,13 @@ Screen = function ( flags, initObject )
 	// Done registering clicks
 	
 	// Moveoverlay
-	var molay = document.createElement ( 'div' );
-	molay.className = 'MoveOverlay';
-	div.moveoverlay = molay;
-	div.appendChild ( molay );
+	if( !this._flags[ 'floating' ] )
+	{
+		var molay = document.createElement ( 'div' );
+		molay.className = 'MoveOverlay';
+		div.moveoverlay = molay;
+		div.appendChild ( molay );
+	}
 	
 	// Slide start on x axis
 	div.startX = -1;

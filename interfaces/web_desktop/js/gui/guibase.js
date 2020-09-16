@@ -2017,7 +2017,7 @@ movableListener = function( e, data )
 			let w = window.currentMovable;
 
 			// Make sure the inner overlay is over screens
-			if( window.currentScreen )
+			if( window.currentScreen && window.currentScreen.moveoverlay )
 			{
 				window.currentScreen.moveoverlay.style.display = '';
 				window.currentScreen.moveoverlay.style.height = '100%';
@@ -2059,7 +2059,7 @@ movableListener = function( e, data )
 				);
 
 				// Do the snap!
-				if( !isMobile && currentMovable.windowObject.flags.resize !== false )
+				if( !isMobile && currentMovable.windowObject.flags.resize !== false && !currentMovable.windowObject.flags.screen )
 				{
 					let tsX = w.offsetLeft;
 					let tsY = w.offsetTop;

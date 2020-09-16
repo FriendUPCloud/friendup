@@ -1041,6 +1041,22 @@ html .Screen > .TitleBar > .Left .Offline
 	pointer-events: none;
 }
 
+/* Floating screens */
+
+html body .View .Screen
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+
+html body .View .Screen .TitleBar
+{
+	display: none;
+}
+
 /* Fullscreen app */
 
 html body.FullscreenApp .Screen > .ScreenContent,
