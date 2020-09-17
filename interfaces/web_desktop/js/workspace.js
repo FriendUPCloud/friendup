@@ -19,7 +19,7 @@ var _protocol = document.location.href.split( '://' )[0];
 
 Workspace = {
 	icons: [],
-	menuMode: 'pear', // 'miga', 'fensters' (alternatives)
+	menuMode: 'pear', // 'miga', 'fensters' (alternatives) -> other menu behaviours
 	mode: 'default',
 	initialized: false,
 	protocol: _protocol,

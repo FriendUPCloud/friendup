@@ -28,67 +28,6 @@ window.addEventListener( 'scroll', function()
 
 var currentViewMode = 'default';
 
-if( isMobile )
-{
-	ge( 'LeftBar' ).style.transform = 'translate3d(-100%,0,0)';
-	ge( 'LeftBar' ).style.width = '100%';
-	ge( 'LeftBar' ).style.transition = 'transform 0.25s';
-	ge( 'FileBar' ).style.transform = 'translate3d(-100%,0,0)';
-	ge( 'FileBar' ).style.width = '100%';
-	ge( 'FileBar' ).style.transition = 'transform 0.25s';
-	ge( 'RightBar' ).style.transform = 'translate3d(0%,0,0)';
-	ge( 'RightBar' ).style.width = '100%';
-	ge( 'RightBar' ).style.transition = 'transform 0.25s';
-}
-var filebrowserCallbacks = {
-	// Check a file on file extension
-	checkFile( path, extension )
-	{
-		
-	},
-	// Load a file
-	loadFile( path )
-	{
-		
-	},
-	folderOpen( ele, e )
-	{
-		if( isMobile && currentViewMode != 'root' ) return;
-		
-		Application.browserPath = ele;
-		Application.fileSaved = false;
-		Application.lastSaved = 0;
-		Application.currentDocument = null;
-		
-		if( e )
-		{
-			Application.refreshFilePane( isMobile ? false : 'findFirstFile', false, function()
-			{
-				currentViewMode = 'files';
-				Application.updateViewMode();
-			} );
-			cancelBubble( e );
-		}
-	},
-	folderClose( ele, e )
-	{
-		if( isMobile && currentViewMode != 'root' ) return;
-		
-		Application.currentDocument = null;
-		Application.browserPath = ele;
-		
-		if( e )
-		{
-			Application.refreshFilePane( isMobile ? false : 'findFirstFile', false, function()
-			{
-				currentViewMode = 'files';
-				Application.updateViewMode();
-			} );	
-			cancelBubble( e );
-		}
-	}
-};
-
 Application.checkFileType = function( p )
 {
 	if( p.indexOf( '/' ) > 0 )
@@ -102,449 +41,6 @@ Application.checkFileType = function( p )
 		p = p.split( ':' );
 		p = p[0] + ':';
 	}
-	if( Application.browserPath != p )
-	{
-		Application.browserPath = p;
-	}
-}
-
-Application.handleBack = function()
-{
-	if( !isMobile ) return;
-	switch( currentViewMode )
-	{
-		case 'root':
-			currentViewMode = 'root';
-			break;
-		case 'files':
-			currentViewMode = 'root';
-			break;
-		default:
-			currentViewMode = 'files';
-			break;
-	}
-	this.updateViewMode();
-}
-
-Application.updateViewMode = function()
-{
-	if( !isMobile ) return;
-	
-	switch( currentViewMode )
-	{
-		case 'root':
-			ge( 'LeftBar' ).style.transform = 'translate3d(0,0,0)';
-			this.fld.style.transform = 'translate3d(0,0,0)';
-			ge( 'FileBar' ).style.transform = 'translate3d(100%,0,0)';
-			ge( 'RightBar' ).style.transform = 'translate3d(100%,0,0)';
-			this.sendMessage( {
-				command: 'updateViewMode',
-				mode: 'root',
-				browserPath: this.browserPath
-			} );
-			break;
-		case 'files':
-			ge( 'LeftBar' ).style.transform = 'translate3d(-100%,0,0)';
-			this.fld.style.transform = 'translate3d(-100%,0,0)';
-			ge( 'FileBar' ).style.transform = 'translate3d(0%,0,0)';
-			ge( 'RightBar' ).style.transform = 'translate3d(100%,0,0)';
-			if( isMobile )
-			{
-				// Force update
-				Application.refreshFilePane( false, true );
-			}
-			this.sendMessage( {
-				command: 'updateViewMode',
-				mode: 'files',
-				browserPath: this.browserPath
-			} );
-			break;
-		default:
-			ge( 'LeftBar' ).style.transform = 'translate3d(-100%,0,0)';
-			this.fld.style.transform = 'translate3d(-100%,0,0)';
-			ge( 'FileBar' ).style.transform = 'translate3d(-100%,0,0)';
-			ge( 'RightBar' ).style.transform = 'translate3d(0%,0,0)';
-			this.sendMessage( {
-				command: 'updateViewMode',
-				mode: 'notes',
-				browserPath: this.browserPath
-			} );
-			break;
-	}
-}
-
-Application.refreshFilePane = function( method, force, callback )
-{
-	if( !method ) method = false;
-	
-	var d = new Door( Application.browserPath );
-	
-	var self = this;
-	
-	// Already showing (mobile only)!
-	if( isMobile && Application.path == Application.browserPath && !force ) return;
-	
-	Application.path = Application.browserPath;
-	var p = Application.path;
-	
-	d.getIcons( function( items )
-	{
-		if( ge( 'FileBar' ).contents )
-		{
-			ge( 'FileBar' ).contents.innerHTML = '';
-		}
-		
-		// Something changed in transit. Do nothing
-		if( p != Application.path )
-		{
-			return;
-		}
-	
-		Application._toBeSaved = null;
-		
-		var byDate = [];
-		items = items.sort( function( a, b ){ return ( new Date( a.DateModified ) ).getTime() - ( new Date( b.DateModified ) ).getTime(); } );
-		items.reverse();
-		
-		var fBar = ge( 'FileBar' );
-		if( !fBar.contents )
-		{
-			fBar.contents = document.createElement( 'div' );
-			fBar.appendChild( fBar.contents );
-			
-			// Make an "add new note" button
-			fBar.add = document.createElement( 'div' );
-			fBar.add.className = 'NewItem';
-			fBar.add.innerHTML = '<div class="Button IconButton IconSmall fa-plus">&nbsp;' + i18n( 'i18n_new_document' ) + '</div>';
-			fBar.add.onclick = function()
-			{
-				var testFile = 'unnamed';
-				var nextTest = testFile;
-				var d = new Door( Application.browserPath );
-				d.getIcons( function( icons )
-				{
-					if( icons )
-					{
-						var found = false;
-						var tries = 1;
-						
-						do
-						{
-							found = false;
-							for( var a = 0; a < icons.length; a++ )
-							{
-								if( icons[ a ].Filename == nextTest + '.html' )
-								{
-									nextTest = testFile + '_' + ( ++tries );
-									found = true;
-									break;
-								}
-							}
-						}
-						while( found );
-					}
-					
-					var f = new File();
-					f.save( "\n", Application.browserPath + nextTest + '.html' );
-					f.onSave = function()
-					{
-						Application.currentDocument = Application.browserPath + nextTest + '.html';
-						Application.sendMessage( {
-							command: 'setfilename',
-							data: Application.currentDocument
-						} );
-						Application.refreshFilePane( false, true );
-						Application.loadFile( Application.browserPath + nextTest + '.html', function()
-						{
-							if( isMobile )
-							{
-								currentViewMode = 'default';
-								Application.updateViewMode();
-							}
-						} );
-					}
-				} );
-			}
-			fBar.appendChild( fBar.add );
-		}
-		fBar.contents.innerHTML = '';
-		fBar.contents.className = 'ContentFull List ScrollArea ScrollBarSmall BorderRight';
-		
-		var sw = 2;
-		var firstFileNum = 0;
-		var foundFile = false;
-
-		for( var a = 0; a < items.length; a++ )
-		{
-			var num = items[ a ];
-			var ext = num.Filename.split( '.' );
-			ext = ext.pop().toLowerCase();
-			if( ext != 'html' && ext != 'htm' ) continue;
-			
-			if( firstFileNum++ == 0 )
-			{
-				if( method == 'findFirstFile' && !foundFile )
-				{
-					Application.loadFile( items[ a ].Path );
-					Application.currentDocument = items[ a ].Path;
-					fouldFile = true;
-				}
-			}
-			
-			sw = sw == 2 ? 1 : 2;
-			
-			var d = document.createElement( 'div' );
-			d.className = 'NotesFileItem Padding BorderBottom MousePointer sw' + sw;
-			
-			( function( p, o ){
-				o.path = p;
-			} )( items[ a ].Path, d );
-			
-			if( Application.currentDocument && Application.currentDocument == num.Path )
-			{
-				d.classList.add( 'Selected' );
-			}
-			else
-			{
-				d.onmouseover = function()
-				{
-					this.classList.add( 'Selected' );
-				}
-				d.onmouseout = function()
-				{
-					this.classList.remove( 'Selected' );
-				}
-			}
-			
-			// No listing here
-			var fn = num.Filename.split( '.' );
-			fn.pop();
-			fn = fn.join( '.' );
-			
-			d.innerHTML = '<p class="Layout"><strong>' + fn + '</strong></p><p class="Layout"><em>' + num.DateModified + '</em></p>';
-			
-			// File permissions are given
-			// TODO: Check permissions
-			var rem = false;
-			if( 1 == 1 )
-			{
-				( function( dd, path ){
-					rem = document.createElement( 'div' );
-					rem.className = 'IconButton fa-remove IconSmall FloatRight';
-					rem.onclick = function( e )
-					{
-						Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_delete_note' ), function( result )
-						{
-							if( result.data )
-							{
-								var l = new Library( 'system.library' );
-								l.onExecuted = function( e, mess )
-								{
-									if( e == 'ok' )
-									{
-										if( Application.currentDocument == path )
-										{
-											Application.newDocument( { just: 'makenew' } );
-										}
-										Application.refreshFilePane();
-									}
-								}
-								l.execute( 'file/delete', { path: path } );
-							}
-						} );
-						return cancelBubble( e );
-					}
-					if( isMobile )
-					{
-						rem.ontouchstart = rem.onclick;
-					}
-					d.insertBefore( rem, d.firstChild );
-				} )( d, num.Path );
-			}
-			
-			fBar.contents.appendChild( d );
-			
-			d.clicker = function( e )
-			{
-				var s = this;
-				if( this.tm )
-				{
-					clearTimeout( this.tm );
-				}
-				this.tm = 'block';
-			
-				var p = this.getElementsByTagName( 'p' )[0];
-				var ml = p.innerHTML;
-				var inp = document.createElement( 'input' );
-				inp.type = 'text';
-				inp.className = 'NoMargins';
-				inp.style.width = 'calc(100% - 32px)';
-				inp.value = p.innerText;
-				p.innerHTML = '';
-				p.appendChild( inp );
-				inp.select();
-				inp.focus();
-				function renameNow()
-				{
-					var val = inp.value;
-					if( val.substr( val.length - 4, 4 ) != '.htm' && val.substr( val.length - 5, 5 ) != '.html' )
-						val += '.html';
-					var l = new Library( 'system.library' );
-					l.onExecuted = function( e, d )
-					{
-						if( e == 'ok' )
-						{
-							Application.sendMessage( {
-								command: 'setfilename',
-								data: Application.path + val
-							} );
-							Application.currentDocument = Application.path + val;
-							Application.refreshFilePane( false, true );
-						}
-						// Perhaps give error - file exists
-						else
-						{
-							inp.select();
-						}
-					}
-					l.execute( 'file/rename', { path: s.path, newname: val } );
-				}
-				p.onkeydown = function( e )
-				{
-					var k = e.which ? e.which : e.keyCode;
-					// Abort
-					if( k == 27 )
-					{
-						if( p && p.parentNode )
-							p.innerHTML = ml;
-						s.tm = null;
-					}
-					// Rename
-					else if( k == 13 )
-					{
-						renameNow();
-					}
-				}
-				inp.onblur = function()
-				{
-					p.innerHTML = ml;
-					s.tm = null;
-				}
-				cancelBubble( e );
-			}
-			
-			// Selected files can be renamed
-			if( d.classList.contains( 'Selected' ) )
-			{
-				if( isMobile )
-				{
-					( function( dd ) {
-						dd.ontouchstart = function( e )
-						{
-							var f = dd;
-							this.editTimeout = setTimeout( function()
-							{
-								f.editTimeout = null;
-								f.clicker();
-							}, 750 );
-							return cancelBubble( e );
-						}
-						dd.ontouchend = function()
-						{
-							if( dd.getElementsByTagName( 'input' ).length ) 
-							{
-								return;
-							}
-							var f = this;
-							if( f.editTimeout )
-							{
-								clearTimeout( f.editTimeout );
-								f.editTimeout = null;
-								Application.currentDocument = f.path;
-								Application.loadFile( f.path, function()
-								{
-									currentViewMode = 'default';
-									Application.updateViewMode();
-								} );
-							}
-						}
-					} )( d );
-				}
-				else
-				{
-					d.onclick = d.clicker;
-				}
-			}
-			// Others are activated
-			else
-			{
-				if( isMobile )
-				{
-					( function( dd ){ 
-						dd.ontouchstart = function( e )
-						{
-							dd.classList.add( 'Selected' );
-							var eles = dd.parentNode.childNodes;
-							for( var a = 0; a < eles.length; a++ )
-							{
-								if( eles[a].tagName == 'DIV' && eles[a] != dd )
-									eles[a].classList.remove( 'Selected' );
-							}
-							var f = dd;
-							this.editTimeout = setTimeout( function()
-							{
-								f.editTimeout = null;
-								f.clicker();
-							}, 750 );
-							return cancelBubble( e );
-						}
-						dd.ontouchend = function()
-						{
-							if( dd.getElementsByTagName( 'input' ).length ) 
-							{
-								return;
-							}
-							var f = this;
-							if( f.editTimeout )
-							{
-								clearTimeout( f.editTimeout );
-								f.editTimeout = null;
-								Application.currentDocument = f.path;
-								Application.loadFile( f.path, function()
-								{
-									currentViewMode = 'default';
-									Application.updateViewMode();
-								} );
-							}
-						}
-					} )( d );
-				}
-				else
-				{
-					( function( dl ){
-						dl.onclick = function()
-						{
-							Application.currentDocument = dl.path;
-							Application.loadFile( dl.path, function()
-							{
-								currentViewMode = 'default';
-								Application.updateViewMode();
-							} );
-							Application.refreshFilePane();
-						}
-					} )( d );
-				}
-			}
-		}
-		
-		if( !foundFile && method == 'findFirstFile' )
-		{
-			Application.newDocument( { just: 'makenew' } );
-		}
-		
-		if( callback )
-			callback( items );
-	} );
 }
 
 Application.run = function( msg, iface )
@@ -555,8 +51,6 @@ Application.run = function( msg, iface )
 	this.ckinitialized = false;
 	this.newLine = true;
 	this.initCKE();
-	
-	this.browserPath = 'Mountlist:';
 	
 	this.sessionObject.currentZoom = '100%';
 	
@@ -580,13 +74,6 @@ Application.run = function( msg, iface )
 			Application.contentTimeout = false;
 		}, 250 );
 	}
-	
-	var FileBrowser = new Friend.FileBrowser( ge( 'LeftBar' ), { displayFiles: true, noContextMenu: true }, filebrowserCallbacks );
-	FileBrowser.render();
-	this.fileBrowser = FileBrowser;
-	
-	
-	Application.updateViewMode();
 }
 
 Application.checkWidth = function()
@@ -685,21 +172,6 @@ Application.initCKE = function()
 				// Create temporary file "to be saved"
 				if( !Application.currentDocument )
 				{
-					if( !Application._toBeSaved )
-					{
-						var fb = ge( 'FileBar' );
-						if( fb )
-						{
-							var d = fb.getElementsByClassName( 'List' );
-							if( d.length )
-							{
-								var el = document.createElement( 'div' );
-								el.className = 'NotesFileItem Padding BorderBottom MousePointer New';
-								d[0].insertBefore( el, d[0].firstChild );
-								Application._toBeSaved = el;
-							}
-						}
-					}
 					var data = Application.editor.element.innerText.split( "\n" )[0].substr( 0, 32 );
 					data = data.split( /[^ a-z0-9]/i ).join( '' );
 					if( !data.length )
@@ -982,6 +454,8 @@ Application.parseText = function( str )
 
 function CleanSpeecher( textHere )
 {
+	if( !textHere ) return;
+	
 	if( !Application.newLine && textHere.length != 1 )
 	{
 		textHere = ' ' + textHere;
@@ -1016,7 +490,7 @@ Application.initializeToolbar = function()
 		d.id = 'AuthorToolbar';
 		d.className = 'BackgroundDefault ColorDefault BorderTop';
 		this.toolbar = d;
-		ge( 'RightBar' ).insertBefore( d, ge( 'RightBar' ).firstChild );
+		ge( 'Main' ).insertBefore( d, ge( 'Main' ).firstChild );
 		
 		var f = new File( 'Progdir:Templates/toolbar.html' );
 		f.onLoad = function( data )
@@ -1124,15 +598,7 @@ Application.setCurrentDocument = function( pth )
 	
 	this.path = pth.substr( 0, pth.length - this.fileName.length );
 	this.currentDocument = pth;
-	
-	// Store the path also for the browser
-	Application.browserPath = this.path;
-
-	// Update filebrowser
-	this.fileBrowser.setPath( this.path );
-	
-	Application.refreshFilePane();
-	
+		
 	this.sendMessage( {
 		command: 'currentfile',
 		path: this.path,
@@ -1251,8 +717,6 @@ Application.loadFile = function( path, cbk )
 						scrollTop: 0
 					} );
 					
-					Application.refreshFilePane();
-					
 					if( cbk ) cbk();
 				}
 				Application.loading = false;
@@ -1313,14 +777,12 @@ Application.saveFile = function( path, content )
 					Application.lastSaved = ( new Date() ).getTime();
 					Application.statusMessage( i18n('i18n_written') );
 					Application.currentDocument = path;
-					Application.refreshFilePane();
 				}
 				// We got an error...
 				else
 				{
 					Application.statusMessage( data );
 				}
-				Application.refreshFilePane();
 			}
 			m.execute( 'convertfile', { path: path, data: content, dataFormat: 'html', format: extension } );
 			break;
@@ -1332,7 +794,6 @@ Application.saveFile = function( path, content )
 				Application.lastSaved = ( new Date() ).getTime();
 				Application.statusMessage(  i18n('i18n_written') );
 				Application.currentDocument = path;
-				Application.refreshFilePane();
 			}
 			f.save( content, path );
 			break;
@@ -1414,18 +875,6 @@ Application.newDocument = function( args )
 			this.setCurrentDocument( args.path );
 			this.lastSaved = ( new Date() ).getTime();
 		}
-		else
-		{
-			if( args.browserPath )
-			{
-				this.browserPath = args.browserPath;
-				this.path = args.browserPath;
-				if( !args.content )
-				{
-					this.fileBrowser.setPath( args.browserPath );
-				}
-			}
-		}
 		
 		if( Application.editor )
 		{
@@ -1460,27 +909,6 @@ Application.newDocument = function( args )
 			{
 				Application.initializeBody();
 			} );
-		}
-		
-		if( args.browserPath )
-		{
-			this.browserPath = args.browserPath;
-			this.path = args.browserPath;
-			if( this.fileBrowser )
-			{
-				this.fileBrowser.setPath( args.browserPath );
-			}
-			// Try again
-			else
-			{
-				setTimeout( function()
-				{
-					if( self.fileBrowser )
-					{
-						self.fileBrowser.setPath( args.browserPath );
-					}
-				}, 5000 );
-			}
 		}
 	}
 }
@@ -1592,9 +1020,6 @@ Application.receiveMessage = function( msg )
 			currentViewMode = msg.mode;
 			Application.updateViewMode();
 			break;
-		case 'mobilebackbutton':
-			Application.handleBack();
-			break;
 		case 'applystyle':
 			if( msg.style )
 			{
@@ -1642,8 +1067,7 @@ Application.receiveMessage = function( msg )
 			var o = {
 				content: msg.content ? msg.content : '', 
 				scrollTop: msg.scrollTop >= 0 ? msg.scrollTop : 0,
-				path: msg.path ? msg.path : '',
-				browserPath: msg.browserPath ? msg.browserPath : false
+				path: msg.path ? msg.path : ''
 			};
 			this.newDocument( o );
 			break;

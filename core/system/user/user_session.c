@@ -205,7 +205,7 @@ void UserSessionDelete( UserSession *us )
 			ApplicationManagerRemoveApplicationSessionByUserSessionID( lsb->sl_ApplicationManager, us->us_ID );
 		}
 
-		Log( FLOG_DEBUG, "[UserSessionDelete] Freeing user structure pointer.\n" );
+		Log( FLOG_DEBUG, "[UserSessionDelete] Freeing user structure pointer %p.\n", us );
 		FFree( us );
 			
 		if( count > 50 )

@@ -676,7 +676,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							return $okRet . base64_encode( file_get_contents( $fname ) );
 						}
 					
-						friendHeader( 'Content-Length: ' . filesize( $fname ) + strlen( $okRet ) );
+						friendHeader( 'Content-Length: ' . ( filesize( $fname ) + strlen( $okRet ) ) );
 						return $okRet . trim( file_get_contents( $fname ) );
 					}
 				}
@@ -859,7 +859,10 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							// Get by path (subfolder)
 							$subPath = $testPath = false;
 							if( is_string( $path ) && strstr( $path, ':' ) )
-								$testPath = $subPath = end( explode( ':', $path ) );
+							{
+								$testPath = explode( ':', $path );
+								$testPath = $subPath = end( $testPath );
+							}
 						
 							// Remove filename
 							$fo = false;

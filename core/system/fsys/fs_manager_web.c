@@ -1587,23 +1587,25 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									
 									ListStringJoin( ls );
 									
-									char *finalBuffer = ls->ls_Data;
-									ls->ls_Data = NULL;
-									char *outputBuf = finalBuffer;
-									
-									int offBuf = 0;
-								
-									// Try to skip embedded headers
-									char *ptr = strstr( finalBuffer, "---http-headers-end---\n" );
-									if( ptr != NULL )
+									if( ls->ls_Data != NULL )
 									{
-										// With the diff, move offset and set correct size
-										int diff = ( ptr - finalBuffer ) + 23;
-										totalBytes = (int)( ( (FULONG)finalBuffer) - diff) + 1;
-										outputBuf = FCalloc( totalBytes, sizeof( char ) );
-										memcpy( outputBuf, ptr + 23, totalBytes );
-										FFree( finalBuffer );
-									}
+										char *finalBuffer = ls->ls_Data;
+										ls->ls_Data = NULL;
+										char *outputBuf = finalBuffer;
+									
+										int offBuf = 0;
+								
+										// Try to skip embedded headers
+										char *ptr = strstr( finalBuffer, "---http-headers-end---\n" );
+										if( ptr != NULL )
+										{
+											// With the diff, move offset and set correct size
+											int headerlength = ( ptr - finalBuffer ) + 23;
+											totalBytes = strlen( finalBuffer ) - headerlength;
+											outputBuf = FCalloc( totalBytes + 1, sizeof( char ) );
+											sprintf( outputBuf, finalBuffer + headerlength, totalBytes );
+											FFree( finalBuffer );
+										}
 								
 								/*
 								 *								// Correct mime from data
@@ -1630,7 +1632,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							
 							INFO("READ RETURN BYTES %d  - %s\n", totalBytes, mime );
 							*/
-									HttpSetContent( response, outputBuf, totalBytes );
+										HttpSetContent( response, outputBuf, totalBytes );
+									}
 								}
 								else
 								{
