@@ -1109,12 +1109,15 @@ Screen = function ( flags, initObject )
     // Let's poll the tray!
 	if( statusbar.length )
         PollTray();
-      
-	if( !Workspace.screenList )
-	{
-		Workspace.screenList = [];
-	}  
-	Workspace.screenList.push( this );
+    
+    if( !self._flags[ 'floating' ] )
+    {
+		if( !Workspace.screenList )
+		{
+			Workspace.screenList = [];
+		}  
+		Workspace.screenList.push( this );
+	}
 }
 
 

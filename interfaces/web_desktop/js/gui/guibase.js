@@ -2058,7 +2058,7 @@ movableListener = function( e, data )
 					lockY ? currentMovable.offsetTop : my 
 				);
 
-				// Do the snap!
+				// Do the snap! (not on separate screens)
 				if( !isMobile && currentMovable.windowObject.flags.resize !== false && !currentMovable.windowObject.flags.screen )
 				{
 					let tsX = w.offsetLeft;

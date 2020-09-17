@@ -1052,6 +1052,12 @@ html body .View .Screen
 	height: 100%;
 }
 
+html body .View .Screen .ViewContainer
+{
+	width: 100%;
+	height: 100%;
+}
+
 html body .View .Screen .TitleBar
 {
 	display: none;
