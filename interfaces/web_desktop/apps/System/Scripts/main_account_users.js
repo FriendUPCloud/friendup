@@ -4831,7 +4831,7 @@ Sections.accounts_users = function( cmd, extra )
 						
 						if( ShowLog ) console.log( '// 0 | Load userinfo' );
 						
-						initUsersDetails( loadingInfo, [  ], true );
+						initUsersDetails( loadingInfo, [ '*' ], true );
 						
 						// Go to next in line ...
 						loadingList[ ++loadingSlot ](  );
@@ -4889,7 +4889,7 @@ Sections.accounts_users = function( cmd, extra )
 							}
 							loadingInfo.roles = uroles;
 						}
-						console.log( 'userroleget ', { e:e, d:uroles } );
+						//console.log( 'userroleget ', { e:e, d:uroles } );
 						if( e != 'ok' ) loadingInfo.roles = ''/*'404'*/;
 						
 						if( ShowLog ) console.log( '// 4 | Get user\'s roles' );
@@ -5125,7 +5125,7 @@ Sections.accounts_users = function( cmd, extra )
 						
 						if( ShowLog ) console.log( '// 8 | Load user settings' );
 						
-						initUsersDetails( loadingInfo, [  ] );
+						initUsersDetails( loadingInfo, [ '*' ] );
 						
 						// Go to next in line ...
 						loadingList[ ++loadingSlot ](  );
@@ -5161,7 +5161,7 @@ Sections.accounts_users = function( cmd, extra )
 							
 							if( ShowLog ) console.log( '// 9 | Get more user setting' );
 							
-							initUsersDetails( loadingInfo, [  ]/*, true*/ );
+							initUsersDetails( loadingInfo, [ '*' ]/*, true*/ );
 						}
 						u.execute( 'getsetting', { settings: [ 
 							/*'avatar', */'workspacemode', 'wallpaperdoors', 'wallpaperwindows', 'language', 
