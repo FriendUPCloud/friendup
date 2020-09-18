@@ -10,7 +10,7 @@ in /usr/app/friendup/<version>, this is what should be passed to the build scrip
 
 > sh build_package.sh <version>
 
-The output will be /tmp/friendup-<version>.tar.gz, ready for distribution
+The output will be /tmp/friendup-<version>.tar.gz, ready for distribution.
 
 ### Applying package manually
 
