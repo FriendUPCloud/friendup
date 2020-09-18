@@ -11,7 +11,8 @@ autoreconf --verbose
 
 ./configure --prefix=/usr/app/friendup/$version \
 	--sysconfdir=/etc/app/friendup \
-	--localstatedir=/var/app/friendup
+	--localstatedir=/var/app/friendup \
+	FERSION=$version
 
 cp -r /etc/app/friendup etc
 cp -r /var/app/friendup var
