@@ -1,4 +1,4 @@
-AC_INIT([friendup], [1])
+AC_INIT([friendup])
 
 AM_INIT_AUTOMAKE([ -Wall -Werror foreign])
 AC_CONFIG_FILES([Makefile])

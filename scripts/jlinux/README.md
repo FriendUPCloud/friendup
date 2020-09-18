@@ -17,6 +17,6 @@ The output will be /tmp/friendup-<version>.tar.gz, ready for distribution.
 On the server to be updated: 
 	unpack friendup-<version>.tar.gz
 	change to /usr/app/friendup/<version>
-	make install
+	> make install
 	change symlink /usr/app/friendup/current to point to new version, i guess
 	probably other things
