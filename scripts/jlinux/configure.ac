@@ -1,4 +1,4 @@
-m4_define([fersion], esyscmd_s(echo $FERSION))
+m4_define([fersion], m4_esyscmd_s(echo $FERSION))
 
 AC_INIT([friendup], [fersion])
 
