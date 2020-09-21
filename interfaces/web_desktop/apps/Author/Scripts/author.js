@@ -14,11 +14,11 @@ Application.run = function( msg, iface )
 	nd.execute( 'file/makedir', { path: 'Home:Documents' } );
 	
 	var w = new View( {
-		'title'     : 'Author - BETA',
-		'width'     : 1290,
-		'height'    : 800,
-		'min-width' : 700,
-		'min-height': 400
+		'title'     : 'Author',
+		'width'     : 960,
+		'height'    : 700,
+		'min-width' : 500,
+		'min-height': 300
 	} );
 	
 	this.mainView = w;
@@ -123,26 +123,6 @@ Application.run = function( msg, iface )
 			if( msg.args && typeof( msg.args ) != 'undefined' )
 			{
 				w.sendMessage( { command: 'loadfiles', files: [ { Path: msg.args } ] } );
-			}
-			// We have a session object ----------------------------------------
-			else if( Application.sessionObject && Application.sessionObject.content )
-			{
-				// Load previously active document -----------------------------
-				if( Application.sessionObject.currentDocument )
-				{
-					w.sendMessage( { command: 'loadfiles', files: [ { Path: Application.sessionObject.currentDocument } ] } );
-				}
-				else
-				{
-					// Create instead a new document with content from session -----
-					var msng = { 
-						command: 'newdocument',
-						content: Application.sessionObject.content,
-						scrollTop: Application.sessionObject.scrollTop,
-						browserPath: 'Home:'
-					};
-					w.sendMessage( msng );
-				}
 			}
 			// Create a new, empty document ------------------------------------
 			else
