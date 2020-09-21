@@ -96,7 +96,7 @@ function refreshSidebar( show )
 			'Liberator': {
 				icon: 'fa-info-circle',
 				showing: isAdmin,
-				display: ( show ? true : false )
+				display: /*( show ? */true/* : false )*/
 			}
 		},
 		'Accounts': {
