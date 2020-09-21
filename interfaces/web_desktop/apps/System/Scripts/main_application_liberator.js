@@ -86,7 +86,7 @@ Sections.applications_liberator = function( cmd, extra )
 		{
 			if( id )
 			{
-				var m = new Module( 'system' );
+				/*var m = new Module( 'system' );
 				m.onExecuted = function( e, d )
 				{
 					if( e == 'ok' && d )
@@ -114,11 +114,33 @@ Sections.applications_liberator = function( cmd, extra )
 					
 					return callback( false, false );
 				}
-				m.execute( 'usersetupget', { id: id, authid: Application.authId } );
+				m.execute( 'usersetupget', { id: id, authid: Application.authId } );*/
+				
+				
+				
+				getSystemSettings( function( config )
+				{
+					
+					guacAdminGetServer( config, id, function( e, d )
+					{
+						
+						console.log( 'guacAdminGetServer ', { e:e, d:d } );
+						
+						if( e == 'ok' && d )
+						{
+							return callback( true, d );
+						}
+						
+						return callback( false, false );
+					
+					} );
+					
+				} );
+				
 			}
 			else
 			{
-				var m = new Module( 'mitra' );
+				/*var m = new Module( 'mitra' );
 				m.onExecuted = function( e, d )
 				{
 					console.log( 'loadapplicationlist ', { e:e, d:d } );
@@ -147,7 +169,41 @@ Sections.applications_liberator = function( cmd, extra )
 					
 					return callback( false, false );
 				}
-				m.execute( 'loadapplicationlist', { admin: true, authid: Application.authId } );
+				m.execute( 'loadapplicationlist', { admin: true, authid: Application.authId } );*/
+				
+				
+				
+				getSystemSettings( function( config )
+				{
+					
+					guacAdminListServers( config, function( e, d )
+					{
+						
+						console.log( 'guacAdminListServers ', { e:e, d:d } );
+						
+						if( e == 'ok' && d )
+						{
+							if( d.childConnections )
+							{
+								return callback( true, d.childConnections );
+							}
+							else
+							{
+								return callback( true, [] );
+							}
+						}
+						
+						return callback( false, false );
+						
+					} );
+					
+					// testing ....
+					
+					guacAdminListServerTest( config );
+					
+				} );
+				
+				
 			}
 			
 			return true;
@@ -214,6 +270,457 @@ Sections.applications_liberator = function( cmd, extra )
 		}
 		
 		return false;
+		
+	}
+	
+	function getSystemSettings( callback )
+	{
+		
+		// TODO: Move these settings to either the Admin/System app part of Server settings storage or it's own but differently defined.
+		
+		// TODO: Only list admin data to admins that have rolepermissions for it, never list for users ...
+		
+		var m = new Module( 'system' );
+		m.onExecuted = function( stat1, resp1 )
+		{
+			var out = {};
+			
+			//console.log( { stat1: stat1, resp1: resp1 } );
+			
+			if( stat1 == 'ok' )
+			{
+				try
+				{
+					 resp1 = JSON.parse( resp1 );	
+					 resp1 = JSON.parse( resp1[0].Data );
+					 
+					 if( resp1 )
+					 {
+					 	out.host = resp1;
+					 }
+				}
+				catch( e ){  }
+			}
+			
+			var mm = new Module( 'system' );
+			mm.onExecuted = function( stat2, resp2 )
+			{
+				//console.log( { stat2: stat2, resp2: resp2 } );
+				
+				if( stat2 == 'ok' )
+				{
+					try
+					{
+						 resp2 = JSON.parse( resp2 );	
+						 resp2 = JSON.parse( resp2[0].Data );
+						 
+						 if( resp2 )
+						 {
+						 	out.admin = resp2;
+						 }
+					}
+					catch( e ){  }
+				}
+				
+				if( callback )
+				{
+					return callback( out );
+				}
+			}
+			mm.execute( 'getsystemsetting', { 'type' : 'mitra', 'key' : 'admin' } );
+			
+		}
+		m.execute( 'getsystemsetting', { 'type' : 'mitra', 'key' : 'host' } );
+	}
+	
+	function guacAdminAuth( config, callback )
+	{
+		
+		console.log( 'guacAdminAuth(  ) ', config );
+		
+		var settings = {
+			server_url      : ( config && config.host.url ? config.host.url : 'https://localhost/guacamole/' ),
+			server_api_path : 'api/',
+			admin_username  : ( config && config.admin.admin_username ? config.admin.admin_username : 'guacadmin' ),
+			admin_password  : ( config && config.admin.admin_password ? config.admin.admin_password : 'guacadmin' )
+		};
+		
+		var xhttp = new XMLHttpRequest();
+		xhttp.onreadystatechange = function() 
+		{
+			if( this.readyState == 4 ) 
+			{
+				
+				data = false;
+				
+				try
+				{
+					data = JSON.parse( this.responseText );
+				}
+				catch( err )
+				{
+					//
+				}
+				
+				if( this.status == 200 )
+				{
+					if( data )
+					{
+						console.log( '[' + this.status + '] Permission Granted. ', data );
+						
+						if( data.authToken )
+						{
+							if( callback )
+							{
+								return callback( data.authToken );
+							}
+						}
+					}
+				}
+				else
+				{
+					if( data )
+					{
+						console.log( '[' + this.status + '] Permission Denied. ', data );
+					}
+					
+					if( callback )
+					{
+						return callback( false );
+					}
+				}
+			}
+		};
+		
+		xhttp.open( "POST", ( settings.server_url + settings.server_api_path + 'tokens' ), true );	
+		//xhttp.setRequestHeader( "Content-Type", "application/json;charset=UTF-8" );
+		xhttp.send( "username=" + encodeURIComponent( settings.admin_username ) + "&password=" + encodeURIComponent( settings.admin_password ) );
+		
+	}
+	
+	function guacAdminListConnectionGroups( config )
+	{
+		
+		
+		
+	}
+	
+	function guacAdminGetServer( config, id, callback )
+	{
+		
+		guacAdminAuth( config, function( token )
+		{
+			
+			console.log( 'guacAdminListServers( '+token+' )' );
+			
+			if( token )
+			{
+			
+				var settings = {
+					server_url       : ( config && config.host.url ? config.host.url : 'https://localhost/guacamole/' ),
+					server_api_path  : 'api/session/data/mysql/',
+					server_api_token : token
+				};
+				
+				// --- Connections (Servers) ---------------------------------------------------------------------------
+				
+				var xhttp = new XMLHttpRequest();
+				xhttp.onreadystatechange = function() 
+				{
+					if( this.readyState == 4 ) 
+					{
+				
+						data = false;
+					
+						try
+						{
+							data = JSON.parse( this.responseText );
+						}
+						catch( err )
+						{
+							//
+						}
+					
+						if( this.status == 200 )
+						{
+							if( data )
+							{
+								console.log( '[' + this.status + '] ', data );
+							
+								if( callback )
+								{
+									return callback( 'ok', data );
+								}
+							}
+							else
+							{
+								if( callback )
+								{
+									return callback( 'fail', data );
+								}
+							}
+						}
+						else
+						{
+							if( data )
+							{
+								console.log( '[' + this.status + '] ', data );
+							}
+							
+							if( callback )
+							{
+								return callback( 'fail', data );
+							}
+						}
+					}
+				};
+			
+
+			
+				xhttp.open( "GET", ( settings.server_url + settings.server_api_path + 'connections/'+id+'/parameters?token=' + settings.server_api_token ), true );	
+				//xhttp.setRequestHeader( "Content-Type", "application/json;charset=UTF-8" );
+				xhttp.send(  );
+			
+			}
+		
+		} );
+		
+	}
+	
+	function guacAdminListServers( config, callback )
+	{
+		
+		// Guacamole Rest API Documentation : https://github.com/ridvanaltun/guacamole-rest-api-documentation
+		
+		guacAdminAuth( config, function( token )
+		{
+			
+			console.log( 'guacAdminListServers( '+token+' )' );
+			
+			if( token )
+			{
+			
+				var settings = {
+					server_url       : ( config && config.host.url ? config.host.url : 'https://localhost/guacamole/' ),
+					server_api_path  : 'api/session/data/mysql/',
+					server_api_token : token
+				};
+				
+				// --- Connections (Servers) -------------------------------------------------------------------------------
+				
+				var xhttp = new XMLHttpRequest();
+				xhttp.onreadystatechange = function() 
+				{
+					if( this.readyState == 4 ) 
+					{
+				
+						data = false;
+					
+						try
+						{
+							data = JSON.parse( this.responseText );
+						}
+						catch( err )
+						{
+							//
+						}
+					
+						if( this.status == 200 )
+						{
+							if( data )
+							{
+								console.log( '[' + this.status + '] ', data );
+							
+								if( callback )
+								{
+									return callback( 'ok', data );
+								}
+							}
+							else
+							{
+								if( callback )
+								{
+									return callback( 'fail', data );
+								}
+							}
+						}
+						else
+						{
+							if( data )
+							{
+								console.log( '[' + this.status + '] ', data );
+							}
+							
+							if( callback )
+							{
+								return callback( 'fail', data );
+							}
+						}
+					}
+				};
+			
+				// TODO: Get connectionGroup Name Servers id: 2 dynamic ...
+			
+				xhttp.open( "GET", ( settings.server_url + settings.server_api_path + 'connectionGroups/2/tree?token=' + settings.server_api_token ), true );	
+				//xhttp.setRequestHeader( "Content-Type", "application/json;charset=UTF-8" );
+				xhttp.send(  );
+			
+			}
+		
+		} );
+		
+	}
+	
+	function guacAdminListServerTest( config )
+	{
+		
+		// Guacamole Rest API Documentation : https://github.com/ridvanaltun/guacamole-rest-api-documentation
+		
+		guacAdminAuth( config, function( token )
+		{
+			
+			console.log( 'guacAdminListServerTest( '+token+' )' );
+		
+			if( token )
+			{
+			
+				var settings = {
+					server_url       : ( config && config.host.url ? config.host.url : 'https://localhost/guacamole/' ),
+					server_api_path  : 'api/session/data/mysql/',
+					server_api_token : token
+				};
+			
+				// --- Users -----------------------------------------------------------------------------------------------
+			
+				var xhttp = new XMLHttpRequest();
+				xhttp.onreadystatechange = function() 
+				{
+					if( this.readyState == 4 ) 
+					{
+				
+						data = false;
+					
+						try
+						{
+							data = JSON.parse( this.responseText );
+						}
+						catch( err )
+						{
+							//
+						}
+				
+						if( this.status == 200 )
+						{
+							if( data )
+							{
+								console.log( '[' + this.status + '] ', data );
+							}
+						}
+						else
+						{
+							if( data )
+							{
+								console.log( '[' + this.status + '] ', data );
+							}
+						}
+					}
+				};
+			
+				xhttp.open( "GET", ( settings.server_url + settings.server_api_path + 'users?token=' + settings.server_api_token ), true );	
+				//xhttp.setRequestHeader( "Content-Type", "application/json;charset=UTF-8" );
+				xhttp.send(  );
+			
+				// --- ConnectionGroups (Servers) --------------------------------------------------------------------------
+			
+				var xhttp = new XMLHttpRequest();
+				xhttp.onreadystatechange = function() 
+				{
+					if( this.readyState == 4 ) 
+					{
+				
+						data = false;
+					
+						try
+						{
+							data = JSON.parse( this.responseText );
+						}
+						catch( err )
+						{
+							//
+						}
+				
+						if( this.status == 200 )
+						{
+							if( data )
+							{
+								console.log( '[' + this.status + '] ', data );
+							}
+						}
+						else
+						{
+							if( data )
+							{
+								console.log( '[' + this.status + '] ', data );
+							}
+						}
+					}
+				};
+			
+				// TODO: List connectionGroups look for Name Servers ...
+			
+				xhttp.open( "GET", ( settings.server_url + settings.server_api_path + 'connectionGroups?token=' + settings.server_api_token ), true );	
+				//xhttp.setRequestHeader( "Content-Type", "application/json;charset=UTF-8" );
+				xhttp.send(  );
+			
+				// --- Connections (Servers) -------------------------------------------------------------------------------
+			
+				var xhttp = new XMLHttpRequest();
+				xhttp.onreadystatechange = function() 
+				{
+					if( this.readyState == 4 ) 
+					{
+				
+						data = false;
+					
+						try
+						{
+							data = JSON.parse( this.responseText );
+						}
+						catch( err )
+						{
+							//
+						}
+				
+						if( this.status == 200 )
+						{
+							if( data )
+							{
+								console.log( '[' + this.status + '] ', data );
+							}
+						}
+						else
+						{
+							if( data )
+							{
+								console.log( '[' + this.status + '] ', data );
+							}
+						}
+					}
+				};
+			
+				// TODO: Get connectionGroup Name Servers id: 2 dynamic ...
+			
+				xhttp.open( "GET", ( settings.server_url + settings.server_api_path + 'connectionGroups/2/tree?token=' + settings.server_api_token ), true );	
+				//xhttp.setRequestHeader( "Content-Type", "application/json;charset=UTF-8" );
+				xhttp.send(  );
+			
+				// --- other -----------------------------------------------------------------------------------------------
+			
+
+			
+			}
+		
+		} );
 		
 	}
 	
@@ -293,7 +800,7 @@ Sections.applications_liberator = function( cmd, extra )
 				
 						console.log( { e:res, d:dat } );
 						
-						if( !res ) return;
+						//if( !res ) return;
 						
 						loadingInfo.details = dat;
 						
@@ -360,7 +867,12 @@ Sections.applications_liberator = function( cmd, extra )
 		
 		// Add all data for the template
 		d.replacements = {
-			
+			liberator_title          : ( details && details.name     ? details.name     : '' ),
+			liberator_address        : ( details && details.hostname ? details.hostname : '' ),
+			liberator_port           : ( details && details.port     ? details.port     : '' ),
+			liberator_admin_username : ( details && details.username ? details.username : '' ),
+			liberator_admin_password : ( details && details.password ? details.password : '' ),
+			liberator_domain         : ( details && details.domain   ? details.domain   : '' )
 		};
 		
 		// Add translations
@@ -438,7 +950,7 @@ Sections.applications_liberator = function( cmd, extra )
 								{
 									var d = document.createElement( 'div' );
 									d.className = 'HContent50 FloatLeft';
-									d.innerHTML = '<h3 class="NoMargin FloatLeft"><strong>' + i18n( 'i18n_servers' ) + '</strong></h3>';
+									d.innerHTML = '<h3 class="NoMargin FloatLeft"><strong>' + i18n( 'i18n_liberator_servers' ) + '</strong></h3>';
 									return d;
 								}() 
 							}, 
@@ -545,7 +1057,7 @@ Sections.applications_liberator = function( cmd, extra )
 					for( var k in servers )
 					{
 						
-						if( servers[k] && servers[k].ID && servers[k].Data )
+						if( servers[k] && servers[k].identifier && servers[k].name )
 						{
 							
 							var divs = appendChild( [ 
@@ -554,7 +1066,7 @@ Sections.applications_liberator = function( cmd, extra )
 									{
 										var d = document.createElement( 'div' );
 										d.className = 'HRow';
-										d.id = servers[k].ID;
+										d.id = servers[k].identifier;
 										d.onclick = function()
 										{
 											edit( this.id, this );
@@ -578,7 +1090,8 @@ Sections.applications_liberator = function( cmd, extra )
 											{
 												var d = document.createElement( 'div' );
 												d.className = 'HContent80 FloatLeft PaddingSmall Ellipsis';
-												d.innerHTML = servers[k].Data.name + ' (Host: '+servers[k].Data['full address']+')';
+												//d.innerHTML = servers[k].Data.name + ' (Host: '+servers[k].Data['full address']+')';
+												d.innerHTML = '['+servers[k].protocol+'] ' + servers[k].name;
 												return d;
 											}()
 										},

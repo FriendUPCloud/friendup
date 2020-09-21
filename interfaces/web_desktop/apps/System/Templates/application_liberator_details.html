@@ -3,7 +3,7 @@
 		<div class="HContent50 FloatLeft">
 			<!--<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left" id="LiberatorBackBtn"></button>-->
 			<h3 class="NoMargin FloatLeft">
-				<strong>{i18n_liberator_details}</strong>
+				<strong>{i18n_liberator_server_details}</strong>
 			</h3>
 		</div>
 	</div>
@@ -25,30 +25,59 @@
 		
 		<div class="HRow MarginBottom">
 			<div class="HContent30 FloatLeft Ellipsis">
-				<strong>{i18n_liberator_name}:</strong>
+				<strong>{i18n_liberator_type}:</strong>
 			</div>
 			<div class="HContent70 FloatLeft Ellipsis">
-				<input id="LiberatorName" type="text" class="FullWidth" value="{liberator_name}"/>
-			</div>
-		</div>
-		
-		<div class="HRow MarginBottom">
-			<div class="HContent30 FloatLeft Ellipsis">
-				<strong>{i18n_liberator_description}:</strong>
-			</div>
-			<div class="HContent70 FloatLeft Ellipsis">
-				<textarea id="LiberatorDescription" class="FullWidth" style="resize: none;">{liberator_description}</textarea>
-			</div>
-		</div>
-		
-		<div class="HRow MarginBottom">
-			<div class="HContent30 FloatLeft Ellipsis">
-				<strong>{i18n_liberator_language}:</strong>
-			</div>
-			<div class="HContent70 FloatLeft Ellipsis">
-				<select class="InputHeight FullWidth" id="LiberatorLanguages">
-					{liberator_language}
+				<select id="LiberatorType" class="FullWidth" disabled="true">
+					<option>RDP</option>
+					<option>SSH</option>
+					<option>VNC</option>
 				</select>
+			</div>
+		</div>
+		
+		<div class="HRow MarginBottom">
+			<div class="HContent30 FloatLeft Ellipsis">
+				<strong>{i18n_liberator_address}:</strong>
+			</div>
+			<div class="HContent70 FloatLeft Ellipsis">
+				<input type="text" class="FullWidth" id="LiberatorAddress" value="{liberator_address}"/>
+			</div>
+		</div>
+		
+		<div class="HRow MarginBottom">
+			<div class="HContent30 FloatLeft Ellipsis">
+				<strong>{i18n_liberator_port}:</strong>
+			</div>
+			<div class="HContent70 FloatLeft Ellipsis">
+				<input type="text" class="FullWidth" id="LiberatorPort" value="{liberator_port}"/>
+			</div>
+		</div>
+		
+		<div class="HRow MarginBottom">
+			<div class="HContent30 FloatLeft Ellipsis">
+				<strong>{i18n_liberator_admin_username}:</strong>
+			</div>
+			<div class="HContent70 FloatLeft Ellipsis">
+				<input type="text" class="FullWidth" id="LiberatorUsername" value="{liberator_admin_username}"/>
+			</div>
+		</div>
+		
+		<div class="HRow MarginBottom">
+			<div class="HContent30 FloatLeft Ellipsis">
+				<strong>{i18n_liberator_admin_password}:</strong>
+			</div>
+			<div class="HContent70 FloatLeft Ellipsis">
+				<input type="password" class="FullWidth" id="LiberatorPassword" value="{liberator_admin_password}"/>
+			</div>
+		</div>
+		
+		<div class="HRow MarginBottom">
+			<div class="HContent30 FloatLeft Ellipsis">
+				<strong>{i18n_liberator_domain}:</strong>
+			</div>
+			<div class="HContent70 FloatLeft Ellipsis">
+				<input type="text" class="FullWidth" id="LiberatorDomain" value="{liberator_domain}"/>
 			</div>
 		</div>
 		
