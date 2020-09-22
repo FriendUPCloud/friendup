@@ -345,6 +345,7 @@ i18n_workgroup_drive_edit_in         : Edit Workgroup drive in "Workgroups" sect
 
 #Liberator related
 
+i18n_liberator_name                  : Name
 i18n_liberator_servers               : Servers
 i18n_liberator_server_details        : Server details
 i18n_liberator_type                  : Type
@@ -353,4 +354,6 @@ i18n_liberator_port                  : Port
 i18n_liberator_admin_username        : Admin username
 i18n_liberator_admin_password        : Admin password
 i18n_liberator_domain                : Domain
+
+i18n_delete_liberator_server         : Delete server
 
