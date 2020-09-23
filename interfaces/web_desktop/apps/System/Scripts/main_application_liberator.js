@@ -1048,9 +1048,11 @@ Sections.applications_liberator = function( cmd, extra )
 				if( ge( 'LiberatorType' ) && ge( 'LiberatorType' ).value == 'VNC' )
 				{
 					
+					// TODO: Remove protocol identity in name if we have icons to display the different protocols instead of [protocol] ...
+					
 					var form = {
 						'parentIdentifier'       : groups['_Servers'].identifier,
-						'name'                   : ( ge( 'LiberatorName'     ) ? ge( 'LiberatorName'     ).value : '' ),
+						'name'                   : '[VNC] ' + ( ge( 'LiberatorName' ) ? ge( 'LiberatorName' ).value : '' ),
 						'protocol'               : 'vnc',
 						'attributes'             : { 'max-connections' : null, 'max-connections-per-user' : null },
 						'activeConnections'      : 0,
@@ -1130,7 +1132,7 @@ Sections.applications_liberator = function( cmd, extra )
 										
 					var form = {
 						'parentIdentifier'               : groups['_Servers'].identifier,
-						'name'                           : ( ge( 'LiberatorName' ) ? ge( 'LiberatorName' ).value : '' ),
+						'name'                           : '[RDP] ' + ( ge( 'LiberatorName' ) ? ge( 'LiberatorName' ).value : '' ),
 						'protocol'                       : 'rdp',
 						'parameters'                     : {
 							'port'                       : ( ge( 'LiberatorPort' ) ? ge( 'LiberatorPort' ).value : '' ),
@@ -1237,6 +1239,10 @@ Sections.applications_liberator = function( cmd, extra )
 					return false;
 				}
 				
+				// Temporary
+				
+				if( ge( 'LiberatorType' ) && ge( 'LiberatorType' ).value != 'RDP' ) return false;
+				
 				// --- Connections (Servers) ---------------------------------------------------------------------------
 				
 				var xhttp = new XMLHttpRequest();
@@ -1338,9 +1344,11 @@ Sections.applications_liberator = function( cmd, extra )
 				else if( ge( 'LiberatorType' ) && ge( 'LiberatorType' ).value == 'RDP' )
 				{
 					
+					// TODO: Remove protocol identity in name if we have icons to display the different protocols instead of [protocol] ...
+					
 					var form = {
 						'parentIdentifier'               : groups['_Servers'].identifier,
-						'name'                           : ( ge( 'LiberatorName'     ) ? ge( 'LiberatorName'     ).value : '' ),
+						'name'                           : '[RDP] ' + ( ge( 'LiberatorName' ) ? ge( 'LiberatorName' ).value : '' ),
 						'identifier'                     : id,
 						'protocol'                       : 'rdp',
 						'parameters'                     : {
@@ -1350,7 +1358,7 @@ Sections.applications_liberator = function( cmd, extra )
 							'password'                   : ( ge( 'LiberatorPassword' ) ? ge( 'LiberatorPassword' ).value : '' ),
 							'domain'                     : ( ge( 'LiberatorDomain'   ) ? ge( 'LiberatorDomain'   ).value : '' )
 						},
-						'attributes'                     : {}
+						'attributes'                     : { 'max-connections' : null, 'max-connections-per-user' : null }
 					};
 					
 				}
@@ -1363,6 +1371,10 @@ Sections.applications_liberator = function( cmd, extra )
 					
 					return false;
 				}
+				
+				// Temporary
+				
+				if( ge( 'LiberatorType' ) && ge( 'LiberatorType' ).value != 'RDP' ) return false;
 				
 				// --- Connections (Servers) ---------------------------------------------------------------------------
 				
@@ -2020,7 +2032,7 @@ Sections.applications_liberator = function( cmd, extra )
 			var loadingInfo = {};
 			var loadingList = [
 				
-				// 0 | Load template details
+				// 0 | Load server details
 				
 				function(  )
 				{
@@ -2034,6 +2046,15 @@ Sections.applications_liberator = function( cmd, extra )
 						
 						if( dat && obj )
 						{
+							if( obj && obj.name )
+							{
+								// TODO: Remove protocol identity in name if we have icons to display the different protocols instead of [protocol] ...
+								
+								obj.name = obj.name.split( '[RDP] ' ).join( '' );
+								obj.name = obj.name.split( '[SSH] ' ).join( '' );
+								obj.name = obj.name.split( '[VNC] ' ).join( '' );
+							}
+							
 							dat.obj = obj;
 						}
 						
@@ -2097,12 +2118,32 @@ Sections.applications_liberator = function( cmd, extra )
 		
 		console.log( { details: details, apps: apps } );
 		
+		var type = '';
+		
+		var protocol = [ 'RDP', 'SSH', 'VNC' ];
+		
+		for( var i in protocol )
+		{
+			if( protocol[i] )
+			{
+				var selected = '';
+				
+				if( details.obj && details.obj.protocol == protocol[i].toLowerCase() )
+				{
+					selected = ' selected="selected"';
+				}
+				
+				type += '<option' + selected + '>' + protocol[i] + '</option>';
+			}
+		}
+		
 		// Get the user details template
 		var d = new File( 'Progdir:Templates/application_liberator_details.html' );
 		
 		// Add all data for the template
 		d.replacements = {
 			liberator_title          : ( details.obj && details.obj.name ? details.obj.name : ''            ),
+			liberator_type           : ( type                                                               ),
 			liberator_name           : ( details.obj && details.obj.name ? details.obj.name : ''            ),
 			liberator_address        : ( details     && details.hostname ? details.hostname : ''            ),
 			liberator_port           : ( details     && details.port     ? details.port     : ''            ),
@@ -2399,6 +2440,8 @@ Sections.applications_liberator = function( cmd, extra )
 										{
 											'element' : function()
 											{
+												// TODO: Add proper protocol icon ...
+												
 												var d = document.createElement( 'div' );
 												d.className = 'TextCenter HContent10 FloatLeft PaddingSmall Ellipsis';
 												//d.innerHTML = '<span class="IconSmall NegativeAlt fa-file-text-o"></span>';
@@ -2411,8 +2454,7 @@ Sections.applications_liberator = function( cmd, extra )
 											{
 												var d = document.createElement( 'div' );
 												d.className = 'HContent80 FloatLeft PaddingSmall Ellipsis';
-												//d.innerHTML = servers[k].Data.name + ' (Host: '+servers[k].Data['full address']+')';
-												d.innerHTML = '['+servers[k].protocol+'] ' + servers[k].name;
+												d.innerHTML = /*'['+servers[k].protocol+'] ' + */servers[k].name;
 												return d;
 											}()
 										},
