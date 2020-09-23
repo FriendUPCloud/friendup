@@ -222,7 +222,7 @@ Sections.applications_liberator = function( cmd, extra )
 		
 		initMain();
 		
-		if( id && obj )
+		if( id )
 		{
 			edit( id, obj, _this );
 		}
@@ -231,6 +231,8 @@ Sections.applications_liberator = function( cmd, extra )
 	
 	function edit( id, obj, _this )
 	{
+		
+		console.log( 'edit ', { id: id, obj: obj, _this: _this } );
 		
 		if( _this )
 		{
@@ -373,6 +375,8 @@ Sections.applications_liberator = function( cmd, extra )
 		}
 		m.execute( 'getsystemsetting', { 'type' : 'mitra', 'key' : 'host' } );
 	}
+	
+	// TODO: MOVE ALL GUACAMOLE CALLS TO SERVER USING CURL TO NOT EXPOSE ADMIN AUTHTOKEN TO CLIENTS ...
 	
 	function guacAdminAuth( config, callback, token )
 	{
@@ -905,7 +909,7 @@ Sections.applications_liberator = function( cmd, extra )
 	
 	// write -------------------------------------------------------------------------------------------------------- //
 	
-	function create()
+	function create( _this )
 	{
 		
 		getSystemSettings( function( config )
@@ -928,7 +932,7 @@ Sections.applications_liberator = function( cmd, extra )
 					
 					if( d.identifier && d.name )
 					{
-						refresh( d.identifier, d );
+						refresh( d.identifier, d, _this );
 					}
 					
 				}
@@ -955,6 +959,70 @@ Sections.applications_liberator = function( cmd, extra )
 			
 		} );
 
+		
+	}
+	
+	function update( id, _this )
+	{
+		
+		if( id )
+		{
+			
+			getSystemSettings( function( config )
+			{
+			
+				guacAdminUpdateServer( config, id, function( e, data )
+				{
+						
+					console.log( { e:e, d:data } );
+				
+					// TODO: Find out what error messages look like ...
+					
+					if( e == 'ok' )
+					{
+						if( data )
+						{
+							if( data && data.message )
+							{
+								Notify( { title: 'success', text: data.message } );
+							}
+					
+							if( data.identifier && data.name )
+							{
+								refresh( data.identifier, data, _this );
+							}
+						}
+						else
+						{
+							refresh( id, false, _this );
+						}
+						
+						editMode( true );
+					}
+					else if( data && data.response )
+					{
+						Notify( { title: i18n( 'i18n_liberator_server_update' ), text: i18n( 'i18n_' + data.response ) } );
+					
+						if( ge( 'LiberatorName' ) )
+						{
+							ge( 'LiberatorName' ).focus();
+						}
+					}
+					else
+					{
+					
+						if( data && data.message )
+						{
+							Notify( { title: 'failed', text: data.message } );
+						}
+					
+					}
+				
+				} );
+			
+			} );
+			
+		}
 		
 	}
 	
@@ -995,6 +1063,66 @@ Sections.applications_liberator = function( cmd, extra )
 							'clipboard-encoding' : ''
 						}
 					};
+					
+				}
+				else if( ge( 'LiberatorType' ) && ge( 'LiberatorType' ).value == 'SSH' )
+				{
+					
+					/*{
+					  "parentIdentifier": "ROOT",
+					  "name": "test",
+					  "protocol": "ssh",
+					  "parameters": {
+						"port": "",
+						"read-only": "",
+						"swap-red-blue": "",
+						"cursor": "",
+						"color-depth": "",
+						"clipboard-encoding": "",
+						"disable-copy": "",
+						"disable-paste": "",
+						"dest-port": "",
+						"recording-exclude-output": "",
+						"recording-exclude-mouse": "",
+						"recording-include-keys": "",
+						"create-recording-path": "",
+						"enable-sftp": "",
+						"sftp-port": "",
+						"sftp-server-alive-interval": "",
+						"enable-audio": "",
+						"color-scheme": "",
+						"font-size": "",
+						"scrollback": "",
+						"timezone": null,
+						"server-alive-interval": "",
+						"backspace": "",
+						"terminal-type": "",
+						"create-typescript-path": "",
+						"hostname": "",
+						"host-key": "",
+						"private-key": "",
+						"username": "",
+						"password": "",
+						"passphrase": "",
+						"font-name": "",
+						"command": "",
+						"locale": "",
+						"typescript-path": "",
+						"typescript-name": "",
+						"recording-path": "",
+						"recording-name": "",
+						"sftp-root-directory": ""
+					  },
+					  "attributes": {
+						"max-connections": "",
+						"max-connections-per-user": "",
+						"weight": "",
+						"failover-only": "",
+						"guacd-port": "",
+						"guacd-encryption": "",
+						"guacd-hostname": ""
+					  }
+					}*/	
 					
 				}
 				else if( ge( 'LiberatorType' ) && ge( 'LiberatorType' ).value == 'RDP' )
@@ -1163,6 +1291,133 @@ Sections.applications_liberator = function( cmd, extra )
 				};
 				
 				xhttp.open( "POST", ( settings.server_url+settings.server_api_path+'connections?token='+settings.server_api_token ), true );	
+				xhttp.setRequestHeader( "Content-Type", "application/json;charset=UTF-8" );
+				xhttp.send( JSON.stringify( form ) );
+			
+			}
+		
+		} );
+		
+	}
+	
+	function guacAdminUpdateServer( config, id, callback )
+	{
+		
+		guacAdminListConnectionGroups( config, function( token, groups )
+		{
+			
+			console.log( 'guacAdminUpdateServer( '+token+' ) ', { id:id, groups:groups } );
+			
+			if( token && id && groups && groups['_Servers'] && groups['_Servers'].identifier )
+			{
+				
+				var settings = {
+					server_url       : ( config && config.host.url ? config.host.url : 'https://localhost/guacamole/' ),
+					server_api_path  : 'api/session/data/mysql/',
+					server_api_token : token
+				};
+				
+				
+				
+				if( ge( 'LiberatorType' ) && ge( 'LiberatorType' ).value == 'VNC' )
+				{
+					
+					// TODO: Add support for updating protocol VNC
+					
+					var form = {};
+					
+				}
+				else if( ge( 'LiberatorType' ) && ge( 'LiberatorType' ).value == 'SSH' )
+				{
+					
+					// TODO: Add support for updating protocol SSH
+					
+					var form = {};
+					
+				}
+				else if( ge( 'LiberatorType' ) && ge( 'LiberatorType' ).value == 'RDP' )
+				{
+					
+					var form = {
+						'parentIdentifier'               : groups['_Servers'].identifier,
+						'name'                           : ( ge( 'LiberatorName'     ) ? ge( 'LiberatorName'     ).value : '' ),
+						'identifier'                     : id,
+						'protocol'                       : 'rdp',
+						'parameters'                     : {
+							'port'                       : ( ge( 'LiberatorPort'     ) ? ge( 'LiberatorPort'     ).value : '' ),
+							'hostname'                   : ( ge( 'LiberatorAddress'  ) ? ge( 'LiberatorAddress'  ).value : '' ),
+							'username'                   : ( ge( 'LiberatorUsername' ) ? ge( 'LiberatorUsername' ).value : '' ),
+							'password'                   : ( ge( 'LiberatorPassword' ) ? ge( 'LiberatorPassword' ).value : '' ),
+							'domain'                     : ( ge( 'LiberatorDomain'   ) ? ge( 'LiberatorDomain'   ).value : '' )
+						},
+						'attributes'                     : {}
+					};
+					
+				}
+				else
+				{
+					if( callback )
+					{
+						return callback( 'fail', false );
+					}
+					
+					return false;
+				}
+				
+				// --- Connections (Servers) ---------------------------------------------------------------------------
+				
+				var xhttp = new XMLHttpRequest();
+				xhttp.onreadystatechange = function() 
+				{
+					if( this.readyState == 4 ) 
+					{
+				
+						data = false;
+					
+						try
+						{
+							data = JSON.parse( this.responseText );
+						}
+						catch( err )
+						{
+							//
+						}
+					
+						if( this.status == 200 || this.status == 204 )
+						{
+							console.log( '[' + this.status + '] ', data );
+							
+							if( data )
+							{
+								if( callback )
+								{
+									return callback( 'ok', data );
+								}
+							}
+							else
+							{
+								if( callback )
+								{
+									return callback( 'ok', data );
+								}
+							}
+						}
+						else
+						{
+							if( data )
+							{
+								console.log( '[' + this.status + '] ', data );
+							}
+							
+							if( callback )
+							{
+								return callback( 'fail', data );
+							}
+						}
+					}
+				};
+				
+				xhttp.open( "PUT", ( settings.server_url+settings.server_api_path+'connections/'+id+'?token='+settings.server_api_token ), true );	
 				xhttp.setRequestHeader( "Content-Type", "application/json;charset=UTF-8" );
 				xhttp.send( JSON.stringify( form ) );
 			
@@ -1759,6 +2014,8 @@ Sections.applications_liberator = function( cmd, extra )
 		
 		if( id )
 		{
+			if( !obj ) return false;
+			
 			var loadingSlot = 0;
 			var loadingInfo = {};
 			var loadingList = [
@@ -1899,13 +2156,13 @@ Sections.applications_liberator = function( cmd, extra )
 				{					
 					console.log( 'update( '+details.obj.identifier+' )' );
 					
-					//update( details.obj.identifier );
+					update( details.obj.identifier );
 				}
 				else
 				{
 					console.log( 'create()' );
-									
-					create();
+							
+					create(  );
 				}
 			}
 			
