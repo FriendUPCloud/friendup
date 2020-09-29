@@ -208,12 +208,15 @@ Sections.accounts_templates = function( cmd, extra )
 	function refresh( id, _this )
 	{
 		
-		initMain();
-		
-		if( id )
+		initMain( function(  )
 		{
-			edit( id, _this );
-		}
+			
+			if( id )
+			{
+				edit( id, _this );
+			}
+			
+		} );
 		
 	}
 	
@@ -238,6 +241,10 @@ Sections.accounts_templates = function( cmd, extra )
 			}
 			
 			_this.classList.add( 'Selected' );
+		}
+		else if( id && ge( 'TemplateID_' + id ) )
+		{
+			ge( 'TemplateID_' + id ).classList.add( 'Selected' );
 		}
 		
 		loading( id );
@@ -304,7 +311,7 @@ Sections.accounts_templates = function( cmd, extra )
 				
 				if( data && data.message )
 				{
-					Notify( { title: 'success', text: data.message } );
+					Notify( { title: i18n( 'i18n_template_create' ), text: i18n( 'i18n_' + data.message ).replace( 'i18n_', '' ) } );
 				}
 				
 				refresh( d );
@@ -312,7 +319,7 @@ Sections.accounts_templates = function( cmd, extra )
 			}
 			else if( data && data.response )
 			{
-				Notify( { title: i18n( 'i18n_template_create' ), text: i18n( 'i18n_' + data.response ) } );
+				Notify( { title: i18n( 'i18n_template_create' ), text: i18n( 'i18n_' + data.response ).replace( 'i18n_', '' ) } );
 				
 				if( ge( 'TempName' ) )
 				{
@@ -388,7 +395,7 @@ Sections.accounts_templates = function( cmd, extra )
 					
 					if( data && data.message )
 					{
-						Notify( { title: 'success', text: data.message } );
+						Notify( { title: i18n( 'i18n_template_update' ), text: i18n( 'i18n_' + data.message ).replace( 'i18n_', '' ) } );
 					}
 					
 					/*// Wallpaper settings if we have a new wallpaper ...
@@ -436,12 +443,14 @@ Sections.accounts_templates = function( cmd, extra )
 						
 					}*/
 					
+					refresh( id );
+					
 					editMode( true );
 					
 				}
 				else if( data && data.response )
 				{
-					Notify( { title: i18n( 'i18n_template_update' ), text: i18n( 'i18n_' + data.response ) } );
+					Notify( { title: i18n( 'i18n_template_update' ), text: i18n( 'i18n_' + data.response ).replace( 'i18n_', '' ) } );
 					
 					if( ge( 'TempName' ) )
 					{
@@ -3287,22 +3296,32 @@ Sections.accounts_templates = function( cmd, extra )
 										'child' : 
 										[ 
 											{ 
-												'element' : function() 
+												'element' : function( _this ) 
 												{
 													var d = document.createElement( 'div' );
 													d.className = 'PaddingSmall HContent40 FloatLeft';
 													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+													d.ele = this;
+													d.onclick = function(  )
+													{
+														_this.sortstartup( 'Name' );
+													};
 													return d;
-												}() 
+												}( this ) 
 											}, 
 											{ 
-												'element' : function() 
+												'element' : function( _this ) 
 												{
 													var d = document.createElement( 'div' );
 													d.className = 'PaddingSmall HContent25 FloatLeft Relative';
 													d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
+													d.ele = this;
+													d.onclick = function(  )
+													{
+														_this.sortstartup( 'Category' );
+													};
 													return d;
-												}()
+												}( this )
 											},
 											{ 
 												'element' : function() 
@@ -3408,18 +3427,21 @@ Sections.accounts_templates = function( cmd, extra )
 																{
 																	var d = document.createElement( 'div' );
 																	d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
-																	return d;;
+																	return d;
 																}(),
 																 'child' : 
 																[ 
 																	{ 
 																		'element' : function() 
 																		{
-																			var d = document.createElement( 'div' );
+																			var d = document.createElement( 'span' );
+																			d.setAttribute( 'Name', apps[k].Name );
+																			d.setAttribute( 'Category', apps[k].Category );
 																			d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																			d.style.backgroundSize = 'contain';
 																			d.style.width = '24px';
 																			d.style.height = '24px';
+																			d.style.display = 'block';
 																			return d;
 																		}(), 
 																		 'child' : 
@@ -3438,7 +3460,7 @@ Sections.accounts_templates = function( cmd, extra )
 																					return d;
 																				}()
 																			}
-																		]
+																		]																		
 																	}
 																] 
 															},
@@ -3658,11 +3680,14 @@ Sections.accounts_templates = function( cmd, extra )
 																	{ 
 																		'element' : function() 
 																		{
-																			var d = document.createElement( 'div' );
+																			var d = document.createElement( 'span' );
+																			d.setAttribute( 'Name', apps[k].Name );
+																			d.setAttribute( 'Category', apps[k].Category );
 																			d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																			d.style.backgroundSize = 'contain';
 																			d.style.width = '24px';
 																			d.style.height = '24px';
+																			d.style.display = 'block';
 																			return d;
 																		}(), 
 																		 'child' : 
@@ -3798,6 +3823,9 @@ Sections.accounts_templates = function( cmd, extra )
 									
 								}
 								
+								// Sort default by Name ASC
+								this.sortstartup( 'Name', 'ASC' );
+								
 							},
 							
 							refresh : function (  )
@@ -3820,6 +3848,145 @@ Sections.accounts_templates = function( cmd, extra )
 										
 								}
 								
+							},
+							
+							searchstartup : function ( filter, server )
+							{
+								
+								//
+								
+								if( ge( 'StartupInner' ) )
+								{
+									var list = ge( 'StartupInner' ).getElementsByTagName( 'div' );
+
+									if( list.length > 0 )
+									{
+										for( var a = 0; a < list.length; a++ )
+										{
+											if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+		
+											var span = list[a].getElementsByTagName( 'span' )[0];
+		
+											if( span )
+											{
+												var param = [
+													( " " + span.getAttribute( 'name' ).toLowerCase() + " " ), 
+													( " " + span.getAttribute( 'category' ).toLowerCase() + " " )
+												];
+												
+												if( !filter || filter == ''  
+												|| span.getAttribute( 'name' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+												|| span.getAttribute( 'category' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+												)
+												{
+													list[a].style.display = '';
+				
+													var div = list[a].getElementsByTagName( 'div' );
+				
+													if( div.length )
+													{
+														for( var i in div )
+														{
+															if( div[i] && div[i].className && ( div[i].className.indexOf( 'name' ) >= 0 || div[i].className.indexOf( 'category' ) >= 0 ) )
+															{
+																// TODO: Make text searched for ...
+															}
+														}
+													}
+												}
+												else
+												{
+													list[a].style.display = 'none';
+												}
+											}
+										}
+	
+									}
+									
+									if( ge( 'StartupSearchCancelBtn' ) )
+									{
+										if( !filter && ( ge( 'StartupSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'StartupSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+										{
+											ge( 'StartupSearchCancelBtn' ).classList.remove( 'Open' );
+											ge( 'StartupSearchCancelBtn' ).classList.add( 'Closed' );
+										}
+										
+										else if( filter != '' && ( ge( 'StartupSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'StartupSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+										{
+											ge( 'StartupSearchCancelBtn' ).classList.remove( 'Closed' );
+											ge( 'StartupSearchCancelBtn' ).classList.add( 'Open' );
+										}
+									}
+								}
+								
+							},
+							
+							sortstartup : function ( sortby, orderby )
+							{
+
+								//
+
+								var _this = ge( 'StartupInner' );
+
+								if( _this )
+								{
+									orderby = ( orderby ? orderby : ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' ) );
+									
+									var list = _this.getElementsByTagName( 'div' );
+	
+									if( list.length > 0 )
+									{
+										var output = [];
+		
+										var callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
+		
+										for( var a = 0; a < list.length; a++ )
+										{
+											if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+			
+											var span = list[a].getElementsByTagName( 'span' )[0];
+			
+											if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' )
+											{
+												var obj = { 
+													sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
+													content : list[a]
+												};
+			
+												output.push( obj );
+											}
+										}
+		
+										if( output.length > 0 )
+										{
+											// Sort ASC default
+			
+											output.sort( callback );
+			
+											// Sort DESC
+			
+											if( orderby == 'DESC' ) 
+											{ 
+												output.reverse();  
+											}
+			
+											_this.innerHTML = '';
+			
+											_this.setAttribute( 'orderby', orderby );
+			
+											for( var key in output )
+											{
+												if( output[key] && output[key].content )
+												{
+													// Add row
+													_this.appendChild( output[key].content );
+												}
+											}
+										}
+									}
+								}
+
+								//console.log( output );
 							},
 							
 							// TODO: Check this function, top doesn't sort properly after one click ...
@@ -4044,7 +4211,18 @@ Sections.accounts_templates = function( cmd, extra )
 										
 									};
 								}
-							
+								
+								var inp = ge( 'AdminStartupContainer' ).getElementsByTagName( 'input' )[0];
+								inp.onkeyup = function( e )
+								{
+									init.searchstartup( this.value );
+								}
+								ge( 'StartupSearchCancelBtn' ).onclick = function( e )
+								{
+									init.searchstartup( false );
+									inp.value = '';
+								}
+								
 								// Show listed startup ... 
 						
 								init.list();
@@ -4359,7 +4537,7 @@ Sections.accounts_templates = function( cmd, extra )
 		
 	}
 	
-	function initMain()
+	function initMain( callback )
 	{
 		if( ShowLog ) console.log( 'initMain()' );
 		
@@ -4523,6 +4701,7 @@ Sections.accounts_templates = function( cmd, extra )
 									{
 										var d = document.createElement( 'div' );
 										d.className = 'HRow';
+										d.id = 'TemplateID_' + temp[k].ID;
 										d.tempid = temp[k].ID;
 										d.onclick = function()
 										{
@@ -4603,6 +4782,7 @@ Sections.accounts_templates = function( cmd, extra )
 				Friend.responsive.pageActive = ge( 'TemplateList' );
 				Friend.responsive.reinit();
 				
+				if( callback ) callback( true );
 				
 			} );
 			
@@ -4615,6 +4795,9 @@ Sections.accounts_templates = function( cmd, extra )
 			var h2 = document.createElement( 'h2' );
 			h2.innerHTML = '{i18n_permission_denied}';
 			o.appendChild( h2 );
+			
+			if( callback ) callback( true );
+			
 		}
 		
 	}

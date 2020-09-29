@@ -387,12 +387,15 @@ Sections.accounts_workgroups = function( cmd, extra )
 	function refresh( id, _this )
 	{
 		
-		initMain();
-		
-		if( id )
+		initMain( function(  )
 		{
-			edit( id, _this );
-		}
+			
+			if( id )
+			{
+				edit( id, _this );
+			}
+			
+		} );
 		
 	}
 	
@@ -417,6 +420,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 			}
 			
 			_this.classList.add( 'Selected' );
+		}
+		else if( id && ge( 'WorkgroupID_' + id ) )
+		{
+			ge( 'WorkgroupID_' + id ).classList.add( 'Selected' );
 		}
 		
 		loading( id );
@@ -488,11 +495,11 @@ Sections.accounts_workgroups = function( cmd, extra )
 				
 				if( data && data.message )
 				{
-					Notify( { title: i18n( 'i18n_workgroup_create' ), text: data.message } );
+					Notify( { title: i18n( 'i18n_workgroup_create' ), text: i18n( 'i18n_' + data.message ).replace( 'i18n_', '' ) } );
 				}
 				else if ( data && data.response )
 				{
-					Notify( { title: i18n( 'i18n_workgroup_create' ), text: data.response } );
+					Notify( { title: i18n( 'i18n_workgroup_create' ), text: i18n( 'i18n_' + data.response ).replace( 'i18n_', '' ) } );
 				}
 				
 				refresh( data.id );
@@ -530,11 +537,11 @@ Sections.accounts_workgroups = function( cmd, extra )
 				
 				if( data && data.message )
 				{
-					Notify( { title: i18n( 'i18n_workgroup_create' ), text: data.message } );
+					Notify( { title: i18n( 'i18n_workgroup_create' ), text: i18n( 'i18n_' + data.message ).replace( 'i18n_', '' ) } );
 				}
 				else if( data && data.response )
 				{
-					Notify( { title: i18n( 'i18n_workgroup_create' ), text: data.response } );
+					Notify( { title: i18n( 'i18n_workgroup_create' ), text: i18n( 'i18n_' + data.response ).replace( 'i18n_', '' ) } );
 				}
 				else
 				{
@@ -611,14 +618,14 @@ Sections.accounts_workgroups = function( cmd, extra )
 					
 					if( data && data.message )
 					{
-						Notify( { title: i18n( 'i18n_workgroup_update' ), text: data.message } );
+						Notify( { title: i18n( 'i18n_workgroup_update' ), text: i18n( 'i18n_' + data.message ).replace( 'i18n_', '' ) } );
 					}
 					else if ( data && data.response )
 					{
-						Notify( { title: i18n( 'i18n_workgroup_update' ), text: data.response } );
+						Notify( { title: i18n( 'i18n_workgroup_update' ), text: i18n( 'i18n_' + data.response ).replace( 'i18n_', '' ) } );
 					}
 					
-					//refresh( data.id );
+					refresh( data.id );
 					
 					editMode( true );
 				}
@@ -652,11 +659,11 @@ Sections.accounts_workgroups = function( cmd, extra )
 					
 					if( data && data.message )
 					{
-						Notify( { title: i18n( 'i18n_workgroup_update' ), text: data.message } );
+						Notify( { title: i18n( 'i18n_workgroup_update' ), text: i18n( 'i18n_' + data.message ).replace( 'i18n_', '' ) } );
 					}
 					else if ( data && data.response )
 					{
-						Notify( { title: i18n( 'i18n_workgroup_update' ), text: data.response } );
+						Notify( { title: i18n( 'i18n_workgroup_update' ), text: i18n( 'i18n_' + data.response ).replace( 'i18n_', '' ) } );
 					}
 					else
 					{
@@ -4143,7 +4150,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 	
 	
 	
-	function initMain()
+	function initMain( callback )
 	{
 		var checkedGlobal = Application.checkAppPermission( [ 'PERM_WORKGROUP_READ_GLOBAL', 'PERM_WORKGROUP_GLOBAL' ] );
 		var checkedWorkgr = Application.checkAppPermission( [ 'PERM_WORKGROUP_READ_IN_WORKGROUP', 'PERM_WORKGROUP_WORKGROUP' ] );
@@ -4283,6 +4290,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 							var r = document.createElement( 'div' );
 							setROnclick( r, userList[ a ].ID );
 							r.className = 'HRow ';
+							r.id = 'WorkgroupID_' + userList[ a ].ID;
 			
 							//var icon = '<span class="IconSmall NegativeAlt fa-users"></span>';
 							var icon = '<span class="IconSmall fa-users"></span>';
@@ -4315,6 +4323,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 			
 				Friend.responsive.pageActive = ge( 'WorkgroupList' );
 				Friend.responsive.reinit();
+				
+				if( callback ) callback( true );
+				
 			} );
 			
 		}
@@ -4326,6 +4337,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 			var h2 = document.createElement( 'h2' );
 			h2.innerHTML = '{i18n_permission_denied}';
 			o.appendChild( h2 );
+			
+			if( callback ) callback( true );
 		}
 		
 	}

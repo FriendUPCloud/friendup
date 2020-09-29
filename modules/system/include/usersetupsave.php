@@ -14,6 +14,7 @@ if( $level == 'Admin' && $args->args->id > 0 )
 	if( isset( $args->args->Name ) )
 	{
 		$c = new dbIO( 'FUserGroup' );
+		$c->Type = 'Setup';
 		$c->Name = $args->args->Name;
 		if( $c->Load() && $c->ID != $args->args->id )
 		{
@@ -23,6 +24,7 @@ if( $level == 'Admin' && $args->args->id > 0 )
 	
 	// Get the fusergroup object
 	$o = new dbIO( 'FUserGroup' );
+	$o->Type = 'Setup';
 	$o->ID = $args->args->id;
 	if( $o->Load() )
 	{
