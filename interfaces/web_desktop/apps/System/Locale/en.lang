@@ -360,3 +360,7 @@ i18n_liberator_domain                : Domain
 
 i18n_delete_liberator_server         : Delete server
 
+i18n_liberator_application_name       : Application name
+i18n_liberator_application_alias      : Application alias
+i18n_liberator_application_remote_dir : Remote directory
+

@@ -245,6 +245,58 @@
 	border: 1px solid rgba(0,0,0,0) !important;*/
 }
 
+/* Gui LiberatorAppDetails --------------------------------------------------- */
+
+#Admin #LiberatorAppDetails .IconRect 
+{
+	max-width: 320px;
+	margin-left: auto;
+	margin-right: 0;
+}
+
+#Admin #LiberatorAppDetails .IconRect > div
+{
+	position: relative;
+	min-height: 138px;
+	box-sizing: border-box;
+}
+
+#Admin #LiberatorAppDetails .IconRect > div button
+{
+	position: absolute;
+	left: 10px;
+	bottom: 0;
+}
+
+#Admin #LiberatorAppDetails #LiberatorAppIconArea.IconSmall:before
+{
+	font-size: 128px;
+  	vertical-align: middle;
+  	line-height: 128px;
+  	/*color: #34495E;*/
+}
+
+#Admin #LiberatorAppDetails #LiberatorAppIconArea 
+{
+    position: relative;
+    display: block;
+    margin-bottom: 10px;
+    width: 128px;
+    height: 128px;
+    border-radius: 100%;
+    overflow: hidden;
+}
+
+#Admin #LiberatorAppDetails #LiberatorAppIconArea #LiberatorAppIcon 
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+    width: 256px;
+    height: 256px;
+    zoom: 0.5;
+}
+
 /* Server printers ---------------------------------------------------------- */
 
 

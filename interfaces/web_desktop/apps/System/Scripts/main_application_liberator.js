@@ -288,7 +288,7 @@ Sections.applications_liberator = function( cmd, extra )
 		
 		if( callback )
 		{
-			var m = new Module( 'system' );
+			/*var m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{
 				if( e == 'ok' && d )
@@ -307,7 +307,30 @@ Sections.applications_liberator = function( cmd, extra )
 				
 				return callback( false, false );
 			}
-			m.execute( 'software', { mode: 'showall', authid: Application.authId } );
+			m.execute( 'software', { mode: 'showall', authid: Application.authId } );*/
+			
+			var m = new Module( 'mitra' );
+			m.onExecuted = function( e, d )
+			{
+				console.log( 'loadapplicationlist ', { e:e, d:d } );
+				
+				if( e == 'ok' && d )
+				{
+					try
+					{
+						var json = JSON.parse( d );
+					
+						if( json )
+						{
+							return callback( true, json );
+						}
+					} 
+					catch( e ){ } 
+				}
+				
+				return callback( false, false );
+			}
+			m.execute( 'loadapplicationlist' );
 			
 			return true;
 		}
@@ -2246,8 +2269,771 @@ Sections.applications_liberator = function( cmd, extra )
 			function onLoad ( data )
 			{
 			
-			
-			
+				var func = {
+					
+					appids : function ( soft )
+					{
+						var ids = {};
+						
+						if( soft )
+						{
+							if( ShowLog ) console.log( 'soft ', soft );
+							
+							var i = 0;
+							
+							for( var a in soft )
+							{
+								if( soft[a] && soft[a].ID )
+								{
+									ids[ i++ ] = soft[a].ID;
+								}
+							}
+						}
+						
+						return ids;
+						
+					}( apps ),
+					
+					mode : { applications : 'list' },
+					
+					// Applications ------------------------------------------------------------------------------------
+					
+					applications : function ( func )
+					{
+						
+						// Editing applications
+						
+						var init =
+						{
+							
+							func : this,
+							
+							ids  : this.appids,
+							
+							head : function ( hide )
+							{
+								
+								var inp = ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0];
+								inp.value = '';
+								
+								if( ge( 'ApplicationSearchCancelBtn' ) && ge( 'ApplicationSearchCancelBtn' ).classList.contains( 'Open' ) )
+								{
+									ge( 'ApplicationSearchCancelBtn' ).classList.remove( 'Open' );
+									ge( 'ApplicationSearchCancelBtn' ).classList.add( 'Closed' );
+								}
+								
+								var o = ge( 'ApplicationGui' ); o.innerHTML = '<input type="hidden" id="TempApplications">';
+								
+								//this.func.updateids( 'applications' );
+								
+								var divs = appendChild( [ 
+									{ 
+										'element' : function() 
+										{
+											var d = document.createElement( 'div' );
+											//d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+											d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
+											return ( !hide ? d : '' );
+										}(),
+										'child' : 
+										[ 
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmall HContent40 FloatLeft';
+													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+													d.onclick = function(  )
+													{
+														//sortApps( 'Name' );
+													};
+													return ( !hide ? d : '' );
+												}() 
+											}, 
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmall HContent45 FloatLeft Relative';
+													d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
+													d.onclick = function(  )
+													{
+														//sortApps( 'Category' );
+													};
+													return ( !hide ? d : '' );
+												}()
+											},
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmall HContent15 FloatLeft Relative';
+													return ( !hide ? d : '' );
+												}()
+											}
+										]
+									},
+									{
+										'element' : function() 
+										{
+											var d = document.createElement( 'div' );
+											d.className = 'HRow Box Padding';
+											d.id = 'ApplicationInner';
+											return d;
+										}()
+									}
+								] );
+								
+								if( divs )
+								{
+									for( var i in divs )
+									{
+										if( divs[i] && o )
+										{
+											o.appendChild( divs[i] );
+										}
+									}
+								}
+								
+							},
+							
+							list : function (  )
+							{
+								
+								this.func.mode[ 'applications' ] = 'list';
+								
+								if( apps )
+								{
+									this.head();
+									
+									var o = ge( 'ApplicationInner' ); o.innerHTML = '';
+									
+									console.log( 'apps: ', { apps: apps, ids: this.ids } );
+									
+									if( this.ids )
+									{
+										for( var a in this.ids )
+										{
+											if( this.ids[a] && this.ids[a].ID )
+											{
+												var found = false;
+												
+												for( var k in apps )
+												{
+													if( this.ids[a] && this.ids[a].ID == apps[k].ID )
+													{
+														found = true;
+														
+														break;
+													}
+												}
+												
+												if( !found ) continue;
+											
+												var divs = appendChild( [
+													{ 
+														'element' : function() 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'HRow';
+															return d;
+														}(),
+														'child' : 
+														[ 
+															{ 
+																'element' : function() 
+																{
+																	var d = document.createElement( 'div' );
+																	d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																	return d;
+																}(),
+																 'child' : 
+																[ 
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'span' );
+																			d.setAttribute( 'Name', apps[k].Key ? apps[k].Key : 'n/a' );
+																			d.setAttribute( 'Category', apps[k].Category ? apps[k].Category : 'n/a' );
+																			d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
+																			d.style.backgroundSize = 'contain';
+																			d.style.width = '24px';
+																			d.style.height = '24px';
+																			d.style.display = 'block';
+																			return d;
+																		}(), 
+																		 'child' : 
+																		[ 
+																			{
+																				'element' : function() 
+																				{
+																					var d = document.createElement( 'div' );
+																					if( apps[k].Preview )
+																					{
+																						d.style.backgroundImage = 'url(\'' + apps[k].Preview + '\')';
+																						d.style.backgroundSize = 'contain';
+																						d.style.width = '24px';
+																						d.style.height = '24px';
+																					}
+																					return d;
+																				}()
+																			}
+																		]
+																	}
+																]
+															},
+															{ 
+																'element' : function() 
+																{
+																	var d = document.createElement( 'div' );
+																	d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
+																	d.innerHTML = '<strong>' + ( apps[k].Key ? apps[k].Key : 'n/a' ) + '</strong>';
+																	return d;
+																}() 
+															},
+															{ 
+																'element' : function() 
+																{
+																	var d = document.createElement( 'div' );
+																	d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
+																	d.innerHTML = '<span>' + ( apps[k].Category ? apps[k].Category : 'n/a' ) + '</span>';
+																	return d;
+																}() 
+															}, 
+															{ 
+																'element' : function() 
+																{
+																	var d = document.createElement( 'div' );
+																	d.className = 'PaddingSmall HContent15 FloatLeft';
+																	return d;
+																}(),
+																'child' : 
+																[ 
+																	{ 
+																		'element' : function( ids, name, func ) 
+																		{
+																			var b = document.createElement( 'button' );
+																			b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																			b.onclick = function(  )
+																			{
+																			
+																				var pnt = this.parentNode.parentNode;
+																			
+																				removeBtn( this, { ids: ids, name: name, func: func, pnt: pnt }, function ( args )
+																				{
+																					
+																					/*args.func.updateids( 'applications', args.name, false );
+																					
+																					if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																				
+																					updateApplications( details.ID, function( e, d, vars )
+																					{
+																					
+																						if( e && vars )
+																						{
+																						
+																							if( vars.pnt )
+																							{
+																								vars.pnt.innerHTML = '';
+																							}
+																			
+																							if( vars.func )
+																							{
+																								vars.func.dock( 'refresh' );
+																								vars.func.startup( 'refresh' );
+																							}
+																						
+																						}
+																						else
+																						{
+																							if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+																						}
+																					
+																					}, { pnt: args.pnt, func: args.func } );*/
+																				
+																				} );
+																			
+																			};
+																			return b;
+																		}( this.ids, apps[k].Key, this.func ) 
+																	}
+																]
+															}
+														]
+													}
+												] );
+											
+												if( divs )
+												{
+													for( var i in divs )
+													{
+														if( divs[i] && o )
+														{
+															o.appendChild( divs[i] );
+														}
+													}
+												}
+											}
+									
+										}
+										
+										// Sort default by Name ASC
+										//this.sortapps( 'Name', 'ASC' );
+										
+									}
+									
+								}
+									
+							},
+							
+							update : function ( app )
+							{
+								
+								console.log( 'app: ', app );
+								
+								this.func.mode[ 'applications' ] = 'update';
+								
+								this.head( true );
+								
+								var o = ge( 'ApplicationInner' ); o.innerHTML = '';
+								
+								
+								
+								var str = '';
+								
+								str +='<div id="LiberatorAppDetails">';
+		
+								str +='	<div class="IconRect MarginTop MarginBottom HRow HContent70">';
+								str +='		<div class="FloatLeft Padding TextLeft Relative">';
+								str +='			<div id="LiberatorAppIconArea" class="IconSmall fa-user-circle-o">';
+								str +='				<canvas id="LiberatorAppIcon" width="256" height="256"></canvas>';
+								str +='			</div>';
+								str +='		</div>';
+								str +='		<div class="FloatLeft Padding TextLeft Relative">';
+								str +='			<button type="button" class="Button IconSmall" id="LiberatorAppIconEdit">';
+								str +='				' + i18n( 'i18n_browse' );
+								str +='			</button>';
+								str +='		</div>';
+								str +='	</div>';
+								
+								str +='	<div class="HRow MarginBottom">';
+								str +='		<div class="HContent30 FloatLeft Ellipsis">';
+								str +='			<strong>' + i18n( 'i18n_liberator_application_name' ) + ':</strong>';
+								str +='		</div>';
+								str +='		<div class="HContent70 FloatLeft Ellipsis">';
+								str +='			<input type="text" class="FullWidth" id="LiberatorAppName" value="' + ( app && app.Key ? app.Key : '' ) + '"/>';
+								str +='		</div>';
+								str +='	</div>';
+								str +='	<div class="HRow MarginBottom">';
+								str +='		<div class="HContent30 FloatLeft Ellipsis">';
+								str +='			<strong>' + i18n( 'i18n_liberator_application_alias' ) + ':</strong>';
+								str +='		</div>';
+								str +='		<div class="HContent70 FloatLeft Ellipsis">';
+								str +='			<input type="text" class="FullWidth" id="LiberatorAppAlias" value="'  + ( app && app.Key ? app.Key : '' ) + '"/>';
+								str +='		</div>';
+								str +='	</div>';
+								str +='	<div class="HRow MarginBottom">';
+								str +='		<div class="HContent30 FloatLeft Ellipsis">';
+								str +='			<strong>' + i18n( 'i18n_liberator_application_remote_dir' ) + ':</strong>';
+								str +='		</div>';
+								str +='		<div class="HContent70 FloatLeft Ellipsis">';
+								str +='			<input type="text" class="FullWidth" id="LiberatorAppRemoteDir" value=""/>';
+								str +='		</div>';
+								str +='	</div>';
+								
+								str +='	<div id="UserEditContainer">';
+								str +='		<div class="HRow">';
+								str +='			<div id="UserEditButtons">';
+								str +='				<button class="Button IconSmall FloatRight MarginLeft" id="LiberatorAppSaveBtn">';
+								str +='					' + i18n( 'i18n_save' );
+								str +='				</button>';
+								str +='				<button class="Button IconSmall FloatRight MarginLeft" id="LiberatorAppCancelBtn">';
+								str +='					' + i18n( 'i18n_cancel' );
+								str +='				</button>';
+								str +='			</div>';
+								str +='		</div>';
+								str +='	</div>';
+								
+								str +='</div>';
+								
+								o.innerHTML = str;
+								
+							},
+							
+							edit : function (  )
+							{
+								
+								this.func.mode[ 'applications' ] = 'edit';
+								
+								if( apps )
+								{
+									this.head();
+									
+									var o = ge( 'ApplicationInner' ); o.innerHTML = '';
+									
+									for( var k in apps )
+									{
+										if( apps[k] && apps[k].ID )
+										{
+											var found = false;
+											
+											if( this.ids )
+											{
+												for( var a in this.ids )
+												{
+													if( this.ids[a] && this.ids[a].ID == apps[k].ID )
+													{
+														found = true;
+													}
+												}
+											}
+											
+											var divs = appendChild( [
+												{ 
+													'element' : function() 
+													{
+														var d = document.createElement( 'div' );
+														d.className = 'HRow';
+														return d;
+													}(),
+													'child' : 
+													[ 
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																return d;
+															}(),
+															 'child' : 
+															[ 
+																{ 
+																	'element' : function() 
+																	{
+																		var d = document.createElement( 'span' );
+																		d.setAttribute( 'Name', apps[k].Key ? apps[k].Key : 'n/a' );
+																		d.setAttribute( 'Category', apps[k].Category ? apps[k].Category : 'n/a' );
+																		d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
+																		d.style.backgroundSize = 'contain';
+																		d.style.width = '24px';
+																		d.style.height = '24px';
+																		d.style.display = 'block';
+																		return d;
+																	}(), 
+																	 'child' : 
+																	[ 
+																		{
+																			'element' : function() 
+																			{
+																				var d = document.createElement( 'div' );
+																				if( apps[k].Preview )
+																				{
+																					d.style.backgroundImage = 'url(\'' + apps[k].Preview + '\')';
+																					d.style.backgroundSize = 'contain';
+																					d.style.width = '24px';
+																					d.style.height = '24px';
+																				}
+																				return d;
+																			}()
+																		}
+																	]
+																}
+															]
+														},
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
+																d.innerHTML = '<strong>' + ( apps[k].Key ? apps[k].Key : 'n/a' ) + '</strong>';
+																return d;
+															}() 
+														}, 
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
+																d.innerHTML = '<span>' + ( apps[k].Category ? apps[k].Category : 'n/a' ) + '</span>';
+																return d;
+															}() 
+														},
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+																return d;
+															}(),
+															'child' : 
+															[ 
+																{ 
+																	'element' : function( ids, app, _this ) 
+																	{
+																		var b = document.createElement( 'button' );
+																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' );
+																		b.onclick = function(  )
+																		{
+																			
+																			_this.update( app );
+																			
+																			if( this.classList.contains( 'fa-toggle-off' ) )
+																			{
+																				/*func.updateids( 'applications', name, [ name, '0' ] );
+																				
+																				if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																				
+																				updateApplications( details.ID, function( e, d, vars )
+																				{
+																					
+																					if( e && vars )
+																					{
+																						
+																						vars._this.classList.remove( 'fa-toggle-off' );
+																						vars._this.classList.add( 'fa-toggle-on' );
+																						
+																						if( vars.func )
+																						{
+																							vars.func.dock( 'refresh' );
+																							vars.func.startup( 'refresh' );
+																						}
+																						
+																					}
+																					else
+																					{
+																						if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+																					}
+																					
+																				}, { _this: this, func: func } );*/
+																				
+																			}
+																			else
+																			{
+																				
+																				/*func.updateids( 'applications', name, false );
+																				
+																				if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																				
+																				updateApplications( details.ID, function( e, d, vars )
+																				{
+																					
+																					if( e && vars )
+																					{
+																						
+																						vars._this.classList.remove( 'fa-toggle-on' );
+																						vars._this.classList.add( 'fa-toggle-off' );
+																						
+																						if( vars.func )
+																						{
+																							vars.func.dock( 'refresh' );
+																							vars.func.startup( 'refresh' );
+																						}
+																						
+																					}
+																					else
+																					{
+																						if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+																					}
+																					
+																				}, { _this: this, func: func } );*/
+																				
+																			}
+																			
+																		};
+																		return b;
+																	}( this.ids, apps[k], this ) 
+																}
+															]
+														}
+													]
+												}
+											] );
+											
+											if( divs )
+											{
+												for( var i in divs )
+												{
+													if( divs[i] && o )
+													{
+														o.appendChild( divs[i] );
+													}
+												}
+											}
+										}
+									
+									}
+									
+									// Sort default by Name ASC
+									//this.sortapps( 'Name', 'ASC' );
+									
+								}
+								
+							},
+							
+							refresh : function (  )
+							{
+								
+								switch( this.func.mode[ 'applications' ] )
+								{
+									
+									case 'list':
+										
+										this.list();
+										
+										break;
+									
+									case 'update':
+										
+										this.update();
+										
+										break;
+									
+									case 'edit':
+										
+										this.edit();
+										
+										break;
+										
+								}
+								
+							}
+							
+						};
+						
+						switch( func )
+						{
+							
+							case 'head':
+								
+								init.head();
+								
+								break;
+								
+							case 'list':
+								
+								init.list();
+								
+								break;
+							
+							case 'update':
+								
+								init.update();
+								
+								break;
+							
+							case 'edit':
+								
+								init.edit();
+								
+								break;
+								
+							case 'refresh':
+								
+								init.refresh();
+								
+								break;
+							
+							default:
+								
+								var etn = ge( 'ApplicationEdit' );
+								if( etn )
+								{
+									etn.onclick = function( e )
+									{
+								
+										init.update();
+								
+										// Hide add / edit button ...
+								
+										if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+										{
+											etn.classList.remove( 'Open' );
+											etn.classList.add( 'Closed' );
+										}
+								
+										// Show back button ...
+								
+										if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+										{
+											btn.classList.remove( 'Closed' );
+											btn.classList.add( 'Open' );
+										}
+										
+										if( ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0] )
+										{
+											ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0].classList.remove( 'Open' );
+											ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0].classList.add( 'Closed' );
+										}
+										
+									};
+								}
+						
+								var btn = ge( 'ApplicationEditBack' );
+								if( btn )
+								{
+									btn.onclick = function( e )
+									{
+								
+										//init.list();
+										init.edit();
+										
+										// Hide back button ...
+								
+										if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+										{
+											btn.classList.remove( 'Open' );
+											btn.classList.add( 'Closed' );
+										}
+						
+										// Show add / edit button ...
+								
+										if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+										{
+											etn.classList.remove( 'Closed' );
+											etn.classList.add( 'Open' );
+										}
+										
+										if( ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0] )
+										{
+											ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0].classList.remove( 'Closed' );
+											ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0].classList.add( 'Open' );
+										}
+										
+									};
+								}
+								
+								var inp = ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0];
+								inp.onkeyup = function( e )
+								{
+									//init.searchapps( this.value );
+								}
+								ge( 'ApplicationSearchCancelBtn' ).onclick = function( e )
+								{
+									//init.searchapps( false );
+									inp.value = '';
+								}
+								
+								// Show listed applications ... 
+								
+								//init.list();
+								init.edit();
+								
+								break;
+								
+						}
+						
+						
+						
+					}
+					
+					// More functions ...
+					
+				};
+				
+				// Init
+				
+				func.applications();
+				
 			}
 			
 			// Run onload functions ....
