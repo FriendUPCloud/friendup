@@ -329,7 +329,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 
 	let maximized = div.getAttribute( 'maximized' ) == 'true' || 
 		div.windowObject.flags.maximized;
-
+	
 	if ( !wi || wi == 'false' ) wi = div.content ? div.content.offsetWidth  : div.offsetWidth;
 	if ( !he || he == 'false' ) he = div.content ? div.content.offsetHeight : div.offsetHeight;
 
@@ -494,6 +494,12 @@ function ResizeWindow( div, wi, he, mode, depth )
 				t[0].style.pointerEvents = 'all';
 			}
 		}
+	}
+	
+	// If we're a floating screen, do the resize event on the screen
+	if( div.windowObject.flags.screen )
+	{
+		div.windowObject.flags.screen.resize();
 	}
 }
 
@@ -4906,18 +4912,6 @@ var View = function( args )
 				this.flags[ flag ] = value;
 				if( viewdiv )
 				{	
-					if( value == 'max' )
-					{
-						if( flag == 'width' )
-						{
-							value = this.flags.screen.getMaxViewWidth();
-						}
-						else
-						{
-							value = this.flags.screen.getMaxViewHeight();
-						}
-					}
-					
 					ResizeWindow( viewdiv, ( flag == 'width' ? value : null ), ( flag == 'height' ? value : null ) );
 					RefreshWindow( viewdiv );
 				}

@@ -214,14 +214,29 @@ Screen = function ( flags, initObject )
 				{
 					var w = movableWindows[ a ].windowObject;
 					
+					var v = w._window.parentNode;
 					if( w.flags.maximized || w.flags.width == 'max' || ( movableWindows[ a ].zoom && movableWindows[ a ].zoom.mode == 'maximized' ) )
 					{
-						var v = w._window.parentNode;
 						v.setAttribute( 'moving', 'moving' );
 						v.style.width = self.getMaxViewWidth() + 'px';
 						v.style.height = self.getMaxViewHeight() + 'px';
 						w.setFlag( 'top', 0 );
 						w.setFlag( 'left', 0 );
+					}
+					if( ( w.flags.width + "" ).substr( -1, 1 ) == '%' )
+					{
+						v.style.width = self.getMaxViewWidth() / 100 * parseInt( w.flags.width ) + 'px';
+						v.style.maxWidth = self.getMaxViewWidth() / 100 * parseInt( w.flags.width ) + 'px';
+					}
+					if( ( w.flags.height + "" ).substr( -1, 1 ) == '%' )
+					{
+						v.style.height = self.getMaxViewHeight() / 100 * parseInt( w.flags.height ) + 'px';
+						v.style.maxHeight = self.getMaxViewHeight() / 100 * parseInt( w.flags.height ) + 'px';
+					}
+					if( w.flags.height == 'max' )
+					{
+						v.style.height = self.getMaxViewHeight() + 'px';
+						v.style.maxHeight = self.getMaxViewHeight() + 'px';
 					}
 				}
 				
