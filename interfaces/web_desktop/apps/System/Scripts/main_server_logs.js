@@ -14,7 +14,7 @@
 
 Sections.server_logs = function( cmd, extra )
 {
-	console.log( cmd, extra );
+	if( ShowLog ) console.log( cmd, extra );
 	if( cmd )
 	{
 		

@@ -131,9 +131,9 @@ Application.run = function( msg, iface )
 				
 				//Authenticate.load( 'publickey', displayPublicKey );
 				
-				Application.sendMessage( { type: 'encryption', command: 'publickey', args: { encoded: false } }, function( data )
-				{
-					if( data && data.publickey )
+				Application.sendMessage( { type: 'encryption', command: 'publickey', args: { encoded: false } }, function( res, data )
+				{	
+					if( res && data && data.publickey )
 					{
 						displayPublicKey( data.publickey );
 					}
@@ -184,6 +184,16 @@ Application.receiveMessage = function( msg )
 	
 	switch( msg.command )
 	{
+		case 'publickey': 
+			Application.sendMessage( { type: 'encryption', command: 'publickey', args: { encoded: false } }, function( res, data )
+			{
+				if( res && data && data.publickey )
+				{
+					displayPublicKey( data.publickey );
+				}
+			} );
+			break;
+			
 		case 'encrypt':
 			if( msg.key )
 			{

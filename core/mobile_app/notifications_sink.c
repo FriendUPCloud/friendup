@@ -787,7 +787,13 @@ void ProcessSinkMessage( void *locd )
 										
 										NotificationManagerSendEventToConnections( SLIB->sl_NotificationManager, NULL, NULL, reqid, NULL, NULL, NULL, bs->bs_Buffer );
 										
-										UserDelete( usr );
+										while( usr != NULL )
+										{
+											User *rem = usr;
+											usr = (User *)usr->node.mln_Succ;
+											
+											UserDelete( rem );
+										}
 									}
 									else
 									{

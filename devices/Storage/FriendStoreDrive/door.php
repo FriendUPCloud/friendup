@@ -796,8 +796,8 @@ if( !class_exists( 'DoorFriendStoreDrive' ) )
 				{
 					$o = new stdClass();
 					$o->Volume = $this->Name . ':';
-					$o->Used = $row->FZ;
-					$o->Filesize = FriendStoreDrive_FILE_LIMIT;
+					$o->Used = ( $row->FZ ? $row->FZ : 0 );
+					$o->Filesize = ( defined( 'FriendStoreDrive_FILE_LIMIT' ) ? FriendStoreDrive_FILE_LIMIT : 0 );
 					die( 'ok<!--separate-->' . json_encode( $o ) );
 				}
 				die( 'fail' );
