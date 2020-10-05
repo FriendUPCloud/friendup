@@ -2245,7 +2245,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																									{
 																										var result = ( count - 1 );
 							
-																										if( result && result >= 0 )
+																										if( result >= 0 )
 																										{
 																											ge( 'AdminUsersCount' ).innerHTML = '(' + result + ')';
 																										}
@@ -2500,7 +2500,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																									{
 																										var result = ( count - 1 );
 							
-																										if( result && result >= 0 )
+																										if( result >= 0 )
 																										{
 																											ge( 'AdminUsersCount' ).innerHTML = '(' + result + ')';
 																										}
