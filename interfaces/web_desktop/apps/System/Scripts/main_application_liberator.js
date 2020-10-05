@@ -288,28 +288,38 @@ Sections.applications_liberator = function( cmd, extra )
 		
 		if( callback )
 		{
-			/*var m = new Module( 'system' );
-			m.onExecuted = function( e, d )
+						
+			var mm = new Module( 'mitra' );
+			mm.onExecuted = function( e, d )
 			{
+				var json = null;
+				
 				if( e == 'ok' && d )
 				{
 					try
 					{
-						var json = JSON.parse( d );
+						json = JSON.parse( d );
 					
 						if( json )
 						{
-							return callback( true, json );
+							//
+							
+							if( json.appkeys )
+							{
+								return callback( true, json.appkeys );
+							}
 						}
 					} 
 					catch( e ){ } 
 				}
 				
+				console.log( 'loadmitrasettings ', { e:e, d:(json?json:d) } );
+				
 				return callback( false, false );
 			}
-			m.execute( 'software', { mode: 'showall', authid: Application.authId } );*/
+			mm.execute( 'loadmitrasettings', { 'extended' : 'true' } );
 			
-			var m = new Module( 'mitra' );
+			/*var m = new Module( 'mitra' );
 			m.onExecuted = function( e, d )
 			{
 				console.log( 'loadapplicationlist ', { e:e, d:d } );
@@ -330,7 +340,7 @@ Sections.applications_liberator = function( cmd, extra )
 				
 				return callback( false, false );
 			}
-			m.execute( 'loadapplicationlist' );
+			m.execute( 'loadapplicationlist' );*/
 			
 			return true;
 		}
@@ -1049,6 +1059,85 @@ Sections.applications_liberator = function( cmd, extra )
 		
 	}
 	
+	function updateApplication( details, callback, id )
+	{
+		
+		if( ge( 'LiberatorAppDetails' ) && details && details.obj )
+		{
+			var args = {
+				'type'                         : details.obj.protocol,
+				'name'                         : ge( 'LiberatorAppName'      ).value,
+				'full address'                 : details.hostname,
+				'server port'                  : details.port,
+				'remoteapplicationprogram'     : ge( 'LiberatorAppAlias'     ).value,
+				'remote-app-dir'               : ge( 'LiberatorAppRemoteDir' ).value,
+				'saml_accessgroups'            : '',
+				'icon'                         : '',
+				'executable_path'              : '',
+				'category'                     : 'Office',
+				
+				'security'                     : details.security,
+				
+				//'printing_disabled'          : '',
+				//'drive_disabled'             : '',
+				'alternate shell'              : '',
+				
+				// Parameters
+				
+				'remoteapp_parameters'         : '',
+				'remoteapp_working_dir'        : '',
+				
+				// Audio
+				
+				//'support_audio_console'      : '',
+				//'disable_audio'              : '',
+				//'enable_audio_input'         : '',
+				
+				// Performance settings
+				
+				//'performance_wallpaper'      : '',
+				//'performance_theming'        : '',
+				'performance_cleartype'        : '1',
+				'performance_windowdrag'       : '1',
+				//'performance_aero'           : '',
+				//'performance_menuanimations' : ''
+			};
+			
+			console.log( args );
+			
+			if( args['name'] )
+			{
+				var m = new Module(	'mitra' );
+				m.onExecuted = function( e, d )
+				{
+					if( 1==1 || ShowLog ) console.log( 'updateapplication ', { e:e, d:d } );
+				
+					if( e == 'ok' )
+					{
+						if( callback ) return callback( true, d );
+					}
+					else
+					{
+						if( callback ) return callback( false, d );
+					}
+				}
+				m.execute( 'saveapplicationsettings', { id: ( id ? id : '0' ), key: args['name'], data: JSON.stringify( args ) } );
+			}
+			else
+			{
+				if( callback ) return callback( false, false );
+			}
+			
+		}
+		else
+		{
+			if( callback ) return callback( false, false );
+		}
+		
+	}
+	
+	
+	
 	function guacAdminCreateServer( config, callback )
 	{
 		
@@ -1763,6 +1852,42 @@ Sections.applications_liberator = function( cmd, extra )
 		
 	}
 	
+	function removeApplication( id, callback )
+	{
+		if( id )
+		{
+			Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_this_will_remove_app' ), function( r )
+			{
+				if( r && r.data == true )
+				{
+					// This is the hard delete method, used by admins ...
+					var m = new Module(	'mitra' );
+					m.onExecuted = function( e, d )
+					{
+						if( e == 'ok' )
+						{
+							if( callback ) return callback( true, d );
+						}
+						else
+						{
+							if( callback ) return callback( false, d );
+						}
+					}
+					m.execute( 'deleteapplicationsettings', { id: id } );
+				}
+				else
+				{
+					if( callback ) return callback( false, false );
+				}
+			} );
+		}
+		else
+		{
+			if( callback ) return callback( false, false );
+		}
+		
+	}
+	
 	function guacAdminRemoveServer( config, id, callback )
 	{
 		
@@ -2338,30 +2463,30 @@ Sections.applications_liberator = function( cmd, extra )
 										'child' : 
 										[ 
 											{ 
-												'element' : function() 
+												'element' : function( _this ) 
 												{
 													var d = document.createElement( 'div' );
 													d.className = 'PaddingSmall HContent40 FloatLeft';
 													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
 													d.onclick = function(  )
 													{
-														//sortApps( 'Name' );
+														_this.sortapps( 'Name' );
 													};
 													return ( !hide ? d : '' );
-												}() 
+												}( this ) 
 											}, 
 											{ 
-												'element' : function() 
+												'element' : function( _this ) 
 												{
 													var d = document.createElement( 'div' );
 													d.className = 'PaddingSmall HContent45 FloatLeft Relative';
 													d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
 													d.onclick = function(  )
 													{
-														//sortApps( 'Category' );
+														_this.sortapps( 'Category' );
 													};
 													return ( !hide ? d : '' );
-												}()
+												}( this )
 											},
 											{ 
 												'element' : function() 
@@ -2578,7 +2703,7 @@ Sections.applications_liberator = function( cmd, extra )
 										}
 										
 										// Sort default by Name ASC
-										//this.sortapps( 'Name', 'ASC' );
+										this.sortapps( 'Name', 'ASC' );
 										
 									}
 									
@@ -2629,7 +2754,7 @@ Sections.applications_liberator = function( cmd, extra )
 								str +='			<strong>' + i18n( 'i18n_liberator_application_alias' ) + ':</strong>';
 								str +='		</div>';
 								str +='		<div class="HContent70 FloatLeft Ellipsis">';
-								str +='			<input type="text" class="FullWidth" id="LiberatorAppAlias" value="'  + ( app && app.Key ? app.Key : '' ) + '"/>';
+								str +='			<input type="text" class="FullWidth" id="LiberatorAppAlias" value="'  + ( app && app.Data ? app.Data : '' ) + '"/>';
 								str +='		</div>';
 								str +='	</div>';
 								str +='	<div class="HRow MarginBottom">';
@@ -2650,6 +2775,16 @@ Sections.applications_liberator = function( cmd, extra )
 								str +='				<button class="Button IconSmall FloatRight MarginLeft" id="LiberatorAppCancelBtn">';
 								str +='					' + i18n( 'i18n_cancel' );
 								str +='				</button>';
+								
+								if( app && app.ID )
+								{
+									
+									str +='				<button class="Button IconSmall Danger FloatRight MarginLeft" id="LiberatorAppDeleteBtn">';
+									str +='					' + i18n( 'i18n_remove_app' );
+									str +='				</button>';
+									
+								}
+								
 								str +='			</div>';
 								str +='		</div>';
 								str +='	</div>';
@@ -2658,22 +2793,188 @@ Sections.applications_liberator = function( cmd, extra )
 								
 								o.innerHTML = str;
 								
+								var _this = this;
+								
+								if( ge( 'LiberatorAppSaveBtn' ) )
+								{
+									ge( 'LiberatorAppSaveBtn' ).onclick = function()
+									{
+										
+										updateApplication( details, function( ret )
+										{
+											
+											if( ret )
+											{
+												applications( function ( res, dat )
+												{
+					
+													console.log( { e:res, d:dat } );
+						
+													if( !res ) return;
+													
+													_this.edit( dat );
+													
+													var btn = ge( 'ApplicationEditBack' );
+													if( btn )
+													{
+														
+														// Hide back button ...
+														
+														if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+														{
+															btn.classList.remove( 'Open' );
+															btn.classList.add( 'Closed' );
+														}
+														
+														// Show add / edit button ...
+														
+														if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+														{
+															etn.classList.remove( 'Closed' );
+															etn.classList.add( 'Open' );
+														}
+														
+														if( ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0] )
+														{
+															ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0].classList.remove( 'Closed' );
+															ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0].classList.add( 'Open' );
+														}
+														
+													}
+													
+												} );
+											}
+											
+										}, ( app && app.ID ? app.ID : null ) );
+										
+									};
+								}
+								
+								if( ge( 'LiberatorAppCancelBtn' ) )
+								{
+									ge( 'LiberatorAppCancelBtn' ).onclick = function(  )
+									{
+										
+										applications( function ( res, dat )
+										{
+										
+											console.log( { e:res, d:dat } );
+										
+											if( !res ) return;
+											
+											_this.edit( dat );
+										
+											var btn = ge( 'ApplicationEditBack' );
+											if( btn )
+											{
+											
+												// Hide back button ...
+							
+												if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+												{
+													btn.classList.remove( 'Open' );
+													btn.classList.add( 'Closed' );
+												}
+					
+												// Show add / edit button ...
+							
+												if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+												{
+													etn.classList.remove( 'Closed' );
+													etn.classList.add( 'Open' );
+												}
+									
+												if( ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0] )
+												{
+													ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0].classList.remove( 'Closed' );
+													ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0].classList.add( 'Open' );
+												}
+											
+											}
+											
+										} );
+										
+									};
+								}
+								
+								if( app && app.ID )
+								{
+									
+									if( ge( 'LiberatorAppDeleteBtn' ) )
+									{
+										ge( 'LiberatorAppDeleteBtn' ).onclick = function()
+										{
+											
+											removeApplication( app.ID, function( ret )
+											{
+											
+												if( ret )
+												{
+													applications( function ( res, dat )
+													{
+														
+														console.log( { e:res, d:dat } );
+														
+														if( !res ) return;
+														
+														_this.edit( dat );
+														
+														var btn = ge( 'ApplicationEditBack' );
+														if( btn )
+														{
+														
+															// Hide back button ...
+														
+															if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+															{
+																btn.classList.remove( 'Open' );
+																btn.classList.add( 'Closed' );
+															}
+														
+															// Show add / edit button ...
+														
+															if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+															{
+																etn.classList.remove( 'Closed' );
+																etn.classList.add( 'Open' );
+															}
+														
+															if( ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0] )
+															{
+																ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0].classList.remove( 'Closed' );
+																ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0].classList.add( 'Open' );
+															}
+														
+														}
+													
+													} );
+												}
+											
+											} );
+										
+										};
+									}
+									
+								}
+								
 							},
 							
-							edit : function (  )
+							edit : function ( rows )
 							{
 								
 								this.func.mode[ 'applications' ] = 'edit';
 								
-								if( apps )
+								var _apps = ( rows ? rows : apps );
+								
+								if( _apps )
 								{
 									this.head();
 									
 									var o = ge( 'ApplicationInner' ); o.innerHTML = '';
 									
-									for( var k in apps )
+									for( var k in _apps )
 									{
-										if( apps[k] && apps[k].ID )
+										if( _apps[k] && _apps[k].ID )
 										{
 											var found = false;
 											
@@ -2681,7 +2982,7 @@ Sections.applications_liberator = function( cmd, extra )
 											{
 												for( var a in this.ids )
 												{
-													if( this.ids[a] && this.ids[a].ID == apps[k].ID )
+													if( this.ids[a] && this.ids[a].ID == _apps[k].ID )
 													{
 														found = true;
 													}
@@ -2711,8 +3012,8 @@ Sections.applications_liberator = function( cmd, extra )
 																	'element' : function() 
 																	{
 																		var d = document.createElement( 'span' );
-																		d.setAttribute( 'Name', apps[k].Key ? apps[k].Key : 'n/a' );
-																		d.setAttribute( 'Category', apps[k].Category ? apps[k].Category : 'n/a' );
+																		d.setAttribute( 'Name', _apps[k].Key ? _apps[k].Key : 'n/a' );
+																		d.setAttribute( 'Category', _apps[k].Category ? _apps[k].Category : 'Office' );
 																		d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																		d.style.backgroundSize = 'contain';
 																		d.style.width = '24px';
@@ -2726,9 +3027,9 @@ Sections.applications_liberator = function( cmd, extra )
 																			'element' : function() 
 																			{
 																				var d = document.createElement( 'div' );
-																				if( apps[k].Preview )
+																				if( _apps[k].Preview )
 																				{
-																					d.style.backgroundImage = 'url(\'' + apps[k].Preview + '\')';
+																					d.style.backgroundImage = 'url(\'' + _apps[k].Preview + '\')';
 																					d.style.backgroundSize = 'contain';
 																					d.style.width = '24px';
 																					d.style.height = '24px';
@@ -2745,7 +3046,7 @@ Sections.applications_liberator = function( cmd, extra )
 															{
 																var d = document.createElement( 'div' );
 																d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
-																d.innerHTML = '<strong>' + ( apps[k].Key ? apps[k].Key : 'n/a' ) + '</strong>';
+																d.innerHTML = '<strong>' + ( _apps[k].Key ? _apps[k].Key : 'n/a' ) + '</strong>';
 																return d;
 															}() 
 														}, 
@@ -2754,7 +3055,7 @@ Sections.applications_liberator = function( cmd, extra )
 															{
 																var d = document.createElement( 'div' );
 																d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
-																d.innerHTML = '<span>' + ( apps[k].Category ? apps[k].Category : 'n/a' ) + '</span>';
+																d.innerHTML = '<span>' + ( _apps[k].Category ? _apps[k].Category : 'Office' ) + '</span>';
 																return d;
 															}() 
 														},
@@ -2776,6 +3077,30 @@ Sections.applications_liberator = function( cmd, extra )
 																		{
 																			
 																			_this.update( app );
+																			
+																			// Hide add / edit button ...
+								
+																			if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+																			{
+																				etn.classList.remove( 'Open' );
+																				etn.classList.add( 'Closed' );
+																			}
+								
+																			// Show back button ...
+								
+																			if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+																			{
+																				//btn.classList.remove( 'Closed' );
+																				//btn.classList.add( 'Open' );
+																			}
+										
+																			if( ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0] )
+																			{
+																				ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0].classList.remove( 'Open' );
+																				ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0].classList.add( 'Closed' );
+																			}
+																			
+																			
 																			
 																			if( this.classList.contains( 'fa-toggle-off' ) )
 																			{
@@ -2841,7 +3166,7 @@ Sections.applications_liberator = function( cmd, extra )
 																			
 																		};
 																		return b;
-																	}( this.ids, apps[k], this ) 
+																	}( this.ids, _apps[k], this ) 
 																}
 															]
 														}
@@ -2864,10 +3189,147 @@ Sections.applications_liberator = function( cmd, extra )
 									}
 									
 									// Sort default by Name ASC
-									//this.sortapps( 'Name', 'ASC' );
+									this.sortapps( 'Name', 'ASC' );
 									
 								}
 								
+							},
+							
+							searchapps : function ( filter, server )
+							{
+								
+								if( ge( 'ApplicationInner' ) )
+								{
+									var list = ge( 'ApplicationInner' ).getElementsByTagName( 'div' );
+
+									if( list.length > 0 )
+									{
+										for( var a = 0; a < list.length; a++ )
+										{
+											if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+		
+											var span = list[a].getElementsByTagName( 'span' )[0];
+		
+											if( span )
+											{
+												var param = [
+													( " " + span.getAttribute( 'name' ).toLowerCase() + " " ), 
+													( " " + span.getAttribute( 'category' ).toLowerCase() + " " )
+												];
+												
+												if( !filter || filter == ''  
+												|| span.getAttribute( 'name' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+												|| span.getAttribute( 'category' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+												)
+												{
+													list[a].style.display = '';
+				
+													var div = list[a].getElementsByTagName( 'div' );
+				
+													if( div.length )
+													{
+														for( var i in div )
+														{
+															if( div[i] && div[i].className && ( div[i].className.indexOf( 'name' ) >= 0 || div[i].className.indexOf( 'category' ) >= 0 ) )
+															{
+																// TODO: Make text searched for ...
+															}
+														}
+													}
+												}
+												else
+												{
+													list[a].style.display = 'none';
+												}
+											}
+										}
+	
+									}
+									
+									if( ge( 'ApplicationSearchCancelBtn' ) )
+									{
+										if( !filter && ( ge( 'ApplicationSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'ApplicationSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+										{
+											ge( 'ApplicationSearchCancelBtn' ).classList.remove( 'Open' );
+											ge( 'ApplicationSearchCancelBtn' ).classList.add( 'Closed' );
+										}
+										
+										else if( filter != '' && ( ge( 'ApplicationSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'ApplicationSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+										{
+											ge( 'ApplicationSearchCancelBtn' ).classList.remove( 'Closed' );
+											ge( 'ApplicationSearchCancelBtn' ).classList.add( 'Open' );
+										}
+									}
+								}
+								
+							},
+							
+							sortapps : function ( sortby, orderby )
+							{
+
+								//
+
+								var _this = ge( 'ApplicationInner' );
+
+								if( _this )
+								{
+									orderby = ( orderby ? orderby : ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' ) );
+									
+									var list = _this.getElementsByTagName( 'div' );
+	
+									if( list.length > 0 )
+									{
+										var output = [];
+		
+										var callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
+		
+										for( var a = 0; a < list.length; a++ )
+										{
+											if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+			
+											var span = list[a].getElementsByTagName( 'span' )[0];
+			
+											if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' )
+											{
+												var obj = { 
+													sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
+													content : list[a]
+												};
+			
+												output.push( obj );
+											}
+										}
+		
+										if( output.length > 0 )
+										{
+											// Sort ASC default
+			
+											output.sort( callback );
+			
+											// Sort DESC
+			
+											if( orderby == 'DESC' ) 
+											{ 
+												output.reverse();  
+											}
+			
+											_this.innerHTML = '';
+			
+											_this.setAttribute( 'orderby', orderby );
+			
+											for( var key in output )
+											{
+												if( output[key] && output[key].content )
+												{
+													// Add row
+													_this.appendChild( output[key].content );
+												}
+											}
+										}
+									}
+								}
+
+								//console.log( output );
 							},
 							
 							refresh : function (  )
@@ -2955,8 +3417,8 @@ Sections.applications_liberator = function( cmd, extra )
 								
 										if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
 										{
-											btn.classList.remove( 'Closed' );
-											btn.classList.add( 'Open' );
+											//btn.classList.remove( 'Closed' );
+											//btn.classList.add( 'Open' );
 										}
 										
 										if( ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0] )
@@ -3005,11 +3467,11 @@ Sections.applications_liberator = function( cmd, extra )
 								var inp = ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0];
 								inp.onkeyup = function( e )
 								{
-									//init.searchapps( this.value );
+									init.searchapps( this.value );
 								}
 								ge( 'ApplicationSearchCancelBtn' ).onclick = function( e )
 								{
-									//init.searchapps( false );
+									init.searchapps( false );
 									inp.value = '';
 								}
 								

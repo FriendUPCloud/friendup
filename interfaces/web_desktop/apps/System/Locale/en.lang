@@ -364,3 +364,6 @@ i18n_liberator_application_name       : Application name
 i18n_liberator_application_alias      : Application alias
 i18n_liberator_application_remote_dir : Remote directory
 
+i18n_remove_app                       : Remove app
+i18n_this_will_remove_app             : This will remove the app from the system.
+
