@@ -643,6 +643,159 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 				/// @cond WEB_CALL_DOCUMENTATION
 				/**
 				*
+				* <HR><H2>system.library/file/checksharedpaths</H2>Check for shared files in path
+				*
+				* @param sessionid - (required) session id of logged user
+				* @param paths - (required) arguments where to find paths
+				* @return return directory entries in JSON format when success, otherwise error code
+				*/
+				/// @endcond
+				else if( strcmp( urlpath[ 1 ], "checksharedpaths" ) == 0 )
+				{
+					response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
+						HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
+					
+					char *paths = NULL;
+					el = HttpGetPOSTParameter( request, "paths" );
+					if( el == NULL ) el = HashmapGet( request->http_Query, "paths" );
+					if( el != NULL ) 
+					{
+						paths = (char *)el->hme_Data;
+						
+						char *decoded = UrlDecodeToMem( paths );
+						
+						// Get JSON structure
+						JSONData *j = JSONParse( decoded, strlen( decoded ) );
+						
+						free( decoded );
+					
+						if( j->type && j->type == (JSON_TYPE_ARRAY|JSON_TYPE_ARRAY_LIST) )
+						{
+							// Build SQL query
+							BufString *sql = BufStringNew();
+							BufStringAdd( sql, "SELECT DISTINCT(`Data`) FROM FShared WHERE `Data` IN ( " );
+							
+							SQLLibrary *sqllib = l->LibrarySQLGet( l );
+							
+							int resultCount = 0;
+							BufString *result = BufStringNew();
+							
+							if( sqllib != NULL )
+							{
+								JSONData **list = ( JSONData ** )j->data;
+								unsigned int i = 0; for( ; i < j->size; i++ )
+								{
+									JSONData *dt = list[ i ];
+									if( dt != NULL )
+									{
+										if( dt->type == JSON_TYPE_STRING )
+										{
+											BufStringAdd( sql, "\"" );
+											char *data = ( char *)dt->data;
+											
+											// TODO: Replace this with mysql_escape_string!
+											unsigned int test = 0; 
+											int failed = 0;
+											for( ; test < strlen( data ); test++ )
+											{
+												if( data[ test ] == ';' || data[ test ] == '\"' )
+												{
+													failed = 1;
+													break;
+												}
+											}
+											
+											if( data != NULL && failed == 0 )
+											{
+												BufStringAdd( sql, data );
+											}
+											// Done security test
+											
+											if( i < j->size - 1 )
+											{
+												BufStringAdd( sql, "\"," );
+											}
+											else
+											{
+												BufStringAdd( sql, "\"" );
+											}
+										}
+									}
+								}
+						
+								BufStringAdd( sql, " ) AND OwnerUserID=" );
+							
+								char num[ 32 ];
+								sprintf( num, "%ld", (long int)loggedSession->us_User->u_ID );
+								BufStringAdd( sql, num );
+						
+								// Create output "JSON"
+								BufStringAdd( result, "ok<!--separate-->[" );
+						
+								// Fetch the result
+							
+								void *res = sqllib->Query( sqllib, sql->bs_Buffer );
+								if( res != NULL )
+								{
+									char **row;
+									while( ( row = sqllib->FetchRow( sqllib, res ) ) )
+									{
+										if( row[ 0 ] != NULL )
+										{
+											if( resultCount > 0 )
+											{
+												BufStringAdd( result, "," );
+											}
+											BufStringAdd( result, "\"" );
+											BufStringAdd( result, row[ 0 ] );
+											BufStringAdd( result, "\"" );
+											resultCount++;
+										}
+									}
+									sqllib->FreeResult( sqllib, res );
+								}
+								l->LibrarySQLDrop( l, sqllib );
+							}
+							BufStringAdd( result, "]" );
+							
+							BufStringDelete( sql );
+							
+							if( resultCount > 0 )
+							{
+								HttpAddTextContent( response, result->bs_Buffer );
+							}
+							else
+							{
+								// TODO: Add error code
+								char dictmsgbuf[ 256 ];
+								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"No shared files in directory\", \"code\":\"-1\" }" );
+								HttpAddTextContent( response, dictmsgbuf );
+							}
+							BufStringDelete( result );
+						}
+						else
+						{
+							// TODO: Add error code
+							char dictmsgbuf[ 256 ];
+							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"Paths not given in array format\", \"code\":\"-1\" }" );
+							HttpAddTextContent( response, dictmsgbuf );
+						}
+					
+						JSONFree( j );
+					}
+					// Fail
+					else
+					{
+						// TODO: Add error code
+						char dictmsgbuf[ 256 ];
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"Args not found\", \"code\":\"-1\" }" );
+						HttpAddTextContent( response, dictmsgbuf );
+					}
+				}
+				
+				/// @cond WEB_CALL_DOCUMENTATION
+				/**
+				*
 				* <HR><H2>system.library/file/dir</H2>Get directory content
 				*
 				* @param sessionid - (required) session id of logged user
@@ -811,9 +964,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									char *data = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", command, &dataLength );
 									if( data != NULL )
 									{
-										if( strncmp( data, "ok", 2 ) == 0 )
+										/*if( strncmp( data, "ok", 2 ) == 0 )
 										{
-										}
+										}*/
 										FFree( data );
 									}
 									FFree( command );
@@ -932,9 +1085,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								char *data = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", command, &dataLength );
 								if( data != NULL )
 								{
-									if( strncmp( data, "ok", 2 ) == 0 )
+									/*if( strncmp( data, "ok", 2 ) == 0 )
 									{
-									}
+									}*/
 									FFree( data );
 								}
 								FFree( command );
@@ -1434,23 +1587,25 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									
 									ListStringJoin( ls );
 									
-									char *finalBuffer = ls->ls_Data;
-									ls->ls_Data = NULL;
-									char *outputBuf = finalBuffer;
-									
-									int offBuf = 0;
-								
-									// Try to skip embedded headers
-									char *ptr = strstr( finalBuffer, "---http-headers-end---\n" );
-									if( ptr != NULL )
+									if( ls->ls_Data != NULL )
 									{
-										// With the diff, move offset and set correct size
-										int diff = ( ptr - finalBuffer ) + 23;
-										totalBytes = (int)( ( (FULONG)finalBuffer) - diff) + 1;
-										outputBuf = FCalloc( totalBytes, sizeof( char ) );
-										memcpy( outputBuf, ptr + 23, totalBytes );
-										FFree( finalBuffer );
-									}
+										char *finalBuffer = ls->ls_Data;
+										ls->ls_Data = NULL;
+										char *outputBuf = finalBuffer;
+									
+										int offBuf = 0;
+								
+										// Try to skip embedded headers
+										char *ptr = strstr( finalBuffer, "---http-headers-end---\n" );
+										if( ptr != NULL )
+										{
+											// With the diff, move offset and set correct size
+											int headerlength = ( ptr - finalBuffer ) + 23;
+											totalBytes = strlen( finalBuffer ) - headerlength;
+											outputBuf = FCalloc( totalBytes + 1, sizeof( char ) );
+											sprintf( outputBuf, finalBuffer + headerlength, totalBytes );
+											FFree( finalBuffer );
+										}
 								
 								/*
 								 *								// Correct mime from data
@@ -1477,7 +1632,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							
 							INFO("READ RETURN BYTES %d  - %s\n", totalBytes, mime );
 							*/
-									HttpSetContent( response, outputBuf, totalBytes );
+										HttpSetContent( response, outputBuf, totalBytes );
+									}
 								}
 								else
 								{
@@ -1809,6 +1965,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 										
 													FQUAD dataread = 0;
 													int readTr = 0;
+													int bytes = 0;
 
 													while( ( dataread = actFS->FileRead( rfp, dataBuffer, 524288 ) ) > 0 )
 													{
@@ -1821,7 +1978,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 													
 														if( dataread > 0 )
 														{
-															int bytes = 0;
+															bytes = 0;
 														
 															dataread = FileSystemActivityCheckAndUpdate( l, &(dstrootf->f_Activity), dataread );
 
@@ -1910,9 +2067,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 										char *data = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", command, &dataLength );
 										if( data != NULL )
 										{
-											if( strncmp( data, "ok", 2 ) == 0 )
+											/*if( strncmp( data, "ok", 2 ) == 0 )
 											{
-											}
+											}*/
 											FFree( data );
 										}
 										FFree( command );
@@ -2124,12 +2281,12 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									
 									LOG( FLOG_DEBUG, "UPLOAD FINISHED\n");
 									
-									actFS->FileClose( actDev, fp );
-									
+									int closeResponse = actFS->FileClose( actDev, fp );
+								
 									int addSize = 0;
 									if( uploadedFiles == 0 )
 									{
-										addSize = snprintf( tmpFileData, sizeof( tmpFileData ), "{\"name\":\"%s\",\"bytesexpected\":%ld,\"bytesstored\":%ld}", file->hf_FileName, file->hf_FileSize, storedBytes );
+										addSize = snprintf( tmpFileData, sizeof( tmpFileData ), "{\"name\":\"%s\",\"bytesexpected\":%ld,\"bytesstored\":%ld,\"responseCode\":%d}", file->hf_FileName, file->hf_FileSize, storedBytes, closeResponse );
 									}
 									else
 									{
@@ -2166,7 +2323,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						char *ttmp = FMalloc( 256 + uploadedFilesBS->bs_Size );
 						if( ttmp != NULL )
 						{
-							int spsize = sprintf( ttmp, "ok<!--separate-->{\"uploaded\":%d,\"files\":%s}", uploadedFiles, uploadedFilesBS->bs_Buffer );
+							int spsize = sprintf( ttmp, "ok<!--separate-->{\"uploaded files\":%d,\"files\":%s}", uploadedFiles, uploadedFilesBS->bs_Buffer );
 							HttpSetContent( response, ttmp, spsize );
 							*result = 200;
 							// there is no need to release ttmp, it will be released with HttpFree
@@ -2174,7 +2331,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						else
 						{
 							char tmp[ 256 ];
-							sprintf( tmp, "ok<!--separate-->{\"Uploaded files\":\"%d\"}", uploadedFiles );
+							sprintf( tmp, "ok<!--separate-->{\"uploaded files\":\"%d\"}", uploadedFiles );
 							HttpAddTextContent( response, tmp );
 							*result = 200;
 						}
@@ -2182,7 +2339,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					else
 					{
 						char tmp[ 256 ];
-						sprintf( tmp, "fail<!--separate-->{\"Uploaded files\":\"%d\"}", uploadedFiles );
+						sprintf( tmp, "fail<!--separate-->{\"uploaded files\":\"%d\"}", uploadedFiles );
 						HttpAddTextContent( response, tmp );
 						*result = 200;
 					}
@@ -2498,7 +2655,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					BufString *bs = FSManagerGetAccess( l->sl_FSM, filepath, actDev->f_ID, loggedSession->us_User );
 					if( bs != NULL )
 					{
-						HttpSetContent( response,  bs->bs_Buffer, bs->bs_Size );
+						HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
 						bs->bs_Buffer = NULL;
 						BufStringDelete( bs );
 					}

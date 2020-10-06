@@ -1,3 +1,5 @@
+#ifndef __LIBSSH2_BLF_H
+#define __LIBSSH2_BLF_H
 /* $OpenBSD: blf.h,v 1.7 2007/03/14 17:59:41 grunk Exp $ */
 /*
  * Blowfish - a fast block cipher designed by Bruce Schneier
@@ -31,9 +33,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _BLF_H_
-#define _BLF_H_
-
 #if !defined(HAVE_BCRYPT_PBKDF) && !defined(HAVE_BLH_H)
 
 /* Schneier specifies a maximum key length of 56 bytes.
@@ -43,20 +42,20 @@
  * of the key affect all cipherbits.
  */
 
-#define BLF_N	16			/* Number of Subkeys */
-#define BLF_MAXKEYLEN ((BLF_N-2)*4)	/* 448 bits */
-#define BLF_MAXUTILIZED ((BLF_N+2)*4)	/* 576 bits */
+#define BLF_N   16                      /* Number of Subkeys */
+#define BLF_MAXKEYLEN ((BLF_N-2)*4)     /* 448 bits */
+#define BLF_MAXUTILIZED ((BLF_N + 2)*4)   /* 576 bits */
 
 /* Blowfish context */
 typedef struct BlowfishContext {
-	uint32_t S[4][256];	/* S-Boxes */
-	uint32_t P[BLF_N + 2];	/* Subkeys */
+        uint32_t S[4][256];     /* S-Boxes */
+        uint32_t P[BLF_N + 2];  /* Subkeys */
 } blf_ctx;
 
 /* Raw access to customized Blowfish
- *	blf_key is just:
- *	Blowfish_initstate( state )
- *	Blowfish_expand0state( state, key, keylen )
+ *      blf_key is just:
+ *      Blowfish_initstate( state )
+ *      Blowfish_expand0state( state, key, keylen )
  */
 
 void Blowfish_encipher(blf_ctx *, uint32_t *, uint32_t *);
@@ -79,11 +78,12 @@ void blf_cbc_encrypt(blf_ctx *, uint8_t *, uint8_t *, uint32_t);
 void blf_cbc_decrypt(blf_ctx *, uint8_t *, uint8_t *, uint32_t);
 
 /* Converts uint8_t to uint32_t */
-uint32_t Blowfish_stream2word(const uint8_t *, uint16_t , uint16_t *);
+uint32_t Blowfish_stream2word(const uint8_t *, uint16_t, uint16_t *);
 
 /* bcrypt with pbkd */
-int bcrypt_pbkdf(const char *pass, size_t passlen, const uint8_t *salt, size_t saltlen,
-    uint8_t *key, size_t keylen, unsigned int rounds);
+int bcrypt_pbkdf(const char *pass, size_t passlen, const uint8_t *salt,
+                 size_t saltlen,
+                 uint8_t *key, size_t keylen, unsigned int rounds);
 
 #endif /* !defined(HAVE_BCRYPT_PBKDF) && !defined(HAVE_BLH_H) */
-#endif /* _BLF_H */
+#endif /* __LIBSSH2_BLF_H */

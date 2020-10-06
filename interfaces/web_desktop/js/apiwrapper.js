@@ -1612,6 +1612,8 @@ function apiWrapper( event, force )
 							{
 								win.iframe.classList.remove( 'Loading' );
 							}
+							// Clean blocker
+							RemoveFromExecutionQueue( app.applicationName );
 							break;
 						// Pass a message to actual window
 						case 'sendMessage':
@@ -2830,7 +2832,11 @@ function apiWrapper( event, force )
 			case 'fconn':
 				if( !Workspace.conn )
 				{
-					console.log( 'Workspace.conn - websocket not enabled, aborting' );
+					Workspace.initWebSocket( function()
+					{
+						apiWrapper( event, force );
+					} );
+					console.log( 'Workspace.conn - websocket not enabled, reinitializing' );
 					return;
 				}
 
@@ -3462,7 +3468,7 @@ function apiWrapper( event, force )
 						break;
 					case 'savewallpaperimage':
 						var m = new Module( 'system' );
-						m.onExecuted = function( e )
+						m.onExecuted = function( e, d )
 						{
 							if( e == 'ok' )
 							{
@@ -4176,7 +4182,7 @@ if( window.addEventListener )
 
 			if( args.sessionid )
 			{
-				Workspace.loginSessionId( args.sessionid, args.callbac, args.event );
+				Friend.User.LoginWithSessionId( args.sessionid, args.callbac, args.event );
 			}
 
 			if( typeof( args.username ) != 'undefined' )
@@ -4289,6 +4295,19 @@ function GetContentWindowById( app, id )
 		cw = app.windows[id].iframe;
 	}
 	if( cw.contentWindow ) return cw.contentWindow;
+	return false;
+}
+
+// Just get the iframe object
+function _getAppByAppId( appid )
+{
+	var t = ge( 'Tasks' );
+	for( var a = 0; a < t.childNodes.length; a++ )
+	{
+		if( !t.childNodes[a].ifr ) continue;
+		if( t.childNodes[a].ifr.applicationId == appid )
+			return t.childNodes[a].ifr;
+	}
 	return false;
 }
 

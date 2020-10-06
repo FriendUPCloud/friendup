@@ -878,7 +878,9 @@ function SetScreenByWindowElement( div )
 function _ActivateWindowOnly( div )
 {
 	if( Workspace.contextMenuShowing && Workspace.contextMenuShowing.shown )
+	{
 		return;
+	}
 	
 	// Blocker
 	if( !isMobile && div.content && div.content.blocker )
@@ -975,6 +977,11 @@ function _ActivateWindowOnly( div )
 				
 				if( window._getAppByAppId )
 				{
+<<<<<<< HEAD
+=======
+					let app = _getAppByAppId( div.applicationId );
+
+>>>>>>> master
 					if( app )
 					{
 						if( m.windowObject != app.mainView )
@@ -1043,7 +1050,9 @@ var _activationTarget = null;
 function _ActivateWindow( div, nopoll, e )
 {
 	if( Workspace.contextMenuShowing && Workspace.contextMenuShowing.shown )
+	{
 		return;
+	}
 
 	if( !e ) e = window.event;
 	
@@ -1791,7 +1800,14 @@ function CloseView( win, delayed )
 					{
 						if( app.windows[ a ] != div.windowObject )
 						{
-							app.windows[ a ]._window.parentNode.parentNode.style.display = 'none';
+							if( app.windows[ a ]._window.parentNode && app.windows[ a ]._window.parentNode.parentNode )
+							{
+								let elef = app.windows[ a ]._window.parentNode.parentNode;
+								if( elef.classList && elef.classList.contains( 'View' ) || elef.classList.contains( 'ViewContainer' ) )
+								{
+									app.windows[ a ]._window.parentNode.parentNode.style.display = 'none';
+								}
+							}
 						}
 					}
 				}
@@ -1947,7 +1963,8 @@ function CloseView( win, delayed )
 		{
 			for( var a in app.windows )
 			{
-				app.windows[ a ].activate( 'force' );
+				if( app.windows[ a ].activate )
+					app.windows[ a ].activate( 'force' );
 				break;
 			}
 		}
@@ -2577,7 +2594,7 @@ var View = function( args )
 				if( e.button != 0 && !mode ) return cancelBubble( e );
 
 				let x, y;
-				if( isTablet || isTouchDevice() )
+				if( e.touches && ( isTablet || isTouchDevice() ) )
 				{
 					x = e.touches[0].pageX;
 					y = e.touches[0].pageY;
@@ -2729,8 +2746,11 @@ var View = function( args )
 						clearInterval( self.touchInterval );
 						self.touchInterval = null;
 					
-						self.viewIcon.classList.add( 'Remove' );
-						self.classList.add( 'Remove' );
+						if( !isTablet || isMobile )
+						{
+							self.viewIcon.classList.add( 'Remove' );
+							self.classList.add( 'Remove' );
+						}
 					}
 				}
 			}, 150 );
@@ -3935,8 +3955,10 @@ var View = function( args )
 		// Windows on own screen ignores the virtual workspaces
 		if( this.flags.screen && this.flags.screen != Workspace.screen ) return;
 		
-		if( wsnum < 0 || wsnum > globalConfig.workspacecount - 1 )
-			return; 
+		if( wsnum != 0 && ( wsnum < 0 || wsnum > globalConfig.workspacecount - 1 ) )
+		{
+			return;
+		}
 		let wn = this._window.parentNode;
 		let pn = wn.parentNode;
 		
@@ -5920,6 +5942,10 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 	{
 		v.setContent( data );
 		let eles = v._window.getElementsByTagName( 'button' );
+		if( !eles && v.dom )
+		{
+			eles = v.dom.getElementsByTagName( 'button' );
+		}
 
 		// FL-6/06/2018: correction so that it does not take the relative position of OK/Cancel in the box 
 		// US-792 - 2020: Correction to fix sending the same delete request multiple times

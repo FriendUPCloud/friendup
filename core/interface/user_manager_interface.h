@@ -48,7 +48,7 @@ typedef struct UserManagerInterface
 	FULONG				(*UMGetAllowedLoginTime)( UserManager *um, const char *name );
 	FBOOL				(*UMGetLoginPossibilityLastLogins)( UserManager *um, const char *name, int numberOfFail, time_t *lastLoginTime );
 	int					(*UMStoreLoginAttempt)( UserManager *um, const char *name, const char *info, const char *failReason );
-	Http				*(*UMWebRequest)( void *m, char **urlpath, Http* request, UserSession *session, int *result, FBOOL *logoutCalled );
+	Http				*(*UMWebRequest)( void *m, char **urlpath, Http* request, UserSession *session, int *result, int *logoutCalled );
 	int					(*UMAddGlobalRemoteUser)( UserManager *um, const char *name, const char *sessid, const char *hostname );
 	int					(*UMRemoveGlobalRemoteUser)( UserManager *um, const char *name, const char *hostname );
 	int					(*UMAddGlobalRemoteDrive)( UserManager *um, const char *locuname, const char *uname, const char *authid, const char *hostname, char *localDevName, char *remoteDevName, FULONG remoteid  );

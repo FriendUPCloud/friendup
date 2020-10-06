@@ -26,7 +26,7 @@ Application.run = function( msg, iface )
 	// On set flag
 	w.onSetFlag = function( flag, value )
 	{
-		if( flag == 'minimized' )
+		/*if( flag == 'minimized' )
 		{
 			if( value )
 			{
@@ -36,7 +36,7 @@ Application.run = function( msg, iface )
 			{
 				Application.hideWidget();
 			}
-		}
+		}*/
 	}
 	
 	w.onClose = function( closeWindow )
@@ -616,6 +616,11 @@ Application.receiveMessage = function( msg )
 			break;
 		case 'print_remote':
 			this.print();
+			break;
+		case 'new_blank':
+			this.fileName = i18n( 'i18n_unnamed' );
+			this.wholeFilename = this.path + this.fileName;
+			this.setCorrectTitle();
 			break;
 		case 'remembercontent':
 			this.sessionObject.content = msg.data;

@@ -18,7 +18,39 @@ DirectoryView.prototype.ShowShareDialog = function( elements, mode )
 	{
 		// Only allow to drop regular files
 		if( elements[ c ].fileInfo.Type == 'File' )
-			out.push( elements[ c ] );
+		{
+			let l = document.createElement( 'div' );
+			l.fileInfo = elements[ c ].fileInfo;
+			l.className = 'File';
+			l.setAttribute( 'title', elements[ c ].getAttribute( 'title' ) );
+			
+			let g = elements[ c ].getElementsByClassName( 'Column' );
+			if( g.length )
+			{
+				g = g[0];
+			}
+			else
+			{
+				g = elements[ c ].getElementsByClassName( 'Title' );
+				g = g[0];
+			}
+			
+			let ii = elements[ c ].getElementsByClassName( 'Icon' );
+			if( ii.length )
+			{
+				let i = document.createElement( 'div' );
+				i.className = 'Icon';
+				i.innerHTML = ii[0].innerHTML;
+				l.appendChild( i );
+			}
+			
+			let t = document.createElement( 'a' );
+			t.className = 'Title';
+			t.innerHTML = g.innerHTML;
+			l.appendChild( t );
+			
+			out.push( l );
+		}
 		else mixed = true;
 	}
 	// We have a list of files
@@ -83,9 +115,9 @@ DirectoryView.prototype.ShowShareDialog = function( elements, mode )
 							}
 						}
 					
-						for( let c = 0; c < elements.length; c++ )
+						for( let c = 0; c < out.length; c++ )
 						{
-							wstr += '<div class="Rounded ShareFile File">' + elements[ c ].innerHTML + '</div>';
+							wstr += '<div class="Rounded ShareFile File">' + out[ c ].innerHTML + '</div>';
 						}
 						wstr += '<div class="BorderTop fa-arrow-down IconSmall TextCenter MarginTop MarginBottom" style="clear: both">&nbsp;</div>';
 					
@@ -145,9 +177,11 @@ DirectoryView.prototype.ShowShareDialog = function( elements, mode )
 								self.HideShareDialog();
 							}
 							eles = v.getElementsByClassName( 'SearchBarInput' );
-							eles[0].onkeyup = function()
+							
+							eles[0].onkeyup = function( e )
 							{
 								filterShareItems( this.value );
+								return cancelBubble( e );
 							}
 							// Apply current sharing info
 							eles = v.getElementsByClassName( 'DoShare' );
@@ -301,7 +335,12 @@ DirectoryView.prototype.HideShareDialog = function()
 // Dropping an icon on a window or an icon!
 DirectoryView.prototype.doCopyOnElement = function( eles, e )
 {
-	var dview = this; // The view in question
+	// Can't handle file dialogs!
+	if( this.filedialog ) return false;
+	if( this.directoryView && this.directoryView.filedialog ) return false;
+	if( this.content && this.content.directoryview && this.content.directoryview.filedialog ) return false;
+	
+	let dview = this; // The view in question
 	
 	// OOOH! Shared drive action!
 	if( this.content && this.content.fileInfo && this.content.fileInfo.Path.indexOf( 'Shared:' ) == 0 )
@@ -1033,6 +1072,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 							{
 								if( result.substr( 0, 3 ) != 'ok<' )
 								{
+									console.log( 'ERROR COPY ' + result );
 									Notify( {
 										title: i18n( 'i18n_filecopy_error' ),
 										text: i18n( 'i18n_could_not_copy_files' ) + '<br>' + fl.fileInfo.Path + ' to ' + toPath

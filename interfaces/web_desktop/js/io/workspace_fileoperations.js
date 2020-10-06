@@ -9,7 +9,7 @@
 *****************************************************************************©*/
 
 // Delete selected files
-Workspace.deleteFile = function()
+Workspace.deleteFile = function( mode )
 {
 	var self = this;
 	
@@ -43,7 +43,16 @@ Workspace.deleteFile = function()
 
 		if( cnt > 0 )
 		{
-			Confirm( i18n( 'i18n_sure_delete' ), i18n( 'i18n_sure_deldesc' ), function( d )
+			let titlet = 'i18n_sure_delete';
+			let titled = 'i18n_sure_deldesc';
+			let titles = 'i18n_deleting_files';
+			if( mode == 'unshare' )
+			{
+				titlet = 'i18n_sure_unshare';
+				titled = 'i18n_sure_unshdesc';
+				titles = 'i18n_unsharing_files';
+			}
+			Confirm( i18n( titlet ), i18n( titled ), function( d )
 			{
 				if( d == true )
 				{
@@ -62,7 +71,7 @@ Workspace.deleteFile = function()
 					else
 					{
 						v = new View( {
-							title: i18n( 'i18n_deleting_files' ),
+							title: i18n( titles ),
 							width: 320,
 							height: 100
 						} );

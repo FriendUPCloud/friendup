@@ -130,6 +130,11 @@ int UserRemoveSession( User *usr, void *ls )
 		return -1;
 	}
 	
+	while( usr->u_InUse > 0 )
+	{
+		usleep( 5000 );
+	}
+	
 	if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
 	{
 		UserSessListEntry *actus = (UserSessListEntry *)usr->u_SessionsList;
@@ -190,7 +195,12 @@ void UserDelete( User *usr )
 {
 	if( usr != NULL )
 	{
-		int i;
+		// Do not release User resources when structure is used
+		while( usr->u_InUse > 0 )
+		{
+			usleep( 5000 );
+		}
+
 		if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
 		{
 			if( usr->u_Printers != NULL )
@@ -241,14 +251,7 @@ void UserDelete( User *usr )
 
 		UserDeleteGroupLinkAll( usr->u_UserGroupLinks );
 		usr->u_UserGroupLinks = NULL;
-		/*
-		if( usr->u_Groups != NULL )
-		{
-			FFree( usr->u_Groups );
-			usr->u_Groups = NULL;
-		}
-		*/
-		
+
 		if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
 		{
 			if( usr->u_Email ){ FFree( usr->u_Email );}

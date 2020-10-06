@@ -1217,7 +1217,7 @@ int FileRead( struct File *f, char *buffer, int rsize )
 		
 		if( f->f_Stream == TRUE && result > 0 )
 		{
-			sd->sb->sl_SocketInterface.SocketWrite( f->f_Socket, buffer, (FLONG)result );
+			f->f_Socket->s_Interface->SocketWrite( f->f_Socket, buffer, (FLONG)result );
 		}
 		
 #ifdef __ENABLE_MUTEX
@@ -1434,8 +1434,11 @@ static FLONG RemoveDirectory( SpecialData *sdat, const char *path )
 			LIBSSH2_SFTP_ATTRIBUTES attrs;
 			int r2 = 0;
 			
+			DEBUG("inside do\n");
+			
 			// loop until we fail *
 			int rc = libssh2_sftp_readdir_ex( sftphandle, mem, sizeof(mem), longentry, sizeof(longentry), &attrs);
+			DEBUG("libssh2_sftp_readdir_ex rc %d\n", rc );
 			if( rc > 0 )//&&  > 0 && strcmp( mem, ".." ) > 0 )
 			{
 				if( (strcmp( mem, ".") == 0) || ( strcmp( mem, "..") == 0 ) ){ continue; }
@@ -1444,6 +1447,11 @@ static FLONG RemoveDirectory( SpecialData *sdat, const char *path )
 				if( longentry[ 0 ] == 'd' )
 				{
 					isDir = 1;
+				}
+				else
+				{
+					DEBUG("This is file!\n");
+					break;
 				}
 			
 				int len = pathlen + strlen( path ) + strlen( mem ); 
@@ -1467,18 +1475,20 @@ static FLONG RemoveDirectory( SpecialData *sdat, const char *path )
 			
 				if( r2 != 0 )
 				{
+					DEBUG("r2 %d\n", r2 );
 					break;
 				}
 			}
 			else
 			{
+				DEBUG("openssl dir fail!\n");
 				break;
 			}
 		
 		} while (1);
 	
 		libssh2_sftp_closedir( sftphandle );
-		
+		DEBUG("Will remove now : %s\n", path );
 		libssh2_sftp_rmdir( sdat->sftp_session, path );
 	}
 	else

@@ -60,7 +60,7 @@
 #define WORKERS_MIN 8
 #endif
 #ifndef EPOLL_MAX_EVENTS
-#define EPOLL_MAX_EVENTS 512
+#define EPOLL_MAX_EVENTS 1024
 #endif
 #ifndef BUFFER_READ_SIZE
 #define BUFFER_READ_SIZE 1024 * 8
@@ -80,11 +80,11 @@
 //
 
 /**
- * Contains the definition of each instance of the core Friend server
- *
- * Note: Preferably, the contents of this structure should
- * never be modified after the server has been started.
- */
+* Contains the definition of each instance of the core Friend server
+*
+* Note: Preferably, the contents of this structure should
+* never be modified after the server has been started.
+*/
 
 typedef struct FriendCoreManager
 {

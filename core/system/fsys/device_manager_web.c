@@ -651,7 +651,10 @@ f.Name ASC";
 			}
 			else
 			{
-				userID = usr->u_ID;
+				if( usr != NULL )
+				{
+					userID = usr->u_ID;
+				}
 			}
 			
 			/*
@@ -666,7 +669,7 @@ f.Name ASC";
 				updateDatabase = TRUE;
 				HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"Mounted successfully.\"}" );
 			}
-			else	// usr != NULL
+			else if( usr != NULL )
 			{
 				userID = usr->u_ID;
 				

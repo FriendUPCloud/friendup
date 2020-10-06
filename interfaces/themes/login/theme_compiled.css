@@ -73,13 +73,13 @@ button, .Button { margin:0; font-family: 'assistant'; }
 div.Logo
 {
 	color: transparent;
-	background-image: url(/graphics/logoblue.png);
-	background-size: 60% auto;
+	background-image: url(/graphics/release_logo.png);
+	background-size: 90% auto;
 	background-repeat: no-repeat;
 	height: 60px;
 	box-sizing: border-box;
 	font-size: 18px;
-	background-position: center 30px;
+	background-position: center 20px;
 	background-color: #F0F1F2;
 	padding: 70px 40px 50px 40px;
 	margin: -20px -20px 20px -20px;
@@ -112,7 +112,7 @@ html input[type=text]:focus, html input[type=username]:focus, html input[type=pa
 	box-sizing: border-box;
 	width: 100%;
 	outline: 0;
-	border-radius: 0;
+	border-radius: 2px;
 	box-shadow: none;
 	height: 35px;
 	line-height: 30px;
@@ -138,7 +138,7 @@ button
 	display: block;
 	font-size: 15px;
 	width: 100%;
-	background-color: #F4F7F7;
+	background-color: #f0f1f2;
 	color: #95A5A6;
 	padding: 0px 10px;
 	height: 30px;
@@ -146,7 +146,7 @@ button
 	border: 0;
 	text-transform: uppercase;
 	font-weight: bold;
-	border-radius: 0;
+	border-radius: 2px;
 }
 
 #loginButton.Forgot

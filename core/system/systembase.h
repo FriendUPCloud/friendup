@@ -118,6 +118,25 @@ enum {
 };
 
 //
+// Login/Logout calls
+//
+
+enum {
+	LL_NONE = 0,
+	LL_LOGIN,
+	LL_LOGOUT
+};
+
+//
+// Registered modules have each a module set
+//
+
+struct ModuleSet {
+	char *name;
+	char *extension;
+};
+
+//
 // Devices
 //
 
@@ -263,11 +282,13 @@ typedef struct SystemBase
 	AuthMod							*sl_ActiveAuthModule;	// active login module
 	AuthMod							*sl_DefaultAuthModule;  //
 	char 							*sl_ModuleNames;		// name of modules which will be used
+	List                            *sl_AvailableModules;   // available modules with extension
 	char 							*sl_ActiveModuleName;	// name of active module
 	char							*sl_DefaultDBLib;		// default DB library name
 	time_t							sl_RemoveSessionsAfterTime;	// time after which session will be removed
 	int								sl_MaxLogsInMB;			// Maximum size of logs in log folder in MB ( if > then old ones will be removed)
 	char							*sl_MasterServer;		// FriendCore master server
+	int								sl_RemoveOldSessionTimeout;	// Time in seconds after which old sessions will be removed
 	
 	//
 	// 60 seconds
@@ -399,7 +420,8 @@ typedef struct SystemBase
 	char							**l_ServerKeyValues;
 	int								l_ServerKeysNum;
 	
-	//WebsocketAPNSConnector			*l_APNSConnection;
+	struct LSocketInterface_t		l_SocketISSL;
+	struct LSocketInterface_t		l_SocketINOSSL;
 } SystemBase;
 
 
@@ -414,6 +436,12 @@ SystemBase *SystemInit( void );
 //
 
 UserGroup *LoadGroups( struct SystemBase *sb );
+
+//
+// Just get unixtime now
+//
+
+int GetUnixTime();
 
 //
 //

@@ -85,6 +85,7 @@ DirectoryView = function( winobj, extra )
 	// Read in extra stuff
 	if( extra )
 	{
+		this.oldExtra = extra;
 		if( extra.startPath )
 			this.startPath = extra.startPath;
 		if( extra.filedialog )
@@ -501,6 +502,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 			content: i18n( 'i18n_dir_btn_reload' ),
 			onclick: function( e )
 			{
+				winobj.directoryview.toChange = true;
 				winobj.refresh();
 			}
 		},
@@ -519,6 +521,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 						{
 							winobj.directoryview.window.classList.add( 'LoadingIcons' );
 							winobj.directoryview.listMode = 'iconview';
+							winobj.directoryview.toChange = true;
 							winobj.refresh();
 							this.parentNode.checkActive( this.value );
 						}
@@ -535,6 +538,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 						{
 							winobj.directoryview.window.classList.add( 'LoadingIcons' );
 							winobj.directoryview.listMode = 'imageview';
+							winobj.directoryview.toChange = true;
 							winobj.refresh();
 							this.parentNode.checkActive( this.value );
 						}
@@ -551,6 +555,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 						{
 							winobj.directoryview.window.classList.add( 'LoadingIcons' );
 							winobj.directoryview.listMode = 'compact';
+							winobj.directoryview.toChange = true;
 							winobj.refresh();
 							this.parentNode.checkActive( this.value );
 						}
@@ -567,6 +572,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 						{
 							winobj.directoryview.window.classList.add( 'LoadingIcons' );
 							winobj.directoryview.listMode = 'listview';
+							winobj.directoryview.toChange = true;
 							winobj.refresh();
 							this.parentNode.checkActive( this.value );
 						}
@@ -727,6 +733,10 @@ DirectoryView.prototype.ShowFileBrowser = function()
 			},
 			folderOpen( path, event, flags )
 			{
+				// Only does something when the user clicked
+				let buttonClick = ( event ? ( ( event.button === 0 || event.button > 0 ) ? true : false ) : false );
+				if( !buttonClick ) return;
+				
 				let vol = path.split( ':' )[0];
 			
 				winobj.fileInfo = {
@@ -745,6 +755,10 @@ DirectoryView.prototype.ShowFileBrowser = function()
 			},
 			folderClose( path, event, flags )
 			{
+				// Only does something when the user clicked
+				let buttonClick = ( event ? ( ( event.button === 0 || event.button > 0 ) ? true : false ) : false );
+				if( !buttonClick ) return;
+				
 				let vol = path.split( ':' )[0];
 				
 				winobj.fileInfo = {
@@ -764,6 +778,7 @@ DirectoryView.prototype.ShowFileBrowser = function()
 			}
 		} );
 		winobj.fileBrowser.cancelId = winobj.directoryview.cancelId;
+		winobj.fileBrowser.directoryView = this;
 		winobj.fileBrowser.render();
 	}
 }
@@ -795,7 +810,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			e.defaultBehavior = true;
 			return;
 		}
-		if( !window.isMobile )
+		if( !window.isMobile && !window.isTablet )
 		{
 			Workspace.showContextMenu( false, e );
 		}
@@ -859,18 +874,65 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	{
 		let dirv = this.directoryview;
 		
-		if( dirv.window.fileBrowser )
-		{
-			// Correct file browser
-			dirv.window.fileBrowser.setPath( winobj.fileInfo.Path );
-		}
-		
 		// Assign icons now
 		// Store
+		// If we're told it hasn't changed - don't do this
+		if( icons && icons.length && !dirv.toChange )
+		{
+			if( !window.isMobile || ( window.isMobile && !winobj.parentNode.classList.contains( 'Mountlist' ) ) )
+			{
+				// Check if the icons haven't changed!
+				if( this.icons && this.allIcons.length )
+				{
+					let changed = false;
+					for( let a = 0; a < icons.length; a++ )
+					{
+						// We found a different icon
+						if( !this.allIcons[a] || icons[a].Path != this.allIcons[a].Path )
+						{
+							changed = true;
+							break;
+						}
+					}
+					if( this.icons.length )
+					{
+						for( let a = 0; a < this.icons.length; a++ )
+						{
+							// Missing dom node!
+							if( this.icons[ a ].domNode && !this.icons[ a ].domNode.parentNode )
+							{
+								changed = true;
+								break;
+							}
+							if( this.icons[ a ].selected )
+							{
+								changed = true;
+								break;
+							}
+						}
+					}
+					if( !changed ) 
+					{
+						return;
+					}
+				}
+			}
+		}
+
+		// If stuff has changed - set the new icons.
 		if( icons )
 		{
 			this.icons = icons;
 			this.allIcons = icons;
+		}
+		
+		// We don't need no force change (toChange passes the changed check)
+		dirv.toChange = false;
+		
+		if( dirv.window.fileBrowser )
+		{
+			// Correct file browser
+			dirv.window.fileBrowser.setPath( winobj.fileInfo.Path );
 		}
 		
 		// When we have a toolbar and no file browser, remove up on root paths
@@ -1010,7 +1072,6 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			this.noRunPath = '';
 		}
 		
-		// Filter icons
 		if( this.icons )
 		{
 			for( var a = 0; a < this.icons.length; a++ )
@@ -1118,8 +1179,9 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					}
 				}
 
-				self.directoryview.changed = true;
-
+				// And we know it changed now..
+				dirv.changed = true;
+				
 				// Make sure the menu is refreshed due to icon selection
 				if( self.parentNode && ( self.parentNode == currentMovable || ( !currentMovable && self.parentNode == currentScreen ) ) )
 				{
@@ -1181,6 +1243,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 				self.directoryview.window.classList.remove( 'LoadingIcons' );
 			}
 		}
+		this.redrawing = false;
 		return false;
 	}
 
@@ -1219,6 +1282,12 @@ DirectoryView.prototype.InitWindow = function( winobj )
 		// formatted is used to handle a formatted, recursive list
 		function handleHostFileSelect( e )
 		{	
+			if( winobj && winobj.fileInfo && winobj.fileInfo.Path.indexOf( 'Shared:' ) == 0 )
+			{
+				Notify( { title: i18n( 'i18n_not_upload_target' ), text: i18n( 'i18n_not_upload_target_desc' ) } );
+				cancelBubble( e );
+				return false;
+			}
 			let hasDownload = false;
 			
 			function makeTransferDirectory()
@@ -1589,7 +1658,9 @@ DirectoryView.prototype.InitWindow = function( winobj )
 							{
 								w.close();
 								if( winobj && winobj.refresh )
+								{
 									winobj.refresh();
+								}
 
 								Notify( { title: i18n( 'i18n_upload_completed' ), 'text':i18n('i18n_uploaded') }, false, function()
 								{
@@ -1742,6 +1813,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	// If we resized, recalculate all
 	if( this.prevWidth != windowWidth || this.prevHeight != windowHeight )
 	{
+		this.toChange = true;
 		if( flags )
 		{
 			flags.addPlaceholderFirst = false;
@@ -2284,7 +2356,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	// Handle scrolling
 	this.refreshScrollTimeout = false;
 	this.scroller.onscroll = function( e )
-	{
+	{	
 		// Only handle scroll if it changed
 		if( !self.scrollerTop || self.scrollerTop != self.scroller.scrollTop )
 		{
@@ -2472,6 +2544,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 						dv.sortOrder = dv.sortOrder == 'ascending' ? 'descending' : 'ascending';
 					}
 					dv.sortColumn = this.sortColumn;
+					dv.toChange = true;
 					dv.window.refresh();
 				}
 				head.appendChild ( d );
@@ -2698,6 +2771,9 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			{
 				if( !e ) e = window.event ? window.event : {};
 			
+				if( isTablet )
+					dv.multiple = e.shiftKey = true;
+			
 				// This means we are adding
 				if( e.shiftKey || e.ctrlKey )
 				{
@@ -2880,32 +2956,21 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					this.listSelectTimeout = setTimeout( function()
 					{
 						self.click = false;
-						if( self.classList.contains( 'Selected' ) )
-						{
-							clearRegionIcons();
-						}
-						else
-						{
-							clearRegionIcons();
-							self.classList.add( 'Selected' );
-							self.selected = true;
-							this.icon.selected = true;
-							self.fileInfo.selected = true;
-							self.touchPos = {
-								x: e.touches[0].pageX,
-								y: e.touches[0].pageY
-							};
-							self.touchMode = 0;
-						}
+						self.classList.add( 'Selected' );
+						self.selected = true;
+						this.icon.selected = true;
+						self.fileInfo.selected = true;
+						self.touchPos = {
+							x: e.touches[0].pageX,
+							y: e.touches[0].pageY
+						};
+						self.touchMode = 0;
 					}, 100 );
 					
-					if( window.isTablet )
+					this.contextMenuTimeout = setTimeout( function()
 					{
-						this.contextMenuTimeout = setTimeout( function()
-						{
-							Workspace.showContextMenu( false, e );
-						}, 800 );
-					}
+						Workspace.showContextMenu( false, e );
+					}, 1000 );
 					
 					return cancelBubble( e );
 				}
@@ -2968,7 +3033,10 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 							this.contextMenuTimeout = false;
 						}
 					}
+					clearTimeout( this.contextMenuTimeout );
+					this.contextMenuTimeout = null;
 					this.touchPos = false;
+					return cancelBubble( e );
 				}
 				
 				r.onclick = null;
@@ -2980,7 +3048,10 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			{
 				if( !e.ctrlKey && !e.shiftKey && !e.command && !ge( 'RegionSelector' ) )
 				{
-					clearRegionIcons( { exception: this, force: true } );
+					if( !isMobile && !isTablet )
+					{
+						clearRegionIcons( { exception: this, force: true } );
+					}
 				}
 			}
 
@@ -3537,7 +3608,10 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				{
 					if( !Workspace.contextMenuShowing || !Workspace.contextMenuShowing.shown )
 					{
-						clearRegionIcons( { exception: this } );
+						if( !isMobile && !isTablet )
+						{
+							clearRegionIcons( { exception: this } );
+						}
 					}
 				}
 
@@ -3592,7 +3666,10 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			}
 			if( !e.ctrlKey && !e.shiftKey && !e.command && !ge( 'RegionSelector' ) )
 			{
-				clearRegionIcons( { exception: this, force: true } );
+				if( !isMobile && !isTablet )
+				{
+					clearRegionIcons( { exception: this, force: true } );
+				}
 			}
 			window.targetMovable = false;
 		}
@@ -3756,11 +3833,11 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 								Workspace.diskNotificationList[ ppath ] = false;
 							}
 							ff.execute( 'file/notificationremove' );
-							console.log( 'Notification remove: ' + ppath );
+							//console.log( 'Notification remove: ' + ppath );
 						} );
 					}
 					f.execute( 'file/notificationstart' );
-					console.log( 'Notification start: ' + ppath );
+					//console.log( 'Notification start: ' + ppath );
 				}
 
 				// Open unique window!
@@ -3843,6 +3920,8 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		file.onmouseout = function( e )
 		{
 			if ( !e ) e = window.event;
+			if( this.directoryView.filedialog ) return;
+			
 			if ( window.mouseDown == this )
 			{
 				mousePointer.pickup( this );
@@ -3886,6 +3965,30 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		{
 			if( this.directoryView.filedialog )
 				return;
+				
+			// On mobile and tablet, don't click other icons when showing the context menu
+			if( ( isMobile || isTablet ) && Workspace.contextMenuShowing ) 
+			{
+				Workspace.contextMenuShowing.hide()
+				Workspace.contextMenuShowing = false;
+				return cancelBubble( event );
+			}
+			
+			// Only click icons!
+			if( 
+				!event.target.parentNode.classList.contains( 'Icon' ) && 
+				!event.target.parentNode.classList.contains( 'Drive' )  )
+			{
+				return;
+			}
+			else
+			{
+				event.target.parentNode.style.filter = 'hue-rotate(45deg) drop-shadow(0px 0px 2px rgba(255,240,0,0.5))';
+				setTimeout( function()
+				{
+					event.target.parentNode.style.filter = '';
+				}, 30 );
+			}
 			
 			window.fileMenuElement = file;
 			window.clickElement = file;
@@ -3908,13 +4011,11 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				}
 			}, 100 );
 
-			if( !window.isMobile )
-			{		
-				file.contextMenuTimeout = setTimeout( function()
-				{
-					Workspace.showContextMenu( false, event );
-				}, 800 );
-			}
+
+			file.contextMenuTimeout = setTimeout( function()
+			{
+				Workspace.showContextMenu( false, event );
+			}, 1000 );
 			//return cancelBubble( event );
 		}, false );
 
@@ -3922,6 +4023,18 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		{
 			if( this.directoryView.filedialog )
 				return;
+			if( Workspace.contextMenuShowing ) 
+			{
+				return cancelBubble( event );
+			}
+			
+			// No need
+			if( file.menuTimeout )
+				clearTimeout( file.menuTimeout );
+			file.menuTimeout = false;
+			if( file.contextMenuTimeout )
+				clearTimeout( file.contextMenuTimeout );
+			file.contextMenuTimeout = false;
 			
 			if( window.clickElement == this )
 			{
@@ -3929,7 +4042,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 
 				// When single clicking (under a second) click the file!
 				let time = ( new Date() ).getTime() - file.clickedTime;
-				if( time < 250 && window.clickElement )
+				if( time < 500 && window.clickElement )
 				{
 					setTimeout( function()
 					{
@@ -3940,15 +4053,9 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 					}, 100 );
 				}
 
-				if( file.menuTimeout )
-					clearTimeout( file.menuTimeout );
-				file.menuTimeout = false;
-				if( file.contextMenuTimeout )
-					clearTimeout( file.contextMenuTimeout );
-				file.contextMenuTimeout = false;
 				window.clickElement = null;
-				return cancelBubble( event );
 			}
+		 	return cancelBubble( event );
 		} );
 	}
 }
@@ -3967,7 +4074,6 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 	for( var a in oFileInfo )
 		fileInfo[ a ] = oFileInfo[ a ];
 
-	//console.log('OpenWindowByFileinfo fileInfo is ',fileInfo);
 	if( !iconObject )
 	{
 		let ext = fileInfo.Path ? fileInfo.Path.split( '.' ) : ( fileInfo.Filename ? fileInfo.Filename.split( '.' ) : fileInfo.Title.split( '.' ) );
@@ -4066,6 +4172,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 					if( self.win.revent ) self.win.removeEvent( 'resize', self.win.revent );
 					self.win.revent = self.win.addEvent( 'resize', function( cbk )
 					{
+						self.directoryview.toChange = true;
 						self.redrawIcons( self.win.icons, self.direction, cbk );
 					} );
 					self.refreshTimeout = null;
@@ -4199,7 +4306,9 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 	// We've clicked on a directory!
 	else if( fileInfo.MetaType == 'Directory' || fileInfo.MetaType == 'Door' )
 	{
-		let extra = null;
+		// Try to reuse the directoryview extra flags
+		let extra = fileInfo.directoryview ? fileInfo.directoryview.oldExtra : null;
+		
 		let wt = fileInfo.Path ? fileInfo.Path : ( fileInfo.Filename ? fileInfo.Filename : fileInfo.Title );
 
 		let id = fileInfo.Type + '_' + wt.split( /[^a-z0-9]+/i ).join( '_' );
@@ -4272,7 +4381,8 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 		// Special case - a mobile opens a mountlist
 		if( isMobile && fileInfo.Path == 'Mountlist:' )
 		{
-			extra = {};
+			// Try to reuse the old directoryview flags
+			extra = fileInfo.directoryview ? fileInfo.directoryview.oldExtra : {};
 			fileInfo.Path = 'Home:';
 			iconObject.Path = 'Home:';
 			let t = document.createElement( 'div' );
@@ -4378,6 +4488,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 								if( w.revent ) w.removeEvent( 'resize', w.revent );
 								w.revent = w.addEvent( 'resize', function( cbk )
 								{
+									dv.toChange = true;
 									self.redrawIcons( false, self.direction, cbk );
 								} );
 								
@@ -4516,6 +4627,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 						if( w.revent ) ww.RemoveEvent( 'resize', ww.revent );
 						ww.revent = ww.AddEvent ( 'resize', function ( cbk )
 						{
+							ww.directoryview.toChange = true;
 							ww.redrawIcons( null, ww.direction, cbk );
 						} );
 					}
@@ -5020,10 +5132,22 @@ Friend.startImageViewer = function( iconObject, extra )
 		// Enable panning image
 		image.onmousedown = function( e )
 		{
-			let offx = e.clientX;
-			let offy = e.clientY;
+			let offx = offy = 0;
+			
+			if( e.touches )
+			{
+				offx = e.touches[0].pageX;
+				offy = e.touches[0].pageY;
+			}
+			else
+			{		
+				offx = e.clientX;
+				offy = e.clientY;
+			}
+			
 			let px = image.offsetX;
 			let py = image.offsetY;
+			
 			image.classList.add( 'Panning' );
 			window.mouseDown = image;
 			window.mouseReleaseFunc = function()
@@ -5032,11 +5156,26 @@ Friend.startImageViewer = function( iconObject, extra )
 			}
 			window.mouseMoveFunc = function( e2 )
 			{
-				image.offsetX = px + ( e2.clientX - offx );
-				image.offsetY = py + ( e2.clientY - offy );
+				let cx, cy = 0;
+				
+				if( e2.touches )
+				{
+					cx = e2.touches[0].pageX;
+					cy = e2.touches[0].pageY;
+				}
+				else
+				{		
+					cx = e2.clientX;
+					cy = e2.clientY;
+				}
+				
+				image.offsetX = px + ( cx - offx );
+				image.offsetY = py + ( cy - offy );
 				repositionElement( win );
 			}
 		}
+		
+		image.ontouchstart = image.onmousedown;
 		
 		image.onmousewheel = function( e )
 		{
@@ -5200,6 +5339,7 @@ Friend.startImageViewer = function( iconObject, extra )
 			<div class="ZoomIn MousePointer"><span class="IconSmall fa-plus-circle"></span></div>\
 			<div class="ZoomOut MousePointer"><span class="IconSmall fa-minus-circle"></span></div>\
 			<div class="ArrowRight MousePointer"><span class="IconSmall fa-angle-right"></span></div>\
+			<div class="Close MousePointer"><span class="IconSmall fa-remove"></span></div>\
 		';
 		eparent.appendChild( d );
 		let eles = d.getElementsByTagName( 'div' );
@@ -5269,6 +5409,13 @@ Friend.startImageViewer = function( iconObject, extra )
 					if( zoomLevel < 0.1 )
 						zoomLevel = 0.1;
 					repositionElement( owin );
+				}
+			}
+			else if( eles[a].classList.contains( 'Close' ) )
+			{
+				eles[ a ].onclick = function( e )
+				{
+					CloseView();
 				}
 			}
 		}

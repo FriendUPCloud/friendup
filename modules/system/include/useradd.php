@@ -13,6 +13,8 @@
 global $Logger;
 $prevlevel = $level;
 
+$LogThis = false;
+
 if( isset( $args->args->authid ) && !isset( $args->authid ) )
 {
 	$args->authid = $args->args->authid;
@@ -61,9 +63,9 @@ if( $level == 'Admin' )
 	
 	if( $g->ID > 0 )
 	{
-		//$Logger->log( "\n-\n" );
+		if( $LogThis ) $Logger->log( "\n-\n" );
 		
-		//$Logger->log( print_r( $args, 1  ) );
+		if( $LogThis ) $Logger->log( print_r( $args, 1  ) );
 		
 		$uargs = Array(
 			'sessionid' => $args->sessionid,
@@ -74,34 +76,34 @@ if( $level == 'Admin' )
 			'level'     => $args->args->level
 		);
 		
-		//$Logger->log( 'Creating: ' . print_r( $uargs, 1 ) );
+		if( $LogThis ) $Logger->log( 'Creating: ' . print_r( $uargs, 1 ) );
 		
 		$res = fc_query( '/system.library/user/create', $uargs );
-		//$Logger->log( 'Result from create: ' . $res );
+		if( $LogThis ) $Logger->log( 'Result from create: ' . $res );
 		
 		// Unexpected error!
 		if( !$res ) die( 'fail<!--separate-->{"response":"100","message":"Failed to create user."}' );
 		
 		list( $code, $message ) = explode( '<!--separate-->', $res );
 		
-		//$Logger->log( 'More importantly: ' . $code . ' -> ' . $message );
+		if( $LogThis ) $Logger->log( 'More importantly: ' . $code . ' -> ' . $message );
 		
 		$message = json_decode( $message );
 		
-		//$Logger->log( 'Parsed json message: ' . print_r( $message, 1 ) );
+		if( $LogThis ) $Logger->log( 'Parsed json message: ' . print_r( $message, 1 ) );
 		
 		// Just pass the error code
 		if( $code != 'ok' )
 			die( $res );
 		
 		// Create the new user
-		//$Logger->log( 'Trying to load user: ' . $message->id );
+		if( $LogThis ) $Logger->log( 'Trying to load user: ' . $message->id );
 		$u = new dbIO( 'FUser' );
 		$u->Load( $message->id );
 
 		if( $u->ID > 0 )
 		{
-			//$Logger->log( 'User was created, now adding user to workgroup.' );
+			if( $LogThis ) $Logger->log( 'User was created, now adding user to workgroup.' );
 			//$SqlDatabase->query( 'INSERT INTO FUserToGroup ( UserID, UserGroupID ) VALUES ( \'' . $u->ID . '\', \'' . $g->ID . '\' )' );
 				
 			// TODO: Should be a check if the user that is creating this new user has access to add users to defined workgroup(s) before saving ... 
@@ -140,7 +142,7 @@ if( $level == 'Admin' )
 						];
 						
 						// If you wanna know what's going on.
-						//$Logger->log( 'Added nested arguments: ' . print_r( $w_args, 1 ) );
+						if( $LogThis ) $Logger->log( 'Added nested arguments: ' . print_r( $w_args, 1 ) );
 						
 						if( $res = fc_query( '/system.library/group/addusers', $w_args ) )
 						{
@@ -151,29 +153,29 @@ if( $level == 'Admin' )
 							
 								// 
 								$err = 'fail<!--separate-->' . ( $resp[1] ? $resp[1] : '' ) . ' [] debug: ' . print_r( $perm,1 ) . ' [] args: ' . print_r( $w_args,1 ); 
-								//$Logger->log( $err );
+								if( $LogThis ) $Logger->log( $err );
 								die( $err );
 							}
 							else
 							{
-								//$Logger->log( 'Added user to workgroup ' . $gid );
+								if( $LogThis ) $Logger->log( 'Added user to workgroup ' . $gid );
 							}
 						
 						}
 						else
 						{
-							//$Logger->log( 'Could not add user to workgroup ' . $gid );
+							if( $LogThis ) $Logger->log( 'Could not add user to workgroup ' . $gid );
 						}
 					}
 				}
 			}
 			
-			//$Logger->log( 'Completed user ' . $user->Name .'..' );
+			if( $LogThis ) $Logger->log( 'Completed user ' . $user->Name .'..' );
 			die( 'ok<!--separate-->' . $u->ID );
 		}
 		else
 		{
-			//$Logger->log( 'User was not created (' . $message->id . ') - or could not load from database.' );
+			if( $LogThis ) $Logger->log( 'User was not created (' . $message->id . ') - or could not load from database.' );
 		}
 	}
 }
@@ -182,7 +184,9 @@ die( 'fail<!--separate-->{"response":"user add failed"}'  );
 // Helper functions ...
 function fc_query( $command = '', $args = false, $method = 'POST', $headers = false )
 {
-	global $Config;	
+	global $Config, $Logger;	
+	
+	$LogThis = false;
 	
 	$curl = curl_init();
 	
@@ -269,12 +273,16 @@ function fc_query( $command = '', $args = false, $method = 'POST', $headers = fa
 		curl_setopt( $curl, CURLOPT_POST, true );
 		curl_setopt( $curl, CURLOPT_POSTFIELDS, $args );
 	}
-
+	
+	if( $LogThis ) $Logger->log( 'Curl Init: ' . $url . ' ', print_r( $args,1 ) );
+	
 	curl_setopt( $curl, CURLOPT_RETURNTRANSFER, true );
 
 	$output = curl_exec( $curl );
 
 	$httpCode = curl_getinfo( $curl, CURLINFO_HTTP_CODE );
+	
+	if( $LogThis ) $Logger->log( 'Curl HttpCode: ', print_r( $httpCode,1 ) );
 	
 	curl_close( $curl );
 

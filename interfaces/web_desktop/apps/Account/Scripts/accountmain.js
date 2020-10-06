@@ -664,6 +664,14 @@ function refreshUserKeys()
 		data = JSON.parse( d );
 		
 		drawKeyList( data );
+		
+		Application.encryption.publickey( function( res, data )
+		{
+			if( res && data && data.publickey )
+			{
+				displayPublicKey( data.publickey );
+			}
+		} );
 	}
 	m.execute( 'keys' );	
 }
@@ -919,7 +927,13 @@ function ClearKeyCache( keyid, callback )
 
 function displayPublicKey( key )
 {
+	// What was this used for now again???
 	if( ge( 'PublicKeyContainer' ) )
+	{
+		ge( 'UserAccPublicKey' ).value = key;
+	}
+	
+	if( key && ge( 'UserAccPublicKey' ) )
 	{
 		ge( 'UserAccPublicKey' ).value = key;
 	}

@@ -23,9 +23,9 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 		*/
 		function onConstruct()
 		{
-			global $args;
+			global $args, $Logger;
 			$this->fileInfo = isset( $args->fileInfo ) ? $args->fileInfo : new stdClass();
-			$defaultDiskspace = 536870912;
+			$defaultDiskspace = 500000000;
 			if( isset( $this->Config ) && strlen( $this->Config) > 3 )
 			{
 				$this->configObject = json_decode( $this->Config );
@@ -38,19 +38,19 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 					{
 						case 'kb':
 							$nn = substr( $ds, 0, strlen( $ds ) - 2 );
-							$nn = intval( $nn, 10 ) * 1024;
+							$nn = intval( $nn, 10 ) * 1000;
 							break;
 						case 'mb':
 							$nn = substr( $ds, 0, strlen( $ds ) - 2 );
-							$nn = intval( $nn, 10 ) * 1024 * 1024;
+							$nn = intval( $nn, 10 ) * 1000 * 1000;
 							break;
 						case 'gb':
 							$nn = substr( $ds, 0, strlen( $ds ) - 2 );
-							$nn = intval( $nn, 10 ) * 1024 * 1024 * 1024;
+							$nn = intval( $nn, 10 ) * 1000 * 1000 * 1000;
 							break;
 						case 'tb':
 							$nn = substr( $ds, 0, strlen( $ds ) - 2 );
-							$nn = intval( $nn, 10 ) * 1024 * 1024 * 1024 * 1024;
+							$nn = intval( $nn, 10 ) * 1000 * 1000 * 1000 * 1000;
 							break;
 						default:
 							$nn = intval( $ds, 10 );
@@ -369,15 +369,18 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 			}
 			else if( $args->command == 'write' )
 			{
+				set_time_limit( 0 );
+				
+				
 				// We need to check how much is in our database first
 				$deletable = false;
 				$total = 0;
 				if( $sum = $SqlDatabase->FetchObject( '
 					SELECT SUM(u.Filesize) z FROM FSFile u
-					WHERE AND FilesystemID = \'' . $this->ID . '\'
+					WHERE FilesystemID = \'' . $this->ID . '\'
 				' ) )
 				{
-					$total = $sum->z;
+					$total = intval( $sum->z, 10 );
 				}
 				
 				// Create a file object
@@ -507,11 +510,19 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 
 									if( $total + $len < SQLWORKGROUPDRIVE_FILE_LIMIT )
 									{
-										rename( $args->tmpfile, $Config->FCUpload . $fn );
+										$Logger->log( '[SqlWorkgroupDrive] Moving tmp file ' . $args->tmpfile . ' to ' . $Config->FCUpload . $fn . ' because ' . ( $total + $len ) . ' < ' . SQLDRIVE_FILE_LIMIT );
+										$res = rename( $args->tmpfile, $Config->FCUpload . $fn );
+										
+										if( !$res )
+										{
+											$Logger->log( '[SqlWorkgroupDrive] Failed to move file.' );
+											die( 'fail<!--separate-->{"response":"-1","message":"Failed to move temp file."}' );
+										}
 									}
 									else
 									{
-										die( 'fail<!--separate-->Limit broken' );
+										$Logger->log( '[SqlWorkgroupDrive] fail<!--separate-->Limit broken' );
+										die( 'fail<!--separate-->{"response":"-1","message":"Limit broken"}' );
 									}
 								}
 								else
@@ -521,7 +532,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 							}
 							else
 							{
-								die( 'fail<!--separate-->Tempfile does not exist!' );
+								die( 'fail<!--separate-->{"response","-1","message":"Tempfile does not exist"}' );
 							}
 						}
 						else
@@ -534,7 +545,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 							else
 							{
 								fclose( $file );
-								die( 'fail<!--separate-->Limit broken' );
+								die( 'fail<!--separate-->{"response":"-1","message":"Limit broken"}' );
 							}
 						}
 						

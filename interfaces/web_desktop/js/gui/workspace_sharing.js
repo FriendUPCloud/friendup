@@ -31,7 +31,12 @@ Workspace.viewSharingOptions = function( path )
 	v.path = path;
 	v.dIndex = 0;
 	v.selectedItems = [];
-	v.content.onclick = function( e )
+	let intype = window.isTablet || window.isMobile ? 'ontouchstart' : 'onclick';
+	v.content[ intype ] = function( e )
+	{
+		v.clickIt();
+	}
+	v.clickIt = function()
 	{
 		if( v.dropDown && v.dropDown.classList.contains( 'Showing' ) )
 		{
@@ -60,13 +65,7 @@ Workspace.viewSharingOptions = function( path )
 				}
 			}
 			v.dropDown.classList.remove( 'Showing' );
-			Workspace.refreshShareInformation( v, function()
-			{
-				if( v.doApply )
-				{
-					Workspace.saveFileShareInfo( v.uniqueId );
-				}
-			} );
+			Workspace.refreshShareInformation( v );
 		}
 	}
 	
@@ -105,19 +104,23 @@ Workspace.viewSharingOptions = function( path )
 	}
 	f.load();
 };
-Workspace.saveFileShareInfo = function( uniqueId )
+Workspace.saveFileShareInfo = function( uniqueId, noclose )
 {
 	if( !this.sharingDialogs[ uniqueId ] ) return;
+	if( !noclose ) noclose = false;
 	let self = this;
 	let d = this.sharingDialogs[ uniqueId ];
-	
 	let drp = null;
 	if( drp = d._window.getElementsByClassName( 'Dropdown' ) )
 	{
 		if( drp[0].classList.contains( 'Showing' ) )
 		{
-			d.doApply = true;
-			return;
+			d.clickIt();
+			return Workspace.refreshShareInformation( d, function()
+			{
+				drp[0].classList.remove( 'Showing' );
+				Workspace.saveFileShareInfo( uniqueId, true );
+			} );
 		}
 	}
 	
@@ -126,7 +129,8 @@ Workspace.saveFileShareInfo = function( uniqueId )
 	{
 		if( e == 'ok' )
 		{
-			d.close();
+			if( !noclose )
+				d.close();
 		}
 		else
 		{
@@ -143,7 +147,8 @@ Workspace.setSharingGui = function( viewObject )
 	let searchF = ge( 'dropdownfield_' + viewObject.uniqueId );
 	let dropDown = ge( 'dropdown_' + viewObject.uniqueId );
 	viewObject.dropDown = dropDown;
-	dropDown.onclick = function( e ){ return cancelBubble( e ); }
+	let intype = window.isTablet || window.isMobile ? 'ontouchstart' : 'onclick';
+	dropDown[ intype ] = function( e ){ return cancelBubble( e ); }
 	searchF.onkeyup = function( e )
 	{
 		// Arrow down/up
@@ -296,9 +301,10 @@ Workspace.setSharingGui = function( viewObject )
 		{
 			dropDown.innerHTML = str;
 			let eles = dropDown.getElementsByClassName( 'DropdownItem' );
+			let intype = window.isTablet || window.isMobile ? 'ontouchstart' : 'onclick';
 			for( let c = 0; c < eles.length; c++ )
 			{
-				eles[ c ].onclick = function( e )
+				eles[ c ][ intype ] = function( e )
 				{
 					if( this.classList.contains( 'Active' ) )
 						this.classList.remove( 'Active' );
@@ -400,12 +406,13 @@ Workspace.refreshShareInformation = function( viewObject, callback )
 			}
 			str += '</div>';
 			list.innerHTML = str;
+			let intype = window.isTablet || window.isMobile ? 'ontouchstart' : 'onclick';
 			let buttons = list.getElementsByTagName( 'button' );
 			for( let c = 0; c < buttons.length; c++ )
 			{
 				( function( bt )
 				{
-					bt.onclick = function()
+					bt[ intype ] = function()
 					{
 						let n = null;
 						let m = new Module( 'system' );

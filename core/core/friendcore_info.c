@@ -290,6 +290,7 @@ BufString *FriendCoreInfoGet( FriendcoreInfo *fci )
 		
 		int i = 0, j =0;
 		char coreid[ 33 ];
+		int maxWorkers = 0;
 		
 		while( fc != NULL )
 		{
@@ -315,7 +316,15 @@ BufString *FriendCoreInfoGet( FriendcoreInfo *fci )
 			
 			BufStringAdd( bs, temp );
 		
-			snprintf( temp, 2048, "%d", sb->sl_WorkerManager->wm_MaxWorkers );
+			// Get max amount of workers
+			maxWorkers = sb->sl_WorkersNumber;
+			if( sb->sl_WorkerManager )
+			{
+				maxWorkers = sb->sl_WorkerManager->wm_MaxWorkers;
+			}
+			
+			snprintf( temp, 2048, "%d", maxWorkers );
+		
 			//strcpy( temp, "\"0\"" );
 			BufStringAdd( bs, temp );
 			

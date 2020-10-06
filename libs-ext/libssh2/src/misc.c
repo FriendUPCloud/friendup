@@ -1,5 +1,5 @@
 /* Copyright (c) 2004-2007 Sara Golemon <sarag@libssh2.org>
- * Copyright (c) 2009-2014 by Daniel Stenberg
+ * Copyright (c) 2009-2019 by Daniel Stenberg
  * Copyright (c) 2010  Simon Josefsson
  * All rights reserved.
  *
@@ -41,6 +41,10 @@
 #include "misc.h"
 #include "blf.h"
 
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -49,10 +53,17 @@
 #include <sys/time.h>
 #endif
 
+#if defined(HAVE_DECL_SECUREZEROMEMORY) && HAVE_DECL_SECUREZEROMEMORY
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
+#endif
+
 #include <stdio.h>
 #include <errno.h>
 
-int _libssh2_error_flags(LIBSSH2_SESSION* session, int errcode, const char *errmsg, int errflags)
+int _libssh2_error_flags(LIBSSH2_SESSION* session, int errcode,
+                         const char *errmsg, int errflags)
 {
     if(session->err_flags & LIBSSH2_ERR_FLAG_DUP)
         LIBSSH2_FREE(session, (char *)session->err_msg);
@@ -130,19 +141,16 @@ _libssh2_recv(libssh2_socket_t sock, void *buffer, size_t length,
 #ifdef WIN32
     if(rc < 0)
         return -wsa2errno();
-#elif defined(__VMS)
-    if(rc < 0) {
-        if(errno == EWOULDBLOCK)
-            return -EAGAIN;
-        else
-            return -errno;
-    }
 #else
     if(rc < 0) {
         /* Sometimes the first recv() function call sets errno to ENOENT on
            Solaris and HP-UX */
         if(errno == ENOENT)
             return -EAGAIN;
+#ifdef EWOULDBLOCK /* For VMS and other special unixes */
+        else if(errno == EWOULDBLOCK)
+          return -EAGAIN;
+#endif
         else
             return -errno;
     }
@@ -166,16 +174,14 @@ _libssh2_send(libssh2_socket_t sock, const void *buffer, size_t length,
 #ifdef WIN32
     if(rc < 0)
         return -wsa2errno();
-#elif defined(__VMS)
-    if(rc < 0) {
-        if(errno == EWOULDBLOCK)
-            return -EAGAIN;
-        else
-            return -errno;
-    }
 #else
-    if(rc < 0)
-        return -errno;
+    if(rc < 0) {
+#ifdef EWOULDBLOCK /* For VMS and other special unixes */
+      if(errno == EWOULDBLOCK)
+        return -EAGAIN;
+#endif
+      return -errno;
+    }
 #endif
     return rc;
 }
@@ -185,7 +191,10 @@ _libssh2_send(libssh2_socket_t sock, const void *buffer, size_t length,
 unsigned int
 _libssh2_ntohu32(const unsigned char *buf)
 {
-    return (buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | buf[3];
+    return (((unsigned int)buf[0] << 24)
+           | ((unsigned int)buf[1] << 16)
+           | ((unsigned int)buf[2] << 8)
+           | ((unsigned int)buf[3]));
 }
 
 
@@ -332,7 +341,8 @@ size_t _libssh2_base64_encode(LIBSSH2_SESSION *session,
     char *base64data;
     const char *indata = inp;
 
-    *outptr = NULL; /* set to NULL in case of failure before we reach the end */
+    *outptr = NULL; /* set to NULL in case of failure before we reach the
+                       end */
 
     if(0 == insize)
         insize = strlen(indata);
@@ -677,14 +687,21 @@ void _libssh2_aes_ctr_increment(unsigned char *ctr,
     }
 }
 
+#ifdef WIN32
+static void * (__cdecl * const volatile memset_libssh)(void *, int, size_t) =
+    memset;
+#else
 static void * (* const volatile memset_libssh)(void *, int, size_t) = memset;
+#endif
 
 void _libssh2_explicit_zero(void *buf, size_t size)
 {
-#ifdef HAVE_DECL_SECUREZEROMEMORY
+#if defined(HAVE_DECL_SECUREZEROMEMORY) && HAVE_DECL_SECUREZEROMEMORY
     SecureZeroMemory(buf, size);
+    (void)memset_libssh; /* Silence unused variable warning */
 #elif defined(HAVE_MEMSET_S)
     (void)memset_s(buf, size, 0, size);
+    (void)memset_libssh; /* Silence unused variable warning */
 #else
     memset_libssh(buf, 0, size);
 #endif
@@ -696,7 +713,8 @@ struct string_buf* _libssh2_string_buf_new(LIBSSH2_SESSION *session)
 {
     struct string_buf *ret;
 
-    if((ret = _libssh2_calloc(session, sizeof(*ret))) == NULL)
+    ret = _libssh2_calloc(session, sizeof(*ret));
+    if(ret == NULL)
         return NULL;
 
     return ret;
@@ -708,7 +726,7 @@ void _libssh2_string_buf_free(LIBSSH2_SESSION *session, struct string_buf *buf)
         return;
 
     if(buf->data != NULL)
-        free(buf->data);
+        LIBSSH2_FREE(session, buf->data);
 
     LIBSSH2_FREE(session, buf);
     buf = NULL;
@@ -716,31 +734,39 @@ void _libssh2_string_buf_free(LIBSSH2_SESSION *session, struct string_buf *buf)
 
 int _libssh2_get_u32(struct string_buf *buf, uint32_t *out)
 {
-    unsigned char *p = NULL;
-
     if(!_libssh2_check_length(buf, 4)) {
         return -1;
     }
 
-    p = buf->dataptr;
-    *out = (((uint32_t) p[0]) << 24) + (((uint32_t) p[1]) << 16) +
-    (((uint32_t) p[2]) << 8) + ((uint32_t) p[3]);
+    *out = _libssh2_ntohu32(buf->dataptr);
     buf->dataptr += 4;
-    buf->offset += 4;
+    return 0;
+}
+
+int _libssh2_get_u64(struct string_buf *buf, libssh2_uint64_t *out)
+{
+    if(!_libssh2_check_length(buf, 8)) {
+        return -1;
+    }
+
+    *out = _libssh2_ntohu64(buf->dataptr);
+    buf->dataptr += 8;
     return 0;
 }
 
 int _libssh2_match_string(struct string_buf *buf, const char *match)
 {
     unsigned char *out;
-    if((size_t)_libssh2_get_c_string(buf, &out) != strlen(match) ||
-        strncmp((char*)out, match, strlen(match)) != 0) {
+    size_t len = 0;
+    if(_libssh2_get_string(buf, &out, &len) || len != strlen(match) ||
+        strncmp((char *)out, match, strlen(match)) != 0) {
         return -1;
     }
     return 0;
 }
 
-int _libssh2_get_c_string(struct string_buf *buf, unsigned char **outbuf)
+int _libssh2_get_string(struct string_buf *buf, unsigned char **outbuf,
+                        size_t *outlen)
 {
     uint32_t data_len;
     if(_libssh2_get_u32(buf, &data_len) != 0) {
@@ -751,17 +777,45 @@ int _libssh2_get_c_string(struct string_buf *buf, unsigned char **outbuf)
     }
     *outbuf = buf->dataptr;
     buf->dataptr += data_len;
-    buf->offset += data_len;
-    return data_len;
+
+    if(outlen)
+        *outlen = (size_t)data_len;
+
+    return 0;
 }
 
-int _libssh2_get_bignum_bytes(struct string_buf *buf, unsigned char **outbuf)
+int _libssh2_copy_string(LIBSSH2_SESSION *session, struct string_buf *buf,
+                         unsigned char **outbuf, size_t *outlen)
+{
+    size_t str_len;
+    unsigned char *str;
+
+    if(_libssh2_get_string(buf, &str, &str_len)) {
+        return -1;
+    }
+
+    *outbuf = LIBSSH2_ALLOC(session, str_len);
+    if(*outbuf) {
+        memcpy(*outbuf, str, str_len);
+    }
+    else {
+        return -1;
+    }
+
+    if(outlen)
+        *outlen = str_len;
+
+    return 0;
+}
+
+int _libssh2_get_bignum_bytes(struct string_buf *buf, unsigned char **outbuf,
+                              size_t *outlen)
 {
     uint32_t data_len;
     uint32_t bn_len;
     unsigned char *bnptr;
 
-    if(_libssh2_get_u32(buf, &data_len) != 0) {
+    if(_libssh2_get_u32(buf, &data_len)) {
         return -1;
     }
     if(!_libssh2_check_length(buf, data_len)) {
@@ -771,23 +825,30 @@ int _libssh2_get_bignum_bytes(struct string_buf *buf, unsigned char **outbuf)
     bn_len = data_len;
     bnptr = buf->dataptr;
 
-    // trim leading zeros
+    /* trim leading zeros */
     while(bn_len > 0 && *bnptr == 0x00) {
         bn_len--;
         bnptr++;
     }
 
     *outbuf = bnptr;
-
     buf->dataptr += data_len;
-    buf->offset += data_len;
 
-    return bn_len;
+    if(outlen)
+        *outlen = (size_t)bn_len;
+
+    return 0;
 }
+
+/* Given the current location in buf, _libssh2_check_length ensures
+   callers can read the next len number of bytes out of the buffer
+   before reading the buffer content */
 
 int _libssh2_check_length(struct string_buf *buf, size_t len)
 {
-    return ((int)(buf->dataptr - buf->data) <= (int)(buf->len - len)) ? 1 : 0;
+    unsigned char *endp = &buf->data[buf->len];
+    size_t left = endp - buf->dataptr;
+    return ((len <= left) && (left <= buf->len));
 }
 
 /* Wrappers */

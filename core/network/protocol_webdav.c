@@ -690,7 +690,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		SocketSetBlocking( req->http_Socket, FALSE );
 		while( TRUE )
 		{
-			rs = SocketRead( req->http_Socket, buf, 10000, 0 );
+			rs = req->http_Socket->s_Interface->SocketRead( req->http_Socket, buf, 10000, 0 );
 			if( rs > 0 )
 			{
 				printf("------------------------%s\n", buf );
@@ -918,8 +918,12 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 						UserAddSession( usr, ses );
 						USMSessionSaveDB( sb->sl_USM, ses );
 					
-						ses->node.mln_Succ = (MinNode *) sb->sl_USM->usm_Sessions;
-						sb->sl_USM->usm_Sessions = ses;
+						if( FRIEND_MUTEX_LOCK( &(sb->sl_USM->usm_Mutex) ) == 0 )
+						{
+							ses->node.mln_Succ = (MinNode *) sb->sl_USM->usm_Sessions;
+							sb->sl_USM->usm_Sessions = ses;
+							FRIEND_MUTEX_UNLOCK( &(sb->sl_USM->usm_Mutex) );
+						}
 					}
 				}
 				char *err = NULL;

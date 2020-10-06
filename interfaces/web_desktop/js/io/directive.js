@@ -34,14 +34,17 @@ function RemoveFromExecutionQueue( app )
 // Load a javascript application into a sandbox
 function ExecuteApplication( app, args, callback, retries )
 {
+	// Just nothing.
+	if( !app ) return;
+	
 	// If we don't have any cached basics, wait a bit
 	if( typeof( _applicationBasics ) == 'undefined' || !_applicationBasics.js )
 	{
 		if( retries == 3 ) return console.log( 'Could not execute app: ' + app );
-		return setTimeout( function()
+		loadApplicationBasics( function()
 		{
 			ExecuteApplication( app, args, callback, !retries ? 1 : retries++ );
-		}, 125 );
+		} );
 	}
 	var appName = app;
 	if( app.indexOf( ':' ) > 0 )
@@ -203,14 +206,12 @@ function ExecuteApplication( app, args, callback, retries )
 		{
 			//
 		}
-
-		// Remove blocker
-		RemoveFromExecutionQueue( appName );
-		// console.log( 'Test3: Executed. Removing appqueue: ' + appName );
-		
+	
 		if( r == 'activate' )
 		{
 			ActivateApplication( app, conf );
+			// Remove blocker
+			RemoveFromExecutionQueue( appName );
 			if( callback ) callback( false );
 			
 			return false;
@@ -233,6 +234,8 @@ function ExecuteApplication( app, args, callback, retries )
 				{
 					if( !callback( { error: 2, errorMessage: i18n( 'install_question_title' ) } ) )
 					{
+						// Remove blocker
+						RemoveFromExecutionQueue( appName );
 						return;
 					}
 				}
@@ -257,7 +260,6 @@ function ExecuteApplication( app, args, callback, retries )
 					if( hideView )
 					{
 						InstallApplication( app );
-
 					}
 				}
 				f.load();
@@ -267,22 +269,28 @@ function ExecuteApplication( app, args, callback, retries )
 				// Just use callback
 				if( callback )
 				{
+					// Remove blocker
+					RemoveFromExecutionQueue( appName );
 					return callback( { error: 1, errorMessage: i18n( 'application_not_signed' ) } );
 				}
 				Ac2Alert( i18n( 'application_not_signed' ) );
 			}
 			else if( r == 'fail' && conf && conf.response == 'application not validated' )
-			{
+			{				
 				if( callback )
 				{
+					// Remove blocker
+					RemoveFromExecutionQueue( appName );
 					return callback( { error: 1, errorMessage: i18n( 'application_not_validated' ) } );
 				}
 				Ac2Alert( i18n( 'application_not_validated' ) );
 			}
 			else
-			{
+			{				
 				if( callback )
 				{
+					// Remove blocker
+					RemoveFromExecutionQueue( appName );
 					return callback( { error: 1, errorMessage: i18n( 'application_not_found' ) } );
 				}
 				Ac2Alert( i18n( 'application_not_found' ) );
@@ -299,6 +307,8 @@ function ExecuteApplication( app, args, callback, retries )
 			// Kill app if it is there
 			KillApplication( appName );
 			
+			// Remove blocker
+			RemoveFromExecutionQueue( appName );		
 			return false;
 		}
 
@@ -309,11 +319,15 @@ function ExecuteApplication( app, args, callback, retries )
 			{
 				if( callback )
 				{
+					// Remove blocker
+					RemoveFromExecutionQueue( appName );
 					return callback( { error: 1, errorMessage: 'Can not run v0 applications.' } );
 				}
 				Ac2Alert( 'Can not run v0 applications.' );
 				if( callback ) callback( false );
 				
+				// Remove blocker
+				RemoveFromExecutionQueue( appName );
 				return false;
 			}
 
@@ -376,6 +390,8 @@ function ExecuteApplication( app, args, callback, retries )
 			{
 				if( conf.Init.indexOf( ':' ) > 0 && conf.Init.indexOf( '.jsx' ) > 0 )
 				{
+					// Remove blocker
+					RemoveFromExecutionQueue( appName );
 					return ExecuteJSXByPath( conf.Init, args, callback, conf );
 				}
 				// TODO: Check privileges of one app to launch another!
@@ -554,9 +570,6 @@ function ExecuteApplication( app, args, callback, retries )
 			// Register application
 			ifr.onload = function()
 			{
-				// Clean blocker
-				RemoveFromExecutionQueue( appName );
-				
 				// Make sure pickup items are cleared
 				mousePointer.clear();
 				
@@ -662,11 +675,6 @@ function ExecuteApplication( app, args, callback, retries )
 	var eo = { application: app, args: args };
 	if( Workspace.conf && Workspace.conf.authid )
 		eo.authid = Workspace.conf.authid;
-	m.onQueue = function()
-	{
-		// Clean blocker
-		RemoveFromExecutionQueue( appName );
-	}
 	m.execute( 'friendapplication', eo );
 	// console.log( 'Test3: Executing application: ' + app );
 }

@@ -80,9 +80,9 @@ static inline ListString *RunPHPScript( const char *command )
 		return NULL;
 	}
 	
-#define PHP_READ_SIZE 65536	
+#define PHP_READ_SIZE 4096	
 	
-	char *buf = FMalloc( PHP_READ_SIZE+16 );
+	char *buf = FMalloc( PHP_READ_SIZE + 16 );
 	ListString *ls = ListStringNew();
 	
 #ifdef USE_NPOPEN_POLL
@@ -101,12 +101,12 @@ static inline ListString *RunPHPScript( const char *command )
 	// watch stdout for ability to write
 	fds[1].fd = STDOUT_FILENO;
 	fds[1].events = POLLOUT;
-
+	
 	while( TRUE )
 	{
 		DEBUG("[RunPHPScript] in loop\n");
 		
-		int ret = poll( fds, 2, MOD_TIMEOUT * 1000);
+		int ret = poll( fds, 2, 250 );
 
 		if( ret == 0 )
 		{
@@ -287,7 +287,6 @@ static inline int ReadServerFile( Uri *uri __attribute__((unused)), char *locpat
 	FBOOL freeFile = FALSE;
 
 	LocFile* file = NULL;
-	//if( FRIEND_MUTEX_LOCK( &SLIB->sl_ResourceMutex ) == 0 )
 	{
 		if( SLIB->sl_CacheFiles == 1 )
 		{
@@ -338,7 +337,6 @@ static inline int ReadServerFile( Uri *uri __attribute__((unused)), char *locpat
 				freeFile = TRUE;
 			}
 		}
-		//FRIEND_MUTEX_UNLOCK( &SLIB->sl_ResourceMutex );
 	}
 
 	// Send reply
@@ -526,7 +524,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 #ifdef __PERF_MEAS
 		stime = GetCurrentTimestampD();
 #endif
-		
+				
 		Log( FLOG_DEBUG, "[ProtocolHttp] Request parsed without problems.\n");
 		Uri *uri = request->http_Uri;
 		Path *path = NULL;
@@ -656,15 +654,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							{
 								if( tst->hme_Data != NULL )
 								{
-									session = SLIB->sl_USM->usm_Sessions;
-									while( session != NULL )
-									{
-										if(  strcmp( session->us_SessionID, (char *)tst->hme_Data ) == 0 )
-										{
-											break;
-										}
-										session = (UserSession *)session->node.mln_Succ;
-									}
+									session = USMGetSessionBySessionID( SLIB->sl_USM, (char *)tst->hme_Data );
 								}
 							}
 							UserLoggerStore( SLIB->sl_ULM, session, request->http_RawRequestPath, request->http_UserActionInfo );
@@ -910,7 +900,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							char *usrSessionID = NULL;
 							FBOOL sessionIDGenerated = FALSE;
 							
-							sqllib->SNPrintF( sqllib, query, sizeof(query), "SELECT fs.Name, fs.Devname, fs.Path, fs.UserID, f.Type, u.SessionID FROM FFileShared fs, Filesystem f, FUser u WHERE fs.Hash=\"%s\" AND u.ID = fs.UserID AND f.Name = fs.Devname", path->parts[ 1 ] );
+							sqllib->SNPrintF( sqllib, query, 1024, "SELECT fs.Name, fs.Devname, fs.Path, fs.UserID, f.Type, u.SessionID FROM FFileShared fs, Filesystem f, FUser u WHERE fs.Hash=\"%s\" AND u.ID = fs.UserID AND f.Name = fs.Devname", path->parts[ 1 ] );
 							
 							void *res = sqllib->Query( sqllib, query );
 							if( res != NULL )
@@ -955,7 +945,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							if( usrSessionID == NULL )// if res == NULL
 							{
 								DEBUG("First call releated to shared files did not return any results\n");
-								sqllib->SNPrintF( sqllib, query, sizeof(query), "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,u.SessionID,f.ID from FFileShared fs inner join Filesystem f on fs.FSID=f.ID inner join FUser u on fs.UserID=u.ID where `Hash`='%s'", path->parts[ 1 ] );
+								sqllib->SNPrintF( sqllib, query, 1024, "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,u.SessionID,f.ID from FFileShared fs inner join Filesystem f on fs.FSID=f.ID inner join FUser u on fs.UserID=u.ID where `Hash`='%s'", path->parts[ 1 ] );
 							
 								res = sqllib->Query( sqllib, query );
 								if( res != NULL )
@@ -1131,7 +1121,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 														resp = 1;
 													}
 													dataread = fread( tbuffer, 1, SHARING_BUFFER_SIZE, cf->cf_Fp );
-													SocketWrite( request->http_Socket, tbuffer, dataread );
+													request->http_Socket->s_Interface->SocketWrite( request->http_Socket, tbuffer, dataread );
 												}
 												FFree( tbuffer );
 											}
@@ -1225,11 +1215,11 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 															HttpWrite( response, request->http_Socket );
 															resp = 1;
 															
-															SocketWrite( request->http_Socket, tbuffer, dataread );
+															request->http_Socket->s_Interface->SocketWrite( request->http_Socket, tbuffer, dataread );
 														}
 														else
 														{
-															SocketWrite( request->http_Socket, tbuffer, dataread );
+															request->http_Socket->s_Interface->SocketWrite( request->http_Socket, tbuffer, dataread );
 														}
 														
 														if( cffp != NULL )
@@ -1346,15 +1336,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 						{
 							if( tst->hme_Data != NULL )
 							{
-								session = SLIB->sl_USM->usm_Sessions;
-								while( session != NULL )
-								{
-									if(  strcmp( session->us_SessionID, (char *)tst->hme_Data ) == 0 )
-									{
-										break;
-									}
-									session = (UserSession *)session->node.mln_Succ;
-								}
+								session = USMGetSessionBySessionID( SLIB->sl_USM, (char *)tst->hme_Data );
 							}
 						}
 						UserLoggerStore( SLIB->sl_ULM, session, request->http_RawRequestPath, request->http_UserActionInfo );
@@ -1546,7 +1528,14 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 													DEBUG("[ProtocolHttp] File created %s size %lu\n", nlf->lf_Path, nlf->lf_FileSize );
 
-													if( CacheManagerFilePut( SLIB->cm, nlf ) != 0 )
+													if( SLIB->sl_CacheFiles == TRUE )
+													{
+														if( CacheManagerFilePut( SLIB->cm, nlf ) != 0 )
+														{
+															LocFileDelete( nlf );
+														}
+													}
+													else
 													{
 														LocFileDelete( nlf );
 													}
@@ -1555,6 +1544,8 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 												{
 													FFree( mime );
 												}
+												
+												//DEBUG("Multifile content: %s\n\n\n", bs->bs_Buffer );
 
 												bs->bs_Buffer = NULL;
 
@@ -1596,11 +1587,11 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 								char *newUrl = NULL;
 								FBOOL fromUrl = FALSE;
 
-								if( strcmp( path->parts[ 0 ], "webclient" ) == 0 &&
-									path->parts[ 1 ] != NULL && strcmp( path->parts[ 1 ], "index.html" ) == 0 
+								if( SLIB->fcm->fcm_ClusterMaster
 									&&
-									
-									SLIB->fcm->fcm_ClusterMaster )
+									strcmp( path->parts[ 0 ], "webclient" ) == 0 &&
+									path->parts[ 1 ] != NULL && strcmp( path->parts[ 1 ], "index.html" ) == 0 
+								)
 								{
 									//DEBUG("\n\n\n\n===========================\n\n");
 									DEBUG("Checking connections, number sessions %d\n", SLIB->sl_USM->usm_SessionCounter );
@@ -1655,11 +1646,11 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
  Attempting to redirect to <a href=\"https://%s/webclient/index.html\">https://%s</a>.</body></html>", newUrl, newUrl, newUrl ); */
 										if( fromUrl == TRUE )
 										{
-											redsize = snprintf( redirect, sizeof( redirect ), "https://%s/webclient/index.html", newUrl );
+											redsize = snprintf( redirect, 1024, "https://%s/webclient/index.html", newUrl );
 										}
 										else
 										{
-											redsize = snprintf( redirect, sizeof( redirect ), "https://%s:6502/webclient/index.html", newUrl );
+											redsize = snprintf( redirect, 1024, "https://%s:6502/webclient/index.html", newUrl );
 										}
 									}
 									else
@@ -1706,7 +1697,6 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 									{
 										LocFile* file = NULL;
 
-										//if( FRIEND_MUTEX_LOCK( &SLIB->sl_ResourceMutex ) == 0 )
 										{
 											char *decoded = UrlDecodeToMem( completePath->raw );
 											if( SLIB->sl_CacheFiles == 1 )
@@ -1759,8 +1749,6 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 												freeFile = TRUE;
 											}
 											FFree( decoded );
-											DEBUG("Resource mutex released\n");
-											//FRIEND_MUTEX_UNLOCK( &SLIB->sl_ResourceMutex );
 										}
 										if( file != NULL )
 										{
@@ -1841,14 +1829,13 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 											char *url = FCalloc( 2048, sizeof(char) );
 											
-											//char url[ 2048 ]; 
-											//memset( url, '\0', 2048 );
 											int hasUrl = 0;
 											if( sqllib != NULL )
 											{
 												char *qery = FMalloc( 1048 );
-												//char qery[ 1048 ];
+												
 												qery[ 1024 ] = 0;
+												
 												sqllib->SNPrintF( sqllib, qery, 1024, "SELECT Source FROM FTinyUrl WHERE `Hash`=\"%s\"", hash ? hash : "-" );
 												void *res = sqllib->Query( sqllib, qery );
 												if( res != NULL )
@@ -2002,20 +1989,21 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 															//snprintf( runFile, argssize + 512, "php \"php/catch_all.php\" \"%s\";", allArgsNew );
 															DEBUG("MODRUNPHP '%s'\n", runFile );
 															
+															Log( FLOG_DEBUG, "[ProtocolHttp] Executing RunPHPScript\n");
 															phpResp = RunPHPScript( runFile );
 														
 															FFree( runFile );
 														}
-													}
+														
+														if( isFile )
+														{
+															//"file<!--separate-->%s"
+															char *fname = allArgsNew + MODULE_FILE_CALL_STRING_LEN;
+															remove( fname );
+														}
 													
-													if( isFile )
-													{
-														//"file<!--separate-->%s"
-														char *fname = allArgsNew + MODULE_FILE_CALL_STRING_LEN;
-														remove( fname );
+														FFree( allArgsNew );
 													}
-													
-													FFree( allArgsNew );
 												}
 												
 												if( phpResp == NULL )
@@ -2025,6 +2013,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 													{
 														snprintf( command, clen, "php \"php/catch_all.php\" \"%s\" \"%s\";", uri->uri_Path->raw, request->http_Uri ? request->http_Uri->uri_QueryRaw : NULL );
 													
+														Log( FLOG_DEBUG, "[ProtocolHttp] Executing php/catch_all.php\n");
 														phpResp = RunPHPScript( command );
 														
 														FFree( command );
@@ -2096,7 +2085,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 													response->http_WriteType = FREE_ONLY;
 
-													SocketWrite( sock, resp, (FLONG)(phpResp->ls_Size - (resp - phpResp->ls_Data)) );
+													sock->s_Interface->SocketWrite( sock, resp, (FLONG)(phpResp->ls_Size - (resp - phpResp->ls_Data)) );
 
 													if( cntype != NULL ) FFree( cntype );
 													if( code != NULL ) FFree( code );

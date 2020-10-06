@@ -105,15 +105,15 @@ FriendCoreManager *FriendCoreManagerNew()
 		{ 
 			pthread_mutex_init( &ssl_mutex_buf[ i ], NULL );
 		}
-	 
-		// Setup static locking.
-		CRYPTO_set_locking_callback( ssl_locking_function );
-		CRYPTO_set_id_callback( ssl_id_function );
 	
 		OpenSSL_add_all_algorithms();
 	
 		// Load the error strings for SSL & CRYPTO APIs 
 		SSL_load_error_strings();
+		
+		// Setup static locking.
+		CRYPTO_set_locking_callback( ssl_locking_function );
+		CRYPTO_set_id_callback( ssl_id_function );
 	
 		RAND_load_file( "/dev/urandom", 1024 );
 		
@@ -295,12 +295,14 @@ int FriendCoreManagerInit( FriendCoreManager *fcm )
 		Log(FLOG_INFO, "-----FC id: %128s\n", fcm->fcm_ID  );
 		Log(FLOG_INFO, "-----FC launched with options\n");
 		Log(FLOG_INFO, "-----Cache files: %d\n", SLIB->sl_CacheFiles );
+#ifdef USE_WORKERS		
+		Log(FLOG_INFO, "-----Workers: %d\n", SLIB->sl_WorkerManager->wm_MaxWorkers );
+#endif
 		Log(FLOG_INFO, "-----HTTP SSL enabled: %d\n", fcm->fcm_SSLEnabled );
 		Log(FLOG_INFO, "-----WS SSL enabled: %d\n", fcm->fcm_WSSSLEnabled );
 		Log(FLOG_INFO, "-----Communication SSL enabled: %d\n", fcm->fcm_SSLEnabledCommuncation );
 		Log(FLOG_INFO, "-----FCPort: %d\n", fcm->fcm_FCPort );
 		Log(FLOG_INFO, "-----WSPort: %d\n", fcm->fcm_WSPort );
-		Log(FLOG_INFO, "-----WSMobilePort: %d\n", fcm->fcm_WSMobilePort );
 		Log(FLOG_INFO, "-----WSNotificationPort: %d\n", fcm->fcm_WSNotificationPort );
 		Log(FLOG_INFO, "-----CommPort: %d\n", fcm->fcm_ComPort );
 		Log(FLOG_INFO, "-----CommRemotePort: %d\n", fcm->fcm_ComRemotePort );
@@ -375,7 +377,7 @@ int FriendCoreManagerInitServices( FriendCoreManager *fcm )
 			
 			if( fcm->fcm_DisableExternalWS == 0 )
 			{
-				if( ( fcm->fcm_WebSocketNotification = WebSocketNew( SLIB, fcm->fcm_WSNotificationPort, fcm->fcm_WSSSLEnabled, 2, fcm->fcm_WSExtendedDebug ) ) != NULL )
+				if( ( fcm->fcm_WebSocketNotification = WebSocketNew( SLIB, fcm->fcm_WSNotificationPort, FALSE, 2, fcm->fcm_WSExtendedDebug ) ) != NULL )
 				{
 					WebSocketStart( fcm->fcm_WebSocketNotification );
 				}
@@ -525,8 +527,8 @@ void FriendCoreManagerDelete( FriendCoreManager *fcm )
 		EVP_cleanup( );
 		SSL_COMP_free_compression_methods();
 		COMP_zlib_cleanup();
-		ERR_remove_state(0);
-		ERR_remove_thread_state(NULL);
+		//ERR_remove_state(0);
+		//ERR_remove_thread_state(NULL);
 
 		ERR_free_strings();
 		CRYPTO_cleanup_all_ex_data();

@@ -50,7 +50,10 @@ if( isset( $args->conf ) )
 					f.Name ASC' )
 				)
 				{
-					$conf = json_decode( $f->Config );
+					if( isset( $f->Config ) )
+					{
+						$conf = json_decode( $f->Config );
+					}
 				}
 				else die( 'fail<!--separate-->{"response":"Could not find file system."}' );
 			}

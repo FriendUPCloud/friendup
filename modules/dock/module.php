@@ -82,11 +82,11 @@ if( isset( $args->command ) )
 	switch( $args->command )
 	{
 		case 'items':
-			if( $args->args->userID && $args->args->userID != $User->ID )
+			if( isset( $args->args->userID ) && $args->args->userID != $User->ID )
 			{
 				if( $level != 'Admin' ) die('fail<!--separate-->not authorized to sort dockitems');
 			}
-			$userid = ( $args->args->userID ? intval( $args->args->userID ) : $User->ID );
+			$userid = ( isset( $args->args->userID ) ? intval( $args->args->userID ) : $User->ID );
 			// Load root items if nothing else is requested
 			if( $rows = $SqlDatabase->FetchObjects( '
 				SELECT d.* FROM
@@ -146,12 +146,12 @@ if( isset( $args->command ) )
 			$s = filter_var( $args->args->name, FILTER_SANITIZE_STRING );
 			if( $args->args->fuzzy )
 			{
-				$q = ( 'DELETE FROM DockItem WHERE UserID=\'' . $userid . '\' AND `Application` LIKE "' . $s . ' %" AND `Type`="' . ( isset( $args->args->type ) ? '' : 'executable' ) . '"' );
+				$q = ( 'DELETE FROM DockItem WHERE UserID=\'' . $userid . '\' AND `Application` LIKE "' . $s . ' %" AND ( `Type`="' . ( isset( $args->args->type ) ? '' : 'executable' ) . '" OR `Type`="" ' );
 				//$Logger->log('cleaning a dock here... ' . $q);
 			}
 			else
 			{
-				$q = ( 'DELETE FROM DockItem WHERE UserID=\'' . $userid . '\' AND `Application`="' . $s . '" AND `Type`="' . ( isset( $args->args->type ) ? '' : 'executable' ) . '" LIMIT 1' );
+				$q = ( 'DELETE FROM DockItem WHERE UserID=\'' . $userid . '\' AND `Application`="' . $s . '" AND ( `Type`="' . ( isset( $args->args->type ) ? '' : 'executable' ) . '" OR `Type`="" ) LIMIT 1' );
 			}
 			if( $SqlDatabase->Query( $q ) )
 			{

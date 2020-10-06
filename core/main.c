@@ -243,8 +243,54 @@ int main( int argc, char *argv[])
 	return 0;
 }
 
+#define MAX_STACK_FRAMES 64
+#define USE_SYSTEM
+
 //Based on https://spin.atomicobject.com/2013/01/13/exceptions-stack-traces-c/
 static void crash_handler(int sig __attribute__((unused))){
+	
+#ifdef USE_SYSTEM
+	// we dont need all information
+	
+	static void *stack_traces[MAX_STACK_FRAMES];
+	char buffer[ 512 ];
+
+	int i, trace_size = 0;
+	char **messages = (char **)NULL;
+
+	trace_size = backtrace(stack_traces, MAX_STACK_FRAMES);
+	messages = backtrace_symbols(stack_traces, trace_size);
+
+	/* skip the first couple stack frames (as they are this function and
+     our handler) and also skip the last frame as it's (always?) junk. */
+	// for (i = 3; i < (trace_size - 1); ++i)
+	// we'll use this for now so you can see what's going on
+	system( "echo 'Start' >> crash.log" );
+	
+	for (i = 0; i < trace_size; ++i)
+	{
+		snprintf( buffer, 512, "echo '> %s\n' >> crash.log", messages[i] );
+		system( buffer );
+		
+		if (addr2line(_program_name, stack_traces[i], NULL ) != 0)
+		{
+			snprintf( buffer, 512, "echo 'error determining line # for: %s\n' >> crash.log", messages[i] );
+			system( buffer );
+		}
+	}
+	if( messages )
+	{
+		free(messages);
+	}
+
+	printf("\n\n"
+			"#######################################################\n"
+			"           Sorry - FriendCore has crashed\n"
+			"            log saved to file %s\n"
+			"#######################################################\n"
+			"\n\n", CRASH_LOG_FILENAME );
+	
+#else
 	FILE *crash_log_file_handle = fopen( CRASH_LOG_FILENAME, "w");
 
 	fprintf(crash_log_file_handle, "\n************ CRASH INFO ************\n");
@@ -271,7 +317,6 @@ static void crash_handler(int sig __attribute__((unused))){
 	fprintf(crash_log_file_handle, "non-gcc compiler\n");
 #endif
 
-#define MAX_STACK_FRAMES 64
 	static void *stack_traces[MAX_STACK_FRAMES];
 
 	int i, trace_size = 0;
@@ -305,32 +350,32 @@ static void crash_handler(int sig __attribute__((unused))){
 			"#######################################################\n"
 			"\n\n", CRASH_LOG_FILENAME );
 	//_exit(1);
-	
+#endif
 	FriendCoreLockRelease();
 	
 	signal( sig, SIG_DFL );
 	kill( getpid(), sig );
 }
 
-/* Resolve symbol name and source location given the path to the executable
-   and an address */
+// Resolve symbol name and source location given the path to the executable
+//   and an address 
 static int addr2line(char const * const program_name, void const * const addr, FILE *target_stream)
 {
 	char addr2line_cmd[512] = {0};
 
-	/* have addr2line map the address to the relent line in the code */
+	// have addr2line map the address to the relent line in the code 
 #ifdef __APPLE__
-	/* apple does things differently... */
+	// apple does things differently... 
 	sprintf(addr2line_cmd,"atos -o %.256s %p", program_name, addr);
 #else
-	sprintf(addr2line_cmd,"addr2line -f -p -e %.256s %p", program_name, addr);
+	sprintf( addr2line_cmd,"addr2line -f -p -e %.256s %p", program_name, addr);
 #endif
 
-	/* This will print a nicely formatted string specifying the
-     function and source line of the address */
+	// This will print a nicely formatted string specifying the
+    // function and source line of the address */
 	//	return system(addr2line_cmd);
 
-	FILE* fp = popen(addr2line_cmd, "r");
+	FILE* fp = popen( addr2line_cmd, "r");
 	if (fp == NULL) {
 		printf("Failed to run addr2line\n" );
 		return 1;
@@ -338,8 +383,22 @@ static int addr2line(char const * const program_name, void const * const addr, F
 
 	char line_buffer[256];
 	memset(line_buffer, 0, sizeof(line_buffer));
-	while (fgets(line_buffer, sizeof(line_buffer)-1, fp) != NULL) {
-		fprintf(target_stream, "%s", line_buffer);
+	if( target_stream != NULL )
+	{
+		while( fgets(line_buffer, sizeof(line_buffer)-1, fp ) != NULL )
+		{
+			fprintf( target_stream, "%s", line_buffer );
+		}
+	}
+	else
+	{
+		while( fgets(line_buffer, sizeof(line_buffer)-1, fp ) != NULL )
+		{
+			char buffer[ 512 ];
+			
+			snprintf( buffer, 512, "echo '- %s\n' >> crash.log", line_buffer );
+			system( buffer );
+		}
 	}
 
 	/* close */

@@ -77,7 +77,7 @@ self.checkVolume = function()
 					self.postMessage( { 'error': 1, 'errormessage': 'Illegal server response.' } ); return; 
 				}
 				
-				var diskspace = parseInt( tmp.Filesize ) - parseInt( tmp.Used );
+				var diskspace = parseInt( tmp.Filesize ) - parseInt( tmp.Used ? tmp.Used : 0 );
 				
 				for( var f in self.files )
 				{
@@ -381,7 +381,50 @@ self.uploadFiles = function()
 			xh.onreadystatechange = function()
 			{
 				if( this.readyState == 4 && this.status == 200  )
-				{					
+				{
+					// Check the uploaded files..
+					let serverResponse = null;
+					let serverResponseCode = null;
+					let serverResponseMessage = 'Successful upload';
+					try
+					{
+						let d = this.responseText.split( '<!--separate-->' );
+						
+						serverResponseCode = d[0];
+						serverResponse = JSON.parse( d[1] );
+						if( serverResponse.files.length )
+						{
+							for( let b = 0; b < serverResponse.files.length; b++ )
+							{
+								if( serverResponse.files[b].responseCode == 2 )
+								{
+									serverResponseCode = 'fail';
+									serverResponseMessage = 'Not enough space on device';
+									break;
+								}
+							}
+						}
+					}
+					catch( e )
+					{
+						serverResponseCode = 'fail';
+						serverResponseMessage = 'Upload failed due to an unexpected error';
+					}
+					
+					if( serverResponseCode == 'fail' )
+					{
+						self.postMessage( {
+							'progressinfo' : 1,
+							'error' : 1,
+							'fileindex' : ind, 
+							'uploaderror' : 'Upload failed. Server response was readystate/status: |' + 
+								this.readyState + '/' + this.status + '|',
+							'message' : serverResponseMessage
+						} );
+						if( callback ) callback();
+						return;
+					}
+					
 					loadPieces[ ind ].loaded = loadPieces[ ind ].total;
 					
 					if( self.filesUnderTransport > 1 ) 
@@ -401,12 +444,16 @@ self.uploadFiles = function()
 				}
 				else if( this.readyState > 1 && this.status > 0 )
 				{
-					self.postMessage( {
-						'progressinfo' : 1,
-						'fileindex' : ind, 
-						'uploaderror' : 'Upload failed. Server response was readystate/status: |' + 
-							this.readyState + '/' + this.status + '|' 
-					} );
+					// Only flag fail if it actually failed!
+					if( this.responseText.substr( 0, 4 ) == 'fail' )
+					{
+						self.postMessage( {
+							'progressinfo' : 1,
+							'fileindex' : ind, 
+							'uploaderror' : 'Upload failed. Server response was readystate/status: |' + 
+								this.readyState + '/' + this.status + '|' 
+						} );
+					}
 				}
 				else
 				{

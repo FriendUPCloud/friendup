@@ -31,6 +31,7 @@ typedef struct UserSessionManager
 {
 	void							*usm_SB;
 	UserSession						*usm_Sessions;							// user sessions
+	UserSession						*usm_SessionsToBeRemoved;				// sessions which must be removed
 	int								usm_SessionCounter;
 	void 							*usm_UM;
 	
@@ -211,5 +212,11 @@ char *USMCreateTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, F
 //
 
 void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, char *sessionID );
+
+//
+// Check if User Session is attached to Sentinel User
+//
+
+User *USMIsSentinel( UserSessionManager *usm, char *username, UserSession **rus, FBOOL *isSentinel );
 
 #endif //__SYSTEM_USER_USER_SESSIONMANAGER_H__

@@ -44,6 +44,9 @@ typedef struct SpecialData
 	char				*module;
 	char				*fname;
 	char				*path;
+	NPOpenFD            *pofd;
+	struct pollfd       *pollfd1;
+	struct pollfd       *pollfd2;
 	int					mode;
 	SystemBase			*sb;
 } SpecialData;
@@ -189,9 +192,9 @@ char *GetFileName( const char *path )
 }
 
 //#define PHP_READ_SIZE 262144
-//#define PHP_READ_SIZE 2048
-//#define PHP_READ_SIZE 132144
-#define PHP_READ_SIZE (1024 * 1024 * 2)
+#define PHP_READ_SIZE 4096
+// #define PHP_READ_SIZE 131072
+//#define PHP_READ_SIZE (1024 * 1024 * 2)
 #define USE_NPOPEN_POLL
 
 //
@@ -225,31 +228,37 @@ ListString *PHPCall( const char *command )
 	// watch stdout for ability to write
 	fds[1].fd = STDOUT_FILENO;
 	fds[1].events = POLLOUT;
+	
+	// Set to non block
+	fcntl( fds[1].fd, F_SETFL, O_NONBLOCK );
+	
+	int ret = 0;
+	int timeout = FILESYSTEM_MOD_TIMEOUT * 1000;
 
 	while( TRUE )
 	{
-		DEBUG("[PHPFsys] in loop\n");
+		//DEBUG("[PHPFsys] in loop\n");
 		
-		int ret = poll( fds, 2, FILESYSTEM_MOD_TIMEOUT * 1000);
+		ret = poll( fds, 2, 250 ); // HT Small timeout
 
 		if( ret == 0 )
 		{
-			DEBUG("Timeout!\n");
+			//DEBUG("Timeout!\n");
 			break;
 		}
 		else if(  ret < 0 )
 		{
-			DEBUG("Error\n");
+			//DEBUG("Error\n");
 			break;
 		}
 		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
 
-		DEBUG( "[PHPFsys] Adding %d of data\n", size );
+		//DEBUG( "[PHPFsys] Adding %d of data\n", size );
 		if( size > 0 )
 		{
-			DEBUG( "[PHPFsys] before adding to list\n");
+			//DEBUG( "[PHPFsys] before adding to list\n");
 			ListStringAdd( ls, buf, size );
-			DEBUG( "[PHPFsys] after adding to list\n");
+			//DEBUG( "[PHPFsys] after adding to list\n");
 			//res += size;
 		}
 		else
@@ -311,7 +320,7 @@ ListString *PHPCall( const char *command )
 	
 	ListStringJoin( ls );		//we join all string into one buffer
 
-	DEBUG( "[fsysphp] Finished PHP call...(%lu length)-\n", ls->ls_Size );
+	DEBUG( "[fsysphp] Finished PHP call...(%lu length, %s)-\n", ls->ls_Size, ls->ls_Data );
 	return ls;
 }
 
@@ -379,7 +388,7 @@ BufStringDisk *PHPCallDisk( const char *command )
 		return NULL;
 	}
 	
-	char *buf = FMalloc( PHP_READ_SIZE+16 );
+	char *buf = FMalloc( PHP_READ_SIZE + 16 );
 	//ListString *ls = ListStringNew();
 	BufStringDisk *ls = BufStringDiskNew();
 	int errCounter = 0;
@@ -396,9 +405,11 @@ BufStringDisk *PHPCallDisk( const char *command )
 	fds[1].fd = STDOUT_FILENO;
 	fds[1].events = POLLOUT;
 
+	int ret = 0;
+
 	while( TRUE )
 	{
-		int ret = poll( fds, 2, FILESYSTEM_MOD_TIMEOUT * 1000);
+		ret = poll( fds, 2, 250 ); // HT Small timeout
 
 		if( ret == 0 )
 		{
@@ -904,18 +915,23 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 	
 	if( strcmp( mode, "rs" ) == 0 )
 	{
-		FILE *pipe = popen( command, "r" );
-		if( !pipe )
+		// Using newpopen
+		
+		NPOpenFD *pofd = FMalloc( sizeof( NPOpenFD ) );
+		int err = newpopen( command, pofd );
+		if( err != 0 )
 		{
-			FFree( command );
-			FFree( encodedcomm );
-			FERROR("[PHPFsys] cannot open pipe\n");
+			FERROR("[PHPCallDisk] cannot open pipe: %s\n", strerror( errno ) );
 			return NULL;
 		}
 	
+		int errCounter = 0;
+		int size = 0;
+		
 		File *locfil = NULL;
 		if( ( locfil = FCalloc( 1, sizeof( File ) ) ) != NULL )
 		{
+			locfil->f_Stream = TRUE;
 			locfil->f_Path = StringDup( path );
 	
 			if( ( locfil->f_SpecialData = FCalloc( 1, sizeof( SpecialData ) ) ) != NULL )
@@ -923,7 +939,18 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 				sd->fp = pipe; 
 				SpecialData *locsd = (SpecialData *)locfil->f_SpecialData;
 				locsd->sb = sd->sb;
-				locsd->fp = pipe;
+				locsd->fp = -1;
+				locsd->pofd = pofd;
+				
+				locsd->pollfd1 = FCalloc( 1, sizeof( struct pollfd ) );
+				locsd->pollfd2 = FCalloc( 1, sizeof( struct pollfd ) );
+				// watch stdin for input 
+				locsd->pollfd1->fd = locsd->pofd->np_FD[ NPOPEN_CONSOLE ];// STDIN_FILENO;
+				locsd->pollfd1->events = POLLIN;
+				// watch stdout for ability to write
+				locsd->pollfd2->fd = STDOUT_FILENO;
+				locsd->pollfd2->events = POLLOUT;
+				
 				locsd->mode = MODE_READ;
 				//locsd->fname = StringDup( tmpfilename );
 				locsd->path = StringDup( path );
@@ -940,11 +967,15 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 			FFree( locfil->f_Path );
 			locfil->f_Path = NULL;
 			FFree( locfil );
-			pclose( pipe );
+			
+			newpclose( pofd );
+			FFree( pofd );
 		}
 		else
 		{
-			pclose( pipe );
+			newpclose( pofd );
+			FFree( pofd );
+			
 			FFree( command );
 			FFree( encodedcomm );
 			FERROR("[PHPFsys] cannot alloc memory\n");
@@ -1041,9 +1072,10 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 					store = (int)toWrite;
 				}
 				
+				int rbytes = 0;
 				while( toWrite > 0 )
 				{
-					int rbytes = write( lockf, ( void *)dataptr, store );
+					rbytes = write( lockf, ( void *)dataptr, store );
 					dataptr += rbytes;
 					toWrite -= rbytes;
 					
@@ -1052,9 +1084,6 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 						store = (int)toWrite;
 					}
 				}
-				
-				//int written = write( lockf, ( void *)result->bsd_Buffer, result->bsd_Size );
-				//int written = write( lockf, ( void *)result->ls_Data, result->ls_Size );
 	
 				// Clean out result
 				BufStringDiskDelete( result ); result = NULL;
@@ -1133,11 +1162,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		char tmpfilename[ 712 ];
 
 		// Make sure we can make the tmp file unique
-		//do
-		//{
 		snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/Friendup/%s_write_%d%d%d%d", s->f_SessionIDPTR, rand()%9999, rand()%9999, rand()%9999, rand()%9999 );
-		//}
-		//while( access( tmpfilename, F_OK ) != -1 );
 
 		DEBUG("[fsysphp] WRITE FILE %s\n", tmpfilename );
 
@@ -1208,7 +1233,16 @@ int FileClose( struct File *s, void *fp )
 		{
 			SpecialData *sd = ( SpecialData *)lfp->f_SpecialData;
 			
-			if( sd->fp )
+			if( sd->pofd )
+			{
+				newpclose( sd->pofd );
+				FFree( sd->pollfd1 );
+				FFree( sd->pollfd2 );
+				FFree( sd->pofd );
+				sd->pofd = NULL;
+				DEBUG( "[fsysphp] Closed pofd!\n" );
+			}
+			else if( sd->fp )
 			{
 				if( lfp->f_Stream == TRUE )
 				{
@@ -1279,6 +1313,8 @@ int FileClose( struct File *s, void *fp )
 						BufStringDisk *result = PHPCallDisk( command );
 						if( result != NULL )
 						{
+							DEBUG("[fsysphp] : phpcalldisk result: %s\n", result->bsd_Buffer );
+							
 							if( result->bsd_Buffer[0] == 'f' && result->bsd_Buffer[1] == 'a' && result->bsd_Buffer[2] == 'i' && result->bsd_Buffer[3] == 'l' )
 							{
 								closeerr = 2;
@@ -1340,31 +1376,83 @@ int FileRead( struct File *f, char *buffer, int rsize )
 	if( sd != NULL )
 	{
 		if( f->f_Stream == TRUE )
-		{
-			SpecialData *sd = (SpecialData *)f->f_SpecialData;
-			
-			if( feof( sd->fp ) )
+		{	
+			// Make a new buffer and read
+			if( sd->pofd )
+			{
+				DEBUG( "[fsysphp] Reading from pofd!\n" );
+				int size = 0, readSize = 0, ret = 0, errCounter = 0;
+				
+				int amountToRead = 0, wholeSize = rsize;
+				
+				struct pollfd fds[2];
+				fds[0].fd = sd->pollfd1->fd;// STDIN_FILENO;
+				fds[0].events = sd->pollfd1->events;
+				// watch stdout for ability to write
+				fds[1].fd = sd->pollfd1->fd;
+				fds[1].events = sd->pollfd2->events;
+				
+				while( TRUE && rsize > 0 )
+				{
+					//DEBUG("[PHPFsys] in loop\n");
+		
+					ret = poll( fds, 2, 10000 ); // HT Small timeout
+
+					if( ret == 0 )
+					{
+						//DEBUG("Timeout!\n");
+						return -1;
+					}
+					else if(  ret < 0 )
+					{
+						//DEBUG("Error\n");
+						return -1;
+					}					
+					
+					amountToRead = rsize < 4096 ? rsize : 4096;
+					readSize = read( sd->pofd->np_FD[ NPOPEN_CONSOLE ], buffer + size, amountToRead );
+
+
+					//DEBUG( "[PHPFsys] Adding %d of data\n", size );
+					if( readSize > 0 )
+					{
+						size += readSize;
+						rsize -= readSize;
+						//DEBUG( "Read %d/%d (%d)\n", readSize, wholeSize, size );
+						//DEBUG( "[PHPFsys] before adding to list\n");
+					}
+					else
+					{
+						errCounter++;
+						//DEBUG("ErrCounter: %d (read %dbytes/%dbytes)\n", errCounter, size, rsize );
+						if( size == 0 ) return -1;
+						break;
+					}
+				}
+				result = size;
+			}
+			else if( feof( sd->fp ) )
 			{
 				DEBUG("[fsysphp] EOF\n");
 				return -1;
 			}
-
-			// Make a new buffer and read
-			result = fread( buffer, 1, rsize, sd->fp  );
+			else
+			{
+				result = fread( buffer, 1, rsize, sd->fp  );
+			}
 			//DEBUG( "[PHPFsys] Adding %ul of data\n", result );
 			
 			if( f->f_Socket )
 			{
 				char *ptr = strstr( buffer, "---http-headers-end---\n" );
-				SystemBase *sb = (SystemBase *)sd->sb;
-				
+
 				if( ptr != NULL && result > 23 )
 				{
-					sb->sl_SocketInterface.SocketWrite( f->f_Socket, (ptr+23), (FLONG)(result-23) );
+					f->f_Socket->s_Interface->SocketWrite( f->f_Socket, (ptr+23), (FLONG)(result-23) );
 				}
 				else
 				{
-					sb->sl_SocketInterface.SocketWrite( f->f_Socket, buffer, (FLONG)result );
+					f->f_Socket->s_Interface->SocketWrite( f->f_Socket, buffer, (FLONG)result );
 				}
 			}
 		}
@@ -1375,7 +1463,61 @@ int FileRead( struct File *f, char *buffer, int rsize )
 		
 		else
 		{
-			if( feof( sd->fp ) )
+			// Make a new buffer and read
+			if( sd->pofd )
+			{
+				DEBUG( "[fsysphp] Reading from pofd 2!\n" );
+				int size = 0, readSize = 0, ret = 0, errCounter = 0;
+				
+				int amountToRead = 0, wholeSize = rsize;
+				
+				struct pollfd fds[2];
+				fds[0].fd = sd->pollfd1->fd;// STDIN_FILENO;
+				fds[0].events = sd->pollfd1->events;
+				// watch stdout for ability to write
+				fds[1].fd = sd->pollfd1->fd;
+				fds[1].events = sd->pollfd2->events;
+				
+				while( TRUE && rsize > 0 )
+				{
+					//DEBUG("[PHPFsys] in loop\n");
+		
+					ret = poll( fds, 2, 20000 ); // HT Small timeout
+
+					if( ret == 0 )
+					{
+						//DEBUG("Timeout!\n");
+						return -1;
+					}
+					else if(  ret < 0 )
+					{
+						//DEBUG("Error\n");
+						return -1;
+					}					
+					
+					amountToRead = rsize < 4096 ? rsize : 4096;
+					readSize = read( sd->pofd->np_FD[ NPOPEN_CONSOLE ], buffer + size, amountToRead );
+
+
+					//DEBUG( "[PHPFsys] Adding %d of data\n", size );
+					if( readSize > 0 )
+					{
+						size += readSize;
+						rsize -= readSize;
+						DEBUG( "Read %d/%d (%d)\n", readSize, wholeSize, size );
+						//DEBUG( "[PHPFsys] before adding to list\n");
+					}
+					else
+					{
+						errCounter++;
+						DEBUG("ErrCounter: %d (read %dbytes/%dbytes)\n", errCounter, size, rsize );
+						if( size == 0 ) return -1;
+						break;
+					}
+				}
+				result = size;
+			}
+			else if( feof( sd->fp ) )
 			{
 				DEBUG("[fsysphp] EOF\n");
 				return -1;
@@ -2039,7 +2181,7 @@ BufString *Dir( File *s, const char *path )
 			
 			DEBUG("[PHPFS] dir path : %s\n", comm );
 			// Encoded path
-			char *encComm = MarkAndBase64EncodeString( comm );
+			char *encComm      = MarkAndBase64EncodeString( comm );
 			strcat( comm, "/" );
 			char *encPathSlash = MarkAndBase64EncodeString( comm );
 			if( !encComm ) encComm = comm;

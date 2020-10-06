@@ -384,7 +384,7 @@ body:not([mobile]) #Screens .View.Opening
 	border: 0;
 	margin: 0;
 	outline: none;
-	transition: opacity 0.25s ease;
+	transition: opacity 0.1s ease;
 	opacity: 1;
 }
 

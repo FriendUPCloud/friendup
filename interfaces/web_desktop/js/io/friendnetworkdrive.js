@@ -174,7 +174,7 @@ FriendNetworkDrive =
 	watchDog: function()
 	{
 		var self = FriendNetworkDrive;
-		var connected = !Workspace.workspaceIsDisconnected;
+		var connected = Friend.User.ServerIsThere;
 		if ( self.connected != connected )
 		{
 			self.connected = connected;

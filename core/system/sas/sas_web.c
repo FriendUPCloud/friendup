@@ -57,7 +57,28 @@
 /// endif
 Http* SASWebRequest( SystemBase *l, char **urlpath, Http* request, UserSession *loggedSession )
 {
-	Log( FLOG_DEBUG, "SASWebRequest %s  CALLED BY: %s\n", urlpath[ 0 ], loggedSession->us_User->u_Name );
+	if( urlpath[ 0 ] == NULL )
+	{
+		Http* response = NULL;
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
+			{TAG_DONE, TAG_DONE}
+		};
+		
+		response = HttpNewSimple( HTTP_200_OK,  tags );
+		
+		HttpAddTextContent( response, "urlpath[0] is NULL\n" );
+		return response;
+	}
+	if( loggedSession != NULL && loggedSession->us_User != NULL )
+	{
+		Log( FLOG_DEBUG, "SASWebRequest %s  CALLED BY user: %s\n", urlpath[ 0 ], loggedSession->us_User->u_Name );
+	}
+	else
+	{
+		Log( FLOG_DEBUG, "SASWebRequest %s  CALLED BY sessionID: %s\n", urlpath[ 0 ], loggedSession->us_SessionID );
+	}
 	
 	// DEBUG disabled
 	/*
@@ -719,6 +740,7 @@ Application.checkDocumentSession = function( sasID = null )
 					
 					//if( ( entry = AppSessionAddUsersBySession( as, loggedSession, loggedSession->us_SessionID, "system", NULL ) ) != NULL )
 					{
+						char tmpmsg[ 255 ];
 						// just accept connection
 						entry->status = SASID_US_ACCEPTED;
 						DEBUG("SAS/register Connection accepted\n");
@@ -728,8 +750,18 @@ Application.checkDocumentSession = function( sasID = null )
 						
 						as->sas_UserNumber++;
 						
-						char tmpmsg[ 255 ];
-						int msgsize = snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"client-accept\",\"data\":\"%s\"}", loggedSession->us_User->u_Name );
+						
+						int msgsize = 0;
+						
+						DEBUG("[SASWebRequest] loggedSession->us_User : %p\n", loggedSession->us_User );
+						if( loggedSession->us_User == NULL )
+						{
+							snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"client-accept\",\"data\":\"%s\"}", "unknown" );
+						}
+						else
+						{
+							snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"client-accept\",\"data\":\"%s\"}", loggedSession->us_User->u_Name );
+						}
 						
 						int err = SASSessionSendMessage( as, loggedSession, tmpmsg, msgsize, NULL );
 						//int err = AppSessionSendOwnerMessage( as, loggedSession, tmpmsg, msgsize );

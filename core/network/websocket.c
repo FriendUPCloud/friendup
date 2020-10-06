@@ -200,11 +200,13 @@ void hand(int s )
  */
 int WebsocketThread( FThread *data )
 {
+	pthread_detach( pthread_self() );
 	int cnt = 0;
 	WebSocket *ws = (WebSocket *)data->t_Data;
-	if( ws->ws_Context == NULL )
+	if( ws == NULL || ws->ws_Context == NULL )
 	{
-		FERROR("[WS] WsContext is empty\n");
+		Log( FLOG_ERROR, "[WebsocketThread] WsContext is empty\n");
+		pthread_exit( NULL );
 		return 0;
 	}
 	
@@ -222,7 +224,8 @@ int WebsocketThread( FThread *data )
 
 	while( TRUE )
 	{
-		int n = lws_service( ws->ws_Context, 50 );
+		int n = lws_service( ws->ws_Context, -1 );
+		usleep( 2500 );
 		
 		if( ws->ws_Quit == TRUE && ws->ws_NumberCalls <= 0 )
 		{
@@ -245,6 +248,7 @@ int WebsocketThread( FThread *data )
 
 done:
 	data->t_Launched = FALSE;
+	pthread_exit( NULL );
 	return 0;
 }
 
@@ -365,7 +369,7 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 		ws->ws_Context = lws_create_context( &ws->ws_Info );
 		if( ws->ws_Context == NULL )
 		{
-			FERROR( "Libwebsocket init failed, cannot create context\n" );
+			Log( FLOG_ERROR, "[WebSocketNew] Libwebsocket init failed, cannot create context\n" );
 			FFree( ws );
 			return NULL;
 		}
@@ -374,7 +378,7 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 	}
 	else
 	{
-		FERROR("[WS] Cannot allocate memory for WebSocket\n");
+		Log( FLOG_ERROR, "[WebSocketNew] Cannot allocate memory for WebSocket\n");
 	}
 	
 	DEBUG1("[WS] Websocket created\n");
@@ -564,7 +568,7 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
 		{
 			char qery[ 1024 ];
 			
-			sqllib->SNPrintF( sqllib, qery,  sizeof(qery), \
+			sqllib->SNPrintF( sqllib, qery, 1024, \
 				 "SELECT * FROM ( ( SELECT u.SessionID FROM FUserSession u, FUserApplication a WHERE a.AuthID=\"%s\" AND a.UserID = u.UserID LIMIT 1 ) \
 				UNION ( SELECT u2.SessionID FROM FUserSession u2, Filesystem f WHERE f.Config LIKE \"%s%s%s\" AND u2.UserID = f.UserID LIMIT 1 ) ) z LIMIT 1",
 				( char *)authid, "%", ( char *)authid, "%"
@@ -578,7 +582,7 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
 				char **row;
 				if( ( row = sqllib->FetchRow( sqllib, res ) ) )
 				{
-					snprintf( lsessionid, sizeof(lsessionid), "%s", row[ 0 ] );
+					snprintf( lsessionid, DEFAULT_SESSION_ID_SIZE, "%s", row[ 0 ] );
 					sessionid = lsessionid;
 				}
 				sqllib->FreeResult( sqllib, res );
@@ -648,15 +652,19 @@ int DetachWebsocketFromSession( void *d )
 	UserSession *us = NULL;
 	if( FRIEND_MUTEX_LOCK( &(data->wsc_Mutex) ) == 0 )
 	{
-		us = (UserSession *)data->wsc_UserSession;
-		data->wsc_UserSession = NULL;
+		if( data->wsc_UserSession != NULL )
+		{
+			us = (UserSession *)data->wsc_UserSession;
+		}
+		
+		//data->wsc_UserSession = NULL;
 		data->wsc_Wsi = NULL;
 		FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
 	}
 	
-	if( us != NULL )
+	if( data->wsc_UserSession != NULL && us != NULL )
 	{
-		Log( FLOG_DEBUG, "[WS] Lock DetachWebsocketFromSession\n");
+		//Log( FLOG_DEBUG, "[WS] Lock DetachWebsocketFromSession\n");
 		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 		{
 			us->us_Wsi = NULL;
@@ -665,6 +673,12 @@ int DetachWebsocketFromSession( void *d )
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
 		Log( FLOG_DEBUG, "[WS] UnLock DetachWebsocketFromSession\n");
+	}
+	
+	if( FRIEND_MUTEX_LOCK( &(data->wsc_Mutex) ) == 0 )
+	{
+		data->wsc_UserSession = NULL;
+		FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
 	}
     return 0;
 }

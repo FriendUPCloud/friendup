@@ -10,7 +10,6 @@ var WorkspaceInside = {
 	websocketDisconnectTime: 0,
 	websocketState: null,
 	currentViewState: 'inactive',
-	serverIsThere: true, // Assume we have a server!
 	// Did we load the wallpaper?
 	wallpaperLoaded: false,
 	// We only initialize once
@@ -39,10 +38,9 @@ var WorkspaceInside = {
 				{
 					if( b == num )
 					{
-						wsp[a].onmousedown();
+						Workspace.setWorkspace( b, eles[0] );
 						if( ge( 'InputGrabber' ) )
 							ge( 'InputGrabber' ).blur();
-						return;
 					}
 					b++; 
 				}
@@ -432,58 +430,7 @@ var WorkspaceInside = {
 					w.ind = a;
 					w.onmousedown = function( e )
 					{
-						// No need for change
-						if( this.ind == globalConfig.workspaceCurrent )
-							return;
-							
-						var cnt = 0;
-						for( var z = 0; z < d.childNodes.length; z++ )
-						{
-							if( d.childNodes[z].className && d.childNodes[z].classList.contains( 'Workspace' ) )
-							{
-								if( d.childNodes[z] == this )
-								{
-									globalConfig.workspaceCurrent = cnt;
-									d.childNodes[z].classList.add( 'Active' );
-								}
-								else d.childNodes[z].classList.remove( 'Active' );
-								cnt++;
-							}
-						}
-						ge( 'DoorsScreen' ).screenObject.contentDiv.style.left = '-' + 100 * this.ind + '%';
-						
-						_DeactivateWindows();
-						
-						// Check if we have a preset window that should be activated
-						var foundActive = false;
-						if( typeof( virtualWorkspaces[ this.ind ] ) != 'undefined' )
-						{
-							if( virtualWorkspaces[ this.ind ].activeWindow )
-							{
-								_ActivateWindow( virtualWorkspaces[ this.ind ].activeWindow );
-								foundActive = true;
-							}
-						}
-						
-						// Activate next window on next screen
-						if( !foundActive )
-						{
-							for( var c in movableWindows )
-							{
-								if( !movableWindows[c].windowObject ) continue;
-							
-								if( movableWindows[c].windowObject.workspace == this.ind )
-								{
-									var pn = movableWindows[c].parentNode;
-									if( pn.getAttribute( 'minimized' ) != 'minimized' )
-									{
-										_ActivateWindow( movableWindows[c] );
-										break;
-									}
-								}
-							}
-						}
-						return cancelBubble( e );
+						Workspace.setWorkspace( this.ind, d, e );
 					}
 					d.appendChild( w );
 				}
@@ -491,11 +438,114 @@ var WorkspaceInside = {
 				
 				Workspace.checkWorkspaceWallpapers();
 				
+				// Keep windows in the right place
+				for( let c in movableWindows )
+				{
+					if( movableWindows[ c ].windowObject.workspace > globalConfig.workspacecount - 1 )
+					{
+						movableWindows[ c ].windowObject.sendToWorkspace( globalConfig.workspacecount - 1 );
+					}
+				}
+				
+				// We don't wanna show offscreen
+				if( globalConfig.workspaceCurrent > globalConfig.workspacecount - 1 )
+				{
+					Workspace.setWorkspace( globalConfig.workspacecount - 1 );
+				}
+				
 				PollTrayPosition();
+			}
+			// Put all on workspace 1
+			else
+			{
+				for( let c in movableWindows )
+				{
+					movableWindows[ c ].windowObject.sendToWorkspace( 0 );
+				}
+				Workspace.setWorkspace( 0 );
 			}
 		}
 		// Refresh our dynamic classes now..
 		RefreshDynamicClasses();
+	},
+	setWorkspace: function( index, workspaceButtons, e )
+	{
+		if( !e ) e = window.event;
+		
+		// No need for change
+		if( index == globalConfig.workspaceCurrent )
+		{
+			return;
+		}
+		
+		if( !workspaceButtons )
+		{
+			let eles = ge( 'DoorsScreen' ).getElementsByClassName( 'VirtualWorkspaces' );
+			if( eles.length )
+			{
+				workspaceButtons = eles[0];
+			}
+		}
+		
+		// Out of bounds!
+		if( index != 0 && ( index < 0 || index >= globalConfig.workspacecount ) )
+		{
+			return;
+		}
+		
+		globalConfig.workspaceCurrent = index;
+		
+		var cnt = 0;
+		let d = workspaceButtons;
+		if( d )
+		{
+			for( var z = 0; z < d.childNodes.length; z++ )
+			{
+				if( d.childNodes[z].className && d.childNodes[z].classList.contains( 'Workspace' ) )
+				{
+					if( cnt == index )
+					{
+						d.childNodes[z].classList.add( 'Active' );
+					}
+					else d.childNodes[z].classList.remove( 'Active' );
+					cnt++;
+				}
+			}
+		}
+		ge( 'DoorsScreen' ).screenObject.contentDiv.style.left = '-' + ( 100 * index ) + '%';
+		
+		_DeactivateWindows();
+		
+		// Check if we have a preset window that should be activated
+		var foundActive = false;
+		if( typeof( virtualWorkspaces ) != 'undefined' && typeof( virtualWorkspaces[ index ] ) != 'undefined' )
+		{
+			if( virtualWorkspaces[ index ].activeWindow )
+			{
+				_ActivateWindowOnly( virtualWorkspaces[ index ].activeWindow );
+				foundActive = true;
+			}
+		}
+		
+		// Activate next window on next screen
+		if( !foundActive )
+		{
+			for( var c in movableWindows )
+			{
+				if( !movableWindows[c].windowObject ) continue;
+			
+				if( movableWindows[c].windowObject.workspace == index )
+				{
+					var pn = movableWindows[c].parentNode;
+					if( pn.getAttribute( 'minimized' ) != 'minimized' )
+					{
+						_ActivateWindow( movableWindows[c] );
+						break;
+					}
+				}
+			}
+		}
+		return cancelBubble( e );
 	},
 	// Reposition and size
 	repositionWorkspaceWallpapers: function()
@@ -563,34 +613,56 @@ var WorkspaceInside = {
 		if( Workspace.readyToRun ) return Workspace.websocketState;
 		return "false";
 	},
-	initWebSocket: function()
+	initWebSocket: function( callback )
 	{	
-		// We're already open
+		let self = this;
+		function closeConn()
+		{
+			// Clean up previous
+			if( self.conn )
+			{
+				try
+				{
+					self.conn.ws.cleanup();
+				}
+				catch( ez )
+				{
+					console.log( 'Conn is dead.', ez, ez2 );
+				}
+				delete self.conn;
+			}
+		}
+	
+		// We're already open or connecting
 		if( Workspace.websocketState == 'open' ) return;
 		
-		if( Workspace.reloginInProgress || Workspace.websocketState == 'connecting' )
+		if( window.Friend && Friend.User && Friend.User.State != 'online' ) 
+		{
+			console.log( 'Cannot initialize web socket - user is offline.' );
+			closeConn();
+			return;
+		}
+		
+		if( Workspace.websocketState == 'connecting' )
 			return;
 		
 		if( !Workspace.sessionId && Workspace.userLevel )
 		{
-			return Workspace.relogin();
+			return Friend.User.ReLogin();
 		}
 		
+		// Not ready
 		if( !Workspace.sessionId )
 		{
-			setTimeout( Workspace.initWebSocket, 1000 );
+			return setTimeout( function(){ Workspace.initWebSocket( callback ); }, 1000 );
 		}
 
 		// Force connecting ws state (we will close it!)
 		Workspace.websocketState = 'connecting';
-		Workspace.websocketsOffline = false;
-		
-		// Just remove this by force
-		document.body.classList.remove( 'Busy' );
 
-		var conf = {
+		let conf = {
 			onstate: onState,
-			onend  : onEnd,
+			onend  : onEnd
 		};
 
         //we assume we are being proxied - set the websocket to use the same port as we do
@@ -600,31 +672,11 @@ var WorkspaceInside = {
             //console.log('webproxy set to be tunneled as well.');
         }
 		
-		// Clean up previous
-		if( this.conn )
-		{
-			try
-			{
-				this.conn.ws.close();
-			}
-			catch( ez )
-			{
-				try
-				{
-					this.conn.ws.cleanup();
-				}
-				catch( ez2 )
-				{
-					console.log( 'Conn is dead.', ez, ez2 );
-				}
-			}
-			delete this.conn;
-		}
+		closeConn();
 		
 		if( typeof FriendConnection == 'undefined' )
 		{
-			setTimeout( Workspace.initWebSocket, 250 );
-			return;
+			return setTimeout( function(){ Workspace.initWebSocket( callback ); }, 250 );
 		}
 		
 		this.conn = new FriendConnection( conf );
@@ -641,11 +693,12 @@ var WorkspaceInside = {
 		this.conn.on( 'notification', handleNotifications );
 		
 		// Reference for handler
-		var selfConn = this.conn;
+		let selfConn = this.conn;
 
 		function onState( e )
 		{
-			//console.log( 'Worspace.conn.onState', e );
+			//console.log( 'Worspace.conn.onState', e, 'State: ' + Workspace.websocketState );
+			
 			if( e.type == 'error' || e.type == 'close' )
 			{
 				if( e.type == 'close' )
@@ -657,51 +710,18 @@ var WorkspaceInside = {
 				{
 					console.log( '[onState] We got an error.' );
 					Workspace.websocketState = 'error';
-					var serverCheck = new Module( 'system' );
-					serverCheck.onExecuted = function( q, s )
-					{
-						if( ( q == 'fail' && !s ) || ( !q && !s ) )
-						{
-							Workspace.serverIsThere = false;
-							Workspace.workspaceIsDisconnected = true;
-							Workspace.checkServerConnectionResponse();
-						}
-					}
-					serverCheck.execute( 'getsetting', { setting: 'infowindow' } );
 				}
-				// After such an error, always try reconnect
-				if( Workspace.httpCheckConnectionInterval )
-					clearInterval( Workspace.httpCheckConnectionInterval );
-				Workspace.httpCheckConnectionInterval = setInterval( 'Workspace.checkServerConnectionHTTP()', 10000 );
 			}
 			else if( e.type == 'ping' )
 			{
-				// Ignite queue on ping
-				var time = ( new Date() ).getTime() - _cajax_http_last_time;
-				if( time > 10000 && window.Friend )
-				{
-					// Ignite queue
-					_cajax_http_connections = 0;
-					if( Friend.cajax.length > 0 )
-					{
-						Friend.cajax[0].forceSend = true;
-						Friend.cajax[0].send();
-					}
-				}
-				
-				//if we get a ping we have a websocket.... no need to do the http server check
-				clearInterval( Workspace.httpCheckConnectionInterval );
-				Workspace.httpCheckConnectionInterval = false;
 				if( Workspace.websocketState != 'open' )
 				{
 					// Refresh mountlist
 					Workspace.refreshDesktop( false, true );
 				}
 
-				if( Workspace.screen ) Workspace.screen.hideOfflineMessage();
-				document.body.classList.remove( 'Offline' );
-				Workspace.workspaceIsDisconnected = false;
-				Workspace.websocketDisconnectTime = 0;
+				if( Friend.User )
+					Friend.User.SetUserConnectionState( 'online' );
 				
 				// Reattach
 				if( !Workspace.conn && selfConn )
@@ -713,26 +733,29 @@ var WorkspaceInside = {
 			{
 				if( e.type == 'open' )
 				{
-					// TODO: Fix this!! Whenthe state is open, ws should 
-					//       immediately be able to handle requests, now its
-					//       a slight delay
-					setTimeout( function()
+					if( callback )
 					{
-						Workspace.websocketState = 'open';
-					}, 150 );
+						callback();
+						callback = null;
+					}
+					Workspace.websocketState = 'open';
 				}
 				else if( e.type == 'connecting' )
 				{
 					Workspace.websocketState = 'connecting';
 				}
-				if( e.type != 'connecting' && e.type != 'open' ) console.log( e );
+				if( e.type != 'connecting' && e.type != 'open' )
+				{
+					console.log( 'Strange onState: ', e );
+				}
 			}
 		}
 
 		function onEnd( e )
 		{
-			console.log( 'Workspace.conn.onEnd', e );
+			//console.log( 'Workspace.conn.onEnd', e );
 			Workspace.websocketState = 'closed';
+			Friend.User.SetUserConnectionState( 'offline' );
 		}
 
 		function handleIconChange( e ){ console.log( 'icon-change event', e ); }
@@ -748,18 +771,18 @@ var WorkspaceInside = {
 			// Clear cache
 			if( msg && msg.devname && msg.path )
 			{
-				var ext4 = msg.path.substr( msg.path.length - 5, 5 );
-				var ext3 = msg.path.substr( msg.path.length - 4, 4 );
+				let ext4 = msg.path.substr( msg.path.length - 5, 5 );
+				let ext3 = msg.path.substr( msg.path.length - 4, 4 );
 				ext4 = ext4.toLowerCase();
 				ext3 = ext3.toLowerCase();
 				if( ext4 == '.jpeg' || ext3 == '.jpg' || ext3 == '.gif' || ext3 == '.png' )
 				{
-					var ic = new FileIcon();
+					let ic = new FileIcon();
 					ic.delCache( msg.devname + ':' + msg.path );
 				}
 			}
 			
-			var t = msg.devname + ( msg.path ? msg.path : '' );
+			let t = msg.devname + ( msg.path ? msg.path : '' );
 			if( Workspace.filesystemChangeTimeouts[ t ] )
 			{
 				clearTimeout( Workspace.filesystemChangeTimeouts[ t ] );
@@ -774,7 +797,7 @@ var WorkspaceInside = {
 			{
 				if( msg.path || msg.devname )
 				{
-					var p = '';
+					let p = '';
 					// check if path contain device
 					if( msg.path.indexOf( ':' ) > 0 )
 					{
@@ -804,15 +827,15 @@ var WorkspaceInside = {
 						// Check if we need to handle events for apps
 						if( Workspace.appFilesystemEvents[ 'filesystem-change' ] )
 						{
-							var evList = Workspace.appFilesystemEvents[ 'filesystem-change' ];
-							var outEvents = [];
-							for( var a = 0; a < evList.length; a++ )
+							let evList = Workspace.appFilesystemEvents[ 'filesystem-change' ];
+							let outEvents = [];
+							for( let a = 0; a < evList.length; a++ )
 							{
-								var found = false;
+								let found = false;
 								if( evList[a].applicationId )
 								{
 									found = evList[a];
-									var app = findApplication( evList[a].applicationId );
+									let app = findApplication( evList[a].applicationId );
 									if( app )
 									{
 										if( evList[a].viewId && app.windows[ evList[a].viewId ] )
@@ -1221,7 +1244,9 @@ var WorkspaceInside = {
 					}
 				}
 				if( wid )
+				{
 					wid.autosize();
+				}
 				PollTrayPosition();
 			}
 		}
@@ -1468,7 +1493,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// NB: Start of workspace_inside.js ----------------------------------------
 	refreshUserSettings: function( callback )
 	{
-		var m = new Module( 'system' );
+		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
 			function initFriendWorkspace()
@@ -2868,7 +2893,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		// Only on force or first time
 		if( this.themeRefreshed && !update )
+		{
 			return;
+		}
 
 		// Check url var
 		if( GetUrlVar( 'fullscreenapp' ) )
@@ -3337,6 +3364,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		this.getMountlist( function( data )
 		{
+			// Something went wrong - don't show an empty workspace
+			// We always have one entry, the system disk
+			if( data.length <= 1 )
+			{
+				console.log( 'No stuff!' );
+				return;
+			}
+			
 			if( callback && typeof( callback ) == 'function' ) callback( data );
 
 			// make drive list behave like a desklet... copy paste som code back and forth ;)
@@ -4026,6 +4061,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			wb.onselectstart = function( e ) { return cancelBubble ( e ); };
 			wb.ondragstart = function( e ) { return cancelBubble ( e ); };
+			wb.directoryview.toChange = true;
 			wb.redrawIcons( this.getIcons(), 'vertical' );
 		}
 		
@@ -4766,10 +4802,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		m.execute( 'setmimetype', { type: ext, executable: executable } );
 	},
 	// Show file info dialog
-	fileInfo: function( icon )
+	fileInfo: function( iconOriginal )
 	{
-		if( !icon ) icon = this.getActiveIcon();
-
+		if( !iconOriginal ) iconOriginal = this.getActiveIcon();
+		
+		let icon = {};
+		for( let c in iconOriginal )
+			icon[ c ] = iconOriginal[ c ];
+	
+		
 		if( icon )
 		{
 			// Check volume icon
@@ -5781,12 +5822,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								}
 							}
 						
+							console.log( 'UPLOAD COMPLETED ' + ee, dd );
 							Notify( { title: i18n( 'i18n_upload_completed' ), text: i18n( 'i18n_upload_completed_description' ) } );
 							if( typeof Workspace.uploadWindow.close == 'function' ) Workspace.uploadWindow.close();
 							Workspace.refreshWindowByPath( uppath );
 						}
 						else
 						{
+							console.log( 'ERROR UPLOAD ' + dd );
 							Notify( { title: i18n( 'i18n_upload_failed' ), text: i18n( 'i18n_upload_failed_description' ) } );
 						}
 					
@@ -5911,53 +5954,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Simple logout..
 	logout: function()
 	{
-		// FIXME: implement
-		window.localStorage.removeItem( 'WorkspaceUsername' );
-		window.localStorage.removeItem( 'WorkspacePassword' );
-		window.localStorage.removeItem( 'WorkspaceSessionID' );
-
-		var keys = parent.ApplicationStorage.load( { applicationName : 'Workspace' } );
-
-		if( keys )
-		{
-			keys.username = '';
-
-			parent.ApplicationStorage.save( keys, { applicationName : 'Workspace' } );
-		}
-
-		let dologt = null;
-
-		SaveWindowStorage( function()
-		{
-			if( dologt != null )
-				clearTimeout( dologt );
-			
-			// Do external logout and then our internal one.
-			if( Workspace.logoutURL )
-			{
-				Workspace.externalLogout();
-				return;
-			}
-
-			var m = new cAjax();
-			Workspace.websocketsOffline = true;
-			m.open( 'get', '/system.library/user/logout/?sessionid=' + Workspace.sessionId, true );
-			m.send();
-			Workspace.websocketsOffline = false;
-			setTimeout( doLogout, 500 );
-		} );
-		// Could be there will be no connection..
-		function doLogout()
-		{
-			if( typeof friendApp != 'undefined' && typeof friendApp.exit == 'function')
-			{
-				friendApp.exit();
-				return;
-			}
-			Workspace.sessionId = ''; 
-			document.location.href = window.location.href.split( '?' )[0]; //document.location.reload();
-		}
-		dologt = setTimeout( doLogout, 750 );
+		Friend.User.Logout();
 	},
 	externalLogout: function()
 	{
@@ -6596,8 +6593,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					//	disabled: ( !iconsSelected || volumeIcon  || systemDrive )
 					//},
 					{
-						name:	i18n( 'menu_delete' ),
-						command: function() { Workspace.deleteFile(); },
+						name:	sharedVolume ? i18n( 'menu_unshare' ) : i18n( 'menu_delete' ),
+						command: function() { Workspace.deleteFile( sharedVolume ? 'unshare' : false ); },
 						disabled: ( !iconsSelected || volumeIcon ) || systemDrive || cannotWrite
 					},
 					// Add sharing
@@ -6794,6 +6791,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								command: function(){ Workspace.viewDirectory( 'compact' ); }
 							},
 							{
+								name:	 i18n( 'menu_show_as_gallery' ),
+								command: function(){ Workspace.viewDirectory( 'imageview' ); }
+							},
+							{
 								name:	 i18n( 'menu_show_as_list' ),
 								command: function(){ Workspace.viewDirectory( 'listview' ); }
 							}/*,
@@ -6823,6 +6824,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				name: i18n( 'menu_help' ),
 				items: [
+					{
+						name: i18n( 'menu_help_tutorials' ),
+						command: function(){ ShowAllTutorials(); }
+					},
 					{
 						name: i18n( 'menu_help_bug' ),
 						command: function(){ window.open( 'https://github.com/FriendUPCloud/friendup/issues', '', '' ); }
@@ -6937,7 +6942,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		
 		SetWindowStorage( uid, d );
-		window.currentMovable.content.redrawIcons();
+		window.currentMovable.content.refresh();
 	},
 	showContextMenu: function( menu, e, extra )
 	{
@@ -6976,7 +6981,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		var el = tr;
 		if( el )
 		{
-			while( el != document.body )
+			while( el != document.body && el )
 			{
 				if( el.classList && el.classList.contains( 'Content' ) )
 					break;
@@ -7067,13 +7072,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				t = iconWindow;
 			else
 			{
-				while( !( t.classList && t.classList.contains( 'Content' ) ) && t.parentNode != document.body )
+				while( t && !( t.classList && t.classList.contains( 'Content' ) ) && t.parentNode != document.body )
 				{
 					t = t.parentNode;
 				}
 			}
-			if( t.checkSelected )
-				t.checkSelected();
+			if( t )
+			{
+				if( t.checkSelected )
+					t.checkSelected();
+			}
 			
 			Workspace.refreshMenu( true );
 			for( var z = 0; z < Workspace.menu.length; z++ )
@@ -7263,7 +7271,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 			}
 			
-			for( var z = 0; z < menu.length; z++ )
+			let menuitemCount = 0;
+			for( let z = 0; z < menu.length; z++ )
 			{
 				if( menu[z].divider ) continue;
 				var p = document.createElement( 'p' );
@@ -7274,6 +7283,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				else
 				{
+					menuitemCount++;
 					if( extra && extra.applicationId )
 					{
 						( function( m ){
@@ -7340,14 +7350,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				p.innerHTML = menu[z].name;
 				menuout.appendChild( p );
 			}
-			v.dom.appendChild( menuout );
+			if( menuitemCount )
+			{
+				v.dom.appendChild( menuout );
 			
-			// Show the thing
-			v.setFlag( 'height', v.dom.lastChild.offsetHeight + v.dom.lastChild.offsetTop );
-			v.setFlag( 'left', flg.left );
-			v.setFlag( 'top', flg.top );
-			v.raise();
-			v.show();
+				// Show the thing
+				v.setFlag( 'height', v.dom.lastChild.offsetHeight + v.dom.lastChild.offsetTop );
+				v.setFlag( 'left', flg.left );
+				v.setFlag( 'top', flg.top );
+				v.raise();
+				v.show();
+			}
 		}
 		return true;
 	},
@@ -8074,125 +8087,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		Workspace.sessionId = '';
 	},
-	//try to run a call and if does not get back display offline message....
-	checkServerConnectionHTTP: function()
-	{	
-		var self = this;
-		// Too early
-		if( !Workspace.postInitialized || !Workspace.sessionId || Workspace.reloginInProgress ) return;
-		if( window.ScreenOverlay && ScreenOverlay.visibility )
-		{
-			if( Workspace.onReady )
-				Workspace.onReady( false, true );
-			return;
-		}
-		
-		// No home disk? Try to refresh the desktop
-		// Limit two times..
-		if( Workspace.icons.length <= 1 && Workspace.refreshDesktopIconsRetries < 2 )
-		{
-			Workspace.refreshDesktopIconsRetries++;
-			Workspace.refreshDesktop( function()
-			{
-				Workspace.redrawIcons();
-			}, true );
-		}
-		
-		// Just make sure we don't pile on somehow...
-		if( Workspace.serverHTTPCheckModule )
-		{
-			Workspace.serverHTTPCheckModule.destroy();
-			Workspace.serverHTTPCheckModule = null;
-		}
-		
-		CancelCajaxOnId( 'checkserverconnection' );
-		
-		var inactiveTimeout = false;
-		
-		var m = new Module('system');
-		
-		m.forceSend = true;
-		m.cancelId = 'checkserverconnection';
-		
-		// This one is executed when we get a response from the server
-		m.onExecuted = function( e, d )
-		{
-			if( inactiveTimeout )
-				clearTimeout( inactiveTimeout );
-			inactiveTimeout = false;
-			
-			try
-			{
-				var js = JSON.parse( d );
-				if( js.code && ( parseInt( js.code ) == 11 || parseInt( js.code ) == 3 ) )
-				{
-					Workspace.relogin(); // Try login using local storage
-				}
-			}
-			catch( b )
-			{
-				if( e == null && d == null )
-				{
-					Workspace.relogin();
-				}
-			}
-			
-			//console.log( 'Response from connection checker: ', e, d );
-			if( e == 'error' )
-			{
-				// Just die!
-				return;
-			}
-			else if( e == 'fail' ) 
-			{
-				console.log( '[getsetting] Got "fail" response.' );
-			}
-			
-			Workspace.serverIsThere = true;
-			Workspace.workspaceIsDisconnected = false;
-			
-			// If we have no conn, and we have waited five cycles, force reconnect
-			// the websocket...
-			if( Workspace.websocketState != 'open' )
-			{
-				Workspace.initWebSocket();
-			}
-			else
-			{
-				// Just remove this by force
-				document.body.classList.remove( 'Busy' );
-			}
-		}
-		// Only set serverIsThere if we don't have a response from the server
-		inactiveTimeout = setTimeout( function(){ Workspace.serverIsThere = false; }, 1000 );
-		
-		Workspace.serverHTTPCheckModule = m;
-		
-		//m.forceSend = true;
-		m.execute( 'getsetting', { setting: 'infowindow' } );
-		return setTimeout( 'Workspace.checkServerConnectionResponse();', 1000 );
-	},
-	checkServerConnectionResponse: function()
-	{
-		if( Workspace.serverIsThere == false )
-		{
-			document.body.classList.add( 'Offline' );
-			if( Workspace.screen )
-				Workspace.screen.displayOfflineMessage();
-			Workspace.workspaceIsDisconnected = true;
-			Workspace.nudgeWorkspacesWidget();
-		}
-		else
-		{
-			document.body.classList.remove( 'Offline' );
-			if( Workspace.screen )
-				Workspace.screen.hideOfflineMessage();
-			Workspace.workspaceIsDisconnected = false;
-			Workspace.nudgeWorkspacesWidget();
-			// Just remove this by force
-			document.body.classList.remove( 'Busy' );
-		}
-	},
 	// Upgrade settings (for new versions)
 	upgradeWorkspaceSettings: function( cb )
 	{
@@ -8353,7 +8247,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				} );
 			}
 		}
-		j.send ();
+		j.send();
 
 
 	}, // end of uploadPastedFile
@@ -8595,7 +8489,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				Workspace.loginCall.destroy();
 				Workspace.loginCall = null;
 			}
-			Workspace.relogin();
+			Friend.User.ReLogin();
 			return; 
 		}
 		
@@ -8606,26 +8500,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			Workspace.nudgeWorkspacesWidget();
 			
 			document.body.classList.add( 'ViewStateActive' );
-			// TODO: Remove the uncommented thing, it isn't working
-			// TODO: Check with pawel..
-			/*if( isMobile )
-			{
-				//mobileDebug( 'Trying to init websocket.' );
-				Workspace.initWebSocket();
 
-				var setwsstate = setTimeout( function()
-				{
-					if( Workspace.conn && Workspace.conn.ws )
-						Workspace.conn.ws.close();
-				}, 1500 );
-				var dl = new FriendLibrary( 'system.library' );
-				dl.addVar( 'status', 0 );
-				dl.onExecuted = function(e,d)
-				{
-					clearTimeout( setwsstate );
-				};
-				dl.execute( 'mobile/setwsstate' );
-			}*/
 			// Tell all windows
 			if( window.friendApp )
 			{
@@ -8672,18 +8547,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			document.body.classList.remove( 'ViewStateActive' );
 			document.body.classList.remove( 'Activating' );
-			/*
-			TODO: Remove. But check with pawel. Not required anymore
-			if( isMobile )
+			
+			if( !Workspace.conn || !Workspace.conn.ws )
 			{
-				var dl = new FriendLibrary( 'system.library' );
-				dl.addVar( 'status', 1 );
-				dl.onExecuted = function(e,d)
-				{
-					//mobileDebug( 'setwsstate inactive: ' + e );
-				};
-				dl.execute( 'mobile/setwsstate' );
-			}*/
+				Workspace.initWebSocket();
+			}
 		}
 		this.sleepTimeout();
 		this.currentViewState = newState;
@@ -9457,11 +9325,6 @@ function InitWorkspaceNetwork()
 	{
 		wsp.initWebSocket();
 	}
-	
-	// After such an error, always try reconnect
-	if( Workspace.httpCheckConnectionInterval )
-		clearInterval( Workspace.httpCheckConnectionInterval );
-	Workspace.httpCheckConnectionInterval = setInterval( 'Workspace.checkServerConnectionHTTP()', 10000 );
 
 	wsp.checkFriendNetwork();
 	
@@ -9484,7 +9347,7 @@ function AboutFriendUP()
 {
 	if( !Workspace.sessionId ) return;
 	var v = new View( {
-		title: i18n( 'about_system' ) + ' v1.2.4',
+		title: i18n( 'i18n_title_about_friendos' ) + ' Hydrogen',
 		width: 540,
 		height: 560,
 		id: 'about_friendup'
@@ -9777,9 +9640,8 @@ InitDynamicClassSystem();
 
 document.addEventListener( 'paste', function( evt )
 {
-	//console.log('paste event received',evt);
 	Workspace.handlePasteEvent( evt );
-});
+} );
 
 // Push notification integration and other app events --------------------------
 if( window.friendApp )
@@ -9800,13 +9662,17 @@ if( window.friendApp )
 Workspace.receiveLive = function( viewId, jsonEvent ) {
 	const self = this;
 	let event = null;
-	try {
+	
+	try 
+	{
 		event = JSON.parse( jsonEvent );
-	} catch( ex ) {
+	}
+	catch( ex )
+	{
 		console.log( 'Workspace.receiveLive - error parsing json', {
 			error     : ex,
 			jsonEvent : jsonEvent,
-		});
+		} );
 		return;
 	}
 	
@@ -9814,24 +9680,29 @@ Workspace.receiveLive = function( viewId, jsonEvent ) {
 		viewId : viewId,
 		json   : jsonEvent,
 		event  : event,
-	});
+	} );
+	
 	const appName = 'FriendChat';
+	
 	// find friendchat app
 	let chat = null;
+	
 	console.log( 'all apps', Workspace.applications );
+	
 	Workspace.applications.some( app => {
 		console.log( 'looking for chat', {
 			app  : app,
 			name : app.applicationName,
-		});
+		} );
 		if ( app.applicationName != appName )
 			return false;
 		
 		chat = app;
 		return true;
-	});
+	} );
 	
-	if ( !chat ) {
+	if( !chat )
+	{
 		console.log( 'receiveLive - chat not found' );
 		return;
 	}
@@ -9848,14 +9719,14 @@ Workspace.receiveLive = function( viewId, jsonEvent ) {
 // Receive push notification (when a user clicks native push notification on phone)
 Workspace.receivePush = function( jsonMsg, ready )
 {
-	if( !isMobile ) return "mobile";
+	if( !isMobile ) return 'mobile';
 	var msg = jsonMsg ? jsonMsg : ( window.friendApp && typeof friendApp.get_notification == 'function' ? friendApp.get_notification() : false );
 
 	// we use 1 as special case for no push being here... to make it easier to know when to launch startup sequence... maybe not ideal, but works
 	if( msg == false || msg == 1 ) 
 	{
 		if( !ready && this.onReady ) this.onReady();
-		return "nomsg";
+		return 'nomsg';
 	}
 	try
 	{
@@ -9869,7 +9740,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 	if( !msg ) 
 	{
 		if( !ready && this.onReady ) this.onReady();
-		return "nomsg";
+		return 'nomsg';
 	}
 		
 	// Clear the notifications now... (race cond?)
@@ -9894,7 +9765,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 	
 	function handleClick()
 	{
-		if( !msg.application ) 
+		if( !msg.application || msg.application == 'null' ) 
 		{
 			if( !ready && Workspace.onReady ) Workspace.onReady();
 			return 'noapp';
@@ -9911,10 +9782,11 @@ Workspace.receivePush = function( jsonMsg, ready )
 			{}
 		}
 	
-		for( var a = 0; a < Workspace.applications.length; a++ )
+		// Check existing applications
+		for( let a = 0; a < Workspace.applications.length; a++ )
 		{
-			if( Workspace.applications[a].applicationName == msg.application )
-			{	
+			if( Workspace.applications[ a ].applicationName == msg.application )
+			{
 				// Need a "message id" to be able to update notification
 				// on the Friend Core side
 				if( msg.id )
@@ -9934,7 +9806,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 			
 				mobileDebug( ' Sendtoapp2: ' + JSON.stringify( msg ), true );
 			
-				var app = Workspace.applications[a];
+				let app = Workspace.applications[a];
 				app.contentWindow.postMessage( JSON.stringify( { 
 					type: 'system',
 					method: 'pushnotification',
@@ -9954,7 +9826,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 			if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
 			{
 				messageRead = true;
-				var l = new Library( 'system.library' );
+				let l = new Library( 'system.library' );
 				l.onExecuted = function(){};
 				l.execute( 'mobile/updatenotification', { 
 					notifid: msg.id, 
@@ -9968,13 +9840,13 @@ Workspace.receivePush = function( jsonMsg, ready )
 		// Send message to app once it has started...
 		function appMessage()
 		{
-			var app = false;
-			var apps = Workspace.applications;
+			let app = false;
+			let apps = Workspace.applications;
 			
 			//too early?
 			if( !apps ) return;
 			
-			for( var a = 0; a < apps.length; a++ )
+			for( let a = 0; a < apps.length; a++ )
 			{
 				// Found the application
 				if( apps[ a ].applicationName == msg.application )
@@ -9988,8 +9860,7 @@ Workspace.receivePush = function( jsonMsg, ready )
 			// TODO: Localize response!
 			if( !app )
 			{
-				// no notification here... we got weird message in our new android app but everything worked...
-				//Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
+				// No notification here... we got weird message in our new android app but everything worked...
 				if( Workspace.onReady ) Workspace.onReady();
 				return;
 			}
@@ -10049,7 +9920,7 @@ if( document.hidden )
 {
 	Workspace.updateViewState( 'inactive' );
 }
-else 
+else
 {
 	Workspace.updateViewState( 'active' );
 }
@@ -10097,31 +9968,40 @@ function mobileDebug( str, clear )
 _applicationBasics = {};
 function loadApplicationBasics( callback )
 {
+	// Don't do in login
+	if( Workspace.loginPrompt )
+	{
+		if( callback )
+			callback();
+		return;
+	}
+	
 	// Preload basic scripts
-	var a = new File( '/webclient/js/apps/api.js' );
-	a.onLoad = function( data )
+	let a_ = new File( '/webclient/js/apps/api.js' );
+	a_.onLoad = function( data )
 	{
 		_applicationBasics.apiV1 = URL.createObjectURL( new Blob( [ data ], { type: 'text/javascript' } ) );
 	}
-	a.load();
-	var sb = new File( '/themes/friendup12/scrollbars.css' );
-	sb.onLoad = function( data )
+	a_.load();
+	let sb_ = new File( '/themes/friendup12/scrollbars.css' );
+	sb_.onLoad = function( data )
 	{
 		if( _applicationBasics.css )
 			_applicationBasics.css += data;
 		else _applicationBasics.css = data;
 	}
-	sb.load();
+	sb_.load();
 	// Preload basic scripts
-	var c = new File( '/system.library/module/?module=system&command=theme&args=%7B%22theme%22%3A%22friendup12%22%7D&sessionid=' + Workspace.sessionId );
-	c.onLoad = function( data )
+	let c_ = new File( '/system.library/module/?module=system&command=theme&args=%7B%22theme%22%3A%22friendup12%22%7D&sessionid=' + Workspace.sessionId );
+	c_.onLoad = function( data )
 	{
 		if( _applicationBasics.css )
 			_applicationBasics.css += data;
 		else _applicationBasics.css = data;
 	}
-	c.load();
-	var js = '/webclient/' + [ 'js/oo.js',
+	c_.load();
+	
+	let js = '/webclient/' + [ 'js/oo.js',
 	'js/api/friendappapi.js',
 	'js/utils/engine.js',
 	'js/utils/tool.js',
@@ -10130,12 +10010,21 @@ function loadApplicationBasics( callback )
 	'js/io/appConnection.js',
 	'js/io/coreSocket.js',
 	'js/gui/treeview.js' ].join( ';/webclient/' );
-	var j = new File( js );
-	j.onLoad = function( data )
+	let j_ = new File( js );
+	j_.onLoad = function( data )
 	{
 		_applicationBasics.js = data;
-		if( callback ) callback();
+		if( callback )
+		{
+			try
+			{
+				callback();
+			}
+			catch( e )
+			{
+			}
+		}
 	}
-	j.load();
+	j_.load();
 };
 

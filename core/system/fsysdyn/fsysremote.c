@@ -259,8 +259,8 @@ DataForm *SendMessageRFS( SpecialData *sd, DataForm *df )
 	if( newsock != NULL )
 	{
 		DEBUG("[SendMessageRFS] Connection created, message will be send: %lu\n", df->df_Size );
-		int size = sd->sb->sl_SocketInterface.SocketWrite( newsock, (char *)df, (FLONG)df->df_Size );
-		bs = sd->sb->sl_SocketInterface.SocketReadTillEnd( newsock, 0, 15 );
+		int size = newsock->s_Interface->SocketWrite( newsock, (char *)df, (FLONG)df->df_Size );
+		bs = newsock->s_Interface->SocketReadTillEnd( newsock, 0, 15 );
 		
 		if( bs != NULL )
 		{
@@ -307,7 +307,7 @@ DataForm *SendMessageRFS( SpecialData *sd, DataForm *df )
 			BufStringDelete( bs );
 		}
 		
-		sd->sb->sl_SocketInterface.SocketDelete( newsock );
+		newsock->s_Interface->SocketDelete( newsock );
 		
 		DEBUG("[SendMessageRFS] got reponse\n");
 		
@@ -343,8 +343,8 @@ DataForm *SendMessageRFSRelogin( SpecialData *sd, DataForm *df )
 	if( newsock != NULL )
 	{
 		DEBUG("[SendMessageRFSRelogin] Connection created, message will be send: %lu\n", df->df_Size );
-		int size = sd->sb->sl_SocketInterface.SocketWrite( newsock, (char *)df, (FLONG)df->df_Size );
-		bs = sd->sb->sl_SocketInterface.SocketReadTillEnd( newsock, 0, 15 );
+		int size = newsock->s_Interface->SocketWrite( newsock, (char *)df, (FLONG)df->df_Size );
+		bs = newsock->s_Interface->SocketReadTillEnd( newsock, 0, 15 );
 		
 		if( bs != NULL )
 		{
@@ -389,7 +389,7 @@ DataForm *SendMessageRFSRelogin( SpecialData *sd, DataForm *df )
 						
 						BufStringDelete( bs );
 						
-						sd->sb->sl_SocketInterface.SocketDelete( newsock );
+						newsock->s_Interface->SocketDelete( newsock );
 						
 						return SendMessageRFS( sd, df );
 					}
@@ -406,7 +406,7 @@ DataForm *SendMessageRFSRelogin( SpecialData *sd, DataForm *df )
 			BufStringDelete( bs );
 		}
 		
-		sd->sb->sl_SocketInterface.SocketDelete( newsock );
+		newsock->s_Interface->SocketDelete( newsock );
 		
 		DEBUG("[SendMessageRFSRelogin] got reponse\n");
 		
@@ -518,7 +518,7 @@ FConnection *ConnectToServerRFS( SpecialData *sd, char *conname )
 			DataFormAdd( &df, (FBYTE *)fcm->fcm_ID, FRIEND_CORE_MANAGER_ID_SIZE );
 			//INFO("Message created name byte %c%c%c%c\n", fcm->fcm_ID[32], fcm->fcm_ID[33], fcm->fcm_ID[34], fcm->fcm_ID[35]	);
 		
-			int sbytes = sd->sb->sl_SocketInterface.SocketWrite( newsock, (char *)df, (FLONG)df->df_Size );
+			int sbytes = newsock->s_Interface->SocketWrite( newsock, (char *)df, (FLONG)df->df_Size );
 		
 			DEBUG("Message sent %d\n", sbytes );
 			DataFormDelete( df );
@@ -551,7 +551,7 @@ FConnection *ConnectToServerRFS( SpecialData *sd, char *conname )
 	{
 		if( newsock != NULL )
 		{
-			sd->sb->sl_SocketInterface.SocketDelete( newsock );
+			newsock->s_Interface->SocketDelete( newsock );
 		}
 	}
 	else
@@ -699,7 +699,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 			
 			while( fcm->fcm_CommServiceRemote == NULL )
 			{
-				sleep( 1 );
+				usleep( 5000 );
 				if( (tr--) <= 0 )
 				{
 					break;
@@ -1049,7 +1049,7 @@ DataForm *SendMessageWithReconnection( SpecialData *sd, DataForm *df )
 					FriendCoreManager *fcm = sb->fcm;
 					DataFormAdd( &df, (FBYTE *)fcm->fcm_ID, FRIEND_CORE_MANAGER_ID_SIZE );
 
-					int sbytes = sd->sb->sl_SocketInterface.SocketWrite( newsock, (char *)df, (FLONG)df->df_Size );
+					int sbytes = newsock->s_Interface->SocketWrite( newsock, (char *)df, (FLONG)df->df_Size );
 		
 					DEBUG("Message sent %d\n", sbytes );
 					DataFormDelete( df );
@@ -1400,7 +1400,7 @@ int FileRead( struct File *f, char *buffer, int rsize )
 			
 			if( f->f_Stream == TRUE )
 			{
-				sd->sb->sl_SocketInterface.SocketWrite( f->f_Socket, d, (FLONG)result );
+				f->f_Socket->s_Interface->SocketWrite( f->f_Socket, d, (FLONG)result );
 			}
 			else
 			{

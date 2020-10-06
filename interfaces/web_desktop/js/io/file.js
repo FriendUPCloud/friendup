@@ -149,6 +149,9 @@ File = function( filename )
 	{
 		var t = this;
 		var jax = new cAjax ();
+		
+		if( t.ondestroy ) jax.ondestroy = t.ondestroy;
+		
 		if( this.cancelId )
 			jax.cancelId = this.cancelId;
 

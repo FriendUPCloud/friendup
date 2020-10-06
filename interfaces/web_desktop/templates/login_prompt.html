@@ -42,14 +42,14 @@
 								<button id="loginButton" class="IconSmall fa-unlock" tabindex="4" onclick="Application.doLogin()">
 									Sign in
 								</button>
-								<div id="RememberMe">
+								<!--<div id="RememberMe">
 									<p class="Layout HideForPass" style="float: right; position: relative; top: 5px">
 										<label id="rememberLabel" for="remember">Remember me</label>
 									</p>
 									<p class="Layout HideForPass" style="float: right; position: relative; top: 7px">
 										<input type="checkbox" id="remember" tabindex="3"/>
 									</p>
-								</div>
+								</div>-->
 								<div id="invalidLogin" class="Padding"><p>&nbsp;</p></div>
 							</div>
 						</div>
@@ -58,12 +58,12 @@
 					<hr/>
 					<div id="compatability" class="HRow MarginTop BorderTop HideForPass">
 						<p><strong>Compatibility information:</strong></p>
-						<p>Please use Google Chrome, Firefox or Samsung Internet. Experimental support for Safari, Operax and MS Edge.</p>
+						<p>Please use Google Chrome, Firefox. Experimental support for Safari, Opera and MS Edge.</p>
 					</div>
 				</div>
 			</div>
 		</div>
-		<script>
+		<script type="text/javascript">
 			Application = {
 				failedAttempt: false,
 				passwordRecoveryMode: false,
@@ -72,9 +72,8 @@
 				},
 				doLogin: function( e )
 				{
-					
 					/*
-						in password recivery mode we do stuff a bit differently...
+						In password recivery mode we do stuff a bit differently...
 					*/
 					if( this.passwordRecoveryMode )
 					{
@@ -82,15 +81,16 @@
 						if( Trim( ge( 'Username' ).value ) == '')
 						{
 							ge( 'Username' ).focus();
-							document.getElementById( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = 'Enter your username!';
+							ge( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = 'Enter your username.';
 							return;
 						}
-						document.getElementById( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = '';
-						parent.Workspace.resetPassword( Trim( ge( 'Username' ).value ), function( result ){
+						ge( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = '';
+						parent.Friend.User.ResetPassword( Trim( ge( 'Username' ).value ), function( result ){
 							Application.forgotPassword();
-							if( document.getElementById('Username').value.indexOf('@') > 1 ) document.getElementById('Username').value = '';
-							document.getElementById( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = ( result == 'ok' ? 'Please check your inbox.' : 'Could not reset password.' );
-						});
+							if( ge( 'Username' ).value.indexOf( '@' ) > 1 ) 
+								ge( 'Username' ).value = '';
+							ge( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = ( result == 'ok' ? 'Please check your inbox.' : 'Could not reset password.' );
+						} );
 						return;
 					}
 					
@@ -100,37 +100,39 @@
 					
 					if( this.failedAttempt )
 					{
-						document.getElementById("invalidLogin").getElementsByTagName("p")[0].innerHTML = 'Logging in...';
+						ge( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = 'Logging in...';
 					}
 					
-					//track users login..
-					if(typeof ga == "function" ) ga('send', 'event', 'userloginattempt', Trim( ge( 'Username' ).value ) );
-					parent.Workspace.login( Trim( ge( 'Username' ).value ), Trim( ge( 'Password' ).value ), ge( 'remember' ).checked, function( result, answer )
+					// Track user's login
+					if( typeof ga == 'function' ) ga( 'send', 'event', 'userloginattempt', Trim( ge( 'Username' ).value ) );
+					parent.Friend.User.Init();
+					let us = Trim( ge( 'Username' ).value );
+					let pw = Trim( ge( 'Password' ).value )
+					parent.Friend.User.Login( us, pw, false /*ge( 'remember' ).checked */, function( result, answer )
 					{
-						var tmp;
+						let tmp = null;
 						if( answer )
 						{
-							//try to parse it...
+							// Try to parse response answer
 							try
 							{
 								tmp = JSON.parse( answer );
 							}
-							catch(e)
+							catch( e )
 							{
-								console.log('answer was not json --- ',answer);
+								console.log( 'Answer was not in json format: ', answer );
 							}
 							if( tmp && tmp.response )
 							{								//check for block....
-								if( tmp.response.indexOf('account blocked until:') > -1 )
+								if( tmp.response.indexOf( 'account blocked until:' ) > -1 )
 								{
-									var ts = tmp.response.replace('account blocked until:','');
+									let ts = tmp.response.replace( 'account blocked until:', '' );
 									if( parseInt( ts ) > 0 )
 									{
 										Application.errorMessage = 'Account blocked (try again after ' + new Date( ts * 1000 ).toLocaleString() + ')';
 										showLoginError();  
 										return;
 									}
-
 								}
 							}
 						}
@@ -147,13 +149,14 @@
 						else
 						{
 							//track users login..
-							if( typeof ga == "function" )
+							if( typeof ga == 'function' )
 							{
-								ga( 'send', 'event', 'userloginsuccess', Trim( ge( 'Username' ).value ) );	
+								ga( 'send', 'event', 'userloginsuccess', us );	
 							}
+							parent.Workspace.showDesktop();
 							Application.busy = false;
 						}
-					}, e );
+					}, e, { hashedPassword: ge( 'Password' ).hashed ? true : false } );
 				},
 				checkKeys: function( e )
 				{
@@ -175,49 +178,47 @@
 						ge( 'Username' ).value = msg.username;
 						ge( 'Password' ).value = msg.password;
 						
-					
 						Application.loginUser();
 					}
 				},
 				forgotPassword : function()
 				{
-					document.getElementById( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = '';
+					ge( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = '';
 					if( Application.passwordRecoveryMode )
 					{
 						Application.passwordRecoveryMode = false;
-						document.getElementById('loginButton').classList.remove('FloatRight');
-						document.getElementById('loginButton').innerHTML = ' &nbsp; Log in';
-						document.getElementById('UsernameLabel').innerHTML = 'Login';
-						document.getElementById('forgotPassword').innerHTML = 'Forgot password';
-						document.querySelectorAll('.HideForPass').forEach(function( thisNode ) {
+						ge( 'loginButton' ).classList.remove( 'FloatRight' );
+						ge( 'loginButton' ).innerHTML = ' &nbsp; Log in';
+						ge( 'UsernameLabel' ).innerHTML = 'Login';
+						ge( 'forgotPassword' ).innerHTML = 'Forgot password';
+						document.querySelectorAll( '.HideForPass' ).forEach( function( thisNode ){
 							thisNode.style.display = thisNode.dataset.oldDisplay;
-						});	
-						document.getElementById('loginButton').classList.remove( 'Forgot' );
-						
+						} );	
+						ge('loginButton').classList.remove( 'Forgot' );
 						return;
 					}
 					
 					Application.passwordRecoveryMode = true;
-					document.querySelectorAll('.HideForPass').forEach(function( thisNode ) {
+					document.querySelectorAll( '.HideForPass' ).forEach( function( thisNode ){
 						thisNode.dataset.oldDisplay = thisNode.style.display;
 						thisNode.style.display = 'none';
-					});	
-					document.getElementById('loginButton').classList.add('FloatRight');
-					document.getElementById('loginButton').innerHTML = ' &nbsp; Request new password';
-					document.getElementById('loginButton').classList.add( 'Forgot' );
-					document.getElementById('UsernameLabel').innerHTML = 'Username / e-mail:';
-					document.getElementById('forgotPassword').innerHTML = 'Return to login form';
+					} );	
+					ge( 'loginButton' ).classList.add( 'FloatRight' );
+					ge( 'loginButton' ).innerHTML = ' &nbsp; Request new password';
+					ge( 'loginButton' ).classList.add( 'Forgot' );
+					ge( 'UsernameLabel' ).innerHTML = 'Username / e-mail:';
+					ge( 'forgotPassword' ).innerHTML = 'Return to login form';
 				}
 			};
 			
 			function showLoginError()
 			{
 				parent.Workspace.loginPrompt.setFlag( 'height', 263 );
-				document.getElementById( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = ( Application.errorMessage ? Application.errorMessage : 'Invalid credentials. Please check your input.');
-				document.getElementById( 'Username' ).focus();
+				ge( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = ( Application.errorMessage ? Application.errorMessage : 'Invalid credentials. Please check your input.' );
+				ge( 'Username' ).focus();
 				Application.failedAttempt = true;
 				Application.busy = false;
-				document.getElementById('LoginElement').style.visibility = 'visible';
+				ge( 'LoginElement' ).style.visibility = 'visible';
 			}
 			
 			// Focus the username field
@@ -226,32 +227,28 @@
 				if( typeof( GetCookie ) == 'undefined' ) return setTimeout( loginNow, 50 );
 				
 				Application.applicationId = 'loginprompt';
-				if( parent.GetCookie( 'loginUsername' ) && parent.GetCookie( 'loginPassword' ) )
+				
+				if( parent.GetUrlVar( 'username' ) )
 				{
-					document.getElementById( 'Username' ).value = parent.GetCookie( 'loginUsername' );
-					document.getElementById( 'Password' ).value = parent.GetCookie( 'loginPassword' );
+					ge( 'Username' ).value = parent.GetUrlVar( 'username' );
+					ge( 'Password' ).value = parent.GetUrlVar( 'password' );
+					ge( 'Password' ).hashed = true;
 					Application.doLogin( e );
 				}
-				else if( document.body.className == 'Loading' )
-				{
-					return setTimeout( loginNow, 50 );
-				}
-				else
-				{
-					document.getElementById('LoginElement').style.visibility = 'visible';
-					document.getElementById('Username').focus(); 
-				}
+				
+				document.getElementById('LoginElement').style.visibility = 'visible';
+				document.getElementById('Username').focus();
 			}
 		</script>
-		<script>
+		<script type="text/javascript">
 			if( document.location.href.indexOf( 'friendsky.cloud' ) >= 0 )
 			{
 				(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
 				(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
 				m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
 				})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-				ga('create', 'UA-64441212-5', 'auto');
-				ga('send', 'pageview');			  
+				ga( 'create', 'UA-64441212-5', 'auto' );
+				ga( 'send', 'pageview' );
 				ga( 'send', 'event', 'logindisplay', document.location.href );
 			}
 		</script>

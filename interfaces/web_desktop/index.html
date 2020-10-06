@@ -36,14 +36,23 @@
 			webclient/js/gui/filebrowser.js;
 			webclient/js/gui/screenoverlay.js;
 			webclient/js/apiwrapper.js;
-			webclient/js/workspace.js" type="text/javascript">
+			webclient/js/workspace.js;
+			webclient/js/user.js" type="text/javascript">
 		</script>
 		<meta name="apple-mobile-web-app-capable" content="yes">
 	</head>
-	<body onload="Workspace.preinit()" class="Loading" onunload="Workspace.doLeave();" onbeforeunload="Workspace.leave();">
+	<body onload="Workspace.preinit()" class="Loading" onunload="if( window.Workspace ) Workspace.doLeave();" onbeforeunload="if( window.Workspace ) Workspace.leave();">
 		<div id="Screens"></div>
 		<div id="Tasks"></div>
 		<div id="TaskSwitcher"></div>
 		<input id="FocusGrabber" type="text"/>
+		<div id="OfflineMessage">
+			<div class="IconSmall fa-warning">
+				<h1>Reconnecting</h1>
+				<p>
+					You are being reconnected to your workspace. Please wait.
+				</p>
+			</div>
+		</div>
 	</body>
 </html>

@@ -1,6 +1,6 @@
 #ifndef __LIBSSH2_MISC_H
 #define __LIBSSH2_MISC_H
-/* Copyright (c) 2009-2014 by Daniel Stenberg
+/* Copyright (c) 2009-2019 by Daniel Stenberg
  *
  * All rights reserved.
  *
@@ -50,13 +50,13 @@ struct list_node {
 };
 
 struct string_buf {
-	unsigned char *data;
-	unsigned char *dataptr;
-	size_t len;
-	size_t offset;
+    unsigned char *data;
+    unsigned char *dataptr;
+    size_t len;
 };
 
-int _libssh2_error_flags(LIBSSH2_SESSION* session, int errcode, const char *errmsg, int errflags);
+int _libssh2_error_flags(LIBSSH2_SESSION* session, int errcode,
+                         const char *errmsg, int errflags);
 int _libssh2_error(LIBSSH2_SESSION* session, int errcode, const char *errmsg);
 
 void _libssh2_list_init(struct list_head *head);
@@ -89,11 +89,17 @@ void *_libssh2_calloc(LIBSSH2_SESSION *session, size_t size);
 void _libssh2_explicit_zero(void *buf, size_t size);
 
 struct string_buf* _libssh2_string_buf_new(LIBSSH2_SESSION *session);
-void _libssh2_string_buf_free(LIBSSH2_SESSION *session, struct string_buf *buf);
+void _libssh2_string_buf_free(LIBSSH2_SESSION *session,
+                              struct string_buf *buf);
 int _libssh2_get_u32(struct string_buf *buf, uint32_t *out);
+int _libssh2_get_u64(struct string_buf *buf, libssh2_uint64_t *out);
 int _libssh2_match_string(struct string_buf *buf, const char *match);
-int _libssh2_get_c_string(struct string_buf *buf, unsigned char **outbuf);
-int _libssh2_get_bignum_bytes(struct string_buf *buf, unsigned char **outbuf);
+int _libssh2_get_string(struct string_buf *buf, unsigned char **outbuf,
+                        size_t *outlen);
+int _libssh2_copy_string(LIBSSH2_SESSION* session, struct string_buf *buf,
+                         unsigned char **outbuf, size_t *outlen);
+int _libssh2_get_bignum_bytes(struct string_buf *buf, unsigned char **outbuf,
+                              size_t *outlen);
 int _libssh2_check_length(struct string_buf *buf, size_t requested_len);
 
 #if defined(LIBSSH2_WIN32) && !defined(__MINGW32__) && !defined(__CYGWIN__)

@@ -14,6 +14,12 @@
 	border-radius: 0;
 }
 
+.ViewContainer[minimized]
+{
+	visibility: hidden;
+	pointer-events: none;
+}
+
 #DoorsScreen > .ScreenContent
 {
 	overflow: hidden;
@@ -67,4 +73,88 @@ body[windowcount] #Thanks
 	font-size: 24px;
 	line-height: 80px;
 }
+
+/* Image viewer */
+
+
+.View > .ImageViewerToolbar
+{
+	overflow: hidden;
+	position: absolute;
+	bottom: 20px;
+	left: 10%;
+	width: 80%;
+	height: 40px;
+	border-radius: 20px;
+	background: rgba(0,0,0,0.5);
+	text-align: center;
+	z-index: 100;
+	color: white;
+}
+
+.View > .Content > .ImageViewerContent
+{
+	overflow: hidden;
+}
+
+.View > .Content > .ImageViewerContent > img
+{
+	position: absolute;
+	transform: rotateZ(0deg);
+	z-index: 99;
+}
+.View > .Content > .ImageViewerContent > img.Panning
+{
+	pointer-events: none;
+}
+.View > .Content > .ImageViewerContent > img:not(.Panning)
+{
+	transition: top,left,width,height 0.25s,0.25s,0.25s,0.25s;
+}
+
+@media (max-width: 380px)
+{
+	.View > .ImageViewerToolbar
+	{
+		left: calc(50% - 200px);
+		width: 400px;
+	}
+	.View > .ImageViewerToolbar
+	{
+		width: calc(100% - 40px);
+		left: 20px;
+	}
+}
+
+.View > .ImageViewerToolbar > div
+{
+	display: inline-block;
+	width: 40px;
+	height: 30px;
+	margin: 5px 15px 0 0;
+	border-radius: 5px;
+	line-height: 30px;
+	background: transparent;
+	transition: background 0.25s;
+}
+
+body:not([mobile]) .View > .ImageViewerToolbar > div:hover
+{
+	background: rgba(0,0,0,0.5);
+}
+
+.View > .ImageViewerToolbar > div > span
+{
+	display: block;
+	margin: auto;
+}
+
+
+.View > .ImageViewerToolbar > div:last-child
+{
+	margin: 5px 0 0 0;
+}
+
+
+
 

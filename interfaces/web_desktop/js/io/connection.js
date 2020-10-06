@@ -13,7 +13,7 @@
 FriendConnection = function( conf )
 {
 	// TODO read stuff from conf / pass in conf
-	var self = this;
+	let self = this;
 	self.onstate = conf.onstate;
 	self.onend = conf.onend;
 	
@@ -35,8 +35,8 @@ FriendConnection = function( conf )
 
 FriendConnection.prototype.request = function( conf, callback )
 {
-	var self = this;
-	var reqId = self.setRequestCallback( callback );
+	let self = this;
+	let reqId = self.setRequestCallback( callback );
 	
 	req = {
 		type : 'request',
@@ -45,7 +45,7 @@ FriendConnection.prototype.request = function( conf, callback )
 		data : conf.data,
 	};
 	req = self.setId( req, conf );
-	var result = self.sendMessage( req );
+	let result = self.sendMessage( req );
 	if( result ) 
 	{
 		return reqId;
@@ -55,8 +55,8 @@ FriendConnection.prototype.request = function( conf, callback )
 
 FriendConnection.prototype.send = function( conf )
 {
-	var self = this;
-	var event = {
+	let self = this;
+	let event = {
 		type : 'event',
 		path : conf.path,
 		data : conf.data,
@@ -69,11 +69,11 @@ FriendConnection.prototype.send = function( conf )
 
 FriendConnection.prototype.on = function( event, listener )
 {	
-	var self = this;
+	let self = this;
 	if( !self.listeners[ event ] )
 		self.listeners[ event ] = [];
 	
-	var listenerId = friendUP.tool.uid( 'listener' );
+	let listenerId = friendUP.tool.uid( 'listener' );
 	self.listenerMap[ listenerId ] = listener;
 	self.listeners[ event ].push( listenerId );
 	return listenerId;
@@ -81,8 +81,8 @@ FriendConnection.prototype.on = function( event, listener )
 
 FriendConnection.prototype.once = function( event, listener )
 {
-	var self = this;
-	var id = self.on( event, onceie );
+	let self = this;
+	let id = self.on( event, onceie );
 	
 	function onceie( data )
 	{
@@ -93,7 +93,7 @@ FriendConnection.prototype.once = function( event, listener )
 
 FriendConnection.prototype.off = function( event, id )
 {
-	var self = this;
+	let self = this;
 	if ( !self.listenerMap[ id ]) {
 		console.log( 'FriendConnection.off - listenerId not found',
 			{ id : id, listenerMap : self.listenerMap });
@@ -102,14 +102,14 @@ FriendConnection.prototype.off = function( event, id )
 	
 	delete self.listenerMap[ id ];
 	
-	var eventIds = self.listeners[ event ];
+	let eventIds = self.listeners[ event ];
 	if ( !eventIds || !eventIds.length ) {
 		console.log( 'FriendConnection.off - event not found',
 			{ e : event, listenerMap : self.listeners });
 		return;
 	}
 	
-	var index = eventIds.indexOf( id );
+	let index = eventIds.indexOf( id );
 	if ( -1 === index ) {
 		console.log( 'FriendConnection.off - id not found for event',
 			{ id : id, event : self.listeners });
@@ -127,7 +127,7 @@ FriendConnection.prototype.off = function( event, id )
 
 FriendConnection.prototype.release = function()
 {
-	var self = this;
+	let self = this;
 	for ( var lId in self.listenerMap )
 		delete self.listeners[ lId ];
 	
@@ -142,8 +142,8 @@ FriendConnection.prototype.release = function()
 
 FriendConnection.prototype.init = function()
 {
-	var self = this;
-	var dest = document.location;
+	let self = this;
+	let dest = document.location;
 	self.reqProtocol = dest.protocol;
 	self.wsProtocol = 'https:' === dest.protocol ? 'wss://' : 'ws://';
 	self.host = dest.hostname;
@@ -155,26 +155,27 @@ FriendConnection.prototype.init = function()
 
 FriendConnection.prototype.connectWebSocket = function()
 {
-	var self = this;
+	let self = this;
 	if ( self.ws )
 		self.releaseWebSocket();
 	
-	var url = self.wsProtocol + self.host;
+	let url = self.wsProtocol + self.host;
 	if ( self.wsPort )
 		url += ':' + self.wsPort;
 
 
 	url += '/fcws';
 
-console.log("Connect : " + url );
+	//console.log("Connect: " + url + ' with ' + Friend.User.State );
 
-	var conf = {
+	let conf = {
 		url : url,
 		sessionId : Workspace.sessionId,
 		onmessage : onMessage,
 		onstate : onState,
 		onend : onEnd,
 	};
+	
 	self.ws = new FriendWebSocket( conf );
 	
 	function onMessage( e ) { self.onWsMessage( e ); }
@@ -184,7 +185,7 @@ console.log("Connect : " + url );
 
 FriendConnection.prototype.setId = function( event, conf )
 {
-	var self = this;
+	let self = this;
 	if ( conf.authId )
 		event.authid = conf.authId;
 	else
@@ -195,7 +196,7 @@ FriendConnection.prototype.setId = function( event, conf )
 
 FriendConnection.prototype.onWsMessage = function( msg )
 {
-	var self = this;
+	let self = this;
 
 	//console.log("Message came: ", msg );
 	
@@ -209,9 +210,9 @@ FriendConnection.prototype.onWsMessage = function( msg )
 	}
 	
 	function handleEvent( msg )
-	{
-		var event = msg.type;
-		var lIds = self.listeners[ event ];
+	{	
+		let event = msg.type;
+		let lIds = self.listeners[ event ];
 		if( !lIds )
 		{
 			console.log( 'FriendConnection - handler ids not found for', {
@@ -226,7 +227,7 @@ FriendConnection.prototype.onWsMessage = function( msg )
 		lIds.forEach( callHandler )
 		function callHandler( id )
 		{
-			var handler = self.listenerMap[ id ];
+			let handler = self.listenerMap[ id ];
 			if ( !handler ) {
 				console.log( 'FriendConnection - no handler for id', {
 					id : id,
@@ -253,8 +254,8 @@ FriendConnection.prototype.onWsMessage = function( msg )
 	}
 	
 	function handleResponse( msg ) {
-		var id = msg.requestid;
-		var handler = self.listenerMap[ id ];
+		let id = msg.requestid;
+		let handler = self.listenerMap[ id ];
 		if ( !id || !handler ) {
 			console.log( 'FriendConnection - stuff missing', {
 				msg : msg,
@@ -271,7 +272,7 @@ FriendConnection.prototype.onWsMessage = function( msg )
 
 FriendConnection.prototype.onWsState = function( e )
 {
-	var self = this;
+	let self = this;
 	//console.log( 'onWsState', e );
 	if ( self.onstate )
 		self.onstate( e );
@@ -279,7 +280,7 @@ FriendConnection.prototype.onWsState = function( e )
 
 FriendConnection.prototype.onWsEnd = function( e )
 {
-	var self = this;
+	let self = this;
 	console.log( 'onWsEnd', e );
 	self.releaseWebSocket();
 	if ( self.onend )
@@ -287,8 +288,9 @@ FriendConnection.prototype.onWsEnd = function( e )
 	
 }
 
-FriendConnection.prototype.releaseWebSocket = function() {
-	var self = this;
+FriendConnection.prototype.releaseWebSocket = function() 
+{	
+	let self = this;
 	if ( !self.ws )
 		return;
 	
@@ -298,7 +300,7 @@ FriendConnection.prototype.releaseWebSocket = function() {
 
 FriendConnection.prototype.sendMessage = function( msg )
 {
-	var self = this;
+	let self = this;
 	if ( !self.ws )
 	{
 		console.log( 'FriendConnection.sendMessage - no ws found, sending async', msg );
@@ -311,15 +313,15 @@ FriendConnection.prototype.sendMessage = function( msg )
 // TODO: Implement
 FriendConnection.prototype.sendAsync = function( msg )
 {
-	var self = this;
+	let self = this;
 	console.log( 'sendAsync - NYI', msg );
 	return false;
 }
 
 FriendConnection.prototype.setRequestCallback = function( callback )
 {
-	var self = this;
-	var cid = friendUP.tool.uid( 'fconn-req' );
+	let self = this;
+	let cid = friendUP.tool.uid( 'fconn-req' );
 	self.listenerMap[ cid ] = callback;
 	return cid;
 }

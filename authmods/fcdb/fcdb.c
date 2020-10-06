@@ -348,14 +348,16 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 	
 	if( logsess == NULL  )
 	{
-		DEBUG("[FCDB] Usersession not provided, will be taken from DB\n");
+		DEBUG("[FCDB] Usersession not provided, will be taken from DB. User name: %s\n", name );
 
 		tmpusr = sb->sl_UserManagerInterface.UMUserGetByNameDB( sb->sl_UM, name );
 		userFromDB = TRUE;
 		
+		DEBUG("[FCBD] pointer to user: %p\n", tmpusr );
 		if( tmpusr != NULL )
 		{
-			uses = USMGetSessionByDeviceIDandUser( sb->sl_USM, devname, tmpusr->u_ID );
+			uses = sb->sl_UserSessionManagerInterface.USMGetSessionByDeviceIDandUser( sb->sl_USM, devname, tmpusr->u_ID );
+			DEBUG("[FCBD] pointer to user session: %p by devname: %s userid: %ld\n", uses, devname, tmpusr->u_ID );
 		}
 		else
 		{
@@ -538,22 +540,30 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 		}
 		
 		//
+		//
+		//
+		
+		DEBUG("[FCDB] Get session by deviceid: %s\n", devname );
+		if( tmpusr != NULL )
+		{
+			uses = sb->sl_UserSessionManagerInterface.USMGetSessionByDeviceIDandUser( sb->sl_USM, devname, tmpusr->u_ID );
+			DEBUG("[FCBD] pointer to user session: %p by devname: %s userid: %ld\n", uses, devname, tmpusr->u_ID );
+		}
+		
+		//
 		// if session is not provided we must create one
 		//
 		
+		FBOOL createNewSession = FALSE;
 		if( uses == NULL )
 		{
 			DEBUG("[FCDB] Create new session\n");
-			//USMGetSessionByDeviceIDandUser()
-			uses = UserSessionNew( NULL, devname );
-			uses->us_UserID = tmpusr->u_ID;
+			createNewSession = TRUE;
+			
 		}
 		else
 		{
 			DEBUG("[FCDB] Found old session, using it %s\n", uses->us_SessionID );
-			if( uses->us_User->u_MainSessionID != NULL )
-			{
-			}
 		}
 		
 		//USMSessionSaveDB( sb->sl_USM, uses );
@@ -566,6 +576,26 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 		SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 		if( sqlLib != NULL )
 		{
+			if( createNewSession == TRUE )
+			{
+				//Generate new session ID for the user
+				char *new_session_id = SessionIDGenerate();
+			
+				uses = UserSessionNew( new_session_id, devname );
+			
+				FFree( new_session_id );
+				uses->us_UserID = tmpusr->u_ID;
+				uses->us_LoggedTime = time( NULL );
+			
+				int error;
+				if( ( error = sqlLib->Save( sqlLib, UserSessionDesc, uses ) ) != 0 )
+				{
+					FERROR("Cannot store session\n");
+				}
+			
+				DEBUG("[FCDB] sessionid %s\n", uses->us_SessionID );
+			}
+			
 			FBOOL testAPIUser = isAPIUser( sqlLib, tmpusr );
 			
 			//if( uses->us_SessionID == NULL || testAPIUser != 0 )
@@ -586,6 +616,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 				}
 				else		// user session is no longer active
 				{
+					/*
 					//Generate new session ID for the user
 					char *new_session_id = SessionIDGenerate();
 					DEBUG("[FCDB] New sessionid <%s>\n", new_session_id);
@@ -596,6 +627,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 						FFree( uses->us_SessionID );
 					}
 					uses->us_SessionID = new_session_id;
+					*/
 				}
 
 				DEBUG("[FCDB] Update filesystems\n");
@@ -650,7 +682,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 	// next request, if session id exist then user is logged in
 	
 loginok:
-	DEBUG("[FCDB] Login ok Stored\n");
+	DEBUG("[FCDB] Login ok Stored %p\n", uses);
 	sb->sl_UserManagerInterface.UMStoreLoginAttempt( sb->sl_UM, name, "Login success", NULL );
 	return uses;
 	

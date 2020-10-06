@@ -24,5 +24,8 @@ i18n_add_source                  : Add source
 i18n_add_web_stream              : Add a web stream
 
 i18n_empty_playlist              : Playlist is empty.
-i18n_loading_song                : Loading song
+i18n_loading_song                : Loading song.
 i18n_welcome                     : Welcome to the Friend Jukebox.
+
+i18n_stopped                     : Stopped.
+i18n_could_not_load_song         : Busy.

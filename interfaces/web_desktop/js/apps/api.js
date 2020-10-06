@@ -63,8 +63,8 @@ Friend.application = {
 			setTimeout( function()
 			{
 				document.body.style.willChange = '';
-			}, 250 );
-		}, 100 );
+			}, 100 );
+		}, 5 );
 		Application.sendMessage( {
 			type: 'view',
 			method: 'doneloadingbody'
@@ -593,7 +593,7 @@ Friend.pasteClipboard = function( evt )
 	if( typeof Application != 'undefined' && typeof Application.handlePaste == 'function' )
 	{
 		//wait a bit for the clipboard to be updated...
-		setTimeout( 'Application.handlePaste( Friend.clipboard );',250);
+		setTimeout( 'Application.handlePaste( Friend.clipboard );', 250 );
 	}
 	if( Application) Application.sendMessage( { type: 'system', command: 'setclipboard', value: Friend.clipboard } );
 	if( Friend.lastKeydownTarget )
@@ -3447,6 +3447,7 @@ function AudioObject( sample, callback )
 
 	this.pause = function()
 	{
+		if( !this.loader ) return;
 		this.paused = this.loader.audioGraph.pause();
 		if( !this.paused )
 		{
@@ -3475,14 +3476,18 @@ function AudioObject( sample, callback )
 
 	this.unload = function()
 	{
-		this.loader.audioGraph.source = null;
-		this.loader.audioGraph = null;
-		this.loader = null;
+		if( this.loader )
+		{
+			this.loader.audioGraph.source = null;
+			this.loader.audioGraph = null;
+			this.loader = null;
+		}
 	}
 
 	this.stop = function()
 	{
-		this.loader.audioGraph.stop();
+		if( this.loader )
+			this.loader.audioGraph.stop();
 		this.stopped = true;
 		if( this.interval )
 		{
@@ -4938,7 +4943,7 @@ Authenticate = {
 	{
 		var self = this;
 		if ( self.listeners[ event ]) {
-			console.log( { event : event, listeners : self.listeners });
+			//console.log( { event : event, listeners : self.listeners });
 			throw new Error( 'FConn.on - event already registered' );
 		}
 
@@ -6005,7 +6010,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// We need to wait for all functions to be available
 		if( typeof( ge ) == 'undefined' || typeof( Trim ) == 'undefined' || typeof( cAjax ) == 'undefined' )
 		{
-			return setTimeout( onLoaded, 50 );
+			return setTimeout( onLoaded, 5 );
 		}
 
 		var loadedResources = 0;
@@ -6462,7 +6467,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						}
 						else
 						{
-							setTimeout( fl, 50 );
+							setTimeout( fl, 5 );
 						}
 					}
 					s.onload = fl;
@@ -8565,10 +8570,6 @@ GuiDesklet = function()
 				force : self.forceid
 			}
 		};
-		
-
-		console.log('register client... ' + self.sessiontype);
-		
 		if( self.sessiontype == 'open' )
 		{
 			accept.path = self.regPath;
