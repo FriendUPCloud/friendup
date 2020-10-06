@@ -347,6 +347,10 @@ Sections.applications_liberator = function( cmd, extra )
 		
 		return false;
 		
+		// Add a new Module called Liberator and add list to FApplication like for example:
+				
+		// 'SELECT * FROM FApplication WHERE UserID=\'' . USERID . '\' AND `InstallPath` LIKE "rdp://185.116.4.200:3389/%"'
+		
 	}
 	
 	function getSystemSettings( callback )
@@ -1134,6 +1138,41 @@ Sections.applications_liberator = function( cmd, extra )
 			if( callback ) return callback( false, false );
 		}
 		
+		
+		
+		// Add a new Module called Liberator and add save to FApplication like for example:
+		
+		// $conf = {
+		//   "Name": "Paint",
+		//   "Category": "Office",
+		//   "Path": "C:\Windows\system32\mspaint.exe",
+		//   "Description": "...",
+		//   "Permissions": [
+		//	  "Door Local",
+		//	  "Module System"
+		//   ],
+		//   "Parameters": args,
+		//   "Trusted": "yes"
+		// };
+		
+		// $a = new dbIO( 'FApplication' );
+		// $a->UserID = USERID;
+		// $a->Name = 'Mitra mspaint';
+		// $a->InstallPath = 'rdp://185.116.4.200:3389/mspaint';
+		// if( !$a->Load() )
+		// {
+		//    $a->DateInstalled = date( 'Y-m-d H:i:s' );
+		//    $a->Config = $conf;
+		//    $a->Permissions = 'UGO';
+		//    $a->DateModified = $a->DateInstalled;
+		//    $a->Save();
+		// }
+		
+		// grep -rnw '/home/acezerox/Projects/friendup/build/' -e "'FApplication'"
+		// grep -rnw '/home/acezerox/Projects/friendup/build/' -e "ExecuteApplication("
+		
+		// Don't show liberator application for everyone ... And can't be used on Launch ...
+		
 	}
 	
 	
@@ -1885,6 +1924,12 @@ Sections.applications_liberator = function( cmd, extra )
 		{
 			if( callback ) return callback( false, false );
 		}
+		
+		// Add a new Module called Liberator and add delete from FApplication and FUserApplication like for example:
+		
+		// DELETE all connected to FApplicationID first on users ...
+		
+		// 'DELETE FROM FApplication WHERE ID=\'' . ID . '\' AND UserID=\'' . USERID . '\' AND `InstallPath` != ""'
 		
 	}
 	
