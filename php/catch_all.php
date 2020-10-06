@@ -9,12 +9,10 @@
 *                                                                              *
 *****************************************************************************©*/
 
-<<<<<<< HEAD
-=======
+
 // Set it to empty
 $path = '';
 
->>>>>>> master
 // Get arguments from argv
 if( isset( $argv ) && isset( $argv[1] ) )
 {
