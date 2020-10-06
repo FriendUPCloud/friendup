@@ -283,13 +283,59 @@ Sections.applications_liberator = function( cmd, extra )
 		}
 	}
 	
-	function applications( callback )
+	function applications( details, callback )
 	{
 		
-		if( callback )
+		if( callback && details && details.obj )
 		{
-						
-			var mm = new Module( 'mitra' );
+			
+			var m = new Module( 'liberator' );
+			m.onExecuted = function( e, d )
+			{
+				var json = null;
+				
+				if( e == 'ok' && d )
+				{
+					try
+					{
+						json = JSON.parse( d );
+					
+						if( json )
+						{
+							//
+							
+							for( var i in json )
+							{
+								if( json[i].Config )
+								{
+									console.log( json[i].Config );
+									
+									json[i].Config = JSON.parse( json[i].Config );
+									
+									console.log( json[i].Config );
+								}
+							}
+							
+							return callback( true, json );
+							
+						}
+					} 
+					catch( e )
+					{ 
+						console.log( e );
+					} 
+				}
+				
+				console.log( 'liberator app list ', { e:e, d:(json?json:d), args: { 'installPath': ( details.obj.protocol+'://'+details.hostname+(details.port?':'+details.port:'')+'/'+details.obj.identifier+'/' ) } } );
+				
+				return callback( false, false );
+				
+			}
+			m.execute( 'list', { installPath: ( details.obj.protocol+'://'+details.hostname+(details.port?':'+details.port:'')+'/'+details.obj.identifier+'/' ) } );
+			
+			
+					
+			/*var mm = new Module( 'mitra' );
 			mm.onExecuted = function( e, d )
 			{
 				var json = null;
@@ -317,7 +363,7 @@ Sections.applications_liberator = function( cmd, extra )
 				
 				return callback( false, false );
 			}
-			mm.execute( 'loadmitrasettings', { 'extended' : 'true' } );
+			mm.execute( 'loadmitrasettings', { 'extended' : 'true' } );*/
 			
 			/*var m = new Module( 'mitra' );
 			m.onExecuted = function( e, d )
@@ -1074,7 +1120,7 @@ Sections.applications_liberator = function( cmd, extra )
 				'full address'                 : details.hostname,
 				'server port'                  : details.port,
 				'remoteapplicationprogram'     : ge( 'LiberatorAppAlias'     ).value,
-				'remote-app-dir'               : ge( 'LiberatorAppRemoteDir' ).value,
+				'remote-app-dir'               : ( ge( 'LiberatorAppRemoteDir' ).value ? '/"' + JSON.stringify( ge( 'LiberatorAppRemoteDir' ).value ) + '/"' : '' ),
 				'saml_accessgroups'            : '',
 				'icon'                         : '',
 				'executable_path'              : '',
@@ -1109,9 +1155,52 @@ Sections.applications_liberator = function( cmd, extra )
 			
 			console.log( args );
 			
-			if( args['name'] )
+			if( args['name'] && args['remoteapplicationprogram'] )
 			{
-				var m = new Module(	'mitra' );
+				
+				var data = {
+					'Name'        : args['name'],
+					'Category'    : args['category'],
+					'Path'        : args['remote-app-dir'],
+					'Description' : '...',
+					'Permissions' : [
+						'Door Local',
+						'Module System'
+					],
+					'Parameters' : args
+				};
+				
+				var mm = new Module( 'liberator' );
+				mm.onExecuted = function( e, d )
+				{
+					if( 1==1 || ShowLog ) console.log( 'liberator app save ', { e:e, d:d, args: 
+					{ 
+						id: ( id ? id : '0' ), 
+						name: args['remoteapplicationprogram'], 
+						installPath: ( args['type']+'://'+args['full address']+(args['server port']?':'+args['server port']:'')+'/'+details.obj.identifier+'/'+args['remoteapplicationprogram'] ), 
+						data: JSON.stringify( data, null, 2 ) 
+					} } );
+					
+					if( e == 'ok' )
+					{
+						if( callback ) return callback( true, d );
+					}
+					else
+					{
+						if( callback ) return callback( false, d );
+					}
+				}
+				mm.execute( id > 0 ? 'update' : 'create', 
+				{ 
+					id: ( id ? id : '0' ), 
+					name: args['remoteapplicationprogram'], 
+					installPath: ( args['type']+'://'+args['full address']+(args['server port']?':'+args['server port']:'')+'/'+details.obj.identifier+'/'+args['remoteapplicationprogram'] ), 
+					data: JSON.stringify( data, null, 2 ) 
+				} );
+				
+				
+				
+				/*var m = new Module(	'mitra' );
 				m.onExecuted = function( e, d )
 				{
 					if( 1==1 || ShowLog ) console.log( 'updateapplication ', { e:e, d:d } );
@@ -1125,7 +1214,8 @@ Sections.applications_liberator = function( cmd, extra )
 						if( callback ) return callback( false, d );
 					}
 				}
-				m.execute( 'saveapplicationsettings', { id: ( id ? id : '0' ), key: args['name'], data: JSON.stringify( args ) } );
+				m.execute( 'saveapplicationsettings', { id: ( id ? id : '0' ), key: args['name'], data: JSON.stringify( args ) } );*/
+				
 			}
 			else
 			{
@@ -1158,7 +1248,7 @@ Sections.applications_liberator = function( cmd, extra )
 		// $a = new dbIO( 'FApplication' );
 		// $a->UserID = USERID;
 		// $a->Name = 'Mitra mspaint';
-		// $a->InstallPath = 'rdp://185.116.4.200:3389/mspaint';
+		// $a->InstallPath = 'rdp://185.116.4.200:3389/12/mspaint';
 		// if( !$a->Load() )
 		// {
 		//    $a->DateInstalled = date( 'Y-m-d H:i:s' );
@@ -1172,6 +1262,8 @@ Sections.applications_liberator = function( cmd, extra )
 		// grep -rnw '/home/acezerox/Projects/friendup/build/' -e "ExecuteApplication("
 		
 		// Don't show liberator application for everyone ... And can't be used on Launch ...
+		
+		
 		
 	}
 	
@@ -1900,7 +1992,8 @@ Sections.applications_liberator = function( cmd, extra )
 				if( r && r.data == true )
 				{
 					// This is the hard delete method, used by admins ...
-					var m = new Module(	'mitra' );
+					
+					var m = new Module(	'liberator' );
 					m.onExecuted = function( e, d )
 					{
 						if( e == 'ok' )
@@ -1912,7 +2005,21 @@ Sections.applications_liberator = function( cmd, extra )
 							if( callback ) return callback( false, d );
 						}
 					}
-					m.execute( 'deleteapplicationsettings', { id: id } );
+					m.execute( 'remove', { id: id } );
+					
+					/*var m = new Module(	'mitra' );
+					m.onExecuted = function( e, d )
+					{
+						if( e == 'ok' )
+						{
+							if( callback ) return callback( true, d );
+						}
+						else
+						{
+							if( callback ) return callback( false, d );
+						}
+					}
+					m.execute( 'deleteapplicationsettings', { id: id } );*/
 				}
 				else
 				{
@@ -2265,7 +2372,7 @@ Sections.applications_liberator = function( cmd, extra )
 				function(  )
 				{
 					
-					applications( function ( res, dat )
+					applications( loadingInfo.details, function ( res, dat )
 					{
 					
 						console.log( { e:res, d:dat } );
@@ -2791,7 +2898,7 @@ Sections.applications_liberator = function( cmd, extra )
 								str +='			<strong>' + i18n( 'i18n_liberator_application_name' ) + ':</strong>';
 								str +='		</div>';
 								str +='		<div class="HContent70 FloatLeft Ellipsis">';
-								str +='			<input type="text" class="FullWidth" id="LiberatorAppName" value="' + ( app && app.Key ? app.Key : '' ) + '"/>';
+								str +='			<input type="text" class="FullWidth" id="LiberatorAppName" value="' + ( app && app.Config && app.Config.Name ? app.Config.Name : '' ) + '"/>';
 								str +='		</div>';
 								str +='	</div>';
 								str +='	<div class="HRow MarginBottom">';
@@ -2799,7 +2906,7 @@ Sections.applications_liberator = function( cmd, extra )
 								str +='			<strong>' + i18n( 'i18n_liberator_application_alias' ) + ':</strong>';
 								str +='		</div>';
 								str +='		<div class="HContent70 FloatLeft Ellipsis">';
-								str +='			<input type="text" class="FullWidth" id="LiberatorAppAlias" value="'  + ( app && app.Data ? app.Data : '' ) + '"/>';
+								str +='			<input type="text" class="FullWidth" id="LiberatorAppAlias" value="'  + ( app && app.Name ? app.Name : '' ) + '"/>';
 								str +='		</div>';
 								str +='	</div>';
 								str +='	<div class="HRow MarginBottom">';
@@ -2807,7 +2914,7 @@ Sections.applications_liberator = function( cmd, extra )
 								str +='			<strong>' + i18n( 'i18n_liberator_application_remote_dir' ) + ':</strong>';
 								str +='		</div>';
 								str +='		<div class="HContent70 FloatLeft Ellipsis">';
-								str +='			<input type="text" class="FullWidth" id="LiberatorAppRemoteDir" value=""/>';
+								str +='			<input type="text" class="FullWidth" id="LiberatorAppRemoteDir" value="' + ( app && app.Config && app.Config.Path ? app.Config.Path : '' ) + '"/>';
 								str +='		</div>';
 								str +='	</div>';
 								
@@ -2850,7 +2957,7 @@ Sections.applications_liberator = function( cmd, extra )
 											
 											if( ret )
 											{
-												applications( function ( res, dat )
+												applications( details, function ( res, dat )
 												{
 					
 													console.log( { e:res, d:dat } );
@@ -2900,7 +3007,7 @@ Sections.applications_liberator = function( cmd, extra )
 									ge( 'LiberatorAppCancelBtn' ).onclick = function(  )
 									{
 										
-										applications( function ( res, dat )
+										applications( details, function ( res, dat )
 										{
 										
 											console.log( { e:res, d:dat } );
@@ -2955,7 +3062,7 @@ Sections.applications_liberator = function( cmd, extra )
 											
 												if( ret )
 												{
-													applications( function ( res, dat )
+													applications( details, function ( res, dat )
 													{
 														
 														console.log( { e:res, d:dat } );
@@ -3057,8 +3164,8 @@ Sections.applications_liberator = function( cmd, extra )
 																	'element' : function() 
 																	{
 																		var d = document.createElement( 'span' );
-																		d.setAttribute( 'Name', _apps[k].Key ? _apps[k].Key : 'n/a' );
-																		d.setAttribute( 'Category', _apps[k].Category ? _apps[k].Category : 'Office' );
+																		d.setAttribute( 'Name', _apps[k].Config && _apps[k].Config.Name ? _apps[k].Config.Name : 'n/a' );
+																		d.setAttribute( 'Category', _apps[k].Config && _apps[k].Config.Category ? _apps[k].Config.Category : 'Office' );
 																		d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																		d.style.backgroundSize = 'contain';
 																		d.style.width = '24px';
@@ -3091,7 +3198,7 @@ Sections.applications_liberator = function( cmd, extra )
 															{
 																var d = document.createElement( 'div' );
 																d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
-																d.innerHTML = '<strong>' + ( _apps[k].Key ? _apps[k].Key : 'n/a' ) + '</strong>';
+																d.innerHTML = '<strong>' + ( _apps[k].Config && _apps[k].Config.Name ? _apps[k].Config.Name : 'n/a' ) + '</strong>';
 																return d;
 															}() 
 														}, 
@@ -3100,7 +3207,7 @@ Sections.applications_liberator = function( cmd, extra )
 															{
 																var d = document.createElement( 'div' );
 																d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
-																d.innerHTML = '<span>' + ( _apps[k].Category ? _apps[k].Category : 'Office' ) + '</span>';
+																d.innerHTML = '<span>' + ( _apps[k].Config && _apps[k].Config.Category ? _apps[k].Config.Category : 'Office' ) + '</span>';
 																return d;
 															}() 
 														},
