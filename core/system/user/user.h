@@ -173,7 +173,6 @@ typedef struct User
 	char						*u_UUID;						// unique ID
 	char						*u_Timezone;					// timezone
 	int							u_InUse;						// usage counter
->>>>>>> master
 } User;
 
 //
