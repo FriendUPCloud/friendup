@@ -248,7 +248,10 @@ i18n_workgroup_description             : Description
 i18n_delete_workgroup                  : Delete workgroup
 
 i18n_workgroup_create                  : Workgroup create
+i18n_workgroup_update                  : Workgroup update
 i18n_User Group already exist          : User Group already exist
+
+i18n_sucess                            : Success
 
 #Storage related
 
