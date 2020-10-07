@@ -304,19 +304,29 @@ Sections.applications_liberator = function( cmd, extra )
 						{
 							//
 							
+							var out = [];
+							
 							for( var i in json )
 							{
+								
 								if( json[i].Config )
 								{
-									console.log( json[i].Config );
-									
 									json[i].Config = JSON.parse( json[i].Config );
 									
 									console.log( json[i].Config );
+									
+									out.push( {
+										'ID'       : json[i].ID,
+										'Alias'    : json[i].Name,
+										'Name'     : json[i].Config.Name,
+										'Path'     : json[i].Config.Path,
+										'Category' : json[i].Config.Category
+									} );
 								}
+								
 							}
 							
-							return callback( true, json );
+							return callback( true, out );
 							
 						}
 					} 
@@ -397,6 +407,58 @@ Sections.applications_liberator = function( cmd, extra )
 				
 		// 'SELECT * FROM FApplication WHERE UserID=\'' . USERID . '\' AND `InstallPath` LIKE "rdp://185.116.4.200:3389/%"'
 		
+	}
+	
+	function remoteapps( details, callback )
+	{
+		if( callback && details && details.obj )
+		{
+			
+			var ssh = new Module( 'liberator' );
+			ssh.onExecuted = function( e, d )
+			{
+				
+				try
+				{
+					data = JSON.parse( d );
+				
+					if( data )
+					{
+						var out = [];
+						
+						for( var i in data )
+						{
+							if( data[i] && data[i][1] )
+							{
+								out.push( {
+									'Alias'    : ( data[i][1]['col'] == 'Alias'       ? data[i][1]['val'] : '' ),
+									'Name'     : ( data[i][2]['col'] == 'DisplayName' ? data[i][2]['val'] : '' ),
+									'Path'     : ( data[i][3]['col'] == 'FilePath'    ? data[i][3]['val'] : '' ),
+									'Category' : 'Office'
+								} );
+							}
+						}
+						
+						console.log( 'ssh_test: ', { e:e, d:out } );
+						
+						return callback( true, out );
+						
+					}
+				} 
+				catch( e )
+				{ 
+					console.log( 'ssh_test: ', { e:e, d:d } );
+				}
+				
+				return callback( false, false );
+				
+			}
+			ssh.execute( 'ssh_test' );
+			
+			return true;
+		}
+		
+		return false;
 	}
 	
 	function getSystemSettings( callback )
@@ -2324,6 +2386,8 @@ Sections.applications_liberator = function( cmd, extra )
 	{
 		console.log( 'got to edit ...' );
 		
+		ge( 'LiberatorDetails' ).innerHTML = '';
+		
 		if( id )
 		{
 			if( !obj ) return false;
@@ -2379,11 +2443,30 @@ Sections.applications_liberator = function( cmd, extra )
 						
 						if( !res ) return;
 						
-						loadingInfo.applications = dat;
-						
-						// Go to next in line ...
-						loadingList[ ++loadingSlot ](  );
-						
+						if( dat && dat.length )
+						{
+							
+							loadingInfo.applications = dat;
+							
+							// Go to next in line ...
+							loadingList[ ++loadingSlot ](  );
+							
+						}
+						else
+						{
+							
+							remoteapps( loadingInfo.details, function( e, d )
+							{
+								
+								loadingInfo.applications = d;
+							
+								// Go to next in line ...
+								loadingList[ ++loadingSlot ](  );
+								
+							} );
+							
+						}
+							
 					} );
 					
 				},
@@ -2730,7 +2813,7 @@ Sections.applications_liberator = function( cmd, extra )
 																		'element' : function() 
 																		{
 																			var d = document.createElement( 'span' );
-																			d.setAttribute( 'Name', apps[k].Key ? apps[k].Key : 'n/a' );
+																			d.setAttribute( 'Name', apps[k].Name ? apps[k].Name : 'n/a' );
 																			d.setAttribute( 'Category', apps[k].Category ? apps[k].Category : 'n/a' );
 																			d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																			d.style.backgroundSize = 'contain';
@@ -2764,7 +2847,7 @@ Sections.applications_liberator = function( cmd, extra )
 																{
 																	var d = document.createElement( 'div' );
 																	d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
-																	d.innerHTML = '<strong>' + ( apps[k].Key ? apps[k].Key : 'n/a' ) + '</strong>';
+																	d.innerHTML = '<strong>' + ( apps[k].Name ? apps[k].Name : 'n/a' ) + '</strong>';
 																	return d;
 																}() 
 															},
@@ -2832,7 +2915,7 @@ Sections.applications_liberator = function( cmd, extra )
 																			
 																			};
 																			return b;
-																		}( this.ids, apps[k].Key, this.func ) 
+																		}( this.ids, apps[k].Name, this.func ) 
 																	}
 																]
 															}
@@ -2898,7 +2981,7 @@ Sections.applications_liberator = function( cmd, extra )
 								str +='			<strong>' + i18n( 'i18n_liberator_application_name' ) + ':</strong>';
 								str +='		</div>';
 								str +='		<div class="HContent70 FloatLeft Ellipsis">';
-								str +='			<input type="text" class="FullWidth" id="LiberatorAppName" value="' + ( app && app.Config && app.Config.Name ? app.Config.Name : '' ) + '"/>';
+								str +='			<input type="text" class="FullWidth" id="LiberatorAppName" value="' + ( app && app.Name ? app.Name : '' ) + '"/>';
 								str +='		</div>';
 								str +='	</div>';
 								str +='	<div class="HRow MarginBottom">';
@@ -2906,7 +2989,7 @@ Sections.applications_liberator = function( cmd, extra )
 								str +='			<strong>' + i18n( 'i18n_liberator_application_alias' ) + ':</strong>';
 								str +='		</div>';
 								str +='		<div class="HContent70 FloatLeft Ellipsis">';
-								str +='			<input type="text" class="FullWidth" id="LiberatorAppAlias" value="'  + ( app && app.Name ? app.Name : '' ) + '"/>';
+								str +='			<input type="text" class="FullWidth" id="LiberatorAppAlias" value="'  + ( app && app.Alias ? app.Alias : '' ) + '"/>';
 								str +='		</div>';
 								str +='	</div>';
 								str +='	<div class="HRow MarginBottom">';
@@ -2914,7 +2997,7 @@ Sections.applications_liberator = function( cmd, extra )
 								str +='			<strong>' + i18n( 'i18n_liberator_application_remote_dir' ) + ':</strong>';
 								str +='		</div>';
 								str +='		<div class="HContent70 FloatLeft Ellipsis">';
-								str +='			<input type="text" class="FullWidth" id="LiberatorAppRemoteDir" value="' + ( app && app.Config && app.Config.Path ? app.Config.Path : '' ) + '"/>';
+								str +='			<input type="text" class="FullWidth" id="LiberatorAppRemoteDir" value="' + ( app && app.Path ? app.Path : '' ) + '"/>';
 								str +='		</div>';
 								str +='	</div>';
 								
@@ -3126,11 +3209,11 @@ Sections.applications_liberator = function( cmd, extra )
 									
 									for( var k in _apps )
 									{
-										if( _apps[k] && _apps[k].ID )
+										if( _apps[k]/* && _apps[k].ID*/ )
 										{
 											var found = false;
 											
-											if( this.ids )
+											if( 1!=1 && this.ids )
 											{
 												for( var a in this.ids )
 												{
@@ -3164,8 +3247,8 @@ Sections.applications_liberator = function( cmd, extra )
 																	'element' : function() 
 																	{
 																		var d = document.createElement( 'span' );
-																		d.setAttribute( 'Name', _apps[k].Config && _apps[k].Config.Name ? _apps[k].Config.Name : 'n/a' );
-																		d.setAttribute( 'Category', _apps[k].Config && _apps[k].Config.Category ? _apps[k].Config.Category : 'Office' );
+																		d.setAttribute( 'Name', _apps[k].Name ? _apps[k].Name : 'n/a' );
+																		d.setAttribute( 'Category', _apps[k].Category ? _apps[k].Category : 'Office' );
 																		d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																		d.style.backgroundSize = 'contain';
 																		d.style.width = '24px';
@@ -3198,7 +3281,7 @@ Sections.applications_liberator = function( cmd, extra )
 															{
 																var d = document.createElement( 'div' );
 																d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
-																d.innerHTML = '<strong>' + ( _apps[k].Config && _apps[k].Config.Name ? _apps[k].Config.Name : 'n/a' ) + '</strong>';
+																d.innerHTML = '<strong>' + ( _apps[k].Name ? _apps[k].Name : 'n/a' ) + '</strong>';
 																return d;
 															}() 
 														}, 
@@ -3207,7 +3290,7 @@ Sections.applications_liberator = function( cmd, extra )
 															{
 																var d = document.createElement( 'div' );
 																d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
-																d.innerHTML = '<span>' + ( _apps[k].Config && _apps[k].Config.Category ? _apps[k].Config.Category : 'Office' ) + '</span>';
+																d.innerHTML = '<span>' + ( _apps[k].Category ? _apps[k].Category : 'Office' ) + '</span>';
 																return d;
 															}() 
 														},
@@ -3228,7 +3311,10 @@ Sections.applications_liberator = function( cmd, extra )
 																		b.onclick = function(  )
 																		{
 																			
+																			if( !app.ID ) return;
+																			
 																			_this.update( app );
+																			
 																			
 																			// Hide add / edit button ...
 								
