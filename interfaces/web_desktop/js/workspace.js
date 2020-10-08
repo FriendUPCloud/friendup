@@ -1029,7 +1029,10 @@ Workspace = {
 					        {
 					            ShowEula();
 							}
-				            afterEula( e );								
+				            else
+				            {
+				            	afterEula( e );
+				            }
 						}
 						m.execute( 'getsetting', {
 							setting: 'accepteula'
