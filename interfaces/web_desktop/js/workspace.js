@@ -1027,7 +1027,7 @@ Workspace = {
 						{
 					        if( ee != 'ok' )
 					        {
-					            ShowEula();
+					            ScreenOverlay.showEula();
 							}
 				            else
 				            {
