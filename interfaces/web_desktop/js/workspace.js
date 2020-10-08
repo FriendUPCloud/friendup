@@ -1022,22 +1022,19 @@ Workspace = {
 					var m = new Module( 'system' );
 					m.onExecuted = function( e, d )
 					{	
-						var m = new Module( 'system' );
+						/*var m = new Module( 'system' );
 						m.onExecuted = function( ee, dd )
 						{
 					        if( ee != 'ok' )
 					        {
-					            ScreenOverlay.showEula();
+					            ShowEula();
 							}
-				            else
-				            {
-				            	afterEula( e );
-				            }
+				            afterEula( e );								
 						}
 						m.execute( 'getsetting', {
 							setting: 'accepteula'
-						} );
-						//afterEula( 'ok' );
+						} );*/
+						afterEula( 'ok' );
 						
 						// When eula is displayed or not
 						function afterEula( e )
