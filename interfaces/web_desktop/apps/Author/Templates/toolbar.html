@@ -1,0 +1,67 @@
+
+	<div class="Speech">
+		<div class="IconSmall fa-microphone" onclick="this.getElementsByTagName( 'input' )[0].focus();">
+			<input type="text" id="Speecher" onchange="Application.parseText(this.value)"/>
+		</div>
+	</div>
+
+	<div class="ToolbarInner">
+		<div class="HRow">
+			<div class="ButtonHeight Button IconButton IconSmall fa-bold" id="tBold" title="{i18n_set_bold}" onclick="editorCommand('bold')">
+				<em>B</em>
+			</div>
+			<div class="ButtonHeight Button IconButton IconSmall fa-italic" id="tItalic" title="{i18n_set_italic}" onclick="editorCommand('italic')">
+				<em>I</em>
+			</div>
+			<!--<div class="ButtonHeight Button IconButton IconSmall fa-underline" id="tUnderline" title="{i18n_set_underline}" onclick="editorCommand('underline')">
+				<em>U</em>
+			</div>-->
+			<div class="ToolDivider Divider1"></div>
+			<select id="ToolFormat" title="{i18n_set_block_format}" class="ButtonHeight ToolSelect" onchange="editorCommand( 'format' + this.value )">
+				<option value="">{i18n_headers}</option>
+				<option value="h2">{i18n_header_2}</option>
+				<option value="h3">{i18n_header_3}</option>
+				<option value="h4">{i18n_header_4}</option>
+				<option value="h5">{i18n_header_5}</option>
+				<option value="h6">{i18n_header_6}</option>
+			</select>
+			<div id="MobileMenu">
+				<div class="MenuContents">
+					<select class="ButtonHeight ToolSelect" id="FontSize" title="{i18n_font_size}" onchange="editorCommand( 'fontSize', this.value )">
+						<option value="">{i18n_sizes}</option>
+						<option value="tiny">{i18n_tiny}</option>
+						<option value="small">{i18n_small}</option>
+						<option value="normal">{i18n_normal}</option>
+						<option value="big">{i18n_big}</option>
+						<option value="huge">{i18n_huge}</option>
+					</select>
+					<div class="ToolDivider Divider4"></div>
+					<div class="Button ButtonHeight IconButton IconSmall fa-file-image-o" id="tImage" title="{i18n_insert_image}" onclick="editorCommand('image')">
+						<em>IMG</em>
+					</div>
+					<!--<div class="Button ButtonHeight IconButton IconSmall fa-code" id="tStyles" title="{i18n_styles}" onclick="editStyles()">
+						<em>IMG</em>
+					</div>-->
+					<div class="Button ButtonHeight IconButton IconSmall fa-align-left" id="tAlignLeft" title="{i18n_align_left}" onclick="editorCommand('align-left')">
+						<em>IMG</em>
+					</div>
+					<div class="Button ButtonHeight IconButton IconSmall fa-align-center" id="tAlignCenter" title="{i18n_align_center}" onclick="editorCommand('align-center')">
+						<em>IMG</em>
+					</div>
+					<div class="Button ButtonHeight IconButton IconSmall fa-align-right" id="tAlignRight" title="{i18n_align_right}" onclick="editorCommand('align-right')">
+						<em>IMG</em>
+					</div>
+					<div class="Button ButtonHeight IconButton IconSmall fa-align-justify" id="tAlignJustify" title="{i18n_align_justify}" onclick="editorCommand('align-justify')">
+						<em>IMG</em>
+					</div>
+					<div class="Button ButtonHeight IconButton IconSmall fa-list-ul" id="tUnorderedBulletList" title="{i18n_unordered_bullet_points}" onclick="editorCommand('olbullets')">
+						<em>IMG</em>
+					</div>
+					<div class="Button ButtonHeight IconButton IconSmall fa-list-ol" id="tOrderedBulletList" title="{i18n_ordered_bullet_point}" onclick="editorCommand('ulbullets')">
+						<em>IMG</em>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+

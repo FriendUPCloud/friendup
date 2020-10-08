@@ -2832,7 +2832,11 @@ function apiWrapper( event, force )
 			case 'fconn':
 				if( !Workspace.conn )
 				{
-					console.log( 'Workspace.conn - websocket not enabled, aborting' );
+					Workspace.initWebSocket( function()
+					{
+						apiWrapper( event, force );
+					} );
+					console.log( 'Workspace.conn - websocket not enabled, reinitializing' );
 					return;
 				}
 
@@ -3464,7 +3468,7 @@ function apiWrapper( event, force )
 						break;
 					case 'savewallpaperimage':
 						var m = new Module( 'system' );
-						m.onExecuted = function( e )
+						m.onExecuted = function( e, d )
 						{
 							if( e == 'ok' )
 							{
@@ -4178,7 +4182,7 @@ if( window.addEventListener )
 
 			if( args.sessionid )
 			{
-				Workspace.loginSessionId( args.sessionid, args.callbac, args.event );
+				Friend.User.LoginWithSessionId( args.sessionid, args.callbac, args.event );
 			}
 
 			if( typeof( args.username ) != 'undefined' )

@@ -424,6 +424,24 @@ if( !class_exists( 'DoorCorvoDrive' ) )
 			else if( $args->command == 'volumeinfo' )
 			{
 				//
+				
+				// TODO: Show real data ...
+				
+				if( !$this->ID )
+				{
+					if( $d = $SqlDatabase->FetchObject( '
+						SELECT * FROM `Filesystem` WHERE `UserID`=\'' . $User->ID . '\' AND LOWER(`Name`)=LOWER("' . reset( explode( ':', $args->path ) ) . '")
+					' ) )
+					{
+						foreach( $d as $k=>$v )
+						$this->$k = $v;
+					}
+				}
+				$o = new stdClass();
+				$o->Volume = $this->Name . ':';
+				$o->Used = 0;
+				$o->Filesize = 0;
+				die( 'ok<!--separate-->' . json_encode( $o ) );
 			}
 			else if( $args->command == 'dosaction' )
 			{

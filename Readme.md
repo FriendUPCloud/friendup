@@ -9,7 +9,7 @@ The Friend OS leverages the computing power of the Internet to offer many of the
 
 The FriendOS liberates you from Big Tech:  It gives you control to create, collaborate, store and share information, data and content across all your devices in a secure private environment and access it anywhere on any device.
 
-![Friend OS Hydrogen](https://evaluate.friendup.cloud/wp-content/uploads/2020/07/hydrogen-fulldesktop.jpg "Friend OS Hydrogen")
+![Friend OS Hydrogen](https://friendos.com/wp-content/uploads/2020/07/hydrogen-fulldesktop.jpg "Friend OS Hydrogen")
 
 Across devices
 --------------
@@ -27,9 +27,9 @@ Getting started
 
 Prior to installation, check that 'bash', or a compatible shell is installed on your machine.
 
-Just clone this repository, run the install.sh script and follow the on screen instructions. This script should run on most modern Linux distributions. Post to the [Developer Community](https://discord.gg/GREj9Gv) if you run into any problems here.
+After you cloned this repository, install the dependencies and do a manual install. Post to the [Developer Community](https://discord.gg/GREj9Gv) if you run into any problems here.
 
-The below script has been tested on Ubuntu 16. You might need to install MySQL or MariaDB first.
+The current distribution of choice is Ubuntu 18.
 
 ```
 git clone https://github.com/FriendSoftwareLabs/friendup
@@ -37,7 +37,7 @@ apt install make cmake dialog
 cd friendup/
 ```
 
-After this, you currently need to manually compile and install.
+After this, manually compile and install. You might need to install MySQL or MariaDB first.
 
 Dependencies
 ------------
@@ -191,8 +191,6 @@ Tested - a lot
 ==============
 
 We extensively test our platform and use https://www.browserstack.com/ for cross browser testing.
-
-<a href="https://www.browserstack.com/"><img src="https://friendos.com/wp-content/uploads/2019/09/Browserstack-logo.png" style="max-width:320px;" /></a>
 
 List of dependencies
 ====================

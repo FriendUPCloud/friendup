@@ -65,12 +65,23 @@
 #define LIB_REVISION		0
 #define CONFIG_DIRECTORY	"cfg/"
 
+#define MINS1 60
+#define MINS5 300
+#define MINS6 460
+#define MINS30 1800
+#define MINS60 MINS6*10
+#define MINS360 6*MINS60
+#define HOUR12 12*MINS60
+#define DAYS1 24*MINS60
+#define DAYS5 5*24*MINS60
+
+//#define USE_WORKERS
 
 //
 // global structure
 //
 
-struct SystemBase *SLIB;
+extern struct SystemBase *SLIB;
 
 //
 // definitions
@@ -232,6 +243,9 @@ SystemBase *SystemInit( void )
 	l->AppLibCounter = 0;
 	l->PropLibCounter = 0;
 	l->ZLibCounter = 0;
+
+	l->sl_AvailableModules = CreateList();
+	l->sl_AvailableModules->l_Data = NULL;
 	
 	// Set mutex
 	pthread_mutex_init( &l->sl_InternalMutex, NULL );
@@ -313,6 +327,8 @@ SystemBase *SystemInit( void )
 	strcpy( l->RSA_CLIENT_KEY_PEM, "/home/stefkos/development/friendup/build/testkeys/client.pem" );
 	l->RSA_CLIENT_KEY_PEM[ 0 ] = 0;
 	
+	l->sl_RemoveOldSessionTimeout = 0;
+	
 	if( plib != NULL && plib->Open != NULL )
 	{
 		char *ptr = getenv("FRIEND_HOME");
@@ -365,6 +381,8 @@ SystemBase *SystemInit( void )
 			DEBUG("[SystemBase] connections read %d\n", l->sqlpoolConnections );
 			options = plib->ReadStringNCS( prop, "databaseuser:options", NULL );
 			DEBUG("[SystemBase] options %s\n",options );
+			
+			l->sl_RemoveOldSessionTimeout = plib->ReadIntNCS( prop, "user:timeout", MINS60 );
 			
 			l->sl_CacheFiles = plib->ReadIntNCS( prop, "Options:CacheFiles", 1 );
 			l->sl_UnMountDevicesInDB = plib->ReadIntNCS( prop, "Options:UnmountInDB", 1 );
@@ -613,7 +631,12 @@ SystemBase *SystemInit( void )
 	
 	l->fcm = FriendCoreManagerNew();
 
+#ifdef USE_WORKERS
 	l->sl_WorkerManager = WorkerManagerNew( l->sl_WorkersNumber );
+#else
+	l->sl_WorkerManager = NULL;
+#endif
+
 	if( FriendCoreManagerInit( l->fcm ) != 0 )
 	{
 		FriendCoreInstance *fci = l->fcm->fcm_FriendCores;
@@ -1022,19 +1045,9 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	Log( FLOG_INFO, "[SystemBase] Register Events\n");
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
-	
-	#define MINS1 60
-	#define MINS5 300
-	#define MINS6 460
-	#define MINS30 1800
-	#define MINS60 MINS6*10
-	#define MINS360 6*MINS60
-	#define HOUR12 12*MINS60
-	#define DAYS1 24*MINS60
-	#define DAYS5 5*24*MINS60
 
 	EventAdd( l->sl_EventManager, "DoorNotificationRemoveEntries", DoorNotificationRemoveEntries, l, time( NULL )+MINS30, MINS30, -1 );
-	EventAdd( l->sl_EventManager, "USMRemoveOldSessions", USMRemoveOldSessions, l, time( NULL )+MINS360, MINS360, -1 );
+	EventAdd( l->sl_EventManager, "USMRemoveOldSessions", USMRemoveOldSessions, l, time( NULL )+l->sl_RemoveOldSessionTimeout, l->sl_RemoveOldSessionTimeout, -1 );	// default 60mins
 	// test, to remove
 	EventAdd( l->sl_EventManager, "PIDThreadManagerRemoveThreads", PIDThreadManagerRemoveThreads, l->sl_PIDTM, time( NULL )+MINS60, MINS60, -1 );
 	EventAdd( l->sl_EventManager, "CacheUFManagerRefresh", CacheUFManagerRefresh, l->sl_CacheUFM, time( NULL )+DAYS5, DAYS5, -1 );
@@ -1070,6 +1083,18 @@ SystemBase *SystemInit( void )
 	FFree( tempString );
 
 	return ( void *)l;
+}
+
+/**
+ * Just get milliseconds since 1 Jan 1970
+ * 
+ */
+
+int GetUnixTime()
+{
+	struct timeval tp;
+	gettimeofday( &tp, NULL );
+	return tp.tv_sec * 1000 + tp.tv_usec / 1000;
 }
 
 /**
@@ -1375,6 +1400,28 @@ void SystemClose( SystemBase *l )
 	if( l->sl_ModuleNames != NULL )
 	{
 		FFree( l->sl_ModuleNames );
+	}
+	
+	// Clear available modules
+	if( FRIEND_MUTEX_LOCK( &l->sl_InternalMutex ) == 0 )
+	{
+		List *ls = l->sl_AvailableModules;
+		while( ls != NULL )
+		{
+			if( ls->l_Data )
+			{
+				struct ModuleSet *set = ( struct ModuleSet *)ls->l_Data;
+				if( set->name )
+					FFree( set->name );
+				if( set->extension )
+					FFree( set->extension );
+				FFree( ls->l_Data );
+			}
+			ls = ls->next;
+		}
+		FreeList( l->sl_AvailableModules );
+		l->sl_AvailableModules = NULL;
+		FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
 	}
 	
 	// Destroy mutex
@@ -2347,6 +2394,8 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
 					// Increment and check
 					if( ++l->MsqLlibCounter >= l->sqlpoolConnections ) l->MsqLlibCounter = 0;
 					FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
+					// Give some grace time..
+					usleep( 0 );
 					continue;
 				}
 				
@@ -2357,7 +2406,7 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
 					l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib->con.sql_Recconect = FALSE;
 				}
 			
-				INFO( "[LibraryMYSQLGet] We found mysql library on slot %d.\n", l->MsqLlibCounter );
+				INFO( "[LibraryMYSQLGet] We found mysql library on slot %d (library %p).\n", l->MsqLlibCounter, l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib );
 			
 				// Increment and check
 				if( ++l->MsqLlibCounter >= l->sqlpoolConnections )
@@ -2374,10 +2423,11 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
 		}
 		
 		timer++;
+		// We got too many connections, give grace time
 		if( timer >= l->sqlpoolConnections )
 		{
 			timer = 0;
-			usleep( 5000 );
+			usleep( 0 );
 		}
 		
 		l->MsqLlibCounter++;
@@ -2427,12 +2477,12 @@ void LibrarySQLDrop( SystemBase *l, SQLLibrary *mclose )
 		
 	if( mclose->l_InUse != FALSE )
 	{
-		DEBUG( "[SystemBase] Mysql slot %d is still in use\n", i );
+		DEBUG( "[SystemBase] Mysql library %p is still in use\n", mclose );
 	}
 	
 	if( closed != -1 )
 	{
-		INFO( "[SystemBase] MYSQL slot %d was closed properly.\n", closed );
+		INFO( "[SystemBase] MYSQL library %p was closed properly.\n", mclose );
 	}
 }
 
@@ -2612,7 +2662,7 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 		{
 			if( usersession->us_WSD != NULL )
 			{
-				bytes += UserSessionWebsocketWrite( usersession , buf , len, LWS_WRITE_TEXT );
+				bytes += UserSessionWebsocketWrite( usersession, buf , len, LWS_WRITE_TEXT );
 			}
 			else
 			{

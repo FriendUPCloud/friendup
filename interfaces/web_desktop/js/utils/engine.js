@@ -2718,37 +2718,87 @@ function GetDeviceId()
 	else if( ua.indexOf( 'linux' ) > 0 ){ platform = 'Linux'; }
 	if( !platform ) platform = 'Generic';
 	
-	var r = id + '_' + type + '_' + platform + '_' + __randDevId;
+	let r = id + '_' + type + '_' + platform + '_' + __randDevId;
 
 	//application token is needed for iOS push notifications
 	if( window.friendApp )
 	{
 		if( window.friendApp.get_app_token )
 		{
+			let oldToken = friendApp.get_app_token();
 			if( window.friendApp.get_platform )
 			{
 				if( friendApp.get_platform() == 'iOS' )
 				{
-					r = id + '_ios_app_' + friendApp.get_app_token();
+					platform = 'iOS';
+					// Already has a token
+					if( oldToken.indexOf( '_ios_app_' ) > 0 )
+					{
+						r = friendApp.get_app_token();
+					}
+					else
+					{
+						r = id + '_ios_app_' + friendApp.get_app_token();
+					}
 				}
 				else
 				{
-					r = id + '_android_app_' + friendApp.get_app_token();
+					platform = 'Android';
+					// Already has a token
+					if( oldToken.indexOf( '_android_app_' ) > 0 )
+					{
+						r = friendApp.get_app_token();
+					}
+					else
+					{
+						r = id + '_android_app_' + friendApp.get_app_token();
+					}
 				}
 			}
 			else
 			{
 				if( platform === 'iOS' )
-				{		
-					r = id + '_ios_app_' + friendApp.get_app_token();
+				{	
+					platform = 'iOS';
+					// Already has a token
+					if( oldToken.indexOf( '_ios_app_' ) > 0 )
+					{
+						r = friendApp.get_app_token();
+					}
+					else
+					{	
+						r = id + '_ios_app_' + friendApp.get_app_token();
+					}
 				}
 				else
 				{
-					r = id + '_android_app_' + friendApp.get_app_token();
+					platform = 'Android';
+					// Already has a token
+					if( oldToken.indexOf( '_android_app_' ) > 0 )
+					{
+						r = friendApp.get_app_token();
+					}
+					else
+					{
+						r = id + '_android_app_' + friendApp.get_app_token();
+					}
 				}
 			}
 		}
 	}
+	
+	// Avoid duplicates
+	if( platform != 'iOS' )
+	{
+		while( r.indexOf( 'android_app_touch_android_app_' ) >= 0 ) 
+			r = r.split( 'android_app_touch_android_app_' ).join( 'android_app_' );
+	}
+	else
+	{
+		while( r.indexOf( 'ios_app_touch_ios_app_' ) >= 0 ) 
+			r = r.split( 'ios_app_touch_ios_app_' ).join( 'ios_app_' );
+	}
+	
 	// Store the cookie for later use
 	//SetCookie( 'deviceId', r );
 	

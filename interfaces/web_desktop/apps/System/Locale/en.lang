@@ -44,7 +44,11 @@ i18n_workspaces                        : Workspaces
 
 i18n_workgroups                        : Workgroups
 
+i18n_user_workgroups_empty             : User workgroups empty.
+
 i18n_roles                             : Roles
+
+i18n_user_roles_empty                  : User roles empty.
 
 i18n_storage                           : Storage
 i18n_drives                            : Drives
@@ -195,6 +199,8 @@ i18n_deleting_printer_verify           : Are you sure?
 
 i18n_users                             : Users
 i18n_find_users                        : Find users...
+
+i18n_search                            : Search
 
 i18n_header_FullName                   : Name
 i18n_header_Name                       : Username

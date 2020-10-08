@@ -60,7 +60,7 @@ endif
 ifeq ($(DEBUG),1)
 CFLAGS					+=	-D__DEBUG -O0 -g
 else
-CFLAGS					+=	-O2
+CFLAGS					+=	-O3
 endif
 
 ifeq ($(PERF_MEAS),1)

@@ -669,7 +669,7 @@ f.Name ASC";
 				updateDatabase = TRUE;
 				HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"Mounted successfully.\"}" );
 			}
-			else	// usr != NULL
+			else if( usr != NULL )
 			{
 				userID = usr->u_ID;
 				

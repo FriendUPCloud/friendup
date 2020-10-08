@@ -188,7 +188,7 @@ Sections.accounts_templates = function( cmd, extra )
 			var m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{
-				console.log( { e:e, d:d } );
+				if( ShowLog ) console.log( { e:e, d:d } );
 				
 				if( e == 'ok' )
 				{
@@ -247,7 +247,7 @@ Sections.accounts_templates = function( cmd, extra )
 	function cancel()
 	{
 		
-		console.log( 'cancel(  ) ' );
+		if( ShowLog ) console.log( 'cancel(  ) ' );
 
 		if( ge( 'TemplateDetails' ) )
 		{
@@ -274,7 +274,7 @@ Sections.accounts_templates = function( cmd, extra )
 	function filter( filter, server )
 	{
 		
-		console.log( { filter: filter, server: server } );
+		if( ShowLog ) console.log( { filter: filter, server: server } );
 		
 	}
 	
@@ -283,7 +283,7 @@ Sections.accounts_templates = function( cmd, extra )
 	function create()
 	{
 		
-		console.log( 'create()' );
+		if( ShowLog ) console.log( 'create()' );
 		
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
@@ -297,7 +297,7 @@ Sections.accounts_templates = function( cmd, extra )
 			}
 			catch( e ) {  }
 			
-			console.log( { e:e, d:(data?data:d) } );
+			if( ShowLog ) console.log( { e:e, d:(data?data:d) } );
 			
 			if( e == 'ok' && d )
 			{
@@ -341,7 +341,7 @@ Sections.accounts_templates = function( cmd, extra )
 	function update( id )
 	{
 		
-		console.log( 'update( '+id+' )' );
+		if( ShowLog ) console.log( 'update( '+id+' )' );
 		
 		if ( id )
 		{
@@ -365,7 +365,7 @@ Sections.accounts_templates = function( cmd, extra )
 			
 			args[ 'WorkspaceCount' ] = ge( 'workspace_count_input' ).value;*/
 			
-			console.log( args );
+			if( ShowLog ) console.log( args );
 			
 			
 			
@@ -381,7 +381,7 @@ Sections.accounts_templates = function( cmd, extra )
 				}
 				catch( e ) {  }
 				
-				console.log( { e:e, d:(data?data:d) } );
+				if( ShowLog ) console.log( { e:e, d:(data?data:d) } );
 				
 				if( e == 'ok' )
 				{
@@ -473,7 +473,7 @@ Sections.accounts_templates = function( cmd, extra )
 			var m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{
-				console.log( { e:e, d:d } );
+				if( ShowLog ) console.log( { e:e, d:d } );
 				
 				var data = false;
 													
@@ -536,7 +536,7 @@ Sections.accounts_templates = function( cmd, extra )
 			var m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{
-				console.log( { e:e, d:d } );
+				if( ShowLog ) console.log( { e:e, d:d } );
 				
 				var data = false;
 													
@@ -600,7 +600,7 @@ Sections.accounts_templates = function( cmd, extra )
 			var m = new Module( 'system' );
 			m.onExecuted = function( ee, dd )
 			{
-				console.log( { e:ee, d:dd } );
+				if( ShowLog ) console.log( { e:ee, d:dd } );
 				
 				var dat = false;
 									
@@ -660,7 +660,7 @@ Sections.accounts_templates = function( cmd, extra )
 			m.onExecuted = function( e, d )
 			{
 				
-				console.log( { e:e, d:d } );
+				if( ShowLog ) console.log( { e:e, d:d } );
 				
 				var mm = new Module( 'system' );
 				mm.onExecuted = function( ee, dd )
@@ -795,7 +795,7 @@ Sections.accounts_templates = function( cmd, extra )
 	
 	function editMode( close )
 	{
-		console.log( 'editMode() ', ge( 'TempEditButtons' ) );
+		if( ShowLog ) console.log( 'editMode() ', ge( 'TempEditButtons' ) );
 		
 		if( ge( 'TempEditButtons' ) )
 		{
@@ -891,7 +891,7 @@ Sections.accounts_templates = function( cmd, extra )
 			}
 		}
 		
-		console.log( output );
+		if( ShowLog ) console.log( output );
 	}
 	
 	Application.closeAllEditModes = function( act )
@@ -978,7 +978,7 @@ Sections.accounts_templates = function( cmd, extra )
 	
 	function loading( id )
 	{
-		console.log( 'got to edit ...' );
+		if( ShowLog ) console.log( 'got to edit ...' );
 		
 		if( id )
 		{
@@ -994,7 +994,7 @@ Sections.accounts_templates = function( cmd, extra )
 					list( function ( res, dat )
 					{
 				
-						console.log( { e:res, d:dat } );
+						if( ShowLog ) console.log( { e:res, d:dat } );
 						
 						if( !res ) return;
 						
@@ -1015,7 +1015,7 @@ Sections.accounts_templates = function( cmd, extra )
 					applications( function ( res, dat )
 					{
 					
-						console.log( { e:res, d:dat } );
+						if( ShowLog ) console.log( { e:res, d:dat } );
 						
 						//if( !res ) return;
 						
@@ -1059,7 +1059,7 @@ Sections.accounts_templates = function( cmd, extra )
 				//  | init
 				function(  )
 				{
-					console.log( '//  | init' );
+					if( ShowLog ) console.log( '//  | init' );
 					
 					initDetails( loadingInfo, [ 'application', 'dock', 'startup', 'looknfeel', true ] );
 				}
@@ -1091,7 +1091,7 @@ Sections.accounts_templates = function( cmd, extra )
 		var apps = ( info.applications ? info.applications : {} );
 		var look = ( info.looknfeel    ? info.looknfeel    : {} );
 		
-		console.log( info );
+		if( ShowLog ) console.log( info );
 		
 		// Language
 		var availLangs = {
@@ -1242,13 +1242,13 @@ Sections.accounts_templates = function( cmd, extra )
 				
 				if( details.ID )
 				{
-					console.log( '// save template' );
+					if( ShowLog ) console.log( '// save template' );
 					
 					update( details.ID );
 				}
 				else
 				{
-					console.log( '// create template' );
+					if( ShowLog ) console.log( '// create template' );
 					
 					create();
 				}
@@ -1279,7 +1279,7 @@ Sections.accounts_templates = function( cmd, extra )
 				
 				if( details.ID )
 				{
-					console.log( '// delete template' );
+					if( ShowLog ) console.log( '// delete template' );
 					
 					removeBtn( this, { id: details.ID, button_text: 'i18n_delete_template', }, function ( args )
 					{
@@ -1318,7 +1318,7 @@ Sections.accounts_templates = function( cmd, extra )
 						
 						if( soft )
 						{
-							console.log( 'soft ', soft );
+							if( ShowLog ) console.log( 'soft ', soft );
 							
 							var i = 0;
 							
@@ -1341,7 +1341,7 @@ Sections.accounts_templates = function( cmd, extra )
 			
 						if( star )
 						{
-							console.log( 'star ', star );
+							if( ShowLog ) console.log( 'star ', star );
 							
 							var i = 0;
 							
@@ -1402,7 +1402,7 @@ Sections.accounts_templates = function( cmd, extra )
 										}
 									}
 									
-									console.log( 'applications ', this.appids );
+									if( ShowLog ) console.log( 'applications ', this.appids );
 									
 									if( ge( 'TempApplications' ) )
 									{
@@ -1459,7 +1459,7 @@ Sections.accounts_templates = function( cmd, extra )
 										}
 									}
 									
-									console.log( 'dock ', this.appids );
+									if( ShowLog ) console.log( 'dock ', this.appids );
 									
 									if( ge( 'TempApplications' ) )
 									{
@@ -1516,7 +1516,7 @@ Sections.accounts_templates = function( cmd, extra )
 											}
 										}
 										
-										console.log( 'startup ', this.startids );
+										if( ShowLog ) console.log( 'startup ', this.startids );
 										
 										if( ge( 'TempStartup' ) )
 										{
@@ -1553,6 +1553,15 @@ Sections.accounts_templates = function( cmd, extra )
 							
 							head : function (  )
 							{
+								
+								var inp = ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0];
+								inp.value = '';
+								
+								if( ge( 'ApplicationSearchCancelBtn' ) && ge( 'ApplicationSearchCancelBtn' ).classList.contains( 'Open' ) )
+								{
+									ge( 'ApplicationSearchCancelBtn' ).classList.remove( 'Open' );
+									ge( 'ApplicationSearchCancelBtn' ).classList.add( 'Closed' );
+								}
 								
 								var o = ge( 'ApplicationGui' ); o.innerHTML = '<input type="hidden" id="TempApplications">';
 								
@@ -1734,7 +1743,7 @@ Sections.accounts_templates = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+																	d.className = 'PaddingSmall HContent15 FloatLeft';
 																	return d;
 																}(),
 																'child' : 
@@ -1756,7 +1765,7 @@ Sections.accounts_templates = function( cmd, extra )
 																				
 																					args.func.updateids( 'applications', args.name, false );
 																					
-																					console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																					if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
 																				
 																					updateApplications( details.ID, function( e, d, vars )
 																					{
@@ -1778,7 +1787,7 @@ Sections.accounts_templates = function( cmd, extra )
 																						}
 																						else
 																						{
-																							console.log( { e:e, d:d, vars: vars } );
+																							if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
 																						}
 																					
 																					}, { pnt: args.pnt, func: args.func } );
@@ -1810,7 +1819,7 @@ Sections.accounts_templates = function( cmd, extra )
 										}
 										
 										// Sort default by Name ASC
-										sortApps( 'Name' );
+										this.sortapps( 'Name', 'ASC' );
 										
 									}
 									
@@ -1868,11 +1877,14 @@ Sections.accounts_templates = function( cmd, extra )
 																{ 
 																	'element' : function() 
 																	{
-																		var d = document.createElement( 'div' );
+																		var d = document.createElement( 'span' );
+																		d.setAttribute( 'Name', apps[k].Name );
+																		d.setAttribute( 'Category', apps[k].Category );
 																		d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																		d.style.backgroundSize = 'contain';
 																		d.style.width = '24px';
 																		d.style.height = '24px';
+																		d.style.display = 'block';
 																		return d;
 																	}(), 
 																	 'child' : 
@@ -1935,7 +1947,7 @@ Sections.accounts_templates = function( cmd, extra )
 																				
 																				func.updateids( 'applications', name, [ name, '0' ] );
 																				
-																				console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																				if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
 																				
 																				updateApplications( details.ID, function( e, d, vars )
 																				{
@@ -1955,7 +1967,7 @@ Sections.accounts_templates = function( cmd, extra )
 																					}
 																					else
 																					{
-																						console.log( { e:e, d:d, vars: vars } );
+																						if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
 																					}
 																					
 																				}, { _this: this, func: func } );
@@ -1967,7 +1979,7 @@ Sections.accounts_templates = function( cmd, extra )
 																				
 																				func.updateids( 'applications', name, false );
 																				
-																				console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																				if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
 																				
 																				updateApplications( details.ID, function( e, d, vars )
 																				{
@@ -1987,7 +1999,7 @@ Sections.accounts_templates = function( cmd, extra )
 																					}
 																					else
 																					{
-																						console.log( { e:e, d:d, vars: vars } );
+																						if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
 																					}
 																					
 																				}, { _this: this, func: func } );
@@ -2018,8 +2030,148 @@ Sections.accounts_templates = function( cmd, extra )
 									
 									}
 									
+									// Sort default by Name ASC
+									this.sortapps( 'Name', 'ASC' );
+									
 								}
 								
+							},
+							
+							searchapps : function ( filter, server )
+							{
+								
+								if( ge( 'ApplicationInner' ) )
+								{
+									var list = ge( 'ApplicationInner' ).getElementsByTagName( 'div' );
+
+									if( list.length > 0 )
+									{
+										for( var a = 0; a < list.length; a++ )
+										{
+											if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+		
+											var span = list[a].getElementsByTagName( 'span' )[0];
+		
+											if( span )
+											{
+												var param = [
+													( " " + span.getAttribute( 'name' ).toLowerCase() + " " ), 
+													( " " + span.getAttribute( 'category' ).toLowerCase() + " " )
+												];
+												
+												if( !filter || filter == ''  
+												|| span.getAttribute( 'name' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+												|| span.getAttribute( 'category' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+												)
+												{
+													list[a].style.display = '';
+				
+													var div = list[a].getElementsByTagName( 'div' );
+				
+													if( div.length )
+													{
+														for( var i in div )
+														{
+															if( div[i] && div[i].className && ( div[i].className.indexOf( 'name' ) >= 0 || div[i].className.indexOf( 'category' ) >= 0 ) )
+															{
+																// TODO: Make text searched for ...
+															}
+														}
+													}
+												}
+												else
+												{
+													list[a].style.display = 'none';
+												}
+											}
+										}
+	
+									}
+									
+									if( ge( 'ApplicationSearchCancelBtn' ) )
+									{
+										if( !filter && ( ge( 'ApplicationSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'ApplicationSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+										{
+											ge( 'ApplicationSearchCancelBtn' ).classList.remove( 'Open' );
+											ge( 'ApplicationSearchCancelBtn' ).classList.add( 'Closed' );
+										}
+										
+										else if( filter != '' && ( ge( 'ApplicationSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'ApplicationSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+										{
+											ge( 'ApplicationSearchCancelBtn' ).classList.remove( 'Closed' );
+											ge( 'ApplicationSearchCancelBtn' ).classList.add( 'Open' );
+										}
+									}
+								}
+								
+							},
+							
+							sortapps : function ( sortby, orderby )
+							{
+
+								//
+
+								var _this = ge( 'ApplicationInner' );
+
+								if( _this )
+								{
+									orderby = ( orderby ? orderby : ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' ) );
+	
+									var list = _this.getElementsByTagName( 'div' );
+	
+									if( list.length > 0 )
+									{
+										var output = [];
+		
+										var callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
+		
+										for( var a = 0; a < list.length; a++ )
+										{
+											if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+			
+											var span = list[a].getElementsByTagName( 'span' )[0];
+			
+											if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' )
+											{
+												var obj = { 
+													sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
+													content : list[a]
+												};
+			
+												output.push( obj );
+											}
+										}
+		
+										if( output.length > 0 )
+										{
+											// Sort ASC default
+			
+											output.sort( callback );
+			
+											// Sort DESC
+			
+											if( orderby == 'DESC' ) 
+											{ 
+												output.reverse();  
+											}
+			
+											_this.innerHTML = '';
+			
+											_this.setAttribute( 'orderby', orderby );
+			
+											for( var key in output )
+											{
+												if( output[key] && output[key].content )
+												{
+													// Add row
+													_this.appendChild( output[key].content );
+												}
+											}
+										}
+									}
+								}
+
+								//console.log( output );
 							},
 							
 							refresh : function (  )
@@ -2128,7 +2280,18 @@ Sections.accounts_templates = function( cmd, extra )
 								
 									};
 								}
-						
+								
+								var inp = ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0];
+								inp.onkeyup = function( e )
+								{
+									init.searchapps( this.value );
+								}
+								ge( 'ApplicationSearchCancelBtn' ).onclick = function( e )
+								{
+									init.searchapps( false );
+									inp.value = '';
+								}
+								
 								// Show listed applications ... 
 						
 								init.list();
@@ -2155,6 +2318,16 @@ Sections.accounts_templates = function( cmd, extra )
 							
 							head : function ( hidecol )
 							{
+								
+								var inp = ge( 'AdminDockContainer' ).getElementsByTagName( 'input' )[0];
+								inp.value = '';
+								
+								if( ge( 'DockSearchCancelBtn' ) && ge( 'DockSearchCancelBtn' ).classList.contains( 'Open' ) )
+								{
+									ge( 'DockSearchCancelBtn' ).classList.remove( 'Open' );
+									ge( 'DockSearchCancelBtn' ).classList.add( 'Closed' );
+								}
+								
 								var o = ge( 'DockGui' ); o.innerHTML = '';
 								
 								this.func.updateids( 'dock' );
@@ -2171,28 +2344,38 @@ Sections.accounts_templates = function( cmd, extra )
 										'child' : 
 										[ 
 											{ 
-												'element' : function() 
+												'element' : function( _this ) 
 												{
 													var d = document.createElement( 'div' );
 													d.className = 'PaddingSmall HContent40 FloatLeft';
 													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+													d.ele = this;
+													d.onclick = function(  )
+													{
+														_this.sortdock( 'Name' );
+													};
 													return d;
-												}() 
+												}( this ) 
 											}, 
 											{ 
-												'element' : function() 
+												'element' : function( _this )  
 												{
 													var d = document.createElement( 'div' );
 													d.className = 'PaddingSmall HContent25 FloatLeft Relative';
 													d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
+													d.ele = this;
+													d.onclick = function(  )
+													{
+														_this.sortdock( 'Category' );
+													};
 													return d;
-												}()
+												}( this )
 											},
 											{ 
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
+													d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
 													d.innerHTML = '<strong>' + i18n( 'i18n_order' ) + '</strong>';
 													return d;
 												}()
@@ -2201,7 +2384,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent15 FloatLeft Relative';
+													d.className = 'PaddingSmall HContent10 FloatLeft Relative';
 													return d;
 												}()
 											}
@@ -2284,11 +2467,14 @@ Sections.accounts_templates = function( cmd, extra )
 																	{ 
 																		'element' : function() 
 																		{
-																			var d = document.createElement( 'div' );
+																			var d = document.createElement( 'span' );
+																			d.setAttribute( 'Name', apps[k].Name );
+																			d.setAttribute( 'Category', apps[k].Category );
 																			d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																			d.style.backgroundSize = 'contain';
 																			d.style.width = '24px';
 																			d.style.height = '24px';
+																			d.style.display = 'block';
 																			return d;
 																		}(), 
 																		 'child' : 
@@ -2333,7 +2519,7 @@ Sections.accounts_templates = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Ellipsis';
+																	d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Ellipsis';
 																	return d;
 																}(),
 																'child' : 
@@ -2382,7 +2568,7 @@ Sections.accounts_templates = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+																	d.className = 'PaddingSmall HContent10 FloatLeft';
 																	return d;
 																
 																}(),
@@ -2405,7 +2591,7 @@ Sections.accounts_templates = function( cmd, extra )
 																				
 																					args.func.updateids( 'dock', args.name, [ args.name, '0' ] );
 																				
-																					console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																					if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
 																				
 																					updateApplications( details.ID, function( e, d, vars )
 																					{
@@ -2421,7 +2607,7 @@ Sections.accounts_templates = function( cmd, extra )
 																						}
 																						else
 																						{
-																							console.log( { e:e, d:d, vars: vars } );
+																							if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
 																						}
 																				
 																					}, { pnt: args.pnt } );
@@ -2508,18 +2694,21 @@ Sections.accounts_templates = function( cmd, extra )
 																{
 																	var d = document.createElement( 'div' );
 																	d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
-																	return d;;
+																	return d;
 																}(),
 																 'child' : 
 																[ 
 																	{ 
 																		'element' : function() 
 																		{
-																			var d = document.createElement( 'div' );
+																			var d = document.createElement( 'span' );
+																			d.setAttribute( 'Name', apps[k].Name );
+																			d.setAttribute( 'Category', apps[k].Category );
 																			d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																			d.style.backgroundSize = 'contain';
 																			d.style.width = '24px';
 																			d.style.height = '24px';
+																			d.style.display = 'block';
 																			return d;
 																		}(), 
 																		 'child' : 
@@ -2582,7 +2771,7 @@ Sections.accounts_templates = function( cmd, extra )
 																				
 																					func.updateids( 'dock', name, [ name, '1' ] );
 																				
-																					console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																					if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
 																				
 																					updateApplications( details.ID, function( e, d, vars )
 																					{
@@ -2596,7 +2785,7 @@ Sections.accounts_templates = function( cmd, extra )
 																						}
 																						else
 																						{
-																							console.log( { e:e, d:d, vars: vars } );
+																							if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
 																						}
 																				
 																					}, { _this: this } );
@@ -2608,7 +2797,7 @@ Sections.accounts_templates = function( cmd, extra )
 																				
 																					func.updateids( 'dock', name, [ name, '0' ] );
 																				
-																					console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																					if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
 																				
 																					updateApplications( details.ID, function( e, d, vars )
 																					{
@@ -2622,7 +2811,7 @@ Sections.accounts_templates = function( cmd, extra )
 																						}
 																						else
 																						{
-																							console.log( { e:e, d:d, vars: vars } );
+																							if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
 																						}
 																					
 																					}, { _this: this } );
@@ -2651,10 +2840,151 @@ Sections.accounts_templates = function( cmd, extra )
 											}
 									
 										}
+										
+										// Sort default by Name ASC
+										this.sortdock( 'Name', 'ASC' );
+										
 									}
 									
 								}
 								
+							},
+							
+							searchdock : function ( filter, server )
+							{
+								
+								if( ge( 'DockInner' ) )
+								{
+									var list = ge( 'DockInner' ).getElementsByTagName( 'div' );
+
+									if( list.length > 0 )
+									{
+										for( var a = 0; a < list.length; a++ )
+										{
+											if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+		
+											var span = list[a].getElementsByTagName( 'span' )[0];
+		
+											if( span )
+											{
+												var param = [
+													( " " + span.getAttribute( 'name' ).toLowerCase() + " " ), 
+													( " " + span.getAttribute( 'category' ).toLowerCase() + " " )
+												];
+												
+												if( !filter || filter == ''  
+												|| span.getAttribute( 'name' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+												|| span.getAttribute( 'category' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+												)
+												{
+													list[a].style.display = '';
+				
+													var div = list[a].getElementsByTagName( 'div' );
+				
+													if( div.length )
+													{
+														for( var i in div )
+														{
+															if( div[i] && div[i].className && ( div[i].className.indexOf( 'name' ) >= 0 || div[i].className.indexOf( 'category' ) >= 0 ) )
+															{
+																// TODO: Make text searched for ...
+															}
+														}
+													}
+												}
+												else
+												{
+													list[a].style.display = 'none';
+												}
+											}
+										}
+	
+									}
+									
+									if( ge( 'DockSearchCancelBtn' ) )
+									{
+										if( !filter && ( ge( 'DockSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'DockSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+										{
+											ge( 'DockSearchCancelBtn' ).classList.remove( 'Open' );
+											ge( 'DockSearchCancelBtn' ).classList.add( 'Closed' );
+										}
+										
+										else if( filter != '' && ( ge( 'DockSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'DockSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+										{
+											ge( 'DockSearchCancelBtn' ).classList.remove( 'Closed' );
+											ge( 'DockSearchCancelBtn' ).classList.add( 'Open' );
+										}
+									}
+								}
+								
+							},
+							
+							sortdock : function ( sortby, orderby )
+							{
+
+								//
+
+								var _this = ge( 'DockInner' );
+
+								if( _this )
+								{
+									orderby = ( orderby ? orderby : ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' ) );
+									
+									var list = _this.getElementsByTagName( 'div' );
+	
+									if( list.length > 0 )
+									{
+										var output = [];
+		
+										var callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
+		
+										for( var a = 0; a < list.length; a++ )
+										{
+											if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+			
+											var span = list[a].getElementsByTagName( 'span' )[0];
+			
+											if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' )
+											{
+												var obj = { 
+													sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
+													content : list[a]
+												};
+			
+												output.push( obj );
+											}
+										}
+		
+										if( output.length > 0 )
+										{
+											// Sort ASC default
+			
+											output.sort( callback );
+			
+											// Sort DESC
+			
+											if( orderby == 'DESC' ) 
+											{ 
+												output.reverse();  
+											}
+			
+											_this.innerHTML = '';
+			
+											_this.setAttribute( 'orderby', orderby );
+			
+											for( var key in output )
+											{
+												if( output[key] && output[key].content )
+												{
+													// Add row
+													_this.appendChild( output[key].content );
+												}
+											}
+										}
+									}
+								}
+
+								//console.log( output );
 							},
 							
 							refresh : function (  )
@@ -2684,9 +3014,9 @@ Sections.accounts_templates = function( cmd, extra )
 							sortup : function ( order, callback )
 							{
 								
-								console.log( 'TODO: sortup: ' + order + ' ', this.ids );
+								if( ShowLog ) console.log( 'TODO: sortup: ' + order + ' ', this.ids );
 								
-								console.log( 'soft: ', soft );
+								if( ShowLog ) console.log( 'soft: ', soft );
 								
 								var num = 0; var array = []; var found = null;
 								
@@ -2699,7 +3029,7 @@ Sections.accounts_templates = function( cmd, extra )
 											
 											// 
 											
-											console.log( { a:a, num:num } );
+											if( ShowLog ) console.log( { a:a, num:num } );
 											
 											if( order == a && typeof this.ids[ order ] !== "undefined" )
 											{
@@ -2712,7 +3042,7 @@ Sections.accounts_templates = function( cmd, extra )
 										}
 									}
 									
-									console.log( { array: array, found: found, past: array[ found-1 ] } );
+									if( ShowLog ) console.log( { array: array, found: found, past: array[ found-1 ] } );
 									
 									if( array && typeof found !== "undefined" )
 									{
@@ -2740,7 +3070,7 @@ Sections.accounts_templates = function( cmd, extra )
 										}
 									}
 									
-									console.log( this.ids );
+									if( ShowLog ) console.log( this.ids );
 									
 									this.refresh();
 									//this.func.applications( 'refresh' );
@@ -2753,9 +3083,9 @@ Sections.accounts_templates = function( cmd, extra )
 							sortdown : function ( order, callback )
 							{
 								
-								console.log( 'TODO: sortdown: ' + order + ' ', this.ids );
+								if( ShowLog ) console.log( 'TODO: sortdown: ' + order + ' ', this.ids );
 								
-								console.log( 'soft: ', soft );
+								if( ShowLog ) console.log( 'soft: ', soft );
 								
 								var num = 0; var array = []; var found = null;
 								
@@ -2768,7 +3098,7 @@ Sections.accounts_templates = function( cmd, extra )
 											
 											// 
 											
-											console.log( { a:a, num:num } );
+											if( ShowLog ) console.log( { a:a, num:num } );
 											
 											if( order == a && typeof this.ids[ order ] !== "undefined" )
 											{
@@ -2781,7 +3111,7 @@ Sections.accounts_templates = function( cmd, extra )
 										}
 									}
 									
-									console.log( { array: array, found: found, past: array[ found+1 ] } );
+									if( ShowLog ) console.log( { array: array, found: found, past: array[ found+1 ] } );
 									
 									if( array && typeof found !== "undefined" )
 									{
@@ -2809,7 +3139,7 @@ Sections.accounts_templates = function( cmd, extra )
 										}
 									}
 									
-									console.log( this.ids );
+									if( ShowLog ) console.log( this.ids );
 									
 									this.refresh();
 									//this.func.applications( 'refresh' );
@@ -2903,7 +3233,18 @@ Sections.accounts_templates = function( cmd, extra )
 										
 									};
 								}
-							
+								
+								var inp = ge( 'AdminDockContainer' ).getElementsByTagName( 'input' )[0];
+								inp.onkeyup = function( e )
+								{
+									init.searchdock( this.value );
+								}
+								ge( 'DockSearchCancelBtn' ).onclick = function( e )
+								{
+									init.searchdock( false );
+									inp.value = '';
+								}
+								
 								// Show listed dock ... 
 						
 								init.list();
@@ -2967,7 +3308,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
+													d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
 													d.innerHTML = '<strong>' + i18n( 'i18n_order' ) + '</strong>';
 													return d;
 												}()
@@ -2976,7 +3317,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent15 FloatLeft Relative';
+													d.className = 'PaddingSmall HContent10 FloatLeft Relative';
 													return d;
 												}()
 											}
@@ -3123,7 +3464,7 @@ Sections.accounts_templates = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Ellipsis';
+																	d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Ellipsis';
 																	return d;
 																}(),
 																'child' : 
@@ -3139,7 +3480,7 @@ Sections.accounts_templates = function( cmd, extra )
 																				_this.sortdown( order, function()
 																				{
 																					
-																					console.log( 'updateApplications( '+details.ID+' )' );
+																					if( ShowLog ) console.log( 'updateApplications( '+details.ID+' )' );
 																					
 																					updateApplications( details.ID );
 																					
@@ -3160,7 +3501,7 @@ Sections.accounts_templates = function( cmd, extra )
 																				_this.sortup( order, function()
 																				{
 																					
-																					console.log( 'updateApplications( '+details.ID+' )' );
+																					if( ShowLog ) console.log( 'updateApplications( '+details.ID+' )' );
 																					
 																					updateApplications( details.ID );
 																					
@@ -3176,7 +3517,7 @@ Sections.accounts_templates = function( cmd, extra )
 																'element' : function() 
 																{
 																	var d = document.createElement( 'div' );
-																	d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+																	d.className = 'PaddingSmall HContent10 FloatLeft';
 																	return d;
 																
 																}(),
@@ -3199,7 +3540,7 @@ Sections.accounts_templates = function( cmd, extra )
 																				
 																					args.func.updateids( 'startup', args.name, false );
 																				
-																					console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																					if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
 																				
 																					updateApplications( details.ID, function( e, d, vars )
 																					{
@@ -3215,7 +3556,7 @@ Sections.accounts_templates = function( cmd, extra )
 																						}
 																						else
 																						{
-																							console.log( { e:e, d:d, vars: vars } );
+																							if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
 																						}
 																				
 																					}, { pnt: args.pnt } );
@@ -3384,7 +3725,7 @@ Sections.accounts_templates = function( cmd, extra )
 																				
 																					func.updateids( 'startup', name, ( 'launch ' + name ) );
 																				
-																					console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																					if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
 																				
 																					updateApplications( details.ID, function( e, d, vars )
 																					{
@@ -3398,7 +3739,7 @@ Sections.accounts_templates = function( cmd, extra )
 																						}
 																						else
 																						{
-																							console.log( { e:e, d:d, vars: vars } );
+																							if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
 																						}
 																				
 																					}, { _this: this } );
@@ -3410,7 +3751,7 @@ Sections.accounts_templates = function( cmd, extra )
 																				
 																					func.updateids( 'startup', name, false );
 																				
-																					console.log( 'updateApplications( '+details.ID+', callback, vars )' );
+																					if( ShowLog ) console.log( 'updateApplications( '+details.ID+', callback, vars )' );
 																				
 																					updateApplications( details.ID, function( e, d, vars )
 																					{
@@ -3424,7 +3765,7 @@ Sections.accounts_templates = function( cmd, extra )
 																						}
 																						else
 																						{
-																							console.log( { e:e, d:d, vars: vars } );
+																							if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
 																						}
 																					
 																					}, { _this: this } );
@@ -3486,9 +3827,9 @@ Sections.accounts_templates = function( cmd, extra )
 							sortup : function ( order, callback )
 							{
 								
-								console.log( 'TODO: sortup: ' + order + ' ', this.ids );
+								if( ShowLog ) console.log( 'TODO: sortup: ' + order + ' ', this.ids );
 								
-								console.log( 'star: ', star );
+								if( ShowLog ) console.log( 'star: ', star );
 								
 								var num = 0; var array = []; var found = null;
 								
@@ -3501,7 +3842,7 @@ Sections.accounts_templates = function( cmd, extra )
 											
 											// 
 											
-											console.log( { a:a, num:num } );
+											if( ShowLog ) console.log( { a:a, num:num } );
 											
 											if( order == a && typeof this.ids[ order ] !== "undefined" )
 											{
@@ -3514,7 +3855,7 @@ Sections.accounts_templates = function( cmd, extra )
 										}
 									}
 									
-									console.log( { array: array, found: found, past: array[ found-1 ] } );
+									if( ShowLog ) console.log( { array: array, found: found, past: array[ found-1 ] } );
 									
 									if( array && typeof found !== "undefined" )
 									{
@@ -3542,7 +3883,7 @@ Sections.accounts_templates = function( cmd, extra )
 										}
 									}
 									
-									console.log( this.ids );
+									if( ShowLog ) console.log( this.ids );
 									
 									this.refresh();
 									
@@ -3554,9 +3895,9 @@ Sections.accounts_templates = function( cmd, extra )
 							sortdown : function ( order, callback )
 							{
 								
-								console.log( 'TODO: sortdown: ' + order + ' ', this.ids );
+								if( ShowLog ) console.log( 'TODO: sortdown: ' + order + ' ', this.ids );
 								
-								console.log( 'star: ', star );
+								if( ShowLog ) console.log( 'star: ', star );
 								
 								var num = 0; var array = []; var found = null;
 								
@@ -3569,7 +3910,7 @@ Sections.accounts_templates = function( cmd, extra )
 											
 											// 
 											
-											console.log( { a:a, num:num } );
+											if( ShowLog ) console.log( { a:a, num:num } );
 											
 											if( order == a && typeof this.ids[ order ] !== "undefined" )
 											{
@@ -3582,7 +3923,7 @@ Sections.accounts_templates = function( cmd, extra )
 										}
 									}
 									
-									console.log( { array: array, found: found, past: array[ found+1 ] } );
+									if( ShowLog ) console.log( { array: array, found: found, past: array[ found+1 ] } );
 									
 									if( array && typeof found !== "undefined" )
 									{
@@ -3610,7 +3951,7 @@ Sections.accounts_templates = function( cmd, extra )
 										}
 									}
 									
-									console.log( this.ids );
+									if( ShowLog ) console.log( this.ids );
 									
 									this.refresh();
 									
@@ -3730,7 +4071,7 @@ Sections.accounts_templates = function( cmd, extra )
 									
 									this.setAttribute( 'value', 'charcoal' );
 									
-									console.log( 'updateLookAndFeel( '+details.ID+', callback, vars )' );
+									if( ShowLog ) console.log( 'updateLookAndFeel( '+details.ID+', callback, vars )' );
 									
 									updateLookAndFeel( details.ID, function( e, d, vars )
 									{
@@ -3744,7 +4085,7 @@ Sections.accounts_templates = function( cmd, extra )
 										}
 										else
 										{
-											console.log( { e:e, d:d, vars: vars } );
+											if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
 										}
 										
 									}, { _this: this } );
@@ -3755,7 +4096,7 @@ Sections.accounts_templates = function( cmd, extra )
 									
 									this.setAttribute( 'value', 'light' );
 									
-									console.log( 'updateLookAndFeel( '+details.ID+', callback, vars )' );
+									if( ShowLog ) console.log( 'updateLookAndFeel( '+details.ID+', callback, vars )' );
 									
 									updateLookAndFeel( details.ID, function( e, d, vars )
 									{
@@ -3769,7 +4110,7 @@ Sections.accounts_templates = function( cmd, extra )
 										}
 										else
 										{
-											console.log( { e:e, d:d, vars: vars } );
+											if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
 										}
 										
 									}, { _this: this } );
@@ -3784,7 +4125,7 @@ Sections.accounts_templates = function( cmd, extra )
 							s.onchange = function(  )
 							{
 								
-								console.log( 'updateLookAndFeel( '+details.ID+', callback, vars )' );
+								if( ShowLog ) console.log( 'updateLookAndFeel( '+details.ID+', callback, vars )' );
 								
 								updateLookAndFeel( details.ID, function( e, d, vars )
 								{
@@ -3795,7 +4136,7 @@ Sections.accounts_templates = function( cmd, extra )
 									}
 									else
 									{
-										console.log( { e:e, d:d, vars: vars } );
+										if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
 									}
 									
 								} );
@@ -3813,7 +4154,7 @@ Sections.accounts_templates = function( cmd, extra )
 								if( this.value >= 1 )
 								{
 									
-									console.log( 'updateLookAndFeel( '+details.ID+', callback, vars )' );
+									if( ShowLog ) console.log( 'updateLookAndFeel( '+details.ID+', callback, vars )' );
 									
 									updateLookAndFeel( details.ID, function( e, d, vars )
 									{
@@ -3828,7 +4169,7 @@ Sections.accounts_templates = function( cmd, extra )
 										{
 											vars._this.value = vars._this.current;
 											
-											console.log( { e:e, d:d, vars: vars } );
+											if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
 											
 										}
 										
@@ -3867,7 +4208,7 @@ Sections.accounts_templates = function( cmd, extra )
 											var image = new Image();
 											image.onload = function()
 											{
-												console.log( 'loaded image ... ', item );
+												if( ShowLog ) console.log( 'loaded image ... ', item );
 												// Resizes the image
 												var canvas = ge( 'AdminWallpaper' );
 												var context = canvas.getContext( '2d' );
@@ -3881,7 +4222,7 @@ Sections.accounts_templates = function( cmd, extra )
 												ge( 'wallpaper_button_inner' ).setAttribute( 'value', item[ 0 ].Path );
 											}
 											
-											console.log( 'updateWallpaper( '+details.ID+', callback )' );
+											if( ShowLog ) console.log( 'updateWallpaper( '+details.ID+', callback )' );
 											
 											updateWallpaper( details.ID, function( e, d, vars )
 											{
@@ -3892,7 +4233,7 @@ Sections.accounts_templates = function( cmd, extra )
 												}
 												else
 												{
-													console.log( { e:e, d:d, vars: vars } );
+													if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
 												}
 										
 											} );
@@ -4020,7 +4361,7 @@ Sections.accounts_templates = function( cmd, extra )
 	
 	function initMain()
 	{
-		console.log( 'initMain()' );
+		if( ShowLog ) console.log( 'initMain()' );
 		
 		var checkedGlobal = Application.checkAppPermission( 'PERM_TEMPLATE_GLOBAL' );
 		var checkedWorkgr = Application.checkAppPermission( 'PERM_TEMPLATE_WORKGROUP' );
@@ -4031,7 +4372,7 @@ Sections.accounts_templates = function( cmd, extra )
 			// Get the user list
 			list( function( res, dat )
 			{
-				console.log( { e:res, d:dat } );
+				if( ShowLog ) console.log( { e:res, d:dat } );
 				
 				var temp = null;
 				
@@ -4214,7 +4555,7 @@ Sections.accounts_templates = function( cmd, extra )
 											'element' : function()
 											{
 												var d = document.createElement( 'div' );
-												d.className = 'HContent10 FloatLeft PaddingSmall Ellipsis';
+												d.className = 'HContent10 FloatLeft PaddingSmall';
 												return d;
 											}()/*,
 											'child' : 

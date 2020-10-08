@@ -78,6 +78,7 @@ static inline int LocFileRead( LocFile* file, FILE *fp, long long offset, long l
 	}
 
 	file->lf_Buffer = (char *)FMalloc( size + 1 );
+	file->lf_Buffer[ size ] = 0;
 	if( file->lf_Buffer == NULL )
 	{
 		DEBUG("Cannot allocate memory for file\n");
@@ -85,7 +86,7 @@ static inline int LocFileRead( LocFile* file, FILE *fp, long long offset, long l
 	}
 	
 	file->lf_FileSize = size;
-	fseek( fp, offset, SEEK_SET );
+	fseeko( fp, offset, SEEK_SET );
 	int result = fread( file->lf_Buffer, size, 1, fp );
 	if( result < size )
 	{
@@ -151,10 +152,11 @@ LocFile* LocFileNew( char* path, unsigned int flags )
 		
 		memcpy(  &(fo->lf_Info),  &st, sizeof( struct stat) );
 
-		fseek( fp, 0, SEEK_END );
-		long fsize = ftell( fp );
-		fseek( fp, 0, SEEK_SET );  //same as rewind(f);
-		fo->lf_FileSize = fsize;// st.st_size; //ftell( fp );
+		// Use big file compliant seek/tell functions
+		fseeko( fp, 0, SEEK_END );
+		off_t fsize = ftello( fp );
+		fseeko( fp, 0, SEEK_SET );  //same as rewind(f);
+		fo->lf_FileSize = ( long )fsize;// st.st_size; //ftell( fp );
 
 		if( flags & FILE_READ_NOW )
 		{

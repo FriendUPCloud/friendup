@@ -25,7 +25,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 		{
 			global $args;
 			$this->fileInfo = isset( $args->fileInfo ) ? $args->fileInfo : new stdClass();
-			$defaultDiskspace = 536870912;
+			$defaultDiskspace = 500000000;
 			if( isset( $this->Config ) && strlen( $this->Config) > 3 )
 			{
 				$this->configObject = json_decode( $this->Config );
@@ -38,19 +38,19 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					{
 						case 'kb':
 							$nn = substr( $ds, 0, strlen( $ds ) - 2 );
-							$nn = intval( $nn, 10 ) * 1024;
+							$nn = intval( $nn, 10 ) * 1000;
 							break;
 						case 'mb':
 							$nn = substr( $ds, 0, strlen( $ds ) - 2 );
-							$nn = intval( $nn, 10 ) * 1024 * 1024;
+							$nn = intval( $nn, 10 ) * 1000 * 1000;
 							break;
 						case 'gb':
 							$nn = substr( $ds, 0, strlen( $ds ) - 2 );
-							$nn = intval( $nn, 10 ) * 1024 * 1024 * 1024;
+							$nn = intval( $nn, 10 ) * 1000 * 1000 * 1000;
 							break;
 						case 'tb':
 							$nn = substr( $ds, 0, strlen( $ds ) - 2 );
-							$nn = intval( $nn, 10 ) * 1024 * 1024 * 1024 * 1024;
+							$nn = intval( $nn, 10 ) * 1000 * 1000 * 1000 * 1000;
 							break;
 						default:
 							$nn = intval( $ds, 10 );
@@ -296,15 +296,19 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					// Create a file object
 					$f = new dbIO( 'FSFile' );
 					$f->FilesystemID = $this->ID;
-					$fname = end( explode( ':', $args->path ) );
-					$fname = end( explode( '/', $fname ) );
+					$fname = explode( ':', $args->path );
+					$fname = end( $fname );
+					$fname = explode( '/', $fname );
+					$fname = end( $fname );
 					$f->Filename = $fname;
 					//$f->UserID = $User->ID; // TODO: Add for security!
 					$f->FolderID = '0';
 					$fn = '';
 	
 					// Can we get sub folder?
-					if( isset( $args->path ) && $subPath = trim( end( explode( ':', $args->path ) ) ) )
+					$test = explode( ':', $args->path );
+					$test = end( $test );
+					if( isset( $args->path ) && $subPath = trim( $test ) )
 					{	
 						// Remove filename
 						if( substr( $subPath, -1, 1 ) != '/' && strstr( $subPath, '/' ) )
@@ -556,6 +560,31 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						$Logger->log( '[SQLDRIVE] WRITING store in DB' );
 						$f->Save();
 						$Logger->log( '[SQLDRIVE] WRITING stored in db - recordID is ' . $f->ID . ' (Err: ' . $f->_lastError . ')' . ' -> ' . $f->_lastQuery );
+						
+						// Update latest StoredBytes for this Filesystem
+						if( $this->ID > 0 && $User->ID > 0 )
+						{
+							$sbytes = 0;
+							if( $sum = $SqlDatabase->FetchObject( '
+								SELECT SUM(u.Filesize) z FROM FSFile u 
+								WHERE u.UserID=\'' . $User->ID . '\' AND FilesystemID = \'' . $this->ID . '\'
+							' ) )
+							{
+								$sbytes = intval( $sum->z, 10 );
+							
+								$fs = new dbIO( 'Filesystem' );
+								$fs->ID     = $this->ID;
+								$fs->UserID = $User->ID;
+								if( $fs->Load() && $sbytes > 0 )
+								{
+									$Logger->log( '[SQLDRIVE] WRITING StoredBytes (' . $sbytes . ') to Filesystem DB' );
+									
+									$fs->StoredBytes = $sbytes;
+									$fs->Save();
+								}
+							}
+						}
+						
 						return 'ok<!--separate-->' . $len . '<!--separate-->' . $f->ID;
 					}
 				}
@@ -647,7 +676,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							return $okRet . base64_encode( file_get_contents( $fname ) );
 						}
 					
-						friendHeader( 'Content-Length: ' . filesize( $fname ) + strlen( $okRet ) );
+						friendHeader( 'Content-Length: ' . ( filesize( $fname ) + strlen( $okRet ) ) );
 						return $okRet . trim( file_get_contents( $fname ) );
 					}
 				}
@@ -830,7 +859,10 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							// Get by path (subfolder)
 							$subPath = $testPath = false;
 							if( is_string( $path ) && strstr( $path, ':' ) )
-								$testPath = $subPath = end( explode( ':', $path ) );
+							{
+								$testPath = explode( ':', $path );
+								$testPath = $subPath = end( $testPath );
+							}
 						
 							// Remove filename
 							$fo = false;
@@ -896,6 +928,30 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						{
 							if( $this->deleteFile( $path, true ) )
 							{
+								// Update latest StoredBytes for this Filesystem
+								if( $this->ID > 0 && $User->ID > 0 )
+								{
+									$sbytes = 0;
+									if( $sum = $SqlDatabase->FetchObject( '
+										SELECT SUM(u.Filesize) z FROM FSFile u 
+										WHERE u.UserID=\'' . $User->ID . '\' AND FilesystemID = \'' . $this->ID . '\'
+									' ) )
+									{
+										$sbytes = intval( $sum->z, 10 );
+									}
+									
+									$fs = new dbIO( 'Filesystem' );
+									$fs->ID     = $this->ID;
+									$fs->UserID = $User->ID;
+									if( $fs->Load() )
+									{
+										$Logger->log( '[SQLDRIVE] WRITING StoredBytes (' . $sbytes . ') to Filesystem DB' );
+								
+										$fs->StoredBytes = $sbytes;
+										$fs->Save();
+									}
+								}
+								
 								return 'ok';
 							}
 						}

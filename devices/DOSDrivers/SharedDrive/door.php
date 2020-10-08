@@ -58,7 +58,8 @@ if( !class_exists( 'SharedDrive' ) )
 						$paths[] = 'Shared:' . $entry->Path;
 					// Normal
 					else $paths[] = $entry->Path;
-					$files[] = $entry->ID;
+					if( isset( $entry->id ) )
+						$files[] = $entry->ID;
 					$f = false;
 					foreach( $userids as $kk=>$v )
 					{
@@ -228,48 +229,45 @@ if( !class_exists( 'SharedDrive' ) )
 					' ) ) )
 					{
 						// Shared through groups by others
-						$rows = $SqlDatabase->fetchObjects( '
-							SELECT 
-								s.ID, s.Data, s.OwnerUserID, u.ServerToken
-							FROM 
-								FShared s, FUserGroup g, FUserToGroup ug, FUserToGroup ug2, FUser u
-							WHERE 
-								g.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $path[ 1 ] ) . '\' AND
-								s.OwnerUserID != \'' . intval( $User->ID, 10 ) . '\' AND
-								s.SharedType = \'group\' AND 
-								s.SharedID = g.ID AND 
-								ug.UserGroupID = g.ID AND
-								ug.UserID = s.OwnerUserID AND
-								ug2.UserGroupID = g.ID AND
-								ug2.UserID = \'' . $User->ID . '\' AND
-								u.ID = ug.UserID AND
-								u.ServerToken != ""
-						' );
-						// Shared through groups by self
-						if( $own = $SqlDatabase->fetchObjects( '
-							SELECT 
-								s.ID, s.Data, s.OwnerUserID, u.ServerToken
-							FROM 
-								FShared s, FUserGroup g, FUserToGroup ug, FUser u
-							WHERE 
-								g.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $path[ 1 ] ) . '\' AND
-								s.OwnerUserID = \'' . intval( $User->ID, 10 ) . '\' AND
-								s.SharedType = \'group\' AND 
-								s.SharedID = g.ID AND 
-								ug.UserGroupID = g.ID AND
-								ug.UserID = u.ID AND
-								u.ServerToken != "" AND 
-								u.ID = s.OwnerUserID
+						// Second in union is own files
+						if( $rows = $SqlDatabase->fetchObjects( '
+							(
+								SELECT 
+									s.ID, s.Data, s.OwnerUserID, u.ServerToken
+								FROM 
+									FShared s, FUserGroup g, FUserToGroup ug, FUserToGroup ug2, FUser u
+								WHERE 
+									g.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $path[ 1 ] ) . '\' AND
+									s.OwnerUserID != \'' . intval( $User->ID, 10 ) . '\' AND
+									s.SharedType = \'group\' AND 
+									s.SharedID = g.ID AND 
+									ug.UserGroupID = g.ID AND
+									ug.UserID = s.OwnerUserID AND
+									ug2.UserGroupID = g.ID AND
+									ug2.UserID = \'' . $User->ID . '\' AND
+									u.ID = ug.UserID AND
+									u.ServerToken != ""
+							)
+							UNION
+							(
+								SELECT 
+									s.ID, s.Data, s.OwnerUserID, u.ServerToken
+								FROM 
+									FShared s, FUserGroup g, FUserToGroup ug, FUser u
+								WHERE 
+									g.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $path[ 1 ] ) . '\' AND
+									s.OwnerUserID = \'' . intval( $User->ID, 10 ) . '\' AND
+									s.SharedType = \'group\' AND 
+									s.SharedID = g.ID AND 
+									ug.UserGroupID = g.ID AND
+									ug.UserID = u.ID AND
+									u.ServerToken != "" AND 
+									u.ID = s.OwnerUserID
+							)
 						' ) )
 						{
-							if( $rows )
-							{
-								$rows = array_merge( $rows, $own );
-							}
-							else $rows = $own;
-						}
-						if( $rows )
 							$groupShare = true;
+						}
 					}
 					// Add own files shared with other user (we're not in group)
 					if( !$groupShare && $own = $SqlDatabase->fetchObjects( '
@@ -295,6 +293,10 @@ if( !class_exists( 'SharedDrive' ) )
 					// TODO: Support groups
 					if( $rows )
 					{
+						// Use multi!
+						$multiArray = array();
+						$master = curl_multi_init();
+						
 						foreach( $rows as $row )
 						{
 							if( $delete )
@@ -356,79 +358,100 @@ if( !class_exists( 'SharedDrive' ) )
 							}							
 							
 							$url = ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/';
-							$res = FriendCall( $url . 'file/info?servertoken=' . $row->ServerToken, false,
+							$s->multi = FriendCall( $url . 'file/info?servertoken=' . $row->ServerToken, false,
 								array( 
 									'devname'   => $vol[0],
 									'path'      => $p
-								)
+								), true
 							);
-							$code = explode( '<!--separate-->', $res );
-							
-							if( $code[0] == 'ok' )
+							$multiArray[] = $s;
+							curl_multi_add_handle( $master, $s->multi );
+						}
+						
+						// Wait for curl to finish
+						if( count( $multiArray ) )
+						{
+							do
 							{
-								if( isset( $getinfo ) && $pth == $s->Filename )
+								$running = 0;
+								curl_multi_exec( $master, $running );
+							}
+							while( $running > 0 );
+					
+							for( $a = 0; $a < count( $multiArray ); $a++ )
+							{
+								$file = $multiArray[ $a ];
+						
+								$res = curl_multi_getcontent( $file->multi );
+						
+								$code = explode( '<!--separate-->', $res );
+							
+								if( $code[0] == 'ok' )
 								{
-									$info = json_decode( $code[1] );
-									$fInfo = new stdClass();
-									$fInfo->Type = 'File';
-									$fInfo->ID = $s->ID;
-									$fInfo->MetaType = $fInfo->Type;
-									$fInfo->Path = $s->Path;
-									$fInfo->Filesize = $info->Filesize;
-									$fInfo->Filename = $s->Filename;
-									$fInfo->DateCreated = $info->DateCreated;
-									$fInfo->DateModified = $info->DateModified;
-									$fInfo->Owner = $s->Owner;
-									$fInfo->ExternPath = $s->ExternPath;
-									die( 'ok<!--separate-->' . json_encode( $fInfo ) );
-								}
-								// Read mode intercepts here
-								else if( isset( $read ) && $pth == $s->Filename ) 
-								{
-									// Don't require verification on localhost
-									$context = stream_context_create(
-										array(
-											'ssl'=>array(
-												'verify_peer' => false,
-												'verify_peer_name' => false,
-												'allow_self_signed' => true,
+									if( isset( $getinfo ) && $pth == $s->Filename )
+									{
+										$info = json_decode( $code[1] );
+										$fInfo = new stdClass();
+										$fInfo->Type = 'File';
+										$fInfo->ID = $s->ID;
+										$fInfo->MetaType = $fInfo->Type;
+										$fInfo->Path = $s->Path;
+										$fInfo->Filesize = $info->Filesize;
+										$fInfo->Filename = $s->Filename;
+										$fInfo->DateCreated = $info->DateCreated;
+										$fInfo->DateModified = $info->DateModified;
+										$fInfo->Owner = $s->Owner;
+										$fInfo->ExternPath = $s->ExternPath;
+										die( 'ok<!--separate-->' . json_encode( $fInfo ) );
+									}
+									// Read mode intercepts here
+									else if( isset( $read ) && $pth == $s->Filename ) 
+									{
+										// Don't require verification on localhost
+										$context = stream_context_create(
+											array(
+												'ssl'=>array(
+													'verify_peer' => false,
+													'verify_peer_name' => false,
+													'allow_self_signed' => true,
+												) 
 											) 
-										) 
-									);
+										);
 									
-									// Don't timeout!
-									set_time_limit( 0 );
-									ob_end_clean();
-									if( $fp = fopen( $url . 'file/read?servertoken=' . $row->ServerToken . '&path=' . urlencode( $s->ExternPath ) . '&mode=rb', 'rb', false, $context ) )
-									{
-										fpassthru( $fp );
-										fclose( $fp );
+										// Don't timeout!
+										set_time_limit( 0 );
+										ob_end_clean();
+										if( $fp = fopen( $url . 'file/read?servertoken=' . $row->ServerToken . '&path=' . urlencode( $s->ExternPath ) . '&mode=rb', 'rb', false, $context ) )
+										{
+											fpassthru( $fp );
+											fclose( $fp );
+										}
+										die();
 									}
-									die();
-								}
-								else if( isset( $write ) && $pth == $s->Filename )
-								{
-									$s->ExternServerToken = $row->ServerToken;
+									else if( isset( $write ) && $pth == $s->Filename )
+									{
+										$s->ExternServerToken = $row->ServerToken;
 
-									if( $info = $this->doWrite( $s, $args->tmpfile, $args->data ) )
-									{
-										die( 'ok<!--separate-->' . $info->Len . '<!--separate-->' );
+										if( $info = $this->doWrite( $s, $args->tmpfile, $args->data ) )
+										{
+											die( 'ok<!--separate-->' . $info->Len . '<!--separate-->' );
+										}
+										die( 'fail<!--separate-->{"response":"-1","message":"Could not write file."}' );
 									}
-									die( 'fail<!--separate-->{"response":"-1","message":"Could not write file."}' );
+									$info = json_decode( $code[1] );
+									$file->Filesize = $info->Filesize;
+									$file->DateCreated = $info->DateCreated;
+									$file->DateModified = $info->DateModified;
+									$file->multi = null;
+									$out[] = $file;
 								}
-								$info = json_decode( $code[1] );
-								$s->Filesize = $info->Filesize;
-								$s->DateCreated = $info->DateCreated;
-								$s->DateModified = $info->DateModified;
+								// This file does not exist!
+								else
+								{
+									$SqlDatabase->query( 'DELETE FROM FShared WHERE ID=\'' . $row->ID . '\' AND OwnerUserID=\'' . $User->ID . '\'' );
+									continue;
+								}
 							}
-							// This file does not exist!
-							else
-							{
-								$SqlDatabase->query( 'DELETE FROM FShared WHERE ID=\'' . $row->ID . '\' AND OwnerUserID=\'' . $User->ID . '\'' );
-								continue;
-							}
-							
-							$out[] = $s;
 						}
 						
 						// We couldn't if we reach here
@@ -503,9 +526,13 @@ if( !class_exists( 'SharedDrive' ) )
 						die( 'fail<!--separate-->{"message":"Failed to unshare file.","response":"-1"}' );
 					}				
 				
-					$queries = new stdClass();
 					// Select groupshares that has been shared in where I am member
-					$queries->groups = 'SELECT s.ID AS ShareID, g.Name, g.ID, u.ID AS OwnerID, u.ServerToken, "group" AS `Type`
+					// First in union is; Get folders by other users or groups
+					// Second one is: Select usershares where I am shared with
+					
+					if( $rows = $SqlDatabase->fetchObjects( '
+					(
+						SELECT s.ID AS ShareID, "" as FullName, g.Name, g.ID, u.ID AS OwnerID, u.ServerToken, DateTouched AS DateModified, DateCreated, "group" AS `Type`
 							FROM 
 								FShared s, FUserGroup g, FUserToGroup ug, FUserToGroup ug2, FUser u
 							WHERE 
@@ -517,9 +544,10 @@ if( !class_exists( 'SharedDrive' ) )
 								ug2.UserID = \'' . $User->ID . '\' AND
 								u.ID = ug.UserID AND
 								u.ServerToken != ""
-					';
-					// Select usershares where I am shared with
-					$queries->users = 'SELECT s.ID AS ShareID, u.FullName, u.Name, u.ID, u.ID AS OwnerID, u.ServerToken, "user" AS `Type`
+					)
+					UNION
+					(
+						SELECT s.ID AS ShareID, u.FullName, u.Name, u.ID, u.ID AS OwnerID, u.ServerToken, DateTouched AS DateModified, DateCreated, "user" AS `Type`
 							FROM 
 								FShared s, FUser u 
 							WHERE
@@ -527,43 +555,43 @@ if( !class_exists( 'SharedDrive' ) )
 								s.OwnerUserID != \'' . intval( $User->ID, 10 ) . '\' AND
 								s.SharedType = \'user\' AND
 								s.SharedID = \'' . intval( $User->ID, 10 ) . '\' AND
-								u.ServerToken != ""';
-				
-					// Get folders by other users or groups
-					foreach( $queries as $k=>$q )
+								u.ServerToken != ""
+					)
+					' ) )
 					{
-						if( $rows = $SqlDatabase->fetchObjects( $q ) )
+						// Remove duplicates
+						$out2 = [];
+						foreach( $rows as $row )
 						{
-							// Remove duplicates
-							$out2 = [];
-							foreach( $rows as $row )
-							{
-								if( !isset( $out2[ $row->Name . '-' . $row->Type ] ) )
-									$out2[ $row->Name . '-' . $row->Type ] = $row;
-							}
-							foreach( $out2 as $a=>$row )
-							{
-								$s = new stdClass();
-								$s->Filename = $row->Name;
-								if( isset( $row->FullName ) )
-									$s->Title = $row->FullName;
-								$s->ID = $row->ID;
-								$s->Path = $row->Name;
-								$s->Type = 'Directory';
-								$s->MetaType = 'Directory';
-								$s->IconLabel = $k == 'users' ? 'UserShare' : 'GroupShare';
-								$s->Permissions = '---------------';
-								$s->DateCreated = $s->DateModified = date( 'Y-m-d H:i:s' );
-								$s->Shared = '';
-								$s->SharedLink = '';
-								$s->Filesize = 0;
-								$s->ExternServerToken = $row->ServerToken;
-								$s->ShareID = $row->ShareID;
-								$out[] = $s;
-							}
+							if( !isset( $out2[ $row->Name . '-' . $row->Type ] ) )
+								$out2[ $row->Name . '-' . $row->Type ] = $row;
+						}
+						foreach( $out2 as $a=>$row )
+						{
+							$s = new stdClass();
+							$s->Filename = $row->Name;
+							if( isset( $row->FullName ) )
+								$s->Title = $row->FullName;
+							$s->ID = $row->ID;
+							$s->Path = $row->Name;
+							$s->Type = 'Directory';
+							$s->MetaType = 'Directory';
+							$s->IconLabel = $row->Type == 'user' ? 'UserShare' : 'GroupShare';
+							$s->Permissions = '---------------';
+							$s->DateCreated = $s->DateModified = date( 'Y-m-d H:i:s' );
+							$s->Shared = '';
+							$s->SharedLink = '';
+							$s->Filesize = 0;
+							$s->ExternServerToken = $row->ServerToken;
+							$s->ShareID = $row->ShareID;
+							$out[] = $s;
 						}
 					}
 				}
+				
+				// Use multi!
+				$multiArray = array();
+				$master = curl_multi_init();
 				
 				// Stat everything
 				foreach( $out as $k=>$file )
@@ -576,12 +604,50 @@ if( !class_exists( 'SharedDrive' ) )
 					{
 						$vol = explode( ':', $file->ExternPath );
 						$url = ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/';
-						$res = FriendCall( $url . 'file/info?servertoken=' . $file->ExternServerToken, false,
+						$file->multi = FriendCall( $url . 'file/info?servertoken=' . $file->ExternServerToken, false,
 							array( 
 								'devname'   => $vol[0],
 								'path'      => $file->ExternPath
-							)
-						);
+							), true );
+						$file->key = $k;
+						$multiArray[] = $file;
+						curl_multi_add_handle( $master, $file->multi );
+					}
+					else if( $file->Type == 'Directory' )
+					{
+						if( isset( $getinfo ) && $pth == $file->Filename )
+						{
+							$fInfo = new stdClass();
+							$fInfo->Type = 'Directory';
+							$fInfo->MetaType = $fInfo->Type;
+							$fInfo->Path = $file->Path;
+							$fInfo->Filesize = 0;
+							$fInfo->Filename = $file->Filename;
+							$fInfo->DateCreated = date( 'Y-m-d H:i:s' );
+							$fInfo->DateModified = date( 'Y-m-d H:i:s' );
+							die( 'ok<!--separate-->' . json_encode( $fInfo ) );
+						}
+					}
+					unset( $out[$k]->ShareID );
+				}
+				
+				// Wait for curl to finish
+				if( count( $multiArray ) )
+				{
+					set_time_limit( 0 );
+					do
+					{
+						$running = 0;
+						curl_multi_exec( $master, $running );
+					}
+					while( $running > 0 );
+					
+					for( $a = 0; $a < count( $multiArray ); $a++ )
+					{
+						$file = $multiArray[ $a ];
+						
+						$k = $file->key;
+						$res = curl_multi_getcontent( $file->multi );
 						$code = explode( '<!--separate-->', $res );
 						if( $code[0] == 'ok' )
 						{
@@ -652,23 +718,9 @@ if( !class_exists( 'SharedDrive' ) )
 						if( isset( $out[$k]->ShareID ) )
 							unset( $out[$k]->ShareID );
 						unset( $out[$k]->ExternServerToken );
+						unset( $out[$k]->key );
+						unset( $out[$k]->multi );
 					}
-					else if( $file->Type == 'Directory' )
-					{
-						if( isset( $getinfo ) && $pth == $file->Filename )
-						{
-							$fInfo = new stdClass();
-							$fInfo->Type = 'Directory';
-							$fInfo->MetaType = $fInfo->Type;
-							$fInfo->Path = $file->Path;
-							$fInfo->Filesize = 0;
-							$fInfo->Filename = $file->Filename;
-							$fInfo->DateCreated = date( 'Y-m-d H:i:s' );
-							$fInfo->DateModified = date( 'Y-m-d H:i:s' );
-							die( 'ok<!--separate-->' . json_encode( $fInfo ) );
-						}
-					}
-					unset( $out[$k]->ShareID );
 				}
 				
 				// Get the output

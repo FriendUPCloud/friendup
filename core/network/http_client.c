@@ -70,6 +70,10 @@ HttpClient *HttpClientNew( FBOOL post, FBOOL http2, char *param, char *headers, 
 		{
 			c->hc_Content = StringDuplicate( content );
 		}
+		else
+		{
+			c->hc_Content = NULL;
+		}
 	}
 	
 	return c;
@@ -147,8 +151,6 @@ BufString *HttpClientCall( HttpClient *c, char *host, int port, FBOOL secured )
 			BIO_METHOD *biofile = BIO_s_file();
 			certbio = BIO_new( biofile );
 			outbio  = BIO_new_fp( stdout, BIO_NOCLOSE );
-			
-			//SSL_library_init();
 			
 			//OpenSSL_add_all_algorithms();  /* Load cryptos, et.al. */
 			//SSL_load_error_strings();   /* Bring in and register error messages */
@@ -481,6 +483,7 @@ client_error:
 
 	if( sockfd != 0 )
 	{
+		shutdown( sockfd, SHUT_RDWR );
 		close( sockfd );
 	}
 	

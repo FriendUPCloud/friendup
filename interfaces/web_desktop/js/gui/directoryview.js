@@ -733,6 +733,10 @@ DirectoryView.prototype.ShowFileBrowser = function()
 			},
 			folderOpen( path, event, flags )
 			{
+				// Only does something when the user clicked
+				let buttonClick = ( event ? ( ( event.button === 0 || event.button > 0 ) ? true : false ) : false );
+				if( !buttonClick ) return;
+				
 				let vol = path.split( ':' )[0];
 			
 				winobj.fileInfo = {
@@ -751,6 +755,10 @@ DirectoryView.prototype.ShowFileBrowser = function()
 			},
 			folderClose( path, event, flags )
 			{
+				// Only does something when the user clicked
+				let buttonClick = ( event ? ( ( event.button === 0 || event.button > 0 ) ? true : false ) : false );
+				if( !buttonClick ) return;
+				
 				let vol = path.split( ':' )[0];
 				
 				winobj.fileInfo = {
@@ -1274,6 +1282,12 @@ DirectoryView.prototype.InitWindow = function( winobj )
 		// formatted is used to handle a formatted, recursive list
 		function handleHostFileSelect( e )
 		{	
+			if( winobj && winobj.fileInfo && winobj.fileInfo.Path.indexOf( 'Shared:' ) == 0 )
+			{
+				Notify( { title: i18n( 'i18n_not_upload_target' ), text: i18n( 'i18n_not_upload_target_desc' ) } );
+				cancelBubble( e );
+				return false;
+			}
 			let hasDownload = false;
 			
 			function makeTransferDirectory()
@@ -4613,7 +4627,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 						if( w.revent ) ww.RemoveEvent( 'resize', ww.revent );
 						ww.revent = ww.AddEvent ( 'resize', function ( cbk )
 						{
-							win.directoryview.toChange = true;
+							ww.directoryview.toChange = true;
 							ww.redrawIcons( null, ww.direction, cbk );
 						} );
 					}

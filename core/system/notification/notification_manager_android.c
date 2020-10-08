@@ -29,6 +29,8 @@
 
 void NotificationAndroidSendingThread( FThread *data )
 {
+	pthread_detach( pthread_self() );
+	
 	data->t_Launched = TRUE;
 	NotificationManager *nm = (NotificationManager *)data->t_Data;
 	
@@ -39,8 +41,6 @@ void NotificationAndroidSendingThread( FThread *data )
 	char headers[ 512 ];
 	snprintf( headers, sizeof(headers), "Content-type: application/json\nAuthorization: key=%s", nm->nm_FirebaseKey );
 	
-	//nm->nm_AndroidSendHttpClient = HttpClientNew( TRUE, FALSE, tmp, headers, NULL );// msg );
-
 	while( data->t_Quit != TRUE )
 	{
 		DEBUG("NotificationAndroidSendingThread: Before condition\n");
@@ -63,21 +63,19 @@ void NotificationAndroidSendingThread( FThread *data )
 				{
 					nm->nm_AndroidSendInUse++;
 					
-					FQueue *q = &(nm->nm_AndroidSendMessages);
-					if( ( e = FQPop( q ) ) != NULL )
+					FQueue *q = &( nm->nm_AndroidSendMessages );
+					if( q && ( e = FQPop( q ) ) != NULL )
 					{
 						FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
 					
-						// send message
-						//nm->nm_AndroidSendHttpClient->hc_Content = (char *)e->fq_Data;
-						
 						//Log( FLOG_INFO, "Send message to android device: %s<\n", nm->nm_AndroidSendHttpClient->hc_Content );
 						
 						HttpClient *c = HttpClientNew( TRUE, FALSE, tmp, headers, NULL );// msg );
 						c->hc_Content = (char *)e->fq_Data;
 						Log( FLOG_INFO, "Send message to android device: %s<\n", c->hc_Content );
 						BufString *bs = HttpClientCall( c, FIREBASE_HOST, 443, TRUE );
-						//BufString *bs = HttpClientCall( nm->nm_AndroidSendHttpClient, FIREBASE_HOST, 443, TRUE );
+						Log( FLOG_INFO, "Sent message to android device.\n" );
+						
 						if( bs != NULL )
 						{
 							DEBUG("Call done\n");
@@ -97,9 +95,10 @@ void NotificationAndroidSendingThread( FThread *data )
 							FFree( e->fq_Data );
 							FFree( e );
 						}
-					} // if( ( e = FQPop( q ) ) != NULL )
+					}
 					else
 					{
+						nm->nm_AndroidSendInUse--;
 						FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
 						break;
 					}
@@ -109,15 +108,13 @@ void NotificationAndroidSendingThread( FThread *data )
 						nm->nm_AndroidSendInUse--;
 						FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
 					}
-				} // if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
-			}	// while TRUE
+				}
+			}
 		}
-	}	// while( data->t_Quit != TRUE )
-	
-	//nm->nm_AndroidSendHttpClient->hc_Content = NULL;	//must be set to NULL becaouse we overwrite point to send messages (e->fq_Data)
-	//HttpClientDelete( nm->nm_AndroidSendHttpClient );
+	}
 	
 	data->t_Launched = FALSE;
+	pthread_exit( NULL );
 }
 
 /**
@@ -209,6 +206,7 @@ int NotificationManagerNotificationSendAndroidQueue( NotificationManager *nm, No
 	SystemBase *sb = (SystemBase *)nm->nm_SB;
 	char *host = FIREBASE_HOST;
 	
+	DEBUG("[NotificationManagerNotificationSendAndroidQueue] start\n");
 	
 	int msgSize = 512;
 	
@@ -224,6 +222,8 @@ int NotificationManagerNotificationSendAndroidQueue( NotificationManager *nm, No
 	{
 		int len = snprintf( msg, msgSize, "{\"registration_ids\":[%s],\"notification\": {},\"data\":{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"%s\",\"id\":%lu,\"notifid\":%lu,\"source\":\"notification\",\"createtime\":%lu},\"android\":{\"priority\":\"high\"}}", tokens, notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, action, ID , notif->n_ID, notif->n_OriginalCreateT );
 	
+		DEBUG("[NotificationManagerNotificationSendAndroidQueue] send message\n");
+		
 		FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 		if( en != NULL )
 		{
@@ -234,18 +234,23 @@ int NotificationManagerNotificationSendAndroidQueue( NotificationManager *nm, No
 			{
 				FQPushFIFO( &(nm->nm_AndroidSendMessages), en );
 				
+				DEBUG("[NotificationManagerNotificationSendAndroidQueue] signal triggered\n");
 				pthread_cond_signal( &(nm->nm_AndroidSendCond) );
 				FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
 			}
 		}
-
-		//FFree( msg ); // do not release message if its going to queue
+		else
+		{
+			FFree( msg ); // do not release message if its going to queue
+		}
 	}
 	else
 	{
 		DEBUG("Cannot allocate memory for message\n");
 		return -1;
 	}
+	DEBUG("[NotificationManagerNotificationSendAndroidQueue] end\n");
 	
 	return 0;
 }
+

@@ -516,7 +516,7 @@ int handleSSHCommands( SSHSession *sess, const char *buf, const int len __attrib
 		SystemBase *sb = (SystemBase *)sess->sshs_SB;
 		WorkerManager *wm = sb->sl_WorkerManager;
 		
-		if( sess->sshs_Usr->u_IsAdmin == TRUE )
+		if( wm != NULL && sess->sshs_Usr->u_IsAdmin == TRUE )
 		{
 			for( i=0 ; i < wm->wm_MaxWorkers ; i++ )
 			{

@@ -8,6 +8,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
+var ShowLog = false;
+
 // Start!
 Application.run = function( msg )
 { 
@@ -40,6 +42,8 @@ function initGui()
 function refreshSidebar( show )
 {
 	console.log( 'to show whole list use: refreshSidebar( true );' );
+	
+	console.log( 'ShowLog = true; to show debug console.log output' );
 	
 	var isAdmin = Application.getUserLevel() == 'admin' ? true : false;
 
@@ -85,6 +89,11 @@ function refreshSidebar( show )
 		},
 		'Applications': {
 			'Applications': {
+				icon: 'fa-info-circle',
+				showing: isAdmin,
+				display: ( show ? true : false )
+			},
+			'Liberator': {
 				icon: 'fa-info-circle',
 				showing: isAdmin,
 				display: ( show ? true : false )
@@ -181,7 +190,7 @@ function refreshSidebar( show )
 	
 	getSystemSettings( function( data )
 	{
-		console.log( data );
+		if( ShowLog ) console.log( data );
 		
 		// add plugins if found ...
 		if( data )
@@ -425,7 +434,7 @@ function setGUISection( module, section, action )
 		if( action[0] && action[1] )
 		{
 			ge( 'GuiContent' ).innerHTML = '...';
-			console.log( action );
+			if( ShowLog ) console.log( action );
 			var m = new Module( action[0] );
 			m.onExecuted = function( res, data )
 			{
@@ -453,7 +462,7 @@ function setGUISection( module, section, action )
 		
 			// Temporary until search is fixed for users ...
 		
-			if( section.toLowerCase() == 'users' ) 
+			if( section.toLowerCase() == 'users' || section.toLowerCase() == 'workgroups' ) 
 			{
 				//UsersSettings( 'maxlimit', 99999 );
 			
@@ -520,7 +529,7 @@ var Sections = {
 				}
 			}
 			
-			console.log( 'system_permissions() ', { e:e, d:d } );
+			if( ShowLog ) console.log( 'system_permissions() ', { e:e, d:d } );
 		}
 		m.execute( 'getsystempermissions', { authid: Application.authId } );
 	},
@@ -535,7 +544,7 @@ function Toggle( _this, callback, on )
 {
 	if( callback )
 	{
-		console.log( _this.className );
+		if( ShowLog ) console.log( _this.className );
 		if( _this.className.indexOf( 'fa-toggle-off' ) >= 0 )
 		{
 			_this.className = _this.className.split( ' fa-toggle-off' ).join( '' ) + ' fa-toggle-on';
@@ -688,6 +697,30 @@ function FormatBytes( bytes, decimals = 2, units = 1 )
 {
     if ( bytes == 0 ) return ( '' + ( units ? '0B' : '' ) );
 	
+	// Using the same function that is used for fileInfo
+	//var humanFS = Friend.Utilities.humanFileSize( bytes );
+	var humanFS = HumanFileSize( bytes );
+	
+	if( humanFS )
+	{
+		var size = humanFS.split( ' ' )[0];
+		var unit = humanFS.split( ' ' ).pop();
+		
+		//console.log( 'humanFS: ' + humanFS );
+		//console.log( 'size: ' + size );
+		//console.log( 'unit: ' + unit );
+		
+		if( units === 2 ) return unit;
+		
+		// Decimals are set to fixed = 1 ...
+		
+		return ( !units ? size : ( size + unit ) );
+	}
+	
+	return ( !units ? '' : '0B' );
+	
+	// Old method ...
+	
     const k = 1024;
     const dm = decimals < 0 ? 0 : decimals;
     const sizes = [ 'B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB' ];
@@ -696,14 +729,37 @@ function FormatBytes( bytes, decimals = 2, units = 1 )
 	
 	if( units === 2 ) return sizes[i];
 	
-    return parseFloat( ( bytes / Math.pow( k, i ) ).toFixed( dm ) ) + ( units ? ( sizes[i] ) : '' );
+    return parseFloat( ( bytes / Math.pow( k, i ) ).toFixed( dm ) ) + ( units ? ( ' ' + sizes[i] ) : '' );
+}
+
+// Couldn't include the function Friend.Utilities.humanFileSize() from interfaces/web_desktop/js/utils/utilities.js it wasn't enabled in the Application API so copied it, if changed, change also here ...
+
+// TODO: look at this function why for example 500MB becomes 524.3MB
+
+function HumanFileSize( bytes, si )
+{
+	if( typeof( si ) == 'undefined' || si !== false ) si = true;
+	
+    var thresh = si ? 1000 : 1024;
+    if(Math.abs(bytes) < thresh) {
+        return bytes + ' B';
+    }
+    var units = si
+        ? ['kB','MB','GB','TB','PB','EB','ZB','YB']
+        : ['KiB','MiB','GiB','TiB','PiB','EiB','ZiB','YiB'];
+    var u = -1;
+    do {
+        bytes /= thresh;
+        ++u;
+    } while(Math.abs(bytes) >= thresh && u < units.length - 1);
+    return bytes.toFixed(1)+' '+units[u];
 }
 
 function CheckScroll( ele )
 {
 	if( !ele ) return;
 	
-	console.log( ele.clientHeight + ' ... '  );
+	if( ShowLog ) console.log( ele.clientHeight + ' ... '  );
 	
 	ele.style.border = '1px solid blue';
 	
@@ -825,7 +881,7 @@ function initTest()
 				catch( e ){  }
 			}
 		
-			console.log( 'initTest('+this.i+') ' + "\r\n" + JSON.stringify( args[this.i] ) + "\r\n", { e:e, result:d } );
+			if( ShowLog ) console.log( 'initTest('+this.i+') ' + "\r\n" + JSON.stringify( args[this.i] ) + "\r\n", { e:e, result:d } );
 		}
 		m.execute( 'permissions', args[i] );
 	}

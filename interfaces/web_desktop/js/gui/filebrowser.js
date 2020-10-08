@@ -181,7 +181,6 @@ Friend.FileBrowser.prototype.rollOver = function( elements )
 Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, depth, flags, evt )
 {
 	let self = this;
-	
 	if( !evt ) evt = {};
 	
 	if( !rootElement ) rootElement = this.dom;
@@ -213,7 +212,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 		ele.onclick = function( e )
 		{
 			// Real click removes temp flags
-			if( e && e.button >= 0 )
+			if( e && ( e.button === 0 || e.button > 0 ) )
 				self.tempFlags = false;
 				
 			if( !ppath ) 
@@ -285,7 +284,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					nam[0].classList.add( 'Active' );
 				}
 			}
-			else if( type == 'Directory' || type == 'volume' )
+			else if( type == 'Directory' || type == 'volume' || type == 'bookmark' )
 			{
 				// Are we in a file dialog?
 				if( isMobile && ( self.flags.filedialog || self.flags.justPaths ) )
@@ -553,6 +552,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						d.className = 'DiskItem';
 						d.id = 'diskitem_' + msg.list[a].Title;
 						d.path = msg.list[a].Volume;
+						d.type = msg.list[a].Type;
 						let nm = document.createElement( 'div' );
 						nm.style.paddingLeft = ( depth << 3 ) + 'px'; // * 8
 						nm.className = 'Name IconSmall IconDisk';
@@ -629,7 +629,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						s.className = 'SubItems';
 						d.appendChild( s );
 						rootElement.appendChild( d );
-						createOnclickAction( d, d.path, 'volume', depth + 1 );
+						createOnclickAction( d, d.path, msg.list[a].Type && msg.list[a].Type == 'bookmark' ? 'bookmark' : 'volume', depth + 1 );
 					}
 					// Existing items
 					else

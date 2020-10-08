@@ -8,7 +8,7 @@
 *                                                                              *
 *****************************************************************************©*/
 
-var AdminViews = {};
+var SystemViews = {};
 
 var Config = { data: {}, raw: '' };
 
@@ -31,7 +31,7 @@ Application.run = function( msg )
 		catch( e ){  }
 		
 		var v = new View( {
-			title: 'Friend Admin' + ( Config.data.Version ? ' (v' + Config.data.Version + ')' : '' ),
+			title: 'Friend System' + ( Config.data.Version ? ' (v' + Config.data.Version + ')' : '' ),
 			width: 1280,
 			height: 960
 		} );
@@ -72,13 +72,12 @@ messageFunctions = {
 
 	about( msg )
 	{
-		//console.log( msg );
 		
-		if( !AdminViews[ 'about' ] )
+		if( !SystemViews[ 'about' ] )
 		{
 			
-			AdminViews[ 'about' ] = new View( {
-				title: 'About Friend Admin' + ( Config.data.Version ? ' (v' + Config.data.Version + ')' : '' ),
+			SystemViews[ 'about' ] = new View( {
+				title: 'About Friend System' + ( Config.data.Version ? ' (v' + Config.data.Version + ')' : '' ),
 				width: 400,
 				height: 288
 			} );
@@ -89,7 +88,7 @@ messageFunctions = {
 			};
 			f.onLoad = function( data )
 			{
-				AdminViews[ 'about' ].setContent( data );
+				SystemViews[ 'about' ].setContent( data );
 			}
 			f.load();
 			
@@ -100,9 +99,6 @@ messageFunctions = {
 				
 		}
 		
-		//return Application.mainView.sendMessage( {
-		//	command: 'about'
-		//} );
 	}
 	
 };

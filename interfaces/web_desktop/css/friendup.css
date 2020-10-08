@@ -51,6 +51,14 @@ body > #FocusGrabber
 	top: 100%;
 }
 
+#OfflineMessage
+{ 
+	position: absolute;
+	visibility: hidden; 
+	opacity: 0; 
+	pointer-events: none; 
+}
+
 /* Helper classes ----------------------------------------------------------- */
 
 h1, h2, h3, h4

@@ -231,9 +231,10 @@ void CommServiceDelete( CommService *s )
 
 void *ServiceTempThread( void *d )
 {
+	pthread_detach( pthread_self() );
 	CommServiceSetupOutgoing( d );
 	DEBUG("[ServiceTempThread] pthread quit\n");
-	pthread_exit(0);
+	pthread_exit( NULL );
 }
 
 /**
@@ -274,7 +275,6 @@ int CommServiceStart( CommService *s )
 		
 		pthread_t t;
 		pthread_create( &t, NULL, &ServiceTempThread, s );
-		pthread_detach( t );
 	}
 	return 0;
 }
@@ -581,6 +581,8 @@ Create outgoing connections\n \
 
 int CommServiceThreadServer( FThread *ptr )
 {
+	pthread_detach( pthread_self() );
+	
 	CommService *service = (CommService *)ptr->t_Data;
 	
 	DEBUG("[COMMSERV]  Start\n");
@@ -597,6 +599,7 @@ int CommServiceThreadServer( FThread *ptr )
 		{
 			service->s_Socket->s_Interface->SocketDelete( service->s_Socket );
 			FERROR("[COMMSERV]  Cannot listen on socket!\n");
+			pthread_exit( NULL );
 			return -1;
 		}
 		
@@ -607,6 +610,7 @@ int CommServiceThreadServer( FThread *ptr )
 		if( service->s_Epollfd == -1 )
 		{
 			FERROR( "[COMMSERV]  poll_create\n" );
+			pthread_exit( NULL );
 			return -1;
 		}
 
@@ -621,6 +625,7 @@ int CommServiceThreadServer( FThread *ptr )
 		if( epoll_ctl( service->s_Epollfd, EPOLL_CTL_ADD, service->s_Socket->fd, &mevent ) == -1 )
 		{
 			FERROR( "[COMMSERV]  epoll_ctl" );
+			pthread_exit( NULL );
 			return -1;
 		}
 
@@ -703,22 +708,24 @@ int CommServiceThreadServer( FThread *ptr )
 						
 							if( loccon != NULL )
 							{
-								FRIEND_MUTEX_LOCK( &loccon->fc_Mutex );
-								/*
-								if( 0 == CommServiceDelConnection( service, loccon, sock ) )
+								if( FRIEND_MUTEX_LOCK( &loccon->fc_Mutex ) == 0 )
 								{
-									INFO("Socket connection removed\n");
-								}
-								else
-								{
-									FERROR("Cannot remove socket connection\n");
-								}
-								*/
-								sock->s_Data = NULL;
-								loccon->fc_Socket = NULL;
-								loccon->fc_Status = CONNECTION_STATUS_DISCONNECTED;
+									/*
+									if( 0 == CommServiceDelConnection( service, loccon, sock ) )
+									{
+										INFO("Socket connection removed\n");
+									}
+									else
+									{
+										FERROR("Cannot remove socket connection\n");
+									}
+									*/
+									sock->s_Data = NULL;
+									loccon->fc_Socket = NULL;
+									loccon->fc_Status = CONNECTION_STATUS_DISCONNECTED;
 								
-								FRIEND_MUTEX_UNLOCK( &loccon->fc_Mutex );
+									FRIEND_MUTEX_UNLOCK( &loccon->fc_Mutex );
+								}
 							}
 							//SocketClose( sock );
 						}
@@ -773,6 +780,7 @@ int CommServiceThreadServer( FThread *ptr )
 							if( retval == -1 )
 							{
 								FERROR("[CommServiceRemote] EPOLLctrl error\n");
+								pthread_exit( NULL );
 								return 1;
 							}
 							break;
@@ -864,22 +872,24 @@ int CommServiceThreadServer( FThread *ptr )
 								{
 									DEBUG("[COMMSERV] Response received!\n");
 									
-									FRIEND_MUTEX_LOCK( &service->s_Mutex );
-									DEBUG("[COMMSERV] lock set\n");
-									CommRequest *cr = service->s_Requests;
-									while( cr != NULL )
+									if( FRIEND_MUTEX_LOCK( &service->s_Mutex ) == 0 )
 									{
-										DEBUG("[COMMSERV] Going through requests %ld find %ld\n", df->df_Size, cr->cr_RequestID );
-										if( cr->cr_RequestID == df->df_Size )
+										DEBUG("[COMMSERV] lock set\n");
+										CommRequest *cr = service->s_Requests;
+										while( cr != NULL )
 										{
-											cr->cr_Bs = bs;
-											DEBUG("[COMMSERV] Message found by id\n");
-											pthread_cond_broadcast( &service->s_DataReceivedCond );
-											break;
+											DEBUG("[COMMSERV] Going through requests %ld find %ld\n", df->df_Size, cr->cr_RequestID );
+											if( cr->cr_RequestID == df->df_Size )
+											{
+												cr->cr_Bs = bs;
+												DEBUG("[COMMSERV] Message found by id\n");
+												pthread_cond_broadcast( &service->s_DataReceivedCond );
+												break;
+											}
+											cr = (CommRequest *) cr->node.mln_Succ;
 										}
-										cr = (CommRequest *) cr->node.mln_Succ;
+										FRIEND_MUTEX_UNLOCK( &service->s_Mutex );
 									}
-									FRIEND_MUTEX_UNLOCK( &service->s_Mutex );
 								}
 								
 								// Another FC is trying to connect
@@ -1150,6 +1160,8 @@ int CommServiceThreadServer( FThread *ptr )
 	DEBUG("[COMMSERV] CommunicationService End\n");
 	
 	ptr->t_Launched = FALSE;
+	
+	pthread_exit( NULL );
 	
 	return 0;
 }
@@ -1716,6 +1728,8 @@ int CommServiceDelConnection( CommService* s, FConnection *loccon, Socket *sock 
 
 void *InternalPINGThread( void *d )
 {
+	pthread_detach( pthread_self() );
+	
 	FConnection *con = (FConnection *)d;
 	con->fc_PingInProgress = TRUE;
 	
@@ -1852,7 +1866,8 @@ void *InternalPINGThread( void *d )
 	con->fc_PingInProgress = FALSE;
 	
 	DEBUG("[ServiceTempThread] internal ping thread quit\n");
-	//pthread_exit( 0 );
+	
+	pthread_exit( NULL );
 	return NULL;
 }
 
@@ -1881,7 +1896,6 @@ void CommServicePING( CommService* s )
 		{
 			pthread_t t;
 			pthread_create( &t, NULL, &InternalPINGThread, con );
-			pthread_detach( t );
 		}
 		
 		if( fcm->fcm_Shutdown == TRUE )

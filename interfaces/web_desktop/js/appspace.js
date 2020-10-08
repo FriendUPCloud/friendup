@@ -467,7 +467,6 @@ Workspace = {
 	},
 
 	// Dummy functions here
-	relogin: function( us, ps ){},
 	updateTasks: function(){},
 	refreshDesktop: function( callback ){ if ( callback ) callback(); },
 	refreshMenu: function(){},
@@ -501,7 +500,6 @@ Workspace = {
 	],
 	directoryView: false,
 	conn: null,
-	websocketsOffline: true,
 	//set an additional URL to call on logout
 	setLogoutURL: function( logoutURL )
 	{

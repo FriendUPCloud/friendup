@@ -50,9 +50,9 @@
 #define SOCKET_CLOSED_STATE -2
 
 // For debug
-int _writes;
-int _reads;
-int _sockets;
+//int _writes;
+//int _reads;
+//int _sockets;
 
 // Forward declarations
 
@@ -152,6 +152,8 @@ typedef struct Socket
 	int							s_Timeouts;
 	int							s_Timeoutu;
 	int							s_Users;        // How many use it right now?
+	
+	int                         s_SocketBlockTimeout; // How long to block on Blocking Sockets
 	
 	int							s_AcceptFlags;
 	int							(*VerifyPeer)( int ok, X509_STORE_CTX* ctx );

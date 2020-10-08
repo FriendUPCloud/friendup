@@ -35,7 +35,8 @@ enum
 {
 	USER_SESSION_STATUS_NONE = 0,
 	USER_SESSION_STATUS_AUTHORIZING,
-	USER_SESSION_STATUS_AUTHORIZED
+	USER_SESSION_STATUS_AUTHORIZED,
+	USER_SESSION_STATUS_TO_REMOVE
 };
 
 /*
@@ -65,7 +66,7 @@ typedef struct UserSession
 	char					*us_DeviceIdentity;			// device identity
 	char					*us_SessionID;				// session id
 	time_t					us_LoggedTime;				// last update from user
-	int						us_LoginStatus;				// login status
+	int						us_Status;					// session status
 	
 	File					*us_OpenedFiles;			// opened files in user session
 	
@@ -74,21 +75,18 @@ typedef struct UserSession
 	void					*us_SB;						// pointer to systembase
 	
 	char					us_UserActionInfo[ 512 ];	// last action called
-	char					us_Name[ 256 ];				// session name
+	//char					us_Name[ 256 ];				// session name
 	int						us_InUseCounter;			// is session used counter
 	WebsocketReqManager		*us_WSReqManager;			// 
 	void					*us_DOSToken;				// 
 	FULONG					us_MobileAppID;				//
-	UserMobileApp			*us_MobileApp;				// 
 	
 	// WEBSOCKETS
-	//UserSessionWebsocket	us_Websockets;
-	
 	int						us_WebSocketStatus;	// status of websocket
 	struct lws				*us_Wsi;				// pointer to WSI
-	FQueue					us_MsgQueue;			// message queue
 	time_t					us_LastPingTime;		// ping timestamp
 	void					*us_WSD;				// pointer to WebsocketData
+	FQueue					us_MsgQueue;			// message queue
 }UserSession;
 
 //

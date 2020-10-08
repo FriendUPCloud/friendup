@@ -94,7 +94,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				var f = new Library( 'system.library' );
 				f.onExecuted = function( e, d )
 				{
-					console.log( { e:e , d:d, args: args } );
+					if( ShowLog ) console.log( { e:e , d:d, args: args } );
 					
 					if( e == 'ok' && d )
 					{
@@ -104,7 +104,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 							
 							// Workaround for now .... until rolepermissions is correctly implemented in C ...
 							
-							console.log( '[2] ', data );
+							if( ShowLog ) console.log( '[2] ', data );
 							
 							if( data && data.data && data.data.details && data.data.details.group )
 							{
@@ -145,7 +145,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				var f = new Library( 'system.library' );
 				f.onExecuted = function( e, d )
 				{
-					console.log( { e:e , d:d, args: args } );
+					if( ShowLog ) console.log( { e:e , d:d, args: args } );
 				
 					if( e == 'ok' && d )
 					{
@@ -155,7 +155,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 							
 							// Workaround for now .... until rolepermissions is correctly implemented in C ...
 							
-							console.log( '[1] ', data );
+							if( ShowLog ) console.log( '[1] ', data );
 							
 							if( data && data.data && data.data.details && data.data.details.groups )
 							{
@@ -247,6 +247,63 @@ Sections.accounts_workgroups = function( cmd, extra )
 		}
 	}
 	
+	function getStorageInfo( path, id, args, callback )
+	{
+		// TODO: Had to move this function out of this section to get access to it outside in another function, look at this mess some other time ...
+	
+		// TODO: So we need to get server token as admin for this user and then use that as a sessionid ???
+	
+		if( path && id && callback )
+		{
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				var json = null;
+			
+				if( d )
+				{
+					try
+					{
+						var json = JSON.parse( d );
+					} 
+					catch( e ){ }
+				}
+			
+				if( e == 'ok' && d )
+				{
+					if( json )
+					{
+						if( ShowLog ) console.log( '[ok] volumeinfo ', { e:e, d:json, args: { path: path, userid: id, authid: Application.authId } } );
+					
+						return callback( true, json, args );
+					}
+				}
+			
+				// Show error message if there is any ...
+			
+				if( d )
+				{
+					//console.log( '[fail] volumeinfo ', { e:e, d:(json?json:d), args: { path: path, userid: id, authid: Application.authId } } );
+				
+					args.Errors = { text: '[fail] volumeinfo ', content: { e:e, d:(json?json:d), args: { path: path, userid: id, authid: Application.authId } } };
+				}
+				else
+				{
+					//console.log( '[fail] volumeinfo not support in DOSDriver ... ', { path: path, userid: id, authid: Application.authId } );
+				
+					args.Errors = { text: '[fail] volumeinfo not support in DOSDriver ... ', content: { path: path, userid: id, authid: Application.authId } };
+				}
+			
+				return callback( false, ( json ? json : false ), args );
+			}
+			m.execute( 'volumeinfo', { path: path, userid: id, authid: Application.authId } );
+		
+			return true;
+		}
+	
+		return false;
+	}
+	
 	function dosdrivergui( storage, callback )
 	{
 		var ft = new Module( 'system' );
@@ -261,7 +318,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			{
 				// return info that this is loaded.
 				
-				console.log( { e:e, d:d } );
+				if( ShowLog ) console.log( { e:e, d:d } );
 				
 				if( callback ) callback( storage );
 				
@@ -270,6 +327,61 @@ Sections.accounts_workgroups = function( cmd, extra )
 			m.execute( 'dosdrivergui', { type: storage.type, id: storage.id, authid: Application.authId } );
 		}
 		ft.execute( 'dosdrivergui', { component: 'locale', type: storage.type, language: Application.language, authid: Application.authId } );
+	}
+	
+	function listUsers( callback, obj, showall )
+	{
+		var args = {  
+			count   : true, 
+			authid  : Application.authId 
+		};
+		
+		if( !showall )
+		{
+			args.query   = UsersSettings( 'searchquery' ); 
+			args.sortby  = UsersSettings( 'sortby'      ); 
+			args.orderby = UsersSettings( 'orderby'     ); 
+			args.limit   = UsersSettings( 'limit'       );
+		}
+		
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			var users = null;
+			
+			if( e == 'ok' )
+			{
+				try
+				{
+					users = JSON.parse( d );
+					
+					if( users )
+					{
+						for( var k in users )
+						{
+							if( users[ k ].ID )
+							{
+								users[ k ].Avatar = '/system.library/module/?module=system&command=getavatar&userid=' + users[ k ].ID + ( users[ k ].Image ? '&image=' + users[ k ].Image : '' ) + '&width=30&height=30&authid=' + Application.authId;
+							}
+						}
+					}
+				}
+				catch( e )
+				{
+					console.log( { e:e, d:d, args:args } );
+				}
+			}
+			
+			console.log( 'listUsers( callback, obj ) ', { e:e, d:(users?users:d), args:args } );
+			
+			if( callback )
+			{
+				return callback( e, users, obj );
+			}
+			
+			return users;
+		}
+		m.execute( 'listusers', args );
 	}
 	
 	function refresh( id, _this )
@@ -314,7 +426,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 	function cancel()
 	{
 		
-		console.log( 'cancel(  ) ' );
+		if( ShowLog ) console.log( 'cancel(  ) ' );
 
 		if( ge( 'WorkgroupDetails' ) )
 		{
@@ -369,7 +481,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			}
 			catch( e ) {  }
 			
-			console.log( 'create() ', { e:e, d:(data?data:d), args: args } );
+			if( ShowLog ) console.log( 'create() ', { e:e, d:(data?data:d), args: args } );
 			
 			if( e == 'ok' && d )
 			{
@@ -484,7 +596,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				}
 				catch( e ) {  }
 				
-				console.log( { e:e, d:(data?data:d), args: {
+				if( ShowLog ) console.log( { e:e, d:(data?data:d), args: {
 					id          : ( id                                                                     ), 
 					groupname   : ( ge( 'WorkgroupName'   ).value                                          ), 
 					parentid    : ( ge( 'WorkgroupParent' ).value                                          ), 
@@ -598,7 +710,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			var f = new Library( 'system.library' );
 			f.onExecuted = function( e, d )
 			{
-				console.log( { e:e, d:d } );
+				if( ShowLog ) console.log( { e:e, d:d } );
 			
 				if( e == 'ok' )
 				{
@@ -641,7 +753,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			var f = new Library( 'system.library' );
 			f.onExecuted = function( e, d )
 			{
-				console.log( { e:e, d:d } );
+				if( ShowLog ) console.log( { e:e, d:d } );
 			
 				if( e == 'ok' )
 				{
@@ -699,7 +811,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			}
 		}
 		
-		console.log( { userid: ( userid ? userid : '0' ), diskid: diskid, elems: elems } );
+		if( ShowLog ) console.log( { userid: ( userid ? userid : '0' ), diskid: diskid, elems: elems } );
 		
 		if( elems && elems[ 'Workgroup' ] && elems[ 'Workgroup' ].value )
 		{
@@ -819,7 +931,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				}
 			}
 			
-			console.log( data );
+			if( ShowLog ) console.log( data );
 			
 			// if the disk is mounted, we need to unmount it based on its old name first.
 			if( elems[ 'Name' ].hasAttribute('data-stored-value') &&  elems[ 'Name' ].hasAttribute('data-mount-state') && elems[ 'Name' ].getAttribute('data-mount-state') == '1' )
@@ -851,13 +963,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 			{
 				unmountDisk( devname, userid, function( e, d )
 				{
-					console.log( 'unmountDrive( '+devname+', '+( userid ? userid : '0' )+' ) ', { e:e, d:d } );
+					if( ShowLog ) console.log( 'unmountDrive( '+devname+', '+( userid ? userid : '0' )+' ) ', { e:e, d:d } );
 				
 					if( e == 'ok' )
 					{
 						Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 						
-						console.log( 'Application.sendMessage( { type: \'system\', command: \'refreshdoors\' } );' );
+						if( ShowLog ) console.log( 'Application.sendMessage( { type: \'system\', command: \'refreshdoors\' } );' );
 					
 						Notify( { title: i18n( 'i18n_unmounting' ) + ' ' + devname + ':', text: i18n( 'i18n_successfully_unmounted' ) } );
 						
@@ -881,13 +993,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 			{
 				mountDisk( devname, userid, function( e, d )
 				{
-					console.log( 'mountDrive( '+devname+', '+( userid ? userid : '0' )+' ) ', { e:e, d:d } );
+					if( ShowLog ) console.log( 'mountDrive( '+devname+', '+( userid ? userid : '0' )+' ) ', { e:e, d:d } );
 				
 					if( e == 'ok' )
 					{
 						Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 					
-						console.log( 'Application.sendMessage( { type: \'system\', command: \'refreshdoors\' } );' );
+						if( ShowLog ) console.log( 'Application.sendMessage( { type: \'system\', command: \'refreshdoors\' } );' );
 					
 						Notify( { title: i18n( 'i18n_mounting' ) + ' ' + devname + ':', text: i18n( 'i18n_successfully_mounted' ) } );
 						
@@ -952,7 +1064,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 			f.onExecuted = function( e, d )
 			{
-				console.log( 'mountDisk ( device/mount ) ', { vars: vars, e:e, d:d } );
+				if( ShowLog ) console.log( 'mountDisk ( device/mount ) ', { vars: vars, e:e, d:d } );
 			
 				if( callback ) callback( e, d );
 			}
@@ -1003,7 +1115,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 			f.onExecuted = function( e, d )
 			{
-				console.log( 'unmountDisk ( device/unmount ) ', { vars: vars, e:e, d:d } );
+				if( ShowLog ) console.log( 'unmountDisk ( device/unmount ) ', { vars: vars, e:e, d:d } );
 			
 				if( callback ) callback( e, d );
 			}
@@ -1048,7 +1160,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			var m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{
-				console.log( { e:e, d:d } );
+				if( ShowLog ) console.log( { e:e, d:d } );
 			}
 			m.execute( 'userroleupdate', { id: rid, groupid: groupid, data: data, authid: Application.authId } );
 		}
@@ -1090,7 +1202,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					var f = new Library( 'system.library' );
 					f.onExecuted = function( e, d )
 					{
-						console.log( { e:e, d:d, args: args } );
+						if( ShowLog ) console.log( { e:e, d:d, args: args } );
 					
 						//Sections.accounts_workgroups( 'refresh' ); 
 					
@@ -1117,7 +1229,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					
 					// TODO: Add the userid of the user that created the disk in all ...
 					
-					console.log( { diskid: diskid, userid: ( userid ? userid : '0' ), devname: devname } );
+					if( ShowLog ) console.log( { diskid: diskid, userid: ( userid ? userid : '0' ), devname: devname } );
 					
 					unmountDrive( devname, false, function()
 					{
@@ -1126,7 +1238,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 						var m = new Module( 'system' );
 						m.onExecuted = function( e, d )
 						{
-							console.log( 'deletedoor', { id:diskid, e:e, d:d } );
+							if( ShowLog ) console.log( 'deletedoor', { id:diskid, e:e, d:d } );
 						
 							if( e == 'ok' )
 							{
@@ -1209,7 +1321,26 @@ Sections.accounts_workgroups = function( cmd, extra )
 	function readableBytes( bytes, decimals = 2, units = 1 ) 
 	{
 		if ( bytes == 0 ) return ( '' + ( units ? '0B' : '' ) );
+		
+		// Using the same function that is used for fileInfo
+		var humanFS = HumanFileSize( bytes );
 	
+		if( humanFS )
+		{
+			var size = humanFS.split( ' ' )[0];
+			var unit = humanFS.split( ' ' ).pop();
+		
+			if( units === 2 ) return unit;
+		
+			// Decimals are set to fixed = 1 ...
+		
+			return ( !units ? size : ( size + unit ) );
+		}
+	
+		return ( !units ? '' : '0B' );
+	
+		// Old method ...
+		
 		const k = 1024;
 		const dm = decimals < 0 ? 0 : decimals;
 		const sizes = [ 'B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB' ];
@@ -1263,7 +1394,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 	
 	function editMode( close )
 	{
-		console.log( 'editMode() ', ge( 'GroupEditButtons' ) );
+		if( ShowLog ) console.log( 'editMode() ', ge( 'GroupEditButtons' ) );
 		
 		if( ge( 'GroupEditButtons' ) )
 		{
@@ -1378,7 +1509,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 	
 	function loading( id )
 	{
-		console.log( 'loading( '+id+' )' );
+		if( ShowLog ) console.log( 'loading( '+id+' )' );
 		
 		if( id )
 		{
@@ -1438,24 +1569,16 @@ Sections.accounts_workgroups = function( cmd, extra )
 				function()
 				{
 					
-					var m = new Module( 'system' );
-					m.onExecuted = function( e, d )
+					listUsers( function( e, d )
 					{
-						info.users = null;
-						console.log( { e:e, d:d } );
-						if( e == 'ok' )
-						{
-							try
-							{
-								info.users = JSON.parse( d );
-							}
-							catch( e ){ }
-							
-							console.log( 'info.users ', info.users );
-						}
+						
+						info.users = d;
+						
+						if( ShowLog ) console.log( 'info.users ', info.users );
+						
 						loadingList[ ++loadingSlot ]( info );
-					}
-					m.execute( 'listusers', { authid: Application.authId } );
+						
+					}, false, true );
 					
 				},
 				
@@ -1482,7 +1605,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					u.onExecuted = function( e, d )
 					{
 						info.roles = null;
-						console.log( { e:e, d:d } );
+						if( ShowLog ) console.log( { e:e, d:d } );
 						if( e == 'ok' )
 						{
 							try
@@ -1541,7 +1664,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 		var users      = ( workgroup.users ? workgroup.users : [] );
 		var list       = ( info.users      ? info.users      : [] );
 		
-		console.log( 'initDetails() ', info );
+		if( ShowLog ) console.log( 'initDetails() ', info );
 		
 		// Workgroups
 		var pstr = '';
@@ -1587,8 +1710,11 @@ Sections.accounts_workgroups = function( cmd, extra )
 				}
 				
 				rstr += '<div class="HRow">';
-				rstr += '<div class="PaddingSmall HContent80 FloatLeft Ellipsis">' + roles[a].Name + '</div>';
-				rstr += '<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
+				rstr += '	<div class="PaddingSmall HContent80 FloatLeft Ellipsis" title="' + roles[a].Name + '">'
+				rstr += '		<span name="' + roles[a].Name + '" style="display: none;"></span>';
+				rstr += '		<strong>' + roles[a].Name + '</strong>';
+				rstr += '	</div>';
+				rstr += '	<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
 				
 				if( Application.checkAppPermission( [ 
 					'PERM_ROLE_CREATE_GLOBAL', 'PERM_ROLE_CREATE_IN_WORKGROUP', 
@@ -1599,7 +1725,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					rstr += '<button onclick="Sections.accounts_workgroups(\'update_role\',{rid:'+roles[a].ID+',groupid:'+workgroup.groupid+',_this:this})" class="IconButton IconSmall ButtonSmall FloatRight' + ( roles[a].WorkgroupID ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
 				}
 				
-				rstr += '</div>';
+				rstr += '	</div>';
 				rstr += '</div>';
 				
 			}
@@ -1616,8 +1742,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 			workgroup_name        : ( workgroup.name        ? workgroup.name        : ''                           ),
 			workgroup_parent      : pstr,
 			workgroup_description : ( workgroup.description ? workgroup.description : ''                           ),
+			users_count           : ( list && list.Count ? '(' + list.Count + ')' : '(0)' ),
 			storage               : ''/*mlst*/,
-			roles                 : rstr
+			roles                 : ''/*rstr*/
 		};
 		
 		// Add translations
@@ -1630,7 +1757,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 			{
 				ge( 'GroupDeleteBtn' ).style.display = 'none';
 				
-				
+				ge( 'AdminUsersContainer'   ).style.display = 'none';
+				ge( 'AdminStorageContainer' ).style.display = 'none';
+				ge( 'AdminRolesContainer'   ).style.display = 'none';
 			}
 			else
 			{
@@ -1680,13 +1809,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 				
 						if( info.ID )
 						{
-							console.log( '// save workgroup' );
+							if( ShowLog ) console.log( '// save workgroup' );
 					
 							update( info.ID );
 						}
 						else
 						{
-							console.log( '// create workgroup' );
+							if( ShowLog ) console.log( '// create workgroup' );
 					
 							create();
 						}
@@ -1730,7 +1859,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				
 						if( info.ID )
 						{
-							console.log( '// delete workgroup' );
+							if( ShowLog ) console.log( '// delete workgroup' );
 					
 							removeBtn( this, { id: info.ID, button_text: 'i18n_delete_workgroup', }, function ( args )
 							{
@@ -1832,11 +1961,21 @@ Sections.accounts_workgroups = function( cmd, extra )
 							
 							head : function ( hidecol )
 							{
+								
+								var inp = ge( 'AdminUsersContainer' ).getElementsByTagName( 'input' )[0];
+								inp.value = '';
+								
+								if( ge( 'UsersSearchCancelBtn' ) && ge( 'UsersSearchCancelBtn' ).classList.contains( 'Open' ) )
+								{
+									ge( 'UsersSearchCancelBtn' ).classList.remove( 'Open' );
+									ge( 'UsersSearchCancelBtn' ).classList.add( 'Closed' );
+								}
+								
 								var o = ge( 'UsersGui' ); o.innerHTML = '<input type="hidden" id="WorkgroupUsers">';
 								
 								this.func.updateids( 'users' );
 								
-								console.log( 'userids: ', this.ids );
+								if( ShowLog ) console.log( 'userids: ', this.ids );
 								
 								var divs = appendChild( [ 
 									{ 
@@ -1850,31 +1989,46 @@ Sections.accounts_workgroups = function( cmd, extra )
 										'child' : 
 										[ 
 											{ 
-												'element' : function() 
+												'element' : function( _this ) 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent40 FloatLeft'  + ( hidecol ? ' Closed' : '' );
+													d.className = 'PaddingSmall HContent40 FloatLeft'/*  + ( hidecol ? ' Closed' : '' )*/;
 													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+													d.ele = this;
+													d.onclick = function(  )
+													{
+														_this.sortusers( 'FullName' );
+													};
 													return d;
-												}() 
+												}( this ) 
 											}, 
 											{ 
-												'element' : function() 
+												'element' : function( _this ) 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent25 FloatLeft Relative'  + ( hidecol ? ' Closed' : '' );
+													d.className = 'PaddingSmall HContent25 FloatLeft Relative'/*  + ( hidecol ? ' Closed' : '' )*/;
 													d.innerHTML = '<strong>' + i18n( 'i18n_username' ) + '</strong>';
+													d.ele = this;
+													d.onclick = function(  )
+													{
+														_this.sortusers( 'Name' );
+													};
 													return d;
-												}()
+												}( this )
 											},
 											{ 
-												'element' : function() 
+												'element' : function( _this ) 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
+													d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Relative'/* + ( hidecol ? ' Closed' : '' )*/;
 													d.innerHTML = '<strong>' + i18n( 'i18n_status' ) + '</strong>';
+													d.ele = this;
+													d.onclick = function(  )
+													{
+														_this.sortusers( 'Status' );
+													};
 													return d;
-												}()
+												}( this )
 											},
 											{ 
 												'element' : function() 
@@ -1910,16 +2064,22 @@ Sections.accounts_workgroups = function( cmd, extra )
 								
 							},
 							
-							list : function (  )
+							list : function ( users )
 							{
 								
-								this.func.mode[ 'users' ] = 'list';
+								// TODO: Refresh and list only added users to workgroups because of server search ...
+								
+								if( users ) console.log( 'users list: ', users );
+								
+								var ii = 0;
 								
 								if( list )
 								{
 									this.head();
 									
 									var o = ge( 'UsersInner' ); o.innerHTML = '';
+									
+									this.func.mode[ 'users' ] = 'list';
 									
 									for( var k in list )
 									{
@@ -1932,14 +2092,17 @@ Sections.accounts_workgroups = function( cmd, extra )
 												found = true;
 											}
 											
-											if( !found || list[k].Status == 1 ) continue;
+											if( !found/* || list[k].Status == 1*/ ) continue;
+											
+											var status = [ 'Active', 'Disabled', 'Locked' ];
 											
 											var divs = appendChild( [
 												{ 
 													'element' : function() 
 													{
 														var d = document.createElement( 'div' );
-														d.className = 'HRow';
+														d.className = 'HRow ' + status[ ( list[k].Status ? list[k].Status : 0 ) ];
+														d.id = ( 'UserListID_' + list[k].ID );
 														return d;
 													}(),
 													'child' : 
@@ -1948,7 +2111,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																d.className = 'TextCenter PaddingSmall HContent10 FloatLeft Ellipsis';
 																return d;
 															}(),
 															 'child' : 
@@ -1956,13 +2119,18 @@ Sections.accounts_workgroups = function( cmd, extra )
 																{ 
 																	'element' : function() 
 																	{
-																		var d = document.createElement( 'div' );
+																		var d = document.createElement( 'span' );
+																		d.setAttribute( 'FullName', list[k].FullName );
+																		d.setAttribute( 'Name', list[k].Name );
+																		d.setAttribute( 'Status', status[ ( list[k].Status ? list[k].Status : 0 ) ] );
 																		//d.className = 'IconSmall NegativeAlt fa-user-circle-o avatar';
 																		d.className = 'IconSmall fa-user-circle-o avatar';
 																		//d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																		//d.style.backgroundSize = 'contain';
 																		//d.style.width = '24px';
 																		//d.style.height = '24px';
+																		//d.style.display = 'block';
+																		d.style.position = 'relative';
 																		return d;
 																	}(), 
 																	 'child' : 
@@ -1975,8 +2143,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 																				{
 																					d.style.backgroundImage = 'url(\'' + list[k].Avatar + '\')';
 																					d.style.backgroundSize = 'contain';
-																					d.style.width = '24px';
-																					d.style.height = '24px';
+																					d.style.backgroundPosition = 'center center';
+																					d.style.backgroundRepeat = 'no-repeat';
+																					d.style.position = 'absolute';
+																					d.style.top = '0';
+																					d.style.left = '0';
+																					d.style.width = '100%'/*'24px'*/;
+																					d.style.height = '100%'/*'24px'*/;
 																				}
 																				return d;
 																			}()
@@ -1990,7 +2163,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 															{
 																var d = document.createElement( 'div' );
 																d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
-																d.innerHTML = '<strong>' + ( list[k].FullName ? list[k].FullName : 'n/a' ) + '</strong>';
+																d.innerHTML = '<span>' + ( list[k].FullName ? list[k].FullName : 'n/a' ) + '</span>';
 																return d;
 															}() 
 														},
@@ -2008,7 +2181,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 															{
 																var d = document.createElement( 'div' );
 																d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Ellipsis';
-																//d.innerHTML = '<span>' + ( list[k].Status ? list[k].Status : '' ) + '</span>';
+																d.innerHTML = '<span>' + ( status[ ( list[k].Status ? list[k].Status : 0 ) ] ) + '</span>';
 																return d;
 															}() 
 														}, 
@@ -2041,7 +2214,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																				removeBtn( this, { ids: ids, id: id, func: func, pnt: pnt }, function ( args )
 																				{
 																				
-																					console.log( 'removeUser( '+args.id+', '+info.ID+', callback, vars )' );
+																					if( ShowLog ) console.log( 'removeUser( '+args.id+', '+info.ID+', callback, vars )' );
 																				
 																					removeUser( args.id, info.ID, function( e, d, vars )
 																					{
@@ -2054,10 +2227,28 @@ Sections.accounts_workgroups = function( cmd, extra )
 																							{
 																								vars.pnt.innerHTML = '';
 																							}
+																							
+																							if( ge( 'AdminUsersCount' ) )
+																							{
+																								if( ge( 'AdminUsersCount' ).innerHTML )
+																								{
+																									var count = ge( 'AdminUsersCount' ).innerHTML.split( '(' ).join( '' ).split( ')' ).join( '' );
+																									
+																									if( count && count > 0 )
+																									{
+																										var result = ( count - 1 );
+							
+																										if( result && result >= 0 )
+																										{
+																											ge( 'AdminUsersCount' ).innerHTML = '(' + result + ')';
+																										}
+																									}
+																								}
+																							}
 																						}
 																						else
 																						{
-																							console.log( { e:e, d:d, vars: vars } );
+																							if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
 																						}
 																					
 																					}, { uid: args.id, func: func, pnt: pnt } );
@@ -2085,198 +2276,490 @@ Sections.accounts_workgroups = function( cmd, extra )
 													}
 												}
 											}
+											
+											ii++;
 										}
 									
 									}
 									
 								}
+								
+								if( ge( 'AdminUsersCount' ) )
+								{
+									ge( 'AdminUsersCount' ).innerHTML = '(' + ii + ')';
+								}
+								
+								var inp = ge( 'AdminUsersContainer' ).getElementsByTagName( 'input' )[0];
+								inp.onkeyup = function( e )
+								{
+									init.searchusers( this.value );
+								}
+								ge( 'UsersSearchCancelBtn' ).onclick = function( e )
+								{
+									init.searchusers( false );
+									inp.value = '';
+								}
 									
 							},
 							
-							edit : function (  )
+							edit : function ( users )
 							{
 								
-								this.func.mode[ 'users' ] = 'edit';
+								// TODO: Make support for populating the users list based on new server data on the go, like on users main ...
+								
+								if( users ) console.log( 'users edit: ', users );
+								
+								list = ( users ? users : list );
 								
 								if( list )
 								{
-									this.head( true );
 									
-									var o = ge( 'UsersInner' ); o.innerHTML = '';
+									// TODO: Find a way to only list head if not listed before, don't add multiple times, because of server search feature ...
+									
+									if( !users ) this.head( true );
+									
+									var o = ge( 'UsersInner' ); if( this.func.mode[ 'users' ] != 'edit' ) o.innerHTML = '';
+									
+									this.func.mode[ 'users' ] = 'edit';
 									
 									for( var k in list )
 									{
 										if( list[k] && list[k].ID )
 										{
-											var toggle = false;
-											
-											if( this.ids && this.ids[ list[k].ID ] )
+											if( !ge( 'UserListID_' + list[k].ID ) )
 											{
-												toggle = true;
-											}
+												
+												var toggle = false;
 											
-											if( list[k].Status == 1 ) continue;
-											
-											var divs = appendChild( [
-												{ 
-													'element' : function() 
-													{
-														var d = document.createElement( 'div' );
-														d.className = 'HRow';
-														return d;
-													}(),
-													'child' : 
-													[ 
-														{ 
-															'element' : function() 
-															{
-																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
-																return d;;
-															}(),
-															 'child' : 
-															[ 
-																{ 
-																	'element' : function() 
-																	{
-																		var d = document.createElement( 'div' );
-																		//d.className = 'IconSmall NegativeAlt fa-user-circle-o avatar';
-																		d.className = 'IconSmall fa-user-circle-o avatar';
-																		//d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
-																		//d.style.backgroundSize = 'contain';
-																		//d.style.width = '24px';
-																		//d.style.height = '24px';
-																		return d;
-																	}(), 
-																	 'child' : 
-																	[ 
-																		{
-																			'element' : function() 
-																			{
-																				var d = document.createElement( 'div' );
-																				if( list[k].Avatar )
-																				{
-																					d.style.backgroundImage = 'url(\'' + list[k].Avatar + '\')';
-																					d.style.backgroundSize = 'contain';
-																					d.style.width = '24px';
-																					d.style.height = '24px';
-																				}
-																				return d;
-																			}()
-																		}
-																	]
-																}
-															] 
-														},
-														{ 
-															'element' : function() 
-															{
-																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
-																d.innerHTML = '<strong>' + ( list[k].FullName ? list[k].FullName : 'n/a' ) + '</strong>';
-																return d;
-															}() 
-														}, 
-														{ 
-															'element' : function() 
-															{
-																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
-																//d.innerHTML = '<span>' + list[k].Name + '</span>';
-																return d;
-															}() 
-														},
-														{ 
-															'element' : function() 
-															{
-																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
-																return d;
-															}(),
-															'child' : 
-															[ 
-																{ 
-																	'element' : function( ids, id, func ) 
-																	{
-																		var b = document.createElement( 'button' );
-																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( toggle ? 'on' : 'off' );
-																		b.onclick = function(  )
-																		{
-																			if( this.classList.contains( 'fa-toggle-off' ) )
-																			{
-																				
-																				console.log( 'addUser( '+id+', '+info.ID+', callback, vars )' );
-																				
-																				addUser( id, info.ID, function( e, d, vars )
-																				{
-																					
-																					if( e && vars )
-																					{
-																						vars.func.updateids( 'users', vars.uid, true );
-																						
-																						vars._this.classList.remove( 'fa-toggle-off' );
-																						vars._this.classList.add( 'fa-toggle-on' );
-																					}
-																					else
-																					{
-																						console.log( { e:e, d:d, vars: vars } );
-																					}
-																					
-																				}, { uid: id, func: func, _this: this } );
-																				
-																			}
-																			else
-																			{
-																				
-																				console.log( 'removeUser( '+id+', '+info.ID+', callback, vars )' );
-																				
-																				removeUser( id, info.ID, function( e, d, vars )
-																				{
-																					
-																					if( e && vars )
-																					{
-																						vars.func.updateids( 'users', vars.uid, false );
-																						
-																						vars._this.classList.remove( 'fa-toggle-on' );
-																						vars._this.classList.add( 'fa-toggle-off' );
-																					}
-																					else
-																					{
-																						console.log( { e:e, d:d, vars: vars } );
-																					}
-																					
-																				}, { uid: id, func: func, _this: this } );
-																				
-																			}
-																		};
-																		return b;
-																	}( this.ids, list[k].ID, this.func ) 
-																}
-															]
-														}
-													]
-												}
-											] );
-											
-											if( divs )
-											{
-												for( var i in divs )
+												if( this.ids && this.ids[ list[k].ID ] )
 												{
-													if( divs[i] && o )
+													toggle = true;
+												}
+											
+												//if( list[k].Status == 1 ) continue;
+											
+												var status = [ 'Active', 'Disabled', 'Locked' ];
+											
+												var divs = appendChild( [
+													{ 
+														'element' : function() 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'HRow ' + status[ ( list[k].Status ? list[k].Status : 0 ) ];
+															d.id = ( 'UserListID_' + list[k].ID );
+															return d;
+														}(),
+														'child' : 
+														[ 
+															{ 
+																'element' : function() 
+																{
+																	var d = document.createElement( 'div' );
+																	d.className = 'TextCenter PaddingSmall HContent10 FloatLeft Ellipsis';
+																	return d;;
+																}(),
+																 'child' : 
+																[ 
+																	{ 
+																		'element' : function() 
+																		{
+																			var d = document.createElement( 'span' );
+																			d.setAttribute( 'FullName', list[k].FullName );
+																			d.setAttribute( 'Name', list[k].Name );
+																			d.setAttribute( 'Status', status[ ( list[k].Status ? list[k].Status : 0 ) ] );
+																			//d.className = 'IconSmall NegativeAlt fa-user-circle-o avatar';
+																			d.className = 'IconSmall fa-user-circle-o avatar';
+																			//d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
+																			//d.style.backgroundSize = 'contain';
+																			//d.style.width = '24px';
+																			//d.style.height = '24px';
+																			//d.style.display = 'block';
+																			d.style.position = 'relative';
+																			return d;
+																		}(), 
+																		 'child' : 
+																		[ 
+																			{
+																				'element' : function() 
+																				{
+																					var d = document.createElement( 'div' );
+																					if( list[k].Avatar )
+																					{
+																						d.style.backgroundImage = 'url(\'' + list[k].Avatar + '\')';
+																						d.style.backgroundSize = 'contain';
+																						d.style.backgroundPosition = 'center center';
+																						d.style.backgroundRepeat = 'no-repeat';
+																						d.style.position = 'absolute';
+																						d.style.top = '0';
+																						d.style.left = '0';
+																						d.style.width = '100%'/*'24px'*/;
+																						d.style.height = '100%'/*'24px'*/;
+																					}
+																					return d;
+																				}()
+																			}
+																		]
+																	}
+																] 
+															},
+															{ 
+																'element' : function() 
+																{
+																	var d = document.createElement( 'div' );
+																	d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
+																	d.innerHTML = '<span>' + ( list[k].FullName ? list[k].FullName : 'n/a' ) + '</span>';
+																	return d;
+																}() 
+															}, 
+															{ 
+																'element' : function() 
+																{
+																	var d = document.createElement( 'div' );
+																	d.className = 'PaddingSmall HContent25 FloatLeft Ellipsis';
+																	d.innerHTML = '<span>' + ( list[k].Name ? list[k].Name : '' ) + '</span>';
+																	return d;
+																}() 
+															},
+															{ 
+																'element' : function() 
+																{
+																	var d = document.createElement( 'div' );
+																	d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Ellipsis';
+																	d.innerHTML = '<span>' + ( status[ ( list[k].Status ? list[k].Status : 0 ) ] ) + '</span>';
+																	return d;
+																}() 
+															}, 
+															{ 
+																'element' : function() 
+																{
+																	var d = document.createElement( 'div' );
+																	d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+																	return d;
+																}(),
+																'child' : 
+																[ 
+																	{ 
+																		'element' : function( ids, id, func ) 
+																		{
+																			var b = document.createElement( 'button' );
+																			b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( toggle ? 'on' : 'off' );
+																			b.onclick = function(  )
+																			{
+																				if( this.classList.contains( 'fa-toggle-off' ) )
+																				{
+																				
+																					if( ShowLog ) console.log( 'addUser( '+id+', '+info.ID+', callback, vars )' );
+																				
+																					addUser( id, info.ID, function( e, d, vars )
+																					{
+																					
+																						if( e && vars )
+																						{
+																							vars.func.updateids( 'users', vars.uid, true );
+																						
+																							vars._this.classList.remove( 'fa-toggle-off' );
+																							vars._this.classList.add( 'fa-toggle-on' );
+																						}
+																						else
+																						{
+																							if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+																						}
+																					
+																					}, { uid: id, func: func, _this: this } );
+																				
+																				}
+																				else
+																				{
+																				
+																					if( ShowLog ) console.log( 'removeUser( '+id+', '+info.ID+', callback, vars )' );
+																				
+																					removeUser( id, info.ID, function( e, d, vars )
+																					{
+																					
+																						if( e && vars )
+																						{
+																							vars.func.updateids( 'users', vars.uid, false );
+																						
+																							vars._this.classList.remove( 'fa-toggle-on' );
+																							vars._this.classList.add( 'fa-toggle-off' );
+																							
+																							if( ge( 'AdminUsersCount' ) )
+																							{
+																								if( ge( 'AdminUsersCount' ).innerHTML )
+																								{
+																									var count = ge( 'AdminUsersCount' ).innerHTML.split( '(' ).join( '' ).split( ')' ).join( '' );
+																									
+																									if( count && count > 0 )
+																									{
+																										var result = ( count - 1 );
+							
+																										if( result && result >= 0 )
+																										{
+																											ge( 'AdminUsersCount' ).innerHTML = '(' + result + ')';
+																										}
+																									}
+																								}
+																							}
+																						}
+																						else
+																						{
+																							if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+																						}
+																					
+																					}, { uid: id, func: func, _this: this } );
+																				
+																				}
+																			};
+																			return b;
+																		}( this.ids, list[k].ID, this.func ) 
+																	}
+																]
+															}
+														]
+													}
+												] );
+											
+												if( divs )
+												{
+													for( var i in divs )
 													{
-														o.appendChild( divs[i] );
+														if( divs[i] && o )
+														{
+															o.appendChild( divs[i] );
+														}
 													}
 												}
 											}
+											else
+											{
+												// Add to the field that is allready there ... But we also gotto consider sorting the list by default or defined sorting ...
+												
+												
+											}
+											
 										}
 									
 									}
 									
 								}
 								
+								if( ge( 'AdminUsersCount' ) )
+								{
+									ge( 'AdminUsersCount' ).innerHTML = ( list && list.Count ? '(' + list.Count + ')' : '(0)' );
+								}
+								
+								// TODO: No need to keep adding every time ...
+								
+								var inp = ge( 'AdminUsersContainer' ).getElementsByTagName( 'input' )[0];
+								inp.onkeyup = function( e )
+								{
+									init.searchusers( this.value, true );
+								}
+								ge( 'UsersSearchCancelBtn' ).onclick = function( e )
+								{
+									init.searchusers( false );
+									inp.value = '';
+								}
+								
 							},
 							
-							refresh : function (  )
+							searchusers : function ( filter, server )
+							{
+								
+								if( !filter )
+								{
+									UsersSettings( 'searchquery', filter );
+								}
+								
+								if( ge( 'UsersInner' ) )
+								{
+									var list = ge( 'UsersInner' ).getElementsByTagName( 'div' );
+
+									if( list.length > 0 )
+									{
+										for( var a = 0; a < list.length; a++ )
+										{
+											if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+		
+											var span = list[a].getElementsByTagName( 'span' )[0];
+		
+											if( span )
+											{
+												var param = [
+													( " " + span.getAttribute( 'fullname' ).toLowerCase() + " " ), 
+													( " " + span.getAttribute( 'name' ).toLowerCase() + " " )
+												];
+												
+												if( !filter || filter == ''  
+												|| span.getAttribute( 'fullname' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+												|| span.getAttribute( 'name' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+												)
+												{
+													list[a].style.display = '';
+				
+													var div = list[a].getElementsByTagName( 'div' );
+				
+													if( div.length )
+													{
+														for( var i in div )
+														{
+															if( div[i] && div[i].className && ( div[i].className.indexOf( 'fullname' ) >= 0 || div[i].className.indexOf( 'name' ) >= 0 ) )
+															{
+																// TODO: Make text searched for ...
+															}
+														}
+													}
+												}
+												else
+												{
+													list[a].style.display = 'none';
+												}
+											}
+										}
+	
+									}
+									
+									if( ge( 'UsersSearchCancelBtn' ) )
+									{
+										if( !filter && ( ge( 'UsersSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'UsersSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+										{
+											ge( 'UsersSearchCancelBtn' ).classList.remove( 'Open' );
+											ge( 'UsersSearchCancelBtn' ).classList.add( 'Closed' );
+										}
+										
+										else if( filter != '' && ( ge( 'UsersSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'UsersSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+										{
+											ge( 'UsersSearchCancelBtn' ).classList.remove( 'Closed' );
+											ge( 'UsersSearchCancelBtn' ).classList.add( 'Open' );
+										}
+									}
+								}
+								
+								if( filter.length < 3 || filter.length < UsersSettings( 'searchquery' ).length || filter == UsersSettings( 'searchquery' ) || !server ) return;
+								
+								UsersSettings( 'reset', true );
+								
+								UsersSettings( 'searchquery', filter );
+								
+								console.log( 'try getting server data ... ', { filter:filter, searchquery:UsersSettings( 'searchquery' ) } );
+								
+								
+								
+								//console.log( filter + ' < ' + UsersSettings( 'searchquery' ) );
+		
+								if( filter.length < UsersSettings( 'searchquery' ).length )
+								{
+									return;
+								}
+								
+								listUsers( function( res, users )
+								{
+									
+									console.log( 'search users ', users );
+									
+									// TODO: Finish before implementing
+									
+									//init.refresh( users );
+									
+								} );
+								
+							},
+							
+							sortusers : function ( sortby )
+							{
+
+								//
+
+								var _this = ge( 'UsersInner' );
+
+								if( _this )
+								{
+									var orderby = ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' );
+	
+									var list = _this.getElementsByTagName( 'div' );
+	
+									if( list.length > 0 )
+									{
+										var output = [];
+										
+										var custom = { 
+											'Status' : { 
+												'ASC'  : { 'locked' : 0, 'active' : 1, 'disabled' : 2 }, 
+												'DESC' : { 'locked' : 0, 'disabled' : 1, 'active' : 2 } 
+											},
+											'LoginTime' : 'timestamp' 
+										};
+										
+										var callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
+										
+										var override = false;
+										
+										if( custom[ sortby ] && sortby == 'LoginTime' )
+										{
+											sortby = custom[ sortby ];
+											orderby = ( orderby == 'ASC' ? 'DESC' : 'ASC' ); 
+			
+											// TODO: Find out how to specifically sort by the custom sortorder of Status ...
+										}
+										else if( custom[ sortby ] && custom[ sortby ][ orderby ] && sortby == 'Status' )
+										{
+											callback = ( function ( a, b ) { return ( custom[ sortby ][ orderby ][ a.sortby ] - custom[ sortby ][ orderby ][ b.sortby ] ); } );
+			
+											//console.log( custom[ sortby ][ orderby ] );
+			
+											override = true;
+										}
+										
+										for( var a = 0; a < list.length; a++ )
+										{
+											if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+			
+											var span = list[a].getElementsByTagName( 'span' )[0];
+			
+											if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' )
+											{
+												var obj = { 
+													sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
+													content : list[a]
+												};
+			
+												output.push( obj );
+											}
+										}
+		
+										if( output.length > 0 )
+										{
+											// Sort ASC default
+			
+											output.sort( callback );
+			
+											// Sort DESC
+											
+											if( !override && orderby == 'DESC' ) 
+											{ 
+												output.reverse();  
+											}
+			
+											_this.innerHTML = '';
+			
+											_this.setAttribute( 'orderby', orderby );
+			
+											for( var key in output )
+											{
+												if( output[key] && output[key].content )
+												{
+													// Add row
+													_this.appendChild( output[key].content );
+												}
+											}
+										}
+									}
+								}
+
+								//console.log( output );
+							},
+							
+							refresh : function ( users )
 							{
 								
 								switch( this.func.mode[ 'users' ] )
@@ -2284,13 +2767,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 									
 									case 'list':
 										
-										this.list();
+										this.list( users );
 										
 										break;
 										
 									case 'edit':
 										
-										this.edit();
+										this.edit( users );
 										
 										break;
 										
@@ -2393,7 +2876,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 										
 									};
 								}
-							
+								
 								// Show listed users ... 
 						
 								init.list();
@@ -2425,7 +2908,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								
 								mountlist = ( rows ? rows : mountlist );
 								
-								console.log( 'init.list ', mountlist );
+								if( ShowLog ) console.log( 'init.list ', mountlist );
 								
 								if( mountlist && mountlist.length )
 								{
@@ -2449,7 +2932,15 @@ Sections.accounts_workgroups = function( cmd, extra )
 			
 										try
 										{
-											sorted[b].Config = JSON.parse( sorted[b].Config );
+											if( typeof sorted[b].Config != "object" )
+											{
+												var conf = JSON.parse( sorted[b].Config );
+											
+												if( conf )
+												{
+													sorted[b].Config = conf;
+												}
+											}
 										}
 										catch( e )
 										{
@@ -2463,22 +2954,22 @@ Sections.accounts_workgroups = function( cmd, extra )
 										var type = mode[0].toLowerCase();
 										if( type == 'kb' )
 										{
-											size = size * 1024;
+											size = size * 1000;
 										}
 										else if( type == 'mb' )
 										{
-											size = size * 1024 * 1024;
+											size = size * 1000 * 1000;
 										}
 										else if( type == 'gb' )
 										{
-											size = size * 1024 * 1024 * 1024;
+											size = size * 1000 * 1000 * 1000;
 										}
 										else if( type == 'tb' )
 										{
-											size = size * 1024 * 1024 * 1024 * 1024;
+											size = size * 1000 * 1000 * 1000 * 1000;
 										}
 										var used = parseInt( sorted[b].StoredBytes );
-										if( isNaN( size ) || size == 0 ) size = 512 * 1024; // < Normally the default size
+										if( isNaN( size ) || size == 0 ) size = 500 * 1000; // < Normally the default size
 										if( !used && !size ) used = 0, size = 0;
 										if( !used ) used = 0;
 										if( used > size || ( used && !size ) ) size = used;
@@ -2554,13 +3045,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 															+ '			<div class="label" style="background-image: url(\'' + storage.icon + '\')"></div>'
 															+ '		</div>'
 															+ '	</div>'
-															+ '	<div class="Col2 FloatLeft HContent100 Name Ellipsis">'
+															+ '	<div class="Col2 FloatLeft HContent100 Name Ellipsis" id="StorageInfo_' + storage.id + '">'
 															+ '		<div class="name" title="' + storage.name + '">' + storage.name + ':</div>'
 															+ '		<div class="type" title="' + i18n( 'i18n_' + storage.type ) + '">' + i18n( 'i18n_' + storage.type ) + '</div>'
-															+ '		<div class="rectangle">'
-															+ '			<div title="' + storage.used + ' used" style="width:' + storage.prog + '%"></div>'
+															+ '		<div class="rectangle" title="' + storage.used + ' used">'
+															+ '			<div style="width:' + storage.prog + '%"></div>'
 															+ '		</div>'
-															+ '		<div class="bytes">' + storage.free  + ' free of ' + storage.size + '</div>'
+															+ '		<div class="bytes" title="' + storage.free  + ' free of ' + storage.size + '">' + storage.free  + ' free of ' + storage.size + '</div>'
 															+ '	<div>';
 															return d;
 														}( this, storage, workgroup.groupid )
@@ -2569,9 +3060,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 												]
 											}
 										] );
-								
-								
-								
+										
+										
+										
 										if( divs )
 										{
 											for( var i in divs )
@@ -2582,7 +3073,70 @@ Sections.accounts_workgroups = function( cmd, extra )
 												}
 											}
 										}
-							
+										
+										
+										
+										getStorageInfo( sorted[b].Name + ':', sorted[b].UserID, sorted[b], function( res, dat, args )
+										{
+					
+											//
+					
+											// Update even if there is an error so we can see what is missing ServerToken etc other stuff in console ...
+					
+											if( ge( 'StorageInfo_' + args.ID ) && ge( 'StorageInfo_' + args.ID ).className.indexOf( 'Updated' ) < 0 )
+											{
+						
+												var size = 0;
+												var used = 0;
+						
+												try
+												{
+													if( dat )
+													{
+														size = ( dat.Filesize ? dat.Filesize : 0 );
+														used = ( dat.Used ? dat.Used : 0 );
+													}
+												}
+												catch( e ){  }
+						
+						
+						
+												var storage = {
+													id    : args.ID,
+													user  : args.UserID,
+													name  : args.Name,
+													type  : args.Type,
+													size  : size, 
+													used  : used, 
+													free  : ( size - used ), 
+													prog  : ( ( used / size * 100 ) > 100 ? 100 : ( !used && !size ? 0 : ( used / size * 100 ) ) )
+												};
+						
+												if( ShowLog ) console.log( storage );
+						
+												var mlst = '';
+						
+												mlst += '<div class="name Ellipsis" title="' + storage.name + '">' + storage.name + ':</div>';
+												mlst += '<div class="type Ellipsis" title="' + i18n( 'i18n_' + storage.type ) + '">' + i18n( 'i18n_' + storage.type ) + '</div>';
+												mlst += '<div class="rectangle" title="' + readableBytes( storage.used, 0 ) + ' used"><div style="width:' + storage.prog + '%"></div></div>';
+												mlst += '<div class="bytes Ellipsis" title="'+ readableBytes( storage.free, 0 )  + ' free of ' + readableBytes( storage.size, 0 ) + '">' + readableBytes( storage.free, 0 )  + ' free of ' + readableBytes( storage.size, 0 ) + '</div>';
+						
+												//console.log( mlst );
+						
+												ge( 'StorageInfo_' + args.ID ).classList.add( 'Updated' );
+						
+												ge( 'StorageInfo_' + args.ID ).innerHTML = mlst;
+						
+												// Show errors if there is any ...
+						
+												if( args.Errors ) console.log( args.Errors.text, args.Errors.content );
+						
+											}
+					
+										} );
+										
+										
+										
 									}
 							
 								}
@@ -2609,7 +3163,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								var n = new Module( 'system' );
 								n.onExecuted = function( ee, dat )
 								{
-									console.log( { e:ee, d:dat } );
+									if( ShowLog ) console.log( { e:ee, d:dat } );
 									
 									try
 									{
@@ -2627,11 +3181,11 @@ Sections.accounts_workgroups = function( cmd, extra )
 									listStorage( function( res, js )
 									{
 										
-										var storage = { id : '', user: '', name : '', type : 'SQLWorkgroupDrive', note: '', size : 512 };
+										var storage = { id : '', user: '', name : '', type : 'SQLWorkgroupDrive', note: '', csize : 500, cunit : 'MB' };
 										
 										var units = [ 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB' ];
 										
-										console.log( { res:res, js:js } );
+										if( ShowLog ) console.log( { res:res, js:js } );
 										
 										if( res && js )
 										{
@@ -2649,41 +3203,49 @@ Sections.accounts_workgroups = function( cmd, extra )
 											var size = ( js.Config.DiskSize ? js.Config.DiskSize : 0 );
 											var mode = ( size && size.length && size != 'undefined' ? size.match( /[a-z]+/i ) : [ '' ] );
 											size = parseInt( size );
+											
+											var csize = size;
+											var cunit = ( mode[0] ? mode[0] : 'MB' );
+											
 											var type = mode[0].toLowerCase();
 											if( type == 'kb' )
 											{
-												size = size * 1024;
+												size = size * 1000;
 											}
 											else if( type == 'mb' )
 											{
-												size = size * 1024 * 1024;
+												size = size * 1000 * 1000;
 											}
 											else if( type == 'gb' )
 											{
-												size = size * 1024 * 1024 * 1024;
+												size = size * 1000 * 1000 * 1000;
 											}
 											else if( type == 'tb' )
 											{
-												size = size * 1024 * 1024 * 1024 * 1024;
+												size = size * 1000 * 1000 * 1000 * 1000;
 											}
 											var used = parseInt( js.StoredBytes );
-											if( isNaN( size ) ) size = 512 * 1024; // < Normally the default size
+											if( isNaN( size ) ) size = 500 * 1000; // < Normally the default size
 											if( !used && !size ) used = 0, size = 0;
-											if( !size ) size = 536870912;
+											if( !size ) size = 500000000;
 											if( !used ) used = 0;
 											if( used > size || ( used && !size ) ) size = used;
-			
+											
+											csize = ( !csize ? 500 : csize );
+											
 											storage = {
-												id   : js.ID,
-												user : js.UserID,
-												name : js.Name,
-												type : js.Type,
-												note : js.ShortDescription,
-												size : size, 
-												used : used, 
-												free : ( size - used ), 
-												prog : ( ( used / size * 100 ) > 100 ? 100 : ( used / size * 100 ) ), 
-												icon : '/iconthemes/friendup15/DriveLabels/FriendDisk.svg',
+												id    : js.ID,
+												user  : js.UserID,
+												name  : js.Name,
+												type  : js.Type,
+												csize : csize,
+												cunit : cunit,
+												note  : js.ShortDescription,
+												size  : size, 
+												used  : used, 
+												free  : ( size - used ), 
+												prog  : ( ( used / size * 100 ) > 100 ? 100 : ( used / size * 100 ) ), 
+												icon  : '/iconthemes/friendup15/DriveLabels/FriendDisk.svg',
 												mount : js.Mounted
 											};
 											
@@ -2702,7 +3264,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 											storage.icon = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
 										}
 										
-										console.log( storage );
+										if( ShowLog ) console.log( storage );
 										
 										dosdrivergui( storage, function( storage )
 										{
@@ -2855,7 +3417,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																	{
 																		var d = document.createElement( 'div' );
 																		d.className = 'HContent35 FloatLeft Ellipsis PaddingRight';
-																		d.innerHTML = '<input type="text" class="FullWidth" id="DiskSizeA" value="' + readableBytes( storage.size, 0, 0 ) + '" placeholder="512"/>';
+																		d.innerHTML = '<input type="text" class="FullWidth" id="DiskSizeA" value="' + storage.csize + '" placeholder="500"/>';
 																		return d;
 																	}(  )
 																	
@@ -2886,7 +3448,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																					for( var a in units )
 																					{
 																						d.innerHTML += ''
-																						+ '<option' + ( storage.size && readableBytes( storage.size, 0, 2 ) == units[a] ? ' selected="selected"' : '' ) + '>' 
+																						+ '<option' + ( storage.csize && storage.cunit == units[a] ? ' selected="selected"' : '' ) + '>' 
 																						+ 	units[a] 
 																						+ '</option>';
 																					}
@@ -3047,7 +3609,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																			listStorage( function( res, js )
 																			{
 																			
-																				console.log( 'init.list(  ); ', { res: res, js:js } );
+																				if( ShowLog ) console.log( 'init.list(  ); ', { res: res, js:js } );
 																			
 																				if( res )
 																				{
@@ -3067,7 +3629,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 														
 														{ 
 															
-															'element' : function( init ) 
+															'element' : function( groupid, init ) 
 															{
 																var d = document.createElement( 'button' );
 																d.className = 'IconSmall FloatRight MarginLeft';
@@ -3075,11 +3637,21 @@ Sections.accounts_workgroups = function( cmd, extra )
 																d.onclick = function ()
 																{
 																	
-																	init.list();
+																	listStorage( function( res, js )
+																	{
+																		
+																		if( ShowLog ) console.log( 'init.list(  ); ', { res: res, js:js } );
+																		
+																		if( res )
+																		{
+																			init.list( js );
+																		}
+																		
+																	}, groupid );
 																	
 																};
 																return d;
-															}( init )
+															}( workgroup.groupid, init )
 															
 														},
 														
@@ -3104,7 +3676,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																			listStorage( function( res, js )
 																			{
 																			
-																				console.log( 'init.list(  ); ', { res: res, js:js } );
+																				if( ShowLog ) console.log( 'init.list(  ); ', { res: res, js:js } );
 																			
 																				if( res )
 																				{
@@ -3144,7 +3716,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																			listStorage( function( res, js )
 																			{
 																			
-																				console.log( 'init.list(  ); ', { res: res, js:js } );
+																				if( ShowLog ) console.log( 'init.list(  ); ', { res: res, js:js } );
 																				
 																				if( res )
 																				{
@@ -3187,6 +3759,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 												ge( 'Name' ).current = storage.name;
 												
 											}
+											
+											
+											
+											
 											
 										} );
 										
@@ -3275,13 +3851,231 @@ Sections.accounts_workgroups = function( cmd, extra )
 						
 					},
 					
+					// Roles -------------------------------------------------------------------------------------------
+					
+					roles : function (  )
+					{
+						
+						if( ge( 'RolesGui' ) && rstr )
+						{
+							
+							var o = ge( 'RolesGui' ); if( o ) o.innerHTML = '';
+							
+							var divs = appendChild( [ 
+								{ 
+									'element' : function() 
+									{
+										var d = document.createElement( 'div' );
+										d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
+										return d;
+									}(),
+									'child' : 
+									[ 
+										{ 
+											'element' : function(  ) 
+											{
+												var d = document.createElement( 'div' );
+												d.className = 'PaddingSmall HContent40 FloatLeft';
+												d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+												d.onclick = function(  )
+												{
+													sortroles( 'Name' );
+												};
+												return d;
+											}(  ) 
+										}, 
+										{ 
+											'element' : function() 
+											{
+												var d = document.createElement( 'div' );
+												d.className = 'PaddingSmall HContent15 FloatLeft Relative';
+												return d;
+											}()
+										}
+									]
+								},
+								{
+									'element' : function() 
+									{
+										var d = document.createElement( 'div' );
+										d.className = 'HRow Box Padding';
+										d.id = 'RolesInner';
+										return d;
+									}()
+								}
+							] );
+
+							if( divs )
+							{
+								for( var i in divs )
+								{
+									if( divs[i] && o )
+									{
+										o.appendChild( divs[i] );
+									}
+								}
+							}
+							
+							
+							
+							ge( 'RolesInner' ).innerHTML = rstr;
+							
+							var inp = ge( 'AdminRolesContainer' ).getElementsByTagName( 'input' )[0];
+							inp.value = '';
+							
+							if( ge( 'RolesSearchCancelBtn' ) && ge( 'RolesSearchCancelBtn' ).classList.contains( 'Open' ) )
+							{
+								ge( 'RolesSearchCancelBtn' ).classList.remove( 'Open' );
+								ge( 'RolesSearchCancelBtn' ).classList.add( 'Closed' );
+							}
+							
+							// Search ...............
+							
+							var searchroles = function ( filter, server )
+							{
+							
+								if( ge( 'RolesInner' ) )
+								{
+									var list = ge( 'RolesInner' ).getElementsByTagName( 'div' );
+								
+									if( list.length > 0 )
+									{
+										for( var a = 0; a < list.length; a++ )
+										{
+											if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+										
+											var strong = list[a].getElementsByTagName( 'strong' )[0];
+											var span = list[a].getElementsByTagName( 'span' )[0];
+										
+											if( strong || span )
+											{
+												if( !filter || filter == '' 
+												|| strong && strong.innerHTML.toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+												|| span && span.innerHTML.toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+												)
+												{
+													list[a].style.display = '';
+												}
+												else
+												{
+													list[a].style.display = 'none';
+												}
+											}
+										}
+
+									}
+									
+									if( ge( 'RolesSearchCancelBtn' ) )
+									{
+										if( !filter && ( ge( 'RolesSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'RolesSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+										{
+											ge( 'RolesSearchCancelBtn' ).classList.remove( 'Open' );
+											ge( 'RolesSearchCancelBtn' ).classList.add( 'Closed' );
+										}
+									
+										else if( filter != '' && ( ge( 'RolesSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'RolesSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+										{
+											ge( 'RolesSearchCancelBtn' ).classList.remove( 'Closed' );
+											ge( 'RolesSearchCancelBtn' ).classList.add( 'Open' );
+										}
+									}
+								}
+							
+							};
+						
+							// Sort .............
+						
+							var sortroles = function ( sortby )
+							{
+							
+								//
+							
+								var _this = ge( 'RolesInner' );
+							
+								if( _this )
+								{
+									var orderby = ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' );
+								
+									var list = _this.getElementsByTagName( 'div' );
+								
+									if( list.length > 0 )
+									{
+										var output = [];
+									
+										var callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
+									
+										for( var a = 0; a < list.length; a++ )
+										{
+											if( !list[a].className || ( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) ) continue;
+										
+											var span = list[a].getElementsByTagName( 'span' )[0];
+											
+											if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' )
+											{
+												var obj = { 
+													sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
+													content : list[a]
+												};
+												
+												output.push( obj );
+											}
+										}
+									
+										if( output.length > 0 )
+										{
+											// Sort ASC default
+										
+											output.sort( callback );
+										
+											// Sort DESC
+										
+											if( orderby == 'DESC' ) 
+											{ 
+												output.reverse();  
+											}
+										
+											_this.innerHTML = '';
+										
+											_this.setAttribute( 'orderby', orderby );
+										
+											for( var key in output )
+											{
+												if( output[key] && output[key].content )
+												{
+													// Add row
+													_this.appendChild( output[key].content );
+												}
+											}
+										}
+									}
+								}
+							
+							};
+							
+							// .................
+							
+							var inp = ge( 'AdminRolesContainer' ).getElementsByTagName( 'input' )[0];
+							inp.onkeyup = function( e )
+							{
+								searchroles( this.value );
+							}
+							ge( 'RolesSearchCancelBtn' ).onclick = function( e )
+							{
+								searchroles( false );
+								inp.value = '';
+							}
+							
+						}
+						
+					},
+					
 					// Permissions -------------------------------------------------------------------------------------
 					
 					permissions : function ( show )
 					{
 						// Check Permissions
 						
-						console.log( '// Check Permissions ', ( show ? show : [] ) );
+						if( ShowLog ) console.log( '// Check Permissions ', ( show ? show : [] ) );
 						
 						if( !show || show.indexOf( 'user' ) >= 0 )
 						{
@@ -3324,6 +4118,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				
 				func.users();
 				func.storage();
+				func.roles();
 				func.permissions();
 				
 			
@@ -3359,7 +4154,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			// Get the user list
 			list( function( e, d )
 			{
-				console.log( 'initMain() ', { e:e, d:d } );
+				if( ShowLog ) console.log( 'initMain() ', { e:e, d:d } );
 				
 				//if( e != 'ok' ) return;
 				var userList = null;

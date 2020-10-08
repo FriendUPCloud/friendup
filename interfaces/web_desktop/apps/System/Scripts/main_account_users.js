@@ -136,7 +136,7 @@ Sections.accounts_users = function( cmd, extra )
 				var apps              = ( info.applications ? info.applications : {} );
 				var dock              = ( info.dock ? info.dock : {} );
 				
-				console.log( 'initUsersDetails( info ) ', info );		
+				if( ShowLog ) console.log( 'initUsersDetails( info ) ', info );		
 				
 				var func = {
 					
@@ -251,8 +251,12 @@ Sections.accounts_users = function( cmd, extra )
 								{
 									if( !wids[b] || !wids[b].Name ) continue;
 									
+									wstr += '<div>';
 									wstr += '<div class="HRow">';
-									wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis"><strong>' + wids[b].Name + '</strong></div>';
+									wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">';
+									wstr += '		<span name="' + wids[b].Name + '" style="display: none;"></span>';
+									wstr += '		<strong>' + wids[b].Name + '</strong>';
+									wstr += '	</div>';
 									wstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 									
 									if( Application.checkAppPermission( [ 
@@ -266,6 +270,7 @@ Sections.accounts_users = function( cmd, extra )
 									
 									wstr += '	</div>';
 									wstr += '</div>';
+									wstr += '</div>';
 								}
 							}
 						}
@@ -275,6 +280,7 @@ Sections.accounts_users = function( cmd, extra )
 					
 					roles : function (  )
 					{
+								
 						// Roles
 						var rstr = '';
 				
@@ -298,9 +304,6 @@ Sections.accounts_users = function( cmd, extra )
 									continue;
 								}
 								
-								rstr += '<div class="HRow">';
-								rstr += '<div class="PaddingSmall HContent45 FloatLeft Ellipsis"><strong>' + uroles[a].Name + '</strong></div>';
-						
 								var title = '';
 						
 								if( uroles[a].Permissions.length )
@@ -317,8 +320,16 @@ Sections.accounts_users = function( cmd, extra )
 							
 									title = wgrs.join( ',' );
 								}
-						
-								rstr += '<div class="PaddingSmall HContent40 FloatLeft Ellipsis"' + ( title ? ' title="' + title + '"' : '' ) + '>' + title + '</div>';
+								
+								rstr += '<div class="HRow">';
+								rstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis" title="' + uroles[a].Name + '">';
+								rstr += '		<span name="' + uroles[a].Name + '" workgroups="' + title + '" style="display: none;"></span>';
+								rstr += '		<strong>' + uroles[a].Name + '</strong>';
+								rstr += '	</div>';
+								
+								
+								
+								rstr += '<div class="PaddingSmall HContent45 FloatLeft Ellipsis"' + ( title ? ' title="' + title + '"' : '' ) + '>' + title + '</div>';
 						
 								rstr += '<div class="PaddingSmall HContent15 FloatLeft Ellipsis">';
 								
@@ -335,7 +346,13 @@ Sections.accounts_users = function( cmd, extra )
 								rstr += '</div>';
 							}
 						}
-					
+						else
+						{
+							rstr += '<div class="HRow"><div class="HContent100">' + i18n( 'i18n_user_roles_empty' ) + '</div></div>';
+						}
+						
+						
+						
 						return rstr;
 					},
 					
@@ -353,8 +370,8 @@ Sections.accounts_users = function( cmd, extra )
 						}
 						
 						// Storage / disks
-						var mlst = Sections.user_disk_refresh( mountlist, userInfo.ID );
-					
+						var mlst = Sections.user_disk_refresh( mountlist, userInfo.ID, Sections.user_volumeinfo_refresh( mountlist, userInfo.ID ) );
+						
 						return mlst;
 					},
 					
@@ -778,6 +795,90 @@ Sections.accounts_users = function( cmd, extra )
 							workgroups : function (  )
 							{
 								
+								
+								// Heading ...
+								
+								/*var wgstr = '';
+								
+								wgstr += '<div class="HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight">';
+								wgstr += '	<div class="PaddingSmall HContent40 FloatLeft" onclick="sortgroups(\'Name\')"><strong>' + i18n( 'i18n_name' ) + '</strong></div>';
+								wgstr += '	<div class="PaddingSmall HContent45 FloatLeft Relative"><strong></strong></div>';
+								wgstr += '	<div class="PaddingSmall HContent15 FloatLeft Relative"></div>';
+								wgstr += '</div>';
+								
+								wgstr += '<div class="HRow Box Padding" id="WorkgroupInner"></div>';*/
+								
+								var o = ge( 'WorkgroupGui' ); if( o ) o.innerHTML = '';/*.innerHTML = wgstr;*/
+								
+								
+								
+								var divs = appendChild( [ 
+									{ 
+										'element' : function() 
+										{
+											var d = document.createElement( 'div' );
+											d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
+											return d;
+										}(),
+										'child' : 
+										[ 
+											{ 
+												'element' : function(  ) 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmall HContent40 FloatLeft';
+													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+													d.ele = this;
+													d.onclick = function(  )
+													{
+														sortgroups( 'Name' );
+													};
+													return d;
+												}(  ) 
+											}, 
+											{ 
+												'element' : function( _this ) 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmall HContent45 FloatLeft Relative';
+													d.innerHTML = '<strong></strong>';
+													return d;
+												}( this )
+											},
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmall HContent15 FloatLeft Relative';
+													return d;
+												}()
+											}
+										]
+									},
+									{
+										'element' : function() 
+										{
+											var d = document.createElement( 'div' );
+											d.className = 'HRow Box Padding';
+											d.id = 'WorkgroupInner';
+											return d;
+										}()
+									}
+								] );
+				
+								if( divs )
+								{
+									for( var i in divs )
+									{
+										if( divs[i] && o )
+										{
+											o.appendChild( divs[i] );
+										}
+									}
+								}
+								
+								
+								
 								// Editing workgroups
 								
 								var wge = ge( 'WorkgroupEdit' );
@@ -800,15 +901,15 @@ Sections.accounts_users = function( cmd, extra )
 								
 								// TODO: List the groups sorting here since that is constant, so there is no difference between first render and switch between edit and list enabled.
 								
-								if( ge( 'WorkgroupGui' ) && wstr )
+								if( ge( 'WorkgroupInner' ) && wstr )
 								{
-									ge( 'WorkgroupGui' ).innerHTML = wstr;
+									ge( 'WorkgroupInner' ).innerHTML = wstr;
 									
 									// TODO: Move wstr rendering into this function so we don't have to render all of this 3 times ....
 									
-									if( ge( 'WorkgroupGui' ).innerHTML )
+									if( ge( 'WorkgroupInner' ).innerHTML )
 									{
-										var workBtns = ge( 'WorkgroupGui' ).getElementsByTagName( 'button' );
+										var workBtns = ge( 'WorkgroupInner' ).getElementsByTagName( 'button' );
 										
 										if( workBtns )
 										{
@@ -946,13 +1047,24 @@ Sections.accounts_users = function( cmd, extra )
 										//console.log( groups );
 									}
 									
+									if( ge( 'AdminWorkgroupContainer' ) )
+									{
+										var inp = ge( 'AdminWorkgroupContainer' ).getElementsByTagName( 'input' )[0];
+										inp.value = '';
+									
+										if( ge( 'WorkgroupSearchCancelBtn' ) && ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Open' ) )
+										{
+											ge( 'WorkgroupSearchCancelBtn' ).classList.remove( 'Open' );
+											ge( 'WorkgroupSearchCancelBtn' ).classList.add( 'Closed' );
+										}
+									}
 									
 									
 									/*// Show
 									if( !this.activated )
 									{*/
 										this.activated = true;
-										//this.oldML = ge( 'WorkgroupGui' ).innerHTML;
+										//this.oldML = ge( 'WorkgroupInner' ).innerHTML;
 							
 										var str = '';
 										
@@ -983,11 +1095,13 @@ Sections.accounts_users = function( cmd, extra )
 													}
 												}
 												
+												
+												
 												str += '<div>';
 												
 												str += '<div class="HRow">';
 												str += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">';
-												str += '		<span class="IconSmall ' + ( groups[a].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;' + groups[a].Name + '</span>';
+												str += '		<span name="' + groups[a].Name + '" class="IconSmall ' + ( groups[a].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;' + groups[a].Name + '</span>';
 												str += '	</div>';
 												str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 												
@@ -1030,7 +1144,7 @@ Sections.accounts_users = function( cmd, extra )
 														
 														str += '<div class="HRow">';
 														str += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">';
-														str += '		<span class="IconSmall ' + ( groups[a].groups[aa].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>';
+														str += '		<span name="' + groups[a].groups[aa].Name + '" class="IconSmall ' + ( groups[a].groups[aa].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>';
 														str += '	</div>';
 														str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 														
@@ -1071,7 +1185,7 @@ Sections.accounts_users = function( cmd, extra )
 																
 																str += '<div class="HRow">';
 																str += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">';
-																str += '		<span class="IconSmall">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>';
+																str += '		<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconSmall">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>';
 																str += '	</div>';
 																str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 																
@@ -1104,7 +1218,13 @@ Sections.accounts_users = function( cmd, extra )
 											
 											
 										}
-										ge( 'WorkgroupGui' ).innerHTML = str;
+										else
+										{
+											str += '<div class="HRow"><div class="HContent100">' + i18n( 'i18n_user_workgroups_empty' ) + '</div></div>';
+										}
+										
+										
+										ge( 'WorkgroupInner' ).innerHTML = str;
 										
 										// Hide add / edit button ...
 										
@@ -1116,7 +1236,7 @@ Sections.accounts_users = function( cmd, extra )
 										
 										// Toggle arrow function, put into function that can be reused some time ...
 										
-										var workArr = ge( 'WorkgroupGui' ).getElementsByTagName( 'span' );
+										var workArr = ge( 'WorkgroupInner' ).getElementsByTagName( 'span' );
 										
 										if( workArr )
 										{
@@ -1190,7 +1310,7 @@ Sections.accounts_users = function( cmd, extra )
 											}
 										}
 										
-										var workBtns = ge( 'WorkgroupGui' ).getElementsByTagName( 'button' );
+										var workBtns = ge( 'WorkgroupInner' ).getElementsByTagName( 'button' );
 							
 										if( workBtns )
 										{
@@ -1300,13 +1420,25 @@ Sections.accounts_users = function( cmd, extra )
 										
 										if( wgc ) wgc.onclick = function( e )
 										{
-										
+											
+											
+											var inp = ge( 'AdminWorkgroupContainer' ).getElementsByTagName( 'input' )[0];
+											inp.value = '';
+									
+											if( ge( 'WorkgroupSearchCancelBtn' ) && ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Open' ) )
+											{
+												ge( 'WorkgroupSearchCancelBtn' ).classList.remove( 'Open' );
+												ge( 'WorkgroupSearchCancelBtn' ).classList.add( 'Closed' );
+											}
+											
+											
+											
 											this.wge.wids = {};
 											this.wge.wgroups = false;
 										
-											if( ge( 'WorkgroupGui' ) && ge( 'WorkgroupGui' ).innerHTML )
+											if( ge( 'WorkgroupInner' ) && ge( 'WorkgroupInner' ).innerHTML )
 											{
-												var workBtns = ge( 'WorkgroupGui' ).getElementsByTagName( 'button' );
+												var workBtns = ge( 'WorkgroupInner' ).getElementsByTagName( 'button' );
 									
 												if( workBtns )
 												{
@@ -1326,14 +1458,20 @@ Sections.accounts_users = function( cmd, extra )
 											{
 												for( var b in groups )
 												{
+													
+													
 													if( groups[b].Name && this.wge.wids[ groups[b].ID ] )
 													{
 														//wstr += '<div class="HRow">';
 														//wstr += '<div class="HContent100"><strong>' + groups[b].Name + '</strong></div>';
 														//wstr += '</div>';
-													
+														
+														wstr += '<div>';0
 														wstr += '<div class="HRow">';
-														wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis"><strong>' + groups[b].Name + '</strong></div>';
+														wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">';
+														wstr += '		<span name="' + groups[b].Name + '" style="display: none;"></span>';
+														wstr += '		<strong>' + groups[b].Name + '</strong>';
+														wstr += '	</div>';
 														wstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 														
 														if( Application.checkAppPermission( [ 
@@ -1346,6 +1484,7 @@ Sections.accounts_users = function( cmd, extra )
 														}
 														
 														wstr += '	</div>';
+														wstr += '</div>';
 														wstr += '</div>';
 													}
 												
@@ -1360,9 +1499,13 @@ Sections.accounts_users = function( cmd, extra )
 																	//wstr += '<div class="HRow">';
 																	//wstr += '<div class="HContent100"><strong>' + groups[b].groups[k].Name + '</strong></div>';
 																	//wstr += '</div>';
-																
+																	
+																	wstr += '<div>';
 																	wstr += '<div class="HRow">';
-																	wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis"><strong>' + groups[b].groups[k].Name + '</strong></div>';
+																	wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">';
+																	wstr += '		<span name="' + groups[b].groups[k].Name + '" style="display: none;"></span>';
+																	wstr += '		<strong>' + groups[b].groups[k].Name + '</strong>';
+																	wstr += '	</div>';
 																	wstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 																	
 																	if( Application.checkAppPermission( [ 
@@ -1375,6 +1518,7 @@ Sections.accounts_users = function( cmd, extra )
 																	}
 																	
 																	wstr += '	</div>';
+																	wstr += '</div>';
 																	wstr += '</div>';
 																}
 															
@@ -1389,9 +1533,13 @@ Sections.accounts_users = function( cmd, extra )
 																				//wstr += '<div class="HRow">';
 																				//wstr += '<div class="HContent100"><strong>' + groups[b].groups[k].groups[i].Name + '</strong></div>';
 																				//wstr += '</div>';
-																			
+																				
+																				wstr += '<div>';
 																				wstr += '<div class="HRow">';
-																				wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis"><strong>' + groups[b].groups[k].groups[i].Name + '</strong></div>';
+																				wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">';
+																				wstr += '		<span name="' + groups[b].groups[k].groups[i].Name + '" style="display: none;"></span>';
+																				wstr += '		<strong>' + groups[b].groups[k].groups[i].Name + '</strong>';
+																				wstr += '	</div>';
 																				wstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 																				
 																				if( Application.checkAppPermission( [ 
@@ -1405,6 +1553,7 @@ Sections.accounts_users = function( cmd, extra )
 																				
 																				wstr += '	</div>';
 																				wstr += '</div>';
+																				wstr += '</div>';
 																			}
 																		}
 																	}
@@ -1412,15 +1561,18 @@ Sections.accounts_users = function( cmd, extra )
 															}
 														}
 													}
+													
+													
+													
 												}
 											}
 										
 											//console.log( this.wge.wids );
 										
 											this.wge.activated = false;
-											ge( 'WorkgroupGui' ).innerHTML = wstr;
+											ge( 'WorkgroupInner' ).innerHTML = wstr;
 										
-											var workBtns = ge( 'WorkgroupGui' ).getElementsByTagName( 'button' );
+											var workBtns = ge( 'WorkgroupInner' ).getElementsByTagName( 'button' );
 							
 											if( workBtns )
 											{
@@ -1527,6 +1679,173 @@ Sections.accounts_users = function( cmd, extra )
 									/*}*/
 								}
 								
+								
+								// Search ...............
+								
+								var searchgroups = function ( filter, server )
+								{
+									
+									if( ge( 'WorkgroupInner' ) )
+									{
+										var list = ge( 'WorkgroupInner' ).getElementsByTagName( 'div' );
+										
+										if( list.length > 0 )
+										{
+											for( var a = 0; a < list.length; a++ )
+											{
+												if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+												
+												var strong = list[a].getElementsByTagName( 'strong' )[0];
+												var span = list[a].getElementsByTagName( 'span' )[0];
+												
+												if( strong || span )
+												{
+													if( !filter || filter == '' 
+													|| strong && strong.innerHTML.toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+													|| span && span.innerHTML.toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+													)
+													{
+														list[a].style.display = '';
+														
+														if( list[a].parentNode.parentNode && list[a].parentNode.parentNode.parentNode && list[a].parentNode.parentNode.parentNode.className.indexOf( 'HRow' ) >= 0 )
+														{
+															if( list[a].parentNode.classList.contains( 'Closed' ) )
+															{
+																list[a].parentNode.classList.remove( 'Closed' );
+																list[a].parentNode.classList.add( 'Open' );
+															}
+															
+															list[a].parentNode.style.display = '';
+															list[a].parentNode.parentNode.style.display = '';
+														}
+													}
+													else if( list[a].parentNode && list[a].parentNode.className )
+													{
+														list[a].style.display = 'none';
+													}
+												}
+											}
+		
+										}
+										
+										if( ge( 'WorkgroupSearchCancelBtn' ) )
+										{
+											if( !filter && ( ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+											{
+												ge( 'WorkgroupSearchCancelBtn' ).classList.remove( 'Open' );
+												ge( 'WorkgroupSearchCancelBtn' ).classList.add( 'Closed' );
+												
+												if( list.length > 0 )
+												{
+													for( var a = 0; a < list.length; a++ )
+													{
+														if( list[a].classList.contains( 'Open' ) )
+														{
+															list[a].classList.remove( 'Open' );
+															list[a].classList.add( 'Closed' );
+														}
+													}
+												}
+											}
+											
+											else if( filter != '' && ( ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+											{
+												ge( 'WorkgroupSearchCancelBtn' ).classList.remove( 'Closed' );
+												ge( 'WorkgroupSearchCancelBtn' ).classList.add( 'Open' );
+											}
+										}
+									}
+									
+								};
+								
+								// Sort .............
+								
+								var sortgroups = function ( sortby )
+								{
+									
+									//
+									
+									var _this = ge( 'WorkgroupInner' );
+									
+									if( _this )
+									{
+										var orderby = ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' );
+										
+										var list = _this.getElementsByTagName( 'div' );
+										
+										if( list.length > 0 )
+										{
+											var output = [];
+											
+											var callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
+											
+											for( var a = 0; a < list.length; a++ )
+											{
+												if( !list[a].className || ( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) ) continue;
+												
+												var span = list[a].getElementsByTagName( 'span' )[0];
+												
+												if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' && span.getAttribute( sortby.toLowerCase() ) )
+												{
+													if( !list[a].parentNode.className )
+													{
+														var obj = { 
+															sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
+															content : list[a].parentNode
+														};
+													
+														output.push( obj );
+													}
+												}
+											}
+											
+											if( output.length > 0 )
+											{
+												// Sort ASC default
+												
+												output.sort( callback );
+												
+												// Sort DESC
+												
+												if( orderby == 'DESC' ) 
+												{ 
+													output.reverse();  
+												}
+												
+												_this.innerHTML = '';
+												
+												_this.setAttribute( 'orderby', orderby );
+												
+												for( var key in output )
+												{
+													if( output[key] && output[key].content )
+													{
+														// Add row
+														_this.appendChild( output[key].content );
+													}
+												}
+											}
+										}
+									}
+									
+								};
+								
+								// .................
+								
+								if( ge( 'AdminWorkgroupContainer' ) )
+								{
+									var inp = ge( 'AdminWorkgroupContainer' ).getElementsByTagName( 'input' )[0];
+									inp.onkeyup = function( e )
+									{
+										searchgroups( this.value );
+									}
+									ge( 'WorkgroupSearchCancelBtn' ).onclick = function( e )
+									{
+										searchgroups( false );
+										inp.value = '';
+									}
+								}
+								
 							},
 							
 							roles : function (  )
@@ -1534,7 +1853,227 @@ Sections.accounts_users = function( cmd, extra )
 								
 								if( ge( 'RolesGui' ) && rstr )
 								{
-									ge( 'RolesGui' ).innerHTML = rstr;
+									
+									
+									var o = ge( 'RolesGui' ); if( o ) o.innerHTML = '';
+									
+									var divs = appendChild( [ 
+										{ 
+											'element' : function() 
+											{
+												var d = document.createElement( 'div' );
+												d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
+												return d;
+											}(),
+											'child' : 
+											[ 
+												{ 
+													'element' : function(  ) 
+													{
+														var d = document.createElement( 'div' );
+														d.className = 'PaddingSmall HContent40 FloatLeft';
+														d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+														d.onclick = function(  )
+														{
+															sortroles( 'Name' );
+														};
+														return d;
+													}(  ) 
+												}, 
+												{ 
+													'element' : function( _this ) 
+													{
+														var d = document.createElement( 'div' );
+														d.className = 'PaddingSmall HContent45 FloatLeft Relative';
+														d.innerHTML = '<strong>' + i18n( 'i18n_workgroups' ) + '</strong>';
+														d.onclick = function(  )
+														{
+															sortroles( 'Workgroups' );
+														};
+														return d;
+													}( this )
+												},
+												{ 
+													'element' : function() 
+													{
+														var d = document.createElement( 'div' );
+														d.className = 'PaddingSmall HContent15 FloatLeft Relative';
+														return d;
+													}()
+												}
+											]
+										},
+										{
+											'element' : function() 
+											{
+												var d = document.createElement( 'div' );
+												d.className = 'HRow Box Padding';
+												d.id = 'RolesInner';
+												return d;
+											}()
+										}
+									] );
+		
+									if( divs )
+									{
+										for( var i in divs )
+										{
+											if( divs[i] && o )
+											{
+												o.appendChild( divs[i] );
+											}
+										}
+									}
+									
+									
+									
+									ge( 'RolesInner' ).innerHTML = rstr;
+									
+									var inp = ge( 'AdminRoleContainer' ).getElementsByTagName( 'input' )[0];
+									inp.value = '';
+									
+									if( ge( 'RolesSearchCancelBtn' ) && ge( 'RolesSearchCancelBtn' ).classList.contains( 'Open' ) )
+									{
+										ge( 'RolesSearchCancelBtn' ).classList.remove( 'Open' );
+										ge( 'RolesSearchCancelBtn' ).classList.add( 'Closed' );
+									}
+									
+									// Search ...............
+									
+									var searchroles = function ( filter, server )
+									{
+									
+										if( ge( 'RolesInner' ) )
+										{
+											var list = ge( 'RolesInner' ).getElementsByTagName( 'div' );
+										
+											if( list.length > 0 )
+											{
+												for( var a = 0; a < list.length; a++ )
+												{
+													if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+												
+													var strong = list[a].getElementsByTagName( 'strong' )[0];
+													var span = list[a].getElementsByTagName( 'span' )[0];
+												
+													if( strong || span )
+													{
+														if( !filter || filter == '' 
+														|| strong && strong.innerHTML.toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+														|| span && span.innerHTML.toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+														)
+														{
+															list[a].style.display = '';
+														}
+														else
+														{
+															list[a].style.display = 'none';
+														}
+													}
+												}
+		
+											}
+											
+											if( ge( 'RolesSearchCancelBtn' ) )
+											{
+												if( !filter && ( ge( 'RolesSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'RolesSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+												{
+													ge( 'RolesSearchCancelBtn' ).classList.remove( 'Open' );
+													ge( 'RolesSearchCancelBtn' ).classList.add( 'Closed' );
+												}
+											
+												else if( filter != '' && ( ge( 'RolesSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'RolesSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+												{
+													ge( 'RolesSearchCancelBtn' ).classList.remove( 'Closed' );
+													ge( 'RolesSearchCancelBtn' ).classList.add( 'Open' );
+												}
+											}
+										}
+									
+									};
+								
+									// Sort .............
+								
+									var sortroles = function ( sortby )
+									{
+									
+										//
+									
+										var _this = ge( 'RolesInner' );
+									
+										if( _this )
+										{
+											var orderby = ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' );
+										
+											var list = _this.getElementsByTagName( 'div' );
+										
+											if( list.length > 0 )
+											{
+												var output = [];
+											
+												var callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
+											
+												for( var a = 0; a < list.length; a++ )
+												{
+													if( !list[a].className || ( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) ) continue;
+												
+													var span = list[a].getElementsByTagName( 'span' )[0];
+													
+													if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' )
+													{
+														var obj = { 
+															sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
+															content : list[a]
+														};
+														
+														output.push( obj );
+													}
+												}
+											
+												if( output.length > 0 )
+												{
+													// Sort ASC default
+												
+													output.sort( callback );
+												
+													// Sort DESC
+												
+													if( orderby == 'DESC' ) 
+													{ 
+														output.reverse();  
+													}
+												
+													_this.innerHTML = '';
+												
+													_this.setAttribute( 'orderby', orderby );
+												
+													for( var key in output )
+													{
+														if( output[key] && output[key].content )
+														{
+															// Add row
+															_this.appendChild( output[key].content );
+														}
+													}
+												}
+											}
+										}
+									
+									};
+									
+									// .................
+									
+									var inp = ge( 'AdminRoleContainer' ).getElementsByTagName( 'input' )[0];
+									inp.onkeyup = function( e )
+									{
+										searchroles( this.value );
+									}
+									ge( 'RolesSearchCancelBtn' ).onclick = function( e )
+									{
+										searchroles( false );
+										inp.value = '';
+									}
+									
 								}
 								
 							},
@@ -1770,9 +2309,21 @@ Sections.accounts_users = function( cmd, extra )
 									
 									head : function (  )
 									{
-								
+										
+										if( ge( 'AdminApplicationContainer' ) )
+										{
+											var inp = ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0];
+											inp.value = '';
+										
+											if( ge( 'ApplicationSearchCancelBtn' ) && ge( 'ApplicationSearchCancelBtn' ).classList.contains( 'Open' ) )
+											{
+												ge( 'ApplicationSearchCancelBtn' ).classList.remove( 'Open' );
+												ge( 'ApplicationSearchCancelBtn' ).classList.add( 'Closed' );
+											}
+										}
+										
 										var o = ge( 'ApplicationGui' ); if( o ) o.innerHTML = '<input type="hidden" id="TempApplications">';
-								
+										
 										this.func.updateids( 'applications' );
 								
 										var divs = appendChild( [ 
@@ -1935,7 +2486,7 @@ Sections.accounts_users = function( cmd, extra )
 																		'element' : function() 
 																		{
 																			var d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
+																			d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis name';
 																			d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
 																			return d;
 																		}() 
@@ -1944,7 +2495,7 @@ Sections.accounts_users = function( cmd, extra )
 																		'element' : function() 
 																		{
 																			var d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
+																			d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis category';
 																			d.innerHTML = '<span>' + apps[k].Category + '</span>';
 																			return d;
 																		}() 
@@ -1953,7 +2504,7 @@ Sections.accounts_users = function( cmd, extra )
 																		'element' : function() 
 																		{
 																			var d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+																			d.className = 'PaddingSmall HContent15 FloatLeft';
 																			return d;
 																		}(),
 																		'child' : 
@@ -2000,7 +2551,7 @@ Sections.accounts_users = function( cmd, extra )
 																									}
 																									else
 																									{
-																										console.log( { e:e, d:d, vars: vars } );
+																										if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
 																									}
 																					
 																								}, { pnt: args.pnt, func: args.func } );
@@ -2033,7 +2584,7 @@ Sections.accounts_users = function( cmd, extra )
 												}
 										
 												// Sort default by Name ASC
-												this.sortapps( 'Name' );
+												this.sortapps( 'Name', 'ASC' );
 										
 											}
 									
@@ -2091,11 +2642,14 @@ Sections.accounts_users = function( cmd, extra )
 																		{ 
 																			'element' : function() 
 																			{
-																				var d = document.createElement( 'div' );
+																				var d = document.createElement( 'span' );
+																				d.setAttribute( 'Name', apps[k].Name );
+																				d.setAttribute( 'Category', apps[k].Category );
 																				d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																				d.style.backgroundSize = 'contain';
 																				d.style.width = '24px';
 																				d.style.height = '24px';
+																				d.style.display = 'block';
 																				return d;
 																			}(), 
 																			 'child' : 
@@ -2122,7 +2676,7 @@ Sections.accounts_users = function( cmd, extra )
 																	'element' : function() 
 																	{
 																		var d = document.createElement( 'div' );
-																		d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
+																		d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis name';
 																		d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
 																		return d;
 																	}() 
@@ -2131,7 +2685,7 @@ Sections.accounts_users = function( cmd, extra )
 																	'element' : function() 
 																	{
 																		var d = document.createElement( 'div' );
-																		d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
+																		d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis category';
 																		d.innerHTML = '<span>' + apps[k].Category + '</span>';
 																		return d;
 																	}() 
@@ -2180,7 +2734,7 @@ Sections.accounts_users = function( cmd, extra )
 																								}
 																								else
 																								{
-																									console.log( { e:e, d:d, vars: vars } );
+																									if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
 																								}
 																					
 																							}, { _this: this, func: func } );
@@ -2208,7 +2762,7 @@ Sections.accounts_users = function( cmd, extra )
 																								}
 																								else
 																								{
-																									console.log( { e:e, d:d, vars: vars } );
+																									if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
 																								}
 																					
 																							}, { _this: this, func: func } );
@@ -2237,14 +2791,86 @@ Sections.accounts_users = function( cmd, extra )
 														}
 													}
 												}
-									
+												
+												// Sort default by Name ASC
+												this.sortapps( 'Name', 'ASC' );
+												
 											}
 									
 										}
 								
 									},
 									
-									sortapps : function ( sortby )
+									searchapps : function ( filter, server )
+									{
+										
+										if( ge( 'ApplicationInner' ) )
+										{
+											var list = ge( 'ApplicationInner' ).getElementsByTagName( 'div' );
+	
+											if( list.length > 0 )
+											{
+												for( var a = 0; a < list.length; a++ )
+												{
+													if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+				
+													var span = list[a].getElementsByTagName( 'span' )[0];
+				
+													if( span )
+													{
+														var param = [
+															( " " + span.getAttribute( 'name' ).toLowerCase() + " " ), 
+															( " " + span.getAttribute( 'category' ).toLowerCase() + " " )
+														];
+														
+														if( !filter || filter == ''  
+														|| span.getAttribute( 'name' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+														|| span.getAttribute( 'category' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+														)
+														{
+															list[a].style.display = '';
+						
+															var div = list[a].getElementsByTagName( 'div' );
+						
+															if( div.length )
+															{
+																for( var i in div )
+																{
+																	if( div[i] && div[i].className && ( div[i].className.indexOf( 'name' ) >= 0 || div[i].className.indexOf( 'category' ) >= 0 ) )
+																	{
+																		// TODO: Make text searched for ...
+																	}
+																}
+															}
+														}
+														else
+														{
+															list[a].style.display = 'none';
+														}
+													}
+												}
+			
+											}
+											
+											if( ge( 'ApplicationSearchCancelBtn' ) )
+											{
+												if( !filter && ( ge( 'ApplicationSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'ApplicationSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+												{
+													ge( 'ApplicationSearchCancelBtn' ).classList.remove( 'Open' );
+													ge( 'ApplicationSearchCancelBtn' ).classList.add( 'Closed' );
+												}
+												
+												else if( filter != '' && ( ge( 'ApplicationSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'ApplicationSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+												{
+													ge( 'ApplicationSearchCancelBtn' ).classList.remove( 'Closed' );
+													ge( 'ApplicationSearchCancelBtn' ).classList.add( 'Open' );
+												}
+											}
+										}
+										
+									},
+									
+									sortapps : function ( sortby, orderby )
 									{
 		
 										//
@@ -2253,8 +2879,8 @@ Sections.accounts_users = function( cmd, extra )
 		
 										if( _this )
 										{
-											var orderby = ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' );
-			
+											orderby = ( orderby ? orderby : ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' ) );
+											
 											var list = _this.getElementsByTagName( 'div' );
 			
 											if( list.length > 0 )
@@ -2269,7 +2895,7 @@ Sections.accounts_users = function( cmd, extra )
 					
 													var span = list[a].getElementsByTagName( 'span' )[0];
 					
-													if( span && span.getAttribute( sortby.toLowerCase() ) )
+													if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' )
 													{
 														var obj = { 
 															sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
@@ -2433,7 +3059,21 @@ Sections.accounts_users = function( cmd, extra )
 								
 											};
 										}
-						
+										
+										if( ge( 'AdminApplicationContainer' ) )
+										{
+											var inp = ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0];
+											inp.onkeyup = function( e )
+											{
+												init.searchapps( this.value );
+											}
+											ge( 'ApplicationSearchCancelBtn' ).onclick = function( e )
+											{
+												init.searchapps( false );
+												inp.value = '';
+											}
+										}
+										
 										// Show listed applications ... 
 										
 										init.list();
@@ -2460,6 +3100,19 @@ Sections.accounts_users = function( cmd, extra )
 									
 									head : function ( hidecol )
 									{
+										
+										if( ge( 'AdminDockContainer' ) )
+										{
+											var inp = ge( 'AdminDockContainer' ).getElementsByTagName( 'input' )[0];
+											inp.value = '';
+										
+											if( ge( 'DockSearchCancelBtn' ) && ge( 'DockSearchCancelBtn' ).classList.contains( 'Open' ) )
+											{
+												ge( 'DockSearchCancelBtn' ).classList.remove( 'Open' );
+												ge( 'DockSearchCancelBtn' ).classList.add( 'Closed' );
+											}
+										}
+										
 										var o = ge( 'DockGui' ); if( o ) o.innerHTML = '';
 								
 										this.func.updateids( 'dock' );
@@ -2476,28 +3129,38 @@ Sections.accounts_users = function( cmd, extra )
 												'child' : 
 												[ 
 													{ 
-														'element' : function() 
+														'element' : function( _this ) 
 														{
 															var d = document.createElement( 'div' );
 															d.className = 'PaddingSmall HContent40 FloatLeft';
 															d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+															d.ele = this;
+															d.onclick = function(  )
+															{
+																_this.sortdock( 'Name' );
+															};
 															return d;
-														}() 
+														}( this ) 
 													}, 
 													{ 
-														'element' : function() 
+														'element' : function( _this ) 
 														{
 															var d = document.createElement( 'div' );
 															d.className = 'PaddingSmall HContent25 FloatLeft Relative';
 															d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
+															d.ele = this;
+															d.onclick = function(  )
+															{
+																_this.sortdock( 'Category' );
+															};
 															return d;
-														}()
+														}( this )
 													},
 													{ 
 														'element' : function() 
 														{
 															var d = document.createElement( 'div' );
-															d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
+															d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
 															d.innerHTML = '<strong>' + i18n( 'i18n_order' ) + '</strong>';
 															return d;
 														}()
@@ -2506,7 +3169,7 @@ Sections.accounts_users = function( cmd, extra )
 														'element' : function() 
 														{
 															var d = document.createElement( 'div' );
-															d.className = 'PaddingSmall HContent15 FloatLeft Relative';
+															d.className = 'PaddingSmall HContent10 FloatLeft Relative';
 															return d;
 														}()
 													}
@@ -2586,18 +3249,21 @@ Sections.accounts_users = function( cmd, extra )
 																		{
 																			var d = document.createElement( 'div' );
 																			d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
-																			return d;;
+																			return d;
 																		}(),
 																		 'child' : 
 																		[ 
 																			{ 
 																				'element' : function() 
 																				{
-																					var d = document.createElement( 'div' );
+																					var d = document.createElement( 'span' );
+																					d.setAttribute( 'Name', apps[k].Name );
+																					d.setAttribute( 'Category', apps[k].Category );
 																					d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																					d.style.backgroundSize = 'contain';
 																					d.style.width = '24px';
 																					d.style.height = '24px';
+																					d.style.display = 'block';
 																					return d;
 																				}(), 
 																				 'child' : 
@@ -2624,7 +3290,7 @@ Sections.accounts_users = function( cmd, extra )
 																		'element' : function() 
 																		{
 																			var d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
+																			d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis name';
 																			d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
 																			return d;
 																		}() 
@@ -2633,7 +3299,7 @@ Sections.accounts_users = function( cmd, extra )
 																		'element' : function() 
 																		{
 																			var d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent25 FloatLeft Ellipsis';
+																			d.className = 'PaddingSmall HContent25 FloatLeft Ellipsis category';
 																			d.innerHTML = '<span>' + apps[k].Category + '</span>';
 																			return d;
 																		}() 
@@ -2642,7 +3308,7 @@ Sections.accounts_users = function( cmd, extra )
 																		'element' : function() 
 																		{
 																			var d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Ellipsis';
+																			d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Ellipsis';
 																			return d;
 																		}(),
 																		'child' : 
@@ -2719,7 +3385,7 @@ Sections.accounts_users = function( cmd, extra )
 																		'element' : function() 
 																		{
 																			var d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
+																			d.className = 'PaddingSmall HContent10 FloatLeft';
 																			return d;
 																
 																		}(),
@@ -2859,11 +3525,14 @@ Sections.accounts_users = function( cmd, extra )
 																			{ 
 																				'element' : function() 
 																				{
-																					var d = document.createElement( 'div' );
+																					var d = document.createElement( 'span' );
+																					d.setAttribute( 'Name', apps[k].Name );
+																					d.setAttribute( 'Category', apps[k].Category );
 																					d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																					d.style.backgroundSize = 'contain';
 																					d.style.width = '24px';
 																					d.style.height = '24px';
+																					d.style.display = 'block';
 																					return d;
 																				}(), 
 																				 'child' : 
@@ -2890,7 +3559,7 @@ Sections.accounts_users = function( cmd, extra )
 																		'element' : function() 
 																		{
 																			var d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
+																			d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis name';
 																			d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
 																			return d;
 																		}() 
@@ -2899,7 +3568,7 @@ Sections.accounts_users = function( cmd, extra )
 																		'element' : function() 
 																		{
 																			var d = document.createElement( 'div' );
-																			d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
+																			d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis category';
 																			d.innerHTML = '<span>' + apps[k].Category + '</span>';
 																			return d;
 																		}() 
@@ -2987,12 +3656,153 @@ Sections.accounts_users = function( cmd, extra )
 													}
 									
 												}
+												
+												// Sort default by Name ASC
+												this.sortdock( 'Name', 'ASC' );
+												
 											}
 									
 										}
 								
 									},
-							
+									
+									searchdock : function ( filter, server )
+									{
+										
+										if( ge( 'DockInner' ) )
+										{
+											var list = ge( 'DockInner' ).getElementsByTagName( 'div' );
+	
+											if( list.length > 0 )
+											{
+												for( var a = 0; a < list.length; a++ )
+												{
+													if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+				
+													var span = list[a].getElementsByTagName( 'span' )[0];
+				
+													if( span )
+													{
+														var param = [
+															( " " + span.getAttribute( 'name' ).toLowerCase() + " " ), 
+															( " " + span.getAttribute( 'category' ).toLowerCase() + " " )
+														];
+														
+														if( !filter || filter == ''  
+														|| span.getAttribute( 'name' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+														|| span.getAttribute( 'category' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+														)
+														{
+															list[a].style.display = '';
+						
+															var div = list[a].getElementsByTagName( 'div' );
+						
+															if( div.length )
+															{
+																for( var i in div )
+																{
+																	if( div[i] && div[i].className && ( div[i].className.indexOf( 'name' ) >= 0 || div[i].className.indexOf( 'category' ) >= 0 ) )
+																	{
+																		// TODO: Make text searched for ...
+																	}
+																}
+															}
+														}
+														else
+														{
+															list[a].style.display = 'none';
+														}
+													}
+												}
+			
+											}
+											
+											if( ge( 'DockSearchCancelBtn' ) )
+											{
+												if( !filter && ( ge( 'DockSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'DockSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+												{
+													ge( 'DockSearchCancelBtn' ).classList.remove( 'Open' );
+													ge( 'DockSearchCancelBtn' ).classList.add( 'Closed' );
+												}
+												
+												else if( filter != '' && ( ge( 'DockSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'DockSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+												{
+													ge( 'DockSearchCancelBtn' ).classList.remove( 'Closed' );
+													ge( 'DockSearchCancelBtn' ).classList.add( 'Open' );
+												}
+											}
+										}
+										
+									},
+									
+									sortdock : function ( sortby, orderby )
+									{
+		
+										//
+		
+										var _this = ge( 'DockInner' );
+		
+										if( _this )
+										{
+											orderby = ( orderby ? orderby : ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' ) );
+											
+											var list = _this.getElementsByTagName( 'div' );
+			
+											if( list.length > 0 )
+											{
+												var output = [];
+				
+												var callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
+				
+												for( var a = 0; a < list.length; a++ )
+												{
+													if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+					
+													var span = list[a].getElementsByTagName( 'span' )[0];
+					
+													if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' )
+													{
+														var obj = { 
+															sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
+															content : list[a]
+														};
+					
+														output.push( obj );
+													}
+												}
+				
+												if( output.length > 0 )
+												{
+													// Sort ASC default
+					
+													output.sort( callback );
+					
+													// Sort DESC
+					
+													if( orderby == 'DESC' ) 
+													{ 
+														output.reverse();  
+													}
+					
+													_this.innerHTML = '';
+					
+													_this.setAttribute( 'orderby', orderby );
+					
+													for( var key in output )
+													{
+														if( output[key] && output[key].content )
+														{
+															// Add row
+															_this.appendChild( output[key].content );
+														}
+													}
+												}
+											}
+										}
+		
+										//console.log( output );
+									},
+									
 									refresh : function (  )
 									{
 								
@@ -3270,7 +4080,21 @@ Sections.accounts_users = function( cmd, extra )
 										
 											};
 										}
-							
+										
+										if( ge( 'AdminDockContainer' ) )
+										{
+											var inp = ge( 'AdminDockContainer' ).getElementsByTagName( 'input' )[0];
+											inp.onkeyup = function( e )
+											{
+												init.searchdock( this.value );
+											}
+											ge( 'DockSearchCancelBtn' ).onclick = function( e )
+											{
+												init.searchdock( false );
+												inp.value = '';
+											}
+										}
+										
 										// Show listed dock ... 
 						
 										init.list();
@@ -3718,74 +4542,101 @@ Sections.accounts_users = function( cmd, extra )
 							{
 								// Check Permissions
 								
-								console.log( '// Check Permissions ', show );
+								if( ShowLog || 1==1 ) console.log( '// Check Permissions ', show );
 								
-								if( !show || show.indexOf( 'workgroup' ) >= 0 )
+								if( show )
 								{
-									if( Application.checkAppPermission( [ 
-										'PERM_WORKGROUP_READ_GLOBAL', 'PERM_WORKGROUP_READ_IN_WORKGROUP', 
-										'PERM_WORKGROUP_GLOBAL',      'PERM_WORKGROUP_WORKGROUP' 
-									] ) )
+									
+									if( /*!show || */show.indexOf( 'workgroup' ) >= 0 || show.indexOf( '*' ) >= 0 )
 									{
-										if( ge( 'AdminWorkgroupContainer' ) ) ge( 'AdminWorkgroupContainer' ).className = 'Open';
+										if( Application.checkAppPermission( [ 
+											'PERM_WORKGROUP_READ_GLOBAL', 'PERM_WORKGROUP_READ_IN_WORKGROUP', 
+											'PERM_WORKGROUP_GLOBAL',      'PERM_WORKGROUP_WORKGROUP' 
+										] ) )
+										{
+											if( ge( 'AdminWorkgroupContainer' ) ) ge( 'AdminWorkgroupContainer' ).className = 'Open';
+										}
+										else
+										{
+											console.log( '// No Permission = workgroup' );
+										}
 									}
-								}
 								
-								if( !show || show.indexOf( 'role' ) >= 0 )
-								{
-									if( Application.checkAppPermission( [ 
-										'PERM_ROLE_READ_GLOBAL', 'PERM_ROLE_READ_IN_WORKGROUP', 
-										'PERM_ROLE_GLOBAL',      'PERM_ROLE_WORKGROUP' 
-									] ) )
+									if( /*!show || */show.indexOf( 'role' ) >= 0 || show.indexOf( '*' ) >= 0 )
 									{
-										if( ge( 'AdminRoleContainer' ) ) ge( 'AdminRoleContainer' ).className = 'Open';
+										if( Application.checkAppPermission( [ 
+											'PERM_ROLE_READ_GLOBAL', 'PERM_ROLE_READ_IN_WORKGROUP', 
+											'PERM_ROLE_GLOBAL',      'PERM_ROLE_WORKGROUP' 
+										] ) )
+										{
+											if( ge( 'AdminRoleContainer' ) ) ge( 'AdminRoleContainer' ).className = 'Open';
+										}
+										else
+										{
+											console.log( '// No Permission = role' );
+										}
 									}
-								}
 								
-								if( !show || show.indexOf( 'storage' ) >= 0 )
-								{
-									if( Application.checkAppPermission( [ 
-										'PERM_STORAGE_READ_GLOBAL', 'PERM_STORAGE_READ_IN_WORKGROUP', 
-										'PERM_STORAGE_GLOBAL',      'PERM_STORAGE_WORKGROUP' 
-									] ) )
+									if( /*!show || */show.indexOf( 'storage' ) >= 0 || show.indexOf( '*' ) >= 0 )
 									{
-										if( ge( 'AdminStorageContainer' ) ) ge( 'AdminStorageContainer' ).className = 'Open';
+										if( Application.checkAppPermission( [ 
+											'PERM_STORAGE_READ_GLOBAL', 'PERM_STORAGE_READ_IN_WORKGROUP', 
+											'PERM_STORAGE_GLOBAL',      'PERM_STORAGE_WORKGROUP' 
+										] ) )
+										{
+											if( ge( 'AdminStorageContainer' ) ) ge( 'AdminStorageContainer' ).className = 'Open';
+										}
+										else
+										{
+											console.log( '// No Permission = storage' );
+										}
 									}
-								}
 								
-								if( !show || show.indexOf( 'application' ) >= 0 )
-								{
-									if( Application.checkAppPermission( [ 
-										'PERM_APPLICATION_READ_GLOBAL', 'PERM_APPLICATION_READ_IN_WORKGROUP', 
-										'PERM_APPLICATION_GLOBAL',      'PERM_APPLICATION_WORKGROUP' 
-									] ) )
+									if( /*!show || */show.indexOf( 'application' ) >= 0 || show.indexOf( '*' ) >= 0 )
 									{
-										// TODO: Implement Save support in a PHP module first ...
-										if( ge( 'AdminApplicationContainer' ) ) ge( 'AdminApplicationContainer' ).className = 'Open';
+										if( Application.checkAppPermission( [ 
+											'PERM_APPLICATION_READ_GLOBAL', 'PERM_APPLICATION_READ_IN_WORKGROUP', 
+											'PERM_APPLICATION_GLOBAL',      'PERM_APPLICATION_WORKGROUP' 
+										] ) )
+										{
+											if( ge( 'AdminApplicationContainer' ) ) ge( 'AdminApplicationContainer' ).className = 'Open';
+										}
+										else
+										{
+											console.log( '// No Permission = application' );
+										}
 									}
-								}
 								
-								if( !show || show.indexOf( 'dock' ) >= 0 )
-								{
-									if( Application.checkAppPermission( [ 
-										'PERM_APPLICATION_READ_GLOBAL', 'PERM_APPLICATION_READ_IN_WORKGROUP', 
-										'PERM_APPLICATION_GLOBAL',      'PERM_APPLICATION_WORKGROUP' 
-									] ) )
+									if( /*!show || */show.indexOf( 'dock' ) >= 0 || show.indexOf( '*' ) >= 0 )
 									{
-										// TODO: Implement Save support in a PHP module first ...
-										if( ge( 'AdminDockContainer' ) ) ge( 'AdminDockContainer' ).className = 'Open';
+										if( Application.checkAppPermission( [ 
+											'PERM_APPLICATION_READ_GLOBAL', 'PERM_APPLICATION_READ_IN_WORKGROUP', 
+											'PERM_APPLICATION_GLOBAL',      'PERM_APPLICATION_WORKGROUP' 
+										] ) )
+										{
+											if( ge( 'AdminDockContainer' ) ) ge( 'AdminDockContainer' ).className = 'Open';
+										}
+										else
+										{
+											console.log( '// No Permission = dock' );
+										}
 									}
-								}
 								
-								if( !show || show.indexOf( 'looknfeel' ) >= 0 )
-								{
-									if( Application.checkAppPermission( [ 
-										'PERM_LOOKNFEEL_READ_GLOBAL', 'PERM_LOOKNFEEL_READ_IN_WORKGROUP', 
-										'PERM_LOOKNFEEL_GLOBAL',      'PERM_LOOKNFEEL_WORKGROUP' 
-									] ) )
+									if( /*!show || */show.indexOf( 'looknfeel' ) >= 0 || show.indexOf( '*' ) >= 0 )
 									{
-										if( ge( 'AdminLooknfeelContainer' ) ) ge( 'AdminLooknfeelContainer' ).className = 'Open';
+										if( Application.checkAppPermission( [ 
+											'PERM_LOOKNFEEL_READ_GLOBAL', 'PERM_LOOKNFEEL_READ_IN_WORKGROUP', 
+											'PERM_LOOKNFEEL_GLOBAL',      'PERM_LOOKNFEEL_WORKGROUP' 
+										] ) )
+										{
+											if( ge( 'AdminLooknfeelContainer' ) ) ge( 'AdminLooknfeelContainer' ).className = 'Open';
+										}
+										else
+										{
+											console.log( '// No Permission = looknfeel' );
+										}
 									}
+									
 								}
 							}
 							
@@ -3942,6 +4793,7 @@ Sections.accounts_users = function( cmd, extra )
 			// Go through all data gathering until stop
 			var loadingSlot = 0;
 			var loadingInfo = {};
+			var loadingBoxs = [ 'workgroup', 'role', 'storage', 'dock', 'application', 'looknfeel' ];
 			var loadingList = [
 				
 				// 0 | Load userinfo
@@ -3973,11 +4825,13 @@ Sections.accounts_users = function( cmd, extra )
 						
 						userInfo.avatar = '/system.library/module/?module=system&command=getavatar&userid=' + userInfo.ID + ( userInfo.Image ? '&image=' + userInfo.Image : '' ) + '&width=256&height=256&authid=' + Application.authId;
 						
+						//userInfo.Workgroup = '';
+						
 						loadingInfo.userInfo = userInfo;
 						
-						console.log( '// 0 | Load userinfo' );
+						if( ShowLog ) console.log( '// 0 | Load userinfo' );
 						
-						initUsersDetails( loadingInfo, [  ], true );
+						initUsersDetails( loadingInfo, [ '*' ], true );
 						
 						// Go to next in line ...
 						loadingList[ ++loadingSlot ](  );
@@ -4002,10 +4856,10 @@ Sections.accounts_users = function( cmd, extra )
 							wgroups = null;
 						}
 						//console.log( 'workgroups ', { e:e, d:d } );
-						if( e != 'ok' ) wgroups = '404';
+						if( e != 'ok' ) wgroups = ''/*'404'*/;
 						loadingInfo.workgroups = wgroups;
 						
-						console.log( '// 3 | Get user\'s workgroups' );
+						if( ShowLog ) console.log( '// 3 | Get user\'s workgroups' );
 						
 						initUsersDetails( loadingInfo, [ 'workgroup' ] );
 					}
@@ -4036,9 +4890,9 @@ Sections.accounts_users = function( cmd, extra )
 							loadingInfo.roles = uroles;
 						}
 						//console.log( 'userroleget ', { e:e, d:uroles } );
-						if( e != 'ok' ) loadingInfo.roles = '404';
+						if( e != 'ok' ) loadingInfo.roles = ''/*'404'*/;
 						
-						console.log( '// 4 | Get user\'s roles' );
+						if( ShowLog ) console.log( '// 4 | Get user\'s roles' );
 						
 						initUsersDetails( loadingInfo, [ 'role' ] );
 					}
@@ -4099,12 +4953,35 @@ Sections.accounts_users = function( cmd, extra )
 							}*/
 							
 							
+							// TODO: Add call to volumeinfo for each disk in the list ...
 							
-							//console.log( '[2] mountlist ', { e:e, d:(rows?rows:d) } );
-							if( e != 'ok' ) rows = '404';
+							// make a sub queue for all these disks ...
+							
+							//if( rows )
+							//{
+								//for( var a in rows )
+								//{
+									
+									//if( rows[a].ID && rows[a].Name && rows[a].UserID )
+									//{
+										//getStorageInfo( rows[a].Name + ':', rows[a].UserID, function( res, dat )
+										//{
+											
+											//
+											
+											//console.log( 'getStorageInfo ', { res: res, dat: dat } );
+											
+										//} );
+									//}
+									
+								//}
+							//}
+							
+							//console.log( '[2] mountlist ', { e:e, d:(rows?rows:d), args: { userid: extra, authid: Application.authId } } );
+							if( e != 'ok' ) rows = ''/*'404'*/;
 							loadingInfo.mountlist = rows;
 							
-							console.log( '// 5 | Get storage' );
+							if( ShowLog ) console.log( '// 5 | Get storage' );
 							
 							initUsersDetails( loadingInfo, [ 'storage' ] );
 							
@@ -4185,7 +5062,7 @@ Sections.accounts_users = function( cmd, extra )
 						
 						loadingInfo.applications = dat;
 						
-						console.log( '// 6 | Get all applications' );
+						if( ShowLog ) console.log( '// 6 | Get all applications' );
 						
 						initUsersDetails( loadingInfo, [ 'application', 'looknfeel' ] );
 						
@@ -4216,7 +5093,7 @@ Sections.accounts_users = function( cmd, extra )
 						
 						loadingInfo.dock = dat;
 						
-						console.log( '// 7 | Get user dock' );
+						if( ShowLog ) console.log( '// 7 | Get user dock' );
 						
 						initUsersDetails( loadingInfo, [ 'dock' ] );
 						
@@ -4246,14 +5123,15 @@ Sections.accounts_users = function( cmd, extra )
 						if( e != 'ok' ) settings = '404';
 						loadingInfo.settings = settings;
 						
-						console.log( '// 8 | Load user settings' );
+						if( ShowLog ) console.log( '// 8 | Load user settings' );
 						
-						initUsersDetails( loadingInfo, [  ] );
+						initUsersDetails( loadingInfo, [ '*' ] );
 						
 						// Go to next in line ...
 						loadingList[ ++loadingSlot ](  );
 					}
 					u.execute( 'usersettings', { userid: extra, authid: Application.authId } );
+					
 				},
 				
 				// 9 | Get more user settings
@@ -4281,9 +5159,9 @@ Sections.accounts_users = function( cmd, extra )
 							if( e != 'ok' ) workspacesettings = '404';
 							loadingInfo.workspaceSettings = workspacesettings;
 							
-							console.log( '// 9 | Get more user setting' );
+							if( ShowLog ) console.log( '// 9 | Get more user setting' );
 							
-							initUsersDetails( loadingInfo, [  ]/*, true*/ );
+							initUsersDetails( loadingInfo, [ '*' ]/*, true*/ );
 						}
 						u.execute( 'getsetting', { settings: [ 
 							/*'avatar', */'workspacemode', 'wallpaperdoors', 'wallpaperwindows', 'language', 
@@ -4301,9 +5179,9 @@ Sections.accounts_users = function( cmd, extra )
 				// 7 | init
 				function(  )
 				{
-					console.log( '// 10 | init' );
+					if( ShowLog ) console.log( '// 10 | init' );
 					
-					initUsersDetails( loadingInfo, [ 'workgroup', 'role', 'storage', 'dock', /*'application', */'looknfeel' ] );
+					initUsersDetails( loadingInfo, [ 'workgroup', 'role', 'storage', 'dock', 'application', 'looknfeel' ] );
 				}
 				
 			];
@@ -4362,7 +5240,7 @@ Sections.accounts_users = function( cmd, extra )
 				
 				tr.innerHTML = '\
 					<div class="HContent20 FloatLeft">\
-						<h3><strong>' + i18n( 'i18n_users' ) + '</strong></h3>\
+						<h3><strong>' + i18n( 'i18n_users' ) + ' </strong><span id="AdminUsersCount">' + (userList&&userList['Count']?'('+userList['Count']+')':'(0)')+'</span></h3>\
 					</div>\
 					<div class="HContent70 FloatLeft Relative">\
 						' + extr + '\
@@ -4544,13 +5422,16 @@ Sections.accounts_users = function( cmd, extra )
 							{
 								bg1.onclick = function( e )
 								{
+									
 									if( ge( 'usUsername' ).value )
 									{
+										
 										saveUser( false, function( uid )
 										{
-							
+											
 											if( uid )
 											{
+												
 												// Refresh whole users list ...
 									
 												Sections.accounts_users(  );
@@ -4752,7 +5633,7 @@ Sections.accounts_users = function( cmd, extra )
 										wgroups = null;
 									}
 									
-									console.log( 'workgroups ', { e:e , d:(wgroups?wgroups:d), args: args } );
+									if( ShowLog ) console.log( 'workgroups ', { e:e , d:(wgroups?wgroups:d), args: args } );
 									
 									if( wgroups.groups )
 									{
@@ -4804,7 +5685,7 @@ Sections.accounts_users = function( cmd, extra )
 									
 									var workgroups = userInfo.Workgroup;
 									
-									console.log( 'userinfo ', { e:e, d:(userInfo?userInfo:d) } );
+									if( ShowLog ) console.log( 'userinfo ', { e:e, d:(userInfo?userInfo:d) } );
 									
 									if( userInfo && workgroups )
 									{
@@ -4825,7 +5706,7 @@ Sections.accounts_users = function( cmd, extra )
 						GetUserWorkgroups( function( workgroups )
 						{
 							
-							console.log( 'workgroups: ', workgroups );
+							if( ShowLog ) console.log( 'workgroups: ', workgroups );
 							
 							groups = {};
 						
@@ -4837,7 +5718,7 @@ Sections.accounts_users = function( cmd, extra )
 								
 								var wgroups = false;
 								
-								console.log( 'userlevel ', { adminlevel: adminlevel, userlevel: userlevel } );
+								if( ShowLog ) console.log( 'userlevel ', { adminlevel: adminlevel, userlevel: userlevel } );
 								
 								if( !adminlevel && userlevel )
 								{
@@ -4910,10 +5791,10 @@ Sections.accounts_users = function( cmd, extra )
 									var found = false;
 									
 									str += '<div>';
-								
+									
 									str += '<div class="HRow">\
 										<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
-											<span class="IconSmall NegativeAlt ' + ( groups[a].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;' + groups[a].Name + '</span>\
+											<span name="' + groups[a].Name + '" class="IconSmall NegativeAlt ' + ( groups[a].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;' + groups[a].Name + '</span>\
 										</div>\
 										<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
 											<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
@@ -4930,7 +5811,7 @@ Sections.accounts_users = function( cmd, extra )
 											
 											str += '<div class="HRow">\
 												<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
-													<span class="IconSmall NegativeAlt ' + ( groups[a].groups[aa].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>\
+													<span name="' + groups[a].groups[aa].Name + '" class="IconSmall NegativeAlt ' + ( groups[a].groups[aa].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>\
 												</div>\
 												<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
 													<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
@@ -4947,7 +5828,7 @@ Sections.accounts_users = function( cmd, extra )
 													
 													str += '<div class="HRow">\
 														<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
-															<span class="IconSmall NegativeAlt">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>\
+															<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconSmall NegativeAlt">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>\
 														</div>\
 														<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
 															<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
@@ -4975,11 +5856,82 @@ Sections.accounts_users = function( cmd, extra )
 								
 							}
 							
-							ge( 'WorkgroupGui' ).innerHTML = '<input type="hidden" id="usWorkgroups">' + str;
+							
+							
+							var o = ge( 'WorkgroupGui' ); if( o ) o.innerHTML = '';
+							
+							var divs = appendChild( [ 
+								{ 
+									'element' : function() 
+									{
+										var d = document.createElement( 'div' );
+										d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
+										return d;
+									}(),
+									'child' : 
+									[ 
+										{ 
+											'element' : function(  ) 
+											{
+												var d = document.createElement( 'div' );
+												d.className = 'PaddingSmall HContent40 FloatLeft';
+												d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+												d.ele = this;
+												d.onclick = function(  )
+												{
+													sortgroups( 'Name' );
+												};
+												return d;
+											}(  ) 
+										}, 
+										{ 
+											'element' : function( _this ) 
+											{
+												var d = document.createElement( 'div' );
+												d.className = 'PaddingSmall HContent45 FloatLeft Relative';
+												d.innerHTML = '<strong></strong>';
+												return d;
+											}( this )
+										},
+										{ 
+											'element' : function() 
+											{
+												var d = document.createElement( 'div' );
+												d.className = 'PaddingSmall HContent15 FloatLeft Relative';
+												return d;
+											}()
+										}
+									]
+								},
+								{
+									'element' : function() 
+									{
+										var d = document.createElement( 'div' );
+										d.className = 'HRow Box Padding';
+										d.id = 'WorkgroupInner';
+										return d;
+									}()
+								}
+							] );
+			
+							if( divs )
+							{
+								for( var i in divs )
+								{
+									if( divs[i] && o )
+									{
+										o.appendChild( divs[i] );
+									}
+								}
+							}
+							
+							
+							
+							ge( 'WorkgroupInner' ).innerHTML = '<input type="hidden" id="usWorkgroups">' + str;
 							
 							// Toggle arrow function, put into function that can be reused some time ...
 									
-							var workArr = ge( 'WorkgroupGui' ).getElementsByTagName( 'span' );
+							var workArr = ge( 'WorkgroupInner' ).getElementsByTagName( 'span' );
 							
 							if( workArr )
 							{
@@ -5053,7 +6005,7 @@ Sections.accounts_users = function( cmd, extra )
 								}
 							}
 							
-							var workBtns = ge( 'WorkgroupGui' ).getElementsByTagName( 'button' );
+							var workBtns = ge( 'WorkgroupInner' ).getElementsByTagName( 'button' );
 							
 							if( workBtns )
 							{
@@ -5145,6 +6097,174 @@ Sections.accounts_users = function( cmd, extra )
 											
 										}
 									} )( workBtns[ a ] );
+								}
+							}
+							
+							// Search ...............
+							
+							var searchgroups = function ( filter, server )
+							{
+								
+								if( ge( 'WorkgroupInner' ) )
+								{
+									var list = ge( 'WorkgroupInner' ).getElementsByTagName( 'div' );
+									
+									if( list.length > 0 )
+									{
+										for( var a = 0; a < list.length; a++ )
+										{
+											if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+											
+											var strong = list[a].getElementsByTagName( 'strong' )[0];
+											var span = list[a].getElementsByTagName( 'span' )[0];
+											
+											if( strong || span )
+											{
+												if( !filter || filter == '' 
+												|| strong && strong.innerHTML.toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+												|| span && span.innerHTML.toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+												)
+												{
+													list[a].style.display = '';
+													
+													if( list[a].parentNode.parentNode && list[a].parentNode.parentNode.parentNode && list[a].parentNode.parentNode.parentNode.className.indexOf( 'HRow' ) >= 0 )
+													{
+														if( list[a].parentNode.classList.contains( 'Closed' ) )
+														{
+															list[a].parentNode.classList.remove( 'Closed' );
+															list[a].parentNode.classList.add( 'Open' );
+														}
+														
+														list[a].parentNode.style.display = '';
+														list[a].parentNode.parentNode.style.display = '';
+													}
+												}
+												else if( list[a].parentNode && list[a].parentNode.className )
+												{
+													list[a].style.display = 'none';
+												}
+											}
+										}
+	
+									}
+									
+									if( ge( 'WorkgroupSearchCancelBtn' ) )
+									{
+										if( !filter && ( ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+										{
+											ge( 'WorkgroupSearchCancelBtn' ).classList.remove( 'Open' );
+											ge( 'WorkgroupSearchCancelBtn' ).classList.add( 'Closed' );
+											
+											if( list.length > 0 )
+											{
+												for( var a = 0; a < list.length; a++ )
+												{
+													if( list[a].classList.contains( 'Open' ) )
+													{
+														list[a].classList.remove( 'Open' );
+														list[a].classList.add( 'Closed' );
+													}
+												}
+											}
+										}
+										
+										else if( filter != '' && ( ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+										{
+											ge( 'WorkgroupSearchCancelBtn' ).classList.remove( 'Closed' );
+											ge( 'WorkgroupSearchCancelBtn' ).classList.add( 'Open' );
+										}
+									}
+								}
+								
+							};
+							
+
+							
+							// Sort .............
+							
+							var sortgroups = function ( sortby )
+							{
+								
+								//
+								
+								var _this = ge( 'WorkgroupInner' );
+								
+								if( _this )
+								{
+									var orderby = ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' );
+									
+									var list = _this.getElementsByTagName( 'div' );
+									
+									if( list.length > 0 )
+									{
+										var output = [];
+										
+										var callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
+										
+										for( var a = 0; a < list.length; a++ )
+										{
+											if( !list[a].className || ( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) ) continue;
+											
+											var span = list[a].getElementsByTagName( 'span' )[0];
+											
+											if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' && span.getAttribute( sortby.toLowerCase() ) )
+											{
+												if( !list[a].parentNode.className )
+												{
+													var obj = { 
+														sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
+														content : list[a].parentNode
+													};
+												
+													output.push( obj );
+												}
+											}
+										}
+										
+										if( output.length > 0 )
+										{
+											// Sort ASC default
+											
+											output.sort( callback );
+											
+											// Sort DESC
+											
+											if( orderby == 'DESC' ) 
+											{ 
+												output.reverse();  
+											}
+											
+											_this.innerHTML = '';
+											
+											_this.setAttribute( 'orderby', orderby );
+											
+											for( var key in output )
+											{
+												if( output[key] && output[key].content )
+												{
+													// Add row
+													_this.appendChild( output[key].content );
+												}
+											}
+										}
+									}
+								}
+								
+							};
+							
+							// .................
+							
+							if( ge( 'AdminWorkgroupContainer' ) )
+							{
+								var inp = ge( 'AdminWorkgroupContainer' ).getElementsByTagName( 'input' )[0];
+								inp.onkeyup = function( e )
+								{
+									searchgroups( this.value );
+								}
+								ge( 'WorkgroupSearchCancelBtn' ).onclick = function( e )
+								{
+									searchgroups( false );
+									inp.value = '';
 								}
 							}
 							
@@ -5392,6 +6512,13 @@ Sections.accounts_users = function( cmd, extra )
 			}
 		}
 		
+		//console.log( "userList['Count'] ", { count: userList['Count'], userlist: userList } );
+		
+		if( ge( 'AdminUsersCount' ) )
+		{
+			ge( 'AdminUsersCount' ).innerHTML = ( userList && userList['Count'] ? '(' + userList['Count'] + ')' : ( ge( 'AdminUsersCount' ).innerHTML ? ge( 'AdminUsersCount' ).innerHTML : '(0)' ) );
+		}
+		
 		if( output.length > 0 )
 		{
 			// Sort ASC default
@@ -5485,7 +6612,7 @@ Sections.accounts_users = function( cmd, extra )
 			}, ( users ? users.join(',') : false ) );
 			
 			
-			console.log( 'new users added to list: ' + i + '/' + tot + ' total ['+total+']' );
+			if( ShowLog ) console.log( 'new users added to list: ' + i + '/' + tot + ' total ['+total+']' );
 			
 			
 			
@@ -5552,6 +6679,63 @@ Sections.accounts_users = function( cmd, extra )
 		
 	}
 	
+	function getStorageInfo( path, id, args, callback )
+	{
+		// TODO: Had to move this function out of this section to get access to it outside in another function, look at this mess some other time ...
+	
+		// TODO: So we need to get server token as admin for this user and then use that as a sessionid ???
+	
+		if( path && id && callback )
+		{
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				var json = null;
+			
+				if( d )
+				{
+					try
+					{
+						var json = JSON.parse( d );
+					} 
+					catch( e ){ }
+				}
+			
+				if( e == 'ok' && d )
+				{
+					if( json )
+					{
+						if( ShowLog ) console.log( '[ok] volumeinfo ', { e:e, d:json, args: { path: path, userid: id, authid: Application.authId } } );
+					
+						return callback( true, json, args );
+					}
+				}
+			
+				// Show error message if there is any ...
+			
+				if( d )
+				{
+					//console.log( '[fail] volumeinfo ', { e:e, d:(json?json:d), args: { path: path, userid: id, authid: Application.authId } } );
+				
+					args.Errors = { text: '[fail] volumeinfo ', content: { e:e, d:(json?json:d), args: { path: path, userid: id, authid: Application.authId } } };
+				}
+				else
+				{
+					//console.log( '[fail] volumeinfo not support in DOSDriver ... ', { path: path, userid: id, authid: Application.authId } );
+				
+					args.Errors = { text: '[fail] volumeinfo not support in DOSDriver ... ', content: { path: path, userid: id, authid: Application.authId } };
+				}
+			
+				return callback( false, ( json ? json : false ), args );
+			}
+			m.execute( 'volumeinfo', { path: path, userid: id, authid: Application.authId } );
+		
+			return true;
+		}
+	
+		return false;
+	}
+	
 	function applications( callback, id )
 	{
 		
@@ -5570,7 +6754,7 @@ Sections.accounts_users = function( cmd, extra )
 					
 							if( json )
 							{
-								console.log( 'listuserapplications ', { e:e, d:json } );
+								if( ShowLog ) console.log( 'listuserapplications ', { e:e, d:json } );
 								
 								return callback( true, json );
 							}
@@ -5578,7 +6762,7 @@ Sections.accounts_users = function( cmd, extra )
 						catch( e ){ } 
 					}
 					
-					console.log( 'listuserapplications ', { e:e, d:d } );
+					if( ShowLog ) console.log( 'listuserapplications ', { e:e, d:d } );
 					
 					return callback( false, false );
 				}
@@ -5597,7 +6781,7 @@ Sections.accounts_users = function( cmd, extra )
 					
 							if( json )
 							{
-								console.log( 'software ', { e:e, d:json } );
+								if( ShowLog ) console.log( 'software ', { e:e, d:json } );
 								
 								return callback( true, json );
 							}
@@ -5605,7 +6789,7 @@ Sections.accounts_users = function( cmd, extra )
 						catch( e ){ } 
 					}
 					
-					console.log( 'software ', { e:e, d:d } );
+					if( ShowLog ) console.log( 'software ', { e:e, d:d } );
 					
 					return callback( false, false );
 				}
@@ -5624,7 +6808,7 @@ Sections.accounts_users = function( cmd, extra )
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( 'adduserapplication ', { e:e, d:d } );
+			if( ShowLog ) console.log( 'adduserapplication ', { e:e, d:d } );
 			
 			if( e == 'ok' )
 			{
@@ -5643,14 +6827,14 @@ Sections.accounts_users = function( cmd, extra )
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( 'removeApplication ', { e:e, d:d } );
+			if( ShowLog ) console.log( 'removeApplication ', { e:e, d:d } );
 			
 			if( e == 'ok' )
 			{
 				
 				removeDockItem( appName, userId, function( ee, dd )
 				{
-					console.log( 'removeDockItem ', { ee:ee, dd:dd } );
+					if( ShowLog ) console.log( 'removeDockItem ', { ee:ee, dd:dd } );
 					
 					if( callback ) callback( true, d, vars );
 					
@@ -5672,7 +6856,7 @@ Sections.accounts_users = function( cmd, extra )
 			var m = new Module( 'mitra' );
 			m.onExecuted = function( e, d )
 			{
-				console.log( 'mitraApps( callback, id ) ', { e:e, d:d } );
+				if( ShowLog ) console.log( 'mitraApps( callback, id ) ', { e:e, d:d } );
 				
 				if( callback ) return callback( { e:e, d:d } );
 			}
@@ -5720,13 +6904,13 @@ Sections.accounts_users = function( cmd, extra )
 			
 			if( e == 'ok' && data )
 			{
-				console.log( 'getDockItems ', { e:e, d:data } );
+				if( ShowLog ) console.log( 'getDockItems ', { e:e, d:data } );
 				
 				if( callback ) callback( true, data );
 			}
 			else
 			{
-				console.log( 'getDockItems ', { e:e, d:d } );
+				if( ShowLog ) console.log( 'getDockItems ', { e:e, d:d } );
 				
 				if( callback ) callback( false, false );
 			}
@@ -6543,7 +7727,7 @@ function getUserlist( callback, obj )
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
-		//console.log( { e:e, d:d } );
+		//console.log( { e:e, d:d, args: args } );
 		
 		var userList = null;
 		
@@ -6605,6 +7789,64 @@ function getLastLoginlist( callback, users )
 		m.execute( 'listusers', args );
 	}
 }
+
+function getStorageInfo( path, id, args, callback )
+{
+	// TODO: Had to move this function out of this section to get access to it outside in another function, look at this mess some other time ...
+	
+	// TODO: So we need to get server token as admin for this user and then use that as a sessionid ???
+	
+	if( path && id && callback )
+	{
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			var json = null;
+			
+			if( d )
+			{
+				try
+				{
+					var json = JSON.parse( d );
+				} 
+				catch( e ){ }
+			}
+			
+			if( e == 'ok' && d )
+			{
+				if( json )
+				{
+					if( ShowLog ) console.log( '[ok] volumeinfo ', { e:e, d:json, args: { path: path, userid: id, authid: Application.authId } } );
+					
+					return callback( true, json, args );
+				}
+			}
+			
+			// Show error message if there is any ...
+			
+			if( d )
+			{
+				//console.log( '[fail] volumeinfo ', { e:e, d:(json?json:d), args: { path: path, userid: id, authid: Application.authId } } );
+				
+				args.Errors = { text: '[fail] volumeinfo ', content: { e:e, d:(json?json:d), args: { path: path, userid: id, authid: Application.authId } } };
+			}
+			else
+			{
+				//console.log( '[fail] volumeinfo not support in DOSDriver ... ', { path: path, userid: id, authid: Application.authId } );
+				
+				args.Errors = { text: '[fail] volumeinfo not support in DOSDriver ... ', content: { path: path, userid: id, authid: Application.authId } };
+			}
+			
+			return callback( false, ( json ? json : false ), args );
+		}
+		m.execute( 'volumeinfo', { path: path, userid: id, authid: Application.authId } );
+		
+		return true;
+	}
+	
+	return false;
+}
+
 
 
 function SubMenu( _this, close )
@@ -6791,7 +8033,7 @@ function CheckUserlistSize( firstrun )
 					
 						UsersSettings( 'limit', true );
 						
-						console.log( '[2] GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) + ' (' + UsersSettings( 'intervals' ) + ')' ); 
+						if( ShowLog ) console.log( '[2] GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) + ' (' + UsersSettings( 'intervals' ) + ')' ); 
 					
 						getUserlist( function( res, data, key )
 						{
@@ -6854,7 +8096,7 @@ function CheckUserlistSize( firstrun )
 				{
 					//RequestQueue.Set( function() {
 						
-						console.log( '[1] GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) + ' (' + UsersSettings( 'intervals' ) + ')' ); 
+						if( ShowLog ) console.log( '[1] GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) + ' (' + UsersSettings( 'intervals' ) + ')' ); 
 						
 						Sections.accounts_users(); 
 						
@@ -6893,7 +8135,7 @@ function Init()
 		
 			UsersSettings( 'limit', true );
 			
-			console.log( '[3] GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) + ' (' + UsersSettings( 'intervals' ) + ')' ); 
+			if( ShowLog ) console.log( '[3] GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) + ' (' + UsersSettings( 'intervals' ) + ')' ); 
 			
 			getUserlist( function( res, data, key )
 			{
@@ -7327,7 +8569,7 @@ Sections.user_disk_save = function( userid, did )
 						ul = null;
 					}
 				
-					ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid );
+					ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid, Sections.user_volumeinfo_refresh( ul, userid ) );
 				
 					Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 				}
@@ -7372,13 +8614,15 @@ Sections.user_disk_cancel = function( userid )
 			ul = null;
 		}
 		
-		ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid );
+		//console.log( '[3] mountlist ', { e:e, d:(ul?ul:d), args: { userid: userid+"", authid: Application.authId } } );
+		
+		ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid, Sections.user_volumeinfo_refresh( ul, userid ) );
 		
 		//console.log( 'Application.sendMessage( { type: \'system\', command: \'refreshdoors\' } );' );
 		
 		Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 	}
-	u.execute( 'mountlist', { userid: userid, authid: Application.authId } );
+	u.execute( 'mountlist', { userid: userid+"", authid: Application.authId } );
 	
 };
 
@@ -7419,7 +8663,7 @@ Sections.user_disk_remove = function( devname, did, userid )
 									ul = null;
 								}
 							
-								ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid );
+								ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid, Sections.user_volumeinfo_refresh( ul, userid ) );
 							}
 							u.execute( 'mountlist', { userid: userid, authid: Application.authId } );
 						
@@ -7477,8 +8721,8 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 			{
 				//console.log( 'user_disk_update ', { e:e, d:d } );
 				
-				var storage = { id : '', name : '', type : '', size : 512, user : user };
-			
+				var storage = { id : '', name : '', type : '', csize : 500, cunit : 'MB', user : user };
+				
 				var units = [ 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB' ];
 		
 				if( e == 'ok' )
@@ -7507,44 +8751,52 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 						var size = ( js.Config.DiskSize ? js.Config.DiskSize : 0 );
 						var mode = ( size && size.length && size != 'undefined' ? size.match( /[a-z]+/i ) : [ '' ] );
 						size = parseInt( size );
+						
+						var csize = size;
+						var cunit = ( mode[0] ? mode[0] : 'MB' );
+						
 						var type = mode[0].toLowerCase();
 						if( type == 'kb' )
 						{
-							size = size * 1024;
+							size = size * 1000;
 						}
 						else if( type == 'mb' )
 						{
-							size = size * 1024 * 1024;
+							size = size * 1000 * 1000;
 						}
 						else if( type == 'gb' )
 						{
-							size = size * 1024 * 1024 * 1024;
+							size = size * 1000 * 1000 * 1000;
 						}
 						else if( type == 'tb' )
 						{
-							size = size * 1024 * 1024 * 1024 * 1024;
+							size = size * 1000 * 1000 * 1000 * 1000;
 						}
 						var used = parseInt( js.StoredBytes );
-						if( isNaN( size ) ) size = 512 * 1024; // < Normally the default size
+						if( isNaN( size ) ) size = 500 * 1000; // < Normally the default size
 						if( !used && !size ) used = 0, size = 0;
-						if( !size ) size = 536870912;
+						if( !size ) size = 500000000;
 						if( !used ) used = 0;
 						if( used > size || ( used && !size ) ) size = used;
-				
+						
+						csize = ( !csize ? 500 : csize );
+						
 						storage = {
-							id   : js.ID,
-							user : js.UserID,
-							name : js.Name,
-							type : js.Type,
-							size : size, 
-							used : used, 
-							free : ( size - used ), 
-							prog : ( ( used / size * 100 ) > 100 ? 100 : ( used / size * 100 ) ), 
-							icon : '/iconthemes/friendup15/DriveLabels/FriendDisk.svg',
-							mont : js.Mounted,
-							data : js
+							id    : js.ID,
+							user  : js.UserID,
+							name  : js.Name,
+							type  : js.Type,
+							csize : csize,
+							cunit : cunit,
+							size  : size, 
+							used  : used, 
+							free  : ( size - used ), 
+							prog  : ( ( used / size * 100 ) > 100 ? 100 : ( used / size * 100 ) ), 
+							icon  : '/iconthemes/friendup15/DriveLabels/FriendDisk.svg',
+							mont  : js.Mounted,
+							data  : js
 						};
-				
+						
 						if( Friend.dosDrivers[ storage.type ] && Friend.dosDrivers[ storage.type ].iconLabel )
 						{
 							storage.icon = 'data:image/svg+xml;base64,' + Friend.dosDrivers[ storage.type ].iconLabel;
@@ -7625,7 +8877,7 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 					str += '<strong>' + i18n( 'i18n_size' ) + ':</strong>';
 					str += '</div>';
 					str += '<div class="HContent35 FloatLeft Ellipsis PaddingRight">';
-					str += '<input type="text" class="FullWidth" id="DiskSizeA" value="' + FormatBytes( storage.size, 0, 0 ) + '" placeholder="512"/>';
+					str += '<input type="text" class="FullWidth" id="DiskSizeA" value="' + storage.csize + '" placeholder="512"/>';
 					str += '</div>';
 					str += '<div class="HContent35 FloatLeft Ellipsis PaddingLeft">';
 					str += '<select class="FullWidth" id="DiskSizeB">';
@@ -7634,7 +8886,7 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 					{
 						for( var a in units )
 						{
-							str += '<option' + ( storage.size && FormatBytes( storage.size, 0, 2 ) == units[a] ? ' selected="selected"' : '' ) + '>' + units[a] + '</option>';
+							str += '<option' + ( storage.csize && storage.cunit == units[a] ? ' selected="selected"' : '' ) + '>' + units[a] + '</option>';
 						}
 					}
 			
@@ -7703,7 +8955,7 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 	}
 };
 
-Sections.user_disk_refresh = function( mountlist, userid )
+Sections.user_disk_refresh = function( mountlist, userid, func )
 {
 	// Mountlist
 	var mlst = '';
@@ -7765,7 +9017,15 @@ Sections.user_disk_refresh = function( mountlist, userid )
 					if( rows[b].Type == 'SharedDrive' ) continue;
 					try
 					{
-						rows[b].Config = JSON.parse( rows[b].Config );
+						if( typeof rows[b].Config != "object" )
+						{
+							var conf = JSON.parse( rows[b].Config );
+						
+							if( conf )
+							{
+								rows[b].Config = conf;
+							}
+						}
 					}
 					catch( e )
 					{
@@ -7785,48 +9045,58 @@ Sections.user_disk_refresh = function( mountlist, userid )
 					//if( rows[b] && rows[b].Mounted < 0 ) continue;
 			
 					//console.log( rows[b] );
-			
+					
+					// TODO: Add support decimals ...
+					
 					// Calculate disk usage
 					var size = ( rows[b].Config.DiskSize ? rows[b].Config.DiskSize : 0 );
 					var mode = ( size && size.length && size != 'undefined' ? size.match( /[a-z]+/i ) : [ '' ] );
 					size = parseInt( size );
+					
+					var csize = size;
+					var cunit = ( mode[0] ? mode[0] : 'MB' );
+					
 					var type = mode[0].toLowerCase();
 					if( type == 'kb' )
 					{
-						size = size * 1024;
+						size = size * 1000;
 					}
 					else if( type == 'mb' )
 					{
-						size = size * 1024 * 1024;
+						size = size * 1000 * 1000;
 					}
 					else if( type == 'gb' )
 					{
-						size = size * 1024 * 1024 * 1024;
+						size = size * 1000 * 1000 * 1000;
 					}
 					else if( type == 'tb' )
 					{
-						size = size * 1024 * 1024 * 1024 * 1024;
+						size = size * 1000 * 1000 * 1000 * 1000;
 					}
 					var used = parseInt( rows[b].StoredBytes );
-					if( isNaN( size ) ) size = 512 * 1024; // < Normally the default size
+					if( isNaN( size ) ) size = 500 * 1000; // < Normally the default size
 					if( !used && !size ) used = 0, size = 0;
-					if( !size ) size = 536870912;
+					if( !size ) size = 500000000;
 					if( !used ) used = 0;
 					if( used > size || ( used && !size ) ) size = used;
-			
+					
+					csize = ( !csize ? 500 : csize );
+					
 					var storage = {
-						id   : rows[b].ID,
-						user : rows[b].UserID,
-						name : rows[b].Name,
-						type : rows[b].Type,
-						size : size, 
-						used : used, 
-						free : ( size - used ), 
-						prog : ( ( used / size * 100 ) > 100 ? 100 : ( used / size * 100 ) ), 
-						icon : '/iconthemes/friendup15/DriveLabels/FriendDisk.svg',
-						mont : rows[b].Mounted
+						id    : rows[b].ID,
+						user  : rows[b].UserID,
+						name  : rows[b].Name,
+						type  : rows[b].Type,
+						csize : csize,
+						cunit : cunit,
+						size  : size, 
+						used  : used, 
+						free  : ( size - used ), 
+						prog  : ( ( used / size * 100 ) > 100 ? 100 : ( used / size * 100 ) ), 
+						icon  : '/iconthemes/friendup15/DriveLabels/FriendDisk.svg',
+						mont  : rows[b].Mounted
 					};
-			
+					
 					if( Friend.dosDrivers[ storage.type ] && Friend.dosDrivers[ storage.type ].iconLabel )
 					{
 						storage.icon = 'data:image/svg+xml;base64,' + Friend.dosDrivers[ storage.type ].iconLabel;
@@ -7841,9 +9111,9 @@ Sections.user_disk_refresh = function( mountlist, userid )
 					}
 			
 					//console.log( storage );
-			
-					mlst += '<div class="HContent33 FloatLeft DiskContainer"' + ( storage.mont <= 0 ? ' style="opacity:0.6"' : '' ) + '>';
-			
+					
+					mlst += '<div id="StorageWrapper_' + storage.id + '" class="HContent33 FloatLeft DiskContainer"' + ( storage.mont <= 0 ? ' style="opacity:0.6"' : '' ) + '>';
+					
 					// If "SQLWorkgroupDrive" handle the edit in Workgroups ...
 					
 					if( !Application.checkAppPermission( [ 
@@ -7866,11 +9136,11 @@ Sections.user_disk_refresh = function( mountlist, userid )
 					mlst += '<div class="Col1 FloatLeft" id="Storage_' + storage.id + '">';
 					mlst += '<div class="disk"><div class="label" style="background-image: url(\'' + storage.icon + '\')"></div></div>';
 					mlst += '</div>';
-					mlst += '<div class="Col2 FloatLeft HContent100 Name Ellipsis">';
+					mlst += '<div class="Col2 FloatLeft HContent100 Name Ellipsis" id="StorageInfo_' + storage.id + '">';
 					mlst += '<div class="name Ellipsis" title="' + storage.name + '">' + storage.name + ':</div>';
 					mlst += '<div class="type Ellipsis" title="' + i18n( 'i18n_' + storage.type ) + '">' + i18n( 'i18n_' + storage.type ) + '</div>';
-					mlst += '<div class="rectangle"><div title="' + FormatBytes( storage.used, 0 ) + ' used" style="width:' + storage.prog + '%"></div></div>';
-					mlst += '<div class="bytes Ellipsis">' + FormatBytes( storage.free, 0 )  + ' free of ' + FormatBytes( storage.size, 0 ) + '</div>';
+					mlst += '<div class="rectangle" title="' + FormatBytes( storage.used, 0 ) + ' used"><div style="width:' + storage.prog + '%"></div></div>';
+					mlst += '<div class="bytes Ellipsis" title="'+ FormatBytes( storage.free, 0 )  + ' free of ' + FormatBytes( storage.size, 0 ) + '">' + FormatBytes( storage.free, 0 )  + ' free of ' + FormatBytes( storage.size, 0 ) + '</div>';
 					mlst += '</div>';
 					mlst += '</div>';
 					mlst += '</div>';
@@ -7878,6 +9148,14 @@ Sections.user_disk_refresh = function( mountlist, userid )
 			}
 		}
 		mlst += '</div>';
+		
+		// Run delayed function if defined ...
+		
+		if( func )
+		{
+			func();
+		}
+		
 	}
 	else
 	{
@@ -7886,6 +9164,80 @@ Sections.user_disk_refresh = function( mountlist, userid )
 	
 	return mlst;
 };
+
+Sections.user_volumeinfo_refresh = function( mountlist, userid )
+{
+	// Temporary complicated function until list of volumeinfo per user per disks can be combined without sessionid dependency, or mountlist can be used with out wrong StoredBytes data from db ...
+	
+	if( mountlist && userid )
+	{
+		for( var i in mountlist )
+		{
+			if( mountlist[i].ID && mountlist[i].Name && mountlist[i].UserID )
+			{
+				getStorageInfo( mountlist[i].Name + ':', mountlist[i].UserID, mountlist[i], function( res, dat, args )
+				{
+					
+					//
+					
+					// Update even if there is an error so we can see what is missing ServerToken etc other stuff in console ...
+					
+					if( ge( 'StorageInfo_' + args.ID ) && ge( 'StorageInfo_' + args.ID ).className.indexOf( 'Updated' ) < 0 )
+					{
+						
+						var size = 0;
+						var used = 0;
+						
+						try
+						{
+							if( dat )
+							{
+								size = ( dat.Filesize ? dat.Filesize : 0 );
+								used = ( dat.Used ? dat.Used : 0 );
+							}
+						}
+						catch( e ){  }
+						
+						
+						
+						var storage = {
+							id    : args.ID,
+							user  : args.UserID,
+							name  : args.Name,
+							type  : args.Type,
+							size  : size, 
+							used  : used, 
+							free  : ( size - used ), 
+							prog  : ( ( used / size * 100 ) > 100 ? 100 : ( !used && !size ? 0 : ( used / size * 100 ) ) )
+						};
+						
+						if( ShowLog ) console.log( storage );
+						
+						var mlst = '';
+						
+						mlst += '<div class="name Ellipsis" title="' + storage.name + '">' + storage.name + ':</div>';
+						mlst += '<div class="type Ellipsis" title="' + i18n( 'i18n_' + storage.type ) + '">' + i18n( 'i18n_' + storage.type ) + '</div>';
+						mlst += '<div class="rectangle" title="' + FormatBytes( storage.used, 0 ) + ' used"><div style="width:' + storage.prog + '%"></div></div>';
+						mlst += '<div class="bytes Ellipsis" title="'+ FormatBytes( storage.free, 0 )  + ' free of ' + FormatBytes( storage.size, 0 ) + '">' + FormatBytes( storage.free, 0 )  + ' free of ' + FormatBytes( storage.size, 0 ) + '</div>';
+						
+						//console.log( mlst );
+						
+						ge( 'StorageInfo_' + args.ID ).classList.add( 'Updated' );
+						
+						ge( 'StorageInfo_' + args.ID ).innerHTML = mlst;
+						
+						// Show errors if there is any ...
+						
+						if( args.Errors ) console.log( args.Errors.text, args.Errors.content );
+						
+					}
+					
+				} );
+			}
+		}	
+	}
+	
+}
 
 Sections.user_disk_mount = function( devname, userid, _this )
 {
@@ -7920,7 +9272,8 @@ Sections.user_disk_mount = function( devname, userid, _this )
 							ul = null;
 						}
 					
-						ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid );
+						ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid, Sections.user_volumeinfo_refresh( ul, userid ) );
+						
 					}
 					u.execute( 'mountlist', { userid: userid, authid: Application.authId } );
 				
@@ -7962,7 +9315,7 @@ Sections.user_disk_mount = function( devname, userid, _this )
 							ul = null;
 						}
 					
-						ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid );
+						ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid, Sections.user_volumeinfo_refresh( ul, userid ) );
 					}
 					u.execute( 'mountlist', { userid: userid, authid: Application.authId } );
 				
@@ -8367,6 +9720,8 @@ function addUser( callback, username )
 		
 	}
 	
+	if( ShowLog ) console.log( 'addUser( callback, username ) ', args );
+	
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
@@ -8377,7 +9732,7 @@ function addUser( callback, username )
 		}
 		catch( e ) {  }
 		
-		//console.log( 'addUser() ', { e:e, d:d, args: args } );
+		if( ShowLog ) console.log( 'addUser() ', { e:e, d:d, args: args } );
 		
 		if( e == 'ok' && d )
 		{
@@ -8480,8 +9835,12 @@ function saveUser( uid, cb, newuser )
 	// If there's no uid, it means that this is a new user - add it.
 	if( !uid )
 	{
+		if( ShowLog ) console.log( args );
+		
 		addUser( function( res, dat )
 		{
+			if( ShowLog ) console.log( 'addUser( function( res, dat ) ', { res: res, dat: dat } );
+			
 			if( res )
 			{
 				// The user was added, now save the rest of the information
@@ -8637,7 +9996,7 @@ function saveUser( uid, cb, newuser )
 						{
 							if( e != 'ok' )
 							{
-								console.log( 'Avatar saving failed.' );
+								if( ShowLog ) console.log( 'Avatar saving failed.' );
 						
 								if( callback ) callback( false );
 							}
@@ -8784,7 +10143,7 @@ function firstLogin( userid, callback )
 	}
 }
 
-function removeUser( id )
+function removeUser( id, callback )
 {
 	if( id )
 	{
@@ -8826,7 +10185,33 @@ function removeUser( id )
 			    	ge( 'UserListID_' + id ).parentNode.removeChild( ge( 'UserListID_' + id ) );
 			    }
 			    
-			    cancelUser(  );
+			    if( ge( 'AdminUsersCount' ) )
+				{
+					if( ge( 'AdminUsersCount' ).innerHTML )
+					{
+						var count = ge( 'AdminUsersCount' ).innerHTML.split( '(' ).join( '' ).split( ')' ).join( '' );
+						
+						if( count && count > 0 )
+						{
+							var result = ( count - 1 );
+							
+							if( result && result >= 0 )
+							{
+								ge( 'AdminUsersCount' ).innerHTML = '(' + result + ')';
+							}
+						}
+					}
+					
+				}
+			    
+			    if( callback )
+			    {
+			    	callback( true );
+			    }
+			    else
+			    { 
+			   		cancelUser(  );
+			    }
 			}
 			else
 			{

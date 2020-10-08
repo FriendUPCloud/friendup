@@ -48,9 +48,9 @@
 
 void SocketFree( Socket *sock );
 
-#define SOCKET_STATE_MAX_ACCEPTED_TIME_s 5 //socket has N seconds to send the first byte
-#define READ_TILL_END_BUFFER_SIZE 256000	//8192
-#define READ_TILL_END_SOCKET_TIMEOUT (10 *1000)
+#define SOCKET_STATE_MAX_ACCEPTED_TIME_s 15 //socket has N seconds to send the first byte
+#define READ_TILL_END_BUFFER_SIZE 4096	//8192
+#define READ_TILL_END_SOCKET_TIMEOUT (10000)
 #define READ_PACKAGE_BUFFER_SIZE 128000
 
 static int ssl_session_ctx_id = 1;
@@ -258,8 +258,6 @@ Socket* SocketNew( void *sb, FBOOL ssl, unsigned short port, int type )
 			sock->s_Interface = &(lsb->l_SocketISSL);
 
 			sock->s_BIO = BIO_new(BIO_s_mem());
-
-			//			SSL_library_init();
 
 			sock->s_Meth = SSLv23_client_method();
 			if( sock->s_Meth  == NULL )
@@ -597,47 +595,47 @@ int SocketConnectSSL( Socket* sock, const char *host )
 				FERROR( "[SocketConnectSSL] We experienced an error %d.\n", error );
 				switch( error )
 				{
-				case SSL_ERROR_NONE:
-				{
-					// NO error..
-					FERROR( "[SocketConnectSSL] No error\n" );
-					break;
-				}
-				case SSL_ERROR_ZERO_RETURN:
-				{
-					FERROR("[SocketConnectSSL] SSL_ACCEPT error: Socket closed.\n" );
-					break;
-				}
-				case SSL_ERROR_WANT_READ:
-				{
-					FERROR( "[SocketConnectSSL] Error want read, retrying\n" );
-					break;
-				}
-				case SSL_ERROR_WANT_WRITE:
-				{
-					FERROR( "[SocketConnectSSL] Error want write, retrying\n" );
-					break;
-				}
-				case SSL_ERROR_WANT_ACCEPT:
-				{
-					FERROR( "[SocketConnectSSL] Want accept\n" );
-					break;
-				}
-				case SSL_ERROR_WANT_X509_LOOKUP:
-				{
-					FERROR( "[SocketConnectSSL] Want 509 lookup\n" );
-					break;
-				}
-				case SSL_ERROR_SYSCALL:
-				{
-					FERROR( "[SocketConnectSSL] Error syscall!\n" );
-					return -2;
-				}
-				default:
-				{
-					FERROR( "[SocketConnectSSL] Other error.\n" );
-					return -3;
-				}
+					case SSL_ERROR_NONE:
+					{
+						// NO error..
+						FERROR( "[SocketConnectSSL] No error\n" );
+						break;
+					}
+					case SSL_ERROR_ZERO_RETURN:
+					{
+						FERROR("[SocketConnectSSL] SSL_ACCEPT error: Socket closed.\n" );
+						break;
+					}
+					case SSL_ERROR_WANT_READ:
+					{
+						FERROR( "[SocketConnectSSL] Error want read, retrying\n" );
+						break;
+					}
+					case SSL_ERROR_WANT_WRITE:
+					{
+						FERROR( "[SocketConnectSSL] Error want write, retrying\n" );
+						break;
+					}
+					case SSL_ERROR_WANT_ACCEPT:
+					{
+						FERROR( "[SocketConnectSSL] Want accept\n" );
+						break;
+					}
+					case SSL_ERROR_WANT_X509_LOOKUP:
+					{
+						FERROR( "[SocketConnectSSL] Want 509 lookup\n" );
+						break;
+					}
+					case SSL_ERROR_SYSCALL:
+					{
+						FERROR( "[SocketConnectSSL] Error syscall!\n" );
+						return -2;
+					}
+					default:
+					{
+						FERROR( "[SocketConnectSSL] Other error.\n" );
+						return -3;
+					}
 				}
 			}
 			return -1;
@@ -1520,7 +1518,7 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 					fds.fd = sock->fd;// STDIN_FILENO;
 					fds.events = POLLIN;
 
-					int err = poll( &fds, 1, 20);
+					int err = poll( &fds, 1, 50 );
 					if( err <= 0 )
 					{
 						DEBUG("[SocketReadSSL] Timeout or there is no data in socket\n");
@@ -1561,11 +1559,21 @@ int SocketReadSSL( Socket* sock, char* data, unsigned int length, unsigned int e
 						fds[1].fd = STDOUT_FILENO;
 						fds[1].events = POLLOUT;
 
-						int err = poll( fds, 1, sock->s_Timeouts * 1000);
+						int timeout = 0;
+						switch( read_retries )
+						{
+							case 0: break;
+							case 1: timeout = 50; break;
+							case 2: timeout = 150; break;
+							default: timeout = 250; break;
+						}
+
+						int err = poll( fds, 1, timeout );
 
 						if( err > 0 )
 						{
-							usleep( 500 ); // 50000
+							read_retries++;
+							usleep( 1 ); // 50000
 							FERROR("[SocketReadSSL] want write\n");
 							continue; // more data to read...
 						}
@@ -1644,7 +1652,7 @@ int SocketReadBlockedNOSSL( Socket* sock, char* data, unsigned int length, unsig
 	fds.fd = sock->fd;
 	fds.events = POLLIN;
 
-	int err = poll( &fds, 1, 5 * 1000);
+	int err = poll( &fds, 1, 10000 );
 	if( err <= 0 )
 	{
 		DEBUG("[SocketReadBlockedNOSSL] Timeout or there is no data in socket\n");
@@ -1674,13 +1682,14 @@ int SocketReadBlockedSSL( Socket* sock, char* data, unsigned int length, unsigne
 	fds.fd = sock->fd;// STDIN_FILENO;
 	fds.events = POLLIN;
 
-	// A timeout here on 50 seems to be a sweet spot - less may break connection
-	int err = poll( &fds, 1, 50 );	//200
+	int err = poll( &fds, 1, sock->s_SocketBlockTimeout > 0 ? sock->s_SocketBlockTimeout : 0 );
+	
 	if( err <= 0 )
 	{
 		DEBUG("[SocketReadBlockedSSL] Timeout or there is no data in socket\n");
 		return err;
 	}
+	
 	if( fds.revents & POLLIN )
 	{
 		DEBUG("[SocketReadBlockedSSL] Got data!!\n");
@@ -1730,7 +1739,7 @@ int SocketWaitReadNOSSL( Socket* sock, char* data, unsigned int length, unsigned
 	fds.fd = sock->fd;
 	fds.events = POLLIN;
 	
-	if( ( n = poll( &fds, 1, sec * 1000) ) == 0 )
+	if( ( n = poll( &fds, 1, READ_TILL_END_SOCKET_TIMEOUT ) ) == 0 )
 	{
 		FERROR("[SocketWaitReadNOSSL] Connection timeout\n");
 		SocketSetBlocking( sock, FALSE );
@@ -1812,7 +1821,7 @@ int SocketWaitReadSSL( Socket* sock, char* data, unsigned int length, unsigned i
 	fds.fd = sock->fd;
 	fds.events = POLLIN;
 
-	if( ( n = poll( &fds, 1, sec * 1000) ) == 0 )
+	if( ( n = poll( &fds, 1, READ_TILL_END_SOCKET_TIMEOUT ) ) == 0 )
 	{
 		FERROR("[SocketWaitReadSSL] Connection timeout\n");
 		SocketSetBlocking( sock, FALSE );
@@ -1875,7 +1884,7 @@ int SocketWaitReadSSL( Socket* sock, char* data, unsigned int length, unsigned i
 				lfds.fd = sock->fd;
 				lfds.events = POLLIN;
 
-				int err = poll( &lfds, 1, sock->s_Timeouts * 1000);
+				int err = poll( &lfds, 1, sock->s_Timeouts > 0 ? sock->s_Timeouts : READ_TILL_END_SOCKET_TIMEOUT );
 				if( err > 0 )
 				{
 					continue; // more data to read...
@@ -1902,7 +1911,7 @@ int SocketWaitReadSSL( Socket* sock, char* data, unsigned int length, unsigned i
 				lfds.fd = sock->fd;// STDIN_FILENO;
 				lfds.events = POLLIN;
 
-				int err = poll( &lfds, 1, sock->s_Timeouts * 1000);
+				int err = poll( &lfds, 1, sock->s_Timeouts > 0 ? sock->s_Timeouts : READ_TILL_END_SOCKET_TIMEOUT );
 				if( err > 0 )
 				{
 					continue; // more data to read...
@@ -1922,7 +1931,6 @@ int SocketWaitReadSSL( Socket* sock, char* data, unsigned int length, unsigned i
 			case SSL_ERROR_SYSCALL:
 				return read;
 			default:
-				//return read;
 				usleep( 0 );
 				if( retries++ > 500 )
 				{
@@ -2074,7 +2082,7 @@ BufString *SocketReadPackageSSL( Socket *sock )
 					lfds.fd = sock->fd;
 					lfds.events = POLLIN;
 
-					int err = poll( &lfds, 1, sock->s_Timeouts * 1000);
+					int err = poll( &lfds, 1, sock->s_Timeouts > 0 ? sock->s_Timeouts : READ_TILL_END_SOCKET_TIMEOUT );
 					if( err > 0 )
 					{
 						FFree( locbuffer );
@@ -2103,7 +2111,7 @@ BufString *SocketReadPackageSSL( Socket *sock )
 					lfds.fd = sock->fd;// STDIN_FILENO;
 					lfds.events = POLLIN;
 
-					int err = poll( &lfds, 1, sock->s_Timeouts * 1000);
+					int err = poll( &lfds, 1, sock->s_Timeouts > 0 ? sock->s_Timeouts : READ_TILL_END_SOCKET_TIMEOUT );
 					if( err > 0 )
 					{
 						FFree( locbuffer );
@@ -2190,7 +2198,7 @@ BufString *SocketReadTillEndNOSSL( Socket* sock, unsigned int pass __attribute__
 
 		while( quit != TRUE )
 		{
-			int ret = poll( fds, 1, 10 * 1000);
+			int ret = poll( fds, 1, 50 );
 		
 			DEBUG("[SocketReadTillEndNOSSL] Before select, ret: %d\n", ret );
 			if( ret == 0 )
@@ -2433,8 +2441,12 @@ FLONG SocketWriteNOSSL( Socket* sock, char* data, FLONG length )
 			// Error, temporarily unavailable..
 			if( errno == 11 )
 			{
+				retries++;
 				usleep( 400 ); // Perhaps allow full throttle?
-				if( ++retries > 10 ) usleep( 20000 );
+				if( retries > 10 ) 
+					usleep( 20000 );
+				else if( retries > 250 )
+					break;
 				continue;
 			}
 			FERROR( "[SocketWriteNOSSL] Failed to write: %d, %s\n", errno, strerror( errno ) );
@@ -2491,21 +2503,25 @@ FLONG SocketWriteSSL( Socket* sock, char* data, FLONG length )
 
 			switch( err )
 			{
-			// The operation did not complete. Call again.
-			case SSL_ERROR_WANT_WRITE:
-			{
-				break;
-			}
-			case SSL_ERROR_SSL:
-				FERROR("[SocketWriteSSL] Cannot write. Error %d stringerr: %s wanted to sent: %ld fullsize: %ld\n", err, strerror( err ), bsize, length );
-				if( counter++ > 3 )
+				// The operation did not complete. Call again.
+				case SSL_ERROR_WANT_WRITE:
 				{
+					break;
+				}
+				case SSL_ERROR_SSL:
+				{
+					FERROR("[SocketWriteSSL] Cannot write. Error %d stringerr: %s wanted to sent: %ld fullsize: %ld\n", err, strerror( err ), bsize, length );
+					if( counter++ > 3 )
+					{
+						return 0;
+					}
+					break;
+				}
+				default:
+				{
+					FERROR("[SocketWriteSSL] Cannot write. Error %d stringerr: %s wanted to sent: %ld fullsize: %ld\n", err, strerror( err ), bsize, length );
 					return 0;
 				}
-				break;
-			default:
-				FERROR("[SocketWriteSSL] Cannot write. Error %d stringerr: %s wanted to sent: %ld fullsize: %ld\n", err, strerror( err ), bsize, length );
-				return 0;
 			}
 		}
 		else
@@ -2550,12 +2566,11 @@ void SocketDeleteNOSSL( Socket* sock )
 		fcntl( sock->fd, F_SETFD, FD_CLOEXEC );
 		
 		int optval;
-		socklen_t optlen = sizeof(optval);
+		socklen_t optlen = sizeof( optval );
 		optval = 0;
 		optlen = sizeof(optval);
-		if( setsockopt(sock->fd, SOL_SOCKET, SO_KEEPALIVE, &optval, optlen) < 0 ) 
-		{
-		}
+		
+		setsockopt( sock->fd, SOL_SOCKET, SO_KEEPALIVE, &optval, optlen );
 		
 		int e = 0;
 		shutdown( sock->fd, SHUT_RDWR );
@@ -2606,38 +2621,42 @@ void SocketDeleteSSL( Socket* sock )
 			default:
 				switch( ( ssl_r = SSL_get_error( sock->s_Ssl, ret) ) )
 				{
-				case SSL_ERROR_ZERO_RETURN:
-					break;
-				case SSL_ERROR_WANT_WRITE:
-				case SSL_ERROR_WANT_READ:
-					break;
-				case SSL_ERROR_SYSCALL:
-					if( 0 != (err = ERR_get_error() ) )
-					{
-						do
+					case SSL_ERROR_ZERO_RETURN:
+						break;
+					case SSL_ERROR_WANT_WRITE:
+					case SSL_ERROR_WANT_READ:
+						break;
+					case SSL_ERROR_SYSCALL:
+						if( 0 != (err = ERR_get_error() ) )
 						{
-							FERROR( "[SocketDeleteSSL] SSL_ERROR_SYSCALL err: %d error message: %s\n", err, ERR_error_string(err, NULL) );
-						}while( ( err = ERR_get_error() ) );
-					}
-					else if( errno != 0 )
-					{
-						switch( errno )
-						{
-						case EPIPE:
-						case ECONNRESET:
-							break;
-						default:
-							FERROR( "[SocketDeleteSSL] SSL_ERROR_SYSCALL errno != 0 err: %d error message: %s\n", err, ERR_error_string(err, NULL) );
+							// TODO: Why have this?
+							/*do
+							{
+								FERROR( "[SocketDeleteSSL] SSL_ERROR_SYSCALL err: %d error message: %s\n", err, ERR_error_string(err, NULL) );
+							}
+							while( ( err = ERR_get_error() ) );*/
 							break;
 						}
-					}
-					break;
-				default:
-					while( ( err = ERR_get_error() ) )
-					{
-						FERROR( "[SocketDeleteSSL] default err: %d error message: %s\n", err, ERR_error_string(err, NULL) );
-					}
-					break;
+						else if( errno != 0 )
+						{
+							switch( errno )
+							{
+								case EPIPE:
+								case ECONNRESET:
+									break;
+								default:
+									FERROR( "[SocketDeleteSSL] SSL_ERROR_SYSCALL errno != 0 err: %d error message: %s\n", err, ERR_error_string(err, NULL) );
+									break;
+							}
+						}
+						break;
+					default:
+						// TODO: Why do we have this?
+						/*while( ( err = ERR_get_error() ) )
+						{
+							FERROR( "[SocketDeleteSSL] default err: %d error message: %s\n", err, ERR_error_string(err, NULL) );
+						}*/
+						break;
 				}
 		}
 		
@@ -2663,12 +2682,10 @@ void SocketDeleteSSL( Socket* sock )
 		fcntl( sock->fd, F_SETFD, FD_CLOEXEC );
 		
 		int optval;
-		socklen_t optlen = sizeof(optval);
+		socklen_t optlen = sizeof( optval );
 		optval = 0;
-		optlen = sizeof(optval);
-		if( setsockopt(sock->fd, SOL_SOCKET, SO_KEEPALIVE, &optval, optlen) < 0 ) 
-		{
-		}
+		optlen = sizeof( optval );
+		setsockopt( sock->fd, SOL_SOCKET, SO_KEEPALIVE, &optval, optlen );
 		
 		int e = 0;
 		shutdown( sock->fd, SHUT_RDWR );
@@ -2679,3 +2696,4 @@ void SocketDeleteSSL( Socket* sock )
 	}
 	FFree( sock );
 }
+

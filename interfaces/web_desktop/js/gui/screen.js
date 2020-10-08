@@ -192,6 +192,7 @@ Screen = function ( flags, initObject )
 				for( var a in movableWindows )
 				{
 					var w = movableWindows[ a ].windowObject;
+					
 					if( w.flags.maximized || w.flags.width == 'max' || ( movableWindows[ a ].zoom && movableWindows[ a ].zoom.mode == 'maximized' ) )
 					{
 						var v = w._window.parentNode;
@@ -199,7 +200,7 @@ Screen = function ( flags, initObject )
 						v.style.width = self.getMaxViewWidth() + 'px';
 						v.style.height = self.getMaxViewHeight() + 'px';
 						w.setFlag( 'top', 0 );
-						w.setFlag( 'left', w.workspace * self.getMaxViewWidth() );
+						w.setFlag( 'left', 0 );
 					}
 				}
 				

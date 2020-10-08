@@ -171,6 +171,7 @@ typedef struct User
 	FLONG						u_MaxBytesReadPerDevice;		// maximum bytes read per device
 	
 	char						*u_UUID;						// unique ID
+	int							u_InUse;						// usage counter
 } User;
 
 //

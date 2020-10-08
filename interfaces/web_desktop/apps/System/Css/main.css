@@ -144,19 +144,19 @@
 	display: block;
 }
 
-#Admin #GuiContent #UserList .HRow.Disabled
+#Admin #GuiContent .HRow.Disabled
 {
 	/* Concrete Grey */
 	color: #95A5A6;
 }
 
-#Admin #GuiContent #UserList .HRow.Locked
+#Admin #GuiContent .HRow.Locked
 {
 	/* Pomegranate Red */
 	color: #C0392B;
 }
 
-#Admin #GuiContent #UserList .HRow span
+#Admin #GuiContent .HRow span
 {
 	/*border-radius: 100%;*/
 }
