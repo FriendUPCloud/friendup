@@ -2504,6 +2504,13 @@ function checkMobileBrowser()
 		window.isMobile = true;
 	}
 	
+	// Special for Friend Sky
+	if( window.friendApp )
+	{
+		window.isMobile = true;
+		window.isTablet = false;
+	}
+	
 	window.isTouch = !!('ontouchstart' in window);
 	if( window.isMobile )
 	{
