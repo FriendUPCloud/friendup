@@ -418,37 +418,42 @@ Sections.applications_liberator = function( cmd, extra )
 			ssh.onExecuted = function( e, d )
 			{
 				
-				try
+				if( e == 'ok' )
 				{
-					data = JSON.parse( d );
-				
-					if( data )
+					try
 					{
-						var out = [];
-						
-						for( var i in data )
+						data = JSON.parse( d );
+				
+						if( data )
 						{
-							if( data[i] && data[i][1] )
+							var out = [];
+						
+							for( var i in data )
 							{
-								out.push( {
-									'Alias'    : ( data[i][1]['col'] == 'Alias'       ? data[i][1]['val'] : '' ),
-									'Name'     : ( data[i][2]['col'] == 'DisplayName' ? data[i][2]['val'] : '' ),
-									'Path'     : ( data[i][3]['col'] == 'FilePath'    ? data[i][3]['val'] : '' ),
-									'Category' : 'Office'
-								} );
+								if( data[i] && data[i][1] )
+								{
+									out.push( {
+										'Alias'    : ( data[i][1]['col'] == 'Alias'       ? data[i][1]['val'] : '' ),
+										'Name'     : ( data[i][2]['col'] == 'DisplayName' ? data[i][2]['val'] : '' ),
+										'Path'     : ( data[i][3]['col'] == 'FilePath'    ? data[i][3]['val'] : '' ),
+										'Category' : 'Office'
+									} );
+								}
 							}
+						
+							console.log( 'ssh_test: ', { e:e, d:out } );
+						
+							return callback( true, out );
+						
 						}
-						
-						console.log( 'ssh_test: ', { e:e, d:out } );
-						
-						return callback( true, out );
-						
+					} 
+					catch( e )
+					{ 
+						//console.log( 'ssh_test: ', { e:e, d:d } );
 					}
-				} 
-				catch( e )
-				{ 
-					console.log( 'ssh_test: ', { e:e, d:d } );
 				}
+				
+				console.log( 'ssh_test: ', { e:e, d:d } );
 				
 				return callback( false, false );
 				
