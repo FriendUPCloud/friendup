@@ -10,9 +10,20 @@
 *                                                                              *
 *****************************************************************************©*/
 
-global $SqlDatabase, $User, $args;
+global $SqlDatabase, $User, $Config, $args;
 
 include_once( 'php/friend.php' );
+
+$wname = $Config->FCUpload;
+if( substr( $wname, -1, 1 ) != '/' ) $wname .= '/';
+if( !file_exists( $wname . 'apps' ) )
+{
+	mkdir( $wname . 'apps' );
+}
+if( !file_exists( $wname . 'apps/friendrds' ) )
+{
+	mkdir( $wname . 'apps/friendrds' );
+}
 
 if( $args->command )
 {
@@ -154,7 +165,57 @@ if( $args->command )
 			die( 'fail<!--separate-->' );
 			
 			break;
+		
+		//module=friendrds&command=getappicon&app=paint
+		
+		case 'getappicon':
 			
+			if( $args->appid && $args->appname )
+			{
+				function _file_output( $filepath )
+				{
+					if( $filepath )
+					{
+						ob_clean();
+		
+						FriendHeader( 'Content-Type: image/png' );
+		
+						FriendHeader( 'Expires: ' . gmdate( 'D, d M Y H:i:s \G\M\T', time() + 86400 ) );
+		
+						// Generate some useful time vars based on file date
+						$last_modified_time = filemtime( $filepath ); 
+						$etag = md5_file( $filepath );
+		
+						// Always send headers
+						FriendHeader( 'Last-Modified: ' . gmdate( 'D, d M Y H:i:s', $last_modified_time ) . ' GMT' ); 
+						FriendHeader( 'Etag: ' . $etag ); 
+		
+						// TODO: Fix this so it works in FriendCore ... only works in apache, nginx, etc ...
+		
+						// Exit if not modified
+						if ( ( @strtotime( $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) == $last_modified_time ) ||  ( @trim( $_SERVER['HTTP_IF_NONE_MATCH'] ) == $etag ) )
+						{
+							FriendHeader( 'HTTP/1.1 304 Not Modified' ); 
+							die();
+						}
+						//die( print_r( $_SERVER,1 ) . ' .. ' . $last_modified_time . ' || ' . $etag );
+						die( file_get_contents( $filepath ) );
+					}
+				}
+				
+				$folderpath = ( $wname . 'apps/friendrds/' );
+				
+				if( file_exists( $folderpath . ( $args->appid . '_' . strtolower( $args->appname ) ) . '.png' ) )
+				{
+					_file_output( $folderpath . ( $args->appid . '_' . strtolower( $args->appname ) ) . '.png' );
+				}
+				
+			}
+			
+			die(  );
+			
+			break;
+		
 		case 'ssh_test':
 			
 			// TODO: Add dependencies ... php-ssh2 libssh2-php --- and maybe more? confirm on new setup ...
@@ -207,7 +268,7 @@ if( $args->command )
 				
 				//$remote_dir = "C:\Windows\RemotePackages\CPubFarms\QuickSessionCollection\CPubRemoteApps";
 				$remote_dir = "/C:/Windows/RemotePackages/CPubFarms/QuickSessionCollection/CPubRemoteApps/";
-				$local_dir  = "/home/acezerox/Projects/friendup/build/storage/";
+				//$local_dir  = "/home/acezerox/Projects/friendup/build/storage/";
 				
 				$icons = [];
 				
@@ -224,7 +285,7 @@ if( $args->command )
 					}
 				}
 				
-				$data = [];
+				$imgs = [];
 				
 				if( $icons )
 				{
@@ -232,31 +293,39 @@ if( $args->command )
 					
 					foreach( $icons as $i )
 					{
-						$ico = new Ico( "ssh2.sftp://$sftp$remote_dir$i" );
-						$ico->SetBackgroundTransparent();
-						$img = $ico->GetIcon( 11 );
+						$file_name = str_replace( '.ico', '', $i );
 						
-						$file_name = str_replace( '.ico', '.png', $i );
+						$hash = hash( 'sha256', 'rdp://185.116.5.93:3389/1/' . strtolower( $file_name ) );
 						
-						// Save
-						imagepng( $img, $local_dir . $file_name, 9 );
+						// Fix filename
+						$fname = ( $hash . '_' . strtolower( $file_name ) ) . '.png';
 						
 						$obj = new stdClass();
 						$obj->name = $i;
+						$obj->icon = ( '/system.library/module/?module=liberator&command=getappicon&appname=' . strtolower( $file_name ) . '&appid=' . $hash );
 						$obj->data = [];
-						for( $ii = 1; $ii < $ico->TotalIcons(); $ii++ )
+						
+						if( !file_exists( $wname . 'apps/friendrds/' . $fname ) )
 						{
-							$obj->data[$ii] = ( $ico->formats[$ii]['Width'] . 'x' . $ico->formats[$ii]['Height'] );
+							$ico = new Ico( "ssh2.sftp://$sftp$remote_dir$i" );
+							$ico->SetBackgroundTransparent();
+							$source = $ico->GetIcon( 11 );
+							
+							// Save
+							imagepng( $source, $wname . 'apps/friendrds/' . $fname, 9 );
+							
+							for( $ii = 1; $ii < $ico->TotalIcons(); $ii++ )
+							{
+								$obj->data[$ii] = ( $ico->formats[$ii]['Width'] . 'x' . $ico->formats[$ii]['Height'] );
+							}
 						}
 						
-						$data[] = $obj;
-						
-						//die( 'fail<!--separate-->' . print_r( $data,1 ) );
-						//die( 'fail<!--separate-->' . print_r( getimagesize ( "ssh2.sftp://$sftp$remote_dir$i" ), 1 ) . ' -- ' ); 
+						$imgs[$file_name] = $obj;
+						 
 					}
 				}
 				
-				//die( 'fail<!--separate-->' . json_encode( $data ) );
+				//die( 'fail<!--separate-->' . json_encode( $imgs ) );
 				
 				/*$stream = ssh2_exec( $connection, "dir /b $remote_dir*.ico" ); 
 				stream_set_blocking( $stream, true ); 
@@ -381,6 +450,11 @@ if( $args->command )
 											$obj->len = $ii->len;
 											$obj->col = $ii->col;
 											$obj->val = trim( substr( $i, $ii->pos, $ii->len ) );
+											
+											if( isset( $imgs[$obj->val]->icon ) )
+											{
+												$obj->icon = $imgs[$obj->val]->icon;
+											}
 											
 											$vars[] = $obj;
 										}

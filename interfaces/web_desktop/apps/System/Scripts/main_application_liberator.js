@@ -426,16 +426,19 @@ Sections.applications_liberator = function( cmd, extra )
 				
 						if( data )
 						{
+							console.log( data );
+							
 							var out = [];
-						
+							
 							for( var i in data )
 							{
 								if( data[i] && data[i][1] )
 								{
 									out.push( {
-										'Alias'    : ( data[i][1]['col'] == 'Alias'       ? data[i][1]['val'] : '' ),
-										'Name'     : ( data[i][2]['col'] == 'DisplayName' ? data[i][2]['val'] : '' ),
-										'Path'     : ( data[i][3]['col'] == 'FilePath'    ? data[i][3]['val'] : '' ),
+										'Alias'    : ( data[i][1]['col'] == 'Alias'       ? data[i][1]['val']                                : '' ),
+										'Name'     : ( data[i][2]['col'] == 'DisplayName' ? data[i][2]['val']                                : '' ),
+										'Path'     : ( data[i][3]['col'] == 'FilePath'    ? data[i][3]['val']                                : '' ),
+										'Preview'  : ( data[i][1]['icon']                 ? data[i][1]['icon']+'&authid='+Application.authId : '' ),
 										'Category' : 'Office'
 									} );
 								}
