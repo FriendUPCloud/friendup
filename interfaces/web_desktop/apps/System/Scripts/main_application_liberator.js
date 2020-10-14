@@ -316,11 +316,12 @@ Sections.applications_liberator = function( cmd, extra )
 									console.log( json[i].Config );
 									
 									out.push( {
-										'ID'       : json[i].ID,
-										'Alias'    : json[i].Name,
-										'Name'     : json[i].Config.Name,
-										'Path'     : json[i].Config.Path,
-										'Category' : json[i].Config.Category
+										'ID'       : ( json[i].ID                                                           ),
+										'Alias'    : ( json[i].Name                                                         ),
+										'Name'     : ( json[i].Config.Name                                                  ),
+										'Path'     : ( json[i].Config.Path                                                  ),
+										'Preview'  : ( json[i].Preview ? json[i].Preview+'&authid='+Application.authId : '' ),
+										'Category' : ( json[i].Config.Category                                              )
 									} );
 								}
 								
@@ -435,6 +436,7 @@ Sections.applications_liberator = function( cmd, extra )
 								if( data[i] && data[i][1] )
 								{
 									out.push( {
+										'ID'       : 99999,
 										'Alias'    : ( data[i][1]['col'] == 'Alias'       ? data[i][1]['val']                                : '' ),
 										'Name'     : ( data[i][2]['col'] == 'DisplayName' ? data[i][2]['val']                                : '' ),
 										'Path'     : ( data[i][3]['col'] == 'FilePath'    ? data[i][3]['val']                                : '' ),
@@ -3035,6 +3037,58 @@ Sections.applications_liberator = function( cmd, extra )
 								str +='</div>';
 								
 								o.innerHTML = str;
+								
+								if( app && app.Preview )
+								{
+									// Only update the avatar if it exists..
+									var avSrc = new Image();
+									avSrc.src = app.Preview;
+									avSrc.onload = function()
+									{
+										if( ge( 'LiberatorAppIcon' ) )
+										{
+											var ctx = ge( 'LiberatorAppIcon' ).getContext( '2d' );
+											ctx.drawImage( avSrc, 0, 0, 256, 256 );
+											ge( 'LiberatorAppIcon' ).style.background = 'white';
+										}
+									}
+								}
+								
+								var ae = ge( 'LiberatorAppIconEdit' );
+								if( ae ) 
+								{
+									ae.onclick = function( e )
+									{
+										//changeAvatar();
+										
+										var self = this;
+										var description =
+										{
+											triggerFunction: function( item )
+											{
+												if ( item )
+												{
+													// Load the image
+													var image = new Image();
+													image.onload = function()
+													{
+														//console.log( 'loaded image ... ', item );
+														// Resizes the image
+														var canvas = ge( 'LiberatorAppIcon' );
+														var context = canvas.getContext( '2d' );
+														context.drawImage( image, 0, 0, 256, 256 );
+													}
+													image.src = getImageUrl( item[ 0 ].Path );
+												}
+											},
+											path: "Mountlist:",
+											type: "load",
+											title: i18n( 'i18n_fileselectoravatar' ),
+											filename: ""
+										}
+										var d = new Filedialog( description );
+									}
+								}
 								
 								var _this = this;
 								

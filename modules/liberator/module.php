@@ -52,6 +52,13 @@ if( $args->command )
 							}
 						}
 						
+						$hash = hash( 'sha256', $obj->InstallPath );
+						
+						// Fix filename
+						$fname = ( $hash . '_' . strtolower( $obj->Name ) ) . '.png';
+						
+						$obj->Preview = ( '/system.library/module/?module=liberator&command=getappicon&appname=' . strtolower( $obj->Name ) . '&appid=' . $hash );
+						
 					}
 					
 					die( 'ok<!--separate-->' . json_encode( $rows ) );
