@@ -274,29 +274,7 @@ if( defined( 'FRIEND_USERNAME' ) && defined( 'FRIEND_PASSWORD' ) )
 // No sessionid!!
 if( !$UserAccount && !isset( $groupSession ) && !isset( $GLOBALS[ 'args' ]->sessionid ) && !isset( $GLOBALS[ 'args' ]->authid ) )
 {
-	if( isset( $GLOBALS[ 'args' ]->servertoken ) )
-	{
-		include_once( 'classes/dbio.php' );
-		$u = new dbIO( 'FUser' );
-		$u->ServerToken = $GLOBALS[ 'args' ]->servertoken;
-		if($u->Load() )
-		{
-			if( $u->ServerToken == $GLOBALS[ 'args' ]->servertoken )
-			{
-				$GLOBALS[ 'args' ]->sessionid = $u->SessionID;
-			}
-			else
-			{
-				die( '404 NO SESSION 1' );
-			}
-		}
-		else
-		{
-			die( '404 NO SESSION 3' . $GLOBALS[ 'args' ]->servertoken );
-		}
-		unset( $u );
-	}
-	else
+	if( !isset( $GLOBALS[ 'args' ]->servertoken ) )
 	{
 		die( '404 NO SESSION 4' );
 	}
@@ -450,6 +428,17 @@ if( file_exists( 'cfg/cfg.ini' ) )
 		' ) )
 		{
 			$User = $mu;
+		}
+	}
+	else if( isset( $GLOBALS[ 'args' ]->servertoken ) )
+	{
+		$User->ServerToken = $GLOBALS[ 'args' ]->servertoken;
+		if( $User->Load() )
+		{
+			if( $User->ServerToken == $GLOBALS[ 'args' ]->servertoken )
+			{
+				$GLOBALS[ 'args' ]->sessionid = $User->SessionID;
+			}
 		}
 	}
 	
