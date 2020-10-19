@@ -279,8 +279,7 @@ if( !$UserAccount && !isset( $groupSession ) && !isset( $GLOBALS[ 'args' ]->sess
 		include_once( 'classes/dbio.php' );
 		$u = new dbIO( 'FUser' );
 		$u->ServerToken = $GLOBALS[ 'args' ]->servertoken;
-		$u->Load();
-		if( $u->ID > 0 )
+		if($u->Load() )
 		{
 			if( $u->ServerToken == $GLOBALS[ 'args' ]->servertoken )
 			{
@@ -293,7 +292,7 @@ if( !$UserAccount && !isset( $groupSession ) && !isset( $GLOBALS[ 'args' ]->sess
 		}
 		else
 		{
-			die( '404 NO SESSION 3' );
+			die( '404 NO SESSION 3' . $GLOBALS[ 'args' ]->servertoken );
 		}
 		unset( $u );
 	}
