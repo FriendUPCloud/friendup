@@ -274,7 +274,31 @@ if( defined( 'FRIEND_USERNAME' ) && defined( 'FRIEND_PASSWORD' ) )
 // No sessionid!!
 if( !$UserAccount && !isset( $groupSession ) && !isset( $GLOBALS[ 'args' ]->sessionid ) && !isset( $GLOBALS[ 'args' ]->authid ) )
 {
-	die( '404 NO SEESION' );
+	if( isset( $GLOBALS[ 'args' ]->servertoken ) )
+	{
+		$u = new dbIO( 'FUser' );
+		$u->ServerToken = $GLOBALS[ 'args' ]->servertoken;
+		if( $u->Load() )
+		{
+			if( $u->ServerToken == $GLOBALS[ 'args' ]->servertoken )
+			{
+				$GLOBALS[ 'args' ]->sessionid = $u->SessionID;
+			}
+			else
+			{
+				die( '404 NO SEESION' );
+			}
+		}
+		else
+		{
+			die( '404 NO SEESION' );
+		}
+		unset( $u );
+	}
+	else
+	{
+		die( '404 NO SEESION' );
+	}
 }
 if( !$UserAccount && isset( $GLOBALS[ 'args' ]->sessionid ) && $GLOBALS[ 'args' ]->sessionid == '(null)' )
 	die( '404 NO SESSION 2' );
