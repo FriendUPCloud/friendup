@@ -430,16 +430,11 @@ if( file_exists( 'cfg/cfg.ini' ) )
 			$User = $mu;
 		}
 	}
+	// Try with server token
 	else if( isset( $GLOBALS[ 'args' ]->servertoken ) )
 	{
 		$User->ServerToken = $GLOBALS[ 'args' ]->servertoken;
-		if( $User->Load() )
-		{
-			if( $User->ServerToken == $GLOBALS[ 'args' ]->servertoken )
-			{
-				$GLOBALS[ 'args' ]->sessionid = $User->SessionID;
-			}
-		}
+		$User->Load();
 	}
 	
 	// Get the sessionid
