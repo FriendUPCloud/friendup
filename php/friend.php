@@ -276,6 +276,7 @@ if( !$UserAccount && !isset( $groupSession ) && !isset( $GLOBALS[ 'args' ]->sess
 {
 	if( isset( $GLOBALS[ 'args' ]->servertoken ) )
 	{
+		include_once( 'classes/dbio.php' );
 		$u = new dbIO( 'FUser' );
 		$u->ServerToken = $GLOBALS[ 'args' ]->servertoken;
 		if( $u->Load() )
