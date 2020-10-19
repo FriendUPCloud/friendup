@@ -287,18 +287,18 @@ if( !$UserAccount && !isset( $groupSession ) && !isset( $GLOBALS[ 'args' ]->sess
 			}
 			else
 			{
-				die( '404 NO SEESION' );
+				die( '404 NO SESSION 1' );
 			}
 		}
 		else
 		{
-			die( '404 NO SEESION' );
+			die( '404 NO SESSION 3' );
 		}
 		unset( $u );
 	}
 	else
 	{
-		die( '404 NO SEESION' );
+		die( '404 NO SESSION 4' );
 	}
 }
 if( !$UserAccount && isset( $GLOBALS[ 'args' ]->sessionid ) && $GLOBALS[ 'args' ]->sessionid == '(null)' )
