@@ -25,6 +25,8 @@ if( !file_exists( $wname . 'apps/friendrds' ) )
 	mkdir( $wname . 'apps/friendrds' );
 }
 
+$folderpath = ( $wname . 'apps/friendrds/' );
+
 if( $args->command )
 {
 	switch( $args->command )
@@ -102,6 +104,34 @@ if( $args->command )
 					$a->DateModified = $a->DateInstalled;
 					$a->Save();
 					
+					// Handle app icon ...
+					
+					if( isset( $args->args->icon ) && $args->args->icon )
+					{
+						if( $data = explode( ',', $args->args->icon ) )
+						{
+							if( $binary = base64_decode( array_pop( $data ) ) )
+							{
+								if( $im = imagecreatefromstring( $binary ) )
+								{
+									$hash = hash( 'sha256', $args->args->installPath );
+									
+									imagesavealpha( $im, true );
+									
+									imagepng( $im, $folderpath . ( $hash . '_' . strtolower( $args->args->name ) ) . '.png', 9 );
+								
+									// TODO: Maby add path to icon in config?
+								
+									die( 'ok<!--separate-->' . $folderpath . ( $hash . '_' . strtolower( $args->args->name ) ) . '.png' );
+
+								}
+							
+							}
+						}
+						
+						die( 'fail<!--separate-->' . $args->args->icon );
+					}
+					
 					die( 'ok<!--separate-->' . $a->ID );
 				}
 			}
@@ -111,7 +141,7 @@ if( $args->command )
 			break;
 			
 		case 'update':
-			
+				
 			if( isset( $args->args->id ) && $args->args->id > 0 && $args->args->installPath && $args->args->name && $args->args->data )
 			{
 				// Update application!
@@ -143,7 +173,62 @@ if( $args->command )
 					$a->DateModified = date( 'Y-m-d H:i:s' );
 					$a->Save();
 					
+					// Handle app icon ...
+					
+					if( isset( $args->args->icon ) && $args->args->icon )
+					{
+						if( $data = explode( ',', $args->args->icon ) )
+						{
+							if( $binary = base64_decode( array_pop( $data ) ) )
+							{
+								if( $im = imagecreatefromstring( $binary ) )
+								{
+									$hash = hash( 'sha256', $args->args->installPath );
+									
+									imagesavealpha( $im, true );
+									
+									imagepng( $im, $folderpath . ( $hash . '_' . strtolower( $args->args->name ) ) . '.png', 9 );
+								
+									// TODO: Maby add path to icon in config?
+								}
+							
+							}
+						}
+					}
+					
 					die( 'ok<!--separate-->' . $a->ID );
+				}
+			}
+			
+			
+			die( 'fail<!--separate-->' );
+			
+			break;
+		
+		case 'updateicon':
+			
+			if( isset( $args->args->icon ) && $args->args->icon && $args->args->installPath && $args->args->name )
+			{
+				// Handle app icon ...
+				
+				if( $data = explode( ',', $args->args->icon ) )
+				{
+					if( $binary = base64_decode( array_pop( $data ) ) )
+					{
+						if( $im = imagecreatefromstring( $binary ) )
+						{
+							$hash = hash( 'sha256', $args->args->installPath );
+							
+							imagesavealpha( $im, true );
+							
+							imagepng( $im, $folderpath . ( $hash . '_' . strtolower( $args->args->name ) ) . '.png', 9 );
+							
+							// TODO: Maby add path to icon in config?
+							
+							die( 'ok<!--separate-->' . $folderpath . ( $hash . '_' . strtolower( $args->args->name ) ) . '.png' );
+						}
+					
+					}
 				}
 			}
 			
@@ -205,12 +290,12 @@ if( $args->command )
 							FriendHeader( 'HTTP/1.1 304 Not Modified' ); 
 							die();
 						}
-						//die( print_r( $_SERVER,1 ) . ' .. ' . $last_modified_time . ' || ' . $etag );
+						
 						die( file_get_contents( $filepath ) );
 					}
 				}
 				
-				$folderpath = ( $wname . 'apps/friendrds/' );
+				
 				
 				if( file_exists( $folderpath . ( $args->appid . '_' . strtolower( $args->appname ) ) . '.png' ) )
 				{
@@ -223,6 +308,249 @@ if( $args->command )
 			
 			break;
 		
+		case 'getremoteapps':
+			
+			// TODO: Add dependencies ... php-ssh2 libssh2-php --- and maybe more? confirm on new setup ...
+			
+			if( function_exists( 'ssh2_connect' ) )
+			{
+				
+				if( $args->args->protocol && $args->args->hostname && $args->args->identifier && $args->args->username && $args->args->password )
+				{
+					
+					// TODO: Get useful information from failed connection ...
+					
+					function _ssh_disconnect( $reason, $message, $language ) 
+					{
+						die( 'fail<!--separate-->server disconnected with reason code ' . $reason . ' and message: ' . $message );
+					}
+					
+					$methods = [
+						'kex' => 'diffie-hellman-group1-sha1',
+						'client_to_server' => [
+							'crypt' => '3des-cbc',
+							'comp'  => 'none' 
+						],
+						'server_to_client' => [
+							'crypt' => 'aes256-cbc,aes192-cbc,aes128-cbc',
+							'comp'  => 'none' 
+						] 
+					];
+					
+					$callbacks = [ 'disconnect' => '_ssh_disconnect' ];
+					
+					if( !$connection = ssh2_connect( $args->args->hostname, 22 ) )
+					{
+						die( 'fail<!--separate-->failed to connect.' );
+					}
+				
+					if( !ssh2_auth_password( $connection, $args->args->username, $args->args->password ) )
+					{
+						die( 'fail<!--separate-->failed to authenticate.' );
+					}
+					
+					if( !$sftp = ssh2_sftp( $connection ) )
+					{
+						die('fail<!--separate-->failed to create a sftp connection.');
+					}
+					
+					$remote_dir = "/C:/Windows/RemotePackages/CPubFarms/QuickSessionCollection/CPubRemoteApps/";
+					
+					$icons = [];
+					
+					if( $objects = scandir( "ssh2.sftp://$sftp$remote_dir" ) )
+					{
+						foreach( $objects as $file )
+				        {
+							if ( $file == '.' || $file == '..' || !strstr( $file, '.ico' ) )
+							{
+				                continue;
+							}
+						
+							$icons[] = $file;
+						}
+					}
+				
+					$imgs = [];
+					
+					if( $icons )
+					{
+						require_once( 'php/3rdparty/ico/class.ico.php' );
+						
+						$installpath = ( $args->args->protocol . '://' . $args->args->hostname . ( $args->args->port ? ':' . $args->args->port : '' ) . '/' . $args->args->identifier );
+						
+						foreach( $icons as $i )
+						{
+							$file_name = str_replace( '.ico', '', $i );
+							
+							$hash = hash( 'sha256', $installpath . '/' . strtolower( $file_name ) );
+							
+							// Fix filename
+							$fname = ( $hash . '_' . strtolower( $file_name ) ) . '.png';
+						
+							$obj = new stdClass();
+							$obj->name = $i;
+							$obj->icon = ( '/system.library/module/?module=liberator&command=getappicon&appname=' . strtolower( $file_name ) . '&appid=' . $hash );
+							$obj->data = [];
+						
+							if( !file_exists( $wname . 'apps/friendrds/' . $fname ) )
+							{
+								$ico = new Ico( "ssh2.sftp://$sftp$remote_dir$i" );
+								$ico->SetBackgroundTransparent();
+								$source = $ico->GetIcon( 11 );
+							
+								// Save
+								imagepng( $source, $wname . 'apps/friendrds/' . $fname, 9 );
+							
+								for( $ii = 1; $ii < $ico->TotalIcons(); $ii++ )
+								{
+									$obj->data[$ii] = ( $ico->formats[$ii]['Width'] . 'x' . $ico->formats[$ii]['Height'] );
+								}
+							}
+						
+							$imgs[$file_name] = $obj;
+							 
+						}
+					}
+					
+					
+					
+					// Close the sftp connection
+					fclose( $sftp );
+				
+					$stream = ssh2_exec( $connection, "powershell;Get-RDRemoteApp" );
+				
+					$outputStream = ssh2_fetch_stream( $stream, SSH2_STREAM_STDIO );
+					$errorStream  = ssh2_fetch_stream( $stream, SSH2_STREAM_STDERR );
+				
+					// Enable blocking for both streams
+					stream_set_blocking( $outputStream, true );
+					stream_set_blocking( $errorStream, true );
+				
+					$data  = stream_get_contents( $outputStream );
+					$error = stream_get_contents( $errorStream );
+				
+					// Close the streams        
+					fclose( $errorStream );
+					fclose( $stream );
+				
+					
+				
+					$output = [];
+				
+					if( $data )
+					{
+						if( $parts = explode( "\n", $data ) )
+						{
+							$header = false;
+						
+							foreach( $parts as $i )
+							{
+							
+								if( trim( $i ) && !strstr( trim( $i ), '---' ) && trim( substr( $i, 0, 13 ) ) )
+								{
+									if( !$header )
+									{
+										$vars = [];
+								
+										if( $cols = explode( " ", $i ) )
+										{
+											foreach( $cols as $ii )
+											{
+												if( trim( $ii ) )
+												{
+													$obj = new stdClass();
+													$obj->pos = strpos( $i, trim( $ii ) );
+													$obj->len = ( strlen( $i ) - $obj->pos );
+													$obj->col = trim( $ii );
+												
+													$vars[] = $obj;
+												}
+											}
+									
+											foreach( $vars as $k=>$v )
+											{
+												if( isset( $vars[ $k+1 ] ) && $vars[ $k+1 ]->pos )
+												{
+													$vars[ $k ]->len = ( $vars[ $k+1 ]->pos - $vars[ $k ]->pos );
+												}
+											}
+										}
+									
+										if( $vars )
+										{
+											$header = $vars;
+										}
+									
+										continue;
+									}
+								
+								
+								
+									if( $header )
+									{
+										$vars = [];
+									
+										foreach( $header as $ii )
+										{
+											if( substr( $i, $ii->pos, $ii->len ) )
+											{
+												$obj = new stdClass();
+												$obj->pos = $ii->pos;
+												$obj->len = $ii->len;
+												$obj->col = $ii->col;
+												$obj->val = trim( substr( $i, $ii->pos, $ii->len ) );
+											
+												if( isset( $imgs[$obj->val]->icon ) )
+												{
+													$obj->icon = $imgs[$obj->val]->icon;
+												}
+											
+												$vars[] = $obj;
+											}
+										}
+									
+										if( $vars )
+										{
+											$output[] = $vars;
+										}
+									}
+								
+								}
+							
+							}
+						
+							if( $output )
+							{
+								$output = json_encode( $output );
+							}
+						}
+					}
+					
+					
+				
+					if( $output )
+					{
+						die( 'ok<!--separate-->' . $output );
+					}
+				
+					if( $error )
+					{
+						die( 'fail<!--separate-->' . $error );
+					}
+				
+					die( 'fail<!--separate-->couldn\'t connect ...' );
+					
+				}
+				
+				die( 'fail<!--separate-->args missing ...' );
+				
+			}
+			
+			die( 'fail<!--separate-->function ssh2_connect doesn\'t exist' );
+			
+			break;
+		
 		case 'ssh_test':
 			
 			// TODO: Add dependencies ... php-ssh2 libssh2-php --- and maybe more? confirm on new setup ...
@@ -230,7 +558,7 @@ if( $args->command )
 			if( function_exists( 'ssh2_connect' ) )
 			{
 				
-				// scp chris@185.116.5.93:/C:/Windows/RemotePackages/CPubFarms/QuickSessionCollection/CPubRemoteApps/* ~/Desktop/
+				/*// scp chris@185.116.5.93:/C:/Windows/RemotePackages/CPubFarms/QuickSessionCollection/CPubRemoteApps/* ~/Desktop/
 				
 				function _ssh_disconnect( $reason, $message, $language ) 
 				{
@@ -333,37 +661,6 @@ if( $args->command )
 				}
 				
 				//die( 'fail<!--separate-->' . json_encode( $imgs ) );
-				
-				/*$stream = ssh2_exec( $connection, "dir /b $remote_dir*.ico" ); 
-				stream_set_blocking( $stream, true ); 
-				$cmd = fread( $stream, 4096 );
-				
-				$arr = explode( "\n", $cmd ); 
-				
-				$out = [];
-				
-				if( $arr )
-				{
-					foreach( $arr as $fil )
-					{
-						$file_name = trim( $fil );
-						
-						if( $file_name != '' )
-						{
-							$remote_file = ( $remote_dir . $file_name );        
-        					$local_file  = ( $local_dir  . $file_name );
-							
-							//if( ssh2_scp_recv( $connection, "\"/".$remote_file."\"", $local_file ) )
-							//{ 
-							//	$out[] = "File " . $file_name . " was copied to $local_dir<br />"; 
-							//}
-							//else
-							//{
-								$out[] = $file_name;
-							//}
-						}
-					}
-				}*/
 				
 				//$errorStream = ssh2_fetch_stream( $stream, SSH2_STREAM_STDERR );
 				//$error = stream_get_contents( $errorStream );
@@ -494,7 +791,7 @@ if( $args->command )
 				if( $error )
 				{
 					die( 'fail<!--separate-->' . $error );
-				}
+				}*/
 				
 				die( 'fail<!--separate-->couldn\'t connect ...' );
 			}

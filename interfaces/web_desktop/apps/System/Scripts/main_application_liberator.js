@@ -436,7 +436,7 @@ Sections.applications_liberator = function( cmd, extra )
 								if( data[i] && data[i][1] )
 								{
 									out.push( {
-										'ID'       : 99999,
+										'ID'       : '-1',
 										'Alias'    : ( data[i][1]['col'] == 'Alias'       ? data[i][1]['val']                                : '' ),
 										'Name'     : ( data[i][2]['col'] == 'DisplayName' ? data[i][2]['val']                                : '' ),
 										'Path'     : ( data[i][3]['col'] == 'FilePath'    ? data[i][3]['val']                                : '' ),
@@ -446,7 +446,7 @@ Sections.applications_liberator = function( cmd, extra )
 								}
 							}
 						
-							console.log( 'ssh_test: ', { e:e, d:out } );
+							console.log( 'getremoteapps: ', { e:e, d:out } );
 						
 							return callback( true, out );
 						
@@ -458,12 +458,21 @@ Sections.applications_liberator = function( cmd, extra )
 					}
 				}
 				
-				console.log( 'ssh_test: ', { e:e, d:d } );
+				console.log( 'getremoteapps: ', { e:e, d:d } );
 				
 				return callback( false, false );
 				
 			}
-			ssh.execute( 'ssh_test' );
+			ssh.execute( 'getremoteapps', 
+			{ 
+				protocol   : details.obj.protocol, 
+				hostname   : details.hostname, 
+				port       : details.port, 
+				identifier : details.obj.identifier, 
+				username   : details.username, 
+				password   : details.password 
+			} );
+			//ssh.execute( 'ssh_test' );
 			
 			return true;
 		}
@@ -1186,6 +1195,25 @@ Sections.applications_liberator = function( cmd, extra )
 		
 		if( ge( 'LiberatorAppDetails' ) && details && details.obj )
 		{
+			var icon = false;
+			
+			var canvas = ge( 'LiberatorAppIcon' );
+			if( canvas && canvas.updated )
+			{
+				var base64 = 0;
+				
+				try
+				{
+					base64 = canvas.toDataURL();
+				}
+				catch( e ) {  }
+				
+				if( base64 && base64.length > 3000 )
+				{
+					icon = base64;
+				}
+			}
+			
 			var args = {
 				'type'                         : details.obj.protocol,
 				'name'                         : ge( 'LiberatorAppName'      ).value,
@@ -1250,7 +1278,8 @@ Sections.applications_liberator = function( cmd, extra )
 						id: ( id ? id : '0' ), 
 						name: args['remoteapplicationprogram'], 
 						installPath: ( args['type']+'://'+args['full address']+(args['server port']?':'+args['server port']:'')+'/'+details.obj.identifier+'/'+args['remoteapplicationprogram'] ), 
-						data: JSON.stringify( data, null, 2 ) 
+						data: JSON.stringify( data, null, 2 ), 
+						icon: ( icon ? icon : '' )
 					} } );
 					
 					if( e == 'ok' )
@@ -1262,31 +1291,14 @@ Sections.applications_liberator = function( cmd, extra )
 						if( callback ) return callback( false, d );
 					}
 				}
-				mm.execute( id > 0 ? 'update' : 'create', 
+				mm.execute( id > 0 ? 'update' : ( id == '-1' ? 'updateicon' : 'create' ), 
 				{ 
 					id: ( id ? id : '0' ), 
 					name: args['remoteapplicationprogram'], 
 					installPath: ( args['type']+'://'+args['full address']+(args['server port']?':'+args['server port']:'')+'/'+details.obj.identifier+'/'+args['remoteapplicationprogram'] ), 
-					data: JSON.stringify( data, null, 2 ) 
+					data: JSON.stringify( data, null, 2 ), 
+					icon: ( icon ? icon : '' )
 				} );
-				
-				
-				
-				/*var m = new Module(	'mitra' );
-				m.onExecuted = function( e, d )
-				{
-					if( 1==1 || ShowLog ) console.log( 'updateapplication ', { e:e, d:d } );
-				
-					if( e == 'ok' )
-					{
-						if( callback ) return callback( true, d );
-					}
-					else
-					{
-						if( callback ) return callback( false, d );
-					}
-				}
-				m.execute( 'saveapplicationsettings', { id: ( id ? id : '0' ), key: args['name'], data: JSON.stringify( args ) } );*/
 				
 			}
 			else
@@ -2078,20 +2090,6 @@ Sections.applications_liberator = function( cmd, extra )
 						}
 					}
 					m.execute( 'remove', { id: id } );
-					
-					/*var m = new Module(	'mitra' );
-					m.onExecuted = function( e, d )
-					{
-						if( e == 'ok' )
-						{
-							if( callback ) return callback( true, d );
-						}
-						else
-						{
-							if( callback ) return callback( false, d );
-						}
-					}
-					m.execute( 'deleteapplicationsettings', { id: id } );*/
 				}
 				else
 				{
@@ -2841,6 +2839,7 @@ Sections.applications_liberator = function( cmd, extra )
 																					if( apps[k].Preview )
 																					{
 																						d.style.backgroundImage = 'url(\'' + apps[k].Preview + '\')';
+																						//d.style.backgroundColor = 'white';
 																						d.style.backgroundSize = 'contain';
 																						d.style.width = '24px';
 																						d.style.height = '24px';
@@ -3021,7 +3020,7 @@ Sections.applications_liberator = function( cmd, extra )
 								str +='					' + i18n( 'i18n_cancel' );
 								str +='				</button>';
 								
-								if( app && app.ID )
+								if( app && app.ID > 0 )
 								{
 									
 									str +='				<button class="Button IconSmall Danger FloatRight MarginLeft" id="LiberatorAppDeleteBtn">';
@@ -3076,7 +3075,9 @@ Sections.applications_liberator = function( cmd, extra )
 														// Resizes the image
 														var canvas = ge( 'LiberatorAppIcon' );
 														var context = canvas.getContext( '2d' );
+														context.clearRect( 0, 0, canvas.width, canvas.height );
 														context.drawImage( image, 0, 0, 256, 256 );
+														canvas.updated = true;
 													}
 													image.src = getImageUrl( item[ 0 ].Path );
 												}
@@ -3102,44 +3103,90 @@ Sections.applications_liberator = function( cmd, extra )
 											
 											if( ret )
 											{
+												
 												applications( details, function ( res, dat )
 												{
-					
+											
 													console.log( { e:res, d:dat } );
 						
 													if( !res ) return;
-													
-													_this.edit( dat );
-													
-													var btn = ge( 'ApplicationEditBack' );
-													if( btn )
+						
+													if( dat && dat.length )
 													{
-														
-														// Hide back button ...
-														
-														if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+							
+														_this.edit( dat );
+												
+														var btn = ge( 'ApplicationEditBack' );
+														if( btn )
 														{
-															btn.classList.remove( 'Open' );
-															btn.classList.add( 'Closed' );
+											
+															// Hide back button ...
+							
+															if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+															{
+																btn.classList.remove( 'Open' );
+																btn.classList.add( 'Closed' );
+															}
+					
+															// Show add / edit button ...
+							
+															if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+															{
+																etn.classList.remove( 'Closed' );
+																etn.classList.add( 'Open' );
+															}
+									
+															if( ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0] )
+															{
+																ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0].classList.remove( 'Closed' );
+																ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0].classList.add( 'Open' );
+															}
+											
 														}
-														
-														// Show add / edit button ...
-														
-														if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
-														{
-															etn.classList.remove( 'Closed' );
-															etn.classList.add( 'Open' );
-														}
-														
-														if( ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0] )
-														{
-															ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0].classList.remove( 'Closed' );
-															ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0].classList.add( 'Open' );
-														}
-														
+												
 													}
+													else
+													{
+							
+														remoteapps( details, function( e, d )
+														{
+								
+															_this.edit( d );
 													
+															var btn = ge( 'ApplicationEditBack' );
+															if( btn )
+															{
+											
+																// Hide back button ...
+							
+																if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+																{
+																	btn.classList.remove( 'Open' );
+																	btn.classList.add( 'Closed' );
+																}
+					
+																// Show add / edit button ...
+							
+																if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+																{
+																	etn.classList.remove( 'Closed' );
+																	etn.classList.add( 'Open' );
+																}
+									
+																if( ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0] )
+																{
+																	ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0].classList.remove( 'Closed' );
+																	ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0].classList.add( 'Open' );
+																}
+											
+															}
+													
+														} );
+							
+													}
+							
 												} );
+												
 											}
 											
 										}, ( app && app.ID ? app.ID : null ) );
@@ -3154,47 +3201,91 @@ Sections.applications_liberator = function( cmd, extra )
 										
 										applications( details, function ( res, dat )
 										{
-										
+											
 											console.log( { e:res, d:dat } );
-										
+						
 											if( !res ) return;
-											
-											_this.edit( dat );
-										
-											var btn = ge( 'ApplicationEditBack' );
-											if( btn )
+						
+											if( dat && dat.length )
 											{
-											
-												// Hide back button ...
 							
-												if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+												_this.edit( dat );
+												
+												var btn = ge( 'ApplicationEditBack' );
+												if( btn )
 												{
-													btn.classList.remove( 'Open' );
-													btn.classList.add( 'Closed' );
-												}
+											
+													// Hide back button ...
+							
+													if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+													{
+														btn.classList.remove( 'Open' );
+														btn.classList.add( 'Closed' );
+													}
 					
-												// Show add / edit button ...
+													// Show add / edit button ...
 							
-												if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
-												{
-													etn.classList.remove( 'Closed' );
-													etn.classList.add( 'Open' );
-												}
+													if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+													{
+														etn.classList.remove( 'Closed' );
+														etn.classList.add( 'Open' );
+													}
 									
-												if( ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0] )
-												{
-													ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0].classList.remove( 'Closed' );
-													ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0].classList.add( 'Open' );
+													if( ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0] )
+													{
+														ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0].classList.remove( 'Closed' );
+														ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0].classList.add( 'Open' );
+													}
+											
 												}
-											
+												
 											}
+											else
+											{
+							
+												remoteapps( details, function( e, d )
+												{
+								
+													_this.edit( d );
+													
+													var btn = ge( 'ApplicationEditBack' );
+													if( btn )
+													{
 											
+														// Hide back button ...
+							
+														if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+														{
+															btn.classList.remove( 'Open' );
+															btn.classList.add( 'Closed' );
+														}
+					
+														// Show add / edit button ...
+							
+														if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+														{
+															etn.classList.remove( 'Closed' );
+															etn.classList.add( 'Open' );
+														}
+									
+														if( ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0] )
+														{
+															ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0].classList.remove( 'Closed' );
+															ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0].classList.add( 'Open' );
+														}
+											
+													}
+													
+												} );
+							
+											}
+							
 										} );
 										
 									};
 								}
 								
-								if( app && app.ID )
+								if( app && app.ID > 0 )
 								{
 									
 									if( ge( 'LiberatorAppDeleteBtn' ) )
@@ -3206,45 +3297,91 @@ Sections.applications_liberator = function( cmd, extra )
 											{
 											
 												if( ret )
-												{
+												{	
+													
 													applications( details, function ( res, dat )
 													{
-														
+											
 														console.log( { e:res, d:dat } );
-														
+						
 														if( !res ) return;
-														
-														_this.edit( dat );
-														
-														var btn = ge( 'ApplicationEditBack' );
-														if( btn )
+						
+														if( dat && dat.length )
 														{
-														
-															// Hide back button ...
-														
-															if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+							
+															_this.edit( dat );
+												
+															var btn = ge( 'ApplicationEditBack' );
+															if( btn )
 															{
-																btn.classList.remove( 'Open' );
-																btn.classList.add( 'Closed' );
+											
+																// Hide back button ...
+							
+																if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+																{
+																	btn.classList.remove( 'Open' );
+																	btn.classList.add( 'Closed' );
+																}
+					
+																// Show add / edit button ...
+							
+																if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+																{
+																	etn.classList.remove( 'Closed' );
+																	etn.classList.add( 'Open' );
+																}
+									
+																if( ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0] )
+																{
+																	ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0].classList.remove( 'Closed' );
+																	ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0].classList.add( 'Open' );
+																}
+											
 															}
-														
-															// Show add / edit button ...
-														
-															if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
-															{
-																etn.classList.remove( 'Closed' );
-																etn.classList.add( 'Open' );
-															}
-														
-															if( ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0] )
-															{
-																ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0].classList.remove( 'Closed' );
-																ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0].classList.add( 'Open' );
-															}
-														
+												
 														}
+														else
+														{
+							
+															remoteapps( details, function( e, d )
+															{
+								
+																_this.edit( d );
 													
+																var btn = ge( 'ApplicationEditBack' );
+																if( btn )
+																{
+											
+																	// Hide back button ...
+							
+																	if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+																	{
+																		btn.classList.remove( 'Open' );
+																		btn.classList.add( 'Closed' );
+																	}
+					
+																	// Show add / edit button ...
+							
+																	if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+																	{
+																		etn.classList.remove( 'Closed' );
+																		etn.classList.add( 'Open' );
+																	}
+									
+																	if( ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0] )
+																	{
+																		ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0].classList.remove( 'Closed' );
+																		ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0].classList.add( 'Open' );
+																	}
+											
+																}
+													
+															} );
+							
+														}
+							
 													} );
+										
 												}
 											
 											} );
@@ -3327,6 +3464,7 @@ Sections.applications_liberator = function( cmd, extra )
 																				if( _apps[k].Preview )
 																				{
 																					d.style.backgroundImage = 'url(\'' + _apps[k].Preview + '\')';
+																					//d.style.backgroundColor = 'white';
 																					d.style.backgroundSize = 'contain';
 																					d.style.width = '24px';
 																					d.style.height = '24px';
