@@ -431,7 +431,7 @@ if( file_exists( 'cfg/cfg.ini' ) )
 		}
 	}
 	// Try with server token
-	else if( isset( $GLOBALS[ 'args' ]->servertoken ) )
+	else if( isset( $GLOBALS[ 'args' ]->servertoken ) )
 	{
 		$User->ServerToken = $GLOBALS[ 'args' ]->servertoken;
 		$User->Load();
