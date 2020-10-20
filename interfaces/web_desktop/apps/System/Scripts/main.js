@@ -95,8 +95,23 @@ function refreshSidebar( show )
 			},
 			'Liberator': {
 				icon: 'fa-info-circle',
+				name: i18n( 'i18n_link_friendrds' ),
 				showing: isAdmin,
-				display: /*( show ? */true/* : false )*/
+				display: true,
+				childs: false/*{
+					'Servers': { 
+						icon: 'fa-info-circle',
+						name: i18n( 'i18n_link_servers' ),
+						showing: isAdmin,
+						display: true
+					},
+					'Users': {
+						icon: 'fa-info-circle',
+						name: i18n( 'i18n_link_users' ),
+						showing: isAdmin,
+						display: true
+					}
+				}*/ 
 			}
 		},
 		'Accounts': {
@@ -280,14 +295,14 @@ function refreshSidebar( show )
 			headings[ a ].elements.innerHTML = '';
 		
 			var heading_children = 0;
-		
+			
 			// Populate children
 			for( var b in mods[ a ] )
 			{
 				var ch = mods[ a ][ b ];
 				var ptag = document.createElement( 'div' );
 				var atag = document.createElement( 'a' );
-				atag.innerHTML = b;
+				atag.innerHTML = ( ch.name ? ch.name : b );
 				//ptag.className = 'HRow BackgroundNegativeAlt PaddingLeft PaddingSmallTop PaddingRight PaddingSmallBottom';
 				ptag.className = 'HRow BackgroundNegative PaddingLeft PaddingSmallTop PaddingRight PaddingSmallBottom';
 				ptag.appendChild( atag );
@@ -313,7 +328,8 @@ function refreshSidebar( show )
 					}
 					else continue;
 				}
-				if( ch.icon )
+				
+				if( ch.icon && !ch.childs )
 				{
 					//atag.classList.add( 'IconMedium', ch.icon );
 					//atag.classList.add( 'IconSmall', ch.icon );
@@ -322,43 +338,133 @@ function refreshSidebar( show )
 					//atag.classList.add( 'PaddingRight', ch.icon );
 					atag.className = 'IconSmall ' + ch.icon + ' Negative PaddingLeft PaddingRight';
 					atag.innerHTML = '&nbsp;&nbsp;&nbsp;' + atag.innerHTML;
-					( function( module, sect, ch, ele, act )
+					
+					if( !ch.childs )
 					{
-						ele.onclick = function()
+						( function( module, sect, ch, ele, act )
 						{
-							// Update latest changes to permissions before showing page ...
-							Application.checkAppPermission( false, function()
+							ele.onclick = function()
 							{
-								if( ge( 'GuiSidebar' ) )
+								// Update latest changes to permissions before showing page ...
+								Application.checkAppPermission( false, function()
 								{
-									var list = ge( 'GuiSidebar' ).getElementsByTagName( 'div' );
-								
-									if( list.length > 0 )
+									if( ge( 'GuiSidebar' ) )
 									{
-										for( var a = 0; a < list.length; a++ )
+										var list = ge( 'GuiSidebar' ).getElementsByTagName( 'div' );
+								
+										if( list.length > 0 )
 										{
-											if( list[a] && list[a].className && list[a].className.indexOf( ' Selected' ) >= 0 )
+											for( var a = 0; a < list.length; a++ )
 											{
-												list[a].className = ( list[a].className.split( ' Selected' ).join( '' ) );
+												if( list[a] && list[a].className && list[a].className.indexOf( ' Selected' ) >= 0 )
+												{
+													list[a].className = ( list[a].className.split( ' Selected' ).join( '' ) );
+												}
 											}
 										}
 									}
-								}
 							
-								ele.parentNode.className = ( ele.parentNode.className.split( ' Selected' ).join( '' ) + ' Selected' );
-							
-								setGUISection( module, sect, act );
-							} );
-						}
+									ele.parentNode.className = ( ele.parentNode.className.split( ' Selected' ).join( '' ) + ' Selected' );
+									
+									setGUISection( module, sect, false, act );
+								} );
+							}
 					
-						if( ch.init )
-						{
-							ele.onclick();
-						}
+							if( ch.init )
+							{
+								ele.onclick();
+							}
 					
-					} )( a, b, ch, atag, ch.action );
+						} )( a, b, ch, atag, ch.action );
+					}
 				}
+				
 				headings[ a ].elements.appendChild( ptag );
+				
+				// Add sub children if found ...
+				if( ch.icon && ch.childs )
+				{
+					
+					for( var c in ch.childs )
+					{
+						var chc = ch.childs[ c ];
+						var ptag = document.createElement( 'div' );
+						var atag = document.createElement( 'a' );
+						atag.innerHTML = ( chc.name ? chc.name : c );
+						ptag.className = 'HRow BackgroundNegative PaddingLeft PaddingSmallTop PaddingRight PaddingSmallBottom';
+						ptag.appendChild( atag );
+					
+						if( !chc.display ) continue;
+					
+						// If we have no showing check permissions
+						if( !chc.showing )
+						{
+							if( chc.permissions )
+							{
+								var access = false;
+				
+								for( var i in chc.permissions )
+								{
+									if( chc.permissions[i] && Application.checkAppPermission( chc.permissions[i] ) )
+									{
+										access = true;
+									}
+								}
+				
+								if( !access ) continue;
+							}
+							else continue;
+						}
+					
+						if( chc.icon )
+						{
+							atag.className = 'IconSmall ' + chc.icon + ' Negative PaddingLeft PaddingRight';
+							atag.innerHTML = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + atag.innerHTML;
+							
+							( function( module, sect, child, ch, ele, act )
+							{
+								ele.onclick = function()
+								{
+									// Update latest changes to permissions before showing page ...
+									Application.checkAppPermission( false, function()
+									{
+										if( ge( 'GuiSidebar' ) )
+										{
+											var list = ge( 'GuiSidebar' ).getElementsByTagName( 'div' );
+							
+											if( list.length > 0 )
+											{
+												for( var a = 0; a < list.length; a++ )
+												{
+													if( list[a] && list[a].className && list[a].className.indexOf( ' Selected' ) >= 0 )
+													{
+														list[a].className = ( list[a].className.split( ' Selected' ).join( '' ) );
+													}
+												}
+											}
+										}
+						
+										ele.parentNode.className = ( ele.parentNode.className.split( ' Selected' ).join( '' ) + ' Selected' );
+						
+										setGUISection( module, sect, child, act );
+									} );
+								}
+				
+								if( chc.init )
+								{
+									ele.onclick();
+								}
+				
+							} )( a, b, c, ch, atag, chc.action );
+							
+						}
+						
+						headings[ a ].elements.appendChild( ptag );
+						
+					}
+					
+				}
+				
 				heading_children++;
 			}
 		
@@ -410,7 +516,7 @@ function refreshStatistics()
 }
 
 // Sets the gui for a section in the app
-function setGUISection( module, section, action )
+function setGUISection( module, section, child, action )
 {
 	var found = false;
 	if( typeof( Application.mods[ module ] ) != 'undefined' )
@@ -454,7 +560,7 @@ function setGUISection( module, section, action )
 	
 	else
 	{
-		var sectPart = module.toLowerCase() + '_' + section.toLowerCase();
+		var sectPart = module.toLowerCase() + '_' + section.toLowerCase() + ( child ? '_' + child.toLowerCase() : '' );
 		var f = new File( 'Progdir:Templates/' + sectPart + '.html' );
 		f.onLoad = function( data )
 		{
