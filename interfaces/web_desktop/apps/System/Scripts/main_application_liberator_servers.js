@@ -8,9 +8,9 @@
 *                                                                              *
 *****************************************************************************©*/
 
-// Section for liberator management
+// Section for liberator servers management
 
-Sections.applications_liberator = function( cmd, extra )
+Sections.applications_liberator_servers = function( cmd, extra )
 {
 	
 	switch( cmd )
@@ -2529,7 +2529,7 @@ Sections.applications_liberator = function( cmd, extra )
 		}
 		
 		// Get the user details template
-		var d = new File( 'Progdir:Templates/application_liberator_details.html' );
+		var d = new File( 'Progdir:Templates/application_liberator_servers_details.html' );
 		
 		// Add all data for the template
 		d.replacements = {

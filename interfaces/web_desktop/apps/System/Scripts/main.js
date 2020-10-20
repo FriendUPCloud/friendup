@@ -98,7 +98,7 @@ function refreshSidebar( show )
 				name: i18n( 'i18n_link_friendrds' ),
 				showing: isAdmin,
 				display: true,
-				childs: false/*{
+				childs: /*false*/{
 					'Servers': { 
 						icon: 'fa-info-circle',
 						name: i18n( 'i18n_link_servers' ),
@@ -111,7 +111,7 @@ function refreshSidebar( show )
 						showing: isAdmin,
 						display: true
 					}
-				}*/ 
+				} 
 			}
 		},
 		'Accounts': {
@@ -329,7 +329,7 @@ function refreshSidebar( show )
 					else continue;
 				}
 				
-				if( ch.icon && !ch.childs )
+				if( ch.icon )
 				{
 					//atag.classList.add( 'IconMedium', ch.icon );
 					//atag.classList.add( 'IconSmall', ch.icon );
@@ -389,11 +389,17 @@ function refreshSidebar( show )
 					{
 						var chc = ch.childs[ c ];
 						var ptag = document.createElement( 'div' );
+						var dtag = document.createElement( 'div' );
+						var ctag = document.createElement( 'div' );
 						var atag = document.createElement( 'a' );
 						atag.innerHTML = ( chc.name ? chc.name : c );
 						ptag.className = 'HRow BackgroundNegative PaddingLeft PaddingSmallTop PaddingRight PaddingSmallBottom';
-						ptag.appendChild( atag );
-					
+						dtag.className = 'PaddingLeft BackgroundNegative';
+						ctag.className = 'PaddingLeft BackgroundNegative';
+						dtag.appendChild( atag );
+						ctag.appendChild( dtag );
+						ptag.appendChild( ctag );
+						
 						if( !chc.display ) continue;
 					
 						// If we have no showing check permissions
@@ -419,7 +425,7 @@ function refreshSidebar( show )
 						if( chc.icon )
 						{
 							atag.className = 'IconSmall ' + chc.icon + ' Negative PaddingLeft PaddingRight';
-							atag.innerHTML = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + atag.innerHTML;
+							atag.innerHTML = '&nbsp;&nbsp;&nbsp;' + atag.innerHTML;
 							
 							( function( module, sect, child, ch, ele, act )
 							{
@@ -561,6 +567,7 @@ function setGUISection( module, section, child, action )
 	else
 	{
 		var sectPart = module.toLowerCase() + '_' + section.toLowerCase() + ( child ? '_' + child.toLowerCase() : '' );
+		
 		var f = new File( 'Progdir:Templates/' + sectPart + '.html' );
 		f.onLoad = function( data )
 		{
