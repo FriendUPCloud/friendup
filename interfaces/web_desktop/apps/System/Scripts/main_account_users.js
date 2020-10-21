@@ -10195,7 +10195,7 @@ function removeUser( id, callback )
 						{
 							var result = ( count - 1 );
 							
-							if( result && result >= 0 )
+							if( result >= 0 )
 							{
 								ge( 'AdminUsersCount' ).innerHTML = '(' + result + ')';
 							}

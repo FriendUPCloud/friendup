@@ -12,6 +12,7 @@
 if( $level == 'Admin' )
 {
 	$o = new DbIO( 'FUserGroup' );
+	$o->Type = 'Setup';
 	if( $o->Load( $args->args->id ) )
 	{
 		$s = new dbIO( 'FSetting' );
