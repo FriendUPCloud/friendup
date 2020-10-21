@@ -8,9 +8,9 @@
 *                                                                              *
 *****************************************************************************©*/
 
-// Section for liberator servers management
+// Section for friendrds servers management
 
-Sections.applications_liberator_servers = function( cmd, extra )
+Sections.applications_friendrds_servers = function( cmd, extra )
 {
 	
 	switch( cmd )
@@ -84,37 +84,6 @@ Sections.applications_liberator_servers = function( cmd, extra )
 		{
 			if( id )
 			{
-				/*var m = new Module( 'system' );
-				m.onExecuted = function( e, d )
-				{
-					if( e == 'ok' && d )
-					{
-						try
-						{
-							var json = JSON.parse( d );
-							
-							if( json )
-							{
-								if( json.Data )
-								{
-									try
-									{
-										json.Data = JSON.parse( json.Data );
-									} 
-									catch( e ) {  }
-								}
-								
-								return callback( true, json );
-							}
-						} 
-						catch( e ){ } 
-					}
-					
-					return callback( false, false );
-				}
-				m.execute( 'usersetupget', { id: id, authid: Application.authId } );*/
-				
-				
 				
 				getSystemSettings( function( config )
 				{
@@ -138,38 +107,6 @@ Sections.applications_liberator_servers = function( cmd, extra )
 			}
 			else
 			{
-				/*var m = new Module( 'mitra' );
-				m.onExecuted = function( e, d )
-				{
-					console.log( 'loadapplicationlist ', { e:e, d:d } );
-					
-					if( e == 'ok' && d )
-					{
-						try
-						{
-							var json = JSON.parse( d );
-							
-							if( json )
-							{
-								for( var i in json )
-								{
-									if( json[i] && json[i].Data )
-									{
-										json[i].Data = JSON.parse( json[i].Data );
-									}
-								}
-								
-								return callback( true, json );
-							}
-						} 
-						catch( e ){ } 
-					}
-					
-					return callback( false, false );
-				}
-				m.execute( 'loadapplicationlist', { admin: true, authid: Application.authId } );*/
-				
-				
 				
 				getSystemSettings( function( config )
 				{
@@ -177,8 +114,6 @@ Sections.applications_liberator_servers = function( cmd, extra )
 					// Create groups ...
 					
 					//guacAdminCreateConnectionGroups( config );
-					
-					
 					
 					guacAdminListServers( config, function( e, d )
 					{
@@ -289,7 +224,7 @@ Sections.applications_liberator_servers = function( cmd, extra )
 		if( callback && details && details.obj )
 		{
 			
-			var m = new Module( 'liberator' );
+			var m = new Module( 'friendrds' );
 			m.onExecuted = function( e, d )
 			{
 				var json = null;
@@ -343,62 +278,7 @@ Sections.applications_liberator_servers = function( cmd, extra )
 				
 			}
 			m.execute( 'list', { installPath: ( details.obj.protocol+'://'+details.hostname+(details.port?':'+details.port:'')+'/'+details.obj.identifier+'/' ) } );
-			
-			
-					
-			/*var mm = new Module( 'mitra' );
-			mm.onExecuted = function( e, d )
-			{
-				var json = null;
-				
-				if( e == 'ok' && d )
-				{
-					try
-					{
-						json = JSON.parse( d );
-					
-						if( json )
-						{
-							//
-							
-							if( json.appkeys )
-							{
-								return callback( true, json.appkeys );
-							}
-						}
-					} 
-					catch( e ){ } 
-				}
-				
-				console.log( 'loadmitrasettings ', { e:e, d:(json?json:d) } );
-				
-				return callback( false, false );
-			}
-			mm.execute( 'loadmitrasettings', { 'extended' : 'true' } );*/
-			
-			/*var m = new Module( 'mitra' );
-			m.onExecuted = function( e, d )
-			{
-				console.log( 'loadapplicationlist ', { e:e, d:d } );
-				
-				if( e == 'ok' && d )
-				{
-					try
-					{
-						var json = JSON.parse( d );
-					
-						if( json )
-						{
-							return callback( true, json );
-						}
-					} 
-					catch( e ){ } 
-				}
-				
-				return callback( false, false );
-			}
-			m.execute( 'loadapplicationlist' );*/
-			
+						
 			return true;
 		}
 		
@@ -415,7 +295,7 @@ Sections.applications_liberator_servers = function( cmd, extra )
 		if( callback && details && details.obj )
 		{
 			
-			var ssh = new Module( 'liberator' );
+			var ssh = new Module( 'friendrds' );
 			ssh.onExecuted = function( e, d )
 			{
 				
@@ -615,7 +495,7 @@ Sections.applications_liberator_servers = function( cmd, extra )
 	function guacAdminListConnectionGroups( config, callback, groups )
 	{
 		
-		// _Liberator
+		// _FriendRDS
 		// _Servers
 		// _Users
 		
@@ -665,7 +545,7 @@ Sections.applications_liberator_servers = function( cmd, extra )
 								
 								var count = 0;
 								
-								var names = [ '_Liberator', '_Servers', '_Users' ];
+								var names = [ '_FriendRDS', '_Servers', '_Users' ];
 								
 								groups = {};
 								
@@ -1270,7 +1150,7 @@ Sections.applications_liberator_servers = function( cmd, extra )
 					'Parameters' : args
 				};
 				
-				var mm = new Module( 'liberator' );
+				var mm = new Module( 'friendrds' );
 				mm.onExecuted = function( e, d )
 				{
 					if( 1==1 || ShowLog ) console.log( 'liberator app save ', { e:e, d:d, args: 
@@ -2008,7 +1888,7 @@ Sections.applications_liberator_servers = function( cmd, extra )
 				xhr1.setRequestHeader( "Content-Type", "application/json;charset=UTF-8" );
 				xhr1.send( JSON.stringify( {
 					'parentIdentifier'         : 'ROOT',
-					'name'                     : '_Liberator',
+					'name'                     : '_FriendRDS',
 					'type'                     : 'ORGANIZATIONAL',
 					'attributes'               : {
 					'max-connections'          : '',
@@ -2077,7 +1957,7 @@ Sections.applications_liberator_servers = function( cmd, extra )
 				{
 					// This is the hard delete method, used by admins ...
 					
-					var m = new Module(	'liberator' );
+					var m = new Module(	'friendrds' );
 					m.onExecuted = function( e, d )
 					{
 						if( e == 'ok' )
@@ -2529,7 +2409,7 @@ Sections.applications_liberator_servers = function( cmd, extra )
 		}
 		
 		// Get the user details template
-		var d = new File( 'Progdir:Templates/application_liberator_servers_details.html' );
+		var d = new File( 'Progdir:Templates/application_friendrds_servers_details.html' );
 		
 		// Add all data for the template
 		d.replacements = {

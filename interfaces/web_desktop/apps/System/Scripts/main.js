@@ -93,12 +93,12 @@ function refreshSidebar( show )
 				showing: isAdmin,
 				display: ( show ? true : false )
 			},
-			'Liberator': {
+			'FriendRDS': {
 				icon: 'fa-info-circle',
 				name: i18n( 'i18n_link_friendrds' ),
 				showing: isAdmin,
 				display: true,
-				childs: /*false*/{
+				childs: {
 					'Servers': { 
 						icon: 'fa-info-circle',
 						name: i18n( 'i18n_link_servers' ),

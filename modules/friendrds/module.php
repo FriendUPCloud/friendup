@@ -258,8 +258,6 @@ if( $args->command )
 			
 			break;
 		
-		//module=friendrds&command=getappicon&app=paint
-		
 		case 'getappicon':
 			
 			if( $args->appid && $args->appname )
