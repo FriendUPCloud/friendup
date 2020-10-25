@@ -333,6 +333,27 @@ function ResizeWindow( div, wi, he, mode, depth )
 	if ( !wi || wi == 'false' ) wi = div.content ? div.content.offsetWidth  : div.offsetWidth;
 	if ( !he || he == 'false' ) he = div.content ? div.content.offsetHeight : div.offsetHeight;
 
+	// Could be we are using percentages (and floating screens sometimes)
+	let fwp = fhp = false;
+	let fw = div.windowObject.flags.width;
+	let fh = div.windowObject.flags.height;
+	if( typeof( fw ) == 'string' && fw.substr( -1, 1 ) == '%' )
+	{
+		if( div.windowObject.screen )
+		{
+			fwp = true;
+			wi = div.windowObject.screen.contentDiv.offsetWidth / 100 * parseInt( fw );
+		}
+	}
+	if( typeof( fh ) == 'string' && fh.substr( -1, 1 ) == '%' )
+	{
+		if( div.windowObject.screen )
+		{
+			fhp = true;
+			he = div.windowObject.screen.contentDiv.offsetHeight / 100 * parseInt( fh );
+		}
+	}
+
 	wi = parseInt( wi );
 	he = parseInt( he );
 
@@ -420,10 +441,10 @@ function ResizeWindow( div, wi, he, mode, depth )
 	else if( he >= fmaxh ) he = fmaxh;
 
 	// Absolute minimum windows
-	if( wi < 160 ) wi = 160;
-	if( he < 60 ) he = 60;
+	if( !fwp && wi < 160 ) wi = 160;
+	if( !fhp && he < 60 ) he = 60;
 	
-	// Set the width and height
+	// Set the width and height (check percentages!)
 	div.style.width  = wi + 'px';
 	div.style.height = he + 'px';
 
@@ -497,9 +518,9 @@ function ResizeWindow( div, wi, he, mode, depth )
 	}
 	
 	// If we're a floating screen, do the resize event on the screen
-	if( div.windowObject.flags.screen )
+	if( div.windowObject.floatingScreen )
 	{
-		div.windowObject.flags.screen.resize();
+		div.windowObject.floatingScreen.resize();
 	}
 }
 
@@ -2338,6 +2359,8 @@ var View = function( args )
 				{
 					divParent = document.body;
 				}
+				if( flags[ 'drop-shadow' ] )
+					div.style.boxShadow = flags[ 'drop-shadow' ];
 			}
 			
 			// Designate
@@ -4999,6 +5022,9 @@ var View = function( args )
 				break;
 			case 'fullscreenenabled':
 				this.flags.fullscreenenabled = value;
+				break;
+			case 'drop-shadow':
+				this.flags[ 'drop-shadow' ] = value;
 				break;
 			case 'transparent':
 				this.flags.transparent = value;

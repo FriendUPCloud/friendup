@@ -175,6 +175,7 @@ Screen = function ( flags, initObject )
 				height: this._flags[ 'height' ] ? this._flags[ 'height' ] : 640
 			} );
 			self.windowObject.content.appendChild( div );
+			self.windowObject.floatingScreen = self;
 			self.windowObject.onClose = function()
 			{
 				self.close();
@@ -213,8 +214,10 @@ Screen = function ( flags, initObject )
 				for( var a in movableWindows )
 				{
 					var w = movableWindows[ a ].windowObject;
+					if( !w.screen || w.screen != self ) continue;
 					
 					var v = w._window.parentNode;
+					
 					if( w.flags.maximized || w.flags.width == 'max' || ( movableWindows[ a ].zoom && movableWindows[ a ].zoom.mode == 'maximized' ) )
 					{
 						v.setAttribute( 'moving', 'moving' );
