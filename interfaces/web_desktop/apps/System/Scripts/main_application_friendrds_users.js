@@ -192,6 +192,8 @@ Sections.applications_friendrds_users = function( cmd, extra )
 					
 		userids : function ( users )
 		{
+			// TODO: Look at this ...
+			
 			var ids = {};
 			
 			if( users )
@@ -214,6 +216,8 @@ Sections.applications_friendrds_users = function( cmd, extra )
 			
 			switch( mode )
 			{
+				
+				// TODO: Check this ...
 				
 				case 'users':
 					
@@ -250,7 +254,7 @@ Sections.applications_friendrds_users = function( cmd, extra )
 		
 		// Users --------------------------------------------------------------------------------------------
 		
-		users : function ( func, users )
+		users : function ( func, users, options )
 		{
 			
 			// Editing Users
@@ -277,6 +281,8 @@ Sections.applications_friendrds_users = function( cmd, extra )
 						ge( 'UsersSearchCancelBtn' ).classList.add( 'Closed' );
 					}
 					
+					// TODO: Look at this ...
+					
 					var o = ge( 'UsersGui' ); if( o ) o.innerHTML = '<input type="hidden" id="WorkgroupUsers">';
 					
 					this.func.updateids( 'users' );
@@ -298,7 +304,7 @@ Sections.applications_friendrds_users = function( cmd, extra )
 									'element' : function( _this ) 
 									{
 										var d = document.createElement( 'div' );
-										d.className = 'PaddingSmall HContent40 FloatLeft'/*  + ( hidecol ? ' Closed' : '' )*/;
+										d.className = 'PaddingSmall HContent40 FloatLeft';
 										d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
 										d.ele = this;
 										d.onclick = function(  )
@@ -312,7 +318,7 @@ Sections.applications_friendrds_users = function( cmd, extra )
 									'element' : function( _this ) 
 									{
 										var d = document.createElement( 'div' );
-										d.className = 'PaddingSmall HContent25 FloatLeft Relative'/*  + ( hidecol ? ' Closed' : '' )*/;
+										d.className = 'PaddingSmall HContent25 FloatLeft Relative';
 										d.innerHTML = '<strong>' + i18n( 'i18n_username' ) + '</strong>';
 										d.ele = this;
 										d.onclick = function(  )
@@ -326,7 +332,7 @@ Sections.applications_friendrds_users = function( cmd, extra )
 									'element' : function( _this ) 
 									{
 										var d = document.createElement( 'div' );
-										d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Relative'/* + ( hidecol ? ' Closed' : '' )*/;
+										d.className = 'PaddingSmall HContent20 TextCenter FloatLeft Relative';
 										d.innerHTML = '<strong>' + i18n( 'i18n_status' ) + '</strong>';
 										d.ele = this;
 										d.onclick = function(  )
@@ -376,6 +382,8 @@ Sections.applications_friendrds_users = function( cmd, extra )
 					// TODO: Refresh and list only added users to workgroups because of server search ...
 					
 					if( users ) console.log( 'users list: ', users );
+					
+					var list = ( users ? users : list );
 					
 					var ii = 0;
 					
@@ -431,11 +439,6 @@ Sections.applications_friendrds_users = function( cmd, extra )
 															d.setAttribute( 'Status', status[ ( list[k].Status ? list[k].Status : 0 ) ] );
 															//d.className = 'IconSmall NegativeAlt fa-user-circle-o avatar';
 															d.className = 'IconSmall fa-user-circle-o avatar';
-															//d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
-															//d.style.backgroundSize = 'contain';
-															//d.style.width = '24px';
-															//d.style.height = '24px';
-															//d.style.display = 'block';
 															d.style.position = 'relative';
 															return d;
 														}(), 
@@ -454,8 +457,8 @@ Sections.applications_friendrds_users = function( cmd, extra )
 																		d.style.position = 'absolute';
 																		d.style.top = '0';
 																		d.style.left = '0';
-																		d.style.width = '100%'/*'24px'*/;
-																		d.style.height = '100%'/*'24px'*/;
+																		d.style.width = '100%';
+																		d.style.height = '100%';
 																	}
 																	return d;
 																}()
@@ -510,59 +513,71 @@ Sections.applications_friendrds_users = function( cmd, extra )
 																'PERM_USER_GLOBAL',        'PERM_USER_WORKGROUP' 
 															] ) )
 															{
-																var b = document.createElement( 'button' );
-																b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
-																b.onclick = function(  )
+																if( !options || !options['actions'] || options['actions']['list'] )
 																{
-																
-																	var pnt = this.parentNode.parentNode;
-																
-																	removeBtn( this, { ids: ids, id: id, func: func, pnt: pnt }, function ( args )
+																	if( options['actions']['list'] )
 																	{
-																	
-																		if( ShowLog ) console.log( 'removeUser( '+args.id+', '+info.ID+', callback, vars )' );
-																	
-																		removeUser( args.id, info.ID, function( e, d, vars )
+																		console.log( options['actions']['list'] );
+																	}
+																	else
+																	{
+																		var b = document.createElement( 'button' );
+																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																		b.onclick = function(  )
 																		{
-																		
-																			if( e && vars )
+																
+																			var pnt = this.parentNode.parentNode;
+																	
+																			// TODO: Look at this ...
+																	
+																			removeBtn( this, { ids: ids, id: id, func: func, pnt: pnt }, function ( args )
 																			{
-																				vars.func.updateids( 'users', vars.uid, false );
-																			
-																				if( vars.pnt )
+																	
+																				if( ShowLog ) console.log( 'removeUser( '+args.id+', '+info.ID+', callback, vars )' );
+																	
+																				removeUser( args.id, info.ID, function( e, d, vars )
 																				{
-																					vars.pnt.innerHTML = '';
-																				}
-																				
-																				if( ge( 'AdminUsersCount' ) )
-																				{
-																					if( ge( 'AdminUsersCount' ).innerHTML )
+																		
+																					if( e && vars )
 																					{
-																						var count = ge( 'AdminUsersCount' ).innerHTML.split( '(' ).join( '' ).split( ')' ).join( '' );
-																						
-																						if( count && count > 0 )
+																						vars.func.updateids( 'users', vars.uid, false );
+																			
+																						if( vars.pnt )
 																						{
-																							var result = ( count - 1 );
-				
-																							if( result >= 0 )
+																							vars.pnt.innerHTML = '';
+																						}
+																				
+																						if( ge( 'AdminUsersCount' ) )
+																						{
+																							if( ge( 'AdminUsersCount' ).innerHTML )
 																							{
-																								ge( 'AdminUsersCount' ).innerHTML = '(' + result + ')';
+																								var count = ge( 'AdminUsersCount' ).innerHTML.split( '(' ).join( '' ).split( ')' ).join( '' );
+																						
+																								if( count && count > 0 )
+																								{
+																									var result = ( count - 1 );
+				
+																									if( result >= 0 )
+																									{
+																										ge( 'AdminUsersCount' ).innerHTML = '(' + result + ')';
+																									}
+																								}
 																							}
 																						}
 																					}
-																				}
-																			}
-																			else
-																			{
-																				if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
-																			}
+																					else
+																					{
+																						if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+																					}
 																		
-																		}, { uid: args.id, func: func, pnt: pnt } );
+																				}, { uid: args.id, func: func, pnt: pnt } );
 																	
-																	} );
+																			} );
 																
-																};
-																return b;
+																		};
+																		return b;
+																	}
+																}
 															}
 														}( this.ids, list[k].ID, this.func ) 
 													}
@@ -621,14 +636,14 @@ Sections.applications_friendrds_users = function( cmd, extra )
 					
 					if( users ) console.log( 'users edit: ', users );
 					
-					list = ( users ? users : list );
+					var list = ( users ? users : list );
 					
 					if( list )
 					{
 						
 						// TODO: Find a way to only list head if not listed before, don't add multiple times, because of server search feature ...
 						
-						if( !users ) this.head( true );
+						this.head();
 						
 						var o = ge( 'UsersInner' ); if( this.func.mode[ 'users' ] != 'edit' ) o.innerHTML = '';
 						
@@ -681,11 +696,6 @@ Sections.applications_friendrds_users = function( cmd, extra )
 																d.setAttribute( 'Status', status[ ( list[k].Status ? list[k].Status : 0 ) ] );
 																//d.className = 'IconSmall NegativeAlt fa-user-circle-o avatar';
 																d.className = 'IconSmall fa-user-circle-o avatar';
-																//d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
-																//d.style.backgroundSize = 'contain';
-																//d.style.width = '24px';
-																//d.style.height = '24px';
-																//d.style.display = 'block';
 																d.style.position = 'relative';
 																return d;
 															}(), 
@@ -704,8 +714,8 @@ Sections.applications_friendrds_users = function( cmd, extra )
 																			d.style.position = 'absolute';
 																			d.style.top = '0';
 																			d.style.left = '0';
-																			d.style.width = '100%'/*'24px'*/;
-																			d.style.height = '100%'/*'24px'*/;
+																			d.style.width = '100%';
+																			d.style.height = '100%';
 																		}
 																		return d;
 																	}()
@@ -753,76 +763,89 @@ Sections.applications_friendrds_users = function( cmd, extra )
 														{ 
 															'element' : function( ids, id, func ) 
 															{
-																var b = document.createElement( 'button' );
-																b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( toggle ? 'on' : 'off' );
-																b.onclick = function(  )
+																if( !options || !options['actions'] || options['actions']['edit'] )
 																{
-																	if( this.classList.contains( 'fa-toggle-off' ) )
+																	if( options['actions']['edit'] )
 																	{
-																	
-																		if( ShowLog ) console.log( 'addUser( '+id+', '+info.ID+', callback, vars )' );
-																	
-																		addUser( id, info.ID, function( e, d, vars )
-																		{
-																		
-																			if( e && vars )
-																			{
-																				vars.func.updateids( 'users', vars.uid, true );
-																			
-																				vars._this.classList.remove( 'fa-toggle-off' );
-																				vars._this.classList.add( 'fa-toggle-on' );
-																			}
-																			else
-																			{
-																				if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
-																			}
-																		
-																		}, { uid: id, func: func, _this: this } );
-																	
+																		console.log( options['actions']['edit'] );
 																	}
 																	else
 																	{
-																	
-																		if( ShowLog ) console.log( 'removeUser( '+id+', '+info.ID+', callback, vars )' );
-																	
-																		removeUser( id, info.ID, function( e, d, vars )
+																		var b = document.createElement( 'button' );
+																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( toggle ? 'on' : 'off' );
+																		b.onclick = function(  )
 																		{
-																		
-																			if( e && vars )
+																
+																			// TODO: Look at this ...
+																	
+																			if( this.classList.contains( 'fa-toggle-off' ) )
 																			{
-																				vars.func.updateids( 'users', vars.uid, false );
-																			
-																				vars._this.classList.remove( 'fa-toggle-on' );
-																				vars._this.classList.add( 'fa-toggle-off' );
-																				
-																				if( ge( 'AdminUsersCount' ) )
+																	
+																				if( ShowLog ) console.log( 'addUser( '+id+', '+info.ID+', callback, vars )' );
+																	
+																				addUser( id, info.ID, function( e, d, vars )
 																				{
-																					if( ge( 'AdminUsersCount' ).innerHTML )
+																		
+																					if( e && vars )
 																					{
-																						var count = ge( 'AdminUsersCount' ).innerHTML.split( '(' ).join( '' ).split( ')' ).join( '' );
-																						
-																						if( count && count > 0 )
-																						{
-																							var result = ( count - 1 );
-				
-																							if( result >= 0 )
-																							{
-																								ge( 'AdminUsersCount' ).innerHTML = '(' + result + ')';
-																							}
-																						}
+																						vars.func.updateids( 'users', vars.uid, true );
+																			
+																						vars._this.classList.remove( 'fa-toggle-off' );
+																						vars._this.classList.add( 'fa-toggle-on' );
 																					}
-																				}
+																					else
+																					{
+																						if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+																					}
+																		
+																				}, { uid: id, func: func, _this: this } );
+																	
 																			}
 																			else
 																			{
-																				if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
-																			}
-																		
-																		}, { uid: id, func: func, _this: this } );
 																	
+																				if( ShowLog ) console.log( 'removeUser( '+id+', '+info.ID+', callback, vars )' );
+																	
+																				removeUser( id, info.ID, function( e, d, vars )
+																				{
+																		
+																					if( e && vars )
+																					{
+																						vars.func.updateids( 'users', vars.uid, false );
+																			
+																						vars._this.classList.remove( 'fa-toggle-on' );
+																						vars._this.classList.add( 'fa-toggle-off' );
+																				
+																						if( ge( 'AdminUsersCount' ) )
+																						{
+																							if( ge( 'AdminUsersCount' ).innerHTML )
+																							{
+																								var count = ge( 'AdminUsersCount' ).innerHTML.split( '(' ).join( '' ).split( ')' ).join( '' );
+																						
+																								if( count && count > 0 )
+																								{
+																									var result = ( count - 1 );
+				
+																									if( result >= 0 )
+																									{
+																										ge( 'AdminUsersCount' ).innerHTML = '(' + result + ')';
+																									}
+																								}
+																							}
+																						}
+																					}
+																					else
+																					{
+																						if( ShowLog ) console.log( { e:e, d:d, vars: vars } );
+																					}
+																		
+																				}, { uid: id, func: func, _this: this } );
+																	
+																			}
+																		};
+																		return b;
 																	}
-																};
-																return b;
+																}
 															}( this.ids, list[k].ID, this.func ) 
 														}
 													]
@@ -1112,6 +1135,8 @@ Sections.applications_friendrds_users = function( cmd, extra )
 					
 				case 'edit':
 					
+					// TODO: Add init stuff ...
+					
 					init.edit( users );
 					
 					break;
@@ -1123,6 +1148,10 @@ Sections.applications_friendrds_users = function( cmd, extra )
 					break;
 				
 				default:
+					
+					// TODO: Look at this ...
+					
+					//if( !options || !options['actions'] || options['actions']['add'] )
 					
 					var etn = ge( 'UsersEdit' );
 					if( etn )
@@ -1215,12 +1244,47 @@ Sections.applications_friendrds_users = function( cmd, extra )
 		if( checkedGlobal || checkedWorkgr )
 		{
 			
+			var str = '';
+			
+			// TODO: Add hamburger menu ...
+			
+			str += '<div id="AdminUsersContainer">';
+			str += '	<div class="HRow BackgroundNegative Negative Padding">';
+			str += '		<div class="PaddingSmall HContent40 FloatLeft">';
+			str += '			<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed" id="UsersEditBack"></button>';
+			str += '			<h3 class="NoMargin FloatLeft">';
+			str += '				<strong>' + i18n( 'i18n_users' ) + ' </strong>';
+			str += '				<span id="AdminUsersCount">(0)</span>';
+			str += '			</h3>';
+			str += '		</div>';
+			str += '		<div class="PaddingSmall HContent45 FloatLeft Relative">';
+			str += '			<button class="IconButton IconSmall ButtonSmall fa-times-circle Closed" style="position:absolute;right:0;margin-top:-2px;margin-right:-2px;" id="UsersSearchCancelBtn"></button>';
+			str += '			<input type="text" class="FullWidth" placeholder="' + i18n( 'i18n_search' ) + '" style="padding-right:21px">';
+			str += '		</div>';
+			str += '		<div class="PaddingSmall HContent15 FloatLeft Relative">';
+			str += '			<button class="IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle Open" id="UsersEdit"></button>';
+			str += '		</div>';
+			str += '	</div>';
+			str += '	<div id="UsersGui"></div>';
+			str += '</div>';
+			
+			var o = ge( 'FriendRDSUsersList' ); if( o ) o.innerHTML = str;
+			
 			// Get the user list
 			list( function( res, dat )
 			{
 				//console.log( { e:res, d:dat } );
 				
-				func.users( dat );
+				// TODO: Send in functions for adding, editing, deleting users ... and also column listings ...
+				
+				func.users( 'edit', dat, { 
+					'columns' : [ 'FullName', 'Name', 'Status', 'LoginTime' ], 
+					'actions' : { 
+						'add'  : false, 
+						'list' : false, 
+						'edit' : 'editUsers' 
+					}
+				} );
 				
 				
 				
