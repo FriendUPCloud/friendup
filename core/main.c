@@ -244,7 +244,7 @@ int main( int argc, char *argv[])
 }
 
 #define MAX_STACK_FRAMES 64
-#define USE_SYSTEM
+//#define USE_SYSTEM
 
 //Based on https://spin.atomicobject.com/2013/01/13/exceptions-stack-traces-c/
 static void crash_handler(int sig __attribute__((unused))){

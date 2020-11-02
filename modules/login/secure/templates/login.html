@@ -59,7 +59,7 @@
 					<hr/>
 					<div id="compatability" class="HRow MarginTop BorderTop HideForPass">
 						<p><strong>Compatibility information:</strong></p>
-						<p>Please use Google Chrome or Samsung Internet. Experimental support for Safari, Opera, Firefox and MS Edge.</p>
+						<p>Please use Google Chrome, Firefox. Experimental support for Safari, Opera and MS Edge.</p>
 					</div>
 				</div>
 			</div>
@@ -116,7 +116,7 @@
 					
 					this.login( htmlentities( Trim( ge( 'Username' ).value ) ), Trim( ge( 'Password' ).value ), ge( 'remember' ).checked, function( result, answer )
 					{
-						//console.log( { result: result, answer: answer } );
+						console.log( { result: result, answer: answer } );
 						
 						var tmp;
 						if( answer )
@@ -164,15 +164,16 @@
 								
 								ga( 'send', 'event', 'userloginsuccess', htmlentities( Trim( usr ) ) );	
 							}
+							parent.Workspace.showDesktop();
 							Application.busy = false;
 						}
-					}, e );
+					}, e, { hashedPassword: true } );
 					
 					
 					
 				},
 				
-				login: function( u, p, r, callback, ev )
+				login: function( u, p, r, callback, ev, flags )
 				{
 					var _this = parent.Workspace;
 					
@@ -252,7 +253,12 @@
 											//console.log( '--- localStorage --- ', window.localStorage );
 										}
 										
-										return _this.loginSessionId( json.sessionid, ( callback && typeof( callback ) == 'function' ? callback( true ) : false ) );
+										// TODO: loginSessionId doesn't return json.username and that is why this method is deprecated ... login should support keypair login in FriendCore ...
+										
+										Application.errorMessage = 'Login with sessionid is deprecated ... username is not returned on login call, call system admin to fix this. Optimal would be keypair login ...';
+										
+										parent.Friend.User.Init();
+										return _this.loginSessionId( json.sessionid, ( callback && typeof( callback ) == 'function' ? callback : false ) );
 									}
 									else
 									{
