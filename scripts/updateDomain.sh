@@ -1,12 +1,10 @@
 #!/bin/sh
 
 #
-# Friend Core, Friend Chat and Friend Network installation script
+# Update domain in multiple config files and add proxy setup for friend to apache config
 #
-# This script will install the necessary components to make the Friend servers
-# run on your machine.
-# It will save all the recorded information so that you do not have to type
-# them the next time you run the script.
+# $1 FQDN to update to, required
+# $2 Pattern to search for, optional. Defaults to {YourDomain}
 #
 
 DOMAIN=$1
@@ -34,14 +32,14 @@ fi
 
 FBUILD="$FRIEND/build"
 
-# PATHS
+# Config files
 APACHE="/etc/apache2/sites-available/000-default.conf"
 CFG="$FBUILD/cfg/cfg.ini"
 PRESENCE="$FBUILD/services/Presence/config.js"
 HELLO="$FBUILD/services/FriendChat/config.js"
 HELLO_CLIENT="$FBUILD/resources/webclient/apps/FriendChat/local.config.js"
 
-# CHECk
+# check
 check_file_exists(){
 	if [ -f "$1" ]; then
 		echo "found: $1"
@@ -80,15 +78,20 @@ sudo ln -s /etc/letsencrypt/live/$DOMAIN/fullchain.pem certificate.pem
 sudo ln -s /etc/letsencrypt/live/$DOMAIN/privkey.pem key.pem
 sudo chmod +r  /etc/letsencrypt/archive/$DOMAIN/privkey1.pem
 
-# insert the thing into apache conf
-TCONF="$FRIEND/scripts/tobbans_special_sauce.txt"
-ASSLCONF="/etc/apache2/sites-available/000-default-le-ssl.conf"
-sudo sed -i "/DocumentRoot \/var\/www\/html/ r $TCONF" $ASSLCONF
+# insert friend proxy setup into apache conf if its not already set
 
-# restart
+TCONF="$FRIEND/scripts/apache_proxy_conf.txt"
+ASSLCONF="/etc/apache2/sites-available/000-default-le-ssl.conf"
+PROXY_SET=$(grep -c '<Location \/fcws>' $ASSLCONF)
+if [ 0 != $PROXY_SET ]; then
+	echo 'proxy setup found, skipping'
+else
+	echo 'adding friend proxy setup to apache'
+	sudo sed -i "/DocumentRoot \/var\/www\/html/ r $TCONF" $ASSLCONF
+fi
+
+# restart the things
 sudo /etc/init.d/apache2 restart
 sudo systemctl restart friendcore
 sudo systemctl restart friendchat-server
 sudo systemctl restart presence-server
-#sudo systemctl stop friendchat-server && sudo systemctl stop presence-server
-#sudo systemctl start friendchat-server  && sudo systemctl start presence-server
