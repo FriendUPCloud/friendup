@@ -39,6 +39,7 @@ APACHE="/etc/apache2/sites-available/000-default.conf"
 CFG="$FBUILD/cfg/cfg.ini"
 PRESENCE="$FBUILD/services/Presence/config.js"
 HELLO="$FBUILD/services/FriendChat/config.js"
+HELLO_CLIENT="$FBUILD/resources/webclient/apps/FriendChat/local.config.js"
 
 # CHECk
 check_file_exists(){
@@ -54,6 +55,7 @@ check_file_exists "$APACHE"
 check_file_exists "$CFG"
 check_file_exists "$PRESENCE"
 check_file_exists "$HELLO"
+check_file_exists "$HELLO_CLIENT"
 
 # set domain
 
@@ -61,6 +63,7 @@ sudo sed -i "s/$NEEDLE/$DOMAIN/g" $APACHE
 sed -i "s/$NEEDLE/$DOMAIN/g" $CFG
 sed -i "s/$NEEDLE/$DOMAIN/g" $PRESENCE
 sed -i "s/$NEEDLE/$DOMAIN/g" $HELLO
+sed -i "s/$NEEDLE/$DOMAIN/g" $HELLO_CLIENT
 
 #restart apache
 sudo /etc/init.d/apache2 restart
