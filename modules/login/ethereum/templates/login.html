@@ -84,7 +84,7 @@
 				},
 				loginUser: function()
 				{
-					if( parent && parent.Workspace && parent.Friend && Friend.User )
+					if( parent && parent.Workspace && parent.Friend && parent.Friend.User )
 					{
 						// Don't do it many times while working!
 						if( Application.busy ) return;
@@ -112,7 +112,7 @@
 							{
 								Application.busy = false;
 							}
-						}, e, { hashedPassword: Application.pHash ? true : false } );
+						}, false, { hashedPassword: Application.pHash ? true : false } );
 					}
 					else
 					{

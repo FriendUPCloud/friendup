@@ -223,6 +223,8 @@
 								
 								//
 								
+								console.log( 'TODO: This is deprecated because of changes to the Friend login code, we need a rewrite here ...' );
+								
 								var json = JSON.parse( decrypted );
 								
 								if( json )
@@ -238,13 +240,15 @@
 										*/
 										if( r && _this.encryption.keys.client )
 										{
-											parent.ApplicationStorage.save( {
+											console.log( 'localStorage should not be used for storing privatekey and sensitive data anymore ...' );
+											
+											/*parent.ApplicationStorage.save( {
 												privatekey  : _this.encryption.keys.client.privatekey, 
 												publickey   : _this.encryption.keys.client.publickey, 
 												username    : ( u ? u : ( Application.keys ? Application.keys.username : '' ) ),
 												recoverykey : _this.encryption.keys.client.recoverykey 
 											},
-											{ applicationName : 'Workspace' } );
+											{ applicationName : 'Workspace' } );*/
 											
 											//console.log( '--- localStorage (remember) --- ', window.localStorage );
 										}
