@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html>
+	<title>Friend UP</title>
+	<head>
+		<script onload="" src="/webclient/js/apps/api.js"></script>
+	</head>
+	<body class="Loading" onload="">
+		<div id="LoginElement" style="visibility: hidden">
+			<div class="VContentTop">
+				<div class="Logo" style="cursor: pointer" onclick="document.location.reload()">
+					FriendUP
+				</div>
+				<h1>
+					{welcome}
+				</h1>
+				<div class="Box">
+					<form method="post" onsubmit="return false">
+						<div class="HRow">
+							<p>
+								<label id="UsernameLabel" for="Username">Login</label>
+							</p>
+							<p>
+								<input type="username" id="Username" class="FullWidth" onkeydown="Application.checkKeys(event)" autocapitalize="none" autocorrect="none" />
+							</p>
+						</div>
+						<div class="HRow MarginTop HideForPass">
+							<p>
+								<label id="PasswordLabel" for="Password">Password</label>
+							</p>
+							<p>
+								<input type="password" id="Password" class="FullWidth" onkeydown="Application.checkKeys(event)" />
+							</p>
+						</div>
+						<div class="HRow MarginTop HideForPass">
+							<p>
+								<a id="forgotPassword" href="javascript:Application.forgotPassword()">Forgot password</a>
+								<span> | </span>
+								<a href="{scriptpath}?module=fcdb">Login using Friend account</a>
+							</p>
+						</div>
+						<div class="HRow MarginTop">
+							<div class="HContent100">
+								<button id="loginButton" type="submit" class="IconSmall fa-unlock" onclick="Application.doLogin(event)">
+									Sign in
+								</button>
+								<div id="RememberMe">
+									<p class="Layout HideForPass" style="float: right; position: relative; top: 5px">
+										<label id="rememberLabel" for="remember">Remember me</label>
+									</p>
+									<p class="Layout HideForPass" style="float: right; position: relative; top: 7px">
+										<input type="checkbox" id="remember"/>
+									</p>
+								</div>
+								<div id="invalidLogin" class="Padding"><p>&nbsp;</p></div>
+							</div>
+						</div>
+						<input type="hidden" id="publickey" value="{publickey}"/>
+					</form>
+					<hr/>
+					<div id="compatability" class="HRow MarginTop BorderTop HideForPass">
+						<p><strong>Compatibility information:</strong></p>
+						<p>Please use Google Chrome, Firefox. Experimental support for Safari, Opera and MS Edge.</p>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script>
+			Application = {
+				failedAttempt: false,
+				passwordRecoveryMode: false,
+				loginUsername: false,
+				loginPassword: false,
+				
+				keys: parent.ApplicationStorage.load( { applicationName : 'Workspace' } ),
+				
+				init: function( data )
+				{
+					//
+				},
+				
+				doLogin: function( e )
+				{
+					
+					/*
+						in password recivery mode we do stuff a bit differently...
+					*/
+					if( this.passwordRecoveryMode )
+					{
+						
+						if( Trim( ge( 'Username' ).value ) == '')
+						{
+							ge( 'Username' ).focus();
+							document.getElementById( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = 'Enter your username!';
+							return;
+						}
+						document.getElementById( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = '';
+						parent.Workspace.resetPassword( Trim( ge( 'Username' ).value ), function( result ){
+							Application.forgotPassword();
+							if( document.getElementById('Username').value.indexOf('@') > 1 ) document.getElementById('Username').value = '';
+							document.getElementById( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = ( result == 'ok' ? 'Please check your inbox.' : 'Could not reset password.' );
+						});
+						return;
+					}
+					
+					// Don't do it many times while working!
+					if( this.busy ) return;
+					this.busy = true;
+					
+					if( this.failedAttempt )
+					{
+						document.getElementById("invalidLogin").getElementsByTagName("p")[0].innerHTML = 'Logging in...';
+					}
+					
+					//track users login..
+					if(typeof ga == "function" ) ga('send', 'event', 'userloginattempt', Trim( ge( 'Username' ).value ) );
+					
+					this.login( htmlentities( Trim( ge( 'Username' ).value ) ), Trim( ge( 'Password' ).value ), ge( 'remember' ).checked, function( result, answer )
+					{
+						console.log( { result: result, answer: answer } );
+						
+						var tmp;
+						if( answer )
+						{
+							//try to parse it...
+							try
+							{
+								tmp = JSON.parse( answer );
+							}
+							catch(e)
+							{
+								console.log('answer was not json --- ',answer);
+							}
+							if( tmp && tmp.response )
+							{								//check for block....
+								if( tmp.response.indexOf('account blocked until:') > -1 )
+								{
+									var ts = tmp.response.replace('account blocked until:','');
+									if( parseInt( ts ) > 0 )
+									{
+										Application.errorMessage = 'Account blocked (try again after ' + new Date( ts * 1000 ).toLocaleString() + ')';
+										showLoginError();  
+										return;
+									}
+
+								}
+							}
+						}
+						
+						if( result == false )
+						{
+							showLoginError();
+						}
+						else if( result == 0 )
+						{
+							setTimeout( showLoginError, 1000 );
+						}
+						// Success!
+						else
+						{
+							//track users login..
+							if( typeof ga == "function" )
+							{
+								var usr = ( ge( 'Username' ) && ge( 'Username' ).value ? ge( 'Username' ).value : ( Application.keys ? Application.keys.username : '' ) );
+								
+								ga( 'send', 'event', 'userloginsuccess', htmlentities( Trim( usr ) ) );	
+							}
+							parent.Workspace.showDesktop();
+							Application.busy = false;
+						}
+					}, e, { hashedPassword: true } );
+					
+					
+					
+				},
+				
+				login: function( u, p, r, callback, ev, flags )
+				{
+					var _this = parent.Workspace;
+					
+					if( u && p )
+					{
+						this.loginUsername = u;
+					
+						if( p.indexOf('HASHED') == 0 )
+						{
+							this.loginPassword = p;
+						}
+						else
+						{
+							this.loginPassword = 'HASHED' + Sha256.hash( p );
+						}
+					}
+					
+					if( r || ( this.loginUsername && this.loginPassword ) )
+					{
+						//_this.encryption.keys.server = ( ge( 'publickey' ) && ge( 'publickey' ).value ? { publickey: ge( 'publickey' ).value } : false );
+						_this.encryption.setKeys( this.loginUsername, this.loginPassword );
+						
+						var data = {
+							username: ( u ? u : ( Application.keys ? Application.keys.username : '' ) ),
+							publickey: _this.encryption.keys.client.publickey,
+							deviceid: _this.deviceid
+						};
+						
+						var m = new cAjax();
+						m.open( 'POST', '/loginprompt', true );
+						
+						if( 1!=1 && _this.encryption.keys.server.publickey )
+						{
+							m.addVar( 'encrypted', _this.encryption.encrypt( JSON.stringify( data ) ) );
+						}
+						else
+						{
+							m.addVar( 'data', JSON.stringify( data ) );
+						}
+						
+						m.onload = function()
+						{
+							var decrypted = _this.encryption.decrypt( this.responseText() );
+							
+							if( decrypted )
+							{
+								
+								//
+								
+								console.log( 'TODO: This is deprecated because of changes to the Friend login code, we need a rewrite here ...' );
+								
+								var json = JSON.parse( decrypted );
+								
+								if( json )
+								{
+									
+									var hasSessionID = ( json.sessionid && json.sessionid.length > 1 );
+									var hasLoginID = ( json.loginid && json.loginid.length > 1 );
+									
+									if( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 )
+									{
+										/*
+											r = remember me set....
+										*/
+										if( r && _this.encryption.keys.client )
+										{
+											console.log( 'localStorage should not be used for storing privatekey and sensitive data anymore ...' );
+											
+											/*parent.ApplicationStorage.save( {
+												privatekey  : _this.encryption.keys.client.privatekey, 
+												publickey   : _this.encryption.keys.client.publickey, 
+												username    : ( u ? u : ( Application.keys ? Application.keys.username : '' ) ),
+												recoverykey : _this.encryption.keys.client.recoverykey 
+											},
+											{ applicationName : 'Workspace' } );*/
+											
+											//console.log( '--- localStorage (remember) --- ', window.localStorage );
+										}
+										else
+										{
+											//console.log( '--- localStorage --- ', window.localStorage );
+										}
+										
+										// TODO: loginSessionId doesn't return json.username and that is why this method is deprecated ... login should support keypair login in FriendCore ...
+										
+										Application.errorMessage = 'Login with sessionid is deprecated ... username is not returned on login call, call system admin to fix this. Optimal would be keypair login ...';
+										
+										parent.Friend.User.Init();
+										return _this.loginSessionId( json.sessionid, ( callback && typeof( callback ) == 'function' ? callback : false ) );
+									}
+									else
+									{
+										//if( _this.loginPrompt )
+										//{
+										//	_this.loginPrompt.sendMessage( { command: 'error', other: 'test' } );
+										//}
+									}
+								}
+							}
+							
+							if( callback && typeof( callback ) == 'function' ) callback( false );
+						}
+						m.send();
+						
+					}
+					
+					return 0;
+				},
+				
+				checkKeys: function( e )
+				{
+					var k = e.which ? e.which : e.keyCode;
+					if( k == 13 )
+					{
+						this.doLogin( e );
+					}
+				},
+				
+				receiveMessage: function( msg )
+				{
+					//console.log( 'receiveMessage(login.html) ', msg );
+					
+					// TODO: Remove if not in any use ...
+					
+					if( msg.command && msg.command == 'error' )
+					{
+						showLoginError();
+					}
+					else if( msg.cmd && msg.cmd == 'login' )
+					{
+						ge( 'Username' ).value = msg.username;
+						ge( 'Password' ).value = msg.password;
+						
+					
+						Application.loginUser();
+					}
+				},
+				
+				forgotPassword : function()
+				{
+					document.getElementById( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = '';
+					if( Application.passwordRecoveryMode )
+					{
+						Application.passwordRecoveryMode = false;
+						document.getElementById('loginButton').classList.remove('FloatRight');
+						document.getElementById('loginButton').innerHTML = ' &nbsp; Log in';
+						document.getElementById('UsernameLabel').innerHTML = 'Login';
+						document.getElementById('forgotPassword').innerHTML = 'Forgot password';
+						document.querySelectorAll('.HideForPass').forEach(function( thisNode ) {
+							thisNode.style.display = thisNode.dataset.oldDisplay;
+						});	
+						document.getElementById('loginButton').classList.remove( 'Forgot' );
+						
+						return;
+					}
+					
+					Application.passwordRecoveryMode = true;
+					document.querySelectorAll('.HideForPass').forEach(function( thisNode ) {
+						thisNode.dataset.oldDisplay = thisNode.style.display;
+						thisNode.style.display = 'none';
+					});	
+					document.getElementById('loginButton').classList.add('FloatRight');
+					document.getElementById('loginButton').innerHTML = ' &nbsp; Request new password';
+					document.getElementById('loginButton').classList.add( 'Forgot' );
+					document.getElementById('UsernameLabel').innerHTML = 'Username / e-mail:';
+					document.getElementById('forgotPassword').innerHTML = 'Return to login form';
+				}
+								
+			};
+			
+			function showLoginError()
+			{
+				parent.Workspace.loginPrompt.setFlag( 'height', 263 );
+				document.getElementById( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = ( Application.errorMessage ? Application.errorMessage : 'Invalid credentials. Please check your input.');
+				document.getElementById( 'Username' ).focus();
+				Application.failedAttempt = true;
+				Application.busy = false;
+				document.getElementById('LoginElement').style.visibility = 'visible';
+			}
+			
+			// Focus the username field
+			function loginNow( e )
+			{
+				var keys = Application.keys;
+				
+				Application.applicationId = 'loginprompt';
+				
+				if( keys && keys.username )
+				{
+					ge( 'remember' ).checked = true;
+					Application.doLogin( e );
+				}
+				else if( document.body.className == 'Loading' )
+				{
+					return setTimeout( loginNow, 50 );
+				}
+				else
+				{
+					document.getElementById('LoginElement').style.visibility = 'visible'
+					document.getElementById('Username').focus(); 
+				}
+			}
+			
+			setTimeout( loginNow, 150 );
+		</script>
+		<script>
+			if( document.location.href.indexOf( 'friendsky.cloud' ) >= 0 )
+			{
+				(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+				(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+				m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+				})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+				ga('create', 'UA-64441212-5', 'auto');
+				ga('send', 'pageview');			  
+				ga( 'send', 'event', 'logindisplay', document.location.href );
+			}
+		</script>
+	</body>
+</html>
