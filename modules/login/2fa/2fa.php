@@ -15,13 +15,6 @@
 			{
 				if( $keys->privatekey )
 				{
-					/*$decrypted = $fcrypt->decryptString( $args->encrypted, $keys->privatekey );
-					
-					if( $decrypted && $decrypted->plaintext )
-					{
-						$json = json_decode( $decrypted->plaintext );
-					}*/
-					
 					if( $decrypted = $fcrypt->decryptRSA( $args->encrypted, $keys->privatekey ) )
 					{
 						$json = json_decode( $decrypted );
@@ -36,9 +29,6 @@
 				// TODO: Find out why this didn't work ???
 				//$encrypted = $fcrypt->encryptRSA( json_encode( $json ), $args->publickey );
 				//die( $encrypted );
-				
-				$encrypted = $fcrypt->encryptString( json_encode( $json ), $args->publickey );
-				die( $encrypted->cipher );
 			}
 			
 			// TODO: Do some checking in the database for 2 factor mobile number on the user wanting to login, then send sms confirmation code and render form on client side.
@@ -58,7 +48,10 @@
 				{
 					if( $ses->sessionid )
 					{
-						die( json_encode( $ses ) );
+						if( $encrypted = $fcrypt->encryptString( json_encode( $ses ), $args->publickey ) )
+						{
+							die( $encrypted->cipher );
+						}
 					}
 				}
 			}
@@ -193,10 +186,6 @@
 		
 		$url = ( $conf['Core']['SSLEnable'] ? 'https://' : 'http://' ) . $conf['FriendCore']['fchost'] . ( $conf['FriendCore']['port'] ? ':' . $conf['FriendCore']['port'] : '' ) . $url;
 		
-		//die( $url . ' -- ' );
-		
-		// TODO: Check why curl won't get localhost ???, maybe SSL needs to be off or on ??? Look at some old code using localhost with curl ...
-		
 		$curl = curl_init();
 		
 		if( $headers && $auth && $auth['username'] && $auth['password'] )
@@ -299,13 +288,21 @@
 			curl_setopt( $curl, CURLOPT_POST, true );
 			curl_setopt( $curl, CURLOPT_POSTFIELDS, $args );
 		}
-	
+		
 		curl_setopt( $curl, CURLOPT_RETURNTRANSFER, true );
-	
+		
 		$output = curl_exec( $curl );
 	
 		$httpCode = curl_getinfo( $curl, CURLINFO_HTTP_CODE );
-	
+		
+		if( !$httpCode && !$output )
+		{
+			curl_setopt( $curl, CURLOPT_SSL_VERIFYHOST, false );
+			curl_setopt( $curl, CURLOPT_SSL_VERIFYPEER, false );
+			
+			$output = curl_exec( $curl );	
+		}
+		
 		//die( $url . ' [] ' . $output . ' || ' . print_r( $httpCode,1 ) );
 	
 		curl_close( $curl );

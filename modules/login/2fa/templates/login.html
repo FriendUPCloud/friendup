@@ -176,7 +176,7 @@
 						// So here we are setting keys twice first time in the login form to securely communicate with the server, then again in parent.Friend.User, might be overkill ...
 						parent.Workspace.encryption.setKeys( username, password );
 						
-						// If password is not hashed, has it ... TODO: Look at the keystorage prosess to see if we do hash twice ...
+						// If password is not hashed, hash it ... TODO: Look at the keystorage prosess to see if we do hash twice ...
 						if( flags && !flags.hashedPassword )
 						{
 							password = ( 'HASHED' + Sha256.hash( password ) );
@@ -194,14 +194,14 @@
 						m.onload = function()
 						{
 							var decrypted1 = false;
-							var decrypted2 = false;
+							//var decrypted2 = false;
 							
-							console.log( this.responseText() );
+							//console.log( this.responseText() );
 							
 							try
 							{
 								decrypted1 = parent.Workspace.encryption.decrypt( this.responseText() );
-								decrypted2 = parent.Workspace.encryption.decryptRSA( this.responseText() );
+								//decrypted2 = parent.Workspace.encryption.decryptRSA( this.responseText() );
 							}
 							catch( e ) 
 							{
@@ -209,7 +209,7 @@
 							}
 							
 							console.log( decrypted1 );
-							console.log( decrypted2 );
+							//console.log( decrypted2 );
 							
 							return;
 							
