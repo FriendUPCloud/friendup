@@ -118,9 +118,9 @@
 							}
 							if( tmp && tmp.response )
 							{								//check for block....
-								if( tmp.response.indexOf( 'account blocked until:' ) > -1 )
+								if( tmp.response.indexOf( 'Account blocked until:' ) > -1 )
 								{
-									let ts = tmp.response.replace( 'account blocked until:', '' );
+									let ts = tmp.response.replace( 'Account blocked until:', '' );
 									if( parseInt( ts ) > 0 )
 									{
 										Application.errorMessage = 'Account blocked (try again after ' + new Date( ts * 1000 ).toLocaleString() + ')';
@@ -165,6 +165,8 @@
 					if( username && password )
 					{
 						
+						// TODO: Cleanup once it works ...
+						
 						parent.Workspace.encryption.keys.server = ( ge( 'publickey' ) && ge( 'publickey' ).value ? { publickey: ge( 'publickey' ).value } : false );
 						
 						if( !parent.Workspace.encryption.keys.server.publickey )
@@ -193,81 +195,70 @@
 						
 						m.onload = function()
 						{
-							var decrypted1 = false;
-							//var decrypted2 = false;
-							
-							//console.log( this.responseText() );
+							var json = null; var serveranswer = null; 
 							
 							try
 							{
-								decrypted1 = parent.Workspace.encryption.decrypt( this.responseText() );
+								serveranswer = parent.Workspace.encryption.decrypt( this.responseText() );
+								
 								//decrypted2 = parent.Workspace.encryption.decryptRSA( this.responseText() );
+								
+								if( serveranswer )
+								{
+									json = JSON.parse( serveranswer );
+								}
 							}
 							catch( e ) 
 							{
 								console.log( e );
 							}
 							
-							console.log( decrypted1 );
-							//console.log( decrypted2 );
+							console.log( { json: json, serveranswer: serveranswer } );
 							
-							return;
-							
-							if( decrypted )
+							// We got a real error
+							if( json == null )
+							{
+								if( callback && typeof( callback ) == 'function' ) callback( false );
+							}
+							try
 							{
 								
-								try
+								if( json && json.username )
 								{
+									parent.Workspace.sessionId     = json.sessionid;
+									parent.Workspace.loginUsername = json.username;
+									parent.Workspace.loginUserId   = json.userid;
+									parent.Workspace.loginid       = json.loginid;
+									parent.Workspace.userLevel     = json.level;
+									parent.Workspace.fullName      = json.fullname;
 									
-									var json = JSON.parse( decrypted );
+									// We are now online!
+									parent.Friend.User.SetUserConnectionState( 'online' );
 									
-									if( json )
+									if( !parent.Workspace.userWorkspaceInitialized )
 									{
-										var hasSessionID = ( json.sessionid && json.sessionid.length > 1 );
-										var hasLoginID = ( json.loginid && json.loginid.length > 1 );
-										
-										var hasUser = ( json.username && json.username.length > 1 );
-										var hasToken = ( json.token && json.token.length > 1 );
-										
-										if( !hasLoginID && hasUser && hasToken )
-										{
-											return parent.Friend.User.Login( Trim( json.username ), Trim( json.token ), remember, callback, event, { hashedPassword: true } );
-										}
+										return parent.Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), event );
+									}
+									else
+									{
+										if( typeof( callback ) == 'function' ) return callback( true, serveranswer );
+										// Make sure we didn't lose websocket!
 									}
 								}
-								catch( e ) 
+								else
 								{
-									console.log( this.responseText() );
+									parent.Friend.User.SetUserConnectionState( 'offline' );
+									
+									if( callback && typeof( callback ) == 'function' ) return callback( false, serveranswer );
 								}
-							}
-							else
+							}	
+							catch( e )
 							{
-								
-								try
-								{
-									var json = JSON.parse( this.responseText() );
-								
-									if( json )
-									{
-										var hasSessionID = ( json.sessionid && json.sessionid.length > 1 );
-										var hasLoginID = ( json.loginid && json.loginid.length > 1 );
-										
-										var hasUser = ( json.username && json.username.length > 1 );
-										var hasToken = ( json.token && json.token.length > 1 );
-										
-										if( !hasLoginID && hasUser && hasToken )
-										{
-											return parent.Friend.User.Login( Trim( json.username ), Trim( json.token ), remember, callback, event, { hashedPassword: true } );
-										}
-									}
-								}
-								catch( e ) 
-								{
-									console.log( this.responseText() );
-								}
-							}
+								console.log( 'Failed to understand server response.', e );
+								if( callback && typeof( callback ) == 'function' ) return callback( false );
+							};
 							
-							if( callback && typeof( callback ) == 'function' ) callback( false );
+							if( callback && typeof( callback ) == 'function' ) return callback( false );
 						}
 						m.send();
 						
@@ -284,18 +275,55 @@
 					}
 				},
 				receiveMessage: function( msg )
-				{	
-					// TODO: Remove if not in any use ...
+				{
 					if( msg.command && msg.command == 'error' )
 					{
 						showLoginError();
 					}
 					else if( msg.cmd && msg.cmd == 'login' )
 					{
-						ge( 'Username' ).value = msg.username;
-						ge( 'Password' ).value = msg.password;
+						Application.loginUser( msg );
+					}
+				},
+				loginUser: function( msg )
+				{
+					if( msg && parent && parent.Workspace && parent.Friend && parent.Friend.User )
+					{
+						// Don't do it many times while working!
+						if( Application.busy ) return;
+						Application.busy = true;
 						
-						Application.loginUser();
+						if( msg.password.indexOf( 'HASHED' ) >= 0 || msg.password.indexOf( '{S6}' ) >= 0 )
+						{
+							msg.hashed = true;
+						}
+						else
+						{
+							msg.hashed = false;
+						}
+						
+						parent.Friend.User.Init();
+						parent.Workspace.setLogoutURL( msg.logouturl );
+						this.login( Trim( msg.username ), Trim( msg.password ), false, function( result )
+						{
+							if( result == false )
+							{
+								console.log( 'Could NOT logg in... why...?' +  msg.username + ':' +  msg.password + ':' + result );
+								showLoginError();
+							}
+							else if( result == 0 )
+							{
+								setTimeout( showLoginError, 1000 );
+							}
+							else
+							{
+								Application.busy = false;
+							}
+						}, false, { hashedPassword: msg.hashed ? true : false } );
+					}
+					else
+					{
+						showLoginError( 'Could not login' );
 					}
 				},
 				forgotPassword : function()

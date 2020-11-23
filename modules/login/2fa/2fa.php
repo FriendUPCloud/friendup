@@ -38,25 +38,33 @@
 			// check user data before login into FriendCore and asking for sessionid to return to client (encrypted)
 			
 			if( $login = remoteAuth( '/system.library/login', 
-				array(
-					'username'  => $json->username, 
-					'password'  => $json->password, 
-					'deviceid'  => $json->deviceid 
-			) ) )
+			[
+				'username' => $json->username, 
+				'password' => $json->password, 
+				'deviceid' => $json->deviceid 
+			] ) )
 			{
+				if( strstr( $login, '<!--separate-->' ) )
+				{
+					if( $ret = explode( '<!--separate-->', $login ) )
+					{
+						if( isset( $ret[1] ) )
+						{
+							$login = $ret[1];
+						}
+					}
+				}
+				
 				if( $ses = json_decode( $login ) )
 				{
-					if( $ses->sessionid )
+					if( $encrypted = $fcrypt->encryptString( json_encode( $ses ), $args->publickey ) )
 					{
-						if( $encrypted = $fcrypt->encryptString( json_encode( $ses ), $args->publickey ) )
-						{
-							die( $encrypted->cipher );
-						}
+						die( $encrypted->cipher );
 					}
 				}
 			}
 			
-			die( 'fail ... ' . ( $login ? $login : '' ) );
+			die( 'fail ... ret: ' . $login );
 			
 		}
 	}
