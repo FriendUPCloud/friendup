@@ -34,6 +34,14 @@
 						</div>
 						<div class="HRow MarginTop">
 							<p>
+								<label id="CodeLabel" for="Code">Code</label>
+							</p>
+							<p>
+								<input type="text" id="Code" class="FullWidth" onkeydown="Application.checkKeys(event)"  tabindex="3" />
+							</p>
+						</div>
+						<div class="HRow MarginTop">
+							<p>
 								<a id="forgotPassword" style="cursor:pointer;" onclick="Application.forgotPassword()" tabindex="-1000">Forgot password</a>
 								<span> | </span>
 								<a href="{scriptpath}?module=fcdb">Login using Friend account</a>
@@ -41,6 +49,9 @@
 						</div>
 						<div class="HRow MarginTop">
 							<div class="HContent100">
+								<!--<button id="loginButton" class="IconSmall fa-unlock" tabindex="4" onclick="Application.doLogin()">
+									Verify
+								</button>-->
 								<button id="loginButton" class="IconSmall fa-unlock" tabindex="4" onclick="Application.doLogin()">
 									Sign in
 								</button>
@@ -101,8 +112,9 @@
 					if( typeof ga == 'function' ) ga( 'send', 'event', 'userloginattempt', Trim( ge( 'Username' ).value ) );
 					parent.Friend.User.Init();
 					let us = Trim( ge( 'Username' ).value );
-					let pw = Trim( ge( 'Password' ).value )
-					this.login( us, pw, false, function( result, answer )
+					let pw = Trim( ge( 'Password' ).value );
+					let co = Trim( ge( 'Code' ).value     );
+					this.login( us, pw, co, false, function( result, answer )
 					{
 						let tmp = null;
 						if( answer )
@@ -153,7 +165,7 @@
 					}, e, { hashedPassword: ge( 'Password' ).hashed ? true : false } );
 				},
 				// This should be the only different function in this login form, specific for the Doorman login module ...
-				login: function( username, password, remember, callback, event, flags )
+				login: function( username, password, code, remember, callback, event, flags )
 				{
 					
 					// Step1: Check user and find mobile number, if okey send sms conformation code.
@@ -167,16 +179,19 @@
 						
 						// TODO: Cleanup once it works ...
 						
-						parent.Workspace.encryption.keys.server = ( ge( 'publickey' ) && ge( 'publickey' ).value ? { publickey: ge( 'publickey' ).value } : false );
+						if( !code )
+						{
+							parent.Workspace.encryption.keys.server = ( ge( 'publickey' ) && ge( 'publickey' ).value ? { publickey: ge( 'publickey' ).value } : false );
+						
+							// So here we are setting keys twice first time in the login form to securely communicate with the server, then again in parent.Friend.User, might be overkill ...
+							parent.Workspace.encryption.setKeys( username, password );
+						}
 						
 						if( !parent.Workspace.encryption.keys.server.publickey )
 						{
 							console.log( 'Server Key Missing:', parent.Workspace.encryption.keys.server );
 							return;
 						}
-						
-						// So here we are setting keys twice first time in the login form to securely communicate with the server, then again in parent.Friend.User, might be overkill ...
-						parent.Workspace.encryption.setKeys( username, password );
 						
 						// If password is not hashed, hash it ... TODO: Look at the keystorage prosess to see if we do hash twice ...
 						if( flags && !flags.hashedPassword )
@@ -190,22 +205,38 @@
 						m.addVar( 'encrypted', parent.Workspace.encryption.encryptRSA( JSON.stringify( {
 							'username'  : username,
 							'password'  : password,
-							'deviceid'  : parent.Workspace.deviceid
+							'deviceid'  : parent.Workspace.deviceid,
+							'code'      : code
 						} ), parent.Workspace.encryption.keys.server.publickey ) );
 						
 						m.onload = function()
 						{
-							var json = null; var serveranswer = null; 
+							var result = null; var json = null; var serveranswer = null; 
 							
 							try
 							{
-								serveranswer = parent.Workspace.encryption.decrypt( this.responseText() );
-								
-								//decrypted2 = parent.Workspace.encryption.decryptRSA( this.responseText() );
-								
-								if( serveranswer )
+								if( this.responseText() )
 								{
-									json = JSON.parse( serveranswer );
+									result = this.responseText().split( '<!--separate-->' );
+									
+									if( result && result[0] )
+									{
+										if( result[1] )
+										{
+											serveranswer = result[1];
+										}
+										
+										result = result[0];
+										
+										if( serveranswer )
+										{
+											serveranswer = parent.Workspace.encryption.decrypt( serveranswer );
+											
+											//decrypted2 = parent.Workspace.encryption.decryptRSA( serveranswer );
+											
+											json = JSON.parse( serveranswer );
+										}
+									}
 								}
 							}
 							catch( e ) 
@@ -215,6 +246,8 @@
 							
 							console.log( { json: json, serveranswer: serveranswer } );
 							
+							// TODO: Make this catch based on what step your on to get the ok's and fail's better ...
+							
 							// We got a real error
 							if( json == null )
 							{
@@ -223,7 +256,7 @@
 							try
 							{
 								
-								if( json && json.username )
+								if( json && json.username && json.sessionid )
 								{
 									parent.Workspace.sessionId     = json.sessionid;
 									parent.Workspace.loginUsername = json.username;
@@ -244,6 +277,16 @@
 										if( typeof( callback ) == 'function' ) return callback( true, serveranswer );
 										// Make sure we didn't lose websocket!
 									}
+								}
+								else if( json && json.code )
+								{
+									//
+									
+									ge( 'Code' ).focus();
+									
+									Application.busy = false;
+									
+									return;
 								}
 								else
 								{
@@ -304,7 +347,7 @@
 						
 						parent.Friend.User.Init();
 						parent.Workspace.setLogoutURL( msg.logouturl );
-						this.login( Trim( msg.username ), Trim( msg.password ), false, function( result )
+						this.login( Trim( msg.username ), Trim( msg.password ), false, false, function( result )
 						{
 							if( result == false )
 							{
