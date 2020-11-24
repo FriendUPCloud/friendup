@@ -16,74 +16,77 @@
 				//die( $encrypted );
 			}
 			
-			// TODO: Do some checking in the database for 2 factor mobile number on the user wanting to login, then send sms confirmation code and render form on client side.
 			
-			// TODO: Setup receiving sms confirmation code and login to FriendCore once SMS code is confirmed.
 			
-			// check user data before login into FriendCore and asking for sessionid to return to client (encrypted)
-			
-			// TODO: Store verification code somehow ...
-			
-			// TODO: Make sure not to send sms more then once ...
-			
-			// TODO: Return ok or failed then data ...
-			
-			if( verifyCode( $json->code ) )
+			if( $ret = verifyCode( $json->username, $json->password, $json->code ) )
 			{
-				if( $login = remoteAuth( '/system.library/login', 
-				[
-					'username' => $json->username, 
-					'password' => $json->password, 
-					'deviceid' => $json->deviceid 
-				] ) )
+				if( $ret[0] && $ret[0] == 'ok' && $ret[1] )
 				{
-					if( strstr( $login, '<!--separate-->' ) )
+					if( $login = remoteAuth( '/system.library/login', 
+					[
+						'username' => $json->username, 
+						'password' => $json->password, 
+						'deviceid' => $json->deviceid 
+					] ) )
 					{
-						if( $ret = explode( '<!--separate-->', $login ) )
+						if( strstr( $login, '<!--separate-->' ) )
 						{
-							if( isset( $ret[1] ) )
+							if( $ret = explode( '<!--separate-->', $login ) )
 							{
-								$login = $ret[1];
+								if( isset( $ret[1] ) )
+								{
+									$login = $ret[1];
+								}
 							}
 						}
-					}
 					
-					if( $ses = json_decode( $login ) )
-					{
-						if( $ses->sessionid )
+						if( $ses = json_decode( $login ) )
 						{
-							send( true, json_encode( $ses ), $args->publickey );
+							if( $ses->sessionid )
+							{
+								send( true, json_encode( $ses ), $args->publickey );
+							}
+							else
+							{
+								send( false, json_encode( $ses ), $args->publickey );
+							}
 						}
-						else
-						{
-							send( false, json_encode( $ses ), $args->publickey );
-						}
-					}
-				}
-			}
-			
-			// TODO: Implement Friend User check for mobile number here ...
-			
-			// TODO: Check database for credentials here aswell in case username / pw is wrong ...
-			
-			else if( $res = sendCode( '95103175' ) )
-			{
-				if( $res[0] == 'ok' )
-				{
-					if( $res[1] && $res[2] )
-					{
-						$debug = false;
-						
-						send( true, '{"code":"sent to 95103175"}' . ( $debug ? '<!--separate-->' . json_encode( $res ) : '' ), $args->publickey );
 					}
 				}
 				else
 				{
-					send( false, json_encode( $res[1] ), $args->publickey );
+					send( false, $ret[1], $args->publickey );
 				}
 			}
 			
-			die( 'fail ... ret: ' . $login );
+			if( $ret = verifyIdentity( $json->username, $json->password ) )
+			{
+				if( $ret[0] && $ret[0] == 'ok' && $ret[1] )
+				{
+					if( $res = sendCode( $ret[1]->UserID, $ret[1]->Mobile ) )
+					{
+						if( $res[0] == 'ok' )
+						{
+							if( $res[1] && $res[2] )
+							{
+								// TODO: Send back useful info ...
+								// TODO: Also add useful clicatell data to make sure it was sent ...
+								send( true, '{"code":"sent to ' . $ret[1]->Mobile . '"}', $args->publickey );
+							}
+						}
+						else
+						{
+							send( false, $res[1], $args->publickey );
+						}
+					}
+				}
+				else
+				{
+					send( false, $ret[1], $args->publickey );
+				}
+			}
+			
+			die( 'fail ... ' );
 			
 		}
 	}
@@ -331,9 +334,7 @@
 			
 				$output = curl_exec( $curl );	
 			}
-		
-			//die( $url . ' [] ' . $output . ' || ' . print_r( $httpCode,1 ) );
-	
+			
 			curl_close( $curl );
 		
 			return $output;
@@ -344,11 +345,176 @@
 		}
 	}
 	
-	function verifyCode( $code = false )
+	function verifyIdentity( $username, $password = '' )
 	{
-		if( $code )
+		$error = false; $data = false;
+		
+		if( $username )
 		{
-			return true;
+			include_once( __DIR__ . '/../../../php/classes/dbio.php' );
+			$conf = parse_ini_file( __DIR__ . '/../../../cfg/cfg.ini', true );
+			
+			if( !( isset( $conf['DatabaseUser']['host'] ) && isset( $conf['DatabaseUser']['login'] ) && isset( $conf['DatabaseUser']['password'] ) && isset( $conf['DatabaseUser']['dbname'] ) ) )
+			{
+				die( 'CORRUPT FRIEND INSTALL!' );
+			}
+			
+			$dbo = new SqlDatabase( );
+			if( $dbo->open( $conf['DatabaseUser']['host'], $conf['DatabaseUser']['login'], $conf['DatabaseUser']['password'] ) )
+			{
+				if( !$dbo->SelectDatabase( $conf['DatabaseUser']['dbname'] ) )
+				{
+					die( 'ERROR! DB not found!' );
+				}
+			}
+			else
+			{
+				die( 'ERROR! MySQL unavailable!' );
+			}
+			
+			if( $creds = $dbo->fetchObject( '
+				SELECT fu.ID FROM FUser fu 
+				WHERE 
+						fu.Name     = \'' . mysqli_real_escape_string( $dbo->_link, $username ) . '\' 
+					AND fu.Password = \'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', $password ) ) . '\' 
+			' ) )
+			{
+				if( $identity = $dbo->fetchObject( '
+					SELECT 
+						fm.DataID AS UserID, fm.ValueString AS Mobile 
+					FROM 
+						FMetaData fm 
+					WHERE 
+							fm.Key       = "Mobile" 
+						AND fm.DataID    = \'' . $creds->ID . '\' 
+						AND fm.DataTable = "FUser" 
+					ORDER BY 
+						fm.ID DESC 
+				' ) )
+				{
+					if( $identity->UserID && $identity->Mobile )
+					{
+						$data = $identity;
+					}
+					else
+					{
+						$error = '{"result":"-1","response":"Mobile number for user account empty ..."}';
+					}
+				}
+				else
+				{
+					$error = '{"result":"-1","response":"Mobile number for user account missing ..."}';
+				}
+			}
+			else
+			{
+				$error = '{"result":"-1","response":"Account blocked until: 0","code":"6"}';
+			}
+		}
+		else
+		{
+			$error = '{"result":"-1","response":"Account blocked until: 0","code":"6"}';
+		}
+		
+		if( $data )
+		{
+			return [ 'ok', $data ];
+		}
+		else
+		{
+			return [ 'fail', $error ];
+		}
+	}
+	
+	function verifyCode( $username, $password = '', $code = false )
+	{
+		if( $code && $username )
+		{
+			$error = false; $data = false;
+			
+			include_once( __DIR__ . '/../../../php/classes/dbio.php' );
+			$conf = parse_ini_file( __DIR__ . '/../../../cfg/cfg.ini', true );
+			
+			if( !( isset( $conf['DatabaseUser']['host'] ) && isset( $conf['DatabaseUser']['login'] ) && isset( $conf['DatabaseUser']['password'] ) && isset( $conf['DatabaseUser']['dbname'] ) ) )
+			{
+				die( 'CORRUPT FRIEND INSTALL!' );
+			}
+			
+			$dbo = new SqlDatabase( );
+			if( $dbo->open( $conf['DatabaseUser']['host'], $conf['DatabaseUser']['login'], $conf['DatabaseUser']['password'] ) )
+			{
+				if( !$dbo->SelectDatabase( $conf['DatabaseUser']['dbname'] ) )
+				{
+					die( 'ERROR! DB not found!' );
+				}
+			}
+			else
+			{
+				die( 'ERROR! MySQL unavailable!' );
+			}
+			
+			if( $creds = $dbo->fetchObject( '
+				SELECT fu.ID FROM FUser fu 
+				WHERE 
+						fu.Name     = \'' . mysqli_real_escape_string( $dbo->_link, $username ) . '\' 
+					AND fu.Password = \'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', $password ) ) . '\' 
+			' ) )
+			{
+				if( $verify = $dbo->fetchObject( '
+					SELECT 
+						fm.DataID AS UserID, fm.ValueString AS Code 
+					FROM 
+						FMetaData fm 
+					WHERE 
+							fm.Key       = "VerificationCode" 
+						AND fm.DataID    = \'' . $creds->ID . '\' 
+						AND fm.DataTable = "FUser" 
+					ORDER BY 
+						fm.ID DESC 
+				' ) )
+				{
+					if( $verify->Code )
+					{
+						if( trim( $verify->Code ) == trim( $code ) )
+						{
+							$dbo->Query( '
+								DELETE FROM FMetaData 
+								WHERE 
+										`Key` = "VerificationCode" 
+									AND `DataID` = \'' . $creds->ID . '\' 
+									AND `DataTable` = "FUser" 
+							' );
+							
+							$data = $verify->Code;
+						}
+						else
+						{
+							$error = '{"result":"-1","response":"Verification code doesn\'t match, try again ..."}';
+						}
+					}
+					else
+					{
+						$error = '{"result":"-1","response":"Verification code for user account empty ..."}';
+					}
+				}
+				else
+				{
+					$error = '{"result":"-1","response":"Verification code missing ..."}';
+				}
+			}
+			else
+			{
+				$error = '{"result":"-1","response":"Account blocked until: 0","code":"6"}';
+			}
+			
+			if( $data )
+			{
+				return [ 'ok', $data ];
+			}
+			else
+			{
+				return [ 'fail', $error ];
+			}
 		}
 		else
 		{
@@ -356,13 +522,30 @@
 		}
 	}
 	
-	function sendCode( $mobile, $code = false )
+	function sendCode( $userid, $mobile, $code = false )
 	{
 		$error = false;
 		
-		$configpath = __DIR__ . '/../../../cfg/cfg.ini';
+		include_once( __DIR__ . '/../../../php/classes/dbio.php' );
+		$conf = parse_ini_file( __DIR__ . '/../../../cfg/cfg.ini', true );
 		
-		$conf = parse_ini_file( $configpath, true );
+		if( !( isset( $conf['DatabaseUser']['host'] ) && isset( $conf['DatabaseUser']['login'] ) && isset( $conf['DatabaseUser']['password'] ) && isset( $conf['DatabaseUser']['dbname'] ) ) )
+		{
+			die( 'CORRUPT FRIEND INSTALL!' );
+		}
+		
+		$dbo = new SqlDatabase( );
+		if( $dbo->open( $conf['DatabaseUser']['host'], $conf['DatabaseUser']['login'], $conf['DatabaseUser']['password'] ) )
+		{
+			if( !$dbo->SelectDatabase( $conf['DatabaseUser']['dbname'] ) )
+			{
+				die( 'ERROR! DB not found!' );
+			}
+		}
+		else
+		{
+			die( 'ERROR! MySQL unavailable!' );
+		}
 		
 		$version = ( isset( $conf['SMS']['version'] ) ? $conf['SMS']['version'] : '' );
 		
@@ -370,7 +553,8 @@
 		$token = ( isset( $conf['SMS']['token'] ) ? $conf['SMS']['token'] : '' );
 		$from  = ( isset( $conf['SMS']['from']  ) ? $conf['SMS']['from']  : '' );
 		
-		$code = ( $code ? trim( $code ) : mt_rand( 10000000, 99999999 ) );
+		$expire = strtotime( '+1 hour' );
+		$code   = ( $code ? trim( $code ) : mt_rand( 10000, 99999 ) );
 		
 		$recv    = trim( $mobile );
 		$message = "Friend OS: $code is your verification code.";
@@ -378,141 +562,184 @@
 		if( function_exists( 'curl_init' ) )
 		{
 			
-			if( $recv )
+			if( $userid && $recv )
 			{
+				$dbo->Query( '
+					DELETE FROM FMetaData 
+					WHERE 
+							`Key` = "VerificationCode" 
+						AND `DataID` = \'' . $userid . '\' 
+						AND `DataTable` = "FUser" 
+						AND 
+						( 
+							`ValueString` = "" OR `ValueNumber` < ' . time( ) . ' 
+						) 
+				' );
 				
-				if( $host && $token && $message )
+				if( $check = $dbo->fetchObject( '
+					SELECT 
+						fm.DataID AS UserID, fm.ValueNumber AS Expiry, fm.ValueString AS Code 
+					FROM 
+						FMetaData fm 
+					WHERE 
+							fm.Key          = "VerificationCode" 
+						AND fm.DataID       = \'' . $userid . '\' 
+						AND fm.DataTable    = "FUser" 
+						AND fm.ValueNumber != 0 AND fm.ValueString != "" 
+					ORDER BY 
+						fm.ID DESC 
+				' ) )
 				{
-					
-					if( function_exists( 'mb_detect_encoding' ) )
+					$error = '{"result":"-1","response":"Verification code has allready been sent (expires ' . date( 'Y-m-d H:i', $check->Expiry ) . ')."}';
+				}
+				
+				if( !$error )
+				{
+					if( $host && $token && $message )
 					{
-						$encoding = mb_detect_encoding ( $message, 'auto' );
-						$message = iconv( $encoding, 'UTF-8', $message );
-					}
 					
-					// Add norway
-					if( strlen ( $recv ) == 8 )
-					{
-						$recv = ( '+47' . $recv );
-					}
+						if( function_exists( 'mb_detect_encoding' ) )
+						{
+							$encoding = mb_detect_encoding ( $message, 'auto' );
+							$message = iconv( $encoding, 'UTF-8', $message );
+						}
 					
-					switch( $version )
-					{
+						// Add norway
+						if( strlen ( $recv ) == 8 )
+						{
+							$recv = ( '+47' . $recv );
+						}
+					
+						switch( $version )
+						{
 						
-						case 1:
+							case 1:
 							
-							$header = array(
-								'X-Version: 1',
-								'Content-Type: application/json',
-								'Authorization: bearer ' . $token,
-								'Accept: application/json'
-							);
+								$header = array(
+									'X-Version: 1',
+									'Content-Type: application/json',
+									'Authorization: bearer ' . $token,
+									'Accept: application/json'
+								);
 							
-							$json = new stdClass();
-							$json->text = $message;
-							$json->to = array( $recv );
-							//$json->from = $from;
+								$json = new stdClass();
+								$json->text = $message;
+								$json->to = array( $recv );
+								//$json->from = $from;
 							
-							break;
+								break;
 							
-						default:
+							default:
 							
-							$header = array(
-								'Content-Type: application/json',
-								'Authorization: ' . $token
-							);
+								$header = array(
+									'Content-Type: application/json',
+									'Authorization: ' . $token
+								);
 							
-							$json = new stdClass();
-							$json->content = $message;
-							$json->to = array( $recv );
-							//$json->from = $from;
+								$json = new stdClass();
+								$json->content = $message;
+								$json->to = array( $recv );
+								//$json->from = $from;
 							
-							break;
+								break;
 							
-					}
+						}
 					
-					$curl = curl_init();
+						$curl = curl_init();
 					
-					curl_setopt( $curl, CURLOPT_URL, $host );
+						curl_setopt( $curl, CURLOPT_URL, $host );
 					
-					curl_setopt( $curl, CURLOPT_HTTPHEADER, $header );
+						curl_setopt( $curl, CURLOPT_HTTPHEADER, $header );
 					
-					curl_setopt( $curl, CURLOPT_POST, 1 );
-					curl_setopt( $curl, CURLOPT_POSTFIELDS, json_encode( $json ) );
-					curl_setopt( $curl, CURLOPT_RETURNTRANSFER, true );
+						curl_setopt( $curl, CURLOPT_POST, 1 );
+						curl_setopt( $curl, CURLOPT_POSTFIELDS, json_encode( $json ) );
+						curl_setopt( $curl, CURLOPT_RETURNTRANSFER, true );
 					
-					$output = curl_exec( $curl );
+						$output = curl_exec( $curl );
+						
+						$httpCode = curl_getinfo( $curl, CURLINFO_HTTP_CODE );
 					
-					$httpCode = curl_getinfo( $curl, CURLINFO_HTTP_CODE );
+						curl_close( $curl );
 					
-					curl_close( $curl );
+						$str = json_encode( $json );
 					
-					$str = json_encode( $json );
-					
-					$log = "
-SMS Output log: " . date ( 'Y-m-d H:i:s' ) . "
+						$log = "
+	SMS Output log: " . date ( 'Y-m-d H:i:s' ) . "
 
-{$output}
--------------------------------------------------------------------
-Sent JSON: 
-{$str}
-*******************************************************************
-";
+	{$output}
+	-------------------------------------------------------------------
+	Sent JSON: 
+	{$str}
+	*******************************************************************
+	";
 					
-					if( $output && ( $err = json_decode( $output ) ) )
-					{
+						if( $output && ( $err = json_decode( $output ) ) )
+						{
 						
-						if( $err->data && $err->data->message && $err->data->message[0] && $err->data->message[0]->error )
-						{
-							$error = $err->data->message[0]->error;
-						}
-						else if( $err->code )
-						{
-							$error = $err->code;
-						}
-						else if( $err->error )
-						{
-							$error = $err->error;
-						}
-						
-						if( $error )
-						{
-							// Try to log
-							if ( $f = @fopen ( __DIR__ . '/../../../log/sms_clickatell.log', 'a+' ) )
+							if( $err->data && $err->data->message && $err->data->message[0] && $err->data->message[0]->error )
 							{
-								fwrite ( $f, $log );
-								fclose ( $f );
+								$error = '{"result":"-1","response":"' . $err->data->message[0]->error . '"}';
+							}
+							else if( $err->code )
+							{
+								$error = '{"result":"-1","response":"' . $err->code . '"}';
+							}
+							else if( $err->error )
+							{
+								$error = '{"result":"-1","response":"' . $err->error . '"}';
+							}
+						
+							if( $error )
+							{
+								// Try to log
+								if ( $f = @fopen ( __DIR__ . '/../../../log/sms_clickatell.log', 'a+' ) )
+								{
+									fwrite ( $f, $log );
+									fclose ( $f );
+								}
+							}
+						
+						}
+					
+						if( !$error && $output )
+						{
+							if( $dbo->Query( '
+							INSERT INTO FMetaData ( `Key`, `DataID`, `DataTable`, `ValueNumber`, `ValueString` ) 
+							VALUES ('
+								. ' \'VerificationCode\'' 
+								. ',\'' . $userid . '\'' 
+								. ',\'FUser\'' 
+								. ',\'' . $expire . '\'' 
+								. ',\'' . $code . '\'' 
+							.') ' ) )
+							{
+								return [ 'ok', $code, $output ];
+							}
+							else
+							{
+								$error = '{"result":"-1","response":"' . mysqli_error( $dbo->_link ) . '"}';
 							}
 						}
-						
 					}
-					
-					if( !$error && $output )
+					else
 					{
-						return [ 'ok', $code, $output ];
+						$error  = '{"result":"-1","response":"Config settings are missing ... expecting: ' . "\r\n\r\n";
+						$error .= '[SMS]' . "\r\n";
+						$error .= 'version = 1 or 2' . "\r\n";
+						$error .= 'from = Your Company Name' . "\r\n";
+						$error .= 'host = https://api.clickatell.com/rest/message' . "\r\n";
+						$error .= 'token = Clickatell Token"}';
 					}
-					
 				}
-				else
-				{
-					$error  = 'Config settings are missing ... expecting: ' . "\r\n\r\n";
-					$error .= '[SMS]' . "\r\n";
-					$error .= 'version = 1 or 2' . "\r\n";
-					$error .= 'from = Your Company Name' . "\r\n";
-					$error .= 'host = https://api.clickatell.com/rest/message' . "\r\n";
-					$error .= 'token = Clickatell Token' . "\r\n";
-				}
-				
 			}
 			else
 			{
-				$error = 'Phone number is missing ...';
+				$error = '{"result":"-1","response":"Phone number is missing ..."}';
 			}
-		
 		}
 		else
 		{
-			$error = 'cURL is not installed, contact support ...';
+			$error = '{"result":"-1","response":"cURL is not installed, contact support ..."}';
 		}
 		
 		return [ 'fail', $error ];

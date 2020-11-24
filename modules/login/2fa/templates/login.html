@@ -6,6 +6,12 @@
 	</head>
 	<body class="Loading" onload="loginNow()">
 		<link rel="stylesheet" href="/webclient/css/extraLoginCSS.css"/>
+		<style>
+			div.closed
+			{
+				display: none;
+			}
+		</style>
 		<div id="LoginElement" style="visibility: hidden">
 			<div class="VContentTop">
 				<div class="Logo">
@@ -16,29 +22,33 @@
 				</h1>
 				<div class="Box">
 					<form method="post" onsubmit="return false">
-						<div class="HRow">
-							<p>
-								<label id="UsernameLabel" for="Username">Login</label>
-							</p>
-							<p>
-								<input type="username" id="Username" class="FullWidth" onkeydown="Application.checkKeys(event)" autocapitalize="none" autocorrect="none" tabindex="1" />
-							</p>
+						<div id="step1">
+							<div class="HRow">
+								<p>
+									<label id="UsernameLabel" for="Username">Login</label>
+								</p>
+								<p>
+									<input type="username" id="Username" class="FullWidth" onkeydown="Application.checkKeys(event)" autocapitalize="none" autocorrect="none" tabindex="1" />
+								</p>
+							</div>
+							<div class="HRow MarginTop HideForPass">
+								<p>
+									<label id="PasswordLabel" for="Password">Password</label>
+								</p>
+								<p>
+									<input type="password" id="Password" class="FullWidth" onkeydown="Application.checkKeys(event)"  tabindex="2" />
+								</p>
+							</div>
 						</div>
-						<div class="HRow MarginTop HideForPass">
-							<p>
-								<label id="PasswordLabel" for="Password">Password</label>
-							</p>
-							<p>
-								<input type="password" id="Password" class="FullWidth" onkeydown="Application.checkKeys(event)"  tabindex="2" />
-							</p>
-						</div>
-						<div class="HRow MarginTop">
-							<p>
-								<label id="CodeLabel" for="Code">Code</label>
-							</p>
-							<p>
-								<input type="text" id="Code" class="FullWidth" onkeydown="Application.checkKeys(event)"  tabindex="3" />
-							</p>
+						<div id="step2" class="closed">
+							<div class="HRow">
+								<p>
+									<label id="CodeLabel" for="Code">Code</label>
+								</p>
+								<p>
+									<input type="text" id="Code" class="FullWidth" onkeydown="Application.checkKeys(event)"  tabindex="3" />
+								</p>
+							</div>
 						</div>
 						<div class="HRow MarginTop">
 							<p>
@@ -49,11 +59,8 @@
 						</div>
 						<div class="HRow MarginTop">
 							<div class="HContent100">
-								<!--<button id="loginButton" class="IconSmall fa-unlock" tabindex="4" onclick="Application.doLogin()">
-									Verify
-								</button>-->
 								<button id="loginButton" class="IconSmall fa-unlock" tabindex="4" onclick="Application.doLogin()">
-									Sign in
+									Verify
 								</button>
 								<div id="invalidLogin" class="Padding"><p>&nbsp;</p></div>
 							</div>
@@ -70,6 +77,7 @@
 		</div>
 		<script type="text/javascript">
 			Application = {
+				showLog: true,
 				failedAttempt: false,
 				passwordRecoveryMode: false,
 				init: function( data )
@@ -103,17 +111,26 @@
 					if( this.busy ) return;
 					this.busy = true;
 					
-					if( this.failedAttempt )
+					let us = Trim( ge( 'Username' ).value );
+					let pw = Trim( ge( 'Password' ).value );
+					let co = Trim( ge( 'Code' ).value     );
+					
+					if( 1==1 || this.failedAttempt )
 					{
-						ge( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = 'Logging in...';
+						if( co )
+						{
+							ge( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = 'Logging in...';
+						}
+						else
+						{
+							ge( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = 'Verifying...';
+						}
 					}
 					
 					// Track user's login
 					if( typeof ga == 'function' ) ga( 'send', 'event', 'userloginattempt', Trim( ge( 'Username' ).value ) );
 					parent.Friend.User.Init();
-					let us = Trim( ge( 'Username' ).value );
-					let pw = Trim( ge( 'Password' ).value );
-					let co = Trim( ge( 'Code' ).value     );
+					
 					this.login( us, pw, co, false, function( result, answer )
 					{
 						let tmp = null;
@@ -129,7 +146,8 @@
 								console.log( 'Answer was not in json format: ', answer );
 							}
 							if( tmp && tmp.response )
-							{								//check for block....
+							{	
+								//check for block....
 								if( tmp.response.indexOf( 'Account blocked until:' ) > -1 )
 								{
 									let ts = tmp.response.replace( 'Account blocked until:', '' );
@@ -139,6 +157,11 @@
 										showLoginError();  
 										return;
 									}
+								}
+								if( !tmp.code )
+								{
+									showLoginError( tmp.response );
+									return;
 								}
 							}
 						}
@@ -174,7 +197,7 @@
 					
 					// Step3: Show desktop once sessionid is received ...
 					
-					if( username && password )
+					if( username )
 					{
 						
 						// TODO: Cleanup once it works ...
@@ -244,64 +267,83 @@
 								console.log( e );
 							}
 							
-							console.log( { json: json, serveranswer: serveranswer } );
+							if( Application.showLog ) console.log( { json: json, serveranswer: serveranswer } );
 							
 							// TODO: Make this catch based on what step your on to get the ok's and fail's better ...
 							
-							// We got a real error
-							if( json == null )
+							if( result && result == 'ok' )
 							{
-								if( callback && typeof( callback ) == 'function' ) callback( false );
-							}
-							try
-							{
-								
-								if( json && json.username && json.sessionid )
+								// We got a real error
+								if( json == null )
 								{
-									parent.Workspace.sessionId     = json.sessionid;
-									parent.Workspace.loginUsername = json.username;
-									parent.Workspace.loginUserId   = json.userid;
-									parent.Workspace.loginid       = json.loginid;
-									parent.Workspace.userLevel     = json.level;
-									parent.Workspace.fullName      = json.fullname;
-									
-									// We are now online!
-									parent.Friend.User.SetUserConnectionState( 'online' );
-									
-									if( !parent.Workspace.userWorkspaceInitialized )
+									if( callback && typeof( callback ) == 'function' ) callback( false );
+								}
+								try
+								{
+								
+									if( json && json.username && json.sessionid )
 									{
-										return parent.Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), event );
+										parent.Workspace.sessionId     = json.sessionid;
+										parent.Workspace.loginUsername = json.username;
+										parent.Workspace.loginUserId   = json.userid;
+										parent.Workspace.loginid       = json.loginid;
+										parent.Workspace.userLevel     = json.level;
+										parent.Workspace.fullName      = json.fullname;
+									
+										// We are now online!
+										parent.Friend.User.SetUserConnectionState( 'online' );
+									
+										if( !parent.Workspace.userWorkspaceInitialized )
+										{
+											return parent.Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), event );
+										}
+										else
+										{
+											if( typeof( callback ) == 'function' ) return callback( true, serveranswer );
+											// Make sure we didn't lose websocket!
+										}
+									}
+									else if( json && json.code )
+									{
+										//
+										
+										// TODO: Cleanup ...
+										
+										if( document.getElementById( 'step1' ) && document.getElementById( 'step1' ).className.indexOf( 'closed' ) < 0 )
+										{
+											document.getElementById( 'step1' ).classList.add( 'closed' );
+										}
+										if( document.getElementById( 'step2' ) && document.getElementById( 'step2' ).className.indexOf( 'closed' ) >= 0 )
+										{
+											document.getElementById( 'step2' ).classList.remove( 'closed' );
+										}
+										
+										if( ge( 'loginButton' ) )
+										{
+											ge( 'loginButton' ).innerHTML = 'Sign in';
+										}
+										
+										ge( 'Code' ).focus();
+									
+										Application.busy = false;
+									
+										return;
 									}
 									else
 									{
-										if( typeof( callback ) == 'function' ) return callback( true, serveranswer );
-										// Make sure we didn't lose websocket!
+										parent.Friend.User.SetUserConnectionState( 'offline' );
+									
+										if( callback && typeof( callback ) == 'function' ) return callback( false, serveranswer );
 									}
-								}
-								else if( json && json.code )
+								}	
+								catch( e )
 								{
-									//
-									
-									ge( 'Code' ).focus();
-									
-									Application.busy = false;
-									
-									return;
-								}
-								else
-								{
-									parent.Friend.User.SetUserConnectionState( 'offline' );
-									
+									console.log( 'Failed to understand server response.', e );
 									if( callback && typeof( callback ) == 'function' ) return callback( false, serveranswer );
-								}
-							}	
-							catch( e )
-							{
-								console.log( 'Failed to understand server response.', e );
-								if( callback && typeof( callback ) == 'function' ) return callback( false );
-							};
+								};
+							}
 							
-							if( callback && typeof( callback ) == 'function' ) return callback( false );
+							if( callback && typeof( callback ) == 'function' ) return callback( false, serveranswer );
 						}
 						m.send();
 						
@@ -399,10 +441,10 @@
 				}
 			};
 			
-			function showLoginError()
+			function showLoginError( msg )
 			{
 				parent.Workspace.loginPrompt.setFlag( 'height', 263 );
-				ge( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = ( Application.errorMessage ? Application.errorMessage : 'Invalid credentials. Please check your input.' );
+				ge( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = ( Application.errorMessage ? Application.errorMessage : ( msg ? msg : 'Invalid credentials. Please check your input.' ) );
 				ge( 'Username' ).focus();
 				Application.failedAttempt = true;
 				Application.busy = false;
