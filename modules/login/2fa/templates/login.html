@@ -59,6 +59,9 @@
 						</div>
 						<div class="HRow MarginTop">
 							<div class="HContent100">
+								<!--<button id="backButton" class="IconSmall fa-unlock closed" onclick="Application.back()">
+									Back
+								</button>-->
 								<button id="loginButton" class="IconSmall fa-unlock" tabindex="4" onclick="Application.doLogin()">
 									Verify
 								</button>
@@ -191,12 +194,6 @@
 				login: function( username, password, code, remember, callback, event, flags )
 				{
 					
-					// Step1: Check user and find mobile number, if okey send sms conformation code.
-					
-					// Step2: Send sms confirmation code with login info and receive sessionid.
-					
-					// Step3: Show desktop once sessionid is received ...
-					
 					if( username )
 					{
 						
@@ -234,118 +231,151 @@
 						
 						m.onload = function()
 						{
-							var result = null; var json = null; var serveranswer = null; 
+							var json = null; var serveranswer = null; 
 							
-							try
+							if( this.responseText() )
 							{
-								if( this.responseText() )
+								var res = this.responseText().split( '<!--separate-->' );
+								
+								if( res && res[ 0 ] && res[ 1 ] )
 								{
-									result = this.responseText().split( '<!--separate-->' );
 									
-									if( result && result[0] )
+									if( res[ 2 ] )
 									{
-										if( result[1] )
+										try
 										{
-											serveranswer = result[1];
-										}
-										
-										result = result[0];
-										
-										if( serveranswer )
-										{
-											serveranswer = parent.Workspace.encryption.decrypt( serveranswer );
-											
-											//decrypted2 = parent.Workspace.encryption.decryptRSA( serveranswer );
+											serveranswer = parent.Workspace.encryption.decrypt( res[ 2 ] );
 											
 											json = JSON.parse( serveranswer );
 										}
+										catch( e ) 
+										{
+											console.log( e );
+										}
+										
+										// We got a real error
+										if( json == null )
+										{
+											if( callback && typeof( callback ) == 'function' ) callback( false );
+										}
 									}
-								}
-							}
-							catch( e ) 
-							{
-								console.log( e );
-							}
-							
-							if( Application.showLog ) console.log( { json: json, serveranswer: serveranswer } );
-							
-							// TODO: Divide by process verification and login ...
-							
-							// TODO: Make this catch based on what step your on to get the ok's and fail's better ...
-							
-							if( result && result == 'ok' )
-							{
-								// We got a real error
-								if( json == null )
-								{
-									if( callback && typeof( callback ) == 'function' ) callback( false );
-								}
-								try
-								{
+									
+									if( Application.showLog ) console.log( { json: json, serveranswer: serveranswer, raw: this.responseText() } );
+									
+									switch( res[ 1 ] )
+									{
 								
-									if( json && json.username && json.sessionid )
-									{
-										parent.Workspace.sessionId     = json.sessionid;
-										parent.Workspace.loginUsername = json.username;
-										parent.Workspace.loginUserId   = json.userid;
-										parent.Workspace.loginid       = json.loginid;
-										parent.Workspace.userLevel     = json.level;
-										parent.Workspace.fullName      = json.fullname;
+										// ok identity check ...
+										
+										case 'identity':
+												
+											if( res[0] == 'ok' )
+											{
+												Application.busy = false;
+												
+												if( ge( 'loginButton' ) )
+												{
+													ge( 'loginButton' ).innerHTML = 'Sign in';
+												}
+												
+												if( ge( 'Code' ) )
+												{
+													ge( 'Code' ).focus();
+												}
+											}
+											else
+											{
+												if( json && json.response && !json.code )
+												{
+													showLoginError( json.response );
+													
+													// TODO: Look at the various error messages and make them handled here better ...
+													
+													/*if( ge( 'loginButton' ) )
+													{
+														ge( 'loginButton' ).innerHTML = 'Resend';
+													}*/
+													
+													if( ge( 'Code' ) )
+													{
+														ge( 'Code' ).focus();
+													}
+												}
+												else
+												{
+													if( callback && typeof( callback ) == 'function' ) return callback( false, serveranswer );
+												}
+											}
+											
+											// TODO: Cleanup ...
+											
+											if( document.getElementById( 'step1' ) && document.getElementById( 'step1' ).className.indexOf( 'closed' ) < 0 )
+											{
+												document.getElementById( 'step1' ).classList.add( 'closed' );
+											}
+											if( document.getElementById( 'step2' ) && document.getElementById( 'step2' ).className.indexOf( 'closed' ) >= 0 )
+											{
+												document.getElementById( 'step2' ).classList.remove( 'closed' );
+											}
+											
+											return;
+											
+											break;
 									
-										// We are now online!
-										parent.Friend.User.SetUserConnectionState( 'online' );
-									
-										if( !parent.Workspace.userWorkspaceInitialized )
-										{
-											return parent.Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), event );
-										}
-										else
-										{
-											if( typeof( callback ) == 'function' ) return callback( true, serveranswer );
-											// Make sure we didn't lose websocket!
-										}
+										// ok verification code ...
+										
+										case 'verification':
+											
+											if( res[ 0 ] == 'ok' && json && json.username && json.sessionid )
+											{
+												
+												parent.Workspace.sessionId     = json.sessionid;
+												parent.Workspace.loginUsername = json.username;
+												parent.Workspace.loginUserId   = json.userid;
+												parent.Workspace.loginid       = json.loginid;
+												parent.Workspace.userLevel     = json.level;
+												parent.Workspace.fullName      = json.fullname;
+												
+												// We are now online!
+												parent.Friend.User.SetUserConnectionState( 'online' );
+												
+												if( !parent.Workspace.userWorkspaceInitialized )
+												{
+													return parent.Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), event );
+												}
+												else
+												{
+													if( typeof( callback ) == 'function' ) return callback( true, serveranswer );
+													// Make sure we didn't lose websocket!
+												}
+												
+											}
+											else
+											{
+												parent.Friend.User.SetUserConnectionState( 'offline' );
+												
+												if( callback && typeof( callback ) == 'function' ) return callback( false, serveranswer );
+											}
+											
+											break;
+										
+										// if nothing expected run default ...
+										
+										default:
+											
+											if( callback && typeof( callback ) == 'function' ) return callback( false, serveranswer );
+											
+											break;
+										
 									}
-									else if( json && json.code )
-									{
-										//
-										
-										// TODO: Cleanup ...
-										
-										if( document.getElementById( 'step1' ) && document.getElementById( 'step1' ).className.indexOf( 'closed' ) < 0 )
-										{
-											document.getElementById( 'step1' ).classList.add( 'closed' );
-										}
-										if( document.getElementById( 'step2' ) && document.getElementById( 'step2' ).className.indexOf( 'closed' ) >= 0 )
-										{
-											document.getElementById( 'step2' ).classList.remove( 'closed' );
-										}
-										
-										if( ge( 'loginButton' ) )
-										{
-											ge( 'loginButton' ).innerHTML = 'Sign in';
-										}
-										
-										ge( 'Code' ).focus();
-									
-										Application.busy = false;
-									
-										return;
-									}
-									else
-									{
-										parent.Friend.User.SetUserConnectionState( 'offline' );
-									
-										if( callback && typeof( callback ) == 'function' ) return callback( false, serveranswer );
-									}
-								}	
-								catch( e )
-								{
-									console.log( 'Failed to understand server response.', e );
-									if( callback && typeof( callback ) == 'function' ) return callback( false, serveranswer );
-								};
+								
+								}
 							}
 							
-							if( callback && typeof( callback ) == 'function' ) return callback( false, serveranswer );
+							if( Application.showLog ) console.log( this.responseText() );
+							
+							if( callback && typeof( callback ) == 'function' ) callback( false );
+							
 						}
 						m.send();
 						

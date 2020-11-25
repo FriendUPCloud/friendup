@@ -44,18 +44,18 @@
 						{
 							if( $ses->sessionid )
 							{
-								send( true, json_encode( $ses ), $args->publickey );
+								send( true, 'verification', json_encode( $ses ), $args->publickey );
 							}
 							else
 							{
-								send( false, json_encode( $ses ), $args->publickey );
+								send( false, 'verification', json_encode( $ses ), $args->publickey );
 							}
 						}
 					}
 				}
 				else
 				{
-					send( false, $ret[1], $args->publickey );
+					send( false, 'verification', $ret[1], $args->publickey );
 				}
 			}
 			
@@ -71,18 +71,18 @@
 							{
 								// TODO: Send back useful info ...
 								// TODO: Also add useful clicatell data to make sure it was sent ...
-								send( true, '{"code":"sent to ' . $ret[1]->Mobile . '"}', $args->publickey );
+								send( true, 'identity', '{"code":"sent to ' . $ret[1]->Mobile . '","data":' . $res[2] . '}', $args->publickey );
 							}
 						}
 						else
 						{
-							send( false, $res[1], $args->publickey );
+							send( false, 'identity', $res[1], $args->publickey );
 						}
 					}
 				}
 				else
 				{
-					send( false, $ret[1], $args->publickey );
+					send( false, 'identity', $ret[1], $args->publickey );
 				}
 			}
 			
@@ -154,31 +154,18 @@
 	
 	function renderSecureLoginForm()
 	{
-		$providers = [];
-		$provider = false;
-		$lp = '';		
-	
-		if( isset( $GLOBALS['login_modules']['saml']['Providers'] ) )
+		
+		if( file_exists( dirname(__FILE__) . '/templates/login.html' ) )
 		{
-			foreach( $GLOBALS['login_modules']['saml']['Providers'] as $pk => $pv );
-			{
-				//do some checks here
-			}
+			die( renderReplacements( file_get_contents( dirname(__FILE__) . '/templates/login.html' ) ) );
 		}
 		
-		if( file_exists(dirname(__FILE__) . '/templates/login.html') )
-			die( renderReplacements( file_get_contents(dirname(__FILE__) . '/templates/login.html') ) );
-		
-		
-		die('<h1>Your FriendUP installation is incomplete!</h1>');
+		die( '<h1>Your FriendUP installation is incomplete!</h1>' );
 	}
 	
 	function renderReplacements( $template )
 	{
-		$welcome = $GLOBALS['login_modules']['saml']['Login']['logintitle_en'] !== null ? $GLOBALS['login_modules']['saml']['Login']['logintitle_en'] :'Login to your workspace (2FA)';
-		$samlendpoint = $GLOBALS['login_modules']['saml']['Module']['samlendpoint'] !== null ? $GLOBALS['login_modules']['saml']['Module']['samlendpoint'] : 'about:blank';
-		
-		$samlendpoint .= '?friendendpoint=' . urlencode($GLOBALS['request_path']);
+		$welcome = 'Login to your workspace (2FA)';
 		
 		$publickey = '';
 		
@@ -193,17 +180,15 @@
 		$finds = [
 			'{scriptpath}'
 			,'{welcome}'
-			,'{samlendpoint}'
 			,'{publickey}'
 		];
 		$replacements = [
 				$GLOBALS['request_path']
 				,$welcome
-				,$samlendpoint
 				,$publickey
 		];
 		
-		return str_replace($finds, $replacements, $template);
+		return str_replace( $finds, $replacements, $template );
 	}
 	
 	
@@ -524,7 +509,7 @@
 	
 	function sendCode( $userid, $mobile, $code = false )
 	{
-		$error = false;
+		$error = false; $debug = false;
 		
 		include_once( __DIR__ . '/../../../php/classes/dbio.php' );
 		$conf = parse_ini_file( __DIR__ . '/../../../cfg/cfg.ini', true );
@@ -654,8 +639,15 @@
 						curl_setopt( $curl, CURLOPT_POST, 1 );
 						curl_setopt( $curl, CURLOPT_POSTFIELDS, json_encode( $json ) );
 						curl_setopt( $curl, CURLOPT_RETURNTRANSFER, true );
-					
-						$output = curl_exec( $curl );
+						
+						if( $debug )
+						{
+							$output = '{"verification":"' . $code . '"}';
+						}
+						else
+						{
+							$output = curl_exec( $curl );
+						}
 						
 						$httpCode = curl_getinfo( $curl, CURLINFO_HTTP_CODE );
 					
@@ -766,7 +758,7 @@
 		return $json;
 	}
 	
-	function send( $result, $data = '', $publickey = false )
+	function send( $result, $type = false, $data = '', $publickey = false )
 	{
 		$ret = ( $result ? 'ok' : 'fail' );
 		
@@ -778,15 +770,15 @@
 			
 			if( $encrypted = $fcrypt->encryptString( $data, $publickey ) )
 			{
-				die( $ret . '<!--separate-->' . $encrypted->cipher );
+				die( $ret . '<!--separate-->' . ( $type ? $type . '<!--separate-->' : '' ) . $encrypted->cipher );
 			}
 			else
 			{
-				die( 'fail<!--separate-->failed to encrypt serveranswer ...' );
+				die( 'fail<!--separate-->' . ( $type ? $type . '<!--separate-->' : '' ) . 'failed to encrypt serveranswer ...' );
 			}
 		}
 		
-		die( $ret . '<!--separate-->' . $data );
+		die( $ret . '<!--separate-->' . ( $type ? $type . '<!--separate-->' : '' ) . $data );
 	}
 	
 	//render the form
