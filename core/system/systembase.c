@@ -653,12 +653,6 @@ SystemBase *SystemInit( void )
 			l->fcm->fcm_WebSocket = NULL;
 		}
 		
-		if( l->fcm->fcm_WebSocketMobile != NULL )
-		{
-			WebSocketDelete( l->fcm->fcm_WebSocketMobile );
-			l->fcm->fcm_WebSocketMobile = NULL;
-		}
-		
 		if( l->fcm->fcm_WebSocketNotification != NULL )
 		{
 			WebSocketDelete( l->fcm->fcm_WebSocketNotification );

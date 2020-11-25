@@ -105,7 +105,6 @@ typedef struct FriendCoreManager
 	
 	ServiceManager				*fcm_ServiceManager;							///< Service Manager
 	WebSocket					*fcm_WebSocket;                                 ///< WebSocket Manager
-	WebSocket					*fcm_WebSocketMobile;                           ///< WebSocket Mobile Manager
 	WebSocket					*fcm_WebSocketNotification;                     ///< WebSocket Notification Manager
 	
 	FriendcoreInfo				*fcm_FCI;										///< Friend Core Information
