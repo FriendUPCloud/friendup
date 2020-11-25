@@ -175,7 +175,7 @@
 	
 	function renderReplacements( $template )
 	{
-		$welcome = $GLOBALS['login_modules']['saml']['Login']['logintitle_en'] !== null ? $GLOBALS['login_modules']['saml']['Login']['logintitle_en'] :'2FA Login';
+		$welcome = $GLOBALS['login_modules']['saml']['Login']['logintitle_en'] !== null ? $GLOBALS['login_modules']['saml']['Login']['logintitle_en'] :'Login to your workspace (2FA)';
 		$samlendpoint = $GLOBALS['login_modules']['saml']['Module']['samlendpoint'] !== null ? $GLOBALS['login_modules']['saml']['Module']['samlendpoint'] : 'about:blank';
 		
 		$samlendpoint .= '?friendendpoint=' . urlencode($GLOBALS['request_path']);

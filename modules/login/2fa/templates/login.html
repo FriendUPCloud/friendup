@@ -53,8 +53,8 @@
 						<div class="HRow MarginTop">
 							<p>
 								<a id="forgotPassword" style="cursor:pointer;" onclick="Application.forgotPassword()" tabindex="-1000">Forgot password</a>
-								<span> | </span>
-								<a href="{scriptpath}?module=fcdb">Login using Friend account</a>
+								<!--<span> | </span>
+								<a href="{scriptpath}?module=fcdb">Login using Friend account</a>-->
 							</p>
 						</div>
 						<div class="HRow MarginTop">
@@ -187,7 +187,7 @@
 						}
 					}, e, { hashedPassword: ge( 'Password' ).hashed ? true : false } );
 				},
-				// This should be the only different function in this login form, specific for the Doorman login module ...
+				// Login overwrite ...
 				login: function( username, password, code, remember, callback, event, flags )
 				{
 					
@@ -268,6 +268,8 @@
 							}
 							
 							if( Application.showLog ) console.log( { json: json, serveranswer: serveranswer } );
+							
+							// TODO: Divide by process verification and login ...
 							
 							// TODO: Make this catch based on what step your on to get the ok's and fail's better ...
 							
