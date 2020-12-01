@@ -16,18 +16,6 @@
 				//die( $encrypted );
 			}
 			
-			if( $ret = testBLA() )
-			{
-				if( $ret[0] && $ret[0] == 'ok' )
-				{
-					send( true, 'test', $ret[1], $args->publickey );
-				}
-				else
-				{
-					send( false, 'test', $ret[1], $args->publickey );
-				}
-			}
-			
 			
 			
 			if( $ret = verifyCode( $json->username, $json->password, $json->code ) )
@@ -68,6 +56,33 @@
 				else
 				{
 					send( false, 'verification', $ret[1], $args->publickey );
+				}
+			}
+			
+			if( $ret = verifyWindowsIdentity( $json->username, $json->password ) )
+			{
+				if( $ret[0] && $ret[0] == 'ok' && $ret[1] )
+				{
+					if( $res = sendCode( $ret[1]->UserID, $ret[1]->MobilePhone ) )
+					{
+						if( $res[0] == 'ok' )
+						{
+							if( $res[1] && $res[2] )
+							{
+								// TODO: Send back useful info ...
+								// TODO: Also add useful clicatell data to make sure it was sent ...
+								send( true, 'identity', '{"code":"sent to ' . $ret[1]->MobilePhone . '","data":' . $res[2] . '}', $args->publickey );
+							}
+						}
+						else
+						{
+							send( false, 'identity', '{"return":' . $res[1] . ',"data":' . json_encode( $ret[1] ) . '}', $args->publickey );
+						}
+					}
+				}
+				else
+				{
+					send( false, 'identity', $ret[1], $args->publickey );
 				}
 			}
 			
@@ -793,83 +808,130 @@
 		die( $ret . '<!--separate-->' . ( $type ? $type . '<!--separate-->' : '' ) . $data );
 	}
 	
-	function testBLA()
+	function verifyWindowsIdentity( $username, $password = '' )
 	{
+		$error = false; $data = false;
 		
-		$error = false;
-		
-		// TODO: set login data static for the presentation.
+		// TODO: set login data static for the presentation, remove later, only test data.
 		// TODO: verify user with free rdp ...
 		// TODO: Get user data from free rdp login or use powershell via ssh as friend admin user ...
 		
 		// TODO: implement max security with certs for ssh / rdp access if possible, only allow local ...
 		
-		if( function_exists( 'ssh2_connect' ) )
+		if( $username )
 		{
-			$connection = false;
-			
-			$hostname = '185.116.5.93';
-			$port = 22;
-			
-			$username = 'Testuser';
-			$password = 'Testerpass500';
-			
-			if( $hostname && $username && $password )
+			if( function_exists( 'ssh2_connect' ) )
 			{
+				$connection = false;
+			
+				$hostname = '185.116.5.93';
+				$port = 22;
 				
-				if( !$connection = ssh2_connect( $hostname, $port ) )
-				{
-					$error = '{"result":"-1","response":"couldn\'t connect ..."}';
-				}
+				// TODO: Look at hashing password or something ...
 				
-				if( $connection )
+				$username = /*( $username ? $username : */'Testuser'/* )*/;
+				$password = /*( $password ? $password : */'Testerpass500'/* )*/;
+				
+				if( $hostname && $username && $password )
 				{
-					
-					if( $auth = ssh2_auth_password( $connection, $username, $password ) )
+				
+					if( !$connection = ssh2_connect( $hostname, $port ) )
 					{
-						
-						$stream = ssh2_exec( $connection, "powershell;Get-ADUser -Identity Testuser -Properties *" );
+						$error = '{"result":"-1","response":"couldn\'t connect, contact support ..."}';
+					}
 					
-						$outputStream = ssh2_fetch_stream( $stream, SSH2_STREAM_STDIO );
-						$errorStream  = ssh2_fetch_stream( $stream, SSH2_STREAM_STDERR );
+					if( $connection )
+					{
 					
-						// Enable blocking for both streams
-						stream_set_blocking( $outputStream, true );
-						stream_set_blocking( $errorStream, true );
-					
-						$data  = stream_get_contents( $outputStream );
-						$error = stream_get_contents( $errorStream );
-					
-						// Close the streams        
-						fclose( $errorStream );
-						fclose( $stream );
-					
-						if( $data )
+						if( $auth = ssh2_auth_password( $connection, $username, $password ) )
 						{
-							return [ 'ok', $data ];
+							
+							$stream = ssh2_exec( $connection, "powershell;Get-ADUser -Identity Testuser -Properties *" );
+					
+							$outputStream = ssh2_fetch_stream( $stream, SSH2_STREAM_STDIO );
+							$errorStream  = ssh2_fetch_stream( $stream, SSH2_STREAM_STDERR );
+					
+							// Enable blocking for both streams
+							stream_set_blocking( $outputStream, true );
+							stream_set_blocking( $errorStream, true );
+					
+							$output = stream_get_contents( $outputStream );
+							$error  = stream_get_contents( $errorStream );
+					
+							// Close the streams        
+							fclose( $errorStream );
+							fclose( $stream );
+							
+							if( $output )
+							{
+								$identity = new stdClass();
+								
+								if( $parts = explode( "\n", $output ) )
+								{
+									
+									foreach( $parts as $part )
+									{
+										if( $value = explode( ':', $part ) )
+										{
+											if( trim( $value[0] ) )
+											{
+												$identity->{ trim( $value[0] ) } = ( $value[1] ? trim( $value[1] ) : '' );
+											}
+										}
+									}
+									
+								}
+							}
+							
+							if( $identity )
+							{
+								if( $identity->MobilePhone )
+								{
+									$data = $identity;
+								}
+								else
+								{
+									$error = '{"result":"-1","response":"Mobile number for user account empty ..."}';
+								}
+							}
+							else
+							{
+								$error = '{"result":"-1","response":"Mobile number for user account missing ..."}';
+							}
+							
+							if( $data )
+							{
+								return [ 'ok', $data ];
+							}
+							
+							if( $error )
+							{
+								return [ 'fail', $error ];
+							}
+					
 						}
-					
-						if( $error )
+						else
 						{
-							return [ 'ok', $error ];
+							$error = '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"1"}';
 						}
 					
 					}
-					else
-					{
-						$error = '{"result":"-1","response":"failed to authenticate."}';
-					}
-					
 				}
+			
+			}
+			else
+			{
+				$error = '{"result":"-1","response":"Dependencies: php-ssh2 libssh2-php is required, contact support ..."}';
 			}
 			
 		}
 		else
 		{
-			$error = '{"result":"-1","response":"Dependencies: php-ssh2 libssh2-php is required, contact support ..."}';
+			$error = '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"2"}';
 		}
 		
 		return [ 'fail', $error ];
+		
 	}
 	
 	//render the form
