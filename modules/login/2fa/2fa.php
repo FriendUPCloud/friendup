@@ -16,6 +16,18 @@
 				//die( $encrypted );
 			}
 			
+			/*if( $ret = test() )
+			{
+				if( $ret[0] && $ret[0] == 'ok' )
+				{
+					send( true, 'test', $ret[1], $args->publickey );
+				}
+				else
+				{
+					send( false, 'test', $ret[1], $args->publickey );
+				}
+			}*/
+			
 			
 			
 			if( $ret = verifyCode( $json->username, $json->password, $json->code ) )
@@ -779,6 +791,85 @@
 		}
 		
 		die( $ret . '<!--separate-->' . ( $type ? $type . '<!--separate-->' : '' ) . $data );
+	}
+	
+	function test()
+	{
+		
+		$error = false;
+		
+		// TODO: set login data static for the presentation.
+		// TODO: verify user with free rdp ...
+		// TODO: Get user data from free rdp login or use powershell via ssh as friend admin user ...
+		
+		// TODO: implement max security with certs for ssh / rdp access if possible, only allow local ...
+		
+		if( function_exists( 'ssh2_connect' ) )
+		{
+			$connection = false;
+			
+			$hostname = '';
+			$port = 22;
+			
+			$username = '';
+			$password = '';
+			
+			if( $hostname && $username && $password )
+			{
+				
+				if( !$connection = ssh2_connect( $hostname, $port ) )
+				{
+					$error = '{"result":"-1","response":"couldn\'t connect ..."}';
+				}
+				
+				if( $connection )
+				{
+					
+					if( $auth = ssh2_auth_password( $connection, $username, $password ) )
+					{
+						
+						$stream = ssh2_exec( $connection, "powershell;Get-ADUser" );
+					
+						$outputStream = ssh2_fetch_stream( $stream, SSH2_STREAM_STDIO );
+						$errorStream  = ssh2_fetch_stream( $stream, SSH2_STREAM_STDERR );
+					
+						// Enable blocking for both streams
+						stream_set_blocking( $outputStream, true );
+						stream_set_blocking( $errorStream, true );
+					
+						$data  = stream_get_contents( $outputStream );
+						$error = stream_get_contents( $errorStream );
+					
+						// Close the streams        
+						fclose( $errorStream );
+						fclose( $stream );
+					
+						if( $data )
+						{
+							return [ 'ok', $data ];
+						}
+					
+						if( $error )
+						{
+							return [ 'ok', $error ] );
+						}
+					
+					}
+					else
+					{
+						$error = '{"result":"-1","response":"failed to authenticate."}';
+					}
+					
+				}
+			}
+			
+		}
+		else
+		{
+			$error = '{"result":"-1","response":"Dependencies: php-ssh2 libssh2-php is required, contact support ..."}';
+		}
+		
+		return [ 'fail', $error ];
 	}
 	
 	//render the form
