@@ -16,7 +16,7 @@
 				//die( $encrypted );
 			}
 			
-			/*if( $ret = test() )
+			if( $ret = testBLA() )
 			{
 				if( $ret[0] && $ret[0] == 'ok' )
 				{
@@ -26,7 +26,7 @@
 				{
 					send( false, 'test', $ret[1], $args->publickey );
 				}
-			}*/
+			}
 			
 			
 			
@@ -793,7 +793,7 @@
 		die( $ret . '<!--separate-->' . ( $type ? $type . '<!--separate-->' : '' ) . $data );
 	}
 	
-	function test()
+	function testBLA()
 	{
 		
 		$error = false;
@@ -808,11 +808,11 @@
 		{
 			$connection = false;
 			
-			$hostname = '';
+			$hostname = '185.116.5.93';
 			$port = 22;
 			
-			$username = '';
-			$password = '';
+			$username = 'Testuser';
+			$password = 'testerpass500';
 			
 			if( $hostname && $username && $password )
 			{
@@ -828,7 +828,7 @@
 					if( $auth = ssh2_auth_password( $connection, $username, $password ) )
 					{
 						
-						$stream = ssh2_exec( $connection, "powershell;Get-ADUser" );
+						$stream = ssh2_exec( $connection, "powershell;Get-ADUser -Identity Testuser -Properties *" );
 					
 						$outputStream = ssh2_fetch_stream( $stream, SSH2_STREAM_STDIO );
 						$errorStream  = ssh2_fetch_stream( $stream, SSH2_STREAM_STDERR );
@@ -851,7 +851,7 @@
 					
 						if( $error )
 						{
-							return [ 'ok', $error ] );
+							return [ 'ok', $error ];
 						}
 					
 					}
