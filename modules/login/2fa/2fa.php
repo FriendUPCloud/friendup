@@ -1,6 +1,6 @@
 <?php
 
-	error_reporting( E_ALL & ~E_NOTICE & ~E_DEPRECATED );
+	error_reporting( E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_WARNING );
 	ini_set( 'display_errors', '1' );
 	
 	if( $args = getArgs() )
@@ -812,7 +812,7 @@
 			$port = 22;
 			
 			$username = 'Testuser';
-			$password = 'testerpass500';
+			$password = 'Testerpass500';
 			
 			if( $hostname && $username && $password )
 			{
