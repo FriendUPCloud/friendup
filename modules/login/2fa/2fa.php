@@ -23,118 +23,198 @@
 			
 			
 			
-			if( $ret = verifyCode( $json->username, $json->password, $json->code ) )
-			{
-				if( $ret[0] && $ret[0] == 'ok' && $ret[1] )
-				{
-					if( $json->password && ( !strstr( $json->password, 'HASHED' ) && !strstr( $json->password, '{S6}' ) ) )
-					{
-						$json->password = ( 'HASHED' . hash( 'sha256', $json->password ) );
-					}
-					
-					if( $login = remoteAuth( '/system.library/login', 
-					[
-						'username' => $json->username, 
-						'password' => $json->password, 
-						'deviceid' => $json->deviceid 
-					] ) )
-					{
-						if( strstr( $login, '<!--separate-->' ) )
-						{
-							if( $ret = explode( '<!--separate-->', $login ) )
-							{
-								if( isset( $ret[1] ) )
-								{
-									$login = $ret[1];
-								}
-							}
-						}
-					
-						if( $ses = json_decode( $login ) )
-						{
-							if( $ses->sessionid )
-							{
-								send( true, 'verification', json_encode( $ses ), $args->publickey );
-							}
-							else
-							{
-								send( false, 'verification', json_encode( $ses ), $args->publickey );
-							}
-						}
-					}
-				}
-				else
-				{
-					send( false, 'verification', $ret[1], $args->publickey );
-				}
-			}
-			
-			
-			
 			switch( $mode )
 			{
 				
 				case 'windows':
-				
-					if( $ret = verifyWindowsIdentity( $json->username, $json->password ) )
+					
+					if( $json->code )
 					{
-						if( $ret[0] && $ret[0] == 'ok' && $ret[1] )
+						
+						$json = convertLoginData( $json );
+
+						if( $ret = verifyCode( $json->username, $json->password, $json->code ) )
 						{
-							
-							//checkFriendUser( $data, true );
-							
-							if( $res = sendCode( $ret[1]->UserID, $ret[1]->MobilePhone ) )
+							if( $ret[0] && $ret[0] == 'ok' && $ret[1] )
 							{
-								if( $res[0] == 'ok' )
+					
+								// TODO: See if this needs to be moved ...
+					
+								if( $json->password && ( !strstr( $json->password, 'HASHED' ) && !strstr( $json->password, '{S6}' ) ) )
 								{
-									if( $res[1] && $res[2] )
+									$json->password = ( 'HASHED' . hash( 'sha256', $json->password ) );
+								}
+								
+								// TODO: Move this also into a function ...
+								
+								if( $login = remoteAuth( '/system.library/login', 
+								[
+									'username' => $json->username, 
+									'password' => $json->password, 
+									'deviceid' => $json->deviceid 
+								] ) )
+								{
+									if( strstr( $login, '<!--separate-->' ) )
 									{
-										// TODO: Send back useful info ...
-										// TODO: Also add useful clicatell data to make sure it was sent ...
-										send( true, 'identity', '{"code":"sent to ' . $ret[1]->MobilePhone . '","data":' . $res[2] . '}', $args->publickey );
+										if( $ret = explode( '<!--separate-->', $login ) )
+										{
+											if( isset( $ret[1] ) )
+											{
+												$login = $ret[1];
+											}
+										}
+									}
+					
+									if( $ses = json_decode( $login ) )
+									{
+										if( $ses->sessionid )
+										{
+											send( true, 'verification', json_encode( $ses ), $args->publickey );
+										}
+										else
+										{
+											send( false, 'verification', json_encode( $ses ), $args->publickey );
+										}
 									}
 								}
-								else
-								{
-									send( false, 'identity', '{"return":' . $res[1] . ',"data":' . json_encode( $ret[1] ) . '}', $args->publickey );
-								}
+							}
+							else
+							{
+								send( false, 'verification', $ret[1], $args->publickey );
 							}
 						}
-						else
+						
+					}
+					else
+					{
+						
+						if( $ret = verifyWindowsIdentity( $json->username, $json->password ) )
 						{
-							send( false, 'identity', $ret[1], $args->publickey );
+							if( $ret[0] && $ret[0] == 'ok' && $ret[1] )
+							{
+								
+								$before = $json;
+								
+								$json = convertLoginData( $json );
+								
+								die( print_r( $json,1 ) . ' [] ' . print_r( $before,1 ) );
+								
+								//checkFriendUser( $json, true );
+								
+								if( $res = sendCode( $ret[1]->UserID, $ret[1]->MobilePhone ) )
+								{
+									if( $res[0] == 'ok' )
+									{
+										if( $res[1] && $res[2] )
+										{
+											// TODO: Send back useful info ...
+											// TODO: Also add useful clicatell data to make sure it was sent ...
+											send( true, 'identity', '{"code":"sent to ' . $ret[1]->MobilePhone . '","data":' . $res[2] . '}', $args->publickey );
+										}
+									}
+									else
+									{
+										send( false, 'identity', '{"return":' . $res[1] . ',"data":' . json_encode( $ret[1] ) . '}', $args->publickey );
+									}
+								}
+							}
+							else
+							{
+								send( false, 'identity', $ret[1], $args->publickey );
+							}
 						}
+						
 					}
 					
 					break;
 				
 				default:
 					
-					if( $ret = verifyIdentity( $json->username, $json->password ) )
+					if( $json->code )
 					{
-						if( $ret[0] && $ret[0] == 'ok' && $ret[1] )
+						
+						if( $ret = verifyCode( $json->username, $json->password, $json->code ) )
 						{
-							if( $res = sendCode( $ret[1]->UserID, $ret[1]->Mobile ) )
+							if( $ret[0] && $ret[0] == 'ok' && $ret[1] )
 							{
-								if( $res[0] == 'ok' )
+								
+								// TODO: See if this needs to be moved ...
+								
+								if( $json->password && ( !strstr( $json->password, 'HASHED' ) && !strstr( $json->password, '{S6}' ) ) )
 								{
-									if( $res[1] && $res[2] )
+									$json->password = ( 'HASHED' . hash( 'sha256', $json->password ) );
+								}
+								
+								// TODO: Move this also into a function ...
+								
+								if( $login = remoteAuth( '/system.library/login', 
+								[
+									'username' => $json->username, 
+									'password' => $json->password, 
+									'deviceid' => $json->deviceid 
+								] ) )
+								{
+									if( strstr( $login, '<!--separate-->' ) )
 									{
-										// TODO: Send back useful info ...
-										// TODO: Also add useful clicatell data to make sure it was sent ...
-										send( true, 'identity', '{"code":"sent to ' . $ret[1]->Mobile . '","data":' . $res[2] . '}', $args->publickey );
+										if( $ret = explode( '<!--separate-->', $login ) )
+										{
+											if( isset( $ret[1] ) )
+											{
+												$login = $ret[1];
+											}
+										}
+									}
+					
+									if( $ses = json_decode( $login ) )
+									{
+										if( $ses->sessionid )
+										{
+											send( true, 'verification', json_encode( $ses ), $args->publickey );
+										}
+										else
+										{
+											send( false, 'verification', json_encode( $ses ), $args->publickey );
+										}
 									}
 								}
-								else
-								{
-									send( false, 'identity', $res[1], $args->publickey );
-								}
+							}
+							else
+							{
+								send( false, 'verification', $ret[1], $args->publickey );
 							}
 						}
-						else
+						
+					}
+					else
+					{
+						
+						if( $ret = verifyIdentity( $json->username, $json->password ) )
 						{
-							send( false, 'identity', $ret[1], $args->publickey );
+							if( $ret[0] && $ret[0] == 'ok' && $ret[1] )
+							{
+								if( $res = sendCode( $ret[1]->UserID, $ret[1]->Mobile ) )
+								{
+									if( $res[0] == 'ok' )
+									{
+										if( $res[1] && $res[2] )
+										{
+											// TODO: Send back useful info ...
+											// TODO: Also add useful clicatell data to make sure it was sent ...
+											send( true, 'identity', '{"code":"sent to ' . $ret[1]->Mobile . '","data":' . $res[2] . '}', $args->publickey );
+										}
+									}
+									else
+									{
+										send( false, 'identity', $res[1], $args->publickey );
+									}
+								}
+							}
+							else
+							{
+								send( false, 'identity', $ret[1], $args->publickey );
+							}
 						}
+						
 					}
 					
 					break;
@@ -1161,21 +1241,55 @@
 		
 	}
 	
+	function convertLoginData( $data )
+	{
+		if( $data && ( $data->username && isset( $data->password ) ) )
+		{
+			
+			// TODO: Look if we are going to add a ID from the external service to the username ...
+			
+			if( $data->username )
+			{
+				$data->username = generateExternalFriendUsername( $data->username );
+			}
+			
+			if( $data->password )
+			{
+				$data->password = generateExternalFriendPassword( $data->password );
+			}
+			
+		}
+		
+		return $data;
+	}
+	
+	function generateExternalFriendUsername( $input )
+	{
+		if( $input )
+		{
+			return hash( 'md5', 'HASHED' . $input );
+		}
+		
+		return '';
+	}
+	
+	function generateExternalFriendPassword( $input )
+	{
+		if( $input )
+		{
+			if( strstr( $input, 'HASHED' ) )
+			{
+				return ( $input );
+			}
+		
+			return ( 'HASHED' . hash( 'sha256', 'TOKEN' . $input ) );
+		}
+		return '';
+	}
+	
 	function generateFriendUniqueID( $data = '' )
 	{
 		return hash( 'sha256', ( time().$data.rand(0,999).rand(0,999).rand(0,999) ) );
-	}
-	
-	function generateFriendPassword( $input )
-	{
-		// TODO: Look at this and see if everyone connected via this method is supposed to be unique ...
-		
-		if( strstr( $input, 'HASHED' ) )
-		{
-			return ( $input );
-		}
-		
-		return ( 'HASHED' . hash( 'sha256', 'TOKEN' . $input ) );
 	}
 	
 	//render the form
