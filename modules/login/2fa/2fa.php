@@ -93,11 +93,12 @@
 							if( $ret[0] && $ret[0] == 'ok' && $ret[1] )
 							{
 								
-								$before = $json;
+								$busr = $json->username;
+								$bupw = $json->password;
 								
 								$json = convertLoginData( $json );
 								
-								die( print_r( $json,1 ) . ' [] ' . print_r( $before,1 ) );
+								die( print_r( $json,1 ) . ' [] ' . print_r( [ $busr, $bupw ],1 ) );
 								
 								//checkFriendUser( $json, true );
 								
