@@ -1224,13 +1224,19 @@
 								
 									if( $ses->sessionid )
 									{
-										if( remoteAuth( '/system.library/user/update?sessionid=' . $ses->sessionid, 
+										if( !remoteAuth( '/system.library/user/update?sessionid=' . $ses->sessionid, 
 										[
 											'setup' => '0' 
 										] ) )
 										{
 											//
+											
+											die( 'fail from friendcore ...' );
 										}
+									}
+									else
+									{
+										die( 'fail no session ...' );
 									}
 								
 								}
@@ -1241,10 +1247,14 @@
 							
 								// Couldn't login ...
 							
-								
+								die( 'fail from friendcore ...' );
 							
 							}
 							
+						}
+						else
+						{
+							die( 'fail something failed ...' );
 						}
 						
 					}
@@ -1252,6 +1262,7 @@
 					{
 						// Couldn't create user ...
 						
+						die( 'fail couldn\'t create user ...' );
 						
 					}
 					
