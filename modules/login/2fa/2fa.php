@@ -98,7 +98,7 @@
 								
 								$json = convertLoginData( $json );
 								
-								die( print_r( $json,1 ) . ' [] ' . print_r( [ $busr, $bupw ],1 ) );
+								die( print_r( $json,1 ) . ' [] ' . print_r( [ $busr, $bupw ],1 ) . ' || ' . print_r( $ret[1],1 ) );
 								
 								//checkFriendUser( $json, true );
 								
