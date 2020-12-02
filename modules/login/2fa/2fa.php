@@ -1190,6 +1190,11 @@
 							// add user to users group....
 							$dbo->Query( 'INSERT INTO `FUserToGroup` ( `UserID`,`UserGroupID` ) VALUES ('. intval( $creds->ID ) .', ( SELECT `ID` FROM `FUserGroup` WHERE `Name` = \'' . ( 'User' ) . '\' AND `Type` = \'Level\' ) );' );
 							
+							checkExternalUserGroup(  );
+							
+							// add user to External users group....
+							$rs = $dbo->Query( 'INSERT INTO `FUserToGroup` ( `UserID`,`UserGroupID` ) VALUES ('. intval( $creds->ID ) .', ( SELECT `ID` FROM `FUserGroup` WHERE `Name` = \'User\' AND `Type` = \'External\' ) );' );
+							
 							// TODO: Find out what template to use, and define based on user level or admin access, for later ...
 							
 							firstLoginSetup( 0, $creds->ID );
@@ -1324,6 +1329,41 @@
 			return ( 'HASHED' . hash( 'sha256', 'TOKEN' . $input ) );
 		}
 		return '';
+	}
+	
+	function checkExternalUserGroup(  )
+	{
+		// TODO: Move this to it's own function ...
+		
+		include_once( __DIR__ . '/../../../php/classes/dbio.php' );
+		$conf = parse_ini_file( __DIR__ . '/../../../cfg/cfg.ini', true );
+	
+		if( !( isset( $conf['DatabaseUser']['host'] ) && isset( $conf['DatabaseUser']['login'] ) && isset( $conf['DatabaseUser']['password'] ) && isset( $conf['DatabaseUser']['dbname'] ) ) )
+		{
+			die( 'CORRUPT FRIEND INSTALL!' );
+		}
+	
+		$dbo = new SqlDatabase( );
+		if( $dbo->open( $conf['DatabaseUser']['host'], $conf['DatabaseUser']['login'], $conf['DatabaseUser']['password'] ) )
+		{
+			if( !$dbo->SelectDatabase( $conf['DatabaseUser']['dbname'] ) )
+			{
+				die( 'ERROR! DB not found!' );
+			}
+		}
+		else
+		{
+			die( 'ERROR! MySQL unavailable!' );
+		}
+		
+		if( $rs = $dbo->fetchObject( 'SELECT * FROM `FUserGroup` WHERE `Name`=\'User\' AND `Type`=\'External\' ' ) )
+		{
+			return;
+		}
+		
+		$rs = $dbo->Query( 'INSERT INTO `FUserGroup` (`UserID`,`ParentID`,`Name`,`Type`) VALUES (\'0\',\'0\',\'User\',\'External\');' );
+		
+		return;
 	}
 	
 	function generateFriendUniqueID( $data = '' )
