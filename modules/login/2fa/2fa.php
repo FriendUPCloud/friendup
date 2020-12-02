@@ -80,6 +80,9 @@
 					{
 						if( $ret[0] && $ret[0] == 'ok' && $ret[1] )
 						{
+							
+							//checkFriendUser( $data, true );
+							
 							if( $res = sendCode( $ret[1]->UserID, $ret[1]->MobilePhone ) )
 							{
 								if( $res[0] == 'ok' )
@@ -133,7 +136,7 @@
 							send( false, 'identity', $ret[1], $args->publickey );
 						}
 					}
-				
+					
 					break;
 					
 			}
@@ -502,6 +505,8 @@
 				$password = ( 'HASHED' . hash( 'sha256', $password ) );
 			}
 			
+			// TODO: Check what mode we are using for password and for username ... this might be different depending on what mode ...
+			
 			if( $creds = $dbo->fetchObject( '
 				SELECT fu.ID FROM FUser fu 
 				WHERE 
@@ -571,9 +576,9 @@
 		}
 	}
 	
-	function sendCode( $userid, $mobile, $code = false )
+	function sendCode( $userid, $mobile, $code = false, $limit = true )
 	{
-		$error = false; $debug = false;
+		$error = false; $debug = true;
 		
 		include_once( __DIR__ . '/../../../php/classes/dbio.php' );
 		$conf = parse_ini_file( __DIR__ . '/../../../cfg/cfg.ini', true );
@@ -613,6 +618,7 @@
 			
 			if( $userid && $recv )
 			{
+				
 				$dbo->Query( '
 					DELETE FROM FMetaData 
 					WHERE 
@@ -625,22 +631,27 @@
 						) 
 				' );
 				
-				if( $check = $dbo->fetchObject( '
-					SELECT 
-						fm.DataID AS UserID, fm.ValueNumber AS Expiry, fm.ValueString AS Code 
-					FROM 
-						FMetaData fm 
-					WHERE 
-							fm.Key          = "VerificationCode" 
-						AND fm.DataID       = \'' . $userid . '\' 
-						AND fm.DataTable    = "FUser" 
-						AND fm.ValueNumber != 0 AND fm.ValueString != "" 
-					ORDER BY 
-						fm.ID DESC 
-				' ) )
+				if( $limit )
 				{
-					$error = '{"result":"-1","response":"Verification code has allready been sent (expires ' . date( 'Y-m-d H:i', $check->Expiry ) . ')."}';
+					if( $check = $dbo->fetchObject( '
+						SELECT 
+							fm.DataID AS UserID, fm.ValueNumber AS Expiry, fm.ValueString AS Code 
+						FROM 
+							FMetaData fm 
+						WHERE 
+								fm.Key          = "VerificationCode" 
+							AND fm.DataID       = \'' . $userid . '\' 
+							AND fm.DataTable    = "FUser" 
+							AND fm.ValueNumber != 0 AND fm.ValueString != "" 
+						ORDER BY 
+							fm.ID DESC 
+					' ) )
+					{
+						$error = '{"result":"-1","response":"Verification code has allready been sent (expires ' . date( 'Y-m-d H:i', $check->Expiry ) . ')."}';
+					}
 				}
+				
+				
 				
 				if( !$error )
 				{
@@ -756,7 +767,7 @@
 							}
 						
 						}
-					
+						
 						if( !$error && $output )
 						{
 							if( $dbo->Query( '
@@ -860,7 +871,9 @@
 			if( function_exists( 'ssh2_connect' ) )
 			{
 				$connection = false;
-			
+				
+				// TODO: Move this to a config, together with what mode to use for 2factor ...
+				
 				$hostname = '185.116.5.93';
 				$port = 22;
 				
@@ -992,11 +1005,177 @@
 		
 	}
 	
-	function checkFriendUser()
+	function checkFriendUser( $data, $create = false )
 	{
 		
 		//	
 		
+		if( $data && $data->username && isset( $data->password ) )
+		{
+			
+			// TODO: Move this to it's own function ...
+			
+			include_once( __DIR__ . '/../../../php/classes/dbio.php' );
+			$conf = parse_ini_file( __DIR__ . '/../../../cfg/cfg.ini', true );
+		
+			if( !( isset( $conf['DatabaseUser']['host'] ) && isset( $conf['DatabaseUser']['login'] ) && isset( $conf['DatabaseUser']['password'] ) && isset( $conf['DatabaseUser']['dbname'] ) ) )
+			{
+				die( 'CORRUPT FRIEND INSTALL!' );
+			}
+		
+			$dbo = new SqlDatabase( );
+			if( $dbo->open( $conf['DatabaseUser']['host'], $conf['DatabaseUser']['login'], $conf['DatabaseUser']['password'] ) )
+			{
+				if( !$dbo->SelectDatabase( $conf['DatabaseUser']['dbname'] ) )
+				{
+					die( 'ERROR! DB not found!' );
+				}
+			}
+			else
+			{
+				die( 'ERROR! MySQL unavailable!' );
+			}
+			
+			
+			
+			if( $data->password && ( !strstr( $data->password, 'HASHED' ) && !strstr( $data->password, '{S6}' ) ) )
+			{
+				$data->password = ( 'HASHED' . hash( 'sha256', $data->password ) );
+			}
+			
+			// TODO: Handle password different for an external system ...
+			
+			if( !$creds = $dbo->fetchObject( '
+				SELECT fu.ID FROM FUser fu 
+				WHERE 
+						fu.Name     = \'' . mysqli_real_escape_string( $dbo->_link, $data->username ) . '\' 
+					AND fu.Password = \'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', $data->password ) ) . '\' 
+			' ) )
+			{
+				
+				// Check if user exists and password is wrong ...	
+				
+				if( $dbo->fetchObject( '
+					SELECT 
+						fu.* 
+					FROM 
+						FUser fu 
+					WHERE 
+						fu.Name = \'' . mysqli_real_escape_string( $dbo->_link, $data->username ) . '\' 
+				' ) )
+				{
+					die( 'CORRUPT FRIEND INSTALL! User exists but Friend password is incorrect.' );
+				}
+				
+				// TODO: Make sure username is unique for the external service and that the password is not the users original ...
+				
+				// Create new user ...
+				
+				if( $create )
+				{
+					
+					if( $dbo->Query( '
+					INSERT INTO FUser ( `Name`, `Password`, `PublicKey`, `Fullname`, `Email`, `LoggedTime`, `CreatedTime`, `LoginTime`, `UniqueID` ) 
+					VALUES ('
+						. ' \'' . mysqli_real_escape_string( $dbo->_link, $data->username                                  ) . '\'' 
+						. ',\'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', $data->password )       ) . '\'' 
+						. ',\'' . mysqli_real_escape_string( $dbo->_link, $data->publickey ? trim( $data->publickey ) : '' ) . '\'' 
+						. ',\'' . mysqli_real_escape_string( $dbo->_link, $data->fullname  ? trim( $data->fullname )  : '' ) . '\'' 
+						. ',\'' . mysqli_real_escape_string( $dbo->_link, $data->email     ? trim( $data->email )     : '' ) . '\'' 
+						. ','   . time() 
+						. ','   . time() 
+						. ','   . time() 
+						. ',\'' . mysqli_real_escape_string( $dbo->_link, generateFriendUniqueID( $data->username )        ) . '\'' 
+					.') ' ) )
+					{
+						
+						// Success now log the user in and activate it ...	
+						
+						if( $login = remoteAuth( '/system.library/login', 
+						[
+							'username' => $data->username, 
+							'password' => $data->password, 
+							'deviceid' => $data->deviceid 
+						] ) )
+						{
+							if( strstr( $login, '<!--separate-->' ) )
+							{
+								if( $ret = explode( '<!--separate-->', $login ) )
+								{
+									if( isset( $ret[1] ) )
+									{
+										$login = $ret[1];
+									}
+								}
+							}
+							
+							if( $ses = json_decode( $login ) )
+							{
+								
+								if( $ses->sessionid )
+								{
+									if( remoteAuth( '/system.library/user/update?sessionid=' . $ses->sessionid, 
+									[
+										'setup' => '0' 
+									] ) )
+									{
+										//
+									}
+								}
+								
+							}
+							
+						}
+						else
+						{
+							
+							// Couldn't login ...
+							
+							
+							
+						}
+						
+					}
+					else
+					{
+						// Couldn't create user ...
+						
+						
+					}
+					
+				}
+				
+			}
+			else
+			{
+				
+				// return data ...
+				
+				
+				
+			}
+			
+			// TODO: Allways get user data as output on success ...
+			
+		}
+		
+	}
+	
+	function generateFriendUniqueID( $data = '' )
+	{
+		return hash( 'sha256', ( time().$data.rand(0,999).rand(0,999).rand(0,999) ) );
+	}
+	
+	function generateFriendPassword( $input )
+	{
+		// TODO: Look at this and see if everyone connected via this method is supposed to be unique ...
+		
+		if( strstr( $input, 'HASHED' ) )
+		{
+			return ( $input );
+		}
+		
+		return ( 'HASHED' . hash( 'sha256', 'TOKEN' . $input ) );
 	}
 	
 	//render the form

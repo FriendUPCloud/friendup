@@ -215,6 +215,8 @@
 							return;
 						}
 						
+						// TODO: For Windows auth find a way to handle username / password auth here in client before sending anything to server ...
+						
 						// If password is not hashed, hash it ... TODO: Look at the keystorage prosess to see if we do hash twice ...
 						if( flags && !flags.hashedPassword && Application.mode != 'windows' )
 						{
@@ -232,7 +234,7 @@
 							'mode'      : Application.mode
 						} ), parent.Workspace.encryption.keys.server.publickey ) );
 						
-						console.log( 'vars ', {
+						if( Application.showLog ) console.log( 'vars ', {
 							'username'  : username,
 							'password'  : password,
 							'deviceid'  : parent.Workspace.deviceid,
