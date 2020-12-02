@@ -1192,7 +1192,7 @@
 							
 							// TODO: Find out what template to use, and define based on user level or admin access, for later ...
 							
-							//firstLoginSetup( 0, $creds->ID );
+							firstLoginSetup( 0, $creds->ID );
 							
 							// Success now log the user in and activate it ...	
 							
@@ -1358,7 +1358,7 @@
 		
 		
 		
-		if( $setupid && $uid )
+		if( $uid )
 		{
 			// If we have a populated dock it's not firstime and the template will have to be updated manual through the users app ...
 			
@@ -1374,13 +1374,17 @@
 					`FUserGroup` g, 
 					`FSetting` s 
 				WHERE 
-						g.ID = \'' . $setupid . '\' 
-					AND g.Type = "Setup" 
+						' . ( $setupid ? . 'g.ID = \'' . $setupid . '\' AND ' : '' ) . ' 
+						g.Type = "Setup" 
 					AND s.Type = "setup" 
 					AND s.Key = "usergroup" 
 					AND s.UserID = g.ID 
+				ORDER BY g.ID ASC 
+				LIMIT 1
 			' ) )
 			{
+				
+				$setupid = $ug->ID;
 				
 				// TODO: Connect this to the main handling of user templates so it doesn't fall out of sync ...
 				
