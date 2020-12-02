@@ -1374,7 +1374,7 @@
 					`FUserGroup` g, 
 					`FSetting` s 
 				WHERE 
-						' . ( $setupid ? . 'g.ID = \'' . $setupid . '\' AND ' : '' ) . ' 
+						' . ( $setupid ? 'g.ID = ' . $setupid . ' AND ' : '' ) . ' 
 						g.Type = "Setup" 
 					AND s.Type = "setup" 
 					AND s.Key = "usergroup" 
