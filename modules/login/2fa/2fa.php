@@ -666,7 +666,7 @@
 	
 	function sendCode( $userid, $mobile, $code = false, $limit = true )
 	{
-		$error = false; $debug = true;
+		$error = false; $debug = false;
 		
 		include_once( __DIR__ . '/../../../php/classes/dbio.php' );
 		$conf = parse_ini_file( __DIR__ . '/../../../cfg/cfg.ini', true );
@@ -1187,6 +1187,13 @@
 						if( $creds = $dbo->fetchObject( $query ) )
 						{
 							
+							// add user to users group....
+							$dbo->Query( 'INSERT INTO `FUserToGroup` ( `UserID`,`UserGroupID` ) VALUES ('. intval( $creds->ID ) .', ( SELECT `ID` FROM `FUserGroup` WHERE `Name` = \'' . ( 'User' ) . '\' AND `Type` = \'Level\' ) );' );
+							
+							// TODO: Find out what template to use, and define based on user level or admin access, for later ...
+							
+							//firstLoginSetup( 0, $creds->ID );
+							
 							// Success now log the user in and activate it ...	
 							
 							if( $login = remoteAuth( '/system.library/login', 
@@ -1322,6 +1329,266 @@
 	function generateFriendUniqueID( $data = '' )
 	{
 		return hash( 'sha256', ( time().$data.rand(0,999).rand(0,999).rand(0,999) ) );
+	}
+	
+	function firstLoginSetup( $setupid, $uid )
+	{
+		// TODO: Move this to it's own function ...
+		
+		include_once( __DIR__ . '/../../../php/classes/dbio.php' );
+		$conf = parse_ini_file( __DIR__ . '/../../../cfg/cfg.ini', true );
+	
+		if( !( isset( $conf['DatabaseUser']['host'] ) && isset( $conf['DatabaseUser']['login'] ) && isset( $conf['DatabaseUser']['password'] ) && isset( $conf['DatabaseUser']['dbname'] ) ) )
+		{
+			die( 'CORRUPT FRIEND INSTALL!' );
+		}
+	
+		$dbo = new SqlDatabase( );
+		if( $dbo->open( $conf['DatabaseUser']['host'], $conf['DatabaseUser']['login'], $conf['DatabaseUser']['password'] ) )
+		{
+			if( !$dbo->SelectDatabase( $conf['DatabaseUser']['dbname'] ) )
+			{
+				die( 'ERROR! DB not found!' );
+			}
+		}
+		else
+		{
+			die( 'ERROR! MySQL unavailable!' );
+		}
+		
+		
+		
+		if( $setupid && $uid )
+		{
+			// If we have a populated dock it's not firstime and the template will have to be updated manual through the users app ...
+			
+			if( ( $row = $dbo->FetchObject( 'SELECT * FROM DockItem WHERE UserID=\'' . $uid . '\'' ) ) )
+			{
+				return true;
+			}
+			
+			if( $ug = $dbo->FetchObject( '
+				SELECT 
+					g.*, s.Data 
+				FROM 
+					`FUserGroup` g, 
+					`FSetting` s 
+				WHERE 
+						g.ID = \'' . $setupid . '\' 
+					AND g.Type = "Setup" 
+					AND s.Type = "setup" 
+					AND s.Key = "usergroup" 
+					AND s.UserID = g.ID 
+			' ) )
+			{
+				
+				// TODO: Connect this to the main handling of user templates so it doesn't fall out of sync ...
+				
+				$ug->Data = ( $ug->Data ? json_decode( $ug->Data ) : false );
+						
+				
+				if( $ug->Data && $uid )
+				{
+					// Language ----------------------------------------------------------------------------------------
+	
+					if( $ug->Data->language )
+					{
+						// 1. Check and update language!
+
+						$lang = new dbIO( 'FSetting', $dbo );
+						$lang->UserID = $uid;
+						$lang->Type = 'system';
+						$lang->Key = 'locale';
+						$lang->Load();
+						$lang->Data = $ug->Data->language;
+						$lang->Save();
+					}
+
+					// Startup -----------------------------------------------------------------------------------------
+
+					if( isset( $ug->Data->startups ) )
+					{
+						// 2. Check and update startup!
+
+						$star = new dbIO( 'FSetting', $dbo );
+						$star->UserID = $uid;
+						$star->Type = 'system';
+						$star->Key = 'startupsequence';
+						$star->Load();
+						$star->Data = ( $ug->Data->startups ? json_encode( $ug->Data->startups ) : '[]' );
+						$star->Save();
+					}
+
+					// Theme -------------------------------------------------------------------------------------------
+
+					if( $ug->Data->theme )
+					{
+						// 3. Check and update theme!
+
+						$them = new dbIO( 'FSetting', $dbo );
+						$them->UserID = $uid;
+						$them->Type = 'system';
+						$them->Key = 'theme';
+						$them->Load();
+						$them->Data = $ug->Data->theme;
+						$them->Save();
+					}
+			
+					// Software ----------------------------------------------------------------------------------------
+			
+					if( !isset( $ug->Data->software ) )
+					{
+						$ug->Data->software = json_decode( '[["Dock","1"]]' );
+					}
+			
+					if( $ug->Data->software )
+					{
+						// 4. Check dock!
+				
+						// TODO: Perhaps we should add the current list of dock items if there is any included with the software list for adding ...
+
+						if( 1==1/* || !( $row = $dbo->FetchObject( 'SELECT * FROM DockItem WHERE UserID=\'' . $uid . '\'' ) )*/ )
+						{
+							$i = 0;
+							
+							foreach( $ug->Data->software as $r )
+							{
+								if( $r[0] )
+								{
+									// 5. Store applications
+		
+									if( $path = findInSearchPaths( $r[0] ) )
+									{
+										if( file_exists( $path . '/Config.conf' ) )
+										{
+											$f = file_get_contents( $path . '/Config.conf' );
+											// Path is dynamic!
+											$f = preg_replace( '/\"Path[^,]*?\,/i', '"Path": "' . $path . '/",', $f );
+			
+											// Store application!
+											$a = new dbIO( 'FApplication', $dbo );
+											$a->UserID = $uid;
+											$a->Name = $r[0];
+											if( !$a->Load() )
+											{
+												$a->DateInstalled = date( 'Y-m-d H:i:s' );
+												$a->Config = $f;
+												$a->Permissions = 'UGO';
+												$a->DateModified = $a->DateInstalled;
+												$a->Save();
+											}
+				
+											// 6. Setup dock items
+				
+											if( $r[1] )
+											{
+												$d = new dbIO( 'DockItem', $dbo );
+												$d->Application = $r[0];
+												$d->UserID = $uid;
+												$d->Parent = 0;
+												if( !$d->Load() )
+												{
+													//$d->ShortDescription = $r[1];
+													$d->SortOrder = $i++;
+													$d->Save();
+												}
+											}
+					
+											// 7. Pre-install applications
+				
+											if( $ug->Data->preinstall != '0' && $a->ID > 0 )
+											{
+												if( $a->Config && ( $cf = json_decode( $a->Config ) ) )
+												{
+													if( isset( $cf->Permissions ) && $cf->Permissions )
+													{
+														$perms = [];
+														foreach( $cf->Permissions as $p )
+														{
+															$perms[] = [$p,(strtolower($p)=='door all'?'all':'')];
+														}
+						
+														// TODO: Get this from Config.ini in the future, atm set nothing
+														$da = new stdClass();
+														$da->domain = '';
+							
+														// Collect permissions in a string
+														$app = new dbIO( 'FUserApplication', $dbo );
+														$app->ApplicationID = $a->ID;
+														$app->UserID = $a->UserID;
+														if( !$app->Load() )
+														{
+															$app->AuthID = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . $a->ID );
+															$app->Permissions = json_encode( $perms );
+															$app->Data = json_encode( $da );
+															$app->Save();
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+				
+				
+				
+				if( $uid )
+				{
+					if( $dels = $dbo->FetchObjects( $q = '
+						SELECT 
+							g.* 
+						FROM 
+							`FUserGroup` g, 
+							`FUserToGroup` ug 
+						WHERE 
+								g.Type = "Setup" 
+							AND ug.UserGroupID = g.ID 
+							AND ug.UserID = \'' . $uid . '\' 
+						ORDER BY 
+							g.ID ASC 
+					' ) )
+					{
+
+						foreach( $dels as $del )
+						{
+							if( $del->ID != $setupid )
+							{
+								$dbo->Query( 'DELETE FROM FUserToGroup WHERE UserID = \'' . $uid . '\' AND UserGroupID = \'' . $del->ID . '\'' );
+							}
+						}
+					}
+
+					if( $dbo->FetchObject( '
+						SELECT 
+							ug.* 
+						FROM 
+							`FUserToGroup` ug 
+						WHERE 
+								ug.UserGroupID = \'' . $ug->ID . '\' 
+							AND ug.UserID = \'' . $uid . '\' 
+					' ) )
+					{
+						$dbo->query( '
+							UPDATE FUserToGroup SET UserGroupID = \'' . $ug->ID . '\' 
+							WHERE UserGroupID = \'' . $ug->ID . '\' AND UserID = \'' . $uid . '\' 
+						' );
+					}
+					else
+					{
+						$dbo->query( 'INSERT INTO FUserToGroup ( UserID, UserGroupID ) VALUES ( \'' . $uid . '\', \'' . $ug->ID . '\' )' );
+					}
+				}
+				
+			
+				return ( $ug->Data ? json_encode( $ug->Data ) : false );
+			}
+		}
+		
+		return false;
 	}
 	
 	//render the form
