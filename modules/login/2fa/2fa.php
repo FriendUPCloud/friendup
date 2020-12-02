@@ -109,7 +109,7 @@
 									die( 'fail ... unexpected return, need more time to complete code ...' );
 								}
 								
-								if( $res = sendCode( $data->userid, $data->mobile ) )
+								if( $res = sendCode( $data->userid, $data->mobile, false, false ) )
 								{
 									if( $res[0] == 'ok' )
 									{
