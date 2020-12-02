@@ -1331,6 +1331,22 @@
 		return hash( 'sha256', ( time().$data.rand(0,999).rand(0,999).rand(0,999) ) );
 	}
 	
+	function findInSearchPaths( $app )
+	{
+		$ar = array(
+			'repository/',
+			'resources/webclient/apps/'
+		);
+		foreach ( $ar as $apath )
+		{
+			if( file_exists( $apath . $app ) && is_dir( $apath . $app ) )
+			{
+				return $apath . $app;
+			}
+		}
+		return false;
+	}
+	
 	function firstLoginSetup( $setupid, $uid )
 	{
 		// TODO: Move this to it's own function ...
