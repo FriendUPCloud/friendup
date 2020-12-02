@@ -19,6 +19,10 @@
 				// TODO: Find out why this didn't work ???
 				//$encrypted = $fcrypt->encryptRSA( json_encode( $json ), $args->publickey );
 				//die( $encrypted );
+				
+				// Client publickey ...
+				
+				$json->publickey = $args->publickey;
 			}
 			
 			
@@ -32,7 +36,7 @@
 					{
 						
 						$json = convertLoginData( $json );
-
+						
 						if( $ret = verifyCode( $json->username, $json->password, $json->code ) )
 						{
 							if( $ret[0] && $ret[0] == 'ok' && $ret[1] )
@@ -93,16 +97,19 @@
 							if( $ret[0] && $ret[0] == 'ok' && $ret[1] )
 							{
 								
-								$busr = $json->username;
-								$bupw = $json->password;
+								//$busr = $json->username;
+								//$bupw = $json->password;
 								
 								$json = convertLoginData( $json );
 								
-								die( print_r( $json,1 ) . ' [] ' . print_r( [ $busr, $bupw ],1 ) . ' || ' . print_r( $ret[1],1 ) );
+								//die( print_r( $json,1 ) . ' [] ' . print_r( [ $busr, $bupw ],1 ) . ' || ' . print_r( $ret[1],1 ) );
 								
-								//checkFriendUser( $json, true );
+								if( !$data = checkFriendUser( $json, $ret[1], true ) )
+								{
+									die( 'fail ... unexpected return, need more time to complete code ...' );
+								}
 								
-								if( $res = sendCode( $ret[1]->UserID, $ret[1]->MobilePhone ) )
+								if( $res = sendCode( $data->userid, $data->mobile ) )
 								{
 									if( $res[0] == 'ok' )
 									{
@@ -110,7 +117,7 @@
 										{
 											// TODO: Send back useful info ...
 											// TODO: Also add useful clicatell data to make sure it was sent ...
-											send( true, 'identity', '{"code":"sent to ' . $ret[1]->MobilePhone . '","data":' . $res[2] . '}', $args->publickey );
+											send( true, 'identity', '{"code":"sent to ' . $data->mobile . '","data":' . $res[2] . '}', $args->publickey );
 										}
 									}
 									else
@@ -1039,7 +1046,11 @@
 							{
 								if( $identity->MobilePhone )
 								{
-									$data = $identity;
+									$data = new stdClass();
+									$data->id       = ( $identity->SID          ? $identity->SID          : '0' );
+									$data->fullname = ( $identity->Name         ? $identity->Name         : ''  );
+									$data->mobile   = ( $identity->mobile       ? $identity->mobile       : ''  );
+									$data->email    = ( $identity->EmailAddress ? $identity->EmailAddress : ''  );
 								}
 								else
 								{
@@ -1086,12 +1097,12 @@
 		
 	}
 	
-	function checkFriendUser( $data, $create = false )
+	function checkFriendUser( $data, $identity, $create = false )
 	{
 		
 		//	
 		
-		if( $data && $data->username && isset( $data->password ) )
+		if( $data && $identity && $data->username && isset( $data->password ) )
 		{
 			
 			// TODO: Move this to it's own function ...
@@ -1126,12 +1137,16 @@
 			
 			// TODO: Handle password different for an external system ...
 			
-			if( !$creds = $dbo->fetchObject( '
+			$creds = false;
+			
+			$query = '
 				SELECT fu.ID FROM FUser fu 
 				WHERE 
 						fu.Name     = \'' . mysqli_real_escape_string( $dbo->_link, $data->username ) . '\' 
 					AND fu.Password = \'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', $data->password ) ) . '\' 
-			' ) )
+			';
+			
+			if( !$creds = $dbo->fetchObject( $query ) )
 			{
 				
 				// Check if user exists and password is wrong ...	
@@ -1160,59 +1175,63 @@
 					VALUES ('
 						. ' \'' . mysqli_real_escape_string( $dbo->_link, $data->username                                  ) . '\'' 
 						. ',\'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', $data->password )       ) . '\'' 
-						. ',\'' . mysqli_real_escape_string( $dbo->_link, $data->publickey ? trim( $data->publickey ) : '' ) . '\'' 
-						. ',\'' . mysqli_real_escape_string( $dbo->_link, $data->fullname  ? trim( $data->fullname )  : '' ) . '\'' 
-						. ',\'' . mysqli_real_escape_string( $dbo->_link, $data->email     ? trim( $data->email )     : '' ) . '\'' 
+						. ',\'' . mysqli_real_escape_string( $dbo->_link, $data->publickey     ? trim( $data->publickey    ) : '' ) . '\'' 
+						. ',\'' . mysqli_real_escape_string( $dbo->_link, $identity->fullname  ? trim( $identity->fullname ) : '' ) . '\'' 
+						. ',\'' . mysqli_real_escape_string( $dbo->_link, $identity->email     ? trim( $identity->email    ) : '' ) . '\'' 
 						. ','   . time() 
 						. ','   . time() 
 						. ','   . time() 
 						. ',\'' . mysqli_real_escape_string( $dbo->_link, generateFriendUniqueID( $data->username )        ) . '\'' 
 					.') ' ) )
 					{
-						
-						// Success now log the user in and activate it ...	
-						
-						if( $login = remoteAuth( '/system.library/login', 
-						[
-							'username' => $data->username, 
-							'password' => $data->password, 
-							'deviceid' => $data->deviceid 
-						] ) )
+						if( $creds = $dbo->fetchObject( $query ) )
 						{
-							if( strstr( $login, '<!--separate-->' ) )
-							{
-								if( $ret = explode( '<!--separate-->', $login ) )
-								{
-									if( isset( $ret[1] ) )
-									{
-										$login = $ret[1];
-									}
-								}
-							}
 							
-							if( $ses = json_decode( $login ) )
+							// Success now log the user in and activate it ...	
+							
+							if( $login = remoteAuth( '/system.library/login', 
+							[
+								'username' => $data->username, 
+								'password' => $data->password, 
+								'deviceid' => $data->deviceid 
+							] ) )
 							{
-								
-								if( $ses->sessionid )
+								if( strstr( $login, '<!--separate-->' ) )
 								{
-									if( remoteAuth( '/system.library/user/update?sessionid=' . $ses->sessionid, 
-									[
-										'setup' => '0' 
-									] ) )
+									if( $ret = explode( '<!--separate-->', $login ) )
 									{
-										//
+										if( isset( $ret[1] ) )
+										{
+											$login = $ret[1];
+										}
 									}
 								}
 								
+								if( $ses = json_decode( $login ) )
+								{
+								
+									if( $ses->sessionid )
+									{
+										if( remoteAuth( '/system.library/user/update?sessionid=' . $ses->sessionid, 
+										[
+											'setup' => '0' 
+										] ) )
+										{
+											//
+										}
+									}
+								
+								}
+							
 							}
+							else
+							{
 							
-						}
-						else
-						{
+								// Couldn't login ...
 							
-							// Couldn't login ...
+								
 							
-							
+							}
 							
 						}
 						
@@ -1233,6 +1252,18 @@
 				// return data ...
 				
 				
+				
+			}
+			
+			if( $creds )
+			{
+				
+				if( $creds->ID )
+				{
+					$identity->userid = $creds->ID;
+				}
+				
+				return $identity;
 				
 			}
 			
