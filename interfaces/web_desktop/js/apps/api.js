@@ -6426,6 +6426,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					'js/oo.js',
 					'js/api/friendappapi.js',
 					'js/utils/engine.js',
+					'js/api/fui.js',
 					'js/utils/tool.js',
 					'js/utils/json.js',
 					'js/io/cajax.js',
