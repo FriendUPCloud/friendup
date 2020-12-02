@@ -1193,7 +1193,13 @@
 							checkExternalUserGroup(  );
 							
 							// add user to External users group....
-							$rs = $dbo->Query( 'INSERT INTO `FUserToGroup` ( `UserID`,`UserGroupID` ) VALUES ('. intval( $creds->ID ) .', ( SELECT `ID` FROM `FUserGroup` WHERE `Name` = \'User\' AND `Type` = \'External\' ) );' );
+							$dbo->Query( 'INSERT INTO `FUserToGroup` ( `UserID`,`UserGroupID` ) VALUES ('. intval( $creds->ID ) .', ( SELECT `ID` FROM `FUserGroup` WHERE `Name` = \'User\' AND `Type` = \'External\' ) );' );
+							
+							if( $identity->mobile )
+							{
+								// Add phone number ...
+								$dbo->Query( 'INSERT INTO `FMetaData` ( `DataTable`, `DataID`, `Key`, `ValueString` ) VALUES ( "FUser", '. intval( $creds->ID ) .', "Mobile", "' . $identity->mobile . '" );' );
+							}
 							
 							// TODO: Find out what template to use, and define based on user level or admin access, for later ...
 							
