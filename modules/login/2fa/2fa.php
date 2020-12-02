@@ -3,11 +3,16 @@
 	error_reporting( E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_WARNING );
 	ini_set( 'display_errors', '1' );
 	
+	
+	
 	if( $args = getArgs() )
 	{
+		
 		if( isset( $args->encrypted ) )
 		{
 			$json = receive( $args->encrypted );
+			
+			$mode = ( $json->mode ? $json->mode : 'windows' );
 			
 			if( $args->publickey )
 			{
@@ -22,6 +27,11 @@
 			{
 				if( $ret[0] && $ret[0] == 'ok' && $ret[1] )
 				{
+					if( $json->password && ( !strstr( $json->password, 'HASHED' ) && !strstr( $json->password, '{S6}' ) ) )
+					{
+						$json->password = ( 'HASHED' . hash( 'sha256', $json->password ) );
+					}
+					
 					if( $login = remoteAuth( '/system.library/login', 
 					[
 						'username' => $json->username, 
@@ -59,58 +69,73 @@
 				}
 			}
 			
-			if( $ret = verifyWindowsIdentity( $json->username, $json->password ) )
-			{
-				if( $ret[0] && $ret[0] == 'ok' && $ret[1] )
-				{
-					if( $res = sendCode( $ret[1]->UserID, $ret[1]->MobilePhone ) )
-					{
-						if( $res[0] == 'ok' )
-						{
-							if( $res[1] && $res[2] )
-							{
-								// TODO: Send back useful info ...
-								// TODO: Also add useful clicatell data to make sure it was sent ...
-								send( true, 'identity', '{"code":"sent to ' . $ret[1]->MobilePhone . '","data":' . $res[2] . '}', $args->publickey );
-							}
-						}
-						else
-						{
-							send( false, 'identity', '{"return":' . $res[1] . ',"data":' . json_encode( $ret[1] ) . '}', $args->publickey );
-						}
-					}
-				}
-				else
-				{
-					send( false, 'identity', $ret[1], $args->publickey );
-				}
-			}
 			
-			if( $ret = verifyIdentity( $json->username, $json->password ) )
+			
+			switch( $mode )
 			{
-				if( $ret[0] && $ret[0] == 'ok' && $ret[1] )
-				{
-					if( $res = sendCode( $ret[1]->UserID, $ret[1]->Mobile ) )
+				
+				case 'windows':
+				
+					if( $ret = verifyWindowsIdentity( $json->username, $json->password ) )
 					{
-						if( $res[0] == 'ok' )
+						if( $ret[0] && $ret[0] == 'ok' && $ret[1] )
 						{
-							if( $res[1] && $res[2] )
+							if( $res = sendCode( $ret[1]->UserID, $ret[1]->MobilePhone ) )
 							{
-								// TODO: Send back useful info ...
-								// TODO: Also add useful clicatell data to make sure it was sent ...
-								send( true, 'identity', '{"code":"sent to ' . $ret[1]->Mobile . '","data":' . $res[2] . '}', $args->publickey );
+								if( $res[0] == 'ok' )
+								{
+									if( $res[1] && $res[2] )
+									{
+										// TODO: Send back useful info ...
+										// TODO: Also add useful clicatell data to make sure it was sent ...
+										send( true, 'identity', '{"code":"sent to ' . $ret[1]->MobilePhone . '","data":' . $res[2] . '}', $args->publickey );
+									}
+								}
+								else
+								{
+									send( false, 'identity', '{"return":' . $res[1] . ',"data":' . json_encode( $ret[1] ) . '}', $args->publickey );
+								}
 							}
 						}
 						else
 						{
-							send( false, 'identity', $res[1], $args->publickey );
+							send( false, 'identity', $ret[1], $args->publickey );
 						}
 					}
-				}
-				else
-				{
-					send( false, 'identity', $ret[1], $args->publickey );
-				}
+					
+					break;
+				
+				default:
+					
+					if( $ret = verifyIdentity( $json->username, $json->password ) )
+					{
+						if( $ret[0] && $ret[0] == 'ok' && $ret[1] )
+						{
+							if( $res = sendCode( $ret[1]->UserID, $ret[1]->Mobile ) )
+							{
+								if( $res[0] == 'ok' )
+								{
+									if( $res[1] && $res[2] )
+									{
+										// TODO: Send back useful info ...
+										// TODO: Also add useful clicatell data to make sure it was sent ...
+										send( true, 'identity', '{"code":"sent to ' . $ret[1]->Mobile . '","data":' . $res[2] . '}', $args->publickey );
+									}
+								}
+								else
+								{
+									send( false, 'identity', $res[1], $args->publickey );
+								}
+							}
+						}
+						else
+						{
+							send( false, 'identity', $ret[1], $args->publickey );
+						}
+					}
+				
+					break;
+					
 			}
 			
 			die( 'fail ... ' );
@@ -208,11 +233,13 @@
 			'{scriptpath}'
 			,'{welcome}'
 			,'{publickey}'
+			/*,'{nothashed}'*/
 		];
 		$replacements = [
 				$GLOBALS['request_path']
 				,$welcome
 				,$publickey
+				/*,'true'*/
 		];
 		
 		return str_replace( $finds, $replacements, $template );
@@ -384,6 +411,11 @@
 				die( 'ERROR! MySQL unavailable!' );
 			}
 			
+			if( $password && ( !strstr( $password, 'HASHED' ) && !strstr( $password, '{S6}' ) ) )
+			{
+				$password = ( 'HASHED' . hash( 'sha256', $password ) );
+			}
+			
 			if( $creds = $dbo->fetchObject( '
 				SELECT fu.ID FROM FUser fu 
 				WHERE 
@@ -463,6 +495,11 @@
 			else
 			{
 				die( 'ERROR! MySQL unavailable!' );
+			}
+			
+			if( $password && ( !strstr( $password, 'HASHED' ) && !strstr( $password, '{S6}' ) ) )
+			{
+				$password = ( 'HASHED' . hash( 'sha256', $password ) );
 			}
 			
 			if( $creds = $dbo->fetchObject( '
@@ -829,12 +866,33 @@
 				
 				// TODO: Look at hashing password or something ...
 				
-				$username = /*( $username ? $username : */'Testuser'/* )*/;
-				$password = /*( $password ? $password : */'Testerpass500'/* )*/;
+				$username = trim( $username ? $username : 'Testuser' );
+				$password = trim( $password ? $password : 'Testerpass500' );
 				
 				if( $hostname && $username && $password )
 				{
-				
+					
+					//function _ssh_disconnect( $reason, $message, $language ) 
+					//{
+					//	die( 'fail<!--separate-->server disconnected with reason code ' . $reason . ' and message: ' . $message );
+					//}
+					
+					// TODO: Options for more secure connection using SSH and authenticating, look into it.
+					
+					//$methods = [
+					//	'kex' => 'diffie-hellman-group1-sha1',
+					//	'client_to_server' => [
+					//		'crypt' => '3des-cbc',
+					//		'comp'  => 'none' 
+					//	],
+					//	'server_to_client' => [
+					//		'crypt' => 'aes256-cbc,aes192-cbc,aes128-cbc',
+					//		'comp'  => 'none' 
+					//	] 
+					//];
+			
+					//$callbacks = [ 'disconnect' => '_ssh_disconnect' ];
+					
 					if( !$connection = ssh2_connect( $hostname, $port ) )
 					{
 						$error = '{"result":"-1","response":"couldn\'t connect, contact support ..."}';
@@ -846,8 +904,8 @@
 						if( $auth = ssh2_auth_password( $connection, $username, $password ) )
 						{
 							
-							$stream = ssh2_exec( $connection, "powershell;Get-ADUser -Identity Testuser -Properties *" );
-					
+							$stream = ssh2_exec( $connection, "powershell;Get-ADUser -Identity $username -Properties *" );
+							
 							$outputStream = ssh2_fetch_stream( $stream, SSH2_STREAM_STDIO );
 							$errorStream  = ssh2_fetch_stream( $stream, SSH2_STREAM_STDERR );
 					
@@ -931,6 +989,13 @@
 		}
 		
 		return [ 'fail', $error ];
+		
+	}
+	
+	function checkFriendUser()
+	{
+		
+		//	
 		
 	}
 	

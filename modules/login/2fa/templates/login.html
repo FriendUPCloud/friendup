@@ -69,6 +69,7 @@
 							</div>
 						</div>
 						<input type="hidden" id="publickey" value="{publickey}"/>
+						<!--<input type="hidden" id="nohash" value="{nohash}"/>-->
 					</form>
 					<hr/>
 					<div id="compatability" class="HRow MarginTop BorderTop HideForPass">
@@ -80,6 +81,7 @@
 		</div>
 		<script type="text/javascript">
 			Application = {
+				mode: 'windows',
 				showLog: true,
 				failedAttempt: false,
 				passwordRecoveryMode: false,
@@ -214,7 +216,7 @@
 						}
 						
 						// If password is not hashed, hash it ... TODO: Look at the keystorage prosess to see if we do hash twice ...
-						if( flags && !flags.hashedPassword )
+						if( flags && !flags.hashedPassword && Application.mode != 'windows' )
 						{
 							password = ( 'HASHED' + Sha256.hash( password ) );
 						}
@@ -226,8 +228,17 @@
 							'username'  : username,
 							'password'  : password,
 							'deviceid'  : parent.Workspace.deviceid,
-							'code'      : code
+							'code'      : code,
+							'mode'      : Application.mode
 						} ), parent.Workspace.encryption.keys.server.publickey ) );
+						
+						console.log( 'vars ', {
+							'username'  : username,
+							'password'  : password,
+							'deviceid'  : parent.Workspace.deviceid,
+							'code'      : code,
+							'mode'      : Application.mode
+						} );
 						
 						m.onload = function()
 						{
