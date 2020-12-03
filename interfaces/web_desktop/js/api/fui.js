@@ -128,6 +128,7 @@ FUI.Grid.Renderers = {};
 FUI.Grid.Renderers.html5 = function( gridObject )
 {
 	this.grid = gridObject;
+	this.domNodes = [];
 }
 FUI.Grid.Renderers.html5.prototype.refresh = function()
 {
@@ -165,14 +166,26 @@ FUI.Grid.Renderers.html5.prototype.refresh = function()
 	for( let a = 0; a < gridDescription.rows.length; a++ )
 	{
 		let row = gridDescription.rows[ a ];
+		let create = false;
 		
-		// Create dom object
-		let d = document.createElement( 'div' );
-		d.style.position = 'absolute';
-		d.style.left = '0px';
-		d.style.width = '100%';
-		d.style.boxSizing = 'border-box';
-		d.style.backgroundColor = 'rgb(' + ( Math.random() % 255 ) + ',' + ( Math.random() % 255 ) + ',' + ( Math.random() % 255 ) + ')';
+		// Check if we need to create dom node
+		// TODO: Perhaps children should be gotten by unique ID to prevent drifting of child objects
+		let d = false;
+		if( this.domNodes.length > a )
+			d = this.domNodes[ a ];
+		else
+		{
+			// Create dom object
+			d = document.createElement( 'div' );
+			d.style.position = 'absolute';
+			d.style.left = '0px';
+			d.style.width = '100%';
+			d.style.boxSizing = 'border-box';
+			d.style.backgroundColor = 'rgb(' + ( Math.random() % 255 ) + ',' + ( Math.random() % 255 ) + ',' + ( Math.random() % 255 ) + ')';
+			create = true;
+		}
+		
+		if( !d ) continue;
 		
 		// Take account of pixel heights
 		if( pixels > 0 )
@@ -208,12 +221,14 @@ FUI.Grid.Renderers.html5.prototype.refresh = function()
 		}
 		else continue;
 		
-		this.dom.appendChild( d );
+		if( create )
+			this.dom.appendChild( d );
+		
+		this.domNodes[ a ] = d; // Memorize!
 		
 		if( !row.columns ) continue;
 		
-		// Do the columns
-		
+		// Do the columns.............................
 		let l = pl = 0;
 		let rpixels = 0;
 		let rtotal = 0;
@@ -227,15 +242,28 @@ FUI.Grid.Renderers.html5.prototype.refresh = function()
 		
 		for( let b = 0; b < row.columns.length; b++ )
 		{
+			create = false;
+			
 			let column = row.columns[ b ];
 			
-			// Create dom object
-			let r = document.createElement( 'div' );
-			r.style.position = 'absolute';
-			r.style.left = '0px';
-			r.style.height = '100%';
-			r.style.boxSizing = 'border-box';
-			r.style.backgroundColor = 'rgb(' + ( Math.random() % 255 ) + ',' + ( Math.random() % 255 ) + ',' + ( Math.random() % 255 ) + ')';
+			// Check if we need to create dom node
+			// TODO: Perhaps children should be gotten by unique ID to prevent drifting of child objects
+			let r = false;
+			if( d.children && d.children.length > b )
+				r = d.children[ b ];
+			else
+			{
+				if( !d.children ) d.children = [];
+				
+				// Create dom object
+				r = document.createElement( 'div' );
+				r.style.position = 'absolute';
+				r.style.left = '0px';
+				r.style.height = '100%';
+				r.style.boxSizing = 'border-box';
+				r.style.backgroundColor = 'rgb(' + ( Math.random() % 255 ) + ',' + ( Math.random() % 255 ) + ',' + ( Math.random() % 255 ) + ')';
+				create = true;
+			}
 		
 			// Take account of pixel heights
 			if( pixels > 0 )
@@ -271,7 +299,10 @@ FUI.Grid.Renderers.html5.prototype.refresh = function()
 			}
 			else continue;
 		
-			d.appendChild( r );
+			if( create )
+				d.appendChild( r );
+			
+			d.children[ b ] = r; // Memorize!
 		}
 	}
 	
