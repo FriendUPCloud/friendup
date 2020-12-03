@@ -16,7 +16,7 @@ FUI.initialize = function( flags, callback )
 {
 	this.flags = {};
 	
-	if( flags.classList )
+	if( flags && flags.classList )
 	{
 		let str = '/';
 	
@@ -28,12 +28,13 @@ FUI.initialize = function( flags, callback )
 	}
 	
 	// Set renderer
-	if( !flags.renderer )
+	if( flags && !flags.renderer )
 		flags.renderer = 'html5';
-	switch( flags.renderer )
+	let ren = flags ? flags.renderer : false;
+	switch( ren )
 	{
 		case 'html5':
-			this.flags.renderer = flags.renderer;
+			this.flags.renderer = ren;
 			break;
 		default:
 			this.flags.renderer = 'html5';
@@ -41,7 +42,7 @@ FUI.initialize = function( flags, callback )
 	}
 	
 	// Set insertion point
-	if( flags.parentNode )
+	if( flags && flags.parentNode )
 	{
 		FUI.dom = flags.parentNode;
 	}
@@ -70,7 +71,7 @@ FUI.refresh = function( element )
 	if( element )
 	{
 		let children = element.refresh();
-		if( children.length )
+		if( children && children.length )
 		{
 			for( let a = 0; a < children.length; a++ )
 			{
@@ -86,13 +87,37 @@ FUI.loadTheme = function( name )
 	
 }
 
+/* Event class -------------------------------------------------------------- */
+
+FUI.inherit = function( self )
+{
+	self.addEvent = function( type, callback )
+	{
+		if( typeof( self[ 'on' + type ] ) != 'undefined' )
+		{
+			if( !self.events ) self.events = {};
+			if( !self.events[ 'on' + type ] )
+				self.events[ 'on' + type ] = [];
+			self.events[ 'on' + type ].push( callback );
+		}
+	}
+}
+
+/* View class --------------------------------------------------------------- */
+
+FUI.View = function( object )
+{
+	
+}
+
 
 /* Grid class --------------------------------------------------------------- */
 
 FUI.Grid = function( object )
 {
+	FUI.inherit( this );
 	this.gridDescription = [];
-	this.renderer = new FUI.Grid.Renderers[ FUI.renderer ]( this );
+	this.renderer = new FUI.Grid.Renderers[ FUI.flags.renderer ]( this );
 	if( object ) this.setGrid( object );
 }
 
@@ -139,7 +164,7 @@ FUI.Grid.Renderers.html5 = function( gridObject )
 }
 FUI.Grid.Renderers.html5.prototype.refresh = function()
 {
-	if( !this.parentNode ) return;
+	if( !this.grid.parentNode ) return;
 	let self = this;
 	if( !this.dom )
 	{
@@ -149,7 +174,7 @@ FUI.Grid.Renderers.html5.prototype.refresh = function()
 		this.dom.style.left = '0';
 		this.dom.style.width = '100%';
 		this.dom.style.height = '100%';
-		this.parentNode.appendChild( this.dom );
+		this.grid.parentNode.appendChild( this.dom );
 	}
 	
 	let gridObject = self.grid;
