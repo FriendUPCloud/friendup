@@ -89,17 +89,18 @@ FUI.loadTheme = function( name )
 
 /* Grid class --------------------------------------------------------------- */
 
-FUI.Grid = function()
+FUI.Grid = function( object )
 {
 	this.gridDescription = [];
 	this.renderer = new FUI.Grid.Renderers[ FUI.renderer ]( this );
+	if( object ) this.setGrid( object );
 }
 
 // Layout methods --------------------------------------------------------------
 
 FUI.Grid.prototype.setGrid = function( object )
 {
-	
+	this.gridDescription = object;
 }
 
 // Getters and setters
