@@ -80,6 +80,12 @@ FUI.refresh = function( element )
 	}
 }
 
+// Load theme by name
+FUI.loadTheme = function( name )
+{
+	
+}
+
 
 /* Grid class --------------------------------------------------------------- */
 
