@@ -265,7 +265,7 @@ FUI.Grid.Renderers.html5.prototype.refresh = function()
 				// Create dom object
 				r = document.createElement( 'div' );
 				r.style.position = 'absolute';
-				r.style.left = '0px';
+				r.style.top = '0px';
 				r.style.height = '100%';
 				r.style.boxSizing = 'border-box';
 				r.style.backgroundColor = 'rgb(' + ( Math.random() % 255 ) + ',' + ( Math.random() % 255 ) + ',' + ( Math.random() % 255 ) + ')';
@@ -277,31 +277,31 @@ FUI.Grid.Renderers.html5.prototype.refresh = function()
 			{
 				if( t > 0 )
 				{
-					r.style.top = 'calc(' + pl + '% + ' + l + 'px)';
+					r.style.left = 'calc(' + pl + '% + ' + l + 'px)';
 				}
 				else
 				{
-					r.style.top = pl + '%';
+					r.style.left = pl + '%';
 				}
 			
 				if( column.weight )
 				{
 					let pct = column.weight / total * 100;
-					r.style.height = 'calc(' + pct + '% - ' + rpixels + 'px)';
+					r.style.width = 'calc(' + pct + '% - ' + rpixels + 'px)';
 					pl += pct;
 				}
-				else if( column.pixelHeight )
+				else if( column.pixelWidth )
 				{
-					r.style.height = column.pixelHeight + 'px';
-					l += column.pixelHeight;
+					r.style.width = column.pixelWidth + 'px';
+					l += column.pixelWidth;
 				}
 				else continue;
 			}
 			// Just percentages
 			else if( column.weight )
 			{
-				r.style.height = column.weight / rtotal * 100 + '%';
-				r.style.top = pl + '%';
+				r.style.width = column.weight / rtotal * 100 + '%';
+				r.style.left = pl + '%';
 				pl += r.style.height;
 			}
 			else continue;
