@@ -716,6 +716,18 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 						HttpWrite( response, sock );
 						result = 200;
 					}
+					
+					//
+					// Monitoring
+					//
+					
+					else if( strcmp( path->parts[ 0 ], "monitor" ) == 0 )
+					{
+						response = SystemMonitorManagerWEB( SLIB->fcm->fcm_SystemMonitorManager, path->parts[ 1 ], request );
+
+						HttpWrite( response, sock );
+						result = 200;
+					}
 						
 	
 					//

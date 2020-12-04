@@ -270,6 +270,8 @@ FriendCoreManager *FriendCoreManagerNew()
 		}
 		
 		fcm->fcm_ServiceManager = ServiceManagerNew( fcm );
+		
+		fcm->fcm_SystemMonitorManager = SystemMonitorManagerNew( SLIB );
 	}
 	return fcm;
 }
@@ -418,6 +420,11 @@ void FriendCoreManagerDelete( FriendCoreManager *fcm )
 	Log( FLOG_INFO,"FriendCoreManager Delete\n");
 	if( fcm != NULL )
 	{
+		if( fcm->fcm_SystemMonitorManager != NULL )
+		{
+			SystemMonitorManagerDelete( fcm->fcm_SystemMonitorManager );
+		}
+		
 #ifdef COMMUNICATION_REM_SERVICE
 		DEBUG("[FriendCoreManager] Close remote communcation service\n");
 		if( fcm->fcm_CommServiceRemote != NULL )

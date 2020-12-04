@@ -11,7 +11,7 @@
  *
  * Body of DOS token manager
  *
- * @author PS (Pawel Stefansky)
+ * @author PS (Pawel Stefanski)
  * @date created PS (27/03/2018)
  */
 

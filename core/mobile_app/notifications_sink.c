@@ -244,6 +244,7 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 		
 		case LWS_CALLBACK_RECEIVE:
 		{
+			SLIB->fcm->fcm_SystemMonitorManager->smm_PresenceTimestamp = time( NULL );
 			MobileAppNotif *man = (MobileAppNotif *)user;
 			if( man != NULL && man->man_Data != NULL )
 			{
