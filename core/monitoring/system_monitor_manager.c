@@ -158,6 +158,8 @@ Http *SystemMonitorManagerWEB( SystemMonitorManager *smm, char *function, Http *
 			*/
 			/// @endcond
 			
+			DEBUG("[SystemMonitorManagerWEB] compare key %s=%s", locKey, key );
+			
 			if( locKey == NULL || strcmp( locKey, key ) == 0 )
 			{
 				if( strcmp( function, "presence" ) == 0 )
