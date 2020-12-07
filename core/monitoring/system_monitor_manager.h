@@ -26,6 +26,7 @@ typedef struct SystemMonitorManager
 {
 	void				*smm_SB;
 	char				*smm_Key;			// key used to check authorization
+	time_t				smm_TimeDiffAlarm;	// this set range from which alarm is set (response code)
 	pthread_mutex_t		smm_Mutex;
 	time_t				smm_PresenceTimestamp;		// last presence connection timestamp
 }SystemMonitorManager;

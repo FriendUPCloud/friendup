@@ -31,6 +31,7 @@ SystemMonitorManager *SystemMonitorManagerNew( void *sb )
 	if( smm != NULL )
 	{
 		smm->smm_SB = sb;
+		smm->smm_TimeDiffAlarm = 30;
 		pthread_mutex_init( &smm->smm_Mutex, NULL );
 		
 		Props *prop = NULL;
@@ -50,6 +51,7 @@ SystemMonitorManager *SystemMonitorManagerNew( void *sb )
 			if( prop != NULL)
 			{
 				char *tptr  = plib->ReadStringNCS( prop, "Monitoring:key", "" );
+				smm->smm_TimeDiffAlarm = plib->ReadInt( prop, "Monitoring:diff", smm->smm_TimeDiffAlarm );
 				smm->smm_Key = StringDuplicate( tptr );
 				plib->Close( prop );
 			}
@@ -174,8 +176,21 @@ Http *SystemMonitorManagerWEB( SystemMonitorManager *smm, char *function, Http *
 					}
 					else
 					{
-						snprintf( resp, sizeof( resp ), "ok<!--separate-->{\"response\":0,\"lastcall\":%ld}", currTimestamp-smm->smm_PresenceTimestamp );
+						// seems time diff is bigger then we set (default 30seconds)
+						if( (currTimestamp-smm->smm_PresenceTimestamp) > smm->smm_TimeDiffAlarm )
+						{
+							snprintf( resp, sizeof( resp ), "fail<!--separate-->{\"response\":0,\"lastcall\":%ld}", currTimestamp-smm->smm_PresenceTimestamp );
+						}
+						else
+						{
+							snprintf( resp, sizeof( resp ), "ok<!--separate-->{\"response\":0,\"lastcall\":%ld}", currTimestamp-smm->smm_PresenceTimestamp );
+						}
 					}
+					if( (currTimestamp-smm->smm_PresenceTimestamp) > smm->smm_TimeDiffAlarm )
+					{
+						
+					}
+					
 					HttpAddTextContent( response, resp );
 				}
 			}
