@@ -131,7 +131,7 @@ Http *SystemMonitorManagerWEB( SystemMonitorManager *smm, char *function, Http *
 				
 				// example: INSERT INTO `FGlobalVariables` ( `Key`, `Value`, `Comment`, `Date`) VALUES ('MONITORING_KEY', 'blabla1', 'monitoring key', '0');
 				
-				sqllib->SNPrintF( sqllib, qery, 1024, "SELECT * FROM `FGlobalVariables` WHERE `Key`=\"MONITORING_KEY\"" );
+				sqllib->SNPrintF( sqllib, qery, 1024, "SELECT `Value` FROM `FGlobalVariables` WHERE `Key`=\"MONITORING_KEY\"" );
 				void *res = sqllib->Query( sqllib, qery );
 				if( res != NULL )
 				{
