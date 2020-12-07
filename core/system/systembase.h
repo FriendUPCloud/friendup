@@ -58,11 +58,11 @@
 #include <system/usergroup/user_group_manager.h>
 #include <system/user/remote_user.h>
 #include <system/fsys/fs_manager.h>
-#include <hardware/usb/usb_manager.h>
-#include <hardware/usb/usb_device_web.h>
+#include <usb/usblibrary.h>
+#include <hardware/usb/usb_remote_manager.h>
+#include <hardware/usb/usb_remote_device_web.h>
 #include <hardware/printer/printer_manager.h>
 #include <hardware/printer/printer_web.h>
-#include <core/pid_thread_manager.h>
 #include <system/log/user_logger_manager.h>
 #include <system/user/user_manager_web.h>
 #include <system/token/dos_token_manager.h>
@@ -73,6 +73,8 @@
 #include <system/security/security_manager.h>
 #include <system/sas/sas_manager.h>
 #include <system/application/application_manager.h>
+#include <system/mitra/mitra_manager.h>
+#include <core/pid_thread_manager.h>
 
 #include <interface/socket_interface.h>
 #include <interface/string_interface.h>
@@ -92,6 +94,7 @@
 #include <communication/cluster_node.h>
 #include <config/properties.h>
 #include <websockets/websocket_apns_connector.h>
+#include <system/support/support_manager.h>
 
 //#include <network/protocol_websocket.h>
 #include <system/permission/permission_manager.h>
@@ -257,7 +260,7 @@ typedef struct SystemBase
 	UserManager						*sl_UM;		// user manager
 	UserGroupManager				*sl_UGM;	// user group manager
 	FSManager						*sl_FSM;		// filesystem manager
-	USBManager						*sl_USB;		// usb manager
+	USBRemoteManager				*sl_USBRemoteManager; // usb remote manager
 	PrinterManager					*sl_PrinterM;		// printer manager
 	EventManager					*sl_EventManager;								///< Manager of events
 	PIDThreadManager				*sl_PIDTM;			// PIDThreadManager
@@ -273,7 +276,9 @@ typedef struct SystemBase
 	PermissionManager				*sl_PermissionManager;		// Permission Manager
 	RoleManager						*sl_RoleManager;	// Role Manager
 	SecurityManager					*sl_SecurityManager;	// Security Manager
+	SupportManager					*sl_SupportManager;	// Support Manager
 	SASManager						*sl_SASManager;			// SAS Manager
+	MitraManager					*sl_MitraManager;		// Mitra Manager
 
 	pthread_mutex_t 				sl_ResourceMutex;	// resource mutex
 	pthread_mutex_t					sl_InternalMutex;		// internal slib mutex
@@ -300,8 +305,9 @@ typedef struct SystemBase
 	struct SQLConPool				*sqlpool;			// mysql.library pool
 	int								sqlpoolConnections;	// number of database connections
 	struct ApplicationLibrary		*alib;				// application library
-	struct ZLibrary					*zlib;						// z.library
-	struct ImageLibrary				*ilib;						// image.library
+	struct ZLibrary					*zlib;				// z.library
+	struct ImageLibrary				*ilib;				// image.library
+	struct USBLibrary				*usblib;			// usb.library
 
 	struct FriendCoreManager 		*fcm;						// connection with FriendCores
 	CacheManager 					*cm;						// cache manager

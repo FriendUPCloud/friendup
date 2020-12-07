@@ -143,7 +143,7 @@ FriendcoreInfo *FriendCoreInfoNew( void *slib )
 				{
 					//freegeoip.net/xml/
 			
-					bs = HttpClientCall( c, geoProvider, 80, FALSE );
+					bs = HttpClientCall( c, geoProvider, 80, FALSE, FALSE );
 					HttpClientDelete( c );
 				}
 			}

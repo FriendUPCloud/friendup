@@ -48,7 +48,7 @@
 #include <system/fsys/fs_remote_manager_web.h>
 #include <core/pid_thread_web.h>
 #include <system/fsys/device_manager_web.h>
-#include <hardware/usb/usb_device_web.h>
+#include <usb/usblibrary.h>
 #include <system/fsys/door_notification.h>
 #include <system/admin/admin_web.h>
 #include <system/connection/connection_web.h>
@@ -1690,7 +1690,24 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	else if( strcmp( urlpath[ 0 ], "usb" ) == 0 )
 	{
 		DEBUG("USB function %p  libptr %p\n", l, l->ilib );
-		response = USBManagerWebRequest( l,  &(urlpath[ 1 ]), *request, loggedSession );
+		if( l->usblib != NULL )
+		{
+			response = l->usblib->USBWebRequest( l->usblib,  &(urlpath[ 1 ]), *request, loggedSession );
+		}
+		else
+        {
+            FERROR("USB Library not found!\n");
+        }
+	}
+	
+	//
+	// Remote USB
+	//
+	
+	else if( strcmp( urlpath[ 0 ], "usbremote" ) == 0 )
+	{
+		DEBUG("USBRemote function %p  libptr %p\n", l, l->ilib );
+		response = USBRemoteManagerWebRequest( l,  &(urlpath[ 1 ]), *request, loggedSession );
 	}
 	
 	//
@@ -2113,6 +2130,30 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					
 					if( loggedSession != NULL )
 					{
+						// check if connected device is webmed device
+						
+						if( deviceid != NULL && strncmp( deviceid, "medclient-", 10 ) == 0 )
+						{
+							MitraManagerCheckAndAddToken( l->sl_MitraManager, TRUE );
+							
+							DEBUG("USB function %p  libptr %p\n", l, l->ilib );
+							if( l->usblib != NULL )
+							{
+								if( l->usblib->sl_USBManager != NULL )
+								{
+									if( l->usblib->sl_USBManager != NULL )
+									{
+										l->usblib->USBManagerRemoveUserPorts( l->usblib->sl_USBManager, usrname );
+									}
+									else
+									{
+										FERROR("ERROR: USBManager is not created!\n");
+									}
+								}
+								//response = l->usblib->USBWebRequest( l->usblib,  &(urlpath[ 1 ]), *request, loggedSession );
+							}
+						}
+						
 						DEBUG("session loaded session id %s\n", loggedSession->us_SessionID );
 						if( ( loggedSession = USMUserSessionAdd( l->sl_USM, loggedSession ) ) != NULL )
 						{

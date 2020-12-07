@@ -35,7 +35,6 @@
 #include <core/pid_thread_web.h>
 #include <system/fsys/device_manager_web.h>
 #include <network/mime.h>
-#include <hardware/usb/usb_device_web.h>
 #include <system/fsys/door_notification.h>
 
 /**

@@ -35,7 +35,6 @@
 #include <core/pid_thread_web.h>
 #include <system/fsys/device_manager_web.h>
 #include <network/mime.h>
-#include <hardware/usb/usb_device_web.h>
 #include <system/fsys/door_notification.h>
 #include <mobile_app/mobile_app.h>
 
@@ -450,7 +449,6 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 							char dictmsgbuf[ 256 ];
 							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
 							HttpAddTextContent( response, dictmsgbuf );
-							//HttpAddTextContent( response, "fail<!--separate-->{\"response\":\"cannot allocate memory for response!\"}" );
 						}
 						DataFormDelete( recvdf );
 					}
@@ -461,7 +459,6 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 						snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED_EMPTY_STRING], "CommServiceSendMsgDirect" );
 						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_FUNCTION_RETURNED_EMPTY_STRING );
 						HttpAddTextContent( response, dictmsgbuf );
-						//HttpAddTextContent( response, "fail<!--separate-->{\"response\":\"response is empty!\"}" );
 					}
 				}
 				else
@@ -471,9 +468,6 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 					snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_SERVER_CONNECT_ERROR], host );
 					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_SERVER_CONNECT_ERROR );
 					HttpAddTextContent( response, dictmsgbuf );
-					//char temp[ 512 ];
-					//snprintf( temp, sizeof(temp), "ok<!--separate-->{\"response\":\"cannot setup connection with server!: %s\"}", host );
-					//HttpAddTextContent( response, temp );
 				}
 				
 				DataFormDelete( df );
@@ -483,7 +477,6 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 				char dictmsgbuf[ 256 ];
 				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_CONVERT_MESSAGE] , DICT_CANNOT_CONVERT_MESSAGE );
 				HttpAddTextContent( response, dictmsgbuf );
-				//HttpAddTextContent( response, "fail<!--separate-->{\"response\":\"cannot convert message!\"}" );
 			}
 			FFree( host );
 		}
@@ -494,7 +487,6 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "remotehost" );
 			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, dictmsgbuf );
-			//HttpAddTextContent( response, "fail<!--separate-->{\"response\":\"'remotehost' parameter not found!\"}" );
 		}
 	}
 	
@@ -745,10 +737,76 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			char dictmsgbuf[ 512 ];
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "ok<!--separate-->{\"result\":1,\"uptime\":%lu", (time( NULL ) - l->l_UptimeStart) );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "ok<!--separate-->{\"result\":1,\"uptime\":%lu}", (time( NULL ) - l->l_UptimeStart) );
 		
 			HttpAddTextContent( response, dictmsgbuf );
 			*result = 200;
+		}
+		else
+		{
+			char dictmsgbuf[ 256 ];
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, dictmsgbuf );
+		}
+	}
+	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/admin/eveusbrestart</H2>Function which restart eveusb service or daemon
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param type - (required) "service/daemon"
+	* @return function return ok<!--separate-->{"result":0,"message":<MSG>} when success, otherwise error number
+	*/
+	/// @endcond
+	if( strcmp( urlpath[ 1 ], "eveusbrestart" ) == 0 )
+	{
+		//ok<!--separate-->{"result":1,"uptime":unixtime_number}
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
+		{
+			HashmapElement *el = NULL;
+			char *type = NULL;
+		
+			el = HttpGetPOSTParameter( (*request), "message" );
+			if( el == NULL ) el = HashmapGet( (*request)->http_Query, "message" );
+			if( el != NULL )
+			{
+				type = UrlDecodeToMem( ( char *)el->hme_Data );
+			}
+			
+			if( type != NULL )
+			{
+				char dictmsgbuf[ 512 ];
+				
+				if( strcmp( type, "service" ) == 0 )
+				{
+					system( "sudo systemctl restart eveusb" );
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "ok<!--separate-->{\"result\":0,\"message\":\"service restarted\"}");
+				}
+				else if( strcmp( type, "daemon" ) == 0 )
+				{
+					system( "sudo eveusb daemon reload" );
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "ok<!--separate-->{\"result\":0,\"message\":\"daemon reloaded\"}");
+				}
+				else
+				{
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "ok<!--separate-->{\"result\":1,\"message\":\"type not found\"}");
+				}
+				HttpAddTextContent( response, dictmsgbuf );
+				
+				*result = 200;
+				
+				FFree( type );
+			}
+			else
+			{
+				char dictmsgbuf[ 256 ];
+				char dictmsgbuf1[ 196 ];
+				snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "remotehost" );
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+				HttpAddTextContent( response, dictmsgbuf );
+			}
 		}
 		else
 		{
