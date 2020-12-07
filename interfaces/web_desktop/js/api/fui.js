@@ -14,43 +14,61 @@ FUI.children = [];
 
 FUI.initialize = function( flags, callback )
 {
+	let self = this;
 	this.flags = {};
 	
 	if( flags && flags.classList )
 	{
-		let str = '/';
+		let str = document.location.protocol + '//' + document.location.host + '/';
 	
-		for( let a = 0; a < classList.length; a++ )
+		for( let a = 0; a < flags.classList.length; a++ )
 		{
 			if( a > 0 ) str += ';';
-			str += 'webclient/js/api/fui/' + classList[ a ];
+			str += 'webclient/js/api/fui/' + flags.classList[ a ].toLowerCase() + '.class.js';
 		}
+		
+		// Load includes synchronously
+		let c = new cAjax();		
+		c.open( 'GET', str, false, false );
+		c.onload = function()
+		{
+			eval( this.responseText() );
+			done();
+		}
+		c.send();
 	}
-	
-	// Set renderer
-	if( flags && !flags.renderer )
-		flags.renderer = 'html5';
-	let ren = flags ? flags.renderer : false;
-	switch( ren )
+	else
 	{
-		case 'html5':
-			this.flags.renderer = ren;
-			break;
-		default:
-			this.flags.renderer = 'html5';
-			break;
+		done();
 	}
 	
-	// Set insertion point
-	if( flags && flags.parentNode )
+	function done()
 	{
-		FUI.dom = flags.parentNode;
-	}
-	else FUI.dom = document.body;
+		// Set renderer
+		if( flags && !flags.renderer )
+			flags.renderer = 'html5';
+		let ren = flags && flags.renderer ? flags.renderer : false;
+		switch( ren )
+		{
+			case 'html5':
+				self.flags.renderer = ren;
+				break;
+			default:
+				self.flags.renderer = 'html5';
+				break;
+		}
 	
-	if( callback )
-		return callback( { result: true } );
-	return;
+		// Set insertion point
+		if( flags && flags.parentNode )
+		{
+			FUI.dom = flags.parentNode;
+		}
+		else FUI.dom = document.body;
+	
+		if( callback )
+			return callback( { result: true } );
+		return;
+	}
 }
 
 FUI.addChild = function( element )
@@ -89,255 +107,100 @@ FUI.loadTheme = function( name )
 
 /* Event class -------------------------------------------------------------- */
 
-FUI.inherit = function( self )
+FUI.inherit = function( self, className )
 {
+	self.properties = {};
+	
 	self.addEvent = function( type, callback )
 	{
-		if( typeof( self[ 'on' + type ] ) != 'undefined' )
+		if( !self.events ) self.events = {};
+		if( !self.events[ 'on' + type ] )
+			self.events[ 'on' + type ] = [];
+		self.events[ 'on' + type ].push( callback );
+		return [ type, callback ];
+	}
+	
+	self.removeEvent = function( event )
+	{
+		if( self.events[ 'on' + event[ 0 ] ] )
 		{
-			if( !self.events ) self.events = {};
-			if( !self.events[ 'on' + type ] )
-				self.events[ 'on' + type ] = [];
-			self.events[ 'on' + type ].push( callback );
+			let out = [];
+			let found = false;
+			let lst = self.events[ 'on' + event[ 0 ] ];
+			for( let a = 0; a < lst.length; a++ )
+			{
+				if( lst[ a ] != event[ 1 ] )
+					out.push( lst[ a ] );
+				else found = true;
+			}
+			if( found )
+			{
+				self.events[ 'on' + event[ 0 ] ] = out;
+				return true;
+			}
 		}
-	}
-}
-
-/* View class --------------------------------------------------------------- */
-
-FUI.View = function( object )
-{
-	
-}
-
-
-/* Grid class --------------------------------------------------------------- */
-
-FUI.Grid = function( object )
-{
-	FUI.inherit( this );
-	this.gridDescription = [];
-	this.renderer = new FUI.Grid.Renderers[ FUI.flags.renderer ]( this );
-	if( object ) this.setGrid( object );
-}
-
-// Layout methods --------------------------------------------------------------
-
-FUI.Grid.prototype.setGrid = function( object )
-{
-	this.gridDescription = object;
-}
-
-// Getters and setters
-
-FUI.Grid.prototype.getCellById = function( id )
-{
-}
-
-FUI.Grid.prototype.setCellId = function( cell )
-{
-}
-
-FUI.Grid.prototype.setCellProperties = function( cell, properties )
-{
-}
-
-// Default methods
-
-FUI.Grid.prototype.refresh = function()
-{
-	return this.renderer.refresh();
-}
-
-FUI.Grid.prototype.getChildren = function()
-{
-	return false;
-}
-
-// HTML5 Renderer
-
-FUI.Grid.Renderers = {};
-FUI.Grid.Renderers.html5 = function( gridObject )
-{
-	this.grid = gridObject;
-	this.domNodes = [];
-}
-FUI.Grid.Renderers.html5.prototype.refresh = function()
-{
-	if( !this.grid.parentNode ) return;
-	let self = this;
-	if( !this.dom )
-	{
-		this.dom = document.createElement( 'div' );
-		this.dom.style.position = 'absolute';
-		this.dom.style.top = '0';
-		this.dom.style.left = '0';
-		this.dom.style.width = '100%';
-		this.dom.style.height = '100%';
-		this.grid.parentNode.appendChild( this.dom );
+		return false;
 	}
 	
-	let gridObject = self.grid;
-	let gridDescription = gridObject.gridDescription;
-	if( !gridDescription.rows ) return;
-	
-	// Calculate dimensions
-	let t = pt = 0; // top and percentTop
-	let total = 0;
-	let pixels = 0;
-	for( let a = 0; a < gridDescription.rows.length; a++ )
+	// Set a property
+	self.setProperty = function( propertyName, value )
 	{
-		if( gridDescription.rows[ a ].weight )
-			total += gridDescription.rows[ a ].weight;
-		else if( gridDescription.rows[ a ].pixelHeight )
-			pixels += gridDescription.rows[ a ].pixelHeight;
+		this.properties[ propertyName ] = value;
+		// TODO: Check if we need to send to source destination
+		if( this.onPropertySet )
+			this.onPropertySet( propertyName );
 	}
-	let unit = total / gridDescription.rows.length;
 	
-	// Add objects
-	for( let a = 0; a < gridDescription.rows.length; a++ )
+	// Get a property
+	self.getProperty = function ( propertyName )
 	{
-		let row = gridDescription.rows[ a ];
-		let create = false;
-		
-		// Check if we need to create dom node
-		// TODO: Perhaps children should be gotten by unique ID to prevent drifting of child objects
-		let d = false;
-		if( this.domNodes.length > a )
-			d = this.domNodes[ a ];
+		// TODO: Check if we need to send to source destination
+		if( this.property[ propertyName ] )
+			return this.properties[ propertyName ];
+		return null;
+	}
+	// Execute a property
+	self.doMethod = function( method, args, callback )
+	{
+		if( typeof( this[ method ] ) == 'function' )
+		{
+			this[ method ]( args, callback );
+			return true;
+		}
+		return false;
+	}
+	// Anchor object to scope
+	self.setIdentity = function()
+	{
+		if( Application.viewId )
+		{
+			this.identity = 'viewId';
+			this.viewId = Application.viewId;
+			return true;
+		}
+		else if( Application.screenId )
+		{
+			this.identity = 'screenId';
+			this.viewId = Application.screenId;
+			return true;
+		}
+		else if( Application.widgetId )
+		{
+			this.identity = 'widgetId';
+			this.viewId = Application.widgetId;
+			return true;
+		}
 		else
 		{
-			// Create dom object
-			d = document.createElement( 'div' );
-			d.style.position = 'absolute';
-			d.style.left = '0px';
-			d.style.width = '100%';
-			d.style.boxSizing = 'border-box';
-			d.style.backgroundColor = 'rgb(' + ( Math.random() % 255 ) + ',' + ( Math.random() % 255 ) + ',' + ( Math.random() % 255 ) + ')';
-			create = true;
+			this.identity = 'projection';
+			this.identityType = 'viewId';
+			this.identityId = '3940873098479038';
 		}
-		
-		if( !d ) continue;
-		
-		// Take account of pixel heights
-		if( pixels > 0 )
-		{
-			if( t > 0 )
-			{
-				d.style.top = 'calc(' + pt + '% + ' + t + 'px)';
-			}
-			else
-			{
-				d.style.top = pt + '%';
-			}
-			
-			if( row.weight )
-			{
-				let pct = row.weight / total * 100;
-				d.style.height = 'calc(' + pct + '% - ' + pixels + 'px)';
-				pt += pct;
-			}
-			else if( row.pixelHeight )
-			{
-				d.style.height = row.pixelHeight + 'px';
-				t += row.pixelHeight;
-			}
-			else continue;
-		}
-		// Just percentages
-		else if( row.weight )
-		{
-			d.style.height = row.weight / total * 100 + '%';
-			d.style.top = pt + '%';
-			pt += d.style.height;
-		}
-		else continue;
-		
-		if( create )
-			this.dom.appendChild( d );
-		
-		this.domNodes[ a ] = d; // Memorize!
-		
-		if( !row.columns ) continue;
-		
-		// Do the columns.............................
-		let l = pl = 0;
-		let rpixels = 0;
-		let rtotal = 0;
-		for( let b = 0; b < row.columns.length; b++ )
-		{
-			if( row.columns[ b ].weight )
-				rtotal += row.columns[ b ].weight;
-			else if( row.columns[ b ].pixelHeight )
-				rpixels += row.columns[ b ].pixelHeight;
-		}
-		
-		for( let b = 0; b < row.columns.length; b++ )
-		{
-			create = false;
-			
-			let column = row.columns[ b ];
-			
-			// Check if we need to create dom node
-			// TODO: Perhaps children should be gotten by unique ID to prevent drifting of child objects
-			let r = false;
-			if( d.children && d.children.length > b )
-				r = d.children[ b ];
-			else
-			{
-				if( !d.children ) d.children = [];
-				
-				// Create dom object
-				r = document.createElement( 'div' );
-				r.style.position = 'absolute';
-				r.style.top = '0px';
-				r.style.height = '100%';
-				r.style.boxSizing = 'border-box';
-				r.style.backgroundColor = 'rgb(' + ( Math.random() % 255 ) + ',' + ( Math.random() % 255 ) + ',' + ( Math.random() % 255 ) + ')';
-				create = true;
-			}
-		
-			// Take account of pixel heights
-			if( pixels > 0 )
-			{
-				if( t > 0 )
-				{
-					r.style.left = 'calc(' + pl + '% + ' + l + 'px)';
-				}
-				else
-				{
-					r.style.left = pl + '%';
-				}
-			
-				if( column.weight )
-				{
-					let pct = column.weight / total * 100;
-					r.style.width = 'calc(' + pct + '% - ' + rpixels + 'px)';
-					pl += pct;
-				}
-				else if( column.pixelWidth )
-				{
-					r.style.width = column.pixelWidth + 'px';
-					l += column.pixelWidth;
-				}
-				else continue;
-			}
-			// Just percentages
-			else if( column.weight )
-			{
-				r.style.width = column.weight / rtotal * 100 + '%';
-				r.style.left = pl + '%';
-				pl += r.style.height;
-			}
-			else continue;
-		
-			if( create )
-				d.appendChild( r );
-			
-			d.children[ b ] = r; // Memorize!
-		}
+		return false;
 	}
 	
-	return this.getChildren();
+	self.renderer = new FUI[ className ].Renderers[ FUI.flags.renderer ]( self );
 }
+
+
 
