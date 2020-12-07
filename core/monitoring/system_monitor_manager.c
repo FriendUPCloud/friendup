@@ -96,11 +96,22 @@ Http *SystemMonitorManagerWEB( SystemMonitorManager *smm, char *function, Http *
 	else
 	{
 		char *key = NULL;
+		FBOOL raw = FALSE;
 		HashmapElement *el = HttpGetPOSTParameter( req, "key" );
 		if( el == NULL ) el = HashmapGet( req->http_Query, "key" );
 		if( el != NULL )
 		{
 			key = StringDuplicate( (char *)el->hme_Data );
+		}
+		
+		el = HttpGetPOSTParameter( req, "raw" );
+		if( el == NULL ) el = HashmapGet( req->http_Query, "raw" );
+		if( el != NULL )
+		{
+			if( strcmp( el->hme_Data,"1" ) == 0 )
+			{
+				raw = TRUE;
+			}
 		}
 		
 		if( key == NULL )
@@ -132,6 +143,18 @@ Http *SystemMonitorManagerWEB( SystemMonitorManager *smm, char *function, Http *
 				FFree( qery );
 			}
 			
+			/// @cond WEB_CALL_DOCUMENTATION
+			/**
+			*
+			* <HR><H2>monitor/presence</H2>return information about presence connection (last call timestamp diff)
+			*
+			* @param key - (required) authentication key, stored in DB in FGLobalVariables with key MONITORING_KEY
+			* @param raw - if 1 then only difference will be returned otherwise full response in json format
+			* 
+			* @return return information about connection state
+			*/
+			/// @endcond
+			
 			if( locKey == NULL || strcmp( locKey, key ) == 0 )
 			{
 				if( strcmp( function, "presence" ) == 0 )
@@ -139,7 +162,16 @@ Http *SystemMonitorManagerWEB( SystemMonitorManager *smm, char *function, Http *
 					char resp[ 512 ];
 					time_t currTimestamp = time( NULL );
 					
-					snprintf( resp, sizeof( resp ), "ok<!--separate-->{\"response\":0,\"lastcall\":%ld}", currTimestamp-smm->smm_PresenceTimestamp );
+					// we just want to get timestamp
+					if( raw == TRUE )
+					{
+						snprintf( resp, sizeof( resp ), "%ld", currTimestamp-smm->smm_PresenceTimestamp );
+					}
+					else
+					{
+						snprintf( resp, sizeof( resp ), "ok<!--separate-->{\"response\":0,\"lastcall\":%ld}", currTimestamp-smm->smm_PresenceTimestamp );
+					}
+					HttpAddTextContent( response, resp );
 				}
 			}
 			else	// key is NULL or not equal
