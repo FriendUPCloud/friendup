@@ -128,6 +128,9 @@ Http *SystemMonitorManagerWEB( SystemMonitorManager *smm, char *function, Http *
 			{
 				char *qery = FMalloc( 1048 );
 				qery[ 1024 ] = 0;
+				
+				// example: INSERT INTO `FGlobalVariables` ( `Key`, `Value`, `Comment`, `Date`) VALUES ('MONITORING_KEY', 'blabla1', 'monitoring key', '0');
+				
 				sqllib->SNPrintF( sqllib, qery, 1024, "SELECT * FROM `FGlobalVariables` WHERE `Key`=\"MONITORING_KEY\"" );
 				void *res = sqllib->Query( sqllib, qery );
 				if( res != NULL )
@@ -135,7 +138,7 @@ Http *SystemMonitorManagerWEB( SystemMonitorManager *smm, char *function, Http *
 					char **row;
 					if( ( row = sqllib->FetchRow( sqllib, res ) ) )
 					{
-						locKey = StringDuplicate( row[0] );
+						locKey = UrlDecodeToMem( row[0] );
 					}
 					sqllib->FreeResult( sqllib, res );
 				}
@@ -177,6 +180,11 @@ Http *SystemMonitorManagerWEB( SystemMonitorManager *smm, char *function, Http *
 			else	// key is NULL or not equal
 			{
 				HttpAddTextContent( response, "fail<!--separate-->{\"response\":1,\"code\":3}" );
+			}
+			
+			if( locKey != NULL )
+			{
+				FFree( locKey );
 			}
 		}
 	}

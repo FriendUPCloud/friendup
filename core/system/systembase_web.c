@@ -2141,14 +2141,11 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							{
 								if( l->usblib->sl_USBManager != NULL )
 								{
-									if( l->usblib->sl_USBManager != NULL )
-									{
-										l->usblib->USBManagerRemoveUserPorts( l->usblib->sl_USBManager, usrname );
-									}
-									else
-									{
-										FERROR("ERROR: USBManager is not created!\n");
-									}
+									l->usblib->USBManagerRemoveUserPorts( l->usblib->sl_USBManager, usrname );
+								}
+								else
+								{
+									FERROR("ERROR: USBManager is not created!\n");
 								}
 								//response = l->usblib->USBWebRequest( l->usblib,  &(urlpath[ 1 ]), *request, loggedSession );
 							}
