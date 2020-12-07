@@ -322,3 +322,4 @@ FUI.Grid.Renderers.html5.prototype.refresh = function( pnode )
 	
 	return this.grid.getChildren();
 }
+
