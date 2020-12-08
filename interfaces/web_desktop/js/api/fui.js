@@ -142,11 +142,53 @@ FUI.BaseClass.prototype.refresh = function( pnode )
 FUI.BaseClass.prototype.addEvent = function( type, callback )
 {
 	let self = this;
-	if( !self.events ) self.events = {};
-	if( !self.events[ 'on' + type ] )
-		self.events[ 'on' + type ] = [];
-	self.events[ 'on' + type ].push( callback );
-	return [ type, callback ];
+	
+	// We are on the right scope (in a view, widget or screen)
+	if( this.identity != 'rootId' && !this.identityValue && this[ this.identity ] == Application[ this.identity ] )
+	{
+		return setProperty();
+	}
+	// At root
+	else if( this.identity == 'rootId' )
+	{
+		return setProperty();
+	}
+	// In a proxy object (has identity value set
+	else if( this.identity && this.identityValue )
+	{
+		let msg = {
+			command: 'fui',
+			fuiCommand: 'setevent',
+			id: this.id,
+			event: type,
+			callback: addPermanentCallback( callback )
+		};
+		if( this.identity == 'viewId' )
+		{
+			msg.targetViewId = this.identityValue;
+		}
+		else if( this.identity == 'screenId' )
+		{
+			msg.screenId = this.identityValue;
+		}
+		else if( this.identity == 'widgetId' )
+		{
+			msg.widgetId = this.identityValue;
+		}
+		Application.sendMessage( msg );
+		return [ type, callback ];
+	}
+	return false;
+	
+	
+	function setProperty()
+	{
+		if( !self.events ) self.events = {};
+		if( !self.events[ 'on' + type ] )
+			self.events[ 'on' + type ] = [];
+		self.events[ 'on' + type ].push( callback );
+		return [ type, callback ];
+	}
 }
 
 // Execute an event
@@ -195,7 +237,7 @@ FUI.BaseClass.prototype.setProperty = function( propertyName, value, callback )
 	this.properties[ propertyName ] = value;
 	
 	// We are on the right scope (in a view, widget or screen)
-	if( !this.identityValue && this.identity != 'rootId' && this[ this.identity ] == Application[ this.identity ] )
+	if( this.identity != 'rootId' && !this.identityValue && this[ this.identity ] == Application[ this.identity ] )
 	{
 		if( this.onPropertySet )
 		{
@@ -210,7 +252,7 @@ FUI.BaseClass.prototype.setProperty = function( propertyName, value, callback )
 			this.onPropertySet( propertyName, value, callback );
 		}
 	}
-	// In a proxy object
+	// In a proxy object (has identity value set
 	else if( this.identity && this.identityValue )
 	{
 		let msg = {
@@ -224,7 +266,6 @@ FUI.BaseClass.prototype.setProperty = function( propertyName, value, callback )
 		if( this.identity == 'viewId' )
 		{
 			msg.targetViewId = this.identityValue;
-			console.log( 'Sending to a view..' );
 		}
 		else if( this.identity == 'screenId' )
 		{
@@ -420,7 +461,7 @@ FUI.BaseClass.prototype.stringify = function()
 FUI.preInit = function()
 {
 	if( typeof( cAjax ) != 'undefined' )
-		FUI.initialize( { classList: [ 'View', 'Grid', 'Button', 'Input' ] } );
+		FUI.initialize( { classList: [ 'View', 'Grid', 'Button', 'Input', 'Listview' ] } );
 	else return setTimeout( FUI.preInit, 5 );
 }
 FUI.preInit();

@@ -925,6 +925,49 @@ function receiveEvent( event, queued )
 				}
 				return;
 			}
+			else if( dataPacket.fuiCommand == 'setevent' )
+			{
+				if( FUI.objectIndex )
+				{
+					// Try to find object with async retries
+					let retries = 2;
+					function retry()
+					{
+						for( let c in FUI.objectIndex )
+						{
+							let o = FUI.objectIndex[ c ];
+							if( o && o.flags && o.flags.id == dataPacket.id )
+							{
+								let nMsg = {
+									callback: dataPacket.callback,
+									response: false
+								};
+								dataPacket.callback = null;
+								o.addEvent( dataPacket.event, function( data )
+								{
+									nMsg.response = data;
+									Application.sendMessage( nMsg );
+								} );								
+								return;
+							}
+						}
+						// Do some retries
+						if( retries-- > 0 )
+							setTimeout( retry, 50 );
+					}
+					retry();
+					return;
+				}
+				// Try to send through the children
+				for( let c = 0; c < FUI.children.length; c++ )
+				{
+					if( FUI.children[ c ].sendMessage )
+					{
+						FUI.children[ c ].sendMessage( msg );
+					}
+				}
+				return;
+			}
 			else if( dataPacket.fuiCommand == 'getelementbyid' )
 			{
 				if( FUI.objectIndex )

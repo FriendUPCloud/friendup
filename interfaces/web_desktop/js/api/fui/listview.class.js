@@ -10,22 +10,22 @@
 
 /* Button class ------------------------------------------------------------- */
 
-FUI.Button = function( object )
+FUI.Listview = function( object )
 {
-	this.initialize( 'Button' );
+	this.initialize( 'Listview' );
 	this.flags = object;
 }
 
-FUI.Button.prototype = new FUI.BaseClass();
+FUI.Listview.prototype = new FUI.BaseClass();
 
 // Default methods -------------------------------------------------------------
 
-FUI.Button.prototype.onPropertySet = function( property, value, callback )
+FUI.Listview.prototype.onPropertySet = function( property, value, callback )
 {
 	switch( property )
 	{
-		case 'text':
-			this.flags.text = value;
+		case 'headers':
+			this.flags.headers = value;
 			this.refresh();
 			break;
 	}
@@ -34,30 +34,30 @@ FUI.Button.prototype.onPropertySet = function( property, value, callback )
 
 // Renderers -------------------------------------------------------------------
 
-FUI.Button.Renderers = {};
+FUI.Listview.Renderers = {};
 
 // "Signal Renderer"
 
-FUI.Button.Renderers.signal = function()
+FUI.Listview.Renderers.signal = function()
 {
 }
 
 // HTML5 Renderer
 
-FUI.Button.Renderers.html5 = function( buttonObj )
+FUI.Listview.Renderers.html5 = function( gridObject )
 {
-	this.button = buttonObj;
+	this.grid = gridObject;
 	this.domNodes = [];
 }
-FUI.Button.Renderers.html5.prototype.refresh = function( pnode )
+FUI.Listview.Renderers.html5.prototype.refresh = function( pnode )
 {
 	let self = this;
 	
-	if( !pnode && !self.button.parentNode ) return;
-	if( !pnode )  pnode = self.button.parentNode;
-	this.button.parentNode = pnode;
+	if( !pnode && !self.grid.parentNode ) return;
+	if( !pnode )  pnode = self.grid.parentNode;
+	this.grid.parentNode = pnode;
 	
-	if( !this.button.domNode )
+	if( !this.grid.domNode )
 	{
 		let d = document.createElement( 'div' );
 		d.style.position = 'absolute';
@@ -69,35 +69,45 @@ FUI.Button.Renderers.html5.prototype.refresh = function( pnode )
 		d.style.borderLeft = '1px solid white';
 		d.style.borderRight = '1px solid black';
 		d.style.borderBottom = '1px solid black';
-		d.style.backgroundColor = '#888888';
+		d.style.backgroundColor = '#f8f8f8';
 		d.style.textAlign = 'center';
 		d.style.verticalAlign = 'middle';
 		d.style.cursor = 'pointer';
 		d.style.borderRadius = '3px';
 		d.style.boxSizing = 'border-box';
-		this.button.domNode = d;
+		this.grid.domNode = d;
 		pnode.appendChild( d );
-		d.onclick = function( e )
-		{
-			if( self.button.events && self.button.events[ 'onclick' ] )
-			{
-				for( let z = 0; z < self.button.events[ 'onclick' ].length; z++ )
-				{
-					self.button.events[ 'onclick' ][ z ]( e );
-				}
-			}
-		}
 	}
 	
-	let d = this.button.domNode;
+	let d = this.grid.domNode;
 	
-	if( this.button.flags.text )
+	if( this.grid.flags.headers )
 	{
-		d.innerHTML = this.button.flags.text;
+		d.innerHTML = '';
+		let headers = this.grid.flags.headers;
+		for( let a = 0; a < headers.length; a++ )
+		{
+			let n = document.createElement( 'div' );
+			n.style.position = 'absolute';
+			if( a != headers.length - 1 )
+				n.style.borderRight = '1px solid #444444';
+			n.style.borderBottom = '1px solid #444444';
+			n.style.backgroundColor = '#a0a0a0';
+			n.style.fontWeight = 'bold';
+			n.style.height = '30px';
+			let w = 100 / headers.length;
+			n.style.width = w + '%';
+			n.style.left = a * w + '%';
+			n.style.top = '0';
+			n.style.boxSizing = 'border-box';
+			n.style.padding = '5px';
+			n.innerHTML = headers[ a ];
+			d.appendChild( n );
+		}
 	}
 	else
 	{
-		d.innerHTML = 'Unnamed button';
+		d.innerHTML = '';
 	}
 }
 
