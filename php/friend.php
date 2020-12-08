@@ -274,7 +274,10 @@ if( defined( 'FRIEND_USERNAME' ) && defined( 'FRIEND_PASSWORD' ) )
 // No sessionid!!
 if( !$UserAccount && !isset( $groupSession ) && !isset( $GLOBALS[ 'args' ]->sessionid ) && !isset( $GLOBALS[ 'args' ]->authid ) )
 {
-	die( '404 NO SEESION' );
+	if( !isset( $GLOBALS[ 'args' ]->servertoken ) )
+	{
+		die( '404 NO SESSION 4' );
+	}
 }
 if( !$UserAccount && isset( $GLOBALS[ 'args' ]->sessionid ) && $GLOBALS[ 'args' ]->sessionid == '(null)' )
 	die( '404 NO SESSION 2' );
@@ -426,6 +429,12 @@ if( file_exists( 'cfg/cfg.ini' ) )
 		{
 			$User = $mu;
 		}
+	}
+	// Try with server token
+	else if( isset( $GLOBALS[ 'args' ]->servertoken ) )
+	{
+		$User->ServerToken = $GLOBALS[ 'args' ]->servertoken;
+		$User->Load();
 	}
 	
 	// Get the sessionid

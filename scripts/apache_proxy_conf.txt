@@ -1,0 +1,82 @@
+        SetEnvIf Request_URI "^/guacamole/tunnel" dontlog
+        CustomLog /var/log/apache2/guac.log common env=!dontlog
+                Header set Access-Control-Allow-Origin "*"
+                Header set Access-Control-Allow-Headers "method, origin, content-type, accept, options, Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With"
+                Header set Access-Control-Allow-Methods "POST, GET, PATCH, DELETE, PUT, OPTIONS"
+                SetEnv proxy-sendchunked
+                SetEnv proxy-sendcl
+        AllowEncodedSlashes NoDecode
+                <Location />
+                        Order allow,deny
+                        Allow from all
+                        ProxyPass https://127.0.0.1:6502/ flushpackets=on
+                        ProxyPassReverse https://127.0.0.1:6502/
+                </Location>
+                #Friend Core websocket
+                <Location /fcws>
+                    Order allow,deny
+                    Allow from all
+                    #as set in friendup/build/cfg/cfg.ini "wsport" variable [Core]
+                    ProxyPass wss://127.0.0.1:6500/ flushpackets=on
+                    ProxyPassReverse wss://127.0.0.1:6500/
+                </Location>
+                <Location /.well-known>
+                        ProxyPass "!"
+                </Location>
+                <Location /dropbox-saveuser.php>
+                        ProxyPass "!"
+                </Location>
+                <Location /gdrive-saveuser.php>
+                        ProxyPass "!"
+                </Location>
+                <Location /guacamole>
+                        Header set Access-Control-Allow-Origin "*"
+                        Header set Access-Control-Allow-Headers "origin, content-type, accept, Guacamole-Status-Code, Guacamole-Error-Message"
+                        Header set Access-Control-Allow-Methods "POST, GET, PATCH, DELETE, PUT"
+                        Header set Access-Control-Expose-Headers "Guacamole-Status-Code, Guacamole-Error-Message"
+                        Order allow,deny
+                        Allow from all
+                        ProxyPass http://127.0.0.1:8080/guacamole flushpackets=on
+                        ProxyPassReverse http://127.0.0.1:8080/guacamole
+                </Location>
+                <Location /guacamole/websocket-tunnel>
+                        Order allow,deny
+                        Allow from all
+                        ProxyPass ws://127.0.0.1:8080/guacamole/websocket-tunnel
+                        ProxyPassReverse ws://127.0.0.1:8080/guacamole/websocket-tunnel
+                </Location>
+                SSLProxyEngine on
+                SSLProxyVerify none
+                SSLProxyCheckPeerCN off
+                SSLProxyCheckPeerName off
+                SSLProxyCheckPeerExpire off
+                <Location /hello/>
+                        Order allow,deny
+                        Allow from all
+                        ProxyPass https://127.0.0.1:3000/
+                        ProxyPassReverse https://127.0.0.1:3000/
+                </Location>
+                <Location /hello/chat/>
+                        Order allow,deny
+                        Allow from all
+                        ProxyPass wss://127.0.0.1:3001/
+                        ProxyPassReverse wss://127.0.0.1:3001/
+                </Location>
+                 <Location /hello/live/>
+                        Order allow,deny
+                        Allow from all
+                        ProxyPass wss://127.0.0.1:3002/
+                        ProxyPassReverse wss://127.0.0.1:3002/
+                </Location>
+                <Location /presence>
+                        Order allow,deny
+                        Allow from all
+                        ProxyPass wss://127.0.0.1:27960/
+                        ProxyPassReverse wss://127.0.0.1:27960/
+                </Location>
+                <Location /presence/guest>
+                        Order allow,deny
+                        Allow from all
+                        ProxyPass wss://127.0.0.1:27970/
+                        ProxyPassReverse wss://127.0.0.1:27970/
+                </Location>

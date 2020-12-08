@@ -27,7 +27,7 @@ if( !file_exists( 'cfg/serverglobals' ) )
 $files = new stdClass();
 $files->eulaShortText = 'eulashort.html';
 $files->eulaLongText = 'eulalong.html';
-$files->logoImage = 'logoimage.png';
+$files->logoImage = 'release_logo.png';
 $files->backgroundImage = 'release_loginimage.jpg';
 $files->aboutTemplate = 'aboutTemplate.html';
 $files->extraLoginCSS = 'extraLoginCSS.css';
@@ -198,6 +198,8 @@ $keyz = [
 	'aboutTemplate' 
 ];
 
+//$Logger->log( 'Updating white label settings.' );
+
 for( $k = 0; $k < 6; $k++ )
 {
 	$backup = $backups[ $k ];
@@ -208,6 +210,17 @@ for( $k = 0; $k < 6; $k++ )
 	
 	if( $possibilities->{$kk} )
 	{
+		// We may not have set the backup - then do that first..
+		if( !file_exists( $backup ) && file_exists( $target ) )
+		{
+			copy( $target, $backup );
+			//$Logger->log( '-> Copied original to backup, because we have no backup.' );
+		}
+		if( !file_exists( $target ) )
+		{
+			//$Logger->log( '-> Target ' . $target . ' does not exist!' );
+		}
+			
 		// Make sure we have a backup
 		// If the default login image was changed, make sure to delete the backup image when updating!
 		if( !file_exists( $backup ) )
@@ -218,16 +231,18 @@ for( $k = 0; $k < 6; $k++ )
 			}
 			else
 			{
+				$Logger->log( '-> Copied ' . $target . ' to backup ' . $backup );
 			}
 		}
 		if( file_exists( $source ) )
 		{
 			// Write new data
 			copy( $source, $target );
+			//$Logger->log( '-> Copied source ' . $source . ' over target ' . $target );
 		}
 		else
 		{
-			die( 'fail<!--separate-->{"message":"Could not overwrite ' . $target . ' with ' . $source . '.","response":-1}' );
+			die( 'fail<!--separate-->{"message":"Could not (' . $backup . ') overwrite ' . $target . ' with ' . $source . '.","response":-1}' );
 		}
 	}
 	// Restore the backup
@@ -238,12 +253,15 @@ for( $k = 0; $k < 6; $k++ )
 			$f = file_get_contents( $backup );
 			if( $fp = fopen( $target, 'w+' ) )
 			{
+				//$Logger->log( '-> Restored backup ' . $backup . ' to target ' . $target );
 				fwrite( $fp, $f );
 				fclose( $fp );
 			}
 		}
 	}
 }
+
+//$Logger->log( 'Done updating whitelabel settings.' );
 
 die( 'ok<!--separate-->{"message":"Server globals were saved.","response":"1"}' );
 

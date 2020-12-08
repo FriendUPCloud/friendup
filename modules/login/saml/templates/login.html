@@ -33,6 +33,7 @@
 				failedAttempt: false,
 				uName: false,
 				uPass: false,
+				pHash: false,
 				logoutURL: false,
 				loginAttempts: 0,
 				init: function( data )
@@ -78,10 +79,20 @@
 				},
 				loginUser: function()
 				{
-					if( parent && parent.Workspace )
+					if( parent && parent.Workspace && parent.Friend && parent.Friend.User )
 					{
+						// Don't do it many times while working!
+						if( Application.busy ) return;
+						Application.busy = true;
+						
+						if( Application.uPass.indexOf( 'HASHED' ) >= 0 || Application.uPass.indexOf( '{S6}' ) >= 0 )
+						{
+							Application.pHash = true;
+						}
+						
+						parent.Friend.User.Init();
 						parent.Workspace.setLogoutURL( Application.logoutURL );
-						parent.Workspace.login( htmlentities( Application.uName ), htmlentities( Application.uPass ), false, function( result )
+						parent.Friend.User.Login( Trim( Application.uName ), Trim( Application.uPass ), false, function( result )
 						{
 							if( result == false )
 							{
@@ -96,7 +107,7 @@
 							{
 								Application.busy = false;
 							}
-						} );
+						}, false, { hashedPassword: Application.pHash ? true : false } );
 					}
 					else
 					{
