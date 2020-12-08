@@ -75,25 +75,20 @@ FUI.initialize = function( flags, callback )
 	}
 }
 
-FUI.build = function( description )
+FUI.build = function( description, callback )
 {
 	if( !this.initialized ) return setTimeout( function(){ FUI.build( description ); }, 5 );
-	
-	let result = new FUI[ description.rootClass ]( description.flags );
-	if( result )
-	{
-		return FUI.addChild( result );
-	}
-	return false;
+	return FUI.addChild( new FUI[ description.rootClass ]( description.flags ), callback );
 }
 
-FUI.addChild = function( element )
+FUI.addChild = function( element, callback )
 {
 	if( element && element.refresh )
 	{
 		element.parentNode = this.dom;
 		this.children.push( element );
 		this.refresh( element );
+		if( callback ) callback( true );
 		return this.children.length;
 	}
 	return false;
@@ -102,7 +97,7 @@ FUI.addChild = function( element )
 // Refresh the UI recursively
 FUI.refresh = function( element )
 {
-	if( element )
+	if( element && element.refresh )
 	{
 		let children = element.refresh();
 		if( children && children.length )
@@ -128,9 +123,19 @@ FUI.BaseClass = function(){};
 FUI.BaseClass.prototype.initialize = function( className )
 {
 	let self = this;
+	self.className = className;
 	self.properties = {};
 	self.setIdentity();
 	self.renderer = new FUI[ className ].Renderers[ FUI.flags.renderer ]( self );
+}
+
+FUI.BaseClass.prototype.refresh = function( pnode )
+{
+	if( !this.renderer || !this.renderer.refresh )
+	{
+		return false;
+	}
+	return this.renderer.refresh( pnode );
 }
 
 // Add an event
@@ -189,14 +194,47 @@ FUI.BaseClass.prototype.setProperty = function( propertyName, value, callback )
 	let self = this;
 	this.properties[ propertyName ] = value;
 	
-	if( this.identity )
+	// We are on the right scope (in a view, widget or screen)
+	if( !this.identityValue && this.identity != 'rootId' && this[ this.identity ] == Application[ this.identity ] )
 	{
 		if( this.onPropertySet )
+		{
 			this.onPropertySet( propertyName, value, callback );
+		}
 	}
-	else
+	// At root
+	else if( this.identity == 'rootId' )
 	{
-		console.log( 'This element is not found here.' );
+		if( this.onPropertySet )
+		{
+			this.onPropertySet( propertyName, value, callback );
+		}
+	}
+	// In a proxy object
+	else if( this.identity && this.identityValue )
+	{
+		let msg = {
+			command: 'fui',
+			fuiCommand: 'setproperty',
+			id: this.id,
+			property: propertyName,
+			value: value,
+			callback: addCallback( callback )
+		};
+		if( this.identity == 'viewId' )
+		{
+			msg.targetViewId = this.identityValue;
+			console.log( 'Sending to a view..' );
+		}
+		else if( this.identity == 'screenId' )
+		{
+			msg.screenId = this.identityValue;
+		}
+		else if( this.identity == 'widgetId' )
+		{
+			msg.widgetId = this.identityValue;
+		}
+		Application.sendMessage( msg );
 	}
 	return;
 }
@@ -260,7 +298,8 @@ FUI.BaseClass.prototype.setIdentity = function()
 	// This is an element without gui identity
 	else
 	{
-		this.identity = true;
+		this.identity = 'rootId';
+		this.rootId = '0';
 		return true;
 	}
 	return false;
@@ -278,29 +317,103 @@ FUI.BaseClass.prototype.sendMessage = function( msg, callback )
 		msg.command = 'fui';
 		if( callback )
 			msg.callback = addCallback( callback );
+		
+		/*if( this.identity )
+		{
+			if( this.identity == 'viewId' )
+			{
+				msg.targetViewId = this.viewId;
+			}
+			// TODO: check if this works
+			else if( this.idendity == 'screenId' )
+			{
+				msg.screenId = this.screenId;
+			}
+			// TODO: check if it works
+			else if( this.identity == 'widgetId' )
+			{
+				msg.widgetId = this.widgetId;
+			}
+			Application.sendMessage( msg );
+			console.log( 'Sending away!', this );
+			return;
+		}*/
 		this.messagePort.sendMessage( msg );
 		return true;
 	}
 	return false;
 }
 
+// Take simplified prototype and generate usable object
+FUI.BaseClass.prototype.importPrototype = function( prototype )
+{
+	for( let a in prototype )
+		this[ a ] = prototype[ a ];
+	return true;
+}
+
 // Get element
-FUI.BaseClass.prototype.getElementById = function( objectId, callback )
+FUI.BaseClass.prototype.getElementById = function( id, callback )
 {
 	let self = this;
 	
-	if( !self.objectIndex || typeof( self.objectIndex[ objectId ] ) == undefined )
+	// With no object index, send a message on messageport
+	if( !self.objectIndex )
 	{
 		this.sendMessage( {
 			fuiCommand: 'getelementbyid',
-			objectId: objectId,
-			callback: addCallback( callback )
+			id: id,
+			callback: addCallback( function( data )
+			{
+				if( data && data.response )
+				{
+					let prototype = JSON.parse( data.response );
+					prototype.id = id;
+					let btn = new FUI[ prototype.className ]();
+					btn.importPrototype( prototype );
+					callback( btn );
+				}
+				else
+				{
+					callback( false );
+				}
+			} )
 		} );
-		return;
+		return false;
 	}
-	callback( self.objectIndex[ objectId ] );
+	// Go through object index
+	else
+	{
+		for( let a in self.objectIndex.length )
+		{
+			let o = self.objectIndex[ a ];
+			if( o && o.flags && o.flags.id == id )
+			{
+				callback( self.objectIndex[ a ] );
+				return true;
+			}
+		}
+	}
+	return false;
 }
 
+FUI.BaseClass.prototype.getChildren = function()
+{
+	if( this.children )
+		return this.children;
+	return false;
+}
+
+// Convert self to stringified, portable object
+FUI.BaseClass.prototype.stringify = function()
+{
+	return JSON.stringify( {
+		className: this.className,
+		properties: this.properties,
+		identity: this.identity,
+		identityValue: this[ this.identity ]
+	} );
+}
 
 /* Event class -------------------------------------------------------------- */
 
@@ -310,5 +423,5 @@ FUI.preInit = function()
 		FUI.initialize( { classList: [ 'View', 'Grid', 'Button', 'Input' ] } );
 	else return setTimeout( FUI.preInit, 5 );
 }
-
 FUI.preInit();
+

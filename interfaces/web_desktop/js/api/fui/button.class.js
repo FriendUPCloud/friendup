@@ -13,23 +13,29 @@
 FUI.Button = function( object )
 {
 	this.initialize( 'Button' );
-	
 	this.flags = object;
 }
 
-FUI.Button.prototype = FUI.BaseClass.prototype;
+FUI.Button.prototype = new FUI.BaseClass();
 
-// Default methods
+// Default methods -------------------------------------------------------------
 
-FUI.Button.prototype.refresh = function( pnode )
+FUI.Button.prototype.onPropertySet = function( property, value, callback )
 {
-	return this.renderer.refresh( pnode );
+	switch( property )
+	{
+		case 'text':
+			this.flags.text = value;
+			console.log( 'Refreshing now: ' + value );
+			this.refresh();
+			break;
+		default:
+			console.log( 'Do not know what to set on "' + property + '" -> ' + value );
+	}
+	return;
 }
 
-FUI.Button.prototype.getChildren = function()
-{
-	return false;
-}
+// Renderers -------------------------------------------------------------------
 
 FUI.Button.Renderers = {};
 
@@ -52,6 +58,7 @@ FUI.Button.Renderers.html5.prototype.refresh = function( pnode )
 	
 	if( !pnode && !self.grid.parentNode ) return;
 	if( !pnode )  pnode = self.grid.parentNode;
+	this.grid.parentNode = pnode;
 	
 	if( !this.grid.domNode )
 	{

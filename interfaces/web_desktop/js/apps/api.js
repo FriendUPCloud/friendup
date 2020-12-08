@@ -875,15 +875,47 @@ function receiveEvent( event, queued )
 		case 'fui':
 			if( dataPacket.fuiCommand == 'setgui' )
 			{
-				FUI.build( dataPacket.gui );
-			}
-			else if( dataPacket.fuiCommand == 'getelementbyid' )
-			{
-				if( FUI.objectIndex && FUI.objectIndex[ dataPacket.objectId ] )
+				let nMsg = dataPacket;
+				dataPacket.callback = null;
+				FUI.build( dataPacket.gui, function()
 				{
-					console.log( 'Found it!', FUI.objectIndex[ dataPacket.objectId ] );
-					return true;
+					Application.sendMessage( nMsg );
+				} );
+			}
+			else if( dataPacket.fuiCommand == 'setproperty' )
+			{
+				if( FUI.objectIndex )
+				{
+					// Try to find object with async retries
+					let retries = 2;
+					function retry()
+					{
+						for( let c in FUI.objectIndex )
+						{
+							let o = FUI.objectIndex[ c ];
+							if( o && o.flags && o.flags.id == dataPacket.id )
+							{
+								let nMsg = {
+									callback: dataPacket.callback,
+									response: false
+								};
+								dataPacket.callback = null;
+								o.setProperty( dataPacket.property, dataPacket.value, function( data )
+								{
+									nMsg.response = data;
+									Application.sendMessage( nMsg );
+								} );								
+								return;
+							}
+						}
+						// Do some retries
+						if( retries-- > 0 )
+							setTimeout( retry, 50 );
+					}
+					retry();
+					return;
 				}
+				// Try to send through the children
 				for( let c = 0; c < FUI.children.length; c++ )
 				{
 					if( FUI.children[ c ].sendMessage )
@@ -891,8 +923,46 @@ function receiveEvent( event, queued )
 						FUI.children[ c ].sendMessage( msg );
 					}
 				}
-				console.log( 'Tried to pass it on.' );
-				return true;
+				return;
+			}
+			else if( dataPacket.fuiCommand == 'getelementbyid' )
+			{
+				if( FUI.objectIndex )
+				{
+					// Try to find object with async retries
+					let retries = 2;
+					function retry()
+					{
+						for( let c in FUI.objectIndex )
+						{
+							let o = FUI.objectIndex[ c ];
+							if( o && o.flags && o.flags.id == dataPacket.id )
+							{
+								let nMsg = {
+									callback: dataPacket.callback,
+									response: o.stringify()
+								};
+								dataPacket.callback = null;
+								Application.sendMessage( nMsg );
+								return;
+							}
+						}
+						// Do some retries
+						if( retries-- > 0 )
+							setTimeout( retry, 50 );
+					}
+					retry();
+					return;
+				}
+				// Try to send through the children
+				for( let c = 0; c < FUI.children.length; c++ )
+				{
+					if( FUI.children[ c ].sendMessage )
+					{
+						FUI.children[ c ].sendMessage( msg );
+					}
+				}
+				return;
 			}
 			return;
 		

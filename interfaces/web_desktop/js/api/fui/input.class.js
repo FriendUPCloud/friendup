@@ -17,19 +17,9 @@ FUI.Input = function( object )
 	this.flags = object;
 }
 
-FUI.Input.prototype = FUI.BaseClass.prototype;
+FUI.Input.prototype = new FUI.BaseClass();
 
-// Default methods
-
-FUI.Input.prototype.refresh = function( pnode )
-{
-	return this.renderer.refresh( pnode );
-}
-
-FUI.Input.prototype.getChildren = function()
-{
-	return false;
-}
+// Renderers -------------------------------------------------------------------
 
 FUI.Input.Renderers = {};
 

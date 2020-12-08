@@ -17,57 +17,14 @@ FUI.Grid = function( object )
 	// Some special stuff!
 	this.gridDescription = [];
 	this.children = [];
-	if( object ) 
-	{
-		this.setGrid( object );
-	}
-}
-
-FUI.Grid.prototype = FUI.BaseClass.prototype;
-
-// Layout methods --------------------------------------------------------------
-
-FUI.Grid.prototype.setGrid = function( object )
-{
 	this.gridDescription = object;
 }
 
-// Getters and setters
+FUI.Grid.prototype = new FUI.BaseClass();
 
-FUI.Grid.prototype.getCellById = function( id )
-{
-}
+// Layout methods --------------------------------------------------------------
 
-FUI.Grid.prototype.setCellId = function( cell )
-{
-}
-
-FUI.Grid.prototype.setCellProperties = function( cell, properties )
-{
-}
-
-FUI.Grid.prototype.getChildren = function()
-{
-	return this.children;
-}
-
-FUI.Grid.prototype.setTitleText = function( text )
-{
-	this.text = text;
-	this.updateTitleText( text );
-}
-
-// Default methods
-
-FUI.Grid.prototype.refresh = function( pnode )
-{
-	return this.renderer.refresh( pnode );
-}
-
-FUI.Grid.prototype.getChildren = function()
-{
-	return false;
-}
+// Renderers -------------------------------------------------------------------
 
 FUI.Grid.Renderers = {};
 

@@ -24,7 +24,7 @@ FUI.View = function( object )
 	}
 }
 
-FUI.View.prototype = FUI.BaseClass.prototype;
+FUI.View.prototype = new FUI.BaseClass();
 
 FUI.View.prototype.onPropertySet = function( property, value, callback )
 {
@@ -32,6 +32,7 @@ FUI.View.prototype.onPropertySet = function( property, value, callback )
 	{
 		case 'showing':
 			this.viewObject.setFlag( 'invisible', value ? false : true );
+			if( callback ) return callback( true );
 			break;
 	}
 	if( callback )
@@ -68,4 +69,6 @@ FUI.View.Renderers.html5 = function( gridObject )
 	this.grid = gridObject;
 	this.domNodes = [];
 }
+
+
 
