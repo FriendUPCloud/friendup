@@ -877,6 +877,23 @@ function receiveEvent( event, queued )
 			{
 				FUI.build( dataPacket.gui );
 			}
+			else if( dataPacket.fuiCommand == 'getelementbyid' )
+			{
+				if( FUI.objectIndex && FUI.objectIndex[ dataPacket.objectId ] )
+				{
+					console.log( 'Found it!', FUI.objectIndex[ dataPacket.objectId ] );
+					return true;
+				}
+				for( let c = 0; c < FUI.children.length; c++ )
+				{
+					if( FUI.children[ c ].sendMessage )
+					{
+						FUI.children[ c ].sendMessage( msg );
+					}
+				}
+				console.log( 'Tried to pass it on.' );
+				return true;
+			}
 			return;
 		
 		// Update clipboard

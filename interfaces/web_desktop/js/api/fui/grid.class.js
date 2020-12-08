@@ -12,11 +12,18 @@
 
 FUI.Grid = function( object )
 {
-	FUI.inherit( this, 'Grid' );
+	this.initialize( 'Grid' );
+	
+	// Some special stuff!
 	this.gridDescription = [];
 	this.children = [];
-	if( object ) this.setGrid( object );
+	if( object ) 
+	{
+		this.setGrid( object );
+	}
 }
+
+FUI.Grid.prototype = FUI.BaseClass.prototype;
 
 // Layout methods --------------------------------------------------------------
 

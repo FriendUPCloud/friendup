@@ -10,19 +10,21 @@
 
 FUI.View = function( object )
 {
-	FUI.inherit( this, 'View' );
+	this.initialize( 'View' );
 	
 	let self = this;
 	
 	this.flags = object;
 	this.flags.invisible = true;
-	this.viewObject = new View( this.flags );
+	this.messagePort = this.viewObject = new View( this.flags );
 	this.viewObject.setContent( '' );
 	this.viewObject.onClose = function()
 	{
 		self.executeEvent( 'close' );
 	}
 }
+
+FUI.View.prototype = FUI.BaseClass.prototype;
 
 FUI.View.prototype.onPropertySet = function( property, value, callback )
 {

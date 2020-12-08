@@ -12,9 +12,12 @@
 
 FUI.Input = function( object )
 {
-	FUI.inherit( this, 'Input' );
+	this.initialize( 'Input' );
+	
 	this.flags = object;
 }
+
+FUI.Input.prototype = FUI.BaseClass.prototype;
 
 // Default methods
 

@@ -121,135 +121,188 @@ FUI.loadTheme = function( name )
 	
 }
 
-/* Event class -------------------------------------------------------------- */
+/* Baseclass ---------------------------------------------------------------- */
 
-FUI.inherit = function( self, className )
+FUI.BaseClass = function(){};
+
+FUI.BaseClass.prototype.initialize = function( className )
 {
+	let self = this;
 	self.properties = {};
-	
-	// Add an event
-	self.addEvent = function( type, callback )
-	{
-		if( !self.events ) self.events = {};
-		if( !self.events[ 'on' + type ] )
-			self.events[ 'on' + type ] = [];
-		self.events[ 'on' + type ].push( callback );
-		return [ type, callback ];
-	}
-	
-	// Execute an event
-	self.executeEvent = function( type, eventData )
-	{
-		if( self.events && typeof( self.events[ 'on' + type ] ) != 'undefined' )
-		{
-			for( let a = 0; a < self.events[ 'on' + type ].length; a++ )
-			{
-				self.events[ 'on' + type ][ a ]( eventData );
-			}
-			return true;
-		}
-		return false;
-	}
-	
-	// Remove an event
-	self.removeEvent = function( event )
-	{
-		if( self.events[ 'on' + event[ 0 ] ] )
-		{
-			let out = [];
-			let found = false;
-			let lst = self.events[ 'on' + event[ 0 ] ];
-			for( let a = 0; a < lst.length; a++ )
-			{
-				if( lst[ a ] != event[ 1 ] )
-					out.push( lst[ a ] );
-				else found = true;
-			}
-			if( found )
-			{
-				self.events[ 'on' + event[ 0 ] ] = out;
-				return true;
-			}
-		}
-		return false;
-	}
-	
-	// Set a property
-	self.setProperty = function( propertyName, value, callback )
-	{
-		this.properties[ propertyName ] = value;
-		
-		if( this.identity )
-		{
-			if( this.onPropertySet )
-				this.onPropertySet( propertyName, value, callback );
-		}
-		else
-		{
-			console.log( 'This element is not found here.' );
-		}
-		return;
-	}
-	
-	// Get a property
-	self.getProperty = function ( propertyName )
-	{
-		/*// TODO: Check if we need to send to source destination
-		if( this.property[ propertyName ] )
-			return this.properties[ propertyName ];
-		return null;*/
-	}
-	// Execute a property
-	self.doMethod = function( method, args, callback )
-	{
-		if( this.identity )
-		{
-			if( this.onMethod )
-				this.onMethod( method, args, callback );
-		}
-		else
-		{
-			console.log( 'This element is not found here.', self );
-		}
-		return;
-	}
-	// Anchor object to scope
-	self.setIdentity = function()
-	{
-		this.objectId = md5( "" + Math.random() * 999 + ( Math.random() * 999 ) + new Date().getTime() );
-		
-		FUI.objectIndex[ this.objectId ] = this;
-		
-		if( Application.viewId )
-		{
-			this.identity = 'viewId';
-			this.viewId = Application.viewId;
-			return true;
-		}
-		else if( Application.screenId )
-		{
-			this.identity = 'screenId';
-			this.viewId = Application.screenId;
-			return true;
-		}
-		else if( Application.widgetId )
-		{
-			this.identity = 'widgetId';
-			this.viewId = Application.widgetId;
-			return true;
-		}
-		// This is an element without gui identity
-		else
-		{
-			this.identity = true;
-			return true;
-		}
-		return false;
-	}
-	
 	self.setIdentity();
 	self.renderer = new FUI[ className ].Renderers[ FUI.flags.renderer ]( self );
 }
+
+// Add an event
+FUI.BaseClass.prototype.addEvent = function( type, callback )
+{
+	let self = this;
+	if( !self.events ) self.events = {};
+	if( !self.events[ 'on' + type ] )
+		self.events[ 'on' + type ] = [];
+	self.events[ 'on' + type ].push( callback );
+	return [ type, callback ];
+}
+
+// Execute an event
+FUI.BaseClass.prototype.executeEvent = function( type, eventData )
+{
+	let self = this;
+	if( self.events && typeof( self.events[ 'on' + type ] ) != 'undefined' )
+	{
+		for( let a = 0; a < self.events[ 'on' + type ].length; a++ )
+		{
+			self.events[ 'on' + type ][ a ]( eventData );
+		}
+		return true;
+	}
+	return false;
+}
+
+// Remove an event
+FUI.BaseClass.prototype.removeEvent = function( event )
+{
+	let self = this;
+	if( self.events[ 'on' + event[ 0 ] ] )
+	{
+		let out = [];
+		let found = false;
+		let lst = self.events[ 'on' + event[ 0 ] ];
+		for( let a = 0; a < lst.length; a++ )
+		{
+			if( lst[ a ] != event[ 1 ] )
+				out.push( lst[ a ] );
+			else found = true;
+		}
+		if( found )
+		{
+			self.events[ 'on' + event[ 0 ] ] = out;
+			return true;
+		}
+	}
+	return false;
+}
+
+// Set a property
+FUI.BaseClass.prototype.setProperty = function( propertyName, value, callback )
+{
+	let self = this;
+	this.properties[ propertyName ] = value;
+	
+	if( this.identity )
+	{
+		if( this.onPropertySet )
+			this.onPropertySet( propertyName, value, callback );
+	}
+	else
+	{
+		console.log( 'This element is not found here.' );
+	}
+	return;
+}
+
+// Get a property
+FUI.BaseClass.prototype.getProperty = function ( propertyName )
+{
+	/*// TODO: Check if we need to send to source destination
+	if( this.property[ propertyName ] )
+		return this.properties[ propertyName ];
+	return null;*/
+}
+// Execute a property
+FUI.BaseClass.prototype.doMethod = function( method, args, callback )
+{
+	let self = this;
+	if( this.identity )
+	{
+		if( this.onMethod )
+			this.onMethod( method, args, callback );
+	}
+	else
+	{
+		this.sendMessage( {
+			command: 'fui',
+			fuiCommand: 'domethod',
+			method: method,
+			args: args,
+			callback: addCallback( callback )
+		} );
+	}
+	return;
+}
+// Anchor object to scope
+FUI.BaseClass.prototype.setIdentity = function()
+{
+	let self = this;
+	
+	this.objectId = md5( "" + Math.random() * 999 + ( Math.random() * 999 ) + new Date().getTime() );
+	
+	FUI.objectIndex[ this.objectId ] = this;
+	
+	if( Application.viewId )
+	{
+		this.identity = 'viewId';
+		this.viewId = Application.viewId;
+		return true;
+	}
+	else if( Application.screenId )
+	{
+		this.identity = 'screenId';
+		this.viewId = Application.screenId;
+		return true;
+	}
+	else if( Application.widgetId )
+	{
+		this.identity = 'widgetId';
+		this.viewId = Application.widgetId;
+		return true;
+	}
+	// This is an element without gui identity
+	else
+	{
+		this.identity = true;
+		return true;
+	}
+	return false;
+}
+
+// Send a message down the object hierarchy
+FUI.BaseClass.prototype.sendMessage = function( msg, callback )
+{
+	let self = this;
+	
+	if( !msg ) return false;
+	// Messageport has a sendMessage function!
+	if( this.messagePort )
+	{
+		msg.command = 'fui';
+		if( callback )
+			msg.callback = addCallback( callback );
+		this.messagePort.sendMessage( msg );
+		return true;
+	}
+	return false;
+}
+
+// Get element
+FUI.BaseClass.prototype.getElementById = function( objectId, callback )
+{
+	let self = this;
+	
+	if( !self.objectIndex || typeof( self.objectIndex[ objectId ] ) == undefined )
+	{
+		this.sendMessage( {
+			fuiCommand: 'getelementbyid',
+			objectId: objectId,
+			callback: addCallback( callback )
+		} );
+		return;
+	}
+	callback( self.objectIndex[ objectId ] );
+}
+
+
+/* Event class -------------------------------------------------------------- */
 
 FUI.preInit = function()
 {
@@ -257,4 +310,5 @@ FUI.preInit = function()
 		FUI.initialize( { classList: [ 'View', 'Grid', 'Button', 'Input' ] } );
 	else return setTimeout( FUI.preInit, 5 );
 }
+
 FUI.preInit();

@@ -12,9 +12,12 @@
 
 FUI.Button = function( object )
 {
-	FUI.inherit( this, 'Button' );
+	this.initialize( 'Button' );
+	
 	this.flags = object;
 }
+
+FUI.Button.prototype = FUI.BaseClass.prototype;
 
 // Default methods
 
