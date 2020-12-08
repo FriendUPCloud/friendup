@@ -872,6 +872,13 @@ function receiveEvent( event, queued )
 	
 	switch( dataPacket.command )
 	{	
+		case 'fui':
+			if( dataPacket.fuiCommand == 'setgui' )
+			{
+				FUI.build( dataPacket.gui );
+			}
+			return;
+		
 		// Update clipboard
 		case 'updateclipboard':
 			Friend.clipboard = dataPacket.value;
@@ -6375,10 +6382,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		'js/oo.js',
 		'js/api/friendappapi.js',
 		'js/utils/engine.js',
+		'js/io/cajax.js',
 		'js/api/fui.js',
 		'js/utils/tool.js',
 		'js/utils/json.js',
-		'js/io/cajax.js',
 		'js/io/appConnection.js',
 		'js/io/coreSocket.js',
 		'js/gui/treeview.js'

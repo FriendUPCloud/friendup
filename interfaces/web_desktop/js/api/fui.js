@@ -11,6 +11,8 @@
 var FUI = window.FUI ? window.FUI : {};
 
 FUI.children = [];
+FUI.objectIndex = {};
+FUI.initialized = false;
 
 FUI.initialize = function( flags, callback )
 {
@@ -19,7 +21,7 @@ FUI.initialize = function( flags, callback )
 	
 	if( flags && flags.classList )
 	{
-		let str = document.location.protocol + '//' + document.location.host + '/';
+		let str = document.location.origin + '/';
 	
 		for( let a = 0; a < flags.classList.length; a++ )
 		{
@@ -65,6 +67,8 @@ FUI.initialize = function( flags, callback )
 		}
 		else FUI.dom = document.body;
 	
+		FUI.initialized = true;
+		
 		if( callback )
 			return callback( { result: true } );
 		return;
@@ -73,6 +77,8 @@ FUI.initialize = function( flags, callback )
 
 FUI.build = function( description )
 {
+	if( !this.initialized ) return setTimeout( function(){ FUI.build( description ); }, 5 );
+	
 	let result = new FUI[ description.rootClass ]( description.flags );
 	if( result )
 	{
@@ -121,6 +127,7 @@ FUI.inherit = function( self, className )
 {
 	self.properties = {};
 	
+	// Add an event
 	self.addEvent = function( type, callback )
 	{
 		if( !self.events ) self.events = {};
@@ -130,6 +137,21 @@ FUI.inherit = function( self, className )
 		return [ type, callback ];
 	}
 	
+	// Execute an event
+	self.executeEvent = function( type, eventData )
+	{
+		if( self.events && typeof( self.events[ 'on' + type ] ) != 'undefined' )
+		{
+			for( let a = 0; a < self.events[ 'on' + type ].length; a++ )
+			{
+				self.events[ 'on' + type ][ a ]( eventData );
+			}
+			return true;
+		}
+		return false;
+	}
+	
+	// Remove an event
 	self.removeEvent = function( event )
 	{
 		if( self.events[ 'on' + event[ 0 ] ] )
@@ -153,35 +175,51 @@ FUI.inherit = function( self, className )
 	}
 	
 	// Set a property
-	self.setProperty = function( propertyName, value )
+	self.setProperty = function( propertyName, value, callback )
 	{
 		this.properties[ propertyName ] = value;
-		// TODO: Check if we need to send to source destination
-		if( this.onPropertySet )
-			this.onPropertySet( propertyName );
+		
+		if( this.identity )
+		{
+			if( this.onPropertySet )
+				this.onPropertySet( propertyName, value, callback );
+		}
+		else
+		{
+			console.log( 'This element is not found here.' );
+		}
+		return;
 	}
 	
 	// Get a property
 	self.getProperty = function ( propertyName )
 	{
-		// TODO: Check if we need to send to source destination
+		/*// TODO: Check if we need to send to source destination
 		if( this.property[ propertyName ] )
 			return this.properties[ propertyName ];
-		return null;
+		return null;*/
 	}
 	// Execute a property
 	self.doMethod = function( method, args, callback )
 	{
-		if( typeof( this[ method ] ) == 'function' )
+		if( this.identity )
 		{
-			this[ method ]( args, callback );
-			return true;
+			if( this.onMethod )
+				this.onMethod( method, args, callback );
 		}
-		return false;
+		else
+		{
+			console.log( 'This element is not found here.', self );
+		}
+		return;
 	}
 	// Anchor object to scope
 	self.setIdentity = function()
 	{
+		this.objectId = md5( "" + Math.random() * 999 + ( Math.random() * 999 ) + new Date().getTime() );
+		
+		FUI.objectIndex[ this.objectId ] = this;
+		
 		if( Application.viewId )
 		{
 			this.identity = 'viewId';
@@ -200,17 +238,23 @@ FUI.inherit = function( self, className )
 			this.viewId = Application.widgetId;
 			return true;
 		}
+		// This is an element without gui identity
 		else
 		{
-			this.identity = 'projection';
-			this.identityType = 'viewId';
-			this.identityId = '3940873098479038';
+			this.identity = true;
+			return true;
 		}
 		return false;
 	}
 	
+	self.setIdentity();
 	self.renderer = new FUI[ className ].Renderers[ FUI.flags.renderer ]( self );
 }
 
-
-
+FUI.preInit = function()
+{
+	if( typeof( cAjax ) != 'undefined' )
+		FUI.initialize( { classList: [ 'View', 'Grid', 'Button', 'Input' ] } );
+	else return setTimeout( FUI.preInit, 5 );
+}
+FUI.preInit();
