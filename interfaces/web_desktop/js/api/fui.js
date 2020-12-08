@@ -71,6 +71,16 @@ FUI.initialize = function( flags, callback )
 	}
 }
 
+FUI.build = function( description )
+{
+	let result = new FUI[ description.rootClass ]( description.flags );
+	if( result )
+	{
+		return FUI.addChild( result );
+	}
+	return false;
+}
+
 FUI.addChild = function( element )
 {
 	if( element && element.refresh )

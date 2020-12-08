@@ -295,6 +295,7 @@ FUI.Grid.Renderers.html5.prototype.refresh = function( pnode )
 			{
 				delayedChildElements.push( {
 					child: column.child,
+					flags: column.flags,
 					parent: r,
 					index: childn
 				} );
@@ -307,7 +308,7 @@ FUI.Grid.Renderers.html5.prototype.refresh = function( pnode )
 	{
 		for( let a = 0; a < delayedChildElements.length; a++ )
 		{
-			let c = delayedChildElements[ a ].child;
+			let c = new FUI[ delayedChildElements[ a ].child ]( delayedChildElements[ a ].flags );
 			let p = delayedChildElements[ a ].parent;
 			let i = delayedChildElements[ a ].index;
 			
