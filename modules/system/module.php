@@ -234,7 +234,7 @@ if( isset( $args->command ) )
 				'setfilepublic', 'setfileprivate', 'zip', 'unzip', 'volumeinfo',
 				'securitydomains', 'systemmail', 'removebookmark', 'addbookmark',
 				'getbookmarks', 'listapplicationdocs', 'finddocumentation', 'userinfoget',
-				'userinfoset',  'useradd', 'checkuserbyname', 'userbetamail', 'listbetausers', 'listconnectedusers',
+				'userinfoset',  'useradd', 'user/create', 'user/update', 'checkuserbyname', 'userbetamail', 'listbetausers', 'listconnectedusers',
 				'usersetup', 'usersetupadd', 'usersetupapply', 'usersetupsave', 'usersetupdelete',
 				'usersetupget', 'userwallpaperset', 'workgroups', 'workgroupadd', 'workgroupupdate', 'workgroupdelete',
 				'workgroupget', 'setsetting', 'getsetting', 'getavatar', 'listlibraries', 'listmodules',
@@ -1511,6 +1511,12 @@ if( isset( $args->command ) )
 		// TODO: Permissions! ONly admin can do this!
 		case 'useradd':
 			require( 'modules/system/include/useradd.php' );
+			break;
+		case 'user/create':
+			require( 'modules/system/include/user.php' );
+			break;
+		case 'user/update':
+			require( 'modules/system/include/user.php' );
 			break;
 		//
 		case 'checkuserbyname':
