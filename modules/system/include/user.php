@@ -10,6 +10,9 @@
 *                                                                              *
 *****************************************************************************©*/
 
+error_reporting( E_ALL & ~E_NOTICE );
+ini_set( 'display_errors', 1 );
+
 require_once( 'php/include/permissions.php' );
 
 $prevlevel = $level;
@@ -43,7 +46,7 @@ $prevlevel = $level;
 	}
 }*/
 
-die( 'TODO: finish the module code to create / update user ' . print_r( $args,1 ) . ' -- ' );
+//die( 'TODO: finish the module code to create / update user ' . print_r( $args,1 ) . ' -- ' );
 
 
 
@@ -125,7 +128,7 @@ if( $level == 'Admin' )
 		switch( $args->command )
 		{
 	
-			case 'user/create'
+			case 'user/create':
 				
 				// TODO: Add permission check ...
 				
@@ -136,7 +139,7 @@ if( $level == 'Admin' )
 					
 					// Specific for Pawel's code ... He just wants to forward json ...
 					
-					$data['args'] = json_decode( '{
+					$data['args'] = '{
 						"type"    : "write", 
 						"context" : "application",  
 						"data"    : { 
@@ -147,7 +150,9 @@ if( $level == 'Admin' )
 								"PERM_USER_WORKGROUP" 
 							]
 						} 
-					}' );
+					}';
+					
+					$data['level'] = 'User';
 					
 					$g = new dbIO( 'FUserGroup' );
 					$g->Name = 'User';
@@ -216,7 +221,7 @@ if( $level == 'Admin' )
 					
 					// Specific for Pawel's code ... He just wants to forward json ...
 					
-					$data['args'] = json_decode( '{
+					$data['args'] = '{
 						"type"    : "write", 
 						"context" : "application",  
 						"data"    : { 
@@ -229,7 +234,7 @@ if( $level == 'Admin' )
 						}, 
 						"object"   : "user", 
 						"objectid" : ' . $data['id'] . ' 
-					}' );
+					}';
 					
 					$res = _fcquery( '/system.library/user/update', $data );
 					
@@ -284,7 +289,7 @@ if( $level == 'Admin' )
 					
 					// Specific for Pawel's code ... He just wants to forward json ...
 					
-					$data['args'] = json_decode( '{
+					$data['args'] = '{
 						"type"    : "delete", 
 						"context" : "application",  
 						"data"    : { 
@@ -297,7 +302,7 @@ if( $level == 'Admin' )
 						}, 
 						"object"   : "user", 
 						"objectid" : ' . $data['id'] . ' 
-					}' );
+					}';
 					
 					$res = _fcquery( '/system.library/user/delete', $data );
 					
@@ -415,7 +420,7 @@ function _fcquery( $command = '', $args = false, $method = 'POST', $headers = fa
 				'args' => urlencode( $args )
 			);
 		}
-	
+		
 		curl_setopt( $curl, CURLOPT_POST, true );
 		curl_setopt( $curl, CURLOPT_POSTFIELDS, $args );
 	}
