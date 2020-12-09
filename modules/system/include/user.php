@@ -673,6 +673,8 @@ function _fcquery( $command = '', $args = false, $method = 'POST', $headers = fa
 				{
 					return $json;
 				}
+				
+				return json_decode( '{"result":"fail","data":' . trim( $output ) . '}' );
 			}
 		}
 		
