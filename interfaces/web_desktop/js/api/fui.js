@@ -29,6 +29,9 @@ FUI.initialize = function( flags, callback )
 			str += 'webclient/js/api/fui/' + flags.classList[ a ].toLowerCase() + '.class.js';
 		}
 		
+		// TODO: Overwrite depending on theme
+		str += 'webclient/js/api/fui/theme.js';
+		
 		// Load includes synchronously
 		let c = new cAjax();		
 		c.open( 'GET', str, false, false );
@@ -456,7 +459,7 @@ FUI.BaseClass.prototype.stringify = function()
 	} );
 }
 
-/* Event class -------------------------------------------------------------- */
+/* Init --------------------------------------------------------------------- */
 
 FUI.preInit = function()
 {
