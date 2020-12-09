@@ -17,423 +17,670 @@ require_once( 'php/include/permissions.php' );
 
 $prevlevel = $level;
 
-/*if( $perm = Permissions( 'write', 'application', false, [ 
-	'PERM_USER_CREATE_GLOBAL', 'PERM_USER_CREATE_IN_WORKGROUP', 
-	'PERM_USER_GLOBAL',        'PERM_USER_WORKGROUP' 
-	'PERM_USER_UPDATE_GLOBAL', 'PERM_USER_UPDATE_IN_WORKGROUP', 
-	'PERM_USER_GLOBAL',        'PERM_USER_WORKGROUP' 
-] ) )
+//die( 'TODO: finish the module code to create / update user ' . print_r( $args,1 ) . ' -- ' . ' [] ' . $prevlevel );
+
+
+
+$data = []; $extr = [];
+
+if( isset( $args->sessionid ) )
 {
-	if( is_object( $perm ) )
-	{
-		// Permission denied.
-		
-		if( $perm->response == -1 )
-		{
-			//
-			
-			die( 'fail<!--separate-->' . json_encode( $perm ) );
-		}
-		
-		// Permission granted.
-		
-		if( $perm->response == 1 )
-		{*/
-			
-			$level = 'Admin';
-			
-		/*}
-	}
-}*/
-
-//die( 'TODO: finish the module code to create / update user ' . print_r( $args,1 ) . ' -- ' );
-
-
-
-if( $level == 'Admin' )
-{
-	
-	$data = []; $extr = [];
-	
-	if( isset( $args->sessionid ) )
-	{
-		$data['sessionid'] = trim( $args->sessionid );
-	}
-	if( isset( $args->servertoken ) )
-	{
-		$data['servertoken'] = trim( $args->servertoken );
-	}
-	if( isset( $args->args->id ) )
-	{
-		$data['id'] = trim( $args->args->id );
-		
-		// TODO: Add check if it's correct format if not return back ...
-	}
-	if( isset( $args->args->fullname ) )
-	{
-		$data['fullname'] = trim( $args->args->fullname );
-	}
-	if( isset( $args->args->username ) )
-	{
-		$data['username'] = trim( $args->args->username );
-	}
-	if( isset( $args->args->password ) )
-	{
-		$data['password'] = trim( $args->args->password );
-		
-		// TODO: Add check if it's correct format if not return back ...
-	}
-	if( isset( $args->args->email ) )
-	{
-		$data['email'] = trim( $args->args->email );
-		
-		// TODO: Add check if it's correct format if not return back ...
-	}
-	if( isset( $args->args->mobile ) )
-	{
-		$extr['mobile'] = trim( $args->args->mobile );
-		
-		// TODO: Add check if it's correct format if not return back ...
-	}
-	if( isset( $args->args->language ) )
-	{
-		$extr['language'] = trim( $args->args->language );
-		
-		// TODO: Add check if it's correct format if not return back ...
-	}
-	if( isset( $args->args->avatar ) )
-	{
-		$extr['avatar'] = trim( $args->args->avatar );
-		
-		// TODO: Add check if it's correct format if not return back ...
-	}
-	if( isset( $args->args->workgroups ) )
-	{
-		$extr['workgroups'] = trim( $args->args->workgroups );
-		
-		// TODO: Add check if it's correct format if not return back ...
-	}
-	if( isset( $args->args->setup ) )
-	{
-		$extr['setup'] = trim( $args->args->setup );
-		
-		// TODO: Add check if it's correct format if not return back ...
-	}
-	
-	
-	
-	if( $args->command )
-	{
-	
-		switch( $args->command )
-		{
-	
-			case 'user/create':
-				
-				// TODO: Add permission check ...
-				
-				// 0: Create user ... 
-				
-				if( isset( $data['fullname'] ) && $data['fullname'] && isset( $data['username'] ) && $data['username'] && isset( $data['password'] ) && $data['password'] )
-				{
-					
-					// Specific for Pawel's code ... He just wants to forward json ...
-					
-					$data['args'] = '{
-						"type"    : "write", 
-						"context" : "application",  
-						"data"    : { 
-							"permission" : [ 
-								"PERM_USER_CREATE_GLOBAL", 
-								"PERM_USER_CREATE_IN_WORKGROUP", 
-								"PERM_USER_GLOBAL", 
-								"PERM_USER_WORKGROUP" 
-							]
-						} 
-					}';
-					
-					$data['level'] = 'User';
-					
-					$g = new dbIO( 'FUserGroup' );
-					$g->Name = 'User';
-					$g->Load();
-					$g->Save();
-					
-					if( $g->ID > 0 )
-					{
-						
-						$res = _fcquery( '/system.library/user/create', $data );
-					
-						die( $res . ' -- ' );
-						
-						// 1: Add extra field
-						
-						if( isset( $extr['mobile'] ) && $extr['mobile'] )
-						{
-							_addExtraFields( $userid, [ 'Mobile' => $extr['mobile'] ] );
-						}
-						
-						// 2: First login
-						
-						_firstLogin( $userid );
-						
-						// 3: Save avatar image
-						
-						if( isset( $extr['avatar'] ) && $extr['avatar'] )
-						{
-							_saveAvatar( $userid, $extr['avatar'] );
-						}
-						
-						// 4: Apply template
-						
-						if( isset( $extr['setup'] ) && $extr['setup'] )
-						{
-							_applySetup( $userid, $extr['setup'] );
-						}
-						
-						// 5: Save language setting
-						
-						if( isset( $extr['language'] ) && $extr['language'] )
-						{
-							_updateLanguages( $userid, $extr['language'] );
-						}
-						
-						die( 'ok success' );
-						
-					}
-					
-				}
-				else
-				{
-					die( 'fail fullname, username and password is required ...' );
-				}
-				
-				break;
-	
-			case 'user/update':
-				
-				// TODO: Add permission check ...
-				
-				// 0: Update user ... 
-				
-				if( isset( $data['id'] ) && $data['id'] )
-				{
-					
-					// Specific for Pawel's code ... He just wants to forward json ...
-					
-					$data['args'] = '{
-						"type"    : "write", 
-						"context" : "application",  
-						"data"    : { 
-							"permission" : [ 
-								"PERM_USER_UPDATE_GLOBAL", 
-								"PERM_USER_UPDATE_IN_WORKGROUP", 
-								"PERM_USER_GLOBAL", 
-								"PERM_USER_WORKGROUP" 
-							]
-						}, 
-						"object"   : "user", 
-						"objectid" : ' . $data['id'] . ' 
-					}';
-					
-					$res = _fcquery( '/system.library/user/update', $data );
-					
-					die( $res . ' -- ' );
-					
-					// 1: Add extra field
-					
-					if( isset( $extr['mobile'] ) && $extr['mobile'] )
-					{
-						_addExtraFields( $userid, [ 'Mobile' => $extr['mobile'] ] );
-					}
-					
-					// 2: Save avatar image
-					
-					if( isset( $extr['mobile'] ) && $extr['avatar'] )
-					{
-						_saveAvatar( $userid, $extr['avatar'] );
-					}
-					
-					// 3: Apply template
-					
-					if( isset( $extr['mobile'] ) && $extr['setup'] )
-					{
-						_applySetup( $userid, $extr['setup'] );
-					}
-					
-					// 4: Save language setting
-					
-					if( isset( $extr['mobile'] ) && $extr['language'] )
-					{
-						_updateLanguages( $userid, $extr['language'] );
-					}
-					
-					die( 'ok success' );
-					
-				}
-				else
-				{
-					die( 'fail id is required ...' );
-				}
-				
-				break;
-				
-			case 'user/delete':
-				
-				// TODO: Add permission check ...
-				
-				// 0: Delete user ...
-				
-				if( isset( $data['id'] ) && $data['id'] )
-				{
-					
-					// Specific for Pawel's code ... He just wants to forward json ...
-					
-					$data['args'] = '{
-						"type"    : "delete", 
-						"context" : "application",  
-						"data"    : { 
-							"permission" : [ 
-								"PERM_USER_DELETE_GLOBAL", 
-								"PERM_USER_DELETE_IN_WORKGROUP", 
-								"PERM_USER_GLOBAL", 
-								"PERM_USER_WORKGROUP" 
-							]
-						}, 
-						"object"   : "user", 
-						"objectid" : ' . $data['id'] . ' 
-					}';
-					
-					$res = _fcquery( '/system.library/user/delete', $data );
-					
-					// 1: Delete extra fields ...
-					
-					_deleteExtraFields( $userid );
-					
-					die( $res . ' -- ' );
-					
-					die( 'ok success' );
-					
-				}
-				else
-				{
-					die( 'fail id is required ...' );
-				}
-				
-				break;
-				
-		}
-		
-		
-		
-		
-		
-
-		
-	}
-
+	$data['sessionid'] = trim( $args->sessionid );
 }
+if( isset( $args->servertoken ) )
+{
+	$data['servertoken'] = trim( $args->servertoken );
+}
+if( isset( $args->args->id ) )
+{
+	$data['id'] = trim( $args->args->id );
+	
+	// TODO: Add check if it's correct format if not return back ...
+}
+if( isset( $args->args->fullname ) )
+{
+	$data['fullname'] = trim( $args->args->fullname );
+}
+if( isset( $args->args->username ) )
+{
+	$data['username'] = trim( $args->args->username );
+}
+if( isset( $args->args->password ) )
+{
+	$data['password'] = trim( $args->args->password );
+	
+	// TODO: Add check if it's correct format if not return back ...
+}
+if( isset( $args->args->email ) )
+{
+	$data['email'] = trim( $args->args->email );
+	
+	// TODO: Add check if it's correct format if not return back ...
+}
+if( isset( $args->args->mobile ) )
+{
+	$extr['mobile'] = trim( $args->args->mobile );
+	
+	// TODO: Add check if it's correct format if not return back ...
+}
+if( isset( $args->args->language ) )
+{
+	$extr['language'] = trim( $args->args->language );
+	
+	// TODO: Add check if it's correct format if not return back ...
+}
+if( isset( $args->args->avatar ) )
+{
+	$extr['avatar'] = trim( $args->args->avatar );
+	
+	// TODO: Add check if it's correct format if not return back ...
+}
+if( isset( $args->args->workgroups ) )
+{
+	$extr['workgroups'] = trim( $args->args->workgroups );
+	
+	// TODO: Add check if it's correct format if not return back ...
+}
+if( isset( $args->args->setup ) )
+{
+	$extr['setup'] = trim( $args->args->setup );
+	
+	// TODO: Add check if it's correct format if not return back ...
+}
+
+
+
+if( $args->command )
+{
+
+	switch( $args->command )
+	{
+
+		case 'user/create':
+			
+			// TODO: Add permission check ...
+			
+			// 0: Create user ... 
+			
+			if( isset( $data['fullname'] ) && $data['fullname'] && isset( $data['username'] ) && $data['username'] && isset( $data['password'] ) && $data['password'] )
+			{
+				
+				if( $perm = Permissions( 'write', 'application', 'system', [ 
+					'PERM_USER_CREATE_GLOBAL', 'PERM_USER_CREATE_IN_WORKGROUP', 
+					'PERM_USER_GLOBAL',        'PERM_USER_WORKGROUP' 
+				] ) )
+				{
+					if( is_object( $perm ) )
+					{
+						// Permission denied.
+						
+						if( $perm->response == -1 )
+						{
+							//
+							
+							die( '{"result":"fail","data":' . json_encode( $perm ) . '}' );
+						}
+						
+						// Permission granted.
+						
+					}
+				}
+				
+				// Specific for Pawel's code ... He just wants to forward json ...
+				
+				$data['args'] = '{
+					"type"    : "write", 
+					"context" : "application", 
+					"name"    : "system",
+					"data"    : { 
+						"permission" : [ 
+							"PERM_USER_CREATE_GLOBAL", 
+							"PERM_USER_CREATE_IN_WORKGROUP", 
+							"PERM_USER_GLOBAL", 
+							"PERM_USER_WORKGROUP" 
+						]
+					} 
+				}';
+				
+				$data['level'] = 'User';
+				
+				$g = new dbIO( 'FUserGroup' );
+				$g->Name = 'User';
+				$g->Load();
+				$g->Save();
+				
+				if( $g->ID > 0 )
+				{
+					
+					if( $res = _fcquery( '/system.library/user/create', $data ) )
+					{
+						if( is_object( $res ) )
+						{
+							if( isset( $res->result ) && $res->result == 'ok' )
+							{
+								if( isset( $res->data->id ) && $res->data->id )
+								{
+									
+									// 1: Add extra field
+									
+									if( isset( $extr['mobile'] ) && $extr['mobile'] )
+									{
+										if( $ret = _addExtraFields( $res->data->id, [ 'Mobile' => $extr['mobile'] ] ) )
+										{
+											if( isset( $ret->result ) && $ret->result == 'fail' )
+											{
+												die( json_encode( $ret ) );
+											}
+											else
+											{
+												if( !isset( $res->debug ) )
+												{
+													$res->debug = [];
+												}
+												
+												$res->debug['1: Add extra field'] = 'true';
+											}
+										}
+									}
+									
+									// 2: First login
+									
+									if( $ret = _firstLogin( $res->data->id ) )
+									{
+										if( isset( $ret->result ) && $ret->result == 'fail' )
+										{
+											die( json_encode( $ret ) );
+										}
+										else
+										{
+											if( !isset( $res->debug ) )
+											{
+												$res->debug = [];
+											}
+											
+											$res->debug['2: First login'] = 'true';
+										}
+									}
+									
+									// 3: Save avatar image
+									
+									if( isset( $extr['avatar'] ) && $extr['avatar'] )
+									{
+										if( $ret = _saveAvatar( $res->data->id, $extr['avatar'] ) )
+										{
+											if( isset( $ret->result ) && $ret->result == 'fail' )
+											{
+												die( json_encode( $ret ) );
+											}
+											else
+											{
+												if( !isset( $res->debug ) )
+												{
+													$res->debug = [];
+												}
+												
+												$res->debug['3: Save avatar image'] = 'true';
+											}
+										}
+									}
+									
+									// 4: Apply template
+									
+									if( isset( $extr['setup'] ) && $extr['setup'] )
+									{
+										if( $ret = _applySetup( $res->data->id, $extr['setup'] ) )
+										{
+											if( isset( $ret->result ) && $ret->result == 'fail' )
+											{
+												die( json_encode( $ret ) );
+											}
+											else
+											{
+												if( !isset( $res->debug ) )
+												{
+													$res->debug = [];
+												}
+												
+												$res->debug['4: Apply template'] = 'true';
+											}
+										}
+									}
+									
+									// 5: Save language setting
+									
+									if( isset( $extr['language'] ) && $extr['language'] )
+									{
+										if( $ret = _updateLanguages( $res->data->id, $extr['language'] ) )
+										{
+											if( isset( $ret->result ) && $ret->result == 'fail' )
+											{
+												die( json_encode( $ret ) );
+											}
+											else
+											{
+												if( !isset( $res->debug ) )
+												{
+													$res->debug = [];
+												}
+												
+												$res->debug['5: Save language setting'] = 'true';
+											}
+										}
+									}
+									
+								}
+							}
+							
+							die( json_encode( $res ) );
+						}
+					}
+					
+					die( $res );
+				}
+				
+			}
+			else
+			{
+				die( '{"result":"fail","data":{"response":"fullname, username and password is required ..."}}' );
+			}
+			
+			break;
+
+		case 'user/update':
+			
+			// TODO: Add permission check ...
+			
+			// 0: Update user ... 
+			
+			if( isset( $data['id'] ) && $data['id'] )
+			{
+				
+				if( $perm = Permissions( 'write', 'application', 'system', [ 
+					'PERM_USER_UPDATE_GLOBAL', 'PERM_USER_UPDATE_IN_WORKGROUP', 
+					'PERM_USER_GLOBAL',        'PERM_USER_WORKGROUP' 
+				], 'user', $data['id'] ) )
+				{
+					if( is_object( $perm ) )
+					{
+						// Permission denied.
+						
+						if( $perm->response == -1 )
+						{
+							//
+							
+							die( '{"result":"fail","data":' . json_encode( $perm ) . '}' );
+						}
+						
+						// Permission granted.
+						
+					}
+				}
+				
+				// Specific for Pawel's code ... He just wants to forward json ...
+				
+				$data['args'] = '{
+					"type"    : "write", 
+					"context" : "application", 
+					"name"    : "system", 
+					"data"    : { 
+						"permission" : [ 
+							"PERM_USER_UPDATE_GLOBAL", 
+							"PERM_USER_UPDATE_IN_WORKGROUP", 
+							"PERM_USER_GLOBAL", 
+							"PERM_USER_WORKGROUP" 
+						]
+					}, 
+					"object"   : "user", 
+					"objectid" : ' . $data['id'] . ' 
+				}';
+				
+				if( $res = _fcquery( '/system.library/user/update', $data ) )
+				{
+					if( is_object( $res ) )
+					{
+						if( isset( $res->result ) && $res->result == 'ok' )
+						{
+							if( isset( $res->data->update ) && $res->data->update )
+							{
+								
+								// 1: Add extra field
+								
+								if( isset( $extr['mobile'] ) && $extr['mobile'] )
+								{
+									if( $ret = _addExtraFields( $data['id'], [ 'Mobile' => $extr['mobile'] ] ) )
+									{
+										if( isset( $ret->result ) && $ret->result == 'fail' )
+										{
+											die( json_encode( $ret ) );
+										}
+										else
+										{
+											if( !isset( $res->debug ) )
+											{
+												$res->debug = [];
+											}
+											
+											$res->debug['1: Add extra field'] = 'true';
+										}
+									}
+								}
+								
+								// 2: Save avatar image
+								
+								if( isset( $extr['avatar'] ) && $extr['avatar'] )
+								{
+									if( $ret = _saveAvatar( $data['id'], $extr['avatar'] ) )
+									{
+										if( isset( $ret->result ) && $ret->result == 'fail' )
+										{
+											die( json_encode( $ret ) );
+										}
+										else
+										{
+											if( !isset( $res->debug ) )
+											{
+												$res->debug = [];
+											}
+											
+											$res->debug['2: Save avatar image'] = 'true';
+										}
+									}
+								}
+								
+								// 3: Apply template
+								
+								if( isset( $extr['setup'] ) && $extr['setup'] )
+								{
+									if( $ret = _applySetup( $data['id'], $extr['setup'] ) )
+									{
+										if( isset( $ret->result ) && $ret->result == 'fail' )
+										{
+											die( json_encode( $ret ) );
+										}
+										else
+										{
+											if( !isset( $res->debug ) )
+											{
+												$res->debug = [];
+											}
+											
+											$res->debug['3: Apply template'] = 'true';
+										}
+									}
+								}
+								
+								// 4: Save language setting
+								
+								if( isset( $extr['language'] ) && $extr['language'] )
+								{
+									if( $ret = _updateLanguages( $data['id'], $extr['language'] ) )
+									{
+										if( isset( $ret->result ) && $ret->result == 'fail' )
+										{
+											die( json_encode( $ret ) );
+										}
+										else
+										{
+											if( !isset( $res->debug ) )
+											{
+												$res->debug = [];
+											}
+											
+											$res->debug['4: Save language setting'] = 'true';
+										}
+									}
+								}
+								
+							}
+						}
+						
+						die( json_encode( $res ) );
+					}
+				
+				}
+				
+				die( $res );
+				
+			}
+			else
+			{
+				die( '{"result":"fail","data":{"response":"id is required ..."}}' );
+			}
+			
+			break;
+			
+		case 'user/delete':
+			
+			// TODO: Add permission check ...
+			
+			// 0: Delete user ...
+			
+			if( isset( $data['id'] ) && $data['id'] )
+			{
+				
+				if( $perm = Permissions( 'delete', 'application', 'system', [ 
+					'PERM_USER_DELETE_GLOBAL', 'PERM_USER_DELETE_IN_WORKGROUP', 
+					'PERM_USER_GLOBAL',        'PERM_USER_WORKGROUP' 
+				], 'user', $data['id'] ) )
+				{
+					if( is_object( $perm ) )
+					{
+						// Permission denied.
+						
+						if( $perm->response == -1 )
+						{
+							//
+							
+							die( '{"result":"fail","data":' . json_encode( $perm ) . '}' );
+						}
+						
+						// Permission granted.
+						
+					}
+				}
+				
+				// Specific for Pawel's code ... He just wants to forward json ...
+				
+				$data['args'] = '{
+					"type"    : "delete", 
+					"context" : "application", 
+					"name"    : "system", 
+					"data"    : { 
+						"permission" : [ 
+							"PERM_USER_DELETE_GLOBAL", 
+							"PERM_USER_DELETE_IN_WORKGROUP", 
+							"PERM_USER_GLOBAL", 
+							"PERM_USER_WORKGROUP" 
+						]
+					}, 
+					"object"   : "user", 
+					"objectid" : ' . $data['id'] . ' 
+				}';
+				
+				if( $res = _fcquery( '/system.library/user/delete', $data ) )
+				{
+					if( is_object( $res ) )
+					{
+						if( isset( $res->result ) && $res->result == 'ok' )
+						{
+							if( isset( $res->data ) && $res->data )
+							{
+								// 1: Delete extra fields ...
+								
+								if( $ret = _deleteExtraFields( $data['id'] ) )
+								{
+									if( isset( $ret->result ) && $ret->result == 'fail' )
+									{
+										die( json_encode( $ret ) );
+									}
+									else
+									{
+										if( !isset( $res->debug ) )
+										{
+											$res->debug = [];
+										}
+										
+										$res->debug['1: Delete extra fields'] = 'true';
+									}
+								}
+							}
+							
+						}
+					}
+					
+					die( json_encode( $res ) );
+				}
+				
+				die( $res );
+				
+			}
+			else
+			{
+				die( '{"result":"fail","data":{"response":"id is required ..."}}' );
+			}
+			
+			break;
+			
+	}
+	
+	
+	
+}
+
+
 
 // Helper functions ...
 function _fcquery( $command = '', $args = false, $method = 'POST', $headers = false )
 {
 	global $Config;	
-		
-	$curl = curl_init();
 	
-	$server = ( $Config->SSLEnable ? 'https://' : 'http://' ) . $Config->FCHost . ( $Config->FCHost == 'localhost' && $Config->FCPort ? ':' . $Config->FCPort : '' );
-	
-	$url = ( $server . $command );
-	
-	if( $url && strstr( $url, '?' ) )
+	if( function_exists( 'curl_init' ) )
 	{
-		$thispath = $url;
-		$url = explode( '?', $url );
+		
+		$curl = curl_init();
 	
-		if( isset( $url[1] ) )
+		$server = ( $Config->SSLEnable ? 'https://' : 'http://' ) . $Config->FCHost . ( $Config->FCHost == 'localhost' && $Config->FCPort ? ':' . $Config->FCPort : '' );
+	
+		$url = ( $server . $command );
+	
+		if( $url && strstr( $url, '?' ) )
 		{
-			if( strstr( $url[1], '&' ) && strstr( $url[1], '=' ) )
+			$thispath = $url;
+			$url = explode( '?', $url );
+	
+			if( isset( $url[1] ) )
 			{
-				$url[1] = explode( '&', $url[1] );
-			
-				foreach( $url[1] as $k=>$p )
+				if( strstr( $url[1], '&' ) && strstr( $url[1], '=' ) )
 				{
-					if( strstr( $url[1][$k], '=' ) )
+					$url[1] = explode( '&', $url[1] );
+			
+					foreach( $url[1] as $k=>$p )
 					{
-						$url[1][$k] = explode( '=', $url[1][$k] );
-					
-						if( isset( $url[1][$k][1] ) )
+						if( strstr( $url[1][$k], '=' ) )
 						{
-							$url[1][$k][1] = urlencode( $url[1][$k][1] );
-						}
+							$url[1][$k] = explode( '=', $url[1][$k] );
 					
-						$url[1][$k] = implode( '=', $url[1][$k] );
+							if( isset( $url[1][$k][1] ) )
+							{
+								$url[1][$k][1] = urlencode( $url[1][$k][1] );
+							}
+					
+							$url[1][$k] = implode( '=', $url[1][$k] );
+						}
+					}
+			
+					$url[1] = implode( '&', $url[1] );
+				}
+				else if( strstr( $url[1], '=' ) )
+				{
+					$url[1] = explode( '=', $url[1] );
+			
+					if( isset( $url[1][1] ) )
+					{
+						$url[1][1] = urlencode( $url[1][1] );
+					}
+			
+					$url[1] = implode( '=', $url[1] );
+				}
+			}
+	
+			$url = implode( '?', $url );
+		}
+
+		curl_setopt( $curl, CURLOPT_URL, $url );
+		curl_setopt( $curl, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
+
+		if( $headers )
+		{
+			curl_setopt( $curl, CURLOPT_HTTPHEADER, $headers );
+		}
+
+		if( $method != 'POST' )
+		{
+			curl_setopt( $curl, CURLOPT_CUSTOMREQUEST, $method );
+		}
+	
+		// TODO: Turn this off when SSL is working ...
+		curl_setopt( $curl, CURLOPT_SSL_VERIFYHOST, false );
+		curl_setopt( $curl, CURLOPT_SSL_VERIFYPEER, false );
+	
+		if( $args )
+		{
+			if( is_object( $args ) )
+			{
+				$args = array(
+					'args' => urlencode( json_encode( $args ) )
+				);
+			}
+			else if( is_string( $args ) )
+			{
+				$args = array(
+					'args' => urlencode( $args )
+				);
+			}
+		
+			curl_setopt( $curl, CURLOPT_POST, true );
+			curl_setopt( $curl, CURLOPT_POSTFIELDS, $args );
+		}
+	
+		curl_setopt( $curl, CURLOPT_RETURNTRANSFER, true );
+
+		$output = curl_exec( $curl );
+
+		$httpCode = curl_getinfo( $curl, CURLINFO_HTTP_CODE );
+	
+		curl_close( $curl );
+		
+		if( trim( $output ) )
+		{
+			if( strstr( trim( $output ), '<!--separate-->' ) )
+			{
+				if( $resp = explode( '<!--separate-->', trim( $output ) ) )
+				{
+					if( $resp[0] == 'ok' )
+					{
+						return json_decode( '{"result":"ok","data":' . ( isset( $resp[1] ) ? $resp[1] : 'null' ) . '}' );
+					}
+					else
+					{
+						return json_decode( '{"result":"fail","data":' . ( isset( $resp[1] ) ? $resp[1] : 'null' ) . '}' );
 					}
 				}
-			
-				$url[1] = implode( '&', $url[1] );
 			}
-			else if( strstr( $url[1], '=' ) )
+			else
 			{
-				$url[1] = explode( '=', $url[1] );
-			
-				if( isset( $url[1][1] ) )
+				if( $json = json_decode( trim( $output ) ) )
 				{
-					$url[1][1] = urlencode( $url[1][1] );
+					return $json;
 				}
-			
-				$url[1] = implode( '=', $url[1] );
 			}
-		}
-	
-		$url = implode( '?', $url );
-	}
-
-	curl_setopt( $curl, CURLOPT_URL, $url );
-	curl_setopt( $curl, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
-
-	if( $headers )
-	{
-		curl_setopt( $curl, CURLOPT_HTTPHEADER, $headers );
-	}
-
-	if( $method != 'POST' )
-	{
-		curl_setopt( $curl, CURLOPT_CUSTOMREQUEST, $method );
-	}
-	
-	// TODO: Turn this off when SSL is working ...
-	curl_setopt( $curl, CURLOPT_SSL_VERIFYHOST, false );
-	curl_setopt( $curl, CURLOPT_SSL_VERIFYPEER, false );
-	
-	if( $args )
-	{
-		if( is_object( $args ) )
-		{
-			$args = array(
-				'args' => urlencode( json_encode( $args ) )
-			);
-		}
-		else if( is_string( $args ) )
-		{
-			$args = array(
-				'args' => urlencode( $args )
-			);
 		}
 		
-		curl_setopt( $curl, CURLOPT_POST, true );
-		curl_setopt( $curl, CURLOPT_POSTFIELDS, $args );
+		return json_decode( '{"result":"fail","data":{"response":"Unexpected error!","curl_code":"' . $httpCode . '"}}' );
+		
 	}
 	
-	curl_setopt( $curl, CURLOPT_RETURNTRANSFER, true );
-
-	$output = curl_exec( $curl );
-
-	$httpCode = curl_getinfo( $curl, CURLINFO_HTTP_CODE );
-	
-	curl_close( $curl );
-
-	return $output;
+	return false;
 }
 
 function _findInSearchPaths( $app )
@@ -454,6 +701,8 @@ function _findInSearchPaths( $app )
 
 function _addExtraFields( $userid, $fields )
 {
+	global $SqlDatabase;
+	
 	if( $userid > 0 && $fields )
 	{
 		
@@ -481,6 +730,8 @@ function _addExtraFields( $userid, $fields )
 
 function _deleteExtraFields( $userid )
 {
+	global $SqlDatabase;
+	
 	if( $userid > 0 )
 	{
 		
@@ -522,6 +773,8 @@ function _deleteExtraFields( $userid )
 
 function _firstLogin( $userid )
 {
+	global $SqlDatabase;
+	
 	// TODO: Find out what is going to be the main module call / fc call for first login and use a module or library class to call, like doors.
 	
 	if( $userid > 0 )
@@ -703,6 +956,8 @@ function _firstLogin( $userid )
 
 function _saveAvatar( $userid, $base64 )
 {
+	global $SqlDatabase;
+	
 	// TODO: Find out what is going to be the main module call / fc call for first login and use a module or library class to call, like doors.
 	
 	if( $userid > 0 && trim( $base64 ) )
@@ -740,6 +995,8 @@ function _saveAvatar( $userid, $base64 )
 
 function _applySetup( $userid, $id )
 {
+	global $SqlDatabase;
+	
 	// TODO: Find out what is going to be the main module call / fc call for first login and use a module or library class to call, like doors.
 	
 	if( $userid > 0 && $id > 0 )
@@ -933,7 +1190,7 @@ function _applySetup( $userid, $id )
 							
 							}
 						}
-					
+						
 						// Startup -----------------------------------------------------------------------------------------
 		
 						if( isset( $ug->Data->startups ) )
@@ -1150,6 +1407,8 @@ function _applySetup( $userid, $id )
 
 function _updateLanguages( $userid, $lang )
 {
+	global $SqlDatabase;
+	
 	// TODO: Find out what is going to be the main module call / fc call for first login and use a module or library class to call, like doors.
 	
 	if( $userid > 0 && trim( $lang ) )
