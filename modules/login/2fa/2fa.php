@@ -956,7 +956,7 @@
 		
 		if( $username )
 		{
-			if( function_exists( 'ssh2_connect' ) )
+			if( function_exists( 'ssh2_connect' ) && function_exists( 'shell_exec' ) )
 			{
 				$connection = false;
 				
@@ -964,14 +964,52 @@
 				
 				$hostname = '185.116.5.93';
 				$port = 22;
+				$rdp = 3389;
 				
 				// TODO: Look at hashing password or something ...
 				
-				$username = trim( $username ? $username : 'Testuser' );
-				$password = trim( $password ? $password : 'Testerpass500' );
+				$adminus = 'Testuser';
+				$adminpw = 'Testerpass500';
+				
+				$username = trim( $username );
+				$password = trim( $password );
 				
 				if( $hostname && $username && $password )
 				{
+					
+					// Check user creds using freerdp ...
+					
+					// TODO: Add more security to password check ...
+					
+					$authenticated = false;
+					
+					if( $checkauth = shell_exec( "xfreerdp /cert:ignore +auth-only /u:$username /p:$password /v:$hostname /port:$rdp /log-level:ERROR 2>&1" ) )
+					{
+						if( $parts = explode( "\n", $checkauth ) )
+						{
+							foreach( $parts as $part )
+							{
+								if( $value = explode( 'Authentication only,', $part ) )
+								{
+									if( trim( $value[1] ) && trim( $value[1] ) == 'exit status 0' )
+									{
+										$authenticated = true;
+									}
+								}
+							}
+							
+							if( !$authenticated )
+							{
+								$error = '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"1"}';
+							}
+						}
+					}
+					else
+					{
+						$error = '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"2"}';
+					}
+					
+					
 					
 					//function _ssh_disconnect( $reason, $message, $language ) 
 					//{
@@ -991,7 +1029,7 @@
 					//		'comp'  => 'none' 
 					//	] 
 					//];
-			
+					
 					//$callbacks = [ 'disconnect' => '_ssh_disconnect' ];
 					
 					if( !$connection = ssh2_connect( $hostname, $port ) )
@@ -999,17 +1037,16 @@
 						$error = '{"result":"-1","response":"couldn\'t connect, contact support ..."}';
 					}
 					
-					if( $connection )
+					if( $authenticated && $connection )
 					{
-					
-						if( $auth = ssh2_auth_password( $connection, $username, $password ) )
+						if( $auth = ssh2_auth_password( $connection, $adminus/*$username*/, $adminpw/*$password*/ ) )
 						{
 							
 							$stream = ssh2_exec( $connection, "powershell;Get-ADUser -Identity $username -Properties *" );
 							
 							$outputStream = ssh2_fetch_stream( $stream, SSH2_STREAM_STDIO );
 							$errorStream  = ssh2_fetch_stream( $stream, SSH2_STREAM_STDERR );
-					
+							
 							// Enable blocking for both streams
 							stream_set_blocking( $outputStream, true );
 							stream_set_blocking( $errorStream, true );
@@ -1020,6 +1057,8 @@
 							// Close the streams        
 							fclose( $errorStream );
 							fclose( $stream );
+							
+							
 							
 							if( $output )
 							{
@@ -1075,22 +1114,22 @@
 						}
 						else
 						{
-							$error = '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"1"}';
+							$error = '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"3"}';
 						}
-					
+						
 					}
 				}
 			
 			}
 			else
 			{
-				$error = '{"result":"-1","response":"Dependencies: php-ssh2 libssh2-php is required, contact support ..."}';
+				$error = '{"result":"-1","response":"Dependencies: php-ssh2 libssh2-php and or enabling shell_exec is required, contact support ..."}';
 			}
 			
 		}
 		else
 		{
-			$error = '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"2"}';
+			$error = '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"4"}';
 		}
 		
 		return [ 'fail', $error ];
@@ -1227,7 +1266,7 @@
 								
 								if( $ses = json_decode( $login ) )
 								{
-								
+									
 									if( $ses->sessionid )
 									{
 										if( !remoteAuth( '/system.library/user/update?sessionid=' . $ses->sessionid, 
