@@ -981,13 +981,30 @@
 					
 					// TODO: Add more security to password check ...
 					
-					$authenticated = false;
+					$authenticated = false; $found = false;
 					
-					if( $checkauth = shell_exec( "xfreerdp /cert-ignore /cert:ignore +auth-only /u:$username /p:$password /v:$hostname /port:$rdp /log-level:ERROR 2>&1" ) )
+					// sfreerdp needs special option added on install cmake -GNinja -DCHANNEL_URBDRC=OFF -DWITH_DSP_FFMPEG=OFF -DWITH_CUPS=OFF -DWITH_PULSE=OFF -DWITH_SAMPLE=ON .
+					
+					if( $checkauth = shell_exec( "sfreerdp /cert-ignore /cert:ignore +auth-only /u:$username /p:$password /v:$hostname /port:$rdp /log-level:ERROR 2>&1" ) )
 					{
-						if( strstr( $checkauth, 'xfreerdp: not found' ) )
+						if( strstr( $checkauth, 'sfreerdp: not found' ) )
 						{
-							$error = '{"result":"-1","response":"Dependencies: xfreerdp is required, contact support ..."}';
+							$checkauth = shell_exec( "xfreerdp /cert-ignore /cert:ignore +auth-only /u:$username /p:$password /v:$hostname /port:$rdp /log-level:ERROR 2>&1" );
+						}
+						
+						$found = true;
+					}
+					
+					if( !$found )
+					{
+						$checkauth = shell_exec( "xfreerdp /cert-ignore /cert:ignore +auth-only /u:$username /p:$password /v:$hostname /port:$rdp /log-level:ERROR 2>&1" );
+					}
+					
+					if( $checkauth )
+					{
+						if( strstr( $checkauth, 'sfreerdp: not found' ) || strstr( $checkauth, 'xfreerdp: not found' ) )
+						{
+							$error = '{"result":"-1","response":"Dependencies: sfreerdp or xfreerdp is required, contact support ..."}';
 						}
 						else if( $parts = explode( "\n", $checkauth ) )
 						{
