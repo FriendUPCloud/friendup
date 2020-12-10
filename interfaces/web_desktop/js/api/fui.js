@@ -464,7 +464,12 @@ FUI.BaseClass.prototype.stringify = function()
 FUI.preInit = function()
 {
 	if( typeof( cAjax ) != 'undefined' )
-		FUI.initialize( { classList: [ 'View', 'Grid', 'Button', 'Input', 'Listview' ] } );
+	{
+		FUI.initialize( { classList: [ 
+			'View', 'Grid', 'Button', 'Input', 'Listview', 'Image', 
+			'ImageButton', 'Label', 'TabList'
+		] } );
+	}
 	else return setTimeout( FUI.preInit, 5 );
 }
 FUI.preInit();
