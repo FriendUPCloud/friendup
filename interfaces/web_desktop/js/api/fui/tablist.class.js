@@ -65,6 +65,7 @@ FUI.TabList.Renderers.html5.prototype.refresh = function( pnode )
 		d.style.left = '0';
 		d.style.width = '100%';
 		d.style.height = '100%';
+		d.style.overflow = 'auto';
 		d.style.backgroundColor = FUI.theme.palette.foreground.color;
 		d.style.boxSizing = 'border-box';
 		this.TabList.domNode = d;
