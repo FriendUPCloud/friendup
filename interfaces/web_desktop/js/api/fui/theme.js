@@ -25,11 +25,18 @@ FUI.theme = {
 		}
 	},
 	fontStyles: {
-		normal: {},
-		large: {},
-		small: {},
-		extraSmall: {},
-		emphasized: {}
+		normal: {
+			
+		},
+		large: {
+			fontSize: '16px'
+		},
+		small: {
+		},
+		extraSmall: {
+		},
+		emphasized: {
+		}
 	},
 	icons: {
 	}

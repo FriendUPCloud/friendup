@@ -30,7 +30,7 @@ FUI.initialize = function( flags, callback )
 		}
 		
 		// TODO: Overwrite depending on theme
-		str += 'webclient/js/api/fui/theme.js';
+		str += ';webclient/js/api/fui/theme.js';
 		
 		// Load includes synchronously
 		let c = new cAjax();		
@@ -38,6 +38,7 @@ FUI.initialize = function( flags, callback )
 		c.onload = function()
 		{
 			eval( this.responseText() );
+			Friend.totalLoadingResources--;
 			done();
 		}
 		c.send();
@@ -472,5 +473,6 @@ FUI.preInit = function()
 	}
 	else return setTimeout( FUI.preInit, 5 );
 }
+Friend.totalLoadingResources++;
 FUI.preInit();
 

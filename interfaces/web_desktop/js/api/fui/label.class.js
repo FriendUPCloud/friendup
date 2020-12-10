@@ -65,14 +65,8 @@ FUI.Label.Renderers.html5.prototype.refresh = function( pnode )
 		d.style.left = '0';
 		d.style.width = '100%';
 		d.style.height = '100%';
-		d.style.borderTop = '1px solid white';
-		d.style.borderLeft = '1px solid white';
-		d.style.borderRight = '1px solid black';
-		d.style.borderBottom = '1px solid black';
-		d.style.backgroundColor = '#888888';
-		d.style.textAlign = 'center';
+		d.style.textAlign = 'left';
 		d.style.verticalAlign = 'middle';
-		d.style.cursor = 'pointer';
 		d.style.borderRadius = '3px';
 		d.style.boxSizing = 'border-box';
 		this.Label.domNode = d;
@@ -91,7 +85,9 @@ FUI.Label.Renderers.html5.prototype.refresh = function( pnode )
 	
 	let d = this.Label.domNode;
 	
-	if( this.Label.flags.text )
+	let fl = this.Label.flags;
+	
+	if( fl.text )
 	{
 		d.innerHTML = this.Label.flags.text;
 	}
@@ -99,5 +95,15 @@ FUI.Label.Renderers.html5.prototype.refresh = function( pnode )
 	{
 		d.innerHTML = 'Unnamed button';
 	}
+	
+	if( fl.fontStyle && typeof( FUI.theme.fontStyles[ fl.fontStyle ] ) != 'undefined' )
+	{
+		d.style.fontSize = FUI.theme.fontStyles[ fl.fontStyle ].fontSize;
+	}
+	if( fl.textAlign )
+	{
+		d.style.textAlign = fl.textAlign;
+	}
+	
 }
 

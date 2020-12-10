@@ -12,11 +12,11 @@
 
 FUI.ImageButton = function( object )
 {
-	this.initialize( 'Button' );
+	this.initialize( 'ImageButton' );
 	this.flags = object;
 }
 
-FUI.ImageButton.prototype = new FUI.Button();
+FUI.ImageButton.prototype = new FUI.BaseClass();
 
 // Default methods -------------------------------------------------------------
 

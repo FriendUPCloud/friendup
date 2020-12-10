@@ -65,15 +65,7 @@ FUI.Image.Renderers.html5.prototype.refresh = function( pnode )
 		d.style.left = '0';
 		d.style.width = '100%';
 		d.style.height = '100%';
-		d.style.borderTop = '1px solid white';
-		d.style.borderLeft = '1px solid white';
-		d.style.borderRight = '1px solid black';
-		d.style.borderBottom = '1px solid black';
 		d.style.backgroundColor = '#888888';
-		d.style.textAlign = 'center';
-		d.style.verticalAlign = 'middle';
-		d.style.cursor = 'pointer';
-		d.style.borderRadius = '3px';
 		d.style.boxSizing = 'border-box';
 		this.Image.domNode = d;
 		pnode.appendChild( d );
@@ -91,13 +83,51 @@ FUI.Image.Renderers.html5.prototype.refresh = function( pnode )
 	
 	let d = this.Image.domNode;
 	
-	if( this.Image.flags.text )
+	let fl = this.Image.flags;
+	
+	if( fl.type )
 	{
-		d.innerHTML = this.Image.flags.text;
+		if( fl.type == 'background' )
+		{
+			if( fl.pattern )
+			{
+				let url = getImageUrl( fl.pattern );
+				d.style.backgroundImage = 'url(' + url + ')';
+			}
+			if( fl.patternSize )
+			{
+				d.style.backgroundSize = fl.patternSize;
+			}
+			if( fl.patternPosition )
+			{
+				let pos = '';
+				if( !fl.patternPosition.vertical ) fl.patternPosition.vertical = 'middle';
+				if( !fl.patternPosition.horizontal ) fl.patternPosition.horizontal = 'middle';
+				switch( fl.patternPosition.vertical )
+				{
+					case 'top':
+					case 'bottom':
+						pos += fl.patternPosition.vertical;
+					case 'middle':
+						pos += 'center';
+						break;
+				}
+				switch( fl.patternPosition.horizontal )
+				{
+					case 'left':
+					case 'right':
+						pos += ' ' + fl.patternPosition.horizontal;
+					case 'middle':
+						pos += ' center';
+						break;
+				}
+				d.style.backgroundPosition = pos;
+			}
+		}
 	}
 	else
 	{
-		d.innerHTML = 'Unnamed button';
+		d.innerHTML = '';
 	}
 }
 

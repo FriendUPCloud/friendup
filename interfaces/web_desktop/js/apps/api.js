@@ -6151,7 +6151,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 
 		var loadedResources = 0;
-		var totalLoadingResources = 0;
+		Friend.totalLoadingResources = 0;
 		
 		// No cached app data
 		if( !packet.cachedAppData )
@@ -6163,7 +6163,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			if( !document.themeCss )
 			{
-				totalLoadingResources++;
+				Friend.totalLoadingResources++;
 			
 				var s = document.createElement( 'link' );
 				document.themeCss = s;
@@ -6199,7 +6199,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				if( src )
 				{
 					
-					totalLoadingResources++;
+					Friend.totalLoadingResources++;
 					var d = document.createElement( 'script' );
 					d.src = src;
 					d.async = false;
@@ -6222,7 +6222,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( packet && packet.filePath )
 		{
 			// Load translations and run locale
-			totalLoadingResources++;
+			Friend.totalLoadingResources++;
 			loadLocale( packet.filePath, function()
 			{
 				// Set config
@@ -6447,7 +6447,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 				}
 				// Check for scripts and run them
-				else if( loadedResources == totalLoadingResources && !window.applicationStarted )
+				else if( loadedResources == Friend.totalLoadingResources && !window.applicationStarted )
 				{
 					runNow();
 				}
@@ -6481,7 +6481,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			loadedResources++;
 
 			// Loading complete
-			if( loadedResources == totalLoadingResources )
+			if( loadedResources == Friend.totalLoadingResources )
 			{
 				waitToStart();
 			}

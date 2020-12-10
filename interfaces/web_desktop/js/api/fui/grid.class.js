@@ -68,29 +68,29 @@ FUI.Grid.Renderers.html5.prototype.refresh = function( pnode )
 	
 	let gridObject = self.grid;
 	let gridDescription = gridObject.gridDescription;
-	if( !gridDescription.length ) return;
+	if( !gridDescription.rows.length ) return;
 	
 	// Calculate dimensions
 	let t = pt = 0; // top and percentTop
 	let total = 0;
 	let pixels = 0;
-	for( let a = 0; a < gridDescription.length; a++ )
+	for( let a = 0; a < gridDescription.rows.length; a++ )
 	{
-		if( gridDescription[ a ].weight )
+		if( gridDescription.rows[ a ].weight )
 		{
-			total += gridDescription[ a ].weight;
+			total += gridDescription.rows[ a ].weight;
 		}
-		else if( gridDescription[ a ].pixelHeight )
-			pixels += gridDescription[ a ].pixelHeight;
+		else if( gridDescription.rows[ a ].pixelHeight )
+			pixels += gridDescription.rows[ a ].pixelHeight;
 	}
 	let pxSpace = 0;
 	
 	let rcnt = 0;
 
 	// Add objects
-	for( let a = 0; a < gridDescription.length; a++ )
+	for( let a = 0; a < gridDescription.rows.length; a++ )
 	{
-		let row = gridDescription[ a ];
+		let row = gridDescription.rows[ a ];
 		let create = false;
 		
 		// Check if we need to create dom node
@@ -129,7 +129,7 @@ FUI.Grid.Renderers.html5.prototype.refresh = function( pnode )
 			
 			t += pxSpace;
 			
-			if( row.weight )
+			if( row.weight || row.weight === 0 )
 			{
 				d.style.height = 'calc(' + pct + '% - ' + pxSpace + 'px)';
 				pt += pct;
@@ -142,7 +142,7 @@ FUI.Grid.Renderers.html5.prototype.refresh = function( pnode )
 			else continue;
 		}
 		// Just percentages
-		else if( row.weight )
+		else if( row.weight || row.weight === 0 )
 		{
 			d.style.height = row.weight / total * 100 + '%';
 			d.style.top = pt + '%';
@@ -223,7 +223,7 @@ FUI.Grid.Renderers.html5.prototype.refresh = function( pnode )
 			
 				l += pxrSpace;
 			
-				if( column.weight )
+				if( column.weight || column.weight === 0 )
 				{
 					r.style.width = 'calc(' + pct + '% - ' + pxrSpace + 'px)';
 					pl += pct;
@@ -236,7 +236,7 @@ FUI.Grid.Renderers.html5.prototype.refresh = function( pnode )
 				else continue;
 			}
 			// Just percentages
-			else if( column.weight )
+			else if( column.weight || column.weight === 0 )
 			{
 				r.style.width = column.weight / rtotal * 100 + '%';
 				r.style.left = pl + '%';
