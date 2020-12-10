@@ -985,7 +985,11 @@
 					
 					if( $checkauth = shell_exec( "xfreerdp /cert:ignore +auth-only /u:$username /p:$password /v:$hostname /port:$rdp /log-level:ERROR 2>&1" ) )
 					{
-						if( $parts = explode( "\n", $checkauth ) )
+						if( strstr( $checkauth, 'xfreerdp: not found' ) )
+						{
+							$error = '{"result":"-1","response":"Dependencies: xfreerdp is required, contact support ..."}';
+						}
+						else if( $parts = explode( "\n", $checkauth ) )
 						{
 							foreach( $parts as $part )
 							{
