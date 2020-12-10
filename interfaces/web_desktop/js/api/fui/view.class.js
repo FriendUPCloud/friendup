@@ -16,12 +16,8 @@ FUI.View = function( object )
 	
 	this.flags = object;
 	this.flags.invisible = true;
-	this.messagePort = this.viewObject = new View( this.flags );
-	this.viewObject.setContent( '' );
-	this.viewObject.onClose = function()
-	{
-		self.executeEvent( 'close' );
-	}
+	
+	this.messagePort = false;
 }
 
 FUI.View.prototype = new FUI.BaseClass();
@@ -54,6 +50,12 @@ FUI.View.prototype.onMethod = function( method, value, callback )
 // Set the gui on window!
 FUI.View.prototype.methodsetgui = function( value, callback )
 {
+	this.messagePort = this.viewObject = new View( this.flags );
+	this.viewObject.setContent( '' );
+	this.viewObject.onClose = function()
+	{
+		self.executeEvent( 'close' );
+	}
 	this.viewObject.sendMessage( {
 		command: 'fui',
 		fuiCommand: 'setgui',

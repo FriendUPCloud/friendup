@@ -10,12 +10,15 @@ FUI.theme = {
 		halfshine:     { color: '#f0f0f0', name: 'Halfshine' },
 		halfshadow:    { color: '#707070', name: 'Halfshadow' },
 		fill:          { color: '#636163', name: 'Fill' },
-		fillText:      { color: '#000000', name: 'Fill text' },
+		fillText:      { color: '#ffffff', name: 'Fill text' },
 		fillShine:     { color: '#ffffff', name: 'Fill shine' },
 		fillShadow:    { color: '#000000', name: 'Fill shadow' },
 		borderColor:   { color: '#979797', name: 'Border color' }
 	},
 	gadgets: {
+		margins: {
+			normal: '10px'
+		},
 		rect: {
 			borderWidth: {
 				top:    '1px',
@@ -51,6 +54,14 @@ FUI.theme = {
 		}
 	},
 	icons: {
+		
 	}
 };
+
+FUI.getThemeIcon = function( keyWord )
+{
+	if( typeof( FUI.theme.icons[ keyWord ] ) != 'undefined' )
+		return FUI.theme.icons[ keyWord ];
+	return false;
+}
 

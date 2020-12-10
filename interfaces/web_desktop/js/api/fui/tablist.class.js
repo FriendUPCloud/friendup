@@ -44,9 +44,9 @@ FUI.TabList.Renderers.signal = function()
 
 // HTML5 Renderer
 
-FUI.TabList.Renderers.html5 = function( buttonObj )
+FUI.TabList.Renderers.html5 = function( tablist )
 {
-	this.TabList = buttonObj;
+	this.TabList = tablist;
 	this.domNodes = [];
 }
 FUI.TabList.Renderers.html5.prototype.refresh = function( pnode )
@@ -65,15 +65,7 @@ FUI.TabList.Renderers.html5.prototype.refresh = function( pnode )
 		d.style.left = '0';
 		d.style.width = '100%';
 		d.style.height = '100%';
-		d.style.borderTop = '1px solid white';
-		d.style.borderLeft = '1px solid white';
-		d.style.borderRight = '1px solid black';
-		d.style.borderBottom = '1px solid black';
-		d.style.backgroundColor = '#888888';
-		d.style.textAlign = 'center';
-		d.style.verticalAlign = 'middle';
-		d.style.cursor = 'pointer';
-		d.style.borderRadius = '3px';
+		d.style.backgroundColor = FUI.theme.palette.foreground.color;
 		d.style.boxSizing = 'border-box';
 		this.TabList.domNode = d;
 		pnode.appendChild( d );
@@ -91,13 +83,55 @@ FUI.TabList.Renderers.html5.prototype.refresh = function( pnode )
 	
 	let d = this.TabList.domNode;
 	
-	if( this.TabList.flags.text )
+	if( this.TabList.flags.rows )
+	{
+		let rows = this.TabList.flags.rows;
+		for( let a = 0; a < rows.length; a++ )
+		{
+			let r = document.createElement( 'div' );
+			r.setAttribute( 'fui-component', 'TabList-Row' );
+			r.style.position = 'relative';
+			r.style.width = '100%';
+			r.style.height = '30px';
+			r.style.color = FUI.theme.palette.fillText.color;
+			r.style.boxSizing = 'border-box';
+			r.style.padding = FUI.theme.gadgets.margins.normal;
+			
+			if( rows[ a ].icon )
+			{
+				let icon = false;
+				if( ( icon = FUI.getThemeIcon( rows[ a ].icon ) ) )
+				{
+					let i = document.createElement( 'div' );
+					i.style.position = 'absolute';
+					i.style.left = '0px';
+					i.style.width = '30px';
+					i.style.height = '100%';
+					i.innerHTML = icon;
+					r.appendChild( i );
+				}
+			}
+			
+			let t = document.createElement( 'div' );
+			t.style.position = 'absolute';
+			t.style.left = '30px';
+			t.style.width = 'calc(100% - 60px)';
+			t.style.height = '100%';
+			t.innerHTML = rows[ a ].text;
+			r.appendChild( t );
+			
+			
+			d.appendChild( r );
+		}
+	}
+	
+	/*if( this.TabList.flags.text )
 	{
 		d.innerHTML = this.TabList.flags.text;
 	}
 	else
 	{
 		d.innerHTML = 'Unnamed button';
-	}
+	}*/
 }
 
