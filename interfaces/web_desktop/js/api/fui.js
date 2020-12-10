@@ -9,6 +9,7 @@
 *****************************************************************************©*/
 
 var FUI = window.FUI ? window.FUI : {};
+var Friend = window.Friend ? window.Friend : {};
 
 FUI.children = [];
 FUI.objectIndex = {};
@@ -21,6 +22,8 @@ FUI.initialize = function( flags, callback )
 	
 	if( flags && flags.classList )
 	{
+		Friend.totalLoadingResources++;
+		
 		let str = document.location.origin + '/';
 	
 		for( let a = 0; a < flags.classList.length; a++ )
@@ -38,13 +41,13 @@ FUI.initialize = function( flags, callback )
 		c.onload = function()
 		{
 			eval( this.responseText() );
-			Friend.totalLoadingResources--;
 			done();
 		}
 		c.send();
 	}
 	else
 	{
+		
 		done();
 	}
 	
@@ -72,6 +75,9 @@ FUI.initialize = function( flags, callback )
 		else FUI.dom = document.body;
 	
 		FUI.initialized = true;
+		
+		// From api.js
+		Friend.doneLoading();
 		
 		if( callback )
 			return callback( { result: true } );
@@ -473,6 +479,6 @@ FUI.preInit = function()
 	}
 	else return setTimeout( FUI.preInit, 5 );
 }
-Friend.totalLoadingResources++;
+
 FUI.preInit();
 

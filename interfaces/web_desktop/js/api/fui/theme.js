@@ -12,13 +12,25 @@ FUI.theme = {
 		fill:          { color: '#636163', name: 'Fill' },
 		fillText:      { color: '#000000', name: 'Fill text' },
 		fillShine:     { color: '#ffffff', name: 'Fill shine' },
-		fillShadow:    { color: '#000000', name: 'Fill shadow' }
+		fillShadow:    { color: '#000000', name: 'Fill shadow' },
+		borderColor:   { color: '#979797', name: 'Border color' }
 	},
 	gadgets: {
 		rect: {
-			borderWidth: {},
+			borderWidth: {
+				top:    '1px',
+				left:   '1px',
+				right:  '1px',
+				bottom: '1px'
+			},
+			borderStyle: 'solid',
 			background: {},
-			borderRadius: {}
+			borderRadius: {
+				top:    '0px',
+				left:   '0px',
+				right:  '0px',
+				bottom: '0px'
+			}
 		},
 		button: {
 			
