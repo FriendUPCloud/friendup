@@ -50,6 +50,8 @@ FUI.View.prototype.onMethod = function( method, value, callback )
 // Set the gui on window!
 FUI.View.prototype.methodsetgui = function( value, callback )
 {
+	let self = this;
+	
 	this.messagePort = this.viewObject = new View( this.flags );
 	this.viewObject.setContent( '' );
 	this.viewObject.onClose = function()
