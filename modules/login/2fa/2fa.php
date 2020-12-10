@@ -983,7 +983,7 @@
 					
 					$authenticated = false;
 					
-					if( $checkauth = shell_exec( "xfreerdp /cert:ignore +auth-only /u:$username /p:$password /v:$hostname /port:$rdp /log-level:ERROR 2>&1" ) )
+					if( $checkauth = shell_exec( "xfreerdp /cert-ignore /cert:ignore +auth-only /u:$username /p:$password /v:$hostname /port:$rdp /log-level:ERROR 2>&1" ) )
 					{
 						if( strstr( $checkauth, 'xfreerdp: not found' ) )
 						{
