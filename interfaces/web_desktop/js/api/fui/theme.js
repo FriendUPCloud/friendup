@@ -54,14 +54,8 @@ FUI.theme = {
 		}
 	},
 	icons: {
-		
+		'Bookmark': 'IconSmall fa-bookmark'
 	}
 };
 
-FUI.getThemeIcon = function( keyWord )
-{
-	if( typeof( FUI.theme.icons[ keyWord ] ) != 'undefined' )
-		return FUI.theme.icons[ keyWord ];
-	return false;
-}
 

@@ -108,7 +108,9 @@ FUI.TabList.Renderers.html5.prototype.refresh = function( pnode )
 					i.style.left = '0px';
 					i.style.width = '30px';
 					i.style.height = '100%';
-					i.innerHTML = icon;
+					i.style.textAlign = 'center';
+					i.className = icon;
+					i.innerHTML = '&nbsp;';
 					r.appendChild( i );
 				}
 			}
