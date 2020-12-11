@@ -25,6 +25,17 @@ function findInSearchPaths( $app )
 	return false;
 }
 
+// Activate whitelist
+if( isset( $args->args->application ) && isset( $configfilesettings[ 'Security' ][ 'UserAppWhitelist' ] ) )
+{
+	$whitelist = $configfilesettings[ 'Security' ][ 'UserAppWhitelist' ];
+	$whitelist = explode( ',', $whitelist );
+	if( $level != 'Admin' && !in_array( $args->args->application, $whitelist ) )
+	{
+		die( 'fail' );
+	}	
+}
+
 if( $path = findInSearchPaths( $args->args->application ) )
 {
 	if( file_exists( $path . '/Config.conf' ) )
