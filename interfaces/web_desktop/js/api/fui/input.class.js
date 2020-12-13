@@ -45,11 +45,19 @@ FUI.Input.Renderers.html5.prototype.refresh = function( pnode )
 	
 	if( !this.grid.domNode )
 	{
+		let m = document.createElement( 'div' );
+		m.style.position = 'absolute';
+		m.style.top = FUI.theme.gadgets.margins.normal;
+		m.style.left = FUI.theme.gadgets.margins.normal;
+		m.style.width = 'calc(100% - ' + FUI.theme.gadgets.margins.normal + ' - ' + FUI.theme.gadgets.margins.normal + ')';
+		m.style.height = 'calc(100% - ' + FUI.theme.gadgets.margins.normal + ' - ' + FUI.theme.gadgets.margins.normal + ')';
+		m.style.boxSizing = 'border-box';
+		
 		let d = document.createElement( 'input' );
 		d.setAttribute( 'type', 'text' );
 		d.style.position = 'absolute';
-		d.style.top = '0';
-		d.style.left = '0';
+		d.style.top = '0px';
+		d.style.left = '0px';
 		d.style.width = '100%';
 		d.style.height = '100%';
 		d.style.borderTop = '1px solid black';
@@ -61,8 +69,11 @@ FUI.Input.Renderers.html5.prototype.refresh = function( pnode )
 		d.style.cursor = 'text';
 		d.style.borderRadius = '3px';
 		d.style.boxSizing = 'border-box';
-		this.grid.domNode = d;
-		pnode.appendChild( d );
+		
+		m.appendChild( d );
+		
+		this.grid.domNode = m;
+		pnode.appendChild( m );
 	}
 	
 	let d = this.grid.domNode;
@@ -73,7 +84,7 @@ FUI.Input.Renderers.html5.prototype.refresh = function( pnode )
 	}
 	else
 	{
-		d.innerHTML = 'Unnamed button';
+		d.innerHTML = 'Unnamed input';
 	}
 }
 

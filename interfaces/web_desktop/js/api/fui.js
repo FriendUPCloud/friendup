@@ -22,8 +22,6 @@ FUI.initialize = function( flags, callback )
 	
 	if( flags && flags.classList )
 	{
-		Friend.totalLoadingResources++;
-		
 		let str = document.location.origin + '/';
 	
 		for( let a = 0; a < flags.classList.length; a++ )
@@ -475,6 +473,9 @@ FUI.BaseClass.prototype.stringify = function()
 }
 
 /* Init --------------------------------------------------------------------- */
+
+// Make sure we can load.
+Friend.totalLoadingResources++;
 
 FUI.preInit = function()
 {
