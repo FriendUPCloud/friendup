@@ -360,20 +360,6 @@ int FriendCoreManagerInitServices( FriendCoreManager *fcm )
 				Log( FLOG_FATAL, "Cannot launch websocket server\n");
 				return -1;
 			}
-			/*
-			if( fcm->fcm_DisableMobileWS == 0 )
-			{
-				if( ( fcm->fcm_WebSocketMobile = WebSocketNew( SLIB, fcm->fcm_WSMobilePort, fcm->fcm_WSSSLEnabled, 1, fcm->fcm_WSExtendedDebug ) ) != NULL )
-				{
-					WebSocketStart( fcm->fcm_WebSocketMobile );
-				}
-				else
-				{
-					Log( FLOG_FATAL, "Cannot launch websocket server\n");
-					return -1;
-				}
-			}
-			*/
 			
 			if( fcm->fcm_DisableExternalWS == 0 )
 			{
@@ -400,19 +386,23 @@ int FriendCoreManagerInitServices( FriendCoreManager *fcm )
 		
 		fcm->fcm_Shutdown = FALSE;
 		
+#ifdef COMMUNICATION_SERVICE
 		fcm->fcm_CommService = CommServiceNew( fcm->fcm_ComPort, fcm->fcm_SSLEnabledCommuncation, SLIB, fcm->fcm_MaxpCom, fcm->fcm_BufsizeCom );
 		
 		if( fcm->fcm_CommService )
 		{
 			CommServiceStart( fcm->fcm_CommService );
 		}
-		
+#endif
+
+#ifdef COMMUNICATION_REM_SERVICE
 		fcm->fcm_CommServiceRemote = CommServiceRemoteNew( fcm->fcm_ComRemotePort, fcm->fcm_SSLEnabledCommuncation, SLIB, fcm->fcm_MaxpComRemote );
 		
 		if( fcm->fcm_CommServiceRemote )
 		{
 			CommServiceRemoteStart( fcm->fcm_CommServiceRemote );
 		}
+#endif
 		
 		return 0;
 }
@@ -428,18 +418,22 @@ void FriendCoreManagerDelete( FriendCoreManager *fcm )
 	Log( FLOG_INFO,"FriendCoreManager Delete\n");
 	if( fcm != NULL )
 	{
+#ifdef COMMUNICATION_REM_SERVICE
 		DEBUG("[FriendCoreManager] Close remote communcation service\n");
 		if( fcm->fcm_CommServiceRemote != NULL )
 		{
 			CommServiceRemoteDelete( fcm->fcm_CommServiceRemote );
 			fcm->fcm_CommServiceRemote = NULL;
 		}
+#endif
+#ifdef COMMUNICATION_SERVICE
 		DEBUG("[FriendCoreManager] Close communication service\n");
 		if( fcm->fcm_CommService != NULL )
 		{
 			CommServiceDelete( fcm->fcm_CommService );
 			fcm->fcm_CommService = NULL;
 		}
+#endif
 		
 		DEBUG("[FriendCoreManager] Closing websockets notification channel\n");
 		
@@ -454,13 +448,6 @@ void FriendCoreManagerDelete( FriendCoreManager *fcm )
 		{
 			WebSocketDelete( fcm->fcm_WebSocket );
 			fcm->fcm_WebSocket = NULL;
-		}
-		
-		DEBUG("[FriendCoreManager] Closing moble WS\n");
-		if( fcm->fcm_WebSocketMobile != NULL )
-		{
-			WebSocketDelete( fcm->fcm_WebSocketMobile );
-			fcm->fcm_WebSocketMobile = NULL;
 		}
 		
 		DEBUG("[FriendCoreManager] Shutdown\n");
