@@ -69,7 +69,6 @@
 							</div>
 						</div>
 						<input type="hidden" id="publickey" value="{publickey}"/>
-						<!--<input type="hidden" id="nohash" value="{nohash}"/>-->
 					</form>
 					<hr/>
 					<div id="compatability" class="HRow MarginTop BorderTop HideForPass">
@@ -81,7 +80,6 @@
 		</div>
 		<script type="text/javascript">
 			Application = {
-				mode: 'windows',
 				showLog: false,
 				failedAttempt: false,
 				passwordRecoveryMode: false,
@@ -218,10 +216,10 @@
 						// TODO: For Windows auth find a way to handle username / password auth here in client before sending anything to server ...
 						
 						// If password is not hashed, hash it ... TODO: Look at the keystorage prosess to see if we do hash twice ...
-						if( flags && !flags.hashedPassword && Application.mode != 'windows' )
+						/*if( flags && !flags.hashedPassword && Application.mode != 'windows' )
 						{
 							password = ( 'HASHED' + Sha256.hash( password ) );
-						}
+						}*/
 						
 						var m = new cAjax();
 						m.open( 'POST', '/loginprompt/' + parent.Workspace.encryption.keys.client.publickey, true );
@@ -230,16 +228,14 @@
 							'username'  : username,
 							'password'  : password,
 							'deviceid'  : parent.Workspace.deviceid,
-							'code'      : code,
-							'mode'      : Application.mode
+							'code'      : code
 						} ), parent.Workspace.encryption.keys.server.publickey ) );
 						
 						if( Application.showLog ) console.log( 'vars ', {
 							'username'  : username,
 							'password'  : password,
 							'deviceid'  : parent.Workspace.deviceid,
-							'code'      : code,
-							'mode'      : Application.mode
+							'code'      : code
 						} );
 						
 						m.onload = function()

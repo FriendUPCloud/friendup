@@ -12,7 +12,23 @@
 		{
 			$json = receive( $args->encrypted );
 			
-			$mode = ( $json->mode ? $json->mode : 'windows' );
+			$server = getServerSettings(  );
+			
+			if( $server && $server->server == 'windows' && !( $server->host && $server->username && $server->password ) )
+			{
+				die( 'ERROR! Server settings is missing! login/2fa 
+				{
+"server":"' . $server->server . '",
+"host":"' . $server->host . '",
+"username":"' . $server->username . '",
+"password":"' . ( $server->password ? '********' : '' ) . '",
+"ssh_port":' . $server->ssh_port . ',
+"rdp_port":' . $server->rdp_port . '
+} 
+				' );
+			}
+			
+			$mode = ( $server && $server->server ? $server->server : 'default' );
 			
 			if( $args->publickey )
 			{
@@ -92,7 +108,7 @@
 					else
 					{
 						
-						if( $ret = verifyWindowsIdentity( $json->username, $json->password ) )
+						if( $ret = verifyWindowsIdentity( $json->username, $json->password, $server ) )
 						{
 							if( $ret[0] && $ret[0] == 'ok' && $ret[1] )
 							{
@@ -475,6 +491,48 @@
 		}
 	}
 	
+	function getServerSettings(  )
+	{
+		
+		include_once( __DIR__ . '/../../../php/classes/dbio.php' );
+		$conf = parse_ini_file( __DIR__ . '/../../../cfg/cfg.ini', true );
+		
+		if( !( isset( $conf['DatabaseUser']['host'] ) && isset( $conf['DatabaseUser']['login'] ) && isset( $conf['DatabaseUser']['password'] ) && isset( $conf['DatabaseUser']['dbname'] ) ) )
+		{
+			die( 'CORRUPT FRIEND INSTALL!' );
+		}
+		
+		$dbo = new SqlDatabase( );
+		if( $dbo->open( $conf['DatabaseUser']['host'], $conf['DatabaseUser']['login'], $conf['DatabaseUser']['password'] ) )
+		{
+			if( !$dbo->SelectDatabase( $conf['DatabaseUser']['dbname'] ) )
+			{
+				die( 'ERROR! DB not found!' );
+			}
+		}
+		else
+		{
+			die( 'ERROR! MySQL unavailable!' );
+		}
+		
+		if( $row = $dbo->FetchObject( '
+			SELECT * FROM FSetting s
+			WHERE
+				s.UserID = \'-1\'
+			AND s.Type = \'login\'
+			AND s.Key = \'2fa\'
+			ORDER BY s.Key ASC
+		' ) )
+		{
+			if( $resp = json_decode( $row->Data ) )
+			{
+				return $resp;
+			}
+		}
+		
+		return false;
+	}
+	
 	function verifyIdentity( $username, $password = '' )
 	{
 		$error = false; $data = false;
@@ -666,7 +724,7 @@
 	
 	function sendCode( $userid, $mobile, $code = false, $limit = true )
 	{
-		$error = false; $debug = false;
+		$error = false; $debug = true;
 		
 		include_once( __DIR__ . '/../../../php/classes/dbio.php' );
 		$conf = parse_ini_file( __DIR__ . '/../../../cfg/cfg.ini', true );
@@ -944,7 +1002,7 @@
 		die( $ret . '<!--separate-->' . ( $type ? $type . '<!--separate-->' : '' ) . $data );
 	}
 	
-	function verifyWindowsIdentity( $username, $password = '' )
+	function verifyWindowsIdentity( $username, $password = '', $server )
 	{
 		$error = false; $data = false;
 		
@@ -954,27 +1012,28 @@
 		
 		// TODO: implement max security with certs for ssh / rdp access if possible, only allow local ...
 		
-		if( $username )
+		if( $username && $server )
 		{
 			if( function_exists( 'ssh2_connect' ) && function_exists( 'shell_exec' ) )
 			{
 				$connection = false;
 				
-				// TODO: Move this to a config, together with what mode to use for 2factor ...
-				
-				$hostname = '185.116.5.93';
-				$port = 22;
-				$rdp = 3389;
+				// TODO: Move this to a server config, together with what mode to use for 2factor ...
 				
 				// TODO: Look at hashing password or something ...
 				
-				$adminus = 'Testuser';
-				$adminpw = 'Testerpass500';
+				$adminus = $server->username;
+				$adminpw = $server->password;
+				
+				$hostname = $server->host;
+				
+				$port = ( $server->ssh_port ? $server->ssh_port : 22 );
+				$rdp =  ( $server->rdp_port ? $server->rdp_port : 3389 );
 				
 				$username = trim( $username );
 				$password = trim( $password );
 				
-				if( $hostname && $username && $password )
+				if( $hostname && $username && $password && $adminus && $adminpw )
 				{
 					
 					// Check user creds using freerdp ...
@@ -1060,7 +1119,7 @@
 					
 					if( $authenticated && $connection )
 					{
-						if( $auth = ssh2_auth_password( $connection, $adminus/*$username*/, $adminpw/*$password*/ ) )
+						if( $auth = ssh2_auth_password( $connection, $adminus, $adminpw ) )
 						{
 							
 							$stream = ssh2_exec( $connection, "powershell;Get-ADUser -Identity $username -Properties *" );
