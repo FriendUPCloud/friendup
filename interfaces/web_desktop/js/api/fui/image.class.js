@@ -108,6 +108,7 @@ FUI.Image.Renderers.html5.prototype.refresh = function( pnode )
 					case 'top':
 					case 'bottom':
 						pos += fl.patternPosition.vertical;
+						break;
 					case 'middle':
 						pos += 'center';
 						break;
@@ -117,6 +118,7 @@ FUI.Image.Renderers.html5.prototype.refresh = function( pnode )
 					case 'left':
 					case 'right':
 						pos += ' ' + fl.patternPosition.horizontal;
+						break;
 					case 'middle':
 						pos += ' center';
 						break;

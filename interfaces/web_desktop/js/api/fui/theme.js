@@ -9,6 +9,8 @@ FUI.theme = {
 		shadow:        { color: '#000000', name: 'Shadow' },
 		halfshine:     { color: '#f0f0f0', name: 'Halfshine' },
 		halfshadow:    { color: '#707070', name: 'Halfshadow' },
+		bordershine:   { color: '#979797', name: 'Border shine' },
+		bordershadow:  { color: '#979797', name: 'Border shadow' },
 		fill:          { color: '#636163', name: 'Fill' },
 		fillText:      { color: '#ffffff', name: 'Fill text' },
 		fillShine:     { color: '#ffffff', name: 'Fill shine' },
@@ -27,7 +29,6 @@ FUI.theme = {
 				bottom: '1px'
 			},
 			borderStyle: 'solid',
-			background: {},
 			borderRadius: {
 				top:    '0px',
 				left:   '0px',
@@ -44,7 +45,8 @@ FUI.theme = {
 			
 		},
 		large: {
-			fontSize: '16px'
+			fontSize: '16px',
+			weight: 'bold'
 		},
 		small: {
 		},
@@ -54,7 +56,8 @@ FUI.theme = {
 		}
 	},
 	icons: {
-		'Bookmark': 'IconSmall fa-bookmark'
+		'Bookmark': 'IconSmall fa-bookmark',
+		'Plus':     'IconSmall fa-plus'
 	}
 };
 

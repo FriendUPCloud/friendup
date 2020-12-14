@@ -60,6 +60,8 @@ FUI.Grid.Renderers.html5.prototype.refresh = function( pnode )
 		this.dom.style.position = 'absolute';
 		this.dom.style.top = '0';
 		this.dom.style.left = '0';
+		this.dom.style.backgroundColor = FUI.theme.palette.background.color;
+		this.dom.style.color = FUI.theme.palette.fillText.color;
 		this.dom.style.width = '100%';
 		this.dom.style.height = '100%';
 		this.dom.setAttribute( 'fui-component', 'Grid' );

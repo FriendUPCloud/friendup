@@ -31,9 +31,9 @@ FUI.Input.Renderers.signal = function()
 
 // HTML5 Renderer
 
-FUI.Input.Renderers.html5 = function( gridObject )
+FUI.Input.Renderers.html5 = function( inputObject )
 {
-	this.grid = gridObject;
+	this.grid = inputObject;
 	this.domNodes = [];
 }
 FUI.Input.Renderers.html5.prototype.refresh = function( pnode )
@@ -60,17 +60,21 @@ FUI.Input.Renderers.html5.prototype.refresh = function( pnode )
 		d.style.left = '0px';
 		d.style.width = '100%';
 		d.style.height = '100%';
-		d.style.borderTop = '1px solid black';
-		d.style.borderLeft = '1px solid black';
-		d.style.borderRight = '1px solid white';
-		d.style.borderBottom = '1px solid white';
-		d.style.backgroundColor = '#888888';
+		d.style.borderTop = FUI.theme.gadgets.rect.borderWidth.top + ' ' + FUI.theme.gadgets.rect.borderStyle + ' ' + FUI.theme.palette.bordershine.color;
+		d.style.borderLeft = FUI.theme.gadgets.rect.borderWidth.left + ' ' + FUI.theme.gadgets.rect.borderStyle + ' ' + FUI.theme.palette.bordershine.color;
+		d.style.borderRight = FUI.theme.gadgets.rect.borderWidth.right + ' ' + FUI.theme.gadgets.rect.borderStyle + ' ' + FUI.theme.palette.bordershadow.color;
+		d.style.borderBottom = FUI.theme.gadgets.rect.borderWidth.bottom + ' ' + FUI.theme.gadgets.rect.borderStyle + ' ' + FUI.theme.palette.bordershadow.color;
+		d.style.backgroundColor = FUI.theme.palette.foreground.color;
 		d.style.textAlign = 'left';
 		d.style.cursor = 'text';
-		d.style.borderRadius = '3px';
+		d.style.borderRadius = FUI.theme.gadgets.rect.borderRadius.top + ' ' +
+		                       FUI.theme.gadgets.rect.borderRadius.left + ' ' +
+		                       FUI.theme.gadgets.rect.borderRadius.right + ' ' +
+		                       FUI.theme.gadgets.rect.borderRadius.bottom;
 		d.style.boxSizing = 'border-box';
 		
 		m.appendChild( d );
+		m.input = d;
 		
 		this.grid.domNode = m;
 		pnode.appendChild( m );
@@ -78,13 +82,9 @@ FUI.Input.Renderers.html5.prototype.refresh = function( pnode )
 	
 	let d = this.grid.domNode;
 	
-	if( this.grid.flags.text )
+	if( this.grid.flags.placeholder )
 	{
-		d.innerHTML = this.grid.flags.text;
-	}
-	else
-	{
-		d.innerHTML = 'Unnamed input';
+		d.input.setAttribute( 'placeholder', this.grid.flags.placeholder );
 	}
 }
 

@@ -59,6 +59,14 @@ FUI.Label.Renderers.html5.prototype.refresh = function( pnode )
 	
 	if( !this.Label.domNode )
 	{
+		let m = document.createElement( 'div' );
+		m.style.position = 'absolute';
+		m.style.top = FUI.theme.gadgets.margins.normal;
+		m.style.left = FUI.theme.gadgets.margins.normal;
+		m.style.width = 'calc(100% - ' + FUI.theme.gadgets.margins.normal + ' - ' + FUI.theme.gadgets.margins.normal + ')';
+		m.style.height = 'calc(100% - ' + FUI.theme.gadgets.margins.normal + ' - ' + FUI.theme.gadgets.margins.normal + ')';
+		m.style.boxSizing = 'border-box';
+	
 		let d = document.createElement( 'div' );
 		d.style.position = 'absolute';
 		d.style.top = '0';
@@ -66,11 +74,20 @@ FUI.Label.Renderers.html5.prototype.refresh = function( pnode )
 		d.style.width = '100%';
 		d.style.height = '100%';
 		d.style.textAlign = 'left';
+		d.style.fontWeight = FUI.theme.fontStyles.large.weight;
 		d.style.verticalAlign = 'middle';
-		d.style.borderRadius = '3px';
+		d.style.borderRadius = FUI.theme.gadgets.rect.borderRadius.top + ' ' +
+		                       FUI.theme.gadgets.rect.borderRadius.left + ' ' +
+		                       FUI.theme.gadgets.rect.borderRadius.right + ' ' +
+		                       FUI.theme.gadgets.rect.borderRadius.bottom;
 		d.style.boxSizing = 'border-box';
-		this.Label.domNode = d;
-		pnode.appendChild( d );
+		
+		m.appendChild( d );
+		
+		this.Label.domNode = m;
+		
+		pnode.appendChild( m );
+		
 		d.onclick = function( e )
 		{
 			if( self.Label.events && self.Label.events[ 'onclick' ] )

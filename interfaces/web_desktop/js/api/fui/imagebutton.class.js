@@ -65,16 +65,26 @@ FUI.ImageButton.Renderers.html5.prototype.refresh = function( pnode )
 		d.style.left = '0';
 		d.style.width = '100%';
 		d.style.height = '100%';
-		d.style.borderTop = '1px solid white';
-		d.style.borderLeft = '1px solid white';
-		d.style.borderRight = '1px solid black';
-		d.style.borderBottom = '1px solid black';
-		d.style.backgroundColor = '#888888';
 		d.style.textAlign = 'center';
-		d.style.verticalAlign = 'middle';
 		d.style.cursor = 'pointer';
-		d.style.borderRadius = '3px';
 		d.style.boxSizing = 'border-box';
+		if( this.ImageButton.flags.icon )
+		{
+			let i = document.createElement( 'span' );
+			i.style.marginTop = 'calc(50% - 10px)';
+			i.style.display = 'inline-block';
+			i.className = FUI.theme.icons[ this.ImageButton.flags.icon ];
+			d.appendChild( i );
+			this.icon = i;
+		}
+		else
+		{
+			if( this.icon )
+			{
+				this.ImageButton.domNode.removeChild( this.icon );
+				this.icon = null;
+			}
+		}
 		this.ImageButton.domNode = d;
 		pnode.appendChild( d );
 		d.onclick = function( e )
@@ -91,13 +101,23 @@ FUI.ImageButton.Renderers.html5.prototype.refresh = function( pnode )
 	
 	let d = this.ImageButton.domNode;
 	
-	if( this.ImageButton.flags.text )
+	if( this.ImageButton.flags.iconText && this.ImageButton.flags.iconText !== false )
 	{
-		d.innerHTML = this.ImageButton.flags.text;
+		if( this.ImageButton.flags.text )
+		{
+			d.innerHTML = this.ImageButton.flags.text;
+			if( this.icon ) d.appendChild( this.icon );
+		}
+		else
+		{
+			d.innerHTML = 'Unnamed button';
+			if( this.icon ) d.appendChild( this.icon );
+		}
 	}
 	else
 	{
-		d.innerHTML = 'Unnamed button';
+		d.innerHTML = '';
+		if( this.icon ) d.appendChild( this.icon );
 	}
 }
 
