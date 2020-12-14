@@ -10232,6 +10232,7 @@ function _saveUser( uid, callback )
 	}
 	
 	var m = new Module( 'system' );
+	m.forceHTTP = true;
 	m.onExecuted = function( server )
 	{
 		
