@@ -717,7 +717,7 @@ Sections.accounts_users = function( cmd, extra )
 										{
 											if( ge( 'usUsername' ).value )
 											{
-												saveUser( userInfo.ID );
+												_saveUser( userInfo.ID );
 										
 												editMode( true );
 											}
@@ -772,7 +772,7 @@ Sections.accounts_users = function( cmd, extra )
 												removeBtn( this, { id: userInfo.ID, button_text: 'i18n_delete_user', }, function ( args )
 												{
 									
-													removeUser( args.id );
+													_removeUser( args.id );
 									
 												} );
 								
@@ -5426,7 +5426,7 @@ Sections.accounts_users = function( cmd, extra )
 									if( ge( 'usUsername' ).value )
 									{
 										
-										saveUser( false, function( uid )
+										_saveUser( false, function( uid )
 										{
 											
 											if( uid )
@@ -10107,6 +10107,242 @@ function saveUser( uid, cb, newuser )
 	f.execute( 'user/update', args );
 }
 
+function _saveUser( uid, callback )
+{
+	var args = {  };
+	
+	var mapping = {
+		usFullname : 'fullname',
+		usEmail    : 'email',
+		usMobile   : 'mobile',
+		usUsername : 'username',
+		usPassword : 'password'
+	};
+	
+	if( Application.checkAppPermission( [ 
+		'PERM_USER_READ_GLOBAL', 
+		'PERM_USER_GLOBAL' 
+	] ) )
+	{
+		mapping[ 'usLevel' ] = 'level';
+	}
+	
+	for( var a in mapping )
+	{
+		var k = mapping[ a ];
+		
+		// Skip nonchanged passwords
+		if( a == 'usPassword' )
+		{
+			if( ( !ge( a ).value || ge( a ).value == '********' ) )
+			{
+				continue;
+			}
+			else
+			{
+				if( ge( a ).value != ge( 'usPasswordConfirm' ).value )
+				{
+					ge( 'PassError' ).innerHTML = i18n( '<span>New password confirmation does not match new password.</span>' );
+					ge( a ).focus();
+					return false;
+				}
+				else
+				{
+					ge( 'PassError' ).innerHTML = '';
+				}
+			}
+		}
+		
+		if( ge( a ) )
+		{
+			args[ k ] = Trim( ge( a ).value );
+		}
+		
+		// Special case, hashed password
+		if( a == 'usPassword' )
+		{
+			args[ k ] = ( 'HASHED' + Sha256.hash( args[ k ] ) );
+		}
+		
+		
+	}
+	
+	if( !args.username )
+	{
+		return Alert( i18n( 'i18n_you_forgot_username' ), i18n( 'i18n_you_forgot_username_desc' ) );
+	}
+	
+	if( ge( 'usWorkgroups' ) )
+	{
+		//	
+		if( ge( 'usWorkgroups' ).value )
+		{
+			args.workgroups = ge( 'usWorkgroups' ).value;
+		}
+		else if( !Application.checkAppPermission( [ 
+			'PERM_USER_READ_GLOBAL', 
+			'PERM_USER_GLOBAL' 
+		] ) )
+		{
+			Notify( { title: i18n( 'i18n_user_workgroup_missing' ), text: i18n( 'i18n_Adding a User to a Workgroup is required.' ) } );
+			
+			return;
+		}
+		
+	}
+	
+	// 1: First Wallpaper update ...
+	
+	var canvas = ge( 'AdminAvatar' );
+	if( canvas )
+	{
+		var base64 = 0;
+		
+		try
+		{
+			base64 = canvas.toDataURL();
+		}
+		catch( e ) {  }
+		
+		if( base64 && base64.length > 3000 )
+		{
+			args.avatar = base64;
+		}
+	}
+	
+	// 2: Second Template update ...
+	
+	if( !uid || ( ge( 'usSetup' ) && ge( 'usSetup' ).value != ge( 'usSetup' ).current ) )
+	{
+		args.setup = ( ge( 'usSetup' ).value ? ge( 'usSetup' ).value : '0' );
+	}
+	
+	// 3: Third language update ...
+	
+	if( !uid || ge( 'usLanguage' ) && ge( 'usLanguage' ).value != ge( 'usLanguage' ).current )
+	{
+		args.language = ge( 'usLanguage' ).value;
+	}
+	
+	
+	
+	if( uid > 0 )
+	{
+		args.id = uid;
+	}
+	
+	var m = new Module( 'system' );
+	m.onExecuted = function( server )
+	{
+		
+		try
+		{
+			server = JSON.parse( server );
+		}
+		catch( e ) {  }
+		
+		var e = ( server && server.result ? server.result : {} );
+		var d = ( server && server.data   ? server.data   : {} );
+		
+		if( ShowLog ) console.log( '_saveUser( uid, callback, newuser ) ', { e:e, d:d, args: args, server: server } );
+		
+		if( e == 'ok' )
+		{
+			
+			if( !uid )
+			{
+				Notify( { title: i18n( 'i18n_user_create' ), text: i18n( 'i18n_user_create_succ' ) } );
+			}
+			else
+			{
+				Notify( { title: i18n( 'i18n_user_updated' ), text: i18n( 'i18n_user_updated_succ' ) } );
+			}
+			
+			/*// Save avatar image
+			
+			function saveAvatar( callback )
+			{
+				var canvas = ge( 'AdminAvatar' );
+				if( canvas )
+				{
+					var base64 = 0;
+					
+					try
+					{
+						base64 = canvas.toDataURL();
+					}
+					catch( e ) {  }
+					
+					if( base64 && base64.length > 3000 )
+					{
+						var ma = new Module( 'system' );
+						ma.forceHTTP = true;
+						ma.onExecuted = function( e, d )
+						{
+							if( e != 'ok' )
+							{
+								if( ShowLog ) console.log( 'Avatar saving failed.' );
+						
+								if( callback ) callback( false );
+							}
+					
+							if( callback ) callback( true );
+						};
+						ma.execute( 'setsetting', { userid: uid, setting: 'avatar', data: base64, authid: Application.authId } );
+					}
+					else
+					{
+						if( callback ) callback( false );
+					}
+				}
+			}
+			
+			saveAvatar( function (  )
+			{*/
+				
+				if( callback )
+				{
+					return callback( d.id ? d.id : uid );
+				}
+				else
+				{
+					Sections.accounts_users( 'edit', d.id ? d.id : uid );
+				}
+				
+			/*} );*/
+			
+		}
+		else if( d && d.code == 19 && d.response )
+		{
+			Notify( { title: i18n( 'i18n_user_update_fail' ), text: i18n( 'i18n_' + d.response ) } );
+			
+			if( ge( 'usUsername' ) )
+			{
+				ge( 'usUsername' ).focus();
+			}
+		}
+		else if( d && d.response )
+		{
+			Notify( { title: i18n( 'i18n_user_update_fail' ), text: /*i18n( 'i18n_' + */d.response/* )*/ } );
+		}
+		else
+		{
+			Notify( { title: i18n( 'i18n_user_update_fail' ), text: i18n( 'i18n_user_update_failed' ) } );
+		}
+		
+	}
+	
+	if( uid > 0 )
+	{
+		m.execute( 'user/update', args );
+	}
+	else
+	{
+		m.execute( 'user/create', args );
+	}
+	
+}
+
 function firstLogin( userid, callback )
 {
 	if( userid > 0 )
@@ -10222,6 +10458,75 @@ function removeUser( id, callback )
 
 		f.execute( 'user/delete', args );
 		
+	}
+}
+
+function _removeUser( id, callback )
+{
+	if( id )
+	{
+		var m = new Module( 'system' );
+		m.onExecuted = function( server )
+		{
+			
+			try
+			{
+				server = JSON.parse( server );
+			}
+			catch( e ) {  }
+			
+			var e = ( server && server.result ? server.result : {} );
+			var d = ( server && server.data   ? server.data   : {} );
+			
+			if( ShowLog ) console.log( '_removeUser( id, callback ) ', { e:e, d:d, id:id, server: server } );
+			
+			if( e == 'ok' )
+			{
+				Notify( { title: i18n( 'i18n_user_delete' ), text: i18n( 'i18n_user_delete_succ' ) } );
+				
+				// Refresh users list ...
+				
+				// TODO: Find a way to remove the user in question from the list ...
+				
+				if( ge( 'UserListID_' + id ) )
+				{
+					ge( 'UserListID_' + id ).parentNode.removeChild( ge( 'UserListID_' + id ) );
+				}
+				
+				if( ge( 'AdminUsersCount' ) )
+				{
+					if( ge( 'AdminUsersCount' ).innerHTML )
+					{
+						var count = ge( 'AdminUsersCount' ).innerHTML.split( '(' ).join( '' ).split( ')' ).join( '' );
+					
+						if( count && count > 0 )
+						{
+							var result = ( count - 1 );
+						
+							if( result >= 0 )
+							{
+								ge( 'AdminUsersCount' ).innerHTML = '(' + result + ')';
+							}
+						}
+					}
+				
+				}
+				
+				if( callback )
+				{
+					callback( true );
+				}
+				else
+				{ 
+			   		cancelUser(  );
+				}
+			}
+			else
+			{
+				Notify( { title: i18n( 'i18n_user_delete_fail' ), text: i18n( 'i18n_user_delete_failed' ) } );
+			}
+		}
+		m.execute( 'user/delete', { id: id } );
 	}
 }
 

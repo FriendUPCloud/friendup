@@ -15,10 +15,6 @@ ini_set( 'display_errors', 1 );
 
 require_once( 'php/include/permissions.php' );
 
-$prevlevel = $level;
-
-//die( 'TODO: finish the module code to create / update user ' . print_r( $args,1 ) . ' -- ' . ' [] ' . $prevlevel );
-
 
 
 $data = []; $extr = [];
@@ -57,6 +53,15 @@ if( isset( $args->args->email ) )
 	
 	// TODO: Add check if it's correct format if not return back ...
 }
+
+if( isset( $args->args->level ) )
+{
+	$data['level'] = trim( $args->args->level );
+	
+	// TODO: Add check if it's correct format if not return back ...
+	// TODO: Make it so only global / system admin can set level admin
+}
+
 if( isset( $args->args->mobile ) )
 {
 	$extr['mobile'] = trim( $args->args->mobile );
@@ -105,7 +110,7 @@ if( $args->command )
 			if( isset( $data['fullname'] ) && $data['fullname'] && isset( $data['username'] ) && $data['username'] && isset( $data['password'] ) && $data['password'] )
 			{
 				
-				if( $perm = Permissions( 'write', 'application', 'system', [ 
+				if( $perm = Permissions( 'write', 'application', "'System','Admin'", [ 
 					'PERM_USER_CREATE_GLOBAL', 'PERM_USER_CREATE_IN_WORKGROUP', 
 					'PERM_USER_GLOBAL',        'PERM_USER_WORKGROUP' 
 				] ) )
@@ -131,7 +136,7 @@ if( $args->command )
 				$data['args'] = '{
 					"type"    : "write", 
 					"context" : "application", 
-					"name"    : "system",
+					"name"    : "\'System\',\'Admin\'",
 					"data"    : { 
 						"permission" : [ 
 							"PERM_USER_CREATE_GLOBAL", 
@@ -142,7 +147,22 @@ if( $args->command )
 					} 
 				}';
 				
-				$data['level'] = 'User';
+				if( !isset( $data['level'] ) && !$data['level'] )
+				{
+					$data['level'] = 'User';
+				}
+				
+				// TODO: Should be a check if the user that is creating this new user has access to add users to defined workgroup(s) before saving ... 
+				
+				// TODO: It's required to add user with a workgroup if the user adding is not Admin and have rolepermissions ...
+				
+				if( $level == 'User' || isset( $extr['workgroups'] ) )
+				{
+					if( !isset( $extr['workgroups'] ) || !$extr['workgroups'] )
+					{
+						die( '{"result":"fail","data":{"response":"Adding a User to a Workgroup is required.","code":"20"}' );
+					}
+				}
 				
 				$g = new dbIO( 'FUserGroup' );
 				$g->Name = 'User';
@@ -161,7 +181,34 @@ if( $args->command )
 								if( isset( $res->data->id ) && $res->data->id )
 								{
 									
-									// 1: Add extra field
+									// 1: Add user to workgroup(s)
+									
+									if( isset( $extr['workgroups'] ) && $extr['workgroups'] )
+									{
+										if( $ret = _addToWorkgroups( $res->data->id, $extr['workgroups'], $data, '[ 
+											"PERM_USER_CREATE_GLOBAL", 
+											"PERM_USER_CREATE_IN_WORKGROUP", 
+											"PERM_USER_GLOBAL", 
+											"PERM_USER_WORKGROUP" 
+										]' ) )
+										{
+											if( isset( $ret->result ) && $ret->result == 'fail' )
+											{
+												die( json_encode( $ret ) );
+											}
+											else
+											{
+												if( !isset( $res->debug ) )
+												{
+													$res->debug = [];
+												}
+												
+												$res->debug['1: Add user to workgroup(s)'] = 'true';
+											}
+										}
+									}
+									
+									// 2: Add extra field
 									
 									if( isset( $extr['mobile'] ) && $extr['mobile'] )
 									{
@@ -178,12 +225,12 @@ if( $args->command )
 													$res->debug = [];
 												}
 												
-												$res->debug['1: Add extra field'] = 'true';
+												$res->debug['2: Add extra field'] = 'true';
 											}
 										}
 									}
 									
-									// 2: First login
+									// 3: First login
 									
 									if( $ret = _firstLogin( $res->data->id ) )
 									{
@@ -198,11 +245,11 @@ if( $args->command )
 												$res->debug = [];
 											}
 											
-											$res->debug['2: First login'] = 'true';
+											$res->debug['3: First login'] = 'true';
 										}
 									}
 									
-									// 3: Save avatar image
+									// 4: Save avatar image
 									
 									if( isset( $extr['avatar'] ) && $extr['avatar'] )
 									{
@@ -219,12 +266,12 @@ if( $args->command )
 													$res->debug = [];
 												}
 												
-												$res->debug['3: Save avatar image'] = 'true';
+												$res->debug['4: Save avatar image'] = 'true';
 											}
 										}
 									}
 									
-									// 4: Apply template
+									// 5: Apply template
 									
 									if( isset( $extr['setup'] ) && $extr['setup'] )
 									{
@@ -241,12 +288,12 @@ if( $args->command )
 													$res->debug = [];
 												}
 												
-												$res->debug['4: Apply template'] = 'true';
+												$res->debug['5: Apply template'] = 'true';
 											}
 										}
 									}
 									
-									// 5: Save language setting
+									// 6: Save language setting
 									
 									if( isset( $extr['language'] ) && $extr['language'] )
 									{
@@ -263,7 +310,7 @@ if( $args->command )
 													$res->debug = [];
 												}
 												
-												$res->debug['5: Save language setting'] = 'true';
+												$res->debug['6: Save language setting'] = 'true';
 											}
 										}
 									}
@@ -295,7 +342,7 @@ if( $args->command )
 			if( isset( $data['id'] ) && $data['id'] )
 			{
 				
-				if( $perm = Permissions( 'write', 'application', 'system', [ 
+				if( $perm = Permissions( 'write', 'application', "'System','Admin'", [ 
 					'PERM_USER_UPDATE_GLOBAL', 'PERM_USER_UPDATE_IN_WORKGROUP', 
 					'PERM_USER_GLOBAL',        'PERM_USER_WORKGROUP' 
 				], 'user', $data['id'] ) )
@@ -321,7 +368,7 @@ if( $args->command )
 				$data['args'] = '{
 					"type"    : "write", 
 					"context" : "application", 
-					"name"    : "system", 
+					"name"    : "\'System\',\'Admin\'", 
 					"data"    : { 
 						"permission" : [ 
 							"PERM_USER_UPDATE_GLOBAL", 
@@ -343,7 +390,34 @@ if( $args->command )
 							if( isset( $res->data->update ) && $res->data->update )
 							{
 								
-								// 1: Add extra field
+								// 1: Add user to workgroup(s)
+								
+								if( isset( $extr['workgroups'] ) && $extr['workgroups'] )
+								{
+									if( $ret = _addToWorkgroups( $data['id'], $extr['workgroups'], $data, '[ 
+										"PERM_USER_UPDATE_GLOBAL", 
+										"PERM_USER_UPDATE_IN_WORKGROUP", 
+										"PERM_USER_GLOBAL", 
+										"PERM_USER_WORKGROUP" 
+									]' ) )
+									{
+										if( isset( $ret->result ) && $ret->result == 'fail' )
+										{
+											die( json_encode( $ret ) );
+										}
+										else
+										{
+											if( !isset( $res->debug ) )
+											{
+												$res->debug = [];
+											}
+											
+											$res->debug['1: Add user to workgroup(s)'] = 'true';
+										}
+									}
+								}
+								
+								// 2: Add extra field
 								
 								if( isset( $extr['mobile'] ) && $extr['mobile'] )
 								{
@@ -360,12 +434,12 @@ if( $args->command )
 												$res->debug = [];
 											}
 											
-											$res->debug['1: Add extra field'] = 'true';
+											$res->debug['2: Add extra field'] = 'true';
 										}
 									}
 								}
 								
-								// 2: Save avatar image
+								// 3: Save avatar image
 								
 								if( isset( $extr['avatar'] ) && $extr['avatar'] )
 								{
@@ -382,12 +456,12 @@ if( $args->command )
 												$res->debug = [];
 											}
 											
-											$res->debug['2: Save avatar image'] = 'true';
+											$res->debug['3: Save avatar image'] = 'true';
 										}
 									}
 								}
 								
-								// 3: Apply template
+								// 4: Apply template
 								
 								if( isset( $extr['setup'] ) && $extr['setup'] )
 								{
@@ -404,12 +478,12 @@ if( $args->command )
 												$res->debug = [];
 											}
 											
-											$res->debug['3: Apply template'] = 'true';
+											$res->debug['4: Apply template'] = 'true';
 										}
 									}
 								}
 								
-								// 4: Save language setting
+								// 5: Save language setting
 								
 								if( isset( $extr['language'] ) && $extr['language'] )
 								{
@@ -426,7 +500,7 @@ if( $args->command )
 												$res->debug = [];
 											}
 											
-											$res->debug['4: Save language setting'] = 'true';
+											$res->debug['5: Save language setting'] = 'true';
 										}
 									}
 								}
@@ -458,7 +532,7 @@ if( $args->command )
 			if( isset( $data['id'] ) && $data['id'] )
 			{
 				
-				if( $perm = Permissions( 'delete', 'application', 'system', [ 
+				if( $perm = Permissions( 'delete', 'application', "'System','Admin'", [ 
 					'PERM_USER_DELETE_GLOBAL', 'PERM_USER_DELETE_IN_WORKGROUP', 
 					'PERM_USER_GLOBAL',        'PERM_USER_WORKGROUP' 
 				], 'user', $data['id'] ) )
@@ -484,7 +558,7 @@ if( $args->command )
 				$data['args'] = '{
 					"type"    : "delete", 
 					"context" : "application", 
-					"name"    : "system", 
+					"name"    : "\'System\',\'Admin\'", 
 					"data"    : { 
 						"permission" : [ 
 							"PERM_USER_DELETE_GLOBAL", 
@@ -679,6 +753,80 @@ function _fcquery( $command = '', $args = false, $method = 'POST', $headers = fa
 		}
 		
 		return json_decode( '{"result":"fail","data":{"response":"Unexpected error!","curl_code":"' . $httpCode . '"}}' );
+		
+	}
+	
+	return false;
+}
+
+function _addToWorkgroups( $userid, $workgroups, $token, $perms )
+{
+	if( $userid > 0 && $workgroups && $token && $perms )
+	{
+		
+		$success = false; $data = []; 
+		
+		if( $wgr = explode( ',', $workgroups ) )
+		{
+			foreach( $wgr as $gid )
+			{
+				
+				if( $gid > 0 )
+				{
+					
+					// Specific for Pawel's code ... He just wants to forward json ...
+				
+					$data['args'] = '{
+						"type"    : "write", 
+						"context" : "application", 
+						"name"    : "\'System\',\'Admin\'", 
+						"data"    : { 
+							"permission" : ' . $perms . '
+						}, 
+						"object"   : "workgroup", 
+						"objectid" : ' . $gid . ' 
+					}';
+				
+					if( $token )
+					{
+						if( $token['sessionid'] )
+						{
+							$data['sessionid'] = $token['sessionid'];
+						}
+						if( $token['servertoken'] )
+						{
+							$data['servertoken'] = $token['servertoken'];
+						}
+					}
+				
+					$data['id']    = intval( $gid );
+					$data['users'] = intval( $userid );
+				
+					if( $res = _fcquery( '/system.library/group/addusers', $data ) )
+					{
+						if( is_object( $res ) )
+						{
+							if( isset( $res->result ) && $res->result == 'fail' )
+							{
+								return false;
+							}
+							else
+							{
+								$success = true;
+							}
+						}
+					}
+					
+				}
+				
+			}
+			
+			if( $success )
+			{
+				return true;
+			}
+			
+		}
 		
 	}
 	
@@ -970,7 +1118,7 @@ function _saveAvatar( $userid, $base64 )
 		}
 		
 		$o = new dbIO( 'FSetting' );
-		$o->UserID = $uid;
+		$o->UserID = $userid;
 		$o->Type = 'system';
 		$o->Key = 'avatar';
 		$o->Load();
