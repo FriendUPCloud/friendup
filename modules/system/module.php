@@ -1903,6 +1903,35 @@ if( isset( $args->command ) )
 			die( 'ok<!--separate-->{"slept_for": "'. $sleeptime .'" seconds", "randomstuff":"'.$randomstring.'" }' );
 			break;
 		
+		case 'checkeula':
+			$eula = isset( $configfilesettings[ 'Security' ][ 'EULARequired' ] ) ? $configfilesettings[ 'Security' ][ 'EULARequired' ] : false;
+			if( $eula )
+			{
+				$l = new dbIO( 'FSetting' );
+				$l->Type = 'system';
+				$l->Key = 'accepteula';
+				$l->UserID = $User->ID;
+				if( !$l->Load() )
+				{
+					die( 'fail<!--separate-->{"euladocument":"' . ( 
+						isset( $configfilesettings[ 'Security' ][ 'EULADocument' ] ) ? $configfilesettings[ 'Security' ][ 'EULADocument' ] : '' 
+					) . '"}' );
+				}
+			}
+			die( 'ok' );
+			break;
+		case 'geteuladocument':
+			if( isset( $configfilesettings[ 'Security' ][ 'EULADocument' ] ) )
+			{
+				$path = trim( $configfilesettings[ 'Security' ][ 'EULADocument' ] );
+				if( file_exists( $path ) )
+				{
+					die( 'ok<!--separate-->' . file_get_contents( $path ) );
+				}
+			}
+			die( 'fail' );
+			break;
+		
 		// Init firstlogin for a new user via this module call 
 		case 'firstlogin':
 			
