@@ -17,7 +17,7 @@
 			if( $server && $server->server == 'windows' && !( $server->host && $server->username && $server->password ) )
 			{
 				die( 'ERROR! Server settings is missing! login/2fa 
-				{
+{
 "server":"' . $server->server . '",
 "host":"' . $server->host . '",
 "username":"' . $server->username . '",
@@ -724,7 +724,7 @@
 	
 	function sendCode( $userid, $mobile, $code = false, $limit = true )
 	{
-		$error = false; $debug = true;
+		$error = false; $debug = false;
 		
 		include_once( __DIR__ . '/../../../php/classes/dbio.php' );
 		$conf = parse_ini_file( __DIR__ . '/../../../cfg/cfg.ini', true );
