@@ -313,7 +313,7 @@ if( $args->command )
 									
 													// 5: Apply template
 									
-													if( isset( $extr['setup'] ) && $extr['setup'] )
+													if( isset( $extr['setup'] ) )
 													{
 														if( $ret = _applySetup( $res->data->id, $extr['setup'] ) )
 														{
@@ -532,7 +532,7 @@ if( $args->command )
 								
 								// 4: Apply template
 								
-								if( isset( $extr['setup'] ) && $extr['setup'] )
+								if( isset( $extr['setup'] ) )
 								{
 									if( $ret = _applySetup( $data['id'], $extr['setup'] ) )
 									{
