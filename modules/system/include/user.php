@@ -164,7 +164,7 @@ if( $args->command )
 				
 				// TODO: It's required to add user with a workgroup if the user adding is not Admin and have rolepermissions ...
 				
-				if( $level == 'User' || isset( $extr['workgroups'] ) )
+				if( $level == 'User' || ( isset( $extr['workgroups'] ) && $extr['workgroups'] ) )
 				{
 					if( !isset( $extr['workgroups'] ) || !$extr['workgroups'] )
 					{
