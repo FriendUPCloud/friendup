@@ -208,6 +208,37 @@ if( $args->command )
 										
 									}
 									
+									
+									
+									// 1: Add user to workgroup(s)
+									
+									if( isset( $extr['workgroups'] ) && $extr['workgroups'] )
+									{
+										if( $ret = _addToWorkgroups( $res->data->id, $extr['workgroups'], $data, '[ 
+											"PERM_USER_CREATE_GLOBAL", 
+											"PERM_USER_CREATE_IN_WORKGROUP", 
+											"PERM_USER_GLOBAL", 
+											"PERM_USER_WORKGROUP" 
+										]' ) )
+										{
+											if( isset( $ret->result ) && $ret->result == 'fail' )
+											{
+												die( json_encode( $ret ) );
+											}
+											else
+											{
+												if( !isset( $res->debug ) )
+												{
+													$res->debug = [];
+												}
+								
+												$res->debug['1: Add user to workgroup(s)'] = $ret;
+											}
+										}
+									}
+									
+									
+									
 									if( $res2 = _fcquery( '/system.library/user/update', $data ) )
 									{
 										if( is_object( $res2 ) )
@@ -217,35 +248,6 @@ if( $args->command )
 												if( isset( $res2->data->update ) && $res2->data->update )
 												{
 													
-													
-													
-													// 1: Add user to workgroup(s)
-									
-													if( isset( $extr['workgroups'] ) && $extr['workgroups'] )
-													{
-														if( $ret = _addToWorkgroups( $res->data->id, $extr['workgroups'], $data, '[ 
-															"PERM_USER_CREATE_GLOBAL", 
-															"PERM_USER_CREATE_IN_WORKGROUP", 
-															"PERM_USER_GLOBAL", 
-															"PERM_USER_WORKGROUP" 
-														]' ) )
-														{
-															if( isset( $ret->result ) && $ret->result == 'fail' )
-															{
-																die( json_encode( $ret ) );
-															}
-															else
-															{
-																if( !isset( $res->debug ) )
-																{
-																	$res->debug = [];
-																}
-												
-																$res->debug['1: Add user to workgroup(s)'] = 'true';
-															}
-														}
-													}
-									
 													// 2: Add extra field
 									
 													if( isset( $extr['mobile'] ) && $extr['mobile'] )
@@ -479,7 +481,7 @@ if( $args->command )
 												$res->debug = [];
 											}
 											
-											$res->debug['1: Add user to workgroup(s)'] = 'true';
+											$res->debug['1: Add user to workgroup(s)'] = $ret;
 										}
 									}
 								}
@@ -829,7 +831,7 @@ function _addToWorkgroups( $userid, $workgroups, $token, $perms )
 	if( $userid > 0 && $workgroups && $token && $perms )
 	{
 		
-		$success = false; $data = []; 
+		$success = []; $data = []; 
 		
 		if( $wgr = explode( ',', $workgroups ) )
 		{
@@ -877,7 +879,7 @@ function _addToWorkgroups( $userid, $workgroups, $token, $perms )
 							}
 							else
 							{
-								$success = true;
+								$success[] = json_encode( [ $data, $res ] );
 							}
 						}
 					}
@@ -888,7 +890,7 @@ function _addToWorkgroups( $userid, $workgroups, $token, $perms )
 			
 			if( $success )
 			{
-				return true;
+				return $success;
 			}
 			
 		}
