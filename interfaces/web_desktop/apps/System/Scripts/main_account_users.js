@@ -10246,7 +10246,7 @@ function _saveUser( uid, callback )
 		var d = ( server && server.data   ? server.data   : {} );
 		
 		if( ShowLog ) console.log( '_saveUser( uid, callback, newuser ) ', { e:e, d:d, args: args, server: server } );
-		
+				
 		if( e == 'ok' )
 		{
 			
@@ -10258,7 +10258,7 @@ function _saveUser( uid, callback )
 			{
 				Notify( { title: i18n( 'i18n_user_updated' ), text: i18n( 'i18n_user_updated_succ' ) } );
 			}
-							
+						
 			if( callback )
 			{
 				return callback( d.id ? d.id : uid );
@@ -10266,7 +10266,7 @@ function _saveUser( uid, callback )
 			else
 			{
 				Sections.accounts_users( 'edit', d.id ? d.id : uid );
-			}	
+			}
 			
 		}
 		else if( d && d.code == 19 && d.response )
@@ -10423,6 +10423,7 @@ function _removeUser( id, callback )
 	if( id )
 	{
 		var m = new Module( 'system' );
+		//m.forceHTTP = true;
 		m.onExecuted = function( server )
 		{
 			

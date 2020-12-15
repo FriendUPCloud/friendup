@@ -328,7 +328,7 @@ if( $args->command )
 																	$res->debug = [];
 																}
 												
-																$res->debug['5: Apply template'] = 'true';
+																$res->debug['5: Apply template'] = $ret;
 															}
 														}
 													}
@@ -547,7 +547,7 @@ if( $args->command )
 												$res->debug = [];
 											}
 											
-											$res->debug['4: Apply template'] = 'true';
+											$res->debug['4: Apply template'] = $ret;
 										}
 									}
 								}
@@ -1212,7 +1212,7 @@ function _saveAvatar( $userid, $base64 )
 
 function _applySetup( $userid, $id )
 {
-	global $SqlDatabase;
+	global $Config, $SqlDatabase;	
 	
 	// TODO: Find out what is going to be the main module call / fc call for first login and use a module or library class to call, like doors.
 	
@@ -1232,6 +1232,7 @@ function _applySetup( $userid, $id )
 				AND s.UserID = g.ID 
 		' ) )
 		{
+			$debug = [];
 			
 			$users = array( $userid );
 			
@@ -1259,6 +1260,8 @@ function _applySetup( $userid, $id )
 			{
 				foreach( $users as $uid )
 				{
+					$debug[$uid] = new stdClass();
+					
 					// Make sure the user exists!
 					$theUser = new dbIO( 'FUser' );
 					$theUser->load( $uid );
@@ -1280,6 +1283,8 @@ function _applySetup( $userid, $id )
 							$lang->Load();
 							$lang->Data = $ug->Data->language;
 							$lang->Save();
+							
+							$debug[$uid]->language = ( $lang->ID > 0 ? $lang->Data : false );
 						}
 		
 						// Wallpaper -----------------------------------------------
@@ -1287,13 +1292,17 @@ function _applySetup( $userid, $id )
 					
 						if( $wallpaper )
 						{
+							$debug[$uid]->wallpaper = new stdClass();
+							
 							$fnam = $wallpaper->ValueString;
 							$fnam = explode( '/', $fnam );
 							$fnam = end( $fnam );
 							$ext  = explode( '.', $fnam );
 							$fnam = $ext[0];
 							$ext  = $ext[1];
-						
+							
+							$debug[$uid]->wallpaper->filename = $wallpaper->ValueString;
+							
 							$f = new dbIO( 'Filesystem' );
 							$f->UserID = $uid;
 							$f->Name   = 'Home';
@@ -1351,21 +1360,24 @@ function _applySetup( $userid, $id )
 								{
 									$fnam = ( $fnam . rand( 0, 999999 ) );
 								}
-							
+								
+								
+								
 								if( $fp = fopen( $Config->FCUpload . $uname . '/' . $fnam . '.' . $ext, 'w+' ) )
 								{
 									fwrite( $fp, $wallpaperContent );
 									fclose( $fp );
-								
-								
-								
+									
+									$debug[$uid]->wallpaper->diskfilename = ( $uname . '/' . $fnam . '.' . $ext );
+									$debug[$uid]->wallpaper->content = ( $wallpaperContent ? true : false );
+									
 									$fi->DiskFilename = ( $uname . '/' . $fnam . '.' . $ext );
 									$fi->Filesize = filesize( $wallpaper->ValueString );
 									$fi->DateCreated = date( 'Y-m-d H:i:s' );
 									$fi->DateModified = $fi->DateCreated;
 									$fi->Save();
 								
-								
+									$debug[$uid]->wallpaper->id = ( $fi->ID > 0 ? $fi->ID : false );
 								
 									// Set the wallpaper in config
 									$s = new dbIO( 'FSetting' );
@@ -1376,7 +1388,7 @@ function _applySetup( $userid, $id )
 									$s->Data = '"Home:Wallpaper/' . $fi->Filename . '"';
 									$s->Save();
 								
-								
+									$debug[$uid]->wallpaper->wallpaperdoors = ( $s->ID > 0 ? $s->Data : false );
 								
 									// Fill Wallpaper app with settings and set default wallpaper
 									$wp = new dbIO( 'FSetting' );
@@ -1398,6 +1410,8 @@ function _applySetup( $userid, $id )
 													$wp->Data = stripslashes( '"' . $data . '"' );
 													$wp->Save();
 												}
+												
+												$debug[$uid]->wallpaper->imagesdoors = ( $wp->ID > 0 ? $wp->Data : false );
 											}
 										}
 									}
@@ -1421,6 +1435,8 @@ function _applySetup( $userid, $id )
 							$star->Load();
 							$star->Data = ( $ug->Data->startups ? json_encode( $ug->Data->startups ) : '[]' );
 							$star->Save();
+							
+							$debug[$uid]->startup = ( $star->ID > 0 ? $star->Data : false );
 						}
 		
 						// Theme -------------------------------------------------------------------------------------------
@@ -1436,6 +1452,8 @@ function _applySetup( $userid, $id )
 							$them->Load();
 							$them->Data = $ug->Data->theme;
 							$them->Save();
+							
+							$debug[$uid]->theme = ( $them->ID > 0 ? $them->Data : false );
 						}
 					
 						if( $ug->Data->themeconfig && $ug->Data->theme )
@@ -1449,6 +1467,8 @@ function _applySetup( $userid, $id )
 							$them->Load();
 							$them->Data = json_encode( $ug->Data->themeconfig );
 							$them->Save(); 
+							
+							$debug[$uid]->themedata = ( $them->ID > 0 ? $them->Data : false );
 						}
 					
 						if( $ug->Data->workspacecount )
@@ -1462,6 +1482,8 @@ function _applySetup( $userid, $id )
 							$them->Load();
 							$them->Data = $ug->Data->workspacecount;
 							$them->Save(); 
+							
+							$debug[$uid]->workspacecount = ( $them->ID > 0 ? $them->Data : false );
 						}
 					
 						// Software ----------------------------------------------------------------------------------------
@@ -1614,9 +1636,46 @@ function _applySetup( $userid, $id )
 					}
 				}
 			}
-		
-			return ( $ug->Data ? json_encode( $ug->Data ) : 'false' );
+			
+			return ( $ug->Data ? json_encode( [ $ug->Data, $debug ] ) : 'false' );
 		}
+	}
+	else if( $userid > 0 && ( !$id || $id == 0 ) )
+	{
+		
+		$users = array( $userid );	
+	
+		if( $users )
+		{
+			foreach( $users as $uid )
+			{
+				if( $uid )
+				{
+					if( $dels = $SqlDatabase->FetchObjects( $q = '
+						SELECT 
+							g.* 
+						FROM 
+							`FUserGroup` g, 
+							`FUserToGroup` ug 
+						WHERE 
+								g.Type = "Setup" 
+							AND ug.UserGroupID = g.ID 
+							AND ug.UserID = \'' . $uid . '\' 
+						ORDER BY 
+							g.ID ASC 
+					' ) )
+					{
+						foreach( $dels as $del )
+						{
+							$SqlDatabase->Query( 'DELETE FROM FUserToGroup WHERE UserID = \'' . $uid . '\' AND UserGroupID = \'' . $del->ID . '\'' );
+						}
+					}
+				}
+			}
+			
+			return '[]';
+		}
+		
 	}
 	
 	return false;
