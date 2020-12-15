@@ -36,7 +36,7 @@ FUI.View.prototype.onPropertySet = function( property, value, callback )
 }
 
 
-FUI.View.prototype.onMethod = function( method, value, callback )
+FUI.View.prototype.onMethodCalled = function( method, value, callback )
 {
 	if( this[ 'method' + method ] )
 	{

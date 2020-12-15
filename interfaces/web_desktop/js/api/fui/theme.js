@@ -57,7 +57,9 @@ FUI.theme = {
 	},
 	icons: {
 		'Bookmark': 'IconSmall fa-bookmark',
-		'Plus':     'IconSmall fa-plus'
+		'Plus':     'IconSmall fa-plus',
+		'Video':    'IconSmall fa-video',
+		'Calendar': 'IconSmall fa-calendar'
 	}
 };
 

@@ -18,6 +18,8 @@ FUI.TabList = function( object )
 
 FUI.TabList.prototype = new FUI.BaseClass();
 
+( function(){
+
 // Default methods -------------------------------------------------------------
 
 FUI.TabList.prototype.onPropertySet = function( property, value, callback )
@@ -28,9 +30,52 @@ FUI.TabList.prototype.onPropertySet = function( property, value, callback )
 			this.flags.text = value;
 			this.refresh();
 			break;
+		case 'tabs':
+			this.doMethod( 'setTabs', value, callback );
+			break;
 	}
 	return;
 }
+
+FUI.TabList.prototype.onMethodCalled = function( method, value, callback )
+{
+	let o = {};
+
+	if( Private[ method ] )
+	{
+		Private[ method ]( value, callback, this );
+	}
+	if( callback )
+		return callback( false );	
+	return false;
+}
+
+// Private methods -------------------------------------------------------------
+
+let Private = {
+	
+	// Set tab rows
+	setTabs: function( v, cbk, self )
+	{	
+		self.flags.rows = v;
+		
+		self.clear = true;
+		
+		self.refresh();
+
+		// Just say we're not ok
+		if( cbk )
+			cbk( false );
+	},
+	// Clear all tab rows
+	clearTabs: function( v, cbk, self )
+	{
+		if( cbk )
+			cbk( false );
+	}
+};
+
+} )();
 
 // Renderers -------------------------------------------------------------------
 
@@ -54,6 +99,7 @@ FUI.TabList.Renderers.html5.prototype.refresh = function( pnode )
 	let self = this;
 	
 	if( !pnode && !self.TabList.parentNode ) return;
+	
 	if( !pnode )  pnode = self.TabList.parentNode;
 	this.TabList.parentNode = pnode;
 	
@@ -86,6 +132,12 @@ FUI.TabList.Renderers.html5.prototype.refresh = function( pnode )
 	
 	if( this.TabList.flags.rows )
 	{
+		if( this.TabList.clear )
+		{
+			d.innerHTML = '';
+			delete this.TabList.clear;
+		}
+	
 		let rows = this.TabList.flags.rows;
 		for( let a = 0; a < rows.length; a++ )
 		{

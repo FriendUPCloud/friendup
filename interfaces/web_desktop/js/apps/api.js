@@ -886,6 +886,7 @@ function receiveEvent( event, queued )
 	switch( dataPacket.command )
 	{	
 		case 'fui':
+			// Set GUI structure
 			if( dataPacket.fuiCommand == 'setgui' )
 			{
 				let nMsg = dataPacket;
@@ -895,6 +896,50 @@ function receiveEvent( event, queued )
 					Application.sendMessage( nMsg );
 				} );
 			}
+			else if( dataPacket.fuiCommand == 'refresh' )
+			{
+				if( FUI.objectIndex )
+				{
+					// Try to find object with async retries
+					let retries = 2;
+					function retry()
+					{
+						for( let c in FUI.objectIndex )
+						{
+							let o = FUI.objectIndex[ c ];
+							if( o && o.flags && o.flags.id == dataPacket.id )
+							{
+								let nMsg = {
+									callback: dataPacket.callback,
+									response: false
+								};
+								dataPacket.callback = null;
+								o.refresh( null, function( data )
+								{
+									nMsg.response = data;
+									Application.sendMessage( nMsg );
+								} );								
+								return;
+							}
+						}
+						// Do some retries
+						if( retries-- > 0 )
+							setTimeout( retry, 50 );
+					}
+					retry();
+					return;
+				}
+				// Try to send through the children
+				for( let c = 0; c < FUI.children.length; c++ )
+				{
+					if( FUI.children[ c ].sendMessage )
+					{
+						FUI.children[ c ].sendMessage( msg );
+					}
+				}
+				return;
+			}
+			// Set properties
 			else if( dataPacket.fuiCommand == 'setproperty' )
 			{
 				if( FUI.objectIndex )
@@ -938,6 +983,7 @@ function receiveEvent( event, queued )
 				}
 				return;
 			}
+			// Add events
 			else if( dataPacket.fuiCommand == 'setevent' )
 			{
 				if( FUI.objectIndex )
@@ -957,6 +1003,50 @@ function receiveEvent( event, queued )
 								};
 								dataPacket.callback = null;
 								o.addEvent( dataPacket.event, function( data )
+								{
+									nMsg.response = data;
+									Application.sendMessage( nMsg );
+								} );								
+								return;
+							}
+						}
+						// Do some retries
+						if( retries-- > 0 )
+							setTimeout( retry, 50 );
+					}
+					retry();
+					return;
+				}
+				// Try to send through the children
+				for( let c = 0; c < FUI.children.length; c++ )
+				{
+					if( FUI.children[ c ].sendMessage )
+					{
+						FUI.children[ c ].sendMessage( msg );
+					}
+				}
+				return;
+			}
+			// Execute methods
+			else if( dataPacket.fuiCommand == 'domethod' )
+			{
+				if( FUI.objectIndex )
+				{
+					// Try to find object with async retries
+					let retries = 2;
+					function retry()
+					{
+						for( let c in FUI.objectIndex )
+						{
+							let o = FUI.objectIndex[ c ];
+							if( o && o.flags && o.flags.id == dataPacket.id )
+							{
+								let nMsg = {
+									callback: dataPacket.callback,
+									response: false
+								};
+								dataPacket.callback = null;
+								o.doMethod( dataPacket.method, dataPacket.args, function( data )
 								{
 									nMsg.response = data;
 									Application.sendMessage( nMsg );

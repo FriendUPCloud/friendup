@@ -15,6 +15,12 @@ FUI.children = [];
 FUI.objectIndex = {};
 FUI.initialized = false;
 
+FUI.def = {
+	scopeLocal: 1,
+	scopeRemote: 2,
+	scopeFriendNetwork: 3
+};
+
 FUI.initialize = function( flags, callback )
 {
 	let self = this;
@@ -126,6 +132,22 @@ FUI.refresh = function( element )
 	}
 }
 
+FUI.setMessageTarget = function( element, message )
+{
+	if( element.identity == 'viewId' )
+	{
+		message.targetViewId = element.identityValue;
+	}
+	else if( this.identity == 'screenId' )
+	{
+		message.screenId = element.identityValue;
+	}
+	else if( this.identity == 'widgetId' )
+	{
+		message.widgetId = element.identityValue;
+	}
+}
+
 // Load theme by name
 FUI.loadTheme = function( name )
 {
@@ -145,13 +167,52 @@ FUI.BaseClass.prototype.initialize = function( className )
 	self.renderer = new FUI[ className ].Renderers[ FUI.flags.renderer ]( self );
 }
 
-FUI.BaseClass.prototype.refresh = function( pnode )
+// Check object instance scope
+FUI.BaseClass.prototype.getScope = function()
 {
-	if( !this.renderer || !this.renderer.refresh )
+	// We are at a local scope non root
+	if( this.identity != 'rootId' && !this.identityValue && this[ this.identity ] == Application[ this.identity ] )
+		return FUI.def.scopeLocal;
+	// We are at a root local scope
+	if( this.identity == 'rootId' )
+		return FUI.def.scopeLocal;
+	// We have a remote (iframe?) scope
+	if( this.identity && this.identityValue )
+		return FUI.def.scopeRemote;
+	return false;
+}
+
+// Refresh GUI object
+FUI.BaseClass.prototype.refresh = function( pnode, callback )
+{
+	let scope = this.getScope();
+	
+	if( scope == FUI.def.scopeLocal )
 	{
-		return false;
+		if( !this.renderer || !this.renderer.refresh )
+		{
+			if( callback ) callback( false );
+			return false;
+		}
+		
+		let res = this.renderer.refresh( pnode );
+
+		if( callback ) callback( true );
+		return res;
 	}
-	return this.renderer.refresh( pnode );
+	else if( scope == FUI.def.scopeRemote )
+	{
+		let msg = {
+			command: 'fui',
+			fuiCommand: 'refresh',
+			id: this.id,
+			callback: addCallback( callback )
+		};
+		FUI.setMessageTarget( this, msg );
+		Application.sendMessage( msg );
+		return [ type, msg.callback ];
+	}
+	return false;
 }
 
 // Add an event
@@ -159,18 +220,15 @@ FUI.BaseClass.prototype.addEvent = function( type, callback )
 {
 	let self = this;
 	
+	let scope = this.getScope();
+	
 	// We are on the right scope (in a view, widget or screen)
-	if( this.identity != 'rootId' && !this.identityValue && this[ this.identity ] == Application[ this.identity ] )
+	if( scope == FUI.def.scopeLocal )
 	{
 		return setProperty();
 	}
-	// At root
-	else if( this.identity == 'rootId' )
-	{
-		return setProperty();
-	}
-	// In a proxy object (has identity value set
-	else if( this.identity && this.identityValue )
+	// In a proxy object (has identity value set)
+	else if( scope == FUI.def.scopeRemote )
 	{
 		let msg = {
 			command: 'fui',
@@ -179,18 +237,7 @@ FUI.BaseClass.prototype.addEvent = function( type, callback )
 			event: type,
 			callback: addPermanentCallback( callback )
 		};
-		if( this.identity == 'viewId' )
-		{
-			msg.targetViewId = this.identityValue;
-		}
-		else if( this.identity == 'screenId' )
-		{
-			msg.screenId = this.identityValue;
-		}
-		else if( this.identity == 'widgetId' )
-		{
-			msg.widgetId = this.identityValue;
-		}
+		FUI.setMessageTarget( this, msg );
 		Application.sendMessage( msg );
 		return [ type, callback ];
 	}
@@ -252,16 +299,10 @@ FUI.BaseClass.prototype.setProperty = function( propertyName, value, callback )
 	let self = this;
 	this.properties[ propertyName ] = value;
 	
+	let scope = this.getScope();
+	
 	// We are on the right scope (in a view, widget or screen)
-	if( this.identity != 'rootId' && !this.identityValue && this[ this.identity ] == Application[ this.identity ] )
-	{
-		if( this.onPropertySet )
-		{
-			this.onPropertySet( propertyName, value, callback );
-		}
-	}
-	// At root
-	else if( this.identity == 'rootId' )
+	if( scope == FUI.def.scopeLocal )
 	{
 		if( this.onPropertySet )
 		{
@@ -269,7 +310,7 @@ FUI.BaseClass.prototype.setProperty = function( propertyName, value, callback )
 		}
 	}
 	// In a proxy object (has identity value set
-	else if( this.identity && this.identityValue )
+	else if( scope == FUI.def.scopeRemote )
 	{
 		let msg = {
 			command: 'fui',
@@ -279,18 +320,7 @@ FUI.BaseClass.prototype.setProperty = function( propertyName, value, callback )
 			value: value,
 			callback: addCallback( callback )
 		};
-		if( this.identity == 'viewId' )
-		{
-			msg.targetViewId = this.identityValue;
-		}
-		else if( this.identity == 'screenId' )
-		{
-			msg.screenId = this.identityValue;
-		}
-		else if( this.identity == 'widgetId' )
-		{
-			msg.widgetId = this.identityValue;
-		}
+		FUI.setMessageTarget( this, msg );
 		Application.sendMessage( msg );
 	}
 	return;
@@ -308,20 +338,30 @@ FUI.BaseClass.prototype.getProperty = function ( propertyName )
 FUI.BaseClass.prototype.doMethod = function( method, args, callback )
 {
 	let self = this;
-	if( this.identity )
+	
+	let scope = this.getScope();
+	
+	// We are on the right scope (in a view, widget or screen)
+	if( scope == FUI.def.scopeLocal )
 	{
-		if( this.onMethod )
-			this.onMethod( method, args, callback );
+		if( this.onMethodCalled )
+		{
+			this.onMethodCalled( method, args, callback );
+		}
 	}
-	else
+	// At root
+	else if( scope == FUI.def.scopeRemote )
 	{
-		this.sendMessage( {
+		let msg = {
 			command: 'fui',
 			fuiCommand: 'domethod',
+			id: this.id,
 			method: method,
 			args: args,
 			callback: addCallback( callback )
-		} );
+		};
+		FUI.setMessageTarget( this, msg );
+		Application.sendMessage( msg );
 	}
 	return;
 }
@@ -374,27 +414,7 @@ FUI.BaseClass.prototype.sendMessage = function( msg, callback )
 		msg.command = 'fui';
 		if( callback )
 			msg.callback = addCallback( callback );
-		
-		/*if( this.identity )
-		{
-			if( this.identity == 'viewId' )
-			{
-				msg.targetViewId = this.viewId;
-			}
-			// TODO: check if this works
-			else if( this.idendity == 'screenId' )
-			{
-				msg.screenId = this.screenId;
-			}
-			// TODO: check if it works
-			else if( this.identity == 'widgetId' )
-			{
-				msg.widgetId = this.widgetId;
-			}
-			Application.sendMessage( msg );
-			console.log( 'Sending away!', this );
-			return;
-		}*/
+
 		this.messagePort.sendMessage( msg );
 		return true;
 	}
