@@ -193,6 +193,21 @@ if( $args->command )
 									
 									$data['id'] = $res->data->id;
 									
+									if( trim( $data['password'] ) )
+									{
+										
+										if( !strstr( $data['password'], 'HASHED' ) )
+										{
+											$data['password'] = ( 'HASHED' . hash( 'sha256', $data['password'] ) );
+										}
+										
+										if( !strstr( $data['password'], '{S6}' ) )
+										{
+											$data['password'] = ( '{S6}' . hash( 'sha256', $data['password'] ) );
+										}
+										
+									}
+									
 									if( $res2 = _fcquery( '/system.library/user/update', $data ) )
 									{
 										if( is_object( $res2 ) )
@@ -398,6 +413,21 @@ if( $args->command )
 				if( !isset( $data['setup'] ) )
 				{
 					$data['setup'] = '0';
+				}
+				
+				if( trim( $data['password'] ) )
+				{
+					
+					if( !strstr( $data['password'], 'HASHED' ) )
+					{
+						$data['password'] = ( 'HASHED' . hash( 'sha256', $data['password'] ) );
+					}
+					
+					if( !strstr( $data['password'], '{S6}' ) )
+					{
+						$data['password'] = ( '{S6}' . hash( 'sha256', $data['password'] ) );
+					}
+					
 				}
 				
 				// Specific for Pawel's code ... He just wants to forward json ...
