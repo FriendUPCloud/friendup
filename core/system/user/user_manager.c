@@ -1042,8 +1042,8 @@ int UMAddUser( UserManager *um,  User *usr )
  */
 int UMRemoveUser(UserManager *um, User *usr, UserSessionManager *user_session_manager)
 {
-	User *user_current = um->um_Users; //current element of the linked list, set to the beginning of the list
-	User *user_previous = NULL; //previous element of the linked list
+	User *userCurrent = NULL; //current element of the linked list, set to the beginning of the list
+	User *userPrevious = NULL; //previous element of the linked list
 
 	FULONG user_id = usr->u_ID;
 
@@ -1057,31 +1057,36 @@ int UMRemoveUser(UserManager *um, User *usr, UserSessionManager *user_session_ma
     unsigned int n = 0;
     bool found = false;
 	
-	while( user_current != NULL )
+	if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
 	{
-		if( user_current == usr )
+		userCurrent = um->um_Users;
+		while( userCurrent != NULL )
 		{
-			DEBUG("%s removing user at %p, place in list %d\n", __func__, user_current, n);
-			found = true;
-			n++;
-			break;
+			if( userCurrent == usr )
+			{
+				DEBUG("%s removing user at %p, place in list %d\n", __func__, userCurrent, n);
+				found = true;
+				n++;
+				break;
+			}
+			userPrevious = userCurrent;
+			userCurrent = (User *)userCurrent->node.mln_Succ; //this is the next element in the linked list
 		}
-		user_previous = user_current;
-		user_current = (User *)user_current->node.mln_Succ; //this is the next element in the linked list
+		FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
 	}
 	
 	if( found )
 	{ //the requested user has been found in the list
-		if( user_previous )
+		if( userPrevious )
 		{ //we are in the middle or at the end of the list
 			DEBUG("Deleting from the middle or end of the list\n");
-			user_previous->node.mln_Succ = user_current->node.mln_Succ;
+			userPrevious->node.mln_Succ = userCurrent->node.mln_Succ;
 		}
 		else
 		{ //we are at the very beginning of the list
-			um->um_Users = (User *)user_current->node.mln_Succ; //set the global start pointer of the list
+			um->um_Users = (User *)userCurrent->node.mln_Succ; //set the global start pointer of the list
 		}
-		UserDelete(user_current);
+		UserDelete( userCurrent );
 		
 		return 0;
 	}
