@@ -10,40 +10,40 @@
 
 /* Button class ------------------------------------------------------------- */
 
-FUI.Input = function( object )
+FUI.Page = function( object )
 {
 	this.initialize( 'Input' );
 	
 	this.flags = object;
 }
 
-FUI.Input.prototype = new FUI.BaseClass();
+FUI.Page.prototype = new FUI.BaseClass();
 
 // Renderers -------------------------------------------------------------------
 
-FUI.Input.Renderers = {};
+FUI.Page.Renderers = {};
 
 // "Signal Renderer"
 
-FUI.Input.Renderers.signal = function()
+FUI.Page.Renderers.signal = function()
 {
 }
 
 // HTML5 Renderer
 
-FUI.Input.Renderers.html5 = function( inputObject )
+FUI.Page.Renderers.html5 = function( pageObject )
 {
-	this.inputObject = inputObject;
+	this.pageObject = pageObject;
 	this.domNodes = [];
 }
-FUI.Input.Renderers.html5.prototype.refresh = function( pnode )
+FUI.Page.Renderers.html5.prototype.refresh = function( pnode )
 {
 	let self = this;
 	
 	if( !pnode && !self.grid.parentNode ) return;
 	if( !pnode )  pnode = self.grid.parentNode;
 	
-	if( !this.inputObject.domNode )
+	if( !this.pageObject.domNode )
 	{
 		let m = document.createElement( 'div' );
 		m.style.position = 'absolute';
@@ -76,7 +76,7 @@ FUI.Input.Renderers.html5.prototype.refresh = function( pnode )
 		m.appendChild( d );
 		m.input = d;
 		
-		if( this.inputObject.flags.icon )
+		if( this.pageObject.flags.icon )
 		{
 			
 		}
@@ -84,15 +84,15 @@ FUI.Input.Renderers.html5.prototype.refresh = function( pnode )
 		{
 		}
 		
-		this.inputObject.domNode = m;
+		this.pageObject.domNode = m;
 		pnode.appendChild( m );
 	}
 	
-	let d = this.inputObject.domNode;
+	let d = this.pageObject.domNode;
 	
-	if( this.inputObject.flags.placeholder )
+	if( this.pageObject.flags.placeholder )
 	{
-		d.input.setAttribute( 'placeholder', this.inputObject.flags.placeholder );
+		d.input.setAttribute( 'placeholder', this.pageObject.flags.placeholder );
 	}
 }
 
