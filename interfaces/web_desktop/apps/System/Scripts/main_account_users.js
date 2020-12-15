@@ -10258,59 +10258,15 @@ function _saveUser( uid, callback )
 			{
 				Notify( { title: i18n( 'i18n_user_updated' ), text: i18n( 'i18n_user_updated_succ' ) } );
 			}
-			
-			/*// Save avatar image
-			
-			function saveAvatar( callback )
+							
+			if( callback )
 			{
-				var canvas = ge( 'AdminAvatar' );
-				if( canvas )
-				{
-					var base64 = 0;
-					
-					try
-					{
-						base64 = canvas.toDataURL();
-					}
-					catch( e ) {  }
-					
-					if( base64 && base64.length > 3000 )
-					{
-						var ma = new Module( 'system' );
-						ma.forceHTTP = true;
-						ma.onExecuted = function( e, d )
-						{
-							if( e != 'ok' )
-							{
-								if( ShowLog ) console.log( 'Avatar saving failed.' );
-						
-								if( callback ) callback( false );
-							}
-					
-							if( callback ) callback( true );
-						};
-						ma.execute( 'setsetting', { userid: uid, setting: 'avatar', data: base64, authid: Application.authId } );
-					}
-					else
-					{
-						if( callback ) callback( false );
-					}
-				}
+				return callback( d.id ? d.id : uid );
 			}
-			
-			saveAvatar( function (  )
-			{*/
-				
-				if( callback )
-				{
-					return callback( d.id ? d.id : uid );
-				}
-				else
-				{
-					Sections.accounts_users( 'edit', d.id ? d.id : uid );
-				}
-				
-			/*} );*/
+			else
+			{
+				Sections.accounts_users( 'edit', d.id ? d.id : uid );
+			}	
 			
 		}
 		else if( d && d.code == 19 && d.response )

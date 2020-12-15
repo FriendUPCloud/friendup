@@ -88,6 +88,9 @@ if( isset( $args->args->workgroups ) )
 }
 if( isset( $args->args->setup ) )
 {
+	// TODO: Look into why we need to add this to Friend Core ..
+	
+	$data['setup'] = trim( $args->args->setup );
 	$extr['setup'] = trim( $args->args->setup );
 	
 	// TODO: Add check if it's correct format if not return back ...
@@ -102,8 +105,6 @@ if( $args->command )
 	{
 
 		case 'user/create':
-			
-			// TODO: Add permission check ...
 			
 			// 0: Create user ... 
 			
@@ -152,6 +153,13 @@ if( $args->command )
 					$data['level'] = 'User';
 				}
 				
+				// TODO: Find out why it's needed?
+				
+				if( !isset( $data['setup'] ) )
+				{
+					$data['setup'] = '0';
+				}
+				
 				// TODO: Should be a check if the user that is creating this new user has access to add users to defined workgroup(s) before saving ... 
 				
 				// TODO: It's required to add user with a workgroup if the user adding is not Admin and have rolepermissions ...
@@ -181,139 +189,163 @@ if( $args->command )
 								if( isset( $res->data->id ) && $res->data->id )
 								{
 									
-									// 1: Add user to workgroup(s)
+									// TODO: Look into why you need to run user/update after user/create to create a user in Friend Core ...
 									
-									if( isset( $extr['workgroups'] ) && $extr['workgroups'] )
+									$data['id'] = $res->data->id;
+									
+									if( $res2 = _fcquery( '/system.library/user/update', $data ) )
 									{
-										if( $ret = _addToWorkgroups( $res->data->id, $extr['workgroups'], $data, '[ 
-											"PERM_USER_CREATE_GLOBAL", 
-											"PERM_USER_CREATE_IN_WORKGROUP", 
-											"PERM_USER_GLOBAL", 
-											"PERM_USER_WORKGROUP" 
-										]' ) )
+										if( is_object( $res2 ) )
 										{
-											if( isset( $ret->result ) && $ret->result == 'fail' )
+											if( isset( $res2->result ) && $res2->result == 'ok' )
 											{
-												die( json_encode( $ret ) );
-											}
-											else
-											{
-												if( !isset( $res->debug ) )
+												if( isset( $res2->data->update ) && $res2->data->update )
 												{
-													$res->debug = [];
-												}
+													
+													
+													
+													// 1: Add user to workgroup(s)
+									
+													if( isset( $extr['workgroups'] ) && $extr['workgroups'] )
+													{
+														if( $ret = _addToWorkgroups( $res->data->id, $extr['workgroups'], $data, '[ 
+															"PERM_USER_CREATE_GLOBAL", 
+															"PERM_USER_CREATE_IN_WORKGROUP", 
+															"PERM_USER_GLOBAL", 
+															"PERM_USER_WORKGROUP" 
+														]' ) )
+														{
+															if( isset( $ret->result ) && $ret->result == 'fail' )
+															{
+																die( json_encode( $ret ) );
+															}
+															else
+															{
+																if( !isset( $res->debug ) )
+																{
+																	$res->debug = [];
+																}
 												
-												$res->debug['1: Add user to workgroup(s)'] = 'true';
-											}
-										}
-									}
+																$res->debug['1: Add user to workgroup(s)'] = 'true';
+															}
+														}
+													}
 									
-									// 2: Add extra field
+													// 2: Add extra field
 									
-									if( isset( $extr['mobile'] ) && $extr['mobile'] )
-									{
-										if( $ret = _addExtraFields( $res->data->id, [ 'Mobile' => $extr['mobile'] ] ) )
-										{
-											if( isset( $ret->result ) && $ret->result == 'fail' )
-											{
-												die( json_encode( $ret ) );
-											}
-											else
-											{
-												if( !isset( $res->debug ) )
-												{
-													$res->debug = [];
-												}
+													if( isset( $extr['mobile'] ) && $extr['mobile'] )
+													{
+														if( $ret = _addExtraFields( $res->data->id, [ 'Mobile' => $extr['mobile'] ] ) )
+														{
+															if( isset( $ret->result ) && $ret->result == 'fail' )
+															{
+																die( json_encode( $ret ) );
+															}
+															else
+															{
+																if( !isset( $res->debug ) )
+																{
+																	$res->debug = [];
+																}
 												
-												$res->debug['2: Add extra field'] = 'true';
-											}
-										}
-									}
+																$res->debug['2: Add extra field'] = 'true';
+															}
+														}
+													}
 									
-									// 3: First login
+													// 3: First login
 									
-									if( $ret = _firstLogin( $res->data->id ) )
-									{
-										if( isset( $ret->result ) && $ret->result == 'fail' )
-										{
-											die( json_encode( $ret ) );
-										}
-										else
-										{
-											if( !isset( $res->debug ) )
-											{
-												$res->debug = [];
-											}
+													if( $ret = _firstLogin( $res->data->id ) )
+													{
+														if( isset( $ret->result ) && $ret->result == 'fail' )
+														{
+															die( json_encode( $ret ) );
+														}
+														else
+														{
+															if( !isset( $res->debug ) )
+															{
+																$res->debug = [];
+															}
 											
-											$res->debug['3: First login'] = 'true';
-										}
-									}
+															$res->debug['3: First login'] = 'true';
+														}
+													}
 									
-									// 4: Save avatar image
+													// 4: Save avatar image
 									
-									if( isset( $extr['avatar'] ) && $extr['avatar'] )
-									{
-										if( $ret = _saveAvatar( $res->data->id, $extr['avatar'] ) )
-										{
-											if( isset( $ret->result ) && $ret->result == 'fail' )
-											{
-												die( json_encode( $ret ) );
-											}
-											else
-											{
-												if( !isset( $res->debug ) )
-												{
-													$res->debug = [];
-												}
+													if( isset( $extr['avatar'] ) && $extr['avatar'] )
+													{
+														if( $ret = _saveAvatar( $res->data->id, $extr['avatar'] ) )
+														{
+															if( isset( $ret->result ) && $ret->result == 'fail' )
+															{
+																die( json_encode( $ret ) );
+															}
+															else
+															{
+																if( !isset( $res->debug ) )
+																{
+																	$res->debug = [];
+																}
 												
-												$res->debug['4: Save avatar image'] = 'true';
-											}
-										}
-									}
+																$res->debug['4: Save avatar image'] = 'true';
+															}
+														}
+													}
 									
-									// 5: Apply template
+													// 5: Apply template
 									
-									if( isset( $extr['setup'] ) && $extr['setup'] )
-									{
-										if( $ret = _applySetup( $res->data->id, $extr['setup'] ) )
-										{
-											if( isset( $ret->result ) && $ret->result == 'fail' )
-											{
-												die( json_encode( $ret ) );
-											}
-											else
-											{
-												if( !isset( $res->debug ) )
-												{
-													$res->debug = [];
-												}
+													if( isset( $extr['setup'] ) && $extr['setup'] )
+													{
+														if( $ret = _applySetup( $res->data->id, $extr['setup'] ) )
+														{
+															if( isset( $ret->result ) && $ret->result == 'fail' )
+															{
+																die( json_encode( $ret ) );
+															}
+															else
+															{
+																if( !isset( $res->debug ) )
+																{
+																	$res->debug = [];
+																}
 												
-												$res->debug['5: Apply template'] = 'true';
-											}
-										}
-									}
+																$res->debug['5: Apply template'] = 'true';
+															}
+														}
+													}
 									
-									// 6: Save language setting
+													// 6: Save language setting
 									
-									if( isset( $extr['language'] ) && $extr['language'] )
-									{
-										if( $ret = _updateLanguages( $res->data->id, $extr['language'] ) )
-										{
-											if( isset( $ret->result ) && $ret->result == 'fail' )
-											{
-												die( json_encode( $ret ) );
-											}
-											else
-											{
-												if( !isset( $res->debug ) )
-												{
-													$res->debug = [];
-												}
+													if( isset( $extr['language'] ) && $extr['language'] )
+													{
+														if( $ret = _updateLanguages( $res->data->id, $extr['language'] ) )
+														{
+															if( isset( $ret->result ) && $ret->result == 'fail' )
+															{
+																die( json_encode( $ret ) );
+															}
+															else
+															{
+																if( !isset( $res->debug ) )
+																{
+																	$res->debug = [];
+																}
 												
-												$res->debug['6: Save language setting'] = 'true';
+																$res->debug['6: Save language setting'] = 'true';
+															}
+														}
+													}
+													
+													
+													
+												} 
 											}
 										}
 									}
+									
+									
 									
 								}
 							}
@@ -334,8 +366,6 @@ if( $args->command )
 			break;
 
 		case 'user/update':
-			
-			// TODO: Add permission check ...
 			
 			// 0: Update user ... 
 			
@@ -361,6 +391,13 @@ if( $args->command )
 						// Permission granted.
 						
 					}
+				}
+				
+				// TODO: Find out why it's needed?
+				
+				if( !isset( $data['setup'] ) )
+				{
+					$data['setup'] = '0';
 				}
 				
 				// Specific for Pawel's code ... He just wants to forward json ...
@@ -524,8 +561,6 @@ if( $args->command )
 			break;
 			
 		case 'user/delete':
-			
-			// TODO: Add permission check ...
 			
 			// 0: Delete user ...
 			
