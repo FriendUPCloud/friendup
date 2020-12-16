@@ -1047,11 +1047,11 @@ int UMRemoveUser(UserManager *um, User *usr, UserSessionManager *user_session_ma
 
 	FULONG user_id = usr->u_ID;
 
-	UserSession *session_to_delete;
-    while( ( session_to_delete = USMGetSessionByUserID( user_session_manager, user_id ) ) != NULL )
+	UserSession *sessionToDelete;
+    while( ( sessionToDelete = USMGetSessionByUserID( user_session_manager, user_id ) ) != NULL )
 	{
-    	int status = USMUserSessionRemove( user_session_manager, session_to_delete );
-    	DEBUG("%s removing session at %p, status %d\n", __func__, session_to_delete, status);
+    	int status = USMUserSessionRemove( user_session_manager, sessionToDelete );
+    	DEBUG("%s removing session at %p, status %d\n", __func__, sessionToDelete, status);
     }
 
     unsigned int n = 0;
