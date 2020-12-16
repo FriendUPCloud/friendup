@@ -1,12 +1,7 @@
 <div class="ContentFull ScrollArea PaddingSize">
 	<div{nevershowed} class="NeverShow MousePointer" onclick="nevershow()">{nevershowagain}</div>
-	<div class="Stage" style="background: url('Progdir:welcome.jpg')">
-		<div class="Social">
-			<a href="https://www.facebook.com/friendupcloud/" target="_blank"><img src="Progdir:Gfx/facebook.png"/></a>
-			<a href="https://twitter.com/friendupcloud" target="_blank"><img src="Progdir:Gfx/twitter.png"/></a>
-			<a href="https://www.youtube.com/channel/UCi_8eeLQt9DKJC0xZQsiIDg/videos?shelf_id=1&view=0&sort=dd" target="_blank"><img src="Progdir:Gfx/youtube.png"/></a>
-			<a href="https://www.linkedin.com/company/friend-software-labs-as" target="_blank"><img src="Progdir:Gfx/linkedin.png"/></a>
-		</div>
+	<div class="Stage" style="background: url('Progdir:christmas.jpg')">
+
 	</div>
 	
 	<div class="TheTabs">
@@ -15,7 +10,7 @@
 			<div class="ThePage PaddingMinor MouseDefault">
 				<div class="TheColumn">
 					<p>
-						<iframe width="100%" height="240" src="https://www.youtube.com/embed/PX-74ooqino" frameborder="0" gesture="media" allow="encrypted-media" allowfullscreen></iframe>
+						<iframe width="100%" height="240" style="border-radius: 3px" src="https://www.youtube.com/embed/HCuPOp1dx9E" frameborder="0" gesture="media" allow="encrypted-media" allowfullscreen></iframe>
 					</p>
 					<p>
 						Welcome to the Friend Workspace! This is your very first 
@@ -31,25 +26,18 @@
 						Access our channels to interact with the community
 					</h2>
 					<div class="AppButtonBar">
-						<div class="AppButton MousePointer" onclick="launch('FriendCommunity')">
+						<div class="AppButton MousePointer" onclick="launch('FriendNexus')">
 							<div class="AppButtonImage Community">
-								<img src="Progdir:Gfx/community.png"/>
+								<img src="/webclient/gfx/friend-nexus.png" width="200" height="auto"/>
 							</div>
 							<div class="AppButtonLabel">
-								Friend Community
+								Friend Nexus
 							</div>
 						</div>
-						<div class="AppButton MousePointer" onclick="launch('FriendDevelopers')">
-							<div class="AppButtonImage Developers">
-								<img src="Progdir:Gfx/developers.jpg"/>
-							</div>
-							<div class="AppButtonLabel">
-								Friend Developers
-							</div>
-						</div>
+						
 						<div class="AppButton MousePointer" onclick="launch('FriendChat')">
 							<div class="AppButtonImage Chat">
-								<img src="Progdir:Gfx/friendchat.png"/>
+								<img src="System:apps/FriendChat/icon.png"/>
 							</div>
 							<div class="AppButtonLabel">
 								Friend Chat
@@ -57,9 +45,36 @@
 						</div>
 					</div>
 					<h2>
-						<a href="https://www.youtube.com/channel/UCi_8eeLQt9DKJC0xZQsiIDg" target="_blank">For videos and updates, check out our Youtube page »</a>
+						Try our productivity applications!
 					</h2>
-					<div id="LastUploads">
+					<div class="AppButtonBar">
+						<div class="AppButton MousePointer" onclick="launch('BassoonTracker')">
+							<div class="AppButtonImage Chat">
+								<img src="/webclient/gfx/bassoon.png" width="200"/>
+							</div>
+							<div class="AppButtonLabel">
+								Bassoon Tracker
+							</div>
+						</div>
+						<div class="AppButton MousePointer" onclick="launch('Photopea')">
+						<div class="AppButtonImage" style="background-image: url('/system.library/module/?module=system&command=getapplicationpreview&application=Photopea&authid={authid}'); background-position: center center; background-size: contain; background-repeat: no-repeat">
+							&nbsp;
+						</div>
+						<div class="AppButtonLabel">
+							Photopea
+						</div>
+					</div>
+					</div>
+					<h2>
+						Follow us!
+					</h2>
+					<div class="Social">
+						<a href="https://www.friend-nexus.com/" target="_blank"><img src="/webclient/gfx/friend-nexus.png" width="52" height="auto"/></a>
+						<a href="https://www.facebook.com/friendupcloud/" target="_blank"><img src="Progdir:Gfx/facebook.png"/></a>
+						<a href="https://twitter.com/friendupcloud" target="_blank"><img src="Progdir:Gfx/twitter.png"/></a>
+						<a href="https://www.youtube.com/channel/UCi_8eeLQt9DKJC0xZQsiIDg/videos?shelf_id=1&view=0&sort=dd" target="_blank"><img src="Progdir:Gfx/youtube.png"/></a>
+						<a href="https://www.linkedin.com/company/friend-software-labs-as" target="_blank"><img src="Progdir:Gfx/linkedin.png"/></a>
+						<br /><br /><a href="https://friendos.com/" target="_blank">Visit our website!</a>
 					</div>
 				</div>
 			</div>
@@ -127,102 +142,6 @@
 					of the icons below to start the game or app.
 				</p>
 				<div class="Fun AppButtonBar">
-					<div class="AppButton MousePointer" onclick="launch('CNESSatellites')">
-						<div class="AppButtonImage" style="background-image: url('/system.library/module/?module=system&command=getapplicationpreview&application=CNESSatellites&authid={authid}'); background-position: center center; background-size: contain; background-repeat: no-repeat">
-							&nbsp;
-						</div>
-						<div class="AppButtonLabel">
-							CNESSatelites
-						</div>
-					</div>
-					<div class="AppButton MousePointer" onclick="launch('CrossWordsArena')">
-						<div class="AppButtonImage" style="background-image: url('/system.library/module/?module=system&command=getapplicationpreview&application=CrossWordsArena&authid={authid}'); background-position: center center; background-size: contain; background-repeat: no-repeat">
-							&nbsp;
-						</div>
-						<div class="AppButtonLabel">
-							Crosswords Arena
-						</div>
-					</div>
-					<div class="AppButton MousePointer" onclick="launch('CubeSlam')">
-						<div class="AppButtonImage" style="background-image: url('/system.library/module/?module=system&command=getapplicationpreview&application=CubeSlam&authid={authid}'); background-position: center center; background-size: contain; background-repeat: no-repeat">
-							&nbsp;
-						</div>
-						<div class="AppButtonLabel">
-							CubeSlam
-						</div>
-					</div>
-					<div class="AppButton MousePointer" onclick="launch('Doom')">
-						<div class="AppButtonImage" style="background-image: url('/system.library/module/?module=system&command=getapplicationpreview&application=Doom&authid={authid}'); background-position: center center; background-size: contain; background-repeat: no-repeat">
-							&nbsp;
-						</div>
-						<div class="AppButtonLabel">
-							Doom
-						</div>
-					</div>
-					<div class="AppButton MousePointer" onclick="launch('GameOfBombs')">
-						<div class="AppButtonImage" style="background-image: url('/system.library/module/?module=system&command=getapplicationpreview&application=GameOfBombs&authid={authid}'); background-position: center center; background-size: contain; background-repeat: no-repeat">
-							&nbsp;
-						</div>
-						<div class="AppButtonLabel">
-							Game Of Bombs
-						</div>
-					</div>
-					<div class="AppButton MousePointer" onclick="launch('GeoGuessr')">
-						<div class="AppButtonImage" style="background-image: url('/system.library/module/?module=system&command=getapplicationpreview&application=GeoGuessr&authid={authid}'); background-position: center center; background-size: contain; background-repeat: no-repeat">
-							&nbsp;
-						</div>
-						<div class="AppButtonLabel">
-							GeoGuessr
-						</div>
-					</div>
-					<div class="AppButton MousePointer" onclick="launch('Instagram')">
-						<div class="AppButtonImage" style="background-image: url('/system.library/module/?module=system&command=getapplicationpreview&application=Instagram&authid={authid}'); background-position: center center; background-size: contain; background-repeat: no-repeat">
-							&nbsp;
-						</div>
-						<div class="AppButtonLabel">
-							Instagram
-						</div>
-					</div>
-					<div class="AppButton MousePointer" onclick="launch('InternetArchive')">
-						<div class="AppButtonImage" style="background-image: url('/system.library/module/?module=system&command=getapplicationpreview&application=InternetArchive&authid={authid}'); background-position: center center; background-size: contain; background-repeat: no-repeat">
-							&nbsp;
-						</div>
-						<div class="AppButtonLabel">
-							Internet Archive
-						</div>
-					</div>
-					<div class="AppButton MousePointer" onclick="launch('MissileGame')">
-						<div class="AppButtonImage" style="background-image: url('/system.library/module/?module=system&command=getapplicationpreview&application=MissileGame&authid={authid}'); background-position: center center; background-size: contain; background-repeat: no-repeat">
-							&nbsp;
-						</div>
-						<div class="AppButtonLabel">
-							Missile Game
-						</div>
-					</div>
-					<div class="AppButton MousePointer" onclick="launch('PolarrPhotoEditor')">
-						<div class="AppButtonImage" style="background-image: url('/system.library/module/?module=system&command=getapplicationpreview&application=PolarrPhotoEditor&authid={authid}'); background-position: center center; background-size: contain; background-repeat: no-repeat">
-							&nbsp;
-						</div>
-						<div class="AppButtonLabel">
-							Polarr Photo Editor
-						</div>
-					</div>
-					<div class="AppButton MousePointer" onclick="launch('Sumon')">
-						<div class="AppButtonImage" style="background-image: url('/system.library/module/?module=system&command=getapplicationpreview&application=Sumon&authid={authid}'); background-position: center center; background-size: contain; background-repeat: no-repeat">
-							&nbsp;
-						</div>
-						<div class="AppButtonLabel">
-							Sumon
-						</div>
-					</div>
-					<div class="AppButton MousePointer" onclick="launch('SVGEdit')">
-						<div class="AppButtonImage" style="background-image: url('/system.library/module/?module=system&command=getapplicationpreview&application=SVGEdit&authid={authid}'); background-position: center center; background-size: contain; background-repeat: no-repeat">
-							&nbsp;
-						</div>
-						<div class="AppButtonLabel">
-							SVGEdit
-						</div>
-					</div>
 					<div class="AppButton MousePointer" onclick="launch('Swooop')">
 						<div class="AppButtonImage" style="background-image: url('/system.library/module/?module=system&command=getapplicationpreview&application=Swooop&authid={authid}'); background-position: center center; background-size: contain; background-repeat: no-repeat">
 							&nbsp;
@@ -231,26 +150,10 @@
 							Swooop
 						</div>
 					</div>
-					<div class="AppButton MousePointer" onclick="launch('TED')">
-						<div class="AppButtonImage" style="background-image: url('/system.library/module/?module=system&command=getapplicationpreview&application=TED&authid={authid}'); background-position: center center; background-size: contain; background-repeat: no-repeat">
-							&nbsp;
-						</div>
-						<div class="AppButtonLabel">
-							TED
-						</div>
-					</div>
-					<div class="AppButton MousePointer" onclick="launch('Photopea')">
-						<div class="AppButtonImage" style="background-image: url('/system.library/module/?module=system&command=getapplicationpreview&application=Photopea&authid={authid}'); background-position: center center; background-size: contain; background-repeat: no-repeat">
-							&nbsp;
-						</div>
-						<div class="AppButtonLabel">
-							Photopea
-						</div>
-					</div>
 				</div>
 			</div>
 		</div>
-		<div class="TheTab MousePointer">
+		<!-- div class="TheTab MousePointer">
 			<span>10 things to do in Friend</span>
 			<div class="ThePage PaddingMinor MouseDefault">
 				<div class="TheColumn">
@@ -382,7 +285,7 @@
 				<div class="TheColumn">
 				</div>
 			</div>
-		</div>
+		</div -->
 	</div>
 </div>
 <link rel="stylesheet" href="Progdir:Css/main.css"/>
