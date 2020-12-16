@@ -212,7 +212,7 @@ Workspace = {
 						{
 							// Setup default Doors screen
 							var wbscreen = new Screen( {
-									title: 'Friend Workspace v1.2-rc1',
+									title: 'Friend Workspace v1.2.5',
 									id:	'DoorsScreen',
 									extra: Workspace.fullName,
 									taskbar: false
