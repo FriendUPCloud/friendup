@@ -1018,23 +1018,32 @@ Workspace = {
 				// See if we have some theme settings
 				else
 				{
-					// Previously this was timeouted for 400 ms...
+					// Check eula
 					var m = new Module( 'system' );
 					m.onExecuted = function( e, d )
 					{	
-						/*var m = new Module( 'system' );
+						var m = new Module( 'system' );
 						m.onExecuted = function( ee, dd )
 						{
 					        if( ee != 'ok' )
 					        {
+					        	if( dd )
+					        	{
+					        		try
+					        		{
+					        			let js = JSON.parse( dd );
+					        			if( js.euladocument )
+					        			{
+					        				Workspace.euladocument = js.euladocument;
+					        			}
+					        		}
+					        		catch( e ){};
+					        	}
 					            ShowEula();
 							}
 				            afterEula( e );								
 						}
-						m.execute( 'getsetting', {
-							setting: 'accepteula'
-						} );*/
-						afterEula( 'ok' );
+						m.execute( 'checkeula' );
 						
 						// When eula is displayed or not
 						function afterEula( e )
