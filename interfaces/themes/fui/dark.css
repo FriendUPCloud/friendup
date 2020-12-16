@@ -1,0 +1,24 @@
+
+div[fui-component=TabList-Row],
+div[fui-component=ImageButton] > span
+{
+	transition: background-color 0.25s;
+	cursor: pointer;
+}
+
+div[fui-component=ImageButton] > span
+{
+	padding: 4px;
+	border-radius: 4px;
+}
+
+div[fui-component=TabList-Row]:hover,
+div[fui-component=ImageButton]:hover > span
+{
+	background-color: var(--fui-color-halfshadow);
+}
+
+div[fui-component=TabList-Row]:hover
+{
+	left: 0;
+}
