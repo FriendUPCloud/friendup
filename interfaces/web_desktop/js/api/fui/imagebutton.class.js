@@ -60,6 +60,7 @@ FUI.ImageButton.Renderers.html5.prototype.refresh = function( pnode )
 	if( !this.ImageButton.domNode )
 	{
 		let d = document.createElement( 'div' );
+		d.setAttribute( 'fui-component', 'ImageButton' );
 		d.style.position = 'absolute';
 		d.style.top = '0';
 		d.style.left = '0';

@@ -14,6 +14,7 @@ var Friend = window.Friend ? window.Friend : {};
 FUI.children = [];
 FUI.objectIndex = {};
 FUI.initialized = false;
+FUI.resources = {};
 
 FUI.def = {
 	scopeLocal: 1,
@@ -39,19 +40,47 @@ FUI.initialize = function( flags, callback )
 		// TODO: Overwrite depending on theme
 		str += ';webclient/js/api/fui/theme.js';
 		
-		// Load includes synchronously
+		// Load synchronously (with possibility of removing old resources9
 		let c = new cAjax();		
 		c.open( 'GET', str, false, false );
 		c.onload = function()
 		{
+			let head = document.querySelector( 'head' );
+			
 			eval( this.responseText() );
+			
+			// Load css - and lets not wait for it!
+			if( FUI.theme.webCSS )
+			{
+				// Generate theme css vars
+				let str = [];
+				for( let v in FUI.theme.palette )
+				{
+					str.push( '--fui-color-' + v + ': ' + FUI.theme.palette[ v ].color + ';' );
+				}
+				str = ':root { ' + "\n" + str.join( "\n" ) + "\n" + ' }';
+				
+				let z = new cAjax();
+				z.open( 'GET', FUI.theme.webCSS, false, false );
+				z.onload = function()
+				{
+					let sty = document.createElement( 'style' );
+					if( FUI.resources.style )
+						head.removeChild( FUI.resources.style );
+					FUI.resources.style = sty;
+					sty.type = 'text/css';
+					sty.innerHTML = str + "\n" + this.responseText() + "\n";
+					head.appendChild( sty );
+				}
+				z.send();
+			}
+
 			done();
 		}
 		c.send();
 	}
 	else
 	{
-		
 		done();
 	}
 	

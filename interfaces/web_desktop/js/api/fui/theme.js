@@ -1,6 +1,13 @@
 /* Base theme --------------------------------------------------------------- */
 
 FUI.theme = {
+	// Name your theme
+	name: 'FUI Dark',
+	
+	// Underneath are some definitions that are obligatory! You can change the
+	// values, but not the attributes
+	
+	// Palette definitions
 	palette: {
 		background:    { color: '#3C3A3C', name: 'Background' },
 		foreground:    { color: '#2E2F31', name: 'Foreground' },
@@ -17,6 +24,7 @@ FUI.theme = {
 		fillShadow:    { color: '#000000', name: 'Fill shadow' },
 		borderColor:   { color: '#979797', name: 'Border color' }
 	},
+	// Gadget proportions
 	gadgets: {
 		margins: {
 			normal: '10px'
@@ -40,6 +48,7 @@ FUI.theme = {
 			
 		}
 	},
+	// Named fontstyles
 	fontStyles: {
 		normal: {
 			
@@ -55,12 +64,19 @@ FUI.theme = {
 		emphasized: {
 		}
 	},
+	// Icon support definitions (classnames for web css)
 	icons: {
-		'Bookmark': 'IconSmall fa-bookmark',
-		'Plus':     'IconSmall fa-plus',
-		'Video':    'IconSmall fa-video',
-		'Calendar': 'IconSmall fa-calendar'
-	}
+		'Bookmark':  'IconSmall fa-bookmark',
+		'Plus':      'IconSmall fa-plus',
+		'Video':     'IconSmall fa-video-camera',
+		'Calendar':  'IconSmall fa-calendar',
+		'Clipboard': 'IconSmall fa-clipboard',
+		'Copy':      'IconSmall fa-copy',
+		'Send':      'IconSmall fa-send'
+	},
+	// Optional web css path - relative url!
+	webCSS: '/themes/fui/dark.css'
 };
+
 
 

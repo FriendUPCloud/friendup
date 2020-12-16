@@ -105,18 +105,22 @@ FUI.TabList.Renderers.html5.prototype.refresh = function( pnode )
 	
 	if( !this.TabList.domNode )
 	{
-		let d = document.createElement( 'div' );
-		d.style.position = 'absolute';
-		d.style.top = '0';
-		d.style.left = '0';
-		d.style.width = '100%';
-		d.style.height = '100%';
-		d.style.overflow = 'auto';
-		d.style.backgroundColor = FUI.theme.palette.foreground.color;
-		d.style.boxSizing = 'border-box';
-		this.TabList.domNode = d;
-		pnode.appendChild( d );
-		d.onclick = function( e )
+		let f = document.createElement( 'div' );
+		f.setAttribute( 'fui-component', 'TabList' );
+		f.style.position = 'absolute';
+		f.style.top = '0';
+		f.style.left = '0';
+		f.style.width = '100%';
+		f.style.height = '100%';
+		f.style.backgroundColor = FUI.theme.palette.foreground.color;
+		f.style.overflow = 'auto';
+		f.style.smoothScrolling = 'true';
+		f.style.boxSizing = 'border-box';
+		
+		let sub = FUI.theme.gadgets.margins.normal + ' - ' + FUI.theme.gadgets.margins.normal;
+		
+		
+		f.onclick = function( e )
 		{
 			if( self.TabList.events && self.TabList.events[ 'onclick' ] )
 			{
@@ -126,6 +130,10 @@ FUI.TabList.Renderers.html5.prototype.refresh = function( pnode )
 				}
 			}
 		}
+		
+		// Attach
+		this.TabList.domNode = f;
+		pnode.appendChild( f );
 	}
 	
 	let d = this.TabList.domNode;
@@ -141,6 +149,7 @@ FUI.TabList.Renderers.html5.prototype.refresh = function( pnode )
 		let rows = this.TabList.flags.rows;
 		for( let a = 0; a < rows.length; a++ )
 		{
+			// Row container
 			let r = document.createElement( 'div' );
 			r.setAttribute( 'fui-component', 'TabList-Row' );
 			r.style.position = 'relative';
@@ -148,8 +157,8 @@ FUI.TabList.Renderers.html5.prototype.refresh = function( pnode )
 			r.style.height = '30px';
 			r.style.color = FUI.theme.palette.fillText.color;
 			r.style.boxSizing = 'border-box';
-			r.style.padding = FUI.theme.gadgets.margins.normal;
 			
+			// Add icon in list
 			if( rows[ a ].icon )
 			{
 				let icon = false;
@@ -157,36 +166,64 @@ FUI.TabList.Renderers.html5.prototype.refresh = function( pnode )
 				{
 					let i = document.createElement( 'div' );
 					i.style.position = 'absolute';
-					i.style.left = '0px';
+					i.style.left = FUI.theme.gadgets.margins.normal;
 					i.style.width = '30px';
 					i.style.height = '100%';
-					i.style.textAlign = 'center';
+					i.style.textAlign = 'left';
+					i.style.lineHeight = '30px';
 					i.className = icon;
 					i.innerHTML = '&nbsp;';
 					r.appendChild( i );
 				}
 			}
 			
+			// Text content
 			let t = document.createElement( 'div' );
 			t.style.position = 'absolute';
-			t.style.left = '30px';
-			t.style.width = 'calc(100% - 60px)';
+			t.style.left = 'calc(30px + ' + FUI.theme.gadgets.margins.normal + ')';
+			t.style.width = 'calc(60% - 30px - ' + FUI.theme.gadgets.margins.normal + ')';
 			t.style.height = '100%';
+			t.style.overflow = 'hidden';
+			t.style.textOverflow = 'ellipsis';
+			t.style.lineHeight = '30px';
 			t.innerHTML = rows[ a ].text;
 			r.appendChild( t );
 			
+			// Button list
+			let b = document.createElement( 'div' );
+			b.setAttribute( 'fui-component', 'TabList-Row-Buttons' );
+			b.style.position = 'absolute';
+			b.style.width = 'calc(40% - ' + FUI.theme.gadgets.margins.normal + ')';
+			b.style.height = '100%';
+			b.style.top = '0';
+			b.style.right = FUI.theme.gadgets.margins.normal;
+			
+			r.appendChild( b );
+			
+			if( rows[ a ].buttons && rows[ a ].buttons.length )
+			{
+				let buttons = rows[ a ].buttons;
+				for( let z = 0; z < buttons.length; z++ )
+				{
+					let bt = document.createElement( 'div' );
+					bt.style.position = 'absolute';
+					bt.style.width = 100 / buttons.length + '%';
+					bt.style.left = z / buttons.length * 100 + '%';
+					bt.style.height = '100%';
+					bt.style.lineHeight = '30px';
+					bt.style.textAlign = 'right';
+					bt.innerHTML = '<span class="' + FUI.theme.icons[ buttons[ z ].icon ] + '"></span>';
+					b.appendChild( bt );
+				} 
+			}
 			
 			d.appendChild( r );
 		}
 	}
-	
-	/*if( this.TabList.flags.text )
-	{
-		d.innerHTML = this.TabList.flags.text;
-	}
-	else
-	{
-		d.innerHTML = 'Unnamed button';
-	}*/
 }
+
+/* Dependencies ------------------------------------------------------------- */
+
+
+
 
