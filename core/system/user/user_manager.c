@@ -1032,30 +1032,39 @@ int UMAddUser( UserManager *um,  User *usr )
 	return  0;
 }
 
+int killUserSession( SystemBase *l, UserSession *ses );
+
 /**
  * Remove user from FC user list
  *
  * @param um pointer to UserManager
  * @param usr user which will be removed from FC user list
- * @param user_session_manager Session manager of the currently running instance
+ * @param userSessionManager Session manager of the currently running instance
  * @return 0 when success, otherwise error number
  */
-int UMRemoveUser(UserManager *um, User *usr, UserSessionManager *user_session_manager)
+int UMRemoveUser( UserManager *um, User *usr, UserSessionManager *userSessionManager )
 {
 	User *userCurrent = NULL; //current element of the linked list, set to the beginning of the list
 	User *userPrevious = NULL; //previous element of the linked list
 
-	FULONG user_id = usr->u_ID;
+	if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
+	{
+		usr->u_InUse++;
+		FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
+	}
+	
+	FULONG userId = usr->u_ID;
 
 	UserSession *sessionToDelete;
-    while( ( sessionToDelete = USMGetSessionByUserID( user_session_manager, user_id ) ) != NULL )
+	while( ( sessionToDelete = USMGetSessionByUserID( userSessionManager, userId ) ) != NULL )
 	{
-    	int status = USMUserSessionRemove( user_session_manager, sessionToDelete );
-    	DEBUG("%s removing session at %p, status %d\n", __func__, sessionToDelete, status);
-    }
+		killUserSession( um->um_SB, sessionToDelete );
+		//int status = USMUserSessionRemove( userSessionManager, sessionToDelete );
+		//DEBUG("%s removing session at %p, status %d\n", __func__, sessionToDelete, status);
+	}
 
-    unsigned int n = 0;
-    bool found = false;
+	unsigned int n = 0;
+	FBOOL found = FALSE;
 	
 	if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
 	{
@@ -1075,7 +1084,7 @@ int UMRemoveUser(UserManager *um, User *usr, UserSessionManager *user_session_ma
 		FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
 	}
 	
-	if( found )
+	if( found == TRUE )
 	{ //the requested user has been found in the list
 		if( userPrevious )
 		{ //we are in the middle or at the end of the list
@@ -1086,9 +1095,24 @@ int UMRemoveUser(UserManager *um, User *usr, UserSessionManager *user_session_ma
 		{ //we are at the very beginning of the list
 			um->um_Users = (User *)userCurrent->node.mln_Succ; //set the global start pointer of the list
 		}
+		
+		if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
+		{
+			usr->u_InUse--;
+			FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
+		}
+		
 		UserDelete( userCurrent );
 		
 		return 0;
+	}
+	else
+	{
+		if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
+		{
+			usr->u_InUse--;
+			FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
+		}
 	}
 	
 	return -1;
