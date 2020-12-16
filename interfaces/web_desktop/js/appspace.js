@@ -207,114 +207,110 @@ Workspace = {
 						if( !window.pingInt ) window.pingInt = setInterval( Workspace.pingAccount, 10000 );
 						Workspace.pingAccount();
 
-						// Get available drives
-						return Workspace.getMountlist( function()
-						{
-							// Setup default Doors screen
-							var wbscreen = new Screen( {
-									title: 'Friend Workspace v1.2.5',
-									id:	'DoorsScreen',
-									extra: Workspace.fullName,
-									taskbar: false
-								}
-							);
-
-							// Touch start show menu!
-							wbscreen.contentDiv.addEventListener( 'click', function( e )
-							{
-								var t = e.target ? e.target : e.srcElement;
-								if( t == wbscreen.contentDiv )
-								{
-									// You need to click two times! And within 500 ms
-									setTimeout( function()
-									{
-										wbscreen.canShowMenu = false;
-									}, 500 );
-									if( !wbscreen.canShowMenu )
-									{
-										wbscreen.canShowMenu = true;
-										return;
-									}
-									setTimeout( function()
-									{
-										WorkspaceMenu.show();
-										ge( 'MobileMenu' ).classList.add( 'Visible' );
-									}, 100 );
-								}
-							}, true );
-
-							document.body.style.visibility = 'visible';
-							// Loading notice
-							var loading = document.createElement( 'div' );
-							loading.className = 'LoadingMessage';
-							if( typeof( t.conf.app ) == 'undefined' )
-								loading.innerHTML = '<p>Nothing to load...</p>';
-							else loading.innerHTML = '<p>Entering ' + t.conf.app + '...</p>';
-							document.body.appendChild( loading );
-							setTimeout( function()
-							{
-								loading.classList.add( 'Loaded' );
-							}, 25 );
-							
-							if( t.conf.app )
-							{
-								return loadApplicationBasics( function()
-								{
-									ExecuteApplication( t.conf.app, GetUrlVar( 'data' ), function( result )
-									{
-										// Prevent loading twice...
-										if( document.body.loaded ) return;
-										document.body.loaded = true;
-									
-										// Remove loading notice
-										if( loading )
-										{
-											loading.classList.remove( 'Loaded' );
-											setTimeout( function()
-											{
-												if( loading )
-												{
-													loading.parentNode.removeChild( loading );
-													loading = null;
-												}
-											}, 500 );
-										}
-										function showThankyou()
-										{
-											if( !ge( 'Thanks' ) )
-											{
-												// Wait till we have windows!
-												var count = 0;
-												for( var a in window.movableWindows ){ count++; }
-												if( count <= 0 )
-													return setTimeout( showThankyou, 500 );
-											
-												// Open the thank you template
-												var jo = new cAjax();
-												jo.open( 'get', '/webclient/templates/thankyou.html', true, false );
-												jo.onload = function()
-												{
-													if( ge( 'Thanks' ) ) return;
-													var ele = document.createElement( 'div' );
-													ele.id = 'Thanks';
-													ele.className = 'ThankYou Padding';
-													ele.innerHTML = this.responseText();
-													var s = GeByClass( 'ScreenContent' );
-													if( s )
-													{
-														if( s.length ) s = s[0];
-														s.appendChild( ele );
-													}
-													else document.body.appendChild( s );
-												}
-												jo.send();
-											}
-										}
-										showThankyou();
-									} );
-								} );
+						// Setup default Doors screen
+						var wbscreen = new Screen( {
+								title: 'Friend Workspace v1.2.5',
+								id:	'DoorsScreen',
+								extra: Workspace.fullName,
+								taskbar: false
 							}
-						} );
+						);
+
+						// Touch start show menu!
+						wbscreen.contentDiv.addEventListener( 'click', function( e )
+						{
+							var t = e.target ? e.target : e.srcElement;
+							if( t == wbscreen.contentDiv )
+							{
+								// You need to click two times! And within 500 ms
+								setTimeout( function()
+								{
+									wbscreen.canShowMenu = false;
+								}, 500 );
+								if( !wbscreen.canShowMenu )
+								{
+									wbscreen.canShowMenu = true;
+									return;
+								}
+								setTimeout( function()
+								{
+									WorkspaceMenu.show();
+									ge( 'MobileMenu' ).classList.add( 'Visible' );
+								}, 100 );
+							}
+						}, true );
+
+						document.body.style.visibility = 'visible';
+						// Loading notice
+						var loading = document.createElement( 'div' );
+						loading.className = 'LoadingMessage';
+						if( typeof( t.conf.app ) == 'undefined' )
+							loading.innerHTML = '<p>Nothing to load...</p>';
+						else loading.innerHTML = '<p>Entering ' + t.conf.app + '...</p>';
+						document.body.appendChild( loading );
+						setTimeout( function()
+						{
+							loading.classList.add( 'Loaded' );
+						}, 25 );
+						
+						if( t.conf.app )
+						{
+							return loadApplicationBasics( function()
+							{
+								ExecuteApplication( t.conf.app, GetUrlVar( 'data' ), function( result )
+								{
+									// Prevent loading twice...
+									if( document.body.loaded ) return;
+									document.body.loaded = true;
+								
+									// Remove loading notice
+									if( loading )
+									{
+										loading.classList.remove( 'Loaded' );
+										setTimeout( function()
+										{
+											if( loading )
+											{
+												loading.parentNode.removeChild( loading );
+												loading = null;
+											}
+										}, 500 );
+									}
+									function showThankyou()
+									{
+										if( !ge( 'Thanks' ) )
+										{
+											// Wait till we have windows!
+											var count = 0;
+											for( var a in window.movableWindows ){ count++; }
+											if( count <= 0 )
+												return setTimeout( showThankyou, 500 );
+										
+											// Open the thank you template
+											var jo = new cAjax();
+											jo.open( 'get', '/webclient/templates/thankyou.html', true, false );
+											jo.onload = function()
+											{
+												if( ge( 'Thanks' ) ) return;
+												var ele = document.createElement( 'div' );
+												ele.id = 'Thanks';
+												ele.className = 'ThankYou Padding';
+												ele.innerHTML = this.responseText();
+												var s = GeByClass( 'ScreenContent' );
+												if( s )
+												{
+													if( s.length ) s = s[0];
+													s.appendChild( ele );
+												}
+												else document.body.appendChild( s );
+											}
+											jo.send();
+										}
+									}
+									showThankyou();
+								} );
+							} );
+						}
 					}
 					document.body.appendChild( s );
 					return;
