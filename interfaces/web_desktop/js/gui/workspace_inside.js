@@ -9699,7 +9699,7 @@ function ShowEula( accept, cbk )
 		var dl = new FriendLibrary( 'system.library' );
 		dl.addVar( 'visible', true );
 		//dl.forceSend = true;
-		dl.onExecuted = function(e,d)
+		dl.onExecuted = function( e, d )
 		{
 			//console.log( 'First login. Device list refreshed.', e, d );
 		};
@@ -9708,22 +9708,55 @@ function ShowEula( accept, cbk )
 	}
 
 
-	var d = document.createElement( 'div' );
+	let d = document.createElement( 'div' );
 	d.className = 'Eula';
 	d.id = 'EulaDialog';
 	document.body.appendChild( d );
 
-	var f = new File( 'System:templates/eula.html' );
-	f.onLoad = function( data )
+	// Using a configurable eula document
+	if( Workspace.euladocument )
 	{
-		d.innerHTML = data;
-		// Tell app we can show ourselves!
-		if( window.friendApp && window.friendApp.reveal )
+		let n = new Module( 'system' );
+		n.onExecuted = function( e, data )
 		{
-			friendApp.reveal();
-		}		
+			if( e == 'ok' )
+			{
+				d.innerHTML = '<div class="EulaText SmoothScrolling"><div>' + data + '</div></div>\
+				<div class="EulaInfo">\
+		<div>\
+			<button type="button" class="Button IconSmall fa-cross" onclick="document.location.href=\'http://duckduckgo.com\';">\
+				I decline\
+			</button>\
+			\
+			<button type="button" class="Button IconSmall fa-accept" onclick="ShowEula(true)">\
+				I accept\
+			</button>\
+		</div>\
+	</div>';
+				// Tell app we can show ourselves!
+				if( window.friendApp && window.friendApp.reveal )
+				{
+					friendApp.reveal();
+				}
+			}
+		}
+		n.execute( 'geteuladocument' );
 	}
-	f.load();
+	// Using the Friend OS standard eula
+	else
+	{
+		let f = new File( 'System:templates/eula.html' );
+		f.onLoad = function( data )
+		{
+			d.innerHTML = data;
+			// Tell app we can show ourselves!
+			if( window.friendApp && window.friendApp.reveal )
+			{
+				friendApp.reveal();
+			}		
+		}
+		f.load();
+	}
 }
 
 

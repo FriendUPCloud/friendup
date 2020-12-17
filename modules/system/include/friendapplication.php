@@ -60,8 +60,6 @@ function storeRecentApps( $name )
 	$appHistory->save();
 	unset( $list, $a );
 	
-	$Logger->log( 'Stored anything? ' . $appHistory->Data );
-	
 	// Done storing recent apps ------------------------------------------------
 }
 
@@ -79,6 +77,17 @@ function findInSearchPaths( $app )
 		}
 	}
 	return false;
+}
+
+// Activate whitelist
+if( isset( $args->args->application ) && isset( $configfilesettings[ 'Security' ][ 'UserAppWhitelist' ] ) )
+{
+	$whitelist = $configfilesettings[ 'Security' ][ 'UserAppWhitelist' ];
+	$whitelist = explode( ',', $whitelist );
+	if( $level != 'Admin' && !in_array( $args->args->application, $whitelist ) )
+	{
+		die( 'fail' );
+	}	
 }
 
 // Get the groups for authentication
