@@ -236,25 +236,25 @@ int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname );
 //Update UserSessionId by ID
 //
 
-int UpdateFUserSessionIDByID(UserManager *um, FULONG userId, const char* sessionId );
+int UMUpdateFUserSessionIDByID(UserManager *um, FULONG userId, const char* sessionId );
 
 //
 //Get UserSessionId by ID
 //
 
-char* GetFUserSessionIDByID(UserManager *um, FULONG userId );
+char* UMGetFUserSessionIDByID(UserManager *um, FULONG userId );
 
 //
 //Update ServerToken by ID
 //
 
-int UpdateFUserServerTokenByID(UserManager *um, FULONG userId, const char* serverToken );
+int UMUpdateFUserServerTokenByID(UserManager *um, FULONG userId, const char* serverToken );
 
 //
 //Get ServerToken by ID
 //
 
-char* GetFUserServerTokenByID(UserManager *um, FULONG userId);
+char* UMGetFUserServerTokenByID(UserManager *um, FULONG userId);
 
 //
 //Get SessionId and UserName by ServerToken
@@ -265,6 +265,6 @@ int UMGetSessionIdNameByServerToken( UserManager *um, const char *serverToken, c
 //Update LoggedTime and SessionID by Name
 //
 
-int UpdateFUserLoggedTimeSessionIDByName(UserManager *um, const char *name, const time_t *loggedTime, const char *sessionID);
+int UMUpdateFUserLoggedTimeSessionIDByName(UserManager *um, const char *name, const time_t *loggedTime, const char *sessionID);
 
 #endif //__SYSTEM_USER_USER_MANAGER_H__

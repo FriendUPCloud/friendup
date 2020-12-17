@@ -838,7 +838,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			//	l->LibrarySQLDrop( l, sqllib );
 			//}
 
-			if (UpdateFUserSessionLoggedTimeBySessionID(l->sl_USM, timestamp, sessionid) != 0)
+			if (USMUpdateFUserSessionLoggedTimeBySessionID(l->sl_USM, &timestamp, sessionid) != 0)
 			{
 				FERROR("Can't Update logged time and session id  DB!\n");
 			}
@@ -1913,7 +1913,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								//}
 								//l->LibrarySQLDrop( l, sqlLib );
 								
-								if(UpdateFUserLoggedTimeSessionIDByName( l->sl_UM, loggedSession->us_User->u_Name, &(loggedSession->us_LoggedTime), loggedSession->us_User->u_MainSessionID ) != 0)
+								if(UMUpdateFUserLoggedTimeSessionIDByName( l->sl_UM, loggedSession->us_User->u_Name, &(loggedSession->us_LoggedTime), loggedSession->us_User->u_MainSessionID ) != 0)
 								{
 									FERROR("Can't Update logged time and session id  DB!\n");
 								}
@@ -2205,7 +2205,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 
 									//}
 
-									if (UpdateFUserLoggedTimeSessionIDByName(l->sl_UM, loggedSession->us_User->u_Name, &(loggedSession->us_LoggedTime), loggedSession->us_User->u_MainSessionID) != 0)
+									if (UMUpdateFUserLoggedTimeSessionIDByName(l->sl_UM, loggedSession->us_User->u_Name, &(loggedSession->us_LoggedTime), loggedSession->us_User->u_MainSessionID) != 0)
 									{
 										FERROR("Can't Update logged time and session id  DB!\n");
 									}

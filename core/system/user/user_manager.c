@@ -825,7 +825,7 @@ User* UMGetUserByNameDBCon(UserManager* um, SQLLibrary* sqlLib, const char* name
  * @param sessionId session id value
  * @return 0 sucess or -1 when error
  */
-int UpdateFUserSessionIDByID(UserManager* um, FULONG userId, const char* sessionId)
+int UMUpdateFUserSessionIDByID(UserManager *um, FULONG userId, const char* sessionId )
 {
 	Log(FLOG_INFO, "## RT NEW ##[UpdateFUserSessionIDByID] START\n");
 
@@ -867,7 +867,7 @@ int UpdateFUserSessionIDByID(UserManager* um, FULONG userId, const char* session
  * @param userId user ID
  * @return SessionID or empty when error
  */
-char* GetFUserSessionIDByID(UserManager* um, FULONG userId)
+char* UMGetFUserSessionIDByID(UserManager *um,  FULONG userId )
 {
 	Log(FLOG_INFO, "## RT NEW ##[GetFUserSessionIDByID] START\n");
 
@@ -918,7 +918,7 @@ char* GetFUserSessionIDByID(UserManager* um, FULONG userId)
  * @param serverToken server token value
  * @return 0 sucess or -1 when error
  */
-int UpdateFUserServerTokenByID(UserManager* um, FULONG userId, const char* serverToken)
+int UMUpdateFUserServerTokenByID(UserManager *um, FULONG userId, const char* serverToken )
 {
 	Log(FLOG_INFO, "## RT NEW ##[UpdateFUserServerTokenByID] START\n");
 	SystemBase* sb = (SystemBase*)um->um_SB;
@@ -959,7 +959,7 @@ int UpdateFUserServerTokenByID(UserManager* um, FULONG userId, const char* serve
  * @param userId user ID
  * @return ServerToken or empty when error
  */
-char* GetFUserServerTokenByID(UserManager* um, FULONG userId)
+char* UMGetFUserServerTokenByID(UserManager *um,  FULONG userId )
 {
 	Log(FLOG_INFO, "## RT NEW ##[GetFUserServerTokenByID] START\n");
 
@@ -1057,7 +1057,7 @@ int UMGetSessionIdNameByServerToken(UserManager* um, const char* serverToken, ch
  * @param sessionID Session id
  * @return 0 sucess or -1 when error
  */
-int UpdateFUserLoggedTimeSessionIDByName(UserManager* um, const char* name, const time_t* loggedTime, const char* sessionID)
+int UMUpdateFUserLoggedTimeSessionIDByName(UserManager *um, const char *name, const time_t *loggedTime, const char *sessionID)
 {
 	SystemBase* sb = (SystemBase*)um->um_SB;
 	SQLLibrary* sqlLib = sb->LibrarySQLGet(sb);

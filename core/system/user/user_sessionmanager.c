@@ -1362,7 +1362,7 @@ User *USMIsSentinel( UserSessionManager *usm, char *username, UserSession **rus,
  * @param sessionID Session id
  * @return 0 sucess or -1 when error
  */
-int UpdateFUserSessionLoggedTimeBySessionID(UserSessionManager* usm, const time_t* loggedTime, const char* sessionID)
+int USMUpdateFUserSessionLoggedTimeBySessionID(UserSessionManager* usm, const time_t* loggedTime, const char* sessionID)
 {
 	Log(FLOG_INFO, "## RT NEW ##[UpdateFUserSessionLoggedTimeBySessionID] START\n");
 

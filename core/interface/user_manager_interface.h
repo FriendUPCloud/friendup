@@ -54,13 +54,12 @@ typedef struct UserManagerInterface
 	int					(*UMAddGlobalRemoteDrive)( UserManager *um, const char *locuname, const char *uname, const char *authid, const char *hostname, char *localDevName, char *remoteDevName, FULONG remoteid  );
 	int					(*UMRemoveGlobalRemoteDrive)( UserManager *um, const char *uname, const char *hostname, char *localDevName, char *remoteDevName);
     
-   	int					(*UpdateFUserSessionIDByID)(UserManager *um, FULONG userId, const char* sessionId);
-   	int					(*UpdateFUserServerTokenByID)(UserManager *um, FULONG userId, const char* serverToken);
-   	char				*(*GetFUserSessionIDByID)( UserManager *um, FULONG userId );
-   	char				*(*GetFUserServerTokenByID)( UserManager *um, FULONG userId  );
+   	int					(*UMUpdateFUserSessionIDByID)(UserManager *um, FULONG userId, const char* sessionId);
+   	int					(*UMUpdateFUserServerTokenByID)(UserManager *um, FULONG userId, const char* serverToken);
+   	char				*(*UMGetFUserSessionIDByID)( UserManager *um, FULONG userId );
+   	char				*(*UMGetFUserServerTokenByID)( UserManager *um, FULONG userId  );
 	int					(*UMGetSessionIdNameByServerToken)( UserManager *um, const char *serverToken, char *sessionID, char *name );
-	int					(*UpdateFUserLoggedTimeSessionIDByName)( UserManager *um, const char *name, const time_t *loggedTime, const char *sessionID );
-    
+	int					(*UMUpdateFUserLoggedTimeSessionIDByName)( UserManager *um, const char *name, const time_t *loggedTime, const char *sessionID );    
 }UserManagerInterface;
 
 //
@@ -99,12 +98,12 @@ static inline void UserManagerInterfaceInit( UserManagerInterface *si )
 	si->UMAddGlobalRemoteDrive = UMAddGlobalRemoteDrive;
 	si->UMRemoveGlobalRemoteDrive = UMRemoveGlobalRemoteDrive;
 
-	si->UpdateFUserSessionIDByID = UpdateFUserSessionIDByID;
-	si->UpdateFUserServerTokenByID = UpdateFUserServerTokenByID;
-	si->GetFUserSessionIDByID = GetFUserSessionIDByID;
-	si->GetFUserServerTokenByID = GetFUserServerTokenByID;
+	si->UMUpdateFUserSessionIDByID = UMUpdateFUserSessionIDByID;
+	si->UMUpdateFUserServerTokenByID = UMUpdateFUserServerTokenByID;
+	si->UMGetFUserSessionIDByID = UMGetFUserSessionIDByID;
+	si->UMGetFUserServerTokenByID = UMGetFUserServerTokenByID;
 	si->UMGetSessionIdNameByServerToken = UMGetSessionIdNameByServerToken;
-	si->UpdateFUserLoggedTimeSessionIDByName = UpdateFUserLoggedTimeSessionIDByName;
+	si->UMUpdateFUserLoggedTimeSessionIDByName = UMUpdateFUserLoggedTimeSessionIDByName;
 }
 
 #endif
