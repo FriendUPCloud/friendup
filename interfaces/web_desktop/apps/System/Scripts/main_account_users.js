@@ -7551,9 +7551,9 @@ Sections.accounts_users = function( cmd, extra )
 		
 		if( filter.length < 3 || filter.length < UsersSettings( 'searchquery' ).length || filter == UsersSettings( 'searchquery' ) || !server ) return;
 		
-		UsersSettings( 'searchquery', filter );
-		
 		UsersSettings( 'reset', true );
+		
+		UsersSettings( 'searchquery', filter );
 		
 		//console.log( filter.length );
 		
