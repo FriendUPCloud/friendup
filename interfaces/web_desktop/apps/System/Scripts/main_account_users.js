@@ -6419,6 +6419,8 @@ Sections.accounts_users = function( cmd, extra )
 		
 		//console.log( 'Application.totalUserCount: ', Application.totalUserCount );
 		
+		var avatars = [];
+		
 		var sw = 2; var tot = 0;
 		for( var b = 0; b < levels.length; b++ )
 		{
@@ -6451,9 +6453,15 @@ Sections.accounts_users = function( cmd, extra )
 					
 					userList[ a ][ 'LoginTime' ] = ( userList[a][ 'LoginTime' ] != 0 && userList[a][ 'LoginTime' ] != null ? CustomDateTime( userList[a][ 'LoginTime' ] ) : login[ 0 ] );
 					
+					
+					
 					var img = '/system.library/module/?module=system&command=getavatar&userid=' + userList[ a ].ID + ( userList[ a ].Image ? '&image=' + userList[ a ].Image : '' ) + '&width=30&height=30&authid=' + Application.authId;
 					
-					var bg = 'background-image: url(\'' + img + '\');background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;';
+					var bg = ''/*'background-image: url(\'' + img + '\');background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;'*/;
+					
+					avatars.push( { userid: userList[ a ].ID, image: ( userList[ a ].Image ? userList[ a ].Image : null ) } );
+					
+					
 					
 					userList[ a ][ 'Edit' ] = '<span '             + 
 					'id="UserAvatar_' + userList[ a ].ID + '" '    + 
@@ -6611,6 +6619,13 @@ Sections.accounts_users = function( cmd, extra )
 				
 			}, ( users ? users.join(',') : false ) );
 			
+			// Temporary until we got a better way ...
+			
+			if( avatars )
+			{
+				// TODO: finish this ...
+				//getAvatars( avatars );
+			}
 			
 			if( ShowLog ) console.log( 'new users added to list: ' + i + '/' + tot + ' total ['+total+']' );
 			
@@ -7279,6 +7294,109 @@ Sections.accounts_users = function( cmd, extra )
 		}
 	}
 	
+	function getAvatars( avatars )
+	{
+		//console.log( '[1] getAvatars ', avatars );
+		
+		if( avatars )
+		{
+			for( var k in avatars )
+			{
+				if( avatars[k].userid )
+				{
+					if( ge( 'UserAvatar_' + avatars[k].userid ) )
+					{
+						var div = ge( 'UserAvatar_' + avatars[k].userid ).getElementsByTagName( 'div' )[0];
+						
+						if( div )
+						{
+							var bg = 'background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;';
+							div.setAttribute( "style", bg );
+							
+							var img = new Image();
+							img.onload = function() 
+							{
+								
+								div.style.backgroundImage = 'url(' + img.src + ')';
+								
+								img = '';
+								
+								if( avatars && k )
+								{
+									var next = [];
+					
+									for( var i in avatars )
+									{
+										if( i != k && avatars[i] && avatars[i].userid )
+										{
+											next.push( avatars[i] );
+										}
+									}
+					
+									// Loop it ...
+					
+									if( next )
+									{
+										getAvatars( next );
+									}
+								}
+								
+							};
+							img.src = '/system.library/module/?module=system&command=getavatar&userid=' + avatars[k].userid + ( avatars[k].userid.image ? '&image=' + avatars[k].userid.image : '' ) + '&width=30&height=30&authid=' + Application.authId;
+						}
+						
+					}
+					
+					
+					/*var m = new Module( 'system' );
+					m.avatar = avatars[k];
+					m.key = k;
+					m.avatars = avatars;
+					m.forceHTTP = true;
+					m.onExecuted = function( result )
+					{
+						if( ge( 'UserAvatar_' + this.avatar.userid ) && result )
+						{
+							var div = ge( 'UserAvatar_' + this.avatar.userid ).getElementsByTagName( 'div' )[0];
+							
+							if( div )
+							{
+								var bg = 'background-image: url(\'' + result + '\');background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;';
+							
+								div.setAttribute( "style", bg );
+							}
+						}
+						
+						if( this.avatars && this.key )
+						{
+							var next = [];
+					
+							for( var i in this.avatars )
+							{
+								if( i != this.key && this.avatars[i] && this.avatars[i].userid )
+								{
+									next.push( this.avatars[i] );
+								}
+							}
+					
+							// Loop it ...
+					
+							if( next )
+							{
+								getAvatars( next );
+							}
+						}
+					}
+					m.execute( 'getavatar', { userid: m.avatar.userid, image: m.avatar.image, width: '30', height: '30', display: 'base64', authid: Application.authId } );*/
+				}
+				
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
 	function randomAvatar( fullname, callback )
 	{
 		if( fullname )
@@ -7626,7 +7744,7 @@ function refreshUserList( userInfo )
 					{
 						var img = '/system.library/module/?module=system&command=getavatar&userid=' + userInfo.ID + ( userInfo.Image ? '&image=' + userInfo.Image : '' ) + '&width=30&height=30&authid=' + Application.authId;
 						
-						var bg = 'background-image: url(\'' + img + '\');background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;';
+						var bg = /*''*/'background-image: url(\'' + img + '\');background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;';
 						
 						div[i].innerHTML = '<span '                  + 
 						'id="UserAvatar_' + userInfo.ID + '" '       + 
@@ -8135,7 +8253,7 @@ function Init()
 		
 			UsersSettings( 'limit', true );
 			
-			if( ShowLog ) console.log( '[3] GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) + ' (' + UsersSettings( 'intervals' ) + ')' ); 
+			if( 1==1 || ShowLog ) console.log( '[3] GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) + ' (' + UsersSettings( 'intervals' ) + ')' ); 
 			
 			getUserlist( function( res, data, key )
 			{
@@ -8149,6 +8267,10 @@ function Init()
 				
 				if( res == 'ok' && data )
 				{
+					// Don't loop it ...
+					
+					return;
+					
 					Sections.accounts_users( 'init', data );
 					
 					// Just loop it ...

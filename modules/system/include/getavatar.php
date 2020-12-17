@@ -97,21 +97,27 @@ $height = 256;
 $mode = 'resize';
 $hash = false;
 
-if( isset( $args->image ) )
+$display = 'default';
+
+if( isset( $args->image ) || isset( $args->args->image ) )
 {
-	$hash = $args->image;
+	$hash = ( isset( $args->args->image ) ? $args->args->image : $args->image );
 }
-if( isset( $args->width ) )
+if( isset( $args->width ) || isset( $args->args->width ) )
 {
-	$width = $args->width;
+	$width = ( isset( $args->args->width ) ? $args->args->width : $args->width );
 }
-if( isset( $args->height ) )
+if( isset( $args->height ) || isset( $args->args->height ) )
 {
-	$height = $args->height;
+	$height = ( isset( $args->args->height ) ? $args->args->height : $args->height );
 }
-if( isset( $args->mode ) )
+if( isset( $args->mode ) || isset( $args->args->mode ) )
 {
-	$mode = $args->mode;
+	$mode = ( isset( $args->args->mode ) ? $args->args->mode : $args->mode );
+}
+if( isset( $args->display ) || isset( $args->args->display ) )
+{
+	$display = ( isset( $args->args->display ) ? $args->args->display : $args->display );
 }
 
 // Sanitized username
@@ -122,15 +128,30 @@ if( !file_exists( $wname . 'thumbnails' ) )
 	mkdir( $wname . 'thumbnails' );
 }
 
-function _file_broken()
+function _file_broken( $display )
 {
 	$cnt = file_get_contents( 'resources/iconthemes/friendup15/File_Broken.svg' );
 	FriendHeader( 'Content-Length: ' . strlen( $cnt ) );
 	FriendHeader( 'Content-Type: image/svg+xml' );
-	die( $cnt );
+	
+	switch( $display )
+	{
+		case 'base64':
+			
+				die( 'data:image/' . pathinfo( 'resources/iconthemes/friendup15/File_Broken.svg', PATHINFO_EXTENSION ) . ';base64,' . base64_encode( $cnt ) );
+				
+			break;
+			
+		default:
+			
+				die( $cnt );
+			
+			break;
+	}
+	
 }
 
-function _file_output( $filepath )
+function _file_output( $filepath, $display )
 {
 	if( $filepath )
 	{
@@ -157,7 +178,21 @@ function _file_output( $filepath )
 			die();
 		}
 		//die( print_r( $_SERVER,1 ) . ' .. ' . $last_modified_time . ' || ' . $etag );
-		die( file_get_contents( $filepath ) );
+		switch( $display )
+		{
+			case 'base64':
+				
+					die( 'data:image/' . pathinfo( $filepath, PATHINFO_EXTENSION ) . ';base64,' . base64_encode( file_get_contents( $filepath ) ) );
+				
+				break;
+				
+			default:
+				
+					die( file_get_contents( $filepath ) );
+				
+				break;
+		}
+		
 	}
 }
 
@@ -169,7 +204,7 @@ if( $userid > 0 && $wname )
 	// Check if it exists!
 	if( $hash && file_exists( $folderpath . ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png' ) )
 	{
-		_file_output( $folderpath . ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png' );
+		_file_output( $folderpath . ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png', $display );
 	}
 	else
 	{
@@ -326,7 +361,7 @@ if( $userid > 0 && $wname )
 		// Check again ...
 		if( $hash && file_exists( $filepath ) )
 		{
-			_file_output( $filepath );	
+			_file_output( $filepath, $display );	
 		}
 		
 		if( $avatar && $hash && $fname && $filepath )
@@ -347,7 +382,7 @@ if( $userid > 0 && $wname )
 				}
 				if( !file_exists( $folderpath ) )
 				{
-					_file_broken();
+					_file_broken( $display );
 				}
 				
 				// Clean up ...
@@ -387,7 +422,7 @@ if( $userid > 0 && $wname )
 				
 				if( !$source )
 				{
-					_file_broken();
+					_file_broken( $display );
 				}
 				
 				
@@ -447,7 +482,7 @@ if( $userid > 0 && $wname )
 				// Check if it exists!
 				if( file_exists( $filepath ) )
 				{
-					_file_output( $filepath );
+					_file_output( $filepath, $display );
 				}
 				
 			}
@@ -458,6 +493,6 @@ if( $userid > 0 && $wname )
 }
 
 // TODO: Support more icons
-_file_broken();
+_file_broken( $display );
 
 ?>
