@@ -59,12 +59,15 @@ FUI.ImageButton.Renderers.html5.prototype.refresh = function( pnode )
 	
 	if( !this.ImageButton.domNode )
 	{
+		let width = this.ImageButton.renderWidth ? this.ImageButton.renderWidth : '100%';
+		let left = this.ImageButton.renderLeft ? this.ImageButton.renderLeft : '0';
+		
 		let d = document.createElement( 'div' );
 		d.setAttribute( 'fui-component', 'ImageButton' );
 		d.style.position = 'absolute';
 		d.style.top = '0';
-		d.style.left = '0';
-		d.style.width = '100%';
+		d.style.left = left;
+		d.style.width = width;
 		d.style.height = '100%';
 		d.style.textAlign = 'center';
 		d.style.cursor = 'pointer';
@@ -72,7 +75,8 @@ FUI.ImageButton.Renderers.html5.prototype.refresh = function( pnode )
 		if( this.ImageButton.flags.icon )
 		{
 			let i = document.createElement( 'span' );
-			i.style.marginTop = 'calc(50% - 10px)';
+			i.style.position = 'relative';
+			i.style.top = 'calc(50% - 13px)';
 			i.style.display = 'inline-block';
 			i.className = FUI.theme.icons[ this.ImageButton.flags.icon ];
 			d.appendChild( i );

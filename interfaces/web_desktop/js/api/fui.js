@@ -495,6 +495,7 @@ FUI.BaseClass.prototype.getElementById = function( id, callback )
 			let o = self.objectIndex[ a ];
 			if( o && o.flags && o.flags.id == id )
 			{
+				console.log( 'Found internal: ' + id );
 				callback( self.objectIndex[ a ] );
 				return true;
 			}

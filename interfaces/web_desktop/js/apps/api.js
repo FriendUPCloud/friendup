@@ -1088,6 +1088,7 @@ function receiveEvent( event, queued )
 									callback: dataPacket.callback,
 									response: o.stringify()
 								};
+								console.log( 'Sending object back ' + dataPacket.id + '; ' + nMsg.response );
 								dataPacket.callback = null;
 								Application.sendMessage( nMsg );
 								return;

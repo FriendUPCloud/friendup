@@ -70,6 +70,7 @@ FUI.theme = {
 		'Plus':      'IconSmall fa-plus',
 		'Video':     'IconSmall fa-video-camera',
 		'Calendar':  'IconSmall fa-calendar',
+		'Cog':       'IconSmall fa-cog',
 		'Clipboard': 'IconSmall fa-clipboard',
 		'Copy':      'IconSmall fa-copy',
 		'Send':      'IconSmall fa-send'

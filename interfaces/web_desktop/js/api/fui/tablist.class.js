@@ -59,6 +59,28 @@ let Private = {
 	{	
 		self.flags.rows = v;
 		
+		// Clear children
+		self.children = [];
+		
+		// Add children
+		for( let a = 0; a < v.length; a++ )
+		{
+			if( !v[a].id )
+			{
+				v[a].id = 'TabListRow_' + a;
+			}
+			// Add buttons to children
+			if( v[a].buttons )
+			{
+				for( let b = 0; b < v[a].buttons.length; b++ )
+				{
+					let c = new FUI.ImageButton( v[a].buttons[b] );
+					c.tabListRow = v[a].id;
+					self.children.push( c );
+				}
+			}
+		}
+		
 		self.clear = true;
 		
 		self.refresh();
@@ -147,6 +169,7 @@ FUI.TabList.Renderers.html5.prototype.refresh = function( pnode )
 		}
 	
 		let rows = this.TabList.flags.rows;
+		let refreshers = {};
 		for( let a = 0; a < rows.length; a++ )
 		{
 			// Row container
@@ -191,32 +214,43 @@ FUI.TabList.Renderers.html5.prototype.refresh = function( pnode )
 			
 			// Button list
 			let b = document.createElement( 'div' );
+			b.id = rows[ a ].id;
 			b.setAttribute( 'fui-component', 'TabList-Row-Buttons' );
 			b.style.position = 'absolute';
 			b.style.width = 'calc(40% - ' + FUI.theme.gadgets.margins.normal + ')';
 			b.style.height = '100%';
 			b.style.top = '0';
 			b.style.right = FUI.theme.gadgets.margins.normal;
-			
 			r.appendChild( b );
-			
-			if( rows[ a ].buttons && rows[ a ].buttons.length )
+		
+			// Render ImageButton objects
+			if( self.TabList.children )
 			{
-				let buttons = rows[ a ].buttons;
+				let buttons = self.TabList.children;
+				refreshers[ b ] = {
+					pnode: b,
+					children: []
+				};
+				
+				// Calculate weight for button list
+				let totals = pos = 0;
+				for( let z = 0; z < buttons.length; z++ )
+					if( buttons[ z ].tabListRow == b.id )
+						totals += buttons[ z ].flags.weight;
+				
 				for( let z = 0; z < buttons.length; z++ )
 				{
-					let bt = document.createElement( 'div' );
-					bt.style.position = 'absolute';
-					bt.style.width = 100 / buttons.length + '%';
-					bt.style.left = z / buttons.length * 100 + '%';
-					bt.style.height = '100%';
-					bt.style.lineHeight = '30px';
-					bt.style.textAlign = 'right';
-					bt.innerHTML = '<span class="' + FUI.theme.icons[ buttons[ z ].icon ] + '"></span>';
-					b.appendChild( bt );
+					if( buttons[ z ].tabListRow == b.id )
+					{
+						buttons[ z ].renderWidth = buttons[ z ].flags.weight / totals * 100 + '%';
+						buttons[ z ].renderLeft = pos / totals * 100 + '%';
+						buttons[ z ].refresh( b );
+						pos += buttons[ z ].flags.weight;
+					}
 				} 
 			}
 			
+			// Add the row
 			d.appendChild( r );
 		}
 	}
@@ -224,6 +258,44 @@ FUI.TabList.Renderers.html5.prototype.refresh = function( pnode )
 
 /* Dependencies ------------------------------------------------------------- */
 
+/*FUI.TabListRow = function()
+{
+	
+}
 
+FUI.TabListRow.prototype = new FUI.BaseClass();*/
 
+// Default methods -------------------------------------------------------------
+
+/*( function(){
+
+FUI.TabList.prototype.onPropertySet = function( property, value, callback )
+{
+	switch( property )
+	{
+		case 'text':
+			this.flags.text = value;
+			this.refresh();
+			break;
+		case 'tabs':
+			this.doMethod( 'setTabs', value, callback );
+			break;
+	}
+	return;
+}
+
+FUI.TabList.prototype.onMethodCalled = function( method, value, callback )
+{
+	let o = {};
+
+	if( Private[ method ] )
+	{
+		Private[ method ]( value, callback, this );
+	}
+	if( callback )
+		return callback( false );	
+	return false;
+}
+
+} )();*/
 

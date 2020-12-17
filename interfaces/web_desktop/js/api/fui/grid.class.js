@@ -108,7 +108,6 @@ FUI.Grid.Renderers.html5.prototype.refresh = function( pnode )
 			d.style.width = '100%';
 			d.style.boxSizing = 'border-box';
 			d.setAttribute( 'fui-component', 'Grid-Row' );
-			//d.style.backgroundColor = 'rgb(' + ( Math.random() % 255 ) + ',' + ( Math.random() % 255 ) + ',' + ( Math.random() % 255 ) + ')';
 			create = true;
 		}
 		
@@ -204,7 +203,6 @@ FUI.Grid.Renderers.html5.prototype.refresh = function( pnode )
 				r.style.height = '100%';
 				r.style.overflow = 'hidden';
 				r.style.boxSizing = 'border-box';
-				//r.style.backgroundColor = 'rgb(' + ( Math.random() * 255 ) + ',' + ( Math.random() * 255 ) + ',' + ( Math.random() * 255 ) + ')';
 				create = true;
 			}
 			
