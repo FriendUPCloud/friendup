@@ -489,6 +489,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 
 				// Get authid from mysql
 				if( sqllib != NULL )
+		if( tst == NULL && ast == NULL && sst == NULL )
 				{
 					char qery[ 1024 ];
 
@@ -523,31 +524,36 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			
 			if( loggedSession == NULL )
 			{
-				SQLLibrary *sqllib = l->LibrarySQLGet( l );
+//				SQLLibrary *sqllib = l->LibrarySQLGet( l );
 
 				// Get authid from mysql
-				if( sqllib != NULL )
-				{
-					char qery[ 1024 ];
+//				if( sqllib != NULL )
+//				{
+//					char qery[ 1024 ];
 
 					// TODO: Remove need for existing SessionID (instead generate it if it does not exist)!
-					sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT u.SessionID, u.Name FROM FUser u WHERE u.SessionID != \"\" AND u.ServerToken=\"%s\" LIMIT 1",( char *)sst->hme_Data );;
+//					sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT u.SessionID, u.Name FROM FUser u WHERE u.SessionID != \"\" AND u.ServerToken=\"%s\" LIMIT 1",( char *)sst->hme_Data );
 					
-					void *res = sqllib->Query( sqllib, qery );
-					if( res != NULL )
-					{
-						char **row;
-						if( ( row = sqllib->FetchRow( sqllib, res ) ) )
-						{
-							if( row[ 0 ] != NULL )
-							{
-								snprintf( sessionid, DEFAULT_SESSION_ID_SIZE,"%s", row[ 0 ] );
-								snprintf( userName, 256, "%s", row[ 1 ] );
-							}
-						}
-						sqllib->FreeResult( sqllib, res );
-					}
-					l->LibrarySQLDrop( l, sqllib );
+//					void *res = sqllib->Query( sqllib, qery );
+//					if( res != NULL )
+//					{
+//						char **row;
+//						if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+//						{
+//							if( row[ 0 ] != NULL )
+//							{
+//								snprintf( sessionid, DEFAULT_SESSION_ID_SIZE,"%s", row[ 0 ] );
+//								snprintf( userName, 256, "%s", row[ 1 ] );
+//							}
+//						}
+//						sqllib->FreeResult( sqllib, res );
+//					}
+//					l->LibrarySQLDrop( l, sqllib );
+//				}
+                
+				if(UMGetSessionIdNameByServerToken( l->sl_UM, ( char *)sst->hme_Data, sessionid, userName) != 0)
+				{
+					FERROR("Can't get sessionid and user name from DB!\n");
 				}
 			}
 		}
@@ -815,21 +821,30 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			{
 				loggedSession->us_User->u_LoggedTime = timestamp;
 			}
-			
-			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
-			if( sqllib != NULL )
+
+			//SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+			//if( sqllib != NULL )
+			//{
+			//	char *tmpQuery = FCalloc( 1025, sizeof( char ) );
+			//	if( tmpQuery )
+			//	{
+			//		sqllib->SNPrintF( sqllib, tmpQuery, 1024, "UPDATE FUserSession SET `LoggedTime` = '%ld' WHERE `SessionID` = '%s'", timestamp, sessionid );
+			//		sqllib->QueryWithoutResults( sqllib, tmpQuery );
+			//	
+			//		INFO("Logged time updated: %lu\n", timestamp );
+			//	
+			//		FFree( tmpQuery );
+			//	}
+			//	l->LibrarySQLDrop( l, sqllib );
+			//}
+
+			if (UpdateFUserSessionLoggedTimeBySessionID(l->sl_USM, timestamp, sessionid) != 0)
 			{
-				char *tmpQuery = FCalloc( 1025, sizeof( char ) );
-				if( tmpQuery )
-				{
-					sqllib->SNPrintF( sqllib, tmpQuery, 1024, "UPDATE FUserSession SET `LoggedTime` = '%ld' WHERE `SessionID` = '%s'", timestamp, sessionid );
-					sqllib->QueryWithoutResults( sqllib, tmpQuery );
-				
-					INFO("Logged time updated: %lu\n", timestamp );
-				
-					FFree( tmpQuery );
-				}
-				l->LibrarySQLDrop( l, sqllib );
+				FERROR("Can't Update logged time and session id  DB!\n");
+			}
+			else
+			{
+				INFO("Logged time updated: %lu\n", timestamp );
 			}
 		}
 	}
@@ -1891,12 +1906,17 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								// update user
 								//
 							
-								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoggedTime='%lld', SessionID='%s' WHERE `Name` = '%s'",  (long long)loggedSession->us_LoggedTime, loggedSession->us_User->u_MainSessionID, loggedSession->us_User->u_Name );
-								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
-								{ 
+								//sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoggedTime='%lld', SessionID='%s' WHERE `Name` = '%s'",  (long long)loggedSession->us_LoggedTime, loggedSession->us_User->u_MainSessionID, loggedSession->us_User->u_Name );
+								//if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
+								//{ 
+							
+								//}
+								//l->LibrarySQLDrop( l, sqlLib );
 								
+								if(UpdateFUserLoggedTimeSessionIDByName( l->sl_UM, loggedSession->us_User->u_Name, &(loggedSession->us_LoggedTime), loggedSession->us_User->u_MainSessionID ) != 0)
+								{
+									FERROR("Can't Update logged time and session id  DB!\n");
 								}
-								l->LibrarySQLDrop( l, sqlLib );
 							
 								UMAddUser( l->sl_UM, loggedSession->us_User );
 							
@@ -2179,11 +2199,15 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							
 								if( loggedSession->us_User != NULL )
 								{
-									sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoggedTime = '%lld', SessionID='%s' WHERE `Name` = '%s'",  (long long)loggedSession->us_LoggedTime, loggedSession->us_User->u_MainSessionID, loggedSession->us_User->u_Name );
-									
-									if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
-									{ 
+									//sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoggedTime = '%lld', SessionID='%s' WHERE `Name` = '%s'",  (long long)loggedSession->us_LoggedTime, loggedSession->us_User->u_MainSessionID, loggedSession->us_User->u_Name );
+									//if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
+									//{ 
 
+									//}
+
+									if (UpdateFUserLoggedTimeSessionIDByName(l->sl_UM, loggedSession->us_User->u_Name, &(loggedSession->us_LoggedTime), loggedSession->us_User->u_MainSessionID) != 0)
+									{
+										FERROR("Can't Update logged time and session id  DB!\n");
 									}
 								}
 								

@@ -219,4 +219,10 @@ void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, c
 
 User *USMIsSentinel( UserSessionManager *usm, char *username, UserSession **rus, FBOOL *isSentinel );
 
+//
+// Update LoggedTime by SessionID
+//
+
+int UpdateFUserSessionLoggedTimeBySessionID(UserSessionManager* usm, const time_t* loggedTime, const char* sessionID);
+
 #endif //__SYSTEM_USER_USER_SESSIONMANAGER_H__

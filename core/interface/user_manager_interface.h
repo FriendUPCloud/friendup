@@ -53,6 +53,14 @@ typedef struct UserManagerInterface
 	int					(*UMRemoveGlobalRemoteUser)( UserManager *um, const char *name, const char *hostname );
 	int					(*UMAddGlobalRemoteDrive)( UserManager *um, const char *locuname, const char *uname, const char *authid, const char *hostname, char *localDevName, char *remoteDevName, FULONG remoteid  );
 	int					(*UMRemoveGlobalRemoteDrive)( UserManager *um, const char *uname, const char *hostname, char *localDevName, char *remoteDevName);
+    
+   	int					(*UpdateFUserSessionIDByID)(UserManager *um, FULONG userId, const char* sessionId);
+   	int					(*UpdateFUserServerTokenByID)(UserManager *um, FULONG userId, const char* serverToken);
+   	char				*(*GetFUserSessionIDByID)( UserManager *um, FULONG userId );
+   	char				*(*GetFUserServerTokenByID)( UserManager *um, FULONG userId  );
+	int					(*UMGetSessionIdNameByServerToken)( UserManager *um, const char *serverToken, char *sessionID, char *name );
+	int					(*UpdateFUserLoggedTimeSessionIDByName)( UserManager *um, const char *name, const time_t *loggedTime, const char *sessionID );
+    
 }UserManagerInterface;
 
 //
@@ -90,6 +98,13 @@ static inline void UserManagerInterfaceInit( UserManagerInterface *si )
 	si->UMRemoveGlobalRemoteUser = UMRemoveGlobalRemoteUser;
 	si->UMAddGlobalRemoteDrive = UMAddGlobalRemoteDrive;
 	si->UMRemoveGlobalRemoteDrive = UMRemoveGlobalRemoteDrive;
+
+	si->UpdateFUserSessionIDByID = UpdateFUserSessionIDByID;
+	si->UpdateFUserServerTokenByID = UpdateFUserServerTokenByID;
+	si->GetFUserSessionIDByID = GetFUserSessionIDByID;
+	si->GetFUserServerTokenByID = GetFUserServerTokenByID;
+	si->UMGetSessionIdNameByServerToken = UMGetSessionIdNameByServerToken;
+	si->UpdateFUserLoggedTimeSessionIDByName = UpdateFUserLoggedTimeSessionIDByName;
 }
 
 #endif
