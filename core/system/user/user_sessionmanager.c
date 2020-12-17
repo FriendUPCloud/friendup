@@ -1352,3 +1352,43 @@ User *USMIsSentinel( UserSessionManager *usm, char *username, UserSession **rus,
 	}
 	return tuser;
 }
+
+
+/**
+ * Update LoggedTime by SessionID
+ *
+ * @param um pointer to UserManager
+ * @param loggedTime loggin time value
+ * @param sessionID Session id
+ * @return 0 sucess or -1 when error
+ */
+int UpdateFUserSessionLoggedTimeBySessionID(UserSessionManager* usm, const time_t* loggedTime, const char* sessionID)
+{
+	Log(FLOG_INFO, "## RT NEW ##[UpdateFUserSessionLoggedTimeBySessionID] START\n");
+
+		SystemBase *sb = (SystemBase *)usm->usm_SB;
+		SQLLibrary* sqlLib = sb->LibrarySQLGet(sb);
+
+		if (sqlLib != NULL)
+		{
+			DEBUG("[UpdateFUserSessionLoggedTimeBySessionID] %s\n", sessionID);
+
+			char temptext[2048];
+
+			sqlLib->SNPrintF(sqlLib, temptext, 2048, "UPDATE FUserSession SET `LoggedTime` = '%ld' WHERE `SessionID` = '%s'", (long long)loggedTime, sessionID);
+
+			void* res = sqlLib->Query(sqlLib, temptext);
+			if (res != NULL)
+			{
+				sqlLib->FreeResult(sqlLib, res);
+			}
+
+			sb->LibrarySQLDrop(sb, sqlLib);
+		}
+		else
+		{
+			Log(FLOG_ERROR, "[UpdateFUserSessionLoggedTimeBySessionID] SQL library error\n");
+			return -1;
+		}
+	return 0;
+}

@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS `FDocumentation` (
 -- Table structure for table `FTinyUrl`
 --
 
-CREATE TABLE `FTinyUrl` (
+CREATE TABLE IF NOT EXISTS `FTinyUrl` (
  `ID` bigint(20) NOT NULL AUTO_INCREMENT,
  `UserID` bigint(20) NOT NULL,
  `Source` text NOT NULL,
