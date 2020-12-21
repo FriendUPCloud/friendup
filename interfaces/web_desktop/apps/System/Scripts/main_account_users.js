@@ -7873,12 +7873,14 @@ function refreshUserList( userInfo )
 
 function getUserlist( callback, obj )
 {
+	// TODO: Check why notids is buggy ... 	
+	
 	var args = { 
 		query   : UsersSettings( 'searchquery' ), 
 		sortby  : UsersSettings( 'sortby'      ), 
 		orderby : UsersSettings( 'orderby'     ), 
 		limit   : UsersSettings( 'limit'       ),
-		notids  : UsersSettings( 'uids'        ).join( ',' ),
+		/*notids  : UsersSettings( 'uids'        ).join( ',' ),*/
 		count   : true, 
 		authid  : Application.authId 
 	};
