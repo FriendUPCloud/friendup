@@ -6455,11 +6455,21 @@ Sections.accounts_users = function( cmd, extra )
 					
 					
 					
-					var img = '/system.library/module/?module=system&command=getavatar&userid=' + userList[ a ].ID + ( userList[ a ].Image ? '&image=' + userList[ a ].Image : '' ) + '&width=30&height=30&authid=' + Application.authId;
+					//var img = '/system.library/module/?module=system&command=getavatar&userid=' + userList[ a ].ID + ( userList[ a ].Image ? '&image=' + userList[ a ].Image : '' ) + '&width=30&height=30&authid=' + Application.authId;
 					
 					var bg = ''/*'background-image: url(\'' + img + '\');background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;'*/;
 					
-					avatars.push( { userid: userList[ a ].ID, image: ( userList[ a ].Image ? userList[ a ].Image : null ) } );
+					
+					
+					avatars.push( { 
+						id        : userList[ a ].ID,
+						fullname  : userList[ a ].FullName,
+						name      : userList[ a ].Name,
+						status    : userList[ a ].Status,
+						logintime : userList[ a ].LoginTime,
+						timestamp : timestamp,
+						image     : ( userList[ a ].Image ? userList[ a ].Image : null ) 
+					} );
 					
 					
 					
@@ -6624,7 +6634,7 @@ Sections.accounts_users = function( cmd, extra )
 			if( avatars )
 			{
 				// TODO: finish this ...
-				//getAvatars( avatars );
+				getAvatars( avatars );
 			}
 			
 			if( ShowLog ) console.log( 'new users added to list: ' + i + '/' + tot + ' total ['+total+']' );
@@ -7302,32 +7312,46 @@ Sections.accounts_users = function( cmd, extra )
 		{
 			for( var k in avatars )
 			{
-				if( avatars[k].userid )
+				if( avatars[k].id )
 				{
-					if( ge( 'UserAvatar_' + avatars[k].userid ) )
+					if( ge( 'UserAvatar_' + avatars[k].id ) )
 					{
-						var div = ge( 'UserAvatar_' + avatars[k].userid ).getElementsByTagName( 'div' )[0];
+						var span = ge( 'UserAvatar_' + avatars[k].id );
 						
-						if( div )
+						var src = '/system.library/module/?module=system&command=getavatar&userid=' + avatars[k].id + ( avatars[k].image ? '&image=' + avatars[k].image : '' ) + '&width=30&height=30&authid=' + Application.authId;
+						
+						if( span )
 						{
-							var bg = 'background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;';
-							div.setAttribute( "style", bg );
 							
 							var img = new Image();
 							img.onload = function() 
 							{
 								
-								div.style.backgroundImage = 'url(' + img.src + ')';
+								var bg = 'background-image: url(\'' + src + '\');background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;';
+								
+								var str = '<span '                                           + 
+								'id="UserAvatar_' + avatars[k].id + '" '                     + 
+								'fullname="' + avatars[k].fullname + '" '                    + 
+								'name="' + avatars[k].name + '" '                            + 
+								'status="' + avatars[k].status + '" '                        + 
+								'logintime="' + avatars[k].logintime + '" '                  + 
+								'timestamp="' + avatars[k].timestamp + '" '                  +
+								//'class="IconSmall NegativeAlt fa-user-circle-o avatar" '   + 
+								'class="IconSmall fa-user-circle-o avatar" '                 + 
+								'style="position: relative;" '                               +
+								'><div style="' + bg + '"></div></span>';
+								
+								span.parentNode.innerHTML = str;
 								
 								img = '';
 								
 								if( avatars && k )
 								{
 									var next = [];
-					
+									
 									for( var i in avatars )
 									{
-										if( i != k && avatars[i] && avatars[i].userid )
+										if( i != k && avatars[i] && avatars[i].id )
 										{
 											next.push( avatars[i] );
 										}
@@ -7342,10 +7366,11 @@ Sections.accounts_users = function( cmd, extra )
 								}
 								
 							};
-							img.src = '/system.library/module/?module=system&command=getavatar&userid=' + avatars[k].userid + ( avatars[k].userid.image ? '&image=' + avatars[k].userid.image : '' ) + '&width=30&height=30&authid=' + Application.authId;
+							img.src = src;
 						}
 						
 					}
+					
 					
 					
 					/*var m = new Module( 'system' );
@@ -7744,7 +7769,7 @@ function refreshUserList( userInfo )
 					{
 						var img = '/system.library/module/?module=system&command=getavatar&userid=' + userInfo.ID + ( userInfo.Image ? '&image=' + userInfo.Image : '' ) + '&width=30&height=30&authid=' + Application.authId;
 						
-						var bg = /*''*/'background-image: url(\'' + img + '\');background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;';
+						var bg = 'background-image: url(\'' + img + '\');background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;';
 						
 						div[i].innerHTML = '<span '                  + 
 						'id="UserAvatar_' + userInfo.ID + '" '       + 
@@ -7756,6 +7781,8 @@ function refreshUserList( userInfo )
 						'class="IconSmall fa-user-circle-o avatar" ' + 
 						'style="position: relative;" '               +
 						'><div style="' + bg + '"></div></span>';
+						
+						//console.log( 'refreshUserList: ', bg );
 					}
 					
 					if( div[i].className.indexOf( ' fullname' ) >= 0 )
