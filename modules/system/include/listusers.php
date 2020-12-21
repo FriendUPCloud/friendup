@@ -189,6 +189,9 @@ switch( $args->args->mode )
 				' . ( isset( $args->args->userid ) && $args->args->userid ? '
 				AND u.ID IN (' . $args->args->userid . ') 
 				' : '' ) . '
+				' . ( isset( $args->args->notids ) && $args->args->notids ? '
+				AND u.ID NOT IN (' . $args->args->notids . ') 
+				' : '' ) . '
 				' . ( isset( $args->args->query ) && $args->args->query ? '
 				AND 
 				(

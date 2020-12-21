@@ -35,7 +35,8 @@ var UsersSettings = function ( setting, set )
 		startlimit  : startlimit,
 		maxlimit    : maxlimit,
 		limit       : limit,
-		reset       : true,
+		uids        : [],
+		reset       : true
 	} );
 	
 	function Update ( setting, set )
@@ -84,6 +85,12 @@ var UsersSettings = function ( setting, set )
 					this.vars.maxlimit    = ( Math.round(this.vars.startlimit + this.vars.intervals) );
 					this.vars.limit       = ( this.vars.startlimit + ', ' + this.vars.maxlimit       );
 					break;
+				case 'uids':
+					if( this.vars.uids.indexOf( set ) < 0 )
+					{
+						this.vars.uids.push( set                                                     );
+					}
+					break;
 				case 'reset'              :
 					this.vars.searchquery = ( searchquery                                            );
 					this.vars.searchby    = ( searchby                                               );
@@ -96,6 +103,7 @@ var UsersSettings = function ( setting, set )
 					this.vars.maxlimit    = ( maxlimit                                               );
 					this.vars.intervals   = ( intervals                                              );
 					this.vars.limit       = ( startlimit + ', ' + maxlimit                           );
+					this.vars.uids        = ( []                                                     );
 					break;
 			}
 		}
@@ -6522,6 +6530,8 @@ Sections.accounts_users = function( cmd, extra )
 						output.push( obj );
 					}
 					
+					UsersSettings( 'uids', userList[ a ].ID );
+					
 				}
 				else
 				{
@@ -7856,6 +7866,7 @@ function refreshUserList( userInfo )
 			}, userInfo.ID );
 		}
 		
+		UsersSettings( 'uids', userInfo.ID );
 		
 	}
 }
@@ -7866,7 +7877,8 @@ function getUserlist( callback, obj )
 		query   : UsersSettings( 'searchquery' ), 
 		sortby  : UsersSettings( 'sortby'      ), 
 		orderby : UsersSettings( 'orderby'     ), 
-		limit   : UsersSettings( 'limit'       ), 
+		limit   : UsersSettings( 'limit'       ),
+		notids  : UsersSettings( 'uids'        ).join( ',' ),
 		count   : true, 
 		authid  : Application.authId 
 	};
