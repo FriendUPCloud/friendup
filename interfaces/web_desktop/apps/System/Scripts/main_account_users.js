@@ -101,7 +101,10 @@ var UsersSettings = function ( setting, set )
 		}
 	}
 	
-	Update( setting, set );
+	if( setting )
+	{
+		Update( setting, set );
+	}
 	
 	if( setting )
 	{
@@ -7867,12 +7870,17 @@ function getUserlist( callback, obj )
 		count   : true, 
 		authid  : Application.authId 
 	};
-
+	
+	if( UsersSettings( 'total' ) > 0 && UsersSettings( 'startlimit' ) > UsersSettings( 'total' ) )
+	{
+		console.log( 'getUserlist( callback, obj ): ', { args: args, usersettings: UsersSettings() } );
+		return;
+	}
+	
 	// Get the user list
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
-		console.log( 'getUserlist( callback, obj ): ', { e:e, d:d, args: args } );
 		
 		var userList = null;
 		
@@ -7885,6 +7893,8 @@ function getUserlist( callback, obj )
 		{
 			console.log( { e:e, d:d, args:args } );
 		}
+		
+		console.log( 'getUserlist( callback, obj ): ', { e:e, d:(userList?userList:d), args: args, usersettings: UsersSettings() } );
 		
 		if( callback )
 		{
