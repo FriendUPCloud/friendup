@@ -1,7 +1,7 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -19,19 +19,28 @@
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_KDFOPT, OPT_BIN, OPT_KEYLEN, OPT_OUT
+    OPT_KDFOPT, OPT_BIN, OPT_KEYLEN, OPT_OUT,
+    OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS kdf_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] kdf_name\n"},
-    {OPT_HELP_STR, 1, '-', "kdf_name\t KDF algorithm.\n"},
+
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"kdfopt", OPT_KDFOPT, 's', "KDF algorithm control parameters in n:v form. "
-                                "See 'Supported Controls' in the EVP_KDF_ docs"},
+    {"kdfopt", OPT_KDFOPT, 's', "KDF algorithm control parameters in n:v form"},
+    {OPT_MORE_STR, 1, '-', "See 'Supported Controls' in the EVP_KDF_ docs\n"},
     {"keylen", OPT_KEYLEN, 's', "The size of the output derived key"},
+
+    OPT_SECTION("Output"),
     {"out", OPT_OUT, '>', "Output to filename rather than stdout"},
-    {"binary", OPT_BIN, '-', "Output in binary format (Default is hexadecimal "
-                             "output)"},
+    {"binary", OPT_BIN, '-',
+        "Output in binary format (default is hexadecimal)"},
+
+    OPT_PROV_OPTIONS,
+
+    OPT_PARAMETERS(),
+    {"kdf_name", 0, 0, "Name of the KDF algorithm"},
     {NULL}
 };
 
@@ -74,15 +83,18 @@ opthelp:
             if (opts == NULL || !sk_OPENSSL_STRING_push(opts, opt_arg()))
                 goto opthelp;
             break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto err;
+            break;
         }
     }
+
+    /* One argument, the KDF name. */
     argc = opt_num_rest();
     argv = opt_rest();
-
-    if (argc != 1) {
-        BIO_printf(bio_err, "Invalid number of extra arguments\n");
+    if (argc != 1)
         goto opthelp;
-    }
 
     if ((kdf = EVP_KDF_fetch(NULL, argv[0], NULL)) == NULL) {
         BIO_printf(bio_err, "Invalid KDF name %s\n", argv[0]);
@@ -132,6 +144,10 @@ opthelp:
         BIO_write(out, dkm_bytes, dkm_len);
     } else {
         hexout = OPENSSL_buf2hexstr(dkm_bytes, dkm_len);
+        if (hexout == NULL) {
+            BIO_printf(bio_err, "Memory allocation failure\n");
+            goto err;
+        }
         BIO_printf(out, "%s\n\n", hexout);
     }
 

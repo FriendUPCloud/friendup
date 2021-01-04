@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2018-2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -34,7 +34,7 @@ EVP_KDF_CTX *EVP_KDF_CTX_new(EVP_KDF *kdf)
     if (ctx == NULL
         || (ctx->data = kdf->newctx(ossl_provider_ctx(kdf->prov))) == NULL
         || !EVP_KDF_up_ref(kdf)) {
-        EVPerr(EVP_F_EVP_KDF_CTX_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         if (ctx != NULL)
             kdf->freectx(ctx->data);
         OPENSSL_free(ctx);
@@ -64,13 +64,13 @@ EVP_KDF_CTX *EVP_KDF_CTX_dup(const EVP_KDF_CTX *src)
 
     dst = OPENSSL_malloc(sizeof(*dst));
     if (dst == NULL) {
-        EVPerr(EVP_F_EVP_KDF_CTX_DUP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
     memcpy(dst, src, sizeof(*dst));
     if (!EVP_KDF_up_ref(dst->meth)) {
-        EVPerr(EVP_F_EVP_KDF_CTX_DUP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(dst);
         return NULL;
     }
@@ -83,9 +83,21 @@ EVP_KDF_CTX *EVP_KDF_CTX_dup(const EVP_KDF_CTX *src)
     return dst;
 }
 
+int EVP_KDF_number(const EVP_KDF *kdf)
+{
+    return kdf->name_id;
+}
+
 const char *EVP_KDF_name(const EVP_KDF *kdf)
 {
-    return evp_first_name(kdf->prov, kdf->name_id);
+    if (kdf->prov != NULL)
+        return evp_first_name(kdf->prov, kdf->name_id);
+    return NULL;
+}
+
+int EVP_KDF_is_a(const EVP_KDF *kdf, const char *name)
+{
+    return evp_is_a(kdf->prov, kdf->name_id, NULL, name);
 }
 
 const OSSL_PROVIDER *EVP_KDF_provider(const EVP_KDF *kdf)
@@ -98,7 +110,7 @@ const EVP_KDF *EVP_KDF_CTX_kdf(EVP_KDF_CTX *ctx)
     return ctx->meth;
 }
 
-void EVP_KDF_reset(EVP_KDF_CTX *ctx)
+void EVP_KDF_CTX_reset(EVP_KDF_CTX *ctx)
 {
     if (ctx == NULL)
         return;
@@ -107,7 +119,7 @@ void EVP_KDF_reset(EVP_KDF_CTX *ctx)
         ctx->meth->reset(ctx->data);
 }
 
-size_t EVP_KDF_size(EVP_KDF_CTX *ctx)
+size_t EVP_KDF_CTX_get_kdf_size(EVP_KDF_CTX *ctx)
 {
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     size_t s;
@@ -158,4 +170,12 @@ int EVP_KDF_CTX_set_params(EVP_KDF_CTX *ctx, const OSSL_PARAM params[])
     if (ctx->meth->set_ctx_params != NULL)
         return ctx->meth->set_ctx_params(ctx->data, params);
     return 1;
+}
+
+void EVP_KDF_names_do_all(const EVP_KDF *kdf,
+                          void (*fn)(const char *name, void *data),
+                          void *data)
+{
+    if (kdf->prov != NULL)
+        evp_names_do_all(kdf->prov, kdf->name_id, fn, data);
 }

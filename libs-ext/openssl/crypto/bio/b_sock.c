@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,7 +9,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
 #include "bio_local.h"
 #ifndef OPENSSL_NO_SOCK
 # define SOCKET_PROTOCOL IPPROTO_TCP
@@ -24,7 +23,20 @@
 static int wsa_init_done = 0;
 # endif
 
-# if !OPENSSL_API_1_1_0
+# if defined __TANDEM
+#  include <unistd.h>
+#  include <sys/time.h> /* select */
+#  if defined(OPENSSL_TANDEM_FLOSS)
+#   include <floss.h(floss_select)>
+#  endif
+# elif !defined _WIN32
+#  include <unistd.h>
+#  include <sys/select.h>
+# else
+#  include <winsock.h> /* for type fd_set */
+# endif
+
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 int BIO_get_host_ip(const char *str, unsigned char *ip)
 {
     BIO_ADDRINFO *res = NULL;
@@ -37,8 +49,7 @@ int BIO_get_host_ip(const char *str, unsigned char *ip)
         size_t l;
 
         if (BIO_ADDRINFO_family(res) != AF_INET) {
-            BIOerr(BIO_F_BIO_GET_HOST_IP,
-                   BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET);
+            ERR_raise(ERR_LIB_BIO, BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET);
         } else if (BIO_ADDR_rawaddress(BIO_ADDRINFO_address(res), NULL, &l)) {
             /*
              * Because only AF_INET addresses will reach this far, we can assert
@@ -61,7 +72,7 @@ int BIO_get_port(const char *str, unsigned short *port_ptr)
     int ret = 0;
 
     if (str == NULL) {
-        BIOerr(BIO_F_BIO_GET_PORT, BIO_R_NO_PORT_DEFINED);
+        ERR_raise(ERR_LIB_BIO, BIO_R_NO_PORT_DEFINED);
         return 0;
     }
 
@@ -70,8 +81,7 @@ int BIO_get_port(const char *str, unsigned short *port_ptr)
 
     if (BIO_lookup(NULL, str, BIO_LOOKUP_CLIENT, AF_INET, SOCK_STREAM, &res)) {
         if (BIO_ADDRINFO_family(res) != AF_INET) {
-            BIOerr(BIO_F_BIO_GET_PORT,
-                   BIO_R_ADDRINFO_ADDR_IS_NOT_AF_INET);
+            ERR_raise(ERR_LIB_BIO, BIO_R_ADDRINFO_ADDR_IS_NOT_AF_INET);
         } else {
             *port_ptr = ntohs(BIO_ADDR_rawport(BIO_ADDRINFO_address(res)));
             ret = 1;
@@ -103,7 +113,7 @@ int BIO_sock_error(int sock)
         return j;
 }
 
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 struct hostent *BIO_gethostbyname(const char *name)
 {
     /*
@@ -131,7 +141,7 @@ int BIO_sock_init(void)
         if (WSAStartup(0x0202, &wsa_state) != 0) {
             ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                            "calling wsastartup()");
-            BIOerr(BIO_F_BIO_SOCK_INIT, BIO_R_WSASTARTUP);
+            ERR_raise(ERR_LIB_BIO, BIO_R_WSASTARTUP);
             return -1;
         }
     }
@@ -195,7 +205,7 @@ int BIO_socket_ioctl(int fd, long type, void *arg)
     return i;
 }
 
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 int BIO_get_accept_socket(char *host, int bind_mode)
 {
     int s = INVALID_SOCKET;
@@ -244,7 +254,7 @@ int BIO_accept(int sock, char **ip_port)
         }
         ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                        "calling accept()");
-        BIOerr(BIO_F_BIO_ACCEPT, BIO_R_ACCEPT_ERROR);
+        ERR_raise(ERR_LIB_BIO, BIO_R_ACCEPT_ERROR);
         goto end;
     }
 
@@ -257,7 +267,7 @@ int BIO_accept(int sock, char **ip_port)
             *ip_port = NULL;
 
         if (*ip_port == NULL) {
-            BIOerr(BIO_F_BIO_ACCEPT, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
             BIO_closesocket(ret);
             ret = (int)INVALID_SOCKET;
         } else {
@@ -333,7 +343,7 @@ int BIO_socket_nbio(int s, int mode)
     }
 # else
     /* make sure this call always pushes an error level; BIO_socket_ioctl() does so, so we do too. */
-    BIOerr(BIO_F_BIO_SOCKET_NBIO, ERR_R_PASSED_INVALID_ARGUMENT);
+    ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_INVALID_ARGUMENT);
 # endif
 
     return (ret == 0);
@@ -353,20 +363,48 @@ int BIO_sock_info(int sock,
             if (ret == -1) {
                 ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                                "calling getsockname()");
-                BIOerr(BIO_F_BIO_SOCK_INFO, BIO_R_GETSOCKNAME_ERROR);
+                ERR_raise(ERR_LIB_BIO, BIO_R_GETSOCKNAME_ERROR);
                 return 0;
             }
             if ((size_t)addr_len > sizeof(*info->addr)) {
-                BIOerr(BIO_F_BIO_SOCK_INFO, BIO_R_GETSOCKNAME_TRUNCATED_ADDRESS);
+                ERR_raise(ERR_LIB_BIO, BIO_R_GETSOCKNAME_TRUNCATED_ADDRESS);
                 return 0;
             }
         }
         break;
     default:
-        BIOerr(BIO_F_BIO_SOCK_INFO, BIO_R_UNKNOWN_INFO_TYPE);
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNKNOWN_INFO_TYPE);
         return 0;
     }
     return 1;
 }
 
-#endif
+/* TODO simplify by BIO_socket_wait() further other uses of select() in apps/ */
+/*
+ * Wait on fd at most until max_time; succeed immediately if max_time == 0.
+ * If for_read == 0 then assume to wait for writing, else wait for reading.
+ * Returns -1 on error, 0 on timeout, and 1 on success.
+ */
+int BIO_socket_wait(int fd, int for_read, time_t max_time)
+{
+    fd_set confds;
+    struct timeval tv;
+    time_t now;
+
+    if (fd < 0 || fd >= FD_SETSIZE)
+        return -1;
+    if (max_time == 0)
+        return 1;
+
+    now = time(NULL);
+    if (max_time <= now)
+        return 0;
+
+    FD_ZERO(&confds);
+    openssl_fdset(fd, &confds);
+    tv.tv_usec = 0;
+    tv.tv_sec = (long)(max_time - now); /* might overflow */
+    return select(fd + 1, for_read ? &confds : NULL,
+                  for_read ? NULL : &confds, NULL, &tv);
+}
+#endif /* !defined(OPENSSL_NO_SOCK) */

@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -24,6 +24,7 @@
 IMPLEMENT_ASN1_MSTRING(ASN1_TIME, B_ASN1_TIME)
 
 IMPLEMENT_ASN1_FUNCTIONS(ASN1_TIME)
+IMPLEMENT_ASN1_DUP_FUNCTION(ASN1_TIME)
 
 static int is_utc(const int year)
 {
@@ -327,7 +328,7 @@ ASN1_TIME *ASN1_TIME_adj(ASN1_TIME *s, time_t t,
 
     ts = OPENSSL_gmtime(&t, &data);
     if (ts == NULL) {
-        ASN1err(ASN1_F_ASN1_TIME_ADJ, ASN1_R_ERROR_GETTING_TIME);
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_ERROR_GETTING_TIME);
         return NULL;
     }
     if (offset_day || offset_sec) {

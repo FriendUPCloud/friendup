@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -127,8 +127,7 @@ int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
         fnd->uptodate = 0;
         if (setdefault) {
             if (!engine_unlocked_init(e)) {
-                ENGINEerr(ENGINE_F_ENGINE_TABLE_REGISTER,
-                          ENGINE_R_INIT_FAILED);
+                ERR_raise(ERR_LIB_ENGINE, ENGINE_R_INIT_FAILED);
                 goto end;
             }
             if (fnd->funct)
@@ -170,7 +169,7 @@ void engine_table_unregister(ENGINE_TABLE **table, ENGINE *e)
 
 static void int_cleanup_cb_doall(ENGINE_PILE *p)
 {
-    if (!p)
+    if (p == NULL)
         return;
     sk_ENGINE_free(p->sk);
     if (p->funct)

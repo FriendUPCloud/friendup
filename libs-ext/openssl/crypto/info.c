@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,6 +8,7 @@
  */
 
 #include <openssl/crypto.h>
+#include "crypto/rand.h"
 #include "crypto/dso_conf.h"
 #include "internal/thread_once.h"
 #include "internal/cryptlib.h"
@@ -16,6 +17,12 @@
 
 #if defined(__arm__) || defined(__arm) || defined(__aarch64__)
 # include "arm_arch.h"
+# define CPU_INFO_STR_LEN 128
+#elif defined(__s390__) || defined(__s390x__)
+# include "s390x_arch.h"
+# define CPU_INFO_STR_LEN 2048
+#else
+# define CPU_INFO_STR_LEN 128
 #endif
 
 /* extern declaration to avoid warning */
@@ -23,7 +30,7 @@ extern char ossl_cpu_info_str[];
 
 static char *seed_sources = NULL;
 
-char ossl_cpu_info_str[128] = "";
+char ossl_cpu_info_str[CPU_INFO_STR_LEN] = "";
 #define CPUINFO_PREFIX "CPUINFO: "
 
 static CRYPTO_ONCE init_info = CRYPTO_ONCE_STATIC_INIT;
@@ -55,6 +62,42 @@ DEFINE_RUN_ONCE_STATIC(init_info_strings)
         BIO_snprintf(ossl_cpu_info_str + strlen(ossl_cpu_info_str),
                      sizeof(ossl_cpu_info_str) - strlen(ossl_cpu_info_str),
                      " env:%s", env);
+# elif defined(__s390__) || defined(__s390x__)
+    const char *env;
+
+    BIO_snprintf(ossl_cpu_info_str, sizeof(ossl_cpu_info_str),
+                 CPUINFO_PREFIX "OPENSSL_s390xcap="
+                 "stfle:0x%llx:0x%llx:0x%llx:0x%llx:"
+                 "kimd:0x%llx:0x%llx:"
+                 "klmd:0x%llx:0x%llx:"
+                 "km:0x%llx:0x%llx:"
+                 "kmc:0x%llx:0x%llx:"
+                 "kmac:0x%llx:0x%llx:"
+                 "kmctr:0x%llx:0x%llx:"
+                 "kmo:0x%llx:0x%llx:"
+                 "kmf:0x%llx:0x%llx:"
+                 "prno:0x%llx:0x%llx:"
+                 "kma:0x%llx:0x%llx:"
+                 "pcc:0x%llx:0x%llx:"
+                 "kdsa:0x%llx:0x%llx",
+                 OPENSSL_s390xcap_P.stfle[0], OPENSSL_s390xcap_P.stfle[1],
+                 OPENSSL_s390xcap_P.stfle[2], OPENSSL_s390xcap_P.stfle[3],
+                 OPENSSL_s390xcap_P.kimd[0], OPENSSL_s390xcap_P.kimd[1],
+                 OPENSSL_s390xcap_P.klmd[0], OPENSSL_s390xcap_P.klmd[1],
+                 OPENSSL_s390xcap_P.km[0], OPENSSL_s390xcap_P.km[1],
+                 OPENSSL_s390xcap_P.kmc[0], OPENSSL_s390xcap_P.kmc[1],
+                 OPENSSL_s390xcap_P.kmac[0], OPENSSL_s390xcap_P.kmac[1],
+                 OPENSSL_s390xcap_P.kmctr[0], OPENSSL_s390xcap_P.kmctr[1],
+                 OPENSSL_s390xcap_P.kmo[0], OPENSSL_s390xcap_P.kmo[1],
+                 OPENSSL_s390xcap_P.kmf[0], OPENSSL_s390xcap_P.kmf[1],
+                 OPENSSL_s390xcap_P.prno[0], OPENSSL_s390xcap_P.prno[1],
+                 OPENSSL_s390xcap_P.kma[0], OPENSSL_s390xcap_P.kma[1],
+                 OPENSSL_s390xcap_P.pcc[0], OPENSSL_s390xcap_P.pcc[1],
+                 OPENSSL_s390xcap_P.kdsa[0], OPENSSL_s390xcap_P.kdsa[1]);
+    if ((env = getenv("OPENSSL_s390xcap")) != NULL)
+        BIO_snprintf(ossl_cpu_info_str + strlen(ossl_cpu_info_str),
+                     sizeof(ossl_cpu_info_str) - strlen(ossl_cpu_info_str),
+                     " env:%s", env);
 # endif
 #endif
 
@@ -71,14 +114,15 @@ DEFINE_RUN_ONCE_STATIC(init_info_strings)
         do {                                                            \
             add_seeds_string(label "(");                                \
             {                                                           \
-                const char *dev[] = strlist;                            \
+                const char *dev[] =  { strlist, NULL };                 \
+                const char **p;                                         \
                 int first = 1;                                          \
                                                                         \
-                for (; *dev != NULL; dev++) {                           \
+                for (p = dev; *p != NULL; p++) {                        \
                     if (!first)                                         \
                         OPENSSL_strlcat(seeds, " ", sizeof(seeds));     \
                     first = 0;                                          \
-                    OPENSSL_strlcat(seeds, *dev, sizeof(seeds));        \
+                    OPENSSL_strlcat(seeds, *p, sizeof(seeds));          \
                 }                                                       \
             }                                                           \
             OPENSSL_strlcat(seeds, ")", sizeof(seeds));                 \
@@ -100,10 +144,10 @@ DEFINE_RUN_ONCE_STATIC(init_info_strings)
         add_seeds_string("getrandom-syscall");
 #endif
 #ifdef OPENSSL_RAND_SEED_DEVRANDOM
-        add_seeds_stringlist("random-device", { DEVRANDOM, NULL });
+        add_seeds_stringlist("random-device", DEVRANDOM);
 #endif
 #ifdef OPENSSL_RAND_SEED_EGD
-        add_seeds_stringlist("EGD", { DEVRANDOM_EGD, NULL });
+        add_seeds_stringlist("EGD", DEVRANDOM_EGD);
 #endif
 #ifdef OPENSSL_RAND_SEED_OS
         add_seeds_string("os-specific");

@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,6 +8,12 @@
  */
 
 /* test vectors from p1ovect1.txt */
+
+/*
+ * RSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -21,16 +27,9 @@
 
 #include "testutil.h"
 
-#ifdef OPENSSL_NO_RSA
-int setup_tests(void)
-{
-    /* No tests */
-    return 1;
-}
-#else
-# include <openssl/rsa.h>
+#include <openssl/rsa.h>
 
-# define SetKey \
+#define SetKey \
     RSA_set0_key(key,                                           \
                  BN_bin2bn(n, sizeof(n)-1, NULL),               \
                  BN_bin2bn(e, sizeof(e)-1, NULL),               \
@@ -225,18 +224,20 @@ static int pad_unknown(void)
 static int rsa_setkey(RSA** key, unsigned char* ctext, int idx)
 {
     int clen = 0;
+
     *key = RSA_new();
-    switch (idx) {
-    case 0:
-        clen = key1(*key, ctext);
-        break;
-    case 1:
-        clen = key2(*key, ctext);
-        break;
-    case 2:
-        clen = key3(*key, ctext);
-        break;
-    }
+    if (*key != NULL)
+        switch (idx) {
+        case 0:
+            clen = key1(*key, ctext);
+            break;
+        case 1:
+            clen = key2(*key, ctext);
+            break;
+        case 2:
+            clen = key3(*key, ctext);
+            break;
+        }
     return clen;
 }
 
@@ -428,4 +429,3 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_rsa_security_bit, OSSL_NELEM(rsa_security_bits_cases));
     return 1;
 }
-#endif

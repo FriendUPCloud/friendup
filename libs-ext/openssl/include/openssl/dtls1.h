@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,7 +12,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_DTLS1_H
 # endif
 
@@ -24,7 +24,7 @@ extern "C" {
 
 # define DTLS1_VERSION                   0xFEFF
 # define DTLS1_2_VERSION                 0xFEFD
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define DTLS_MIN_VERSION                DTLS1_VERSION
 #  define DTLS_MAX_VERSION                DTLS1_2_VERSION
 # endif
@@ -36,11 +36,8 @@ extern "C" {
 # define DTLS_ANY_VERSION                0x1FFFF
 
 /* lengths of messages */
-/*
- * Actually the max cookie length in DTLS is 255. But we can't change this now
- * due to compatibility concerns.
- */
-# define DTLS1_COOKIE_LENGTH                     256
+
+# define DTLS1_COOKIE_LENGTH                     255
 
 # define DTLS1_RT_HEADER_LENGTH                  13
 

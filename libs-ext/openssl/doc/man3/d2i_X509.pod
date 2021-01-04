@@ -1,5 +1,12 @@
 =pod
 
+=begin comment
+
+Any keypair function here that gets deprecated should be moved to
+d2i_RSAPrivateKey.pod.
+
+=end comment
+
 =head1 NAME
 
 d2i_ACCESS_DESCRIPTION,
@@ -44,15 +51,7 @@ d2i_DIRECTORYSTRING,
 d2i_DISPLAYTEXT,
 d2i_DIST_POINT,
 d2i_DIST_POINT_NAME,
-d2i_DSAPrivateKey,
-d2i_DSAPrivateKey_bio,
-d2i_DSAPrivateKey_fp,
-d2i_DSAPublicKey,
-d2i_DSA_PUBKEY,
-d2i_DSA_PUBKEY_bio,
-d2i_DSA_PUBKEY_fp,
 d2i_DSA_SIG,
-d2i_DSAparams,
 d2i_ECDSA_SIG,
 d2i_ECPKParameters,
 d2i_ECParameters,
@@ -75,6 +74,7 @@ d2i_IPAddressChoice,
 d2i_IPAddressFamily,
 d2i_IPAddressOrRange,
 d2i_IPAddressRange,
+d2i_ISSUER_SIGN_TOOL,
 d2i_ISSUING_DIST_POINT,
 d2i_NAMING_AUTHORITY,
 d2i_NETSCAPE_CERT_SEQUENCE,
@@ -98,6 +98,7 @@ d2i_OCSP_SIGNATURE,
 d2i_OCSP_SINGLERESP,
 d2i_OSSL_CMP_MSG,
 d2i_OSSL_CMP_PKIHEADER,
+d2i_OSSL_CMP_PKISI,
 d2i_OSSL_CRMF_CERTID,
 d2i_OSSL_CRMF_CERTTEMPLATE,
 d2i_OSSL_CRMF_ENCRYPTEDVALUE,
@@ -139,17 +140,8 @@ d2i_POLICYQUALINFO,
 d2i_PROFESSION_INFO,
 d2i_PROXY_CERT_INFO_EXTENSION,
 d2i_PROXY_POLICY,
-d2i_RSAPrivateKey,
-d2i_RSAPrivateKey_bio,
-d2i_RSAPrivateKey_fp,
-d2i_RSAPublicKey,
-d2i_RSAPublicKey_bio,
-d2i_RSAPublicKey_fp,
 d2i_RSA_OAEP_PARAMS,
 d2i_RSA_PSS_PARAMS,
-d2i_RSA_PUBKEY,
-d2i_RSA_PUBKEY_bio,
-d2i_RSA_PUBKEY_fp,
 d2i_SCRYPT_PARAMS,
 d2i_SCT_LIST,
 d2i_SXNET,
@@ -184,6 +176,8 @@ d2i_X509_EXTENSIONS,
 d2i_X509_NAME,
 d2i_X509_NAME_ENTRY,
 d2i_X509_PUBKEY,
+d2i_X509_PUBKEY_bio,
+d2i_X509_PUBKEY_fp,
 d2i_X509_REQ,
 d2i_X509_REQ_INFO,
 d2i_X509_REQ_bio,
@@ -264,6 +258,7 @@ i2d_IPAddressChoice,
 i2d_IPAddressFamily,
 i2d_IPAddressOrRange,
 i2d_IPAddressRange,
+i2d_ISSUER_SIGN_TOOL,
 i2d_ISSUING_DIST_POINT,
 i2d_NAMING_AUTHORITY,
 i2d_NETSCAPE_CERT_SEQUENCE,
@@ -287,6 +282,7 @@ i2d_OCSP_SIGNATURE,
 i2d_OCSP_SINGLERESP,
 i2d_OSSL_CMP_MSG,
 i2d_OSSL_CMP_PKIHEADER,
+i2d_OSSL_CMP_PKISI,
 i2d_OSSL_CRMF_CERTID,
 i2d_OSSL_CRMF_CERTTEMPLATE,
 i2d_OSSL_CRMF_ENCRYPTEDVALUE,
@@ -331,17 +327,8 @@ i2d_POLICYQUALINFO,
 i2d_PROFESSION_INFO,
 i2d_PROXY_CERT_INFO_EXTENSION,
 i2d_PROXY_POLICY,
-i2d_RSAPrivateKey,
-i2d_RSAPrivateKey_bio,
-i2d_RSAPrivateKey_fp,
-i2d_RSAPublicKey,
-i2d_RSAPublicKey_bio,
-i2d_RSAPublicKey_fp,
 i2d_RSA_OAEP_PARAMS,
 i2d_RSA_PSS_PARAMS,
-i2d_RSA_PUBKEY,
-i2d_RSA_PUBKEY_bio,
-i2d_RSA_PUBKEY_fp,
 i2d_SCRYPT_PARAMS,
 i2d_SCT_LIST,
 i2d_SXNET,
@@ -376,6 +363,8 @@ i2d_X509_EXTENSIONS,
 i2d_X509_NAME,
 i2d_X509_NAME_ENTRY,
 i2d_X509_PUBKEY,
+i2d_X509_PUBKEY_bio,
+i2d_X509_PUBKEY_fp,
 i2d_X509_REQ,
 i2d_X509_REQ_INFO,
 i2d_X509_REQ_bio,
@@ -387,9 +376,9 @@ i2d_X509_VAL,
 
 =head1 SYNOPSIS
 
-=for comment generic
+=for openssl generic
 
- TYPE *d2i_TYPE(TYPE **a, unsigned char **ppin, long length);
+ TYPE *d2i_TYPE(TYPE **a, const unsigned char **ppin, long length);
  TYPE *d2i_TYPE_bio(BIO *bp, TYPE **a);
  TYPE *d2i_TYPE_fp(FILE *fp, TYPE **a);
 
@@ -403,7 +392,7 @@ i2d_X509_VAL,
 =head1 DESCRIPTION
 
 In the description here, B<I<TYPE>> is used a placeholder
-for any of the OpenSSL datatypes, such as I<X509_CRL>.
+for any of the OpenSSL datatypes, such as B<X509_CRL>.
 The function parameters I<ppin> and I<ppout> are generally
 either both named I<pp> in the headers, or I<in> and I<out>.
 
@@ -445,7 +434,7 @@ the encoding of the structure I<a> to BIO I<bp> and it
 returns 1 for success and 0 for failure.
 
 B<i2d_I<TYPE>_fp>() is similar to B<i2d_I<TYPE>>() except it writes
-the encoding of the structure I<a> to BIO I<bp> and it
+the encoding of the structure I<a> to FILE pointer I<fp> and it
 returns 1 for success and 0 for failure.
 
 These routines do not encrypt private keys and therefore offer no
@@ -464,7 +453,7 @@ populated B<I<TYPE>> structure -- it B<cannot> simply be fed with an
 empty structure such as that returned by TYPE_new().
 
 The encoded data is in binary form and may contain embedded zeros.
-Therefore any FILE pointers or BIOs should be opened in binary mode.
+Therefore, any FILE pointers or BIOs should be opened in binary mode.
 Functions such as strlen() will B<not> return the correct length
 of the encoded structure.
 
@@ -487,26 +476,13 @@ Represents an ASN1 OBJECT IDENTIFIER.
 
 Represents a PKCS#3 DH parameters structure.
 
-=item B<DHparamx>
+=item B<DHxparams>
 
 Represents an ANSI X9.42 DH parameters structure.
-
-=item B<DSA_PUBKEY>
-
-Represents a DSA public key using a B<SubjectPublicKeyInfo> structure.
-
-=item B<DSAPublicKey>, B<DSAPrivateKey>
-
-Use a non-standard OpenSSL format and should be avoided; use B<DSA_PUBKEY>,
-L<PEM_write_PrivateKey(3)>, or similar instead.
 
 =item B<ECDSA_SIG>
 
 Represents an ECDSA signature.
-
-=item B<RSAPublicKey>
-
-Represents a PKCS#1 RSA public key structure.
 
 =item B<X509_ALGOR>
 
@@ -556,7 +532,8 @@ Allocate and encode the DER encoding of an X509 structure:
 Attempt to decode a buffer:
 
  X509 *x;
- unsigned char *buf, *p;
+ unsigned char *buf;
+ const unsigned char *p;
  int len;
 
  /* Set up buf and len to point to the input buffer. */
@@ -568,7 +545,8 @@ Attempt to decode a buffer:
 Alternative technique:
 
  X509 *x;
- unsigned char *buf, *p;
+ unsigned char *buf;
+ const unsigned char *p;
  int len;
 
  /* Set up buf and len to point to the input buffer. */
@@ -637,7 +615,7 @@ efficiency reasons.
 
 =head1 COPYRIGHT
 
-Copyright 1998-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 1998-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

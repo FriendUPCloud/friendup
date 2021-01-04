@@ -18,7 +18,11 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS info_options[] = {
+
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
+
+    OPT_SECTION("Output"),
     {"configdir", OPT_CONFIGDIR, '-', "Default configuration file directory"},
     {"enginesdir", OPT_ENGINESDIR, '-', "Default engine module directory"},
     {"modulesdir", OPT_MODULESDIR, '-',
@@ -82,10 +86,8 @@ opthelp:
             break;
         }
     }
-    if (opt_num_rest() != 0) {
-        BIO_printf(bio_err, "%s: Extra parameters given.\n", prog);
+    if (opt_num_rest() != 0)
         goto opthelp;
-    }
     if (dirty > 1) {
         BIO_printf(bio_err, "%s: Only one item allowed\n", prog);
         goto opthelp;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,25 +7,31 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/cryptlib.h"
+/*
+ * AES_encrypt/AES_decrypt are deprecated - but we need to use them to implement
+ * these functions
+ */
+#include "internal/deprecated.h"
 
-#if OPENSSL_API_3
-NON_EMPTY_TRANSLATION_UNIT
-#else
+#include "internal/cryptlib.h"
 
 #include <openssl/aes.h>
 #include "aes_local.h"
-
-#define N_WORDS (AES_BLOCK_SIZE / sizeof(unsigned long))
-typedef struct {
-    unsigned long data[N_WORDS];
-} aes_block_t;
 
 /* XXX: probably some better way to do this */
 #if defined(__i386__) || defined(__x86_64__)
 # define UNALIGNED_MEMOPS_ARE_FAST 1
 #else
 # define UNALIGNED_MEMOPS_ARE_FAST 0
+#endif
+
+#define N_WORDS (AES_BLOCK_SIZE / sizeof(unsigned long))
+typedef struct {
+    unsigned long data[N_WORDS];
+#if defined(__GNUC__) && UNALIGNED_MEMOPS_ARE_FAST
+} aes_block_t __attribute((__aligned__(1)));
+#else
+} aes_block_t;
 #endif
 
 #if UNALIGNED_MEMOPS_ARE_FAST
@@ -44,7 +50,7 @@ void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
                      unsigned char *ivec, const int enc)
 {
     size_t n;
-    size_t len = length;
+    size_t len = length / AES_BLOCK_SIZE;
 
     if (length == 0)
         return;
@@ -52,8 +58,6 @@ void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
     OPENSSL_assert(in && out && key && ivec);
     OPENSSL_assert((AES_ENCRYPT == enc) || (AES_DECRYPT == enc));
     OPENSSL_assert((length % AES_BLOCK_SIZE) == 0);
-
-    len = length / AES_BLOCK_SIZE;
 
     if (AES_ENCRYPT == enc) {
         if (in != out &&
@@ -295,4 +299,3 @@ void AES_bi_ige_encrypt(const unsigned char *in, unsigned char *out,
         }
     }
 }
-#endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -9,6 +9,7 @@
  */
 
 #include <stdarg.h>
+#include <openssl/evp.h>
 #include "testutil.h"
 #include "internal/nelem.h"
 #include "internal/property.h"
@@ -26,6 +27,15 @@ static int add_property_names(const char *n, ...)
     } while ((n = va_arg(args, const char *)) != NULL);
     va_end(args);
     return res;
+}
+
+static int up_ref(void *p)
+{
+    return 1;
+}
+
+static void down_ref(void *p)
+{
 }
 
 static int test_property_string(void)
@@ -242,7 +252,7 @@ static int test_register_deregister(void)
     for (i = 0; i < OSSL_NELEM(impls); i++)
         if (!TEST_true(ossl_method_store_add(store, NULL, impls[i].nid,
                                              impls[i].prop, impls[i].impl,
-                                             NULL, NULL))) {
+                                             &up_ref, &down_ref))) {
             TEST_note("iteration %zd", i + 1);
             goto err;
         }
@@ -310,7 +320,7 @@ static int test_property(void)
     for (i = 0; i < OSSL_NELEM(impls); i++)
         if (!TEST_true(ossl_method_store_add(store, NULL, impls[i].nid,
                                              impls[i].prop, impls[i].impl,
-                                             NULL, NULL))) {
+                                             &up_ref, &down_ref))) {
             TEST_note("iteration %zd", i + 1);
             goto err;
         }
@@ -350,10 +360,12 @@ static int test_query_cache_stochastic(void)
         v[i] = 2 * i;
         BIO_snprintf(buf, sizeof(buf), "n=%d\n", i);
         if (!TEST_true(ossl_method_store_add(store, NULL, i, buf, "abc",
-                                             NULL, NULL))
-                || !TEST_true(ossl_method_store_cache_set(store, i, buf, v + i))
+                                             &up_ref, &down_ref))
+                || !TEST_true(ossl_method_store_cache_set(store, i, buf, v + i,
+                                                          &up_ref, &down_ref))
                 || !TEST_true(ossl_method_store_cache_set(store, i, "n=1234",
-                                                          "miss"))) {
+                                                          "miss", &up_ref,
+                                                          &down_ref))) {
             TEST_note("iteration %d", i);
             goto err;
         }
@@ -372,6 +384,35 @@ err:
     return res;
 }
 
+static int test_fips_mode(void)
+{
+    int ret = 0;
+    OSSL_LIB_CTX *ctx = NULL;
+
+    if (!TEST_ptr(ctx = OSSL_LIB_CTX_new()))
+        goto err;
+
+    ret = TEST_true(EVP_set_default_properties(ctx, "default=yes,fips=yes"))
+          && TEST_true(EVP_default_properties_is_fips_enabled(ctx))
+          && TEST_true(EVP_set_default_properties(ctx, "fips=no,default=yes"))
+          && TEST_false(EVP_default_properties_is_fips_enabled(ctx))
+          && TEST_true(EVP_set_default_properties(ctx, "fips=no"))
+          && TEST_false(EVP_default_properties_is_fips_enabled(ctx))
+          && TEST_true(EVP_set_default_properties(ctx, "fips!=no"))
+          && TEST_true(EVP_default_properties_is_fips_enabled(ctx))
+          && TEST_true(EVP_set_default_properties(ctx, "fips=no"))
+          && TEST_false(EVP_default_properties_is_fips_enabled(ctx))
+          && TEST_true(EVP_set_default_properties(ctx, "fips=no,default=yes"))
+          && TEST_true(EVP_default_properties_enable_fips(ctx, 1))
+          && TEST_true(EVP_default_properties_is_fips_enabled(ctx))
+          && TEST_true(EVP_default_properties_enable_fips(ctx, 0))
+          && TEST_false(EVP_default_properties_is_fips_enabled(ctx));
+err:
+    OSSL_LIB_CTX_free(ctx);
+    return ret;
+}
+
+
 int setup_tests(void)
 {
     ADD_TEST(test_property_string);
@@ -382,5 +423,6 @@ int setup_tests(void)
     ADD_TEST(test_register_deregister);
     ADD_TEST(test_property);
     ADD_TEST(test_query_cache_stochastic);
+    ADD_TEST(test_fips_mode);
     return 1;
 }

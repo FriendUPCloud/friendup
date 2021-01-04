@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -22,6 +22,7 @@
 # endif
 
 # include "crypto/bn.h"
+# include "internal/cryptlib.h"
 
 /*
  * These preprocessor symbols control various aspects of the bignum headers
@@ -664,5 +665,8 @@ static ossl_inline BIGNUM *bn_expand(BIGNUM *a, int bits)
 
     return bn_expand2((a),(bits+BN_BITS2-1)/BN_BITS2);
 }
+
+int bn_check_prime_int(const BIGNUM *w, int checks, BN_CTX *ctx,
+                      int do_trial_division, BN_GENCB *cb);
 
 #endif
