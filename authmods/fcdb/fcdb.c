@@ -257,7 +257,7 @@ int UpdatePassword( struct AuthMod *l, Http *r __attribute__((unused)), User *us
 		{
 			char temptext[ 2048 ];
 			
-			sqlLib->SNPrintF( sqlLib, temptext, 2048, "UPDATE `FUser` f SET f.Password = '%s' WHERE`ID` = '%ld'",  pass, usr->u_ID );
+			sqlLib->SNPrintF( sqlLib, temptext, 2048, "UPDATE `FUser` f SET f.Password='%s' WHERE`ID`='%ld'",  pass, usr->u_ID );
 
 			void *res = sqlLib->Query( sqlLib, temptext );
 			if( res != NULL )
@@ -579,11 +579,11 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 			if( createNewSession == TRUE )
 			{
 				//Generate new session ID for the user
-				char *new_session_id = SessionIDGenerate();
+				char *newSessionId = SessionIDGenerate();
 			
-				uses = UserSessionNew( new_session_id, devname );
+				uses = UserSessionNew( newSessionId, devname );
 			
-				FFree( new_session_id );
+				FFree( newSessionId );
 				uses->us_UserID = tmpusr->u_ID;
 				uses->us_LoggedTime = time( NULL );
 			

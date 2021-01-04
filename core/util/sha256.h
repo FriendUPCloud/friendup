@@ -33,23 +33,48 @@
 #define SIG0(x) (ROTRIGHT(x,7) ^ ROTRIGHT(x,18) ^ ((x) >> 3))
 #define SIG1(x) (ROTRIGHT(x,17) ^ ROTRIGHT(x,19) ^ ((x) >> 10))
 
-typedef struct FCSHA256_CTX{
-   uchar data[64];
-   uint datalen;
-   uint bitlen[2];
-   uint state[8];
-} FCSHA256_CTX;
+typedef struct FCSHA256_CTX
+{
+	uchar data[64];
+	uint datalen;
+	uint bitlen[2];
+	uint state[8];
+}FCSHA256_CTX;
 
 //
 //
 //
 
-void Sha256Transform(FCSHA256_CTX *ctx, uchar data[]);
+void Sha256Transform( FCSHA256_CTX *ctx, uchar data[] );
 
-void Sha256Init(FCSHA256_CTX *ctx);
+//
+//
+//
 
-void Sha256Update(FCSHA256_CTX *ctx, uchar data[], uint len);
+void Sha256Init( FCSHA256_CTX *ctx );
 
-void Sha256Final(FCSHA256_CTX *ctx, uchar hash[]);
+//
+//
+//
+
+void Sha256Update( FCSHA256_CTX *ctx, uchar data[], uint len );
+
+//
+//
+//
+
+void Sha256Final( FCSHA256_CTX *ctx, uchar hash[] );
+
+//
+//
+//
+
+char *EncodeStringLenSHA256( char *data, int len );
+
+//
+//
+//
+
+char *EncodeStringSHA256( char *data );
 
 #endif // __UTIL_SHA256_H__

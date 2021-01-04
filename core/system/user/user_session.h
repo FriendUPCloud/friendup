@@ -121,7 +121,7 @@ static FULONG UserSessionDesc[] = {
 	SQLT_IDINT,   (FULONG)"ID",          offsetof( struct UserSession, us_ID ), 
 	SQLT_INT,     (FULONG)"UserID", offsetof( struct UserSession, us_UserID ),
 	SQLT_STR,     (FULONG)"DeviceIdentity",       offsetof( struct UserSession, us_DeviceIdentity ),
-	SQLT_STR,     (FULONG)"SessionID",   offsetof( struct UserSession, us_SessionID ),
+	SQLT_STR_HASH,(FULONG)"SessionID",   offsetof( struct UserSession, us_SessionID ),
 	SQLT_INT,     (FULONG)"LoggedTime", offsetof( struct UserSession, us_LoggedTime ),
 	SQLT_INT,     (FULONG)"UMA_ID", offsetof( struct UserSession, us_MobileAppID ),
 	SQLT_INIT_FUNCTION, (FULONG)"init", (FULONG)&UserSessionInit,

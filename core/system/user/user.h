@@ -276,7 +276,7 @@ static FULONG UserDesc[] = {
 	SQLT_STR,     (FULONG)"Password",    offsetof( struct User, u_Password ),
 	SQLT_STR,     (FULONG)"Fullname",    offsetof( struct User, u_FullName ),
 	SQLT_STR,     (FULONG)"Email",       offsetof( struct User, u_Email ),
-	SQLT_STR,     (FULONG)"SessionID",   offsetof( struct User, u_MainSessionID ),
+	SQLT_STR_HASH,(FULONG)"SessionID",   offsetof( struct User, u_MainSessionID ),
 	SQLT_INT,     (FULONG)"LoggedTime",  offsetof( struct User, u_LoggedTime ),
 	SQLT_INT,     (FULONG)"CreatedTime", offsetof( struct User, u_CreatedTime ),
 	SQLT_INT,     (FULONG)"ModifyTime", offsetof( struct User, u_ModifyTime ),
