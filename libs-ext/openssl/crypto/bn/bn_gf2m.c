@@ -1,8 +1,8 @@
 /*
- * Copyright 2002-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -297,7 +297,7 @@ int BN_GF2m_mod_arr(BIGNUM *r, const BIGNUM *a, const int p[])
 
     bn_check_top(a);
 
-    if (p[0] == 0) {
+    if (!p[0]) {
         /* reduction mod 1 => return 0 */
         BN_zero(r);
         return 1;
@@ -395,7 +395,7 @@ int BN_GF2m_mod(BIGNUM *r, const BIGNUM *a, const BIGNUM *p)
     bn_check_top(p);
     ret = BN_GF2m_poly2arr(p, arr, OSSL_NELEM(arr));
     if (!ret || ret > (int)OSSL_NELEM(arr)) {
-        ERR_raise(ERR_LIB_BN, BN_R_INVALID_LENGTH);
+        BNerr(BN_F_BN_GF2M_MOD, BN_R_INVALID_LENGTH);
         return 0;
     }
     ret = BN_GF2m_mod_arr(r, a, arr);
@@ -475,7 +475,7 @@ int BN_GF2m_mod_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
         goto err;
     ret = BN_GF2m_poly2arr(p, arr, max);
     if (!ret || ret > max) {
-        ERR_raise(ERR_LIB_BN, BN_R_INVALID_LENGTH);
+        BNerr(BN_F_BN_GF2M_MOD_MUL, BN_R_INVALID_LENGTH);
         goto err;
     }
     ret = BN_GF2m_mod_mul_arr(r, a, b, arr, ctx);
@@ -533,7 +533,7 @@ int BN_GF2m_mod_sqr(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
         goto err;
     ret = BN_GF2m_poly2arr(p, arr, max);
     if (!ret || ret > max) {
-        ERR_raise(ERR_LIB_BN, BN_R_INVALID_LENGTH);
+        BNerr(BN_F_BN_GF2M_MOD_SQR, BN_R_INVALID_LENGTH);
         goto err;
     }
     ret = BN_GF2m_mod_sqr_arr(r, a, arr, ctx);
@@ -732,8 +732,8 @@ int BN_GF2m_mod_inv(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 
     /* generate blinding value */
     do {
-        if (!BN_priv_rand_ex(b, BN_num_bits(p) - 1,
-                             BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY, ctx))
+        if (!BN_priv_rand(b, BN_num_bits(p) - 1,
+                          BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY))
             goto err;
     } while (BN_is_zero(b));
 
@@ -907,7 +907,7 @@ int BN_GF2m_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
         goto err;
     ret = BN_GF2m_poly2arr(p, arr, max);
     if (!ret || ret > max) {
-        ERR_raise(ERR_LIB_BN, BN_R_INVALID_LENGTH);
+        BNerr(BN_F_BN_GF2M_MOD_EXP, BN_R_INVALID_LENGTH);
         goto err;
     }
     ret = BN_GF2m_mod_exp_arr(r, a, b, arr, ctx);
@@ -929,7 +929,7 @@ int BN_GF2m_mod_sqrt_arr(BIGNUM *r, const BIGNUM *a, const int p[],
 
     bn_check_top(a);
 
-    if (p[0] == 0) {
+    if (!p[0]) {
         /* reduction mod 1 => return 0 */
         BN_zero(r);
         return 1;
@@ -966,7 +966,7 @@ int BN_GF2m_mod_sqrt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
         goto err;
     ret = BN_GF2m_poly2arr(p, arr, max);
     if (!ret || ret > max) {
-        ERR_raise(ERR_LIB_BN, BN_R_INVALID_LENGTH);
+        BNerr(BN_F_BN_GF2M_MOD_SQRT, BN_R_INVALID_LENGTH);
         goto err;
     }
     ret = BN_GF2m_mod_sqrt_arr(r, a, arr, ctx);
@@ -988,7 +988,7 @@ int BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const int p[],
 
     bn_check_top(a_);
 
-    if (p[0] == 0) {
+    if (!p[0]) {
         /* reduction mod 1 => return 0 */
         BN_zero(r);
         return 1;
@@ -1031,8 +1031,7 @@ int BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const int p[],
         if (tmp == NULL)
             goto err;
         do {
-            if (!BN_priv_rand_ex(rho, p[0], BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY,
-                                 ctx))
+            if (!BN_priv_rand(rho, p[0], BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
                 goto err;
             if (!BN_GF2m_mod_arr(rho, rho, p))
                 goto err;
@@ -1054,7 +1053,7 @@ int BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const int p[],
             count++;
         } while (BN_is_zero(w) && (count < MAX_ITERATIONS));
         if (BN_is_zero(w)) {
-            ERR_raise(ERR_LIB_BN, BN_R_TOO_MANY_ITERATIONS);
+            BNerr(BN_F_BN_GF2M_MOD_SOLVE_QUAD_ARR, BN_R_TOO_MANY_ITERATIONS);
             goto err;
         }
     }
@@ -1064,7 +1063,7 @@ int BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const int p[],
     if (!BN_GF2m_add(w, z, w))
         goto err;
     if (BN_GF2m_cmp(w, a)) {
-        ERR_raise(ERR_LIB_BN, BN_R_NO_SOLUTION);
+        BNerr(BN_F_BN_GF2M_MOD_SOLVE_QUAD_ARR, BN_R_NO_SOLUTION);
         goto err;
     }
 
@@ -1097,7 +1096,7 @@ int BN_GF2m_mod_solve_quad(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
         goto err;
     ret = BN_GF2m_poly2arr(p, arr, max);
     if (!ret || ret > max) {
-        ERR_raise(ERR_LIB_BN, BN_R_INVALID_LENGTH);
+        BNerr(BN_F_BN_GF2M_MOD_SOLVE_QUAD, BN_R_INVALID_LENGTH);
         goto err;
     }
     ret = BN_GF2m_mod_solve_quad_arr(r, a, arr, ctx);

@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
-# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the Apache License 2.0 (the "License").  You may not use
+# Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -24,7 +24,7 @@ my $out = "cyrillic_crl.out";
 my $utf = srctop_file("test/certs", "cyrillic_crl.utf8");
 
 subtest 'crl conversions' => sub {
-    tconversion( -type => "crl", -in => srctop_file("test","testcrl.pem") );
+    tconversion("crl", srctop_file("test","testcrl.pem"));
 };
 
 ok(run(test(['crltest'])));
@@ -40,6 +40,7 @@ ok(run(app(["openssl", "crl", "-text", "-in", $pem, "-out", $out,
             "-nameopt", "utf8"])));
 is(cmp_text($out, srctop_file("test/certs", "cyrillic_crl.utf8")),
    0, 'Comparing utf8 output');
+unlink $out;
 
 sub compare1stline {
     my ($cmdarray, $str) = @_;

@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -28,7 +28,7 @@ X509_REQ *X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 
     ret = X509_REQ_new();
     if (ret == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+        X509err(X509_F_X509_TO_X509_REQ, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -85,18 +85,33 @@ int X509_REQ_check_private_key(X509_REQ *x, EVP_PKEY *k)
     int ok = 0;
 
     xk = X509_REQ_get_pubkey(x);
-    switch (EVP_PKEY_eq(xk, k)) {
+    switch (EVP_PKEY_cmp(xk, k)) {
     case 1:
         ok = 1;
         break;
     case 0:
-        ERR_raise(ERR_LIB_X509, X509_R_KEY_VALUES_MISMATCH);
+        X509err(X509_F_X509_REQ_CHECK_PRIVATE_KEY,
+                X509_R_KEY_VALUES_MISMATCH);
         break;
     case -1:
-        ERR_raise(ERR_LIB_X509, X509_R_KEY_TYPE_MISMATCH);
+        X509err(X509_F_X509_REQ_CHECK_PRIVATE_KEY, X509_R_KEY_TYPE_MISMATCH);
         break;
     case -2:
-        ERR_raise(ERR_LIB_X509, X509_R_UNKNOWN_KEY_TYPE);
+#ifndef OPENSSL_NO_EC
+        if (EVP_PKEY_id(k) == EVP_PKEY_EC) {
+            X509err(X509_F_X509_REQ_CHECK_PRIVATE_KEY, ERR_R_EC_LIB);
+            break;
+        }
+#endif
+#ifndef OPENSSL_NO_DH
+        if (EVP_PKEY_id(k) == EVP_PKEY_DH) {
+            /* No idea */
+            X509err(X509_F_X509_REQ_CHECK_PRIVATE_KEY,
+                    X509_R_CANT_CHECK_DH_KEY);
+            break;
+        }
+#endif
+        X509err(X509_F_X509_REQ_CHECK_PRIVATE_KEY, X509_R_UNKNOWN_KEY_TYPE);
     }
 
     EVP_PKEY_free(xk);

@@ -1,7 +1,7 @@
 /*
  * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -32,7 +32,7 @@ ENGINE *ENGINE_new(void)
 
     if (!RUN_ONCE(&engine_lock_init, do_engine_lock_init)
         || (ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
-        ERR_raise(ERR_LIB_ENGINE, ERR_R_MALLOC_FAILURE);
+        ENGINEerr(ENGINE_F_ENGINE_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     ret->struct_ref = 1;
@@ -126,7 +126,7 @@ static ENGINE_CLEANUP_ITEM *int_cleanup_item(ENGINE_CLEANUP_CB *cb)
     ENGINE_CLEANUP_ITEM *item;
 
     if ((item = OPENSSL_malloc(sizeof(*item))) == NULL) {
-        ERR_raise(ERR_LIB_ENGINE, ERR_R_MALLOC_FAILURE);
+        ENGINEerr(ENGINE_F_INT_CLEANUP_ITEM, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     item->cb = cb;
@@ -194,7 +194,7 @@ void *ENGINE_get_ex_data(const ENGINE *e, int idx)
 int ENGINE_set_id(ENGINE *e, const char *id)
 {
     if (id == NULL) {
-        ERR_raise(ERR_LIB_ENGINE, ERR_R_PASSED_NULL_PARAMETER);
+        ENGINEerr(ENGINE_F_ENGINE_SET_ID, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
     e->id = id;
@@ -204,7 +204,7 @@ int ENGINE_set_id(ENGINE *e, const char *id)
 int ENGINE_set_name(ENGINE *e, const char *name)
 {
     if (name == NULL) {
-        ERR_raise(ERR_LIB_ENGINE, ERR_R_PASSED_NULL_PARAMETER);
+        ENGINEerr(ENGINE_F_ENGINE_SET_NAME, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
     e->name = name;

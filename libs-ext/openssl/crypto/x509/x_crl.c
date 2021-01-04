@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -27,8 +27,8 @@ ASN1_SEQUENCE(X509_REVOKED) = {
 
 static int def_crl_verify(X509_CRL *crl, EVP_PKEY *r);
 static int def_crl_lookup(X509_CRL *crl,
-                          X509_REVOKED **ret, const ASN1_INTEGER *serial,
-                          const X509_NAME *issuer);
+                          X509_REVOKED **ret, ASN1_INTEGER *serial,
+                          X509_NAME *issuer);
 
 static X509_CRL_METHOD int_crl_meth = {
     0,
@@ -264,15 +264,6 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         ASN1_INTEGER_free(crl->crl_number);
         ASN1_INTEGER_free(crl->base_crl_number);
         sk_GENERAL_NAMES_pop_free(crl->issuers, GENERAL_NAMES_free);
-        OPENSSL_free(crl->propq);
-        break;
-    case ASN1_OP_DUP_POST:
-        {
-            X509_CRL *old = exarg;
-
-            if (!x509_crl_set0_libctx(crl, old->libctx, old->propq))
-                return 0;
-        }
         break;
     }
     return 1;
@@ -348,7 +339,7 @@ int X509_CRL_add0_revoked(X509_CRL *crl, X509_REVOKED *rev)
     if (inf->revoked == NULL)
         inf->revoked = sk_X509_REVOKED_new(X509_REVOKED_cmp);
     if (inf->revoked == NULL || !sk_X509_REVOKED_push(inf->revoked, rev)) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ASN1err(ASN1_F_X509_CRL_ADD0_REVOKED, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     inf->enc.modified = 1;
@@ -363,7 +354,7 @@ int X509_CRL_verify(X509_CRL *crl, EVP_PKEY *r)
 }
 
 int X509_CRL_get0_by_serial(X509_CRL *crl,
-                            X509_REVOKED **ret, const ASN1_INTEGER *serial)
+                            X509_REVOKED **ret, ASN1_INTEGER *serial)
 {
     if (crl->meth->crl_lookup)
         return crl->meth->crl_lookup(crl, ret, serial, NULL);
@@ -374,7 +365,7 @@ int X509_CRL_get0_by_cert(X509_CRL *crl, X509_REVOKED **ret, X509 *x)
 {
     if (crl->meth->crl_lookup)
         return crl->meth->crl_lookup(crl, ret,
-                                     X509_get0_serialNumber(x),
+                                     X509_get_serialNumber(x),
                                      X509_get_issuer_name(x));
     return 0;
 }
@@ -385,7 +376,7 @@ static int def_crl_verify(X509_CRL *crl, EVP_PKEY *r)
                              &crl->sig_alg, &crl->signature, &crl->crl, r));
 }
 
-static int crl_revoked_issuer_match(X509_CRL *crl, const X509_NAME *nm,
+static int crl_revoked_issuer_match(X509_CRL *crl, X509_NAME *nm,
                                     X509_REVOKED *rev)
 {
     int i;
@@ -413,8 +404,8 @@ static int crl_revoked_issuer_match(X509_CRL *crl, const X509_NAME *nm,
 }
 
 static int def_crl_lookup(X509_CRL *crl,
-                          X509_REVOKED **ret, const ASN1_INTEGER *serial,
-                          const X509_NAME *issuer)
+                          X509_REVOKED **ret, ASN1_INTEGER *serial,
+                          X509_NAME *issuer)
 {
     X509_REVOKED rtmp, *rev;
     int idx, num;
@@ -463,15 +454,15 @@ X509_CRL_METHOD *X509_CRL_METHOD_new(int (*crl_init) (X509_CRL *crl),
                                      int (*crl_free) (X509_CRL *crl),
                                      int (*crl_lookup) (X509_CRL *crl,
                                                         X509_REVOKED **ret,
-                                                        const ASN1_INTEGER *ser,
-                                                        const X509_NAME *issuer),
+                                                        ASN1_INTEGER *ser,
+                                                        X509_NAME *issuer),
                                      int (*crl_verify) (X509_CRL *crl,
                                                         EVP_PKEY *pk))
 {
     X509_CRL_METHOD *m = OPENSSL_malloc(sizeof(*m));
 
     if (m == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+        X509err(X509_F_X509_CRL_METHOD_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     m->crl_init = crl_init;
@@ -497,19 +488,4 @@ void X509_CRL_set_meth_data(X509_CRL *crl, void *dat)
 void *X509_CRL_get_meth_data(X509_CRL *crl)
 {
     return crl->meth_data;
-}
-
-int x509_crl_set0_libctx(X509_CRL *x, OSSL_LIB_CTX *libctx, const char *propq)
-{
-    if (x != NULL) {
-        x->libctx = libctx;
-        OPENSSL_free(x->propq);
-        x->propq = NULL;
-        if (propq != NULL) {
-            x->propq = OPENSSL_strdup(propq);
-            if (x->propq == NULL)
-                return 0;
-        }
-    }
-    return 1;
 }

@@ -5,6 +5,7 @@
 # trust variants: +serverAuth -serverAuth +clientAuth -clientAuth +anyEKU -anyEKU
 #
 ./mkcert.sh genroot "Root CA" root-key root-cert
+DAYS=-1 ./mkcert.sh genroot "Root CA" root-key root-expired
 ./mkcert.sh genss "Root CA" root-key root-nonca
 ./mkcert.sh genroot "Root CA" root-key2 root-cert2
 ./mkcert.sh genroot "Root Cert 2" root-key root-name2
@@ -81,7 +82,6 @@ openssl x509 -in sroot-cert.pem -trustout \
 # trust variants: +serverAuth, -serverAuth, +clientAuth, -clientAuth, -anyEKU, +anyEKU
 #
 ./mkcert.sh genca "CA" ca-key ca-cert root-key root-cert
-DAYS=-1 ./mkcert.sh genroot "Root CA" root-key root-expired
 ./mkcert.sh genee "CA" ca-key ca-nonca root-key root-cert
 ./mkcert.sh gen_nonbc_ca "CA" ca-key ca-nonbc root-key root-cert
 ./mkcert.sh genca "CA" ca-key2 ca-cert2 root-key root-cert
@@ -197,21 +197,9 @@ OPENSSL_KEYBITS=768 \
 # EC cert with named curve signed by named curve ca
 ./mkcert.sh genee server.example ee-key-ec-named-named \
     ee-cert-ec-named-named ca-key-ec-named ca-cert-ec-named
-# 1024-bit leaf key
-OPENSSL_KEYBITS=1024 \
-./mkcert.sh genee server.example ee-key-1024 ee-cert-1024 ca-key ca-cert
-# 3072-bit leaf key
-OPENSSL_KEYBITS=3072 \
-./mkcert.sh genee server.example ee-key-3072 ee-cert-3072 ca-key ca-cert
-# 4096-bit leaf key
-OPENSSL_KEYBITS=4096 \
-./mkcert.sh genee server.example ee-key-4096 ee-cert-4096 ca-key ca-cert
-# 8192-bit leaf key
-OPENSSL_KEYBITS=8192 \
-./mkcert.sh genee server.example ee-key-8192 ee-cert-8192 ca-key ca-cert
 
 # self-signed end-entity cert with explicit keyUsage not including KeyCertSign
-openssl req -new -x509 -key ee-key.pem -subj /CN=ee-self-signed -out ee-self-signed.pem -addext keyUsage=digitalSignature -days 36525
+openssl req -new -x509 -key ee-key.pem -subj /CN=ee-self-signed -out ee-self-signed.pem -addext keyUsage=digitalSignature -days 36500
 
 # Proxy certificates, off of ee-client
 # Start with some good ones
@@ -400,25 +388,13 @@ OPENSSL_KEYALG=ec OPENSSL_KEYBITS=brainpoolP256r1 ./mkcert.sh genee \
     "Server ECDSA brainpoolP256r1 cert" server-ecdsa-brainpoolP256r1-key \
     server-ecdsa-brainpoolP256r1-cert rootkey rootcert
 
-openssl req -new -noenc -subj "/CN=localhost" \
+openssl req -new -nodes -subj "/CN=localhost" \
     -newkey rsa-pss -keyout server-pss-restrict-key.pem \
     -pkeyopt rsa_pss_keygen_md:sha256 -pkeyopt rsa_pss_keygen_saltlen:32 | \
     ./mkcert.sh geneenocsr "Server RSA-PSS restricted cert" \
     server-pss-restrict-cert rootkey rootcert
 
-# CT entry
-./mkcert.sh genct server.example embeddedSCTs1-key embeddedSCTs1 embeddedSCTs1_issuer-key embeddedSCTs1_issuer ct-server-key
-
 OPENSSL_SIGALG=ED448 OPENSSL_KEYALG=ed448 ./mkcert.sh genroot "Root Ed448" \
     root-ed448-key root-ed448-cert
 OPENSSL_SIGALG=ED448 OPENSSL_KEYALG=ed448 ./mkcert.sh genee ed448 \
     server-ed448-key server-ed448-cert root-ed448-key root-ed448-cert
-
-# non-critical unknown extension
-./mkcert.sh geneeextra server.example ee-key ee-cert-noncrit-unknown-ext ca-key ca-cert "1.2.3.4=DER:05:00"
-
-# critical unknown extension
-./mkcert.sh geneeextra server.example ee-key ee-cert-crit-unknown-ext ca-key ca-cert "1.2.3.4=critical,DER:05:00"
-
-# critical id-pkix-ocsp-no-check extension
-./mkcert.sh geneeextra server.example ee-key ee-cert-ocsp-nocheck ca-key ca-cert "1.3.6.1.5.5.7.48.1.5=critical,DER:05:00"

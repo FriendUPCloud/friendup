@@ -1,7 +1,7 @@
 /*
- * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -9,7 +9,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 #include "apps.h"
 #include "progs.h"
 #include <openssl/pem.h>
@@ -19,27 +18,19 @@
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_IN, OPT_OUT, OPT_TEXT, OPT_NOOUT,
-    OPT_ENGINE, OPT_CHECK,
-    OPT_PROV_ENUM
+    OPT_ENGINE, OPT_CHECK
 } OPTION_CHOICE;
 
 const OPTIONS pkeyparam_options[] = {
-    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
+    {"in", OPT_IN, '<', "Input file"},
+    {"out", OPT_OUT, '>', "Output file"},
+    {"text", OPT_TEXT, '-', "Print parameters as text"},
+    {"noout", OPT_NOOUT, '-', "Don't output encoded parameters"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
     {"check", OPT_CHECK, '-', "Check key param consistency"},
-
-    OPT_SECTION("Input"),
-    {"in", OPT_IN, '<', "Input file"},
-
-    OPT_SECTION("Output"),
-    {"out", OPT_OUT, '>', "Output file"},
-    {"text", OPT_TEXT, '-', "Print parameters as text"},
-    {"noout", OPT_NOOUT, '-', "Don't output encoded parameters"},
-
-    OPT_PROV_OPTIONS,
     {NULL}
 };
 
@@ -48,11 +39,9 @@ int pkeyparam_main(int argc, char **argv)
     ENGINE *e = NULL;
     BIO *in = NULL, *out = NULL;
     EVP_PKEY *pkey = NULL;
-    EVP_PKEY_CTX *ctx = NULL;
-    int text = 0, noout = 0, ret = EXIT_FAILURE, check = 0, r;
+    int text = 0, noout = 0, ret = 1, check = 0;
     OPTION_CHOICE o;
     char *infile = NULL, *outfile = NULL, *prog;
-    unsigned long err;
 
     prog = opt_init(argc, argv, pkeyparam_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -84,14 +73,8 @@ int pkeyparam_main(int argc, char **argv)
         case OPT_CHECK:
             check = 1;
             break;
-        case OPT_PROV_CASES:
-            if (!opt_provider(o))
-                goto end;
-            break;
         }
     }
-
-    /* No extra arguments. */
     argc = opt_num_rest();
     if (argc != 0)
         goto opthelp;
@@ -110,6 +93,9 @@ int pkeyparam_main(int argc, char **argv)
     }
 
     if (check) {
+        int r;
+        EVP_PKEY_CTX *ctx;
+
         ctx = EVP_PKEY_CTX_new(pkey, e);
         if (ctx == NULL) {
             ERR_print_errors(bio_err);
@@ -125,6 +111,8 @@ int pkeyparam_main(int argc, char **argv)
              * Note: at least for RSA keys if this function returns
              * -1, there will be no error reasons.
              */
+            unsigned long err;
+
             BIO_printf(out, "Parameters are invalid\n");
 
             while ((err = ERR_peek_error()) != 0) {
@@ -132,8 +120,8 @@ int pkeyparam_main(int argc, char **argv)
                            ERR_reason_error_string(err));
                 ERR_get_error(); /* remove err from error stack */
             }
-            goto end;
         }
+        EVP_PKEY_CTX_free(ctx);
     }
 
     if (!noout)
@@ -142,10 +130,9 @@ int pkeyparam_main(int argc, char **argv)
     if (text)
         EVP_PKEY_print_params(out, pkey, 0, NULL);
 
-    ret = EXIT_SUCCESS;
+    ret = 0;
 
  end:
-    EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
     release_engine(e);
     BIO_free_all(out);

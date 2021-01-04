@@ -1,7 +1,7 @@
 /*
- * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -33,9 +33,9 @@ void asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
     ASN1_aux_cb *asn1_cb;
     int i;
 
-    if (pval == NULL)
+    if (!pval)
         return;
-    if ((it->itype != ASN1_ITYPE_PRIMITIVE) && *pval == NULL)
+    if ((it->itype != ASN1_ITYPE_PRIMITIVE) && !*pval)
         return;
     if (aux && aux->asn1_cb)
         asn1_cb = aux->asn1_cb;
@@ -103,7 +103,7 @@ void asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
             ASN1_VALUE **pseqval;
 
             tt--;
-            seqtt = asn1_do_adb(*pval, tt, 0);
+            seqtt = asn1_do_adb(pval, tt, 0);
             if (!seqtt)
                 continue;
             pseqval = asn1_get_field_ptr(pval, seqtt);
@@ -168,15 +168,15 @@ void asn1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
 
         utype = typ->type;
         pval = &typ->value.asn1_value;
-        if (*pval == NULL)
+        if (!*pval)
             return;
     } else if (it->itype == ASN1_ITYPE_MSTRING) {
         utype = -1;
-        if (*pval == NULL)
+        if (!*pval)
             return;
     } else {
         utype = it->utype;
-        if ((utype != V_ASN1_BOOLEAN) && *pval == NULL)
+        if ((utype != V_ASN1_BOOLEAN) && !*pval)
             return;
     }
 

@@ -1,7 +1,7 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -11,6 +11,7 @@
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
 #include <openssl/stack.h>
+#include <openssl/objects.h>
 #include <errno.h>
 #include <openssl/e_os2.h>      /* For ossl_inline */
 
@@ -46,7 +47,7 @@ OPENSSL_STACK *OPENSSL_sk_dup(const OPENSSL_STACK *sk)
     OPENSSL_STACK *ret;
 
     if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+        CRYPTOerr(CRYPTO_F_OPENSSL_SK_DUP, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -77,7 +78,7 @@ OPENSSL_STACK *OPENSSL_sk_deep_copy(const OPENSSL_STACK *sk,
     int i;
 
     if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+        CRYPTOerr(CRYPTO_F_OPENSSL_SK_DEEP_COPY, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -177,7 +178,7 @@ static int sk_reserve(OPENSSL_STACK *st, int n, int exact)
          * so |num_alloc| value is |n| or |min_nodes| if greater than |n|.
          */
         if ((st->data = OPENSSL_zalloc(sizeof(void *) * num_alloc)) == NULL) {
-            ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+            CRYPTOerr(CRYPTO_F_SK_RESERVE, ERR_R_MALLOC_FAILURE);
             return 0;
         }
         st->num_alloc = num_alloc;
@@ -306,20 +307,20 @@ static int internal_find(OPENSSL_STACK *st, const void *data,
     }
     if (data == NULL)
         return -1;
-    r = ossl_bsearch(&data, st->data, st->num, sizeof(void *), st->comp,
-                     ret_val_options);
+    r = OBJ_bsearch_ex_(&data, st->data, st->num, sizeof(void *), st->comp,
+                        ret_val_options);
 
     return r == NULL ? -1 : (int)((const void **)r - st->data);
 }
 
 int OPENSSL_sk_find(OPENSSL_STACK *st, const void *data)
 {
-    return internal_find(st, data, OSSL_BSEARCH_FIRST_VALUE_ON_MATCH);
+    return internal_find(st, data, OBJ_BSEARCH_FIRST_VALUE_ON_MATCH);
 }
 
 int OPENSSL_sk_find_ex(OPENSSL_STACK *st, const void *data)
 {
-    return internal_find(st, data, OSSL_BSEARCH_VALUE_ON_NOMATCH);
+    return internal_find(st, data, OBJ_BSEARCH_VALUE_ON_NOMATCH);
 }
 
 int OPENSSL_sk_push(OPENSSL_STACK *st, const void *data)

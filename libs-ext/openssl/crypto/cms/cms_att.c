@@ -1,7 +1,7 @@
 /*
- * Copyright 2008-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -276,7 +276,7 @@ int CMS_si_check_attributes(const CMS_SignerInfo *si)
                                  si->signedAttrs, have_signed_attrs)
             || !cms_check_attribute(nid, flags, CMS_ATTR_F_UNSIGNED,
                                     si->unsignedAttrs, have_unsigned_attrs)) {
-            ERR_raise(ERR_LIB_CMS, CMS_R_ATTRIBUTE_ERROR);
+            CMSerr(CMS_F_CMS_SI_CHECK_ATTRIBUTES, CMS_R_ATTRIBUTE_ERROR);
             return 0;
         }
     }

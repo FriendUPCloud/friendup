@@ -1,8 +1,8 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -83,9 +83,9 @@ IMPLEMENT_STATIC_ASN1_ENCODE_FUNCTIONS(SSL_SESSION_ASN1)
 /* Initialise OCTET STRING from buffer and length */
 
 static void ssl_session_oinit(ASN1_OCTET_STRING **dest, ASN1_OCTET_STRING *os,
-                              const unsigned char *data, size_t len)
+                              unsigned char *data, size_t len)
 {
-    os->data = (unsigned char *)data; /* justified cast: data is not modified */
+    os->data = data;
     os->length = (int)len;
     os->flags = 0;
     *dest = os;
@@ -93,15 +93,15 @@ static void ssl_session_oinit(ASN1_OCTET_STRING **dest, ASN1_OCTET_STRING *os,
 
 /* Initialise OCTET STRING from string */
 static void ssl_session_sinit(ASN1_OCTET_STRING **dest, ASN1_OCTET_STRING *os,
-                              const char *data)
+                              char *data)
 {
     if (data != NULL)
-        ssl_session_oinit(dest, os, (const unsigned char *)data, strlen(data));
+        ssl_session_oinit(dest, os, (unsigned char *)data, strlen(data));
     else
         *dest = NULL;
 }
 
-int i2d_SSL_SESSION(const SSL_SESSION *in, unsigned char **pp)
+int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 {
 
     SSL_SESSION_ASN1 as;
@@ -250,7 +250,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
     if (as == NULL)
         goto err;
 
-    if (a == NULL || *a == NULL) {
+    if (!a || !*a) {
         ret = SSL_SESSION_new();
         if (ret == NULL)
             goto err;
@@ -259,21 +259,21 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
     }
 
     if (as->version != SSL_SESSION_ASN1_VERSION) {
-        ERR_raise(ERR_LIB_SSL, SSL_R_UNKNOWN_SSL_VERSION);
+        SSLerr(SSL_F_D2I_SSL_SESSION, SSL_R_UNKNOWN_SSL_VERSION);
         goto err;
     }
 
     if ((as->ssl_version >> 8) != SSL3_VERSION_MAJOR
         && (as->ssl_version >> 8) != DTLS1_VERSION_MAJOR
         && as->ssl_version != DTLS1_BAD_VER) {
-        ERR_raise(ERR_LIB_SSL, SSL_R_UNSUPPORTED_SSL_VERSION);
+        SSLerr(SSL_F_D2I_SSL_SESSION, SSL_R_UNSUPPORTED_SSL_VERSION);
         goto err;
     }
 
     ret->ssl_version = (int)as->ssl_version;
 
     if (as->cipher->length != 2) {
-        ERR_raise(ERR_LIB_SSL, SSL_R_CIPHER_CODE_WRONG_LENGTH);
+        SSLerr(SSL_F_D2I_SSL_SESSION, SSL_R_CIPHER_CODE_WRONG_LENGTH);
         goto err;
     }
 
@@ -339,7 +339,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 #ifndef OPENSSL_NO_COMP
     if (as->comp_id) {
         if (as->comp_id->length != 1) {
-            ERR_raise(ERR_LIB_SSL, SSL_R_BAD_LENGTH);
+            SSLerr(SSL_F_D2I_SSL_SESSION, SSL_R_BAD_LENGTH);
             goto err;
         }
         ret->compress_meth = as->comp_id->data[0];

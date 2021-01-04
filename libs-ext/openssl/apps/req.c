@@ -1,7 +1,7 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -25,10 +25,14 @@
 #include <openssl/pem.h>
 #include <openssl/bn.h>
 #include <openssl/lhash.h>
-#include <openssl/rsa.h>
+#ifndef OPENSSL_NO_RSA
+# include <openssl/rsa.h>
+#endif
 #ifndef OPENSSL_NO_DSA
 # include <openssl/dsa.h>
 #endif
+
+#define SECTION         "req"
 
 #define BITS            "default_bits"
 #define KEYFILE         "default_keyfile"
@@ -73,8 +77,6 @@ static int join(char buf[], size_t buf_size, const char *name,
 static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
                                     int *pkey_type, long *pkeylen,
                                     char **palgnam, ENGINE *keygen_engine);
-
-static const char *section = "req";
 static CONF *req_conf = NULL;
 static CONF *addext_conf = NULL;
 static int batch = 0;
@@ -84,42 +86,51 @@ typedef enum OPTION_choice {
     OPT_INFORM, OPT_OUTFORM, OPT_ENGINE, OPT_KEYGEN_ENGINE, OPT_KEY,
     OPT_PUBKEY, OPT_NEW, OPT_CONFIG, OPT_KEYFORM, OPT_IN, OPT_OUT,
     OPT_KEYOUT, OPT_PASSIN, OPT_PASSOUT, OPT_NEWKEY,
-    OPT_PKEYOPT, OPT_SIGOPT, OPT_VFYOPT, OPT_BATCH, OPT_NEWHDR, OPT_MODULUS,
-    OPT_VERIFY, OPT_NOENC, OPT_NODES, OPT_NOOUT, OPT_VERBOSE, OPT_UTF8,
+    OPT_PKEYOPT, OPT_SIGOPT, OPT_BATCH, OPT_NEWHDR, OPT_MODULUS,
+    OPT_VERIFY, OPT_NODES, OPT_NOOUT, OPT_VERBOSE, OPT_UTF8,
     OPT_NAMEOPT, OPT_REQOPT, OPT_SUBJ, OPT_SUBJECT, OPT_TEXT, OPT_X509,
     OPT_MULTIVALUE_RDN, OPT_DAYS, OPT_SET_SERIAL, OPT_ADDEXT, OPT_EXTENSIONS,
     OPT_REQEXTS, OPT_PRECERT, OPT_MD,
-    OPT_SECTION,
-    OPT_R_ENUM, OPT_PROV_ENUM
+    OPT_R_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS req_options[] = {
-    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-    {"keygen_engine", OPT_KEYGEN_ENGINE, 's',
-     "Specify engine to be used for key generation operations"},
-#endif
-    {"in", OPT_IN, '<', "Input file"},
     {"inform", OPT_INFORM, 'F', "Input format - DER or PEM"},
-    {"verify", OPT_VERIFY, '-', "Verify signature on REQ"},
-
-    OPT_SECTION("Certificate"),
+    {"outform", OPT_OUTFORM, 'F', "Output format - DER or PEM"},
+    {"in", OPT_IN, '<', "Input file"},
+    {"out", OPT_OUT, '>', "Output file"},
+    {"key", OPT_KEY, 's', "Private key to use"},
+    {"keyform", OPT_KEYFORM, 'f', "Key file format"},
+    {"pubkey", OPT_PUBKEY, '-', "Output public key"},
     {"new", OPT_NEW, '-', "New request"},
     {"config", OPT_CONFIG, '<', "Request template file"},
-    {"section", OPT_SECTION, 's', "Config section to use (default \"req\")"},
+    {"keyout", OPT_KEYOUT, '>', "File to send the key to"},
+    {"passin", OPT_PASSIN, 's', "Private key password source"},
+    {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
+    OPT_R_OPTIONS,
+    {"newkey", OPT_NEWKEY, 's', "Specify as type:bits"},
+    {"pkeyopt", OPT_PKEYOPT, 's', "Public key options as opt:value"},
+    {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
+    {"batch", OPT_BATCH, '-',
+     "Do not ask anything during request generation"},
+    {"newhdr", OPT_NEWHDR, '-', "Output \"NEW\" in the header lines"},
+    {"modulus", OPT_MODULUS, '-', "RSA modulus"},
+    {"verify", OPT_VERIFY, '-', "Verify signature on REQ"},
+    {"nodes", OPT_NODES, '-', "Don't encrypt the output key"},
+    {"noout", OPT_NOOUT, '-', "Do not output REQ"},
+    {"verbose", OPT_VERBOSE, '-', "Verbose output"},
     {"utf8", OPT_UTF8, '-', "Input characters are UTF8 (default ASCII)"},
-    {"nameopt", OPT_NAMEOPT, 's', "Certificate subject/issuer name printing options"},
+    {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
     {"reqopt", OPT_REQOPT, 's', "Various request text options"},
     {"text", OPT_TEXT, '-', "Text form of request"},
     {"x509", OPT_X509, '-',
-     "Output an x509 structure instead of a cert request"},
+     "Output a x509 structure instead of a cert request"},
     {OPT_MORE_STR, 1, 1, "(Required by some CA's)"},
     {"subj", OPT_SUBJ, 's', "Set or modify request subject"},
     {"subject", OPT_SUBJECT, '-', "Output the request's subject"},
     {"multivalue-rdn", OPT_MULTIVALUE_RDN, '-',
-     "Deprecated; multi-valued RDNs support is always on."},
+     "Enable support for multivalued RDNs"},
     {"days", OPT_DAYS, 'p', "Number of days cert is valid for"},
     {"set_serial", OPT_SET_SERIAL, 's', "Serial number to use"},
     {"addext", OPT_ADDEXT, 's',
@@ -129,34 +140,12 @@ const OPTIONS req_options[] = {
     {"reqexts", OPT_REQEXTS, 's',
      "Request extension section (override value in config file)"},
     {"precert", OPT_PRECERT, '-', "Add a poison extension (implies -new)"},
-
-    OPT_SECTION("Keys and Signing"),
-    {"key", OPT_KEY, 's', "Private key to use"},
-    {"keyform", OPT_KEYFORM, 'f', "Key file format (ENGINE, other values ignored)"},
-    {"pubkey", OPT_PUBKEY, '-', "Output public key"},
-    {"keyout", OPT_KEYOUT, '>', "File to send the key to"},
-    {"passin", OPT_PASSIN, 's', "Private key password source"},
-    {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
-    {"newkey", OPT_NEWKEY, 's', "Specify as type:bits"},
-    {"pkeyopt", OPT_PKEYOPT, 's', "Public key options as opt:value"},
-    {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
-    {"vfyopt", OPT_VFYOPT, 's', "Verification parameter in n:v form"},
     {"", OPT_MD, '-', "Any supported digest"},
-
-    OPT_SECTION("Output"),
-    {"out", OPT_OUT, '>', "Output file"},
-    {"outform", OPT_OUTFORM, 'F', "Output format - DER or PEM"},
-    {"batch", OPT_BATCH, '-',
-     "Do not ask anything during request generation"},
-    {"verbose", OPT_VERBOSE, '-', "Verbose output"},
-    {"noenc", OPT_NOENC, '-', "Don't encrypt private keys"},
-    {"nodes", OPT_NODES, '-', "Don't encrypt private keys; deprecated"},
-    {"noout", OPT_NOOUT, '-', "Do not output REQ"},
-    {"newhdr", OPT_NEWHDR, '-', "Output \"NEW\" in the header lines"},
-    {"modulus", OPT_MODULUS, '-', "RSA modulus"},
-
-    OPT_R_OPTIONS,
-    OPT_PROV_OPTIONS,
+#ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+    {"keygen_engine", OPT_KEYGEN_ENGINE, 's',
+     "Specify engine to be used for key generation operations"},
+#endif
     {NULL}
 };
 
@@ -226,11 +215,11 @@ static int duplicated(LHASH_OF(OPENSSL_STRING) *addexts, char *kv)
 int req_main(int argc, char **argv)
 {
     ASN1_INTEGER *serial = NULL;
-    BIO *out = NULL;
+    BIO *in = NULL, *out = NULL;
     ENGINE *e = NULL, *gen_eng = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *genctx = NULL;
-    STACK_OF(OPENSSL_STRING) *pkeyopts = NULL, *sigopts = NULL, *vfyopts = NULL;
+    STACK_OF(OPENSSL_STRING) *pkeyopts = NULL, *sigopts = NULL;
     LHASH_OF(OPENSSL_STRING) *addexts = NULL;
     X509 *x509ss = NULL;
     X509_REQ *req = NULL;
@@ -249,8 +238,8 @@ int req_main(int argc, char **argv)
     int ret = 1, x509 = 0, days = 0, i = 0, newreq = 0, verbose = 0;
     int pkey_type = -1, private = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, keyform = FORMAT_PEM;
-    int modulus = 0, multirdn = 1, verify = 0, noout = 0, text = 0;
-    int noenc = 0, newhdr = 0, subject = 0, pubkey = 0, precert = 0;
+    int modulus = 0, multirdn = 0, verify = 0, noout = 0, text = 0;
+    int nodes = 0, newhdr = 0, subject = 0, pubkey = 0, precert = 0;
     long newkey = -1;
     unsigned long chtype = MBSTRING_ASC, reqflag = 0;
 
@@ -283,7 +272,7 @@ int req_main(int argc, char **argv)
             break;
         case OPT_KEYGEN_ENGINE:
 #ifndef OPENSSL_NO_ENGINE
-            gen_eng = setup_engine(opt_arg(), 0);
+            gen_eng = ENGINE_by_id(opt_arg());
             if (gen_eng == NULL) {
                 BIO_printf(bio_err, "Can't find keygen engine %s\n", *argv);
                 goto opthelp;
@@ -301,9 +290,6 @@ int req_main(int argc, char **argv)
             break;
         case OPT_CONFIG:
             template = opt_arg();
-            break;
-        case OPT_SECTION:
-            section = opt_arg();
             break;
         case OPT_KEYFORM:
             if (!opt_format(opt_arg(), OPT_FMT_ANY, &keyform))
@@ -328,31 +314,20 @@ int req_main(int argc, char **argv)
             if (!opt_rand(o))
                 goto end;
             break;
-        case OPT_PROV_CASES:
-            if (!opt_provider(o))
-                goto end;
-            break;
         case OPT_NEWKEY:
             keyalg = opt_arg();
             newreq = 1;
             break;
         case OPT_PKEYOPT:
-            if (pkeyopts == NULL)
+            if (!pkeyopts)
                 pkeyopts = sk_OPENSSL_STRING_new_null();
-            if (pkeyopts == NULL
-                    || !sk_OPENSSL_STRING_push(pkeyopts, opt_arg()))
+            if (!pkeyopts || !sk_OPENSSL_STRING_push(pkeyopts, opt_arg()))
                 goto opthelp;
             break;
         case OPT_SIGOPT:
             if (!sigopts)
                 sigopts = sk_OPENSSL_STRING_new_null();
             if (!sigopts || !sk_OPENSSL_STRING_push(sigopts, opt_arg()))
-                goto opthelp;
-            break;
-        case OPT_VFYOPT:
-            if (!vfyopts)
-                vfyopts = sk_OPENSSL_STRING_new_null();
-            if (!vfyopts || !sk_OPENSSL_STRING_push(vfyopts, opt_arg()))
                 goto opthelp;
             break;
         case OPT_BATCH:
@@ -368,8 +343,7 @@ int req_main(int argc, char **argv)
             verify = 1;
             break;
         case OPT_NODES:
-        case OPT_NOENC:
-            noenc = 1;
+            nodes = 1;
             break;
         case OPT_NOOUT:
             noout = 1;
@@ -413,7 +387,7 @@ int req_main(int argc, char **argv)
             subj = opt_arg();
             break;
         case OPT_MULTIVALUE_RDN:
-            /* obsolete */
+            multirdn = 1;
             break;
         case OPT_ADDEXT:
             p = opt_arg();
@@ -424,11 +398,9 @@ int req_main(int argc, char **argv)
                     goto end;
             }
             i = duplicated(addexts, p);
-            if (i == 1) {
-                BIO_printf(bio_err, "Duplicate extension: %s\n", p);
+            if (i == 1)
                 goto opthelp;
-            }
-            if (i < 0 || BIO_printf(addext_bio, "%s\n", p) < 0)
+            if (i < 0 || BIO_printf(addext_bio, "%s\n", opt_arg()) < 0)
                 goto end;
             break;
         case OPT_EXTENSIONS:
@@ -447,8 +419,6 @@ int req_main(int argc, char **argv)
             break;
         }
     }
-
-    /* No extra arguments. */
     argc = opt_num_rest();
     if (argc != 0)
         goto opthelp;
@@ -470,10 +440,10 @@ int req_main(int argc, char **argv)
         BIO_printf(bio_err, "Using configuration from %s\n", template);
     if ((req_conf = app_load_config(template)) == NULL)
         goto end;
-    if (addext_bio != NULL) {
+    if (addext_bio) {
         if (verbose)
             BIO_printf(bio_err,
-                       "Using additional configuration from -addext options\n");
+                       "Using additional configuration from command line\n");
         if ((addext_conf = app_load_config_bio(addext_bio, NULL)) == NULL)
             goto end;
     }
@@ -503,7 +473,7 @@ int req_main(int argc, char **argv)
         goto end;
 
     if (md_alg == NULL) {
-        p = NCONF_get_string(req_conf, section, "default_md");
+        p = NCONF_get_string(req_conf, SECTION, "default_md");
         if (p == NULL) {
             ERR_clear_error();
         } else {
@@ -514,7 +484,7 @@ int req_main(int argc, char **argv)
     }
 
     if (extensions == NULL) {
-        extensions = NCONF_get_string(req_conf, section, V3_EXTENSIONS);
+        extensions = NCONF_get_string(req_conf, SECTION, V3_EXTENSIONS);
         if (extensions == NULL)
             ERR_clear_error();
     }
@@ -525,7 +495,7 @@ int req_main(int argc, char **argv)
         X509V3_set_nconf(&ctx, req_conf);
         if (!X509V3_EXT_add_nconf(req_conf, &ctx, extensions, NULL)) {
             BIO_printf(bio_err,
-                       "Error checking x509 extension section %s\n", extensions);
+                       "Error Loading extension section %s\n", extensions);
             goto end;
         }
     }
@@ -535,26 +505,26 @@ int req_main(int argc, char **argv)
         X509V3_set_ctx_test(&ctx);
         X509V3_set_nconf(&ctx, addext_conf);
         if (!X509V3_EXT_add_nconf(addext_conf, &ctx, "default", NULL)) {
-            BIO_printf(bio_err, "Error checking extensions defined using -addext\n");
+            BIO_printf(bio_err, "Error Loading command line extensions\n");
             goto end;
         }
     }
 
     if (passin == NULL) {
         passin = nofree_passin =
-            NCONF_get_string(req_conf, section, "input_password");
+            NCONF_get_string(req_conf, SECTION, "input_password");
         if (passin == NULL)
             ERR_clear_error();
     }
 
     if (passout == NULL) {
         passout = nofree_passout =
-            NCONF_get_string(req_conf, section, "output_password");
+            NCONF_get_string(req_conf, SECTION, "output_password");
         if (passout == NULL)
             ERR_clear_error();
     }
 
-    p = NCONF_get_string(req_conf, section, STRING_MASK);
+    p = NCONF_get_string(req_conf, SECTION, STRING_MASK);
     if (p == NULL)
         ERR_clear_error();
 
@@ -564,7 +534,7 @@ int req_main(int argc, char **argv)
     }
 
     if (chtype != MBSTRING_UTF8) {
-        p = NCONF_get_string(req_conf, section, UTF8_IN);
+        p = NCONF_get_string(req_conf, SECTION, UTF8_IN);
         if (p == NULL)
             ERR_clear_error();
         else if (strcmp(p, "yes") == 0)
@@ -572,7 +542,7 @@ int req_main(int argc, char **argv)
     }
 
     if (req_exts == NULL) {
-        req_exts = NCONF_get_string(req_conf, section, REQ_EXTENSIONS);
+        req_exts = NCONF_get_string(req_conf, SECTION, REQ_EXTENSIONS);
         if (req_exts == NULL)
             ERR_clear_error();
     }
@@ -583,23 +553,26 @@ int req_main(int argc, char **argv)
         X509V3_set_nconf(&ctx, req_conf);
         if (!X509V3_EXT_add_nconf(req_conf, &ctx, req_exts, NULL)) {
             BIO_printf(bio_err,
-                       "Error checking request extension section %s\n",
+                       "Error Loading request extension section %s\n",
                        req_exts);
             goto end;
         }
     }
 
     if (keyfile != NULL) {
-        pkey = load_key(keyfile, keyform, 0, passin, e, "private key");
-        if (pkey == NULL)
+        pkey = load_key(keyfile, keyform, 0, passin, e, "Private Key");
+        if (pkey == NULL) {
+            /* load_key() has already printed an appropriate message */
             goto end;
-        app_RAND_load_conf(req_conf, section);
+        } else {
+            app_RAND_load_conf(req_conf, SECTION);
+        }
     }
 
     if (newreq && (pkey == NULL)) {
-        app_RAND_load_conf(req_conf, section);
+        app_RAND_load_conf(req_conf, SECTION);
 
-        if (!NCONF_get_number(req_conf, section, BITS, &newkey)) {
+        if (!NCONF_get_number(req_conf, SECTION, BITS, &newkey)) {
             newkey = DEFAULT_KEY_LENGTH;
         }
 
@@ -661,7 +634,7 @@ int req_main(int argc, char **argv)
         EVP_PKEY_CTX_set_app_data(genctx, bio_err);
 
         if (EVP_PKEY_keygen(genctx, &pkey) <= 0) {
-            BIO_puts(bio_err, "Error generating key\n");
+            BIO_puts(bio_err, "Error Generating Key\n");
             goto end;
         }
 
@@ -669,7 +642,7 @@ int req_main(int argc, char **argv)
         genctx = NULL;
 
         if (keyout == NULL) {
-            keyout = NCONF_get_string(req_conf, section, KEYFILE);
+            keyout = NCONF_get_string(req_conf, SECTION, KEYFILE);
             if (keyout == NULL)
                 ERR_clear_error();
         }
@@ -682,16 +655,16 @@ int req_main(int argc, char **argv)
         if (out == NULL)
             goto end;
 
-        p = NCONF_get_string(req_conf, section, "encrypt_rsa_key");
+        p = NCONF_get_string(req_conf, SECTION, "encrypt_rsa_key");
         if (p == NULL) {
             ERR_clear_error();
-            p = NCONF_get_string(req_conf, section, "encrypt_key");
+            p = NCONF_get_string(req_conf, SECTION, "encrypt_key");
             if (p == NULL)
                 ERR_clear_error();
         }
         if ((p != NULL) && (strcmp(p, "no") == 0))
             cipher = NULL;
-        if (noenc)
+        if (nodes)
             cipher = NULL;
 
         i = 0;
@@ -713,9 +686,18 @@ int req_main(int argc, char **argv)
     }
 
     if (!newreq) {
-        req = load_csr(infile, informat, "X509 request");
-        if (req == NULL)
+        in = bio_open_default(infile, 'r', informat);
+        if (in == NULL)
             goto end;
+
+        if (informat == FORMAT_ASN1)
+            req = d2i_X509_REQ_bio(in, NULL);
+        else
+            req = PEM_read_bio_X509_REQ(in, NULL, NULL, NULL);
+        if (req == NULL) {
+            BIO_printf(bio_err, "unable to load X509 request\n");
+            goto end;
+        }
     }
 
     if (newreq || x509) {
@@ -740,10 +722,13 @@ int req_main(int argc, char **argv)
         if (x509) {
             EVP_PKEY *tmppkey;
             X509V3_CTX ext_ctx;
-            if ((x509ss = X509_new_ex(app_get0_libctx(), app_get0_propq())) == NULL)
+            if ((x509ss = X509_new()) == NULL)
                 goto end;
 
             /* Set version to V3 */
+            if ((extensions != NULL || addext_conf != NULL)
+                && !X509_set_version(x509ss, 2))
+                goto end;
             if (serial != NULL) {
                 if (!X509_set_serialNumber(x509ss, serial))
                     goto end;
@@ -769,21 +754,21 @@ int req_main(int argc, char **argv)
 
             /* Set up V3 context struct */
 
-            X509V3_set_ctx(&ext_ctx, x509ss, x509ss, NULL, NULL, X509V3_CTX_REPLACE);
+            X509V3_set_ctx(&ext_ctx, x509ss, x509ss, NULL, NULL, 0);
             X509V3_set_nconf(&ext_ctx, req_conf);
 
             /* Add extensions */
             if (extensions != NULL && !X509V3_EXT_add_nconf(req_conf,
                                                             &ext_ctx, extensions,
                                                             x509ss)) {
-                BIO_printf(bio_err, "Error adding x509 extensions from section %s\n",
+                BIO_printf(bio_err, "Error Loading extension section %s\n",
                            extensions);
                 goto end;
             }
             if (addext_conf != NULL
                 && !X509V3_EXT_add_nconf(addext_conf, &ext_ctx, "default",
                                          x509ss)) {
-                BIO_printf(bio_err, "Error adding extensions defined via -addext\n");
+                BIO_printf(bio_err, "Error Loading command line extensions\n");
                 goto end;
             }
 
@@ -813,14 +798,14 @@ int req_main(int argc, char **argv)
             if (req_exts != NULL
                 && !X509V3_EXT_REQ_add_nconf(req_conf, &ext_ctx,
                                              req_exts, req)) {
-                BIO_printf(bio_err, "Error adding request extensions from section %s\n",
+                BIO_printf(bio_err, "Error Loading extension section %s\n",
                            req_exts);
                 goto end;
             }
             if (addext_conf != NULL
                 && !X509V3_EXT_REQ_add_nconf(addext_conf, &ext_ctx, "default",
                                              req)) {
-                BIO_printf(bio_err, "Error adding extensions defined via -addext\n");
+                BIO_printf(bio_err, "Error Loading command line extensions\n");
                 goto end;
             }
             i = do_X509_REQ_sign(req, pkey, digest, sigopts);
@@ -864,7 +849,7 @@ int req_main(int argc, char **argv)
                 goto end;
         }
 
-        i = do_X509_REQ_verify(req, tpubkey, vfyopts);
+        i = X509_REQ_verify(req, tpubkey);
 
         if (i < 0) {
             goto end;
@@ -937,16 +922,14 @@ int req_main(int argc, char **argv)
             goto end;
         }
         fprintf(stdout, "Modulus=");
-        if (EVP_PKEY_is_a(tpubkey, "RSA")) {
-            BIGNUM *n;
-
-            /* Every RSA key has an 'n' */
-            EVP_PKEY_get_bn_param(pkey, "n", &n);
+#ifndef OPENSSL_NO_RSA
+        if (EVP_PKEY_base_id(tpubkey) == EVP_PKEY_RSA) {
+            const BIGNUM *n;
+            RSA_get0_key(EVP_PKEY_get0_RSA(tpubkey), &n, NULL, NULL);
             BN_print(out, n);
-            BN_free(n);
-        } else {
+        } else
+#endif
             fprintf(stdout, "Wrong Algorithm type");
-        }
         fprintf(stdout, "\n");
     }
 
@@ -980,16 +963,16 @@ int req_main(int argc, char **argv)
     NCONF_free(req_conf);
     NCONF_free(addext_conf);
     BIO_free(addext_bio);
+    BIO_free(in);
     BIO_free_all(out);
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(genctx);
     sk_OPENSSL_STRING_free(pkeyopts);
     sk_OPENSSL_STRING_free(sigopts);
-    sk_OPENSSL_STRING_free(vfyopts);
     lh_OPENSSL_STRING_doall(addexts, exts_cleanup);
     lh_OPENSSL_STRING_free(addexts);
 #ifndef OPENSSL_NO_ENGINE
-    release_engine(gen_eng);
+    ENGINE_free(gen_eng);
 #endif
     OPENSSL_free(keyalgstr);
     X509_REQ_free(req);
@@ -1011,13 +994,13 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *subj, int multirdn,
     STACK_OF(CONF_VALUE) *dn_sk, *attr_sk = NULL;
     char *tmp, *dn_sect, *attr_sect;
 
-    tmp = NCONF_get_string(req_conf, section, PROMPT);
+    tmp = NCONF_get_string(req_conf, SECTION, PROMPT);
     if (tmp == NULL)
         ERR_clear_error();
     if ((tmp != NULL) && strcmp(tmp, "no") == 0)
         no_prompt = 1;
 
-    dn_sect = NCONF_get_string(req_conf, section, DISTINGUISHED_NAME);
+    dn_sect = NCONF_get_string(req_conf, SECTION, DISTINGUISHED_NAME);
     if (dn_sect == NULL) {
         BIO_printf(bio_err, "unable to find '%s' in config\n",
                    DISTINGUISHED_NAME);
@@ -1029,7 +1012,7 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *subj, int multirdn,
         goto err;
     }
 
-    attr_sect = NCONF_get_string(req_conf, section, ATTRIBUTES);
+    attr_sect = NCONF_get_string(req_conf, SECTION, ATTRIBUTES);
     if (attr_sect == NULL) {
         ERR_clear_error();
         attr_sk = NULL;
@@ -1072,7 +1055,7 @@ static int build_subject(X509_REQ *req, const char *subject, unsigned long chtyp
 {
     X509_NAME *n;
 
-    if ((n = parse_name(subject, chtype, multirdn, "subject")) == NULL)
+    if ((n = parse_name(subject, chtype, multirdn)) == NULL)
         return 0;
 
     if (!X509_REQ_set_subject_name(req, n)) {
@@ -1096,7 +1079,8 @@ static int prompt_info(X509_REQ *req,
     char *type, *value;
     const char *def;
     CONF_VALUE *v;
-    X509_NAME *subj = X509_REQ_get_subject_name(req);
+    X509_NAME *subj;
+    subj = X509_REQ_get_subject_name(req);
 
     if (!batch) {
         BIO_printf(bio_err,
@@ -1181,7 +1165,8 @@ static int prompt_info(X509_REQ *req,
                 return 0;
         }
         if (X509_NAME_entry_count(subj) == 0) {
-            BIO_printf(bio_err, "error, no objects specified in config file\n");
+            BIO_printf(bio_err,
+                       "error, no objects specified in config file\n");
             return 0;
         }
 
@@ -1508,7 +1493,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
 
         EVP_PKEY_asn1_get0_info(NULL, pkey_type, NULL, NULL, NULL, ameth);
 #ifndef OPENSSL_NO_ENGINE
-        finish_engine(tmpeng);
+        ENGINE_finish(tmpeng);
 #endif
         if (*pkey_type == EVP_PKEY_RSA) {
             if (p != NULL) {
@@ -1569,7 +1554,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
         EVP_PKEY_asn1_get0_info(NULL, NULL, NULL, NULL, &anam, ameth);
         *palgnam = OPENSSL_strdup(anam);
 #ifndef OPENSSL_NO_ENGINE
-        finish_engine(tmpeng);
+        ENGINE_finish(tmpeng);
 #endif
     }
 
@@ -1593,6 +1578,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
         EVP_PKEY_CTX_free(gctx);
         return NULL;
     }
+#ifndef OPENSSL_NO_RSA
     if ((*pkey_type == EVP_PKEY_RSA) && (keylen != -1)) {
         if (EVP_PKEY_CTX_set_rsa_keygen_bits(gctx, keylen) <= 0) {
             BIO_puts(bio_err, "Error setting RSA keysize\n");
@@ -1601,6 +1587,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
             return NULL;
         }
     }
+#endif
 
     return gctx;
 }
@@ -1622,4 +1609,71 @@ static int genpkey_cb(EVP_PKEY_CTX *ctx)
     BIO_write(b, &c, 1);
     (void)BIO_flush(b);
     return 1;
+}
+
+static int do_sign_init(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
+                        const EVP_MD *md, STACK_OF(OPENSSL_STRING) *sigopts)
+{
+    EVP_PKEY_CTX *pkctx = NULL;
+    int i, def_nid;
+
+    if (ctx == NULL)
+        return 0;
+    /*
+     * EVP_PKEY_get_default_digest_nid() returns 2 if the digest is mandatory
+     * for this algorithm.
+     */
+    if (EVP_PKEY_get_default_digest_nid(pkey, &def_nid) == 2
+            && def_nid == NID_undef) {
+        /* The signing algorithm requires there to be no digest */
+        md = NULL;
+    }
+    if (!EVP_DigestSignInit(ctx, &pkctx, md, NULL, pkey))
+        return 0;
+    for (i = 0; i < sk_OPENSSL_STRING_num(sigopts); i++) {
+        char *sigopt = sk_OPENSSL_STRING_value(sigopts, i);
+        if (pkey_ctrl_string(pkctx, sigopt) <= 0) {
+            BIO_printf(bio_err, "parameter error \"%s\"\n", sigopt);
+            ERR_print_errors(bio_err);
+            return 0;
+        }
+    }
+    return 1;
+}
+
+int do_X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md,
+                 STACK_OF(OPENSSL_STRING) *sigopts)
+{
+    int rv;
+    EVP_MD_CTX *mctx = EVP_MD_CTX_new();
+
+    rv = do_sign_init(mctx, pkey, md, sigopts);
+    if (rv > 0)
+        rv = X509_sign_ctx(x, mctx);
+    EVP_MD_CTX_free(mctx);
+    return rv > 0 ? 1 : 0;
+}
+
+int do_X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md,
+                     STACK_OF(OPENSSL_STRING) *sigopts)
+{
+    int rv;
+    EVP_MD_CTX *mctx = EVP_MD_CTX_new();
+    rv = do_sign_init(mctx, pkey, md, sigopts);
+    if (rv > 0)
+        rv = X509_REQ_sign_ctx(x, mctx);
+    EVP_MD_CTX_free(mctx);
+    return rv > 0 ? 1 : 0;
+}
+
+int do_X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md,
+                     STACK_OF(OPENSSL_STRING) *sigopts)
+{
+    int rv;
+    EVP_MD_CTX *mctx = EVP_MD_CTX_new();
+    rv = do_sign_init(mctx, pkey, md, sigopts);
+    if (rv > 0)
+        rv = X509_CRL_sign_ctx(x, mctx);
+    EVP_MD_CTX_free(mctx);
+    return rv > 0 ? 1 : 0;
 }

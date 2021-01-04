@@ -1,7 +1,7 @@
 /*
- * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -16,7 +16,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
-#if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#ifndef OPENSSL_NO_DES
 # include <openssl/des.h>
 #endif
 #include <openssl/md5.h>
@@ -38,6 +38,7 @@ static const char ascii_dollar[] = { 0x24, 0x00 };
 
 typedef enum {
     passwd_unset = 0,
+    passwd_crypt,
     passwd_md5,
     passwd_apr1,
     passwd_sha256,
@@ -53,40 +54,29 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_IN,
     OPT_NOVERIFY, OPT_QUIET, OPT_TABLE, OPT_REVERSE, OPT_APR1,
-    OPT_1, OPT_5, OPT_6, OPT_AIXMD5, OPT_SALT, OPT_STDIN,
-    OPT_R_ENUM, OPT_PROV_ENUM
+    OPT_1, OPT_5, OPT_6, OPT_CRYPT, OPT_AIXMD5, OPT_SALT, OPT_STDIN,
+    OPT_R_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS passwd_options[] = {
-    {OPT_HELP_STR, 1, '-', "Usage: %s [options] [password]\n"},
-
-    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-
-    OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Read passwords from file"},
     {"noverify", OPT_NOVERIFY, '-',
      "Never verify when reading password from terminal"},
-    {"stdin", OPT_STDIN, '-', "Read passwords from stdin"},
-
-    OPT_SECTION("Output"),
     {"quiet", OPT_QUIET, '-', "No warnings"},
     {"table", OPT_TABLE, '-', "Format output as table"},
     {"reverse", OPT_REVERSE, '-', "Switch table columns"},
-
-    OPT_SECTION("Cryptographic"),
     {"salt", OPT_SALT, 's', "Use provided salt"},
+    {"stdin", OPT_STDIN, '-', "Read passwords from stdin"},
     {"6", OPT_6, '-', "SHA512-based password algorithm"},
     {"5", OPT_5, '-', "SHA256-based password algorithm"},
     {"apr1", OPT_APR1, '-', "MD5-based password algorithm, Apache variant"},
     {"1", OPT_1, '-', "MD5-based password algorithm"},
     {"aixmd5", OPT_AIXMD5, '-', "AIX MD5-based password algorithm"},
-
+#ifndef OPENSSL_NO_DES
+    {"crypt", OPT_CRYPT, '-', "Standard Unix password algorithm (default)"},
+#endif
     OPT_R_OPTIONS,
-    OPT_PROV_OPTIONS,
-
-    OPT_PARAMETERS(),
-    {"password", 0, 0, "Password text to digest (optional)"},
     {NULL}
 };
 
@@ -164,6 +154,13 @@ int passwd_main(int argc, char **argv)
                 goto opthelp;
             mode = passwd_aixmd5;
             break;
+        case OPT_CRYPT:
+#ifndef OPENSSL_NO_DES
+            if (mode != passwd_unset)
+                goto opthelp;
+            mode = passwd_crypt;
+#endif
+            break;
         case OPT_SALT:
             passed_salt = 1;
             salt = opt_arg();
@@ -178,16 +175,11 @@ int passwd_main(int argc, char **argv)
             if (!opt_rand(o))
                 goto end;
             break;
-        case OPT_PROV_CASES:
-            if (!opt_provider(o))
-                goto end;
-            break;
         }
     }
-
-    /* All remaining arguments are the password text */
     argc = opt_num_rest();
     argv = opt_rest();
+
     if (*argv != NULL) {
         if (pw_source_defined)
             goto opthelp;
@@ -197,8 +189,13 @@ int passwd_main(int argc, char **argv)
 
     if (mode == passwd_unset) {
         /* use default */
-        mode = passwd_md5;
+        mode = passwd_crypt;
     }
+
+#ifdef OPENSSL_NO_DES
+    if (mode == passwd_crypt)
+        goto opthelp;
+#endif
 
     if (infile != NULL && in_stdin) {
         BIO_printf(bio_err, "%s: Can't combine -in and -stdin\n", prog);
@@ -214,6 +211,9 @@ int passwd_main(int argc, char **argv)
         if (in == NULL)
             goto end;
     }
+
+    if (mode == passwd_crypt)
+        pw_maxlen = 8;
 
     if (passwds == NULL) {
         /* no passwords on the command line */
@@ -785,6 +785,11 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
         size_t saltlen = 0;
         size_t i;
 
+#ifndef OPENSSL_NO_DES
+        if (mode == passwd_crypt)
+            saltlen = 2;
+#endif                         /* !OPENSSL_NO_DES */
+
         if (mode == passwd_md5 || mode == passwd_apr1 || mode == passwd_aixmd5)
             saltlen = 8;
 
@@ -823,6 +828,10 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
     assert(strlen(passwd) <= pw_maxlen);
 
     /* now compute password hash */
+#ifndef OPENSSL_NO_DES
+    if (mode == passwd_crypt)
+        hash = DES_crypt(passwd, *salt_p);
+#endif
     if (mode == passwd_md5 || mode == passwd_apr1)
         hash = md5crypt(passwd, (mode == passwd_md5 ? "1" : "apr1"), *salt_p);
     if (mode == passwd_aixmd5)

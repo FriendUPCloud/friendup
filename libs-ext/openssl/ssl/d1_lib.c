@@ -1,7 +1,7 @@
 /*
- * Copyright 2005-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -192,7 +192,7 @@ int dtls1_clear(SSL *s)
         return 0;
 
     if (s->method->version == DTLS_ANY_VERSION)
-        s->version = DTLS_MAX_VERSION_INTERNAL;
+        s->version = DTLS_MAX_VERSION;
 #ifndef OPENSSL_NO_DTLS1_METHOD
     else if (s->options & SSL_OP_CISCO_ANYCONNECT)
         s->client_version = s->version = DTLS1_BAD_VER;
@@ -378,7 +378,8 @@ int dtls1_check_timeout_num(SSL *s)
 
     if (s->d1->timeout.num_alerts > DTLS1_TMO_ALERT_COUNT) {
         /* fail the connection, enough alerts have been sent */
-        SSLfatal(s, SSL_AD_NO_ALERT, SSL_R_READ_TIMEOUT_EXPIRED);
+        SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_DTLS1_CHECK_TIMEOUT_NUM,
+                 SSL_R_READ_TIMEOUT_EXPIRED);
         return -1;
     }
 
@@ -470,7 +471,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
     wbio = SSL_get_wbio(s);
 
     if (!rbio || !wbio) {
-        ERR_raise(ERR_LIB_SSL, SSL_R_BIO_NOT_SET);
+        SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_BIO_NOT_SET);
         return -1;
     }
 
@@ -482,12 +483,12 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
      * SSL_accept)
      */
     if ((s->version & 0xff00) != (DTLS1_VERSION & 0xff00)) {
-        ERR_raise(ERR_LIB_SSL, SSL_R_UNSUPPORTED_SSL_VERSION);
+        SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_UNSUPPORTED_SSL_VERSION);
         return -1;
     }
 
     if (!ssl3_setup_buffers(s)) {
-        /* ERR_raise() already called */
+        /* SSLerr already called */
         return -1;
     }
     buf = RECORD_LAYER_get_rbuf(&s->rlayer)->buf;
@@ -521,7 +522,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
         }
 
         if (!PACKET_buf_init(&pkt, buf, n)) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+            SSLerr(SSL_F_DTLSV1_LISTEN, ERR_R_INTERNAL_ERROR);
             return -1;
         }
 
@@ -536,7 +537,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
 
         /* this packet contained a partial record, dump it */
         if (n < DTLS1_RT_HEADER_LENGTH) {
-            ERR_raise(ERR_LIB_SSL, SSL_R_RECORD_TOO_SMALL);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_RECORD_TOO_SMALL);
             goto end;
         }
 
@@ -547,12 +548,12 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
         /* Get the record header */
         if (!PACKET_get_1(&pkt, &rectype)
             || !PACKET_get_1(&pkt, &versmajor)) {
-            ERR_raise(ERR_LIB_SSL, SSL_R_LENGTH_MISMATCH);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_LENGTH_MISMATCH);
             goto end;
         }
 
         if (rectype != SSL3_RT_HANDSHAKE) {
-            ERR_raise(ERR_LIB_SSL, SSL_R_UNEXPECTED_MESSAGE);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_UNEXPECTED_MESSAGE);
             goto end;
         }
 
@@ -561,7 +562,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
          * the same.
          */
         if (versmajor != DTLS1_VERSION_MAJOR) {
-            ERR_raise(ERR_LIB_SSL, SSL_R_BAD_PROTOCOL_VERSION_NUMBER);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_BAD_PROTOCOL_VERSION_NUMBER);
             goto end;
         }
 
@@ -569,7 +570,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
             /* Save the sequence number: 64 bits, with top 2 bytes = epoch */
             || !PACKET_copy_bytes(&pkt, seq, SEQ_NUM_SIZE)
             || !PACKET_get_length_prefixed_2(&pkt, &msgpkt)) {
-            ERR_raise(ERR_LIB_SSL, SSL_R_LENGTH_MISMATCH);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_LENGTH_MISMATCH);
             goto end;
         }
         reclen = PACKET_remaining(&msgpkt);
@@ -580,7 +581,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
 
         /* This is an initial ClientHello so the epoch has to be 0 */
         if (seq[0] != 0 || seq[1] != 0) {
-            ERR_raise(ERR_LIB_SSL, SSL_R_UNEXPECTED_MESSAGE);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_UNEXPECTED_MESSAGE);
             goto end;
         }
 
@@ -595,18 +596,18 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
             || !PACKET_get_net_3_len(&msgpkt, &fraglen)
             || !PACKET_get_sub_packet(&msgpkt, &msgpayload, fraglen)
             || PACKET_remaining(&msgpkt) != 0) {
-            ERR_raise(ERR_LIB_SSL, SSL_R_LENGTH_MISMATCH);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_LENGTH_MISMATCH);
             goto end;
         }
 
         if (msgtype != SSL3_MT_CLIENT_HELLO) {
-            ERR_raise(ERR_LIB_SSL, SSL_R_UNEXPECTED_MESSAGE);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_UNEXPECTED_MESSAGE);
             goto end;
         }
 
         /* Message sequence number can only be 0 or 1 */
         if (msgseq > 2) {
-            ERR_raise(ERR_LIB_SSL, SSL_R_INVALID_SEQUENCE_NUMBER);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_INVALID_SEQUENCE_NUMBER);
             goto end;
         }
 
@@ -619,7 +620,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
          */
         if (fragoff != 0 || fraglen > msglen) {
             /* Non initial ClientHello fragment (or bad fragment) */
-            ERR_raise(ERR_LIB_SSL, SSL_R_FRAGMENTED_CLIENT_HELLO);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_FRAGMENTED_CLIENT_HELLO);
             goto end;
         }
 
@@ -629,7 +630,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
                             s->msg_callback_arg);
 
         if (!PACKET_get_net_2(&msgpayload, &clientvers)) {
-            ERR_raise(ERR_LIB_SSL, SSL_R_LENGTH_MISMATCH);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_LENGTH_MISMATCH);
             goto end;
         }
 
@@ -638,7 +639,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
          */
         if (DTLS_VERSION_LT(clientvers, (unsigned int)s->method->version) &&
             s->method->version != DTLS_ANY_VERSION) {
-            ERR_raise(ERR_LIB_SSL, SSL_R_WRONG_VERSION_NUMBER);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_WRONG_VERSION_NUMBER);
             goto end;
         }
 
@@ -649,7 +650,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
              * Could be malformed or the cookie does not fit within the initial
              * ClientHello fragment. Either way we can't handle it.
              */
-            ERR_raise(ERR_LIB_SSL, SSL_R_LENGTH_MISMATCH);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_LENGTH_MISMATCH);
             goto end;
         }
 
@@ -664,7 +665,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
              * We have a cookie, so lets check it.
              */
             if (s->ctx->app_verify_cookie_cb == NULL) {
-                ERR_raise(ERR_LIB_SSL, SSL_R_NO_VERIFY_COOKIE_CALLBACK);
+                SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_NO_VERIFY_COOKIE_CALLBACK);
                 /* This is fatal */
                 return -1;
             }
@@ -696,7 +697,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
             if (s->ctx->app_gen_cookie_cb == NULL ||
                 s->ctx->app_gen_cookie_cb(s, cookie, &cookielen) == 0 ||
                 cookielen > 255) {
-                ERR_raise(ERR_LIB_SSL, SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
+                SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
                 /* This is fatal */
                 return -1;
             }
@@ -759,7 +760,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
                     || !WPACKET_close(&wpkt)
                     || !WPACKET_get_total_written(&wpkt, &wreclen)
                     || !WPACKET_finish(&wpkt)) {
-                ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+                SSLerr(SSL_F_DTLSV1_LISTEN, ERR_R_INTERNAL_ERROR);
                 WPACKET_cleanup(&wpkt);
                 /* This is fatal */
                 return -1;
@@ -781,7 +782,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
                                 DTLS1_RT_HEADER_LENGTH, s, s->msg_callback_arg);
 
             if ((tmpclient = BIO_ADDR_new()) == NULL) {
-                ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+                SSLerr(SSL_F_DTLSV1_LISTEN, ERR_R_MALLOC_FAILURE);
                 goto end;
             }
 

@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
-# Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the Apache License 2.0 (the "License").  You may not use
+# Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -57,50 +57,12 @@ if (eval { require Win32::API; 1; }) {
 }
 $ENV{OPENSSL_WIN32_UTF8}=1;
 
-plan tests => 5;
-
-# Test different PKCS#12 formats
-ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
+plan tests => 1;
 
 # just see that we can read shibboleth.pfx protected with $pass
 ok(run(app(["openssl", "pkcs12", "-noout",
             "-password", "pass:$pass",
             "-in", srctop_file("test", "shibboleth.pfx")])),
-   "test_load_cert_pkcs12");
-
-my @path = qw(test certs);
-my $outfile1 = "out1.p12";
-my $outfile2 = "out2.p12";
-my $outfile3 = "out3.p12";
-
-# Test the -chain option with -untrusted
-ok(run(app(["openssl", "pkcs12", "-export", "-chain",
-            "-CAfile",  srctop_file(@path,  "sroot-cert.pem"),
-            "-untrusted", srctop_file(@path, "ca-cert.pem"),
-            "-in", srctop_file(@path, "ee-cert.pem"),
-            "-nokeys", "-passout", "pass:", "-out", $outfile1])),
-   "test_pkcs12_chain_untrusted");
-
-# Test the -passcerts option
-ok(run(app(["openssl", "pkcs12", "-export",
-            "-in", srctop_file(@path, "ee-cert.pem"),
-            "-certfile", srctop_file(@path, "v3-certs-TDES.p12"),
-            "-passcerts", "pass:v3-certs",
-            "-nokeys", "-passout", "pass:v3-certs", "-descert",
-            "-out", $outfile2])),
-   "test_pkcs12_passcerts");
-
-SKIP: {
-    skip "Skipping legacy PKCS#12 test because RC2 is disabled in this build", 1
-        if disabled("rc2") || disabled("legacy");
-    # Test reading legacy PKCS#12 file
-    ok(run(app(["openssl", "pkcs12", "-export",
-                "-in", srctop_file(@path, "v3-certs-RC2.p12"),
-                "-passin", "pass:v3-certs",
-                "-provider", "default", "-provider", "legacy",
-                "-nokeys", "-passout", "pass:v3-certs", "-descert",
-                "-out", $outfile3])),
-    "test_pkcs12_passcerts_legacy");
-}
+   "test_pkcs12");
 
 SetConsoleOutputCP($savedcp) if (defined($savedcp));

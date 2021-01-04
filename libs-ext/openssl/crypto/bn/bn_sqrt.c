@@ -1,7 +1,7 @@
 /*
- * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -38,7 +38,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
             return ret;
         }
 
-        ERR_raise(ERR_LIB_BN, BN_R_P_IS_NOT_PRIME);
+        BNerr(BN_F_BN_MOD_SQRT, BN_R_P_IS_NOT_PRIME);
         return NULL;
     }
 
@@ -180,7 +180,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
             if (!BN_set_word(y, i))
                 goto end;
         } else {
-            if (!BN_priv_rand_ex(y, BN_num_bits(p), 0, 0, ctx))
+            if (!BN_priv_rand(y, BN_num_bits(p), 0, 0))
                 goto end;
             if (BN_ucmp(y, p) >= 0) {
                 if (!(p->neg ? BN_add : BN_sub) (y, y, p))
@@ -197,7 +197,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
             goto end;
         if (r == 0) {
             /* m divides p */
-            ERR_raise(ERR_LIB_BN, BN_R_P_IS_NOT_PRIME);
+            BNerr(BN_F_BN_MOD_SQRT, BN_R_P_IS_NOT_PRIME);
             goto end;
         }
     }
@@ -209,7 +209,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
          * than just bad luck. Even if p is not prime, we should have found
          * some y such that r == -1.
          */
-        ERR_raise(ERR_LIB_BN, BN_R_TOO_MANY_ITERATIONS);
+        BNerr(BN_F_BN_MOD_SQRT, BN_R_TOO_MANY_ITERATIONS);
         goto end;
     }
 
@@ -224,7 +224,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
     if (!BN_mod_exp(y, y, q, p, ctx))
         goto end;
     if (BN_is_one(y)) {
-        ERR_raise(ERR_LIB_BN, BN_R_P_IS_NOT_PRIME);
+        BNerr(BN_F_BN_MOD_SQRT, BN_R_P_IS_NOT_PRIME);
         goto end;
     }
 
@@ -308,7 +308,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
         while (!BN_is_one(t)) {
             i++;
             if (i == e) {
-                ERR_raise(ERR_LIB_BN, BN_R_NOT_A_SQUARE);
+                BNerr(BN_F_BN_MOD_SQRT, BN_R_NOT_A_SQUARE);
                 goto end;
             }
             if (!BN_mod_mul(t, t, t, p, ctx))
@@ -342,7 +342,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
             err = 1;
 
         if (!err && 0 != BN_cmp(x, A)) {
-            ERR_raise(ERR_LIB_BN, BN_R_NOT_A_SQUARE);
+            BNerr(BN_F_BN_MOD_SQRT, BN_R_NOT_A_SQUARE);
             err = 1;
         }
     }

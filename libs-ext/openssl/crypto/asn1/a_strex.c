@@ -1,7 +1,7 @@
 /*
- * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -152,13 +152,13 @@ static int do_buf(unsigned char *buf, int buflen,
     switch (charwidth) {
     case 4:
         if (buflen & 3) {
-            ERR_raise(ERR_LIB_ASN1, ASN1_R_INVALID_UNIVERSALSTRING_LENGTH);
+            ASN1err(ASN1_F_DO_BUF, ASN1_R_INVALID_UNIVERSALSTRING_LENGTH);
             return -1;
         }
         break;
     case 2:
         if (buflen & 1) {
-            ERR_raise(ERR_LIB_ASN1, ASN1_R_INVALID_BMPSTRING_LENGTH);
+            ASN1err(ASN1_F_DO_BUF, ASN1_R_INVALID_BMPSTRING_LENGTH);
             return -1;
         }
         break;
@@ -281,7 +281,7 @@ static int do_dump(unsigned long lflags, char_io *io_ch, void *arg,
     t.value.ptr = (char *)str;
     der_len = i2d_ASN1_TYPE(&t, NULL);
     if ((der_buf = OPENSSL_malloc(der_len)) == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ASN1err(ASN1_F_DO_DUMP, ERR_R_MALLOC_FAILURE);
         return -1;
     }
     p = der_buf;

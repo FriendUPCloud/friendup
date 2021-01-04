@@ -2,7 +2,7 @@
  * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -30,10 +30,6 @@
 
 /* Curve does not support signing operations */
 #define EC_FLAGS_NO_SIGN        0x4
-
-#ifdef OPENSSL_NO_DEPRECATED_3_0
-typedef struct ec_method_st EC_METHOD;
-#endif
 
 /*
  * Structure details are not part of the exported interface, so all this may
@@ -80,6 +76,14 @@ struct ec_method_st {
      * EC_POINT_set_compressed_coordinates:
      */
     int (*point_set_to_infinity) (const EC_GROUP *, EC_POINT *);
+    int (*point_set_Jprojective_coordinates_GFp) (const EC_GROUP *,
+                                                  EC_POINT *, const BIGNUM *x,
+                                                  const BIGNUM *y,
+                                                  const BIGNUM *z, BN_CTX *);
+    int (*point_get_Jprojective_coordinates_GFp) (const EC_GROUP *,
+                                                  const EC_POINT *, BIGNUM *x,
+                                                  BIGNUM *y, BIGNUM *z,
+                                                  BN_CTX *);
     int (*point_set_affine_coordinates) (const EC_GROUP *, EC_POINT *,
                                          const BIGNUM *x, const BIGNUM *y,
                                          BN_CTX *);
@@ -175,14 +179,6 @@ struct ec_method_st {
     /* custom ECDH operation */
     int (*ecdh_compute_key)(unsigned char **pout, size_t *poutlen,
                             const EC_POINT *pub_key, const EC_KEY *ecdh);
-    /* custom ECDSA */
-    int (*ecdsa_sign_setup)(EC_KEY *eckey, BN_CTX *ctx, BIGNUM **kinvp,
-                            BIGNUM **rp);
-    ECDSA_SIG *(*ecdsa_sign_sig)(const unsigned char *dgst, int dgstlen,
-                                 const BIGNUM *kinv, const BIGNUM *r,
-                                 EC_KEY *eckey);
-    int (*ecdsa_verify_sig)(const unsigned char *dgst, int dgstlen,
-                            const ECDSA_SIG *sig, EC_KEY *eckey);
     /* Inverse modulo order */
     int (*field_inverse_mod_ord)(const EC_GROUP *, BIGNUM *r,
                                  const BIGNUM *x, BN_CTX *);
@@ -274,9 +270,6 @@ struct ec_group_st {
         NISTZ256_PRE_COMP *nistz256;
         EC_PRE_COMP *ec;
     } pre_comp;
-
-    OSSL_LIB_CTX *libctx;
-    char *propq;
 };
 
 #define SETPRECOMP(g, type, pre) \
@@ -295,15 +288,8 @@ struct ec_key_st {
     point_conversion_form_t conv_form;
     CRYPTO_REF_COUNT references;
     int flags;
-#ifndef FIPS_MODULE
     CRYPTO_EX_DATA ex_data;
-#endif
     CRYPTO_RWLOCK *lock;
-    OSSL_LIB_CTX *libctx;
-    char *propq;
-
-    /* Provider data */
-    size_t dirty_cnt; /* If any key material changes, increment this */
 };
 
 struct ec_point_st {
@@ -325,10 +311,13 @@ struct ec_point_st {
 static ossl_inline int ec_point_is_compat(const EC_POINT *point,
                                           const EC_GROUP *group)
 {
-    return group->meth == point->meth
-           && (group->curve_name == 0
-               || point->curve_name == 0
-               || group->curve_name == point->curve_name);
+    if (group->meth != point->meth
+        || (group->curve_name != 0
+            && point->curve_name != 0
+            && group->curve_name != point->curve_name))
+        return 0;
+
+    return 1;
 }
 
 NISTP224_PRE_COMP *EC_nistp224_pre_comp_dup(NISTP224_PRE_COMP *);
@@ -593,28 +582,12 @@ void ec_GFp_nistp_recode_scalar_bits(unsigned char *sign,
 #endif
 int ec_group_simple_order_bits(const EC_GROUP *group);
 
-/**
- *  Creates a new EC_GROUP object
- *  \param   libctx The associated library context or NULL for the default
- *                  library context
- *  \param   propq  Any property query string
- *  \param   meth   EC_METHOD to use
- *  \return  newly created EC_GROUP object or NULL in case of an error.
- */
-EC_GROUP *ec_group_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
-                          const EC_METHOD *meth);
-
 #ifdef ECP_NISTZ256_ASM
 /** Returns GFp methods using montgomery multiplication, with x86-64 optimized
  * P256. See http://eprint.iacr.org/2013/816.
  *  \return  EC_METHOD object
  */
 const EC_METHOD *EC_GFp_nistz256_method(void);
-#endif
-#ifdef S390X_EC_ASM
-const EC_METHOD *EC_GFp_s390x_nistp256_method(void);
-const EC_METHOD *EC_GFp_s390x_nistp384_method(void);
-const EC_METHOD *EC_GFp_s390x_nistp521_method(void);
 #endif
 
 size_t ec_key_simple_priv2oct(const EC_KEY *eckey,
@@ -657,9 +630,6 @@ struct ec_key_method_st {
 
 #define EC_KEY_METHOD_DYNAMIC   1
 
-EC_KEY *ec_key_new_method_int(OSSL_LIB_CTX *libctx, const char *propq,
-                              ENGINE *engine);
-
 int ossl_ec_key_gen(EC_KEY *eckey);
 int ossl_ecdh_compute_key(unsigned char **pout, size_t *poutlen,
                           const EC_POINT *pub_key, const EC_KEY *ecdh);
@@ -683,14 +653,18 @@ int ossl_ecdsa_verify(int type, const unsigned char *dgst, int dgst_len,
                       const unsigned char *sigbuf, int sig_len, EC_KEY *eckey);
 int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
                           const ECDSA_SIG *sig, EC_KEY *eckey);
-int ecdsa_simple_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
-                            BIGNUM **rp);
-ECDSA_SIG *ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
-                                 const BIGNUM *in_kinv, const BIGNUM *in_r,
-                                 EC_KEY *eckey);
-int ecdsa_simple_verify_sig(const unsigned char *dgst, int dgst_len,
-                            const ECDSA_SIG *sig, EC_KEY *eckey);
 
+int ED25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
+                 const uint8_t public_key[32], const uint8_t private_key[32]);
+int ED25519_verify(const uint8_t *message, size_t message_len,
+                   const uint8_t signature[64], const uint8_t public_key[32]);
+void ED25519_public_from_private(uint8_t out_public_key[32],
+                                 const uint8_t private_key[32]);
+
+int X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
+           const uint8_t peer_public_value[32]);
+void X25519_public_from_private(uint8_t out_public_value[32],
+                                const uint8_t private_key[32]);
 
 /*-
  * This functions computes a single point multiplication over the EC group,

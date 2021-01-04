@@ -1,7 +1,7 @@
 /*
- * Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -9,7 +9,7 @@
 
 #include <string.h>
 
-#include "helpers/ssltestlib.h"
+#include "ssltestlib.h"
 #include "testutil.h"
 
 static char *cert = NULL;
@@ -102,9 +102,8 @@ static int test_record_overflow(int idx)
 
     ERR_clear_error();
 
-    if (!TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(),
-                                       TLS_client_method(),
-                                       TLS1_VERSION, 0,
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
+                                       TLS1_VERSION, TLS_MAX_VERSION,
                                        &sctx, &cctx, cert, privkey)))
         goto end;
 
@@ -182,15 +181,8 @@ static int test_record_overflow(int idx)
     return testresult;
 }
 
-OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
-
 int setup_tests(void)
 {
-    if (!test_skip_common_options()) {
-        TEST_error("Error parsing test options\n");
-        return 0;
-    }
-
     if (!TEST_ptr(cert = test_get_argument(0))
             || !TEST_ptr(privkey = test_get_argument(1)))
         return 0;

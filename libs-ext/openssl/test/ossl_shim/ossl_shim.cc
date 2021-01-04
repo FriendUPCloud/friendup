@@ -1,7 +1,7 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -39,7 +39,6 @@ OPENSSL_MSVC_PRAGMA(comment(lib, "Ws2_32.lib"))
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
 #include <openssl/bn.h>
-#include <openssl/core_names.h>
 #include <openssl/crypto.h>
 #include <openssl/dh.h>
 #include <openssl/err.h>
@@ -289,8 +288,8 @@ static unsigned PskClientCallback(SSL *ssl, const char *hint,
     return 0;
   }
 
-  OPENSSL_strlcpy(out_identity, config->psk_identity.c_str(),
-                  max_identity_len);
+  BUF_strlcpy(out_identity, config->psk_identity.c_str(),
+              max_identity_len);
   memcpy(out_psk, config->psk.data(), config->psk.size());
   return config->psk.size();
 }
@@ -371,10 +370,8 @@ static int NewSessionCallback(SSL *ssl, SSL_SESSION *session) {
 }
 
 static int TicketKeyCallback(SSL *ssl, uint8_t *key_name, uint8_t *iv,
-                             EVP_CIPHER_CTX *ctx, EVP_MAC_CTX *hmac_ctx,
+                             EVP_CIPHER_CTX *ctx, HMAC_CTX *hmac_ctx,
                              int encrypt) {
-  OSSL_PARAM params[3], *p = params;
-
   if (!encrypt) {
     if (GetTestState(ssl)->ticket_decrypt_done) {
       fprintf(stderr, "TicketKeyCallback called after completion.\n");
@@ -394,16 +391,8 @@ static int TicketKeyCallback(SSL *ssl, uint8_t *key_name, uint8_t *iv,
     return 0;
   }
 
-  *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
-                                          const_cast<char *>("SHA256"), 0);
-  *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
-                                           (void *)kZeros,
-                                           sizeof(kZeros));
-  *p = OSSL_PARAM_construct_end();
-
-  if (!EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), NULL, kZeros, iv, encrypt)
-      || !EVP_MAC_init(hmac_ctx)
-      || !EVP_MAC_CTX_set_params(hmac_ctx, params)) {
+  if (!HMAC_Init_ex(hmac_ctx, kZeros, sizeof(kZeros), EVP_sha256(), NULL) ||
+      !EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), NULL, kZeros, iv, encrypt)) {
     return -1;
   }
 
@@ -636,7 +625,7 @@ static bssl::UniquePtr<SSL_CTX> SetupCtx(const TestConfig *config) {
   SSL_CTX_sess_set_new_cb(ssl_ctx.get(), NewSessionCallback);
 
   if (config->use_ticket_callback) {
-    SSL_CTX_set_tlsext_ticket_key_evp_cb(ssl_ctx.get(), TicketKeyCallback);
+    SSL_CTX_set_tlsext_ticket_key_cb(ssl_ctx.get(), TicketKeyCallback);
   }
 
   if (config->enable_client_custom_extension &&
@@ -894,7 +883,7 @@ static bool CheckHandshakeProperties(SSL *ssl, bool is_resume) {
       return false;
     }
   } else if (!config->is_server || config->require_any_client_certificate) {
-    if (SSL_get0_peer_certificate(ssl) == nullptr) {
+    if (SSL_get_peer_certificate(ssl) == nullptr) {
       fprintf(stderr, "Received no peer certificate but expected one.\n");
       return false;
     }
@@ -1085,7 +1074,6 @@ static bool DoExchange(bssl::UniquePtr<SSL_SESSION> *out_session,
     } while (config->async && RetryAsync(ssl.get(), ret));
     if (ret != 1 ||
         !CheckHandshakeProperties(ssl.get(), is_resume)) {
-      fprintf(stderr, "resumption check failed\n");
       return false;
     }
 
@@ -1106,7 +1094,6 @@ static bool DoExchange(bssl::UniquePtr<SSL_SESSION> *out_session,
       return false;
     }
     if (WriteAll(ssl.get(), result.data(), result.size()) < 0) {
-      fprintf(stderr, "writing exported key material failed\n");
       return false;
     }
   }
@@ -1137,7 +1124,6 @@ static bool DoExchange(bssl::UniquePtr<SSL_SESSION> *out_session,
     if (config->shim_writes_first) {
       if (WriteAll(ssl.get(), reinterpret_cast<const uint8_t *>("hello"),
                    5) < 0) {
-        fprintf(stderr, "shim_writes_first write failed\n");
         return false;
       }
     }
@@ -1163,7 +1149,6 @@ static bool DoExchange(bssl::UniquePtr<SSL_SESSION> *out_session,
             fprintf(stderr, "Invalid SSL_get_error output\n");
             return false;
           }
-          fprintf(stderr, "Unexpected entry in error queue\n");
           return false;
         }
         // Successfully read data.
@@ -1183,7 +1168,6 @@ static bool DoExchange(bssl::UniquePtr<SSL_SESSION> *out_session,
           buf[i] ^= 0xff;
         }
         if (WriteAll(ssl.get(), buf.get(), n) < 0) {
-          fprintf(stderr, "write of inverted bitstream failed\n");
           return false;
         }
       }

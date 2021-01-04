@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
-# Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the Apache License 2.0 (the "License").  You may not use
+# Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -19,15 +19,13 @@ use OpenSSL::Test::Utils;
 
 # This block needs to run before 'use lib srctop_dir' directives.
 BEGIN {
-    OpenSSL::Test::setup("no_test_here", quiet => 1);
+    OpenSSL::Test::setup("no_test_here");
 }
 
-use FindBin;
-use lib "$FindBin::Bin/../util/perl";
-use OpenSSL::fallback "$FindBin::Bin/../external/perl/MODULES.txt";
-use Text::Template 1.46;
+use lib srctop_dir("util", "perl");  # for with_fallback
+use lib srctop_dir("test", "ssl-tests");  # for ssltests_base
 
-use lib "$FindBin::Bin/ssl-tests";
+use with_fallback qw(Text::Template);
 
 use vars qw/@ISA/;
 push (@ISA, qw/Text::Template/);
@@ -127,11 +125,6 @@ sub print_templates {
 # Shamelessly copied from Configure.
 sub read_config {
     my $fname = shift;
-    my $provider = shift;
-    local $ssltests::fips_mode = $provider eq "fips";
-    local $ssltests::no_deflt_libctx =
-        $provider eq "default" || $provider eq "fips";
-
     open(INPUT, "< $fname") or die "Can't open input file '$fname'!\n";
     local $/ = undef;
     my $content = <INPUT>;
@@ -141,9 +134,8 @@ sub read_config {
 }
 
 my $input_file = shift;
-my $provider = shift;
 # Reads the tests into ssltests::tests.
-read_config($input_file, $provider);
+read_config($input_file);
 print_templates();
 
 1;

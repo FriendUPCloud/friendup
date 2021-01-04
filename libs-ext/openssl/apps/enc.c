@@ -1,7 +1,7 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -45,45 +45,32 @@ typedef enum OPTION_choice {
     OPT_NOPAD, OPT_SALT, OPT_NOSALT, OPT_DEBUG, OPT_UPPER_P, OPT_UPPER_A,
     OPT_A, OPT_Z, OPT_BUFSIZE, OPT_K, OPT_KFILE, OPT_UPPER_K, OPT_NONE,
     OPT_UPPER_S, OPT_IV, OPT_MD, OPT_ITER, OPT_PBKDF2, OPT_CIPHER,
-    OPT_R_ENUM, OPT_PROV_ENUM
+    OPT_R_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS enc_options[] = {
-    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
     {"list", OPT_LIST, '-', "List ciphers"},
-#ifndef OPENSSL_NO_DEPRECATED_3_0
     {"ciphers", OPT_LIST, '-', "Alias for -list"},
-#endif
+    {"in", OPT_IN, '<', "Input file"},
+    {"out", OPT_OUT, '>', "Output file"},
+    {"pass", OPT_PASS, 's', "Passphrase source"},
     {"e", OPT_E, '-', "Encrypt"},
     {"d", OPT_D, '-', "Decrypt"},
     {"p", OPT_P, '-', "Print the iv/key"},
     {"P", OPT_UPPER_P, '-', "Print the iv/key and exit"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-#endif
-
-    OPT_SECTION("Input"),
-    {"in", OPT_IN, '<', "Input file"},
-    {"k", OPT_K, 's', "Passphrase"},
-    {"kfile", OPT_KFILE, '<', "Read passphrase from file"},
-
-    OPT_SECTION("Output"),
-    {"out", OPT_OUT, '>', "Output file"},
-    {"pass", OPT_PASS, 's', "Passphrase source"},
     {"v", OPT_V, '-', "Verbose output"},
-    {"a", OPT_A, '-', "Base64 encode/decode, depending on encryption flag"},
-    {"base64", OPT_A, '-', "Same as option -a"},
-    {"A", OPT_UPPER_A, '-',
-     "Used with -[base64|a] to specify base64 buffer as a single line"},
-
-    OPT_SECTION("Encryption"),
     {"nopad", OPT_NOPAD, '-', "Disable standard block padding"},
     {"salt", OPT_SALT, '-', "Use salt in the KDF (default)"},
     {"nosalt", OPT_NOSALT, '-', "Do not use salt in the KDF"},
     {"debug", OPT_DEBUG, '-', "Print debug info"},
-
+    {"a", OPT_A, '-', "Base64 encode/decode, depending on encryption flag"},
+    {"base64", OPT_A, '-', "Same as option -a"},
+    {"A", OPT_UPPER_A, '-',
+     "Used with -[base64|a] to specify base64 buffer as a single line"},
     {"bufsize", OPT_BUFSIZE, 's', "Buffer size"},
+    {"k", OPT_K, 's', "Passphrase"},
+    {"kfile", OPT_KFILE, '<', "Read passphrase from file"},
     {"K", OPT_UPPER_K, 's', "Raw key, in hex"},
     {"S", OPT_UPPER_S, 's', "Salt, in hex"},
     {"iv", OPT_IV, 's', "IV in hex"},
@@ -91,13 +78,14 @@ const OPTIONS enc_options[] = {
     {"iter", OPT_ITER, 'p', "Specify the iteration count and force use of PBKDF2"},
     {"pbkdf2", OPT_PBKDF2, '-', "Use password-based key derivation function 2"},
     {"none", OPT_NONE, '-', "Don't encrypt"},
+    {"", OPT_CIPHER, '-', "Any supported cipher"},
+    OPT_R_OPTIONS,
 #ifdef ZLIB
     {"z", OPT_Z, '-', "Use zlib as the 'encryption'"},
 #endif
-    {"", OPT_CIPHER, '-', "Any supported cipher"},
-
-    OPT_R_OPTIONS,
-    OPT_PROV_OPTIONS,
+#ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+#endif
     {NULL}
 };
 
@@ -289,17 +277,12 @@ int enc_main(int argc, char **argv)
             if (!opt_rand(o))
                 goto end;
             break;
-        case OPT_PROV_CASES:
-            if (!opt_provider(o))
-                goto end;
-            break;
         }
     }
-
-    /* No extra arguments. */
-    argc = opt_num_rest();
-    if (argc != 0)
+    if (opt_num_rest() != 0) {
+        BIO_printf(bio_err, "Extra arguments given.\n");
         goto opthelp;
+    }
 
     if (cipher && EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
         BIO_printf(bio_err, "%s: AEAD ciphers not supported\n", prog);
@@ -539,7 +522,7 @@ int enc_main(int argc, char **argv)
                 goto end;
             }
             /* wiping secret data as we no longer need it */
-            cleanse(hkey);
+            OPENSSL_cleanse(hkey, strlen(hkey));
         }
 
         if ((benc = BIO_new(BIO_f_cipher())) == NULL)
@@ -552,7 +535,7 @@ int enc_main(int argc, char **argv)
 
         BIO_get_cipher_ctx(benc, &ctx);
 
-        if (!EVP_CipherInit_ex(ctx, cipher, e, NULL, NULL, enc)) {
+        if (!EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, enc)) {
             BIO_printf(bio_err, "Error setting cipher %s\n",
                        EVP_CIPHER_name(cipher));
             ERR_print_errors(bio_err);

@@ -1,7 +1,7 @@
 /*
- * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -12,7 +12,6 @@
 #include <openssl/evp.h>
 #include <openssl/pkcs12.h>
 #include <openssl/x509.h>
-#include "crypto/evp.h"
 #include "evp_local.h"
 
 /* Password based encryption (PBE) functions */
@@ -93,17 +92,16 @@ int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
     if (!EVP_PBE_find(EVP_PBE_TYPE_OUTER, OBJ_obj2nid(pbe_obj),
                       &cipher_nid, &md_nid, &keygen)) {
         char obj_tmp[80];
-
-        if (pbe_obj == NULL)
+        EVPerr(EVP_F_EVP_PBE_CIPHERINIT, EVP_R_UNKNOWN_PBE_ALGORITHM);
+        if (!pbe_obj)
             OPENSSL_strlcpy(obj_tmp, "NULL", sizeof(obj_tmp));
         else
             i2t_ASN1_OBJECT(obj_tmp, sizeof(obj_tmp), pbe_obj);
-        ERR_raise_data(ERR_LIB_EVP, EVP_R_UNKNOWN_PBE_ALGORITHM,
-                       "TYPE=%s", obj_tmp);
+        ERR_add_error_data(2, "TYPE=", obj_tmp);
         return 0;
     }
 
-    if (pass == NULL)
+    if (!pass)
         passlen = 0;
     else if (passlen == -1)
         passlen = strlen(pass);
@@ -113,8 +111,7 @@ int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
     else {
         cipher = EVP_get_cipherbynid(cipher_nid);
         if (!cipher) {
-            ERR_raise_data(ERR_LIB_EVP, EVP_R_UNKNOWN_CIPHER,
-                           OBJ_nid2sn(cipher_nid));
+            EVPerr(EVP_F_EVP_PBE_CIPHERINIT, EVP_R_UNKNOWN_CIPHER);
             return 0;
         }
     }
@@ -124,12 +121,16 @@ int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
     else {
         md = EVP_get_digestbynid(md_nid);
         if (!md) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_UNKNOWN_DIGEST);
+            EVPerr(EVP_F_EVP_PBE_CIPHERINIT, EVP_R_UNKNOWN_DIGEST);
             return 0;
         }
     }
 
-    return keygen(ctx, pass, passlen, param, cipher, md, en_de);
+    if (!keygen(ctx, pass, passlen, param, cipher, md, en_de)) {
+        EVPerr(EVP_F_EVP_PBE_CIPHERINIT, EVP_R_KEYGEN_FAILURE);
+        return 0;
+    }
+    return 1;
 }
 
 DECLARE_OBJ_BSEARCH_CMP_FN(EVP_PBE_CTL, EVP_PBE_CTL, pbe2);
@@ -183,7 +184,7 @@ int EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid,
     return 1;
 
  err:
-    ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+    EVPerr(EVP_F_EVP_PBE_ALG_ADD_TYPE, ERR_R_MALLOC_FAILURE);
     return 0;
 }
 

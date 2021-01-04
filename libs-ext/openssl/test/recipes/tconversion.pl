@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
-# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the Apache License 2.0 (the "License").  You may not use
+# Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -21,23 +21,14 @@ my %conversionforms = (
     "msb"	=> [ "d", "p", "msblob" ],
     );
 sub tconversion {
-    my %opts = @_;
-
-    die "Missing option -type" unless $opts{-type};
-    die "Missing option -in" unless $opts{-in};
-    my $testtype = $opts{-type};
-    my $t = $opts{-in};
-    my $prefix = $opts{-prefix} // $testtype;
+    my $testtype = shift;
+    my $t = shift;
     my @conversionforms =
 	defined($conversionforms{$testtype}) ?
 	@{$conversionforms{$testtype}} :
 	@{$conversionforms{"*"}};
-    my @openssl_args;
-    if (defined $opts{-args}) {
-        @openssl_args = @{$opts{-args}} if ref $opts{-args} eq 'ARRAY';
-        @openssl_args = ($opts{-args}) if ref $opts{-args} eq '';
-    }
-    @openssl_args = ($testtype) unless @openssl_args;
+    my @openssl_args = @_;
+    if (!@openssl_args) { @openssl_args = ($testtype); }
 
     my $n = scalar @conversionforms;
     my $totaltests =
@@ -53,13 +44,13 @@ sub tconversion {
 
     my $init;
     if (scalar @openssl_args > 0 && $openssl_args[0] eq "pkey") {
-	$init = ok(run(app([@cmd, "-in", $t, "-out", "$prefix-fff.p"])),
+	$init = ok(run(app([@cmd, "-in", $t, "-out", "$testtype-fff.p"])),
 		   'initializing');
     } else {
-	$init = ok(copy($t, "$prefix-fff.p"), 'initializing');
+	$init = ok(copy($t, "$testtype-fff.p"), 'initializing');
     }
     if (!$init) {
-	diag("Trying to copy $t to $prefix-fff.p : $!");
+	diag("Trying to copy $t to $testtype-fff.p : $!");
     }
 
   SKIP: {
@@ -67,9 +58,9 @@ sub tconversion {
 
       foreach my $to (@conversionforms) {
 	  ok(run(app([@cmd,
-		      "-in", "$prefix-fff.p",
+		      "-in", "$testtype-fff.p",
 		      "-inform", "p",
-		      "-out", "$prefix-f.$to",
+		      "-out", "$testtype-f.$to",
 		      "-outform", $to])),
 	     "p -> $to");
       }
@@ -77,27 +68,30 @@ sub tconversion {
       foreach my $to (@conversionforms) {
 	  foreach my $from (@conversionforms) {
 	      ok(run(app([@cmd,
-			  "-in", "$prefix-f.$from",
+			  "-in", "$testtype-f.$from",
 			  "-inform", $from,
-			  "-out", "$prefix-ff.$from$to",
+			  "-out", "$testtype-ff.$from$to",
 			  "-outform", $to])),
 		 "$from -> $to");
 	  }
       }
 
       if ($testtype ne "p7d") {
-	  is(cmp_text("$prefix-fff.p", "$prefix-f.p"), 0,
+	  is(cmp_text("$testtype-fff.p", "$testtype-f.p"), 0,
 	     'comparing orig to p');
       }
 
       foreach my $to (@conversionforms) {
 	  next if $to eq "d";
 	  foreach my $from (@conversionforms) {
-	      is(cmp_text("$prefix-f.$to", "$prefix-ff.$from$to"), 0,
+	      is(cmp_text("$testtype-f.$to", "$testtype-ff.$from$to"), 0,
 		 "comparing $to to $from$to");
 	  }
       }
     }
+    unlink glob "$testtype-f.*";
+    unlink glob "$testtype-ff.*";
+    unlink glob "$testtype-fff.*";
 }
 
 sub cmp_text {

@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 # Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the Apache License 2.0 (the "License").  You may not use
+# Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -138,32 +138,32 @@ SKIP: {
 
     $proxy->filter(\&sigalgs_filter);
 
-    #Test 10: Sending no sig algs extension in TLSv1.2 will make it use
-    #         SHA1, which is only supported at security level 0.
+    #Test 10: Sending no sig algs extension in TLSv1.2 should succeed at
+    #         security level 1
     $proxy->clear();
     $testtype = NO_SIG_ALGS_EXT;
-    $proxy->clientflags("-no_tls1_3 -cipher DEFAULT:\@SECLEVEL=0");
-    $proxy->ciphers("ECDHE-RSA-AES128-SHA:\@SECLEVEL=0");
+    $proxy->clientflags("-no_tls1_3 -cipher DEFAULT\@SECLEVEL=1");
+    $proxy->ciphers("ECDHE-RSA-AES128-SHA\@SECLEVEL=1");
     $proxy->start();
-    ok(TLSProxy::Message->success, "No TLSv1.2 sigalgs seclevel 0");
+    ok(TLSProxy::Message->success, "No TLSv1.2 sigalgs seclevel 1");
 
     #Test 11: Sending no sig algs extension in TLSv1.2 should fail at security
-    #         level 1 since it will try to use SHA1. Testing client at level 0,
+    #         level 2 since it will try to use SHA1. Testing client at level 1,
+    #         server level 2.
+    $proxy->clear();
+    $testtype = NO_SIG_ALGS_EXT;
+    $proxy->clientflags("-tls1_2 -cipher DEFAULT\@SECLEVEL=1");
+    $proxy->ciphers("DEFAULT\@SECLEVEL=2");
+    $proxy->start();
+    ok(TLSProxy::Message->fail, "No TLSv1.2 sigalgs server seclevel 2");
+
+    #Test 12: Sending no sig algs extension in TLSv1.2 should fail at security
+    #         level 2 since it will try to use SHA1. Testing client at level 2,
     #         server level 1.
     $proxy->clear();
     $testtype = NO_SIG_ALGS_EXT;
-    $proxy->clientflags("-tls1_2 -cipher DEFAULT:\@SECLEVEL=0");
-    $proxy->ciphers("DEFAULT:\@SECLEVEL=1");
-    $proxy->start();
-    ok(TLSProxy::Message->fail, "No TLSv1.2 sigalgs server seclevel 1");
-
-    #Test 12: Sending no sig algs extension in TLSv1.2 should fail at security
-    #         level 1 since it will try to use SHA1. Testing client at level 1,
-    #         server level 0.
-    $proxy->clear();
-    $testtype = NO_SIG_ALGS_EXT;
-    $proxy->clientflags("-tls1_2 -cipher DEFAULT:\@SECLEVEL=1");
-    $proxy->ciphers("DEFAULT:\@SECLEVEL=0");
+    $proxy->clientflags("-tls1_2 -cipher DEFAULT\@SECLEVEL=2");
+    $proxy->ciphers("DEFAULT\@SECLEVEL=1");
     $proxy->start();
     ok(TLSProxy::Message->fail, "No TLSv1.2 sigalgs client seclevel 2");
 
@@ -221,16 +221,15 @@ SKIP: {
     ok(TLSProxy::Message->fail, "No matching TLSv1.2 sigalgs");
     $proxy->filter(\&sigalgs_filter);
 
-    #Test 19: No sig algs extension, ECDSA cert, will use SHA1,
-    #         TLSv1.2 should succeed at security level 0
+    #Test 19: No sig algs extension, ECDSA cert, TLSv1.2 should succeed
     $proxy->clear();
     $testtype = NO_SIG_ALGS_EXT;
-    $proxy->clientflags("-no_tls1_3 -cipher DEFAULT:\@SECLEVEL=0");
+    $proxy->clientflags("-no_tls1_3");
     $proxy->serverflags("-cert " . srctop_file("test", "certs",
                                                "server-ecdsa-cert.pem") .
                         " -key " . srctop_file("test", "certs",
                                                "server-ecdsa-key.pem")),
-    $proxy->ciphers("ECDHE-ECDSA-AES128-SHA:\@SECLEVEL=0");
+    $proxy->ciphers("ECDHE-ECDSA-AES128-SHA");
     $proxy->start();
     ok(TLSProxy::Message->success, "No TLSv1.2 sigalgs, ECDSA");
 }
@@ -246,7 +245,7 @@ SKIP: {
     $proxy->filter(\&modify_sigalgs_filter);
     $proxy->start();
     ok($dsa_status && $sha1_status && $sha224_status,
-       "DSA and SHA1 sigalgs not sent for 1.3-only ClientHello");
+       "DSA/SHA2 sigalg sent for 1.3-only ClientHello");
 
     #Test 21: signature_algorithms with backwards compatible ClientHello
     SKIP: {
@@ -254,11 +253,10 @@ SKIP: {
         $testtype = COMPAT_SIGALGS;
         $dsa_status = $sha1_status = $sha224_status = 0;
         $proxy->clear();
-        $proxy->clientflags("-cipher AES128-SHA\@SECLEVEL=0");
         $proxy->filter(\&modify_sigalgs_filter);
         $proxy->start();
         ok($dsa_status && $sha1_status && $sha224_status,
-           "backwards compatible sigalg sent for compat ClientHello");
+           "DSA sigalg not sent for compat ClientHello");
    }
 }
 

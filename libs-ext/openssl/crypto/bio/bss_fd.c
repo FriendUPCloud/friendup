@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -94,7 +94,7 @@ static int fd_new(BIO *bi)
     bi->init = 0;
     bi->num = -1;
     bi->ptr = NULL;
-    bi->flags = BIO_FLAGS_UPLINK_INTERNAL; /* essentially redundant */
+    bi->flags = BIO_FLAGS_UPLINK; /* essentially redundant */
     return 1;
 }
 
@@ -107,7 +107,7 @@ static int fd_free(BIO *a)
             UP_close(a->num);
         }
         a->init = 0;
-        a->flags = BIO_FLAGS_UPLINK_INTERNAL;
+        a->flags = BIO_FLAGS_UPLINK;
     }
     return 1;
 }

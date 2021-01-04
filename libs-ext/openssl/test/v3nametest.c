@@ -1,7 +1,7 @@
 /*
  * Copyright 2012-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -289,10 +289,10 @@ static int run_cert(X509 *crt, const char *nameincert,
     for (; *pname != NULL; ++pname) {
         int samename = strcasecmp(nameincert, *pname) == 0;
         size_t namelen = strlen(*pname);
-        char *name = OPENSSL_malloc(namelen + 1);
+        char *name = OPENSSL_malloc(namelen);
         int match, ret;
 
-        memcpy(name, *pname, namelen + 1);
+        memcpy(name, *pname, namelen);
 
         match = -1;
         if (!TEST_int_ge(ret = X509_check_host(crt, name, namelen, 0, NULL),

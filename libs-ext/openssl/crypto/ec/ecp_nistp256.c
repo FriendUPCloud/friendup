@@ -1,7 +1,7 @@
 /*
  * Copyright 2011-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -24,12 +24,6 @@
  */
 
 /*
- * ECDSA low level APIs are deprecated for public use, but still ok for
- * internal use.
- */
-#include "internal/deprecated.h"
-
-/*
  * A 64-bit implementation of the NIST P-256 elliptic curve point multiplication
  *
  * OpenSSL integration was taken from Emilia Kasper's work in ecp_nistp224.c.
@@ -38,20 +32,23 @@
  */
 
 #include <openssl/opensslconf.h>
+#ifdef OPENSSL_NO_EC_NISTP_64_GCC_128
+NON_EMPTY_TRANSLATION_UNIT
+#else
 
-#include <stdint.h>
-#include <string.h>
-#include <openssl/err.h>
-#include "ec_local.h"
+# include <stdint.h>
+# include <string.h>
+# include <openssl/err.h>
+# include "ec_local.h"
 
-#if defined(__SIZEOF_INT128__) && __SIZEOF_INT128__==16
+# if defined(__SIZEOF_INT128__) && __SIZEOF_INT128__==16
   /* even with gcc, the typedef won't work for 32-bit platforms */
 typedef __uint128_t uint128_t;  /* nonstandard; implemented by gcc on 64-bit
                                  * platforms */
 typedef __int128_t int128_t;
-#else
-# error "Your compiler doesn't appear to support 128-bit integer types"
-#endif
+# else
+#  error "Your compiler doesn't appear to support 128-bit integer types"
+# endif
 
 typedef uint8_t u8;
 typedef uint32_t u32;
@@ -59,7 +56,7 @@ typedef uint64_t u64;
 
 /*
  * The underlying field. P256 operates over GF(2^256-2^224+2^192+2^96-1). We
- * can serialize an element of this field into 32 bytes. We call this an
+ * can serialise an element of this field into 32 bytes. We call this an
  * felem_bytearray.
  */
 
@@ -113,7 +110,7 @@ static const felem_bytearray nistp256_curve_params[5] = {
  * values are used as intermediate values before multiplication.
  */
 
-#define NLIMBS 4
+# define NLIMBS 4
 
 typedef uint128_t limb;
 typedef limb felem[NLIMBS];
@@ -138,7 +135,7 @@ static void bin32_to_felem(felem out, const u8 in[32])
 }
 
 /*
- * smallfelem_to_bin32 takes a smallfelem and serializes into a little
+ * smallfelem_to_bin32 takes a smallfelem and serialises into a little
  * endian, 32 byte array. This assumes that the CPU is little-endian.
  */
 static void smallfelem_to_bin32(u8 out[32], const smallfelem in)
@@ -156,12 +153,12 @@ static int BN_to_felem(felem out, const BIGNUM *bn)
     int num_bytes;
 
     if (BN_is_negative(bn)) {
-        ERR_raise(ERR_LIB_EC, EC_R_BIGNUM_OUT_OF_RANGE);
+        ECerr(EC_F_BN_TO_FELEM, EC_R_BIGNUM_OUT_OF_RANGE);
         return 0;
     }
     num_bytes = BN_bn2lebinpad(bn, b_out, sizeof(b_out));
     if (num_bytes < 0) {
-        ERR_raise(ERR_LIB_EC, EC_R_BIGNUM_OUT_OF_RANGE);
+        ECerr(EC_F_BN_TO_FELEM, EC_R_BIGNUM_OUT_OF_RANGE);
         return 0;
     }
     bin32_to_felem(out, b_out);
@@ -245,9 +242,9 @@ static void longfelem_scalar(longfelem out, const u64 scalar)
     out[7] *= scalar;
 }
 
-#define two105m41m9 (((limb)1) << 105) - (((limb)1) << 41) - (((limb)1) << 9)
-#define two105 (((limb)1) << 105)
-#define two105m41p9 (((limb)1) << 105) - (((limb)1) << 41) + (((limb)1) << 9)
+# define two105m41m9 (((limb)1) << 105) - (((limb)1) << 41) - (((limb)1) << 9)
+# define two105 (((limb)1) << 105)
+# define two105m41p9 (((limb)1) << 105) - (((limb)1) << 41) + (((limb)1) << 9)
 
 /* zero105 is 0 mod p */
 static const felem zero105 =
@@ -290,9 +287,9 @@ static void felem_diff(felem out, const felem in)
     out[3] -= in[3];
 }
 
-#define two107m43m11 (((limb)1) << 107) - (((limb)1) << 43) - (((limb)1) << 11)
-#define two107 (((limb)1) << 107)
-#define two107m43p11 (((limb)1) << 107) - (((limb)1) << 43) + (((limb)1) << 11)
+# define two107m43m11 (((limb)1) << 107) - (((limb)1) << 43) - (((limb)1) << 11)
+# define two107 (((limb)1) << 107)
+# define two107m43p11 (((limb)1) << 107) - (((limb)1) << 43) + (((limb)1) << 11)
 
 /* zero107 is 0 mod p */
 static const felem zero107 =
@@ -361,10 +358,10 @@ static void longfelem_diff(longfelem out, const longfelem in)
     out[7] -= in[7];
 }
 
-#define two64m0 (((limb)1) << 64) - 1
-#define two110p32m0 (((limb)1) << 110) + (((limb)1) << 32) - 1
-#define two64m46 (((limb)1) << 64) - (((limb)1) << 46)
-#define two64m32 (((limb)1) << 64) - (((limb)1) << 32)
+# define two64m0 (((limb)1) << 64) - 1
+# define two110p32m0 (((limb)1) << 110) + (((limb)1) << 32) - 1
+# define two64m46 (((limb)1) << 64) - (((limb)1) << 46)
+# define two64m32 (((limb)1) << 64) - (((limb)1) << 32)
 
 /* zero110 is 0 mod p */
 static const felem zero110 = { two64m0, two110p32m0, two64m46, two64m32 };
@@ -714,9 +711,9 @@ static void felem_small_mul(longfelem out, const smallfelem small1,
     smallfelem_mul(out, small1, small2);
 }
 
-#define two100m36m4 (((limb)1) << 100) - (((limb)1) << 36) - (((limb)1) << 4)
-#define two100 (((limb)1) << 100)
-#define two100m36p4 (((limb)1) << 100) - (((limb)1) << 36) + (((limb)1) << 4)
+# define two100m36m4 (((limb)1) << 100) - (((limb)1) << 36) - (((limb)1) << 4)
+# define two100 (((limb)1) << 100)
+# define two100m36p4 (((limb)1) << 100) - (((limb)1) << 36) + (((limb)1) << 4)
 /* zero100 is 0 mod p */
 static const felem zero100 =
     { two100m36m4, two100, two100m36p4, two100m36p4 };
@@ -1798,6 +1795,8 @@ const EC_METHOD *EC_GFp_nistp256_method(void)
         ec_GFp_simple_point_clear_finish,
         ec_GFp_simple_point_copy,
         ec_GFp_simple_point_set_to_infinity,
+        ec_GFp_simple_set_Jprojective_coordinates_GFp,
+        ec_GFp_simple_get_Jprojective_coordinates_GFp,
         ec_GFp_simple_point_set_affine_coordinates,
         ec_GFp_nistp256_point_get_affine_coordinates,
         0 /* point_set_compressed_coordinates */ ,
@@ -1830,9 +1829,6 @@ const EC_METHOD *EC_GFp_nistp256_method(void)
         0, /* keycopy */
         0, /* keyfinish */
         ecdh_simple_compute_key,
-        ecdsa_simple_sign_setup,
-        ecdsa_simple_sign_sig,
-        ecdsa_simple_verify_sig,
         0, /* field_inverse_mod_ord */
         0, /* blind_coordinates */
         0, /* ladder_pre */
@@ -1853,7 +1849,7 @@ static NISTP256_PRE_COMP *nistp256_pre_comp_new(void)
     NISTP256_PRE_COMP *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ECerr(EC_F_NISTP256_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
         return ret;
     }
 
@@ -1861,7 +1857,7 @@ static NISTP256_PRE_COMP *nistp256_pre_comp_new(void)
 
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ECerr(EC_F_NISTP256_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(ret);
         return NULL;
     }
@@ -1911,16 +1907,12 @@ int ec_GFp_nistp256_group_set_curve(EC_GROUP *group, const BIGNUM *p,
                                     BN_CTX *ctx)
 {
     int ret = 0;
-    BIGNUM *curve_p, *curve_a, *curve_b;
-#ifndef FIPS_MODULE
     BN_CTX *new_ctx = NULL;
+    BIGNUM *curve_p, *curve_a, *curve_b;
 
     if (ctx == NULL)
-        ctx = new_ctx = BN_CTX_new();
-#endif
-    if (ctx == NULL)
-        return 0;
-
+        if ((ctx = new_ctx = BN_CTX_new()) == NULL)
+            return 0;
     BN_CTX_start(ctx);
     curve_p = BN_CTX_get(ctx);
     curve_a = BN_CTX_get(ctx);
@@ -1931,16 +1923,15 @@ int ec_GFp_nistp256_group_set_curve(EC_GROUP *group, const BIGNUM *p,
     BN_bin2bn(nistp256_curve_params[1], sizeof(felem_bytearray), curve_a);
     BN_bin2bn(nistp256_curve_params[2], sizeof(felem_bytearray), curve_b);
     if ((BN_cmp(curve_p, p)) || (BN_cmp(curve_a, a)) || (BN_cmp(curve_b, b))) {
-        ERR_raise(ERR_LIB_EC, EC_R_WRONG_CURVE_PARAMETERS);
+        ECerr(EC_F_EC_GFP_NISTP256_GROUP_SET_CURVE,
+              EC_R_WRONG_CURVE_PARAMETERS);
         goto err;
     }
     group->field_mod_func = BN_nist_mod_256;
     ret = ec_GFp_simple_group_set_curve(group, p, a, b, ctx);
  err:
     BN_CTX_end(ctx);
-#ifndef FIPS_MODULE
     BN_CTX_free(new_ctx);
-#endif
     return ret;
 }
 
@@ -1958,7 +1949,8 @@ int ec_GFp_nistp256_point_get_affine_coordinates(const EC_GROUP *group,
     longfelem tmp;
 
     if (EC_POINT_is_at_infinity(group, point)) {
-        ERR_raise(ERR_LIB_EC, EC_R_POINT_AT_INFINITY);
+        ECerr(EC_F_EC_GFP_NISTP256_POINT_GET_AFFINE_COORDINATES,
+              EC_R_POINT_AT_INFINITY);
         return 0;
     }
     if ((!BN_to_felem(x_in, point->X)) || (!BN_to_felem(y_in, point->Y)) ||
@@ -1972,7 +1964,8 @@ int ec_GFp_nistp256_point_get_affine_coordinates(const EC_GROUP *group,
     felem_contract(x_out, x_in);
     if (x != NULL) {
         if (!smallfelem_to_BN(x, x_out)) {
-            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+            ECerr(EC_F_EC_GFP_NISTP256_POINT_GET_AFFINE_COORDINATES,
+                  ERR_R_BN_LIB);
             return 0;
         }
     }
@@ -1983,7 +1976,8 @@ int ec_GFp_nistp256_point_get_affine_coordinates(const EC_GROUP *group,
     felem_contract(y_out, y_in);
     if (y != NULL) {
         if (!smallfelem_to_BN(y, y_out)) {
-            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+            ECerr(EC_F_EC_GFP_NISTP256_POINT_GET_AFFINE_COORDINATES,
+                  ERR_R_BN_LIB);
             return 0;
         }
     }
@@ -2071,11 +2065,12 @@ int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
         if (!smallfelem_to_BN(x, g_pre_comp[0][1][0]) ||
             !smallfelem_to_BN(y, g_pre_comp[0][1][1]) ||
             !smallfelem_to_BN(z, g_pre_comp[0][1][2])) {
-            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+            ECerr(EC_F_EC_GFP_NISTP256_POINTS_MUL, ERR_R_BN_LIB);
             goto err;
         }
-        if (!ec_GFp_simple_set_Jprojective_coordinates_GFp(group, generator, x,
-                                                           y, z, ctx))
+        if (!EC_POINT_set_Jprojective_coordinates_GFp(group,
+                                                      generator, x, y, z,
+                                                      ctx))
             goto err;
         if (0 == EC_POINT_cmp(group, generator, group->generator, ctx))
             /* precomputation matches generator */
@@ -2102,7 +2097,7 @@ int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
               OPENSSL_malloc(sizeof(*tmp_smallfelems) * (num_points * 17 + 1));
         if ((secrets == NULL) || (pre_comp == NULL)
             || (mixed && (tmp_smallfelems == NULL))) {
-            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+            ECerr(EC_F_EC_GFP_NISTP256_POINTS_MUL, ERR_R_MALLOC_FAILURE);
             goto err;
         }
 
@@ -2134,7 +2129,7 @@ int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
                      * constant-timeness
                      */
                     if (!BN_nnmod(tmp_scalar, p_scalar, group->order, ctx)) {
-                        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+                        ECerr(EC_F_EC_GFP_NISTP256_POINTS_MUL, ERR_R_BN_LIB);
                         goto err;
                     }
                     num_bytes = BN_bn2lebinpad(tmp_scalar,
@@ -2144,7 +2139,7 @@ int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
                                                secrets[i], sizeof(secrets[i]));
                 }
                 if (num_bytes < 0) {
-                    ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+                    ECerr(EC_F_EC_GFP_NISTP256_POINTS_MUL, ERR_R_BN_LIB);
                     goto err;
                 }
                 /* precompute multiples */
@@ -2188,7 +2183,7 @@ int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
              * constant-timeness
              */
             if (!BN_nnmod(tmp_scalar, scalar, group->order, ctx)) {
-                ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+                ECerr(EC_F_EC_GFP_NISTP256_POINTS_MUL, ERR_R_BN_LIB);
                 goto err;
             }
             num_bytes = BN_bn2lebinpad(tmp_scalar, g_secret, sizeof(g_secret));
@@ -2212,10 +2207,10 @@ int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
     felem_contract(z_in, z_out);
     if ((!smallfelem_to_BN(x, x_in)) || (!smallfelem_to_BN(y, y_in)) ||
         (!smallfelem_to_BN(z, z_in))) {
-        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+        ECerr(EC_F_EC_GFP_NISTP256_POINTS_MUL, ERR_R_BN_LIB);
         goto err;
     }
-    ret = ec_GFp_simple_set_Jprojective_coordinates_GFp(group, r, x, y, z, ctx);
+    ret = EC_POINT_set_Jprojective_coordinates_GFp(group, r, x, y, z, ctx);
 
  err:
     BN_CTX_end(ctx);
@@ -2231,24 +2226,17 @@ int ec_GFp_nistp256_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     int ret = 0;
     NISTP256_PRE_COMP *pre = NULL;
     int i, j;
+    BN_CTX *new_ctx = NULL;
     BIGNUM *x, *y;
     EC_POINT *generator = NULL;
     smallfelem tmp_smallfelems[32];
     felem x_tmp, y_tmp, z_tmp;
-#ifndef FIPS_MODULE
-    BN_CTX *new_ctx = NULL;
-#endif
 
     /* throw away old precomputation */
     EC_pre_comp_free(group);
-
-#ifndef FIPS_MODULE
     if (ctx == NULL)
-        ctx = new_ctx = BN_CTX_new();
-#endif
-    if (ctx == NULL)
-        return 0;
-
+        if ((ctx = new_ctx = BN_CTX_new()) == NULL)
+            return 0;
     BN_CTX_start(ctx);
     x = BN_CTX_get(ctx);
     y = BN_CTX_get(ctx);
@@ -2366,9 +2354,7 @@ int ec_GFp_nistp256_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
  err:
     BN_CTX_end(ctx);
     EC_POINT_free(generator);
-#ifndef FIPS_MODULE
     BN_CTX_free(new_ctx);
-#endif
     EC_nistp256_pre_comp_free(pre);
     return ret;
 }
@@ -2377,3 +2363,4 @@ int ec_GFp_nistp256_have_precompute_mult(const EC_GROUP *group)
 {
     return HAVEPRECOMP(group, nistp256);
 }
+#endif

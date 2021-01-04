@@ -2,7 +2,7 @@
  * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2013-2014 Timo Teräs <timo.teras@gmail.com>
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -41,6 +41,7 @@
 # include <openssl/evp.h>
 # include <openssl/pem.h>
 # include <openssl/x509.h>
+
 
 # ifndef PATH_MAX
 #  define PATH_MAX 4096
@@ -232,7 +233,7 @@ static int do_file(const char *filename, const char *fullpath, enum Hash h)
 {
     STACK_OF (X509_INFO) *inf = NULL;
     X509_INFO *x;
-    const X509_NAME *name = NULL;
+    X509_NAME *name = NULL;
     BIO *b;
     const char *ext;
     unsigned char digest[EVP_MAX_MD_SIZE];
@@ -454,27 +455,18 @@ static int do_dir(const char *dirname, enum Hash h)
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_COMPAT, OPT_OLD, OPT_N, OPT_VERBOSE,
-    OPT_PROV_ENUM
+    OPT_COMPAT, OPT_OLD, OPT_N, OPT_VERBOSE
 } OPTION_CHOICE;
 
 const OPTIONS rehash_options[] = {
-    {OPT_HELP_STR, 1, '-', "Usage: %s [options] [directory...]\n"},
-
-    OPT_SECTION("General"),
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] [cert-directory...]\n"},
+    {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
     {"help", OPT_HELP, '-', "Display this summary"},
     {"h", OPT_HELP, '-', "Display this summary"},
     {"compat", OPT_COMPAT, '-', "Create both new- and old-style hash links"},
     {"old", OPT_OLD, '-', "Use old-style hash to generate links"},
     {"n", OPT_N, '-', "Do not remove existing links"},
-
-    OPT_SECTION("Output"),
     {"v", OPT_VERBOSE, '-', "Verbose output"},
-
-    OPT_PROV_OPTIONS,
-
-    OPT_PARAMETERS(),
-    {"directory", 0, 0, "One or more directories to process (optional)"},
     {NULL}
 };
 
@@ -509,14 +501,8 @@ int rehash_main(int argc, char **argv)
         case OPT_VERBOSE:
             verbose = 1;
             break;
-        case OPT_PROV_CASES:
-            if (!opt_provider(o))
-                goto end;
-            break;
         }
     }
-
-    /* Optional arguments are directories to scan. */
     argc = opt_num_rest();
     argv = opt_rest();
 
