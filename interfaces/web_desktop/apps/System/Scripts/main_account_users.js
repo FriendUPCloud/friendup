@@ -36,6 +36,9 @@ var UsersSettings = function ( setting, set )
 		maxlimit    : maxlimit,
 		limit       : limit,
 		uids        : [],
+		avatars     : true,
+		logintime   : true,
+		listall     : false,
 		reset       : true
 	} );
 	
@@ -47,63 +50,77 @@ var UsersSettings = function ( setting, set )
 			
 			switch( setting )
 			{
-				case 'searchquery'        :
-					this.vars.searchquery = set;
+				case 'searchquery'         :
+					this.vars.searchquery  = set;
 					break;
-				case 'searchby'           :
-					this.vars.searchby    = set;
+				case 'searchby'            :
+					this.vars.searchby     = set;
 					break;
-				case 'sortby'             :
-					this.vars.sortby      = set;
+				case 'sortby'              :
+					this.vars.sortby       = set;
 					break;
-				case 'orderby'            :
-					this.vars.orderby     = set;
+				case 'orderby'             :
+					this.vars.orderby      = set;
 					break;
-				case 'divh'               :
-					this.vars.divh        = set;
+				case 'divh'                :
+					this.vars.divh         = set;
 					break;
-				case 'listed'             :
-					this.vars.listed      = set;
+				case 'listed'              :
+					this.vars.listed       = set;
 					break;
-				case 'total'              :
-					this.vars.total       = set;
+				case 'total'               :
+					this.vars.total        = set;
 					break;
-				case 'startlimit'         :
-					this.vars.startlimit  = ( set                                                    );
-					this.vars.limit       = ( this.vars.startlimit + ', ' + this.vars.maxlimit       );
+				case 'startlimit'          :
+					this.vars.startlimit   = ( set                                                    );
+					this.vars.limit        = ( this.vars.startlimit + ', ' + this.vars.maxlimit       );
 					break;
-				case 'maxlimit'           :
-					this.vars.startlimit  = ( 0                                                      );
-					this.vars.maxlimit    = ( set                                                    );
-					this.vars.limit       = ( this.vars.startlimit + ', ' + this.vars.maxlimit       );
+				case 'maxlimit'            :
+					this.vars.startlimit   = ( 0                                                      );
+					this.vars.maxlimit     = ( set                                                    );
+					this.vars.limit        = ( this.vars.startlimit + ', ' + this.vars.maxlimit       );
 					break;
-				case 'intervals'          :
-					this.vars.intervals   = ( set                                                    );
+				case 'intervals'           :
+					this.vars.intervals    = ( set                                                    );
 					break;
-				case 'limit'              :
-					this.vars.startlimit  = ( this.vars.maxlimit                                     );
-					this.vars.maxlimit    = ( Math.round(this.vars.startlimit + this.vars.intervals) );
-					this.vars.limit       = ( this.vars.startlimit + ', ' + this.vars.maxlimit       );
+				case 'limit'               :
+					this.vars.startlimit   = ( this.vars.maxlimit                                     );
+					this.vars.maxlimit     = ( Math.round(this.vars.startlimit + this.vars.intervals) );
+					this.vars.limit        = ( this.vars.startlimit + ', ' + this.vars.maxlimit       );
 					break;
 				case 'uids':
 					if( this.vars.uids.indexOf( set ) < 0 )
 					{
-						this.vars.uids.push( set                                                     );
+						this.vars.uids.push( set                                                      );
 					}
 					break;
-				case 'reset'              :
-					this.vars.searchquery = ( searchquery                                            );
-					this.vars.searchby    = ( searchby                                               );
-					this.vars.sortby      = ( sortby                                                 );
-					this.vars.orderby     = ( orderby                                                );
-					this.vars.divh        = ( divh                                                   );
-					this.vars.listed      = ( listed                                                 );
-					this.vars.total       = ( total                                                  );
-					this.vars.startlimit  = ( startlimit                                             );
-					this.vars.maxlimit    = ( maxlimit                                               );
-					this.vars.intervals   = ( intervals                                              );
-					this.vars.limit       = ( startlimit + ', ' + maxlimit                           );
-					this.vars.uids        = ( []                                                     );
+				case 'avatars'             :
+					this.vars.avatars      = ( set                                                    );
+				case 'logintime'           :
+					this.vars.logintime    = ( set                                                    );
+					break;
+				case 'listall'             :
+					this.vars.listall      = ( set                                                    );
+					this.vars.startlimit   = ( 0                                                      );
+					this.vars.maxlimit     = ( 99999                                                  );
+					this.vars.limit        = ( this.vars.startlimit + ', ' + this.vars.maxlimit       );
+					break;
+				case 'reset'               :
+					this.vars.searchquery  = ( searchquery                                            );
+					this.vars.searchby     = ( searchby                                               );
+					this.vars.sortby       = ( sortby                                                 );
+					this.vars.orderby      = ( orderby                                                );
+					this.vars.divh         = ( divh                                                   );
+					this.vars.listed       = ( listed                                                 );
+					this.vars.total        = ( total                                                  );
+					this.vars.startlimit   = ( startlimit                                             );
+					if( !this.vars.listall )
+					{
+						this.vars.maxlimit = ( maxlimit                                               );
+						this.vars.limit    = ( startlimit + ', ' + maxlimit                           );
+					}
+					this.vars.intervals    = ( intervals                                              );
+					this.vars.uids         = ( []                                                     );
 					break;
 			}
 		}
@@ -6647,7 +6664,10 @@ Sections.accounts_users = function( cmd, extra )
 			if( avatars )
 			{
 				// TODO: finish this ...
-				getAvatars( avatars );
+				if( UsersSettings( 'avatars' ) )
+				{
+					getAvatars( avatars );
+				}
 			}
 			
 			if( ShowLog ) console.log( 'new users added to list: ' + i + '/' + tot + ' total ['+total+']' );
@@ -7639,6 +7659,11 @@ Sections.accounts_users = function( cmd, extra )
 			else
 			{
 				
+				console.log( "UsersSettings( 'listall', true ); to list all users ..." );
+				console.log( "UsersSettings( 'avatars', false ); to list users without avatar ..." );
+				console.log( "UsersSettings( 'lastlogin', false ); to list users without lastlogin ..." );
+				console.log( "UsersSettings(  ); for current Users Settings ..." );
+				
 				// Get correct estimate of how many users fit into the window area ...
 			
 				CheckUserlistSize( true );
@@ -7922,7 +7947,7 @@ function getUserlist( callback, obj )
 
 function getLastLoginlist( callback, users )
 {
-	if( users )
+	if( users && UsersSettings( 'lastlogin' ) )
 	{
 		var args = { 
 			mode    : 'logintime',

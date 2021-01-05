@@ -9,8 +9,16 @@
 *                                                                              *
 *****************************************************************************©*/
 
+if( !function_exists( 'microseconds' ) )
+{
+	function microseconds( $float = false ) 
+	{
+		list( $usec, $sec ) = explode( " ", microtime() );
+		return round( ( (float)$usec + (float)$sec ) * 1000 );
+	}
+}
 
-
+$micro_start = microseconds( true );
 
 /*// TODO: Permissions!!! Only list out when you have users below your
 //                      level, unless you are Admin
@@ -150,6 +158,10 @@ switch( $args->args->mode )
 					}
 				}
 				
+				$micro_end = microseconds( true );
+				
+				$out['MS'] = ( $micro_end - $micro_start ) . ' ms';
+				
 				die( 'ok<!--separate-->' . json_encode( $out ) );
 			}
 		}
@@ -165,6 +177,10 @@ switch( $args->args->mode )
 			
 			$count = $SqlDatabase->FetchObject( 'SELECT COUNT( DISTINCT( u.ID ) ) AS Num FROM FUser u, FUserToGroup tg WHERE u.ID = tg.UserID ' );
 			$out['Count'] = ( $count ? $count->Num : 0 );
+			
+			$micro_end = microseconds( true );
+			
+			$out['MS'] = ( $micro_end - $micro_start ) . ' ms';
 			
 			die( 'ok<!--separate-->' . json_encode( $out ) );
 		}
@@ -237,6 +253,10 @@ switch( $args->args->mode )
 				$count = $SqlDatabase->FetchObject( 'SELECT COUNT( DISTINCT( u.ID ) ) AS Num FROM FUser u, FUserToGroup tg WHERE u.ID = tg.UserID ' );
 				$out['Count'] = ( $count ? $count->Num : 0 );
 			}
+			
+			$micro_end = microseconds( true );
+			
+			$out['MS'] = ( $micro_end - $micro_start ) . ' ms';
 			
 			die( 'ok<!--separate-->' . json_encode( $out ) );
 		}
