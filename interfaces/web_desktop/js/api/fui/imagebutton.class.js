@@ -77,6 +77,19 @@ FUI.ImageButton.Renderers.html5.prototype.refresh = function( pnode )
 			let i = document.createElement( 'span' );
 			i.style.position = 'relative';
 			i.style.top = 'calc(50% - 13px)';
+			if( self.ImageButton.flags && self.ImageButton.flags.verticalAlign )
+			{
+				switch( self.ImageButton.flags.verticalAlign )
+				{
+					case 'top':
+						i.style.top = '0px';
+						break;
+					case 'bottom':
+						i.style.top = '';
+						i.style.bottom = '100%';
+						break;
+				}
+			}
 			i.style.display = 'inline-block';
 			i.className = FUI.theme.icons[ this.ImageButton.flags.icon ];
 			d.appendChild( i );

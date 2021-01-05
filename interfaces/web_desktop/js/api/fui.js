@@ -40,7 +40,7 @@ FUI.initialize = function( flags, callback )
 		// TODO: Overwrite depending on theme
 		str += ';webclient/js/api/fui/theme.js';
 		
-		// Load synchronously (with possibility of removing old resources9
+		// Load synchronously (with possibility of removing old resources
 		let c = new cAjax();		
 		c.open( 'GET', str, false, false );
 		c.onload = function()
@@ -533,7 +533,8 @@ FUI.preInit = function()
 	{
 		FUI.initialize( { classList: [ 
 			'View', 'Grid', 'Button', 'Input', 'Listview', 'Image', 
-			'ImageButton', 'Label', 'TabList'
+			'ImageButton', 'Label', 'TabList', 'Toggle', 'Textarea',
+			'Memberslist', 'Dropdown'
 		] } );
 	}
 	else return setTimeout( FUI.preInit, 5 );

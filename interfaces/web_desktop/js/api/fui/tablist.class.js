@@ -258,12 +258,13 @@ FUI.TabList.Renderers.html5.prototype.refresh = function( pnode )
 
 /* Dependencies ------------------------------------------------------------- */
 
-/*FUI.TabListRow = function()
+FUI.TabListRow = function( object )
 {
-	
+	this.initialize( 'TabListRow' );
+	this.flags = object;
 }
 
-FUI.TabListRow.prototype = new FUI.BaseClass();*/
+FUI.TabListRow.prototype = new FUI.BaseClass();
 
 // Default methods -------------------------------------------------------------
 

@@ -66,7 +66,8 @@ FUI.Label.Renderers.html5.prototype.refresh = function( pnode )
 		m.style.width = 'calc(100% - ' + FUI.theme.gadgets.margins.normal + ' - ' + FUI.theme.gadgets.margins.normal + ')';
 		m.style.height = 'calc(100% - ' + FUI.theme.gadgets.margins.normal + ' - ' + FUI.theme.gadgets.margins.normal + ')';
 		m.style.boxSizing = 'border-box';
-	
+		m.setAttribute( 'fui-component', 'Label' );
+		
 		let d = document.createElement( 'div' );
 		d.style.position = 'absolute';
 		d.style.top = '0';

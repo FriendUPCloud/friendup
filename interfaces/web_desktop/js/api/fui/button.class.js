@@ -60,16 +60,17 @@ FUI.Button.Renderers.html5.prototype.refresh = function( pnode )
 	if( !this.button.domNode )
 	{
 		let d = document.createElement( 'div' );
+		d.setAttribute( 'fui-component', 'Button' );
 		d.style.position = 'absolute';
 		d.style.top = '0';
 		d.style.left = '0';
 		d.style.width = '100%';
-		d.style.height = '100%';
-		d.style.borderTop = '1px solid white';
+		d.style.height = '24px';
+		d.style.lineHeight = '24px';
+		/*d.style.borderTop = '1px solid white';
 		d.style.borderLeft = '1px solid white';
 		d.style.borderRight = '1px solid black';
-		d.style.borderBottom = '1px solid black';
-		d.style.backgroundColor = '#888888';
+		d.style.borderBottom = '1px solid black';*/
 		d.style.textAlign = 'center';
 		d.style.verticalAlign = 'middle';
 		d.style.cursor = 'pointer';

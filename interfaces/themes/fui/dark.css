@@ -22,3 +22,16 @@ div[fui-component=TabList-Row]:hover
 {
 	left: 0;
 }
+
+div[fui-component=Button]
+{
+	background-color: var(--fui-color-buttonBackground);
+	color: var(--fui-color-buttonText);
+	transition: background-color 0.25s;
+}
+
+div[fui-component=Button]:hover
+{
+	background-color: var(--fui-color-buttonHighlight);
+	color: var(--fui-color-buttonTextHighlight);
+}

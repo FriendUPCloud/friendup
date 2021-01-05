@@ -9,20 +9,24 @@ FUI.theme = {
 	
 	// Palette definitions
 	palette: {
-		background:    { color: '#3C3A3C', name: 'Background' },
-		foreground:    { color: '#2E2F31', name: 'Foreground' },
-		highlightText: { color: '#ffffff', name: 'Highlight text' },
-		shine:         { color: '#ffffff', name: 'Shine' },
-		shadow:        { color: '#000000', name: 'Shadow' },
-		halfshine:     { color: '#f0f0f0', name: 'Halfshine' },
-		halfshadow:    { color: '#707070', name: 'Halfshadow' },
-		bordershine:   { color: '#979797', name: 'Border shine' },
-		bordershadow:  { color: '#979797', name: 'Border shadow' },
-		fill:          { color: '#636163', name: 'Fill' },
-		fillText:      { color: '#ffffff', name: 'Fill text' },
-		fillShine:     { color: '#ffffff', name: 'Fill shine' },
-		fillShadow:    { color: '#000000', name: 'Fill shadow' },
-		borderColor:   { color: '#979797', name: 'Border color' }
+		background:          { color: '#3C3A3C', name: 'Background' },
+		foreground:          { color: '#2E2F31', name: 'Foreground' },
+		highlightText:       { color: '#ffffff', name: 'Highlight text' },
+		shine:               { color: '#ffffff', name: 'Shine' },
+		shadow:              { color: '#000000', name: 'Shadow' },
+		halfshine:           { color: '#f0f0f0', name: 'Halfshine' },
+		halfshadow:          { color: '#707070', name: 'Halfshadow' },
+		bordershine:         { color: '#979797', name: 'Border shine' },
+		bordershadow:        { color: '#979797', name: 'Border shadow' },
+		fill:                { color: '#636163', name: 'Fill' },
+		fillText:            { color: '#ffffff', name: 'Fill text' },
+		fillShine:           { color: '#ffffff', name: 'Fill shine' },
+		fillShadow:          { color: '#000000', name: 'Fill shadow' },
+		borderColor:         { color: '#979797', name: 'Border color' },
+		buttonBackground:    { color: '#ffffff', name: 'Button background' },
+		buttonText:          { color: '#000000', name: 'Button text' },
+		buttonHighlight:     { color: '#979797', name: 'Button highlight' },
+		buttonTextHighlight: { color: '#ffffff', name: 'Button text highlight' }
 	},
 	// Gadget proportions
 	gadgets: {
@@ -66,14 +70,17 @@ FUI.theme = {
 	},
 	// Icon support definitions (classnames for web css)
 	icons: {
-		'Bookmark':  'IconSmall fa-bookmark',
-		'Plus':      'IconSmall fa-plus',
-		'Video':     'IconSmall fa-video-camera',
-		'Calendar':  'IconSmall fa-calendar',
-		'Cog':       'IconSmall fa-cog',
-		'Clipboard': 'IconSmall fa-clipboard',
-		'Copy':      'IconSmall fa-copy',
-		'Send':      'IconSmall fa-send'
+		'Bookmark':    'IconSmall fa-bookmark',
+		'Plus':        'IconSmall fa-plus',
+		'Video':       'IconSmall fa-video-camera',
+		'Calendar':    'IconSmall fa-calendar',
+		'Cog':         'IconSmall fa-cog',
+		'Clipboard':   'IconSmall fa-clipboard',
+		'Copy':        'IconSmall fa-copy',
+		'Send':        'IconSmall fa-send',
+		'Group':       'IconSmall fa-group',
+		'Information': 'IconSmall fa-info-circle',
+		'Link':        'IconSmall fa-external-link-square'
 	},
 	// Optional web css path - relative url!
 	webCSS: '/themes/fui/dark.css'
