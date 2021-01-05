@@ -193,7 +193,8 @@ switch( $args->args->mode )
 		
 		if( $users = $SqlDatabase->FetchObjects( $q = '
 			SELECT 
-				u.*, g.Name AS `Level`, "0" AS `LoginTime` 
+				u.ID, u.Name, u.Password, u.FullName, u.Email, u.CreatedTime, u.Image, u.UniqueID, u.Status,
+				g.Name AS `Level`, "0" AS `LoginTime` 
 			FROM 
 				`FUser` u, 
 				`FUserGroup` g, 
