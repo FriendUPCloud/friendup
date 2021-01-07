@@ -1039,17 +1039,14 @@ function ActivateAutocomplete ( ele, completeurl )
 // Include a javascript source and eval it globally
 function Include ( url, callback )
 {
-	var ele = document.createElement ( "script" );
-	ele.type = "text/javascript";
-	ele.src = url;
-	if( callback )
+	let ele = new cAjax();
+	ele.open( 'get', url, true );
+	ele.onload = function( e, d)
 	{
-		ele.onload = function( e )
-		{
-			callback( e );
-		}
+		window.eval( d );
+		if( callback ) callback( e );
 	}
-	document.body.appendChild ( ele );
+	ele.send();
 }
 
 // Add several events on each event type
