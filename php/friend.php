@@ -445,6 +445,8 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	
 	//$logger->log( 'Trying to log in: ' . $sidm . ' ' . print_r( $args, 1 ) );
 	
+	$hsidm = hash( 'sha256', $sidm );
+
 	// Here we need a union because we are looking for sessionid in both the
 	// FUserSession and FUser tables..
 	if( isset( $User->ID ) && $User->ID > 0 )
@@ -453,12 +455,12 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	}
 	// Here we're trying to load it
 	else if(
-		$sidm && 
+		$hsidm && 
 		( $User = $SqlDatabase->fetchObject( '
 			SELECT u.* FROM FUser u, FUserSession us
 			WHERE
 				us.UserID = u.ID AND
-				( u.SessionID=\'' . $sidm . '\' OR us.SessionID = \'' . $sidm . '\' )
+				( u.SessionID=\'' . $hsidm . '\' OR us.SessionID = \'' . $hsidm . '\' )
 		' ) )
 	)
 	{
@@ -493,21 +495,24 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	else
 	{
 		// Ok, did we have auth id?
+
 		if( isset( $GLOBALS['args']->authid ) )
 		{
 			$asid = mysqli_real_escape_string( $SqlDatabase->_link, $GLOBALS['args']->authid );
+			$hasid = hash( 'sha256', $asid );
+
 			if( $row = $SqlDatabase->FetchObject( $q = '
 				SELECT * FROM ( 
 					( 
 						SELECT u.ID FROM FUser u, FUserApplication a 
 						WHERE 
-							a.AuthID="' . $asid . '" AND a.UserID = u.ID LIMIT 1 
+							a.AuthID="' . $hasid . '" AND a.UserID = u.ID LIMIT 1 
 					) 
 					UNION 
 					( 
 						SELECT u2.ID FROM FUser u2, Filesystem f 
 						WHERE 
-							f.Config LIKE "%' . $asid . '%" AND u2.ID = f.UserID LIMIT 1 
+							f.Config LIKE "%' . $hasid . '%" AND u2.ID = f.UserID LIMIT 1 
 					) 
 				) z LIMIT 1
 			' ) )

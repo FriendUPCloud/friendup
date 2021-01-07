@@ -1512,13 +1512,13 @@ int SystemInitExternal( SystemBase *l )
 			if( prop != NULL )
 			{
 				// Do we even want a sentinel?
-				char *userTest = plib->ReadStringNCS( prop, "Core:SentinelUsername", NULL );
-				if( userTest != NULL )
+				char *sentUsrName = plib->ReadStringNCS( prop, "Core:SentinelUsername", NULL );
+				if( sentUsrName != NULL )
 				{
 					l->sl_Sentinel = FCalloc( 1, sizeof( Sentinel ) );
 					if( l->sl_Sentinel != NULL )
 					{
-						l->sl_Sentinel->s_ConfigUsername = StringDuplicate( userTest );
+						l->sl_Sentinel->s_ConfigUsername = StringDuplicate( sentUsrName );
 						l->sl_Sentinel->s_ConfigPassword = StringDuplicate( plib->ReadStringNCS( prop, "Core:SentinelPassword", NULL ) );
 					
 						memcpy( l->sl_Sentinel->s_FCID, l->fcm->fcm_ID, FRIEND_CORE_MANAGER_ID_SIZE );
@@ -1593,6 +1593,7 @@ int SystemInitExternal( SystemBase *l )
 						if( strcmp( usr->u_Name, l->sl_Sentinel->s_ConfigUsername ) == 0 )
 						{
 							l->sl_Sentinel->s_User = usr;
+							usr->u_IsSentinel = TRUE;
 							DEBUG("[SystemBase] Sentinel user found: %s\n", usr->u_Name );
 						}
 					}
@@ -1636,6 +1637,7 @@ int SystemInitExternal( SystemBase *l )
 				
 				DEBUG("[SystemBase] Sentinel user is avaiable\n");
 				l->sl_Sentinel->s_User = sentuser;
+				sentuser->u_IsSentinel = TRUE;
 			}
 			else
 			{

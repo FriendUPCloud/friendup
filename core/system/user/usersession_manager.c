@@ -17,7 +17,7 @@
  *  @date created 11/2016
  */
 
-#include "user_sessionmanager.h"
+#include "usersession_manager.h"
 #include "user.h"
 
 #include <system/systembase.h>
@@ -160,10 +160,10 @@ UserSession *USMGetSessionBySessionID( UserSessionManager *usm, char *sessionid 
  * Get UserSession by sessionid from DB
  *
  * @param smgr pointer to UserSessionManager
- * @param id sessionid as string
+ * @param sessionid sessionid as string
  * @return pointer to UserSession structure
  */
-UserSession *USMGetSessionBySessionIDFromDB( UserSessionManager *smgr, char *id )
+UserSession *USMGetSessionBySessionIDFromDB( UserSessionManager *smgr, char *sessionid )
 {
 	SystemBase *sb = (SystemBase *)smgr->usm_SB;
 	struct UserSession *usersession = NULL;
@@ -173,8 +173,13 @@ UserSession *USMGetSessionBySessionIDFromDB( UserSessionManager *smgr, char *id 
 	if( sqlLib != NULL )
 	{
 		int entries = 0;
-		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery)," SessionID='%s'", id );
-	
+		
+		char *tmpSessionID = sb->sl_UtilInterface.DatabaseEncodeString( sessionid );
+		if( tmpSessionID != NULL )
+		{
+			sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery)," SessionID='%s'", tmpSessionID );
+			FFree( tmpSessionID );
+		}
 		DEBUG( "[USMGetSessionBySessionIDFromDB] Sending query: %s...\n", tmpQuery );
 
 		usersession = ( struct UserSession *)sqlLib->Load( sqlLib, UserSessionDesc, tmpQuery, &entries );
@@ -811,8 +816,12 @@ int USMGetSessionsDeleteDB( UserSessionManager *smgr, const char *sessionid )
 		return -1;
 	}
 
-	sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "DELETE from FUserSession WHERE SessionID='%s'", sessionid );
-
+	char *tmpSessionID = sb->sl_UtilInterface.DatabaseEncodeString( (char *)sessionid );
+	if( tmpSessionID != NULL )
+	{
+		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "DELETE from FUserSession WHERE SessionID='%s'", tmpSessionID );
+		FFree( tmpSessionID );
+	}
 	sqlLib->QueryWithoutResults( sqlLib, tmpQuery );
 
 	sb->LibrarySQLDrop( sb, sqlLib );
@@ -882,7 +891,7 @@ int USMSessionSaveDB( UserSessionManager *smgr, UserSession *ses )
 		int error = 0;
 		char *temptext = FMalloc( TEMPSIZE );
 		
-		sqllib->SNPrintF( sqllib, temptext, TEMPSIZE, "SELECT ID FROM `FUserSession` WHERE `DeviceIdentity` = '%s' AND `UserID`=%lu", ses->us_DeviceIdentity,  ses->us_UserID );
+		sqllib->SNPrintF( sqllib, temptext, TEMPSIZE, "SELECT ID FROM `FUserSession` WHERE `DeviceIdentity`='%s' AND `UserID`=%lu", ses->us_DeviceIdentity,  ses->us_UserID );
 
 		void *res = sqllib->Query( sqllib, temptext );
 		char **row;
@@ -1120,8 +1129,7 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
 							if( sendNotif == TRUE )
 							{
 								DEBUG("[USMSendDoorNotification] Send message %s function pointer %p sbpointer %p to sessiondevid: %s\n", tmpmsg, sb->WebSocketSendMessage, sb, uses->us_DeviceIdentity );
-				
-						
+								
 								//FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 								WebSocketSendMessage( sb, uses, tmpmsg, len );
 								//FRIEND_MUTEX_LOCK( &(usr->u_Mutex) );
@@ -1255,6 +1263,7 @@ char *USMCreateTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, F
 	{
 		char temp[ 1024 ];
 	 
+		// There is no need to hash temporary session, it will be destroyed
 		//INSERT INTO `FUserSession` ( `UserID`, `DeviceIdentity`, `SessionID`, `LoggedTime`) VALUES (0, 'tempsession','93623b68df9e390bc89eff7875d6b8407257d60d',0 )
 		snprintf( temp, sizeof(temp), "INSERT INTO `FUserSession` (`UserID`,`DeviceIdentity`,`SessionID`,`LoggedTime`) VALUES (%lu,'tempsession','%s',%lu)", userID, sessionID, time(NULL) );
 
@@ -1331,20 +1340,14 @@ User *USMIsSentinel( UserSessionManager *usm, char *username, UserSession **rus,
 			tuser = tusers->us_User;
 			// Check both username and password
 
-			if( tuser != NULL && strcmp( tuser->u_Name, username ) == 0 )
+			if( strcmp( tuser->u_Name, username ) == 0 )
 			{
-				FBOOL isUserSentinel = FALSE;
-				
-				Sentinel *sent = sb->GetSentinelUser( sb );
-				if( sent != NULL )
+				if( tuser->u_IsSentinel == TRUE )
 				{
-					if( tuser == sent->s_User )
-					{
-						isUserSentinel = TRUE;
-					}
+					*rus = tusers;
+					*isSentinel = TRUE;
+					break;
 				}
-				*rus = tusers;
-				break;
 			}
 			tusers = (UserSession *)tusers->node.mln_Succ;
 		}

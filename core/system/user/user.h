@@ -163,6 +163,7 @@ typedef struct User
 	RemoteUser					*u_RemoteUsers;					// user which use this account to have access to resources
 	FBOOL						u_IsAdmin;						// set to TRUE when user is in Admin group
 	FBOOL						u_IsAPI;						// set to TRUE when user is in API group
+	FBOOL						u_IsSentinel;					// set to TRUE when user is Sentinel
 	
 	pthread_mutex_t				u_Mutex;						// User structure mutex
 	CacheUserFiles				*u_FileCache;					// internal file cache

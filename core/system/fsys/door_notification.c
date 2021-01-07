@@ -17,7 +17,7 @@
 
 #include "door_notification.h"
 #include <system/systembase.h>
-#include <system/user/user_sessionmanager.h>
+#include <system/user/usersession_manager.h>
 
 #define LOCK_TIMEOUT 100000
 

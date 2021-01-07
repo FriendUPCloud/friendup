@@ -19,7 +19,7 @@
 
 #include "user.h"
 #include "user_manager.h"
-#include "user_sessionmanager.h"
+#include "usersession_manager.h"
 
 #include <system/systembase.h>
 #include <util/sha256.h>
@@ -1320,7 +1320,7 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 			}
 			user->u_MainSessionID = sesid;
 			
-			sqlLib->SNPrintF( sqlLib, temptext, 2048, "UPDATE `FUser` f SET f.SessionID = '%s' WHERE`ID` = '%ld'",  user->u_MainSessionID, user->u_ID );
+			sqlLib->SNPrintF( sqlLib, temptext, 2048, "UPDATE `FUser` f SET f.SessionID='%s' WHERE`ID`='%ld'",  user->u_MainSessionID, user->u_ID );
 			sqlLib->QueryWithoutResults( sqlLib, temptext );
 			sb->LibrarySQLDrop( sb, sqlLib );
 			

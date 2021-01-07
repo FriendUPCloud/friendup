@@ -31,10 +31,9 @@
 #include <util/session_id.h>
 #include <network/websocket_client.h>
 
-#include <system/user/user_sessionmanager.h>
 #include <system/systembase.h>
 #include <system/user/user_manager.h>
-#include <system/user/user_sessionmanager.h>
+#include <system/user/usersession_manager.h>
 
 #define LIB_NAME "fcdb.authmod"
 #define LIB_VERSION			1
@@ -429,7 +428,6 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 			{
 				UserSession *s = (UserSession *)usl->us;
 				if( strcmp( s->us_DeviceIdentity, "remote" ) == 0 )
-				//if( strcmp( s->us_SessionID, "remote" ) == 0 )
 				{
 					break;
 				}
@@ -566,8 +564,6 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 			DEBUG("[FCDB] Found old session, using it %s\n", uses->us_SessionID );
 		}
 		
-		//USMSessionSaveDB( sb->sl_USM, uses );
-		
 		DEBUG( "[FCDB] The password comparison is: %s, %s\n", pass, tmpusr->u_Password );
 		
 		SystemBase *sb = (SystemBase *)l->sb;
@@ -700,12 +696,12 @@ loginfail:
  *
  * @param l pointer to AuthMod
  * @param r pointer to Http request
- * @param name name of the User
+ * @param sessionid sessionid of user which will be logged out
  */
-void Logout( struct AuthMod *l, Http *r __attribute__((unused)), char *name )
+void Logout( struct AuthMod *l, Http *r __attribute__((unused)), char *sessionid )
 {
 	SystemBase *sb = (SystemBase *)l->sb;
-	//UserSession *users = sb->sl_UserSessionManagerInterface.USMGetSessionBySessionID( sb->sl_USM, name );
+	//UserSession *users = sb->sl_UserSessionManagerInterface.USMGetSessionBySessionID( sb->sl_USM, sessionid );
 	
 	DEBUG("Logout get\n");
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
@@ -713,11 +709,15 @@ void Logout( struct AuthMod *l, Http *r __attribute__((unused)), char *name )
 	{
 		char tmpQuery[ 1024 ];
 		
-		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "DELETE FROM FUserSession WHERE SessionID = '%s'", name );
-		DEBUG("Logout sql: %s\n", tmpQuery );
-		
-		sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
-	
+		char *tmpSessionID = sb->sl_UtilInterface.DatabaseEncodeString( sessionid );
+		if( tmpSessionID != NULL )
+		{
+			sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "DELETE FROM FUserSession WHERE SessionID='%s'", tmpSessionID );
+			DEBUG("Logout sql: %s\n", tmpQuery );
+			sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
+			
+			FFree( tmpSessionID );
+		}
 		sb->LibrarySQLDrop( sb, sqlLib );
 	}
 	DEBUG("Logout get end\n");
@@ -738,7 +738,6 @@ UserSession *IsSessionValid( struct AuthMod *l, Http *r __attribute__((unused)),
 	UserSession *users = sb->sl_UserSessionManagerInterface.USMGetSessionBySessionID( sb->sl_USM, sessionId );
 	time_t timestamp = time ( NULL );
 	
-	
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	if( sqlLib == NULL )
 	{
@@ -755,7 +754,8 @@ UserSession *IsSessionValid( struct AuthMod *l, Http *r __attribute__((unused)),
 
 	// we check if user is already logged in
 	if( ( timestamp - users->us_LoggedTime ) < sb->sl_RemoveSessionsAfterTime )
-	{	// session timeout
+	{
+		// session timeout
 		// we set timeout
 
 		if( strcmp( users->us_SessionID, sessionId ) == 0 )
@@ -763,17 +763,18 @@ UserSession *IsSessionValid( struct AuthMod *l, Http *r __attribute__((unused)),
 			DEBUG( "[FCDB] IsSessionValid: Session is valid! %s\n", sessionId );
 			char tmpQuery[ 512 ];
 			
-			sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUserSession SET `LoggedTime` = '%ld' WHERE `SessionID` = '%s'", timestamp, sessionId );
-			//sprintf( tmpQuery, "UPDATE FUserSession SET `LoggedTime` = '%ld' WHERE `SessionID` = '%s'", timestamp, sessionId );
-
-			void *res = sqlLib->Query( sqlLib, tmpQuery );
-			if( res != NULL )
+			char *tmpSessionID = sb->sl_UtilInterface.DatabaseEncodeString( sessionId );
+			if( tmpSessionID != NULL )
 			{
-			//users->us_User->u_Error = FUP_AUTHERR_UPDATE;
-				sqlLib->FreeResult( sqlLib, res );
-				sb->LibrarySQLDrop( sb, sqlLib );
-				return users;
+				sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUserSession SET `LoggedTime`='%ld' WHERE `SessionID`='%s'", timestamp, sessionId );
+			
+				sqlLib->QueryWithoutResults( sqlLib, tmpQuery );
+				FFree( tmpSessionID );
 			}
+			
+			sb->LibrarySQLDrop( sb, sqlLib );
+
+			return users;
 		}
 		else
 		{

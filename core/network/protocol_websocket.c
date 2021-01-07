@@ -872,7 +872,8 @@ int ParseAndCall( WSThreadData *wstd )
 							int total = 0;
 							int data = 0;
 							
-							unsigned long int intstart = 0;
+							char *intstart = NULL;
+							//unsigned long int intstart = 0;
 							unsigned long int tendstrt = 0;
 							
 							for( i = 9; i < r ; i++ )
@@ -1014,7 +1015,8 @@ int ParseAndCall( WSThreadData *wstd )
 					}
 					else	// connection message
 					{
-						unsigned long int intstart = 0;
+						char *intstart = NULL;
+						//unsigned long int intstart = 0;
 						unsigned long int tendstrt = 0;
 						
 						for( i = 4; i < r ; i++ )
@@ -1110,6 +1112,7 @@ int ParseAndCall( WSThreadData *wstd )
 							{
 								locus->us_LoggedTime = time( NULL );
 								
+								//char *tmpSessionID = sb->sl_UtilInterface.DatabaseEncodeString( sessionid );
 								//sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime=%lld,SessionID='%s',UMA_ID=%lu WHERE `DeviceIdentity` = '%s' AND `UserID`=%lu", (long long)loggedSession->us_LoggedTime, loggedSession->us_SessionID, umaID, deviceid,  loggedSession->us_UserID );
 								WSThreadPing( wstd );
 								wstd = NULL;

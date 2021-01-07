@@ -546,10 +546,12 @@ int Update( struct SQLLibrary *l, FULONG *descr, void *data )
 							{
 								mysql_real_escape_string( l->con.sql_Con, esctext, tmpchar, tmpcharsize );
 								SystemBase *sb = (SystemBase *)l->sb;
-								char *storeString = sb->sl_UtilInterface.EncodeStringSHA256( esctext );
+								char *storeString = sb->sl_UtilInterface.DatabaseEncodeString( esctext );
 								
 								if( storeString != NULL )
 								{
+									DEBUG("\n\n\n\n\nold: %s new %s\n\n\n\n\n", esctext, storeString );
+									
 									if( cols == 0 )
 									{
 										sprintfsize = sprintf( ttext, " %s='%s'", (char *)dptr[ 1 ], storeString );
@@ -575,11 +577,11 @@ int Update( struct SQLLibrary *l, FULONG *descr, void *data )
 					{
 						if( cols == 0 )
 						{
-							sprintfsize = sprintf( tmp, " %s = NULL", (char *)dptr[ 1 ] );
+							sprintfsize = sprintf( tmp, " %s=NULL", (char *)dptr[ 1 ] );
 						}
 						else
 						{
-							sprintfsize = sprintf( tmp, ", %s = NULL", (char *)dptr[ 1 ] );
+							sprintfsize = sprintf( tmp, ", %s=NULL", (char *)dptr[ 1 ] );
 						}
 						BufStringAddSize( querybs, tmp, sprintfsize );
 						//strcat( tmpQuery, tmp );
@@ -826,10 +828,12 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 						{
 							mysql_real_escape_string( l->con.sql_Con, esctext, tmpchar, tmpcharsize );
 							SystemBase *sb = (SystemBase *)l->sb;
-							char *storeString = sb->sl_UtilInterface.EncodeStringSHA256( esctext );
+							char *storeString = sb->sl_UtilInterface.DatabaseEncodeString( esctext );
 							
 							if( storeString != NULL )
 							{
+								DEBUG("\n\n\n\n\nSAVEDEBUG old: %s new %s\n\n\n\n\n", esctext, storeString );
+								
 								BufStringAdd( dataquerybs, storeString );
 								FFree( storeString );
 							}

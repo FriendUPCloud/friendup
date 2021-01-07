@@ -25,6 +25,8 @@ typedef struct UtilInterface
 	void						(*Log)( int lev, char* fmt, ...);
 	char						*(*EncodeStringLenSHA256)( char *data, int len );
 	char						*(*EncodeStringSHA256)( char *data );
+	char						*(*DatabaseEncodeStringLen)( char *data, int len );
+	char						*(*DatabaseEncodeString)( char *data );
 }UtilInterface;
 
 //
@@ -36,6 +38,8 @@ static inline void UtilInterfaceInit( UtilInterface *ui )
 	ui->Log = Log;
 	ui->EncodeStringLenSHA256 = EncodeStringLenSHA256;
 	ui->EncodeStringSHA256 = EncodeStringSHA256;
+	ui->DatabaseEncodeStringLen = EncodeStringLenSHA256;		// default encode function
+	ui->DatabaseEncodeString = EncodeStringSHA256;				// default encode function
 }
 
 #endif // __INTERFACE_UTIL_INTERFACE_H__

@@ -17,7 +17,7 @@
 #ifndef __INTERFACE_USERSESSION_MANAGER_INTERFACE_H__
 #define __INTERFACE_USERSESSION_MANAGER_INTERFACE_H__
 
-#include <system/user/user_sessionmanager.h>
+#include <system/user/usersession_manager.h>
 
 typedef struct UserSessionManagerInterface
 {

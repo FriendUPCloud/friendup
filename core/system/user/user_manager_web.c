@@ -22,7 +22,7 @@
 #include "user_manager_web.h"
 #include <system/systembase.h>
 #include <system/fsys/device_handling.h>
-#include <system/user/user_sessionmanager.h>
+#include <system/user/usersession_manager.h>
 #include <util/session_id.h>
 
 //test
