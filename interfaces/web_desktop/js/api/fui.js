@@ -495,7 +495,6 @@ FUI.BaseClass.prototype.getElementById = function( id, callback )
 			let o = self.objectIndex[ a ];
 			if( o && o.flags && o.flags.id == id )
 			{
-				console.log( 'Found internal: ' + id );
 				callback( self.objectIndex[ a ] );
 				return true;
 			}
@@ -534,7 +533,7 @@ FUI.preInit = function()
 		FUI.initialize( { classList: [ 
 			'View', 'Grid', 'Button', 'Input', 'Listview', 'Image', 
 			'ImageButton', 'Label', 'TabList', 'Toggle', 'Textarea',
-			'Memberslist', 'Dropdown'
+			'Memberslist', 'Dropdown', 'Pages'
 		] } );
 	}
 	else return setTimeout( FUI.preInit, 5 );

@@ -69,16 +69,6 @@ let Private = {
 			{
 				v[a].id = 'TabListRow_' + a;
 			}
-			// Add buttons to children
-			if( v[a].buttons )
-			{
-				for( let b = 0; b < v[a].buttons.length; b++ )
-				{
-					let c = new FUI.ImageButton( v[a].buttons[b] );
-					c.tabListRow = v[a].id;
-					self.children.push( c );
-				}
-			}
 		}
 		
 		self.clear = true;
@@ -141,7 +131,6 @@ FUI.TabList.Renderers.html5.prototype.refresh = function( pnode )
 		
 		let sub = FUI.theme.gadgets.margins.normal + ' - ' + FUI.theme.gadgets.margins.normal;
 		
-		
 		f.onclick = function( e )
 		{
 			if( self.TabList.events && self.TabList.events[ 'onclick' ] )
@@ -169,7 +158,6 @@ FUI.TabList.Renderers.html5.prototype.refresh = function( pnode )
 		}
 	
 		let rows = this.TabList.flags.rows;
-		let refreshers = {};
 		for( let a = 0; a < rows.length; a++ )
 		{
 			// Row container
@@ -224,29 +212,28 @@ FUI.TabList.Renderers.html5.prototype.refresh = function( pnode )
 			r.appendChild( b );
 		
 			// Render ImageButton objects
-			if( self.TabList.children )
+			if( rows[ a ].buttons )
 			{
-				let buttons = self.TabList.children;
-				refreshers[ b ] = {
-					pnode: b,
-					children: []
-				};
+				let buttons = rows[ a ].buttons;
 				
 				// Calculate weight for button list
 				let totals = pos = 0;
+				let buttonObjects = [];
 				for( let z = 0; z < buttons.length; z++ )
-					if( buttons[ z ].tabListRow == b.id )
-						totals += buttons[ z ].flags.weight;
+				{
+					let i = new FUI.ImageButton( buttons[ z ] );
+					buttonObjects.push( i );
+					totals += i.flags.weight;
+				}
 				
 				for( let z = 0; z < buttons.length; z++ )
 				{
-					if( buttons[ z ].tabListRow == b.id )
-					{
-						buttons[ z ].renderWidth = buttons[ z ].flags.weight / totals * 100 + '%';
-						buttons[ z ].renderLeft = pos / totals * 100 + '%';
-						buttons[ z ].refresh( b );
-						pos += buttons[ z ].flags.weight;
-					}
+					let i = buttonObjects[ z ];
+					i.renderWidth = i.flags.weight / totals * 100 + '%';
+					i.renderLeft = pos / totals * 100 + '%';
+					i.refresh( b );
+					
+					pos += i.flags.weight;
 				} 
 			}
 			

@@ -1057,7 +1057,7 @@ function TriggerEvent( eventName, object )
 	var event = false;
 	if ( typeof document.createEvent == 'function' )
 	{
-		event = document.createEvent ( 'HTMLEvents' );
+		event = document.createEvent( 'HTMLEvents' );
 		event.initEvent ( eventName, true, true );
 	} 
 	else 

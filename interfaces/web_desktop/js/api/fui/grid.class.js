@@ -17,12 +17,60 @@ FUI.Grid = function( object )
 	// Some special stuff!
 	this.gridDescription = [];
 	this.children = [];
-	this.gridDescription = this.flags = object;
+	this.rows = [];
+	this.flags = this.gridDescription = object;
 }
+
 
 FUI.Grid.prototype = new FUI.BaseClass();
 
-// Layout methods --------------------------------------------------------------
+( function(){
+
+FUI.Grid.prototype.onMethodCalled = function( method, value, cbk )
+{
+	switch( method )
+	{
+		case 'hideColumn':
+			for( let a = 0; a < this.rows.length; a++ )
+			{
+				for( let b = 0; b < this.rows[ a ].columns.length; b++ )
+				{
+					let col = this.rows[ a ].columns[ b ];
+					if( col.name == value )
+					{
+						col.column.prevWeight = col.column.weight;
+						col.column.prevPixelWidth = col.column.pixelWidth;
+						col.column.pixelWidth = 0;
+						if( cbk )
+							return cbk( true );	
+					}
+				}
+			}
+			break;
+		case 'showColumn':
+			for( let a = 0; a < this.rows.length; a++ )
+			{
+				for( let b = 0; b < this.rows[ a ].columns.length; b++ )
+				{
+					let col = this.rows[ a ].columns[ b ];
+					if( col.name == value )
+					{
+						col.column.weight = col.column.prevWeight;
+						col.column.pixelWidth = col.column.prevPixelWidth;
+						if( cbk )
+							return cbk( true );	
+					}
+				}
+			}
+			break;
+	}
+	if( cbk )
+		return cbk( false );
+}
+
+// Private methods -------------------------------------------------------------
+
+} )();
 
 // Renderers -------------------------------------------------------------------
 
@@ -68,7 +116,6 @@ FUI.Grid.Renderers.html5.prototype.refresh = function( pnode )
 		pnode.appendChild( self.dom );
 	}
 	
-	console.log( 'Flaggies: ', self.grid.flags );
 	if( self.grid.flags && self.grid.flags.scrollable === true )
 	{
 		this.dom.style.overflow = 'auto';
@@ -119,6 +166,9 @@ FUI.Grid.Renderers.html5.prototype.refresh = function( pnode )
 			d.style.boxSizing = 'border-box';
 			d.setAttribute( 'fui-component', 'Grid-Row' );
 			create = true;
+			
+			// Add to internal rows
+			self.grid.rows.push( { id: a, name: row.name, dom: d, columns: [] } );
 		}
 		
 		if( !d ) continue;
@@ -163,7 +213,7 @@ FUI.Grid.Renderers.html5.prototype.refresh = function( pnode )
 		
 		if( create )
 		{
-			d.setAttribute( 'fui-component', 'Grid-Column' );
+			d.setAttribute( 'fui-component', 'Grid-Row' );
 			self.dom.appendChild( d );
 		}
 		
@@ -213,7 +263,11 @@ FUI.Grid.Renderers.html5.prototype.refresh = function( pnode )
 				r.style.height = '100%';
 				r.style.overflow = 'hidden';
 				r.style.boxSizing = 'border-box';
+				r.setAttribute( 'fui-component', 'Grid-Column' );
 				create = true;
+				
+				// Add to internal row columns
+				self.grid.rows[ a ].columns.push( { id: b, name: column.name, column: column, dom: r, flags: column.flags } );
 			}
 			
 			// Take account of pixel heights
