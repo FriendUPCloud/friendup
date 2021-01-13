@@ -2914,6 +2914,23 @@ function apiWrapper( event, force )
 							return df( msg.data ? msg.data : ( msg.error ? msg.error : null ) );
 						}
 						return false;
+					// Application is asking for Friend credentials
+					case 'friendcredentials':
+						let response = false;
+						// TODO: Investigate different credential types
+						if( msg.credentialType == 'friend' )
+						{
+							console.log( 'You want Friend credentials?' );
+							if( msg.callback )
+							{
+								let nmsg = {}; for( let xz in msg ) nmsg[ xz ] = msg[ xz ];
+								nmsg.type = 'callback';
+								nmsg.response = response;
+								nmsg.message = 'Could not retrieve Friend credentials.';
+								app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+							}
+						}
+						break;
 					case 'addfilesystemevent':
 						if( msg.event && msg.path )
 						{

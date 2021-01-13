@@ -198,6 +198,25 @@ var Application =
 			} );
 		}
 	},
+	// If the application is authorized to do this
+	getFriendCredentials: function( label, callback )
+	{
+		switch( label )
+		{
+			case 'friend':
+				Application.sendMessage( {
+					type: 'system',
+					credentialType: label,
+					command: 'friendcredentials',
+					callback: addCallback( callback )
+				} );
+				break;
+			default:
+				break;
+		}
+		if( callback ) callback( false );
+		return false;
+	}
 	// Load locale translations
 	loadTranslations: function( path, callback )
 	{
