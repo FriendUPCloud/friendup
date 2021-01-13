@@ -2917,16 +2917,31 @@ function apiWrapper( event, force )
 					// Application is asking for Friend credentials
 					case 'friendcredentials':
 						let response = false;
+						let message = 'Could not retrieve Friend credentials.';
 						// TODO: Investigate different credential types
 						if( msg.credentialType == 'friend' )
 						{
-							console.log( 'You want Friend credentials?' );
+							// TODO: Filter application to get access to this!
 							if( msg.callback )
 							{
+								if( Workspace.storedCredentials )
+								{
+									let enc = Workspace.encryption;
+									let user = enc.decrypt( Workspace.storedCredentials.username, enc.getKeys().privatekey );
+									let pass = enc.decrypt( Workspace.storedCredentials.username, enc.getKeys().privatekey );
+									if( user && pass )
+									{
+										response = {
+											username: user,
+											password: pass
+										};
+										message = 'Friend credentials successfully delivered.';
+									}
+								}
 								let nmsg = {}; for( let xz in msg ) nmsg[ xz ] = msg[ xz ];
 								nmsg.type = 'callback';
 								nmsg.response = response;
-								nmsg.message = 'Could not retrieve Friend credentials.';
+								nmsg.message = message;
 								app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
 							}
 						}
