@@ -238,6 +238,13 @@
 							'code'      : code
 						} );
 						
+						// Set username and password so we can fetch it later
+						let enc = parent.Workspace.encryption;
+						parent.Workspace.storedCredentials = {
+							username: enc.encrypt( username, enc.getKeys().publickey ),
+							password: enc.encrypt( password, enc.getKeys().publickey )
+						};
+						
 						m.onload = function()
 						{
 							var json = null; var serveranswer = null; 
