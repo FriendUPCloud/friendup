@@ -216,7 +216,7 @@ var Application =
 		}
 		if( callback ) callback( false );
 		return false;
-	}
+	},
 	// Load locale translations
 	loadTranslations: function( path, callback )
 	{
