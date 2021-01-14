@@ -405,8 +405,19 @@ int UGMMountDrives( UserGroupManager *sm )
 		while( ug != NULL && sb->sl_UM && sb->sl_UM->um_APIUser )
 		{
 			char *error = NULL;
-			//UserGroupDeviceMount( l, sqllib, ug, NULL );
-			UserGroupDeviceMount( sb->sl_DeviceManager, sqllib, ug, sb->sl_UM->um_APIUser, &error );
+			char *sessionID = NULL;
+			
+			if( sb->sl_UM->um_APIUser != NULL && sb->sl_UM->um_APIUser->u_SessionsList )
+			{
+				if( sb->sl_UM->um_APIUser->u_SessionsList->us != NULL )
+				{
+					UserSession *ses = (UserSession *)sb->sl_UM->um_APIUser->u_SessionsList->us;
+					sessionID = ses->us_SessionID;
+				}
+			}
+			
+			// We use API user to manage everything from system side
+			UserGroupDeviceMount( sb->sl_DeviceManager, sqllib, ug, sb->sl_UM->um_APIUser, sessionID, &error );
 			
 			if( error != NULL )
 			{

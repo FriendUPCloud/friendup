@@ -414,7 +414,8 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	
 	// Get user information, trying first on FUserSession SessionID
 	$User = new dbIO( 'FUser' );
-	
+	$UserSession = new dbIO( 'FUserSession' );
+
 	$sudm = false;
 	
 	// TODO: Implement authentication modules!
@@ -428,6 +429,11 @@ if( file_exists( 'cfg/cfg.ini' ) )
 		' ) )
 		{
 			$User = $mu;
+			if( $mus = $SqlDatabase->fetchObject( '
+				SELECT * FROM FUserSession WHERE UserID = \'' . $mu->ID . '\' LIMIT 1' ) )
+				{
+					$UserSession = $mus;
+				}	
 		}
 	}
 	// Try with server token
@@ -442,6 +448,11 @@ if( file_exists( 'cfg/cfg.ini' ) )
 		isset( $User->SessionID ) ? $User->SessionID :
 		( isset( $GLOBALS['args']->sessionid ) ? $GLOBALS['args']->sessionid : '' )
 	);
+
+	if( !$sidm )
+	{
+		$sidm = mysqli_real_escape_string( $SqlDatabase->_link, $UserSession->SessionID );
+	}
 	
 	//$logger->log( 'Trying to log in: ' . $sidm . ' ' . print_r( $args, 1 ) );
 	
@@ -452,6 +463,7 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	if( isset( $User->ID ) && $User->ID > 0 )
 	{
 		$GLOBALS[ 'User' ] =& $User;
+		$GLOBALS[ 'UserSession' ] =& $UserSession;
 	}
 	// Here we're trying to load it
 	else if(
@@ -460,25 +472,12 @@ if( file_exists( 'cfg/cfg.ini' ) )
 			SELECT u.* FROM FUser u, FUserSession us
 			WHERE
 				us.UserID = u.ID AND
-				( u.SessionID=\'' . $hsidm . '\' OR us.SessionID = \'' . $hsidm . '\' )
+				( us.SessionID = \'' . $hsidm . '\' )
 		' ) )
 	)
 	{
 		// Login success
-		//$logger->log( 'User logged in with sessionid: (' . $GLOBALS[ 'args' ]->sessionid . ') ' . ( $User ? ( $User->ID . ' ' . $User->SessionID ) : '' ) );
-		$GLOBALS[ 'User' ] =& $User;
-	}
-	else if(
-		$sidm && 
-		( $User = $SqlDatabase->fetchObject( '
-			SELECT u.* FROM FUser u
-			WHERE
-				( u.SessionID=\'' . $sidm . '\' )
-		' ) )
-	)
-	{
-		// Login success
-		//$logger->log( 'User logged in with sessionid: (' . $GLOBALS[ 'args' ]->sessionid . ') ' . ( $User ? ( $User->ID . ' ' . $User->SessionID ) : '' ) );
+		$logger->log( 'User logged in with sessionid: (' . $GLOBALS[ 'args' ]->sessionid . ') ' . ( $User ? ( $User->ID . ' '  ) : '' ) );
 		$GLOBALS[ 'User' ] =& $User;
 	}
 	else if(
@@ -489,12 +488,14 @@ if( file_exists( 'cfg/cfg.ini' ) )
 		' ) ) 
 	)
 	{
-		//$logger->log( 'User logged in using registered User->SessionID..' );
+		$logger->log( 'User logged in using registered User->SessionID..' );
 		$GLOBALS[ 'User' ] =& $User;
 	}
 	else
 	{
 		// Ok, did we have auth id?
+
+		$logger->log('check by authid');
 
 		if( isset( $GLOBALS['args']->authid ) )
 		{

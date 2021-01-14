@@ -262,8 +262,6 @@ void UserDelete( User *usr )
 		
 			if( usr->u_Password ){ FFree( usr->u_Password );}
 		
-			if( usr->u_MainSessionID ){ FFree( usr->u_MainSessionID );}
-		
 			if( usr->u_UUID ){ FFree( usr->u_UUID );}
 		
 			FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
@@ -615,7 +613,7 @@ File *UserRemDeviceByGroupID( User *usr, FULONG grid, int *error )
 }
 
 /**
- * Regenerate sessionid for user
+ * Regenerate sessionid for user (DEPRICATED)
  *
  * @param usr pointer to User which will have new sessionid
  * @param newsess new session hash. If passed value is equal to NULL new hash will be generated
@@ -623,42 +621,20 @@ File *UserRemDeviceByGroupID( User *usr, FULONG grid, int *error )
  */
 int UserRegenerateSessionID( User *usr, char *newsess )
 {
+	/*
 	if( usr != NULL )
 	{
-		//pthread_mutex_lock( &(usr->) );
-		// Remove old one and update
-		if( usr->u_MainSessionID )
-		{
-			FFree( usr->u_MainSessionID );
-		}
-		
-		if( newsess != NULL )
-		{
-			usr->u_MainSessionID = StringDuplicate( newsess );
-		}
-		else
-		{
-			time_t timestamp = time ( NULL );
-	
-			char *hashBase = MakeString( 255 );
-			sprintf( hashBase, "%ld%s%d", timestamp, usr->u_FullName, ( rand() % 999 ) + ( rand() % 999 ) + ( rand() % 999 ) );
-			HashedString( &hashBase );
-
-			usr->u_MainSessionID = hashBase;
-		}
-	
 		// UPDATE file systems
 		File *lDev = usr->u_MountedDevs;
 		if( lDev != NULL )
 		{
 			while( lDev != NULL )
 			{
-				/*
-				if( lDev->f_SessionID )
-				{
-					FFree( lDev->f_SessionID );
-				}
-				*/
+				//if( lDev->f_SessionID )
+				//{
+				//	FFree( lDev->f_SessionID );
+				//}
+				
 				//lDev->f_SessionID = StringDuplicate( usr->u_MainSessionID );
 				lDev->f_SessionIDPTR = usr->u_MainSessionID;
 				lDev = (File *)lDev->node.mln_Succ;
@@ -669,7 +645,7 @@ int UserRegenerateSessionID( User *usr, char *newsess )
 	{
 		DEBUG("User structure = NULL\n");
 		return 1;
-	}
+	}*/
 	return 0;
 }
 

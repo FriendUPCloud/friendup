@@ -1393,7 +1393,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					
 						UGMAssignGroupToUserByStringDB( l->sl_UGM, logusr, level, workgroups );
 					
-						RefreshUserDrives( l->sl_DeviceManager, logusr, NULL, &error );
+						RefreshUserDrives( l->sl_DeviceManager, loggedSession, NULL, &error );
 					
 						NotifyExtServices( l, request, logusr, "update" );
 					
@@ -1587,7 +1587,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 
 					UGMAssignGroupToUserByStringDB( l->sl_UGM, logusr, NULL, workgroups );
 					
-					RefreshUserDrives( l->sl_DeviceManager, logusr, NULL, &error );
+					RefreshUserDrives( l->sl_DeviceManager, loggedSession, NULL, &error );
 					
 					NotifyExtServices( l, request, logusr, "update" );
 					

@@ -1285,6 +1285,7 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, int nu
  */
 int UMCheckAndLoadAPIUser( UserManager *um )
 {
+	int result = 0;
 	SystemBase *sb = (SystemBase *)um->um_SB;
 	DEBUG("[UMCheckAndLoadAPIUser] Start\n" );
 	
@@ -1295,60 +1296,63 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 		if( tuser->u_IsAPI || strcmp( tuser->u_Name, "apiuser" ) == 0 )
 		{
 			um->um_APIUser = tuser;
-			return 0;
+			break;
 		}
 		tuser = (User *)tuser->node.mln_Succ;
 	}
 	
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
-	
-	if( sqlLib != NULL )
+	// We have to create user
+	if( tuser == NULL )
 	{
-		User *user = NULL;
-
-		int entries;
-		user = sqlLib->Load( sqlLib, UserDesc, "Name='apiuser' LIMIT 1", &entries );
-
-		if( user != NULL )
+		SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	
+		if( sqlLib != NULL )
 		{
-			// Generate the API user session
-			char temptext[ 2048 ];
-			char *sesid = SessionIDGenerate( );
-			if( user->u_MainSessionID != NULL )
+			User *user = NULL;
+
+			int entries;
+			user = sqlLib->Load( sqlLib, UserDesc, "Name='apiuser' LIMIT 1", &entries );
+
+			if( user != NULL )
 			{
-				FFree( user->u_MainSessionID );
-			}
-			user->u_MainSessionID = sesid;
+				sb->LibrarySQLDrop( sb, sqlLib );
 			
-			sqlLib->SNPrintF( sqlLib, temptext, 2048, "UPDATE `FUser` f SET f.SessionID='%s' WHERE`ID`='%ld'",  user->u_MainSessionID, user->u_ID );
-			sqlLib->QueryWithoutResults( sqlLib, temptext );
-			sb->LibrarySQLDrop( sb, sqlLib );
+				DEBUG("[UMCheckAndLoadAPIUser] User found %s  id %ld\n", user->u_Name, user->u_ID );
+				UGMAssignGroupToUser( sb->sl_UGM, user );
+				UMAssignApplicationsToUser( um, user );
+				user->u_MountedDevs = NULL;
+				
+				UMAddUser( sb->sl_UM, user );
+				tuser = user;
 			
-			DEBUG("[UMCheckAndLoadAPIUser] User found %s  id %ld\n", user->u_Name, user->u_ID );
-			UGMAssignGroupToUser( sb->sl_UGM, user );
-			UMAssignApplicationsToUser( um, user );
-			user->u_MountedDevs = NULL;
-			
-			if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
-			{
-				user->node.mln_Succ  = (MinNode *) um->um_Users;
-				if( um->um_Users != NULL )
+				// API user have only one session
+				if( user->u_SessionsList == NULL )
 				{
-					um->um_Users->node.mln_Pred = (MinNode *)user;
+					// we now generate dummy session
+					UserSession *ses = UserSessionNew( "api", "api" );
+					if( ses != NULL )
+					{
+						ses->us_UserID = user->u_ID;
+						ses->us_LoggedTime = time( NULL );
+				
+						UserAddSession( user, ses );
+						USMSessionSaveDB( sb->sl_USM, ses );
+					
+						USMUserSessionAdd( sb->sl_USM, ses );
+					}
 				}
-				um->um_Users = user;
-			
-				um->um_APIUser = user;
-				FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
+
+				result = 0;
 			}
-			return 0;
+			else
+			{
+				sb->LibrarySQLDrop( sb, sqlLib );
+				result = 1;
+			}
 		}
-		else
-		{
-			sb->LibrarySQLDrop( sb, sqlLib );
-		}
-	}
-	return 1;
+	}	// tuser != NULL
+	
+	return result;
 }
 
 

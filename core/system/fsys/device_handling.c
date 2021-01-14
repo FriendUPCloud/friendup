@@ -276,12 +276,13 @@ inline static int MountUnlock( DeviceManager *dm, User *usr )
  * 
  * @param dm pointer to DeviceManager
  * @param usr pointer to User structure to which drive will be attached
+ * @param sessionID session which will be used to mount drive
  * @param groupID ID of group to which user belong
  * @return error number
  * 
  **/
 
-int UserGroupMountWorkgroupDrives( DeviceManager *dm, User *usr, FULONG groupID )
+int UserGroupMountWorkgroupDrives( DeviceManager *dm, User *usr, char *sessionID, FULONG groupID )
 {
 	int error = 0;
 	SystemBase *l = (SystemBase *)dm->dm_SB;
@@ -416,7 +417,7 @@ int UserGroupMountWorkgroupDrives( DeviceManager *dm, User *usr, FULONG groupID 
 						retFile->f_UserGroupID = groupID;
 						
 						retFile->f_UserID = usr->u_ID;
-						retFile->f_SessionIDPTR = usr->u_MainSessionID;
+						retFile->f_SessionIDPTR = sessionID;
 						retFile->f_Mounted = 1;
 						retFile->f_Config = StringDuplicate( config );
 						retFile->f_Visible = 1;
@@ -883,8 +884,9 @@ AND f.Name = '%s'",
 						// Just use the session id
 						//else{ f->f_SessionID = StringDuplicate( sessionid );}
 					
-						if( usingSentinel ){ f->f_SessionIDPTR = sent->s_User->u_MainSessionID; }
-						else{ f->f_SessionIDPTR = sessionid;}
+						//if( usingSentinel ){ f->f_SessionIDPTR = sent->s_User->u_MainSessionID; }
+						//else{ 
+						f->f_SessionIDPTR = sessionid;//}
 					
 						f->f_ID = id;
 						if( f->f_FSysName != NULL ){ FFree( f->f_FSysName );}
@@ -1010,7 +1012,7 @@ AND f.Name = '%s'",
 				}
 				
 				retFile->f_UserID = dbUserID;
-				retFile->f_SessionIDPTR = usr->u_MainSessionID;
+				retFile->f_SessionIDPTR = sessionid;
 				retFile->f_UserGroupID = userGroupID;
 				retFile->f_ID = id;
 				retFile->f_Mounted = mount;
@@ -1561,8 +1563,9 @@ AND f.Name = '%s'",
 						// Just use the session id
 						//else{ f->f_SessionID = StringDuplicate( sessionid );}
 					
-						if( usingSentinel ){ f->f_SessionIDPTR = sent->s_User->u_MainSessionID; }
-						else{ f->f_SessionIDPTR = sessionid;}
+						//if( usingSentinel ){ f->f_SessionIDPTR = sent->s_User->u_MainSessionID; }
+						//else{ 
+						f->f_SessionIDPTR = sessionid;
 					
 						f->f_ID = id;
 						if( f->f_FSysName != NULL ){ FFree( f->f_FSysName );}
@@ -1687,7 +1690,7 @@ AND f.Name = '%s'",
 				}
 				
 				retFile->f_UserID = dbUserID;
-				retFile->f_SessionIDPTR = usr->u_MainSessionID;
+				retFile->f_SessionIDPTR = sessionid;
 				retFile->f_UserGroupID = userGroupID;
 				retFile->f_ID = id;
 				retFile->f_Mounted = mount;
@@ -2205,7 +2208,7 @@ ug.UserID = '%ld' \
 )\
 ", name, usr->u_ID, usr->u_ID );
 
-				if( DeviceUnMount( dm, remdev, usr ) != 0 )
+				if( DeviceUnMount( dm, remdev, usr, loggedSession->us_SessionID ) != 0 )
 				//if( fsys->UnMount( remdev->f_FSys, remdev, usr ) != 0 )
 				{
 					FERROR("[UnMountFS] ERROR: Cannot unmount device\n");
@@ -2281,20 +2284,11 @@ ug.UserID = '%ld' \
 								
 									DEBUG( "[UnMountFS] Freeing this defunct device: %s (%s)\n", name, tmpUser->u_Name );
 								
-									DeviceUnMount( dm, search, usr );
+									DeviceUnMount( dm, search, tmpUser, loggedSession->us_SessionID );
 									//fsys->UnMount( search->f_FSys, search, usr );
 								
 									FileDelete( search );
-									/*
-									// Free up some
-									//if( search->f_SessionID ) FFree( search->f_SessionID );
-									if( search->f_Config ) FFree( search->f_Config );
-									if( search->f_FSysName ) FFree( search->f_FSysName );
-									if( search->f_Execute ) FFree( search->f_Execute );
-									if( search->f_DevServer ) FFree( search->f_DevServer );
-									FFree( search );
-									*/
-								
+
 									int doBreak = 0;
 								
 									// First item
@@ -2551,12 +2545,13 @@ ug.UserID = '%ld' \
  * @param sqllib pointer to sql.library
  * @param fsysid filesystem id
  * @param uid user ID to which device is assigned
+ * @param sessionID sessionID
  * @param devname device name
  * @param mountError pointer to place where error string will be stored
  * @return when device exist and its avaiable then pointer to it is returned
  */
 
-File *GetUserDeviceByFSysUserIDDevName( DeviceManager *dm, SQLLibrary *sqllib, FULONG fsysid, FULONG uid, const char *devname, char **mountError )
+File *GetUserDeviceByFSysUserIDDevName( DeviceManager *dm, SQLLibrary *sqllib, FULONG fsysid, FULONG uid, char *sessionID, const char *devname, char **mountError )
 {
 	SystemBase *l = (SystemBase *)dm->dm_SB;
 	File *device = NULL;
@@ -2618,8 +2613,6 @@ WHERE (`UserID`=%ld OR `GroupID` in( select GroupID from FUserToGroup where User
 		
 		// Done fetching sessionid =)
 		
-		char *masterSession = NULL;
-		
 		char *path = StringDuplicate( row[ 4 ] );
 		char *type = StringDuplicate( row[ 1 ] );
 		char *name = StringDuplicate( row[ 0 ] );
@@ -2634,14 +2627,13 @@ WHERE (`UserID`=%ld OR `GroupID` in( select GroupID from FUserToGroup where User
 		
 		if( tuser != NULL )
 		{
-			masterSession = tuser->u_MainSessionID;
 			struct TagItem tags[] = {
 				{FSys_Mount_Path, (FULONG)path},
 				{FSys_Mount_Server, (FULONG)NULL},
 				{FSys_Mount_Port, (FULONG)NULL},
 				{FSys_Mount_Type, (FULONG)type},
 				{FSys_Mount_Name, (FULONG)name},
-				{FSys_Mount_User_SessionID, (FULONG)masterSession },
+				{FSys_Mount_User_SessionID, (FULONG)sessionID },
 				//{FSys_Mount_User_SessionID, (FULONG)tuser->u_ID },
 				{FSys_Mount_Owner, (FULONG)owner },
 				{FSys_Mount_ID, (FULONG)id },
@@ -2958,16 +2950,18 @@ int MountDoorByRow( DeviceManager *dm, User *usr, char **row, User *mountUser __
  * Refresh user disk (difference between DB and FC)
  *
  * @param dm pointer to DeviceManager
- * @param u pointer to user which call this function
+ * @param us pointer to user session which call this function
  * @param bs pointer to BufferString when results will be stored
  * @param mountError pointer to place where error will be stored
  * @return success (0) or fail value (not equal to 0)
  */
-int RefreshUserDrives( DeviceManager *dm, User *u, BufString *bs, char **mountError )
+int RefreshUserDrives( DeviceManager *dm, UserSession *us, BufString *bs, char **mountError )
 {
 	SystemBase *l = (SystemBase *)dm->dm_SB;
 	FULONG *ids = FCalloc( 512, sizeof( FULONG ) );
 	int idsEntries = 0;
+	
+	User *u = us->us_User;
 	
 	// ask about all drives in DB
 	
@@ -3050,7 +3044,7 @@ ug.UserID = '%lu' \
 								{ FSys_Mount_Port,           (FULONG)row[ 3 ] },
 								{ FSys_Mount_Type,           (FULONG)row[ 0 ] },
 								{ FSys_Mount_Name,           (FULONG)row[ 8 ] },
-								{ FSys_Mount_User_SessionID, (FULONG)u->u_MainSessionID },
+								{ FSys_Mount_User_SessionID, (FULONG)us->us_SessionID },
 								{ FSys_Mount_Owner,          (FULONG)u },
 								{ FSys_Mount_Mount,          (FULONG)TRUE },
 								{ FSys_Mount_SysBase,        (FULONG)l },
@@ -3258,9 +3252,10 @@ int DeviceRelease( DeviceManager *dm, File *rootDev )
  * @param dm pointer to DeviceManager
  * @param rootDev pointer to device root file
  * @param usr pointer to User structure (device owner)
+ * @param sessionID session ID which will be used to unmount device
  * @return success (0) or fail value (not equal to 0)
  */
-int DeviceUnMount( DeviceManager *dm, File *rootDev, User *usr )
+int DeviceUnMount( DeviceManager *dm, File *rootDev, User *usr, char *sessionID )
 {
 	SystemBase *l = (SystemBase *)dm->dm_SB;
 	int errRet = 0;
@@ -3282,7 +3277,7 @@ int DeviceUnMount( DeviceManager *dm, File *rootDev, User *usr )
 
 		if( fsys != NULL && fsys->UnMount != NULL )
 		{
-			rootDev->f_SessionIDPTR = usr->u_MainSessionID;
+			rootDev->f_SessionIDPTR = sessionID;
 			errRet = fsys->UnMount( fsys, rootDev, usr );
 		}
 		else
@@ -3402,11 +3397,12 @@ File *GetRootDeviceByName( User *usr, char *devname )
  * @param sqllib pointer to sql.library
  * @param usrgrp pointer to usergroup to which doors belong
  * @param usr pointer to User. If user is not in FC list it will be added
+ * @param sessionID session ID which will be used to mount device
  * @param mountError pointer to error message
  * @return 0 if everything went fine, otherwise error number
  */
 
-int UserGroupDeviceMount( DeviceManager *dm, SQLLibrary *sqllib, UserGroup *usrgrp, User *usr, char **mountError )
+int UserGroupDeviceMount( DeviceManager *dm, SQLLibrary *sqllib, UserGroup *usrgrp, User *usr, char *sessionID, char **mountError )
 {
 	SystemBase *l = (SystemBase *)dm->dm_SB;
 	Log( FLOG_INFO,  "[UserGroupDeviceMount] Mount user device from Database\n");
@@ -3457,7 +3453,6 @@ usrgrp->ug_ID
 			int mount = atoi( row[ 5 ] );
 			int id = atol( row[ 7 ] );
 			int userID = atol( row[ 6 ] );
-			char *sessionID = NULL;
 			
 			// if user is not passed then we must add him, becaouse he is drive owner
 			if( usr == NULL )
@@ -3472,11 +3467,6 @@ usrgrp->ug_ID
 				{
 					UMAddUser( l->sl_UM, usr );
 				}
-			}
-			
-			if( usr != NULL )
-			{
-				sessionID = usr->u_MainSessionID;
 			}
 			
 			DEBUG("Usergroup mount: pass sessionid: '%s'\n", sessionID );
@@ -3494,7 +3484,7 @@ usrgrp->ug_ID
 				{ FSys_Mount_SysBase, (FULONG)SLIB },
 				{ FSys_Mount_User_SessionID, (FULONG)sessionID },
 				{ FSys_Mount_Visible, (FULONG)1 },     // Assume visible
-				{TAG_DONE, TAG_DONE}
+				{ TAG_DONE, TAG_DONE }
 			};
 
 			FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );

@@ -312,7 +312,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				}
 				else // only fragment was received
 				{
-					DEBUG1("[WS] Only received: %s\n", tin );
+					//DEBUG1("[WS] Only received: %s\n", tin );
 					BufStringAddSize( wsd->wsc_Buffer, tin, len );
 					return 0;
 				}

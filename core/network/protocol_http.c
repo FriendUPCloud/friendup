@@ -1014,7 +1014,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 								User *u = UMGetUserByID( SLIB->sl_UM, fs_IDUser );
 								if( u != NULL )
 								{
-									rootDev = GetUserDeviceByFSysUserIDDevName( SLIB->sl_DeviceManager, sqllib, fsysID, fs_IDUser, fs_DeviceName, &error );
+									rootDev = GetUserDeviceByFSysUserIDDevName( SLIB->sl_DeviceManager, sqllib, fsysID, fs_IDUser, usrSessionID, fs_DeviceName, &error );
 									
 									
 								} // if user is not in memory (and his drives), we must mount drives only
@@ -1161,19 +1161,14 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 										// We need to get the sessionId if we can!
 										// currently from table we read UserID
-										User *tuser = UMGetUserByID( SLIB->sl_UM, fs_IDUser );
 
-										if( tuser != NULL )
+										UserSession *sess = USMGetSessionByUserID( SLIB->sl_USM, fs_IDUser );
+
+										if( sess != NULL )
 										{
-											char *sess = USMUserGetFirstActiveSessionID( SLIB->sl_USM, tuser );
-
-											if( sess != NULL )
-											{
-												rootDev->f_SessionIDPTR = tuser->u_MainSessionID;
-												DEBUG("[ProtocolHttp] Session %s tusr ptr %p\n", sess, tuser );
-											}
+											rootDev->f_SessionIDPTR = sess->us_SessionID;
+											//DEBUG("[ProtocolHttp] Session %s\n", sess );
 										}
-
 
 										if( actFS != NULL )
 										{
@@ -1290,7 +1285,6 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 								// if device was mounted without user (not in memory) it must be removed on the end
 								if( mountedWithoutUser == TRUE )
 								{
-									//DeviceRelease( SLIB->sl_DeviceManager, rootDev );
 									DeviceRelease( SLIB->sl_DeviceManager, rootDev );
 									FileDelete( rootDev );
 								}

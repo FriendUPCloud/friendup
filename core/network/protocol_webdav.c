@@ -496,7 +496,6 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		return resp;
 	}
 
-	User *usr = sb->sl_UM->um_Users;
 	File *rootDev = NULL;
 	char *devname = NULL;
 	char *filePath = NULL;
@@ -649,7 +648,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 			{	HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/xml" ) },
 			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{	HTTP_HEADER_WWW_AUTHENTICATE, (FULONG)StringDuplicateN( data, size ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		resp = HttpNewSimple( HTTP_401_UNAUTHORIZED,  tagsauth );
@@ -882,6 +881,8 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 	// we must split path, to have access to device name, user name
 	AuthMod *ulib = sb->AuthModuleGet( sb );
 
+	User *usr = sb->sl_UM->um_Users;
+	
 	LIST_FOR_EACH( sb->sl_UM->um_Users, usr, User * )
 	{
 		if( strcmp( userName, usr->u_Name ) == 0 )
@@ -893,73 +894,39 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 	// user not logged in, we must add it to session
 	// and mount shared device
 	
+	UserSession *loggedSession = NULL;
+	if( usr == NULL )
 	{
-		if( usr == NULL )
-		{
-			DEBUG("User '%s' not found. FC will try to get it from DB\n", userName );
-			// SQL is used to mount  device!
+		DEBUG("User '%s' not found. FC will try to get it from DB\n", userName );
+		// SQL is used to mount  device!
 
-			usr = UMUserGetByNameDB( sb->sl_UM, userName );
-		
-			if( usr != NULL )
+		usr = UMUserGetByNameDB( sb->sl_UM, userName );
+	
+		if( usr != NULL )
+		{
+			LIST_ADD_HEAD( sb->sl_UM->um_Users, usr );
+			
+			loggedSession = USMGetSessionByDeviceIDandUser( sb->sl_USM, "webdav", usr->u_ID );
+			
+			if( loggedSession == NULL )
 			{
-				LIST_ADD_HEAD( sb->sl_UM->um_Users, usr );
-				
-				UserSession *ses = USMGetSessionByDeviceIDandUser( sb->sl_USM, "webdav", usr->u_ID );
-				
-				if( ses == NULL )
+				loggedSession = UserSessionNew( "webdav", "webdav" );
+				if( loggedSession != NULL )
 				{
-					ses = UserSessionNew( "webdav", "webdav" );
-					if( ses != NULL )
+					loggedSession->us_UserID = usr->u_ID;
+					loggedSession->us_LoggedTime = time( NULL );
+				
+					UserAddSession( usr, loggedSession );
+					USMSessionSaveDB( sb->sl_USM, loggedSession );
+				
+					if( FRIEND_MUTEX_LOCK( &(sb->sl_USM->usm_Mutex) ) == 0 )
 					{
-						ses->us_UserID = usr->u_ID;
-						ses->us_LoggedTime = time( NULL );
-					
-						UserAddSession( usr, ses );
-						USMSessionSaveDB( sb->sl_USM, ses );
-					
-						if( FRIEND_MUTEX_LOCK( &(sb->sl_USM->usm_Mutex) ) == 0 )
-						{
-							ses->node.mln_Succ = (MinNode *) sb->sl_USM->usm_Sessions;
-							sb->sl_USM->usm_Sessions = ses;
-							FRIEND_MUTEX_UNLOCK( &(sb->sl_USM->usm_Mutex) );
-						}
+						loggedSession->node.mln_Succ = (MinNode *) sb->sl_USM->usm_Sessions;
+						sb->sl_USM->usm_Sessions = loggedSession;
+						FRIEND_MUTEX_UNLOCK( &(sb->sl_USM->usm_Mutex) );
 					}
 				}
-				char *err = NULL;
-				sb->UserDeviceMount( sb, usr, 0, TRUE, &err, TRUE );
-				if( err != NULL )
-				{
-					FERROR("UserDeviceMount returned: %s\n", err );
-					FFree( err );
-				}
 			}
-			else
-			{
-				struct TagItem tagsauth[] = {
-					{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/xml" ) },
-					{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-					{TAG_DONE, TAG_DONE}
-				};
-
-				resp = HttpNewSimple( HTTP_401_UNAUTHORIZED,  tagsauth );
-				
-				sb->AuthModuleDrop( sb, ulib );
-			
-				char dictmsgbuf[ 256 ];
-				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", sb->sl_Dictionary->d_Msg[DICT_BAD_ERROR_OR_PASSWORD] , DICT_BAD_ERROR_OR_PASSWORD );
-				HttpAddTextContent( resp, dictmsgbuf );
-
-				FFree( path );
-				FFree( fpath );
-				if( decodedUser != NULL ){ FFree( decodedUser ); }
-			
-				return resp;
-			}
-			sb->AuthModuleDrop( sb, ulib );
-		}
-		else
-		{
 			char *err = NULL;
 			sb->UserDeviceMount( sb, usr, 0, TRUE, &err, TRUE );
 			if( err != NULL )
@@ -968,14 +935,45 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 				FFree( err );
 			}
 		}
+		else
+		{
+			struct TagItem tagsauth[] = {
+				{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/xml" ) },
+				{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+				{ TAG_DONE, TAG_DONE }
+			};
+				resp = HttpNewSimple( HTTP_401_UNAUTHORIZED,  tagsauth );
+			
+			sb->AuthModuleDrop( sb, ulib );
+		
+			char dictmsgbuf[ 256 ];
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", sb->sl_Dictionary->d_Msg[DICT_BAD_ERROR_OR_PASSWORD] , DICT_BAD_ERROR_OR_PASSWORD );
+			HttpAddTextContent( resp, dictmsgbuf );
+			FFree( path );
+			FFree( fpath );
+			if( decodedUser != NULL ){ FFree( decodedUser ); }
+		
+			return resp;
+		}
+		sb->AuthModuleDrop( sb, ulib );
+	}
+	else
+	{
+		char *err = NULL;
+		sb->UserDeviceMount( sb, usr, 0, TRUE, &err, TRUE );
+		if( err != NULL )
+		{
+			FERROR("UserDeviceMount returned: %s\n", err );
+			FFree( err );
+		}
 	}
 	
 	if( usr == NULL )
 	{
 		struct TagItem tagsauth[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/xml" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/xml" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
 		};
 
 		resp = HttpNewSimple( HTTP_401_UNAUTHORIZED,  tagsauth );
@@ -1184,7 +1182,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		if( have == TRUE )
 		{
 			FHandler *actFS = (FHandler *)rootDev->f_FSys;
-			rootDev->f_SessionIDPTR = usr->u_MainSessionID;
+			rootDev->f_SessionIDPTR = loggedSession->us_SessionID;
 			
 			File *fp = (File *)actFS->FileOpen( rootDev, filePath, "rb" );
 			if( fp != NULL )
@@ -1331,7 +1329,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		if( have == TRUE )
 		{
 			FHandler *actFS = (FHandler *)rootDev->f_FSys;
-			rootDev->f_SessionIDPTR = usr->u_MainSessionID;
+			rootDev->f_SessionIDPTR = loggedSession->us_SessionID;
 			File *fp = (File *)actFS->FileOpen( rootDev, filePath, "rb" );
 			if( fp != NULL )
 			{
@@ -1377,7 +1375,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		{
 			FHandler *actFS = (FHandler *)rootDev->f_FSys;
 			
-			rootDev->f_SessionIDPTR = usr->u_MainSessionID;
+			rootDev->f_SessionIDPTR = loggedSession->us_SessionID;
 			File *fp = (File *)actFS->FileOpen( rootDev, filePath, "wb" );
 			if( fp != NULL )
 			{
@@ -1466,7 +1464,7 @@ Host: 192.168.153.138:6502
 			}
 			DEBUG("RENAME, srcname %s dstname %s\n", filePath, dstpath );
 			
-			rootDev->f_SessionIDPTR = usr->u_MainSessionID;
+			rootDev->f_SessionIDPTR = loggedSession->us_SessionID;
 			int err = actFS->Rename( rootDev, filePath, dstpath );
 			
 			DEBUG("RENAME, err %d\n", err );
@@ -1504,7 +1502,7 @@ Host: 192.168.153.138:6502
 		if( have == TRUE )
 		{
 			FHandler *actFS = (FHandler *)rootDev->f_FSys;
-			rootDev->f_SessionIDPTR = usr->u_MainSessionID;
+			rootDev->f_SessionIDPTR = loggedSession->us_SessionID;
 			actFS->MakeDir( rootDev, filePath );
 		}
 		
@@ -1573,7 +1571,7 @@ Host: 192.168.153.138:6502
 				int read;
 				FHandler *actFS = (FHandler *)rootDev->f_FSys;
 				
-				rootDev->f_SessionIDPTR = usr->u_MainSessionID;
+				rootDev->f_SessionIDPTR = loggedSession->us_SessionID;
 			
 				File *rfp = (File *)actFS->FileOpen( rootDev, filePath, "rb" );
 				if( rfp != NULL )
@@ -1690,7 +1688,7 @@ Host: 192.168.153.138:6502
 					BufString *locdirresp;
 					
 					//stefkos
-					rootDev->f_SessionIDPTR = usr->u_MainSessionID;
+					rootDev->f_SessionIDPTR = loggedSession->us_SessionID;
 					if( filePath == NULL )
 					{
 						locdirresp = actFS->Dir( rootDev, "" );

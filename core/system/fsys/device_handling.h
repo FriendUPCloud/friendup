@@ -73,13 +73,13 @@ int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, cha
 //
 //
 
-int UserGroupMountWorkgroupDrives( DeviceManager *dm, User *usr, FULONG groupID );
+int UserGroupMountWorkgroupDrives( DeviceManager *dm, User *usr, char *sessionID, FULONG groupID );
 
 //
 //
 //
 
-int UserGroupDeviceMount( DeviceManager *dm, SQLLibrary *sqllib, UserGroup *usrgrp, User *usr, char **mountError );
+int UserGroupDeviceMount( DeviceManager *dm, SQLLibrary *sqllib, UserGroup *usrgrp, User *usr, char *sessionID, char **mountError );
 
 //
 //
@@ -103,7 +103,7 @@ int DeviceMountDB( DeviceManager *dm, File *rootDev, FBOOL mount );
 //
 //
 
-File *GetUserDeviceByFSysUserIDDevName( DeviceManager *dm, SQLLibrary *sqllib, FULONG fsysid, FULONG uid, const char *devname, char **mountError );
+File *GetUserDeviceByFSysUserIDDevName( DeviceManager *dm, SQLLibrary *sqllib, FULONG fsysid, FULONG uid, char *sessionID, const char *devname, char **mountError );
 //File *GetUserDeviceByUserID( DeviceManager *dm, SQLLibrary *sqllib, FULONG uid, const char *devname, char **mountError );
 
 //
@@ -134,7 +134,7 @@ int CheckAndMountWorkgroupDrive( DeviceManager *dm, char *type, User *usr, FUQUA
 //
 //
 
-int RefreshUserDrives( DeviceManager *dm, User *u, BufString *bs, char **mountError );
+int RefreshUserDrives( DeviceManager *dm, UserSession *us, BufString *bs, char **mountError );
 
 //
 //
@@ -146,7 +146,7 @@ int DeviceRelease( DeviceManager *dm, File *rootDev );
 //
 //
 
-int DeviceUnMount( DeviceManager *dm, File *rootDev, User *usr );
+int DeviceUnMount( DeviceManager *dm, File *rootDev, User *usr, char *sessionID );
 
 //
 // find comma and return position

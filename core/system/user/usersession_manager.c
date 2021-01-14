@@ -280,7 +280,7 @@ UserSession *USMGetSessionByUserID( UserSessionManager *usm, FULONG id )
 		UserSession *us = usm->usm_Sessions;
 		while( us != NULL )
 		{
-			if( us->us_User  != NULL  && us->us_User->u_ID == id )
+			if( us->us_User != NULL  && us->us_User->u_ID == id )
 			{
 				if( us->us_User->u_SessionsList != NULL )
 				{
@@ -668,12 +668,13 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 		}
 		else
 		{
-			DEBUG("[USMUserSessionAdd] User added to user %s main sessionid %s usptr: %p\n", locusr->u_Name, locusr->u_MainSessionID, us );
+			//DEBUG("[USMUserSessionAdd] User added to user %s main sessionid %s usptr: %p\n", locusr->u_Name, locusr->u_MainSessionID, us );
 			
 			UserAddSession( locusr, us );
 
 			us->us_User = locusr;
 			
+			/*
 			DEBUG("[USMUserSessionAdd] have more sessions: %d mainsessionid: '%s'\n", userHaveMoreSessions, locusr->u_MainSessionID );
 			
 			if( userHaveMoreSessions == FALSE && ( locusr->u_MainSessionID == NULL || ( strlen( locusr->u_MainSessionID ) <= 0 ) ) )
@@ -687,6 +688,7 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 				
 				DEBUG("[USMUserSessionAdd] SessionID will be overwriten\n");
 			}
+			*/
 		}
 	}
 	else
@@ -946,11 +948,11 @@ void USMDebugSessions( UserSessionManager *smgr )
 	{
 		if( lses->us_User != NULL )
 		{
-			DEBUG("[USMDebugSessions]----\n USER %s ID %ld\nsessionid %s mastersesid %s device %s\n\n", lses->us_User->u_Name, lses->us_ID, lses->us_SessionID, lses->us_User->u_MainSessionID, lses->us_DeviceIdentity );
+			DEBUG("[USMDebugSessions]----\n USER %s ID %ld\nsessionid %s device %s\n\n", lses->us_User->u_Name, lses->us_ID, lses->us_SessionID, lses->us_DeviceIdentity );
 		}
 		else
 		{
-			DEBUG("[USMDebugSessions]----\n USER %s ID %ld\nsessionid %s mastersesid %s device %s\n\n", "NOUSER!", lses->us_ID, lses->us_SessionID, lses->us_User->u_MainSessionID, lses->us_DeviceIdentity );
+			DEBUG("[USMDebugSessions]----\n USER %s ID %ld\nsessionid %s device %s\n\n", "NOUSER!", lses->us_ID, lses->us_SessionID, lses->us_DeviceIdentity );
 		}
 		lses = (UserSession *)lses->node.mln_Succ;
 	}
@@ -994,6 +996,14 @@ int USMRemoveOldSessions( void *lsb )
 					if( remSession->us_User == sb->sl_Sentinel->s_User && strcmp( remSession->us_DeviceIdentity, "remote" ) == 0 )
 					{
 						DEBUG("Sentinel REMOTE session I cannot remove it\n");
+						canDelete = FALSE;
+					}
+				}
+				else
+				{
+					if( strcmp( remSession->us_DeviceIdentity, "api" ) == 0 )
+					{
+						// There is no need to remove API user session
 						canDelete = FALSE;
 					}
 				}
@@ -1247,7 +1257,6 @@ char *USMCreateTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, F
 	char *sessionID = NULL;
 	FBOOL locSQLused = FALSE;
 	SystemBase *sb = NULL;
-
 	
 	SQLLibrary *locSqllib = sqllib;
 	if( sqllib == NULL )
@@ -1340,7 +1349,7 @@ User *USMIsSentinel( UserSessionManager *usm, char *username, UserSession **rus,
 			tuser = tusers->us_User;
 			// Check both username and password
 
-			if( strcmp( tuser->u_Name, username ) == 0 )
+			if( tuser != NULL && strcmp( tuser->u_Name, username ) == 0 )
 			{
 				if( tuser->u_IsSentinel == TRUE )
 				{

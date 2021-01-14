@@ -623,17 +623,12 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 		if( sd != NULL )
 		{
 			sd->module = StringDup( module );
-			if( usr != NULL && usr->u_MainSessionID != NULL )
+
+			if( userSession == NULL )
 			{
-				userSession = usr->u_MainSessionID;
+				userSession = empty;
 			}
-			else
-			{
-				if( userSession == NULL )
-				{
-					userSession = empty;
-				}
-			}
+			
 			DEBUG( "[fsysphp] Copying session: %s\n", userSession );
 			//dev->f_SessionID = StringDup( usr->u_MainSessionID );
 			dev->f_SessionIDPTR = userSession;

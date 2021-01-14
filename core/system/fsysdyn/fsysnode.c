@@ -225,7 +225,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 	char *module = NULL;
 	char *type = NULL;
 	char *authid = NULL;
-//	FULONG id = 0;
+	char *userSession = NULL;
 	
 	SystemBase *sb = NULL;
 	
@@ -273,6 +273,9 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 				case FSys_Mount_SysBase:
 					sb = (SystemBase *)lptr->ti_Data;
 					break;
+				case FSys_Mount_User_SessionID:
+					userSession = (char *)lptr->ti_Data;
+					break;
 			}
 			lptr++;
 		}
@@ -315,8 +318,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 		{
 			sd->module = StringDup( module );
 			DEBUG( "Copying session.\n" );
-			//dev->f_SessionID = StringDup( usr->u_MainSessionID );
-			dev->f_SessionIDPTR = usr->u_MainSessionID;
+			dev->f_SessionIDPTR = userSession;
 			sd->type = StringDup( type );
 			dev->f_SpecialData = sd;
 			sd->sb = sb;
@@ -327,7 +329,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 				( name ? strlen( name ) : 0 ) + 
 				( path ? strlen( path ) : 0 ) + 
 				( module ? strlen( module ) : strlen( "files" ) ) + 
-				( usr->u_MainSessionID ? strlen( usr->u_MainSessionID ) : 0 ) + 1;
+				( userSession ? strlen( userSession ) : 0 ) + 1;
 			
 			
 			// Whole command
@@ -348,7 +350,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 						name ? name : "", 
 						path ? path : "", 
 						module ? module : "files", 
-						usr->u_MainSessionID ? usr->u_MainSessionID : ""  );
+						userSession ? userSession : ""  );
 					sprintf( command, "node \"modules/node/module.js\" \"%s\";", FilterNodeVar( commandCnt ) );
 					FFree( commandCnt );
 			

@@ -1207,7 +1207,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 									if( el->ugid == 0 ) // user is not in group we must add him
 									{
 										UserGroupAddUser( fg, usr );
-										UserGroupMountWorkgroupDrives( l->sl_DeviceManager, usr, groupID );
+										UserGroupMountWorkgroupDrives( l->sl_DeviceManager, usr, loggedSession->us_SessionID, groupID );
 										
 										UserNotifyFSEvent2( l->sl_DeviceManager, usr, "refresh", "Mountlist:" );
 									}
@@ -1706,9 +1706,9 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 							{
 								char *errorStr = NULL;
 
-								UserGroupMountWorkgroupDrives( l->sl_DeviceManager, usr, groupID );
+								UserGroupMountWorkgroupDrives( l->sl_DeviceManager, usr, loggedSession->us_SessionID, groupID );
 								
-								if( UserGroupDeviceMount( l->sl_DeviceManager, sqlLib, ug, usr, &errorStr ) != 0 )
+								if( UserGroupDeviceMount( l->sl_DeviceManager, sqlLib, ug, usr, loggedSession->us_SessionID, &errorStr ) != 0 )
 								{
 									//INFO( "[MountFS] -- Could not mount device for user %s. Drive was %s.\n", tmpUser->u_Name ? tmpUser->u_Name : "--nousername--", name ? name : "--noname--" );
 								}

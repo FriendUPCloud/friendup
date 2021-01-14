@@ -2256,13 +2256,20 @@ int UserDeviceUnMount( SystemBase *l, SQLLibrary *sqllib __attribute__((unused))
 		{
 			File *dev = usr->u_MountedDevs;
 			File *remdev = dev;
+			char *sessionID = NULL;
+			
+			if( usr->u_SessionsList != NULL && usr->u_SessionsList->us != NULL )
+			{
+				UserSession *ses = usr->u_SessionsList->us;
+				sessionID = ses->us_SessionID;
+			}
 			
 			while( dev != NULL )
 			{
 				remdev = dev;
 				dev = (File *)dev->node.mln_Succ;
 				
-				DeviceUnMount( l->sl_DeviceManager, remdev, usr );
+				DeviceUnMount( l->sl_DeviceManager, remdev, usr, sessionID );
 				
 				FFree( remdev );
 			}

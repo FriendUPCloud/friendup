@@ -216,7 +216,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 		
 		char *error = NULL;
 		BufString *bs = BufStringNew();
-		if( ( resperr = RefreshUserDrives( l->sl_DeviceManager, loggedSession->us_User, bs, &error ) ) == 0 )
+		if( ( resperr = RefreshUserDrives( l->sl_DeviceManager, loggedSession, bs, &error ) ) == 0 )
 		{
 			HttpSetContent( response, bs->bs_Buffer, bs->bs_Bufsize );
 			bs->bs_Buffer = NULL;
@@ -679,7 +679,7 @@ f.Name ASC";
 					{ FSys_Mount_Port,           (FULONG)port },
 					{ FSys_Mount_Type,           (FULONG)type },
 					{ FSys_Mount_Name,           (FULONG)devname },
-					{ FSys_Mount_User_SessionID, (FULONG)usr->u_MainSessionID },
+					{ FSys_Mount_User_SessionID, (FULONG)loggedSession->us_SessionID },
 					{ FSys_Mount_Module,         (FULONG)module },
 					{ FSys_Mount_Owner,          (FULONG)usr },
 					{ FSys_Mount_UserName, (FULONG)usr->u_Name },
