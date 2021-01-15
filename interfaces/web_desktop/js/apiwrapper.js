@@ -2928,7 +2928,7 @@ function apiWrapper( event, force )
 								{
 									let enc = Workspace.encryption;
 									let user = enc.decrypt( Workspace.storedCredentials.username, enc.getKeys().privatekey );
-									let pass = enc.decrypt( Workspace.storedCredentials.username, enc.getKeys().privatekey );
+									let pass = enc.decrypt( Workspace.storedCredentials.password, enc.getKeys().privatekey );
 									if( user && pass )
 									{
 										response = {
