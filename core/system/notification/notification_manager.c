@@ -1046,7 +1046,7 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 int NotificationManagerAddIncomingRequestES( NotificationManager *nm, char *reqid, char *message )
 {
 	// allocate memory for new entry
-	FQEntry *newEntry = FCalloc( 1, sizeof( FQEntry ) );
+	FQEntry *newEntry = (FQEntry *)FCalloc( 1, sizeof( FQEntry ) );
 	
 	DEBUG("[NotificationManagerAddIncomingRequestES] requestid : %s message: %s\n", reqid, message );
 	
@@ -1064,6 +1064,10 @@ int NotificationManagerAddIncomingRequestES( NotificationManager *nm, char *reqi
 			
 			DEBUG("[NotificationManagerAddIncomingRequestES] new entry added to list\n");
 			return 0;
+		}
+		else
+		{
+			FFree( newEntry );
 		}
 	}
 	return 1;
@@ -1430,7 +1434,7 @@ int NotificationManagerNotificationSendFirebaseQueue( NotificationManager *nm, N
 			}
 		}
 		
-		FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
+		FQEntry *en = (FQEntry *)FCalloc( 1, sizeof( FQEntry ) );
 		if( en != NULL )
 		{
 			en->fq_Data = (void *)msg;

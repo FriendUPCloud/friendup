@@ -270,7 +270,7 @@ int UserGroupAddUser( UserGroup *ug, void *u )
 		if( ( au = (GroupUserLink *) FCalloc( 1, sizeof( GroupUserLink ) ) ) != NULL )
 		{
 			// add link from user to group
-			UserGroupLink *ugl = FCalloc( 1, sizeof(UserGroupLink ) );
+			UserGroupLink *ugl = (UserGroupLink *)FCalloc( 1, sizeof(UserGroupLink ) );
 			if( ugl != NULL )
 			{
 				ugl->ugl_Group = ug;
