@@ -1033,7 +1033,7 @@
 				$username = trim( $username );
 				$password = trim( $password );
 				
-				if( $hostname && $username && $password && $adminus && $adminpw )
+				if( $hostname && $username && $password )
 				{
 					
 					// Check user creds using freerdp ...
@@ -1050,15 +1050,15 @@
 						{
 							$checkauth = shell_exec( "xfreerdp /cert-ignore /cert:ignore +auth-only /u:$username /p:$password /v:$hostname /port:$rdp /log-level:ERROR 2>&1" );
 						}
-						
+					
 						$found = true;
 					}
-					
+				
 					if( !$found )
 					{
 						$checkauth = shell_exec( "xfreerdp /cert-ignore /cert:ignore +auth-only /u:$username /p:$password /v:$hostname /port:$rdp /log-level:ERROR 2>&1" );
 					}
-					
+				
 					if( $checkauth )
 					{
 						if( strstr( $checkauth, 'sfreerdp: not found' ) || strstr( $checkauth, 'xfreerdp: not found' ) )
@@ -1077,7 +1077,7 @@
 									}
 								}
 							}
-							
+						
 							if( !$authenticated )
 							{
 								$error = '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"1"}';
@@ -1087,6 +1087,67 @@
 					else
 					{
 						$error = '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"2"}';
+					}
+					
+					
+					
+					$path = ( __DIR__ . '/../../../cfg' );
+					
+					// Specific usecase ...
+					
+					if( file_exists( $path . '/Friend-AD-Time-IT.csv' ) )
+					{
+						if( $output = file_get_contents( $path . '/Friend-AD-Time-IT.csv' ) )
+						{
+							$identity = new stdClass();
+								
+							if( $parts = explode( "\n", trim( $output ) ) )
+							{
+								
+								foreach( $parts as $part )
+								{
+									if( $value = explode( ';', $part ) )
+									{
+										if( isset( $value[0] ) && isset( $value[1] ) && isset( $value[2] ) && trim( $value[2] ) )
+										{
+											if( !intval( trim( $value[0] ) ) )
+											{
+												if( $mobile = (int) filter_var( trim( $value[0] ), FILTER_SANITIZE_NUMBER_INT ) )
+												{
+													$value[0] = $mobile;
+												}
+											}
+											
+											$identity->{ strtolower( trim( $value[2] ) ) } = [ intval( trim( $value[0] ) ), trim( $value[1] ), trim( $value[2] ) ];
+										}
+									}
+								}
+							
+							}
+							
+							if( $identity && isset( $identity->{ strtolower( trim( $username ) ) } ) )
+							{
+								$data = new stdClass();
+								$data->id       = ( '0' );
+								$data->fullname = ( $identity->{ strtolower( trim( $username ) ) }[1] );
+								$data->mobile   = ( $identity->{ strtolower( trim( $username ) ) }[0] );
+							}
+							else
+							{
+								$error = '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"0"}';
+							}
+							
+							if( $data )
+							{
+								return [ 'ok', $data ];
+							}
+						
+							if( $error )
+							{
+								return [ 'fail', $error ];
+							}
+							
+						}
 					}
 					
 					
@@ -1119,83 +1180,87 @@
 					
 					if( $authenticated && $connection )
 					{
-						if( $auth = ssh2_auth_password( $connection, $adminus, $adminpw ) )
+						
+						if( $adminus && $adminpw )
 						{
 							
-							$stream = ssh2_exec( $connection, "powershell;Get-ADUser -Identity $username -Properties *" );
-							
-							$outputStream = ssh2_fetch_stream( $stream, SSH2_STREAM_STDIO );
-							$errorStream  = ssh2_fetch_stream( $stream, SSH2_STREAM_STDERR );
-							
-							// Enable blocking for both streams
-							stream_set_blocking( $outputStream, true );
-							stream_set_blocking( $errorStream, true );
-					
-							$output = stream_get_contents( $outputStream );
-							$error  = stream_get_contents( $errorStream );
-					
-							// Close the streams        
-							fclose( $errorStream );
-							fclose( $stream );
-							
-							
-							
-							if( $output )
+							if( $auth = ssh2_auth_password( $connection, $adminus, $adminpw ) )
 							{
-								$identity = new stdClass();
+							
+								$stream = ssh2_exec( $connection, "powershell;Get-ADUser -Identity $username -Properties *" );
+							
+								$outputStream = ssh2_fetch_stream( $stream, SSH2_STREAM_STDIO );
+								$errorStream  = ssh2_fetch_stream( $stream, SSH2_STREAM_STDERR );
+							
+								// Enable blocking for both streams
+								stream_set_blocking( $outputStream, true );
+								stream_set_blocking( $errorStream, true );
+					
+								$output = stream_get_contents( $outputStream );
+								$error  = stream_get_contents( $errorStream );
+					
+								// Close the streams        
+								fclose( $errorStream );
+								fclose( $stream );
+							
 								
-								if( $parts = explode( "\n", $output ) )
+							
+								if( $output )
 								{
-									
-									foreach( $parts as $part )
+									$identity = new stdClass();
+								
+									if( $parts = explode( "\n", $output ) )
 									{
-										if( $value = explode( ':', $part ) )
+									
+										foreach( $parts as $part )
 										{
-											if( trim( $value[0] ) )
+											if( $value = explode( ':', $part ) )
 											{
-												$identity->{ trim( $value[0] ) } = ( $value[1] ? trim( $value[1] ) : '' );
+												if( trim( $value[0] ) )
+												{
+													$identity->{ trim( $value[0] ) } = ( $value[1] ? trim( $value[1] ) : '' );
+												}
 											}
 										}
-									}
 									
+									}
 								}
-							}
 							
-							if( $identity )
-							{
-								if( $identity->MobilePhone )
+								if( $identity )
 								{
-									$data = new stdClass();
-									$data->id       = ( $identity->SID          ? $identity->SID          : '0' );
-									$data->fullname = ( $identity->Name         ? $identity->Name         : ''  );
-									$data->mobile   = ( $identity->mobile       ? $identity->mobile       : ''  );
-									$data->email    = ( $identity->EmailAddress ? $identity->EmailAddress : ''  );
+									if( $identity->MobilePhone )
+									{
+										$data = new stdClass();
+										$data->id       = ( $identity->SID          ? $identity->SID          : '0' );
+										$data->fullname = ( $identity->Name         ? $identity->Name         : ''  );
+										$data->mobile   = ( $identity->mobile       ? $identity->mobile       : ''  );
+										$data->email    = ( $identity->EmailAddress ? $identity->EmailAddress : ''  );
+									}
+									else
+									{
+										$error = '{"result":"-1","response":"Mobile number for user account empty ..."}';
+									}
 								}
 								else
 								{
-									$error = '{"result":"-1","response":"Mobile number for user account empty ..."}';
+									$error = '{"result":"-1","response":"Mobile number for user account missing ..."}';
 								}
-							}
-							else
-							{
-								$error = '{"result":"-1","response":"Mobile number for user account missing ..."}';
+							
+								if( $data )
+								{
+									return [ 'ok', $data ];
+								}
+							
+								if( $error )
+								{
+									return [ 'fail', $error ];
+								}
+							
 							}
 							
-							if( $data )
-							{
-								return [ 'ok', $data ];
-							}
-							
-							if( $error )
-							{
-								return [ 'fail', $error ];
-							}
-					
 						}
-						else
-						{
-							$error = '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"3"}';
-						}
+						
+						$error = '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"3"}';
 						
 					}
 				}
