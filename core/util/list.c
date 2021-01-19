@@ -119,6 +119,10 @@ List* ListNew()
 
 List* ListAdd( List** list, void* data )
 {
+	if( list == NULL )
+	{
+		return NULL;
+	}
 	if( !(*list)->l_Data )
 	{
 		(*list)->l_Data = data;

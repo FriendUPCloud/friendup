@@ -145,6 +145,12 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 		{
 			sprintf( allArgs, "%s", request->http_Uri->uri_QueryRaw );
 		}
+		
+		if( allArgsNew == NULL )
+		{
+			FFree( allArgs );
+			return NULL;
+		}
 	
 		// application/json are used to communicate with another tools like onlyoffce
 		char *sessptr = NULL;
@@ -1157,13 +1163,16 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						if( checkAvail->l_Data )
 						{
 							struct ModuleSet *mp = ( struct ModuleSet * )checkAvail->l_Data;
-							if( strcmp( ( char *)he->hme_Data, mp->name ) == 0 )
+							if( mp != NULL && mp->name != NULL )
 							{
-								found = 1;
-								modType = StringDuplicate( mp->extension );
-								snprintf( path, sizeof( path ), "modules/%s", mp->name );
-								path[ 511 ] = 0;
-								break;
+								if( strcmp( ( char *)he->hme_Data, mp->name ) == 0 )
+								{
+									found = 1;
+									modType = StringDuplicate( mp->extension );
+									snprintf( path, sizeof( path ), "modules/%s", mp->name );
+									path[ 511 ] = 0;
+									break;
+								}
 							}
 						}
 						checkAvail = checkAvail->next;

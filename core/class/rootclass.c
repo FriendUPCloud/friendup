@@ -99,7 +99,9 @@ FULONG rootNew( Class *c, Object *o __attribute__((unused)), struct Msg *msg )
 		newObject->o_Class = c;
 		c->cl_ObjectCount++;
 		DEBUG("ROOTNEW object created %ld\n", c->cl_ObjectCount );
-	}else{
+	}
+	else
+	{
 		return (FULONG)NULL;
 	}
 
@@ -251,12 +253,14 @@ FULONG rootNotify( Class *c __attribute__((unused)), Object *o, struct Msg *msg 
 
 			lastEvent->node.mln_Succ = (struct MinNode *)event;
 			event->node.mln_Pred = (struct MinNode *)lastEvent;
-		}else{
+		}
+		else
+		{
 			o->o_Event = event;
 		}
-
-		
-	}else{
+	}
+	else
+	{
 		return 1;
 	}
 

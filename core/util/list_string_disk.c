@@ -182,6 +182,10 @@ FQUAD ListStringDiskAdd( ListStringDisk *ls, char *data, FLONG size )
 	}
 	else
 	{
+		if( nls != NULL )
+		{
+			FFree( nls );
+		}
 		return -2;
 	}
 	return 0;
