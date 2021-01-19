@@ -81,6 +81,11 @@ function refreshSidebar( show )
 			}
 		},
 		'Services': {
+			'Guacamole': {
+				icon: 'fa-info-circle',
+				showing: isAdmin,
+				display: true
+			},
 			'Status': {
 				icon: 'fa-info-circle',
 				showing: isAdmin,

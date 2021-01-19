@@ -7664,6 +7664,9 @@ Sections.accounts_users = function( cmd, extra )
 				console.log( "UsersSettings( 'lastlogin', false ); to list users without lastlogin ..." );
 				console.log( "UsersSettings(  ); for current Users Settings ..." );
 				
+				// Temporary ...
+				UsersSettings( 'avatars', false );
+				
 				// Get correct estimate of how many users fit into the window area ...
 			
 				CheckUserlistSize( true );
