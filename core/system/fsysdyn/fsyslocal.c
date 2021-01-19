@@ -57,19 +57,16 @@ const char *GetPrefix()
 
 char* StringDup( const char* str )
 {
-	if( str == NULL)
-	{
-		//DEBUG("Cannot copy string!\n");
-		return NULL;
-	}
-	
-	int len = strlen( str );
 	char *res = NULL;
-	if( ( res = calloc( len+1, sizeof(char) ) ) != NULL )
+	if( str != NULL)
 	{
-		strcpy( res, str );
-	}
+		int len = strlen( str );
 	
+		if( ( res = FCalloc( len+1, sizeof(char) ) ) != NULL )
+		{
+			strcpy( res, str );
+		}
+	}
 	return res;
 }
 
@@ -188,52 +185,37 @@ void *Mount( struct FHandler *s, struct TagItem *ti, UserSession *usrs, char **m
 			dev->f_Size = 0;
 			
 			DEBUG("LOCALFS IS DIRECTORY data filled\n");
+			
+			// we are trying to open folder/connection
+		
+			unsigned int pathlen = strlen( path );
+			dev->f_Path = FCalloc( pathlen + 10, sizeof(char) );
+			if( dev->f_Path != NULL )
+			{
+				strcpy( dev->f_Path, path );
+				if( path[ pathlen-1 ] != '/' )
+				{
+					strcat( dev->f_Path, "/" );
+				}
+			}
+			//dev->f_Path = StringDup( path );
+			DEBUG("LOCALFS: localfs path is ok '%s'\n", dev->f_Path );
+			dev->f_FSys = s;
+			dev->f_Position = 0;
+			dev->f_User = usrs->us_User;
+			dev->f_Name = StringDup( name );
+			dev->f_SpecialData = FCalloc( 1, sizeof(SpecialData) );
+			if( dev->f_SpecialData != NULL )
+			{
+				//SpecialData *locsd = (SpecialData *)dev->f_SpecialData;
+				((SpecialData *)dev->f_SpecialData)->sb = sb;
+			}
 		}
 		else
 		{
 			FFree( dev );
 			return NULL;
 		}
-		/*
-		if( isAdmin == TRUE )
-		{
-			
-		}
-		else
-		{
-			if( strncmp( path, usersPath, strlen( usersPath ) ) == 0 )
-			{
-				// path is correct, user can use it
-			}
-			else
-			{
-				path = usersPath;
-			}
-		}
-		*/
-		
-		// we are trying to open folder/connection
-		
-		unsigned int pathlen = strlen( path );
-		dev->f_Path = FCalloc( pathlen + 10, sizeof(char) );
-		strcpy( dev->f_Path, path );
-		if( path[ pathlen-1 ] != '/' )
-		{
-			strcat( dev->f_Path, "/" );
-		}
-		//dev->f_Path = StringDup( path );
-		DEBUG("LOCALFS: localfs path is ok '%s'\n", dev->f_Path );
-		dev->f_FSys = s;
-		dev->f_Position = 0;
-		dev->f_User = usrs->us_User;
-		dev->f_Name = StringDup( name );
-		dev->f_SpecialData = FCalloc( 1, sizeof(SpecialData) );
-		
-		SpecialData *locsd = (SpecialData *)dev->f_SpecialData;
-		locsd->sb = sb;
-		
-		
-		
 	}
 	
 	DEBUG("LOCALFS localfs mount ok\n");
@@ -299,7 +281,10 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 	// Make relative path
 	int pathsize = strlen( path );
 	char *commClean = FCalloc( pathsize+10, sizeof( char ) );
-	
+	if( commClean == NULL )
+	{
+		return NULL;
+	}
 	int i = 0;
 	for( i=0 ; i < pathsize ; i++ )
 	{
@@ -451,11 +436,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		FFree( comm );
 	}
 	
-	// Free commClean
-	if( commClean )
-	{
-		FFree( commClean );
-	}
+	FFree( commClean );
 	/*
 	if( cleanPath )
 	{
@@ -845,6 +826,7 @@ int Rename( struct File *s, const char *path, const char *nname )
 {
 	DEBUG("Rename!\n");
 	char *newname = NULL;
+	int res = 0;
 	
 	// remove disk name
 	char *pathNoDiskName = (char *)path;
@@ -865,61 +847,67 @@ int Rename( struct File *s, const char *path, const char *nname )
 	
 	// 1a. is the source a folder? If so, remove trailing /
 	char *targetPath = NULL;
-	
-	if( pathNoDiskName[spath-1] == '/' )
+	if( ( targetPath = FCalloc( spath + 1, sizeof( char ) ) ) != NULL )
 	{
-		targetPath = FCalloc( spath, sizeof( char ) );
-		sprintf( targetPath, "%.*s", spath - 1, pathNoDiskName );
-	}
-	else
-	{
-		targetPath = FCalloc( spath + 1, sizeof( char ) ); 
-		sprintf( targetPath, "%.*s", spath, pathNoDiskName );
-	}
-	
-	// 1b. Do we have a sub folder in pathNoDiskName?
-	int hasSubFolder = 0;
-	int off = 0;
-	int c = 0; for( ; c < spath; c++ )
-	{
-		if( targetPath[c] == '/' )
+		if( pathNoDiskName[spath-1] == '/' )
 		{
-			hasSubFolder++;
-			off = c + 1;
+			sprintf( targetPath, "%.*s", spath - 1, pathNoDiskName );
 		}
+		else
+		{
+			sprintf( targetPath, "%.*s", spath, pathNoDiskName );
+		}
+	
+		// 1b. Do we have a sub folder in pathNoDiskName?
+		int hasSubFolder = 0;
+		int off = 0;
+		int c = 0; for( ; c < spath; c++ )
+		{
+			if( targetPath[c] == '/' )
+			{
+				hasSubFolder++;
+				off = c + 1;
+			}
+		}
+	
+		// 2. Full path of source
+		char *source = FCalloc( rspath + spath + 1, sizeof( char ) );
+		if( source != NULL )
+		{
+			sprintf( source, "%s%s", s->f_Path, targetPath );
+	
+			// 3. Ok if we have sub folder or not, add it to our destination
+			char *dest = NULL;
+			dest = FCalloc( rspath + off + strlen( nname ) + 1, sizeof( char ) );
+			if( dest != NULL )
+			{
+				if( hasSubFolder > 0 )
+				{
+					sprintf( dest, "%.*s", rspath, s->f_Path );
+					printf("-------%s\n", dest );
+					sprintf( dest + rspath, "%.*s", off, targetPath );
+					printf("1-------%s\n", dest );
+					sprintf( dest + rspath + off, "%s", nname );
+					printf("2-------%s\n", dest );
+				}
+				else 
+				{
+					sprintf( dest, "%s", s->f_Path );
+					sprintf( dest + rspath, "%s", nname );
+				}
+	
+				// 4. Execute!
+				DEBUG( "executing: rename %s %s\n", source, dest );
+				res = rename( source, dest );
+	
+				// 5. Free up
+			
+				FFree( dest );
+			}
+			FFree( source );
+		}
+		FFree( targetPath );
 	}
-	
-	// 2. Full path of source
-	char *source = FCalloc( rspath + spath + 1, sizeof( char ) );
-	sprintf( source, "%s%s", s->f_Path, targetPath );
-	
-	// 3. Ok if we have sub folder or not, add it to our destination
-	char *dest = NULL;
-	if( hasSubFolder > 0 )
-	{
-		dest = FCalloc( rspath + off + strlen( nname ) + 1, sizeof( char ) );
-		sprintf( dest, "%.*s", rspath, s->f_Path );
-		printf("-------%s\n", dest );
-		sprintf( dest + rspath, "%.*s", off, targetPath );
-		printf("1-------%s\n", dest );
-		sprintf( dest + rspath + off, "%s", nname );
-		printf("2-------%s\n", dest );
-	}
-	else 
-	{
-		dest = FCalloc( rspath + strlen( nname ) + 1, sizeof( char ) );
-		sprintf( dest, "%s", s->f_Path );
-		sprintf( dest + rspath, "%s", nname );
-	}
-	
-	// 4. Execute!
-	DEBUG( "executing: rename %s %s\n", source, dest );
-	int res = rename( source, dest );
-	
-	// 5. Free up
-	FFree( source );
-	FFree( dest );
-	FFree( targetPath );
 	
 	return res;
 }

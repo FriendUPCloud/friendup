@@ -238,6 +238,10 @@ int NotificationManagerNotificationSendAndroidQueue( NotificationManager *nm, No
 				pthread_cond_signal( &(nm->nm_AndroidSendCond) );
 				FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
 			}
+			else
+			{
+				FFree( en );
+			}
 		}
 		else
 		{

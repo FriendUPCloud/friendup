@@ -140,7 +140,7 @@ Http *INVARManagerWebRequest( void *m, char **urlpath, Http* request )
 			}
 			else
 			{
- 				Log( FLOG_ERROR, "Wrong GID '%s' provided\n", gid->hme_Data );
+ 				Log( FLOG_ERROR, "Wrong GID provided\n");
 			}
 		}
 		else

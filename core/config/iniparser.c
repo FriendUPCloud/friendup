@@ -379,6 +379,10 @@ int iniparser_getseckeysvalues(dictionary * d, char * s, char ***keys, char ***v
 	if (d==NULL) return 0;
 	seclen  = (int)strlen(s);
 	localGroupName = calloc( seclen + 1, sizeof(char) );
+	if( localGroupName == NULL )
+	{
+		return 0;
+	}
 	
 	for( i=0 ; i < seclen ; i++ )
 	{
@@ -403,7 +407,9 @@ int iniparser_getseckeysvalues(dictionary * d, char * s, char ***keys, char ***v
 	for (j=0 ; j<d->size ; j++)
 	{
 		if (d->key[j]==NULL)
+		{
 			continue ;
+		}
 		
 		if (!strncmp(d->key[j], keym, seclen+1))
 		{
@@ -459,11 +465,13 @@ int iniparser_getseckeysvalues(dictionary * d, char * s, char ***keys, char ***v
 /*--------------------------------------------------------------------------*/
 char * iniparser_getstring(dictionary * d, const char * key, char * def)
 {
-    char * lc_key ;
-    char * sval ;
+	char *lc_key;
+	char *sval;
 
-    if (d==NULL || key==NULL)
-        return def ;
+	if (d==NULL || key==NULL)
+	{
+		return def ;
+	}
 
     lc_key = strlwc(key);
     sval = dictionary_get(d, lc_key, def);
@@ -617,7 +625,7 @@ int iniparser_find_entry(
 )
 {
     int found=0 ;
-    if (iniparser_getstring(ini, entry, INI_INVALID_KEY)!=INI_INVALID_KEY) {
+    if(iniparser_getstring(ini, entry, INI_INVALID_KEY)!=INI_INVALID_KEY) {
         found = 1 ;
     }
     return found ;
@@ -747,7 +755,7 @@ dictionary * iniparser_load(const char * ininame)
     char line    [ASCIILINESZ+1];
     char section [ASCIILINESZ+1];
     char key     [ASCIILINESZ+1];
-    char tmp     [ASCIILINESZ+1];
+    char tmp     [ (ASCIILINESZ+1)*2 ];
     char val     [ASCIILINESZ+1];
 
     int  last=0 ;

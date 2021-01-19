@@ -86,9 +86,9 @@ void FriendCoreProcess( void *fcv );
 
 int accept4(int sockfd, struct sockaddr *addr,            socklen_t *addrlen, int flags );
 
-void FriendCoreProcessSockBlock( void *fcv );
+void *FriendCoreProcessSockBlock( void *fcv );
 
-void FriendCoreProcessSockNonBlock( void *fcv );
+void *FriendCoreProcessSockNonBlock( void *fcv );
 
 int nothreads = 0;					/// threads coutner @todo to rewrite
 #define MAX_CALLHANDLER_THREADS 256			///< maximum number of simulatenous handlers
@@ -1263,7 +1263,7 @@ void *FriendCoreAcceptPhase2( void *d )
 //
 //
 
-void FriendCoreProcessSockBlock( void *fcv )
+void *FriendCoreProcessSockBlock( void *fcv )
 {
 #ifdef USE_PTHREAD
 	pthread_detach( pthread_self() );
@@ -1274,7 +1274,7 @@ void FriendCoreProcessSockBlock( void *fcv )
 #ifdef USE_PTHREAD
 		pthread_exit( NULL );
 #endif
-		return;
+		return NULL;
 	}
 
 	struct fcThreadInstance *th = ( struct fcThreadInstance *)fcv;
@@ -1475,19 +1475,21 @@ void FriendCoreProcessSockBlock( void *fcv )
 	}
 
 	if( resultString )
+	{
 		BufStringDiskDelete( resultString );
+	}
 
 #ifdef USE_PTHREAD
 	pthread_exit( NULL );
 #endif
-	return;
+	return NULL;
 }
 
 
 
 
 
-void FriendCoreProcessSockNonBlock( void *fcv )
+void *FriendCoreProcessSockNonBlock( void *fcv )
 {
 #ifdef USE_PTHREAD
 	pthread_detach( pthread_self() );
@@ -1498,7 +1500,7 @@ void FriendCoreProcessSockNonBlock( void *fcv )
 #ifdef USE_PTHREAD
 		pthread_exit( NULL );
 #endif
-		return;
+		return NULL;
 	}
 
 	struct fcThreadInstance *th = ( struct fcThreadInstance *)fcv;
@@ -1509,7 +1511,7 @@ void FriendCoreProcessSockNonBlock( void *fcv )
 #ifdef USE_PTHREAD
 		pthread_exit( NULL );
 #endif
-		return;
+		return NULL;
 	}
 
 	// Let's go!
@@ -1646,7 +1648,7 @@ void FriendCoreProcessSockNonBlock( void *fcv )
 #ifdef USE_PTHREAD
 	pthread_exit( NULL );
 #endif
-	return;
+	return NULL;
 }
 
 
@@ -2067,11 +2069,11 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 						DEBUG( "[FriendCoreEpoll] Adding the damned thing %d.\n", fd );
 						
 						AcceptStruct *as = FCalloc( 1, sizeof( AcceptStruct ) );
-						//int *fdi = malloc( sizeof( int ) );
-						//*fdi = fd;
-						//AddToList( pre->fds, ( void *)fdi );
-						as->fd = fd;
-						as->node.mln_Succ = (MinNode *)pre->afd;
+						if( as != NULL )
+						{
+							as->fd = fd;
+							as->node.mln_Succ = (MinNode *)pre->afd;
+						}
 						pre->afd = as;
 						
 						// We are now in use!

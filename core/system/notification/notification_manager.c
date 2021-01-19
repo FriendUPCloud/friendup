@@ -863,7 +863,7 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 				}
 				*/
 				
-				dstsize = GenerateServiceMessage( dstMsg, reqID, path, params, us );
+				dstsize = GenerateServiceMessage( dstMsg, reqID, (char *)path, (char *)params, us );
 				
 				Log( FLOG_INFO, "[NotificationManagerSendRequestToConnections] Send message: '%s'\n", dstMsg );
 				
@@ -891,7 +891,7 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 				}
 				*/
 				
-				dstsize = GenerateServiceMessage( dstMsg, reqID, path, params, us );
+				dstsize = GenerateServiceMessage( dstMsg, reqID, (char *)path, (char *)params, us );
 				Log( FLOG_INFO, "[NotificationManagerSendRequestToConnections] Send message: '%s'\n", dstMsg );
 				
 				ret += WriteMessageToServers( con->esc_Connection, (unsigned char *)dstMsg, dstsize );
@@ -1446,6 +1446,10 @@ int NotificationManagerNotificationSendFirebaseQueue( NotificationManager *nm, N
 				
 				pthread_cond_signal( &(nm->nm_AndroidSendCond) );
 				FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
+			}
+			else
+			{
+				FFree( en );
 			}
 		}
 		else

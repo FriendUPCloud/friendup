@@ -359,6 +359,7 @@ int UMUserCreate( UserManager *smgr, Http *r __attribute__((unused)), User *usr 
 	if( usr == NULL )
 	{
 		FERROR("Cannot create user, NULL cannot be stored into database\n");
+		return -1;
 	}
 
 	if( UMUserExistByNameDB( smgr, usr->u_Name ) == TRUE )
@@ -381,7 +382,7 @@ int UMUserCreate( UserManager *smgr, Http *r __attribute__((unused)), User *usr 
 			unsigned char hash[ 32 ];
 			char *hashTarget;
 			
-			if( ( hashTarget = calloc( 69, sizeof(char) ) ) != NULL )
+			if( ( hashTarget = FCalloc( 69, sizeof(char) ) ) != NULL )
 			{
 				hashTarget[ 0 ] = '{';
 				hashTarget[ 1 ] = 'S';
@@ -417,7 +418,6 @@ int UMUserCreate( UserManager *smgr, Http *r __attribute__((unused)), User *usr 
 	GenerateUUID( &( usr->u_UUID ) );
 
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
-	
 	int val = 0;
 	if( sqlLib != NULL )
 	{

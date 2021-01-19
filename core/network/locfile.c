@@ -78,12 +78,13 @@ static inline int LocFileRead( LocFile* file, FILE *fp, long long offset, long l
 	}
 
 	file->lf_Buffer = (char *)FMalloc( size + 1 );
-	file->lf_Buffer[ size ] = 0;
 	if( file->lf_Buffer == NULL )
 	{
 		DEBUG("Cannot allocate memory for file\n");
 		return 0;
 	}
+	
+	file->lf_Buffer[ size ] = 0;
 	
 	file->lf_FileSize = size;
 	fseeko( fp, offset, SEEK_SET );
@@ -261,6 +262,7 @@ int LocFileReload( LocFile *file, char *path )
 	if( stat( path, &st ) < 0 )
 	{
 		FERROR("Cannot run stat on file: %s!\n", path);
+		fclose( fp );
 		return -2;
 	}
 	memcpy(  &(file->lf_Info),  &st, sizeof(stat) );

@@ -82,10 +82,14 @@ Path* PathNew( const char* path )
 	if( len > 0 )
 	{
 		//DEBUG( "[PathNew] Here it is: %d\n", len );
-		p->raw = calloc( len + 10, sizeof( char ) );
-		p->p_CopyRaw = calloc( len + 10, sizeof( char ) );
-		memcpy( p->raw, path, len );
-		memcpy( p->p_CopyRaw, path, len );
+		if( ( p->raw = FCalloc( len + 10, sizeof( char ) ) ) != NULL )
+		{
+			memcpy( p->raw, path, len );
+		}
+		if( ( p->p_CopyRaw = FCalloc( len + 10, sizeof( char ) ) ) != NULL )
+		{
+			memcpy( p->p_CopyRaw, path, len );
+		}
 		p->rawSize = len;
 		PathSplit( p );
 
@@ -201,7 +205,7 @@ void PathMake( Path* path )
 	// Free the previous path, if any
 	if( path->raw )
 	{
-		free( path->raw );
+		FFree( path->raw );
 		path->raw = NULL;
 	}
 
@@ -215,12 +219,18 @@ void PathMake( Path* path )
 	length += path->size - 1;     // All the /'s inbetween segments
 	length += path->file ? 0 : 1; // Trailing / for directories
 
-	path->raw = FCalloc( length + 1, sizeof( char ) );
+	if( ( path->raw = FCalloc( length + 1, sizeof( char ) ) ) != NULL )
+	{
+		path->raw[length] = '\0';
+	}
 	path->rawSize = length;
-	path->raw[length] = '\0';
-
+	
 	// Create the path string
 	char* raw = path->raw;
+	if( raw  == NULL )
+	{
+		return;
+	}
 
 	if( path->isAbsolute )
 	{

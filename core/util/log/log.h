@@ -163,9 +163,9 @@ extern FlogFlags slg;
 #define LOG( LEV, ...)  Log( LEV,  "(" __FILE__ " " STR(__LINE__ ) ") " FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
 
 #ifdef __DEBUG
-#define FERROR(...) printf( "\x1B[31m (%s:%d) %d ", __FILE__, __LINE__, pthread_self()  ); printf( FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
+#define FERROR(...) printf( "\x1B[31m (%s:%d) %ld ", __FILE__, __LINE__, pthread_self()  ); printf( FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
 
-#define INFO(...) printf( "\x1B[34m (%s:%d) %d ", __FILE__, __LINE__, pthread_self()  ); printf( FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
+#define INFO(...) printf( "\x1B[34m (%s:%d) %ld ", __FILE__, __LINE__, pthread_self()  ); printf( FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
 #else
 #define FERROR(...)
 
@@ -202,19 +202,19 @@ extern FlogFlags slg;
 
 #ifdef LOG_TIMESTAMP
 
-#define DEBUG(...) printf( "\x1B[32m (%s:%d) %d Time: %lld ", __FILE__, __LINE__, pthread_self(), currentTimestamp() ); printf( FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
+#define DEBUG(...) printf( "\x1B[32m (%s:%d) %ld Time: %lld ", __FILE__, __LINE__, pthread_self(), currentTimestamp() ); printf( FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
 
-#define DEBUG1(...) printf( "\x1B[37m (%s:%d) %d Time: %lld ", __FILE__, __LINE__, pthread_self(), currentTimestamp() ); printf( FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
+#define DEBUG1(...) printf( "\x1B[37m (%s:%d) %ld Time: %lld ", __FILE__, __LINE__, pthread_self(), currentTimestamp() ); printf( FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
 
-#define DEBUG2(...) printf( "\x1B[33m (%s:%d) %d Time: %lld ", __FILE__, __LINE__, pthread_self(), currentTimestamp() ); printf( FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
+#define DEBUG2(...) printf( "\x1B[33m (%s:%d) %ld Time: %lld ", __FILE__, __LINE__, pthread_self(), currentTimestamp() ); printf( FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
 
 #else
 
-#define DEBUG(...) printf( "\x1B[32m (%s:%d) %d ", __FILE__, __LINE__, pthread_self() ); printf( FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
+#define DEBUG(...) printf( "\x1B[32m (%s:%d) %ld ", __FILE__, __LINE__, pthread_self() ); printf( FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
 
-#define DEBUG1(...) printf( "\x1B[37m (%s:%d) %d ", __FILE__, __LINE__, pthread_self() ); printf( FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
+#define DEBUG1(...) printf( "\x1B[37m (%s:%d) %ld ", __FILE__, __LINE__, pthread_self() ); printf( FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
 
-#define DEBUG2(...) printf( "\x1B[33m (%s:%d) %d ", __FILE__, __LINE__, pthread_self() ); printf( FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
+#define DEBUG2(...) printf( "\x1B[33m (%s:%d) %ld ", __FILE__, __LINE__, pthread_self() ); printf( FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
 #endif
 
 #else

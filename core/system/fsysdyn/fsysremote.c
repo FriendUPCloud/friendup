@@ -664,17 +664,19 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 		// we are trying to open folder/connection
 		
 		unsigned int pathlen = strlen( path );
-		dev->f_Path = FCalloc( pathlen + 10, sizeof(char) );
-		strcpy( dev->f_Path, path );
-		if( pathlen <=  0 )
+		if( ( dev->f_Path = FCalloc( pathlen + 10, sizeof(char) ) ) != NULL )
 		{
-			strcat( dev->f_Path, ":" );
-		}
-		else
-		{
-			if( path[ pathlen-1 ] != ':' )
+			strcpy( dev->f_Path, path );
+			if( pathlen <=  0 )
 			{
 				strcat( dev->f_Path, ":" );
+			}
+			else
+			{
+				if( path[ pathlen-1 ] != ':' )
+				{
+					strcat( dev->f_Path, ":" );
+				}
 			}
 		}
 		

@@ -96,12 +96,14 @@ int LogNew( const char* fname, const char* conf, int toFile, int lvl, int flvl, 
 			path = ReadStringNCS( prop, "Log:filepath", "log/" );
 			
 			slg.ff_DestinationPathLength = strlen( slg.ff_Fname ) + strlen( path ) + 32;
-			slg.ff_Path = FCalloc( slg.ff_DestinationPathLength, sizeof(char) );
 			slg.ff_DestinationPath = FCalloc( slg.ff_DestinationPathLength, sizeof(char) );
+			slg.ff_Path = FCalloc( slg.ff_DestinationPathLength, sizeof(char) );
 			
-			strcpy( slg.ff_Path, path );
-			mkdir( slg.ff_Path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-			
+			if( slg.ff_Path != NULL )
+			{
+				strcpy( slg.ff_Path, path );
+				mkdir( slg.ff_Path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+			}
             PropertiesClose( prop );
 		}
 	}
@@ -151,8 +153,10 @@ void LogDelete( )
 			if( slg.ff_FileNames[ i ] != NULL )
 			{
 				FFree( slg.ff_FileNames[ i ] );
+				slg.ff_FileNames[ i ] = NULL;
 			}
 			FFree( slg.ff_FileNames );
+			slg.ff_FileNames = NULL;
 		}
 	}
     

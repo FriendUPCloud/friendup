@@ -90,7 +90,6 @@ FriendCoreManager *FriendCoreManagerNew()
 	{
 		FCM = fcm;
 		
-		
 		// Static locks callbacks
 		SSL_library_init();
 		// Static locks buffer

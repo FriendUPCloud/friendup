@@ -281,6 +281,11 @@ int UserGroupAddUser( UserGroup *ug, void *u )
 					locu->u_UserGroupLinks = ugl;
 					FRIEND_MUTEX_UNLOCK( &locu->u_Mutex );
 				}
+				else
+				{
+					FFree( ugl );
+					ugl = NULL;
+				}
 			}
 			
 			au->ugau_UserID = locu->u_ID;
@@ -291,6 +296,14 @@ int UserGroupAddUser( UserGroup *ug, void *u )
 				au->node.mln_Succ = (MinNode *)ug->ug_UserList;
 				ug->ug_UserList = au;
 				FRIEND_MUTEX_UNLOCK( &(ug->ug_Mutex) );
+			}
+			else
+			{
+				if( ugl != NULL )
+				{
+					FFree( ugl );
+				}
+				FFree( au );
 			}
 		}
 		else

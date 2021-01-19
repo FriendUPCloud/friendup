@@ -479,8 +479,11 @@ AES_RETURN aes_decrypt_key192(const unsigned char *key, aes_decrypt_ctx cx[1])
     ss[3] ^= ss[2]; k[v(56,(8*(i))+11)] = ss[3]; \
 }
 
+#include <string.h>
 AES_RETURN aes_decrypt_key256(const unsigned char *key, aes_decrypt_ctx cx[1])
-{   uint_32t    ss[9];
+{   
+	uint_32t    ss[9];
+	ss[0]=ss[1]=ss[2]=ss[3]=ss[4]=ss[5]=ss[6]=ss[7]=ss[8]=0;
 #if defined( d_vars )
         d_vars;
 #endif

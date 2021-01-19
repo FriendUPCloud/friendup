@@ -377,16 +377,23 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 									}
 									
 									char *pname = FCalloc( iname, sizeof(char) );
-									char *paddress = FCalloc( iaddress, sizeof(char) );
-									strcpy( pname, "name=" );
-									if( name != NULL )
+									if( pname != NULL )
 									{
-										strcpy( &pname[ 5 ], name );
+										strcpy( pname, "name=" );
+										if( name != NULL )
+										{
+											strcpy( &pname[ 5 ], name );
+										}
 									}
-									strcpy( paddress, "address=" );
-									if( address != NULL )
+									
+									char *paddress = FCalloc( iaddress, sizeof(char) );
+									if( paddress != NULL )
 									{
-										strcpy( &paddress[ 8 ], address );
+										strcpy( paddress, "address=" );
+										if( address != NULL )
+										{
+											strcpy( &paddress[ 8 ], address );
+										}
 									}
 									
 									ClusterNode *cn = l->fcm->fcm_ClusterNodes;

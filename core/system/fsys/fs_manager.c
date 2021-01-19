@@ -876,6 +876,17 @@ int FSManagerProtect( FSManager *fm, const char *path, FULONG devid, char *accgr
 				FFree( rem );
 			}
 		}
+		else
+		{
+			prev = root;
+			AGroup *rem = prev;
+			while( prev != NULL )
+			{
+				rem = prev;
+				prev = prev->next;
+				FFree( rem );
+			}
+		}
 		sb->LibrarySQLDrop( sb, sqllib );
 	}
 	return 0;

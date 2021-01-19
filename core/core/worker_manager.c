@@ -60,7 +60,7 @@ WorkerManager *WorkerManagerNew( int number )
 		{
  			FERROR( "[WorkerManager] Cannot allocate memory for workers\n" );
 			FFree( wm );
-			return NULL;
+			wm = NULL;
 		}
 	}
 	else

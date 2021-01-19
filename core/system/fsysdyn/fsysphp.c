@@ -918,69 +918,75 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		// Using newpopen
 		
 		NPOpenFD *pofd = FMalloc( sizeof( NPOpenFD ) );
-		int err = newpopen( command, pofd );
-		if( err != 0 )
+		if( pofd != NULL )
 		{
-			FERROR("[PHPCallDisk] cannot open pipe: %s\n", strerror( errno ) );
-			return NULL;
-		}
-	
-		int errCounter = 0;
-		int size = 0;
-		
-		File *locfil = NULL;
-		if( ( locfil = FCalloc( 1, sizeof( File ) ) ) != NULL )
-		{
-			locfil->f_Stream = TRUE;
-			locfil->f_Path = StringDup( path );
-	
-			if( ( locfil->f_SpecialData = FCalloc( 1, sizeof( SpecialData ) ) ) != NULL )
+			int err = newpopen( command, pofd );
+			if( err != 0 )
 			{
-				sd->fp = pipe; 
-				SpecialData *locsd = (SpecialData *)locfil->f_SpecialData;
-				locsd->sb = sd->sb;
-				locsd->fp = -1;
-				locsd->pofd = pofd;
-				
-				locsd->pollfd1 = FCalloc( 1, sizeof( struct pollfd ) );
-				locsd->pollfd2 = FCalloc( 1, sizeof( struct pollfd ) );
-				// watch stdin for input 
-				locsd->pollfd1->fd = locsd->pofd->np_FD[ NPOPEN_CONSOLE ];// STDIN_FILENO;
-				locsd->pollfd1->events = POLLIN;
-				// watch stdout for ability to write
-				locsd->pollfd2->fd = STDOUT_FILENO;
-				locsd->pollfd2->events = POLLOUT;
-				
-				locsd->mode = MODE_READ;
-				//locsd->fname = StringDup( tmpfilename );
-				locsd->path = StringDup( path );
-				//locfil->f_SessionID = StringDup( s->f_SessionID );
-				locfil->f_SessionIDPTR = s->f_SessionIDPTR;
-		
-				DEBUG("[fsysphp] FileOpened, memory allocated for reading.\n" );
-				FFree( command );
-				FFree( encodedcomm );
-				return locfil;
+				FERROR("[PHPCallDisk] cannot open pipe: %s\n", strerror( errno ) );
+				return NULL;
 			}
 	
-			// Free this one
-			FFree( locfil->f_Path );
-			locfil->f_Path = NULL;
-			FFree( locfil );
+			File *locfil = NULL;
+			if( ( locfil = FCalloc( 1, sizeof( File ) ) ) != NULL )
+			{
+				locfil->f_Stream = TRUE;
+				locfil->f_Path = StringDup( path );
+	
+				if( ( locfil->f_SpecialData = FCalloc( 1, sizeof( SpecialData ) ) ) != NULL )
+				{
+					sd->fp = (FILE *) pipe; 
+					SpecialData *locsd = (SpecialData *)locfil->f_SpecialData;
+					locsd->sb = sd->sb;
+					locsd->fp = NULL;
+					locsd->pofd = pofd;
+				
+					locsd->pollfd1 = FCalloc( 1, sizeof( struct pollfd ) );
+					locsd->pollfd2 = FCalloc( 1, sizeof( struct pollfd ) );
+					// watch stdin for input
+					if( locsd->pollfd1 != NULL )
+					{
+						locsd->pollfd1->fd = pofd->np_FD[ NPOPEN_CONSOLE ];// STDIN_FILENO;
+						locsd->pollfd1->events = POLLIN;
+					}
+					// watch stdout for ability to write
+					if( locsd->pollfd2 != NULL )
+					{
+						locsd->pollfd2->fd = STDOUT_FILENO;
+						locsd->pollfd2->events = POLLOUT;
+					}
+					
+					locsd->mode = MODE_READ;
+					//locsd->fname = StringDup( tmpfilename );
+					locsd->path = StringDup( path );
+					//locfil->f_SessionID = StringDup( s->f_SessionID );
+					locfil->f_SessionIDPTR = s->f_SessionIDPTR;
+		
+					DEBUG("[fsysphp] FileOpened, memory allocated for reading.\n" );
+					FFree( command );
+					FFree( encodedcomm );
+					return locfil;
+				}
+	
+				// Free this one
+				FFree( locfil->f_Path );
+				locfil->f_Path = NULL;
+				FFree( locfil );
 			
-			newpclose( pofd );
-			FFree( pofd );
-		}
-		else
-		{
-			newpclose( pofd );
-			FFree( pofd );
+				newpclose( pofd );
+				FFree( pofd );
+			}
+			else
+			{
+				newpclose( pofd );
+				FFree( pofd );
 			
-			FFree( command );
-			FFree( encodedcomm );
-			FERROR("[PHPFsys] cannot alloc memory\n");
-			return NULL;
-		}
+				FFree( command );
+				FFree( encodedcomm );
+				FERROR("[PHPFsys] cannot alloc memory\n");
+				return NULL;
+			}
+		}	// pofd
 	}
 	
 	//

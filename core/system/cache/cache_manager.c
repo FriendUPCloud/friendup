@@ -47,6 +47,11 @@ CacheManager *CacheManagerNew( FULONG size )
 				cm->cm_CacheFileGroup[ i ].cg_File = NULL;
 			}
 		}
+		else
+		{
+			FFree( cm );
+			return NULL;
+		}
 	}
 	else
 	{
