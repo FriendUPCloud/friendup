@@ -1046,7 +1046,7 @@
 					
 					// sfreerdp needs special option added on install cmake -GNinja -DCHANNEL_URBDRC=OFF -DWITH_DSP_FFMPEG=OFF -DWITH_CUPS=OFF -DWITH_PULSE=OFF -DWITH_SAMPLE=ON .
 					
-					/*if( $checkauth = shell_exec( "sfreerdp /cert-ignore /cert:ignore +auth-only /u:$username /p:$password /v:$hostname /port:$rdp /log-level:ERROR 2>&1" ) )
+					if( $checkauth = shell_exec( "sfreerdp /cert-ignore /cert:ignore +auth-only /u:$username /p:$password /v:$hostname /port:$rdp /log-level:ERROR 2>&1" ) )
 					{
 						if( strstr( $checkauth, 'sfreerdp: not found' ) )
 						{
@@ -1089,7 +1089,7 @@
 					else
 					{
 						$error = '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"2"}';
-					}*/
+					}
 					
 					
 					
