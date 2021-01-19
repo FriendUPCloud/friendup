@@ -724,7 +724,7 @@
 	
 	function sendCode( $userid, $mobile, $code = false, $limit = true )
 	{
-		$error = false; $debug = false;
+		$error = false; $debug = true;
 		
 		include_once( __DIR__ . '/../../../php/classes/dbio.php' );
 		$conf = parse_ini_file( __DIR__ . '/../../../cfg/cfg.ini', true );
@@ -1033,6 +1033,8 @@
 				$username = trim( $username );
 				$password = trim( $password );
 				
+				$dbdiskpath = ( $server->users_db_diskpath ? $server->users_db_diskpath : '' );
+				
 				if( $hostname && $username && $password )
 				{
 					
@@ -1044,7 +1046,7 @@
 					
 					// sfreerdp needs special option added on install cmake -GNinja -DCHANNEL_URBDRC=OFF -DWITH_DSP_FFMPEG=OFF -DWITH_CUPS=OFF -DWITH_PULSE=OFF -DWITH_SAMPLE=ON .
 					
-					if( $checkauth = shell_exec( "sfreerdp /cert-ignore /cert:ignore +auth-only /u:$username /p:$password /v:$hostname /port:$rdp /log-level:ERROR 2>&1" ) )
+					/*if( $checkauth = shell_exec( "sfreerdp /cert-ignore /cert:ignore +auth-only /u:$username /p:$password /v:$hostname /port:$rdp /log-level:ERROR 2>&1" ) )
 					{
 						if( strstr( $checkauth, 'sfreerdp: not found' ) )
 						{
@@ -1087,17 +1089,17 @@
 					else
 					{
 						$error = '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"2"}';
-					}
+					}*/
 					
 					
 					
-					$path = ( __DIR__ . '/../../../cfg' );
+					//$path = ( __DIR__ . '/../../../cfg' );
 					
 					// Specific usecase ...
 					
-					if( file_exists( $path . '/Friend-AD-Time-IT.csv' ) )
+					if( $dbdiskpath && file_exists( $dbdiskpath/*$path . '/Friend-AD-Time-IT.csv'*/ ) )
 					{
-						if( $output = file_get_contents( $path . '/Friend-AD-Time-IT.csv' ) )
+						if( $output = file_get_contents( $dbdiskpath/*$path . '/Friend-AD-Time-IT.csv'*/ ) )
 						{
 							$identity = new stdClass();
 								
@@ -1131,6 +1133,7 @@
 								$data->id       = ( '0' );
 								$data->fullname = ( $identity->{ strtolower( trim( $username ) ) }[1] );
 								$data->mobile   = ( $identity->{ strtolower( trim( $username ) ) }[0] );
+								//$data->email  = ( $identity->{ strtolower( trim( $username ) ) }[2] );
 							}
 							else
 							{
