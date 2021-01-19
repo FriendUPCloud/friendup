@@ -14,6 +14,7 @@ FUI.TabList = function( object )
 {
 	this.initialize( 'TabList' );
 	this.flags = object;
+	this.renderedChildren = {};
 }
 
 FUI.TabList.prototype = new FUI.BaseClass();
@@ -71,8 +72,6 @@ let Private = {
 			}
 		}
 		
-		self.clear = true;
-		
 		self.refresh();
 
 		// Just say we're not ok
@@ -115,6 +114,7 @@ FUI.TabList.Renderers.html5.prototype.refresh = function( pnode )
 	if( !pnode )  pnode = self.TabList.parentNode;
 	this.TabList.parentNode = pnode;
 	
+	// Check container
 	if( !this.TabList.domNode )
 	{
 		let f = document.createElement( 'div' );
@@ -151,15 +151,17 @@ FUI.TabList.Renderers.html5.prototype.refresh = function( pnode )
 	
 	if( this.TabList.flags.rows )
 	{
-		if( this.TabList.clear )
-		{
-			d.innerHTML = '';
-			delete this.TabList.clear;
-		}
-	
 		let rows = this.TabList.flags.rows;
 		for( let a = 0; a < rows.length; a++ )
 		{
+			// Do not re-add rows already added, just refresh
+			if( this.TabList.renderedChildren[ rows[ a ].id ] )
+			{
+				console.log( 'Already added this: ', this.TabList.renderedChildren[ rows[ a ].id ] );
+				this.TabList.renderedChildren[ rows[ a ].id ].refresh();
+				continue;
+			}
+			
 			// Row container
 			let r = document.createElement( 'div' );
 			r.setAttribute( 'fui-component', 'TabList-Row' );
@@ -211,6 +213,10 @@ FUI.TabList.Renderers.html5.prototype.refresh = function( pnode )
 			b.style.right = FUI.theme.gadgets.margins.normal;
 			r.appendChild( b );
 		
+			// Register a dummy to be handled on refresh
+			let dummy = {};
+			this.TabList.renderedChildren[ b.id ] = dummy;
+		
 			// Render ImageButton objects
 			if( rows[ a ].buttons )
 			{
@@ -235,6 +241,20 @@ FUI.TabList.Renderers.html5.prototype.refresh = function( pnode )
 					
 					pos += i.flags.weight;
 				} 
+				
+				dummy.buttons = buttonObjects;
+			}
+			
+			// Refresh buttons next time
+			dummy.refresh = function()
+			{
+				if( this.buttons )
+				{
+					for( let b = 0; b < this.buttons.length; b++ )
+					{
+						this.buttons[ b ].refresh();
+					}
+				}
 			}
 			
 			// Add the row

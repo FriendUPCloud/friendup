@@ -8,6 +8,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
+// TODO: A refresh must not recreate objects, only add the ones missing
+
 /* Grid class --------------------------------------------------------------- */
 
 FUI.Grid = function( object )

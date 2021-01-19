@@ -107,6 +107,7 @@ FUI.ImageButton.Renderers.html5.prototype.refresh = function( pnode )
 		pnode.appendChild( d );
 		d.onclick = function( e )
 		{
+			console.log( 'We clicked: ', self.ImageButton );
 			if( self.ImageButton.events && self.ImageButton.events[ 'onclick' ] )
 			{
 				for( let z = 0; z < self.ImageButton.events[ 'onclick' ].length; z++ )
