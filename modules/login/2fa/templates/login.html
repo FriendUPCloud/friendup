@@ -80,7 +80,7 @@
 		</div>
 		<script type="text/javascript">
 			Application = {
-				showLog: true,
+				showLog: false,
 				failedAttempt: false,
 				passwordRecoveryMode: false,
 				init: function( data )
@@ -276,7 +276,7 @@
 										}
 									}
 									
-									if( Application.showLog ) console.log( { json: json, serveranswer: serveranswer, raw: this.responseText() } );
+									if( Application.showLog || 1==1 ) console.log( { json: json, serveranswer: serveranswer, raw: this.responseText() } );
 									
 									switch( res[ 1 ] )
 									{
