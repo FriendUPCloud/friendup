@@ -30,7 +30,19 @@ Sections.services_guacamole = function( cmd, extra )
 				else
 				{
 					
-					initMain( config );
+					guacAdminAuth( config, function( token )
+					{
+						
+						if( token )
+						{
+							initMain( config, token );
+						}
+						else
+						{
+							initSettings( config );
+						}
+						
+					} );
 					
 				}
 				
@@ -201,7 +213,7 @@ Sections.services_guacamole = function( cmd, extra )
 		d.onLoad = function( data )
 		{
 			
-			
+			data = GetScripts( data );
 			
 			var doc = o.getElementsByTagName( 'iframe' )[0].contentWindow.document;
 			doc.open();
@@ -213,31 +225,26 @@ Sections.services_guacamole = function( cmd, extra )
 		
 	}
 	
-	function initMain( config )
+	function initMain( config, token )
 	{
 		
-		guacAdminAuth( config, function( token )
-		{
-			
-			var creds = ''; var src = '';
-			
-			console.log( config );
+		var creds = ''; var src = '';
 		
-			src = ( config.host && config.host.url ? config.host.url : 'https://volatile.friendup.cloud/guacamole/' );
-			
-			console.log( 'initMain() ' + src );
-			
-			creds = ( token ? '?token=' + token : '' );
-			
-			var o = ge( 'GuacamoleMain' );
-			o.innerHTML = '<iframe style="width:100%;height:calc(100% - 5px);box-sizing:border-box;" frameBorder="0" src="' + ( src + '#/' + creds ) + '"></iframe>';
-			
-			/*o.getElementsByTagName( 'iframe' )[0].onload = function()
-			{ 
-				this.src = ( src + '#/' ); 
-			};*/
-			
-		} );
+		console.log( { config: config, token: token } );
+		
+		src = ( config.host && config.host.url ? config.host.url : 'https://volatile.friendup.cloud/guacamole/' );
+		
+		console.log( 'initMain() ' + src );
+		
+		creds = ( token ? '?token=' + token : '' );
+		
+		var o = ge( 'GuacamoleMain' );
+		o.innerHTML = '<iframe style="width:100%;height:calc(100% - 5px);box-sizing:border-box;" frameBorder="0" src="' + ( src + '#/' + creds ) + '"></iframe>';
+		
+		/*o.getElementsByTagName( 'iframe' )[0].onload = function()
+		{ 
+			this.src = ( src + '#/' ); 
+		};*/
 		
 	}
 	

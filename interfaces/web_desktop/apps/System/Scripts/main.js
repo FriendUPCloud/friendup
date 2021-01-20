@@ -909,6 +909,108 @@ function CheckWindowSize()
 	CheckUserlistSize();
 }
 
+function RunScripts( data )
+{
+	if( data )
+	{
+		var wholescript = [];
+		
+		while( scripts = data.match( /\<script[^>]*?\>([\w\W]*?)\<\/script[^>]*?\>/i ) )
+		{
+			wholescript.push( scripts[1] );
+			data = data.split( scripts[0] ).join ( '' );
+		}
+		// Run script
+		if( wholescript.length )
+		{
+			eval( wholescript.join ( '' ) );
+		}
+	}
+}
+
+function GetLinks( data, arr, exl )
+{
+	var m = ''; var i = 0;
+	
+	while( m = data.match( /<link.*?href='(.*?)'/i ) )
+	{
+		var href = ResolvePath( 'Progdir:' + m[1] );
+		
+		data = data.split( m[0] ).join( '<link rel="stylesheet" href="' + href + '"' );
+		
+		var sty = href;
+		
+		if( arr.indexOf( sty ) < 0 && exl.indexOf( sty ) < 0 )
+		{
+			arr.push( sty );
+		}
+		
+		i++;
+		
+		if( i >= 1000 ) break;
+	}
+	
+	return data;
+}
+
+function GetScripts( data, arr, exl )
+{
+	var m = ''; var i = 0;
+	
+	while( m = data.match( /<script.*?src='(.*?)'/i ) )
+	{
+		if( m[1] && m[1].indexOf( 'Progdir:' ) < 0 )
+		{
+			var src = ResolvePath( 'Progdir:' + m[1] );
+		}
+		else
+		{
+			var src = ResolvePath( m[1] );
+		}
+		
+		data = data.split( m[0] ).join( '<script src="' + src + '"' );
+		
+		var scr = src;
+		
+		if( arr )
+		{
+			if( arr.indexOf( scr ) < 0/* && exl.indexOf( scr ) < 0*/ )
+			{
+				arr.push( scr );
+			}
+		}
+		
+		i++;
+		
+		if( i >= 1000 ) break;
+	}
+	return data;
+}
+
+function ResolvePath( filename )
+{
+	if( filename.toLowerCase().substr( 0, 8 ) == 'progdir:' )
+	{
+		filename = filename.substr( 8, filename.length - 8 );
+		if( Application && Application.filePath )
+			filename = Application.filePath + filename;
+	}
+	// TODO: Remove system: here (we're rollin with Libs:)
+	else if( 
+		filename.toLowerCase().substr( 0, 7 ) == 'system:' ||
+		filename.toLowerCase().substr( 0, 4 ) == 'libs:' 
+	)
+	{
+		filename = filename.substr( 7, filename.length - 7 );
+		filename = '/webclient/' + filename;
+	}
+	// Fix broken paths
+	if( filename.substr( 0, 20 ) == 'resources/webclient/' )
+		filename = filename.substr( 20, filename.length - 20 );
+		
+	return filename;
+}
+
 function initTest()
 {
 	

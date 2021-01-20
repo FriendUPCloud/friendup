@@ -1,18 +1,8 @@
 
 <head>
 	
-	<link rel="stylesheet" type="text/css" href="{url}app.css?v=1.2.0">
-	
-	<script>
-		
-		function login()
-		{
-			alert( 'send login data to parent ...' );
-		}
-		
-	</script>
-	
-	<!--<script src="Progdir:Scripts/guacamole_functions.js"></script>-->
+	<link rel='stylesheet' type='text/css' href='{url}app.css?v=1.2.0'>
+	<script src='Progdir:Scripts/guacamole_functions.js'></script>
 	
 </head>
 <body>
@@ -84,9 +74,11 @@
 		            <!-- Login/continue button -->
 		            <div class="buttons">
 
-		                <input type="submit" name="login" class="login" ng-disabled="submitted" value="Login">
+		                <input name="login" class="login" ng-disabled="submitted" value="Login" onclick="saveCreds()">
 
-		                <input type="submit" name="login" class="continue-login" ng-disabled="submitted" value="Continue">
+		                <!--<input type="submit" name="login" class="continue-login" ng-disabled="submitted" value="Continue">
+		                
+		                <br><br><input type="button" name="login" class="login" value="Test" onclick="saveCreds()">-->
 
 		            </div>
 
