@@ -2,8 +2,8 @@
 -include ../Config.defs
 -include ../Config
 
-CC			=	gcc-10 -fanalyzer
-CPP			=	g++-10 -fanalyzer
+CC			=	gcc
+CPP			=	g++
 OUTPUT			=	bin/FriendCore
 
 #`mysql_config --libs`
