@@ -10,7 +10,7 @@
 *                                                                              *
 *****************************************************************************©*/
 
-global $args, $SqlDatabase, $User, $Logger;
+global $args, $SqlDatabase, $User, $Logger, $UserSession;
 
 // Include API
 require( 'php/friend.php' );
@@ -116,7 +116,7 @@ if( isset( $args->command ) )
 					if( !$row->Icon )
 					{
 						if( file_exists( 'repository/' . $row->Application . '/icon.png' ) )
-							$o->Icon = '/system.library/module/?module=system&command=repoappimage&sessionid=' . $User->SessionID . '&i=' . $row->Application;
+							$o->Icon = '/system.library/module/?module=system&command=repoappimage&sessionid=' . $UserSession->SessionID . '&i=' . $row->Application;
 						else if( !strstr( $o->Icon, ':' ) && !strstr( $o->Icon, '/system.library' ) )
 							$o->Icon = file_exists( $path . '/icon_dock.png' ) ? ( $apath . 'icon_dock.png' ) : '';
 					}

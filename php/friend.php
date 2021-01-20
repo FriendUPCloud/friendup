@@ -481,15 +481,22 @@ if( file_exists( 'cfg/cfg.ini' ) )
 		$GLOBALS[ 'User' ] =& $User;
 	}
 	else if(
-		isset( $User->SessionID ) && trim( $User->SessionID ) && 
+		isset( $UserSession->SessionID ) && trim( $UserSession->SessionID ) && 
 		( $User = $SqlDatabase->FetchObject( '
-			SELECT u.* FROM FUser u
-			WHERE u.SessionID=\'' . $User->SessionID . '\'
+			SELECT u.* FROM FUser u, FUserSession us
+			WHERE u.ID=us.UserID AND us.SessionID=\'' . $UserSession->SessionID . '\'
 		' ) ) 
 	)
 	{
 		$logger->log( 'User logged in using registered User->SessionID..' );
 		$GLOBALS[ 'User' ] =& $User;
+		$UserSession = $SqlDatabase->FetchObject( '
+			SELECT us.* FROM FUserSession us
+			WHERE us.SessionID=\'' . $UserSession->SessionID .'\'
+		' ) )
+		{
+			$GLOBALS[ 'UserSession' ] = & $UserSession;
+		}
 	}
 	else
 	{

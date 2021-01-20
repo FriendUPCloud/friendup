@@ -26,6 +26,7 @@ if( !class_exists( 'Door' ) )
 		var $_authcontext = null; // authentication key (e.g. sessionid)
 		var $_authdata = null; // authentication data (e.g. a sessionid hash)
 		var $_user = null; // override user
+		var $_userSession = null;
 	
 		// Construct a Door object
 		function __construct( $path = false, $authcontext = false, $authdata = false )
@@ -262,9 +263,10 @@ if( !class_exists( 'Door' ) )
 	
 		function dosQuery( $query )
 		{
-			global $Config, $User, $SqlDatabase, $Logger;
+			global $Config, $User, $SqlDatabase, $Logger, $UserSession;
 		
 			$activeUser = isset( $this->_user ) ? $this->user : $User;
+			$activeSession = isset( $this->_userSession ) ? $this->userSession : $UserSession;
 		
 			// Support auth context
 			if( isset( $this->_authdata ) )
