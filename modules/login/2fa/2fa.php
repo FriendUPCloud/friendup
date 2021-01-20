@@ -1022,6 +1022,7 @@
 		}
 		$output = file_get_contents( $outfile );
 		unlink( $outfile );
+		exec( "kill -9 $pid", $null );
 		return $output;
 	}
 	
