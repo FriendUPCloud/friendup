@@ -255,6 +255,7 @@ void AddEscapeChars( char *str )
 			tmp[ii++] = str[i];
 		}
 		strcpy( str, tmp );
+		FFree( tmp );
 	}
 }
 

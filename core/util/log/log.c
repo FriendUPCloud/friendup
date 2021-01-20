@@ -48,29 +48,26 @@ FlogFlags slg;
 
 int LogNew( const char* fname, const char* conf, int toFile, int lvl, int flvl, int maxSize )
 {
-    int status = 0;
-
-    slg.ff_Level = lvl;
-    slg.ff_FileLevel = flvl;
-    slg.ff_ToFile = toFile;
-    slg.ff_Pretty = 0;
-    slg.ff_Time = -1;
-    slg.ff_TdSafe = 1;
-    slg.ff_FP = NULL;
-    slg.ff_Fname = NULL;
-    slg.ff_MaxSize = 0;
-    slg.ff_LogNumber = 0;
-    slg.ff_Size = 0;
-    slg.ff_MaxSize = 0;
-    slg.ff_ArchiveFiles = 0;
+	slg.ff_Level = lvl;
+	slg.ff_FileLevel = flvl;
+	slg.ff_ToFile = toFile;
+	slg.ff_Pretty = 0;
+	slg.ff_Time = -1;
+	slg.ff_TdSafe = 1;
+	slg.ff_FP = NULL;
+	slg.ff_Fname = NULL;
+	slg.ff_MaxSize = 0;
+	slg.ff_LogNumber = 0;
+	slg.ff_Size = 0;
+	slg.ff_MaxSize = 0;
+	slg.ff_ArchiveFiles = 0;
 	slg.ff_ToConsole = 1;
 
-    if( maxSize >= 100000 )
-    {
-        slg.ff_MaxSize =  (FUQUAD)maxSize;
-    }
+	if( maxSize >= 100000 )
+	{
+		slg.ff_MaxSize =  (FUQUAD)maxSize;
+	}
 
-    {
 		Props *prop = NULL;
 		char *ptr, path[ 1024 ];
 		path[ 0 ] = 0;
@@ -104,20 +101,19 @@ int LogNew( const char* fname, const char* conf, int toFile, int lvl, int flvl, 
 				strcpy( slg.ff_Path, path );
 				mkdir( slg.ff_Path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 			}
-            PropertiesClose( prop );
+			PropertiesClose( prop );
 		}
-	}
 
 	if ( pthread_mutex_init(&slg.logMutex, NULL) )
 	{
 		printf("<%s:%d> %s: [ERROR] Cannot initialize mutex: %d\n",  __FILE__, __LINE__, __FUNCTION__, errno );
 	}
 
-    if ( conf != NULL && slg.ff_Fname != NULL )
-    {
-        slg.ff_Fname = fname;
-        //status = LogParseConfig(conf);
-    }
+	if ( conf != NULL && slg.ff_Fname != NULL )
+	{
+		slg.ff_Fname = fname;
+		//status = LogParseConfig(conf);
+	}
 
 	if( slg.ff_ArchiveFiles > 0 )
 	{
@@ -136,7 +132,7 @@ int LogNew( const char* fname, const char* conf, int toFile, int lvl, int flvl, 
 		}
 	}
 
-    return 0;
+	return 0;
 }
 
 /**

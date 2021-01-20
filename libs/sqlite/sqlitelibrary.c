@@ -160,7 +160,7 @@ void *Load( struct SQLLibrary *l, const FULONG *descr, char *where, int *entries
 	int pos = 0;
 	int size = 0;
 	BufStringAdd( tmpQuerybs, "SELECT " );
-	FULONG *dptr = &descr[ SQL_DATA_STRUCT_START ]; 
+	FULONG *dptr = (FULONG *)&descr[ SQL_DATA_STRUCT_START ]; 
 	
 	while( dptr[0] != SQLT_END )
 	{

@@ -129,9 +129,12 @@ List* ListAdd( List** list, void* data )
 		return (*list);
 	}
 	List *l = ListNew();
-	l->next = (*list);
-	(*list) = l;
-	l->l_Data = data;
+	if( l != NULL )
+	{
+		l->next = (*list);
+		(*list) = l;
+		l->l_Data = data;
+	}
 	return l;
 }
 

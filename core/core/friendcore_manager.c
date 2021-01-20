@@ -88,8 +88,6 @@ FriendCoreManager *FriendCoreManagerNew()
 	
 	if( ( fcm = FCalloc( 1, sizeof( struct FriendCoreManager ) ) ) != NULL )
 	{
-		FCM = fcm;
-		
 		// Static locks callbacks
 		SSL_library_init();
 		// Static locks buffer
@@ -97,6 +95,7 @@ FriendCoreManager *FriendCoreManagerNew()
 		if( ssl_mutex_buf == NULL)
 		{ 
 			LOG( FLOG_PANIC, "[FriendCoreNew] Failed to allocate ssl mutex buffer.\n" );
+			FFree( fcm );
 			return NULL; 
 		} 
 	
@@ -186,7 +185,6 @@ FriendCoreManager *FriendCoreManagerNew()
 		
 		Props *prop = NULL;
 		PropertiesInterface *plib = &(SLIB->sl_PropertiesInterface);
-		//if( ( plib = (struct PropertiesLibrary *)LibraryOpen( SLIB, "properties.library", 0 ) ) != NULL )
 		{
 			char *ptr, path[ 1024 ];
 			path[ 0 ] = 0;
@@ -267,6 +265,8 @@ FriendCoreManager *FriendCoreManagerNew()
 				plib->Close( prop );
 			}
 		}
+		
+		FCM = fcm;
 		
 		fcm->fcm_ServiceManager = ServiceManagerNew( fcm );
 	}

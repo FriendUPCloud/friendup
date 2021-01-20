@@ -53,51 +53,44 @@ typedef struct SpecialData
 //
 //
 
-void SDDelete( SpecialData *sd )
-{
-	if( sd == NULL )
-	{
-		return;
-	}
-	
-	if( sd->temp != NULL )
-	{
-		FFree( sd->temp );
-	}
-
-	if( sd->server != NULL )
-	{
-		FFree( sd->server );
-	}
-
-	if( sd->share != NULL )
-	{
-		FFree( sd->share );
-	}
-
-	if( sd->workgroup != NULL )
-	{
-		FFree( sd->workgroup );
-	}
-	
-	if( sd->username != NULL )
-	{
-		FFree( sd->username );
-	}
-
-	if( sd->password != NULL )
-	{
-		FFree( sd->password );
-	}
-	
-	//smbc_close( sd->ctx->f ->fd );
-	//libsmbc->fd = -1;
-  
-	if( sd->ctx != NULL )
-	{
-		smbc_free_context( sd->ctx, 1 );
-	}
-	FFree( sd );
+#define SDDelete( sd ) \
+	if( sd != NULL )\
+	{\
+	if( sd->temp != NULL )\
+	{\
+		FFree( sd->temp );\
+	}\
+\
+	if( sd->server != NULL )\
+	{\
+		FFree( sd->server );\
+	}\
+\
+	if( sd->share != NULL )\
+	{\
+		FFree( sd->share );\
+	}\
+\
+	if( sd->workgroup != NULL )\
+	{\
+		FFree( sd->workgroup );\
+	}\
+	\
+	if( sd->username != NULL ) \
+	{\
+		FFree( sd->username );\
+	}\
+\
+	if( sd->password != NULL )\
+	{\
+		FFree( sd->password );\
+	}\
+	\
+	if( sd->ctx != NULL )\
+	{\
+		smbc_free_context( sd->ctx, 1 );\
+	}\
+	FFree( sd );\
 }
 
 const char *GetSuffix()
@@ -184,16 +177,15 @@ typedef struct HandlerData
 
 char* StringDup( const char* str )
 {
-	if( str == NULL)
-	{
-		return NULL;
-	}
-	
-	int len = strlen( str );
 	char *res = NULL;
-	if( ( res = FCalloc( len+1, sizeof(char) ) ) != NULL )
+	if( str != NULL)
 	{
-		strcpy( res, str );
+		int len = strlen( str );
+		
+		if( ( res = FCalloc( len+1, sizeof(char) ) ) != NULL )
+		{
+			strcpy( res, str );
+		}
 	}
 	
 	return res;
@@ -362,7 +354,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, UserSession *usrs, char **m
 			if( smbc_init( NULL, 0 ) < 0 )
 			{
 				SDDelete( ((SpecialData *)dev->f_SpecialData) );
-				smbc_free_context( ((SpecialData *)dev->f_SpecialData)->ctx, 1 );
+
 				FFree( dev );
 				FERROR("[SAMBA] init fail\n");
 				return NULL;
@@ -404,7 +396,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, UserSession *usrs, char **m
 			if( ( dh = smbc_opendir( dev->f_Path ) ) < 0 )
 			{
 				FERROR("[SAMBA] Opendir fail! Path: %s\n", dev->f_Path );
-				smbc_free_context( ((SpecialData *)dev->f_SpecialData)->ctx, 1 );
+
 				SDDelete( ((SpecialData *)dev->f_SpecialData) );
 				FFree( dev );
 				return NULL;
@@ -438,8 +430,7 @@ int Release( struct FHandler *s, void *f )
 		
 		if( lf->f_SpecialData )
 		{
-			SpecialData *sdat = (SpecialData *) lf->f_SpecialData;
-			SDDelete( lf->f_SpecialData );
+			SDDelete( ((SpecialData *) lf->f_SpecialData) );
 		}
 
 		return 0;
@@ -460,9 +451,7 @@ int UnMount( struct FHandler *s, void *f )
 		
 		if( lf->f_SpecialData )
 		{
-			SpecialData *sdat = (SpecialData *) lf->f_SpecialData;
-			
-			SDDelete( lf->f_SpecialData );
+			SDDelete( ((SpecialData *) lf->f_SpecialData) );
 		}
 		return 0;
 	}

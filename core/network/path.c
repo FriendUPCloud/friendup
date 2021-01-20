@@ -22,10 +22,10 @@
 
 static inline void PathSplit( Path* p )
 {
-	char* path = p->raw;
+	char* path = p->p_Raw;
 	char** pathArray = NULL;
 	char* pathStart = path;
-	p->resolved = TRUE;
+	p->p_Resolved = TRUE;
 	
 	if( pathStart == NULL )
 	{
@@ -40,23 +40,23 @@ static inline void PathSplit( Path* p )
 	
 	if( *pathStart == '/' )
 	{
-		p->isAbsolute = TRUE;
-		p->parts[ part++ ] = &(p->p_CopyRaw[ 1 ]);
+		p->p_IsAbsolute = TRUE;
+		p->p_Parts[ part++ ] = &(p->p_CopyRaw[ 1 ]);
 	}
 	else
 	{
-		p->parts[ part++ ] = p->p_CopyRaw;
+		p->p_Parts[ part++ ] = p->p_CopyRaw;
 	}
 	
 	for( i=1 ; i < strLen ; i++ )
 	{
 		if( p->p_CopyRaw[ i ] == '/' )
 		{
-			p->parts[ part++ ] = &(p->p_CopyRaw[ i+1 ]);
+			p->p_Parts[ part++ ] = &(p->p_CopyRaw[ i+1 ]);
 			p->p_CopyRaw[ i ]  = 0;
 		}
 	}
-	p->size = part;
+	p->p_Size = part;
 }
 
 //
@@ -82,35 +82,35 @@ Path* PathNew( const char* path )
 	if( len > 0 )
 	{
 		//DEBUG( "[PathNew] Here it is: %d\n", len );
-		if( ( p->raw = FCalloc( len + 10, sizeof( char ) ) ) != NULL )
+		if( ( p->p_Raw = FCalloc( len + 10, sizeof( char ) ) ) != NULL )
 		{
-			memcpy( p->raw, path, len );
+			memcpy( p->p_Raw, path, len );
 		}
 		if( ( p->p_CopyRaw = FCalloc( len + 10, sizeof( char ) ) ) != NULL )
 		{
 			memcpy( p->p_CopyRaw, path, len );
 		}
-		p->rawSize = len;
+		p->p_RawSize = len;
 		PathSplit( p );
 
 		// If we have a file segment
-		if( path[ p->rawSize - 1 ] != '/' && p->size >= 1 )
+		if( path[ p->p_RawSize - 1 ] != '/' && p->p_Size >= 1 )
 		{
-			p->file = p->parts[p->size - 1];
-			p->extension = strrchr( p->file, '.' );
-			if( p->extension )
+			p->p_File = p->p_Parts[p->p_Size - 1];
+			p->p_Extension = strrchr( p->p_File, '.' );
+			if( p->p_Extension )
 			{
-				p->extension++;
+				p->p_Extension++;
 			}
 		}
 	}
 	else
 	{
 		//DEBUG( "[PathNew] It is nothing.\n" );
-		p->raw = NULL;
-		p->rawSize = 0;
-		p->file = NULL;
-		p->extension = 0;
+		p->p_Raw = NULL;
+		p->p_RawSize = 0;
+		p->p_File = NULL;
+		p->p_Extension = 0;
 	}
 
 	// Update the raw path (Double slashes, etc will be removed from the raw string);
@@ -125,23 +125,23 @@ Path* PathNew( const char* path )
 
 Path* PathJoin( Path* path1, Path* path2 )
 {
-	unsigned int size = path1->rawSize + path2->rawSize + 1;
+	unsigned int size = path1->p_RawSize + path2->p_RawSize + 1;
 	char* newPath = FMalloc( (size + 10) );
 	if( newPath == NULL )
 	{
 		FERROR("PathJoin, cannot allocate memory for newpath\n");
 		return NULL;
 	}
-	memcpy( newPath, path1->raw, path1->rawSize );
-	if( path2->raw[ 0 ] != '/' )
+	memcpy( newPath, path1->p_Raw, path1->p_RawSize );
+	if( path2->p_Raw[ 0 ] != '/' )
 	{
-		memcpy( newPath + path1->rawSize + 1, path2->raw, path2->rawSize );
-		newPath[path1->rawSize] = '/';
+		memcpy( newPath + path1->p_RawSize + 1, path2->p_Raw, path2->p_RawSize );
+		newPath[ path1->p_RawSize ] = '/';
 		newPath[size] = 0;
 	}
 	else
 	{
-		memcpy( newPath + path1->rawSize, path2->raw, path2->rawSize );
+		memcpy( newPath + path1->p_RawSize, path2->p_Raw, path2->p_RawSize );
 		newPath[size-1] = 0;
 	}
 
@@ -152,13 +152,13 @@ Path* PathJoin( Path* path1, Path* path2 )
 
 void PathResolve( Path* p )
 {
-	if( p->resolved || !p->size )
+	if( p->p_Resolved || !p->p_Size )
 	{
 		return;
 	}
 
 	// First segment is ../; We're not even going to bother...
-	if( strcmp( p->parts[0], ".." ) == 0 )
+	if( strcmp( p->p_Parts[0], ".." ) == 0 )
 	{
 		return;
 	}
@@ -168,9 +168,9 @@ void PathResolve( Path* p )
 	int copyTo = 0;
 	
 	unsigned int i;
-	for( i = 0; i < p->size; i++ )
+	for( i = 0; i < p->p_Size; i++ )
 	{
-		if( strcmp( p->parts[ i ], ".." ) == 0 )
+		if( strcmp( p->p_Parts[ i ], ".." ) == 0 )
 		{
 			copyFrom++;
 		}
@@ -180,15 +180,15 @@ void PathResolve( Path* p )
 			copyFrom++;
 		}
 		
-		p->parts[ copyTo ] = p->parts[ copyFrom ];
+		p->p_Parts[ copyTo ] = p->p_Parts[ copyFrom ];
 	}
 
-	p->size = copyTo;
+	p->p_Size = copyTo;
 
 	// Were we able to resolve the path in its entierty?
 	if( copyTo )
 	{
-		p->resolved = TRUE;
+		p->p_Resolved = TRUE;
 	}
 
 	// Update the raw path
@@ -203,55 +203,55 @@ void PathResolve( Path* p )
 void PathMake( Path* path )
 {
 	// Free the previous path, if any
-	if( path->raw )
+	if( path->p_Raw )
 	{
-		FFree( path->raw );
-		path->raw = NULL;
+		FFree( path->p_Raw );
+		path->p_Raw = NULL;
 	}
 
 	// Count the path length
-	unsigned int length = path->isAbsolute ? 1 : 0; // Absolute paths starts with /
-	for( unsigned int i = 0; i < path->size; i++ )
+	unsigned int length = path->p_IsAbsolute ? 1 : 0; // Absolute paths starts with /
+	for( unsigned int i = 0; i < path->p_Size; i++ )
 	{
-		length += strlen( path->parts[ i ] );
+		length += strlen( path->p_Parts[ i ] );
 	}
 
-	length += path->size - 1;     // All the /'s inbetween segments
-	length += path->file ? 0 : 1; // Trailing / for directories
+	length += path->p_Size - 1;     // All the /'s inbetween segments
+	length += path->p_File ? 0 : 1; // Trailing / for directories
 
-	if( ( path->raw = FCalloc( length + 1, sizeof( char ) ) ) != NULL )
+	if( ( path->p_Raw = FCalloc( length + 1, sizeof( char ) ) ) != NULL )
 	{
-		path->raw[length] = '\0';
+		path->p_Raw[length] = '\0';
 	}
-	path->rawSize = length;
-	
-	// Create the path string
-	char* raw = path->raw;
-	if( raw  == NULL )
+	else
 	{
 		return;
 	}
+	path->p_RawSize = length;
+	
+	// Create the path string
+	char* raw = path->p_Raw;
 
-	if( path->isAbsolute )
+	if( path->p_IsAbsolute )
 	{
 		*(raw++) = '/';
 	}
 
-	for( unsigned int i = 0; i < path->size; i++ )
+	for( unsigned int i = 0; i < path->p_Size; i++ )
 	{
-		unsigned int len = strlen( path->parts[i] );
-		memcpy( raw, path->parts[i], len );
+		unsigned int len = strlen( path->p_Parts[i] );
+		memcpy( raw, path->p_Parts[i], len );
 		raw += len;
-		if( i < path->size - 1 )
+		if( i < path->p_Size - 1 )
 		{
 			*(raw++) = '/';
 		}
 	}
 
 	// Don't create // if path is just / (has to be longer than 1 char)
-	if( !path->file && length > 1 )
+	if( path->p_File == NULL && length > 1 )
 	{
-		*(raw) = '/';
+		(*raw) = '/';
 	}
 }
 
@@ -261,11 +261,11 @@ void PathMake( Path* path )
 
 int PathCheckExtension( Path* path, const char* ext )
 {
-	if( !path->extension )
+	if( path->p_Extension == NULL )
 	{
 		return -1;
 	}
-	return strcmp( path->extension, ext );
+	return strcmp( path->p_Extension, ext );
 }
 
 //
@@ -274,19 +274,21 @@ int PathCheckExtension( Path* path, const char* ext )
 
 void PathFree( Path* path )
 {
-	if( path->raw )
+	if( path != NULL )
 	{
-		free( path->raw );
-	}
-	path->raw = NULL;
+		if( path->p_Raw )
+		{
+			FFree( path->p_Raw );
+		}
 	
-	if( path->p_CopyRaw )
-	{
-		free( path->p_CopyRaw );
-	}
-	path->p_CopyRaw = NULL;
+		if( path->p_CopyRaw )
+		{
+			FFree( path->p_CopyRaw );
+		}
+		path->p_CopyRaw = NULL;
 
-	free( path );
+		FFree( path );
+	}
 }
 
 /*

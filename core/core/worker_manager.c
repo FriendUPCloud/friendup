@@ -50,10 +50,13 @@ WorkerManager *WorkerManagerNew( int number )
 		
 		if( ( wm->wm_Workers = FCalloc( wm->wm_MaxWorkers, sizeof(Worker *) ) ) != NULL )
 		{
-			for( ; i < wm->wm_MaxWorkers; i++ )
+			for( i=0; i < wm->wm_MaxWorkers; i++ )
 			{
-				wm->wm_Workers[ i ] = WorkerNew( i ); 
-				WorkerRun( wm->wm_Workers[ i ]  ); 
+				wm->wm_Workers[ i ] = WorkerNew( i );
+				if( wm->wm_Workers[ i ] != NULL )
+				{
+					WorkerRun( wm->wm_Workers[ i ]  );
+				}
 			}
 		}
 		else
@@ -61,6 +64,7 @@ WorkerManager *WorkerManagerNew( int number )
  			FERROR( "[WorkerManager] Cannot allocate memory for workers\n" );
 			FFree( wm );
 			wm = NULL;
+			return NULL;
 		}
 	}
 	else
@@ -85,7 +89,7 @@ void WorkerManagerDelete( WorkerManager *wm )
 	{
 		int i = 0;
 		
-		if( wm->wm_Workers )
+		if( wm->wm_Workers != NULL )
 		{
 			for( ; i < wm->wm_MaxWorkers ; i++ )
 			{

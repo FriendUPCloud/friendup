@@ -61,6 +61,10 @@ char **globalServerEntries = NULL;
 
 static inline int WriteMessageSink( DataQWSIM *d, unsigned char *msg, int len )
 {
+	if( d == NULL )
+	{
+		return 0;
+	}
 	DEBUG("WriteMessageSink\n"); 
 	FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 	if( en != NULL )

@@ -1830,6 +1830,11 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	int i;
 	struct epoll_event *currentEvent;
 	struct epoll_event *events = FCalloc( fc->fci_MaxPoll, sizeof( struct epoll_event ) );
+	if( events == NULL )
+	{
+		FERROR("Cannot allocate memory for events!\n");
+		return;
+	}
 	SystemBase *sb = (SystemBase *)fc->fci_SB;
 
 	// Track fds.

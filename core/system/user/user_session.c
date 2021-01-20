@@ -318,6 +318,10 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 								FFree( en );
 							}
 						}
+						else
+						{
+							FFree( queueMsg );
+						}
 						// callback writeable was here
 					}
 				}

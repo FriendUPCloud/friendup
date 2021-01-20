@@ -221,9 +221,9 @@ int RescanDOSDrivers( DeviceManager *dm )
 				continue;
 			}
 			
-			char *tempString = FCalloc( 1024, sizeof(char) );
+			char *tempString = FCalloc( 2048, sizeof(char) );
 		
-			snprintf( tempString, 1023, "%s%s", ddrivedirectory, dir->d_name );
+			snprintf( tempString, 2047, "%s%s", ddrivedirectory, dir->d_name );
 
 			DEBUG("[RescanDOSDrivers] %s DOSDriver %s\n", dir->d_name, tempString );
 

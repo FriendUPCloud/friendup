@@ -398,49 +398,53 @@ int iniparser_getseckeysvalues(dictionary * d, char * s, char ***keys, char ***v
     nkeys = iniparser_getsecnkeys(d, localGroupName);
 	
     lkeys = (char**) malloc(nkeys*sizeof(char*));
-	lvals = (char**) malloc(nkeys*sizeof(char*));
-
-    sprintf(keym, "%s:", localGroupName);
-	
-    i = 0;
-
-	for (j=0 ; j<d->size ; j++)
+	if( lkeys != NULL )
 	{
-		if (d->key[j]==NULL)
+		lvals = (char**) malloc(nkeys*sizeof(char*));
+		if( lvals != NULL )
 		{
-			continue ;
-		}
-		
-		if (!strncmp(d->key[j], keym, seclen+1))
-		{
-			if( d->key[j] == NULL )
-			{
-				lkeys[i] = NULL;
-			}
-			else
-			{
-				int keysize = strlen( d->key[j] );
-				if( (lkeys[i] = malloc( keysize+ 1 ) ) != NULL )
-				{
-					strcpy( lkeys[i], d->key[j] );
-				}
-			}
-			if( d->val[j] == NULL )
-			{
-				lvals[i] = NULL;
-			}
-			else
-			{
-				if( (lvals[i] = malloc( strlen( d->val[j] ) + 1 ) ) != NULL )
-				{
-					strcpy( lvals[i], d->val[j] );
-				}
-			}
+			sprintf(keym, "%s:", localGroupName);
+	
+			i = 0;
 
-            i++;
-        }
-    }
-    *keys = lkeys;
+			for (j=0 ; j<d->size ; j++)
+			{
+				if (d->key[j]==NULL)
+				{
+					continue ;
+				}
+		
+				if (!strncmp(d->key[j], keym, seclen+1))
+				{
+					if( d->key[j] == NULL )
+					{
+						lkeys[i] = NULL;
+					}
+					else
+					{
+						int keysize = strlen( d->key[j] );
+						if( (lkeys[i] = malloc( keysize+ 1 ) ) != NULL )
+						{
+							strcpy( lkeys[i], d->key[j] );
+						}
+					}
+					if( d->val[j] == NULL )
+					{
+						lvals[i] = NULL;
+					}
+					else
+					{
+						if( (lvals[i] = malloc( strlen( d->val[j] ) + 1 ) ) != NULL )
+						{
+							strcpy( lvals[i], d->val[j] );
+						}
+					}
+					i++;
+				}
+			}
+		}
+	}
+	*keys = lkeys;
 	*val = lvals;
 	
 	free( localGroupName );

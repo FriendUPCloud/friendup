@@ -1163,7 +1163,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						if( checkAvail->l_Data )
 						{
 							struct ModuleSet *mp = ( struct ModuleSet * )checkAvail->l_Data;
-							if( mp != NULL && mp->name != NULL )
+							if( he->hme_Data != NULL && mp != NULL && mp->name != NULL )
 							{
 								if( strcmp( ( char *)he->hme_Data, mp->name ) == 0 )
 								{
@@ -2219,7 +2219,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							FERROR("Cannot  add session\n");
 						}
 
-						char tmp[ 512 ];
+						char tmp[ 768 ];
 						int tmpset = 0;
 						User *loggedUser = NULL;
 						if( loggedSession != NULL )
@@ -2274,7 +2274,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 
 									l->LibrarySQLDrop( l, sqllib );
 
-									snprintf( tmp, 512, "{\"response\":\"%d\",\"sessionid\":\"%s\",\"authid\":\"%s\"}",
+									snprintf( tmp, sizeof(tmp), "{\"response\":\"%d\",\"sessionid\":\"%s\",\"authid\":\"%s\"}",
 									loggedUser->u_Error, loggedUser->u_MainSessionID, authid
 									);
 									tmpset++;

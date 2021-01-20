@@ -873,7 +873,7 @@ int FSManagerProtect( FSManager *fm, const char *path, FULONG devid, char *accgr
 				}
 		
 				FFree( rem );
-			}
+			} // while( prev != NULL )
 		}
 		else
 		{

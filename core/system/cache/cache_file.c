@@ -57,11 +57,6 @@ int CacheFileRead( CacheFile* file )
 {
 	if( file != NULL )
 	{
-		if( file->cf_FileBuffer != NULL )
-		{
-			FFree( file->cf_FileBuffer );
-		}
-		
 		if( file->cf_Fp != NULL )
 		{
 			fclose( file->cf_Fp );
@@ -72,6 +67,11 @@ int CacheFileRead( CacheFile* file )
 		{
 			FERROR("Cannot open file %s (file does not exist?)..\n", file->cf_StorePath );
 			return -1;
+		}
+		
+		if( file->cf_FileBuffer != NULL )
+		{
+			FFree( file->cf_FileBuffer );
 		}
 		
 		fseek( file->cf_Fp, 0, SEEK_END );
@@ -112,7 +112,7 @@ int CacheFileRead( CacheFile* file )
  */
 int CacheFileStore( CacheFile* file )
 {
-	if( file != NULL && file->cf_FileBuffer != NULL )
+	if( file != NULL )
 	{
 		/*
 		FILE* fp = fopen( file->cf_StorePath, "wb" );
@@ -143,11 +143,14 @@ int CacheFileStore( CacheFile* file )
 			return -2;
 		}
 		
-		fwrite( file->cf_FileBuffer, 1, file->cf_FileSize, file->cf_Fp );
 		if( file->cf_FileBuffer != NULL )
 		{
-			FFree( file->cf_FileBuffer );
-			file->cf_FileBuffer = NULL;
+			fwrite( file->cf_FileBuffer, 1, file->cf_FileSize, file->cf_Fp );
+			if( file->cf_FileBuffer != NULL )
+			{
+				FFree( file->cf_FileBuffer );
+				file->cf_FileBuffer = NULL;
+			}
 		}
 		
 		fclose( file->cf_Fp );

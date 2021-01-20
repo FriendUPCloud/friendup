@@ -271,12 +271,12 @@ main(void)
         test_snprintf(i, "%ld", 9223372036854775807L);
         test_snprintf(i, "%ld", 9223372036854775808UL);
         test_snprintf(i, "%ld", 18446744073709551615UL);
-        /*test_snprintf(i, "%ld", 18446744073709551616UL); */
+        //test_snprintf(i, "%ld", 18446744073709551616UL); 
 
         test_snprintf(i, "%lu", 9223372036854775807L);
         test_snprintf(i, "%lu", 9223372036854775808UL);
         test_snprintf(i, "%lu", 18446744073709551615UL);
-        /*test_snprintf(i, "%lu", 18446744073709551616UL); */
+        //test_snprintf(i, "%lu", 18446744073709551616UL); 
 
         test_snprintf(i, "%x", 0);
         test_snprintf(i, "%x", 1234567);

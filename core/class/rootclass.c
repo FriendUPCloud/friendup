@@ -233,7 +233,7 @@ FULONG rootNotify( Class *c __attribute__((unused)), Object *o, struct Msg *msg 
 
 	DEBUG("NOTIFY: SET FOR ALL\n");
 
-	if( ( event = calloc( sizeof( Event ), 1 ) ) != NULL )
+	if( ( event = FCalloc( sizeof( Event ), 1 ) ) != NULL )
 	{
 		event->e_Src = o;                	// pointer to source object
  		event->e_AttributeCheck = lt[ 0 ];  // check argument set

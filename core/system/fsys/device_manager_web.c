@@ -415,7 +415,7 @@ f.Name ASC";
 			}
 			
 			// Add positive response
-			if( ListStringJoin( str ) )
+			if( ListStringJoin( str ) == 0 )
 			{
 				char *cnt = FCalloc( strlen( str->ls_Data ) + 20, sizeof( char ) );
 				if( cnt != NULL )
@@ -1642,7 +1642,19 @@ AND LOWER(f.Name) = LOWER('%s')",
 						}
 						FRIEND_MUTEX_UNLOCK( &( curusr->u_Mutex ) );
 					}
-				
+					else
+					{
+						if( executeCmd )
+						{
+							FFree( executeCmd );
+							executeCmd = NULL;
+						}
+						if( configEscaped )
+						{
+							FFree( configEscaped );
+							configEscaped = NULL;
+						}
+					}
 				
 					//
 					// get information about shared group drives

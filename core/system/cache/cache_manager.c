@@ -36,8 +36,6 @@ CacheManager *CacheManagerNew( FULONG size )
 		
 		pthread_mutex_init( &(cm->cm_Mutex), NULL );
 		
-		cm->cm_CacheMax = size;
-		
 		cm->cm_CacheFileGroup = FCalloc( CACHE_GROUP_MAX, sizeof(CacheFileGroup) );
 		if( cm->cm_CacheFileGroup != NULL )
 		{
@@ -46,11 +44,7 @@ CacheManager *CacheManagerNew( FULONG size )
 				cm->cm_CacheFileGroup[ i ].cg_EntryId = i;
 				cm->cm_CacheFileGroup[ i ].cg_File = NULL;
 			}
-		}
-		else
-		{
-			FFree( cm );
-			return NULL;
+			cm->cm_CacheMax = size;
 		}
 	}
 	else
