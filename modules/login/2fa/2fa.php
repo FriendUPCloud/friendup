@@ -14,7 +14,7 @@
 			
 			$server = getServerSettings(  );
 			
-			if( $server && $server->server == 'windows' && !( $server->host && $server->username && $server->password ) )
+			if( $server && $server->server == 'windows' && !$server->host )
 			{
 				die( 'ERROR! Server settings is missing! login/2fa 
 {
@@ -23,7 +23,8 @@
 "username":"' . $server->username . '",
 "password":"' . ( $server->password ? '********' : '' ) . '",
 "ssh_port":' . $server->ssh_port . ',
-"rdp_port":' . $server->rdp_port . '
+"rdp_port":' . $server->rdp_port . ',
+"users_db_diskpath":' . $server->users_db_diskpath . '
 } 
 				' );
 			}
