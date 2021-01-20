@@ -294,6 +294,8 @@
 													ge( 'loginButton' ).innerHTML = 'Sign in';
 												}
 												
+												ge( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = '';
+												
 												if( ge( 'Code' ) )
 												{
 													ge( 'Code' ).focus();
@@ -332,6 +334,11 @@
 											if( document.getElementById( 'step2' ) && document.getElementById( 'step2' ).className.indexOf( 'closed' ) >= 0 )
 											{
 												document.getElementById( 'step2' ).classList.remove( 'closed' );
+											}
+											
+											if( ge( 'Code' ) )
+											{
+												ge( 'Code' ).focus();
 											}
 											
 											return;
