@@ -951,6 +951,8 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 										$data->mobile   = $mobnum;
 										
 										theLogger( 'Found ' . print_r( $data, 1 ) );
+										
+										return [ 'ok', $data ];
 									}
 								}
 							}
