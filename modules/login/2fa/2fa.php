@@ -13,9 +13,10 @@
 error_reporting( E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_WARNING );
 ini_set( 'display_errors', '1' );
 
+// Get command line arguments
 if( $args = getArgs() )
 {
-	
+	// Check if the request is encrypted(?)
 	if( isset( $args->encrypted ) )
 	{
 		$json = receive_encrypted_json( $args->encrypted );
@@ -51,10 +52,10 @@ if( $args = getArgs() )
 		}
 		
 		
-		
+		// Check authentication mode
 		switch( $mode )
 		{
-			
+			// Using Windows based authentication
 			case 'windows':
 				
 				if( $json->code )
@@ -161,6 +162,7 @@ if( $args = getArgs() )
 				
 				break;
 			
+			// Default authentication
 			default:
 				
 				if( $json->code )
