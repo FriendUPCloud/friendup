@@ -18,7 +18,7 @@ if( $args = getArgs() )
 	
 	if( isset( $args->encrypted ) )
 	{
-		$json = receive( $args->encrypted );
+		$json = receive_encrypted_json( $args->encrypted );
 		
 		$server = getServerSettings(  );
 		
@@ -98,18 +98,18 @@ if( $args = getArgs() )
 								{
 									if( $ses->sessionid )
 									{
-										send( true, 'verification', json_encode( $ses ), $args->publickey );
+										send_2fa_response( true, 'verification', json_encode( $ses ), $args->publickey );
 									}
 									else
 									{
-										send( false, 'verification', json_encode( $ses ), $args->publickey );
+										send_2fa_response( false, 'verification', json_encode( $ses ), $args->publickey );
 									}
 								}
 							}
 						}
 						else
 						{
-							send( false, 'verification', $ret[1], $args->publickey );
+							send_2fa_response( false, 'verification', $ret[1], $args->publickey );
 						}
 					}
 					
@@ -142,18 +142,18 @@ if( $args = getArgs() )
 									{
 										// TODO: Send back useful info ...
 										// TODO: Also add useful clicatell data to make sure it was sent ...
-										send( true, 'identity', '{"code":"sent to ' . $data->mobile . '","data":' . $res[2] . '}', $args->publickey );
+										send_2fa_response( true, 'identity', '{"code":"sent to ' . $data->mobile . '","data":' . $res[2] . '}', $args->publickey );
 									}
 								}
 								else
 								{
-									send( false, 'identity', '{"return":' . $res[1] . ',"data":' . json_encode( $ret[1] ) . '}', $args->publickey );
+									send_2fa_response( false, 'identity', '{"return":' . $res[1] . ',"data":' . json_encode( $ret[1] ) . '}', $args->publickey );
 								}
 							}
 						}
 						else
 						{
-							send( false, 'identity', $ret[1], $args->publickey );
+							send_2fa_response( false, 'identity', $ret[1], $args->publickey );
 						}
 					}
 					
@@ -202,18 +202,18 @@ if( $args = getArgs() )
 								{
 									if( $ses->sessionid )
 									{
-										send( true, 'verification', json_encode( $ses ), $args->publickey );
+										send_2fa_response( true, 'verification', json_encode( $ses ), $args->publickey );
 									}
 									else
 									{
-										send( false, 'verification', json_encode( $ses ), $args->publickey );
+										send_2fa_response( false, 'verification', json_encode( $ses ), $args->publickey );
 									}
 								}
 							}
 						}
 						else
 						{
-							send( false, 'verification', $ret[1], $args->publickey );
+							send_2fa_response( false, 'verification', $ret[1], $args->publickey );
 						}
 					}
 					
@@ -233,18 +233,18 @@ if( $args = getArgs() )
 									{
 										// TODO: Send back useful info ...
 										// TODO: Also add useful clicatell data to make sure it was sent ...
-										send( true, 'identity', '{"code":"sent to ' . $ret[1]->Mobile . '","data":' . $res[2] . '}', $args->publickey );
+										send_2fa_response( true, 'identity', '{"code":"sent to ' . $ret[1]->Mobile . '","data":' . $res[2] . '}', $args->publickey );
 									}
 								}
 								else
 								{
-									send( false, 'identity', $res[1], $args->publickey );
+									send_2fa_response( false, 'identity', $res[1], $args->publickey );
 								}
 							}
 						}
 						else
 						{
-							send( false, 'identity', $ret[1], $args->publickey );
+							send_2fa_response( false, 'identity', $ret[1], $args->publickey );
 						}
 					}
 					

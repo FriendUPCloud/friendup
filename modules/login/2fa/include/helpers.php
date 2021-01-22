@@ -719,7 +719,7 @@ Sent JSON:
 	
 }
 
-function receive( $data = '' )
+function receive_encrypted_json( $data = '' )
 {
 	include_once( 'php/3rdparty/fcrypto/fcrypto.class.php' );
 	
@@ -739,7 +739,7 @@ function receive( $data = '' )
 	return $json;
 }
 
-function send( $result, $type = false, $data = '', $publickey = false )
+function send_2fa_response( $result, $type = false, $data = '', $publickey = false )
 {
 	$ret = ( $result ? 'ok' : 'fail' );
 	
