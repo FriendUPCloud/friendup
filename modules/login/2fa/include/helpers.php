@@ -967,6 +967,7 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 							}
 							
 							theLogger( 'We got this information: ' . ( $data ? print_r( $data, 1 ) : $error ) );
+							theLogger( 'All info: ' . print_r( $identity, 1 ) );
 							
 							if( $data )
 							{
