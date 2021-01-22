@@ -789,7 +789,7 @@ function exec_timeout( $cmd, $timeout = 60 )
 		}
 		$exists = trim( shell_exec( "ps -p $pid -o pid=" ) );
 		if( empty( $exists ) ) break;
-		sleep(1);
+		usleep( 100000 );
 	}
 	$output = file_get_contents( $outfile );
 	unlink( $outfile );
@@ -800,6 +800,8 @@ function exec_timeout( $cmd, $timeout = 60 )
 // Verify the Windows user identity for a specific RDP server
 function verifyWindowsIdentity( $username, $password = '', $server )
 {
+	global $Logger;
+	
 	$error = false; $data = false;
 	
 	// TODO: set login data static for the presentation, remove later, only test data.
@@ -907,43 +909,54 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 						{
 							$identity = new stdClass();
 							
-							if( $parts = explode( "\n", trim( $output ) ) )
-							{
-							
-								foreach( $parts as $part )
+							if( $rows = explode( "\n", trim( $output ) ) )
+							{							
+								foreach( $rows as $line )
 								{
-									if( $value = explode( ';', $part ) )
+									$line = explode( ';', $line );
+									list( $mobnum, $name, $user, ) = $line;
+									$mobnum = trim( $mobnum );
+									$name = trim( $name );
+									$user = trim( $user );
+									if( isset( $mobnum ) && isset( $name ) && isset( $user ) )
 									{
-										if( isset( $value[0] ) && isset( $value[1] ) && isset( $value[2] ) && trim( $value[2] ) )
+										if( !intval( $mobnum ) )
 										{
-											if( !intval( trim( $value[0] ) ) )
+											// TODO: Will this even work?
+											if( $tmp_mobile = (int) filter_var( $mobnum, FILTER_SANITIZE_NUMBER_INT ) )
 											{
-												if( $mobile = (int) filter_var( trim( $value[0] ), FILTER_SANITIZE_NUMBER_INT ) )
-												{
-													$value[0] = $mobile;
-												}
+												$mobnum = $tmp_mobile; // Set sanitized number
 											}
-										
-											$identity->{ strtolower( trim( $value[2] ) ) } = [ intval( trim( $value[0] ) ), trim( $value[1] ), trim( $value[2] ) ];
 										}
+										else
+										{
+											$mobnum = intval( $mobnum );
+										}
+									
+										$identity->{ strtolower( $modnum ) } = [ $mobnum, $name, $user ];
 									}
 								}
 						
 							}
 						
-							if( $identity && isset( $identity->{ strtolower( trim( $username ) ) } ) )
+							$tUsername = strtolower( trim( $username ) );
+						
+							$data = false;
+						
+							if( $identity && isset( $identity->{$tUsername} ) )
 							{
 								$data = new stdClass();
-								$data->id       = ( '0' );
-								$data->fullname = ( $identity->{ strtolower( trim( $username ) ) }[1] );
-								$data->mobile   = ( $identity->{ strtolower( trim( $username ) ) }[0] );
-								//$data->email  = ( $identity->{ strtolower( trim( $username ) ) }[2] );
+								$data->id       = '0';
+								$data->fullname = $identity->{$tUsername}[1];
+								$data->mobile   = $identity->{$tUsername}[0];
 							}
 							else
 							{
 								$error = '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"0"}';
 							}
-						
+							
+							$Logger->log( 'We got this information: ' . ( $data ? print_r( $data, 1 ) : $error ) );
+							
 							if( $data )
 							{
 								return [ 'ok', $data ];
@@ -956,7 +969,12 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 						
 						}
 					}
+					
+
+					// Failed to fin d user in list.
+					return [ 'fail', '{"result":"-1","response":"Could not find user in index, or index does not exist","code":"7","debug":"0"}' ];
 				
+					// TODO: Powershell is commented out but may be used later
 				
 				
 					//function _ssh_disconnect( $reason, $message, $language ) 
@@ -980,7 +998,7 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 				
 					//$callbacks = [ 'disconnect' => '_ssh_disconnect' ];
 				
-					if( !$connection = ssh2_connect( $hostname, $port ) )
+					/*if( !$connection = ssh2_connect( $hostname, $port ) )
 					{
 						$error = '{"result":"-1","response":"couldn\'t connect, contact support ..."}';
 					}
@@ -1010,15 +1028,12 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 								fclose( $errorStream );
 								fclose( $stream );
 						
-							
-						
 								if( $output )
 								{
 									$identity = new stdClass();
 							
 									if( $parts = explode( "\n", $output ) )
 									{
-								
 										foreach( $parts as $part )
 										{
 											if( $value = explode( ':', $part ) )
@@ -1069,7 +1084,7 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 					
 						$error = '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"3"}';
 					
-					}
+					}*/
 				}
 			}
 		

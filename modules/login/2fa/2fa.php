@@ -25,7 +25,7 @@ if( $args = getArgs() )
 		
 		if( $server && $server->server == 'windows' && !$server->host )
 		{
-			die( 'ERROR! Server settings is missing! login/2fa 
+			die( 'ERROR! Server settings are missing! login/2fa 
 {
 "server":"' . $server->server . '",
 "host":"' . $server->host . '",
