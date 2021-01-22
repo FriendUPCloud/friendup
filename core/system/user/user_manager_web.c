@@ -28,7 +28,7 @@
 //test
 //#undef __DEBUG
 
-inline static int killUserSession( SystemBase *l, UserSession *ses )
+int killUserSession( SystemBase *l, UserSession *ses )
 {
 	int error = 0;
 	char tmpmsg[ 2048 ];
