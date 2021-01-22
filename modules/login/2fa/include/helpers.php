@@ -944,7 +944,7 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 											$mobnum = intval( $mobnum );
 										}
 									
-										$identity->{ strtolower( $modnum ) } = [ $mobnum, $name, $user ];
+										$identity->{$modnum} = [ $mobnum, $name, $user ];
 									}
 								}
 						
