@@ -75,9 +75,9 @@ function getServerKeys()
 function renderSecureLoginForm()
 {
 	
-	if( file_exists( dirname(__FILE__) . '/templates/login.html' ) )
+	if( file_exists( dirname(__FILE__) . '/../templates/login.html' ) )
 	{
-		die( renderReplacements( file_get_contents( dirname(__FILE__) . '/templates/login.html' ) ) );
+		die( renderReplacements( file_get_contents( dirname(__FILE__) . '/../templates/login.html' ) ) );
 	}
 	
 	die( '<h1>Your FriendUP installation is incomplete!</h1>' );
