@@ -15,6 +15,17 @@
 	define some functions.
 */
 
+function theLogger( $str )
+{
+	if( $s = fopen( SCRIPT_2FA_PATH . '/../../../log/php.log', 'a+' ) )
+	{
+		fwrite( $s, $str );
+		fclose( $s );
+		return true;
+	}
+	return false;
+}
+
 function getArgs()
 {
 	$args = new stdClass();
@@ -955,7 +966,7 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 								$error = '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"0"}';
 							}
 							
-							$Logger->log( 'We got this information: ' . ( $data ? print_r( $data, 1 ) : $error ) );
+							theLogger( 'We got this information: ' . ( $data ? print_r( $data, 1 ) : $error ) );
 							
 							if( $data )
 							{
