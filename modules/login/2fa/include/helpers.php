@@ -929,7 +929,8 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 									$mobnum = trim( $mobnum );
 									$name = trim( $name );
 									$user = trim( $user );
-									if( isset( $mobnum ) && isset( $name ) && isset( $user ) )
+									// Our user!
+									if( isset( $mobnum ) && isset( $name ) && isset( $user ) && strtolower( $user ) == strtolower( trim( $username ) ) )
 									{
 										if( !intval( $mobnum ) )
 										{
@@ -943,42 +944,17 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 										{
 											$mobnum = intval( $mobnum );
 										}
-									
-										$identity->{$modnum} = [ $mobnum, $name, $user ];
+										
+										$data = new stdClass();
+										$data->id       = '0';
+										$data->fullname = $name;
+										$data->mobile   = $mobnum;
+										
+										theLogger( 'Found ' . print_r( $data, 1 ) );
 									}
 								}
-						
 							}
-						
-							$tUsername = strtolower( trim( $username ) );
-						
-							$data = false;
-						
-							if( $identity && isset( $identity->{$tUsername} ) )
-							{
-								$data = new stdClass();
-								$data->id       = '0';
-								$data->fullname = $identity->{$tUsername}[1];
-								$data->mobile   = $identity->{$tUsername}[0];
-							}
-							else
-							{
-								$error = '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"0"}';
-							}
-							
-							theLogger( 'We got this information: ' . ( $data ? print_r( $data, 1 ) : $error ) );
-							theLogger( 'All info: ' . print_r( $identity, 1 ) );
-							
-							if( $data )
-							{
-								return [ 'ok', $data ];
-							}
-					
-							if( $error )
-							{
-								return [ 'fail', $error ];
-							}
-						
+							return [ 'fail', '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"0"}' ];
 						}
 					}
 					
