@@ -99,15 +99,15 @@ function renderReplacements( $template )
 	}
 	
 	$finds = [
-		'{scriptpath}'
-		,'{welcome}'
-		,'{publickey}'
+		'{scriptpath}',
+		'{welcome}',
+		'{publickey}'
 		/*,'{nothashed}'*/
 	];
 	$replacements = [
-			$GLOBALS['request_path']
-			,$welcome
-			,$publickey
+			$GLOBALS['request_path'],
+			$welcome,
+			$publickey
 			/*,'true'*/
 	];
 	
