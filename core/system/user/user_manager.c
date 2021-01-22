@@ -25,6 +25,7 @@
 #include <util/sha256.h>
 #include <system/fsys/device_handling.h>
 #include <util/session_id.h>
+#include <system/sas/sas_session.h>
 
 /**
  * Create UserManager
@@ -1351,7 +1352,6 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 	return 1;
 }
 
-
 /**
  * Return all users from database
  *
@@ -1423,4 +1423,121 @@ int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname )
 		BufStringAddSize( bs, "]", 1 );
 	}
 	return 0;
+}
+
+/**
+ * Find user by name, add to SAS and send message to all user sessions that user was added to SAS
+ *
+ * @param um pointer to UserManager
+ * @param uname user name
+ * @param las pointer to application session
+ * @param appName application name
+ * @param msg message which will be send to sessions
+ * @param usersAdded pointer to string which will contain users added to SAS
+ * @param listNotEmpty set to TRUE if list already contain users
+ * @return 0 when user was added to SAS, otherwise error number
+ */
+int UMFindUserByNameAndAddToSas( UserManager *um, char *uname, void *las, char *appName, char *msg, BufString *usersAdded, FBOOL listNotEmpty )
+{
+	SASSession *as = (SASSession *)las;
+	SystemBase *sb = (SystemBase *)um->um_SB;
+	char tmp[ 512 ];
+
+	User *tuser = NULL;
+	if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
+	{
+		tuser = um->um_Users;
+		while( tuser != NULL )
+		{
+			// Check both username and password
+			if( strcmp( tuser->u_Name, uname ) == 0 )
+			{
+				FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
+				
+				if( FRIEND_MUTEX_LOCK( &(tuser->u_Mutex) ) == 0 )
+				{
+					tuser->u_InUse++;
+					FRIEND_MUTEX_UNLOCK( &(tuser->u_Mutex) );
+				}
+				
+				FBOOL userAddedToSas = FALSE;
+				
+				UserSessListEntry *usle = tuser->u_SessionsList;
+				while( usle != NULL )
+				{
+					if( usle->us != NULL )
+					{
+						UserSession *us = (UserSession *)usle->us;
+						if( us->us_WSD != NULL )
+						{
+							SASUList *sli = SASSessionAddUser( as, us, NULL );
+
+							DEBUG("[SASSessionAddUsersByName] newsession will be added %p\n", us );
+
+							if( sli != NULL )
+							{
+								char tmpmsg[ 2048 ];
+								int len = sprintf( tmpmsg, "{ \"type\":\"msg\", \"data\":{\"type\":\"sasid-request\",\"data\":{\"sasid\":\"%lu\",\"message\":\"%s\",\"owner\":\"%s\" ,\"appname\":\"%s\"}}}", as->sas_SASID, msg, tuser->u_Name , appName );
+
+								WebSocketSendMessageInt( us, tmpmsg, len );
+								
+								int tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"deviceid\":\"%s\",\"result\":\"invited\"}", tuser->u_Name, us->us_DeviceIdentity );
+								if( listNotEmpty == TRUE )
+								{
+									BufStringAddSize( usersAdded, ",", 1 );
+									BufStringAddSize( usersAdded, tmp, tmpsize );
+								}
+								else
+								{
+									// if list was empty now its not
+									listNotEmpty = FALSE;
+								}
+								userAddedToSas = TRUE;
+							}
+						}
+						else	// Websocket connection not found
+						{
+							// user session was not added to SAS, beacouse websockets were not available
+							int tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"deviceid\":\"%s\",\"result\":\"not invited\"}", tuser->u_Name, us->us_DeviceIdentity );
+							if( listNotEmpty == TRUE )
+							{
+								BufStringAddSize( usersAdded, ",", 1 );
+								BufStringAddSize( usersAdded, tmp, tmpsize );
+							}
+							else
+							{
+								// if list was empty now its not
+								listNotEmpty = FALSE;
+							}
+						}
+					}
+					usle = (UserSessListEntry *)usle->node.mln_Succ;
+				}	// go through all sessions attached to user
+				
+				if( userAddedToSas == TRUE )
+				{
+					if( FRIEND_MUTEX_LOCK( &(tuser->u_Mutex) ) == 0 )
+					{
+						tuser->u_InUse--;
+						FRIEND_MUTEX_UNLOCK( &(tuser->u_Mutex) );
+					}
+					
+					return 0;
+				}
+				
+				// going to check another user, so we have to unlock current one
+				
+				if( FRIEND_MUTEX_LOCK( &(tuser->u_Mutex) ) == 0 )
+				{
+					tuser->u_InUse--;
+					FRIEND_MUTEX_UNLOCK( &(tuser->u_Mutex) );
+				}
+				FRIEND_MUTEX_LOCK( &(um->um_Mutex) );
+			}
+			tuser = (User *)tuser->node.mln_Succ;
+		}
+		FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
+	}
+	
+	return 1;
 }

@@ -24,6 +24,9 @@
 #include <system/user/user_manager.h>
 #include <system/fsys/door_notification.h>
 #include <util/session_id.h>
+#include <strings.h>
+
+#define USE_HASHMAP_FOR_SEARCH
 
 /**
  * Create new User Session Manager
@@ -40,6 +43,8 @@ UserSessionManager *USMNew( void *sb )
 		sm->usm_SB = sb;
 		
 		pthread_mutex_init( &(sm->usm_Mutex), NULL );
+		
+		sm->usm_SessionsHT = AllocateHashTable( sizeof( UserSession *), 0);
 
 		return sm;
 	}
@@ -83,6 +88,11 @@ void USMDelete( UserSessionManager *smgr )
 			}
 		
 			smgr->usm_Sessions = NULL;
+			
+			if( smgr->usm_SessionsHT != NULL )
+			{
+				FreeHashTable( smgr->usm_SessionsHT );
+			}
 		
 			FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
 			
@@ -105,6 +115,14 @@ User *USMGetUserBySessionID( UserSessionManager *usm, char *sessionid )
 	DEBUG("CHECK3\n");
 	if( FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) ) == 0 )
 	{
+#ifdef USE_HASHMAP_FOR_SEARCH
+		HTItem* bck = HashFind( usm->usm_SessionsHT, PTR_KEY(usm->usm_SessionsHT, sessionid) );
+		if( bck != NULL && bck->data != NULL )
+		{
+			FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+			return bck->data;
+		}
+#else
 		UserSession *us = usm->usm_Sessions;
 		while( us != NULL )
 		{
@@ -115,6 +133,7 @@ User *USMGetUserBySessionID( UserSessionManager *usm, char *sessionid )
 			}
 			us = (UserSession *) us->node.mln_Succ;
 		}
+#endif
 		FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 	}
 	return NULL;
@@ -130,15 +149,23 @@ User *USMGetUserBySessionID( UserSessionManager *usm, char *sessionid )
 UserSession *USMGetSessionBySessionID( UserSessionManager *usm, char *sessionid )
 {
 	DEBUG("[USMGetSessionBySessionID] sesssion id %s\n", sessionid );
-    if( sessionid == NULL )
-    {
-        FERROR("Sessionid is NULL!\n");
-        return NULL;
-    }
-    DEBUG("CHECK4\n");
+	if( sessionid == NULL )
+	{
+		FERROR("Sessionid is NULL!\n");
+		return NULL;
+	}
+	DEBUG("CHECK4\n");
 	
 	if( FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) ) == 0 )
 	{
+#ifdef USE_HASHMAP_FOR_SEARCH
+		HTItem* bck = HashFind( usm->usm_SessionsHT, PTR_KEY(usm->usm_SessionsHT, sessionid) );
+		if( bck != NULL && bck->data != NULL )
+		{
+			FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+			return bck->data;
+		}
+#else
 		UserSession *us = usm->usm_Sessions;
 		while( us != NULL )
 		{
@@ -151,6 +178,7 @@ UserSession *USMGetSessionBySessionID( UserSessionManager *usm, char *sessionid 
 			us = (UserSession *) us->node.mln_Succ;
 		}
 		DEBUG("CHECK4END\n");
+#endif
 		FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 	}
 	return NULL;
@@ -275,15 +303,57 @@ UserSession *USMGetSessionByUserID( UserSessionManager *usm, FULONG id )
 		UserSession *us = usm->usm_Sessions;
 		while( us != NULL )
 		{
-			if( us->us_User  != NULL  && us->us_User->u_ID == id )
+			if( us->us_User != NULL  && us->us_User->u_ID == id )
 			{
-				if( us->us_User->u_SessionsList != NULL )
-				{
-					FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
-					return us->us_User->u_SessionsList->us;
-				}
+				FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+				return us;
 			}
 			us = (UserSession *) us->node.mln_Succ;
+		}
+		FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+	}
+	return NULL;
+}
+
+/**
+ * Get first UserSession by user name
+ *
+ * @param usm pointer to UserSessionManager
+ * @param name name of the user to which session belong
+ * @param caseSensitive if set to TRUE function will use case sensitive comparation
+ * @return UserSession structure
+ */
+UserSession *USMGetSessionByUserName( UserSessionManager *usm, char *name, FBOOL caseSensitive )
+{
+	// We will take only first session of that user
+	// protect in mutex
+	if( FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) ) == 0 )
+	{
+		if( caseSensitive == TRUE )
+		{
+			UserSession *us = usm->usm_Sessions;
+			while( us != NULL )
+			{
+				if( us->us_User != NULL  && strcmp( us->us_User->u_Name, name ) == 0 )
+				{
+					FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+					return us;
+				}
+				us = (UserSession *) us->node.mln_Succ;
+			}
+		}
+		else // case sensitive = FALSE
+		{
+			UserSession *us = usm->usm_Sessions;
+			while( us != NULL )
+			{
+				if( us->us_User != NULL  && strcasecmp( us->us_User->u_Name, name ) == 0 )
+				{
+					FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+					return us;
+				}
+				us = (UserSession *) us->node.mln_Succ;
+			}
 		}
 		FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 	}

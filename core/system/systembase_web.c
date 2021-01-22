@@ -584,128 +584,66 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				{
 					if( FRIEND_MUTEX_LOCK( &(l->sl_USM->usm_Mutex) ) == 0 )
 					{
-						UserSession *curusrsess = l->sl_USM->usm_Sessions;
-					
-						while( curusrsess != NULL )
+						UserSession *locus = USMGetSessionByUserName( l->sl_USM, (char *)uname->hme_Data, FALSE );
+						if( locus != NULL )
 						{
-							if( curusrsess != NULL )
+							if( FRIEND_MUTEX_LOCK( &(locus->us_Mutex) ) == 0 )
 							{
-								if( FRIEND_MUTEX_LOCK( &(curusrsess->us_Mutex) ) == 0 )
-								{
-									curusrsess->us_InUseCounter++;
-									FRIEND_MUTEX_UNLOCK( &(curusrsess->us_Mutex) );
-								}
+								locus->us_InUseCounter++;
+								FRIEND_MUTEX_UNLOCK( &(locus->us_Mutex) );
 							}
-							User *curusr = curusrsess->us_User;
-						
+							
+							User *curusr = locus->us_User;
 							if( curusr != NULL )
 							{
-								DEBUG("CHECK remote user: %s pass %s  provided pass %s uname param: %s\n", curusr->u_Name, curusr->u_Password, (char *)lpass, (char *)uname->hme_Data );
-						
-								if( strcasecmp( curusr->u_Name, (char *)uname->hme_Data ) == 0 )
+								FBOOL isSentinel = FALSE;
+								Sentinel *sent = l->GetSentinelUser( l );
+								if( sent != NULL && sent->s_User != NULL && sent->s_User == curusr )
 								{
-									FBOOL isUserSentinel = FALSE;
-							
-									Sentinel *sent = l->GetSentinelUser( l );
-									if( sent != NULL )
-									{
-										if( curusr == sent->s_User )
-										{
-											isUserSentinel = TRUE;
-										}
-									}
-							
-									if( isUserSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, curusr, (char *)passwd->hme_Data, &blockedTime ) == TRUE )
-									{
-										//snprintf( sessionid, sizeof(sessionid), "%lu", curusrsess->us_User->u_ID );
-										//strcpy( sessionid, curusrsess->us_User->u_MainSessionID );
-
-										loggedSession =  curusrsess;
-										userAdded = TRUE;		// there is no need to free resources
-									
-										if( curusrsess != NULL )
-										{
-											if( FRIEND_MUTEX_LOCK( &(curusrsess->us_Mutex) ) == 0 )
-											{
-												curusrsess->us_InUseCounter--;
-												FRIEND_MUTEX_UNLOCK( &(curusrsess->us_Mutex) );
-											}
-										}
-
-										break;
-									}	// compare password
-								}		// compare user name
-							}	//if usr != NULL
-							if( curusrsess != NULL )
-							{
-								if( FRIEND_MUTEX_LOCK( &(curusrsess->us_Mutex) ) == 0 )
+									isSentinel = TRUE;
+								}
+								
+								if( isSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, curusr, (char *)passwd->hme_Data, &blockedTime ) == TRUE )
 								{
-									curusrsess->us_InUseCounter--;
-									FRIEND_MUTEX_UNLOCK( &(curusrsess->us_Mutex) );
+									loggedSession = locus;
+									userAdded = TRUE;		// there is no need to free resources
 								}
 							}
-							curusrsess = (UserSession *)curusrsess->node.mln_Succ;
+							
+							if( FRIEND_MUTEX_LOCK( &(locus->us_Mutex) ) == 0 )
+							{
+								locus->us_InUseCounter--;
+								FRIEND_MUTEX_UNLOCK( &(locus->us_Mutex) );
+							}
 						}
-						FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
 					}
 				}
 			}
 			else
 			{
 				DEBUG("CHECK1\n");
-				if( FRIEND_MUTEX_LOCK( &(l->sl_USM->usm_Mutex) ) == 0 )
+				UserSession *locus = USMGetSessionBySessionID( l->sl_USM, sessionid );
+				if( locus != NULL )
 				{
-					UserSession *curusrsess = l->sl_USM->usm_Sessions;
-
-					while( curusrsess != NULL )
+					if( FRIEND_MUTEX_LOCK( &(locus->us_Mutex) ) == 0 )
 					{
-						/*
-						if( curusrsess != NULL )
-						{
-							if( FRIEND_MUTEX_LOCK( &(curusrsess->us_Mutex) ) == 0 )
-							{
-								curusrsess->us_InUseCounter++;
-								FRIEND_MUTEX_UNLOCK( &(curusrsess->us_Mutex) );
-							}
-						}
-						*/
-						if( curusrsess->us_SessionID != NULL && curusrsess->us_User && curusrsess->us_User->u_MainSessionID != NULL )
-						{
-							if(  (strcmp( curusrsess->us_SessionID, sessionid ) == 0 || strcmp( curusrsess->us_User->u_MainSessionID, sessionid ) == 0 ) )
-							{
-								loggedSession = curusrsess;
-								userAdded = TRUE;		// there is no need to free resources
-								User *curusr = curusrsess->us_User;
-								if( curusr != NULL )
-								{
-									DEBUG("FOUND user: %s session sessionid %s provided session %s\n", curusr->u_Name, curusrsess->us_SessionID, sessionid );
-								}
-								/*
-								if( curusrsess != NULL )
-								{
-									if( FRIEND_MUTEX_LOCK( &(curusrsess->us_Mutex) ) == 0 )
-									{
-										curusrsess->us_InUseCounter--;
-										FRIEND_MUTEX_UNLOCK( &(curusrsess->us_Mutex) );
-									}
-								}
-								*/
-								break;
-							}
-						}
-						/*
-						if( curusrsess != NULL )
-						{
-							if( FRIEND_MUTEX_LOCK( &(curusrsess->us_Mutex) ) == 0 )
-							{
-								curusrsess->us_InUseCounter--;
-								FRIEND_MUTEX_UNLOCK( &(curusrsess->us_Mutex) );
-							}
-						}
-						*/
-						curusrsess = (UserSession *)curusrsess->node.mln_Succ;
+						locus->us_InUseCounter++;
+						FRIEND_MUTEX_UNLOCK( &(locus->us_Mutex) );
 					}
-					FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
+					
+					loggedSession = locus;
+					userAdded = TRUE;
+					User *curusr = locus->us_User;
+					if( curusr != NULL )
+					{
+						DEBUG("FOUND session sessionid %s provided session %s\n", locus->us_SessionID, sessionid );
+					}
+					
+					if( FRIEND_MUTEX_LOCK( &(locus->us_Mutex) ) == 0 )
+					{
+						locus->us_InUseCounter--;
+						FRIEND_MUTEX_UNLOCK( &(locus->us_Mutex) );
+					}
 				}
 				DEBUG("CHECK1END\n");
 			}

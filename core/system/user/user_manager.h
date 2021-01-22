@@ -230,6 +230,12 @@ int UMCheckAndLoadAPIUser( UserManager *um );
 //
 //
 
+int UMFindUserByNameAndAddToSas( UserManager *um, char *uname, void *las, char *appName, char *msg, BufString *usersAdded, FBOOL listNotEmpty );
+
+//
+//
+//
+
 int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname );
 
 #endif //__SYSTEM_USER_USER_MANAGER_H__
