@@ -71,6 +71,7 @@ function getServerKeys()
 	return $pem;
 }
 
+// Renders the login form template
 function renderSecureLoginForm()
 {
 	
@@ -82,6 +83,7 @@ function renderSecureLoginForm()
 	die( '<h1>Your FriendUP installation is incomplete!</h1>' );
 }
 
+// Sets replacements on template
 function renderReplacements( $template )
 {
 	$welcome = 'Login to your workspace (2FA)';
@@ -113,7 +115,7 @@ function renderReplacements( $template )
 }
 
 
-
+// Authenticate with Friend Core
 function remoteAuth( $url, $args = false, $method = 'POST', $headers = false, $auth = false )
 {
 	$configpath = __DIR__ . '/../../../cfg/cfg.ini';
@@ -251,9 +253,9 @@ function remoteAuth( $url, $args = false, $method = 'POST', $headers = false, $a
 	}
 }
 
+// Get server settings configured using the FSettings table
 function getServerSettings(  )
 {
-	
 	include_once( __DIR__ . '/../../../php/classes/dbio.php' );
 	$conf = parse_ini_file( __DIR__ . '/../../../cfg/cfg.ini', true );
 	
@@ -293,6 +295,9 @@ function getServerSettings(  )
 	return false;
 }
 
+// Verify the user identity by Friend username and password
+// TODO: This function will stop working soon, using deprecated password
+//       hashing implementation
 function verifyIdentity( $username, $password = '' )
 {
 	$error = false; $data = false;
@@ -379,6 +384,9 @@ function verifyIdentity( $username, $password = '' )
 	}
 }
 
+// Verify the verifification code
+// TODO: This function will stop working soon, using deprecated password
+//       hashing implementation
 function verifyCode( $username, $password = '', $code = false )
 {
 	if( $code && $username )
@@ -482,6 +490,7 @@ function verifyCode( $username, $password = '', $code = false )
 	}
 }
 
+// Send verification code using SMS
 function sendCode( $userid, $mobile, $code = false, $limit = true )
 {
 	$error = false; $debug = false;
@@ -719,6 +728,7 @@ Sent JSON:
 	
 }
 
+// Receive an encrypted JSON string
 function receive_encrypted_json( $data = '' )
 {
 	include_once( 'php/3rdparty/fcrypto/fcrypto.class.php' );
@@ -739,6 +749,7 @@ function receive_encrypted_json( $data = '' )
 	return $json;
 }
 
+// Send the 2FA response to the login form
 function send_2fa_response( $result, $type = false, $data = '', $publickey = false )
 {
 	$ret = ( $result ? 'ok' : 'fail' );
@@ -762,6 +773,7 @@ function send_2fa_response( $result, $type = false, $data = '', $publickey = fal
 	die( $ret . '<!--separate-->' . ( $type ? $type . '<!--separate-->' : '' ) . $data );
 }
 
+// Execute shell function with a timeout
 function exec_timeout( $cmd, $timeout = 60 )
 {
 	$start = time();
@@ -785,6 +797,7 @@ function exec_timeout( $cmd, $timeout = 60 )
 	return $output;
 }
 
+// Verify the Windows user identity for a specific RDP server
 function verifyWindowsIdentity( $username, $password = '', $server )
 {
 	$error = false; $data = false;
@@ -1076,6 +1089,8 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 	
 }
 
+// Check a Friend user
+// TODO: Fix deprecated password hashing (deprecated soon!)
 function checkFriendUser( $data, $identity, $create = false )
 {
 	
@@ -1281,6 +1296,7 @@ function checkFriendUser( $data, $identity, $create = false )
 	
 }
 
+// Convert login data using hashing function
 function convertLoginData( $data )
 {
 	if( $data && ( $data->username && isset( $data->password ) ) )
@@ -1303,6 +1319,7 @@ function convertLoginData( $data )
 	return $data;
 }
 
+// Hashing function
 function generateExternalFriendUsername( $input )
 {
 	if( $input )
@@ -1313,6 +1330,7 @@ function generateExternalFriendUsername( $input )
 	return '';
 }
 
+// Password hashing function
 function generateExternalFriendPassword( $input )
 {
 	if( $input )
@@ -1327,6 +1345,7 @@ function generateExternalFriendPassword( $input )
 	return '';
 }
 
+// Check if we have "External" type user's group
 function checkExternalUserGroup(  )
 {
 	// TODO: Move this to it's own function ...
@@ -1362,11 +1381,13 @@ function checkExternalUserGroup(  )
 	return;
 }
 
+// Generate random hash
 function generateFriendUniqueID( $data = '' )
 {
 	return hash( 'sha256', ( time().$data.rand(0,999).rand(0,999).rand(0,999) ) );
 }
 
+// Find application in search paths
 function findInSearchPaths( $app )
 {
 	$ar = array(
@@ -1383,6 +1404,7 @@ function findInSearchPaths( $app )
 	return false;
 }
 
+// Check database for first login
 function firstLoginSetup( $setupid, $uid )
 {
 	// TODO: Move this to it's own function ...

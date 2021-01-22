@@ -21,7 +21,7 @@ if( $args = getArgs() )
 	{
 		$json = receive_encrypted_json( $args->encrypted );
 		
-		$server = getServerSettings(  );
+		$server = getServerSettings();
 		
 		if( $server && $server->server == 'windows' && !$server->host )
 		{
