@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
-# Copyright 2007-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the Apache License 2.0 (the "License").  You may not use
+# Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -89,10 +89,7 @@
 # instructions, which deliver ~70% improvement at 8KB block size over
 # vanilla km-based code, 37% - at most like 512-bytes block size.
 
-# $output is the last argument if it looks like a file (it has an extension)
-# $flavour is the first argument if it doesn't look like a file
-$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
-$flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
+$flavour = shift;
 
 if ($flavour =~ /3[12]/) {
 	$SIZE_T=4;
@@ -102,7 +99,8 @@ if ($flavour =~ /3[12]/) {
 	$g="g";
 }
 
-$output and open STDOUT,">$output";
+while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
+open STDOUT,">$output";
 
 $softonly=0;	# allow hardware support
 
@@ -1989,7 +1987,7 @@ $code.=<<___;
 
 .Lxts_enc_done:
 	stg	$sp,$tweak+0($sp)	# wipe tweak
-	stg	$sp,$twesk+8($sp)
+	stg	$sp,$tweak+8($sp)
 	lm${g}	%r6,$ra,6*$SIZE_T($sp)
 	br	$ra
 .size	AES_xts_encrypt,.-AES_xts_encrypt
@@ -2269,7 +2267,7 @@ $code.=<<___;
 	stg	$sp,$tweak-16+8($sp)
 .Lxts_dec_done:
 	stg	$sp,$tweak+0($sp)	# wipe tweak
-	stg	$sp,$twesk+8($sp)
+	stg	$sp,$tweak+8($sp)
 	lm${g}	%r6,$ra,6*$SIZE_T($sp)
 	br	$ra
 .size	AES_xts_decrypt,.-AES_xts_decrypt
@@ -2281,4 +2279,4 @@ ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
 print $code;
-close STDOUT;	# force flush
+close STDOUT or die "error closing STDOUT: $!";	# force flush

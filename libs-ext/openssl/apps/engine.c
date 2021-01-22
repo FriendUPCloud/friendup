@@ -1,26 +1,22 @@
 /*
- * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
 
 #include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_ENGINE
-NON_EMPTY_TRANSLATION_UNIT
-#else
-
-# include "apps.h"
-# include "progs.h"
-# include <stdio.h>
-# include <stdlib.h>
-# include <string.h>
-# include <openssl/err.h>
-# include <openssl/engine.h>
-# include <openssl/ssl.h>
-# include <openssl/store.h>
+#include "apps.h"
+#include "progs.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <openssl/err.h>
+#include <openssl/engine.h>
+#include <openssl/ssl.h>
+#include <openssl/store.h>
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -486,4 +482,3 @@ int engine_main(int argc, char **argv)
     BIO_free_all(out);
     return ret;
 }
-#endif

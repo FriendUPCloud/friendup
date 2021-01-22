@@ -1,7 +1,7 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -237,7 +237,7 @@ int X509_STORE_up_ref(X509_STORE *vfy)
     if (CRYPTO_UP_REF(&vfy->references, &i, vfy->lock) <= 0)
         return 0;
 
-    REF_PRINT_COUNT("X509_STORE", vfy);
+    REF_PRINT_COUNT("X509_STORE", a);
     REF_ASSERT_ISNT(i < 2);
     return ((i > 1) ? 1 : 0);
 }
@@ -289,7 +289,7 @@ X509_OBJECT *X509_STORE_CTX_get_obj_by_subject(X509_STORE_CTX *vs,
 int X509_STORE_CTX_get_by_subject(X509_STORE_CTX *vs, X509_LOOKUP_TYPE type,
                                   X509_NAME *name, X509_OBJECT *ret)
 {
-    X509_STORE *store = vs->store;
+    X509_STORE *store = vs->ctx;
     X509_LOOKUP *lu;
     X509_OBJECT stmp, *tmp;
     int i, j;
@@ -538,7 +538,7 @@ STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *ctx, X509_NAME *nm)
     STACK_OF(X509) *sk = NULL;
     X509 *x;
     X509_OBJECT *obj;
-    X509_STORE *store = ctx->store;
+    X509_STORE *store = ctx->ctx;
 
     if (store == NULL)
         return NULL;
@@ -595,7 +595,7 @@ STACK_OF(X509_CRL) *X509_STORE_CTX_get1_crls(X509_STORE_CTX *ctx, X509_NAME *nm)
     STACK_OF(X509_CRL) *sk = sk_X509_CRL_new_null();
     X509_CRL *x;
     X509_OBJECT *obj, *xobj = X509_OBJECT_new();
-    X509_STORE *store = ctx->store;
+    X509_STORE *store = ctx->ctx;
 
     /* Always do lookup to possibly add new CRLs to cache */
     if (sk == NULL
@@ -678,7 +678,7 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 {
     X509_NAME *xn;
     X509_OBJECT *obj = X509_OBJECT_new(), *pobj = NULL;
-    X509_STORE *store = ctx->store;
+    X509_STORE *store = ctx->ctx;
     int i, ok, idx, ret;
 
     if (obj == NULL)
@@ -918,5 +918,5 @@ void *X509_STORE_get_ex_data(X509_STORE *ctx, int idx)
 
 X509_STORE *X509_STORE_CTX_get0_store(X509_STORE_CTX *ctx)
 {
-    return ctx->store;
+    return ctx->ctx;
 }

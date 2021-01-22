@@ -1,7 +1,7 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
-#include <openssl/kdf.h>
 #include "crypto/objects.h"
 #include <openssl/x509.h>
 #include "crypto/evp.h"
@@ -80,7 +79,6 @@ const EVP_MD *EVP_get_digestbyname(const char *name)
 
 void evp_cleanup_int(void)
 {
-    OBJ_NAME_cleanup(OBJ_NAME_TYPE_KDF_METH);
     OBJ_NAME_cleanup(OBJ_NAME_TYPE_CIPHER_METH);
     OBJ_NAME_cleanup(OBJ_NAME_TYPE_MD_METH);
     /*

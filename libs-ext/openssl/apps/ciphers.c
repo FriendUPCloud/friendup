@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -247,7 +247,7 @@ int ciphers_main(int argc, char **argv)
                 const char *nm = SSL_CIPHER_standard_name(c);
                 if (nm == NULL)
                     nm = "UNKNOWN";
-                BIO_printf(bio_out, "%-45s - ", nm);
+                BIO_printf(bio_out, "%s - ", nm);
             }
             BIO_puts(bio_out, SSL_CIPHER_description(c, buf, sizeof(buf)));
         }

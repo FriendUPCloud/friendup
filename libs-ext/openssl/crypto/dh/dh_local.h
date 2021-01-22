@@ -1,7 +1,7 @@
 /*
  * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -9,8 +9,6 @@
 
 #include <openssl/dh.h>
 #include "internal/refcount.h"
-
-#define DH_MIN_MODULUS_BITS     512
 
 struct dh_st {
     /*
@@ -37,9 +35,6 @@ struct dh_st {
     const DH_METHOD *meth;
     ENGINE *engine;
     CRYPTO_RWLOCK *lock;
-
-    /* Provider data */
-    size_t dirty_cnt; /* If any key material changes, increment this */
 };
 
 struct dh_method {
@@ -60,6 +55,3 @@ struct dh_method {
     int (*generate_params) (DH *dh, int prime_len, int generator,
                             BN_GENCB *cb);
 };
-
-int dh_buf2key(DH *key, const unsigned char *buf, size_t len);
-size_t dh_key2buf(const DH *dh, unsigned char **pbuf);
