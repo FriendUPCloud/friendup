@@ -12,6 +12,8 @@
 
 require( 'include/helpers.php' );
 
+define( 'SCRIPT_2FA_PATH', dirname(__FILE__) );
+
 error_reporting( E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_WARNING );
 ini_set( 'display_errors', '1' );
 

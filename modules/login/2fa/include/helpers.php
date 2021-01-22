@@ -75,9 +75,9 @@ function getServerKeys()
 function renderSecureLoginForm()
 {
 	
-	if( file_exists( dirname(__FILE__) . '/../templates/login.html' ) )
+	if( file_exists( SCRIPT_2FA_PATH . '/templates/login.html' ) )
 	{
-		die( renderReplacements( file_get_contents( dirname(__FILE__) . '/../templates/login.html' ) ) );
+		die( renderReplacements( file_get_contents( SCRIPT_2FA_PATH . '/templates/login.html' ) ) );
 	}
 	
 	die( '<h1>Your FriendUP installation is incomplete!</h1>' );
@@ -118,7 +118,7 @@ function renderReplacements( $template )
 // Authenticate with Friend Core
 function remoteAuth( $url, $args = false, $method = 'POST', $headers = false, $auth = false )
 {
-	$configpath = __DIR__ . '/../../../cfg/cfg.ini';
+	$configpath = SCRIPT_2FA_PATH . '/../../../cfg/cfg.ini';
 	
 	$conf = parse_ini_file( $configpath, true );
 	
@@ -256,8 +256,8 @@ function remoteAuth( $url, $args = false, $method = 'POST', $headers = false, $a
 // Get server settings configured using the FSettings table
 function getServerSettings(  )
 {
-	include_once( __DIR__ . '/../../../php/classes/dbio.php' );
-	$conf = parse_ini_file( __DIR__ . '/../../../cfg/cfg.ini', true );
+	include_once( SCRIPT_2FA_PATH . '/../../../php/classes/dbio.php' );
+	$conf = parse_ini_file( SCRIPT_2FA_PATH . '/../../../cfg/cfg.ini', true );
 	
 	if( !( isset( $conf['DatabaseUser']['host'] ) && isset( $conf['DatabaseUser']['login'] ) && isset( $conf['DatabaseUser']['password'] ) && isset( $conf['DatabaseUser']['dbname'] ) ) )
 	{
@@ -304,8 +304,8 @@ function verifyIdentity( $username, $password = '' )
 	
 	if( $username )
 	{
-		include_once( __DIR__ . '/../../../php/classes/dbio.php' );
-		$conf = parse_ini_file( __DIR__ . '/../../../cfg/cfg.ini', true );
+		include_once( SCRIPT_2FA_PATH . '/../../../php/classes/dbio.php' );
+		$conf = parse_ini_file( SCRIPT_2FA_PATH . '/../../../cfg/cfg.ini', true );
 		
 		if( !( isset( $conf['DatabaseUser']['host'] ) && isset( $conf['DatabaseUser']['login'] ) && isset( $conf['DatabaseUser']['password'] ) && isset( $conf['DatabaseUser']['dbname'] ) ) )
 		{
@@ -393,8 +393,8 @@ function verifyCode( $username, $password = '', $code = false )
 	{
 		$error = false; $data = false;
 		
-		include_once( __DIR__ . '/../../../php/classes/dbio.php' );
-		$conf = parse_ini_file( __DIR__ . '/../../../cfg/cfg.ini', true );
+		include_once( SCRIPT_2FA_PATH . '/../../../php/classes/dbio.php' );
+		$conf = parse_ini_file( SCRIPT_2FA_PATH . '/../../../cfg/cfg.ini', true );
 		
 		if( !( isset( $conf['DatabaseUser']['host'] ) && isset( $conf['DatabaseUser']['login'] ) && isset( $conf['DatabaseUser']['password'] ) && isset( $conf['DatabaseUser']['dbname'] ) ) )
 		{
@@ -495,8 +495,8 @@ function sendCode( $userid, $mobile, $code = false, $limit = true )
 {
 	$error = false; $debug = false;
 	
-	include_once( __DIR__ . '/../../../php/classes/dbio.php' );
-	$conf = parse_ini_file( __DIR__ . '/../../../cfg/cfg.ini', true );
+	include_once( SCRIPT_2FA_PATH . '/../../../php/classes/dbio.php' );
+	$conf = parse_ini_file( SCRIPT_2FA_PATH . '/../../../cfg/cfg.ini', true );
 	
 	if( !( isset( $conf['DatabaseUser']['host'] ) && isset( $conf['DatabaseUser']['login'] ) && isset( $conf['DatabaseUser']['password'] ) && isset( $conf['DatabaseUser']['dbname'] ) ) )
 	{
@@ -674,7 +674,7 @@ Sent JSON:
 						if( $error )
 						{
 							// Try to log
-							if ( $f = @fopen ( __DIR__ . '/../../../log/sms_clickatell.log', 'a+' ) )
+							if ( $f = @fopen ( SCRIPT_2FA_PATH . '/../../../log/sms_clickatell.log', 'a+' ) )
 							{
 								fwrite ( $f, $log );
 								fclose ( $f );
@@ -899,7 +899,7 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 				
 				if( !$error )
 				{
-					//$path = ( __DIR__ . '/../../../cfg' );
+					//$path = ( SCRIPT_2FA_PATH . '/../../../cfg' );
 					
 					// Specific usecase ...
 					
@@ -1116,8 +1116,8 @@ function checkFriendUser( $data, $identity, $create = false )
 		
 		// TODO: Move this to it's own function ...
 		
-		include_once( __DIR__ . '/../../../php/classes/dbio.php' );
-		$conf = parse_ini_file( __DIR__ . '/../../../cfg/cfg.ini', true );
+		include_once( SCRIPT_2FA_PATH . '/../../../php/classes/dbio.php' );
+		$conf = parse_ini_file( SCRIPT_2FA_PATH . '/../../../cfg/cfg.ini', true );
 	
 		if( !( isset( $conf['DatabaseUser']['host'] ) && isset( $conf['DatabaseUser']['login'] ) && isset( $conf['DatabaseUser']['password'] ) && isset( $conf['DatabaseUser']['dbname'] ) ) )
 		{
@@ -1365,8 +1365,8 @@ function checkExternalUserGroup(  )
 {
 	// TODO: Move this to it's own function ...
 	
-	include_once( __DIR__ . '/../../../php/classes/dbio.php' );
-	$conf = parse_ini_file( __DIR__ . '/../../../cfg/cfg.ini', true );
+	include_once( SCRIPT_2FA_PATH . '/../../../php/classes/dbio.php' );
+	$conf = parse_ini_file( SCRIPT_2FA_PATH . '/../../../cfg/cfg.ini', true );
 
 	if( !( isset( $conf['DatabaseUser']['host'] ) && isset( $conf['DatabaseUser']['login'] ) && isset( $conf['DatabaseUser']['password'] ) && isset( $conf['DatabaseUser']['dbname'] ) ) )
 	{
@@ -1424,8 +1424,8 @@ function firstLoginSetup( $setupid, $uid )
 {
 	// TODO: Move this to it's own function ...
 	
-	include_once( __DIR__ . '/../../../php/classes/dbio.php' );
-	$conf = parse_ini_file( __DIR__ . '/../../../cfg/cfg.ini', true );
+	include_once( SCRIPT_2FA_PATH . '/../../../php/classes/dbio.php' );
+	$conf = parse_ini_file( SCRIPT_2FA_PATH . '/../../../cfg/cfg.ini', true );
 
 	if( !( isset( $conf['DatabaseUser']['host'] ) && isset( $conf['DatabaseUser']['login'] ) && isset( $conf['DatabaseUser']['password'] ) && isset( $conf['DatabaseUser']['dbname'] ) ) )
 	{
