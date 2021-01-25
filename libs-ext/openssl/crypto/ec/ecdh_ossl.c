@@ -1,8 +1,8 @@
 /*
- * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2019 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -47,7 +47,7 @@ int ecdh_simple_compute_key(unsigned char **pout, size_t *poutlen,
     size_t buflen, len;
     unsigned char *buf = NULL;
 
-    if ((ctx = BN_CTX_new_ex(ecdh->libctx)) == NULL)
+    if ((ctx = BN_CTX_new()) == NULL)
         goto err;
     BN_CTX_start(ctx);
     x = BN_CTX_get(ctx);

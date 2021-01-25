@@ -5,23 +5,64 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
-  Major changes between OpenSSL 1.1.1 and OpenSSL 3.0.0 [under development]
+  Major changes between OpenSSL 1.1.1i and OpenSSL 1.1.1j [under development]
 
-      o Added error raising macros, ERR_raise() and ERR_raise_data().
-      o Deprecated ERR_put_error().
-      o Added OSSL_PROVIDER_available(), to check provider availibility.
-      o Added 'openssl mac' that uses the EVP_MAC API.
-      o Added 'openssl kdf' that uses the EVP_KDF API.
-      o Add OPENSSL_info() and 'openssl info' to get built-in data.
-      o Add support for enabling instrumentation through trace and debug
-        output.
-      o Changed our version number scheme and set the next major release to
-        3.0.0
-      o Added EVP_MAC, an EVP layer MAC API, and a generic EVP_PKEY to EVP_MAC
-        bridge.
-      o Removed the heartbeat message in DTLS feature.
-      o Added EVP_KDF, an EVP layer KDF API, and a generic EVP_PKEY to EVP_KDF
-        bridge.
+      o
+
+  Major changes between OpenSSL 1.1.1h and OpenSSL 1.1.1i [8 Dec 2020]
+
+      o Fixed NULL pointer deref in GENERAL_NAME_cmp (CVE-2020-1971)
+
+  Major changes between OpenSSL 1.1.1g and OpenSSL 1.1.1h [22 Sep 2020]
+
+      o Disallow explicit curve parameters in verifications chains when
+        X509_V_FLAG_X509_STRICT is used
+      o Enable 'MinProtocol' and 'MaxProtocol' to configure both TLS and DTLS
+        contexts
+      o Oracle Developer Studio will start reporting deprecation warnings
+
+  Major changes between OpenSSL 1.1.1f and OpenSSL 1.1.1g [21 Apr 2020]
+
+      o Fixed segmentation fault in SSL_check_chain() (CVE-2020-1967)
+
+  Major changes between OpenSSL 1.1.1e and OpenSSL 1.1.1f [31 Mar 2020]
+
+      o Revert the unexpected EOF reporting via SSL_ERROR_SSL
+
+  Major changes between OpenSSL 1.1.1d and OpenSSL 1.1.1e [17 Mar 2020]
+
+      o Fixed an overflow bug in the x64_64 Montgomery squaring procedure
+        used in exponentiation with 512-bit moduli (CVE-2019-1551)
+      o Properly detect unexpected EOF while reading in libssl and report
+        it via SSL_ERROR_SSL
+
+  Major changes between OpenSSL 1.1.1c and OpenSSL 1.1.1d [10 Sep 2019]
+
+      o Fixed a fork protection issue (CVE-2019-1549)
+      o Fixed a padding oracle in PKCS7_dataDecode and CMS_decrypt_set1_pkey
+        (CVE-2019-1563)
+      o For built-in EC curves, ensure an EC_GROUP built from the curve name is
+        used even when parsing explicit parameters
+      o Compute ECC cofactors if not provided during EC_GROUP construction
+        (CVE-2019-1547)
+      o Early start up entropy quality from the DEVRANDOM seed source has been
+        improved for older Linux systems
+      o Correct the extended master secret constant on EBCDIC systems
+      o Use Windows installation paths in the mingw builds (CVE-2019-1552)
+      o Changed DH_check to accept parameters with order q and 2q subgroups
+      o Significantly reduce secure memory usage by the randomness pools
+      o Revert the DEVRANDOM_WAIT feature for Linux systems
+
+  Major changes between OpenSSL 1.1.1b and OpenSSL 1.1.1c [28 May 2019]
+
+      o Prevent over long nonces in ChaCha20-Poly1305 (CVE-2019-1543)
+
+  Major changes between OpenSSL 1.1.1a and OpenSSL 1.1.1b [26 Feb 2019]
+
+      o Change the info callback signals for the start and end of a post-handshake
+        message exchange in TLSv1.3.
+      o Fix a bug in DTLS over SCTP. This breaks interoperability with older versions
+        of OpenSSL like OpenSSL 1.1.0 and OpenSSL 1.0.2.
 
   Major changes between OpenSSL 1.1.1 and OpenSSL 1.1.1a [20 Nov 2018]
 

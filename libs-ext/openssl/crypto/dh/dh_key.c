@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -87,11 +87,6 @@ static int generate_key(DH *dh)
         return 0;
     }
 
-    if (BN_num_bits(dh->p) < DH_MIN_MODULUS_BITS) {
-        DHerr(DH_F_GENERATE_KEY, DH_R_MODULUS_TOO_SMALL);
-        return 0;
-    }
-
     ctx = BN_CTX_new();
     if (ctx == NULL)
         goto err;
@@ -159,7 +154,6 @@ static int generate_key(DH *dh)
 
     dh->pub_key = pub_key;
     dh->priv_key = priv_key;
-    dh->dirty_cnt++;
     ok = 1;
  err:
     if (ok != 1)
@@ -184,11 +178,6 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
     if (BN_num_bits(dh->p) > OPENSSL_DH_MAX_MODULUS_BITS) {
         DHerr(DH_F_COMPUTE_KEY, DH_R_MODULUS_TOO_LARGE);
         goto err;
-    }
-
-    if (BN_num_bits(dh->p) < DH_MIN_MODULUS_BITS) {
-        DHerr(DH_F_COMPUTE_KEY, DH_R_MODULUS_TOO_SMALL);
-        return 0;
     }
 
     ctx = BN_CTX_new();
@@ -247,67 +236,4 @@ static int dh_finish(DH *dh)
 {
     BN_MONT_CTX_free(dh->method_mont_p);
     return 1;
-}
-
-int dh_buf2key(DH *dh, const unsigned char *buf, size_t len)
-{
-    int err_reason = DH_R_BN_ERROR;
-    BIGNUM *pubkey = NULL;
-    const BIGNUM *p;
-    size_t p_size;
-
-    if ((pubkey = BN_bin2bn(buf, len, NULL)) == NULL)
-        goto err;
-    DH_get0_pqg(dh, &p, NULL, NULL);
-    if (p == NULL || (p_size = BN_num_bytes(p)) == 0) {
-        err_reason = DH_R_NO_PARAMETERS_SET;
-        goto err;
-    }
-    /*
-     * As per Section 4.2.8.1 of RFC 8446 fail if DHE's
-     * public key is of size not equal to size of p
-     */
-    if (BN_is_zero(pubkey) || p_size != len) {
-        err_reason = DH_R_INVALID_PUBKEY;
-        goto err;
-    }
-    if (DH_set0_key(dh, pubkey, NULL) != 1)
-        goto err;
-    return 1;
-err:
-    DHerr(DH_F_DH_BUF2KEY, err_reason);
-    BN_free(pubkey);
-    return 0;
-}
-
-size_t dh_key2buf(const DH *dh, unsigned char **pbuf_out)
-{
-    const BIGNUM *pubkey;
-    unsigned char *pbuf;
-    const BIGNUM *p;
-    int p_size;
-
-    DH_get0_pqg(dh, &p, NULL, NULL);
-    DH_get0_key(dh, &pubkey, NULL);
-    if (p == NULL || pubkey == NULL
-            || (p_size = BN_num_bytes(p)) == 0
-            || BN_num_bytes(pubkey) == 0) {
-        DHerr(DH_F_DH_KEY2BUF, DH_R_INVALID_PUBKEY);
-        return 0;
-    }
-    if ((pbuf = OPENSSL_malloc(p_size)) == NULL) {
-        DHerr(DH_F_DH_KEY2BUF, ERR_R_MALLOC_FAILURE);
-        return 0;
-    }
-    /*
-     * As per Section 4.2.8.1 of RFC 8446 left pad public
-     * key with zeros to the size of p
-     */
-    if (BN_bn2binpad(pubkey, pbuf, p_size) < 0) {
-        OPENSSL_free(pbuf);
-        DHerr(DH_F_DH_KEY2BUF, DH_R_BN_ERROR);
-        return 0;
-    }
-    *pbuf_out = pbuf;
-    return p_size;
 }

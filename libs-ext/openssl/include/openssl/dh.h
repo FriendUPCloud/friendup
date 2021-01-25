@@ -1,20 +1,14 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OPENSSL_DH_H
-# define OPENSSL_DH_H
-# pragma once
-
-# include <openssl/macros.h>
-# if !OPENSSL_API_3
-#  define HEADER_DH_H
-# endif
+#ifndef HEADER_DH_H
+# define HEADER_DH_H
 
 # include <openssl/opensslconf.h>
 
@@ -22,8 +16,8 @@
 # include <openssl/e_os2.h>
 # include <openssl/bio.h>
 # include <openssl/asn1.h>
-# include <openssl/types.h>
-# if !OPENSSL_API_1_1_0
+# include <openssl/ossl_typ.h>
+# if OPENSSL_API_COMPAT < 0x10100000L
 #  include <openssl/bn.h>
 # endif
 # include <openssl/dherr.h>
@@ -40,7 +34,7 @@ extern "C" {
 
 # define DH_FLAG_CACHE_MONT_P     0x01
 
-# if !OPENSSL_API_1_1_0
+# if OPENSSL_API_COMPAT < 0x10100000L
 /*
  * Does nothing. Previously this switched off constant time behaviour.
  */
@@ -71,7 +65,7 @@ extern "C" {
 DECLARE_ASN1_ITEM(DHparams)
 
 # define DH_GENERATOR_2          2
-# define DH_GENERATOR_3          3
+/* #define DH_GENERATOR_3       3 */
 # define DH_GENERATOR_5          5
 
 /* DH_check error codes */
@@ -82,8 +76,6 @@ DECLARE_ASN1_ITEM(DHparams)
 # define DH_CHECK_Q_NOT_PRIME            0x10
 # define DH_CHECK_INVALID_Q_VALUE        0x20
 # define DH_CHECK_INVALID_J_VALUE        0x40
-# define DH_MODULUS_TOO_SMALL            0x80
-# define DH_MODULUS_TOO_LARGE            0x100
 
 /* DH_check_pub_key error codes */
 # define DH_CHECK_PUBKEY_TOO_SMALL       0x01
@@ -106,7 +98,7 @@ DECLARE_ASN1_ITEM(DHparams)
 # define d2i_DHparams_bio(bp,x) \
     ASN1_d2i_bio_of(DH, DH_new, d2i_DHparams, bp, x)
 # define i2d_DHparams_bio(bp,x) \
-    ASN1_i2d_bio_of(DH,i2d_DHparams,bp,x)
+    ASN1_i2d_bio_of_const(DH,i2d_DHparams,bp,x)
 
 # define d2i_DHxparams_fp(fp,x) \
     (DH *)ASN1_d2i_fp((char *(*)())DH_new, \
@@ -118,9 +110,9 @@ DECLARE_ASN1_ITEM(DHparams)
 # define d2i_DHxparams_bio(bp,x) \
     ASN1_d2i_bio_of(DH, DH_new, d2i_DHxparams, bp, x)
 # define i2d_DHxparams_bio(bp,x) \
-    ASN1_i2d_bio_of(DH, i2d_DHxparams, bp, x)
+    ASN1_i2d_bio_of_const(DH, i2d_DHxparams, bp, x)
 
-DECLARE_ASN1_DUP_FUNCTION_name(DH, DHparams)
+DH *DHparams_dup(DH *);
 
 const DH_METHOD *DH_OpenSSL(void);
 
@@ -159,8 +151,10 @@ int DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *codes);
 int DH_generate_key(DH *dh);
 int DH_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh);
 int DH_compute_key_padded(unsigned char *key, const BIGNUM *pub_key, DH *dh);
-DECLARE_ASN1_ENCODE_FUNCTIONS_only(DH, DHparams)
-DECLARE_ASN1_ENCODE_FUNCTIONS_only(DH, DHxparams)
+DH *d2i_DHparams(DH **a, const unsigned char **pp, long length);
+int i2d_DHparams(const DH *a, unsigned char **pp);
+DH *d2i_DHxparams(DH **a, const unsigned char **pp, long length);
+int i2d_DHxparams(const DH *a, unsigned char **pp);
 # ifndef OPENSSL_NO_STDIO
 int DHparams_print_fp(FILE *fp, const DH *x);
 # endif
@@ -261,7 +255,9 @@ int DH_meth_set_generate_params(DH_METHOD *dhm,
                         EVP_PKEY_OP_PARAMGEN | EVP_PKEY_OP_KEYGEN, \
                         EVP_PKEY_CTRL_DH_NID, nid, NULL)
 
-int EVP_PKEY_CTX_set_dh_pad(EVP_PKEY_CTX *ctx, int pad);
+# define EVP_PKEY_CTX_set_dh_pad(ctx, pad) \
+        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_DERIVE, \
+                          EVP_PKEY_CTRL_DH_PAD, pad, NULL)
 
 # define EVP_PKEY_CTX_set_dh_kdf_type(ctx, kdf) \
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, \

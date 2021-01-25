@@ -1,7 +1,7 @@
 /*
  * Copyright 2011-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -51,7 +51,7 @@ static int rc4_hmac_md5_init_key(EVP_CIPHER_CTX *ctx,
     return 1;
 }
 
-# if     defined(RC4_ASM) && defined(MD5_ASM) &&     (     \
+# if     defined(RC4_ASM) && defined(MD5_ASM) &&     (	   \
         defined(__x86_64)       || defined(__x86_64__)  || \
         defined(_M_AMD64)       || defined(_M_X64)      )
 #  define STITCHED_CALL
@@ -71,6 +71,7 @@ static int rc4_hmac_md5_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                                        * rc4_md5-x86_64.pl */
         md5_off = MD5_CBLOCK - key->md.num, blocks;
     unsigned int l;
+    extern unsigned int OPENSSL_ia32cap_P[];
 # endif
     size_t plen = key->payload_length;
 

@@ -1,7 +1,7 @@
 /*
- * Copyright 2010-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2010-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -72,6 +72,7 @@ typedef uint64_t u64;
  */
 
 typedef uint64_t limb;
+typedef uint64_t limb_aX __attribute((__aligned__(1)));
 typedef uint128_t widelimb;
 
 typedef limb felem[4];
@@ -292,9 +293,6 @@ const EC_METHOD *EC_GFp_nistp224_method(void)
         0, /* keycopy */
         0, /* keyfinish */
         ecdh_simple_compute_key,
-        ecdsa_simple_sign_setup,
-        ecdsa_simple_sign_sig,
-        ecdsa_simple_verify_sig,
         0, /* field_inverse_mod_ord */
         0, /* blind_coordinates */
         0, /* ladder_pre */
@@ -310,10 +308,10 @@ const EC_METHOD *EC_GFp_nistp224_method(void)
  */
 static void bin28_to_felem(felem out, const u8 in[28])
 {
-    out[0] = *((const uint64_t *)(in)) & 0x00ffffffffffffff;
-    out[1] = (*((const uint64_t *)(in + 7))) & 0x00ffffffffffffff;
-    out[2] = (*((const uint64_t *)(in + 14))) & 0x00ffffffffffffff;
-    out[3] = (*((const uint64_t *)(in+20))) >> 8;
+    out[0] = *((const limb *)(in)) & 0x00ffffffffffffff;
+    out[1] = (*((const limb_aX *)(in + 7))) & 0x00ffffffffffffff;
+    out[2] = (*((const limb_aX *)(in + 14))) & 0x00ffffffffffffff;
+    out[3] = (*((const limb_aX *)(in + 20))) >> 8;
 }
 
 static void felem_to_bin28(u8 out[28], const felem in)
@@ -665,9 +663,7 @@ static void felem_contract(felem out, const felem in)
  */
 static void felem_neg(felem out, const felem in)
 {
-    widefelem tmp;
-
-    memset(tmp, 0, sizeof(tmp));
+    widefelem tmp = {0};
     felem_diff_128_64(tmp, in);
     felem_reduce(out, tmp);
 }
@@ -912,6 +908,7 @@ static void point_add(felem x3, felem y3, felem z3,
     felem ftmp, ftmp2, ftmp3, ftmp4, ftmp5, x_out, y_out, z_out;
     widefelem tmp, tmp2;
     limb z1_is_zero, z2_is_zero, x_equal, y_equal;
+    limb points_equal;
 
     if (!mixed) {
         /* ftmp2 = z2^2 */
@@ -968,15 +965,41 @@ static void point_add(felem x3, felem y3, felem z3,
     felem_reduce(ftmp, tmp);
 
     /*
-     * the formulae are incorrect if the points are equal so we check for
-     * this and do doubling if this happens
+     * The formulae are incorrect if the points are equal, in affine coordinates
+     * (X_1, Y_1) == (X_2, Y_2), so we check for this and do doubling if this
+     * happens.
+     *
+     * We use bitwise operations to avoid potential side-channels introduced by
+     * the short-circuiting behaviour of boolean operators.
      */
     x_equal = felem_is_zero(ftmp);
     y_equal = felem_is_zero(ftmp3);
+    /*
+     * The special case of either point being the point at infinity (z1 and/or
+     * z2 are zero), is handled separately later on in this function, so we
+     * avoid jumping to point_double here in those special cases.
+     */
     z1_is_zero = felem_is_zero(z1);
     z2_is_zero = felem_is_zero(z2);
-    /* In affine coordinates, (X_1, Y_1) == (X_2, Y_2) */
-    if (x_equal && y_equal && !z1_is_zero && !z2_is_zero) {
+
+    /*
+     * Compared to `ecp_nistp256.c` and `ecp_nistp521.c`, in this
+     * specific implementation `felem_is_zero()` returns truth as `0x1`
+     * (rather than `0xff..ff`).
+     *
+     * This implies that `~true` in this implementation becomes
+     * `0xff..fe` (rather than `0x0`): for this reason, to be used in
+     * the if expression, we mask out only the last bit in the next
+     * line.
+     */
+    points_equal = (x_equal & y_equal & (~z1_is_zero) & (~z2_is_zero)) & 1;
+
+    if (points_equal) {
+        /*
+         * This is obviously not constant-time but, as mentioned before, this
+         * case never happens during single point multiplication, so there is no
+         * timing leak for ECDH or ECDSA signing.
+         */
         point_double(x3, y3, z3, x1, y1, z1);
         return;
     }
@@ -1270,16 +1293,12 @@ int ec_GFp_nistp224_group_set_curve(EC_GROUP *group, const BIGNUM *p,
                                     BN_CTX *ctx)
 {
     int ret = 0;
-    BIGNUM *curve_p, *curve_a, *curve_b;
-#ifndef FIPS_MODE
     BN_CTX *new_ctx = NULL;
+    BIGNUM *curve_p, *curve_a, *curve_b;
 
     if (ctx == NULL)
-        ctx = new_ctx = BN_CTX_new();
-#endif
-    if (ctx == NULL)
-        return 0;
-
+        if ((ctx = new_ctx = BN_CTX_new()) == NULL)
+            return 0;
     BN_CTX_start(ctx);
     curve_p = BN_CTX_get(ctx);
     curve_a = BN_CTX_get(ctx);
@@ -1298,9 +1317,7 @@ int ec_GFp_nistp224_group_set_curve(EC_GROUP *group, const BIGNUM *p,
     ret = ec_GFp_simple_group_set_curve(group, p, a, b, ctx);
  err:
     BN_CTX_end(ctx);
-#ifndef FIPS_MODE
     BN_CTX_free(new_ctx);
-#endif
     return ret;
 }
 
@@ -1587,23 +1604,16 @@ int ec_GFp_nistp224_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     int ret = 0;
     NISTP224_PRE_COMP *pre = NULL;
     int i, j;
+    BN_CTX *new_ctx = NULL;
     BIGNUM *x, *y;
     EC_POINT *generator = NULL;
     felem tmp_felems[32];
-#ifndef FIPS_MODE
-    BN_CTX *new_ctx = NULL;
-#endif
 
     /* throw away old precomputation */
     EC_pre_comp_free(group);
-
-#ifndef FIPS_MODE
     if (ctx == NULL)
-        ctx = new_ctx = BN_CTX_new();
-#endif
-    if (ctx == NULL)
-        return 0;
-
+        if ((ctx = new_ctx = BN_CTX_new()) == NULL)
+            return 0;
     BN_CTX_start(ctx);
     x = BN_CTX_get(ctx);
     y = BN_CTX_get(ctx);
@@ -1711,9 +1721,7 @@ int ec_GFp_nistp224_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
  err:
     BN_CTX_end(ctx);
     EC_POINT_free(generator);
-#ifndef FIPS_MODE
     BN_CTX_free(new_ctx);
-#endif
     EC_nistp224_pre_comp_free(pre);
     return ret;
 }

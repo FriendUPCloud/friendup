@@ -11,7 +11,7 @@ Ed448
 The B<Ed25519> and B<Ed448> EVP_PKEY implementation supports key generation,
 one-shot digest sign and digest verify using PureEdDSA and B<Ed25519> or B<Ed448>
 (see RFC8032). It has associated private and public key formats compatible with
-draft-ietf-curdle-pkix-04.
+RFC 8410.
 
 No additional parameters can be set during key generation, one-shot signing or
 verification. In particular, because PureEdDSA is used, a digest must B<NOT> be
@@ -25,7 +25,7 @@ The message to sign or verify must be passed using the one-shot
 EVP_DigestSign() and EVP_DigestVerify() functions.
 
 When calling EVP_DigestSignInit() or EVP_DigestVerifyInit(), the
-digest I<type> parameter B<MUST> be set to NULL.
+digest B<type> parameter B<MUST> be set to B<NULL>.
 
 Applications wishing to sign certificates (or other structures such as
 CRLs or certificate requests) using Ed25519 or Ed448 can either use X509_sign()
@@ -77,9 +77,9 @@ L<EVP_DigestVerifyInit(3)>,
 
 =head1 COPYRIGHT
 
-Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the Apache License 2.0 (the "License").  You may not use
+Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

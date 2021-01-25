@@ -2436,6 +2436,14 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					FBOOL alreadyExist = FALSE;
 					char hashmap[ 512 ];
 					hashmap[ 0 ] = 0;
+					
+					char *encName = NULL;
+					
+					if( strlen( name ) > 0 )
+					{
+						encName = UrlEncodeToMem( name );
+					}
+					DEBUG("[File/Expose] encoded file name: %s\n", encName );
 
 					//char *checkquery = NULL;
 					char *fortestpurp = FMalloc( 2048 ); //[ 2048 ];
@@ -2468,7 +2476,16 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						// if entry do not exist in database
 						if( hashmap[ 0 ] == 0 )
 						{
-							FileShared *tmpfs = FileSharedNew( fortestpurp, name );
+							FileShared *tmpfs = NULL;
+							
+							if( encName != NULL )
+							{
+								tmpfs = FileSharedNew( fortestpurp, encName );
+							}
+							else
+							{
+								tmpfs = FileSharedNew( fortestpurp, name );
+							}
 
 							if( tmpfs != NULL )
 							{
@@ -2529,11 +2546,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					char *tmp = FMalloc( 2048 );
 					if( sharedFile == TRUE )
 					{
-						size = snprintf( tmp, 2048, "ok<!--separate-->{\"hash\":\"%s\", \"name\":\"%s\" }", hashmap, name );
+						size = snprintf( tmp, 2048, "ok<!--separate-->{\"hash\":\"%s\", \"name\":\"%s\" }", hashmap, encName );
 					}
 					else if( alreadyExist == TRUE )
 					{
-						size = snprintf( tmp, 2048, "ok<!--separate-->{\"hash\":\"%s\", \"name\":\"%s\" }", hashmap, name );
+						size = snprintf( tmp, 2048, "ok<!--separate-->{\"hash\":\"%s\", \"name\":\"%s\" }", hashmap, encName );
 					}
 					else
 					{
@@ -2548,6 +2565,10 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( dest != NULL )
 					{
 						FFree( dest );
+					}
+					if( encName != NULL )
+					{
+						FFree( encName );
 					}
 					FFree( fortestpurp );
 				}

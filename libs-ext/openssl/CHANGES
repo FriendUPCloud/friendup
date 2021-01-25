@@ -7,57 +7,195 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
- Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
+ Changes between 1.1.1i and 1.1.1j [xx XXX xxxx]
 
-  *) The undocumented function NCONF_WIN32() has been deprecated; for
-     conversion details see the HISTORY section of doc/man5/config.pod
-     [Rich Salz]
+  *)
 
-  *) Introduced the new functions EVP_DigestSignInit_ex() and
-     EVP_DigestVerifyInit_ex(). The macros EVP_DigestSignUpdate() and
-     EVP_DigestVerifyUpdate() have been converted to functions. See the man
-     pages for further details.
+ Changes between 1.1.1h and 1.1.1i [8 Dec 2020]
+
+  *) Fixed NULL pointer deref in the GENERAL_NAME_cmp function
+     This function could crash if both GENERAL_NAMEs contain an EDIPARTYNAME.
+     If an attacker can control both items being compared  then this could lead
+     to a possible denial of service attack. OpenSSL itself uses the
+     GENERAL_NAME_cmp function for two purposes:
+     1) Comparing CRL distribution point names between an available CRL and a
+        CRL distribution point embedded in an X509 certificate
+     2) When verifying that a timestamp response token signer matches the
+        timestamp authority name (exposed via the API functions
+        TS_RESP_verify_response and TS_RESP_verify_token)
+     (CVE-2020-1971)
      [Matt Caswell]
 
-  *) Over two thousand fixes were made to the documentation, including:
-     adding missing command flags, better style conformance, documentation
-     of internals, etc.
-     [Rich Salz, Richard Levitte]
+  *) Add support for Apple Silicon M1 Macs with the darwin64-arm64-cc target.
+     [Stuart Carnie]
 
-  *) s390x assembly pack: add hardware-support for P-256, P-384, P-521,
-     X25519, X448, Ed25519 and Ed448.
-     [Patrick Steuer]
+  *) The security callback, which can be customised by application code, supports
+     the security operation SSL_SECOP_TMP_DH. This is defined to take an EVP_PKEY
+     in the "other" parameter. In most places this is what is passed. All these
+     places occur server side. However there was one client side call of this
+     security operation and it passed a DH object instead. This is incorrect
+     according to the definition of SSL_SECOP_TMP_DH, and is inconsistent with all
+     of the other locations. Therefore this client side call has been changed to
+     pass an EVP_PKEY instead.
+     [Matt Caswell]
+
+  *) In 1.1.1h, an expired trusted (root) certificate was not anymore rejected
+     when validating a certificate path. This check is restored in 1.1.1i.
+     [David von Oheimb]
+
+ Changes between 1.1.1g and 1.1.1h [22 Sep 2020]
+
+  *) Certificates with explicit curve parameters are now disallowed in
+     verification chains if the X509_V_FLAG_X509_STRICT flag is used.
+     [Tomas Mraz]
+
+  *) The 'MinProtocol' and 'MaxProtocol' configuration commands now silently
+     ignore TLS protocol version bounds when configuring DTLS-based contexts, and
+     conversely, silently ignore DTLS protocol version bounds when configuring
+     TLS-based contexts.  The commands can be repeated to set bounds of both
+     types.  The same applies with the corresponding "min_protocol" and
+     "max_protocol" command-line switches, in case some application uses both TLS
+     and DTLS.
+  
+     SSL_CTX instances that are created for a fixed protocol version (e.g.
+     TLSv1_server_method()) also silently ignore version bounds.  Previously
+     attempts to apply bounds to these protocol versions would result in an
+     error.  Now only the "version-flexible" SSL_CTX instances are subject to
+     limits in configuration files in command-line options.
+     [Viktor Dukhovni]
+
+  *) Handshake now fails if Extended Master Secret extension is dropped
+     on renegotiation.
+     [Tomas Mraz]
+
+  *) Accidentally, an expired trusted (root) certificate is not anymore rejected
+     when validating a certificate path.
+     [David von Oheimb]
+
+  *) The Oracle Developer Studio compiler will start reporting deprecated APIs
+
+ Changes between 1.1.1f and 1.1.1g [21 Apr 2020]
+
+  *) Fixed segmentation fault in SSL_check_chain()
+     Server or client applications that call the SSL_check_chain() function
+     during or after a TLS 1.3 handshake may crash due to a NULL pointer
+     dereference as a result of incorrect handling of the
+     "signature_algorithms_cert" TLS extension. The crash occurs if an invalid
+     or unrecognised signature algorithm is received from the peer. This could
+     be exploited by a malicious peer in a Denial of Service attack.
+     (CVE-2020-1967)
+     [Benjamin Kaduk]
+
+  *) Added AES consttime code for no-asm configurations
+     an optional constant time support for AES was added
+     when building openssl for no-asm.
+     Enable with: ./config no-asm -DOPENSSL_AES_CONST_TIME
+     Disable with: ./config no-asm -DOPENSSL_NO_AES_CONST_TIME
+     At this time this feature is by default disabled.
+     It will be enabled by default in 3.0.
+     [Bernd Edlinger]
+
+ Changes between 1.1.1e and 1.1.1f [31 Mar 2020]
+
+  *) Revert the change of EOF detection while reading in libssl to avoid
+     regressions in applications depending on the current way of reporting
+     the EOF. As the existing method is not fully accurate the change to
+     reporting the EOF via SSL_ERROR_SSL is kept on the current development
+     branch and will be present in the 3.0 release.
+     [Tomas Mraz]
+
+  *) Revised BN_generate_prime_ex to not avoid factors 3..17863 in p-1
+     when primes for RSA keys are computed.
+     Since we previously always generated primes == 2 (mod 3) for RSA keys,
+     the 2-prime and 3-prime RSA modules were easy to distinguish, since
+     N = p*q = 1 (mod 3), but N = p*q*r = 2 (mod 3). Therefore fingerprinting
+     2-prime vs. 3-prime RSA keys was possible by computing N mod 3.
+     This avoids possible fingerprinting of newly generated RSA modules.
+     [Bernd Edlinger]
+
+ Changes between 1.1.1d and 1.1.1e [17 Mar 2020]
+  *) Properly detect EOF while reading in libssl. Previously if we hit an EOF
+     while reading in libssl then we would report an error back to the
+     application (SSL_ERROR_SYSCALL) but errno would be 0. We now add
+     an error to the stack (which means we instead return SSL_ERROR_SSL) and
+     therefore give a hint as to what went wrong.
+     [Matt Caswell]
+
+  *) Check that ed25519 and ed448 are allowed by the security level. Previously
+     signature algorithms not using an MD were not being checked that they were
+     allowed by the security level.
+     [Kurt Roeckx]
+
+  *) Fixed SSL_get_servername() behaviour. The behaviour of SSL_get_servername()
+     was not quite right. The behaviour was not consistent between resumption
+     and normal handshakes, and also not quite consistent with historical
+     behaviour. The behaviour in various scenarios has been clarified and
+     it has been updated to make it match historical behaviour as closely as
+     possible.
+     [Matt Caswell]
+
+  *) [VMS only] The header files that the VMS compilers include automatically,
+     __DECC_INCLUDE_PROLOGUE.H and __DECC_INCLUDE_EPILOGUE.H, use pragmas that
+     the C++ compiler doesn't understand.  This is a shortcoming in the
+     compiler, but can be worked around with __cplusplus guards.
+
+     C++ applications that use OpenSSL libraries must be compiled using the
+     qualifier '/NAMES=(AS_IS,SHORTENED)' to be able to use all the OpenSSL
+     functions.  Otherwise, only functions with symbols of less than 31
+     characters can be used, as the linker will not be able to successfully
+     resolve symbols with longer names.
+     [Richard Levitte]
+
+  *) Corrected the documentation of the return values from the EVP_DigestSign*
+     set of functions.  The documentation mentioned negative values for some
+     errors, but this was never the case, so the mention of negative values
+     was removed.
+
+     Code that followed the documentation and thereby check with something
+     like 'EVP_DigestSignInit(...) <= 0' will continue to work undisturbed.
+     [Richard Levitte]
+
+  *) Fixed an an overflow bug in the x64_64 Montgomery squaring procedure
+     used in exponentiation with 512-bit moduli. No EC algorithms are
+     affected. Analysis suggests that attacks against 2-prime RSA1024,
+     3-prime RSA1536, and DSA1024 as a result of this defect would be very
+     difficult to perform and are not believed likely. Attacks against DH512
+     are considered just feasible. However, for an attack the target would
+     have to re-use the DH512 private key, which is not recommended anyway.
+     Also applications directly using the low level API BN_mod_exp may be
+     affected if they use BN_FLG_CONSTTIME.
+     (CVE-2019-1551)
+     [Andy Polyakov]
+
+  *) Added a new method to gather entropy on VMS, based on SYS$GET_ENTROPY.
+     The presence of this system service is determined at run-time.
+     [Richard Levitte]
+
+  *) Added newline escaping functionality to a filename when using openssl dgst.
+     This output format is to replicate the output format found in the '*sum'
+     checksum programs. This aims to preserve backward compatibility.
+     [Matt Eaton, Richard Levitte, and Paul Dale]
 
   *) Print all values for a PKCS#12 attribute with 'openssl pkcs12', not just
      the first value.
      [Jon Spillett]
 
-  *) Deprecated the public definition of ERR_STATE as well as the function
-     ERR_get_state().  This is done in preparation of making ERR_STATE an
-     opaque type.
-     [Richard Levitte]
+ Changes between 1.1.1c and 1.1.1d [10 Sep 2019]
 
-  *) Added ERR functionality to give callers access to the stored function
-     names that have replaced the older function code based functions.
+  *) Fixed a fork protection issue. OpenSSL 1.1.1 introduced a rewritten random
+     number generator (RNG). This was intended to include protection in the
+     event of a fork() system call in order to ensure that the parent and child
+     processes did not share the same RNG state. However this protection was not
+     being used in the default case.
 
-     New functions are ERR_get_error_func(), ERR_peek_error_func(),
-     ERR_peek_last_error_func(), ERR_get_error_data(), ERR_peek_error_data(),
-     ERR_peek_last_error_data(), ERR_get_error_all(), ERR_peek_error_all()
-     and ERR_peek_last_error_all().
+     A partial mitigation for this issue is that the output from a high
+     precision timer is mixed into the RNG state so the likelihood of a parent
+     and child process sharing state is significantly reduced.
 
-     These functions have become deprecated: ERR_get_error_line_data(),
-     ERR_peek_error_line_data(), ERR_peek_last_error_line_data() and
-     ERR_func_error_string().
-     [Richard Levitte]
-
-  *) Extended testing to be verbose for failing tests only.  The make variables
-     VERBOSE_FAILURE or VF can be used to enable this:
-
-     $ make VF=1 test                                   # Unix
-     $ mms /macro=(VF=1) test                           ! OpenVMS
-     $ nmake VF=1 test                                  # Windows
-
-     [Richard Levitte]
+     If an application already calls OPENSSL_init_crypto() explicitly using
+     OPENSSL_INIT_ATFORK then this problem does not occur at all.
+     (CVE-2019-1549)
+     [Matthias St. Pierre]
 
   *) For built-in EC curves, ensure an EC_GROUP built from the curve name is
      used even when parsing explicit parameters, when loading a serialized key
@@ -89,6 +227,7 @@
      certifiate is not given and all recipientInfo are tried out.
      The old behaviour can be re-enabled in the CMS code by setting the
      CMS_DEBUG_DECRYPT flag.
+     (CVE-2019-1563)
      [Bernd Edlinger]
 
   *) Early start up entropy quality from the DEVRANDOM seed source has been
@@ -100,15 +239,6 @@
      the desired value.  The default identifier is 114.
      [Paul Dale]
 
-  *) Revised BN_generate_prime_ex to not avoid factors 2..17863 in p-1
-     when primes for RSA keys are computed.
-     Since we previously always generated primes == 2 (mod 3) for RSA keys,
-     the 2-prime and 3-prime RSA modules were easy to distinguish, since
-     N = p*q = 1 (mod 3), but N = p*q*r = 2 (mod 3). Therefore fingerprinting
-     2-prime vs. 3-prime RSA keys was possible by computing N mod 3.
-     This avoids possible fingerprinting of newly generated RSA modules.
-     [Bernd Edlinger]
-
   *) Correct the extended master secret constant on EBCDIC systems. Without this
      fix TLS connections between an EBCDIC system and a non-EBCDIC system that
      negotiate EMS will fail. Unfortunately this also means that TLS connections
@@ -116,30 +246,15 @@
      fix will fail if they negotiate EMS.
      [Matt Caswell]
 
-  *) Changed the library initialisation so that the config file is now loaded
-     by default. This was already the case for libssl. It now occurs for both
-     libcrypto and libssl. Use the OPENSSL_INIT_NO_LOAD_CONFIG option to
-     OPENSSL_init_crypto() to suppress automatic loading of a config file.
-     [Matt Caswell]
+  *) Use Windows installation paths in the mingw builds
 
-  *) Introduced new error raising macros, ERR_raise() and ERR_raise_data(),
-     where the former acts as a replacement for ERR_put_error(), and the
-     latter replaces the combination ERR_put_error()+ERR_add_error_data().
-     ERR_raise_data() adds more flexibility by taking a format string and
-     an arbitrary number of arguments following it, to be processed with
-     BIO_snprintf().
+     Mingw isn't a POSIX environment per se, which means that Windows
+     paths should be used for installation.
+     (CVE-2019-1552)
      [Richard Levitte]
 
-  *) Introduced a new function, OSSL_PROVIDER_available(), which can be used
-     to check if a named provider is loaded and available.  When called, it
-     will also activate all fallback providers if such are still present.
-     [Richard Levitte]
-
-  *) Enforce a minimum DH modulus size of 512 bits.
-     [Bernd Edlinger]
-
-  *) Changed DH parameters to generate the order q subgroup instead of 2q.
-     Previously generated DH parameters are still accepted by DH_check
+  *) Changed DH_check to accept parameters with order q and 2q subgroups.
+     With order 2q subgroups the bit 0 of the private key is not secret
      but DH_generate_key works around that by clearing bit 0 of the
      private key for those. This avoids leaking bit 0 of the private key.
      [Bernd Edlinger]
@@ -147,130 +262,22 @@
   *) Significantly reduce secure memory usage by the randomness pools.
      [Paul Dale]
 
-  *) {CRYPTO,OPENSSL}_mem_debug_{push,pop} are now no-ops and have been
-     deprecated.
-     [Rich Salz]
+  *) Revert the DEVRANDOM_WAIT feature for Linux systems
 
-  *) A new type, EVP_KEYEXCH, has been introduced to represent key exchange
-     algorithms. An implementation of a key exchange algorithm can be obtained
-     by using the function EVP_KEYEXCH_fetch(). An EVP_KEYEXCH algorithm can be
-     used in a call to EVP_PKEY_derive_init_ex() which works in a similar way to
-     the older EVP_PKEY_derive_init() function. See the man pages for the new
-     functions for further details.
-     [Matt Caswell]
+     The DEVRANDOM_WAIT feature added a select() call to wait for the
+     /dev/random device to become readable before reading from the
+     /dev/urandom device.
 
-  *) The EVP_PKEY_CTX_set_dh_pad() macro has now been converted to a function.
-     [Matt Caswell]
+     It turned out that this change had negative side effects on
+     performance which were not acceptable. After some discussion it
+     was decided to revert this feature and leave it up to the OS
+     resp. the platform maintainer to ensure a proper initialization
+     during early boot time.
+     [Matthias St. Pierre]
 
-  *) Removed the function names from error messages and deprecated the
-     xxx_F_xxx define's.
+ Changes between 1.1.1b and 1.1.1c [28 May 2019]
 
-  *) Removed NextStep support and the macro OPENSSL_UNISTD
-     [Rich Salz]
-
-  *) Removed DES_check_key.  Also removed OPENSSL_IMPLEMENT_GLOBAL,
-     OPENSSL_GLOBAL_REF, OPENSSL_DECLARE_GLOBAL.
-     Also removed "export var as function" capability; we do not export
-     variables, only functions.
-     [Rich Salz]
-
-  *) RC5_32_set_key has been changed to return an int type, with 0 indicating
-     an error and 1 indicating success. In previous versions of OpenSSL this
-     was a void type. If a key was set longer than the maximum possible this
-     would crash.
-     [Matt Caswell]
-
-  *) Support SM2 signing and verification schemes with X509 certificate.
-     [Paul Yang]
-
-  *) Use SHA256 as the default digest for TS query in the ts app.
-     [Tomas Mraz]
-
-  *) Change PBKDF2 to conform to SP800-132 instead of the older PKCS5 RFC2898.
-     This checks that the salt length is at least 128 bits, the derived key
-     length is at least 112 bits, and that the iteration count is at least 1000.
-     For backwards compatibility these checks are disabled by default in the
-     default provider, but are enabled by default in the fips provider.
-     To enable or disable these checks use the control
-     EVP_KDF_CTRL_SET_PBKDF2_PKCS5_MODE.
-     [Shane Lontis]
-
-  *) Default cipher lists/suites are now available via a function, the
-     #defines are deprecated.
-     [Todd Short]
-
-  *) Add target VC-WIN32-UWP, VC-WIN64A-UWP, VC-WIN32-ARM-UWP and
-     VC-WIN64-ARM-UWP in Windows OneCore target for making building libraries
-     for Windows Store apps easier. Also, the "no-uplink" option has been added.
-     [Kenji Mouri]
-
-  *) Join the directories crypto/x509 and crypto/x509v3
-     [Richard Levitte]
-
-  *) Change the default RSA, DSA and DH size to 2048 bit instead of 1024.
-     This changes the size when using the genpkey app when no size is given. It
-     fixes an omission in earlier changes that changed all RSA, DSA and DH
-     generation apps to use 2048 bits by default.
-     [Kurt Roeckx]
-
-  *) Added command 'openssl kdf' that uses the EVP_KDF API.
-     [Shane Lontis]
-
-  *) Added command 'openssl mac' that uses the EVP_MAC API.
-     [Shane Lontis]
-
-  *) Added OPENSSL_info() to get diverse built-in OpenSSL data, such
-     as default directories.  Also added the command 'openssl info'
-     for scripting purposes.
-     [Richard Levitte]
-
-  *) The functions AES_ige_encrypt() and AES_bi_ige_encrypt() have been
-     deprecated. These undocumented functions were never integrated into the EVP
-     layer and implement the AES Infinite Garble Extension (IGE) mode and AES
-     Bi-directional IGE mode. These modes were never formally standardised and
-     usage of these functions is believed to be very small. In particular
-     AES_bi_ige_encrypt() has a known bug. It accepts 2 AES keys, but only one
-     is ever used. The security implications are believed to be minimal, but
-     this issue was never fixed for backwards compatibility reasons. New code
-     should not use these modes.
-     [Matt Caswell]
-
-  *) Add prediction resistance to the DRBG reseeding process.
-     [Paul Dale]
-
-  *) Limit the number of blocks in a data unit for AES-XTS to 2^20 as
-     mandated by IEEE Std 1619-2018.
-     [Paul Dale]
-
-  *) Added newline escaping functionality to a filename when using openssl dgst.
-     This output format is to replicate the output format found in the '*sum'
-     checksum programs. This aims to preserve backward compatibility.
-     [Matt Eaton, Richard Levitte, and Paul Dale]
-
-  *) Removed the heartbeat message in DTLS feature, as it has very
-     little usage and doesn't seem to fulfill a valuable purpose.
-     The configuration option is now deprecated.
-     [Richard Levitte]
-
-  *) Changed the output of 'openssl {digestname} < file' to display the
-     digest name in its output.
-     [Richard Levitte]
-
-  *) Added a new generic trace API which provides support for enabling
-     instrumentation through trace output. This feature is mainly intended
-     as an aid for developers and is disabled by default. To utilize it,
-     OpenSSL needs to be configured with the `enable-trace` option.
-
-     If the tracing API is enabled, the application can activate trace output
-     by registering BIOs as trace channels for a number of tracing and debugging
-     categories.
-
-     The 'openssl' application has been expanded to enable any of the types
-     available via environment variables defined by the user, and serves as
-     one possible example on how to use this functionality.
-     [Richard Levitte & Matthias St. Pierre]
-
-  *) Added build tests for C++.  These are generated files that only do one
+  *) Add build tests for C++.  These are generated files that only do one
      thing, to include one public OpenSSL head file each.  This tests that
      the public header files can be usefully included in a C++ application.
 
@@ -278,15 +285,78 @@
      'enable-buildtest-c++'.
      [Richard Levitte]
 
-  *) Add Single Step KDF (EVP_KDF_SS) to EVP_KDF.
-     [Shane Lontis]
+  *) Enable SHA3 pre-hashing for ECDSA and DSA.
+     [Patrick Steuer]
 
-  *) Add KMAC to EVP_MAC.
-     [Shane Lontis]
+  *) Change the default RSA, DSA and DH size to 2048 bit instead of 1024.
+     This changes the size when using the genpkey app when no size is given. It
+     fixes an omission in earlier changes that changed all RSA, DSA and DH
+     generation apps to use 2048 bits by default.
+     [Kurt Roeckx]
 
-  *) Added property based algorithm implementation selection framework to
-     the core.
-     [Paul Dale]
+  *) Reorganize the manual pages to consistently have RETURN VALUES,
+     EXAMPLES, SEE ALSO and HISTORY come in that order, and adjust
+     util/fix-doc-nits accordingly.
+     [Paul Yang, Joshua Lock]
+
+  *) Add the missing accessor EVP_PKEY_get0_engine()
+     [Matt Caswell]
+
+  *) Have apps like 's_client' and 's_server' output the signature scheme
+     along with other cipher suite parameters when debugging.
+     [Lorinczy Zsigmond]
+
+  *) Make OPENSSL_config() error agnostic again.
+     [Richard Levitte]
+
+  *) Do the error handling in RSA decryption constant time.
+     [Bernd Edlinger]
+
+  *) Prevent over long nonces in ChaCha20-Poly1305.
+
+     ChaCha20-Poly1305 is an AEAD cipher, and requires a unique nonce input
+     for every encryption operation. RFC 7539 specifies that the nonce value
+     (IV) should be 96 bits (12 bytes). OpenSSL allows a variable nonce length
+     and front pads the nonce with 0 bytes if it is less than 12
+     bytes. However it also incorrectly allows a nonce to be set of up to 16
+     bytes. In this case only the last 12 bytes are significant and any
+     additional leading bytes are ignored.
+
+     It is a requirement of using this cipher that nonce values are
+     unique. Messages encrypted using a reused nonce value are susceptible to
+     serious confidentiality and integrity attacks. If an application changes
+     the default nonce length to be longer than 12 bytes and then makes a
+     change to the leading bytes of the nonce expecting the new value to be a
+     new unique nonce then such an application could inadvertently encrypt
+     messages with a reused nonce.
+
+     Additionally the ignored bytes in a long nonce are not covered by the
+     integrity guarantee of this cipher. Any application that relies on the
+     integrity of these ignored leading bytes of a long nonce may be further
+     affected. Any OpenSSL internal use of this cipher, including in SSL/TLS,
+     is safe because no such use sets such a long nonce value. However user
+     applications that use this cipher directly and set a non-default nonce
+     length to be longer than 12 bytes may be vulnerable.
+
+     This issue was reported to OpenSSL on 16th of March 2019 by Joran Dirk
+     Greef of Ronomon.
+     (CVE-2019-1543)
+     [Matt Caswell]
+
+  *) Add DEVRANDOM_WAIT feature for Linux systems
+
+     On older Linux systems where the getrandom() system call is not available,
+     OpenSSL normally uses the /dev/urandom device for seeding its CSPRNG.
+     Contrary to getrandom(), the /dev/urandom device will not block during
+     early boot when the kernel CSPRNG has not been seeded yet.
+
+     To mitigate this known weakness, use select() to wait for /dev/random to
+     become readable before reading from /dev/urandom.
+
+  *) Ensure that SM2 only uses SM3 as digest algorithm
+     [Paul Yang]
+
+ Changes between 1.1.1a and 1.1.1b [26 Feb 2019]
 
   *) Added SCA hardening for modular field inversion in EC_GROUP through
      a new dedicated field_inv() pointer in EC_METHOD.
@@ -294,18 +364,16 @@
      to affine coordinates.
      [Billy Bob Brumley, Nicola Tuveri]
 
-  *) Added EVP_KDF, an EVP layer KDF API, to simplify adding KDF and PRF
-     implementations.  This includes an EVP_PKEY to EVP_KDF bridge for
-     those algorithms that were already supported through the EVP_PKEY API
-     (scrypt, TLS1 PRF and HKDF).  The low-level KDF functions for PBKDF2
-     and scrypt are now wrappers that call EVP_KDF.
-     [David Makepeace]
-
-  *) Build devcrypto engine as a dynamic engine.
-     [Eneas U de Queiroz]
-
-  *) Add keyed BLAKE2 to EVP_MAC.
-     [Antoine Salon]
+  *) Change the info callback signals for the start and end of a post-handshake
+     message exchange in TLSv1.3. In 1.1.1/1.1.1a we used SSL_CB_HANDSHAKE_START
+     and SSL_CB_HANDSHAKE_DONE. Experience has shown that many applications get
+     confused by this and assume that a TLSv1.2 renegotiation has started. This
+     can break KeyUpdate handling. Instead we no longer signal the start and end
+     of a post handshake message exchange (although the messages themselves are
+     still signalled). This could break some applications that were expecting
+     the old signals. However without this KeyUpdate is not usable for many
+     applications.
+     [Matt Caswell]
 
   *) Fix a bug in the computation of the endpoint-pair shared secret used
      by DTLS over SCTP. This breaks interoperability with older versions
@@ -321,101 +389,10 @@
   *) Move strictness check from EVP_PKEY_asn1_new() to EVP_PKEY_asn1_add0().
      [Richard Levitte]
 
-  *) Change the license to the Apache License v2.0.
-     [Richard Levitte]
-
-  *) Change the possible version information given with OPENSSL_API_COMPAT.
-     It may be a pre-3.0.0 style numerical version number as it was defined
-     in 1.1.0, and it may also simply take the major version number.
-
-     Because of the version numbering of pre-3.0.0 releases, the values 0,
-     1 and 2 are equivalent to 0x00908000L (0.9.8), 0x10000000L (1.0.0) and
-     0x10100000L (1.1.0), respectively.
-     [Richard Levitte]
-
-  *) Switch to a new version scheme using three numbers MAJOR.MINOR.PATCH.
-
-     o Major releases (indicated by incrementing the MAJOR release number)
-       may introduce incompatible API/ABI changes.
-     o Minor releases (indicated by incrementing the MINOR release number)
-       may introduce new features but retain API/ABI compatibility.
-     o Patch releases (indicated by incrementing the PATCH number)
-       are intended for bug fixes and other improvements of existing
-       features only (like improving performance or adding documentation)
-       and retain API/ABI compatibility.
-     [Richard Levitte]
-
-  *) Add support for RFC5297 SIV mode (siv128), including AES-SIV.
-     [Todd Short]
-
   *) Remove the 'dist' target and add a tarball building script.  The
      'dist' target has fallen out of use, and it shouldn't be
      necessary to configure just to create a source distribution.
      [Richard Levitte]
-
-  *) Recreate the OS390-Unix config target.  It no longer relies on a
-     special script like it did for OpenSSL pre-1.1.0.
-     [Richard Levitte]
-
-  *) Instead of having the source directories listed in Configure, add
-     a 'build.info' keyword SUBDIRS to indicate what sub-directories to
-     look into.
-     [Richard Levitte]
-
-  *) Add GMAC to EVP_MAC.
-     [Paul Dale]
-
-  *) Ported the HMAC, CMAC and SipHash EVP_PKEY_METHODs to EVP_MAC.
-     [Richard Levitte]
-
-  *) Added EVP_MAC, an EVP layer MAC API, to simplify adding MAC
-     implementations.  This includes a generic EVP_PKEY to EVP_MAC bridge,
-     to facilitate the continued use of MACs through raw private keys in
-     functionality such as EVP_DigestSign* and EVP_DigestVerify*.
-     [Richard Levitte]
-
-  *) Deprecate ECDH_KDF_X9_62() and mark its replacement as internal. Users
-     should use the EVP interface instead (EVP_PKEY_CTX_set_ecdh_kdf_type).
-     [Antoine Salon]
-
-  *) Added EVP_PKEY_ECDH_KDF_X9_63 and ecdh_KDF_X9_63() as replacements for
-     the EVP_PKEY_ECDH_KDF_X9_62 KDF type and ECDH_KDF_X9_62(). The old names
-     are retained for backwards compatibility.
-     [Antoine Salon]
-
-  *) AES-XTS mode now enforces that its two keys are different to mitigate
-     the attacked described in "Efficient Instantiations of Tweakable
-     Blockciphers and Refinements to Modes OCB and PMAC" by Phillip Rogaway.
-     Details of this attack can be obtained from:
-     http://web.cs.ucdavis.edu/%7Erogaway/papers/offsets.pdf
-     [Paul Dale]
-
-  *) Rename the object files, i.e. give them other names than in previous
-     versions.  Their names now include the name of the final product, as
-     well as its type mnemonic (bin, lib, shlib).
-     [Richard Levitte]
-
-  *) Added new option for 'openssl list', '-objects', which will display the
-     list of built in objects, i.e. OIDs with names.
-     [Richard Levitte]
-
-  *) Added support for Linux Kernel TLS data-path. The Linux Kernel data-path
-     improves application performance by removing data copies and providing
-     applications with zero-copy system calls such as sendfile and splice.
-     [Boris Pismenny]
-
- Changes between 1.1.1a and 1.1.1b [xx XXX xxxx]
-
-  *) Change the info callback signals for the start and end of a post-handshake
-     message exchange in TLSv1.3. In 1.1.1/1.1.1a we used SSL_CB_HANDSHAKE_START
-     and SSL_CB_HANDSHAKE_DONE. Experience has shown that many applications get
-     confused by this and assume that a TLSv1.2 renegotiation has started. This
-     can break KeyUpdate handling. Instead we no longer signal the start and end
-     of a post handshake message exchange (although the messages themselves are
-     still signalled). This could break some applications that were expecting
-     the old signals. However without this KeyUpdate is not usable for many
-     applications.
-     [Matt Caswell]
 
  Changes between 1.1.1 and 1.1.1a [20 Nov 2018]
 
@@ -438,6 +415,11 @@
      This issue was reported to OpenSSL on 25th October 2018 by Samuel Weiser.
      (CVE-2018-0735)
      [Paul Dale]
+
+  *) Added EVP_PKEY_ECDH_KDF_X9_63 and ecdh_KDF_X9_63() as replacements for
+     the EVP_PKEY_ECDH_KDF_X9_62 KDF type and ECDH_KDF_X9_62(). The old names
+     are retained for backwards compatibility.
+     [Antoine Salon]
 
   *) Fixed the issue that RAND_add()/RAND_seed() silently discards random input
      if its length exceeds 4096 bytes. The limit has been raised to a buffer size
@@ -824,9 +806,9 @@
      bytes long. In theory it is permissible in SSLv3 - TLSv1.2 to fragment such
      alerts across multiple records (some of which could be empty). In practice
      it make no sense to send an empty alert record, or to fragment one. TLSv1.3
-     prohibts this altogether and other libraries (BoringSSL, NSS) do not
+     prohibits this altogether and other libraries (BoringSSL, NSS) do not
      support this at all. Supporting it adds significant complexity to the
-     record layer, and its removal is unlikely to cause inter-operability
+     record layer, and its removal is unlikely to cause interoperability
      issues.
      [Matt Caswell]
 
@@ -3843,7 +3825,7 @@
      implementations).
      [Emilia Käsper, Adam Langley, Bodo Moeller (Google)]
 
-  *) Use type ossl_ssize_t instad of ssize_t which isn't available on
+  *) Use type ossl_ssize_t instead of ssize_t which isn't available on
      all platforms. Move ssize_t definition from e_os.h to the public
      header file e_os2.h as it now appears in public header file cms.h
      [Steve Henson]
@@ -8564,7 +8546,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
   *) New OCSP utility. Allows OCSP requests to be generated or
      read. The request can be sent to a responder and the output
-     parsed, outputed or printed in text form. Not complete yet:
+     parsed, outputted or printed in text form. Not complete yet:
      still needs to check the OCSP response validity.
      [Steve Henson]
 
@@ -9559,7 +9541,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      [Andy Polyakov]
 
   *) Modified SSL library such that the verify_callback that has been set
-     specificly for an SSL object with SSL_set_verify() is actually being
+     specifically for an SSL object with SSL_set_verify() is actually being
      used. Before the change, a verify_callback set with this function was
      ignored and the verify_callback() set in the SSL_CTX at the time of
      the call was used. New function X509_STORE_CTX_set_verify_cb() introduced
@@ -10676,10 +10658,10 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      as other interfaces in OpenSSL, like the BIO interface.
      NCONF_dump_* dump the internal storage of the configuration file,
      which is useful for debugging.  All other functions take the same
-     arguments as the old CONF_* functions wth the exception of the
+     arguments as the old CONF_* functions with the exception of the
      first that must be a `CONF *' instead of a `LHASH *'.
 
-     To make it easer to use the new classes with the old CONF_* functions,
+     To make it easier to use the new classes with the old CONF_* functions,
      the function CONF_set_default_method is provided.
      [Richard Levitte]
 
@@ -11821,7 +11803,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      (still largely untested)
      [Bodo Moeller]
 
-  *) New function ASN1_tag2str() to convert an ASN1 tag to a descriptive
+  *) New function ANS1_tag2str() to convert an ASN1 tag to a descriptive
      ASCII string. This was handled independently in various places before.
      [Steve Henson]
 
@@ -12522,7 +12504,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      than the old method: it now uses a modified version of Ulf's parser to
      read the ANSI prototypes in all header files (thus the old K&R definitions
      aren't needed for error creation any more) and do a better job of
-     translating function codes into names. The old 'ASN1 error code imbedded
+     translating function codes into names. The old 'ASN1 error code embedded
      in a comment' is no longer necessary and it doesn't use .err files which
      have now been deleted. Also the error code call doesn't have to appear all
      on one line (which resulted in some large lines...).
@@ -12823,7 +12805,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
   *) Add a useful kludge to allow package maintainers to specify compiler and
      other platforms details on the command line without having to patch the
-     Configure script everytime: One now can use ``perl Configure
+     Configure script every time: One now can use ``perl Configure
      <id>:<details>'', i.e. platform ids are allowed to have details appended
      to them (separated by colons). This is treated as there would be a static
      pre-configured entry in Configure's %table under key <id> with value

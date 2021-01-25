@@ -1,13 +1,12 @@
 /*
  * Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/trace.h>
 #include "internal/cryptlib.h"
 #include "bn_local.h"
 
@@ -86,105 +85,93 @@ struct bignum_ctx {
     int too_many;
     /* Flags. */
     int flags;
-    /* The library context */
-    OPENSSL_CTX *libctx;
 };
 
-#ifndef FIPS_MODE
-/* Debugging functionality */
-static void ctxdbg(BIO *channel, const char *text, BN_CTX *ctx)
+/* Enable this to find BN_CTX bugs */
+#ifdef BN_CTX_DEBUG
+static const char *ctxdbg_cur = NULL;
+static void ctxdbg(BN_CTX *ctx)
 {
     unsigned int bnidx = 0, fpidx = 0;
     BN_POOL_ITEM *item = ctx->pool.head;
     BN_STACK *stack = &ctx->stack;
-
-    BIO_printf(channel, "%s\n", text);
-    BIO_printf(channel, "  (%16p): ", (void*)ctx);
+    fprintf(stderr, "(%16p): ", ctx);
     while (bnidx < ctx->used) {
-        BIO_printf(channel, "%03x ",
-                   item->vals[bnidx++ % BN_CTX_POOL_SIZE].dmax);
+        fprintf(stderr, "%03x ", item->vals[bnidx++ % BN_CTX_POOL_SIZE].dmax);
         if (!(bnidx % BN_CTX_POOL_SIZE))
             item = item->next;
     }
-    BIO_printf(channel, "\n");
+    fprintf(stderr, "\n");
     bnidx = 0;
-    BIO_printf(channel, "   %16s : ", "");
+    fprintf(stderr, "          : ");
     while (fpidx < stack->depth) {
         while (bnidx++ < stack->indexes[fpidx])
-            BIO_printf(channel, "    ");
-        BIO_printf(channel, "^^^ ");
+            fprintf(stderr, "    ");
+        fprintf(stderr, "^^^ ");
         bnidx++;
         fpidx++;
     }
-    BIO_printf(channel, "\n");
+    fprintf(stderr, "\n");
 }
 
-# define CTXDBG(str, ctx)           \
-    OSSL_TRACE_BEGIN(BN_CTX) {      \
-        ctxdbg(trc_out, str, ctx);  \
-    } OSSL_TRACE_END(BN_CTX)
+# define CTXDBG_ENTRY(str, ctx)  do { \
+                                ctxdbg_cur = (str); \
+                                fprintf(stderr,"Starting %s\n", ctxdbg_cur); \
+                                ctxdbg(ctx); \
+                                } while(0)
+# define CTXDBG_EXIT(ctx)        do { \
+                                fprintf(stderr,"Ending %s\n", ctxdbg_cur); \
+                                ctxdbg(ctx); \
+                                } while(0)
+# define CTXDBG_RET(ctx,ret)
 #else
-/* TODO(3.0): Consider if we want to do this in FIPS mode */
-# define CTXDBG(str, ctx) do {} while(0)
-#endif /* FIPS_MODE */
+# define CTXDBG_ENTRY(str, ctx)
+# define CTXDBG_EXIT(ctx)
+# define CTXDBG_RET(ctx,ret)
+#endif
 
-BN_CTX *BN_CTX_new_ex(OPENSSL_CTX *ctx)
+
+BN_CTX *BN_CTX_new(void)
 {
     BN_CTX *ret;
 
     if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
-        BNerr(BN_F_BN_CTX_NEW_EX, ERR_R_MALLOC_FAILURE);
+        BNerr(BN_F_BN_CTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     /* Initialise the structure */
     BN_POOL_init(&ret->pool);
     BN_STACK_init(&ret->stack);
-    ret->libctx = ctx;
     return ret;
 }
 
-#ifndef FIPS_MODE
-BN_CTX *BN_CTX_new(void)
+BN_CTX *BN_CTX_secure_new(void)
 {
-    return BN_CTX_new_ex(NULL);
-}
-#endif
-
-BN_CTX *BN_CTX_secure_new_ex(OPENSSL_CTX *ctx)
-{
-    BN_CTX *ret = BN_CTX_new_ex(ctx);
+    BN_CTX *ret = BN_CTX_new();
 
     if (ret != NULL)
         ret->flags = BN_FLG_SECURE;
     return ret;
 }
 
-#ifndef FIPS_MODE
-BN_CTX *BN_CTX_secure_new(void)
-{
-    return BN_CTX_secure_new_ex(NULL);
-}
-#endif
-
 void BN_CTX_free(BN_CTX *ctx)
 {
     if (ctx == NULL)
         return;
-#ifndef FIPS_MODE
-    OSSL_TRACE_BEGIN(BN_CTX) {
+#ifdef BN_CTX_DEBUG
+    {
         BN_POOL_ITEM *pool = ctx->pool.head;
-        BIO_printf(trc_out,
-                   "BN_CTX_free(): stack-size=%d, pool-bignums=%d\n",
-                   ctx->stack.size, ctx->pool.size);
-        BIO_printf(trc_out, "  dmaxs: ");
+        fprintf(stderr, "BN_CTX_free, stack-size=%d, pool-bignums=%d\n",
+                ctx->stack.size, ctx->pool.size);
+        fprintf(stderr, "dmaxs: ");
         while (pool) {
             unsigned loop = 0;
             while (loop < BN_CTX_POOL_SIZE)
-                BIO_printf(trc_out, "%02x ", pool->vals[loop++].dmax);
+                fprintf(stderr, "%02x ", pool->vals[loop++].dmax);
             pool = pool->next;
         }
-        BIO_printf(trc_out, "\n");
-    } OSSL_TRACE_END(BN_CTX);
+        fprintf(stderr, "\n");
+    }
 #endif
     BN_STACK_finish(&ctx->stack);
     BN_POOL_finish(&ctx->pool);
@@ -193,7 +180,7 @@ void BN_CTX_free(BN_CTX *ctx)
 
 void BN_CTX_start(BN_CTX *ctx)
 {
-    CTXDBG("ENTER BN_CTX_start()", ctx);
+    CTXDBG_ENTRY("BN_CTX_start", ctx);
     /* If we're already overflowing ... */
     if (ctx->err_stack || ctx->too_many)
         ctx->err_stack++;
@@ -202,14 +189,14 @@ void BN_CTX_start(BN_CTX *ctx)
         BNerr(BN_F_BN_CTX_START, BN_R_TOO_MANY_TEMPORARY_VARIABLES);
         ctx->err_stack++;
     }
-    CTXDBG("LEAVE BN_CTX_start()", ctx);
+    CTXDBG_EXIT(ctx);
 }
 
 void BN_CTX_end(BN_CTX *ctx)
 {
     if (ctx == NULL)
         return;
-    CTXDBG("ENTER BN_CTX_end()", ctx);
+    CTXDBG_ENTRY("BN_CTX_end", ctx);
     if (ctx->err_stack)
         ctx->err_stack--;
     else {
@@ -221,14 +208,14 @@ void BN_CTX_end(BN_CTX *ctx)
         /* Unjam "too_many" in case "get" had failed */
         ctx->too_many = 0;
     }
-    CTXDBG("LEAVE BN_CTX_end()", ctx);
+    CTXDBG_EXIT(ctx);
 }
 
 BIGNUM *BN_CTX_get(BN_CTX *ctx)
 {
     BIGNUM *ret;
 
-    CTXDBG("ENTER BN_CTX_get()", ctx);
+    CTXDBG_ENTRY("BN_CTX_get", ctx);
     if (ctx->err_stack || ctx->too_many)
         return NULL;
     if ((ret = BN_POOL_get(&ctx->pool, ctx->flags)) == NULL) {
@@ -245,15 +232,8 @@ BIGNUM *BN_CTX_get(BN_CTX *ctx)
     /* clear BN_FLG_CONSTTIME if leaked from previous frames */
     ret->flags &= (~BN_FLG_CONSTTIME);
     ctx->used++;
-    CTXDBG("LEAVE BN_CTX_get()", ctx);
+    CTXDBG_RET(ctx, ret);
     return ret;
-}
-
-OPENSSL_CTX *bn_get_lib_ctx(BN_CTX *ctx)
-{
-    if (ctx == NULL)
-        return NULL;
-    return ctx->libctx;
 }
 
 /************/

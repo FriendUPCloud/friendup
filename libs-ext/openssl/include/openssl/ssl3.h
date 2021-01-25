@@ -1,21 +1,15 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OPENSSL_SSL3_H
-# define OPENSSL_SSL3_H
-# pragma once
-
-# include <openssl/macros.h>
-# if !OPENSSL_API_3
-#  define HEADER_SSL3_H
-# endif
+#ifndef HEADER_SSL3_H
+# define HEADER_SSL3_H
 
 # include <openssl/comp.h>
 # include <openssl/buffer.h>
@@ -220,6 +214,7 @@ extern "C" {
 # define SSL3_RT_ALERT                   21
 # define SSL3_RT_HANDSHAKE               22
 # define SSL3_RT_APPLICATION_DATA        23
+# define DTLS1_RT_HEARTBEAT              24
 
 /* Pseudo content types to indicate additional parameters */
 # define TLS1_RT_CRYPTO                  0x1000
@@ -296,6 +291,9 @@ extern "C" {
 # define TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE       0x0400
 
 # define TLS1_FLAGS_STATELESS                    0x0800
+
+/* Set if extended master secret extension required on renegotiation */
+# define TLS1_FLAGS_REQUIRED_EXTMS               0x1000
 
 # define SSL3_MT_HELLO_REQUEST                   0
 # define SSL3_MT_CLIENT_HELLO                    1

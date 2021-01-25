@@ -1,2 +1,0 @@
-
-SOURCE[../fips]=fipsprov.c selftest.c

@@ -1,7 +1,7 @@
 /*
  * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -16,8 +16,6 @@
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include <openssl/cms.h>
-#include <openssl/core_names.h>
-#include "internal/param_build.h"
 
 /*
  * i2d/d2i like DH parameter functions which use the appropriate routine for
@@ -183,7 +181,7 @@ static int dh_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
         DHerr(DH_F_DH_PRIV_DECODE, DH_R_BN_ERROR);
         goto dherr;
     }
-    /* Calculate public key, increments dirty_cnt */
+    /* Calculate public key */
     if (!DH_generate_key(dh))
         goto dherr;
 
@@ -257,7 +255,6 @@ static int dh_param_decode(EVP_PKEY *pkey,
         DHerr(DH_F_DH_PARAM_DECODE, ERR_R_DH_LIB);
         return 0;
     }
-    dh->dirty_cnt++;
     EVP_PKEY_assign(pkey, pkey->ameth->pkey_id, dh);
     return 1;
 }
@@ -418,11 +415,10 @@ static int int_dh_param_copy(DH *to, const DH *from, int is_x942)
         }
     } else
         to->length = from->length;
-    to->dirty_cnt++;
     return 1;
 }
 
-DH *DHparams_dup(const DH *dh)
+DH *DHparams_dup(DH *dh)
 {
     DH *ret;
     ret = DH_new();
@@ -494,18 +490,6 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri);
 static int dh_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 {
     switch (op) {
-    case ASN1_PKEY_CTRL_SET1_TLS_ENCPT:
-        return dh_buf2key(EVP_PKEY_get0_DH(pkey), arg2, arg1);
-    case ASN1_PKEY_CTRL_GET1_TLS_ENCPT:
-        return dh_key2buf(EVP_PKEY_get0_DH(pkey), arg2);
-    default:
-        return -2;
-    }
-}
-
-static int dhx_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
-{
-    switch (op) {
 #ifndef OPENSSL_NO_CMS
 
     case ASN1_PKEY_CTRL_CMS_ENVELOPE:
@@ -544,59 +528,6 @@ static int dh_pkey_param_check(const EVP_PKEY *pkey)
     return DH_check_ex(dh);
 }
 
-static size_t dh_pkey_dirty_cnt(const EVP_PKEY *pkey)
-{
-    return pkey->pkey.dh->dirty_cnt;
-}
-
-static void *dh_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
-{
-    DH *dh = pk->pkey.dh;
-    OSSL_PARAM_BLD tmpl;
-    const BIGNUM *p = DH_get0_p(dh), *g = DH_get0_g(dh), *q = DH_get0_q(dh);
-    const BIGNUM *pub_key = DH_get0_pub_key(dh);
-    const BIGNUM *priv_key = DH_get0_priv_key(dh);
-    OSSL_PARAM *params;
-    void *provkey = NULL;
-
-    if (p == NULL || g == NULL)
-        return NULL;
-
-    ossl_param_bld_init(&tmpl);
-    if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_P, p)
-        || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_G, g))
-        return NULL;
-
-    if (q != NULL) {
-        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_Q, q))
-            return NULL;
-    }
-
-    /*
-     * This may be used to pass domain parameters only without any key data -
-     * so "pub_key" is optional. We can never have a "priv_key" without a
-     * corresponding "pub_key" though.
-     */
-    if (pub_key != NULL) {
-        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DH_PUB_KEY, pub_key))
-            return NULL;
-
-        if (priv_key != NULL) {
-            if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DH_PRIV_KEY,
-                                        priv_key))
-                return NULL;
-        }
-    }
-
-    params = ossl_param_bld_to_param(&tmpl);
-
-    /* We export, the provider imports */
-    provkey = evp_keymgmt_importkey(keymgmt, params);
-
-    ossl_param_bld_free(params);
-    return provkey;
-}
-
 const EVP_PKEY_ASN1_METHOD dh_asn1_meth = {
     EVP_PKEY_DH,
     EVP_PKEY_DH,
@@ -627,18 +558,13 @@ const EVP_PKEY_ASN1_METHOD dh_asn1_meth = {
     0,
 
     int_dh_free,
-    dh_pkey_ctrl,
+    0,
 
     0, 0, 0, 0, 0,
 
     0,
     dh_pkey_public_check,
-    dh_pkey_param_check,
-
-    0, 0, 0, 0,
-
-    dh_pkey_dirty_cnt,
-    dh_pkey_export_to,
+    dh_pkey_param_check
 };
 
 const EVP_PKEY_ASN1_METHOD dhx_asn1_meth = {
@@ -671,7 +597,7 @@ const EVP_PKEY_ASN1_METHOD dhx_asn1_meth = {
     0,
 
     int_dh_free,
-    dhx_pkey_ctrl,
+    dh_pkey_ctrl,
 
     0, 0, 0, 0, 0,
 
@@ -975,6 +901,7 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
  err:
     OPENSSL_free(penc);
     X509_ALGOR_free(wrap_alg);
+    OPENSSL_free(dukm);
     return rv;
 }
 

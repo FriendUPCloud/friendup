@@ -1,23 +1,17 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OPENSSL_BUFFER_H
-# define OPENSSL_BUFFER_H
-# pragma once
+#ifndef HEADER_BUFFER_H
+# define HEADER_BUFFER_H
 
-# include <openssl/macros.h>
-# if !OPENSSL_API_3
-#  define HEADER_BUFFER_H
-# endif
-
-# include <openssl/types.h>
-# ifndef OPENSSL_CRYPTO_H
+# include <openssl/ossl_typ.h>
+# ifndef HEADER_CRYPTO_H
 #  include <openssl/crypto.h>
 # endif
 # include <openssl/buffererr.h>
