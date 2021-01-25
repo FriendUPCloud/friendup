@@ -31,10 +31,9 @@
 #include <util/session_id.h>
 #include <network/websocket_client.h>
 
-#include <system/user/user_sessionmanager.h>
+#include <system/user/user_session_manager.h>
 #include <system/systembase.h>
 #include <system/user/user_manager.h>
-#include <system/user/user_sessionmanager.h>
 
 #define LIB_NAME "fcdb.authmod"
 #define LIB_VERSION			1

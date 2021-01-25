@@ -40,7 +40,7 @@
 #include <system/fsys/file.h>
 #include <system/fsys/device_handling.h>
 
-#include <system/user/user_sessionmanager.h>
+#include <system/user/user_session_manager.h>
 #include <system/user/user_manager.h>
 #include <system/web_util.h>
 

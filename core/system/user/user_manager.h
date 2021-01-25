@@ -23,7 +23,7 @@
 #include <core/types.h>
 #include "user_session.h"
 #include <system/usergroup/user_group.h>
-#include "user_sessionmanager.h"
+#include "user_session_manager.h"
 #include "user.h"
 #include "remote_user.h"
 

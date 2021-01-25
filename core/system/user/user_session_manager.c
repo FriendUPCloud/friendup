@@ -17,7 +17,7 @@
  *  @date created 11/2016
  */
 
-#include "user_sessionmanager.h"
+#include "user_session_manager.h"
 #include "user.h"
 
 #include <system/systembase.h>
@@ -542,6 +542,11 @@ UserSession *USMUserSessionAddToList( UserSessionManager *smgr, UserSession *s )
 			FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
 			return s;
 		}
+		
+#ifdef USE_HASHMAP_FOR_SEARCH
+		HashInsert( smgr->usm_SessionsHT, PTR_KEY(smgr->usm_SessionsHT, s->us_SessionID), s );
+#endif
+		
 		// Add next usersession
 		s->node.mln_Succ = (MinNode *)smgr->usm_Sessions;
 		smgr->usm_Sessions = s;
@@ -677,6 +682,9 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 			
 			if( sessPtr == NULL )
 			{
+#ifdef USE_HASHMAP_FOR_SEARCH
+				HashInsert( smgr->usm_SessionsHT, PTR_KEY(smgr->usm_SessionsHT, us->us_SessionID), us );
+#endif
 				us->node.mln_Succ = (MinNode *)smgr->usm_Sessions;
 				smgr->usm_Sessions = us;
 			}

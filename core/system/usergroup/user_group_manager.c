@@ -18,7 +18,7 @@
  */
 
 #include "user_group_manager.h"
-#include <system/user/user_sessionmanager.h>
+#include <system/user/user_session_manager.h>
 
 #include <system/systembase.h>
 #include <util/sha256.h>
