@@ -1,20 +1,14 @@
 /*
  * Copyright 2008-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OPENSSL_CMS_H
-# define OPENSSL_CMS_H
-# pragma once
-
-# include <openssl/macros.h>
-# if !OPENSSL_API_3
-#  define HEADER_CMS_H
-# endif
+#ifndef HEADER_CMS_H
+# define HEADER_CMS_H
 
 # include <openssl/opensslconf.h>
 
@@ -79,7 +73,6 @@ DECLARE_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
 # define CMS_DEBUG_DECRYPT               0x20000
 # define CMS_KEY_PARAM                   0x40000
 # define CMS_ASCIICRLF                   0x80000
-# define CMS_CADES                       0x100000
 
 const ASN1_OBJECT *CMS_get0_type(const CMS_ContentInfo *cms);
 
@@ -90,7 +83,7 @@ ASN1_OCTET_STRING **CMS_get0_content(CMS_ContentInfo *cms);
 int CMS_is_detached(CMS_ContentInfo *cms);
 int CMS_set_detached(CMS_ContentInfo *cms, int detached);
 
-# ifdef OPENSSL_PEM_H
+# ifdef HEADER_PEM_H
 DECLARE_PEM_rw_const(CMS, CMS_ContentInfo)
 # endif
 int CMS_stream(unsigned char ***boundary, CMS_ContentInfo *cms);
@@ -204,7 +197,7 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
                                                const EVP_CIPHER *kekciph);
 
 int CMS_RecipientInfo_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri);
-int CMS_RecipientInfo_encrypt(const CMS_ContentInfo *cms, CMS_RecipientInfo *ri);
+int CMS_RecipientInfo_encrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri);
 
 int CMS_uncompress(CMS_ContentInfo *cms, BIO *dcont, BIO *out,
                    unsigned int flags);

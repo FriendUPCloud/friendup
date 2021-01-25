@@ -1,7 +1,7 @@
 /*
- * Copyright 2008-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -64,7 +64,6 @@ static void mime_hdr_free(MIME_HEADER *hdr);
 
 /* Output an ASN1 structure in BER format streaming if necessary */
 
-/* unfortunately cannot constify this due to CMS_stream() and PKCS7_stream() */
 int i2d_ASN1_bio_stream(BIO *out, ASN1_VALUE *val, BIO *in, int flags,
                         const ASN1_ITEM *it)
 {
@@ -199,6 +198,14 @@ static int asn1_write_micalg(BIO *out, STACK_OF(X509_ALGOR) *mdalgs)
             BIO_puts(out, "gostr3411-94");
             goto err;
 
+        case NID_id_GostR3411_2012_256:
+            BIO_puts(out, "gostr3411-2012-256");
+            goto err;
+
+        case NID_id_GostR3411_2012_512:
+            BIO_puts(out, "gostr3411-2012-512");
+            goto err;
+
         default:
             if (have_unknown)
                 write_comma = 0;
@@ -312,7 +319,6 @@ int SMIME_write_ASN1(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
 
 /* Handle output of ASN1 data */
 
-/* cannot constify val because of CMS_dataFinal() */
 static int asn1_output_data(BIO *out, BIO *data, ASN1_VALUE *val, int flags,
                             const ASN1_ITEM *it)
 {

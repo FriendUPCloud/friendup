@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -62,7 +62,7 @@ void md5_block_data_order(MD5_CTX *c, const void *p, size_t num);
 #define R0(a,b,c,d,k,s,t) { \
         a+=((k)+(t)+F((b),(c),(d))); \
         a=ROTATE(a,s); \
-        a+=b; };\
+        a+=b; };
 
 #define R1(a,b,c,d,k,s,t) { \
         a+=((k)+(t)+G((b),(c),(d))); \

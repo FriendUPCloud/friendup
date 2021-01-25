@@ -1,7 +1,7 @@
 /*
- * Copyright 2011-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -128,6 +128,7 @@ static const felem_bytearray nistp521_curve_params[5] = {
 # define NLIMBS 9
 
 typedef uint64_t limb;
+typedef limb limb_aX __attribute((__aligned__(1)));
 typedef limb felem[NLIMBS];
 typedef uint128_t largefelem[NLIMBS];
 
@@ -141,14 +142,14 @@ static const limb bottom58bits = 0x3ffffffffffffff;
 static void bin66_to_felem(felem out, const u8 in[66])
 {
     out[0] = (*((limb *) & in[0])) & bottom58bits;
-    out[1] = (*((limb *) & in[7]) >> 2) & bottom58bits;
-    out[2] = (*((limb *) & in[14]) >> 4) & bottom58bits;
-    out[3] = (*((limb *) & in[21]) >> 6) & bottom58bits;
-    out[4] = (*((limb *) & in[29])) & bottom58bits;
-    out[5] = (*((limb *) & in[36]) >> 2) & bottom58bits;
-    out[6] = (*((limb *) & in[43]) >> 4) & bottom58bits;
-    out[7] = (*((limb *) & in[50]) >> 6) & bottom58bits;
-    out[8] = (*((limb *) & in[58])) & bottom57bits;
+    out[1] = (*((limb_aX *) & in[7]) >> 2) & bottom58bits;
+    out[2] = (*((limb_aX *) & in[14]) >> 4) & bottom58bits;
+    out[3] = (*((limb_aX *) & in[21]) >> 6) & bottom58bits;
+    out[4] = (*((limb_aX *) & in[29])) & bottom58bits;
+    out[5] = (*((limb_aX *) & in[36]) >> 2) & bottom58bits;
+    out[6] = (*((limb_aX *) & in[43]) >> 4) & bottom58bits;
+    out[7] = (*((limb_aX *) & in[50]) >> 6) & bottom58bits;
+    out[8] = (*((limb_aX *) & in[58])) & bottom57bits;
 }
 
 /*
@@ -159,14 +160,14 @@ static void felem_to_bin66(u8 out[66], const felem in)
 {
     memset(out, 0, 66);
     (*((limb *) & out[0])) = in[0];
-    (*((limb *) & out[7])) |= in[1] << 2;
-    (*((limb *) & out[14])) |= in[2] << 4;
-    (*((limb *) & out[21])) |= in[3] << 6;
-    (*((limb *) & out[29])) = in[4];
-    (*((limb *) & out[36])) |= in[5] << 2;
-    (*((limb *) & out[43])) |= in[6] << 4;
-    (*((limb *) & out[50])) |= in[7] << 6;
-    (*((limb *) & out[58])) = in[8];
+    (*((limb_aX *) & out[7])) |= in[1] << 2;
+    (*((limb_aX *) & out[14])) |= in[2] << 4;
+    (*((limb_aX *) & out[21])) |= in[3] << 6;
+    (*((limb_aX *) & out[29])) = in[4];
+    (*((limb_aX *) & out[36])) |= in[5] << 2;
+    (*((limb_aX *) & out[43])) |= in[6] << 4;
+    (*((limb_aX *) & out[50])) |= in[7] << 6;
+    (*((limb_aX *) & out[58])) = in[8];
 }
 
 /* BN_to_felem converts an OpenSSL BIGNUM into an felem */
@@ -1158,6 +1159,7 @@ static void point_add(felem x3, felem y3, felem z3,
     felem ftmp, ftmp2, ftmp3, ftmp4, ftmp5, ftmp6, x_out, y_out, z_out;
     largefelem tmp, tmp2;
     limb x_equal, y_equal, z1_is_zero, z2_is_zero;
+    limb points_equal;
 
     z1_is_zero = felem_is_zero(z1);
     z2_is_zero = felem_is_zero(z2);
@@ -1242,7 +1244,24 @@ static void point_add(felem x3, felem y3, felem z3,
     felem_scalar64(ftmp5, 2);
     /* ftmp5[i] < 2^61 */
 
-    if (x_equal && y_equal && !z1_is_zero && !z2_is_zero) {
+    /*
+     * The formulae are incorrect if the points are equal, in affine coordinates
+     * (X_1, Y_1) == (X_2, Y_2), so we check for this and do doubling if this
+     * happens.
+     *
+     * We use bitwise operations to avoid potential side-channels introduced by
+     * the short-circuiting behaviour of boolean operators.
+     *
+     * The special case of either point being the point at infinity (z1 and/or
+     * z2 are zero), is handled separately later on in this function, so we
+     * avoid jumping to point_double here in those special cases.
+     *
+     * Notice the comment below on the implications of this branching for timing
+     * leaks and why it is considered practically irrelevant.
+     */
+    points_equal = (x_equal & y_equal & (~z1_is_zero) & (~z2_is_zero));
+
+    if (points_equal) {
         /*
          * This is obviously not constant-time but it will almost-never happen
          * for ECDH / ECDSA. The case where it can happen is during scalar-mult
@@ -1651,9 +1670,6 @@ const EC_METHOD *EC_GFp_nistp521_method(void)
         0, /* keycopy */
         0, /* keyfinish */
         ecdh_simple_compute_key,
-        ecdsa_simple_sign_setup,
-        ecdsa_simple_sign_sig,
-        ecdsa_simple_verify_sig,
         0, /* field_inverse_mod_ord */
         0, /* blind_coordinates */
         0, /* ladder_pre */
@@ -1732,16 +1748,12 @@ int ec_GFp_nistp521_group_set_curve(EC_GROUP *group, const BIGNUM *p,
                                     BN_CTX *ctx)
 {
     int ret = 0;
-    BIGNUM *curve_p, *curve_a, *curve_b;
-#ifndef FIPS_MODE
     BN_CTX *new_ctx = NULL;
+    BIGNUM *curve_p, *curve_a, *curve_b;
 
     if (ctx == NULL)
-        ctx = new_ctx = BN_CTX_new();
-#endif
-    if (ctx == NULL)
-        return 0;
-
+        if ((ctx = new_ctx = BN_CTX_new()) == NULL)
+            return 0;
     BN_CTX_start(ctx);
     curve_p = BN_CTX_get(ctx);
     curve_a = BN_CTX_get(ctx);
@@ -1760,9 +1772,7 @@ int ec_GFp_nistp521_group_set_curve(EC_GROUP *group, const BIGNUM *p,
     ret = ec_GFp_simple_group_set_curve(group, p, a, b, ctx);
  err:
     BN_CTX_end(ctx);
-#ifndef FIPS_MODE
     BN_CTX_free(new_ctx);
-#endif
     return ret;
 }
 
@@ -2054,23 +2064,16 @@ int ec_GFp_nistp521_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     int ret = 0;
     NISTP521_PRE_COMP *pre = NULL;
     int i, j;
+    BN_CTX *new_ctx = NULL;
     BIGNUM *x, *y;
     EC_POINT *generator = NULL;
     felem tmp_felems[16];
-#ifndef FIPS_MODE
-    BN_CTX *new_ctx = NULL;
-#endif
 
     /* throw away old precomputation */
     EC_pre_comp_free(group);
-
-#ifndef FIPS_MODE
     if (ctx == NULL)
-        ctx = new_ctx = BN_CTX_new();
-#endif
-    if (ctx == NULL)
-        return 0;
-
+        if ((ctx = new_ctx = BN_CTX_new()) == NULL)
+            return 0;
     BN_CTX_start(ctx);
     x = BN_CTX_get(ctx);
     y = BN_CTX_get(ctx);
@@ -2158,9 +2161,7 @@ int ec_GFp_nistp521_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
  err:
     BN_CTX_end(ctx);
     EC_POINT_free(generator);
-#ifndef FIPS_MODE
     BN_CTX_free(new_ctx);
-#endif
     EC_nistp521_pre_comp_free(pre);
     return ret;
 }

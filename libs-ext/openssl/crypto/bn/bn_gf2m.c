@@ -2,7 +2,7 @@
  * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -732,8 +732,8 @@ int BN_GF2m_mod_inv(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 
     /* generate blinding value */
     do {
-        if (!BN_priv_rand_ex(b, BN_num_bits(p) - 1,
-                             BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY, ctx))
+        if (!BN_priv_rand(b, BN_num_bits(p) - 1,
+                          BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY))
             goto err;
     } while (BN_is_zero(b));
 
@@ -1031,8 +1031,7 @@ int BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const int p[],
         if (tmp == NULL)
             goto err;
         do {
-            if (!BN_priv_rand_ex(rho, p[0], BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY,
-                                 ctx))
+            if (!BN_priv_rand(rho, p[0], BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
                 goto err;
             if (!BN_GF2m_mod_arr(rho, rho, p))
                 goto err;

@@ -1535,26 +1535,38 @@ a.Negative:hover, a.Negative:active, a.Negative:visited
 
 .Button.Accept,
 .Select.Accept {
-	color : $ColorAcceptButton;
+	color            : $ColorAcceptButton;
 	background-color : $ColorAcceptButtonBg;
 }
 
 .Button.Accept:hover,
 .Select.Accept:hover {
-	color : $ColorAcceptButtonHover;
+	color            : $ColorAcceptButtonHover;
 	background-color : $ColorAcceptButtonHoverBg;
 }
 
 .Button.Danger,
 .Select.Danger {
-	color : $ColorDangerButton;
+	color            : $ColorDangerButton;
 	background-color : $ColorDangerButtonBg;
 }
 
 .Button.Danger:hover,
 .Select.Danger:hover {
-	color : $ColorDangerButtonHover;
+	color            : $ColorDangerButtonHover;
 	background-color : $ColorDangerButtonHoverBg;
+}
+
+.Button.Available,
+.Select.Available {
+	color            : $ColorAvailableButton;
+	background-color : $ColorAvailableButtonBg;
+}
+
+.Button.Available:hover,
+.Select.Available:hover {
+	color            : $ColorAvailableButtonHover;
+	background-color : $ColorAvailableButtonHoverBg;
 }
 
 /* put on text inputs */

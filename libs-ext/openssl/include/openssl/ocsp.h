@@ -1,20 +1,14 @@
 /*
- * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OPENSSL_OCSP_H
-# define OPENSSL_OCSP_H
-# pragma once
-
-# include <openssl/macros.h>
-# if !OPENSSL_API_3
-#  define HEADER_OCSP_H
-# endif
+#ifndef HEADER_OCSP_H
+# define HEADER_OCSP_H
 
 #include <openssl/opensslconf.h>
 
@@ -32,10 +26,7 @@
  *        superseded              (4),
  *        cessationOfOperation    (5),
  *        certificateHold         (6),
- *        -- value 7 is not used
- *        removeFromCRL           (8),
- *        privilegeWithdrawn      (9),
- *        aACompromise           (10) }
+ *        removeFromCRL           (8) }
  */
 #  define OCSP_REVOKED_STATUS_NOSTATUS               -1
 #  define OCSP_REVOKED_STATUS_UNSPECIFIED             0
@@ -46,13 +37,11 @@
 #  define OCSP_REVOKED_STATUS_CESSATIONOFOPERATION    5
 #  define OCSP_REVOKED_STATUS_CERTIFICATEHOLD         6
 #  define OCSP_REVOKED_STATUS_REMOVEFROMCRL           8
-#  define OCSP_REVOKED_STATUS_PRIVILEGEWITHDRAWN      9
-#  define OCSP_REVOKED_STATUS_AACOMPROMISE           10
 
 
 # ifndef OPENSSL_NO_OCSP
 
-#  include <openssl/types.h>
+#  include <openssl/ossl_typ.h>
 #  include <openssl/x509.h>
 #  include <openssl/x509v3.h>
 #  include <openssl/safestack.h>
@@ -157,7 +146,7 @@ typedef struct ocsp_service_locator_st OCSP_SERVICELOC;
                 (OCSP_CERTSTATUS*)ASN1_dup((int(*)())i2d_OCSP_CERTSTATUS,\
                 (char *(*)())d2i_OCSP_CERTSTATUS,(char *)(cs))
 
-DECLARE_ASN1_DUP_FUNCTION(OCSP_CERTID)
+OCSP_CERTID *OCSP_CERTID_dup(OCSP_CERTID *id);
 
 OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, const char *path, OCSP_REQUEST *req);
 OCSP_REQ_CTX *OCSP_sendreq_new(BIO *io, const char *path, OCSP_REQUEST *req,
