@@ -22,6 +22,7 @@
 #include "user_session.h"
 #include <system/usergroup/user_group.h>
 #include "user.h"
+#include <util/libchash.h>
 
 //
 // User Session Manager structure
@@ -30,8 +31,11 @@
 typedef struct UserSessionManager
 {
 	void							*usm_SB;
-	UserSession						*usm_Sessions;							// user sessions
+	
+	UserSession						*usm_Sessions;							// list of all user sessions
+	FHashTable						*usm_SessionsHT;						// Hashmap of sessions
 	UserSession						*usm_SessionsToBeRemoved;				// sessions which must be removed
+	
 	int								usm_SessionCounter;
 	void 							*usm_UM;
 	
@@ -92,6 +96,12 @@ void USMLogUsersAndDevices( UserSessionManager *usm );
 //
 
 UserSession *USMGetSessionByUserID( UserSessionManager *usm, FULONG id );
+
+//
+//
+//
+
+UserSession *USMGetSessionByUserName( UserSessionManager *usm, char *uname, FBOOL caseSensitive );
 
 //
 //

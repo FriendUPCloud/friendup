@@ -23,7 +23,6 @@
 #include <core/types.h>
 #include <system/user/user_session.h>
 #include <system/usergroup/user_group.h>
-#include <system/user/usersession_manager.h>
 #include <system/user/user.h>
 #include <util/hashmap_long.h>
 

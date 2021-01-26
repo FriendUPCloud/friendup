@@ -899,7 +899,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			status = (FLONG)strtol ( (char *)el->hme_Data, &next, 0 );
 		}
 		
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
+		if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
 		{
 			if( id > 0 && status >= 0 )
 			{
@@ -1069,7 +1069,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			int err = 0;
 			
 			// if you are admin you can change every user password
-			if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
+			if( loggedSession->us_User->u_IsAdmin == TRUE )
 			{
 				access = TRUE;
 			}
@@ -1503,7 +1503,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				//args = UrlDecodeToMem( el->hme_Data );
 			}
 				
-			if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
+			if( loggedSession->us_User->u_IsAdmin || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
 			{
 				haveAccess = TRUE;
 			
@@ -1656,7 +1656,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		
 		HashmapElement *el = HttpGetPOSTParameter( request, "sessionid" );
 		
-		if( UMUserIsAdmin( l->sl_UM  , request, loggedSession->us_User ) == TRUE )
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			if( el == NULL )
 			{
@@ -1777,7 +1777,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		User *logusr = NULL;
 		logusr = loggedSession->us_User;
 		
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			// only when you are admin you can change stuff on other user accounts
 			if( usrname != NULL )
@@ -2012,7 +2012,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		if( UMUserIsAdmin( l->sl_UM  , request, loggedSession->us_User ) == TRUE )
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			FBOOL usersOnly = FALSE;
 			
@@ -2122,7 +2122,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		
 		DEBUG("[UMWebRequest] GET activews list\n");
 		
-		if( UMUserIsAdmin( l->sl_UM  , request, loggedSession->us_User ) == TRUE )
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			FBOOL usersOnly = FALSE;
 			

@@ -144,7 +144,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 			FCID = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		
-		if( UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE && temp != NULL )
+		if( loggedSession->us_User->u_IsAdmin == TRUE && temp != NULL )
 		{
 			BufString *bs = BufStringNew();
 
@@ -305,7 +305,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		
 		BufStringAddSize( bs, "ok<!--separate-->[", 18 );
 		
-		if( UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE )
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			uiadmin = TRUE;
 		}
@@ -545,7 +545,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		{
 			msgsize += strlen( msg )+1024;
 		
-			if( usersession == NULL && UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE )
+			if( usersession == NULL && loggedSession->us_User->u_IsAdmin == TRUE )
 			{
 				BufStringAdd( bs, "{\"userlist\":[");
 			

@@ -26,6 +26,7 @@
 #include "usersession_manager.h"
 #include "user.h"
 #include "remote_user.h"
+#include <util/hashmap_kint.h>
 
 //
 // User Session Manager structure
@@ -36,6 +37,9 @@ typedef struct UserManager
 	void								*um_SB;
 	
 	User								*um_Users; 						// logged users with mounted devices
+	
+	HMapKInt							um_UsersMapByID;
+	
 	//UserGroup							*um_UserGroups;			// all user groups
 	void 								*um_USM;
 	RemoteUser							*um_RemoteUsers;		// remote users and their connections
@@ -111,12 +115,6 @@ User * UMUserGetByIDDB( UserManager *um, FULONG id );
 //
 
 int UMUserCreate( UserManager *smgr, Http *r, User *usr );
-
-//
-// is user in admin group
-//
-
-FBOOL UMUserIsAdmin( UserManager *smgr, Http *r, User *usr );
 
 //
 // is user in admin group
@@ -225,6 +223,12 @@ int UMStoreLoginAttempt( UserManager *um, const char *name, const char *info, co
 //
 
 int UMCheckAndLoadAPIUser( UserManager *um );
+
+//
+//
+//
+
+int UMFindUserByNameAndAddToSas( UserManager *um, char *uname, void *las, char *appName, char *msg, BufString *usersAdded, FBOOL listNotEmpty );
 
 //
 //

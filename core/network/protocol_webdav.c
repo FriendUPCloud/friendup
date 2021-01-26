@@ -909,7 +909,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 				
 				if( ses == NULL )
 				{
-					ses = UserSessionNew( "webdav", "webdav" );
+					ses = UserSessionNew( sb, NULL, "webdav" );
 					if( ses != NULL )
 					{
 						ses->us_UserID = usr->u_ID;
@@ -917,13 +917,8 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 					
 						UserAddSession( usr, ses );
 						USMSessionSaveDB( sb->sl_USM, ses );
-					
-						if( FRIEND_MUTEX_LOCK( &(sb->sl_USM->usm_Mutex) ) == 0 )
-						{
-							ses->node.mln_Succ = (MinNode *) sb->sl_USM->usm_Sessions;
-							sb->sl_USM->usm_Sessions = ses;
-							FRIEND_MUTEX_UNLOCK( &(sb->sl_USM->usm_Mutex) );
-						}
+						
+						USMUserSessionAddToList( sb->sl_USM, ses );
 					}
 				}
 				char *err = NULL;

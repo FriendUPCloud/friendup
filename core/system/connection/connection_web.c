@@ -102,7 +102,7 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 			fname = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		
-		if( UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE && temp != NULL )
+		if( loggedSession->us_User->u_IsAdmin == TRUE && temp != NULL )
 		{
 			BufString *bs = BufStringNew();
 
@@ -196,7 +196,7 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 			addr = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		
-		if( UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE && temp != NULL )
+		if( loggedSession->us_User->u_IsAdmin == TRUE && temp != NULL )
 		{
 			BufString *bs = BufStringNew();
 
@@ -290,7 +290,7 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 		int type = -1;
 		char dictmsgbuf[ 256 ];
 		
-		if( UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE )
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			el =  HashmapGet( (*request)->http_ParsedPostContent, "address" );
 			if( el != NULL )
@@ -519,7 +519,7 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 		char *address = NULL, *destFCID = NULL, *PEM = NULL, *serverType = NULL, *clusterID = NULL, *name = NULL;
 		int approved = -1;
 		
-		if( UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE )
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			el =  HashmapGet( (*request)->http_ParsedPostContent, "id" );
 			if( el != NULL )
@@ -737,7 +737,7 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 		char *name = NULL;
 		char dictmsgbuf[ 256 ];
 		
-		if( UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE )
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			el =  HashmapGet( (*request)->http_ParsedPostContent, "id" );
 			if( el != NULL )

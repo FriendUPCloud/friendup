@@ -22,22 +22,34 @@
 #include <system/systembase.h>
 #include <system/token/dos_token.h>
 #include <system/application/application_manager.h>
+#include <util/session_id.h>
 
 extern SystemBase *SLIB;
 
 /**
  * Create new User Session
  *
- * @param sessid sessionID
+ * @param sb pointer to SystemBase
+ * @param sesid SessionID. If provided it will be used
  * @param devid deviceID
  * @return new UserSession structure when success, otherwise NULL
  */
-UserSession *UserSessionNew( char *sessid, char *devid )
+UserSession *UserSessionNew( void *sb, char *sesid, char *devid )
 {
 	UserSession *s;
 	if( ( s = FCalloc( 1, sizeof(UserSession) ) ) != NULL )
 	{
-		s->us_SessionID = StringDuplicate( sessid );
+		SystemBase *lsb = (SystemBase *)sb;
+		if( sesid != NULL )
+		{
+			s->us_SessionID = StringDuplicate( sesid );
+		}
+		else
+		{
+			s->us_SessionID = SessionIDGenerate();
+		}
+		s->us_HashedSessionID = lsb->sl_UtilInterface.DatabaseEncodeString( s->us_SessionID );
+					
 		s->us_DeviceIdentity = StringDuplicate( devid );
 		
 		UserSessionInit( s );
@@ -187,6 +199,11 @@ void UserSessionDelete( UserSession *us )
 			if( us->us_SessionID != NULL )
 			{
 				FFree( us->us_SessionID );
+			}
+			
+			if( us->us_HashedSessionID != NULL )
+			{
+				FFree( us->us_HashedSessionID );
 			}
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}

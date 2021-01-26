@@ -710,12 +710,15 @@ char *SASSessionAddUsersByName( SASSession *as, UserSession *loggedSession, char
 		}
 		
 		// I assume that user can have max 8 sessions - usersi * 512 * 8
-		DEBUG("[SASSessionAddUsersByName] Bytes %d for user list will be allocated\n", SHIFT_LEFT( SHIFT_LEFT(usersi, 9), 3 ) );
-		userlistadded = FCalloc( SHIFT_LEFT( SHIFT_LEFT(usersi, 9), 3 ), sizeof(char) );
-		if( userlistadded != NULL )
+		//DEBUG("[SASSessionAddUsersByName] Bytes %d for user list will be allocated\n", SHIFT_LEFT( SHIFT_LEFT(usersi, 9), 3 ) );
+		//userlistadded = FCalloc( SHIFT_LEFT( SHIFT_LEFT(usersi, 9), 3 ), sizeof(char) );
+		//if( userlistadded != NULL )
+		BufString *usersAddedBS = BufStringNew();
+		if( usersAddedBS != NULL )
 		{
 			int errors = 0;
-			strcpy( userlistadded, "{ \"invited\": [" );
+			//strcpy( userlistadded, "{ \"invited\": [" );
+			BufStringAdd( usersAddedBS, "{ \"invited\": [" );
 
 			//
 			// we are going through list of users passed by client
@@ -759,6 +762,17 @@ char *SASSessionAddUsersByName( SASSession *as, UserSession *loggedSession, char
 
 					if( curgusr == NULL )
 					{
+						FBOOL usersInList = FALSE;
+						if( pos > 0 )
+						{
+							usersInList = TRUE;
+						}
+						int added = UMFindUserByNameAndAddToSas( l->sl_UM, upositions[ i ], as, appname, msg, usersAddedBS, usersInList );
+						if( added == 0 )
+						{
+							pos++;
+						}
+						/*
 						while( usrses != NULL )
 						{
 							// if user is not logged in he will not get invitation
@@ -826,6 +840,7 @@ char *SASSessionAddUsersByName( SASSession *as, UserSession *loggedSession, char
 							}
 							usrses  = (UserSession *)usrses->node.mln_Succ;
 						}	//while lusr
+						*/
 					}// if userfound
 					else
 					{
@@ -840,12 +855,14 @@ char *SASSessionAddUsersByName( SASSession *as, UserSession *loggedSession, char
 					
 							if( pos > 0  )
 							{
-								strcat( userlistadded, "," );
+								BufStringAddSize( usersAddedBS, ",", 1 );
+								//strcat( userlistadded, "," );
 							}
 					
 							DEBUG("[SASSessionAddUsersByName] Old entry will be updated: %s , currentlist size %d\n", tmp, (int)strlen(userlistadded ) );
 					
-							strcat( userlistadded, tmp );
+							BufStringAddSize( usersAddedBS, tmp, tmpsize );
+							//strcat( userlistadded, tmp );
 							pos++;
 					
 							char tmpmsg[ 2048 ];
@@ -857,7 +874,12 @@ char *SASSessionAddUsersByName( SASSession *as, UserSession *loggedSession, char
 					FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
 				}
 			} // for usersi
-			strcat( userlistadded,  "]}" );
+			//strcat( userlistadded,  "]}" );
+			BufStringAdd( usersAddedBS, "]}" );
+			
+			userlistadded = usersAddedBS->bs_Buffer;
+			usersAddedBS->bs_Buffer = NULL;
+			BufStringDelete( usersAddedBS );
 		}	// check if userlistadded != NULL
 	}
 	else
