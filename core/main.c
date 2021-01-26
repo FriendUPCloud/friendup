@@ -391,7 +391,7 @@ static void crash_handler(int sig __attribute__((unused))){
 			"\n\n", CRASH_LOG_FILENAME );
 	*/
 #endif
-	FriendCoreLockRelease();
+	//FriendCoreLockRelease();
 	
 	signal( sig, SIG_DFL );
 	kill( getpid(), sig );
