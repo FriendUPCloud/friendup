@@ -27,6 +27,8 @@
 #include <util/session_id.h>
 #include <system/sas/sas_session.h>
 
+#define USE_HASHMAP_TO_HOLD_USERS
+
 /**
  * Create UserManager
  *
@@ -42,6 +44,10 @@ UserManager *UMNew( void *sb )
 		sm->um_SB = sb;
 		
 		pthread_mutex_init( &(sm->um_Mutex), NULL );
+		
+#ifdef USE_HASHMAP_TO_HOLD_USERS
+		sm->um_UsersMapByID = HashmapKIntNew();
+#endif
 		
 		return sm;
 	}
@@ -109,6 +115,10 @@ void UMDelete( UserManager *smgr )
 	}
 	
 	RemoteUserDeleteAll( smgr->um_RemoteUsers );
+	
+#ifdef USE_HASHMAP_TO_HOLD_USERS
+	HashmapKIntFree( smgr->um_UsersMapByID );
+#endif
 	
 	// destroy mutex
 	pthread_mutex_destroy( &(smgr->um_Mutex) );
@@ -431,27 +441,6 @@ int UMUserCreate( UserManager *smgr, Http *r __attribute__((unused)), User *usr 
 		return 2;
 	}
 	return val;
-}
-
-/**
- * Return information if user is admin
- *
- * @param smgr pointer to UserManager UNUSED
- * @param r http request UNUSED
- * @param usr pointer to user structure which will be checked
- * @return TRUE if user is administrator, otherwise FALSE
- */
-FBOOL UMUserIsAdmin( UserManager *smgr __attribute__((unused)), Http *r __attribute__((unused)), User *usr )
-{
-	if( usr != NULL &&  usr->u_IsAdmin == TRUE )
-	{
-		return TRUE;
-	}
-	else
-	{
-		FERROR("User is: %p or not admin\n", usr );
-		return FALSE;
-	}
 }
 
 /**

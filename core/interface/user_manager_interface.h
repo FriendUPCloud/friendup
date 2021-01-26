@@ -34,7 +34,6 @@ typedef struct UserManagerInterface
 	User				*(*UMUserGetByIDDB)( UserManager *um, FULONG id );
 	User 				*(*UMGetUserByNameDB)( UserManager *smgr, const char *name );
 	int					(*UMUserCreate)( UserManager *smgr, Http *r, User *usr );
-	FBOOL				(*UMUserIsAdmin)( UserManager *smgr, Http *r, User *usr );
 	FBOOL				(*UMUserIsAdminByAuthID)( UserManager *smgr, Http *r, char *auth );
 	User				*(*UMUserCheckExistsInMemory)( UserManager *smgr, User *u );
 	FBOOL				(*UMUserExistByNameDB)( UserManager *smgr, const char *name );
@@ -70,7 +69,6 @@ static inline void UserManagerInterfaceInit( UserManagerInterface *si )
 	si->UMUserGetByNameDB = UMUserGetByNameDB;
 	si->UMUserGetByIDDB = UMUserGetByIDDB;
 	si->UMUserCreate = UMUserCreate;
-	si->UMUserIsAdmin = UMUserIsAdmin;
 	si->UMUserIsAdminByAuthID = UMUserIsAdminByAuthID;
 	si->UMUserCheckExistsInMemory = UMUserCheckExistsInMemory;
 	si->UMUserExistByNameDB = UMUserExistByNameDB;

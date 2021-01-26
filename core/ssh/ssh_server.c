@@ -584,7 +584,7 @@ int handleSSHCommands( SSHSession *sess, const char *buf, const int len __attrib
 	}
 	else if( strncmp( buf, "shutdown", 8 ) == 0 )
 	{
-		if( UMUserIsAdmin( SLIB->sl_UM, NULL, sess->sshs_Usr )  == TRUE )
+		if( sess->sshs_Usr->u_IsAdmin  == TRUE )
 		{
 			ssh_channel_write( sess->sshs_Chan, "Server will shutdown shortly\n", 29 );
 			FriendCoreManagerShutdown( SLIB->fcm );

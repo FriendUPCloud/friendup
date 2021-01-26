@@ -86,7 +86,7 @@ Http *TokenWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 	{
 		int pos = 0;
 
-		if( UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE )
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			BufString *bs = DOSTokenManagerList( l->sl_DOSTM );
 			
