@@ -22,6 +22,10 @@
 char* JSONGetExpectedErrorString( unsigned int expected )
 {
 	char* str = malloc( 86 );
+	if( str == NULL )
+	{
+		return NULL;
+	}
 	char* ptr = str;
 	if( expected & JSON_TYPE_ARRAY )
 	{
@@ -111,7 +115,10 @@ JSONArray* JSONArrayNew()
 JSONData* JSONDataNew( unsigned int line __attribute__((unused)))
 {
 	JSONData* d = calloc( 1, sizeof( JSONData ) );
-	d->type = JSON_TYPE_NONE;
+	if( d != NULL )
+	{
+		d->type = JSON_TYPE_NONE;
+	}
 	//printf("++++ JSONDataNew 0x%.8X, %d\n", d, line);
 	return d;
 }

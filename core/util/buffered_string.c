@@ -31,15 +31,14 @@
 BufString *BufStringNew(void)
 {
 	BufString *str = FCalloc(sizeof(BufString), 1 );
-		
-	if(str){
+	if( str != NULL )
+	{
 		str->bs_Size = 0;
 		str->bs_Bufsize = BUF_STRING_MAX;
 		str->bs_Buffer = FCalloc( str->bs_Bufsize+1, sizeof(char) );
 		str->buffer_increments = 0;
-		return str;
 	}
-	return NULL;
+	return str;
 }
 
 BufString *BufStringNewSize(unsigned int initial_size)
@@ -152,8 +151,11 @@ BufString *BufStringRead(const char *path )
 		if( fsize > 0 )
 		{
 			bs = BufStringNewSize( fsize+1 );
-			fread( bs->bs_Buffer, 1, fsize, fp );
-			bs->bs_Buffer[ fsize ] = 0;
+			if( bs != NULL )
+			{
+				fread( bs->bs_Buffer, 1, fsize, fp );
+				bs->bs_Buffer[ fsize ] = 0;
+			}
 		}
 		fclose( fp );
 	}

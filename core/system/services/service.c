@@ -41,7 +41,7 @@
  * @param sendMessage pointer to function which will be used to send messages
  * @return pointer to new Service structure or NULL when error appear
  */
-Service* ServiceOpen( void *sysbase, char* name, long version __attribute__((unused)), void *sm, void (*sendMessage)(void *a, void *b) )
+Service* ServiceOpen( void *sysbase, char* name, long version __attribute__((unused)), void *sm, void *(*sendMessage)(void *a, void *b) )
 {
 	FBOOL loaded = FALSE;
 	char currentDirectory[ PATH_MAX ];
@@ -96,12 +96,10 @@ Service* ServiceOpen( void *sysbase, char* name, long version __attribute__((unu
 	if( tserv != NULL )
 	{
 		tserv->ServiceNew = dlsym( handle, "ServiceNew" );
+		service = tserv->ServiceNew( sysbase, name );
+		FFree( tserv );
 	}
-	
-	service = tserv->ServiceNew( sysbase, name );
-	
-	FFree( tserv );
-	
+
 	if( service != NULL )
 	{
 		service->s_Handle = handle;

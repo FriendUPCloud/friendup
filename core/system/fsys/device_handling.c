@@ -221,9 +221,9 @@ int RescanDOSDrivers( DeviceManager *dm )
 				continue;
 			}
 			
-			char *tempString = FCalloc( 1024, sizeof(char) );
+			char *tempString = FCalloc( 2048, sizeof(char) );
 		
-			snprintf( tempString, 1024, "%s%s", ddrivedirectory, dir->d_name );
+			snprintf( tempString, 2047, "%s%s", ddrivedirectory, dir->d_name );
 
 			DEBUG("[RescanDOSDrivers] %s DOSDriver %s\n", dir->d_name, tempString );
 
@@ -1392,7 +1392,7 @@ AND f.Name = '%s'",
 			{
 				// Id, UserId, Name, Type, ShrtDesc, Server, Port, Path, Username, Password, Mounted
 
-				if( type != NULL ){FFree( type );}
+				if( type != NULL ){FFree( type ); type = NULL;}
 				if( row[ 0 ] != NULL ) type = StringDuplicate( row[ 0 ] );
 				
 				if( server != NULL ){FFree( server );}

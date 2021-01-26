@@ -61,22 +61,38 @@ char **globalServerEntries = NULL;
 
 static inline int WriteMessageSink( DataQWSIM *d, unsigned char *msg, int len )
 {
+	if( d == NULL )
+	{
+		return 0;
+	}
 	DEBUG("WriteMessageSink\n"); 
 	FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 	if( en != NULL )
 	{
 		DEBUG("Message added to queue: '%s'\n", msg );
 		en->fq_Data = FMalloc( len+64+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
-		memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msg, len );
-		
-		en->fq_Size = len;
-
-		if( FRIEND_MUTEX_LOCK( &d->d_Mutex ) == 0 )
+		if( en->fq_Data != NULL )
 		{
-			FQPushFIFO( &(d->d_Queue), en );
-			FRIEND_MUTEX_UNLOCK( &(d->d_Mutex) );
+			memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msg, len );
+		
+			en->fq_Size = len;
+
+			if( FRIEND_MUTEX_LOCK( &d->d_Mutex ) == 0 )
+			{
+				FQPushFIFO( &(d->d_Queue), en );
+
+				FRIEND_MUTEX_UNLOCK( &(d->d_Mutex) );
 			
-			lws_callback_on_writable( d->d_Wsi );
+				lws_callback_on_writable( d->d_Wsi );
+			}
+			else
+			{
+				FFree( en );
+			}
+		}
+		else
+		{
+			FFree( en );
 		}
 	}
 	return len;
@@ -117,8 +133,11 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 		int s = (int)len;
 		// copy received bufffer
 		buf = FMalloc( s+64 );
-		memcpy( buf, in, s );
-		buf[ s ] = 0;
+		if( buf != NULL )
+		{
+			memcpy( buf, in, s );
+			buf[ s ] = 0;
+		}
 	}
 	//Log( FLOG_INFO, "[WebsocketNotificationsSinkCallback] incoming msg, reason: %d msg len: %d\n", reason, len );
 	
@@ -413,14 +432,20 @@ void ProcessSinkMessage( void *locd )
 						p++;
 						int secondSize = t[p].end - t[p].start;
 						authKey = FCalloc( secondSize + 16, sizeof(char) );
-						strncpy( authKey, data + t[p].start, secondSize );
+						if( authKey != NULL )
+						{
+							strncpy( authKey, data + t[p].start, secondSize );
+						}
 					}
 					else if ( strncmp( data + t[p].start, "serviceName", firstSize ) == 0 )
 					{
 						p++;
 						int secondSize = t[p].end - t[p].start;
 						authName = FCalloc( secondSize + 16, sizeof(char) );
-						strncpy( authName, data + t[p].start, secondSize );
+						if( authName != NULL )
+						{
+							strncpy( authName, data + t[p].start, secondSize );
+						}
 					}
 				}
 				
@@ -428,16 +453,16 @@ void ProcessSinkMessage( void *locd )
 				//json_get_element_string(&json, "key");
 				if( authKey == NULL || authName == NULL )
 				{
-					if( authKey != NULL ){ FFree( authKey ); }
-					if( authName != NULL ){ FFree( authName ); }
+					if( authKey != NULL ){ FFree( authKey ); authKey = NULL; }
+					if( authName != NULL ){ FFree( authName ); authName = NULL; }
 					ReplyError( d, WS_NOTIF_SINK_ERROR_NO_AUTH_ELEMENTS );
 					goto error_point;
 				}
 				
 				if( VerifyAuthKey( authName, authKey ) == FALSE )
 				{
-					FFree( authKey );
-					FFree( authName );
+					FFree( authKey ); authKey = NULL;
+					FFree( authName ); authName = NULL;
 					ReplyError( d, WS_NOTIF_SINK_ERROR_AUTH_FAILED );
 					goto error_point;
 				}

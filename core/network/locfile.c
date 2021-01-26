@@ -78,19 +78,21 @@ static inline int LocFileRead( LocFile* file, FILE *fp, long long offset, long l
 	}
 
 	file->lf_Buffer = (char *)FMalloc( size + 1 );
-	file->lf_Buffer[ size ] = 0;
-	if( file->lf_Buffer == NULL )
+	if( file->lf_Buffer != NULL )
+	{
+		file->lf_Buffer[ size ] = 0;
+	
+		file->lf_FileSize = size;
+		fseeko( fp, offset, SEEK_SET );
+		int result = fread( file->lf_Buffer, size, 1, fp );
+		if( result < size )
+		{
+			return result; 
+		}
+	}
+	else
 	{
 		DEBUG("Cannot allocate memory for file\n");
-		return 0;
-	}
-	
-	file->lf_FileSize = size;
-	fseeko( fp, offset, SEEK_SET );
-	int result = fread( file->lf_Buffer, size, 1, fp );
-	if( result < size )
-	{
-		return result; 
 	}
 	return 0;
 }
@@ -261,6 +263,7 @@ int LocFileReload( LocFile *file, char *path )
 	if( stat( path, &st ) < 0 )
 	{
 		FERROR("Cannot run stat on file: %s!\n", path);
+		fclose( fp );
 		return -2;
 	}
 	memcpy(  &(file->lf_Info),  &st, sizeof(stat) );
@@ -376,26 +379,30 @@ FLONG LocFileAvaiableSpace( const char *path )
  * @param name pointer to file path
  * @return extension as string
  */
-char * GetExtension( char* name )
+char *GetExtension( char* name )
 {
+	char *extension = NULL;
 	char *reverse = FCalloc( 1, 16 ); // 16 characters extension!
-	int cmode = 0, cz = 0;
-	int len = strlen( name ) - 1;
-	for( cz = len; cz > 0 && cmode < 16; cz--, cmode++ )
+	if( reverse != NULL )
 	{
-		if( name[cz] == '.' )
+		int cmode = 0, cz = 0;
+		int len = strlen( name ) - 1;
+		for( cz = len; cz > 0 && cmode < 16; cz--, cmode++ )
 		{
-			break;
+			if( name[cz] == '.' )
+			{
+				break;
+			}
+			reverse[len-cz] = name[cz];
 		}
-		reverse[len-cz] = name[cz];
+		len = strlen( reverse );
+		extension = FCalloc( 1, len + 1 );
+		for( cz = 0; cz < len; cz++ )
+		{
+			extension[cz] = reverse[len-1-cz];
+		}
+		FFree( reverse );
 	}
-	len = strlen( reverse );
-	char *extension = FCalloc( 1, len + 1 );
-	for( cz = 0; cz < len; cz++ )
-	{
-		extension[cz] = reverse[len-1-cz];
-	}
-	FFree( reverse );
 	return extension;
 }
 

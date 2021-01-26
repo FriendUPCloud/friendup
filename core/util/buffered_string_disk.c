@@ -30,15 +30,14 @@
 BufStringDisk *BufStringDiskNew(void)
 {
 	BufStringDisk *str = FCalloc(sizeof(BufStringDisk), 1 );
-		
-	if(str){
+	if( str != NULL)
+	{
 		str->bsd_Size = 0;
 		str->bsd_Bufsize = BUF_STRING_DISK_MAX;
 		str->bsd_Buffer = FCalloc( str->bsd_Bufsize+1, sizeof(char) );
 		str->bsd_BufferIncrements = 0;
-		return str;
 	}
-	return NULL;
+	return str;
 }
 
 BufStringDisk *BufStringDiskNewSize(unsigned int initial_size)
@@ -247,8 +246,11 @@ BufStringDisk *BufStringDiskRead( const char *path )
 		if( fsize > 0 )
 		{
 			bs = BufStringDiskNewSize( fsize+1 );
-			fread( bs->bsd_Buffer, 1, fsize, fp );
-			bs->bsd_Buffer[ fsize ] = 0;
+			if( bs != NULL )
+			{
+				fread( bs->bsd_Buffer, 1, fsize, fp );
+				bs->bsd_Buffer[ fsize ] = 0;
+			}
 		}
 		fclose( fp );
 	}

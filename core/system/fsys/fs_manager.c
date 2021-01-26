@@ -745,7 +745,6 @@ int FSManagerProtect( FSManager *fm, const char *path, FULONG devid, char *accgr
 	}
 	unsigned int i;
 	int entries = 1;		// number
-	char *users = accgroups;
 
 	//
 	// counting how many entries we have
@@ -873,6 +872,17 @@ int FSManagerProtect( FSManager *fm, const char *path, FULONG devid, char *accgr
 					sqllib->QueryWithoutResults( sqllib, insertQuery );
 				}
 		
+				FFree( rem );
+			} // while( prev != NULL )
+		}
+		else
+		{
+			prev = root;
+			AGroup *rem = prev;
+			while( prev != NULL )
+			{
+				rem = prev;
+				prev = prev->next;
 				FFree( rem );
 			}
 		}

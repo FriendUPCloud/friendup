@@ -57,40 +57,49 @@ int CacheFileRead( CacheFile* file )
 {
 	if( file != NULL )
 	{
-		if( file->cf_FileBuffer != NULL )
+		if( file->cf_Fp != NULL )
 		{
-			FFree( file->cf_FileBuffer );
+			fclose( file->cf_Fp );
 		}
 		
-		FILE* fp = fopen( file->cf_StorePath, "rb" );
-		if( fp == NULL )
+		file->cf_Fp = fopen( file->cf_StorePath, "rb" );
+		if( file->cf_Fp == 0 )
 		{
 			FERROR("Cannot open file %s (file does not exist?)..\n", file->cf_StorePath );
 			return -1;
 		}
 		
-		file->cf_Fp = fp;
-		fseek( fp, 0, SEEK_END );
-		file->cf_FileSize = ftell( fp );
-		fseek( fp, 0, SEEK_SET );  //same as rewind(f);
+		if( file->cf_FileBuffer != NULL )
+		{
+			FFree( file->cf_FileBuffer );
+		}
+		
+		fseek( file->cf_Fp, 0, SEEK_END );
+		file->cf_FileSize = ftell( file->cf_Fp );
+		fseek( file->cf_Fp, 0, SEEK_SET );  //same as rewind(f);
 		
 		file->cf_FileBuffer = (char *)FCalloc( file->cf_FileSize, sizeof( char ) );
 		if( file->cf_FileBuffer == NULL )
 		{
 			DEBUG("Cannot allocate memory for file\n");
+			fclose( file->cf_Fp );
+			file->cf_Fp = 0;
 			return -2;
 		}
 	
 		fseek( file->cf_Fp, 0, SEEK_SET );
 		unsigned int result = fread( file->cf_FileBuffer, 1, file->cf_FileSize, file->cf_Fp );
-		fclose( file->cf_Fp );
 		
 		if( result < file->cf_FileSize )
 		{
 			FFree( file->cf_FileBuffer );
 			file->cf_FileBuffer = NULL;
+			fclose( file->cf_Fp );
+			file->cf_Fp = 0;
 			return -3; 
 		}
+		fclose( file->cf_Fp );
+		file->cf_Fp = 0;
 	}
 	return 0;
 }
@@ -103,8 +112,9 @@ int CacheFileRead( CacheFile* file )
  */
 int CacheFileStore( CacheFile* file )
 {
-	if( file != NULL && file->cf_FileBuffer != NULL )
+	if( file != NULL )
 	{
+		/*
 		FILE* fp = fopen( file->cf_StorePath, "wb" );
 		if( fp == NULL )
 		{
@@ -120,6 +130,31 @@ int CacheFileStore( CacheFile* file )
 		}
 		
 		fclose( file->cf_Fp );
+		*/
+		if( file->cf_Fp != NULL )
+		{
+			fclose( file->cf_Fp );
+		}
+		
+		file->cf_Fp = fopen( file->cf_StorePath, "wb" );
+		if( file->cf_Fp == NULL )
+		{
+			FERROR("Cannot write file %s\n", file->cf_StorePath );
+			return -2;
+		}
+		
+		if( file->cf_FileBuffer != NULL )
+		{
+			fwrite( file->cf_FileBuffer, 1, file->cf_FileSize, file->cf_Fp );
+			if( file->cf_FileBuffer != NULL )
+			{
+				FFree( file->cf_FileBuffer );
+				file->cf_FileBuffer = NULL;
+			}
+		}
+		
+		fclose( file->cf_Fp );
+		file->cf_Fp = NULL;
 	}
 	else
 	{

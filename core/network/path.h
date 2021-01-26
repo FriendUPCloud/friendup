@@ -21,18 +21,18 @@
 
 typedef struct Path
 {
-	char*        		raw;        // The raw, resolved path
-	unsigned int 	rawSize;    // Size of the raw path
-	//char**       		parts;      // The segments
-	unsigned int 	size;       // Number of segments
-	char*				file;       // Last segment, if not empty ("path/" == empty last segment)
-	char*		 		extension;  // Extension, if any ("path/file.some" gives "some")
-	FBOOL					isAbsolute;
-	FBOOL					resolved;   // Are ../'s resolved completely?
+	char					*p_Raw;        // The raw, resolved path
+	unsigned int 			p_RawSize;    // Size of the raw path
+	//char**       			p_Parts;      // The segments
+	unsigned int 			p_Size;       // Number of segments
+	char					*p_File;       // Last segment, if not empty ("path/" == empty last segment)
+	char					*p_Extension;  // Extension, if any ("path/file.some" gives "some")
+	FBOOL					p_IsAbsolute;
+	FBOOL					p_Resolved;   // Are ../'s resolved completely?
 	
-	char 				*p_CopyRaw;	// copy of path, used by parts[]
+	char 					*p_CopyRaw;	// copy of path, used by parts[]
 	
-	char 				*parts[ PATH_MAX_PARTS ];
+	char 					*p_Parts[ PATH_MAX_PARTS ];
 } Path;
 
 //

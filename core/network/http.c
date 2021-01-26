@@ -1363,7 +1363,7 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 	}
 	
 	// Setting it up
-	if( !http->http_PartialRequest )
+	if( http->http_PartialRequest == FALSE )
 	{
 		http->http_PartialRequest = TRUE;
 		//Log( FLOG_INFO,"INCOMING Request threads: %d length: %ld data: %.*s\n", nothreads, length, 512, data );
@@ -1413,9 +1413,10 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 						}
 						else
 						{
-							if( http->http_Content )
+							if( http->http_Content != NULL )
 							{
 								FFree( http->http_Content );
+								http->http_Content = NULL;
 							}
 						}
 						
@@ -1439,13 +1440,10 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 
 							DEBUG("MMAP: HttpParsePartialRequest size: %lu\n", size );
 							http->http_Content = mmap( 0, size+5, PROT_READ | PROT_WRITE, MAP_SHARED, http->http_ContentFileHandle, 0/*offset*/);
-							
-							//http->http_Content = mmap( 0, size, PROT_READ | PROT_WRITE, MAP_SHARED, http->http_ContentFileHandle, 0/*offset*/);
 							DEBUG("Content set\n");
 						}
 						else
 						{
-							//http->content = FCalloc( (size + 5), sizeof( char ) );
 							http->http_Content = FMalloc( size + 5 );
 							http->http_SizeOfContent = size;
 					
@@ -2267,7 +2265,7 @@ char *HttpBuild( Http* http )
 		strings[ stringPos++ ] = tmpdat;
 
 		// Add all the custom headers
-		int iterator = 0;
+
 		i = 0;
 	
 		if( http->http_ResponseHeadersRelease == TRUE )
@@ -2281,7 +2279,7 @@ char *HttpBuild( Http* http )
 					{
 						snprintf( tmp, 512, "%s: %s\r\n", HEADERS[ i ], http->http_RespHeaders[ i ] );
 						strings[ stringPos++ ] = tmp;
-						//INFO("ADDDDDDDDDDDD %s   AND FREE %s\n", tmp, http->http_RespHeaders[ i ] );
+						
 						if( i != HTTP_HEADER_X_FRAME_OPTIONS )
 						{
 							FFree( http->http_RespHeaders[ i ] );
@@ -2291,7 +2289,6 @@ char *HttpBuild( Http* http )
 					else
 					{
 						FERROR("respheader = NULL\n");
-						FFree( tmp );
 					}
 				}
 			}
@@ -2340,26 +2337,38 @@ char *HttpBuild( Http* http )
 
 	// Concat all the strings into one mega reply!!
 	char* response = FCalloc( (size + 1), sizeof( char ) );
-	char* ptr = response;
-	
-	for( i = 0; i < stringPos; i++ )
+	if( response != NULL )
 	{
-		memcpy( ptr, strings[ i ], stringsSize[ i ] );
-		ptr += stringsSize[ i ];
-		FFree( strings[ i ] );
-	}
+		char* ptr = response;
+	
+		for( i = 0; i < stringPos; i++ )
+		{
+			memcpy( ptr, strings[ i ], stringsSize[ i ] );
+			ptr += stringsSize[ i ];
+			FFree( strings[ i ] );
+		}
 
-	if( http->http_Stream == FALSE && http->http_Content )
-	{
-		memcpy( response + ( size - http->http_SizeOfContent ), http->http_Content, http->http_SizeOfContent );
-	}
+		if( http->http_Stream == FALSE && http->http_Content )
+		{
+			memcpy( response + ( size - http->http_SizeOfContent ), http->http_Content, http->http_SizeOfContent );
+		}
 	
-	// Old response is gone
-	if( http->http_Response )
-	{
-		FFree( http->http_Response );
+		// Old response is gone
+		if( http->http_Response )
+		{
+			FFree( http->http_Response );
+		}
 	}
-		
+	else
+	{
+		for( i = 0; i < stringPos; i++ )
+		{
+			if( strings[ i ] != NULL )
+			{
+				FFree( strings[ i ] );
+			}
+		}
+	}
 	// Store the response pointer, so that we can free it later
 	http->http_Response = response;
 	http->http_ResponseLength = size;

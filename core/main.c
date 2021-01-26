@@ -36,6 +36,7 @@
 #include <util/base64.h>
 
 #include <util/file_operations.h>
+#include <util/safe_snprintf.h>
 
 // memory check
 #include <mcheck.h>
@@ -53,7 +54,7 @@ FriendCoreManager *coreManager;         ///< Global FriendCoreManager structure
 static const char *_program_name;
 
 static void crash_handler(int sig);
-static int addr2line(char const * const program_name, void const * const addr, FILE *target_stream);
+static int addr2line(char const * const program_name, void const * const addr);
 
 /**
  * Handles ctrl-c interruption signals.
@@ -65,8 +66,6 @@ static int addr2line(char const * const program_name, void const * const addr, F
  */
 void InterruptSignalHandler(int signum)
 {
-	INFO("\nCaught signal %d\n",signum);
-
 	// Cleanup and close up stuff here
 	if( coreManager != NULL )
 	{
@@ -246,6 +245,37 @@ int main( int argc, char *argv[])
 #define MAX_STACK_FRAMES 64
 //#define USE_SYSTEM
 
+#define BUF_SIZE 512
+
+void cfclog(const char *fmt, ...)
+{
+	int fd;
+	pid_t pid;
+	char format[BUF_SIZE];
+	char buf[BUF_SIZE];
+	int len;
+
+	va_list ap;
+	va_start(ap, fmt);
+
+	pid = getpid();
+	if( ( fd = open( CRASH_LOG_FILENAME, O_WRONLY | O_APPEND | O_CREAT) ) >= 0 )
+	{
+		//sprintf(format, "<21> [%d] ", pid);
+		strncat(format , fmt, BUF_SIZE);
+		format[BUF_SIZE-1] = 0;
+
+		safe_vsnprintf(buf, sizeof(buf), format, ap);
+		buf[BUF_SIZE-1] = 0;
+
+		len = strlen(buf);
+		write(fd, buf, len);
+		close(fd);
+	}
+
+	va_end(ap);
+}
+
 //Based on https://spin.atomicobject.com/2013/01/13/exceptions-stack-traces-c/
 static void crash_handler(int sig __attribute__((unused))){
 	
@@ -258,8 +288,12 @@ static void crash_handler(int sig __attribute__((unused))){
 	int i, trace_size = 0;
 	char **messages = (char **)NULL;
 
-	trace_size = backtrace(stack_traces, MAX_STACK_FRAMES);
-	messages = backtrace_symbols(stack_traces, trace_size);
+	if( ( fd = open( CRASH_LOG_FILENAME, O_WRONLY | O_APPEND | O_CREAT) ) >= 0 )
+	{
+		trace_size = backtrace(stack_traces, MAX_STACK_FRAMES);
+		messages = backtrace_symbols_fd(stack_traces, trace_size, fd );
+		close( fd );
+	}
 
 	/* skip the first couple stack frames (as they are this function and
      our handler) and also skip the last frame as it's (always?) junk. */
@@ -291,39 +325,44 @@ static void crash_handler(int sig __attribute__((unused))){
 			"\n\n", CRASH_LOG_FILENAME );
 	
 #else
-	FILE *crash_log_file_handle = fopen( CRASH_LOG_FILENAME, "w");
-
-	fprintf(crash_log_file_handle, "\n************ CRASH INFO ************\n");
+	
+	cfclog( "\n************ CRASH INFO ************\n");
 #ifdef APPVERSION
-	fprintf(crash_log_file_handle, "APPVERSION %s\n", APPVERSION);
+	cfclog( "APPVERSION %s\n", APPVERSION);
 #else
-	fprintf(crash_log_file_handle, "no APPVERSION?\n");
+	cfclog( "no APPVERSION?\n");
 #endif
 #ifdef APPGITVERSION
-	fprintf(crash_log_file_handle, "APPGITVERSION %s\n", APPGITVERSION);
+	cfclog( "APPGITVERSION %s\n", APPGITVERSION);
 #else
-	fprintf(crash_log_file_handle, "no APPGITVERSION?\n");
+	cfclog( "no APPGITVERSION?\n");
 #endif
 
 #ifdef __GNU_LIBRARY__
-	fprintf(crash_log_file_handle, "glibc %d %d.%d\n", __GNU_LIBRARY__, __GLIBC__, __GLIBC_MINOR__);
+	cfclog( "glibc %d %d.%d\n", __GNU_LIBRARY__, __GLIBC__, __GLIBC_MINOR__);
 #else
-	fprintf(crash_log_file_handle, "non-glibc system\n");
+	cfclog( "non-glibc system\n");
 #endif
 
 #ifdef __GNUC__
-	fprintf(crash_log_file_handle, "gcc %d.%d.%d\n", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
+	cfclog( "gcc %d.%d.%d\n", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
 #else
-	fprintf(crash_log_file_handle, "non-gcc compiler\n");
+	cfclog( "non-gcc compiler\n");
 #endif
 
-	static void *stack_traces[MAX_STACK_FRAMES];
+	static void *stackTraces[MAX_STACK_FRAMES];
 
 	int i, trace_size = 0;
 	char **messages = (char **)NULL;
 
-	trace_size = backtrace(stack_traces, MAX_STACK_FRAMES);
-	messages = backtrace_symbols(stack_traces, trace_size);
+	trace_size = backtrace(stackTraces, MAX_STACK_FRAMES);
+	int fd;
+	if( ( fd = open( CRASH_LOG_FILENAME, O_WRONLY | O_APPEND | O_CREAT) ) >= 0 )
+	{
+		//messages = 
+		backtrace_symbols_fd(stackTraces, trace_size, fd);
+		close( fd );
+	}
 
 	/* skip the first couple stack frames (as they are this function and
      our handler) and also skip the last frame as it's (always?) junk. */
@@ -331,25 +370,23 @@ static void crash_handler(int sig __attribute__((unused))){
 	// we'll use this for now so you can see what's going on
 	for (i = 0; i < trace_size; ++i)
 	{
-		fprintf(crash_log_file_handle, "> %s\n", messages[i]);
-		if (addr2line(_program_name, stack_traces[i], crash_log_file_handle) != 0)
+		//cfclog( "> %s\n", messages[i]);
+		if (addr2line(_program_name, stackTraces[i] ) != 0)
 		{
-			fprintf(crash_log_file_handle, "  error determining line # for: %s\n", messages[i]);
+			cfclog( "  error determining line # for: %s\n", messages[i]);
 		}
 
 	}
 	if (messages) { free(messages); }
-	fprintf(crash_log_file_handle, "************ CRASH INFO ************\n");
-
-	fclose(crash_log_file_handle);
-
+	cfclog( "************ CRASH INFO ************\n");
+/*
 	printf("\n\n"
 			"#######################################################\n"
 			"           Sorry - FriendCore has crashed\n"
 			"            log saved to file %s\n"
 			"#######################################################\n"
 			"\n\n", CRASH_LOG_FILENAME );
-	//_exit(1);
+	*/
 #endif
 	FriendCoreLockRelease();
 	
@@ -359,7 +396,7 @@ static void crash_handler(int sig __attribute__((unused))){
 
 // Resolve symbol name and source location given the path to the executable
 //   and an address 
-static int addr2line(char const * const program_name, void const * const addr, FILE *target_stream)
+static int addr2line(char const * const program_name, void const * const addr)
 {
 	char addr2line_cmd[512] = {0};
 
@@ -368,7 +405,7 @@ static int addr2line(char const * const program_name, void const * const addr, F
 	// apple does things differently... 
 	sprintf(addr2line_cmd,"atos -o %.256s %p", program_name, addr);
 #else
-	sprintf( addr2line_cmd,"addr2line -f -p -e %.256s %p", program_name, addr);
+	safe_snprintf( addr2line_cmd, 512, "addr2line -f -p -e %.256s %p", program_name, addr);
 #endif
 
 	// This will print a nicely formatted string specifying the
@@ -383,22 +420,10 @@ static int addr2line(char const * const program_name, void const * const addr, F
 
 	char line_buffer[256];
 	memset(line_buffer, 0, sizeof(line_buffer));
-	if( target_stream != NULL )
+
+	while( fgets(line_buffer, sizeof(line_buffer)-1, fp ) != NULL )
 	{
-		while( fgets(line_buffer, sizeof(line_buffer)-1, fp ) != NULL )
-		{
-			fprintf( target_stream, "%s", line_buffer );
-		}
-	}
-	else
-	{
-		while( fgets(line_buffer, sizeof(line_buffer)-1, fp ) != NULL )
-		{
-			char buffer[ 512 ];
-			
-			snprintf( buffer, 512, "echo '- %s\n' >> crash.log", line_buffer );
-			system( buffer );
-		}
+		cfclog( "%s", line_buffer );
 	}
 
 	/* close */

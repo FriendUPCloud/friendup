@@ -267,7 +267,10 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 				if( data == NULL )
 				{
 					data = FCalloc( 2, sizeof(char) );
-					data[ 0 ] = ' ';
+					if( data != NULL )
+					{
+						data[ 0 ] = ' ';
+					}
 				}
 				
 				DEBUG("[/app/register] SQL lib found!\n");
