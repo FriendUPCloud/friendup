@@ -278,13 +278,13 @@ void cfclog(const char *fmt, ...)
 
 //Based on https://spin.atomicobject.com/2013/01/13/exceptions-stack-traces-c/
 static void crash_handler(int sig __attribute__((unused))){
+	char buffer[ 512 ];
 	
 #ifdef USE_SYSTEM
 	// we dont need all information
 	
 	static void *stack_traces[MAX_STACK_FRAMES];
-	char buffer[ 512 ];
-
+	
 	int i, trace_size = 0;
 	char **messages = (char **)NULL;
 
@@ -353,7 +353,7 @@ static void crash_handler(int sig __attribute__((unused))){
 	static void *stackTraces[MAX_STACK_FRAMES];
 
 	int i, trace_size = 0;
-	char **messages = (char **)NULL;
+	//char **messages = (char **)NULL;
 
 	trace_size = backtrace(stackTraces, MAX_STACK_FRAMES);
 	int fd;
@@ -371,13 +371,16 @@ static void crash_handler(int sig __attribute__((unused))){
 	for (i = 0; i < trace_size; ++i)
 	{
 		//cfclog( "> %s\n", messages[i]);
+		safe_snprintf( buffer, 512, "%.256s %p", _program_name, stackTraces[i]);
+		cfclog( "> %s\n", buffer );
+		/*
 		if (addr2line(_program_name, stackTraces[i] ) != 0)
 		{
 			cfclog( "  error determining line # for: %s\n", messages[i]);
 		}
-
+		*/
 	}
-	if (messages) { free(messages); }
+	//if (messages) { free(messages); }
 	cfclog( "************ CRASH INFO ************\n");
 /*
 	printf("\n\n"
