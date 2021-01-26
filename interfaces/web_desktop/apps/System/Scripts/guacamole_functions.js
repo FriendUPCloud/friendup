@@ -17,23 +17,13 @@ Application.sendMessage = function( dataPacket, origin )
 	
 };
 
-Application.receiveMessage = function( msg )
+function login()
 {
-	
-	if( msg.loginresult && msg.loginresult == 'negative' )
-	{
-		//ge('wrongCreds').style.display = 'block';
-		
-		console.log( msg );
-		
-	}
-
-};
+	return false;
+}
 
 function saveCreds()
 {
-	console.log( 'send login data to parent ... ' );
-	
 	var inputs = document.getElementsByTagName( 'input' );
 	
 	if( inputs.length > 0 )
@@ -56,46 +46,13 @@ function saveCreds()
 				{
 					creds[ 'host' ] = inputs[i].value;
 				}
-				console.log( inputs[i].value, inputs[i] );
 			}
 		}
-		
-		console.log( creds );
 		
 		Application.sendMessage( {
 			command: 'savecredentials',
 			data : creds,
 		} );
 	}
-}
-
-function saveCredentials()
-{
-	var e = ge( 'fEmail' ).value;
-	var p = ge( 'fPassword' ).value;
-	
-	var u = ge( 'fUrl' ).value;
-	var b = ge( 'fBackend' ).value;
-	
-	var s = ( ge( 'fEncrypted' ).checked ? '1' : '0' );
-	
-	if( e != '' && p != '' )
-	{
-		Application.sendMessage( {
-			command: 'savecredentials',
-			data : {
-				username : e,
-				password : p,
-				url      : u,
-				server   : b,
-				encrypt  : s
-			},
-		} );		
-	}
-	else
-	{
-		ge('wrongCreds').style.display = 'block';
-	}
-	return;
 }
 

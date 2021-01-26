@@ -28,7 +28,7 @@ Sections.services_guacamole = function( cmd, extra )
 					}
 				};
 				
-				console.log( 'auth ', config );
+				//console.log( 'auth ', config );
 				
 				if( config.host && config.admin.admin_username && config.admin.admin_password )
 				{
@@ -41,14 +41,12 @@ Sections.services_guacamole = function( cmd, extra )
 							saveUserSettings( config, function( res )
 							{
 								
-								if( res )
+								if( !res )
 								{
-									initMain( config, token );
+									console.log( 'saveUserSettings fail ??? ' );
 								}
-								else
-								{
-									console.log( 'fail ??? ' );
-								}
+								
+								initMain( config, token );
 								
 							} );
 							
@@ -56,6 +54,8 @@ Sections.services_guacamole = function( cmd, extra )
 						else
 						{
 							console.log( 'fail auth ... ' );
+							
+							initSettings( config, true );
 						}
 				
 					} );
@@ -63,6 +63,8 @@ Sections.services_guacamole = function( cmd, extra )
 				else
 				{
 					console.log( 'missing args ... ' );
+					
+					initSettings( config, true );
 				}
 			}
 			
@@ -104,6 +106,52 @@ Sections.services_guacamole = function( cmd, extra )
 		
 	}
 	
+	// helper functions --------------------------------------------------------------------------------------------- //
+	
+	function appendChild( child )
+	{
+		if( child )
+		{
+			var out = [];
+			
+			for( var k in child )
+			{
+				if( child[k] )
+				{
+					if( child[k]['element'] )
+					{
+						var div = child[k]['element'];
+						
+						if( child[k]['child'] )
+						{
+							var elem = appendChild( child[k]['child'] );
+							
+							if( elem )
+							{
+								for( var i in elem )
+								{
+									if( elem[i] )
+									{
+										div.appendChild( elem[i] );
+									}
+								}
+							}
+						}
+						
+						out.push( div );
+					}
+				}
+			}
+			
+			if( out )
+			{
+				return out;
+			}
+		}
+		
+		return false;
+	}
+	
 	// TODO: get API Token
 	// TODO: get server data, or setup server data from app, like epat ...
 	
@@ -117,7 +165,7 @@ Sections.services_guacamole = function( cmd, extra )
 		//user settings
 		Application.keyData.get( function( e, d )
 		{
-			console.log( 'getSystemSettings( callback ) ', { e:e, d:d } );
+			//console.log( { e: e, d: d } );
 			
 			var out = {};
 			
@@ -197,12 +245,9 @@ Sections.services_guacamole = function( cmd, extra )
 		// user settings
 		Application.keyData.save( 'guacamole', data, true, function( e, d )
 		{
-			console.log( 'saveUserSettings( data, callback ) ', { e:e, d:d } );
 			
 			if( e == 'ok' )
 			{
-				console.log('User creds saved');
-				
 				if( callback ) callback( true );
 				
 				return true;
@@ -228,13 +273,11 @@ Sections.services_guacamole = function( cmd, extra )
 			return callback( token );
 		}
 		
-		console.log( 'guacAdminAuth(  ) ', config );
-		
 		var settings = {
-			server_url      : ( config && config.host.url ? config.host.url : 'https://localhost/guacamole/' ),
+			server_url      : ( config && config.host.url ? config.host.url : '' ),
 			server_api_path : 'api/',
-			admin_username  : ( config && config.admin.admin_username ? config.admin.admin_username : 'guacadmin' ),
-			admin_password  : ( config && config.admin.admin_password ? config.admin.admin_password : 'guacadmin' )
+			admin_username  : ( config && config.admin.admin_username ? config.admin.admin_username : '' ),
+			admin_password  : ( config && config.admin.admin_password ? config.admin.admin_password : '' )
 		};
 		
 		var xhttp = new XMLHttpRequest();
@@ -258,7 +301,7 @@ Sections.services_guacamole = function( cmd, extra )
 				{
 					if( data )
 					{
-						console.log( '[' + this.status + '] Permission Granted. ', data );
+						console.log( '[' + this.status + '] Permission Granted. '/*, data*/ );
 						
 						if( data.authToken )
 						{
@@ -318,23 +361,19 @@ Sections.services_guacamole = function( cmd, extra )
 			};
 			
 			xhttp.open( "GET", ( host + 'app.css?v=1.2.0' ), true );
-			//xhttp.open( 'head', host + 'app.css?v=1.2.0', false );
     		xhttp.send(  );
 			
 		}
 	}
 	
-	function initSettings( config )
+	function initSettings( config, error )
 	{
-		
-		// TODO: Set host url first ...
 		
 		var o = ge( 'GuacamoleMain' );
 		
 		if( !config || !config.host || !config.host.url )
 		{
-			o.innerHTML = 'Server settings: mitra/host: url is required ...';
-			return false;
+			config = { host: { url: ( window.location.protocol + '//' + window.location.hostname + '/guacamole/' ) } };
 		}
 		
 		checkHostUrl( config.host.url, function( res )
@@ -349,9 +388,10 @@ Sections.services_guacamole = function( cmd, extra )
 		
 				// Add all data for the template
 				d.replacements = {
-					url : ( config && config.host && config.host.url ? config.host.url : '' )
+					url   : ( config && config.host && config.host.url ? config.host.url : '' ),
+					error : ( error ? 'error' : '' )
 				};
-		
+				
 				// Add translations
 				d.i18n();
 				d.onLoad = function( data )
@@ -367,10 +407,75 @@ Sections.services_guacamole = function( cmd, extra )
 				}
 				d.load();
 				
+				return true;
 			}
 			else
 			{
-				o.innerHTML = 'Server settings: mitra/host: url is required ...';
+				
+				o.innerHTML = '';
+				
+				var divs = appendChild( [ 
+					{
+						'element' : function()
+						{
+							var d = document.createElement( 'div' );
+							d.className = 'HRow Padding';
+							return d;
+						}(),
+						'child' : 
+						[
+							{
+								'element' : function()
+								{
+									var d = document.createElement( 'div' );
+									d.className = 'HContent40 FloatLeft';
+									d.innerHTML = '<input type="text" class="FullWidth" placeholder="guacamole server url..." value="' + config.host.url + '">';
+									return d;
+								}()
+							},
+							{
+								'element' : function()
+								{
+									var d = document.createElement( 'div' );
+									d.className = 'HContent10 FloatLeft PaddingLeft';
+									return d;
+								}(),
+								'child' : 
+								[
+									{
+										'element' : function()
+										{
+											var b = document.createElement( 'button' );
+											b.className = 'Button';
+											b.innerHTML = 'Retry';
+											b.onclick = function()
+											{
+												if( this.parentNode.parentNode.getElementsByTagName( 'input' )[0].value )
+												{
+													initSettings( { host: { url: this.parentNode.parentNode.getElementsByTagName( 'input' )[0].value } } );
+												}
+											};
+											return b;
+										}()
+									}
+								]
+							}
+						]
+					}
+				] );
+				
+				if( divs )
+				{
+					for( var i in divs )
+					{
+						if( divs[i] )
+						{
+							o.appendChild( divs[i] );
+						}
+					}
+				}
+				
+				
 				return false;
 			}
 			
@@ -383,11 +488,7 @@ Sections.services_guacamole = function( cmd, extra )
 		
 		var creds = ''; var src = '';
 		
-		console.log( { config: config, token: token } );
-		
-		src = ( config.host && config.host.url ? config.host.url : 'https://volatile.friendup.cloud/guacamole/' );
-		
-		console.log( 'initMain() ' + src );
+		src = ( config.host && config.host.url ? config.host.url : '' );
 		
 		creds = ( token ? '?token=' + token : '' );
 		
@@ -405,7 +506,7 @@ Application.receiveMessage = function( msg )
 	
 	if( msg.command == 'savecredentials' )
 	{
-		console.log( 'Application.receiveMessage = function( msg ) ', msg );
+		//console.log( 'Application.receiveMessage = function( msg ) ', msg );
 		
 		Sections.services_guacamole( 'auth', msg );
 	}

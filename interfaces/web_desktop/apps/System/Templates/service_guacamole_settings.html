@@ -42,11 +42,11 @@
 </head>
 <body>
 	
-	<div class="login-ui ng-isolate-scope initial" ng-class="{error: loginError, continuation: isContinuation(), initial: !isContinuation()}" ng-show="expectedCredentials" help-text="loginHelpText" form="expectedCredentials" values="acceptedCredentials">
+	<div class="login-ui ng-isolate-scope initial {error}" ng-class="{error: loginError, continuation: isContinuation(), initial: !isContinuation()}" ng-show="expectedCredentials" help-text="loginHelpText" form="expectedCredentials" values="acceptedCredentials">
 
 		<!-- Login error message -->
-		<p class="login-error ng-scope" translate="" translate-values=""></p>
-
+		<p class="login-error ng-scope" translate="LOGIN.ERROR_INVALID_LOGIN" translate-values="">Invalid Login</p>
+		
 		<div class="login-dialog-middle">
 
 		    <div class="login-dialog">
@@ -76,26 +76,26 @@
 		        <!-- ngRepeat: field in form.fields --><!-- ngIf: isVisible(field) --><div class="labeled-field ng-scope ng-isolate-scope empty" ng-class="{empty: !model}" ng-show="isFieldVisible()" ng-repeat="field in form.fields" namespace="namespace" ng-if="isVisible(field)" data-disabled="disabled" focused="isFocused(field)" field="field" model="values[field.name]">
 
 		<!-- Field header -->
-		<div class="field-header">
+		<!--<div class="field-header">
 		    <label ng-attr-for="{{ fieldId }}" class="ng-binding" for="guac-field-a9vbzlymnoz96fx9-kk43qpeo">Username</label>
-		</div>
+		</div>-->
 
 		<!-- Field content -->
 		<div class="form-field"><div class="text-field ng-scope">
-		<input type="text" ng-attr-id="{{ fieldId }}" ng-attr-list="{{ dataListId }}" ng-model="model" ng-disabled="disabled" guac-focus="focused" autocorrect="off" autocapitalize="off" class="ng-pristine ng-valid ng-empty ng-touched" id="guac-field-a9vbzlymnoz96fx9-kk43qpeo">
+		<input type="text" ng-attr-id="{{ fieldId }}" ng-attr-list="{{ dataListId }}" ng-model="model" ng-disabled="disabled" guac-focus="focused" autocorrect="off" autocapitalize="off" class="ng-pristine ng-valid ng-empty ng-touched" id="guac-field-a9vbzlymnoz96fx9-kk43qpeo" placeholder="Username">
 		<!-- ngIf: dataListId -->
 	</div></div>
 
 	</div><!-- end ngIf: isVisible(field) --><!-- end ngRepeat: field in form.fields --><!-- ngIf: isVisible(field) --><div class="labeled-field ng-scope ng-isolate-scope empty" ng-class="{empty: !model}" ng-show="isFieldVisible()" ng-repeat="field in form.fields" namespace="namespace" ng-if="isVisible(field)" data-disabled="disabled" focused="isFocused(field)" field="field" model="values[field.name]">
 
 		<!-- Field header -->
-		<div class="field-header">
+		<!--<div class="field-header">
 		    <label ng-attr-for="{{ fieldId }}" class="ng-binding" for="guac-field-5behj98ssr3qiahp-kk43qpep">Password</label>
-		</div>
+		</div>-->
 
 		<!-- Field content -->
 		<div class="form-field"><div class="password-field ng-scope">
-		<input type="password" ng-disabled="disabled" ng-attr-id="{{ fieldId }}" ng-model="model" ng-trim="false" guac-focus="focused" autocorrect="off" autocapitalize="off" class="ng-pristine ng-untouched ng-valid ng-empty" id="guac-field-5behj98ssr3qiahp-kk43qpep">
+		<input type="password" ng-disabled="disabled" ng-attr-id="{{ fieldId }}" ng-model="model" ng-trim="false" guac-focus="focused" autocorrect="off" autocapitalize="off" class="ng-pristine ng-untouched ng-valid ng-empty" id="guac-field-5behj98ssr3qiahp-kk43qpep" placeholder="Password">
 		<div class="icon toggle-password" ng-click="togglePassword()" title="Click to show password"></div>
 	</div></div>
 
