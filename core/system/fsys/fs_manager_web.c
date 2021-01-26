@@ -956,7 +956,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								char *command = FMalloc( len );
 								if( command != NULL )
 								{
-									snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", origDecodedPath, loggedSession->us_SessionID );
+									snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", origDecodedPath, loggedSession->us_HashedSessionID );
 			
 									DEBUG("Run command via php: '%s'\n", command );
 									FULONG dataLength;
@@ -1077,7 +1077,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							char *command = FMalloc( len );
 							if( command != NULL )
 							{
-								snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", origDecodedPath, loggedSession->us_SessionID );
+								snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", origDecodedPath, loggedSession->us_HashedSessionID );
 			
 								DEBUG("Run command via php: '%s'\n", command );
 								FULONG dataLength;
@@ -1945,13 +1945,13 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 										int64_t written = 0;
 										int64_t readall = 0;
 										
-										actDev->f_SessionIDPTR = loggedSession->us_SessionID;//->us_User->u_MainSessionID;
+										actDev->f_SessionIDPTR = loggedSession->us_HashedSessionID;//->us_User->u_MainSessionID;
 										File *rfp = (File *)actFS->FileOpen( actDev, path, "rb" );
 										int closeError = 0;
 										
 										if( rfp != NULL )
 										{
-											dstrootf->f_SessionIDPTR = loggedSession->us_SessionID;//->us_User->u_MainSessionID;
+											dstrootf->f_SessionIDPTR = loggedSession->us_HashedSessionID;//->us_User->u_MainSessionID;
 											
 											File *wfp = (File *)dsthand->FileOpen( dstrootf, dstpath, "w+" );
 											
@@ -2059,7 +2059,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									char *command = FMalloc( len );
 									if( command != NULL )
 									{
-										snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", topath, loggedSession->us_SessionID );
+										snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", topath, loggedSession->us_HashedSessionID );
 			
 										DEBUG("Run command via php: '%s'\n", command );
 										FULONG dataLength;
@@ -3055,7 +3055,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						//DEBUG("\n\n\n\n\n\n\n\nORIGINAL PATH: %s archpath %s\n\n\n\n\n\n", path, archpath );
 						{
 							char *dirname = FCalloc( 1024, sizeof(char) );
-							snprintf( dirname, 1024, "%s%s_decomp_%d%d", DEFAULT_TMP_DIRECTORY, loggedSession->us_SessionID, rand()%9999, rand()%9999 );
+							snprintf( dirname, 1024, "%s%s_decomp_%d%d", DEFAULT_TMP_DIRECTORY, loggedSession->us_HashedSessionID, rand()%9999, rand()%9999 );
 
 							mkdir( dirname, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH );
 						
@@ -3270,7 +3270,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					{
 						//char dirname[ 756 ];
 						char *dirname = FCalloc( 1024, sizeof(char ) );
-						snprintf( dirname, 1024, "%s%s_decomp_%d%d", DEFAULT_TMP_DIRECTORY, loggedSession->us_SessionID, rand()%9999, rand()%9999 );
+						snprintf( dirname, 1024, "%s%s_decomp_%d%d", DEFAULT_TMP_DIRECTORY, loggedSession->us_HashedSessionID, rand()%9999, rand()%9999 );
 						
 						mkdir( dirname, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH );
 						

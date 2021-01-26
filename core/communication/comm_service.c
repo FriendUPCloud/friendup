@@ -1451,34 +1451,15 @@ FConnection *CommServiceAddConnection( CommService* s, Socket* socket, char *nam
 		if( cfcn->fc_Socket != NULL )
 		{
 			DEBUG("Closing new socket\n");
-			cfcn->fc_Socket->s_Interface->SocketDelete( socket );
-			socket = NULL;
+			cfcn->fc_Socket->s_Interface->SocketDelete( cfcn->fc_Socket );
+			cfcn->fc_Socket = NULL;
 		}
-		else
+		
+		cfcn->fc_Socket = socket;
+		if( socket != NULL )
 		{
-			DEBUG("New socket added\n");
-			cfcn->fc_Socket = socket;
-			if( socket != NULL )
-			{
-				socket->s_Data = cfcn;
-			}
+			socket->s_Data = cfcn;
 		}
-		/*
-		if( cfcn->fc_Socket != NULL )
-		{
-			SocketDelete( socket );
-			socket = NULL;
-		}
-		else
-		{
-			cfcn->fc_Socket = socket;
-			if( socket != NULL )
-			{
-				socket->s_Data = cfcn;
-			}
-		}
-		*/
-		//DEBUG("FCID '%s' DSTFCID '%s'\n", cfcn->fc_FCID, cfcn->fc_DestinationFCID );
 		
 		if( socket != NULL && socket->s_SSLEnabled == TRUE )
 		{
