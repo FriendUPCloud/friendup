@@ -16,6 +16,58 @@ Sections.services_guacamole = function( cmd, extra )
 	switch( cmd )
 	{
 		
+		case 'auth':
+			
+			if( extra && extra.data )
+			{
+				var config = {
+					host  : { url: extra.data.host },
+					admin : { 
+						admin_username : extra.data.username,
+						admin_password : extra.data.password
+					}
+				};
+				
+				console.log( 'auth ', config );
+				
+				if( config.host && config.admin.admin_username && config.admin.admin_password )
+				{
+					guacAdminAuth( config, function( token )
+					{
+						
+						if( token )
+						{
+							
+							saveUserSettings( config, function( res )
+							{
+								
+								if( res )
+								{
+									initMain( config, token );
+								}
+								else
+								{
+									console.log( 'fail ??? ' );
+								}
+								
+							} );
+							
+						}
+						else
+						{
+							console.log( 'fail auth ... ' );
+						}
+				
+					} );
+				}
+				else
+				{
+					console.log( 'missing args ... ' );
+				}
+			}
+			
+			break;
+		
 		default:
 			
 			getSystemSettings( function( config )
@@ -62,57 +114,109 @@ Sections.services_guacamole = function( cmd, extra )
 		
 		// TODO: Only list admin data to admins that have rolepermissions for it, never list for users ...
 		
-		var m = new Module( 'system' );
-		m.onExecuted = function( stat1, resp1 )
+		//user settings
+		Application.keyData.get( function( e, d )
 		{
+			console.log( 'getSystemSettings( callback ) ', { e:e, d:d } );
+			
 			var out = {};
 			
-			//console.log( { stat1: stat1, resp1: resp1 } );
-			
-			if( stat1 == 'ok' )
+			if( e == 'ok' && d && d[0].Data )
 			{
-				try
+				out = d[0].Data;
+				
+				if( out.host && out.host.url && out.admin.admin_username && out.admin.admin_password )
 				{
-					 resp1 = JSON.parse( resp1 );	
-					 resp1 = JSON.parse( resp1[0].Data );
-					 
-					 if( resp1 )
-					 {
-					 	out.host = resp1;
-					 }
+					if( callback )
+					{
+						return callback( out );
+					}
 				}
-				catch( e ){  }
+				
 			}
 			
-			var mm = new Module( 'system' );
-			mm.onExecuted = function( stat2, resp2 )
+			// default to server settings ...
+			
+			var m = new Module( 'system' );
+			m.onExecuted = function( stat1, resp1 )
 			{
-				//console.log( { stat2: stat2, resp2: resp2 } );
+				//console.log( { stat1: stat1, resp1: resp1 } );
 				
-				if( stat2 == 'ok' )
+				if( stat1 == 'ok' )
 				{
 					try
 					{
-						 resp2 = JSON.parse( resp2 );	
-						 resp2 = JSON.parse( resp2[0].Data );
+						 resp1 = JSON.parse( resp1 );	
+						 resp1 = JSON.parse( resp1[0].Data );
 						 
-						 if( resp2 )
+						 if( resp1 )
 						 {
-						 	out.admin = resp2;
+						 	out.host = resp1;
 						 }
 					}
 					catch( e ){  }
 				}
 				
-				if( callback )
+				var mm = new Module( 'system' );
+				mm.onExecuted = function( stat2, resp2 )
 				{
-					return callback( out );
+					//console.log( { stat2: stat2, resp2: resp2 } );
+				
+					if( stat2 == 'ok' )
+					{
+						try
+						{
+							 resp2 = JSON.parse( resp2 );	
+							 resp2 = JSON.parse( resp2[0].Data );
+							 
+							 if( resp2 )
+							 {
+							 	out.admin = resp2;
+							 }
+						}
+						catch( e ){  }
+					}
+				
+					if( callback )
+					{
+						return callback( out );
+					}
 				}
-			}
-			mm.execute( 'getsystemsetting', { 'type' : 'mitra', 'key' : 'admin' } );
+				mm.execute( 'getsystemsetting', { 'type' : 'mitra', 'key' : 'admin' } );
 			
-		}
-		m.execute( 'getsystemsetting', { 'type' : 'mitra', 'key' : 'host' } );
+			}
+			m.execute( 'getsystemsetting', { 'type' : 'mitra', 'key' : 'host' } );
+			
+		} );
+		
+	}
+	
+	function saveUserSettings( data, callback )
+	{
+		
+		// user settings
+		Application.keyData.save( 'guacamole', data, true, function( e, d )
+		{
+			console.log( 'saveUserSettings( data, callback ) ', { e:e, d:d } );
+			
+			if( e == 'ok' )
+			{
+				console.log('User creds saved');
+				
+				if( callback ) callback( true );
+				
+				return true;
+			}
+			else
+			{
+				console.log('could not save user credentials',{ e:e, d:d });
+				
+				if( callback ) callback( false );
+				
+				return false;
+			}
+			
+		} );
 		
 	}
 	
@@ -185,6 +289,41 @@ Sections.services_guacamole = function( cmd, extra )
 		
 	}
 	
+	function checkHostUrl( host, callback )
+	{
+		if( host )
+		{
+			var xhttp = new XMLHttpRequest();
+			xhttp.onreadystatechange = function() 
+			{
+				
+				if( this.readyState == 4 )
+				{
+					if( this.status === 200 && this.getResponseHeader( 'Content-Type' ) == 'text/css' )
+					{
+						if( callback )
+						{
+							callback( true );
+						}
+					}
+					else
+					{
+						if( callback )
+						{
+							callback( false );
+						}
+					}
+				}
+				
+			};
+			
+			xhttp.open( "GET", ( host + 'app.css?v=1.2.0' ), true );
+			//xhttp.open( 'head', host + 'app.css?v=1.2.0', false );
+    		xhttp.send(  );
+			
+		}
+	}
+	
 	function initSettings( config )
 	{
 		
@@ -198,30 +337,44 @@ Sections.services_guacamole = function( cmd, extra )
 			return false;
 		}
 		
-		o.innerHTML = '<iframe style="width:100%;height:calc(100% - 5px);box-sizing:border-box;" frameBorder="0"></iframe>';
-		
-		// Get the user details template
-		var d = new File( 'Progdir:Templates/service_guacamole_settings.html' );
-		
-		// Add all data for the template
-		d.replacements = {
-			url : ( config && config.host && config.host.url ? config.host.url : '' )
-		};
-		
-		// Add translations
-		d.i18n();
-		d.onLoad = function( data )
+		checkHostUrl( config.host.url, function( res )
 		{
 			
-			data = GetScripts( data );
+			if( res )
+			{
+				o.innerHTML = '<iframe style="width:100%;height:calc(100% - 5px);box-sizing:border-box;" frameBorder="0"></iframe>';
 			
-			var doc = o.getElementsByTagName( 'iframe' )[0].contentWindow.document;
-			doc.open();
-			doc.write( data );
-			doc.close();
+				// Get the user details template
+				var d = new File( 'Progdir:Templates/service_guacamole_settings.html' );
+		
+				// Add all data for the template
+				d.replacements = {
+					url : ( config && config.host && config.host.url ? config.host.url : '' )
+				};
+		
+				// Add translations
+				d.i18n();
+				d.onLoad = function( data )
+				{
 			
-		}
-		d.load();
+					data = GetScripts( data );
+			
+					var doc = o.getElementsByTagName( 'iframe' )[0].contentWindow.document;
+					doc.open();
+					doc.write( data );
+					doc.close();
+			
+				}
+				d.load();
+				
+			}
+			else
+			{
+				o.innerHTML = 'Server settings: mitra/host: url is required ...';
+				return false;
+			}
+			
+		} );
 		
 	}
 	
@@ -241,11 +394,20 @@ Sections.services_guacamole = function( cmd, extra )
 		var o = ge( 'GuacamoleMain' );
 		o.innerHTML = '<iframe style="width:100%;height:calc(100% - 5px);box-sizing:border-box;" frameBorder="0" src="' + ( src + '#/' + creds ) + '"></iframe>';
 		
-		/*o.getElementsByTagName( 'iframe' )[0].onload = function()
-		{ 
-			this.src = ( src + '#/' ); 
-		};*/
+	}
+	
+};
+
+Application.receiveMessage = function( msg )
+{
+	
+	if( !msg.command && !msg.derp ) return;
+	
+	if( msg.command == 'savecredentials' )
+	{
+		console.log( 'Application.receiveMessage = function( msg ) ', msg );
 		
+		Sections.services_guacamole( 'auth', msg );
 	}
 	
 };

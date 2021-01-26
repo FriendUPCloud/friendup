@@ -2,7 +2,42 @@
 <head>
 	
 	<link rel='stylesheet' type='text/css' href='{url}app.css?v=1.2.0'>
+	<script src='Libs:js/apps/api.js'></script>
 	<script src='Progdir:Scripts/guacamole_functions.js'></script>
+	
+	<style>
+		
+		.login-ui .login-dialog .buttons input[name="login"] 
+		{
+			width: 100%;
+			margin: 0;
+		}
+		
+		input[name="login"] 
+		{
+			-webkit-appearance: none;
+			text-decoration: none;
+			background-color: #3c3c3c;
+			border: 1px solid rgba(0,0,0,0.4);
+			color: white;
+			text-shadow: -1px -1px rgba(0,0,0,0.3);
+			font-size: 1em;
+			font-weight: bold;
+			font-family: Carlito,FreeSans,Helvetica,Arial,sans-serif;
+			padding: .35em 1em;
+			min-width: 5em;
+			margin: .25em;
+			box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+		}
+		
+		input[name="login" i] 
+		{
+			align-items: flex-start;
+			text-align: center;
+			cursor: default;
+    	}
+		
+	</style>
 	
 </head>
 <body>
@@ -81,7 +116,9 @@
 		                <br><br><input type="button" name="login" class="login" value="Test" onclick="saveCreds()">-->
 
 		            </div>
-
+					
+					<input type="hidden" name="host" value="{url}">
+					
 		        </form>
 
 		    </div>

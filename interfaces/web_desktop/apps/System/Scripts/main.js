@@ -959,7 +959,7 @@ function GetScripts( data, arr, exl )
 	
 	while( m = data.match( /<script.*?src='(.*?)'/i ) )
 	{
-		if( m[1] && m[1].indexOf( 'Progdir:' ) < 0 )
+		if( m[1] && m[1].indexOf( 'Progdir:' ) < 0 && m[1].indexOf( 'Libs:' ) < 0 )
 		{
 			var src = ResolvePath( 'Progdir:' + m[1] );
 		}
@@ -996,17 +996,21 @@ function ResolvePath( filename )
 			filename = Application.filePath + filename;
 	}
 	// TODO: Remove system: here (we're rollin with Libs:)
-	else if( 
-		filename.toLowerCase().substr( 0, 7 ) == 'system:' ||
-		filename.toLowerCase().substr( 0, 4 ) == 'libs:' 
-	)
+	else if( filename.toLowerCase().substr( 0, 7 ) == 'system:' )
 	{
 		filename = filename.substr( 7, filename.length - 7 );
 		filename = '/webclient/' + filename;
 	}
+	if( filename.toLowerCase().substr( 0, 5 ) == 'libs:' )
+	{
+		filename = filename.substr( 5, filename.length - 5 );
+		filename = '/webclient/' + filename;
+	}
 	// Fix broken paths
 	if( filename.substr( 0, 20 ) == 'resources/webclient/' )
+	{
 		filename = filename.substr( 20, filename.length - 20 );
+	}
 		
 	return filename;
 }
