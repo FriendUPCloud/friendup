@@ -1,7 +1,7 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -268,18 +268,29 @@ ASN1_STRING *ASN1_STRING_dup(const ASN1_STRING *str)
     return ret;
 }
 
-int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len)
+int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len_in)
 {
     unsigned char *c;
     const char *data = _data;
+    size_t len;
 
-    if (len < 0) {
+    if (len_in < 0) {
         if (data == NULL)
             return 0;
-        else
-            len = strlen(data);
+        len = strlen(data);
+    } else {
+        len = (size_t)len_in;
     }
-    if ((str->length <= len) || (str->data == NULL)) {
+    /*
+     * Verify that the length fits within an integer for assignment to
+     * str->length below.  The additional 1 is subtracted to allow for the
+     * '\0' terminator even though this isn't strictly necessary.
+     */
+    if (len > INT_MAX - 1) {
+        ASN1err(0, ASN1_R_TOO_LARGE);
+        return 0;
+    }
+    if ((size_t)str->length <= len || str->data == NULL) {
         c = str->data;
         str->data = OPENSSL_realloc(c, len + 1);
         if (str->data == NULL) {
@@ -383,7 +394,7 @@ const unsigned char *ASN1_STRING_get0_data(const ASN1_STRING *x)
     return x->data;
 }
 
-# if !OPENSSL_API_1_1_0
+# if OPENSSL_API_COMPAT < 0x10100000L
 unsigned char *ASN1_STRING_data(ASN1_STRING *x)
 {
     return x->data;

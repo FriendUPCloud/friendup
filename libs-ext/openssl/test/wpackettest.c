@@ -1,7 +1,7 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -9,7 +9,18 @@
 
 #include <string.h>
 #include <openssl/buffer.h>
-#include "internal/packet.h"
+
+#ifdef __VMS
+# pragma names save
+# pragma names as_is,shortened
+#endif
+
+#include "../ssl/packet_local.h"
+
+#ifdef __VMS
+# pragma names restore
+#endif
+
 #include "testutil.h"
 
 static const unsigned char simple1[] = { 0xff };

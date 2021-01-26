@@ -1,20 +1,14 @@
 /*
  * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OPENSSL_DES_H
-# define OPENSSL_DES_H
-# pragma once
-
-# include <openssl/macros.h>
-# if !OPENSSL_API_3
-#  define HEADER_DES_H
-# endif
+#ifndef HEADER_DES_H
+# define HEADER_DES_H
 
 # include <openssl/opensslconf.h>
 
@@ -68,6 +62,9 @@ typedef struct DES_ks {
 
 # define DES_ede2_ofb64_encrypt(i,o,l,k1,k2,iv,n) \
         DES_ede3_ofb64_encrypt((i),(o),(l),(k1),(k2),(k1),(iv),(n))
+
+OPENSSL_DECLARE_GLOBAL(int, DES_check_key); /* defaults to false */
+# define DES_check_key OPENSSL_GLOBAL_REF(DES_check_key)
 
 const char *DES_options(void);
 void DES_ecb3_encrypt(const_DES_cblock *input, DES_cblock *output,
@@ -151,7 +148,8 @@ int DES_check_key_parity(const_DES_cblock *key);
 int DES_is_weak_key(const_DES_cblock *key);
 /*
  * DES_set_key (= set_key = DES_key_sched = key_sched) calls
- * DES_set_key_checked
+ * DES_set_key_checked if global variable DES_check_key is set,
+ * DES_set_key_unchecked otherwise.
  */
 int DES_set_key(const_DES_cblock *key, DES_key_schedule *schedule);
 int DES_key_sched(const_DES_cblock *key, DES_key_schedule *schedule);

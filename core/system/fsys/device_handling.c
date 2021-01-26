@@ -2659,7 +2659,7 @@ WHERE (`UserID`=%ld OR `GroupID` in( select GroupID from FUserToGroup where User
 				}
 				else
 				{
-					FERROR("Cannot mount device, device '%s' will be unmounted. ERROR %d\n", row[ 0 ], err );
+					FERROR("Cannot mount device, device '%s' will be unmounted. ERROR %d\n", name, err );
 				}
 			}
 			else

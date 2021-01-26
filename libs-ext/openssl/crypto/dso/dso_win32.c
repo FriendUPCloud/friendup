@@ -1,7 +1,7 @@
 /*
- * Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -565,8 +565,8 @@ static int win32_pathbyaddr(void *addr, char *path, int sz)
 
     /* Enumerate the modules to find one which includes me. */
     do {
-        if ((uintptr_t) addr >= (uintptr_t) me32.modBaseAddr &&
-            (uintptr_t) addr < (uintptr_t) (me32.modBaseAddr + me32.modBaseSize)) {
+        if ((size_t) addr >= (size_t) me32.modBaseAddr &&
+            (size_t) addr < (size_t) (me32.modBaseAddr + me32.modBaseSize)) {
             (*close_snap) (hModuleSnap);
             FreeLibrary(dll);
 # ifdef _WIN32_WCE

@@ -1,2 +1,0 @@
-LIBS=../../libcrypto
-SOURCE[../../libcrypto]= cmp_asn.c cmp_ctx.c cmp_err.c cmp_util.c

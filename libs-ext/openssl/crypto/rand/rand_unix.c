@@ -1,7 +1,7 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -26,17 +26,16 @@
 #  include <sys/utsname.h>
 # endif
 #endif
-#if defined(__FreeBSD__) && !defined(OPENSSL_SYS_UEFI)
+#if (defined(__FreeBSD__) || defined(__NetBSD__)) && !defined(OPENSSL_SYS_UEFI)
 # include <sys/types.h>
 # include <sys/sysctl.h>
 # include <sys/param.h>
 #endif
-#if defined(__OpenBSD__) || defined(__NetBSD__)
+#if defined(__OpenBSD__)
 # include <sys/param.h>
 #endif
 
-#if (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS)) \
-     || defined(__DJGPP__)
+#if defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__)
 # include <sys/types.h>
 # include <sys/stat.h>
 # include <fcntl.h>
@@ -81,7 +80,8 @@ static uint64_t get_timer_bits(void);
 #   define OSSL_POSIX_TIMER_OKAY
 #  endif
 # endif
-#endif /* defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__) */
+#endif /* (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS))
+          || defined(__DJGPP__) */
 
 #if defined(OPENSSL_RAND_SEED_NONE)
 /* none means none. this simplifies the following logic */
@@ -94,8 +94,30 @@ static uint64_t get_timer_bits(void);
 # undef OPENSSL_RAND_SEED_EGD
 #endif
 
-#if defined(OPENSSL_SYS_UEFI) && !defined(OPENSSL_RAND_SEED_NONE)
-# error "UEFI only supports seeding NONE"
+#if (defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)) && \
+        !defined(OPENSSL_RAND_SEED_NONE)
+# error "UEFI and VXWorks only support seeding NONE"
+#endif
+
+#if defined(OPENSSL_SYS_VXWORKS)
+/* empty implementation */
+int rand_pool_init(void)
+{
+    return 1;
+}
+
+void rand_pool_cleanup(void)
+{
+}
+
+void rand_pool_keep_random_devices_open(int keep)
+{
+}
+
+size_t rand_pool_acquire_entropy(RAND_POOL *pool)
+{
+    return rand_pool_entropy_available(pool);
+}
 #endif
 
 #if !(defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32) \
@@ -225,10 +247,12 @@ static ssize_t sysctl_random(char *buf, size_t buflen)
      * when the sysctl returns long and we want to request something not a
      * multiple of longs, which should never be the case.
      */
+#if   defined(__FreeBSD__)
     if (!ossl_assert(buflen % sizeof(long) == 0)) {
         errno = EINVAL;
         return -1;
     }
+#endif
 
     /*
      * On NetBSD before 4.0 KERN_ARND was an alias for KERN_URND, and only
@@ -246,7 +270,7 @@ static ssize_t sysctl_random(char *buf, size_t buflen)
     mib[1] = KERN_ARND;
 
     do {
-        len = buflen;
+        len = buflen > 256 ? 256 : buflen;
         if (sysctl(mib, 2, buf, &len, NULL, 0) == -1)
             return done > 0 ? done : -1;
         done += len;
@@ -341,13 +365,20 @@ static ssize_t syscall_random(void *buf, size_t buflen)
      * - OpenBSD since 5.6
      * - Linux since 3.17 with glibc 2.25
      * - FreeBSD since 12.0 (1200061)
+     *
+     * Note: Sometimes getentropy() can be provided but not implemented
+     * internally. So we need to check errno for ENOSYS
      */
 #  if defined(__GNUC__) && __GNUC__>=2 && defined(__ELF__) && !defined(__hpux)
     extern int getentropy(void *buffer, size_t length) __attribute__((weak));
 
-    if (getentropy != NULL)
-        return getentropy(buf, buflen) == 0 ? (ssize_t)buflen : -1;
-#  elif !defined(FIPS_MODE)
+    if (getentropy != NULL) {
+        if (getentropy(buf, buflen) == 0)
+            return (ssize_t)buflen;
+        if (errno != ENOSYS)
+            return -1;
+    }
+#  else
     union {
         void *p;
         int (*f)(void *buffer, size_t length);
@@ -387,15 +418,14 @@ static struct random_device {
 } random_devices[OSSL_NELEM(random_device_paths)];
 static int keep_random_devices_open = 1;
 
-#   if defined(__linux) && defined(DEVRANDOM_WAIT)
+#   if defined(__linux) && defined(DEVRANDOM_WAIT) \
+       && defined(OPENSSL_RAND_SEED_GETRANDOM)
 static void *shm_addr;
 
-#    if !defined(FIPS_MODE)
 static void cleanup_shm(void)
 {
     shmdt(shm_addr);
 }
-#    endif
 
 /*
  * Ensure that the system randomness source has been adequately seeded.
@@ -461,16 +491,13 @@ static int wait_random_seeded(void)
              * If this call fails, it isn't a big problem.
              */
             shm_addr = shmat(shm_id, NULL, SHM_RDONLY);
-#    ifndef FIPS_MODE
-            /* TODO 3.0: The FIPS provider doesn't have OPENSSL_atexit */
             if (shm_addr != (void *)-1)
                 OPENSSL_atexit(&cleanup_shm);
-#    endif
         }
     }
     return seeded;
 }
-#   else /* defined __linux */
+#   else /* defined __linux && DEVRANDOM_WAIT && OPENSSL_RAND_SEED_GETRANDOM */
 static int wait_random_seeded(void)
 {
     return 1;
@@ -722,18 +749,14 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 # endif
 #endif
 
-#if (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS)) \
-     || defined(__DJGPP__)
+#if defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__)
 int rand_pool_add_nonce_data(RAND_POOL *pool)
 {
     struct {
         pid_t pid;
         CRYPTO_THREAD_ID tid;
         uint64_t time;
-    } data;
-
-    /* Erase the entire structure including any padding */
-    memset(&data, 0, sizeof(data));
+    } data = { 0 };
 
     /*
      * Add process id, thread id, and a high resolution timestamp to
@@ -753,10 +776,7 @@ int rand_pool_add_additional_data(RAND_POOL *pool)
         int fork_id;
         CRYPTO_THREAD_ID tid;
         uint64_t time;
-    } data;
-
-    /* Erase the entire structure including any padding */
-    memset(&data, 0, sizeof(data));
+    } data = { 0 };
 
     /*
      * Add some noise from the thread id and a high resolution timer.
@@ -851,4 +871,5 @@ static uint64_t get_timer_bits(void)
 # endif
     return time(NULL);
 }
-#endif /* defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__) */
+#endif /* (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS))
+          || defined(__DJGPP__) */
