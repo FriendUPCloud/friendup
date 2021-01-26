@@ -1485,7 +1485,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 
 								FQUAD totalBytes = 0;
 								
-								ListString *ls = ListStringNew();
+								BufString *bs = BufStringNew();
+								//ListString *ls = ListStringNew();
 							
 								if( offset != NULL && bytes != NULL )
 								{
@@ -1514,7 +1515,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 												continue;
 											}
 										
-											ListStringAdd( ls, dataBuffer, dataread );
+											//ListStringAdd( ls, dataBuffer, dataread );
+											BufStringAddSize( bs, dataBuffer, dataread );
 										
 											// Make sure we only read as much as we need
 											bytesint -= dataread;
@@ -1566,7 +1568,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									
 											if( dataread > 0 )
 											{
-												ListStringAdd( ls, dataBuffer, dataread );
+												BufStringAddSize( bs, dataBuffer, dataread );
+												//ListStringAdd( ls, dataBuffer, dataread );
 												totalBytes += dataread;
 											}
 											else
@@ -1581,30 +1584,41 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								// Close the file
 								actFS->FileClose( actDev, fp );
 							
-								if( ls->ls_Size > 0 && totalBytes > 0 )
+								//if( ls->ls_Size > 0 && totalBytes > 0 )
+								if( bs->bs_Size > 0 && totalBytes > 0 )
 								{
 									// Combine all parts into one buffer
 									
-									ListStringJoin( ls );
+									//ListStringJoin( ls );
 									
-									if( ls->ls_Data != NULL )
+									//if( ls->ls_Data != NULL )
+									if( bs->bs_Buffer != NULL )
 									{
-										char *finalBuffer = ls->ls_Data;
-										ls->ls_Data = NULL;
-										char *outputBuf = finalBuffer;
+										//char *finalBuffer = ls->ls_Data;
+										//ls->ls_Data = NULL;
+										char *outputBuf = bs->bs_Buffer;
 									
 										int offBuf = 0;
 								
 										// Try to skip embedded headers
-										char *ptr = strstr( finalBuffer, "---http-headers-end---\n" );
+										char *ptr = strstr( bs->bs_Buffer, "---http-headers-end---\n" );
 										if( ptr != NULL )
 										{
 											// With the diff, move offset and set correct size
-											int headerlength = ( ptr - finalBuffer ) + 23;
-											totalBytes = strlen( finalBuffer ) - headerlength;
-											outputBuf = FCalloc( totalBytes + 1, sizeof( char ) );
-											sprintf( outputBuf, finalBuffer + headerlength, totalBytes );
-											FFree( finalBuffer );
+											int headerlength = ( ptr - bs->bs_Buffer ) + 23;
+											totalBytes = bs->bs_Size - headerlength;
+											if( ( outputBuf = FMalloc( totalBytes + 1 ) ) != NULL )
+											{
+												strncpy( outputBuf, bs->bs_Buffer + headerlength, totalBytes );
+												//sprintf( outputBuf, finalBuffer + headerlength, totalBytes );
+												//FFree( finalBuffer );
+												HttpSetContent( response, outputBuf, totalBytes );
+											}
+										}
+										else
+										{
+											HttpSetContent( response, bs->bs_Buffer, totalBytes );
+											bs->bs_Buffer = NULL; // we cannot release memory
 										}
 								
 								/*
@@ -1632,7 +1646,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							
 							INFO("READ RETURN BYTES %d  - %s\n", totalBytes, mime );
 							*/
-										HttpSetContent( response, outputBuf, totalBytes );
+										//HttpSetContent( response, outputBuf, totalBytes );
 									}
 								}
 								else
@@ -1648,7 +1662,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									HttpAddTextContent( response, dictmsgbuf );
 								}
 								
-								ListStringDelete( ls );
+								//ListStringDelete( ls );
+								BufStringDelete( bs );
 							}
 							else
 							{
