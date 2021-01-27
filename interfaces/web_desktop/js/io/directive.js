@@ -32,7 +32,7 @@ function RemoveFromExecutionQueue( app )
 }
 
 // Load a javascript application into a sandbox
-function ExecuteApplication( app, args, callback, retries )
+function ExecuteApplication( app, args, callback, retries, flags )
 {
 	// Just nothing.
 	if( !app ) return;

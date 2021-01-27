@@ -914,7 +914,11 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 							{
 								if( ext == mt.types[ b ].toLowerCase() )
 								{
-									return ExecuteApplication( mt.executable, executable );
+									return ( function( mm, me, dd ){
+										ExecuteApplication( mm, me, false, false, {
+											dockItem: dd
+										} );
+									} )( mt.executable, executable, div );
 								}
 							}
 						}
@@ -937,7 +941,11 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				{
 					if( !Friend.singleInstanceApps[ executable ] )				
 					{
-						ExecuteApplication( executable, args );
+						( function( mm, me, dd ){
+							ExecuteApplication( mm, me, false, false, {
+								dockItem: dd
+							} );
+						} )( executable, args, div );
 					}
 					else if( rememberCurrent && rememberCurrent.windowObject.applicationName == executable )
 					{
@@ -974,7 +982,11 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					}
 				
 					// If we didn't find the app, execute
-					ExecuteApplication( executable, args );
+					( function( mm, me, dd ){
+						ExecuteApplication( mm, me, false, false, {
+							dockItem: dd
+						} );
+					} )( executable, args, div );
 				}
 			
 				// Switch to the workspace of the app
