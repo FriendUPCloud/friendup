@@ -958,7 +958,7 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 									}
 								}
 							}
-							return [ 'fail', '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"0"}' ];
+							//return [ 'fail', '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"0"}' ];
 						}
 					}
 					
@@ -1321,14 +1321,18 @@ function convertLoginData( $data )
 		
 		// TODO: Look if we are going to add a ID from the external service to the username ...
 		
-		if( $data->username )
-		{
-			$data->username = generateExternalFriendUsername( $data->username );
-		}
-		
 		if( $data->password )
 		{
 			$data->password = generateExternalFriendPassword( $data->password );
+			
+			// TODO: Look at this ...
+			// Password will have to be something that cannot be changed ...
+			//$data->password = generateExternalFriendPassword( $data->username );
+		}
+		
+		if( $data->username )
+		{
+			$data->username = generateExternalFriendUsername( $data->username );
 		}
 		
 	}
