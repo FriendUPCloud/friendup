@@ -805,6 +805,8 @@ function exec_timeout( $cmd, $timeout = 60 )
 	$output = file_get_contents( $outfile );
 	unlink( $outfile );
 	exec( "kill -9 $pid", $null );
+	// Remove bash history to protect temporary unsafe auth with terminal ...
+	exec( "history -c" );
 	return $output;
 }
 
@@ -1288,6 +1290,16 @@ function checkFriendUser( $data, $identity, $create = false )
 			
 			if( $creds->ID )
 			{
+				// Add custom DockItem temporary solution ...
+				
+				$hostip = false/*'185.116.5.93'*/;
+				$cluster = 'LINE';
+				
+				if( addCustomDockItem( $creds->ID, 'Mitra', true, true, ' usefriendcredentials ad-hoc ' . ( $cluster ? ( 'cluster=' . $cluster ) : 'ip=' . $hostip ) ) )
+				{
+					// It was added with success ...
+				}
+				
 				$identity->userid = $creds->ID;
 			}
 			
@@ -1407,6 +1419,117 @@ function findInSearchPaths( $app )
 		}
 	}
 	return false;
+}
+
+function addCustomDockItem( $uid, $appname, $dock = false, $preinstall = false, $params = '' )
+{
+	
+	// TODO: Move this to it's own function ...
+	
+	include_once( SCRIPT_2FA_PATH . '/../../../php/classes/dbio.php' );
+	$conf = parse_ini_file( SCRIPT_2FA_PATH . '/../../../cfg/cfg.ini', true );
+
+	if( !( isset( $conf['DatabaseUser']['host'] ) && isset( $conf['DatabaseUser']['login'] ) && isset( $conf['DatabaseUser']['password'] ) && isset( $conf['DatabaseUser']['dbname'] ) ) )
+	{
+		die( 'CORRUPT FRIEND INSTALL!' );
+	}
+
+	$dbo = new SqlDatabase( );
+	if( $dbo->open( $conf['DatabaseUser']['host'], $conf['DatabaseUser']['login'], $conf['DatabaseUser']['password'] ) )
+	{
+		if( !$dbo->SelectDatabase( $conf['DatabaseUser']['dbname'] ) )
+		{
+			die( 'ERROR! DB not found!' );
+		}
+	}
+	else
+	{
+		die( 'ERROR! MySQL unavailable!' );
+	}
+	
+	
+	
+	if( $uid && $appname )
+	{
+		// 5. Store applications
+		
+		if( $path = findInSearchPaths( $appname ) )
+		{
+			if( file_exists( $path . '/Config.conf' ) )
+			{
+				$f = file_get_contents( $path . '/Config.conf' );
+				// Path is dynamic!
+				$f = preg_replace( '/\"Path[^,]*?\,/i', '"Path": "' . $path . '/",', $f );
+			
+				// Store application!
+				$a = new dbIO( 'FApplication', $dbo );
+				$a->UserID = $uid;
+				$a->Name = $r[0];
+				if( !$a->Load() )
+				{
+					$a->DateInstalled = date( 'Y-m-d H:i:s' );
+					$a->Config = $f;
+					$a->Permissions = 'UGO';
+					$a->DateModified = $a->DateInstalled;
+					$a->Save();
+				}
+			
+				// 6. Setup dock items
+				
+				if( $dock )
+				{
+					$d = new dbIO( 'DockItem', $dbo );
+					$d->Application = ( $appname . $params );
+					$d->UserID = $uid;
+					$d->Parent = 0;
+					if( !$d->Load() )
+					{
+						//$d->ShortDescription = $r[1];
+						$d->SortOrder = $i++;
+						$d->Save();
+					}
+				}
+				
+				// 7. Pre-install applications
+				
+				if( $preinstall && $a->ID > 0 )
+				{
+					if( $a->Config && ( $cf = json_decode( $a->Config ) ) )
+					{
+						if( isset( $cf->Permissions ) && $cf->Permissions )
+						{
+							$perms = [];
+							foreach( $cf->Permissions as $p )
+							{
+								$perms[] = [$p,(strtolower($p)=='door all'?'all':'')];
+							}
+							
+							// TODO: Get this from Config.ini in the future, atm set nothing
+							$da = new stdClass();
+							$da->domain = '';
+							
+							// Collect permissions in a string
+							$app = new dbIO( 'FUserApplication', $dbo );
+							$app->ApplicationID = $a->ID;
+							$app->UserID = $a->UserID;
+							if( !$app->Load() )
+							{
+								$app->AuthID = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . $a->ID );
+								$app->Permissions = json_encode( $perms );
+								$app->Data = json_encode( $da );
+								$app->Save();
+							}
+						}
+					}
+				}
+				
+				return true;
+			}
+		}
+	}
+	
+	return false;
+								
 }
 
 // Check database for first login
