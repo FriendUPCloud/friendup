@@ -1140,11 +1140,18 @@ function checkFriendUser( $data, $identity, $create = false )
 		
 		$creds = false;
 		
-		$query = '
+		// TODO: Base it on username and forget about password only one unique username is allowed for users ...
+		
+		/*$query = '
 			SELECT fu.ID FROM FUser fu 
 			WHERE 
 					fu.Name     = \'' . mysqli_real_escape_string( $dbo->_link, $data->username ) . '\' 
 				AND fu.Password = \'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', $data->password ) ) . '\' 
+		';*/
+		
+		$query = '
+			SELECT fu.ID FROM FUser fu 
+			WHERE fu.Name = \'' . mysqli_real_escape_string( $dbo->_link, $data->username ) . '\' 
 		';
 		
 		if( !$creds = $dbo->fetchObject( $query ) )
@@ -1281,7 +1288,75 @@ function checkFriendUser( $data, $identity, $create = false )
 			
 			// return data ...
 			
+			// Update password if different ... TODO: Look at this in the future ...
 			
+			if( $creds && $creds->ID )
+			{
+				$u = new dbIO( 'FUser', $dbo );
+				$u->ID       = $creds->ID;
+				$u->Name     = $data->username;
+				$u->UniqueID = generateFriendUniqueID( $data->username );
+				if( $u->Load() && $u->Password != ( '{S6}' . hash( 'sha256', $data->password ) ) )
+				{
+					$u->Password = ( '{S6}' . hash( 'sha256', $data->password ) );
+					$u->Save();
+					
+					if( $u->ID > 0 )
+					{
+						if( $login = remoteAuth( '/system.library/login', 
+						[
+							'username' => $data->username, 
+							'password' => $data->password, 
+							'deviceid' => $data->deviceid 
+						] ) )
+						{
+							if( strstr( $login, '<!--separate-->' ) )
+							{
+								if( $ret = explode( '<!--separate-->', $login ) )
+								{
+									if( isset( $ret[1] ) )
+									{
+										$login = $ret[1];
+									}
+								}
+							}
+							
+							/*if( $ses = json_decode( $login ) )
+							{
+							
+								if( $ses->sessionid )
+								{
+									if( !remoteAuth( '/system.library/user/update?sessionid=' . $ses->sessionid, 
+									[
+										'setup' => '0' 
+									] ) )
+									{
+										//
+									
+										die( 'fail from friendcore ...' );
+									}
+								}
+								else
+								{
+									die( 'fail no session ...' );
+								}
+						
+							}*/
+							
+						}
+						else
+						{
+					
+							// Couldn't login ...
+					
+							die( 'fail from friendcore ...' );
+					
+						}
+					}
+					
+				}
+				
+			}
 			
 		}
 		
