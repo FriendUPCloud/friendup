@@ -1464,7 +1464,7 @@ function addCustomDockItem( $uid, $appname, $dock = false, $preinstall = false, 
 				// Store application!
 				$a = new dbIO( 'FApplication', $dbo );
 				$a->UserID = $uid;
-				$a->Name = $r[0];
+				$a->Name = $appname;
 				if( !$a->Load() )
 				{
 					$a->DateInstalled = date( 'Y-m-d H:i:s' );
