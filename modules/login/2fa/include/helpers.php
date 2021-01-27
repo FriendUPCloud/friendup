@@ -504,7 +504,7 @@ function verifyCode( $username, $password = '', $code = false )
 // Send verification code using SMS
 function sendCode( $userid, $mobile, $code = false, $limit = true )
 {
-	$error = false; $debug = true;
+	$error = false; $debug = false;
 	
 	include_once( SCRIPT_2FA_PATH . '/../../../php/classes/dbio.php' );
 	$conf = parse_ini_file( SCRIPT_2FA_PATH . '/../../../cfg/cfg.ini', true );
