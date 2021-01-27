@@ -15,19 +15,19 @@
  *  @date pushed on 22/9/16
  */
 
+#include <stdio.h>
+#include <execinfo.h>
+#include <signal.h>
+#include <stdio_ext.h>
+#include <string.h>
+#include <stdlib.h>
+#include <time.h>
+
 #include "core/friend_core.h"
 #include "core/friendcore_manager.h"
 #include "network/uri.h"
 
-#include <execinfo.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdio_ext.h>
-#include <string.h>
-#include <stdlib.h>
-
 #include <class/phpproxyclass.h>
-#include <time.h>
 
 #include <system/systembase.h>
 #include <application/applicationlibrary.h>
@@ -37,6 +37,7 @@
 
 #include <util/file_operations.h>
 #include <util/safe_snprintf.h>
+
 
 // memory check
 #include <mcheck.h>
@@ -54,7 +55,6 @@ FriendCoreManager *coreManager;         ///< Global FriendCoreManager structure
 static const char *_program_name;
 
 static void crash_handler(int sig);
-static int addr2line(char const * const program_name, void const * const addr);
 
 /**
  * Handles ctrl-c interruption signals.
@@ -247,6 +247,10 @@ int main( int argc, char *argv[])
 
 #define BUF_SIZE 512
 
+//
+// Function which give us possibility to store logs even in crash handler
+//
+
 void cfclog(const char *fmt, ...)
 {
 	int fd;
@@ -276,8 +280,53 @@ void cfclog(const char *fmt, ...)
 	va_end(ap);
 }
 
+// Resolve symbol name and source location given the path to the executable
+//   and an address 
+static int addr2line(char const * const program_name, void const * const addr)
+{
+	char addr2line_cmd[512] = {0};
+
+	// have addr2line map the address to the relent line in the code 
+#ifdef __APPLE__
+	// apple does things differently... 
+	sprintf(addr2line_cmd,"atos -o %.256s %p", program_name, addr);
+#else
+	safe_snprintf( addr2line_cmd, 512, "addr2line -f -p -e %.256s %p", program_name, addr);
+#endif
+
+	// This will print a nicely formatted string specifying the
+    // function and source line of the address 
+	//	return system(addr2line_cmd);
+	
+	// !!! POPEN CANNOT BE USED IN CRASH HANDLER! 
+
+	FILE* fp = popen( addr2line_cmd, "r");
+	if( fp == NULL )
+	{
+		printf("Failed to run addr2line\n" );
+		return 1;
+	}
+
+	char line_buffer[256];
+	memset(line_buffer, 0, sizeof(line_buffer));
+
+	while( fgets(line_buffer, sizeof(line_buffer)-1, fp ) != NULL )
+	{
+		cfclog( "%s", line_buffer );
+	}
+
+	/* close */
+	pclose(fp);
+
+	return 0;
+}
+
+//
 //Based on https://spin.atomicobject.com/2013/01/13/exceptions-stack-traces-c/
-static void crash_handler(int sig __attribute__((unused))){
+//
+
+static void crash_handler(int sig __attribute__((unused)))
+{
 	char buffer[ 512 ];
 	
 #ifdef USE_SYSTEM
@@ -380,6 +429,15 @@ static void crash_handler(int sig __attribute__((unused))){
 		}
 		*/
 	}
+	
+	cfclog( "************ Do this calls on system to get line numbers ************\n");
+	for (i = 0; i < trace_size; ++i)
+	{
+		safe_snprintf( buffer, 512, "addr2line -f -p -e %.256s %p", _program_name, stackTraces[i] );
+		cfclog( "%s\n", buffer );
+	}
+	cfclog( "*********************************************************************\n");
+	
 	//if (messages) { free(messages); }
 	cfclog( "************ CRASH INFO ************\n");
 /*
@@ -397,40 +455,3 @@ static void crash_handler(int sig __attribute__((unused))){
 	kill( getpid(), sig );
 }
 
-// Resolve symbol name and source location given the path to the executable
-//   and an address 
-static int addr2line(char const * const program_name, void const * const addr)
-{
-	char addr2line_cmd[512] = {0};
-
-	// have addr2line map the address to the relent line in the code 
-#ifdef __APPLE__
-	// apple does things differently... 
-	sprintf(addr2line_cmd,"atos -o %.256s %p", program_name, addr);
-#else
-	safe_snprintf( addr2line_cmd, 512, "addr2line -f -p -e %.256s %p", program_name, addr);
-#endif
-
-	// This will print a nicely formatted string specifying the
-    // function and source line of the address */
-	//	return system(addr2line_cmd);
-
-	FILE* fp = popen( addr2line_cmd, "r");
-	if (fp == NULL) {
-		printf("Failed to run addr2line\n" );
-		return 1;
-	}
-
-	char line_buffer[256];
-	memset(line_buffer, 0, sizeof(line_buffer));
-
-	while( fgets(line_buffer, sizeof(line_buffer)-1, fp ) != NULL )
-	{
-		cfclog( "%s", line_buffer );
-	}
-
-	/* close */
-	pclose(fp);
-
-	return 0;
-}

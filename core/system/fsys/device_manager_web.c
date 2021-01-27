@@ -22,7 +22,9 @@
 #include <core/functions.h>
 #include <system/fsys/door_notification.h>
 
+//
 // local funciton
+//
 
 static inline void EscapeConfigFromString( char *str, char **configEscaped, char **executeCmd )
 {
@@ -95,7 +97,9 @@ static inline void EscapeConfigFromString( char *str, char **configEscaped, char
 	}
 }
 
+//
 // fill information about device
+//
 
 static inline void FillDeviceInfo( int devnr, char *tmp, int tmplen, int mounted, char *fname, char *fsysname, char *path, char *sysname, char *config, int visible, char *exec, int isLimited, char *devserver, int devport, FULONG usergroupid )
 {
@@ -152,7 +156,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 	
 	// No urlpath..
 	// TODO: Give this a unique error message..
-	if( !urlpath || !urlpath[ 1 ] )
+	if( urlpath == NULL || urlpath[ 1 ] == NULL )
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( DEFAULT_CONTENT_TYPE ) },
@@ -180,7 +184,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -272,16 +276,17 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 		int success = -1;
 		char *resultstring = NULL;
 		
+#define QUERY_LEN 512
+		
 		if( devname != NULL )
 		{
-			char *query = FCalloc( 512, sizeof( char ) );
+			char *query = FCalloc( QUERY_LEN, sizeof( char ) );
 			
 			// Fetch rows
 			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 			if( sqllib )
 			{
-				//snprintf( query, 512, ""
-				sqllib->SNPrintF( sqllib, query, 512, ""
+				sqllib->SNPrintF( sqllib, query, QUERY_LEN, ""
 "SELECT f.Name, f.ShortDescription FROM `Filesystem` f "
 "WHERE f.Config LIKE \"%%\\\"pollable\\\":\\\"yes\\\"%%\" "
 "AND f.Name = \"%s\" LIMIT 1", devname );
@@ -295,7 +300,8 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 					{
 						if( row[ 0 ] != NULL && row[ 1 ] != NULL )
 						{
-							resultstring = FCalloc( 512, sizeof( char ) );
+							int len = 128 + strlen( row[ 0 ] ) + strlen( row[ 1 ] );
+							resultstring = FCalloc( len, sizeof( char ) );
 							if( resultstring != NULL )
 							{
 								sprintf( resultstring, "ok<!--separate-->{\"Name\":\"%s\",\"Description\":\"%s\"}", row[0], row[1] );
@@ -349,9 +355,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "devname" );
 			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, dictmsgbuf );
-		}		
-		
-		
+		}
 		*result = 200;
 	}
 
@@ -386,7 +390,7 @@ WHERE f.Config LIKE \"%\\\"pollable\\\":\\\"yes\\\"%\" AND u.ID = f.UserID \
 ORDER BY \
 f.Name ASC";
 			
-			ListString *str = ListStringNew();
+			BufString *bs = BufStringNew();
 			
 			// Fetch rows
 			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
@@ -402,9 +406,15 @@ f.Name ASC";
 					{
 						if( row[ 0 ] != NULL && row[ 1 ] != NULL )
 						{
-							char *prt = FCalloc( 512, sizeof( char ) );
-							sprintf( prt, "%s{\"Name\":\"%s\",\"Publisher\":\"%s\"}", rownr == 0 ? "" : ",", row[0], row[1] );
-							ListStringAdd( str, prt, strlen( prt ) ); 
+							int len = 128 + strlen( row[ 0 ] ) + strlen( row[ 1 ] );
+							char *prt = FCalloc( len, sizeof( char ) );
+							int spLen = 0;
+							if( prt != NULL )
+							{
+								spLen = sprintf( prt, "%s{\"Name\":\"%s\",\"Publisher\":\"%s\"}", rownr == 0 ? "" : ",", row[0], row[1] );
+								BufStringAddSize( bs, prt, spLen );
+							}
+							//ListStringAdd( str, prt, strlen( prt ) ); 
 							FFree( prt );
 							rownr++;
 						}
@@ -415,14 +425,15 @@ f.Name ASC";
 			}
 			
 			// Add positive response
-			if( ListStringJoin( str ) == 0 )
+			if( bs->bs_Size > 0 )
 			{
-				char *cnt = FCalloc( strlen( str->ls_Data ) + 20, sizeof( char ) );
+				char *cnt = FMalloc( bs->bs_Size + 20 );
 				if( cnt != NULL )
 				{
-					sprintf( cnt, "ok<!--separate-->[%s]", str->ls_Data );
-					HttpAddTextContent( response, cnt );
-					FFree( cnt );
+					int len = sprintf( cnt, "ok<!--separate-->[%s]", bs->bs_Buffer );
+					HttpSetContent( response, cnt, len );
+					//HttpAddTextContent( response, cnt );
+					//FFree( cnt );
 				}
 			}
 			// Add negative response
@@ -434,7 +445,7 @@ f.Name ASC";
 			}
 			
 			// Clean up and set result status
-			ListStringDelete( str );
+			BufStringDelete( bs );
 			*result = 200;
 	}
 	
@@ -528,10 +539,9 @@ f.Name ASC";
 			path = (char *)el->hme_Data;
 			if( path != NULL )
 			{
-				char *lpath = NULL;
-				if( ( lpath = FCalloc( strlen( path ) + 1, sizeof(char) ) ) != NULL )
+				char *lpath = UrlDecodeToMem( path );
+				if( lpath != NULL )
 				{
-					UrlDecode( lpath, path );
 					strcpy( path, lpath );
 					
 					FFree( lpath );
@@ -836,7 +846,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 							);
 						}
 
-						void *res = sqllib->Query( sqllib, temptext );
+						sqllib->QueryWithoutResults( sqllib, temptext );
 
 						FFree( temptext );
 					}
@@ -995,7 +1005,6 @@ AND LOWER(f.Name) = LOWER('%s')",
 							activeUser = locusr;
 							userID = activeUser->u_ID;
 						}
-						//deviceUnmounted = TRUE;
 
 						mountError = 0;
 					}
@@ -1004,10 +1013,6 @@ AND LOWER(f.Name) = LOWER('%s')",
 						Log( FLOG_INFO, "Admin1 ID[%lu] is mounting drive to user ID[%lu]\n", activeUser->u_ID, activeUser->u_ID );
 						userID = activeUser->u_ID;
 					}
-					//if( args != NULL )
-					//{
-					//	FFree( args );
-					//}
 				}
 				
 				DEBUG("[DeviceMWebRequest] device unmounted: %d\n", deviceUnmounted );
@@ -1410,7 +1415,6 @@ AND LOWER(f.Name) = LOWER('%s')",
 					break;
 				}
 			}
-			
 			
 			if( rootDev != NULL )
 			{
@@ -1826,8 +1830,8 @@ AND LOWER(f.Name) = LOWER('%s')",
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( DEFAULT_CONTENT_TYPE ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		if( response != NULL )
@@ -1901,8 +1905,8 @@ AND LOWER(f.Name) = LOWER('%s')",
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( DEFAULT_CONTENT_TYPE ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		char *devname = NULL;
