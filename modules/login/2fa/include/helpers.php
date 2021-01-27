@@ -504,7 +504,7 @@ function verifyCode( $username, $password = '', $code = false )
 // Send verification code using SMS
 function sendCode( $userid, $mobile, $code = false, $limit = true )
 {
-	$error = false; $debug = false;
+	$error = false; $debug = true;
 	
 	include_once( SCRIPT_2FA_PATH . '/../../../php/classes/dbio.php' );
 	$conf = parse_ini_file( SCRIPT_2FA_PATH . '/../../../cfg/cfg.ini', true );
@@ -1295,7 +1295,6 @@ function checkFriendUser( $data, $identity, $create = false )
 				$u = new dbIO( 'FUser', $dbo );
 				$u->ID       = $creds->ID;
 				$u->Name     = $data->username;
-				$u->UniqueID = generateFriendUniqueID( $data->username );
 				if( $u->Load() && $u->Password != ( '{S6}' . hash( 'sha256', $data->password ) ) )
 				{
 					$u->Password = ( '{S6}' . hash( 'sha256', $data->password ) );
