@@ -671,8 +671,8 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 
 				// Remove lock!
 				FILE *locfp = NULL;
-				fcntl( lockf, F_SETLKW, F_UNLCK );
-				fchmod( lockf, 0755 );
+				//fcntl( lockf, F_SETLKW, F_UNLCK );
+				//fchmod( lockf, 0755 );
 				close( lockf );
 				lockf = -1;
 	

@@ -135,7 +135,7 @@ LocFile* LocFileNew( char* path, unsigned int flags )
 		fclose( fp );
 		return NULL;
 	}
-	
+	 
 	if( S_ISDIR( st.st_mode ) )
 	{
 		FERROR( "'%s' is a directory. Can not open.\n", path );

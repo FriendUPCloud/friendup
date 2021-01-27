@@ -1097,8 +1097,8 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 
 				// Remove lock!
 				//fcntl( lockf, F_SETLKW ); // TODO: Why the hell was this here? :-D
-				fcntl( lockf, F_UNLCK );
-				fchmod( lockf, 0755 );
+				//fcntl( lockf, F_UNLCK );
+				//fchmod( lockf, 0755 );
 				close( lockf );
 				lockf = -1;
 				
