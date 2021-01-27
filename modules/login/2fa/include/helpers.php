@@ -1484,6 +1484,8 @@ function addCustomDockItem( $uid, $appname, $dock = false, $preinstall = false, 
 					$d->Parent = 0;
 					if( !$d->Load() )
 					{
+						$d->Type = 'executable';
+						$d->Icon = '/webclient/apps/' . $appname . '/icon.png';
 						//$d->ShortDescription = $r[1];
 						$d->SortOrder = $i++;
 						$d->Save();
