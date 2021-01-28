@@ -1577,7 +1577,7 @@ function addCustomDockItem( $uid, $appname, $dock = false, $preinstall = false, 
 						}
 						else
 						{
-							$d->Workspace = 0;
+							$d->Workspace = 1;
 						}
 						//$d->ShortDescription = $r[1];
 						$d->SortOrder = $i++;
