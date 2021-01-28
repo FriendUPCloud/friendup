@@ -1368,8 +1368,15 @@ function checkFriendUser( $data, $identity, $create = false )
 				
 				$hostip = false/*'185.116.5.93'*/;
 				$cluster = 'LINE';
+				$domain = 'KJELL';
 				
-				if( addCustomDockItem( $creds->ID, 'Mitra', true, true, ' usefriendcredentials ad-hoc ' . ( $cluster ? ( 'cluster=' . $cluster ) : 'ip=' . $hostip ) ) )
+				$line = ' usefriendcredentials ad-hoc ' . ( $cluster ? ( 'cluster=' . $cluster ) : 'ip=' . $hostip );
+				if( $domain )
+				{
+					$line .= ' domain=' . $domain;
+				}
+				
+				if( addCustomDockItem( $creds->ID, 'Mitra', true, true, $line ) )
 				{
 					// It was added with success ...
 				}
