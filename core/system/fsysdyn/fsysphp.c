@@ -993,7 +993,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		SystemBase *locsb = (SystemBase *)sd->sb;
 
 		// when pointer is used there is no way that something will write to same file
-		snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/Friendup/%s_read_%f%p%ld", s->f_SessionIDPTR, timeInMill, sd, locsb->sl_UtilInterface.GetUniqueFileID( locsb->sl_SupportManager ) );
+		snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/Friendup/%s_read_%f%p%d", s->f_SessionIDPTR, timeInMill, sd, rand()%999 );
 		
 		DEBUG( "[fsysphp] Success in locking %s\n", tmpfilename );
 
