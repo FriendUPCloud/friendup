@@ -325,6 +325,8 @@ static int addr2line(char const * const program_name, void const * const addr)
 //Based on https://spin.atomicobject.com/2013/01/13/exceptions-stack-traces-c/
 //
 
+static void *stackTraces[MAX_STACK_FRAMES];
+
 static void crash_handler(int sig __attribute__((unused)))
 {
 	char buffer[ 512 ];
@@ -401,20 +403,14 @@ static void crash_handler(int sig __attribute__((unused)))
 		cfclog( fd, "non-gcc compiler\n");
 #endif
 
-		static void *stackTraces[MAX_STACK_FRAMES];
-
 		int i, trace_size = 0;
 		//char **messages = (char **)NULL;
 
 		trace_size = backtrace(stackTraces, MAX_STACK_FRAMES);
-		//int fd;
-		//if( ( fd = open( CRASH_LOG_FILENAME, O_WRONLY | O_APPEND | O_CREAT) ) >= 0 )
-		//{
-		//messages = 
-		backtrace_symbols_fd(stackTraces, trace_size, fd);
-		//	close( fd );
-		//}
 
+		backtrace_symbols_fd(stackTraces, trace_size, fd);
+
+		//cfclog( fd, "> %s\n", buffer );
 	/* skip the first couple stack frames (as they are this function and
      our handler) and also skip the last frame as it's (always?) junk. */
 	// for (i = 3; i < (trace_size - 1); ++i)
@@ -422,8 +418,9 @@ static void crash_handler(int sig __attribute__((unused)))
 		for (i = 0; i < trace_size; ++i)
 		{
 			//cfclog( "> %s\n", messages[i]);
-			safe_snprintf( buffer, 512, "%.256s %p", _program_name, stackTraces[i]);
-			cfclog( fd, "> %s\n", buffer );
+			cfclog( fd, "%s %p", _program_name, stackTraces[i] );
+			//safe_snprintf( buffer, 512, "%.256s %p", _program_name, stackTraces[i]);
+			//cfclog( fd, "> %s\n", buffer );
 			/*
 			if (addr2line(_program_name, stackTraces[i] ) != 0)
 			{
