@@ -1798,6 +1798,7 @@ function firstLoginSetup( $setupid, $uid )
 											$d->Parent = 0;
 											if( !$d->Load() )
 											{
+												$d->Workspace = 1;
 												//$d->ShortDescription = $r[1];
 												$d->SortOrder = $i++;
 												$d->Save();
