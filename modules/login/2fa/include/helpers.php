@@ -1571,7 +1571,14 @@ function addCustomDockItem( $uid, $appname, $dock = false, $preinstall = false, 
 					{
 						$d->Type = 'executable';
 						$d->Icon = '/webclient/apps/' . $appname . '/icon.png';
-						$d->Workspace = 0;
+						if( strtolower( $appname ) == 'mitra' && $params && strstr( $params, 'domain=' ) )
+						{
+							$d->Workspace = 2;
+						}
+						else
+						{
+							$d->Workspace = 0;
+						}
 						//$d->ShortDescription = $r[1];
 						$d->SortOrder = $i++;
 						$d->Save();
@@ -1726,6 +1733,15 @@ function firstLoginSetup( $setupid, $uid )
 					$them->Load();
 					$them->Data = $ug->Data->theme;
 					$them->Save();
+					
+					// 3.b. Set 2 workspaces
+					$t = new dbIO( 'FSetting', $dbo );
+					$t->UserID = $uid;
+					$t->Type = 'system';
+					$t->Key = 'workspacecount';
+					$t->Load();
+					$t->Data = '2';
+					$t->Save();
 				}
 		
 				// Software ----------------------------------------------------------------------------------------
