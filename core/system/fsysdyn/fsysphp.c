@@ -1036,7 +1036,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 				
 				int rbytes = 0;
 				FILE *tempFileStoreFP;
-				if( ( tempFileStoreFP = fopen( tmpfilename, mode ) ) != NULL )
+				if( ( tempFileStoreFP = fopen( tmpfilename, "wb" ) ) != NULL )
 				{
 					while( toWrite > 0 )
 					{
