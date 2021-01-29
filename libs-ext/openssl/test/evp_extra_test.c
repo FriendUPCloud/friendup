@@ -1,7 +1,7 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/bio.h>
-#include <openssl/conf.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
@@ -19,9 +18,7 @@
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 #include <openssl/kdf.h>
-#include <openssl/provider.h>
-#include <openssl/core_names.h>
-#include <openssl/dsa.h>
+#include <openssl/dh.h>
 #include "testutil.h"
 #include "internal/nelem.h"
 #include "crypto/evp.h"
@@ -602,7 +599,7 @@ static int test_EVP_PKCS82PKEY(void)
 }
 #endif
 
-#if !defined(OPENSSL_NO_SM2) && !defined(FIPS_MODE)
+#ifndef OPENSSL_NO_SM2
 
 static int test_EVP_SM2_verify(void)
 {
@@ -1071,148 +1068,106 @@ done:
   X509_PUBKEY_free(xp);
   return ret;
 }
-#endif /* OPENSSL_NO_EC */
+#endif
 
-#ifndef OPENSSL_NO_DSA
-/* Test getting and setting parameters on an EVP_PKEY_CTX */
-static int test_EVP_PKEY_CTX_get_set_params(void)
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
+static int test_decrypt_null_chunks(void)
 {
-    EVP_MD_CTX *mdctx = NULL;
-    EVP_PKEY_CTX *ctx = NULL;
-    EVP_SIGNATURE *dsaimpl = NULL;
-    const OSSL_PARAM *params;
-    OSSL_PARAM ourparams[2], *param = ourparams;
-    DSA *dsa = NULL;
-    BIGNUM *p = NULL, *q = NULL, *g = NULL;
-    EVP_PKEY *pkey = NULL;
+    EVP_CIPHER_CTX* ctx = NULL;
+    const unsigned char key[32] = {
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
+        0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+        0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1
+    };
+    unsigned char iv[12] = {
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b
+    };
+    unsigned char msg[] = "It was the best of times, it was the worst of times";
+    unsigned char ciphertext[80];
+    unsigned char plaintext[80];
+    /* We initialise tmp to a non zero value on purpose */
+    int ctlen, ptlen, tmp = 99;
     int ret = 0;
-    const EVP_MD *md;
-    size_t mdsize = SHA512_DIGEST_LENGTH;
-    char ssl3ms[48];
+    const int enc_offset = 10, dec_offset = 20;
 
-    /*
-     * Setup the parameters for our DSA object. For our purposes they don't have
-     * to actually be *valid* parameters. We just need to set something. We
-     * don't even need a pub_key/priv_key.
-     */
-    dsa = DSA_new();
-    p = BN_new();
-    q = BN_new();
-    g = BN_new();
-    if (!TEST_ptr(dsa)
-            || !TEST_ptr(p)
-            || !TEST_ptr(q)
-            || !TEST_ptr(g)
-            || !DSA_set0_pqg(dsa, p, q, g))
-        goto err;
-    p = q = g = NULL;
-
-    pkey = EVP_PKEY_new();
-    if (!TEST_ptr(pkey)
-            || !TEST_true(EVP_PKEY_assign_DSA(pkey, dsa)))
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+            || !TEST_true(EVP_EncryptInit_ex(ctx, EVP_chacha20_poly1305(), NULL,
+                                             key, iv))
+            || !TEST_true(EVP_EncryptUpdate(ctx, ciphertext, &ctlen, msg,
+                                            enc_offset))
+            /* Deliberate add a zero length update */
+            || !TEST_true(EVP_EncryptUpdate(ctx, ciphertext + ctlen, &tmp, NULL,
+                                            0))
+            || !TEST_int_eq(tmp, 0)
+            || !TEST_true(EVP_EncryptUpdate(ctx, ciphertext + ctlen, &tmp,
+                                            msg + enc_offset,
+                                            sizeof(msg) - enc_offset))
+            || !TEST_int_eq(ctlen += tmp, sizeof(msg))
+            || !TEST_true(EVP_EncryptFinal(ctx, ciphertext + ctlen, &tmp))
+            || !TEST_int_eq(tmp, 0))
         goto err;
 
-    dsa = NULL;
-
-    /* Initialise a sign operation */
-    ctx = EVP_PKEY_CTX_new(pkey, NULL);
-    dsaimpl = EVP_SIGNATURE_fetch(NULL, "DSA", NULL);
-    if (!TEST_ptr(ctx)
-            || !TEST_ptr(dsaimpl)
-            || !TEST_int_gt(EVP_PKEY_sign_init_ex(ctx, dsaimpl), 0))
-        goto err;
-
-    /*
-     * We should be able to query the parameters now. The default DSA
-     * implementation supports exactly one parameter - so we expect to see that
-     * returned and no more.
-     */
-    params = EVP_PKEY_CTX_settable_params(ctx);
-    if (!TEST_ptr(params)
-            || !TEST_int_eq(strcmp(params[0].key,
-                            OSSL_SIGNATURE_PARAM_DIGEST_SIZE), 0)
-            || !TEST_int_eq(strcmp(params[1].key, OSSL_SIGNATURE_PARAM_DIGEST),
-                            0)
-               /* The final key should be NULL */
-            || !TEST_ptr_null(params[2].key))
-        goto err;
-
-    /* Gettable params are the same as the settable ones */
-    params = EVP_PKEY_CTX_gettable_params(ctx);
-    if (!TEST_ptr(params)
-            || !TEST_int_eq(strcmp(params[0].key,
-                            OSSL_SIGNATURE_PARAM_DIGEST_SIZE), 0)
-            || !TEST_int_eq(strcmp(params[1].key, OSSL_SIGNATURE_PARAM_DIGEST),
-                            0)
-               /* The final key should be NULL */
-            || !TEST_ptr_null(params[2].key))
-        goto err;
-
-    /*
-     * Test getting and setting params via EVP_PKEY_CTX_set_params() and
-     * EVP_PKEY_CTX_get_params()
-     */
-    *param++ = OSSL_PARAM_construct_size_t(OSSL_SIGNATURE_PARAM_DIGEST_SIZE,
-                                           &mdsize);
-    *param++ = OSSL_PARAM_construct_end();
-
-    if (!TEST_true(EVP_PKEY_CTX_set_params(ctx, ourparams)))
-        goto err;
-
-    mdsize = 0;
-    if (!TEST_true(EVP_PKEY_CTX_get_params(ctx, ourparams))
-            || !TEST_size_t_eq(mdsize, SHA512_DIGEST_LENGTH))
-        goto err;
-
-    /*
-     * Test the TEST_PKEY_CTX_set_signature_md() and
-     * TEST_PKEY_CTX_get_signature_md() functions
-     */
-    if (!TEST_int_gt(EVP_PKEY_CTX_set_signature_md(ctx, EVP_sha256()), 0)
-            || !TEST_int_gt(EVP_PKEY_CTX_get_signature_md(ctx, &md), 0)
-            || !TEST_ptr_eq(md, EVP_sha256()))
-        goto err;
-
-    /*
-     * Test getting MD parameters via an associated EVP_PKEY_CTX
-     */
-    mdctx = EVP_MD_CTX_new();
-    if (!TEST_ptr(mdctx)
-            || !TEST_true(EVP_DigestSignInit_ex(mdctx, NULL, "SHA1", NULL,
-                                                pkey, dsaimpl)))
-        goto err;
-
-    /*
-     * We now have an EVP_MD_CTX with an EVP_PKEY_CTX inside it. We should be
-     * able to obtain the digest's settable parameters from the provider.
-     */
-    params = EVP_MD_CTX_settable_params(mdctx);
-    if (!TEST_ptr(params)
-            || !TEST_int_eq(strcmp(params[0].key, OSSL_DIGEST_PARAM_SSL3_MS), 0)
-               /* The final key should be NULL */
-            || !TEST_ptr_null(params[1].key))
-        goto err;
-
-    param = ourparams;
-    memset(ssl3ms, 0, sizeof(ssl3ms));
-    *param++ = OSSL_PARAM_construct_octet_string(OSSL_DIGEST_PARAM_SSL3_MS,
-                                                 ssl3ms, sizeof(ssl3ms));
-    *param++ = OSSL_PARAM_construct_end();
-
-    if (!TEST_true(EVP_MD_CTX_set_params(mdctx, ourparams)))
+    /* Deliberately initialise tmp to a non zero value */
+    tmp = 99;
+    if (!TEST_true(EVP_DecryptInit_ex(ctx, EVP_chacha20_poly1305(), NULL, key,
+                                      iv))
+            || !TEST_true(EVP_DecryptUpdate(ctx, plaintext, &ptlen, ciphertext,
+                                            dec_offset))
+            /*
+             * Deliberately add a zero length update. We also deliberately do
+             * this at a different offset than for encryption.
+             */
+            || !TEST_true(EVP_DecryptUpdate(ctx, plaintext + ptlen, &tmp, NULL,
+                                            0))
+            || !TEST_int_eq(tmp, 0)
+            || !TEST_true(EVP_DecryptUpdate(ctx, plaintext + ptlen, &tmp,
+                                            ciphertext + dec_offset,
+                                            ctlen - dec_offset))
+            || !TEST_int_eq(ptlen += tmp, sizeof(msg))
+            || !TEST_true(EVP_DecryptFinal(ctx, plaintext + ptlen, &tmp))
+            || !TEST_int_eq(tmp, 0)
+            || !TEST_mem_eq(msg, sizeof(msg), plaintext, ptlen))
         goto err;
 
     ret = 1;
-
  err:
-    EVP_MD_CTX_free(mdctx);
-    EVP_PKEY_CTX_free(ctx);
-    EVP_SIGNATURE_free(dsaimpl);
-    EVP_PKEY_free(pkey);
-    DSA_free(dsa);
-    BN_free(p);
-    BN_free(q);
-    BN_free(g);
+    EVP_CIPHER_CTX_free(ctx);
+    return ret;
+}
+#endif /* !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305) */
+
+#ifndef OPENSSL_NO_DH
+static int test_EVP_PKEY_set1_DH(void)
+{
+    DH *x942dh, *pkcs3dh;
+    EVP_PKEY *pkey1, *pkey2;
+    int ret = 0;
+
+    x942dh = DH_get_2048_256();
+    pkcs3dh = DH_new_by_nid(NID_ffdhe2048);
+    pkey1 = EVP_PKEY_new();
+    pkey2 = EVP_PKEY_new();
+    if (!TEST_ptr(x942dh)
+            || !TEST_ptr(pkcs3dh)
+            || !TEST_ptr(pkey1)
+            || !TEST_ptr(pkey2))
+        goto err;
+
+    if(!TEST_true(EVP_PKEY_set1_DH(pkey1, x942dh))
+            || !TEST_int_eq(EVP_PKEY_id(pkey1), EVP_PKEY_DHX))
+        goto err;
+
+
+    if(!TEST_true(EVP_PKEY_set1_DH(pkey2, pkcs3dh))
+            || !TEST_int_eq(EVP_PKEY_id(pkey2), EVP_PKEY_DH))
+        goto err;
+
+    ret = 1;
+ err:
+    EVP_PKEY_free(pkey1);
+    EVP_PKEY_free(pkey2);
+    DH_free(x942dh);
+    DH_free(pkcs3dh);
 
     return ret;
 }
@@ -1227,7 +1182,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_EC
     ADD_TEST(test_EVP_PKCS82PKEY);
 #endif
-#if !defined(OPENSSL_NO_SM2) && !defined(FIPS_MODE)
+#ifndef OPENSSL_NO_SM2
     ADD_TEST(test_EVP_SM2);
     ADD_TEST(test_EVP_SM2_verify);
 #endif
@@ -1247,8 +1202,12 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_invalide_ec_char2_pub_range_decode,
                   OSSL_NELEM(ec_der_pub_keys));
 #endif
-#ifndef OPENSSL_NO_DSA
-    ADD_TEST(test_EVP_PKEY_CTX_get_set_params);
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
+    ADD_TEST(test_decrypt_null_chunks);
 #endif
+#ifndef OPENSSL_NO_DH
+    ADD_TEST(test_EVP_PKEY_set1_DH);
+#endif
+
     return 1;
 }

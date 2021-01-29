@@ -1,9 +1,9 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -11,7 +11,6 @@
 
 #include <stdio.h>
 #include "ssl_local.h"
-#include "e_os.h"
 #include <openssl/objects.h>
 #include <openssl/x509v3.h>
 #include <openssl/rand.h>
@@ -21,10 +20,10 @@
 #include <openssl/engine.h>
 #include <openssl/async.h>
 #include <openssl/ct.h>
-#include <openssl/trace.h>
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
-#include "internal/ktls.h"
+
+const char SSL_version_str[] = OPENSSL_VERSION_TEXT;
 
 static int ssl_undefined_function_1(SSL *ssl, SSL3_RECORD *r, size_t s, int t)
 {
@@ -660,7 +659,7 @@ int SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth)
 
     ctx->method = meth;
 
-    if (!SSL_CTX_set_ciphersuites(ctx, OSSL_default_ciphersuites())) {
+    if (!SSL_CTX_set_ciphersuites(ctx, TLS_DEFAULT_CIPHERSUITES)) {
         SSLerr(SSL_F_SSL_CTX_SET_SSL_VERSION, SSL_R_SSL_LIBRARY_HAS_NO_CIPHERS);
         return 0;
     }
@@ -668,7 +667,7 @@ int SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth)
                                 ctx->tls13_ciphersuites,
                                 &(ctx->cipher_list),
                                 &(ctx->cipher_list_by_id),
-                                OSSL_default_cipher_list(), ctx->cert);
+                                SSL_DEFAULT_CIPHER_LIST, ctx->cert);
     if ((sk == NULL) || (sk_SSL_CIPHER_num(sk) <= 0)) {
         SSLerr(SSL_F_SSL_CTX_SET_SSL_VERSION, SSL_R_SSL_LIBRARY_HAS_NO_CIPHERS);
         return 0;
@@ -785,7 +784,6 @@ SSL *SSL_new(SSL_CTX *ctx)
         s->ext.ecpointformats_len =
             ctx->ext.ecpointformats_len;
     }
-#endif
     if (ctx->ext.supportedgroups) {
         s->ext.supportedgroups =
             OPENSSL_memdup(ctx->ext.supportedgroups,
@@ -795,7 +793,7 @@ SSL *SSL_new(SSL_CTX *ctx)
             goto err;
         s->ext.supportedgroups_len = ctx->ext.supportedgroups_len;
     }
-
+#endif
 #ifndef OPENSSL_NO_NEXTPROTONEG
     s->ext.npn = NULL;
 #endif
@@ -838,9 +836,6 @@ SSL *SSL_new(SSL_CTX *ctx)
 #endif
     s->psk_find_session_cb = ctx->psk_find_session_cb;
     s->psk_use_session_cb = ctx->psk_use_session_cb;
-
-    s->async_cb = ctx->async_cb;
-    s->async_cb_arg = ctx->async_cb_arg;
 
     s->job = NULL;
 
@@ -1158,15 +1153,11 @@ void SSL_free(SSL *s)
     dane_final(&s->dane);
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL, s, &s->ex_data);
 
-    RECORD_LAYER_release(&s->rlayer);
-
     /* Ignore return value */
     ssl_free_wbio_buffer(s);
 
     BIO_free_all(s->wbio);
-    s->wbio = NULL;
     BIO_free_all(s->rbio);
-    s->rbio = NULL;
 
     BUF_MEM_free(s->init_buf);
 
@@ -1209,6 +1200,8 @@ void SSL_free(SSL *s)
     OPENSSL_free(s->ext.ocsp.resp);
     OPENSSL_free(s->ext.alpn);
     OPENSSL_free(s->ext.tls13_cookie);
+    if (s->clienthello != NULL)
+        OPENSSL_free(s->clienthello->pre_proc_exts);
     OPENSSL_free(s->clienthello);
     OPENSSL_free(s->pha_context);
     EVP_MD_CTX_free(s->pha_dgst);
@@ -1220,6 +1213,8 @@ void SSL_free(SSL *s)
 
     if (s->method != NULL)
         s->method->ssl_free(s);
+
+    RECORD_LAYER_release(&s->rlayer);
 
     SSL_CTX_free(s->ctx);
 
@@ -1360,15 +1355,6 @@ int SSL_set_fd(SSL *s, int fd)
     }
     BIO_set_fd(bio, fd, BIO_NOCLOSE);
     SSL_set_bio(s, bio, bio);
-#ifndef OPENSSL_NO_KTLS
-    /*
-     * The new socket is created successfully regardless of ktls_enable.
-     * ktls_enable doesn't change any functionality of the socket, except
-     * changing the setsockopt to enable the processing of ktls_start.
-     * Thus, it is not a problem to call it for non-TLS sockets.
-     */
-    ktls_enable(fd);
-#endif /* OPENSSL_NO_KTLS */
     ret = 1;
  err:
     return ret;
@@ -1388,15 +1374,6 @@ int SSL_set_wfd(SSL *s, int fd)
         }
         BIO_set_fd(bio, fd, BIO_NOCLOSE);
         SSL_set0_wbio(s, bio);
-#ifndef OPENSSL_NO_KTLS
-        /*
-         * The new socket is created successfully regardless of ktls_enable.
-         * ktls_enable doesn't change any functionality of the socket, except
-         * changing the setsockopt to enable the processing of ktls_start.
-         * Thus, it is not a problem to call it for non-TLS sockets.
-         */
-        ktls_enable(fd);
-#endif /* OPENSSL_NO_KTLS */
     } else {
         BIO_up_ref(rbio);
         SSL_set0_wbio(s, rbio);
@@ -1432,10 +1409,12 @@ size_t SSL_get_finished(const SSL *s, void *buf, size_t count)
 {
     size_t ret = 0;
 
-    ret = s->s3.tmp.finish_md_len;
-    if (count > ret)
-        count = ret;
-    memcpy(buf, s->s3.tmp.finish_md, count);
+    if (s->s3 != NULL) {
+        ret = s->s3->tmp.finish_md_len;
+        if (count > ret)
+            count = ret;
+        memcpy(buf, s->s3->tmp.finish_md, count);
+    }
     return ret;
 }
 
@@ -1444,10 +1423,12 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count)
 {
     size_t ret = 0;
 
-    ret = s->s3.tmp.peer_finish_md_len;
-    if (count > ret)
-        count = ret;
-    memcpy(buf, s->s3.tmp.peer_finish_md, count);
+    if (s->s3 != NULL) {
+        ret = s->s3->tmp.peer_finish_md_len;
+        if (count > ret)
+            count = ret;
+        memcpy(buf, s->s3->tmp.peer_finish_md, count);
+    }
     return ret;
 }
 
@@ -1663,40 +1644,6 @@ int SSL_get_changed_async_fds(SSL *s, OSSL_ASYNC_FD *addfd, size_t *numaddfds,
                                           numdelfds);
 }
 
-int SSL_CTX_set_async_callback(SSL_CTX *ctx, SSL_async_callback_fn callback)
-{
-    ctx->async_cb = callback;
-    return 1;
-}
-
-int SSL_CTX_set_async_callback_arg(SSL_CTX *ctx, void *arg)
-{
-    ctx->async_cb_arg = arg;
-    return 1;
-}
-
-int SSL_set_async_callback(SSL *s, SSL_async_callback_fn callback)
-{
-    s->async_cb = callback;
-    return 1;
-}
-
-int SSL_set_async_callback_arg(SSL *s, void *arg)
-{
-    s->async_cb_arg = arg;
-    return 1;
-}
-
-int SSL_get_async_status(SSL *s, int *status)
-{
-    ASYNC_WAIT_CTX *ctx = s->waitctx;
-
-    if (ctx == NULL)
-        return 0;
-    *status = ASYNC_WAIT_CTX_get_status(ctx);
-    return 1;
-}
-
 int SSL_accept(SSL *s)
 {
     if (s->handshake_func == NULL) {
@@ -1722,13 +1669,6 @@ long SSL_get_default_timeout(const SSL *s)
     return s->method->get_timeout();
 }
 
-static int ssl_async_wait_ctx_cb(void *arg)
-{
-    SSL *s = (SSL *)arg;
-
-    return s->async_cb(s, s->async_cb_arg);
-}
-
 static int ssl_start_async_job(SSL *s, struct ssl_async_args *args,
                                int (*func) (void *))
 {
@@ -1736,10 +1676,6 @@ static int ssl_start_async_job(SSL *s, struct ssl_async_args *args,
     if (s->waitctx == NULL) {
         s->waitctx = ASYNC_WAIT_CTX_new();
         if (s->waitctx == NULL)
-            return -1;
-        if (s->async_cb != NULL
-            && !ASYNC_WAIT_CTX_set_callback
-                 (s->waitctx, ssl_async_wait_ctx_cb, s))
             return -1;
     }
     switch (ASYNC_start_job(&s->job, s->waitctx, &ret, func, args,
@@ -2019,73 +1955,6 @@ int ssl_write_internal(SSL *s, const void *buf, size_t num, size_t *written)
     }
 }
 
-ossl_ssize_t SSL_sendfile(SSL *s, int fd, off_t offset, size_t size, int flags)
-{
-    ossl_ssize_t ret;
-
-    if (s->handshake_func == NULL) {
-        SSLerr(SSL_F_SSL_SENDFILE, SSL_R_UNINITIALIZED);
-        return -1;
-    }
-
-    if (s->shutdown & SSL_SENT_SHUTDOWN) {
-        s->rwstate = SSL_NOTHING;
-        SSLerr(SSL_F_SSL_SENDFILE, SSL_R_PROTOCOL_IS_SHUTDOWN);
-        return -1;
-    }
-
-    if (!BIO_get_ktls_send(s->wbio)) {
-        SSLerr(SSL_F_SSL_SENDFILE, SSL_R_UNINITIALIZED);
-        return -1;
-    }
-
-    /* If we have an alert to send, lets send it */
-    if (s->s3.alert_dispatch) {
-        ret = (ossl_ssize_t)s->method->ssl_dispatch_alert(s);
-        if (ret <= 0) {
-            /* SSLfatal() already called if appropriate */
-            return ret;
-        }
-        /* if it went, fall through and send more stuff */
-    }
-
-    s->rwstate = SSL_WRITING;
-    if (BIO_flush(s->wbio) <= 0) {
-        if (!BIO_should_retry(s->wbio)) {
-            s->rwstate = SSL_NOTHING;
-        } else {
-#ifdef EAGAIN
-            set_sys_error(EAGAIN);
-#endif
-        }
-        return -1;
-    }
-
-#ifndef OPENSSL_NO_KTLS
-    ret = ktls_sendfile(SSL_get_wfd(s), fd, offset, size, flags);
-#else
-    ret = -1;
-#endif
-    if (ret < 0) {
-#if defined(EAGAIN) && defined(EINTR) && defined(EBUSY)
-        if ((get_last_sys_error() == EAGAIN) ||
-            (get_last_sys_error() == EINTR) ||
-            (get_last_sys_error() == EBUSY))
-            BIO_set_retry_write(s->wbio);
-        else
-#endif
-#ifdef OPENSSL_NO_KTLS
-            ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
-                          "calling sendfile()");
-#else
-            SSLerr(SSL_F_SSL_SENDFILE, SSL_R_UNINITIALIZED);
-#endif
-        return ret;
-    }
-    s->rwstate = SSL_NOTHING;
-    return ret;
-}
-
 int SSL_write(SSL *s, const void *buf, int num)
 {
     int ret;
@@ -2330,10 +2199,6 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
     case SSL_CTRL_SET_MAX_SEND_FRAGMENT:
         if (larg < 512 || larg > SSL3_RT_MAX_PLAIN_LENGTH)
             return 0;
-#ifndef OPENSSL_NO_KTLS
-        if (s->wbio != NULL && BIO_get_ktls_send(s->wbio))
-            return 0;
-#endif /* OPENSSL_NO_KTLS */
         s->max_send_fragment = larg;
         if (s->max_send_fragment < s->split_send_fragment)
             s->split_send_fragment = s->max_send_fragment;
@@ -2351,7 +2216,10 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
             RECORD_LAYER_set_read_ahead(&s->rlayer, 1);
         return 1;
     case SSL_CTRL_GET_RI_SUPPORT:
-        return s->s3.send_connection_binding;
+        if (s->s3)
+            return s->s3->send_connection_binding;
+        else
+            return 0;
     case SSL_CTRL_CERT_FLAGS:
         return (s->cert->cert_flags |= larg);
     case SSL_CTRL_CLEAR_CERT_FLAGS:
@@ -2359,10 +2227,10 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
 
     case SSL_CTRL_GET_RAW_CIPHERLIST:
         if (parg) {
-            if (s->s3.tmp.ciphers_raw == NULL)
+            if (s->s3->tmp.ciphers_raw == NULL)
                 return 0;
-            *(unsigned char **)parg = s->s3.tmp.ciphers_raw;
-            return (int)s->s3.tmp.ciphers_rawlen;
+            *(unsigned char **)parg = s->s3->tmp.ciphers_raw;
+            return (int)s->s3->tmp.ciphers_rawlen;
         } else {
             return TLS_CIPHER_LEN;
         }
@@ -2757,31 +2625,85 @@ char *SSL_get_shared_ciphers(const SSL *s, char *buf, int size)
     return buf;
 }
 
-/** return a servername extension value if provided in Client Hello, or NULL.
- * So far, only host_name types are defined (RFC 3546).
+/**
+ * Return the requested servername (SNI) value. Note that the behaviour varies
+ * depending on:
+ * - whether this is called by the client or the server,
+ * - if we are before or during/after the handshake,
+ * - if a resumption or normal handshake is being attempted/has occurred
+ * - whether we have negotiated TLSv1.2 (or below) or TLSv1.3
+ * 
+ * Note that only the host_name type is defined (RFC 3546).
  */
-
 const char *SSL_get_servername(const SSL *s, const int type)
 {
+    /*
+     * If we don't know if we are the client or the server yet then we assume
+     * client.
+     */
+    int server = s->handshake_func == NULL ? 0 : s->server;
     if (type != TLSEXT_NAMETYPE_host_name)
         return NULL;
 
-    /*
-     * SNI is not negotiated in pre-TLS-1.3 resumption flows, so fake up an
-     * SNI value to return if we are resuming/resumed.  N.B. that we still
-     * call the relevant callbacks for such resumption flows, and callbacks
-     * might error out if there is not a SNI value available.
-     */
-    if (s->hit)
-        return s->session->ext.hostname;
+    if (server) {
+        /**
+         * Server side
+         * In TLSv1.3 on the server SNI is not associated with the session
+         * but in TLSv1.2 or below it is.
+         *
+         * Before the handshake:
+         *  - return NULL
+         *
+         * During/after the handshake (TLSv1.2 or below resumption occurred):
+         * - If a servername was accepted by the server in the original
+         *   handshake then it will return that servername, or NULL otherwise.
+         *
+         * During/after the handshake (TLSv1.2 or below resumption did not occur):
+         * - The function will return the servername requested by the client in
+         *   this handshake or NULL if none was requested.
+         */
+         if (s->hit && !SSL_IS_TLS13(s))
+            return s->session->ext.hostname;
+    } else {
+        /**
+         * Client side
+         *
+         * Before the handshake:
+         *  - If a servername has been set via a call to
+         *    SSL_set_tlsext_host_name() then it will return that servername
+         *  - If one has not been set, but a TLSv1.2 resumption is being
+         *    attempted and the session from the original handshake had a
+         *    servername accepted by the server then it will return that
+         *    servername
+         *  - Otherwise it returns NULL
+         *
+         * During/after the handshake (TLSv1.2 or below resumption occurred):
+         * - If the session from the original handshake had a servername accepted
+         *   by the server then it will return that servername.
+         * - Otherwise it returns the servername set via
+         *   SSL_set_tlsext_host_name() (or NULL if it was not called).
+         *
+         * During/after the handshake (TLSv1.2 or below resumption did not occur):
+         * - It will return the servername set via SSL_set_tlsext_host_name()
+         *   (or NULL if it was not called).
+         */
+        if (SSL_in_before(s)) {
+            if (s->ext.hostname == NULL
+                    && s->session != NULL
+                    && s->session->ssl_version != TLS1_3_VERSION)
+                return s->session->ext.hostname;
+        } else {
+            if (!SSL_IS_TLS13(s) && s->hit && s->session->ext.hostname != NULL)
+                return s->session->ext.hostname;
+        }
+    }
+
     return s->ext.hostname;
 }
 
 int SSL_get_servername_type(const SSL *s)
 {
-    if (s->session
-        && (!s->ext.hostname ? s->session->
-            ext.hostname : s->ext.hostname))
+    if (SSL_get_servername(s, TLSEXT_NAMETYPE_host_name) != NULL)
         return TLSEXT_NAMETYPE_host_name;
     return -1;
 }
@@ -2961,11 +2883,13 @@ void SSL_CTX_set_alpn_select_cb(SSL_CTX *ctx,
 void SSL_get0_alpn_selected(const SSL *ssl, const unsigned char **data,
                             unsigned int *len)
 {
-    *data = ssl->s3.alpn_selected;
+    *data = NULL;
+    if (ssl->s3)
+        *data = ssl->s3->alpn_selected;
     if (*data == NULL)
         *len = 0;
     else
-        *len = (unsigned int)ssl->s3.alpn_selected_len;
+        *len = (unsigned int)ssl->s3->alpn_selected_len;
 }
 
 int SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
@@ -2973,7 +2897,8 @@ int SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
                                const unsigned char *context, size_t contextlen,
                                int use_context)
 {
-    if (s->version < TLS1_VERSION && s->version != DTLS1_BAD_VER)
+    if (s->session == NULL
+        || (s->version < TLS1_VERSION && s->version != DTLS1_BAD_VER))
         return -1;
 
     return s->method->ssl3_enc->export_keying_material(s, out, olen, label,
@@ -3088,13 +3013,13 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
         goto err;
 #endif
 
-    if (!SSL_CTX_set_ciphersuites(ret, OSSL_default_ciphersuites()))
+    if (!SSL_CTX_set_ciphersuites(ret, TLS_DEFAULT_CIPHERSUITES))
         goto err;
 
     if (!ssl_create_cipher_list(ret->method,
                                 ret->tls13_ciphersuites,
                                 &ret->cipher_list, &ret->cipher_list_by_id,
-                                OSSL_default_cipher_list(), ret->cert)
+                                SSL_DEFAULT_CIPHER_LIST, ret->cert)
         || sk_SSL_CIPHER_num(ret->cipher_list) <= 0) {
         SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_LIBRARY_HAS_NO_CIPHERS);
         goto err2;
@@ -3374,7 +3299,7 @@ void SSL_set_cert_cb(SSL *s, int (*cb) (SSL *ssl, void *arg), void *arg)
 void ssl_set_masks(SSL *s)
 {
     CERT *c = s->cert;
-    uint32_t *pvalid = s->s3.tmp.valid_flags;
+    uint32_t *pvalid = s->s3->tmp.valid_flags;
     int rsa_enc, rsa_sign, dh_tmp, dsa_sign;
     unsigned long mask_k, mask_a;
 #ifndef OPENSSL_NO_EC
@@ -3398,8 +3323,10 @@ void ssl_set_masks(SSL *s)
     mask_k = 0;
     mask_a = 0;
 
-    OSSL_TRACE4(TLS_CIPHER, "dh_tmp=%d rsa_enc=%d rsa_sign=%d dsa_sign=%d\n",
-               dh_tmp, rsa_enc, rsa_sign, dsa_sign);
+#ifdef CIPHER_DEBUG
+    fprintf(stderr, "dht=%d re=%d rs=%d ds=%d\n",
+            dh_tmp, rsa_enc, rsa_sign, dsa_sign);
+#endif
 
 #ifndef OPENSSL_NO_GOST
     if (ssl_has_cert(s, SSL_PKEY_GOST12_512)) {
@@ -3480,15 +3407,15 @@ void ssl_set_masks(SSL *s)
         mask_k |= SSL_kECDHEPSK;
 #endif
 
-    s->s3.tmp.mask_k = mask_k;
-    s->s3.tmp.mask_a = mask_a;
+    s->s3->tmp.mask_k = mask_k;
+    s->s3->tmp.mask_a = mask_a;
 }
 
 #ifndef OPENSSL_NO_EC
 
 int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
 {
-    if (s->s3.tmp.new_cipher->algorithm_auth & SSL_aECDSA) {
+    if (s->s3->tmp.new_cipher->algorithm_auth & SSL_aECDSA) {
         /* key usage, if present, must allow signing */
         if (!(X509_get_key_usage(x) & X509v3_KU_DIGITAL_SIGNATURE)) {
             SSLerr(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG,
@@ -3504,7 +3431,7 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
 int ssl_get_server_cert_serverinfo(SSL *s, const unsigned char **serverinfo,
                                    size_t *serverinfo_length)
 {
-    CERT_PKEY *cpk = s->s3.tmp.cert;
+    CERT_PKEY *cpk = s->s3->tmp.cert;
     *serverinfo_length = 0;
 
     if (cpk == NULL || cpk->serverinfo == NULL)
@@ -3696,7 +3623,7 @@ int SSL_get_error(const SSL *s, int i)
         return SSL_ERROR_WANT_CLIENT_HELLO_CB;
 
     if ((s->shutdown & SSL_RECEIVED_SHUTDOWN) &&
-        (s->s3.warn_alert == SSL_AD_CLOSE_NOTIFY))
+        (s->s3->warn_alert == SSL_AD_CLOSE_NOTIFY))
         return SSL_ERROR_ZERO_RETURN;
 
     return SSL_ERROR_SYSCALL;
@@ -3900,6 +3827,8 @@ SSL *SSL_dup(SSL *s)
         goto err;
     ret->version = s->version;
     ret->options = s->options;
+    ret->min_proto_version = s->min_proto_version;
+    ret->max_proto_version = s->max_proto_version;
     ret->mode = s->mode;
     SSL_set_max_cert_list(ret, SSL_get_max_cert_list(s));
     SSL_set_read_ahead(ret, SSL_get_read_ahead(s));
@@ -3914,21 +3843,6 @@ SSL *SSL_dup(SSL *s)
     /* copy app data, a little dangerous perhaps */
     if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_SSL, &ret->ex_data, &s->ex_data))
         goto err;
-
-    /* setup rbio, and wbio */
-    if (s->rbio != NULL) {
-        if (!BIO_dup_state(s->rbio, (char *)&ret->rbio))
-            goto err;
-    }
-    if (s->wbio != NULL) {
-        if (s->wbio != s->rbio) {
-            if (!BIO_dup_state(s->wbio, (char *)&ret->wbio))
-                goto err;
-        } else {
-            BIO_up_ref(ret->rbio);
-            ret->wbio = ret->rbio;
-        }
-    }
 
     ret->server = s->server;
     if (s->handshake_func) {
@@ -4026,7 +3940,7 @@ const SSL_CIPHER *SSL_get_current_cipher(const SSL *s)
 
 const SSL_CIPHER *SSL_get_pending_cipher(const SSL *s)
 {
-    return s->s3.tmp.new_cipher;
+    return s->s3->tmp.new_cipher;
 }
 
 const COMP_METHOD *SSL_get_current_compression(const SSL *s)
@@ -4244,20 +4158,20 @@ long SSL_get_verify_result(const SSL *ssl)
 size_t SSL_get_client_random(const SSL *ssl, unsigned char *out, size_t outlen)
 {
     if (outlen == 0)
-        return sizeof(ssl->s3.client_random);
-    if (outlen > sizeof(ssl->s3.client_random))
-        outlen = sizeof(ssl->s3.client_random);
-    memcpy(out, ssl->s3.client_random, outlen);
+        return sizeof(ssl->s3->client_random);
+    if (outlen > sizeof(ssl->s3->client_random))
+        outlen = sizeof(ssl->s3->client_random);
+    memcpy(out, ssl->s3->client_random, outlen);
     return outlen;
 }
 
 size_t SSL_get_server_random(const SSL *ssl, unsigned char *out, size_t outlen)
 {
     if (outlen == 0)
-        return sizeof(ssl->s3.server_random);
-    if (outlen > sizeof(ssl->s3.server_random))
-        outlen = sizeof(ssl->s3.server_random);
-    memcpy(out, ssl->s3.server_random, outlen);
+        return sizeof(ssl->s3->server_random);
+    if (outlen > sizeof(ssl->s3->server_random))
+        outlen = sizeof(ssl->s3->server_random);
+    memcpy(out, ssl->s3->server_random, outlen);
     return outlen;
 }
 
@@ -4587,7 +4501,7 @@ int ssl_handshake_hash(SSL *s, unsigned char *out, size_t outlen,
                        size_t *hashlen)
 {
     EVP_MD_CTX *ctx = NULL;
-    EVP_MD_CTX *hdgst = s->s3.handshake_dgst;
+    EVP_MD_CTX *hdgst = s->s3->handshake_dgst;
     int hashleni = EVP_MD_CTX_size(hdgst);
     int ret = 0;
 
@@ -4626,7 +4540,7 @@ int SSL_is_server(const SSL *s)
     return s->server;
 }
 
-#if !OPENSSL_API_1_1_0
+#if OPENSSL_API_COMPAT < 0x10100000L
 void SSL_set_debug(SSL *s, int debug)
 {
     /* Old function was do-nothing anyway... */
@@ -5363,7 +5277,7 @@ int ssl_log_secret(SSL *ssl,
 {
     return nss_keylog_int(label,
                           ssl,
-                          ssl->s3.client_random,
+                          ssl->s3->client_random,
                           SSL3_RANDOM_SIZE,
                           secret,
                           secret_len);
@@ -5389,9 +5303,9 @@ int ssl_cache_cipherlist(SSL *s, PACKET *cipher_suites, int sslv2format)
         return 0;
     }
 
-    OPENSSL_free(s->s3.tmp.ciphers_raw);
-    s->s3.tmp.ciphers_raw = NULL;
-    s->s3.tmp.ciphers_rawlen = 0;
+    OPENSSL_free(s->s3->tmp.ciphers_raw);
+    s->s3->tmp.ciphers_raw = NULL;
+    s->s3->tmp.ciphers_rawlen = 0;
 
     if (sslv2format) {
         size_t numciphers = PACKET_remaining(cipher_suites) / n;
@@ -5407,13 +5321,13 @@ int ssl_cache_cipherlist(SSL *s, PACKET *cipher_suites, int sslv2format)
          * problem.
          */
         raw = OPENSSL_malloc(numciphers * TLS_CIPHER_LEN);
-        s->s3.tmp.ciphers_raw = raw;
+        s->s3->tmp.ciphers_raw = raw;
         if (raw == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_CACHE_CIPHERLIST,
                      ERR_R_MALLOC_FAILURE);
             return 0;
         }
-        for (s->s3.tmp.ciphers_rawlen = 0;
+        for (s->s3->tmp.ciphers_rawlen = 0;
              PACKET_remaining(&sslv2ciphers) > 0;
              raw += TLS_CIPHER_LEN) {
             if (!PACKET_get_1(&sslv2ciphers, &leadbyte)
@@ -5424,16 +5338,16 @@ int ssl_cache_cipherlist(SSL *s, PACKET *cipher_suites, int sslv2format)
                         && !PACKET_forward(&sslv2ciphers, TLS_CIPHER_LEN))) {
                 SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_SSL_CACHE_CIPHERLIST,
                          SSL_R_BAD_PACKET);
-                OPENSSL_free(s->s3.tmp.ciphers_raw);
-                s->s3.tmp.ciphers_raw = NULL;
-                s->s3.tmp.ciphers_rawlen = 0;
+                OPENSSL_free(s->s3->tmp.ciphers_raw);
+                s->s3->tmp.ciphers_raw = NULL;
+                s->s3->tmp.ciphers_rawlen = 0;
                 return 0;
             }
             if (leadbyte == 0)
-                s->s3.tmp.ciphers_rawlen += TLS_CIPHER_LEN;
+                s->s3->tmp.ciphers_rawlen += TLS_CIPHER_LEN;
         }
-    } else if (!PACKET_memdup(cipher_suites, &s->s3.tmp.ciphers_raw,
-                           &s->s3.tmp.ciphers_rawlen)) {
+    } else if (!PACKET_memdup(cipher_suites, &s->s3->tmp.ciphers_raw,
+                           &s->s3->tmp.ciphers_rawlen)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_CACHE_CIPHERLIST,
                  ERR_R_INTERNAL_ERROR);
         return 0;
@@ -5626,9 +5540,9 @@ int SSL_stateless(SSL *s)
 
     ERR_clear_error();
 
-    s->s3.flags |= TLS1_FLAGS_STATELESS;
+    s->s3->flags |= TLS1_FLAGS_STATELESS;
     ret = SSL_accept(s);
-    s->s3.flags &= ~TLS1_FLAGS_STATELESS;
+    s->s3->flags &= ~TLS1_FLAGS_STATELESS;
 
     if (ret > 0 && s->ext.cookieok)
         return 1;
