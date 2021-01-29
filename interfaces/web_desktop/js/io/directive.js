@@ -43,7 +43,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 		if( retries == 3 ) return console.log( 'Could not execute app: ' + app );
 		loadApplicationBasics( function()
 		{
-			ExecuteApplication( app, args, callback, !retries ? 1 : retries++ );
+			ExecuteApplication( app, args, callback, !retries ? 1 : retries++, flags );
 		} );
 	}
 	var appName = app;
