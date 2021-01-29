@@ -641,6 +641,12 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				this.contentWindow.postMessage( JSON.stringify( o ), '*' );
 			}
 
+			// Attach flags to iframe if they exist
+			if( flags )
+			{
+				ifr.flags = flags;
+			}
+
 			// Add application iframe to body
 			AttachAppSandbox( ifr, sdomain + filepath );
 

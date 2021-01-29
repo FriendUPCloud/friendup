@@ -1573,11 +1573,13 @@ function addCustomDockItem( $uid, $appname, $dock = false, $preinstall = false, 
 						$d->Icon = '/webclient/apps/' . $appname . '/icon.png';
 						if( strtolower( $appname ) == 'mitra' && $params && strstr( $params, 'domain=' ) )
 						{
+							$d->DisplayName = 'Desktop';
 							$d->Workspace = 2;
 						}
 						else
 						{
 							$d->Workspace = 1;
+							$d->DisplayName = ucfirst( $appname );
 						}
 						//$d->ShortDescription = $r[1];
 						$d->SortOrder = $i++;
