@@ -2558,6 +2558,12 @@ html #Tray.Size16
 	text-align: center;
 }
 
+.MobileNotification .Title > .DateStamp,
+.BubbleInfo .DateStamp
+{
+	font-size: 11px;
+}
+
 .BubbleInfo, .PopInfo
 {
 	position: absolute;
