@@ -2094,7 +2094,7 @@ var View = function( args )
 	this.setWorkspace = function()
 	{
 		// Ignore windows on own screen
-		if( this.flags.screen && this.flags.screen != Workspace.screen ) return;
+		if( this.flags && this.flags.screen && this.flags.screen != Workspace.screen ) return;
 		if( globalConfig.workspacecount > 1 )
 		{
 			let ws = this.getFlag( 'left' );
@@ -3950,7 +3950,7 @@ var View = function( args )
 		if( isMobile ) return;
 		
 		// Windows on own screen ignores the virtual workspaces
-		if( this.flags.screen && this.flags.screen != Workspace.screen ) return;
+		if( this.flags && this.flags.screen && this.flags.screen != Workspace.screen ) return;
 		
 		if( wsnum != 0 && ( wsnum < 0 || wsnum > globalConfig.workspacecount - 1 ) )
 		{
@@ -3965,7 +3965,7 @@ var View = function( args )
 		cleanVirtualWorkspaceInformation(); // Just clean the workspace info
 		
 		// Done moving
-		if( this.flags.screen )
+		if( this.flags && this.flags.screen )
 		{
 			let maxViewWidth = this.flags.screen.getMaxViewWidth();
 			this.workspace = wsnum;
@@ -4910,11 +4910,11 @@ var View = function( args )
 					{
 						if( flag == 'width' )
 						{
-							value = this.flags.screen.getMaxViewWidth();
+							value = ( this.flags && this.flags.screen ) ? this.flags.screen.getMaxViewWidth() : window.innerWidth;
 						}
 						else
 						{
-							value = this.flags.screen.getMaxViewHeight();
+							value = ( this.flags && this.flags.screen ) ? this.flags.screen.getMaxViewHeight() : window.innerHeight;
 						}
 					}
 					
@@ -5109,7 +5109,7 @@ var View = function( args )
 					let fl = this.flags[flag];
 					if( fl.indexOf && fl.indexOf( '%' ) > 0 )
 						return fl;
-					if( fl == 'max' && this.flags.screen )
+					if( fl == 'max' && this.flags && this.flags.screen )
 					{
 						fl = this.flags.screen.getMaxViewWidth();
 					}
@@ -5120,7 +5120,7 @@ var View = function( args )
 					let fl = this.flags[flag];
 					if( fl.indexOf && fl.indexOf( '%' ) > 0 )
 						return fl;
-					if( fl == 'max' && this.flags.screen )
+					if( fl == 'max' && this.flags && this.flags.screen )
 					{
 						fl = this.flags.screen.getMaxViewHeight();
 					}
