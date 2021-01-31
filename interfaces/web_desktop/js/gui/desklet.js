@@ -704,7 +704,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		for( var a = 0; a < Workspace.applications.length; a++ )
 		{
 			var ap = Workspace.applications[a];
-			if( ap.applicationName != ele.executable )
+			if( ap.applicationId != ele.uniqueId )
 				continue;
 			if( !ap.windows ) continue;
 			
@@ -956,7 +956,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 							} );
 						} )( executable, args, div );
 					}
-					else if( rememberCurrent && rememberCurrent.windowObject.applicationName == executable )
+					else if( rememberCurrent && rememberCurrent.windowObject.applicationId == div.uniqueId )
 					{
 						_ActivateWindow( rememberCurrent );
 					}
@@ -966,7 +966,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 						// TODO: Find the last active
 						for( var a = 0; a < Workspace.applications.length; a++ )
 						{
-							if( Workspace.applications[a].applicationName == executable )
+							if( Workspace.applications[a].applicationId == div.uniqueId )
 							{
 								if( Workspace.applications[a].windows )
 								{
