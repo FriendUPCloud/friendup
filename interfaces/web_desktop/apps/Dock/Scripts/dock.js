@@ -113,17 +113,25 @@ function LoadApplications( win, currentItemId, callback )
 			var im = '<div class="Empty"></div>';
 			if( img && img.length )
 			{
-				im = '<img style="float: right; width: 40px; height: auto" src="' + img + '"/>';
+				im = '<img style="float: right; width: 40px; height: auto" src="' + img + '" onerror="this.src = \'/iconthemes/friendup15/File_Function.svg\'"/>';
 			}
 			
 			sw = sw == 1 ? 2 : 1;
 			cl += ' sw' + sw;
 			
+			let nam = eles[a].Name;
+			if( nam.indexOf( ':' ) > 0 )
+				nam = nam.split( ':' )[1];
+			if( nam.indexOf( '/' ) > 0 )
+				nam = nam.split( '/' )[1];
+			if( nam.indexOf( ' ' ) > 0 )
+				nam = nam.split( ' ' )[0] + ' ...';
+			
 			ele += '\
 			<div class="Padding' + cl + '" id="dockEdit'+ eles[a].Id +'" onclick="Application.sendMessage( { command: \'select\', id: \'' + eles[a].Id + '\' } )">\
 				<div class="HRow">\
 					<div class="FloatRight" style="width: 60px">' + im + '</div>\
-					<div class="FloatLeft PaddingLeft" style="width: calc(100%-60px)">' + eles[a].Name + '</div>\
+					<div class="FloatLeft PaddingLeft" style="width: calc(100%-60px)">' + nam + '</div>\
 				</div>\
 			</div>\
 			';

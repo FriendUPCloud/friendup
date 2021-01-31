@@ -832,7 +832,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				d.innerHTML = '<div class="Icon"><div style="background-size: contain" class="TypeWebUrl"><span>' + o.exe + '</span></div></div><span>' + o.exe + '</span>';
 				div.appendChild( d );
 			}
-			else if( o.src.substr( 0, 1 ) == '.' )
+			else if( o.src.substr( 0, 1 ) == '.' && o.src != '.txt' )
 			{
 				div.style.backgroundImage = '';
 				var d = document.createElement( 'div' );
