@@ -3417,10 +3417,10 @@ function PollDockedTaskbar()
 		}
 		
 		// Go through all movable view windows and check!
-		// Buty only for docked mode.
+		// But only for docked mode.
 		if( globalConfig.viewList == 'docked' )
 		{
-			for( var b in movableWindows )
+			for( let b in movableWindows )
 			{
 				if( movableWindows[ b ].windowObject )
 				{
@@ -3440,7 +3440,7 @@ function PollDockedTaskbar()
 					let found = false;
 				
 					// Try to find view in viewlist
-					for( var c = 0; c < desklet.viewList.childNodes.length; c++ )
+					for( let c = 0; c < desklet.viewList.childNodes.length; c++ )
 					{
 						let cn = desklet.viewList.childNodes[ c ];
 						if( cn.viewId == win )
@@ -3463,7 +3463,7 @@ function PollDockedTaskbar()
 					// Try to find the application if it is an application window
 					if( !found && app )
 					{
-						for( var c = 0; c < desklet.dom.childNodes.length; c++ )
+						for( let c = 0; c < desklet.dom.childNodes.length; c++ )
 						{
 							let dof = desklet.dom.childNodes[ c ];
 							if( dof.executable == app )
@@ -3482,7 +3482,7 @@ function PollDockedTaskbar()
 						// Single instance apps handle themselves
 						if( !Friend.singleInstanceApps[ found ] )
 						{
-							for( var c = 0; c < desklet.dom.childNodes.length; c++ )
+							for( let c = 0; c < desklet.dom.childNodes.length; c++ )
 							{
 								let d = desklet.dom.childNodes[ c ];
 								if( !d.classList.contains( 'Launcher' ) ) continue;
@@ -3493,7 +3493,7 @@ function PollDockedTaskbar()
 								
 									// Clear non existing
 									let out = [];
-									for( var i in d.views )
+									for( let i in d.views )
 										if( movableWindows[ i ] ) out[ i ] = d.views[ i ];
 									d.views = out;
 								}

@@ -848,6 +848,12 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				div.setAttribute('data-workspace', ( o.workspace ? o.workspace : 0 ) );
 				div.setAttribute('data-displayname', ( o.displayname ? o.displayname: o.exe ) );
 				div.setAttribute('id', 'dockItem_' + o.exe );
+				let i = new Image();
+				i.src = o.src;
+				i.onerror = function( e )
+				{
+					div.style.backgroundImage = 'url(/iconthemes/friendup15/File_Function.svg)';
+				}
 			}
 			
 			function clickFunc( e )
