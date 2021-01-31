@@ -761,7 +761,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		this.dom.classList.remove( 'Initialized' );
 	}
 	
-	this.addLauncher = function ( o )
+	this.addLauncher = function( o )
 	{
 		var dk = this;
 		if ( o.src && ( o.click || o.exe ) )
@@ -773,11 +773,12 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			div.style.backgroundSize = 'contain';
 			div.style.height = this.width - ( this.margin * 2 ) + 'px';
 			div.executable = o.exe;
+			div.uniqueId = UniqueHash( o.exe + ' ' + o.displayname );
 			
 			// Running apps
 			for( var a in Workspace.applications )
 			{
-				if( Workspace.applications[ a ].applicationName == o.exe )
+				if( Workspace.applications[ a ].applicationId == div.uniqueId )
 				{
 					div.classList.add( 'Running' );
 					break;
@@ -922,7 +923,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 								{
 									return ( function( mm, me, dd ){
 										ExecuteApplication( mm, me, false, false, {
-											dockItem: dd
+											dockItem: dd,
+											uniqueId: dd.uniqueId
 										} );
 									} )( mt.executable, executable, div );
 								}
@@ -949,7 +951,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					{
 						( function( mm, me, dd ){
 							ExecuteApplication( mm, me, false, false, {
-								dockItem: dd
+								dockItem: dd,
+								uniqueId: dd.uniqueId
 							} );
 						} )( executable, args, div );
 					}
@@ -990,7 +993,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					// If we didn't find the app, execute
 					( function( mm, me, dd ){
 						ExecuteApplication( mm, me, false, false, {
-							dockItem: dd
+							dockItem: dd,
+							uniqueId: dd.uniqueId
 						} );
 					} )( executable, args, div );
 				}

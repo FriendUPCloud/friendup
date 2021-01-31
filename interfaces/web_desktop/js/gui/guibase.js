@@ -3314,11 +3314,12 @@ function PollTaskbar( curr )
 				if( movableWindows[b].windowObject )
 				{
 					let app = movableWindows[b].windowObject.applicationName;
+					let aid = movableWindows[b].windowObject.applicationId;
 				
 					// Try to find the application if it is an application window
 					for( var c = 0; c < desklet.dom.childNodes.length; c++ )
 					{
-						if( app && desklet.dom.childNodes[c].executable == app )
+						if( app && desklet.dom.childNodes[c].uniqueId == aid )
 						{
 							desklet.dom.childNodes[c].classList.add( 'Running' );
 							desklet.dom.childNodes[c].running = true;
@@ -3435,6 +3436,7 @@ function PollDockedTaskbar()
 					}
 				
 					let app = movableWindows[ b ].windowObject.applicationName;
+					let aid = movableWindows[ b ].windowObject.applicationId;
 					let win = b;
 					let wino = movableWindows[ b ];
 					let found = false;
@@ -3466,7 +3468,7 @@ function PollDockedTaskbar()
 						for( let c = 0; c < desklet.dom.childNodes.length; c++ )
 						{
 							let dof = desklet.dom.childNodes[ c ];
-							if( dof.executable == app )
+							if( dof.uniqueId == aid )
 							{
 								found = dof.executable;
 								dof.classList.add( 'Running' );

@@ -185,7 +185,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	{
 		// Remove from execution queue
 		RemoveFromExecutionQueue( appName );
-		return ExecuteJSXByPath( app, args, callback, undefined );
+		return ExecuteJSXByPath( app, args, callback, undefined, flags );
 	}
 	else if( app.indexOf( ':' ) > 0 )
 	{
@@ -338,21 +338,22 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			}
 
 			// Correct filepath can be a resource file (i.e. in a repository) or a local file
-			var filepath = '/system.library/module/?module=system&command=resource&authid=' + conf.AuthID + '&file=' + app + '/';
+			let filepath = '/system.library/module/?module=system&command=resource&authid=' + conf.AuthID + '&file=' + app + '/';
 			// Here's the local file..
 			if( conf && conf.ConfFilename && conf.ConfFilename.indexOf( 'resources/webclient/apps' ) >= 0 )
 				filepath = '/webclient/apps/' + app + '/';
 
 			// Security domain
-			var applicationId = md5( app + '-' + ( new Date() ).getTime() );
+			let applicationId = ( flags && flags.uniqueId ) ? flags.uniqueId : UniqueHash();
+			console.log( 'Here is the appid: ' + applicationId );
 			SubSubDomains.reserveSubSubDomain( applicationId );
-			var sdomain = GetDomainFromConf( conf, applicationId );
+			let sdomain = GetDomainFromConf( conf, applicationId );
 			
 			// Open the Dormant drive of the application
 			var drive = null;
 			if( conf.DormantDisc )
 			{
-				var options =
+				let options =
 				{
 					name: conf.DormantDisc.name ? conf.DormantDisc.name : app,
 					type: 'applicationDisc',
@@ -367,7 +368,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			}
 			
 			// Load application into a sandboxed iframe
-			var ifr = document.createElement( 'iframe' );
+			let ifr = document.createElement( 'iframe' );
 			// Only sandbox when it's on another domain
 			if( document.location.href.indexOf( sdomain ) != 0 )
 				ifr.setAttribute( 'sandbox', DEFAULT_SANDBOX_ATTRIBUTES );
@@ -392,18 +393,18 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				{
 					// Remove blocker
 					RemoveFromExecutionQueue( appName );
-					return ExecuteJSXByPath( conf.Init, args, callback, conf );
+					return ExecuteJSXByPath( conf.Init, args, callback, conf, flags );
 				}
 				// TODO: Check privileges of one app to launch another!
 				else
 				{
-					var sid = Workspace.sessionId && Workspace.sessionId != 'undefined' ?
+					let sid = Workspace.sessionId && Workspace.sessionId != 'undefined' ?
 						Workspace.sessionId : ( Workspace.conf && Workspace.conf.authid ? Workspace.conf.authId : '');
-					var svalu = sid ? Workspace.sessionId :( Workspace.conf && Workspace.conf.authid ? Workspace.conf.authId : '');
-					var stype = sid ? 'sessionid' : 'authid';
+					let svalu = sid ? Workspace.sessionId :( Workspace.conf && Workspace.conf.authid ? Workspace.conf.authId : '');
+					let stype = sid ? 'sessionid' : 'authid';
 					
 					// Quicker ajax implementation
-					var j = new cAjax();
+					let j = new cAjax();
 					j.open( 'POST', '/system.library/module?module=system&' +
 						stype + '=' + svalu + '&command=launch&app=' +
 						app + '&friendup=' + escape( Doors.runLevels[0].domain ), true );
@@ -1070,7 +1071,7 @@ function ExecuteApplicationActivation( app, win, permissions, reactivation )
 }
 
 // Do it by path!
-function ExecuteJSXByPath( path, args, callback, conf )
+function ExecuteJSXByPath( path, args, callback, conf, flags )
 {
 	if( !path ) return;
 	var app = path.split( ':' )[1];
@@ -1093,7 +1094,7 @@ function ExecuteJSXByPath( path, args, callback, conf )
 						callback();
 					// Clean blocker
 					RemoveFromExecutionQueue( app );
-				}, conf ? conf.ConfFilename : false );
+				}, conf ? conf.ConfFilename : false, flags );
 				// Uncommented running callback, it is already running in executeJSX!
 				// Perhaps 'r' should tell us if it was run, and then run it if not?
 				//if( callback ) callback( true );
@@ -1111,7 +1112,7 @@ function ExecuteJSXByPath( path, args, callback, conf )
 	f.load();
 }
 
-function ExecuteJSX( data, app, args, path, callback, conf )
+function ExecuteJSX( data, app, args, path, callback, conf, flags )
 {
 	if( data.indexOf( '{' ) < 0 ) return;
 
@@ -1157,7 +1158,7 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 			// Special case, we have a conf
 			var sid = false;
 			var confObject = false;
-			var applicationId = app + '-' + ( new Date() ).getTime();
+			var applicationId = ( flags && flags.uniqueId ) ? flags.uniqueId : UniqueHash();
 			if( conf )
 			{
 				var dom = GetDomainFromConf( conf, applicationId );
@@ -1212,7 +1213,7 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 			// Register name and ID
 			ifr.applicationName = app;
 			ifr.applicationNumber = _appNum++;
-			ifr.applicationId = app + '-' + (new Date()).getTime();
+			ifr.applicationId = applicationId;
 			ifr.workspaceMode = Workspace.workspacemode;
 			ifr.userId = Workspace.userId;
 			ifr.userLevel = Workspace.userLevel;
