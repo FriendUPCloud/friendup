@@ -161,6 +161,10 @@ if( $args = getArgs() )
 							send_2fa_response( false, 'identity', $ret[1], $args->publickey );
 						}
 					}
+					else
+					{
+						send_2fa_response( false, 'failedwindowscredentials', false, false );
+					}
 					
 				}
 				
