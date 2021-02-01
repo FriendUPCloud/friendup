@@ -54,6 +54,15 @@ function ExecuteApplication( app, args, callback, retries, flags )
 		else appName = app.split( ':' ).pop();
 	}
 	
+	// Match silent
+	if( args.indexOf( 'silent ' ) > 0 || args.indexOf( ' silent' ) > 0 || args == 'silent' )
+	{
+		args = args.split( 'silent' ).join( '' );
+		args = args.split( '  ' ).join( ' ' );
+		if( !flags ) flags = {};
+		flags.openSilent = true;
+	}
+	
 	// You need to wait with opening apps until they are loaded by app name
 	if( _executionQueue[ appName ] )
 	{
@@ -345,7 +354,6 @@ function ExecuteApplication( app, args, callback, retries, flags )
 
 			// Security domain
 			let applicationId = ( flags && flags.uniqueId ) ? flags.uniqueId : UniqueHash();
-			console.log( 'Here is the appid: ' + applicationId );
 			SubSubDomains.reserveSubSubDomain( applicationId );
 			let sdomain = GetDomainFromConf( conf, applicationId );
 			
@@ -428,6 +436,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			ifr.username = Workspace.loginUsername;
 			ifr.userLevel = Workspace.userLevel;
 			ifr.workspace = workspace;
+			ifr.opensilent = flags && flags.openSilent ? true : false;
 			ifr.applicationId = applicationId;
 			ifr.workspaceMode = Workspace.workspacemode;
 			ifr.id = 'sandbox_' + ifr.applicationId;

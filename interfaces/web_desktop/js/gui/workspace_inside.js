@@ -2753,6 +2753,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							type        : ele.Type,
 							src         : icon,
 							workspace   : ele.Workspace - 1,
+							opensilent  : ele.OpenSilent,
 							displayname : ele.DisplayName,
 							'title'     : ele.Title ? ele.Title : ele.Name
 						};

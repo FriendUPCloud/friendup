@@ -1076,6 +1076,14 @@ function _ActivateWindow( div, nopoll, e )
 	if( div.classList.contains( 'Remove' ) )
 		return;
 	
+	// Remove flag from window and app
+	div.windowObject.setFlag( 'opensilent', false );
+	if( div.applicationId && window._getAppByAppId )
+	{
+		let app = _getAppByAppId( div.applicationId );
+		app.opensilent = false;
+	}
+	
 	// Remove menu on calendar
 	if( Workspace.calendarWidget )
 		Workspace.calendarWidget.hide();
@@ -3920,7 +3928,7 @@ var View = function( args )
 			Friend.currentWindowHover = false;
 		
 		// Only activate if needed
-		if( !flags.minimized )
+		if( !flags.minimized && !flags.openSilent )
 		{
 			_ActivateWindow( div );
 			_WindowToFront( div );

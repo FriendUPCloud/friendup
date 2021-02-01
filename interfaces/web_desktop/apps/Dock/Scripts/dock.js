@@ -294,7 +294,7 @@ Application.blur = function()
 }
 
 // Update an application in the database
-Application.saveItem = function( id, application, displayname, shortdescription, icon, workspace )
+Application.saveItem = function( id, application, displayname, shortdescription, icon, workspace, opensilent )
 {
 	var w = this.view;
 
@@ -321,9 +321,9 @@ Application.saveItem = function( id, application, displayname, shortdescription,
 		displayname: displayname,
 		shortdescription: shortdescription, 
 		icon: icon, 
-		workspace: workspace 
+		workspace: workspace,
+		opensilent: opensilent ? '1' : '0'
 	};
-	console.log( 'Saving item: ', ms );
 	Application.selectAfterLoad = id;
 	m.execute( 'saveitem', ms );
 }
@@ -382,7 +382,8 @@ Application.receiveMessage = function( msg )
 						msg.displayname,
 						msg.shortdescription,
 						msg.icon,
-						msg.workspace
+						msg.workspace,
+						msg.opensilent
 					);
 				}
 				break;

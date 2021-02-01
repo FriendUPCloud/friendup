@@ -1819,6 +1819,11 @@ function apiWrapper( event, force )
 							}
 							break;
 						case 'activate':
+							// Silent apps don't activate until clicked!
+							if( app.opensilent )
+							{
+								return;
+							}
 							// Don't touch moving windows!
 							if( window.isMobile )
 							{
@@ -1853,6 +1858,7 @@ function apiWrapper( event, force )
 					
 					// Add preferred workspace
 					if( app.workspace ) msg.data.workspace = app.workspace;
+					if( app.opensilent ) msg.data.openSilent = app.opensilent;
 
 					// Redirect to the real screen
 					if( msg.data.screen && app && app.screens[ msg.data.screen ] )

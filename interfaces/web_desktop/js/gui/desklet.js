@@ -791,6 +791,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				o.src = getImageUrl( o.src );
 			}
 			
+			o.opensilent = o.opensilent === '1' ? true : false;
+			
 			// This is web bookmarks
 			if( o.src == '.url' )
 			{
@@ -869,7 +871,9 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				}
 
 				var rememberCurrent = false;
-				if( currentMovable )
+				
+				// If we have a non silent launch, and a current movable, deactivate current
+				if( currentMovable && !o.opensilent )
 				{
 					rememberCurrent = currentMovable;
 					_DeactivateWindow( currentMovable );
@@ -924,7 +928,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 									return ( function( mm, me, dd ){
 										ExecuteApplication( mm, me, false, false, {
 											dockItem: dd,
-											uniqueId: dd.uniqueId
+											uniqueId: dd.uniqueId,
+											openSilent: o.opensilent ? true : false
 										} );
 									} )( mt.executable, executable, div );
 								}
@@ -952,7 +957,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 						( function( mm, me, dd ){
 							ExecuteApplication( mm, me, false, false, {
 								dockItem: dd,
-								uniqueId: dd.uniqueId
+								uniqueId: dd.uniqueId,
+								openSilent: o.opensilent ? true : false
 							} );
 						} )( executable, args, div );
 					}
@@ -994,13 +1000,17 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					( function( mm, me, dd ){
 						ExecuteApplication( mm, me, false, false, {
 							dockItem: dd,
-							uniqueId: dd.uniqueId
+							uniqueId: dd.uniqueId,
+							openSilent: o.opensilent ? true : false
 						} );
 					} )( executable, args, div );
 				}
 			
-				// Switch to the workspace of the app
-				Workspace.switchWorkspace( o.workspace );
+				// Switch to the workspace of the app (unless silent)
+				if( !o.opensilent )
+				{
+					Workspace.switchWorkspace( o.workspace );
+				}
 			
 				// Close it for mobile
 				if( window.isMobile )
@@ -1121,7 +1131,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				}
 			}
 			this.dom.appendChild( div );
-			this.refresh ();
+			this.refresh();
 			return true;
 		}
 		return false;
