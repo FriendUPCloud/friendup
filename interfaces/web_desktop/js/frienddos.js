@@ -1615,8 +1615,6 @@ window.Shell = function( appObject )
 			return false;
 		}
 		
-		//console.log( 'this.execute = function( cmd, ecallback )', cmd );
-		
 		// References
 		// TODO: Remove dosobj and replace with t
 		var dosobj = t = this;

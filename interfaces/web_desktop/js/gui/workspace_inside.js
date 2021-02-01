@@ -1932,8 +1932,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 												// Sanitize
 												if( cmd.indexOf( 'launch' ) == 0 )
 												{
-													var appName = cmd.split( ' ' );
-													appName = appName[ appName.length - 1 ];
+													let appString = cmd.substr( 7, cmd.length - 7 );
+													let appName = appString.split( ' ' )[0];
+													let args = appString.substr( appName.length + 1, appString.length - appName.length + 1 );
 													var found = false;
 													for( var b = 0; b < Workspace.applications.length; b++ )
 													{
