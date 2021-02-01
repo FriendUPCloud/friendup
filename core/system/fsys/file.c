@@ -16,7 +16,7 @@
  */
 
 #include "file.h"
-#include <system/user/user_session.h>
+#include <system/user/usersession.h>
 #include <system/fsys/device_handling.h>
 #include <system/json/jsmn.h>
 #include <system/systembase.h>

@@ -21,9 +21,9 @@
 #define __SYSTEM_SECURITY_SECURITY_MANAGER_H__
 
 #include <core/types.h>
-#include <system/user/user_session.h>
+#include <system/user/usersession.h>
 #include <system/usergroup/user_group.h>
-#include <system/user/user_session_manager.h>
+#include <system/user/usersession_manager.h>
 #include <system/user/user.h>
 #include <util/hashmap_long.h>
 

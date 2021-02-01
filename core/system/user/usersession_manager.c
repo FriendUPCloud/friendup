@@ -17,7 +17,7 @@
  *  @date created 11/2016
  */
 
-#include "user_session_manager.h"
+#include "usersession_manager.h"
 #include "user.h"
 
 #include <system/systembase.h>

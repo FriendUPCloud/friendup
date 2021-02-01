@@ -21,9 +21,9 @@
 #define __SYSTEM_USER_USER_MANAGER_H__
 
 #include <core/types.h>
-#include "user_session.h"
+#include "usersession.h"
 #include <system/usergroup/user_group.h>
-#include "user_session_manager.h"
+#include "usersession_manager.h"
 #include "user.h"
 #include "remote_user.h"
 #include <util/hashmap_kint.h>

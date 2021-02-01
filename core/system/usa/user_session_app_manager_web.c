@@ -22,7 +22,7 @@
 #include "user_session_app_manager_web.h"
 #include <system/systembase.h>
 #include <system/fsys/device_handling.h>
-#include <system/user/user_session_manager.h>
+#include <system/user/usersession_manager.h>
 
 /**
  * Http web call processor

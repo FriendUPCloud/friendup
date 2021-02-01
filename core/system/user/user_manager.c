@@ -19,7 +19,7 @@
 
 #include "user.h"
 #include "user_manager.h"
-#include "user_session_manager.h"
+#include "usersession_manager.h"
 
 #include <system/systembase.h>
 #include <util/sha256.h>

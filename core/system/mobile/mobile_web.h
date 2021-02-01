@@ -23,7 +23,7 @@
 #include <core/types.h>
 #include <core/nodes.h>
 
-#include <system/user/user_session.h>
+#include <system/user/usersession.h>
 #include <system/usergroup/user_group.h>
 #include <system/user/user.h>
 #include "mobile_manager.h"

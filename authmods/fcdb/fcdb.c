@@ -31,7 +31,7 @@
 #include <util/session_id.h>
 #include <network/websocket_client.h>
 
-#include <system/user/user_session_manager.h>
+#include <system/user/usersession_manager.h>
 #include <system/systembase.h>
 #include <system/user/user_manager.h>
 

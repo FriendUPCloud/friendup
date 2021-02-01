@@ -28,7 +28,7 @@
 #include <interface/properties_interface.h>
 #include <util/buffered_string.h>
 #include <system/json/json_converter.h>
-#include <system/user/user_session.h>
+#include <system/user/usersession.h>
 
 #define LIB_NAME "z.library"
 #define LIB_VERSION			1

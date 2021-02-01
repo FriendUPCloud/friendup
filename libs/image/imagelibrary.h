@@ -22,7 +22,7 @@
 #include <system/fsys/file.h>
 #include <system/fsys/fsys.h>
 #include <system/user/user.h>
-#include <system/user/user_session.h>
+#include <system/user/usersession.h>
 
 #ifdef USE_IMAGE_MAGICK
 #include <wand/magick_wand.h>

@@ -22,7 +22,7 @@
 #include <time.h>
 #include <system/systembase.h>
 #include "file_permissions.h"
-#include <system/user/user_session.h>
+#include <system/user/usersession.h>
 
 //
 // Lock types
