@@ -445,7 +445,7 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	
 	//$logger->log( 'Trying to log in: ' . $sidm . ' ' . print_r( $args, 1 ) );
 	
-	$hsidm = hash( 'sha256', $sidm );
+	//$hsidm = hash( 'sha256', $sidm );
 
 	// Here we need a union because we are looking for sessionid in both the
 	// FUserSession and FUser tables..
@@ -455,12 +455,12 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	}
 	// Here we're trying to load it
 	else if(
-		$hsidm && 
+		$sidm && 
 		( $User = $SqlDatabase->fetchObject( '
 			SELECT u.* FROM FUser u, FUserSession us
 			WHERE
 				us.UserID = u.ID AND
-				( u.SessionID=\'' . $hsidm . '\' OR us.SessionID = \'' . $hsidm . '\' )
+				( u.SessionID=\'' . $sidm . '\' OR us.SessionID = \'' . $sidm . '\' )
 		' ) )
 	)
 	{

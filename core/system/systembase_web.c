@@ -182,23 +182,46 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 			strcpy( allArgsNew, allArgs );
 		}
 		*/
-		strcpy( allArgsNew, allArgs );
+		//strcpy( allArgsNew, allArgs );
 		
+		//
 		// if there is sessionid in request it should be changed to one used by DB
+		//
+		
 		char *sessptr = strstr( allArgs, "sessionid=" );
 		if( sessptr != NULL )
 		{
 			char *sessionPointerInMemory = sessptr+10;
-			char *sessionIdFromArgs = StringDuplicateN( sessionPointerInMemory, 255 );
+			int len = 0;
+			char *endSessionID = strstr( sessionPointerInMemory, "&" );
+			if( endSessionID != NULL )
+			{
+				len = endSessionID - sessionPointerInMemory;
+			}
+			else
+			{
+				len = strlen( sessionPointerInMemory );
+			}
+			
+			// now we have to copy everything
+			strncpy( allArgsNew, allArgs, sessionPointerInMemory-allArgs );
+			
+			char *sessionIdFromArgs = StringDuplicateN( sessionPointerInMemory, len );
 			if( sessionIdFromArgs != NULL )
 			{
 				char *encSessionID = SLIB->sl_UtilInterface.DatabaseEncodeString( sessionIdFromArgs );
 				if( encSessionID != NULL )
 				{
-					memcpy( sessionPointerInMemory, encSessionID, 255 );
+					//memcpy( sessionPointerInMemory, encSessionID, len );
+					strcat( allArgsNew, encSessionID );
 					FFree( encSessionID );
 				}
 				FFree( sessionIdFromArgs );
+			}
+			
+			if( endSessionID != NULL )
+			{
+				strcat( allArgsNew, endSessionID );
 			}
 		}
 		else
