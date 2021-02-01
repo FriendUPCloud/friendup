@@ -1,22 +1,23 @@
 /*
  * Copyright 2011-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/opensslconf.h>
+
 #include <stdio.h>
 #include <string.h>
-#include <openssl/opensslconf.h>
+
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/aes.h>
 #include <openssl/sha.h>
 #include <openssl/rand.h>
-#include "internal/cryptlib.h"
-#include "crypto/modes.h"
+#include "modes_local.h"
 #include "crypto/evp.h"
 #include "internal/constant_time.h"
 
@@ -32,10 +33,11 @@ typedef struct {
 
 #define NO_PAYLOAD_LENGTH       ((size_t)-1)
 
-#if     defined(AES_ASM) &&     ( \
+#if     defined(AESNI_ASM) &&     ( \
         defined(__x86_64)       || defined(__x86_64__)  || \
         defined(_M_AMD64)       || defined(_M_X64)      )
 
+extern unsigned int OPENSSL_ia32cap_P[];
 # define AESNI_CAPABLE   (1<<(57-32))
 
 int aesni_set_encrypt_key(const unsigned char *userKey, int bits,

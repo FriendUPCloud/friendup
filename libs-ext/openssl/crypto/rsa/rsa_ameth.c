@@ -1,7 +1,7 @@
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -118,6 +118,15 @@ static int rsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 
 static int rsa_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 {
+    /*
+     * Don't check the public/private key, this is mostly for smart
+     * cards.
+     */
+    if (((RSA_flags(a->pkey.rsa) & RSA_METHOD_FLAG_NO_CHECK))
+            || (RSA_flags(b->pkey.rsa) & RSA_METHOD_FLAG_NO_CHECK)) {
+        return 1;
+    }
+
     if (BN_cmp(b->pkey.rsa->n, a->pkey.rsa->n) != 0
         || BN_cmp(b->pkey.rsa->e, a->pkey.rsa->e) != 0)
         return 0;
@@ -447,7 +456,7 @@ static int rsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
         RSA_PSS_PARAMS_free(pss);
         if (!rv)
             return 0;
-    } else if (BIO_puts(bp, "\n") <= 0) {
+    } else if (!sig && BIO_puts(bp, "\n") <= 0) {
         return 0;
     }
     if (sig)

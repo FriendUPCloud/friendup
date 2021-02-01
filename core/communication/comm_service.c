@@ -1452,10 +1452,9 @@ FConnection *CommServiceAddConnection( CommService* s, Socket* socket, char *nam
 		{
 			DEBUG("Closing new socket\n");
 			cfcn->fc_Socket->s_Interface->SocketDelete( cfcn->fc_Socket );
-			socket = NULL;
+			//socket = NULL;
 		}
 		
-		DEBUG("New socket added\n");
 		cfcn->fc_Socket = socket;
 		if( socket != NULL )
 		{

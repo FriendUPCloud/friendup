@@ -161,7 +161,7 @@ void NotificationManagerDelete( NotificationManager *nm )
 			while( TRUE )
 			{
 				DEBUG("[NotificationManagerDelete] killing android in use: %d\n", nm->nm_AndroidSendInUse );
-				if( nm->nm_AndroidSendInUse <= 0 || ((tr++)> 30 ) )
+				if( (nm->nm_AndroidSendInUse <= 0 && nm->nm_AndroidSendThread->t_Launched == FALSE ) || ((tr++)> 30 ) )
 				{
 					break;
 				}
@@ -863,7 +863,7 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 				}
 				*/
 				
-				dstsize = GenerateServiceMessage( dstMsg, reqID, path, params, us );
+				dstsize = GenerateServiceMessage( dstMsg, reqID, (char *)path, (char *)params, us );
 				
 				Log( FLOG_INFO, "[NotificationManagerSendRequestToConnections] Send message: '%s'\n", dstMsg );
 				
@@ -891,7 +891,7 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 				}
 				*/
 				
-				dstsize = GenerateServiceMessage( dstMsg, reqID, path, params, us );
+				dstsize = GenerateServiceMessage( dstMsg, reqID, (char *)path, (char *)params, us );
 				Log( FLOG_INFO, "[NotificationManagerSendRequestToConnections] Send message: '%s'\n", dstMsg );
 				
 				ret += WriteMessageToServers( con->esc_Connection, (unsigned char *)dstMsg, dstsize );
@@ -1046,7 +1046,7 @@ char *NotificationManagerSendRequestToConnections( NotificationManager *nm, Http
 int NotificationManagerAddIncomingRequestES( NotificationManager *nm, char *reqid, char *message )
 {
 	// allocate memory for new entry
-	FQEntry *newEntry = FCalloc( 1, sizeof( FQEntry ) );
+	FQEntry *newEntry = (FQEntry *)FCalloc( 1, sizeof( FQEntry ) );
 	
 	DEBUG("[NotificationManagerAddIncomingRequestES] requestid : %s message: %s\n", reqid, message );
 	
@@ -1064,6 +1064,10 @@ int NotificationManagerAddIncomingRequestES( NotificationManager *nm, char *reqi
 			
 			DEBUG("[NotificationManagerAddIncomingRequestES] new entry added to list\n");
 			return 0;
+		}
+		else
+		{
+			FFree( newEntry );
 		}
 	}
 	return 1;
@@ -1430,7 +1434,7 @@ int NotificationManagerNotificationSendFirebaseQueue( NotificationManager *nm, N
 			}
 		}
 		
-		FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
+		FQEntry *en = (FQEntry *)FCalloc( 1, sizeof( FQEntry ) );
 		if( en != NULL )
 		{
 			en->fq_Data = (void *)msg;
@@ -1442,6 +1446,10 @@ int NotificationManagerNotificationSendFirebaseQueue( NotificationManager *nm, N
 				
 				pthread_cond_signal( &(nm->nm_AndroidSendCond) );
 				FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
+			}
+			else
+			{
+				FFree( en );
 			}
 		}
 		else

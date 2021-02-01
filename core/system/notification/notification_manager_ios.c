@@ -142,7 +142,7 @@ char *TokenToBinary( const char *token, int *bsize )
 
 		for( i = 0; i < len; i += 8)
 		{
-			memset(data, 0, 4);
+			memset(data, 0, 4*sizeof(unsigned) );
 			data[0] = (inputCharVector[i] << 4) | (inputCharVector[i + 1]);
 			data[1] = (inputCharVector[i + 2] << 4) | (inputCharVector[i + 3]);
 			data[2] = (inputCharVector[i + 4] << 4) | (inputCharVector[i + 5]);

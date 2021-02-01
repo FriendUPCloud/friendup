@@ -562,28 +562,31 @@ INRAMFile *INRAMFileMakedirPath( INRAMFile *root, char *path, int *error )
 	if( i != pathlen )
 	{
 		char *npath = FCalloc( pathlen+10, sizeof(char) );
-		strncpy( npath, path, pathlen );
-		strcat( npath, "/" );
-		int oldpos = i = 0;
-		for( ; i < pathlen+1 ; i++ )
+		if( npath != NULL )
 		{
-			if( npath[ i ] == '/' || npath[ i ] == 0 )
+			strncpy( npath, path, pathlen );
+			strcat( npath, "/" );
+			int oldpos = i = 0;
+			for( ; i < pathlen+1 ; i++ )
 			{
-				npath[ i ] = 0;
-				DEBUG("founded i %d len %d path %s\n", i, pathlen, &npath[ oldpos ] );
-				INRAMFile *nd = INRAMFileNew( INRAM_DIR, NULL, &npath[ oldpos ] );
+				if( npath[ i ] == '/' || npath[ i ] == 0 )
+				{
+					npath[ i ] = 0;
+					DEBUG("founded i %d len %d path %s\n", i, pathlen, &npath[ oldpos ] );
+					INRAMFile *nd = INRAMFileNew( INRAM_DIR, NULL, &npath[ oldpos ] );
 				
-				INRAMFileAddChild( root, nd );
-				INRAMFile *oldnd = nd->nf_Parent;
-				DEBUG("---parent %s\n", oldnd->nf_Name );
+					INRAMFileAddChild( root, nd );
+					INRAMFile *oldnd = nd->nf_Parent;
+					DEBUG("---parent %s\n", oldnd->nf_Name );
 				
-				root = nd;
+					root = nd;
 				
-				oldpos = i+1;
-				//break;
+					oldpos = i+1;
+					//break;
+				}
 			}
+			FFree( npath );
 		}
-		FFree( npath );
 	}
 	else
 	{

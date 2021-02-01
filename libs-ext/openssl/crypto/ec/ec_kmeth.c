@@ -1,7 +1,7 @@
 /*
  * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -59,7 +59,7 @@ int EC_KEY_set_method(EC_KEY *key, const EC_KEY_METHOD *meth)
     if (finish != NULL)
         finish(key);
 
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#ifndef OPENSSL_NO_ENGINE
     ENGINE_finish(key->engine);
     key->engine = NULL;
 #endif
@@ -70,30 +70,28 @@ int EC_KEY_set_method(EC_KEY *key, const EC_KEY_METHOD *meth)
     return 1;
 }
 
-EC_KEY *ec_key_new_method_int(OPENSSL_CTX *libctx, ENGINE *engine)
+EC_KEY *EC_KEY_new_method(ENGINE *engine)
 {
     EC_KEY *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        ECerr(EC_F_EC_KEY_NEW_METHOD_INT, ERR_R_MALLOC_FAILURE);
+        ECerr(EC_F_EC_KEY_NEW_METHOD, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-
-    ret->libctx = libctx;
 
     ret->references = 1;
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        ECerr(EC_F_EC_KEY_NEW_METHOD_INT, ERR_R_MALLOC_FAILURE);
+        ECerr(EC_F_EC_KEY_NEW_METHOD, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(ret);
         return NULL;
     }
 
     ret->meth = EC_KEY_get_default_method();
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#ifndef OPENSSL_NO_ENGINE
     if (engine != NULL) {
         if (!ENGINE_init(engine)) {
-            ECerr(EC_F_EC_KEY_NEW_METHOD_INT, ERR_R_ENGINE_LIB);
+            ECerr(EC_F_EC_KEY_NEW_METHOD, ERR_R_ENGINE_LIB);
             goto err;
         }
         ret->engine = engine;
@@ -102,7 +100,7 @@ EC_KEY *ec_key_new_method_int(OPENSSL_CTX *libctx, ENGINE *engine)
     if (ret->engine != NULL) {
         ret->meth = ENGINE_get_EC(ret->engine);
         if (ret->meth == NULL) {
-            ECerr(EC_F_EC_KEY_NEW_METHOD_INT, ERR_R_ENGINE_LIB);
+            ECerr(EC_F_EC_KEY_NEW_METHOD, ERR_R_ENGINE_LIB);
             goto err;
         }
     }
@@ -111,15 +109,12 @@ EC_KEY *ec_key_new_method_int(OPENSSL_CTX *libctx, ENGINE *engine)
     ret->version = 1;
     ret->conv_form = POINT_CONVERSION_UNCOMPRESSED;
 
-/* No ex_data inside the FIPS provider */
-#ifndef FIPS_MODE
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_EC_KEY, ret, &ret->ex_data)) {
         goto err;
     }
-#endif
 
     if (ret->meth->init != NULL && ret->meth->init(ret) == 0) {
-        ECerr(EC_F_EC_KEY_NEW_METHOD_INT, ERR_R_INIT_FAIL);
+        ECerr(EC_F_EC_KEY_NEW_METHOD, ERR_R_INIT_FAIL);
         goto err;
     }
     return ret;
@@ -128,13 +123,6 @@ EC_KEY *ec_key_new_method_int(OPENSSL_CTX *libctx, ENGINE *engine)
     EC_KEY_free(ret);
     return NULL;
 }
-
-#ifndef FIPS_MODE
-EC_KEY *EC_KEY_new_method(ENGINE *engine)
-{
-    return ec_key_new_method_int(NULL, engine);
-}
-#endif
 
 int ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
                      const EC_KEY *eckey,

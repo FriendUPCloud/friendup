@@ -37,14 +37,15 @@
 
 typedef struct App
 {
-	int appPid;
+	int			appPid;
 	
-	int outfd[2];
-	int infd[2];
-	fd_set readfd, writefd;
+	int			outfd[2];
+	int			infd[2];
+	fd_set		readfd;
+	fd_set		writefd;
 	
-	int quit;
-	int appQuit;
+	int			quit;
+	int			appQuit;
 }App;
 
 //

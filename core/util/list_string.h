@@ -55,6 +55,6 @@ FLONG ListStringAdd(ListString *add, char *data, FLONG size);
 // join all lists to one string
 //
 
-ListString *ListStringJoin(ListString *ls);
+int ListStringJoin(ListString *ls);
 
 #endif

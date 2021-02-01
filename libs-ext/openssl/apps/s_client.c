@@ -1,8 +1,8 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -38,7 +38,6 @@ typedef unsigned int u_int;
 #include <openssl/rand.h>
 #include <openssl/ocsp.h>
 #include <openssl/bn.h>
-#include <openssl/trace.h>
 #include <openssl/async.h>
 #ifndef OPENSSL_NO_SRP
 # include <openssl/srp.h>
@@ -75,7 +74,6 @@ static void print_stuff(BIO *berr, SSL *con, int full);
 static int ocsp_resp_cb(SSL *s, void *arg);
 #endif
 static int ldap_ExtendedResponse_parse(const char *buf, long rem);
-static char *base64encode (const void *buf, size_t len);
 static int is_dNS_name(const char *host);
 
 static int saved_errno;
@@ -593,8 +591,7 @@ typedef enum OPTION_choice {
     OPT_V_ENUM,
     OPT_X_ENUM,
     OPT_S_ENUM,
-    OPT_FALLBACKSCSV, OPT_NOCMDS, OPT_PROXY, OPT_PROXY_USER, OPT_PROXY_PASS,
-    OPT_DANE_TLSA_DOMAIN,
+    OPT_FALLBACKSCSV, OPT_NOCMDS, OPT_PROXY, OPT_DANE_TLSA_DOMAIN,
 #ifndef OPENSSL_NO_CT
     OPT_CT, OPT_NOCT, OPT_CTLOG_FILE,
 #endif
@@ -613,8 +610,6 @@ const OPTIONS s_client_options[] = {
     {"bind", OPT_BIND, 's', "bind local address for connection"},
     {"proxy", OPT_PROXY, 's',
      "Connect to via specified proxy to the real server"},
-    {"proxy_user", OPT_PROXY_USER, 's', "UserID for proxy authentication"},
-    {"proxy_pass", OPT_PROXY_PASS, 's', "Proxy authentication password source"},
 #ifdef AF_UNIX
     {"unix", OPT_UNIX, 's', "Connect over the specified Unix-domain socket"},
 #endif
@@ -902,10 +897,8 @@ int s_client_main(int argc, char **argv)
     STACK_OF(X509_CRL) *crls = NULL;
     const SSL_METHOD *meth = TLS_client_method();
     const char *CApath = NULL, *CAfile = NULL;
-    char *cbuf = NULL, *sbuf = NULL, *mbuf = NULL;
-    char *proxystr = NULL, *proxyuser = NULL;
-    char *proxypassarg = NULL, *proxypass = NULL;
-    char *connectstr = NULL, *bindstr = NULL;
+    char *cbuf = NULL, *sbuf = NULL;
+    char *mbuf = NULL, *proxystr = NULL, *connectstr = NULL, *bindstr = NULL;
     char *cert_file = NULL, *key_file = NULL, *chain_file = NULL;
     char *chCApath = NULL, *chCAfile = NULL, *host = NULL;
     char *port = OPENSSL_strdup(PORT);
@@ -1087,12 +1080,6 @@ int s_client_main(int argc, char **argv)
         case OPT_PROXY:
             proxystr = opt_arg();
             starttls_proto = PROTO_CONNECT;
-            break;
-        case OPT_PROXY_USER:
-            proxyuser = opt_arg();
-            break;
-        case OPT_PROXY_PASS:
-            proxypassarg = opt_arg();
             break;
 #ifdef AF_UNIX
         case OPT_UNIX:
@@ -1296,22 +1283,42 @@ int s_client_main(int argc, char **argv)
         case OPT_SSL3:
             min_version = SSL3_VERSION;
             max_version = SSL3_VERSION;
+            socket_type = SOCK_STREAM;
+#ifndef OPENSSL_NO_DTLS
+            isdtls = 0;
+#endif
             break;
         case OPT_TLS1_3:
             min_version = TLS1_3_VERSION;
             max_version = TLS1_3_VERSION;
+            socket_type = SOCK_STREAM;
+#ifndef OPENSSL_NO_DTLS
+            isdtls = 0;
+#endif
             break;
         case OPT_TLS1_2:
             min_version = TLS1_2_VERSION;
             max_version = TLS1_2_VERSION;
+            socket_type = SOCK_STREAM;
+#ifndef OPENSSL_NO_DTLS
+            isdtls = 0;
+#endif
             break;
         case OPT_TLS1_1:
             min_version = TLS1_1_VERSION;
             max_version = TLS1_1_VERSION;
+            socket_type = SOCK_STREAM;
+#ifndef OPENSSL_NO_DTLS
+            isdtls = 0;
+#endif
             break;
         case OPT_TLS1:
             min_version = TLS1_VERSION;
             max_version = TLS1_VERSION;
+            socket_type = SOCK_STREAM;
+#ifndef OPENSSL_NO_DTLS
+            isdtls = 0;
+#endif
             break;
         case OPT_DTLS:
 #ifndef OPENSSL_NO_DTLS
@@ -1522,7 +1529,6 @@ int s_client_main(int argc, char **argv)
             break;
         }
     }
-
     if (count4or6 >= 2) {
         BIO_printf(bio_err, "%s: Can't use both -4 and -6\n", prog);
         goto opthelp;
@@ -1645,17 +1651,7 @@ int s_client_main(int argc, char **argv)
 #endif
 
     if (!app_passwd(passarg, NULL, &pass, NULL)) {
-        BIO_printf(bio_err, "Error getting private key password\n");
-        goto end;
-    }
-
-    if (!app_passwd(proxypassarg, NULL, &proxypass, NULL)) {
-        BIO_printf(bio_err, "Error getting proxy password\n");
-        goto end;
-    }
-
-    if (proxypass != NULL && proxyuser == NULL) {
-        BIO_printf(bio_err, "Error: Must specify proxy_user with proxy_pass\n");
+        BIO_printf(bio_err, "Error getting password\n");
         goto end;
     }
 
@@ -2017,7 +2013,7 @@ int s_client_main(int argc, char **argv)
 
     if (!noservername && (servername != NULL || dane_tlsa_domain == NULL)) {
         if (servername == NULL) {
-            if(host == NULL || is_dNS_name(host))
+            if(host == NULL || is_dNS_name(host)) 
                 servername = (host == NULL) ? "localhost" : host;
         }
         if (servername != NULL && !SSL_set_tlsext_host_name(con, servername)) {
@@ -2365,33 +2361,7 @@ int s_client_main(int argc, char **argv)
             BIO *fbio = BIO_new(BIO_f_buffer());
 
             BIO_push(fbio, sbio);
-            BIO_printf(fbio, "CONNECT %s HTTP/1.0\r\n", connectstr);
-            /*
-             * Workaround for broken proxies which would otherwise close
-             * the connection when entering tunnel mode (eg Squid 2.6)
-             */
-            BIO_printf(fbio, "Proxy-Connection: Keep-Alive\r\n");
-
-            /* Support for basic (base64) proxy authentication */
-            if (proxyuser != NULL) {
-                size_t l;
-                char *proxyauth, *proxyauthenc;
-
-                l = strlen(proxyuser);
-                if (proxypass != NULL)
-                    l += strlen(proxypass);
-                proxyauth = app_malloc(l + 2, "Proxy auth string");
-                BIO_snprintf(proxyauth, l + 2, "%s:%s", proxyuser,
-                             (proxypass != NULL) ? proxypass : "");
-                proxyauthenc = base64encode(proxyauth, strlen(proxyauth));
-                BIO_printf(fbio, "Proxy-Authorization: Basic %s\r\n",
-                           proxyauthenc);
-                OPENSSL_clear_free(proxyauth, strlen(proxyauth));
-                OPENSSL_clear_free(proxyauthenc, strlen(proxyauthenc));
-            }
-
-            /* Terminate the HTTP CONNECT request */
-            BIO_printf(fbio, "\r\n");
+            BIO_printf(fbio, "CONNECT %s HTTP/1.0\r\n\r\n", connectstr);
             (void)BIO_flush(fbio);
             /*
              * The first line is the HTTP response.  According to RFC 7230,
@@ -2604,16 +2574,12 @@ int s_client_main(int argc, char **argv)
             /* STARTTLS command requires CAPABILITIES... */
             BIO_printf(fbio, "CAPABILITIES\r\n");
             (void)BIO_flush(fbio);
-            BIO_gets(fbio, mbuf, BUFSIZZ);
-            /* no point in trying to parse the CAPABILITIES response if there is none */
-            if (strstr(mbuf, "101") != NULL) {
-                /* wait for multi-line CAPABILITIES response */
-                do {
-                    mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
-                    if (strstr(mbuf, "STARTTLS"))
-                        foundit = 1;
-                } while (mbuf_len > 1 && mbuf[0] != '.');
-            }
+            /* wait for multi-line CAPABILITIES response */
+            do {
+                mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
+                if (strstr(mbuf, "STARTTLS"))
+                    foundit = 1;
+            } while (mbuf_len > 1 && mbuf[0] != '.');
             (void)BIO_flush(fbio);
             BIO_pop(fbio);
             BIO_free(fbio);
@@ -3104,14 +3070,22 @@ int s_client_main(int argc, char **argv)
                 BIO_printf(bio_err, "RENEGOTIATING\n");
                 SSL_renegotiate(con);
                 cbuf_len = 0;
-            } else if (!c_ign_eof && (cbuf[0] == 'K' || cbuf[0] == 'k' )
+	    } else if (!c_ign_eof && (cbuf[0] == 'K' || cbuf[0] == 'k' )
                     && cmdletters) {
                 BIO_printf(bio_err, "KEYUPDATE\n");
                 SSL_key_update(con,
                                cbuf[0] == 'K' ? SSL_KEY_UPDATE_REQUESTED
                                               : SSL_KEY_UPDATE_NOT_REQUESTED);
                 cbuf_len = 0;
-            } else {
+            }
+#ifndef OPENSSL_NO_HEARTBEATS
+            else if ((!c_ign_eof) && (cbuf[0] == 'B' && cmdletters)) {
+                BIO_printf(bio_err, "HEARTBEATING\n");
+                SSL_heartbeat(con);
+                cbuf_len = 0;
+            }
+#endif
+            else {
                 cbuf_len = i;
                 cbuf_off = 0;
 #ifdef CHARSET_EBCDIC
@@ -3187,8 +3161,6 @@ int s_client_main(int argc, char **argv)
     OPENSSL_clear_free(cbuf, BUFSIZZ);
     OPENSSL_clear_free(sbuf, BUFSIZZ);
     OPENSSL_clear_free(mbuf, BUFSIZZ);
-    if (proxypass != NULL)
-        OPENSSL_clear_free(proxypass, strlen(proxypass));
     release_engine(e);
     BIO_free(bio_c_out);
     bio_c_out = NULL;
@@ -3310,14 +3282,9 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     BIO_printf(bio, "Expansion: %s\n",
                expansion ? SSL_COMP_get_name(expansion) : "NONE");
 #endif
-#ifndef OPENSSL_NO_KTLS
-    if (BIO_get_ktls_send(SSL_get_wbio(s)))
-        BIO_printf(bio_err, "Using Kernel TLS for sending\n");
-    if (BIO_get_ktls_recv(SSL_get_rbio(s)))
-        BIO_printf(bio_err, "Using Kernel TLS for receiving\n");
-#endif
 
-    if (OSSL_TRACE_ENABLED(TLS)) {
+#ifdef SSL_DEBUG
+    {
         /* Print out local port of connection: useful for debugging */
         int sock;
         union BIO_sock_info_u info;
@@ -3330,6 +3297,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
         }
         BIO_ADDR_free(info.addr);
     }
+#endif
 
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
     if (next_proto.status != -1) {
@@ -3529,30 +3497,7 @@ static int ldap_ExtendedResponse_parse(const char *buf, long rem)
 }
 
 /*
- * BASE64 encoder: used only for encoding basic proxy authentication credentials
- */
-static char *base64encode (const void *buf, size_t len)
-{
-    int i;
-    size_t outl;
-    char  *out;
-
-    /* Calculate size of encoded data */
-    outl = (len / 3);
-    if (len % 3 > 0)
-        outl++;
-    outl <<= 2;
-    out = app_malloc(outl + 1, "base64 encode buffer");
-
-    i = EVP_EncodeBlock((unsigned char *)out, buf, len);
-    assert(i <= (int)outl);
-    if (i < 0)
-        *out = '\0';
-    return out;
-}
-
-/*
- * Host dNS Name verifier: used for checking that the hostname is in dNS format
+ * Host dNS Name verifier: used for checking that the hostname is in dNS format 
  * before setting it as SNI
  */
 static int is_dNS_name(const char *host)

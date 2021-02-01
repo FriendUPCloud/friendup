@@ -1,7 +1,7 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <openssl/opensslv.h>
 #include <openssl/ssl.h>
-#include <openssl/types.h>
+#include <openssl/ossl_typ.h>
 #include "crypto/dso_conf.h"
 
 typedef void DSO;
@@ -23,9 +23,7 @@ typedef void (*SSL_CTX_free_t)(SSL_CTX *);
 typedef int (*OPENSSL_init_crypto_t)(uint64_t, void *);
 typedef int (*OPENSSL_atexit_t)(void (*handler)(void));
 typedef unsigned long (*ERR_get_error_t)(void);
-typedef unsigned long (*OPENSSL_version_major_t)(void);
-typedef unsigned long (*OPENSSL_version_minor_t)(void);
-typedef unsigned long (*OPENSSL_version_patch_t)(void);
+typedef unsigned long (*OpenSSL_version_num_t)(void);
 typedef DSO * (*DSO_dsobyaddr_t)(void (*addr)(void), int flags);
 typedef int (*DSO_free_t)(DSO *dso);
 
@@ -126,14 +124,12 @@ static int test_lib(void)
     union {
         void (*func)(void);
         SHLIB_SYM sym;
-    } symbols[5];
+    } symbols[3];
     TLS_method_t myTLS_method;
     SSL_CTX_new_t mySSL_CTX_new;
     SSL_CTX_free_t mySSL_CTX_free;
     ERR_get_error_t myERR_get_error;
-    OPENSSL_version_major_t myOPENSSL_version_major;
-    OPENSSL_version_minor_t myOPENSSL_version_minor;
-    OPENSSL_version_patch_t myOPENSSL_version_patch;
+    OpenSSL_version_num_t myOpenSSL_version_num;
     OPENSSL_atexit_t myOPENSSL_atexit;
     int result = 0;
 
@@ -199,10 +195,8 @@ static int test_lib(void)
     }
 
     if (!shlib_sym(cryptolib, "ERR_get_error", &symbols[0].sym)
-           || !shlib_sym(cryptolib, "OPENSSL_version_major", &symbols[1].sym)
-           || !shlib_sym(cryptolib, "OPENSSL_version_minor", &symbols[2].sym)
-           || !shlib_sym(cryptolib, "OPENSSL_version_patch", &symbols[3].sym)
-           || !shlib_sym(cryptolib, "OPENSSL_atexit", &symbols[4].sym)) {
+           || !shlib_sym(cryptolib, "OpenSSL_version_num", &symbols[1].sym)
+           || !shlib_sym(cryptolib, "OPENSSL_atexit", &symbols[2].sym)) {
         fprintf(stderr, "Failed to load libcrypto symbols\n");
         goto end;
     }
@@ -212,18 +206,13 @@ static int test_lib(void)
         goto end;
     }
 
-    /* Library and header version should be identical in this test */
-    myOPENSSL_version_major = (OPENSSL_version_major_t)symbols[1].func;
-    myOPENSSL_version_minor = (OPENSSL_version_minor_t)symbols[2].func;
-    myOPENSSL_version_patch = (OPENSSL_version_patch_t)symbols[3].func;
-    if (myOPENSSL_version_major() != OPENSSL_VERSION_MAJOR
-            || myOPENSSL_version_minor() != OPENSSL_VERSION_MINOR
-            || myOPENSSL_version_patch() != OPENSSL_VERSION_PATCH) {
+    myOpenSSL_version_num = (OpenSSL_version_num_t)symbols[1].func;
+    if (myOpenSSL_version_num()  != OPENSSL_VERSION_NUMBER) {
         fprintf(stderr, "Invalid library version number\n");
         goto end;
     }
 
-    myOPENSSL_atexit = (OPENSSL_atexit_t)symbols[4].func;
+    myOPENSSL_atexit = (OPENSSL_atexit_t)symbols[2].func;
     if (!myOPENSSL_atexit(atexit_handler)) {
         fprintf(stderr, "Failed to register atexit handler\n");
         goto end;

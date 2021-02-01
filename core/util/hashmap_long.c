@@ -237,24 +237,23 @@ int HashmapLongRehash( HashmapLong* in )
 	int oldSize;
 	HashmapElementLong* curr;
 
-	/* Setup the new elements */
-	HashmapLong *m = (HashmapLong *) in;
-	HashmapElementLong* temp = (HashmapElementLong *) FCalloc( (2 * m->hl_TableSize), sizeof( HashmapElementLong ) );
-	if( temp  == NULL )
+	// Setup the new elements 
+	HashmapElementLong* temp = (HashmapElementLong *) FCalloc( (2 * in->hl_TableSize), sizeof( HashmapElementLong ) );
+	if( temp == NULL )
 	{
 		return MAP_OMEM;
 	}
 
 	// Update the array 
-	curr = m->hl_Data;
-	m->hl_Data = temp;
+	curr = in->hl_Data;
+	in->hl_Data = temp;
 
 	// Update the size 
-	oldSize = m->hl_TableSize;
-	m->hl_TableSize = 2 * m->hl_TableSize;
-	m->hl_Size = 0;
+	oldSize = in->hl_TableSize;
+	in->hl_TableSize = (2 * in->hl_TableSize);
+	in->hl_Size = 0;
 
-	/* Rehash the elements */
+	// Rehash the elements 
 	for( i = 0; i < oldSize; i++ )
 	{
 		int status;
@@ -264,7 +263,7 @@ int HashmapLongRehash( HashmapLong* in )
 			continue;
 		}
             
-		status = HashmapLongPut( m, curr[i].hel_Key, curr[i].hel_Data );
+		status = HashmapLongPut( in, curr[i].hel_Key, curr[i].hel_Data );
 		if( status != MAP_OK )
 		{
 			FFree( curr );
@@ -421,7 +420,7 @@ void HashmapLongFree( HashmapLong* in )
 	{
 		if( in->hl_Data[i].hel_InUse == TRUE )
 		{
-			if( in->hl_Data[i].hel_Key  != NULL ) FFree( in->hl_Data[i].hel_Key );
+			if( in->hl_Data[i].hel_Key  != NULL ){ FFree( in->hl_Data[i].hel_Key ); in->hl_Data[i].hel_Key = NULL; }
 		}
 	}
 	if( in->hl_Data != NULL )
