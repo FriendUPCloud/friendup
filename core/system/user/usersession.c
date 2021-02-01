@@ -17,7 +17,7 @@
  *  @date created 11/2016
  */
 
-#include "user_session.h"
+#include "usersession.h"
 #include <util/string.h>
 #include <system/systembase.h>
 #include <system/token/dos_token.h>

@@ -51,7 +51,7 @@
 #include <system/cache/cache_manager.h>
 #include <libwebsockets.h>
 #include <system/invar/invar_manager.h>
-#include <system/user/user_session.h>
+#include <system/user/usersession.h>
 #include <system/user/usersession_manager.h>
 #include <system/roles/role_manager.h>
 #include <system/user/user_manager.h>

@@ -939,13 +939,8 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 				
 					UserAddSession( usr, loggedSession );
 					USMSessionSaveDB( sb->sl_USM, loggedSession );
-				
-					if( FRIEND_MUTEX_LOCK( &(sb->sl_USM->usm_Mutex) ) == 0 )
-					{
-						loggedSession->node.mln_Succ = (MinNode *) sb->sl_USM->usm_Sessions;
-						sb->sl_USM->usm_Sessions = loggedSession;
-						FRIEND_MUTEX_UNLOCK( &(sb->sl_USM->usm_Mutex) );
-					}
+
+					USMUserSessionAddToList( sb->sl_USM, loggedSession );
 				}
 				char *err = NULL;
 				sb->UserDeviceMount( sb, usr, 0, TRUE, &err, TRUE );

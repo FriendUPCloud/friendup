@@ -22,7 +22,7 @@
 #include <network/socket.h>
 #include <network/http.h>
 #include <network/path.h>
-#include <system/user/user_session.h>
+#include <system/user/usersession.h>
 
 //
 // Web calls handler, void *SystemBase

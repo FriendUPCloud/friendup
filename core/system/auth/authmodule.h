@@ -23,7 +23,7 @@
 #include "network/socket.h"
 #include "network/http.h"
 #include <system/user/user.h>
-#include <system/user/user_session.h>
+#include <system/user/usersession.h>
 #include <system/application/application.h>
 
 //

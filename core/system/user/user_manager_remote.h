@@ -21,7 +21,7 @@
 #define __SYSTEM_USER_USER_MANAGER_REMOTE_H__
 
 #include <core/types.h>
-#include "user_session.h"
+#include "usersession.h"
 #include <system/usergroup/user_group.h>
 #include "user.h"
 #include "remote_user.h"

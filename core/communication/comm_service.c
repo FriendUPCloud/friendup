@@ -1460,6 +1460,7 @@ FConnection *CommServiceAddConnection( CommService* s, Socket* socket, char *nam
 		{
 			socket->s_Data = cfcn;
 		}
+		
 		/*
 		if( cfcn->fc_Socket != NULL )
 		{

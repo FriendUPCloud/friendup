@@ -27,7 +27,7 @@
 #include <util/buffered_string.h>
 #include <system/fsys/file.h>
 #include <network/user_session_websocket.h>
-#include <system/user/user_session.h>
+#include <system/user/usersession.h>
 
 //
 //

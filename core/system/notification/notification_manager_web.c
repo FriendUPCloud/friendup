@@ -118,7 +118,7 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		
 		HashmapElement *el = NULL;
 		
-		//if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
+		//if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			el = HttpGetPOSTParameter( request, "msg" );
 			if( el != NULL )

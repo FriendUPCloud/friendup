@@ -122,7 +122,7 @@ int mkdir_p(const char *path)
 
 #include <util/log/log.h>
 #include <util/buffered_string.h>
-#include <system/user/user_session.h>
+#include <system/user/usersession.h>
 #include <system/systembase.h>
 #include <network/http.h>
 

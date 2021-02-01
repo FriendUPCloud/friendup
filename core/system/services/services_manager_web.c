@@ -407,7 +407,7 @@ Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserS
 	
 	if( strcmp( urlpath[ ELEMENT_COMMAND ], "start" ) == 0 )
 	{
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			if( selService->ServiceStart != NULL )
 			{
@@ -442,7 +442,7 @@ Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserS
 	
 	else if( strcmp( urlpath[ ELEMENT_COMMAND ], "stop" ) == 0 )
 	{
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			if( selService->ServiceStop != NULL )
 			{
@@ -484,7 +484,7 @@ Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserS
 	
 	else if( strcmp( urlpath[ ELEMENT_COMMAND ], "pause" ) == 0 )
 	{
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			error = 2;
 			HttpAddTextContent( response, "{ \"Status\": \"ok\"}" );
@@ -510,7 +510,7 @@ Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserS
 	
 	else if( strcmp( urlpath[ ELEMENT_COMMAND ], "install" ) == 0 )
 	{
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			if( selService->ServiceInstall != NULL )
 			{
@@ -544,7 +544,7 @@ Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserS
 	
 	else if( strcmp( urlpath[ ELEMENT_COMMAND ], "uninstall" ) == 0 )
 	{
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			if( selService->ServiceUninstall != NULL )
 			{
@@ -578,7 +578,7 @@ Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserS
 	
 	else if( strcmp( urlpath[ ELEMENT_COMMAND ], "status" ) == 0 )
 	{
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			int len;
 		
@@ -617,7 +617,7 @@ Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserS
 	else if( strcmp( urlpath[ ELEMENT_COMMAND ], "command" ) == 0 )
 	{
 
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			HashmapElement *el;
 			char *ret = NULL;
@@ -680,7 +680,7 @@ Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserS
 	
 	else if( strcmp( urlpath[ ELEMENT_COMMAND ], "getwebguii" ) == 0 )
 	{
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			DEBUG("[ServiceManagerWebRequest] GetWebGUI\n");
 			char *lresp = selService->ServiceGetWebGUI( selService );

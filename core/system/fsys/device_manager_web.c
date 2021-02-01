@@ -1570,7 +1570,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 					
 							FBOOL isLimited = FALSE;
 					
-							if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == FALSE )
+							if( loggedSession->us_User->u_IsAdmin == FALSE )
 							{
 								if( strcmp( dev->f_FSysName, "Local" ) == 0 )
 								{
@@ -1697,7 +1697,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 					
 							FBOOL isLimited = FALSE;
 					
-							if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == FALSE )
+							if( loggedSession->us_User->u_IsAdmin == FALSE )
 							{
 								if( strcmp( dev->f_FSysName, "Local" ) == 0 )
 								{
