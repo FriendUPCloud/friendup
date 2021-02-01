@@ -52,7 +52,7 @@ typedef struct WebsocketClient
 // Create new Websocket Client
 //
 
-WebsocketClient *WebsocketClientNew( char *host, int port, void (*fptr)( void *, char *, int ) );
+WebsocketClient *WebsocketClientNew( char *host, int port, void (*fptr)( struct WebsocketClient *, char *, int ) );
 
 //
 // Delete Websocket Client structure

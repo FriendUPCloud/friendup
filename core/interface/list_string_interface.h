@@ -24,7 +24,7 @@ typedef struct ListStringInterface
 	ListString					*(*ListStringNew)();
 	void						(*ListStringDelete)( ListString *ls );
 	int64_t						(*ListStringAdd)( ListString *add, char *data, int64_t size );
-	ListString					*(*ListStringJoin)( ListString *ls );
+	int							(*ListStringJoin)( ListString *ls );
 } ListStringInterface;
 
 //

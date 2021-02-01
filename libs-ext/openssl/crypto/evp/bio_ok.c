@@ -1,7 +1,7 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -203,7 +203,7 @@ static int ok_read(BIO *b, char *out, int outl)
                 /*
                  * copy start of the next block into proper place
                  */
-                if (ctx->buf_len_save - ctx->buf_off_save > 0) {
+                if (ctx->buf_len_save > ctx->buf_off_save) {
                     ctx->buf_len = ctx->buf_len_save - ctx->buf_off_save;
                     memmove(ctx->buf, &(ctx->buf[ctx->buf_off_save]),
                             ctx->buf_len);

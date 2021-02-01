@@ -1,7 +1,7 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -179,7 +179,7 @@ typedef struct {
     ENCDEC_DATA(-1, -1),                        \
     ENCDEC_DATA(0, ASN1_LONG_UNDEF)
 
-#if !OPENSSL_API_3
+#if OPENSSL_API_COMPAT < 0x10200000L
 /***** LONG ******************************************************************/
 
 typedef struct {
@@ -824,7 +824,7 @@ static int test_intern(const TEST_PACKAGE *package)
     return fail == 0;
 }
 
-#if !OPENSSL_API_3
+#if OPENSSL_API_COMPAT < 0x10200000L
 static int test_long_32bit(void)
 {
     return test_intern(&long_test_package_32bit);
@@ -856,9 +856,41 @@ static int test_uint64(void)
     return test_intern(&uint64_test_package);
 }
 
+typedef struct {
+    ASN1_STRING *invalidDirString;
+} INVALIDTEMPLATE;
+
+ASN1_SEQUENCE(INVALIDTEMPLATE) = {
+    /*
+     * DirectoryString is a CHOICE type so it must use explicit tagging -
+     * but we deliberately use implicit here, which makes this template invalid.
+     */
+    ASN1_IMP(INVALIDTEMPLATE, invalidDirString, DIRECTORYSTRING, 12)
+} static_ASN1_SEQUENCE_END(INVALIDTEMPLATE)
+
+IMPLEMENT_STATIC_ASN1_ENCODE_FUNCTIONS(INVALIDTEMPLATE)
+IMPLEMENT_STATIC_ASN1_ALLOC_FUNCTIONS(INVALIDTEMPLATE)
+
+static int test_invalid_template(void)
+{
+    INVALIDTEMPLATE *temp = INVALIDTEMPLATE_new();
+    int ret;
+
+    if (!TEST_ptr(temp))
+        return 0;
+
+    ret = i2d_INVALIDTEMPLATE(temp, NULL);
+
+    INVALIDTEMPLATE_free(temp);
+
+    /* We expect the i2d operation to fail */
+    return ret < 0;
+}
+
+
 int setup_tests(void)
 {
-#if !OPENSSL_API_3
+#if OPENSSL_API_COMPAT < 0x10200000L
     ADD_TEST(test_long_32bit);
     ADD_TEST(test_long_64bit);
 #endif
@@ -866,5 +898,6 @@ int setup_tests(void)
     ADD_TEST(test_uint32);
     ADD_TEST(test_int64);
     ADD_TEST(test_uint64);
+    ADD_TEST(test_invalid_template);
     return 1;
 }

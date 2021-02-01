@@ -173,6 +173,10 @@ int getLocalIP( char* buffer, size_t buflen )
 	char line[100] , *p = NULL, *c;
      
 	f = fopen("/proc/net/route" , "r");
+	if( f == NULL )
+	{
+		return 3;
+	}
 	
     while( fgets(line , 100 , f ) )
 	{
@@ -196,8 +200,7 @@ int getLocalIP( char* buffer, size_t buflen )
  
 	if( getifaddrs(&ifaddr) == -1 )
 	{
-		//perror("getifaddrs");
-		//exit(EXIT_FAILURE);
+		fclose( f );
 		return 1;
 	}
  
@@ -219,6 +222,7 @@ int getLocalIP( char* buffer, size_t buflen )
 				if( s != 0 ) 
 				{
 					DEBUG("getnameinfo() failed: %s\n", gai_strerror(s));
+					fclose( f );
 					return 2;
 				}
 				printf("address: %s", buffer );
@@ -226,5 +230,6 @@ int getLocalIP( char* buffer, size_t buflen )
 		}
 	}
 	freeifaddrs(ifaddr);
+	fclose( f );
 	return 0;
 }

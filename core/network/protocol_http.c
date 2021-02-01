@@ -290,11 +290,11 @@ static inline int ReadServerFile( Uri *uri __attribute__((unused)), char *locpat
 	{
 		if( SLIB->sl_CacheFiles == 1 )
 		{
-			file = CacheManagerFileGet( SLIB->cm, completePath->raw, FALSE );
+			file = CacheManagerFileGet( SLIB->cm, completePath->p_Raw, FALSE );
 
 			if( file == NULL )
 			{
-				char *decoded = UrlDecodeToMem( completePath->raw );
+				char *decoded = UrlDecodeToMem( completePath->p_Raw );
 				file = LocFileNew( decoded, FILE_READ_NOW | FILE_CACHEABLE );
 				FFree( decoded );
 
@@ -307,30 +307,30 @@ static inline int ReadServerFile( Uri *uri __attribute__((unused)), char *locpat
 				}
 				else
 				{
-					Log( FLOG_ERROR,"Cannot read file %s\n", completePath->raw );
+					Log( FLOG_ERROR,"Cannot read file %s\n", completePath->p_Raw );
 				}
 			}
 			else
 			{
 				struct stat attr;
-				stat( completePath->raw, &attr);
+				stat( completePath->p_Raw, &attr);
 
 				// if file is new file, reload it
 				//DEBUG1("\n\n\n\n\n SIZE %lld  stat %lld\n\n\n\n",attr.st_mtime ,file->info.st_mtime );
 				if( attr.st_mtime != file->lf_Info.st_mtime )
 				{
-					LocFileReload( file, completePath->raw);
+					LocFileReload( file, completePath->p_Raw);
 				}
 			}
 		}
 		else
 		{
-			char *decoded = UrlDecodeToMem( completePath->raw );
+			char *decoded = UrlDecodeToMem( completePath->p_Raw );
 			file = LocFileNew( decoded, FILE_READ_NOW | FILE_CACHEABLE );
 			FFree( decoded );
 			if( file == NULL )
 			{
-				Log( FLOG_ERROR,"Cannot load file in developer mode %s\n", completePath->raw );
+				Log( FLOG_ERROR,"Cannot load file in developer mode %s\n", completePath->p_Raw );
 			}
 			else
 			{
@@ -344,7 +344,7 @@ static inline int ReadServerFile( Uri *uri __attribute__((unused)), char *locpat
 	{
 		if(  file->lf_Buffer == NULL )
 		{
-			Log( FLOG_ERROR,"File is empty %s\n", completePath->raw );
+			Log( FLOG_ERROR,"File is empty %s\n", completePath->p_Raw );
 		}
 
 		BufStringAddSize( dstbs, file->lf_Buffer, file->lf_FileSize );
@@ -528,18 +528,18 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 		Log( FLOG_DEBUG, "[ProtocolHttp] Request parsed without problems.\n");
 		Uri *uri = request->http_Uri;
 		Path *path = NULL;
-		if( uri->uri_Path->raw )
+		if( uri->uri_Path->p_Raw )
 		{
 			int nlen = 0;
 			for( ; ; nlen++ )
 			{
-				if( !uri->uri_Path->raw[nlen] )
+				if( !uri->uri_Path->p_Raw[nlen] )
 				{
 					break;
 				}
 			}
-			DEBUG("[ProtocolHttp] Want to parse path: %s (%d)\n", uri->uri_Path->raw, nlen );
-			path = PathNew( uri->uri_Path->raw );
+			DEBUG("[ProtocolHttp] Want to parse path: %s (%d)\n", uri->uri_Path->p_Raw, nlen );
+			path = PathNew( uri->uri_Path->p_Raw );
 			if( path )
 			{
 				PathResolve( path );  // Resolve checks for "../"'s, and removes as many as it can.
@@ -564,7 +564,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 		// WEBDAV
 		//
 
-		else if( strcmp( "webdav", path->parts[ 0 ] ) == 0 ) //if( (request->h_ContentType == HTTP_CONTENT_TYPE_APPLICATION_XML || request->h_ContentType == HTTP_CONTENT_TYPE_TEXT_XML ) &&
+		else if( strcmp( "webdav", path->p_Parts[ 0 ] ) == 0 ) //if( (request->h_ContentType == HTTP_CONTENT_TYPE_APPLICATION_XML || request->h_ContentType == HTTP_CONTENT_TYPE_TEXT_XML ) &&
 		{
 			response = HandleWebDav( SLIB, request, request->http_Content, request->http_SizeOfContent );
 
@@ -602,7 +602,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 		}
 		else
 		{
-			if( !path || !path->resolved ) // If it cannot remove all, path->resolved == false.
+			if( !path || !path->p_Resolved ) // If it cannot remove all, path->resolved == false.
 			{
 				Log( FLOG_ERROR, "404 error, path is equal to NULL\n");
 
@@ -618,17 +618,17 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 			else
 			{
 				{
-					if( path->size >= 2 && StringCheckExtension( path->parts[0], "library" ) == 0 )
+					if( path->p_Size >= 2 && StringCheckExtension( path->p_Parts[0], "library" ) == 0 )
 					{
 						// system.library is main library and should be use for most things
 						// we open it and close in main
 
-						if( strcmp( path->parts[ 0 ], "system.library" ) == 0 )
+						if( strcmp( path->p_Parts[ 0 ], "system.library" ) == 0 )
 						{
-							DEBUG("[ProtocolHttp] -----------------------------------------------------Calling SYSBASE via HTTP %s\n", path->parts[1] );
+							DEBUG("[ProtocolHttp] -----------------------------------------------------Calling SYSBASE via HTTP %s\n", path->p_Parts[1] );
 
 							int respcode = 0;
-							response = SLIB->SysWebRequest( SLIB, &(path->parts[1]), &request, NULL, &respcode );
+							response = SLIB->SysWebRequest( SLIB, &(path->p_Parts[1]), &request, NULL, &respcode );
 
 							if( response == NULL )
 							{
@@ -660,10 +660,10 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							UserLoggerStore( SLIB->sl_ULM, session, request->http_RawRequestPath, request->http_UserActionInfo );
 
 							FriendCoreInstance_t *fci = (FriendCoreInstance_t *) sock->s_Data;
-							Library* lib = FriendCoreGetLibrary( fci, path->parts[0], 1 );
+							Library* lib = FriendCoreGetLibrary( fci, path->p_Parts[0], 1 );
 							if( lib && lib->WebRequest )
 							{
-								response = lib->WebRequest( lib, path->parts[1], request );
+								response = lib->WebRequest( lib, path->p_Parts[1], request );
 								if( response == NULL )
 								{
 									struct TagItem tags[] = {
@@ -696,7 +696,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 					}
 */
 	
-					else if( strcmp( path->parts[ 0 ], "version" ) == 0 )
+					else if( strcmp( path->p_Parts[ 0 ], "version" ) == 0 )
 					{
 						struct TagItem tags[] = {
 							{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate("text/html") },
@@ -722,7 +722,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 					// login path file
 					//
 
-					else if( strcmp( path->parts[ 0 ], "loginprompt" ) == 0 )
+					else if( strcmp( path->p_Parts[ 0 ], "loginprompt" ) == 0 )
 					{
 						
 						//
@@ -741,7 +741,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 								char *command = FMalloc( MAX_LEN_PHP_INT_COMMAND );
 
 								// Make the commandline string with the safe, escaped arguments, and check for buffer overflows.
-								int cx = snprintf( command, MAX_LEN_PHP_INT_COMMAND-1, "php \"php/login.php\" \"%s\" \"%s\" \"%s\"; 2>&1", uri->uri_Path->raw, uri->uri_QueryRaw, request->http_Content ); // SLIB->sl_ModuleNames
+								int cx = snprintf( command, MAX_LEN_PHP_INT_COMMAND-1, "php \"php/login.php\" \"%s\" \"%s\" \"%s\"; 2>&1", uri->uri_Path->p_Raw, uri->uri_QueryRaw, request->http_Content ); // SLIB->sl_ModuleNames
 								//if( !( cx >= 0 ) )
 								//{
 								//	FERROR( "[ProtocolHttp] snprintf\n" );;
@@ -879,13 +879,13 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 					// share file
 					//
 
-					else if( strcmp( path->parts[ 0 ], "sharedfile" ) == 0 )
+					else if( strcmp( path->p_Parts[ 0 ], "sharedfile" ) == 0 )
 					{
 						//FileShared *fs = NULL;
 						char query[ 1024 ];
 						int entries = 0;
 
-						Log( FLOG_DEBUG, "[ProtocolHttp] Shared file hash %s name %s\n", path->parts[ 1 ], path->parts[ 2 ] );
+						Log( FLOG_DEBUG, "[ProtocolHttp] Shared file hash %s name %s\n", path->p_Parts[ 1 ], path->p_Parts[ 2 ] );
 
 						SQLLibrary *sqllib = SLIB->LibrarySQLGet( SLIB );
 
@@ -900,7 +900,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							char *usrSessionID = NULL;
 							FBOOL sessionIDGenerated = FALSE;
 							
-							sqllib->SNPrintF( sqllib, query, 1024, "SELECT fs.Name, fs.Devname, fs.Path, fs.UserID, f.Type, u.SessionID FROM FFileShared fs, Filesystem f, FUser u WHERE fs.Hash=\"%s\" AND u.ID = fs.UserID AND f.Name = fs.Devname", path->parts[ 1 ] );
+							sqllib->SNPrintF( sqllib, query, 1024, "SELECT fs.Name, fs.Devname, fs.Path, fs.UserID, f.Type, u.SessionID FROM FFileShared fs, Filesystem f, FUser u WHERE fs.Hash=\"%s\" AND u.ID = fs.UserID AND f.Name = fs.Devname", path->p_Parts[ 1 ] );
 							
 							void *res = sqllib->Query( sqllib, query );
 							if( res != NULL )
@@ -945,7 +945,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							if( usrSessionID == NULL )// if res == NULL
 							{
 								DEBUG("First call releated to shared files did not return any results\n");
-								sqllib->SNPrintF( sqllib, query, 1024, "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,u.SessionID,f.ID from FFileShared fs inner join Filesystem f on fs.FSID=f.ID inner join FUser u on fs.UserID=u.ID where `Hash`='%s'", path->parts[ 1 ] );
+								sqllib->SNPrintF( sqllib, query, 1024, "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,u.SessionID,f.ID from FFileShared fs inner join Filesystem f on fs.FSID=f.ID inner join FUser u on fs.UserID=u.ID where `Hash`='%s'", path->p_Parts[ 1 ] );
 							
 								res = sqllib->Query( sqllib, query );
 								if( res != NULL )
@@ -1342,9 +1342,9 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 						int flaw = 0;
 
 						// Make sure we're not having an exploit here
-						for( ; i < path->rawSize - 1; i++ )
+						for( ; i < path->p_RawSize - 1; i++ )
 						{
-							if( path->raw[ i ] == '.' && path->raw[ i + 1 ] == '.' )
+							if( path->p_Raw[ i ] == '.' && path->p_Raw[ i + 1 ] == '.' )
 							{
 								flaw = 1;
 								break;
@@ -1353,11 +1353,11 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 						// We don't allow directory traversals..
 						if( flaw == 0 )
 						{
-							Log( FLOG_DEBUG, "[ProtocolHttp] read static file %s path size %d\n", path->raw, path->rawSize );
+							Log( FLOG_DEBUG, "[ProtocolHttp] read static file %s path size %d\n", path->p_Raw, path->p_RawSize );
 
-							for( i = 0; i < path->rawSize; i++ )
+							for( i = 0; i < path->p_RawSize; i++ )
 							{
-								if( path->raw[ i ] == ';' )
+								if( path->p_Raw[ i ] == ';' )
 								{
 									pos = i;
 									break;
@@ -1368,7 +1368,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 							if( pos > 0 )
 							{
-								LocFile *file = CacheManagerFileGet( SLIB->cm, path->raw, TRUE );
+								LocFile *file = CacheManagerFileGet( SLIB->cm, path->p_Raw, TRUE );
 
 								if( file != NULL )
 								{
@@ -1381,9 +1381,9 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 										int max = 0;
 										int ii = 0;
 
-										for( ii = path->rawSize - 1; ii >= 0 ; ii-- )
+										for( ii = path->p_RawSize - 1; ii >= 0 ; ii-- )
 										{
-											if( path->raw[ ii ] == '.'  || max >= 5 )
+											if( path->p_Raw[ ii ] == '.'  || max >= 5 )
 											{
 												pos = ii + 1;
 												break;
@@ -1393,7 +1393,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 										for( ii = 0; ii < max; ii++ )
 										{
-											extension[ ii ] = path->raw[ pos++ ];
+											extension[ ii ] = path->p_Raw[ pos++ ];
 										}
 
 										mime = StringDuplicate( MimeFromExtension( extension ) );
@@ -1432,13 +1432,13 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 									char *multipath = NULL, *pathTable[ MAX_FILES_TO_LOAD ];
 
 									memset( pathTable, 0, MAX_FILES_TO_LOAD*sizeof(char *) );
-									unsigned int pathSize = path->rawSize + 1;
+									unsigned int pathSize = path->p_RawSize + 1;
 
 									// split path 
 
 									if( ( multipath = FCalloc( pathSize, sizeof( char ) ) ) != NULL )
 									{
-										memcpy( multipath, path->raw, pathSize );
+										memcpy( multipath, path->p_Raw, pathSize );
 
 										int entry = 0;
 										pathTable[ entry ] = multipath;
@@ -1515,7 +1515,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 												HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
 
-												LocFile* nlf = LocFileNewFromBuf( path->raw, bs );
+												LocFile* nlf = LocFileNewFromBuf( path->p_Raw, bs );
 												if( nlf != NULL )
 												{
 													nlf->lf_Mime = mime;
@@ -1554,7 +1554,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 											// error, cannot open any file
 											else
 											{
-												Log( FLOG_ERROR,"File do not exist '%s'\n", path->raw );
+												Log( FLOG_ERROR,"File do not exist '%s'\n", path->p_Raw );
 
 												struct TagItem tags[] = {
 														{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
@@ -1583,8 +1583,8 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 								if( SLIB->fcm->fcm_ClusterMaster
 									&&
-									strcmp( path->parts[ 0 ], "webclient" ) == 0 &&
-									path->parts[ 1 ] != NULL && strcmp( path->parts[ 1 ], "index.html" ) == 0 
+									strcmp( path->p_Parts[ 0 ], "webclient" ) == 0 &&
+									path->p_Parts[ 1 ] != NULL && strcmp( path->p_Parts[ 1 ], "index.html" ) == 0 
 								)
 								{
 									//DEBUG("\n\n\n\n===========================\n\n");
@@ -1692,7 +1692,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 										LocFile* file = NULL;
 
 										{
-											char *decoded = UrlDecodeToMem( completePath->raw );
+											char *decoded = UrlDecodeToMem( completePath->p_Raw );
 											if( SLIB->sl_CacheFiles == 1 )
 											{
 												Log( FLOG_DEBUG, "[ProtocolHttp] Read single file, first from cache %s\n", decoded );
@@ -1761,15 +1761,15 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 											if(  file->lf_Buffer == NULL )
 											{
-												Log( FLOG_ERROR,"File is empty %s\n", completePath->raw );
+												Log( FLOG_ERROR,"File is empty %s\n", completePath->p_Raw );
 											}
 
 											if( file->lf_Mime == NULL )
 											{
-												DEBUG("GET single file : extension '%s'\n", completePath->extension );
-												if( completePath->extension )
+												DEBUG("GET single file : extension '%s'\n", completePath->p_Extension );
+												if( completePath->p_Extension )
 												{
-													const char *t = MimeFromExtension( completePath->extension );
+													const char *t = MimeFromExtension( completePath->p_Extension );
 													mime = StringDuplicate( t );
 												}
 												else
@@ -1818,7 +1818,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 										else
 										{
 											// First try to get tinyurl
-											char *hash = path->parts[0];
+											char *hash = path->p_Parts[0];
 											SQLLibrary *sqllib  = SLIB->LibrarySQLGet( SLIB );
 
 											char *url = FCalloc( 2048, sizeof(char) );
@@ -1906,7 +1906,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 												char *command = NULL;
 												ListString *phpResp = NULL;
 
-												int clen = strlen( uri->uri_Path->raw ) + 256;
+												int clen = strlen( uri->uri_Path->p_Raw ) + 256;
 												
 												if( request->http_ContentType == HTTP_CONTENT_TYPE_APPLICATION_JSON )
 												{
@@ -1952,14 +1952,14 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 													if( allArgsNew != NULL )
 													{
 														int argssize = strlen( allArgsNew );
-														char *runFile = FCalloc( ( argssize << 1 ) + 512 + strlen( uri->uri_Path->raw ), sizeof(char) );
+														char *runFile = FCalloc( ( argssize << 1 ) + 512 + strlen( uri->uri_Path->p_Raw ), sizeof(char) );
 														if( runFile != NULL )
 														{
-															int rawLength = strlen( uri->uri_Path->raw );
+															int rawLength = strlen( uri->uri_Path->p_Raw );
 															
 															strcpy( runFile, "php \"php/catch_all.php\" \"" );
 															
-															strcpy( runFile + 25, uri->uri_Path->raw );
+															strcpy( runFile + 25, uri->uri_Path->p_Raw );
 															
 															strcpy( runFile + 25 + rawLength, "\" \"" );
 															
@@ -2005,7 +2005,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 													DEBUG("CatchALL 1621\n");
 													if( ( command = FCalloc( clen, sizeof(char) ) ) != NULL )
 													{
-														snprintf( command, clen, "php \"php/catch_all.php\" \"%s\" \"%s\";", uri->uri_Path->raw, request->http_Uri ? request->http_Uri->uri_QueryRaw : NULL );
+														snprintf( command, clen, "php \"php/catch_all.php\" \"%s\" \"%s\";", uri->uri_Path->p_Raw, request->http_Uri ? request->http_Uri->uri_QueryRaw : NULL );
 													
 														Log( FLOG_DEBUG, "[ProtocolHttp] Executing php/catch_all.php\n");
 														phpResp = RunPHPScript( command );
@@ -2106,7 +2106,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 											}
 											FFree( url );
 										}
-										Log( FLOG_DEBUG, "[ProtocolHttp] File delivered: %s\n", completePath->raw );
+										Log( FLOG_DEBUG, "[ProtocolHttp] File delivered: %s\n", completePath->p_Raw );
 
 										PathFree( base );
 										PathFree( completePath );

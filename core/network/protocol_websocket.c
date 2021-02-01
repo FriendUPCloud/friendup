@@ -117,10 +117,9 @@ void WSThreadPing( WSThreadData *data )
 					{
 						FFree( data->wstd_Requestid );
 					}
-					
+					FRIEND_MUTEX_UNLOCK( &(data->wstd_WSD->wsc_Mutex) );
 					FFree( data );
 				}
-				FRIEND_MUTEX_UNLOCK( &(data->wstd_WSD->wsc_Mutex) );
 				
 				// Decrease counter
 				if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
@@ -170,7 +169,7 @@ static inline int jsoneqin(const char *json, const jsmntok_t *tok, const char *s
 
 void ParseAndCallThread( void *d );
 //int ParseAndCall( InputMsg *im );
-int ParseAndCall( WSThreadData *wstd );
+void *ParseAndCall( WSThreadData *wstd );
 
 /**
  * Main FriendCore websocket callback
@@ -312,7 +311,6 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				}
 				else // only fragment was received
 				{
-					//DEBUG1("[WS] Only received: %s\n", tin );
 					BufStringAddSize( wsd->wsc_Buffer, tin, len );
 					return 0;
 				}
@@ -791,7 +789,7 @@ static inline int WSSystemLibraryCall( WSThreadData *wstd, UserSession *locus, H
 //
 //
 
-int ParseAndCall( WSThreadData *wstd )
+void *ParseAndCall( WSThreadData *wstd )
 {
 	pthread_detach( pthread_self() );
 
@@ -824,7 +822,7 @@ int ParseAndCall( WSThreadData *wstd )
 			
 			// And exit
 			pthread_exit( NULL );
-			return 1;
+			return NULL;
 		}
 	}
 	
@@ -873,8 +871,7 @@ int ParseAndCall( WSThreadData *wstd )
 							int data = 0;
 							
 							char *intstart = NULL;
-							//unsigned long int intstart = 0;
-							unsigned long int tendstrt = 0;
+							int tendstrt = 0;
 							
 							for( i = 9; i < r ; i++ )
 							{
@@ -1016,8 +1013,7 @@ int ParseAndCall( WSThreadData *wstd )
 					else	// connection message
 					{
 						char *intstart = NULL;
-						//unsigned long int intstart = 0;
-						unsigned long int tendstrt = 0;
+						int tendstrt = 0;
 						
 						for( i = 4; i < r ; i++ )
 						{
@@ -1597,5 +1593,5 @@ int ParseAndCall( WSThreadData *wstd )
 	
 	pthread_exit( NULL );
 	
-	return 0;
+	return NULL;
 }

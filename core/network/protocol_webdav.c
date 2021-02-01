@@ -506,12 +506,33 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 	int pathSize = strlen( req->http_RawRequestPath );
 
 	path = UrlDecodeToMem( req->http_RawRequestPath );
-	
+	if( path == NULL )
+	{
+		return NULL;
+	}
 	fpath = FCalloc( pathSize+10, sizeof(char) );
+	if( fpath == NULL )
+	{
+		FFree( path );
+		return NULL;
+	}
 	memcpy( fpath, req->http_RawRequestPath, pathSize );
 	
 	devname = FCalloc( pathSize+10, sizeof(char) );
+	if( devname == NULL )
+	{
+		FFree( fpath );
+		FFree( path );
+		return NULL;
+	}
 	filePath = FCalloc( pathSize+10, sizeof(char) );
+	if( filePath == NULL )
+	{
+		FFree( devname );
+		FFree( fpath );
+		FFree( path );
+		return NULL;
+	}
 	
 	int i;
 	int pos = 0;
@@ -926,6 +947,35 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 						FRIEND_MUTEX_UNLOCK( &(sb->sl_USM->usm_Mutex) );
 					}
 				}
+				char *err = NULL;
+				sb->UserDeviceMount( sb, usr, 0, TRUE, &err, TRUE );
+				if( err != NULL )
+				{
+					FERROR("UserDeviceMount returned: %s\n", err );
+					FFree( err );
+				}
+			}
+			else
+			{
+				struct TagItem tagsauth[] = {
+					{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/xml" ) },
+					{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+					{ TAG_DONE, TAG_DONE }
+				};
+
+				resp = HttpNewSimple( HTTP_401_UNAUTHORIZED,  tagsauth );
+				
+				sb->AuthModuleDrop( sb, ulib );
+			
+				char dictmsgbuf[ 256 ];
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", sb->sl_Dictionary->d_Msg[DICT_BAD_ERROR_OR_PASSWORD] , DICT_BAD_ERROR_OR_PASSWORD );
+				HttpAddTextContent( resp, dictmsgbuf );
+
+				FFree( path );
+				FFree( fpath );
+				if( decodedUser != NULL ){ FFree( decodedUser ); }
+			
+				return resp;
 			}
 			char *err = NULL;
 			sb->UserDeviceMount( sb, usr, 0, TRUE, &err, TRUE );

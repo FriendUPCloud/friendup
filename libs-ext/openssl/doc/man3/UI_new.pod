@@ -132,7 +132,7 @@ the possible answers (given through the I<action_desc> argument).
 
 UI_add_info_string() and UI_add_error_string() add strings that are shown at
 the same time as the prompt for extra information or to show an error string.
-The difference between the two is only conceptual.  With the built-in method,
+The difference between the two is only conceptual.  With the builtin method,
 there's no technical difference between them.  Other methods may make a
 difference between them, however.
 
@@ -158,7 +158,7 @@ string and may include encodings that will be processed by the other
 method functions.
 
 UI_add_user_data() adds a user data pointer for the method to use at any
-time.  The built-in UI method doesn't care about this info.  Note that several
+time.  The builtin UI method doesn't care about this info.  Note that several
 calls to this function doesn't add data, it replaces the previous blob
 with the one given as argument.
 
@@ -243,9 +243,9 @@ The UI_dup_user_data() function was added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
-Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the Apache License 2.0 (the "License").  You may not use
+Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

@@ -1,32 +1,41 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * Derived from the BLAKE2 reference implementation written by Samuel Neves.
+ * Copyright 2012, Samuel Neves <sneves@dei.uc.pt>
+ * More information about the BLAKE2 hash function and its implementations
+ * can be found at https://blake2.net.
+ */
+
+#include "internal/cryptlib.h"
+
 #ifndef OPENSSL_NO_BLAKE2
 
-# include <stddef.h>
-# include <openssl/obj_mac.h>
+# include <openssl/evp.h>
+# include <openssl/objects.h>
+# include "blake2_local.h"
 # include "crypto/evp.h"
-# include "internal/blake2.h"
 
 static int init(EVP_MD_CTX *ctx)
 {
-    return blake2s256_init(EVP_MD_CTX_md_data(ctx));
+    return BLAKE2s_Init(EVP_MD_CTX_md_data(ctx));
 }
 
 static int update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
-    return blake2s_update(EVP_MD_CTX_md_data(ctx), data, count);
+    return BLAKE2s_Update(EVP_MD_CTX_md_data(ctx), data, count);
 }
 
 static int final(EVP_MD_CTX *ctx, unsigned char *md)
 {
-    return blake2s_final(md, EVP_MD_CTX_md_data(ctx));
+    return BLAKE2s_Final(md, EVP_MD_CTX_md_data(ctx));
 }
 
 static const EVP_MD blake2s_md = {
@@ -40,11 +49,11 @@ static const EVP_MD blake2s_md = {
     NULL,
     NULL,
     BLAKE2S_BLOCKBYTES,
-    sizeof(BLAKE2S_CTX),
+    sizeof(EVP_MD *) + sizeof(BLAKE2S_CTX),
 };
 
 const EVP_MD *EVP_blake2s256(void)
 {
     return &blake2s_md;
 }
-#endif /* OPENSSL_NO_BLAKE2 */
+#endif

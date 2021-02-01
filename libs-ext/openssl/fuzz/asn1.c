@@ -1,7 +1,7 @@
 /*
- * Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License");
+ * Licensed under the OpenSSL licenses, (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * https://www.openssl.org/source/license.html
@@ -20,6 +20,7 @@
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/dh.h>
+#include <openssl/dsa.h>
 #include <openssl/ec.h>
 #include <openssl/ocsp.h>
 #include <openssl/pkcs12.h>
@@ -27,13 +28,11 @@
 #include <openssl/ts.h>
 #include <openssl/x509v3.h>
 #include <openssl/cms.h>
-#include <openssl/ess.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <openssl/ssl.h>
-#include <internal/nelem.h>
 #include "fuzzer.h"
 
 #include "rand.inc"
@@ -108,7 +107,7 @@ static ASN1_ITEM_EXP *item_type[] = {
     ASN1_ITEM_ref(IPAddressRange),
 #endif
     ASN1_ITEM_ref(ISSUING_DIST_POINT),
-#if !OPENSSL_API_3
+#if OPENSSL_API_COMPAT < 0x10200000L
     ASN1_ITEM_ref(LONG),
 #endif
     ASN1_ITEM_ref(NAME_CONSTRAINTS),
@@ -189,7 +188,7 @@ static ASN1_ITEM_EXP *item_type[] = {
     ASN1_ITEM_ref(X509_REVOKED),
     ASN1_ITEM_ref(X509_SIG),
     ASN1_ITEM_ref(X509_VAL),
-#if !OPENSSL_API_3
+#if OPENSSL_API_COMPAT < 0x10200000L
     ASN1_ITEM_ref(ZLONG),
 #endif
     ASN1_ITEM_ref(INT32),
@@ -283,7 +282,7 @@ int FuzzerInitialize(int *argc, char ***argv)
 
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
     OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL);
-    ERR_clear_error();
+    ERR_get_state();
     CRYPTO_free_ex_index(0, -1);
     FuzzerSetRand();
 
@@ -319,12 +318,10 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     DO_TEST(TS_STATUS_INFO, d2i_TS_STATUS_INFO, i2d_TS_STATUS_INFO, TS_STATUS_INFO_print_bio);
     DO_TEST(TS_TST_INFO, d2i_TS_TST_INFO, i2d_TS_TST_INFO, TS_TST_INFO_print_bio);
     DO_TEST_NO_PRINT(TS_ACCURACY, d2i_TS_ACCURACY, i2d_TS_ACCURACY);
-#endif
     DO_TEST_NO_PRINT(ESS_ISSUER_SERIAL, d2i_ESS_ISSUER_SERIAL, i2d_ESS_ISSUER_SERIAL);
     DO_TEST_NO_PRINT(ESS_CERT_ID, d2i_ESS_CERT_ID, i2d_ESS_CERT_ID);
     DO_TEST_NO_PRINT(ESS_SIGNING_CERT, d2i_ESS_SIGNING_CERT, i2d_ESS_SIGNING_CERT);
-    DO_TEST_NO_PRINT(ESS_CERT_ID_V2, d2i_ESS_CERT_ID_V2, i2d_ESS_CERT_ID_V2);
-    DO_TEST_NO_PRINT(ESS_SIGNING_CERT_V2, d2i_ESS_SIGNING_CERT_V2, i2d_ESS_SIGNING_CERT_V2);
+#endif
 #ifndef OPENSSL_NO_DH
     DO_TEST(DH, d2i_DHparams, i2d_DHparams, DHparams_print);
     DO_TEST(DH, d2i_DHxparams, i2d_DHxparams, DHparams_print);
