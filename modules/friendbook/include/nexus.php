@@ -15,7 +15,7 @@ class Nexus
     // Check the host for information
     public function checkhost( $vars, $args )
     {
-    
+        
     }
 }
 
