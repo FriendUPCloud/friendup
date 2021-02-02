@@ -1698,11 +1698,9 @@ int SystemInitExternal( SystemBase *l )
 			
 			if( foundRemoteSession == FALSE )
 			{
-				char *newSessionId = SessionIDGenerate();
 				DEBUG("[SystemBase] Remote session will be created for Sentinel\n");
 				
-				UserSession *ses = UserSessionNew( newSessionId, "remote" );
-				//UserSession *ses = UserSessionNew( "remote", "remote" );
+				UserSession *ses = UserSessionNew( l, NULL, "remote" );
 				if( ses != NULL )
 				{
 					ses->us_UserID = l->sl_Sentinel->s_User->u_ID;
@@ -1712,7 +1710,6 @@ int SystemInitExternal( SystemBase *l )
 					
 					USMUserSessionAddToList( l->sl_USM, ses );
 				}
-				FFree( newSessionId );
 			}
 			
 			//

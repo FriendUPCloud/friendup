@@ -1317,7 +1317,8 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 				if( user->u_SessionsList == NULL )
 				{
 					// we now generate dummy session
-					UserSession *ses = UserSessionNew( "api", "api" );
+					//UserSession *ses = UserSessionNew( sb, "api", "api" );
+					UserSession *ses = UserSessionNew( sb, NULL, "api" );
 					if( ses != NULL )
 					{
 						ses->us_UserID = user->u_ID;

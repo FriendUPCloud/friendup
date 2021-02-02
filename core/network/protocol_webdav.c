@@ -925,13 +925,13 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 	
 		if( usr != NULL )
 		{
-			LIST_ADD_HEAD( sb->sl_UM->um_Users, usr );
+			UMAddUser( sb->sl_UM, usr );
 			
 			loggedSession = USMGetSessionByDeviceIDandUser( sb->sl_USM, "webdav", usr->u_ID );
 			
 			if( loggedSession == NULL )
 			{
-				loggedSession = UserSessionNew( "webdav", "webdav" );
+				loggedSession = UserSessionNew( sb, NULL, "webdav" );
 				if( loggedSession != NULL )
 				{
 					loggedSession->us_UserID = usr->u_ID;

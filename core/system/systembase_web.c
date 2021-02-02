@@ -151,6 +151,9 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 			return NULL;
 		}
 	
+	/*
+		// this function was doing nothing:)
+		
 		// application/json are used to communicate with another tools like onlyoffce
 		char *sessptr = NULL;
 		if( request->http_ContentType != HTTP_CONTENT_TYPE_APPLICATION_JSON )
@@ -184,6 +187,54 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 		{
 			strcpy( allArgsNew, allArgs );
 		}
+		*/
+		//strcpy( allArgsNew, allArgs );
+		
+		//
+		// if there is sessionid in request it should be changed to one used by DB
+		//
+		
+		char *sessptr = strstr( allArgs, "sessionid=" );
+		if( sessptr != NULL )
+		{
+			char *sessionPointerInMemory = sessptr+10;
+			int len = 0;
+			char *endSessionID = strstr( sessionPointerInMemory, "&" );
+			if( endSessionID != NULL )
+			{
+				len = endSessionID - sessionPointerInMemory;
+			}
+			else
+			{
+				len = strlen( sessionPointerInMemory );
+			}
+			
+			// now we have to copy everything
+			strncpy( allArgsNew, allArgs, sessionPointerInMemory-allArgs );
+			
+			char *sessionIdFromArgs = StringDuplicateN( sessionPointerInMemory, len );
+			if( sessionIdFromArgs != NULL )
+			{
+				char *encSessionID = SLIB->sl_UtilInterface.DatabaseEncodeString( sessionIdFromArgs );
+				if( encSessionID != NULL )
+				{
+					//memcpy( sessionPointerInMemory, encSessionID, len );
+					strcat( allArgsNew, encSessionID );
+					FFree( encSessionID );
+				}
+				FFree( sessionIdFromArgs );
+			}
+			
+			if( endSessionID != NULL )
+			{
+				strcat( allArgsNew, endSessionID );
+			}
+		}
+		else
+		{
+			strcpy( allArgsNew, allArgs );
+		}
+		
 		DEBUG("REquest source: %d\n", request->http_RequestSource );
 		
 		// get values from POST 
@@ -679,7 +730,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			int userAdded = 0;
 			
 			// Server token reins supreme! Add the session
-			if( ( loggedSession = UserSessionNew( sessionid, "server" ) ) != NULL )
+			if( ( loggedSession = UserSessionNew( l, sessionid, "server" ) ) != NULL )
 			{
 				User *tmpusr = UMGetUserByName( l->sl_UM, userName );
 				if( !tmpusr )
@@ -1864,7 +1915,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								}
 								loggedSession->us_MobileAppID = umaID;
 								
-								char *locSessionID = loggedSession->us_SessionID;
+								char *locSessionID = loggedSession->us_HashedSessionID;
 								
 								char *tmpSessionID = l->sl_UtilInterface.DatabaseEncodeString( sessionid );
 								if( tmpSessionID != NULL )
@@ -2050,7 +2101,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							User *tmpusr = UMUserGetByNameDB( l->sl_UM, usrname );
 							if( tmpusr != NULL )
 							{
-								loggedSession = UserSessionNew( "remote", deviceid );
+								loggedSession = UserSessionNew( l, NULL, deviceid );
 								if( loggedSession != NULL )
 								{
 									loggedSession->us_UserID = tmpusr->u_ID;
@@ -2164,15 +2215,10 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								// update UserSession
 								//
 								
-								char *tmpSessionID = l->sl_UtilInterface.DatabaseEncodeString( loggedSession->us_SessionID );
-								if( tmpSessionID != NULL )
-								{
-									sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime=%lld,SessionID='%s',UMA_ID=%lu WHERE `DeviceIdentity`='%s' AND `UserID`=%lu", (long long)loggedSession->us_LoggedTime, tmpSessionID, umaID, deviceid,  loggedSession->us_UserID );
-									if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
-									{ 
-									
-									}
-									FFree( tmpSessionID );
+								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime=%lld,SessionID='%s',UMA_ID=%lu WHERE `DeviceIdentity`='%s' AND `UserID`=%lu", (long long)loggedSession->us_LoggedTime, loggedSession->us_HashedSessionID, umaID, deviceid,  loggedSession->us_UserID );
+								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
+								{ 
+								
 								}
 
 								//

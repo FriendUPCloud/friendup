@@ -65,6 +65,7 @@ typedef struct UserSession
 	FULONG					us_UserID;					// ID of user to which session is attached
 	char					*us_DeviceIdentity;			// device identity
 	char					*us_SessionID;				// session id
+	char					*us_HashedSessionID;		// Hashed SessionID used by database
 	time_t					us_LoggedTime;				// last update from user
 	int						us_Status;					// session status
 	
@@ -93,7 +94,7 @@ typedef struct UserSession
 //
 //
 
-UserSession *UserSessionNew( char *sessid, char *devid );
+UserSession *UserSessionNew( void *sb, char *sesid, char *devid );
 
 //
 //

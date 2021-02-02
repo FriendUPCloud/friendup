@@ -71,7 +71,7 @@ void USMDelete( UserSessionManager *smgr )
 			
 				DEBUG("[USMDelete] \t\tRemove session : %s uid %lu\n", rem->us_SessionID, rem->us_UserID );
 			
-				USMGetSessionsDeleteDB( smgr, rem->us_SessionID );
+				USMGetSessionsDeleteDB( smgr, rem->us_HashedSessionID );
 				UserSessionDelete( rem );
 			}
 		
@@ -83,7 +83,7 @@ void USMDelete( UserSessionManager *smgr )
 			
 				DEBUG("[USMDelete] \t\tRemove session from remove list: %s uid %lu\n", rem->us_SessionID, rem->us_UserID );
 			
-				USMGetSessionsDeleteDB( smgr, rem->us_SessionID );
+				USMGetSessionsDeleteDB( smgr, rem->us_HashedSessionID );
 				UserSessionDelete( rem );
 			}
 		
@@ -863,7 +863,7 @@ int USMUserSessionRemove( UserSessionManager *smgr, UserSession *remsess )
 	
 	if( sessionRemoved == TRUE )
 	{
-		USMGetSessionsDeleteDB( smgr, remsess->us_SessionID );
+		USMGetSessionsDeleteDB( smgr, remsess->us_HashedSessionID );
 		
 		// we do not delete session, untill it is used
 		if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) == 0 )
@@ -896,12 +896,8 @@ int USMGetSessionsDeleteDB( UserSessionManager *smgr, const char *sessionid )
 		return -1;
 	}
 
-	char *tmpSessionID = sb->sl_UtilInterface.DatabaseEncodeString( (char *)sessionid );
-	if( tmpSessionID != NULL )
-	{
-		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "DELETE from FUserSession WHERE SessionID='%s'", tmpSessionID );
-		FFree( tmpSessionID );
-	}
+	sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "DELETE from FUserSession WHERE SessionID='%s'", sessionid );
+
 	sqlLib->QueryWithoutResults( sqlLib, tmpQuery );
 
 	sb->LibrarySQLDrop( sb, sqlLib );

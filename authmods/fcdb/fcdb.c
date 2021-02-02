@@ -31,9 +31,9 @@
 #include <util/session_id.h>
 #include <network/websocket_client.h>
 
-#include <system/user/usersession_manager.h>
 #include <system/systembase.h>
 #include <system/user/user_manager.h>
+#include <system/user/usersession_manager.h>
 
 #define LIB_NAME "fcdb.authmod"
 #define LIB_VERSION			1
@@ -437,7 +437,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 			if( usl == NULL )
 			{
 				if(  tmpusr != NULL && userFromDB == TRUE ){ UserDelete( tmpusr );	tmpusr =  NULL; }
-				UserSession *ses = UserSessionNew( sessionId, "remote" );
+				UserSession *ses = UserSessionNew( sb, sessionId, "remote" );
 				if( ses != NULL )
 				{
 					ses->us_UserID = tmpusr->u_ID;
@@ -574,12 +574,8 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 		{
 			if( createNewSession == TRUE )
 			{
-				//Generate new session ID for the user
-				char *newSessionId = SessionIDGenerate();
-			
-				uses = UserSessionNew( newSessionId, devname );
-			
-				FFree( newSessionId );
+				uses = UserSessionNew( sb, NULL, devname );
+
 				uses->us_UserID = tmpusr->u_ID;
 				uses->us_LoggedTime = time( NULL );
 			
