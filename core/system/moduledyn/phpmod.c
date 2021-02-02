@@ -357,6 +357,8 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	char *final = ls->ls_Data;
 	ls->ls_Data = NULL;
 	ListStringDelete( ls );
+	
+	DEBUG("FINAL:\n\n\n%s\n\n\n", final );
 
 	if( command != NULL )
 	{

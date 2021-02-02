@@ -116,7 +116,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 	char *allArgs = FCallocAlign( fullsize, sizeof(char) );
 	if( allArgs != NULL )
 	{
-		allArgsNew = FCallocAlign( fullsize + 100, sizeof(char) );
+		allArgsNew = FCallocAlign( fullsize + 256, sizeof(char) );
 	
 		if( both == TRUE )
 		{
@@ -227,7 +227,65 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 			
 			if( endSessionID != NULL )
 			{
-				strcat( allArgsNew, endSessionID );
+				// We have to try to replace 2 sessionid's from request.
+				// One may be sent in module and second in args
+			
+				char *foundArgs = strstr( endSessionID, "args" );
+				if( foundArgs != NULL )
+				{
+					// sessionid=63d7d6150aaaeabfd0a10966b47da293e3225d99c0ca991ddee0ae3f88c5f7a2&module=system&args=%7B%22application%22%3A%22Calculator%22%2C%22args%22%3A%22%22%7D&command=friendapplication&sessionid=fa76bc626bc83fd09f4424437f79410d00389695&system.library/module/'
+
+					
+					char *locsessptr = strstr( foundArgs, "sessionid=" );
+					if( locsessptr != NULL )
+					{
+						char *locsessionPointerInMemory = locsessptr+10;
+						int loclen = 0;
+						char *locendSessionID = strstr( locsessionPointerInMemory, "&" );
+						if( locendSessionID != NULL )
+						{
+							loclen = locendSessionID - locsessionPointerInMemory;
+						}
+						else
+						{
+							loclen = strlen( locsessionPointerInMemory );
+						}
+			
+						// now we have to copy everything
+						strncat( allArgsNew, foundArgs, locsessionPointerInMemory-foundArgs );
+			
+						char *locsessionIdFromArgs = StringDuplicateN( locsessionPointerInMemory, loclen );
+						if( locsessionIdFromArgs != NULL )
+						{
+							char *locencSessionID = SLIB->sl_UtilInterface.DatabaseEncodeString( locsessionIdFromArgs );
+							if( locencSessionID != NULL )
+							{
+								//memcpy( locsessionPointerInMemory, locencSessionID, loclen );
+								strcat( allArgsNew, locencSessionID );
+								FFree( locencSessionID );
+							}
+							FFree( locsessionIdFromArgs );
+						}
+						
+						//>request->content sessionid=85494406b741e1ef99158b8a209ece169b700c04&module=system&args=%7B%22application%22%3A%22Calculator%22%2C%22args%22%3A%22%22%7D&command=friendapplication&sessionid=85494406b741e1ef99158b8a209ece169b700c04 raw system.library/module/ len 233
+
+						// CALL: sessionid=c8c671151946f968ba4365f42cea91ce96ff3768c5f8f0674478b75f6de2b20fargs=%7B%22application%22%3A%22Calculator%22%2C%22args%22%3A%22%22%7D&command=friendapplication&sessionid=c8c671151946f968ba4365f42cea91ce96ff3768c5f8f0674478b75f6de2b20f&system.library/module/
+						
+						if( locendSessionID != NULL )
+						{
+							strcat( allArgsNew, locendSessionID+loclen );
+						}
+					}
+					else
+					{
+						strcat( allArgsNew, endSessionID );
+					}
+					 
+				}
+				else
+				{
+					strcat( allArgsNew, endSessionID );
+				}
 			}
 		}
 		else
@@ -1762,6 +1820,10 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
+		
+		DEBUG("----------------------------------\n" \
+			  "--Login start---------------------\n" \
+			  "----------------------------------\n" );
 	
 		if( (*request)->http_ParsedPostContent != NULL )
 		{
@@ -2375,6 +2437,10 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			{
 				FFree( usrname );
 			}
+			
+			DEBUG("----------------------------------\n" \
+			      "--Login end-----------------------\n" \
+			      "----------------------------------\n" );
 		}
 		else
 		{

@@ -428,10 +428,12 @@ if( file_exists( 'cfg/cfg.ini' ) )
 				u.Password = \'' . '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $UserAccount->Password ) ) . '\'
 		' ) )
 		{
+			$logger->log('User found');
 			$User = $mu;
 			if( $mus = $SqlDatabase->fetchObject( '
 				SELECT * FROM FUserSession WHERE UserID = \'' . $mu->ID . '\' LIMIT 1' ) )
 				{
+					$loggeer->log('UserSession found');
 					$UserSession = $mus;
 				}	
 		}
@@ -445,7 +447,7 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	
 	// Get the sessionid
 	$sidm = mysqli_real_escape_string( $SqlDatabase->_link, 
-		isset( $User->SessionID ) ? $User->SessionID :
+		isset( $UserSession->SessionID ) ? $UserSession->SessionID :
 		( isset( $GLOBALS['args']->sessionid ) ? $GLOBALS['args']->sessionid : '' )
 	);
 
@@ -454,7 +456,7 @@ if( file_exists( 'cfg/cfg.ini' ) )
 		$sidm = mysqli_real_escape_string( $SqlDatabase->_link, $UserSession->SessionID );
 	}
 	
-	//$logger->log( 'Trying to log in: ' . $sidm . ' ' . print_r( $args, 1 ) );
+	$logger->log( 'Trying to log in: ' . $sidm . ' ' . print_r( $args, 1 ) );
 	
 	//$hsidm = hash( 'sha256', $sidm );
 
@@ -462,6 +464,7 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	// FUserSession and FUser tables..
 	if( isset( $User->ID ) && $User->ID > 0 )
 	{
+		$logger->log('User and UserSession found');
 		$GLOBALS[ 'User' ] =& $User;
 		$GLOBALS[ 'UserSession' ] =& $UserSession;
 	}
@@ -477,9 +480,10 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	)
 	{
 		// Login success
-		//$logger->log( 'User logged in with sessionid: (' . $GLOBALS[ 'args' ]->sessionid . ') ' . ( $User ? ( $User->ID . ' ' . $User->SessionID ) : '' ) );
+		$logger->log( 'User logged in with sessionid: (' . $GLOBALS[ 'args' ]->sessionid . ') ' . ( $User ? ( $User->ID . ' ' . $User->SessionID ) : '' ) );
 		$GLOBALS[ 'User' ] =& $User;
 	}
+	/*
 	else if(
 		$sidm && 
 		( $User = $SqlDatabase->fetchObject( '
@@ -492,12 +496,12 @@ if( file_exists( 'cfg/cfg.ini' ) )
 		// Login success
 		$logger->log( 'User logged in with sessionid: (' . $GLOBALS[ 'args' ]->sessionid . ') ' . ( $User ? ( $User->ID . ' '  ) : '' ) );
 		$GLOBALS[ 'User' ] =& $User;
-	}
+	}*/
 	else if(
-		isset( $UserSession->SessionID ) && trim( $UserSession->SessionID ) && 
+		$sidm && 
 		( $User = $SqlDatabase->FetchObject( '
 			SELECT u.* FROM FUser u, FUserSession us
-			WHERE u.ID=us.UserID AND us.SessionID=\'' . $UserSession->SessionID . '\'
+			WHERE u.ID=us.UserID AND us.SessionID=\'' . $sidm . '\'
 		' ) ) 
 	)
 	{
@@ -506,10 +510,8 @@ if( file_exists( 'cfg/cfg.ini' ) )
 		$UserSession = $SqlDatabase->FetchObject( '
 			SELECT us.* FROM FUserSession us
 			WHERE us.SessionID=\'' . $UserSession->SessionID .'\'
-		' ) )
-		{
-			$GLOBALS[ 'UserSession' ] = & $UserSession;
-		}
+		' );
+		$GLOBALS[ 'UserSession' ] = & $UserSession;
 	}
 	else
 	{
@@ -520,29 +522,48 @@ if( file_exists( 'cfg/cfg.ini' ) )
 		if( isset( $GLOBALS['args']->authid ) )
 		{
 			$asid = mysqli_real_escape_string( $SqlDatabase->_link, $GLOBALS['args']->authid );
-			$hasid = hash( 'sha256', $asid );
+			//$hasid = hash( 'sha256', $asid );
 
 			if( $row = $SqlDatabase->FetchObject( $q = '
 				SELECT * FROM ( 
 					( 
 						SELECT u.ID FROM FUser u, FUserApplication a 
 						WHERE 
-							a.AuthID="' . $hasid . '" AND a.UserID = u.ID LIMIT 1 
+							a.AuthID="' . $asid . '" AND a.UserID = u.ID LIMIT 1 
 					) 
 					UNION 
 					( 
 						SELECT u2.ID FROM FUser u2, Filesystem f 
 						WHERE 
-							f.Config LIKE "%' . $hasid . '%" AND u2.ID = f.UserID LIMIT 1 
+							f.Config LIKE "%' . $asid . '%" AND u2.ID = f.UserID LIMIT 1 
 					) 
 				) z LIMIT 1
 			' ) )
 			{
 				$User->Load( $row->ID );
+				$logger->log('User loaded');
 				
 				if( $User->ID > 0 )
+				{
+					$logger->log('User set');
 					$GLOBALS[ 'User' ] =& $User;
+					if( $mus = $SqlDatabase->fetchObject( '
+                                		SELECT * FROM FUserSession WHERE UserID = \'' . $User->ID . '\' LIMIT 1' ) )
+						{
+							$logger->log('User session loaded');
+							$UserSession = $mus;
+							$GLOBALS[ 'UserSession' ] = & $UserSession;
+                                		}
+				}
 			}
+			else
+			{
+				$logger->log('user not found by authid: ' . $asid );
+			}
+		}
+		else
+		{
+			$logger->log('authid parameter not found');
 		}
 		
 		//$logger->log( 'ok: ' . ( isset( $User ) ? ' has user' : ' no user' ) );

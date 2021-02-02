@@ -68,7 +68,7 @@ if( $level = $SqlDatabase->FetchObject( '
 	SELECT g.Name FROM FUserGroup g, FUserToGroup ug
 	WHERE
 		g.Type = \'Level\' AND
-		ug.UserID=\'' . $User->ID . '\' AND
+		ug.UserID=\'' . $UserSession->UserID . '\' AND
 		ug.UserGroupID = g.ID
 ' ) )
 {
@@ -82,11 +82,11 @@ if( isset( $args->command ) )
 	switch( $args->command )
 	{
 		case 'items':
-			if( isset( $args->args->userID ) && $args->args->userID != $User->ID )
+			if( isset( $args->args->userID ) && $args->args->userID != $UserSession->UserID )
 			{
 				if( $level != 'Admin' ) die('fail<!--separate-->not authorized to sort dockitems');
 			}
-			$userid = ( isset( $args->args->userID ) ? intval( $args->args->userID ) : $User->ID );
+			$userid = ( isset( $args->args->userID ) ? intval( $args->args->userID ) : $UserSession->UserID );
 			// Load root items if nothing else is requested
 			if( $rows = $SqlDatabase->FetchObjects( '
 				SELECT d.* FROM
@@ -137,12 +137,12 @@ if( isset( $args->command ) )
 			}
 			break;
 		case 'removefromdock':
-			if( $args->args->userID && $args->args->userID != $User->ID )
+			if( $args->args->userID && $args->args->userID != $UserSession->UserID )
 			{
 				if( $level != 'Admin' ) die('fail<!--separate-->not authorized to add dockitems');
 			}
 			//prepare....
-			$userid = ( $args->args->userID ? intval( $args->args->userID ) : $User->ID );
+			$userid = ( $args->args->userID ? intval( $args->args->userID ) : $UserSession->ID );
 			$s = filter_var( $args->args->name, FILTER_SANITIZE_STRING );
 			if( $args->args->fuzzy )
 			{
@@ -161,13 +161,13 @@ if( isset( $args->command ) )
 			break;
 
 		case 'deleteitem';
-			if( $rows = $SqlDatabase->Query( 'DELETE FROM DockItem WHERE UserID=\'' . $User->ID . '\' AND ID=\'' . intval( $args->args->itemId, 10 ) . '\' LIMIT 1' ) )
+			if( $rows = $SqlDatabase->Query( 'DELETE FROM DockItem WHERE UserID=\'' . $UserSession->UserID . '\' AND ID=\'' . intval( $args->args->itemId, 10 ) . '\' LIMIT 1' ) )
 			{
 				die( 'ok<!--separate-->' . $args->args->itemId );
 			}
 			die( 'fail' );
 		case 'getitem':
-			if( $row = $SqlDatabase->FetchObject( 'SELECT * FROM DockItem WHERE ID=\'' . intval( $args->args->itemId, 10 ) . '\' AND UserID=\'' . $User->ID . '\'' ) )
+			if( $row = $SqlDatabase->FetchObject( 'SELECT * FROM DockItem WHERE ID=\'' . intval( $args->args->itemId, 10 ) . '\' AND UserID=\'' . $UserSession->UserID . '\'' ) )
 			{
 				if( isset( $args->args ) && $args->args->method == 'html' )
 				{
@@ -180,11 +180,11 @@ if( isset( $args->command ) )
 			}
 			die( 'fail' );
 		case 'sortorder':
-			if( $args->args->userID && $args->args->userID != $User->ID )
+			if( $args->args->userID && $args->args->userID != $UserSession->UserID )
 			{
 				if( $level != 'Admin' ) die('fail<!--separate-->not authorized to sort dockitems');
 			}
-			$userid = ( $args->args->userID ? intval( $args->args->userID ) : $User->ID );
+			$userid = ( $args->args->userID ? intval( $args->args->userID ) : $UserSession->UserID );
 			if( $out = $SqlDatabase->FetchObjects( 'SELECT * FROM DockItem WHERE UserID=\'' . $userid . '\' ORDER BY SortOrder ASC' ) )
 			{
 				$i = 0;
@@ -237,7 +237,7 @@ if( isset( $args->command ) )
 					`Workspace` = \'' . $work . '\'
 				WHERE
 					ID=\'' . $id . '\' AND
-					UserID=\'' . $User->ID . '\'
+					UserID=\'' . $UserSession->UserID . '\'
 			' );
 			die( 'ok' );
 			break;
@@ -246,14 +246,14 @@ if( isset( $args->command ) )
 		case 'additems':
 			//sanitize...
 			if( !$args->args->dockitems ) die('fail<!--separate-->bad request to add dockitems');
-			if( $args->args->userID && $args->args->userID != $User->ID )
+			if( $args->args->userID && $args->args->userID != $UserSession->UserID )
 			{
 				if( $level != 'Admin' ) die('fail<!--separate-->not authorized to add dockitems');
 			}
 			
 			
 			//prepare....
-			$userid = ( $args->args->userID ? intval( $args->args->userID ) : $User->ID );
+			$userid = ( $args->args->userID ? intval( $args->args->userID ) : $UserSession->UserID );
 			$sortindex = 1;
 			$userdock = $SqlDatabase->FetchObjects( 'SELECT ID,Application,SortOrder FROM DockItem WHERE UserID=\'' . $userid . '\' ORDER BY SortOrder DESC' );
 
@@ -316,11 +316,11 @@ if( isset( $args->command ) )
 			break;
 			
 		case 'additem':
-			if( $args->args->userID && $args->args->userID != $User->ID )
+			if( $args->args->userID && $args->args->userID != $UserSession->UserID )
 			{
 				if( $level != 'Admin' ) die('fail<!--separate-->not authorized to add dockitems');
 			}
-			$userid = ( $args->args->userID ? intval( $args->args->userID ) : $User->ID );
+			$userid = ( $args->args->userID ? intval( $args->args->userID ) : $UserSession->UserID );
 			$max = $SqlDatabase->FetchRow( 'SELECT MAX(SortOrder) MX FROM DockItem WHERE UserID = \'' . $userid . '\' AND Parent = 0' );
 			if( isset( $args->args->application ) )
 			{
@@ -375,7 +375,7 @@ if( isset( $args->command ) )
 		case 'getdock':
 			$o = new DbIO( 'DockItem' );
 			if( $dock = $SqlDatabase->FetchObject( '
-				SELECT * FROM DockItem WHERE UserID=\'' . $User->ID . '\' AND `Type`=\'Dock\' AND `DockID`=\'' . $args->args->dockid . '\'
+				SELECT * FROM DockItem WHERE UserID=\'' . $UserSession->UserID . '\' AND `Type`=\'Dock\' AND `DockID`=\'' . $args->args->dockid . '\'
 			' ) )
 			{
 				if( $o->Load( $dock->ID ) )
@@ -388,7 +388,7 @@ if( isset( $args->command ) )
 		case 'savedock':
 			$o = new DbIO( 'DockItem' );
 			if( $dock = $SqlDatabase->FetchObject( '
-				SELECT * FROM DockItem WHERE UserID=\'' . $User->ID . '\' AND `Type`=\'Dock\' AND `DockID`=\'' . $args->args->dockid . '\'
+				SELECT * FROM DockItem WHERE UserID=\'' . $UserSession->UserID . '\' AND `Type`=\'Dock\' AND `DockID`=\'' . $args->args->dockid . '\'
 			' ) )
 			{
 				$o->Load( $dock->ID );
@@ -396,7 +396,7 @@ if( isset( $args->command ) )
 			if( !$o->ID )
 			{
 				$o->DockID = $args->args->dockid;
-				$o->UserID = $User->ID;
+				$o->UserID = $UserSession->UserID;
 				$o->Type = 'Dock';
 			}
 			$cfg = new stdClass();
