@@ -424,7 +424,7 @@ DataForm *CommServiceSendMsgDirect( FConnection *con, DataForm *df )
  */
 FConnection *FConnectionNew( const char *add, const char *name, int type, void *service )
 {
-	FConnection *newcon;
+	FConnection *newcon = NULL;
 	
 	if( add == NULL )
 	{
@@ -435,11 +435,11 @@ FConnection *FConnectionNew( const char *add, const char *name, int type, void *
 	{
 		int addlen = strlen( add );
 
-		newcon->fc_Address = FCalloc( addlen+1 , sizeof( char ) );
 		newcon->fc_Name = StringDuplicate( (char *) name );
+		newcon->fc_Address = StringDuplicate( (char *) add );
 		
-		strcpy( newcon->fc_Address, add );
-		strcpy( newcon->fc_Name, name );
+		//strcpy( newcon->fc_Address, add );
+		//strcpy( newcon->fc_Name, name );
 		
 		newcon->fc_Type  = type;
 		newcon->fc_Service = service;
@@ -604,13 +604,14 @@ FConnection *ConnectToServer( CommService *s, char *conname )
 			int i;
 			
 			// if thats our core connection we just copy ID
-			
+			/*
 			if( coreConnection == TRUE )
 			{
 				memcpy( id, con->fc_FCID, FRIEND_CORE_MANAGER_ID_SIZE );
 			}
 			else
 			{
+				*/
 				strcpy( id, address );
 				
 				for( i=0 ; i<FRIEND_CORE_MANAGER_ID_SIZE; i++ )
@@ -620,7 +621,7 @@ FConnection *ConnectToServer( CommService *s, char *conname )
 						fcm->fcm_ID[ i ] = '0';
 					}
 				}
-			}
+			//}
 		}
 	}
 	

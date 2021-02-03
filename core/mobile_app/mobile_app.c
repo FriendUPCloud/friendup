@@ -63,10 +63,13 @@ int CAddToList( char *usernname, UserMobileAppConnections *lc )
 		e = (UCEntry*) e->node.mln_Succ;
 	}
 	e = FCalloc( 1, sizeof(UCEntry) );
-	e->u = usernname;
-	e->c = lc;
-	e->node.mln_Succ = (MinNode *)globalUserToAppConnection;
-	globalUserToAppConnection = e;
+	if( e != NULL )
+	{
+		e->u = usernname;
+		e->c = lc;
+		e->node.mln_Succ = (MinNode *)globalUserToAppConnection;
+		globalUserToAppConnection = e;
+	}
 	return 0;
 }
 

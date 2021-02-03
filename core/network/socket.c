@@ -242,7 +242,7 @@ Socket* SocketNew( void *sb, FBOOL ssl, unsigned short port, int type )
 		else
 		{
 			FERROR("[SocketNew] Cannot allocate memory for socket!\n");
-			sock->s_Interface->SocketDelete( sock );
+			//sock->s_Interface->SocketDelete( sock );
 			return NULL;
 		}
 

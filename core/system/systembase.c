@@ -916,6 +916,12 @@ SystemBase *SystemInit( void )
 	
 	// create all managers
 	
+	l->sl_SupportManager = SupportManagerNew( l );
+	if( l->sl_SupportManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize SupportManager\n");
+	}
+	
 	l->sl_PermissionManager = PermissionManagerNew( l );
 	if( l->sl_PermissionManager == NULL )
 	{
@@ -1267,6 +1273,10 @@ void SystemClose( SystemBase *l )
 	if( l->sl_SASManager != NULL )
 	{
 		SASManagerDelete( l->sl_SASManager );
+	}
+	if( l->sl_SupportManager != NULL )
+	{
+		SupportManagerDelete( l->sl_SupportManager );
 	}
 	
 	// Remove sentinel from active memory

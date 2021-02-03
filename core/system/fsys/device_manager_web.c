@@ -22,7 +22,9 @@
 #include <core/functions.h>
 #include <system/fsys/door_notification.h>
 
+//
 // local funciton
+//
 
 static inline void EscapeConfigFromString( char *str, char **configEscaped, char **executeCmd )
 {
@@ -38,58 +40,66 @@ static inline void EscapeConfigFromString( char *str, char **configEscaped, char
 			FFree( *configEscaped );
 		}
 		*configEscaped = FCalloc( len * 2 + 2, sizeof( char ) );
-		int n = 0; for( ; n < len; n++ )
+		if( *configEscaped != NULL )
 		{
-			if( str[n] == '"' )
+			int n = 0; for( ; n < len; n++ )
 			{
-				(*configEscaped)[k++] = '\\';
-			}
-			(*configEscaped)[k++] = str[n];
-		}
-		// Find executable
-		DEBUG( "[DeviceMWebRequest] Looking in: %s\n", str );
-		*executeCmd = FCalloc( 256, sizeof( char ) );
-		int mo = 0, im = 0, imrun = 1;
-		for( ; imrun == 1 && im < len - 14; im++ )
-		{
-			if( strncmp( str + im, "\"Executable\"", 12 ) == 0 )
-			{
-				im += 14;
-				imrun = 0;
-				for( ; im < len; im++ )
+				if( str[n] == '"' )
 				{
-					// Next quote is end of string
-					if( str[im] == '"' ) break;
-					*executeCmd[ mo++ ] = str[ im ];
+					(*configEscaped)[k++] = '\\';
+				}
+				(*configEscaped)[k++] = str[n];
+			}
+			// Find executable
+			DEBUG( "[DeviceMWebRequest] Looking in: %s\n", str );
+			*executeCmd = FCalloc( 256, sizeof( char ) );
+			if( *executeCmd != NULL )
+			{
+				int mo = 0, im = 0, imrun = 1;
+				for( ; imrun == 1 && im < len - 14; im++ )
+				{
+					if( strncmp( str + im, "\"Executable\"", 12 ) == 0 )
+					{
+						im += 14;
+						imrun = 0;
+						for( ; im < len; im++ )
+						{
+							// Next quote is end of string
+							if( str[im] == '"' ) break;
+							*executeCmd[ mo++ ] = str[ im ];
+						}
+					}
 				}
 			}
-		}
 		
-		// remove private user data
-		{
-			char *lockey = strstr( *configEscaped, "PrivateKey" );
-			if( lockey != NULL )
+			// remove private user data
 			{
-				// add  PrivateKey"="
-				lockey += 15;
-				int pos = 0;
-				while( TRUE )
+				char *lockey = strstr( *configEscaped, "PrivateKey" );
+				if( lockey != NULL )
 				{
-					//printf("inside '%c'\n", *lockey );
-					if( *lockey == 0 || (lockey[ 0 ] == '\\' && lockey[ 1 ] == '"' ) )
+					// add  PrivateKey"="
+					lockey += 15;
+					int pos = 0;
+					while( TRUE )
 					{
-						break;
+						//printf("inside '%c'\n", *lockey );
+						if( *lockey == 0 || (lockey[ 0 ] == '\\' && lockey[ 1 ] == '"' ) )
+						{
+							break;
+						}
+						*lockey = ' ';
+						lockey++;
+						pos++;
 					}
-					*lockey = ' ';
-					lockey++;
-					pos++;
 				}
 			}
 		}
 	}
 }
 
+//
 // fill information about device
+//
 
 static inline void FillDeviceInfo( int devnr, char *tmp, int tmplen, int mounted, char *fname, char *fsysname, char *path, char *sysname, char *config, int visible, char *exec, int isLimited, char *devserver, int devport, FULONG usergroupid )
 {
@@ -146,7 +156,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 	
 	// No urlpath..
 	// TODO: Give this a unique error message..
-	if( !urlpath || !urlpath[ 1 ] )
+	if( urlpath == NULL || urlpath[ 1 ] == NULL )
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( DEFAULT_CONTENT_TYPE ) },
@@ -174,7 +184,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -266,16 +276,17 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 		int success = -1;
 		char *resultstring = NULL;
 		
+#define QUERY_LEN 512
+		
 		if( devname != NULL )
 		{
-			char *query = FCalloc( 512, sizeof( char ) );
+			char *query = FCalloc( QUERY_LEN, sizeof( char ) );
 			
 			// Fetch rows
 			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 			if( sqllib )
 			{
-				//snprintf( query, 512, ""
-				sqllib->SNPrintF( sqllib, query, 512, ""
+				sqllib->SNPrintF( sqllib, query, QUERY_LEN, ""
 "SELECT f.Name, f.ShortDescription FROM `Filesystem` f "
 "WHERE f.Config LIKE \"%%\\\"pollable\\\":\\\"yes\\\"%%\" "
 "AND f.Name = \"%s\" LIMIT 1", devname );
@@ -285,13 +296,16 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 				if( res != NULL )
 				{
 					char **row;
-					int rownr = 0;
 					if( ( row = sqllib->FetchRow( sqllib, res ) ) )
 					{
 						if( row[ 0 ] != NULL && row[ 1 ] != NULL )
 						{
-							resultstring = FCalloc( 512, sizeof( char ) );
-							sprintf( resultstring, "ok<!--separate-->{\"Name\":\"%s\",\"Description\":\"%s\"}", row[0], row[1] );
+							int len = 128 + strlen( row[ 0 ] ) + strlen( row[ 1 ] );
+							resultstring = FCalloc( len, sizeof( char ) );
+							if( resultstring != NULL )
+							{
+								sprintf( resultstring, "ok<!--separate-->{\"Name\":\"%s\",\"Description\":\"%s\"}", row[0], row[1] );
+							}
 							success = 0;
 						}
 					}
@@ -341,9 +355,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "devname" );
 			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, dictmsgbuf );
-		}		
-		
-		
+		}
 		*result = 200;
 	}
 
@@ -378,7 +390,7 @@ WHERE f.Config LIKE \"%\\\"pollable\\\":\\\"yes\\\"%\" AND u.ID = f.UserID \
 ORDER BY \
 f.Name ASC";
 			
-			ListString *str = ListStringNew();
+			BufString *bs = BufStringNew();
 			
 			// Fetch rows
 			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
@@ -394,9 +406,15 @@ f.Name ASC";
 					{
 						if( row[ 0 ] != NULL && row[ 1 ] != NULL )
 						{
-							char *prt = FCalloc( 512, sizeof( char ) );
-							sprintf( prt, "%s{\"Name\":\"%s\",\"Publisher\":\"%s\"}", rownr == 0 ? "" : ",", row[0], row[1] );
-							ListStringAdd( str, prt, strlen( prt ) ); 
+							int len = 128 + strlen( row[ 0 ] ) + strlen( row[ 1 ] );
+							char *prt = FCalloc( len, sizeof( char ) );
+							int spLen = 0;
+							if( prt != NULL )
+							{
+								spLen = sprintf( prt, "%s{\"Name\":\"%s\",\"Publisher\":\"%s\"}", rownr == 0 ? "" : ",", row[0], row[1] );
+								BufStringAddSize( bs, prt, spLen );
+							}
+							//ListStringAdd( str, prt, strlen( prt ) ); 
 							FFree( prt );
 							rownr++;
 						}
@@ -407,12 +425,16 @@ f.Name ASC";
 			}
 			
 			// Add positive response
-			if( ListStringJoin( str ) )
+			if( bs->bs_Size > 0 )
 			{
-				char *cnt = FCalloc( strlen( str->ls_Data ) + 20, sizeof( char ) );
-				sprintf( cnt, "ok<!--separate-->[%s]", str->ls_Data );
-				HttpAddTextContent( response, cnt );
-				FFree( cnt );
+				char *cnt = FMalloc( bs->bs_Size + 20 );
+				if( cnt != NULL )
+				{
+					int len = sprintf( cnt, "ok<!--separate-->[%s]", bs->bs_Buffer );
+					HttpSetContent( response, cnt, len );
+					//HttpAddTextContent( response, cnt );
+					//FFree( cnt );
+				}
 			}
 			// Add negative response
 			else
@@ -423,7 +445,7 @@ f.Name ASC";
 			}
 			
 			// Clean up and set result status
-			ListStringDelete( str );
+			BufStringDelete( bs );
 			*result = 200;
 	}
 	
@@ -517,10 +539,9 @@ f.Name ASC";
 			path = (char *)el->hme_Data;
 			if( path != NULL )
 			{
-				char *lpath = NULL;
-				if( ( lpath = FCalloc( strlen( path ) + 1, sizeof(char) ) ) != NULL )
+				char *lpath = UrlDecodeToMem( path );
+				if( lpath != NULL )
 				{
-					UrlDecode( lpath, path );
 					strcpy( path, lpath );
 					
 					FFree( lpath );
@@ -825,7 +846,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 							);
 						}
 
-						void *res = sqllib->Query( sqllib, temptext );
+						sqllib->QueryWithoutResults( sqllib, temptext );
 
 						FFree( temptext );
 					}
@@ -984,7 +1005,6 @@ AND LOWER(f.Name) = LOWER('%s')",
 							activeUser = locusr;
 							userID = activeUser->u_ID;
 						}
-						//deviceUnmounted = TRUE;
 
 						mountError = 0;
 					}
@@ -993,10 +1013,6 @@ AND LOWER(f.Name) = LOWER('%s')",
 						Log( FLOG_INFO, "Admin1 ID[%lu] is mounting drive to user ID[%lu]\n", activeUser->u_ID, activeUser->u_ID );
 						userID = activeUser->u_ID;
 					}
-					//if( args != NULL )
-					//{
-					//	FFree( args );
-					//}
 				}
 				
 				DEBUG("[DeviceMWebRequest] device unmounted: %d\n", deviceUnmounted );
@@ -1400,7 +1416,6 @@ AND LOWER(f.Name) = LOWER('%s')",
 				}
 			}
 			
-			
 			if( rootDev != NULL )
 			{
 				//
@@ -1527,55 +1542,57 @@ AND LOWER(f.Name) = LOWER('%s')",
 				
 #define TMP_SIZE 8112//2048
 #define TMP_SIZE_MIN1 (TMP_SIZE-1)
-				char *tmp = FCalloc( TMP_SIZE, sizeof( char ) ); 
-				char *executeCmd = NULL;
-				char *configEscaped = NULL;
-				
-				//
-				// get information about user drives
-				//
-				
-				if( FRIEND_MUTEX_LOCK( &( curusr->u_Mutex ) ) == 0 )
+				char *tmp = FCalloc( TMP_SIZE, sizeof( char ) );
+				if( tmp != NULL )
 				{
-					while( dev != NULL )
+					char *executeCmd = NULL;
+					char *configEscaped = NULL;
+				
+					//
+					// get information about user drives
+					//
+				
+					if( FRIEND_MUTEX_LOCK( &( curusr->u_Mutex ) ) == 0 )
 					{
-						FHandler *sys = (FHandler *)dev->f_FSys;
-						char *sysname = NULL;
-						if( sys != NULL )
+						while( dev != NULL )
 						{
-							sysname = sys->Name;
-						}
-						Filesystem *fsys = ( Filesystem *)dev->f_DOSDriver;
-					
-						EscapeConfigFromString( dev->f_Config, &configEscaped, &executeCmd );
-					
-						memset( tmp, '\0', TMP_SIZE );
-					
-						FBOOL isLimited = FALSE;
-					
-						if( loggedSession->us_User->u_IsAdmin == FALSE )
-						{
-							if( strcmp( dev->f_FSysName, "Local" ) == 0 )
+							FHandler *sys = (FHandler *)dev->f_FSys;
+							char *sysname = NULL;
+							if( sys != NULL )
 							{
-								isLimited = TRUE;
+								sysname = sys->Name;
 							}
-						}
+							Filesystem *fsys = ( Filesystem *)dev->f_DOSDriver;
 					
-						FillDeviceInfo( devnr, tmp, TMP_SIZE_MIN1, dev->f_Mounted, dev->f_Name, dev->f_FSysName, dev->f_Path, sysname, configEscaped, dev->f_Visible, executeCmd, isLimited, dev->f_DevServer, dev->f_DevPort, dev->f_UserGroupID );
+							EscapeConfigFromString( dev->f_Config, &configEscaped, &executeCmd );
 					
-						{
-							char inttmp[ 256 ];
-							int addlen = 0;
-							if( bsMountedDrives->bs_Size == 0 )
+							memset( tmp, '\0', TMP_SIZE );
+					
+							FBOOL isLimited = FALSE;
+					
+							if( loggedSession->us_User->u_IsAdmin == FALSE )
 							{
-								addlen = snprintf( inttmp, sizeof( inttmp ), "%lu", dev->f_ID );
+								if( strcmp( dev->f_FSysName, "Local" ) == 0 )
+								{
+									isLimited = TRUE;
+								}
 							}
-							else
+					
+							FillDeviceInfo( devnr, tmp, TMP_SIZE_MIN1, dev->f_Mounted, dev->f_Name, dev->f_FSysName, dev->f_Path, sysname, configEscaped, dev->f_Visible, executeCmd, isLimited, dev->f_DevServer, dev->f_DevPort, dev->f_UserGroupID );
+					
 							{
-								addlen = snprintf( inttmp, sizeof( inttmp ), ",%lu", dev->f_ID );
+								char inttmp[ 256 ];
+								int addlen = 0;
+								if( bsMountedDrives->bs_Size == 0 )
+								{
+									addlen = snprintf( inttmp, sizeof( inttmp ), "%lu", dev->f_ID );
+								}
+								else
+								{
+									addlen = snprintf( inttmp, sizeof( inttmp ), ",%lu", dev->f_ID );
+								}
+								BufStringAddSize( bsMountedDrives, inttmp, addlen );
 							}
-							BufStringAddSize( bsMountedDrives, inttmp, addlen );
-						}
 						/*
 						if( devnr == 0 )
 						{
@@ -1611,6 +1628,26 @@ AND LOWER(f.Name) = LOWER('%s')",
 						}
 						*/
 					
+							if( executeCmd )
+							{
+								FFree( executeCmd );
+								executeCmd = NULL;
+							}
+							if( configEscaped )
+							{
+								FFree( configEscaped );
+								configEscaped = NULL;
+							}
+						
+							BufStringAdd( bs, tmp );
+					
+							devnr++;
+							dev = (File *)dev->node.mln_Succ;
+						}
+						FRIEND_MUTEX_UNLOCK( &( curusr->u_Mutex ) );
+					}
+					else
+					{
 						if( executeCmd )
 						{
 							FFree( executeCmd );
@@ -1621,75 +1658,68 @@ AND LOWER(f.Name) = LOWER('%s')",
 							FFree( configEscaped );
 							configEscaped = NULL;
 						}
-					
-						BufStringAdd( bs, tmp );
-					
-						devnr++;
-						dev = (File *)dev->node.mln_Succ;
 					}
-					FRIEND_MUTEX_UNLOCK( &( curusr->u_Mutex ) );
-				}
 				
-				//
-				// get information about shared group drives
-				//
+					//
+					// get information about shared group drives
+					//
 				
-				UserGroupLink *ugl = loggedSession->us_User->u_UserGroupLinks;
-				while( ugl != NULL )
-				//int gr = 0;
-				//for( gr = 0 ; gr < curusr->u_GroupsNr ; gr++ )
-				{
-					//DEBUG("\n\n\n\nGROUP: %s\n\n\n\n\n", curusr->u_Groups[ gr ]->ug_Name );
-					dev = NULL;
-					if( ugl->ugl_Group != NULL )
+					UserGroupLink *ugl = loggedSession->us_User->u_UserGroupLinks;
+					while( ugl != NULL )
+					//int gr = 0;
+					//for( gr = 0 ; gr < curusr->u_GroupsNr ; gr++ )
 					{
-						dev = ugl->ugl_Group->ug_MountedDevs;
-					}
-					
-					while( dev != NULL )
-					{
-						// if this is shared drive and user want details we must point to original drive
-						if( dev->f_SharedFile != NULL )
+						//DEBUG("\n\n\n\nGROUP: %s\n\n\n\n\n", curusr->u_Groups[ gr ]->ug_Name );
+						dev = NULL;
+						if( ugl->ugl_Group != NULL )
 						{
-							dev = dev->f_SharedFile;
+							dev = ugl->ugl_Group->ug_MountedDevs;
 						}
+					
+						while( dev != NULL )
+						{
+							// if this is shared drive and user want details we must point to original drive
+							if( dev->f_SharedFile != NULL )
+							{
+								dev = dev->f_SharedFile;
+							}
 						
-						FHandler *sys = (FHandler *)dev->f_FSys;
-						char *sysname = NULL;
-						if( sys != NULL )
-						{
-							sysname = sys->Name;
-						}
-					
-						EscapeConfigFromString( dev->f_Config, &configEscaped, &executeCmd );
-					
-						memset( tmp, '\0', TMP_SIZE );
-					
-						FBOOL isLimited = FALSE;
-					
-						if( loggedSession->us_User->u_IsAdmin == FALSE )
-						{
-							if( strcmp( dev->f_FSysName, "Local" ) == 0 )
+							FHandler *sys = (FHandler *)dev->f_FSys;
+							char *sysname = NULL;
+							if( sys != NULL )
 							{
-								isLimited = TRUE;
+								sysname = sys->Name;
 							}
-						}
 					
-						FillDeviceInfo( devnr, tmp, TMP_SIZE_MIN1, dev->f_Mounted, dev->f_Name, dev->f_FSysName, dev->f_Path, sysname, configEscaped, dev->f_Visible, executeCmd, isLimited, dev->f_DevServer, dev->f_DevPort, dev->f_UserGroupID );
+							EscapeConfigFromString( dev->f_Config, &configEscaped, &executeCmd );
+					
+							memset( tmp, '\0', TMP_SIZE );
+					
+							FBOOL isLimited = FALSE;
+					
+							if( loggedSession->us_User->u_IsAdmin == FALSE )
+							{
+								if( strcmp( dev->f_FSysName, "Local" ) == 0 )
+								{
+									isLimited = TRUE;
+								}
+							}
+					
+							FillDeviceInfo( devnr, tmp, TMP_SIZE_MIN1, dev->f_Mounted, dev->f_Name, dev->f_FSysName, dev->f_Path, sysname, configEscaped, dev->f_Visible, executeCmd, isLimited, dev->f_DevServer, dev->f_DevPort, dev->f_UserGroupID );
 						
-						{
-							char inttmp[ 256 ];
-							int addlen = 0;
-							if( bsMountedDrives->bs_Size == 0 )
 							{
-								addlen = snprintf( inttmp, sizeof( inttmp ), "%lu", dev->f_ID );
+								char inttmp[ 256 ];
+								int addlen = 0;
+								if( bsMountedDrives->bs_Size == 0 )
+								{
+									addlen = snprintf( inttmp, sizeof( inttmp ), "%lu", dev->f_ID );
+								}
+								else
+								{
+									addlen = snprintf( inttmp, sizeof( inttmp ), ",%lu", dev->f_ID );
+								}
+								BufStringAddSize( bsMountedDrives, inttmp, addlen );
 							}
-							else
-							{
-								addlen = snprintf( inttmp, sizeof( inttmp ), ",%lu", dev->f_ID );
-							}
-							BufStringAddSize( bsMountedDrives, inttmp, addlen );
-						}
 					/*
 						if( devnr == 0 )
 						{
@@ -1763,10 +1793,10 @@ AND LOWER(f.Name) = LOWER('%s')",
 						devnr++;
 						dev = (File *)dev->node.mln_Succ;
 					}
-					ugl = (UserGroupLink *)ugl->node.mln_Succ;
+						ugl = (UserGroupLink *)ugl->node.mln_Succ;
+					}
+					FFree( tmp );
 				}
-				
-				FFree( tmp );
 				
 				BufStringAdd( bs, "]" );
 				
@@ -1800,8 +1830,8 @@ AND LOWER(f.Name) = LOWER('%s')",
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( DEFAULT_CONTENT_TYPE ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		if( response != NULL )
@@ -1875,8 +1905,8 @@ AND LOWER(f.Name) = LOWER('%s')",
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( DEFAULT_CONTENT_TYPE ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		char *devname = NULL;

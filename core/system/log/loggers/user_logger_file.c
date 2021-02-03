@@ -53,60 +53,66 @@ void init( struct UserLogger *s )
 		if( plib != NULL )
 		{
 			char *ptr = getenv("FRIEND_HOME");
-			char *path = FCalloc( 1000, sizeof( char ) );
-			
-			if( ptr != NULL )
+			char *path = FCalloc( 1024, sizeof( char ) );
+			if( path != NULL )
 			{
-				sprintf( path, "%scfg/cfg.ini", ptr );
-			}
-			
-			DEBUG( "Opening config file: %s\n", path );
-			
-			prop = plib->Open( path );
-			FFree( path );
-			
-			if( prop != NULL)
-			{
-				DEBUG("[UserLogger] reading file name\n");
-				
-				// get filename
-				fname = plib->ReadStringNCS( prop, "Logger:filename", "action_logger" );
-				if( fname == NULL )
+				if( ptr != NULL )
 				{
+					sprintf( path, "%scfg/cfg.ini", ptr );
+				}
+			
+				DEBUG( "Opening config file: %s\n", path );
+			
+				prop = plib->Open( path );
+				FFree( path );
+			
+				if( prop != NULL)
+				{
+					DEBUG("[UserLogger] reading file name\n");
+				
+					// get filename
+					fname = plib->ReadStringNCS( prop, "Logger:filename", "action_logger" );
+					if( fname == NULL )
+					{
+						strcpy( sd->sd_FileName, "action_logger" );
+					}
+					else
+					{
+						strcpy( sd->sd_FileName, fname );
+					}
+				
+					// get file path
+					fpath = plib->ReadStringNCS( prop, "Logger:filepath", "log/" );
+					int size = 5;
+					if( fpath != NULL )
+					{
+						size = strlen( fpath );
+						if( ( sd->sd_FilePath = FCalloc( size+64, sizeof(char) ) ) != NULL )
+						{
+							strcpy( sd->sd_FilePath, fpath );
+						}
+					}
+					else
+					{
+						if( ( sd->sd_FilePath = FCalloc( size+64, sizeof(char) ) ) != NULL )
+						{
+							strcpy( sd->sd_FilePath, "log/" );
+						}
+					}
+				
+					sd->sd_DstFilePathLength = size+32+strlen(sd->sd_FileName);
+					sd->sd_DstFilePath = FCalloc( sd->sd_DstFilePathLength, sizeof(char) );
+					//snprintf( sd->sd_DstFilePath, lsize, "%s%s", sd->sd_FilePath, sd->sd_FileName );
+				}
+				else
+				{
+					int size = 5;
+					FERROR( "Cannot open property file!\n" );
+					sd->sd_DstFilePathLength = size+32+strlen(sd->sd_FileName);
+					sd->sd_DstFilePath = FCalloc( sd->sd_DstFilePathLength, sizeof(char) );
+					strcpy( sd->sd_FilePath, "log/" );
 					strcpy( sd->sd_FileName, "action_logger" );
 				}
-				else
-				{
-					strcpy( sd->sd_FileName, fname );
-				}
-				
-				// get file path
-				fpath = plib->ReadStringNCS( prop, "Logger:filepath", "log/" );
-				int size = 5;
-				if( fpath == NULL )
-				{
-					sd->sd_FilePath = FCalloc( size+64, sizeof(char) );
-					strcpy( sd->sd_FilePath, "log/" );
-				}
-				else
-				{
-					size = strlen( fpath );
-					sd->sd_FilePath = FCalloc( size+64, sizeof(char) );
-					strcpy( sd->sd_FilePath, fpath );
-				}
-				
-				sd->sd_DstFilePathLength = size+32+strlen(sd->sd_FileName);
-				sd->sd_DstFilePath = FCalloc( sd->sd_DstFilePathLength, sizeof(char) );
-				//snprintf( sd->sd_DstFilePath, lsize, "%s%s", sd->sd_FilePath, sd->sd_FileName );
-			}
-			else
-			{
-				int size = 5;
-				FERROR( "Cannot open property file!\n" );
-				sd->sd_DstFilePathLength = size+32+strlen(sd->sd_FileName);
-				sd->sd_DstFilePath = FCalloc( sd->sd_DstFilePathLength, sizeof(char) );
-				strcpy( sd->sd_FilePath, "log/" );
-				strcpy( sd->sd_FileName, "action_logger" );
 			}
 
 			if( prop ) plib->Close( prop );

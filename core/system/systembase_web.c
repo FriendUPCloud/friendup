@@ -144,6 +144,12 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 		{
 			sprintf( allArgs, "%s", request->http_Uri->uri_QueryRaw );
 		}
+		
+		if( allArgsNew == NULL )
+		{
+			FFree( allArgs );
+			return NULL;
+		}
 	
 	/*
 		// this function was doing nothing:)
@@ -1164,13 +1170,16 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						if( checkAvail->l_Data )
 						{
 							struct ModuleSet *mp = ( struct ModuleSet * )checkAvail->l_Data;
-							if( strcmp( ( char *)he->hme_Data, mp->name ) == 0 )
+							if( he->hme_Data != NULL && mp != NULL && mp->name != NULL )
 							{
-								found = 1;
-								modType = StringDuplicate( mp->extension );
-								snprintf( path, sizeof( path ), "modules/%s", mp->name );
-								path[ 511 ] = 0;
-								break;
+								if( strcmp( ( char *)he->hme_Data, mp->name ) == 0 )
+								{
+									found = 1;
+									modType = StringDuplicate( mp->extension );
+									snprintf( path, sizeof( path ), "modules/%s", mp->name );
+									path[ 511 ] = 0;
+									break;
+								}
 							}
 						}
 						checkAvail = checkAvail->next;
@@ -2231,7 +2240,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							FERROR("Cannot  add session\n");
 						}
 
-						char tmp[ 512 ];
+						char tmp[ 768 ];
 						int tmpset = 0;
 						User *loggedUser = NULL;
 						if( loggedSession != NULL )
@@ -2286,7 +2295,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 
 									l->LibrarySQLDrop( l, sqllib );
 
-									snprintf( tmp, 512, "{\"response\":\"%d\",\"sessionid\":\"%s\",\"authid\":\"%s\"}",
+									snprintf( tmp, sizeof(tmp), "{\"response\":\"%d\",\"sessionid\":\"%s\",\"authid\":\"%s\"}",
 									loggedUser->u_Error, loggedUser->u_MainSessionID, authid
 									);
 									tmpset++;

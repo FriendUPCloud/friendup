@@ -19,6 +19,7 @@
 
 #include <util/log/log.h>
 #include <util/sha256.h>
+#include <system/support/support_manager.h>
 
 typedef struct UtilInterface
 {
@@ -27,6 +28,7 @@ typedef struct UtilInterface
 	char						*(*EncodeStringSHA256)( char *data );
 	char						*(*DatabaseEncodeStringLen)( char *data, int len );
 	char						*(*DatabaseEncodeString)( char *data );
+	FQUAD						(*GetUniqueFileID)( SupportManager *sm );
 }UtilInterface;
 
 //
@@ -40,6 +42,7 @@ static inline void UtilInterfaceInit( UtilInterface *ui )
 	ui->EncodeStringSHA256 = EncodeStringSHA256;
 	ui->DatabaseEncodeStringLen = EncodeStringLenSHA256;		// default encode function
 	ui->DatabaseEncodeString = EncodeStringSHA256;				// default encode function
+	ui->GetUniqueFileID = SupportManagerGetTempFileID;
 }
 
 #endif // __INTERFACE_UTIL_INTERFACE_H__

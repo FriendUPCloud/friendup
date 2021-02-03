@@ -1271,52 +1271,57 @@ int SASSessionSendMessage( SASSession *as, UserSession *sender, char *msg, int l
 	else  // dstusers != NULL
 	{
 		int dstuserssize = strlen( dstusers );
-		char *quotaName = FMalloc( dstuserssize );
+		char *quotaName = (char *)FMalloc( dstuserssize );
 		
-		SASUList *ali = as->sas_UserSessionList;
-		while( ali != NULL )
+		if( quotaName != NULL )
 		{
-			if( ali->usersession == sender )
+			SASUList *ali = as->sas_UserSessionList;
+			while( ali != NULL )
 			{
-				// sender should receive response
-				DEBUG("[SASSessionSendMessage] SENDER AUTHID %s\n", ali->authid );
-			}
-			else
-			{
-				UserSession *locusrsess = (UserSession *)ali->usersession;
-				User *usr = locusrsess->us_User;
-				
-				if( usr != NULL )
+				if( ali->usersession == sender )
 				{
-					int size = strlen( usr->u_Name );
-					quotaName[ 0 ] = quotaName[ size+1 ] = '\"';
-					quotaName[ size+2 ] = 0;
-					memcpy( &quotaName[ 1 ], usr->u_Name, size );
-					
-					char *newmsg = NULL;
-					
-					if( strstr( dstusers, quotaName ) != NULL &&  ( newmsg = FCalloc( length+256, sizeof(char) ) ) != NULL )
+					// sender should receive response
+					DEBUG("[SASSessionSendMessage] SENDER AUTHID %s\n", ali->authid );
+				}
+				else
+				{
+					UserSession *locusrsess = (UserSession *)ali->usersession;
+					if( locusrsess != NULL )
 					{
-						User *usend = sender->us_User;
+						User *usr = locusrsess->us_User;
+				
+						if( usr != NULL )
+						{
+							int size = strlen( usr->u_Name );
+							quotaName[ 0 ] = quotaName[ size+1 ] = '\"';
+							quotaName[ size+2 ] = 0;
+							memcpy( &quotaName[ 1 ], usr->u_Name, size );
+					
+							char *newmsg = NULL;
+					
+							if( strstr( dstusers, quotaName ) != NULL &&  ( newmsg = FCalloc( length+256, sizeof(char) ) ) != NULL )
+							{
+								User *usend = sender->us_User;
 						
-						DEBUG("[SASSessionSendMessage] Sendmessage AUTHID %s\n", ali->authid );
+								DEBUG("[SASSessionSendMessage] Sendmessage AUTHID %s\n", ali->authid );
 						
-						int newmsgsize = sprintf( newmsg, WS_MESSAGE_TEMPLATE_USER, ali->authid, as->sas_SASID, usend->u_Name, msg );
+								int newmsgsize = sprintf( newmsg, WS_MESSAGE_TEMPLATE_USER, ali->authid, as->sas_SASID, usend->u_Name, msg );
 						
-						msgsndsize += WebSocketSendMessageInt( ali->usersession, newmsg, newmsgsize );
-						DEBUG("[SASSessionSendMessage] FROM %s  TO %s  MESSAGE SIZE %d\n", usend->u_Name, ali->usersession->us_User->u_Name, msgsndsize );
-						FFree( newmsg );
-					}
-					else
-					{
-						//FERROR("Cannot allocate memory for message\n");
+								msgsndsize += WebSocketSendMessageInt( ali->usersession, newmsg, newmsgsize );
+								DEBUG("[SASSessionSendMessage] FROM %s  TO %s  MESSAGE SIZE %d\n", usend->u_Name, ali->usersession->us_User->u_Name, msgsndsize );
+								FFree( newmsg );
+							}
+							else
+							{
+							//FERROR("Cannot allocate memory for message\n");
+							}
+						}
 					}
 				}
+				ali = (SASUList *) ali->node.mln_Succ;
 			}
-			ali = (SASUList *) ali->node.mln_Succ;
+			FFree( quotaName );
 		}
-		
-		FFree( quotaName );
 	}
 	DEBUG("[SASSessionSendMessage] end\n");
 	return msgsndsize;

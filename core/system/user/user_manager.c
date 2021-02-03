@@ -370,6 +370,7 @@ int UMUserCreate( UserManager *smgr, Http *r __attribute__((unused)), User *usr 
 	if( usr == NULL )
 	{
 		FERROR("Cannot create user, NULL cannot be stored into database\n");
+		return -1;
 	}
 
 	if( UMUserExistByNameDB( smgr, usr->u_Name ) == TRUE )
@@ -378,11 +379,9 @@ int UMUserCreate( UserManager *smgr, Http *r __attribute__((unused)), User *usr 
 		return 1;
 	}
 	
-	time_t timestamp = time ( NULL );
-	
-	if( usr->u_Name != NULL )
+	if( usr->u_Password != NULL )
 	{
-		if( usr->u_Name[ 0 ] == '{' && usr->u_Name[ 1 ] == 'S' && usr->u_Name[ 2 ] == '6' && usr->u_Name[ 3 ] == '}' )
+		if( usr->u_Password[ 0 ] == '{' && usr->u_Password[ 1 ] == 'S' && usr->u_Password[ 2 ] == '6' && usr->u_Password[ 3 ] == '}' )
 		{
 			
 		}
@@ -392,7 +391,7 @@ int UMUserCreate( UserManager *smgr, Http *r __attribute__((unused)), User *usr 
 			unsigned char hash[ 32 ];
 			char *hashTarget;
 			
-			if( ( hashTarget = calloc( 69, sizeof(char) ) ) != NULL )
+			if( ( hashTarget = FCalloc( 69, sizeof(char) ) ) != NULL )
 			{
 				hashTarget[ 0 ] = '{';
 				hashTarget[ 1 ] = 'S';
@@ -428,7 +427,6 @@ int UMUserCreate( UserManager *smgr, Http *r __attribute__((unused)), User *usr 
 	GenerateUUID( &( usr->u_UUID ) );
 
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
-	
 	int val = 0;
 	if( sqlLib != NULL )
 	{

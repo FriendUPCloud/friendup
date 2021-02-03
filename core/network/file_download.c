@@ -50,7 +50,7 @@ int DownloadFile( const char *file, char *webpath )
 
 	DEBUG("[DownloadFile] openfile: %s\n", file );
 
-	if (!(f = fopen(file, "w")))
+	if( ( f = fopen(file, "w") ) == NULL )
 	{
 		return -1;
 	}
@@ -74,6 +74,7 @@ int DownloadFile( const char *file, char *webpath )
 	if ( (i = getaddrinfo(host, "80", &hints, &ai) ) != 0 )
 	{
 		FERROR("Cannot find site : %s\n", webpath );
+		fclose( f );
 		return -2;
 	}
 
@@ -89,6 +90,7 @@ int DownloadFile( const char *file, char *webpath )
 	if ( i < (int) strlen(buf) || (i == -1) )
 	{
 		FERROR("Error. Failed to send GET request!\n");
+		fclose( f );
 		return -3;
 	}
 	
