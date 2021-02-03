@@ -1345,7 +1345,10 @@ inline static void HttpReleaseContent( Http *http )
 		}
 		else
 		{
-			FFree( http->http_Content );
+			if( http->http_Content != NULL )
+			{
+				FFree( http->http_Content );
+			}
 			http->http_Content = NULL;
 		}
 	}

@@ -137,7 +137,7 @@ unsigned int BufStringDiskAddSize( BufStringDisk *bs, const char *stringToAppend
 				bs->bsd_FileHandler = open( bs->bsd_FileName, O_RDWR | O_CREAT | O_EXCL, 0600 );
 				if( bs->bsd_FileHandler == -1 )
 				{
-					FERROR("temporary file open failed!");
+					FERROR("temporary file open failed: %s!", bs->bsd_FileName );
 					return -1;
 				}
 			}

@@ -112,6 +112,20 @@ LocFile* LocFileNew( char* path, unsigned int flags )
 		FERROR("File path is null\n");
 		return NULL;
 	}
+	
+	struct stat st;
+	if( stat( path, &st ) < 0 )
+	{
+		FERROR( "Cannot stat file: '%s'.\n", path );
+		return NULL;
+	}
+	
+	if( S_ISDIR( st.st_mode ) )
+	{
+		FERROR( "'%s' is a directory. Can not open.\n", path );
+		return NULL;
+	}
+	
 	FILE* fp = fopen( path, "rb" );
 	if( fp == NULL )
 	{
@@ -128,29 +142,13 @@ LocFile* LocFileNew( char* path, unsigned int flags )
 		return NULL;
 	}
 	
-	struct stat st;
-	if( stat( path, &st ) < 0 )
-	{
-		FERROR( "Cannot stat file: '%s'.\n", path );
-		fclose( fp );
-		return NULL;
-	}
-	
-	if( S_ISDIR( st.st_mode ) )
-	{
-		FERROR( "'%s' is a directory. Can not open.\n", path );
-		fclose( fp );
-		return NULL;
-	}
-	
 	LocFile* fo = (LocFile*) FCalloc( 1, sizeof(LocFile) );
 	if( fo != NULL )
 	{
 		fo->lf_PathLength = strlen( path );
 		fo->lf_Path = StringDuplicateN( path, fo->lf_PathLength );
-		//fo->lf_Filename = StringDuplicate( GetFileNamePtr( path, fo->lf_PathLength ) );
-		
-		MURMURHASH3( fo->lf_Path, fo->lf_PathLength, fo->hash );
+
+		//MURMURHASH3( fo->lf_Path, fo->lf_PathLength, fo->hash );
 		
 		memcpy(  &(fo->lf_Info),  &st, sizeof( struct stat) );
 
@@ -158,7 +156,7 @@ LocFile* LocFileNew( char* path, unsigned int flags )
 		fseeko( fp, 0, SEEK_END );
 		off_t fsize = ftello( fp );
 		fseeko( fp, 0, SEEK_SET );  //same as rewind(f);
-		fo->lf_FileSize = ( long )fsize;// st.st_size; //ftell( fp );
+		fo->lf_FileSize = (FULONG)fsize;// st.st_size; //ftell( fp );
 
 		if( flags & FILE_READ_NOW )
 		{
@@ -214,11 +212,8 @@ LocFile* LocFileNewFromBuf( char* path, BufString *bs )
 	{
 		fo->lf_PathLength = strlen( path );
 		fo->lf_Path = StringDuplicateN( path, fo->lf_PathLength );
-		//fo->lf_Filename = StringDuplicateN( path, fo->lf_PathLength );//StringDuplicate( GetFileNamePtr( path, len ) );
-		MURMURHASH3( fo->lf_Path, fo->lf_PathLength, fo->hash );
+		//MURMURHASH3( fo->lf_Path, fo->lf_PathLength, fo->hash );
 		
-		//DEBUG("PATH: %s \n", fo->lf_Path );
-
 		fo->lf_FileSize = bs->bs_Size;
 		
 		if( ( fo->lf_Buffer = FMalloc( fo->lf_FileSize ) ) != NULL )

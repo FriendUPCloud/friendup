@@ -15,19 +15,19 @@
  *  @date pushed on 22/9/16
  */
 
+#include <stdio.h>
+#include <execinfo.h>
+#include <signal.h>
+#include <stdio_ext.h>
+#include <string.h>
+#include <stdlib.h>
+#include <time.h>
+
 #include "core/friend_core.h"
 #include "core/friendcore_manager.h"
 #include "network/uri.h"
 
-#include <execinfo.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdio_ext.h>
-#include <string.h>
-#include <stdlib.h>
-
 #include <class/phpproxyclass.h>
-#include <time.h>
 
 #include <system/systembase.h>
 #include <application/applicationlibrary.h>
@@ -37,6 +37,7 @@
 
 #include <util/file_operations.h>
 #include <util/safe_snprintf.h>
+
 
 // memory check
 #include <mcheck.h>
@@ -54,7 +55,6 @@ FriendCoreManager *coreManager;         ///< Global FriendCoreManager structure
 static const char *_program_name;
 
 static void crash_handler(int sig);
-static int addr2line(char const * const program_name, void const * const addr);
 
 /**
  * Handles ctrl-c interruption signals.
@@ -247,10 +247,14 @@ int main( int argc, char *argv[])
 
 #define BUF_SIZE 512
 
-void cfclog(const char *fmt, ...)
+//
+// Function which give us possibility to store logs even in crash handler
+//
+
+void cfclog(int fd, const char *fmt, ...)
 {
-	int fd;
-	pid_t pid;
+	//int fd;
+	//pid_t pid;
 	char format[BUF_SIZE];
 	char buf[BUF_SIZE];
 	int len;
@@ -258,8 +262,8 @@ void cfclog(const char *fmt, ...)
 	va_list ap;
 	va_start(ap, fmt);
 
-	pid = getpid();
-	if( ( fd = open( CRASH_LOG_FILENAME, O_WRONLY | O_APPEND | O_CREAT) ) >= 0 )
+	//pid = getpid();
+	//if( ( fd = open( CRASH_LOG_FILENAME, O_WRONLY | O_APPEND | O_CREAT) ) >= 0 )
 	{
 		//sprintf(format, "<21> [%d] ", pid);
 		strncat(format , fmt, BUF_SIZE);
@@ -270,15 +274,63 @@ void cfclog(const char *fmt, ...)
 
 		len = strlen(buf);
 		write(fd, buf, len);
-		close(fd);
+		//close(fd);
 	}
 
 	va_end(ap);
 }
 
+// Resolve symbol name and source location given the path to the executable
+//   and an address 
+static int addr2line(char const * const program_name, void const * const addr)
+{
+	char addr2line_cmd[512] = {0};
+
+	// have addr2line map the address to the relent line in the code 
+#ifdef __APPLE__
+	// apple does things differently... 
+	sprintf(addr2line_cmd,"atos -o %.256s %p", program_name, addr);
+#else
+	safe_snprintf( addr2line_cmd, 512, "addr2line -f -p -e %.256s %p", program_name, addr);
+#endif
+
+	// This will print a nicely formatted string specifying the
+    // function and source line of the address 
+	//	return system(addr2line_cmd);
+	
+	// !!! POPEN CANNOT BE USED IN CRASH HANDLER! 
+
+	FILE* fp = popen( addr2line_cmd, "r");
+	if( fp == NULL )
+	{
+		printf("Failed to run addr2line\n" );
+		return 1;
+	}
+
+	char line_buffer[256];
+	memset(line_buffer, 0, sizeof(line_buffer));
+
+	while( fgets(line_buffer, sizeof(line_buffer)-1, fp ) != NULL )
+	{
+		//cfclog( "%s", line_buffer );
+	}
+
+	/* close */
+	pclose(fp);
+
+	return 0;
+}
+
+//
 //Based on https://spin.atomicobject.com/2013/01/13/exceptions-stack-traces-c/
-static void crash_handler(int sig __attribute__((unused))){
+//
+
+static void *stackTraces[MAX_STACK_FRAMES];
+
+static void crash_handler(int sig __attribute__((unused)))
+{
 	char buffer[ 512 ];
+	int fd;
 	
 #ifdef USE_SYSTEM
 	// we dont need all information
@@ -325,63 +377,68 @@ static void crash_handler(int sig __attribute__((unused))){
 			"\n\n", CRASH_LOG_FILENAME );
 	
 #else
-	
-	cfclog( "\n************ CRASH INFO ************\n");
+	if( ( fd = open( CRASH_LOG_FILENAME, O_WRONLY | O_APPEND | O_CREAT) ) >= 0 )
+	{
+		cfclog( fd, "\n************ CRASH INFO ************\n");
 #ifdef APPVERSION
-	cfclog( "APPVERSION %s\n", APPVERSION);
+		cfclog( fd, "APPVERSION %s\n", APPVERSION);
 #else
-	cfclog( "no APPVERSION?\n");
+		cfclog( fd, "no APPVERSION?\n");
 #endif
 #ifdef APPGITVERSION
-	cfclog( "APPGITVERSION %s\n", APPGITVERSION);
+		cfclog( fd, "APPGITVERSION %s\n", APPGITVERSION);
 #else
-	cfclog( "no APPGITVERSION?\n");
+		cfclog( fd, "no APPGITVERSION?\n");
 #endif
 
 #ifdef __GNU_LIBRARY__
-	cfclog( "glibc %d %d.%d\n", __GNU_LIBRARY__, __GLIBC__, __GLIBC_MINOR__);
+		cfclog( fd, "glibc %d %d.%d\n", __GNU_LIBRARY__, __GLIBC__, __GLIBC_MINOR__);
 #else
-	cfclog( "non-glibc system\n");
+		cfclog( fd, "non-glibc system\n");
 #endif
 
 #ifdef __GNUC__
-	cfclog( "gcc %d.%d.%d\n", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
+		cfclog( fd, "gcc %d.%d.%d\n", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
 #else
-	cfclog( "non-gcc compiler\n");
+		cfclog( fd, "non-gcc compiler\n");
 #endif
 
-	static void *stackTraces[MAX_STACK_FRAMES];
+		int i, trace_size = 0;
+		//char **messages = (char **)NULL;
 
-	int i, trace_size = 0;
-	//char **messages = (char **)NULL;
+		trace_size = backtrace(stackTraces, MAX_STACK_FRAMES);
 
-	trace_size = backtrace(stackTraces, MAX_STACK_FRAMES);
-	int fd;
-	if( ( fd = open( CRASH_LOG_FILENAME, O_WRONLY | O_APPEND | O_CREAT) ) >= 0 )
-	{
-		//messages = 
 		backtrace_symbols_fd(stackTraces, trace_size, fd);
-		close( fd );
-	}
 
+		//cfclog( fd, "> %s\n", buffer );
 	/* skip the first couple stack frames (as they are this function and
      our handler) and also skip the last frame as it's (always?) junk. */
 	// for (i = 3; i < (trace_size - 1); ++i)
 	// we'll use this for now so you can see what's going on
-	for (i = 0; i < trace_size; ++i)
-	{
-		//cfclog( "> %s\n", messages[i]);
-		safe_snprintf( buffer, 512, "%.256s %p", _program_name, stackTraces[i]);
-		cfclog( "> %s\n", buffer );
-		/*
-		if (addr2line(_program_name, stackTraces[i] ) != 0)
+		for (i = 0; i < trace_size; ++i)
 		{
-			cfclog( "  error determining line # for: %s\n", messages[i]);
+			//cfclog( "> %s\n", messages[i]);
+			cfclog( fd, "%s %p", _program_name, stackTraces[i] );
+			//safe_snprintf( buffer, 512, "%.256s %p", _program_name, stackTraces[i]);
+			//cfclog( fd, "> %s\n", buffer );
+			/*
+			if (addr2line(_program_name, stackTraces[i] ) != 0)
+			{
+				cfclog( "  error determining line # for: %s\n", messages[i]);
+			}
+			*/
 		}
-		*/
-	}
-	//if (messages) { free(messages); }
-	cfclog( "************ CRASH INFO ************\n");
+	
+		cfclog( fd, "************ Do this calls on system to get line numbers ************\n");
+		for (i = 0; i < trace_size; ++i)
+		{
+			safe_snprintf( buffer, 512, "addr2line -f -p -e %.256s %p", _program_name, stackTraces[i] );
+			cfclog( fd, "%s\n", buffer );
+		}
+		cfclog( fd, "*********************************************************************\n");
+	
+		//if (messages) { free(messages); }
+		cfclog( fd, "************ CRASH INFO ************\n");
 /*
 	printf("\n\n"
 			"#######################################################\n"
@@ -390,6 +447,8 @@ static void crash_handler(int sig __attribute__((unused))){
 			"#######################################################\n"
 			"\n\n", CRASH_LOG_FILENAME );
 	*/
+		close( fd );
+	}
 #endif
 	//FriendCoreLockRelease();
 	
@@ -397,40 +456,3 @@ static void crash_handler(int sig __attribute__((unused))){
 	kill( getpid(), sig );
 }
 
-// Resolve symbol name and source location given the path to the executable
-//   and an address 
-static int addr2line(char const * const program_name, void const * const addr)
-{
-	char addr2line_cmd[512] = {0};
-
-	// have addr2line map the address to the relent line in the code 
-#ifdef __APPLE__
-	// apple does things differently... 
-	sprintf(addr2line_cmd,"atos -o %.256s %p", program_name, addr);
-#else
-	safe_snprintf( addr2line_cmd, 512, "addr2line -f -p -e %.256s %p", program_name, addr);
-#endif
-
-	// This will print a nicely formatted string specifying the
-    // function and source line of the address */
-	//	return system(addr2line_cmd);
-
-	FILE* fp = popen( addr2line_cmd, "r");
-	if (fp == NULL) {
-		printf("Failed to run addr2line\n" );
-		return 1;
-	}
-
-	char line_buffer[256];
-	memset(line_buffer, 0, sizeof(line_buffer));
-
-	while( fgets(line_buffer, sizeof(line_buffer)-1, fp ) != NULL )
-	{
-		cfclog( "%s", line_buffer );
-	}
-
-	/* close */
-	pclose(fp);
-
-	return 0;
-}

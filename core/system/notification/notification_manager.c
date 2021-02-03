@@ -161,7 +161,7 @@ void NotificationManagerDelete( NotificationManager *nm )
 			while( TRUE )
 			{
 				DEBUG("[NotificationManagerDelete] killing android in use: %d\n", nm->nm_AndroidSendInUse );
-				if( nm->nm_AndroidSendInUse <= 0 || ((tr++)> 30 ) )
+				if( (nm->nm_AndroidSendInUse <= 0 && nm->nm_AndroidSendThread->t_Launched == FALSE ) || ((tr++)> 30 ) )
 				{
 					break;
 				}
