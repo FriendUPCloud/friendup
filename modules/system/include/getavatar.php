@@ -459,6 +459,7 @@ if( $userid > 0 && $wname )
 				if( file_exists( $filepath ) )
 				{
 					_file_output( $filepath );
+					die();
 				}
 				
 			}
