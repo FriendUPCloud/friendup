@@ -19,7 +19,7 @@
 
 #include <core/types.h>
 #include <core/library.h>
-#include <system/user/user_session.h>
+#include <system/user/usersession.h>
 #include <system/fsys/dosdriver.h>
 //#include <system/systembase.h>
 

@@ -21,7 +21,7 @@
 #define __SYSTEM_USER_USER_MANAGER_H__
 
 #include <core/types.h>
-#include "user_session.h"
+#include "usersession.h"
 #include <system/usergroup/user_group.h>
 #include "usersession_manager.h"
 #include "user.h"

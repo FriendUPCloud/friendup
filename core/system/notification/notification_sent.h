@@ -22,7 +22,7 @@
 #include <core/nodes.h>
 #include <db/sqllib.h>
 #include <stddef.h>
-#include <system/user/user_session.h>
+#include <system/user/usersession.h>
 
 /*
 
@@ -75,7 +75,7 @@ NotificationSent *NotificationSentNew( );
 
 // Init NotificationSent
 
-void NotificationSentInit( NotificationSent *n );
+void NotificationSentInit( NotificationSent *n, void *sb );
 
 // release NotificationSent
 

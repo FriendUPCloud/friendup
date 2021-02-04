@@ -33,7 +33,7 @@
 #include <time.h>
 #include <util/buffered_string.h>
 #include <util/friendqueue.h>
-//#include <system/user/user_session.h>
+//#include <system/user/usersession.h>
 
 #define MAX_MESSAGE_QUEUE 64
 

@@ -952,8 +952,8 @@ Application.checkDocumentSession = function( sasID = null )
 						
 					}
 					
-					 err = SASSessionRemUserSession( as, loggedSession );
-					 error = 0;
+					err = SASSessionRemUserSession( as, loggedSession );
+					error = 0;
 				}
 				
 				if( error == 0 )
@@ -1041,7 +1041,7 @@ Application.checkDocumentSession = function( sasID = null )
 			char q[ 1024 ];
 			if( as != NULL )
 			{
-				sqllib->SNPrintF( sqllib, q, sizeof(q), "SELECT `Name` FROM `FUserApplication` ua, `FApplication` a  WHERE ua.AuthID=\"%s\" and ua.ApplicationID = a.ID LIMIT 1",( char *)as->sas_AuthID );
+				sqllib->SNPrintF( sqllib, q, sizeof(q), "SELECT `Name` FROM `FUserApplication` ua, `FApplication` a WHERE ua.AuthID=\"%s\" and ua.ApplicationID=a.ID LIMIT 1",( char *)as->sas_AuthID );
 
 				void *res = sqllib->Query( sqllib, q );
 				if( res != NULL )

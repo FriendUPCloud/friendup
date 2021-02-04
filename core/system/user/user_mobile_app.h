@@ -84,7 +84,7 @@ void UserMobileAppDeleteAll( UserMobileApp *app );
 //
 //
 
-void UserMobileAppInit( UserMobileApp *app );
+void UserMobileAppInit( UserMobileApp *app, void *sb );
 
 /*
 CREATE TABLE IF NOT EXISTS `FUserMobileApp` (

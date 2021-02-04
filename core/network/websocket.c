@@ -41,7 +41,7 @@
 #include <system/systembase.h>
 #include <system/json/jsmn.h>
 #include <libwebsockets.h>
-#include <system/user/user_session.h>
+#include <system/user/usersession.h>
 #include <util/base64.h>
 #include <network/websocket_client.h>
 #include <websockets/websocket_req_manager.h>

@@ -106,7 +106,7 @@ void UserSessionDelete( UserSession *us );
 //
 //
 
-void UserSessionInit( UserSession *us );
+void UserSessionInit( UserSession *us, void *sb );
 
 //
 //

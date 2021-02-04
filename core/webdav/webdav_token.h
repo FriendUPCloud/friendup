@@ -27,7 +27,7 @@
 
 #include <db/sql_defs.h>
 #include <time.h>
-#include <system/user/user_session.h>
+#include <system/user/usersession.h>
 #include <security/fkey.h>
 
 #define WEBDAV_TOKEN_LENGTH 32

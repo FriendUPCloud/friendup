@@ -22,7 +22,7 @@
 #include "file.h"
 #include "file_permissions.h"
 #include <system/user/user.h>
-#include <system/user/user_session.h>
+#include <system/user/usersession.h>
 #include <util/json_core.h>
 
 //

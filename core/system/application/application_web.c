@@ -11,7 +11,7 @@
  *
  *  Application Web
  *
- * handle all commands send by the user
+ * handle all commands regarding applications, application sessions
  *
  *  @author PS (Pawel Stefanski)
  *  @date created 11/2016
@@ -29,16 +29,6 @@
 #include <z/zlibrary.h>
 #include <system/systembase.h>
 #include <system/json/json_converter.h>
-
-//
-// How this thing is working
-//  user A call  app/register and then new appsession is created, user structure is filled by his app authid
-//  user A call app/share and point to usernames splitted by comma, users X,Y,Z receive via WS information that someone want to invite them
-//  user X,Y,Z send message app/accept if they are accepting connection. They also attach their authid. If they cancel they are sending app/unshare
-//  user A by using app/send command, can spread message between users X,Y,Z
-//  users X,Y,Z can only send messages to session owner (user A) by using command app/sendowner
-//
-//
 
 /// ifnot WEB_CALL_DOCUMENTATION
 /**

@@ -19,7 +19,7 @@
 #define __SYSTEM_USER_USER_SESSIONMANAGER_H__
 
 #include <core/types.h>
-#include "user_session.h"
+#include "usersession.h"
 #include <system/usergroup/user_group.h>
 #include "user.h"
 #include <util/libchash.h>

@@ -19,7 +19,7 @@
 #include <core/nodes.h>
 #include <db/sqllib.h>
 #include <stddef.h>
-#include <system/user/user_session.h>
+#include <system/user/usersession.h>
 #include "notification.h"
 #include <util/session_id.h>
 

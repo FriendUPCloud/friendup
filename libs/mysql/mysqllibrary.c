@@ -332,8 +332,8 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 							//DEBUG("[MYSQLLibrary] Init function found, calling it\n");
 							if( ((void *)dptr[2]) != NULL && data != NULL )
 							{
-								void (*funcptr)( void * ) = (void *)(void *)dptr[2];
-								funcptr( (void *)data );
+								void (*funcptr)( void *, void *) = (void (*)( void *, void *))dptr[2];
+								funcptr( (void *)data, l->sb );
 							}
 						}
 					break;
