@@ -22,7 +22,7 @@ function PadList( str, len, dir, chr, ellipsis )
 	if( !dir ){ dir = 'left'; }
 	if( !chr ){ chr = '&nbsp;'; }
 	if( typeof( ellipsis ) == 'undefined' ){ ellipsis = true; }
-	var slen = str.length;
+	let slen = str.length;
 
 	// If we're using ellipsis
 	if( ellipsis )
@@ -34,8 +34,8 @@ function PadList( str, len, dir, chr, ellipsis )
 		}
 	}
 
-	var stro = str;
-	var a;
+	let stro = str;
+	let a;
 	
 	// Left padded
 	if( dir == 'left' )
@@ -72,7 +72,7 @@ function PadList( str, len, dir, chr, ellipsis )
 
 window.Shell = function( appObject )
 {
-	var shell = this;
+	let shell = this;
 	
 	this.applicationId = false;
 	this.authId = false;
@@ -90,7 +90,7 @@ window.Shell = function( appObject )
 
 	this.mind = FriendMind.makeSession( appObject );
 
-	var aa = 0;
+	let aa = 0;
 
 	// This is used by object that are living in the Workspace domain
 	if( appObject.sessionId )
@@ -103,10 +103,10 @@ window.Shell = function( appObject )
 		this.applicationId = appObject.applicationId;
 		this.authId = appObject.authId;
 		// Find app object
-		var tsk = ge( 'Tasks' );
+		let tsk = ge( 'Tasks' );
 		for( aa = 0; aa < tsk.childNodes.length; aa++ )
 		{
-			var ttt = tsk.childNodes[aa];
+			let ttt = tsk.childNodes[aa];
 			if( ttt.ifr && ttt.ifr.applicationId == this.applicationId )
 			{
 				this.app = ttt.ifr;
@@ -133,7 +133,7 @@ window.Shell = function( appObject )
 		}
 		if( path.indexOf( ':' ) <= 0 )
 		{
-			var l = this.currentPath.substr( this.currentPath.length - 1 );
+			let l = this.currentPath.substr( this.currentPath.length - 1 );
 			if( l == ':' )
 				path = this.currentPath + path;
 			else if( l != '/' )
@@ -141,7 +141,7 @@ window.Shell = function( appObject )
 		}
 		if( path.indexOf( ':' ) <= 0 ) path = this.currentPath;
 
-		var p = path.split( ':' )[0] + ':';
+		let p = path.split( ':' )[0] + ':';
 		if( typeof( DormantMaster ) != 'undefined' )
 		{
 			function handleDirs( dirs )
@@ -149,11 +149,11 @@ window.Shell = function( appObject )
 				if( callback ) callback( dirs );
 			}
 		
-			var doors = DormantMaster.getDoors();
+			let doors = DormantMaster.getDoors();
 			
 			if( doors )
 			{
-				for( var a in doors )
+				for( let a in doors )
 				{
 					if( doors[a].Title.toLowerCase() == p.toLowerCase() )
 					{
@@ -177,8 +177,8 @@ window.Shell = function( appObject )
 	// Check if a file exists
 	this.fileExists = function( fileWithPath, callback )
 	{
-		var path = '';
-		var dirmode = false;
+		let path = '';
+		let dirmode = false;
 
 		// Aha a directory!
 		if( fileWithPath.substr( fileWithPath.length - 1, 1 ) == '/' )
@@ -200,7 +200,7 @@ window.Shell = function( appObject )
 			if( dirmode ) fileWithPath += '/';
 			if( info && data.length )
 			{
-				for( var a = 0; a < data.length; a++ )
+				for( let a = 0; a < data.length; a++ )
 				{
 					// File exists!
 					if( data[a].Path == fileWithPath )
@@ -219,17 +219,17 @@ window.Shell = function( appObject )
 		// Check dormant first!
 		this.checkDormantDoors( path, function( dirs )
 		{
-			var fname = path.split( ':' )[1];
+			let fname = path.split( ':' )[1];
 			if( fname && fname.indexOf( '/' ) > 0 ){ fname = fname.split( '/' ); fname = fname[fname.length-1]; }
 
 			// If we end up here, we're not using dormant - which is OK! :)
 			if( !dirs || ( !dirs && !dirs.length ) )
 			{
 				// Use standard doors
-				var door = ( new Door() ).get( path );
+				let door = ( new Door() ).get( path );
 				door.getIcons( false, function( data )
 				{
-					var info = false;
+					let info = false;
 					if( data.length )
 					{
 						info = {
@@ -246,8 +246,8 @@ window.Shell = function( appObject )
 				// We need this as an array!
 				if( dirs && typeof( dirs ) == 'object' )
 				{
-					var o = [];
-					for( var a in dirs ) o.push( dirs[a] );
+					let o = [];
+					for( let a in dirs ) o.push( dirs[a] );
 					dirs = o;
 				}
 
@@ -262,7 +262,7 @@ window.Shell = function( appObject )
 
 	this.mountDevice = function( devname )
 	{
-		var l = new Library( 'system.library' );
+		let l = new Library( 'system.library' );
 		l.onExecuted = function( e, d )
 		{
 			if( e != 'ok' )
@@ -274,7 +274,7 @@ window.Shell = function( appObject )
 
 	this.unmountDevice = function( dev )
 	{
-		var l = new Library( 'system.library' );
+		let l = new Library( 'system.library' );
 		l.onExecuted = function( e, d )
 		{
 			if( e != 'ok' )
@@ -287,11 +287,11 @@ window.Shell = function( appObject )
 	// Adds an event
 	this.addEvent = function( eventName, persistent, callback )
 	{
-		var allowedEvents = [
+		let allowedEvents = [
 			'mount', 'unmount', 'openscreen', 'closescreen',
 			'openview', 'closeview' /* More to come... */
 		];
-		for( var a = 0; a < allowedEvents; a++ )
+		for( let a = 0; a < allowedEvents; a++ )
 		{
 			if( eventName == allowedEvents[a] )
 			{
@@ -308,13 +308,13 @@ window.Shell = function( appObject )
 		// Queue while running other events
 		if( this.eventsRunning )
 		{
-			var t = this;
+			let t = this;
 			return setTimeout( function(){ t.runEvents( eventName ); }, 50 );
 		}
 		// Run event queue and clear the event out
 		this.eventsRunning = true;
-		var nlist = [];
-		for( var a = 0; a < this.events.length; a++ )
+		let nlist = [];
+		for( let a = 0; a < this.events.length; a++ )
 		{
 			if( this.events[a][0] == eventName )
 			{
@@ -335,8 +335,8 @@ window.Shell = function( appObject )
 		if( !eventName ) this.events = [];
 		else
 		{
-			var nlist = [];
-			for( var a = 0; a < this.events.length; a++ )
+			let nlist = [];
+			for( let a = 0; a < this.events.length; a++ )
 			{
 				if( this.events[a][0] != eventName )
 					nlist.push( this.events[a] );
@@ -355,7 +355,7 @@ window.Shell = function( appObject )
 	// queue and culminate output!
 	this.queueCommand = function( array, index, buffer, callback )
 	{
-		var t = this;
+		let t = this;
 		this.execute( array[index++], function( result, data )
 		{
 			console.log( 'this.queueCommand = function( array, index, buffer, callback ) ', { array: array, index: index, buffer: buffer } );
@@ -384,7 +384,7 @@ window.Shell = function( appObject )
 		{
 			if( Workspace.handsFree )
             {
-                var inp = ge( 'Handsfree' ).getElementsByTagName( 'input' )[0];
+                let inp = ge( 'Handsfree' ).getElementsByTagName( 'input' )[0];
                 inp.blur();
                 document.body.removeChild( ge( 'Handsfree' ) );
                 Workspace.handsFree = false;
@@ -396,9 +396,9 @@ window.Shell = function( appObject )
 
 		// Sanitize
 		string = Trim( string.toLowerCase() );
-		var args = string.split( ' ' );
-		var fin_args = '';
-		var a = 0;
+		let args = string.split( ' ' );
+		let fin_args = '';
+		let a = 0;
 		for( a = 1; a < args.length; a++ )
 		{
 			if( a != 1 )
@@ -438,7 +438,7 @@ window.Shell = function( appObject )
 					SayWithText( 'Reverting to standard mode.' );
 					return false;
 				}
-				var t = this.exeIcon.Title ? this.exeIcon.Title : this.exeIcon.Filename;
+				let t = this.exeIcon.Title ? this.exeIcon.Title : this.exeIcon.Filename;
 				if( this.exeIcon.Type.toLowerCase() == 'dormantfunction' )
 				{
 					apiWrapper( { data: JSON.stringify( {
@@ -465,7 +465,7 @@ window.Shell = function( appObject )
 		// Some number magick!
 		if( args.length >= 3 && ( args[2] == 'file' || args[2] == 'directory' || args[2] == 'volume' ) )
 		{
-			var type = args[2];
+			let type = args[2];
 			switch( args[1] )
 			{
 				case 'first': args[2] = '1'; break;
@@ -493,39 +493,39 @@ window.Shell = function( appObject )
 				if( args[1] == 'volume' && typeof( args[2] != 'undefined' ) )
 				{
 					// Same sorting as doors desktop
-					var index = parseInt( args[2] ) - 1;
-				   var icons = sortArray( Workspace.icons, [ 'Title', 'Filename' ] );
-				   if( parseInt( args[2] ) > 0 )
-				   {
-					   if( parseInt( args[2] ) > icons.length )
-					   {
-						   SayWithText( 'Excuse me. Can you repeat that?' );
-						   return;
-					   }
-					   SayWithText( 'You opened volume ' + icons[index].Volume.split(':')[0] );
-					   return OpenWindowByFileinfo( icons[index] );
-				   }
-				   var tries = [ args[2].toLowerCase() ];
-				   if( typeof( args[3] ) != 'undefined' )
-				   {
-					   tries.push(
-						   args[2].toLowerCase() + args[3].toLowerCase()
-					   );
-				   }
-				   for( var b = 0; b < tries.length; b++ )
-				   {
-					   // Two tries
-					   for( a = 0; a < icons.length; a++ )
-					   {
-						   if( icons[a].Volume.toLowerCase().split( ':' )[0] == tries[b] )
-						   {
-							   SayWithText( 'You opened volume ' + icons[a].Volume.split( ':' )[0] );
-							   return OpenWindowByFileinfo( icons[a] );
-						   }
-					   }
-				   }
-				   SayWithText( 'Excuse me. Can you repeat that?' );
-				   return;
+					let index = parseInt( args[2] ) - 1;
+				  let icons = sortArray( Workspace.icons, [ 'Title', 'Filename' ] );
+				  if( parseInt( args[2] ) > 0 )
+				  {
+					  if( parseInt( args[2] ) > icons.length )
+					  {
+						  SayWithText( 'Excuse me. Can you repeat that?' );
+						  return;
+					  }
+					  SayWithText( 'You opened volume ' + icons[index].Volume.split(':')[0] );
+					  return OpenWindowByFileinfo( icons[index] );
+				  }
+				  let tries = [ args[2].toLowerCase() ];
+				  if( typeof( args[3] ) != 'undefined' )
+				  {
+					  tries.push(
+						  args[2].toLowerCase() + args[3].toLowerCase()
+					  );
+				  }
+				  for( let b = 0; b < tries.length; b++ )
+				  {
+					  // Two tries
+					  for( a = 0; a < icons.length; a++ )
+					  {
+						  if( icons[a].Volume.toLowerCase().split( ':' )[0] == tries[b] )
+						  {
+							  SayWithText( 'You opened volume ' + icons[a].Volume.split( ':' )[0] );
+							  return OpenWindowByFileinfo( icons[a] );
+						  }
+					  }
+				  }
+				  SayWithText( 'Excuse me. Can you repeat that?' );
+				  return;
 				}
 				else if( args[1] == 'directory' )
 				{
@@ -599,7 +599,7 @@ window.Shell = function( appObject )
 				}
 				break;
 			case 'move':
-				var nl;
+				let nl;
 				if( !window.currentMovable )
 				{
 					SayWithText( 'I have no window or desklet to move.' );
@@ -665,7 +665,7 @@ window.Shell = function( appObject )
 				}
 				else if( args[1] == 'cycle' || args[1] == 'swap' )
 				{
-					var ind = [];
+					let ind = [];
 					for( a in movableWindows )
 					{
 						ind.push( movableWindows[a] );
@@ -674,7 +674,7 @@ window.Shell = function( appObject )
 					{
 						if( ind[a] == window.currentMovable || !window.currentMovable )
 						{
-							var b = ( a - 1 ); if( b < 0 ) b = ind.length - 1;
+							let b = ( a - 1 ); if( b < 0 ) b = ind.length - 1;
 							_WindowToFront( ind[b] );
 							_ActivateWindow( ind[b] );
 							SayWithText( 'Windows swapped.' );
@@ -687,7 +687,7 @@ window.Shell = function( appObject )
 				break;
 			case 'quit':
 			case 'close':
-				 if( fin_args == 'programming application' )
+				if( fin_args == 'programming application' )
 				{
 					KillApplication( 'Artisan' );
 					SayWithText( 'You quit the programming application, Artisan.' );
@@ -731,7 +731,7 @@ window.Shell = function( appObject )
 
 	this.parseVariables = function( pr )
 	{
-		for( var a in this.variables )
+		for( let a in this.variables )
 		{
 			if( !a.length ) continue;
 			pr = pr.split( "$" + a ).join( this.variables[a] );
@@ -753,7 +753,7 @@ window.Shell = function( appObject )
 	// Evaluate an input command array
 	this.evaluateInput = function( input, index, callback, mode )
 	{
-		var t = this;
+		let t = this;
 		return setTimeout( function()
 		{
 			t.executeEvaluateInput( input, index, callback, mode );
@@ -763,8 +763,8 @@ window.Shell = function( appObject )
 	this.executeEvaluateInput = function( input, index, callback, mode )
 	{
 		// What to do with the ouput?
-		var t = this;
-		var previousCallback = callback;
+		let t = this;
+		let previousCallback = callback;
 		callback = function( data, returnMessage )
 		{
 			if ( t.workspace )
@@ -825,7 +825,7 @@ window.Shell = function( appObject )
 				// Ok, we hit our target! Delete state and continue past exit
 				else
 				{
-					var state = this.state;
+					let state = this.state;
 					this.state = this.state.prevState;
 					return this.evaluateInput( state.prevInput, state.terminator + 1, callback, state.prevMode );
 				}
@@ -833,8 +833,8 @@ window.Shell = function( appObject )
 			// Go ahead with the next
 			if( this.temporaryList )
 			{
-				var nextList = this.temporaryList.list;
-				var nextIndex = this.temporaryList.index;
+				let nextList = this.temporaryList.list;
+				let nextIndex = this.temporaryList.index;
 				this.temporaryList = null;
 				return this.evaluateInput( nextList, nextIndex, callback, mode );
 			}
@@ -851,7 +851,7 @@ window.Shell = function( appObject )
 		}
 		if( !index ) index = 0;
 
-		var cmd, rawLine;
+		let cmd, rawLine;
 
 		// elements
 		if( input[index] )
@@ -892,7 +892,7 @@ window.Shell = function( appObject )
 			}
 			else if( rawLine.substr( rawLine.length - 1, 1 ) == '/' )
 			{
-				var d = '';
+				let d = '';
 				if( rawLine.indexOf( ':' ) < 0 )
 					d = this.currentPath;
 				input[ index ] = 'cd ' + d + rawLine;
@@ -913,15 +913,15 @@ window.Shell = function( appObject )
 		cmd = cmd.split( ' ' );
 		cmd[0] = cmd[0].toLowerCase();
 		// Counters
-		var a = 0, b = 0, c = 0, ba = 0;
+		let a = 0, b = 0, c = 0, ba = 0;
 		
 		for( ; a < cmd.length; a++ )
 		{
 			// Fix these, because we use it for something else
 			do
 			{
-				var c = cmd[a];
-				var i = c.indexOf( ';' );
+				let c = cmd[a];
+				let i = c.indexOf( ';' );
 				if( i >= 0 && i < cmd[a].length )
 				{
 					cmd[a] = c.substr( 0, i ) + '<!--semicolon-->' + c.substr( i + 1, c.length - i );
@@ -935,15 +935,15 @@ window.Shell = function( appObject )
 		if( cmd.indexOf( ';' ) > 0 )
 		{
 			cmd = cmd.split( ';' );
-			var ar = [];
-			var a = 0;
+			let ar = [];
+			let a = 0;
 			for( ; a < cmd.length; a++ )
 			{
 				ar[a] = Trim( cmd[a], 'left' );
 			}
 			if( input.length && index + 1 < input.length )
 			{
-				var b = index + 1;
+				let b = index + 1;
 				for( ; b < input.length; b++ )
 				{
 					ar[a++] = input[b];
@@ -978,18 +978,18 @@ window.Shell = function( appObject )
 			{
 				// TODO: implement AND, OR etc
 				// Find what we compare, and what we compare to
-				var preroll = '';
-				var operators = [ '=', '!=', '<', '>' ];
-				var fin_args = [];
-				var compi = 0;
-				var argument = {
+				let preroll = '';
+				let operators = [ '=', '!=', '<', '>' ];
+				let fin_args = [];
+				let compi = 0;
+				let argument = {
 					operator: '',
 					vars: []
 				};
 
 				// Case
-				var out = [];
-				var c = 0;
+				let out = [];
+				let c = 0;
 				for( a = 0; a < cmd.length; a++ )
 				{
 					if( cmd[a].substr( cmd[a].length - 1, 1 ) == ':' )
@@ -1024,7 +1024,7 @@ window.Shell = function( appObject )
 					}
 
 					// find operators
-					var operatorFound = false;
+					let operatorFound = false;
 					for( c = 0; c < operators.length; c++ )
 					{
 						if( cmd[b] == operators[c] )
@@ -1084,9 +1084,9 @@ window.Shell = function( appObject )
 				}
 
 				// Evaluate all fin_args
-				var result  = true;
-				var orFlag  = false;
-				var oneTrue = false;
+				let result  = true;
+				let orFlag  = false;
+				let oneTrue = false;
 				for( a = 0; a < fin_args.length; a++ )
 				{
 					if( fin_args[a].operator == 'or' )
@@ -1115,11 +1115,11 @@ window.Shell = function( appObject )
 				else
 				{
 					// Find the terminator
-					var terminator = false;
-					var depth = 0;
+					let terminator = false;
+					let depth = 0;
 					for( ba = index + 1; ba < input.length; ba++ )
 					{
-						var lineH = Trim( input[ba], 'left' );
+						let lineH = Trim( input[ba], 'left' );
 
 						// TODO: Add all other loops that use stop!
 						if(
@@ -1203,7 +1203,7 @@ window.Shell = function( appObject )
 				return callback( false, { response: "Not enough fin_args.", done: true } );
 			}
 
-			var va = cmd[2];
+			let va = cmd[2];
 			if( va.indexOf && va.indexOf( '<!--space--!>' ) )
 				va = va.split( '<!--space--!>' ).join( ' ' );
 
@@ -1280,7 +1280,7 @@ window.Shell = function( appObject )
 		// Repeat until
 		else if( cmd[0] == 'repeat' )
 		{
-			var num = 0;
+			let num = 0;
 			if( cmd.length > 1 )
 			{
 				num = parseInt( cmd[1] );
@@ -1290,13 +1290,13 @@ window.Shell = function( appObject )
 					if( cmd.length > 2 && ( cmd[2] == 'times:' || cmd[2] == 'times' ) )
 					{
 						// If we have a colon here, the next part is a new command
-						var colonFound = false;
+						let colonFound = false;
 						if( cmd[2] == 'times:' ) colonFound = 2;
 
 						// Add preroll
-						var preroll = [];
+						let preroll = [];
 
-						var variable = '';
+						let variable = '';
 						if( colonFound === false )
 						{
 							for( c = 0; c < cmd.length; c++ )
@@ -1316,7 +1316,7 @@ window.Shell = function( appObject )
 							}
 						}
 
-						var command = '';
+						let command = '';
 						if( colonFound > 0 && cmd.length > colonFound )
 						{
 							for( c = colonFound + 1; c < cmd.length; c++ )
@@ -1335,11 +1335,11 @@ window.Shell = function( appObject )
 						}
 
 						// Find the terminator 'stop'
-						var terminator = index;
-						var depth = 0;
+						let terminator = index;
+						let depth = 0;
 						for( ba = index + 1; ba < input.length; ba++ )
 						{
-							var lineH = Trim( input[ba], 'left' );
+							let lineH = Trim( input[ba], 'left' );
 
 							// TODO: Add all other loops that use stop!
 							if(
@@ -1363,7 +1363,7 @@ window.Shell = function( appObject )
 
 						if (terminator > index)
 						{
-							for (var a = index + 1; a < terminator; a++)
+							for (let a = index + 1; a < terminator; a++)
 								preroll.push(input[a]);
 						}
 
@@ -1396,8 +1396,8 @@ window.Shell = function( appObject )
 		// An event trigger (on Artisan KeyDown x: echo "$x was the key"; done)
 		else if( cmd[0] == 'on' )
 		{
-			var app = '';
-			var trigger = '';
+			let app = '';
+			let trigger = '';
 			if( cmd.length > 1 )
 			{
 				app = cmd[1];
@@ -1407,15 +1407,15 @@ window.Shell = function( appObject )
 					if( cmd.length > 2 )
 					{
 						// If we have a colon here, the next part is a new command
-						var colonFound = false;
+						let colonFound = false;
 						if( cmd[2].substr( cmd[2].length-1, 1 ) == ':' ) colonFound = 2;
 						if( colonFound == 2 )
 							trigger = cmd[2].substr( 0, cmd[2].length - 1 );
 						else trigger = cmd[2];
 
 						// Add preroll
-						var preroll = '';
-						var variable = '';
+						let preroll = '';
+						let variable = '';
 						if( colonFound === false )
 						{
 							for( c = 0; c < cmd.length; c++ )
@@ -1456,11 +1456,11 @@ window.Shell = function( appObject )
 						else
 						{
 							// Find the terminator
-							var terminator = false;
-							var depth = 0;
+							let terminator = false;
+							let depth = 0;
 							for( ba = index + 1; ba < input.length; ba++ )
 							{
-								var lineH = Trim( input[ba], 'left' );
+								let lineH = Trim( input[ba], 'left' );
 
 								// TODO: Add all other loops that use stop!
 								if(
@@ -1489,13 +1489,13 @@ window.Shell = function( appObject )
 							// Ok, we have a terminator, add list to callbacks
 							if( terminator )
 							{
-								var newList = [];
+								let newList = [];
 
-								for( var n = index + 1; n <= terminator; n++ )
+								for( let n = index + 1; n <= terminator; n++ )
 								{
 									if( preroll )
 									{
-										var pr = Trim( preroll, 'left' );
+										let pr = Trim( preroll, 'left' );
 
 										// Skip the stop
 										if( pr == 'stop' ) continue;
@@ -1506,11 +1506,11 @@ window.Shell = function( appObject )
 									}
 
 									// Skip a stop
-									var pr = Trim( input[n], 'left' );
+									let pr = Trim( input[n], 'left' );
 									if( pr == 'stop' ) continue;
 									if( pr == '' ) continue;
 
-									var pr = this.parseVariables( pr );
+									pr = this.parseVariables( pr );
 									newList.push( pr );
 								}
 
@@ -1525,8 +1525,8 @@ window.Shell = function( appObject )
 							else
 							{
 								// New list
-								var newList = [];
-								var pr = preroll;
+								let newList = [];
+								let pr = preroll;
 								pr = this.parseVariables( pr );
 								newList.push( pr );
 
@@ -1559,14 +1559,14 @@ window.Shell = function( appObject )
 		// Handle gotos!
 		else if( cmd[0] == 'goto' )
 		{
-			var where = cmd[1];
+			let where = cmd[1];
 			if( !isNaN( parseInt( where ) ) )
 			{
 				return this.evaluateInput( input, parseInt( where ), callback, mode );
 			}
 			for( a = 0; a < input.length; a++ )
 			{
-				var str = Trim( input[a], 'left' );
+				let str = Trim( input[a], 'left' );
 				if( str.substr( str.length - 1, 1 ) == ':' && str.substr( 0, str.length - 1 ) == where )
 				{
 					return this.evaluateInput( input, a, callback, mode );
@@ -1579,7 +1579,7 @@ window.Shell = function( appObject )
 		else
 		{
 			// Go parse the single command
-			var time = 1; // <- make sure we only evaluate one time, and not for ever
+			let time = 1; // <- make sure we only evaluate one time, and not for ever
 			this.execute( cmd.join( ' ' ), function( e, d )
 			{
 				if( callback ) callback( e, d );
@@ -1619,7 +1619,7 @@ window.Shell = function( appObject )
 		
 		// References
 		// TODO: Remove dosobj and replace with t
-		var dosobj = t = this;
+		let dosobj = t = this;
 
 		// Pipe to another place (reroute)
 		if( this.pipe )
@@ -1627,7 +1627,7 @@ window.Shell = function( appObject )
 			// The pipe is an application object
 			if( this.pipe.applicationName )
 			{
-				var cid = addWrapperCallback( function( response )
+				let cid = addWrapperCallback( function( response )
 				{
 					if( !response )
 						return ecallback( false, 'Unknown response..' );
@@ -1671,7 +1671,7 @@ window.Shell = function( appObject )
 		// Get an intelligent parsed object for variables and fin_args
 		cmd = Trim( EntityDecode( cmd.split( '<!--semicolon-->' ).join( ';' ) ) );
 		
-		var rawLine = cmd + '';
+		let rawLine = cmd + '';
 		
 		// Fix newline support ...
 		cmd = cmd.split( "\\n" ).join( "\n" );
@@ -1680,7 +1680,7 @@ window.Shell = function( appObject )
 		cmd = cmd.split( "\\t" ).join( "\t" );
 		
 		// Setup proxy caller we can add some things to
-		var dcallback;
+		let dcallback;
 		if( !ecallback )
 		{
 			dcallback = function( d )
@@ -1708,7 +1708,7 @@ window.Shell = function( appObject )
 		// Ignore comments
 		if( rawLine.substr( 0, 2 ) == '//' ) return dcallback( false );
 
-		var a = 0, b = 0;
+		let a = 0, b = 0;
 
 		// Multiline fork
 		if( rawLine.indexOf( ';' ) > 0 )
@@ -1745,7 +1745,7 @@ window.Shell = function( appObject )
 				break;
 		}
 
-		var parsedObject = this.parseInput( cmd );
+		let parsedObject = this.parseInput( cmd );
 		cmd = parsedObject.args; // Just the fin_args
 		this.parsedObj = parsedObject;
 		
@@ -1789,7 +1789,7 @@ window.Shell = function( appObject )
 			{
 				//// Signal to parent that we want to execute an application
 				//var args = [];
-				//for( var a = 1; a < cmd.length; a++ )
+				//for( let a = 1; a < cmd.length; a++ )
 				//	args.push( cmd[a] );
 				//args = args.join ( ' ' );
 				//var command = cmd[0];
@@ -1808,7 +1808,7 @@ window.Shell = function( appObject )
 			}
 
 			// Construct path var
-			var path = ( cmd[0] == 'cd' && typeof(cmd[1]) != 'undefined' && cmd[1].length ) ? cmd[1] : this.currentPath;
+			let path = ( cmd[0] == 'cd' && typeof(cmd[1]) != 'undefined' && cmd[1].length ) ? cmd[1] : this.currentPath;
 
 			// We're just entering a path
 			if( cmd.length == 1 && cmd[0].indexOf( ':' ) >= 0 )
@@ -1817,7 +1817,7 @@ window.Shell = function( appObject )
 				if( path.charAt( path.length - 1 ) != ':' && path.charAt( path.length - 1 ) != '/' )
 				{
 					// Subdir or...
-					var s = path.indexOf( '/' );
+					let s = path.indexOf( '/' );
 					if( s > 0 )
 					{
 						path = path.split( '/' );
@@ -1833,9 +1833,9 @@ window.Shell = function( appObject )
 			}
 			
 			// Try to see if there is an executable in the current directory
-			var dirs = false;
-			var door = false;
-			var tt = this;
+			let dirs = false;
+			let door = false;
+			let tt = this;
 
 			// Check dormant first!
 			// TODO: Make uniform!
@@ -1845,9 +1845,9 @@ window.Shell = function( appObject )
 				if( !dirs || ( !dirs && !dirs.length ) )
 				{
 					// Use standard doors
-					var door = ( new Door() ).get( path );
+					let door = ( new Door() ).get( path );
 					
-					var filename = cmd[0];
+					let filename = cmd[0];
 					if( filename.indexOf( '/' ) > 0 || filename.indexOf( ':' ) > 0 )
 					{
 						filename = cmd[0].indexOf( '/' ) > 0 ? cmd[0].split( '/' ).pop() : cmd[0].split( ':' ).pop();
@@ -1857,9 +1857,9 @@ window.Shell = function( appObject )
 					{
 						if( data.length )
 						{
-							for( var a in data )
+							for( let a in data )
 							{
-								var f = data[a].Filename ? data[a].Filename : data[a].Title;
+								let f = data[a].Filename ? data[a].Filename : data[a].Title;
 								if( !f ) continue;
 								
 								// Match it!
@@ -1874,11 +1874,11 @@ window.Shell = function( appObject )
 										return dosobj.execute( 'cd ' + f, ecallback );
 									}
 									
-									var args = [];
-									for( var aa = 1; aa < cmd.length; aa++ )
+									let args = [];
+									for( let aa = 1; aa < cmd.length; aa++ )
 										args.push( cmd[aa].split( '<!--space--!>' ).join( ' ' ) );
 
-									var command = cmd[0];
+									let command = cmd[0];
 
 									// TODO: Make safe! Could have jsx in the middle of the file name!
 									if( command.indexOf( '.jsx' ) > 0 )
@@ -1886,14 +1886,14 @@ window.Shell = function( appObject )
 										command = path + command;
 									}
 
-									var s = command.split( '.' );
+									let s = command.split( '.' );
 									if( s[ s.length - 1 ].toLowerCase() == 'module' )
 									{
-										var call = cmd.length > 1 ? cmd[1] : 'help';
-										var m = new Module( s[ s.length - 2 ] );
+										let call = cmd.length > 1 ? cmd[1] : 'help';
+										let m = new Module( s[ s.length - 2 ] );
 										m.onExecuted = function( e, d )
 										{
-											var o = false;
+											let o = false;
 											try
 											{
 												o = JSON.parse( d );
@@ -1907,7 +1907,7 @@ window.Shell = function( appObject )
 												
 												if( call == 'help' )
 												{
-													var str = '<strong>Commands:</strong><br><br>';
+													let str = '<strong>Commands:</strong><br><br>';
 													str += o.Commands.join( ', ' ) + '.';
 													dcallback( false, { response: str } );
 												}
@@ -1921,8 +1921,8 @@ window.Shell = function( appObject )
 													function outd( p, dd )
 													{
 														if( !dd ) dd = '';
-														var str = '';
-														for( var f in p )
+														let str = '';
+														for( let f in p )
 														{
 															if( !p[f] ) continue;
 															if( p[f].indexOf && p[f].indexOf( '{' ) >= 0 )
@@ -1948,13 +1948,13 @@ window.Shell = function( appObject )
 												dcallback( false, { response: 'No output from this module.' } );
 											}
 										}
-										var args = {};
-										for( var f = 1; f < cmd.length; f++ )
+										let args = {};
+										for( let f = 1; f < cmd.length; f++ )
 										{
 											// Named variable
 											if( cmd[f].indexOf( '=' ) > 0 )
 											{
-												var d = cmd[f].split( '=' );
+												let d = cmd[f].split( '=' );
 												args[d[0]] = d[1];
 											}
 											// Just use the variable as a bool
@@ -1968,13 +1968,13 @@ window.Shell = function( appObject )
 										return;
 									}
 									
-									var cid = addWrapperCallback( function( msg )
+									let cid = addWrapperCallback( function( msg )
 									{
-										var resp = msg ? ( msg.response ? msg.response : msg ) : false;
+										let resp = msg ? ( msg.response ? msg.response : msg ) : false;
 										dcallback( resp ? resp : false, { path: path } );
 									} );
 
-									var msgHere = {
+									let msgHere = {
 										applicationName: tt.app.applicationName,
 										applicationId: tt.app.applicationId,
 										type: 'system',
@@ -1999,7 +1999,7 @@ window.Shell = function( appObject )
 				else
 				{
 					// Check command
-					var command = cmd[0];
+					let command = cmd[0];
 					if( command.indexOf( '/' ) )
 					{
 						command = command.split( '/' ).pop();
@@ -2009,21 +2009,21 @@ window.Shell = function( appObject )
 						command = command.split( ':' ).pop();
 					}
 				
-					for( var a in dirs )
+					for( let a in dirs )
 					{
 						if( dirs[a].Title && dirs[a].Title.toLowerCase() == command )
 						{
-							var args = [];
-							for( var aa = 1; aa < cmd.length; aa++ )
+							let args = [];
+							for( let aa = 1; aa < cmd.length; aa++ )
 								args.push( cmd[aa].split( '<!--space--!>' ).join( ' ' ) );
 
-							var cid = addWrapperCallback( function( msg )
+							let cid = addWrapperCallback( function( msg )
 							{
-								var resp = msg ? msg.response : false;
+								let resp = msg ? msg.response : false;
 								dcallback( resp ? true : false, resp ? { response: resp, path: path } : { response: 'Command completed.' } );
 							} );
 							
-							var msgHere = {
+							let msgHere = {
 								applicationName: tt.app.applicationName,
 								applicationId: tt.app.applicationId,
 								type: 'dormantmaster',
@@ -2045,17 +2045,17 @@ window.Shell = function( appObject )
 	};
 
 	/**
-	 * @brief Converts a string into an object with a list of fin_args and vars
-	 *
-	 * @string a string value
-	 * @return an object with the members args (array) and vars (key/values)
-	 */
+	* @brief Converts a string into an object with a list of fin_args and vars
+	*
+	* @string a string value
+	* @return an object with the members args (array) and vars (key/values)
+	*/
 	this.parseInput = function( string )
 	{
 		// Clean up escaped characters and double quoted
-		var qmode = 0;
-		var out = '';
-		var a = 0;
+		let qmode = 0;
+		let out = '';
+		let a = 0;
 		for( ; a < string.length; a++ )
 		{
 			if( qmode === 0 && string[a] == '"' )
@@ -2092,7 +2092,7 @@ window.Shell = function( appObject )
 		
 		out1 = out.split( ';' );
 		
-		for( var i in out1 )
+		for( let i in out1 )
 		{
 			out.push( out1[i] );
 		}
@@ -2100,7 +2100,7 @@ window.Shell = function( appObject )
 		out2 = out.split( ' ' );*/
 		//console.log( 'this.parseInput = function( string ) ', out );
 		out = out.split( ' ' );
-		var object = { args: [], vars: [] };
+		let object = { args: [], vars: [] };
 		for( a = 0; a < out.length; a++ )
 		{
 			if( out[a].indexOf( '<!--space--!>' ) >= 0 )
@@ -2108,7 +2108,7 @@ window.Shell = function( appObject )
 			object.args.push( out[a] );
 			if( out[a].indexOf( '=' ) > 0 )
 			{
-				var sp = out[a].split( '=' );
+				let sp = out[a].split( '=' );
 				if( sp.length == 2 )
 				{
 					object.vars[sp[0]] = sp[1];
@@ -2123,24 +2123,24 @@ window.Shell = function( appObject )
 	{
 		if( !type ) type = 'html';
 
-		var acount = objects.length;
-		var third  = Math.floor( acount / 3 );
-		var output = [];
-		var count  = 0;
-		var column = 0;
+		let acount = objects.length;
+		let third  = Math.floor( acount / 3 );
+		let output = [];
+		let count  = 0;
+		let column = 0;
 		// Go through the icons
-		var icons = '';
-		var trash = 0; // how many bad icons were found
-		var a = 0;
+		let icons = '';
+		let trash = 0; // how many bad icons were found
+		let a = 0;
 		
 		for( ; a < acount; a++ )
 		{
-			var row = objects[a];
+			let row = objects[a];
 			if( !output[column] ) output[column] = '';
 			if( !row.Type ){ trash++; continue; }
-			var dirType = row.Type ? row.Type.toLowerCase() : 'File';
-			var isDir = ( dirType == 'directory' || row.MetaType == 'Folder' || dirType == 'dormant' );
-			var itm = ( row.Title ? row.Title : row.Filename ) + ( isDir ? '/' : '' ) + '<br>';
+			let dirType = row.Type ? row.Type.toLowerCase() : 'File';
+			let isDir = ( dirType == 'directory' || row.MetaType == 'Folder' || dirType == 'dormant' );
+			let itm = ( row.Title ? row.Title : row.Filename ) + ( isDir ? '/' : '' ) + '<br>';
 			if ( isDir ) itm = '<div class="Container">' + itm + '</div>';
 			else itm = '<div class="File">' + itm + '</div>';
 			output[column] += itm;
@@ -2152,7 +2152,7 @@ window.Shell = function( appObject )
 		icons += '<table style="border-collapse: collapse; border-spacing: 0"><tr>';
 		for( a = 0; a < output.length; a++ )
 		{
-			var c = output[a];
+			let c = output[a];
 			icons += '<td style="vertical-align: top; padding-right: 20px">' + c + '</td>';
 		}
 		icons += '</tr></table><br>';
@@ -2163,14 +2163,14 @@ window.Shell = function( appObject )
 	this.fileOpen = function( win, arg )
 	{
 		if( !win.content || !win.content.icons ) return false;
-		var argn = parseInt( arg ); if( isNaN( argn ) ) argn = 0;
+		let argn = parseInt( arg ); if( isNaN( argn ) ) argn = 0;
 		arg = arg.toLowerCase();
-		for( var a = 0, b = 0; a < win.content.icons.length; a++ )
+		for( let a = 0, b = 0; a < win.content.icons.length; a++ )
 		{
-			var i = win.content.icons[a];
+			let i = win.content.icons[a];
 			if( i.Type.toLowerCase() != 'file' && i.Type.toLowerCase() != 'dormantfunction' ) continue;
 			b++;
-			var t = i.Title ? i.Title : i.Filename;
+			let t = i.Title ? i.Title : i.Filename;
 			if( ( argn > 0 && b == argn ) || ( argn <= 0 && t.toLowerCase() == arg ) )
 			{
 				if( i.Type.toLowerCase() == 'dormantfunction' )
@@ -2192,14 +2192,14 @@ window.Shell = function( appObject )
 	this.directoryOpen = function( win, arg )
 	{
 		if( !win.content || !win.content.icons ) return false;
-		var argn = parseInt( arg ); if( isNaN( argn ) ) argn = 0;
+		let argn = parseInt( arg ); if( isNaN( argn ) ) argn = 0;
 		arg = arg.toLowerCase();
-		for( var a = 0, b = 0; a < win.content.icons.length; a++ )
+		for( let a = 0, b = 0; a < win.content.icons.length; a++ )
 		{
-			var i = win.content.icons[a];
+			let i = win.content.icons[a];
 			if( i.Type.toLowerCase() != 'directory' && i.Type.toLowerCase() != 'dormant' ) continue;
 			b++;
-			var t = i.Title ? i.Title : i.Filename;
+			let t = i.Title ? i.Title : i.Filename;
 			if( ( argn > 0 && b == argn ) || ( argn <= 0 && t.toLowerCase() == arg ) )
 			{
 				i.domNode.ondblclick();
@@ -2241,7 +2241,7 @@ window.Shell = function( appObject )
 			{
 				if( result )
 				{
-					var nl = new Library( 'system.library' );
+					let nl = new Library( 'system.library' );
 					nl.onExecuted = function( e, d )
 					{
 						if( e == 'ok' )
@@ -2250,10 +2250,10 @@ window.Shell = function( appObject )
 
 							d = JSON.parse( d );
 
-							var str2ar = function( str ){ var o = []; for( var a = 0; a < str.length; a++ ) o.push( str[a] ); return o };
-							var res = { user: '', group: '', others: '' };
-							var combined = [ '-', '-', '-', '-', '-' ];
-							var a = 0;
+							let str2ar = function( str ){ let o = []; for( let a = 0; a < str.length; a++ ) o.push( str[a] ); return o };
+							let res = { user: '', group: '', others: '' };
+							let combined = [ '-', '-', '-', '-', '-' ];
+							let a = 0;
 							for( ; a < d.length; a++ )
 							{
 								if( !d[ a ].access ) continue;
@@ -2266,20 +2266,20 @@ window.Shell = function( appObject )
 								else
 								{
 									// Merge
-									for( var c = 0; c < res[ d[ a ].type ].length; c++ )
+									for( let c = 0; c < res[ d[ a ].type ].length; c++ )
 									{
 										if( d[ a ].access[ c ] != '-' && res[ d[ a ].type ][ c ] == '-' )
 											res[ d[ a ].type ][ c ] = d[ a ].access[ c ].toLowerCase();
 									}
 								}
 								// Merge with combined
-								for( var b = 0; b < d[ a ].access.length; b++ )
+								for( let b = 0; b < d[ a ].access.length; b++ )
 								{
 									if( d[ a ].access[ b ] != '-' && combined[ b ] == '-' )
 										combined[ b ] = d[ a ].access[ b ];
 								}
 							}
-							var out = '';
+							let out = '';
 							for( a in res )
 								out += a + ': ' + ( typeof( res[ a ] ) == 'object' ? res[a].join( '' ) : '-----' ) + "&nbsp;&nbsp;&nbsp;&nbsp;";
 							out += '<br>combined: ' + combined.join( '' ).toLowerCase();
@@ -2314,16 +2314,16 @@ window.Shell = function( appObject )
 		}, 
 		'assign': function( args, callback )
 		{
-			var mode = 'new';
+			let mode = 'new';
 
 			if( args.length >= 2 )
 			{
-				var path = args[1];
-				var assign = args[2];
+				let path = args[1];
+				let assign = args[2];
 
 				for( a = 2; a < args.length; a++ )
 				{
-					var cm = args[a].toLowerCase();
+					let cm = args[a].toLowerCase();
 					if( cm == 'add' ) mode = 'add';
 					if( ( cm == 'to' || cm == 'from' ) && a+1 < args.length )
 					{
@@ -2350,13 +2350,13 @@ window.Shell = function( appObject )
 				if( path.indexOf( ':' ) > 0 && assign.indexOf( ':' ) > 0 && assign.split( ':' )[1].length <= 0 && mode != 'remove' )
 				{
 					// Let's check the path! (must be a directory or volume)
-					var lch = path.substr( path.length - 1, 1 );
+					let lch = path.substr( path.length - 1, 1 );
 					if( lch != '/' && lch != ':' ) path += '/';
 					shell.getDirectory( path, function( directory, children )
 					{
 						if( directory && directory.Type && ( directory.Type == 'Directory' || directory.Type == 'Volume' ) )
 						{
-							var m = new Module( 'system' );
+							let m = new Module( 'system' );
 							m.onExecuted = function( e, d )
 							{
 								if( e == 'ok' )
@@ -2386,11 +2386,11 @@ window.Shell = function( appObject )
 				}
 				else if( mode == 'remove' )
 				{
-					var assignPath = path;
+					let assignPath = path;
 					if( assign.indexOf( ':' ) > 0 )
 						assignPath = assign;
 
-					var m = new Module( 'system' );
+					let m = new Module( 'system' );
 					m.onExecuted = function( e, d )
 					{
 						if( e == 'ok' )
@@ -2419,16 +2419,16 @@ window.Shell = function( appObject )
 			// Just give a list
 			else
 			{
-				var m = new Module( 'system' );
+				let m = new Module( 'system' );
 				m.onExecuted = function( e, d )
 				{
 					if( e == 'fail' )
 					{
 						return callback( true, { response: 'No available assign devices.' } );
 					}
-					var list = JSON.parse( d );
-					var out = '';
-					for( var y = 0; y < list.length; y++ )
+					let list = JSON.parse( d );
+					let out = '';
+					for( let y = 0; y < list.length; y++ )
 					{
 						out += "&nbsp;&nbsp;" + list[y].Name + ":" + ( list[y].Mounted == 1 ? " mounted..." : "<br>" );
 					}
@@ -2451,32 +2451,32 @@ window.Shell = function( appObject )
 		{
 			if( args.length == 2 )
 			{
-				var p = args[ 1 ];
+				let p = args[ 1 ];
 				if( p.indexOf( ':' ) <= 0 )
 					p = shell.currentPath + p;
 
 				// Get a door object and get file information about image
-				var pp = p.indexOf( ':' );
+				let pp = p.indexOf( ':' );
 				pp = p.substr(0, pp + 1);
-				var d = new Door( pp );
+				let d = new Door( pp );
 				d.dosAction( 
 					'file/info', 
 					{ path: p },
 					function( data )
 					{
-						var res = data.split( "<!--separate-->" );
+						let res = data.split( "<!--separate-->" );
 						if( res[0] != "ok" )
 						{
 							callback( false, { response: 'File not found.' } )
 							return false;
 						}
-						var d = JSON.parse( res[1] );
+						let d = JSON.parse( res[1] );
 						if ( d.Filesize > 1024 * 100 )
 						{
 							callback( false, { response: 'File too large: ' + d.Filesize / 1024 +' kb.' } );
 							return false;
 						}
-						var f = new File( p );
+						let f = new File( p );
 						f.onLoad = function( data )
 						{
 							callback( false, { response: data.split( "\n" ).join( "<br>" ) } );
@@ -2502,16 +2502,16 @@ window.Shell = function( appObject )
 			}
 
 			// Get path string (and fix spaces)
-			var str = args[1];
+			let str = args[1];
 			if( args.length > 2 )
 			{
-				var args2 = [];
+				let args2 = [];
 				for( a = 1; a < args.length; a++ )
 					args2.push( args[a].split( '<!--space--!>' ).join( ' ' ) );
 				str = args2.join( ' ' );
 			}
 
-			var fullPath = Trim( str.split( '<!--space--!>' ).join( ' ' ), 'left' );
+			let fullPath = Trim( str.split( '<!--space--!>' ).join( ' ' ), 'left' );
 
 			// Go to root
 			if( fullPath == ':' )
@@ -2522,7 +2522,7 @@ window.Shell = function( appObject )
 			// Go to parent
 			if( fullPath.substr( 0, 1 ) == '/' && shell.currentPath )
 			{
-				var tmp = shell.currentPath;
+				let tmp = shell.currentPath;
 				
 				// Remove trailing forward slash
 				if( tmp.substr( tmp.length - 1, 1 ) == '/' )
@@ -2557,7 +2557,7 @@ window.Shell = function( appObject )
 			if( fullPath.indexOf( ':' ) < 0 )
 			{
 				fullPath = shell.currentPath;
-				var ll = fullPath.substr( fullPath.length - 1, 1 );
+				let ll = fullPath.substr( fullPath.length - 1, 1 );
 				if( ll != ':' && ll != '/' )
 					fullPath += '/';
 				fullPath = fullPath + str.split( '<!--space--!>' ).join( ' ' );
@@ -2568,7 +2568,7 @@ window.Shell = function( appObject )
 			// Not a door volume name
 			else if ( fullPath.substr( fullPath.length - 1, 1 ) != ':' )
 			{
-				var ll = fullPath.substr( fullPath.length - 1, 1 );
+				let ll = fullPath.substr( fullPath.length - 1, 1 );
 				if( ll != '/' )
 					fullPath += '/';
 			}
@@ -2600,7 +2600,7 @@ window.Shell = function( appObject )
 				// Use standard doors
 				if( !dirs || ( !dirs && !dirs.length ) )
 				{
-					var door = ( new Door() ).get( fullPath );
+					let door = ( new Door() ).get( fullPath );
 					door.getIcons( false, function( data, path )
 					{
 						if( typeof( data ) == 'object' && path )
@@ -2628,7 +2628,7 @@ window.Shell = function( appObject )
 							return callback( false, { response: 'Path is restricted by host to ' + shell.restrictedPath } );
 
 					// TODO: Fix that these are arrays!
-					var count = 0;
+					let count = 0;
 					for( a in dirs ) count++;
 					if( dirs || count > 0 )
 					{
@@ -2660,8 +2660,8 @@ window.Shell = function( appObject )
 			{
 				shell.terminate = true;
 
-				var start = 1;
-				var recursive = false;
+				let start = 1;
+				let recursive = false;
 
 				// check recursive
 				if( ( args[ 0 ] + ' ' + args[ 1 ] ).toLowerCase() == 'copy all' )
@@ -2670,11 +2670,11 @@ window.Shell = function( appObject )
 					recursive = true;
 				}
 
-				var src = args[ start ];
+				let src = args[ start ];
 
 				if( src.indexOf( ':' ) < 0 ) src = shell.currentPath + src;
 
-				var dst = args[ start + 1 ].toLowerCase() == 'to' ? args[ start + 2 ] : args[ start + 1 ];
+				let dst = args[ start + 1 ].toLowerCase() == 'to' ? args[ start + 2 ] : args[ start + 1 ];
 
 				if( dst.indexOf( ':' ) < 0 ) dst = shell.currentPath + dst;
 
@@ -2694,7 +2694,7 @@ window.Shell = function( appObject )
 		},		
 		'date': function( args, callback )
 		{
-			var td = new Date();
+			let td = new Date();
 			callback( true, {
 				response: td.getFullYear() + '-' +
 				StrPad( ( td.getMonth() + 1 ), 2, '0' ) + '-' +
@@ -2713,9 +2713,9 @@ window.Shell = function( appObject )
 
 			if( args.length >= 2 )
 			{
-				var start = 1;
-				var recursive = false;
-				var notrash = false;
+				let start = 1;
+				let recursive = false;
+				let notrash = false;
 
 				// check recursive (if we have at least three fin_args)
 				if( ( args[ 0 ] + ' ' + args[ 1 ] ).toLowerCase() == 'delete all' && typeof( args[ 2 ] ) != 'undefined' )
@@ -2725,7 +2725,7 @@ window.Shell = function( appObject )
 				}
 
 				// Find source path
-				var src = args[ start++ ];
+				let src = args[ start++ ];
 				src = src.split( '&nbsp;' ).join( ' ' ).split( '<!--space--!>' ).join( ' ' );
 				if( src.indexOf( ':' ) < 0 ) src = shell.currentPath + src;
 
@@ -2747,12 +2747,12 @@ window.Shell = function( appObject )
 		},
 		'dir': function( args, callback )
 		{
-			var path = ( typeof( args[ 1 ] ) != 'undefined' && args[ 1 ].length ) ? args[ 1 ] : shell.currentPath;
+			let path = ( typeof( args[ 1 ] ) != 'undefined' && args[ 1 ].length ) ? args[ 1 ] : shell.currentPath;
  
 			if( path.indexOf( ':' ) < 0 )
 			{
-				var cp = shell.currentPath;
-				var ssign = cp.substr( cp.length - 1 );
+				let cp = shell.currentPath;
+				let ssign = cp.substr( cp.length - 1 );
 				path = shell.currentPath + ( ( ssign != ':' && ssign != '/' ) ? '/' : '' ) + path;
 			}
 			if( path.substr( path.length - 1, 1 ) != ':' && path.substr( path.length - 1, 1 ) != '/' )
@@ -2787,9 +2787,9 @@ window.Shell = function( appObject )
 		// TODO: test in real!
 		'engage': function( args, callback )
 		{
-			var preposition = 'with';
-			var subject = false;
-			var number = -1;
+			let preposition = 'with';
+			let subject = false;
+			let number = -1;
 			for( b = 1; b < args.length; b++ )
 			{
 				if( args[ b ] == 'with' )
@@ -2805,13 +2805,13 @@ window.Shell = function( appObject )
 			if( subject && preposition )
 			{
 				// Check if subject exists!
-				var candidates = [];
-				var appObjects = [];
-				var i = 0;
+				let candidates = [];
+				let appObjects = [];
+				let i = 0;
 				for( a in Workspace.applications )
 				{
 					i++;
-					var appNr = Workspace.applications[a].applicationName + ' ' + i;
+					let appNr = Workspace.applications[a].applicationName + ' ' + i;
 					if( Workspace.applications[a].applicationName == subject || subject == appNr )
 					{
 						candidates.push( Workspace.applications[a].applicationName );
@@ -2843,12 +2843,12 @@ window.Shell = function( appObject )
 		{
 			if( args.length > 1 && args[ 1 ].substr( args[ 1 ].length - 4, 4 ).toLowerCase() == '.run' )
 			{
-				var fname = args[ 1 ];
+				let fname = args[ 1 ];
 				if( fname.indexOf( ':' ) < 0 )
 				{
 					fname = shell.currentPath + fname;
 				}
-				var f = new File( fname );
+				let f = new File( fname );
 				f.onLoad = function( data )
 				{
 					shell.parseShellScript( data, callback );
@@ -2864,7 +2864,7 @@ window.Shell = function( appObject )
 		},
 		'help': function( args, callback )
 		{
-			var commands = [
+			let commands = [
 				'ls', 'info', 'list', 'dir', 'cat', 'type', 'why', 'copy', 'delete', 'makedir', 'tinyurl',
 				'protect', 'access', 'execute', 'launch', 'output', 'infoget', 'infoset', 'wait',
 				'rename', /*'mind',*/ 'enter', 'engage', 'date', 'clear', 'flush', 'cd', 'set', 'echo',
@@ -2878,7 +2878,7 @@ window.Shell = function( appObject )
 			}
 			else if ( args.length == 2 )
 			{
-				for ( var a = 0; a < commands.length; a++ )
+				for ( let a = 0; a < commands.length; a++ )
 				{
 					if ( commands[ a ] == args[ 1 ] )
 					{
@@ -2904,17 +2904,17 @@ window.Shell = function( appObject )
 			{
 				return callback( false, { response: "Could not get info. Please specify file." } );
 			}
-			var o = new Object();
+			let o = new Object();
 
-			var path = args[ 1 ];
+			let path = args[ 1 ];
 			if( path.indexOf( ':' ) < 0 )
 			{
-				var cp = shell.currentPath;
-				var ssign = cp.substr( cp.length - 1 );
+				let cp = shell.currentPath;
+				let ssign = cp.substr( cp.length - 1 );
 				path = shell.currentPath + ( ( ssign != ':' && ssign != '/' ) ? '/' : '' ) + path;
 			}
 
-			var m = new Library( 'system.library' );
+			let m = new Library( 'system.library' );
 			m.onExecuted = function( e, d )
 			{
 				if( e != 'ok' ) 
@@ -2925,10 +2925,10 @@ window.Shell = function( appObject )
 
 				d = JSON.parse( d );
 
-				var fn = path.split( path.indexOf( '/' ) > 0 ? '/' : ':' ).pop();
-				var info = false;
+				let fn = path.split( path.indexOf( '/' ) > 0 ? '/' : ':' ).pop();
+				let info = false;
 
-				for( var a = 0; a < d.length; a++ )
+				for( let a = 0; a < d.length; a++ )
 				{
 					if( d[a].Filename == fn )
 					{
@@ -2950,7 +2950,7 @@ window.Shell = function( appObject )
 				if( typeof( args[ 2 ] ) != 'undefined' )
 					o.key = args[ 2 ];
 
-				var l = new Library( 'system.library' );
+				let l = new Library( 'system.library' );
 				l.onExecuted = function( e, d )
 				{
 					if( e == 'ok' )
@@ -2973,30 +2973,30 @@ window.Shell = function( appObject )
 			{
 				return callback( false, { response: "Could not get info. Please specify file." } );
 			}
-			var o = new Object();
+			let o = new Object();
 
-			var path = args[ 1 ];
+			let path = args[ 1 ];
 			if( path.indexOf( ':' ) < 0 )
 			{
-				var cp = shell.currentPath;
-				var ssign = cp.substr( cp.length - 1 );
+				let cp = shell.currentPath;
+				let ssign = cp.substr( cp.length - 1 );
 				path = shell.currentPath + ( ( ssign != ':' && ssign != '/' ) ? '/' : '' ) + path;
 			}
 
-			var m = new Library( 'system.library' );
+			let m = new Library( 'system.library' );
 			m.onExecuted = function( e, d )
 			{
 				if( e != 'ok' ) return;
 
 				d = JSON.parse( d );
 
-				var np = path;
+				let np = path;
 				if( np.substr( np.length - 1, 1 ) == '/' )
 					np = np.substr( 0, np.length - 1 );
-				var fn = np.split( np.indexOf( '/' ) > 0 ? '/' : ':' ).pop();
-				var info = false;
+				let fn = np.split( np.indexOf( '/' ) > 0 ? '/' : ':' ).pop();
+				let info = false;
 
-				for( var a = 0; a < d.length; a++ )
+				for( let a = 0; a < d.length; a++ )
 				{
 					if( d[a].Filename == fn )
 					{
@@ -3016,14 +3016,14 @@ window.Shell = function( appObject )
 				o.path = path.split( '<!--space--!>' ).join( ' ' );
 
 				// Get args
-				var ind = args[ 2 ].indexOf( '=' );
+				let ind = args[ 2 ].indexOf( '=' );
 				if( ind < 0 )
 					return callback( false, { response: "Could not set info. Please specify file, key and value." } );
 				o.key = args[ 2 ].substr( 0, ind );
 				o.value = args[ 2 ].substr( ind + 1, args[ 2 ].length - ind );
 
 				// Execute!
-				var l = new Library( 'system.library' );
+				let l = new Library( 'system.library' );
 				l.onExecuted = function( e, d )
 				{
 					if( e == 'ok' )
@@ -3038,11 +3038,11 @@ window.Shell = function( appObject )
 		},
 		'info': function( args, callback )
 		{
-			var path = args[ 1 ];
+			let path = args[ 1 ];
 			
 			if( !path || path.indexOf( ':' ) <= 0 )
 			{
-				var l = shell.currentPath.substr( shell.currentPath.length - 1 );
+				let l = shell.currentPath.substr( shell.currentPath.length - 1 );
 				if( l == ':' )
 					path = shell.currentPath + path;
 				else if( l != '/' )
@@ -3061,8 +3061,8 @@ window.Shell = function( appObject )
 					try
 					{
 						d = JSON.parse( d );
-						var output = '';
-						for( var z in d )
+						let output = '';
+						for( let z in d )
 						{
 							output += '<div class="Container">' + z + ': ';
 							switch( z )
@@ -3132,8 +3132,8 @@ window.Shell = function( appObject )
 						callback( msg.data, msg.error );
 					}
 				}
-				var args2 = '';
-				for( var z = 2; z < args.length; z++ )
+				let args2 = '';
+				for( let z = 2; z < args.length; z++ )
 					args2 += ( z > 2 ? ' ' : '' ) + args[ z ];
 				
 				// Already in startup apps!
@@ -3156,7 +3156,7 @@ window.Shell = function( appObject )
 						return callback( false, { response: 'Host forbids to leave ' + shell.currentPath } );
 
 				// TODO: Perhaps have a history here!
-				var tp = shell.currentPath;
+				let tp = shell.currentPath;
 				shell.currentPath = shell.previousPath;
 				shell.previousPath = tp;
 				return callback( false, { path: shell.currentPath } );
@@ -3165,12 +3165,12 @@ window.Shell = function( appObject )
 		},
 		'list': function( args, callback )
 		{
-			var path = ( typeof( args[ 1 ]) != 'undefined' && args[ 1 ].length ) ? args[ 1 ] : shell.currentPath;
+			let path = ( typeof( args[ 1 ]) != 'undefined' && args[ 1 ].length ) ? args[ 1 ] : shell.currentPath;
  
 			if( path.indexOf( ':' ) < 0 )
 			{
-				var cp = shell.currentPath;
-				var ssign = cp.substr( cp.length - 1 );
+				let cp = shell.currentPath;
+				let ssign = cp.substr( cp.length - 1 );
 				path = shell.currentPath + ( ( ssign != ':' && ssign != '/' ) ? '/' : '' ) + path;
 			}
 			if( path.substr( path.length - 1, 1 ) != ':' && path.substr( path.length - 1, 1 ) != '/' )
@@ -3184,12 +3184,12 @@ window.Shell = function( appObject )
 				// We got data
 				if( data && data.length )
 				{
-					var str = '';
-					var now = new Date();
+					let str = '';
+					let now = new Date();
 					now = now.getFullYear() + '-' + PadList( now.getMonth() + 1, 2, 'right', '0' )  + '-' + PadList( now.getDay(), 2, 'right', '0' ) + ' 00:00:00';
-					for( var c = 0; c <= 1; c++ )
+					for( let c = 0; c <= 1; c++ )
 					{
-						for( var a = 0; a < data.length; a++ )
+						for( let a = 0; a < data.length; a++ )
 						{
 							if( !data[a].DateCreated )
 								if( data[a].DateModified )
@@ -3197,7 +3197,7 @@ window.Shell = function( appObject )
 							else
 								data[a].DateCreated = now;
 
-							var fnam = '';
+							let fnam = '';
 							if( data[a].Type != 'Directory' )
 							{
 								fnam = data[a].Filename ? data[a].Filename : data[a].Title;
@@ -3206,13 +3206,13 @@ window.Shell = function( appObject )
 							{
 								fnam = data[a].Title ? data[a].Title : data[a].Filename;
 							}
-							var date = data[a].DateCreated.split( ' ' );
-							var today = ( new Date() ); today = today.getFullYear() + '-' + ( PadList( today.getMonth() + 1 + '', 2, 'right', '0', false ) ) + '-' + PadList( today.getDate() + '', 2, 'right', '0', false );
+							let date = data[a].DateCreated.split( ' ' );
+							let today = ( new Date() ); today = today.getFullYear() + '-' + ( PadList( today.getMonth() + 1 + '', 2, 'right', '0', false ) ) + '-' + PadList( today.getDate() + '', 2, 'right', '0', false );
 							if( today == date[0] )
 								date[0] = i18n( 'i18n_today' );
 							date = PadList( date[0], 10, 'right', '&nbsp;', false ) + ' &nbsp;' + date[1];
 
-							var permz = '-----';
+							let permz = '-----';
 							if( data[a].Permissions )
 							{
 								if( typeof( data[a].Permissions ) == 'string' )
@@ -3226,11 +3226,11 @@ window.Shell = function( appObject )
 
 								// Flatten permissions (user,group,others -> combined)
 								permz = permz.split( ',' );
-								var out = '-----';
-								for( var i = 0; i < permz.length; i++ )
+								let out = '-----';
+								for( let i = 0; i < permz.length; i++ )
 								{
-									var tmp = '';
-									for( var f = 0; f < permz[i].length; f++ )
+									let tmp = '';
+									for( let f = 0; f < permz[i].length; f++ )
 									{
 										if( out.substr( f, 1 ) == '-' && permz[i].substr( f, 1 ) != '-' )
 										{
@@ -3281,20 +3281,20 @@ window.Shell = function( appObject )
 			if ( shell.restrictedPath )
 				return callback( false, { response: 'Makedir is not authorised by host.' } );
 
-			var cdr = shell.currentPath;
-			var chk = cdr.substr( cdr.length - 1, 1 );
+			let cdr = shell.currentPath;
+			let chk = cdr.substr( cdr.length - 1, 1 );
 			if( chk != ':' && chk != '/' ) cdr += '/';
-			var npath = cdr;
-			var dir = args[1].split( '<!--space--!>' ).join( ' ' );
+			let npath = cdr;
+			let dir = args[1].split( '<!--space--!>' ).join( ' ' );
 			if( dir.indexOf( ':' ) > 0 )
 			{
 				npath = dir;
-				var chark = dir.substr( dir.length - 1, 1 );
+				let chark = dir.substr( dir.length - 1, 1 );
 				if( chark != ':' && chark != '/' ) dir += '/';
 				cdr = dir;
 			}
 			else cdr += dir;
-			var d = ( new Door() ).get( npath );
+			let d = ( new Door() ).get( npath );
 
 			d.dosAction( 'makedir', { path: cdr }, function()
 			{
@@ -3311,7 +3311,7 @@ window.Shell = function( appObject )
 			{
 				return callback( false, { response: 'Syntax error. Usage:<br>mount [disk:]<br>' } );
 			}
-			var l = new Library( 'system.library' );
+			let l = new Library( 'system.library' );
 			l.onExecuted = function( e, d )
 			{
 				if( e != 'ok' )
@@ -3330,22 +3330,22 @@ window.Shell = function( appObject )
 
 			if( args.length == 2 && args[ 1 ] == 'unmounted' )
 			{
-				var m = new Module( 'system' );
+				let m = new Module( 'system' );
 				m.onExecuted = function( e, d )
 				{
 					if( e != 'ok' )
 					{
 						return callback( false, { response: 'No unmounted disks available.' } );
 					}
-					var rows = JSON.parse( d );
-					var disks = PadList( 'Volumes:', 25, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
-						        PadList( 'Type:', 20, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
-						        PadList( 'Visible:', 11, 'left', '&nbsp;' ) + '<br>';
+					let rows = JSON.parse( d );
+					let disks = PadList( 'Volumes:', 25, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
+						       PadList( 'Type:', 20, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
+						       PadList( 'Visible:', 11, 'left', '&nbsp;' ) + '<br>';
 					disks +=   '<br>';
-					var diskcount = 0;
+					let diskcount = 0;
 					for( a = 0; a < rows.length; a++ )
 					{
-						var cfg = false;
+						let cfg = false;
 						if( rows[a].Config && rows[a].Config.indexOf( '{' ) >= 0 )
 						{
 							// See if we can parse
@@ -3360,7 +3360,7 @@ window.Shell = function( appObject )
 						}
 						if( rows[a].Mounted == '1' ) continue;
 						disks += '<div class="Container">' +
-						    PadList( rows[a].Name + ':', 25, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
+						   PadList( rows[a].Name + ':', 25, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
 							PadList( rows[a].Type, 20, 'left', '&nbsp;' ) + '&nbsp;&nbsp' +
 							PadList( cfg && cfg.Invisible == 'Yes' ? 'hidden' : 'yes', 10, 'right', '&nbsp;' ) + '</div>';
 						diskcount++;
@@ -3375,17 +3375,17 @@ window.Shell = function( appObject )
 				{
 					if ( !shell.workspace )
 					{
-						var disks = PadList( 'Volumes:', 25, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
-							        PadList( 'Handler:', 20, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
-							        PadList( 'Visible:', 11, 'left', '&nbsp;' ) + '<br>';
+						let disks = PadList( 'Volumes:', 25, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
+							       PadList( 'Handler:', 20, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
+							       PadList( 'Visible:', 11, 'left', '&nbsp;' ) + '<br>';
 						disks +=   '<br>';
-						var diskcount = 0;
-						for( var a = 0; a < rows.length; a++ )
+						let diskcount = 0;
+						for( let a = 0; a < rows.length; a++ )
 						{
 							if( rows[a].Mounted != '1' ) continue;
 							if( !rows[a].Volume ) continue;
 							disks += '<div class="Container">' +
-							    PadList( rows[a].Volume, 25, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
+							   PadList( rows[a].Volume, 25, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
 								PadList( rows[a].Handler, 20, 'left', '&nbsp;' ) + '&nbsp;&nbsp' +
 								PadList( rows[a].Visible ? 'yes' : 'hidden', 10, 'right', '&nbsp;' ) + '</div>';
 							diskcount++;
@@ -3406,8 +3406,8 @@ window.Shell = function( appObject )
 
 			// Find filename, then flags
 			// Usage: protect myfile rwd
-			var fn = '';
-			var flags = '';
+			let fn = '';
+			let flags = '';
 			for( a = 1; a < args.length; a++ )
 			{
 				if( !fn && args[ a ].indexOf( '=' ) < 0 )
@@ -3427,7 +3427,7 @@ window.Shell = function( appObject )
 				fn = shell.currentPath + fn;
 			}
 
-			var uf = false, gf = false, of = false;
+			let uf = false, gf = false, of = false;
 
 			if( shell.parsedObj.vars.user )
 				uf = shell.parsedObj.vars.user;
@@ -3439,22 +3439,22 @@ window.Shell = function( appObject )
 			if( fn && ( flags || uf || gf || of ) )
 			{
 				// Put the flags in the right format
-				var finalFlags = '';
+				let finalFlags = '';
 
-				var data = {
+				let data = {
 					user: ( flags ? flags : ( uf ? uf : '' ) ).toLowerCase(),
 					group: ( gf ? gf : '' ).toLowerCase(),
 					others: ( of ? of : '' ).toLowerCase()
 				};
 
-				var all = {};
+				let all = {};
 
 				// Go through users-others
-				for( var g in data )
+				for( let g in data )
 				{
 					if( !data[ g ].length ) continue;
 					all[ g ] = '';
-					var perms = { a: '-', r: '-', w: '-', e: '-', d: '-' };
+					let perms = { a: '-', r: '-', w: '-', e: '-', d: '-' };
 					for( a = 0; a < data[ g ].length; a++ )
 					{
 						perms[ data[ g ][ a ] ] = data[ g ][ a ] ? data[ g ][ a ] : '-';
@@ -3469,7 +3469,7 @@ window.Shell = function( appObject )
 				all.path = fn;
 
 				// Execute!
-				var l = new Library( 'system.library' );
+				let l = new Library( 'system.library' );
 				l.onExecuted = function( e, d )
 				{
 					if( e == 'ok' )
@@ -3493,13 +3493,13 @@ window.Shell = function( appObject )
 
 			if( args.length == 3 || ( args.length == 4 && args[ 2 ] == 'to' ) )
 			{
-				var src = args[ 1 ];
-				var dst = args[ 2 ];
+				let src = args[ 1 ];
+				let dst = args[ 2 ];
 				if( args.length == 4 && args[ 2 ] == 'to' )
 					dst = args[ 3 ];
 
-				var dstVolume = '';
-				var srcVolume = '';
+				let dstVolume = '';
+				let srcVolume = '';
 
 				if( dst.indexOf( ':' ) > 0 )
 					dstVolume = dst.split( ':' )[0] + ':';
@@ -3514,11 +3514,11 @@ window.Shell = function( appObject )
 
 				if( dstVolume == srcVolume || !dstVolume )
 				{
-					var newname = dst.split( ':' )[ 1 ];
+					let newname = dst.split( ':' )[ 1 ];
 					newname = newname.split( '/' );
 					newname = newname[ newname.length - 1 ];
 
-					var doorSrc = ( new Door() ).get( src );
+					let doorSrc = ( new Door() ).get( src );
 
 					doorSrc.dosAction( 'rename', { path: src, newname: newname }, function()
 					{
@@ -3537,10 +3537,10 @@ window.Shell = function( appObject )
 		},
 		'say': function( args, callback )
 		{
-			var args2 = [];
+			let args2 = [];
 			for( a = 1; a < args.length; a++ )
 				args2.push( args[ a ].split( '<!--space--!>' ).join( ' ' ) );
-			var str = args2.join( ' ' );
+			let str = args2.join( ' ' );
 			SayWithText( shell.parseVariables( str ) );
 			return callback( true );
 		},
@@ -3556,14 +3556,14 @@ window.Shell = function( appObject )
 		{
 			if( args.length >= 2 )
 			{
-				var post = { source: args[ 1 ] };
+				let post = { source: args[ 1 ] };
 				if( args.length > 2 )
 					post.expire = args[ 2 ];
 
-				var m = new Module( 'system' );
+				let m = new Module( 'system' );
 				m.onExecuted = function( e, d )
 				{
-					var r = false;
+					let r = false;
 					try
 					{
 						r = JSON.parse( d );
@@ -3590,11 +3590,11 @@ window.Shell = function( appObject )
 		{
 			if( args.length == 2 )
 			{
-				var p = args[ 1 ];
+				let p = args[ 1 ];
 				if( p.indexOf( ':' ) <= 0 )
 					p = shell.currentPath + p;
 
-				var f = new File( p );
+				let f = new File( p );
 				f.onLoad = function( data )
 				{
 					callback( false, { response: data.split( "\n" ).join( "<br>" ) } );
@@ -3616,7 +3616,7 @@ window.Shell = function( appObject )
 			{
 				return callback( false, { response: 'Syntax error. Usage:<br>unmount [disk:]<br>' } );
 			}
-			var l = new Library( 'system.library' );
+			let l = new Library( 'system.library' );
 			l.onExecuted = function( e, d )
 			{
 				if( e != 'ok' )
@@ -3676,11 +3676,11 @@ window.Shell = function( appObject )
 				// We are installing a friend package
 				if( args[ 1 ] == 'package' && args.length == 3 )
 				{
-					var p = args[ 2 ];
+					let p = args[ 2 ];
 					if( p.indexOf( ':' ) <= 0 )
 						p = shell.currentPath + p;
 					
-					var m = new Module( 'system' );
+					let m = new Module( 'system' );
 					m.onExecuted = function( e, d )
 					{
 						if( e != 'ok' )
@@ -3696,7 +3696,7 @@ window.Shell = function( appObject )
 				}
 				else
 				{
-					var m = new Module( 'system' );
+					let m = new Module( 'system' );
 					m.onExecuted = function( e, d )
 					{
 						if( e == 'ok' )
@@ -3754,15 +3754,15 @@ window.Shell = function( appObject )
 			}
 			else
 			{
-				var l = new Library( 'system.library' );
+				let l = new Library( 'system.library' );
 				l.onExecuted = function( e, d )
 				{	
 					Workspace.refreshDesktop( false, true ); // Badabish
 					
-					var m = new Module( 'system' );
+					let m = new Module( 'system' );
 					m.onExecuted = function( e, dat )
 					{
-						var ll = new Library( 'system.library' );
+						let ll = new Library( 'system.library' );
 						ll.execute( 'device/refreshlist', { sessionid: Workspace.sessionid } );
 						setTimeout( function()
 						{
@@ -3777,8 +3777,8 @@ window.Shell = function( appObject )
 		'metainfo': function( args, callback )
 		{
 			// Get command
-			var command = false;
-			var options = [ 'get', 'set', 'list' ];
+			let command = false;
+			let options = [ 'get', 'set', 'list' ];
 			for( a = 0; a < options.length; a++ )
 			{
 				if( args[ 1 ] == options[ a ] )
@@ -3790,16 +3790,16 @@ window.Shell = function( appObject )
 			if( !command )
 				return callback( false, { response: 'Command not recognized. Usage: metainfo get|set|list filename (key=value)' } );
 
-			var filename = false;
-			var variable = false;
-			var data = false;
+			let filename = false;
+			let variable = false;
+			let data = false;
 
 			// Get the rest
 			for( a = 2; a < args.length; a++ )
 			{
 				if( args[ a ].indexOf( '=' ) > 0 )
 				{
-					var pair = args[ a ].split( '=' );
+					let pair = args[ a ].split( '=' );
 					variable = pair[ 0 ];
 					pair[ 0 ] = '';
 					pair = pair.join( '=' );
@@ -3816,7 +3816,7 @@ window.Shell = function( appObject )
 
 			if( filename )
 			{
-				var d = ( new Door() ).get( filename );
+				let d = ( new Door() ).get( filename );
 				if( d )
 				{
 					return d.dosAction( 'metainfo', { path: filename, command: command, variable: variable, data: data }, function( e )
@@ -3840,8 +3840,8 @@ window.Shell = function( appObject )
 			{
 				shell.terminate = true;
 
-				var start = 1;
-				var recursive = false;
+				let start = 1;
+				let recursive = false;
 
 				// check recursive
 				if( ( args[ 0 ] + ' ' + args[ 1 ] ).toLowerCase() == 'move all' )
@@ -3850,12 +3850,12 @@ window.Shell = function( appObject )
 					recursive = true;
 				}
 
-				var src = args[ start ];
+				let src = args[ start ];
 
 				if( src.indexOf( ':' ) < 0 ) 
 					src = shell.currentPath + src;
 
-				var dst = args[ start + 1 ].toLowerCase() == 'to' ? args[ start + 2 ] : args[ start + 1 ];
+				let dst = args[ start + 1 ].toLowerCase() == 'to' ? args[ start + 2 ] : args[ start + 1 ];
 
 				if( dst.indexOf( ':' ) < 0 ) 
 					dst = shell.currentPath + dst;
@@ -3880,21 +3880,21 @@ window.Shell = function( appObject )
 		{
 			if( args.length >= 3 )
 			{
-				var start = 1;
+				let start = 1;
 
-				var src = args[ start ];
+				let src = args[ start ];
 
 				if( src.indexOf( ':' ) < 0 ) 
 					src = shell.currentPath + src;
 
-				var dst = args[ start + 1 ].toLowerCase() == 'to' ? args[ start + 2 ] : args[ start + 1 ];
+				let dst = args[ start + 1 ].toLowerCase() == 'to' ? args[ start + 2 ] : args[ start + 1 ];
 
 				if( dst.indexOf( ':' ) < 0 ) 
 					dst = shell.currentPath + dst;
 
 				if( dst )
 				{
-					var d = ( new Door() ).get( dst );
+					let d = ( new Door() ).get( dst );
 					if( d )
 					{
 						return d.dosAction( 'link', { from: src, to: dst }, function( e )
@@ -3944,14 +3944,14 @@ window.Shell = function( appObject )
 				case 'connect':
 					if ( args.length < 3 )
 						return callback( false, { response: 'Syntax: friendnetwork connect "hostname".' } );
-					var p2p = false;
+					let p2p = false;
 					if ( args.length == 4 && args[ 3 ] == 'p2p' )
 						p2p = true;
 					return callback(false, 
 					{
 						command: 'friendnetworkconnect',
 						name:    args[ 2 ],
-						p2p:	 p2p
+						p2p:	p2p
 					});
 				case 'password':
 					if ( args.length < 4 )
@@ -3992,7 +3992,7 @@ window.FriendDOS =
 	copyFiles: function( src, dest, flags, callback, depth, copyObject )
 	{
 		// Do we want to move the files?
-		var move = flags && flags.move ? true : false;
+		let move = flags && flags.move ? true : false;
 
 		// Setup copyobject!
 		if( !copyObject ) 
@@ -4036,10 +4036,10 @@ window.FriendDOS =
 				{
 					if( e )
 					{
-						var f = false;
+						let f = false;
 						try
 						{
-							 f = JSON.parse( d );
+							f = JSON.parse( d );
 						}
 						catch( e )
 						{
@@ -4053,10 +4053,10 @@ window.FriendDOS =
 					cfcbk( src, dest, flags, callback, depth );
 					/*
 					if( !e ) return callback( 'Failed to copy files.', { done: true } );
-					var f = false;
+					let f = false;
 					try
 					{
-						 f = JSON.parse( d );
+						f = JSON.parse( d );
 					}
 					catch( e )
 					{
@@ -4075,7 +4075,7 @@ window.FriendDOS =
 		// Actual working code
 		function cfcbk( src, dest, flags, cb, depth )
 		{
-			var self = this;
+			let self = this;
 
 			if (!depth)
    			{
@@ -4087,8 +4087,8 @@ window.FriendDOS =
    			}
 
 			// Get door objects
-			var doorSrc = ( new Door() ).get( src );
-			var doorDst = ( new Door() ).get( src );
+			let doorSrc = ( new Door() ).get( src );
+			let doorDst = ( new Door() ).get( src );
 			if( move ) window.moveFiles.doorSrc = doorSrc;
 
 			// Don't copy to self
@@ -4096,7 +4096,7 @@ window.FriendDOS =
 				return false;
 
 			// Check what type source and destination is
-			var pthTest = src;
+			let pthTest = src;
 
 			// Get without trailing forward slash so we get the parent folder
 			if( src.substr( src.length - 1, 1 ) == '/' )
@@ -4117,7 +4117,7 @@ window.FriendDOS =
 			}
 
 			// Correct path
-			var ptsg = pthTest.substr( pthTest.length - 1, 1 );
+			let ptsg = pthTest.substr( pthTest.length - 1, 1 );
 			if( ptsg != ':' && ptsg != '/' ) pthTest += '/';
 
 			doorSrc.path = pthTest;
@@ -4126,14 +4126,14 @@ window.FriendDOS =
 			if( move ) window.moveFiles.counter++;
 			doorSrc.getIcons( false, function( data )
 			{
-				var abort = false;
+				let abort = false;
 
 				// TODO: Support #? and * wildcards
-				for( var a = 0; a < data.length && !abort; a++ )
+				for( let a = 0; a < data.length && !abort; a++ )
 				{
 					//console.log( '>>> Examining: ' + data[a].Path );
 					// Make a trim
-					var compare = data[a].Path;
+					let compare = data[a].Path;
 					if(
 						data[a].Path.substr( data[a].Path.length - 1, 1 ) == '/' &&
 						src.substr( src.length - 1, 1 ) != '/'
@@ -4148,23 +4148,23 @@ window.FriendDOS =
 						// Recurse into directories (copy a directory)
 						if( data[a].Type == 'Directory' || data[a].Type == 'Door' )
 						{
-							var dsign = dest.substr( dest.length - 1, 1 );
+							let dsign = dest.substr( dest.length - 1, 1 );
 							if( dsign != ':' && dsign != '/' ) dsign = '/'; else dsign = '';
 
-							var destination = dest + dsign + data[a].Filename + '/';
-							var p = data[a].Path;
+							let destination = dest + dsign + data[a].Filename + '/';
+							let p = data[a].Path;
 
 							if( move )
-			    			{
-				    			window.moveFiles.dirArray.push(p);
-				    			window.moveFiles.counter++;
-			    			}
+			   			{
+				   			window.moveFiles.dirArray.push(p);
+				   			window.moveFiles.counter++;
+			   			}
 
-			    			// Assume the destination directory does not exist
+			   			// Assume the destination directory does not exist
 							doorSrc.dosAction( 'makedir', { path: destination }, function()
 							{
 								if( move ) window.moveFiles.counter--;
-								var d = ( new Door() ).get( p );
+								let d = ( new Door() ).get( p );
 								if( move ) window.moveFiles.counter++;
 								// Get source directory
 								d.getIcons( p, function( subs )
@@ -4192,7 +4192,7 @@ window.FriendDOS =
 										} );
 									}
 
-									for( var c = 0; c < subs.length; c++ )
+									for( let c = 0; c < subs.length; c++ )
 									{
 										if( subs[c].Type == 'File' )
 										{
@@ -4203,17 +4203,17 @@ window.FriendDOS =
 										{
 											if( flags && flags.recursive == true )
 											{
-												var p = subs[c].Path;
-												var psign = p.substr( p.length - 1, 1 );
+												let p = subs[c].Path;
+												let psign = p.substr( p.length - 1, 1 );
 												if( psign != ':' && psign != '/' ) p += '/';
 
 												//console.log( 'Foodah! Recursing on ' + p + "! Because of recursion: " + flags.recursive + "\n" );
 												FriendDOS.copyFiles( p, destination, flags, callback, depth + 1, copyObject );
 											}
 											else
-							    			{
-								    			if( move ) window.moveFiles.noDeleteRoot = true;
-							    			}
+							   			{
+								   			if( move ) window.moveFiles.noDeleteRoot = true;
+							   			}
 										}
 									}
 									if( move ) window.moveFiles.counter--;
@@ -4224,7 +4224,7 @@ window.FriendDOS =
 						else
 						{
 							copyObject.copyTotal++;
-							var destination = dest + data[a].Filename;
+							let destination = dest + data[a].Filename;
 							if( move )
 							{
 								window.moveFiles.fileArray.push( { source: src, destination: destination } );
@@ -4252,7 +4252,7 @@ window.FriendDOS =
 			} );
 			if( move && depth === 0 )
    			{
-	   			setTimeout( FriendDOS.checkMove, 100 );
+	  			setTimeout( FriendDOS.checkMove, 100 );
    			}
 		}
 	},
@@ -4264,13 +4264,13 @@ window.FriendDOS =
 			return;
 		}
 
-		var move = window.moveFiles;
+		let move = window.moveFiles;
 		if (!move.currentSrceSize)
 		{
 			move.fileCount = move.fileArray.length;
 			move.currentSrceSize = [];
 			move.currentDestSize = [];
-			for (var count = 0; count < move.fileArray.length; count++)
+			for (let count = 0; count < move.fileArray.length; count++)
 			{
 				move.currentSrceSize[count] = -1;
 				move.currentDestSize[count] = -1;
@@ -4278,12 +4278,12 @@ window.FriendDOS =
 				{
 					if( data.substr( 0, 2 ) == 'ok' )
 					{
-						var move = window.moveFiles;
+						let move = window.moveFiles;
 						if (move)
 						{
-							var info = data.split( '<!--separate-->' )[ 1 ];
+							let info = data.split( '<!--separate-->' )[ 1 ];
 							info = JSON.parse( info );
-							for (var a = 0; a < move.fileArray.length; a++)
+							for (let a = 0; a < move.fileArray.length; a++)
 							{
 								if (info.Path == move.fileArray[a].source)
 									break;
@@ -4303,12 +4303,12 @@ window.FriendDOS =
 				{
 					if( data.substr(0, 2) == 'ok' )
 					{
-						var move = window.moveFiles;
+						let move = window.moveFiles;
 						if (move)
 						{
-							var info = data.split('<!--separate-->')[1];
+							let info = data.split('<!--separate-->')[1];
 							info = JSON.parse( info );
-							for (var a = 0; a < move.fileArray.length; a++)
+							for (let a = 0; a < move.fileArray.length; a++)
 							{
 								if (info.Path == move.fileArray[a].destination)
 									break;
@@ -4338,7 +4338,7 @@ window.FriendDOS =
 			// Delete directories
 			if ( !move.noDeleteRoot )
 			{
-				for (var count = move.dirArray.length - 1; count >= 0; count--)
+				for (let count = move.dirArray.length - 1; count >= 0; count--)
 				{
 					move.doorSrc.dosAction('delete', {path: move.dirArray[count], notrash: true}, function (result)
 					{
@@ -4355,7 +4355,7 @@ window.FriendDOS =
 	// depth, how deep we've recursed into directories
 	deleteFiles: function( src, flags, callback, depth )
 	{
-		var self = this;
+		let self = this;
 		if( !depth ) depth = 0;
 		if( !flags ) flags = {};
 
@@ -4385,11 +4385,11 @@ window.FriendDOS =
 				}
 
 				// Delete five directories at a time
-				var ceiling = 5;
-				var out = [];
+				let ceiling = 5;
+				let out = [];
 				if( this._dirsToDelete && this._dirsToDelete.length )
 				{
-					for( var a = this._dirsToDelete.length - 1; a >= 0; a-- )
+					for( let a = this._dirsToDelete.length - 1; a >= 0; a-- )
 					{
 						if( ceiling-- > 0 )
 						{
@@ -4423,10 +4423,10 @@ window.FriendDOS =
 		}
 
 		// Get door objects
-		var doorSrc = ( new Door() ).get( src );
+		let doorSrc = ( new Door() ).get( src );
 
 		// Check what type source
-		var pthTest = src;
+		let pthTest = src;
 
 		// Get without trailing forward slash so we get the parent folder
 		if( src.substr( src.length - 1, 1 ) == '/' )
@@ -4445,7 +4445,7 @@ window.FriendDOS =
 		}
 
 		// Correct path
-		var ptsg = pthTest.substr( pthTest.length - 1, 1 );
+		let ptsg = pthTest.substr( pthTest.length - 1, 1 );
 		if( ptsg != ':' && ptsg != '/' ) pthTest += '/';
 
 		doorSrc.path = pthTest;
@@ -4453,15 +4453,15 @@ window.FriendDOS =
 		// Get directory listing
 		doorSrc.getIcons( false, function( data )
 		{
-			var abort = false; // in the future, we can abort the process
+			let abort = false; // in the future, we can abort the process
 
-			var dirCount = 0;
+			let dirCount = 0;
 
 			// TODO: Support #? and * wildcards
-			for( var a = 0; a < data.length && !abort; a++ )
+			for( let a = 0; a < data.length && !abort; a++ )
 			{
 				// Make a trim
-				var compare = data[a].Path;
+				let compare = data[a].Path;
 				if( data[a].Path.substr( data[a].Path.length - 1, 1 ) == '/' &&
 					src.substr( src.length - 1, 1 ) != '/' )
 				{
@@ -4475,26 +4475,26 @@ window.FriendDOS =
 					if( data[a].Type == 'Directory' || data[a].Type == 'Door' )
 					{
 						dirCount++;
-						var p = data[a].Path;
+						let p = data[a].Path;
 
-						var d = ( new Door() ).get( p );
+						let d = ( new Door() ).get( p );
 
 						// Start process getting sub folder
 						flags._activeProcesses++;
 
-						var foo = p;
+						let foo = p;
 						d.getIcons( p, function( subs )
 						{
 							flags._dirsToDelete.push( foo );
 							//console.log( 'Added ' + foo + ' to dirsToDelete array...' );
 
-							for( var c = 0; c < subs.length; c++ )
+							for( let c = 0; c < subs.length; c++ )
 							{
 								// If we have a directory/file ID, then use that instead of a whole path
 								if( subs[c].Type == 'File' )
 								{
-									var dcp = subs[c].Path;
-									var dfn = subs[c].Filename;
+									let dcp = subs[c].Path;
+									let dfn = subs[c].Filename;
 									// Start delete
 									flags._activeProcesses++;
 									doorSrc.dosAction( 'delete', { path: dcp, notrash: flags.notrash }, function( result )
@@ -4509,8 +4509,8 @@ window.FriendDOS =
 									dirCount++;
 									if( flags && flags.recursive == true )
 									{
-										var p = subs[c].Path;
-										var psign = p.substr( p.length - 1, 1 );
+										let p = subs[c].Path;
+										let psign = p.substr( p.length - 1, 1 );
 										if( psign != ':' && psign != '/' ) p += '/';
 
 										// Start deleting of sub directory
@@ -4533,7 +4533,7 @@ window.FriendDOS =
 					// Delete single file
 					else
 					{
-						var dPath = src;
+						let dPath = src;
 
 						// Start delete process
 						flags._activeProcesses++;
@@ -4558,8 +4558,8 @@ window.FriendDOS =
 			}
 			else
 			{
-				 return;
-				 //return callback();
+				return;
+				//return callback();
 			}
 		} );
 	},
@@ -4567,7 +4567,7 @@ window.FriendDOS =
 	// Callback format myFunc( bool return value, data )
 	getFileInfo: function( path, callback )
 	{
-		var l = new Library( 'system.library' );
+		let l = new Library( 'system.library' );
 		l.onExecuted = function( e, d )
 		{
 			if( callback ) callback( e == 'ok' ? true : false, d );
@@ -4579,11 +4579,11 @@ window.FriendDOS =
 	addSession: function( appObject, callback )
 	{
 		// Find unique shell slot number
-		var available = 0, found;
+		let available = 0, found;
 		do
 		{
 			found = false;
-			for( var c in this.sessions )
+			for( let c in this.sessions )
 			{
 				if( this.sessions[c].number == available )
 				{
@@ -4595,7 +4595,7 @@ window.FriendDOS =
 		}
 		while( found );
 
-		var a = new Shell( appObject );
+		let a = new Shell( appObject );
 		this.sessions[a.uniqueId] = a;
 		this.sessions[a.uniqueId].number = available;
 		if( callback ) callback( a.uniqueId );
@@ -4617,8 +4617,8 @@ window.FriendDOS =
 	{
 		if( typeof( this.sessions[sessionid] ) != 'undefined' )
 		{
-			var sessions = [];
-			for( var b in this.sessions )
+			let sessions = [];
+			for( let b in this.sessions )
 			{
 				if( b != sessionid )
 				{
