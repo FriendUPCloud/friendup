@@ -4143,7 +4143,25 @@ window.FriendDOS =
 					}
 
 					// We have a match with the path we want to copy!
-					if( compare == src )
+					let compared = false;
+					let finalSrc = src;
+					if( src.indexOf( '*' ) )
+					{
+						// If src fits wildcard!
+						let srcCmpPos = src.indexOf( '*' ) + 1;
+						if( 
+							compare.substr( 0, src.indexOf( '*' ) ) == src.substr( 0, src.indexOf( '*' ) ) &&
+							src.substr( srcCmpPos, src.length - srcCmpPos ) ==
+								compare.substr( compare.length - ( src.length - srcCmpPos ) )
+						)
+						{
+							compared = true;
+							finalSrc = compare;
+						}
+					}
+					else if( compare == src ) compared = true;
+					
+					if( compared )
 					{
 						// Recurse into directories (copy a directory)
 						if( data[a].Type == 'Directory' || data[a].Type == 'Door' )
@@ -4155,12 +4173,12 @@ window.FriendDOS =
 							let p = data[a].Path;
 
 							if( move )
-			   			{
-				   			window.moveFiles.dirArray.push(p);
-				   			window.moveFiles.counter++;
-			   			}
+				   			{
+					   			window.moveFiles.dirArray.push(p);
+					   			window.moveFiles.counter++;
+				   			}
 
-			   			// Assume the destination directory does not exist
+				   			// Assume the destination directory does not exist
 							doorSrc.dosAction( 'makedir', { path: destination }, function()
 							{
 								if( move ) window.moveFiles.counter--;
@@ -4227,18 +4245,18 @@ window.FriendDOS =
 							let destination = dest + data[a].Filename;
 							if( move )
 							{
-								window.moveFiles.fileArray.push( { source: src, destination: destination } );
+								window.moveFiles.fileArray.push( { source: finalSrc, destination: destination } );
 								window.moveFiles.counter++;
 							}
-							doorSrc.dosAction( 'copy', { from: src, to: destination }, function( result )
+							doorSrc.dosAction( 'copy', { from: finalSrc, to: destination }, function( result )
 							{
 								if( move )
 								{
-									callback( 'Moved ' + src + ' to ' + destination + '..' );
+									callback( 'Moved ' + finalSrc + ' to ' + destination + '..' );
 								}
 								else
 								{
-									callback( 'Copied ' + src + ' to ' + destination + '..' );
+									callback( 'Copied ' + finalSrc + ' to ' + destination + '..' );
 								}
 								// Upon fail! Just piss.
 								if( 1 == 2 ) abort = true;
