@@ -14,7 +14,9 @@ global $SqlDatabase, $User, $Config;
 
 
 
-// Dependency
+// Dependency ------------------------------------------------------------------
+
+// Calculate the text box of the image (initials etc)
 function getsetting_calculateTextBox( $text, $fontFile, $fontSize, $fontAngle )
 {
 	$rect = imagettfbbox( $fontSize, $fontAngle, $fontFile, $text );
@@ -30,20 +32,61 @@ function getsetting_calculateTextBox( $text, $fontFile, $fontSize, $fontAngle )
 		"box"    => $rect
 	);
 }
-// End dependency
+// Return "broken file"
+function _file_broken()
+{
+	$cnt = file_get_contents( 'resources/iconthemes/friendup15/File_Broken.svg' );
+	FriendHeader( 'Content-Length: ' . strlen( $cnt ) );
+	FriendHeader( 'Content-Type: image/svg+xml' );
+	die( $cnt );
+}
+
+// Output the file
+function _file_output( $filepath )
+{
+	if( $filepath )
+	{
+		ob_clean();
+		
+		FriendHeader( 'Content-Type: image/png' );
+		
+		FriendHeader( 'Expires: ' . gmdate( 'D, d M Y H:i:s \G\M\T', time() + 86400 ) );
+		
+		// Generate some useful time vars based on file date
+		$last_modified_time = filemtime( $filepath ); 
+		$etag = md5_file( $filepath );
+		
+		// Always send headers
+		FriendHeader( 'Last-Modified: ' . gmdate( 'D, d M Y H:i:s', $last_modified_time ) . ' GMT' ); 
+		FriendHeader( 'Etag: ' . $etag ); 
+		
+		// TODO: Fix this so it works in FriendCore ... only works in apache, nginx, etc ...
+		
+		// Exit if not modified
+		if ( ( @strtotime( $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) == $last_modified_time ) ||  ( @trim( $_SERVER['HTTP_IF_NONE_MATCH'] ) == $etag ) )
+		{
+			FriendHeader( 'HTTP/1.1 304 Not Modified' ); 
+			die();
+		}
+		//die( print_r( $_SERVER,1 ) . ' .. ' . $last_modified_time . ' || ' . $etag );
+		die( file_get_contents( $filepath ) );
+	}
+}
+
+// End dependency --------------------------------------------------------------
 
 
-
+// Get UserID
 if( isset( $args->args->userid ) && !isset( $args->userid ) )
 {
 	$args->userid = $args->args->userid;
 }
-
+// Get AuthID
 if( isset( $args->args->authid ) && !isset( $args->authid ) )
 {
 	$args->authid = $args->args->authid;
 }
-
+// Try to fetch  user who is logged in
 if( !isset( $args->authid ) )
 {
 	$userid = ( $level == 'Admin' && isset( $args->userid ) ? $args->userid : $User->ID );
@@ -97,18 +140,22 @@ $height = 256;
 $mode = 'resize';
 $hash = false;
 
+// Image was set
 if( isset( $args->image ) )
 {
 	$hash = $args->image;
 }
+// Width was requested
 if( isset( $args->width ) )
 {
 	$width = $args->width;
 }
+// Height was requested
 if( isset( $args->height ) )
 {
 	$height = $args->height;
 }
+// Mode was requested
 if( isset( $args->mode ) )
 {
 	$mode = $args->mode;
@@ -122,45 +169,6 @@ if( !file_exists( $wname . 'thumbnails' ) )
 	mkdir( $wname . 'thumbnails' );
 }
 
-function _file_broken()
-{
-	$cnt = file_get_contents( 'resources/iconthemes/friendup15/File_Broken.svg' );
-	FriendHeader( 'Content-Length: ' . strlen( $cnt ) );
-	FriendHeader( 'Content-Type: image/svg+xml' );
-	die( $cnt );
-}
-
-function _file_output( $filepath )
-{
-	if( $filepath )
-	{
-		ob_clean();
-		
-		FriendHeader( 'Content-Type: image/png' );
-		
-		FriendHeader( 'Expires: ' . gmdate( 'D, d M Y H:i:s \G\M\T', time() + 86400 ) );
-		
-		// Generate some useful time vars based on file date
-		$last_modified_time = filemtime( $filepath ); 
-		$etag = md5_file( $filepath );
-		
-		// Always send headers
-		FriendHeader( 'Last-Modified: ' . gmdate( 'D, d M Y H:i:s', $last_modified_time ) . ' GMT' ); 
-		FriendHeader( 'Etag: ' . $etag ); 
-		
-		// TODO: Fix this so it works in FriendCore ... only works in apache, nginx, etc ...
-		
-		// Exit if not modified
-		if ( ( @strtotime( $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) == $last_modified_time ) ||  ( @trim( $_SERVER['HTTP_IF_NONE_MATCH'] ) == $etag ) )
-		{
-			FriendHeader( 'HTTP/1.1 304 Not Modified' ); 
-			die();
-		}
-		//die( print_r( $_SERVER,1 ) . ' .. ' . $last_modified_time . ' || ' . $etag );
-		die( file_get_contents( $filepath ) );
-	}
-}
-
 if( $userid > 0 && $wname )
 {
 	
@@ -170,7 +178,9 @@ if( $userid > 0 && $wname )
 	if( $hash && file_exists( $folderpath . ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png' ) )
 	{
 		_file_output( $folderpath . ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png' );
+		die();
 	}
+	// Try to generate it
 	else
 	{
 	
@@ -180,6 +190,8 @@ if( $userid > 0 && $wname )
 		$s->Type = 'system';
 		$s->Key = 'avatar';
 		$s->UserID = $userid;
+		
+		// We do not have full name and we can load and ( we have no mode or the mode isn't reset )
 		if( !isset( $args->args->fullname ) && $s->Load() && ( !isset( $args->args->mode ) || $args->args->mode != 'reset' ) )
 		{
 			$json = false;
