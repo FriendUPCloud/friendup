@@ -1,5 +1,9 @@
 <?php
 
+include_once( 'php/friend.php' );
+include_once( 'php/classes/file.php' );
+include_once( 'php/classes/logger.php' );
+
 
 /*©lgpl*************************************************************************
 *                                                                              *
@@ -499,7 +503,7 @@ function verifyCode( $username, $password = '', $code = false )
 	}
 	else
 	{
-		return [ false, '{"result":"-1","response":"Unknown code verification error.","code":"60"}' ];
+		return false;
 	}
 }
 
