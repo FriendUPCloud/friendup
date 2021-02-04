@@ -2011,7 +2011,7 @@ window.Shell = function( appObject )
 				
 					for( var a in dirs )
 					{
-						if( dirs[a].Title.toLowerCase() == command )
+						if( dirs[a].Title && dirs[a].Title.toLowerCase() == command )
 						{
 							var args = [];
 							for( var aa = 1; aa < cmd.length; aa++ )
