@@ -16,7 +16,7 @@
 
 function theLogger( $str )
 {
-	if( $s = fopen( SCRIPT_2FA_PATH . '/../../../log/php.log', 'a+' ) )
+	if( $s = fopen( SCRIPT_2FA_PATH . '/../../../log/php_log.txt', 'a+' ) )
 	{
 		fwrite( $s, $str );
 		fclose( $s );
@@ -398,9 +398,7 @@ function verifyIdentity( $username, $password = '' )
 // TODO: This function will stop working soon, using deprecated password
 //       hashing implementation
 function verifyCode( $username, $password = '', $code = false )
-{
-	global $Logger;
-	
+{	
 	if( $code && $username )
 	{
 		$error = false; $data = false;
@@ -504,9 +502,7 @@ function verifyCode( $username, $password = '', $code = false )
 
 // Send verification code using SMS
 function sendCode( $userid, $mobile, $code = false, $limit = true )
-{
-	global $Logger;
-	
+{	
 	$error = false; $debug = false;
 	
 	include_once( SCRIPT_2FA_PATH . '/../../../php/classes/dbio.php' );
@@ -738,7 +734,7 @@ Sent JSON:
 		$error = '{"result":"-1","response":"cURL is not installed, contact support ..."}';
 	}
 	
-	$Logger->log( 'We returned with an error 2: ' + $error );
+	theLogger( 'We returned with an error 2: ' + $error );
 	
 	return [ 'fail', $error ];
 	
@@ -819,9 +815,7 @@ function exec_timeout( $cmd, $timeout = 60 )
 
 // Verify the Windows user identity for a specific RDP server
 function verifyWindowsIdentity( $username, $password = '', $server )
-{
-	global $Logger;
-	
+{	
 	$error = false; $data = false;
 	
 	// TODO: set login data static for the presentation, remove later, only test data.
@@ -1099,7 +1093,7 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 		$error = '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"4"}';
 	}
 	
-	$Logger->log( 'Er returned with an error: ' . $error );
+	theLogger( 'Er returned with an error: ' . $error );
 	
 	return [ 'fail', $error ];
 	
