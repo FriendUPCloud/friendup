@@ -4145,6 +4145,7 @@ window.FriendDOS =
 					// We have a match with the path we want to copy!
 					let compared = false;
 					let finalSrc = src;
+					// TODO: If the filename contains actually a '*' sign, then switch order on these if's!
 					if( src.indexOf( '*' ) )
 					{
 						// If src fits wildcard!
