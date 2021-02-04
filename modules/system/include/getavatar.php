@@ -35,10 +35,9 @@ function getsetting_calculateTextBox( $text, $fontFile, $fontSize, $fontAngle )
 // Return "broken file"
 function _file_broken()
 {
-	$cnt = file_get_contents( 'resources/iconthemes/friendup15/File_Broken.svg' );
 	FriendHeader( 'Content-Length: ' . strlen( $cnt ) );
 	FriendHeader( 'Content-Type: image/svg+xml' );
-	die( $cnt );
+	readfile( 'resources/iconthemes/friendup15/File_Broken.svg' );
 }
 
 // Output the file
@@ -69,7 +68,7 @@ function _file_output( $filepath )
 			die();
 		}
 		//die( print_r( $_SERVER,1 ) . ' .. ' . $last_modified_time . ' || ' . $etag );
-		die( file_get_contents( $filepath ) );
+		die( readfile( $filepath ) );
 	}
 }
 
