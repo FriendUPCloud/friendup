@@ -136,8 +136,6 @@
 					
 					this.login( us, pw, co, false, function( result, answer )
 					{
-						console.log( 'What was it: ', result, answer );
-					
 						let tmp = null;
 						if( answer )
 						{
@@ -305,7 +303,7 @@
 											}
 											else
 											{
-												if( json && json.response && !json.code )
+												if( json && json.response )
 												{
 													showLoginError( json.response );
 													
