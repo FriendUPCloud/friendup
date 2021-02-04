@@ -367,12 +367,12 @@ function verifyIdentity( $username, $password = '' )
 				}
 				else
 				{
-					$error = '{"result":"-1","response":"Mobile number for user account empty ..."}';
+					$error = '{"result":"-1","response":"Mobile number for user account empty ...","code":"18"}';
 				}
 			}
 			else
 			{
-				$error = '{"result":"-1","response":"Mobile number for user account missing ..."}';
+				$error = '{"result":"-1","response":"Mobile number for user account missing ...","code":"19"}';
 			}
 		}
 		else
@@ -400,6 +400,8 @@ function verifyIdentity( $username, $password = '' )
 //       hashing implementation
 function verifyCode( $username, $password = '', $code = false )
 {
+	global $Logger;
+	
 	if( $code && $username )
 	{
 		$error = false; $data = false;
@@ -468,17 +470,17 @@ function verifyCode( $username, $password = '', $code = false )
 					}
 					else
 					{
-						$error = '{"result":"-1","response":"Verification code doesn\'t match, try again ..."}';
+						$error = '{"result":"-1","response":"Verification code doesn\'t match, try again ...","code":"23"}';
 					}
 				}
 				else
 				{
-					$error = '{"result":"-1","response":"Verification code for user account empty ..."}';
+					$error = '{"result":"-1","response":"Verification code for user account empty ...","code":"22"}';
 				}
 			}
 			else
 			{
-				$error = '{"result":"-1","response":"Verification code missing ..."}';
+				$error = '{"result":"-1","response":"Verification code missing ...","code":"21"}';
 			}
 		}
 		else
@@ -497,13 +499,15 @@ function verifyCode( $username, $password = '', $code = false )
 	}
 	else
 	{
-		return false;
+		return [ false, '{"result":"-1","response":"Unknown code verification error.","code":"60"}' ];
 	}
 }
 
 // Send verification code using SMS
 function sendCode( $userid, $mobile, $code = false, $limit = true )
 {
+	global $Logger;
+	
 	$error = false; $debug = false;
 	
 	include_once( SCRIPT_2FA_PATH . '/../../../php/classes/dbio.php' );
@@ -735,6 +739,8 @@ Sent JSON:
 		$error = '{"result":"-1","response":"cURL is not installed, contact support ..."}';
 	}
 	
+	$Logger->log( 'We returned with an error 2: ' + $error );
+	
 	return [ 'fail', $error ];
 	
 }
@@ -764,6 +770,8 @@ function receive_encrypted_json( $data = '' )
 function send_2fa_response( $result, $type = false, $data = '', $publickey = false )
 {
 	$ret = ( $result ? 'ok' : 'fail' );
+	
+	$jsonData = $data;
 	
 	if( $publickey )
 	{
@@ -825,7 +833,7 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 	
 	if( $username && $server )
 	{
-		if( function_exists( 'ssh2_connect' ) && function_exists( 'shell_exec' ) )
+		if( /*function_exists( 'ssh2_connect' ) &&*/ function_exists( 'shell_exec' ) )
 		{
 			$connection = false;
 			
@@ -857,7 +865,7 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 				
 				// sfreerdp needs special option added on install cmake -GNinja -DCHANNEL_URBDRC=OFF -DWITH_DSP_FFMPEG=OFF -DWITH_CUPS=OFF -DWITH_PULSE=OFF -DWITH_SAMPLE=ON .
 				
-				// TODO: Get error messages for not WHITELABELED!!!!!!
+				// TODO: Get error messages for not WHITE LABELLED!!!!!!
 				
 				if( $checkauth = exec_timeout( "sfreerdp /cert-ignore /cert:ignore +auth-only /u:$username /p:$password /v:$hostname /port:$rdp /log-level:ERROR 2>&1" ) )
 				{
@@ -1091,6 +1099,8 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 	{
 		$error = '{"result":"-1","response":"Account blocked until: 0","code":"6","debug":"4"}';
 	}
+	
+	$Logger->log( 'Er returned with an error: ' . $error );
 	
 	return [ 'fail', $error ];
 	

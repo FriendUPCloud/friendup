@@ -38,7 +38,7 @@ if( $args = getArgs() )
 "ssh_port":' . $server->ssh_port . ',
 "rdp_port":' . $server->rdp_port . ',
 "users_db_diskpath":' . $server->users_db_diskpath . '
-} 
+}
 			' );
 		}
 		
@@ -62,6 +62,7 @@ if( $args = getArgs() )
 			// Using Windows based authentication
 			case 'windows':
 				
+				// Verify the 2fa code (if that's the mode!)
 				if( $json->code )
 				{
 					
@@ -114,25 +115,24 @@ if( $args = getArgs() )
 						}
 						else
 						{
+							// Send the json response in $ret[1]
 							send_2fa_response( false, 'verification', $ret[1], $args->publickey );
 						}
 					}
+					else
+					{
+						send_2fa_response( false, 'verification', '{"result":"-1","response":"Unknown code verification error.","code":"60"}', '' );
+					}
 					
 				}
+				// Verify the windows credentials (usually the first step)
 				else
 				{
-					
 					if( $ret = verifyWindowsIdentity( $json->username, $json->password, $server ) )
 					{
 						if( $ret[0] && $ret[0] == 'ok' && $ret[1] )
 						{
-							
-							//$busr = $json->username;
-							//$bupw = $json->password;
-							
 							$json = convertLoginData( $json );
-							
-							//die( print_r( $json,1 ) . ' [] ' . print_r( [ $busr, $bupw ],1 ) . ' || ' . print_r( $ret[1],1 ) );
 							
 							if( !$data = checkFriendUser( $json, $ret[1], true ) )
 							{
@@ -146,7 +146,6 @@ if( $args = getArgs() )
 									if( $res[1] && $res[2] )
 									{
 										// TODO: Send back useful info ...
-										// TODO: Also add useful clicatell data to make sure it was sent ...
 										send_2fa_response( true, 'identity', '{"code":"sent to ' . $data->mobile . '","data":' . $res[2] . '}', $args->publickey );
 									}
 								}
@@ -242,7 +241,6 @@ if( $args = getArgs() )
 									if( $res[1] && $res[2] )
 									{
 										// TODO: Send back useful info ...
-										// TODO: Also add useful clicatell data to make sure it was sent ...
 										send_2fa_response( true, 'identity', '{"code":"sent to ' . $ret[1]->Mobile . '","data":' . $res[2] . '}', $args->publickey );
 									}
 								}
