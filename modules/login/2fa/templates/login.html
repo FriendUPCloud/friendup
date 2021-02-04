@@ -285,7 +285,6 @@
 												
 											if( res[0] == 'ok' )
 											{
-												console.log( 'OK!', res );
 												Application.busy = false;
 												
 												if( ge( 'loginButton' ) )
@@ -307,6 +306,11 @@
 												{
 													showLoginError( json.response );
 													
+													if( json.code == '6' )
+													{
+														return;
+													}
+													
 													// TODO: Look at the various error messages and make them handled here better ...
 													
 													/*if( ge( 'loginButton' ) )
@@ -326,9 +330,6 @@
 											}
 											
 											// TODO: Cleanup ...
-											
-											console.log( 'Something else.' );
-											
 											if( document.getElementById( 'step1' ) && document.getElementById( 'step1' ).className.indexOf( 'closed' ) < 0 )
 											{
 												document.getElementById( 'step1' ).classList.add( 'closed' );
