@@ -1,10 +1,5 @@
 <?php
 
-include_once( 'php/friend.php' );
-include_once( 'php/classes/file.php' );
-include_once( 'php/classes/logger.php' );
-
-
 /*©lgpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *

@@ -10,6 +10,10 @@
 *                                                                              *
 *****************************************************************************©*/
 
+include_once( '../../php/friend.php' );
+include_once( '../../php/classes/file.php' );
+include_once( '../../php/classes/logger.php' );
+
 require( 'include/helpers.php' );
 
 define( 'SCRIPT_2FA_PATH', dirname(__FILE__) );
