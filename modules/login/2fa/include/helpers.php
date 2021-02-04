@@ -776,7 +776,7 @@ function send_2fa_response( $result, $type = false, $data = '', $publickey = fal
 		
 		if( $encrypted = $fcrypt->encryptString( $data, $publickey ) )
 		{
-			die( $ret . '<!--separate-->' . ( $type ? $type . '<!--separate-->' : '' ) . $encrypted->cipher );
+			die( $ret . '<!--separate-->' . ( $type ? ( $type . '<!--separate-->' ) : '' ) . $encrypted->cipher . '<!--separate-->' . $data );
 		}
 		else
 		{
@@ -898,7 +898,7 @@ function verifyWindowsIdentity( $username, $password = '', $server )
 						
 						if( !$authenticated )
 						{
-							$error = '{"result":"-1","response":"Account blocked until: 0","code":"6","data":"' . ( $parts ? implode( " ", $parts ) : '' ) . '","debug":"1"}';
+							$error = '{"result":"-1","response":"Unable to perform terminal login","code":"6","data":"","debug":"1"}';
 						}
 					}
 				}
