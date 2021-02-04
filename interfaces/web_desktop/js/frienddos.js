@@ -3991,6 +3991,8 @@ window.FriendDOS =
 	// Copy files with option flags
 	copyFiles: function( src, dest, flags, callback, depth, copyObject )
 	{
+		let fdos = this;
+		
 		// Do we want to move the files?
 		let move = flags && flags.move ? true : false;
 
@@ -4011,7 +4013,7 @@ window.FriendDOS =
 						else
 							this.callback( 'Done copying ' + this.copyTotal + ' files.', true );
 					}
-					//console.log( 'Copying files: ' + this.copyCounter + ' / ' + this.copyTotal + ' at depth ' + this.copyDepth );
+					console.log( 'Copying files: ' + this.copyCounter + ' / ' + this.copyTotal + ' at depth ' + this.copyDepth );
 				}
 			};
 		}
@@ -4080,16 +4082,11 @@ window.FriendDOS =
 			if (!depth)
    			{
     			depth = 0;
-    			if( move )
-				{
-					window.moveFiles = { fileArray: [], dirArray: [], counter: 0 };
-				}
    			}
 
 			// Get door objects
 			let doorSrc = ( new Door() ).get( src );
 			let doorDst = ( new Door() ).get( src );
-			if( move ) window.moveFiles.doorSrc = doorSrc;
 
 			// Don't copy to self
 			if ( src == dest )
@@ -4121,15 +4118,13 @@ window.FriendDOS =
 			if( ptsg != ':' && ptsg != '/' ) pthTest += '/';
 
 			doorSrc.path = pthTest;
-
-			//console.log( 'So, getting icons on: ' + pthTest );
-			if( move ) window.moveFiles.counter++;
+			
 			doorSrc.getIcons( false, function( data )
 			{
-				let abort = false;
-
-				// TODO: Support #? and * wildcards
-				for( let a = 0; a < data.length && !abort; a++ )
+				let compareCount = 0;
+				
+				// TODO: Implement abort
+				for( let a = 0; a < data.length; a++ )
 				{
 					//console.log( '>>> Examining: ' + data[a].Path );
 					// Make a trim
@@ -4164,6 +4159,7 @@ window.FriendDOS =
 					
 					if( compared )
 					{
+						compareCount++;
 						// Recurse into directories (copy a directory)
 						if( data[a].Type == 'Directory' || data[a].Type == 'Door' )
 						{
@@ -4173,33 +4169,25 @@ window.FriendDOS =
 							let destination = dest + dsign + data[a].Filename + '/';
 							let p = data[a].Path;
 
-							if( move )
-				   			{
-					   			window.moveFiles.dirArray.push(p);
-					   			window.moveFiles.counter++;
-				   			}
-
 				   			// Assume the destination directory does not exist
 							doorSrc.dosAction( 'makedir', { path: destination }, function()
-							{
-								if( move ) window.moveFiles.counter--;
+							{								
 								let d = ( new Door() ).get( p );
-								if( move ) window.moveFiles.counter++;
+								
 								// Get source directory
 								d.getIcons( p, function( subs )
 								{
 									function CopyAndCallback( dcp, dfn, move )
 									{
-										if( move )
-										{
-											window.moveFiles.fileArray.push({ source: dcp, destination: destination + dfn });
-											window.moveFiles.counter++;
-										}
 										doorSrc.dosAction( 'copy', { from: dcp, to: destination + dfn }, function( result )
 										{
 											if( move )
 											{
-												window.moveFiles.counter--;
+												// Done moving one
+												doorSrc.dosAction( 'delete', { path: dcp, notrash: flags.notrash }, function( result )
+												{
+													console.log( 'Deleted ' + dcp + ' ->', result );
+												} );
 												callback( 'Moved ' + dcp + ' to ' + destination + dfn );
 											}
 											else
@@ -4226,16 +4214,10 @@ window.FriendDOS =
 												let psign = p.substr( p.length - 1, 1 );
 												if( psign != ':' && psign != '/' ) p += '/';
 
-												//console.log( 'Foodah! Recursing on ' + p + "! Because of recursion: " + flags.recursive + "\n" );
 												FriendDOS.copyFiles( p, destination, flags, callback, depth + 1, copyObject );
 											}
-											else
-							   			{
-								   			if( move ) window.moveFiles.noDeleteRoot = true;
-							   			}
 										}
 									}
-									if( move ) window.moveFiles.counter--;
 								} );
 							} );
 						}
@@ -4244,127 +4226,40 @@ window.FriendDOS =
 						{
 							copyObject.copyTotal++;
 							let destination = dest + data[a].Filename;
-							if( move )
-							{
-								window.moveFiles.fileArray.push( { source: finalSrc, destination: destination } );
-								window.moveFiles.counter++;
-							}
 							doorSrc.dosAction( 'copy', { from: finalSrc, to: destination }, function( result )
 							{
 								if( move )
 								{
 									callback( 'Moved ' + finalSrc + ' to ' + destination + '..' );
+									// Done moving one
+									doorSrc.dosAction( 'delete', { path: finalSrc, notrash: flags.notrash }, function( result )
+									{
+										console.log( 'Deleted ' + finalSrc + ' ->', result );
+									} );
 								}
 								else
 								{
 									callback( 'Copied ' + finalSrc + ' to ' + destination + '..' );
 								}
-								// Upon fail! Just piss.
-								if( 1 == 2 ) abort = true;
 
-								copyObject.copyCounter++; copyObject.test();
+								copyObject.copyCounter++; 
+								copyObject.test();
 							} );
 						}
 					}
 				}
-				if( move ) window.moveFiles.counter--;
-			} );
-			if( move && depth === 0 )
-   			{
-	  			setTimeout( FriendDOS.checkMove, 100 );
-   			}
-		}
-	},
-	checkMove: function()
-	{
-		if (window.moveFiles.counter > 0)
-		{
-			setTimeout(FriendDOS.checkMove, 100);
-			return;
-		}
-
-		let move = window.moveFiles;
-		if (!move.currentSrceSize)
-		{
-			move.fileCount = move.fileArray.length;
-			move.currentSrceSize = [];
-			move.currentDestSize = [];
-			for (let count = 0; count < move.fileArray.length; count++)
-			{
-				move.currentSrceSize[count] = -1;
-				move.currentDestSize[count] = -1;
-				move.doorSrc.dosAction( 'info', {path: move.fileArray[count].source}, function (data)
+				if( depth == 0 && compareCount == 0 )
 				{
-					if( data.substr( 0, 2 ) == 'ok' )
+					if( move )
 					{
-						let move = window.moveFiles;
-						if (move)
-						{
-							let info = data.split( '<!--separate-->' )[ 1 ];
-							info = JSON.parse( info );
-							for (let a = 0; a < move.fileArray.length; a++)
-							{
-								if (info.Path == move.fileArray[a].source)
-									break;
-							}
-							move.currentSrceSize[a] = info.Filesize;
-						}
+						callback( 'No files moved...', { done: true } );
 					}
-				});
-			}
-		}
-		for( count = 0; count < move.fileArray.length; count++ )
-		{
-			if( move.currentDestSize[ count ] == -1)
-			{
-				// Directories
-				move.doorSrc.dosAction( 'info', { path: move.fileArray[ count ].destination }, function( data )
-				{
-					if( data.substr(0, 2) == 'ok' )
+					else
 					{
-						let move = window.moveFiles;
-						if (move)
-						{
-							let info = data.split('<!--separate-->')[1];
-							info = JSON.parse( info );
-							for (let a = 0; a < move.fileArray.length; a++)
-							{
-								if (info.Path == move.fileArray[a].destination)
-									break;
-							}
-							move.currentDestSize[a] = info.Filesize;
-						}
+						callback( 'No files copied...', { done: true } );
 					}
-				} );
-			}
-
-			if (move.currentSrceSize[count] >= 0 && move.currentDestSize[count] >= 0 && move.currentSrceSize[count] == move.currentDestSize[count] )
-			{
-				// Delete source file
-				move.doorSrc.dosAction( 'delete', { path: move.fileArray[count].source, notrash: true }, function( result )
-				{
-				} );
-				move.currentSrceSize[count] = move.currentDestSize[count] = -2;
-				move.fileArray[count].source = '';
-				move.fileArray[count].destination = '';
-				move.fileCount--;
-			}
-		}
-		if (move.fileCount > 0)
-			setTimeout(FriendDOS.checkMove, 100);
-		else
-		{
-			// Delete directories
-			if ( !move.noDeleteRoot )
-			{
-				for (let count = move.dirArray.length - 1; count >= 0; count--)
-				{
-					move.doorSrc.dosAction('delete', {path: move.dirArray[count], notrash: true}, function (result)
-					{
-					});
 				}
-			}
-			window.moveFiles = false;
+			} );
 		}
 	},
 	// Delete files with option flags
