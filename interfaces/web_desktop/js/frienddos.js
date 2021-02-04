@@ -4003,17 +4003,31 @@ window.FriendDOS =
 				copyCounter: 0, // Done copying files
 				copyTotal: 0,   // Files copying in progress
 				copyDepth: 0,    // Swipe depth
+				processes: 0, // Other processes
+				completed: 0, // Completed processes
 				callback: callback,
+				deleteMovePaths: [],
 				test: function()
 				{
-					if( this.copyCounter == this.copyTotal && this.copyDepth === 0 )
+					if( this.copyCounter == this.copyTotal && this.copyDepth === 0 && this.processes == this.completed )
 					{
-						if ( move )
-							this.callback( 'Done moving ' + this.copyTotal + ' files.', true );
+						if( !this.callback ) return;
+						if( move )
+						{
+							for( let a = this.deleteMovePaths.length - 1; a >= 0; a-- )
+							{
+								let dmp = this.deleteMovePaths[ a ];
+								dmp.door.dosAction( 'delete', { path: dmp.path, notrash: flags.notrash } );
+							}
+							this.callback( 'Done moving ' + this.copyTotal + ' files.', { done: true } );
+						}
 						else
-							this.callback( 'Done copying ' + this.copyTotal + ' files.', true );
+						{
+							this.callback( 'Done copying ' + this.copyTotal + ' files.', { done: true } );
+						}
+						this.callback = false;
 					}
-					console.log( 'Copying files: ' + this.copyCounter + ' / ' + this.copyTotal + ' at depth ' + this.copyDepth );
+					//console.log( 'Copying files: ' + this.copyCounter + ' / ' + this.copyTotal + ' at depth ' + this.copyDepth );
 				}
 			};
 		}
@@ -4034,8 +4048,10 @@ window.FriendDOS =
 			}
 			else
 			{
+				copyObject.processes++;
 				FriendDOS.getFileInfo( dest, function( e, d )
 				{
+					copyObject.completed++;
 					if( e )
 					{
 						let f = false;
@@ -4047,8 +4063,13 @@ window.FriendDOS =
 						{
 							return callback( 'Failed to get file info on ' + dest, { done: true } );
 						}
-						if( f && f.Type == 'Directory' && dest.substr( dest.length - 1, 1 ) != '/' )
-							dest += '/';
+						if( f && f.Type == 'Directory' )
+						{
+							if( dest.substr( dest.length - 1, 1 ) != '/' )
+							{
+								dest += '/';
+							}
+						}
 						if( flags ) flags.verifiedDestination = true;
 						else flags = { verifiedDestination: true };
 					}
@@ -4125,12 +4146,18 @@ window.FriendDOS =
 
 			// Correct path
 			let ptsg = pthTest.substr( pthTest.length - 1, 1 );
-			if( ptsg != ':' && ptsg != '/' ) pthTest += '/';
+			if( ptsg != ':' && ptsg != '/' )
+			{
+				pthTest += '/';
+			}
 
 			doorSrc.path = pthTest;
 			
+			copyObject.processes++;
 			doorSrc.getIcons( false, function( data )
 			{
+				copyObject.completed++;
+				
 				let compareCount = 0;
 				
 				// TODO: Implement abort
@@ -4179,18 +4206,26 @@ window.FriendDOS =
 							let destination = dest + dsign + data[a].Filename + '/';
 							let p = data[a].Path;
 
+				   			copyObject.deleteMovePaths.push( { path: p, door: doorSrc } );
+				   			
 				   			// Assume the destination directory does not exist
+				   			copyObject.processes++;
 							doorSrc.dosAction( 'makedir', { path: destination }, function()
-							{								
+							{
+								copyObject.completed++;
 								let d = ( new Door() ).get( p );
 								
 								// Get source directory
+								copyObject.processes++;
 								d.getIcons( p, function( subs )
 								{
+									copyObject.completed++;
 									function CopyAndCallback( dcp, dfn, move )
 									{
+										copyObject.processes++;
 										doorSrc.dosAction( 'copy', { from: dcp, to: destination + dfn }, function( result )
 										{
+											copyObject.completed++;
 											if( move )
 											{
 												// Done moving one
@@ -4205,29 +4240,35 @@ window.FriendDOS =
 												callback( 'Copied ' + dcp + ' to ' + destination + dfn );
 											}
 											copyObject.copyCounter++;
+											copyObject.completed++;
 											copyObject.test();
 										} );
 									}
 
-									for( let c = 0; c < subs.length; c++ )
+									if( subs.length )
 									{
-										if( subs[c].Type == 'File' )
+										for( let c = 0; c < subs.length; c++ )
 										{
-											copyObject.copyTotal++;
-											CopyAndCallback( subs[c].Path, subs[c].Filename, move );
-										}
-										else
-										{
-											if( flags && flags.recursive == true )
+											if( subs[c].Type == 'File' )
 											{
-												let p = subs[c].Path;
-												let psign = p.substr( p.length - 1, 1 );
-												if( psign != ':' && psign != '/' ) p += '/';
+												copyObject.copyTotal++;
+												copyObject.processes++;
+												CopyAndCallback( subs[c].Path, subs[c].Filename, move );
+											}
+											else
+											{
+												if( flags && flags.recursive == true )
+												{
+													let p = subs[c].Path;
+													let psign = p.substr( p.length - 1, 1 );
+													if( psign != ':' && psign != '/' ) p += '/';
 
-												FriendDOS.copyFiles( p, destination, flags, callback, depth + 1, copyObject );
+													FriendDOS.copyFiles( p, destination, flags, callback, depth + 1, copyObject );
+												}
 											}
 										}
 									}
+									copyObject.test();
 								} );
 							} );
 						}
@@ -4235,6 +4276,7 @@ window.FriendDOS =
 						else
 						{
 							copyObject.copyTotal++;
+							copyObject.processes++;
 							let destination = dest + data[a].Filename;
 							doorSrc.dosAction( 'copy', { from: finalSrc, to: destination }, function( result )
 							{
@@ -4253,6 +4295,7 @@ window.FriendDOS =
 								}
 
 								copyObject.copyCounter++; 
+								copyObject.completed++;
 								copyObject.test();
 							} );
 						}
