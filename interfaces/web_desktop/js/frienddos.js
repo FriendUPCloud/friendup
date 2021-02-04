@@ -4089,8 +4089,18 @@ window.FriendDOS =
 			let doorDst = ( new Door() ).get( src );
 
 			// Don't copy to self
-			if ( src == dest )
+			let srcPath = src;
+			let destPath = dest;
+			if( srcPath.substr( -1, 1 ) == '/' || srcPath.substr( -1, 1 ) == ':' )
+				srcPath = srcPath.substr( 0, srcPath.length - 1 );
+			if( destPath.substr( -1, 1 ) == '/' || destPath.substr( -1, 1 ) == ':' )
+				destPath = destPath.substr( 0, destPath.length - 1 );
+			
+			if ( srcPath == destPath )
+			{
+				callback( 'Cannot ' + ( move ? 'move' : 'copy' ) + ' into self.', { done: true } );
 				return false;
+			}
 
 			// Check what type source and destination is
 			let pthTest = src;
