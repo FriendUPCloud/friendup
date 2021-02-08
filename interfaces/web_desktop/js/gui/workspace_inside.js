@@ -1922,7 +1922,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									{
 										if( Workspace.getWebSocketsState() != 'open' )
 										{
-											console.log( 'Waiting for websocket... ' + Math.random() );
+											//console.log( 'Waiting for websocket... ' + Math.random() );
 											return setTimeout( function(){ l.func() }, 500 );
 										}
 										if( !ScreenOverlay.done && l.index < seq.length )
