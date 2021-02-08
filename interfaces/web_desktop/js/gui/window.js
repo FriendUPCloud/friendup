@@ -4225,6 +4225,8 @@ var View = function( args )
 		
 		// Rich content still can't have any scripts!
 		content = this.removeScriptsFromData( content );
+		if( !this._window )
+			return;
 		let eles = this._window.getElementsByTagName( _viewType );
 		let ifr = false;
 		if( eles[0] )
