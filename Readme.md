@@ -27,6 +27,7 @@ Getting started
 
 Please follow this guide to install Friend OS:
 
+```
 For Ubuntu 18: https://docs.friendos.com/docs/administrator-guide/installation/
 For Ubuntu 20: https://docs.friendos.com/docs/administrator-guide/installation-ubuntu-20/
 ```
