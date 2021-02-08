@@ -1,7 +1,7 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -236,7 +236,7 @@ extern FILE *_imp___iob;
 # else                          /* The non-microsoft world */
 
 #  if defined(OPENSSL_SYS_VXWORKS)
-#   include <time.h>
+#   include <sys/times.h>
 #  else
 #   include <sys/time.h>
 #  endif
@@ -286,7 +286,11 @@ extern FILE *_imp___iob;
 
 #  else
      /* !defined VMS */
-#   include <unistd.h>
+#   ifdef OPENSSL_UNISTD
+#    include OPENSSL_UNISTD
+#   else
+#    include <unistd.h>
+#   endif
 #   include <sys/types.h>
 #   ifdef OPENSSL_SYS_WIN32_CYGWIN
 #    include <io.h>
@@ -304,7 +308,7 @@ extern FILE *_imp___iob;
 # if defined(OPENSSL_SYS_WINDOWS)
 #  define strcasecmp _stricmp
 #  define strncasecmp _strnicmp
-#  if (_MSC_VER >= 1310)
+#  if (_MSC_VER >= 1310) && !defined(_WIN32_WCE)
 #   define open _open
 #   define fdopen _fdopen
 #   define close _close

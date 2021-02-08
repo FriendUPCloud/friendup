@@ -71,7 +71,7 @@ Http* WebRequest (struct Library *l __attribute__((unused)), char* func, Http *r
 	if( strcmp( func, "echo" ) == 0 )
 	{
 		Http *response = HttpNewSimple(HTTP_200_OK, tags);
-		HttpAddTextContent( response, request->http_Uri->uri_Path->raw );
+		HttpAddTextContent( response, request->http_Uri->uri_Path->p_Raw );
 		return response;
 	}
 	else

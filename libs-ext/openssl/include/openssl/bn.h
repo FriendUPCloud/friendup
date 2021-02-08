@@ -1,28 +1,22 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OPENSSL_BN_H
-# define OPENSSL_BN_H
-# pragma once
-
-# include <openssl/macros.h>
-# if !OPENSSL_API_3
-#  define HEADER_BN_H
-# endif
+#ifndef HEADER_BN_H
+# define HEADER_BN_H
 
 # include <openssl/e_os2.h>
 # ifndef OPENSSL_NO_STDIO
 #  include <stdio.h>
 # endif
 # include <openssl/opensslconf.h>
-# include <openssl/types.h>
+# include <openssl/ossl_typ.h>
 # include <openssl/crypto.h>
 # include <openssl/bnerr.h>
 
@@ -62,12 +56,12 @@ extern "C" {
  * avoid leaking exponent information through timing,
  * BN_mod_exp_mont() will call BN_mod_exp_mont_consttime,
  * BN_div() will call BN_div_no_branch,
- * BN_mod_inverse() will call BN_mod_inverse_no_branch.
+ * BN_mod_inverse() will call bn_mod_inverse_no_branch.
  */
 # define BN_FLG_CONSTTIME        0x04
 # define BN_FLG_SECURE           0x08
 
-# if !OPENSSL_API_0_9_8
+# if OPENSSL_API_COMPAT < 0x00908000L
 /* deprecated name for the flag */
 #  define BN_FLG_EXP_CONSTTIME BN_FLG_CONSTTIME
 #  define BN_FLG_FREE            0x8000 /* used for debugging */
@@ -196,7 +190,7 @@ int BN_is_odd(const BIGNUM *a);
 
 void BN_zero_ex(BIGNUM *a);
 
-# if OPENSSL_API_0_9_8
+# if OPENSSL_API_COMPAT >= 0x00908000L
 #  define BN_zero(a)      BN_zero_ex(a)
 # else
 #  define BN_zero(a)      (BN_set_word((a),0))
@@ -204,21 +198,15 @@ void BN_zero_ex(BIGNUM *a);
 
 const BIGNUM *BN_value_one(void);
 char *BN_options(void);
-BN_CTX *BN_CTX_new_ex(OPENSSL_CTX *ctx);
 BN_CTX *BN_CTX_new(void);
-BN_CTX *BN_CTX_secure_new_ex(OPENSSL_CTX *ctx);
 BN_CTX *BN_CTX_secure_new(void);
 void BN_CTX_free(BN_CTX *c);
 void BN_CTX_start(BN_CTX *ctx);
 BIGNUM *BN_CTX_get(BN_CTX *ctx);
 void BN_CTX_end(BN_CTX *ctx);
-int BN_rand_ex(BIGNUM *rnd, int bits, int top, int bottom, BN_CTX *ctx);
 int BN_rand(BIGNUM *rnd, int bits, int top, int bottom);
-int BN_priv_rand_ex(BIGNUM *rnd, int bits, int top, int bottom, BN_CTX *ctx);
 int BN_priv_rand(BIGNUM *rnd, int bits, int top, int bottom);
-int BN_rand_range_ex(BIGNUM *r, const BIGNUM *range, BN_CTX *ctx);
 int BN_rand_range(BIGNUM *rnd, const BIGNUM *range);
-int BN_priv_rand_range_ex(BIGNUM *r, const BIGNUM *range, BN_CTX *ctx);
 int BN_priv_rand_range(BIGNUM *rnd, const BIGNUM *range);
 int BN_pseudo_rand(BIGNUM *rnd, int bits, int top, int bottom);
 int BN_pseudo_rand_range(BIGNUM *rnd, const BIGNUM *range);
@@ -235,8 +223,6 @@ int BN_bn2bin(const BIGNUM *a, unsigned char *to);
 int BN_bn2binpad(const BIGNUM *a, unsigned char *to, int tolen);
 BIGNUM *BN_lebin2bn(const unsigned char *s, int len, BIGNUM *ret);
 int BN_bn2lebinpad(const BIGNUM *a, unsigned char *to, int tolen);
-BIGNUM *BN_native2bn(const unsigned char *s, int len, BIGNUM *ret);
-int BN_bn2nativepad(const BIGNUM *a, unsigned char *to, int tolen);
 BIGNUM *BN_mpi2bn(const unsigned char *s, int len, BIGNUM *ret);
 int BN_bn2mpi(const BIGNUM *a, unsigned char *to);
 int BN_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b);
@@ -354,9 +340,6 @@ DEPRECATEDIN_0_9_8(int
                                         int do_trial_division))
 
 /* Newer versions */
-int BN_generate_prime_ex2(BIGNUM *ret, int bits, int safe,
-                         const BIGNUM *add, const BIGNUM *rem, BN_GENCB *cb,
-                         BN_CTX *ctx);
 int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe, const BIGNUM *add,
                          const BIGNUM *rem, BN_GENCB *cb);
 int BN_is_prime_ex(const BIGNUM *p, int nchecks, BN_CTX *ctx, BN_GENCB *cb);
@@ -536,7 +519,7 @@ BIGNUM *BN_get_rfc3526_prime_4096(BIGNUM *bn);
 BIGNUM *BN_get_rfc3526_prime_6144(BIGNUM *bn);
 BIGNUM *BN_get_rfc3526_prime_8192(BIGNUM *bn);
 
-# if !OPENSSL_API_1_1_0
+# if OPENSSL_API_COMPAT < 0x10100000L
 #  define get_rfc2409_prime_768 BN_get_rfc2409_prime_768
 #  define get_rfc2409_prime_1024 BN_get_rfc2409_prime_1024
 #  define get_rfc3526_prime_1536 BN_get_rfc3526_prime_1536

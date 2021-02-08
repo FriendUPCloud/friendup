@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
-# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2019 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the Apache License 2.0 (the "License").  You may not use
+# Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -28,7 +28,7 @@ map { s/\^// } @conf_files if $^O eq "VMS";
 
 # We hard-code the number of tests to double-check that the globbing above
 # finds all files as expected.
-plan tests => 30;  # = scalar @conf_srcs
+plan tests => 29;  # = scalar @conf_srcs
 
 # Some test results depend on the configuration of enabled protocols. We only
 # verify generated sources in the default configuration.
@@ -59,7 +59,7 @@ my %conf_dependent_tests = (
                            || !disabled("sctp"),
   "05-sni.conf" => disabled("tls1_1"),
   "07-dtls-protocol-version.conf" => !$is_default_dtls || !disabled("sctp"),
-  "10-resumption.conf" => !$is_default_tls || $no_ec,
+  "10-resumption.conf" => !$is_default_tls,
   "11-dtls_resumption.conf" => !$is_default_dtls || !disabled("sctp"),
   "16-dtls-certstatus.conf" => !$is_default_dtls || !disabled("sctp"),
   "17-renegotiate.conf" => disabled("tls1_2"),
@@ -70,7 +70,6 @@ my %conf_dependent_tests = (
   "25-cipher.conf" => disabled("poly1305") || disabled("chacha"),
   "27-ticket-appdata.conf" => !$is_default_tls,
   "28-seclevel.conf" => disabled("tls1_2") || $no_ec,
-  "30-extended-master-secret.conf" => disabled("tls1_2"),
 );
 
 # Add your test here if it should be skipped for some compile-time

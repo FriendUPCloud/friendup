@@ -66,7 +66,7 @@ FriendcoreInfo *FriendCoreInfoNew( void *slib )
 		char *ptr = getenv("FRIEND_HOME");
 		char *path = FCalloc( 1000, sizeof( char ) );
 		
-		if( ptr != NULL )
+		if( path != NULL )
 		{
 			sprintf( path, "%scfg/cfg.ini", ptr );
 		}

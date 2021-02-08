@@ -1,7 +1,7 @@
 /*
- * Copyright 2012-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2012-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -136,7 +136,7 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
                            size_t mac_secret_length, char is_sslv3)
 {
     union {
-        OSSL_UNION_ALIGN;
+        double align;
         unsigned char c[sizeof(LARGEST_DIGEST_CTX)];
     } md_state;
     void (*md_final_raw) (void *ctx, unsigned char *md_out);

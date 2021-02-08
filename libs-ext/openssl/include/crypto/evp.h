@@ -1,14 +1,13 @@
 /*
  * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
 
 #include <openssl/evp.h>
-#include <openssl/core_numbers.h>
 #include "internal/refcount.h"
 
 /*
@@ -18,23 +17,6 @@
 #define EVP_MD_CTX_FLAG_KEEP_PKEY_CTX   0x0400
 
 struct evp_pkey_ctx_st {
-    /* Actual operation */
-    int operation;
-
-    union {
-        struct {
-            EVP_KEYEXCH *exchange;
-            void *exchprovctx;
-        } kex;
-
-        struct {
-            EVP_SIGNATURE *signature;
-            void *sigprovctx;
-        } sig;
-    } op;
-
-    /* Legacy fields below */
-
     /* Method associated with this operation */
     const EVP_PKEY_METHOD *pmeth;
     /* Engine that implements this method or NULL if builtin */
@@ -43,6 +25,8 @@ struct evp_pkey_ctx_st {
     EVP_PKEY *pkey;
     /* Peer key for key agreement, may be NULL */
     EVP_PKEY *peerkey;
+    /* Actual operation */
+    int operation;
     /* Algorithm specific data */
     void *data;
     /* Application specific data */
@@ -60,7 +44,7 @@ struct evp_pkey_method_st {
     int pkey_id;
     int flags;
     int (*init) (EVP_PKEY_CTX *ctx);
-    int (*copy) (EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src);
+    int (*copy) (EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src);
     void (*cleanup) (EVP_PKEY_CTX *ctx);
     int (*paramgen_init) (EVP_PKEY_CTX *ctx);
     int (*paramgen) (EVP_PKEY_CTX *ctx, EVP_PKEY *pkey);
@@ -109,81 +93,27 @@ DEFINE_STACK_OF_CONST(EVP_PKEY_METHOD)
 
 void evp_pkey_set_cb_translate(BN_GENCB *cb, EVP_PKEY_CTX *ctx);
 
-const EVP_PKEY_METHOD *cmac_pkey_method(void);
-const EVP_PKEY_METHOD *dh_pkey_method(void);
-const EVP_PKEY_METHOD *dhx_pkey_method(void);
-const EVP_PKEY_METHOD *dsa_pkey_method(void);
-const EVP_PKEY_METHOD *ec_pkey_method(void);
-const EVP_PKEY_METHOD *sm2_pkey_method(void);
-const EVP_PKEY_METHOD *ecx25519_pkey_method(void);
-const EVP_PKEY_METHOD *ecx448_pkey_method(void);
-const EVP_PKEY_METHOD *ed25519_pkey_method(void);
-const EVP_PKEY_METHOD *ed448_pkey_method(void);
-const EVP_PKEY_METHOD *hmac_pkey_method(void);
-const EVP_PKEY_METHOD *rsa_pkey_method(void);
-const EVP_PKEY_METHOD *rsa_pss_pkey_method(void);
-const EVP_PKEY_METHOD *scrypt_pkey_method(void);
-const EVP_PKEY_METHOD *tls1_prf_pkey_method(void);
-const EVP_PKEY_METHOD *hkdf_pkey_method(void);
-const EVP_PKEY_METHOD *poly1305_pkey_method(void);
-const EVP_PKEY_METHOD *siphash_pkey_method(void);
-
-struct evp_mac_st {
-    OSSL_PROVIDER *prov;
-    int name_id;
-
-    CRYPTO_REF_COUNT refcnt;
-    CRYPTO_RWLOCK *lock;
-
-    OSSL_OP_mac_newctx_fn *newctx;
-    OSSL_OP_mac_dupctx_fn *dupctx;
-    OSSL_OP_mac_freectx_fn *freectx;
-    OSSL_OP_mac_size_fn *size;
-    OSSL_OP_mac_init_fn *init;
-    OSSL_OP_mac_update_fn *update;
-    OSSL_OP_mac_final_fn *final;
-    OSSL_OP_mac_gettable_params_fn *gettable_params;
-    OSSL_OP_mac_gettable_ctx_params_fn *gettable_ctx_params;
-    OSSL_OP_mac_settable_ctx_params_fn *settable_ctx_params;
-    OSSL_OP_mac_get_params_fn *get_params;
-    OSSL_OP_mac_get_ctx_params_fn *get_ctx_params;
-    OSSL_OP_mac_set_ctx_params_fn *set_ctx_params;
-};
-
-struct evp_kdf_st {
-    OSSL_PROVIDER *prov;
-    int name_id;
-    CRYPTO_REF_COUNT refcnt;
-    CRYPTO_RWLOCK *lock;
-
-    OSSL_OP_kdf_newctx_fn *newctx;
-    OSSL_OP_kdf_dupctx_fn *dupctx;
-    OSSL_OP_kdf_freectx_fn *freectx;
-    OSSL_OP_kdf_reset_fn *reset;
-    OSSL_OP_kdf_derive_fn *derive;
-    OSSL_OP_kdf_gettable_params_fn *gettable_params;
-    OSSL_OP_kdf_gettable_ctx_params_fn *gettable_ctx_params;
-    OSSL_OP_kdf_settable_ctx_params_fn *settable_ctx_params;
-    OSSL_OP_kdf_get_params_fn *get_params;
-    OSSL_OP_kdf_get_ctx_params_fn *get_ctx_params;
-    OSSL_OP_kdf_set_ctx_params_fn *set_ctx_params;
-};
-
-extern const EVP_KDF pbkdf2_kdf_meth;
-extern const EVP_KDF scrypt_kdf_meth;
-extern const EVP_KDF tls1_prf_kdf_meth;
-extern const EVP_KDF hkdf_kdf_meth;
-extern const EVP_KDF sshkdf_kdf_meth;
-extern const EVP_KDF ss_kdf_meth;
-extern const EVP_KDF x963_kdf_meth;
-extern const EVP_KDF x942_kdf_meth;
+extern const EVP_PKEY_METHOD cmac_pkey_meth;
+extern const EVP_PKEY_METHOD dh_pkey_meth;
+extern const EVP_PKEY_METHOD dhx_pkey_meth;
+extern const EVP_PKEY_METHOD dsa_pkey_meth;
+extern const EVP_PKEY_METHOD ec_pkey_meth;
+extern const EVP_PKEY_METHOD sm2_pkey_meth;
+extern const EVP_PKEY_METHOD ecx25519_pkey_meth;
+extern const EVP_PKEY_METHOD ecx448_pkey_meth;
+extern const EVP_PKEY_METHOD ed25519_pkey_meth;
+extern const EVP_PKEY_METHOD ed448_pkey_meth;
+extern const EVP_PKEY_METHOD hmac_pkey_meth;
+extern const EVP_PKEY_METHOD rsa_pkey_meth;
+extern const EVP_PKEY_METHOD rsa_pss_pkey_meth;
+extern const EVP_PKEY_METHOD scrypt_pkey_meth;
+extern const EVP_PKEY_METHOD tls1_prf_pkey_meth;
+extern const EVP_PKEY_METHOD hkdf_pkey_meth;
+extern const EVP_PKEY_METHOD poly1305_pkey_meth;
+extern const EVP_PKEY_METHOD siphash_pkey_meth;
 
 struct evp_md_st {
-    /* nid */
     int type;
-
-    /* Legacy structure members */
-    /* TODO(3.0): Remove these */
     int pkey_type;
     int md_size;
     unsigned long flags;
@@ -196,39 +126,14 @@ struct evp_md_st {
     int ctx_size;               /* how big does the ctx->md_data need to be */
     /* control function */
     int (*md_ctrl) (EVP_MD_CTX *ctx, int cmd, int p1, void *p2);
-
-    /* New structure members */
-    /* TODO(3.0): Remove above comment when legacy has gone */
-    int name_id;
-    OSSL_PROVIDER *prov;
-    CRYPTO_REF_COUNT refcnt;
-    CRYPTO_RWLOCK *lock;
-    OSSL_OP_digest_newctx_fn *newctx;
-    OSSL_OP_digest_init_fn *dinit;
-    OSSL_OP_digest_update_fn *dupdate;
-    OSSL_OP_digest_final_fn *dfinal;
-    OSSL_OP_digest_digest_fn *digest;
-    OSSL_OP_digest_freectx_fn *freectx;
-    OSSL_OP_digest_dupctx_fn *dupctx;
-    OSSL_OP_digest_get_params_fn *get_params;
-    OSSL_OP_digest_set_ctx_params_fn *set_ctx_params;
-    OSSL_OP_digest_get_ctx_params_fn *get_ctx_params;
-    OSSL_OP_digest_gettable_params_fn *gettable_params;
-    OSSL_OP_digest_settable_ctx_params_fn *settable_ctx_params;
-    OSSL_OP_digest_gettable_ctx_params_fn *gettable_ctx_params;
-
 } /* EVP_MD */ ;
 
 struct evp_cipher_st {
     int nid;
-
     int block_size;
     /* Default value for variable length ciphers */
     int key_len;
     int iv_len;
-
-    /* Legacy structure members */
-    /* TODO(3.0): Remove these */
     /* Various flags */
     unsigned long flags;
     /* init key */
@@ -249,27 +154,6 @@ struct evp_cipher_st {
     int (*ctrl) (EVP_CIPHER_CTX *, int type, int arg, void *ptr);
     /* Application data */
     void *app_data;
-
-    /* New structure members */
-    /* TODO(3.0): Remove above comment when legacy has gone */
-    int name_id;
-    OSSL_PROVIDER *prov;
-    CRYPTO_REF_COUNT refcnt;
-    CRYPTO_RWLOCK *lock;
-    OSSL_OP_cipher_newctx_fn *newctx;
-    OSSL_OP_cipher_encrypt_init_fn *einit;
-    OSSL_OP_cipher_decrypt_init_fn *dinit;
-    OSSL_OP_cipher_update_fn *cupdate;
-    OSSL_OP_cipher_final_fn *cfinal;
-    OSSL_OP_cipher_cipher_fn *ccipher;
-    OSSL_OP_cipher_freectx_fn *freectx;
-    OSSL_OP_cipher_dupctx_fn *dupctx;
-    OSSL_OP_cipher_get_params_fn *get_params;
-    OSSL_OP_cipher_get_ctx_params_fn *get_ctx_params;
-    OSSL_OP_cipher_set_ctx_params_fn *set_ctx_params;
-    OSSL_OP_cipher_gettable_params_fn *gettable_params;
-    OSSL_OP_cipher_gettable_ctx_params_fn *gettable_ctx_params;
-    OSSL_OP_cipher_settable_ctx_params_fn *settable_ctx_params;
 } /* EVP_CIPHER */ ;
 
 /* Macros to code block cipher wrappers */
@@ -493,7 +377,6 @@ const EVP_CIPHER *EVP_##cname##_ecb(void) { return &cname##_ecb; }
 
 #define X25519_KEYLEN        32
 #define X448_KEYLEN          56
-#define ED25519_KEYLEN       32
 #define ED448_KEYLEN         57
 
 #define MAX_KEYLEN  ED448_KEYLEN
@@ -510,9 +393,9 @@ typedef struct {
  * method, as in, can it do arbitrary encryption....
  */
 struct evp_pkey_st {
-    /* == Legacy attributes == */
     int type;
     int save_type;
+    CRYPTO_REF_COUNT references;
     const EVP_PKEY_ASN1_METHOD *ameth;
     ENGINE *engine;
     ENGINE *pmeth_engine; /* If not NULL public key ENGINE to use */
@@ -532,76 +415,16 @@ struct evp_pkey_st {
         ECX_KEY *ecx;           /* X25519, X448, Ed25519, Ed448 */
 # endif
     } pkey;
-
-    /* == Common attributes == */
-    CRYPTO_REF_COUNT references;
-    CRYPTO_RWLOCK *lock;
-    STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
     int save_parameters;
-
-    /* == Provider attributes == */
-    /*
-     * To support transparent export/import between providers that
-     * support the methods for it, and still not having to do the
-     * export/import every time a key is used, we maintain a cache
-     * of imported key, indexed by provider address.
-     * pkeys[0] is *always* the "original" key.
-     */
-    struct {
-        EVP_KEYMGMT *keymgmt;
-        void *provkey;
-    } pkeys[10];
-    /*
-     * If there is a legacy key assigned to this structure, we keep
-     * a copy of that key's dirty count.
-     */
-    size_t dirty_cnt_copy;
+    STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
+    CRYPTO_RWLOCK *lock;
 } /* EVP_PKEY */ ;
 
-#define EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx) \
-    ((ctx)->operation == EVP_PKEY_OP_SIGN \
-     || (ctx)->operation == EVP_PKEY_OP_SIGNCTX \
-     || (ctx)->operation == EVP_PKEY_OP_VERIFY \
-     || (ctx)->operation == EVP_PKEY_OP_VERIFYCTX \
-     || (ctx)->operation == EVP_PKEY_OP_VERIFYRECOVER)
-
-#define EVP_PKEY_CTX_IS_DERIVE_OP(ctx) \
-    ((ctx)->operation == EVP_PKEY_OP_DERIVE)
 
 void openssl_add_all_ciphers_int(void);
 void openssl_add_all_digests_int(void);
 void evp_cleanup_int(void);
 void evp_app_cleanup_int(void);
-
-/* KEYMGMT helper functions */
-void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt);
-void evp_keymgmt_clear_pkey_cache(EVP_PKEY *pk);
-
-/* KEYMGMT provider interface functions */
-void *evp_keymgmt_importdomparams(const EVP_KEYMGMT *keymgmt,
-                                  const OSSL_PARAM params[]);
-void *evp_keymgmt_gendomparams(const EVP_KEYMGMT *keymgmt,
-                            const OSSL_PARAM params[]);
-void evp_keymgmt_freedomparams(const EVP_KEYMGMT *keymgmt,
-                               void *provdomparams);
-int evp_keymgmt_exportdomparams(const EVP_KEYMGMT *keymgmt,
-                                void *provdomparams, OSSL_PARAM params[]);
-const OSSL_PARAM *
-evp_keymgmt_importdomparam_types(const EVP_KEYMGMT *keymgmt);
-const OSSL_PARAM *
-evp_keymgmt_exportdomparam_types(const EVP_KEYMGMT *keymgmt);
-
-void *evp_keymgmt_importkey(const EVP_KEYMGMT *keymgmt,
-                            const OSSL_PARAM params[]);
-void *evp_keymgmt_genkey(const EVP_KEYMGMT *keymgmt, void *domparams,
-                         const OSSL_PARAM params[]);
-void *evp_keymgmt_loadkey(const EVP_KEYMGMT *keymgmt,
-                          void *id, size_t idlen);
-void evp_keymgmt_freekey(const EVP_KEYMGMT *keymgmt, void *provkey);
-int evp_keymgmt_exportkey(const EVP_KEYMGMT *keymgmt,
-                               void *provkey, OSSL_PARAM params[]);
-const OSSL_PARAM *evp_keymgmt_importkey_types(const EVP_KEYMGMT *keymgmt);
-const OSSL_PARAM *evp_keymgmt_exportkey_types(const EVP_KEYMGMT *keymgmt);
 
 /* Pulling defines out of C source files */
 

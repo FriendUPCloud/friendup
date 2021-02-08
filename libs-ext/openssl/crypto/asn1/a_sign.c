@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -145,7 +145,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
     unsigned char *buf_in = NULL, *buf_out = NULL;
     size_t inl = 0, outl = 0, outll = 0;
     int signid, paramtype, buf_len = 0;
-    int rv, pkey_id;
+    int rv;
 
     type = EVP_MD_CTX_md(ctx);
     pkey = EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_pkey_ctx(ctx));
@@ -184,14 +184,9 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
             ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ASN1_R_CONTEXT_NOT_INITIALISED);
             goto err;
         }
-
-        pkey_id =
-#ifndef OPENSSL_NO_SM2
-            EVP_PKEY_id(pkey) == NID_sm2 ? NID_sm2 :
-#endif
-        pkey->ameth->pkey_id;
-
-        if (!OBJ_find_sigid_by_algs(&signid, EVP_MD_nid(type), pkey_id)) {
+        if (!OBJ_find_sigid_by_algs(&signid,
+                                    EVP_MD_nid(type),
+                                    pkey->ameth->pkey_id)) {
             ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX,
                     ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
             goto err;

@@ -1,7 +1,7 @@
 /*
- * Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -14,12 +14,9 @@
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
 #include <openssl/cms.h>
-#include <openssl/ess.h>
 #include "cms_local.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
-#include "crypto/cms.h"
-#include "crypto/ess.h"
 
 /* CMS SignedData Utilities */
 
@@ -349,27 +346,6 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
             if (!i)
                 goto merr;
         }
-        if (flags & CMS_CADES) {
-            ESS_SIGNING_CERT *sc = NULL;
-            ESS_SIGNING_CERT_V2 *sc2 = NULL;
-            int add_sc;
-
-            if (md == EVP_sha1() || md == NULL) {
-                if ((sc = ESS_SIGNING_CERT_new_init(signer,
-                                                    NULL, 1)) == NULL)
-                    goto err;
-                add_sc = cms_add1_signing_cert(si, sc);
-                ESS_SIGNING_CERT_free(sc);
-            } else {
-                if ((sc2 = ESS_SIGNING_CERT_V2_new_init(md, signer,
-                                                        NULL, 1)) == NULL)
-                    goto err;
-                add_sc = cms_add1_signing_cert_v2(si, sc2);
-                ESS_SIGNING_CERT_V2_free(sc2);
-            }
-            if (!add_sc)
-                goto err;
-        }
         if (flags & CMS_REUSE_DIGEST) {
             if (!cms_copy_messageDigest(cms, si))
                 goto err;
@@ -396,7 +372,8 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
                 goto err;
             if (EVP_PKEY_CTX_set_signature_md(si->pctx, md) <= 0)
                 goto err;
-        } else if (EVP_DigestSignInit(si->mctx, &si->pctx, md, NULL, pk) <= 0)
+        } else if (EVP_DigestSignInit(si->mctx, &si->pctx, md, NULL, pk) <=
+                   0)
             goto err;
     }
 
@@ -706,23 +683,11 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
         si->pctx = pctx;
     }
 
-    /*
-     * TODO(3.0): This causes problems when providers are in use, so disabled
-     * for now. Can we get rid of this completely? AFAICT this ctrl has been
-     * present since CMS was first put in - but has never been used to do
-     * anything. All internal implementations just return 1 and ignore this ctrl
-     * and have always done so by the looks of things. To fix this we could
-     * convert this ctrl into a param, which would require us to send all the
-     * signer info data as a set of params...but that is non-trivial and since
-     * this isn't used by anything it may be better just to remove it.
-     */
-#if 0
     if (EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_SIGN,
                           EVP_PKEY_CTRL_CMS_SIGN, 0, si) <= 0) {
         CMSerr(CMS_F_CMS_SIGNERINFO_SIGN, CMS_R_CTRL_ERROR);
         goto err;
     }
-#endif
 
     alen = ASN1_item_i2d((ASN1_VALUE *)si->signedAttrs, &abuf,
                          ASN1_ITEM_rptr(CMS_Attributes_Sign));
@@ -739,23 +704,11 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
     if (EVP_DigestSignFinal(mctx, abuf, &siglen) <= 0)
         goto err;
 
-    /*
-     * TODO(3.0): This causes problems when providers are in use, so disabled
-     * for now. Can we get rid of this completely? AFAICT this ctrl has been
-     * present since CMS was first put in - but has never been used to do
-     * anything. All internal implementations just return 1 and ignore this ctrl
-     * and have always done so by the looks of things. To fix this we could
-     * convert this ctrl into a param, which would require us to send all the
-     * signer info data as a set of params...but that is non-trivial and since
-     * this isn't used by anything it may be better just to remove it.
-     */
-#if 0
     if (EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_SIGN,
                           EVP_PKEY_CTRL_CMS_SIGN, 1, si) <= 0) {
         CMSerr(CMS_F_CMS_SIGNERINFO_SIGN, CMS_R_CTRL_ERROR);
         goto err;
     }
-#endif
 
     EVP_MD_CTX_reset(mctx);
 
@@ -944,8 +897,10 @@ int CMS_add_simple_smimecap(STACK_OF(X509_ALGOR) **algs,
     ASN1_INTEGER *key = NULL;
     if (keysize > 0) {
         key = ASN1_INTEGER_new();
-        if (key == NULL || !ASN1_INTEGER_set(key, keysize))
+        if (key == NULL || !ASN1_INTEGER_set(key, keysize)) {
+            ASN1_INTEGER_free(key);
             return 0;
+        }
     }
     alg = X509_ALGOR_new();
     if (alg == NULL) {

@@ -1891,6 +1891,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								ExecuteApplication( GetUrlVar( 'app' ), args );
 							}
 							ScreenOverlay.hide();
+							PollTray();
+							PollTaskbar();
 							return;
 						}
 						
@@ -1920,6 +1922,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									{
 										if( Workspace.getWebSocketsState() != 'open' )
 										{
+											//console.log( 'Waiting for websocket... ' + Math.random() );
 											return setTimeout( function(){ l.func() }, 500 );
 										}
 										if( !ScreenOverlay.done && l.index < seq.length )
@@ -1978,6 +1981,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										}
 										// Hide overlay
 										ScreenOverlay.hide();
+										PollTray();
+										PollTaskbar();
 										l.func = function()
 										{
 											//
@@ -1992,12 +1997,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							{
 								// Hide overlay
 								ScreenOverlay.hide();
+								PollTray();
+								PollTaskbar();
 							}
 						} );
 					}
-
-					PollTray();
-					PollTaskbar();
 				}
 				else
 				{

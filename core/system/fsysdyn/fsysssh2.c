@@ -512,6 +512,10 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs __attribute__((u
 		dev->f_Name = StringDup( name );
 		DEBUG("data filled, name of the drive: %s\n", dev->f_Name );
 	}
+	else	// dev allocation fail
+	{
+		return NULL;
+	}
 	
 	//
 	// we will hold here special data SSH2
@@ -940,8 +944,17 @@ int Release( struct FHandler *s, void *f )
 void *FileOpen( struct File *s, const char *path, char *mode )
 {
 	// Make relative path
-	int pathsize = strlen( path );
+	int pathsize = 0;
+	if( path == NULL )
+	{
+		return NULL;
+	}
+	pathsize = strlen( path );
 	char *commClean = FCalloc( pathsize+10, sizeof( char ) );
+	if( commClean == NULL )
+	{
+		return NULL;
+	}
 	int il = pathsize, imode = 0, in = 0;
 	int ii = 0; for( ; ii < il; ii++ )
 	{
@@ -981,8 +994,12 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 			break;
 		}
 	}
-	if( imode == 1 ) sprintf( cleanPath, "%.*s", il, commClean );
 	
+	if( imode == 1 && cleanPath != NULL )
+	{
+		sprintf( cleanPath, "%.*s", il, commClean );
+	}
+		
 	// Create a string that has the real file path of the file
 	if( comm != NULL )
 	{
@@ -1021,8 +1038,10 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 				char *directory = FCalloc( alsize , sizeof( char ) );
 				if( directory != NULL )
 				{
-					snprintf( directory, alsize, "%s%.*s", s->f_Path, i, cleanPath );
-					
+					if( cleanPath != NULL )
+					{
+						snprintf( directory, alsize, "%s%.*s", s->f_Path, i, cleanPath );
+					}
 					libssh2_sftp_mkdir( sdat->sftp_session, directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
 					
 					
@@ -1573,7 +1592,7 @@ FLONG Delete( struct File *s, const char *path )
 int Rename( struct File *s, const char *path, const char *nname )
 {
 	DEBUG("Rename!  from %s to %s\n", path, nname );
-
+	int res = 0;
 	// remove disk name
 	char *pathNoDiskName = (char *)path;
 	int spath = strlen( path );
@@ -1595,75 +1614,76 @@ int Rename( struct File *s, const char *path, const char *nname )
 	
 	// 1a. is the source a folder? If so, remove trailing /
 	char *targetPath = NULL;
-	
-	if( pathNoDiskName[spath-1] == '/' )
+	targetPath = FCalloc( spath + 1, sizeof( char ) );
+	if( targetPath != NULL )
 	{
-		targetPath = FCalloc( spath, sizeof( char ) );
-		sprintf( targetPath, "%.*s", spath - 1, pathNoDiskName );
-	}
-	else
-	{
-		targetPath = FCalloc( spath + 1, sizeof( char ) ); 
-		sprintf( targetPath, "%.*s", spath, pathNoDiskName );
-	}
-	
-	// 1b. Do we have a sub folder in path?
-	int hasSubFolder = 0;
-	int off = 0;
-	int c = 0; for( ; c < spath; c++ )
-	{
-		if( targetPath[c] == '/' )
+		if( pathNoDiskName[spath-1] == '/' )
 		{
-			hasSubFolder++;
-			off = c + 1;
+			sprintf( targetPath, "%.*s", spath - 1, pathNoDiskName );
 		}
-	}
-	
-	// 2. Full path of source
-	char *source = FCalloc( rspath + spath + 1, sizeof( char ) );
-	sprintf( source, "%s%s", s->f_Path, targetPath );
-	
-	// 3. Ok if we have sub folder or not, add it to our destination
-	char *dest = NULL;
-	if( hasSubFolder > 0 )
-	{
-		dest = FCalloc( rspath + off + strlen( nname ) + 1, sizeof( char ) );
-		if( dest != NULL )
+		else
 		{
-			sprintf( dest, "%.*s", rspath, s->f_Path );
-			sprintf( dest + rspath, "%.*s", off, targetPath );
-			sprintf( dest + rspath + off, "%s", nname );
+			sprintf( targetPath, "%.*s", spath, pathNoDiskName );
 		}
-	}
-	else 
-	{
-		dest = FCalloc( rspath + strlen( nname ) + 1, sizeof( char ) );
-		if( dest != NULL )
+	
+		// 1b. Do we have a sub folder in path?
+		int hasSubFolder = 0;
+		int off = 0;
+		int c = 0; for( ; c < spath; c++ )
 		{
-			sprintf( dest, "%s", s->f_Path );
-			sprintf( dest + rspath, "%s", nname );
+			if( targetPath[c] == '/' )
+			{
+				hasSubFolder++;
+				off = c + 1;
+			}
 		}
-	}
+	
+		// 2. Full path of source
+		char *source = FCalloc( rspath + spath + 1, sizeof( char ) );
+		if( source != NULL )
+		{
+			sprintf( source, "%s%s", s->f_Path, targetPath );
+	
+			// 3. Ok if we have sub folder or not, add it to our destination
+			char *dest = NULL;
+			dest = FCalloc( rspath + off + strlen( nname ) + 1, sizeof( char ) );
+			if( dest != NULL )
+			{
+				if( hasSubFolder > 0 )
+				{
+					sprintf( dest, "%.*s", rspath, s->f_Path );
+					sprintf( dest + rspath, "%.*s", off, targetPath );
+					sprintf( dest + rspath + off, "%s", nname );
+				}
+				else 
+				{
+					sprintf( dest, "%s", s->f_Path );
+					sprintf( dest + rspath, "%s", nname );
+				}
 	
 #ifdef __ENABLE_MUTEX
-	pthread_mutex_lock( &hd->hd_Mutex );
+				pthread_mutex_lock( &hd->hd_Mutex );
 #endif
-	// 4. Execute!
-	DEBUG( "executing: rename %s %s\n", source, dest );
-	int res = libssh2_sftp_rename( sdat->sftp_session, source, dest );// rename( source, dest );
-	if( res != 0 )
-	{
-		ServerReconnect( sdat, hd );
-		res = libssh2_sftp_rename( sdat->sftp_session, source, dest );
-	}
+				// 4. Execute!
+				DEBUG( "executing: rename %s %s\n", source, dest );
+				res = libssh2_sftp_rename( sdat->sftp_session, source, dest );// rename( source, dest );
+				if( res != 0 )
+				{
+					ServerReconnect( sdat, hd );
+					res = libssh2_sftp_rename( sdat->sftp_session, source, dest );
+				}
 #ifdef __ENABLE_MUTEX
-	pthread_mutex_unlock( &hd->hd_Mutex );
+				pthread_mutex_unlock( &hd->hd_Mutex );
 #endif
 	
 	// 5. Free up
-	FFree( source );
-	FFree( dest );
-	FFree( targetPath );
+	
+				FFree( dest );
+			}
+			FFree( source );
+		}
+		FFree( targetPath );
+	}
 	
 	return res;
 }
