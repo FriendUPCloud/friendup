@@ -3182,6 +3182,14 @@ body:not([mobile]).ShowTasks #TaskSwitcher .Current .Close
 	opacity: 1;
 }
 
+.DesktopIconsHidden #DoorsScreen > .ScreenContent > .Scroller 
+{
+	opacity: 0;
+	pointer-events: none;
+	visibility: hidden;
+}
+
+
 /* Different solution for drives */
 #DoorsScreen > .ScreenContent.DrivePanel > .Scroller 
 {

@@ -1820,11 +1820,21 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						globalConfig.viewList = dat.windowlist;
 						document.body.setAttribute( 'viewlist', dat.windowlist ); // Register for styling
 					}
-					if( dat.scrolldesktopicons )
+					if( dat.scrolldesktopicons == 1 )
 					{
 						globalConfig.scrolldesktopicons = dat.scrolldesktopicons;
 					}
 					else globalConfig.scrolldesktopicons = 0;
+					if( dat.hidedesktopicons == 1 )
+					{
+						globalConfig.hidedesktopicons = dat.scrolldesktopicons;
+						document.body.classList.add( 'DesktopIconsHidden' );
+					}
+					else
+					{
+						globalConfig.hidedesktopicons = 0;
+						document.body.classList.remove( 'DesktopIconsHidden' );
+					}
 					// Can only have workspaces on mobile
 					// TODO: Implement dynamic workspace count for mobile (one workspace per app)
 					if( dat.workspacecount >= 0 && !window.isMobile )
@@ -2021,7 +2031,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			'avatar', 'workspacemode', 'wallpaperdoors', 'wallpaperwindows', 'language', 
 			'menumode', 'startupsequence', 'navigationmode', 'windowlist', 
 			'focusmode', 'hiddensystem', 'workspacecount', 
-			'scrolldesktopicons', 'wizardrun', 'themedata_' + Workspace.theme,
+			'scrolldesktopicons', 'hidedesktopicons', 'wizardrun', 'themedata_' + Workspace.theme,
 			'workspacemode', 'workspace_labels'
 		] } );
 	},
