@@ -62,7 +62,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -90,7 +90,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -103,17 +103,13 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			
 			DEBUG("[ApplicationWebRequest] Application LIST\n");
 			
-			BufStringAdd( bs, " { \"Application\": [" );
+			BufStringAdd( bs, "{\"Application\":[" );
 			
 			while( al != NULL )
 			{
 				if( pos > 0 )
 				{
 					BufStringAdd( bs, ", " );
-				}
-				else
-				{
-					//BufStringAdd( bs, "{" );
 				}
 				
 				BufString *lbs = GetJSONFromStructure( ApplicationDesc, al );
@@ -132,7 +128,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			}
 			//INFO("JSON INFO 2: %s\n", bs->bs_Buffer );
 			
-			BufStringAdd( bs, " ]}" );
+			BufStringAdd( bs, "]}" );
 			
 			HttpAddTextContent( response, bs->bs_Buffer );
 			
@@ -162,7 +158,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -209,7 +205,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
-			{ TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -334,7 +330,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
-			{ TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -363,7 +359,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			else
 			{
 				char dictmsgbuf[ 256 ];
-				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] , DICT_SQL_LIBRARY_NOT_FOUND );
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] , DICT_SQL_LIBRARY_NOT_FOUND );
 			}
 		}
 		else
@@ -371,7 +367,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			char dictmsgbuf[ 256 ];
 			char dictmsgbuf1[ 196 ];
 			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "qauthid" );
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, dictmsgbuf );
 
 			FERROR("sasid or users is missing!\n");
@@ -380,6 +376,272 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		if( qauthid != NULL )
 		{
 			FFree( qauthid );
+		}
+	}
+	
+	/*
+	-system.library/application/?=oldid&applicationName=name&sessionid=id
+
+	-system.library/application/?authidremove=authid&sessionid=id
+	 */
+	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	* 
+	* <HR><H2>system.library/app/authidgen</H2>Create authentication id token
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param appname - (required ) application name
+	* @param userid - user id
+
+	* @return { "response":"success", "authid":"<XYZ>" } otherwise information about error
+	*/
+	/// @endcond
+	else if( strcmp( urlpath[ 0 ], "authidgen" ) == 0 )
+	{
+		char *appname = NULL;
+		FQUAD uid= 0;
+		
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
+		};
+		
+		response = HttpNewSimple( HTTP_200_OK,  tags );
+		
+		HashmapElement *el = HashmapGet( request->http_ParsedPostContent, "appname" );
+		if( el != NULL )
+		{
+			appname = UrlDecodeToMem( ( char *)el->hme_Data );
+		}
+		
+		el = HashmapGet( request->http_ParsedPostContent, "userid" );
+		if( el != NULL )
+		{
+			char *end;
+			uid = strtoull( (( char *)el->hme_Data), &end, 0 );
+		}
+		
+		if( appname != NULL )
+		{
+			if( loggedSession->us_User->u_IsAdmin )
+			{
+				if( uid == 0 )
+				{
+					uid = loggedSession->us_UserID;
+				}
+			}
+			else
+			{
+				uid = loggedSession->us_UserID;
+			}
+			
+			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+			
+			if( sqllib != NULL )
+			{
+				FQUAD appID = 0;
+				char query[ 1024 ];
+				char respMsg[ 1024 ];
+				int err = 0;
+				
+				// we must get application id from database
+				
+				sqllib->SNPrintF( sqllib, query, sizeof(query), "SELECT u.ID FROM `FApplication` WHERE Name=\"%s\" LIMIT 1", appname );
+		
+				void *result = sqllib->Query( sqllib, query );
+				if( result != NULL )
+				{
+					char **row;
+					if( ( row = sqllib->FetchRow( sqllib, result ) ) )
+					{
+						char *end;
+						appID = strtoull( row[ 0 ], &end, 0 );
+					}
+					sqllib->FreeResult( sqllib, result );
+				}
+			
+				// now its time to generate hash
+			
+				if( appID > 0 )
+				{
+					AppSession *las = AppSessionNew( l, appID, uid, NULL );
+					if( las != NULL )
+					{
+						err = sqllib->Save( sqllib, AppSessionDesc, las );
+						if( err == 0 )
+						{
+							snprintf( respMsg, sizeof(respMsg), "{\"result\":\"success\",\"id\":%lu,\"authid\":\"%s\"}", las->as_ID, las->as_AuthID );
+						
+							AppSessionManagerAppSessionAdd( l->sl_AppSessionManager, las );
+						}
+						else
+						{
+							AppSessionDelete( las );
+						}
+					}
+					l->LibrarySQLDrop( l, sqllib );
+
+					HttpAddTextContent( response, respMsg );
+				}
+				else
+				{
+					char dictmsgbuf[ 256 ];
+					char dictmsgbuf1[ 196 ];
+					snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_APPLICATION_NOT_FOUND], appname );
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", dictmsgbuf1 , DICT_APPLICATION_NOT_FOUND );
+					HttpAddTextContent( response, dictmsgbuf );
+				}
+			}
+			else
+			{
+				char dictmsgbuf[ 256 ];
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] , DICT_SQL_LIBRARY_NOT_FOUND );
+			}
+			FFree( appname );
+		}
+		else
+		{
+			char dictmsgbuf[ 256 ];
+			char dictmsgbuf1[ 196 ];
+			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "appname" );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+			HttpAddTextContent( response, dictmsgbuf );
+		}
+	}
+	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	* 
+	* <HR><H2>system.library/app/authidrenew</H2>Recreate authentication id token
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param appname - (required) application name
+	* @param oldid - (required) previous authid
+
+	* @return { "response":"success", "authid":"<XYZ>" } otherwise information about error
+	*/
+	/// @endcond
+	else if( strcmp( urlpath[ 0 ], "authidrenew" ) == 0 )
+	{
+		char *appname = NULL;
+		char *oldid = NULL;
+		FQUAD uid= 0;
+		
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
+		};
+		
+		response = HttpNewSimple( HTTP_200_OK,  tags );
+		
+		HashmapElement *el = HashmapGet( request->http_ParsedPostContent, "appname" );
+		if( el != NULL )
+		{
+			appname = UrlDecodeToMem( ( char *)el->hme_Data );
+		}
+		
+		el = HashmapGet( request->http_ParsedPostContent, "oldid" );
+		if( el != NULL )
+		{
+			oldid = UrlDecodeToMem( ( char *)el->hme_Data );
+		}
+		
+		if( appname != NULL && oldid != NULL )
+		{
+			if( loggedSession->us_User->u_IsAdmin )
+			{
+				if( uid == 0 )
+				{
+					uid = loggedSession->us_UserID;
+				}
+			}
+			else
+			{
+				uid = loggedSession->us_UserID;
+			}
+			
+			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+			
+			if( sqllib != NULL )
+			{
+				FQUAD appID = 0;
+				char query[ 1024 ];
+				char respMsg[ 1024 ];
+				int err = 0;
+				
+				// we must get application id from database
+				
+				sqllib->SNPrintF( sqllib, query, sizeof(query), "SELECT u.ID FROM `FApplication` WHERE Name=\"%s\" LIMIT 1", appname );
+		
+				void *result = sqllib->Query( sqllib, query );
+				if( result != NULL )
+				{
+					char **row;
+					if( ( row = sqllib->FetchRow( sqllib, result ) ) )
+					{
+						char *end;
+						appID = strtoull( row[ 0 ], &end, 0 );
+					}
+					sqllib->FreeResult( sqllib, result );
+				}
+			
+				// now its time to generate hash
+			
+				if( appID > 0 )
+				{
+					AppSession *las = AppSessionNew( l, appID, uid, NULL );
+					if( las != NULL )
+					{
+						err = sqllib->Save( sqllib, AppSessionDesc, las );
+						if( err == 0 )
+						{
+							snprintf( respMsg, sizeof(respMsg), "{\"result\":\"success\",\"id\":%lu,\"authid\":\"%s\"}", las->as_ID, las->as_AuthID );
+						
+							AppSessionManagerAppSessionAdd( l->sl_AppSessionManager, las );
+						}
+						else
+						{
+							AppSessionDelete( las );
+						}
+					}
+					l->LibrarySQLDrop( l, sqllib );
+
+					HttpAddTextContent( response, respMsg );
+				}
+				else
+				{
+					char dictmsgbuf[ 256 ];
+					char dictmsgbuf1[ 196 ];
+					snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_APPLICATION_NOT_FOUND], appname );
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", dictmsgbuf1 , DICT_APPLICATION_NOT_FOUND );
+					HttpAddTextContent( response, dictmsgbuf );
+				}
+			}
+			else
+			{
+				char dictmsgbuf[ 256 ];
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] , DICT_SQL_LIBRARY_NOT_FOUND );
+			}
+		}
+		else
+		{
+			char dictmsgbuf[ 256 ];
+			char dictmsgbuf1[ 196 ];
+			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "appname, oldid" );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+			HttpAddTextContent( response, dictmsgbuf );
+		}
+		
+		if( appname != NULL )
+		{
+			FFree( appname );
+		}
+		if( oldid != NULL )
+		{
+			FFree( oldid );
 		}
 	}
 	else

@@ -74,6 +74,7 @@
 #include <system/sas/sas_manager.h>
 #include <system/application/application_manager.h>
 #include <system/support/support_manager.h>
+#include <system/application/appsession_manager.h>
 
 #include <interface/socket_interface.h>
 #include <interface/string_interface.h>
@@ -254,6 +255,7 @@ typedef struct SystemBase
 	DeviceManager					*sl_DeviceManager;	// DeviceManager
 	WorkerManager					*sl_WorkerManager; ///< Worker Manager
 	ApplicationManager				*sl_ApplicationManager;		// application
+	AppSessionManager				*sl_AppSessionManager;		// application session manager
 	UserSessionManager				*sl_USM;			// user session manager
 	UserManager						*sl_UM;		// user manager
 	UserGroupManager				*sl_UGM;	// user group manager

@@ -71,7 +71,7 @@ void USMDelete( UserSessionManager *smgr )
 			
 				DEBUG("[USMDelete] \t\tRemove session : %s uid %lu\n", rem->us_SessionID, rem->us_UserID );
 			
-				USMGetSessionsDeleteDB( smgr, rem->us_HashedSessionID );
+				USMSessionsDeleteDB( smgr, rem->us_HashedSessionID );
 				UserSessionDelete( rem );
 			}
 		
@@ -83,7 +83,7 @@ void USMDelete( UserSessionManager *smgr )
 			
 				DEBUG("[USMDelete] \t\tRemove session from remove list: %s uid %lu\n", rem->us_SessionID, rem->us_UserID );
 			
-				USMGetSessionsDeleteDB( smgr, rem->us_HashedSessionID );
+				USMSessionsDeleteDB( smgr, rem->us_HashedSessionID );
 				UserSessionDelete( rem );
 			}
 		
@@ -578,7 +578,7 @@ UserSession *USMUserSessionAddToList( UserSessionManager *smgr, UserSession *s )
 			remSess = actSess;
 			actSess = (UserSession *)actSess->node.mln_Succ;
 			
-			USMGetSessionsDeleteDB( smgr, remSess->us_SessionID );
+			USMSessionsDeleteDB( smgr, remSess->us_SessionID );
 			UserSessionDelete( remSess );
 		}
 	}
@@ -861,7 +861,7 @@ int USMUserSessionRemove( UserSessionManager *smgr, UserSession *remsess )
 	
 	if( sessionRemoved == TRUE )
 	{
-		USMGetSessionsDeleteDB( smgr, remsess->us_HashedSessionID );
+		USMSessionsDeleteDB( smgr, remsess->us_HashedSessionID );
 		
 		// we do not delete session, untill it is used
 		if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) == 0 )
@@ -882,7 +882,7 @@ int USMUserSessionRemove( UserSessionManager *smgr, UserSession *remsess )
  * @param sessionid user sessionid
  * @return 0 when success otherwise error number
  */
-int USMGetSessionsDeleteDB( UserSessionManager *smgr, const char *sessionid )
+int USMSessionsDeleteDB( UserSessionManager *smgr, const char *sessionid )
 {
 	SystemBase *sb = (SystemBase *)smgr->usm_SB;
 	char tmpQuery[ 1024 ];
@@ -900,7 +900,7 @@ int USMGetSessionsDeleteDB( UserSessionManager *smgr, const char *sessionid )
 
 	sb->LibrarySQLDrop( sb, sqlLib );
 
-	DEBUG("[USMGetSessionsDeleteDB] end\n");
+	DEBUG("[USMSessionsDeleteDB] end\n");
 	return 0;
 }
 

@@ -156,6 +156,7 @@ enum {
 	DICT_NO_PERMISSION,
 	DICT_UMA_ENTRY_NOT_FOUND,
 	DICT_FILE_UNCOMPRESS_PROBLEM,
+	DICT_APPLICATION_NOT_FOUND,
 	DICT_MAX
 };
 /*
@@ -252,6 +253,8 @@ INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) 
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'User Mobile App entry not found', 'ENG', '72');
 
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'File uncompress problem: %d', 'ENG', '73');
+
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Application not found: %s', 'ENG', '74');
 */
 
 // User status

@@ -1011,6 +1011,12 @@ SystemBase *SystemInit( void )
 	l->sl_ApplicationManager = ApplicationManagerNew( l );
 	if( l->sl_ApplicationManager == NULL )
 	{
+		Log( FLOG_ERROR, "Cannot initialize ApplicationManager\n");
+	}
+	
+	l->sl_AppSessionManager = AppSessionManagerNew( l );
+	if( l->sl_AppSessionManager == NULL )
+	{
 		Log( FLOG_ERROR, "Cannot initialize AppSessionManager\n");
 	}
 	
@@ -1137,6 +1143,12 @@ void SystemClose( SystemBase *l )
 	}
 	
 	Log( FLOG_INFO, "[SystemBase] SystemClose in progress\n");
+	
+	if( l->sl_AppSessionManager != NULL )
+	{
+		AppSessionManagerDelete( l->sl_AppSessionManager );
+		l->sl_AppSessionManager = NULL;
+	}
 	
 	if( l->sl_ApplicationManager != NULL )
 	{
