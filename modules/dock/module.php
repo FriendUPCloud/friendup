@@ -151,12 +151,12 @@ if( isset( $args->command ) )
 			$s = filter_var( $args->args->name, FILTER_SANITIZE_STRING );
 			if( $args->args->fuzzy )
 			{
-				$q = ( 'DELETE FROM DockItem WHERE UserID=\'' . $userid . '\' AND `Application` LIKE "' . $s . ' %" AND ( `Type`="' . ( isset( $args->args->type ) ? '' : 'executable' ) . '" OR `Type`="" ' );
+				$q = ( 'DELETE FROM DockItem WHERE UserID=\'' . $userid . '\' AND `Application` LIKE "' . $s . ' %" AND ( `Type`="' . ( isset( $args->args->type ) ? '' : 'executable' ) . '" OR `Type`="" OR `Type`="file" ) LIMIT 1' );
 				//$Logger->log('cleaning a dock here... ' . $q);
 			}
 			else
 			{
-				$q = ( 'DELETE FROM DockItem WHERE UserID=\'' . $userid . '\' AND `Application`="' . $s . '" AND ( `Type`="' . ( isset( $args->args->type ) ? '' : 'executable' ) . '" OR `Type`="" ) LIMIT 1' );
+				$q = ( 'DELETE FROM DockItem WHERE UserID=\'' . $userid . '\' AND `Application`="' . $s . '" AND ( `Type`="' . ( isset( $args->args->type ) ? '' : 'executable' ) . '" OR `Type`="" OR `Type`="file" ) LIMIT 1' );
 			}
 			if( $SqlDatabase->Query( $q ) )
 			{
