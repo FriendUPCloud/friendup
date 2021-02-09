@@ -12,6 +12,11 @@ var _appNum = 1;
 
 var _executionQueue = {};
 
+// TODO: Both ExecuteApplication and ExecuteJSXByPath are using a terribly
+//       messy implementation of flags, args etc. This must be refactored
+//       with a function that parses flags and adds args to flags list!
+//       Mucho importante!
+
 function RemoveFromExecutionQueue( app )
 {
 	try
