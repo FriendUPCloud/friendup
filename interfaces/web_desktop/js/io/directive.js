@@ -65,6 +65,11 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			flags.openSilent = true;
 		}
 	}
+	else
+	{
+		if( !flags ) flags = {};
+		flags.openSilent = false;
+	}
 	
 	// You need to wait with opening apps until they are loaded by app name
 	if( _executionQueue[ appName ] )
@@ -1092,6 +1097,71 @@ function ExecuteJSXByPath( path, args, callback, conf, flags )
 		app = app.split( '/' );
 		app = app[app.length-1];
 	}
+	
+	// Strip arguments
+	if( path.indexOf( ' ' ) > 0 )
+	{
+		path = path.split( ' ' )[0];
+	}
+	
+	// Strip arguments and place in args
+	if( app.indexOf( ' ' ) > 0 )
+	{
+		app = app.split( ' ' );
+		if( !args )
+		{
+			args = app;
+			let out = [];
+			for( let i = 1; i < args.length; i++ )
+				out.push( args[i] );
+			args = out.join( ' ' );
+		}
+		app = app[0];
+	}
+	
+	// Filter arguments
+	if( args )
+	{
+		args = args.split( ' ' );
+		let aout = [];
+		for( var a = 0; a < args.length; a++ )
+		{
+			var pair = args[a].split( '=' );
+			if( pair.length > 1 )
+			{
+				switch( pair[0] )
+				{
+					case 'workspace':
+						flags.workspace = parseInt( pair[1] ) - 1;
+						if( flags.workspace < 0 ) 
+							flags.workspace = false;
+						break;
+					default:
+						aout.push( args[a] );
+						break;
+				}
+			}
+			else aout.push( args[a] );
+		}
+		args = aout.join( ' ' );
+	}
+	
+	// Match silent
+	if( args )
+	{
+		if( args.indexOf( 'silent ' ) > 0 || args.indexOf( ' silent' ) > 0 || args == 'silent' )
+		{
+			args = args.split( 'silent' ).join( '' );
+			args = args.split( '  ' ).join( ' ' );
+			if( !flags ) flags = {};
+			flags.openSilent = true;
+		}
+	}
+	else
+	{
+		flags.openSilent = false;
+	}
+	
 	var f = new File( path );
 	f.onLoad = function( data )
 	{
@@ -1230,6 +1300,8 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 			ifr.userId = Workspace.userId;
 			ifr.userLevel = Workspace.userLevel;
 			ifr.username = Workspace.loginUsername;
+			ifr.workspace = flags && flags.workspace ? flags.workspace : 0;
+			ifr.opensilent = flags && flags.openSilent == true ? true : false;
 			ifr.applicationType = 'jsx';
 			if( sid ) 
 				ifr.sessionId = Workspace.sessionId; // JSX has sessionid
