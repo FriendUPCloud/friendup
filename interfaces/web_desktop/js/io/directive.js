@@ -68,7 +68,8 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	else
 	{
 		if( !flags ) flags = {};
-		flags.openSilent = false;
+		if( !flags.openSilent )
+			flags.openSilent = false;
 	}
 	
 	// You need to wait with opening apps until they are loaded by app name
@@ -186,6 +187,9 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			{
 				case 'workspace':
 					workspace = parseInt( pair[1] );
+					if( !flags ) flags = {};
+					if( !flags.workspace )
+						flags.workspace = workspace;
 					if( !workspace ) workspace = 0;
 					break;
 				default:
@@ -1157,7 +1161,7 @@ function ExecuteJSXByPath( path, args, callback, conf, flags )
 			flags.openSilent = true;
 		}
 	}
-	else
+	else if( flags && !flags.openSilent )
 	{
 		flags.openSilent = false;
 	}
