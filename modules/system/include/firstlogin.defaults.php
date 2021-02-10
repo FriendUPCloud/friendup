@@ -92,7 +92,7 @@ if( ( !isset( $args->args->exclude ) || isset( $args->args->exclude ) && !in_arr
 						$app->ApplicationID = $a->ID;
 						$app->UserID = $a->UserID;
 						$app->Load();
-						$app->AuthID = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . $a->ID );
+						//$app->AuthID = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . $a->ID );
 						$app->Permissions = json_encode( $perms );
 						$app->Data = json_encode( $da );
 						$app->Save();

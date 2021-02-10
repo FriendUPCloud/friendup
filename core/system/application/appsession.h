@@ -34,7 +34,7 @@
 CREATE TABLE IF NOT EXISTS `FAppSession` (
   `ID` bigint(32) NOT NULL AUTO_INCREMENT,
   `UserID` bigint(32) NOT NULL,
-  `ApplicationID` bigint(32) NOT NULL,
+  `UserApplicationID` bigint(32) NOT NULL,
   `AuthID` varchar(255) DEFAULT NULL,
   `CreateTime` bigint(32) NOT NULL,
   PRIMARY KEY (`ID`)
@@ -54,7 +54,7 @@ typedef struct AppSession
 	pthread_mutex_t			as_Mutex;					// User mutex
 	
 	FQUAD					as_UserID;					// ID of user to which session is attached
-	FQUAD					as_ApplicationID;			// ID of application to which session is attached
+	FQUAD					as_UserApplicationID;		// ID of application to which session is attached
 	User					*as_User;					// pointer to User structure
 	char					*as_AuthID;					// authentication ID
 	char					*as_HashedAuthID;			// hashed authentication id
@@ -84,12 +84,18 @@ void AppSessionInit( AppSession *as, void *sb );
 //
 //
 
+void AppSessionRegenerateAuthID( AppSession *as, void *sb );
+
+//
+//
+//
+
 static FULONG AppSessionDesc[] = { 
 	SQLT_TABNAME, (FULONG)"FAppSession",       
 	SQLT_STRUCTSIZE, sizeof( struct AppSession ), 
 	SQLT_IDINT,   (FULONG)"ID",          offsetof( struct AppSession, as_ID ), 
 	SQLT_INT,     (FULONG)"UserID", offsetof( struct AppSession, as_UserID ),
-	SQLT_INT,     (FULONG)"ApplicationID", offsetof( struct AppSession, as_ApplicationID ),
+	SQLT_INT,     (FULONG)"UserApplicationID", offsetof( struct AppSession, as_UserApplicationID ),
 	SQLT_STR_HASH,(FULONG)"AuthID",   offsetof( struct AppSession, as_AuthID ),
 	SQLT_INT,     (FULONG)"LoggedTime", offsetof( struct AppSession, as_CreateTime ),
 

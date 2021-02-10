@@ -23,6 +23,8 @@
 #include <system/usergroup/user_group.h>
 #include <util/libchash.h>
 
+#define DEFAULT_APPSESSION_TIMEOUT (60 *60)
+
 //
 // User Session Manager structure
 //
@@ -35,6 +37,7 @@ typedef struct AppSessionManager
 	FHashTable						*asm_SessionsHT;						// Hashmap of sessions
 
 	int								asm_SessionCounter;
+	time_t							asm_SessionTimeout;						// time in seconds after which session is removed
 	
 	pthread_mutex_t					asm_Mutex;		// mutex
 } AppSessionManager;
@@ -62,7 +65,13 @@ int AppSessionManagerSessionsDeleteDB( AppSessionManager *asmgr, const char *aut
 //
 //
 
-AppSessionManager *AppSessionManagerGetSessionByID( AppSessionManager *usm, char *id );
+AppSession *AppSessionManagerGetSessionByAuthID( AppSessionManager *usm, char *id );
+
+//
+//
+//
+
+AppSession *AppSessionManagerGetSessionByID( AppSessionManager *usm, FQUAD id );
 
 //
 //
@@ -87,5 +96,17 @@ AppSession *AppSessionManagerAppSessionAdd( AppSessionManager *smgr, AppSession 
 //
 
 int AppSessionManagerAppSessionRemove( AppSessionManager *smgr, AppSession *remsess );
+
+//
+//
+//
+
+int AppSessionManagerAppSessionRemoveByAuthID( AppSessionManager *asmgr, char *authid );
+
+//
+//
+//
+
+int AppSessionManagerRemoveOldAppSessions( void *lsb );
 
 #endif //__SYSTEM_APPLICATION_APP_SESSIONMANAGER_H__

@@ -305,7 +305,6 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 	}
 	DEBUG("[FCDB] Authenticate START (%s)\n", name );
 	
-	//struct User *user = NULL;
 	UserSession *uses = NULL;
 	User *tmpusr = NULL;
 	SystemBase *sb = (SystemBase *)l->sb;

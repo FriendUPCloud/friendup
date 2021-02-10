@@ -379,12 +379,6 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		}
 	}
 	
-	/*
-	-system.library/application/?=oldid&applicationName=name&sessionid=id
-
-	-system.library/application/?authidremove=authid&sessionid=id
-	 */
-	
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	* 
@@ -448,7 +442,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 				
 				// we must get application id from database
 				
-				sqllib->SNPrintF( sqllib, query, sizeof(query), "SELECT u.ID FROM `FApplication` WHERE Name=\"%s\" LIMIT 1", appname );
+				sqllib->SNPrintF( sqllib, query, sizeof(query), "SELECT * FROM `FApplication` a inner join `FUserApplication` ua on a.ID=ua.ApplicationID WHERE a.Name='%s' AND ua.UserID=%ld LIMIT 1", appname, uid );
 		
 				void *result = sqllib->Query( sqllib, query );
 				if( result != NULL )
@@ -551,22 +545,11 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		
 		if( appname != NULL && oldid != NULL )
 		{
-			if( loggedSession->us_User->u_IsAdmin )
-			{
-				if( uid == 0 )
-				{
-					uid = loggedSession->us_UserID;
-				}
-			}
-			else
-			{
-				uid = loggedSession->us_UserID;
-			}
-			
 			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 			
 			if( sqllib != NULL )
 			{
+				FQUAD asID = 0;
 				FQUAD appID = 0;
 				char query[ 1024 ];
 				char respMsg[ 1024 ];
@@ -574,23 +557,47 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 				
 				// we must get application id from database
 				
-				sqllib->SNPrintF( sqllib, query, sizeof(query), "SELECT u.ID FROM `FApplication` WHERE Name=\"%s\" LIMIT 1", appname );
+				sqllib->SNPrintF( sqllib, query, sizeof(query), "SELECT ass.ID, a.ID FROM `FApplication` a inner join `FUserApplication` ua on a.ID=ua.ApplicationID inner join `FAppSession` ass on ua.ID=ass.UserApplicationID WHERE a.Name='%s' AND ass.AuthID='%s' LIMIT 1", appname, oldid );
 		
 				void *result = sqllib->Query( sqllib, query );
 				if( result != NULL )
 				{
 					char **row;
-					if( ( row = sqllib->FetchRow( sqllib, result ) ) )
+					if( ( row = sqllib->FetchRow( sqllib, result ) ) )	// getting AppSession ID
 					{
 						char *end;
-						appID = strtoull( row[ 0 ], &end, 0 );
+						asID = strtoull( row[ 0 ], &end, 0 );
+					}
+					if( ( row = sqllib->FetchRow( sqllib, result ) ) )	// getting App ID
+					{
+						char *end;
+						appID = strtoull( row[ 1 ], &end, 0 );
 					}
 					sqllib->FreeResult( sqllib, result );
 				}
 			
-				// now its time to generate hash
+				// entry found so we have to update it
 			
-				if( appID > 0 )
+				if( asID > 0 )
+				{
+					AppSession *locas = AppSessionManagerGetSessionByAuthID( l->sl_AppSessionManager, oldid );
+					if( locas != NULL )
+					{
+						AppSessionRegenerateAuthID( locas, l );
+						
+						sqllib->SNPrintF( sqllib, query, sizeof(query), "UPDATE `FAppSession` Set AuthID='%s' where ID=%ld", locas->as_HashedAuthID, asID );
+						sqllib->QueryWithoutResults( sqllib, query );	// update database
+						
+						snprintf( respMsg, sizeof(respMsg), "{\"result\":\"success\",\"id\":%lu,\"authid\":\"%s\"}", locas->as_ID, locas->as_AuthID );
+						HttpAddTextContent( response, respMsg );
+					}
+					else
+					{
+						char dictmsgbuf[ 256 ];
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_APPLICATION_SESSION_NOT_FOUND] , DICT_APPLICATION_SESSION_NOT_FOUND );
+					}
+				}
+				else	// entry not found, will be generated
 				{
 					AppSession *las = AppSessionNew( l, appID, uid, NULL );
 					if( las != NULL )
@@ -607,18 +614,10 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 							AppSessionDelete( las );
 						}
 					}
-					l->LibrarySQLDrop( l, sqllib );
-
 					HttpAddTextContent( response, respMsg );
 				}
-				else
-				{
-					char dictmsgbuf[ 256 ];
-					char dictmsgbuf1[ 196 ];
-					snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_APPLICATION_NOT_FOUND], appname );
-					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", dictmsgbuf1 , DICT_APPLICATION_NOT_FOUND );
-					HttpAddTextContent( response, dictmsgbuf );
-				}
+				
+				l->LibrarySQLDrop( l, sqllib );
 			}
 			else
 			{
@@ -642,6 +641,89 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		if( oldid != NULL )
 		{
 			FFree( oldid );
+		}
+	}
+	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	* 
+	* <HR><H2>system.library/app/authidremove</H2>Remove authentication id token
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param id - (required) authid of entry which will be removed
+	* @param userid - if passed then session will be checked for this user
+
+	* @return { "response":"success" } otherwise information about error
+	*/
+	/// @endcond
+	else if( strcmp( urlpath[ 0 ], "authidremove" ) == 0 )
+	{
+		char *authid = NULL;
+		FULONG uid = 0;
+		
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
+		};
+		
+		response = HttpNewSimple( HTTP_200_OK,  tags );
+		
+		HashmapElement *el = HashmapGet( request->http_ParsedPostContent, "id" );
+		if( el != NULL )
+		{
+			authid = UrlDecodeToMem( ( char *)el->hme_Data );
+		}
+		
+		el = HashmapGet( request->http_ParsedPostContent, "userid" );
+		if( el != NULL )
+		{
+			char *end;
+			uid = strtoull( (( char *)el->hme_Data), &end, 0 );
+		}
+		
+		if( authid != NULL )
+		{
+			char respMsg[ 1024 ];
+			User *usr = NULL;
+			
+			// we must get application id from database
+			AppSession *ses = AppSessionManagerGetSessionByAuthID( l->sl_AppSessionManager, authid );
+			if( ses != NULL )
+			{
+				if( loggedSession->us_User->u_IsAdmin )
+				{
+					if( uid == 0 )
+					{
+						usr = loggedSession->us_User;
+					}
+					else
+					{
+						usr = UMGetUserByID( l->sl_UM, uid );
+					}
+				}
+				else
+				{
+					usr = loggedSession->us_User;
+				}
+				
+				UserRemoveAppSession( usr, ses );
+				AppSessionManagerAppSessionRemoveByAuthID( l->sl_AppSessionManager, authid );
+			}
+
+			snprintf( respMsg, sizeof(respMsg), "{\"result\":\"success\"}" );
+
+			HttpAddTextContent( response, respMsg );
+
+			FFree( authid );
+		}
+		else
+		{
+			char dictmsgbuf[ 256 ];
+			char dictmsgbuf1[ 196 ];
+			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "appname" );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+			HttpAddTextContent( response, dictmsgbuf );
 		}
 	}
 	else

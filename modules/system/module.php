@@ -713,7 +713,7 @@ if( isset( $args->command ) )
 			}
 			
 			if( $User->ID > 0 && ( $keys = $SqlDatabase->FetchObjects( $q = '
-				SELECT k.*, a.Name AS Application, u.AuthID AS ApplicationAuthID 
+				SELECT k.*, a.Name AS Application, as.AuthID AS ApplicationAuthID 
 				FROM 
 					`FKeys` k 
 						LEFT JOIN `FApplication` a ON 
@@ -722,14 +722,18 @@ if( isset( $args->command ) )
 						) 
 						LEFT JOIN `FUserApplication` u ON 
 						( 
-								u.ApplicationID = k.ApplicationID 
+							u.ApplicationID = k.ApplicationID 
 							AND u.UserID = \'' . $User->ID . '\' 
+						)
+						LEFT JOIN `FAppSession` as ON
+						(
+							as.UserApplicationID = u.ID
 						)
 				WHERE 
 						k.UserID = \'' . $User->ID . '\' 
 					AND k.IsDeleted = "0" 
 					' . ( isset( $args->args->id ) ? 'AND k.ID IN ( ' . $args->args->id . ' ) ' : '' ) . '
-					' . ( isset( $args->args->authId ) && !isset( $args->args->appPath ) ? ( $args->args->authId == "0" ? 'AND ( k.ApplicationID = "0" OR k.ApplicationID = "-1" ) ' : 'AND u.AuthID = \'' . $args->args->authId . '\' ' ) : '' ) . '
+					' . ( isset( $args->args->authId ) && !isset( $args->args->appPath ) ? ( $args->args->authId == "0" ? 'AND ( k.ApplicationID = "0" OR k.ApplicationID = "-1" ) ' : 'AND as.AuthID = \'' . $args->args->authId . '\' ' ) : '' ) . '
 				ORDER 
 					BY k.ID ASC 
 			' ) ) )
@@ -1298,11 +1302,13 @@ if( isset( $args->command ) )
 							a.ID 
 						FROM 
 							`FUserApplication` u, 
-							`FApplication` a 
+							`FApplication` a
+						       	`FAppSession` as	
 						WHERE 
-								u.UserID = \'' . $User->ID . '\' 
-							AND u.AuthID = \'' . $args->args->authId . '\' 
-							AND a.ID = u.ApplicationID 
+							u.UserID = \'' . $User->ID . '\' 
+							AND as.AuthID = \'' . $args->args->authId . '\' 
+							AND a.ID = u.ApplicationID
+							AND as.UserApplicationID = u.ID 
 						ORDER BY 
 							a.ID ASC 
 						LIMIT 1 

@@ -193,7 +193,6 @@ DOSToken *DOSTokenManagerGetDOSToken( DOSTokenManager *d, const char *tokenID )
 				if( us != NULL )
 				{
 					us->us_LoggedTime = time( NULL );
-					us->us_SB = d->dtm_SB;
 
 					SQLLibrary *sqllib  = sb->LibrarySQLGet( sb );
 					if( sqllib != NULL )

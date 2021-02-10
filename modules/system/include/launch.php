@@ -72,8 +72,19 @@ if( $app->ID )
 		$ua->ApplicationID = $app->ID;
 		if( $ua->Load() )
 		{
-			$d = substr( $path, 11, strlen( $path ) - 10 );
-			$scrp = preg_replace( '/progdir\:/i', '/system.library/module/?module=system&authid=' . $ua->AuthID . '&command=resource&file=' . rawurlencode( $d ), $scrp );
+			$as = new dbIO( 'FAppSession' );
+			$as->UserID = $app->UserID;
+			$as->UserApplicationID = $ua->ID;
+			if( $as->Load() )
+			{
+				$d = substr( $path, 11, strlen( $path ) - 10 );
+				$scrp = preg_replace( '/progdir\:/i', '/system.library/module/?module=system&authid=' . $as->AuthID . '&command=resource&file=' . rawurlencode( $d ), $scrp );
+			
+			}
+			else
+			{
+				die( 'fail<!--separate-->{"response":application lacks user installation record"}' );
+			}
 		}
 		else
 		{

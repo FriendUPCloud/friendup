@@ -45,6 +45,31 @@ AppSessionManager *AppSessionManagerNew( void *sb )
 		pthread_mutex_init( &(asm->asm_Mutex), NULL );
 		
 		asm->asm_SessionsHT = AllocateHashTable( sizeof( AppSession *), 0);
+		
+		SystemBase *lsb = (SystemBase *)sb;
+		
+		asm->asm_SessionTimeout = DEFAULT_APPSESSION_TIMEOUT;	// one hour by default
+		
+		Props *prop = NULL;
+		PropertiesInterface *plib = &(lsb->sl_PropertiesInterface);
+		{
+			char *ptr, path[ 1024 ];
+			path[ 0 ] = 0;
+			
+			ptr = getenv("FRIEND_HOME");
+			
+			if( ptr != NULL )
+			{
+				sprintf( path, "%scfg/cfg.ini", ptr );
+			}
+
+			prop = plib->Open( path );
+			if( prop != NULL)
+			{
+				asm->asm_SessionTimeout = plib->ReadIntNCS( prop, "core:appsessiontimeout", DEFAULT_APPSESSION_TIMEOUT );
+				plib->Close( prop );
+			}
+		}
 
 		return asm;
 	}
@@ -121,6 +146,40 @@ int AppSessionManagerSessionsDeleteDB( AppSessionManager *asmgr, const char *aut
 }
 
 /**
+ * Get AppSession by ID
+ *
+ * @param usm pointer to AppSessionManager
+ * @param id entry ID
+ * @return pointer to AppSession structure
+ */
+AppSession *AppSessionManagerGetSessionByID( AppSessionManager *asmgr, FQUAD id )
+{
+	DEBUG("[AppSessionManagerGetSessionByAuthID] authid %ld\n", id );
+	if( id == 0 )
+	{
+		FERROR("Sessionid is NULL!\n");
+		return NULL;
+	}
+	
+	if( FRIEND_MUTEX_LOCK( &(asmgr->asm_Mutex) ) == 0 )
+	{
+		AppSession *as = asmgr->asm_Sessions;
+		while( as != NULL )
+		{
+			if( id == as->as_ID )
+			{
+				FRIEND_MUTEX_UNLOCK( &(asmgr->asm_Mutex) );
+				return as;
+			}
+			as = (AppSession *) as->node.mln_Succ;
+		}
+		DEBUG("CHECK4END\n");
+		FRIEND_MUTEX_UNLOCK( &(asmgr->asm_Mutex) );
+	}
+	return NULL;
+}
+
+/**
  * Get AppSession by authid
  *
  * @param usm pointer to AppSessionManager
@@ -135,7 +194,6 @@ AppSession *AppSessionManagerGetSessionByAuthID( AppSessionManager *asmgr, char 
 		FERROR("Sessionid is NULL!\n");
 		return NULL;
 	}
-	DEBUG("CHECK4\n");
 	
 	if( FRIEND_MUTEX_LOCK( &(asmgr->asm_Mutex) ) == 0 )
 	{
@@ -152,10 +210,10 @@ AppSession *AppSessionManagerGetSessionByAuthID( AppSessionManager *asmgr, char 
 		{
 			if( strcmp( authid, as->as_AuthID ) == 0 )
 			{
-				FRIEND_MUTEX_UNLOCK( &(asmgr->usm_Mutex) );
+				FRIEND_MUTEX_UNLOCK( &(asmgr->asm_Mutex) );
 				return as;
 			}
-			as = (UserSession *) as->node.mln_Succ;
+			as = (AppSession *) as->node.mln_Succ;
 		}
 		DEBUG("CHECK4END\n");
 #endif
@@ -419,7 +477,6 @@ int AppSessionManagerAppSessionRemove( AppSessionManager *asmgr, AppSession *rem
 	
 	DEBUG("[AppSessionManagerAppSessionRemove] UserSessionRemove\n");
 	
-	DEBUG("CHECK9\n");
 	if( FRIEND_MUTEX_LOCK( &(asmgr->asm_Mutex) ) == 0 )
 	{
 		if( remsess == asmgr->asm_Sessions )
@@ -458,5 +515,126 @@ int AppSessionManagerAppSessionRemove( AppSessionManager *asmgr, AppSession *rem
 		AppSessionDelete( remsess );
 	}
 
+	return 0;
+}
+
+
+/**
+ * Remove AppSession from FC list
+ *
+ * @param asmgr pointer to AppSessionManager
+ * @param authid authid of session which will be removed
+ * @return 0 when success, otherwise error number
+ */
+int AppSessionManagerAppSessionRemoveByAuthID( AppSessionManager *asmgr, char *authid )
+{
+	if( authid == NULL )
+	{
+		return -1;
+	}
+	if( asmgr->asm_Sessions == NULL )
+	{
+		return -2;
+	}
+	
+	AppSession *sess = asmgr->asm_Sessions;
+	AppSession *prev = sess;
+	AppSession *toBeRemoved = NULL;
+	
+	DEBUG("[AppSessionManagerAppSessionRemove] UserSessionRemove\n");
+	
+	if( FRIEND_MUTEX_LOCK( &(asmgr->asm_Mutex) ) == 0 )
+	{
+		if( strcmp( authid, asmgr->asm_Sessions->as_AuthID ) == 0 )
+		{
+			asmgr->asm_Sessions = (AppSession *)asmgr->asm_Sessions->node.mln_Succ;
+			toBeRemoved = sess;
+			asmgr->asm_SessionCounter--;
+			INFO("[AppSessionManagerAppSessionRemove] Session removed from list\n");
+		}
+		else
+		{
+			while( sess != NULL )
+			{
+				prev = sess;
+				sess = (AppSession *)sess->node.mln_Succ;
+			
+				if( sess != NULL && strcmp( sess->as_AuthID, authid ) == 0 )
+				{
+					// Remove appsession from list
+					prev->node.mln_Succ = sess->node.mln_Succ;
+					DEBUG("[USMUserSessionRemove] Session removed from list\n");
+					toBeRemoved = sess;
+					break;
+				}
+				
+			}
+			asmgr->asm_SessionCounter--;
+		}
+		FRIEND_MUTEX_UNLOCK( &(asmgr->asm_Mutex) );
+	}
+	
+	if( toBeRemoved != NULL )
+	{
+		AppSessionManagerSessionsDeleteDB( asmgr, toBeRemoved->as_HashedAuthID );
+		
+		AppSessionDelete( toBeRemoved );
+	}
+
+	return 0;
+}
+
+/**
+ * Remove old App Sessions from DB
+ *
+ * @param lsb pointer to SystemBase
+ * @return 0 when success, otherwise error number
+ */
+int AppSessionManagerRemoveOldAppSessions( void *lsb )
+{
+	SystemBase *sb = (SystemBase *)lsb;
+
+	time_t acttime = time( NULL );
+	
+	DEBUG("[USMRemoveOldAppSessions] start\n" );
+	
+	AppSessionManager *asmgr = (AppSessionManager *)sb->sl_AppSessionManager;
+	
+	if( FRIEND_MUTEX_LOCK( &(asmgr->asm_Mutex) ) == 0 )
+	{
+		AppSession *newAsRoot = NULL;
+		AppSession *as = asmgr->asm_Sessions;
+		
+		// now we are going through all sessions and check which one timeout
+		// up-to-date ones are moved to new list, old removed
+		
+		while( as != NULL )
+		{
+			AppSession *oldEntry = as;
+			as = (AppSession *)as->node.mln_Succ;
+			
+			// timeout
+			if( ( acttime - oldEntry->as_CreateTime ) > asmgr->asm_SessionTimeout )
+			{
+				DEBUG("[USMRemoveOldAppSessions] entry removed: %s\n", oldEntry->as_HashedAuthID );
+				
+				AppSessionManagerSessionsDeleteDB( asmgr, oldEntry->as_HashedAuthID );
+		
+				AppSessionDelete( oldEntry );
+			}
+			else
+			{
+				oldEntry->node.mln_Succ = (MinNode *)newAsRoot;
+				newAsRoot = oldEntry;
+			}
+		}
+		
+		asmgr->asm_Sessions = newAsRoot;
+		
+		FRIEND_MUTEX_UNLOCK( &(asmgr->asm_Mutex) );
+	}
+	
+	DEBUG("[USMRemoveOldAppSessions] end\n" );
+	
 	return 0;
 }

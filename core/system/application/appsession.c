@@ -49,7 +49,7 @@ AppSession *AppSessionNew( void *sb, FQUAD applicationID, FQUAD userID, char *au
 		}
 		
 		as->as_UserID = userID;
-		as->as_ApplicationID = applicationID;
+		as->as_UserApplicationID = applicationID;
 
 		AppSessionInit( as, sb );
 	}
@@ -57,9 +57,9 @@ AppSession *AppSessionNew( void *sb, FQUAD applicationID, FQUAD userID, char *au
 }
 
 /**
- * UserSession init
+ * AppSession init
  *
- * @param us pointer to UserSession which will be initalized
+ * @param us pointer to AppSession which will be initalized
  * @param sb pointer to SessionBase
  */
 void AppSessionInit( AppSession *as, void *sb )
@@ -70,13 +70,14 @@ void AppSessionInit( AppSession *as, void *sb )
 		pthread_mutex_init( &as->as_Mutex, NULL );
 		
 		as->as_HashedAuthID = lsb->sl_UtilInterface.DatabaseEncodeString( as->as_AuthID );
+		as->as_CreateTime = time( NULL );
 	}
 }
 
 /**
- * Delete UserSession
+ * Delete AppSession
  *
- * @param us pointer to UserSession which will be deleted
+ * @param us pointer to AppSession which will be deleted
  */
 void AppSessionDelete( AppSession *as )
 {
@@ -101,4 +102,26 @@ void AppSessionDelete( AppSession *as )
 	}
 }
 
+/**
+ * Regenerate AuthID
+ *
+ * @param us pointer to AppSession which will be initalized
+ * @param sb pointer to SystemBase
+ */
+void AppSessionRegenerateAuthID( AppSession *as, void *sb )
+{
+	if( as != NULL )
+	{
+		SystemBase *lsb = (SystemBase *)sb;
+		
+		if( as->as_AuthID != NULL )
+		{
+			FFree( as->as_AuthID );
+		}
+		
+		as->as_AuthID = SessionIDGenerate();
+		
+		as->as_HashedAuthID = lsb->sl_UtilInterface.DatabaseEncodeString( as->as_AuthID );
+	}
+}
 

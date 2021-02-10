@@ -37,8 +37,6 @@ UserSession *UserSessionNew( void *sb, char *sesid, char *devid )
 	UserSession *s;
 	if( ( s = FCalloc( 1, sizeof(UserSession) ) ) != NULL )
 	{
-		s->us_SB = sb;
-		
 		if( sesid != NULL )
 		{
 			s->us_SessionID = StringDuplicate( sesid );
@@ -68,6 +66,7 @@ void UserSessionInit( UserSession *us, void *sb )
 	if( us != NULL )
 	{
 		SystemBase *lsb = (SystemBase *)sb;
+		us->us_SB = sb;
 		
 		pthread_mutex_init( &us->us_Mutex, NULL );
 		
@@ -138,7 +137,7 @@ void UserSessionDelete( UserSession *us )
 		}
 		SystemBase *lsb = (SystemBase *)us->us_SB;
 
-		DEBUG("[UserSessionDelete] Remove session %p\n", us );
+		DEBUG("[UserSessionDelete] Remove session %p pointer to systembase: %p\n", us, lsb );
 
 		// Remove session from SAS
 		//

@@ -97,7 +97,8 @@ static const char *DefaultDictionaryMessages[] =
 "No access, special rights required",
 "User Mobile App entry not found",
 "File uncompress problem: %d",
-"Application not found: %s"
+"Application not found: %s",
+"Application Session not found"
 };
 
 /**

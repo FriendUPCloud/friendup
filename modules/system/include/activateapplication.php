@@ -89,7 +89,7 @@ else if( $row = $SqlDatabase->FetchObject( '
 		$app = new dbIO( 'FUserApplication' );
 		$app->ApplicationID = $row->ID;
 		$app->UserID = $User->ID;
-		$app->AuthID = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . $row->ID );
+		//$app->AuthID = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . $row->ID );
 		$app->Permissions = json_encode( $perms );
 		$app->Data = json_encode( $data );
 		$app->Save();

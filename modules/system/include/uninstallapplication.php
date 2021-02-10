@@ -39,6 +39,13 @@ if( $path = findInSearchPaths( $args->args->application ) )
 	{
 		foreach( $rows as $row )
 		{
+			$ua = new DbIO( 'FUserApplication' );
+        		$ua->UserID = $UserID;
+        		$ua->ApplicationID = $l->ID;
+        		if( $ua->Load() )
+        		{
+				$SqlDatabase->Query( 'DELETE FROM FAppSession WHERE UserApplicationID=\'' . $ua->ID . '\'' );
+			}
 			$SqlDatabase->Query( 'DELETE FROM FUserApplication WHERE UserID=\'' . $User->ID . '\' AND ApplicationID=\'' . $row->ID . '\'' );
 			$SqlDatabase->Query( 'DELETE FROM FApplication WHERE ID=\'' . $row->ID . '\'' );
 		}
