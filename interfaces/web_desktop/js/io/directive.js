@@ -1100,17 +1100,17 @@ function ExecuteApplicationActivation( app, win, permissions, reactivation )
 function ExecuteJSXByPath( path, args, callback, conf, flags )
 {
 	if( !path ) return;
+	
+	// Strip arguments
+	let ind = path.indexOf( '.jsx' );
+	path = path.substr( 0, ind + 4 );
+	
+	// Get app
 	var app = path.split( ':' )[1];
 	if( app.indexOf( '/' ) > 0 )
 	{
 		app = app.split( '/' );
 		app = app[app.length-1];
-	}
-	
-	// Strip arguments
-	if( path.indexOf( ' ' ) > 0 )
-	{
-		path = path.split( ' ' )[0];
 	}
 	
 	// Strip arguments and place in args
