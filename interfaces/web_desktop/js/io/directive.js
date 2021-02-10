@@ -60,21 +60,17 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	}
 	
 	// Match silent
+	if( !flags ) flags = {};
+	flags.openSilent = false;
+	
 	if( args )
 	{
 		if( args.indexOf( 'silent ' ) > 0 || args.indexOf( ' silent' ) > 0 || args == 'silent' )
 		{
 			args = args.split( 'silent' ).join( '' );
 			args = args.split( '  ' ).join( ' ' );
-			if( !flags ) flags = {};
 			flags.openSilent = true;
 		}
-	}
-	else
-	{
-		if( !flags ) flags = {};
-		if( !flags.openSilent )
-			flags.openSilent = false;
 	}
 	
 	// You need to wait with opening apps until they are loaded by app name
