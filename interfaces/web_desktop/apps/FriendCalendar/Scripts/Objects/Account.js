@@ -200,5 +200,5 @@
 		}
 	}
 	
-})( system );
+})( Application );
 
