@@ -674,11 +674,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						locusr->u_Email = email;
 						email = NULL;
 						locusr->u_Password = usrpass;
-<<<<<<< HEAD
 						locusr->u_Timezone = timezone;
-=======
 						usrpass = NULL;
->>>>>>> master
 						userCreated = TRUE;
 						
 						int error = UMUserCreate( l->sl_UM, request, locusr );
