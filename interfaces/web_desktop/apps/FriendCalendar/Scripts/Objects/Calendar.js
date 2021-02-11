@@ -854,9 +854,6 @@ Calendar.refreshRoster = function( mode )
 				let event = eventList[ b ];
 				if( !event ) continue;
 				
-				let eventTime = new Date( event.DateStart ).getTime();
-				let eventStop = false; 
-				
 				let md = false;
 				try
 				{
@@ -864,10 +861,36 @@ Calendar.refreshRoster = function( mode )
 				}
 				catch( e ){ md = false; }
 				
+				// Fix corrupt date
+				let t = event.DateStart.split( ' ' );
+				if( t[1].length <= 3 )
+				{
+					t[1] = '00:00:00';
+				}
+				event.DateStart = t.join( ' ' );
+				
+				let eventTime = new Date( event.DateStart ).getTime();
+				let eventStop = false; 
+				
 				if( md && md.DateTo )
 				{
+					// Fix corrupt date
+					t = md.DateTo.split( ' ' );
+					if( t[1].length <= 3 )
+					{
+						t[1] = '00:00:00';
+					}
+					md.DateTo = t.join( ' ' );
+					// Make time
 					eventStop = new Date( md.DateTo ).getTime();
 				}
+				// No date to? Just add the same
+				else
+				{
+					eventStop = eventTime;
+				}
+				
+				console.log( 'Time frame: ' + eventTime + ' ' + eventStop );
 				
 				// Are we within time span?
 				let within = eventTime >= dateFrom && eventTime <= dateTo;
@@ -881,6 +904,7 @@ Calendar.refreshRoster = function( mode )
 					) :
 					false;
 				// Done time span rules
+				
 				
 				if( within || within2 )
 				{
