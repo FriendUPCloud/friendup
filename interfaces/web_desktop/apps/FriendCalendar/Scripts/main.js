@@ -102,7 +102,7 @@ updateUsers();
 
 function AddEvent( year, month, day )
 {
-	var v = new View( {
+	let v = new View( {
 		title: 'Add event',
 		width: 500,
 		height: 500
@@ -110,16 +110,21 @@ function AddEvent( year, month, day )
 	
 	eventMode = v;
 	
-	var date = year + '-' + 
+	let date = year + '-' + 
 		StrPad( month, 2, '0' ) + '-' +
 		StrPad( day, 2, '0' );
+
+	let now = new Date();
+	let nowTime = StrPad( now.getHours(), 2, '0' ) + ':' +
+				  StrPad( now.getMinutes(), 2, '0' ) + ':' +
+				  '00';
 
 	var f = new File( 'Progdir:Templates/event.html' );
 	f.replacements = {
 		title: '',
 		leadin: '',
-		timefrom: '',
-		timeto: '',
+		timefrom: nowTime,
+		timeto: nowTime,
 		date: date,
 		dateTo: date,
 		timeslot: ' checked="checked"',
@@ -384,6 +389,7 @@ Application.receiveMessage = function( msg )
 				}
 			}
 			Calendar.render();
+			Calendar.refreshRoster();
 			break;
 	}
 }

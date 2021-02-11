@@ -890,8 +890,6 @@ Calendar.refreshRoster = function( mode )
 					eventStop = eventTime;
 				}
 				
-				console.log( 'Time frame: ' + eventTime + ' ' + eventStop );
-				
 				// Are we within time span?
 				let within = eventTime >= dateFrom && eventTime <= dateTo;
 				let within2 = eventStop ? 
