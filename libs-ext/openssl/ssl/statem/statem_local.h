@@ -1,7 +1,7 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -199,9 +199,9 @@ int tls_parse_ctos_early_data(SSL *s, PACKET *pkt, unsigned int context,
 #ifndef OPENSSL_NO_EC
 int tls_parse_ctos_ec_pt_formats(SSL *s, PACKET *pkt, unsigned int context,
                                  X509 *x, size_t chainidx);
-#endif
 int tls_parse_ctos_supported_groups(SSL *s, PACKET *pkt, unsigned int context,
                                     X509 *x, size_t chainidxl);
+#endif
 int tls_parse_ctos_session_ticket(SSL *s, PACKET *pkt, unsigned int context,
                                   X509 *x, size_t chainidx);
 int tls_parse_ctos_sig_algs_cert(SSL *s, PACKET *pkt, unsigned int context,
@@ -314,11 +314,10 @@ EXT_RETURN tls_construct_ctos_srp(SSL *s, WPACKET *pkt, unsigned int context, X5
 EXT_RETURN tls_construct_ctos_ec_pt_formats(SSL *s, WPACKET *pkt,
                                             unsigned int context, X509 *x,
                                             size_t chainidx);
-#endif
 EXT_RETURN tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt,
                                                unsigned int context, X509 *x,
                                                size_t chainidx);
-
+#endif
 EXT_RETURN tls_construct_ctos_early_data(SSL *s, WPACKET *pkt,
                                          unsigned int context, X509 *x,
                                          size_t chainidx);

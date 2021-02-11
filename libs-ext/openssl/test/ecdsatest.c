@@ -1,8 +1,8 @@
 /*
- * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2019 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -118,11 +118,6 @@ static int x9_62_tests(int n)
 
     TEST_info("ECDSA KATs for curve %s", OBJ_nid2sn(nid));
 
-#ifdef FIPS_MODE
-    if (EC_curve_nid2nist(nid) == NULL)
-        return TEST_skip("skip non approved curves");
-#endif /* FIPS_MODE */
-
     if (!TEST_ptr(mctx = EVP_MD_CTX_new())
         /* get the message digest */
         || !TEST_ptr(message = OPENSSL_hexstr2buf(tbs, &msg_len))
@@ -210,7 +205,6 @@ static int test_builtin(int n)
     EVP_MD_CTX *mctx = NULL;
     size_t sig_len;
     int nid, ret = 0;
-    int temp;
 
     nid = curves[n].nid;
 
@@ -237,10 +231,9 @@ static int test_builtin(int n)
         || !TEST_true(EVP_PKEY_assign_EC_KEY(pkey_neg, eckey_neg)))
         goto err;
 
-    temp = ECDSA_size(eckey);
+    sig_len = ECDSA_size(eckey);
 
-    if (!TEST_int_ge(temp, 0)
-        || !TEST_ptr(sig = OPENSSL_malloc(sig_len = (size_t)temp))
+    if (!TEST_ptr(sig = OPENSSL_malloc(sig_len))
         /* create a signature */
         || !TEST_true(EVP_DigestSignInit(mctx, NULL, NULL, NULL, pkey))
         || !TEST_true(EVP_DigestSign(mctx, sig, &sig_len, tbs, sizeof(tbs)))

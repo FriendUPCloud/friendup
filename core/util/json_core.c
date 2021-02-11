@@ -22,6 +22,10 @@
 char* JSONGetExpectedErrorString( unsigned int expected )
 {
 	char* str = malloc( 86 );
+	if( str == NULL )
+	{
+		return NULL;
+	}
 	char* ptr = str;
 	if( expected & JSON_TYPE_ARRAY )
 	{
@@ -111,7 +115,10 @@ JSONArray* JSONArrayNew()
 JSONData* JSONDataNew( unsigned int line __attribute__((unused)))
 {
 	JSONData* d = calloc( 1, sizeof( JSONData ) );
-	d->type = JSON_TYPE_NONE;
+	if( d != NULL )
+	{
+		d->type = JSON_TYPE_NONE;
+	}
 	//printf("++++ JSONDataNew 0x%.8X, %d\n", d, line);
 	return d;
 }
@@ -418,7 +425,17 @@ JSONData* JSONParse( char* str, unsigned int length )
 					else
 					{
 						DEBUG( "Expecting: %.8X%s, got %.8X\n", expect, inObjectKey ? " (string)" : "", state );
-						DEBUG( "    expected: %s. got: %s\n", JSONGetExpectedErrorString(expect), JSONGetExpectedErrorString(state) );
+						char *errExpect = JSONGetExpectedErrorString( expect );
+						if( errExpect != NULL )
+						{
+							char *errState = JSONGetExpectedErrorString( state );
+							if( errState != NULL )
+							{
+								DEBUG( "    expected: %s. got: %s\n", errExpect, errState );
+								FFree( errState );
+							}
+							FFree( errExpect );
+						}
 
 						DEBUG( "Unexpected character \"%c\" on line %d, column %d (%s:%d)\n", c, linenum, column, __FILE__, __LINE__ );
 						JSONFree( firstNode );
@@ -638,8 +655,12 @@ JSONData* JSONParse( char* str, unsigned int length )
 			// If this is the first node, just push it onto the stack
 			if( level == 0 )
 			{
-
-				DEBUG("Got initial type (level %d), type: %s\n", level, JSONGetExpectedErrorString(currentNode->type) );
+				char *err = JSONGetExpectedErrorString( currentNode->type );
+				if( err != NULL )
+				{
+					DEBUG("Got initial type (level %d), type: %s\n", level, err );
+					FFree( err );
+				}
 
 				stack[level++] = currentNode;
 			}
@@ -711,15 +732,23 @@ JSONData* JSONParse( char* str, unsigned int length )
 						currentNode = NULL;
 					expect = JSON_TYPE_COLON;
 
-					DEBUG( "Now expecting: %.8X (%s) (%s:%d)\n", expect, JSONGetExpectedErrorString( expect ), __FILE__, __LINE__ );
-
+					char *err = JSONGetExpectedErrorString( currentNode->type );
+					if( err != NULL )
+					{
+						DEBUG( "Now expecting: %.8X (%s) (%s:%d)\n", expect, err, __FILE__, __LINE__ );
+						FFree( err );
+					}
 					inObjectKey = FALSE;
 				}
 				// Add value
 				else
 				{
-					DEBUG( "Added to object (level %d), type: %s\n", level, JSONGetExpectedErrorString( state ) );
-
+					char *err = JSONGetExpectedErrorString( currentNode->type );
+					if( err != NULL )
+					{
+						DEBUG( "Added to object (level %d), type: %s\n", level, err );
+						FFree( err );
+					}
 					// Get the parent object
 					JSONData* d = stack[level - 1];
 					if( !d || !d->data )
@@ -737,7 +766,12 @@ JSONData* JSONParse( char* str, unsigned int length )
 					currentKey = NULL;
 					expect = JSON_TYPE_COMMA | JSON_TYPE_OBJECT_END;
 
-					DEBUG( "Now expecting: %.8X (%s) (%s:%d)\n", expect, JSONGetExpectedErrorString( expect ), __FILE__, __LINE__ );
+					err = JSONGetExpectedErrorString( currentNode->type );
+					if( err != NULL )
+					{
+						DEBUG( "Now expecting: %.8X (%s) (%s:%d)\n", expect, err, __FILE__, __LINE__ );
+						FFree( err );
+					}
 				}
 				nextExpect = JSON_TYPE_NONE;
 			}
@@ -745,16 +779,24 @@ JSONData* JSONParse( char* str, unsigned int length )
 			// If the element we added was an array, push it onto the stack
 			if( state & JSON_TYPE_ARRAY )
 			{
-
-				DEBUG("Added array (level %d), type: %s\n", level, JSONGetExpectedErrorString(currentNode->type) );
+				char *err = JSONGetExpectedErrorString( currentNode->type );
+				if( err != NULL )
+				{
+					DEBUG("Added array (level %d), type: %s\n", level, err );
+					FFree( err );
+				}
 
 				stack[level++] = currentNode;
 				expect = JSON_TYPE_ARRAY | JSON_TYPE_OBJECT | JSON_TYPE_VALUE | JSON_TYPE_ARRAY_END;
 			}
 			if( state & JSON_TYPE_OBJECT )
 			{
-
-				DEBUG("Added object (level %d), type: %s\n", level, JSONGetExpectedErrorString(currentNode->type) );
+				char *err = JSONGetExpectedErrorString( currentNode->type );
+				if( err != NULL )
+				{
+					DEBUG("Added object (level %d), type: %s\n", level, err );
+					FFree( err );
+				}
 
 				stack[level++] = currentNode;
 				expect = JSON_TYPE_VALUE | JSON_TYPE_OBJECT_END;

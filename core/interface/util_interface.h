@@ -18,10 +18,12 @@
 #define __INTERFACE_UTIL_INTERFACE_H__
 
 #include <util/log/log.h>
+#include <system/support/support_manager.h>
 
 typedef struct UtilInterface
 {
 	void						(*Log)( int lev, char* fmt, ...);
+	FQUAD						(*GetUniqueFileID)( SupportManager *sm );
 }UtilInterface;
 
 //
@@ -31,6 +33,7 @@ typedef struct UtilInterface
 static inline void UtilInterfaceInit( UtilInterface *ui )
 {
 	ui->Log = Log;
+	ui->GetUniqueFileID = SupportManagerGetTempFileID;
 }
 
 #endif // __INTERFACE_UTIL_INTERFACE_H__

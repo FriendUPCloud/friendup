@@ -57,7 +57,11 @@ void PIDThreadDelete( PIDThread *th )
 		
 		for( i = 0; i < th->pt_UrlDepth; i++ )
 		{
-			FFree( th->pt_Url[ i ] );
+			if( th->pt_Url[ i ] != NULL )
+			{
+				FFree( th->pt_Url[ i ] );
+				th->pt_Url[ i ] = NULL;
+			}
 		}
 		
 		ThreadDelete( th->pt_Thread );

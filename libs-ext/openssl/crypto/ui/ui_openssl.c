@@ -1,7 +1,7 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -34,7 +34,11 @@
 # include <errno.h>
 
 # if !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_VMS)
-#  include <unistd.h>
+#  ifdef OPENSSL_UNISTD
+#   include OPENSSL_UNISTD
+#  else
+#   include <unistd.h>
+#  endif
 /*
  * If unistd.h defines _POSIX_VERSION, we conclude that we are on a POSIX
  * system and have sigaction and termios.
@@ -88,8 +92,8 @@
  * We know that VMS, MSDOS, VXWORKS, use entirely other mechanisms.
  */
 #  elif !defined(OPENSSL_SYS_VMS) \
-        && !defined(OPENSSL_SYS_MSDOS) \
-        && !defined(OPENSSL_SYS_VXWORKS)
+	&& !defined(OPENSSL_SYS_MSDOS) \
+	&& !defined(OPENSSL_SYS_VXWORKS)
 #   define TERMIOS
 #   undef  TERMIO
 #   undef  SGTTY
@@ -432,6 +436,16 @@ static int open_console(UI *ui)
              * This should be ok
              */
         if (errno == EIO)
+            is_a_tty = 0;
+        else
+#  endif
+#  ifdef EPERM
+            /*
+             * Linux can return EPERM (Operation not permitted),
+             * e.g. if a daemon executes openssl via fork()+execve()
+             * This should be ok
+             */
+        if (errno == EPERM)
             is_a_tty = 0;
         else
 #  endif

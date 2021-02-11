@@ -1,37 +1,33 @@
 /*
- * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
 
 #include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_RSA
-NON_EMPTY_TRANSLATION_UNIT
-#else
+#include "apps.h"
+#include "progs.h"
+#include <string.h>
+#include <openssl/err.h>
+#include <openssl/pem.h>
+#include <openssl/rsa.h>
 
-# include "apps.h"
-# include "progs.h"
-# include <string.h>
-# include <openssl/err.h>
-# include <openssl/pem.h>
-# include <openssl/rsa.h>
+#define RSA_SIGN        1
+#define RSA_VERIFY      2
+#define RSA_ENCRYPT     3
+#define RSA_DECRYPT     4
 
-# define RSA_SIGN        1
-# define RSA_VERIFY      2
-# define RSA_ENCRYPT     3
-# define RSA_DECRYPT     4
-
-# define KEY_PRIVKEY     1
-# define KEY_PUBKEY      2
-# define KEY_CERT        3
+#define KEY_PRIVKEY     1
+#define KEY_PUBKEY      2
+#define KEY_CERT        3
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_ENGINE, OPT_IN, OPT_OUT, OPT_ASN1PARSE, OPT_HEXDUMP,
-    OPT_RSA_RAW, OPT_OAEP, OPT_SSL, OPT_PKCS, OPT_X931,
+    OPT_RAW, OPT_OAEP, OPT_SSL, OPT_PKCS, OPT_X931,
     OPT_SIGN, OPT_VERIFY, OPT_REV, OPT_ENCRYPT, OPT_DECRYPT,
     OPT_PUBIN, OPT_CERTIN, OPT_INKEY, OPT_PASSIN, OPT_KEYFORM,
     OPT_R_ENUM
@@ -46,7 +42,7 @@ const OPTIONS rsautl_options[] = {
     {"pubin", OPT_PUBIN, '-', "Input is an RSA public"},
     {"certin", OPT_CERTIN, '-', "Input is a cert carrying an RSA public key"},
     {"ssl", OPT_SSL, '-', "Use SSL v2 padding"},
-    {"raw", OPT_RSA_RAW, '-', "Use no padding"},
+    {"raw", OPT_RAW, '-', "Use no padding"},
     {"pkcs", OPT_PKCS, '-', "Use PKCS#1 v1.5 padding (default)"},
     {"oaep", OPT_OAEP, '-', "Use PKCS#1 OAEP"},
     {"sign", OPT_SIGN, '-', "Sign with private key"},
@@ -60,9 +56,9 @@ const OPTIONS rsautl_options[] = {
     {"decrypt", OPT_DECRYPT, '-', "Decrypt with private key"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     OPT_R_OPTIONS,
-# ifndef OPENSSL_NO_ENGINE
+#ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-# endif
+#endif
     {NULL}
 };
 
@@ -112,7 +108,7 @@ int rsautl_main(int argc, char **argv)
         case OPT_HEXDUMP:
             hexdump = 1;
             break;
-        case OPT_RSA_RAW:
+        case OPT_RAW:
             pad = RSA_NO_PADDING;
             break;
         case OPT_OAEP:
@@ -279,4 +275,3 @@ int rsautl_main(int argc, char **argv)
     OPENSSL_free(passin);
     return ret;
 }
-#endif

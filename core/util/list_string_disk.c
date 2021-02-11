@@ -118,6 +118,7 @@ FQUAD ListStringDiskAdd( ListStringDisk *ls, char *data, FLONG size )
 				if( strlen( ls->lsd_TemFileName ) == 0 )
 				{
 					FERROR("[ListStringDisk] mktemp failed!");
+					FFree( nls );
 					return -1;
 				}
 				else
@@ -126,6 +127,7 @@ FQUAD ListStringDiskAdd( ListStringDisk *ls, char *data, FLONG size )
 					if( ls->lsd_FileHandler == -1 )
 					{
 						FERROR("[ListStringDisk] temporary file open failed!");
+						FFree( nls );
 						return -1;
 					}
 				}
@@ -157,6 +159,8 @@ FQUAD ListStringDiskAdd( ListStringDisk *ls, char *data, FLONG size )
 			// lets write data!
 			int wrote = write( ls->lsd_FileHandler, data, size );
 			ls->lsd_Size += size;
+			
+			FFree( nls );
 			return size;
 		}
 		else	// we can do everything in old way (in memory)
@@ -182,6 +186,10 @@ FQUAD ListStringDiskAdd( ListStringDisk *ls, char *data, FLONG size )
 	}
 	else
 	{
+		if( nls != NULL )
+		{
+			FFree( nls );
+		}
 		return -2;
 	}
 	return 0;
@@ -191,7 +199,7 @@ FQUAD ListStringDiskAdd( ListStringDisk *ls, char *data, FLONG size )
 // join all lists to one string
 //
 
-ListStringDisk *ListStringDiskJoin( ListStringDisk *ls )
+int ListStringDiskJoin( ListStringDisk *ls )
 {
 	if( ls->lsd_FileHandler <= 0 )
 	{
@@ -228,7 +236,7 @@ ListStringDisk *ListStringDiskJoin( ListStringDisk *ls )
 		{
 			FERROR("[ListStringDisk] Cannot allocate memory %ld\n", ls->lsd_Size );
 	
-			return NULL;
+			return 0;
 		}
 	}
 	else	// all data were stored on disk before
@@ -239,13 +247,13 @@ ListStringDisk *ListStringDiskJoin( ListStringDisk *ls )
 		if( ls->lsd_Data == MAP_FAILED )
 		{
 			Log( FLOG_ERROR, "[ListStringDisk] Cannot allocate memory for stream, length: %d\n", incomingBufferLength );
-			return NULL;
+			return 0;
 		}
 	}
 	
 	ls->lsd_ListJoined = TRUE;
 	
-	return ls;
+	return 0;
 	
 }
 

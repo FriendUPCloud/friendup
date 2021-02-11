@@ -1,7 +1,7 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -429,6 +429,42 @@ static OSSL_STORE_INFO *try_decode_PrivateKey(const char *pem_name,
         }
     } else {
         int i;
+#ifndef OPENSSL_NO_ENGINE
+        ENGINE *curengine = ENGINE_get_first();
+
+        while (curengine != NULL) {
+            ENGINE_PKEY_ASN1_METHS_PTR asn1meths =
+                ENGINE_get_pkey_asn1_meths(curengine);
+
+            if (asn1meths != NULL) {
+                const int *nids = NULL;
+                int nids_n = asn1meths(curengine, NULL, &nids, 0);
+
+                for (i = 0; i < nids_n; i++) {
+                    EVP_PKEY_ASN1_METHOD *ameth2 = NULL;
+                    EVP_PKEY *tmp_pkey = NULL;
+                    const unsigned char *tmp_blob = blob;
+
+                    if (!asn1meths(curengine, &ameth2, NULL, nids[i]))
+                        continue;
+                    if (ameth2 == NULL
+                        || ameth2->pkey_flags & ASN1_PKEY_ALIAS)
+                        continue;
+
+                    tmp_pkey = d2i_PrivateKey(ameth2->pkey_id, NULL,
+                                              &tmp_blob, len);
+                    if (tmp_pkey != NULL) {
+                        if (pkey != NULL)
+                            EVP_PKEY_free(tmp_pkey);
+                        else
+                            pkey = tmp_pkey;
+                        (*matchcount)++;
+                    }
+                }
+            }
+            curengine = ENGINE_get_next(curengine);
+        }
+#endif
 
         for (i = 0; i < EVP_PKEY_asn1_get_count(); i++) {
             EVP_PKEY *tmp_pkey = NULL;
@@ -824,9 +860,8 @@ static OSSL_STORE_LOADER_CTX *file_open(const OSSL_STORE_LOADER *loader,
         }
 
         if (stat(path_data[i].path, &st) < 0) {
-            ERR_raise_data(ERR_LIB_SYS, errno,
-                           "calling stat(%s)",
-                           path_data[i].path);
+            SYSerr(SYS_F_STAT, errno);
+            ERR_add_error_data(1, path_data[i].path);
         } else {
             path = path_data[i].path;
         }

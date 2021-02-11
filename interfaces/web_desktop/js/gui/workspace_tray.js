@@ -151,10 +151,20 @@ function PollTray()
 					d.className = 'NotificationPopupElement BorderBottom';
 					d.notification = notties[a];
 					notties[ a ].seen = true;
+					
+					// Get timestring
+					let tim = new Date( notties[ a ].time );
+					let tdy = tim.getFullYear();
+					let tdm = StrPad( tim.getMonth() + 1, 2, '0' );
+					let tdd = StrPad( tim.getDate(), 2, '0' );
+					let tdh = StrPad( tim.getHours(), 2, '0' );
+					let tdi = StrPad( tim.getMinutes(), 2, '0' );
+					let timStr = tdy + '/' + tdm + '/' + tdd + ', ' + tdh + ':' + tdi;
+					
 					d.innerHTML = '\
 						<div>\
 							<div class="NotificationClose FloatRight fa-remove IconSmall"></div>\
-							<p class="Layout"><strong>' + notties[a].title + '</strong></p>\
+							<p class="Layout"><strong>' + notties[a].title + '<br><span class="DateStamp">' + timStr + '</span></strong></p>\
 							<p class="Layout">' + notties[a].text + '</p>\
 						</div>';
 					d.onmousedown = function( ev )
@@ -335,9 +345,18 @@ function PollTray()
 					{
 						event.seen = true;
 					
+						// Get timestring
+						let tim = new Date( event.time );
+						let tdy = tim.getFullYear();
+						let tdm = StrPad( tim.getMonth() + 1, 2, '0' );
+						let tdd = StrPad( tim.getDate(), 2, '0' );
+						let tdh = StrPad( tim.getHours(), 2, '0' );
+						let tdi = StrPad( tim.getMinutes(), 2, '0' );
+						let timStr = tdy + '/' + tdm + '/' + tdd + ', ' + tdh + ':' + tdi;
+					
 						var d = document.createElement( 'div' );
 						d.className = 'BubbleInfo';
-						d.innerHTML = '<div><p class="Layout"><strong>' + event.title + '</strong></p><p class="Layout">' + event.text + '</p></div>';
+						d.innerHTML = '<div><p class="Layout"><strong>' + event.title + '<br><span class="DateStamp">' + timStr + '</span></strong></p><p class="Layout">' + event.text + '</p></div>';
 						tray.notifications.appendChild( d );
 						d.onmousedown = function( e )
 						{
@@ -639,8 +658,18 @@ function Notify( message, callback, clickcallback )
 		}
 		if( ic.length )
 			ic = '<div class="Application">' + ic + '</div>';
-			
-		n.innerHTML = ic + '<div class="Title">' + message.title + '</div><div class="Text">' + message.text + '</div>';
+		
+		// Get timestring
+		let tim = new Date( nev.time );
+		let tdy = tim.getFullYear();
+		let tdm = StrPad( tim.getMonth() + 1, 2, '0' );
+		let tdd = StrPad( tim.getDate(), 2, '0' );
+		let tdh = StrPad( tim.getHours(), 2, '0' );
+		let tdi = StrPad( tim.getMinutes(), 2, '0' );
+		let timStr = tdy + '/' + tdm + '/' + tdd + ', ' + tdh + ':' + tdi;
+		
+		
+		n.innerHTML = ic + '<div class="Title">' + message.title + '<br><span class="DateStamp">' + timStr + '</span></div><div class="Text">' + message.text + '</div>';
 		
 		// Check duplicate
 		var found = false;

@@ -213,7 +213,7 @@ void WebsocketClientLoop( void *data )
  * @param port - port on which connection will be made
  * @return new WebsocketClient structure when success, otherwise NULL
  */
-WebsocketClient *WebsocketClientNew( char *host, int port, void (*fptr)( void *, char *, int ) )
+WebsocketClient *WebsocketClientNew( char *host, int port, void (*fptr)( struct WebsocketClient *, char *, int ) )
 {
 	DEBUG("[WebsocketClientNew] start\n" );
 	WebsocketClient *cl = FCalloc( 1, sizeof(WebsocketClient) );
@@ -301,7 +301,10 @@ int WebsocketClientConnect( WebsocketClient *cl )
 			cl->ws_Ccinfo.protocol = protocols[ PROTOCOL_FRIEND ].name;
 			
 			WClientData *ld = FCalloc( 1, sizeof( WClientData ) );
-			ld->wcd_WSClient = cl;
+			if( ld != NULL )
+			{
+				ld->wcd_WSClient = cl;
+			}
 			cl->wc_WSData = ld;
 			cl->ws_Ccinfo.userdata = ld;
 			

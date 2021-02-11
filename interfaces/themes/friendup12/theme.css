@@ -108,34 +108,38 @@
 	$ColorStGrayLight:       #0C2032;
 
 	/* Context colors */
-	$ColorAccept:              #ECF0F1;
-	$ColorAcceptBg:            #0B9A49;
-	$ColorAcceptButton:        #ECF0F1;
-	$ColorAcceptButtonBg:      #519039;
-	$ColorAcceptButtonHover:   #FFFFFF;
-	$ColorAcceptButtonHoverBg: #97d137;
-	$ColorDanger:              #FFE26C;
-	$ColorDangerBg:            #C92918;
-	$ColorDangerButton:        #FFE26C;
-	$ColorDangerButtonBg:      #C92918;
-	$ColorDangerButtonHover:   #FFFFFF;
-	$ColorDangerButtonHoverBg: #E74C3C;
-	$ColorAvailable:           #F7F7F7;
-	$ColorAvailableBg:         #0F85D1;
-	$ColorAction:              #f7f7f7;
-	$ColorActionBg:            #8E44AD;
-	$ColorWarning:             #720B00;
-	$ColorWarningBg:           #F9D543;
-	$ColorNotify:              #0C2032;
-	$ColorNotifyBg:            #E67E22;
+	$ColorAccept:                 #ECF0F1;
+	$ColorAcceptBg:               #0B9A49;
+	$ColorAcceptButton:           #ECF0F1;
+	$ColorAcceptButtonBg:         #519039;
+	$ColorAcceptButtonHover:      #FFFFFF;
+	$ColorAcceptButtonHoverBg:    #97d137;
+	$ColorDanger:                 #FFE26C;
+	$ColorDangerBg:               #C92918;
+	$ColorDangerButton:           #FFE26C;
+	$ColorDangerButtonBg:         #C92918;
+	$ColorDangerButtonHover:      #FFFFFF;
+	$ColorDangerButtonHoverBg:    #E74C3C;
+	$ColorAvailable:              #F7F7F7;
+	$ColorAvailableBg:            #0F85D1;
+	$ColorAvailableButton:        #e0e0e0;
+	$ColorAvailableButtonBg:      #0F85d1;
+	$ColorAvailableButtonHover:   #FFFFFF;
+	$ColorAvailableButtonHoverBg: #58ADE3;
+	$ColorAction:                 #f7f7f7;
+	$ColorActionBg:               #8E44AD;
+	$ColorWarning:                #720B00;
+	$ColorWarningBg:              #F9D543;
+	$ColorNotify:                 #0C2032;
+	$ColorNotifyBg:               #E67E22;
 
 	$ColorIconBlinkStart:      #444444;
 	$ColorIconBlinkEnd:        grey;
-
+	
 	/* Font sizes */
 	$FontSizeButton:         14px;
 	$FontSizeDefault:        14px;
-
+	
 	/* Font weights */
 	$FontWeightButton:       normal;
 	$FontWeightThList:       normal;

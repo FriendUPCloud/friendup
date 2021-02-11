@@ -102,10 +102,18 @@ ifeq ($(LOG_TIMESTAMP),1)
 CFLAGS					+=	-DLOG_TIMESTAMP
 endif
 
+ifeq ($(COMMUNICATION_SERVICE),1)
+CFLAGS					+=	-DCOMMUNICATION_SERVICE
+endif
+
+ifeq ($(COMMUNICATION_REM_SERVICE),1)
+CFLAGS					+=	-DCOMMUNICATION_REM_SERVICE
+endif
+
 C_FILES := $(wildcard main.c core/*.c system/cache/*.c network/*.c system/services/*.c util/*.c class/*.c ssh/*.c hardware/*.c system/*.c \
 			system/dictionary/*.c system/module/*.c system/fsys/*.c system/json/*.c system/user/*.c util/log/*.c system/inram/*.c system/invar/*.c system/application/*.c system/auth/*.c \
 			hardware/usb/*.c hardware/printer/*.c system/datatypes/images/*.c system/log/*.c system/admin/*.c communication/*.c system/autotask/*.c system/token/*.c \
-			websockets/*.c security/*.c webdav/*.c system/connection/*.c mobile_app/*.c mutex/*.c system/usa/*.c system/mobile/*.c system/calendar/*.c config/*.c system/notification/*.c system/usergroup/*.c system/permission/*.c system/roles/*.c system/security/*.c system/sas/*.c system/service/*.c )
+			websockets/*.c security/*.c webdav/*.c system/connection/*.c mobile_app/*.c mutex/*.c system/usa/*.c system/mobile/*.c system/calendar/*.c config/*.c system/notification/*.c system/usergroup/*.c system/permission/*.c system/roles/*.c system/security/*.c system/sas/*.c system/service/*.c system/support/*.c )
 
 OBJ_FILES := $(addprefix obj/,$(notdir $(C_FILES:.c=.o)))
 
@@ -394,6 +402,10 @@ obj/%.o: system/security/%.c system/security/*.h system/security/%.d
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 obj/%.o: system/sas/%.c system/sas/*.h system/sas/%.d
+	@echo "\033[34mCompile ...\033[0m"
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+obj/%.o: system/support/%.c system/support/*.h system/support/%.d
 	@echo "\033[34mCompile ...\033[0m"
 	$(CC) $(CFLAGS) -c -o $@ $<
 	

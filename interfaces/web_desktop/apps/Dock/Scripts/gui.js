@@ -46,6 +46,8 @@ Application.receiveMessage = function( msg )
 			ge( 'Icon' ).value = typeof( msg.item.Icon ) != 'undefined' ? msg.item.Icon : '';
 			ge( 'Workspace' ).value = typeof( msg.item.Workspace ) != 'undefined' ? msg.item.Workspace : '';
 			ge( 'Settings' ).classList.remove( 'Disabled' );
+			ge( 'OpenSilent' ).value = typeof( msg.item.OpenSilent ) != 'undefined' ? msg.item.OpenSilent : 0;
+			ge( 'OpenSilentCheck' ).checked = ge( 'OpenSilent' ).value == 1 ? 'checked' : '';
 		 	
 		 	document.body.classList.add( 'DockEdit' );
 		 	

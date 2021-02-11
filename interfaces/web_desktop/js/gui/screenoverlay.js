@@ -99,10 +99,13 @@ var ScreenOverlay = {
 				// Initialize tutorials
 				if( !isMobile )
 				{
-					let tuts = new TutorialWidget( {
-						x: 'right',
-						y: 'bottom'
-					} );
+					if( typeof( TutorialWidget ) != 'undefined' )
+					{
+						let tuts = new TutorialWidget( {
+							x: 'right',
+							y: 'bottom'
+						} );
+					}
 				}
 				
 				// Tell app we can show ourselves!

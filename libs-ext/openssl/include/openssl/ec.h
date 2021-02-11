@@ -1,28 +1,22 @@
 /*
- * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OPENSSL_EC_H
-# define OPENSSL_EC_H
-# pragma once
-
-# include <openssl/macros.h>
-# if !OPENSSL_API_3
-#  define HEADER_EC_H
-# endif
+#ifndef HEADER_EC_H
+# define HEADER_EC_H
 
 # include <openssl/opensslconf.h>
 
 # ifndef OPENSSL_NO_EC
 # include <openssl/asn1.h>
 # include <openssl/symhacks.h>
-# if !OPENSSL_API_1_1_0
+# if OPENSSL_API_COMPAT < 0x10100000L
 #  include <openssl/bn.h>
 # endif
 # include <openssl/ecerr.h>
@@ -106,19 +100,8 @@ const EC_METHOD *EC_GF2m_simple_method(void);
 /*                   EC_GROUP functions                             */
 /********************************************************************/
 
-/**
- *  Creates a new EC_GROUP object
- *  \param   libctx The associated library context or NULL for the default
- *                  library context
- *  \param   meth   EC_METHOD to use
- *  \return  newly created EC_GROUP object or NULL in case of an error.
- */
-EC_GROUP *EC_GROUP_new_ex(OPENSSL_CTX *libctx, const EC_METHOD *meth);
-
-/**
- *  Creates a new EC_GROUP object. Same as EC_GROUP_new_ex with NULL for the
- *  library context.
- *  \param   meth   EC_METHOD to use
+/** Creates a new EC_GROUP object
+ *  \param   meth  EC_METHOD to use
  *  \return  newly created EC_GROUP object or NULL in case of an error.
  */
 EC_GROUP *EC_GROUP_new(const EC_METHOD *meth);
@@ -140,7 +123,7 @@ void EC_GROUP_clear_free(EC_GROUP *group);
  */
 int EC_GROUP_copy(EC_GROUP *dst, const EC_GROUP *src);
 
-/** Creates a new EC_GROUP object and copies the content
+/** Creates a new EC_GROUP object and copies the copies the content
  *  form src to the newly created EC_KEY object
  *  \param  src  source EC_GROUP object
  *  \return newly created EC_GROUP object or NULL in case of an error.
@@ -229,12 +212,6 @@ void EC_GROUP_set_curve_name(EC_GROUP *group, int nid);
  */
 int EC_GROUP_get_curve_name(const EC_GROUP *group);
 
-/** Gets the field of an EC_GROUP
- *  \param  group  EC_GROUP object
- *  \return the group field
- */
-const BIGNUM *EC_GROUP_get0_field(const EC_GROUP *group);
-
 void EC_GROUP_set_asn1_flag(EC_GROUP *group, int flag);
 int EC_GROUP_get_asn1_flag(const EC_GROUP *group);
 
@@ -281,9 +258,9 @@ int EC_GROUP_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b,
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-DEPRECATEDIN_3(int EC_GROUP_set_curve_GFp(EC_GROUP *group, const BIGNUM *p,
-                                          const BIGNUM *a, const BIGNUM *b,
-                                          BN_CTX *ctx))
+DEPRECATEDIN_1_2_0(int EC_GROUP_set_curve_GFp(EC_GROUP *group, const BIGNUM *p,
+                                              const BIGNUM *a, const BIGNUM *b,
+                                              BN_CTX *ctx))
 
 /** Gets the parameters of an ec curve. Synonym for EC_GROUP_get_curve
  *  \param  group  EC_GROUP object
@@ -294,9 +271,9 @@ DEPRECATEDIN_3(int EC_GROUP_set_curve_GFp(EC_GROUP *group, const BIGNUM *p,
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-DEPRECATEDIN_3(int EC_GROUP_get_curve_GFp(const EC_GROUP *group, BIGNUM *p,
-                                          BIGNUM *a, BIGNUM *b,
-                                          BN_CTX *ctx))
+DEPRECATEDIN_1_2_0(int EC_GROUP_get_curve_GFp(const EC_GROUP *group, BIGNUM *p,
+                                              BIGNUM *a, BIGNUM *b,
+                                              BN_CTX *ctx))
 
 # ifndef OPENSSL_NO_EC2M
 /** Sets the parameter of an ec curve. Synonym for EC_GROUP_set_curve
@@ -308,9 +285,9 @@ DEPRECATEDIN_3(int EC_GROUP_get_curve_GFp(const EC_GROUP *group, BIGNUM *p,
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-DEPRECATEDIN_3(int EC_GROUP_set_curve_GF2m(EC_GROUP *group, const BIGNUM *p,
-                                           const BIGNUM *a, const BIGNUM *b,
-                                           BN_CTX *ctx))
+DEPRECATEDIN_1_2_0(int EC_GROUP_set_curve_GF2m(EC_GROUP *group, const BIGNUM *p,
+                                               const BIGNUM *a, const BIGNUM *b,
+                                               BN_CTX *ctx))
 
 /** Gets the parameters of an ec curve. Synonym for EC_GROUP_get_curve
  *  \param  group  EC_GROUP object
@@ -321,9 +298,9 @@ DEPRECATEDIN_3(int EC_GROUP_set_curve_GF2m(EC_GROUP *group, const BIGNUM *p,
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-DEPRECATEDIN_3(int EC_GROUP_get_curve_GF2m(const EC_GROUP *group, BIGNUM *p,
-                                           BIGNUM *a, BIGNUM *b,
-                                           BN_CTX *ctx))
+DEPRECATEDIN_1_2_0(int EC_GROUP_get_curve_GF2m(const EC_GROUP *group, BIGNUM *p,
+                                               BIGNUM *a, BIGNUM *b,
+                                               BN_CTX *ctx))
 # endif
 /** Returns the number of bits needed to represent a field element
  *  \param  group  EC_GROUP object
@@ -381,20 +358,8 @@ EC_GROUP *EC_GROUP_new_curve_GF2m(const BIGNUM *p, const BIGNUM *a,
                                   const BIGNUM *b, BN_CTX *ctx);
 # endif
 
-/**
- * Creates a EC_GROUP object with a curve specified by a NID
- *  \param  libctx The associated library context or NULL for the default
- *                 context
- *  \param  nid    NID of the OID of the curve name
- *  \return newly created EC_GROUP object with specified curve or NULL
- *          if an error occurred
- */
-EC_GROUP *EC_GROUP_new_by_curve_name_ex(OPENSSL_CTX *libctx, int nid);
-
-/**
- * Creates a EC_GROUP object with a curve specified by a NID. Same as
- * EC_GROUP_new_by_curve_name_ex but the libctx is always NULL.
- *  \param  nid    NID of the OID of the curve name
+/** Creates a EC_GROUP object with a curve specified by a NID
+ *  \param  nid  NID of the OID of the curve name
  *  \return newly created EC_GROUP object with specified curve or NULL
  *          if an error occurred
  */
@@ -451,8 +416,6 @@ size_t EC_get_builtin_curves(EC_builtin_curve *r, size_t nitems);
 
 const char *EC_curve_nid2nist(int nid);
 int EC_curve_nist2nid(const char *name);
-int EC_GROUP_check_named_curve(const EC_GROUP *group, int nist_only,
-                               BN_CTX *ctx);
 
 /********************************************************************/
 /*                    EC_POINT functions                            */
@@ -562,11 +525,11 @@ int EC_POINT_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *p,
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-DEPRECATEDIN_3(int EC_POINT_set_affine_coordinates_GFp(const EC_GROUP *group,
-                                                       EC_POINT *p,
-                                                       const BIGNUM *x,
-                                                       const BIGNUM *y,
-                                                       BN_CTX *ctx))
+DEPRECATEDIN_1_2_0(int EC_POINT_set_affine_coordinates_GFp(const EC_GROUP *group,
+                                                           EC_POINT *p,
+                                                           const BIGNUM *x,
+                                                           const BIGNUM *y,
+                                                           BN_CTX *ctx))
 
 /** Gets the affine coordinates of an EC_POINT. A synonym of
  *  EC_POINT_get_affine_coordinates
@@ -577,11 +540,11 @@ DEPRECATEDIN_3(int EC_POINT_set_affine_coordinates_GFp(const EC_GROUP *group,
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-DEPRECATEDIN_3(int EC_POINT_get_affine_coordinates_GFp(const EC_GROUP *group,
-                                                       const EC_POINT *p,
-                                                       BIGNUM *x,
-                                                       BIGNUM *y,
-                                                       BN_CTX *ctx))
+DEPRECATEDIN_1_2_0(int EC_POINT_get_affine_coordinates_GFp(const EC_GROUP *group,
+                                                           const EC_POINT *p,
+                                                           BIGNUM *x,
+                                                           BIGNUM *y,
+                                                           BN_CTX *ctx))
 
 /** Sets the x9.62 compressed coordinates of a EC_POINT
  *  \param  group  underlying EC_GROUP object
@@ -604,11 +567,11 @@ int EC_POINT_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *p,
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-DEPRECATEDIN_3(int EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group,
-                                                           EC_POINT *p,
-                                                           const BIGNUM *x,
-                                                           int y_bit,
-                                                           BN_CTX *ctx))
+DEPRECATEDIN_1_2_0(int EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group,
+                                                               EC_POINT *p,
+                                                               const BIGNUM *x,
+                                                               int y_bit,
+                                                               BN_CTX *ctx))
 # ifndef OPENSSL_NO_EC2M
 /** Sets the affine coordinates of an EC_POINT. A synonym of
  *  EC_POINT_set_affine_coordinates
@@ -619,11 +582,11 @@ DEPRECATEDIN_3(int EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-DEPRECATEDIN_3(int EC_POINT_set_affine_coordinates_GF2m(const EC_GROUP *group,
-                                                        EC_POINT *p,
-                                                        const BIGNUM *x,
-                                                        const BIGNUM *y,
-                                                        BN_CTX *ctx))
+DEPRECATEDIN_1_2_0(int EC_POINT_set_affine_coordinates_GF2m(const EC_GROUP *group,
+                                                            EC_POINT *p,
+                                                            const BIGNUM *x,
+                                                            const BIGNUM *y,
+                                                            BN_CTX *ctx))
 
 /** Gets the affine coordinates of an EC_POINT. A synonym of
  *  EC_POINT_get_affine_coordinates
@@ -634,11 +597,11 @@ DEPRECATEDIN_3(int EC_POINT_set_affine_coordinates_GF2m(const EC_GROUP *group,
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-DEPRECATEDIN_3(int EC_POINT_get_affine_coordinates_GF2m(const EC_GROUP *group,
-                                                        const EC_POINT *p,
-                                                        BIGNUM *x,
-                                                        BIGNUM *y,
-                                                        BN_CTX *ctx))
+DEPRECATEDIN_1_2_0(int EC_POINT_get_affine_coordinates_GF2m(const EC_GROUP *group,
+                                                            const EC_POINT *p,
+                                                            BIGNUM *x,
+                                                            BIGNUM *y,
+                                                            BN_CTX *ctx))
 
 /** Sets the x9.62 compressed coordinates of a EC_POINT. A synonym of
  *  EC_POINT_set_compressed_coordinates
@@ -649,11 +612,11 @@ DEPRECATEDIN_3(int EC_POINT_get_affine_coordinates_GF2m(const EC_GROUP *group,
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-DEPRECATEDIN_3(int EC_POINT_set_compressed_coordinates_GF2m(const EC_GROUP *group,
-                                                            EC_POINT *p,
-                                                            const BIGNUM *x,
-                                                            int y_bit,
-                                                            BN_CTX *ctx))
+DEPRECATEDIN_1_2_0(int EC_POINT_set_compressed_coordinates_GF2m(const EC_GROUP *group,
+                                                                EC_POINT *p,
+                                                                const BIGNUM *x,
+                                                                int y_bit,
+                                                                BN_CTX *ctx))
 # endif
 /** Encodes a EC_POINT object to a octet string
  *  \param  group  underlying EC_GROUP object
@@ -831,7 +794,7 @@ EC_GROUP *d2i_ECPKParameters(EC_GROUP **, const unsigned char **in, long len);
 int i2d_ECPKParameters(const EC_GROUP *, unsigned char **out);
 
 # define d2i_ECPKParameters_bio(bp,x) ASN1_d2i_bio_of(EC_GROUP,NULL,d2i_ECPKParameters,bp,x)
-# define i2d_ECPKParameters_bio(bp,x) ASN1_i2d_bio_of(EC_GROUP,i2d_ECPKParameters,bp,x)
+# define i2d_ECPKParameters_bio(bp,x) ASN1_i2d_bio_of_const(EC_GROUP,i2d_ECPKParameters,bp,x)
 # define d2i_ECPKParameters_fp(fp,x) (EC_GROUP *)ASN1_d2i_fp(NULL, \
                 (char *(*)())d2i_ECPKParameters,(fp),(unsigned char **)(x))
 # define i2d_ECPKParameters_fp(fp,x) ASN1_i2d_fp(i2d_ECPKParameters,(fp), \
@@ -855,17 +818,7 @@ int ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off);
 # define EC_FLAG_FIPS_CHECKED    0x2
 # define EC_FLAG_COFACTOR_ECDH   0x1000
 
-/**
- *  Creates a new EC_KEY object.
- *  \param  ctx  The library context for to use for this EC_KEY. May be NULL in
- *               which case the default library context is used.
- *  \return EC_KEY object or NULL if an error occurred.
- */
-EC_KEY *EC_KEY_new_ex(OPENSSL_CTX *ctx);
-
-/**
- *  Creates a new EC_KEY object. Same as calling EC_KEY_new_ex with a NULL
- *  library context
+/** Creates a new EC_KEY object.
  *  \return EC_KEY object or NULL if an error occurred.
  */
 EC_KEY *EC_KEY_new(void);
@@ -876,25 +829,14 @@ void EC_KEY_set_flags(EC_KEY *key, int flags);
 
 void EC_KEY_clear_flags(EC_KEY *key, int flags);
 
-/**
- *  Creates a new EC_KEY object using a named curve as underlying
- *  EC_GROUP object.
- *  \param  ctx  The library context for to use for this EC_KEY. May be NULL in
- *               which case the default library context is used.
- *  \param  nid  NID of the named curve.
- *  \return EC_KEY object or NULL if an error occurred.
- */
-EC_KEY *EC_KEY_new_by_curve_name_ex(OPENSSL_CTX *ctx, int nid);
+int EC_KEY_decoded_from_explicit_params(const EC_KEY *key);
 
-/**
- *  Creates a new EC_KEY object using a named curve as underlying
- *  EC_GROUP object. Same as calling EC_KEY_new_by_curve_name_ex with a NULL
- *  library context.
+/** Creates a new EC_KEY object using a named curve as underlying
+ *  EC_GROUP object.
  *  \param  nid  NID of the named curve.
  *  \return EC_KEY object or NULL if an error occurred.
  */
 EC_KEY *EC_KEY_new_by_curve_name(int nid);
-
 
 /** Frees a EC_KEY object.
  *  \param  key  EC_KEY object to be freed.
@@ -1082,7 +1024,7 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **key, const unsigned char **in, long len);
  *               of bytes needed).
  *  \return 1 on success and 0 if an error occurred.
  */
-int i2d_ECPrivateKey(const EC_KEY *key, unsigned char **out);
+int i2d_ECPrivateKey(EC_KEY *key, unsigned char **out);
 
 /********************************************************************/
 /*        de- and encoding functions for EC parameters              */
@@ -1103,7 +1045,7 @@ EC_KEY *d2i_ECParameters(EC_KEY **key, const unsigned char **in, long len);
  *               of bytes needed).
  *  \return 1 on success and 0 if an error occurred.
  */
-int i2d_ECParameters(const EC_KEY *key, unsigned char **out);
+int i2d_ECParameters(EC_KEY *key, unsigned char **out);
 
 /********************************************************************/
 /*         de- and encoding functions for EC public key             */
@@ -1172,10 +1114,10 @@ EC_KEY *EC_KEY_new_method(ENGINE *engine);
  *  it is actually specified in ANSI X9.63.
  *  This identifier is retained for backwards compatibility
  */
-DEPRECATEDIN_3(int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
-                                  const unsigned char *Z, size_t Zlen,
-                                  const unsigned char *sinfo, size_t sinfolen,
-                                  const EVP_MD *md))
+int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
+                   const unsigned char *Z, size_t Zlen,
+                   const unsigned char *sinfo, size_t sinfolen,
+                   const EVP_MD *md);
 
 int ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
                      const EC_KEY *ecdh,
@@ -1194,22 +1136,23 @@ ECDSA_SIG *ECDSA_SIG_new(void);
  */
 void ECDSA_SIG_free(ECDSA_SIG *sig);
 
-/** i2d_ECDSA_SIG encodes content of ECDSA_SIG (note: this function modifies *pp
+/** DER encode content of ECDSA_SIG object (note: this function modifies *pp
  *  (*pp += length of the DER encoded signature)).
  *  \param  sig  pointer to the ECDSA_SIG object
  *  \param  pp   pointer to a unsigned char pointer for the output or NULL
  *  \return the length of the DER encoded ECDSA_SIG object or a negative value
  *          on error
  */
-DECLARE_ASN1_ENCODE_FUNCTIONS_only(ECDSA_SIG, ECDSA_SIG)
+int i2d_ECDSA_SIG(const ECDSA_SIG *sig, unsigned char **pp);
 
-/** d2i_ECDSA_SIG decodes an ECDSA signature (note: this function modifies *pp
+/** Decodes a DER encoded ECDSA signature (note: this function changes *pp
  *  (*pp += len)).
  *  \param  sig  pointer to ECDSA_SIG pointer (may be NULL)
  *  \param  pp   memory buffer with the DER encoded signature
  *  \param  len  length of the buffer
  *  \return pointer to the decoded ECDSA_SIG structure (or NULL)
  */
+ECDSA_SIG *d2i_ECDSA_SIG(ECDSA_SIG **sig, const unsigned char **pp, long len);
 
 /** Accessor for r and s fields of ECDSA_SIG
  *  \param  sig  pointer to ECDSA_SIG structure
@@ -1498,6 +1441,7 @@ void EC_KEY_METHOD_get_verify(const EC_KEY_METHOD *meth,
 # define EVP_PKEY_CTX_set1_id(ctx, id, id_len) \
         EVP_PKEY_CTX_ctrl(ctx, -1, -1, \
                                 EVP_PKEY_CTRL_SET1_ID, (int)id_len, (void*)(id))
+
 # define EVP_PKEY_CTX_get1_id(ctx, id) \
         EVP_PKEY_CTX_ctrl(ctx, -1, -1, \
                                 EVP_PKEY_CTRL_GET1_ID, 0, (void*)(id))

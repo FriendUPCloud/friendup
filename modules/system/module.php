@@ -234,7 +234,7 @@ if( isset( $args->command ) )
 				'setfilepublic', 'setfileprivate', 'zip', 'unzip', 'volumeinfo',
 				'securitydomains', 'systemmail', 'removebookmark', 'addbookmark',
 				'getbookmarks', 'listapplicationdocs', 'finddocumentation', 'userinfoget',
-				'userinfoset',  'useradd', 'checkuserbyname', 'userbetamail', 'listbetausers', 'listconnectedusers',
+				'userinfoset',  'useradd', 'userupdate', 'userdelete', 'checkuserbyname', 'userbetamail', 'listbetausers', 'listconnectedusers',
 				'usersetup', 'usersetupadd', 'usersetupapply', 'usersetupsave', 'usersetupdelete',
 				'usersetupget', 'userwallpaperset', 'workgroups', 'workgroupadd', 'workgroupupdate', 'workgroupdelete',
 				'workgroupget', 'setsetting', 'getsetting', 'getavatar', 'listlibraries', 'listmodules',
@@ -1541,6 +1541,12 @@ if( isset( $args->command ) )
 		case 'useradd':
 			require( 'modules/system/include/useradd.php' );
 			break;
+		case 'userupdate':
+			require( 'modules/system/include/userupdate.php' );
+			break;
+		case 'userdelete':
+			require( 'modules/system/include/userdelete.php' );
+			break;
 		//
 		case 'checkuserbyname':
 			if( $level == 'Admin' || $args->args->id == $User->ID )
@@ -1925,6 +1931,35 @@ if( isset( $args->command ) )
 			sleep( $sleeptime );
 			
 			die( 'ok<!--separate-->{"slept_for": "'. $sleeptime .'" seconds", "randomstuff":"'.$randomstring.'" }' );
+			break;
+		
+		case 'checkeula':
+			$eula = isset( $configfilesettings[ 'Security' ][ 'EULARequired' ] ) ? $configfilesettings[ 'Security' ][ 'EULARequired' ] : false;
+			if( $eula )
+			{
+				$l = new dbIO( 'FSetting' );
+				$l->Type = 'system';
+				$l->Key = 'accepteula';
+				$l->UserID = $User->ID;
+				if( !$l->Load() )
+				{
+					die( 'fail<!--separate-->{"euladocument":"' . ( 
+						isset( $configfilesettings[ 'Security' ][ 'EULADocument' ] ) ? $configfilesettings[ 'Security' ][ 'EULADocument' ] : '' 
+					) . '"}' );
+				}
+			}
+			die( 'ok' );
+			break;
+		case 'geteuladocument':
+			if( isset( $configfilesettings[ 'Security' ][ 'EULADocument' ] ) )
+			{
+				$path = trim( $configfilesettings[ 'Security' ][ 'EULADocument' ] );
+				if( file_exists( $path ) )
+				{
+					die( 'ok<!--separate-->' . file_get_contents( $path ) );
+				}
+			}
+			die( 'fail' );
 			break;
 		
 		// Init firstlogin for a new user via this module call 

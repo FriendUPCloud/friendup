@@ -1,6 +1,6 @@
-# Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the Apache License 2.0 (the "License").  You may not use
+# Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -14,7 +14,7 @@ use Test::More 0.96;
 
 use Exporter;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
-$VERSION = "1.0";
+$VERSION = "0.8";
 @ISA = qw(Exporter);
 @EXPORT = (@Test::More::EXPORT, qw(setup run indir cmd app fuzz test
                                    perlapp perltest subtest));
@@ -22,8 +22,7 @@ $VERSION = "1.0";
                                          srctop_dir srctop_file
                                          data_file data_dir
                                          pipe with cmdstr quotify
-                                         openssl_versions
-                                         ok_nofips is_nofips isnt_nofips));
+                                         openssl_versions));
 
 =head1 NAME
 
@@ -66,7 +65,7 @@ use File::Spec::Functions qw/file_name_is_absolute curdir canonpath splitdir
                              rel2abs/;
 use File::Path 2.00 qw/rmtree mkpath/;
 use File::Basename;
-use Cwd qw/abs_path/;
+use Cwd qw/getcwd abs_path/;
 
 my $level = 0;
 
@@ -446,21 +445,16 @@ sub run {
     die "OpenSSL::Test::run(): statusvar value not a scalar reference"
         if $opts{statusvar} && ref($opts{statusvar}) ne "SCALAR";
 
-    # For some reason, program output, or even output from this function
-    # somehow isn't caught by TAP::Harness (TAP::Parser?) on VMS, so we're
-    # silencing it specifically there until further notice.
+    # In non-verbose, we want to shut up the command interpreter, in case
+    # it has something to complain about.  On VMS, it might complain both
+    # on stdout and stderr
     my $save_STDOUT;
     my $save_STDERR;
-    if ($^O eq 'VMS') {
-        # In non-verbose, we want to shut up the command interpreter, in case
-        # it has something to complain about.  On VMS, it might complain both
-        # on stdout and stderr
-        if ($ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE}) {
-            open $save_STDOUT, '>&', \*STDOUT or die "Can't dup STDOUT: $!";
-            open $save_STDERR, '>&', \*STDERR or die "Can't dup STDERR: $!";
-            open STDOUT, ">", devnull();
-            open STDERR, ">", devnull();
-        }
+    if ($ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE}) {
+        open $save_STDOUT, '>&', \*STDOUT or die "Can't dup STDOUT: $!";
+        open $save_STDERR, '>&', \*STDERR or die "Can't dup STDERR: $!";
+        open STDOUT, ">", devnull();
+        open STDERR, ">", devnull();
     }
 
     $ENV{HARNESS_OSSL_LEVEL} = $level + 1;
@@ -494,20 +488,15 @@ sub run {
         ${$opts{statusvar}} = $r;
     }
 
-    # Restore STDOUT / STDERR on VMS
-    if ($^O eq 'VMS') {
-        if ($ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE}) {
-            close STDOUT;
-            close STDERR;
-            open STDOUT, '>&', $save_STDOUT or die "Can't restore STDOUT: $!";
-            open STDERR, '>&', $save_STDERR or die "Can't restore STDERR: $!";
-        }
-
-        print STDERR "$prefix$display_cmd => $e\n"
-            if !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
-    } else {
-        print STDERR "$prefix$display_cmd => $e\n";
+    if ($ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE}) {
+        close STDOUT;
+        close STDERR;
+        open STDOUT, '>&', $save_STDOUT or die "Can't restore STDOUT: $!";
+        open STDERR, '>&', $save_STDERR or die "Can't restore STDERR: $!";
     }
+
+    print STDERR "$prefix$display_cmd => $e\n"
+        if !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
 
     # At this point, $? stops being interesting, and unfortunately,
     # there are Test::More versions that get picky if we leave it
@@ -822,9 +811,9 @@ sub quotify {
 
 =item B<openssl_versions>
 
-Returns a list of two version numbers, the first representing the build
-version, the second representing the library version.  See opensslv.h for
-more information on those numbers.
+Returns a list of two numbers, the first representing the build version,
+the second representing the library version.  See opensslv.h for more
+information on those numbers.
 
 =back
 
@@ -835,69 +824,13 @@ sub openssl_versions {
     unless (@versions) {
         my %lines =
             map { s/\R$//;
-                  /^(.*): (.*)$/;
-                  $1 => $2 }
+                  /^(.*): (0x[[:xdigit:]]{8})$/;
+                  die "Weird line: $_" unless defined $1;
+                  $1 => hex($2) }
             run(test(['versions']), capture => 1);
         @versions = ( $lines{'Build version'}, $lines{'Library version'} );
     }
     return @versions;
-}
-
-=over 4
-
-=item B<ok_nofips EXPR, TEST_NAME>
-
-C<ok_nofips> is equivalent to using C<ok> when the environment variable
-C<FIPS_MODE> is undefined, otherwise it is equivalent to C<not ok>. This can be
-used for C<ok> tests that must fail when testing a FIPS provider. The parameters
-are the same as used by C<ok> which is an expression EXPR followed by the test
-description TEST_NAME.
-
-An example:
-
-  ok_nofips(run(app(["md5.pl"])), "md5 should fail in fips mode");
-
-=item B<is_nofips EXPR1, EXPR2, TEST_NAME>
-
-C<is_nofips> is equivalent to using C<is> when the environment variable
-C<FIPS_MODE> is undefined, otherwise it is equivalent to C<isnt>. This can be
-used for C<is> tests that must fail when testing a FIPS provider. The parameters
-are the same as used by C<is> which has 2 arguments EXPR1 and EXPR2 that can be
-compared using eq or ne, followed by a test description TEST_NAME.
-
-An example:
-
-  is_nofips(ultimate_answer(), 42,  "Meaning of Life");
-
-=item B<isnt_nofips EXPR1, EXPR2, TEST_NAME>
-
-C<isnt_nofips> is equivalent to using C<isnt> when the environment variable
-C<FIPS_MODE> is undefined, otherwise it is equivalent to C<is>. This can be
-used for C<isnt> tests that must fail when testing a FIPS provider. The
-parameters are the same as used by C<isnt> which has 2 arguments EXPR1 and EXPR2
-that can be compared using ne or eq, followed by a test description TEST_NAME.
-
-An example:
-
-  isnt_nofips($foo, '',  "Got some foo");
-
-=back
-
-=cut
-
-sub ok_nofips {
-    return ok(!$_[0], @_[1..$#_]) if defined $ENV{FIPS_MODE};
-    return ok($_[0], @_[1..$#_]);
-}
-
-sub is_nofips {
-    return isnt($_[0], $_[1], @_[2..$#_]) if defined $ENV{FIPS_MODE};
-    return is($_[0], $_[1], @_[2..$#_]);
-}
-
-sub isnt_nofips {
-    return is($_[0], $_[1], @_[2..$#_]) if defined $ENV{FIPS_MODE};
-    return isnt($_[0], $_[1], @_[2..$#_]);
 }
 
 ######################################################################
@@ -929,12 +862,6 @@ are located.  Defaults to C<$TOP/test> (adapted to the operating system).
 
 If defined, it puts testing in a different mode, where a recipe with
 failures will result in a C<BAIL_OUT> at the end of its run.
-
-=item B<FIPS_MODE>
-
-If defined it indicates that the FIPS provider is being tested. Tests may use
-B<ok_nofips>, B<is_nofips> and B<isnt_nofips> to invert test results
-i.e. Some tests may only work in non FIPS mode.
 
 =back
 
@@ -977,26 +904,26 @@ sub __srctop_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
     my $f = pop;
-    return catfile($directories{SRCTOP},@_,$f);
+    return abs2rel(catfile($directories{SRCTOP},@_,$f),getcwd);
 }
 
 sub __srctop_dir {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
-    return catdir($directories{SRCTOP},@_);
+    return abs2rel(catdir($directories{SRCTOP},@_), getcwd);
 }
 
 sub __bldtop_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
     my $f = pop;
-    return catfile($directories{BLDTOP},@_,$f);
+    return abs2rel(catfile($directories{BLDTOP},@_,$f), getcwd);
 }
 
 sub __bldtop_dir {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
-    return catdir($directories{BLDTOP},@_);
+    return abs2rel(catdir($directories{BLDTOP},@_), getcwd);
 }
 
 # __exeext is a function that returns the platform dependent file extension
@@ -1254,11 +1181,8 @@ sub __decorate_cmd {
 
     my $display_cmd = "$cmdstr$stdin$stdout$stderr";
 
-    # VMS program output escapes TAP::Parser
-    if ($^O eq 'VMS') {
-        $stderr=" 2> ".$null
-            unless $stderr || !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
-    }
+    $stderr=" 2> ".$null
+        unless $stderr || !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
 
     $cmdstr .= "$stdin$stdout$stderr";
 

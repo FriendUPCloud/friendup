@@ -1,11 +1,15 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE
+#endif
 
 #include <assert.h>
 #include <string.h>
@@ -207,8 +211,7 @@ static int addr_strings(const BIO_ADDR *ap, int numeric,
                                flags)) != 0) {
 # ifdef EAI_SYSTEM
             if (ret == EAI_SYSTEM) {
-                ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
-                               "calling getnameinfo()");
+                SYSerr(SYS_F_GETNAMEINFO, get_last_socket_error());
                 BIOerr(BIO_F_ADDR_STRINGS, ERR_R_SYS_LIB);
             } else
 # endif
@@ -697,12 +700,13 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
         /* Note that |res| SHOULD be a 'struct addrinfo **' thanks to
          * macro magic in bio_local.h
          */
+# if defined(AI_ADDRCONFIG) && defined(AI_NUMERICHOST)
       retry:
+# endif
         switch ((gai_ret = getaddrinfo(host, service, &hints, res))) {
 # ifdef EAI_SYSTEM
         case EAI_SYSTEM:
-            ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
-                           "calling getaddrinfo()");
+            SYSerr(SYS_F_GETADDRINFO, get_last_socket_error());
             BIOerr(BIO_F_BIO_LOOKUP_EX, ERR_R_SYS_LIB);
             break;
 # endif
@@ -806,15 +810,12 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
                  */
 # if defined(OPENSSL_SYS_VXWORKS)
                 /* h_errno doesn't exist on VxWorks */
-                ERR_raise_data(ERR_LIB_SYS, 1000,
-                               "calling gethostbyname()");
+                SYSerr(SYS_F_GETHOSTBYNAME, 1000 );
 # else
-                ERR_raise_data(ERR_LIB_SYS, 1000 + h_errno,
-                               "calling gethostbyname()");
+                SYSerr(SYS_F_GETHOSTBYNAME, 1000 + h_errno);
 # endif
 #else
-                ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
-                               "calling gethostbyname()");
+                SYSerr(SYS_F_GETHOSTBYNAME, WSAGetLastError());
 #endif
                 ret = 0;
                 goto err;
@@ -860,8 +861,11 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
                 se = getservbyname(service, proto);
 
                 if (se == NULL) {
-                    ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
-                                   "calling getservbyname()");
+#ifndef OPENSSL_SYS_WINDOWS
+                    SYSerr(SYS_F_GETSERVBYNAME, errno);
+#else
+                    SYSerr(SYS_F_GETSERVBYNAME, WSAGetLastError());
+#endif
                     goto err;
                 }
             } else {

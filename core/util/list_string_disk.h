@@ -62,7 +62,7 @@ FQUAD ListStringDiskAdd( ListStringDisk *add, char *data, FLONG size );
 // join all lists to one string
 //
 
-ListStringDisk *ListStringDiskJoin( ListStringDisk *ls );
+int ListStringDiskJoin( ListStringDisk *ls );
 
 #endif // __UTIL_STRINGLIST_DISK_H__
 

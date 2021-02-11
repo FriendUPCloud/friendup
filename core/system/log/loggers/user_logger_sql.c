@@ -56,36 +56,37 @@ void init( struct UserLogger *s )
 		{
 			char *ptr = getenv("FRIEND_HOME");
 			char *path = FCalloc( 1000, sizeof( char ) );
-			
-			if( ptr != NULL )
+			if( path != NULL )
 			{
-				sprintf( path, "%scfg/cfg.ini", ptr );
+				if( ptr != NULL )
+				{
+					sprintf( path, "%scfg/cfg.ini", ptr );
+				}
+			
+				DEBUG( "Opening config file: %s\n", path );
+			
+				prop = plib->Open( path );
+				FFree( path );
+			
+				if( prop != NULL)
+				{
+					DEBUG("[UserLogger] reading login\n");
+					login = plib->ReadStringNCS( prop, "Logger:sqllogin", "root" );
+					DEBUG("[UserLogger] user %s\n", login );
+					pass = plib->ReadStringNCS( prop, "Logger:sqlpassword", "root" );
+					DEBUG("[UserLogger] password %s\n", pass );
+					host = plib->ReadStringNCS( prop, "Logger:sqlhost", "localhost" );
+					DEBUG("[UserLogger] host %s\n", host );
+					dbname = plib->ReadStringNCS( prop, "Logger:sqldbname", "FriendMaster" );
+					DEBUG("[UserLogger] dbname %s\n",dbname );
+					port = plib->ReadIntNCS( prop, "Logger:sqlport", 3306 );
+					DEBUG("[UserLogger] port read %d\n", port );
+				}
+				else
+				{
+					FERROR( "Cannot open property file!\n" );
+				}
 			}
-			
-			DEBUG( "Opening config file: %s\n", path );
-			
-			prop = plib->Open( path );
-			FFree( path );
-			
-			if( prop != NULL)
-			{
-				DEBUG("[UserLogger] reading login\n");
-				login = plib->ReadStringNCS( prop, "Logger:sqllogin", "root" );
-				DEBUG("[UserLogger] user %s\n", login );
-				pass = plib->ReadStringNCS( prop, "Logger:sqlpassword", "root" );
-				DEBUG("[UserLogger] password %s\n", pass );
-				host = plib->ReadStringNCS( prop, "Logger:sqlhost", "localhost" );
-				DEBUG("[UserLogger] host %s\n", host );
-				dbname = plib->ReadStringNCS( prop, "Logger:sqldbname", "FriendMaster" );
-				DEBUG("[UserLogger] dbname %s\n",dbname );
-				port = plib->ReadIntNCS( prop, "Logger:sqlport", 3306 );
-				DEBUG("[UserLogger] port read %d\n", port );
-			}
-			else
-			{
-				FERROR( "Cannot open property file!\n" );
-			}
-			
 		
 			sd->sd_LibSQL->Connect( sd->sd_LibSQL, host, dbname, login, pass, port );
 			

@@ -1074,6 +1074,14 @@ function _ActivateWindow( div, nopoll, e )
 	if( div.classList.contains( 'Remove' ) )
 		return;
 	
+	// Remove flag from window and app
+	div.windowObject.setFlag( 'opensilent', false );
+	if( div.applicationId && window._getAppByAppId )
+	{
+		let app = _getAppByAppId( div.applicationId );
+		app.opensilent = false;
+	}
+	
 	// Remove menu on calendar
 	if( Workspace.calendarWidget )
 		Workspace.calendarWidget.hide();
@@ -2092,7 +2100,7 @@ var View = function( args )
 	this.setWorkspace = function()
 	{
 		// Ignore windows on own screen
-		if( this.flags.screen && this.flags.screen != Workspace.screen ) return;
+		if( this.flags && this.flags.screen && this.flags.screen != Workspace.screen ) return;
 		if( globalConfig.workspacecount > 1 )
 		{
 			let ws = this.getFlag( 'left' );
@@ -3918,7 +3926,7 @@ var View = function( args )
 			Friend.currentWindowHover = false;
 		
 		// Only activate if needed
-		if( !flags.minimized )
+		if( !flags.minimized && !flags.openSilent )
 		{
 			_ActivateWindow( div );
 			_WindowToFront( div );
@@ -3948,7 +3956,7 @@ var View = function( args )
 		if( isMobile ) return;
 		
 		// Windows on own screen ignores the virtual workspaces
-		if( this.flags.screen && this.flags.screen != Workspace.screen ) return;
+		if( this.flags && this.flags.screen && this.flags.screen != Workspace.screen ) return;
 		
 		if( wsnum != 0 && ( wsnum < 0 || wsnum > globalConfig.workspacecount - 1 ) )
 		{
@@ -3963,7 +3971,7 @@ var View = function( args )
 		cleanVirtualWorkspaceInformation(); // Just clean the workspace info
 		
 		// Done moving
-		if( this.flags.screen )
+		if( this.flags && this.flags.screen )
 		{
 			let maxViewWidth = this.flags.screen.getMaxViewWidth();
 			this.workspace = wsnum;
@@ -4223,6 +4231,8 @@ var View = function( args )
 		
 		// Rich content still can't have any scripts!
 		content = this.removeScriptsFromData( content );
+		if( !this._window )
+			return;
 		let eles = this._window.getElementsByTagName( _viewType );
 		let ifr = false;
 		if( eles[0] )
@@ -4908,11 +4918,11 @@ var View = function( args )
 					{
 						if( flag == 'width' )
 						{
-							value = this.flags.screen.getMaxViewWidth();
+							value = ( this.flags && this.flags.screen ) ? this.flags.screen.getMaxViewWidth() : window.innerWidth;
 						}
 						else
 						{
-							value = this.flags.screen.getMaxViewHeight();
+							value = ( this.flags && this.flags.screen ) ? this.flags.screen.getMaxViewHeight() : window.innerHeight;
 						}
 					}
 					
@@ -5107,7 +5117,7 @@ var View = function( args )
 					let fl = this.flags[flag];
 					if( fl.indexOf && fl.indexOf( '%' ) > 0 )
 						return fl;
-					if( fl == 'max' && this.flags.screen )
+					if( fl == 'max' && this.flags && this.flags.screen )
 					{
 						fl = this.flags.screen.getMaxViewWidth();
 					}
@@ -5118,7 +5128,7 @@ var View = function( args )
 					let fl = this.flags[flag];
 					if( fl.indexOf && fl.indexOf( '%' ) > 0 )
 						return fl;
-					if( fl == 'max' && this.flags.screen )
+					if( fl == 'max' && this.flags && this.flags.screen )
 					{
 						fl = this.flags.screen.getMaxViewHeight();
 					}

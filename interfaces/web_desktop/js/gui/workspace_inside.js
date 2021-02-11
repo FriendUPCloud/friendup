@@ -1594,11 +1594,21 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						globalConfig.viewList = dat.windowlist;
 						document.body.setAttribute( 'viewlist', dat.windowlist ); // Register for styling
 					}
-					if( dat.scrolldesktopicons )
+					if( dat.scrolldesktopicons == 1 )
 					{
 						globalConfig.scrolldesktopicons = dat.scrolldesktopicons;
 					}
 					else globalConfig.scrolldesktopicons = 0;
+					if( dat.hidedesktopicons == 1 )
+					{
+						globalConfig.hidedesktopicons = dat.scrolldesktopicons;
+						document.body.classList.add( 'DesktopIconsHidden' );
+					}
+					else
+					{
+						globalConfig.hidedesktopicons = 0;
+						document.body.classList.remove( 'DesktopIconsHidden' );
+					}
 					// Can only have workspaces on mobile
 					// TODO: Implement dynamic workspace count for mobile (one workspace per app)
 					if( dat.workspacecount >= 0 && !window.isMobile )
@@ -1665,6 +1675,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								ExecuteApplication( GetUrlVar( 'app' ), args );
 							}
 							ScreenOverlay.hide();
+							PollTray();
+							PollTaskbar();
 							return;
 						}
 						
@@ -1694,6 +1706,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									{
 										if( Workspace.getWebSocketsState() != 'open' )
 										{
+											//console.log( 'Waiting for websocket... ' + Math.random() );
 											return setTimeout( function(){ l.func() }, 500 );
 										}
 										if( !ScreenOverlay.done && l.index < seq.length )
@@ -1706,8 +1719,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 												// Sanitize
 												if( cmd.indexOf( 'launch' ) == 0 )
 												{
-													var appName = cmd.split( ' ' );
-													appName = appName[ appName.length - 1 ];
+													let appString = cmd.substr( 7, cmd.length - 7 );
+													let appName = appString.split( ' ' )[0];
+													let args = appString.substr( appName.length + 1, appString.length - appName.length + 1 );
 													var found = false;
 													for( var b = 0; b < Workspace.applications.length; b++ )
 													{
@@ -1751,6 +1765,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										}
 										// Hide overlay
 										ScreenOverlay.hide();
+										PollTray();
+										PollTaskbar();
 										l.func = function()
 										{
 											//
@@ -1765,12 +1781,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							{
 								// Hide overlay
 								ScreenOverlay.hide();
+								PollTray();
+								PollTaskbar();
 							}
 						} );
 					}
-
-					PollTray();
-					PollTaskbar();
 				}
 				else
 				{
@@ -1790,7 +1805,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			'avatar', 'workspacemode', 'wallpaperdoors', 'wallpaperwindows', 'language', 
 			'menumode', 'startupsequence', 'navigationmode', 'windowlist', 
 			'focusmode', 'hiddensystem', 'workspacecount', 
-			'scrolldesktopicons', 'wizardrun', 'themedata_' + Workspace.theme,
+			'scrolldesktopicons', 'hidedesktopicons', 'wizardrun', 'themedata_' + Workspace.theme,
 			'workspacemode', 'workspace_labels'
 		] } );
 	},
@@ -2527,6 +2542,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							type        : ele.Type,
 							src         : icon,
 							workspace   : ele.Workspace - 1,
+							opensilent  : ele.OpenSilent,
 							displayname : ele.DisplayName,
 							'title'     : ele.Title ? ele.Title : ele.Name
 						};
@@ -9478,7 +9494,7 @@ function ShowEula( accept, cbk )
 		var dl = new FriendLibrary( 'system.library' );
 		dl.addVar( 'visible', true );
 		//dl.forceSend = true;
-		dl.onExecuted = function(e,d)
+		dl.onExecuted = function( e, d )
 		{
 			//console.log( 'First login. Device list refreshed.', e, d );
 		};
@@ -9487,22 +9503,55 @@ function ShowEula( accept, cbk )
 	}
 
 
-	var d = document.createElement( 'div' );
+	let d = document.createElement( 'div' );
 	d.className = 'Eula';
 	d.id = 'EulaDialog';
 	document.body.appendChild( d );
 
-	var f = new File( 'System:templates/eula.html' );
-	f.onLoad = function( data )
+	// Using a configurable eula document
+	if( Workspace.euladocument )
 	{
-		d.innerHTML = data;
-		// Tell app we can show ourselves!
-		if( window.friendApp && window.friendApp.reveal )
+		let n = new Module( 'system' );
+		n.onExecuted = function( e, data )
 		{
-			friendApp.reveal();
-		}		
+			if( e == 'ok' )
+			{
+				d.innerHTML = '<div class="EulaText SmoothScrolling"><div>' + data + '</div></div>\
+				<div class="EulaInfo">\
+		<div>\
+			<button type="button" class="Button IconSmall fa-cross" onclick="document.location.href=\'http://duckduckgo.com\';">\
+				I decline\
+			</button>\
+			\
+			<button type="button" class="Button IconSmall fa-accept" onclick="ShowEula(true)">\
+				I accept\
+			</button>\
+		</div>\
+	</div>';
+				// Tell app we can show ourselves!
+				if( window.friendApp && window.friendApp.reveal )
+				{
+					friendApp.reveal();
+				}
+			}
+		}
+		n.execute( 'geteuladocument' );
 	}
-	f.load();
+	// Using the Friend OS standard eula
+	else
+	{
+		let f = new File( 'System:templates/eula.html' );
+		f.onLoad = function( data )
+		{
+			d.innerHTML = data;
+			// Tell app we can show ourselves!
+			if( window.friendApp && window.friendApp.reveal )
+			{
+				friendApp.reveal();
+			}		
+		}
+		f.load();
+	}
 }
 
 

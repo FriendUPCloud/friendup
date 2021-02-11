@@ -59,6 +59,14 @@ DOSToken *DOSTokenNew( UserSession *us, time_t timeout, int usedTimes )
  */
 void DOSTokenInit( DOSToken *dt )
 {
+	if( dt == NULL )
+	{
+		return;
+	}
+	if( dt->ct_Commands == NULL )
+	{
+		return;
+	}
 	int i;
 	int max = strlen( dt->ct_Commands );
 	dt->ct_MaxAccess = 1;

@@ -138,22 +138,22 @@ void UserSessionDelete( UserSession *us )
 		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 		{
 			us->us_Wsi = NULL;
-			data = (WSCData *)us->us_WSD;
+			//data = ((WSCData *)us->us_WSD);
 			//us->us_WSD = NULL;
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
 		
 		if( us->us_WSD != NULL )
 		{
-			if( FRIEND_MUTEX_LOCK( &(data->wsc_Mutex) ) == 0 )
+			if( FRIEND_MUTEX_LOCK( &(((WSCData *)us->us_WSD)->wsc_Mutex) ) == 0 )
 			{
-				if( us->us_WSD != NULL )
+				if( us->us_WSD != NULL && ((WSCData *)us->us_WSD) != NULL )
 				{
-					data->wsc_InUseCounter = 0;
-					data->wsc_UserSession = NULL;
-					data->wsc_Wsi = NULL;
+					((WSCData *)us->us_WSD)->wsc_InUseCounter = 0;
+					((WSCData *)us->us_WSD)->wsc_UserSession = NULL;
+					((WSCData *)us->us_WSD)->wsc_Wsi = NULL;
 				}
-				FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
+				FRIEND_MUTEX_UNLOCK( &(((WSCData *)us->us_WSD)->wsc_Mutex) );
 			}
 		}
 		
@@ -300,20 +300,32 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 						DEBUG( "[UserSessionWebsocketWrite] Determined chunk: %d\n", actChunk );
 				
 						FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
-						en->fq_Data = queueMsg;
-						en->fq_Size = queueMsgLen;
-						en->fq_Priority = 3;	// default priority
-			
-						//DEBUG("FQPush: %p\n 
-						if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+						if( en != NULL )
 						{
-							FQPushFIFO( &(us->us_MsgQueue), en );
-							FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+							en->fq_Data = queueMsg;
+							en->fq_Size = queueMsgLen;
+							en->fq_Priority = 3;	// default priority
+			
+							//DEBUG("FQPush: %p\n 
+							if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+							{
+								FQPushFIFO( &(us->us_MsgQueue), en );
+								FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+							}
+							else
+							{
+								FFree( queueMsg );
+								FFree( en );
+							}
+						}
+						else
+						{
+							FFree( queueMsg );
 						}
 						// callback writeable was here
 					}
 				}
-				
+				/*
 				WSCData *wsd = NULL;
 				
 				if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
@@ -321,23 +333,24 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 					wsd = us->us_WSD;
 					FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 				}
+				*/
 				
 				if( us->us_WSD != NULL )
 				{
-					if( FRIEND_MUTEX_LOCK( &(wsd->wsc_Mutex) ) == 0 )
+					if( FRIEND_MUTEX_LOCK( &( ((WSCData *)us->us_WSD)->wsc_Mutex) ) == 0 )
 					{
-						wsd->wsc_InUseCounter++;
-						FRIEND_MUTEX_UNLOCK( &(wsd->wsc_Mutex) );
+						((WSCData *)us->us_WSD)->wsc_InUseCounter++;
+						FRIEND_MUTEX_UNLOCK( &(((WSCData *)us->us_WSD)->wsc_Mutex) );
 					
-						if( wsd->wsc_Wsi != NULL )
+						if( ((WSCData *)us->us_WSD)->wsc_Wsi != NULL )
 						{
-							lws_callback_on_writable( wsd->wsc_Wsi );
+							lws_callback_on_writable( ((WSCData *)us->us_WSD)->wsc_Wsi );
 						}
 					
-						if( FRIEND_MUTEX_LOCK( &(wsd->wsc_Mutex) ) == 0 )
+						if( FRIEND_MUTEX_LOCK( &(((WSCData *)us->us_WSD)->wsc_Mutex) ) == 0 )
 						{
-							wsd->wsc_InUseCounter--;
-							FRIEND_MUTEX_UNLOCK( &(wsd->wsc_Mutex) );
+							((WSCData *)us->us_WSD)->wsc_InUseCounter--;
+							FRIEND_MUTEX_UNLOCK( &(((WSCData *)us->us_WSD)->wsc_Mutex) );
 						}
 					}
 				}
@@ -385,16 +398,22 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 							us->us_MsgQueue.fq_Last->node.mln_Succ = (MinNode *)en;
 							us->us_MsgQueue.fq_Last = en;
 						}
-						// HT - Something bad happened!
 						else
 						{
 							FFree( en->fq_Data );
 							FFree( en );
+							en = NULL;
 						}
 					
 						DEBUG("[UserSessionWebsocketWrite] Send message to WSI, ptr: %p\n", us->us_Wsi );
 					
 						FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+					}
+					else
+					{
+						FFree( en->fq_Data );
+						FFree( en );
+						en = NULL;
 					}
 					
 			//#define FQPushFIFO( qroot, q ) if( (qroot)->fq_First == NULL ){ (qroot)->fq_First = q; (qroot)->fq_Last = q; }else{ (qroot)->fq_Last->node.mln_Succ = (MinNode *)q; (qroot)->fq_Last = q; } 

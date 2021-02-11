@@ -172,16 +172,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 		}
 	}
 	
-	// Some commands take "files" instead of path
-	/*
-	if( !path )
-	{
-		HashmapElement *el = HttpGetPOSTParameter( request, "files" );
-		if( el == NULL ) el = HashmapGet( request->query, "files" );
-		if( el != NULL ) path = ( char *)el->hme_Data;
-	}
-	*/
-	
 	// Target (for upload f.ex.) Home:MyPath/myfile.zip
 	el = HttpGetPOSTParameter( request, "target" );
 	if( el == NULL ) el = HashmapGet( request->http_Query, "target" );
@@ -237,44 +227,44 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 		
 		DEBUG("[FSMWebRequest] Checking mounted devices\n");
 		
-		//File *lDev = loggedSession->us_User->u_MountedDevs;
-		
 		File *actDev = NULL;
 		char devname[ 256 ];
 		memset( devname, '\0', sizeof(devname) );
 		char *locpath = NULL;
 		int pthl = strlen( path ) + 10;
 		
-		if( ( 
-			locpath = FCalloc( pthl, sizeof(char) ) ) != NULL && 
-			( originalPath = FCalloc( pthl, sizeof(char) ) ) != NULL 
-		)
+		if( ( locpath = FCalloc( pthl, sizeof(char) ) ) != NULL )
 		{
-			UrlDecode( locpath, path );
-			DEBUG("[FSMWebRequest] original path %s\n", path );
-			strcpy( originalPath, path );
+			if( ( originalPath = FCalloc( pthl, sizeof(char) ) ) != NULL )
+			{
+				UrlDecode( locpath, path );
+				DEBUG("[FSMWebRequest] original path %s\n", path );
+				strcpy( originalPath, path );
 
-			// Need a decoded one
-			origDecodedPath = UrlDecodeToMem( originalPath );
-			DEBUG("[FSMWebRequest] Decoded path %s\n", origDecodedPath );
+				// Need a decoded one
+				origDecodedPath = UrlDecodeToMem( originalPath );
+				if( origDecodedPath != NULL )
+				{
+					DEBUG("[FSMWebRequest] Decoded path %s\n", origDecodedPath );
 			
-			int dpos = ColonPosition( origDecodedPath );
+					int dpos = ColonPosition( origDecodedPath );
 
-			strncpy( devname, origDecodedPath, dpos );
-			devname[ dpos ] = 0;
-			
-			DEBUG( "[FSMWebRequest] Device name '%s' Logguser name %s- path %s\n", devname, loggedSession->us_User->u_Name, path );
+					strncpy( devname, origDecodedPath, dpos );
+					devname[ dpos ] = 0;
+				}
+				DEBUG( "[FSMWebRequest] Device name '%s' Logguser name %s- path %s\n", devname, loggedSession->us_User->u_Name, path );
 
-			path = locpath;
+				path = locpath;
 			
-			freePath = 1;
+				freePath = 1;
+			}
+			else
+			{
+				if( locpath ){ FFree( locpath ); locpath = NULL; }
+			}
 		}
-		// Should never happen
-		else
-		{
-			if( locpath ){ FFree( locpath ); locpath = NULL; }
-			if( originalPath ){ FFree( originalPath ); originalPath = NULL; }
-		}
+		// else { Should never happen
+
 		//
 		
 		DEBUG( "[FSMWebRequest] Check if device is mounted for user\n" );
@@ -658,6 +648,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					char *paths = NULL;
 					el = HttpGetPOSTParameter( request, "paths" );
 					if( el == NULL ) el = HashmapGet( request->http_Query, "paths" );
+					
 					if( el != NULL ) 
 					{
 						paths = (char *)el->hme_Data;
@@ -666,10 +657,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						
 						// Get JSON structure
 						JSONData *j = JSONParse( decoded, strlen( decoded ) );
-						
-						free( decoded );
 					
-						if( j->type && j->type == (JSON_TYPE_ARRAY|JSON_TYPE_ARRAY_LIST) )
+						if( j->type && ( j->type == JSON_TYPE_ARRAY || j->type == JSON_TYPE_ARRAY_LIST ) )
 						{
 							// Build SQL query
 							BufString *sql = BufStringNew();
@@ -744,9 +733,12 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 										{
 											if( resultCount > 0 )
 											{
-												BufStringAdd( result, "," );
+												BufStringAdd( result, ",\"" );
 											}
-											BufStringAdd( result, "\"" );
+											else
+											{
+												BufStringAdd( result, "\"" );
+											}
 											BufStringAdd( result, row[ 0 ] );
 											BufStringAdd( result, "\"" );
 											resultCount++;
@@ -768,7 +760,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							{
 								// TODO: Add error code
 								char dictmsgbuf[ 256 ];
-								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"No shared files in directory\", \"code\":\"-1\" }" );
+								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"No shared files in directory\",\"instance\":\"1\",\"code\":\"-1\"}" );
 								HttpAddTextContent( response, dictmsgbuf );
 							}
 							BufStringDelete( result );
@@ -777,18 +769,19 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						{
 							// TODO: Add error code
 							char dictmsgbuf[ 256 ];
-							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"Paths not given in array format\", \"code\":\"-1\" }" );
+							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"Paths not given in array format\",\"instance\":\"2\",\"code\":\"-1\"}" );
 							HttpAddTextContent( response, dictmsgbuf );
 						}
 					
 						JSONFree( j );
+						free( decoded );
 					}
 					// Fail
 					else
 					{
 						// TODO: Add error code
 						char dictmsgbuf[ 256 ];
-						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"Args not found\", \"code\":\"-1\" }" );
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"Args not found\",\"code\":\"-1\"}" );
 						HttpAddTextContent( response, dictmsgbuf );
 					}
 				}
@@ -918,13 +911,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						for( i = 0 ; i < strlen( nname ) ; i++ )
 						{
 							CHECK_BAD_CHARS( nname, i, badCharFound );
-							/*
-							if( nname[ i ] == '/' || nname[ i ] == ':' || nname[ i ] == '\'' )
-							{
-								badCharFound = TRUE;
-								break;
-							}
-							*/
 						}
 						
 						if( badCharFound == FALSE )
@@ -1179,13 +1165,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						for( i = lastChar ; i < plen ; i++ )
 						{
 							CHECK_BAD_CHARS( lpath, i, badCharFound );
-							/*
-							if( lpath[ i ] == '/' || lpath[ i ] == ':' || lpath[ i ] == '\'' )
-							{
-								badCharFound = TRUE;
-								break;
-							}
-							*/
 						}
 						
 						if( have == TRUE )
@@ -1214,7 +1193,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 											DoorNotificationCommunicateChanges( l, loggedSession, actDev, notifPath );
 											FFree( notifPath );
 										}
-										//DoorNotificationCommunicateChanges( l, loggedSession, actDev, path );
 									}
 								}
 								HttpAddTextContent( response, tmp );
@@ -1313,7 +1291,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					char *offset = NULL;
 					char *bytes = NULL;
 					char *fallbackMime = NULL;
-					FBOOL returnStreamOnly =  FALSE;
 					FBOOL downloadMode  = FALSE;
 					
 					fallbackMime = GetMIMEByFilename( path );
@@ -1365,22 +1342,23 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								namepos = i + 1;
 							}
 						}
-						
-						char escaped_filename[2*strlen(&origDecodedPath[namepos])]; //worst case assumption - filename is all quotes and everything has to be escaped
+						int fileLen = strlen( &origDecodedPath[namepos] );
+						char *escapedFilename = FMalloc( 2*fileLen );
+						if( escapedFilename != NULL )
+						{
+							string_escape_quotes(&origDecodedPath[namepos], escapedFilename );
 
-						string_escape_quotes(&origDecodedPath[namepos], escaped_filename);
-
-						memset( temp, 0, sizeof( temp ) );
-						snprintf( temp, sizeof( temp ), "attachment; filename=\"%s\"", escaped_filename);
+							//memset( temp, 0, sizeof( temp ) );
+							snprintf( temp, sizeof( temp ), "attachment; filename=\"%s\"", escapedFilename );
 						
-						DEBUG("dOWNLOAD file path '%s' '%s'\n", &origDecodedPath[namepos], temp );
+							DEBUG("dOWNLOAD file path '%s' '%s'\n", &origDecodedPath[namepos], temp );
 						
-						response = HttpNewSimpleA( HTTP_200_OK, request,  
-												   HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "application/octet-stream" ),
-												   HTTP_HEADER_CONTENT_DISPOSITION, (FULONG)StringDuplicate( temp ),
-												   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),
-												   TAG_DONE, TAG_DONE );
-						
+							response = HttpNewSimpleA( HTTP_200_OK, request,  
+								HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "application/octet-stream" ),
+								HTTP_HEADER_CONTENT_DISPOSITION, (FULONG)StringDuplicate( temp ),
+								HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),
+								TAG_DONE, TAG_DONE );
+						}
 						if( fallbackMime != NULL )
 						{
 							FFree( fallbackMime );
@@ -1389,9 +1367,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					else
 					{
 						response = HttpNewSimpleA( HTTP_200_OK, request,  
-												   HTTP_HEADER_CONTENT_TYPE, (FULONG)( fallbackMime ),
-												   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),
-												   TAG_DONE, TAG_DONE );
+							HTTP_HEADER_CONTENT_TYPE, (FULONG)( fallbackMime ),
+							HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),
+							TAG_DONE, TAG_DONE );
 					}
 					
 					FBOOL have = FSManagerCheckAccess( l->sl_FSM, origDecodedPath, actDev->f_ID, loggedSession->us_User, "-R----" );
@@ -1445,9 +1423,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							}
 							else
 							{
-								HttpFree( response );
-								response = NULL;
-							
+								if( response != NULL )
+								{
+									HttpFree( response );
+									response = NULL;
+								}
 								response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 									HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 							
@@ -1483,10 +1463,10 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								//we want to read only part of data
 #define FS_READ_BUFFER 262144
 
-								FQUAD totalBytes = 0;
+								//FQUAD totalBytes = 0;
 								
-								ListString *ls = ListStringNew();
-							
+								BufString *bs = BufStringNew();
+
 								if( offset != NULL && bytes != NULL )
 								{
 									FQUAD offsetint = atoll( offset );
@@ -1501,36 +1481,33 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 										}
 									
 										char *dataBuffer = FCalloc( readbytes, sizeof( char ) );
-									
-										while( ( dataread = actFS->FileRead( fp, dataBuffer, readbytes ) ) != -1 )
+										if( dataBuffer != NULL )
 										{
-											if( request->http_ShutdownPtr != NULL && *(request->http_ShutdownPtr) == TRUE )
+											while( ( dataread = actFS->FileRead( fp, dataBuffer, readbytes ) ) != -1 )
 											{
-												break;
-											}
+												if( request->http_ShutdownPtr != NULL && *(request->http_ShutdownPtr) == TRUE )
+												{
+													break;
+												}
 											
-											if( dataread == 0 )
-											{
-												continue;
-											}
+												if( dataread == 0 )
+												{
+													continue;
+												}
 										
-											ListStringAdd( ls, dataBuffer, dataread );
+												BufStringAddSize( bs, dataBuffer, dataread );
 										
-											// Make sure we only read as much as we need
-											bytesint -= dataread;
-											if( bytesint > 0 ) 
-											{
-												break;
+												// Make sure we only read as much as we need
+												bytesint -= dataread;
+												if( bytesint > 0 ) 
+												{
+													break;
+												}
+												if( bytesint < readbytes )
+												{
+													readbytes = bytesint;
+												}
 											}
-											if( bytesint < readbytes )
-											{
-												readbytes = bytesint;
-											}
-											totalBytes += readbytes;
-										}
-										
-										if( dataBuffer )
-										{
 											FFree( dataBuffer );
 										}
 									}
@@ -1566,8 +1543,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									
 											if( dataread > 0 )
 											{
-												ListStringAdd( ls, dataBuffer, dataread );
-												totalBytes += dataread;
+												BufStringAddSize( bs, dataBuffer, dataread );
 											}
 											else
 											{
@@ -1581,65 +1557,40 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								// Close the file
 								actFS->FileClose( actDev, fp );
 							
-								if( ls->ls_Size > 0 && totalBytes > 0 )
+								if( bs->bs_Size > 0 )
 								{
 									// Combine all parts into one buffer
-									
-									ListStringJoin( ls );
-									
-									if( ls->ls_Data != NULL )
+
+									if( bs->bs_Buffer != NULL )
 									{
-										char *finalBuffer = ls->ls_Data;
-										ls->ls_Data = NULL;
-										char *outputBuf = finalBuffer;
-									
-										int offBuf = 0;
-								
+										char *outputBuf = bs->bs_Buffer;
+
 										// Try to skip embedded headers
-										char *ptr = strstr( finalBuffer, "---http-headers-end---\n" );
+										char *ptr = strstr( bs->bs_Buffer, "---http-headers-end---\n" );
 										if( ptr != NULL )
 										{
 											// With the diff, move offset and set correct size
-											int headerlength = ( ptr - finalBuffer ) + 23;
-											totalBytes = strlen( finalBuffer ) - headerlength;
-											outputBuf = FCalloc( totalBytes + 1, sizeof( char ) );
-											sprintf( outputBuf, finalBuffer + headerlength, totalBytes );
-											FFree( finalBuffer );
+											int headerlength = ( ptr - bs->bs_Buffer ) + 23;
+											int totalBytes = bs->bs_Size - headerlength;
+											if( ( outputBuf = FMalloc( totalBytes + 1 ) ) != NULL )
+											{
+												strncpy( outputBuf, bs->bs_Buffer + headerlength, totalBytes );
+												HttpSetContent( response, outputBuf, totalBytes );
+											}
 										}
-								
-								/*
-								 *								// Correct mime from data
-								 *								const char *mime = NULL;
-								 *								char *fallbackMime = NULL;
-								 *								
-								 *								
-								 *								if( l->sl_Magic != NULL && outputBuf != NULL )
-								 *								{
-								 *									//INFO("FILE READ BYTE %c %c %c %c\n", outputBuf[ 0 ], outputBuf[ 1 ], outputBuf[ 2 ], outputBuf[ 3 ] );
-								 *									int bytes = totalBytes;
-								 # *define MAGIC_SIZE (1024*6)
-								 
-								 if( bytes > MAGIC_SIZE ){ bytes = MAGIC_SIZE; }
-								 mime = magic_buffer( l->sl_Magic, outputBuf, bytes );
-
-								 //FERROR("\n\n\n\n\n\n\nHELLO\n");
-							}
-							// Just in case!
-							if( mime == NULL )
-							{
-							fallbackMime = getMIMEByFilename( path );
-							}
-							
-							INFO("READ RETURN BYTES %d  - %s\n", totalBytes, mime );
-							*/
-										HttpSetContent( response, outputBuf, totalBytes );
+										else
+										{
+											HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
+											bs->bs_Buffer = NULL; // we cannot release memory, it is assigned now to response
+										}
 									}
 								}
 								else
 								{
-									HttpFree( response );
-									response = NULL;
-								
+									if( response != NULL )
+									{
+										HttpFree( response );
+									}
 									response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 										HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 								
@@ -1647,13 +1598,15 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FILE_NOT_EXIST_OR_EMPTY] , DICT_FILE_NOT_EXIST_OR_EMPTY );
 									HttpAddTextContent( response, dictmsgbuf );
 								}
-								
-								ListStringDelete( ls );
+
+								BufStringDelete( bs );
 							}
 							else
 							{
-								HttpFree( response );
-								response = NULL;
+								if( response != NULL )
+								{
+									HttpFree( response );
+								}
 							
 								response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 									HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
@@ -1668,9 +1621,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						}
 						else
 						{
-							HttpFree( response );
-							response = NULL;
-						
+							if( response != NULL )
+							{
+								response = NULL;
+							}
+							
 							response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 								HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 						
@@ -1683,8 +1638,10 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					}
 					else
 					{
-						HttpFree( response );
-						response = NULL;
+						if( response != NULL )
+						{
+							HttpFree( response );
+						}
 						
 						response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 												   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
@@ -1837,7 +1794,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 											DoorNotificationCommunicateChanges( l, loggedSession, actDev, notifPath );
 											FFree( notifPath );
 										}
-										//DoorNotificationCommunicateChanges( l, loggedSession, actDev, path );
 									}
 								}
 								else
@@ -1860,7 +1816,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						}
 						else
 						{
-							char dictmsgbuf[ 256 ];
+							char dictmsgbuf[ 512 ];
 							char dictmsgbuf1[ 256 ];
 							snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "data" );
 							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
@@ -1869,7 +1825,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					}
 					else
 					{
-						char dictmsgbuf[ 256 ];
+						char dictmsgbuf[ 512 ];
 						char dictmsgbuf1[ 256 ];
 						snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "mode" );
 						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
@@ -1955,10 +1911,12 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 											
 											File *wfp = (File *)dsthand->FileOpen( dstrootf, dstpath, "w+" );
 											
+#define COPY_BUFFER_SIZE 524288
+											
 											if( wfp != NULL )
 											{
 												// Using a big buffer!
-												char *dataBuffer = FCalloc( 524288, sizeof(char) );
+												char *dataBuffer = FCalloc( COPY_BUFFER_SIZE, sizeof(char) );
 												if( dataBuffer != NULL )
 												{
 													DEBUG("[FSMWebRequest] file/copy - files opened, copy in progress\n");
@@ -1967,7 +1925,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 													int readTr = 0;
 													int bytes = 0;
 
-													while( ( dataread = actFS->FileRead( rfp, dataBuffer, 524288 ) ) > 0 )
+													while( ( dataread = actFS->FileRead( rfp, dataBuffer, COPY_BUFFER_SIZE ) ) > 0 )
 													{
 														if( request->http_ShutdownPtr != NULL &&  *(request->http_ShutdownPtr) == TRUE )
 														{
@@ -2104,7 +2062,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					}
 					else
 					{
-						char dictmsgbuf[ 256 ];
+						char dictmsgbuf[ 512 ];
 						char dictmsgbuf1[ 256 ];
 						snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "to" );
 						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
@@ -2436,6 +2394,14 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					FBOOL alreadyExist = FALSE;
 					char hashmap[ 512 ];
 					hashmap[ 0 ] = 0;
+					
+					char *encName = NULL;
+					
+					if( strlen( name ) > 0 )
+					{
+						encName = UrlEncodeToMem( name );
+					}
+					DEBUG("[File/Expose] encoded file name: %s\n", encName );
 
 					//char *checkquery = NULL;
 					char *fortestpurp = FMalloc( 2048 ); //[ 2048 ];
@@ -2468,7 +2434,16 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						// if entry do not exist in database
 						if( hashmap[ 0 ] == 0 )
 						{
-							FileShared *tmpfs = FileSharedNew( fortestpurp, name );
+							FileShared *tmpfs = NULL;
+							
+							if( encName != NULL )
+							{
+								tmpfs = FileSharedNew( fortestpurp, encName );
+							}
+							else
+							{
+								tmpfs = FileSharedNew( fortestpurp, name );
+							}
 
 							if( tmpfs != NULL )
 							{
@@ -2480,7 +2455,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								DEBUG("\n\n\n\n\n tmpfs->fs_FSID : %lu\n\n\n\n\n", tmpfs->fs_FSID );
 						
 								tmpfs->fs_DeviceName = StringDuplicate( devname );
-						
 								tmpfs->fs_DstUsers = StringDuplicate( dstfield );
 						
 								// Make a unique hash
@@ -2529,11 +2503,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					char *tmp = FMalloc( 2048 );
 					if( sharedFile == TRUE )
 					{
-						size = snprintf( tmp, 2048, "ok<!--separate-->{\"hash\":\"%s\", \"name\":\"%s\" }", hashmap, name );
+						size = snprintf( tmp, 2048, "ok<!--separate-->{\"hash\":\"%s\", \"name\":\"%s\" }", hashmap, encName );
 					}
 					else if( alreadyExist == TRUE )
 					{
-						size = snprintf( tmp, 2048, "ok<!--separate-->{\"hash\":\"%s\", \"name\":\"%s\" }", hashmap, name );
+						size = snprintf( tmp, 2048, "ok<!--separate-->{\"hash\":\"%s\", \"name\":\"%s\" }", hashmap, encName );
 					}
 					else
 					{
@@ -2548,6 +2522,10 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( dest != NULL )
 					{
 						FFree( dest );
+					}
+					if( encName != NULL )
+					{
+						FFree( encName );
 					}
 					FFree( fortestpurp );
 				}
@@ -2577,11 +2555,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						
 						sqllib->DeleteWhere( sqllib, FileSharedTDesc, where );
 						
-						{
-							char tmp[ 1024 ];
-							sprintf( tmp, "ok<!--separate-->{\"response\":\"\" }" );
-							HttpAddTextContent( response, tmp );
-						}
+						sprintf( where, "ok<!--separate-->{\"response\":\"\" }" );
+						HttpAddTextContent( response, where );
 						
 						*result = 200;
 						
@@ -2726,7 +2701,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					}
 					else
 					{
-						char dictmsgbuf[ 256 ];
+						char dictmsgbuf[ 512 ];
 						char dictmsgbuf1[ 256 ];
 						snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_CANNOT_CHANGE_ACCESS], err );
 						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_CANNOT_CHANGE_ACCESS );
@@ -2843,7 +2818,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						}
 						else
 						{
-							char dictmsgbuf[ 256 ];
+							char dictmsgbuf[ 512 ];
 							char dictmsgbuf1[ 256 ];
 							snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_CANNOT_UPDATE_DOOR_NOTIFICATION], retVal );
 							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_CANNOT_UPDATE_DOOR_NOTIFICATION );
@@ -2903,7 +2878,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							}
 							else
 							{
-								char dictmsgbuf[ 256 ];
+								char dictmsgbuf[ 512 ];
 								char dictmsgbuf1[ 256 ];
 								snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_ENTRY_CANNOT_BE_REMOVED], id );
 								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_ENTRY_CANNOT_BE_REMOVED );
@@ -2912,7 +2887,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						}
 						else
 						{
-							char dictmsgbuf[ 256 ];
+							char dictmsgbuf[ 512 ];
 							char dictmsgbuf1[ 256 ];
 							snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "id" );
 							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
@@ -2945,15 +2920,14 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 					
 					int error = DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
-					//int error = DoorNotificationCommunicateChanges( l, loggedSession, actDev, path );
-					
+
 					if( error == 0 )
 					{
 						HttpAddTextContent( response,  "ok<!--separate-->{ \"Result\": \"Notifications sent\"}" );
 					}
 					else
 					{
-						char dictmsgbuf[ 256 ];
+						char dictmsgbuf[ 512 ];
 						char dictmsgbuf1[ 256 ];
 						snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_CANNOT_SEND_NOTIFICATION], error );
 						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_CANNOT_SEND_NOTIFICATION );
@@ -3031,7 +3005,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					
 					if( archiver != NULL && files != NULL && archpath != NULL && source != NULL )
 					{
-						//DEBUG("\n\n\n\n\n\n\n\nORIGINAL PATH: %s archpath %s\n\n\n\n\n\n", path, archpath );
 						{
 							char *dirname = FCalloc( 1024, sizeof(char) );
 							snprintf( dirname, 1024, "%s%s_decomp_%d%d", DEFAULT_TMP_DIRECTORY, loggedSession->us_SessionID, rand()%9999, rand()%9999 );
@@ -3116,22 +3089,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 													}
 												}
 											
+												if( notify == TRUE )
 												{
-													/*
-													char *notifPath = CutNotificationPath( archpath );
-													if( notifPath != NULL )
-													{
-														if( notify == TRUE )
-														{
-															DoorNotificationCommunicateChanges( l, loggedSession, dstdevice, notifPath );
-														}
-														FFree( notifPath );
-													}
-													*/
-													if( notify == TRUE )
-													{
-														int err2 = DoorNotificationCommunicateChanges( l, loggedSession, dstdevice, archpath );
-													}
+													int err2 = DoorNotificationCommunicateChanges( l, loggedSession, dstdevice, archpath );
 												}
 											
 												HttpAddTextContent( response,  "ok<!--separate-->{ \"Result\": 0 }" );
@@ -3174,7 +3134,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					}
 					else
 					{
-						char dictmsgbuf[ 256 ];
+						char dictmsgbuf[ 512 ];
 						char dictmsgbuf1[ 256 ];
 						snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "archiver" );
 						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
@@ -3247,185 +3207,192 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					
 					if( archiver != NULL )
 					{
-						//char dirname[ 756 ];
-						char *dirname = FCalloc( 1024, sizeof(char ) );
-						snprintf( dirname, 1024, "%s%s_decomp_%d%d", DEFAULT_TMP_DIRECTORY, loggedSession->us_SessionID, rand()%9999, rand()%9999 );
-						
-						mkdir( dirname, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH );
-						
-						char *dstname = FCalloc( 1024, sizeof(char ) );
-						snprintf( dstname, 1024, "%s.target", dirname );
-						
-						mkdir( dstname, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH );
-						
-						char *tmpfilename = FCalloc( 1024, sizeof(char ) );
-						snprintf( tmpfilename, 1024, "%s/%d%d.zip", dirname, rand()%9999, rand()%9999 );
-
-						DEBUG("[FSMWebRequest] dirname %s dstname %s tmpfilename %s\n", dirname, dstname, tmpfilename );
-
-						FILE *localfp = NULL;
-						
-						if( ( localfp = fopen( tmpfilename, "wb" ) ) != NULL )
+						char *dirname = FMalloc( 1024 );
+						if( dirname != NULL )
 						{
-							// first we must copy file to local tmp folder
-
-							FHandler *actFS = (FHandler *)actDev->f_FSys;
-							int dataread = 0;
-							int readbytes = 0;
-
-							if( actFS != NULL )
+							snprintf( dirname, 1024, "%s%s_decomp_%d%d", DEFAULT_TMP_DIRECTORY, loggedSession->us_SessionID, rand()%9999, rand()%9999 );
+						
+							mkdir( dirname, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH );
+						
+							char *dstname = FMalloc( 1024 );
+							if( dstname != NULL )
 							{
-								actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
-								
-								File *fp = (File *)actFS->FileOpen( actDev, origDecodedPath, "rb" );
-								// Success?
-								if( fp != NULL )
+								snprintf( dstname, 1024, "%s.target", dirname );
+						
+								mkdir( dstname, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH );
+						
+								char *tmpfilename = FMalloc( 1024 );
+								if( tmpfilename )
 								{
-									response->http_Stream = FALSE;
-							
-									fp->f_Stream = request->http_Stream;
-									fp->f_Socket = request->http_Socket;
-									fp->f_WSD =  request->http_WSocket;
-									fp->f_Raw = 1;
-							
-									#define FS_READ_BUFFER 262144
-								
-									char *dataBuffer = FCalloc( FS_READ_BUFFER+1, sizeof( char ) ); 
-							
-									if( dataBuffer != NULL )
+									snprintf( tmpfilename, 1024, "%s/%d%d.zip", dirname, rand()%9999, rand()%9999 );
+
+									DEBUG("[FSMWebRequest] dirname %s dstname %s tmpfilename %s\n", dirname, dstname, tmpfilename );
+
+									FILE *localfp = NULL;
+									
+									if( ( localfp = fopen( tmpfilename, "wb" ) ) != NULL )
 									{
-										dataBuffer[ FS_READ_BUFFER ] = 0;
-								
-										while( ( dataread = actFS->FileRead( fp, dataBuffer, FS_READ_BUFFER ) ) != -1 )
+										// first we must copy file to local tmp folder
+
+										FHandler *actFS = (FHandler *)actDev->f_FSys;
+										int dataread = 0;
+										int readbytes = 0;
+
+										if( actFS != NULL )
 										{
-											if( dataread == 0 )
+											actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
+								
+											File *fp = (File *)actFS->FileOpen( actDev, origDecodedPath, "rb" );
+											// Success?
+											if( fp != NULL )
 											{
-												continue;
-											}
-											fwrite( dataBuffer, 1, dataread, localfp );
+												response->http_Stream = FALSE;
+							
+												fp->f_Stream = request->http_Stream;
+												fp->f_Socket = request->http_Socket;
+												fp->f_WSD =  request->http_WSocket;
+												fp->f_Raw = 1;
+							
+#define FS_READ_BUFFER 262144
+								
+												char *dataBuffer = FCalloc( FS_READ_BUFFER+1, sizeof( char ) ); 
+							
+												if( dataBuffer != NULL )
+												{
+													dataBuffer[ FS_READ_BUFFER ] = 0;
+								
+													while( ( dataread = actFS->FileRead( fp, dataBuffer, FS_READ_BUFFER ) ) != -1 )
+													{
+														if( dataread == 0 )
+														{
+															continue;
+														}
+														fwrite( dataBuffer, 1, dataread, localfp );
 											
-											readbytes += dataread;
-										}	// end of reading part or whole file
-										FFree( dataBuffer );
-									}
-									actFS->FileClose( actDev, fp );
-								}	// if( fp != NULL
-							}	// actfs != NULL
-							else
-							{
-								char dictmsgbuf[ 256 ];
-								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FILESYSTEM_NOT_FOUND] , DICT_FILESYSTEM_NOT_FOUND );
-								HttpAddTextContent( response, dictmsgbuf );
-							}
-							fclose( localfp );
+														readbytes += dataread;
+													}	// end of reading part or whole file
+													FFree( dataBuffer );
+												}
+												actFS->FileClose( actDev, fp );
+											}	// if( fp != NULL
+										}	// actfs != NULL
+										else
+										{
+											char dictmsgbuf[ 256 ];
+											snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FILESYSTEM_NOT_FOUND] , DICT_FILESYSTEM_NOT_FOUND );
+											HttpAddTextContent( response, dictmsgbuf );
+										}
+										fclose( localfp );
 							
-							DEBUG("[FSMWebRequest] Archive read, bytes %d\n", readbytes );
+										DEBUG("[FSMWebRequest] Archive read, bytes %d\n", readbytes );
 							
-							// archive was stored on disk
+										// archive was stored on disk
+										
+										int filesExtracted = 0;
 							
-							int filesExtracted = 0;
-							
-							if( readbytes > 0 )
-							{
-								char command[ 2048 ];
-								command[ 0 ] = 0;
+										if( readbytes > 0 )
+										{
+											char command[ 2048 ];
+											command[ 0 ] = 0;
 								
-								DEBUG("[FSMWebRequest] arch '%s' archsize %d  comp to '%s'\n", archiver, (int) strlen( archiver ), "zip" );
+											DEBUG("[FSMWebRequest] arch '%s' archsize %d  comp to '%s'\n", archiver, (int) strlen( archiver ), "zip" );
 								
-								if( strcmp( archiver, "zip" ) == 0 )
-								{
-									ZLibrary *zlib = l->LibraryZGet( l );
-									if( zlib != NULL )
-									{
-										filesExtracted = zlib->Unpack( zlib, tmpfilename, dstname, NULL, request );
+											if( strcmp( archiver, "zip" ) == 0 )
+											{
+												ZLibrary *zlib = l->LibraryZGet( l );
+												if( zlib != NULL )
+												{
+													filesExtracted = zlib->Unpack( zlib, tmpfilename, dstname, NULL, request );
 									 
-										DEBUG("[FSMWebRequest] Unpack files extracted %d\n", filesExtracted );
+													DEBUG("[FSMWebRequest] Unpack files extracted %d\n", filesExtracted );
 									 
-										l->LibraryZDrop( l, zlib );
-									}
-								}
+													l->LibraryZDrop( l, zlib );
+												}
+											}
 
-								char *dsttmp = StringDuplicate( origDecodedPath );
-								if( dsttmp != NULL )
-								{
-									int i;
-									for( i = strlen( dsttmp ) ; i >= 1 ; i-- )
-									{
-										if( dsttmp[ i ] == '/' || dsttmp[ i ] == ':' )
+											char *dsttmp = StringDuplicate( origDecodedPath );
+											if( dsttmp != NULL )
+											{
+												int i;
+												for( i = strlen( dsttmp ) ; i >= 1 ; i-- )
+												{
+													if( dsttmp[ i ] == '/' || dsttmp[ i ] == ':' )
+													{
+														if( dsttmp[ i ] == '/' )
+														{
+															dsttmp[ i ] = 0;
+														}
+														else if( dsttmp[ i ] == ':' )
+														{
+															dsttmp[ i+1 ] = 0;
+														}
+														break;
+													}
+												}
+									
+												DEBUG("[FSMWebRequest] File upload %s\n", dsttmp );
+									
+												int error = FileUploadFileOrDirectory( request, loggedSession, dsttmp, dstname, filesExtracted );
+								
+												if( notify == TRUE )
+												{
+													int dsttmpLen = strlen( dsttmp );
+													char *dsttmpDup = FCalloc( dsttmpLen+16, sizeof(char) );// StringDuplicate( dsttmp );
+													if( dsttmpDup != NULL )
+													{
+														strcpy( dsttmpDup, dsttmp );
+														if( dsttmpDup[ dsttmpLen-1 ] != '/' )
+														{
+															dsttmpDup[ dsttmpLen ] = '/';
+														}
+														int err2 = DoorNotificationCommunicateChanges( l, loggedSession, actDev, dsttmpDup );
+														FFree( dsttmpDup );
+													}
+												}
+												FFree( dsttmp );
+											}
+								
+											if( filesExtracted <= 0 )	// if unzip fail
+											{
+												char dictmsgbuf[ 256 ];
+												snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_FILE_UNCOMPRESS_PROBLEM] , DICT_FILE_UNCOMPRESS_PROBLEM );
+												HttpAddTextContent( response, dictmsgbuf );
+											}
+											else
+											{
+												char tmp[ 256 ];
+												snprintf( tmp, sizeof(tmp), "ok<!--separate-->{\"Result\":0,\"files\":%d}", filesExtracted );
+												HttpAddTextContent( response, tmp );
+											}
+										}
+										else
 										{
-											if( dsttmp[ i ] == '/' )
-											{
-												dsttmp[ i ] = 0;
-											}
-											else if( dsttmp[ i ] == ':' )
-											{
-												dsttmp[ i+1 ] = 0;
-											}
-											break;
+											char dictmsgbuf[ 256 ];
+											snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_FILE_NOT_EXIST_OR_EMPTY] , DICT_FILE_NOT_EXIST_OR_EMPTY );
+											HttpAddTextContent( response, dictmsgbuf );
 										}
 									}
-									
-									DEBUG("[FSMWebRequest] File upload %s\n", dsttmp );
-									
-									int error = FileUploadFileOrDirectory( request, loggedSession, dsttmp, dstname, filesExtracted );
-								
-									if( notify == TRUE )
+									else
 									{
-										int dsttmpLen = strlen( dsttmp );
-										char *dsttmpDup = FCalloc( dsttmpLen+16, sizeof(char) );// StringDuplicate( dsttmp );
-										if( dsttmpDup != NULL )
-										{
-											strcpy( dsttmpDup, dsttmp );
-											if( dsttmpDup[ dsttmpLen-1 ] != '/' )
-											{
-												dsttmpDup[ dsttmpLen ] = '/';
-											}
-											int err2 = DoorNotificationCommunicateChanges( l, loggedSession, actDev, dsttmpDup );
-											FFree( dsttmpDup );
-										}
+										char dictmsgbuf[ 256 ];
+										snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FILESYSTEM_NOT_FOUND] , DICT_FILESYSTEM_NOT_FOUND );
+										HttpAddTextContent( response, dictmsgbuf );
 									}
-									FFree( dsttmp );
+						
+									// remove created directories
+						
+									LocFileDeleteWithSubs( dirname );
+									LocFileDeleteWithSubs( dstname );
+									FFree( tmpfilename );
 								}
-								
-								if( filesExtracted <= 0 )	// if unzip fail
-								{
-									char dictmsgbuf[ 256 ];
-									snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_FILE_UNCOMPRESS_PROBLEM] , DICT_FILE_UNCOMPRESS_PROBLEM );
-									HttpAddTextContent( response, dictmsgbuf );
-								}
-								else
-								{
-									char tmp[ 256 ];
-									snprintf( tmp, sizeof(tmp), "ok<!--separate-->{\"Result\":0,\"files\":%d}", filesExtracted );
-									HttpAddTextContent( response, tmp );
-								}
+								FFree( dstname );
 							}
-							else
-							{
-								char dictmsgbuf[ 256 ];
-								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_FILE_NOT_EXIST_OR_EMPTY] , DICT_FILE_NOT_EXIST_OR_EMPTY );
-								HttpAddTextContent( response, dictmsgbuf );
-							}
+							FFree( dirname );
 						}
-						else
-						{
-							char dictmsgbuf[ 256 ];
-							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FILESYSTEM_NOT_FOUND] , DICT_FILESYSTEM_NOT_FOUND );
-							HttpAddTextContent( response, dictmsgbuf );
-						}
-						
-						// remove created directories
-						
-						LocFileDeleteWithSubs( dirname );
-						LocFileDeleteWithSubs( dstname );
-						
-						FFree( dirname );
-						FFree( dstname );
-						FFree( tmpfilename );
 					}
 					else
 					{
-						char dictmsgbuf[ 256 ];
+						char dictmsgbuf[ 512 ];
 						char dictmsgbuf1[ 256 ];
 						snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "archiver" );
 						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
@@ -3474,7 +3441,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							}
 							else
 							{
-								char dictmsgbuf[ 256 ];
+								char dictmsgbuf[ 512 ];
 								char dictmsgbuf1[ 256 ];
 								snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED_EMPTY_STRING], "infoget" );
 								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_FUNCTION_RETURNED_EMPTY_STRING );
@@ -3485,7 +3452,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						}
 						else
 						{
-							char buffer[ 256 ];
+							char buffer[ 512 ];
 							char buffer1[ 256 ];
 							snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "key" );
 							snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
@@ -3550,7 +3517,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							}
 							else
 							{
-								char dictmsgbuf[ 256 ];
+								char dictmsgbuf[ 512 ];
 								char dictmsgbuf1[ 256 ];
 								snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "infoset", error );
 								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_FUNCTION_RETURNED );
@@ -3566,7 +3533,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					}
 					else
 					{
-						char buffer[ 256 ];
+						char buffer[ 512 ];
 						char buffer1[ 256 ];
 						snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "key, value" );
 						snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
@@ -3679,7 +3646,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 				response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 										   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 				
-				char buffer[ 256 ];
+				char buffer[ 512 ];
 				char buffer1[ 256 ];
 				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_DEVICE_NOT_FOUND], devname );
 				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_DEVICE_NOT_FOUND );

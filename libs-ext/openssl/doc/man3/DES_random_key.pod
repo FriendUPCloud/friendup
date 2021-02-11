@@ -119,8 +119,11 @@ and is not a weak or semi-weak key.  If the parity is wrong, then -1
 is returned.  If the key is a weak key, then -2 is returned.  If an
 error is returned, the key schedule is not generated.
 
-DES_set_key() works like DES_set_key_checked() and remains for
-backward compatibility.
+DES_set_key() works like
+DES_set_key_checked() if the I<DES_check_key> flag is nonzero,
+otherwise like DES_set_key_unchecked().  These functions are available
+for compatibility; it is recommended to use a function that does not
+depend on a global variable.
 
 DES_set_odd_parity() sets the parity of the passed I<key> to odd.
 
@@ -310,9 +313,9 @@ on some platforms.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the Apache License 2.0 (the "License").  You may not use
+Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.
