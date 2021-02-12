@@ -3023,13 +3023,38 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			
 			// Race condition, cancel existing..
 			if( self.refreshPaths[ ppath ] )
-				clearTimeout( self.refreshPaths[ ppath ] );
+			{
+				self.refreshPaths[ ppath ].timeoutcounter--
+				clearTimeout( self.refreshPaths[ ppath ].timeout );
+			}
 			
-			self.refreshPaths[ ppath ] = setTimeout( function()
+			if( !self.refreshPaths[ ppath ] )
+			{
+				self.refreshPaths[ ppath ] = {
+					timeoutcounter: 0,
+					timeout: null
+				};
+			}
+			
+			self.refreshPaths[ ppath ].timeoutcounter++;
+			self.refreshPaths[ ppath ].timeout = setTimeout( function()
 			{
 				// Setup a new callback for running after the refresh
 				var cbk = function()
 				{
+					if( !self.refreshPaths[ ppath ] )
+					{
+						if( w.directoryview )
+							w.directoryview.toChange = true;
+						w.refresh();
+					}
+					else
+					{
+						self.refreshPaths[ ppath ].timeoutcounter--;
+					}
+					
+					//console.log( 'What is it?', self.refreshPaths[ ppath ] );
+					
 					// Remove this one - now we are ready for the next call
 					delete self.refreshPaths[ ppath ];
 					
