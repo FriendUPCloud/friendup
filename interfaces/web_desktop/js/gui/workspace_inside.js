@@ -3017,17 +3017,19 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		function executeRefresh( w, callback )
 		{
 			// Make sure that the view is unique
-			var ppath = path;
-			if( self.refreshPaths[ ppath ] )
-				ppath = path + w.viewId;
+			let ppath = path + ':' + w.viewId;
+			
+			let timeout = 250;
 			
 			// Race condition, cancel existing..
 			if( self.refreshPaths[ ppath ] )
 			{
+				timeout = 500;
 				self.refreshPaths[ ppath ].timeoutcounter--
 				clearTimeout( self.refreshPaths[ ppath ].timeout );
 			}
 			
+			// No time control yet? Set it up.
 			if( !self.refreshPaths[ ppath ] )
 			{
 				self.refreshPaths[ ppath ] = {
@@ -3036,11 +3038,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				};
 			}
 			
+			// Set up timed refresh on delay
 			self.refreshPaths[ ppath ].timeoutcounter++;
 			self.refreshPaths[ ppath ].timeout = setTimeout( function()
 			{
 				// Setup a new callback for running after the refresh
-				var cbk = function()
+				let cbk = function()
 				{
 					if( !self.refreshPaths[ ppath ] )
 					{
@@ -3065,7 +3068,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				if( w.directoryview )
 					w.directoryview.toChange = true;
 				w.refresh( cbk );
-			}, 500 );
+			}, timeout );
 		}
 
 		// Check movable windows
