@@ -3050,6 +3050,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						if( w.directoryview )
 							w.directoryview.toChange = true;
+						else console.log( 'What is this?', w );
 						w.refresh();
 					}
 					else
@@ -3061,6 +3062,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							{
 								if( w.directoryview )
 									w.directoryview.toChange = true;
+								else console.log( 'AAAAAAAARGH!', w );
 								w.refresh();
 								// Remove this one - now we are ready for the next call
 							}
@@ -3074,6 +3076,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				// Do the actual refresh
 				if( w.directoryview )
 					w.directoryview.toChange = true;
+				else console.log( 'Hippopotomous: ', w );
 				w.refresh( cbk );
 			}, timeout );
 		}
@@ -3088,12 +3091,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				if( mw.content.fileInfo.Path.toLowerCase() == path.toLowerCase() && typeof mw.content.refresh == 'function' )
 				{
+					console.log( 'Executing refresh!' );
 					executeRefresh( mw.content, callback );
 				}
 			}
 			// Dialogs
 			else if( mw.windowObject && mw.windowObject.refreshView )
 			{
+				console.log( 'This is a dialog?' );
 				mw.windowObject.refreshView();
 			}
 		}
@@ -3116,6 +3121,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		if( o != path && o.length )
 		{
+			console.log( 'What? -> ' + o );
 			Workspace.refreshWindowByPath( o, depth + 1, callback );
 		}
 	},
