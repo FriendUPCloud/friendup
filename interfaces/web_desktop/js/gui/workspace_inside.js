@@ -6548,7 +6548,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			Notify( { title: i18n( 'i18n_zip_start_none' ), text: i18n( 'i18n_zip_startdesc_none' ) } );
 		}
 	},
-	// Uncompress files
+	// Decompress files
 	unzipFiles: function()
 	{
 		var ic = currentMovable.content.icons;
