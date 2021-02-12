@@ -790,7 +790,7 @@ var WorkspaceInside = {
 			Workspace.filesystemChangeTimeouts[ t ] = setTimeout( function()
 			{
 				hcbk( msg );
-			}, 500 );
+			}, 250 );
 			
 			// Handle the actual filesystem change
 			function hcbk()
@@ -862,7 +862,7 @@ var WorkspaceInside = {
 							Workspace.appFilesystemEvents[ 'filesystem-change' ] = outEvents;
 						}
 					}
-				
+					
 					Workspace.refreshWindowByPath( p );
 					
 					if( p.substr( p.length - 1, 1 ) == ':' )
@@ -3014,12 +3014,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 
 		// Delayed refreshing
-		function executeRefresh( window, callback )
+		function executeRefresh( w, callback )
 		{
 			// Make sure that the view is unique
 			var ppath = path;
 			if( self.refreshPaths[ ppath ] )
-				ppath = path + window.viewId;
+				ppath = path + w.viewId;
 			
 			// Race condition, cancel existing..
 			if( self.refreshPaths[ ppath ] )
@@ -3037,7 +3037,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					if( callback ) callback();
 				};
 				// Do the actual refresh
-				window.refresh( cbk );
+				if( w.directoryview )
+					w.directoryview.toChange = true;
+				w.refresh( cbk );
 			}, 250 );
 		}
 
@@ -4567,8 +4569,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								dw.activate();
 								// Refresh now
 								if( directoryWindow.content )
+								{
+									if( directoryWindow.content.directoryview )
+										directoryWindow.content.directoryview.toChange = true;
 									directoryWindow.content.refresh();
-								else directoryWindow.refresh();
+								}
+								else 
+								{
+									if( directoryWindow.directoryview )
+										directoryWindow.directoryview.toChange = true;
+									directoryWindow.refresh();
+								}
 							}
 							d.close();
 						}
@@ -4877,7 +4888,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							function( rr, dd )
 							{
 								if( win && win.content.refresh )
+								{
+									if( win.content.directoryview )
+										win.content.directoryview.toChange = true;
 									win.content.refresh();
+								}
 								if( Workspace.renameWindow )
 									Workspace.renameWindow.close();
 							} 
@@ -4910,7 +4925,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					function( rr, dd )
 					{
 						if( win && win.content.refresh )
+						{
+							if( win.content.directoryview )
+								win.content.directoryview.toChange = true;
 							win.content.refresh();
+						}
 						if( Workspace.renameWindow )
 							Workspace.renameWindow.close();
 					}
@@ -7179,6 +7198,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		
 		SetWindowStorage( uid, d );
+		if( window.currentMovable.content.directoryview )
+			window.currentMovable.content.directoryview.toChange = true;
 		window.currentMovable.content.refresh();
 	},
 	showContextMenu: function( menu, e, extra )
@@ -7615,6 +7636,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( !c ) return;
 		var dv = c.content.directoryview;
 		dv.showHiddenFiles = dv.showHiddenFiles ? false : true;
+		if( c.content.directoryview )
+			c.content.directoryview.toChange = true;
 		c.content.refresh();
 	},
 	searchAll: function( args )
@@ -8226,6 +8249,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		if( window.currentMovable && window.currentMovable.content )
 		{
+			if( window.currentMovable.content.directoryview )
+				window.currentMovable.content.directoryview.toChange = true;
 			window.currentMovable.content.refresh();
 		}
 	},
@@ -9422,7 +9447,11 @@ function DoorsKeyDown( e )
 					if( currentMovable && currentMovable.content )
 					{
 						if( currentMovable.content.refresh )
+						{
+							if( currentMovable.content.directoryview )
+								currentMovable.content.directoryview.toChange = true;
 							currentMovable.content.refresh();
+						}
 					}
 					return;
 				}
