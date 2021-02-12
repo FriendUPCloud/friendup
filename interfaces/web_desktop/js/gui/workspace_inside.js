@@ -3040,7 +3040,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				if( w.directoryview )
 					w.directoryview.toChange = true;
 				w.refresh( cbk );
-			}, 250 );
+			}, 500 );
 		}
 
 		// Check movable windows
