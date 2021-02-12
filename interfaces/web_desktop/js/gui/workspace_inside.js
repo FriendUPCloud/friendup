@@ -3025,21 +3025,22 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if( self.refreshPaths[ ppath ] )
 			{
 				timeout = 500;
-				self.refreshPaths[ ppath ].timeoutcounter--
 				clearTimeout( self.refreshPaths[ ppath ].timeout );
+				if( self.refreshPaths[ ppath ].finalTimeout )
+					clearTimeout( self.refreshPaths[ ppath ].finalTimeout );
+				self.refreshPaths[ ppath ].finalTimeout = null;;
 			}
 			
 			// No time control yet? Set it up.
 			if( !self.refreshPaths[ ppath ] )
 			{
 				self.refreshPaths[ ppath ] = {
-					timeoutcounter: 0,
+					finalTimeout: null,
 					timeout: null
 				};
 			}
 			
 			// Set up timed refresh on delay
-			self.refreshPaths[ ppath ].timeoutcounter++;
 			self.refreshPaths[ ppath ].timeout = setTimeout( function()
 			{
 				// Setup a new callback for running after the refresh
@@ -3053,13 +3054,19 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					else
 					{
-						self.refreshPaths[ ppath ].timeoutcounter--;
+						// One extra refresh for safe keeping
+						self.finalTimeout = setTimeout( function()
+						{
+							if( typeof( w.refresh ) != 'undefined' )
+							{
+								if( w.directoryview )
+									w.directoryview.toChange = true;
+								w.refresh();
+								// Remove this one - now we are ready for the next call
+							}
+							delete self.refreshPaths[ ppath ];
+						}, 350 );
 					}
-					
-					//console.log( 'What is it?', self.refreshPaths[ ppath ] );
-					
-					// Remove this one - now we are ready for the next call
-					delete self.refreshPaths[ ppath ];
 					
 					// Run the actual callback
 					if( callback ) callback();
