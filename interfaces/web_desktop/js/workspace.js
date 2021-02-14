@@ -319,6 +319,7 @@ Workspace = {
 
 				// Realign workspaces
 				Workspace.nudgeWorkspacesWidget();
+				Workspace.refreshExtraWidgetContents(); // < Screenbar icons
 			}
 			this.clockInterval = setInterval( clock, 1000 );
 		}
