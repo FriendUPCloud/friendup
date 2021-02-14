@@ -59,6 +59,7 @@
 #include <system/sas/sas_manager.h>
 #include <system/sas/sas_web.h>
 #include <system/service/service_manager_web.h>
+#include <system/security/security_web.h>
 #include <strings.h>
 
 #define LIB_NAME "system.library"
@@ -1509,6 +1510,16 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	{
 		response = AdminWebRequest( l, urlpath, request, loggedSession, result );
 		
+	}
+	
+	//
+	// security
+	//
+	
+	else if( strcmp( urlpath[ 0 ], "security" ) == 0 )
+	{
+		//Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSession *loggedUser );
+		response = SecurityWebRequest( l, urlpath, *request, loggedSession );
 	}
 	
 	//
