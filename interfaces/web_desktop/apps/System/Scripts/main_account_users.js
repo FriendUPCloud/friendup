@@ -21,6 +21,7 @@ var UsersSettings = function ( setting, set )
 	var total       = ( 0                            );
 	var startlimit  = ( 0                            );
 	var maxlimit    = ( 30                           );
+	var minlength   = ( 1							 );
 	var intervals   = ( 50                           );
 	var limit       = ( startlimit + ', ' + maxlimit );
 	
@@ -34,6 +35,7 @@ var UsersSettings = function ( setting, set )
 		total       : total,
 		startlimit  : startlimit,
 		maxlimit    : maxlimit,
+		minlength   : minlength,
 		limit       : limit,
 		uids        : [],
 		avatars     : true,
@@ -79,6 +81,9 @@ var UsersSettings = function ( setting, set )
 					this.vars.startlimit   = ( 0                                                      );
 					this.vars.maxlimit     = ( set                                                    );
 					this.vars.limit        = ( this.vars.startlimit + ', ' + this.vars.maxlimit       );
+					break;
+				case 'minlength'           :
+					this.vars.minlength    = set;
 					break;
 				case 'intervals'           :
 					this.vars.intervals    = ( set                                                    );
@@ -7607,7 +7612,7 @@ Sections.accounts_users = function( cmd, extra )
 		
 		// TODO: Fix server search query when building the search list more advanced with listout limit ...
 		
-		if( filter.length < 3 || filter.length < UsersSettings( 'searchquery' ).length || filter == UsersSettings( 'searchquery' ) || !server ) return;
+		if( filter.length < UsersSettings( 'minlength' ).length || filter.length < UsersSettings( 'searchquery' ).length || filter == UsersSettings( 'searchquery' ) || !server ) return;
 		
 		UsersSettings( 'reset', true );
 		
