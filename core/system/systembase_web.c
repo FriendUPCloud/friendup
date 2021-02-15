@@ -291,10 +291,10 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 					if( strstr( allArgsNew, hm->hm_Data[ i ].hme_Key ) == NULL )
 					{
 						DEBUG("Parameter not found, FC will use one from POST: %s\n", hm->hm_Data[ i ].hme_Key );
-						int size = 10 + strlen( hm->hm_Data[ i ].hme_Key ) + strlen ( hm->hm_Data[ i ].hme_Data );
+						int size = 10 + strlen( hm->hm_Data[ i ].hme_Key ) + ( strlen( hm->hm_Data[ i ].hme_Data ) * 2 );
 						char *buffer;
 						
-						if( ( buffer = FCalloc( size, sizeof(char) ) ) != NULL )
+						if( ( buffer = FMalloc( size ) ) != NULL )
 						{
 #ifdef DOUBLE_SESSIONID_HASH
 							// if key is sessionid we must convert it to one recognized by database
