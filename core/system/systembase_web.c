@@ -78,7 +78,7 @@
 extern int UserDeviceMount( SystemBase *l, User *usr, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
 
 
-inline static void ReplaceSessionToHashed( char *in, char *out )
+inline static void ReplaceSessionToHashed( char *out, char *in )
 {
 	char *sessptr = strstr( in, "sessionid=" );
 	if( sessptr != NULL )
@@ -245,7 +245,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 			char *internalArgs = NULL;
 			if( ( internalArgs = strstr( sessionPointerInMemory, "args" ) ) != NULL )
 			{
-				ReplaceSessionToHashed( internalArgs, sessionPointerInMemory+4 );
+				ReplaceSessionToHashed( sessionPointerInMemory+4, allArgsNew );
 			}
 			else
 			{
