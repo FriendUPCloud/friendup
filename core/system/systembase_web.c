@@ -195,44 +195,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 			FFree( allArgs );
 			return NULL;
 		}
-	
-	/*
-		// this function was doing nothing:)
-		
-		// application/json are used to communicate with another tools like onlyoffce
-		char *sessptr = NULL;
-		if( request->http_ContentType != HTTP_CONTENT_TYPE_APPLICATION_JSON )
-		{
-			int add = 0;
-			// Check in the middle of the query
-			sessptr = strstr( allArgs, "&sessionid=" );
-			
-			// If not check first part of the query
-			if( sessptr == NULL )
-			{
-				sessptr = strstr( allArgs, "sessionid=" );
-				if( sessptr != NULL )
-				{
-					add = 10;
-				}
-			}
-			else
-			{
-				add = 11;
-			}
-			
-			DEBUG("Sessptr !NULL\n");
-			{
-				memcpy( allArgsNew, allArgs, fullsize );
-			}
-			
-			//fprintf( log, "\n\n\n\n\n\n\n\nSIZE ALLAGRS %lu  ALLARGSNEW %lu\n\n\n\n\n\n", strlen( allArgs ), strlen( allArgsNew ) );
-		}
-		else
-		{
-			strcpy( allArgsNew, allArgs );
-		}
-		*/
+
 		//strcpy( allArgsNew, allArgs );
 		
 		//
@@ -271,7 +234,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 			}
 			
 			//sessionid=6b57dd326d4c5993fc48a7eecf26257f6ab5caa797645efda5927eb7ab2f4f72&module=system&args=%7B%22application%22%3A%22Calculator%22%2C%22args%22%3A%22%22%7D&command=friendapplication&sessionid=589384a9699db054a0a452f26b5d560b40ba2fe4&system.library/module/
-			
+			/*
 			char *internalArgs = NULL;
 			if( ( internalArgs = strstr( sessionPointerInMemory, "args" ) ) != NULL )
 			{
@@ -283,6 +246,11 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 				{
 					strcat( allArgsNew, endSessionID );
 				}
+			}
+			*/
+			if( endSessionID != NULL )
+			{
+				strcat( allArgsNew, endSessionID );
 			}
 		}
 		else
@@ -322,14 +290,36 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 						
 						if( ( buffer = FCalloc( size, sizeof(char) ) ) != NULL )
 						{
-							if( quotationFound == TRUE )
+							// if key is sessionid we must convert it to one recognized by database
+							
+							if( hm->hm_Data[ i ].hme_Key != NULL && strstr( hm->hm_Data[ i ].hme_Key, "sessionid" ) != NULL )
 							{
-								sprintf( buffer, "&%s=%s", hm->hm_Data[ i ].hme_Key, (char *)hm->hm_Data[ i ].hme_Data );
+								char *encSessionID = SLIB->sl_UtilInterface.DatabaseEncodeString( (char *)hm->hm_Data[ i ].hme_Data );
+								if( encSessionID != NULL )
+								{
+									if( quotationFound == TRUE )
+									{
+										sprintf( buffer, "&%s=%s", hm->hm_Data[ i ].hme_Key, encSessionID );
+									}
+									else
+									{
+										sprintf( buffer, "?%s=%s", hm->hm_Data[ i ].hme_Key, encSessionID );
+										quotationFound = TRUE;
+									}
+									FFree( encSessionID );
+								}
 							}
 							else
 							{
-								sprintf( buffer, "?%s=%s", hm->hm_Data[ i ].hme_Key, (char *)hm->hm_Data[ i ].hme_Data );
-								quotationFound = TRUE;
+								if( quotationFound == TRUE )
+								{
+									sprintf( buffer, "&%s=%s", hm->hm_Data[ i ].hme_Key, (char *)hm->hm_Data[ i ].hme_Data );
+								}
+								else
+								{
+									sprintf( buffer, "?%s=%s", hm->hm_Data[ i ].hme_Key, (char *)hm->hm_Data[ i ].hme_Data );
+									quotationFound = TRUE;
+								}
 							}
 							
 							DEBUG("Added param '%s'\n", buffer );
