@@ -69,7 +69,7 @@
 
 //test
 //#undef __DEBUG
-#define DOUBLE_SESSIONID_HASH
+//DB_SESSIONID_HASH
 
 //
 //
@@ -206,7 +206,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 		// if there is sessionid in request it should be changed to one used by DB
 		//
 		
-#ifdef DOUBLE_SESSIONID_HASH
+#ifdef DB_SESSIONID_HASH
 		char *sessptr = strstr( allArgs, "sessionid=" );
 		if( sessptr != NULL )
 		{
@@ -301,7 +301,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 						
 						if( ( buffer = FMalloc( size ) ) != NULL )
 						{
-#ifdef DOUBLE_SESSIONID_HASH
+#ifdef DB_SESSIONID_HASH
 							// if key is sessionid we must convert it to one recognized by database
 							
 							if( hm->hm_Data[ i ].hme_Key != NULL && strstr( hm->hm_Data[ i ].hme_Key, "sessionid" ) != NULL )
@@ -865,12 +865,16 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				char *tmpQuery = FCalloc( 1025, sizeof( char ) );
 				if( tmpQuery )
 				{
+#ifdef DB_SESSIONID_HASH
 					char *tmpSessionID = l->sl_UtilInterface.DatabaseEncodeString( sessionid );
 					if( tmpSessionID != NULL )
 					{
 						sqllib->SNPrintF( sqllib, tmpQuery, 1024, "UPDATE FUserSession SET `LoggedTime`='%ld' WHERE `SessionID`='%s'", timestamp, tmpSessionID );
 						FFree( tmpSessionID );
 					}
+#else
+					sqllib->SNPrintF( sqllib, tmpQuery, 1024, "UPDATE FUserSession SET `LoggedTime`='%ld' WHERE `SessionID`='%s'", timestamp, sessionid );
+#endif
 					sqllib->QueryWithoutResults( sqllib, tmpQuery );
 				
 					INFO("Logged time updated: %lu\n", timestamp );
@@ -1942,13 +1946,11 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								}
 								loggedSession->us_MobileAppID = umaID;
 								
+#ifdef DB_SESSIONID_HASH
 								char *locSessionID = loggedSession->us_HashedSessionID;
-								
-								char *tmpSessionID = l->sl_UtilInterface.DatabaseEncodeString( sessionid );
-								if( tmpSessionID != NULL )
-								{
-									locSessionID = tmpSessionID;
-								}
+#else
+								char *locSessionID = loggedSession->us_SessionID;
+#endif
 							
 								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime = %lld,DeviceIdentity='%s',UMA_ID=%lu WHERE `SessionID`='%s'", (long long)loggedSession->us_LoggedTime, deviceid, umaID, locSessionID );
 								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
@@ -1964,11 +1966,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
 								{ 
 								
-								}
-								
-								if( tmpSessionID != NULL )
-								{
-									FFree( tmpSessionID );
 								}
 									
 								l->LibrarySQLDrop( l, sqlLib );

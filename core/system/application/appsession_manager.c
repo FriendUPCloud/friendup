@@ -96,7 +96,11 @@ void AppSessionManagerDelete( AppSessionManager *asmgr )
 			
 				DEBUG("[USMDelete] \t\tRemove session : %s uid %lu\n", rem->as_AuthID, rem->as_UserID );
 			
+#ifdef DB_SESSIONID_HASH
 				AppSessionManagerSessionsDeleteDB( asmgr, rem->as_HashedAuthID );
+#else
+				AppSessionManagerSessionsDeleteDB( asmgr, rem->as_AuthID );
+#endif
 				AppSessionDelete( rem );
 			}
 		
@@ -240,12 +244,16 @@ AppSession *AppSessionManagerGetSessionByAuthIDFromDB( AppSessionManager *asmgr,
 	{
 		int entries = 0;
 		
+#ifdef DB_SESSIONID_HASH
 		char *tmpSessionID = sb->sl_UtilInterface.DatabaseEncodeString( authid );
 		if( tmpSessionID != NULL )
 		{
 			sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery)," AuthID='%s'", tmpSessionID );
 			FFree( tmpSessionID );
 		}
+#else
+		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery)," AuthID='%s'", authid );
+#endif
 		DEBUG( "[AppSessionManagerGetSessionByAuthIDFromDB] Sending query: %s...\n", tmpQuery );
 
 		appsession = ( AppSession *)sqlLib->Load( sqlLib, AppSessionDesc, tmpQuery, &entries );
@@ -510,7 +518,11 @@ int AppSessionManagerAppSessionRemove( AppSessionManager *asmgr, AppSession *rem
 	
 	if( sessionRemoved == TRUE )
 	{
+#ifdef DB_SESSIONID_HASH
 		AppSessionManagerSessionsDeleteDB( asmgr, remsess->as_HashedAuthID );
+#else
+		AppSessionManagerSessionsDeleteDB( asmgr, remsess->as_AuthID );
+#endif
 		
 		AppSessionDelete( remsess );
 	}
@@ -576,7 +588,11 @@ int AppSessionManagerAppSessionRemoveByAuthID( AppSessionManager *asmgr, char *a
 	
 	if( toBeRemoved != NULL )
 	{
+#ifdef DB_SESSIONID_HASH
 		AppSessionManagerSessionsDeleteDB( asmgr, toBeRemoved->as_HashedAuthID );
+#else
+		AppSessionManagerSessionsDeleteDB( asmgr, toBeRemoved->as_AuthID );
+#endif
 		
 		AppSessionDelete( toBeRemoved );
 	}
@@ -616,9 +632,15 @@ int AppSessionManagerRemoveOldAppSessions( void *lsb )
 			// timeout
 			if( ( acttime - oldEntry->as_CreateTime ) > asmgr->asm_SessionTimeout )
 			{
+#ifdef DB_SESSIONID_HASH
 				DEBUG("[USMRemoveOldAppSessions] entry removed: %s\n", oldEntry->as_HashedAuthID );
 				
 				AppSessionManagerSessionsDeleteDB( asmgr, oldEntry->as_HashedAuthID );
+#else
+				DEBUG("[USMRemoveOldAppSessions] entry removed: %s\n", oldEntry->as_AuthID );
+				
+				AppSessionManagerSessionsDeleteDB( asmgr, oldEntry->as_AuthID );
+#endif
 		
 				AppSessionDelete( oldEntry );
 			}

@@ -202,12 +202,16 @@ UserSession *USMGetSessionBySessionIDFromDB( UserSessionManager *smgr, char *ses
 	{
 		int entries = 0;
 		
+#ifdef DB_SESSIONID_HASH
 		char *tmpSessionID = sb->sl_UtilInterface.DatabaseEncodeString( sessionid );
 		if( tmpSessionID != NULL )
 		{
 			sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery)," SessionID='%s'", tmpSessionID );
 			FFree( tmpSessionID );
 		}
+#else
+		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery)," SessionID='%s'", sessionid );
+#endif
 		DEBUG( "[USMGetSessionBySessionIDFromDB] Sending query: %s...\n", tmpQuery );
 
 		usersession = ( struct UserSession *)sqlLib->Load( sqlLib, UserSessionDesc, tmpQuery, &entries );

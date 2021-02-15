@@ -70,8 +70,9 @@ void UserSessionInit( UserSession *us, void *sb )
 		
 		pthread_mutex_init( &us->us_Mutex, NULL );
 		
+#ifdef DB_SESSIONID_HASH
 		us->us_HashedSessionID = lsb->sl_UtilInterface.DatabaseEncodeString( us->us_SessionID );
-		
+#endif
 		us->us_WSReqManager = WebsocketReqManagerNew();
 		
 		FQDeInit( &(us->us_MsgQueue) );

@@ -96,7 +96,11 @@ static FULONG AppSessionDesc[] = {
 	SQLT_IDINT,   (FULONG)"ID",          offsetof( struct AppSession, as_ID ), 
 	SQLT_INT,     (FULONG)"UserID", offsetof( struct AppSession, as_UserID ),
 	SQLT_INT,     (FULONG)"UserApplicationID", offsetof( struct AppSession, as_UserApplicationID ),
+#ifdef DB_SESSIONID_HASH
 	SQLT_STR_HASH,(FULONG)"AuthID",   offsetof( struct AppSession, as_AuthID ),
+#else
+	SQLT_STR,     (FULONG)"AuthID",   offsetof( struct AppSession, as_AuthID ),
+#endif
 	SQLT_INT,     (FULONG)"LoggedTime", offsetof( struct AppSession, as_CreateTime ),
 
 	SQLT_INIT_FUNCTION, (FULONG)"init", (FULONG)&AppSessionInit,

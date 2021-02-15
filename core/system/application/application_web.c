@@ -585,7 +585,11 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 					{
 						AppSessionRegenerateAuthID( locas, l );
 						
+#ifdef DB_SESSIONID_HASH
 						sqllib->SNPrintF( sqllib, query, sizeof(query), "UPDATE `FAppSession` Set AuthID='%s' where ID=%ld", locas->as_HashedAuthID, asID );
+#else
+						sqllib->SNPrintF( sqllib, query, sizeof(query), "UPDATE `FAppSession` Set AuthID='%s' where ID=%ld", locas->as_AuthID, asID );
+#endif
 						sqllib->QueryWithoutResults( sqllib, query );	// update database
 						
 						snprintf( respMsg, sizeof(respMsg), "{\"result\":\"success\",\"id\":%lu,\"authid\":\"%s\"}", locas->as_ID, locas->as_AuthID );
