@@ -1819,6 +1819,11 @@ function apiWrapper( event, force )
 							}
 							break;
 						case 'activate':
+							// Silent apps don't activate until clicked!
+							if( app.opensilent )
+							{
+								return;
+							}
 							// Don't touch moving windows!
 							if( window.isMobile )
 							{
@@ -1853,6 +1858,7 @@ function apiWrapper( event, force )
 					
 					// Add preferred workspace
 					if( app.workspace ) msg.data.workspace = app.workspace;
+					if( app.opensilent ) msg.data.openSilent = app.opensilent;
 
 					// Redirect to the real screen
 					if( msg.data.screen && app && app.screens[ msg.data.screen ] )
@@ -2914,6 +2920,38 @@ function apiWrapper( event, force )
 							return df( msg.data ? msg.data : ( msg.error ? msg.error : null ) );
 						}
 						return false;
+					// Application is asking for Friend credentials
+					case 'friendcredentials':
+						let response = false;
+						let message = 'Could not retrieve Friend credentials.';
+						// TODO: Investigate different credential types
+						if( msg.credentialType == 'friend' )
+						{
+							// TODO: Filter application to get access to this!
+							if( msg.callback )
+							{
+								if( Workspace.storedCredentials )
+								{
+									let enc = Workspace.encryption;
+									let user = enc.decrypt( Workspace.storedCredentials.username, enc.getKeys().privatekey );
+									let pass = enc.decrypt( Workspace.storedCredentials.password, enc.getKeys().privatekey );
+									if( user && pass )
+									{
+										response = {
+											username: user,
+											password: pass
+										};
+										message = 'Friend credentials successfully delivered.';
+									}
+								}
+								let nmsg = {}; for( let xz in msg ) nmsg[ xz ] = msg[ xz ];
+								nmsg.type = 'callback';
+								nmsg.response = response;
+								nmsg.message = message;
+								app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+							}
+						}
+						break;
 					case 'addfilesystemevent':
 						if( msg.event && msg.path )
 						{

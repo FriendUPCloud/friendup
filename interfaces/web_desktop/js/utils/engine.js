@@ -229,8 +229,10 @@ function UniqueId ()
 	return el;
 }
 
-function UniqueHash()
+function UniqueHash( str )
 {
+	if( str )
+		return SHA256( str + "" );
 	return SHA256( "" + ( Math.random() * 999 ) + ( Math.random() * 999 ) + ( Math.random() * 999 ) + ( new Date() ).getTime() );
 }
 

@@ -1,5 +1,10 @@
 /* Synthwave ---------------------------------------------------------------- */
 
+*
+{
+    scrollbar-color:  #461C64 #000010 !important;
+}
+
 html > body.Synthwave,
 html > body.Synthwave.Inside,
 html > body.Synthwave .Content .Scroller:after

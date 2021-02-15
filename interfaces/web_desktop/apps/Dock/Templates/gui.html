@@ -42,6 +42,15 @@
 					</div>
 					<div class="HRow MarginTop">
 						<div class="HContent25 FloatLeft">
+							<strong id="IconLabel">{i18n_open_silent}:</strong>
+						</div>
+						<div class="HContent75 FloatLeft">
+							<input type="hidden" id="OpenSilent" value="0"/>
+							<input type="checkbox" id="OpenSilentCheck" onclick="ge('OpenSilent').value = this.checked"/>
+						</div>
+					</div>
+					<div class="HRow MarginTop">
+						<div class="HContent25 FloatLeft">
 							<strong id="IconLabel">{i18n_icon}:</strong>
 						</div>
 						<div class="HContent75 FloatLeft">
@@ -65,7 +74,7 @@
 					<div class="HRow BorderBottom MarginTop PaddingTop PaddingBottom">
 						<div class="HContent25 FloatLeft">&nbsp;</div>
 						<div class="HContent75 FloatLeft">
-							<button type="button" class="IconSmall fa-save" onclick="Application.sendMessage( { command: 'saveitem', application: ge('Application').value, displayname: ge('DisplayName' ).value, shortdescription: ge('ShortDescription').value, icon: ge( 'Icon' ).value, workspace: ge( 'Workspace' ).value } )">
+							<button type="button" class="IconSmall fa-save" onclick="Application.sendMessage( { command: 'saveitem', application: ge('Application').value, displayname: ge('DisplayName' ).value, shortdescription: ge('ShortDescription').value, icon: ge( 'Icon' ).value, workspace: ge( 'Workspace' ).value, opensilent: ge( 'OpenSilent' ).value } )">
 								{i18n_save}
 							</button>
 							<button type="button" class="IconSmall fa-remove" onclick="Application.sendMessage( { command: 'deleteitem' } )">

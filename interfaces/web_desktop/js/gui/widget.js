@@ -169,6 +169,10 @@ Widget.prototype.calcPosition = function()
  */
 Widget.prototype.setFlag = function( flag, val )
 {
+	if( !this.target.screenObject )
+	{
+		this.target.screenObject = this.target.parentNode.screenObject; 
+	}
 	var realTop = this.target.screenObject._titleBar.offsetHeight;
 	var target = this.target;
 	switch( flag )

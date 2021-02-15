@@ -790,7 +790,7 @@ var WorkspaceInside = {
 			Workspace.filesystemChangeTimeouts[ t ] = setTimeout( function()
 			{
 				hcbk( msg );
-			}, 500 );
+			}, 250 );
 			
 			// Handle the actual filesystem change
 			function hcbk()
@@ -862,7 +862,7 @@ var WorkspaceInside = {
 							Workspace.appFilesystemEvents[ 'filesystem-change' ] = outEvents;
 						}
 					}
-				
+					
 					Workspace.refreshWindowByPath( p );
 					
 					if( p.substr( p.length - 1, 1 ) == ':' )
@@ -1820,11 +1820,21 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						globalConfig.viewList = dat.windowlist;
 						document.body.setAttribute( 'viewlist', dat.windowlist ); // Register for styling
 					}
-					if( dat.scrolldesktopicons )
+					if( dat.scrolldesktopicons == 1 )
 					{
 						globalConfig.scrolldesktopicons = dat.scrolldesktopicons;
 					}
 					else globalConfig.scrolldesktopicons = 0;
+					if( dat.hidedesktopicons == 1 )
+					{
+						globalConfig.hidedesktopicons = dat.scrolldesktopicons;
+						document.body.classList.add( 'DesktopIconsHidden' );
+					}
+					else
+					{
+						globalConfig.hidedesktopicons = 0;
+						document.body.classList.remove( 'DesktopIconsHidden' );
+					}
 					// Can only have workspaces on mobile
 					// TODO: Implement dynamic workspace count for mobile (one workspace per app)
 					if( dat.workspacecount >= 0 && !window.isMobile )
@@ -1891,6 +1901,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								ExecuteApplication( GetUrlVar( 'app' ), args );
 							}
 							ScreenOverlay.hide();
+							PollTray();
+							PollTaskbar();
 							return;
 						}
 						
@@ -1920,6 +1932,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									{
 										if( Workspace.getWebSocketsState() != 'open' )
 										{
+											//console.log( 'Waiting for websocket... ' + Math.random() );
 											return setTimeout( function(){ l.func() }, 500 );
 										}
 										if( !ScreenOverlay.done && l.index < seq.length )
@@ -1932,8 +1945,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 												// Sanitize
 												if( cmd.indexOf( 'launch' ) == 0 )
 												{
-													var appName = cmd.split( ' ' );
-													appName = appName[ appName.length - 1 ];
+													let appString = cmd.substr( 7, cmd.length - 7 );
+													let appName = appString.split( ' ' )[0];
+													let args = appString.substr( appName.length + 1, appString.length - appName.length + 1 );
 													var found = false;
 													for( var b = 0; b < Workspace.applications.length; b++ )
 													{
@@ -1977,6 +1991,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										}
 										// Hide overlay
 										ScreenOverlay.hide();
+										PollTray();
+										PollTaskbar();
 										l.func = function()
 										{
 											//
@@ -1991,12 +2007,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							{
 								// Hide overlay
 								ScreenOverlay.hide();
+								PollTray();
+								PollTaskbar();
 							}
 						} );
 					}
-
-					PollTray();
-					PollTaskbar();
 				}
 				else
 				{
@@ -2016,7 +2031,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			'avatar', 'workspacemode', 'wallpaperdoors', 'wallpaperwindows', 'language', 
 			'menumode', 'startupsequence', 'navigationmode', 'windowlist', 
 			'focusmode', 'hiddensystem', 'workspacecount', 
-			'scrolldesktopicons', 'wizardrun', 'themedata_' + Workspace.theme,
+			'scrolldesktopicons', 'hidedesktopicons', 'wizardrun', 'themedata_' + Workspace.theme,
 			'workspacemode', 'workspace_labels'
 		] } );
 	},
@@ -2753,6 +2768,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							type        : ele.Type,
 							src         : icon,
 							workspace   : ele.Workspace - 1,
+							opensilent  : ele.OpenSilent,
 							displayname : ele.DisplayName,
 							'title'     : ele.Title ? ele.Title : ele.Name
 						};
@@ -2998,31 +3014,71 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 
 		// Delayed refreshing
-		function executeRefresh( window, callback )
+		function executeRefresh( w, callback )
 		{
 			// Make sure that the view is unique
-			var ppath = path;
-			if( self.refreshPaths[ ppath ] )
-				ppath = path + window.viewId;
+			let ppath = path + ':' + w.viewId;
+			
+			let timeout = 250;
 			
 			// Race condition, cancel existing..
 			if( self.refreshPaths[ ppath ] )
-				clearTimeout( self.refreshPaths[ ppath ] );
+			{
+				timeout = 500;
+				clearTimeout( self.refreshPaths[ ppath ].timeout );
+				if( self.refreshPaths[ ppath ].finalTimeout )
+					clearTimeout( self.refreshPaths[ ppath ].finalTimeout );
+				self.refreshPaths[ ppath ].finalTimeout = null;;
+			}
 			
-			self.refreshPaths[ ppath ] = setTimeout( function()
+			// No time control yet? Set it up.
+			if( !self.refreshPaths[ ppath ] )
+			{
+				self.refreshPaths[ ppath ] = {
+					finalTimeout: null,
+					timeout: null
+				};
+			}
+			
+			// Set up timed refresh on delay
+			self.refreshPaths[ ppath ].timeout = setTimeout( function()
 			{
 				// Setup a new callback for running after the refresh
-				var cbk = function()
+				let cbk = function()
 				{
-					// Remove this one - now we are ready for the next call
-					delete self.refreshPaths[ ppath ];
+					if( !self.refreshPaths[ ppath ] )
+					{
+						if( w.directoryview )
+							w.directoryview.toChange = true;
+						//else console.log( 'What is this?', w );
+						w.refresh();
+					}
+					else
+					{
+						// One extra refresh for safe keeping
+						self.finalTimeout = setTimeout( function()
+						{
+							if( typeof( w.refresh ) != 'undefined' )
+							{
+								if( w.directoryview )
+									w.directoryview.toChange = true;
+								//else console.log( 'AAAAAAAARGH!', w );
+								w.refresh();
+								// Remove this one - now we are ready for the next call
+							}
+							delete self.refreshPaths[ ppath ];
+						}, 350 );
+					}
 					
 					// Run the actual callback
 					if( callback ) callback();
 				};
 				// Do the actual refresh
-				window.refresh( cbk );
-			}, 250 );
+				if( w.directoryview )
+					w.directoryview.toChange = true;
+				//else console.log( 'Hippopotomous: ', w );
+				w.refresh( cbk );
+			}, timeout );
 		}
 
 		// Check movable windows
@@ -3035,12 +3091,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				if( mw.content.fileInfo.Path.toLowerCase() == path.toLowerCase() && typeof mw.content.refresh == 'function' )
 				{
+					//console.log( 'Executing refresh!' );
 					executeRefresh( mw.content, callback );
 				}
 			}
 			// Dialogs
 			else if( mw.windowObject && mw.windowObject.refreshView )
 			{
+				//console.log( 'This is a dialog?' );
 				mw.windowObject.refreshView();
 			}
 		}
@@ -3063,6 +3121,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		if( o != path && o.length )
 		{
+			//console.log( 'What? -> ' + o );
 			Workspace.refreshWindowByPath( o, depth + 1, callback );
 		}
 	},
@@ -4551,8 +4610,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								dw.activate();
 								// Refresh now
 								if( directoryWindow.content )
+								{
+									if( directoryWindow.content.directoryview )
+										directoryWindow.content.directoryview.toChange = true;
 									directoryWindow.content.refresh();
-								else directoryWindow.refresh();
+								}
+								else 
+								{
+									if( directoryWindow.directoryview )
+										directoryWindow.directoryview.toChange = true;
+									directoryWindow.refresh();
+								}
 							}
 							d.close();
 						}
@@ -4861,7 +4929,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							function( rr, dd )
 							{
 								if( win && win.content.refresh )
+								{
+									if( win.content.directoryview )
+										win.content.directoryview.toChange = true;
 									win.content.refresh();
+								}
 								if( Workspace.renameWindow )
 									Workspace.renameWindow.close();
 							} 
@@ -4894,7 +4966,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					function( rr, dd )
 					{
 						if( win && win.content.refresh )
+						{
+							if( win.content.directoryview )
+								win.content.directoryview.toChange = true;
 							win.content.refresh();
+						}
 						if( Workspace.renameWindow )
 							Workspace.renameWindow.close();
 					}
@@ -6478,7 +6554,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			Notify( { title: i18n( 'i18n_zip_start_none' ), text: i18n( 'i18n_zip_startdesc_none' ) } );
 		}
 	},
-	// Uncompress files
+	// Decompress files
 	unzipFiles: function()
 	{
 		var ic = currentMovable.content.icons;
@@ -7163,6 +7239,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		
 		SetWindowStorage( uid, d );
+		if( window.currentMovable.content.directoryview )
+			window.currentMovable.content.directoryview.toChange = true;
 		window.currentMovable.content.refresh();
 	},
 	showContextMenu: function( menu, e, extra )
@@ -7599,6 +7677,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( !c ) return;
 		var dv = c.content.directoryview;
 		dv.showHiddenFiles = dv.showHiddenFiles ? false : true;
+		if( c.content.directoryview )
+			c.content.directoryview.toChange = true;
 		c.content.refresh();
 	},
 	searchAll: function( args )
@@ -8210,6 +8290,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		if( window.currentMovable && window.currentMovable.content )
 		{
+			if( window.currentMovable.content.directoryview )
+				window.currentMovable.content.directoryview.toChange = true;
 			window.currentMovable.content.refresh();
 		}
 	},
@@ -9406,7 +9488,11 @@ function DoorsKeyDown( e )
 					if( currentMovable && currentMovable.content )
 					{
 						if( currentMovable.content.refresh )
+						{
+							if( currentMovable.content.directoryview )
+								currentMovable.content.directoryview.toChange = true;
 							currentMovable.content.refresh();
+						}
 					}
 					return;
 				}

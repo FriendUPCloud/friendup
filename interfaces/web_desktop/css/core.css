@@ -2570,6 +2570,12 @@ html #Tray.Size16
 	text-align: center;
 }
 
+.MobileNotification .Title > .DateStamp,
+.BubbleInfo .DateStamp
+{
+	font-size: 11px;
+}
+
 .BubbleInfo, .PopInfo
 {
 	position: absolute;
@@ -3175,6 +3181,14 @@ body:not([mobile]).ShowTasks #TaskSwitcher .Current .Close
 {
 	opacity: 1;
 }
+
+.DesktopIconsHidden #DoorsScreen > .ScreenContent > .Scroller 
+{
+	opacity: 0;
+	pointer-events: none;
+	visibility: hidden;
+}
+
 
 /* Different solution for drives */
 #DoorsScreen > .ScreenContent.DrivePanel > .Scroller 

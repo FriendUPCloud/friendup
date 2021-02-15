@@ -267,7 +267,10 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						$fldInfo = new stdClass();
 						$fldInfo->Type = 'Directory';
 						$fldInfo->MetaType = $fldInfo->Type;
-						$fldInfo->Path = end( explode( ':', $path ) );
+						
+						$end = explode( ':', $path );
+						$fldInfo->Path = end( $end );
+						
 						$fldInfo->Filesize = 0;
 						$fldInfo->Filename = $sp->Name;
 						$fldInfo->DateCreated = $sp->DateCreated;

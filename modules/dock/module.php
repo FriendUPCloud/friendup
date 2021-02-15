@@ -44,12 +44,14 @@ else
 	$Type = false;
 	$Icon = false;
 	$DisplayName = false;
+	$OpenSilent = false;
 	foreach( $o->_fieldnames as $fn )
 	{
 		if( $fn == 'DockID' ) $DockID = true;
 		if( $fn == 'Type' ) $Type = true;
 		if( $fn == 'Icon' ) $Icon = true;
 		if( $fn == 'DisplayName' ) $DisplayName = true;
+		if( $fn == 'OpenSilent' ) $OpenSilent = true;
 	}
 	if( !$DockID )
 		$SqlDatabase->query( 'ALTER TABLE `DockItem` ADD `DockID` bigint(20) NOT NULL AFTER `Parent`' );
@@ -59,6 +61,8 @@ else
 		$SqlDatabase->query( 'ALTER TABLE `DockItem` ADD `Icon` varchar(255) AFTER `Type`' );
 	if( !$DisplayName )
 		$SqlDatabase->query( 'ALTER TABLE `DockItem` ADD `DisplayName` varchar(255) default \'\' AFTER `Application`' );
+	if( !$OpenSilent )
+		$SqlDatabase->query( 'ALTER TABLE `DockItem` ADD `OpenSilent` tinyint(4) default 0 AFTER `Application`' );
 }
 
 // End run things first time ---------------------------------------------------
@@ -112,6 +116,7 @@ if( isset( $args->command ) )
 					$o->Name = trim( $row->Application ) ? $row->Application : i18n( 'Unnamed' );
 					$o->Title = trim( $row->ShortDescription ) ? $row->ShortDescription : '';
 					$o->Workspace = $row->Workspace;
+					$o->OpenSilent = $row->OpenSilent;
 					$apath = 'apps/' . $row->Application . '/';
 					if( !$row->Icon )
 					{
@@ -146,12 +151,12 @@ if( isset( $args->command ) )
 			$s = filter_var( $args->args->name, FILTER_SANITIZE_STRING );
 			if( $args->args->fuzzy )
 			{
-				$q = ( 'DELETE FROM DockItem WHERE UserID=\'' . $userid . '\' AND `Application` LIKE "' . $s . ' %" AND ( `Type`="' . ( isset( $args->args->type ) ? '' : 'executable' ) . '" OR `Type`="" ' );
+				$q = ( 'DELETE FROM DockItem WHERE UserID=\'' . $userid . '\' AND `Application` LIKE "' . $s . ' %" AND ( `Type`="' . ( isset( $args->args->type ) ? '' : 'executable' ) . '" OR `Type`="" OR `Type`="file" ) LIMIT 1' );
 				//$Logger->log('cleaning a dock here... ' . $q);
 			}
 			else
 			{
-				$q = ( 'DELETE FROM DockItem WHERE UserID=\'' . $userid . '\' AND `Application`="' . $s . '" AND ( `Type`="' . ( isset( $args->args->type ) ? '' : 'executable' ) . '" OR `Type`="" ) LIMIT 1' );
+				$q = ( 'DELETE FROM DockItem WHERE UserID=\'' . $userid . '\' AND `Application`="' . $s . '" AND ( `Type`="' . ( isset( $args->args->type ) ? '' : 'executable' ) . '" OR `Type`="" OR `Type`="file" ) LIMIT 1' );
 			}
 			if( $SqlDatabase->Query( $q ) )
 			{
@@ -227,6 +232,7 @@ if( isset( $args->command ) )
 			$shortdesc = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->shortdescription );
 			$icon = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->icon );
 			$work = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->workspace );
+			$opensilent = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->opensilent );
 			$dname = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->displayname );
 			$SqlDatabase->Query( '
 				UPDATE DockItem SET
@@ -234,7 +240,8 @@ if( isset( $args->command ) )
 					DisplayName = \'' . $dname . '\',
 					ShortDescription = \'' . $shortdesc . '\',
 					`Icon` = \'' . $icon . '\',
-					`Workspace` = \'' . $work . '\'
+					`Workspace` = \'' . $work . '\',
+					`OpenSilent` = \'' . $opensilent . '\'
 				WHERE
 					ID=\'' . $id . '\' AND
 					UserID=\'' . $User->ID . '\'
