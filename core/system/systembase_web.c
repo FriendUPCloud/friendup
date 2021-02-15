@@ -245,7 +245,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 			char *internalArgs = NULL;
 			if( ( internalArgs = strstr( sessionPointerInMemory, "args" ) ) != NULL )
 			{
-				ReplaceSessionToHashed( sessionPointerInMemory+4, allArgsNew );
+				ReplaceSessionToHashed( sessionPointerInMemory+4, internalArgs );
 			}
 			else
 			{
