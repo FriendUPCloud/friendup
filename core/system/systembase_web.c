@@ -118,9 +118,9 @@ inline static void ReplaceSessionToHashed( char *in, char *out )
 			strcat( out, endSessionID );
 		}
 	}
-	else
+	else if( in != NULL )
 	{
-		DEBUG("Sessionid not found\n");
+		DEBUG("Sessionid not found:\nin: %s out: %s\n", in, out );
 		strcat( out, in );
 	}
 }
