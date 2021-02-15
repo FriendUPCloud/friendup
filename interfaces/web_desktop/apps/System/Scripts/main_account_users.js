@@ -101,6 +101,7 @@ var UsersSettings = function ( setting, set )
 					break;
 				case 'avatars'             :
 					this.vars.avatars      = ( set                                                    );
+					break;
 				case 'logintime'           :
 					this.vars.logintime    = ( set                                                    );
 					break;
@@ -7666,7 +7667,7 @@ Sections.accounts_users = function( cmd, extra )
 				
 				console.log( "UsersSettings( 'listall', true ); to list all users ..." );
 				console.log( "UsersSettings( 'avatars', false ); to list users without avatar ..." );
-				console.log( "UsersSettings( 'lastlogin', false ); to list users without lastlogin ..." );
+				console.log( "UsersSettings( 'logintime', false ); to list users without lastlogin ..." );
 				console.log( "UsersSettings(  ); for current Users Settings ..." );
 				
 				// Temporary ...
@@ -7955,7 +7956,8 @@ function getUserlist( callback, obj )
 
 function getLastLoginlist( callback, users )
 {
-	if( users && UsersSettings( 'lastlogin' ) )
+	
+	if( users && UsersSettings( 'logintime' ) )
 	{
 		var args = { 
 			mode    : 'logintime',
@@ -7970,11 +7972,11 @@ function getLastLoginlist( callback, users )
 			//console.log( { e:e, d:d } );
 		
 			var loginTime = null;
-		
+			
 			try
 			{
 				loginTime = JSON.parse( d );
-				//console.log( { e:e, d:(loginTime?loginTime:d), args:args } );
+				console.log( 'getLastLoginlist( callback, users )', { e:e, d:(loginTime?loginTime:d), args:args } );
 			}
 			catch( e )
 			{
