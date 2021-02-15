@@ -68,7 +68,8 @@
 #define CONFIG_DIRECTORY	"cfg/"
 
 //test
-#undef __DEBUG
+//#undef __DEBUG
+#define DOUBLE_SESSIONID_HASH
 
 //
 //
@@ -202,6 +203,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 		// if there is sessionid in request it should be changed to one used by DB
 		//
 		
+#ifdef DOUBLE_SESSIONID_HASH
 		char *sessptr = strstr( allArgs, "sessionid=" );
 		if( sessptr != NULL )
 		{
@@ -257,6 +259,9 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 		{
 			strcpy( allArgsNew, allArgs );
 		}
+#else
+		strcpy( allArgsNew, allArgs );
+#endif
 		
 		DEBUG("REquest source: %d\n", request->http_RequestSource );
 		
@@ -290,6 +295,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 						
 						if( ( buffer = FCalloc( size, sizeof(char) ) ) != NULL )
 						{
+#ifdef DOUBLE_SESSIONID_HASH
 							// if key is sessionid we must convert it to one recognized by database
 							
 							if( hm->hm_Data[ i ].hme_Key != NULL && strstr( hm->hm_Data[ i ].hme_Key, "sessionid" ) != NULL )
@@ -310,6 +316,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 								}
 							}
 							else
+#endif
 							{
 								if( quotationFound == TRUE )
 								{
