@@ -377,7 +377,7 @@ static void crash_handler(int sig __attribute__((unused)))
 			"\n\n", CRASH_LOG_FILENAME );
 	
 #else
-	if( ( fd = open( CRASH_LOG_FILENAME, O_WRONLY | O_APPEND | O_CREAT) ) >= 0 )
+	if( ( fd = open( CRASH_LOG_FILENAME, O_WRONLY | O_APPEND | O_CREAT, 0600) ) >= 0 )
 	{
 		cfclog( fd, "\n************ CRASH INFO ************\n");
 #ifdef APPVERSION
