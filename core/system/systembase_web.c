@@ -77,6 +77,50 @@
 extern int UserDeviceMount( SystemBase *l, User *usr, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
 
 
+inline void ReplaceSessionToHashed( char *in, char *out )
+{
+	char *sessptr = strstr( in, "sessionid=" );
+	if( sessptr != NULL )
+	{
+		char *sessionPointerInMemory = sessptr+10;
+		int len = 0;
+		char *endSessionID = strstr( sessionPointerInMemory, "&" );
+		if( endSessionID != NULL )
+		{
+			len = endSessionID - sessionPointerInMemory;
+		}
+		else
+		{
+			len = strlen( sessionPointerInMemory );
+		}
+			
+		// now we have to copy everything
+		strncat( out, in, sessionPointerInMemory-in );
+		
+		char *sessionIdFromArgs = StringDuplicateN( sessionPointerInMemory, len );
+		if( sessionIdFromArgs != NULL )
+		{
+			char *encSessionID = SLIB->sl_UtilInterface.DatabaseEncodeString( sessionIdFromArgs );
+			if( encSessionID != NULL )
+			{
+				//memcpy( sessionPointerInMemory, encSessionID, len );
+				strcat( out, encSessionID );
+				FFree( encSessionID );
+			}
+			FFree( sessionIdFromArgs );
+		}
+		
+		if( endSessionID != NULL )
+		{
+			strcat( out, endSessionID );
+		}
+	}
+	else
+	{
+		strcpy( out, in );
+	}
+}
+
 /**
  * Get all parameters from Http request and conver them to string
  *
@@ -226,9 +270,19 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 				FFree( sessionIdFromArgs );
 			}
 			
-			if( endSessionID != NULL )
+			//sessionid=6b57dd326d4c5993fc48a7eecf26257f6ab5caa797645efda5927eb7ab2f4f72&module=system&args=%7B%22application%22%3A%22Calculator%22%2C%22args%22%3A%22%22%7D&command=friendapplication&sessionid=589384a9699db054a0a452f26b5d560b40ba2fe4&system.library/module/
+			
+			char *internalArgs = NULL;
+			if( ( internalArgs = strstr( sessionPointerInMemory, "args" ) ) != NULL )
 			{
-				strcat( allArgsNew, endSessionID );
+				ReplaceSessionToHashed( sessionPointerInMemory+4, allArgsNew );
+			}
+			else
+			{
+				if( endSessionID != NULL )
+				{
+					strcat( allArgsNew, endSessionID );
+				}
 			}
 		}
 		else
