@@ -155,7 +155,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 		return NULL;
 	}
 	
-	int fullsize = size + ( both ? 2 : 1 );
+	int fullsize = (size*2) + ( both ? 2 : 1 );
 	
 	if( request->http_ContentType == HTTP_CONTENT_TYPE_APPLICATION_JSON )
 	{
