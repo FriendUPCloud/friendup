@@ -93,6 +93,7 @@ inline static void ReplaceSessionToHashed( char *in, char *out )
 		else
 		{
 			len = strlen( sessionPointerInMemory );
+			endSessionID = sessionPointerInMemory + len;
 		}
 			
 		// now we have to copy everything
@@ -104,6 +105,7 @@ inline static void ReplaceSessionToHashed( char *in, char *out )
 			char *encSessionID = SLIB->sl_UtilInterface.DatabaseEncodeString( sessionIdFromArgs );
 			if( encSessionID != NULL )
 			{
+				DEBUG("CHANGE2 >>>> %s to %s\n", sessionIdFromArgs, encSessionID );
 				//memcpy( sessionPointerInMemory, encSessionID, len );
 				strcat( out, encSessionID );
 				FFree( encSessionID );
@@ -217,6 +219,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 			else
 			{
 				len = strlen( sessionPointerInMemory );
+				endSessionID = sessionPointerInMemory + len;
 			}
 			
 			// now we have to copy everything
@@ -237,7 +240,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 			}
 			
 			//sessionid=6b57dd326d4c5993fc48a7eecf26257f6ab5caa797645efda5927eb7ab2f4f72&module=system&args=%7B%22application%22%3A%22Calculator%22%2C%22args%22%3A%22%22%7D&command=friendapplication&sessionid=589384a9699db054a0a452f26b5d560b40ba2fe4&system.library/module/
-			/*
+			
 			char *internalArgs = NULL;
 			if( ( internalArgs = strstr( sessionPointerInMemory, "args" ) ) != NULL )
 			{
@@ -250,12 +253,12 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 					strcat( allArgsNew, endSessionID );
 				}
 			}
-			*/
+			/*
 			if( endSessionID != NULL )
 			{
 				strcat( allArgsNew, endSessionID );
 			}
-			
+			*/
 		}
 		else
 		{
