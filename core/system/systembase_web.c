@@ -573,8 +573,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					{
 						char qery[ 1024 ];
 
-						// TODO: Remove need for existing SessionID (instead generate it if it does not exist)!
-						sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT u.ID,u.SessionID,u.Name FROM FUser u inner join FSecuredHost sh on u.ID=sh.CreatedBy WHERE u.SessionID !=\"\" AND u.ServerToken=\"%s\" AND sh.Host='%s' LIMIT 1",( char *)serverTokenElement->hme_Data, host );;
+						// Check user server token and access to it
+						sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT u.ID,u.SessionID,u.Name FROM FUser u inner join FSecuredHost sh on u.ID=sh.CreatedBy WHERE u.SessionID !=\"\" AND u.ServerToken=\"%s\" AND sh.Status=1 AND sh.Host='%s' LIMIT 1",( char *)serverTokenElement->hme_Data, host );;
 					
 						void *res = sqllib->Query( sqllib, qery );
 						if( res != NULL )
@@ -703,7 +703,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		
 		// 
 		// But we tried with a server socket
-		if( loggedSession == NULL && sst && strlen( sessionid ) > 0 )
+		if( loggedSession == NULL && serverTokenElement != NULL && strlen( sessionid ) > 0 )
 		{
 			DEBUG( "We asked for server token and have session: %s (%s)\n", sessionid, userName );
 			int userAdded = 0;

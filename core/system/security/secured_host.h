@@ -90,7 +90,7 @@ void SecuredHostInit( SecuredHost *sh );
 static FULONG SecuredHostDesc[] = { 
 	SQLT_TABNAME, (FULONG)"FSecuredHost",       
 	SQLT_STRUCTSIZE, sizeof( struct SecuredHost ), 
-	SQLT_IDINT,   (FULONG)"ID",          offsetof( struct FSecuredHost, sh_ID ), 
+	SQLT_IDINT,   (FULONG)"ID",          offsetof( struct SecuredHost, sh_ID ), 
 	SQLT_STR,     (FULONG)"Host", offsetof( struct SecuredHost, sh_Host ),
 	SQLT_INT,     (FULONG)"Status", offsetof( struct SecuredHost, sh_Status ),
 	SQLT_INT,     (FULONG)"CreatedBy",   offsetof( struct SecuredHost, sh_CreatedBy ),
