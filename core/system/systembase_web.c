@@ -435,9 +435,9 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	{
 		HashmapElement *sessIDElement = GetHEReq( *request, "sessionid" );
 		HashmapElement *authIDElement = GetHEReq( *request, "authid" );
-		HashmapElement *sst = GetHEReq( *request, "servertoken" ); // TODO: Only allow this on localhost!
+		HashmapElement *serverTokenElement = GetHEReq( *request, "servertoken" ); // TODO: Only allow this on localhost!
 		
-		if( sessIDElement == NULL && authIDElement == NULL && sst == NULL )
+		if( sessIDElement == NULL && authIDElement == NULL && serverTokenElement == NULL )
 		{
 			struct TagItem tags[] = {
 				{ HTTP_HEADER_CONTENT_TYPE,(FULONG)StringDuplicate( "text/html" ) },
@@ -552,42 +552,50 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		}	//authIDElement
 		
 		// access through server token
-		else if( sst )
+		else if( serverTokenElement != NULL )
 		{
 			//
 			// check if request came from WebSockets
+			// If loggedSession is not equal NULL then yes
 			//
 			
 			DEBUG("ServerToken received\n");
 			
 			if( loggedSession == NULL )
 			{
-				SQLLibrary *sqllib = l->LibrarySQLGet( l );
-
-				// Get authid from mysql
-				if( sqllib != NULL )
+				char *host = HttpGetHeaderFromTable( *request, HTTP_HEADER_X_FORWARDED_FOR );
+				if( host != NULL )
 				{
-					char qery[ 1024 ];
+					SQLLibrary *sqllib = l->LibrarySQLGet( l );
 
-					// TODO: Remove need for existing SessionID (instead generate it if it does not exist)!
-					sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT u.SessionID, u.Name FROM FUser u WHERE u.SessionID !=\"\" AND u.ServerToken=\"%s\" LIMIT 1",( char *)sst->hme_Data );;
-					
-					void *res = sqllib->Query( sqllib, qery );
-					if( res != NULL )
+					// Get authid from mysql
+					if( sqllib != NULL )
 					{
-						char **row;
-						if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+						char qery[ 1024 ];
+
+						// TODO: Remove need for existing SessionID (instead generate it if it does not exist)!
+						sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT u.ID,u.SessionID,u.Name FROM FUser u inner join FSecuredHost sh on u.ID=sh.CreatedBy WHERE u.SessionID !=\"\" AND u.ServerToken=\"%s\" AND sh.Host='%s' LIMIT 1",( char *)serverTokenElement->hme_Data, host );;
+					
+						void *res = sqllib->Query( sqllib, qery );
+						if( res != NULL )
 						{
-							if( row[ 0 ] != NULL )
+							char **row;
+							if( ( row = sqllib->FetchRow( sqllib, res ) ) )
 							{
-								snprintf( sessionid, DEFAULT_SESSION_ID_SIZE,"%s", row[ 0 ] );
-								snprintf( userName, 256, "%s", row[ 1 ] );
+								if( row[ 0 ] != NULL )
+								{
+									snprintf( sessionid, DEFAULT_SESSION_ID_SIZE,"%s", row[ 0 ] );
+								}
+								if( row[ 1 ] != NULL )
+								{
+									snprintf( userName, 256, "%s", row[ 1 ] );
+								}
 							}
+							sqllib->FreeResult( sqllib, res );
 						}
-						sqllib->FreeResult( sqllib, res );
+						l->LibrarySQLDrop( l, sqllib );
 					}
-					l->LibrarySQLDrop( l, sqllib );
-				}
+				}	// HTTP_HEADER_X_FORWARDED_FOR is missing
 			}
 		}
 		
