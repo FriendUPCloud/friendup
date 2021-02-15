@@ -304,6 +304,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 								char *encSessionID = SLIB->sl_UtilInterface.DatabaseEncodeString( (char *)hm->hm_Data[ i ].hme_Data );
 								if( encSessionID != NULL )
 								{
+									DEBUG(">>>>>>>>>CHANGE %s TO %s\n", (char *)hm->hm_Data[ i ].hme_Data, encSessionID );
 									if( quotationFound == TRUE )
 									{
 										sprintf( buffer, "&%s=%s", hm->hm_Data[ i ].hme_Key, encSessionID );
