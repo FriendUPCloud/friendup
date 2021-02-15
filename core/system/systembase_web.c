@@ -243,7 +243,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 			//sessionid=6b57dd326d4c5993fc48a7eecf26257f6ab5caa797645efda5927eb7ab2f4f72&module=system&args=%7B%22application%22%3A%22Calculator%22%2C%22args%22%3A%22%22%7D&command=friendapplication&sessionid=589384a9699db054a0a452f26b5d560b40ba2fe4&system.library/module/
 			
 			char *internalArgs = NULL;
-			if( ( internalArgs = strstr( sessionPointerInMemory, "args" ) ) != NULL )
+			if( ( internalArgs = strstr( endSessionID, "args" ) ) != NULL )
 			{
 				ReplaceSessionToHashed( sessionPointerInMemory+4, allArgsNew );
 			}
