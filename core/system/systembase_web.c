@@ -76,7 +76,7 @@
 extern int UserDeviceMount( SystemBase *l, User *usr, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
 
 
-inline void ReplaceSessionToHashed( char *in, char *out )
+inline static void ReplaceSessionToHashed( char *in, char *out )
 {
 	char *sessptr = strstr( in, "sessionid=" );
 	if( sessptr != NULL )
