@@ -120,7 +120,8 @@ inline static void ReplaceSessionToHashed( char *in, char *out )
 	}
 	else
 	{
-		strcpy( out, in );
+		DEBUG("Sessionid not found\n");
+		strcat( out, in );
 	}
 }
 
