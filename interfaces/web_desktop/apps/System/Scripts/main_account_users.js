@@ -7703,6 +7703,8 @@ Sections.accounts_users = function( cmd, extra )
 						{
 							console.log( 'scrollengine.init() ... ', scrollengine );
 							
+							ge( 'ListUsersInner' ).innerHTML = '';
+							
 							if( scrollengine.debug )
 							{
 								ge( 'UserList' ).innerHTML += '<div id="Debug"></div>';
@@ -7719,7 +7721,9 @@ Sections.accounts_users = function( cmd, extra )
 								} );
 							}
 							
-							scrollengine.init( ge( 'ListUsersInner' ), myArray );
+							console.log( userList );
+							
+							scrollengine.init( ge( 'ListUsersInner' ), /*userList ? userList : */myArray );
 					
 						}
 						
@@ -7965,7 +7969,7 @@ function getUserlist( callback, obj )
 	
 	// Temp ...
 	
-	if( callback && UsersSettings( 'experiment' ) )
+	/*if( callback && UsersSettings( 'experiment' ) )
 	{
 		return callback( 'ok', [], obj );
 		
@@ -7979,7 +7983,7 @@ function getUserlist( callback, obj )
 		userList['Count'] = '1000';
 		
 		return callback( 'ok', userList, obj );
-	}
+	}*/
 	
 	// Get the user list
 	var m = new Module( 'system' );

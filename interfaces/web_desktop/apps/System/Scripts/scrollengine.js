@@ -60,6 +60,28 @@ scrollengine = {
 		}
 	},
 	
+	length : function ( myArray )
+	{
+		if( typeof myArray.length !== "undefined" )
+		{
+			return myArray.length;
+		}
+		else
+		{
+			let i = 0;
+			
+			for ( let a in myArray )
+			{
+				if( myArray[a] && myArray[a].ID )
+				{
+					i++;
+				}
+			}
+			
+			return i;
+		}
+	},
+	
 	createDiv : function ( id, target, classN )
 	{
 		
@@ -85,12 +107,20 @@ scrollengine = {
         
         for( let a = 0, b = this.rowPosition - this.rowCount, c = 0; a < this.rowCount; a++, b++, c += this.config.rowHeight )
         {
-            if( b >= this.myArray.length ) break;
+            if( b >= this.length( this.myArray ) ) break;
             this.counted = a;
             if( b < 0 ) continue;
             let row = this.createDiv( false, aa, 'RowElement' );
             row.style.top = c + 'px';
-            row.innerHTML = 'Line ' + b;
+            
+            if( this.myArray[b] && this.myArray[b].ID && this.myArray[b].Name )
+            {
+            	row.innerHTML = 'Line ' + b + ' ID ' + this.myArray[b].ID + ' Name ' + this.myArray[b].Name;
+            }
+            else
+            {
+            	row.innerHTML = 'Line ' + b;
+            }
         }
         
         //aa.style.position = 'absolute';
@@ -116,10 +146,19 @@ scrollengine = {
 		
 		for( let a = 0, b = this.rowPosition, c = 0; a < this.rowCount; a++, b++, c += this.config.rowHeight )
 		{
-			if( b >= this.myArray.length ) break;
+			if( b >= this.length( this.myArray ) ) break;
 			let row = this.createDiv( false, d, 'RowElement' );
 			row.style.top = c + 'px';
-			row.innerHTML = 'Line ' + b;
+			
+			if( this.myArray[b] && this.myArray[b].ID && this.myArray[b].Name )
+            {
+            	row.innerHTML = 'Line ' + b + ' ID ' + this.myArray[b].ID + ' Name ' + this.myArray[b].Name;
+            }
+            else
+            {
+            	row.innerHTML = 'Line ' + b;
+            }
+			
 			this.counted = a;
 		}
 		
@@ -149,11 +188,20 @@ scrollengine = {
 		
 		for( let a = 0, b = this.rowPosition, c = 0; a < this.rowCount; a++, b++, c += this.config.rowHeight )
 		{
-			if( b >= this.myArray.length ) break;
+			if( b >= this.length( this.myArray ) ) break;
 			let row = this.createDiv( false, bb, 'RowElement' );
 			row.style.top = c + 'px';
 			row.style.background = 'green';
-			row.innerHTML = 'Line ' + b;
+			
+			if( this.myArray[b] && this.myArray[b].ID && this.myArray[b].Name )
+            {
+            	row.innerHTML = 'Line ' + b + ' ID ' + this.myArray[b].ID + ' Name ' + this.myArray[b].Name;
+            }
+            else
+            {
+            	row.innerHTML = 'Line ' + b;
+            }
+			
 			this.counted = a;
 		}
 		
@@ -176,7 +224,7 @@ scrollengine = {
 		
 		this.scrollTop    = this.list.scrollTop;
 		this.viewHeight   = window.innerHeight;
-		this.scrollHeight = ( this.config.rowHeight * this.myArray.length );
+		this.scrollHeight = ( this.config.rowHeight * this.length( this.myArray ) );
 		
 		// Make elements if they do not exist
 		if( !this.elements.pageAbove )
@@ -235,7 +283,7 @@ scrollengine = {
 		}
 		
 		// If we counted the whole list, then
-		if( this.counted >= this.myArray.length )
+		if( this.counted >= this.length( this.myArray ) )
 		{
 		    let hh = Math.max( d.offsetTop + d.offsetHeight, bb.offsetTop + bb.offsetHeight );
 		    this.elements.wholeHeight.style.height = hh + 'px';
