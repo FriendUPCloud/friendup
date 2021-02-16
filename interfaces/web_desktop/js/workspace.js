@@ -886,6 +886,7 @@ Workspace = {
 				'webclient/js/gui/desklet.js;' +
 				'webclient/js/gui/calendar.js;' +
 				'webclient/js/gui/colorpicker.js;' +
+				'webclient/js/gui/workspace_calendar.js;' +
 				'webclient/js/gui/workspace_tray.js;' +
 				'webclient/js/gui/workspace_sharing.js;' +
 				'webclient/js/gui/tutorial.js;' +

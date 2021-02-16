@@ -1,0 +1,55 @@
+
+iCalcreator 2.28.2 releaseNotes
+
+ 2.27.1  Deprecated Vcalendar/<component>::deleteProperty/getProperty()/setProperty methods,
+         replaced by property delete-/get-/set-methods
+
+ 2.27.2  Exception error management
+
+ 2.27.3  Method chaining, ex. set-, parse and sort-methods
+
+ 2.27.4  Final-izing Vcalendar, Vevent etc
+
+ 2.27.5  Alter config keys to constants, removed config TZID
+
+ 2.27.6  Refine class hierarchy etc
+
+ 2.27.7  TimezoneHandler::createTimezone return Vcalendar instance
+
+ 2.27.8  Renamed/reworked Util classes
+
+ 2.27.9  TimezoneHandler::createTimezone arg timezone no longer required
+         (fetched from X_WR_TIMEZONE, if set, otherwise UTC)
+         input args from/to accepts DateTime
+
+ 2.27.10 Misc, changed all date property set-methods first arg name etc
+
+ 2.27.11 static property name variables replaced by constants in IcalInterface
+         Property parameter Ical keys (and some values) constants in IcalInterface
+
+ 2.27.12 The value type of the "DTEND" or "DUE" properties will now match the value type of "DTSTART" property.
+
+ 2.27.13 Recur UNTIL, the value of the UNTIL rule part will now have the same value type as the "DTSTART" property.
+
+ 2.27.14 PHPUnit testcases and derived (date) rewrites
+
+ 2.27.15 Timezonhandler::createTimezone method moved to Vtimezone::populate,
+         Timezonehandler removal
+
+ 2.27.16 Major improved performance for Vcalendar::selectComponents() (i.e RecurFactory) on more simple recurs patterns
+
+ 2.27.17 bug - also HTAB "\t" can be used as line separator (StringFactory::concatRows/convEolChar)
+
+ 2.27.18 bugs - SelectFactory::selectComponents args calendar, cType reviewing
+
+ 2.27.19 bug - typo in DateTimeFactory::dateTimeHasOffset
+
+ 2.27.20 bug - Break/Continue mixup in RecurFactory::recurWeeklySimple2: split up tests, minor code clean up
+
+ 2.27.21 bug - Break/Continue mixup in Vcalendar.php
+
+ 2.27.22 CalendarComponent::parse() rewrite
+
+ 2.28.1 Vcalendar typo error
+
+ 2.28.2 Vcalendar parse count components test (err91) removed (ie no exception)

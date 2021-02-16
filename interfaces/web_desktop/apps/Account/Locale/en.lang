@@ -88,6 +88,8 @@ i18n_device_name                     : Disk name
 i18n_placeholder_connection          : Mydisk
 i18n_reset                           : Remove
 
+i18n_timezone                        : Timezone
+
 i18n_add_storage                     : Add storage
 i18n_update_disk                     : Update disk
 i18n_mount_disk                      : Mount disk

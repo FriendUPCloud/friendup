@@ -964,7 +964,7 @@ function _ActivateWindowOnly( div )
 			m.classList.add( 'Active' );
 			m.viewContainer.classList.add( 'Active' );
 
-			var app = _getAppByAppId( div.applicationId );
+			let app = _getAppByAppId( div.applicationId );
 
 			// Extra force!
 			if( isMobile )
@@ -977,8 +977,6 @@ function _ActivateWindowOnly( div )
 				
 				if( window._getAppByAppId )
 				{
-					let app = _getAppByAppId( div.applicationId );
-
 					if( app )
 					{
 						if( m.windowObject != app.mainView )

@@ -8,7 +8,7 @@
 *                                                                              *
 *****************************************************************************©*/
 
-var Config = {
+let Config = {
 };
 
 Application.lastSaved = 0;
@@ -28,7 +28,7 @@ window.addEventListener( 'scroll', function()
 }, false );
 // End scroll watcher
 
-var currentViewMode = 'default';
+let currentViewMode = 'default';
 
 // Special styling for mobile --------------------------------------------------
 
@@ -47,7 +47,7 @@ if( isMobile )
 
 // Callbacks for the Friend directory view object ------------------------------
 
-var filebrowserCallbacks = {
+let filebrowserCallbacks = {
 	// Check a file on file extension
 	checkFile( path, extension )
 	{
@@ -70,7 +70,7 @@ var filebrowserCallbacks = {
 		Application.refreshFilePane( isMobile ? false : 'findFirstFile', false, function( items )
 		{
 			// Are we refreshing the root dir?
-			var isRootDir = Application.fileBrowser.rootPath == ele;
+			let isRootDir = Application.fileBrowser.rootPath == ele;
 			for( var a = 0; a < items.length; a++ )
 			{
 				// If it has directory, just wait
@@ -206,12 +206,12 @@ Application.refreshFilePane = function( method, force, callback )
 		Application.fld.classList.remove( 'Hidden' );
 	}
 	
-	var d = new Door( Application.browserPath );
+	let d = new Door( Application.browserPath );
 	
-	var self = this;
+	let self = this;
 	
 	Application.path = Application.browserPath;
-	var p = Application.path;
+	let p = Application.path;
 	
 	d.getIcons( function( items )
 	{
@@ -228,11 +228,11 @@ Application.refreshFilePane = function( method, force, callback )
 	
 		Application._toBeSaved = null;
 		
-		var byDate = [];
+		let byDate = [];
 		items = items.sort( function( a, b ){ return ( new Date( a.DateModified ) ).getTime() - ( new Date( b.DateModified ) ).getTime(); } );
 		items.reverse();
 		
-		var fBar = ge( 'FileBar' );
+		let fBar = ge( 'FileBar' );
 		if( !fBar.contents )
 		{
 			fBar.contents = document.createElement( 'div' );
@@ -244,15 +244,15 @@ Application.refreshFilePane = function( method, force, callback )
 			fBar.add.innerHTML = '<div class="Button IconButton IconSmall fa-plus">&nbsp;' + i18n( 'i18n_add_note' ) + '</div>';
 			fBar.add.onclick = function()
 			{
-				var testFile = 'unnamed';
-				var nextTest = testFile;
-				var d = new Door( Application.browserPath );
+				let testFile = 'unnamed';
+				let nextTest = testFile;
+				let d = new Door( Application.browserPath );
 				d.getIcons( function( icons )
 				{
 					if( icons )
 					{
-						var found = false;
-						var tries = 1;
+						let found = false;
+						let tries = 1;
 						
 						do
 						{
@@ -270,7 +270,7 @@ Application.refreshFilePane = function( method, force, callback )
 						while( found );
 					}
 					
-					var f = new File();
+					let f = new File();
 					f.save( "\n", Application.browserPath + nextTest + '.html' );
 					f.onSave = function()
 					{
@@ -296,270 +296,286 @@ Application.refreshFilePane = function( method, force, callback )
 		fBar.contents.innerHTML = '';
 		fBar.contents.className = 'ContentFull List ScrollArea ScrollBarSmall BorderRight Notelist';
 		
-		var sw = 2;
-		var firstFileNum = 0;
-		var foundFile = false;
+		let sw = 2;
+		let firstFileNum = 0;
+		let foundFile = false;
 
-		for( var a = 0; a < items.length; a++ )
+		if( !items.length )
 		{
-			var num = items[ a ];
-			var ext = num.Filename.split( '.' );
-			ext = ext.pop().toLowerCase();
-			if( ext != 'html' && ext != 'htm' ) continue;
-			
-			if( firstFileNum++ == 0 )
+			// Just create an empty one
+			Application.newDocument( { just: 'makenew' }, function()
 			{
-				if( method == 'findFirstFile' && !foundFile )
+				Application.saveFile( Application.browserPath + 'Empty.html', 'Empty note', function()
 				{
-					Application.loadFile( items[ a ].Path );
-					Application.currentDocument = items[ a ].Path;
-					fouldFile = true;
-				}
-			}
-			
-			sw = sw == 2 ? 1 : 2;
-			
-			var d = document.createElement( 'div' );
-			d.className = 'NotesFileItem Padding BorderBottom MousePointer sw' + sw;
-			
-			( function( p, o ){
-				o.path = p;
-			} )( items[ a ].Path, d );
-			
-			if( Application.currentDocument && Application.currentDocument == num.Path )
+					Application.loadFile( Application.browserPath + 'Empty.html' );
+					Application.currentDocument = Application.browserPath + 'Empty.html';
+					Application.refreshFilePane();
+				} );
+			} );
+		}
+		else
+		{
+			for( let a = 0; a < items.length; a++ )
 			{
-				d.classList.add( 'Selected' );
-			}
-			else
-			{
-				d.onmouseover = function()
+				let num = items[ a ];
+				let ext = num.Filename.split( '.' );
+				ext = ext.pop().toLowerCase();
+				if( ext != 'html' && ext != 'htm' ) continue;
+			
+				if( firstFileNum++ == 0 )
 				{
-					this.classList.add( 'Selected' );
-				}
-				d.onmouseout = function()
-				{
-					this.classList.remove( 'Selected' );
-				}
-			}
-			
-			// No listing here
-			var fn = num.Filename.split( '.' );
-			fn.pop();
-			fn = fn.join( '.' );
-			
-			d.innerHTML = '<p class="Layout"><strong>' + fn + '</strong></p><p class="Layout"><em>' + num.DateModified + '</em></p>';
-			
-			// File permissions are given
-			// TODO: Check permissions
-			var rem = false;
-			if( 1 == 1 )
-			{
-				( function( dd, path ){
-					rem = document.createElement( 'div' );
-					rem.className = 'IconButton fa-remove IconSmall FloatRight';
-					rem.onclick = function( e )
+					if( method == 'findFirstFile' && !foundFile )
 					{
-						Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_delete_note' ), function( result )
+						Application.loadFile( items[ a ].Path );
+						Application.currentDocument = items[ a ].Path;
+						fouldFile = true;
+					}
+				}
+			
+				sw = sw == 2 ? 1 : 2;
+			
+				let d = document.createElement( 'div' );
+				d.className = 'NotesFileItem Padding BorderBottom MousePointer sw' + sw;
+			
+				( function( p, o ){
+					o.path = p;
+				} )( items[ a ].Path, d );
+			
+				if( Application.currentDocument && Application.currentDocument == num.Path )
+				{
+					d.classList.add( 'Selected' );
+				}
+				else
+				{
+					d.onmouseover = function()
+					{
+						this.classList.add( 'Selected' );
+					}
+					d.onmouseout = function()
+					{
+						this.classList.remove( 'Selected' );
+					}
+				}
+			
+				// No listing here
+				let fn = num.Filename.split( '.' );
+				fn.pop();
+				fn = fn.join( '.' );
+			
+				d.innerHTML = '<p class="Layout"><strong>' + fn + '</strong></p><p class="Layout"><em>' + num.DateModified + '</em></p>';
+			
+				// File permissions are given
+				// TODO: Check permissions
+				let rem = false;
+				if( 1 == 1 )
+				{
+					( function( dd, path ){
+						rem = document.createElement( 'div' );
+						rem.className = 'IconButton fa-remove IconSmall FloatRight';
+						rem.onclick = function( e )
 						{
-							if( result.data )
+							Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_delete_note' ), function( result )
 							{
-								var l = new Library( 'system.library' );
-								l.onExecuted = function( e, mess )
+								if( result.data )
 								{
-									if( e == 'ok' )
+									let l = new Library( 'system.library' );
+									l.onExecuted = function( e, mess )
 									{
-										if( Application.currentDocument == path )
+										if( e == 'ok' )
 										{
-											Application.sendMessage( { command: 'new_blank' } );
-											Application.editor.setData( '' );
+											if( Application.currentDocument == path )
+											{
+												Application.sendMessage( { command: 'new_blank' } );
+												Application.editor.setData( '' );
+											}
+											Application.refreshFilePane();
 										}
-										Application.refreshFilePane();
 									}
+									l.execute( 'file/delete', { path: path } );
 								}
-								l.execute( 'file/delete', { path: path } );
-							}
-						} );
-						return cancelBubble( e );
-					}
-					if( isMobile )
-					{
-						rem.ontouchstart = rem.onclick;
-					}
-					d.insertBefore( rem, d.firstChild );
-				} )( d, num.Path );
-			}
-			
-			fBar.contents.appendChild( d );
-			
-			d.clicker = function( e )
-			{
-				var s = this;
-				if( this.tm )
-				{
-					clearTimeout( this.tm );
-				}
-				this.tm = 'block';
-			
-				var p = this.getElementsByTagName( 'p' )[0];
-				var ml = p.innerHTML;
-				var inp = document.createElement( 'input' );
-				inp.type = 'text';
-				inp.className = 'NoMargins';
-				inp.style.width = 'calc(100% - 32px)';
-				inp.value = p.innerText;
-				p.innerHTML = '';
-				p.appendChild( inp );
-				inp.select();
-				inp.focus();
-				function renameNow()
-				{
-					var val = inp.value;
-					if( val.substr( val.length - 4, 4 ) != '.htm' && val.substr( val.length - 5, 5 ) != '.html' )
-						val += '.html';
-					var l = new Library( 'system.library' );
-					l.onExecuted = function( e, d )
-					{
-						if( e == 'ok' )
-						{
-							Application.sendMessage( {
-								command: 'setfilename',
-								data: Application.path + val
 							} );
-							Application.currentDocument = Application.path + val;
-							Application.refreshFilePane( false, true );
+							return cancelBubble( e );
 						}
-						// Perhaps give error - file exists
-						else
+						if( isMobile )
 						{
-							inp.select();
+							rem.ontouchstart = rem.onclick;
+						}
+						d.insertBefore( rem, d.firstChild );
+					} )( d, num.Path );
+				}
+			
+				fBar.contents.appendChild( d );
+			
+				d.clicker = function( e )
+				{
+					let s = this;
+					if( this.tm )
+					{
+						clearTimeout( this.tm );
+					}
+					this.tm = 'block';
+			
+					let p = this.getElementsByTagName( 'p' )[0];
+					let ml = p.innerHTML;
+					let inp = document.createElement( 'input' );
+					inp.type = 'text';
+					inp.className = 'NoMargins';
+					inp.style.width = 'calc(100% - 32px)';
+					inp.value = p.innerText;
+					p.innerHTML = '';
+					p.appendChild( inp );
+					inp.select();
+					inp.focus();
+					function renameNow()
+					{
+						let val = inp.value;
+						if( val.substr( val.length - 4, 4 ) != '.htm' && val.substr( val.length - 5, 5 ) != '.html' )
+							val += '.html';
+						let l = new Library( 'system.library' );
+						l.onExecuted = function( e, d )
+						{
+							if( e == 'ok' )
+							{
+								Application.sendMessage( {
+									command: 'setfilename',
+									data: Application.path + val
+								} );
+								Application.currentDocument = Application.path + val;
+								Application.refreshFilePane( false, true );
+							}
+							// Perhaps give error - file exists
+							else
+							{
+								inp.select();
+							}
+						}
+						l.execute( 'file/rename', { path: s.path, newname: val } );
+					}
+					p.onkeydown = function( e )
+					{
+						let k = e.which ? e.which : e.keyCode;
+						// Abort
+						if( k == 27 )
+						{
+							if( p && p.parentNode )
+								p.innerHTML = ml;
+							s.tm = null;
+						}
+						// Rename
+						else if( k == 13 )
+						{
+							renameNow();
 						}
 					}
-					l.execute( 'file/rename', { path: s.path, newname: val } );
-				}
-				p.onkeydown = function( e )
-				{
-					var k = e.which ? e.which : e.keyCode;
-					// Abort
-					if( k == 27 )
+					inp.onblur = function()
 					{
-						if( p && p.parentNode )
-							p.innerHTML = ml;
+						p.innerHTML = ml;
 						s.tm = null;
 					}
-					// Rename
-					else if( k == 13 )
+					cancelBubble( e );
+				}
+			
+				// Selected files can be renamed
+				if( d.classList.contains( 'Selected' ) )
+				{
+					if( isMobile )
 					{
-						renameNow();
+						( function( dd ) {
+							dd.ontouchstart = function( e )
+							{
+								let f = dd;
+								this.editTimeout = setTimeout( function()
+								{
+									f.editTimeout = null;
+									f.clicker();
+								}, 750 );
+								return cancelBubble( e );
+							}
+							dd.ontouchend = function()
+							{
+								if( dd.getElementsByTagName( 'input' ).length ) 
+								{
+									return;
+								}
+								let f = this;
+								if( f.editTimeout )
+								{
+									clearTimeout( f.editTimeout );
+									f.editTimeout = null;
+									Application.currentDocument = f.path;
+									Application.loadFile( f.path, function()
+									{
+										currentViewMode = 'default';
+										Application.updateViewMode();
+									} );
+								}
+							}
+						} )( d );
+					}
+					else
+					{
+						d.onclick = d.clicker;
 					}
 				}
-				inp.onblur = function()
+				// Others are activated
+				else
 				{
-					p.innerHTML = ml;
-					s.tm = null;
-				}
-				cancelBubble( e );
-			}
-			
-			// Selected files can be renamed
-			if( d.classList.contains( 'Selected' ) )
-			{
-				if( isMobile )
-				{
-					( function( dd ) {
-						dd.ontouchstart = function( e )
-						{
-							var f = dd;
-							this.editTimeout = setTimeout( function()
+					if( isMobile )
+					{
+						( function( dd ){ 
+							dd.ontouchstart = function( e )
 							{
-								f.editTimeout = null;
-								f.clicker();
-							}, 750 );
-							return cancelBubble( e );
-						}
-						dd.ontouchend = function()
-						{
-							if( dd.getElementsByTagName( 'input' ).length ) 
-							{
-								return;
+								dd.classList.add( 'Selected' );
+								let eles = dd.parentNode.childNodes;
+								for( var a = 0; a < eles.length; a++ )
+								{
+									if( eles[a].tagName == 'DIV' && eles[a] != dd )
+										eles[a].classList.remove( 'Selected' );
+								}
+								let f = dd;
+								this.editTimeout = setTimeout( function()
+								{
+									f.editTimeout = null;
+									f.clicker();
+								}, 750 );
+								return cancelBubble( e );
 							}
-							var f = this;
-							if( f.editTimeout )
+							dd.ontouchend = function()
 							{
-								clearTimeout( f.editTimeout );
-								f.editTimeout = null;
-								Application.currentDocument = f.path;
-								Application.loadFile( f.path, function()
+								if( dd.getElementsByTagName( 'input' ).length ) 
+								{
+									return;
+								}
+								let f = this;
+								if( f.editTimeout )
+								{
+									clearTimeout( f.editTimeout );
+									f.editTimeout = null;
+									Application.currentDocument = f.path;
+									Application.loadFile( f.path, function()
+									{
+										currentViewMode = 'default';
+										Application.updateViewMode();
+									} );
+								}
+							}
+						} )( d );
+					}
+					else
+					{
+						( function( dl ){
+							dl.onclick = function()
+							{
+								Application.currentDocument = dl.path;
+								Application.loadFile( dl.path, function()
 								{
 									currentViewMode = 'default';
 									Application.updateViewMode();
 								} );
+								Application.refreshFilePane();
 							}
-						}
-					} )( d );
-				}
-				else
-				{
-					d.onclick = d.clicker;
-				}
-			}
-			// Others are activated
-			else
-			{
-				if( isMobile )
-				{
-					( function( dd ){ 
-						dd.ontouchstart = function( e )
-						{
-							dd.classList.add( 'Selected' );
-							var eles = dd.parentNode.childNodes;
-							for( var a = 0; a < eles.length; a++ )
-							{
-								if( eles[a].tagName == 'DIV' && eles[a] != dd )
-									eles[a].classList.remove( 'Selected' );
-							}
-							var f = dd;
-							this.editTimeout = setTimeout( function()
-							{
-								f.editTimeout = null;
-								f.clicker();
-							}, 750 );
-							return cancelBubble( e );
-						}
-						dd.ontouchend = function()
-						{
-							if( dd.getElementsByTagName( 'input' ).length ) 
-							{
-								return;
-							}
-							var f = this;
-							if( f.editTimeout )
-							{
-								clearTimeout( f.editTimeout );
-								f.editTimeout = null;
-								Application.currentDocument = f.path;
-								Application.loadFile( f.path, function()
-								{
-									currentViewMode = 'default';
-									Application.updateViewMode();
-								} );
-							}
-						}
-					} )( d );
-				}
-				else
-				{
-					( function( dl ){
-						dl.onclick = function()
-						{
-							Application.currentDocument = dl.path;
-							Application.loadFile( dl.path, function()
-							{
-								currentViewMode = 'default';
-								Application.updateViewMode();
-							} );
-							Application.refreshFilePane();
-						}
-					} )( d );
+						} )( d );
+					}
 				}
 			}
 		}
@@ -578,7 +594,7 @@ Application.refreshFilePane = function( method, force, callback )
 
 Application.run = function( msg, iface )
 {
-	var self = this;
+	let self = this;
 	
 	// To tell about ck
 	this.ckinitialized = false;
@@ -612,7 +628,7 @@ Application.run = function( msg, iface )
 	}
 	
 	// Create the filebrowser pane (or side bar on desktop) --------------------
-	var FileBrowser = new Friend.FileBrowser( 
+	let FileBrowser = new Friend.FileBrowser( 
 		ge( 'LeftBar' ), 
 		{ 
 			displayFiles: true, 
@@ -636,7 +652,7 @@ Application.run = function( msg, iface )
 	this.fld.innerHTML = '<div class="Button IconButton IconSmall fa-folder">&nbsp;' + i18n( 'i18n_add_folder' ) + '</div>';
 	this.fld.onclick = function( e )
 	{
-		var el = document.createElement( 'input' );
+		let el = document.createElement( 'input' );
 		el.type = 'text';
 		el.className = 'FullWidth InputHeight';
 		el.placeholder = 'foldername';
@@ -645,14 +661,14 @@ Application.run = function( msg, iface )
 		el.focus();
 		el.onkeydown = function( e )
 		{
-			var w = e.which ? e.which : e.keyCode;
+			let w = e.which ? e.which : e.keyCode;
 			if( w == 27 )
 			{
 				el.parentNode.removeChild( el );
 			}
 			else if( w == 13 )
 			{
-				var l = new Library( 'system.library' );
+				let l = new Library( 'system.library' );
 				l.onExecuted = function()
 				{
 					self.fileBrowser.refresh();
@@ -676,7 +692,7 @@ Application.run = function( msg, iface )
 
 Application.checkWidth = function()
 {
-	var ww = window.innerWidth;
+	let ww = window.innerWidth;
 	if( ww < 840 )
 	{
 		editorCommand( 'staticWidth' );
@@ -762,23 +778,29 @@ Application.initCKE = function()
 			editor.editing.view.document.on( 'keyup', ( evt, data ) => {
 			
 				// Guess a new filename from the document data
-				var data = Application.editor.element.innerText.split( "\n" )[0].substr( 0, 32 );
-				data = data.split( /[^ a-z0-9]/i ).join( '' );
-				if( !data.length )
-					data = 'unnamed';
+				let pdata = Application.editor.element.innerText.split( "\n" )[0].substr( 0, 32 );
+				try
+				{
+					pdata = pdata.split( /[^ a-z0-9]/i ).join( '' );
+				}
+				catch( e )
+				{
+				}
+				if( !pdata.length )
+					pdata = 'unnamed';
 			
 				// Create temporary file "to be saved"
 				if( !Application.currentDocument )
 				{
 					if( !Application._toBeSaved )
 					{
-						var fb = ge( 'FileBar' );
+						let fb = ge( 'FileBar' );
 						if( fb )
 						{
-							var d = fb.getElementsByClassName( 'List' );
+							let d = fb.getElementsByClassName( 'List' );
 							if( d.length )
 							{
-								var el = document.createElement( 'div' );
+								let el = document.createElement( 'div' );
 								el.className = 'NotesFileItem Padding BorderBottom MousePointer New';
 								d[0].insertBefore( el, d[0].firstChild );
 								Application._toBeSaved = el;
@@ -786,7 +808,7 @@ Application.initCKE = function()
 						}
 					}
 					if( Application._toBeSaved )
-						Application._toBeSaved.innerHTML = '<p class="Layout"><strong>' + data + '</strong></p><p class="Layout"><em>' + i18n( 'i18n_unsaved' ) + '...</em></p>';
+						Application._toBeSaved.innerHTML = '<p class="Layout"><strong>' + pdata + '</strong></p><p class="Layout"><em>' + i18n( 'i18n_unsaved' ) + '...</em></p>';
 				}
 				// Remove "to be saved"
 				else if( Application._toBeSaved )
@@ -797,7 +819,7 @@ Application.initCKE = function()
 				}
 			
 				// Rename or set name
-				if( Application.currentDocument != Application.path + data + '.html' )
+				if( Application.currentDocument != Application.path + pdata + '.html' )
 				{
 					if( Application.setFilenameTimeo )
 						clearTimeout( Application.setFilenameTimeo );
@@ -805,7 +827,7 @@ Application.initCKE = function()
 					{
 						Application.sendMessage( {
 							command: 'setfilename',
-							data: Application.path + data + '.html',
+							data: Application.path + pdata + '.html',
 							rename: Application.currentDocument ? Application.currentDocument : false
 						} );
 						Application.setFilenameTimeo = null;
@@ -826,7 +848,7 @@ Application.initCKE = function()
 					// Save again
 					if( Application.fileSaved )
 					{
-						var test = ( new Date() ).getTime();
+						let test = ( new Date() ).getTime();
 						if( test - Application.lastSaved > 1000 )
 						{
 							Application.sendMessage( {
@@ -865,7 +887,7 @@ function MyMouseListener( e )
 {
 	Application.elementHasLineHeight = false;
 	
-	var ele = e.target;
+	let ele = e.target;
 	if( !ele )
 	{
 		Application.resetToolbar();
@@ -919,18 +941,22 @@ function MyMouseListener( e )
 		}
 		
 		// Check font style ----------------------------------------------------
-		var fs = e.target;
+		let fs = e.target;
 		while( fs.parentNode && !fs.style.fontFamily )
 		{
 			fs = fs.parentNode;
 		}
 		
 		// Check for lineheight
-		var fs = e.target;
-		while( fs.parentNode && !fs.style.lineHeight )
+		if( !fs )
 		{
-			fs = fs.parentNode;
+			fs = e.target;
+			while( fs.parentNode && !fs.style.lineHeight )
+			{
+				fs = fs.parentNode;
+			}
 		}
+		
 		if( fs.parentNode && fs.style.lineHeight )
 		{
 			Application.elementHasLineHeight = true;
@@ -947,13 +973,13 @@ function MyMouseListener( e )
 		if( fs.parentNode && fs.style.fontSize )
 		{
 			// TODO: Dynamically load font list!
-			var fonts = [ 
+			let fonts = [ 
 				 '6pt',  '7pt',  '8pt',  '9pt', '10pt', '11pt', 
 				'12pt', '14pt', '16pt', '18pt', '20pt', '24pt',
 				'28pt', '32pt', '36pt', '40pt', '48px', '56pt' 
 			];
-			var current = Trim( fs.style.fontSize.toLowerCase().split( '\'' ).join( '' ) );
-			var found = false;
+			let current = Trim( fs.style.fontSize.toLowerCase().split( '\'' ).join( '' ) );
+			let found = false;
 			for( var a = 0; a < fonts.length; a++ )
 			{
 				if( fonts[a] == current )
@@ -1025,10 +1051,10 @@ Application.parseText = function( str )
 	}
 	
 	// Fallback if we don't have what we wanted
-	var textHere = str.charAt( 0 ).toUpperCase() + str.substr( 1, str.length - 1 );
+	let textHere = str.charAt( 0 ).toUpperCase() + str.substr( 1, str.length - 1 );
 	
 	// Find period
-	var end = textHere.split( ' ' );
+	let end = textHere.split( ' ' );
 	if( end[end.length-1].toLowerCase() == 'period' )
 	{
 		end[end.length-1] = '.';
@@ -1087,19 +1113,19 @@ Application.initializeToolbar = function()
 {
 	if( !this.toolbar )
 	{
-		var d = document.createElement( 'div' );
+		let d = document.createElement( 'div' );
 		d.id = 'AuthorToolbar';
 		d.className = 'BackgroundDefault ColorDefault BorderTop';
 		this.toolbar = d;
 		ge( 'RightBar' ).insertBefore( d, ge( 'RightBar' ).firstChild );
 		
-		var f = new File( 'Progdir:Templates/toolbar.html' );
+		let f = new File( 'Progdir:Templates/toolbar.html' );
 		f.onLoad = function( data )
 		{
 			d.innerHTML = data;
 			if( isMobile )
 			{
-				var menuContents = ge( 'MobileMenu' ).getElementsByClassName( 'MenuContents' )[0];
+				let menuContents = ge( 'MobileMenu' ).getElementsByClassName( 'MenuContents' )[0];
 				ge( 'MobileMenu' ).classList.add( 'ScrollBarSmall', 'Button', 'ImageButton', 'IconSmall', 'fa-navicon' );
 				ge( 'MobileMenu' ).onclick = function()
 				{
@@ -1115,13 +1141,13 @@ Application.initializeToolbar = function()
 				
 				function _gtn( p, tags )
 				{
-					var eles = [];
+					let eles = [];
 					for( var a = 0; a < tags.length; a++ )
 					{
-						var els = p.getElementsByTagName( tags[a] );
+						let els = p.getElementsByTagName( tags[a] );
 						if( els.length )
 						{
-							var makeAr = [];
+							let makeAr = [];
 							for( var b = 0; b < els.length; b++ )
 								makeAr.push( els[b] );
 							eles = eles.concat( makeAr );
@@ -1130,13 +1156,13 @@ Application.initializeToolbar = function()
 					return eles;
 				}
 				
-				var eles = _gtn( ge( 'MobileMenu' ), [ 'div', 'input', 'select' ] );
+				let eles = _gtn( ge( 'MobileMenu' ), [ 'div', 'input', 'select' ] );
 				for( var a = 0; a < eles.length; a++ )
 				{
 					if( eles[a].title && eles[a].title.length )
 					{	
 						if( eles[a].style.display == 'none' ) continue;
-						var span = document.createElement( 'label' );
+						let span = document.createElement( 'label' );
 						if( !eles[a].id )
 							eles[a].id = 'test_' + Math.floor( Math.random() * 100000 );
 						span.for = eles[a].id;
@@ -1153,7 +1179,7 @@ Application.initializeToolbar = function()
 		}
 		f.i18n();
 		f.load();
-		var bt = ge( 'cke_1_bottom' );
+		let bt = ge( 'cke_1_bottom' );
 		if( bt )
 		{
 			bt.className = d.className;
@@ -1171,10 +1197,10 @@ Application.initializeBody = function()
 	AddEvent( 'onkeyup', MyKeyListener );
 }
 
-var _repag = 0;
-var _lastPageCnt = 0;
-var _pageCount = 0;
-var _a4pageHeightPx = 1122.66;
+let _repag = 0;
+let _lastPageCnt = 0;
+let _pageCount = 0;
+let _a4pageHeightPx = 1122.66;
 function MyKeyListener( e )
 {
 	if( !Config.usePagination )
@@ -1190,13 +1216,13 @@ Application.setCurrentDocument = function( pth )
 {
 	if( pth.indexOf( '/' ) > 0 )
 	{
-		var fname = pth.split( '/' );
+		let fname = pth.split( '/' );
 		fname = fname[fname.length-1];
 		this.fileName = fname;
 	}
 	else
 	{
-		var fname = pth.split( ':' );
+		let fname = pth.split( ':' );
 		fname = fname[fname.length-1];
 		this.fileName = fname;
 	}
@@ -1230,29 +1256,29 @@ Application.loadFile = function( path, cbk )
 	Application.lastSaved = ( new Date() ).getTime();
 	Application.fileSaved = true;
 	
-	var extension = path.split( '.' ); extension = extension[extension.length-1];
+	let extension = path.split( '.' ); extension = extension[extension.length-1];
 	
 	switch( extension )
 	{
 		default:
-			var f = new File( path );
+			let f = new File( path );
 			f.onLoad = function( data )
 			{
 				Application.statusMessage( i18n('i18n_loaded') );
 				
 				// Let's fix authid paths and sessionid paths
-				var m = false;
+				let m = false;
 				data = data.split( /authid\=[^&]+/i ).join ( 'authid=' + Application.authId );
 				data = data.split( /sessionid\=[^&]+/i ).join ( 'authid=' + Application.authId );
 		
-				var bdata = data.match( /\<body[^>]*?\>([\w\W]*?)\<\/body[^>]*?\>/i );
+				let bdata = data.match( /\<body[^>]*?\>([\w\W]*?)\<\/body[^>]*?\>/i );
 				if( bdata && bdata[1] )
 				{
 					function loader( num )
 					{
 						if( !num ) num = 0;
 						if( num > 2 ) return; // <- failed
-						var f = Application.editor;
+						let f = Application.editor;
 						
 						// retry
 						if( !f || ( f && !f.element ) )
@@ -1306,7 +1332,7 @@ Application.loadFile = function( path, cbk )
 
 Application.statusMessage = function( msg )
 {
-	var s = ge( 'Status' );
+	let s = ge( 'Status' );
 	if( s.timeout )
 	{
 		clearTimeout( s.timeout );
@@ -1334,16 +1360,16 @@ Application.statusMessage = function( msg )
 
 // Save a file -----------------------------------------------------------------
 
-Application.saveFile = function( path, content )
+Application.saveFile = function( path, content, callback )
 {
 	Application.statusMessage( i18n( 'i18n_status_saving' ) );
 	
-	var extension = path.split( '.' ); extension = extension[extension.length-1];
+	let extension = path.split( '.' ); extension = extension[extension.length-1];
 	
 	switch( extension )
 	{
 		default:
-			var f = new File();
+			let f = new File();
 			f.onSave = function()
 			{
 				Application.fileSaved = true;
@@ -1351,6 +1377,8 @@ Application.saveFile = function( path, content )
 				Application.statusMessage(  i18n('i18n_written') );
 				Application.currentDocument = path;
 				Application.refreshFilePane();
+				if( callback )
+					callback( true );
 			}
 			f.save( content, path );
 			break;
@@ -1362,11 +1390,14 @@ Application.saveFile = function( path, content )
 		data: Application.editor.getData(),
 		scrollTop: Application.editor.element.scrollTop
 	} );
+	
+	if( callback )
+		callback( false );
 }
 
 // Create a new document -------------------------------------------------------
 
-Application.newDocument = function( args )
+Application.newDocument = function( args, callback )
 {
 	// Don't make new document while loading..
 	if( this.loading )
@@ -1375,14 +1406,14 @@ Application.newDocument = function( args )
 	this.fileSaved = false;
 	this.lastSaved = 0;
 	
-	var self = this;
+	let self = this;
 	
 	// Wait till ready
 	if( typeof( ClassicEditor ) == 'undefined' || !Application.editor )
 	{
 		return setTimeout( function()
 		{
-			Application.newDocument( args );
+			Application.newDocument( args, callback );
 		}, 50 );
 	}
 	
@@ -1399,7 +1430,7 @@ Application.newDocument = function( args )
 	
 	if( args && args.content )
 	{
-		var f = document.getElementsByTagName( 'iframe' )[0];
+		let f = document.getElementsByTagName( 'iframe' )[0];
 		
 		
 		if( args.path )
@@ -1426,11 +1457,13 @@ Application.newDocument = function( args )
 		{
 			setTimeout( function()
 			{
-				var i = document.getElementsByTagName( 'iframe' )[0];
+				let i = document.getElementsByTagName( 'iframe' )[0];
 				Application.editor.element.scrollTop = args.scrollTop;
 				Application.initializeBody();
 			}, 50 );
 		}
+		
+		if( callback ) return callback( true );
 	}
 	else
 	{
@@ -1468,14 +1501,16 @@ Application.newDocument = function( args )
 				}, 5000 );
 			}
 		}
+		if( callback ) return callback( true );
 	}
+	if( callback ) callback( false );
 }
 
 // Do a meta search on all connected systems -----------------------------------
 
 function metaSearch( keywords )
 {
-	var m = new Module( 'system' );
+	let m = new Module( 'system' );
 	m.onExecuted = function( rc, response )
 	{
 		console.log( response );
@@ -1485,7 +1520,7 @@ function metaSearch( keywords )
 
 // Apply style from style information ------------------------------------------
 
-var styleElement = null;
+let styleElement = null;
 function ApplyStyle( styleObject, depth )
 {
 	if( !depth ) depth = 0;
@@ -1494,10 +1529,10 @@ function ApplyStyle( styleObject, depth )
 		styleElement = document.createElement( 'style' );
 		// TODO: Add this
 	}
-	var style = '';
+	let style = '';
 	for( var a in styleObject )
 	{
-		var el = styleObject[a];
+		let el = styleObject[a];
 		if( depth > 0 )
 		{
 			switch( a )
@@ -1630,7 +1665,7 @@ Application.receiveMessage = function( msg )
 			break;
 		// Create a new document
 		case 'newdocument':
-			var o = {
+			let o = {
 				content: msg.content ? msg.content : '', 
 				scrollTop: msg.scrollTop >= 0 ? msg.scrollTop : 0,
 				path: msg.path ? msg.path : '',
@@ -1654,7 +1689,7 @@ Application.receiveMessage = function( msg )
 		case 'design_default':
 		case 'design_atmospheric':
 		case 'design_dark':
-			var f = new File( 'Progdir:Css/' + msg.command + '.css' );
+			let f = new File( 'Progdir:Css/' + msg.command + '.css' );
 			f.onLoad = function( data )
 			{
 				if( data && data.length && data.substr( 0, 4 ) != 'fail' )
@@ -1671,15 +1706,15 @@ Application.receiveMessage = function( msg )
 
 function editorCommand( command, value )
 {
-	var editor = Application.editor;
+	let editor = Application.editor;
 	
-	var f = {};
+	let f = {};
 	f.execCommand = function( cmd, val )
 	{
 		return Application.editor.execute( cmd, val ? { value: val } : false );
 	}
 
-	var defWidth = 640;
+	let defWidth = 640;
 	
 	if( command.substr( 0, 4 ) == 'zoom' )
 	{
@@ -1732,8 +1767,8 @@ function editorCommand( command, value )
 	}
 	/*else if( command == 'line-height' )
 	{
-		var st = !Application.elementHasLineHeight ? '2em' : '';
-		var s = new CKEDITOR.style( { attributes: { style: 'line-height: ' + st } } );
+		let st = !Application.elementHasLineHeight ? '2em' : '';
+		let s = new CKEDITOR.style( { attributes: { style: 'line-height: ' + st } } );
 		editor.applyStyle( s );
 	}*/
 	else if( command == 'formath2' )

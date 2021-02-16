@@ -1143,6 +1143,9 @@ var WorkspaceInside = {
 	refreshExtraWidgetContents: function()
 	{
 		if( this.mode == 'vr' ) return;
+
+		var self = this;
+
 		if( Workspace.isSingleTask ) return;
 		
 		var mo = new Library( 'system.library' );
@@ -1216,12 +1219,6 @@ var WorkspaceInside = {
 
 			var closeBtn = '<div class="HRow"><p class="Layout"><button type="button" class="FloatRight Button fa-close IconSmall">' + i18n( 'i18n_close' ) + '</button></p></div>';
 
-			var d = '<hr class="Divider"/>\
-			<div class="Padding"><p class="Layout"><strong>' + i18n( 'i18n_active_session_list' ) + ':</strong></p>\
-			' + ( sessions.length > 0 ? sessions.join( '' ) : '<ul><li>' + i18n( 'i18n_no_other_sessions_available' ) + '.</li></ul>' ) + '\
-			</div>\
-			';
-
 			// Mobile launches calendar in a different way, so this 
 			// functionality is only for desktops
 			if( !isMobile && !Workspace.isSingleTask )
@@ -1235,103 +1232,8 @@ var WorkspaceInside = {
 				if( wid && !wid.initialized )
 				{
 					wid.initialized = true;
-
-					var calendar = new Calendar( wid.dom );
-					wid.dom.id = 'CalendarWidget';
-				
-					Workspace.calendarWidget = wid;
-
-					var newBtn = calendar.createButton( 'fa-calendar-plus-o' );
-					newBtn.onclick = function()
-					{
-						if( calendar.eventWin ) return;
 					
-						var date = calendar.date.getFullYear() + '-' + ( calendar.date.getMonth() + 1 ) + '-' + calendar.date.getDate();
-						var dateForm = date.split( '-' );
-						dateForm = dateForm[0] + '-' + StrPad( dateForm[1], 2, '0' ) + '-' + StrPad( dateForm[2], 2, '0' );
-					
-						calendar.eventWin = new View( {
-							title: i18n( 'i18n_event_overview' ) + ' ' + dateForm,
-							width: 500,
-							height: 445
-						} );
-					
-						calendar.eventWin.onClose = function()
-						{
-							calendar.eventWin = false;
-						}
-
-						var f1 = new File( 'System:templates/calendar_event_add.html' );
-						f1.replacements = { date: dateForm };
-						f1.i18n();
-						f1.onLoad = function( data1 )
-						{
-							calendar.eventWin.setContent( data1 );
-						}
-						f1.load();
-
-						// Just close the widget
-						if( m && wid )
-							wid.hide();
-					}
-					calendar.addButton( newBtn );
-
-					/*
-						TODO: Re-enable the wrench when we have a working calendar
-					var geBtn = calendar.createButton( 'fa-wrench' );
-					geBtn.onclick = function()
-					{
-						ExecuteApplication( 'FriendCalendar' );
-					}
-					calendar.addButton( geBtn );*/
-
-					// Add events to calendar!
-					calendar.eventWin = false;
-					calendar.onSelectDay = function( date )
-					{
-						calendar.date.setDate( parseInt( date.split( '-' )[2] ) );
-						calendar.date.setMonth( parseInt( date.split( '-' )[1] ) - 1 );
-						calendar.date.setFullYear( parseInt( date.split( '-' )[0] ) );
-						calendar.render();
-					}
-
-					calendar.setDate( new Date() );
-					calendar.onRender = function( callback )
-					{
-						var md = new Module( 'system' );
-						md.onExecuted = function( e, d )
-						{
-							try
-							{
-								// Update events
-								var eles = JSON.parse( d );
-								calendar.events = [];
-								for( var a in eles )
-								{
-									if( !calendar.events[eles[a].Date] )
-										calendar.events[eles[a].Date] = [];
-									calendar.events[eles[a].Date].push( eles[a] );
-								}
-							}
-							catch( e )
-							{
-							}
-							calendar.render( true );
-							wid.autosize();
-							ge( 'DoorsScreen' ).screenObject.resize();
-						}
-						md.execute( 'getcalendarevents', { date: calendar.date.getFullYear() + '-' + ( calendar.date.getMonth() + 1 ) } );
-					}
-					calendar.render();
-					Workspace.calendar = calendar;
-
-					m.calendar = calendar;
-
-					var sess = document.createElement( 'div' );
-					sess.className = 'ActiveSessions';
-					sess.innerHTML = d;
-					wid.dom.appendChild( sess );
-					m.sessions = sess;
+					self.createCalendar( wid, sessions );
 				}
 				else
 				{
@@ -1453,134 +1355,6 @@ var WorkspaceInside = {
 		if( Workspace.mainDock && !Workspace.isSingleTask )
 			Workspace.mainDock.closeDesklet();
 		this.exitMobileMenu();
-	},
-	removeCalendarEvent: function( id )
-	{
-		Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_evt_delete_desc' ), function( ok )
-		{
-			if( ok )
-			{
-				var m = new Module( 'system' );
-				m.onExecuted = function( e )
-				{
-					if( e == 'ok' )
-					{
-						// Refresh
-						if( Workspace.calendar ) Workspace.calendar.render();
-						return;
-					}
-					Notify( { title: i18n( 'i18n_evt_delete_failed' ), text: i18n( 'i18n_evt_delete_failed_desc' ) } );
-				}
-				m.execute( 'deletecalendarevent', { id: id } );
-			}
-		} );
-	},
-	addCalendarEvent: function()
-	{
-		var evt = {
-			Title: ge( 'calTitle' ).value,
-			Description: ge( 'calDescription' ).value,
-			TimeFrom: ge( 'calTimeFrom' ).value,
-			TimeTo: ge( 'calTimeTo' ).value,
-			Date: ge( 'calDateField' ).value
-		};
-
-		var m = new Module( 'system' );
-		m.onExecuted = function( e, d )
-		{
-			if( Workspace.calendar && Workspace.calendar.eventWin )
-				Workspace.calendar.eventWin.close();
-			Workspace.calendar.render();
-			Notify( { title: i18n( 'i18n_evt_added' ), text: i18n( 'i18n_evt_addeddesc' ) } );
-		}
-		m.execute( 'addcalendarevent', { event: evt } );
-	},
-	// Edit a calendar event
-	editCalendarEvent: function( id )
-	{
-		var calendar = Workspace.calendar;
-		
-		if( calendar.editWin ) return;
-		
-		var m = new Module( 'system' );
-		m.onExecuted = function( e, d )
-		{
-			if( e == 'ok' )
-			{
-				var row = JSON.parse( d );
-				
-				var date = row.Date;
-				
-				calendar.editWin = new View( {
-					title: i18n( 'i18n_event_overview' ) + ' ' + date,
-					width: 500,
-					height: 445
-				} );
-	
-				calendar.editWin.onClose = function()
-				{
-					calendar.editWin = false;
-				}
-
-				var f1 = new File( 'System:templates/calendar_event_edit.html' );
-				f1.replacements = { 
-					date:         date,
-					timefrom:     row.TimeFrom,
-					timeto:       row.TimeTo,
-					timedisabled: row.TimeFrom == '00:00' && time.TimeTo == '00:00' ? ' disabled="disabled"' : '',
-					title:        row.Title,
-					type:         row.Type,
-					description:  row.Description,
-					id:           id
-				};
-				f1.i18n();
-				f1.onLoad = function( data1 )
-				{
-					calendar.editWin.setContent( data1 );
-				}
-				f1.load();
-			}
-		}
-		m.execute( 'getcalendarevent', { cid: id } );
-	},
-	saveCalendarEvent: function( id )
-	{
-		if( !Workspace.calendar.editWin ) return;
-		var w = Workspace.calendar.editWin;
-		var fields = {};
-		var inps = w.content.getElementsByTagName( 'input' );
-		for( var a = 0; a < inps.length; a++ )
-			fields[ inps[ a ].id ] = inps[ a ].value;
-		var txts = w.content.getElementsByTagName( 'textarea' );
-		for( var a = 0; a < txts.length; a++ )
-			fields[ txts[ a ].id ] = txts[ a ].value;
-		var sels = w.content.getElementsByTagName( 'select' );
-		for( var a = 0; a < txts.length; a++ )
-			fields[ sels[ a ].id ] = sels[ a ].value;
-		
-		var evt = {
-			Title: fields.calTitle,
-			TimeFrom: fields.calTimeFrom,
-			TimeTo: fields.calTimeTo,
-			Description: fields.calDescription,
-			Date: fields.calDateField
-		};
-		
-		var m = new Module( 'system' );
-		m.onExecuted = function( e, d )
-		{
-			if( e == 'ok' )
-			{
-				// Refresh
-				if( Workspace.calendar ) Workspace.calendar.render();
-				if( Workspace.calendar.editWin )
-				{
-					Workspace.calendar.editWin.close();
-				}
-				return;
-			}
-		}
-		m.execute( 'savecalendarevent', { cid: id, event: evt } );
 	},
 	loadSystemInfo: function()
 	{
@@ -3295,6 +3069,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									if( ge( 'Tray' ) && ge( 'Tray' ).downloadApplet )
 									{
 										ge( 'Tray' ).downloadApplet.innerHTML = '<div class="BubbleInfo"><div>' + i18n( 'i18n_drag_files_to_download' ) + '.</div></div>';
+									}
+									// And the calendar applet
+									if( ge( 'Tray' ) && ge( 'Tray' ).calendarApplet )
+									{
+										ge( 'Tray' ).calendarApplet.innerHTML = '<div class="BubbleInfo"><div>' + i18n( 'i18n_add_calendar_event' ) + '.</div></div>';
 									}
 									
 									// New version of Friend?
@@ -10367,3 +10146,4 @@ function loadApplicationBasics( callback )
 	}
 	j_.load();
 };
+
