@@ -39,7 +39,8 @@ var UsersSettings = function ( setting, set )
 		limit       : limit,
 		uids        : [],
 		avatars     : true,
-		logintime   : true,
+		logintime   : false,
+		experiment  : 0/*29*/,
 		listall     : false,
 		reset       : true
 	} );
@@ -98,6 +99,9 @@ var UsersSettings = function ( setting, set )
 					{
 						this.vars.uids.push( set                                                      );
 					}
+					break;
+				case 'experiment'          :
+					this.vars.experiment   = ( set                                                    );
 					break;
 				case 'avatars'             :
 					this.vars.avatars      = ( set                                                    );
@@ -6741,6 +6745,8 @@ Sections.accounts_users = function( cmd, extra )
 			ge( 'ListUsersInner' ).setAttribute( 'orderby', orderby );
 		}
 		
+		
+		
 	}
 	
 	function getStorageInfo( path, id, args, callback )
@@ -7668,6 +7674,7 @@ Sections.accounts_users = function( cmd, extra )
 				console.log( "UsersSettings( 'listall', true ); to list all users ..." );
 				console.log( "UsersSettings( 'avatars', false ); to list users without avatar ..." );
 				console.log( "UsersSettings( 'logintime', false ); to list users without lastlogin ..." );
+				console.log( "UsersSettings( 'experiment', true ); to show latest grid method ..." );
 				console.log( "UsersSettings(  ); for current Users Settings ..." );
 				
 				// Temporary ...
@@ -7676,7 +7683,12 @@ Sections.accounts_users = function( cmd, extra )
 				// Get correct estimate of how many users fit into the window area ...
 			
 				CheckUserlistSize( true );
-		
+				
+				
+				
+				
+				
+				
 				getUserlist( function( res, userList )
 				{
 		
@@ -7685,6 +7697,28 @@ Sections.accounts_users = function( cmd, extra )
 					if( res == 'ok' )
 					{
 						Init();
+						
+						// Experimental ...
+						if( UsersSettings( 'experiment' ) )
+						{
+							console.log( 'scrollengine.init() ... ', scrollengine );
+							
+							ge( 'UserList' ).innerHTML += '<div id="Debug"></div>';
+							ge( 'ListUsersInner' ).className = ge( 'ListUsersInner' ).className + ' experiment';
+							
+							// Data
+							let myArray = [];
+							for( let a = 0; a < 1000; a++ )
+							{
+								myArray.push( {
+									initialized: null,
+								} );
+							}
+							
+							scrollengine.init( ge( 'ListUsersInner' ), myArray );
+					
+						}
+						
 					}
 					
 				} );
@@ -7923,6 +7957,24 @@ function getUserlist( callback, obj )
 	{
 		console.log( 'getUserlist( callback, obj ): ', { args: args, usersettings: UsersSettings() } );
 		return;
+	}
+	
+	// Temp ...
+	
+	if( callback && UsersSettings( 'experiment' ) )
+	{
+		return callback( 'ok', [], obj );
+		
+		var userList = [];
+		
+		for( var a = 1; a <= UsersSettings( 'experiment' ); a++ )
+		{
+			userList.push( { ID: a,  Name: 'Dummy'+(a<10?'0'+a:a), FullName: 'Dummy'+(a<10?'0'+a:a), Level: 'User', Status: 0, LoginTime: 0 } );
+		}
+		
+		userList['Count'] = '1000';
+		
+		return callback( 'ok', userList, obj );
 	}
 	
 	// Get the user list
@@ -8192,6 +8244,11 @@ function sortUsers( sortby, orderby )
 function CheckUserlistSize( firstrun )
 {
 	
+	if( UsersSettings( 'experiment' ) )
+	{
+		return false;
+	}
+	
 	var scrollbox = ge( 'UserList' );
 	var container = ge( 'ListUsersInner' );
 	var wrapper   = ge( 'ListUsersWrapper' );
@@ -8204,13 +8261,17 @@ function CheckUserlistSize( firstrun )
 		
 		if( ( scrollbox.scrollHeight - scrollbox.clientHeight ) > 0 )
 		{
+			
 			var pos = Math.round( scrollbox.scrollTop / ( scrollbox.scrollHeight - scrollbox.clientHeight ) * 100 );
 			
 			// If scrolled area is more then 50% prosentage
 			
 			if( pos && pos >= 50 )
 			{
-				//console.log( pos );
+				if( UsersSettings( 'experiment' ) )
+				{
+					//console.log( pos );
+				}
 				
 				if( UsersSettings( 'total' ) > 0 && ( UsersSettings( 'listed' ) == UsersSettings( 'total' ) ) )
 				{
@@ -8218,7 +8279,11 @@ function CheckUserlistSize( firstrun )
 				}
 				else if( container.clientHeight >= wrapper.clientHeight )
 				{
-					//wrapper.style.minHeight = ( container.clientHeight + scrollbox.clientHeight ) + 'px';
+					if( UsersSettings( 'experiment' ) )
+					{
+						console.log( '[1] wrapper.style.minHeight = ' + ( container.clientHeight + scrollbox.clientHeight ) + 'px' );
+						wrapper.style.minHeight = ( container.clientHeight + scrollbox.clientHeight ) + 'px';
+					}
 					
 					//UsersSettings( 'limit', true );
 						
@@ -8270,7 +8335,11 @@ function CheckUserlistSize( firstrun )
 		{
 			if( container.clientHeight >= wrapper.clientHeight )
 			{
-				//wrapper.style.minHeight = ( container.clientHeight + scrollbox.clientHeight ) + 'px';
+				if( UsersSettings( 'experiment' ) )
+				{
+					//console.log( '[2] wrapper.style.minHeight = ' + ( container.clientHeight + scrollbox.clientHeight ) + 'px' );
+					//wrapper.style.minHeight = ( container.clientHeight + scrollbox.clientHeight ) + 'px';
+				}
 			}
 		}
 		else if( container && ( container.clientHeight + m ) < scrollbox.clientHeight )
@@ -8281,10 +8350,34 @@ function CheckUserlistSize( firstrun )
 			}
 		}
 		
+		
+		
 		var divh = UsersSettings( 'divh' );
 		
 		if( divh && ( !UsersSettings( 'total' ) || ( UsersSettings( 'listed' ) != UsersSettings( 'total' ) ) ) )
 		{
+			
+			if( UsersSettings( 'experiment' ) )
+			{
+				console.log( "UsersSettings( 'total' ) " + UsersSettings( 'total' ) );
+			}
+			
+			if( UsersSettings( 'experiment' ) )
+			{
+				// ...
+				
+				if( container && ( container.clientHeight + m ) > scrollbox.clientHeight )
+				{
+					// If UsersSettings( 'total' ) is bigger then visible area add extra block ...
+					if( container.clientHeight >= wrapper.clientHeight )
+					{
+						console.log( '[0] wrapper.style.minHeight = ' + ( container.clientHeight + scrollbox.clientHeight ) + 'px' );
+						wrapper.style.minHeight = ( container.clientHeight + scrollbox.clientHeight ) + 'px';
+					}
+				}
+			}
+			
+			
 			
 			var minusers = Math.floor( ( scrollbox.clientHeight - m ) / divh );
 			
