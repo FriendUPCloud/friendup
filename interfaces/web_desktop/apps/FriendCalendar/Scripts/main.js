@@ -389,7 +389,6 @@ Application.receiveMessage = function( msg )
 				}
 			}
 			Calendar.render();
-			Calendar.refreshRoster();
 			break;
 	}
 }

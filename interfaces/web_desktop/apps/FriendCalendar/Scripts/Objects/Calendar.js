@@ -193,7 +193,7 @@ Calendar.renderMonth = function()
 	
 	this.dayRows = w;
 	this.refresh();
-	this.refreshRoster( 'week' );
+	this.refreshRoster( 'month' );
 };
 
 Calendar.renderWeek = function()
@@ -807,21 +807,27 @@ Calendar.refreshRoster = function( mode )
 {
 	if( !mode ) mode = 'week';
 	
+	let dateFrom = dateTo = '';
+	let eles = Calendar.events;
+	
+	let heading = i18n( 'i18n_weekly_events' );
+	if( mode == 'month' )
+	    heading = i18n( 'i18n_monthly_events' );
+	
+	let hstr = '<p class="Heading BorderBottom PaddingBottom MarginBottom"><strong>' + heading + '</strong></p>';
+	let pstr = '';
+	let nstr = '';
+	
+	let now = ( new Date() ).getTime();
+	let currdate = null;
+	
 	if( mode == 'week' )
 	{
-		let eles = Calendar.events;
-		let hstr = '<p class="Heading BorderBottom PaddingBottom MarginBottom"><strong>' + i18n( 'i18n_weekly_events' ) + '</strong></p>';
-		let pstr = '';
-		let nstr = '';
-		let now = ( new Date() ).getTime();
-		let currdate = null;
-		
 		let time = this.date.getTime();
 		let time2 = this.date.getTime();
 		let findDay = new Date( time );
 		let startDay = this.date.getDay();
 		let endDay = this.date.getDay();
-		let dateFrom = dateTo = '';
 	
 		// Find start of week (where monday is 1)
 		// And find date span for the week
@@ -845,106 +851,127 @@ Calendar.refreshRoster = function( mode )
 			}
 		}
 		
-		// Time values for span
+		// Set StopIteration
 		dateFrom = ( new Date( dateFrom ) ).getTime();
 		dateTo = ( new Date( dateTo ) ).getTime();
-		
-		for( let a in eles )
+	}
+	else if( mode == 'month' )
+	{
+	    // Set span
+	    dateFrom = new Date( this.date.getFullYear() + '-' + 
+	               StrPad( this.date.getMonth() + 1, 2, '0' ) + '-' +
+	               '01 00:00:00' ).getTime();
+	    let lastDay = 28;
+	    let thisMonth = this.date.getMonth() + 1;
+	    let yearHere = this.date.getFullYear();
+	    
+	    while( true )
+	    {
+	        let n = new Date( yearHere + '-' + StrPad( thisMonth, 2, '0' ) + '-' + lastDay + ' 00:00:00' );
+	        let m = n.getMonth() + 1;
+	        if( m != thisMonth )
+	            break;
+	        else lastDay++;
+	    }
+	    
+	    dateTo = ( new Date( yearHere + '-' + StrPad( thisMonth, 2, '0' ) + '-' + lastDay + ' 00:00:00' ) ).getTime();
+	}
+	else if( mode == 'day' )
+	{
+	    // TODO: Implement when ready
+	}
+	
+
+    // Go through the elements and render roster	
+	for( let a in eles )
+	{
+		let eventList = eles[ a ];
+		if( !eventList || !eventList.length ) continue;
+		for( let b = 0; b < eventList.length; b++ )
 		{
-			let eventList = eles[ a ];
-			if( !eventList || !eventList.length ) continue;
-			for( let b = 0; b < eventList.length; b++ )
+			let event = eventList[ b ];
+			if( !event ) continue;
+			
+			let md = false;
+			try
 			{
-				let event = eventList[ b ];
-				if( !event ) continue;
-				
-				let md = false;
-				try
-				{
-					md = JSON.parse( event.MetaData );
-				}
-				catch( e ){ md = false; }
-				
+				md = JSON.parse( event.MetaData );
+			}
+			catch( e ){ md = false; }
+			
+			// Fix corrupt date
+			let t = event.DateStart.split( ' ' );
+			if( t[1].length <= 3 )
+			{
+				t[1] = '00:00:00';
+			}
+			event.DateStart = t.join( ' ' );
+			
+			let eventTime = new Date( event.DateStart ).getTime();
+			let eventStop = false; 
+			
+			if( md && md.DateTo )
+			{
 				// Fix corrupt date
-				let t = event.DateStart.split( ' ' );
+				t = md.DateTo.split( ' ' );
 				if( t[1].length <= 3 )
 				{
 					t[1] = '00:00:00';
 				}
-				event.DateStart = t.join( ' ' );
-				
-				let eventTime = new Date( event.DateStart ).getTime();
-				let eventStop = false; 
-				
-				if( md && md.DateTo )
+				md.DateTo = t.join( ' ' );
+				// Make time
+				eventStop = new Date( md.DateTo ).getTime();
+			}
+			// No date to? Just add the same
+			else
+			{
+				eventStop = eventTime;
+			}
+			
+			// Are we within time span?
+			let within = eventTime >= dateFrom && eventTime <= dateTo;
+			let within2 = eventStop ? 
+				(
+					( eventTime <= dateFrom && eventStop <= dateTo )
+					||
+					( eventTime >= dateFrom && eventStop <= dateTo )
+					||
+					( eventTime <= dateFrom && eventStop >= dateTo )
+				) :
+				false;
+			// Done time span rules
+			
+			
+			if( within || within2 )
+			{
+				let timestamp = ( new Date( event.DateEnd ) ).getTime();
+			
+				let cl = '';
+				if( now > timestamp )
+					cl = ' Expired';
+				let dst = event.DateStart.split( ' ' )[0];
+				if( currdate != dst )
 				{
-					// Fix corrupt date
-					t = md.DateTo.split( ' ' );
-					if( t[1].length <= 3 )
-					{
-						t[1] = '00:00:00';
-					}
-					md.DateTo = t.join( ' ' );
-					// Make time
-					eventStop = new Date( md.DateTo ).getTime();
-				}
-				// No date to? Just add the same
-				else
-				{
-					eventStop = eventTime;
-				}
-				
-				// Are we within time span?
-				let within = eventTime >= dateFrom && eventTime <= dateTo;
-				let within2 = eventStop ? 
-					(
-						( eventTime <= dateFrom && eventStop <= dateTo )
-						||
-						( eventTime >= dateFrom && eventStop <= dateTo )
-						||
-						( eventTime <= dateFrom && eventStop >= dateTo )
-					) :
-					false;
-				// Done time span rules
-				
-				
-				if( within || within2 )
-				{
-					let timestamp = ( new Date( event.DateEnd ) ).getTime();
-				
-					let cl = '';
-					if( now > timestamp )
-						cl = ' Expired';
-					let dst = event.DateStart.split( ' ' )[0];
-					if( currdate != dst )
-					{
-						currdate = dst;
-						let s = '<p class="Date' + cl + '"><strong>' + currdate + '</strong></p>';
-						if( cl ) pstr += s;
-						else nstr += s;
-					}
-				
-					let time = event.DateStart.split( ' ' )[1];
-					time = time.split( ':' );
-					time = time[0] + ':' + time[1];
-					let s = '<p class="RosterEvent' + cl + '">' + time + ': ' + event.Name + '</p>';
+					currdate = dst;
+					let s = '<p class="Date' + cl + '"><strong>' + currdate + '</strong></p>';
 					if( cl ) pstr += s;
 					else nstr += s;
 				}
+			
+				let time = event.DateStart.split( ' ' )[1];
+				time = time.split( ':' );
+				time = time[0] + ':' + time[1];
+				let s = '<p class="RosterEvent' + cl + '">' + time + ': ' + event.Name + '</p>';
+				if( cl ) pstr += s;
+				else nstr += s;
 			}
 		}
-		let ph = '<p class="Heading BorderBottom PaddingBottom MarginBottom"><strong>' + i18n( 'i18n_expired_events' ) + '</strong></p>';
-		if( !pstr ) ph = '';
-		
-		// Update roster
-		ge( 'Roster' ).innerHTML = hstr + nstr + ph + pstr;
 	}
-	else if( mode == 'month' )
-	{
-	}
-	else if( mode == 'day' )
-	{
-	}
+	let ph = '<p class="Heading BorderBottom PaddingBottom MarginBottom"><strong>' + i18n( 'i18n_expired_events' ) + '</strong></p>';
+	if( !pstr ) ph = '';
+	
+	// Update roster
+	ge( 'Roster' ).innerHTML = hstr + nstr + ph + pstr;
 };
 
 // Just neatly reposition stuff
