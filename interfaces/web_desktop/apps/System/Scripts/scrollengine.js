@@ -37,9 +37,11 @@ scrollengine = {
 	
 	counted : 0,
 	
-	debug : true,
+	debug : false,
 	
 	ex : '',
+	
+	refreshTimeout : 0,
 	
 	init : function ( list, myArray )
 	{
@@ -77,7 +79,6 @@ scrollengine = {
 		
 		// Page above
 		this.aTop = Math.floor( ( this.scrollTop - this.viewHeight ) / this.config.rowHeight ) * this.config.rowHeight;
-		//console.log( 'this.aTop ' + this.aTop );
         let aa = document.createElement( 'div' );
         aa.id = 'pageAbove';
         this.counted = 0;
@@ -92,12 +93,10 @@ scrollengine = {
             row.innerHTML = 'Line ' + b;
         }
         
-        //aa.style.position = 'relative';
         //aa.style.position = 'absolute';
         //aa.style.width = '100%';
-        //console.log( 'aa.style.top = '+this.aTop+'px' );
         aa.style.top = this.aTop + 'px';
-        aa.style.height = this.counted * this.config.rowHeight + 'px';
+        aa.style.height = ( this.counted + 1 ) * this.config.rowHeight + 'px';
         this.list.replaceChild( aa, this.elements.pageAbove );
         this.elements.pageAbove = aa;
 		
@@ -110,7 +109,6 @@ scrollengine = {
 		
 		// Page middle
 		this.dTop = Math.floor( this.scrollTop / this.config.rowHeight ) * this.config.rowHeight;
-		//console.log( 'this.dTop ' + this.dTop );
 		let d = document.createElement( 'div' );
 		d.id = 'pageMiddle';
 		this.ex += this.rowPosition + ' pos ' + this.rowCount + ' count';
@@ -125,12 +123,10 @@ scrollengine = {
 			this.counted = a;
 		}
 		
-		//d.style.position = 'relative';
 		//d.style.position = 'absolute';
 		//d.style.width = '100%';
-		//console.log( 'd.style.top = '+this.dTop+'px' );
 		d.style.top = this.dTop + 'px';
-		d.style.height = this.counted * this.config.rowHeight + 'px';
+		d.style.height = ( this.counted + 1 ) * this.config.rowHeight + 'px';
 		this.list.replaceChild( d, this.elements.pageMiddle );
 		this.elements.pageMiddle = d;
 		
@@ -161,12 +157,10 @@ scrollengine = {
 			this.counted = a;
 		}
 		
-		//bb.style.position = 'relative';
 		//bb.style.position = 'absolute';
 		//bb.style.width = '100%';
-		//console.log( 'bb.style.top = '+this.dTop+' + '+d.offsetHeight + 'px' );
-		bb.style.top = this.dTop + d.offsetHeight + 'px';
-		bb.style.height = this.counted * this.config.rowHeight + 'px';
+		bb.style.top = d.offsetTop + d.offsetHeight + 'px';
+		bb.style.height = ( this.counted ) * this.config.rowHeight + 'px';
 		this.list.replaceChild( bb, this.elements.pageBelow );
 		this.elements.pageBelow = bb;
 		
@@ -175,10 +169,10 @@ scrollengine = {
 	},
 	
 	// Refresh funksjon
-	refresh : function ( force )
+	refresh : function ( force, timeout )
 	{
 		
-		//console.log( this.list );
+		this.counted = 0;
 		
 		this.scrollTop    = this.list.scrollTop;
 		this.viewHeight   = window.innerHeight;
@@ -202,10 +196,8 @@ scrollengine = {
 		
 		let pm = this.elements.pageMiddle;
 		
-		//this.ex += Math.random();
-		
 		// Must redraw if pageMiddle is out of scroll view
-		if( scrollTop > pm.offsetTop + pm.offsetHeight || scrollTop + viewHeight < pm.offsetTop || force === true )
+		if( scrollTop > pm.offsetTop + pm.offsetHeight || scrollTop < viewHeight || scrollTop + viewHeight < pm.offsetTop || force === true )
 		{
 		    this.ex += ' Must redraw';
 		    this.config.mustRedraw = true;
@@ -217,7 +209,6 @@ scrollengine = {
 		
 		// What's left to scroll after pages
 		let leftToScroll = scrollHeight;
-		let counted = this.counted;
 		
 		if( this.config.mustRedraw )
 		{
@@ -228,10 +219,10 @@ scrollengine = {
 		    this.config.mustRedraw = false;
 		    
 		    this.rowPosition = Math.floor( scrollTop / this.config.rowHeight );
-		    this.rowCount    = Math.floor( viewHeight / this.config.rowHeight + 1 );
+		    this.rowCount    = Math.floor( viewHeight / this.config.rowHeight ) + 1;
 		    
 		    // Page above
-		    if( scrollTop > 0 )
+		    if( scrollTop > viewHeight )
 		    {
 		    	let aa = this.pageAbove();
 		    }
@@ -244,7 +235,7 @@ scrollengine = {
 		}
 		
 		// If we counted the whole list, then
-		if( counted >= this.myArray.length )
+		if( this.counted >= this.myArray.length )
 		{
 		    let hh = Math.max( d.offsetTop + d.offsetHeight, bb.offsetTop + bb.offsetHeight );
 		    this.elements.wholeHeight.style.height = hh + 'px';
@@ -256,7 +247,7 @@ scrollengine = {
 		}
 		
 		// Add debug
-		this.debugInfo( scrollTop + ' scroll ' + viewHeight + ' height' + this.ex );
+		if( this.debug ) this.debugInfo( scrollTop + ' scroll ' + viewHeight + ' height' + this.ex );
 		
 	},
 	
@@ -297,8 +288,16 @@ scrollengine = {
 	debugInfo : function( str )
 	{
 		
-		// Add debug
-		if( ge( 'Debug' ) ) ge( 'Debug' ).innerHTML = str;
+		if( this.list )
+		{
+			/*if( !ge( 'Debug' ) )
+			{
+				this.list.parentNode.parentNode.innerHTML += '<div id="Debug"></div>';
+			}*/
+			
+			// Add debug
+			if( ge( 'Debug' ) ) ge( 'Debug' ).innerHTML = str;
+		}
 		
 		this.ex = '';
 		

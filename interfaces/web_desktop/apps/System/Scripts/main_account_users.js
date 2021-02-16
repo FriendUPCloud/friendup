@@ -7703,7 +7703,11 @@ Sections.accounts_users = function( cmd, extra )
 						{
 							console.log( 'scrollengine.init() ... ', scrollengine );
 							
-							ge( 'UserList' ).innerHTML += '<div id="Debug"></div>';
+							if( scrollengine.debug )
+							{
+								ge( 'UserList' ).innerHTML += '<div id="Debug"></div>';
+							}
+							
 							ge( 'ListUsersInner' ).className = ge( 'ListUsersInner' ).className + ' experiment';
 							
 							// Data
