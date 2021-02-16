@@ -60,6 +60,7 @@ Calendar.renderMonth = function()
 	let month = this.date.getMonth();
 	let year = this.date.getFullYear();
 	let currentDay = this.date.getDay();
+	let currentDate = ( new Date() ).getDate();
 	this.dateArray = [ year, month, this.date.getDate() ];
 	
 	let day = 1;
@@ -157,7 +158,10 @@ Calendar.renderMonth = function()
 					}
 					evts += '</div>';
 				}
-				ml += '<div class="Day" onclick="AddEvent(' + year + ',' + ( month + 1 ) + ',' + thisDay + ')">' + evts + '<div class="Number">' + dliteral + '</div></div>';
+				let cla = '';
+				if( thisDay == currentDate && month == dob.getMonth() )
+				    cla = ' Today';
+				ml += '<div class="Day' + cla + '" onclick="AddEvent(' + year + ',' + ( month + 1 ) + ',' + thisDay + ')">' + evts + '<div class="Number">' + dliteral + '</div></div>';
 			}
 			else
 			{

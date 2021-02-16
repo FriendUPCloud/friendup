@@ -402,6 +402,13 @@ html > body .CalendarHeaderRow > .HRow.CalendarRow > .Day.Today > .Label
 	width: 8%;
 }
 
+.HRow:nth-child(odd) .Day:nth-child(even).Today, 
+.HRow:nth-child(even) .Day:nth-child(odd).Today
+{
+    background: linear-gradient(#e4a71e,hsl(42deg 92% 35%)) !important;
+    color: #221100 !important;
+}
+
 .Week .Day + .Day
 {
 	width: 13.142%;
