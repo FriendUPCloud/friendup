@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS `FSecuredHost` (
   `ID` bigint(32) NOT NULL AUTO_INCREMENT,
   `Host` varchar(255) DEFAULT NULL,
   `Status` bigint(8) NOT NULL,
-  `CreatedBy` bigint(32) NOT NULL,
+  `UserID` bigint(32) NOT NULL,
   `CreateTime` bigint(32) NOT NULL,
   PRIMARY KEY (`ID`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
@@ -61,7 +61,7 @@ typedef struct SecuredHost
 	
 	char					*sh_Host;					// Host name
 	FULONG					sh_Status;					// Host status
-	FQUAD					sh_CreatedBy;				// ID of user which created host entry
+	FQUAD					sh_UserID;					// ID of user which created host entry
 	time_t					sh_CreateTime;				// Time when entry was created
 }SecuredHost;
 
@@ -93,7 +93,7 @@ static FULONG SecuredHostDesc[] = {
 	SQLT_IDINT,   (FULONG)"ID",          offsetof( struct SecuredHost, sh_ID ), 
 	SQLT_STR,     (FULONG)"Host", offsetof( struct SecuredHost, sh_Host ),
 	SQLT_INT,     (FULONG)"Status", offsetof( struct SecuredHost, sh_Status ),
-	SQLT_INT,     (FULONG)"CreatedBy",   offsetof( struct SecuredHost, sh_CreatedBy ),
+	SQLT_INT,     (FULONG)"UserID",   offsetof( struct SecuredHost, sh_UserID ),
 	SQLT_INT,     (FULONG)"CreateTime", offsetof( struct SecuredHost, sh_CreateTime ),
 
 	SQLT_INIT_FUNCTION, (FULONG)"init", (FULONG)&SecuredHostInit,

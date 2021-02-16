@@ -160,7 +160,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 	* <HR><H2>system.library/security/deleteservertoken</H2>Function delete server token
 	*
 	* @param sessionid - (required) session id of logged user
-	* @param userid - user id for which token will be generated
+	* @param userid - user id for which token will be removed
 	* 
 	* @return return {"result":"success"} when succes otherwise error
 	*/
@@ -305,13 +305,13 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 				
 				// delete all hosts same hosts for user
 				
-				int size = snprintf( insertQuery, sizeof( insertQuery ), "DELETE FROM `FSecuredHost` where HOST='%s' AND CreatedBy=%lu", host, userID );
+				int size = snprintf( insertQuery, sizeof( insertQuery ), "DELETE FROM `FSecuredHost` where HOST='%s' AND UserID=%lu", host, userID );
 				sqllib->QueryWithoutResults( sqllib, insertQuery );
 				
 				time_t ti = time( NULL );
 				// create host in DB
 				
-				size = snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FSecuredHost` (Host,Status,CreatedBy,CreateTime) VALUES( %s, %lu, %lu, '%lu' )", host, status, userID, ti );
+				size = snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FSecuredHost` (Host,Status,UserID,CreateTime) VALUES( %s, %lu, %lu, '%lu' )", host, status, userID, ti );
 				sqllib->QueryWithoutResults( sqllib, insertQuery );
 			
 				DEBUG("[SecurityWeb/createhost] sl query %s\n", insertQuery );
@@ -344,8 +344,6 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 	* @param userid - id of user to which host will be assigned
 	* @param status - status of entry. Used enums: SECURED_HOST_STATUS_NONE = 0,SECURED_HOST_STATUS_ALLOWED = 1, SECURED_HOST_STATUS_BLOCKED = 2. By default it is set to 0.
 	* 
-	* @return response
-
 	* @return { "response":"success" } otherwise information about error
 	*/
 	/// @endcond
@@ -438,7 +436,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 	* @param host - if passed it is stored, otherwise host is taken from field "fordwarded". If host entry is not provided all hosts will be deleted.
 	* @param userid - id of user to which host will be assigned
 	* 
-	* @return response
+	* @return response {"result":"success","host":"<HOST>"} when success otherwise error
 	*/
 	/// @endcond
 	else if( strcmp( urlpath[ 0 ], "deletehost" ) == 0 )
@@ -495,11 +493,11 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 				
 				if( host == NULL )
 				{
-					int size = snprintf( insertQuery, sizeof( insertQuery ), "DELETE FROM `FSecuredHost` where CreatedBy=%lu", userID );
+					int size = snprintf( insertQuery, sizeof( insertQuery ), "DELETE FROM `FSecuredHost` where UserID=%lu", userID );
 				}
 				else	// delete only specified host
 				{
-					int size = snprintf( insertQuery, sizeof( insertQuery ), "DELETE FROM `FSecuredHost` where HOST='%s' AND CreatedBy=%lu", host, userID );
+					int size = snprintf( insertQuery, sizeof( insertQuery ), "DELETE FROM `FSecuredHost` where HOST='%s' AND UserID=%lu", host, userID );
 				}
 				sqllib->QueryWithoutResults( sqllib, insertQuery );
 
