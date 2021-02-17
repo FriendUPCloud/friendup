@@ -7734,7 +7734,7 @@ Sections.accounts_users = function( cmd, extra )
 						
 						}
 					
-					}, false, '0, 1000' );
+					}, false, '0, ' + UsersSettings( 'maxlimit' ) );
 					
 					return;
 					
