@@ -391,7 +391,7 @@ scrollengine = {
 								
 				var bg = 'background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;';
 
-            	str += '<div class="HRow Active Line '+s+'" id="UserListID_'+this.myArray[s].ID+'">';
+            	//str += '<div class="HRow Active Line '+s+'" id="UserListID_'+this.myArray[s].ID+'">';
 				str += '	<div class="TextCenter HContent10 FloatLeft PaddingSmall Ellipsis edit">';
 				str += '		<span id="UserAvatar_'+this.myArray[s].ID+'" fullname="'+this.myArray[s].FullName+'" name="'+this.myArray[s].Name+'" status="Active" logintime="Never" timestamp="0" class="IconSmall fa-user-circle-o avatar" style="position: relative;">';
 				str += '			<div style="' + bg + '"></div>';
@@ -401,9 +401,24 @@ scrollengine = {
 				str += '	<div class=" HContent25 FloatLeft PaddingSmall Ellipsis name">' + this.myArray[s].Name + '</div>';
 				str += '	<div class=" HContent15 FloatLeft PaddingSmall Ellipsis status">Active</div>';
 				str += '	<div class=" HContent20 FloatLeft PaddingSmall Ellipsis logintime">Never</div>';
-				str += '</div>';
+				//str += '</div>';
             	
-            	allNodes[ a ].innerHTML = str;
+            	let dd = document.createElement( 'div' );
+            	dd.className = 'HRow Active Line';
+            	dd.id = 'UserListID_' + this.myArray[s].ID;
+            	dd.innerHTML = str;
+            	
+            	let test = allNodes[ a ].getElementsByTagName( 'div' );
+            	if( test.length )
+            	{
+            		allNodes[a].replaceChild( dd, test[0] );
+            	}
+            	else
+            	{
+            		allNodes[a].innerHTML = '';
+            		allNodes[a].appendChild( dd );
+            	}
+            	
             	let spa = allNodes[a].getElementsByTagName( 'span' )[0].getElementsByTagName( 'div' )[0];
             	spa.style.backgroundImage = 'url(' + src + ')';
             	allNodes[ a ].title = 'Line '+s;
