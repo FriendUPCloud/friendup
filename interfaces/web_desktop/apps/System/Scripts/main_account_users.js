@@ -7696,21 +7696,122 @@ Sections.accounts_users = function( cmd, extra )
 					getUserlist( function( res, userList )
 					{
 						
-						doListUsers( userList );
+						//doListUsers( userList );
 						
 						console.log( userList );
 						
-						ge( 'ListUsersInner' ).innerHTML = '';
 						
-						if( scrollengine.debug )
-						{
-							ge( 'UserList' ).innerHTML += '<div id="Debug"></div>';
-						}
-						
-						ge( 'ListUsersInner' ).className = ge( 'ListUsersInner' ).className + ' experiment';
 						
 						if( res == 'ok' )
 						{
+							
+							
+							// TODO: Make some propper function for this when it's working ...
+							// TODO: And make it SIMPLER :) not a mess ...
+							
+							var o = ge( 'UserList' );
+							
+							if( !ge( 'ListUsersInner' ) )
+							{
+								if( o ) o.innerHTML = '';
+							}
+							
+							if( !ge( 'ListUsersInner' ) )
+							{
+								/*// Add the main heading
+								( function( ol ) {
+									var tr = document.createElement( 'div' );
+									tr.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingRight';
+				
+									var extr = '';
+									
+									tr.innerHTML = '\
+										<div class="HContent20 FloatLeft">\
+											<h3><strong>' + i18n( 'i18n_users' ) + ' </strong><span id="AdminUsersCount">' + (userList&&userList['Count']?'('+userList['Count']+')':'(0)')+'</span></h3>\
+										</div>\
+										<div class="HContent70 FloatLeft Relative">\
+											' + extr + '\
+											<input type="text" class="FullWidth" placeholder="' + i18n( 'i18n_find_users' ) + '"/>\
+										</div>\
+										<div class="HContent10 FloatLeft TextRight InActive">\
+											<button id="AdminUsersBtn" class="IconButton IconSmall Negative fa-bars"></button>\
+											<div class="submenu_wrapper"><ul id="AdminUsersSubMenu" class="Positive"></ul></div>\
+										</div>\
+									';
+					
+									var inp = tr.getElementsByTagName( 'input' )[0];
+									inp.onkeyup = function( e )
+									{
+										filterUsers( this.value, true );
+									}
+									
+									var bt = tr.getElementsByTagName( 'button' )[0];
+									if( bt )
+									{
+										bt.onclick = function()
+										{
+											filterUsers( false );
+										}
+									}
+					
+									ol.appendChild( tr );
+								} )( o );*/
+								
+								var str = '';
+								
+								// Temporary ...
+								
+								str += '<div class="HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingRight">';
+								str += '	<div class="HContent20 FloatLeft">';
+								str += '		<h3><strong>Users </strong><span id="AdminUsersCount">(' + userList['Count'] + ')</span></h3>';
+								str += '	</div>';
+								str += '	<div class="HContent70 FloatLeft Relative">';
+								str += '		<input type="text" class="FullWidth" placeholder="Find users...">';
+								str += '	</div>';
+								str += '	<div class="HContent10 FloatLeft TextRight InActive">';
+								str += '		<button id="AdminUsersBtn" class="IconButton IconSmall Negative fa-bars"></button>';
+								str += '		<div class="submenu_wrapper">';
+								str += '			<ul id="AdminUsersSubMenu" class="Positive">';
+								str += '				<li>New user</li>';
+								str += '				<li class="show">Show disabled users</li>';
+								str += '				<li class="hide">Hide locked users</li>';
+								str += '			</ul>';
+								str += '		</div>';
+								str += '	</div>';
+								str += '</div>';
+								
+								str += '<div class="List">';
+								str += '	<div class="HRow BackgroundNegative Negative PaddingTop PaddingBottom">';
+								str += '		<div class="PaddingSmallLeft PaddingSmallRight HContent10 FloatLeft Ellipsis"><strong>&nbsp;</strong></div>';
+								str += '		<div class="PaddingSmallLeft PaddingSmallRight HContent30 FloatLeft Ellipsis"><strong onclick="sortUsers(\'FullName\')">Name</strong></div>';
+								str += '		<div class="PaddingSmallLeft PaddingSmallRight HContent25 FloatLeft Ellipsis"><strong onclick="sortUsers(\'Name\')">Username</strong></div>';
+								str += '		<div class="PaddingSmallLeft PaddingSmallRight HContent15 FloatLeft Ellipsis"><strong onclick="sortUsers(\'Status\')">Status</strong></div>';
+								str += '		<div class="PaddingSmallLeft PaddingSmallRight HContent20 FloatLeft Ellipsis"><strong onclick="sortUsers(\'LoginTime\')">Last Login</strong></div>';
+								str += '	</div>';
+								str += '</div>';
+								
+								str += '<div id="ListUsersWrapper" style="position:relative;height:calc(100% - 77px);">';
+								str += '	<div class="ScrollArea HContentLeft VContent100 HContent100">';
+								str += '		<div class="List FullName ASC" id="ListUsersInner" sortby="FullName" orderby="ASC"></div>';
+								str += '	</div>';
+								str += '</div>';
+								
+								o.innerHTML += str;
+								
+								//ge( 'ListUsersInner' ).innerHTML = '';
+								
+								if( scrollengine.debug )
+								{
+									ge( 'UserList' ).innerHTML += '<div id="Debug"></div>';
+								}
+								
+								ge( 'UserList' ).className = ge( 'UserList' ).className + ' experiment';
+								ge( 'ListUsersInner' ).className = ge( 'ListUsersInner' ).className + ' experiment';
+								
+							}
+							
+							
+							
 							
 							scrollengine.init( ge( 'ListUsersInner' ), userList, userList['Count'], function( ret ) 
 							{ 
