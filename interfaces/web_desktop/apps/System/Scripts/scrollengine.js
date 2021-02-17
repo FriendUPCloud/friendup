@@ -62,6 +62,8 @@ scrollengine = {
 		
 		this.reset();
 		
+		console.log( 'INIT RUN !!!' );
+		
 		if( list )
 		{
 			if( callback )
@@ -309,7 +311,17 @@ scrollengine = {
 		// Update scroll list array with new data from JSON array
 		for( let a = 0; a < this.length( data ); a++ )
 		{
+			let cacheImage = this.myArray[ start + a ].imageObj;
 			this.myArray[ start + a ] = data[ a ];
+			if( !cacheImage || !cacheImage.src )
+			{
+				this.myArray[ start + a ].imageObj = null;
+				//console.log( 'We have no cache image!' );
+			}
+			else
+			{
+				this.myArray[ start + a ].imageObj = cacheImage;
+			}
 		}
 		
 		// All elements available
@@ -344,10 +356,45 @@ scrollengine = {
             	
             	let str = '';
             	
+            	let src;
+            	
+            	if( this.myArray[ s ].imageObj == null )
+            	{
+            		src = '/system.library/module/?module=system&command=getavatar&userid=' + this.myArray[s].ID + ( this.myArray[s].image ? '&image=' + this.myArray[s].image : '' ) + '&width=16&height=16&authid=' + Application.authId;
+            		let iii = new Image();
+            		iii.src = src;
+            		/*iii.onload = function()
+            		{
+            			console.log( 'Loaded image: ' + this.src );
+            		}*/
+            		this.myArray[ s ].imageObj = iii;	
+            		//console.log( 'Creating new cache image' );
+            	}
+            	// From cache
+            	else
+            	{
+            		if( this.myArray[ s ].imageObj.blob )
+            		{
+            			src = this.myArray[ s ].imageObj.blob;
+            		}
+            		else
+            		{
+						let canvas = document.createElement( 'canvas' );
+						canvas.width = 16;
+						canvas.height = 16;
+						canvas.getContext('2d').drawImage( this.myArray[ s ].imageObj, 0, 0 );
+						src = canvas.toDataURL('image/png');
+						this.myArray[ s ].imageObj.blob = src;
+					}
+            	}
+            	
+								
+				var bg = 'background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;';
+
             	str += '<div class="HRow Active Line '+s+'" id="UserListID_'+this.myArray[s].ID+'">';
 				str += '	<div class="TextCenter HContent10 FloatLeft PaddingSmall Ellipsis edit">';
 				str += '		<span id="UserAvatar_'+this.myArray[s].ID+'" fullname="'+this.myArray[s].FullName+'" name="'+this.myArray[s].Name+'" status="Active" logintime="Never" timestamp="0" class="IconSmall fa-user-circle-o avatar" style="position: relative;">';
-				str += '			<div style=""></div>';
+				str += '			<div style="' + bg + '"></div>';
 				str += '		</span>';
 				str += '	</div>';
 				str += '	<div class=" HContent30 FloatLeft PaddingSmall Ellipsis fullname">' + this.myArray[s].FullName + '</div>';
@@ -357,6 +404,8 @@ scrollengine = {
 				str += '</div>';
             	
             	allNodes[ a ].innerHTML = str;
+            	let spa = allNodes[a].getElementsByTagName( 'span' )[0].getElementsByTagName( 'div' )[0];
+            	spa.style.backgroundImage = 'url(' + src + ')';
             	allNodes[ a ].title = 'Line '+s;
             	
             	allNodes[ a ].myArrayID = this.myArray[s].ID;
