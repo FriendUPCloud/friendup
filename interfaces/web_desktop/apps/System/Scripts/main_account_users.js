@@ -40,7 +40,7 @@ var UsersSettings = function ( setting, set )
 		uids        : [],
 		avatars     : true,
 		logintime   : false,
-		experiment  : true,
+		experiment  : false,
 		listall     : false,
 		reset       : true
 	} );
