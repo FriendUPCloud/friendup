@@ -351,6 +351,13 @@ scrollengine = {
             	
             	allNodes[ a ].innerHTML = str;
             	
+            	allNodes[ a ].myArrayID = this.myArray[s].ID;
+            	allNodes[ a ].onclick = function(  )
+				{
+					console.log( 'onclick = ' + "Sections.accounts_users( 'edit', "+this.myArrayID+" );" );
+            		Sections.accounts_users( 'edit', this.myArrayID );
+            	}
+            	
             	//allNodes[ a ].innerHTML = 'Line ' + s + ' ID ' + this.myArray[ s ].ID + ' Name ' + this.myArray[ s ].Name;
             }
             else
