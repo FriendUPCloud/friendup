@@ -2,9 +2,13 @@
 
 console.log( 'scrollengine.js init ...' );
 
+// TODO: get max count from server ...
 
+// TODO: Hogne sin fade-in ...
 
 scrollengine = {
+	
+	callback : false,
 	
 	myArray : [],
 	
@@ -35,6 +39,11 @@ scrollengine = {
 	rowPosition : 0,
     rowCount    : 0,
 	
+	dataStart   : null,
+	dataLimit   : null,
+	dataPrevStart : null,
+	dataPrevLimit : null,
+	
 	counted : 0,
 	
 	debug : false,
@@ -43,12 +52,44 @@ scrollengine = {
 	
 	refreshTimeout : 0,
 	
-	init : function ( list, myArray )
+	init : function ( list, data, total, callback )
 	{
+		let self = this;
+		
 		this.reset();
 		
 		if( list )
 		{
+			if( callback )
+			{
+				this.callback = callback;
+			}
+			
+			// Data
+			let myArray = [];
+			
+			if( data )
+			{
+				if( !total )
+				{
+					total = 1000;
+				}
+				else
+				{
+					total = this.length( data );
+				}
+			
+				if( total > 0 )
+				{
+					for( let a = 0; a < total; a++ )
+					{
+						myArray.push( {
+							initialized: null,
+						} );
+					}
+				}
+			}
+			
 			this.myArray = ( myArray ? myArray : [] );
 			
 			this.list = list;
@@ -56,7 +97,46 @@ scrollengine = {
 			this.list.addEventListener( 'scroll', function(  ){ scrollengine.refresh(  ); } );
 			window.addEventListener( 'resize', function(  ){ scrollengine.refresh( true ); } );
 			
+			window.addEventListener( 'keydown', function( e ){ 
+				
+				//console.log( e.which, e.target ); 
+				
+				switch( e.which )
+				{
+					case 33:
+						self.list.scrollTop -= self.list.offsetHeight;
+						break;
+					case 34:
+						self.list.scrollTop += self.list.offsetHeight;
+						break;
+					case 36:
+						self.list.scrollTop = 0;
+						break;
+					case 35:
+						self.list.scrollTop = self.elements.wholeHeight.offsetHeight;
+						break;
+					case 38:
+						self.list.scrollTop -= self.config.rowHeight;
+						break;
+					case 40:
+						self.list.scrollTop += self.config.rowHeight;
+						break;
+				}
+			} );
+			
+			document.body.addEventListener( 'mouseover', function()
+			{
+				window.focus();
+				document.body.focus();
+			} );
+					
 			this.refresh();
+			
+			if( data && total )
+			{
+				this.distribute( data, 0, total );
+			}
+			
 		}
 	},
 	
@@ -105,6 +185,16 @@ scrollengine = {
         aa.id = 'pageAbove';
         this.counted = 0;
         
+        // Adjust database fetch calculator
+        this.dataStart = this.rowPosition - this.rowCount;
+        this.dataLimit = this.rowCount;
+        if( this.dataStart < 0 )
+        {
+        	this.dataLimit += this.dataStart; // decrement with adding  negative value
+        	this.dataStart = 0;
+        }
+        
+        // Pageabove starts counting!
         for( let a = 0, b = this.rowPosition - this.rowCount, c = 0; a < this.rowCount; a++, b++, c += this.config.rowHeight )
         {
             if( b >= this.length( this.myArray ) ) break;
@@ -112,15 +202,7 @@ scrollengine = {
             if( b < 0 ) continue;
             let row = this.createDiv( false, aa, 'RowElement' );
             row.style.top = c + 'px';
-            
-            if( this.myArray[b] && this.myArray[b].ID && this.myArray[b].Name )
-            {
-            	row.innerHTML = 'Line ' + b + ' ID ' + this.myArray[b].ID + ' Name ' + this.myArray[b].Name;
-            }
-            else
-            {
-            	row.innerHTML = 'Line ' + b;
-            }
+            row.innerHTML = 'Line ' + b;
         }
         
         //aa.style.position = 'absolute';
@@ -136,7 +218,6 @@ scrollengine = {
 	
 	pageMiddle : function (  )
 	{
-		
 		// Page middle
 		this.dTop = Math.floor( this.scrollTop / this.config.rowHeight ) * this.config.rowHeight;
 		let d = document.createElement( 'div' );
@@ -149,18 +230,13 @@ scrollengine = {
 			if( b >= this.length( this.myArray ) ) break;
 			let row = this.createDiv( false, d, 'RowElement' );
 			row.style.top = c + 'px';
-			
-			if( this.myArray[b] && this.myArray[b].ID && this.myArray[b].Name )
-            {
-            	row.innerHTML = 'Line ' + b + ' ID ' + this.myArray[b].ID + ' Name ' + this.myArray[b].Name;
-            }
-            else
-            {
-            	row.innerHTML = 'Line ' + b;
-            }
+            row.innerHTML = 'Line ' + b;
 			
 			this.counted = a;
 		}
+		
+		// Add to limit
+		this.dataLimit += this.counted;
 		
 		//d.style.position = 'absolute';
 		//d.style.width = '100%';
@@ -192,18 +268,13 @@ scrollengine = {
 			let row = this.createDiv( false, bb, 'RowElement' );
 			row.style.top = c + 'px';
 			row.style.background = 'green';
-			
-			if( this.myArray[b] && this.myArray[b].ID && this.myArray[b].Name )
-            {
-            	row.innerHTML = 'Line ' + b + ' ID ' + this.myArray[b].ID + ' Name ' + this.myArray[b].Name;
-            }
-            else
-            {
-            	row.innerHTML = 'Line ' + b;
-            }
+            row.innerHTML = 'Line ' + b;
 			
 			this.counted = a;
 		}
+		
+		// Add to limit
+		this.dataLimit += this.counted;
 		
 		//bb.style.position = 'absolute';
 		//bb.style.width = '100%';
@@ -216,9 +287,65 @@ scrollengine = {
 		
 	},
 	
-	// Refresh funksjon
-	refresh : function ( force, timeout )
+	distribute: function( data, start, limit )
 	{
+		// TODO: Update myArray if the limit has changed ...
+		
+		console.log( 'this.myArray.length = ' + this.myArray.length );
+		
+		// Update scroll list array with new data from JSON array
+		for( let a = 0; a < this.length( data ); a++ )
+		{
+			this.myArray[ start + a ] = data[ a ];
+		}
+		
+		// All elements available
+		let elements = [
+			this.elements.pageAbove.childNodes,
+			this.elements.pageMiddle.childNodes,
+			this.elements.pageBelow.childNodes
+		];
+		
+		// Aggregate list
+		let allNodes = [];
+		for( let a = 0; a < elements.length; a++ )
+		{
+			for( let b = 0; b < elements[a].length; b++ )
+			{
+				if( elements[a][b].tagName.toLowerCase() == 'div' )
+				{
+					allNodes.push( elements[a][b] );
+				}
+			}
+		}
+		
+		// Distribute
+		let s = start;
+		for( let a = 0; a < allNodes.length; a++, s++ )
+		{
+			// Set content
+			if( this.myArray[ s ] && this.myArray[ s ].ID && this.myArray[ s ].Name )
+            {
+            	allNodes[ a ].innerHTML = 'Line ' + s + ' ID ' + this.myArray[ s ].ID + ' Name ' + this.myArray[ s ].Name;
+            }
+            else
+            {
+				//allNodes[ a ].innerHTML = this.myArray[ s ];
+			}
+		}
+	},
+	
+	// Refresh funksjon
+	refresh : function ( force )
+	{
+		
+		// Store previous values for comparison
+		this.dataPrevStart = this.dataStart;
+		this.dataPrevLimit = this.dataLimit;
+		
+		// Reset database fetch calculator
+		this.dataStart = 0;
+        this.dataLimit = 0;
 		
 		this.counted = 0;
 		
@@ -280,6 +407,23 @@ scrollengine = {
 		    
 		    // Page below
 		    let bb = this.pageBelow();
+		    
+		    if( this.dataPrevStart != this.dataStart || this.dataPrevLimit != this.dataLimit )
+		    {
+		    	// Fetch new data
+		    	// Distribute data rows from pageAbove, Middle, Below
+		    	
+		    	console.log( { start: this.dataStart, limit: this.dataLimit } );
+		    	
+		    	//this.setToPageAbove( this.myArray );
+		    	//this.setToPageMiddle( this.myArray );
+		    	//this.setToPageBellow( this.myArray );
+		    	
+		    	if( this.callback )
+		    	{
+		    		this.callback( { start: this.dataStart, limit: this.dataLimit, myArray: this.myArray } );
+		    	}
+		    }
 		}
 		
 		// If we counted the whole list, then
@@ -296,6 +440,8 @@ scrollengine = {
 		
 		// Add debug
 		if( this.debug ) this.debugInfo( scrollTop + ' scroll ' + viewHeight + ' height' + this.ex );
+		
+		this.list.focus();
 		
 	},
 	

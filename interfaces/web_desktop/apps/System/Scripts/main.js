@@ -102,7 +102,7 @@ function refreshSidebar( show )
 				icon: 'fa-info-circle',
 				name: i18n( 'i18n_link_friendrds' ),
 				showing: isAdmin,
-				display: true,
+				display: false,
 				childs: {
 					'Servers': { 
 						icon: 'fa-info-circle',
