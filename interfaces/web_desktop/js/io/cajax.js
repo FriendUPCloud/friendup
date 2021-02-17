@@ -167,7 +167,7 @@ cAjax = function()
 	{
 		// We're finished handshaking
 		if( this.readyState == 4 && this.status == 200  )
-		{	
+		{
 			if( this.responseType == 'arraybuffer' )
 			{
 				jax.rawData = this.response;
