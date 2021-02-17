@@ -495,6 +495,11 @@ scrollengine = {
 			wholeHeight : null
 		},
 		
+		this.config = {
+			rowHeight  : 27,
+			mustRedraw : true
+		}
+		
 		// Some vars
 		
 		this.list         = null,
