@@ -326,7 +326,7 @@ scrollengine = {
 			// Set content
 			if( this.myArray[ s ] && this.myArray[ s ].ID && this.myArray[ s ].Name )
             {
-            	allNodes[ a ].innerHTML = 'Line ' + s + ' ID ' + this.myArray[ s ].ID + ' Name ' + this.myArray[ s ].Name;
+            	allNodes[ a ].innerHTML = 'Line ' + a + ' ID ' + this.myArray[ s ].ID + ' Name ' + this.myArray[ s ].Name;
             }
             else
             {
