@@ -3207,8 +3207,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					
 					if( archiver != NULL )
 					{
-
-						//char dirname[ 756 ];
 						char *dirname = FMalloc( 1024 );
 						if( dirname != NULL )
 						{

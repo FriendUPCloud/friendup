@@ -74,6 +74,7 @@ enum {
 	HTTP_HEADER_RANGE,
 	HTTP_HEADER_X_FRAME_OPTIONS,
 	HTTP_HEADER_UPGRADE,
+	HTTP_HEADER_X_FORWARDED_FOR,
 	HTTP_HEADER_END
 };
 
@@ -106,7 +107,8 @@ static const char *HEADERS[] = {
 	"depth",
 	"range",
 	"x-frame-options",
-	"upgrade"
+	"upgrade",
+	"x-forwarded-for"
 };
 
 //

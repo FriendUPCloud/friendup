@@ -94,7 +94,7 @@ UserGroup *UserGroupNew( FULONG id, char *name, FULONG uid, char *type, char *de
 //
 //
 
-void UserGroupInit( UserGroup *ug );
+void UserGroupInit( UserGroup *ug, void *sb );
 
 //
 //

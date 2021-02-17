@@ -49,11 +49,11 @@ enum {
 typedef struct SASUList
 {
 	MinNode 			node;
-	UserSession 		*usersession;
-	char 				authid[ 256 ];
-	int					status;
+	UserSession 		*sasul_Usersession;
+	char 				sasul_Authid[ 256 ];
+	int					sasul_Status;
 	
-	FULONG				ID;
+	FULONG				sasul_ID;
 }SASUList;
 
 

@@ -30,7 +30,7 @@ UserMobileApp *UserMobileAppNew()
 	if( ( app = FCalloc( 1, sizeof(UserMobileApp) ) ) != NULL )
 	{
 		app->uma_CreateTS = time(NULL);
-		UserMobileAppInit( app );
+		UserMobileAppInit( app, NULL );
 	}
 	return app;
 }
@@ -107,7 +107,7 @@ void UserMobileAppDeleteAll( UserMobileApp *app )
  *
  * @param app pointer to UserMobileApp which will be initialized
  */
-void UserMobileAppInit( UserMobileApp *app )
+void UserMobileAppInit( UserMobileApp *app, void *sb )
 {
 	
 }

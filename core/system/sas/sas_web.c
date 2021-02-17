@@ -191,7 +191,7 @@ Http* SASWebRequest( SystemBase *l, char **urlpath, Http* request, UserSession *
 					
 					if( usersOnly )
 					{
-						if( strstr( bs->bs_Buffer, al->usersession->us_User->u_Name ) != NULL )
+						if( strstr( bs->bs_Buffer, al->sasul_Usersession->us_User->u_Name ) != NULL )
 						{
 							add = FALSE;
 						}
@@ -201,11 +201,11 @@ Http* SASWebRequest( SystemBase *l, char **urlpath, Http* request, UserSession *
 					{
 						if( pos == 0 )
 						{
-							size = snprintf( temp, sizeof(temp), "%s", al->usersession->us_User->u_Name );
+							size = snprintf( temp, sizeof(temp), "%s", al->sasul_Usersession->us_User->u_Name );
 						}
 						else
 						{
-							size = snprintf( temp, sizeof(temp), ",%s", al->usersession->us_User->u_Name );
+							size = snprintf( temp, sizeof(temp), ",%s", al->sasul_Usersession->us_User->u_Name );
 						}
 						BufStringAddSize( bs, temp, size );
 					
@@ -588,7 +588,7 @@ Application.checkDocumentSession = function( sasID = null )
 					DEBUG("[SASWebRequest] Found appsession id %lu\n", as->sas_AppID );
 					// if our session is owner session all connections must be closed
 				
-					UserSession *locus = (UserSession *)as->sas_UserSessionList->usersession;
+					UserSession *locus = (UserSession *)as->sas_UserSessionList->sasul_Usersession;
 					int err = 0;
 				
 					char tmpmsg[ 255 ];
@@ -735,10 +735,10 @@ Application.checkDocumentSession = function( sasID = null )
 					{
 						char tmpmsg[ 255 ];
 						// just accept connection
-						entry->status = SASID_US_ACCEPTED;
+						entry->sasul_Status = SASID_US_ACCEPTED;
 
-						DEBUG("[SASWebRequest] ASN set %s pointer %p\n", entry->authid, entry );
-						strcpy( entry->authid, authid );
+						DEBUG("[SASWebRequest] ASN set %s pointer %p\n", entry->sasul_Authid, entry );
+						strcpy( entry->sasul_Authid, authid );
 						
 						as->sas_UserNumber++;
 						
@@ -771,24 +771,24 @@ Application.checkDocumentSession = function( sasID = null )
 					// Find invitee user with authid from user list in allowed users
 					while( li != NULL )
 					{
-						DEBUG("[SASWebRequest] Setting %s userfromlist %s userlogged %s  currauthid %s   entryptr %p\n", authid, li->usersession->us_User->u_Name, loggedSession->us_User->u_Name, li->authid, li );
+						DEBUG("[SASWebRequest] Setting %s userfromlist %s userlogged %s  currauthid %s   entryptr %p\n", authid, li->sasul_Usersession->us_User->u_Name, loggedSession->us_User->u_Name, li->sasul_Authid, li );
 					
-						DEBUG("[SASWebRequest] sessionfrom list %p loggeduser session %p\n",  li->usersession, loggedSession );
-						if( li->usersession == loggedSession )
+						DEBUG("[SASWebRequest] sessionfrom list %p loggeduser session %p\n",  li->sasul_Usersession, loggedSession );
+						if( li->sasul_Usersession == loggedSession )
 						{
-							if( li->authid[ 0 ] != 0 )
+							if( li->sasul_Authid[ 0 ] != 0 )
 							{
-								FERROR("AUTHID IS NOT EMPTY %s!!!\n", li->authid );
+								FERROR("AUTHID IS NOT EMPTY %s!!!\n", li->sasul_Authid );
 							}
 						
-							if( li->status == SASID_US_INVITED )
+							if( li->sasul_Status == SASID_US_INVITED )
 							{
-								li->status = SASID_US_ACCEPTED;
+								li->sasul_Status = SASID_US_ACCEPTED;
 							}
 						
-							DEBUG("[SASWebRequest] ASN set %s pointer %p\n", li->authid, li );
-							strcpy( li->authid, authid );
-							DEBUG("[SASWebRequest] Setting authid %s user %s\n", authid, li->usersession->us_User->u_Name );
+							DEBUG("[SASWebRequest] ASN set %s pointer %p\n", li->sasul_Authid, li );
+							strcpy( li->sasul_Authid, authid );
+							DEBUG("[SASWebRequest] Setting authid %s user %s\n", authid, li->sasul_Usersession->us_User->u_Name );
 						
 							as->sas_UserNumber++;
 						
@@ -811,9 +811,9 @@ Application.checkDocumentSession = function( sasID = null )
 				{
 					int size = 0;
 					
-					if( as->sas_UserSessionList->usersession != NULL )
+					if( as->sas_UserSessionList->sasul_Usersession != NULL )
 					{
-						size = sprintf( buffer,"{\"response\":\"%s\",\"identity\":\"%s\"}", "success", as->sas_UserSessionList->usersession->us_User->u_Name );
+						size = sprintf( buffer,"{\"response\":\"%s\",\"identity\":\"%s\"}", "success", as->sas_UserSessionList->sasul_Usersession->us_User->u_Name );
 					}
 					else
 					{
@@ -952,13 +952,13 @@ Application.checkDocumentSession = function( sasID = null )
 						
 					}
 					
-					 err = SASSessionRemUserSession( as, loggedSession );
-					 error = 0;
+					err = SASSessionRemUserSession( as, loggedSession );
+					error = 0;
 				}
 				
 				if( error == 0 )
 				{
-					int size = sprintf( buffer,"{\"response\":\"%s\",\"identity\":\"%s\"}", "success", as->sas_UserSessionList->usersession->us_User->u_Name );
+					int size = sprintf( buffer,"{\"response\":\"%s\",\"identity\":\"%s\"}", "success", as->sas_UserSessionList->sasul_Usersession->us_User->u_Name );
 					HttpAddTextContent( response, buffer );
 				}
 				else
@@ -1041,7 +1041,7 @@ Application.checkDocumentSession = function( sasID = null )
 			char q[ 1024 ];
 			if( as != NULL )
 			{
-				sqllib->SNPrintF( sqllib, q, sizeof(q), "SELECT `Name` FROM `FUserApplication` ua, `FApplication` a  WHERE ua.AuthID=\"%s\" and ua.ApplicationID = a.ID LIMIT 1",( char *)as->sas_AuthID );
+				sqllib->SNPrintF( sqllib, q, sizeof(q), "SELECT `Name` FROM `FUserApplication` ua, `FApplication` a WHERE ua.AuthID=\"%s\" and ua.ApplicationID=a.ID LIMIT 1",( char *)as->sas_AuthID );
 
 				void *res = sqllib->Query( sqllib, q );
 				if( res != NULL )
@@ -1510,7 +1510,7 @@ Application.checkDocumentSession = function( sasID = null )
 					SASUList *srcli = as->sas_UserSessionList;
 					while( srcli != NULL )
 					{
-						if( srcli->usersession == loggedSession )
+						if( srcli->sasul_Usersession == loggedSession )
 						{
 							break;
 						}
@@ -1522,7 +1522,7 @@ Application.checkDocumentSession = function( sasID = null )
 					SASUList *dstli = as->sas_UserSessionList;
 					while( dstli != NULL )
 					{
-						UserSession *locses = (UserSession *) dstli->usersession;
+						UserSession *locses = (UserSession *) dstli->sasul_Usersession;
 						if( strcmp( devid, locses->us_DeviceIdentity ) == 0 && strcmp( username, locses->us_User->u_Name ) == 0 )
 						{
 							break;
@@ -1530,20 +1530,20 @@ Application.checkDocumentSession = function( sasID = null )
 						dstli = (SASUList *) dstli->node.mln_Succ;
 					}
 				
-					if( dstli != NULL && srcli->usersession != NULL )
+					if( dstli != NULL && srcli->sasul_Usersession != NULL )
 					{
 						char  tmpauthid[ 255 ];
-						strcpy( tmpauthid, srcli->authid );
-						UserSession *tmpses = srcli->usersession;
-						int tmpstatus = srcli->status;
+						strcpy( tmpauthid, srcli->sasul_Authid );
+						UserSession *tmpses = srcli->sasul_Usersession;
+						int tmpstatus = srcli->sasul_Status;
 
 						char tmp[ 1024 ];
 						//int len = sprintf( tmp, "{\"type\":\"msg\",\"data\": { \"type\":\"%s\", \"data\":{\"type\":\"%llu\", \"data\":{ \"identity\":{\"username\":\"%s\"},\"data\": {\"type\":\"client-decline\",\"data\":\"%s\"}\"}}}}}", le->authid, as->as_ASSID, loggedSession->us_User->u_Name, assid, tmpses->us_User->u_Name );
 						//int msgsndsize += WebSocketSendMessageInt( le->usersession, tmp, len );
 					
-						strcpy( dstli->authid, tmpauthid );
-						dstli->usersession = tmpses;
-						dstli->status = tmpstatus;
+						strcpy( dstli->sasul_Authid, tmpauthid );
+						dstli->sasul_Usersession = tmpses;
+						dstli->sasul_Status = tmpstatus;
 					
 						int size = sprintf( buffer, "{\"response\":\"success\"}" );
 						HttpAddTextContent( response, buffer );
@@ -1641,7 +1641,7 @@ Application.checkDocumentSession = function( sasID = null )
 					SASUList *srcli = as->sas_UserSessionList;
 					while( srcli != NULL )
 					{
-						if( srcli->usersession == loggedSession )
+						if( srcli->sasul_Usersession == loggedSession )
 						{
 							break;
 						}
@@ -1653,7 +1653,7 @@ Application.checkDocumentSession = function( sasID = null )
 					SASUList *dstli = as->sas_UserSessionList;
 					while( dstli != NULL )
 					{
-						UserSession *locses = (UserSession *) dstli->usersession;
+						UserSession *locses = (UserSession *) dstli->sasul_Usersession;
 						if( strcmp( devid, locses->us_DeviceIdentity ) == 0 && loggedSession->us_ID == locses->us_ID )
 						{
 							break;
@@ -1661,43 +1661,43 @@ Application.checkDocumentSession = function( sasID = null )
 						dstli = (SASUList *) dstli->node.mln_Succ;
 					}
 				
-					if( dstli != NULL && srcli->usersession != NULL )
+					if( dstli != NULL && srcli->sasul_Usersession != NULL )
 					{
 						DEBUG("[SASWebRequest] Switching sessions\n");
 					
 						char  tmpauthid[ 255 ];
-						if( srcli->authid[ 0 ] == 0 )
+						if( srcli->sasul_Authid[ 0 ] == 0 )
 						{
 							tmpauthid[ 0 ] = 0;
 						}
 						else
 						{
-							strcpy( tmpauthid, srcli->authid );
+							strcpy( tmpauthid, srcli->sasul_Authid );
 						}
-						void *tmpses = srcli->usersession;
-						int tmpstatus = srcli->status;
+						void *tmpses = srcli->sasul_Usersession;
+						int tmpstatus = srcli->sasul_Status;
 					
-						if( dstli->authid[ 0 ] == 0 )
+						if( dstli->sasul_Authid[ 0 ] == 0 )
 						{
-							srcli->authid[ 0 ] = 0;
+							srcli->sasul_Authid[ 0 ] = 0;
 						}
 						else
 						{
-							strcpy( srcli->authid, dstli->authid );
+							strcpy( srcli->sasul_Authid, dstli->sasul_Authid );
 						}
-						srcli->usersession = dstli->usersession;
-						srcli->status = dstli->status;
+						srcli->sasul_Usersession = dstli->sasul_Usersession;
+						srcli->sasul_Status = dstli->sasul_Status;
 					
 						if( tmpauthid[ 0 ] == 0 )
 						{
-							dstli->authid[ 0 ] = 0;
+							dstli->sasul_Authid[ 0 ] = 0;
 						}
 						else
 						{
-							strcpy( dstli->authid, tmpauthid );
+							strcpy( dstli->sasul_Authid, tmpauthid );
 						}
-						dstli->usersession = tmpses;
-						dstli->status = tmpstatus;
+						dstli->sasul_Usersession = tmpses;
+						dstli->sasul_Status = tmpstatus;
 					}
 					else
 					{

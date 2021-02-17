@@ -115,6 +115,9 @@
  *        from disk.
  */
 
+#ifndef __UTIL_LIBCHASH_H__
+#define __UTIL_LIBCHASH_H__
+
 //#include <sparsehash/internal/sparseconfig.h>
 #include <sys/types.h>         /* includes definition of "ulong", we hope */
 
@@ -261,3 +264,4 @@ void HashSave(FILE *fp, struct HashTable *ht, int (*write)(FILE *, char *));
 struct HashTable *HashLoad(FILE *fp, char * (*read)(FILE *, int));
 struct HashTable *HashLoadKeys(FILE *fp, char * (*read)(FILE *, int));
 
+#endif // __UTIL_LIBCHASH_H__

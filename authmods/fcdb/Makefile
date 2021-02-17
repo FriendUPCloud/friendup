@@ -9,31 +9,35 @@ DFLAGS		=	-M $(CFLAGS)
 FPATH		=	$(shell pwd)
 
 ifeq ($(USE_SANITIZER),1)
-LFLAGS				+=	-lasan
+LFLAGS					+=	-lasan
 endif
 
 ifeq ($(DEBUG),1)
-CFLAGS  +=      -D__DEBUG
+CFLAGS					+=	-D__DEBUG
 endif
 
 ifeq ($(PROFILE),1)
-CFLAGS  +=	-pg -DPROFILE=1
+CFLAGS					+=	-pg -DPROFILE=1
 endif
 
 ifeq ($(WEBSOCKETS),1)
-CFLAGS	+=	-DENABLE_WEBSOCKETS
+CFLAGS					+=	-DENABLE_WEBSOCKETS
 endif
 
 ifeq ($(USE_SELECT),1)
-CFLAGS  +=      -DUSE_SELECT
+CFLAGS					+=	-DUSE_SELECT
 endif
 
 ifeq ($(NO_VALGRIND),1)
-CFLAGS  +=      -DNO_VALGRIND_STUFF
+CFLAGS					+=	-DNO_VALGRIND_STUFF
 endif
 
 ifeq ($(CYGWIN_BUILD),1)
-CFLAGS  +=      -DCYGWIN_BUILD
+CFLAGS					+=	-DCYGWIN_BUILD
+endif
+
+ifeq ($(DB_SESSIONID_HASH),1)
+CFLAGS					+=	-DDB_SESSIONID_HASH
 endif
 
 C_FILES := $(wildcard fcdb.c)

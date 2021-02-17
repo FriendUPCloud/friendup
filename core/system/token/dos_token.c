@@ -47,7 +47,7 @@ DOSToken *DOSTokenNew( UserSession *us, time_t timeout, int usedTimes )
 		dt->ct_Commands = StringDuplicate("file/read;file/write");	// default actions allowed
 		dt->ct_MaxAccess = 0;
 		
-		DOSTokenInit( dt );
+		DOSTokenInit( dt, NULL );
 	}
 	return dt;
 }
@@ -56,8 +56,9 @@ DOSToken *DOSTokenNew( UserSession *us, time_t timeout, int usedTimes )
  * Init DOSToken
  *
  * @param dt pointer to DOSToken
+ * @param sb pointer to SystemBase
  */
-void DOSTokenInit( DOSToken *dt )
+void DOSTokenInit( DOSToken *dt, void *sb )
 {
 	if( dt == NULL )
 	{

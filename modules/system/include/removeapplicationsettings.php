@@ -8,9 +8,20 @@ $l->Name = $args->args->appName;
 $l->UserID = $User->ID;
 if( $l->Load() )
 {
-	if( $SqlDatabase->query( 'DELETE FROM `FUserApplication` WHERE `UserID`=\'' . $User->ID . '\' AND `ApplicationID`=\'' . $l->ID . '\'' ) )
+	$ua = new DbIO( 'FUserApplication' );
+	$ua->UserID = $UserID;
+	$ua->ApplicationID = $l->ID;
+	if( $ua->Load() )
 	{
-		$l->Delete();
+		if( $SqlDatabase->query( 'DELETE FROM `FUserApplication` WHERE `UserID`=\'' . $User->ID . '\' AND `ApplicationID`=\'' . $l->ID . '\'' ) )
+		{
+			$l->Delete();
+		}
+		if( $SqlDatabase->query( 'DELETE FROM `FAppSession` WHERE `UserApplicationID=\'' . $ua->ID . '\'' ) )
+		{
+
+		}
+		$ua->Delete();
 	}
 	die( 'ok' );
 }

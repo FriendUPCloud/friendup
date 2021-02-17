@@ -6,30 +6,32 @@ CFLAGS		=	$(GLOBAL_CFLAGS) -I../../$(LIBWS_INCLUDE_DIR) -I../../core/ -fPIC -I..
 LFLAGS		=	-shared -fPIC -L/usr/lib/x86_64-linux-gnu/ `mysql_config --libs` -lz -lpthread -lrt -lcrypt
 FPATH		=	$(shell pwd)
 
-#CFLAGS	=	--std=c99 -Wall  -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -Wno-unused-parameter -Wno-unused-variable -I../../core/ -I/usr/include/mysql/ -I../ -fPIC -I../properties/  -I../../libs-ext/libwebsockets/build/include/  
-
 ifeq ($(DEBUG),1)
-CFLAGS  +=      -D__DEBUG
+CFLAGS					+=	-D__DEBUG
 endif
 
 ifeq ($(PROFILE),1)
-CFLAGS  +=	-pg -DPROFILE=1
+CFLAGS					+=	-pg -DPROFILE=1
 endif
 
 ifeq ($(WEBSOCKETS_THREADS),1)
-CFLAGS	+=	-DENABLE_WEBSOCKETS_THREADS
+CFLAGS					+=	-DENABLE_WEBSOCKETS_THREADS
 endif
 
 ifeq ($(USE_SELECT),1)
-CFLAGS  +=      -DUSE_SELECT
+CFLAGS					+=	-DUSE_SELECT
 endif
 
 ifeq ($(NO_VALGRIND),1)
-CFLAGS  +=      -DNO_VALGRIND_STUFF
+CFLAGS					+=	-DNO_VALGRIND_STUFF
 endif
 
 ifeq ($(CYGWIN_BUILD),1)
-CFLAGS  +=      -DCYGWIN_BUILD
+CFLAGS					+=	-DCYGWIN_BUILD
+endif
+
+ifeq ($(DB_SESSIONID_HASH),1)
+CFLAGS					+=	-DDB_SESSIONID_HASH
 endif
 
 C_FILES := $(wildcard mysqllibrary.c)

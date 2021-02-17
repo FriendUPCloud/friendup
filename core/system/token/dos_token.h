@@ -74,7 +74,7 @@ DOSToken *DOSTokenNew( UserSession *us, time_t timeout, int usedTimes );
 
 // Init DOSToken
 
-void DOSTokenInit( DOSToken *dt );
+void DOSTokenInit( DOSToken *dt, void *sb );
 
 // release DOSToken
 

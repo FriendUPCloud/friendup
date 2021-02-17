@@ -62,7 +62,7 @@ CalendarEntry *CalendarEntryNew( );
 //
 //
 
-int CalendarEntryInit( CalendarEntry *ce );
+int CalendarEntryInit( CalendarEntry *ce, void *sb );
 
 //
 //

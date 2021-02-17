@@ -109,11 +109,26 @@ CREATE TABLE IF NOT EXISTS `FriendMaster.FUser` (
 
 */
 
+//
+// connection between user and his sessions
+//
+
 typedef struct UserSessListEntry
 {
 	void 			*us;
 	MinNode			node;
 }UserSessListEntry;
+
+//
+// connection between user and his application sessions
+//
+
+typedef struct AppSessListEntry
+{
+	void 			*as;
+	MinNode			node;
+}AppSessListEntry;
+
 
 enum {
 USER_STATUS_ENABLED = 0,
@@ -134,7 +149,10 @@ typedef struct User
 	char						*u_FullName;
 	char						*u_Email;
 	int							u_Error;						// if error
-	UserSessListEntry			*u_SessionsList;
+	UserSessListEntry			*u_SessionsList;				// list of user sessions connected to the user
+	int							u_SessionsNr;					// number of sessions
+	AppSessListEntry			*u_AppSessionsList;				// list of application sessions connected to the user
+	int							u_AppSessionsNr;				// number of app session
 	FULONG						u_Status;						// user status
 
 	//char						*u_MainSessionID;				// session id ,  generated only when user is taken from db
@@ -157,7 +175,6 @@ typedef struct User
 	FBOOL						u_InitialDevMount;
 	FBOOL						u_Anonymous;					// if user is anonymous
 	
-	int							u_SessionsNr;					// number of sessions
 	int							u_NumberOfBadLogins;			// number of bad logins
 	
 	RemoteUser					*u_RemoteUsers;					// user which use this account to have access to resources
@@ -191,7 +208,7 @@ int UserCheckExists( User *u );
 //
 //
 
-int UserInit( User *u );
+int UserInit( User *u, void *sb );
 
 //
 //
@@ -216,6 +233,18 @@ int UserRemoveSession( User *usr, void *ls );
 //
 
 int UserAddSession( User *usr, void *s );
+
+//
+//
+//
+
+int UserRemoveAppSession( User *usr, void *ls );
+
+//
+//
+//
+
+int UserAddAppSession( User *usr, void *s );
 
 //
 //

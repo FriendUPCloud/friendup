@@ -69,9 +69,19 @@ if( isset( $args->args->application ) && $args->args->application )
 	$l->UserID = $userid;
 	if( $l->Load() )
 	{
-		if( $SqlDatabase->query( 'DELETE FROM `FUserApplication` WHERE `UserID`=\'' . $l->UserID . '\' AND `ApplicationID`=\'' . $l->ID . '\'' ) )
+		$ua = new DbIO( 'FUserApplication' );
+		$ua->UserID = $l->UserID;
+		$ua->ApplicationID = $l->ID;
+		if( $ua->Load() )
 		{
-			$l->Delete();
+			if( $SqlDatabase->query( 'DELETE FROM `FUserApplication` WHERE `UserID`=\'' . $l->UserID . '\' AND `ApplicationID`=\'' . $l->ID . '\'' ) )
+			{
+				$l->Delete();
+			}
+			if( $SqlDatabase->query( 'DELETE FROM `FAppSession` WHERE UserApplicationID=\'' . $ua->ID . '\'' ) )
+			{
+				$ua->Delete();
+			}
 		}
 		die( 'ok' );
 	}

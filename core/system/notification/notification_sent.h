@@ -75,7 +75,7 @@ NotificationSent *NotificationSentNew( );
 
 // Init NotificationSent
 
-void NotificationSentInit( NotificationSent *n );
+void NotificationSentInit( NotificationSent *n, void *sb );
 
 // release NotificationSent
 

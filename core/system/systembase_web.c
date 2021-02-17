@@ -59,6 +59,7 @@
 #include <system/sas/sas_manager.h>
 #include <system/sas/sas_web.h>
 #include <system/service/service_manager_web.h>
+#include <system/security/security_web.h>
 #include <strings.h>
 
 #define LIB_NAME "system.library"
@@ -67,7 +68,8 @@
 #define CONFIG_DIRECTORY	"cfg/"
 
 //test
-#undef __DEBUG
+//#undef __DEBUG
+//DB_SESSIONID_HASH
 
 //
 //
@@ -75,6 +77,53 @@
 
 extern int UserDeviceMount( SystemBase *l, User *usr, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
 
+
+inline static void ReplaceSessionToHashed( char *out, char *in )
+{
+	char *sessptr = strstr( in, "sessionid=" );
+	if( sessptr != NULL )
+	{
+		char *sessionPointerInMemory = sessptr+10;
+		int len = 0;
+		char *endSessionID = strstr( sessionPointerInMemory, "&" );
+		if( endSessionID != NULL )
+		{
+			len = endSessionID - sessionPointerInMemory;
+		}
+		else
+		{
+			len = strlen( sessionPointerInMemory );
+			endSessionID = sessionPointerInMemory + len;
+		}
+			
+		// now we have to copy everything
+		strncat( out, in, sessionPointerInMemory-in );
+		
+		char *sessionIdFromArgs = StringDuplicateN( sessionPointerInMemory, len );
+		if( sessionIdFromArgs != NULL )
+		{
+			char *encSessionID = SLIB->sl_UtilInterface.DatabaseEncodeString( sessionIdFromArgs );
+			if( encSessionID != NULL )
+			{
+				DEBUG("CHANGE2 >>>> %s to %s\n", sessionIdFromArgs, encSessionID );
+				//memcpy( sessionPointerInMemory, encSessionID, len );
+				strcat( out, encSessionID );
+				FFree( encSessionID );
+			}
+			FFree( sessionIdFromArgs );
+		}
+		
+		if( endSessionID != NULL )
+		{
+			strcat( out, endSessionID );
+		}
+	}
+	else if( in != NULL )
+	{
+		DEBUG("Sessionid not found:\nin: %s out: %s\n", in, out );
+		strcat( out, in );
+	}
+}
 
 /**
  * Get all parameters from Http request and conver them to string
@@ -106,7 +155,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 		return NULL;
 	}
 	
-	int fullsize = size + ( both ? 2 : 1 );
+	int fullsize = (size*2) + ( both ? 2 : 1 );
 	
 	if( request->http_ContentType == HTTP_CONTENT_TYPE_APPLICATION_JSON )
 	{
@@ -150,50 +199,14 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 			FFree( allArgs );
 			return NULL;
 		}
-	
-	/*
-		// this function was doing nothing:)
-		
-		// application/json are used to communicate with another tools like onlyoffce
-		char *sessptr = NULL;
-		if( request->http_ContentType != HTTP_CONTENT_TYPE_APPLICATION_JSON )
-		{
-			int add = 0;
-			// Check in the middle of the query
-			sessptr = strstr( allArgs, "&sessionid=" );
-			
-			// If not check first part of the query
-			if( sessptr == NULL )
-			{
-				sessptr = strstr( allArgs, "sessionid=" );
-				if( sessptr != NULL )
-				{
-					add = 10;
-				}
-			}
-			else
-			{
-				add = 11;
-			}
-			
-			DEBUG("Sessptr !NULL\n");
-			{
-				memcpy( allArgsNew, allArgs, fullsize );
-			}
-			
-			//fprintf( log, "\n\n\n\n\n\n\n\nSIZE ALLAGRS %lu  ALLARGSNEW %lu\n\n\n\n\n\n", strlen( allArgs ), strlen( allArgsNew ) );
-		}
-		else
-		{
-			strcpy( allArgsNew, allArgs );
-		}
-		*/
+
 		//strcpy( allArgsNew, allArgs );
 		
 		//
 		// if there is sessionid in request it should be changed to one used by DB
 		//
 		
+#ifdef DB_SESSIONID_HASH
 		char *sessptr = strstr( allArgs, "sessionid=" );
 		if( sessptr != NULL )
 		{
@@ -207,6 +220,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 			else
 			{
 				len = strlen( sessionPointerInMemory );
+				endSessionID = sessionPointerInMemory + len;
 			}
 			
 			// now we have to copy everything
@@ -218,6 +232,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 				char *encSessionID = SLIB->sl_UtilInterface.DatabaseEncodeString( sessionIdFromArgs );
 				if( encSessionID != NULL )
 				{
+					DEBUG("CHANGE1 >>>>> %s to %s\n", sessionIdFromArgs, encSessionID );
 					//memcpy( sessionPointerInMemory, encSessionID, len );
 					strcat( allArgsNew, encSessionID );
 					FFree( encSessionID );
@@ -225,6 +240,21 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 				FFree( sessionIdFromArgs );
 			}
 			
+			//sessionid=6b57dd326d4c5993fc48a7eecf26257f6ab5caa797645efda5927eb7ab2f4f72&module=system&args=%7B%22application%22%3A%22Calculator%22%2C%22args%22%3A%22%22%7D&command=friendapplication&sessionid=589384a9699db054a0a452f26b5d560b40ba2fe4&system.library/module/
+			
+			char *internalArgs = NULL;
+			if( ( internalArgs = strstr( endSessionID, "args" ) ) != NULL )
+			{
+				ReplaceSessionToHashed( allArgsNew, endSessionID );
+			}
+			else
+			{
+				if( endSessionID != NULL )
+				{
+					strcat( allArgsNew, endSessionID );
+				}
+			}
+			/*
 			if( endSessionID != NULL )
 			{
 				// We have to try to replace 2 sessionid's from request.
@@ -287,11 +317,15 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 					strcat( allArgsNew, endSessionID );
 				}
 			}
+			*/
 		}
 		else
 		{
 			strcpy( allArgsNew, allArgs );
 		}
+#else
+		strcpy( allArgsNew, allArgs );
+#endif
 		
 		DEBUG("REquest source: %d\n", request->http_RequestSource );
 		
@@ -320,19 +354,44 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 					if( strstr( allArgsNew, hm->hm_Data[ i ].hme_Key ) == NULL )
 					{
 						DEBUG("Parameter not found, FC will use one from POST: %s\n", hm->hm_Data[ i ].hme_Key );
-						int size = 10 + strlen( hm->hm_Data[ i ].hme_Key ) + strlen ( hm->hm_Data[ i ].hme_Data );
+						int size = 10 + strlen( hm->hm_Data[ i ].hme_Key ) + ( strlen( hm->hm_Data[ i ].hme_Data ) * 2 );
 						char *buffer;
 						
-						if( ( buffer = FCalloc( size, sizeof(char) ) ) != NULL )
+						if( ( buffer = FMalloc( size ) ) != NULL )
 						{
-							if( quotationFound == TRUE )
+#ifdef DB_SESSIONID_HASH
+							// if key is sessionid we must convert it to one recognized by database
+							
+							if( hm->hm_Data[ i ].hme_Key != NULL && strstr( hm->hm_Data[ i ].hme_Key, "sessionid" ) != NULL )
 							{
-								sprintf( buffer, "&%s=%s", hm->hm_Data[ i ].hme_Key, (char *)hm->hm_Data[ i ].hme_Data );
+								char *encSessionID = SLIB->sl_UtilInterface.DatabaseEncodeString( (char *)hm->hm_Data[ i ].hme_Data );
+								if( encSessionID != NULL )
+								{
+									DEBUG(">>>>>>>>>CHANGE %s TO %s\n", (char *)hm->hm_Data[ i ].hme_Data, encSessionID );
+									if( quotationFound == TRUE )
+									{
+										sprintf( buffer, "&%s=%s", hm->hm_Data[ i ].hme_Key, encSessionID );
+									}
+									else
+									{
+										sprintf( buffer, "?%s=%s", hm->hm_Data[ i ].hme_Key, encSessionID );
+										quotationFound = TRUE;
+									}
+									FFree( encSessionID );
+								}
 							}
 							else
+#endif
 							{
-								sprintf( buffer, "?%s=%s", hm->hm_Data[ i ].hme_Key, (char *)hm->hm_Data[ i ].hme_Data );
-								quotationFound = TRUE;
+								if( quotationFound == TRUE )
+								{
+									sprintf( buffer, "&%s=%s", hm->hm_Data[ i ].hme_Key, (char *)hm->hm_Data[ i ].hme_Data );
+								}
+								else
+								{
+									sprintf( buffer, "?%s=%s", hm->hm_Data[ i ].hme_Key, (char *)hm->hm_Data[ i ].hme_Data );
+									quotationFound = TRUE;
+								}
 							}
 							
 							DEBUG("Added param '%s'\n", buffer );
@@ -488,12 +547,12 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	// Check for sessionid by sessionid specificly or authid
 	if( loginLogoutCalled == FALSE && loggedSession == NULL )
 	{
-		HashmapElement *tst = GetHEReq( *request, "sessionid" );
-		HashmapElement *ast = GetHEReq( *request, "authid" );
-		HashmapElement *sst = GetHEReq( *request, "servertoken" ); // TODO: Only allow this on localhost!
+		HashmapElement *sessIDElement = GetHEReq( *request, "sessionid" );
+		HashmapElement *authIDElement = GetHEReq( *request, "authid" );
+		HashmapElement *serverTokenElement = GetHEReq( *request, "servertoken" ); // TODO: Only allow this on localhost!
 		
-		if( tst == NULL && ast == NULL && sst == NULL )
-		{			
+		if( sessIDElement == NULL && authIDElement == NULL && serverTokenElement == NULL )
+		{
 			struct TagItem tags[] = {
 				{ HTTP_HEADER_CONTENT_TYPE,(FULONG)StringDuplicate( "text/html" ) },
 				{ HTTP_HEADER_CONNECTION,(FULONG)StringDuplicate( "close" ) },
@@ -512,65 +571,73 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			return response;
 		}
 		// Ah, we got our session
-		if( tst )
+		if( sessIDElement )
 		{
 			char tmp[ DEFAULT_SESSION_ID_SIZE ];
-			UrlDecode( tmp, (char *)tst->hme_Data );
+			UrlDecode( tmp, (char *)sessIDElement->hme_Data );
 			
 			snprintf( sessionid, DEFAULT_SESSION_ID_SIZE, "%s", tmp );
 			
 			DEBUG( "Finding sessionid %s\n", sessionid );
 		}
 		// Get it by authid
-		else if( ast )
+		else if( authIDElement != NULL )
 		{
-			//
-			// check if request came from WebSockets
-			//
+			char *authID = UrlDecodeToMem( ( char *)authIDElement->hme_Data );
+			char *assID = NULL;
 			
-			DEBUG("Authid received\n");
-			
-			
-			if( (*request)->http_RequestSource == HTTP_SOURCE_WS )
+			if( authID != NULL )
 			{
-				char *assid = NULL;
-				char *authid = NULL;
-				
-				DEBUG("HTTPSOURCEWS\n");
-				
 				HashmapElement *el =  HashmapGet( (*request)->http_ParsedPostContent, "sasid" );
 				if( el != NULL )
 				{
-					assid = UrlDecodeToMem( ( char *)el->hme_Data );
+					assID = UrlDecodeToMem( ( char *)el->hme_Data );
 				}
 				
-				if( assid != NULL )
+				// we got authID but "sasid" was not provided
+				// so we only match user session by authid
+				
+				if( assID == NULL )
 				{
-					authid = UrlDecodeToMem( ( char *)ast->hme_Data );
-					if( authid != NULL )
+					AppSession *locas = AppSessionManagerGetSessionByAuthID( l->sl_AppSessionManager, authID );
+					if( locas != NULL && locas->as_User != NULL )
 					{
-						// If authID is equal to 0 block this call
-						if( strncmp( authid, "0", 1 ) == 0 )
+						if( FRIEND_MUTEX_LOCK( &(locas->as_User->u_Mutex ) ) == 0 )
 						{
-							FFree( authid );
-							authid = NULL;
+							locas->as_User->u_InUse++;
+							FRIEND_MUTEX_UNLOCK( &(locas->as_User->u_Mutex ) );
 						}
-						else	// proper authid
+						UserSessListEntry *usle = locas->as_User->u_SessionsList;
+						while( usle != NULL )
 						{
-							char *tmpAuthID = l->sl_UtilInterface.DatabaseEncodeString( authid );
-							if( tmpAuthID != NULL )
+							UserSession *tus = (UserSession *)usle->us;
+							if( tus != NULL && tus->us_WSD != NULL )
 							{
-								FFree( authid );
-								authid = tmpAuthID;
+								loggedSession = tus;
+								strncpy( sessionid, loggedSession->us_SessionID, 255 );
+								break;
 							}
+							usle = (UserSessListEntry *)usle->node.mln_Succ;
+						}
+				
+						if( FRIEND_MUTEX_LOCK( &(locas->as_User->u_Mutex ) ) == 0 )
+						{
+							locas->as_User->u_InUse--;
+							FRIEND_MUTEX_UNLOCK( &(locas->as_User->u_Mutex ) );
 						}
 					}
+				}
+				else
+				{
+					// if authid != 0 and command is coming form WS
 					
-					char *end;
-					FUQUAD asval = strtoull( assid,  &end, 0 );
-					
-					if( authid != NULL )
+					if( (*request)->http_RequestSource == HTTP_SOURCE_WS && strncmp( authID, "0", 1 ) != 0 )
 					{
+						DEBUG("HTTPSOURCEWS\n");
+
+						char *end;
+						FUQUAD asval = strtoull( assID,  &end, 0 );
+					
 						SASSession *as = SASManagerGetSession( l->sl_SASManager, asval );
 						if( as != NULL )
 						{
@@ -580,9 +647,9 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								while( alist != NULL )
 								{
 									//DEBUG("Authid check %s user %s\n", alist->authid, alist->usersession->us_User->u_Name );
-									if( strcmp( alist->authid, authid ) ==  0 )
+									if( strcmp( alist->sasul_Authid, authID ) ==  0 )
 									{
-										loggedSession = alist->usersession;
+										loggedSession = alist->sasul_Usersession;
 										sprintf( sessionid, "%s", loggedSession->us_SessionID ); // Overwrite sessionid
 										DEBUG("Found user %s\n", loggedSession->us_User->u_Name );
 										break;
@@ -592,90 +659,58 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								FRIEND_MUTEX_UNLOCK( &as->sas_SessionsMut );
 							}
 						}
-						FFree( authid );
 					}
-					FFree( assid );
+					FFree( assID );
 				}
-				
-			//
-			// unknown source
-			//
-				
-			}
-			
-			if( loggedSession == NULL )
-			{
-				SQLLibrary *sqllib  = l->LibrarySQLGet( l );
-				
-				DEBUG("Session not found in appsessionid table\n");
-
-				// Get authid from mysql
-				if( sqllib != NULL )
-				{
-					char qery[ 1024 ];
-					
-					char *tmpAuthID = l->sl_UtilInterface.DatabaseEncodeString( ( char *)ast->hme_Data );
-					if( tmpAuthID != NULL )
-					{
-						sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT * FROM ( ( SELECT u.SessionID FROM FUser u, FUserApplication a WHERE a.AuthID=\"%s\" AND a.UserID = u.ID LIMIT 1 ) UNION ( SELECT u2.SessionID FROM FUser u2, Filesystem f WHERE f.Config LIKE \"%s%s%s\" AND u2.ID = f.UserID LIMIT 1 ) ) z LIMIT 1", tmpAuthID, "%", tmpAuthID, "%");
-						FFree( tmpAuthID );
-					}
-					
-					void *res = sqllib->Query( sqllib, qery );
-					if( res != NULL )
-					{
-						char **row;
-						if( ( row = sqllib->FetchRow( sqllib, res ) ) )
-						{
-							if( row[ 0 ] != NULL )
-							{
-								snprintf( sessionid, DEFAULT_SESSION_ID_SIZE,"%s", row[ 0 ] );
-							}
-						}
-						sqllib->FreeResult( sqllib, res );
-					}
-					l->LibrarySQLDrop( l, sqllib );
-				}
-			}
-		}
+				FFree( authID );
+			} //authID
+		}	//authIDElement
 		
 		// access through server token
-		else if( sst )
+		else if( serverTokenElement != NULL )
 		{
 			//
 			// check if request came from WebSockets
+			// If loggedSession is not equal NULL then yes
 			//
 			
 			DEBUG("ServerToken received\n");
 			
 			if( loggedSession == NULL )
 			{
-				SQLLibrary *sqllib = l->LibrarySQLGet( l );
-
-				// Get authid from mysql
-				if( sqllib != NULL )
+				char *host = HttpGetHeaderFromTable( *request, HTTP_HEADER_X_FORWARDED_FOR );
+				if( host != NULL )
 				{
-					char qery[ 1024 ];
+					SQLLibrary *sqllib = l->LibrarySQLGet( l );
 
-					// TODO: Remove need for existing SessionID (instead generate it if it does not exist)!
-					sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT u.SessionID, u.Name FROM FUser u WHERE u.SessionID !=\"\" AND u.ServerToken=\"%s\" LIMIT 1",( char *)sst->hme_Data );;
-					
-					void *res = sqllib->Query( sqllib, qery );
-					if( res != NULL )
+					// Get authid from mysql
+					if( sqllib != NULL )
 					{
-						char **row;
-						if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+						char qery[ 1024 ];
+
+						// Check user server token and access to it
+						sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT u.ID,us.SessionID,u.Name FROM FUser u inner join FSecuredHost sh on u.ID=sh.UserID inner join FUserSession us on u.ID=us.UserID  WHERE us.SessionID !=\"\" AND u.ServerToken=\"%s\" AND sh.Status=1 AND sh.Host='%s' LIMIT 1",( char *)serverTokenElement->hme_Data, host );;
+					
+						void *res = sqllib->Query( sqllib, qery );
+						if( res != NULL )
 						{
-							if( row[ 0 ] != NULL )
+							char **row;
+							if( ( row = sqllib->FetchRow( sqllib, res ) ) )
 							{
-								snprintf( sessionid, DEFAULT_SESSION_ID_SIZE,"%s", row[ 0 ] );
-								snprintf( userName, 256, "%s", row[ 1 ] );
+								if( row[ 0 ] != NULL )
+								{
+									snprintf( sessionid, DEFAULT_SESSION_ID_SIZE,"%s", row[ 0 ] );
+								}
+								if( row[ 1 ] != NULL )
+								{
+									snprintf( userName, 256, "%s", row[ 1 ] );
+								}
 							}
+							sqllib->FreeResult( sqllib, res );
 						}
-						sqllib->FreeResult( sqllib, res );
+						l->LibrarySQLDrop( l, sqllib );
 					}
-					l->LibrarySQLDrop( l, sqllib );
-				}
+				}	// HTTP_HEADER_X_FORWARDED_FOR is missing
 			}
 		}
 		
@@ -782,7 +817,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		
 		// 
 		// But we tried with a server socket
-		if( loggedSession == NULL && sst && strlen( sessionid ) > 0 )
+		if( loggedSession == NULL && serverTokenElement != NULL && strlen( sessionid ) > 0 )
 		{
 			DEBUG( "We asked for server token and have session: %s (%s)\n", sessionid, userName );
 			int userAdded = 0;
@@ -820,7 +855,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			struct TagItem tags[] = {
 				{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
 				{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-				{TAG_DONE, TAG_DONE}
+				{ TAG_DONE, TAG_DONE }
 			};
 			
 			//
@@ -886,12 +921,16 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				char *tmpQuery = FCalloc( 1025, sizeof( char ) );
 				if( tmpQuery )
 				{
+#ifdef DB_SESSIONID_HASH
 					char *tmpSessionID = l->sl_UtilInterface.DatabaseEncodeString( sessionid );
 					if( tmpSessionID != NULL )
 					{
 						sqllib->SNPrintF( sqllib, tmpQuery, 1024, "UPDATE FUserSession SET `LoggedTime`='%ld' WHERE `SessionID`='%s'", timestamp, tmpSessionID );
 						FFree( tmpSessionID );
 					}
+#else
+					sqllib->SNPrintF( sqllib, tmpQuery, 1024, "UPDATE FUserSession SET `LoggedTime`='%ld' WHERE `SessionID`='%s'", timestamp, sessionid );
+#endif
 					sqllib->QueryWithoutResults( sqllib, tmpQuery );
 				
 					INFO("Logged time updated: %lu\n", timestamp );
@@ -1599,6 +1638,16 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	}
 	
 	//
+	// security
+	//
+	
+	else if( strcmp( urlpath[ 0 ], "security" ) == 0 )
+	{
+		//Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSession *loggedUser );
+		response = SecurityWebRequest( l, urlpath, *request, loggedSession );
+	}
+	
+	//
 	// connection stuff
 	//
 	
@@ -1977,13 +2026,11 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								}
 								loggedSession->us_MobileAppID = umaID;
 								
+#ifdef DB_SESSIONID_HASH
 								char *locSessionID = loggedSession->us_HashedSessionID;
-								
-								char *tmpSessionID = l->sl_UtilInterface.DatabaseEncodeString( sessionid );
-								if( tmpSessionID != NULL )
-								{
-									locSessionID = tmpSessionID;
-								}
+#else
+								char *locSessionID = loggedSession->us_SessionID;
+#endif
 							
 								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime = %lld,DeviceIdentity='%s',UMA_ID=%lu WHERE `SessionID`='%s'", (long long)loggedSession->us_LoggedTime, deviceid, umaID, locSessionID );
 								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
@@ -1999,11 +2046,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
 								{ 
 								
-								}
-								
-								if( tmpSessionID != NULL )
-								{
-									FFree( tmpSessionID );
 								}
 									
 								l->LibrarySQLDrop( l, sqlLib );
@@ -2174,7 +2216,11 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						}
 						else
 						{
-							loggedSession = l->sl_ActiveAuthModule->Authenticate( l->sl_ActiveAuthModule, *request, NULL, usrname, pass, deviceid, NULL, &blockedTime );
+							DEBUG("Login: pointer to active authmodule: %p authenticate pointer: %p\n", l->sl_ActiveAuthModule, l->sl_ActiveAuthModule->Authenticate );
+							if( l->sl_ActiveAuthModule != NULL )
+							{
+								loggedSession = l->sl_ActiveAuthModule->Authenticate( l->sl_ActiveAuthModule, *request, NULL, usrname, pass, deviceid, NULL, &blockedTime );
+							}
 						}
 						
 						//

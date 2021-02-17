@@ -237,7 +237,7 @@ AES_RETURN aes_encrypt_key(const unsigned char *key, int key_len, aes_encrypt_ct
 #if DEC_ROUND == NO_TABLES
 #define ff(x)   (x)
 #else
-#define ff(x)   inv_mcol(x)
+#define ff(x)   inv_mcol( (x) )
 #if defined( dec_imvars )
 #define d_vars  dec_imvars
 #endif

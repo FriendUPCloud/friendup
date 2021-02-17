@@ -305,7 +305,6 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 	}
 	DEBUG("[FCDB] Authenticate START (%s)\n", name );
 	
-	//struct User *user = NULL;
 	UserSession *uses = NULL;
 	User *tmpusr = NULL;
 	SystemBase *sb = (SystemBase *)l->sb;
@@ -705,6 +704,7 @@ void Logout( struct AuthMod *l, Http *r __attribute__((unused)), char *sessionid
 	{
 		char tmpQuery[ 1024 ];
 		
+#ifdef DB_SESSIONID_HASH
 		char *tmpSessionID = sb->sl_UtilInterface.DatabaseEncodeString( sessionid );
 		if( tmpSessionID != NULL )
 		{
@@ -714,6 +714,11 @@ void Logout( struct AuthMod *l, Http *r __attribute__((unused)), char *sessionid
 			
 			FFree( tmpSessionID );
 		}
+#else
+		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "DELETE FROM FUserSession WHERE SessionID='%s'", sessionid );
+		DEBUG("Logout sql: %s\n", tmpQuery );
+		sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
+#endif
 		sb->LibrarySQLDrop( sb, sqlLib );
 	}
 	DEBUG("Logout get end\n");
@@ -759,14 +764,20 @@ UserSession *IsSessionValid( struct AuthMod *l, Http *r __attribute__((unused)),
 			DEBUG( "[FCDB] IsSessionValid: Session is valid! %s\n", sessionId );
 			char tmpQuery[ 512 ];
 			
+#ifdef DB_SESSIONID_HASH
 			char *tmpSessionID = sb->sl_UtilInterface.DatabaseEncodeString( sessionId );
 			if( tmpSessionID != NULL )
 			{
-				sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUserSession SET `LoggedTime`='%ld' WHERE `SessionID`='%s'", timestamp, sessionId );
+				sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUserSession SET `LoggedTime`='%ld' WHERE `SessionID`='%s'", timestamp, tmpSessionID );
 			
 				sqlLib->QueryWithoutResults( sqlLib, tmpQuery );
 				FFree( tmpSessionID );
 			}
+#else
+			sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUserSession SET `LoggedTime`='%ld' WHERE `SessionID`='%s'", timestamp, sessionId );
+		
+			sqlLib->QueryWithoutResults( sqlLib, tmpQuery );
+#endif
 			
 			sb->LibrarySQLDrop( sb, sqlLib );
 

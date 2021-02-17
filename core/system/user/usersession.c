@@ -24,8 +24,6 @@
 #include <system/application/application_manager.h>
 #include <util/session_id.h>
 
-extern SystemBase *SLIB;
-
 /**
  * Create new User Session
  *
@@ -39,7 +37,6 @@ UserSession *UserSessionNew( void *sb, char *sesid, char *devid )
 	UserSession *s;
 	if( ( s = FCalloc( 1, sizeof(UserSession) ) ) != NULL )
 	{
-		SystemBase *lsb = (SystemBase *)sb;
 		if( sesid != NULL )
 		{
 			s->us_SessionID = StringDuplicate( sesid );
@@ -48,11 +45,10 @@ UserSession *UserSessionNew( void *sb, char *sesid, char *devid )
 		{
 			s->us_SessionID = SessionIDGenerate();
 		}
-		s->us_HashedSessionID = lsb->sl_UtilInterface.DatabaseEncodeString( s->us_SessionID );
-					
+		
 		s->us_DeviceIdentity = StringDuplicate( devid );
 		
-		UserSessionInit( s );
+		UserSessionInit( s, sb );
 		
 		INFO("Mutex initialized\n");
 	}
@@ -63,13 +59,20 @@ UserSession *UserSessionNew( void *sb, char *sesid, char *devid )
  * UserSession init
  *
  * @param us pointer to UserSession which will be initalized
+ * @param sb pointer to SystemBase
  */
-void UserSessionInit( UserSession *us )
+void UserSessionInit( UserSession *us, void *sb )
 {
 	if( us != NULL )
 	{
+		SystemBase *lsb = (SystemBase *)sb;
+		us->us_SB = sb;
+		
 		pthread_mutex_init( &us->us_Mutex, NULL );
 		
+#ifdef DB_SESSIONID_HASH
+		us->us_HashedSessionID = lsb->sl_UtilInterface.DatabaseEncodeString( us->us_SessionID );
+#endif
 		us->us_WSReqManager = WebsocketReqManagerNew();
 		
 		FQDeInit( &(us->us_MsgQueue) );
@@ -133,9 +136,9 @@ void UserSessionDelete( UserSession *us )
 			nrOfSessionsAttached = UserRemoveSession( us->us_User, us );
 			us->us_User = NULL;
 		}
-		SystemBase *lsb = SLIB;
+		SystemBase *lsb = (SystemBase *)us->us_SB;
 
-		DEBUG("[UserSessionDelete] Remove session %p\n", us );
+		DEBUG("[UserSessionDelete] Remove session %p pointer to systembase: %p\n", us, lsb );
 
 		// Remove session from SAS
 		//

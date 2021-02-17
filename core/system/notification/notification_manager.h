@@ -22,7 +22,6 @@
 
 #include <core/types.h>
 #include <system/user/usersession.h>
-#include <system/user/usersession_manager.h>
 #include <system/user/user.h>
 #include <system/user/user_mobile_app.h>
 #include <util/friendqueue.h>

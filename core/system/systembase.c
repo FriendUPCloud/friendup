@@ -814,7 +814,7 @@ SystemBase *SystemInit( void )
 				if( strcmp( locmod->am_Name, l->sl_ActiveModuleName ) == 0 )
 				{
 					l->sl_ActiveAuthModule = locmod;
-					INFO("[SystemBase] Default login module set to : %s\n", l->sl_ActiveAuthModule->am_Name );
+					INFO("[SystemBase] Default login module set to : %s pointer: %p\n", l->sl_ActiveAuthModule->am_Name, l->sl_ActiveAuthModule );
 					break;
 				}
 				
@@ -1011,6 +1011,12 @@ SystemBase *SystemInit( void )
 	l->sl_ApplicationManager = ApplicationManagerNew( l );
 	if( l->sl_ApplicationManager == NULL )
 	{
+		Log( FLOG_ERROR, "Cannot initialize ApplicationManager\n");
+	}
+	
+	l->sl_AppSessionManager = AppSessionManagerNew( l );
+	if( l->sl_AppSessionManager == NULL )
+	{
 		Log( FLOG_ERROR, "Cannot initialize AppSessionManager\n");
 	}
 	
@@ -1048,6 +1054,7 @@ SystemBase *SystemInit( void )
 
 	EventAdd( l->sl_EventManager, "DoorNotificationRemoveEntries", DoorNotificationRemoveEntries, l, time( NULL )+MINS30, MINS30, -1 );
 	EventAdd( l->sl_EventManager, "USMRemoveOldSessions", USMRemoveOldSessions, l, time( NULL )+l->sl_RemoveOldSessionTimeout, l->sl_RemoveOldSessionTimeout, -1 );	// default 60mins
+	EventAdd( l->sl_EventManager, "AppSessionManagerRemoveOldAppSessions", AppSessionManagerRemoveOldAppSessions, l, time( NULL )+MINS360, MINS360, -1 );
 	// test, to remove
 	EventAdd( l->sl_EventManager, "PIDThreadManagerRemoveThreads", PIDThreadManagerRemoveThreads, l->sl_PIDTM, time( NULL )+MINS60, MINS60, -1 );
 	EventAdd( l->sl_EventManager, "CacheUFManagerRefresh", CacheUFManagerRefresh, l->sl_CacheUFM, time( NULL )+DAYS5, DAYS5, -1 );
@@ -1137,6 +1144,12 @@ void SystemClose( SystemBase *l )
 	}
 	
 	Log( FLOG_INFO, "[SystemBase] SystemClose in progress\n");
+	
+	if( l->sl_AppSessionManager != NULL )
+	{
+		AppSessionManagerDelete( l->sl_AppSessionManager );
+		l->sl_AppSessionManager = NULL;
+	}
 	
 	if( l->sl_ApplicationManager != NULL )
 	{

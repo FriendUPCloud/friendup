@@ -13,7 +13,7 @@ $SqlDatabase->Query( '
 	UPDATE FUserApplication SET `Data`=\'' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->state ) . '\'
 	WHERE
 		UserID=\'' . $User->ID . '\' AND
-		AuthID=\'' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->authId ) .'\'
+		ID in ( SELECT UserApplicationID FROM `FAppSession` WHERE AuthID=\'' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->authId ) .'\')
 ' );
 die( 'ok' );
 

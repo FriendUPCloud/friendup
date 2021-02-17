@@ -1,6 +1,7 @@
 #
 # global path's and variables
 #
+DB_SESSIONID_HASH			=	1
 WEBSOCKETS_THREADS			=	1
 USE_SELECT					=	0
 NO_VALGRIND					=	0
