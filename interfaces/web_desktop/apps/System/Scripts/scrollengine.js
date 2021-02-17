@@ -97,7 +97,8 @@ scrollengine = {
 			this.list.addEventListener( 'scroll', function(  ){ scrollengine.refresh(  ); } );
 			window.addEventListener( 'resize', function(  ){ scrollengine.refresh( true ); } );
 			
-			window.addEventListener( 'keydown', function( e ){ 
+			window.addEventListener( 'keydown', function( e )
+			{ 
 				
 				//console.log( e.which, e.target ); 
 				
@@ -326,6 +327,9 @@ scrollengine = {
 			// Set content
 			if( this.myArray[ s ] && this.myArray[ s ].ID && this.myArray[ s ].Name )
             {
+            	
+            	// TODO: define object and how html design should be from an extra var ...
+            	
             	allNodes[ a ].innerHTML = 'Line ' + s + ' ID ' + this.myArray[ s ].ID + ' Name ' + this.myArray[ s ].Name;
             }
             else
