@@ -48,6 +48,8 @@ scrollengine = {
 	
 	counted : 0,
 	
+	total   : 0,
+	
 	debug : false,
 	
 	ex : '',
@@ -74,23 +76,28 @@ scrollengine = {
 			{
 				if( !total )
 				{
-					total = 1000;
-				}
-				else
-				{
 					total = this.length( data );
 				}
-			
-				if( total > 0 )
+			}
+			else
+			{
+				if( !total )
 				{
-					for( let a = 0; a < total; a++ )
-					{
-						myArray.push( {
-							initialized: null,
-						} );
-					}
+					total = 1000;
 				}
 			}
+			
+			if( total > 0 )
+			{
+				for( let a = 0; a < total; a++ )
+				{
+					myArray.push( {
+						initialized: null,
+					} );
+				}
+			}
+			
+			this.total = total;
 			
 			this.myArray = ( myArray ? myArray : [] );
 			
@@ -293,7 +300,7 @@ scrollengine = {
 		
 	},
 	
-	distribute: function( data, start, limit )
+	distribute: function( data, start, total )
 	{
 		// TODO: Update myArray if the limit has changed ...
 		
@@ -350,6 +357,7 @@ scrollengine = {
 				str += '</div>';
             	
             	allNodes[ a ].innerHTML = str;
+            	allNodes[ a ].title = 'Line '+s;
             	
             	allNodes[ a ].myArrayID = this.myArray[s].ID;
             	allNodes[ a ].onclick = function(  )
@@ -453,7 +461,7 @@ scrollengine = {
 		    	
 		    	if( this.callback )
 		    	{
-		    		this.callback( { start: this.dataStart, limit: this.dataLimit, myArray: this.myArray } );
+		    		this.callback( { start: this.dataStart, limit: this.dataLimit, myArray: this.myArray, total: this.total } );
 		    	}
 		    }
 		}
