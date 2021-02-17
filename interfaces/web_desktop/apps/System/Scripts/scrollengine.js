@@ -21,8 +21,10 @@ scrollengine = {
 		wholeHeight : null
 	},
 	
+	// TODO: Make sure to update current height based on css data ...
+	
 	config : {
-		rowHeight  : 35,
+		rowHeight  : 27,
 		mustRedraw : true
 	},
 	
@@ -203,6 +205,8 @@ scrollengine = {
             if( b < 0 ) continue;
             let row = this.createDiv( false, aa, 'RowElement' );
             row.style.top = c + 'px';
+            row.style.background = 'grey';
+			row.style.borderBottom = '1px solid black';
             row.innerHTML = 'Line ' + b;
         }
         
@@ -269,6 +273,7 @@ scrollengine = {
 			let row = this.createDiv( false, bb, 'RowElement' );
 			row.style.top = c + 'px';
 			row.style.background = 'green';
+			row.style.borderBottom = '1px solid black';
             row.innerHTML = 'Line ' + b;
 			
 			this.counted = a;
@@ -330,7 +335,23 @@ scrollengine = {
             	
             	// TODO: define object and how html design should be from an extra var ...
             	
-            	allNodes[ a ].innerHTML = 'Line ' + s + ' ID ' + this.myArray[ s ].ID + ' Name ' + this.myArray[ s ].Name;
+            	let str = '';
+            	
+            	str += '<div class="HRow Active Line '+s+'" id="UserListID_'+this.myArray[s].ID+'">';
+				str += '	<div class="TextCenter HContent10 FloatLeft PaddingSmall Ellipsis edit">';
+				str += '		<span id="UserAvatar_'+this.myArray[s].ID+'" fullname="'+this.myArray[s].FullName+'" name="'+this.myArray[s].Name+'" status="Active" logintime="Never" timestamp="0" class="IconSmall fa-user-circle-o avatar" style="position: relative;">';
+				str += '			<div style=""></div>';
+				str += '		</span>';
+				str += '	</div>';
+				str += '	<div class=" HContent30 FloatLeft PaddingSmall Ellipsis fullname">' + this.myArray[s].FullName + '</div>';
+				str += '	<div class=" HContent25 FloatLeft PaddingSmall Ellipsis name">' + this.myArray[s].Name + '</div>';
+				str += '	<div class=" HContent15 FloatLeft PaddingSmall Ellipsis status">Active</div>';
+				str += '	<div class=" HContent20 FloatLeft PaddingSmall Ellipsis logintime">Never</div>';
+				str += '</div>';
+            	
+            	allNodes[ a ].innerHTML = str;
+            	
+            	//allNodes[ a ].innerHTML = 'Line ' + s + ' ID ' + this.myArray[ s ].ID + ' Name ' + this.myArray[ s ].Name;
             }
             else
             {
