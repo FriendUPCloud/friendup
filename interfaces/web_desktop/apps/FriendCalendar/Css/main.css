@@ -541,6 +541,7 @@ html > body .CalendarHeaderRow > .HRow.CalendarRow > .Day.Today > .Label
 	float: right;
 	margin: 0 5px 0 0;
 	position: relative;
+	box-shadow: 0px 2px 5px rgba(0,0,0,0.5);
 }
 
 .Event > .Title
