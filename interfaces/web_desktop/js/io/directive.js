@@ -399,14 +399,12 @@ function ExecuteApplication( app, args, callback, retries )
 				{
 					var sid = Workspace.sessionId && Workspace.sessionId != 'undefined' ?
 						Workspace.sessionId : ( Workspace.conf && Workspace.conf.authid ? Workspace.conf.authId : '');
-					var svalu = sid ? Workspace.sessionId :( Workspace.conf && Workspace.conf.authid ? Workspace.conf.authId : '');
-					var stype = sid ? 'sessionid' : 'authid';
 					
 					// Quicker ajax implementation
 					var j = new cAjax();
-					j.open( 'POST', '/system.library/module?module=system&' +
-						stype + '=' + svalu + '&command=launch&app=' +
-						app + '&friendup=' + escape( Doors.runLevels[0].domain ), true );
+					let jsrc = '/system.library/module?module=system&command=launch&app=' +
+						app + '&friendup=' + escape( Doors.runLevels[0].domain );
+					j.open( 'POST', jsrc, true );
 					j.onload = function()
 					{	
 						let ws = this.rawData.split( 'src="/webclient/js/apps/api.js"' ).join( 'src="' + _applicationBasics.apiV1 + '"' );
@@ -1168,11 +1166,6 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 					confObject = JSON.parse( conf );
 				}
 				
-				sid = confObject && confObject.authid ? true : false;
-				var svalu = sid ? confObject.authid : Workspace.sessionId;
-				var stype = sid ? 'authid' : 'sessionid';
-				if( stype == 'sessionid' ) ifr.sessionId = svalu;
-
 				// Use path to figure out config
 				if( !d.dormantDoor && conf.indexOf( '{' ) >= 0 )
 					conf = encodeURIComponent( path.split( ':' )[0] + ':' );
@@ -1184,7 +1177,6 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 				// Quicker ajax implementation
 				var j = new cAjax();
 				j.open( 'POST', '/system.library/module/?module=system&command=sandbox' +
-					'&' + stype + '=' + svalu +
 					'&conf=' + conf + '&' + ( args ? ( 'args=' + args ) : '' ) + extra, true );
 				j.onload = function()
 				{
