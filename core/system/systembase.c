@@ -322,6 +322,7 @@ SystemBase *SystemInit( void )
 	l->sl_USFCacheMax = 102400000;
 	l->sl_DefaultDBLib = StringDuplicate("mysql.library");
 	l->sl_XFrameOption = NULL;
+	l->sl_StrictTransportSecurity = NULL;
 	l->l_EnableHTTPChecker = 0;
 	
 	strcpy( l->RSA_CLIENT_KEY_PEM, "/home/stefkos/development/friendup/build/testkeys/client.pem" );
@@ -453,10 +454,16 @@ SystemBase *SystemInit( void )
 			
 			l->l_AppleServerPort = plib->ReadIntNCS( prop, "NotificationService:port", 9000 );
 
-			tptr = plib->ReadStringNCS( prop, "Core:XFrameOption", NULL );
+			tptr = plib->ReadStringNCS( prop, "Core:ResponseHeader-XFrameOption", NULL );
 			if( tptr != NULL )
 			{
 				l->sl_XFrameOption = StringDuplicate( tptr );
+			}
+			
+			tptr = plib->ReadStringNCS( prop, "Core:ResponseHeader-StrictTransportSecurity", NULL );
+			if( tptr != NULL )
+			{
+				l->sl_StrictTransportSecurity = StringDuplicate( tptr );
 			}
 			
 			globalFriendCorePort = plib->ReadIntNCS( prop, "core:port", FRIEND_CORE_PORT );
@@ -1455,6 +1462,11 @@ void SystemClose( SystemBase *l )
 	if( l->sl_XFrameOption != NULL )
 	{
 		FFree( l->sl_XFrameOption );
+	}
+	
+	if( l->sl_StrictTransportSecurity != NULL )
+	{
+		FFree( l->sl_StrictTransportSecurity );
 	}
 	
 	if( l->l_AppleServerHost != NULL )

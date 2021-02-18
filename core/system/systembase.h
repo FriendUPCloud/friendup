@@ -343,7 +343,10 @@ typedef struct SystemBase
 	int								sl_SocketTimeout;
 	FBOOL 							sl_CacheFiles;
 	FBOOL							sl_UnMountDevicesInDB;
-	char							*sl_XFrameOption;
+	
+	char							*sl_XFrameOption;				// if enabled all http responses will contain this header
+	char							*sl_StrictTransportSecurity;	// if enabled all http responses will contain Strict-Transport-Security header
+	
 	FLONG							sl_USFCacheMax; // User Shared File Manager cache max (per device)
 	Sentinel 						*sl_Sentinel;
 

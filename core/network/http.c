@@ -89,6 +89,11 @@ Http *HttpNew( )
 	{
 		h->http_RespHeaders[ HTTP_HEADER_X_FRAME_OPTIONS ] = SLIB->sl_XFrameOption;//StringDuplicate( SLIB->sl_XFrameOption );
 	}
+	
+	if( SLIB->sl_StrictTransportSecurity != NULL )
+	{
+		h->http_RespHeaders[ HTTP_HEADER_STRICT_TRANSPORT_SECURITY ] = SLIB->sl_StrictTransportSecurity;
+	}
 
 	// Set default version to HTTP/1.1
 	h->http_VersionMajor = 1;
@@ -1883,7 +1888,7 @@ void HttpFree( Http* http )
 	{
 		for( i = 0; i < HTTP_HEADER_END ; i++ )
 		{
-			if( (i != HTTP_HEADER_X_FRAME_OPTIONS) )
+			if( i < HTTP_HEADER_X_FRAME_OPTIONS )
 			{
 				if( http->http_RespHeaders[ i ] != NULL)
 				{
@@ -2283,7 +2288,7 @@ char *HttpBuild( Http* http )
 						snprintf( tmp, 512, "%s: %s\r\n", HEADERS[ i ], http->http_RespHeaders[ i ] );
 						strings[ stringPos++ ] = tmp;
 						
-						if( i != HTTP_HEADER_X_FRAME_OPTIONS )
+						if( i < HTTP_HEADER_X_FRAME_OPTIONS )
 						{
 							FFree( http->http_RespHeaders[ i ] );
 							http->http_RespHeaders[ i ] = NULL;
