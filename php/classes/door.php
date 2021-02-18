@@ -157,7 +157,7 @@ if( !class_exists( 'Door' ) )
 		// Gets the correct identifier to extract a filesystem
 		function getQuery( $path = false )
 		{
-			global $args, $User, $Logger, $SqlDatabase;
+			global $args, $User, $Logger, $SqlDatabase, $UserSession;
 			if( !isset( $User->ID ) && !isset( $this->_user ) ) 
 			{
 				return false;

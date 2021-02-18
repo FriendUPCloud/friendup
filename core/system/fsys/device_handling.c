@@ -1628,9 +1628,15 @@ AND f.Name = '%s'",
 			//{FSys_Mount_Execute,(FULONG)execute},
 			{FSys_Mount_UserGroup, (FULONG)usrgrp},
 			{FSys_Mount_ID, (FULONG)id},
+			{FSys_Mount_User_SessionID,(FULONG)sessionid},
 			{FSys_Mount_AdminRights,(FULONG)calledByAdmin},
 			{TAG_DONE, TAG_DONE}
 		};
+		
+		/*
+		case FSys_Mount_User_SessionID:
+					sessionid 
+		 */
 		
 		//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 	
@@ -3044,7 +3050,7 @@ ug.UserID = '%lu' \
 								{ FSys_Mount_Port,           (FULONG)row[ 3 ] },
 								{ FSys_Mount_Type,           (FULONG)row[ 0 ] },
 								{ FSys_Mount_Name,           (FULONG)row[ 8 ] },
-								{ FSys_Mount_User_SessionID, (FULONG)us->us_SessionID },
+								{ FSys_Mount_User_SessionID, (FULONG)us->us_HashedSessionID }, // us->us_SessionID },
 								{ FSys_Mount_Owner,          (FULONG)u },
 								{ FSys_Mount_Mount,          (FULONG)TRUE },
 								{ FSys_Mount_SysBase,        (FULONG)l },

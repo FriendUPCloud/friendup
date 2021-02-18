@@ -700,7 +700,7 @@ f.Name ASC";
 					{ FSys_Mount_Port,           (FULONG)port },
 					{ FSys_Mount_Type,           (FULONG)type },
 					{ FSys_Mount_Name,           (FULONG)devname },
-					{ FSys_Mount_User_SessionID, (FULONG)loggedSession->us_SessionID },
+					{ FSys_Mount_User_SessionID, (FULONG)loggedSession->us_HashedSessionID },   //loggedSession->us_SessionID },
 					{ FSys_Mount_Module,         (FULONG)module },
 					{ FSys_Mount_Owner,          (FULONG)usr },
 					{ FSys_Mount_UserName, (FULONG)usr->u_Name },
