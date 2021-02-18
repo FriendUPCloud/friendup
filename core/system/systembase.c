@@ -2183,7 +2183,6 @@ usr->u_ID , usr->u_ID, usr->u_ID
 				{ FSys_Mount_ID,      (FULONG)id },
 				{ FSys_Mount_Mount,   (FULONG)mount },
 				{ FSys_Mount_SysBase, (FULONG)SLIB },
-				// { FSys_Mount_User_SessionID, (FULONG) --- us_HashedSessionID --- }, // TODO: Fix this missing item!
 				{ FSys_Mount_Visible, (FULONG)1 },     // Assume visible
 				{TAG_DONE, TAG_DONE}
 			};
