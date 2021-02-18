@@ -53,6 +53,28 @@ function jsUrlEncode( $in )
 	);
 }
 
+// Get the auth component of the uri to add to calls
+function getAuthUriComponent( $sessionType, $sessionObject )
+{
+    global $SqlDatabase;
+    if( $sessionType == 'authid' )
+    {
+        return 'authid=' . $sessionObject->authid;
+    }
+    return 'sessionid=' . $sessionObject->sessionid;
+}
+
+// Set auth information on object
+function setAuthOnObject( &$object, $sessionType, $token )
+{
+    if( $sessionType == 'authid' )
+    {
+        $object->authid = $token;
+        return;
+    }
+    $object->sessionid = $token;
+}
+
 // Connects to friend core! You must build the whole query after the fc path
 function FriendCall( $queryString = false, $flags = false, $post = false, $returnCurl = false )
 {
@@ -264,6 +286,9 @@ if( isset( $argv ) && isset( $argv[1] ) )
 }
 
 $UserAccount = false;
+
+// This one is used when friend.php is included elsewhere, using a specific user
+// defined in some external script.
 if( defined( 'FRIEND_USERNAME' ) && defined( 'FRIEND_PASSWORD' ) )
 {
 	$UserAccount = new stdClass();
@@ -271,25 +296,31 @@ if( defined( 'FRIEND_USERNAME' ) && defined( 'FRIEND_PASSWORD' ) )
 	$UserAccount->Password = FRIEND_PASSWORD;
 }
 
-// No sessionid!!
-if( !$UserAccount && !isset( $groupSession ) && !isset( $GLOBALS[ 'args' ]->sessionid ) && !isset( $GLOBALS[ 'args' ]->authid ) )
+// Check if there is no account, and no groupSession and no passed session id
+if( !$UserAccount )
 {
-	if( !isset( $GLOBALS[ 'args' ]->servertoken ) )
-	{
-		die( '404 NO SESSION 4' );
+    if( !isset( $groupSession ) )
+    {
+        if( !isset( $GLOBALS[ 'args' ]->sessionid ) && !isset( $GLOBALS[ 'args' ]->servertoken ) )
+	    {
+		    die( 'fail<!--separate-->{"response":"-1","message":"No session given to system."}' );
+	    }
 	}
+    if( isset( $GLOBALS[ 'args' ]->sessionid ) && $GLOBALS[ 'args' ]->sessionid == '(null)' )
+    {
+        die( 'fail<!--separate-->{"response":"-2","message":"Erroneous sessionid provided."}' );
+    }
 }
-if( !$UserAccount && isset( $GLOBALS[ 'args' ]->sessionid ) && $GLOBALS[ 'args' ]->sessionid == '(null)' )
-	die( '404 NO SESSION 2' );
 
-// Setup mysql abstraction
+// Authentication procedure ----------------------------------------------------
+
 if( file_exists( 'cfg/cfg.ini' ) )
 {
 	$configfilesettings = parse_ini_file( 'cfg/cfg.ini', true );
-	include_once( 'classes/dbio.php' );
-	include_once( 'include/i18n.php' );
-	// For debugging
-	include_once( 'classes/logger.php' );
+	
+	include_once( 'classes/dbio.php' );   // Database abstraction
+	include_once( 'include/i18n.php' );   // Translations
+	include_once( 'classes/logger.php' ); // For debugging
 	
 	$logger =& $GLOBALS['Logger'];
 	
@@ -387,8 +418,6 @@ if( file_exists( 'cfg/cfg.ini' ) )
 		}
 	}
 	
-	//$Logger->log( print_r( $Config, 1 ) );
-	
 	// Don't need these now
 	$dataUser = null;
 	$dataCore = null;
@@ -396,15 +425,17 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	$frindNet = null;
 	
 	// Temporary folder
-	$Config->FCTmp    = isset( $ar['fctmp'] ) ? $ar['fctmp'] : '/tmp/';
+	$Config->FCTmp = isset( $ar['fctmp'] ) ? $ar['fctmp'] : '/tmp/';
 	if( substr( $Config->FCTmp, -1, 1 ) != '/' )
 		$Config->FCTmp .= '/';
 		
 	$GLOBALS['Config'] =& $Config;
 	
 	$SqlDatabase = new SqlDatabase();
+	
 	if( !$SqlDatabase->Open( $Config->Hostname, $Config->Username, $Config->Password ) )
 		die( 'fail<!--separate-->Could not connect to database.' );
+	
 	$SqlDatabase->SelectDatabase( $Config->DbName );
 	
 	$GLOBALS['SqlDatabase'] =& $SqlDatabase;
