@@ -11,9 +11,9 @@
 
 /******************************************************************************\
 *                                                                              *
-* FriendUP PHP API v1.2                                                        *
-* (c) 2015-2018, Friend Software Labs AS                                       *
-* mail: info@friendup.no                                                       *
+* FriendUP PHP API v1.3                                                        *
+* (c) 2015-2021, Friend Software Labs AS                                       *
+* mail: developers@friendos.com                                                *
 *                                                                              *
 \******************************************************************************/
 
@@ -51,28 +51,6 @@ function jsUrlEncode( $in )
 		array( '%20', '%5F', '%2E', '%2D' ),
 		$out
 	);
-}
-
-// Get the auth component of the uri to add to calls
-function getAuthUriComponent( $sessionType, $sessionObject )
-{
-    global $SqlDatabase;
-    if( $sessionType == 'authid' )
-    {
-        return 'authid=' . $sessionObject->authid;
-    }
-    return 'sessionid=' . $sessionObject->sessionid;
-}
-
-// Set auth information on object
-function setAuthOnObject( &$object, $sessionType, $token )
-{
-    if( $sessionType == 'authid' )
-    {
-        $object->authid = $token;
-        return;
-    }
-    $object->sessionid = $token;
 }
 
 // Connects to friend core! You must build the whole query after the fc path
@@ -285,6 +263,7 @@ if( isset( $argv ) && isset( $argv[1] ) )
 	$GLOBALS['args'] = $kvdata;
 }
 
+// Create a user account variable for use later
 $UserAccount = false;
 
 // This one is used when friend.php is included elsewhere, using a specific user
@@ -332,6 +311,8 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	              'WorkspaceShortcuts', 'preventWizard', 'ProxyEnable'
 	);
 
+    // Get access to the database ----------------------------------------------
+    
 	// Shortcuts
 	$dataUser = $configfilesettings[ 'DatabaseUser' ];
 	$dataCore = $configfilesettings[ 'FriendCore' ];
@@ -440,16 +421,18 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	
 	$GLOBALS['SqlDatabase'] =& $SqlDatabase;
 	
+	// Done with database access -----------------------------------------------
+	
 	// User application info
 	$UserApplication = false;
 	
-	// Get user information, trying first on FUserSession SessionID
+	// Get user information, trying first on FUserSession SessionID ------------
 	$User = new dbIO( 'FUser' );
 	$UserSession = new dbIO( 'FUserSession' );
 
 	$sudm = false;
 	
-	// TODO: Implement authentication modules!
+	// Use UserAccount object to authenticate directly into the database
 	if( $UserAccount )
 	{
 		if( $mu = $SqlDatabase->fetchObject( $uq = '
@@ -484,19 +467,15 @@ if( file_exists( 'cfg/cfg.ini' ) )
 		$User->ServerToken = $GLOBALS[ 'args' ]->servertoken;
 		$User->Load();
 	}
-	
-	// Get the sessionid
-	$sidm = mysqli_real_escape_string( $SqlDatabase->_link, 
-		isset( $UserSession->SessionID ) ? $UserSession->SessionID :
-		( isset( $GLOBALS['args']->sessionid ) ? $GLOBALS['args']->sessionid : '' )
-	);
-
-	if( !$sidm )
+	// Load by session id
+	else if( isset( $GLOBALS[ 'args' ]->sessionid ) )
 	{
-		$sidm = mysqli_real_escape_string( $SqlDatabase->_link, $UserSession->SessionID );
+	    $UserSession->SessionID = $GLOBALS['args']->sessionid;
+	    if( $UserSession->Load() )
+	    {
+	        $User->Load( $UserSession->UserID );
+	    }
 	}
-	
-	//$hsidm = hash( 'sha256', $sidm );
 
 	// Here we need a union because we are looking for sessionid in both the
 	// FUserSession and FUser tables..
@@ -505,66 +484,9 @@ if( file_exists( 'cfg/cfg.ini' ) )
 		$GLOBALS[ 'User' ] =& $User;
 		$GLOBALS[ 'UserSession' ] =& $UserSession;
 	}
-	// Here we're trying to load it
-	if(
-		$sidm && 
-		( $User = $SqlDatabase->FetchObject( '
-			SELECT u.*, us.SessionID AS UserSessionID FROM 
-				FUser u, FUserSession us
-			WHERE 
-				u.ID = us.UserID AND us.SessionID = \'' . $sidm . '\'
-		' ) )
-	)
-	{
-		$GLOBALS[ 'User' ] =& $User;
-		$UserSession = $SqlDatabase->FetchObject( $d = '
-			SELECT us.* FROM FUserSession us
-			WHERE us.SessionID=\'' . $User->UserSessionID .'\'
-		' );
-		$GLOBALS[ 'UserSession' ] =& $UserSession;
-	}
 	else
 	{
-		// Ok, did we have auth id?
-		if( isset( $GLOBALS['args']->authid ) )
-		{
-			$asid = mysqli_real_escape_string( $SqlDatabase->_link, $GLOBALS['args']->authid );
-			//$hasid = hash( 'sha256', $asid );
-
-			if( $row = $SqlDatabase->FetchObject( $q = '
-				SELECT * FROM ( 
-					( 
-						SELECT u.ID FROM FUser u, FUserApplication a 
-						WHERE 
-							a.AuthID="' . $asid . '" AND a.UserID = u.ID LIMIT 1 
-					) 
-					UNION 
-					( 
-						SELECT u2.ID FROM FUser u2, Filesystem f 
-						WHERE 
-							f.Config LIKE "%' . $asid . '%" AND u2.ID = f.UserID LIMIT 1 
-					) 
-				) z LIMIT 1
-			' ) )
-			{
-				$User->Load( $row->ID );
-				
-				if( $User->ID > 0 )
-				{
-					$GLOBALS[ 'User' ] =& $User;
-					if( $mus = $SqlDatabase->fetchObject( '
-                                		SELECT * FROM FUserSession WHERE UserID = \'' . $User->ID . '\' LIMIT 1' ) )
-					{
-						$UserSession = $mus;
-						$GLOBALS[ 'UserSession' ] =& $UserSession;
-                	}
-				}
-			}
-		}
-		
-		// Failed to authenticate
-		if( !isset( $groupSession ) && isset( $User->ID ) && $User->ID <= 0 )
-			die( '404' );
+	    die( '404' );
 	}
 	
 	register_shutdown_function( function()
