@@ -652,7 +652,7 @@ f.Name ASC";
 					//args = UrlDecodeToMem( el->data );
 				}
 				
-				if( usr->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
+				if( usr->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
 				{
 					DEBUG("UserID = %lu user is admin: %d\n", userID, usr->u_IsAdmin );
 					User *locusr = UMGetUserByID( l->sl_UM, userID );
@@ -978,7 +978,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 					}
 					DEBUG("UserID %lu\n", userID );
 			
-					if( activeUser->u_IsAdmin || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
+					if( activeUser->u_IsAdmin || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
 					{
 						DEBUG("Permissions accepted or user is admin\n");
 						User *locusr = NULL;

@@ -599,7 +599,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			args = el->hme_Data;//UrlDecodeToMem( el->data );
 		}
 		
-		if( loggedSession->us_User->u_IsAdmin || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_HashedSessionID, authid, args ) )
+		if( loggedSession->us_User->u_IsAdmin || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
 		{
 			el = HttpGetPOSTParameter( request, "username" );
 			if( el != NULL )
@@ -785,7 +785,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			args = el->hme_Data;//UrlDecodeToMem( el->data );
 		}
 		
-		if( loggedSession->us_User->u_IsAdmin || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_HashedSessionID, authid, args ) )
+		if( loggedSession->us_User->u_IsAdmin || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
 		{
 			if( id > 0 )
 			{
@@ -800,7 +800,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						User * usr = UMGetUserByID( l->sl_UM, id );
 						if( usr != NULL )
 						{
-							UserDeviceUnMount( l, sqllib, usr );
+							UserDeviceUnMount( l, usr, loggedSession );
 							UMRemoveUser( l->sl_UM, usr, ((SystemBase*)m)->sl_USM);
 						}
 
@@ -911,7 +911,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			status = (FLONG)strtol ( (char *)el->hme_Data, &next, 0 );
 		}
 		
-		if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_HashedSessionID, authid, args ) )
+		if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
 		{
 			if( id > 0 && status >= 0 )
 			{
@@ -1240,7 +1240,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				args = el->hme_Data;//UrlDecodeToMem( el->data );
 			}
 			
-			if( loggedSession->us_User->u_IsAdmin || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_HashedSessionID, authid, args ) )
+			if( loggedSession->us_User->u_IsAdmin || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
 			{
 				DEBUG("Is user admin: %d\n", loggedSession->us_User->u_IsAdmin );
 				haveAccess = TRUE;
@@ -1501,8 +1501,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			{
 				args = el->hme_Data;
 			}
-				
-			if( loggedSession->us_User->u_IsAdmin || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_HashedSessionID, authid, args ) )
+			
+			if( loggedSession->us_User->u_IsAdmin || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
 			{
 				haveAccess = TRUE;
 			

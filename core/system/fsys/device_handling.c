@@ -3273,11 +3273,12 @@ int DeviceUnMount( DeviceManager *dm, File *rootDev, User *usr, UserSession *ses
  * Get root device by name
  *
  * @param usr user to which device belong
+ * @param ses UserSession. If passed sessionid from UserSession is assigned to device
  * @param devname device name
  * @return pointer to device (File *)
  */
 
-File *GetRootDeviceByName( User *usr, char *devname )
+File *GetRootDeviceByName( User *usr, UserSession *ses, char *devname )
 {
 	//
 	// Check mounted devices for user
@@ -3360,6 +3361,10 @@ File *GetRootDeviceByName( User *usr, char *devname )
 	if( actDev == NULL )
 	{
 		FERROR( "Cannot find mounted device by name: %s\n", devname );
+	}
+	else if( ses != NULL )
+	{
+		FileFillSessionID( actDev, ses );
 	}
 	
 	return actDev;

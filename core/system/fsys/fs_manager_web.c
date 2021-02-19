@@ -316,7 +316,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 			
 			DEBUG("[FSMWebRequest] Find device by name %s\n", devname );
 			
-			actDev = GetRootDeviceByName( loggedSession->us_User, devname );
+			actDev = GetRootDeviceByName( loggedSession->us_User, loggedSession, devname );
 			
 			// TODO: Custom stuff (should probably be in the actual FS)
 
@@ -942,8 +942,12 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								char *command = FMalloc( len );
 								if( command != NULL )
 								{
+#ifdef DB_SESSIONID_HASH
 									snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", origDecodedPath, loggedSession->us_HashedSessionID );
-			
+#else
+									snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", origDecodedPath, loggedSession->us_SessionID );
+#endif
+									
 									DEBUG("Run command via php: '%s'\n", command );
 									FULONG dataLength;
 
@@ -1063,7 +1067,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							char *command = FMalloc( len );
 							if( command != NULL )
 							{
+#ifdef DB_SESSIONID_HASH
 								snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", origDecodedPath, loggedSession->us_HashedSessionID );
+#else
+								snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", origDecodedPath, loggedSession->us_SessionID );
+#endif
 			
 								DEBUG("Run command via php: '%s'\n", command );
 								FULONG dataLength;
@@ -2017,7 +2025,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									char *command = FMalloc( len );
 									if( command != NULL )
 									{
+#ifdef DB_SESSIONID_HASH
 										snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", topath, loggedSession->us_HashedSessionID );
+#else
+										snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", topath, loggedSession->us_SessionID );
+#endif
 			
 										DEBUG("Run command via php: '%s'\n", command );
 										FULONG dataLength;
@@ -3007,7 +3019,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					{
 						{
 							char *dirname = FCalloc( 1024, sizeof(char) );
+#ifdef DB_SESSIONID_HASH
 							snprintf( dirname, 1024, "%s%s_decomp_%d%d", DEFAULT_TMP_DIRECTORY, loggedSession->us_HashedSessionID, rand()%9999, rand()%9999 );
+#else
+							snprintf( dirname, 1024, "%s%s_decomp_%d%d", DEFAULT_TMP_DIRECTORY, loggedSession->us_SessionID, rand()%9999, rand()%9999 );
+#endif
 
 							mkdir( dirname, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH );
 						
@@ -3053,7 +3069,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									}
 								
 									File *dstdevice = NULL;
-									if( ( dstdevice = GetRootDeviceByName( loggedSession->us_User, dstdevicename ) ) != NULL )
+									if( ( dstdevice = GetRootDeviceByName( loggedSession->us_User, loggedSession, dstdevicename ) ) != NULL )
 									{
 										char *buffer = FMalloc( 32768 * sizeof(char) );
 									
@@ -3210,7 +3226,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						char *dirname = FMalloc( 1024 );
 						if( dirname != NULL )
 						{
+#ifdef DB_SESSIONID_HASH
 							snprintf( dirname, 1024, "%s%s_decomp_%d%d", DEFAULT_TMP_DIRECTORY, loggedSession->us_HashedSessionID, rand()%9999, rand()%9999 );
+#else
+							snprintf( dirname, 1024, "%s%s_decomp_%d%d", DEFAULT_TMP_DIRECTORY, loggedSession->us_SessionID, rand()%9999, rand()%9999 );
+#endif
 						
 							mkdir( dirname, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH );
 						

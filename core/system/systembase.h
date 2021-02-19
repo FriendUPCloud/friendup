@@ -384,7 +384,7 @@ typedef struct SystemBase
 	
 	int								(*UserDeviceMount)( struct SystemBase *l, User *usr, UserSession *us, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
 	
-	int								(*UserDeviceUnMount)( struct SystemBase *l, SQLLibrary *sqllib, User *usr );
+	int								(*UserDeviceUnMount)( struct SystemBase *l, User *usr, UserSession *ses );
 	
 	int								(*SystemInitExternal)( struct SystemBase *l );
 	
@@ -404,7 +404,7 @@ typedef struct SystemBase
 	
 	void							(*Log)( int lev, char* fmt, ...) ;
 	
-	File							*(*GetRootDeviceByName)( User *usr, char *devname );
+	File							*(*GetRootDeviceByName)( User *usr, UserSession *ses, char *devname );
 	
 	char							RSA_SERVER_CERT[ CERT_PATH_SIZE ];
 	char							RSA_SERVER_KEY[ CERT_PATH_SIZE ];
@@ -560,7 +560,7 @@ int UserDeviceMount( SystemBase *l, User *u, UserSession *usrses, int force, FBO
 //
 //
 
-int UserDeviceUnMount( SystemBase *l, SQLLibrary *sqllib, User *usr );
+int UserDeviceUnMount( SystemBase *l, User *usr, UserSession *ses );
 
 //
 //

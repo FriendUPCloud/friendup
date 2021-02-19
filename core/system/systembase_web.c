@@ -2323,12 +2323,13 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								// update UserSession
 								//
 								
+#ifdef DB_SESSIONID_HASH
 								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime=%lld,SessionID='%s',UMA_ID=%lu WHERE `DeviceIdentity`='%s' AND `UserID`=%lu", (long long)loggedSession->us_LoggedTime, loggedSession->us_HashedSessionID, umaID, deviceid,  loggedSession->us_UserID );
-								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
-								{ 
-								
-								}
-
+								sqlLib->QueryWithoutResults( sqlLib, tmpQuery );
+#else
+								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime=%lld,SessionID='%s',UMA_ID=%lu WHERE `DeviceIdentity`='%s' AND `UserID`=%lu", (long long)loggedSession->us_LoggedTime, loggedSession->us_SessionID, umaID, deviceid,  loggedSession->us_UserID );
+								sqlLib->QueryWithoutResults( sqlLib, tmpQuery );
+#endif
 								//
 								// update user
 								//

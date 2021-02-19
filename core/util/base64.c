@@ -174,7 +174,8 @@ char *Base64Decode( const unsigned char* data, unsigned int length, int *finalLe
     
 	if( decoded_data != NULL )
 	{
-		unsigned int i, j;
+		unsigned int i;
+		unsigned int j;
 		for( i = 0, j = 0; i < length; )
 		{
 			//DEBUG(" i : %d dataptr %p\n", i, data );

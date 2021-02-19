@@ -1040,7 +1040,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 	}
 	
 	// we should use flag or u_WebDAVDevs
-	rootDev = GetRootDeviceByName( usr, devname );
+	rootDev = GetRootDeviceByName( usr, NULL, devname );
 	/*
 	LIST_FOR_EACH( usr->u_MountedDevs, rootDev, File * )
 	{

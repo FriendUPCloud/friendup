@@ -419,7 +419,7 @@ int FileUploadFileOrDirectory( Http *request, void *us, const char *dst, const c
 	}
 	
 	int files = 0;
-	if( ( actDev = GetRootDeviceByName( loggedSession->us_User, devname ) ) != NULL )
+	if( ( actDev = GetRootDeviceByName( loggedSession->us_User, loggedSession, devname ) ) != NULL )
 	{
 		DEBUG("[FileUploadFileOrDirectory] file uplload rec started\n");
 		
@@ -856,7 +856,7 @@ int FileDownloadFilesOrFolder( Http *request, void *us, const char *basepath, co
 	
 	//DEBUG("\n============================================================\n\n\n dst: %s\nsrc: %s\nbasepath: %s\nbasepos: %d\n\n\n\n\n", dst, src, basepath, basePos );
 	
-	if( ( actDev = GetRootDeviceByName( loggedSession->us_User, devname ) ) != NULL )
+	if( ( actDev = GetRootDeviceByName( loggedSession->us_User, loggedSession, devname ) ) != NULL )
 	{
 		actDev->f_Operations++;
 		

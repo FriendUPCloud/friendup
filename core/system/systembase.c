@@ -1320,6 +1320,7 @@ void SystemClose( SystemBase *l )
 	
 	Log( FLOG_INFO,  "[SystemBase] Release filesystems\n");
 	// release fsystems
+	/*
 	FHandler *lsys = l->sl_Filesystems;
 	while( lsys != NULL )
 	{
@@ -1328,7 +1329,7 @@ void SystemClose( SystemBase *l )
 		DEBUG("[SystemBase] Remove fsys %s\n", rems->Name );
 		FHandlerDelete( rems );
 	}
-	
+	*/
 	if( l->sl_WorkerManager != NULL )
 	{
 		DEBUG( "[FriendCore] Shutting down worker manager.\n" );
@@ -2230,7 +2231,7 @@ usr->u_ID , usr->u_ID, usr->u_ID
  * @return 0 if everything went fine, otherwise error number
  */
 
-int UserDeviceUnMount( SystemBase *l, SQLLibrary *sqllib __attribute__((unused)), User *usr )
+int UserDeviceUnMount( SystemBase *l, User *usr, UserSession *ses )
 {
 	DEBUG("UserDeviceUnMount\n");
 	if( usr != NULL )
@@ -2239,20 +2240,13 @@ int UserDeviceUnMount( SystemBase *l, SQLLibrary *sqllib __attribute__((unused))
 		{
 			File *dev = usr->u_MountedDevs;
 			File *remdev = dev;
-			char *sessionID = NULL;
-			
-			if( usr->u_SessionsList != NULL && usr->u_SessionsList->us != NULL )
-			{
-				UserSession *ses = usr->u_SessionsList->us;
-				sessionID = ses->us_SessionID;
-			}
 			
 			while( dev != NULL )
 			{
 				remdev = dev;
 				dev = (File *)dev->node.mln_Succ;
 				
-				DeviceUnMount( l->sl_DeviceManager, remdev, usr, sessionID );
+				DeviceUnMount( l->sl_DeviceManager, remdev, usr, ses );
 				
 				FFree( remdev );
 			}

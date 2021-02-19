@@ -172,6 +172,6 @@ static inline int ColonPosition( const char *c )
 //
 //
 
-File *GetRootDeviceByName( User *usr, char *devname );
+File *GetRootDeviceByName( User *usr, UserSession *ses, char *devname );
 
 #endif // __SYSTEM_FSYS_DEVICE_HANDLING_H__

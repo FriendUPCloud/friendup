@@ -540,7 +540,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			//args = UrlDecodeToMem( el->hme_Data );
 		}
 		
-		if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_HashedSessionID, authid, args ) )
+		if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
 		{	// user cannot create any groups without permissions
 			el = HttpGetPOSTParameter( request, "groupname" );
 			if( el != NULL )
@@ -829,7 +829,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				//args = UrlDecodeToMem( el->hme_Data );
 			}
 				
-			if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_HashedSessionID, authid, args ) )
+			if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
 			{
 				UserGroup *fg = UGMGetGroupByID( l->sl_UGM, id );
 			
@@ -977,7 +977,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			//args = UrlDecodeToMem( el->hme_Data );
 		}
 		
-		if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_HashedSessionID, authid, args ) )
+		if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
 		{
 			el = HttpGetPOSTParameter( request, "groupname" );
 			if( el != NULL )
@@ -1623,7 +1623,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			authid = el->hme_Data;
 		}
 		
-		if( loggedSession->us_User->u_IsAdmin  == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_HashedSessionID, authid, args ) )
+		if( loggedSession->us_User->u_IsAdmin  == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
 		{
 			el = HttpGetPOSTParameter( request, "users" );
 			if( el != NULL )
@@ -1802,7 +1802,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		if( loggedSession->us_User->u_IsAdmin  == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_HashedSessionID, authid, args ) )
+		if( loggedSession->us_User->u_IsAdmin  == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
 		{
 			el = HttpGetPOSTParameter( request, "users" );
 			if( el != NULL )
