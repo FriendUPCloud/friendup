@@ -517,7 +517,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 	char *name = NULL;
 	char *module = NULL;
 	char *type = NULL;
-	char *userSession = NULL;
+	UserSession *us = NULL;
 	char *empty = "";
 	
 	SystemBase *sb = NULL;
@@ -569,8 +569,8 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 				case FSys_Mount_SysBase:
 					sb = (SystemBase *)lptr->ti_Data;
 					break;
-				case FSys_Mount_User_SessionID:
-					userSession = (char *)lptr->ti_Data;
+				case FSys_Mount_UserSession:
+					us = (UserSession *)lptr->ti_Data;
 					break;
 			}
 			lptr++;
@@ -613,15 +613,10 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 		if( sd != NULL )
 		{
 			sd->module = StringDup( module );
-
-			if( userSession == NULL )
-			{
-				userSession = empty;
-			}
 			
-			DEBUG( "[fsysphp] Copying session: %s\n", userSession );
-			//dev->f_SessionID = StringDup( usr->u_MainSessionID );
-			dev->f_SessionIDPTR = userSession;
+			DEBUG( "[fsysphp] Copying session normal: %s - hashed %s\n", us->us_SessionID, us->us_HashedSessionID );
+			
+			FileFillSessionID( dev, us );
 			sd->type = StringDup( type );
 			dev->f_SpecialData = sd;
 			sd->sb = sb;
@@ -632,8 +627,12 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 				( name ? strlen( name ) : 0 ) + 
 				( path ? strlen( path ) : 0 ) + 
 				( module ? strlen( module ) : strlen( "files" ) ) + 
-				( strlen( userSession ) ) + 1;
-			
+#ifdef DB_SESSIONID_HASH
+				( strlen( us->us_HashedSessionID ) ) + 1;
+#else
+				( strlen( us->us_SessionID ) ) + 1;
+#endif
+			 
 			
 			// Whole command
 			char *command = FCalloc( strlen( "php \"modules/system/module.php\" \"\";" ) + cmdLength + 1, sizeof( char ) );
@@ -651,7 +650,11 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 						name ? name : "", 
 						path ? path : "", 
 						module ? module : "files", 
-						userSession  );
+#ifdef DB_SESSIONID_HASH
+				us->us_HashedSessionID );
+#else
+				us->us_SessionID );
+#endif
 					sprintf( command, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 					FFree( commandCnt );
 			

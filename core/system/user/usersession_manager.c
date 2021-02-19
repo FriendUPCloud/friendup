@@ -1328,35 +1328,38 @@ void USMCloseUnusedWebSockets( UserSessionManager *usm )
  * @param sqllib pointer to SQLLibrary. If you want to use it during one sql connection
  * @param userID user ID to which user session will be assigned
  * @param type type of session
- * @return session ID when success, otherwise NULL
+ * @return UserSession when success, otherwise NULL
  */
-char *USMCreateTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, FULONG userID, int type )
+UserSession *USMCreateTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, FULONG userID, int type )
 {
-	char *sessionID = NULL;
+	UserSession *ses = NULL;
 	FBOOL locSQLused = FALSE;
-	SystemBase *sb = NULL;
+	SystemBase *sb = (SystemBase *)smgr->usm_SB;
 	
 	SQLLibrary *locSqllib = sqllib;
 	if( sqllib == NULL )
 	{
-		sb = (SystemBase *)smgr->usm_SB;
+		
 		locSqllib = sb->LibrarySQLGet( sb );
 		locSQLused = TRUE;
 	}
 	
-	sessionID = SessionIDGenerate( );
-	
-	if( locSqllib != NULL )
+	ses = UserSessionNew( sb, NULL, "tempsession" );
+	if( ses != NULL )
 	{
-		char temp[ 1024 ];
+		ses->us_UserID = userID;
+		if( locSqllib != NULL )
+		{
+			char temp[ 1024 ];
 	 
-		// There is no need to hash temporary session, it will be destroyed
-		//INSERT INTO `FUserSession` ( `UserID`, `DeviceIdentity`, `SessionID`, `LoggedTime`) VALUES (0, 'tempsession','93623b68df9e390bc89eff7875d6b8407257d60d',0 )
-		snprintf( temp, sizeof(temp), "INSERT INTO `FUserSession` (`UserID`,`DeviceIdentity`,`SessionID`,`LoggedTime`) VALUES (%lu,'tempsession','%s',%lu)", userID, sessionID, time(NULL) );
+			// There is no need to hash temporary session, it will be destroyed
+			//INSERT INTO `FUserSession` ( `UserID`, `DeviceIdentity`, `SessionID`, `LoggedTime`) VALUES (0, 'tempsession','93623b68df9e390bc89eff7875d6b8407257d60d',0 )
+			snprintf( temp, sizeof(temp), "INSERT INTO `FUserSession` (`UserID`,`DeviceIdentity`,`SessionID`,`LoggedTime`) VALUES (%lu,'tempsession','%s',%lu)", userID, ses->us_HashedSessionID, time(NULL) );
 
-		DEBUG("USMCreateTemporarySession launched SQL: %s\n", temp );
+			DEBUG("USMCreateTemporarySession launched SQL: %s\n", temp );
 	
-		locSqllib->QueryWithoutResults( locSqllib, temp );
+			locSqllib->QueryWithoutResults( locSqllib, temp );
+		}
 	}
 	
 	if( locSQLused == TRUE )
@@ -1364,7 +1367,7 @@ char *USMCreateTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, F
 		sb->LibrarySQLDrop( sb, locSqllib );
 	}
 	
-	return sessionID;
+	return ses;
 }
 
 /**
@@ -1372,9 +1375,9 @@ char *USMCreateTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, F
  *
  * @param smgr pointer to UserSessionManager
  * @param sqllib pointer to SQLLibrary. If you want to use it during one sql connection
- * @param sessionID session which will be deleted
+ * @param ses session which will be deleted
  */
-void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, char *sessionID )
+void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, UserSession *ses )
 {
 	FBOOL locSQLused = FALSE;
 	SystemBase *sb = NULL;
@@ -1391,7 +1394,7 @@ void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, c
 	{
 		char temp[ 1024 ];
 	 
-		snprintf( temp, sizeof(temp), "DELETE from `FUserSession` where 'SessionID'='%s' AND 'DeviceIdentity'='tempsession'", sessionID );
+		snprintf( temp, sizeof(temp), "DELETE from `FUserSession` where 'SessionID'='%s' AND 'DeviceIdentity'='tempsession'", ses->us_HashedSessionID );
 
 		DEBUG("USMDestroyTemporarySession launched SQL: %s\n", temp );
 	
@@ -1401,6 +1404,11 @@ void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, c
 	if( locSQLused == TRUE )
 	{
 		sb->LibrarySQLDrop( sb, locSqllib );
+	}
+	
+	if( ses != NULL )
+	{
+		UserSessionDelete( ses );
 	}
 }
 

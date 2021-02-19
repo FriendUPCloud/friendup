@@ -71,7 +71,7 @@ AppSession *AppSessionManagerGetSessionByAuthID( AppSessionManager *usm, char *i
 //
 //
 
-AppSession *AppSessionManagerGetSessionByID( AppSessionManager *usm, FQUAD id );
+AppSession *AppSessionManagerGetSessionByID( AppSessionManager *usm, FUQUAD id );
 
 //
 //

@@ -156,7 +156,7 @@ int AppSessionManagerSessionsDeleteDB( AppSessionManager *asmgr, const char *aut
  * @param id entry ID
  * @return pointer to AppSession structure
  */
-AppSession *AppSessionManagerGetSessionByID( AppSessionManager *asmgr, FQUAD id )
+AppSession *AppSessionManagerGetSessionByID( AppSessionManager *asmgr, FUQUAD id )
 {
 	DEBUG("[AppSessionManagerGetSessionByAuthID] authid %ld\n", id );
 	if( id == 0 )

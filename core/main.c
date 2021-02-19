@@ -15,7 +15,9 @@
  *  @date pushed on 22/9/16
  */
 
+#ifndef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE 200112L
+#endif
 #include <stdio.h>
 #include <execinfo.h>
 #include <signal.h>

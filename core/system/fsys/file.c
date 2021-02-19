@@ -931,7 +931,7 @@ int FileDownloadFilesOrFolder( Http *request, void *us, const char *basepath, co
 				
 				DEBUG("============= dst %s\n========= tmpdst %s\n", &lfile[ end+1 ], tmpdst );
 				
-				actDev->f_SessionIDPTR = loggedSession->us_SessionID;
+				FileFillSessionID( actDev, loggedSession );
 				FileDownloadFileOrDirectoryRec( request, actDev, tmpdst, &lfile[ coma+1 ], basePos, -1, numberFiles );
 				FFree( tmpdst );
 			}

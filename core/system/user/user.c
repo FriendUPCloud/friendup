@@ -750,6 +750,34 @@ File *UserRemDeviceByGroupID( User *usr, FULONG grid, int *error )
 }
 
 /**
+ * Get User Device by Name
+ *
+ * @param usr pointer to User structure
+ * @param name name of device
+ * @return pointer to File if user have mounted drive, otherwise NULL
+ */
+File *UserGetDeviceByName( User *usr, const char *name )
+{
+	if( FRIEND_MUTEX_LOCK(&usr->u_Mutex) == 0 )
+	{
+		File *lfile = usr->u_MountedDevs;
+		
+		while( lfile != NULL )
+		{
+			if( strcmp( name, lfile->f_Name ) == 0 )
+			{
+				DEBUG("Device found: %s\n", name );
+				FRIEND_MUTEX_UNLOCK(&usr->u_Mutex);
+				return lfile;
+			}
+			lfile = (File *)lfile->node.mln_Succ;
+		}
+		FRIEND_MUTEX_UNLOCK(&usr->u_Mutex);
+	}
+	return NULL;
+}
+
+/**
  * Regenerate sessionid for user (DEPRICATED)
  *
  * @param usr pointer to User which will have new sessionid

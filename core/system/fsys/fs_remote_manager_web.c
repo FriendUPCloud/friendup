@@ -182,7 +182,8 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 					}
 					else
 					{
-						actDev->f_SessionIDPTR = loggedSession->us_SessionID;
+						//actDev->f_SessionIDPTR = loggedSession->us_SessionID;
+						FileFillSessionID( actDev, loggedSession );
 						
 						File *fp = (File *)actFS->FileOpen( actDev, path, mode );
 					

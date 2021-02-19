@@ -184,10 +184,11 @@ typedef struct Device
 #define FSys_Mount_Mount 				(FSys_Mount_Dummy+12)		// device is mounted flag
 #define FSys_Mount_SysBase				(FSys_Mount_Dummy+13)		// pointer to system.library
 #define FSys_Mount_Config				(FSys_Mount_Dummy + 14 ) // configuration
-#define FSys_Mount_User_SessionID		(FSys_Mount_Dummy + 15 ) // user session id
+//#define FSys_Mount_User_SessionID		(FSys_Mount_Dummy + 15 ) // user session id
+#define FSys_Mount_UserSession			(FSys_Mount_Dummy + 15 ) 
 #define FSys_Mount_Visible				(FSys_Mount_Dummy + 16 ) // Is the drive visible?
 #define FSys_Mount_Execute				(FSys_Mount_Dummy + 17 ) // Can we execute something on mount?
-#define FSys_Mount_AdminRights			(FSys_Mount_Dummy + 18 ) // If functiona was called by admin
+//#define FSys_Mount_AdminRights			(FSys_Mount_Dummy + 18 ) // If functiona was called by admin
 #define FSys_Mount_UserName				(FSys_Mount_Dummy+19)		// name of device
 #define FSys_Mount_UserID				(FSys_Mount_Dummy+20)		// userID - this will allow admin to mount drives to other users
 #define FSys_Mount_UserGroupID			(FSys_Mount_Dummy+21)		// user group id
@@ -355,7 +356,7 @@ typedef struct SystemBase
 
 	int								(*InitSystem)( struct SystemBase *l );
 
-	int								(*MountFS)( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **mountError, FBOOL calledByAdmin, FBOOL notify );
+	int								(*MountFS)( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **mountError, UserSession *us, FBOOL notify );
 
 	int								(*UnMountFS)( DeviceManager *dm, struct TagItem *tl, User *usr, UserSession *loggedSession );
 
@@ -381,7 +382,7 @@ typedef struct SystemBase
 
 	void							(*LibraryImageDrop)( struct SystemBase *sb, ImageLibrary *pl );
 	
-	int								(*UserDeviceMount)( struct SystemBase *l, User *usr, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
+	int								(*UserDeviceMount)( struct SystemBase *l, User *usr, UserSession *us, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
 	
 	int								(*UserDeviceUnMount)( struct SystemBase *l, SQLLibrary *sqllib, User *usr );
 	
@@ -553,7 +554,7 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len );
 //
 //
 
-int UserDeviceMount( SystemBase *l, User *usr, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
+int UserDeviceMount( SystemBase *l, User *u, UserSession *usrses, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
 
 //
 //

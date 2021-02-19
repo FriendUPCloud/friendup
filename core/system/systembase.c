@@ -1737,31 +1737,8 @@ int SystemInitExternal( SystemBase *l )
 		
 		UMCheckAndLoadAPIUser( l->sl_UM );
 		
-		Log( FLOG_INFO, "----------------------------------------------------\n");
-		Log( FLOG_INFO, "---------Mount user devices-------------------------\n");
-		Log( FLOG_INFO, "----------------------------------------------------\n");
-	
-		User *tmpUser = l->sl_UM->um_Users;
-		while( tmpUser != NULL )
-		{
-			char *err = NULL;
-			DEBUG( "[SystemBase] FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
-			UserDeviceMount( l, tmpUser, 1, TRUE, &err, FALSE );
-			if( err != NULL )
-			{
-				Log( FLOG_ERROR, "Initial system mount error. UserID: %lu Error: %s\n", tmpUser->u_ID, err );
-				FFree( err );
-			}
-			DEBUG( "[SystemBase] DONE FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
-			tmpUser = (User *)tmpUser->node.mln_Succ;
-		}
-		
-		Log( FLOG_INFO, "----------------------------------------------------\n");
-		Log( FLOG_INFO, "---------Mount user group devices-------------------\n");
-		Log( FLOG_INFO, "----------------------------------------------------\n");
-		
-		
-		
+		UMInitUsers( l->sl_UM );
+
 		/*
 		User *sentUser = NULL;
 		if( l->sl_Sentinel != NULL )
@@ -2066,7 +2043,8 @@ typedef struct DevNode
  * Load and mount all user doors
  *
  * @param l pointer to SystemBase
- * @param usr pointer to user to which doors belong
+ * @param u pointer to user to which device will be assigned
+ * @param usrses pointer to usersession to which doors belong
  * @param force integer 0 = don't force 1 = force
  * @param unmountIfFail should be device unmounted in DB if mount will fail
  * @param mountError pointer to error message
@@ -2074,16 +2052,17 @@ typedef struct DevNode
  * @return 0 if everything went fine, otherwise error number
  */
 
-int UserDeviceMount( SystemBase *l, User *usr, int force, FBOOL unmountIfFail, char **mountError, FBOOL notify )
+int UserDeviceMount( SystemBase *l, User *u, UserSession *usrses, int force, FBOOL unmountIfFail, char **mountError, FBOOL notify )
 {	
 	Log( FLOG_INFO,  "[UserDeviceMount] Mount user device from Database\n");
 	SQLLibrary *sqllib;
 	
-	if( usr == NULL )
+	if( usrses == NULL || usrses->us_User == NULL )
 	{
 		DEBUG("[UserDeviceMount] User parameter is empty\n");
 		return -1;
 	}
+	User *usr = usrses->us_User;
 	
 	if( usr->u_MountedDevs != NULL && force == 0 )
 	{
@@ -2183,6 +2162,7 @@ usr->u_ID , usr->u_ID, usr->u_ID
 				{ FSys_Mount_ID,      (FULONG)id },
 				{ FSys_Mount_Mount,   (FULONG)mount },
 				{ FSys_Mount_SysBase, (FULONG)SLIB },
+				{ FSys_Mount_UserSession, (FULONG)usrses },
 				{ FSys_Mount_Visible, (FULONG)1 },     // Assume visible
 				{TAG_DONE, TAG_DONE}
 			};
@@ -2190,7 +2170,7 @@ usr->u_ID , usr->u_ID, usr->u_ID
 			File *device = NULL;
 			DEBUG("[UserDeviceMount] Before mounting\n");
 			
-			int err = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &device, usr, mountError, usr->u_IsAdmin, notify );
+			int err = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &device, usr, mountError, usrses, notify );
 
 			sqllib = l->LibrarySQLGet( l );
 			// if there is error but error is not "device is already mounted"
@@ -2203,23 +2183,6 @@ usr->u_ID , usr->u_ID, usr->u_ID
 				{
 					//Log( FLOG_INFO, "UserDeviceMount. Device unmounted: %s UserID: %lu 
 					
-					/*
-					sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "\
-UPDATE `Filesystem` f SET `Mounted` = '0' \
-WHERE \
-( \
-f.UserID = '%ld' OR \
-f.GroupID IN ( \
-SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g \
-WHERE \
-g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND \
-ug.UserID = '%ld' \
-) \
-) \
-AND LOWER(f.Name) = LOWER('%s')", 
-						usr->u_ID, usr->u_ID, (char *)row[ 0 ] 
-					);
-					*/
 					sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "UPDATE `Filesystem` SET Mounted=0 WHERE ID=%lu", id );
 					
 					sqllib->QueryWithoutResults( sqllib, temptext );

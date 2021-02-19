@@ -268,6 +268,12 @@ File *UserRemDeviceByGroupID( User *usr, FULONG grid, int *error );
 //
 //
 
+File *UserGetDeviceByName( User *usr, const char *name );
+
+//
+//
+//
+
 int UserRegenerateSessionID( User *usr, char *newsess );
 
 //

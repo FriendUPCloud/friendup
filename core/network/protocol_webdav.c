@@ -943,7 +943,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 					USMUserSessionAddToList( sb->sl_USM, loggedSession );
 				}
 				char *err = NULL;
-				sb->UserDeviceMount( sb, usr, 0, TRUE, &err, TRUE );
+				sb->UserDeviceMount( sb, usr, loggedSession, 0, TRUE, &err, TRUE );
 				if( err != NULL )
 				{
 					FERROR("UserDeviceMount returned: %s\n", err );
@@ -973,7 +973,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 				return resp;
 			}
 			char *err = NULL;
-			sb->UserDeviceMount( sb, usr, 0, TRUE, &err, TRUE );
+			sb->UserDeviceMount( sb, usr, loggedSession, 0, TRUE, &err, TRUE );
 			if( err != NULL )
 			{
 				FERROR("UserDeviceMount returned: %s\n", err );
@@ -1005,7 +1005,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 	else
 	{
 		char *err = NULL;
-		sb->UserDeviceMount( sb, usr, 0, TRUE, &err, TRUE );
+		sb->UserDeviceMount( sb, usr, loggedSession, 0, TRUE, &err, TRUE );
 		if( err != NULL )
 		{
 			FERROR("UserDeviceMount returned: %s\n", err );
@@ -1227,7 +1227,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		if( have == TRUE )
 		{
 			FHandler *actFS = (FHandler *)rootDev->f_FSys;
-			rootDev->f_SessionIDPTR = loggedSession->us_SessionID;
+			FileFillSessionID( rootDev, loggedSession );
 			
 			File *fp = (File *)actFS->FileOpen( rootDev, filePath, "rb" );
 			if( fp != NULL )
@@ -1374,7 +1374,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		if( have == TRUE )
 		{
 			FHandler *actFS = (FHandler *)rootDev->f_FSys;
-			rootDev->f_SessionIDPTR = loggedSession->us_SessionID;
+			FileFillSessionID( rootDev, loggedSession );
 			File *fp = (File *)actFS->FileOpen( rootDev, filePath, "rb" );
 			if( fp != NULL )
 			{
@@ -1420,7 +1420,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		{
 			FHandler *actFS = (FHandler *)rootDev->f_FSys;
 			
-			rootDev->f_SessionIDPTR = loggedSession->us_SessionID;
+			FileFillSessionID( rootDev, loggedSession );
 			File *fp = (File *)actFS->FileOpen( rootDev, filePath, "wb" );
 			if( fp != NULL )
 			{
@@ -1509,7 +1509,7 @@ Host: 192.168.153.138:6502
 			}
 			DEBUG("RENAME, srcname %s dstname %s\n", filePath, dstpath );
 			
-			rootDev->f_SessionIDPTR = loggedSession->us_SessionID;
+			FileFillSessionID( rootDev, loggedSession );
 			int err = actFS->Rename( rootDev, filePath, dstpath );
 			
 			DEBUG("RENAME, err %d\n", err );
@@ -1547,7 +1547,7 @@ Host: 192.168.153.138:6502
 		if( have == TRUE )
 		{
 			FHandler *actFS = (FHandler *)rootDev->f_FSys;
-			rootDev->f_SessionIDPTR = loggedSession->us_SessionID;
+			FileFillSessionID( rootDev, loggedSession );
 			actFS->MakeDir( rootDev, filePath );
 		}
 		
@@ -1616,7 +1616,7 @@ Host: 192.168.153.138:6502
 				int read;
 				FHandler *actFS = (FHandler *)rootDev->f_FSys;
 				
-				rootDev->f_SessionIDPTR = loggedSession->us_SessionID;
+				FileFillSessionID( rootDev, loggedSession );
 			
 				File *rfp = (File *)actFS->FileOpen( rootDev, filePath, "rb" );
 				if( rfp != NULL )
@@ -1733,7 +1733,7 @@ Host: 192.168.153.138:6502
 					BufString *locdirresp;
 					
 					//stefkos
-					rootDev->f_SessionIDPTR = loggedSession->us_SessionID;
+					FileFillSessionID( rootDev, loggedSession );
 					if( filePath == NULL )
 					{
 						locdirresp = actFS->Dir( rootDev, "" );
