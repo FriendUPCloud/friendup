@@ -192,9 +192,34 @@
 
 /* End positioning on left column */
 
+#Roster .Heading
+{
+    border-bottom: rgba(255,255,255,0.15) 1px solid;
+}
+
+#Roster .Date
+{
+    padding-left: 10px;
+}
+
 #Roster .Date.Expired, #Roster .RosterEvent.Expired
 {
 	opacity: 0.6;
+}
+
+#Roster .RosterEvent
+{
+    box-sizing: border-box;
+    padding: 5px 10px;
+    border-radius: 15px;
+    background: rgb(26, 188, 156);
+    color: black;
+}
+
+#Roster .RosterEvent.Expired
+{
+    background: rgba(0,0,0,0.5);
+    color: white;
 }
 
 #DayHeading

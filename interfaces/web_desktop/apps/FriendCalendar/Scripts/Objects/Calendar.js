@@ -820,36 +820,36 @@ Calendar.refreshRoster = function( mode )
 	
 	let now = ( new Date() ).getTime();
 	let currdate = null;
+	let daySecs = 86400000;
 	
 	if( mode == 'week' )
 	{
 		let time = this.date.getTime();
-		let time2 = this.date.getTime();
+		time = Math.floor( time / daySecs ) * daySecs;
+		let time2 = Math.floor( this.date.getTime() / daySecs ) * daySecs;
 		let findDay = new Date( time );
 		let startDay = this.date.getDay();
-		let endDay = this.date.getDay();
+		let endDay = 0;
 	
 		// Find start of week (where monday is 1)
 		// And find date span for the week
-		if( ( new Date( time ).getDay() ) != 1 )
+		while( findDay != 1 )
 		{
-			while( findDay != 1 )
-			{
-				time -= 86400000;
-				let t1 = new Date( time );
-				findDay = t1.getDay();
-				startDay--;
-				dateFrom = t1.getFullYear() + '-' + StrPad( t1.getMonth() + 1, 2, '0' ) + '-' + StrPad( t1.getDate(), 2, '0' ) + ' 00:00:00';
-			}
-			while( endDay < 7 )
-			{
-				time2 += 86400000;
-				let t2 = new Date( time2 );
-				findDay = t2.getDay();
-				endDay++;
-				dateTo = t2.getFullYear() + '-' + StrPad( t2.getMonth() + 1, 2, '0' ) + '-' + StrPad( t2.getDate(), 2, '0' ) + ' 23:59:59';
-			}
+			time -= daySecs;
+			let t1 = new Date( time );
+			findDay = t1.getDay();
+			startDay--;
+			dateFrom = t1.getFullYear() + '-' + StrPad( t1.getMonth() + 1, 2, '0' ) + '-' + StrPad( t1.getDate(), 2, '0' ) + ' 00:00:00';
 		}
+		while( endDay < 7 )
+		{
+			time2 += daySecs;
+			let t2 = new Date( time2 );
+			findDay = t2.getDay();
+			endDay++;
+			dateTo = t2.getFullYear() + '-' + StrPad( t2.getMonth() + 1, 2, '0' ) + '-' + StrPad( t2.getDate(), 2, '0' ) + ' 23:59:59';
+		}
+	
 		
 		// Set StopIteration
 		dateFrom = ( new Date( dateFrom ) ).getTime();
