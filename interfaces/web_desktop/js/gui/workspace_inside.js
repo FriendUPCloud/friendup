@@ -739,7 +739,6 @@ var WorkspaceInside = {
 						callback();
 						callback = null;
 					}
-					console.log( 'Waiting for ping!' );
 				}
 				else if( e.type == 'connecting' )
 				{
@@ -3459,7 +3458,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				if( eles.length )
 				{
 					// Check if we have a loadable image!
-					console.log( 'What is it?', self.wallpaperImage );
 					let p = self.wallpaperImage.split( ':' )[0];
 					let found = false;
 					for( let a = 0; a < self.icons.length; a++ )
