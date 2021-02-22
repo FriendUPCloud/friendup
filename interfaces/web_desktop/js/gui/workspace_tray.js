@@ -834,7 +834,7 @@ function CloseNotification( notification )
 	    {
 		    d.struct.onCloseBubble();
 	    }
-	   }
+    }
 }
 
 // Buffer for click callbacks
