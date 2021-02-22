@@ -233,7 +233,7 @@ function UniqueHash( str )
 {
 	if( str )
 		return SHA256( str + "" );
-	return SHA256( "" + ( Math.random() * 999 ) + ( Math.random() * 999 ) + ( Math.random() * 999 ) + ( new Date() ).getTime() );
+	return SHA256( Math.random().toString(36).substr(2, 11) + Math.random().toString(36).substr(2, 11) );
 }
 
 // set a cookie

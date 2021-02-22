@@ -506,6 +506,8 @@ cAjax.prototype.setRequestHeader = function( type, data )
 // Just generate a random unique number
 cAjax.prototype.getRandNumbers = function()
 {
+    if( window.UniqueHash )
+    	return UniqueHash();
 	let i = '';
 	for( let a = 0; a < 2; a++ )
 		i += Math.floor( Math.random() * 1000 ) + '';
