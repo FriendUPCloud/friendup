@@ -5393,10 +5393,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									if( this.checked )
 									{
 										var m = new Library( 'system.library' );
+										console.log( 'Public: ' + p );
 										m.onExecuted = function( e, d )
 										{
 											let ele = ( new Door().get( p ) );
-											console.log( 'Public: ' + p );
 											ele.getIcons( false, function( icons, path, test )
 											{
 												// Update link
