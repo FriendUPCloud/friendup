@@ -5395,12 +5395,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										var m = new Library( 'system.library' );
 										m.onExecuted = function( e, d )
 										{
-											var ele = ( new Door().get( p ) );
+											let ele = ( new Door().get( p ) );
 											ele.getIcons( false, function( icons, path, test )
 											{
 												// Update link
-												var ic = false;
-												for( var b = 0; b < icons.length; b++ )
+												let ic = false;
+												for( let b = 0; b < icons.length; b++ )
 												{
 													if( icons[b].Type != 'File' ) continue;
 													if( icons[b].Path == icon.Path )
@@ -5410,7 +5410,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 													}
 												}
 												if( !ic ) return;
-												for( var b = 0; b < eles.length; b++ )
+												for( let b = 0; b < eles.length; b++ )
 												{
 													if( eles[b].getAttribute( 'name' ) == 'PublicLink' )
 													{
@@ -5434,19 +5434,19 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									// Set file private
 									else
 									{
-										var m = new Library( 'system.library' );
+										let m = new Library( 'system.library' );
 										m.onExecuted = function( e )
 										{
 											if( e != 'ok' )
 											{
 												this.checked = true;
 											}
-											var ele = ( new Door().get( p ) );
+											let ele = ( new Door().get( p ) );
 											ele.getIcons( false, function( icons, path, test )
 											{
 												// Update link
-												var ic = false;
-												for( var b = 0; b < icons.length; b++ )
+												let ic = false;
+												for( let b = 0; b < icons.length; b++ )
 												{
 													if( icons[b].Type != 'File' ) continue;
 													if( icons[b].Path == icon.Path )
@@ -5456,7 +5456,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 													}
 												}
 												if( !ic ) return;
-												for( var b = 0; b < eles.length; b++ )
+												for( let b = 0; b < eles.length; b++ )
 												{
 													if( eles[b].getAttribute( 'name' ) == 'PublicLink' )
 													{
