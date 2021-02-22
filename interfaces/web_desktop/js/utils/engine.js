@@ -231,7 +231,7 @@ function UniqueId ()
 
 function UniqueHash( str )
 {
-    if( !str ) str = Math.random() + Math.random() + Math.random();
+    if( !str ) str = Math.random() + '' + Math.random() + '' + Math.random();
     else str = str + '';
     if( window.SHA256 )
     {
