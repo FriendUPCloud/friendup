@@ -944,6 +944,9 @@ Calendar.refreshRoster = function( mode )
 			
 			if( within || within2 )
 			{
+			    let paletteSlot = event.Your ? 0 : 1;
+				let st = 'background-color: ' + eventPaletteBackground[ paletteSlot ] + ';';
+				
 				let timestamp = ( new Date( event.DateEnd ) ).getTime();
 			
 				let cl = '';
@@ -961,7 +964,7 @@ Calendar.refreshRoster = function( mode )
 				let time = event.DateStart.split( ' ' )[1];
 				time = time.split( ':' );
 				time = time[0] + ':' + time[1];
-				let s = '<p class="RosterEvent' + cl + '">' + time + ': ' + event.Name + '</p>';
+				let s = '<p class="RosterEvent' + cl + '" style="' + st + '">' + time + ': ' + event.Name + '</p>';
 				if( cl ) pstr += s;
 				else nstr += s;
 			}
