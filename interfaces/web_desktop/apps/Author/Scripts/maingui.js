@@ -705,7 +705,7 @@ Application.loadFile = function( path, cbk )
 				{
 					if( Application.editor && Application.editor.setData )
 					{
-						Application.editor.setData( Application.editor.getData() + textHere );
+						Application.editor.setData( Application.editor.getData() );
 						ge( 'Printable' ).innerHTML = Application.editor.getData();
 					}
 					
