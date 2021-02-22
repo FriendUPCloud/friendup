@@ -419,6 +419,7 @@ Workspace.refreshShareInformation = function( viewObject, callback )
 						let m = new Module( 'system' );
 						m.onExecuted = function( me, md )
 						{
+							Workspace.refreshWindowByPath( viewObject.path );
 							Workspace.refreshShareInformation( viewObject );
 						}
 						if( n = this.parentNode.getAttribute( 'uid' ) )
