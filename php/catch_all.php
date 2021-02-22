@@ -134,7 +134,8 @@ if( isset( $argv ) && isset( $argv[1] ) )
 				}
 				
 				$path = implode( '/', $path );
-				$devname = reset( explode( ':', $base ) );
+				$devname = explode( ':', $base );
+				$devname = reset( $devname );
 								
 				if( $base && ( $auth || $session ) && $path )
 				{

@@ -1308,6 +1308,7 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 			ifr.workspace = flags && flags.workspace ? flags.workspace : 0;
 			ifr.opensilent = flags && flags.openSilent == true ? true : false;
 			ifr.applicationType = 'jsx';
+			
 			if( sid ) 
 				ifr.sessionId = Workspace.sessionId; // JSX has sessionid
 			else 
