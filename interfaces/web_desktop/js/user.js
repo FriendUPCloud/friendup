@@ -175,6 +175,7 @@ Friend.User = {
 					
 					if( !Workspace.userWorkspaceInitialized )
 					{
+                		// Init workspace
 						Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), event );
 					}
 					else

@@ -902,7 +902,7 @@ Workspace = {
 				'webclient/js/api/friendAPIv1_2.js';
 			s.onload = function()
 			{
-				// Start with expanding the workspace object
+			    // Start with expanding the workspace object
 				// TODO: If we have sessionid - verify it through ajax.
 				// TODO: This block is only for already initialized workspace
 				if( _this.sessionId && _this.postInitialized )
@@ -917,6 +917,9 @@ Workspace = {
 					// console.log( 'Test2: Got in sessionid error.', json );
 					return false;
 				}
+
+                // Just get it done!
+				InitWorkspaceNetwork();
 
 				// Reset some options
 				if( ev && ev.shiftKey )

@@ -717,6 +717,7 @@ var WorkspaceInside = {
 				if( Workspace.websocketState != 'open' )
 				{
 					// Refresh mountlist
+					Workspace.websocketState = 'open';
 					Workspace.refreshDesktop( false, true );
 				}
 
@@ -738,7 +739,7 @@ var WorkspaceInside = {
 						callback();
 						callback = null;
 					}
-					Workspace.websocketState = 'open';
+					console.log( 'Waiting for ping!' );
 				}
 				else if( e.type == 'connecting' )
 				{
@@ -1801,6 +1802,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				initFriendWorkspace()
 			);
 		}
+		m.forceHTTP = true;
 		m.execute( 'getsetting', { settings: [ 
 			'avatar', 'workspacemode', 'wallpaperdoors', 'wallpaperwindows', 'language', 
 			'menumode', 'startupsequence', 'navigationmode', 'windowlist', 
@@ -3032,13 +3034,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									document.body.classList.add( 'Loaded' );
 									document.body.classList.remove( 'Login' );
 									document.body.classList.remove( 'Loading' );
-								
-									// Init the websocket etc
-									InitWorkspaceNetwork();
-									
-									// Generate avatar
-									var sm = new Module( 'system' );
-									sm.execute( 'getsetting', { setting: 'avatar' } );
 									
 									document.title = Friend.windowBaseString;
 									
@@ -3427,7 +3422,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// We always have one entry, the system disk
 			if( data.length <= 1 )
 			{
-				console.log( 'No stuff!' );
 				return;
 			}
 			
@@ -3457,13 +3451,18 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Recall wallpaper
 			if( Workspace.mode != 'vr' && self.wallpaperImage != 'color' )
 			{
-				var eles = self.screen.div.getElementsByClassName( 'ScreenContent' );
+			    if( self.wallpaperImage == undefined )
+			    {
+			        return setTimeout( function(){ Workspace.refreshDesktop( callback, forceRefresh ) }, 25 );
+			    }
+				let eles = self.screen.div.getElementsByClassName( 'ScreenContent' );
 				if( eles.length )
 				{
 					// Check if we have a loadable image!
-					var p = self.wallpaperImage.split( ':' )[0];
-					var found = false;
-					for( var a = 0; a < self.icons.length; a++ )
+					console.log( 'What is it?', self.wallpaperImage );
+					let p = self.wallpaperImage.split( ':' )[0];
+					let found = false;
+					for( let a = 0; a < self.icons.length; a++ )
 					{
 						if( self.icons[a].Title == p )
 						{
@@ -3472,7 +3471,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					
 					// Load image
-					var ext = false;
+					let ext = false;
 					if( self.wallpaperImage.indexOf( '.' ) > 0 )
 					{
 						ext = self.wallpaperImage.split( '.' );
@@ -3480,8 +3479,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 
 					// Remove prev
-					var v = eles[0].parentNode.getElementsByTagName( 'video' );
-					for( var z = 0; z < v.length; z++ ) 
+					let v = eles[0].parentNode.getElementsByTagName( 'video' );
+					for( let z = 0; z < v.length; z++ ) 
 					{
 						v[ z ].parentNode.removeChild( v[ z ] );
 					}
@@ -3502,8 +3501,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								o.className = 'VideoBackground';
 								o.src = getImageUrl( self.wallpaperImage );
 							}
-							var m = document.createElement( 'video' ); setTheThing( m );
-							var c = document.createElement( 'video' ); setTheThing( c );
+							let m = document.createElement( 'video' ); setTheThing( m );
+							let c = document.createElement( 'video' ); setTheThing( c );
 							m.autoplay = true;
 							c.autoplay = false;
 							c.style.visibility = 'hidden';
@@ -3528,14 +3527,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							break;
 						default:
 							Workspace.wallpaperLoaded = false;
-							var workspaceBackgroundImage = new Image();
+							let workspaceBackgroundImage = new Image();
 							workspaceBackgroundImage.onload = function()
 							{
 								// Let's not fill up memory with new wallpaper images
 								if( Workspace.prevWallpaper )
 								{
-									var o = [];
-									for( var c = 0; c < Workspace.imgPreload.length; c++ )
+									let o = [];
+									for( let c = 0; c < Workspace.imgPreload.length; c++ )
 									{
 										if( Workspace.imgPreload[c].src != Workspace.prevWallpaper )
 											o.push( Workspace.imgPreload[c] );
@@ -3606,7 +3605,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// We have no wallpaper...
 			else if( Workspace.mode == 'standard' )
 			{
-				var eles = self.screen.div.getElementsByClassName( 'ScreenContent' );
+				let eles = self.screen.div.getElementsByClassName( 'ScreenContent' );
 				if( eles.length )
 				{
 					eles[0].style.backgroundImage = '';
