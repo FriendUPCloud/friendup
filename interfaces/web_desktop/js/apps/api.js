@@ -786,7 +786,7 @@ function getUrlVar( vari )
 	{
 		url = url[1];
 		let vars = url.split( '&' );
-		for( v = 0; v < vars.length; v++ )
+		for( let v = 0; v < vars.length; v++ )
 		{
 			let va = vars[v].split( '=' );
 			if( va[0] == vari ) return va[1];
@@ -1505,7 +1505,7 @@ function receiveEvent( event, queued )
 						{
 							for( let a in f.replacements )
 							{
-								f.data = f.data.split( '{' + a + '}' ).join ( f.replacements[a] );
+								f.data = f.data.split( '{' + a + '}' ).join( f.replacements[a] );
 							}
 						}
 						// For jsx files and others
@@ -2035,26 +2035,7 @@ function FriendWebSocket( config )
 	this.active = false;
 
 	// Find a unique ID for the websocket
-	let id = ( Math.random() * 999 ) + ( Math.random() * 999 ) + ( new Date().getTime() );
-	let found = false;
-	do
-	{
-		found = false;
-		if( Application.websockets.length )
-		{
-			for( let a in Application.websockets )
-			{
-				if( a == id )
-				{
-					id = ( Math.random() * 999 ) + ( Math.random() * 999 ) + ( new Date().getTime() );
-					found = true;
-					break;
-				}
-			}
-		}
-	}
-	while( found );
-	Application.websockets[id] = this;
+	Application.websockets[UniqueHash()] = this;
 
 	// Connect to server
 	// TODO: Add callback on which to communicate
