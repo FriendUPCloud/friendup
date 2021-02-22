@@ -5393,7 +5393,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									if( this.checked )
 									{
 										var m = new Library( 'system.library' );
-										console.log( 'Public: ' + p );
 										m.onExecuted = function( e, d )
 										{
 											let ele = ( new Door().get( p ) );
@@ -5410,7 +5409,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 														break;
 													}
 												}
-												if( !ic ) return;
+												if( !ic ) return Workspace.refreshWindowByPath( path );;
 												for( let b = 0; b < eles.length; b++ )
 												{
 													if( eles[b].getAttribute( 'name' ) == 'PublicLink' )
@@ -5436,7 +5435,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									else
 									{
 										let m = new Library( 'system.library' );
-										console.log( 'Private: ' + p );
 										m.onExecuted = function( e )
 										{
 											if( e != 'ok' )
@@ -5457,7 +5455,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 														break;
 													}
 												}
-												if( !ic ) return;
+												if( !ic ) return Workspace.refreshWindowByPath( path );;
 												for( let b = 0; b < eles.length; b++ )
 												{
 													if( eles[b].getAttribute( 'name' ) == 'PublicLink' )
