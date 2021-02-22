@@ -231,9 +231,13 @@ function UniqueId ()
 
 function UniqueHash( str )
 {
-	if( str )
-		return SHA256( str + "" );
-	return SHA256( Math.random().toString(36).substr(2, 11) + Math.random().toString(36).substr(2, 11) );
+    if( !str ) str = Math.random().toString(36).substr(2, 11) + Math.random().toString(36).substr(2, 11);
+    else str = str + '';
+    if( window.SHA256 )
+    {
+	    return SHA256( str );
+	}
+	return str;
 }
 
 // set a cookie
