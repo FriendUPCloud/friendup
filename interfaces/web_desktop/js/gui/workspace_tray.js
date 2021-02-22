@@ -816,22 +816,25 @@ function Notify( message, callback, clickcallback )
 }
 function CloseNotification( notification )
 {
-	var d = notification.childNodes[ 0 ];
-	notification.removeChild( d ); 
-	if( notification.getAttribute( 'label' ) )
-	{
-		notification.classList.remove( 'PopNotification' );
-	}
-	if( !notification.getElementsByTagName( 'div' ).length )
-	{
-		ge( 'Tray' ).removeChild( notification );
-	}
-	// Standard notifications can reply to notification origin
-	// that the bubble did close
-	if( d.struct && d.struct.onCloseBubble )
-	{
-		d.struct.onCloseBubble();
-	}
+    if( notification && notification.childNodes )
+    {
+	    var d = notification.childNodes[ 0 ];
+	    notification.removeChild( d ); 
+	    if( notification.getAttribute( 'label' ) )
+	    {
+		    notification.classList.remove( 'PopNotification' );
+	    }
+	    if( !notification.getElementsByTagName( 'div' ).length )
+	    {
+		    ge( 'Tray' ).removeChild( notification );
+	    }
+	    // Standard notifications can reply to notification origin
+	    // that the bubble did close
+	    if( d.struct && d.struct.onCloseBubble )
+	    {
+		    d.struct.onCloseBubble();
+	    }
+	   }
 }
 
 // Buffer for click callbacks
