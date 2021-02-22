@@ -114,7 +114,6 @@ if( isset( $args->conf ) )
 		}
 	}
 	
-	
 	$apibase = base64_encode( file_get_contents( 'resources/webclient/js/apps/api.js' ) );
 	
 	// Includes!
@@ -184,7 +183,9 @@ if( isset( $args->conf ) )
 		$options = new stdClass();
 		if( isset( $args->url ) )
 		{
-			$url = explode( '&', end( explode( '?', $args->url ) ) );
+		    $url = explode( '?', $args->url );
+		    $url = end( $url );
+			$url = explode( '&', $url );
 			foreach( $url as $u )
 			{
 				list( $key, $value ) = explode( '=', $u );
