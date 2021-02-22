@@ -119,6 +119,8 @@ function PollTray()
 		}
 		tray.appendChild( da );
 		
+		/*
+		//TODO: Reenable when ready
 		var ca = tray.calendarApplet = document.createElement( 'div' );
 		ca.className = 'Calendar TrayElement IconSmall';
 		ca.onclick = function()
@@ -128,7 +130,7 @@ function PollTray()
 		ca.poll = function()
 		{
 		}
-		tray.appendChild( ca );
+		tray.appendChild( ca );*/
 	}
 	
 	// Check for notifications in history
