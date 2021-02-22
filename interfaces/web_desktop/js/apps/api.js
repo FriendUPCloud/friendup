@@ -22,9 +22,9 @@ Friend.fastUrlArgs = document.location.href.split( '?' );
 if( Friend.fastUrlArgs.length > 1 )
 {
 	Friend.fastUrlArgs = Friend.fastUrlArgs[1].split( '&' );
-	for( var a = 0; a < Friend.fastUrlArgs.length; a++ )
+	for( let a = 0; a < Friend.fastUrlArgs.length; a++ )
 	{
-		var pair = Friend.fastUrlArgs[a].split( '=' );
+		let pair = Friend.fastUrlArgs[a].split( '=' );
 		if( pair[0] == 'noevents' )
 			Friend.noevents = true;
 	}
@@ -221,7 +221,7 @@ var Application =
 	loadTranslations: function( path, callback )
 	{
 		if( this.language == false ) this.language = Friend.globalConfig.language.split( '-' )[0];
-		var f = new File( path + this.language + '.lang' );
+		let f = new File( path + this.language + '.lang' );
 		f.onLoad = function( data )
 		{
 			// no locale file for this language found?
@@ -233,11 +233,11 @@ var Application =
 			}
 
 			if( !window.translations ) window.translations = [];
-			var expl = data.split( "\n" );
-			for( var a = 0; a < expl.length; a++ )
+			let expl = data.split( "\n" );
+			for( let a = 0; a < expl.length; a++ )
 			{
 				if( expl[a].substr( 0, 1 ) == '#' ) continue;
-				var words = expl[a].split( ':' );
+				let words = expl[a].split( ':' );
 				if( Trim( words[0] ).length )
 				{
 					window.translations[Trim(words[0])] = Trim(words[1]);

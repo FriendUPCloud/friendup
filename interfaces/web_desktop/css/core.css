@@ -22,6 +22,11 @@ body *
 	display:none!important
 }
 
+input:focus, textarea:focus, select:focus
+{
+    outline: none;
+}
+
 /* TEMPORARY TESThtml body.ViewStateActive:after,
 html body:not(.ViewStateActive):after 
 {
