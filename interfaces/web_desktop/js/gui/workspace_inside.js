@@ -2513,11 +2513,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						Workspace.mainDock.addLauncher( ob );
 					}
 
-					var elements = JSON.parse( dat );
-					for( var a = 0; a < elements.length; a++ )
+					let elements = JSON.parse( dat );
+					for( let a = 0; a < elements.length; a++ )
 					{
-						var ele = elements[a];
-						var icon = 'apps/' + ele.Name + '/icon.png';
+						let ele = elements[a];
+						let icon = 'apps/' + ele.Name + '/icon.png';
 						if( ele.Name.indexOf( ':' ) > 0 )
 						{
 							ext = ele.Name.split( ':' )[1];
@@ -2537,7 +2537,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							else icon = ele.Icon;
 						}
 						
-						var ob = {
+						let ob = {
 							exe         : ele.Name,
 							type        : ele.Type,
 							src         : icon,
@@ -2550,7 +2550,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						// For Linux apps..
 						if( ele.Name.substr( 0, 7 ) == 'native:' )
 						{
-							var tmp = ob.exe.split( 'native:' )[1];
+							let tmp = ob.exe.split( 'native:' )[1];
 							ob.click = genFunc( tmp );
 						}
 

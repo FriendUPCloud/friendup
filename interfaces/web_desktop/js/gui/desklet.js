@@ -791,7 +791,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				o.src = getImageUrl( o.src );
 			}
 			
-			o.opensilent = o.opensilent === '1' ? true : false;
+			o.opensilent = o.opensilent == '1' ? true : false;
 			
 			// This is web bookmarks
 			if( o.src == '.url' )
@@ -873,7 +873,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				var rememberCurrent = false;
 				
 				// If we have a non silent launch, and a current movable, deactivate current
-				if( currentMovable && !o.opensilent )
+				if( currentMovable && o.opensilent === false )
 				{
 					rememberCurrent = currentMovable;
 					_DeactivateWindow( currentMovable );

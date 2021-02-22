@@ -61,7 +61,8 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	
 	// Match silent
 	if( !flags ) flags = {};
-	flags.openSilent = false;
+	if( flags.openSilent !== true )
+    	flags.openSilent = false;
 	
 	if( args )
 	{
