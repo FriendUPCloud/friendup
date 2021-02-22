@@ -921,6 +921,11 @@ function receiveEvent( event, queued )
 					document.body.classList.remove( 'Loading' );
 					document.body.classList.add( 'Loaded' );
 				}
+				styles.onerror = function( e, d )
+				{   
+                    document.body.classList.remove( 'Loading' );
+					document.body.classList.add( 'Loaded' );
+				}
 				
 				if( themeName && themeName != 'default' )
 				{
