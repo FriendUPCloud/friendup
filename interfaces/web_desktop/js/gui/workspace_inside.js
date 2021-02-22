@@ -5396,6 +5396,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										m.onExecuted = function( e, d )
 										{
 											let ele = ( new Door().get( p ) );
+											console.log( 'Public: ' + p );
 											ele.getIcons( false, function( icons, path, test )
 											{
 												// Update link
@@ -5435,6 +5436,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									else
 									{
 										let m = new Library( 'system.library' );
+										console.log( 'Private: ' + p );
 										m.onExecuted = function( e )
 										{
 											if( e != 'ok' )
