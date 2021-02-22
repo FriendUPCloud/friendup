@@ -5640,9 +5640,6 @@ function setupMessageFunction( dataPacket, origin )
 		{
 			if( msg[ a ] instanceof ArrayBuffer || toString.call( msg[ a ] ) === '[object ArrayBuffer]' )
 			{
-				//var v = new Uint8Array( msg[ a ] );
-				//msg[ a ] = Array.prototype.join.call( v, ',' );
-				//msg[ a + '_format' ] = 'binaryString';
 				msg[ a ] = ConvertArrayBufferToString( msg[ a ], 'base64' );
 				msg[ a + '_format' ] = 'base64';
 			}
@@ -7097,7 +7094,7 @@ function ShareElementEvents( ele, recursive )
 		'click', 'touchstart', 'touchend', 'keydown', 'keyup', 'keypress'
 	];
 
-	let uid = Sha256.hash( ( ( new Date() ).getTime() + ( Math.random() * 999999 ) ) + "" );
+	let uid = UniqueHash();
 	for( let a = 0; a < events.length; a++ )
 	{
 		let evt = events[a];
