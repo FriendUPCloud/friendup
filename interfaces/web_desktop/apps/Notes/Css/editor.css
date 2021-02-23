@@ -89,13 +89,22 @@ html > body
 }
 #Status * { padding: 0; margin: 0; }
 
+#NotesToolbar
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 250px;
+    height: 47px;
+}
+
 #LeftBar
 {
 	position: absolute;
-	top: 0;
+	top: 47px;
 	left: 0;
 	width: 250px;
-	height: calc(100% - 50px);
+	height: calc(100% - 97px);
 	box-sizing: border-box;
 }
 
