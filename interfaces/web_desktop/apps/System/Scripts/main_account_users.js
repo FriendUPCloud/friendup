@@ -5372,962 +5372,8 @@ Sections.accounts_users = function( cmd, extra )
 			li.onclick = function( e )
 			{
 				
-				// Language
-				var availLangs = {
-					'en' : 'English',
-					'fr' : 'French',
-					'no' : 'Norwegian',
-					'fi' : 'Finnish',
-					'pl' : 'Polish'
-				};
+				NewUser( this );
 				
-				var languages = '';
-				
-				for( var a in availLangs )
-				{
-					languages += '<option value="' + a + '">' + availLangs[ a ] + '</option>';
-				}
-				
-				// Setup / Template
-				
-				getSetupList( function( e, data )
-				{
-					
-					var setup = '<option value="0">None</option>';
-					
-					if( e && data )
-					{
-						for( var s in data )
-						{
-							if( data[s] && data[s].ID )
-							{
-								setup += '<option value="' + data[s].ID + '">' + data[s].Name + '</option>';
-							}
-						}
-					}
-					
-					var d = new File( 'Progdir:Templates/account_users_details.html' );
-					// Add all data for the template
-					d.replacements = {
-						user_name            : i18n( 'i18n_new_user' ),
-						user_fullname        : '',
-						user_username        : '',
-						user_email           : '',
-						user_language        : languages,
-						user_setup           : setup,
-						user_locked_toggle   : 'fa-toggle-off',
-						user_disabled_toggle : 'fa-toggle-off',
-						theme_name           : '',
-						theme_dark           : '',
-						theme_style          : '',
-						theme_preview        : '',
-						wallpaper_name       : '',
-						workspace_count      : '',
-						system_disk_state    : '',
-						storage              : '',
-						workgroups           : '',
-						roles                : '',
-						applications         : ''
-					};
-				
-					// Add translations
-					d.i18n();
-					d.onLoad = function( data )
-					{
-						ge( 'UserDetails'               ).innerHTML = data;
-						//initStorageGraphs();
-						
-						//ge( 'AdminWorkgroupContainer'   ).style.display = 'none';
-						ge( 'WorkgroupEdit' ).style.display = 'none';
-						
-						ge( 'AdminStatusContainer'      ).style.display = 'none';
-					
-						ge( 'AdminLooknfeelContainer'   ).style.display = 'none';
-						
-						ge( 'AdminRoleContainer'        ).style.display = 'none';
-						ge( 'AdminStorageContainer'     ).style.display = 'none';
-						ge( 'AdminApplicationContainer' ).style.display = 'none';
-						
-						// User
-						
-						var bg1  = ge( 'UserSaveBtn' );
-						if( bg1 )
-						{
-							if( Application.checkAppPermission( [ 
-								'PERM_USER_CREATE_GLOBAL', 'PERM_USER_CREATE_IN_WORKGROUP', 
-								'PERM_USER_GLOBAL',        'PERM_USER_WORKGROUP' 
-							] ) )
-							{
-								bg1.onclick = function( e )
-								{
-									
-									if( ge( 'usUsername' ).value )
-									{
-										
-										_saveUser( false, function( uid )
-										{
-											
-											if( uid )
-											{
-												
-												// Refresh whole users list ...
-									
-												Sections.accounts_users(  );
-									
-												// Go to edit mode for the new user ...
-									
-												Sections.accounts_users( 'edit', uid );
-									
-											}
-							
-										} );
-									}
-									else
-									{
-										ge( 'usUsername' ).focus();
-									}
-								}
-							}
-							else
-							{
-								bg1.style.display = 'none';
-							}
-						}
-						var bg2  = ge( 'UserCancelBtn' );
-						if( bg2 ) bg2.onclick = function( e )
-						{
-							cancelUser(  );
-						}
-						var bg3  = ge( 'UserBackBtn' );
-						if( !isMobile ) 
-						{
-							if( bg3 ) bg3.style.display = 'none';
-						}
-						else
-						{
-							if( bg3 ) bg3.onclick = function( e )
-							{
-								cancelUser(  );
-							}
-						}
-						
-						if( ge( 'UserDeleteBtn' ) )
-						{
-							ge( 'UserDeleteBtn' ).className = 'Closed';
-						}
-						
-						if( ge( 'UserEditButtons' ) )
-						{
-							//ge( 'UserEditButtons' ).className = 'Closed';
-						}
-						
-						if( ge( 'UserBasicDetails' ) )
-						{
-							var inps = ge( 'UserBasicDetails' ).getElementsByTagName( 'input' );
-							if( inps.length > 0 )
-							{
-								for( var a = 0; a < inps.length; a++ )
-								{
-									if( inps[ a ].id && [ 'usFullname', 'usUsername', 'usEmail' ].indexOf( inps[ a ].id ) >= 0 )
-									{
-										( function( i ) {
-											i.onclick = function( e )
-											{
-												editMode();
-											}
-										} )( inps[ a ] );
-									}
-									
-								}
-							}
-							
-							if( ge( 'usLevel' ) )
-							{
-								ge( 'usLevel' ).current = ge( 'usLevel' ).value;
-							}
-							
-							if( ge( 'AdminLevelContainer' ) && Application.checkAppPermission( [ 'PERM_USER_READ_GLOBAL', 'PERM_USER_GLOBAL' ] ) )
-							{
-								if( ge( 'AdminLevelContainer' ).classList.contains( 'Closed' ) )
-								{
-									ge( 'AdminLevelContainer' ).classList.remove( 'Closed' );
-									ge( 'AdminLevelContainer' ).classList.add( 'Open' );
-								}
-							}
-							
-							if( ge( 'usLanguage' ) )
-							{
-								ge( 'usLanguage' ).current = ge( 'usLanguage' ).value;
-							}
-							if( ge( 'usSetup' ) )
-							{
-								ge( 'usSetup' ).current = ge( 'usSetup' ).value;
-							}
-						}
-						
-						// Avatar 
-					
-						var ae = ge( 'AdminAvatarEdit' );
-						if( ae )
-						{
-							if( Application.checkAppPermission( [ 
-								'PERM_USER_CREATE_GLOBAL', 'PERM_USER_CREATE_IN_WORKGROUP', 
-								'PERM_USER_UPDATE_GLOBAL', 'PERM_USER_UPDATE_IN_WORKGROUP', 
-								'PERM_USER_GLOBAL',        'PERM_WORKGROUP_GLOBAL' 
-							] ) )
-							{
-								ae.onclick = function( e )
-								{
-									changeAvatar();
-								}
-							}
-							else
-							{
-								ae.style.display = 'none';
-							}
-						}
-					
-						var au = ge( 'usFullname' );
-						if( au ) au.onblur = function( e )
-						{
-							if( this.value && this.value != this.fullname )
-							{
-							
-								randomAvatar( this.value, function( avatar ) 
-								{
-									var canvas = 0;
-									
-									try
-									{
-										canvas = ge( 'AdminAvatar' ).toDataURL();
-									}
-									catch( e ) {  }
-									
-									//console.log( 'canvas: ', ( canvas ? canvas.length : 0 ) );
-									//console.log( 'avatar: ', ( avatar ? avatar.length : 0 ) );
-									
-									if( ge( 'AdminAvatar' ) && avatar && ( ( canvas && canvas.length <= 15000 ) || !canvas ) )
-									{
-										// Only update the avatar if it exists..
-										var avSrc = new Image();
-										avSrc.src = avatar;
-										avSrc.onload = function()
-										{
-											if( ge( 'AdminAvatar' ) )
-											{
-												var ctx = ge( 'AdminAvatar' ).getContext( '2d' );
-												ctx.drawImage( avSrc, 0, 0, 256, 256 );
-											}
-										}
-									}
-								
-								} );
-							
-								this.fullname = this.value;
-							}
-						}
-						
-						// Workgroups ...
-						
-						
-						function GetUserWorkgroups( callback )
-						{
-							
-							if( Application.checkAppPermission( [ 
-								'PERM_WORKGROUP_READ_GLOBAL', 'PERM_WORKGROUP_READ_IN_WORKGROUP', 
-								'PERM_WORKGROUP_GLOBAL',      'PERM_WORKGROUP_WORKGROUP' 
-							] ) )
-							{
-								
-								// Specific for Pawel's code ... He just wants to forward json ...
-								
-								var args = JSON.stringify( {
-									'type'    : 'read', 
-									'context' : 'application', 
-									'authid'  : Application.authId, 
-									'data'    : { 
-										'permission' : [ 
-											'PERM_WORKGROUP_READ_GLOBAL',
-											'PERM_WORKGROUP_READ_IN_WORKGROUP',
-											'PERM_WORKGROUP_GLOBAL', 
-											'PERM_WORKGROUP_WORKGROUP' 
-										]
-									}, 
-									'listdetails' : 'workgroup' 
-								} );
-								
-								var f = new Library( 'system.library' );
-								f.onExecuted = function( e, d )
-								{
-									
-									var wgroups = null; var workgroups = null;
-									
-									try
-									{
-										wgroups = JSON.parse( d );
-									}
-									catch( e )
-									{
-										wgroups = null;
-									}
-									
-									if( ShowLog ) console.log( 'workgroups ', { e:e , d:(wgroups?wgroups:d), args: args } );
-									
-									if( wgroups.groups )
-									{
-										workgroups = wgroups.groups;
-									}
-									else if( wgroups.data && wgroups.data.details && wgroups.data.details.groups )
-									{
-										workgroups = wgroups.data.details.groups;
-									}
-									
-									if( wgroups && workgroups )
-									{
-										var out = [];
-										
-										for( var a in workgroups )
-										{
-											if( workgroups[a] && workgroups[a].ID )
-											{
-												out.push( { ID: workgroups[a].ID, Name: workgroups[a].name, ParentID: workgroups[a].parentid } );
-											}
-										}
-										
-										if( callback ) return callback( out );
-									}
-									
-									if( callback ) return callback( [] );
-									
-								}
-								f.execute( 'group/list', { authid: Application.authId, args: args } );
-								
-							}
-							else
-							{
-								
-								var u = new Module( 'system' );
-								u.onExecuted = function( e, d )
-								{
-							
-									var userInfo = null;
-							
-									try
-									{
-										userInfo = JSON.parse( d );
-									}
-									catch( e )
-									{
-										userInfo = null;
-									}
-									
-									var workgroups = userInfo.Workgroup;
-									
-									if( ShowLog ) console.log( 'userinfo ', { e:e, d:(userInfo?userInfo:d) } );
-									
-									if( userInfo && workgroups )
-									{
-										if( callback ) return callback( workgroups );
-									}
-									
-									if( callback ) return callback( [] );
-									
-								}
-								u.execute( 'userinfoget', { mode: 'all', authid: Application.authId } );
-								
-							}
-							
-						}
-						
-						
-						
-						GetUserWorkgroups( function( workgroups )
-						{
-							
-							if( ShowLog ) console.log( 'workgroups: ', workgroups );
-							
-							groups = {};
-						
-							if( workgroups )
-							{
-								
-								var adminlevel = Application.checkAppPermission( [ 'PERM_WORKGROUP_READ_GLOBAL', 'PERM_USER_READ_GLOBAL', 'PERM_WORKGROUP_GLOBAL', 'PERM_USER_GLOBAL' ] );
-								var userlevel  = Application.checkAppPermission( [ 'PERM_WORKGROUP_READ_IN_WORKGROUP', 'PERM_USER_READ_IN_WORKGROUP', 'PERM_WORKGROUP_WORKGROUP', 'PERM_USER_WORKGROUP' ] );
-								
-								var wgroups = false;
-								
-								if( ShowLog ) console.log( 'userlevel ', { adminlevel: adminlevel, userlevel: userlevel } );
-								
-								if( !adminlevel && userlevel )
-								{
-									var wgroups = {};
-									
-									//console.log( 'userlevel ', userlevel );
-									
-									for( var a in userlevel )
-									{
-										if( userlevel[a] && userlevel[a].GroupID )
-										{
-											wgroups[ userlevel[a].GroupID ] = userlevel[a];
-										}
-									}
-									
-								}
-								
-								var unsorted = {};
-					
-								for( var i in workgroups )
-								{
-									if( workgroups[i] && workgroups[i].ID )
-									{
-										if( wgroups && !wgroups[workgroups[i].ID] )
-										{
-											continue;
-										}
-										
-										workgroups[i].groups = [];
-							
-										unsorted[workgroups[i].ID] = workgroups[i];
-									}
-								}
-							
-								
-							
-								for( var k in unsorted )
-								{
-									if( unsorted[k] && unsorted[k].ID )
-									{
-										if( unsorted[k].ParentID > 0 && unsorted[ unsorted[k].ParentID ] )
-										{
-											if( !groups[ unsorted[k].ParentID ] )
-											{
-												groups[ unsorted[k].ParentID ] = unsorted[ unsorted[k].ParentID ];
-											}
-										
-											if( groups[ unsorted[k].ParentID ] )
-											{
-												groups[ unsorted[k].ParentID ].groups.push( unsorted[k] );
-											}
-										}
-										else if( !groups[ unsorted[k].ID ] )
-										{
-											groups[ unsorted[k].ID ] = unsorted[k];
-										}
-									}	
-								}
-							
-								//console.log( groups );
-							}
-							
-							var str = '';
-							
-							if( groups )
-							{
-							
-								for( var a in groups )
-								{
-									var found = false;
-									
-									str += '<div>';
-									
-									str += '<div class="HRow">\
-										<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
-											<span name="' + groups[a].Name + '" class="IconSmall NegativeAlt ' + ( groups[a].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;' + groups[a].Name + '</span>\
-										</div>\
-										<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
-											<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
-										</div>\
-									</div>';
-								
-									if( groups[a].groups.length > 0 )
-									{
-										str += '<div class="Closed">';
-									
-										for( var aa in groups[a].groups )
-										{
-											var found = false;
-											
-											str += '<div class="HRow">\
-												<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
-													<span name="' + groups[a].groups[aa].Name + '" class="IconSmall NegativeAlt ' + ( groups[a].groups[aa].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>\
-												</div>\
-												<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
-													<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
-												</div>\
-											</div>';
-										
-											if( groups[a].groups[aa].groups.length > 0 )
-											{
-												str += '<div class="Closed">';
-											
-												for( var aaa in groups[a].groups[aa].groups )
-												{
-													var found = false;
-													
-													str += '<div class="HRow">\
-														<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
-															<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconSmall NegativeAlt">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>\
-														</div>\
-														<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
-															<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
-														</div>\
-													</div>';
-												
-												}
-											
-												str += '</div>';
-											}
-											
-										}
-									
-										str += '</div>';
-									}
-								
-									str += '</div>';
-								
-								}
-								
-								if( ge( 'AdminWorkgroupContainer' ) ) 
-								{ 
-									ge( 'AdminWorkgroupContainer' ).className = 'Open';
-								}
-								
-							}
-							
-							
-							
-							var o = ge( 'WorkgroupGui' ); if( o ) o.innerHTML = '';
-							
-							var divs = appendChild( [ 
-								{ 
-									'element' : function() 
-									{
-										var d = document.createElement( 'div' );
-										d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
-										return d;
-									}(),
-									'child' : 
-									[ 
-										{ 
-											'element' : function(  ) 
-											{
-												var d = document.createElement( 'div' );
-												d.className = 'PaddingSmall HContent40 FloatLeft';
-												d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
-												d.ele = this;
-												d.onclick = function(  )
-												{
-													sortgroups( 'Name' );
-												};
-												return d;
-											}(  ) 
-										}, 
-										{ 
-											'element' : function( _this ) 
-											{
-												var d = document.createElement( 'div' );
-												d.className = 'PaddingSmall HContent45 FloatLeft Relative';
-												d.innerHTML = '<strong></strong>';
-												return d;
-											}( this )
-										},
-										{ 
-											'element' : function() 
-											{
-												var d = document.createElement( 'div' );
-												d.className = 'PaddingSmall HContent15 FloatLeft Relative';
-												return d;
-											}()
-										}
-									]
-								},
-								{
-									'element' : function() 
-									{
-										var d = document.createElement( 'div' );
-										d.className = 'HRow Box Padding';
-										d.id = 'WorkgroupInner';
-										return d;
-									}()
-								}
-							] );
-			
-							if( divs )
-							{
-								for( var i in divs )
-								{
-									if( divs[i] && o )
-									{
-										o.appendChild( divs[i] );
-									}
-								}
-							}
-							
-							
-							
-							ge( 'WorkgroupInner' ).innerHTML = '<input type="hidden" id="usWorkgroups">' + str;
-							
-							// Toggle arrow function, put into function that can be reused some time ...
-									
-							var workArr = ge( 'WorkgroupInner' ).getElementsByTagName( 'span' );
-							
-							if( workArr )
-							{
-								for( var a = 0; a < workArr.length; a++ )
-								{
-									
-									if( workArr[ a ].classList.contains( 'fa-caret-right' ) || workArr[ a ].classList.contains( 'fa-caret-down' ) )
-									{
-										
-										( function( b ) {
-											b.onclick = function( e )
-											{
-												var pnt = this.parentNode.parentNode.parentNode;
-												
-												if( this.classList.contains( 'fa-caret-right' ) )
-												{
-													// Toggle open ...
-													
-													//console.log( '// Toggle open ...' );
-													
-													this.classList.remove( 'fa-caret-right' );
-													this.classList.add( 'fa-caret-down' );
-													
-													var divs = pnt.getElementsByTagName( 'div' );
-													
-													if( divs )
-													{
-														for( var c = 0; c < divs.length; c++ )
-														{
-															if( divs[c].classList.contains( 'Closed' ) || divs[c].classList.contains( 'Open' ) )
-															{
-																divs[c].classList.remove( 'Closed' );
-																divs[c].classList.add( 'Open' );
-																
-																break;
-															}
-														}
-													}
-												}
-												else
-												{
-													// Toggle close ...
-													
-													//console.log( '// Toggle close ...' );
-													
-													this.classList.remove( 'fa-caret-down' );
-													this.classList.add( 'fa-caret-right' );
-													
-													var divs = pnt.getElementsByTagName( 'div' );
-													
-													if( divs )
-													{
-														for( var c = 0; c < divs.length; c++ )
-														{
-															if( divs[c].classList.contains( 'Closed' ) || divs[c].classList.contains( 'Open' ) )
-															{
-																divs[c].classList.remove( 'Open' );
-																divs[c].classList.add( 'Closed' );
-																
-																break;
-															}
-														}
-													}
-												}
-												
-											}
-										} )( workArr[ a ] );
-										
-									}
-									
-								}
-							}
-							
-							var workBtns = ge( 'WorkgroupInner' ).getElementsByTagName( 'button' );
-							
-							if( workBtns )
-							{
-								for( var a = 0; a < workBtns.length; a++ )
-								{
-									// Toggle user relation to workgroup
-									( function( b ) {
-										b.onclick = function( e )
-										{
-											
-											if( ge( 'usWorkgroups' ) )
-											{
-												
-												var wids = [];
-													
-												if( ge( 'usWorkgroups' ).value )
-												{
-													wids = ge( 'usWorkgroups' ).value.split( ',' );
-												}
-												
-												if( this.classList.contains( 'fa-toggle-off' ) )
-												{
-													// Toggle on ...
-													
-													//console.log( '// Toggle on ', wids );
-													
-													if( this.getAttribute( 'wid' ) )
-													{
-														
-														wids.push( this.getAttribute( 'wid' ) );
-														
-														if( wids )
-														{
-															ge( 'usWorkgroups' ).setAttribute( 'value', wids.join( ',' ) );
-														}
-														else
-														{
-															ge( 'usWorkgroups' ).removeAttribute( 'value' );	
-														}
-														
-														this.classList.remove( 'fa-toggle-off' );
-														this.classList.add( 'fa-toggle-on' );
-														
-													}
-													
-												}
-												else
-												{
-													// Toggle off ...
-												
-													//console.log( '// Toggle off ', wids );
-													
-													if( this.getAttribute( 'wid' ) )
-													{
-														var nwid = [];
-														
-														if( wids )
-														{
-															for( var a in wids )
-															{
-																if( wids[a] )
-																{
-																	if( wids[a] != this.getAttribute( 'wid' ) )
-																	{
-																		nwid.push( wids[a] );
-																	}
-																}
-															}
-															
-															wids = nwid;
-														}
-														
-														if( wids )
-														{
-															ge( 'usWorkgroups' ).setAttribute( 'value', wids.join( ',' ) );
-														}
-														else
-														{
-															ge( 'usWorkgroups' ).removeAttribute( 'value' );	
-														}
-														
-														this.classList.remove( 'fa-toggle-on' );
-														this.classList.add( 'fa-toggle-off' );
-														
-													}
-																								
-												}
-											}
-											
-										}
-									} )( workBtns[ a ] );
-								}
-							}
-							
-							// Search ...............
-							
-							var searchgroups = function ( filter, server )
-							{
-								
-								if( ge( 'WorkgroupInner' ) )
-								{
-									var list = ge( 'WorkgroupInner' ).getElementsByTagName( 'div' );
-									
-									if( list.length > 0 )
-									{
-										for( var a = 0; a < list.length; a++ )
-										{
-											if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
-											
-											var strong = list[a].getElementsByTagName( 'strong' )[0];
-											var span = list[a].getElementsByTagName( 'span' )[0];
-											
-											if( strong || span )
-											{
-												if( !filter || filter == '' 
-												|| strong && strong.innerHTML.toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
-												|| span && span.innerHTML.toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
-												)
-												{
-													list[a].style.display = '';
-													
-													if( list[a].parentNode.parentNode && list[a].parentNode.parentNode.parentNode && list[a].parentNode.parentNode.parentNode.className.indexOf( 'HRow' ) >= 0 )
-													{
-														if( list[a].parentNode.classList.contains( 'Closed' ) )
-														{
-															list[a].parentNode.classList.remove( 'Closed' );
-															list[a].parentNode.classList.add( 'Open' );
-														}
-														
-														list[a].parentNode.style.display = '';
-														list[a].parentNode.parentNode.style.display = '';
-													}
-												}
-												else if( list[a].parentNode && list[a].parentNode.className )
-												{
-													list[a].style.display = 'none';
-												}
-											}
-										}
-	
-									}
-									
-									if( ge( 'WorkgroupSearchCancelBtn' ) )
-									{
-										if( !filter && ( ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
-										{
-											ge( 'WorkgroupSearchCancelBtn' ).classList.remove( 'Open' );
-											ge( 'WorkgroupSearchCancelBtn' ).classList.add( 'Closed' );
-											
-											if( list.length > 0 )
-											{
-												for( var a = 0; a < list.length; a++ )
-												{
-													if( list[a].classList.contains( 'Open' ) )
-													{
-														list[a].classList.remove( 'Open' );
-														list[a].classList.add( 'Closed' );
-													}
-												}
-											}
-										}
-										
-										else if( filter != '' && ( ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
-										{
-											ge( 'WorkgroupSearchCancelBtn' ).classList.remove( 'Closed' );
-											ge( 'WorkgroupSearchCancelBtn' ).classList.add( 'Open' );
-										}
-									}
-								}
-								
-							};
-							
-
-							
-							// Sort .............
-							
-							var sortgroups = function ( sortby )
-							{
-								
-								//
-								
-								var _this = ge( 'WorkgroupInner' );
-								
-								if( _this )
-								{
-									var orderby = ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' );
-									
-									var list = _this.getElementsByTagName( 'div' );
-									
-									if( list.length > 0 )
-									{
-										var output = [];
-										
-										var callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
-										
-										for( var a = 0; a < list.length; a++ )
-										{
-											if( !list[a].className || ( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) ) continue;
-											
-											var span = list[a].getElementsByTagName( 'span' )[0];
-											
-											if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' && span.getAttribute( sortby.toLowerCase() ) )
-											{
-												if( !list[a].parentNode.className )
-												{
-													var obj = { 
-														sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
-														content : list[a].parentNode
-													};
-												
-													output.push( obj );
-												}
-											}
-										}
-										
-										if( output.length > 0 )
-										{
-											// Sort ASC default
-											
-											output.sort( callback );
-											
-											// Sort DESC
-											
-											if( orderby == 'DESC' ) 
-											{ 
-												output.reverse();  
-											}
-											
-											_this.innerHTML = '';
-											
-											_this.setAttribute( 'orderby', orderby );
-											
-											for( var key in output )
-											{
-												if( output[key] && output[key].content )
-												{
-													// Add row
-													_this.appendChild( output[key].content );
-												}
-											}
-										}
-									}
-								}
-								
-							};
-							
-							// .................
-							
-							if( ge( 'AdminWorkgroupContainer' ) )
-							{
-								var inp = ge( 'AdminWorkgroupContainer' ).getElementsByTagName( 'input' )[0];
-								inp.onkeyup = function( e )
-								{
-									searchgroups( this.value );
-								}
-								ge( 'WorkgroupSearchCancelBtn' ).onclick = function( e )
-								{
-									searchgroups( false );
-									inp.value = '';
-								}
-							}
-							
-							// Storage
-							
-							//if( ge( 'AdminStorageContainer' ) ) 
-							//{ 
-							//	ge( 'AdminStorageContainer' ).className = 'Open';
-							//}
-							
-							
-						} );
-						
-						
-						
-						
-						// Responsive framework
-						Friend.responsive.pageActive = ge( 'UserDetails' );
-						Friend.responsive.reinit();
-					}
-					d.load();
-					
-				} );
-				
-				SubMenu( this.parentNode.parentNode );
 			}
 			sm.appendChild( li );
 			
@@ -7556,6 +6602,50 @@ Sections.accounts_users = function( cmd, extra )
 		}
 	}
 	
+	function searchServer( filter )
+	{
+		if( !filter )
+		{
+			UsersSettings( 'searchquery', filter );
+		}
+		
+		if( filter.length < UsersSettings( 'minlength' ).length || filter.length < UsersSettings( 'searchquery' ).length || filter == UsersSettings( 'searchquery' ) ) return;
+		
+		UsersSettings( 'reset', true );
+		
+		UsersSettings( 'searchquery', filter );
+		
+		RequestQueue.Set( function( callback, key )
+		{
+			console.log( filter + ' < ' + UsersSettings( 'searchquery' ) );
+			
+			if( filter.length < UsersSettings( 'searchquery' ).length )
+			{
+				if( callback ) callback( key );
+				
+				return;
+			}
+			
+			getUserlist( function( res, userList, key )
+			{
+				
+				if( callback ) callback( key );
+				
+				console.log( userList );
+				
+				if( userList )
+				{
+					scrollengine.distribute( userList, 0, userList['Count'] );
+					
+					//scrollengine.refresh( true );
+				}
+				
+			}, key );
+			
+		} );
+		
+	}
+	
 	function filterUsers( filter, server )
 	{
 		if( !filter )
@@ -7654,6 +6744,968 @@ Sections.accounts_users = function( cmd, extra )
 	
 	
 	
+	function NewUser( _this )
+	{
+		// Language
+		var availLangs = {
+			'en' : 'English',
+			'fr' : 'French',
+			'no' : 'Norwegian',
+			'fi' : 'Finnish',
+			'pl' : 'Polish'
+		};
+		
+		var languages = '';
+		
+		for( var a in availLangs )
+		{
+			languages += '<option value="' + a + '">' + availLangs[ a ] + '</option>';
+		}
+		
+		// Setup / Template
+		
+		getSetupList( function( e, data )
+		{
+			
+			var setup = '<option value="0">None</option>';
+			
+			if( e && data )
+			{
+				for( var s in data )
+				{
+					if( data[s] && data[s].ID )
+					{
+						setup += '<option value="' + data[s].ID + '">' + data[s].Name + '</option>';
+					}
+				}
+			}
+			
+			var d = new File( 'Progdir:Templates/account_users_details.html' );
+			// Add all data for the template
+			d.replacements = {
+				user_name            : i18n( 'i18n_new_user' ),
+				user_fullname        : '',
+				user_username        : '',
+				user_email           : '',
+				user_language        : languages,
+				user_setup           : setup,
+				user_locked_toggle   : 'fa-toggle-off',
+				user_disabled_toggle : 'fa-toggle-off',
+				theme_name           : '',
+				theme_dark           : '',
+				theme_style          : '',
+				theme_preview        : '',
+				wallpaper_name       : '',
+				workspace_count      : '',
+				system_disk_state    : '',
+				storage              : '',
+				workgroups           : '',
+				roles                : '',
+				applications         : ''
+			};
+		
+			// Add translations
+			d.i18n();
+			d.onLoad = function( data )
+			{
+				ge( 'UserDetails'               ).innerHTML = data;
+				//initStorageGraphs();
+				
+				//ge( 'AdminWorkgroupContainer'   ).style.display = 'none';
+				ge( 'WorkgroupEdit' ).style.display = 'none';
+				
+				ge( 'AdminStatusContainer'      ).style.display = 'none';
+			
+				ge( 'AdminLooknfeelContainer'   ).style.display = 'none';
+				
+				ge( 'AdminRoleContainer'        ).style.display = 'none';
+				ge( 'AdminStorageContainer'     ).style.display = 'none';
+				ge( 'AdminApplicationContainer' ).style.display = 'none';
+				
+				// User
+				
+				var bg1  = ge( 'UserSaveBtn' );
+				if( bg1 )
+				{
+					if( Application.checkAppPermission( [ 
+						'PERM_USER_CREATE_GLOBAL', 'PERM_USER_CREATE_IN_WORKGROUP', 
+						'PERM_USER_GLOBAL',        'PERM_USER_WORKGROUP' 
+					] ) )
+					{
+						bg1.onclick = function( e )
+						{
+							
+							if( ge( 'usUsername' ).value )
+							{
+								
+								_saveUser( false, function( uid )
+								{
+									
+									if( uid )
+									{
+										
+										// Refresh whole users list ...
+							
+										Sections.accounts_users(  );
+							
+										// Go to edit mode for the new user ...
+							
+										Sections.accounts_users( 'edit', uid );
+							
+									}
+					
+								} );
+							}
+							else
+							{
+								ge( 'usUsername' ).focus();
+							}
+						}
+					}
+					else
+					{
+						bg1.style.display = 'none';
+					}
+				}
+				var bg2  = ge( 'UserCancelBtn' );
+				if( bg2 ) bg2.onclick = function( e )
+				{
+					cancelUser(  );
+				}
+				var bg3  = ge( 'UserBackBtn' );
+				if( !isMobile ) 
+				{
+					if( bg3 ) bg3.style.display = 'none';
+				}
+				else
+				{
+					if( bg3 ) bg3.onclick = function( e )
+					{
+						cancelUser(  );
+					}
+				}
+				
+				if( ge( 'UserDeleteBtn' ) )
+				{
+					ge( 'UserDeleteBtn' ).className = 'Closed';
+				}
+				
+				if( ge( 'UserEditButtons' ) )
+				{
+					//ge( 'UserEditButtons' ).className = 'Closed';
+				}
+				
+				if( ge( 'UserBasicDetails' ) )
+				{
+					var inps = ge( 'UserBasicDetails' ).getElementsByTagName( 'input' );
+					if( inps.length > 0 )
+					{
+						for( var a = 0; a < inps.length; a++ )
+						{
+							if( inps[ a ].id && [ 'usFullname', 'usUsername', 'usEmail' ].indexOf( inps[ a ].id ) >= 0 )
+							{
+								( function( i ) {
+									i.onclick = function( e )
+									{
+										editMode();
+									}
+								} )( inps[ a ] );
+							}
+							
+						}
+					}
+					
+					if( ge( 'usLevel' ) )
+					{
+						ge( 'usLevel' ).current = ge( 'usLevel' ).value;
+					}
+					
+					if( ge( 'AdminLevelContainer' ) && Application.checkAppPermission( [ 'PERM_USER_READ_GLOBAL', 'PERM_USER_GLOBAL' ] ) )
+					{
+						if( ge( 'AdminLevelContainer' ).classList.contains( 'Closed' ) )
+						{
+							ge( 'AdminLevelContainer' ).classList.remove( 'Closed' );
+							ge( 'AdminLevelContainer' ).classList.add( 'Open' );
+						}
+					}
+					
+					if( ge( 'usLanguage' ) )
+					{
+						ge( 'usLanguage' ).current = ge( 'usLanguage' ).value;
+					}
+					if( ge( 'usSetup' ) )
+					{
+						ge( 'usSetup' ).current = ge( 'usSetup' ).value;
+					}
+				}
+				
+				// Avatar 
+			
+				var ae = ge( 'AdminAvatarEdit' );
+				if( ae )
+				{
+					if( Application.checkAppPermission( [ 
+						'PERM_USER_CREATE_GLOBAL', 'PERM_USER_CREATE_IN_WORKGROUP', 
+						'PERM_USER_UPDATE_GLOBAL', 'PERM_USER_UPDATE_IN_WORKGROUP', 
+						'PERM_USER_GLOBAL',        'PERM_WORKGROUP_GLOBAL' 
+					] ) )
+					{
+						ae.onclick = function( e )
+						{
+							changeAvatar();
+						}
+					}
+					else
+					{
+						ae.style.display = 'none';
+					}
+				}
+			
+				var au = ge( 'usFullname' );
+				if( au ) au.onblur = function( e )
+				{
+					if( this.value && this.value != this.fullname )
+					{
+					
+						randomAvatar( this.value, function( avatar ) 
+						{
+							var canvas = 0;
+							
+							try
+							{
+								canvas = ge( 'AdminAvatar' ).toDataURL();
+							}
+							catch( e ) {  }
+							
+							//console.log( 'canvas: ', ( canvas ? canvas.length : 0 ) );
+							//console.log( 'avatar: ', ( avatar ? avatar.length : 0 ) );
+							
+							if( ge( 'AdminAvatar' ) && avatar && ( ( canvas && canvas.length <= 15000 ) || !canvas ) )
+							{
+								// Only update the avatar if it exists..
+								var avSrc = new Image();
+								avSrc.src = avatar;
+								avSrc.onload = function()
+								{
+									if( ge( 'AdminAvatar' ) )
+									{
+										var ctx = ge( 'AdminAvatar' ).getContext( '2d' );
+										ctx.drawImage( avSrc, 0, 0, 256, 256 );
+									}
+								}
+							}
+						
+						} );
+					
+						this.fullname = this.value;
+					}
+				}
+				
+				// Workgroups ...
+				
+				
+				function GetUserWorkgroups( callback )
+				{
+					
+					if( Application.checkAppPermission( [ 
+						'PERM_WORKGROUP_READ_GLOBAL', 'PERM_WORKGROUP_READ_IN_WORKGROUP', 
+						'PERM_WORKGROUP_GLOBAL',      'PERM_WORKGROUP_WORKGROUP' 
+					] ) )
+					{
+						
+						// Specific for Pawel's code ... He just wants to forward json ...
+						
+						var args = JSON.stringify( {
+							'type'    : 'read', 
+							'context' : 'application', 
+							'authid'  : Application.authId, 
+							'data'    : { 
+								'permission' : [ 
+									'PERM_WORKGROUP_READ_GLOBAL',
+									'PERM_WORKGROUP_READ_IN_WORKGROUP',
+									'PERM_WORKGROUP_GLOBAL', 
+									'PERM_WORKGROUP_WORKGROUP' 
+								]
+							}, 
+							'listdetails' : 'workgroup' 
+						} );
+						
+						var f = new Library( 'system.library' );
+						f.onExecuted = function( e, d )
+						{
+							
+							var wgroups = null; var workgroups = null;
+							
+							try
+							{
+								wgroups = JSON.parse( d );
+							}
+							catch( e )
+							{
+								wgroups = null;
+							}
+							
+							if( ShowLog ) console.log( 'workgroups ', { e:e , d:(wgroups?wgroups:d), args: args } );
+							
+							if( wgroups.groups )
+							{
+								workgroups = wgroups.groups;
+							}
+							else if( wgroups.data && wgroups.data.details && wgroups.data.details.groups )
+							{
+								workgroups = wgroups.data.details.groups;
+							}
+							
+							if( wgroups && workgroups )
+							{
+								var out = [];
+								
+								for( var a in workgroups )
+								{
+									if( workgroups[a] && workgroups[a].ID )
+									{
+										out.push( { ID: workgroups[a].ID, Name: workgroups[a].name, ParentID: workgroups[a].parentid } );
+									}
+								}
+								
+								if( callback ) return callback( out );
+							}
+							
+							if( callback ) return callback( [] );
+							
+						}
+						f.execute( 'group/list', { authid: Application.authId, args: args } );
+						
+					}
+					else
+					{
+						
+						var u = new Module( 'system' );
+						u.onExecuted = function( e, d )
+						{
+					
+							var userInfo = null;
+					
+							try
+							{
+								userInfo = JSON.parse( d );
+							}
+							catch( e )
+							{
+								userInfo = null;
+							}
+							
+							var workgroups = userInfo.Workgroup;
+							
+							if( ShowLog ) console.log( 'userinfo ', { e:e, d:(userInfo?userInfo:d) } );
+							
+							if( userInfo && workgroups )
+							{
+								if( callback ) return callback( workgroups );
+							}
+							
+							if( callback ) return callback( [] );
+							
+						}
+						u.execute( 'userinfoget', { mode: 'all', authid: Application.authId } );
+						
+					}
+					
+				}
+				
+				
+				
+				GetUserWorkgroups( function( workgroups )
+				{
+					
+					if( ShowLog ) console.log( 'workgroups: ', workgroups );
+					
+					groups = {};
+				
+					if( workgroups )
+					{
+						
+						var adminlevel = Application.checkAppPermission( [ 'PERM_WORKGROUP_READ_GLOBAL', 'PERM_USER_READ_GLOBAL', 'PERM_WORKGROUP_GLOBAL', 'PERM_USER_GLOBAL' ] );
+						var userlevel  = Application.checkAppPermission( [ 'PERM_WORKGROUP_READ_IN_WORKGROUP', 'PERM_USER_READ_IN_WORKGROUP', 'PERM_WORKGROUP_WORKGROUP', 'PERM_USER_WORKGROUP' ] );
+						
+						var wgroups = false;
+						
+						if( ShowLog ) console.log( 'userlevel ', { adminlevel: adminlevel, userlevel: userlevel } );
+						
+						if( !adminlevel && userlevel )
+						{
+							var wgroups = {};
+							
+							//console.log( 'userlevel ', userlevel );
+							
+							for( var a in userlevel )
+							{
+								if( userlevel[a] && userlevel[a].GroupID )
+								{
+									wgroups[ userlevel[a].GroupID ] = userlevel[a];
+								}
+							}
+							
+						}
+						
+						var unsorted = {};
+			
+						for( var i in workgroups )
+						{
+							if( workgroups[i] && workgroups[i].ID )
+							{
+								if( wgroups && !wgroups[workgroups[i].ID] )
+								{
+									continue;
+								}
+								
+								workgroups[i].groups = [];
+					
+								unsorted[workgroups[i].ID] = workgroups[i];
+							}
+						}
+					
+						
+					
+						for( var k in unsorted )
+						{
+							if( unsorted[k] && unsorted[k].ID )
+							{
+								if( unsorted[k].ParentID > 0 && unsorted[ unsorted[k].ParentID ] )
+								{
+									if( !groups[ unsorted[k].ParentID ] )
+									{
+										groups[ unsorted[k].ParentID ] = unsorted[ unsorted[k].ParentID ];
+									}
+								
+									if( groups[ unsorted[k].ParentID ] )
+									{
+										groups[ unsorted[k].ParentID ].groups.push( unsorted[k] );
+									}
+								}
+								else if( !groups[ unsorted[k].ID ] )
+								{
+									groups[ unsorted[k].ID ] = unsorted[k];
+								}
+							}	
+						}
+					
+						//console.log( groups );
+					}
+					
+					var str = '';
+					
+					if( groups )
+					{
+					
+						for( var a in groups )
+						{
+							var found = false;
+							
+							str += '<div>';
+							
+							str += '<div class="HRow">\
+								<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
+									<span name="' + groups[a].Name + '" class="IconSmall NegativeAlt ' + ( groups[a].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;' + groups[a].Name + '</span>\
+								</div>\
+								<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
+									<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
+								</div>\
+							</div>';
+						
+							if( groups[a].groups.length > 0 )
+							{
+								str += '<div class="Closed">';
+							
+								for( var aa in groups[a].groups )
+								{
+									var found = false;
+									
+									str += '<div class="HRow">\
+										<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
+											<span name="' + groups[a].groups[aa].Name + '" class="IconSmall NegativeAlt ' + ( groups[a].groups[aa].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>\
+										</div>\
+										<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
+											<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
+										</div>\
+									</div>';
+								
+									if( groups[a].groups[aa].groups.length > 0 )
+									{
+										str += '<div class="Closed">';
+									
+										for( var aaa in groups[a].groups[aa].groups )
+										{
+											var found = false;
+											
+											str += '<div class="HRow">\
+												<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
+													<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconSmall NegativeAlt">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>\
+												</div>\
+												<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
+													<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
+												</div>\
+											</div>';
+										
+										}
+									
+										str += '</div>';
+									}
+									
+								}
+							
+								str += '</div>';
+							}
+						
+							str += '</div>';
+						
+						}
+						
+						if( ge( 'AdminWorkgroupContainer' ) ) 
+						{ 
+							ge( 'AdminWorkgroupContainer' ).className = 'Open';
+						}
+						
+					}
+					
+					
+					
+					var o = ge( 'WorkgroupGui' ); if( o ) o.innerHTML = '';
+					
+					var divs = appendChild( [ 
+						{ 
+							'element' : function() 
+							{
+								var d = document.createElement( 'div' );
+								d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
+								return d;
+							}(),
+							'child' : 
+							[ 
+								{ 
+									'element' : function(  ) 
+									{
+										var d = document.createElement( 'div' );
+										d.className = 'PaddingSmall HContent40 FloatLeft';
+										d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+										d.ele = this;
+										d.onclick = function(  )
+										{
+											sortgroups( 'Name' );
+										};
+										return d;
+									}(  ) 
+								}, 
+								{ 
+									'element' : function( _this ) 
+									{
+										var d = document.createElement( 'div' );
+										d.className = 'PaddingSmall HContent45 FloatLeft Relative';
+										d.innerHTML = '<strong></strong>';
+										return d;
+									}( this )
+								},
+								{ 
+									'element' : function() 
+									{
+										var d = document.createElement( 'div' );
+										d.className = 'PaddingSmall HContent15 FloatLeft Relative';
+										return d;
+									}()
+								}
+							]
+						},
+						{
+							'element' : function() 
+							{
+								var d = document.createElement( 'div' );
+								d.className = 'HRow Box Padding';
+								d.id = 'WorkgroupInner';
+								return d;
+							}()
+						}
+					] );
+	
+					if( divs )
+					{
+						for( var i in divs )
+						{
+							if( divs[i] && o )
+							{
+								o.appendChild( divs[i] );
+							}
+						}
+					}
+					
+					
+					
+					ge( 'WorkgroupInner' ).innerHTML = '<input type="hidden" id="usWorkgroups">' + str;
+					
+					// Toggle arrow function, put into function that can be reused some time ...
+							
+					var workArr = ge( 'WorkgroupInner' ).getElementsByTagName( 'span' );
+					
+					if( workArr )
+					{
+						for( var a = 0; a < workArr.length; a++ )
+						{
+							
+							if( workArr[ a ].classList.contains( 'fa-caret-right' ) || workArr[ a ].classList.contains( 'fa-caret-down' ) )
+							{
+								
+								( function( b ) {
+									b.onclick = function( e )
+									{
+										var pnt = this.parentNode.parentNode.parentNode;
+										
+										if( this.classList.contains( 'fa-caret-right' ) )
+										{
+											// Toggle open ...
+											
+											//console.log( '// Toggle open ...' );
+											
+											this.classList.remove( 'fa-caret-right' );
+											this.classList.add( 'fa-caret-down' );
+											
+											var divs = pnt.getElementsByTagName( 'div' );
+											
+											if( divs )
+											{
+												for( var c = 0; c < divs.length; c++ )
+												{
+													if( divs[c].classList.contains( 'Closed' ) || divs[c].classList.contains( 'Open' ) )
+													{
+														divs[c].classList.remove( 'Closed' );
+														divs[c].classList.add( 'Open' );
+														
+														break;
+													}
+												}
+											}
+										}
+										else
+										{
+											// Toggle close ...
+											
+											//console.log( '// Toggle close ...' );
+											
+											this.classList.remove( 'fa-caret-down' );
+											this.classList.add( 'fa-caret-right' );
+											
+											var divs = pnt.getElementsByTagName( 'div' );
+											
+											if( divs )
+											{
+												for( var c = 0; c < divs.length; c++ )
+												{
+													if( divs[c].classList.contains( 'Closed' ) || divs[c].classList.contains( 'Open' ) )
+													{
+														divs[c].classList.remove( 'Open' );
+														divs[c].classList.add( 'Closed' );
+														
+														break;
+													}
+												}
+											}
+										}
+										
+									}
+								} )( workArr[ a ] );
+								
+							}
+							
+						}
+					}
+					
+					var workBtns = ge( 'WorkgroupInner' ).getElementsByTagName( 'button' );
+					
+					if( workBtns )
+					{
+						for( var a = 0; a < workBtns.length; a++ )
+						{
+							// Toggle user relation to workgroup
+							( function( b ) {
+								b.onclick = function( e )
+								{
+									
+									if( ge( 'usWorkgroups' ) )
+									{
+										
+										var wids = [];
+											
+										if( ge( 'usWorkgroups' ).value )
+										{
+											wids = ge( 'usWorkgroups' ).value.split( ',' );
+										}
+										
+										if( this.classList.contains( 'fa-toggle-off' ) )
+										{
+											// Toggle on ...
+											
+											//console.log( '// Toggle on ', wids );
+											
+											if( this.getAttribute( 'wid' ) )
+											{
+												
+												wids.push( this.getAttribute( 'wid' ) );
+												
+												if( wids )
+												{
+													ge( 'usWorkgroups' ).setAttribute( 'value', wids.join( ',' ) );
+												}
+												else
+												{
+													ge( 'usWorkgroups' ).removeAttribute( 'value' );	
+												}
+												
+												this.classList.remove( 'fa-toggle-off' );
+												this.classList.add( 'fa-toggle-on' );
+												
+											}
+											
+										}
+										else
+										{
+											// Toggle off ...
+										
+											//console.log( '// Toggle off ', wids );
+											
+											if( this.getAttribute( 'wid' ) )
+											{
+												var nwid = [];
+												
+												if( wids )
+												{
+													for( var a in wids )
+													{
+														if( wids[a] )
+														{
+															if( wids[a] != this.getAttribute( 'wid' ) )
+															{
+																nwid.push( wids[a] );
+															}
+														}
+													}
+													
+													wids = nwid;
+												}
+												
+												if( wids )
+												{
+													ge( 'usWorkgroups' ).setAttribute( 'value', wids.join( ',' ) );
+												}
+												else
+												{
+													ge( 'usWorkgroups' ).removeAttribute( 'value' );	
+												}
+												
+												this.classList.remove( 'fa-toggle-on' );
+												this.classList.add( 'fa-toggle-off' );
+												
+											}
+																						
+										}
+									}
+									
+								}
+							} )( workBtns[ a ] );
+						}
+					}
+					
+					// Search ...............
+					
+					var searchgroups = function ( filter, server )
+					{
+						
+						if( ge( 'WorkgroupInner' ) )
+						{
+							var list = ge( 'WorkgroupInner' ).getElementsByTagName( 'div' );
+							
+							if( list.length > 0 )
+							{
+								for( var a = 0; a < list.length; a++ )
+								{
+									if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+									
+									var strong = list[a].getElementsByTagName( 'strong' )[0];
+									var span = list[a].getElementsByTagName( 'span' )[0];
+									
+									if( strong || span )
+									{
+										if( !filter || filter == '' 
+										|| strong && strong.innerHTML.toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+										|| span && span.innerHTML.toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+										)
+										{
+											list[a].style.display = '';
+											
+											if( list[a].parentNode.parentNode && list[a].parentNode.parentNode.parentNode && list[a].parentNode.parentNode.parentNode.className.indexOf( 'HRow' ) >= 0 )
+											{
+												if( list[a].parentNode.classList.contains( 'Closed' ) )
+												{
+													list[a].parentNode.classList.remove( 'Closed' );
+													list[a].parentNode.classList.add( 'Open' );
+												}
+												
+												list[a].parentNode.style.display = '';
+												list[a].parentNode.parentNode.style.display = '';
+											}
+										}
+										else if( list[a].parentNode && list[a].parentNode.className )
+										{
+											list[a].style.display = 'none';
+										}
+									}
+								}
+
+							}
+							
+							if( ge( 'WorkgroupSearchCancelBtn' ) )
+							{
+								if( !filter && ( ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+								{
+									ge( 'WorkgroupSearchCancelBtn' ).classList.remove( 'Open' );
+									ge( 'WorkgroupSearchCancelBtn' ).classList.add( 'Closed' );
+									
+									if( list.length > 0 )
+									{
+										for( var a = 0; a < list.length; a++ )
+										{
+											if( list[a].classList.contains( 'Open' ) )
+											{
+												list[a].classList.remove( 'Open' );
+												list[a].classList.add( 'Closed' );
+											}
+										}
+									}
+								}
+								
+								else if( filter != '' && ( ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+								{
+									ge( 'WorkgroupSearchCancelBtn' ).classList.remove( 'Closed' );
+									ge( 'WorkgroupSearchCancelBtn' ).classList.add( 'Open' );
+								}
+							}
+						}
+						
+					};
+					
+
+					
+					// Sort .............
+					
+					var sortgroups = function ( sortby )
+					{
+						
+						//
+						
+						var _this = ge( 'WorkgroupInner' );
+						
+						if( _this )
+						{
+							var orderby = ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' );
+							
+							var list = _this.getElementsByTagName( 'div' );
+							
+							if( list.length > 0 )
+							{
+								var output = [];
+								
+								var callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
+								
+								for( var a = 0; a < list.length; a++ )
+								{
+									if( !list[a].className || ( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) ) continue;
+									
+									var span = list[a].getElementsByTagName( 'span' )[0];
+									
+									if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' && span.getAttribute( sortby.toLowerCase() ) )
+									{
+										if( !list[a].parentNode.className )
+										{
+											var obj = { 
+												sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
+												content : list[a].parentNode
+											};
+										
+											output.push( obj );
+										}
+									}
+								}
+								
+								if( output.length > 0 )
+								{
+									// Sort ASC default
+									
+									output.sort( callback );
+									
+									// Sort DESC
+									
+									if( orderby == 'DESC' ) 
+									{ 
+										output.reverse();  
+									}
+									
+									_this.innerHTML = '';
+									
+									_this.setAttribute( 'orderby', orderby );
+									
+									for( var key in output )
+									{
+										if( output[key] && output[key].content )
+										{
+											// Add row
+											_this.appendChild( output[key].content );
+										}
+									}
+								}
+							}
+						}
+						
+					};
+					
+					// .................
+					
+					if( ge( 'AdminWorkgroupContainer' ) )
+					{
+						var inp = ge( 'AdminWorkgroupContainer' ).getElementsByTagName( 'input' )[0];
+						inp.onkeyup = function( e )
+						{
+							searchgroups( this.value );
+						}
+						ge( 'WorkgroupSearchCancelBtn' ).onclick = function( e )
+						{
+							searchgroups( false );
+							inp.value = '';
+						}
+					}
+					
+					// Storage
+					
+					//if( ge( 'AdminStorageContainer' ) ) 
+					//{ 
+					//	ge( 'AdminStorageContainer' ).className = 'Open';
+					//}
+					
+					
+				} );
+				
+				
+				
+				
+				// Responsive framework
+				Friend.responsive.pageActive = ge( 'UserDetails' );
+				Friend.responsive.reinit();
+			}
+			d.load();
+			
+		} );
+		
+		SubMenu( _this.parentNode.parentNode );
+	}
+	
+	
+	
 	if( checkedGlobal || checkedWorkgr )
 	{
 		
@@ -7717,88 +7769,288 @@ Sections.accounts_users = function( cmd, extra )
 							}
 							
 							if( !ge( 'ListUsersInner' ) )
-							{
-								/*// Add the main heading
-								( function( ol ) {
-									var tr = document.createElement( 'div' );
-									tr.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingRight';
-				
-									var extr = '';
-									
-									tr.innerHTML = '\
-										<div class="HContent20 FloatLeft">\
-											<h3><strong>' + i18n( 'i18n_users' ) + ' </strong><span id="AdminUsersCount">' + (userList&&userList['Count']?'('+userList['Count']+')':'(0)')+'</span></h3>\
-										</div>\
-										<div class="HContent70 FloatLeft Relative">\
-											' + extr + '\
-											<input type="text" class="FullWidth" placeholder="' + i18n( 'i18n_find_users' ) + '"/>\
-										</div>\
-										<div class="HContent10 FloatLeft TextRight InActive">\
-											<button id="AdminUsersBtn" class="IconButton IconSmall Negative fa-bars"></button>\
-											<div class="submenu_wrapper"><ul id="AdminUsersSubMenu" class="Positive"></ul></div>\
-										</div>\
-									';
-					
-									var inp = tr.getElementsByTagName( 'input' )[0];
-									inp.onkeyup = function( e )
-									{
-										filterUsers( this.value, true );
-									}
-									
-									var bt = tr.getElementsByTagName( 'button' )[0];
-									if( bt )
-									{
-										bt.onclick = function()
-										{
-											filterUsers( false );
-										}
-									}
-					
-									ol.appendChild( tr );
-								} )( o );*/
-								
+							{								
 								var str = '';
 								
 								// Temporary ...
 								
-								str += '<div class="HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingRight">';
-								str += '	<div class="HContent20 FloatLeft">';
-								str += '		<h3><strong>Users </strong><span id="AdminUsersCount">(' + userList['Count'] + ')</span></h3>';
-								str += '	</div>';
-								str += '	<div class="HContent70 FloatLeft Relative">';
-								str += '		<input type="text" class="FullWidth" placeholder="Find users...">';
-								str += '	</div>';
-								str += '	<div class="HContent10 FloatLeft TextRight InActive">';
-								str += '		<button id="AdminUsersBtn" class="IconButton IconSmall Negative fa-bars"></button>';
-								str += '		<div class="submenu_wrapper">';
-								str += '			<ul id="AdminUsersSubMenu" class="Positive">';
-								str += '				<li>New user</li>';
-								str += '				<li class="show">Show disabled users</li>';
-								str += '				<li class="hide">Hide locked users</li>';
-								str += '			</ul>';
-								str += '		</div>';
-								str += '	</div>';
-								str += '</div>';
+								var divs = appendChild( [ 
+									{ 
+										'element' : function() 
+										{
+											var d = document.createElement( 'div' );
+											d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingRight';
+											return d;
+										}(),
+										'child' : 
+										[ 
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'HContent20 FloatLeft';
+													d.innerHTML = '<h3><strong>Users </strong><span id="AdminUsersCount">(' + userList['Count'] + ')</span></h3>';
+													return d;
+												}() 
+											}, 
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'HContent70 FloatLeft Relative';
+													return d;
+												}(),
+												'child' : 
+												[ 
+													{ 
+														'element' : function() 
+														{
+															var inp = document.createElement( 'input' );
+															inp.className = 'FullWidth';
+															inp.type = 'text';
+															inp.onkeyup = function(  )
+															{
+																searchServer( this.value );
+															};
+															return inp;
+														}()
+													}
+												]
+											},
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'HContent10 FloatLeft TextRight InActive';
+													return d;
+												}(),
+												'child' : 
+												[ 
+													{
+														'element' : function() 
+														{
+															var btn = document.createElement( 'button' );
+															btn.className = 'IconButton IconSmall Negative fa-bars';
+															btn.id = 'AdminUsersBtn';
+															//btn.onclick = function(  )
+															//{
+															//	searchServer( false );
+															//};
+															btn.onclick = function(  )
+															{
+																SubMenu( this );
+															};
+															return btn;
+														}()
+													},
+													{
+														'element' : function() 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'submenu_wrapper';
+															return d;
+														}(),
+														'child' : 
+														[ 
+															{
+																'element' : function() 
+																{
+																	var ul = document.createElement( 'ul' );
+																	ul.className = 'Positive';
+																	ul.id = 'AdminUsersSubMenu';
+																	return ul;
+																}(),
+																'child' : 
+																[ 
+																	{
+																		'element' : function() 
+																		{
+																			var li = document.createElement( 'li' );
+																			li.innerHTML = i18n( 'i18n_new_user' );
+																			li.onclick = function(  )
+																			{
+																				NewUser( this );
+																			};
+																			return li;
+																		}()
+																	},
+																	{
+																		'element' : function() 
+																		{
+																			var li = document.createElement( 'li' );
+																			li.className = 'show';
+																			li.innerHTML = i18n( 'i18n_show_disabled_users' );
+																			li.onclick = function(  )
+																			{
+																				if( this.className.indexOf( 'show' ) >= 0 )
+																				{
+																					hideStatus( 'Disabled', true );
+																					this.innerHTML = i18n( 'i18n_hide_disabled_users' );
+																					this.className = this.className.split( 'hide' ).join( '' ).split( 'show' ).join( '' ) + 'hide';
+																				}
+																				else
+																				{
+																					hideStatus( 'Disabled', false );
+																					this.innerHTML = i18n( 'i18n_show_disabled_users' );
+																					this.className = this.className.split( 'hide' ).join( '' ).split( 'show' ).join( '' ) + 'show';
+																				}
+																				
+																				SubMenu( this.parentNode.parentNode );
+																			};
+																			return li;
+																		}()
+																	},
+																	{
+																		'element' : function() 
+																		{
+																			var li = document.createElement( 'li' );
+																			li.className = 'hide';
+																			li.innerHTML = i18n( 'i18n_hide_locked_users' );
+																			li.onclick = function(  )
+																			{
+																				if( this.className.indexOf( 'hide' ) >= 0 )
+																				{
+																					hideStatus( 'Locked', false );
+																					this.innerHTML = i18n( 'i18n_show_locked_users' );
+																					this.className = this.className.split( 'hide' ).join( '' ).split( 'show' ).join( '' ) + 'show';
+																				}
+																				else
+																				{
+																					hideStatus( 'Locked', true );
+																					this.innerHTML = i18n( 'i18n_hide_locked_users' );
+																					this.className = this.className.split( 'hide' ).join( '' ).split( 'show' ).join( '' ) + 'hide';
+																				}
+																				
+																				SubMenu( this.parentNode.parentNode );
+																			}
+																			return li;
+																		}()
+																	}
+																]
+															}
+														]
+													}
+												]
+											}
+										]
+									},
+									{
+										'element' : function() 
+										{
+											var d = document.createElement( 'div' );
+											d.className = 'List';
+											return d;
+										}(),
+										'child' : 
+										[ 
+											{
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'HRow BackgroundNegative Negative PaddingTop PaddingBottom';
+													return d;
+												}(),
+												'child' : 
+												[ 
+													{
+														'element' : function() 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmallLeft PaddingSmallRight HContent10 FloatLeft Ellipsis';
+															d.innerHTML = '<strong>&nbsp;</strong>';
+															return d;
+														}()
+													},
+													{
+														'element' : function() 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmallLeft PaddingSmallRight HContent30 FloatLeft Ellipsis';
+															d.innerHTML = '<strong onclick="sortUsers(\'FullName\')">Name</strong>';
+															return d;
+														}()
+													},
+													{
+														'element' : function() 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmallLeft PaddingSmallRight HContent25 FloatLeft Ellipsis';
+															d.innerHTML = '<strong onclick="sortUsers(\'Name\')">Username</strong>';
+															return d;
+														}()
+													},
+													{
+														'element' : function() 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmallLeft PaddingSmallRight HContent15 FloatLeft Ellipsis';
+															d.innerHTML = '<strong onclick="sortUsers(\'Status\')">Status</strong>';
+															return d;
+														}()
+													},
+													{
+														'element' : function() 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'PaddingSmallLeft PaddingSmallRight HContent20 FloatLeft Ellipsis';
+															d.innerHTML = '<strong onclick="sortUsers(\'LoginTime\')">Last Login</strong>';
+															return d;
+														}()
+													}
+												]
+											}
+										]
+									},
+									{
+										'element' : function() 
+										{
+											var d = document.createElement( 'div' );
+											d.style = 'position:relative;height:calc(100% - 77px);';
+											d.id = 'ListUsersWrapper';
+											return d;
+										}(),
+										'child' : 
+										[ 
+											{
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'ScrollArea HContentLeft VContent100 HContent100';
+													return d;
+												}(),
+												'child' : 
+												[ 
+													{
+														'element' : function() 
+														{
+															var d = document.createElement( 'div' );
+															d.className = 'List FullName ASC';
+															d.id = 'ListUsersInner';
+															d.setAttribute( 'sortby', 'FullName' );
+															d.setAttribute( 'orderby', 'ASC' );
+															return d;
+														}()
+													}
+												]
+											}
+										]
+									}
+								] );
 								
-								str += '<div class="List">';
-								str += '	<div class="HRow BackgroundNegative Negative PaddingTop PaddingBottom">';
-								str += '		<div class="PaddingSmallLeft PaddingSmallRight HContent10 FloatLeft Ellipsis"><strong>&nbsp;</strong></div>';
-								str += '		<div class="PaddingSmallLeft PaddingSmallRight HContent30 FloatLeft Ellipsis"><strong onclick="sortUsers(\'FullName\')">Name</strong></div>';
-								str += '		<div class="PaddingSmallLeft PaddingSmallRight HContent25 FloatLeft Ellipsis"><strong onclick="sortUsers(\'Name\')">Username</strong></div>';
-								str += '		<div class="PaddingSmallLeft PaddingSmallRight HContent15 FloatLeft Ellipsis"><strong onclick="sortUsers(\'Status\')">Status</strong></div>';
-								str += '		<div class="PaddingSmallLeft PaddingSmallRight HContent20 FloatLeft Ellipsis"><strong onclick="sortUsers(\'LoginTime\')">Last Login</strong></div>';
-								str += '	</div>';
-								str += '</div>';
+								if( divs )
+								{
+									for( var i in divs )
+									{
+										if( divs[i] && o )
+										{
+											o.appendChild( divs[i] );
+										}
+									}
+								}
 								
-								str += '<div id="ListUsersWrapper" style="position:relative;height:calc(100% - 77px);">';
-								str += '	<div class="ScrollArea HContentLeft VContent100 HContent100">';
-								str += '		<div class="List FullName ASC" id="ListUsersInner" sortby="FullName" orderby="ASC"></div>';
-								str += '	</div>';
-								str += '</div>';
 								
-								o.innerHTML += str;
 								
-								//ge( 'ListUsersInner' ).innerHTML = '';
+								
 								
 								if( scrollengine.debug )
 								{
@@ -7811,28 +8063,38 @@ Sections.accounts_users = function( cmd, extra )
 							}
 							
 							
-							
-							
 							scrollengine.init( ge( 'ListUsersInner' ), userList, userList['Count'], function( ret ) 
 							{ 
 								console.log( '[1] ListUsersInner ', ret );
 								
-								getUserlist( function( res, dat )
+								// Only run the request when server is ready, one job at a time ... 
+								
+								RequestQueue.Set( function( callback, key )
 								{
 									
-									console.log( '[2] ListUsersInner ', { res: res, dat: dat } );
-									
-									if( res == 'ok' && dat )
+									getUserlist( function( res, dat )
 									{
 										
-										scrollengine.distribute( dat, ret.start, dat['Count'] );
+										if( callback )
+										{
+											callback( key );
+										}
 										
-									}
+										console.log( '[2] ListUsersInner ', { res: res, dat: dat } );
 									
-								}, false, ( ret.start + ', ' + ret.limit ) );
+										if( res == 'ok' && dat )
+										{
+										
+											scrollengine.distribute( dat, ret.start, dat['Count'] );
+										
+										}
+									
+									}, key, ( ret.start + ', ' + ret.limit ) );
+								
+								} );
 								
 							} );
-						
+							
 						}
 					
 					}, false, '0, ' + UsersSettings( 'maxlimit' ) );
