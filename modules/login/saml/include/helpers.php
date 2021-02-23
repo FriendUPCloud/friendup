@@ -35,32 +35,45 @@ function renderSAMLLoginForm()
 // Set replacements on template
 function renderReplacements( $template )
 {
-	$welcome 						= $GLOBALS['login_modules']['saml']['Login']['logintitle_en'] !== null ? $GLOBALS['login_modules']['saml']['Login']['logintitle_en'] :'SAML Login';
-	$friendlink 					= $GLOBALS['login_modules']['saml']['Login']['friend_login_text_en'] !== null ? $GLOBALS['login_modules']['saml']['Login']['friend_login_text_en'] :'Login using Friend account';
-	$additional_iframe_styles 		= $GLOBALS['login_modules']['saml']['Login']['additional_iframe_styles'] !== null ? $GLOBALS['login_modules']['saml']['Login']['additional_iframe_styles'] :'';
-	$additionalfriendlinkstyles 	= $GLOBALS['login_modules']['saml']['Login']['additional_friendlink_styles'] !== null ? $GLOBALS['login_modules']['saml']['Login']['additional_friendlink_styles'] : '';
+	$samlLog = $GLOBALS['login_modules']['saml']['Login'];
+	$samlMod = $GLOBALS['login_modules']['saml']['Module'];
 
-	$samlendpoint = $GLOBALS['login_modules']['saml']['Module']['samlendpoint'] !== null ? $GLOBALS['login_modules']['saml']['Module']['samlendpoint'] : 'about:blank';
-	$samlendpoint .= '?friendendpoint=' . urlencode($GLOBALS['request_path']);
+	// Get some keywords
+	$welcome = $samlLog['logintitle_en'] !== null ? 
+		$samlLog['logintitle_en'] : 'SAML Login';
+		
+	$friendlink = $samlLog['friend_login_text_en'] !== null ? 
+		$samlLog['friend_login_text_en'] : 'Login using Friend account';
+		
+	$additional_iframe_styles = $samlLog['additional_iframe_styles'] !== null ? 
+		$samlLog['additional_iframe_styles'] : '';
+		
+	$additionalfriendlinkstyles = $samlLog['additional_friendlink_styles'] !== null ? 
+		$samlLog['additional_friendlink_styles'] : '';
+
+	// Find endpoint
+	$samlendpoint = $samlMod['samlendpoint'] !== null ? 
+		$samlMod['samlendpoint'] : 'about:blank';
+	$samlendpoint .= '?friendendpoint=' . urlencode( $GLOBALS['request_path'] );
 	
 	$finds = [
 		'{scriptpath}'
-		,'{welcome}'
-		,'{friendlinktext}'
-		,'{additionaliframestyles}'
-		,'{samlendpoint}'
-		,'{additionalfriendlinkstyle}'
+		'{welcome}',
+		'{friendlinktext}',
+		'{additionaliframestyles}',
+		'{samlendpoint}',
+		'{additionalfriendlinkstyle}'
 	];
 	$replacements = [
-			$GLOBALS['request_path']
-			,$welcome
-			,$friendlink
-			,$additional_iframe_styles
-			,$samlendpoint
-			,$additionalfriendlinkstyles
+		$GLOBALS['request_path'],
+		$welcome,
+		$friendlink,
+		$additional_iframe_styles,
+		$samlendpoint,
+		$additionalfriendlinkstyles
 	];
 	
-	return str_replace($finds, $replacements, $template);
+	return str_replace( $finds, $replacements, $template );
 }
 
 ?>
