@@ -13,6 +13,7 @@ let Config = {
 
 Application.lastSaved = 0;
 Application.prevDocument = null; // Sometimes, we put prev document
+Application.hasSomethingToSave = false;
 
 // Some events -----------------------------------------------------------------
 
@@ -268,7 +269,7 @@ Application.refreshFilePane = function( method, force, callback )
 		}
 		else
 		{
-			for( let a = 0; a < items.length; a++ )
+		    for( let a = 0; a < items.length; a++ )
 			{
 				let num = items[ a ];
 				let ext = num.Filename.split( '.' );
@@ -700,6 +701,9 @@ Application.initCKE = function()
 			// Other keys...
 			editor.editing.view.document.on( 'keyup', ( evt, data ) => {
 			
+			    // We have something to save
+				Application.hasSomethingToSave = true;
+				
 				// Guess a new filename from the document data
 				let pdata = Application.editor.element.innerText.split( "\n" )[0].substr( 0, 32 );
 				try
@@ -1170,24 +1174,28 @@ Application.setCurrentDocument = function( pth )
 
 // Load a file -----------------------------------------------------------------
 
-Application.loadFile = function( path, cbk, skipSave )
+Application.loadFile = function( path, cbk )
 {
     // This is only if we skip saving :)
-    if( !skipSave )
+    if( Application.hasSomethingToSave == true )
     {
         if( Application.prevDocument && Application.prevDocument.indexOf( ':' ) > 0 && path != Application.prevDocument )
         {
+            Application.hasSomethingToSave = false;
             let content = '<!doctype html><html><head><title></title></head><body>' + Application.editor.getData() + '</body></html>';
             Application.saveFile( Application.prevDocument, content, function()
             {
                 Application.prevDocument = false;
-                Application.loadFile( path, cbk, 'skipsave' );
+                Application.loadFile( path, cbk );
             } );
 	        return;
 	    }
 	}
 	
 	this.loading = true;
+	
+	// New document
+	Application.hasSomethingToSave = false;
 	
 	Application.statusMessage( i18n( 'i18n_status_loading' ) );
 	
@@ -1576,7 +1584,7 @@ Application.addFolder = function( e )
 			l.execute( 'file/makedir', { path: Application.path + this.value } );
 		}
 	}
-	el.blur = function()
+	el.onblur = function()
 	{
 		el.parentNode.removeChild( el );
 	}
@@ -1585,23 +1593,25 @@ Application.addFolder = function( e )
 
 // Add a note ------------------------------------------------------------------
 
-Application.addNote = function( e, skipSave )
+Application.addNote = function( e )
 {
     // This is only if we skip saving :)
-    if( !skipSave )
+    if( Application.hasSomethingToSave == true )
     {
         if( Application.currentDocument && Application.currentDocument.indexOf( ':' ) > 0 )
         {
+            Application.hasSomethingToSave = false;
             let content = '<!doctype html><html><head><title></title></head><body>' + Application.editor.getData() + '</body></html>';
             Application.saveFile( Application.currentDocument, content, function()
             {
-                Application.addNote( e, 'skipsave' );
+                Application.addNote( e );
             } );
 	        return;
 	    }
 	}
 	let testFile = 'unnamed';
 	let nextTest = testFile;
+	Application.hasSomethingToSave = false; // New file!
 	let d = new Door( Application.browserPath );
 	d.getIcons( function( icons )
 	{
