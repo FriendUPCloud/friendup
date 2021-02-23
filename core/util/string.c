@@ -936,7 +936,7 @@ char *EscapeStringToJSON( char *str )
 	if( strstr( str, "\\" ) != NULL )
 	{
 		int size = strlen( str );
-		char *ret = FMalloc( (size*2)+1 );
+		char *ret = FMalloc( (size<<1)+1 ); // * 2 == <<1
 		if( ret != NULL )
 		{
 			char *dst = ret;
