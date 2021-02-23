@@ -29,14 +29,14 @@ function renderSAMLLoginForm()
 		die( renderReplacements( file_get_contents(dirname(__FILE__) . '/templates/login.html') ) );
 	
 	
-	die('<h1>Your FriendUP installation is incomplete!</h1>');
+	die( '<h1>Your FriendUP installation is incomplete!</h1>' );
 }
 
 // Set replacements on template
 function renderReplacements( $template )
 {
-	$samlLog = $GLOBALS['login_modules']['saml']['Login'];
-	$samlMod = $GLOBALS['login_modules']['saml']['Module'];
+	$samlLog = $GLOBALS[ 'login_modules' ][ 'saml' ][ 'Login' ];
+	$samlMod = $GLOBALS[ 'login_modules' ][ 'saml' ][ 'Module' ];
 
 	// Get some keywords
 	$welcome = $samlLog['logintitle_en'] !== null ? 
