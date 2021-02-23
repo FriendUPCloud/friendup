@@ -12,6 +12,7 @@ let Config = {
 };
 
 Application.lastSaved = 0;
+Application.prevDocument = null; // Sometimes, we put prev document
 
 // Some events -----------------------------------------------------------------
 
@@ -242,55 +243,7 @@ Application.refreshFilePane = function( method, force, callback )
 			fBar.add = document.createElement( 'div' );
 			fBar.add.className = 'NewItem';
 			fBar.add.innerHTML = '<div class="Button IconButton IconSmall fa-page-text">&nbsp;' + i18n( 'i18n_add_note' ) + '</div>';
-			fBar.add.onclick = function()
-			{
-				let testFile = 'unnamed';
-				let nextTest = testFile;
-				let d = new Door( Application.browserPath );
-				d.getIcons( function( icons )
-				{
-					if( icons )
-					{
-						let found = false;
-						let tries = 1;
-						
-						do
-						{
-							found = false;
-							for( var a = 0; a < icons.length; a++ )
-							{
-								if( icons[ a ].Filename == nextTest + '.html' )
-								{
-									nextTest = testFile + '_' + ( ++tries );
-									found = true;
-									break;
-								}
-							}
-						}
-						while( found );
-					}
-					
-					let f = new File();
-					f.save( "\n", Application.browserPath + nextTest + '.html' );
-					f.onSave = function()
-					{
-						Application.currentDocument = Application.browserPath + nextTest + '.html';
-						Application.sendMessage( {
-							command: 'setfilename',
-							data: Application.currentDocument
-						} );
-						Application.refreshFilePane( false, true );
-						Application.loadFile( Application.browserPath + nextTest + '.html', function()
-						{
-							if( isMobile )
-							{
-								currentViewMode = 'default';
-								Application.updateViewMode();
-							}
-						} );
-					}
-				} );
-			}
+			fBar.add.onclick = Application.addNote;
 			fBar.appendChild( fBar.add );
 		}
 		fBar.contents.innerHTML = '';
@@ -566,6 +519,7 @@ Application.refreshFilePane = function( method, force, callback )
 						( function( dl ){
 							dl.onclick = function()
 							{
+								Application.prevDocument = Application.currentDocument;
 								Application.currentDocument = dl.path;
 								Application.loadFile( dl.path, function()
 								{
@@ -650,38 +604,7 @@ Application.run = function( msg, iface )
 	}
 	this.fld.className = 'NewFolder BackgroundHeavier';
 	this.fld.innerHTML = '<div class="Button IconButton IconSmall fa-folder">&nbsp;' + i18n( 'i18n_add_folder' ) + '</div>';
-	this.fld.onclick = function( e )
-	{
-		let el = document.createElement( 'input' );
-		el.type = 'text';
-		el.className = 'FullWidth InputHeight';
-		el.placeholder = 'foldername';
-		ge( 'LeftBar' ).appendChild( el );
-		el.select();
-		el.focus();
-		el.onkeydown = function( e )
-		{
-			let w = e.which ? e.which : e.keyCode;
-			if( w == 27 )
-			{
-				el.parentNode.removeChild( el );
-			}
-			else if( w == 13 )
-			{
-				let l = new Library( 'system.library' );
-				l.onExecuted = function()
-				{
-					self.fileBrowser.refresh();
-				}
-				l.execute( 'file/makedir', { path: Application.path + this.value } );
-			}
-		}
-		el.blur = function()
-		{
-			el.parentNode.removeChild( el );
-		}
-		return cancelBubble( e );
-	}
+	this.fld.onclick = Application.addFolder;
 	ge( 'LeftBar' ).parentNode.appendChild( this.fld );
 	
 	// Update the view mode
@@ -1247,8 +1170,23 @@ Application.setCurrentDocument = function( pth )
 
 // Load a file -----------------------------------------------------------------
 
-Application.loadFile = function( path, cbk )
+Application.loadFile = function( path, cbk, skipSave )
 {
+    // This is only if we skip saving :)
+    if( !skipSave )
+    {
+        if( Application.prevDocument && Application.prevDocument.indexOf( ':' ) > 0 && path != Application.prevDocument )
+        {
+            let content = '<!doctype html><html><head><title></title></head><body>' + Application.editor.getData() + '</body></html>';
+            Application.saveFile( Application.prevDocument, content, function()
+            {
+                Application.prevDocument = false;
+                Application.loadFile( path, cbk, 'skipsave' );
+            } );
+	        return;
+	    }
+	}
+	
 	this.loading = true;
 	
 	Application.statusMessage( i18n( 'i18n_status_loading' ) );
@@ -1297,6 +1235,12 @@ Application.loadFile = function( path, cbk )
 						} );
 						
 						Application.setCurrentDocument( path );
+						
+						// Save immediately
+					    Application.sendMessage( {
+	                        command: 'savefile',
+	                        path: Application.currentDocument
+                        } );
 						
 						if( cbk ) cbk();
 					}
@@ -1374,7 +1318,7 @@ Application.saveFile = function( path, content, callback )
 			{
 				Application.fileSaved = true;
 				Application.lastSaved = ( new Date() ).getTime();
-				Application.statusMessage(  i18n('i18n_written') );
+				Application.statusMessage( i18n( 'i18n_written' ) );
 				Application.currentDocument = path;
 				Application.refreshFilePane();
 				if( callback )
@@ -1605,6 +1549,127 @@ function ApplyStyle( styleObject, depth )
 	styleElement.innerHTML = style;
 }
 
+// Add a folder ----------------------------------------------------------------
+Application.addFolder = function( e )
+{
+	let el = document.createElement( 'input' );
+	el.type = 'text';
+	el.className = 'FullWidth InputHeight';
+	el.placeholder = 'foldername';
+	ge( 'LeftBar' ).appendChild( el );
+	el.select();
+	el.focus();
+	el.onkeydown = function( e )
+	{
+		let w = e.which ? e.which : e.keyCode;
+		if( w == 27 )
+		{
+			el.parentNode.removeChild( el );
+		}
+		else if( w == 13 )
+		{
+			let l = new Library( 'system.library' );
+			l.onExecuted = function()
+			{
+				self.fileBrowser.refresh();
+			}
+			l.execute( 'file/makedir', { path: Application.path + this.value } );
+		}
+	}
+	el.blur = function()
+	{
+		el.parentNode.removeChild( el );
+	}
+	return cancelBubble( e );
+};
+
+// Add a note ------------------------------------------------------------------
+
+Application.addNote = function( e, skipSave )
+{
+    // This is only if we skip saving :)
+    if( !skipSave )
+    {
+        if( Application.currentDocument && Application.currentDocument.indexOf( ':' ) > 0 )
+        {
+            let content = '<!doctype html><html><head><title></title></head><body>' + Application.editor.getData() + '</body></html>';
+            Application.saveFile( Application.currentDocument, content, function()
+            {
+                Application.addNote( e, 'skipsave' );
+            } );
+	        return;
+	    }
+	}
+	let testFile = 'unnamed';
+	let nextTest = testFile;
+	let d = new Door( Application.browserPath );
+	d.getIcons( function( icons )
+	{
+		if( icons )
+		{
+			let found = false;
+			let tries = 1;
+			
+			do
+			{
+				found = false;
+				for( var a = 0; a < icons.length; a++ )
+				{
+					if( icons[ a ].Filename == nextTest + '.html' )
+					{
+						nextTest = testFile + '_' + ( ++tries );
+						found = true;
+						break;
+					}
+				}
+			}
+			while( found );
+		}
+		
+		let f = new File();
+		f.save( "\n", Application.browserPath + nextTest + '.html' );
+		f.onSave = function()
+		{
+			Application.currentDocument = Application.browserPath + nextTest + '.html';
+			Application.sendMessage( {
+				command: 'setfilename',
+				data: Application.currentDocument
+			} );
+			Application.refreshFilePane( false, true );
+			Application.loadFile( Application.browserPath + nextTest + '.html', function()
+			{
+				if( isMobile )
+				{
+					currentViewMode = 'default';
+					Application.updateViewMode();
+				}
+			} );
+		}
+	} );
+};
+
+// Search stuff ----------------------------------------------------------------
+
+Application.showSearch = function()
+{
+    let cl = ge( 'NotesSearch' ).classList;
+    if( cl.contains( 'Showing' ) )
+    {
+        ge( 'NotesSearch' ).getElementsByTagName( 'input' )[0].blur();
+        document.body.classList.remove( 'SearchShowing' );
+        cl.remove( 'Showing' );
+    }
+    else
+    {
+        document.body.classList.add( 'SearchShowing' );
+        cl.add( 'Showing' );
+        setTimeout( function()
+        {
+            ge( 'NotesSearch' ).getElementsByTagName( 'input' )[0].focus();
+        }, 25 );
+    }
+}
+
 // Receive a Friend or root Application object message -------------------------
 
 Application.receiveMessage = function( msg )
@@ -1629,6 +1694,9 @@ Application.receiveMessage = function( msg )
 				ApplyStyle( msg.style );
 			}
 			break;
+		case 'newnote':
+		    Application.addNote();
+		    break;
 		case 'setcurrentdocument':
 			Application.setCurrentDocument( msg.path );
 			break;
