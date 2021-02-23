@@ -1148,110 +1148,117 @@ var WorkspaceInside = {
 
 		if( Workspace.isSingleTask ) return;
 		
-		var mo = new Library( 'system.library' );
-		mo.onExecuted = function( rc, sessionList )
+		if( !this.refreshEWCTime )
+		    this.refreshEWCTime = 0;
+		let cand = ( new Date() ).getTime() / 1000;
+		if( cand - this.refreshEWCTime > 30 )
 		{
-			var m = Workspace.widget ? Workspace.widget.target : ge( 'DoorsScreen' );
-			if( m == ge( 'DoorsScreen' ) )
-				m = ge( 'DoorsScreen' ).screenTitle.getElementsByClassName( 'Extra' )[0];
-			if( !m )
-			{
-				//console.log( 'Can not find widget!' );
-				return;
-			}
-		
-			var sessions = [];
-			if( rc == 'ok' )
-			{
-				if( typeof( sessionList ) == 'string' )
-					sessionList = JSON.parse( sessionList );
+		    this.refreshEWCTime = cand;
+		    var mo = new Library( 'system.library' );
+		    mo.onExecuted = function( rc, sessionList )
+		    {
+			    var m = Workspace.widget ? Workspace.widget.target : ge( 'DoorsScreen' );
+			    if( m == ge( 'DoorsScreen' ) )
+				    m = ge( 'DoorsScreen' ).screenTitle.getElementsByClassName( 'Extra' )[0];
+			    if( !m )
+			    {
+				    //console.log( 'Can not find widget!' );
+				    return;
+			    }
+		    
+			    var sessions = [];
+			    if( rc == 'ok' )
+			    {
+				    if( typeof( sessionList ) == 'string' )
+					    sessionList = JSON.parse( sessionList );
 
-				if( sessionList )
-				{
-					try
-					{
-						var exists = [];
-						for( var b = 0; b < sessionList.length; b++ )
-						{
-							if( sessionList[b].sessionid == Workspace.sessionId ) continue;
-							var sn = sessionList[b].deviceidentity.split( '_' );
-							var svn = sn[2] + ' ';
+				    if( sessionList )
+				    {
+					    try
+					    {
+						    var exists = [];
+						    for( var b = 0; b < sessionList.length; b++ )
+						    {
+							    if( sessionList[b].sessionid == Workspace.sessionId ) continue;
+							    var sn = sessionList[b].deviceidentity.split( '_' );
+							    var svn = sn[2] + ' ';
 
-							switch( sn[0] )
-							{
-								case 'touch':
-									svn += 'touch device';
-									break;
-								case 'wimp':
-									svn += 'computer';
-									break;
-							}
-							switch( sn[1] )
-							{
-								case 'iphone':
-									svn += '(iPhone)';
-									break;
-								case 'android':
-									svn += '(Android device)';
-									break;
-							}
-							var num = 0;
-							var found = false;
-							for( var c = 0; c < exists.length; c++ )
-							{
-								if( exists[c] == svn )
-								{
-									num++;
-									found = true;
-								}
-							}
-							exists.push( svn );
-							if( found ) svn += ' ' + (num+1) + '.';
-							sessions.push( '<p class="Relative FullWidth Ellipsis IconSmall fa-close MousePointer" onmousedown="Workspace.terminateSession(\'' +
-								sessionList[b].sessionid + '\', \'' + sessionList[b].deviceidentity + '\');">&nbsp;' + svn + '</p>' );
-						}
-					}
-					catch( e )
-					{
-					}
-				}
-			}
+							    switch( sn[0] )
+							    {
+								    case 'touch':
+									    svn += 'touch device';
+									    break;
+								    case 'wimp':
+									    svn += 'computer';
+									    break;
+							    }
+							    switch( sn[1] )
+							    {
+								    case 'iphone':
+									    svn += '(iPhone)';
+									    break;
+								    case 'android':
+									    svn += '(Android device)';
+									    break;
+							    }
+							    var num = 0;
+							    var found = false;
+							    for( var c = 0; c < exists.length; c++ )
+							    {
+								    if( exists[c] == svn )
+								    {
+									    num++;
+									    found = true;
+								    }
+							    }
+							    exists.push( svn );
+							    if( found ) svn += ' ' + (num+1) + '.';
+							    sessions.push( '<p class="Relative FullWidth Ellipsis IconSmall fa-close MousePointer" onmousedown="Workspace.terminateSession(\'' +
+								    sessionList[b].sessionid + '\', \'' + sessionList[b].deviceidentity + '\');">&nbsp;' + svn + '</p>' );
+						    }
+					    }
+					    catch( e )
+					    {
+					    }
+				    }
+			    }
 
-			var closeBtn = '<div class="HRow"><p class="Layout"><button type="button" class="FloatRight Button fa-close IconSmall">' + i18n( 'i18n_close' ) + '</button></p></div>';
+			    var closeBtn = '<div class="HRow"><p class="Layout"><button type="button" class="FloatRight Button fa-close IconSmall">' + i18n( 'i18n_close' ) + '</button></p></div>';
 
-			// Mobile launches calendar in a different way, so this 
-			// functionality is only for desktops
-			if( !isMobile && !Workspace.isSingleTask )
-			{
-				var wid = Workspace.widget ? Workspace.widget : m.widget;
-				if( wid )
-				{
-					wid.shown = true;
-				}
+			    // Mobile launches calendar in a different way, so this 
+			    // functionality is only for desktops
+			    if( !isMobile && !Workspace.isSingleTask )
+			    {
+				    var wid = Workspace.widget ? Workspace.widget : m.widget;
+				    if( wid )
+				    {
+					    wid.shown = true;
+				    }
 
-				if( wid && !wid.initialized )
-				{
-					wid.initialized = true;
-					
-					self.createCalendar( wid, sessions );
-				}
-				else
-				{
-					if( m.calendar )
-					{
-						m.calendar.render();
-						m.sessions.innerHTML = d;
-					}
-				}
-				if( wid )
-				{
-					wid.autosize();
-				}
-				PollTrayPosition();
-			}
+				    if( wid && !wid.initialized )
+				    {
+					    wid.initialized = true;
+					    
+					    self.createCalendar( wid, sessions );
+				    }
+				    else
+				    {
+					    if( m.calendar )
+					    {
+						    m.calendar.render();
+						    m.sessions.innerHTML = d;
+					    }
+				    }
+				    if( wid )
+				    {
+					    wid.autosize();
+				    }
+				    PollTrayPosition();
+			    }
+		    }
+		    // FRANCOIS: get unique device IDs...
+		    mo.execute( 'user/sessionlist', { username: Workspace.loginUsername } );
 		}
-		// FRANCOIS: get unique device IDs...
-		mo.execute( 'user/sessionlist', { username: Workspace.loginUsername } );
 		
 		// For mobiles, we have a Friend icon at the top of the screen
 		// Also add the app menu
