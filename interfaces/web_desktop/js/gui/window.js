@@ -4255,6 +4255,10 @@ var View = function( args )
 		{
 			ifr.contentWindow.document.body.innerHTML = content;
 		}
+		if( this.flags.requireDoneLoading )
+		{
+			ifr.className = 'Content Loading';	
+		}
 		ifr.onload();
 
 		this.isRich = true;
