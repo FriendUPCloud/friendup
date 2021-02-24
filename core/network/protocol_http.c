@@ -87,7 +87,7 @@ static inline ListString *RunPHPScript( const char *command )
 	
 #ifdef USE_NPOPEN_POLL
 
-	DEBUG("[RunPHPScript] command launched: %s\n", command);
+	DEBUG("[RunPHPScript] command launched\n");
 
 	int size = 0;
 	int errCounter = 0;
