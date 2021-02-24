@@ -1608,6 +1608,7 @@ function apiWrapper( event, force )
 							}
 							break;
 						case 'doneloadingbody':
+							console.log( 'We got it!' );
 							if( win && win.iframe )
 							{
 								win.iframe.classList.remove( 'Loading' );
