@@ -39,7 +39,7 @@ var UsersSettings = function ( setting, set )
 		limit       : limit,
 		uids        : [],
 		avatars     : true,
-		logintime   : false,
+		logintime   : true,
 		experiment  : false,
 		listall     : false,
 		reset       : true
@@ -6569,7 +6569,7 @@ Sections.accounts_users = function( cmd, extra )
 		var d = new Filedialog( description );
 	}
 	
-	function hideStatus( status, show )
+	function hideStatus( status, show, pnt )
 	{
 		if( status && ge( 'ListUsersInner' ) )
 		{
@@ -6587,13 +6587,15 @@ Sections.accounts_users = function( cmd, extra )
 					{
 						if( span.getAttribute( 'status' ).toLowerCase() == status.toLowerCase() )
 						{
+							let obj = ( pnt ? list[a].parentNode : list[a] );
+							
 							if( show )
 							{
-								list[a].style.display = '';
+								obj.style.display = '';
 							}
 							else
 							{
-								list[a].style.display = 'none';
+								obj.style.display = 'none';
 							}
 						}
 					}
@@ -7884,13 +7886,13 @@ Sections.accounts_users = function( cmd, extra )
 																			{
 																				if( this.className.indexOf( 'show' ) >= 0 )
 																				{
-																					hideStatus( 'Disabled', true );
+																					hideStatus( 'Disabled', true, true );
 																					this.innerHTML = i18n( 'i18n_hide_disabled_users' );
 																					this.className = this.className.split( 'hide' ).join( '' ).split( 'show' ).join( '' ) + 'hide';
 																				}
 																				else
 																				{
-																					hideStatus( 'Disabled', false );
+																					hideStatus( 'Disabled', false, true );
 																					this.innerHTML = i18n( 'i18n_show_disabled_users' );
 																					this.className = this.className.split( 'hide' ).join( '' ).split( 'show' ).join( '' ) + 'show';
 																				}
@@ -7910,13 +7912,13 @@ Sections.accounts_users = function( cmd, extra )
 																			{
 																				if( this.className.indexOf( 'hide' ) >= 0 )
 																				{
-																					hideStatus( 'Locked', false );
+																					hideStatus( 'Locked', false, true );
 																					this.innerHTML = i18n( 'i18n_show_locked_users' );
 																					this.className = this.className.split( 'hide' ).join( '' ).split( 'show' ).join( '' ) + 'show';
 																				}
 																				else
 																				{
-																					hideStatus( 'Locked', true );
+																					hideStatus( 'Locked', true, true );
 																					this.innerHTML = i18n( 'i18n_hide_locked_users' );
 																					this.className = this.className.split( 'hide' ).join( '' ).split( 'show' ).join( '' ) + 'hide';
 																				}

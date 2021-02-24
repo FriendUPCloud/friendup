@@ -302,6 +302,8 @@ scrollengine = {
 		
 	},
 	
+	// TODO: Set the design of how the rows should be outside of this engine with a callback ...
+	
 	distribute: function( data, start, total )
 	{
 		// TODO: Update myArray if the limit has changed ...
@@ -343,6 +345,12 @@ scrollengine = {
 				}
 			}
 		}
+		
+		let uids = [];
+		
+		let status = [ 'Active', 'Disabled', 'Locked' ];
+		
+		let login = [ 'Never' ];
 		
 		// Distribute
 		let s = start;
@@ -388,24 +396,32 @@ scrollengine = {
 					}
             	}
             	
-								
+				let obj = {
+					ID        : ( this.myArray[s][ 'ID' ] ),
+					Name      : ( this.myArray[s][ 'Name' ] ? this.myArray[s][ 'Name' ] : 'n/a' ),
+					FullName  : ( this.myArray[s][ 'FullName' ] ? this.myArray[s][ 'FullName' ] : 'n/a' ),
+					Status    : ( status[ ( this.myArray[s][ 'Status' ] ? this.myArray[s][ 'Status' ] : 0 ) ] ),
+					Timestamp : ( this.myArray[s][ 'LoginTime' ] ? this.myArray[s][ 'LoginTime' ] : 0 ),
+					Logintime : ( this.myArray[s][ 'LoginTime' ] != 0 && this.myArray[s][ 'LoginTime' ] != null ? CustomDateTime( this.myArray[s][ 'LoginTime' ] ) : login[ 0 ] )
+				};
+				
 				var bg = 'background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;';
 
-            	//str += '<div class="HRow Active Line '+s+'" id="UserListID_'+this.myArray[s].ID+'">';
+            	//str += '<div class="HRow '+obj.Status+' Line '+s+'" id="UserListID_'+obj.ID+'">';
 				str += '	<div class="TextCenter HContent10 FloatLeft PaddingSmall Ellipsis edit">';
-				str += '		<span id="UserAvatar_'+this.myArray[s].ID+'" fullname="'+this.myArray[s].FullName+'" name="'+this.myArray[s].Name+'" status="Active" logintime="Never" timestamp="0" class="IconSmall fa-user-circle-o avatar" style="position: relative;">';
+				str += '		<span id="UserAvatar_'+obj.ID+'" fullname="'+obj.FullName+'" status="'+obj.Status+'" logintime="'+obj.Logintime+'" timestamp="'+obj.Timestamp+'" class="IconSmall fa-user-circle-o avatar" style="position: relative;">';
 				str += '			<div style="' + bg + '"></div>';
 				str += '		</span>';
 				str += '	</div>';
-				str += '	<div class=" HContent30 FloatLeft PaddingSmall Ellipsis fullname">' + this.myArray[s].FullName + '</div>';
-				str += '	<div class=" HContent25 FloatLeft PaddingSmall Ellipsis name">' + this.myArray[s].Name + '</div>';
-				str += '	<div class=" HContent15 FloatLeft PaddingSmall Ellipsis status">Active</div>';
-				str += '	<div class=" HContent20 FloatLeft PaddingSmall Ellipsis logintime">Never</div>';
+				str += '	<div class=" HContent30 FloatLeft PaddingSmall Ellipsis fullname">' + obj.FullName + '</div>';
+				str += '	<div class=" HContent25 FloatLeft PaddingSmall Ellipsis name">' + obj.Name + '</div>';
+				str += '	<div class=" HContent15 FloatLeft PaddingSmall Ellipsis status">' + obj.Status + '</div>';
+				str += '	<div class=" HContent20 FloatLeft PaddingSmall Ellipsis logintime">' + obj.Logintime + '</div>';
 				//str += '</div>';
             	
             	let dd = document.createElement( 'div' );
-            	dd.className = 'HRow Active Line';
-            	dd.id = 'UserListID_' + this.myArray[s].ID;
+            	dd.className = 'HRow ' + obj.Status + ' Line ' + s;
+            	dd.id = 'UserListID_' + obj.ID;
             	dd.innerHTML = str;
             	
             	let test = allNodes[ a ].getElementsByTagName( 'div' );
@@ -423,12 +439,14 @@ scrollengine = {
             	spa.style.backgroundImage = 'url(' + src + ')';
             	allNodes[ a ].title = 'Line '+s;
             	
-            	allNodes[ a ].myArrayID = this.myArray[s].ID;
+            	allNodes[ a ].myArrayID = obj.ID;
             	allNodes[ a ].onclick = function(  )
 				{
 					console.log( 'onclick = ' + "Sections.accounts_users( 'edit', "+this.myArrayID+" );" );
             		Sections.accounts_users( 'edit', this.myArrayID );
             	}
+            	
+            	uids.push( obj.ID );
             	
             	//allNodes[ a ].innerHTML = 'Line ' + s + ' ID ' + this.myArray[ s ].ID + ' Name ' + this.myArray[ s ].Name;
             }
@@ -437,6 +455,56 @@ scrollengine = {
 				//allNodes[ a ].innerHTML = this.myArray[ s ];
 			}
 		}
+		
+		
+		
+		// Temporary get lastlogin time separate to speed up the sql query ...
+		
+		if( uids.length > 0 )
+		{
+			getLastLoginlist( function ( res, dat )
+			{				
+				if( res == 'ok' && dat )
+				{
+					for ( var i in dat )
+					{
+						if( dat[i] && dat[i]['UserID'] )
+						{
+							if( ge( 'UserListID_' + dat[i]['UserID'] ) )
+							{
+								var elems = ge( 'UserListID_' + dat[i]['UserID'] ).getElementsByTagName( '*' );
+								
+								if( elems.length > 0 )
+								{
+									for ( var div in elems )
+									{
+										if( elems[div] && elems[div].className )
+										{
+											let timestamp = ( dat[i]['LoginTime'] );
+											let logintime = ( dat[i]['LoginTime'] != 0 && dat[i]['LoginTime'] != null ? CustomDateTime( dat[i]['LoginTime'] ) : login[ 0 ] );
+											
+											if( elems[div].className.indexOf( 'avatar' ) >= 0 )
+											{
+												elems[div].setAttribute( 'timestamp', timestamp );
+												elems[div].setAttribute( 'logintime', logintime );
+											}
+											if( elems[div].className.indexOf( 'logintime' ) >= 0 )
+											{
+												elems[div].innerHTML = logintime;
+											}
+										}
+									}
+								}
+							
+							
+							}
+						}
+					}
+				}
+			
+			}, ( uids ? uids.join(',') : false ) );
+		}
+		
 	},
 	
 	// Refresh funksjon
