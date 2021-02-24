@@ -4257,7 +4257,7 @@ var View = function( args )
 		}
 		if( this.flags.requireDoneLoading )
 		{
-			ifr.className = 'Content Loading';	
+			ifr.className = 'Loading';	
 		}
 		ifr.onload();
 
