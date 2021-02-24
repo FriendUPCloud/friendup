@@ -877,7 +877,12 @@ p.Layout
 }
 
 .PadBorder {
-    border : 0.2em solid $ColorBackground;
+    border : 3px solid $ColorBackground;
+}
+
+.PadBackground {
+	background-color : $ColorBackground;
+	padding          : 3px;
 }
 
 /*                                                                            */

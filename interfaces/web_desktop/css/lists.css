@@ -112,6 +112,11 @@
 	border-color : $ColorBgListSw1;
 }
 
+.ZebraList > tr .PadBackground,
+.ZebraList > div .PadBackground {
+	background-color : $ColorBgListSw1;
+}
+
 .ZebraList > tr:nth-child( 2n ),
 .ZebraList > div:nth-child( 2n )
 {
@@ -124,6 +129,12 @@
 	border-color : $ColorBgListSw2;
 }
 
+.ZebraList > tr:nth-child( 2n ) .PadBackground,
+.ZebraList > div:nth-child( 2n ) .PadBackground
+{
+	background-color : $ColorBgListSw2;
+}
+
 .ZebraList.Interactive > tr:hover,
 .ZebraList.Interactive > div:hover
 {
@@ -132,6 +143,12 @@
 
 .ZebraList.Interactive > tr:hover .PadBorder,
 .ZebraList.Interactive > div:hover .PadBorder
+{
+	border-color : $ColorBgListSwHover;
+}
+
+.ZebraList.Interactive > tr:hover .PadBackground,
+.ZebraList.Interactive > div:hover .PadBackground
 {
 	border-color : $ColorBgListSwHover;
 }
