@@ -4257,7 +4257,7 @@ var View = function( args )
 		}
 		if( this.flags.requireDoneLoading )
 		{
-			ifr.className = 'Loading Testing';	
+			ifr.className = 'Loading';	
 		}
 		ifr.onload();
 
@@ -4387,6 +4387,11 @@ var View = function( args )
 		ifr.style.position = 'absolute';
 		ifr.style.top = '0'; ifr.style.left = '0';
 		ifr.style.width = '100%'; ifr.style.height = '100%';
+		
+		if( this.flags.requireDoneLoading )
+		{
+			ifr.className = 'Loading';	
+		}
 
 		// Find our friend
 		// TODO: Only send postmessage to friend targets (from our known origin list (security app))
