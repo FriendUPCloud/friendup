@@ -619,7 +619,7 @@ Uri* UriParse( char* str )
 
 	// Get query --------------------------------------------------------------
 	char* query = UriGetQuery( next, remainingLen, &next );
-	DEBUG( "Testing UriGetQuery: %s\n", query );
+	//DEBUG( "Testing UriGetQuery: %s\n", query );
 	remainingLen = strLen - ( next - str );
 	if( query != NULL )
 	{
