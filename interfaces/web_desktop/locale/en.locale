@@ -280,19 +280,19 @@ i18n_select_local_files                 : Select local files
 i18n_not_upload_target                  : Not an upload target
 i18n_not_upload_target_desc             : You can not upload to the Shared drive.
 
-i18n_unzip_completed                    : Uncompressing completed.
-i18n_unzip_comdesc                      : Uncompressing a file(s) completed successfully
-i18n_unzip_failed                       : Uncompressing failed.
-i18n_unzip_failed_desc                  : Uncompressing of file(s) did not complete
+i18n_unzip_completed                    : Decompressing completed.
+i18n_unzip_comdesc                      : Decompressing a file(s) completed successfully
+i18n_unzip_failed                       : Decompressing failed.
+i18n_unzip_failed_desc                  : Decompressing of file(s) did not complete
 
 i18n_zip_completed                      : Compressing completed.
 i18n_zip_comdesc                        : Compressing the file(s) completed successfully
 i18n_zip_not_completed                  : Compressing failed.
 i18n_zip_not_comdesc                    : Compressing the file(s) did not complete
 
-i18n_unzip_start                        : Uncompressing file(s).
-i18n_unzip_startdesc                    : Uncompressing selected file(s).
-i18n_unzip_start_none                   : Could not uncompress.
+i18n_unzip_start                        : Decompressing file(s).
+i18n_unzip_startdesc                    : Decompressing selected file(s).
+i18n_unzip_start_none                   : Could not decompress.
 i18n_unzip_startdesc_none               : You did not select any files.
 
 i18n_zip_start                          : Compressing file(s).

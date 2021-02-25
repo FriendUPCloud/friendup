@@ -12,6 +12,11 @@ var _appNum = 1;
 
 var _executionQueue = {};
 
+// TODO: Both ExecuteApplication and ExecuteJSXByPath are using a terribly
+//       messy implementation of flags, args etc. This must be refactored
+//       with a function that parses flags and adds args to flags list!
+//       Mucho importante!
+
 function RemoveFromExecutionQueue( app )
 {
 	try
@@ -55,13 +60,15 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	}
 	
 	// Match silent
+	if( !flags ) flags = {};
+	flags.openSilent = false;
+	
 	if( args )
 	{
 		if( args.indexOf( 'silent ' ) > 0 || args.indexOf( ' silent' ) > 0 || args == 'silent' )
 		{
 			args = args.split( 'silent' ).join( '' );
 			args = args.split( '  ' ).join( ' ' );
-			if( !flags ) flags = {};
 			flags.openSilent = true;
 		}
 	}
@@ -181,6 +188,9 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			{
 				case 'workspace':
 					workspace = parseInt( pair[1] );
+					if( !flags ) flags = {};
+					if( !flags.workspace )
+						flags.workspace = workspace;
 					if( !workspace ) workspace = 0;
 					break;
 				default:
@@ -1086,12 +1096,77 @@ function ExecuteApplicationActivation( app, win, permissions, reactivation )
 function ExecuteJSXByPath( path, args, callback, conf, flags )
 {
 	if( !path ) return;
+	
+	// Strip arguments
+	let ind = path.indexOf( '.jsx' );
+	path = path.substr( 0, ind + 4 );
+	
+	// Get app
 	var app = path.split( ':' )[1];
 	if( app.indexOf( '/' ) > 0 )
 	{
 		app = app.split( '/' );
 		app = app[app.length-1];
 	}
+	
+	// Strip arguments and place in args
+	if( app.indexOf( ' ' ) > 0 )
+	{
+		app = app.split( ' ' );
+		if( !args )
+		{
+			args = app;
+			let out = [];
+			for( let i = 1; i < args.length; i++ )
+				out.push( args[i] );
+			args = out.join( ' ' );
+		}
+		app = app[0];
+	}
+	
+	// Filter arguments
+	if( args )
+	{
+		args = args.split( ' ' );
+		let aout = [];
+		for( var a = 0; a < args.length; a++ )
+		{
+			var pair = args[a].split( '=' );
+			if( pair.length > 1 )
+			{
+				switch( pair[0] )
+				{
+					case 'workspace':
+						flags.workspace = parseInt( pair[1] ) - 1;
+						if( flags.workspace < 0 ) 
+							flags.workspace = false;
+						break;
+					default:
+						aout.push( args[a] );
+						break;
+				}
+			}
+			else aout.push( args[a] );
+		}
+		args = aout.join( ' ' );
+	}
+	
+	// Match silent
+	if( args )
+	{
+		if( args.indexOf( 'silent ' ) > 0 || args.indexOf( ' silent' ) > 0 || args == 'silent' )
+		{
+			args = args.split( 'silent' ).join( '' );
+			args = args.split( '  ' ).join( ' ' );
+			if( !flags ) flags = {};
+			flags.openSilent = true;
+		}
+	}
+	else if( flags && !flags.openSilent )
+	{
+		flags.openSilent = false;
+	}
+	
 	var f = new File( path );
 	f.onLoad = function( data )
 	{
@@ -1230,6 +1305,8 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 			ifr.userId = Workspace.userId;
 			ifr.userLevel = Workspace.userLevel;
 			ifr.username = Workspace.loginUsername;
+			ifr.workspace = flags && flags.workspace ? flags.workspace : 0;
+			ifr.opensilent = flags && flags.openSilent == true ? true : false;
 			ifr.applicationType = 'jsx';
 			if( sid ) 
 				ifr.sessionId = Workspace.sessionId; // JSX has sessionid
