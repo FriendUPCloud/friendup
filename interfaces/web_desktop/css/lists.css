@@ -150,7 +150,7 @@
 .ZebraList.Interactive > tr:hover .PadBackground,
 .ZebraList.Interactive > div:hover .PadBackground
 {
-	border-color : $ColorBgListSwHover;
+	background-color : $ColorBgListSwHover;
 }
 
 .ZebraList > div, .BackgroundLists > div
