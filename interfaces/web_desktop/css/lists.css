@@ -235,5 +235,6 @@ ul.Negative.List > li:nth-child(even)
 .ListItemPlain:hover
 {
 	background-color: rgba(180,180,180,0.15);
+	border-radius: 2px;
 }
 
