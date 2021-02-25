@@ -272,6 +272,8 @@ SystemBase *SystemInit( void )
 	l->AuthModuleDrop = AuthModuleDrop;
 	l->LibrarySQLGet = LibrarySQLGet;
 	l->LibrarySQLDrop = LibrarySQLDrop;
+	l->LibrarySQLSecurityGet = LibrarySQLSecurityGet;
+	l->LibrarySQLSecurityDrop = LibrarySQLSecurityDrop;
 	l->LibraryApplicationGet = LibraryApplicationGet;
 	l->LibraryApplicationDrop = LibraryApplicationDrop;
 	l->LibraryZGet = LibraryZGet;
@@ -302,8 +304,16 @@ SystemBase *SystemInit( void )
 	char *pass = "root";
 	char *dbname = "FriendMaster";
 	int port = 3306;
+	
+	char *hostSec = "localhost";
+	char *loginSec = "root";
+	char *passSec = "root";
+	char *dbnameSec = "FriendSecurity";
+	int portSec = 3306;
+	
 	char *options = NULL;
 	l->sqlpoolConnections = DEFAULT_SQLLIB_POOL_NUMBER;
+	l->sqlpoolSecurityConnections = DEFAULT_SQLLIB_POOL_NUMBER;
 	Props *prop = NULL;
 
 	// Get a copy of the properties.library
@@ -366,7 +376,7 @@ SystemBase *SystemInit( void )
 				l->sl_DefaultDBLib = StringDuplicate( tmp );
 			}
 			
-			DEBUG("[SystemBase] reading login\n");
+			DEBUG("[SystemBase] read login\n");
 			login = plib->ReadStringNCS( prop, "databaseuser:login", "root" );
 			DEBUG("[SystemBase] user %s\n", login );
 			pass = plib->ReadStringNCS( prop, "databaseuser:password", "root" );
@@ -379,6 +389,21 @@ SystemBase *SystemInit( void )
 			DEBUG("[SystemBase] port read %d\n", port );
 			l->sqlpoolConnections = plib->ReadIntNCS( prop, "databaseuser:connections", DEFAULT_SQLLIB_POOL_NUMBER );
 			DEBUG("[SystemBase] connections read %d\n", l->sqlpoolConnections );
+			
+			DEBUG("[SystemBase] read login for security\n");
+			loginSec = plib->ReadStringNCS( prop, "securedb:login", "root" );
+			DEBUG("[SystemBase] user %s for security\n", loginSec );
+			passSec = plib->ReadStringNCS( prop, "securedb:password", "root" );
+			DEBUG("[SystemBase] password %s for security\n", passSec );
+			hostSec = plib->ReadStringNCS( prop, "securedb:host", "localhost" );
+			DEBUG("[SystemBase] host %s for security\n", hostSec );
+			dbnameSec = plib->ReadStringNCS( prop, "securedb:dbname", "FriendMaster" );
+			DEBUG("[SystemBase] dbname %s for security\n",dbnameSec );
+			portSec = plib->ReadIntNCS( prop, "securedb:port", 3306 );
+			DEBUG("[SystemBase] port read %d for security\n", portSec );
+			l->sqlpoolSecurityConnections = plib->ReadIntNCS( prop, "securedb:securityconnections", DEFAULT_SQLLIB_POOL_NUMBER );
+			DEBUG("[SystemBase] security connections read %d\n", l->sqlpoolSecurityConnections );
+			
 			options = plib->ReadStringNCS( prop, "databaseuser:options", NULL );
 			DEBUG("[SystemBase] options %s\n",options );
 			
@@ -529,9 +554,50 @@ SystemBase *SystemInit( void )
 				}
 			}
 		}
+		
+		// security
+		
+		Log( FLOG_INFO, "----------------------------------------\n");
+		Log( FLOG_INFO, "-----Security Database configuration-------------\n");
+		Log( FLOG_INFO, "-----Security Host: %s\n", hostSec );
+		Log( FLOG_INFO, "-----Security Port: %d\n", portSec );
+		Log( FLOG_INFO, "-----Security DBName: %s\n", dbnameSec );
+		Log( FLOG_INFO, "-----Security User: %s\n", loginSec );
+		Log( FLOG_INFO, "----------------------------------------\n");
+
+		l->sqlpoolSecurity = FCalloc( l->sqlpoolSecurityConnections, sizeof( SQLConPool) );
+		if( l->sqlpoolSecurity != NULL )
+		{
+			unsigned int i = 0;
+			int error = 0;
+
+			for( ; i < (unsigned int)l->sqlpoolSecurityConnections; i++ )
+			{
+				l->sqlpoolSecurity[ i ].sqll_Sqllib = (struct SQLLibrary *)LibraryOpen( l, l->sl_DefaultDBLib, 0 );
+				if( l->sqlpoolSecurity[ i ].sqll_Sqllib != NULL )
+				{
+					l->sqlpoolSecurity[ i ].sql_ID = i;
+					error = l->sqlpoolSecurity[i ].sqll_Sqllib->SetOption( l->sqlpoolSecurity[ i ].sqll_Sqllib, options );
+					error = l->sqlpoolSecurity[i ].sqll_Sqllib->Connect( l->sqlpoolSecurity[ i ].sqll_Sqllib, hostSec, dbnameSec, loginSec, passSec, portSec );
+					if( error != 0 )
+					{
+						break;
+					}
+				}
+			}
+			
+			if( error != 0 )
+			{
+				i = 0;
+				for( ; i < (unsigned int)l->sqlpoolSecurityConnections; i++ )
+				{
+					LibraryClose( l->sqlpoolSecurity[ i ].sqll_Sqllib );
+					l->sqlpoolSecurity[i ].sqll_Sqllib = NULL;
+				}
+			}
+		}
+		
 		if( prop ) plib->Close( prop );
-	
-		//l->LibraryPropertiesDrop( l, plib );
 	}
 	
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
@@ -1372,8 +1438,20 @@ void SystemClose( SystemBase *l )
 			DEBUG( "[SystemBase] Closed mysql library slot %d\n", i );
 			LibraryClose( l->sqlpool[ i ].sqll_Sqllib );
 		}
-		
 		FFree( l->sqlpool );
+	}
+	
+	// Close mysql library for Security DB
+	DEBUG( "[SystemBase] Closing and looking into mysql security pool\n" );
+	if( l->sqlpoolSecurity != NULL )
+	{
+		unsigned int i = 0;
+		for( ; i < (unsigned int)l->sqlpoolConnections; i++ )
+		{
+			DEBUG( "[SystemBase] Closed mysql library slot %d for security db\n", i );
+			LibraryClose( l->sqlpoolSecurity[ i ].sqll_Sqllib );
+		}
+		FFree( l->sqlpoolSecurity );
 	}
 
 	// release them all strings ;)
@@ -2465,6 +2543,126 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
  */
 
 void LibrarySQLDrop( SystemBase *l, SQLLibrary *mclose )
+{
+	int i = 0;
+	int closed = -1;
+	
+	if( mclose->l_InUse == TRUE )
+	{
+		if( FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex ) == 0 )
+		{
+			mclose->l_InUse = FALSE;
+			FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
+		}
+		closed = i;
+	}
+		
+	if( mclose->l_InUse != FALSE )
+	{
+		DEBUG( "[SystemBase] Mysql library %p is still in use\n", mclose );
+	}
+	
+	if( closed != -1 )
+	{
+		INFO( "[SystemBase] MYSQL library %p was closed properly.\n", mclose );
+	}
+}
+
+/**
+ * Get mysql.library from pool
+ *
+ * @param l pointer to SystemBase
+ * @return pointer to mysql.library
+ */
+
+SQLLibrary *LibrarySQLSecurityGet( SystemBase *l )
+{
+	SQLLibrary *retlib = NULL;
+	int i ;
+	int timer = 0;
+	
+	while( TRUE )
+	{
+		if( FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex ) == 0 )
+		{
+			if( l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib->l_InUse == FALSE )
+			{
+				retlib = l->sqlpool[l->MsqLlibCounter ].sqll_Sqllib;
+				DEBUG("retlibptr %p pool %p\n", retlib, l->sqlpool[l->MsqLlibCounter ].sqll_Sqllib );
+				int status = retlib->GetStatus( (void *)l->sqlpool[l->MsqLlibCounter ].sqll_Sqllib );
+				if( retlib == NULL || status != SQL_STATUS_READY ) //retlib->con.sql_Con->status != MYSQL_STATUS_READY )
+				{
+					FERROR( "[LibraryMYSQLGet] We found a NULL pointer on slot %d retlib %p status %d!\n", l->MsqLlibCounter, retlib, status );
+					// Increment and check
+					if( ++l->MsqLlibCounter >= l->sqlpoolConnections ) l->MsqLlibCounter = 0;
+					FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
+					// Give some grace time..
+					usleep( 0 );
+					continue;
+				}
+				
+				l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib->l_InUse = TRUE;
+				if( l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib->con.sql_Recconect == TRUE )
+				{
+					l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib->Reconnect(  l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib );
+					l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib->con.sql_Recconect = FALSE;
+				}
+			
+				INFO( "[LibraryMYSQLGet] We found mysql library on slot %d (library %p).\n", l->MsqLlibCounter, l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib );
+			
+				// Increment and check
+				if( ++l->MsqLlibCounter >= l->sqlpoolConnections )
+				{
+					l->MsqLlibCounter = 0;
+				}
+				FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
+				break;
+			}
+			else
+			{
+				FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
+			}
+		}
+		
+		timer++;
+		// We got too many connections, give grace time
+		if( timer >= l->sqlpoolConnections )
+		{
+			timer = 0;
+			usleep( 0 );
+		}
+		
+		l->MsqLlibCounter++;
+		if( l->MsqLlibCounter >= l->sqlpoolConnections )
+		{
+			l->MsqLlibCounter = 0;
+		}
+		
+		/*
+		retries++;
+		if( retries >= l->sqlpoolConnections )
+		{
+			if( usingSleep++ >= 32 )
+			{
+				DEBUG( "All SQL connections are busy!\n" );
+				break;
+			}
+			usleep( 5000 );
+		}
+		*/
+	}
+	
+	return retlib;
+}
+
+/**
+ * Drop mysql.library to pool
+ *
+ * @param l pointer to SystemBase
+ * @param mclose pointer to mysql.library which will be returned to pool
+ */
+
+void LibrarySQLSecurityDrop( SystemBase *l, SQLLibrary *mclose )
 {
 	int i = 0;
 	int closed = -1;

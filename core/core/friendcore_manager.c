@@ -307,6 +307,7 @@ int FriendCoreManagerInit( FriendCoreManager *fcm )
 		Log(FLOG_INFO, "-----CommRemotePort: %d\n", fcm->fcm_ComRemotePort );
 		Log(FLOG_INFO, "-----SSH_SERVER_PORT %s\n", SSH_SERVER_PORT );
 		Log(FLOG_INFO, "-----SQL connections: %d\n", SLIB->sqlpoolConnections );
+		Log(FLOG_INFO, "-----SQL SECUREDB connections: %d\n", SLIB->sqlpoolSecurityConnections );
 		Log(FLOG_INFO, "-----UserFileShareCache (per drive): %ld\n", SLIB->sl_USFCacheMax );
 		Log(FLOG_INFO, "-----Cluster Master: %d\n", fcm->fcm_ClusterMaster );
 		Log(FLOG_INFO, "-----UserSession timeout: %d\n", SLIB->sl_RemoveSessionsAfterTime );

@@ -301,6 +301,10 @@ typedef struct SystemBase
 
 	struct SQLConPool				*sqlpool;			// mysql.library pool
 	int								sqlpoolConnections;	// number of database connections
+	
+	struct SQLConPool				*sqlpoolSecurity;			// mysql.library pool of connection to security db
+	int								sqlpoolSecurityConnections;	// number of database connections to security db
+	
 	struct ApplicationLibrary		*alib;				// application library
 	struct ZLibrary					*zlib;						// z.library
 	struct ImageLibrary				*ilib;						// image.library
@@ -366,6 +370,10 @@ typedef struct SystemBase
 	struct SQLLibrary				*(*LibrarySQLGet)( struct SystemBase *l );
 
 	void							(*LibrarySQLDrop)( struct SystemBase *l, struct SQLLibrary * );
+	
+	struct SQLLibrary				*(*LibrarySQLSecurityGet)( struct SystemBase *l );
+
+	void							(*LibrarySQLSecurityDrop)( struct SystemBase *l, struct SQLLibrary * );
 
 	struct ApplicationLibrary		*(*LibraryApplicationGet)( struct SystemBase *l );
 
@@ -498,6 +506,18 @@ struct SQLLibrary *LibrarySQLGet( struct SystemBase *l );
 //
 
 void LibrarySQLDrop( struct SystemBase *l, SQLLibrary *mclose );
+
+//
+//
+//
+
+struct SQLLibrary *LibrarySQLSecurityGet( struct SystemBase *l );
+
+//
+//
+//
+
+void LibrarySQLSecurityDrop( struct SystemBase *l, SQLLibrary *mclose );
 
 //
 //
