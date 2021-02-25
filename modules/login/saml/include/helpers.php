@@ -20,13 +20,16 @@ function renderSAMLLoginForm()
 	$lp = '';		
 
 
-	foreach( $GLOBALS['login_modules']['saml']['Providers'] as $pk => $pv );
-	{
-		//do some checks here
+    if( isset( $GLOBALS['login_modules']['saml']['Providers'] ) )
+    {
+	    foreach( $GLOBALS['login_modules']['saml']['Providers'] as $pk => $pv );
+	    {
+		    //do some checks here
+	    }
 	}
 	
-	if( file_exists(dirname(__FILE__) . '/templates/login.html') )
-		die( renderReplacements( file_get_contents(dirname(__FILE__) . '/templates/login.html') ) );
+	if( file_exists(dirname(__FILE__) . '/../templates/login.html') )
+		die( renderReplacements( file_get_contents(dirname(__FILE__) . '/../templates/login.html') ) );
 	
 	
 	die( '<h1>Your FriendUP installation is incomplete!</h1>' );
@@ -57,7 +60,7 @@ function renderReplacements( $template )
 	$samlendpoint .= '?friendendpoint=' . urlencode( $GLOBALS['request_path'] );
 	
 	$finds = [
-		'{scriptpath}'
+		'{scriptpath}',
 		'{welcome}',
 		'{friendlinktext}',
 		'{additionaliframestyles}',
