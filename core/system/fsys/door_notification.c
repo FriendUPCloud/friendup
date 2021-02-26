@@ -374,7 +374,7 @@ int DoorNotificationCommunicateChanges( void *lsb, UserSession *ses __attribute_
 		return 1;
 	}
 	
-	SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqllib = sb->GetDBConnection( sb );
 	if( sqllib != NULL )
 	{
 		char *pathNoDevice = path;
@@ -391,7 +391,7 @@ int DoorNotificationCommunicateChanges( void *lsb, UserSession *ses __attribute_
 		
 		DoorNotification *notification = DoorNotificationGetNotificationsFromPath( sqllib, device, pathNoDevice );
 		
-		sb->LibrarySQLDrop( sb, sqllib );
+		sb->DropDBConnection( sb, sqllib );
 		
 		while( notification != NULL )
 		{
@@ -421,7 +421,7 @@ int DoorNotificationRemoveEntries( void *lsb )
 {
 	SystemBase *sb = (SystemBase *)lsb;
 	DEBUG("DoorNotificationRemoveEntries LSB %p\n", lsb );
-	SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqllib = sb->GetDBConnection( sb );
 	if( sqllib != NULL )
 	{
 		DEBUG("[DoorNotificationRemoveEntries] start\n");
@@ -433,7 +433,7 @@ int DoorNotificationRemoveEntries( void *lsb )
 		
 		sqllib->QueryWithoutResults( sqllib, temp );
 		
-		sb->LibrarySQLDrop( sb, sqllib );
+		sb->DropDBConnection( sb, sqllib );
 	}
 	return 0;
 }
@@ -451,7 +451,7 @@ int DoorNotificationRemoveEntriesByUser( void *lsb, FULONG uid )
 {
 	//pthread_detach( pthread_self() ); - it is called in systembase_web.c , line 227
 	SystemBase *sb = (SystemBase *)lsb;
-	SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqllib = sb->GetDBConnection( sb );
 	if( sqllib != NULL )
 	{
 		DEBUG("[DoorNotificationRemoveEntriesByUser] start, userID %lu\n", uid );
@@ -466,7 +466,7 @@ int DoorNotificationRemoveEntriesByUser( void *lsb, FULONG uid )
 			DEBUG("[DoorNotificationRemoveEntriesByUser] Cannot call query\n");
 		}
 		
-		sb->LibrarySQLDrop( sb, sqllib );
+		sb->DropDBConnection( sb, sqllib );
 	}
 	return 0;
 }

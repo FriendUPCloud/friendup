@@ -46,14 +46,14 @@ CalendarManager *CalendarManagerNew( void *sb )
 		pthread_mutex_init( &(cm->c_Mutex), NULL );
 		cm->c_Quit = FALSE;
 		
-		SQLLibrary *lsqllib = lsb->LibrarySQLGet( lsb );
+		SQLLibrary *lsqllib = lsb->GetDBConnection( lsb );
 		if( lsqllib != NULL )
 		{
 			int entries;
 			// reading all entries from FCalendar table
 			cm->c_CalEntries = lsqllib->Load( lsqllib, FCalendarEntryDesc, NULL, &entries );
 	
-			lsb->LibrarySQLDrop( lsb, lsqllib );
+			lsb->DropDBConnection( lsb, lsqllib );
 		}
 		
 		// we must sort all entries

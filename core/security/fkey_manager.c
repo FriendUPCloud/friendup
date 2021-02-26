@@ -38,14 +38,14 @@ FKeyManager *FKeyManagerNew( void *sb )
 		SystemBase *lsb = (SystemBase *)sb;
 		fkm->km_SB = sb;
 		
-		SQLLibrary *sqllib = lsb->LibrarySQLGet( lsb );
+		SQLLibrary *sqllib = lsb->GetDBConnection( lsb );
 		if( sqllib != NULL )
 		{
 			int keyentries;
 			
 			fkm->km_Keys = sqllib->Load( sqllib, FKeyDesc, NULL, &keyentries );
 			
-			lsb->LibrarySQLDrop( lsb, sqllib );
+			lsb->DropDBConnection( lsb, sqllib );
 		}
 	}
 	return fkm;
@@ -107,7 +107,7 @@ FKey *FKeyManagerGetByID( FKeyManager *km, FULONG id )
 	// if key doesnt exist, lets try to get it from DB
 	
 	SystemBase *sb = (SystemBase *)km->km_SB;
-	SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqllib = sb->GetDBConnection( sb );
 	if( sqllib != NULL )
 	{
 		int keyentries;
@@ -119,10 +119,10 @@ FKey *FKeyManagerGetByID( FKeyManager *km, FULONG id )
 			{
 				k->node.mln_Succ = (MinNode *)km->km_Keys;
 				km->km_Keys = k;
-				sb->LibrarySQLDrop( sb, sqllib );
+				sb->DropDBConnection( sb, sqllib );
 				return k;
 			}
-		sb->LibrarySQLDrop( sb, sqllib );
+		sb->DropDBConnection( sb, sqllib );
 	}
 	
 	return NULL;
@@ -161,7 +161,7 @@ int FKeyManagerUpdateKeyByID( FKeyManager *km, FULONG id )
 	
 	// Load key from DB first
 	SystemBase *sb = (SystemBase *)km->km_SB;
-	SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqllib = sb->GetDBConnection( sb );
 	if( sqllib != NULL )
 	{
 		int keyentries;
@@ -169,7 +169,7 @@ int FKeyManagerUpdateKeyByID( FKeyManager *km, FULONG id )
 		snprintf( where, sizeof(where), " ID=%lu", id );
 		
 		k = sqllib->Load( sqllib, FKeyDesc, where, &keyentries );
-		sb->LibrarySQLDrop( sb, sqllib );
+		sb->DropDBConnection( sb, sqllib );
 	}
 	
 	if( k == NULL )

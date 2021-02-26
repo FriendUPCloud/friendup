@@ -443,7 +443,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					{
 						FULONG userId = 0;
 						
-						SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+						SQLLibrary *sqllib  = l->GetDBConnection( l );
 						if( sqllib != NULL )
 						{
 							char q[ 1024 ];
@@ -461,7 +461,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 								}
 								sqllib->FreeResult( sqllib, res );
 							}
-							l->LibrarySQLDrop( l, sqllib );
+							l->DropDBConnection( l, sqllib );
 						}
 						
 						if( userId > 0 )
@@ -799,7 +799,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		{
 			if( id > 0 )
 			{
-				SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+				SQLLibrary *sqllib  = l->GetDBConnection( l );
 				if( sqllib != NULL )
 				{
 					char *tmpQuery = NULL;
@@ -841,7 +841,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						HttpAddTextContent( response, buffer );
 					}
 					
-					l->LibrarySQLDrop( l, sqllib );
+					l->DropDBConnection( l, sqllib );
 				}
 				else
 				{
@@ -925,7 +925,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		{
 			if( id > 0 && status >= 0 )
 			{
-				SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+				SQLLibrary *sqllib  = l->GetDBConnection( l );
 				if( sqllib != NULL )
 				{
 					char *tmpQuery = NULL;
@@ -1015,7 +1015,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						HttpAddTextContent( response, buffer );
 					}
 					
-					l->LibrarySQLDrop( l, sqllib );
+					l->DropDBConnection( l, sqllib );
 				}
 				else
 				{
@@ -1114,7 +1114,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					{
 						HttpAddTextContent( response, "ok<!--separate-->{ \"updatepassword\": \"success!\"}" );
 					
-						SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+						SQLLibrary *sqllib  = l->GetDBConnection( l );
 						if( sqllib != NULL )
 						{
 							char tmpQuery[ 256 ];
@@ -1124,7 +1124,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							sprintf( tmpQuery, "UPDATE `FUser` set ModifyTime=%lu where ID=%lu", updateTime, usr->u_ID );
 					
 							sqllib->QueryWithoutResults( sqllib, tmpQuery );
-							l->LibrarySQLDrop( l, sqllib );
+							l->DropDBConnection( l, sqllib );
 						}
 					}
 					else
@@ -1306,12 +1306,12 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						char query[ 1024 ];
 						sprintf( query, " FUser WHERE `Name`='%s' AND ID != %lu" , usrname, id );
 	
-						SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+						SQLLibrary *sqlLib = l->GetDBConnection( l );
 						if( sqlLib != NULL )
 						{
 							entries = sqlLib->NumberOfRecords( sqlLib, UserDesc,  query );
 
-							l->LibrarySQLDrop( l, sqlLib );
+							l->DropDBConnection( l, sqlLib );
 						}
 
 						if( entries == 0 && usrname != NULL && logusr->u_Name != NULL )
@@ -1706,7 +1706,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				{
 					Log( FLOG_INFO, "[UMWebRequest] Logout user, user: %s deviceID: %s\n", sess->us_User->u_Name, sess->us_DeviceIdentity );
 					
-					SQLLibrary *sqlLib =  l->LibrarySQLGet( l );
+					SQLLibrary *sqlLib =  l->GetDBConnection( l );
 					if( sqlLib != NULL )
 					{
 						sqlLib->Delete( sqlLib, UserSessionDesc, sess );
@@ -1718,7 +1718,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	
 							sqlLib->QueryWithoutResults( sqlLib, temp );
 						}
-						l->LibrarySQLDrop( l, sqlLib );
+						l->DropDBConnection( l, sqlLib );
 					}
 					
 					if( l->sl_ActiveAuthModule != NULL )

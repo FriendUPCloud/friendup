@@ -235,7 +235,7 @@ int MobileAppAddNewUserConnection( MobileAppConnection *con, const char *usernam
 			// we must also attach UserID to User. This functionality will allow FC to find user by ID
 			//
 			
-			SQLLibrary *sqllib  = SLIB->LibrarySQLGet( SLIB );
+			SQLLibrary *sqllib  = SLIB->GetDBConnection( SLIB );
 
 			if( sqllib != NULL )
 			{
@@ -259,7 +259,7 @@ int MobileAppAddNewUserConnection( MobileAppConnection *con, const char *usernam
 						}
 						sqllib->FreeResult( sqllib, res );
 					}
-					SLIB->LibrarySQLDrop( SLIB, sqllib );
+					SLIB->DropDBConnection( SLIB, sqllib );
 					FFree( qery );
 				}
 			}
@@ -927,7 +927,7 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 	User *user = NULL;
 	FULONG umaID = 0;
 	
-	SQLLibrary *sqlLib = SLIB->LibrarySQLGet( SLIB );
+	SQLLibrary *sqlLib = SLIB->GetDBConnection( SLIB );
 	if( sqlLib != NULL )
 	{
 		// wait till User Manager will not be equal to NULL
@@ -955,7 +955,7 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 			FERROR("TokenApp is NULL!\n");
 		}
 
-		SLIB->LibrarySQLDrop( SLIB, sqlLib );
+		SLIB->DropDBConnection( SLIB, sqlLib );
 	}
 	AuthMod *a = SLIB->AuthModuleGet( SLIB );
 

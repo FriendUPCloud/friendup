@@ -664,7 +664,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							BufString *sql = BufStringNew();
 							BufStringAdd( sql, "SELECT DISTINCT(`Data`) FROM FShared WHERE `Data` IN ( " );
 							
-							SQLLibrary *sqllib = l->LibrarySQLGet( l );
+							SQLLibrary *sqllib = l->GetDBConnection( l );
 							
 							int resultCount = 0;
 							BufString *result = BufStringNew();
@@ -746,7 +746,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									}
 									sqllib->FreeResult( sqllib, res );
 								}
-								l->LibrarySQLDrop( l, sqllib );
+								l->DropDBConnection( l, sqllib );
 							}
 							BufStringAdd( result, "]" );
 							
@@ -2409,7 +2409,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					
 					char *dest = UrlDecodeToMem( path );
 					
-					SQLLibrary *sqllib = l->LibrarySQLGet( l );
+					SQLLibrary *sqllib = l->GetDBConnection( l );
 					if( sqllib != NULL )
 					{
 						int qsize = 512 + strlen( dest );
@@ -2495,7 +2495,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							alreadyExist = TRUE;
 						}
 						
-						l->LibrarySQLDrop( l, sqllib );
+						l->DropDBConnection( l, sqllib );
 						FFree( qery );
 					}
 
@@ -2545,7 +2545,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 											   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 					
-					SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+					SQLLibrary *sqllib  = l->GetDBConnection( l );
 					
 					if( sqllib != NULL )
 					{
@@ -2560,7 +2560,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						
 						*result = 200;
 						
-						l->LibrarySQLDrop( l, sqllib );
+						l->DropDBConnection( l, sqllib );
 					}
 				}
 				
@@ -2767,7 +2767,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 											   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 					
-					SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+					SQLLibrary *sqllib  = l->GetDBConnection( l );
 					if( sqllib != NULL )
 					{
 						int err = 0;
@@ -2826,7 +2826,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						}
 						HttpAddTextContent( response, answer );
 						
-						l->LibrarySQLDrop( l, sqllib );
+						l->DropDBConnection( l, sqllib );
 					}
 					else
 					{
@@ -2852,7 +2852,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 											   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 					
-					SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+					SQLLibrary *sqllib  = l->GetDBConnection( l );
 					if( sqllib != NULL )
 					{
 						char answer[ 1024 ];
@@ -2894,7 +2894,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							HttpAddTextContent( response, dictmsgbuf );
 						}
 						
-						l->LibrarySQLDrop( l, sqllib );
+						l->DropDBConnection( l, sqllib );
 					}
 					else
 					{

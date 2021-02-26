@@ -169,7 +169,7 @@ UserSession *USMGetSessionBySessionIDFromDB( UserSessionManager *smgr, char *id 
 	struct UserSession *usersession = NULL;
 	char tmpQuery[ 1024 ];
 	
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	if( sqlLib != NULL )
 	{
 		int entries = 0;
@@ -178,7 +178,7 @@ UserSession *USMGetSessionBySessionIDFromDB( UserSessionManager *smgr, char *id 
 		DEBUG( "[USMGetSessionBySessionIDFromDB] Sending query: %s...\n", tmpQuery );
 
 		usersession = ( struct UserSession *)sqlLib->Load( sqlLib, UserSessionDesc, tmpQuery, &entries );
-		sb->LibrarySQLDrop( sb, sqlLib );
+		sb->DropDBConnection( sb, sqlLib );
 	}
 	else
 	{
@@ -235,7 +235,7 @@ UserSession *USMGetSessionByDeviceIDandUserDB( UserSessionManager *smgr, char *d
 	struct UserSession *usersession = NULL;
 	char tmpQuery[ 1024 ];
 	
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	if( sqlLib != NULL )
 	{
 		int entries = 0;
@@ -247,7 +247,7 @@ UserSession *USMGetSessionByDeviceIDandUserDB( UserSessionManager *smgr, char *d
 	
 		//usersession = ( UserSession *)sqlLib->Load( sqlLib, UserSessionDesc, NULL, &entries );
 		usersession = ( struct UserSession *)sqlLib->Load( sqlLib, UserSessionDesc, tmpQuery, &entries );
-		sb->LibrarySQLDrop( sb, sqlLib );	
+		sb->DropDBConnection( sb, sqlLib );	
 	}
 	else
 	{
@@ -329,7 +329,7 @@ UserSession *USMGetSessionsByTimeout( UserSessionManager *smgr, const FULONG tim
 	int entries = 0;
 	char tmpQuery[ 1024 ];
 	
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	if( sqlLib == NULL )
 	{
 		FERROR("Cannot get user, mysql.library was not open\n");
@@ -367,7 +367,7 @@ UserSession *USMGetSessionsByTimeout( UserSessionManager *smgr, const FULONG tim
         ses = (UserSession *)ses->node.mln_Succ;
     }
     
-	sb->LibrarySQLDrop( sb, sqlLib );
+	sb->DropDBConnection( sb, sqlLib );
 
 	DEBUG("[USMGetSessionsByTimeout] UserGetByTimeout end\n");
 	return usersession;
@@ -804,7 +804,7 @@ int USMGetSessionsDeleteDB( UserSessionManager *smgr, const char *sessionid )
 	SystemBase *sb = (SystemBase *)smgr->usm_SB;
 	char tmpQuery[ 1024 ];
 	
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	if( sqlLib == NULL )
 	{
 		FERROR("Cannot get user, mysql.library was not open\n");
@@ -815,7 +815,7 @@ int USMGetSessionsDeleteDB( UserSessionManager *smgr, const char *sessionid )
 
 	sqlLib->QueryWithoutResults( sqlLib, tmpQuery );
 
-	sb->LibrarySQLDrop( sb, sqlLib );
+	sb->DropDBConnection( sb, sqlLib );
 
 	DEBUG("[USMGetSessionsDeleteDB] end\n");
 	return 0;
@@ -868,7 +868,7 @@ int USMSessionSaveDB( UserSessionManager *smgr, UserSession *ses )
 		return 1;
 	}
 	SystemBase *sb = (SystemBase *) smgr->usm_SB;
-	SQLLibrary *sqllib  = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqllib  = sb->GetDBConnection( sb );
 	
 	DEBUG("[USMSessionSaveDB] start\n");
 	if( sqllib != NULL )
@@ -919,7 +919,7 @@ int USMSessionSaveDB( UserSessionManager *smgr, UserSession *ses )
 			DEBUG("[USMSessionSaveDB] Session already exist in DB and it will be not stored.\n");
 		}
 		
-		sb->LibrarySQLDrop( sb, sqllib );
+		sb->DropDBConnection( sb, sqllib );
 	}
 	
 	return 0;
@@ -1041,7 +1041,7 @@ int USMRemoveOldSessionsinDB( void *lsb )
 	
 	DEBUG("USMRemoveOldSessionsDB\n" );
 
-	 SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
+	 SQLLibrary *sqllib = sb->GetDBConnection( sb );
 	 if( sqllib != NULL )
 	 {
 		char temp[ 1024 ];
@@ -1052,7 +1052,7 @@ int USMRemoveOldSessionsinDB( void *lsb )
 	 
 		sqllib->QueryWithoutResults( sqllib, temp );
 	 
-		sb->LibrarySQLDrop( sb, sqllib );
+		sb->DropDBConnection( sb, sqllib );
 	}
 	return 0;
 }
@@ -1245,7 +1245,7 @@ char *USMCreateTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, F
 	if( sqllib == NULL )
 	{
 		sb = (SystemBase *)smgr->usm_SB;
-		locSqllib = sb->LibrarySQLGet( sb );
+		locSqllib = sb->GetDBConnection( sb );
 		locSQLused = TRUE;
 	}
 	
@@ -1265,7 +1265,7 @@ char *USMCreateTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, F
 	
 	if( locSQLused == TRUE )
 	{
-		sb->LibrarySQLDrop( sb, locSqllib );
+		sb->DropDBConnection( sb, locSqllib );
 	}
 	
 	return sessionID;
@@ -1287,7 +1287,7 @@ void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, c
 	if( sqllib == NULL )
 	{
 		sb = (SystemBase *)smgr->usm_SB;
-		locSqllib = sb->LibrarySQLGet( sb );
+		locSqllib = sb->GetDBConnection( sb );
 		locSQLused = TRUE;
 	}
 	
@@ -1304,7 +1304,7 @@ void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, c
 	
 	if( locSQLused == TRUE )
 	{
-		sb->LibrarySQLDrop( sb, locSqllib );
+		sb->DropDBConnection( sb, locSqllib );
 	}
 }
 

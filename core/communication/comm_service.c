@@ -357,7 +357,7 @@ void CommServiceSetupOutgoing( CommService *service )
 Create outgoing connections\n \
 ------------------------------------------\n" );
 	
-	SQLLibrary *lsqllib = SLIB->LibrarySQLGet( SLIB );
+	SQLLibrary *lsqllib = SLIB->GetDBConnection( SLIB );
 	if( lsqllib != NULL )
 	{
 		// when FC is in cluser there is need to split outgoing and incoming connections
@@ -450,7 +450,7 @@ Create outgoing connections\n \
 			}
 			*/
 		}
-		SLIB->LibrarySQLDrop( SLIB, lsqllib );
+		SLIB->DropDBConnection( SLIB, lsqllib );
 		
 		//
 		// Go through all connections
@@ -1002,7 +1002,7 @@ int CommServiceThreadServer( FThread *ptr )
 											
 											INFO("Outgoing connection created\n");
 											
-											SQLLibrary *lsqllib = SLIB->LibrarySQLGet( SLIB );
+											SQLLibrary *lsqllib = SLIB->GetDBConnection( SLIB );
 											if( lsqllib != NULL )
 											{
 												char where[ 1024 ];
@@ -1014,7 +1014,7 @@ int CommServiceThreadServer( FThread *ptr )
 												{
 													lsqllib->Save( lsqllib, FConnectionDesc, con );
 												}
-												SLIB->LibrarySQLDrop( SLIB, lsqllib );
+												SLIB->DropDBConnection( SLIB, lsqllib );
 											}
 										}
 									}
@@ -1511,7 +1511,7 @@ FConnection *CommServiceAddConnection( CommService* s, Socket* socket, char *nam
 		{
 			cfcn->fc_ClusterID = clusterID;
 		
-			SQLLibrary *sqllib  = lsb->LibrarySQLGet( lsb );
+			SQLLibrary *sqllib  = lsb->GetDBConnection( lsb );
 			if( sqllib != NULL )
 			{
 				//fcm->fcm_ClusterNodes->cn_NodeID = clusterID;
@@ -1523,7 +1523,7 @@ FConnection *CommServiceAddConnection( CommService* s, Socket* socket, char *nam
 				int error = sqllib->QueryWithoutResults( sqllib, tmpQuery );
 				DEBUG("CluserID updated: %lu for ID %lu\n", clusterID, cfcn->fc_ClusterID );
 		
-				lsb->LibrarySQLDrop( lsb, sqllib );
+				lsb->DropDBConnection( lsb, sqllib );
 			}
 		}
 	}

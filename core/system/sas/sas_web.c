@@ -1031,7 +1031,7 @@ Application.checkDocumentSession = function( sasID = null )
 			as = SASManagerGetSession( l->sl_SASManager, asval );
 		}
 		
-		SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+		SQLLibrary *sqllib  = l->GetDBConnection( l );
 		if( sqllib != NULL )
 		{
 			//
@@ -1054,7 +1054,7 @@ Application.checkDocumentSession = function( sasID = null )
 					sqllib->FreeResult( sqllib, res );
 				}
 			}
-			l->LibrarySQLDrop( l, sqllib );
+			l->DropDBConnection( l, sqllib );
 		}
 		
 		if( as == NULL  )

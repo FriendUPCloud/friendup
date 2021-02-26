@@ -301,9 +301,11 @@ typedef struct SystemBase
 
 	struct SQLConPool				*sqlpool;			// mysql.library pool
 	int								sqlpoolConnections;	// number of database connections
+	int								sqlConnectionIndex;
 	
-	struct SQLConPool				*sqlpoolSecurity;			// mysql.library pool of connection to security db
-	int								sqlpoolSecurityConnections;	// number of database connections to security db
+	struct SQLConPool				*sqlpoolInternal;			// mysql.library pool of connection to security db
+	int								sqlpoolInternalConnections;	// number of database connections to security db
+	int								sqlInternalConnectionIndex;
 	
 	struct ApplicationLibrary		*alib;				// application library
 	struct ZLibrary					*zlib;						// z.library
@@ -331,7 +333,6 @@ typedef struct SystemBase
 	EModule							*sl_PHPModule;
 
 	int								UserLibCounter;						// counter of opened libraries
-	int								MsqLlibCounter;
 	int								AppLibCounter;
 	int 							PropLibCounter;
 	int 							ZLibCounter;
@@ -367,13 +368,13 @@ typedef struct SystemBase
 
 	void							(*AuthModuleDrop)( struct SystemBase *l, struct AuthMod * );
 
-	struct SQLLibrary				*(*LibrarySQLGet)( struct SystemBase *l );
+	struct SQLLibrary				*(*GetDBConnection)( struct SystemBase *l );
 
-	void							(*LibrarySQLDrop)( struct SystemBase *l, struct SQLLibrary * );
+	void							(*DropDBConnection)( struct SystemBase *l, struct SQLLibrary * );
 	
-	struct SQLLibrary				*(*LibrarySQLSecurityGet)( struct SystemBase *l );
+	struct SQLLibrary				*(*GetInternalDBConnection)( struct SystemBase *l );
 
-	void							(*LibrarySQLSecurityDrop)( struct SystemBase *l, struct SQLLibrary * );
+	void							(*DropInternalDBConnection)( struct SystemBase *l, struct SQLLibrary * );
 
 	struct ApplicationLibrary		*(*LibraryApplicationGet)( struct SystemBase *l );
 
@@ -499,25 +500,25 @@ void LibraryImageDrop( SystemBase *l, ImageLibrary *closelib );
 //
 //
 
-struct SQLLibrary *LibrarySQLGet( struct SystemBase *l );
+struct SQLLibrary *GetDBConnection( struct SystemBase *l );
 
 //
 //
 //
 
-void LibrarySQLDrop( struct SystemBase *l, SQLLibrary *mclose );
+void DropDBConnection( struct SystemBase *l, SQLLibrary *mclose );
 
 //
 //
 //
 
-struct SQLLibrary *LibrarySQLSecurityGet( struct SystemBase *l );
+struct SQLLibrary *GetInternalDBConnection( struct SystemBase *l );
 
 //
 //
 //
 
-void LibrarySQLSecurityDrop( struct SystemBase *l, SQLLibrary *mclose );
+void DropInternalDBConnection( struct SystemBase *l, SQLLibrary *mclose );
 
 //
 //
@@ -584,12 +585,6 @@ int UserDeviceUnMount( SystemBase *l, SQLLibrary *sqllib, User *usr );
 //
 
 int SendProcessMessage( Http *request, char *data, int len );
-
-//
-//
-//
-
-void CheckAndUpdateDB( struct SystemBase *sb );
 
 //
 //

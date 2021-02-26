@@ -33,7 +33,7 @@ int LoadFilesystemActivityDB( void *sb, FilesystemActivity *act, FULONG id, FBOO
 	DEBUG("[LoadFilesystemActivityDB] id %lu\n", id );
 	int errRet = 0;
 	
-	SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+	SQLLibrary *sqllib  = l->GetDBConnection( l );
 	if( sqllib != NULL )
 	{
 		char temptext[ 512 ];
@@ -85,7 +85,7 @@ int LoadFilesystemActivityDB( void *sb, FilesystemActivity *act, FULONG id, FBOO
 			sqllib->FreeResult( sqllib, res );
 		}
 
-		l->LibrarySQLDrop( l, sqllib );
+		l->DropDBConnection( l, sqllib );
 	}
 	else
 	{
@@ -117,7 +117,7 @@ int UpdateFilesystemActivityDB( void *sb, FilesystemActivity *act )
 		LoadFilesystemActivityDB( sb, act, act->fsa_FilesystemID, TRUE );
 	}
 	
-	SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+	SQLLibrary *sqllib  = l->GetDBConnection( l );
 	if( sqllib != NULL )
 	{
 		char temptext[ 256 ];
@@ -125,7 +125,7 @@ int UpdateFilesystemActivityDB( void *sb, FilesystemActivity *act )
 		snprintf( temptext, sizeof(temptext), "UPDATE `FilesystemActivity` SET `StoredBytesLeft`='%ld',`ReadedBytesLeft`='%ld' WHERE `ID` = '%lu'", act->fsa_StoredBytesLeft, act->fsa_ReadBytesLeft, act->fsa_ID );
 		sqllib->QueryWithoutResults( sqllib, temptext );
 
-		l->LibrarySQLDrop( l, sqllib );
+		l->DropDBConnection( l, sqllib );
 	}
 	else
 	{

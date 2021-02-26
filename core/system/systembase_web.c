@@ -489,7 +489,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			
 			if( loggedSession == NULL )
 			{
-				SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+				SQLLibrary *sqllib  = l->GetDBConnection( l );
 				
 				DEBUG("Session not found in appsessionid table\n");
 
@@ -513,7 +513,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						}
 						sqllib->FreeResult( sqllib, res );
 					}
-					l->LibrarySQLDrop( l, sqllib );
+					l->DropDBConnection( l, sqllib );
 				}
 			}
 		}
@@ -529,7 +529,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			
 			if( loggedSession == NULL )
 			{
-				SQLLibrary *sqllib = l->LibrarySQLGet( l );
+				SQLLibrary *sqllib = l->GetDBConnection( l );
 
 				// Get authid from mysql
 				if( sqllib != NULL )
@@ -553,7 +553,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						}
 						sqllib->FreeResult( sqllib, res );
 					}
-					l->LibrarySQLDrop( l, sqllib );
+					l->DropDBConnection( l, sqllib );
 				}
 			}
 		}
@@ -822,7 +822,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				loggedSession->us_User->u_LoggedTime = timestamp;
 			}
 			
-			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+			SQLLibrary *sqllib  = l->GetDBConnection( l );
 			if( sqllib != NULL )
 			{
 				char *tmpQuery = FCalloc( 1025, sizeof( char ) );
@@ -835,7 +835,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				
 					FFree( tmpQuery );
 				}
-				l->LibrarySQLDrop( l, sqllib );
+				l->DropDBConnection( l, sqllib );
 			}
 		}
 	}
@@ -1867,7 +1867,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						
 							char tmpQuery[ 512 ];
 						
-							SQLLibrary *sqlLib =  l->LibrarySQLGet( l );
+							SQLLibrary *sqlLib =  l->GetDBConnection( l );
 							if( sqlLib != NULL )
 							{
 								DEBUG("Try to get mobileappid from DeviceID: %s\n", deviceid );
@@ -1905,7 +1905,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								{ 
 								
 								}
-								l->LibrarySQLDrop( l, sqlLib );
+								l->DropDBConnection( l, sqlLib );
 							
 								UMAddUser( l->sl_UM, loggedSession->us_User );
 							
@@ -2146,7 +2146,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							char tmpQuery[ 512 ];
 							int lpos = 0;
 							
-							SQLLibrary *sqlLib =  l->LibrarySQLGet( l );
+							SQLLibrary *sqlLib =  l->GetDBConnection( l );
 							if( sqlLib != NULL )
 							{
 								//
@@ -2196,7 +2196,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 									}
 								}
 								
-								l->LibrarySQLDrop( l, sqlLib );
+								l->DropDBConnection( l, sqlLib );
 								
 								DEBUG("[SystembaseWeb] user login\n");
 
@@ -2250,7 +2250,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							}
 							else
 							{
-								SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+								SQLLibrary *sqllib  = l->GetDBConnection( l );
 
 								// Get authid from mysql
 								if( sqllib != NULL )
@@ -2272,7 +2272,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 										sqllib->FreeResult( sqllib, res );
 									}
 
-									l->LibrarySQLDrop( l, sqllib );
+									l->DropDBConnection( l, sqllib );
 
 									snprintf( tmp, sizeof(tmp), "{\"response\":\"%d\",\"sessionid\":\"%s\",\"authid\":\"%s\"}",
 									loggedUser->u_Error, loggedUser->u_MainSessionID, authid

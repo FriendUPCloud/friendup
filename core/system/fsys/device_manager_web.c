@@ -283,7 +283,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 			char *query = FCalloc( QUERY_LEN, sizeof( char ) );
 			
 			// Fetch rows
-			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+			SQLLibrary *sqllib  = l->GetDBConnection( l );
 			if( sqllib )
 			{
 				sqllib->SNPrintF( sqllib, query, QUERY_LEN, ""
@@ -313,7 +313,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 					sqllib->FreeResult( sqllib, res );
 				}
 				
-				l->LibrarySQLDrop( l, sqllib );
+				l->DropDBConnection( l, sqllib );
 			}
 			
 			FFree( query );
@@ -393,7 +393,7 @@ f.Name ASC";
 			BufString *bs = BufStringNew();
 			
 			// Fetch rows
-			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+			SQLLibrary *sqllib  = l->GetDBConnection( l );
 			if( sqllib != NULL )
 			{
 				void *res = sqllib->Query( sqllib, query );
@@ -421,7 +421,7 @@ f.Name ASC";
 					}
 					sqllib->FreeResult( sqllib, res );
 				}
-				l->LibrarySQLDrop( l, sqllib );
+				l->DropDBConnection( l, sqllib );
 			}
 			
 			// Add positive response
@@ -809,7 +809,7 @@ f.Name ASC";
 			
 			if( updateDatabase == TRUE )
 			{
-				SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+				SQLLibrary *sqllib  = l->GetDBConnection( l );
 				if( sqllib != NULL )
 				{
 					char *temptext = FCalloc( 512, sizeof( char ) );
@@ -850,7 +850,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 
 						FFree( temptext );
 					}
-					l->LibrarySQLDrop( l, sqllib );
+					l->DropDBConnection( l, sqllib );
 				}
 			}
 		}		// check mount parameters
@@ -1115,7 +1115,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 				{
 					char temptext[ 512 ];
 					
-					SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+					SQLLibrary *sqllib  = l->GetDBConnection( l );
 					if( sqllib != NULL )
 					{
 						sqllib->SNPrintF( sqllib,  temptext, sizeof(temptext),"\
@@ -1141,7 +1141,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 						HttpAddTextContent( response, "ok<!--separate-->{ \"Response\": \"Successfully unmounted\" }" );
 						*result = 200;
 
-						l->LibrarySQLDrop( l, sqllib );
+						l->DropDBConnection( l, sqllib );
 					}
 				}
 			}
@@ -1229,7 +1229,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 		{
 			int error = 0;
 			
-			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+			SQLLibrary *sqllib  = l->GetDBConnection( l );
 			if( sqllib != NULL )
 			{
 				User *usr = loggedSession->us_User;
@@ -1283,7 +1283,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 					HttpAddTextContent( response, dictmsgbuf );
 				}
 
-				l->LibrarySQLDrop( l, sqllib );
+				l->DropDBConnection( l, sqllib );
 			}
 			else
 			{
@@ -1955,7 +1955,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 			{
 				int pos = 0;
 				// we will build update script
-				SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+				SQLLibrary *sqllib  = l->GetDBConnection( l );
 				if( sqllib != NULL )
 				{
 					if( config != NULL )
@@ -2033,7 +2033,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 					}
 					
 					BufStringDelete( bs );
-					l->LibrarySQLDrop( l, sqllib );
+					l->DropDBConnection( l, sqllib );
 				}
 				else	// bs == NULL
 				{

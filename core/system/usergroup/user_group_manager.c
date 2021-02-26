@@ -42,7 +42,7 @@ UserGroupManager *UGMNew( void *sb )
 		sm->ugm_SB = sb;
 		Log( FLOG_INFO,  "[SystemBase] Loading groups from DB\n");
 	
-		SQLLibrary *sqlLib = lsb->LibrarySQLGet( lsb );
+		SQLLibrary *sqlLib = lsb->GetDBConnection( lsb );
 		if( sqlLib != NULL )
 		{
 			int entries;
@@ -51,7 +51,7 @@ UserGroupManager *UGMNew( void *sb )
 			strcpy( where, " Type in( 'Workgroup','Level' )" );
 			
 			sm->ugm_UserGroups = sqlLib->Load( sqlLib, UserGroupDesc, where, &entries );
-			lsb->LibrarySQLDrop( lsb, sqlLib );
+			lsb->DropDBConnection( lsb, sqlLib );
 		}
 		
 		UserGroup *g = sm->ugm_UserGroups;
@@ -164,7 +164,7 @@ UserGroup *UGMGetGroupByNameDB( UserGroupManager *ugm, const char *name )
 {
 	SystemBase *l = (SystemBase *)ugm->ugm_SB;
 	UserGroup *ug = NULL;
-	SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+	SQLLibrary *sqlLib = l->GetDBConnection( l );
 	if( sqlLib != NULL )
 	{
 		// try to find if group is in DB, skip templates and roles
@@ -177,7 +177,7 @@ UserGroup *UGMGetGroupByNameDB( UserGroupManager *ugm, const char *name )
 		{
 			ug->ug_Status = USER_GROUP_STATUS_ACTIVE;
 		}
-		l->LibrarySQLDrop( l, sqlLib );
+		l->DropDBConnection( l, sqlLib );
 	}
 	return ug;
 }
@@ -231,7 +231,7 @@ int UGMRemoveGroup( UserGroupManager *ugm, UserGroup *ug )
 						//sqllib->Update( sqllib, UserGroupDesc, fg );
 		ug->ug_Status = USER_GROUP_STATUS_DISABLED;
 		
-		SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+		SQLLibrary *sqlLib = l->GetDBConnection( l );
 		if( sqlLib != NULL )
 		{
 			DEBUG("Remove users from group\n");
@@ -265,7 +265,7 @@ int UGMRemoveGroup( UserGroupManager *ugm, UserGroup *ug )
 			snprintf( tmpQuery, sizeof(tmpQuery), "delete FROM FUserGroup WHERE ID=%lu", ug->ug_ID );
 			sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
 			
-			l->LibrarySQLDrop( l, sqlLib );
+			l->DropDBConnection( l, sqlLib );
 		}
 		
 		// phisic remove
@@ -396,7 +396,7 @@ File *UGMRemoveDrive( UserGroupManager *sm, const char *name )
 int UGMMountDrives( UserGroupManager *sm )
 {
 	SystemBase *sb = (SystemBase *)sm->ugm_SB;
-	SQLLibrary *sqllib  = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqllib  = sb->GetDBConnection( sb );
 	if( sb != NULL && sqllib != NULL )
 	{
 		// Test for null pointers
@@ -417,7 +417,7 @@ int UGMMountDrives( UserGroupManager *sm )
 			ug = (UserGroup *)ug->node.mln_Succ;
 		}
 		
-		sb->LibrarySQLDrop( sb, sqllib );
+		sb->DropDBConnection( sb, sqllib );
 	}
 	return 0;
 }
@@ -446,7 +446,7 @@ int UGMAssignGroupToUser( UserGroupManager *ugm, User *usr )
 	tmpQuery = (char *)FCalloc( QUERY_SIZE, sizeof(char) );
 	
 	SystemBase *sb = (SystemBase *)ugm->ugm_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 
 	if( sqlLib != NULL )
 	{
@@ -457,7 +457,7 @@ int UGMAssignGroupToUser( UserGroupManager *ugm, User *usr )
 		if ( result == NULL ) 
 		{
 			FERROR("SQL query result is empty!\n");
-			sb->LibrarySQLDrop( sb, sqlLib );
+			sb->DropDBConnection( sb, sqlLib );
 			return 2;
 		}
 		
@@ -517,7 +517,7 @@ int UGMAssignGroupToUser( UserGroupManager *ugm, User *usr )
 	
 		sqlLib->FreeResult( sqlLib, result );
 
-		sb->LibrarySQLDrop( sb, sqlLib );
+		sb->DropDBConnection( sb, sqlLib );
 	}
 	
 	FFree( tmpQuery );
@@ -558,7 +558,7 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *ugm, User *usr, char *leve
 	DEBUG("[UMAssignGroupToUserByStringDB] Assign group to user start NEW GROUPS: >%s< AND WORKGROUPS: >%s<\n", level, workgroups );
 	
 	SystemBase *sb = (SystemBase *)ugm->ugm_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	
 	if( sqlLib == NULL )
 	{
@@ -778,7 +778,7 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *ugm, User *usr, char *leve
 		BufStringDelete( bsInsert );
 	}
 
-	sb->LibrarySQLDrop( sb, sqlLib );
+	sb->DropDBConnection( sb, sqlLib );
 	DEBUG("[UMAssignGroupToUserByStringDB] Assign  groups to user end\n");
 	
 	return 0;
@@ -795,7 +795,7 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *ugm, User *usr, char *leve
 int UGMAddUserToGroupDB( UserGroupManager *um, FULONG groupID, FULONG userID )
 {
 	SystemBase *sb = (SystemBase *)um->ugm_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	
 	if( sqlLib != NULL )
 	{
@@ -807,7 +807,7 @@ int UGMAddUserToGroupDB( UserGroupManager *um, FULONG groupID, FULONG userID )
 			FERROR("Cannot call query: '%s'\n", tmpQuery );
 		}
 		
-		sb->LibrarySQLDrop( sb, sqlLib );
+		sb->DropDBConnection( sb, sqlLib );
 	}
 	else
 	{
@@ -828,7 +828,7 @@ int UGMAddUserToGroupDB( UserGroupManager *um, FULONG groupID, FULONG userID )
 int UGMGetUserGroupsDB( UserGroupManager *um, FULONG userID, BufString *bs )
 {
 	SystemBase *sb = (SystemBase *)um->ugm_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	
 	if( sqlLib != NULL )
 	{
@@ -852,7 +852,7 @@ int UGMGetUserGroupsDB( UserGroupManager *um, FULONG userID, BufString *bs )
 			}
 			sqlLib->FreeResult( sqlLib, result );
 		}
-		sb->LibrarySQLDrop( sb, sqlLib );
+		sb->DropDBConnection( sb, sqlLib );
 	}
 	else
 	{
@@ -873,7 +873,7 @@ int UGMGetUserGroupsDB( UserGroupManager *um, FULONG userID, BufString *bs )
 int UGMRemoveUserFromGroupDB( UserGroupManager *um, FULONG groupID, FULONG userID )
 {
 	SystemBase *sb = (SystemBase *)um->ugm_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	
 	if( sqlLib != NULL )
 	{
@@ -885,7 +885,7 @@ int UGMRemoveUserFromGroupDB( UserGroupManager *um, FULONG groupID, FULONG userI
 			FERROR("Cannot call query: '%s'\n", tmpQuery );
 		}
 		
-		sb->LibrarySQLDrop( sb, sqlLib );
+		sb->DropDBConnection( sb, sqlLib );
 	}
 	else
 	{
@@ -906,7 +906,7 @@ int UGMRemoveUserFromGroupDB( UserGroupManager *um, FULONG groupID, FULONG userI
 FBOOL UGMUserToGroupISConnectedDB( UserGroupManager *um, FULONG ugroupid, FULONG uid )
 {
 	SystemBase *sb = (SystemBase *)um->ugm_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	FBOOL ret = FALSE;
 	
 	if( sqlLib != NULL )
@@ -929,7 +929,7 @@ FBOOL UGMUserToGroupISConnectedDB( UserGroupManager *um, FULONG ugroupid, FULONG
 			ret = FALSE;
 		}
 		
-		sb->LibrarySQLDrop( sb, sqlLib );
+		sb->DropDBConnection( sb, sqlLib );
 	}
 	else
 	{
@@ -950,7 +950,7 @@ FBOOL UGMUserToGroupISConnectedDB( UserGroupManager *um, FULONG ugroupid, FULONG
 FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const char *type, FULONG parentID, int status )
 {
 	SystemBase *sb = (SystemBase *)um->ugm_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	FBOOL ret = FALSE;
 	
 	if( sqlLib != NULL )
@@ -1060,7 +1060,7 @@ FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const cha
 			ret = FALSE;
 		}
 		
-		sb->LibrarySQLDrop( sb, sqlLib );
+		sb->DropDBConnection( sb, sqlLib );
 		
 		BufStringDelete( sqlbs );
 	}
@@ -1153,7 +1153,7 @@ void UGMGetGroups( UserGroupManager *um, FULONG uid, BufString *bs, const char *
 FBOOL UGMUserToGroupISConnectedByUNameDB( UserGroupManager *um, FULONG ugroupid, const char *uname )
 {
 	SystemBase *sb = (SystemBase *)um->ugm_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	FBOOL ret = FALSE;
 	
 	if( sqlLib != NULL )
@@ -1176,7 +1176,7 @@ FBOOL UGMUserToGroupISConnectedByUNameDB( UserGroupManager *um, FULONG ugroupid,
 			ret = FALSE;
 		}
 		
-		sb->LibrarySQLDrop( sb, sqlLib );
+		sb->DropDBConnection( sb, sqlLib );
 	}
 	else
 	{
@@ -1198,7 +1198,7 @@ FBOOL UGMUserToGroupISConnectedByUNameDB( UserGroupManager *um, FULONG ugroupid,
 FBOOL UGMUserToGroupISConnectedByUIDDB( UserGroupManager *um, FULONG ugroupid, FULONG uid )
 {
 	SystemBase *sb = (SystemBase *)um->ugm_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	FBOOL ret = FALSE;
 	
 	if( sqlLib != NULL )
@@ -1222,7 +1222,7 @@ FBOOL UGMUserToGroupISConnectedByUIDDB( UserGroupManager *um, FULONG ugroupid, F
 			ret = FALSE;
 		}
 		
-		sb->LibrarySQLDrop( sb, sqlLib );
+		sb->DropDBConnection( sb, sqlLib );
 	}
 	else
 	{
@@ -1244,7 +1244,7 @@ FBOOL UGMUserToGroupISConnectedByUIDDB( UserGroupManager *um, FULONG ugroupid, F
 int UGMReturnAllAndMembers( UserGroupManager *um, BufString *bs, char *type )
 {
 	SystemBase *l = (SystemBase *)um->ugm_SB;
-	SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+	SQLLibrary *sqlLib = l->GetDBConnection( l );
 	if( sqlLib != NULL )
 	{
 		char tmpQuery[ 512 ];
@@ -1310,7 +1310,7 @@ int UGMReturnAllAndMembers( UserGroupManager *um, BufString *bs, char *type )
 			}
 			sqlLib->FreeResult( sqlLib, result );
 		}
-		l->LibrarySQLDrop( l, sqlLib );
+		l->DropDBConnection( l, sqlLib );
 		
 		if( currGroupID != 0 )
 		{

@@ -195,7 +195,7 @@ DOSToken *DOSTokenManagerGetDOSToken( DOSTokenManager *d, const char *tokenID )
 					us->us_SB = d->dtm_SB;
 					
 					SystemBase *sb = (SystemBase *) us->us_SB;
-					SQLLibrary *sqllib  = sb->LibrarySQLGet( sb );
+					SQLLibrary *sqllib  = sb->GetDBConnection( sb );
 					if( sqllib != NULL )
 					{
 						int error = 0;
@@ -218,7 +218,7 @@ DOSToken *DOSTokenManagerGetDOSToken( DOSTokenManager *d, const char *tokenID )
 						{
 							DEBUG("[USMSessionSaveDB] Session stored\n");
 						}
-						sb->LibrarySQLDrop( sb, sqllib );
+						sb->DropDBConnection( sb, sqllib );
 					}
 				}
 			}

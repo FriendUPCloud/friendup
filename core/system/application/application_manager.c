@@ -82,7 +82,7 @@ void ApplicationManagerRemoveApplicationSessionByUserID( ApplicationManager *asm
 		SystemBase *sb = (SystemBase *)asm->am_SB;
 		//select * from FUserApplication ua left outer join FUserSession us on ua.UserID=us.UserID where us.SessionID is null ORDER BY `ua`.`ID` ASC
 
-		SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
+		SQLLibrary *sqllib = sb->GetDBConnection( sb );
 		if( sqllib != NULL )
 		{
 			DEBUG("[ApplicationManagerRemoveApplicationSessionByUserID] start\n");
@@ -93,7 +93,7 @@ void ApplicationManagerRemoveApplicationSessionByUserID( ApplicationManager *asm
 		
 			sqllib->QueryWithoutResults( sqllib, temp );
 		
-			sb->LibrarySQLDrop( sb, sqllib );
+			sb->DropDBConnection( sb, sqllib );
 		}
 	}
 	*/
@@ -114,7 +114,7 @@ void ApplicationManagerRemoveApplicationSessionByUserSessionID( ApplicationManag
 		SystemBase *sb = (SystemBase *)asm->am_SB;
 		//select * from FUserApplication ua left outer join FUserSession us on ua.UserID=us.UserID where us.SessionID is null ORDER BY `ua`.`ID` ASC
 
-		SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
+		SQLLibrary *sqllib = sb->GetDBConnection( sb );
 		if( sqllib != NULL )
 		{
 			DEBUG("[ApplicationManagerRemoveApplicationSessionByUserID] start\n");
@@ -125,7 +125,7 @@ void ApplicationManagerRemoveApplicationSessionByUserSessionID( ApplicationManag
 		
 			sqllib->QueryWithoutResults( sqllib, temp );
 		
-			sb->LibrarySQLDrop( sb, sqllib );
+			sb->DropDBConnection( sb, sqllib );
 		}
 	}
 	*/
@@ -144,7 +144,7 @@ void ApplicationManagerRemoveDetachedApplicationSession( ApplicationManager *asm
 	{
 		SystemBase *sb = (SystemBase *)asm->am_SB;
 
-		SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
+		SQLLibrary *sqllib = sb->GetDBConnection( sb );
 		if( sqllib != NULL )
 		{
 			DEBUG("[ApplicationManagerRemoveApplicationSessionByUserID] start\n");
@@ -155,7 +155,7 @@ void ApplicationManagerRemoveDetachedApplicationSession( ApplicationManager *asm
 		
 			sqllib->QueryWithoutResults( sqllib, temp );
 		
-			sb->LibrarySQLDrop( sb, sqllib );
+			sb->DropDBConnection( sb, sqllib );
 		}
 	}
 	*/
