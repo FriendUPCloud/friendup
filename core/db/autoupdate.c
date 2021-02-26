@@ -68,7 +68,7 @@ typedef struct DBUpdateEntry
 	char name[ 512 ];
 }DBUpdateEntry;
 
-char *ReadDBFile( char *fname, int *fs )
+static inline char *ReadDBFile( char *fname, int *fs )
 {
 	FILE *fp;
 	char *script = NULL;
@@ -251,6 +251,8 @@ void CheckAndUpdateDB( SystemBase *l, int type )
 					
 					BufString *errorString = BufStringNew();
 					
+					// read file from disk
+					
 					char *script = ReadDBFile( scriptfname, &fsize );
 					if( script != NULL )
 					{
@@ -259,6 +261,7 @@ void CheckAndUpdateDB( SystemBase *l, int type )
 
 						for( z=1 ; z < fsize ; z++ )
 						{
+							// if this script contain many entries
 							if( strncmp( &(script[ z ]), "----script----" , 14 ) == 0 )
 							{
 								char *start = &(script[ z ]);
@@ -287,7 +290,7 @@ void CheckAndUpdateDB( SystemBase *l, int type )
 								
 								command = &script[ z+1 ];
 							}
-							else
+							else	// if script have commands separated by comma
 							{
 								if( script[ z ] == ';' )
 								{
