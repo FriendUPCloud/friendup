@@ -50,6 +50,10 @@ void DBUpdateDelete( DBUpdate *dbu )
 		{
 			FFree( dbu->dbu_Error );
 		}
+		if( dbu->dbu_Script != NULL )
+		{
+			FFree( dbu->dbu_Script );
+		}
 		FFree( dbu );
 	}
 }
@@ -67,6 +71,7 @@ typedef struct DBUpdateEntry
 char *ReadDBFile( char *fname, int *fs )
 {
 	FILE *fp;
+	char *script = NULL;
 	
 	if( ( fp = fopen( fname, "rb" ) ) != NULL )
 	{
@@ -74,21 +79,21 @@ char *ReadDBFile( char *fname, int *fs )
 		long fsize = ftell( fp );
 		fseek( fp, 0, SEEK_SET );
 		
-		char *script;
-		if( ( script = FCalloc( fsize+1, sizeof(char) ) ) != NULL )
+		if( fsize > 0 )
 		{
-			int readbytes = 0;
-			if( ( readbytes = fread( script, fsize, 1, fp ) ) > 0 )
+			if( ( script = FCalloc( fsize+1, sizeof(char) ) ) != NULL )
 			{
-				
+				int readbytes = 0;
+				if( ( readbytes = fread( script, fsize, 1, fp ) ) > 0 )
+				{
+					
+				}
+				*fs = (int)fsize;
 			}
-			*fs = fsize;
 		}
 		fclose( fp );
-		
-		return script;
 	}
-	return NULL;
+	return script;
 }
 
 /**
@@ -322,7 +327,6 @@ void CheckAndUpdateDB( SystemBase *l, int type )
 								lastSQLname = dbentries[i].name;
 							}
 						}
-						FFree( script );
 					}	// script FCalloc
 					
 					if( error == 1 )
@@ -343,9 +347,11 @@ void CheckAndUpdateDB( SystemBase *l, int type )
 								locdbu->dbu_Updated = currTime;
 								locdbu->dbu_Filename = dbentries[i].name;
 								locdbu->dbu_Error = errorString->bs_Buffer;
+								locdbu->dbu_Script = script;
 								
 								sqllib->Save( sqllib, DBUpdateDesc, locdbu );
 								
+								locdbu->dbu_Script = NULL;
 								locdbu->dbu_Filename = NULL;
 								locdbu->dbu_Error = NULL;
 								
@@ -370,14 +376,21 @@ void CheckAndUpdateDB( SystemBase *l, int type )
 								locdbu->dbu_Created = currTime;
 								locdbu->dbu_Updated = currTime;
 								locdbu->dbu_Filename = dbentries[i].name;
+								locdbu->dbu_Script = script;
 								
 								sqllib->Save( sqllib, DBUpdateDesc, locdbu );
 								
+								locdbu->dbu_Script = NULL;
 								locdbu->dbu_Filename = NULL;
 								
 								DBUpdateDelete( locdbu );
 							}
 						}
+					}
+					
+					if( script != NULL )
+					{
+						FFree( script );
 					}
 					
 					if( errorString != NULL )

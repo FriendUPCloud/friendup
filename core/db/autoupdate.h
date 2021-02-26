@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS `FDBUpdate` (
   `Filename` varchar(255) NOT NULL,
   `Created` bigint(20) NOT NULL,
   `Updated` bigint(20) NOT NULL,
+  `Script` varchar(1024) NOT NULL,
   `Error` varchar(1024) NOT NULL,
   PRIMARY KEY (`ID`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
@@ -44,6 +45,7 @@ typedef struct DBUpdate
 {
 	FQUAD			dbu_ID;
 	char			*dbu_Filename;
+	char			*dbu_Script;
 	time_t			dbu_Created;
 	time_t			dbu_Updated;
 	char			*dbu_Error;
@@ -56,12 +58,13 @@ typedef struct DBUpdate
 //
 
 static FULONG DBUpdateDesc[] = { 
-    SQLT_TABNAME, (FULONG)"DBUpdate",       
-    SQLT_STRUCTSIZE, sizeof( struct DBUpdate ), 
+	SQLT_TABNAME, (FULONG)"FDBUpdate",       
+	SQLT_STRUCTSIZE, sizeof( struct DBUpdate ), 
 	SQLT_IDINT,   (FULONG)"ID",          offsetof( struct DBUpdate, dbu_ID ), 
 	SQLT_STR,     (FULONG)"Filename",        offsetof( struct DBUpdate, dbu_Filename ),
 	SQLT_INT,     (FULONG)"Created",    offsetof( struct DBUpdate, dbu_Created ),
 	SQLT_INT,     (FULONG)"Updated",    offsetof( struct DBUpdate, dbu_Updated ),
+	SQLT_STR,     (FULONG)"Script",        offsetof( struct DBUpdate, dbu_Script ),
 	SQLT_STR,     (FULONG)"Error",       offsetof( struct DBUpdate, dbu_Error ),
 	SQLT_NODE,    (FULONG)"node",        offsetof( struct DBUpdate, node ),
 	SQLT_END 

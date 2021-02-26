@@ -618,6 +618,8 @@ SystemBase *SystemInit( void )
 	if( skipDBUpdate == FALSE )
 	{
 		CheckAndUpdateDB( l, UPDATE_DB_TYPE_GLOBAL );
+		
+		CheckAndUpdateDB( l, UPDATE_DB_TYPE_INTERNAL );
 	}
 	else
 	{
