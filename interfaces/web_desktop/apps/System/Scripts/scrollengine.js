@@ -66,6 +66,8 @@ scrollengine = {
 		
 		if( list )
 		{
+			this.list = list;
+			
 			if( callback )
 			{
 				this.callback = callback;
@@ -102,8 +104,6 @@ scrollengine = {
 			this.total = total;
 			
 			this.myArray = ( myArray ? myArray : [] );
-			
-			this.list = list;
 			
 			this.list.addEventListener( 'scroll', function(  ){ scrollengine.refresh(  ); } );
 			window.addEventListener( 'resize', function(  ){ scrollengine.refresh( true ); } );
@@ -419,8 +419,10 @@ scrollengine = {
 				str += '	<div class=" HContent20 FloatLeft PaddingSmall Ellipsis logintime">' + obj.Logintime + '</div>';
 				//str += '</div>';
             	
+            	let selected = ( ge( 'UserListID_' + obj.ID ) && ge( 'UserListID_' + obj.ID ).className.indexOf( 'Selected' ) >= 0 ? ' Selected' : '' );
+            	
             	let dd = document.createElement( 'div' );
-            	dd.className = 'HRow ' + obj.Status + ' Line ' + s;
+            	dd.className = 'HRow ' + obj.Status + ' Line ' + s + selected;
             	dd.id = 'UserListID_' + obj.ID;
             	dd.innerHTML = str;
             	
@@ -620,12 +622,14 @@ scrollengine = {
 	reset : function (  )
 	{
 		
-		this.elements = {
+		// TODO: This is allready created no need to reset it in order to recreate ...
+		
+		/*this.elements = {
 			pageAbove   : null,
 			pageMiddle  : null,
 			pageBelow   : null,
 			wholeHeight : null
-		},
+		},*/
 		
 		this.config = {
 			rowHeight  : 27,

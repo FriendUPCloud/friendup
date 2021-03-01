@@ -152,7 +152,7 @@ var UsersSettings = function ( setting, set )
 };
 
 // Section for user account management
-Sections.accounts_users = function( cmd, extra )
+Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 {
 	// Ugly method for now to get access to functions in the function, but this mess needs to ble cleaned up first ....
 	
@@ -677,6 +677,7 @@ Sections.accounts_users = function( cmd, extra )
 									avSrc.src = userInfo.avatar;
 									avSrc.onload = function()
 									{
+										console.log( 'image have loaded ... ' + this.src );
 										if( ge( 'AdminAvatar' ) )
 										{
 											var ctx = ge( 'AdminAvatar' ).getContext( '2d' );
@@ -810,7 +811,20 @@ Sections.accounts_users = function( cmd, extra )
 												removeBtn( this, { id: userInfo.ID, button_text: 'i18n_delete_user', }, function ( args )
 												{
 									
-													_removeUser( args.id );
+													_removeUser( args.id, function(  )
+													{
+														
+														cancelUser(  );
+														
+														if( UsersSettings( 'experiment' ) )
+														{
+															// TODO: Fix refresh it doesn't work properly ...
+															//scrollengine.refresh(  );
+															
+															Sections.accounts_users( 'init' );
+														}
+														
+													} );
 									
 												} );
 								
@@ -6847,12 +6861,22 @@ Sections.accounts_users = function( cmd, extra )
 									{
 										
 										// Refresh whole users list ...
-							
-										Sections.accounts_users(  );
-							
-										// Go to edit mode for the new user ...
-							
-										Sections.accounts_users( 'edit', uid );
+										
+										// TODO: look at a better way to handle this with the scrollengine for new users and refresh of the list ...
+										
+										Sections.accounts_users( 'init', false, function( ok )
+										{
+											
+											console.log( "Sections.accounts_users( 'init', false, function( ok )" );
+											
+											if( ok )
+											{
+												// Go to edit mode for the new user ...
+												
+												Sections.accounts_users( 'edit', uid );
+											}
+											
+										} );
 							
 									}
 					
@@ -8066,7 +8090,12 @@ Sections.accounts_users = function( cmd, extra )
 							
 							
 							scrollengine.init( ge( 'ListUsersInner' ), userList, userList['Count'], function( ret ) 
-							{ 
+							{
+								if( accounts_users_callback )
+								{
+									accounts_users_callback( true );
+								}
+								
 								console.log( '[1] ListUsersInner ', ret );
 								
 								// Only run the request when server is ready, one job at a time ... 
@@ -8107,6 +8136,8 @@ Sections.accounts_users = function( cmd, extra )
 				
 				
 				
+				// This is the old init, and can be removed once the new one is working PROPERLY, not before.
+				
 				getUserlist( function( res, userList )
 				{
 		
@@ -8116,7 +8147,7 @@ Sections.accounts_users = function( cmd, extra )
 					{
 						Init();
 						
-						// Experimental ...
+						/*// Experimental ...
 						if( UsersSettings( 'experiment' ) )
 						{
 							console.log( 'scrollengine.init() ... ', scrollengine );
@@ -8141,7 +8172,7 @@ Sections.accounts_users = function( cmd, extra )
 							
 							console.log( userList );
 							
-							scrollengine.init( ge( 'ListUsersInner' ), /*userList ? userList : */myArray, function( res ) 
+							scrollengine.init( ge( 'ListUsersInner' ), myArray, function( res ) 
 							{ 
 								console.log( 'ListUsersInner ', res );
 								
@@ -8151,7 +8182,7 @@ Sections.accounts_users = function( cmd, extra )
 								
 							} );
 					
-						}
+						}*/
 						
 					}
 					
@@ -8282,9 +8313,24 @@ function refreshUserList( userInfo )
 					
 					if( div[i].className.indexOf( ' edit' ) >= 0 )
 					{
-						var img = '/system.library/module/?module=system&command=getavatar&userid=' + userInfo.ID + ( userInfo.Image ? '&image=' + userInfo.Image : '' ) + '&width=30&height=30&authid=' + Application.authId;
+						src = '/system.library/module/?module=system&command=getavatar&userid=' + userInfo.ID + ( userInfo.Image ? '&image=' + userInfo.Image : '' ) + '&width=16&height=16&authid=' + Application.authId;
 						
-						var bg = 'background-image: url(\'' + img + '\');background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;';
+						// TODO: maybe remove this from memory?
+						let iii = new Image();
+			    		iii.src = src;
+			    		iii.div = div[i];
+						iii.onload = function()
+		        		{
+							let spa = this.div.getElementsByTagName( 'span' )[0].getElementsByTagName( 'div' )[0];
+            				spa.style.backgroundImage = 'url(' + this.src + ')';
+            				console.log( 'image loaded ' + src );
+            			}
+						
+						//var img = '/system.library/module/?module=system&command=getavatar&userid=' + userInfo.ID + ( userInfo.Image ? '&image=' + userInfo.Image : '' ) + '&width=16&height=16&authid=' + Application.authId;
+						
+						// TODO: Look at this, make it so u can update attributes instead of replacing innerHTML
+						
+						/*var bg = 'background-image: url(\'' + src + '\');background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;';
 						
 						div[i].innerHTML = '<span '                  + 
 						'id="UserAvatar_' + userInfo.ID + '" '       + 
@@ -8295,7 +8341,7 @@ function refreshUserList( userInfo )
 						'timestamp="' + timestamp + '" '             +
 						'class="IconSmall fa-user-circle-o avatar" ' + 
 						'style="position: relative;" '               +
-						'><div style="' + bg + '"></div></span>';
+						'><div style="' + bg + '"></div></span>';*/
 						
 						//console.log( 'refreshUserList: ', bg );
 					}
