@@ -61,6 +61,7 @@
 #include <system/sas/sas_web.h>
 #include <system/service/service_manager_web.h>
 #include <strings.h>
+#include <util/session_id.h>
 
 #define LIB_NAME "system.library"
 #define LIB_VERSION 		1
@@ -388,7 +389,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		HashmapElement *sst = GetHEReq( *request, "servertoken" ); // TODO: Only allow this on localhost!
 		HashmapElement *refreshTokenElement = GetHEReq( *request, "refreshtoken" ); 
 		
-		if( tst == NULL && ast == NULL && sst == NULL )
+		if( tst == NULL && ast == NULL && sst == NULL && refreshTokenElement == NULL )
 		{			
 			struct TagItem tags[] = {
 				{ HTTP_HEADER_CONTENT_TYPE,(FULONG)StringDuplicate( "text/html" ) },
@@ -562,6 +563,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		else if( refreshTokenElement != NULL && refreshTokenElement->hme_Data != NULL )
 		{
 			char *deviceid = NULL;
+			
+			DEBUG("REFRESH TOKEN!!!\n");
 			
 			HashmapElement *el = HashmapGet( (*request)->http_ParsedPostContent, "deviceid" );
 			if( el != NULL )
@@ -1832,6 +1835,65 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			{
 				locsessionid = ( char *)el->hme_Data;
 			}
+			
+			//
+			// If login is done by using RefreshToken
+			//
+			
+			el = HttpGetPOSTParameter( *request, "refreshtoken" );
+			if( el != NULL )
+			{
+				RefreshToken *rt = SecurityManagerGetRefreshTokenAndRecreateDB( l->sl_SecurityManager, el->hme_Data, deviceid, &newRefreshToken );
+				if( rt != NULL )
+				{
+					loggedSession = UserSessionNew( NULL, deviceid );
+					if( loggedSession != NULL )
+					{
+						loggedSession->us_SessionID = SessionIDGenerate();
+						
+						loggedSession->us_UserID = rt->rt_UserID;
+						if( ( loggedSession = USMUserSessionAdd( l->sl_USM, loggedSession ) ) != NULL )
+						{
+							if( loggedSession->us_User == NULL )
+							{
+								DEBUG("User is not attached to session %lu\n", loggedSession->us_UserID );
+								User *lusr = UMGetUserByID( l->sl_UM, loggedSession->us_UserID );
+								if( lusr != NULL )
+								{
+									UserAddSession( lusr, loggedSession );
+								}
+							}
+							USMSessionSaveDB( l->sl_USM, loggedSession );
+						}
+						else
+						{
+							
+						}
+						
+						if( loggedSession->us_User != NULL )
+						{
+							char tmp[ 1024 ];
+							User *loggedUser = loggedSession->us_User;
+							
+							snprintf( tmp, sizeof(tmp) ,
+								"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"username\":\"%s\",\"refreshtoken\":\"%s\"}",
+								loggedUser->u_Error, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedUser->u_ID, loggedUser->u_FullName,  loggedSession->us_SessionID, loggedSession->us_User->u_Name, newRefreshToken );
+							
+							HttpAddTextContent( response, tmp );
+						}
+						else
+						{
+							char buffer[ 256 ];
+							snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ACCOUNT_BLOCKED] , DICT_ACCOUNT_BLOCKED );
+							HttpAddTextContent( response, buffer );
+						}
+					}
+				}
+			}
+			else
+			//
+			// Normal login procedure
+			//
 			
 			if( locsessionid != NULL && deviceid != NULL )
 			{

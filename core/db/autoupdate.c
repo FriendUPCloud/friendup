@@ -76,12 +76,12 @@ static inline char *ReadDBFile( char *fname, int *fs )
 	if( ( fp = fopen( fname, "rb" ) ) != NULL )
 	{
 		fseek( fp, 0, SEEK_END );
-		long fsize = ftell( fp );
+		int fsize = (int)ftell( fp );
 		fseek( fp, 0, SEEK_SET );
 		
 		if( fsize > 0 )
 		{
-			if( ( script = FCalloc( fsize+1, sizeof(char) ) ) != NULL )
+			if( ( script = FCalloc( (fsize+1), sizeof(char) ) ) != NULL )
 			{
 				int readbytes = 0;
 				if( ( readbytes = fread( script, fsize, 1, fp ) ) > 0 )

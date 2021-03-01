@@ -270,13 +270,13 @@ RefreshToken *SecurityManagerCreateRefreshTokenByUserNameDB( SecurityManager* sm
 	{
 		SystemBase *sb = (SystemBase *)sm->sm_SB;
 		
-		SQLLibrary *sqllibGlob = sb->GetInternalDBConnection( sb );
+		SQLLibrary *sqllibGlob = sb->GetDBConnection( sb );
 		if( sqllibGlob != NULL )
 		{
 			// Get UserID from main DB, FUser table
 			FULONG userid = 0;
 			char tmpQuery[ 512 ];
-			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT UserID FROM FUser WHERE Name='%s' LIMIT 1", userName );
+			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ID FROM FUser WHERE Name='%s' LIMIT 1", userName );
 			void *result = sqllibGlob->Query(  sqllibGlob, tmpQuery );
 			if( result != NULL )
 			{
@@ -300,7 +300,7 @@ RefreshToken *SecurityManagerCreateRefreshTokenByUserNameDB( SecurityManager* sm
 			
 					// first we must remove old entry if exist
 			
-					sqllib->SNPrintF( sqllib, qery, 1024, "DELETE FRefreshToken WHERE DeviceID='%s'", deviceID );
+					sqllib->SNPrintF( sqllib, qery, 1024, "DELETE FROM FRefreshToken WHERE DeviceID='%s'", deviceID );
 					sqllib->QueryWithoutResults( sqllib, qery );
 
 					// create new refresh token
