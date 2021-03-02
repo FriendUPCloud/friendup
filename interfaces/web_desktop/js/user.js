@@ -43,6 +43,7 @@ Friend.User = {
 		{
 			try
 			{
+				console.log( 'Clean it now' );
 				Workspace.conn.ws.cleanup();
 			}
 			catch( e )
@@ -84,6 +85,7 @@ Friend.User = {
 		{
 			try
 			{
+				console.log( 'Try to login again.' );
 				Workspace.conn.ws.cleanup();
 			}
 			catch( e )
@@ -237,6 +239,7 @@ Friend.User = {
 		{
 			try
 			{
+				console.log( 'Another reason.' );
 				Workspace.conn.ws.cleanup();
 			}
 			catch( e )
@@ -464,6 +467,7 @@ Friend.User = {
 				{
 					try
 					{
+						console.log( 'Do it again.' );
 						Workspace.conn.ws.cleanup();
 					}
 					catch( e )

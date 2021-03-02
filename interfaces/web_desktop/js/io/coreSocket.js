@@ -17,13 +17,13 @@ FriendWebSocket = function( conf )
 	
 	let self = this;
 	
-	let uniqueWords = [ 'Ball', 'Jacket', 'Fish', 'Origon', 'Nelson', 'Blue', 'Red', 'Slash' ];
+	/*let uniqueWords = [ 'Ball', 'Jacket', 'Fish', 'Origon', 'Nelson', 'Blue', 'Red', 'Slash' ];
 	let ustr = '';
 	for( let a = 0; a < 4; a++ )
 	{
 		ustr += uniqueWords[ Math.floor( Math.random() * uniqueWords.length ) ];
 	}
-	self.uniqueName = ustr;
+	self.uniqueName = ustr;*/
 	
 	// REQUIRED CONFIG
 	self.pConf = conf;
@@ -881,10 +881,8 @@ FriendWebSocket.prototype.wsClose = function( code, reason )
 	code = code || 1000;
 	reason = reason || 'WS connection closed';
 	
-	try 
-	{
-		let ws = window.Workspace ? ( ' ' + Workspace.sessionId ) : '';
-		console.log('closing websocket (' + self.sessionId + ws + ')',code,reason);
+	try {
+		console.log('closing websocket',code,reason);
 		if( window.Friend && Friend.User )
 			Friend.User.CheckServerNow();
 		self.ws.close( code, reason );
