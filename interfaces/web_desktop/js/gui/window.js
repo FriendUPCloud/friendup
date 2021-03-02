@@ -533,6 +533,29 @@ function GetStatusbarHeight( screen )
 	return 0;
 }
 
+// Pop a window up!
+function PopoutWindow( wind, e )
+{
+    let windowObject = wind.windowObject;
+    let ifr = wind.getElementsByTagName( 'iframe' )[0];
+    let v = window.open( '', '', 'width=900,height=900,status=no,topbar=no' );
+    let styl = document.createElement( 'style' );
+    styl.innerHTML = 'iframe{position:absolute;top:0;left:0;width:100%;height:100%;margin:0;border:0}';
+    v.document.body.appendChild( ifr );
+    v.document.body.appendChild( styl );
+    wind.parentNode.parentNode.removeChild( wind.parentNode );
+    windowObject.setFlag( 'invisible', true );
+    v.document.title = windowObject.flags.title;
+    setTimeout( function()
+    {
+        let ifr = v.document.getElementsByTagName( 'iframe' )[0];
+        ifr.contentWindow.document.body.setAttribute( 'style', '' );
+        ifr.contentWindow.document.body.classList.remove( 'Loading' );
+        ifr.contentWindow.Application.run();
+    }, 250 );
+}
+
+
 // Make sure we're not overlapping all of the time
 var _cascadeValue = 0;
 function CascadeWindowPosition( obj )
