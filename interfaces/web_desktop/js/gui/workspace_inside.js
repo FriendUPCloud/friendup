@@ -1161,6 +1161,43 @@ var WorkspaceInside = {
 		if( !this.refreshEWCTime )
 		    this.refreshEWCTime = 0;
 		let cand = ( new Date() ).getTime() / 1000;
+		
+		function doItCal( sessions )
+		{
+			var closeBtn = '<div class="HRow"><p class="Layout"><button type="button" class="FloatRight Button fa-close IconSmall">' + i18n( 'i18n_close' ) + '</button></p></div>';
+
+		    // Mobile launches calendar in a different way, so this 
+		    // functionality is only for desktops
+		    if( !isMobile && !Workspace.isSingleTask )
+		    {
+			    var wid = Workspace.widget ? Workspace.widget : m.widget;
+			    if( wid )
+			    {
+				    wid.shown = true;
+			    }
+
+			    if( wid && !wid.initialized )
+			    {
+				    wid.initialized = true;
+				    
+				    self.createCalendar( wid, sessions );
+			    }
+			    else
+			    {
+				    if( m.calendar )
+				    {
+					    m.calendar.render();
+					    m.sessions.innerHTML = d;
+				    }
+			    }
+			    if( wid )
+			    {
+				    wid.autosize();
+			    }
+			    PollTrayPosition();
+		    }
+		}
+		
 		if( !Workspace.cachedSessionList || cand - this.refreshEWCTime > 30 )
 		{
 		    this.refreshEWCTime = cand;
@@ -1234,41 +1271,14 @@ var WorkspaceInside = {
 				    }
 			    }
 
-			    var closeBtn = '<div class="HRow"><p class="Layout"><button type="button" class="FloatRight Button fa-close IconSmall">' + i18n( 'i18n_close' ) + '</button></p></div>';
-
-			    // Mobile launches calendar in a different way, so this 
-			    // functionality is only for desktops
-			    if( !isMobile && !Workspace.isSingleTask )
-			    {
-				    var wid = Workspace.widget ? Workspace.widget : m.widget;
-				    if( wid )
-				    {
-					    wid.shown = true;
-				    }
-
-				    if( wid && !wid.initialized )
-				    {
-					    wid.initialized = true;
-					    
-					    self.createCalendar( wid, sessions );
-				    }
-				    else
-				    {
-					    if( m.calendar )
-					    {
-						    m.calendar.render();
-						    m.sessions.innerHTML = d;
-					    }
-				    }
-				    if( wid )
-				    {
-					    wid.autosize();
-				    }
-				    PollTrayPosition();
-			    }
+			    doItCal( sessions );
 		    }
 		    // FRANCOIS: get unique device IDs...
 		    mo.execute( 'user/sessionlist', { username: Workspace.loginUsername } );
+		}
+		else
+		{
+			doItCal( [] );
 		}
 		
 		// For mobiles, we have a Friend icon at the top of the screen
