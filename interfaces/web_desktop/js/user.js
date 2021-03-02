@@ -502,7 +502,7 @@ Friend.User = {
 				this.checkInterval = null;
 			}
 			
-			if( this.State != 'online' || force )
+			if( this.State != 'online' || force || !Workspace.conn )
 			{
 				this.ServerIsThere = true;
 				this.State = 'online';
