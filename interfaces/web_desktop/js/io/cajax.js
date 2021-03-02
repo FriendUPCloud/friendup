@@ -694,7 +694,7 @@ cAjax.prototype.send = function( data, callback )
 							self.onload( false, false );
 							self.destroy();
 						}
-
+						console.log( 'We got an issue: ', res );
 						Friend.User.CheckServerConnection();
 					}
 				} ).catch( function( err )
