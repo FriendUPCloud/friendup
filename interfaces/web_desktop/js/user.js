@@ -43,7 +43,6 @@ Friend.User = {
 		{
 			try
 			{
-				console.log( 'Clean it now' );
 				Workspace.conn.ws.cleanup();
 			}
 			catch( e )
@@ -85,7 +84,6 @@ Friend.User = {
 		{
 			try
 			{
-				console.log( 'Try to login again.' );
 				Workspace.conn.ws.cleanup();
 			}
 			catch( e )
@@ -158,8 +156,6 @@ Friend.User = {
 		{
 			Friend.User.lastLogin = null;
 			
-			console.log( 'Result from relogin: ', json );
-		
 			// We got a real error
 			if( json == null )
 			{
@@ -248,7 +244,6 @@ Friend.User = {
 		{
 			try
 			{
-				console.log( 'Another reason.' );
 				Workspace.conn.ws.cleanup();
 			}
 			catch( e )
@@ -409,7 +404,6 @@ Friend.User = {
 					// Dont need this now
 					clearTimeout( checkTimeo );
 					
-					console.log( 'Result here: ', q, s );
 					// Check missing session
 					let missSess = ( s && s.indexOf( 'sessionid or authid parameter is missing' ) > 0 );
 					if( !missSess && ( s && s.indexOf( 'User session not found' ) > 0 ) )
@@ -465,7 +459,6 @@ Friend.User = {
 	// Set the user state (offline / online etc)
 	SetUserConnectionState: function( mode, force )
 	{
-		console.log( 'Setting mode: ' + mode + ' and ' + ( force ? 'force' : 'not force' ) );
 		if( mode == 'offline' )
 		{
 			if( this.State != 'offline' )
@@ -485,7 +478,6 @@ Friend.User = {
 				{
 					try
 					{
-						console.log( 'Do it again.' );
 						Workspace.conn.ws.cleanup();
 					}
 					catch( e )

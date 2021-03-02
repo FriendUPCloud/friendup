@@ -614,8 +614,7 @@ var WorkspaceInside = {
 		return 'false';
 	},
 	initWebSocket: function( callback )
-	{	
-		console.log( 'Initializing websocket!' );
+	{
 		let self = this;
 		function closeConn()
 		{
