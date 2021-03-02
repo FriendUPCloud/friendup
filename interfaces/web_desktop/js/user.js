@@ -112,9 +112,7 @@ Friend.User = {
     SendLoginCall: function( info, callback )
     {
     	// Already logging in
-    	if( this.State == 'Login' ) return;
-    	
-    	this.State = 'Login';
+    	this.State = 'login';
     	
     	if( this.lastLogin && this.lastLogin.currentRequest )
     	{
@@ -151,12 +149,15 @@ Friend.User = {
 		else
 		{
 			this.State = 'offline'; 
+			this.lastLogin = null;
 			return false;
 		}
 		
 		m.addVar( 'deviceid', GetDeviceId() );
 		m.onExecuted = function( json, serveranswer )
 		{
+			Friend.User.lastLogin = null;
+			
 			console.log( 'Result from relogin: ', json, serveranswer );
 		
 			// We got a real error
@@ -176,8 +177,6 @@ Friend.User = {
 					Workspace.loginid = json.loginid;
 					Workspace.userLevel = json.level;
 					Workspace.fullName = json.fullname;
-					
-					Friend.User.lastLogin = null;
 					
 					// We are now online!
 					Friend.User.SetUserConnectionState( 'online' );
@@ -222,7 +221,10 @@ Friend.User = {
 	// When session times out, use log in again...
 	ReLogin: function( callback )
 	{
+    	if( this.lastLogin ) return;
+    	
     	this.State = 'login';
+    	
     	
     	if( !event ) event = window.event;
     	
@@ -258,7 +260,7 @@ Friend.User = {
 		
 		if( info.username || info.sessionid )
 		{
-			this.SendLoginCall( info, callback );
+			this.SendLoginCall( info, callback, 'relogin' );
 		}
 		else
 		{
