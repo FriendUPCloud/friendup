@@ -399,9 +399,16 @@ Friend.User = {
 			Friend.User.serverCheck = null;
 			if( Friend.User.State != 'offline' )
 			{
+				let checkTimeo = setTimeout( function()
+				{
+					Friend.User.SetUserConnectionState( 'offline' );
+				}, 1500 );
 				let serverCheck = new Library( 'system' );
 				serverCheck.onExecuted = function( q, s )
 				{
+					// Dont need this now
+					clearTimeout( checkTimeo );
+					
 					console.log( 'Result here: ', q, s );
 					// Check missing session
 					let missSess = ( s && s.indexOf( 'sessionid or authid parameter is missing' ) > 0 );
