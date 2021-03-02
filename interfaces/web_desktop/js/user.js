@@ -402,6 +402,7 @@ Friend.User = {
 				let serverCheck = new Library( 'system' );
 				serverCheck.onExecuted = function( q, s )
 				{
+					console.log( 'Result here: ', q, s );
 					// Check missing session
 					let missSess = ( s && s.indexOf( 'sessionid or authid parameter is missing' ) > 0 );
 					if( !missSess && ( s && s.indexOf( 'User session not found' ) > 0 ) )
@@ -518,7 +519,6 @@ Friend.User = {
 				if( Workspace.refreshDesktop )
 					Workspace.refreshDesktop( true, false );
 				// Try to reboot the websocket
-				console.log( 'What is this: ', Workspace.conn );
 				if( !Workspace.conn && Workspace.initWebSocket )
 				{
 					Workspace.initWebSocket();
