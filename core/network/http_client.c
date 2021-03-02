@@ -154,7 +154,7 @@ BufString *HttpClientCall( HttpClient *c, char *host, int port, FBOOL secured )
 			
 			//OpenSSL_add_all_algorithms();  /* Load cryptos, et.al. */
 			//SSL_load_error_strings();   /* Bring in and register error messages */
-			method = TLSv1_2_client_method();  /* Create new client-method instance */
+			method = TLS_client_method();//TLSv1_2_client_method();  /* Create new client-method instance */
 
 			if ( (ctx = SSL_CTX_new(method)) == NULL)
 			{

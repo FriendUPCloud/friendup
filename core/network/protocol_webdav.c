@@ -857,7 +857,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		}
 	}
 	
-	DEBUG("[HandleWebDav] uname '%s'\narealm '%s'\nanonce '%s'\nauri '%s'\naresponse '%s'\nalgo '%s'\nacnonce '%s'\naqop '%s'\nanc '%s'\n",userName,arealm,anonce,auri,aresponse,aalgo,acnonce,aqop,anc );
+	//DEBUG("[HandleWebDav] uname '%s'\narealm '%s'\nanonce '%s'\nauri '%s'\naresponse '%s'\nalgo '%s'\nacnonce '%s'\naqop '%s'\nanc '%s'\n",userName,arealm,anonce,auri,aresponse,aalgo,acnonce,aqop,anc );
 	
 	int z=0;
 	for( z = 0 ; z < HTTP_HEADER_END ; z++ )
