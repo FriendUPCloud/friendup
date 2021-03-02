@@ -584,7 +584,7 @@ function setGUISection( module, section, child, action )
 			{
 				//UsersSettings( 'maxlimit', 99999 );
 			
-				UsersSettings( 'reset', true );
+				UsersSettings( 'reset', 'all' );
 			}
 		
 			Sections[ sectPart ]();

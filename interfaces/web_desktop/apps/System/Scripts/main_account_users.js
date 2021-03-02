@@ -122,10 +122,12 @@ var UsersSettings = function ( setting, set )
 					break;
 				case 'reset'               :
 					this.vars.searchquery  = ( searchquery                                            );
-					// TODO: Look if these needs to be reset ...
-					//this.vars.searchby     = ( searchby                                             );
-					//this.vars.sortby       = ( sortby                                               );
-					//this.vars.orderby      = ( orderby                                              );
+					if( set && set == 'all' )
+					{
+						this.vars.searchby = ( searchby                                               );
+						this.vars.sortby   = ( sortby                                                 );
+						this.vars.orderby  = ( orderby                                                );
+					}
 					this.vars.divh         = ( divh                                                   );
 					this.vars.listed       = ( listed                                                 );
 					this.vars.total        = ( total                                                  );
@@ -1684,7 +1686,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										
 										
 										
-									/*}*/
+									
 								}
 								
 								
@@ -4982,400 +4984,26 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 			if( extra )
 			{
 				
-				doListUsers( extra );
-				
+				if( !UsersSettings( 'experiment' ) )
+				{
+					doListUsers( extra );
+				}
 			}
 			else
 			{
-				
-				console.log( "UsersSettings( 'listall', true ); to list all users ..." );
-				console.log( "UsersSettings( 'avatars', false ); to list users without avatar ..." );
-				console.log( "UsersSettings( 'logintime', false ); to list users without lastlogin ..." );
-				console.log( "UsersSettings( 'experiment', true ); to show latest grid method ..." );
-				console.log( "UsersSettings(  ); for current Users Settings ..." );
-				
-				// Temporary ...
-				UsersSettings( 'avatars', false );
-				
-				// Get correct estimate of how many users fit into the window area ...
-			
-				CheckUserlistSize( true );
-				
 				
 				// Experimental ...
 				if( UsersSettings( 'experiment' ) )
 				{
 					
-					console.log( 'scrollengine.init() ... ', scrollengine );
-					
-					
-					
 					getUserlist( function( res, userList )
 					{
-						
-						console.log( userList );
-						
-						
-						
+							
 						if( res == 'ok' )
 						{
 							
+							initUserlist( userList );
 							
-							// TODO: Make some propper function for this when it's working ...
-							// TODO: And make it SIMPLER :) not a mess ...
-							
-							var o = ge( 'UserList' );
-							
-							if( !ge( 'ListUsersInner' ) )
-							{
-								if( o ) o.innerHTML = '';
-							}
-							
-							if( !ge( 'ListUsersInner' ) )
-							{								
-								var str = '';
-								
-								// Temporary ...
-								
-								var divs = appendChild( [ 
-									{ 
-										'element' : function() 
-										{
-											var d = document.createElement( 'div' );
-											d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingRight';
-											return d;
-										}(),
-										'child' : 
-										[ 
-											{ 
-												'element' : function() 
-												{
-													var d = document.createElement( 'div' );
-													d.className = 'HContent20 FloatLeft';
-													d.innerHTML = '<h3><strong>Users </strong><span id="AdminUsersCount">(' + userList['Count'] + ')</span></h3>';
-													return d;
-												}() 
-											}, 
-											{ 
-												'element' : function() 
-												{
-													var d = document.createElement( 'div' );
-													d.className = 'HContent70 FloatLeft Relative';
-													return d;
-												}(),
-												'child' : 
-												[ 
-													{ 
-														'element' : function() 
-														{
-															var inp = document.createElement( 'input' );
-															inp.className = 'FullWidth';
-															inp.type = 'text';
-															inp.onkeyup = function(  )
-															{
-																searchServer( this.value );
-															};
-															return inp;
-														}()
-													}
-												]
-											},
-											{ 
-												'element' : function() 
-												{
-													var d = document.createElement( 'div' );
-													d.className = 'HContent10 FloatLeft TextRight InActive';
-													return d;
-												}(),
-												'child' : 
-												[ 
-													{
-														'element' : function() 
-														{
-															var btn = document.createElement( 'button' );
-															btn.className = 'IconButton IconSmall Negative fa-bars';
-															btn.id = 'AdminUsersBtn';
-															btn.onclick = function(  )
-															{
-																SubMenu( this );
-															};
-															return btn;
-														}()
-													},
-													{
-														'element' : function() 
-														{
-															var d = document.createElement( 'div' );
-															d.className = 'submenu_wrapper';
-															return d;
-														}(),
-														'child' : 
-														[ 
-															{
-																'element' : function() 
-																{
-																	var ul = document.createElement( 'ul' );
-																	ul.className = 'Positive';
-																	ul.id = 'AdminUsersSubMenu';
-																	return ul;
-																}(),
-																'child' : 
-																[ 
-																	{
-																		'element' : function() 
-																		{
-																			var li = document.createElement( 'li' );
-																			li.innerHTML = i18n( 'i18n_new_user' );
-																			li.onclick = function(  )
-																			{
-																				NewUser( this );
-																			};
-																			return li;
-																		}()
-																	},
-																	{
-																		'element' : function() 
-																		{
-																			var li = document.createElement( 'li' );
-																			li.className = 'show';
-																			li.innerHTML = i18n( 'i18n_show_disabled_users' );
-																			li.onclick = function(  )
-																			{
-																				if( this.className.indexOf( 'show' ) >= 0 )
-																				{
-																					hideStatus( 'Disabled', true, true );
-																					this.innerHTML = i18n( 'i18n_hide_disabled_users' );
-																					this.className = this.className.split( 'hide' ).join( '' ).split( 'show' ).join( '' ) + 'hide';
-																				}
-																				else
-																				{
-																					hideStatus( 'Disabled', false, true );
-																					this.innerHTML = i18n( 'i18n_show_disabled_users' );
-																					this.className = this.className.split( 'hide' ).join( '' ).split( 'show' ).join( '' ) + 'show';
-																				}
-																				
-																				SubMenu( this.parentNode.parentNode );
-																			};
-																			return li;
-																		}()
-																	},
-																	{
-																		'element' : function() 
-																		{
-																			var li = document.createElement( 'li' );
-																			li.className = 'hide';
-																			li.innerHTML = i18n( 'i18n_hide_locked_users' );
-																			li.onclick = function(  )
-																			{
-																				if( this.className.indexOf( 'hide' ) >= 0 )
-																				{
-																					hideStatus( 'Locked', false, true );
-																					this.innerHTML = i18n( 'i18n_show_locked_users' );
-																					this.className = this.className.split( 'hide' ).join( '' ).split( 'show' ).join( '' ) + 'show';
-																				}
-																				else
-																				{
-																					hideStatus( 'Locked', true, true );
-																					this.innerHTML = i18n( 'i18n_hide_locked_users' );
-																					this.className = this.className.split( 'hide' ).join( '' ).split( 'show' ).join( '' ) + 'hide';
-																				}
-																				
-																				SubMenu( this.parentNode.parentNode );
-																			};
-																			return li;
-																		}()
-																	}
-																]
-															}
-														]
-													}
-												]
-											}
-										]
-									},
-									{
-										'element' : function() 
-										{
-											var d = document.createElement( 'div' );
-											d.className = 'List';
-											return d;
-										}(),
-										'child' : 
-										[ 
-											{
-												'element' : function() 
-												{
-													var d = document.createElement( 'div' );
-													d.className = 'HRow BackgroundNegative Negative PaddingTop PaddingBottom';
-													return d;
-												}(),
-												'child' : 
-												[ 
-													{
-														'element' : function() 
-														{
-															var d = document.createElement( 'div' );
-															d.className = 'PaddingSmallLeft PaddingSmallRight HContent10 FloatLeft Ellipsis';
-															d.innerHTML = '<strong>&nbsp;</strong>';
-															return d;
-														}()
-													},
-													{
-														'element' : function() 
-														{
-															var d = document.createElement( 'div' );
-															d.className = 'PaddingSmallLeft PaddingSmallRight HContent30 FloatLeft Ellipsis';
-															return d;
-														}(),
-														'child' : 
-														[ 
-															{
-																'element' : function() 
-																{
-																	var b = document.createElement( 'strong' );
-																	b.innerHTML = i18n( 'i18n_header_FullName' );
-																	b.onclick = function()
-																	{
-																		sortUsers( 'FullName' );
-																	};
-																	return b;
-																}()
-															}
-														]
-													},
-													{
-														'element' : function() 
-														{
-															var d = document.createElement( 'div' );
-															d.className = 'PaddingSmallLeft PaddingSmallRight HContent25 FloatLeft Ellipsis';
-															return d;
-														}(),
-														'child' : 
-														[ 
-															{
-																'element' : function() 
-																{
-																	var b = document.createElement( 'strong' );
-																	b.innerHTML = i18n( 'i18n_header_Name' );
-																	b.onclick = function()
-																	{
-																		sortUsers( 'Name' );
-																	};
-																	return b;
-																}()
-															}
-														]
-													},
-													{
-														'element' : function() 
-														{
-															var d = document.createElement( 'div' );
-															d.className = 'PaddingSmallLeft PaddingSmallRight HContent15 FloatLeft Ellipsis';
-															return d;
-														}(),
-														'child' : 
-														[ 
-															{
-																'element' : function() 
-																{
-																	var b = document.createElement( 'strong' );
-																	b.innerHTML = i18n( 'i18n_header_Status' );
-																	b.onclick = function()
-																	{
-																		sortUsers( 'Status' );
-																	};
-																	return b;
-																}()
-															}
-														]
-													},
-													{
-														'element' : function() 
-														{
-															var d = document.createElement( 'div' );
-															d.className = 'PaddingSmallLeft PaddingSmallRight HContent20 FloatLeft Ellipsis';
-															return d;
-														}(),
-														'child' : 
-														[ 
-															{
-																'element' : function() 
-																{
-																	var b = document.createElement( 'strong' );
-																	b.innerHTML = i18n( 'i18n_header_LoginTime' );
-																	b.onclick = function()
-																	{
-																		sortUsers( 'LoginTime' );
-																	};
-																	return b;
-																}()
-															}
-														]
-													}
-												]
-											}
-										]
-									},
-									{
-										'element' : function() 
-										{
-											var d = document.createElement( 'div' );
-											d.style = 'position:relative;height:calc(100% - 77px);';
-											d.id = 'ListUsersWrapper';
-											return d;
-										}(),
-										'child' : 
-										[ 
-											{
-												'element' : function() 
-												{
-													var d = document.createElement( 'div' );
-													d.className = 'ScrollArea HContentLeft VContent100 HContent100';
-													return d;
-												}(),
-												'child' : 
-												[ 
-													{
-														'element' : function() 
-														{
-															var d = document.createElement( 'div' );
-															d.className = 'List FullName ASC';
-															d.id = 'ListUsersInner';
-															d.setAttribute( 'sortby', 'FullName' );
-															d.setAttribute( 'orderby', 'ASC' );
-															return d;
-														}()
-													}
-												]
-											}
-										]
-									}
-								] );
-								
-								if( divs )
-								{
-									for( var i in divs )
-									{
-										if( divs[i] && o )
-										{
-											o.appendChild( divs[i] );
-										}
-									}
-								}
-								
-								
-								
-								
-								
-								if( scrollengine.debug )
-								{
-									ge( 'UserList' ).innerHTML += '<div id="Debug"></div>';
-								}
-								
-								ge( 'UserList' ).className = ge( 'UserList' ).className + ' experiment';
-								ge( 'ListUsersInner' ).className = ge( 'ListUsersInner' ).className + ' experiment';
-								
-							}
 							
 							
 							scrollengine.init( ge( 'ListUsersInner' ), userList, userList['Count'], function( ret ) 
@@ -5427,15 +5055,27 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 				
 				// This is the old init, and can be removed once the new one is working PROPERLY, not before.
 				
+				console.log( "UsersSettings( 'listall', true ); to list all users ..." );
+				console.log( "UsersSettings( 'avatars', false ); to list users without avatar ..." );
+				console.log( "UsersSettings( 'logintime', false ); to list users without lastlogin ..." );
+				console.log( "UsersSettings( 'experiment', true ); to show latest grid method ..." );
+				console.log( "UsersSettings(  ); for current Users Settings ..." );
+				
+				// Temporary ...
+				UsersSettings( 'avatars', false );
+				
+				// Get correct estimate of how many users fit into the window area ...
+			
+				CheckUserlistSize( true );
+				
 				getUserlist( function( res, userList )
 				{
-		
+					
 					doListUsers( userList );
 					
 					if( res == 'ok' )
 					{
 						Init();
-						
 					}
 					
 				} );
@@ -5468,6 +5108,366 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 
 
 // --- Functions related to Sections.account_users() ---------------------------------------------------------------- */
+
+
+
+// read ------------------------------------------------------------------------------------------------------------- //
+
+
+
+function initUserlist( userList  )
+{
+	
+	var o = ge( 'UserList' );
+					
+	if( !ge( 'ListUsersInner' ) )
+	{
+		if( o ) o.innerHTML = '';
+	}
+	
+	if( !ge( 'ListUsersInner' ) )
+	{								
+		var str = '';
+		
+		// Temporary ...
+		
+		var divs = appendChild( [ 
+			{ 
+				'element' : function() 
+				{
+					var d = document.createElement( 'div' );
+					d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingRight';
+					return d;
+				}(),
+				'child' : 
+				[ 
+					{ 
+						'element' : function() 
+						{
+							var d = document.createElement( 'div' );
+							d.className = 'HContent20 FloatLeft';
+							d.innerHTML = '<h3><strong>Users </strong><span id="AdminUsersCount">(' + userList['Count'] + ')</span></h3>';
+							return d;
+						}() 
+					}, 
+					{ 
+						'element' : function() 
+						{
+							var d = document.createElement( 'div' );
+							d.className = 'HContent70 FloatLeft Relative';
+							return d;
+						}(),
+						'child' : 
+						[ 
+							{ 
+								'element' : function() 
+								{
+									var inp = document.createElement( 'input' );
+									inp.className = 'FullWidth';
+									inp.type = 'text';
+									inp.onkeyup = function(  )
+									{
+										searchServer( this.value );
+									};
+									return inp;
+								}()
+							}
+						]
+					},
+					{ 
+						'element' : function() 
+						{
+							var d = document.createElement( 'div' );
+							d.className = 'HContent10 FloatLeft TextRight InActive';
+							return d;
+						}(),
+						'child' : 
+						[ 
+							{
+								'element' : function() 
+								{
+									var btn = document.createElement( 'button' );
+									btn.className = 'IconButton IconSmall Negative fa-bars';
+									btn.id = 'AdminUsersBtn';
+									btn.onclick = function(  )
+									{
+										SubMenu( this );
+									};
+									return btn;
+								}()
+							},
+							{
+								'element' : function() 
+								{
+									var d = document.createElement( 'div' );
+									d.className = 'submenu_wrapper';
+									return d;
+								}(),
+								'child' : 
+								[ 
+									{
+										'element' : function() 
+										{
+											var ul = document.createElement( 'ul' );
+											ul.className = 'Positive';
+											ul.id = 'AdminUsersSubMenu';
+											return ul;
+										}(),
+										'child' : 
+										[ 
+											{
+												'element' : function() 
+												{
+													var li = document.createElement( 'li' );
+													li.innerHTML = i18n( 'i18n_new_user' );
+													li.onclick = function(  )
+													{
+														NewUser( this );
+													};
+													return li;
+												}()
+											},
+											{
+												'element' : function() 
+												{
+													var li = document.createElement( 'li' );
+													li.className = 'show';
+													li.innerHTML = i18n( 'i18n_show_disabled_users' );
+													li.onclick = function(  )
+													{
+														if( this.className.indexOf( 'show' ) >= 0 )
+														{
+															hideStatus( 'Disabled', true, true );
+															this.innerHTML = i18n( 'i18n_hide_disabled_users' );
+															this.className = this.className.split( 'hide' ).join( '' ).split( 'show' ).join( '' ) + 'hide';
+														}
+														else
+														{
+															hideStatus( 'Disabled', false, true );
+															this.innerHTML = i18n( 'i18n_show_disabled_users' );
+															this.className = this.className.split( 'hide' ).join( '' ).split( 'show' ).join( '' ) + 'show';
+														}
+														
+														SubMenu( this.parentNode.parentNode );
+													};
+													return li;
+												}()
+											},
+											{
+												'element' : function() 
+												{
+													var li = document.createElement( 'li' );
+													li.className = 'hide';
+													li.innerHTML = i18n( 'i18n_hide_locked_users' );
+													li.onclick = function(  )
+													{
+														if( this.className.indexOf( 'hide' ) >= 0 )
+														{
+															hideStatus( 'Locked', false, true );
+															this.innerHTML = i18n( 'i18n_show_locked_users' );
+															this.className = this.className.split( 'hide' ).join( '' ).split( 'show' ).join( '' ) + 'show';
+														}
+														else
+														{
+															hideStatus( 'Locked', true, true );
+															this.innerHTML = i18n( 'i18n_hide_locked_users' );
+															this.className = this.className.split( 'hide' ).join( '' ).split( 'show' ).join( '' ) + 'hide';
+														}
+														
+														SubMenu( this.parentNode.parentNode );
+													};
+													return li;
+												}()
+											}
+										]
+									}
+								]
+							}
+						]
+					}
+				]
+			},
+			{
+				'element' : function() 
+				{
+					var d = document.createElement( 'div' );
+					d.className = 'List';
+					return d;
+				}(),
+				'child' : 
+				[ 
+					{
+						'element' : function() 
+						{
+							var d = document.createElement( 'div' );
+							d.className = 'HRow BackgroundNegative Negative PaddingTop PaddingBottom';
+							return d;
+						}(),
+						'child' : 
+						[ 
+							{
+								'element' : function() 
+								{
+									var d = document.createElement( 'div' );
+									d.className = 'PaddingSmallLeft PaddingSmallRight HContent10 FloatLeft Ellipsis';
+									d.innerHTML = '<strong>&nbsp;</strong>';
+									return d;
+								}()
+							},
+							{
+								'element' : function() 
+								{
+									var d = document.createElement( 'div' );
+									d.className = 'PaddingSmallLeft PaddingSmallRight HContent30 FloatLeft Ellipsis';
+									return d;
+								}(),
+								'child' : 
+								[ 
+									{
+										'element' : function() 
+										{
+											var b = document.createElement( 'strong' );
+											b.innerHTML = i18n( 'i18n_header_FullName' );
+											b.onclick = function()
+											{
+												sortUsers( 'FullName' );
+											};
+											return b;
+										}()
+									}
+								]
+							},
+							{
+								'element' : function() 
+								{
+									var d = document.createElement( 'div' );
+									d.className = 'PaddingSmallLeft PaddingSmallRight HContent25 FloatLeft Ellipsis';
+									return d;
+								}(),
+								'child' : 
+								[ 
+									{
+										'element' : function() 
+										{
+											var b = document.createElement( 'strong' );
+											b.innerHTML = i18n( 'i18n_header_Name' );
+											b.onclick = function()
+											{
+												sortUsers( 'Name' );
+											};
+											return b;
+										}()
+									}
+								]
+							},
+							{
+								'element' : function() 
+								{
+									var d = document.createElement( 'div' );
+									d.className = 'PaddingSmallLeft PaddingSmallRight HContent15 FloatLeft Ellipsis';
+									return d;
+								}(),
+								'child' : 
+								[ 
+									{
+										'element' : function() 
+										{
+											var b = document.createElement( 'strong' );
+											b.innerHTML = i18n( 'i18n_header_Status' );
+											b.onclick = function()
+											{
+												sortUsers( 'Status' );
+											};
+											return b;
+										}()
+									}
+								]
+							},
+							{
+								'element' : function() 
+								{
+									var d = document.createElement( 'div' );
+									d.className = 'PaddingSmallLeft PaddingSmallRight HContent20 FloatLeft Ellipsis';
+									return d;
+								}(),
+								'child' : 
+								[ 
+									{
+										'element' : function() 
+										{
+											var b = document.createElement( 'strong' );
+											b.innerHTML = i18n( 'i18n_header_LoginTime' );
+											b.onclick = function()
+											{
+												sortUsers( 'LoginTime' );
+											};
+											return b;
+										}()
+									}
+								]
+							}
+						]
+					}
+				]
+			},
+			{
+				'element' : function() 
+				{
+					var d = document.createElement( 'div' );
+					d.style = 'position:relative;height:calc(100% - 77px);';
+					d.id = 'ListUsersWrapper';
+					return d;
+				}(),
+				'child' : 
+				[ 
+					{
+						'element' : function() 
+						{
+							var d = document.createElement( 'div' );
+							d.className = 'ScrollArea HContentLeft VContent100 HContent100';
+							return d;
+						}(),
+						'child' : 
+						[ 
+							{
+								'element' : function() 
+								{
+									var d = document.createElement( 'div' );
+									d.className = 'List FullName ASC';
+									d.id = 'ListUsersInner';
+									d.setAttribute( 'sortby', 'FullName' );
+									d.setAttribute( 'orderby', 'ASC' );
+									return d;
+								}()
+							}
+						]
+					}
+				]
+			}
+		] );
+		
+		if( divs )
+		{
+			for( var i in divs )
+			{
+				if( divs[i] && o )
+				{
+					o.appendChild( divs[i] );
+				}
+			}
+		}
+		
+		if( scrollengine.debug )
+		{
+			ge( 'UserList' ).innerHTML += '<div id="Debug"></div>';
+		}
+		
+		ge( 'UserList' ).className = ge( 'UserList' ).className + ' experiment';
+		ge( 'ListUsersInner' ).className = ge( 'ListUsersInner' ).className + ' experiment';
+		
+	}
+	
+}
 
 function getStorageInfo( path, id, args, callback )
 {
@@ -5589,90 +5589,6 @@ function applications( callback, id )
 	
 }
 
-function addApplication( appName, userId, callback, vars )
-{
-	var m = new Module( 'system' );
-	m.onExecuted = function( e, d )
-	{
-		if( ShowLog ) console.log( 'adduserapplication ', { e:e, d:d } );
-		
-		if( e == 'ok' )
-		{
-			if( callback ) callback( true, d, vars );
-		}
-		else
-		{
-			if( callback ) callback( false, d, vars );
-		}
-	}
-	m.execute( 'adduserapplication', { application: appName, userid: userId, authid: Application.authId } );
-}
-
-function removeApplication( appName, userId, callback, vars )
-{
-	var m = new Module( 'system' );
-	m.onExecuted = function( e, d )
-	{
-		if( ShowLog ) console.log( 'removeApplication ', { e:e, d:d } );
-		
-		if( e == 'ok' )
-		{
-			
-			removeDockItem( appName, userId, function( ee, dd )
-			{
-				if( ShowLog ) console.log( 'removeDockItem ', { ee:ee, dd:dd } );
-				
-				if( callback ) callback( true, d, vars );
-				
-			} );
-			
-		}
-		else
-		{
-			if( callback ) callback( false, d, vars );
-		}
-	}
-	m.execute( 'removeuserapplication', { application: appName, userid: userId, authid: Application.authId } );
-}
-
-function mitraApps( callback, id )
-{
-	if( callback )
-	{
-		var m = new Module( 'mitra' );
-		m.onExecuted = function( e, d )
-		{
-			if( ShowLog ) console.log( 'mitraApps( callback, id ) ', { e:e, d:d } );
-			
-			if( callback ) return callback( { e:e, d:d } );
-		}
-		m.execute( 'listusers' );
-	}
-}
-
-function updateUserStatus( userid, status )
-{
-	
-	if( userid )
-	{
-		
-		Sections.user_status_update( userid, status, function()
-		{
-			
-			// Refresh whole users list ...
-			
-			Sections.accounts_users(  );
-			
-			// Go to edit mode for the new user ...
-			
-			Sections.accounts_users( 'edit', userid );
-			
-		} );
-		
-	}
-	
-}
-
 function getDockItems( callback, userId )
 {
 	var m = new Module( 'dock' );
@@ -5702,318 +5618,6 @@ function getDockItems( callback, userId )
 	m.execute( 'items', { userID: userId } );
 }
 
-function addDockItem( appName, userId, callback, vars )
-{
-	//console.log( 'addDockItem( appName, userId, callback ) ', { appName:appName, userId:userId, callback:callback } );
-	
-	var m = new Module( 'dock' );
-	m.onExecuted = function( e, d )
-	{
-		//console.log( { e:e, d:d } );
-		
-		if( e == 'ok' )
-		{
-			if( callback ) callback( true, d, vars );
-		}
-		else
-		{
-			if( callback ) callback( false, d, vars );
-		}
-	}
-	m.execute( 'additem', { 
-		userID: userId, 
-		application: appName, 
-		type: '', 
-		displayname: '', 
-		shortdescription: '' 
-	} );
-}
-
-function removeDockItem( appName, userId, callback, vars )
-{
-	//console.log( 'removeDockItem( appName, userId, callback ) ', { appName:appName, userId:userId, callback:callback } );
-	
-	var m = new Module( 'dock' );
-	m.onExecuted = function( e, d )
-	{
-		//console.log( { e:e, d:d } );
-		
-		if( e == 'ok' )
-		{
-			if( callback ) callback( true, d, vars );
-		}
-		else
-		{
-			if( callback ) callback( false, d, vars );
-		}
-	}
-	m.execute( 'removefromdock', { userID: userId, name: appName, type: '' } );
-}
-
-function sortDockItem( direction, itemId, userId, callback )
-{
-	//console.log( 'sortDockItem( direction, itemId, userId, callback ) ', { direction:direction, itemId:itemId, userId:userId, callback:callback } );
-	
-	// TODO: Update the current sorting to support sortinging another users dock ...
-	
-	var m = new Module( 'dock' );
-	m.onExecuted = function( e, d )
-	{
-		//console.log( { e:e, d:d } );
-		
-		if( e == 'ok' )
-		{
-			if( callback ) callback( true, vars );
-		}
-		else
-		{
-			if( callback ) callback( false, vars );
-		}
-	}
-	m.execute( 'sortorder', { userID: userId, itemId: itemId, direction: direction } );
-}
-
-Application.closeAllEditModes = function( act )
-{
-	
-	if( act )
-	{
-		if( act.keycode )
-		{
-			
-			switch ( act.keycode )
-			{
-				// Esc
-				case 27:
-				
-					if( ge( 'UserDeleteBtn' ) && ge( 'UserDeleteBtn' ).savedState )
-					{
-						if( typeof ge( 'UserDeleteBtn' ).savedState.className != 'undefined' )
-						{
-							ge( 'UserDeleteBtn' ).className = ge( 'UserDeleteBtn' ).savedState.className;
-						}
-						if( typeof ge( 'UserDeleteBtn' ).savedState.innerHTML != 'undefined' )
-						{
-							ge( 'UserDeleteBtn' ).innerHTML = ge( 'UserDeleteBtn' ).savedState.innerHTML;
-						}
-						if( typeof ge( 'UserDeleteBtn' ).savedState.onclick != 'undefined' )
-						{
-							ge( 'UserDeleteBtn' ).onclick = ge( 'UserDeleteBtn' ).savedState.onclick;
-						}
-					}
-					
-					if( ge( 'AdminUsersBtn' ) )
-					{
-						SubMenu( ge( 'AdminUsersBtn' ), true );
-					}
-					
-					closeEdit();
-					
-					break;
-				default: break;
-			}
-			
-		}
-		
-		if( act.targ )
-		{
-		
-			if( ge( 'UserDeleteBtn' ) && ge( 'UserDeleteBtn' ).savedState )
-			{
-			
-				if( act.targ.id != 'UserDeleteBtn' && act.targ.tagName != 'HTML' && act.targ.tagName != 'BODY' )
-				{
-					
-					if( typeof ge( 'UserDeleteBtn' ).savedState.className != 'undefined' )
-					{
-						ge( 'UserDeleteBtn' ).className = ge( 'UserDeleteBtn' ).savedState.className;
-					}
-					if( typeof ge( 'UserDeleteBtn' ).savedState.innerHTML != 'undefined' )
-					{
-						ge( 'UserDeleteBtn' ).innerHTML = ge( 'UserDeleteBtn' ).savedState.innerHTML;
-					}
-					if( typeof ge( 'UserDeleteBtn' ).savedState.onclick != 'undefined' )
-					{
-						ge( 'UserDeleteBtn' ).onclick = ge( 'UserDeleteBtn' ).savedState.onclick;
-					}
-				
-				}
-			}
-			
-			if( ge( 'AdminUsersBtn' ) )
-			{
-				found = false;
-				
-				var pnt = ge( 'AdminUsersBtn' ).parentNode;
-				
-				if( pnt )
-				{
-					var ele = pnt.getElementsByTagName( '*' );
-					
-					if( ele.length > 0 )
-					{
-						for( var a = 0; a < ele.length; a++ )
-						{
-							if( ele[a] && ele[a] == act.targ )
-							{
-								found = true;
-							}
-						}
-					}
-				}
-				
-				if( !found && ( act.targ.id != 'AdminUsersBtn' || act.targ.id != 'AdminUsersSubMenu' ) && act.targ.tagName != 'HTML' && act.targ.tagName != 'BODY' )
-				{
-					SubMenu( ge( 'AdminUsersBtn' ), true );
-				}
-			}
-			
-			if( ge( 'EditMode' ) && ge( 'EditMode' ).savedState )
-			{
-				
-				if( act.targ.id != 'EditMode' && act.targ.tagName != 'HTML' && act.targ.tagName != 'BODY' )
-				{
-					closeEdit();
-				}
-				
-			}
-			
-		}
-	}
-	
-}
-
-// helper functions --------------------------------------------------------------------------------------------- //
-
-function appendChild( child )
-{
-	if( child )
-	{
-		var out = [];
-		
-		for( var k in child )
-		{
-			if( child[k] )
-			{
-				if( child[k]['element'] )
-				{
-					var div = child[k]['element'];
-					
-					if( child[k]['child'] )
-					{
-						var elem = appendChild( child[k]['child'] );
-						
-						if( elem )
-						{
-							for( var i in elem )
-							{
-								if( elem[i] )
-								{
-									div.appendChild( elem[i] );
-								}
-							}
-						}
-					}
-					
-					out.push( div );
-				}
-			}
-		}
-		
-		if( out )
-		{
-			return out;
-		}
-	}
-	
-	return false;
-}
-
-function removeBtn( _this, args, callback )
-{
-	
-	if( _this )
-	{
-		closeEdit();
-		
-		_this.savedState = { 
-			className: _this.className, 
-			innerHTML: _this.innerHTML, 
-			onclick: ( _this.onclick ? _this.onclick : function () {} ) 
-		}
-		_this.classList.remove( 'IconButton' );
-		_this.classList.remove( 'IconToggle' );
-		_this.classList.remove( 'ButtonSmall' );
-		_this.classList.remove( 'ColorStGrayLight' );
-		_this.classList.remove( 'fa-minus-circle' );
-		_this.classList.remove( 'fa-trash' );
-		//_this.classList.remove( 'NegativeAlt' );
-		_this.classList.remove( 'Negative' );
-		//_this.classList.add( 'ButtonAlt' );
-		_this.classList.add( 'Button' );
-		_this.classList.add( 'BackgroundRed' );
-		_this.id = ( _this.id ? _this.id : 'EditMode' );
-		_this.innerHTML = ( args.button_text ? i18n( args.button_text ) : i18n( 'i18n_delete' ) );
-		_this.args = args;
-		_this.callback = callback;
-		_this.onclick = function(  )
-		{
-			
-			if( this.callback )
-			{
-				callback( this.args ? this.args : false );
-			}
-			
-		};
-	}
-	
-}
-
-function editMode( close )
-{
-	if( ge( 'UserEditButtons' ) )
-	{
-		ge( 'UserEditButtons' ).className = ( close ? 'Closed' : 'Open' );
-	}
-}
-
-function closeEdit()
-{
-	if( ge( 'EditMode' ) )
-	{
-		if( ge( 'EditMode' ) && ge( 'EditMode' ).savedState )
-		{
-			if( typeof ge( 'EditMode' ).savedState.className != 'undefined' )
-			{
-				ge( 'EditMode' ).className = ge( 'EditMode' ).savedState.className;
-			}
-			if( typeof ge( 'EditMode' ).savedState.innerHTML != 'undefined' )
-			{
-				ge( 'EditMode' ).innerHTML = ge( 'EditMode' ).savedState.innerHTML;
-			}
-			if( typeof ge( 'EditMode' ).savedState.onclick != 'undefined' )
-			{
-				ge( 'EditMode' ).onclick = ge( 'EditMode' ).savedState.onclick;
-			}
-			ge( 'EditMode' ).removeAttribute( 'id' );
-		}
-	}
-}
-
-function toggleChangePass()
-{
-	if( ge( 'ChangePassContainer' ) && ge( 'ResetPassContainer' ) )
-	{
-		ge( 'ChangePassContainer' ).className = 'Open';
-		ge( 'ResetPassContainer'  ).className = 'Closed';
-		
-		if( ge( 'usPassword' ) )
-		{
-			ge( 'usPassword' ).focus();
-		}
-	}
-}
-
 function getSetupList( callback )
 {
 	var m = new Module( 'system' );
@@ -6033,105 +5637,6 @@ function getSetupList( callback )
 		if( callback ) return callback( true, rows );
 	}
 	m.execute( 'usersetup' );
-}
-
-function setAvatar( userid, content, callback )
-{
-	// TODO: Implement support for imageid hash to be sent to the server for cach check
-	
-	if( userid )
-	{
-		var u = new Module( 'system' );
-		u.onExecuted = function( e, d )
-		{
-			var out = null;
-			try
-			{
-				out = JSON.parse( d );
-			}
-			catch( e ) {  }
-			
-			if( callback )
-			{
-				callback( ( out ? true : false ), userid, content, ( out && out.avatar ? out.avatar : false ) );
-			}
-		}
-		u.execute( 'getsetting', { setting: 'avatar', userid: userid, authid: Application.authId } );
-	}
-}
-
-function getAvatars( avatars )
-{
-	
-	if( avatars )
-	{
-		for( var k in avatars )
-		{
-			if( avatars[k].id )
-			{
-				if( ge( 'UserAvatar_' + avatars[k].id ) )
-				{
-					var span = ge( 'UserAvatar_' + avatars[k].id );
-					
-					var src = '/system.library/module/?module=system&command=getavatar&userid=' + avatars[k].id + ( avatars[k].image ? '&image=' + avatars[k].image : '' ) + '&width=30&height=30&authid=' + Application.authId;
-					
-					if( span )
-					{
-						
-						var img = new Image();
-						img.onload = function() 
-						{
-							
-							var bg = 'background-image: url(\'' + src + '\');background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;';
-							
-							var str = '<span '                                           + 
-							'id="UserAvatar_' + avatars[k].id + '" '                     + 
-							'fullname="' + avatars[k].fullname + '" '                    + 
-							'name="' + avatars[k].name + '" '                            + 
-							'status="' + avatars[k].status + '" '                        + 
-							'logintime="' + avatars[k].logintime + '" '                  + 
-							'timestamp="' + avatars[k].timestamp + '" '                  +
-							'class="IconSmall fa-user-circle-o avatar" '                 + 
-							'style="position: relative;" '                               +
-							'><div style="' + bg + '"></div></span>';
-							
-							span.parentNode.innerHTML = str;
-							
-							img = '';
-							
-							if( avatars && k )
-							{
-								var next = [];
-								
-								for( var i in avatars )
-								{
-									if( i != k && avatars[i] && avatars[i].id )
-									{
-										next.push( avatars[i] );
-									}
-								}
-				
-								// Loop it ...
-				
-								if( next )
-								{
-									getAvatars( next );
-								}
-							}
-							
-						};
-						img.src = src;
-					}
-					
-				}
-				
-			}
-			
-			return true;
-		}
-	}
-	
-	return false;
 }
 
 function randomAvatar( fullname, callback )
@@ -6156,41 +5661,6 @@ function randomAvatar( fullname, callback )
 		u.execute( 'getsetting', { setting: 'avatar', fullname: fullname, read: 'only', authid: Application.authId } );
 	}
 }
-
-function changeAvatar()
-{
-	var self = this;
-	var description =
-	{
-		triggerFunction: function( item )
-		{
-			if ( item )
-			{
-				// Load the image
-				var image = new Image();
-				image.onload = function()
-				{
-					//console.log( 'loaded image ... ', item );
-					// Resizes the image
-					var canvas = ge( 'AdminAvatar' );
-					var context = canvas.getContext( '2d' );
-					context.drawImage( image, 0, 0, 256, 256 );
-					
-					// Activate edit mode.
-					editMode();
-				}
-				image.src = getImageUrl( item[ 0 ].Path );
-			}
-		},
-		path: "Mountlist:",
-		type: "load",
-		title: i18n( 'i18n_fileselectoravatar' ),
-		filename: ""
-	}
-	var d = new Filedialog( description );
-}
-
-
 
 function NewUser( _this )
 {
@@ -7416,120 +6886,8 @@ function getLastLoginlist( callback, users )
 	}
 }
 
-function getStorageInfo( path, id, args, callback )
-{
-	// TODO: Had to move this function out of this section to get access to it outside in another function, look at this mess some other time ...
-	
-	// TODO: So we need to get server token as admin for this user and then use that as a sessionid ???
-	
-	if( path && id && callback )
-	{
-		var m = new Module( 'system' );
-		m.onExecuted = function( e, d )
-		{
-			var json = null;
-			
-			if( d )
-			{
-				try
-				{
-					var json = JSON.parse( d );
-				} 
-				catch( e ){ }
-			}
-			
-			if( e == 'ok' && d )
-			{
-				if( json )
-				{
-					if( ShowLog ) console.log( '[ok] volumeinfo ', { e:e, d:json, args: { path: path, userid: id, authid: Application.authId } } );
-					
-					return callback( true, json, args );
-				}
-			}
-			
-			// Show error message if there is any ...
-			
-			if( d )
-			{
-				//console.log( '[fail] volumeinfo ', { e:e, d:(json?json:d), args: { path: path, userid: id, authid: Application.authId } } );
-				
-				args.Errors = { text: '[fail] volumeinfo ', content: { e:e, d:(json?json:d), args: { path: path, userid: id, authid: Application.authId } } };
-			}
-			else
-			{
-				//console.log( '[fail] volumeinfo not support in DOSDriver ... ', { path: path, userid: id, authid: Application.authId } );
-				
-				args.Errors = { text: '[fail] volumeinfo not support in DOSDriver ... ', content: { path: path, userid: id, authid: Application.authId } };
-			}
-			
-			return callback( false, ( json ? json : false ), args );
-		}
-		m.execute( 'volumeinfo', { path: path, userid: id, authid: Application.authId } );
-		
-		return true;
-	}
-	
-	return false;
-}
-
-
-
-function SubMenu( _this, close )
-{
-	if( !close && _this.parentNode.className.indexOf( ' InActive' ) >= 0 )
-	{
-		_this.parentNode.className = _this.parentNode.className.split( ' InActive' ).join( '' ).split( ' Active' ).join( '' ) + ' Active';
-	}
-	else if( _this.parentNode.className.indexOf( ' Active' ) >= 0 )
-	{
-		_this.parentNode.className = _this.parentNode.className.split( ' InActive' ).join( '' ).split( ' Active' ).join( '' ) + ' InActive';
-	}
-}
-
-function hideStatus( status, show, pnt )
-{
-	console.log( "hideStatus( '"+status+"', "+show+", "+pnt+" )" );
-	
-	if( status && ge( 'ListUsersInner' ) )
-	{
-		var list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
-		
-		if( list.length > 0 )
-		{
-			for( var a = 0; a < list.length; a++ )
-			{
-				if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
-				
-				var span = list[a].getElementsByTagName( 'span' )[0];
-				
-				if( span )
-				{
-					if( span.getAttribute( 'status' ).toLowerCase() == status.toLowerCase() )
-					{
-						let obj = ( pnt ? span.parentNode.parentNode : list[a] );
-						
-						if( show )
-						{
-							obj.style.display = '';
-						}
-						else
-						{
-							obj.style.display = 'none';
-						}
-					}
-				}
-			}
-		}
-	}
-}
-
 function searchServer( filter, force )
 {
-	//if( !filter )
-	//{
-	//	UsersSettings( 'searchquery', filter );
-	//}
 	
 	if( !force )
 	{
@@ -7559,7 +6917,7 @@ function searchServer( filter, force )
 			
 			if( callback ) callback( key );
 			
-			console.log( userList );
+			//console.log( userList );
 			
 			if( userList )
 			{
@@ -7718,1242 +7076,6 @@ function sortUsers( sortby, orderby, callback )
 	}
 }
 
-function filterUsers( filter, server )
-{
-	if( !filter )
-	{
-		UsersSettings( 'searchquery', filter );
-	}
-	
-	if( ge( 'ListUsersInner' ) )
-	{
-		var list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
-	
-		if( list.length > 0 )
-		{
-			for( var a = 0; a < list.length; a++ )
-			{
-				if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
-				
-				var span = list[a].getElementsByTagName( 'span' )[0];
-				
-				if( span )
-				{
-					var param = [
-						( " " + span.getAttribute( 'fullname' ).toLowerCase() + " " ), 
-						( " " + span.getAttribute( 'name' ).toLowerCase() + " " )
-					];
-					
-					if( !filter || filter == ''  
-					//|| span.getAttribute( 'fullname' ).toLowerCase().substr( 0, filter.length ) == filter.toLowerCase()
-					//|| span.getAttribute( 'name' ).toLowerCase().substr( 0, filter.length ) == filter.toLowerCase()
-					|| span.getAttribute( 'fullname' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
-					|| span.getAttribute( 'name' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
-					//|| param[0].indexOf( " " + filter.toLowerCase() + " " ) >= 0 
-					//|| param[1].indexOf( " " + filter.toLowerCase() + " " ) >= 0 
-					)
-					{
-						list[a].style.display = '';
-						
-						var div = list[a].getElementsByTagName( 'div' );
-						
-						if( div.length )
-						{
-							for( var i in div )
-							{
-								if( div[i] && div[i].className && ( div[i].className.indexOf( 'fullname' ) >= 0 || div[i].className.indexOf( 'name' ) >= 0 ) )
-								{
-									// TODO: Make text searched for ...
-								}
-							}
-						}
-					}
-					else
-					{
-						list[a].style.display = 'none';
-					}
-				}
-			}
-			
-			hideStatus( 'Disabled', false );
-		}
-	}
-	
-	// TODO: Fix server search query when building the search list more advanced with listout limit ...
-	
-	if( filter.length < UsersSettings( 'minlength' ).length || filter.length < UsersSettings( 'searchquery' ).length || filter == UsersSettings( 'searchquery' ) || !server ) return;
-	
-	UsersSettings( 'reset', true );
-	
-	UsersSettings( 'searchquery', filter );
-	
-	//console.log( filter.length );
-	
-	
-	
-	RequestQueue.Set( function( callback, key )
-	{
-		//console.log( filter + ' < ' + UsersSettings( 'searchquery' ) );
-		
-		if( filter.length < UsersSettings( 'searchquery' ).length )
-		{
-			if( callback ) callback( key );
-			
-			return;
-		}
-		
-		getUserlist( function( res, userList, key )
-		{
-			
-			if( callback ) callback( key );
-			
-			doListUsers( userList );
-			
-		}, key );
-		
-	} );
-}
-
-function doListUsers( userList, clearFilter )
-{
-	var o = ge( 'UserList' );
-	
-	if( !ge( 'ListUsersInner' ) )
-	{
-		if( o ) o.innerHTML = '';
-	}
-	
-	if( !ge( 'ListUsersInner' ) )
-	{
-		// Add the main heading
-		( function( ol ) {
-			var tr = document.createElement( 'div' );
-			//tr.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingTop PaddingRight';
-			tr.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingRight';
-			
-			var extr = '';
-			if( clearFilter )
-			{
-				extr = '<button style="position: absolute; right: 0;" class="ButtonSmall IconButton IconSmall fa-remove"/>&nbsp;</button>';
-			}
-			
-			tr.innerHTML = '\
-				<div class="HContent20 FloatLeft">\
-					<h3><strong>' + i18n( 'i18n_users' ) + ' </strong><span id="AdminUsersCount">' + (userList&&userList['Count']?'('+userList['Count']+')':'(0)')+'</span></h3>\
-				</div>\
-				<div class="HContent70 FloatLeft Relative">\
-					' + extr + '\
-					<input type="text" class="FullWidth" placeholder="' + i18n( 'i18n_find_users' ) + '"/>\
-				</div>\
-				<div class="HContent10 FloatLeft TextRight InActive">\
-					<button id="AdminUsersBtn" class="IconButton IconSmall Negative fa-bars"></button>\
-					<div class="submenu_wrapper"><ul id="AdminUsersSubMenu" class="Positive"></ul></div>\
-				</div>\
-			';
-				
-			var inp = tr.getElementsByTagName( 'input' )[0];
-			inp.onkeyup = function( e )
-			{
-				filterUsers( this.value, true );
-			}
-		
-			if( clearFilter )
-			{
-				inp.value = clearFilter;
-			}
-		
-			var bt = tr.getElementsByTagName( 'button' )[0];
-			if( bt )
-			{
-				bt.onclick = function()
-				{
-					filterUsers( false );
-				}
-			}
-				
-			ol.appendChild( tr );
-		} )( o );
-	}
-
-	// Types of listed fields
-	var types = {
-		Edit: '10',
-		FullName: '30',
-		Name: '25',
-		Status: '15',
-		LoginTime: 20
-	};
-
-	// List by level
-	var levels = [ 'Admin', 'User', 'Guest', 'API' ];
-	
-	var status = [ 'Active', 'Disabled', 'Locked' ];
-	
-	var login = [ 'Never' ];
-	
-	// List headers
-	var header = document.createElement( 'div' );
-	header.className = 'List';
-	var headRow = document.createElement( 'div' );
-	headRow.className = 'HRow BackgroundNegative Negative PaddingTop PaddingBottom';
-	for( var z in types )
-	{
-		var borders = '';
-		var d = document.createElement( 'div' );
-		if( a < userList.length - a )
-			borders += ' BorderBottom';
-		var d = document.createElement( 'div' );
-		d.className = 'PaddingSmallLeft PaddingSmallRight HContent' + types[ z ] + ' FloatLeft Ellipsis' + borders;
-		if( z == 'Edit' ) z = '&nbsp;';
-		d.innerHTML = '<strong' + ( z != '&nbsp;' ? ' onclick="sortUsers(\''+z+'\')"' : '' ) + '>' + ( z != '&nbsp;' ? i18n( 'i18n_header_' + z ) : '&nbsp;' ) + '</strong>';
-		headRow.appendChild( d );
-	}
-	
-	var btn = ge( 'AdminUsersBtn' );
-	if( btn )
-	{
-		btn.onclick = function( e )
-		{
-			SubMenu( this );
-		}
-	}
-	
-	var sm = ge( 'AdminUsersSubMenu' );
-	if( sm && !sm.innerHTML )
-	{
-		
-		var li = document.createElement( 'li' );
-		li.innerHTML = i18n( 'i18n_new_user' );
-		li.onclick = function( e )
-		{
-			
-			NewUser( this );
-			
-		}
-		sm.appendChild( li );
-		
-		var li = document.createElement( 'li' );
-		li.className = 'show';
-		li.innerHTML = i18n( 'i18n_show_disabled_users' );
-		li.onclick = function( e )
-		{
-			if( this.className.indexOf( 'show' ) >= 0 )
-			{
-				hideStatus( 'Disabled', true );
-				this.innerHTML = i18n( 'i18n_hide_disabled_users' );
-				this.className = this.className.split( 'hide' ).join( '' ).split( 'show' ).join( '' ) + 'hide';
-			}
-			else
-			{
-				hideStatus( 'Disabled', false );
-				this.innerHTML = i18n( 'i18n_show_disabled_users' );
-				this.className = this.className.split( 'hide' ).join( '' ).split( 'show' ).join( '' ) + 'show';
-			}
-			
-			SubMenu( this.parentNode.parentNode );
-		}
-		sm.appendChild( li );
-		
-		var li = document.createElement( 'li' );
-		li.className = 'hide';
-		li.innerHTML = i18n( 'i18n_hide_locked_users' );
-		li.onclick = function( e )
-		{
-			if( this.className.indexOf( 'hide' ) >= 0 )
-			{
-				hideStatus( 'Locked', false );
-				this.innerHTML = i18n( 'i18n_show_locked_users' );
-				this.className = this.className.split( 'hide' ).join( '' ).split( 'show' ).join( '' ) + 'show';
-			}
-			else
-			{
-				hideStatus( 'Locked', true );
-				this.innerHTML = i18n( 'i18n_hide_locked_users' );
-				this.className = this.className.split( 'hide' ).join( '' ).split( 'show' ).join( '' ) + 'hide';
-			}
-			
-			SubMenu( this.parentNode.parentNode );
-		}
-		sm.appendChild( li );
-		
-	}
-	
-	if( !ge( 'ListUsersInner' ) )
-	{
-		// Add header columns
-		header.appendChild( headRow );
-	}
-	
-	if( !ge( 'ListUsersInner' ) )
-	{
-		o.appendChild( header );
-	}
-
-	function setROnclick( r, uid )
-	{
-		r.onclick = function()
-		{
-			if( ge( 'ListUsersInner' ) )
-			{
-				var list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
-		
-				if( list.length > 0 )
-				{
-					for( var a = 0; a < list.length; a++ )
-					{
-						if( list[a] && list[a].className && list[a].className.indexOf( ' Selected' ) >= 0 )
-						{
-							list[a].className = ( list[a].className.split( ' Selected' ).join( '' ) );
-						}
-					}
-				}
-			}
-			
-			this.className = ( this.className.split( ' Selected' ).join( '' ) + ' Selected' );
-			
-			Sections.accounts_users( 'edit', uid );
-		}
-	}
-	
-	var sortby  = ( ge( 'ListUsersInner' ) && ge( 'ListUsersInner' ).getAttribute( 'sortby'  ) ? ge( 'ListUsersInner' ).getAttribute( 'sortby'  ) : 'FullName' );
-	var orderby = ( ge( 'ListUsersInner' ) && ge( 'ListUsersInner' ).getAttribute( 'orderby' ) ? ge( 'ListUsersInner' ).getAttribute( 'orderby' ) : 'ASC'      );
-	
-	var output = [];
-	
-	var wrapper = document.createElement( 'div' );
-	wrapper.id = 'ListUsersWrapper';
-	
-	if( ge( 'ListUsersInner' ) )
-	{
-		var list = ge( 'ListUsersInner' );
-	}
-	else
-	{
-		var list = document.createElement( 'div' );
-		list.className = 'List';
-		list.id = 'ListUsersInner';
-	}
-	
-	if( !ge( 'ListUsersInner' ) )
-	{
-		wrapper.appendChild( list );
-	}
-	
-	if( !ge( 'ListUsersInner' ) )
-	{
-		o.appendChild( wrapper );
-	}
-	
-	if( userList['Count'] )
-	{ 
-		Application.totalUserCount = userList['Count'];
-		
-		if( !UsersSettings( 'total' ) )
-		{
-			UsersSettings( 'total', Application.totalUserCount );
-		}
-	}
-	
-	var avatars = [];
-	
-	var sw = 2; var tot = 0;
-	for( var b = 0; b < levels.length; b++ )
-	{
-		for( var a in userList )
-		{
-			if( !userList[ a ] ) continue;
-			
-			// Skip irrelevant level
-			if( userList[ a ].Level != levels[ b ] ) continue;
-			
-			tot++;
-			
-			if( !ge( 'UserListID_'+userList[a].ID ) )
-			{
-				
-				
-				sw = sw == 2 ? 1 : 2;
-				var r = document.createElement( 'div' );
-				setROnclick( r, userList[a].ID );
-				r.className = 'HRow ' + status[ ( userList[ a ][ 'Status' ] ? userList[ a ][ 'Status' ] : 0 ) ];
-				r.id = ( 'UserListID_'+userList[a].ID );
-				
-				var timestamp = ( userList[ a ][ 'LoginTime' ] ? userList[ a ][ 'LoginTime' ] : 0 );
-				
-				userList[ a ][ 'Name' ]     = ( userList[ a ][ 'Name' ]     ? userList[ a ][ 'Name' ]     : 'n/a' );
-				userList[ a ][ 'FullName' ] = ( userList[ a ][ 'FullName' ] ? userList[ a ][ 'FullName' ] : 'n/a' );
-				userList[ a ][ 'Level' ]    = ( userList[ a ][ 'Level' ]    ? userList[ a ][ 'Level' ]    : 'n/a' );
-				
-				userList[ a ][ 'Status' ] = status[ ( userList[a][ 'Status' ] ? userList[a][ 'Status' ] : 0 ) ];
-				
-				userList[ a ][ 'LoginTime' ] = ( userList[a][ 'LoginTime' ] != 0 && userList[a][ 'LoginTime' ] != null ? CustomDateTime( userList[a][ 'LoginTime' ] ) : login[ 0 ] );
-				
-				
-				
-				avatars.push( { 
-					id        : userList[ a ].ID,
-					fullname  : userList[ a ].FullName,
-					name      : userList[ a ].Name,
-					status    : userList[ a ].Status,
-					logintime : userList[ a ].LoginTime,
-					timestamp : timestamp,
-					image     : ( userList[ a ].Image ? userList[ a ].Image : null ) 
-				} );
-				
-				
-				
-				userList[ a ][ 'Edit' ] = '<span '             + 
-				'id="UserAvatar_' + userList[ a ].ID + '" '    + 
-				'fullname="' + userList[ a ].FullName + '" '   + 
-				'name="' + userList[ a ].Name + '" '           + 
-				'status="' + userList[ a ].Status + '" '       + 
-				'logintime="' + userList[ a ].LoginTime + '" ' + 
-				'timestamp="' + timestamp + '" '               +
-				'class="IconSmall fa-user-circle-o avatar" '   + 
-				'style="position: relative;" '                 +
-				'><div style=""></div></span>';
-				
-				
-				
-				for( var z in types )
-				{
-					var borders = '';
-					var d = document.createElement( 'div' );
-					if( z != 'Edit' )
-					{
-						d.className = '';
-					}
-					else d.className = 'TextCenter';
-					if( a < userList.length - a )
-					{
-						borders += ' BorderBottom';
-					}
-					d.className += ' HContent' + types[ z ] + ' FloatLeft PaddingSmall Ellipsis ' + z.toLowerCase() + borders;
-					d.innerHTML = userList[a][ z ];
-					r.appendChild( d );
-				}
-				
-				
-				
-				if( userList[ a ][ sortby ] )
-				{
-					var obj = { 
-						sortby  : userList[ a ][ sortby ].toLowerCase(), 
-						object  : userList[ a ],
-						content : r
-					};
-					
-					output.push( obj );
-				}
-				
-				UsersSettings( 'uids', userList[ a ].ID );
-				
-			}
-			else
-			{
-				// Add to the field that is allready there ... But we also gotto consider sorting the list by default or defined sorting ...
-				
-				
-			}
-			
-		}
-	}
-	
-	if( ge( 'AdminUsersCount' ) )
-	{
-		ge( 'AdminUsersCount' ).innerHTML = ( userList && userList['Count'] ? '(' + userList['Count'] + ')' : ( ge( 'AdminUsersCount' ).innerHTML ? ge( 'AdminUsersCount' ).innerHTML : '(0)' ) );
-	}
-	
-	if( output.length > 0 )
-	{
-		// Sort ASC default
-		
-		output.sort( ( a, b ) => ( a.sortby > b.sortby ) ? 1 : -1 );
-		
-		// Sort DESC
-		
-		if( orderby == 'DESC' ) 
-		{ 
-			output.reverse();  
-		} 
-		
-		var i = 0; var users = [];
-		
-		for( var key in output )
-		{
-			if( output[key] && output[key].content && output[key].object )
-			{
-				i++;
-				
-				users.push( output[key].object.ID );
-				
-				// Add row
-				list.appendChild( output[key].content );
-				
-			}
-		}
-		
-		var total = 0;
-		
-		if( list.innerHTML )
-		{
-			var spans = list.getElementsByTagName( 'span' );
-			
-			if( spans )
-			{
-				total = spans.length;
-				
-				if( total > UsersSettings( 'listed' ) )
-				{
-					UsersSettings( 'listed', total );
-				}
-			}
-		}
-		
-		// Temporary get lastlogin time separate to speed up the sql query ...
-		
-		getLastLoginlist( function ( res, dat )
-		{
-			if( res == 'ok' && dat )
-			{
-				for ( var i in dat )
-				{
-					if( dat[i] && dat[i]['UserID'] )
-					{
-						if( ge( 'UserListID_' + dat[i]['UserID'] ) )
-						{
-							var elems = ge( 'UserListID_' + dat[i]['UserID'] ).getElementsByTagName( '*' );
-							
-							if( elems.length > 0 )
-							{
-								for ( var div in elems )
-								{
-									if( elems[div] && elems[div].className )
-									{
-										var timestamp = ( dat[i]['LoginTime'] );
-										var logintime = ( dat[i]['LoginTime'] != 0 && dat[i]['LoginTime'] != null ? CustomDateTime( dat[i]['LoginTime'] ) : login[ 0 ] );
-										
-										if( elems[div].className.indexOf( 'avatar' ) >= 0 )
-										{
-											elems[div].setAttribute( 'timestamp', timestamp );
-											elems[div].setAttribute( 'logintime', logintime );
-										}
-										if( elems[div].className.indexOf( 'logintime' ) >= 0 )
-										{
-											elems[div].innerHTML = logintime;
-										}
-									}
-								}
-							}
-							
-							
-						}
-					}
-				}
-			}
-			
-		}, ( users ? users.join(',') : false ) );
-		
-		// Temporary until we got a better way ...
-		
-		if( avatars )
-		{
-			// TODO: finish this ...
-			if( UsersSettings( 'avatars' ) )
-			{
-				getAvatars( avatars );
-			}
-		}
-		
-		if( ShowLog ) console.log( 'new users added to list: ' + i + '/' + tot + ' total ['+total+']' );
-		
-		if( Application.totalUserCount > tot )
-		{
-			var divh = ge( 'ListUsersInner' ).getElementsByTagName( 'div' )[0].clientHeight;
-			
-			if( divh > 0 && UsersSettings( 'divh' ) != divh )
-			{
-				UsersSettings( 'divh', divh );
-				
-			}
-		}
-		
-		hideStatus( 'Disabled', false );
-		
-		sortUsers( UsersSettings( 'sortby' ), UsersSettings( 'orderby' ) );
-	}
-	
-	Friend.responsive.pageActive = ge( 'UserList' );
-	Friend.responsive.reinit();
-	
-	if( ge( 'ListUsersInner' ) )
-	{
-		ge( 'ListUsersInner' ).className = ( 'List ' + sortby + ' ' + orderby );
-		ge( 'ListUsersInner' ).setAttribute( 'sortby', sortby );
-		ge( 'ListUsersInner' ).setAttribute( 'orderby', orderby );
-	}
-	
-	
-	
-}
-
-function CheckUserlistSize( firstrun )
-{
-	
-	if( UsersSettings( 'experiment' ) )
-	{
-		return false;
-	}
-	
-	var scrollbox = ge( 'UserList' );
-	var container = ge( 'ListUsersInner' );
-	var wrapper   = ge( 'ListUsersWrapper' );
-	
-	if( scrollbox )
-	{
-		var m = 85;
-		
-		// Check scrollarea ...
-		
-		if( ( scrollbox.scrollHeight - scrollbox.clientHeight ) > 0 )
-		{
-			
-			var pos = Math.round( scrollbox.scrollTop / ( scrollbox.scrollHeight - scrollbox.clientHeight ) * 100 );
-			
-			// If scrolled area is more then 50% prosentage
-			
-			if( pos && pos >= 50 )
-			{
-				if( UsersSettings( 'experiment' ) )
-				{
-					//console.log( pos );
-				}
-				
-				if( UsersSettings( 'total' ) > 0 && ( UsersSettings( 'listed' ) == UsersSettings( 'total' ) ) )
-				{
-					//wrapper.style.minHeight = 'auto';
-				}
-				else if( container.clientHeight >= wrapper.clientHeight )
-				{
-					if( UsersSettings( 'experiment' ) )
-					{
-						console.log( '[1] wrapper.style.minHeight = ' + ( container.clientHeight + scrollbox.clientHeight ) + 'px' );
-						wrapper.style.minHeight = ( container.clientHeight + scrollbox.clientHeight ) + 'px';
-					}
-					
-					//UsersSettings( 'limit', true );
-						
-					//Sections.accounts_users();
-				}
-				
-				// TODO: Handle scroll and getting new data better ...
-				
-				if( !UsersSettings( 'total' ) || ( UsersSettings( 'listed' ) != UsersSettings( 'total' ) ) )
-				{
-					
-					// Only run the request when server is ready, one job at a time ... 
-					
-					RequestQueue.Set( function( callback, key )
-					{
-					
-						UsersSettings( 'limit', true );
-						
-						if( ShowLog ) console.log( '[2] GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) + ' (' + UsersSettings( 'intervals' ) + ')' ); 
-					
-						getUserlist( function( res, data, key )
-						{
-							
-							if( callback )
-							{
-								callback( key );
-							}
-							
-							// If there is data populate if not, do nothing ...
-							
-							if( res == 'ok' && data )
-							{
-								Sections.accounts_users( 'init', data );
-							}
-						
-						}, key );
-			
-					}, false, true );
-					
-					return;
-				}
-				
-			}
-		}
-		
-		
-		
-		if( container && ( container.clientHeight + m ) > scrollbox.clientHeight )
-		{
-			if( container.clientHeight >= wrapper.clientHeight )
-			{
-				if( UsersSettings( 'experiment' ) )
-				{
-					//console.log( '[2] wrapper.style.minHeight = ' + ( container.clientHeight + scrollbox.clientHeight ) + 'px' );
-					//wrapper.style.minHeight = ( container.clientHeight + scrollbox.clientHeight ) + 'px';
-				}
-			}
-		}
-		else if( container && ( container.clientHeight + m ) < scrollbox.clientHeight )
-		{
-			if( wrapper.clientHeight > container.clientHeight )
-			{
-				//wrapper.style.minHeight = 'auto';
-			}
-		}
-		
-		
-		
-		var divh = UsersSettings( 'divh' );
-		
-		if( divh && ( !UsersSettings( 'total' ) || ( UsersSettings( 'listed' ) != UsersSettings( 'total' ) ) ) )
-		{
-			
-			if( UsersSettings( 'experiment' ) )
-			{
-				console.log( "UsersSettings( 'total' ) " + UsersSettings( 'total' ) );
-			}
-			
-			if( UsersSettings( 'experiment' ) )
-			{
-				// ...
-				
-				if( container && ( container.clientHeight + m ) > scrollbox.clientHeight )
-				{
-					// If UsersSettings( 'total' ) is bigger then visible area add extra block ...
-					if( container.clientHeight >= wrapper.clientHeight )
-					{
-						console.log( '[0] wrapper.style.minHeight = ' + ( container.clientHeight + scrollbox.clientHeight ) + 'px' );
-						wrapper.style.minHeight = ( container.clientHeight + scrollbox.clientHeight ) + 'px';
-					}
-				}
-			}
-			
-			
-			
-			var minusers = Math.floor( ( scrollbox.clientHeight - m ) / divh );
-			
-			if( UsersSettings( 'maxlimit' ) < ( minusers * 1.5 ) )
-			{
-				
-				// Set double max limit so that it fills beyond the minimum
-				UsersSettings( 'maxlimit', ( minusers * 2 ) );
-				
-				// TODO: Move some of this into a queue so it doesn't set the limit faster then the server can get new data ...
-				
-				if( !firstrun )
-				{
-					//RequestQueue.Set( function() {
-						
-						if( ShowLog ) console.log( '[1] GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) + ' (' + UsersSettings( 'intervals' ) + ')' ); 
-						
-						Sections.accounts_users(); 
-						
-						//Init();
-						
-					//} );
-				}
-				
-				return
-			}
-		}
-		
-		
-		
-		/*// If firstrun run the loop ...
-		
-		if( firstrun )
-		{
-			Init();
-			
-			return;
-		}*/
-	}
-}
-
-function Init()
-{
-	
-	if( !UsersSettings( 'total' ) || ( UsersSettings( 'listed' ) != UsersSettings( 'total' ) ) )
-	{
-		
-		// Only run the request when server is ready, one job at a time ... 
-		
-		RequestQueue.Set( function( callback, key )
-		{
-		
-			UsersSettings( 'limit', true );
-			
-			if( 1==1 || ShowLog ) console.log( '[3] GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) + ' (' + UsersSettings( 'intervals' ) + ')' ); 
-			
-			getUserlist( function( res, data, key )
-			{
-				
-				if( callback )
-				{
-					callback( key );
-				}
-				
-				// If there is data populate if not, do nothing ...
-				
-				if( res == 'ok' && data )
-				{
-					// Don't loop it ...
-					
-					return;
-					
-					Sections.accounts_users( 'init', data );
-					
-					// Just loop it ...
-					
-					//console.log( 'looping ... ' );
-					
-					Init();
-				}
-			
-			}, key );
-			
-		}, false, true );
-		
-	}
-	
-}
-
-var RequestQueue = {
-	
-	ServerBusy : false, 
-	ServerRequestQueue : [],  
-	
-	Set : function ( func, obj, ready )
-	{
-		
-		// If ready check is requested and server is busy return false
-		if( ready && this.ServerBusy )
-		{
-			return false;
-		}
-		
-		if( !this.ServerRequestQueue.length )
-		{
-			this.ServerRequestQueue.push( { func: func, obj: obj } );
-			
-			this.Run();
-		}
-		else
-		{
-			this.ServerRequestQueue.push( { func: func, obj: obj } );
-		}
-		
-		
-	},
-	
-	Run : function (  )
-	{
-		if( this.ServerRequestQueue )
-		{
-			for( var key in this.ServerRequestQueue )
-			{
-				if( this.ServerRequestQueue[key] && this.ServerRequestQueue[key].func )
-				{
-					// Let the function know the server is now busy with a request
-					this.ServerBusy = true;
-					
-					var _this = this;
-					
-					this.ServerRequestQueue[key].key = key;
-					
-					this.ServerRequestQueue[key].func( function( key )
-					{
-						if( _this.ServerRequestQueue[key] )
-						{
-							_this.Delete( key );
-						}
-						
-						// Let the function know the server is not busy with any requests ...
-						_this.ServerBusy = false;
-						
-						// Run the request queue again, and check for requests in queue ...
-						_this.Run();
-						
-					}, key, this.ServerRequestQueue[key].obj );
-					
-					return;
-				}
-			}
-		}
-	},
-	
-	Delete : function ( key )
-	{
-		var out = [];
-		
-		if( this.ServerRequestQueue )
-		{
-			for( var i in this.ServerRequestQueue )
-			{
-				if( this.ServerRequestQueue[i] && ( !key || key != i ) )
-				{
-					out.push( this.ServerRequestQueue[i] );
-				}
-			}
-		}
-		
-		this.ServerRequestQueue = out;
-	}
-	
-}
-
-
-
-Sections.user_status_update = function( userid, status, callback )
-{
-	
-	if( userid && status )
-	{
-		// 0 = Active, 1 = Disabled, 2 = Locked
-		
-		var on = false;
-		
-		switch( status )
-		{
-			// false = Active, true = Disabled
-			
-			case 1:
-				
-				if( ge( 'usDisabled' ).className.indexOf( 'fa-toggle-off' ) >= 0 )
-				{
-					on = true;
-				}
-				
-				var args = JSON.stringify( {
-					'type'    : 'write', 
-					'context' : 'application', 
-					'authid'  : Application.authId, 
-					'data'    : { 
-						'permission' : [ 
-							'PERM_USER_UPDATE_GLOBAL', 
-							'PERM_USER_UPDATE_IN_WORKGROUP', 
-							'PERM_USER_GLOBAL', 
-							'PERM_USER_WORKGROUP' 
-						]
-					}, 
-					'object'   : 'user', 
-					'objectid' : userid 
-				} );
-				
-				var f = new Library( 'system.library' );
-				f.onExecuted = function( e, d )
-				{
-					//console.log( 'Sections.user_status_update( '+userid+', '+status+' ) ', { e:e, d:d, args: args } );
-					
-					if( e == 'ok' )
-					{
-						Toggle( ge( 'usDisabled' ), false, ( on ? true : false ) );
-						Toggle( ge( 'usLocked'   ), false, false );
-					}
-					
-					if( callback ) return callback();
-				}
-				f.execute( 'user/updatestatus', { id: userid, status: ( on ? 1 : 0 ), authid: Application.authId, args: args } );
-				
-				break;
-			
-			// false = Active, true = Locked
-			
-			case 2:
-				
-				if( ge( 'usLocked' ).className.indexOf( 'fa-toggle-off' ) >= 0 )
-				{
-					on = true;
-				}
-				
-				var args = JSON.stringify( {
-					'type'    : 'write', 
-					'context' : 'application', 
-					'authid'  : Application.authId, 
-					'data'    : { 
-						'permission' : [ 
-							'PERM_USER_UPDATE_GLOBAL', 
-							'PERM_USER_UPDATE_IN_WORKGROUP', 
-							'PERM_USER_GLOBAL', 
-							'PERM_USER_WORKGROUP' 
-						]
-					}, 
-					'object'   : 'user', 
-					'objectid' : userid 
-				} );
-				
-				var f = new Library( 'system.library' );
-				f.onExecuted = function( e, d )
-				{
-					//console.log( 'Sections.user_status_update( '+userid+', '+status+' ) ', { e:e, d:d, args: args } );
-					
-					if( e == 'ok' )
-					{
-						Toggle( ge( 'usLocked'   ), false, ( on ? true : false ) );
-						Toggle( ge( 'usDisabled' ), false, false );
-					}
-					
-					if( callback ) return callback();
-				}
-				f.execute( 'user/updatestatus', { id: userid, status: ( on ? 2 : 0 ), authid: Application.authId, args: args } );
-				
-				break;
-			
-		}
-	}
-	
-}
-
-Sections.userrole_edit = function( userid, _this )
-{
-	
-	var pnt = _this.parentNode;
-	
-	var edit = pnt.innerHTML;
-	
-	var buttons = [  
-		{ 'name' : 'Cancel', 'icon' : '', 'func' : function()
-			{ 
-				pnt.innerHTML = edit 
-			} 
-		}
-	];
-	
-	pnt.innerHTML = '';
-	
-	for( var i in buttons )
-	{
-		var b = document.createElement( 'button' );
-		b.className = 'IconSmall FloatRight';
-		b.innerHTML = buttons[i].name;
-		b.onclick = buttons[i].func;
-		
-		pnt.appendChild( b );
-	}
-	
-}
-
-Sections.userrole_update = function( rid, userid, _this )
-{
-	var data = '';
-	
-	if( _this )
-	{
-		Toggle( _this, function( on )
-		{
-			data = ( on ? 'Activated' : '' );
-		} );
-	}
-	
-	if( rid && userid )
-	{
-		var m = new Module( 'system' );
-		m.onExecuted = function( e, d )
-		{
-			//console.log( { e:e, d:d } );
-		}
-		m.execute( 'userroleupdate', { id: rid, userid: userid, data: data, authid: Application.authId } );
-	}
-};
-
-Sections.user_disk_save = function( userid, did )
-{
-	//console.log( 'Sections.user_disk_save ', { did : did, userid : userid } );
-	
-	var elems = {};
-			
-	var inputs = ge( 'StorageGui' ).getElementsByTagName( 'input' );
-	
-	if( inputs.length > 0 )
-	{
-		for( var i in inputs )
-		{
-			if( inputs[i] && inputs[i].id )
-			{
-				elems[inputs[i].id] = inputs[i];
-			}
-		}
-	}
-	
-	var texts = ge( 'StorageGui' ).getElementsByTagName( 'textarea' );
-	
-	if( texts.length > 0 )
-	{
-		for( var t in texts )
-		{
-			if( texts[t] && texts[t].id )
-			{
-				elems[texts[t].id] = texts[t];
-			}
-		}
-	}
-	
-	var selects = ge( 'StorageGui' ).getElementsByTagName( 'select' );
-	
-	if( selects.length > 0 )
-	{
-		for( var s in selects )
-		{
-			if( selects[s] && selects[s].id )
-			{
-				elems[selects[s].id] = selects[s];
-			}
-		}
-	}
-	
-	//console.log( { userid: userid, elems: elems } );
-	
-	if( userid && elems )
-	{
-		
-		// New way of setting DiskSize so overwrite old method ...
-		
-		if( elems[ 'DiskSizeA' ] && elems[ 'DiskSizeA' ].value && elems[ 'DiskSizeB' ] && elems[ 'DiskSizeB' ].value )
-		{
-			elems[ 'conf.DiskSize' ] = { id: 'conf.DiskSize', value: ( elems[ 'DiskSizeA' ].value + elems[ 'DiskSizeB' ].value ) };
-		}
-		
-		var req = { 'Name' : i18n( 'i18n_disk_name_missing' ), 'Type' : i18n( 'i18n_disk_type_missing' ) };
-		
-		for( var r in req )
-		{
-			if( elems[r] && !elems[r].value )
-			{
-				elems[r].focus();
-				
-				Notify( { title: i18n( 'i18n_disk_error' ), text: req[r] } );
-				
-				return;
-			}
-		}
-		
-		
-		
-		var data = { Name: elems[ 'Name' ].value };
-		
-		if( elems[ 'Server'           ] ) data.Server           = elems[ 'Server'           ].value;
-		if( elems[ 'ShortDescription' ] ) data.ShortDescription = elems[ 'ShortDescription' ].value;
-		if( elems[ 'Port'             ] ) data.Port             = elems[ 'Port'             ].value;
-		if( elems[ 'Username'         ] ) data.Username         = elems[ 'Username'         ].value;
-		// Have password and password is not dummy
-		if( elems[ 'Password' ] && elems[ 'Password' ].value != '********' )
-		{
-			data.Password = elems[ 'Password' ].value;
-		}
-		// Have hashed password and password is not dummy
-		else if( elems[ 'HashedPassword' ] && elems[ 'HashedPassword' ].value != '********' )
-		{
-			data.Password = 'HASHED' + Sha256.hash( elems[ 'HashedPassword' ].value );
-		}
-		if( elems[ 'Path'          ] ) data.Path      = elems[ 'Path'      ].value;
-		if( elems[ 'Type'          ] ) data.Type      = elems[ 'Type'      ].value;
-		if( elems[ 'Workgroup'     ] ) data.Workgroup = elems[ 'Workgroup' ].value;
-		if( elems[ 'conf.Pollable' ] )
-		{
-			data.Pollable = elems[ 'conf.Pollable' ].checked ? 'yes' : 'no';
-			elems[ 'conf.Pollable' ].value = elems[ 'conf.Pollable' ].checked ? 'yes' : 'no';
-		}
-		if( elems[ 'conf.Invisible' ] )
-		{
-			data.Invisible = elems[ 'conf.Invisible' ].checked ? 'yes' : 'no';
-			elems[ 'conf.Invisible' ].value = elems[ 'conf.Invisible' ].checked ? 'yes' : 'no';
-		}
-		if( elems[ 'conf.Executable' ] )
-			data.Invisible = elems[ 'conf.Executable' ].value;
-	
-		if( elems[ 'PrivateKey'      ] )
-		{
-			data.PrivateKey = elems[ 'PrivateKey' ].value;
-		}
-		if( elems[ 'EncryptedKey'    ] )
-		{
-			data.EncryptedKey = elems[ 'EncryptedKey' ].value;
-		}
-		
-		// Custom fields
-		for( var a in elems )
-		{
-			if( elems[a] && elems[a].id.substr( 0, 5 ) == 'conf.' )
-			{
-				data[elems[a].id] = elems[a].value;
-			}
-		}
-		
-		// TODO: Make sure we save for the selected user and not the loggedin user ...
-		
-		if( Application.userId != userid )
-		{
-			data.userid = userid;
-			data.authid = Application.authId;
-		}
-		
-		//console.log( data );
-		
-		//return;
-		
-		var m = new Module( 'system' );
-		m.onExecuted = function( e, dat )
-		{
-			//console.log( 'Sections.user_disk_save ', { e:e, d:dat, args:data } );
-			
-			if( e != 'ok' ) 
-			{
-				Notify( { title: i18n( 'i18n_disk_error' ), text: i18n( 'i18n_failed_to_edit' ) } );
-				return;
-			}
-			else
-			{
-				Notify( { title: i18n( 'i18n_disk_success' ), text: i18n( 'i18n_disk_edited' ) } );
-			}
-			remountDrive( ( elems[ 'Name' ] && elems[ 'Name' ].current ? elems[ 'Name' ].current : data.Name ), data.Name, data.userid, function()
-			{
-				
-				var u = new Module( 'system' );
-				u.onExecuted = function( ee, dd )
-				{
-					var ul = null;
-					try
-					{
-						ul = JSON.parse( dd );
-					}
-					catch( ee )
-					{
-						ul = null;
-					}
-				
-					ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid, Sections.user_volumeinfo_refresh( ul, userid ) );
-				
-					Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
-				}
-				u.execute( 'mountlist', { userid: userid, authid: Application.authId } );
-			
-			} );
-		}
-		
-		
-		
-		// Edit?
-		if( did > 0 )
-		{
-			data.ID = did;
-			
-			m.execute( 'editfilesystem', data );
-		}
-		// Add new...
-		else
-		{
-			m.execute( 'addfilesystem', data );
-		}
-		
-	}
-	
-};
-
 Sections.user_disk_cancel = function( userid )
 {
 	//console.log( 'Sections.user_disk_cancel ' + userid );
@@ -8981,70 +7103,6 @@ Sections.user_disk_cancel = function( userid )
 	}
 	u.execute( 'mountlist', { userid: userid+"", authid: Application.authId } );
 	
-};
-
-Sections.user_disk_remove = function( devname, did, userid )
-{
-	//console.log( 'Sections.user_disk_remove ', { devname : devname, did: did, userid: userid } );
-	
-	if( devname && did && userid )
-	{
-		Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_this_will_remove' ), function( r )
-		{
-			if( r && r.data == true )
-			{
-				// This is the hard delete method, used by admins ...
-				
-				unmountDrive( devname, userid, function()
-				{
-					Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
-					
-					var m = new Module( 'system' );
-					m.onExecuted = function( e, d )
-					{
-						//console.log( 'deletedoor', { id:did, e:e, d:d } );
-						
-						if( e == 'ok' )
-						{
-						
-							var u = new Module( 'system' );
-							u.onExecuted = function( ee, dd )
-							{
-								var ul = null;
-								try
-								{
-									ul = JSON.parse( dd );
-								}
-								catch( ee )
-								{
-									ul = null;
-								}
-							
-								ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid, Sections.user_volumeinfo_refresh( ul, userid ) );
-							}
-							u.execute( 'mountlist', { userid: userid, authid: Application.authId } );
-						
-							return;
-						}
-						try
-						{
-							var r = JSON.parse( d );						
-							Notify( { title: 'An error occured', text: r.message } );
-						}
-						catch( e )
-						{
-							Notify( { title: 'An error occured', text: 'Could not delete this disk.' } );
-						}
-						return;
-					
-					}
-					m.execute( 'deletedoor', { id: did, userid: userid, authid: Application.authId } );
-					
-				} );
-				
-			}
-		} );
-	}
 };
 
 // TODO: Evaluate Disk Editing Design and check what features are missing / removed based on the old app "DiskCatalog" EncryptionKey, Network Visibility, Show on Desktop, JSX Executable, Disk Cover is not included in the new design ...
@@ -9596,98 +7654,6 @@ Sections.user_volumeinfo_refresh = function( mountlist, userid )
 	
 }
 
-Sections.user_disk_mount = function( devname, userid, _this )
-{
-	if( devname && userid && _this )
-	{
-		if( _this.innerHTML.toLowerCase().indexOf( 'unmount' ) >= 0 )
-		{
-			unmountDrive( devname, userid, function( e, d )
-			{
-				//console.log( 'unmountDrive( '+devname+', '+userid+' ) ', { e:e, d:d } );
-				
-				if( e == 'ok' )
-				{
-					Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
-					
-					//console.log( 'Application.sendMessage( { type: \'system\', command: \'refreshdoors\' } );' );
-					
-					Notify( { title: i18n( 'i18n_unmounting' ) + ' ' + devname + ':', text: i18n( 'i18n_successfully_unmounted' ) } );
-					
-					var u = new Module( 'system' );
-					u.onExecuted = function( ee, dd )
-					{
-						//console.log( 'mountlist ', { e:ee, d:dd } );
-						
-						var ul = null;
-						try
-						{
-							ul = JSON.parse( dd );
-						}
-						catch( ee )
-						{
-							ul = null;
-						}
-					
-						ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid, Sections.user_volumeinfo_refresh( ul, userid ) );
-						
-					}
-					u.execute( 'mountlist', { userid: userid, authid: Application.authId } );
-				
-					return;
-				}
-				else
-				{
-					Notify( { title: i18n( 'i18n_fail_unmount' ), text: i18n( 'i18n_fail_unmount_more' ) } );
-				}
-				
-			} );
-		}
-		else
-		{
-			mountDrive( devname, userid, function( e, d )
-			{
-				//console.log( 'mountDrive( '+devname+', '+userid+' ) ', { e:e, d:d } );
-				
-				if( e == 'ok' )
-				{
-					Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
-					
-					//console.log( 'Application.sendMessage( { type: \'system\', command: \'refreshdoors\' } );' );
-					
-					Notify( { title: i18n( 'i18n_mounting' ) + ' ' + devname + ':', text: i18n( 'i18n_successfully_mounted' ) } );
-					
-					var u = new Module( 'system' );
-					u.onExecuted = function( ee, dd )
-					{
-						//console.log( 'mountlist ', { e:ee, d:dd } );
-						
-						var ul = null;
-						try
-						{
-							ul = JSON.parse( dd );
-						}
-						catch( ee )
-						{
-							ul = null;
-						}
-					
-						ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid, Sections.user_volumeinfo_refresh( ul, userid ) );
-					}
-					u.execute( 'mountlist', { userid: userid, authid: Application.authId } );
-				
-					return;
-				}
-				else
-				{
-					Notify( { title: i18n( 'i18n_fail_mount' ), text: i18n( 'i18n_fail_mount_more' ) } );
-				}
-				
-			} );
-		}
-	}
-}
-
 function StorageForm( storage, callback )
 {
 	
@@ -9935,6 +7901,545 @@ function LoadDOSDriverGUI( _this )
 	}
 }
 
+
+
+// write ------------------------------------------------------------------------------------------------------------ //
+
+
+
+function addApplication( appName, userId, callback, vars )
+{
+	var m = new Module( 'system' );
+	m.onExecuted = function( e, d )
+	{
+		if( ShowLog ) console.log( 'adduserapplication ', { e:e, d:d } );
+		
+		if( e == 'ok' )
+		{
+			if( callback ) callback( true, d, vars );
+		}
+		else
+		{
+			if( callback ) callback( false, d, vars );
+		}
+	}
+	m.execute( 'adduserapplication', { application: appName, userid: userId, authid: Application.authId } );
+}
+
+function updateUserStatus( userid, status )
+{
+	
+	if( userid )
+	{
+		
+		Sections.user_status_update( userid, status, function()
+		{
+			
+			// Refresh whole users list ...
+			
+			Sections.accounts_users(  );
+			
+			// Go to edit mode for the new user ...
+			
+			Sections.accounts_users( 'edit', userid );
+			
+		} );
+		
+	}
+	
+}
+
+function addDockItem( appName, userId, callback, vars )
+{
+	//console.log( 'addDockItem( appName, userId, callback ) ', { appName:appName, userId:userId, callback:callback } );
+	
+	var m = new Module( 'dock' );
+	m.onExecuted = function( e, d )
+	{
+		//console.log( { e:e, d:d } );
+		
+		if( e == 'ok' )
+		{
+			if( callback ) callback( true, d, vars );
+		}
+		else
+		{
+			if( callback ) callback( false, d, vars );
+		}
+	}
+	m.execute( 'additem', { 
+		userID: userId, 
+		application: appName, 
+		type: '', 
+		displayname: '', 
+		shortdescription: '' 
+	} );
+}
+
+function sortDockItem( direction, itemId, userId, callback )
+{
+	//console.log( 'sortDockItem( direction, itemId, userId, callback ) ', { direction:direction, itemId:itemId, userId:userId, callback:callback } );
+	
+	// TODO: Update the current sorting to support sortinging another users dock ...
+	
+	var m = new Module( 'dock' );
+	m.onExecuted = function( e, d )
+	{
+		//console.log( { e:e, d:d } );
+		
+		if( e == 'ok' )
+		{
+			if( callback ) callback( true, vars );
+		}
+		else
+		{
+			if( callback ) callback( false, vars );
+		}
+	}
+	m.execute( 'sortorder', { userID: userId, itemId: itemId, direction: direction } );
+}
+
+function changeAvatar()
+{
+	var self = this;
+	var description =
+	{
+		triggerFunction: function( item )
+		{
+			if ( item )
+			{
+				// Load the image
+				var image = new Image();
+				image.onload = function()
+				{
+					//console.log( 'loaded image ... ', item );
+					// Resizes the image
+					var canvas = ge( 'AdminAvatar' );
+					var context = canvas.getContext( '2d' );
+					context.drawImage( image, 0, 0, 256, 256 );
+					
+					// Activate edit mode.
+					editMode();
+				}
+				image.src = getImageUrl( item[ 0 ].Path );
+			}
+		},
+		path: "Mountlist:",
+		type: "load",
+		title: i18n( 'i18n_fileselectoravatar' ),
+		filename: ""
+	}
+	var d = new Filedialog( description );
+}
+
+Sections.user_status_update = function( userid, status, callback )
+{
+	
+	if( userid && status )
+	{
+		// 0 = Active, 1 = Disabled, 2 = Locked
+		
+		var on = false;
+		
+		switch( status )
+		{
+			// false = Active, true = Disabled
+			
+			case 1:
+				
+				if( ge( 'usDisabled' ).className.indexOf( 'fa-toggle-off' ) >= 0 )
+				{
+					on = true;
+				}
+				
+				var args = JSON.stringify( {
+					'type'    : 'write', 
+					'context' : 'application', 
+					'authid'  : Application.authId, 
+					'data'    : { 
+						'permission' : [ 
+							'PERM_USER_UPDATE_GLOBAL', 
+							'PERM_USER_UPDATE_IN_WORKGROUP', 
+							'PERM_USER_GLOBAL', 
+							'PERM_USER_WORKGROUP' 
+						]
+					}, 
+					'object'   : 'user', 
+					'objectid' : userid 
+				} );
+				
+				var f = new Library( 'system.library' );
+				f.onExecuted = function( e, d )
+				{
+					//console.log( 'Sections.user_status_update( '+userid+', '+status+' ) ', { e:e, d:d, args: args } );
+					
+					if( e == 'ok' )
+					{
+						Toggle( ge( 'usDisabled' ), false, ( on ? true : false ) );
+						Toggle( ge( 'usLocked'   ), false, false );
+					}
+					
+					if( callback ) return callback();
+				}
+				f.execute( 'user/updatestatus', { id: userid, status: ( on ? 1 : 0 ), authid: Application.authId, args: args } );
+				
+				break;
+			
+			// false = Active, true = Locked
+			
+			case 2:
+				
+				if( ge( 'usLocked' ).className.indexOf( 'fa-toggle-off' ) >= 0 )
+				{
+					on = true;
+				}
+				
+				var args = JSON.stringify( {
+					'type'    : 'write', 
+					'context' : 'application', 
+					'authid'  : Application.authId, 
+					'data'    : { 
+						'permission' : [ 
+							'PERM_USER_UPDATE_GLOBAL', 
+							'PERM_USER_UPDATE_IN_WORKGROUP', 
+							'PERM_USER_GLOBAL', 
+							'PERM_USER_WORKGROUP' 
+						]
+					}, 
+					'object'   : 'user', 
+					'objectid' : userid 
+				} );
+				
+				var f = new Library( 'system.library' );
+				f.onExecuted = function( e, d )
+				{
+					//console.log( 'Sections.user_status_update( '+userid+', '+status+' ) ', { e:e, d:d, args: args } );
+					
+					if( e == 'ok' )
+					{
+						Toggle( ge( 'usLocked'   ), false, ( on ? true : false ) );
+						Toggle( ge( 'usDisabled' ), false, false );
+					}
+					
+					if( callback ) return callback();
+				}
+				f.execute( 'user/updatestatus', { id: userid, status: ( on ? 2 : 0 ), authid: Application.authId, args: args } );
+				
+				break;
+			
+		}
+	}
+	
+}
+
+Sections.userrole_update = function( rid, userid, _this )
+{
+	var data = '';
+	
+	if( _this )
+	{
+		Toggle( _this, function( on )
+		{
+			data = ( on ? 'Activated' : '' );
+		} );
+	}
+	
+	if( rid && userid )
+	{
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			//console.log( { e:e, d:d } );
+		}
+		m.execute( 'userroleupdate', { id: rid, userid: userid, data: data, authid: Application.authId } );
+	}
+};
+
+Sections.user_disk_save = function( userid, did )
+{
+	//console.log( 'Sections.user_disk_save ', { did : did, userid : userid } );
+	
+	var elems = {};
+			
+	var inputs = ge( 'StorageGui' ).getElementsByTagName( 'input' );
+	
+	if( inputs.length > 0 )
+	{
+		for( var i in inputs )
+		{
+			if( inputs[i] && inputs[i].id )
+			{
+				elems[inputs[i].id] = inputs[i];
+			}
+		}
+	}
+	
+	var texts = ge( 'StorageGui' ).getElementsByTagName( 'textarea' );
+	
+	if( texts.length > 0 )
+	{
+		for( var t in texts )
+		{
+			if( texts[t] && texts[t].id )
+			{
+				elems[texts[t].id] = texts[t];
+			}
+		}
+	}
+	
+	var selects = ge( 'StorageGui' ).getElementsByTagName( 'select' );
+	
+	if( selects.length > 0 )
+	{
+		for( var s in selects )
+		{
+			if( selects[s] && selects[s].id )
+			{
+				elems[selects[s].id] = selects[s];
+			}
+		}
+	}
+	
+	//console.log( { userid: userid, elems: elems } );
+	
+	if( userid && elems )
+	{
+		
+		// New way of setting DiskSize so overwrite old method ...
+		
+		if( elems[ 'DiskSizeA' ] && elems[ 'DiskSizeA' ].value && elems[ 'DiskSizeB' ] && elems[ 'DiskSizeB' ].value )
+		{
+			elems[ 'conf.DiskSize' ] = { id: 'conf.DiskSize', value: ( elems[ 'DiskSizeA' ].value + elems[ 'DiskSizeB' ].value ) };
+		}
+		
+		var req = { 'Name' : i18n( 'i18n_disk_name_missing' ), 'Type' : i18n( 'i18n_disk_type_missing' ) };
+		
+		for( var r in req )
+		{
+			if( elems[r] && !elems[r].value )
+			{
+				elems[r].focus();
+				
+				Notify( { title: i18n( 'i18n_disk_error' ), text: req[r] } );
+				
+				return;
+			}
+		}
+		
+		
+		
+		var data = { Name: elems[ 'Name' ].value };
+		
+		if( elems[ 'Server'           ] ) data.Server           = elems[ 'Server'           ].value;
+		if( elems[ 'ShortDescription' ] ) data.ShortDescription = elems[ 'ShortDescription' ].value;
+		if( elems[ 'Port'             ] ) data.Port             = elems[ 'Port'             ].value;
+		if( elems[ 'Username'         ] ) data.Username         = elems[ 'Username'         ].value;
+		// Have password and password is not dummy
+		if( elems[ 'Password' ] && elems[ 'Password' ].value != '********' )
+		{
+			data.Password = elems[ 'Password' ].value;
+		}
+		// Have hashed password and password is not dummy
+		else if( elems[ 'HashedPassword' ] && elems[ 'HashedPassword' ].value != '********' )
+		{
+			data.Password = 'HASHED' + Sha256.hash( elems[ 'HashedPassword' ].value );
+		}
+		if( elems[ 'Path'          ] ) data.Path      = elems[ 'Path'      ].value;
+		if( elems[ 'Type'          ] ) data.Type      = elems[ 'Type'      ].value;
+		if( elems[ 'Workgroup'     ] ) data.Workgroup = elems[ 'Workgroup' ].value;
+		if( elems[ 'conf.Pollable' ] )
+		{
+			data.Pollable = elems[ 'conf.Pollable' ].checked ? 'yes' : 'no';
+			elems[ 'conf.Pollable' ].value = elems[ 'conf.Pollable' ].checked ? 'yes' : 'no';
+		}
+		if( elems[ 'conf.Invisible' ] )
+		{
+			data.Invisible = elems[ 'conf.Invisible' ].checked ? 'yes' : 'no';
+			elems[ 'conf.Invisible' ].value = elems[ 'conf.Invisible' ].checked ? 'yes' : 'no';
+		}
+		if( elems[ 'conf.Executable' ] )
+			data.Invisible = elems[ 'conf.Executable' ].value;
+	
+		if( elems[ 'PrivateKey'      ] )
+		{
+			data.PrivateKey = elems[ 'PrivateKey' ].value;
+		}
+		if( elems[ 'EncryptedKey'    ] )
+		{
+			data.EncryptedKey = elems[ 'EncryptedKey' ].value;
+		}
+		
+		// Custom fields
+		for( var a in elems )
+		{
+			if( elems[a] && elems[a].id.substr( 0, 5 ) == 'conf.' )
+			{
+				data[elems[a].id] = elems[a].value;
+			}
+		}
+		
+		// TODO: Make sure we save for the selected user and not the loggedin user ...
+		
+		if( Application.userId != userid )
+		{
+			data.userid = userid;
+			data.authid = Application.authId;
+		}
+		
+		//console.log( data );
+		
+		//return;
+		
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, dat )
+		{
+			//console.log( 'Sections.user_disk_save ', { e:e, d:dat, args:data } );
+			
+			if( e != 'ok' ) 
+			{
+				Notify( { title: i18n( 'i18n_disk_error' ), text: i18n( 'i18n_failed_to_edit' ) } );
+				return;
+			}
+			else
+			{
+				Notify( { title: i18n( 'i18n_disk_success' ), text: i18n( 'i18n_disk_edited' ) } );
+			}
+			remountDrive( ( elems[ 'Name' ] && elems[ 'Name' ].current ? elems[ 'Name' ].current : data.Name ), data.Name, data.userid, function()
+			{
+				
+				var u = new Module( 'system' );
+				u.onExecuted = function( ee, dd )
+				{
+					var ul = null;
+					try
+					{
+						ul = JSON.parse( dd );
+					}
+					catch( ee )
+					{
+						ul = null;
+					}
+				
+					ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid, Sections.user_volumeinfo_refresh( ul, userid ) );
+				
+					Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
+				}
+				u.execute( 'mountlist', { userid: userid, authid: Application.authId } );
+			
+			} );
+		}
+		
+		
+		
+		// Edit?
+		if( did > 0 )
+		{
+			data.ID = did;
+			
+			m.execute( 'editfilesystem', data );
+		}
+		// Add new...
+		else
+		{
+			m.execute( 'addfilesystem', data );
+		}
+		
+	}
+	
+};
+
+Sections.user_disk_mount = function( devname, userid, _this )
+{
+	if( devname && userid && _this )
+	{
+		if( _this.innerHTML.toLowerCase().indexOf( 'unmount' ) >= 0 )
+		{
+			unmountDrive( devname, userid, function( e, d )
+			{
+				//console.log( 'unmountDrive( '+devname+', '+userid+' ) ', { e:e, d:d } );
+				
+				if( e == 'ok' )
+				{
+					Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
+					
+					//console.log( 'Application.sendMessage( { type: \'system\', command: \'refreshdoors\' } );' );
+					
+					Notify( { title: i18n( 'i18n_unmounting' ) + ' ' + devname + ':', text: i18n( 'i18n_successfully_unmounted' ) } );
+					
+					var u = new Module( 'system' );
+					u.onExecuted = function( ee, dd )
+					{
+						//console.log( 'mountlist ', { e:ee, d:dd } );
+						
+						var ul = null;
+						try
+						{
+							ul = JSON.parse( dd );
+						}
+						catch( ee )
+						{
+							ul = null;
+						}
+					
+						ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid, Sections.user_volumeinfo_refresh( ul, userid ) );
+						
+					}
+					u.execute( 'mountlist', { userid: userid, authid: Application.authId } );
+				
+					return;
+				}
+				else
+				{
+					Notify( { title: i18n( 'i18n_fail_unmount' ), text: i18n( 'i18n_fail_unmount_more' ) } );
+				}
+				
+			} );
+		}
+		else
+		{
+			mountDrive( devname, userid, function( e, d )
+			{
+				//console.log( 'mountDrive( '+devname+', '+userid+' ) ', { e:e, d:d } );
+				
+				if( e == 'ok' )
+				{
+					Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
+					
+					//console.log( 'Application.sendMessage( { type: \'system\', command: \'refreshdoors\' } );' );
+					
+					Notify( { title: i18n( 'i18n_mounting' ) + ' ' + devname + ':', text: i18n( 'i18n_successfully_mounted' ) } );
+					
+					var u = new Module( 'system' );
+					u.onExecuted = function( ee, dd )
+					{
+						//console.log( 'mountlist ', { e:ee, d:dd } );
+						
+						var ul = null;
+						try
+						{
+							ul = JSON.parse( dd );
+						}
+						catch( ee )
+						{
+							ul = null;
+						}
+					
+						ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid, Sections.user_volumeinfo_refresh( ul, userid ) );
+					}
+					u.execute( 'mountlist', { userid: userid, authid: Application.authId } );
+				
+					return;
+				}
+				else
+				{
+					Notify( { title: i18n( 'i18n_fail_mount' ), text: i18n( 'i18n_fail_mount_more' ) } );
+				}
+				
+			} );
+		}
+	}
+}
+
 // TODO: Check why it doesn't work to mount / unmount for other users as admin or with rights ...
 
 function mountDrive( devname, userid, callback )
@@ -10039,429 +8544,6 @@ function remountDrive( oldname, newname, userid, callback )
 			
 		} );
 	}
-}
-
-// Add new user
-function addUser( callback, username )
-{
-	var args = {
-		authid: Application.authId
-	};
-	
-	if( !username )
-	{
-		return Alert( i18n( 'i18n_you_forgot_username' ), i18n( 'i18n_you_forgot_username_desc' ) );
-	}
-	
-	args[ 'username' ] = username;
-	// Temporary password
-	args[ 'password' ] = ( Math.random() % 999 ) + '_' + ( Math.random() % 999 ) + '_' + ( Math.random() % 999 );
-	args[ 'level' ] = ge( 'usLevel' ).value;
-	
-	if( ge( 'usWorkgroups' ) )
-	{
-		//	
-		if( ge( 'usWorkgroups' ).value )
-		{
-			args.workgroups = ge( 'usWorkgroups' ).value;
-		}
-		else if( !Application.checkAppPermission( [ 
-			'PERM_USER_READ_GLOBAL', 
-			'PERM_USER_GLOBAL' 
-		] ) )
-		{
-			Notify( { title: i18n( 'i18n_user_workgroup_missing' ), text: i18n( 'i18n_Adding a User to a Workgroup is required.' ) } );
-			
-			return;
-		}
-		
-	}
-	
-	if( ShowLog ) console.log( 'addUser( callback, username ) ', args );
-	
-	var m = new Module( 'system' );
-	m.onExecuted = function( e, d )
-	{
-		
-		try
-		{
-			d = JSON.parse( d );
-		}
-		catch( e ) {  }
-		
-		if( ShowLog ) console.log( 'addUser() ', { e:e, d:d, args: args } );
-		
-		if( e == 'ok' && d )
-		{
-			
-			if( d && d > 0 )
-			{
-				
-				// TODO: Look at this because it makes problems for a template setup ...
-				
-				firstLogin( d, function( ok )
-				{ 
-				
-					if( ok )
-					{
-					
-						if( callback )
-						{
-							callback( true, d );
-						}
-						else
-						{
-							saveUser( d, false, true );
-						}
-					
-					}
-				
-				} );
-			}
-			
-			return;
-		}
-		else
-		{
-			if( callback ) callback( false, d );
-		}
-	}
-	m.execute( 'useradd', args );
-}
-
-// Save a user
-function saveUser( uid, cb, newuser )
-{	
-	var args = { authid: Application.authId };
-	
-	var mapping = {
-		usFullname : 'fullname',
-		usEmail    : 'email',
-		usUsername : 'username',
-		usPassword : 'password',
-		usSetup    : 'setup'
-	};
-	
-	// TODO: Make sure that if you don't have GLOBAL or Level Admin, you cannot set a User or yourself to Level Admin ..
-	
-	if( Application.checkAppPermission( [ 
-		'PERM_USER_READ_GLOBAL', 
-		'PERM_USER_GLOBAL' 
-	] ) )
-	{
-		mapping[ 'usLevel' ] = 'level';
-	}
-	
-	for( var a in mapping )
-	{
-		var k = mapping[ a ];
-		
-		// Skip nonchanged passwords
-		if( a == 'usPassword' )
-		{
-			if( ( !ge( a ).value || ge( a ).value == '********' ) )
-			{
-				continue;
-			}
-			else
-			{
-				if( ge( a ).value != ge( 'usPasswordConfirm' ).value )
-				{
-					ge( 'PassError' ).innerHTML = i18n( '<span>New password confirmation does not match new password.</span>' );
-					ge( a ).focus();
-					return false;
-				}
-				else
-				{
-					ge( 'PassError' ).innerHTML = '';
-				}
-			}
-		}
-		
-		args[ k ] = Trim( ge( a ).value );
-		
-		// Special case, hashed password
-		if( a == 'usPassword' )
-		{
-			args[ k ] = '{S6}' + Sha256.hash( 'HASHED' + Sha256.hash( args[ k ] ) );
-		}
-		
-		
-	}
-	
-	// If there's no uid, it means that this is a new user - add it.
-	if( !uid )
-	{
-		if( ShowLog ) console.log( args );
-		
-		addUser( function( res, dat )
-		{
-			if( ShowLog ) console.log( 'addUser( function( res, dat ) ', { res: res, dat: dat } );
-			
-			if( res )
-			{
-				// The user was added, now save the rest of the information
-				if( dat && dat > 0 )
-				{
-					saveUser( dat, cb, true );
-				}
-			}
-			else
-			{
-				// Seems we failed to create user
-				if( dat && dat.code == 19 && dat.response )
-				{
-					Notify( { title: i18n( 'i18n_user_create_fail' ), text: i18n( 'i18n_' + dat.response ) } );
-					
-					if( ge( 'usUsername' ) )
-					{
-						ge( 'usUsername' ).focus();
-					}
-				}
-			}
-			
-		}, args[ 'username' ] );
-		
-		// No going beyond this point
-		return;
-	}
-	else
-	{
-		args.id = uid;
-	}
-	
-	// Specific for Pawel's code ... He just wants to forward json ...
-	
-	args.args = JSON.stringify( {
-		'type'    : 'write', 
-		'context' : 'application', 
-		'authid'  : Application.authId, 
-		'data'    : { 
-			'permission' : [ 
-				'PERM_USER_CREATE_GLOBAL', 
-				'PERM_USER_CREATE_IN_WORKGROUP',
-				'PERM_USER_UPDATE_GLOBAL', 
-				'PERM_USER_UPDATE_IN_WORKGROUP', 
-				'PERM_USER_GLOBAL', 
-				'PERM_USER_WORKGROUP' 
-			]
-		}, 
-		'object'   : 'user', 
-		'objectid' : uid 
-	} );
-	
-	/*args.args = JSON.stringify( {
-		'type'    : 'write', 
-		'context' : 'application', 
-		'authid'  : Application.authId, 
-		'data'    : { 
-			'permission' : [ 
-				'PERM_USER_GLOBAL', 
-				'PERM_USER_WORKGROUP' 
-			]
-		}
-	} );*/
-	
-	var f = new Library( 'system.library' );
-	f.onExecuted = function( e, d )
-	{
-		
-		try
-		{
-			d = JSON.parse( d );
-		}
-		catch( e ) {  }
-		
-		//console.log( { e:e, d:d, args: args } );
-		
-		if( !uid ) return;
-		
-		if( e == 'ok' )
-		{
-			
-			// Save language setting
-			
-			function updateLanguages( ignore, callback )
-			{
-				if( !ignore )
-				{
-					/*Confirm( i18n( 'i18n_update_language_warning' ), i18n( 'i18n_update_language_desc' ), function( resp )
-					{
-						if( resp.data )
-						{*/
-							// Find right language for speech
-							var langs = speechSynthesis.getVoices();
-						
-							var voice = false;
-							for( var v = 0; v < langs.length; v++ )
-							{
-								//console.log( langs[v].lang.substr( 0, 2 ) );
-								if( langs[v].lang.substr( 0, 2 ) == ge( 'usLanguage' ).value )
-								{
-									voice = {
-										spokenLanguage: langs[v].lang,
-										spokenAlternate: langs[v].lang // TODO: Pick an alternative voice - call it spokenVoice
-									};
-								}
-							}
-						
-							var mt = new Module( 'system' );
-							mt.onExecuted = function( ee, dd )
-							{	
-								var mo = new Module( 'system' );
-								mo.onExecuted = function()
-								{
-									if( callback ) return callback( true );
-								}
-								mo.execute( 'setsetting', { userid: uid, setting: 'locale', data: ge( 'usLanguage' ).value, authid: Application.authId } );
-							}
-							mt.execute( 'setsetting', { userid: uid, setting: 'language', data: voice, authid: Application.authId } );
-						/*}
-						else
-						{
-							if( callback ) return callback( true );
-						}
-					
-					} );*/
-				}
-				else
-				{
-					if( callback ) return callback( false );
-				}
-			}
-			
-			// Save avatar image
-			
-			function saveAvatar( callback )
-			{
-				var canvas = ge( 'AdminAvatar' );
-				if( canvas )
-				{
-					var base64 = 0;
-					
-					try
-					{
-						base64 = canvas.toDataURL();
-					}
-					catch( e ) {  }
-					
-					if( base64 && base64.length > 3000 )
-					{
-						var ma = new Module( 'system' );
-						ma.forceHTTP = true;
-						ma.onExecuted = function( e, d )
-						{
-							if( e != 'ok' )
-							{
-								if( ShowLog ) console.log( 'Avatar saving failed.' );
-						
-								if( callback ) callback( false );
-							}
-					
-							if( callback ) callback( true );
-						};
-						ma.execute( 'setsetting', { userid: uid, setting: 'avatar', data: base64, authid: Application.authId } );
-					}
-					else
-					{
-						if( callback ) callback( false );
-					}
-				}
-			}
-			
-			function applySetup( init, callback )
-			{
-				if( init )
-				{
-					var m = new Module( 'system' );
-					m.onExecuted = function( e, d )
-					{
-						//console.log( 'applySetup() ', { e:e, d:d, args: { id: ( ge( 'usSetup' ).value ? ge( 'usSetup' ).value : '0' ), userid: uid, authid: Application.authId } } );
-					
-						if( callback ) return callback( true );
-					
-					}
-					m.execute( 'usersetupapply', { id: ( ge( 'usSetup' ).value ? ge( 'usSetup' ).value : '0' ), userid: uid, authid: Application.authId } );
-				}
-				else
-				{
-					if( callback ) return callback( false );
-				}
-			}
-			
-			
-				
-			// 1: First Wallpaper update ...
-				
-			saveAvatar( function (  )
-			{
-				
-				// 2: Second Template update ...
-				
-				var init = false; var ignore = false;
-				
-				if( newuser || ( ge( 'usSetup' ) && ge( 'usSetup' ).value != ge( 'usSetup' ).current ) )
-				{
-					init = true; ignore = true;
-					
-					//console.log( 'applySetup( '+init+' ) ' + ( (newuser?'true':'false')+' || '+' ( '+ge( 'usSetup' ).value+' != '+ge( 'usSetup' ).current+' )' ) );
-				}
-				
-				applySetup( init, function (  ) 
-				{ 
-					
-					// 3: Third language update ...
-					
-					if( ge( 'usLanguage' ) && ge( 'usLanguage' ).value != ge( 'usLanguage' ).current )
-					{
-						ignore = false;
-						
-						//console.log( 'updateLanguages( '+ignore+' ) || ( '+ge( 'usLanguage' ).value+' != '+ge( 'usLanguage' ).current+' )' );
-					}
-					
-					updateLanguages( ignore, function(  )
-					{
-						
-						if( newuser )
-						{
-							Notify( { title: i18n( 'i18n_user_create' ), text: i18n( 'i18n_user_create_succ' ) } );
-						}
-						else
-						{
-							Notify( { title: i18n( 'i18n_user_updated' ), text: i18n( 'i18n_user_updated_succ' ) } );
-						}
-					
-						if( cb )
-						{
-							return cb( uid );
-						}
-						else
-						{
-							Sections.accounts_users( 'edit', uid );
-						}
-						
-					} );
-					
-				} );
-				
-			} );
-			
-		}
-		else if( d && d.code == 19 && d.response )
-		{
-			Notify( { title: i18n( 'i18n_user_update_fail' ), text: i18n( 'i18n_' + d.response ) } );
-			
-			if( ge( 'usUsername' ) )
-			{
-				ge( 'usUsername' ).focus();
-			}
-		}
-		else
-		{
-			Notify( { title: i18n( 'i18n_user_update_fail' ), text: i18n( 'i18n_user_update_failed' ) } );
-		}
-	}
-	f.execute( 'user/update', args );
 }
 
 function _saveUser( uid, callback )
@@ -10657,123 +8739,123 @@ function _saveUser( uid, callback )
 	
 }
 
-function firstLogin( userid, callback )
+
+
+// delete ----------------------------------------------------------------------------------------------------------- //
+
+
+
+function removeApplication( appName, userId, callback, vars )
 {
-	if( userid > 0 )
+	var m = new Module( 'system' );
+	m.onExecuted = function( e, d )
 	{
-		var m = new Module( 'system' );
-		m.onExecuted = function( e, d )
+		if( ShowLog ) console.log( 'removeApplication ', { e:e, d:d } );
+		
+		if( e == 'ok' )
 		{
-			//console.log( 'firstLogin( '+userid+', callback ) ', { e:e, d:d, args: { userid: userid, authid: Application.authId } } );
 			
-			if( e == 'ok' )
+			removeDockItem( appName, userId, function( ee, dd )
 			{
-				if( d && d.indexOf( '<!--separate-->' ) >= 0 )
+				if( ShowLog ) console.log( 'removeDockItem ', { ee:ee, dd:dd } );
+				
+				if( callback ) callback( true, d, vars );
+				
+			} );
+			
+		}
+		else
+		{
+			if( callback ) callback( false, d, vars );
+		}
+	}
+	m.execute( 'removeuserapplication', { application: appName, userid: userId, authid: Application.authId } );
+}
+
+function removeDockItem( appName, userId, callback, vars )
+{
+	//console.log( 'removeDockItem( appName, userId, callback ) ', { appName:appName, userId:userId, callback:callback } );
+	
+	var m = new Module( 'dock' );
+	m.onExecuted = function( e, d )
+	{
+		//console.log( { e:e, d:d } );
+		
+		if( e == 'ok' )
+		{
+			if( callback ) callback( true, d, vars );
+		}
+		else
+		{
+			if( callback ) callback( false, d, vars );
+		}
+	}
+	m.execute( 'removefromdock', { userID: userId, name: appName, type: '' } );
+}
+
+Sections.user_disk_remove = function( devname, did, userid )
+{
+	//console.log( 'Sections.user_disk_remove ', { devname : devname, did: did, userid: userid } );
+	
+	if( devname && did && userid )
+	{
+		Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_this_will_remove' ), function( r )
+		{
+			if( r && r.data == true )
+			{
+				// This is the hard delete method, used by admins ...
+				
+				unmountDrive( devname, userid, function()
 				{
-					var data = d.split( '<!--separate-->' );
+					Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 					
-					if( data[1] )
+					var m = new Module( 'system' );
+					m.onExecuted = function( e, d )
 					{
+						//console.log( 'deletedoor', { id:did, e:e, d:d } );
+						
+						if( e == 'ok' )
+						{
+						
+							var u = new Module( 'system' );
+							u.onExecuted = function( ee, dd )
+							{
+								var ul = null;
+								try
+								{
+									ul = JSON.parse( dd );
+								}
+								catch( ee )
+								{
+									ul = null;
+								}
+							
+								ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid, Sections.user_volumeinfo_refresh( ul, userid ) );
+							}
+							u.execute( 'mountlist', { userid: userid, authid: Application.authId } );
+						
+							return;
+						}
 						try
 						{
-							data[1] = JSON.parse( data[1] );
-							
-							//console.log( data );
+							var r = JSON.parse( d );						
+							Notify( { title: 'An error occured', text: r.message } );
 						}
-						catch( e ) {  }
-					}
-				}
-				
-				if( callback ) return callback( true );	
-			}
-			
-			if( callback ) return callback( false );
-		}
-		m.execute( 'firstlogin', { userid: userid, force: true, exclude: [ 'mountlist', 'dock', 'mount' ], authid: Application.authId } );
-	}
-}
-
-function removeUser( id, callback )
-{
-	if( id )
-	{
-		
-		var args = { id: id };
-		
-		args.args = JSON.stringify( {
-			'type'    : 'delete', 
-			'context' : 'application', 
-			'authid'  : Application.authId, 
-			'data'    : { 
-				'permission' : [ 
-					'PERM_USER_DELETE_GLOBAL', 
-					'PERM_USER_DELETE_IN_WORKGROUP', 
-					'PERM_USER_GLOBAL', 
-					'PERM_USER_WORKGROUP' 
-				]
-			}, 
-			'object'   : 'user', 
-			'objectid' : id 
-		} );
-		
-		var f = new Library( 'system.library' );
-		
-		f.onExecuted = function( e, d )
-		{
-			//console.log( { e:e, d:d, args:args } );
-			
-			if( e == 'ok' )
-			{
-			    Notify( { title: i18n( 'i18n_user_delete' ), text: i18n( 'i18n_user_delete_succ' ) } );
-			    
-			    // Refresh users list ...
-			    
-			    // TODO: Find a way to remove the user in question from the list ...
-			    
-			    if( ge( 'UserListID_' + id ) )
-			    {
-			    	ge( 'UserListID_' + id ).parentNode.removeChild( ge( 'UserListID_' + id ) );
-			    }
-			    
-			    if( ge( 'AdminUsersCount' ) )
-				{
-					if( ge( 'AdminUsersCount' ).innerHTML )
-					{
-						var count = ge( 'AdminUsersCount' ).innerHTML.split( '(' ).join( '' ).split( ')' ).join( '' );
-						
-						if( count && count > 0 )
+						catch( e )
 						{
-							var result = ( count - 1 );
-							
-							if( result >= 0 )
-							{
-								ge( 'AdminUsersCount' ).innerHTML = '(' + result + ')';
-							}
+							Notify( { title: 'An error occured', text: 'Could not delete this disk.' } );
 						}
-					}
+						return;
 					
-				}
-			    
-			    if( callback )
-			    {
-			    	callback( true );
-			    }
-			    else
-			    { 
-			   		cancelUser(  );
-			    }
+					}
+					m.execute( 'deletedoor', { id: did, userid: userid, authid: Application.authId } );
+					
+				} );
+				
 			}
-			else
-			{
-				Notify( { title: i18n( 'i18n_user_delete_fail' ), text: i18n( 'i18n_user_delete_failed' ) } );
-			}
-			
-		}
-
-		f.execute( 'user/delete', args );
-		
+		} );
 	}
-}
+};
 
 function _removeUser( id, callback )
 {
@@ -10845,10 +8927,192 @@ function _removeUser( id, callback )
 	}
 }
 
+
+
+// helper functions ------------------------------------------------------------------------------------------------- //
+
+
+
+function appendChild( child )
+{
+	if( child )
+	{
+		var out = [];
+		
+		for( var k in child )
+		{
+			if( child[k] )
+			{
+				if( child[k]['element'] )
+				{
+					var div = child[k]['element'];
+					
+					if( child[k]['child'] )
+					{
+						var elem = appendChild( child[k]['child'] );
+						
+						if( elem )
+						{
+							for( var i in elem )
+							{
+								if( elem[i] )
+								{
+									div.appendChild( elem[i] );
+								}
+							}
+						}
+					}
+					
+					out.push( div );
+				}
+			}
+		}
+		
+		if( out )
+		{
+			return out;
+		}
+	}
+	
+	return false;
+}
+
+function removeBtn( _this, args, callback )
+{
+	
+	if( _this )
+	{
+		closeEdit();
+		
+		_this.savedState = { 
+			className: _this.className, 
+			innerHTML: _this.innerHTML, 
+			onclick: ( _this.onclick ? _this.onclick : function () {} ) 
+		}
+		_this.classList.remove( 'IconButton' );
+		_this.classList.remove( 'IconToggle' );
+		_this.classList.remove( 'ButtonSmall' );
+		_this.classList.remove( 'ColorStGrayLight' );
+		_this.classList.remove( 'fa-minus-circle' );
+		_this.classList.remove( 'fa-trash' );
+		//_this.classList.remove( 'NegativeAlt' );
+		_this.classList.remove( 'Negative' );
+		//_this.classList.add( 'ButtonAlt' );
+		_this.classList.add( 'Button' );
+		_this.classList.add( 'BackgroundRed' );
+		_this.id = ( _this.id ? _this.id : 'EditMode' );
+		_this.innerHTML = ( args.button_text ? i18n( args.button_text ) : i18n( 'i18n_delete' ) );
+		_this.args = args;
+		_this.callback = callback;
+		_this.onclick = function(  )
+		{
+			
+			if( this.callback )
+			{
+				callback( this.args ? this.args : false );
+			}
+			
+		};
+	}
+	
+}
+
+function editMode( close )
+{
+	if( ge( 'UserEditButtons' ) )
+	{
+		ge( 'UserEditButtons' ).className = ( close ? 'Closed' : 'Open' );
+	}
+}
+
+function closeEdit()
+{
+	if( ge( 'EditMode' ) )
+	{
+		if( ge( 'EditMode' ) && ge( 'EditMode' ).savedState )
+		{
+			if( typeof ge( 'EditMode' ).savedState.className != 'undefined' )
+			{
+				ge( 'EditMode' ).className = ge( 'EditMode' ).savedState.className;
+			}
+			if( typeof ge( 'EditMode' ).savedState.innerHTML != 'undefined' )
+			{
+				ge( 'EditMode' ).innerHTML = ge( 'EditMode' ).savedState.innerHTML;
+			}
+			if( typeof ge( 'EditMode' ).savedState.onclick != 'undefined' )
+			{
+				ge( 'EditMode' ).onclick = ge( 'EditMode' ).savedState.onclick;
+			}
+			ge( 'EditMode' ).removeAttribute( 'id' );
+		}
+	}
+}
+
+function toggleChangePass()
+{
+	if( ge( 'ChangePassContainer' ) && ge( 'ResetPassContainer' ) )
+	{
+		ge( 'ChangePassContainer' ).className = 'Open';
+		ge( 'ResetPassContainer'  ).className = 'Closed';
+		
+		if( ge( 'usPassword' ) )
+		{
+			ge( 'usPassword' ).focus();
+		}
+	}
+}
+
+function SubMenu( _this, close )
+{
+	if( !close && _this.parentNode.className.indexOf( ' InActive' ) >= 0 )
+	{
+		_this.parentNode.className = _this.parentNode.className.split( ' InActive' ).join( '' ).split( ' Active' ).join( '' ) + ' Active';
+	}
+	else if( _this.parentNode.className.indexOf( ' Active' ) >= 0 )
+	{
+		_this.parentNode.className = _this.parentNode.className.split( ' InActive' ).join( '' ).split( ' Active' ).join( '' ) + ' InActive';
+	}
+}
+
+function hideStatus( status, show, pnt )
+{
+	console.log( "hideStatus( '"+status+"', "+show+", "+pnt+" )" );
+	
+	if( status && ge( 'ListUsersInner' ) )
+	{
+		var list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
+		
+		if( list.length > 0 )
+		{
+			for( var a = 0; a < list.length; a++ )
+			{
+				if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+				
+				var span = list[a].getElementsByTagName( 'span' )[0];
+				
+				if( span )
+				{
+					if( span.getAttribute( 'status' ).toLowerCase() == status.toLowerCase() )
+					{
+						let obj = ( pnt ? span.parentNode.parentNode : list[a] );
+						
+						if( show )
+						{
+							obj.style.display = '';
+						}
+						else
+						{
+							obj.style.display = 'none';
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 function cancelUser(  )
 {
-	//console.log( 'cancelUser(  ) ' );
-	
 	if( ge( 'UserDetails' ) )
 	{
 		ge( 'UserDetails' ).innerHTML = '';
@@ -10864,4 +9128,200 @@ function cancelUser(  )
 		}
 	}
 }
+
+Application.closeAllEditModes = function( act )
+{
+	
+	if( act )
+	{
+		if( act.keycode )
+		{
+			
+			switch ( act.keycode )
+			{
+				// Esc
+				case 27:
+				
+					if( ge( 'UserDeleteBtn' ) && ge( 'UserDeleteBtn' ).savedState )
+					{
+						if( typeof ge( 'UserDeleteBtn' ).savedState.className != 'undefined' )
+						{
+							ge( 'UserDeleteBtn' ).className = ge( 'UserDeleteBtn' ).savedState.className;
+						}
+						if( typeof ge( 'UserDeleteBtn' ).savedState.innerHTML != 'undefined' )
+						{
+							ge( 'UserDeleteBtn' ).innerHTML = ge( 'UserDeleteBtn' ).savedState.innerHTML;
+						}
+						if( typeof ge( 'UserDeleteBtn' ).savedState.onclick != 'undefined' )
+						{
+							ge( 'UserDeleteBtn' ).onclick = ge( 'UserDeleteBtn' ).savedState.onclick;
+						}
+					}
+					
+					if( ge( 'AdminUsersBtn' ) )
+					{
+						SubMenu( ge( 'AdminUsersBtn' ), true );
+					}
+					
+					closeEdit();
+					
+					break;
+				default: break;
+			}
+			
+		}
+		
+		if( act.targ )
+		{
+		
+			if( ge( 'UserDeleteBtn' ) && ge( 'UserDeleteBtn' ).savedState )
+			{
+			
+				if( act.targ.id != 'UserDeleteBtn' && act.targ.tagName != 'HTML' && act.targ.tagName != 'BODY' )
+				{
+					
+					if( typeof ge( 'UserDeleteBtn' ).savedState.className != 'undefined' )
+					{
+						ge( 'UserDeleteBtn' ).className = ge( 'UserDeleteBtn' ).savedState.className;
+					}
+					if( typeof ge( 'UserDeleteBtn' ).savedState.innerHTML != 'undefined' )
+					{
+						ge( 'UserDeleteBtn' ).innerHTML = ge( 'UserDeleteBtn' ).savedState.innerHTML;
+					}
+					if( typeof ge( 'UserDeleteBtn' ).savedState.onclick != 'undefined' )
+					{
+						ge( 'UserDeleteBtn' ).onclick = ge( 'UserDeleteBtn' ).savedState.onclick;
+					}
+				
+				}
+			}
+			
+			if( ge( 'AdminUsersBtn' ) )
+			{
+				found = false;
+				
+				var pnt = ge( 'AdminUsersBtn' ).parentNode;
+				
+				if( pnt )
+				{
+					var ele = pnt.getElementsByTagName( '*' );
+					
+					if( ele.length > 0 )
+					{
+						for( var a = 0; a < ele.length; a++ )
+						{
+							if( ele[a] && ele[a] == act.targ )
+							{
+								found = true;
+							}
+						}
+					}
+				}
+				
+				if( !found && ( act.targ.id != 'AdminUsersBtn' || act.targ.id != 'AdminUsersSubMenu' ) && act.targ.tagName != 'HTML' && act.targ.tagName != 'BODY' )
+				{
+					SubMenu( ge( 'AdminUsersBtn' ), true );
+				}
+			}
+			
+			if( ge( 'EditMode' ) && ge( 'EditMode' ).savedState )
+			{
+				
+				if( act.targ.id != 'EditMode' && act.targ.tagName != 'HTML' && act.targ.tagName != 'BODY' )
+				{
+					closeEdit();
+				}
+				
+			}
+			
+		}
+	}
+	
+}
+
+var RequestQueue = {
+	
+	ServerBusy : false, 
+	ServerRequestQueue : [],  
+	
+	Set : function ( func, obj, ready )
+	{
+		
+		// If ready check is requested and server is busy return false
+		if( ready && this.ServerBusy )
+		{
+			return false;
+		}
+		
+		if( !this.ServerRequestQueue.length )
+		{
+			this.ServerRequestQueue.push( { func: func, obj: obj } );
+			
+			this.Run();
+		}
+		else
+		{
+			this.ServerRequestQueue.push( { func: func, obj: obj } );
+		}
+		
+		
+	},
+	
+	Run : function (  )
+	{
+		if( this.ServerRequestQueue )
+		{
+			for( var key in this.ServerRequestQueue )
+			{
+				if( this.ServerRequestQueue[key] && this.ServerRequestQueue[key].func )
+				{
+					// Let the function know the server is now busy with a request
+					this.ServerBusy = true;
+					
+					var _this = this;
+					
+					this.ServerRequestQueue[key].key = key;
+					
+					this.ServerRequestQueue[key].func( function( key )
+					{
+						if( _this.ServerRequestQueue[key] )
+						{
+							_this.Delete( key );
+						}
+						
+						// Let the function know the server is not busy with any requests ...
+						_this.ServerBusy = false;
+						
+						// Run the request queue again, and check for requests in queue ...
+						_this.Run();
+						
+					}, key, this.ServerRequestQueue[key].obj );
+					
+					return;
+				}
+			}
+		}
+	},
+	
+	Delete : function ( key )
+	{
+		var out = [];
+		
+		if( this.ServerRequestQueue )
+		{
+			for( var i in this.ServerRequestQueue )
+			{
+				if( this.ServerRequestQueue[i] && ( !key || key != i ) )
+				{
+					out.push( this.ServerRequestQueue[i] );
+				}
+			}
+		}
+		
+		this.ServerRequestQueue = out;
+	}
+	
+}
+
+
 
