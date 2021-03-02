@@ -882,7 +882,7 @@ FriendWebSocket.prototype.wsClose = function( code, reason )
 	reason = reason || 'WS connection closed';
 	
 	try {
-		console.log('closing websocket',code,reason);
+		console.log( 'closing websocket', code, reason );
 		if( window.Friend && Friend.User )
 			Friend.User.CheckServerNow();
 		self.ws.close( code, reason );
