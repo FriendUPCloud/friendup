@@ -881,10 +881,10 @@ FriendWebSocket.prototype.wsClose = function( code, reason )
 	code = code || 1000;
 	reason = reason || 'WS connection closed';
 	
-	console.log( 'Why ' + self.uniqueName, self );
-	
-	try {
-		console.log('closing websocket',code,reason);
+	try 
+	{
+		let ws = window.Workspace ? ( ' ' + Workspace.sessionId ) : '';
+		console.log('closing websocket (' + self.sessionId + ws + ')',code,reason);
 		if( window.Friend && Friend.User )
 			Friend.User.CheckServerNow();
 		self.ws.close( code, reason );
