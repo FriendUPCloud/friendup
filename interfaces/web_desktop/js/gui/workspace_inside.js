@@ -660,7 +660,14 @@ var WorkspaceInside = {
 			this.initWSTimeout = setTimeout( function(){ Workspace.initWebSocket( callback ); }, 1000 );
 			return this.initWSTimeout;
 		}
-
+		
+		// Not needed here
+		if( this.initWSTimeout )
+		{
+			clearTimeout( this.initWSTimeout );
+			this.initWSTimeout = null;
+		}
+		
 		// Force connecting ws state (we will close it!)
 		Workspace.websocketState = 'connecting';
 
