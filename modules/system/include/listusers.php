@@ -127,6 +127,25 @@ else
 }
 
 
+
+// TODO: Make support for custom sorting ...
+// TODO: This involves Status and LoginTime, find out how to handle it perhaps in a sql query instead of PHP ...
+if( isset( $args->args->customsort ) && $args->args->customsort )
+{
+	//die( print_r( $args->args->customsort,1 ) . ' -- ' );
+	
+	$custom  = $args->args->customsort;
+	$sortby  = ( isset( $args->args->sortby  ) ? $args->args->sortby  : 'FullName' );
+	$orderby = ( isset( $args->args->orderby ) ? $args->args->orderby : 'ASC'      );
+	//die( print_r( $custom,1 ) . ' || ' . $sortby . ' || ' . $orderby );
+	$cb1 = ( function ( $a, $b ) { return ( $a->sortby > $b->sortby ) ? 1 : -1; } );
+	//die( $cb1 );
+	$cb2 = ( function ( $a, $b ) { return ( $custom[ $sortby ][ $orderby ][ $a->sortby ] - $custom[ $sortby ][ $orderby ][ $b->sortby ] ); } );
+	
+	//die( $custom[ $sortby ][ $orderby ] . ' -- ' . print_r( $args->args->customsort,1 ) );
+	
+}
+
 // TODO: Create searchby komma separated so one can specify what to search by ...
 
 // TODO: Divide into 3 calls to see if it can speed up the process ...

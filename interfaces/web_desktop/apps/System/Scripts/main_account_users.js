@@ -16,6 +16,7 @@ var UsersSettings = function ( setting, set )
 	var searchby    = ( ''                           );
 	var sortby      = ( 'FullName'                   );
 	var orderby     = ( 'ASC'                        ); 
+	var customsort  = ( ''                           );
 	var divh        = ( 29                           );
 	var listed      = ( 0                            );
 	var total       = ( 0                            );
@@ -30,6 +31,7 @@ var UsersSettings = function ( setting, set )
 		searchby    : searchby,
 		sortby      : sortby,
 		orderby     : orderby,
+		customsort  : customsort,
 		divh        : divh,
 		listed      : listed,
 		total       : total,
@@ -40,7 +42,7 @@ var UsersSettings = function ( setting, set )
 		uids        : [],
 		avatars     : true,
 		logintime   : true,
-		experiment  : false,
+		experiment  : true,
 		listall     : false,
 		reset       : true
 	} );
@@ -64,6 +66,9 @@ var UsersSettings = function ( setting, set )
 					break;
 				case 'orderby'             :
 					this.vars.orderby      = set;
+					break;
+				case 'customsort'          :
+					this.vars.customsort   = set;
 					break;
 				case 'divh'                :
 					this.vars.divh         = set;
@@ -117,9 +122,10 @@ var UsersSettings = function ( setting, set )
 					break;
 				case 'reset'               :
 					this.vars.searchquery  = ( searchquery                                            );
-					this.vars.searchby     = ( searchby                                               );
-					this.vars.sortby       = ( sortby                                                 );
-					this.vars.orderby      = ( orderby                                                );
+					// TODO: Look if these needs to be reset ...
+					//this.vars.searchby     = ( searchby                                             );
+					//this.vars.sortby       = ( sortby                                               );
+					//this.vars.orderby      = ( orderby                                              );
 					this.vars.divh         = ( divh                                                   );
 					this.vars.listed       = ( listed                                                 );
 					this.vars.total        = ( total                                                  );
@@ -6583,84 +6589,9 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 		var d = new Filedialog( description );
 	}
 	
-	function hideStatus( status, show, pnt )
-	{
-		if( status && ge( 'ListUsersInner' ) )
-		{
-			var list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
-			
-			if( list.length > 0 )
-			{
-				for( var a = 0; a < list.length; a++ )
-				{
-					if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
-					
-					var span = list[a].getElementsByTagName( 'span' )[0];
-					
-					if( span )
-					{
-						if( span.getAttribute( 'status' ).toLowerCase() == status.toLowerCase() )
-						{
-							let obj = ( pnt ? list[a].parentNode : list[a] );
-							
-							if( show )
-							{
-								obj.style.display = '';
-							}
-							else
-							{
-								obj.style.display = 'none';
-							}
-						}
-					}
-				}
-			}
-		}
-	}
 	
-	function searchServer( filter )
-	{
-		if( !filter )
-		{
-			UsersSettings( 'searchquery', filter );
-		}
-		
-		if( filter.length < UsersSettings( 'minlength' ).length || filter.length < UsersSettings( 'searchquery' ).length || filter == UsersSettings( 'searchquery' ) ) return;
-		
-		UsersSettings( 'reset', true );
-		
-		UsersSettings( 'searchquery', filter );
-		
-		RequestQueue.Set( function( callback, key )
-		{
-			console.log( filter + ' < ' + UsersSettings( 'searchquery' ) );
-			
-			if( filter.length < UsersSettings( 'searchquery' ).length )
-			{
-				if( callback ) callback( key );
-				
-				return;
-			}
-			
-			getUserlist( function( res, userList, key )
-			{
-				
-				if( callback ) callback( key );
-				
-				console.log( userList );
-				
-				if( userList )
-				{
-					scrollengine.distribute( userList, 0, userList['Count'] );
-					
-					//scrollengine.refresh( true );
-				}
-				
-			}, key );
-			
-		} );
-		
-	}
+	
+	
 	
 	function filterUsers( filter, server )
 	{
@@ -7858,10 +7789,6 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 															var btn = document.createElement( 'button' );
 															btn.className = 'IconButton IconSmall Negative fa-bars';
 															btn.id = 'AdminUsersBtn';
-															//btn.onclick = function(  )
-															//{
-															//	searchServer( false );
-															//};
 															btn.onclick = function(  )
 															{
 																SubMenu( this );
@@ -7948,7 +7875,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																				}
 																				
 																				SubMenu( this.parentNode.parentNode );
-																			}
+																			};
 																			return li;
 																		}()
 																	}
@@ -7992,36 +7919,92 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														{
 															var d = document.createElement( 'div' );
 															d.className = 'PaddingSmallLeft PaddingSmallRight HContent30 FloatLeft Ellipsis';
-															d.innerHTML = '<strong onclick="sortUsers(\'FullName\')">Name</strong>';
 															return d;
-														}()
+														}(),
+														'child' : 
+														[ 
+															{
+																'element' : function() 
+																{
+																	var b = document.createElement( 'strong' );
+																	b.innerHTML = i18n( 'i18n_header_FullName' );
+																	b.onclick = function()
+																	{
+																		sortUsers( 'FullName' );
+																	};
+																	return b;
+																}()
+															}
+														]
 													},
 													{
 														'element' : function() 
 														{
 															var d = document.createElement( 'div' );
 															d.className = 'PaddingSmallLeft PaddingSmallRight HContent25 FloatLeft Ellipsis';
-															d.innerHTML = '<strong onclick="sortUsers(\'Name\')">Username</strong>';
 															return d;
-														}()
+														}(),
+														'child' : 
+														[ 
+															{
+																'element' : function() 
+																{
+																	var b = document.createElement( 'strong' );
+																	b.innerHTML = i18n( 'i18n_header_Name' );
+																	b.onclick = function()
+																	{
+																		sortUsers( 'Name' );
+																	};
+																	return b;
+																}()
+															}
+														]
 													},
 													{
 														'element' : function() 
 														{
 															var d = document.createElement( 'div' );
 															d.className = 'PaddingSmallLeft PaddingSmallRight HContent15 FloatLeft Ellipsis';
-															d.innerHTML = '<strong onclick="sortUsers(\'Status\')">Status</strong>';
 															return d;
-														}()
+														}(),
+														'child' : 
+														[ 
+															{
+																'element' : function() 
+																{
+																	var b = document.createElement( 'strong' );
+																	b.innerHTML = i18n( 'i18n_header_Status' );
+																	b.onclick = function()
+																	{
+																		sortUsers( 'Status' );
+																	};
+																	return b;
+																}()
+															}
+														]
 													},
 													{
 														'element' : function() 
 														{
 															var d = document.createElement( 'div' );
 															d.className = 'PaddingSmallLeft PaddingSmallRight HContent20 FloatLeft Ellipsis';
-															d.innerHTML = '<strong onclick="sortUsers(\'LoginTime\')">Last Login</strong>';
 															return d;
-														}()
+														}(),
+														'child' : 
+														[ 
+															{
+																'element' : function() 
+																{
+																	var b = document.createElement( 'strong' );
+																	b.innerHTML = i18n( 'i18n_header_LoginTime' );
+																	b.onclick = function()
+																	{
+																		sortUsers( 'LoginTime' );
+																	};
+																	return b;
+																}()
+															}
+														]
 													}
 												]
 											}
@@ -8146,43 +8129,6 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 					if( res == 'ok' )
 					{
 						Init();
-						
-						/*// Experimental ...
-						if( UsersSettings( 'experiment' ) )
-						{
-							console.log( 'scrollengine.init() ... ', scrollengine );
-							
-							ge( 'ListUsersInner' ).innerHTML = '';
-							
-							if( scrollengine.debug )
-							{
-								ge( 'UserList' ).innerHTML += '<div id="Debug"></div>';
-							}
-							
-							ge( 'ListUsersInner' ).className = ge( 'ListUsersInner' ).className + ' experiment';
-							
-							// Data
-							let myArray = [];
-							for( let a = 0; a < 1000; a++ )
-							{
-								myArray.push( {
-									initialized: null,
-								} );
-							}
-							
-							console.log( userList );
-							
-							scrollengine.init( ge( 'ListUsersInner' ), myArray, function( res ) 
-							{ 
-								console.log( 'ListUsersInner ', res );
-								
-								
-								
-								scrollengine.refresh( true, userlist );
-								
-							} );
-					
-						}*/
 						
 					}
 					
@@ -8424,13 +8370,14 @@ function getUserlist( callback, obj, limit )
 	// TODO: Check why notids is buggy ... 	
 	
 	var args = { 
-		query   : UsersSettings( 'searchquery'           ), 
-		sortby  : UsersSettings( 'sortby'                ), 
-		orderby : UsersSettings( 'orderby'               ), 
-		limit   : limit ? limit : UsersSettings( 'limit' ),
-		/*notids  : UsersSettings( 'uids'        ).join( ',' ),*/
-		count   : true, 
-		authid  : Application.authId 
+		query      : UsersSettings( 'searchquery'           ), 
+		sortby     : UsersSettings( 'sortby'                ), 
+		orderby    : UsersSettings( 'orderby'               ), 
+		customsort : UsersSettings( 'customsort'            ), 
+		limit      : limit ? limit : UsersSettings( 'limit' ),
+		/*notids   : UsersSettings( 'uids'        ).join( ',' ),*/
+		count      : true, 
+		authid     : Application.authId 
 	};
 	
 	if( UsersSettings( 'total' ) > 0 && UsersSettings( 'startlimit' ) > UsersSettings( 'total' ) )
@@ -8438,24 +8385,6 @@ function getUserlist( callback, obj, limit )
 		console.log( 'getUserlist( callback, obj ): ', { args: args, usersettings: UsersSettings() } );
 		return;
 	}
-	
-	// Temp ...
-	
-	/*if( callback && UsersSettings( 'experiment' ) )
-	{
-		return callback( 'ok', [], obj );
-		
-		var userList = [];
-		
-		for( var a = 1; a <= UsersSettings( 'experiment' ); a++ )
-		{
-			userList.push( { ID: a,  Name: 'Dummy'+(a<10?'0'+a:a), FullName: 'Dummy'+(a<10?'0'+a:a), Level: 'User', Status: 0, LoginTime: 0 } );
-		}
-		
-		userList['Count'] = '1000';
-		
-		return callback( 'ok', userList, obj );
-	}*/
 	
 	// Get the user list
 	var m = new Module( 'system' );
@@ -8597,8 +8526,97 @@ function SubMenu( _this, close )
 	}
 }
 
-function sortUsers( sortby, orderby )
+function hideStatus( status, show, pnt )
 {
+	console.log( "hideStatus( '"+status+"', "+show+", "+pnt+" )" );
+	
+	if( status && ge( 'ListUsersInner' ) )
+	{
+		var list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
+		
+		if( list.length > 0 )
+		{
+			for( var a = 0; a < list.length; a++ )
+			{
+				if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+				
+				var span = list[a].getElementsByTagName( 'span' )[0];
+				
+				if( span )
+				{
+					if( span.getAttribute( 'status' ).toLowerCase() == status.toLowerCase() )
+					{
+						let obj = ( pnt ? span.parentNode.parentNode : list[a] );
+						
+						if( show )
+						{
+							obj.style.display = '';
+						}
+						else
+						{
+							obj.style.display = 'none';
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+function searchServer( filter, force )
+{
+	//if( !filter )
+	//{
+	//	UsersSettings( 'searchquery', filter );
+	//}
+	
+	if( !force )
+	{
+		if( filter.length < UsersSettings( 'minlength' ).length || filter.length < UsersSettings( 'searchquery' ).length || filter == UsersSettings( 'searchquery' ) ) return;
+	}
+	
+	if( filter != null )
+	{
+		UsersSettings( 'reset', true );
+		
+		UsersSettings( 'searchquery', filter );
+	}
+	
+	RequestQueue.Set( function( callback, key )
+	{
+		console.log( filter + ' < ' + UsersSettings( 'searchquery' ) );
+		
+		if( filter && filter.length < UsersSettings( 'searchquery' ).length )
+		{
+			if( callback ) callback( key );
+			
+			return;
+		}
+		
+		getUserlist( function( res, userList, key )
+		{
+			
+			if( callback ) callback( key );
+			
+			console.log( userList );
+			
+			if( userList )
+			{
+				scrollengine.distribute( userList, 0, userList['Count'] );
+				
+				//scrollengine.refresh( true );
+			}
+			
+		}, key );
+		
+	} );
+	
+}
+
+function sortUsers( sortby, orderby, callback )
+{
+	let experiment = UsersSettings( 'experiment' );
+	
 	if( sortby && ge( 'ListUsersInner' ) )
 	{
 		var output = [];
@@ -8610,6 +8628,8 @@ function sortUsers( sortby, orderby )
 			},
 			'LoginTime' : 'timestamp' 
 		};
+		
+		UsersSettings( 'customsort', custom );
 		
 		if( !orderby )
 		{
@@ -8631,7 +8651,7 @@ function sortUsers( sortby, orderby )
 			}
 		}
 		
-		var callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
+		var cb = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
 		
 		var override = false;
 		
@@ -8644,48 +8664,56 @@ function sortUsers( sortby, orderby )
 		}
 		else if( custom[ sortby ] && custom[ sortby ][ orderby ] && sortby == 'Status' )
 		{
-			callback = ( function ( a, b ) { return ( custom[ sortby ][ orderby ][ a.sortby ] - custom[ sortby ][ orderby ][ b.sortby ] ); } );
+			cb = ( function ( a, b ) { return ( custom[ sortby ][ orderby ][ a.sortby ] - custom[ sortby ][ orderby ][ b.sortby ] ); } );
 			
 			//console.log( custom[ sortby ][ orderby ] );
 			
 			override = true;
 		}
 		
+		
+		
 		var list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
 		
-		if( list.length > 0 )
+		if( experiment || list.length > 0 )
 		{
-			for( var a = 0; a < list.length; a++ )
+			if( !experiment )
 			{
-				if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
-				
-				var span = list[a].getElementsByTagName( 'span' )[0];
-				
-				if( span && span.getAttribute( sortby.toLowerCase() ) )
+				for( var a = 0; a < list.length; a++ )
 				{
-					var obj = { 
-						sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
-						content : list[a]
-					};
+					if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+				
+					var span = list[a].getElementsByTagName( 'span' )[0];
+				
+					if( span && span.getAttribute( sortby.toLowerCase() ) )
+					{
+						var obj = { 
+							sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
+							content : list[a]
+						};
 					
-					output.push( obj );
+						output.push( obj );
+					}
 				}
 			}
 			
-			if( output.length > 0 )
+			if( experiment || output.length > 0 )
 			{
-				// Sort ASC default
+				if( !experiment )
+				{
+					// Sort ASC default
 				
-				output.sort( callback );
+					output.sort( cb );
 				
-				// Sort DESC
+					// Sort DESC
 		
-				if( !override && orderby == 'DESC' ) 
-				{ 
-					output.reverse();  
-				} 
+					if( !override && orderby == 'DESC' ) 
+					{ 
+						output.reverse();  
+					} 
 				
-				//console.log( 'sortUsers('+sortby+'): ', { output: output, sortby: sortby, orderby: orderby } );
+					//console.log( 'sortUsers('+sortby+'): ', { output: output, sortby: sortby, orderby: orderby } );
+				}
 				
 				// TODO: Make support for sortby Status and Timestamp on the server levels aswell ...
 				
@@ -8705,15 +8733,23 @@ function sortUsers( sortby, orderby )
 					}
 				}
 				
-				ge( 'ListUsersInner' ).innerHTML = '';
-				
-				for( var key in output )
+				if( !experiment )
 				{
-					if( output[key] && output[key].content )
+					ge( 'ListUsersInner' ).innerHTML = '';
+				
+					for( var key in output )
 					{
-						// Add row
-						ge( 'ListUsersInner' ).appendChild( output[key].content );
+						if( output[key] && output[key].content )
+						{
+							// Add row
+							ge( 'ListUsersInner' ).appendChild( output[key].content );
+						}
 					}
+				}
+				
+				if( experiment )
+				{
+					searchServer( null, true );
 				}
 				
 			}

@@ -56,6 +56,8 @@ scrollengine = {
 	
 	refreshTimeout : 0,
 	
+	// TODO: Set custom layout from object ...
+	
 	init : function ( list, data, total, callback )
 	{
 		let self = this;
@@ -360,8 +362,6 @@ scrollengine = {
 			if( this.myArray[ s ] && this.myArray[ s ].ID && this.myArray[ s ].Name )
             {
             	
-            	// TODO: define object and how html design should be from an extra var ...
-            	
             	let str = '';
             	
             	let src;
@@ -371,12 +371,7 @@ scrollengine = {
             		src = '/system.library/module/?module=system&command=getavatar&userid=' + this.myArray[s].ID + ( this.myArray[s].image ? '&image=' + this.myArray[s].image : '' ) + '&width=16&height=16&authid=' + Application.authId;
             		let iii = new Image();
             		iii.src = src;
-            		/*iii.onload = function()
-            		{
-            			console.log( 'Loaded image: ' + this.src );
-            		}*/
             		this.myArray[ s ].imageObj = iii;	
-            		//console.log( 'Creating new cache image' );
             	}
             	// From cache
             	else
@@ -407,17 +402,15 @@ scrollengine = {
 				
 				var bg = 'background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;';
 
-            	//str += '<div class="HRow '+obj.Status+' Line '+s+'" id="UserListID_'+obj.ID+'">';
-				str += '	<div class="TextCenter HContent10 FloatLeft PaddingSmall Ellipsis edit">';
-				str += '		<span id="UserAvatar_'+obj.ID+'" fullname="'+obj.FullName+'" status="'+obj.Status+'" logintime="'+obj.Logintime+'" timestamp="'+obj.Timestamp+'" class="IconSmall fa-user-circle-o avatar" style="position: relative;">';
-				str += '			<div style="' + bg + '"></div>';
-				str += '		</span>';
-				str += '	</div>';
-				str += '	<div class=" HContent30 FloatLeft PaddingSmall Ellipsis fullname">' + obj.FullName + '</div>';
-				str += '	<div class=" HContent25 FloatLeft PaddingSmall Ellipsis name">' + obj.Name + '</div>';
-				str += '	<div class=" HContent15 FloatLeft PaddingSmall Ellipsis status">' + obj.Status + '</div>';
-				str += '	<div class=" HContent20 FloatLeft PaddingSmall Ellipsis logintime">' + obj.Logintime + '</div>';
-				//str += '</div>';
+				str += '<div class="TextCenter HContent10 FloatLeft PaddingSmall Ellipsis edit">';
+				str += '	<span id="UserAvatar_'+obj.ID+'" fullname="'+obj.FullName+'" status="'+obj.Status+'" logintime="'+obj.Logintime+'" timestamp="'+obj.Timestamp+'" class="IconSmall fa-user-circle-o avatar" style="position: relative;">';
+				str += '		<div style="' + bg + '"></div>';
+				str += '	</span>';
+				str += '</div>';
+				str += '<div class=" HContent30 FloatLeft PaddingSmall Ellipsis fullname">' + obj.FullName + '</div>';
+				str += '<div class=" HContent25 FloatLeft PaddingSmall Ellipsis name">' + obj.Name + '</div>';
+				str += '<div class=" HContent15 FloatLeft PaddingSmall Ellipsis status">' + obj.Status + '</div>';
+				str += '<div class=" HContent20 FloatLeft PaddingSmall Ellipsis logintime">' + obj.Logintime + '</div>';
             	
             	let selected = ( ge( 'UserListID_' + obj.ID ) && ge( 'UserListID_' + obj.ID ).className.indexOf( 'Selected' ) >= 0 ? ' Selected' : '' );
             	
@@ -449,13 +442,7 @@ scrollengine = {
             	}
             	
             	uids.push( obj.ID );
-            	
-            	//allNodes[ a ].innerHTML = 'Line ' + s + ' ID ' + this.myArray[ s ].ID + ' Name ' + this.myArray[ s ].Name;
             }
-            else
-            {
-				//allNodes[ a ].innerHTML = this.myArray[ s ];
-			}
 		}
 		
 		
@@ -507,6 +494,8 @@ scrollengine = {
 			}, ( uids ? uids.join(',') : false ) );
 		}
 		
+		hideStatus( 'Disabled', false );
+		
 	},
 	
 	// Refresh funksjon
@@ -530,6 +519,8 @@ scrollengine = {
 		// Make elements if they do not exist
 		if( !this.elements.pageAbove )
 		{
+			this.list.innerHTML = '';
+			
 		    this.elements.pageAbove   = this.createDiv( 'pageAbove' );
 		    this.elements.pageMiddle  = this.createDiv( 'pageMiddle' );
 		    this.elements.pageBelow   = this.createDiv( 'pageBelow' );
@@ -622,14 +613,12 @@ scrollengine = {
 	reset : function (  )
 	{
 		
-		// TODO: This is allready created no need to reset it in order to recreate ...
-		
-		/*this.elements = {
+		this.elements = {
 			pageAbove   : null,
 			pageMiddle  : null,
 			pageBelow   : null,
 			wholeHeight : null
-		},*/
+		},
 		
 		this.config = {
 			rowHeight  : 27,
