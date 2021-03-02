@@ -111,6 +111,9 @@ Friend.User = {
     // Send the actual login call
     SendLoginCall: function( info, callback )
     {
+    	// Already logging in
+    	if( this.State == 'Login' ) return;
+    	
     	this.State = 'Login';
     	
     	if( this.lastLogin && this.lastLogin.currentRequest )
