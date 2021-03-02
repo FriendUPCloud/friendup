@@ -177,6 +177,8 @@ Friend.User = {
 					Workspace.userLevel = json.level;
 					Workspace.fullName = json.fullname;
 					
+					Friend.User.lastLogin = null;
+					
 					// We are now online!
 					Friend.User.SetUserConnectionState( 'online' );
 					
