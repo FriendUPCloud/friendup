@@ -1161,7 +1161,7 @@ var WorkspaceInside = {
 		if( !this.refreshEWCTime )
 		    this.refreshEWCTime = 0;
 		let cand = ( new Date() ).getTime() / 1000;
-		if( cand - this.refreshEWCTime > 30 )
+		if( !Workspace.cachedSessionList || cand - this.refreshEWCTime > 30 )
 		{
 		    this.refreshEWCTime = cand;
 		    var mo = new Library( 'system.library' );
@@ -1184,6 +1184,7 @@ var WorkspaceInside = {
 
 				    if( sessionList )
 				    {
+				    	Workspace.cachedSessionList = sessionList;
 					    try
 					    {
 						    var exists = [];
