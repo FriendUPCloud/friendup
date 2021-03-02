@@ -158,7 +158,7 @@ Friend.User = {
 		{
 			Friend.User.lastLogin = null;
 			
-			console.log( 'Result from relogin: ', json, serveranswer );
+			console.log( 'Result from relogin: ', json );
 		
 			// We got a real error
 			if( json == null )
@@ -457,6 +457,7 @@ Friend.User = {
 	// Set the user state (offline / online etc)
 	SetUserConnectionState: function( mode, force )
 	{
+		console.log( 'Setting mode: ' + mode + ' and ' + ( force ? 'force' : 'not force' ) );
 		if( mode == 'offline' )
 		{
 			if( this.State != 'offline' )
@@ -517,6 +518,7 @@ Friend.User = {
 				if( Workspace.refreshDesktop )
 					Workspace.refreshDesktop( true, false );
 				// Try to reboot the websocket
+				console.log( 'What is this: ', Workspace.conn );
 				if( !Workspace.conn && Workspace.initWebSocket )
 				{
 					Workspace.initWebSocket();
