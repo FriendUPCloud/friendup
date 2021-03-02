@@ -322,7 +322,7 @@ Application.saveItem = function( id, application, displayname, shortdescription,
 		shortdescription: shortdescription, 
 		icon: icon, 
 		workspace: workspace,
-		opensilent: opensilent ? '1' : '0'
+		opensilent: opensilent === '1' ? '1' : '0'
 	};
 	Application.selectAfterLoad = id;
 	m.execute( 'saveitem', ms );
@@ -383,7 +383,7 @@ Application.receiveMessage = function( msg )
 						msg.shortdescription,
 						msg.icon,
 						msg.workspace,
-						msg.opensilent
+						msg.opensilent === 'true' ? '1': '0'
 					);
 				}
 				break;
