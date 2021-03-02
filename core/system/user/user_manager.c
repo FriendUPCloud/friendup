@@ -74,7 +74,7 @@ void UMDelete( UserManager *smgr )
 	}
 	
 	User *remusr = usr;
-	Log( FLOG_INFO,  "Release users\n");
+	Log( FLOG_INFO, "Release users\n");
 	
 	//
 	// we must release all users from memory
@@ -149,13 +149,13 @@ int UMUserUpdateDB( UserManager *um, User *usr )
 		}
 		else
 		{
-			FERROR("Cannot get user, mysql.library was not open\n");
+			FERROR("[UMUserUpdateDB] Cannot get user, mysql.library was not open\n");
 			return 1;
 		}
 	}
 	else
 	{
-		FERROR("User = NULL\n");
+		FERROR("[UMUserUpdateDB] usr pointer is equal to NULL\n");
 		return 2;
 	}
 	return 0;
@@ -250,7 +250,7 @@ User *UMUserGetByName( UserManager *um, const char *name )
 	
 	if( sqlLib == NULL )
 	{
-		FERROR("Cannot get user, mysql.library was not open\n");
+		FERROR("[UMUserGetByName] Cannot get user, mysql.library was not open\n");
 		return NULL;
 	}
 
@@ -283,7 +283,7 @@ User * UMUserGetByNameDB( UserManager *um, const char *name )
 	
 	if( sqlLib == NULL )
 	{
-		FERROR("Cannot get user, mysql.library was not open\n");
+		FERROR("[UMUserGetByNameDB] Cannot get user, mysql.library was not open\n");
 		return NULL;
 	}
 
@@ -326,7 +326,7 @@ User * UMUserGetByIDDB( UserManager *um, FULONG id )
 	
 	if( sqlLib == NULL )
 	{
-		FERROR("Cannot get user, mysql.library was not open\n");
+		FERROR("[UMUserGetByIDDB] Cannot get user, mysql.library was not open\n");
 		return NULL;
 	}
 
@@ -435,7 +435,7 @@ int UMUserCreate( UserManager *smgr, Http *r __attribute__((unused)), User *usr 
 	}
 	else
 	{
-		FERROR("Cannot create user, mysql.library was not opened!\n");
+		FERROR("[UMUserCreate] Cannot create user, mysql.library was not opened!\n");
 		return 2;
 	}
 	return val;
@@ -456,7 +456,7 @@ FBOOL UMUserIsAdminByAuthID( UserManager *smgr, Http *r __attribute__((unused)),
 	
 	if( sqlLib == NULL )
 	{
-		FERROR("Cannot get user, mysql.library was not open\n");
+		FERROR("[UMUserIsAdminByAuthID] Cannot get user, mysql.library was not open\n");
 		return FALSE;
 	}
 	
@@ -1014,7 +1014,7 @@ int UMAddUser( UserManager *um,  User *usr )
 	}
 	else
 	{
-		INFO("User found, will not be added\n");
+		INFO("[UMAddUser] User found, will not be added\n");
 	}
 	
 	return  0;
@@ -1061,7 +1061,7 @@ int UMRemoveUser( UserManager *um, User *usr, UserSessionManager *userSessionMan
 		{
 			if( userCurrent == usr )
 			{
-				DEBUG("%s removing user at %p, place in list %d\n", __func__, userCurrent, n);
+				DEBUG("[UMRemoveUser] %s removing user at %p, place in list %d\n", __func__, userCurrent, n);
 				found = true;
 				n++;
 				break;
@@ -1076,7 +1076,7 @@ int UMRemoveUser( UserManager *um, User *usr, UserSessionManager *userSessionMan
 	{ //the requested user has been found in the list
 		if( userPrevious )
 		{ //we are in the middle or at the end of the list
-			DEBUG("Deleting from the middle or end of the list\n");
+			DEBUG("[UMRemoveUser] Deleting from the middle or end of the list\n");
 			userPrevious->node.mln_Succ = userCurrent->node.mln_Succ;
 		}
 		else
@@ -1464,7 +1464,7 @@ int UMFindUserByNameAndAddToSas( UserManager *um, char *uname, void *las, char *
 						{
 							SASUList *sli = SASSessionAddUser( as, us, NULL );
 
-							DEBUG("[SASSessionAddUsersByName] newsession will be added %p\n", us );
+							DEBUG("[UMFindUserByNameAndAddToSas] newsession will be added %p\n", us );
 
 							if( sli != NULL )
 							{
@@ -1554,7 +1554,7 @@ int UMInitUsers( UserManager *um )
 		while( tmpUser != NULL )
 		{
 			char *err = NULL;
-			DEBUG( "[SystemBase] FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
+			DEBUG( "[UMInitUsers] FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
 			
 			UserSession *session = USMCreateTemporarySession( sb->sl_USM, sqllib, tmpUser->u_ID, 0 );
 			if( session != NULL )
@@ -1570,7 +1570,7 @@ int UMInitUsers( UserManager *um )
 				}
 				USMDestroyTemporarySession( sb->sl_USM, sqllib, session );
 			}
-			DEBUG( "[SystemBase] DONE FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
+			DEBUG( "[UMInitUsers] DONE FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
 			tmpUser = (User *)tmpUser->node.mln_Succ;
 		}
 		

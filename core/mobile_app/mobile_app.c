@@ -395,7 +395,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 		}
 		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 	}
-	DEBUG("Checking: connection to app pointer %p\n", appConnection );
+	DEBUG("[WebsocketAppCallback]: connection to app pointer %p\n", appConnection );
 	
 	switch( reason )
 	{
@@ -959,10 +959,10 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 	}
 	AuthMod *a = SLIB->AuthModuleGet( SLIB );
 
-	DEBUG("Check password %s \n", passwordString );
+	DEBUG("[MobileAppHandleLogin] Check password %s \n", passwordString );
 	if( a->CheckPassword(a, NULL, user, passwordString, &block_time) == FALSE )
 	{
-		DEBUG("Check = false\n");
+		DEBUG("[MobileAppHandleLogin] Check = false\n");
 		if( user != NULL )
 		{
 			UserDelete( user );

@@ -43,7 +43,7 @@
 /// endif
 Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserSession *loggedSession )
 {
-	Log( FLOG_DEBUG, "ApplicationWebRequest %s  CALLED BY: %s\n", urlpath[ 0 ], loggedSession->us_User->u_Name );
+	Log( FLOG_DEBUG, "[ApplicationWebRequest] %s  CALLED BY: %s\n", urlpath[ 0 ], loggedSession->us_User->u_Name );
 
 	Http* response = NULL;
 	
@@ -136,7 +136,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		}
 		else
 		{
-			FERROR("ERROR: Cannot allocate memory for BufferString\n");
+			FERROR("[ApplicationWebRequest] Cannot allocate memory for BufferString\n");
 		}
 	}
 
@@ -296,7 +296,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, dictmsgbuf );
 
-			FERROR("sasid or users is missing!\n");
+			FERROR("[ApplicationWebRequest] sasid or users is missing!\n");
 		}
 		
 		if( qauthid != NULL )
@@ -370,7 +370,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{\"response\":\"%s\",\"code\":\"%d\"}", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, dictmsgbuf );
 
-			FERROR("sasid or users is missing!\n");
+			FERROR("[ApplicationWebRequest] sasid or users is missing!\n");
 		}
 		
 		if( qauthid != NULL )

@@ -39,7 +39,7 @@ ApplicationManager *ApplicationManagerNew( void *sb )
 	}
 	else
 	{
-		FERROR("Cannot allocate memory for ApplicationManager\n");
+		FERROR("[ApplicationManagerNew] Cannot allocate memory for ApplicationManager\n");
 	}
 	
 	return as;

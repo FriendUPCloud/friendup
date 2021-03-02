@@ -332,7 +332,7 @@ CoreEvent *EventCheck( EventManager *em, CoreEvent *ev, time_t ti )
 		FERROR("Cannot do anything with empty event\n");
 		return NULL;
 	}
-	//DEBUG("Check event: time %lu eventTime %lu\n", ti, ev->ce_Time );
+	//DEBUG("[EventCheck]: time %lu eventTime %lu\n", ti, ev->ce_Time );
 	
 	if( ti >= ev->ce_Time  )
 	{

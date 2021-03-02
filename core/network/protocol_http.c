@@ -1514,7 +1514,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 											BufStringDelete( bs );
 										}
 										FFree( multipath );
-										DEBUG("multipath released\n");
+										DEBUG("[ProtocolHttp] multipath released\n");
 									}
 								}	// file not found in cache
 							}
@@ -1532,20 +1532,20 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 								)
 								{
 									//DEBUG("\n\n\n\n===========================\n\n");
-									DEBUG("Checking connections, number sessions %d\n", SLIB->sl_USM->usm_SessionCounter );
+									DEBUG("[ProtocolHttp] Checking connections, number sessions %d\n", SLIB->sl_USM->usm_SessionCounter );
 							
 									int minSessions = SLIB->sl_USM->usm_SessionCounter;
 									ClusterNode *clusNode = SLIB->fcm->fcm_ClusterNodes;
 						
 									while( clusNode != NULL )
 									{
-										DEBUG("Checking sessions on node [%s] number %d min %d connection ptr %p NODEID: %lu\n", clusNode->cn_Address, clusNode->cn_UserSessionsCount, minSessions, clusNode->cn_Connection, clusNode->cn_ID );
+										DEBUG("[ProtocolHttp] Checking sessions on node [%s] number %d min %d connection ptr %p NODEID: %lu\n", clusNode->cn_Address, clusNode->cn_UserSessionsCount, minSessions, clusNode->cn_Connection, clusNode->cn_ID );
 										
 										if( clusNode->cn_Connection != NULL && clusNode->cn_Connection->fc_Socket != NULL )
 										{
 											if( clusNode->cn_UserSessionsCount < minSessions )
 											{
-												DEBUG("New URL will be generated\n");
+												DEBUG("[ProtocolHttp] New URL will be generated\n");
 												if( clusNode->cn_Url != NULL )	// we cannot redirect to url which do not exist
 												{
 													fromUrl = TRUE;
@@ -1559,7 +1559,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 										}
 										else
 										{
-											DEBUG("Connection do not exist [%s]\n", clusNode->cn_Address );
+											DEBUG("[ProtocolHttp] Connection do not exist [%s]\n", clusNode->cn_Address );
 										}
 										clusNode = (ClusterNode *)clusNode->node.mln_Succ;
 									}
@@ -1576,7 +1576,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 									char redirect[ 1024 ];
 									int redsize = 0;
 							
-									DEBUG("REDIRECT SET TO [%s]\n", newUrl );
+									DEBUG("[ProtocolHttp] REDIRECT SET TO [%s]\n", newUrl );
 
 									if( SLIB->fcm->fcm_SSLEnabled )
 									{
@@ -1605,7 +1605,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 										}
 									}
 							
-									DEBUG("Redirected to: [%s]\n", redirect );
+									DEBUG("[ProtocolHttp] Redirected to: [%s]\n", redirect );
 
 									struct TagItem tags[] = {
 										{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate("text/html") },
@@ -1700,7 +1700,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 										// Send reply
 										if( file != NULL )
 										{
-											DEBUG("Check mime\n");
+											DEBUG("[ProtocolHttp] Check mime\n");
 											char *mime = NULL;
 
 											if(  file->lf_Buffer == NULL )
@@ -1710,7 +1710,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 											if( file->lf_Mime == NULL )
 											{
-												DEBUG("GET single file : extension '%s'\n", completePath->p_Extension );
+												DEBUG("[ProtocolHttp] GET single file : extension '%s'\n", completePath->p_Extension );
 												if( completePath->p_Extension )
 												{
 													const char *t = MimeFromExtension( completePath->p_Extension );
@@ -1854,7 +1854,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 												
 												if( request->http_ContentType == HTTP_CONTENT_TYPE_APPLICATION_JSON )
 												{
-													DEBUG("MODRUNPHP %s\n", "php/catch_all.php" );
+													DEBUG("[ProtocolHttp] MODRUNPHP %s\n", "php/catch_all.php" );
 													FBOOL isFile;
 													char *allArgsNew = GetArgsAndReplaceSession( request, NULL, &isFile );
 													if( allArgsNew != NULL )
@@ -1889,7 +1889,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 															*dst++ = '\"';
 															
 															//snprintf( runFile, argssize + 512, "php \"php/catch_all.php\" \"%s\";", allArgsNew );
-															DEBUG("MODRUNPHP '%s'\n", runFile );
+															DEBUG("[ProtocolHttp] MODRUNPHP '%s'\n", runFile );
 															
 															Log( FLOG_DEBUG, "[ProtocolHttp] Executing RunPHPScript\n");
 															phpResp = RunPHPScript( runFile );
@@ -1910,7 +1910,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 												
 												if( phpResp == NULL )
 												{
-													DEBUG("CatchALL 1621\n");
+													DEBUG("[ProtocolHttp] CatchALL 1621\n");
 													if( ( command = FCalloc( clen, sizeof(char) ) ) != NULL )
 													{
 														snprintf( command, clen, "php \"php/catch_all.php\" \"%s\" \"%s\";", uri->uri_Path->p_Raw, request->http_Uri ? request->http_Uri->uri_QueryRaw : NULL );

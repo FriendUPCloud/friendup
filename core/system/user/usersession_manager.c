@@ -112,7 +112,7 @@ void USMDelete( UserSessionManager *smgr )
  */
 User *USMGetUserBySessionID( UserSessionManager *usm, char *sessionid )
 {
-	DEBUG("CHECK3\n");
+	DEBUG("[USMGetUserBySessionID]\n");
 	if( FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) ) == 0 )
 	{
 #ifdef USE_HASHMAP_FOR_SEARCH
@@ -151,11 +151,10 @@ UserSession *USMGetSessionBySessionID( UserSessionManager *usm, char *sessionid 
 	DEBUG("[USMGetSessionBySessionID] sesssion id %s\n", sessionid );
 	if( sessionid == NULL )
 	{
-		FERROR("Sessionid is NULL!\n");
+		FERROR("[USMGetSessionBySessionID] Sessionid is NULL!\n");
 		return NULL;
 	}
-	DEBUG("CHECK4\n");
-	
+
 	if( FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) ) == 0 )
 	{
 #ifdef USE_HASHMAP_FOR_SEARCH
@@ -171,13 +170,11 @@ UserSession *USMGetSessionBySessionID( UserSessionManager *usm, char *sessionid 
 		{
 			if( strcmp( sessionid, us->us_SessionID ) == 0 )
 			{
-				DEBUG("CHECK4END\n");
 				FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 				return us;
 			}
 			us = (UserSession *) us->node.mln_Succ;
 		}
-		DEBUG("CHECK4END\n");
 #endif
 		FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 	}
@@ -197,7 +194,7 @@ UserSession *USMGetSessionByHashedSessionID( UserSessionManager *usm, char *sess
 	DEBUG("[USMGetSessionByHashedSessionID] sesssion id %s\n", sessionid );
 	if( sessionid == NULL )
 	{
-		FERROR("Sessionid is NULL!\n");
+		FERROR("[USMGetSessionByHashedSessionID] Sessionid is NULL!\n");
 		return NULL;
 	}
 
@@ -247,14 +244,14 @@ UserSession *USMGetSessionBySessionIDFromDB( UserSessionManager *smgr, char *ses
 #else
 		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery)," SessionID='%s'", sessionid );
 #endif
-		DEBUG( "[USMGetSessionBySessionIDFromDB] Sending query: %s...\n", tmpQuery );
+		DEBUG("[USMGetSessionBySessionIDFromDB] Sending query: %s...\n", tmpQuery );
 
 		usersession = ( struct UserSession *)sqlLib->Load( sqlLib, UserSessionDesc, tmpQuery, &entries );
 		sb->LibrarySQLDrop( sb, sqlLib );
 	}
 	else
 	{
-		FERROR("Cannot get user, mysql.library was not open\n");
+		FERROR("[USMGetSessionBySessionIDFromDB] Cannot get user, mysql.library was not open\n");
 		return NULL;
 	}
 	
@@ -313,7 +310,7 @@ UserSession *USMGetSessionByDeviceIDandUserDB( UserSessionManager *smgr, char *d
 		int entries = 0;
 		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery)," ( DeviceIdentity='%s' AND UserID = %ld )", devid, uid );
 	
-		DEBUG( "[USMGetSessionByDeviceIDandUserDB] Sending query: %s...\n", tmpQuery );
+		DEBUG("[USMGetSessionByDeviceIDandUserDB] Sending query: %s...\n", tmpQuery );
 	
 		// You added 'where' and on the end you did not used it??
 	
@@ -323,7 +320,7 @@ UserSession *USMGetSessionByDeviceIDandUserDB( UserSessionManager *smgr, char *d
 	}
 	else
 	{
-		FERROR("Cannot get user, mysql.library was not open\n");
+		FERROR("[USMGetSessionByDeviceIDandUserDB] Cannot get user, mysql.library was not open\n");
 		return NULL;
 	}
 	DEBUG("[USMGetSessionByDeviceIDandUserDB] end\n");
@@ -339,7 +336,6 @@ UserSession *USMGetSessionByDeviceIDandUserDB( UserSessionManager *smgr, char *d
  */
 UserSession *USMGetSessionByUserID( UserSessionManager *usm, FULONG id )
 {
-	DEBUG("CHECK6\n");
 	// We will take only first session of that user
 	// protect in mutex
 	if( FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) ) == 0 )
@@ -416,7 +412,7 @@ void USMLogUsersAndDevices( UserSessionManager *usm )
 	User *lu = um->um_Users;
 	while( lu != NULL )
 	{
-		INFO("Unmounting checking users %s\n", lu->u_Name );
+		INFO("[USMLogUsersAndDevices] Unmounting checking users %s\n", lu->u_Name );
 		
 		File *lf = lu->u_MountedDevs;
 		while( lf != NULL )
@@ -446,7 +442,7 @@ UserSession *USMGetSessionsByTimeout( UserSessionManager *smgr, const FULONG tim
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	if( sqlLib == NULL )
 	{
-		FERROR("Cannot get user, mysql.library was not open\n");
+		FERROR("[USMGetSessionsByTimeout] Cannot get user, mysql.library was not open\n");
 		return NULL;
 	}
 	
@@ -477,7 +473,7 @@ UserSession *USMGetSessionsByTimeout( UserSessionManager *smgr, const FULONG tim
     UserSession *ses = usersession;
     while( ses != NULL )
     {
-        INFO("Loaded sessionid: %s id %lu\n", ses->us_SessionID, ses->us_ID );
+        INFO("[USMGetSessionsByTimeout] Loaded sessionid: %s id %lu\n", ses->us_SessionID, ses->us_ID );
         ses = (UserSession *)ses->node.mln_Succ;
     }
     
@@ -644,7 +640,7 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 	
 	if( us == NULL )
 	{
-		FERROR("Cannot add NULL session!\n");
+		FERROR("[USMUserSessionAdd] Cannot add NULL session!\n");
 		return NULL;
 	}
 	
@@ -810,7 +806,7 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 	}
 	else
 	{
-		FERROR("Couldnt find user with ID %lu\n", us->us_UserID );
+		FERROR("[USMUserSessionAdd] Couldnt find user with ID %lu\n", us->us_UserID );
 		if( FRIEND_MUTEX_LOCK( &us->us_Mutex ) == 0 )
 		{
 			us->us_InUseCounter--;
@@ -931,7 +927,7 @@ int USMSessionsDeleteDB( UserSessionManager *smgr, const char *sessionid )
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	if( sqlLib == NULL )
 	{
-		FERROR("Cannot get user, mysql.library was not open\n");
+		FERROR("[USMSessionsDeleteDB] Cannot get user, mysql.library was not open\n");
 		return -1;
 	}
 
@@ -1031,7 +1027,7 @@ int USMSessionSaveDB( UserSessionManager *smgr, UserSession *ses )
 		{
 			if( ( error = sqllib->Save( sqllib, UserSessionDesc, ses ) ) != 0 )
 			{
-				FERROR("Cannot store session\n");
+				FERROR("[USMSessionSaveDB] Cannot store session\n");
 			}
 			else
 			{
@@ -1108,7 +1104,7 @@ int USMRemoveOldSessions( void *lsb )
 				{
 					if( remSession->us_User == sb->sl_Sentinel->s_User && strcmp( remSession->us_DeviceIdentity, "remote" ) == 0 )
 					{
-						DEBUG("Sentinel REMOTE session I cannot remove it\n");
+						DEBUG("[USMRemoveOldSessions] Sentinel REMOTE session I cannot remove it\n");
 						canDelete = FALSE;
 					}
 				}
@@ -1123,7 +1119,7 @@ int USMRemoveOldSessions( void *lsb )
 				
 				if( actSession == (UserSession *)actSession->node.mln_Succ )
 				{
-					DEBUG( "DOUBLE ACTSESSION\n" );
+					DEBUG( "[USMRemoveOldSessions] DOUBLE ACTSESSION\n" );
 					break;
 				}
 				
@@ -1171,7 +1167,7 @@ int USMRemoveOldSessionsinDB( void *lsb )
 
 	time_t acttime = time( NULL );
 	
-	DEBUG("USMRemoveOldSessionsDB\n" );
+	DEBUG("[USMRemoveOldSessionsDB] start\n" );
 
 	 SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
 	 if( sqllib != NULL )
@@ -1180,7 +1176,7 @@ int USMRemoveOldSessionsinDB( void *lsb )
 	 
 		// we remove old entries older then sl_RemoveSessionsAfterTime (look in systembase.c)
 		snprintf( temp, sizeof(temp), "DELETE from `FUserSession` WHERE LoggedTime>0 AND (%lu-LoggedTime)>%lu", acttime, sb->sl_RemoveSessionsAfterTime );
-		DEBUG("USMRemoveOldSessionsDB launched SQL: %s\n", temp );
+		DEBUG("[USMRemoveOldSessionsDB] launched SQL: %s\n", temp );
 	 
 		sqllib->QueryWithoutResults( sqllib, temp );
 	 
@@ -1209,7 +1205,7 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
 	char *tmpmsg = FCalloc( 2048, 1 );
 	if( tmpmsg == NULL )
 	{
-		FERROR("Cannot allocate memory for buffer\n");
+		FERROR("[USMSendDoorNotification] Cannot allocate memory for buffer\n");
 		return FALSE;
 	}
     
@@ -1217,7 +1213,7 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
 	// Go through logged users
 	//
     
-	DEBUG("CHECK11\n");
+	DEBUG("[USMSendDoorNotification] start\n");
 	if( FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) ) == 0 )
 	{
 		User *usr = sb->sl_UM->um_Users;
@@ -1324,11 +1320,9 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
 							le = (UserSessListEntry *)le->node.mln_Succ;
 						} // while loop, session
 					
-						DEBUG("unlock user\n");
+						DEBUG("[USMSendDoorNotification] unlock user\n");
 						FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 					} // mutex lock
-			
-					DEBUG("CHECK12\n");
 					FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
 				}
 			}
@@ -1353,9 +1347,6 @@ void USMCloseUnusedWebSockets( UserSessionManager *usm )
 	DEBUG("[USMCloseUnusedWebSockets] end\n");
 }
 
-//
-
-//
 /**
  * // Generate temporary session
  *
@@ -1391,7 +1382,7 @@ UserSession *USMCreateTemporarySession( UserSessionManager *smgr, SQLLibrary *sq
 			//INSERT INTO `FUserSession` ( `UserID`, `DeviceIdentity`, `SessionID`, `LoggedTime`) VALUES (0, 'tempsession','93623b68df9e390bc89eff7875d6b8407257d60d',0 )
 			snprintf( temp, sizeof(temp), "INSERT INTO `FUserSession` (`UserID`,`DeviceIdentity`,`SessionID`,`LoggedTime`) VALUES (%lu,'tempsession','%s',%lu)", userID, ses->us_HashedSessionID, time(NULL) );
 
-			DEBUG("USMCreateTemporarySession launched SQL: %s\n", temp );
+			DEBUG("[USMCreateTemporarySession] launched SQL: %s\n", temp );
 	
 			locSqllib->QueryWithoutResults( locSqllib, temp );
 		}
@@ -1431,7 +1422,7 @@ void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, U
 	 
 		snprintf( temp, sizeof(temp), "DELETE from `FUserSession` where 'SessionID'='%s' AND 'DeviceIdentity'='tempsession'", ses->us_HashedSessionID );
 
-		DEBUG("USMDestroyTemporarySession launched SQL: %s\n", temp );
+		DEBUG("[USMDestroyTemporarySession] launched SQL: %s\n", temp );
 	
 		locSqllib->QueryWithoutResults( locSqllib, temp );
 	}

@@ -492,7 +492,7 @@ void ProcessSinkMessage( void *locd )
 			{
 				int dlen =  t[3].end - t[3].start;
 				msize = t[2].end - t[2].start;
-				//DEBUG("Check1:  %.*s\n", 10, data + t[2].start );
+				//DEBUG("[ProcessIncomingRequest]:  %.*s\n", 10, data + t[2].start );
 				/*
 				if( strncmp( data + t[2].start, "service", msize ) == 0 && strncmp( data + t[3].start, "data", dlen ) == 0 )
 				{
@@ -505,8 +505,8 @@ void ProcessSinkMessage( void *locd )
 					static int bufferSize = LWS_PRE+256;
 					char *reply = FMalloc( bufferSize );
 					//char reply[ 128 ];
-					DEBUG("size: %d\n", t[4].end-t[4].start );
-					DEBUG("Data: %s\n", (char *)(data + t[4].start));
+					DEBUG("[ProcessIncomingRequest] size: %d\n", t[4].end-t[4].start );
+					DEBUG("[ProcessIncomingRequest] Data: %s\n", (char *)(data + t[4].start));
 					//DEBUG("received message: %s {\"type\":\"pong\",\"data\":\"%.*s\"}", (int)(t[4].end-t[4].start), (char *)(data + t[4].start) );
 					//int locmsglen = snprintf( reply + LWS_PRE, bufferSize ,"{\"type\":\"pong\",\"data\":\"%.*s\"}", t[4].end-t[4].start,data + t[4].start );
 					int locmsglen = sprintf( reply + LWS_PRE ,"{\"type\":\"pong\",\"data\":\"%.*s\"}", t[4].end-t[4].start,data + t[4].start );
@@ -726,13 +726,13 @@ void ProcessSinkMessage( void *locd )
 							if( application != NULL ) FFree( application );
 							if( extra != NULL ) FFree( extra );
 						}
-						else //DEBUG("Check2:  %.*s\n", 10, data + t[6].start );
+						else //DEBUG("[ProcessIncomingRequest]:  %.*s\n", 10, data + t[6].start );
 					
 						if( strncmp( data + t[6].start, "user", msize ) == 0 )
 						{
 							char *reqid = NULL;
 						
-							//DEBUG("Check3:  %.*s\n", 10, data + t[10].start );
+							//DEBUG("[ProcessIncomingRequest]:  %.*s\n", 10, data + t[10].start );
 							if( strncmp( data + t[10].start, "list", t[10].end - t[10].start) == 0) 
 							{
 								if( strncmp( data + t[13].start, "requestid", t[13].end - t[13].start) == 0) 
@@ -767,8 +767,7 @@ void ProcessSinkMessage( void *locd )
 									uuid = StringDuplicateN( data + t[16].start, t[16].end - t[16].start );
 								}
 							
-								DEBUG("Check1:  %s\n", reqid );
-								DEBUG("Check2:  %s\n", uuid );
+								DEBUG("[ProcessIncomingRequest]: reqid %s uuid %s\n", reqid, uuid );
 						
 								if( reqid != NULL && uuid != NULL )
 								{
