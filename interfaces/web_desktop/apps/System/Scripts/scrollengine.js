@@ -8,6 +8,8 @@ console.log( 'scrollengine.js init ...' );
 
 scrollengine = {
 	
+	layout : false,
+	
 	callback : false,
 	
 	myArray : [],
@@ -56,7 +58,12 @@ scrollengine = {
 	
 	refreshTimeout : 0,
 	
-	// TODO: Set custom layout from object ...
+	// TODO: Set custom layout from callback function ...
+	
+	set : function ( layout )
+	{
+		this.layout = layout;
+	},
 	
 	init : function ( list, data, total, callback )
 	{
@@ -218,7 +225,7 @@ scrollengine = {
             row.style.top = c + 'px';
             row.style.background = 'grey';
 			row.style.borderBottom = '1px solid black';
-            row.innerHTML = 'Line ' + b;
+            //row.innerHTML = 'Line ' + b;
         }
         
         //aa.style.position = 'absolute';
@@ -238,7 +245,7 @@ scrollengine = {
 		this.dTop = Math.floor( this.scrollTop / this.config.rowHeight ) * this.config.rowHeight;
 		let d = document.createElement( 'div' );
 		d.id = 'pageMiddle';
-		this.ex += this.rowPosition + ' pos ' + this.rowCount + ' count';
+		this.ex += this.rowPosition + ' pos ' + this.rowCount + ' count ' + "\r\n<br>";
 		this.counted = 0;
 		
 		for( let a = 0, b = this.rowPosition, c = 0; a < this.rowCount; a++, b++, c += this.config.rowHeight )
@@ -246,7 +253,7 @@ scrollengine = {
 			if( b >= this.length( this.myArray ) ) break;
 			let row = this.createDiv( false, d, 'RowElement' );
 			row.style.top = c + 'px';
-            row.innerHTML = 'Line ' + b;
+            //row.innerHTML = 'Line ' + b;
 			
 			this.counted = a;
 		}
@@ -285,7 +292,7 @@ scrollengine = {
 			row.style.top = c + 'px';
 			row.style.background = 'green';
 			row.style.borderBottom = '1px solid black';
-            row.innerHTML = 'Line ' + b;
+            //row.innerHTML = 'Line ' + b;
 			
 			this.counted = a;
 		}
@@ -303,8 +310,6 @@ scrollengine = {
 		return bb;
 		
 	},
-	
-	// TODO: Set the design of how the rows should be outside of this engine with a callback ...
 	
 	distribute: function( data, start, total )
 	{
@@ -348,154 +353,41 @@ scrollengine = {
 			}
 		}
 		
-		let uids = [];
-		
-		let status = [ 'Active', 'Disabled', 'Locked' ];
-		
-		let login = [ 'Never' ];
-		
 		// Distribute
-		let s = start;
-		for( let a = 0; a < allNodes.length; a++, s++ )
+		if( this.layout )
 		{
-			// Set content
-			if( this.myArray[ s ] && this.myArray[ s ].ID && this.myArray[ s ].Name )
-            {
-            	
-            	let str = '';
-            	
-            	let src;
-            	
-            	if( this.myArray[ s ].imageObj == null )
-            	{
-            		src = '/system.library/module/?module=system&command=getavatar&userid=' + this.myArray[s].ID + ( this.myArray[s].image ? '&image=' + this.myArray[s].image : '' ) + '&width=16&height=16&authid=' + Application.authId;
-            		let iii = new Image();
-            		iii.src = src;
-            		this.myArray[ s ].imageObj = iii;	
-            	}
-            	// From cache
-            	else
-            	{
-            		if( this.myArray[ s ].imageObj.blob )
-            		{
-            			src = this.myArray[ s ].imageObj.blob;
-            		}
-            		else
-            		{
-						let canvas = document.createElement( 'canvas' );
-						canvas.width = 16;
-						canvas.height = 16;
-						canvas.getContext('2d').drawImage( this.myArray[ s ].imageObj, 0, 0 );
-						src = canvas.toDataURL('image/png');
-						this.myArray[ s ].imageObj.blob = src;
-					}
-            	}
-            	
-				let obj = {
-					ID        : ( this.myArray[s][ 'ID' ] ),
-					Name      : ( this.myArray[s][ 'Name' ] ? this.myArray[s][ 'Name' ] : 'n/a' ),
-					FullName  : ( this.myArray[s][ 'FullName' ] ? this.myArray[s][ 'FullName' ] : 'n/a' ),
-					Status    : ( status[ ( this.myArray[s][ 'Status' ] ? this.myArray[s][ 'Status' ] : 0 ) ] ),
-					Timestamp : ( this.myArray[s][ 'LoginTime' ] ? this.myArray[s][ 'LoginTime' ] : 0 ),
-					Logintime : ( this.myArray[s][ 'LoginTime' ] != 0 && this.myArray[s][ 'LoginTime' ] != null ? CustomDateTime( this.myArray[s][ 'LoginTime' ] ) : login[ 0 ] )
-				};
+			return this.layout( start, allNodes, this.myArray );
+		}
+		else
+		{
+			let s = start;
+			for( let a = 0; a < allNodes.length; a++, s++ )
+			{
+				// Set content
+				if( this.myArray[ s ] )
+		        {
+		        	
+		        	let div = document.createElement( 'div' );
+		        	div.className = 'Line ' + s;
+		        	div.innerHTML = 'Line ' + s;
+		        	
+		        	let test = allNodes[ a ].getElementsByTagName( 'div' );
+		        	if( test.length )
+		        	{
+		        		allNodes[ a ].replaceChild( div, test[0] );
+		        	}
+		        	else
+		        	{
+		        		allNodes[ a ].innerHTML = '';
+		        		allNodes[ a ].appendChild( div );
+		        	}
+		        	
+		        	allNodes[ a ].title = 'Line ' + s;
+		        	
+		        }
+			}
+		}
 				
-				var bg = 'background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;';
-
-				str += '<div class="TextCenter HContent10 FloatLeft PaddingSmall Ellipsis edit">';
-				str += '	<span id="UserAvatar_'+obj.ID+'" fullname="'+obj.FullName+'" status="'+obj.Status+'" logintime="'+obj.Logintime+'" timestamp="'+obj.Timestamp+'" class="IconSmall fa-user-circle-o avatar" style="position: relative;">';
-				str += '		<div style="' + bg + '"></div>';
-				str += '	</span>';
-				str += '</div>';
-				str += '<div class=" HContent30 FloatLeft PaddingSmall Ellipsis fullname">' + obj.FullName + '</div>';
-				str += '<div class=" HContent25 FloatLeft PaddingSmall Ellipsis name">' + obj.Name + '</div>';
-				str += '<div class=" HContent15 FloatLeft PaddingSmall Ellipsis status">' + obj.Status + '</div>';
-				str += '<div class=" HContent20 FloatLeft PaddingSmall Ellipsis logintime">' + obj.Logintime + '</div>';
-            	
-            	let selected = ( ge( 'UserListID_' + obj.ID ) && ge( 'UserListID_' + obj.ID ).className.indexOf( 'Selected' ) >= 0 ? ' Selected' : '' );
-            	
-            	let dd = document.createElement( 'div' );
-            	dd.className = 'HRow ' + obj.Status + ' Line ' + s + selected;
-            	dd.id = 'UserListID_' + obj.ID;
-            	dd.innerHTML = str;
-            	
-            	let test = allNodes[ a ].getElementsByTagName( 'div' );
-            	if( test.length )
-            	{
-            		allNodes[a].replaceChild( dd, test[0] );
-            	}
-            	else
-            	{
-            		allNodes[a].innerHTML = '';
-            		allNodes[a].appendChild( dd );
-            	}
-            	
-            	let spa = allNodes[a].getElementsByTagName( 'span' )[0].getElementsByTagName( 'div' )[0];
-            	spa.style.backgroundImage = 'url(' + src + ')';
-            	allNodes[ a ].title = 'Line '+s;
-            	
-            	allNodes[ a ].myArrayID = obj.ID;
-            	allNodes[ a ].onclick = function(  )
-				{
-					console.log( 'onclick = ' + "Sections.accounts_users( 'edit', "+this.myArrayID+" );" );
-            		Sections.accounts_users( 'edit', this.myArrayID );
-            	}
-            	
-            	uids.push( obj.ID );
-            }
-		}
-		
-		
-		
-		// Temporary get lastlogin time separate to speed up the sql query ...
-		
-		if( uids.length > 0 )
-		{
-			getLastLoginlist( function ( res, dat )
-			{				
-				if( res == 'ok' && dat )
-				{
-					for ( var i in dat )
-					{
-						if( dat[i] && dat[i]['UserID'] )
-						{
-							if( ge( 'UserListID_' + dat[i]['UserID'] ) )
-							{
-								var elems = ge( 'UserListID_' + dat[i]['UserID'] ).getElementsByTagName( '*' );
-								
-								if( elems.length > 0 )
-								{
-									for ( var div in elems )
-									{
-										if( elems[div] && elems[div].className )
-										{
-											let timestamp = ( dat[i]['LoginTime'] );
-											let logintime = ( dat[i]['LoginTime'] != 0 && dat[i]['LoginTime'] != null ? CustomDateTime( dat[i]['LoginTime'] ) : login[ 0 ] );
-											
-											if( elems[div].className.indexOf( 'avatar' ) >= 0 )
-											{
-												elems[div].setAttribute( 'timestamp', timestamp );
-												elems[div].setAttribute( 'logintime', logintime );
-											}
-											if( elems[div].className.indexOf( 'logintime' ) >= 0 )
-											{
-												elems[div].innerHTML = logintime;
-											}
-										}
-									}
-								}
-							
-							
-							}
-						}
-					}
-				}
-			
-			}, ( uids ? uids.join(',') : false ) );
-		}
-		
-		hideStatus( 'Disabled', false );
-		
 	},
 	
 	// Refresh funksjon
@@ -539,12 +431,12 @@ scrollengine = {
 		// Must redraw if pageMiddle is out of scroll view
 		if( scrollTop > pm.offsetTop + pm.offsetHeight || scrollTop < viewHeight || scrollTop + viewHeight < pm.offsetTop || force === true )
 		{
-		    this.ex += ' Must redraw';
+		    this.ex += 'Must redraw ' + "\r\n<br>";
 		    this.config.mustRedraw = true;
 		}
 		else
 		{
-		    this.ex += '|' + ( pm.offsetTop + pm.offsetHeight ) + ' bottom vs ' + scrollTop + '|';
+		    this.ex += '|' + ( pm.offsetTop + pm.offsetHeight ) + ' bottom vs ' + scrollTop + '| ' + "\r\n<br>";
 		}
 		
 		// What's left to scroll after pages
@@ -604,7 +496,7 @@ scrollengine = {
 		}
 		
 		// Add debug
-		if( this.debug ) this.debugInfo( scrollTop + ' scroll ' + viewHeight + ' height' + this.ex );
+		if( this.debug ) this.debugInfo( scrollTop + ' scroll ' + "\r\n<br>" + viewHeight + ' height ' + "\r\n<br>" + this.ex );
 		
 		this.list.focus();
 		
@@ -648,14 +540,9 @@ scrollengine = {
 	{
 		
 		if( this.list )
-		{
-			/*if( !ge( 'Debug' ) )
-			{
-				this.list.parentNode.parentNode.innerHTML += '<div id="Debug"></div>';
-			}*/
-			
+		{			
 			// Add debug
-			if( ge( 'Debug' ) ) ge( 'Debug' ).innerHTML = str;
+			if( this.debug ) this.debug.innerHTML = str;
 		}
 		
 		this.ex = '';

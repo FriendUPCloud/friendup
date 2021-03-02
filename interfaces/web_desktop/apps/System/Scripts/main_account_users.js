@@ -42,7 +42,7 @@ var UsersSettings = function ( setting, set )
 		uids        : [],
 		avatars     : true,
 		logintime   : true,
-		experiment  : true,
+		experiment  : false,
 		listall     : false,
 		reset       : true
 	} );
@@ -4992,6 +4992,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 			else
 			{
 				
+				console.log( "UsersSettings( 'experiment', true ); to show latest grid method ..." );
+				
 				// Experimental ...
 				if( UsersSettings( 'experiment' ) )
 				{
@@ -5004,14 +5006,167 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							
 							initUserlist( userList );
 							
+							//ge( 'UserList' ).innerHTML += '<div id="Debug"></div>';
+							//scrollengine.debug = ge( 'Debug' );
 							
+							scrollengine.set( function( start, allNodes, myArray )
+							{
+								console.log( { start: start, allNodes: allNodes, myArray: myArray } );
+								
+								if( allNodes && myArray )
+								{
+									let uids = [];
+								
+									let status = [ 'Active', 'Disabled', 'Locked' ];
+		
+									let login = [ 'Never' ];
+									
+									let s = start;
+									for( let a = 0; a < allNodes.length; a++, s++ )
+									{
+										// Set content
+										if( myArray[ s ] && myArray[ s ].ID && myArray[ s ].Name )
+										{
+											let str = '';
+											
+											let src;
+											
+											if( myArray[ s ].imageObj == null )
+											{
+												src = '/system.library/module/?module=system&command=getavatar&userid=' + myArray[s].ID + ( myArray[s].image ? '&image=' + myArray[s].image : '' ) + '&width=16&height=16&authid=' + Application.authId;
+												let iii = new Image();
+												iii.src = src;
+												myArray[ s ].imageObj = iii;
+											}
+											// From cache
+											else
+											{
+												if( myArray[ s ].imageObj.blob )
+												{
+													src = myArray[ s ].imageObj.blob;
+												}
+												else
+												{
+													let canvas = document.createElement( 'canvas' );
+													canvas.width = 16;
+													canvas.height = 16;
+													canvas.getContext('2d').drawImage( myArray[ s ].imageObj, 0, 0 );
+													src = canvas.toDataURL('image/png');
+													myArray[ s ].imageObj.blob = src;
+												}
+											}
+											
+											let obj = {
+												ID        : ( myArray[s][ 'ID' ] ),
+												Name      : ( myArray[s][ 'Name' ] ? myArray[s][ 'Name' ] : 'n/a' ),
+												FullName  : ( myArray[s][ 'FullName' ] ? myArray[s][ 'FullName' ] : 'n/a' ),
+												Status    : ( status[ ( myArray[s][ 'Status' ] ? myArray[s][ 'Status' ] : 0 ) ] ),
+												Timestamp : ( myArray[s][ 'LoginTime' ] ? myArray[s][ 'LoginTime' ] : 0 ),
+												Logintime : ( myArray[s][ 'LoginTime' ] != 0 && myArray[s][ 'LoginTime' ] != null ? CustomDateTime( myArray[s][ 'LoginTime' ] ) : login[ 0 ] )
+											};
+											
+											var bg = 'background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;';
+											
+											str += '<div class="TextCenter HContent10 FloatLeft PaddingSmall Ellipsis edit">';
+											str += '	<span id="UserAvatar_'+obj.ID+'" fullname="'+obj.FullName+'" status="'+obj.Status+'" logintime="'+obj.Logintime+'" timestamp="'+obj.Timestamp+'" class="IconSmall fa-user-circle-o avatar" style="position: relative;">';
+											str += '		<div style="' + bg + '"></div>';
+											str += '	</span>';
+											str += '</div>';
+											str += '<div class=" HContent30 FloatLeft PaddingSmall Ellipsis fullname">' + obj.FullName + '</div>';
+											str += '<div class=" HContent25 FloatLeft PaddingSmall Ellipsis name">' + obj.Name + '</div>';
+											str += '<div class=" HContent15 FloatLeft PaddingSmall Ellipsis status">' + obj.Status + '</div>';
+											str += '<div class=" HContent20 FloatLeft PaddingSmall Ellipsis logintime">' + obj.Logintime + '</div>';
+											
+											let selected = ( ge( 'UserListID_' + obj.ID ) && ge( 'UserListID_' + obj.ID ).className.indexOf( 'Selected' ) >= 0 ? ' Selected' : '' );
+											
+											let div = document.createElement( 'div' );
+											div.className = 'HRow ' + obj.Status + ' Line ' + s + selected;
+											div.id = 'UserListID_' + obj.ID;
+											div.innerHTML = str;
+											
+											let test = allNodes[ a ].getElementsByTagName( 'div' );
+											if( test.length )
+											{
+												allNodes[ a ].replaceChild( div, test[0] );
+											}
+											else
+											{
+												allNodes[ a ].innerHTML = '';
+												allNodes[ a ].appendChild( div );
+											}
+											
+											let spa = allNodes[a].getElementsByTagName( 'span' )[0].getElementsByTagName( 'div' )[0];
+											spa.style.backgroundImage = 'url(' + src + ')';
+											allNodes[ a ].title = 'Line ' + s;
+											
+											allNodes[ a ].myArrayID = obj.ID;
+											allNodes[ a ].onclick = function(  )
+											{
+												Sections.accounts_users( 'edit', this.myArrayID );
+											}
+											
+											uids.push( obj.ID );
+										}
+									}
+		
+		
+									// Temporary get lastlogin time separate to speed up the sql query ...
+		
+									if( uids.length > 0 )
+									{
+										getLastLoginlist( function ( res, dat )
+										{				
+											if( res == 'ok' && dat )
+											{
+												for ( var i in dat )
+												{
+													if( dat[i] && dat[i]['UserID'] )
+													{
+														if( ge( 'UserListID_' + dat[i]['UserID'] ) )
+														{
+															var elems = ge( 'UserListID_' + dat[i]['UserID'] ).getElementsByTagName( '*' );
+								
+															if( elems.length > 0 )
+															{
+																for ( var div in elems )
+																{
+																	if( elems[div] && elems[div].className )
+																	{
+																		let timestamp = ( dat[i]['LoginTime'] );
+																		let logintime = ( dat[i]['LoginTime'] != 0 && dat[i]['LoginTime'] != null ? CustomDateTime( dat[i]['LoginTime'] ) : login[ 0 ] );
+											
+																		if( elems[div].className.indexOf( 'avatar' ) >= 0 )
+																		{
+																			elems[div].setAttribute( 'timestamp', timestamp );
+																			elems[div].setAttribute( 'logintime', logintime );
+																		}
+																		if( elems[div].className.indexOf( 'logintime' ) >= 0 )
+																		{
+																			elems[div].innerHTML = logintime;
+																		}
+																	}
+																}
+															}
+							
+							
+														}
+													}
+												}
+											}
+			
+										}, ( uids ? uids.join(',') : false ) );
+									}
+		
+									hideStatus( 'Disabled', false );
+								}
+								
+							} );
+							
+							//scrollengine.set( false );
 							
 							scrollengine.init( ge( 'ListUsersInner' ), userList, userList['Count'], function( ret ) 
 							{
-								if( accounts_users_callback )
-								{
-									accounts_users_callback( true );
-								}
+								
 								
 								console.log( '[1] ListUsersInner ', ret );
 								
@@ -5058,7 +5213,6 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 				console.log( "UsersSettings( 'listall', true ); to list all users ..." );
 				console.log( "UsersSettings( 'avatars', false ); to list users without avatar ..." );
 				console.log( "UsersSettings( 'logintime', false ); to list users without lastlogin ..." );
-				console.log( "UsersSettings( 'experiment', true ); to show latest grid method ..." );
 				console.log( "UsersSettings(  ); for current Users Settings ..." );
 				
 				// Temporary ...
@@ -5455,11 +5609,6 @@ function initUserlist( userList  )
 					o.appendChild( divs[i] );
 				}
 			}
-		}
-		
-		if( scrollengine.debug )
-		{
-			ge( 'UserList' ).innerHTML += '<div id="Debug"></div>';
 		}
 		
 		ge( 'UserList' ).className = ge( 'UserList' ).className + ' experiment';
