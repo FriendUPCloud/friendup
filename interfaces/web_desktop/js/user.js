@@ -421,7 +421,7 @@ Friend.User = {
 					{
 						if( !Friend.User.ServerIsThere )
 						{
-							Friend.User.SetUserConnectionState( 'online' );
+							Friend.User.SetUserConnectionState( 'online', true );
 						}
 						Friend.User.ConnectionAttempts = 0;
 					}
@@ -455,7 +455,7 @@ Friend.User = {
 		exf();
 	},
 	// Set the user state (offline / online etc)
-	SetUserConnectionState: function( mode )
+	SetUserConnectionState: function( mode, force )
 	{
 		if( mode == 'offline' )
 		{
@@ -501,7 +501,7 @@ Friend.User = {
 				this.checkInterval = null;
 			}
 			
-			if( this.State != 'online' )
+			if( this.State != 'online' || force )
 			{
 				this.ServerIsThere = true;
 				this.State = 'online';
