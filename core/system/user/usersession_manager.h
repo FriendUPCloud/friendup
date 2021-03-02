@@ -71,6 +71,12 @@ UserSession *USMGetSessionBySessionID( UserSessionManager *usm, char *id );
 //
 //
 
+UserSession *USMGetSessionByHashedSessionID( UserSessionManager *usm, char *sessionid );
+
+//
+//
+//
+
 UserSession *USMGetSessionBySessionIDFromDB( UserSessionManager *usm, char *id );
 
 //

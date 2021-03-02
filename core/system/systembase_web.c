@@ -782,8 +782,26 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			}
 			else
 			{
-				DEBUG("CHECK1\n");
+				DEBUG("SystemWeb: USMGetSessionBySessionID\n");
 				UserSession *locus = USMGetSessionBySessionID( l->sl_USM, sessionid );
+				
+#ifdef DB_SESSIONID_HASH
+				
+				//
+				// when local service or module call FriendCore
+				// it may deliver hashed sessionid. If this situation happening we are trying to find session with hashed sessionid
+				//
+				
+				if( locus == NULL )
+				{
+					char *host = HttpGetHeaderFromTable( *request, HTTP_HEADER_X_FORWARDED_FOR );
+					if( host != NULL && (strcmp( host, "localhost") == 0 || strcmp( host, "127.0.0.1") == 0 ) )
+					{
+						locus = USMGetSessionByHashedSessionID( l->sl_USM, sessionid );
+					}
+				}
+#endif
+				
 				if( locus != NULL )
 				{
 					if( FRIEND_MUTEX_LOCK( &(locus->us_Mutex) ) == 0 )

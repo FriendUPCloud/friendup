@@ -185,6 +185,41 @@ UserSession *USMGetSessionBySessionID( UserSessionManager *usm, char *sessionid 
 }
 
 /**
+ * Get UserSession by sessionid
+ * The difference to the previous version is that its compare sessionid to hashed session
+ *
+ * @param usm pointer to UserSessionManager
+ * @param sessionid sessionid as string
+ * @return pointer to UserSession structure
+ */
+UserSession *USMGetSessionByHashedSessionID( UserSessionManager *usm, char *sessionid )
+{
+	DEBUG("[USMGetSessionByHashedSessionID] sesssion id %s\n", sessionid );
+	if( sessionid == NULL )
+	{
+		FERROR("Sessionid is NULL!\n");
+		return NULL;
+	}
+
+	if( FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) ) == 0 )
+	{
+		UserSession *us = usm->usm_Sessions;
+		while( us != NULL )
+		{
+			if( strcmp( sessionid, us->us_HashedSessionID ) == 0 )
+			{
+				DEBUG("[USMGetSessionByHashedSessionID] session found\n");
+				FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+				return us;
+			}
+			us = (UserSession *) us->node.mln_Succ;
+		}
+		FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+	}
+	return NULL;
+}
+
+/**
  * Get UserSession by sessionid from DB
  *
  * @param smgr pointer to UserSessionManager
