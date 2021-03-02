@@ -6491,10 +6491,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 						}
 						
-						if( ics[ a ].Path.indexOf( 'Shared:' ) == 0 )
+						if( ics[ a ].Path )
 						{
-							sharableFile = false;
-							sharedVolume = true;
+							if( ics[ a ].Path.indexOf( 'Shared:' ) == 0 )
+							{
+								sharableFile = false;
+								sharedVolume = true;
+							}
 						}
 						
 						if( ics[a].Volume == 'System:' )
