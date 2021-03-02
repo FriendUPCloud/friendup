@@ -611,10 +611,11 @@ var WorkspaceInside = {
 	getWebSocketsState: function()
 	{
 		if( Workspace.readyToRun ) return Workspace.websocketState;
-		return "false";
+		return 'false';
 	},
 	initWebSocket: function( callback )
 	{	
+		console.log( 'Initializing websocket!' );
 		let self = this;
 		function closeConn()
 		{
@@ -654,7 +655,10 @@ var WorkspaceInside = {
 		// Not ready
 		if( !Workspace.sessionId )
 		{
-			return setTimeout( function(){ Workspace.initWebSocket( callback ); }, 1000 );
+			if( this.initWSTimeout )
+				clearTimeout( this.initWSTimeout );
+			this.initWSTimeout = setTimeout( function(){ Workspace.initWebSocket( callback ); }, 1000 );
+			return this.initWSTimeout;
 		}
 
 		// Force connecting ws state (we will close it!)

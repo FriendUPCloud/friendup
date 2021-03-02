@@ -892,20 +892,13 @@ FriendWebSocket.prototype.wsClose = function( code, reason )
 	}
 }
 
-FriendWebSocket.prototype.cleanup = function( silent )
+FriendWebSocket.prototype.cleanup = function()
 {
 	let self = this;
 	this.conn = false;
 	self.stopKeepAlive();
 	self.clearHandlers();
 	self.wsClose();
-	
-	// On silent (e.g. relogin) reason, dont do anything with any state!
-	if( silent )
-	{
-		delete self.ws;
-		return;
-	}
 	if( window.Workspace )
 		Workspace.websocketState = 'offline';
 	delete self.ws;

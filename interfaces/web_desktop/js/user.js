@@ -249,7 +249,7 @@ Friend.User = {
 			try
 			{
 				console.log( 'Another reason.' );
-				Workspace.conn.ws.cleanup( 'relogin' );
+				Workspace.conn.ws.cleanup();
 			}
 			catch( e )
 			{
