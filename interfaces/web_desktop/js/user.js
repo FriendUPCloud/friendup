@@ -249,7 +249,7 @@ Friend.User = {
 			try
 			{
 				console.log( 'Another reason.' );
-				Workspace.conn.ws.cleanup();
+				Workspace.conn.ws.cleanup( 'relogin' );
 			}
 			catch( e )
 			{
@@ -527,7 +527,6 @@ Friend.User = {
 		}
 		else
 		{
-			console.log( 'Setting another mode: ' + mode );
 			this.State = mode;
 		}
 	}

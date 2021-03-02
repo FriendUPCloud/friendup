@@ -892,13 +892,18 @@ FriendWebSocket.prototype.wsClose = function( code, reason )
 	}
 }
 
-FriendWebSocket.prototype.cleanup = function()
+FriendWebSocket.prototype.cleanup = function( reason )
 {
 	let self = this;
 	this.conn = false;
 	self.stopKeepAlive();
 	self.clearHandlers();
 	self.wsClose();
+	if( reason && reason == 'relogin' )
+	{
+		delete self.ws;
+		return;
+	}
 	if( window.Workspace )
 		Workspace.websocketState = 'offline';
 	delete self.ws;
