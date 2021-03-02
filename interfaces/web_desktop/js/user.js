@@ -492,7 +492,7 @@ Friend.User = {
 				this.checkInterval = setInterval( 'Friend.User.CheckServerConnection()', 2500 );
 			}
 		}
-		else
+		else if( mode == 'online' )
 		{
 			// We're online again
 			if( this.checkInterval )
@@ -524,6 +524,11 @@ Friend.User = {
 				// Clear execution queue
 				_executionQueue = {};
 			}
+		}
+		else
+		{
+			console.log( 'Setting another mode: ' + mode );
+			this.State = mode;
 		}
 	}
 };
