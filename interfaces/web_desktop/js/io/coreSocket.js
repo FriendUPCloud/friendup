@@ -17,6 +17,14 @@ FriendWebSocket = function( conf )
 	
 	let self = this;
 	
+	let uniqueWords = [ 'Ball', 'Jacket', 'Fish', 'Origon', 'Nelson', 'Blue', 'Red', 'Slash' ];
+	let ustr = '';
+	for( let a = 0; a < 4; a++ )
+	{
+		ustr += uniqueWords[ Math.floor( Math.random() * uniqueWords.length ) ];
+	}
+	self.uniqueName = ustr;
+	
 	// REQUIRED CONFIG
 	self.pConf = conf;
 	self.url = conf.url;
@@ -872,6 +880,8 @@ FriendWebSocket.prototype.wsClose = function( code, reason )
 	
 	code = code || 1000;
 	reason = reason || 'WS connection closed';
+	
+	console.log( 'Why ' + self.uniqueName, self );
 	
 	try {
 		console.log('closing websocket',code,reason);
