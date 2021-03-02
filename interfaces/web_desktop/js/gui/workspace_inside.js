@@ -1164,6 +1164,15 @@ var WorkspaceInside = {
 		
 		function doItCal( sessions )
 		{
+			var m = Workspace.widget ? Workspace.widget.target : ge( 'DoorsScreen' );
+		    if( m == ge( 'DoorsScreen' ) )
+			    m = ge( 'DoorsScreen' ).screenTitle.getElementsByClassName( 'Extra' )[0];
+		    if( !m )
+		    {
+			    //console.log( 'Can not find widget!' );
+			    return;
+		    }
+		    
 			var closeBtn = '<div class="HRow"><p class="Layout"><button type="button" class="FloatRight Button fa-close IconSmall">' + i18n( 'i18n_close' ) + '</button></p></div>';
 
 		    // Mobile launches calendar in a different way, so this 
