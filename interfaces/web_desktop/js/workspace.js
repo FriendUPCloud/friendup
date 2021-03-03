@@ -18,6 +18,10 @@
 var _protocol = document.location.href.split( '://' )[0];
 
 Workspace = {
+	receivePush: function()
+	{
+		return false;
+	},
 	icons: [],
 	menuMode: 'pear', // 'miga', 'fensters' (alternatives) -> other menu behaviours
 	mode: 'default',
@@ -425,10 +429,6 @@ Workspace = {
 		SubSubDomains.initSubSubDomains();
 		
 		// console.log( 'Test2: Done post init.' );
-	},
-	receivePush: function()
-	{
-		return false;
 	},
 	// Just a stub - this isn't used anymore
 	rememberKeys: function() {
