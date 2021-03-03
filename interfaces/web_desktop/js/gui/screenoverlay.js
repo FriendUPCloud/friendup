@@ -27,16 +27,6 @@ var ScreenOverlay = {
 	{
 		var self = this;
 		if( this.visibility || !this.div ) return;
-		if( this.hideTimeo )
-		{
-			clearTimeout( this.hideTimeo );
-			this.hideTimeo = null;
-		}
-		if( this.hideTimeo2 )
-		{
-			clearTimeout( this.hideTimeo2 );
-			this.hideTimeo2 = null;
-		}
 		this.visibility = true;
 		this.div.classList.remove( 'Hidden' );
 		this.div.classList.add( 'Visible' );
@@ -79,11 +69,11 @@ var ScreenOverlay = {
 		var self = this;
 		if( !this.visibility ) return;
 		this.div.classList.add( 'Hiding' );
-		this.hideTimeo = setTimeout( function()
+		setTimeout( function()
 		{
 			self.div.classList.remove( 'Showing' );
 			self.div.classList.remove( 'Hiding' );
-			this.hideTimeo2 = setTimeout( function()
+			setTimeout( function()
 			{
 				self.div.classList.add( 'Hidden' );
 				self.div.classList.remove( 'Visible' );
@@ -118,11 +108,6 @@ var ScreenOverlay = {
 					}
 				}
 				
-				// Tell app we can show ourselves!
-				if( window.friendApp && window.friendApp.reveal )
-				{
-					friendApp.reveal();
-				}
 			}, 250 );
 		}, 250 );
 	},

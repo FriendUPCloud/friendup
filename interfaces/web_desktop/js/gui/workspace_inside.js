@@ -1714,6 +1714,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							ScreenOverlay.hide();
 							PollTray();
 							PollTaskbar();
+							// Tell app we can show ourselves!
+							if( window.friendApp && window.friendApp.reveal )
+							{
+								friendApp.reveal();
+							}
 							return;
 						}
 						
@@ -1811,6 +1816,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										}
 										// We are done. Empty startup apps!
 										Friend.startupApps = {};
+										
+										// Tell app we can show ourselves!
+										if( window.friendApp && window.friendApp.reveal )
+										{
+											friendApp.reveal();
+										}
 									}
 								}
 								l.func();
@@ -1830,6 +1841,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 					Workspace.windowWallpaperImage = '';
 					document.body.classList.add( 'DefaultWallpaper' );
+					// Tell app we can show ourselves!
+					if( window.friendApp && window.friendApp.reveal )
+					{
+						friendApp.reveal();
+					}
 				}
 				if( callback && typeof( callback ) == 'function' ) callback();
 			}
