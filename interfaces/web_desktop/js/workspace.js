@@ -429,7 +429,7 @@ Workspace = {
 	receivePush: function()
 	{
 		return false;
-	}
+	},
 	// Just a stub - this isn't used anymore
 	rememberKeys: function() {
 		return false;
