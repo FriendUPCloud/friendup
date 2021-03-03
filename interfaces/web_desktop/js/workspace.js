@@ -742,6 +742,8 @@ Workspace = {
 	{
 		// View desktop
 		document.body.style.visibility = 'visible';
+		if( window.friendApp && window.friendApp.reveal )
+			friendApp.reveal();
 	},
 	// Stubs
 	leave: function()
