@@ -3470,11 +3470,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		var self = this;
 		
 		this.getMountlist( function( data )
-		{
-			// Just in case
-			if( window.friendApp )
-				window.friendApp.reveal();
-			
+		{	
 			// Something went wrong - don't show an empty workspace
 			// We always have one entry, the system disk
 			if( data.length <= 1 )
@@ -3768,6 +3764,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	getMountlist: function( callback, forceRefresh, addDormant )
 	{
 		var t = this; // Reference to workspace
+		
+		// Just in case
+		if( window.friendApp )
+			window.friendApp.reveal();
 		
 		if( !Friend.dosDrivers )
 		{
