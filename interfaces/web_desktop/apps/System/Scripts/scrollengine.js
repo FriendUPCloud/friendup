@@ -227,7 +227,7 @@ scrollengine = {
 			row.style.borderBottom = '1px solid black';
             //row.innerHTML = 'Line ' + b;
         }
-        
+        console.log( '[1] pageAbove', { counted: this.counted, dataStart: this.dataStart, dataLimit: this.dataLimit } );
         //aa.style.position = 'absolute';
         //aa.style.width = '100%';
         aa.style.top = this.aTop + 'px';
@@ -260,6 +260,7 @@ scrollengine = {
 		
 		// Add to limit
 		this.dataLimit += this.counted;
+		console.log( '[2] pageMiddle', { counted: this.counted, dataStart: this.dataStart, dataLimit: this.dataLimit } );
 		
 		//d.style.position = 'absolute';
 		//d.style.width = '100%';
@@ -299,6 +300,7 @@ scrollengine = {
 		
 		// Add to limit
 		this.dataLimit += this.counted;
+		console.log( '[3] pageBelow', { counted: this.counted, dataStart: this.dataStart, dataLimit: this.dataLimit } );
 		
 		//bb.style.position = 'absolute';
 		//bb.style.width = '100%';
@@ -315,7 +317,7 @@ scrollengine = {
 	{
 		// TODO: Update myArray if the limit has changed ...
 		
-		console.log( 'this.myArray.length = ' + this.myArray.length );
+		//console.log( 'this.myArray.length = ' + this.myArray.length );
 		
 		// Update scroll list array with new data from JSON array
 		for( let a = 0; a < this.length( data ); a++ )
@@ -405,7 +407,7 @@ scrollengine = {
 		this.counted = 0;
 		
 		this.scrollTop    = this.list.scrollTop;
-		this.viewHeight   = window.innerHeight;
+		this.viewHeight   = this.list.clientHeight/*window.innerHeight*/;
 		this.scrollHeight = ( this.config.rowHeight * this.length( this.myArray ) );
 		
 		// Make elements if they do not exist
@@ -428,6 +430,11 @@ scrollengine = {
 		
 		let pm = this.elements.pageMiddle;
 		
+		console.log( 'pm.offsetTop ' + pm.offsetTop );
+		console.log( 'pm.offsetHeight ' + pm.offsetHeight );
+		
+		console.log( scrollTop+' > '+(pm.offsetTop + pm.offsetHeight)+(scrollTop > pm.offsetTop + pm.offsetHeight?' [TRUE]':' [FALSE]')+' || '+scrollTop+' < '+viewHeight+(scrollTop < viewHeight?' [TRUE]':' [FALSE]')+' || '+(scrollTop + viewHeight)+' < '+pm.offsetTop+(scrollTop + viewHeight < pm.offsetTop?' [TRUE]':' [FALSE]')+' || '+force );
+		
 		// Must redraw if pageMiddle is out of scroll view
 		if( scrollTop > pm.offsetTop + pm.offsetHeight || scrollTop < viewHeight || scrollTop + viewHeight < pm.offsetTop || force === true )
 		{
@@ -436,7 +443,7 @@ scrollengine = {
 		}
 		else
 		{
-		    this.ex += '|' + ( pm.offsetTop + pm.offsetHeight ) + ' bottom vs ' + scrollTop + '| ' + "\r\n<br>";
+		    this.ex += ( pm.offsetTop + pm.offsetHeight ) + ' bottom vs scrollTop ' + scrollTop + "\r\n<br>";
 		}
 		
 		// What's left to scroll after pages
@@ -465,12 +472,33 @@ scrollengine = {
 		    // Page below
 		    let bb = this.pageBelow();
 		    
+		    console.log( '[4] refresh', { counted: this.counted, dataStart: this.dataStart, dataLimit: this.dataLimit, dataPrevStart: this.dataPrevStart, dataPrevLimit: this.dataPrevLimit } );
+		    
 		    if( this.dataPrevStart != this.dataStart || this.dataPrevLimit != this.dataLimit )
 		    {
 		    	// Fetch new data
 		    	// Distribute data rows from pageAbove, Middle, Below
 		    	
-		    	console.log( { start: this.dataStart, limit: this.dataLimit } );
+		    	// TODO: return correct data to fetch next ... start and limit data ...
+		    	
+		    	// TODO: scrollTop minus means start in minus ...
+		    	// TODO: scrollTop pluss means start in pluss ...
+		    	
+		    	
+		    	
+		    	console.log( 
+		    	{ 
+		    		start        : ( this.rowCount >= this.rowPosition ? this.dataStart : ( this.dataStart + this.dataLimit ) ), 
+		    		limit        : ( ( this.rowCount >= this.rowPosition ? this.dataStart : ( this.dataStart + this.dataLimit ) ) + this.rowCount ), 
+		    		prevstart    : this.dataPrevStart, 
+		    		prevlimit    : this.dataPrevLimit, 
+		    		rowPosition  : this.rowPosition, 
+		    		rowCount     : this.rowCount, 
+		    		leftToScroll : leftToScroll, 
+		    		scrollTop    : scrollTop, 
+		    		viewHeight   : viewHeight, 
+		    		scrollHeight : scrollHeight 
+		    	} );
 		    	
 		    	//this.setToPageAbove( this.myArray );
 		    	//this.setToPageMiddle( this.myArray );
@@ -478,7 +506,13 @@ scrollengine = {
 		    	
 		    	if( this.callback )
 		    	{
-		    		this.callback( { start: this.dataStart, limit: this.dataLimit, myArray: this.myArray, total: this.total } );
+		    		this.callback( 
+		    		{ 
+		    			start   : ( this.rowCount >= this.rowPosition ? this.dataStart : ( this.dataStart + this.dataLimit ) ), 
+		    			limit   : ( ( this.rowCount >= this.rowPosition ? this.dataStart : ( this.dataStart + this.dataLimit ) ) + this.rowCount ), 
+		    			myArray : this.myArray, 
+		    			total   : this.total 
+		    		} );
 		    	}
 		    }
 		}

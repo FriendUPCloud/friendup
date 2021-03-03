@@ -44,7 +44,8 @@ var UsersSettings = function ( setting, set )
 		logintime   : true,
 		experiment  : false,
 		listall     : false,
-		reset       : true
+		reset       : true,
+		debug       : false,
 	} );
 	
 	function Update ( setting, set )
@@ -139,6 +140,9 @@ var UsersSettings = function ( setting, set )
 					}
 					this.vars.intervals    = ( intervals                                              );
 					this.vars.uids         = ( []                                                     );
+					break;
+				case 'debug'             :
+					this.vars.debug        = ( set                                                    );
 					break;
 			}
 		}
@@ -4998,6 +5002,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 				if( UsersSettings( 'experiment' ) )
 				{
 					
+					console.log( "UsersSettings( 'debug', true ); to show debug info ..." );
+					
 					getUserlist( function( res, userList )
 					{
 							
@@ -5006,12 +5012,15 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							
 							initUserlist( userList );
 							
-							//ge( 'UserList' ).innerHTML += '<div id="Debug"></div>';
-							//scrollengine.debug = ge( 'Debug' );
+							if( UsersSettings( 'debug' ) )
+							{
+								ge( 'UserList' ).innerHTML += '<div id="Debug"></div>';
+								scrollengine.debug = ge( 'Debug' );
+							}
 							
 							scrollengine.set( function( start, allNodes, myArray )
 							{
-								console.log( { start: start, allNodes: allNodes, myArray: myArray } );
+								//console.log( { start: start, allNodes: allNodes, myArray: myArray } );
 								
 								if( allNodes && myArray )
 								{
@@ -5168,7 +5177,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							{
 								
 								
-								console.log( '[1] ListUsersInner ', ret );
+								//console.log( '[1] ListUsersInner ', ret );
+								
+								let obj = { start: ret.start, limit: ret.limit };
+								
+								console.log( obj );
 								
 								// Only run the request when server is ready, one job at a time ... 
 								
@@ -5183,16 +5196,16 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											callback( key );
 										}
 										
-										console.log( '[2] ListUsersInner ', { res: res, dat: dat } );
-									
+										//console.log( '[2] ListUsersInner ', { res: res, dat: dat } );
+										
 										if( res == 'ok' && dat )
 										{
 										
-											scrollengine.distribute( dat, ret.start, dat['Count'] );
+											scrollengine.distribute( dat, obj.start/*ret.start*/, dat['Count'] );
 										
 										}
 									
-									}, key, ( ret.start + ', ' + ret.limit ) );
+									}, key, ( obj.start/*ret.start*/ + ', ' + obj.limit/*ret.limit*/ ) );
 								
 								} );
 								
@@ -7017,7 +7030,7 @@ function getLastLoginlist( callback, users )
 			try
 			{
 				loginTime = JSON.parse( d );
-				console.log( 'getLastLoginlist( callback, users )', { e:e, d:(loginTime?loginTime:d), args:args } );
+				//console.log( 'getLastLoginlist( callback, users )', { e:e, d:(loginTime?loginTime:d), args:args } );
 			}
 			catch( e )
 			{
@@ -9225,7 +9238,7 @@ function SubMenu( _this, close )
 
 function hideStatus( status, show, pnt )
 {
-	console.log( "hideStatus( '"+status+"', "+show+", "+pnt+" )" );
+	//console.log( "hideStatus( '"+status+"', "+show+", "+pnt+" )" );
 	
 	if( status && ge( 'ListUsersInner' ) )
 	{
