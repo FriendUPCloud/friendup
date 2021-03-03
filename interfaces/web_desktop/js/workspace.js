@@ -418,6 +418,11 @@ Workspace = {
 					MobileContextMenu.show( tar );
 				}
 			}
+			// Tell app we can show ourselves!
+			if( window.friendApp && window.friendApp.reveal )
+			{
+				friendApp.reveal();
+			}
 		}
 		this.reloadDocks();
 
@@ -742,8 +747,6 @@ Workspace = {
 	{
 		// View desktop
 		document.body.style.visibility = 'visible';
-		if( window.friendApp && window.friendApp.reveal )
-			friendApp.reveal();
 	},
 	// Stubs
 	leave: function()
@@ -1009,7 +1012,7 @@ Workspace = {
 				// Set up a shell instance for the workspace
 				var uid = FriendDOS.addSession( _this );
 				_this.shell = FriendDOS.getSession( uid );
-
+				
 				// We're getting the theme set in an url var
 				var th = '';
 				if( ( th = GetUrlVar( 'theme' ) ) )
