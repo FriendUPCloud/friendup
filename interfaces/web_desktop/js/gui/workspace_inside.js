@@ -1821,7 +1821,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										// Tell app we can show ourselves!
 										if( window.friendApp && window.friendApp.reveal )
 										{
-											console.log( 'Did it' );
+											console.log( 'Did it reveal' );
 											friendApp.reveal();
 										}
 									}
@@ -1846,7 +1846,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					// Tell app we can show ourselves!
 					if( window.friendApp && window.friendApp.reveal )
 					{
-						console.log( 'Foba' );
+						console.log( 'Foba reveal' );
 						friendApp.reveal();
 					}
 				}
