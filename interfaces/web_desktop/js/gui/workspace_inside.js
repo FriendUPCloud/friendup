@@ -1595,7 +1595,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						// Tell app we can show ourselves!
 						if( window.friendApp && window.friendApp.reveal )
 						{
-							friendApp.reveal();
+							// After 500 ms
+							setTimeout( function()
+							{
+								friendApp.reveal();
+							}, 500 );
 						}
 					}
 				
