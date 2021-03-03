@@ -418,11 +418,6 @@ Workspace = {
 					MobileContextMenu.show( tar );
 				}
 			}
-			// Tell app we can show ourselves!
-			if( window.friendApp && window.friendApp.reveal )
-			{
-				friendApp.reveal();
-			}
 		}
 		this.reloadDocks();
 
@@ -431,6 +426,10 @@ Workspace = {
 		
 		// console.log( 'Test2: Done post init.' );
 	},
+	receivePush: function()
+	{
+		return false;
+	}
 	// Just a stub - this isn't used anymore
 	rememberKeys: function() {
 		return false;

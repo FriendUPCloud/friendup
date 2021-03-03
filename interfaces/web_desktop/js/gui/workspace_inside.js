@@ -1590,6 +1590,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 						}
 					}
+					else
+					{
+						// Tell app we can show ourselves!
+						if( window.friendApp && window.friendApp.reveal )
+						{
+							friendApp.reveal();
+						}
+					}
 				
 					if( !Workspace.wallpaperImage || Workspace.wallpaperImage == '""' )
 					{
