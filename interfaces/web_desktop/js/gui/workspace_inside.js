@@ -1590,18 +1590,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 						}
 					}
-					else
-					{
-						// Tell app we can show ourselves!
-						if( window.friendApp && window.friendApp.reveal )
-						{
-							// After 500 ms
-							setTimeout( function()
-							{
-								friendApp.reveal();
-							}, 500 );
-						}
-					}
 				
 					if( !Workspace.wallpaperImage || Workspace.wallpaperImage == '""' )
 					{
@@ -1814,6 +1802,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										}
 										// Hide overlay
 										ScreenOverlay.hide();
+										
 										PollTray();
 										PollTaskbar();
 										l.func = function()
