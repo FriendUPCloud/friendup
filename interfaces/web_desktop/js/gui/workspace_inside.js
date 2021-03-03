@@ -1717,7 +1717,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							// Tell app we can show ourselves!
 							if( window.friendApp && window.friendApp.reveal )
 							{
-								console.log( 'Ran reveal' );
 								friendApp.reveal();
 							}
 							return;
@@ -1821,7 +1820,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										// Tell app we can show ourselves!
 										if( window.friendApp && window.friendApp.reveal )
 										{
-											console.log( 'Did it reveal' );
 											friendApp.reveal();
 										}
 									}
@@ -1846,7 +1844,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					// Tell app we can show ourselves!
 					if( window.friendApp && window.friendApp.reveal )
 					{
-						console.log( 'Foba reveal' );
 						friendApp.reveal();
 					}
 				}
@@ -3474,6 +3471,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		this.getMountlist( function( data )
 		{
+			// Just in case
+			if( window.friendApp )
+				window.friendApp.reveal();
+			
 			// Something went wrong - don't show an empty workspace
 			// We always have one entry, the system disk
 			if( data.length <= 1 )
