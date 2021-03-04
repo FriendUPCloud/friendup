@@ -488,7 +488,7 @@ scrollengine = {
 		    	
 		    	console.log( 
 		    	{ 
-		    		start        : this.dataStart, 
+		    		start        : ( this.rowPosition > this.rowCount ? ( this.dataPrevStart + this.rowCount ) : this.dataStart ), 
 		    		limit        : this.rowPosition, 
 		    		prevstart    : this.dataPrevStart, 
 		    		prevlimit    : this.dataPrevLimit, 
@@ -508,7 +508,7 @@ scrollengine = {
 		    	{
 		    		this.callback( 
 		    		{ 
-		    			start   : this.dataStart, 
+		    			start   : ( this.rowPosition > this.rowCount ? ( this.dataPrevStart + this.rowCount ) : this.dataStart ), 
 		    			limit   : this.rowPosition, 
 		    			myArray : this.myArray, 
 		    			total   : this.total 
