@@ -48,6 +48,8 @@ scrollengine = {
 	dataPrevStart : null,
 	dataPrevLimit : null,
 	
+	rowPrevPosition : null,
+	
 	counted : 0,
 	
 	total   : 0,
@@ -216,6 +218,8 @@ scrollengine = {
         }
         
         let lines = [];
+        let lastline = null;
+        let startline = null;
         
         // Pageabove starts counting!
         for( let a = 0, b = this.rowPosition - this.rowCount, c = 0; a < this.rowCount; a++, b++, c += this.config.rowHeight )
@@ -231,8 +235,21 @@ scrollengine = {
             
             lines.push( b );
             
+            startline = ( startline != null ? startline : b );
+            lastline = b;
+            
         }
-        console.log( '[1] pageAbove', { lines: lines, counted: this.counted, dataStart: this.dataStart, dataLimit: this.dataLimit } );
+        
+        console.log( '[1] pageAbove', { 
+			startline   : (startline?startline:0), 
+			lastline    : (lastline?(lastline+1):0), 
+			lines       : lines, 
+			rowPosition : (this.rowPosition-this.rowCount),
+			counted     : this.counted, 
+			dataStart   : this.dataStart, 
+			dataLimit   : this.dataLimit 
+		} );
+		
         //aa.style.position = 'absolute';
         //aa.style.width = '100%';
         aa.style.top = this.aTop + 'px';
@@ -254,6 +271,8 @@ scrollengine = {
 		this.counted = 0;
 		
 		let lines = [];
+		let lastline = null;
+		let startline = null;
 		
 		for( let a = 0, b = this.rowPosition, c = 0; a < this.rowCount; a++, b++, c += this.config.rowHeight )
 		{
@@ -264,12 +283,23 @@ scrollengine = {
 			
 			lines.push( b );
 			
+			startline = ( startline != null ? startline : b );
+			lastline = b;
+			
 			this.counted = a;
 		}
 		
 		// Add to limit
 		this.dataLimit += this.counted;
-		console.log( '[2] pageMiddle', { lines: lines, counted: this.counted, dataStart: this.dataStart, dataLimit: this.dataLimit } );
+		console.log( '[2] pageMiddle', { 
+			startline   : (startline?startline:0), 
+			lastline    : (lastline?(lastline+1):0), 
+			lines       : lines, 
+			rowPosition : this.rowPosition,
+			counted     : this.counted, 
+			dataStart   : this.dataStart, 
+			dataLimit   : this.dataLimit 
+		} );
 		
 		//d.style.position = 'absolute';
 		//d.style.width = '100%';
@@ -296,6 +326,8 @@ scrollengine = {
 		this.counted = 0;
 		
 		let lines = [];
+		let lastline = null;
+		let startline = null;
 		
 		for( let a = 0, b = this.rowPosition, c = 0; a < this.rowCount; a++, b++, c += this.config.rowHeight )
 		{
@@ -308,12 +340,23 @@ scrollengine = {
             
 			lines.push( b );
 			
+			startline = ( startline != null ? startline : b );
+			lastline = b;
+			
 			this.counted = a;
 		}
 		
 		// Add to limit
 		this.dataLimit += this.counted;
-		console.log( '[3] pageBelow', { lines: lines, counted: this.counted, dataStart: this.dataStart, dataLimit: this.dataLimit } );
+		console.log( '[3] pageBelow', { 
+			startline   : (startline?startline:0), 
+			lastline    : (lastline?(lastline+1):0), 
+			lines       : lines, 
+			rowPosition : this.rowPosition,
+			counted     : this.counted, 
+			dataStart   : this.dataStart, 
+			dataLimit   : this.dataLimit 
+		} );
 		
 		//bb.style.position = 'absolute';
 		//bb.style.width = '100%';
@@ -413,6 +456,8 @@ scrollengine = {
 		this.dataPrevStart = this.dataStart;
 		this.dataPrevLimit = this.dataLimit;
 		
+		this.rowPrevPosition = this.rowPosition;
+		
 		// Reset database fetch calculator
 		this.dataStart = 0;
         this.dataLimit = 0;
@@ -485,7 +530,17 @@ scrollengine = {
 		    // Page below
 		    let bb = this.pageBelow();
 		    
-		    console.log( '[4] refresh', { counted: this.counted, dataStart: this.dataStart, dataLimit: this.dataLimit, dataPrevStart: this.dataPrevStart, dataPrevLimit: this.dataPrevLimit } );
+		    console.log( '[4] refresh', { 
+		    	counted         : this.counted, 
+		    	dataStart       : this.dataStart, 
+		    	dataLimit       : this.dataLimit, 
+		    	rowPosition     : this.rowPosition,
+		    	rowPrevPosition : this.rowPrevPosition,
+		    	dataPrevStart   : this.dataPrevStart, 
+		    	dataPrevLimit   : this.dataPrevLimit, 
+		    	start           : ( this.rowPosition > this.rowCount ? this.rowPrevPosition : this.dataStart ),
+		    	limit           : this.rowPosition
+		    } );
 		    
 		    if( this.dataPrevStart != this.dataStart || this.dataPrevLimit != this.dataLimit )
 		    {
@@ -499,7 +554,7 @@ scrollengine = {
 		    	
 		    	
 		    	
-		    	console.log( 
+		    	/*console.log( 
 		    	{ 
 		    		start        : ( this.rowPosition > this.rowCount ? ( this.dataPrevStart + this.rowCount ) : this.dataStart ), 
 		    		limit        : this.rowPosition, 
@@ -511,7 +566,7 @@ scrollengine = {
 		    		scrollTop    : scrollTop, 
 		    		viewHeight   : viewHeight, 
 		    		scrollHeight : scrollHeight 
-		    	} );
+		    	} );*/
 		    	
 		    	//this.setToPageAbove( this.myArray );
 		    	//this.setToPageMiddle( this.myArray );
@@ -521,7 +576,7 @@ scrollengine = {
 		    	{
 		    		this.callback( 
 		    		{ 
-		    			start   : ( this.rowPosition > this.rowCount ? ( this.dataPrevStart + this.rowCount ) : this.dataStart ), 
+		    			start   : ( this.rowPosition > this.rowCount ? this.rowPrevPosition : this.dataStart ), 
 		    			limit   : this.rowPosition, 
 		    			myArray : this.myArray, 
 		    			total   : this.total 
