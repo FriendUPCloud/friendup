@@ -25,8 +25,6 @@ class File
 
 	function File( $path )
 	{
-		global $Logger;
-		$Logger->log( "Before decode: " . $path );
 		$this->path = urldecode( $path );
 		
 		$this->GetAuthContextComponent();
