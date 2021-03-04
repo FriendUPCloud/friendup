@@ -5033,7 +5033,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									let s = start;
 									for( let a = 0; a < allNodes.length; a++, s++ )
 									{
-										console.log( 'myArray[ s ]', [ myArray[ s ].ID, myArray[ s ].Name ] );
+										console.log( 'Line ' + a + ' myArray[ s ]', [ myArray[ s ].ID, myArray[ s ].Name ] );
 										// Set content
 										if( myArray[ s ] && myArray[ s ].ID && myArray[ s ].Name )
 										{
@@ -5115,11 +5115,14 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												Sections.accounts_users( 'edit', this.myArrayID );
 											}
 											
+											console.log( allNodes[ a ] );
+											
 											uids.push( obj.ID );
 										}
 									}
 		
-		
+									console.log( uids );
+									
 									// Temporary get lastlogin time separate to speed up the sql query ...
 		
 									if( uids.length > 0 )
