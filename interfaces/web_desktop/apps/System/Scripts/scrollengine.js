@@ -533,12 +533,13 @@ scrollengine = {
 		    console.log( '[4] refresh', { 
 		    	counted         : this.counted, 
 		    	dataStart       : this.dataStart, 
-		    	dataLimit       : this.dataLimit, 
+		    	dataLimit       : this.dataLimit,
+		    	rowCount        : this.rowCount, 
 		    	rowPosition     : this.rowPosition,
 		    	rowPrevPosition : this.rowPrevPosition,
 		    	dataPrevStart   : this.dataPrevStart, 
 		    	dataPrevLimit   : this.dataPrevLimit, 
-		    	start           : ( this.rowPosition > this.rowCount ? this.rowPrevPosition : this.dataStart ),
+		    	start           : ( this.rowPosition > this.rowCount && !this.dataStart ? this.rowPrevPosition : this.dataStart ),
 		    	limit           : this.rowPosition
 		    } );
 		    
@@ -576,7 +577,7 @@ scrollengine = {
 		    	{
 		    		this.callback( 
 		    		{ 
-		    			start   : ( this.rowPosition > this.rowCount ? this.rowPrevPosition : this.dataStart ), 
+		    			start   : ( this.rowPosition > this.rowCount && !this.dataStart ? this.rowPrevPosition : this.dataStart ), 
 		    			limit   : this.rowPosition, 
 		    			myArray : this.myArray, 
 		    			total   : this.total 
