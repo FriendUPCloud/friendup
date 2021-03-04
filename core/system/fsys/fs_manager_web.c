@@ -158,7 +158,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 	}
 	
 	// Must have valid path
-	if( path )
+	if( path != NULL )
 	{
 		char *tmpPath = UrlDecodeToMem( path );
 		if( tmpPath != NULL )
@@ -255,6 +255,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 				DEBUG( "[FSMWebRequest] Device name '%s' Logguser name %s- path %s\n", devname, loggedSession->us_User->u_Name, path );
 
 				path = locpath;
+				
+				DEBUG("[FSMWebRequest] path after change: %s\n", path );
 			
 				freePath = 1;
 			}
@@ -324,10 +326,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 			{
 				actDev->f_Operations++;
 				
-				if( ( locpath = FCalloc( strlen( path ) + 255, sizeof(char) ) ) != NULL )
+				if( ( locpath = UrlDecodeToMem( path ) ) != NULL )
 				{
-					UrlDecode( locpath, path );
-					
 					int dpos = ColonPosition( locpath );
 					
 					strcpy( path, &locpath[ dpos + 1 ] );
