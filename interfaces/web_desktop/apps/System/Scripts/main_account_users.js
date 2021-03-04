@@ -5115,13 +5115,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												Sections.accounts_users( 'edit', this.myArrayID );
 											}
 											
-											console.log( allNodes[ a ] );
-											
 											uids.push( obj.ID );
 										}
 									}
 		
-									console.log( uids );
+									
 									
 									// Temporary get lastlogin time separate to speed up the sql query ...
 		
@@ -5170,7 +5168,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										}, ( uids ? uids.join(',') : false ) );
 									}
 		
-									hideStatus( 'Disabled', false );
+									// TODO: look at this later ...
+									//hideStatus( 'Disabled', false );
 								}
 								
 							} );
