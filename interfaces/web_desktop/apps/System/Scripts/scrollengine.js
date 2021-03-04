@@ -215,6 +215,8 @@ scrollengine = {
         	this.dataStart = 0;
         }
         
+        let lines = [];
+        
         // Pageabove starts counting!
         for( let a = 0, b = this.rowPosition - this.rowCount, c = 0; a < this.rowCount; a++, b++, c += this.config.rowHeight )
         {
@@ -226,8 +228,11 @@ scrollengine = {
             row.style.background = 'grey';
 			row.style.borderBottom = '1px solid black';
             //row.innerHTML = 'Line ' + b;
+            
+            lines.push( b );
+            
         }
-        console.log( '[1] pageAbove', { counted: this.counted, dataStart: this.dataStart, dataLimit: this.dataLimit } );
+        console.log( '[1] pageAbove', { lines: lines, counted: this.counted, dataStart: this.dataStart, dataLimit: this.dataLimit } );
         //aa.style.position = 'absolute';
         //aa.style.width = '100%';
         aa.style.top = this.aTop + 'px';
@@ -248,6 +253,8 @@ scrollengine = {
 		this.ex += this.rowPosition + ' pos ' + this.rowCount + ' count ' + "\r\n<br>";
 		this.counted = 0;
 		
+		let lines = [];
+		
 		for( let a = 0, b = this.rowPosition, c = 0; a < this.rowCount; a++, b++, c += this.config.rowHeight )
 		{
 			if( b >= this.length( this.myArray ) ) break;
@@ -255,12 +262,14 @@ scrollengine = {
 			row.style.top = c + 'px';
             //row.innerHTML = 'Line ' + b;
 			
+			lines.push( b );
+			
 			this.counted = a;
 		}
 		
 		// Add to limit
 		this.dataLimit += this.counted;
-		console.log( '[2] pageMiddle', { counted: this.counted, dataStart: this.dataStart, dataLimit: this.dataLimit } );
+		console.log( '[2] pageMiddle', { lines: lines, counted: this.counted, dataStart: this.dataStart, dataLimit: this.dataLimit } );
 		
 		//d.style.position = 'absolute';
 		//d.style.width = '100%';
@@ -286,6 +295,8 @@ scrollengine = {
 		bb.id = 'pageBelow';
 		this.counted = 0;
 		
+		let lines = [];
+		
 		for( let a = 0, b = this.rowPosition, c = 0; a < this.rowCount; a++, b++, c += this.config.rowHeight )
 		{
 			if( b >= this.length( this.myArray ) ) break;
@@ -294,13 +305,15 @@ scrollengine = {
 			row.style.background = 'green';
 			row.style.borderBottom = '1px solid black';
             //row.innerHTML = 'Line ' + b;
+            
+			lines.push( b );
 			
 			this.counted = a;
 		}
 		
 		// Add to limit
 		this.dataLimit += this.counted;
-		console.log( '[3] pageBelow', { counted: this.counted, dataStart: this.dataStart, dataLimit: this.dataLimit } );
+		console.log( '[3] pageBelow', { lines: lines, counted: this.counted, dataStart: this.dataStart, dataLimit: this.dataLimit } );
 		
 		//bb.style.position = 'absolute';
 		//bb.style.width = '100%';

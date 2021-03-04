@@ -5033,7 +5033,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									let s = start;
 									for( let a = 0; a < allNodes.length; a++, s++ )
 									{
-										//console.log( 'Line ' + a + ' myArray[ s ]', [ myArray[ s ].ID, myArray[ s ].Name ] );
+										//console.log( 'Line ' + s + ' myArray[ s ]', [ myArray[ s ].ID, myArray[ s ].Name ] );
 										// Set content
 										if( myArray[ s ] && myArray[ s ].ID && myArray[ s ].Name )
 										{
