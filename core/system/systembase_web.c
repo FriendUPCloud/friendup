@@ -549,14 +549,15 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	// Check for sessionid by sessionid specificly or authid
 	if( loginLogoutCalled == FALSE && loggedSession == NULL )
 	{
-		HashmapElement *sessIDElement = HashmapGet( (*request)->http_ParsedPostContent, "sessionid" );
-		HashmapElement *authIDElement = HashmapGet( (*request)->http_ParsedPostContent, "authid" );
-		HashmapElement *serverTokenElement = HashmapGet( (*request)->http_ParsedPostContent, "servertoken" ); // TODO: Only allow this on localhost!
-		HashmapElement *refreshTokenElement = HashmapGet( (*request)->http_ParsedPostContent, "refreshtoken" ); 
+		//HashmapElement *sessIDElement = HashmapGet( (*request)->http_ParsedPostContent, "sessionid" );
+		//HashmapElement *authIDElement = HashmapGet( (*request)->http_ParsedPostContent, "authid" );
+		//HashmapElement *serverTokenElement = HashmapGet( (*request)->http_ParsedPostContent, "servertoken" );
+		//HashmapElement *refreshTokenElement = HashmapGet( (*request)->http_ParsedPostContent, "refreshtoken" ); 
 		
-		//HashmapElement *sessIDElement = GetHEReq( *request, "sessionid" );
-		//HashmapElement *authIDElement = GetHEReq( *request, "authid" );
-		//HashmapElement *serverTokenElement = GetHEReq( *request, "servertoken" ); // TODO: Only allow this on localhost!
+		HashmapElement *sessIDElement = GetHEReq( *request, "sessionid" );
+		HashmapElement *authIDElement = GetHEReq( *request, "authid" );
+		HashmapElement *serverTokenElement = GetHEReq( *request, "servertoken" ); 
+		HashmapElement *refreshTokenElement = GetHEReq( *request, "refreshtoken" ); 
 		
 		if( sessIDElement == NULL && authIDElement == NULL && serverTokenElement == NULL && refreshTokenElement == NULL )
 		{
