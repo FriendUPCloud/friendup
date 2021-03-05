@@ -20,7 +20,7 @@ function FriendCoreQuery( $command = '', $args = false, $method = 'POST', $heade
 	$curl = curl_init();
 	
 	$host = $conf->FCHost;
-	if( isset( $Config[ 'FriendCore' ][ 'fconlocalhost' ] ) && $Config[ 'FriendCore' ][ 'fconlocalhost' ] == 1 )
+	if( isset( $Config->FriendCore->fconlocalhost ) && $Config->FriendCore->fconlocalhost == 1 )
 	{
 		$host = 'localhost';
 	}
@@ -91,7 +91,7 @@ function FriendCoreQuery( $command = '', $args = false, $method = 'POST', $heade
 	
 	if( $args )
 	{
-		if( !isset( $conf ) || !$conf->argtype )
+		if( !isset( $conf ) || !isset( $conf->argtype ) )
 		{
 			if( is_object( $args ) )
 			{

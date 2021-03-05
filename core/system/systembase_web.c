@@ -798,7 +798,15 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				if( locus == NULL )
 				{
 					char *host = HttpGetHeaderFromTable( *request, HTTP_HEADER_X_FORWARDED_FOR );
-					if( host != NULL && (strcmp( host, "localhost") == 0 || strcmp( host, "127.0.0.1") == 0 ) )
+					if( host != NULL )
+					{
+						if( (strcmp( host, "localhost" ) == 0 || strcmp( host, "127.0.0.1" ) == 0 )  )
+						{
+							locus = USMGetSessionByHashedSessionID( l->sl_USM, sessionid );
+						}
+					}
+					// Not getting the Apache header -> must be from a local service
+					else
 					{
 						locus = USMGetSessionByHashedSessionID( l->sl_USM, sessionid );
 					}

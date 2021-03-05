@@ -9,6 +9,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
+require_once( 'php/include/helpers.php' );
+
 function storeRecentApps( $name )
 {
 	global $User, $Logger;
@@ -208,7 +210,6 @@ else if( $level == 'API' )
 	$fa->ApplicationID = $o->ID;
 	if( !$fa->Load() )
 	{
-		//$fa->AuthID = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . microtime() );
 		$fa->Save();
 	}
 	else
@@ -216,13 +217,10 @@ else if( $level == 'API' )
 		$as->UserID = $User->ID;
 		$as->UserApplicationID = $fa->ID;
 		if( !$as->Load() )
-		{
-			$as->AuthID = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . microtime() );
 			$as->Save();
-		}
 	}
-	// TODO: Update authid sometime for guests..? No?
-	$conf->AuthID = $as->AuthID;
+	$authId = getNewAuthId( $o->Name, $User->ID, $args->sessionid );
+	$conf->AuthID = $authID;
 	
 	storeRecentApps( $o->Name );
 		
@@ -240,13 +238,7 @@ else if( $row = $SqlDatabase->FetchObject( '
 		$fn = $retObject ? $retObject->ConfFilename : false;
 		$conf = json_decode( $row->Config );
 		$conf->Permissions = json_decode( $ur->Permissions );
-		if( $as = $SqlDatabase->FetchObject( '
-			SELECT * FROM FAppSession WHERE FUserApplicationID=\''. $ur->ID . '\'
-		' ) )
-		{
-			$conf->AuthID = $as->AuthID;
-		}
-		//$conf->AuthID = $ur->AuthID;
+		$conf->AuthID = $authId = getNewAuthId( $args->args->application, $User->ID, $args->sessionid );
 		$conf->State = json_decode( $ur->Data );
 		$conf->ConfFilename = $fn;
 		
@@ -308,5 +300,22 @@ else if ( $path = findInSearchPaths( $args->args->application ) )
 	die( 'notinstalled<!--separate-->{"path":"' . $path . '","trusted":"'. $trusted .'"}' );
 }
 die( 'fail<!--separate-->{"response": "file does not exist"}' );
+
+function getNewAuthId( $appName, $userId, $sessionId )
+{
+	if( $result = FriendCoreQuery( '/system.library/app/authidgen', [
+		'appname' => $appName,
+		'userid' => $userId,
+		'sessionid' => $sessionId
+	] ) )
+	{
+		list( $ret, $data ) = explode( '<!--separate-->', $result );
+		if( $ret == 'ok' )
+		{
+			return $data;
+		}
+	}
+	return false;
+}
 
 ?>
