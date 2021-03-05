@@ -101,7 +101,7 @@ static FULONG AppSessionDesc[] = {
 #else
 	SQLT_STR,     (FULONG)"AuthID",   offsetof( struct AppSession, as_AuthID ),
 #endif
-	SQLT_INT,     (FULONG)"LoggedTime", offsetof( struct AppSession, as_CreateTime ),
+	SQLT_INT,     (FULONG)"CreateTime", offsetof( struct AppSession, as_CreateTime ),
 
 	SQLT_INIT_FUNCTION, (FULONG)"init", (FULONG)&AppSessionInit,
 	SQLT_NODE,    (FULONG)"node",        offsetof( struct AppSession, node ),

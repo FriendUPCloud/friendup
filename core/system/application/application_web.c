@@ -472,6 +472,8 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 						}
 						else
 						{
+							snprintf( respMsg, sizeof(respMsg), "{\"result\":\"fail\",\"error\":%d,\"msg\":\"%s\"}", (int)1, "Cannot store authid in DB" );
+							
 							AppSessionDelete( las );
 						}
 					}
