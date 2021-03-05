@@ -70,7 +70,7 @@
 #include <dirent.h>
 
 #include <util/log/log.h>
-#include <system/user/user_session.h>
+#include <system/user/usersession.h>
 #include <system/systembase.h>
 
 uLong filetime(const char *filename, tm_zip *tmzip, uLong *dostime)

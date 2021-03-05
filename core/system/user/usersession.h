@@ -65,6 +65,7 @@ typedef struct UserSession
 	FULONG					us_UserID;					// ID of user to which session is attached
 	char					*us_DeviceIdentity;			// device identity
 	char					*us_SessionID;				// session id
+	char					*us_HashedSessionID;		// Hashed SessionID used by database
 	time_t					us_LoggedTime;				// last update from user
 	int						us_Status;					// session status
 	
@@ -93,7 +94,7 @@ typedef struct UserSession
 //
 //
 
-UserSession *UserSessionNew( char *sessid, char *devid );
+UserSession *UserSessionNew( void *sb, char *sesid, char *devid );
 
 //
 //
@@ -105,7 +106,7 @@ void UserSessionDelete( UserSession *us );
 //
 //
 
-void UserSessionInit( UserSession *us );
+void UserSessionInit( UserSession *us, void *sb );
 
 //
 //
@@ -121,7 +122,11 @@ static FULONG UserSessionDesc[] = {
 	SQLT_IDINT,   (FULONG)"ID",          offsetof( struct UserSession, us_ID ), 
 	SQLT_INT,     (FULONG)"UserID", offsetof( struct UserSession, us_UserID ),
 	SQLT_STR,     (FULONG)"DeviceIdentity",       offsetof( struct UserSession, us_DeviceIdentity ),
+#ifdef DB_SESSIONID_HASH
+	SQLT_STR_HASH,(FULONG)"SessionID",   offsetof( struct UserSession, us_SessionID ),
+#else
 	SQLT_STR,     (FULONG)"SessionID",   offsetof( struct UserSession, us_SessionID ),
+#endif
 	SQLT_INT,     (FULONG)"LoggedTime", offsetof( struct UserSession, us_LoggedTime ),
 	SQLT_INT,     (FULONG)"UMA_ID", offsetof( struct UserSession, us_MobileAppID ),
 	SQLT_INIT_FUNCTION, (FULONG)"init", (FULONG)&UserSessionInit,

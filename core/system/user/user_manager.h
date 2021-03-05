@@ -21,11 +21,12 @@
 #define __SYSTEM_USER_USER_MANAGER_H__
 
 #include <core/types.h>
-#include "user_session.h"
+#include "usersession.h"
 #include <system/usergroup/user_group.h>
-#include "user_sessionmanager.h"
+#include "usersession_manager.h"
 #include "user.h"
 #include "remote_user.h"
+#include <util/hashmap_kint.h>
 
 //
 // User Session Manager structure
@@ -36,6 +37,9 @@ typedef struct UserManager
 	void								*um_SB;
 	
 	User								*um_Users; 						// logged users with mounted devices
+	
+	HMapKInt							um_UsersMapByID;
+	
 	//UserGroup							*um_UserGroups;			// all user groups
 	void 								*um_USM;
 	RemoteUser							*um_RemoteUsers;		// remote users and their connections
@@ -111,12 +115,6 @@ User * UMUserGetByIDDB( UserManager *um, FULONG id );
 //
 
 int UMUserCreate( UserManager *smgr, Http *r, User *usr );
-
-//
-// is user in admin group
-//
-
-FBOOL UMUserIsAdmin( UserManager *smgr, Http *r, User *usr );
 
 //
 // is user in admin group
@@ -230,6 +228,18 @@ int UMCheckAndLoadAPIUser( UserManager *um );
 //
 //
 
+int UMFindUserByNameAndAddToSas( UserManager *um, char *uname, void *las, char *appName, char *msg, BufString *usersAdded, FBOOL listNotEmpty );
+
+//
+//
+//
+
 int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname );
+
+//
+//
+//
+
+int UMInitUsers( UserManager *um );
 
 #endif //__SYSTEM_USER_USER_MANAGER_H__

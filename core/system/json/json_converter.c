@@ -227,6 +227,7 @@ BufString *GetJSONFromStructure( FULONG *descr, void *data )
 				break;
 				
 			case SQLT_STR:
+			case SQLT_STR_HASH:
 				{
 					char tmp[ 512 ];
 					char *tmpchar;
@@ -408,6 +409,7 @@ void *GetStructureFromJSON( FULONG *descr, const char *jsondata )
 					break;
 						
 					case SQLT_STR:
+					case SQLT_STR_HASH:
 					{
 						int retPos = -1;
 						for( i = 0; i <  value->u.object.length; i++) 
@@ -542,6 +544,7 @@ void *GetStructureFromJSON( FULONG *descr, const char *jsondata )
 						break;
 						
 						case SQLT_STR:
+						case SQLT_STR_HASH:
 						{
 							int retPos = -1;
 							for( i = 0; i < intlength; i++) 

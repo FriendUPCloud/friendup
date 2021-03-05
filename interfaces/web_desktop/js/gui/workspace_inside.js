@@ -611,10 +611,10 @@ var WorkspaceInside = {
 	getWebSocketsState: function()
 	{
 		if( Workspace.readyToRun ) return Workspace.websocketState;
-		return "false";
+		return 'false';
 	},
 	initWebSocket: function( callback )
-	{	
+	{
 		let self = this;
 		function closeConn()
 		{
@@ -654,9 +654,19 @@ var WorkspaceInside = {
 		// Not ready
 		if( !Workspace.sessionId )
 		{
-			return setTimeout( function(){ Workspace.initWebSocket( callback ); }, 1000 );
+			if( this.initWSTimeout )
+				clearTimeout( this.initWSTimeout );
+			this.initWSTimeout = setTimeout( function(){ Workspace.initWebSocket( callback ); }, 1000 );
+			return this.initWSTimeout;
 		}
-
+		
+		// Not needed here
+		if( this.initWSTimeout )
+		{
+			clearTimeout( this.initWSTimeout );
+			this.initWSTimeout = null;
+		}
+		
 		// Force connecting ws state (we will close it!)
 		Workspace.websocketState = 'connecting';
 
@@ -1151,7 +1161,53 @@ var WorkspaceInside = {
 		if( !this.refreshEWCTime )
 		    this.refreshEWCTime = 0;
 		let cand = ( new Date() ).getTime() / 1000;
-		if( cand - this.refreshEWCTime > 30 )
+		
+		function doItCal( sessions )
+		{
+			var m = Workspace.widget ? Workspace.widget.target : ge( 'DoorsScreen' );
+		    if( m == ge( 'DoorsScreen' ) )
+			    m = ge( 'DoorsScreen' ).screenTitle.getElementsByClassName( 'Extra' )[0];
+		    if( !m )
+		    {
+			    //console.log( 'Can not find widget!' );
+			    return;
+		    }
+		    
+			var closeBtn = '<div class="HRow"><p class="Layout"><button type="button" class="FloatRight Button fa-close IconSmall">' + i18n( 'i18n_close' ) + '</button></p></div>';
+
+		    // Mobile launches calendar in a different way, so this 
+		    // functionality is only for desktops
+		    if( !isMobile && !Workspace.isSingleTask )
+		    {
+			    var wid = Workspace.widget ? Workspace.widget : m.widget;
+			    if( wid )
+			    {
+				    wid.shown = true;
+			    }
+
+			    if( wid && !wid.initialized )
+			    {
+				    wid.initialized = true;
+				    
+				    self.createCalendar( wid, sessions );
+			    }
+			    else
+			    {
+				    if( m.calendar )
+				    {
+					    m.calendar.render();
+					    m.sessions.innerHTML = d;
+				    }
+			    }
+			    if( wid )
+			    {
+				    wid.autosize();
+			    }
+			    PollTrayPosition();
+		    }
+		}
+		
+		if( !Workspace.cachedSessionList || cand - this.refreshEWCTime > 30 )
 		{
 		    this.refreshEWCTime = cand;
 		    var mo = new Library( 'system.library' );
@@ -1174,6 +1230,7 @@ var WorkspaceInside = {
 
 				    if( sessionList )
 				    {
+				    	Workspace.cachedSessionList = sessionList;
 					    try
 					    {
 						    var exists = [];
@@ -1223,41 +1280,14 @@ var WorkspaceInside = {
 				    }
 			    }
 
-			    var closeBtn = '<div class="HRow"><p class="Layout"><button type="button" class="FloatRight Button fa-close IconSmall">' + i18n( 'i18n_close' ) + '</button></p></div>';
-
-			    // Mobile launches calendar in a different way, so this 
-			    // functionality is only for desktops
-			    if( !isMobile && !Workspace.isSingleTask )
-			    {
-				    var wid = Workspace.widget ? Workspace.widget : m.widget;
-				    if( wid )
-				    {
-					    wid.shown = true;
-				    }
-
-				    if( wid && !wid.initialized )
-				    {
-					    wid.initialized = true;
-					    
-					    self.createCalendar( wid, sessions );
-				    }
-				    else
-				    {
-					    if( m.calendar )
-					    {
-						    m.calendar.render();
-						    m.sessions.innerHTML = d;
-					    }
-				    }
-				    if( wid )
-				    {
-					    wid.autosize();
-				    }
-				    PollTrayPosition();
-			    }
+			    doItCal( sessions );
 		    }
 		    // FRANCOIS: get unique device IDs...
 		    mo.execute( 'user/sessionlist', { username: Workspace.loginUsername } );
+		}
+		else
+		{
+			doItCal( [] );
 		}
 		
 		// For mobiles, we have a Friend icon at the top of the screen
@@ -1684,6 +1714,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							ScreenOverlay.hide();
 							PollTray();
 							PollTaskbar();
+							// Tell app we can show ourselves!
+							if( window.friendApp && window.friendApp.reveal )
+							{
+								friendApp.reveal();
+							}
 							return;
 						}
 						
@@ -1772,6 +1807,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										}
 										// Hide overlay
 										ScreenOverlay.hide();
+										
 										PollTray();
 										PollTaskbar();
 										l.func = function()
@@ -1780,6 +1816,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										}
 										// We are done. Empty startup apps!
 										Friend.startupApps = {};
+										
+										// Tell app we can show ourselves!
+										if( window.friendApp && window.friendApp.reveal )
+										{
+											friendApp.reveal();
+										}
 									}
 								}
 								l.func();
@@ -1799,6 +1841,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 					Workspace.windowWallpaperImage = '';
 					document.body.classList.add( 'DefaultWallpaper' );
+					// Tell app we can show ourselves!
+					if( window.friendApp && window.friendApp.reveal )
+					{
+						friendApp.reveal();
+					}
 				}
 				if( callback && typeof( callback ) == 'function' ) callback();
 			}
@@ -3423,7 +3470,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		var self = this;
 		
 		this.getMountlist( function( data )
-		{
+		{	
 			// Something went wrong - don't show an empty workspace
 			// We always have one entry, the system disk
 			if( data.length <= 1 )
@@ -3717,6 +3764,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	getMountlist: function( callback, forceRefresh, addDormant )
 	{
 		var t = this; // Reference to workspace
+		
+		// Just in case
+		if( window.friendApp )
+			window.friendApp.reveal();
 		
 		if( !Friend.dosDrivers )
 		{
@@ -6481,10 +6532,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 						}
 						
-						if( ics[ a ].Path.indexOf( 'Shared:' ) == 0 )
+						if( ics[ a ].Path )
 						{
-							sharableFile = false;
-							sharedVolume = true;
+							if( ics[ a ].Path.indexOf( 'Shared:' ) == 0 )
+							{
+								sharableFile = false;
+								sharedVolume = true;
+							}
 						}
 						
 						if( ics[a].Volume == 'System:' )

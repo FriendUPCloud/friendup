@@ -142,7 +142,7 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 	if( !$found )
 	{
 				
-		$d = new File( $p );
+		$d = new File( $p, false );
 
 		$source = null;
 	

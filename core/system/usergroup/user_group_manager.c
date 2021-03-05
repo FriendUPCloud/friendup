@@ -18,7 +18,7 @@
  */
 
 #include "user_group_manager.h"
-#include <system/user/user_sessionmanager.h>
+#include <system/user/usersession_manager.h>
 
 #include <system/systembase.h>
 #include <util/sha256.h>
@@ -405,8 +405,18 @@ int UGMMountDrives( UserGroupManager *sm )
 		while( ug != NULL && sb->sl_UM && sb->sl_UM->um_APIUser )
 		{
 			char *error = NULL;
-			//UserGroupDeviceMount( l, sqllib, ug, NULL );
-			UserGroupDeviceMount( sb->sl_DeviceManager, sqllib, ug, sb->sl_UM->um_APIUser, &error );
+			UserSession *ses = NULL;
+			
+			if( sb->sl_UM->um_APIUser != NULL && sb->sl_UM->um_APIUser->u_SessionsList )
+			{
+				if( sb->sl_UM->um_APIUser->u_SessionsList->us != NULL )
+				{
+					ses = (UserSession *)sb->sl_UM->um_APIUser->u_SessionsList->us;
+				}
+			}
+			
+			// We use API user to manage everything from system side
+			UserGroupDeviceMount( sb->sl_DeviceManager, sqllib, ug, sb->sl_UM->um_APIUser, ses, &error );
 			
 			if( error != NULL )
 			{
@@ -442,85 +452,87 @@ int UGMAssignGroupToUser( UserGroupManager *ugm, User *usr )
 	{
 		return 1;
 	}
-	
-	tmpQuery = (char *)FCalloc( QUERY_SIZE, sizeof(char) );
-	
+
 	SystemBase *sb = (SystemBase *)ugm->ugm_SB;
-	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
-
-	if( sqlLib != NULL )
+	if( ( tmpQuery = (char *)FCalloc( QUERY_SIZE, sizeof(char) ) ) != NULL )
 	{
-		sqlLib->SNPrintF( sqlLib, tmpQuery, QUERY_SIZE, "SELECT UserGroupID FROM FUserToGroup WHERE UserID = '%lu'", usr->u_ID );
+		SystemBase *sb = (SystemBase *)ugm->ugm_SB;
+		SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 
-		void *result = sqlLib->Query( sqlLib, tmpQuery );
-	
-		if ( result == NULL ) 
+		if( sqlLib != NULL )
 		{
-			FERROR("SQL query result is empty!\n");
-			sb->DropDBConnection( sb, sqlLib );
-			return 2;
-		}
-		
-		FBOOL isAdmin = FALSE;
-		FBOOL isAPI = FALSE;
+			sqlLib->SNPrintF( sqlLib, tmpQuery, QUERY_SIZE, "SELECT UserGroupID FROM FUserToGroup WHERE UserID = '%lu'", usr->u_ID );
 
-		char **row;
-		int j = 0;
-
-		// remove user from group and then assign to new ones
-
-		UserRemoveFromGroups( usr );
+			void *result = sqlLib->Query( sqlLib, tmpQuery );
 	
-		DEBUG("[UMAssignGroupToUser] Memory for groups allocated\n" );
-	
-		//if( usr->u_Groups != NULL )
-		{
-			while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
+			if ( result == NULL ) 
 			{
-				DEBUG("[UMAssignGroupToUser] Going through loaded rows %d -> %s\n", j, row[ 0 ] );
+				FERROR("SQL query result is empty!\n");
+				FFree( tmpQuery );
+				sb->DropDBConnection( sb, sqlLib );
+				return 2;
+			}
+		
+			FBOOL isAdmin = FALSE;
+			FBOOL isAPI = FALSE;
+
+			char **row;
+			int j = 0;
+
+			// remove user from group and then assign to new ones
+
+			UserRemoveFromGroups( usr );
+	
+			DEBUG("[UMAssignGroupToUser] Memory for groups allocated\n" );
+	
+			//if( usr->u_Groups != NULL )
+			{
+				while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
 				{
-					char *end;
-					FULONG gid = strtol( (char *)row[0], &end, 0 );
-				
-					DEBUG("[UMAssignGroupToUser] User is in group %lu\n", gid  );
-				
-					if( FRIEND_MUTEX_LOCK( &(ugm->ugm_Mutex) ) == 0 )
+					DEBUG("[UMAssignGroupToUser] Going through loaded rows %d -> %s\n", j, row[ 0 ] );
 					{
-						UserGroup *g = ugm->ugm_UserGroups;
-						while( g != NULL )
+						char *end;
+						FULONG gid = strtol( (char *)row[0], &end, 0 );
+				
+						DEBUG("[UMAssignGroupToUser] User is in group %lu\n", gid  );
+				
+						if( FRIEND_MUTEX_LOCK( &(ugm->ugm_Mutex) ) == 0 )
 						{
-							if( g->ug_ID == gid )
+							UserGroup *g = ugm->ugm_UserGroups;
+							while( g != NULL )
 							{
-								if( g->ug_IsAdmin == TRUE )
+								if( g->ug_ID == gid )
 								{
-									isAdmin = g->ug_IsAdmin;
-								}
-								if( g->ug_IsAPI == TRUE )
-								{
-									isAPI = g->ug_IsAPI;
-								}
+									if( g->ug_IsAdmin == TRUE )
+									{
+										isAdmin = g->ug_IsAdmin;
+									}
+									if( g->ug_IsAPI == TRUE )
+									{
+										isAPI = g->ug_IsAPI;
+									}
 							
-								UserGroupAddUser( g, usr );
-								DEBUG("[UMAssignGroupToUser] Added group %s to user %s\n", g->ug_Name, usr->u_Name );
-								//usr->u_Groups[ pos++ ] = g;
+									UserGroupAddUser( g, usr );
+									DEBUG("[UMAssignGroupToUser] Added group %s to user %s\n", g->ug_Name, usr->u_Name );
+									//usr->u_Groups[ pos++ ] = g;
+								}
+								g  = (UserGroup *) g->node.mln_Succ;
 							}
-							g  = (UserGroup *) g->node.mln_Succ;
+							FRIEND_MUTEX_UNLOCK( &(ugm->ugm_Mutex) );
 						}
-						FRIEND_MUTEX_UNLOCK( &(ugm->ugm_Mutex) );
 					}
 				}
 			}
-		}
 		
-		usr->u_IsAdmin = isAdmin;
-		usr->u_IsAPI = isAPI;
+			usr->u_IsAdmin = isAdmin;
+			usr->u_IsAPI = isAPI;
 	
-		sqlLib->FreeResult( sqlLib, result );
+			sqlLib->FreeResult( sqlLib, result );
 
-		sb->DropDBConnection( sb, sqlLib );
+			sb->DropDBConnection( sb, sqlLib );
+		}
+		FFree( tmpQuery );
 	}
-	
-	FFree( tmpQuery );
 	
 	return 0;
 }

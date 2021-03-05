@@ -19,12 +19,15 @@
 
 #include "user.h"
 #include "user_manager.h"
-#include "user_sessionmanager.h"
+#include "usersession_manager.h"
 
 #include <system/systembase.h>
 #include <util/sha256.h>
 #include <system/fsys/device_handling.h>
 #include <util/session_id.h>
+#include <system/sas/sas_session.h>
+
+#define USE_HASHMAP_TO_HOLD_USERS
 
 /**
  * Create UserManager
@@ -41,6 +44,10 @@ UserManager *UMNew( void *sb )
 		sm->um_SB = sb;
 		
 		pthread_mutex_init( &(sm->um_Mutex), NULL );
+		
+#ifdef USE_HASHMAP_TO_HOLD_USERS
+		sm->um_UsersMapByID = HashmapKIntNew();
+#endif
 		
 		return sm;
 	}
@@ -67,7 +74,7 @@ void UMDelete( UserManager *smgr )
 	}
 	
 	User *remusr = usr;
-	Log( FLOG_INFO,  "Release users\n");
+	Log( FLOG_INFO, "Release users\n");
 	
 	//
 	// we must release all users from memory
@@ -109,6 +116,10 @@ void UMDelete( UserManager *smgr )
 	
 	RemoteUserDeleteAll( smgr->um_RemoteUsers );
 	
+#ifdef USE_HASHMAP_TO_HOLD_USERS
+	HashmapKIntFree( smgr->um_UsersMapByID );
+#endif
+	
 	// destroy mutex
 	pthread_mutex_destroy( &(smgr->um_Mutex) );
 	
@@ -138,13 +149,13 @@ int UMUserUpdateDB( UserManager *um, User *usr )
 		}
 		else
 		{
-			FERROR("Cannot get user, mysql.library was not open\n");
+			FERROR("[UMUserUpdateDB] Cannot get user, mysql.library was not open\n");
 			return 1;
 		}
 	}
 	else
 	{
-		FERROR("User = NULL\n");
+		FERROR("[UMUserUpdateDB] usr pointer is equal to NULL\n");
 		return 2;
 	}
 	return 0;
@@ -239,7 +250,7 @@ User *UMUserGetByName( UserManager *um, const char *name )
 	
 	if( sqlLib == NULL )
 	{
-		FERROR("Cannot get user, mysql.library was not open\n");
+		FERROR("[UMUserGetByName] Cannot get user, mysql.library was not open\n");
 		return NULL;
 	}
 
@@ -272,7 +283,7 @@ User * UMUserGetByNameDB( UserManager *um, const char *name )
 	
 	if( sqlLib == NULL )
 	{
-		FERROR("Cannot get user, mysql.library was not open\n");
+		FERROR("[UMUserGetByNameDB] Cannot get user, mysql.library was not open\n");
 		return NULL;
 	}
 
@@ -315,7 +326,7 @@ User * UMUserGetByIDDB( UserManager *um, FULONG id )
 	
 	if( sqlLib == NULL )
 	{
-		FERROR("Cannot get user, mysql.library was not open\n");
+		FERROR("[UMUserGetByIDDB] Cannot get user, mysql.library was not open\n");
 		return NULL;
 	}
 
@@ -424,31 +435,10 @@ int UMUserCreate( UserManager *smgr, Http *r __attribute__((unused)), User *usr 
 	}
 	else
 	{
-		FERROR("Cannot create user, mysql.library was not opened!\n");
+		FERROR("[UMUserCreate] Cannot create user, mysql.library was not opened!\n");
 		return 2;
 	}
 	return val;
-}
-
-/**
- * Return information if user is admin
- *
- * @param smgr pointer to UserManager UNUSED
- * @param r http request UNUSED
- * @param usr pointer to user structure which will be checked
- * @return TRUE if user is administrator, otherwise FALSE
- */
-FBOOL UMUserIsAdmin( UserManager *smgr __attribute__((unused)), Http *r __attribute__((unused)), User *usr )
-{
-	if( usr != NULL &&  usr->u_IsAdmin == TRUE )
-	{
-		return TRUE;
-	}
-	else
-	{
-		FERROR("User is: %p or not admin\n", usr );
-		return FALSE;
-	}
 }
 
 /**
@@ -466,7 +456,7 @@ FBOOL UMUserIsAdminByAuthID( UserManager *smgr, Http *r __attribute__((unused)),
 	
 	if( sqlLib == NULL )
 	{
-		FERROR("Cannot get user, mysql.library was not open\n");
+		FERROR("[UMUserIsAdminByAuthID] Cannot get user, mysql.library was not open\n");
 		return FALSE;
 	}
 	
@@ -1024,7 +1014,7 @@ int UMAddUser( UserManager *um,  User *usr )
 	}
 	else
 	{
-		INFO("User found, will not be added\n");
+		INFO("[UMAddUser] User found, will not be added\n");
 	}
 	
 	return  0;
@@ -1071,7 +1061,7 @@ int UMRemoveUser( UserManager *um, User *usr, UserSessionManager *userSessionMan
 		{
 			if( userCurrent == usr )
 			{
-				DEBUG("%s removing user at %p, place in list %d\n", __func__, userCurrent, n);
+				DEBUG("[UMRemoveUser] %s removing user at %p, place in list %d\n", __func__, userCurrent, n);
 				found = true;
 				n++;
 				break;
@@ -1086,7 +1076,7 @@ int UMRemoveUser( UserManager *um, User *usr, UserSessionManager *userSessionMan
 	{ //the requested user has been found in the list
 		if( userPrevious )
 		{ //we are in the middle or at the end of the list
-			DEBUG("Deleting from the middle or end of the list\n");
+			DEBUG("[UMRemoveUser] Deleting from the middle or end of the list\n");
 			userPrevious->node.mln_Succ = userCurrent->node.mln_Succ;
 		}
 		else
@@ -1283,6 +1273,7 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, int nu
  */
 int UMCheckAndLoadAPIUser( UserManager *um )
 {
+	int result = 0;
 	SystemBase *sb = (SystemBase *)um->um_SB;
 	DEBUG("[UMCheckAndLoadAPIUser] Start\n" );
 	
@@ -1293,62 +1284,70 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 		if( tuser->u_IsAPI || strcmp( tuser->u_Name, "apiuser" ) == 0 )
 		{
 			um->um_APIUser = tuser;
-			return 0;
+			break;
 		}
 		tuser = (User *)tuser->node.mln_Succ;
 	}
-	
-	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
-	
-	if( sqlLib != NULL )
+
+	// We have to create user
+	if( tuser == NULL )
 	{
-		User *user = NULL;
-
-		int entries;
-		user = sqlLib->Load( sqlLib, UserDesc, "Name='apiuser' LIMIT 1", &entries );
-
-		if( user != NULL )
+		SQLLibrary *sqlLib = sb->GetDBConnection( sb );
+	
+		if( sqlLib != NULL )
 		{
-			// Generate the API user session
-			char temptext[ 2048 ];
-			char *sesid = SessionIDGenerate( );
-			if( user->u_MainSessionID != NULL )
+			User *user = NULL;
+
+			int entries;
+			user = sqlLib->Load( sqlLib, UserDesc, "Name='apiuser' LIMIT 1", &entries );
+
+			if( user != NULL )
 			{
-				FFree( user->u_MainSessionID );
-			}
-			user->u_MainSessionID = sesid;
+				sb->DropDBConnection( sb, sqlLib );
 			
-			sqlLib->SNPrintF( sqlLib, temptext, 2048, "UPDATE `FUser` f SET f.SessionID = '%s' WHERE`ID` = '%ld'",  user->u_MainSessionID, user->u_ID );
-			sqlLib->QueryWithoutResults( sqlLib, temptext );
-			sb->DropDBConnection( sb, sqlLib );
+				DEBUG("[UMCheckAndLoadAPIUser] User found %s  id %ld\n", user->u_Name, user->u_ID );
+				UGMAssignGroupToUser( sb->sl_UGM, user );
+				UMAssignApplicationsToUser( um, user );
+				user->u_MountedDevs = NULL;
+				
+				UMAddUser( sb->sl_UM, user );
+				tuser = user;
 			
-			DEBUG("[UMCheckAndLoadAPIUser] User found %s  id %ld\n", user->u_Name, user->u_ID );
-			UGMAssignGroupToUser( sb->sl_UGM, user );
-			UMAssignApplicationsToUser( um, user );
-			user->u_MountedDevs = NULL;
-			
-			if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
-			{
-				user->node.mln_Succ  = (MinNode *) um->um_Users;
-				if( um->um_Users != NULL )
+				// API user have only one session
+				if( user->u_SessionsList == NULL )
 				{
-					um->um_Users->node.mln_Pred = (MinNode *)user;
+					// we now generate dummy session
+					//UserSession *ses = UserSessionNew( sb, "api", "api" );
+					UserSession *ses = UserSessionNew( sb, NULL, "api" );
+					if( ses != NULL )
+					{
+						ses->us_UserID = user->u_ID;
+						ses->us_LoggedTime = time( NULL );
+				
+						UserAddSession( user, ses );
+						USMSessionSaveDB( sb->sl_USM, ses );
+					
+						USMUserSessionAdd( sb->sl_USM, ses );
+					}
 				}
-				um->um_Users = user;
-			
-				um->um_APIUser = user;
-				FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
+
+				result = 0;
+			}
+			else
+			{
+				sb->DropDBConnection( sb, sqlLib );
+				result = 1;
 			}
 			return 0;
 		}
 		else
 		{
-			sb->DropDBConnection( sb, sqlLib );
+			
 		}
-	}
-	return 1;
+	}	// tuser != NULL
+	
+	return result;
 }
-
 
 /**
  * Return all users from database
@@ -1420,5 +1419,171 @@ int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname )
 		
 		BufStringAddSize( bs, "]", 1 );
 	}
+	return 0;
+}
+
+/**
+ * Find user by name, add to SAS and send message to all user sessions that user was added to SAS
+ *
+ * @param um pointer to UserManager
+ * @param uname user name
+ * @param las pointer to application session
+ * @param appName application name
+ * @param msg message which will be send to sessions
+ * @param usersAdded pointer to string which will contain users added to SAS
+ * @param listNotEmpty set to TRUE if list already contain users
+ * @return 0 when user was added to SAS, otherwise error number
+ */
+int UMFindUserByNameAndAddToSas( UserManager *um, char *uname, void *las, char *appName, char *msg, BufString *usersAdded, FBOOL listNotEmpty )
+{
+	SASSession *as = (SASSession *)las;
+	SystemBase *sb = (SystemBase *)um->um_SB;
+	char tmp[ 512 ];
+
+	User *tuser = NULL;
+	if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
+	{
+		tuser = um->um_Users;
+		while( tuser != NULL )
+		{
+			// Check both username and password
+			if( strcmp( tuser->u_Name, uname ) == 0 )
+			{
+				FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
+				
+				if( FRIEND_MUTEX_LOCK( &(tuser->u_Mutex) ) == 0 )
+				{
+					tuser->u_InUse++;
+					FRIEND_MUTEX_UNLOCK( &(tuser->u_Mutex) );
+				}
+				
+				FBOOL userAddedToSas = FALSE;
+				
+				UserSessListEntry *usle = tuser->u_SessionsList;
+				while( usle != NULL )
+				{
+					if( usle->us != NULL )
+					{
+						UserSession *us = (UserSession *)usle->us;
+						if( us->us_WSD != NULL )
+						{
+							SASUList *sli = SASSessionAddUser( as, us, NULL );
+
+							DEBUG("[UMFindUserByNameAndAddToSas] newsession will be added %p\n", us );
+
+							if( sli != NULL )
+							{
+								char tmpmsg[ 2048 ];
+								int len = sprintf( tmpmsg, "{ \"type\":\"msg\", \"data\":{\"type\":\"sasid-request\",\"data\":{\"sasid\":\"%lu\",\"message\":\"%s\",\"owner\":\"%s\" ,\"appname\":\"%s\"}}}", as->sas_SASID, msg, tuser->u_Name , appName );
+
+								WebSocketSendMessageInt( us, tmpmsg, len );
+								
+								int tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"deviceid\":\"%s\",\"result\":\"invited\"}", tuser->u_Name, us->us_DeviceIdentity );
+								if( listNotEmpty == TRUE )
+								{
+									BufStringAddSize( usersAdded, ",", 1 );
+									BufStringAddSize( usersAdded, tmp, tmpsize );
+								}
+								else
+								{
+									// if list was empty now its not
+									listNotEmpty = FALSE;
+								}
+								userAddedToSas = TRUE;
+							}
+						}
+						else	// Websocket connection not found
+						{
+							// user session was not added to SAS, beacouse websockets were not available
+							int tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"deviceid\":\"%s\",\"result\":\"not invited\"}", tuser->u_Name, us->us_DeviceIdentity );
+							if( listNotEmpty == TRUE )
+							{
+								BufStringAddSize( usersAdded, ",", 1 );
+								BufStringAddSize( usersAdded, tmp, tmpsize );
+							}
+							else
+							{
+								// if list was empty now its not
+								listNotEmpty = FALSE;
+							}
+						}
+					}
+					usle = (UserSessListEntry *)usle->node.mln_Succ;
+				}	// go through all sessions attached to user
+				
+				if( userAddedToSas == TRUE )
+				{
+					if( FRIEND_MUTEX_LOCK( &(tuser->u_Mutex) ) == 0 )
+					{
+						tuser->u_InUse--;
+						FRIEND_MUTEX_UNLOCK( &(tuser->u_Mutex) );
+					}
+					
+					return 0;
+				}
+				
+				// going to check another user, so we have to unlock current one
+				
+				if( FRIEND_MUTEX_LOCK( &(tuser->u_Mutex) ) == 0 )
+				{
+					tuser->u_InUse--;
+					FRIEND_MUTEX_UNLOCK( &(tuser->u_Mutex) );
+				}
+				FRIEND_MUTEX_LOCK( &(um->um_Mutex) );
+			}
+			tuser = (User *)tuser->node.mln_Succ;
+		}
+		FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
+	}
+	
+	return 1;
+}
+
+/**
+ * Init user drives
+ *
+ * @param um pointer to UserManager
+ * @return 0 when success, otherwise error number
+ */
+int UMInitUsers( UserManager *um )
+{
+	SystemBase *sb = (SystemBase *)um->um_SB;
+	Log( FLOG_INFO, "----------------------------------------------------\n");
+	Log( FLOG_INFO, "---------Mount user devices-------------------------\n");
+	Log( FLOG_INFO, "----------------------------------------------------\n");
+	
+	SQLLibrary *sqllib = sb->GetDBConnection( sb );
+	if( sqllib != NULL )
+	{
+		User *tmpUser = sb->sl_UM->um_Users;
+		while( tmpUser != NULL )
+		{
+			char *err = NULL;
+			DEBUG( "[UMInitUsers] FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
+			
+			UserSession *session = USMCreateTemporarySession( sb->sl_USM, sqllib, tmpUser->u_ID, 0 );
+			if( session != NULL )
+			{
+				session->us_UserID = tmpUser->u_ID;
+				session->us_User = tmpUser;
+				
+				UserDeviceMount( sb, tmpUser, session, 1, TRUE, &err, FALSE );
+				if( err != NULL )
+				{
+					Log( FLOG_ERROR, "Initial system mount error. UserID: %lu Error: %s\n", tmpUser->u_ID, err );
+					FFree( err );
+				}
+				USMDestroyTemporarySession( sb->sl_USM, sqllib, session );
+			}
+			DEBUG( "[UMInitUsers] DONE FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
+			tmpUser = (User *)tmpUser->node.mln_Succ;
+		}
+		sb->DropDBConnection( sb, sqllib );
+	}
+	
+	Log( FLOG_INFO, "----------------------------------------------------\n");
+	Log( FLOG_INFO, "---------Mount user group devices-------------------\n");
+	Log( FLOG_INFO, "----------------------------------------------------\n");
+		
 	return 0;
 }

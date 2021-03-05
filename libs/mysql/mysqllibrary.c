@@ -207,7 +207,29 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 							memcpy( strptr + dptr[ 2 ], &tmp, sizeof( int ) );
 						}
 						break;
+						
 					case SQLT_STR:
+						{
+							if( row[i] != NULL )
+							{
+								//int len = strlen( row[i] );
+								char *tmpval = calloc( lengths[i] + 1, sizeof( char ) );
+								if( tmpval )
+								{
+									// Copy mysql data
+									memcpy( tmpval, row[i], lengths[i] );
+									// Add tmpval to string pointer list..
+									memcpy( strptr + dptr[2], &tmpval, sizeof( char * ) );
+								}
+							}
+							else
+							{
+
+							}
+						}
+						break;
+						
+					case SQLT_STR_HASH:
 						{
 							if( row[i] != NULL )
 							{
@@ -310,8 +332,8 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 							//DEBUG("[MYSQLLibrary] Init function found, calling it\n");
 							if( ((void *)dptr[2]) != NULL && data != NULL )
 							{
-								void (*funcptr)( void * ) = (void *)(void *)dptr[2];
-								funcptr( (void *)data );
+								void (*funcptr)( void *, void *) = (void (*)( void *, void *))dptr[2];
+								funcptr( (void *)data, l->sb );
 							}
 						}
 					break;
@@ -499,10 +521,76 @@ int Update( struct SQLLibrary *l, FULONG *descr, void *data )
 						
 						cols++;
 					}
-						
 				}
 				break;
 				
+				case SQLT_STR_HASH:
+				{
+					char tmp[ 256 ];
+					char *tmpchar;
+					memcpy( &tmpchar, strptr + dptr[ 2 ], sizeof( char *) );
+					//DEBUG("[MYSQLLibrary] update, pointer %p\n", tmpchar );
+					int sprintfsize = 0;
+					
+					if( tmpchar != NULL )
+					{
+						char *ttext = NULL;
+						char *esctext = NULL;
+						
+						int tmpcharsize = strlen( tmpchar );
+						int ttextsize = strlen( (char *)dptr[ 1 ] ) + ( tmpcharsize << 1 ) + 256;
+						
+						if( ( ttext = FCalloc( ttextsize, sizeof(char) ) ) != NULL )
+						{
+							if( ( esctext = FCalloc( (tmpcharsize << 1 ) + 1, sizeof(char) ) ) != NULL )
+							{
+								mysql_real_escape_string( l->con.sql_Con, esctext, tmpchar, tmpcharsize );
+								SystemBase *sb = (SystemBase *)l->sb;
+								char *storeString = sb->sl_UtilInterface.DatabaseEncodeString( esctext );
+								
+								if( storeString != NULL )
+								{
+									DEBUG("\n\n\n\n\nold: %s new %s\n\n\n\n\n", esctext, storeString );
+									
+									if( cols == 0 )
+									{
+										sprintfsize = sprintf( ttext, " %s='%s'", (char *)dptr[ 1 ], storeString );
+									}
+									else
+									{
+										sprintfsize = sprintf( ttext, ", %s='%s'", (char *)dptr[ 1 ], storeString );
+									}
+									FFree( storeString );
+								}
+								//strcat( tmpQuery, tmp );
+								BufStringAddSize( querybs, ttext, sprintfsize );
+								FFree( esctext );
+							}
+							FFree( ttext );
+						}
+						
+						//DEBUG("[MYSQLLibrary] update set string %s to %s\n", tmpchar, (char *)dptr[ 1 ] );
+						
+						cols++;
+					}
+					else	// string was set to NULL
+					{
+						if( cols == 0 )
+						{
+							sprintfsize = sprintf( tmp, " %s=NULL", (char *)dptr[ 1 ] );
+						}
+						else
+						{
+							sprintfsize = sprintf( tmp, ", %s=NULL", (char *)dptr[ 1 ] );
+						}
+						BufStringAddSize( querybs, tmp, sprintfsize );
+						//strcat( tmpQuery, tmp );
+						
+						cols++;
+					}
+				}
+				break;
+					
 				case SQLT_DATETIME:
 				{
 					int sprintfsize = 0;
@@ -713,7 +801,47 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 						}
 						BufStringAddSize( dataquerybs, "'", 1 );
 					}
-					
+					opt++;
+				}
+				break;
+				
+				case SQLT_STR_HASH:
+					{
+					char *tmpchar;
+
+					memcpy( &tmpchar, strptr+dptr[2], sizeof( char *) );
+
+					if( tmpchar != NULL )
+					{
+						if( opt > 0 )
+						{
+							BufStringAddSize( tablequerybs, ",", 1 );
+							BufStringAddSize( dataquerybs, ",", 1 );
+						}
+
+						BufStringAddSize( dataquerybs, "'", 1 );
+						BufStringAdd( tablequerybs, (char *)dptr[ 1 ] );
+
+						char *esctext;
+						int tmpcharsize = strlen( tmpchar );
+						if( ( esctext = FCalloc( (tmpcharsize << 1 ) + 1, sizeof(char) ) ) != NULL )
+						{
+							mysql_real_escape_string( l->con.sql_Con, esctext, tmpchar, tmpcharsize );
+							SystemBase *sb = (SystemBase *)l->sb;
+							char *storeString = sb->sl_UtilInterface.DatabaseEncodeString( esctext );
+							
+							if( storeString != NULL )
+							{
+								DEBUG("\n\n\n\n\nSAVEDEBUG old: %s new %s\n\n\n\n\n", esctext, storeString );
+								
+								BufStringAdd( dataquerybs, storeString );
+								FFree( storeString );
+							}
+							
+							FFree( esctext );
+						}
+						BufStringAddSize( dataquerybs, "'", 1 );
+					}
 					opt++;
 				}
 				break;

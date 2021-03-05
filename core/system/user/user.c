@@ -19,6 +19,7 @@
 #include "user.h"
 #include <system/systembase.h>
 #include <system/cache/cache_user_files.h>
+#include <system/application/appsession.h>
 
 /**
  * Create new User
@@ -30,7 +31,7 @@ User *UserNew( )
 	User *u;
 	if( ( u = FCalloc( 1, sizeof( User ) ) ) != NULL )
 	{
-		UserInit( u );
+		UserInit( u, NULL );
 	}
 	else
 	{
@@ -46,7 +47,7 @@ User *UserNew( )
  * @param u pointer to memory where poiniter to User is stored
  * @return 0 when success, otherwise error number
  */
-int UserInit( User *u )
+int UserInit( User *u, void *sb )
 {
 	// First make sure we don't have a duplicate!
 	if( u == NULL )
@@ -187,6 +188,128 @@ int UserRemoveSession( User *usr, void *ls )
 }
 
 /**
+ * Add AppSession to User
+ *
+ * @param usr pointer to User structure
+ * @param ls pointer to UserSession which will be added
+ * @return 0 when success, otherwise error number
+ */
+int UserAddAppSession( User *usr, void *ls )
+{
+	if( usr == NULL || ls == NULL )
+	{
+		FERROR("[UserAddAppSession] User %p or appsession %p are empty\n", usr, ls );
+		return 1;
+	}
+	AppSession *s = (AppSession *)ls;
+	AppSessListEntry *asle = NULL;
+	
+	if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
+	{
+		AppSessListEntry *exses = usr->u_AppSessionsList;
+		while( exses != NULL )
+		{
+			if( exses != NULL && exses->as == ls )
+			{
+				DEBUG("[UserAddAppSession] Session was already added to user\n");
+				FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
+				return 0;
+			}
+			exses = (AppSessListEntry *) exses->node.mln_Succ;
+		}
+	
+		if( ( asle = FCalloc( 1, sizeof( AppSessListEntry ) ) ) != NULL )
+		{
+			asle->as = s;
+			s->as_User = usr;	// assign user to session
+			s->as_UserID = usr->u_ID;
+		
+			asle->node.mln_Succ = (MinNode *)usr->u_AppSessionsList;
+			usr->u_AppSessionsList = asle;
+			DEBUG("[UserAddAppSession] LIST OVERWRITEN: %p\n", usr->u_SessionsList );
+		
+			usr->u_AppSessionsNr++;
+		}
+		FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
+	}
+	
+	return 0;
+}
+
+/**
+ * Remove AppSession from User
+ *
+ * @param usr pointer to User from which AppSession will be removed
+ * @param ls pointer to AppSession which will be removed
+ * @return number of attached to user sessions left
+ */
+int UserRemoveAppSession( User *usr, void *ls )
+{
+	int retVal = -1;
+	AppSession *remases = (AppSession *)ls;
+	if( usr  == NULL || ls == NULL )
+	{
+		FERROR("Cannot remove user session, its not connected to user\n");
+		return -1;
+	}
+	
+	while( usr->u_InUse > 0 )
+	{
+		usleep( 5000 );
+	}
+	
+	if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
+	{
+		AppSessListEntry *actus = (AppSessListEntry *)usr->u_SessionsList;
+		AppSessListEntry *prevus = actus;
+		FBOOL removed = FALSE;
+	
+		if( usr->u_AppSessionsList != NULL )
+		{
+			if( usr->u_AppSessionsList->as == remases )
+			{
+				usr->u_SessionsList = (UserSessListEntry *)usr->u_SessionsList->node.mln_Succ;
+				if( prevus != NULL )
+				{
+					FFree( actus );
+				}
+			}
+			else
+			{
+				while( actus != NULL )
+				{
+					prevus = actus;
+					actus = (AppSessListEntry *)actus->node.mln_Succ;
+			
+					if( actus != NULL && actus->as == remases )
+					{
+						prevus->node.mln_Succ = actus->node.mln_Succ;
+					
+						usr->u_AppSessionsNr--;
+						removed = TRUE;
+					
+						if( prevus != NULL )
+						{
+							FFree( actus );
+						}
+						break;
+					}
+				}
+			}
+		}
+		
+		if( usr->u_AppSessionsNr <= 0 )
+		{
+			usr->u_AppSessionsList = NULL;
+		}
+		
+		retVal = usr->u_AppSessionsNr;
+		FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
+	}
+	return retVal;
+}
+
+/**
  * Remove User structure
  *
  * @param usr pointer to User structure which will be deleted
@@ -232,6 +355,20 @@ void UserDelete( User *usr )
 				FFree( delus );
 			}
 			usr->u_SessionsList = NULL;
+			
+			
+			// remove all app sessions connected to user
+		
+			AppSessListEntry *as = (AppSessListEntry *)usr->u_SessionsList;
+			AppSessListEntry *delas = as;
+			while( us != NULL )
+			{
+				delas = as;
+				as = (AppSessListEntry *)as->node.mln_Succ;
+			
+				FFree( delas );
+			}
+			usr->u_AppSessionsList = NULL;
 		
 			// remove all remote users and drives
 		
@@ -263,8 +400,6 @@ void UserDelete( User *usr )
 			if( usr->u_Name ){ FFree( usr->u_Name );}
 		
 			if( usr->u_Password ){ FFree( usr->u_Password );}
-		
-			if( usr->u_MainSessionID ){ FFree( usr->u_MainSessionID );}
 		
 			if( usr->u_UUID ){ FFree( usr->u_UUID );}
 		
@@ -617,7 +752,35 @@ File *UserRemDeviceByGroupID( User *usr, FULONG grid, int *error )
 }
 
 /**
- * Regenerate sessionid for user
+ * Get User Device by Name
+ *
+ * @param usr pointer to User structure
+ * @param name name of device
+ * @return pointer to File if user have mounted drive, otherwise NULL
+ */
+File *UserGetDeviceByName( User *usr, const char *name )
+{
+	if( FRIEND_MUTEX_LOCK(&usr->u_Mutex) == 0 )
+	{
+		File *lfile = usr->u_MountedDevs;
+		
+		while( lfile != NULL )
+		{
+			if( strcmp( name, lfile->f_Name ) == 0 )
+			{
+				DEBUG("Device found: %s\n", name );
+				FRIEND_MUTEX_UNLOCK(&usr->u_Mutex);
+				return lfile;
+			}
+			lfile = (File *)lfile->node.mln_Succ;
+		}
+		FRIEND_MUTEX_UNLOCK(&usr->u_Mutex);
+	}
+	return NULL;
+}
+
+/**
+ * Regenerate sessionid for user (DEPRICATED)
  *
  * @param usr pointer to User which will have new sessionid
  * @param newsess new session hash. If passed value is equal to NULL new hash will be generated
@@ -625,42 +788,20 @@ File *UserRemDeviceByGroupID( User *usr, FULONG grid, int *error )
  */
 int UserRegenerateSessionID( User *usr, char *newsess )
 {
+	/*
 	if( usr != NULL )
 	{
-		//pthread_mutex_lock( &(usr->) );
-		// Remove old one and update
-		if( usr->u_MainSessionID )
-		{
-			FFree( usr->u_MainSessionID );
-		}
-		
-		if( newsess != NULL )
-		{
-			usr->u_MainSessionID = StringDuplicate( newsess );
-		}
-		else
-		{
-			time_t timestamp = time ( NULL );
-	
-			char *hashBase = MakeString( 255 );
-			sprintf( hashBase, "%ld%s%d", timestamp, usr->u_FullName, ( rand() % 999 ) + ( rand() % 999 ) + ( rand() % 999 ) );
-			HashedString( &hashBase );
-
-			usr->u_MainSessionID = hashBase;
-		}
-	
 		// UPDATE file systems
 		File *lDev = usr->u_MountedDevs;
 		if( lDev != NULL )
 		{
 			while( lDev != NULL )
 			{
-				/*
-				if( lDev->f_SessionID )
-				{
-					FFree( lDev->f_SessionID );
-				}
-				*/
+				//if( lDev->f_SessionID )
+				//{
+				//	FFree( lDev->f_SessionID );
+				//}
+				
 				//lDev->f_SessionID = StringDuplicate( usr->u_MainSessionID );
 				lDev->f_SessionIDPTR = usr->u_MainSessionID;
 				lDev = (File *)lDev->node.mln_Succ;
@@ -671,7 +812,7 @@ int UserRegenerateSessionID( User *usr, char *newsess )
 	{
 		DEBUG("User structure = NULL\n");
 		return 1;
-	}
+	}*/
 	return 0;
 }
 

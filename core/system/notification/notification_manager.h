@@ -21,8 +21,7 @@
 #define __SYSTEM_NOTIFICATION_NOTIFICATION_MANAGER_H__
 
 #include <core/types.h>
-#include <system/user/user_session.h>
-#include <system/user/user_sessionmanager.h>
+#include <system/user/usersession.h>
 #include <system/user/user.h>
 #include <system/user/user_mobile_app.h>
 #include <util/friendqueue.h>

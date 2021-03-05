@@ -129,7 +129,7 @@ if( isset( $args->args->application ) && $args->args->application )
 						$app->UserID = $a->UserID;
 						if( !$app->Load() )
 						{
-							$app->AuthID = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . $a->ID );
+							//$app->AuthID = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . $a->ID );
 							$app->Permissions = json_encode( $perms );
 							$app->Data = json_encode( $da );
 							$app->Save();

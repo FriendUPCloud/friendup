@@ -22,7 +22,7 @@
 #include <core/nodes.h>
 #include <db/sqllib.h>
 #include <stddef.h>
-#include <system/user/user_session.h>
+#include <system/user/usersession.h>
 
 #ifndef DOSTOKEN_MAX_PATH_SIZE
 #define DOSTOKEN_MAX_PATH_SIZE 32
@@ -74,7 +74,7 @@ DOSToken *DOSTokenNew( UserSession *us, time_t timeout, int usedTimes );
 
 // Init DOSToken
 
-void DOSTokenInit( DOSToken *dt );
+void DOSTokenInit( DOSToken *dt, void *sb );
 
 // release DOSToken
 

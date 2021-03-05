@@ -16,7 +16,7 @@
  */
 
 #include "file.h"
-#include <system/user/user_session.h>
+#include <system/user/usersession.h>
 #include <system/fsys/device_handling.h>
 #include <system/json/jsmn.h>
 #include <system/systembase.h>
@@ -419,7 +419,7 @@ int FileUploadFileOrDirectory( Http *request, void *us, const char *dst, const c
 	}
 	
 	int files = 0;
-	if( ( actDev = GetRootDeviceByName( loggedSession->us_User, devname ) ) != NULL )
+	if( ( actDev = GetRootDeviceByName( loggedSession->us_User, loggedSession, devname ) ) != NULL )
 	{
 		DEBUG("[FileUploadFileOrDirectory] file uplload rec started\n");
 		
@@ -856,7 +856,7 @@ int FileDownloadFilesOrFolder( Http *request, void *us, const char *basepath, co
 	
 	//DEBUG("\n============================================================\n\n\n dst: %s\nsrc: %s\nbasepath: %s\nbasepos: %d\n\n\n\n\n", dst, src, basepath, basePos );
 	
-	if( ( actDev = GetRootDeviceByName( loggedSession->us_User, devname ) ) != NULL )
+	if( ( actDev = GetRootDeviceByName( loggedSession->us_User, loggedSession, devname ) ) != NULL )
 	{
 		actDev->f_Operations++;
 		
@@ -931,7 +931,7 @@ int FileDownloadFilesOrFolder( Http *request, void *us, const char *basepath, co
 				
 				DEBUG("============= dst %s\n========= tmpdst %s\n", &lfile[ end+1 ], tmpdst );
 				
-				actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
+				FileFillSessionID( actDev, loggedSession );
 				FileDownloadFileOrDirectoryRec( request, actDev, tmpdst, &lfile[ coma+1 ], basePos, -1, numberFiles );
 				FFree( tmpdst );
 			}

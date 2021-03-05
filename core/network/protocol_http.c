@@ -40,7 +40,7 @@
 #include <system/fsys/file.h>
 #include <system/fsys/device_handling.h>
 
-#include <system/user/user_sessionmanager.h>
+#include <system/user/usersession_manager.h>
 #include <system/user/user_manager.h>
 #include <system/web_util.h>
 
@@ -898,10 +898,9 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							char *fs_Name = NULL;
 							char *fs_Type = NULL;
 							char *fs_Path = NULL;
-							char *usrSessionID = NULL;
 							FBOOL sessionIDGenerated = FALSE;
 							
-							sqllib->SNPrintF( sqllib, query, 1024, "SELECT fs.Name, fs.Devname, fs.Path, fs.UserID, f.Type, u.SessionID FROM FFileShared fs, Filesystem f, FUser u WHERE fs.Hash=\"%s\" AND u.ID = fs.UserID AND f.Name = fs.Devname", path->p_Parts[ 1 ] );
+							sqllib->SNPrintF( sqllib, query, 1024, "SELECT fs.Name, fs.Devname, fs.Path, fs.UserID, f.Type FROM FFileShared fs, Filesystem f, FUser u WHERE fs.Hash=\"%s\" AND u.ID = fs.UserID AND f.Name = fs.Devname", path->p_Parts[ 1 ] );
 							
 							void *res = sqllib->Query( sqllib, query );
 							if( res != NULL )
@@ -930,10 +929,6 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 									{
 										fs_Type = StringDuplicate( row[ 4 ] );
 									}
-									if( row[ 5 ] != NULL && strlen( row[ 5 ] ) > 0 )
-									{
-										usrSessionID = StringDuplicate( row[ 5 ] );
-									}
 									if( row[ 6 ] != NULL )
 									{
 										char *end;
@@ -943,62 +938,11 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 								sqllib->FreeResult( sqllib, res );
 							}
 							
-							if( usrSessionID == NULL )// if res == NULL
-							{
-								DEBUG("First call releated to shared files did not return any results\n");
-								sqllib->SNPrintF( sqllib, query, 1024, "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,u.SessionID,f.ID from FFileShared fs inner join Filesystem f on fs.FSID=f.ID inner join FUser u on fs.UserID=u.ID where `Hash`='%s'", path->p_Parts[ 1 ] );
-							
-								res = sqllib->Query( sqllib, query );
-								if( res != NULL )
-								{
-									char **row;
-									if( ( row = sqllib->FetchRow( sqllib, res ) ) )
-									{
-										if( row[ 0 ] != NULL )
-										{
-											fs_Name = StringDuplicate( row[ 0 ] );
-										}
-										if( row[ 1 ] != NULL )
-										{
-											fs_DeviceName = StringDuplicate( row[ 1 ] );
-										}
-										if( row[ 2 ] != NULL )
-										{
-											fs_Path = StringDuplicate( row[ 2 ] );
-										}
-										if( row[ 3 ] != NULL )
-										{
-											char *end;
-											fs_IDUser = strtoul( row[ 3 ], &end, 0 );
-										}
-										if( row[ 4 ] != NULL )
-										{
-											fs_Type = StringDuplicate( row[ 4 ] );
-										}
-										if( row[ 5 ] != NULL && strlen( row[ 5 ] ) > 0 )
-										{
-											usrSessionID = StringDuplicate( row[ 5 ] );
-										}
-										if( row[ 6 ] != NULL )
-										{
-											char *end;
-											fsysID = strtoul( row[ 6 ], &end, 0 );
-										}
-									}
-									sqllib->FreeResult( sqllib, res );
-								}
-							}
-							
 							// Immediately drop here..
 							SLIB->DropDBConnection( SLIB, sqllib );
 							sqllib = NULL;
 							
-							// session was not found. Lets generate temporary one
-							if( usrSessionID == NULL )
-							{
-								sessionIDGenerated = TRUE;
-								usrSessionID = USMCreateTemporarySession( SLIB->sl_USM, sqllib, fs_IDUser, 0 );
-							}
+							UserSession *session = USMCreateTemporarySession( SLIB->sl_USM, sqllib, fs_IDUser, 0 );
 
 							//if( ( fs = sqllib->Load( sqllib, FileSharedTDesc, query, &entries ) ) != NULL )
 							if( fs_Name != NULL && fs_DeviceName != NULL && fs_Path != NULL )
@@ -1015,18 +959,17 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 								User *u = UMGetUserByID( SLIB->sl_UM, fs_IDUser );
 								if( u != NULL )
 								{
-									rootDev = GetUserDeviceByFSysUserIDDevName( SLIB->sl_DeviceManager, sqllib, fsysID, fs_IDUser, fs_DeviceName, &error );
-									
-									
+									rootDev = UserGetDeviceByName( u, fs_DeviceName );
 								} // if user is not in memory (and his drives), we must mount drives only
-								else
+								
+								if( rootDev == NULL )
 								{
 									struct TagItem tags[] = {
 										{FSys_Mount_Type, (FULONG)fs_Type },
 										{FSys_Mount_Name, (FULONG)fs_DeviceName },
 										{FSys_Mount_UserID, (FULONG)fs_IDUser },
 										{FSys_Mount_Owner, (FULONG)NULL },
-										{FSys_Mount_User_SessionID, (FULONG)usrSessionID },
+										{FSys_Mount_UserSession, (FULONG)session },
 										{TAG_DONE, TAG_DONE}
 									};
 									
@@ -1162,19 +1105,17 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 										// We need to get the sessionId if we can!
 										// currently from table we read UserID
-										User *tuser = UMGetUserByID( SLIB->sl_UM, fs_IDUser );
 
-										if( tuser != NULL )
+										/*
+										UserSession *sess = USMGetSessionByUserID( SLIB->sl_USM, fs_IDUser );
+
+										if( sess != NULL )
 										{
-											char *sess = USMUserGetFirstActiveSessionID( SLIB->sl_USM, tuser );
-
-											if( sess != NULL )
-											{
-												rootDev->f_SessionIDPTR = tuser->u_MainSessionID;
-												DEBUG("[ProtocolHttp] Session %s tusr ptr %p\n", sess, tuser );
-											}
+											rootDev->f_SessionIDPTR = sess->us_SessionID;
+											//DEBUG("[ProtocolHttp] Session %s\n", sess );
 										}
-
+										*/
+										FileFillSessionID( rootDev, session );
 
 										if( actFS != NULL )
 										{
@@ -1291,7 +1232,6 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 								// if device was mounted without user (not in memory) it must be removed on the end
 								if( mountedWithoutUser == TRUE )
 								{
-									//DeviceRelease( SLIB->sl_DeviceManager, rootDev );
 									DeviceRelease( SLIB->sl_DeviceManager, rootDev );
 									FileDelete( rootDev );
 								}
@@ -1318,10 +1258,8 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							// if temporary session was generated, we must remove it
 							if( sessionIDGenerated == TRUE )
 							{
-								USMDestroyTemporarySession( SLIB->sl_USM, sqllib, usrSessionID );
+								USMDestroyTemporarySession( SLIB->sl_USM, sqllib, session );
 							}
-							
-							if( usrSessionID != NULL ) FFree( usrSessionID );
 						}
 					}
 
@@ -1577,7 +1515,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 											BufStringDelete( bs );
 										}
 										FFree( multipath );
-										DEBUG("multipath released\n");
+										DEBUG("[ProtocolHttp] multipath released\n");
 									}
 								}	// file not found in cache
 							}
@@ -1595,20 +1533,20 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 								)
 								{
 									//DEBUG("\n\n\n\n===========================\n\n");
-									DEBUG("Checking connections, number sessions %d\n", SLIB->sl_USM->usm_SessionCounter );
+									DEBUG("[ProtocolHttp] Checking connections, number sessions %d\n", SLIB->sl_USM->usm_SessionCounter );
 							
 									int minSessions = SLIB->sl_USM->usm_SessionCounter;
 									ClusterNode *clusNode = SLIB->fcm->fcm_ClusterNodes;
 						
 									while( clusNode != NULL )
 									{
-										DEBUG("Checking sessions on node [%s] number %d min %d connection ptr %p NODEID: %lu\n", clusNode->cn_Address, clusNode->cn_UserSessionsCount, minSessions, clusNode->cn_Connection, clusNode->cn_ID );
+										DEBUG("[ProtocolHttp] Checking sessions on node [%s] number %d min %d connection ptr %p NODEID: %lu\n", clusNode->cn_Address, clusNode->cn_UserSessionsCount, minSessions, clusNode->cn_Connection, clusNode->cn_ID );
 										
 										if( clusNode->cn_Connection != NULL && clusNode->cn_Connection->fc_Socket != NULL )
 										{
 											if( clusNode->cn_UserSessionsCount < minSessions )
 											{
-												DEBUG("New URL will be generated\n");
+												DEBUG("[ProtocolHttp] New URL will be generated\n");
 												if( clusNode->cn_Url != NULL )	// we cannot redirect to url which do not exist
 												{
 													fromUrl = TRUE;
@@ -1622,7 +1560,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 										}
 										else
 										{
-											DEBUG("Connection do not exist [%s]\n", clusNode->cn_Address );
+											DEBUG("[ProtocolHttp] Connection do not exist [%s]\n", clusNode->cn_Address );
 										}
 										clusNode = (ClusterNode *)clusNode->node.mln_Succ;
 									}
@@ -1639,7 +1577,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 									char redirect[ 1024 ];
 									int redsize = 0;
 							
-									DEBUG("REDIRECT SET TO [%s]\n", newUrl );
+									DEBUG("[ProtocolHttp] REDIRECT SET TO [%s]\n", newUrl );
 
 									if( SLIB->fcm->fcm_SSLEnabled )
 									{
@@ -1668,7 +1606,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 										}
 									}
 							
-									DEBUG("Redirected to: [%s]\n", redirect );
+									DEBUG("[ProtocolHttp] Redirected to: [%s]\n", redirect );
 
 									struct TagItem tags[] = {
 										{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate("text/html") },
@@ -1763,7 +1701,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 										// Send reply
 										if( file != NULL )
 										{
-											DEBUG("Check mime\n");
+											DEBUG("[ProtocolHttp] Check mime\n");
 											char *mime = NULL;
 
 											if(  file->lf_Buffer == NULL )
@@ -1773,7 +1711,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 											if( file->lf_Mime == NULL )
 											{
-												DEBUG("GET single file : extension '%s'\n", completePath->p_Extension );
+												DEBUG("[ProtocolHttp] GET single file : extension '%s'\n", completePath->p_Extension );
 												if( completePath->p_Extension )
 												{
 													const char *t = MimeFromExtension( completePath->p_Extension );
@@ -1917,43 +1855,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 												
 												if( request->http_ContentType == HTTP_CONTENT_TYPE_APPLICATION_JSON )
 												{
-													/*
-													HashmapElement *he = HttpGetPOSTParameter( request, "module" );
-													if( he == NULL ) he = HashmapGet( request->query, "module" );
-
-													if( he != NULL && he->data != NULL )
-													{
-														struct stat f;
-														char runfile[ 512 ];
-														snprintf( runfile, sizeof(runfile), "php \"php/catch_all.php\" \"%s\";", (char *)he->data );
-					
-														DEBUG("Run module: '%s'\n", runfile );
-					
-														if( stat( runfile, &f ) != -1 )
-														{
-															FULONG dataLength;
-															DEBUG("MODRUNPHP %s\n", runfile );
-															char *allArgsNew = GetArgsAndReplaceSession( *request, NULL );
-															if( allArgsNew != NULL )
-															{
-																data = SLIB->sl_PHPModule->Run( SLIB->sl_PHPModule, runfile, allArgsNew, &dataLength );
-																
-																phpResp = ListStringNew();
-																if( data != NULL )
-																{
-																	ListStringAdd( phpResp, data, dataLength );
-																	ListStringJoin( phpResp );
-																}
-															}
-														}
-														else
-														{
-															FERROR("Module do not eixst %s\n", runfile );
-														}
-													}
-													*/
-													
-													DEBUG("MODRUNPHP %s\n", "php/catch_all.php" );
+													DEBUG("[ProtocolHttp] MODRUNPHP %s\n", "php/catch_all.php" );
 													FBOOL isFile;
 													char *allArgsNew = GetArgsAndReplaceSession( request, NULL, &isFile );
 													if( allArgsNew != NULL )
@@ -1988,7 +1890,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 															*dst++ = '\"';
 															
 															//snprintf( runFile, argssize + 512, "php \"php/catch_all.php\" \"%s\";", allArgsNew );
-															DEBUG("MODRUNPHP '%s'\n", runFile );
+															DEBUG("[ProtocolHttp] MODRUNPHP '%s'\n", runFile );
 															
 															Log( FLOG_DEBUG, "[ProtocolHttp] Executing RunPHPScript\n");
 															phpResp = RunPHPScript( runFile );
@@ -2009,7 +1911,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 												
 												if( phpResp == NULL )
 												{
-													DEBUG("CatchALL 1621\n");
+													DEBUG("[ProtocolHttp] CatchALL 1621\n");
 													if( ( command = FCalloc( clen, sizeof(char) ) ) != NULL )
 													{
 														snprintf( command, clen, "php \"php/catch_all.php\" \"%s\" \"%s\";", uri->uri_Path->p_Raw, request->http_Uri ? request->http_Uri->uri_QueryRaw : NULL );

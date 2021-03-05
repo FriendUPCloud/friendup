@@ -167,7 +167,7 @@ cAjax = function()
 	{
 		// We're finished handshaking
 		if( this.readyState == 4 && this.status == 200  )
-		{	
+		{
 			if( this.responseType == 'arraybuffer' )
 			{
 				jax.rawData = this.response;
@@ -690,11 +690,10 @@ cAjax.prototype.send = function( data, callback )
 						reject( 'error' );
 						if( self.onload )
 						{
-							//console.log( 'Error...' );
+							console.log( 'Error...' );
 							self.onload( false, false );
 							self.destroy();
 						}
-
 						Friend.User.CheckServerConnection();
 					}
 				} ).catch( function( err )
@@ -703,7 +702,7 @@ cAjax.prototype.send = function( data, callback )
 					{
 						if( callback )
 						{
-							//console.log( 'Other error' );
+							console.log( 'Other error' );
 							callback( false, false );
 						}
 					}

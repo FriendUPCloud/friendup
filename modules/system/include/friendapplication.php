@@ -202,16 +202,27 @@ else if( $level == 'API' )
 	}
 	if( !$o->ID ) die( 'fail<!--separate-->No application object!' );
 	
+	$as = new DbIO( 'FAppSession' );
 	$fa = new DbIO( 'FUserApplication' );
 	$fa->UserID = $User->ID;
 	$fa->ApplicationID = $o->ID;
 	if( !$fa->Load() )
 	{
-		$fa->AuthID = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . microtime() );
+		//$fa->AuthID = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . microtime() );
 		$fa->Save();
 	}
+	else
+	{
+		$as->UserID = $User->ID;
+		$as->UserApplicationID = $fa->ID;
+		if( !$as->Load() )
+		{
+			$as->AuthID = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . microtime() );
+			$as->Save();
+		}
+	}
 	// TODO: Update authid sometime for guests..? No?
-	$conf->AuthID = $fa->AuthID;
+	$conf->AuthID = $as->AuthID;
 	
 	storeRecentApps( $o->Name );
 		
@@ -229,7 +240,13 @@ else if( $row = $SqlDatabase->FetchObject( '
 		$fn = $retObject ? $retObject->ConfFilename : false;
 		$conf = json_decode( $row->Config );
 		$conf->Permissions = json_decode( $ur->Permissions );
-		$conf->AuthID = $ur->AuthID;
+		if( $as = $SqlDatabase->FetchObject( '
+			SELECT * FROM FAppSession WHERE FUserApplicationID=\''. $ur->ID . '\'
+		' ) )
+		{
+			$conf->AuthID = $as->AuthID;
+		}
+		//$conf->AuthID = $ur->AuthID;
 		$conf->State = json_decode( $ur->Data );
 		$conf->ConfFilename = $fn;
 		

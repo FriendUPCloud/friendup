@@ -144,7 +144,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 			FCID = UrlDecodeToMem( (char *)el->hme_Data );
 		}
 		
-		if( UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE && temp != NULL )
+		if( loggedSession->us_User->u_IsAdmin == TRUE && temp != NULL )
 		{
 			BufString *bs = BufStringNew();
 
@@ -218,11 +218,11 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 							char *serverdata = receivedbs->bs_Buffer + (COMM_MSG_HEADER_SIZE*4) + FRIEND_CORE_MANAGER_ID_SIZE;
 							DataForm *locdf = (DataForm *)serverdata;
 							
-							DEBUG("Checking RESPONSE\n");
+							DEBUG("[AdminWebRequest] Checking RESPONSE\n");
 							if( locdf->df_ID == ID_RESP )
 							{
 								serverdata += COMM_MSG_HEADER_SIZE;
-								DEBUG("Response: %s\n", serverdata );
+								DEBUG("[AdminWebRequest] Response: %s\n", serverdata );
 							
 								if( pos == 0 )
 								{
@@ -233,7 +233,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 									size = snprintf( temp, 2048, ",{\"name\":\"%s\",\"id\":\"%s\",\"host\":\"%s\",\"type\":\"fcnode\",\"ping\":%lu,\"status\":%d,\"details\":%s}", actCon->fc_Name, actCon->fc_FCID, actCon->fc_Address, actCon->fc_PINGTime, actCon->fc_Status, serverdata );
 								}
 								
-								DEBUG("TEMPADD: %s\n", temp );
+								DEBUG("[AdminWebRequest] TEMPADD: %s\n", temp );
 								
 								pos++;
 							}
@@ -305,7 +305,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		
 		BufStringAddSize( bs, "ok<!--separate-->[", 18 );
 		
-		if( UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE )
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			uiadmin = TRUE;
 		}
@@ -450,7 +450,6 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 							char dictmsgbuf[ 256 ];
 							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
 							HttpAddTextContent( response, dictmsgbuf );
-							//HttpAddTextContent( response, "fail<!--separate-->{\"response\":\"cannot allocate memory for response!\"}" );
 						}
 						DataFormDelete( recvdf );
 					}
@@ -461,7 +460,6 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 						snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED_EMPTY_STRING], "CommServiceSendMsgDirect" );
 						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_FUNCTION_RETURNED_EMPTY_STRING );
 						HttpAddTextContent( response, dictmsgbuf );
-						//HttpAddTextContent( response, "fail<!--separate-->{\"response\":\"response is empty!\"}" );
 					}
 				}
 				else
@@ -471,9 +469,6 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 					snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_SERVER_CONNECT_ERROR], host );
 					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_SERVER_CONNECT_ERROR );
 					HttpAddTextContent( response, dictmsgbuf );
-					//char temp[ 512 ];
-					//snprintf( temp, sizeof(temp), "ok<!--separate-->{\"response\":\"cannot setup connection with server!: %s\"}", host );
-					//HttpAddTextContent( response, temp );
 				}
 				
 				DataFormDelete( df );
@@ -483,7 +478,6 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 				char dictmsgbuf[ 256 ];
 				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_CONVERT_MESSAGE] , DICT_CANNOT_CONVERT_MESSAGE );
 				HttpAddTextContent( response, dictmsgbuf );
-				//HttpAddTextContent( response, "fail<!--separate-->{\"response\":\"cannot convert message!\"}" );
 			}
 			FFree( host );
 		}
@@ -494,7 +488,6 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "remotehost" );
 			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, dictmsgbuf );
-			//HttpAddTextContent( response, "fail<!--separate-->{\"response\":\"'remotehost' parameter not found!\"}" );
 		}
 	}
 	
@@ -545,7 +538,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		{
 			msgsize += strlen( msg )+1024;
 		
-			if( usersession == NULL && UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE )
+			if( usersession == NULL && loggedSession->us_User->u_IsAdmin == TRUE )
 			{
 				BufStringAdd( bs, "{\"userlist\":[");
 			
@@ -609,7 +602,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 			}
 			else	//is admin
 			{
-				DEBUG("Send server msg: usersession %s\n", usersession );
+				DEBUG("[AdminWebRequest] Send server msg: usersession %s\n", usersession );
 				if( usersession != NULL )
 				{
 					BufStringAdd( bs, "{\"userlist\":[");
@@ -629,10 +622,10 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 								UserSession *ls = (UserSession *)usle->us;
 								if( ls != NULL )
 								{
-									DEBUG("Going through all usersessions: %p, compare %s vs %s\n", ls->us_SessionID, usersession, ls->us_SessionID );
+									DEBUG("[AdminWebRequest] Going through all usersessions: %p, compare %s vs %s\n", ls->us_SessionID, usersession, ls->us_SessionID );
 									if( strcmp( usersession, ls->us_SessionID ) == 0 )
 									{
-										DEBUG("Found same session, sending msg\n");
+										DEBUG("[AdminWebRequest] Found same session, sending msg\n");
 										char tmp[ 512 ];
 										int tmpsize = 0;
 						

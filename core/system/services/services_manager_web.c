@@ -52,7 +52,7 @@ Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserS
 	int newStatus = -1;
 	Service *selService = NULL;
 	
-	DEBUG("ServiceManagerWebRequest\n");
+	DEBUG("[ServiceManagerWebRequest] start\n");
 	
 	struct TagItem tags[] = {
 		{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
@@ -105,10 +105,10 @@ Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserS
 				char *serverdata = bs->bs_Buffer + (COMM_MSG_HEADER_SIZE*4) + FRIEND_CORE_MANAGER_ID_SIZE;
 				DataForm *locdf = (DataForm *)serverdata;
 				
-				DEBUG("Checking RESPONSE\n");
+				DEBUG("[ServiceManagerWebRequest] Checking RESPONSE\n");
 				if( locdf->df_ID == ID_RESP )
 				{
-					DEBUG("ID_RESP found!\n");
+					DEBUG("[ServiceManagerWebRequest] ID_RESP found!\n");
 					int size = locdf->df_Size;
 
 					SServ * li = FCalloc( 1, sizeof( SServ ) );
@@ -133,7 +133,7 @@ Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserS
 					}
 					else
 					{
-						FERROR("Cannot allocate memory for service\n");
+						FERROR("[ServiceManagerWebRequest] Cannot allocate memory for service\n");
 					}
 					
 					/*
@@ -147,7 +147,7 @@ Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserS
 				}
 				else
 				{
-					FERROR("Reponse in message not found!\n");
+					FERROR("[ServiceManagerWebRequest] Reponse in message not found!\n");
 				}
 				BufStringDelete( bs );
 			}
@@ -349,7 +349,7 @@ Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserS
 	
 	if( serviceName == NULL )
 	{
-		FERROR( "ServiceName parameter is missing!\n" );
+		FERROR( "[ServiceManagerWebRequest] ServiceName parameter is missing!\n" );
 		char buffer[ 512 ];
 		char buffer1[ 256 ];
 		snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "ServiceName (in url)" );
@@ -379,7 +379,7 @@ Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserS
 	
 	if( selService == NULL || strlen(serviceName) <= 0 )
 	{
-		FERROR( "Service not found or service name parameter is missing!\n" );
+		FERROR( "[ServiceManagerWebRequest] Service not found or service name parameter is missing!\n" );
 		char buffer[ 256 ];
 		snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SERVICE_OR_SERVNAME_NOT_FOUND] , DICT_SERVICE_OR_SERVNAME_NOT_FOUND );
 		HttpAddTextContent( response, buffer );
@@ -407,7 +407,7 @@ Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserS
 	
 	if( strcmp( urlpath[ ELEMENT_COMMAND ], "start" ) == 0 )
 	{
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			if( selService->ServiceStart != NULL )
 			{
@@ -442,7 +442,7 @@ Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserS
 	
 	else if( strcmp( urlpath[ ELEMENT_COMMAND ], "stop" ) == 0 )
 	{
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			if( selService->ServiceStop != NULL )
 			{
@@ -484,7 +484,7 @@ Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserS
 	
 	else if( strcmp( urlpath[ ELEMENT_COMMAND ], "pause" ) == 0 )
 	{
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			error = 2;
 			HttpAddTextContent( response, "{ \"Status\": \"ok\"}" );
@@ -510,7 +510,7 @@ Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserS
 	
 	else if( strcmp( urlpath[ ELEMENT_COMMAND ], "install" ) == 0 )
 	{
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			if( selService->ServiceInstall != NULL )
 			{
@@ -544,7 +544,7 @@ Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserS
 	
 	else if( strcmp( urlpath[ ELEMENT_COMMAND ], "uninstall" ) == 0 )
 	{
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			if( selService->ServiceUninstall != NULL )
 			{
@@ -578,7 +578,7 @@ Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserS
 	
 	else if( strcmp( urlpath[ ELEMENT_COMMAND ], "status" ) == 0 )
 	{
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			int len;
 		
@@ -617,7 +617,7 @@ Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserS
 	else if( strcmp( urlpath[ ELEMENT_COMMAND ], "command" ) == 0 )
 	{
 
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			HashmapElement *el;
 			char *ret = NULL;
@@ -680,7 +680,7 @@ Http *ServicesManagerWebRequest( void *lsb, char **urlpath, Http* request, UserS
 	
 	else if( strcmp( urlpath[ ELEMENT_COMMAND ], "getwebguii" ) == 0 )
 	{
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			DEBUG("[ServiceManagerWebRequest] GetWebGUI\n");
 			char *lresp = selService->ServiceGetWebGUI( selService );

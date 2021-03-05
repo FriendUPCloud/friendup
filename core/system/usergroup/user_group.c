@@ -46,7 +46,7 @@ UserGroup *UserGroupNew( FULONG id, char *name, FULONG uid, char *type, char *de
 		ug->ug_Type = StringDuplicate(type);
 		ug->ug_Description = StringDuplicate( description );
 		
-		UserGroupInit( ug );
+		UserGroupInit( ug, NULL );
 	}
 	
 	return ug;
@@ -56,8 +56,9 @@ UserGroup *UserGroupNew( FULONG id, char *name, FULONG uid, char *type, char *de
  * Create new User Group
  *
  * @param ug pointer to UserGroup
+ * @param sb pointer to SystemBase
  */
-void UserGroupInit( UserGroup *ug )
+void UserGroupInit( UserGroup *ug, void *sb )
 {
 	if( ug != NULL )
 	{

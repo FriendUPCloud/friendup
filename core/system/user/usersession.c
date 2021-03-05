@@ -17,30 +17,38 @@
  *  @date created 11/2016
  */
 
-#include "user_session.h"
+#include "usersession.h"
 #include <util/string.h>
 #include <system/systembase.h>
 #include <system/token/dos_token.h>
 #include <system/application/application_manager.h>
-
-extern SystemBase *SLIB;
+#include <util/session_id.h>
 
 /**
  * Create new User Session
  *
- * @param sessid sessionID
+ * @param sb pointer to SystemBase
+ * @param sesid SessionID. If provided it will be used
  * @param devid deviceID
  * @return new UserSession structure when success, otherwise NULL
  */
-UserSession *UserSessionNew( char *sessid, char *devid )
+UserSession *UserSessionNew( void *sb, char *sesid, char *devid )
 {
 	UserSession *s;
 	if( ( s = FCalloc( 1, sizeof(UserSession) ) ) != NULL )
 	{
-		s->us_SessionID = StringDuplicate( sessid );
+		if( sesid != NULL )
+		{
+			s->us_SessionID = StringDuplicate( sesid );
+		}
+		else
+		{
+			s->us_SessionID = SessionIDGenerate();
+		}
+		
 		s->us_DeviceIdentity = StringDuplicate( devid );
 		
-		UserSessionInit( s );
+		UserSessionInit( s, sb );
 		
 		INFO("Mutex initialized\n");
 	}
@@ -51,13 +59,20 @@ UserSession *UserSessionNew( char *sessid, char *devid )
  * UserSession init
  *
  * @param us pointer to UserSession which will be initalized
+ * @param sb pointer to SystemBase
  */
-void UserSessionInit( UserSession *us )
+void UserSessionInit( UserSession *us, void *sb )
 {
 	if( us != NULL )
 	{
+		SystemBase *lsb = (SystemBase *)sb;
+		us->us_SB = sb;
+		
 		pthread_mutex_init( &us->us_Mutex, NULL );
 		
+#ifdef DB_SESSIONID_HASH
+		us->us_HashedSessionID = lsb->sl_UtilInterface.DatabaseEncodeString( us->us_SessionID );
+#endif
 		us->us_WSReqManager = WebsocketReqManagerNew();
 		
 		FQDeInit( &(us->us_MsgQueue) );
@@ -121,9 +136,9 @@ void UserSessionDelete( UserSession *us )
 			nrOfSessionsAttached = UserRemoveSession( us->us_User, us );
 			us->us_User = NULL;
 		}
-		SystemBase *lsb = SLIB;
+		SystemBase *lsb = (SystemBase *)us->us_SB;
 
-		DEBUG("[UserSessionDelete] Remove session %p\n", us );
+		DEBUG("[UserSessionDelete] Remove session %p pointer to systembase: %p\n", us, lsb );
 
 		// Remove session from SAS
 		//
@@ -187,6 +202,11 @@ void UserSessionDelete( UserSession *us )
 			if( us->us_SessionID != NULL )
 			{
 				FFree( us->us_SessionID );
+			}
+			
+			if( us->us_HashedSessionID != NULL )
+			{
+				FFree( us->us_HashedSessionID );
 			}
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}

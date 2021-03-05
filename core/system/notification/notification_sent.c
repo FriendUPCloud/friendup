@@ -28,7 +28,7 @@ NotificationSent *NotificationSentNew( )
 	NotificationSent *n = FCalloc( 1, sizeof(NotificationSent) );
 	if( n != NULL )
 	{
-		NotificationSentInit( n );
+		NotificationSentInit( n, NULL );
 	}
 	return n;
 }
@@ -37,8 +37,9 @@ NotificationSent *NotificationSentNew( )
  * Init NotificationSent
  *
  * @param n pointer to NotificationSent
+ * @param sb pointer to SystemBase
  */
-void NotificationSentInit( NotificationSent *n )
+void NotificationSentInit( NotificationSent *n, void *sb )
 {
 }
 

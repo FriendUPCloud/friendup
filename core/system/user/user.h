@@ -109,11 +109,26 @@ CREATE TABLE IF NOT EXISTS `FriendMaster.FUser` (
 
 */
 
+//
+// connection between user and his sessions
+//
+
 typedef struct UserSessListEntry
 {
 	void 			*us;
 	MinNode			node;
 }UserSessListEntry;
+
+//
+// connection between user and his application sessions
+//
+
+typedef struct AppSessListEntry
+{
+	void 			*as;
+	MinNode			node;
+}AppSessListEntry;
+
 
 enum {
 USER_STATUS_ENABLED = 0,
@@ -134,10 +149,13 @@ typedef struct User
 	char						*u_FullName;
 	char						*u_Email;
 	int							u_Error;						// if error
-	UserSessListEntry			*u_SessionsList;
+	UserSessListEntry			*u_SessionsList;				// list of user sessions connected to the user
+	int							u_SessionsNr;					// number of sessions
+	AppSessListEntry			*u_AppSessionsList;				// list of application sessions connected to the user
+	int							u_AppSessionsNr;				// number of app session
 	FULONG						u_Status;						// user status
 
-	char						*u_MainSessionID;				// session id ,  generated only when user is taken from db
+	//char						*u_MainSessionID;				// session id ,  generated only when user is taken from db
 	time_t						u_LoggedTime;       			// last action time
 	time_t						u_CreatedTime;					// when user strcture was created
 	time_t						u_LoginTime;					// last login time
@@ -157,12 +175,12 @@ typedef struct User
 	FBOOL						u_InitialDevMount;
 	FBOOL						u_Anonymous;					// if user is anonymous
 	
-	int							u_SessionsNr;					// number of sessions
 	int							u_NumberOfBadLogins;			// number of bad logins
 	
 	RemoteUser					*u_RemoteUsers;					// user which use this account to have access to resources
 	FBOOL						u_IsAdmin;						// set to TRUE when user is in Admin group
 	FBOOL						u_IsAPI;						// set to TRUE when user is in API group
+	FBOOL						u_IsSentinel;					// set to TRUE when user is Sentinel
 	
 	pthread_mutex_t				u_Mutex;						// User structure mutex
 	CacheUserFiles				*u_FileCache;					// internal file cache
@@ -191,7 +209,7 @@ int UserCheckExists( User *u );
 //
 //
 
-int UserInit( User *u );
+int UserInit( User *u, void *sb );
 
 //
 //
@@ -221,6 +239,18 @@ int UserAddSession( User *usr, void *s );
 //
 //
 
+int UserRemoveAppSession( User *usr, void *ls );
+
+//
+//
+//
+
+int UserAddAppSession( User *usr, void *s );
+
+//
+//
+//
+
 int UserAddDevice( User *usr, File *file );
 
 //
@@ -234,6 +264,12 @@ File *UserRemDeviceByName( User *usr, const char *name, int *error );
 //
 
 File *UserRemDeviceByGroupID( User *usr, FULONG grid, int *error );
+
+//
+//
+//
+
+File *UserGetDeviceByName( User *usr, const char *name );
 
 //
 //
@@ -278,7 +314,7 @@ static FULONG UserDesc[] = {
 	SQLT_STR,     (FULONG)"Fullname",    offsetof( struct User, u_FullName ),
 	SQLT_STR,     (FULONG)"Email",       offsetof( struct User, u_Email ),
 	SQLT_STR,     (FULONG)"Timezone",    offsetof( struct User, u_Timezone ),
-	SQLT_STR,     (FULONG)"SessionID",   offsetof( struct User, u_MainSessionID ),
+	//SQLT_STR,     (FULONG)"SessionID",   offsetof( struct User, u_MainSessionID ),
 	SQLT_INT,     (FULONG)"LoggedTime",  offsetof( struct User, u_LoggedTime ),
 	SQLT_INT,     (FULONG)"CreatedTime", offsetof( struct User, u_CreatedTime ),
 	SQLT_INT,     (FULONG)"ModifyTime", offsetof( struct User, u_ModifyTime ),

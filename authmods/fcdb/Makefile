@@ -9,31 +9,35 @@ DFLAGS		=	-M $(CFLAGS)
 FPATH		=	$(shell pwd)
 
 ifeq ($(USE_SANITIZER),1)
-LFLAGS				+=	-lasan
+LFLAGS					+=	-lasan
 endif
 
 ifeq ($(DEBUG),1)
-CFLAGS  +=      -D__DEBUG
+CFLAGS					+=	-D__DEBUG
 endif
 
 ifeq ($(PROFILE),1)
-CFLAGS  +=	-pg -DPROFILE=1
+CFLAGS					+=	-pg -DPROFILE=1
 endif
 
 ifeq ($(WEBSOCKETS),1)
-CFLAGS	+=	-DENABLE_WEBSOCKETS
+CFLAGS					+=	-DENABLE_WEBSOCKETS
 endif
 
 ifeq ($(USE_SELECT),1)
-CFLAGS  +=      -DUSE_SELECT
+CFLAGS					+=	-DUSE_SELECT
 endif
 
 ifeq ($(NO_VALGRIND),1)
-CFLAGS  +=      -DNO_VALGRIND_STUFF
+CFLAGS					+=	-DNO_VALGRIND_STUFF
 endif
 
 ifeq ($(CYGWIN_BUILD),1)
-CFLAGS  +=      -DCYGWIN_BUILD
+CFLAGS					+=	-DCYGWIN_BUILD
+endif
+
+ifeq ($(DB_SESSIONID_HASH),1)
+CFLAGS					+=	-DDB_SESSIONID_HASH
 endif
 
 C_FILES := $(wildcard fcdb.c)
@@ -44,7 +48,7 @@ ALL:	$(OBJ_FILES) $(OUTPUT)
 
 $(OUTPUT): $(OBJ_FILES)
 	@echo "\033[34mLinking ...\033[0m"
-	$(GCC) $(CFLAGS) -o $(OUTPUT) $(LFLAGS) $(OBJ_FILES) ../../core/obj/library.o ../../core/obj/user_session.o ../../core/obj/sha256.o ../../core/obj/list.o ../../core/obj/string.o ../../core/obj/hashmap.o ../../core/obj/uri.o ../../core/obj/path.o ../../core/obj/user_application.o ../../core/obj/user.o -lcrypto
+	$(GCC) $(CFLAGS) -o $(OUTPUT) $(LFLAGS) $(OBJ_FILES) ../../core/obj/library.o ../../core/obj/usersession.o ../../core/obj/sha256.o ../../core/obj/list.o ../../core/obj/string.o ../../core/obj/hashmap.o ../../core/obj/uri.o ../../core/obj/path.o ../../core/obj/user_application.o ../../core/obj/user.o -lcrypto
 
 obj/fcdb.o: fcdb.c
 	@echo "\033[34mCompile ...\033[0m"

@@ -127,7 +127,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 		
 		HashmapElement *el = NULL;
 		
-		//if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
+		//if( loggedSession->us_User->u_IsAdmin  == TRUE )
 		{
 			el = HttpGetPOSTParameter( request, "userid" );
 			if( el != NULL )

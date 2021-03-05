@@ -22,7 +22,7 @@
 #include <system/user/user_manager_web.h>
 #include <system/systembase.h>
 #include <system/fsys/device_handling.h>
-#include <system/user/user_sessionmanager.h>
+#include <system/user/usersession_manager.h>
 #include <util/session_id.h>
 #include <util/element_list.h>
 
@@ -540,7 +540,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			//args = UrlDecodeToMem( el->hme_Data );
 		}
 		
-		if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
+		if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
 		{	// user cannot create any groups without permissions
 			el = HttpGetPOSTParameter( request, "groupname" );
 			if( el != NULL )
@@ -628,7 +628,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 					if( ug == NULL )
 					{
 						DEBUG("[UMWebRequest] GroupCreate: new UserGroup will be created\n");
-						if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
+						if( loggedSession->us_User->u_IsAdmin == TRUE )
 						{
 							ug = UserGroupNew( 0, groupname, 0, type, description );
 						}
@@ -829,7 +829,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				//args = UrlDecodeToMem( el->hme_Data );
 			}
 				
-			if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
+			if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
 			{
 				UserGroup *fg = UGMGetGroupByID( l->sl_UGM, id );
 			
@@ -853,7 +853,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				if( fg != NULL )
 				{
 					FBOOL canChange = FALSE;
-					if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
+					if( loggedSession->us_User->u_IsAdmin == TRUE )
 					{
 						canChange = TRUE;
 					}
@@ -977,7 +977,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			//args = UrlDecodeToMem( el->hme_Data );
 		}
 		
-		if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
+		if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
 		{
 			el = HttpGetPOSTParameter( request, "groupname" );
 			if( el != NULL )
@@ -1207,7 +1207,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 									if( el->ugid == 0 ) // user is not in group we must add him
 									{
 										UserGroupAddUser( fg, usr );
-										UserGroupMountWorkgroupDrives( l->sl_DeviceManager, usr, groupID );
+										UserGroupMountWorkgroupDrives( l->sl_DeviceManager, usr, loggedSession, groupID );
 										
 										UserNotifyFSEvent2( l->sl_DeviceManager, usr, "refresh", "Mountlist:" );
 									}
@@ -1470,7 +1470,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			len += strlen( args );
 		}
 		
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
+		if( loggedSession->us_User->u_IsAdmin  == TRUE )
 		{
 			char tmp[ 512 ];
 			int tmpsize = 0;
@@ -1623,7 +1623,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			authid = el->hme_Data;
 		}
 		
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
+		if( loggedSession->us_User->u_IsAdmin  == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
 		{
 			el = HttpGetPOSTParameter( request, "users" );
 			if( el != NULL )
@@ -1706,9 +1706,9 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 							{
 								char *errorStr = NULL;
 
-								UserGroupMountWorkgroupDrives( l->sl_DeviceManager, usr, groupID );
+								UserGroupMountWorkgroupDrives( l->sl_DeviceManager, usr, loggedSession, groupID );
 								
-								if( UserGroupDeviceMount( l->sl_DeviceManager, sqlLib, ug, usr, &errorStr ) != 0 )
+								if( UserGroupDeviceMount( l->sl_DeviceManager, sqlLib, ug, usr, loggedSession, &errorStr ) != 0 )
 								{
 									//INFO( "[MountFS] -- Could not mount device for user %s. Drive was %s.\n", tmpUser->u_Name ? tmpUser->u_Name : "--nousername--", name ? name : "--noname--" );
 								}
@@ -1802,7 +1802,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
+		if( loggedSession->us_User->u_IsAdmin  == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession, authid, args ) )
 		{
 			el = HttpGetPOSTParameter( request, "users" );
 			if( el != NULL )
@@ -2010,7 +2010,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		
 		HashmapElement *el = NULL;
 		
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
+		if( loggedSession->us_User->u_IsAdmin  == TRUE )
 		{
 			el = HttpGetPOSTParameter( request, "id" );
 			if( el != NULL )

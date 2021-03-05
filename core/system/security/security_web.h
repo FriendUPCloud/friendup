@@ -9,27 +9,27 @@
 *****************************************************************************©*/
 /** @file
  * 
- *  User Session App
- *
- * file contain definitions related to user sessions app web management
+ *  Security Web
  *
  *  @author PS (Pawel Stefanski)
- *  @date created 25/07/2016
+ *  @date created 12/02/2021
  */
 
-#ifndef __SYSTEM_USA_USER_SESSION_APP_MANAGER_WEB_H__
-#define __SYSTEM_USA_USER_SESSION_APP_MANAGER_WEB_H__
+#ifndef __SYSTEM_SECURITY_SECURITY_WEB_H__
+#define __SYSTEM_SECURITY_SECURITY_WEB_H__
 
 #include <core/types.h>
-#include <core/nodes.h>
+#include <core/library.h>
+#include <mysql.h>
+#include <util/hooks.h>
+#include <util/list.h>
+#include <system/fsys/file.h>
+#include <network/socket.h>
+#include <network/http.h>
+#include <system/application/application.h>
+#include <z/zlibrary.h>
+#include <system/systembase.h>
 
-#include <system/user/user_session.h>
-#include "user_session_app.h"
+Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSession *loggedUser );
 
-//
-//
-//
-
-Http *USAWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedSession, int *result );
-
-#endif // __SYSTEM_USA_USER_SESSION_APP_MANAGER_WEB_H__
+#endif // __SYSTEM_SECURITY_SECURITY_WEB_H__

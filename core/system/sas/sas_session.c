@@ -105,11 +105,11 @@ SASSession *SASSessionNew( void *sb, const char *authid, FUQUAD appid, UserSessi
 		SASUList *ali =  FCalloc( 1, sizeof( SASUList ) );
 		if( ali != NULL )
 		{
-			ali->ID = las->sas_NumberGenerator++;
-			ali->status = SASID_US_STATUS_NEW;
-			ali->usersession = owner;
-			strcpy( ali->authid, authid );
-			DEBUG("[SASSession] ASN set %s pointer %p\n", ali->authid, ali );
+			ali->sasul_ID = las->sas_NumberGenerator++;
+			ali->sasul_Status = SASID_US_STATUS_NEW;
+			ali->sasul_Usersession = owner;
+			strcpy( ali->sasul_Authid, authid );
+			DEBUG("[SASSession] ASN set %s pointer %p\n", ali->sasul_Authid, ali );
 			las->sas_UserSessionList = ali;
 			
 			las->sas_SASID = (FUQUAD)ali;//( rand() % ULLONG_MAX );
@@ -223,7 +223,7 @@ SASUList *SASSessionAddUser( SASSession *as, UserSession *u, char *authid )
 			{
 				// we check if device was added
 			
-				if( lali->usersession == u )
+				if( lali->sasul_Usersession == u )
 				{
 					userAdded = TRUE;
 					break;
@@ -237,7 +237,7 @@ SASUList *SASSessionAddUser( SASSession *as, UserSession *u, char *authid )
 		DEBUG("User was added: %d\n", userAdded );
 		if( userAdded == TRUE )
 		{
-			if( lali->authid[ 0 ] == 0 )
+			if( lali->sasul_Authid[ 0 ] == 0 )
 			{
 				as->sas_Timer = time( NULL );
 				DEBUG("[SASSessionAddUser] User is already invited but he did not accept previous invitation\n");
@@ -259,16 +259,16 @@ SASUList *SASSessionAddUser( SASSession *as, UserSession *u, char *authid )
 			
 			if( ali != NULL )
 			{
-				ali->ID = as->sas_NumberGenerator++;
+				ali->sasul_ID = as->sas_NumberGenerator++;
 
-				ali->usersession = u;
+				ali->sasul_Usersession = u;
 				ali->node.mln_Succ = (MinNode *)as->sas_UserSessionList;
 				as->sas_UserSessionList = ali;
 
 				if( authid != NULL )
 				{
 					DEBUG("[SASSessionAddUser] Auth id set %s in ptr %p\n", authid, ali );
-					strcpy( ali->authid, authid );
+					strcpy( ali->sasul_Authid, authid );
 				}
 			}
 			FRIEND_MUTEX_UNLOCK( &as->sas_SessionsMut );
@@ -327,7 +327,7 @@ int SASSessionRemUserSession( SASSession *as, UserSession *u )
 			DEBUG("[SASSessionRemUserSession] Session before loop\n");
 			while( ali != NULL )
 			{
-				if( u ==  ali->usersession )
+				if( u ==  ali->sasul_Usersession )
 				{
 					if( ali == as->sas_UserSessionList )
 					{
@@ -401,7 +401,7 @@ int SASSessionRemUserSessionAny( SASSession *as, UserSession *u )
 
 			while( ali != NULL )
 			{
-				if( u ==  ali->usersession )
+				if( u ==  ali->sasul_Usersession )
 				{
 					if( ali == as->sas_UserSessionList )
 					{
@@ -466,7 +466,7 @@ int SASSessionRemUser( SASSession *as, User *u )
 		
 			while( ali != NULL )
 			{
-				if( u ==  ali->usersession->us_User  )
+				if( u ==  ali->sasul_Usersession->us_User  )
 				{
 					if( ali == as->sas_UserSessionList )
 					{
@@ -526,7 +526,7 @@ SASUList *SASSessionAddCurrentUserSession( SASSession *as, UserSession *loggedSe
 		while( curgusr != NULL )
 		{
 			//DEBUG("[AppSession] Check users  '%s'='%s'\n", upositions[ i ], curgusr->usersession->us_User->u_Name );
-			if( loggedSession == curgusr->usersession )
+			if( loggedSession == curgusr->sasul_Usersession )
 			{
 				break;
 			}
@@ -600,11 +600,11 @@ SASUList *SASSessionAddUsersBySession( SASSession *as, UserSession *loggedSessio
 			while( curgusr != NULL )
 			{
 				//DEBUG("[AppSession] Check users  '%s'='%s'\n", upositions[ i ], curgusr->usersession->us_User->u_Name );
-				if( strcmp( sessid, curgusr->usersession->us_SessionID  ) == 0  )
+				if( strcmp( sessid, curgusr->sasul_Usersession->us_SessionID  ) == 0  )
 				{
-					if( curgusr->status == SASID_US_STATUS_NEW )
+					if( curgusr->sasul_Status == SASID_US_STATUS_NEW )
 					{
-						curgusr->status = SASID_US_INVITED;
+						curgusr->sasul_Status = SASID_US_INVITED;
 					}
 					break;
 				}
@@ -710,12 +710,15 @@ char *SASSessionAddUsersByName( SASSession *as, UserSession *loggedSession, char
 		}
 		
 		// I assume that user can have max 8 sessions - usersi * 512 * 8
-		DEBUG("[SASSessionAddUsersByName] Bytes %d for user list will be allocated\n", SHIFT_LEFT( SHIFT_LEFT(usersi, 9), 3 ) );
-		userlistadded = FCalloc( SHIFT_LEFT( SHIFT_LEFT(usersi, 9), 3 ), sizeof(char) );
-		if( userlistadded != NULL )
+		//DEBUG("[SASSessionAddUsersByName] Bytes %d for user list will be allocated\n", SHIFT_LEFT( SHIFT_LEFT(usersi, 9), 3 ) );
+		//userlistadded = FCalloc( SHIFT_LEFT( SHIFT_LEFT(usersi, 9), 3 ), sizeof(char) );
+		//if( userlistadded != NULL )
+		BufString *usersAddedBS = BufStringNew();
+		if( usersAddedBS != NULL )
 		{
 			int errors = 0;
-			strcpy( userlistadded, "{ \"invited\": [" );
+			//strcpy( userlistadded, "{ \"invited\": [" );
+			BufStringAdd( usersAddedBS, "{ \"invited\": [" );
 
 			//
 			// we are going through list of users passed by client
@@ -739,11 +742,11 @@ char *SASSessionAddUsersByName( SASSession *as, UserSession *loggedSession, char
 						while( curgusr != NULL )
 						{
 							//DEBUG("[SASSessionAddUsersByName] Check users  '%s'='%s'\n", upositions[ i ], curgusr->usersession->us_User->u_Name );
-							if( strcmp( upositions[ i ], curgusr->usersession->us_User->u_Name  ) == 0  )
+							if( strcmp( upositions[ i ], curgusr->sasul_Usersession->us_User->u_Name  ) == 0  )
 							{
-								if( curgusr->status == SASID_US_STATUS_NEW )
+								if( curgusr->sasul_Status == SASID_US_STATUS_NEW )
 								{
-									curgusr->status = SASID_US_INVITED;
+									curgusr->sasul_Status = SASID_US_INVITED;
 								}
 								break;
 							}
@@ -759,6 +762,17 @@ char *SASSessionAddUsersByName( SASSession *as, UserSession *loggedSession, char
 
 					if( curgusr == NULL )
 					{
+						FBOOL usersInList = FALSE;
+						if( pos > 0 )
+						{
+							usersInList = TRUE;
+						}
+						int added = UMFindUserByNameAndAddToSas( l->sl_UM, upositions[ i ], as, appname, msg, usersAddedBS, usersInList );
+						if( added == 0 )
+						{
+							pos++;
+						}
+						/*
 						while( usrses != NULL )
 						{
 							// if user is not logged in he will not get invitation
@@ -826,10 +840,11 @@ char *SASSessionAddUsersByName( SASSession *as, UserSession *loggedSession, char
 							}
 							usrses  = (UserSession *)usrses->node.mln_Succ;
 						}	//while lusr
+						*/
 					}// if userfound
 					else
 					{
-						UserSession *ses = (UserSession *)curgusr->usersession;
+						UserSession *ses = (UserSession *)curgusr->sasul_Usersession;
 					
 						DEBUG("[SASSessionAddUsersByName] Found user session %p wscon %p\n", ses, ses->us_WSD );
 					
@@ -840,12 +855,14 @@ char *SASSessionAddUsersByName( SASSession *as, UserSession *loggedSession, char
 					
 							if( pos > 0  )
 							{
-								strcat( userlistadded, "," );
+								BufStringAddSize( usersAddedBS, ",", 1 );
+								//strcat( userlistadded, "," );
 							}
 					
 							DEBUG("[SASSessionAddUsersByName] Old entry will be updated: %s , currentlist size %d\n", tmp, (int)strlen(userlistadded ) );
 					
-							strcat( userlistadded, tmp );
+							BufStringAddSize( usersAddedBS, tmp, tmpsize );
+							//strcat( userlistadded, tmp );
 							pos++;
 					
 							char tmpmsg[ 2048 ];
@@ -857,7 +874,12 @@ char *SASSessionAddUsersByName( SASSession *as, UserSession *loggedSession, char
 					FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
 				}
 			} // for usersi
-			strcat( userlistadded,  "]}" );
+			//strcat( userlistadded,  "]}" );
+			BufStringAdd( usersAddedBS, "]}" );
+			
+			userlistadded = usersAddedBS->bs_Buffer;
+			usersAddedBS->bs_Buffer = NULL;
+			BufStringDelete( usersAddedBS );
 		}	// check if userlistadded != NULL
 	}
 	else
@@ -970,29 +992,29 @@ BufString *SASSessionRemUserByNames( SASSession *as, UserSession *loggedSession,
 			{
 				for( i = 0 ; i < usersi ; i++ )
 				{
-					if( asul->usersession->us_User != NULL )
+					if( asul->sasul_Usersession->us_User != NULL )
 					{
 						DEBUG("[SASSessionRemUserByNames] Checking user '%s'\n", upositions[ i ] );
-						if( strcmp( upositions[ i ], asul->usersession->us_User->u_Name ) == 0 )
+						if( strcmp( upositions[ i ], asul->sasul_Usersession->us_User->u_Name ) == 0 )
 						{
 							char locbuf[ 128 ];
 							int size = 0;
 							if( returnEntry == 0 )
 							{
-								size = snprintf( locbuf, sizeof(locbuf), "%s", asul->usersession->us_User->u_Name );
+								size = snprintf( locbuf, sizeof(locbuf), "%s", asul->sasul_Usersession->us_User->u_Name );
 							}
 							else
 							{
-								size = snprintf( locbuf, sizeof(locbuf), ",%s", asul->usersession->us_User->u_Name );
+								size = snprintf( locbuf, sizeof(locbuf), ",%s", asul->sasul_Usersession->us_User->u_Name );
 							}
 							BufStringAddSize( bs, locbuf, size );
 						
 							returnEntry++;
 						
-							if( asul->usersession == as->sas_UserSessionList->usersession )
+							if( asul->sasul_Usersession == as->sas_UserSessionList->sasul_Usersession )
 							{
 								DEBUG("[SASSessionRemUserByNames] Admin will be removed\n");
-								adminSession = asul->usersession;
+								adminSession = asul->sasul_Usersession;
 							}
 							rementr[ rementrnum++ ] = asul;
 						}
@@ -1020,8 +1042,8 @@ BufString *SASSessionRemUserByNames( SASSession *as, UserSession *loggedSession,
 			asul = as->sas_UserSessionList;
 			while( asul != NULL )
 			{
-				int len = sprintf( tmp, "{\"type\":\"msg\",\"data\": { \"type\":\"%s\", \"data\":{\"type\":\"%lu\", \"data\":{ \"identity\":{\"username\":\"%s\"},\"data\": {\"type\":\"sasid-close\",\"data\":\"%s\"}}}}}", asul->authid, as->sas_SASID,  loggedSession->us_User->u_Name, asul->usersession->us_User->u_Name );
-				msgsndsize += WebSocketSendMessageInt( asul->usersession, tmp, len );
+				int len = sprintf( tmp, "{\"type\":\"msg\",\"data\": { \"type\":\"%s\", \"data\":{\"type\":\"%lu\", \"data\":{ \"identity\":{\"username\":\"%s\"},\"data\": {\"type\":\"sasid-close\",\"data\":\"%s\"}}}}}", asul->sasul_Authid, as->sas_SASID,  loggedSession->us_User->u_Name, asul->sasul_Usersession->us_User->u_Name );
+				msgsndsize += WebSocketSendMessageInt( asul->sasul_Usersession, tmp, len );
 			
 				asul = (SASUList *) asul->node.mln_Succ;
 			}
@@ -1030,11 +1052,11 @@ BufString *SASSessionRemUserByNames( SASSession *as, UserSession *loggedSession,
 		{
 			for( i=0 ; i < rementrnum ; i++ )
 			{
-				DEBUG("[SASSessionRemUserByNames] authid %s sasid %lu userptr %p usersessptr %p usersessuser ptr %p\n", rementr[ i ]->authid, as->sas_SASID,  loggedSession->us_User, rementr[ i ]->usersession, rementr[ i ]->usersession->us_User );
-				int len = sprintf( tmp, "{\"type\":\"msg\",\"data\": { \"type\":\"%s\", \"data\":{\"type\":\"%lu\", \"data\":{ \"identity\":{\"username\":\"%s\"},\"data\": {\"type\":\"sasid-close\",\"data\":\"%s\"}}}}}", rementr[ i ]->authid, as->sas_SASID,  loggedSession->us_User->u_Name, rementr[ i ]->usersession->us_User->u_Name );
-				msgsndsize += WebSocketSendMessageInt( rementr[ i ]->usersession, tmp, len );
+				DEBUG("[SASSessionRemUserByNames] authid %s sasid %lu userptr %p usersessptr %p usersessuser ptr %p\n", rementr[ i ]->sasul_Authid, as->sas_SASID,  loggedSession->us_User, rementr[ i ]->sasul_Usersession, rementr[ i ]->sasul_Usersession->us_User );
+				int len = sprintf( tmp, "{\"type\":\"msg\",\"data\": { \"type\":\"%s\", \"data\":{\"type\":\"%lu\", \"data\":{ \"identity\":{\"username\":\"%s\"},\"data\": {\"type\":\"sasid-close\",\"data\":\"%s\"}}}}}", rementr[ i ]->sasul_Authid, as->sas_SASID,  loggedSession->us_User->u_Name, rementr[ i ]->sasul_Usersession->us_User->u_Name );
+				msgsndsize += WebSocketSendMessageInt( rementr[ i ]->sasul_Usersession, tmp, len );
 			
-				SASSessionRemUserSession( as, rementr[ i ]->usersession );
+				SASSessionRemUserSession( as, rementr[ i ]->sasul_Usersession );
 			}
 		}
 		FFree( rementr );
@@ -1209,10 +1231,10 @@ int SASSessionSendMessage( SASSession *as, UserSession *sender, char *msg, int l
 		SASUList *ali = as->sas_UserSessionList;
 		while( ali != NULL )
 		{
-			if( ali->usersession == sender )
+			if( ali->sasul_Usersession == sender )
 			{
 				// sender should receive response
-				DEBUG("[SASSessionSendMessage] SENDER AUTHID %s\n", ali->authid );
+				DEBUG("[SASSessionSendMessage] SENDER AUTHID %s\n", ali->sasul_Authid );
 			}
 			else
 			{
@@ -1222,16 +1244,16 @@ int SASSessionSendMessage( SASSession *as, UserSession *sender, char *msg, int l
 				{
 					User *usend = sender->us_User;
 					
-					DEBUG("[SASSessionSendMessage] Sendmessage AUTHID %s\n", ali->authid );
+					DEBUG("[SASSessionSendMessage] Sendmessage AUTHID %s\n", ali->sasul_Authid );
 					
-					int newmsgsize = sprintf( newmsg, WS_MESSAGE_TEMPLATE_USER, ali->authid, as->sas_SASID, usend->u_Name, msg );
+					int newmsgsize = sprintf( newmsg, WS_MESSAGE_TEMPLATE_USER, ali->sasul_Authid, as->sas_SASID, usend->u_Name, msg );
 					
-					if( ali->usersession != NULL )
+					if( ali->sasul_Usersession != NULL )
 					{
-						msgsndsize += WebSocketSendMessageInt( ali->usersession, newmsg, newmsgsize );
-						if( ali->usersession != NULL && ali->usersession->us_User != NULL )
+						msgsndsize += WebSocketSendMessageInt( ali->sasul_Usersession, newmsg, newmsgsize );
+						if( ali->sasul_Usersession != NULL && ali->sasul_Usersession->us_User != NULL )
 						{
-							DEBUG("[SASSessionSendMessage] FROM %s  TO %s  MESSAGE SIZE %d\n", usend->u_Name, ali->usersession->us_User->u_Name, msgsndsize );
+							DEBUG("[SASSessionSendMessage] FROM %s  TO %s  MESSAGE SIZE %d\n", usend->u_Name, ali->sasul_Usersession->us_User->u_Name, msgsndsize );
 						}
 					}
 					FFree( newmsg );
@@ -1256,14 +1278,14 @@ int SASSessionSendMessage( SASSession *as, UserSession *sender, char *msg, int l
 			SASUList *ali = as->sas_UserSessionList;
 			while( ali != NULL )
 			{
-				if( ali->usersession == sender )
+				if( ali->sasul_Usersession == sender )
 				{
 					// sender should receive response
-					DEBUG("[SASSessionSendMessage] SENDER AUTHID %s\n", ali->authid );
+					DEBUG("[SASSessionSendMessage] SENDER AUTHID %s\n", ali->sasul_Authid );
 				}
 				else
 				{
-					UserSession *locusrsess = (UserSession *)ali->usersession;
+					UserSession *locusrsess = (UserSession *)ali->sasul_Usersession;
 					if( locusrsess != NULL )
 					{
 						User *usr = locusrsess->us_User;
@@ -1281,12 +1303,12 @@ int SASSessionSendMessage( SASSession *as, UserSession *sender, char *msg, int l
 							{
 								User *usend = sender->us_User;
 						
-								DEBUG("[SASSessionSendMessage] Sendmessage AUTHID %s\n", ali->authid );
+								DEBUG("[SASSessionSendMessage] Sendmessage AUTHID %s\n", ali->sasul_Authid );
 						
-								int newmsgsize = sprintf( newmsg, WS_MESSAGE_TEMPLATE_USER, ali->authid, as->sas_SASID, usend->u_Name, msg );
+								int newmsgsize = sprintf( newmsg, WS_MESSAGE_TEMPLATE_USER, ali->sasul_Authid, as->sas_SASID, usend->u_Name, msg );
 						
-								msgsndsize += WebSocketSendMessageInt( ali->usersession, newmsg, newmsgsize );
-								DEBUG("[SASSessionSendMessage] FROM %s  TO %s  MESSAGE SIZE %d\n", usend->u_Name, ali->usersession->us_User->u_Name, msgsndsize );
+								msgsndsize += WebSocketSendMessageInt( ali->sasul_Usersession, newmsg, newmsgsize );
+								DEBUG("[SASSessionSendMessage] FROM %s  TO %s  MESSAGE SIZE %d\n", usend->u_Name, ali->sasul_Usersession->us_User->u_Name, msgsndsize );
 								FFree( newmsg );
 							}
 							else
@@ -1347,8 +1369,8 @@ int SASSessionSendOwnerMessage( SASSession *as, UserSession *sender, char *msg, 
 		{
 			if( as->sas_UserSessionList != NULL )
 			{
-				msgsndsize += WebSocketSendMessageInt( as->sas_UserSessionList->usersession, newmsg, newmsgsize );
-				DEBUG("[SASSessionSendOwnerMessage] FROM %s  TO %s  MESSAGE SIZE %d\n", usend->u_Name, as->sas_UserSessionList->usersession->us_User->u_Name, msgsndsize );
+				msgsndsize += WebSocketSendMessageInt( as->sas_UserSessionList->sasul_Usersession, newmsg, newmsgsize );
+				DEBUG("[SASSessionSendOwnerMessage] FROM %s  TO %s  MESSAGE SIZE %d\n", usend->u_Name, as->sas_UserSessionList->sasul_Usersession->us_User->u_Name, msgsndsize );
 			}
 			//FRIEND_MUTEX_UNLOCK( &(as->sas_SessionsMut) );
 		}
@@ -1386,15 +1408,15 @@ int SASSessionSendPureMessage( SASSession *as, UserSession *sender, char *msg, i
 	SASUList *ali = as->sas_UserSessionList;
 	while( ali != NULL )
 	{
-		if( ali->usersession ==  sender )
+		if( ali->sasul_Usersession ==  sender )
 		{
 			// sender should receive response
 		}
 		else
 		{
-			if( ali->authid[ 0 ] == 0 )
+			if( ali->sasul_Authid[ 0 ] == 0 )
 			{
-				msgsndsize += WebSocketSendMessageInt( ali->usersession, msg, length );
+				msgsndsize += WebSocketSendMessageInt( ali->sasul_Usersession, msg, length );
 			}
 		}
 			
@@ -1427,8 +1449,8 @@ SASUList *SASSessionGetListEntryBySession( SASSession *as, UserSession *ses )
 		// Find invitee user with authid from user list in allowed users
 		while( li != NULL )
 		{
-			DEBUG("[SASSessionGetListEntryBySession] sessionfrom list %p loggeduser session %p\n",  li->usersession, ses );
-			if( li->usersession == ses )
+			DEBUG("[SASSessionGetListEntryBySession] sessionfrom list %p loggeduser session %p\n",  li->sasul_Usersession, ses );
+			if( li->sasul_Usersession == ses )
 			{
 				break;
 			}

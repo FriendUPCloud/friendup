@@ -883,7 +883,7 @@ SystemBase *SystemInit( void )
 				if( strcmp( locmod->am_Name, l->sl_ActiveModuleName ) == 0 )
 				{
 					l->sl_ActiveAuthModule = locmod;
-					INFO("[SystemBase] Default login module set to : %s\n", l->sl_ActiveAuthModule->am_Name );
+					INFO("[SystemBase] Default login module set to : %s pointer: %p\n", l->sl_ActiveAuthModule->am_Name, l->sl_ActiveAuthModule );
 					break;
 				}
 				
@@ -1080,6 +1080,12 @@ SystemBase *SystemInit( void )
 	l->sl_ApplicationManager = ApplicationManagerNew( l );
 	if( l->sl_ApplicationManager == NULL )
 	{
+		Log( FLOG_ERROR, "Cannot initialize ApplicationManager\n");
+	}
+	
+	l->sl_AppSessionManager = AppSessionManagerNew( l );
+	if( l->sl_AppSessionManager == NULL )
+	{
 		Log( FLOG_ERROR, "Cannot initialize AppSessionManager\n");
 	}
 	
@@ -1117,6 +1123,7 @@ SystemBase *SystemInit( void )
 
 	EventAdd( l->sl_EventManager, "DoorNotificationRemoveEntries", DoorNotificationRemoveEntries, l, time( NULL )+MINS30, MINS30, -1 );
 	EventAdd( l->sl_EventManager, "USMRemoveOldSessions", USMRemoveOldSessions, l, time( NULL )+l->sl_RemoveOldSessionTimeout, l->sl_RemoveOldSessionTimeout, -1 );	// default 60mins
+	EventAdd( l->sl_EventManager, "AppSessionManagerRemoveOldAppSessions", AppSessionManagerRemoveOldAppSessions, l, time( NULL )+MINS360, MINS360, -1 );
 	// test, to remove
 	EventAdd( l->sl_EventManager, "PIDThreadManagerRemoveThreads", PIDThreadManagerRemoveThreads, l->sl_PIDTM, time( NULL )+MINS60, MINS60, -1 );
 	EventAdd( l->sl_EventManager, "CacheUFManagerRefresh", CacheUFManagerRefresh, l->sl_CacheUFM, time( NULL )+DAYS5, DAYS5, -1 );
@@ -1206,6 +1213,12 @@ void SystemClose( SystemBase *l )
 	}
 	
 	Log( FLOG_INFO, "[SystemBase] SystemClose in progress\n");
+	
+	if( l->sl_AppSessionManager != NULL )
+	{
+		AppSessionManagerDelete( l->sl_AppSessionManager );
+		l->sl_AppSessionManager = NULL;
+	}
 	
 	if( l->sl_ApplicationManager != NULL )
 	{
@@ -1376,6 +1389,7 @@ void SystemClose( SystemBase *l )
 	
 	Log( FLOG_INFO,  "[SystemBase] Release filesystems\n");
 	// release fsystems
+	/*
 	FHandler *lsys = l->sl_Filesystems;
 	while( lsys != NULL )
 	{
@@ -1384,7 +1398,7 @@ void SystemClose( SystemBase *l )
 		DEBUG("[SystemBase] Remove fsys %s\n", rems->Name );
 		FHandlerDelete( rems );
 	}
-	
+	*/
 	if( l->sl_WorkerManager != NULL )
 	{
 		DEBUG( "[FriendCore] Shutting down worker manager.\n" );
@@ -1603,13 +1617,13 @@ int SystemInitExternal( SystemBase *l )
 			if( prop != NULL )
 			{
 				// Do we even want a sentinel?
-				char *userTest = plib->ReadStringNCS( prop, "Core:SentinelUsername", NULL );
-				if( userTest != NULL )
+				char *sentUsrName = plib->ReadStringNCS( prop, "Core:SentinelUsername", NULL );
+				if( sentUsrName != NULL )
 				{
 					l->sl_Sentinel = FCalloc( 1, sizeof( Sentinel ) );
 					if( l->sl_Sentinel != NULL )
 					{
-						l->sl_Sentinel->s_ConfigUsername = StringDuplicate( userTest );
+						l->sl_Sentinel->s_ConfigUsername = StringDuplicate( sentUsrName );
 						l->sl_Sentinel->s_ConfigPassword = StringDuplicate( plib->ReadStringNCS( prop, "Core:SentinelPassword", NULL ) );
 					
 						memcpy( l->sl_Sentinel->s_FCID, l->fcm->fcm_ID, FRIEND_CORE_MANAGER_ID_SIZE );
@@ -1684,6 +1698,7 @@ int SystemInitExternal( SystemBase *l )
 						if( strcmp( usr->u_Name, l->sl_Sentinel->s_ConfigUsername ) == 0 )
 						{
 							l->sl_Sentinel->s_User = usr;
+							usr->u_IsSentinel = TRUE;
 							DEBUG("[SystemBase] Sentinel user found: %s\n", usr->u_Name );
 						}
 					}
@@ -1727,6 +1742,7 @@ int SystemInitExternal( SystemBase *l )
 				
 				DEBUG("[SystemBase] Sentinel user is avaiable\n");
 				l->sl_Sentinel->s_User = sentuser;
+				sentuser->u_IsSentinel = TRUE;
 			}
 			else
 			{
@@ -1777,11 +1793,9 @@ int SystemInitExternal( SystemBase *l )
 			
 			if( foundRemoteSession == FALSE )
 			{
-				char *newSessionId = SessionIDGenerate();
 				DEBUG("[SystemBase] Remote session will be created for Sentinel\n");
 				
-				UserSession *ses = UserSessionNew( newSessionId, "remote" );
-				//UserSession *ses = UserSessionNew( "remote", "remote" );
+				UserSession *ses = UserSessionNew( l, NULL, "remote" );
 				if( ses != NULL )
 				{
 					ses->us_UserID = l->sl_Sentinel->s_User->u_ID;
@@ -1791,7 +1805,6 @@ int SystemInitExternal( SystemBase *l )
 					
 					USMUserSessionAddToList( l->sl_USM, ses );
 				}
-				FFree( newSessionId );
 			}
 			
 			//
@@ -1806,31 +1819,8 @@ int SystemInitExternal( SystemBase *l )
 		
 		UMCheckAndLoadAPIUser( l->sl_UM );
 		
-		Log( FLOG_INFO, "----------------------------------------------------\n");
-		Log( FLOG_INFO, "---------Mount user devices-------------------------\n");
-		Log( FLOG_INFO, "----------------------------------------------------\n");
-	
-		User *tmpUser = l->sl_UM->um_Users;
-		while( tmpUser != NULL )
-		{
-			char *err = NULL;
-			DEBUG( "[SystemBase] FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
-			UserDeviceMount( l, tmpUser, 1, TRUE, &err, FALSE );
-			if( err != NULL )
-			{
-				Log( FLOG_ERROR, "Initial system mount error. UserID: %lu Error: %s\n", tmpUser->u_ID, err );
-				FFree( err );
-			}
-			DEBUG( "[SystemBase] DONE FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
-			tmpUser = (User *)tmpUser->node.mln_Succ;
-		}
-		
-		Log( FLOG_INFO, "----------------------------------------------------\n");
-		Log( FLOG_INFO, "---------Mount user group devices-------------------\n");
-		Log( FLOG_INFO, "----------------------------------------------------\n");
-		
-		
-		
+		UMInitUsers( l->sl_UM );
+
 		/*
 		User *sentUser = NULL;
 		if( l->sl_Sentinel != NULL )
@@ -1883,7 +1873,8 @@ typedef struct DevNode
  * Load and mount all user doors
  *
  * @param l pointer to SystemBase
- * @param usr pointer to user to which doors belong
+ * @param u pointer to user to which device will be assigned
+ * @param usrses pointer to usersession to which doors belong
  * @param force integer 0 = don't force 1 = force
  * @param unmountIfFail should be device unmounted in DB if mount will fail
  * @param mountError pointer to error message
@@ -1891,16 +1882,17 @@ typedef struct DevNode
  * @return 0 if everything went fine, otherwise error number
  */
 
-int UserDeviceMount( SystemBase *l, User *usr, int force, FBOOL unmountIfFail, char **mountError, FBOOL notify )
+int UserDeviceMount( SystemBase *l, User *u, UserSession *usrses, int force, FBOOL unmountIfFail, char **mountError, FBOOL notify )
 {	
 	Log( FLOG_INFO,  "[UserDeviceMount] Mount user device from Database\n");
 	SQLLibrary *sqllib;
 	
-	if( usr == NULL )
+	if( usrses == NULL || usrses->us_User == NULL )
 	{
 		DEBUG("[UserDeviceMount] User parameter is empty\n");
 		return -1;
 	}
+	User *usr = usrses->us_User;
 	
 	if( usr->u_MountedDevs != NULL && force == 0 )
 	{
@@ -2000,6 +1992,7 @@ usr->u_ID , usr->u_ID, usr->u_ID
 				{ FSys_Mount_ID,      (FULONG)id },
 				{ FSys_Mount_Mount,   (FULONG)mount },
 				{ FSys_Mount_SysBase, (FULONG)SLIB },
+				{ FSys_Mount_UserSession, (FULONG)usrses },
 				{ FSys_Mount_Visible, (FULONG)1 },     // Assume visible
 				{TAG_DONE, TAG_DONE}
 			};
@@ -2007,7 +2000,7 @@ usr->u_ID , usr->u_ID, usr->u_ID
 			File *device = NULL;
 			DEBUG("[UserDeviceMount] Before mounting\n");
 			
-			int err = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &device, usr, mountError, usr->u_IsAdmin, notify );
+			int err = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &device, usr, mountError, usrses, notify );
 
 			sqllib = l->GetDBConnection( l );
 			// if there is error but error is not "device is already mounted"
@@ -2020,23 +2013,6 @@ usr->u_ID , usr->u_ID, usr->u_ID
 				{
 					//Log( FLOG_INFO, "UserDeviceMount. Device unmounted: %s UserID: %lu 
 					
-					/*
-					sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "\
-UPDATE `Filesystem` f SET `Mounted` = '0' \
-WHERE \
-( \
-f.UserID = '%ld' OR \
-f.GroupID IN ( \
-SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g \
-WHERE \
-g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND \
-ug.UserID = '%ld' \
-) \
-) \
-AND LOWER(f.Name) = LOWER('%s')", 
-						usr->u_ID, usr->u_ID, (char *)row[ 0 ] 
-					);
-					*/
 					sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "UPDATE `Filesystem` SET Mounted=0 WHERE ID=%lu", id );
 					
 					sqllib->QueryWithoutResults( sqllib, temptext );
@@ -2084,7 +2060,7 @@ AND LOWER(f.Name) = LOWER('%s')",
  * @return 0 if everything went fine, otherwise error number
  */
 
-int UserDeviceUnMount( SystemBase *l, SQLLibrary *sqllib __attribute__((unused)), User *usr )
+int UserDeviceUnMount( SystemBase *l, User *usr, UserSession *ses )
 {
 	DEBUG("UserDeviceUnMount\n");
 	if( usr != NULL )
@@ -2099,7 +2075,7 @@ int UserDeviceUnMount( SystemBase *l, SQLLibrary *sqllib __attribute__((unused))
 				remdev = dev;
 				dev = (File *)dev->node.mln_Succ;
 				
-				DeviceUnMount( l->sl_DeviceManager, remdev, usr );
+				DeviceUnMount( l->sl_DeviceManager, remdev, usr, ses );
 				
 				FFree( remdev );
 			}

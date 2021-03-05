@@ -864,6 +864,11 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				if( e.button != 0 && e.type != 'touchend' ) return;
 				if( div.helpBubble ) div.helpBubble.close();
 				
+				// Http url
+				if( o.exe.substr( 0, 7 ) == 'http://' || o.exe.substr( 0, 8 ) == 'https://' )
+				{
+					return window.open( o.exe, '', '' );
+				}
 				// We got views? Just manage them
 				if( !isMobile )
 				{

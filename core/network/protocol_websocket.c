@@ -311,7 +311,6 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				}
 				else // only fragment was received
 				{
-					DEBUG1("[WS] Only received: %s\n", (char *)tin );
 					BufStringAddSize( wsd->wsc_Buffer, tin, len );
 					return 0;
 				}
@@ -1109,6 +1108,7 @@ void *ParseAndCall( WSThreadData *wstd )
 							{
 								locus->us_LoggedTime = time( NULL );
 								
+								//char *tmpSessionID = sb->sl_UtilInterface.DatabaseEncodeString( sessionid );
 								//sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime=%lld,SessionID='%s',UMA_ID=%lu WHERE `DeviceIdentity` = '%s' AND `UserID`=%lu", (long long)loggedSession->us_LoggedTime, loggedSession->us_SessionID, umaID, deviceid,  loggedSession->us_UserID );
 								WSThreadPing( wstd );
 								wstd = NULL;

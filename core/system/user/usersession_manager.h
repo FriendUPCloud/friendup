@@ -19,9 +19,10 @@
 #define __SYSTEM_USER_USER_SESSIONMANAGER_H__
 
 #include <core/types.h>
-#include "user_session.h"
+#include "usersession.h"
 #include <system/usergroup/user_group.h>
 #include "user.h"
+#include <util/libchash.h>
 
 //
 // User Session Manager structure
@@ -30,8 +31,11 @@
 typedef struct UserSessionManager
 {
 	void							*usm_SB;
-	UserSession						*usm_Sessions;							// user sessions
+	
+	UserSession						*usm_Sessions;							// list of all user sessions
+	FHashTable						*usm_SessionsHT;						// Hashmap of sessions
 	UserSession						*usm_SessionsToBeRemoved;				// sessions which must be removed
+	
 	int								usm_SessionCounter;
 	void 							*usm_UM;
 	
@@ -67,6 +71,12 @@ UserSession *USMGetSessionBySessionID( UserSessionManager *usm, char *id );
 //
 //
 
+UserSession *USMGetSessionByHashedSessionID( UserSessionManager *usm, char *sessionid );
+
+//
+//
+//
+
 UserSession *USMGetSessionBySessionIDFromDB( UserSessionManager *usm, char *id );
 
 //
@@ -92,6 +102,12 @@ void USMLogUsersAndDevices( UserSessionManager *usm );
 //
 
 UserSession *USMGetSessionByUserID( UserSessionManager *usm, FULONG id );
+
+//
+//
+//
+
+UserSession *USMGetSessionByUserName( UserSessionManager *usm, char *uname, FBOOL caseSensitive );
 
 //
 //
@@ -199,19 +215,19 @@ void USMCloseUnusedWebSockets( UserSessionManager *usm );
 //
 //
 
-int USMGetSessionsDeleteDB( UserSessionManager *smgr, const char *sessionid );
+int USMSessionsDeleteDB( UserSessionManager *smgr, const char *sessionid );
 
 //
 // Generate temporary session
 //
 
-char *USMCreateTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, FULONG userID, int type );
+UserSession *USMCreateTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, FULONG userID, int type );
 
 //
 // Destroy temporary session
 //
 
-void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, char *sessionID );
+void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, UserSession *ses );
 
 //
 // Check if User Session is attached to Sentinel User

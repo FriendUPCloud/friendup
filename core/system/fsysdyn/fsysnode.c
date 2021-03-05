@@ -224,8 +224,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 	char *name = NULL;
 	char *module = NULL;
 	char *type = NULL;
-	char *authid = NULL;
-//	FULONG id = 0;
+	UserSession *us = NULL;
 	
 	SystemBase *sb = NULL;
 	
@@ -273,6 +272,9 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 				case FSys_Mount_SysBase:
 					sb = (SystemBase *)lptr->ti_Data;
 					break;
+				case FSys_Mount_UserSession:
+					us = (UserSession *)lptr->ti_Data;
+					break;
 			}
 			lptr++;
 		}
@@ -315,8 +317,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 		{
 			sd->module = StringDup( module );
 			DEBUG( "Copying session.\n" );
-			//dev->f_SessionID = StringDup( usr->u_MainSessionID );
-			dev->f_SessionIDPTR = usr->u_MainSessionID;
+			FileFillSessionID( dev, us );
 			sd->type = StringDup( type );
 			dev->f_SpecialData = sd;
 			sd->sb = sb;
@@ -327,8 +328,11 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 				( name ? strlen( name ) : 0 ) + 
 				( path ? strlen( path ) : 0 ) + 
 				( module ? strlen( module ) : strlen( "files" ) ) + 
-				( usr->u_MainSessionID ? strlen( usr->u_MainSessionID ) : 0 ) + 1;
-			
+#ifdef DB_SESSIONID_HASH
+				( us ? strlen( us->us_HashedSessionID ) : 0 ) + 1;
+#else
+				( us ? strlen( us->us_SessionID ) : 0 ) + 1;
+#endif
 			
 			// Whole command
 			char *command = FCalloc(
@@ -348,7 +352,11 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 						name ? name : "", 
 						path ? path : "", 
 						module ? module : "files", 
-						usr->u_MainSessionID ? usr->u_MainSessionID : ""  );
+#ifdef DB_SESSIONID_HASH
+						us->us_HashedSessionID ? us->us_HashedSessionID : ""  );
+#else
+						us->us_SessionID ? us->us_SessionID : ""  );
+#endif
 					sprintf( command, "node \"modules/node/module.js\" \"%s\";", FilterNodeVar( commandCnt ) );
 					FFree( commandCnt );
 			

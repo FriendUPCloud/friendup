@@ -158,7 +158,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 	}
 	
 	// Must have valid path
-	if( path )
+	if( path != NULL )
 	{
 		char *tmpPath = UrlDecodeToMem( path );
 		if( tmpPath != NULL )
@@ -255,6 +255,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 				DEBUG( "[FSMWebRequest] Device name '%s' Logguser name %s- path %s\n", devname, loggedSession->us_User->u_Name, path );
 
 				path = locpath;
+				
+				DEBUG("[FSMWebRequest] path after change: %s\n", path );
 			
 				freePath = 1;
 			}
@@ -279,7 +281,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 			
 			if( lrequest != NULL )
 			{
-				snprintf( lrequest, 512, "module=system&command=systempath&sessionid=%s&path=%s", loggedSession->us_User->u_MainSessionID, path );
+				snprintf( lrequest, 512, "module=system&command=systempath&sessionid=%s&path=%s", loggedSession->us_SessionID, path );
 				
 				returnData = l->RunMod( l, "php", "modules/system/module.php", lrequest, &resultLength );
 				
@@ -316,7 +318,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 			
 			DEBUG("[FSMWebRequest] Find device by name %s\n", devname );
 			
-			actDev = GetRootDeviceByName( loggedSession->us_User, devname );
+			actDev = GetRootDeviceByName( loggedSession->us_User, loggedSession, devname );
 			
 			// TODO: Custom stuff (should probably be in the actual FS)
 
@@ -324,10 +326,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 			{
 				actDev->f_Operations++;
 				
-				if( ( locpath = FCalloc( strlen( path ) + 255, sizeof(char) ) ) != NULL )
+				if( ( locpath = UrlDecodeToMem( path ) ) != NULL )
 				{
-					UrlDecode( locpath, path );
-					
 					int dpos = ColonPosition( locpath );
 					
 					strcpy( path, &locpath[ dpos + 1 ] );
@@ -821,7 +821,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							}
 						}
 						
-						actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
+						FileFillSessionID( actDev, loggedSession );
 						BufString *resp = actFS->Dir( actDev, path );
 
 						if( resp != NULL)
@@ -920,7 +920,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							FBOOL have = FSManagerCheckAccess( l->sl_FSM, origDecodedPath, actDev->f_ID, loggedSession->us_User, "--W---" );
 							if( have == TRUE )
 							{
-								actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
+								FileFillSessionID( actDev, loggedSession );
 								int error = actFS->Rename( actDev, origDecodedPath, nname );
 								sprintf( tmp, "ok<!--separate-->{ \"response\": \"%d\"}", error );
 						
@@ -942,8 +942,12 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								char *command = FMalloc( len );
 								if( command != NULL )
 								{
+#ifdef DB_SESSIONID_HASH
+									snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", origDecodedPath, loggedSession->us_HashedSessionID );
+#else
 									snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", origDecodedPath, loggedSession->us_SessionID );
-			
+#endif
+									
 									DEBUG("Run command via php: '%s'\n", command );
 									FULONG dataLength;
 
@@ -1063,7 +1067,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							char *command = FMalloc( len );
 							if( command != NULL )
 							{
+#ifdef DB_SESSIONID_HASH
+								snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", origDecodedPath, loggedSession->us_HashedSessionID );
+#else
 								snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", origDecodedPath, loggedSession->us_SessionID );
+#endif
 			
 								DEBUG("Run command via php: '%s'\n", command );
 								FULONG dataLength;
@@ -1171,7 +1179,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						{
 							if( badCharFound == FALSE )
 							{
-								actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
+								FileFillSessionID( actDev, loggedSession );
 								int error = actFS->MakeDir( actDev, lpath );
 						
 								if( error != 0 )
@@ -1377,7 +1385,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					{
 						if( mode != NULL && strcmp( mode, "rs" ) == 0 )		// read stream
 						{
-							actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
+							FileFillSessionID( actDev, loggedSession );
 							File *fp = (File *)actFS->FileOpen( actDev, origDecodedPath, mode );
 						
 							// Success?
@@ -1445,7 +1453,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					
 						else if( mode != NULL && mode[0] == 'r' )
 						{
-							actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
+							FileFillSessionID( actDev, loggedSession );
 							
 							DEBUG( "[FSMWebRequest] Reading path: %s\n", origDecodedPath );
 							File *fp = (File *)actFS->FileOpen( actDev, origDecodedPath, mode );
@@ -1755,7 +1763,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							FBOOL have = FSManagerCheckAccess( l->sl_FSM, path, actDev->f_ID, loggedSession->us_User, "--W---" );
 							if( have == TRUE )
 							{
-								actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
+								FileFillSessionID( actDev, loggedSession );
 								
 								File *fp = (File *)actFS->FileOpen( actDev, path, mode );
 						
@@ -1901,13 +1909,13 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 										int64_t written = 0;
 										int64_t readall = 0;
 										
-										actDev->f_SessionIDPTR = loggedSession->us_SessionID;//->us_User->u_MainSessionID;
+										FileFillSessionID( actDev, loggedSession );
 										File *rfp = (File *)actFS->FileOpen( actDev, path, "rb" );
 										int closeError = 0;
 										
 										if( rfp != NULL )
 										{
-											dstrootf->f_SessionIDPTR = loggedSession->us_SessionID;//->us_User->u_MainSessionID;
+											FileFillSessionID( dstrootf, loggedSession );
 											
 											File *wfp = (File *)dsthand->FileOpen( dstrootf, dstpath, "w+" );
 											
@@ -2003,7 +2011,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 											}
 										}
 								
-										dstrootf->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
+										FileFillSessionID( dstrootf, loggedSession );
 										int error = dsthand->MakeDir( dstrootf, topath );
 										sprintf( tmp, "ok<!--separate-->{\"response\":\"%d\"}", error );
 								
@@ -2017,7 +2025,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									char *command = FMalloc( len );
 									if( command != NULL )
 									{
+#ifdef DB_SESSIONID_HASH
+										snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", topath, loggedSession->us_HashedSessionID );
+#else
 										snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", topath, loggedSession->us_SessionID );
+#endif
 			
 										DEBUG("Run command via php: '%s'\n", command );
 										FULONG dataLength;
@@ -2205,7 +2217,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								FQUAD storedBytes = 0;
 								
 								LOG( FLOG_DEBUG, "UPLOAD ACCESS GRANTED\n");
-								actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
+								FileFillSessionID( actDev, loggedSession );
 
 								File *fp = (File *)actFS->FileOpen( actDev, tmpPath, "wb" );
 								if( fp != NULL )
@@ -3007,7 +3019,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					{
 						{
 							char *dirname = FCalloc( 1024, sizeof(char) );
+#ifdef DB_SESSIONID_HASH
+							snprintf( dirname, 1024, "%s%s_decomp_%d%d", DEFAULT_TMP_DIRECTORY, loggedSession->us_HashedSessionID, rand()%9999, rand()%9999 );
+#else
 							snprintf( dirname, 1024, "%s%s_decomp_%d%d", DEFAULT_TMP_DIRECTORY, loggedSession->us_SessionID, rand()%9999, rand()%9999 );
+#endif
 
 							mkdir( dirname, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH );
 						
@@ -3053,7 +3069,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									}
 								
 									File *dstdevice = NULL;
-									if( ( dstdevice = GetRootDeviceByName( loggedSession->us_User, dstdevicename ) ) != NULL )
+									if( ( dstdevice = GetRootDeviceByName( loggedSession->us_User, loggedSession, dstdevicename ) ) != NULL )
 									{
 										char *buffer = FMalloc( 32768 * sizeof(char) );
 									
@@ -3062,7 +3078,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									
 										if( ( readfile = fopen( tmpfilename, "rb" ) ) != NULL )
 										{
-											actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
+											FileFillSessionID( actDev, loggedSession );
 											
 											File *fp = (File *)fsys->FileOpen( dstdevice, archpath, "wb" );
 											if( fp != NULL )
@@ -3210,7 +3226,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						char *dirname = FMalloc( 1024 );
 						if( dirname != NULL )
 						{
+#ifdef DB_SESSIONID_HASH
+							snprintf( dirname, 1024, "%s%s_decomp_%d%d", DEFAULT_TMP_DIRECTORY, loggedSession->us_HashedSessionID, rand()%9999, rand()%9999 );
+#else
 							snprintf( dirname, 1024, "%s%s_decomp_%d%d", DEFAULT_TMP_DIRECTORY, loggedSession->us_SessionID, rand()%9999, rand()%9999 );
+#endif
 						
 							mkdir( dirname, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH );
 						
@@ -3240,7 +3260,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 
 										if( actFS != NULL )
 										{
-											actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
+											FileFillSessionID( actDev, loggedSession );
 								
 											File *fp = (File *)actFS->FileOpen( actDev, origDecodedPath, "rb" );
 											// Success?

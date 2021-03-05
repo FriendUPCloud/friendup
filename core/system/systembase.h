@@ -51,8 +51,8 @@
 #include <system/cache/cache_manager.h>
 #include <libwebsockets.h>
 #include <system/invar/invar_manager.h>
-#include <system/user/user_session.h>
-#include <system/user/user_sessionmanager.h>
+#include <system/user/usersession.h>
+#include <system/user/usersession_manager.h>
 #include <system/roles/role_manager.h>
 #include <system/user/user_manager.h>
 #include <system/usergroup/user_group_manager.h>
@@ -74,6 +74,7 @@
 #include <system/sas/sas_manager.h>
 #include <system/application/application_manager.h>
 #include <system/support/support_manager.h>
+#include <system/application/appsession_manager.h>
 
 #include <interface/socket_interface.h>
 #include <interface/string_interface.h>
@@ -183,10 +184,11 @@ typedef struct Device
 #define FSys_Mount_Mount 				(FSys_Mount_Dummy+12)		// device is mounted flag
 #define FSys_Mount_SysBase				(FSys_Mount_Dummy+13)		// pointer to system.library
 #define FSys_Mount_Config				(FSys_Mount_Dummy + 14 ) // configuration
-#define FSys_Mount_User_SessionID		(FSys_Mount_Dummy + 15 ) // user session id
+//#define FSys_Mount_User_SessionID		(FSys_Mount_Dummy + 15 ) // user session id
+#define FSys_Mount_UserSession			(FSys_Mount_Dummy + 15 ) 
 #define FSys_Mount_Visible				(FSys_Mount_Dummy + 16 ) // Is the drive visible?
 #define FSys_Mount_Execute				(FSys_Mount_Dummy + 17 ) // Can we execute something on mount?
-#define FSys_Mount_AdminRights			(FSys_Mount_Dummy + 18 ) // If functiona was called by admin
+//#define FSys_Mount_AdminRights			(FSys_Mount_Dummy + 18 ) // If functiona was called by admin
 #define FSys_Mount_UserName				(FSys_Mount_Dummy+19)		// name of device
 #define FSys_Mount_UserID				(FSys_Mount_Dummy+20)		// userID - this will allow admin to mount drives to other users
 #define FSys_Mount_UserGroupID			(FSys_Mount_Dummy+21)		// user group id
@@ -254,6 +256,7 @@ typedef struct SystemBase
 	DeviceManager					*sl_DeviceManager;	// DeviceManager
 	WorkerManager					*sl_WorkerManager; ///< Worker Manager
 	ApplicationManager				*sl_ApplicationManager;		// application
+	AppSessionManager				*sl_AppSessionManager;		// application session manager
 	UserSessionManager				*sl_USM;			// user session manager
 	UserManager						*sl_UM;		// user manager
 	UserGroupManager				*sl_UGM;	// user group manager
@@ -358,7 +361,7 @@ typedef struct SystemBase
 
 	int								(*InitSystem)( struct SystemBase *l );
 
-	int								(*MountFS)( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **mountError, FBOOL calledByAdmin, FBOOL notify );
+	int								(*MountFS)( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **mountError, UserSession *us, FBOOL notify );
 
 	int								(*UnMountFS)( DeviceManager *dm, struct TagItem *tl, User *usr, UserSession *loggedSession );
 
@@ -388,9 +391,9 @@ typedef struct SystemBase
 
 	void							(*LibraryImageDrop)( struct SystemBase *sb, ImageLibrary *pl );
 	
-	int								(*UserDeviceMount)( struct SystemBase *l, User *usr, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
+	int								(*UserDeviceMount)( struct SystemBase *l, User *usr, UserSession *us, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
 	
-	int								(*UserDeviceUnMount)( struct SystemBase *l, SQLLibrary *sqllib, User *usr );
+	int								(*UserDeviceUnMount)( struct SystemBase *l, User *usr, UserSession *ses );
 	
 	int								(*SystemInitExternal)( struct SystemBase *l );
 	
@@ -410,7 +413,7 @@ typedef struct SystemBase
 	
 	void							(*Log)( int lev, char* fmt, ...) ;
 	
-	File							*(*GetRootDeviceByName)( User *usr, char *devname );
+	File							*(*GetRootDeviceByName)( User *usr, UserSession *ses, char *devname );
 	
 	char							RSA_SERVER_CERT[ CERT_PATH_SIZE ];
 	char							RSA_SERVER_KEY[ CERT_PATH_SIZE ];
@@ -572,13 +575,13 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len );
 //
 //
 
-int UserDeviceMount( SystemBase *l, User *usr, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
+int UserDeviceMount( SystemBase *l, User *u, UserSession *usrses, int force, FBOOL unmountIfFail, char **err, FBOOL notify );
 
 //
 //
 //
 
-int UserDeviceUnMount( SystemBase *l, SQLLibrary *sqllib, User *usr );
+int UserDeviceUnMount( SystemBase *l, User *usr, UserSession *ses );
 
 //
 //

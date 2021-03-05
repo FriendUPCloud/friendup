@@ -33,7 +33,7 @@ CalendarEntry *CalendarEntryNew( )
 	CalendarEntry *ce;
 	if( ( ce = FCalloc( 1, sizeof(CalendarEntry) ) ) != NULL )
 	{
-
+		CalendarEntryInit( ce, NULL );
 	}
 	return ce;
 }
@@ -42,8 +42,9 @@ CalendarEntry *CalendarEntryNew( )
  * Initialize CalendarEntry structure
  *
  * @param ce pointer to CalendarEntry structure which will be initialized
+ * @param sb pointer to SystemBase
  */
-int CalendarEntryInit( CalendarEntry *ce )
+int CalendarEntryInit( CalendarEntry *ce, void *sb )
 {
 	return 0;
 }

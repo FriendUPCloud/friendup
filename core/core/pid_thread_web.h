@@ -27,7 +27,7 @@
 #include <core/nodes.h>
 #include "pid_thread_manager.h"
 #include <network/http.h>
-#include <system/user/user_session.h>
+#include <system/user/usersession.h>
 
 //
 //

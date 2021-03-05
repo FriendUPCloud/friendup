@@ -48,7 +48,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 		if( retries == 3 ) return console.log( 'Could not execute app: ' + app );
 		loadApplicationBasics( function()
 		{
-			ExecuteApplication( app, args, callback, !retries ? 1 : retries++, flags );
+			ExecuteApplication( app, args, callback, !retries ? 3 : retries++, flags );
 		} );
 	}
 	var appName = app;
@@ -422,14 +422,12 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				{
 					let sid = Workspace.sessionId && Workspace.sessionId != 'undefined' ?
 						Workspace.sessionId : ( Workspace.conf && Workspace.conf.authid ? Workspace.conf.authId : '');
-					let svalu = sid ? Workspace.sessionId :( Workspace.conf && Workspace.conf.authid ? Workspace.conf.authId : '');
-					let stype = sid ? 'sessionid' : 'authid';
 					
 					// Quicker ajax implementation
-					let j = new cAjax();
-					j.open( 'POST', '/system.library/module?module=system&' +
-						stype + '=' + svalu + '&command=launch&app=' +
-						app + '&friendup=' + escape( Doors.runLevels[0].domain ), true );
+					var j = new cAjax();
+					let jsrc = '/system.library/module?module=system&command=launch&app=' +
+						app + '&friendup=' + escape( Doors.runLevels[0].domain );
+					j.open( 'POST', jsrc, true );
 					j.onload = function()
 					{	
 						let ws = this.rawData.split( 'src="/webclient/js/apps/api.js"' ).join( 'src="' + _applicationBasics.apiV1 + '"' );
@@ -1263,11 +1261,6 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 					confObject = JSON.parse( conf );
 				}
 				
-				sid = confObject && confObject.authid ? true : false;
-				var svalu = sid ? confObject.authid : Workspace.sessionId;
-				var stype = sid ? 'authid' : 'sessionid';
-				if( stype == 'sessionid' ) ifr.sessionId = svalu;
-
 				// Use path to figure out config
 				if( !d.dormantDoor && conf.indexOf( '{' ) >= 0 )
 					conf = encodeURIComponent( path.split( ':' )[0] + ':' );
@@ -1279,7 +1272,6 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 				// Quicker ajax implementation
 				var j = new cAjax();
 				j.open( 'POST', '/system.library/module/?module=system&command=sandbox' +
-					'&' + stype + '=' + svalu +
 					'&conf=' + conf + '&' + ( args ? ( 'args=' + args ) : '' ) + extra, true );
 				j.onload = function()
 				{

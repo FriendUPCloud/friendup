@@ -26,7 +26,7 @@
 #include <db/sql_defs.h>
 #include <system/user/user_application.h>
 #include <network/websocket_client.h>
-#include <system/user/user_session.h>
+#include <system/user/usersession.h>
 #include <system/user/user.h>
 #include <websockets/websocket_req_manager.h>
 #include <util/friendqueue.h>

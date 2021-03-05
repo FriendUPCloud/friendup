@@ -11,9 +11,9 @@
 
 /******************************************************************************\
 *                                                                              *
-* FriendUP PHP API v1.2                                                        *
-* (c) 2015-2018, Friend Software Labs AS                                       *
-* mail: info@friendup.no                                                       *
+* FriendUP PHP API v1.3                                                        *
+* (c) 2015-2021, Friend Software Labs AS                                       *
+* mail: developers@friendos.com                                                *
 *                                                                              *
 \******************************************************************************/
 
@@ -245,7 +245,19 @@ if( isset( $argv ) && isset( $argv[1] ) )
 					}
 					if( strstr( $value, '%' ) || strstr( $value, '&' ) ) 
 					{
-						$value = rawurldecode( $value );
+						if( strstr( $value, '%2B' ) )
+						{
+							$value = explode( '%2B', $value );
+							foreach( $value as $k=>$v )
+							{
+								$value[ $k ] = rawurldecode( $v );
+							}
+							$value = implode( '%2B', $value );
+						}
+						else
+						{
+							$value = rawurldecode( $value );
+						}
 					}
 					if( $value && ( $value[0] == '{' || $value[0] == '[' ) )
 					{
@@ -263,7 +275,11 @@ if( isset( $argv ) && isset( $argv[1] ) )
 	$GLOBALS['args'] = $kvdata;
 }
 
+// Create a user account variable for use later
 $UserAccount = false;
+
+// This one is used when friend.php is included elsewhere, using a specific user
+// defined in some external script.
 if( defined( 'FRIEND_USERNAME' ) && defined( 'FRIEND_PASSWORD' ) )
 {
 	$UserAccount = new stdClass();
@@ -271,25 +287,31 @@ if( defined( 'FRIEND_USERNAME' ) && defined( 'FRIEND_PASSWORD' ) )
 	$UserAccount->Password = FRIEND_PASSWORD;
 }
 
-// No sessionid!!
-if( !$UserAccount && !isset( $groupSession ) && !isset( $GLOBALS[ 'args' ]->sessionid ) && !isset( $GLOBALS[ 'args' ]->authid ) )
+// Check if there is no account, and no groupSession and no passed session id
+if( !$UserAccount )
 {
-	if( !isset( $GLOBALS[ 'args' ]->servertoken ) )
-	{
-		die( '404 NO SESSION 4' );
+    if( !isset( $groupSession ) )
+    {
+        if( !isset( $GLOBALS[ 'args' ]->sessionid ) && !isset( $GLOBALS[ 'args' ]->servertoken ) )
+	    {
+		    die( 'fail<!--separate-->{"response":"-1","message":"No session given to system."}' );
+	    }
 	}
+    if( isset( $GLOBALS[ 'args' ]->sessionid ) && $GLOBALS[ 'args' ]->sessionid == '(null)' )
+    {
+        die( 'fail<!--separate-->{"response":"-2","message":"Erroneous sessionid provided."}' );
+    }
 }
-if( !$UserAccount && isset( $GLOBALS[ 'args' ]->sessionid ) && $GLOBALS[ 'args' ]->sessionid == '(null)' )
-	die( '404 NO SESSION 2' );
 
-// Setup mysql abstraction
+// Authentication procedure ----------------------------------------------------
+
 if( file_exists( 'cfg/cfg.ini' ) )
 {
 	$configfilesettings = parse_ini_file( 'cfg/cfg.ini', true );
-	include_once( 'classes/dbio.php' );
-	include_once( 'include/i18n.php' );
-	// For debugging
-	include_once( 'classes/logger.php' );
+	
+	include_once( 'classes/dbio.php' );   // Database abstraction
+	include_once( 'include/i18n.php' );   // Translations
+	include_once( 'classes/logger.php' ); // For debugging
 	
 	$logger =& $GLOBALS['Logger'];
 	
@@ -301,6 +323,8 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	              'WorkspaceShortcuts', 'preventWizard', 'ProxyEnable'
 	);
 
+    // Get access to the database ----------------------------------------------
+    
 	// Shortcuts
 	$dataUser = $configfilesettings[ 'DatabaseUser' ];
 	$dataCore = $configfilesettings[ 'FriendCore' ];
@@ -387,8 +411,6 @@ if( file_exists( 'cfg/cfg.ini' ) )
 		}
 	}
 	
-	//$Logger->log( print_r( $Config, 1 ) );
-	
 	// Don't need these now
 	$dataUser = null;
 	$dataCore = null;
@@ -396,38 +418,59 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	$frindNet = null;
 	
 	// Temporary folder
-	$Config->FCTmp    = isset( $ar['fctmp'] ) ? $ar['fctmp'] : '/tmp/';
+	$Config->FCTmp = isset( $ar['fctmp'] ) ? $ar['fctmp'] : '/tmp/';
 	if( substr( $Config->FCTmp, -1, 1 ) != '/' )
 		$Config->FCTmp .= '/';
 		
 	$GLOBALS['Config'] =& $Config;
 	
 	$SqlDatabase = new SqlDatabase();
+	
 	if( !$SqlDatabase->Open( $Config->Hostname, $Config->Username, $Config->Password ) )
 		die( 'fail<!--separate-->Could not connect to database.' );
+	
 	$SqlDatabase->SelectDatabase( $Config->DbName );
 	
 	$GLOBALS['SqlDatabase'] =& $SqlDatabase;
 	
+	// Done with database access -----------------------------------------------
+	
 	// User application info
 	$UserApplication = false;
 	
-	// Get user information, trying first on FUserSession SessionID
+	// Get user information, trying first on FUserSession SessionID ------------
 	$User = new dbIO( 'FUser' );
-	
+	$UserSession = new dbIO( 'FUserSession' );
+
 	$sudm = false;
 	
-	// TODO: Implement authentication modules!
+	// Use UserAccount object to authenticate directly into the database
 	if( $UserAccount )
 	{
-		if( $mu = $SqlDatabase->fetchObject( '
+		if( $mu = $SqlDatabase->fetchObject( $uq = '
 			SELECT * FROM FUser u
 			WHERE
 				u.Name = \'' . $UserAccount->Username . '\' AND
 				u.Password = \'' . '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $UserAccount->Password ) ) . '\'
 		' ) )
 		{
+			$logger->log('User found');
 			$User = $mu;
+			if( $mus = $SqlDatabase->fetchObject( '
+				SELECT * FROM FUserSession WHERE UserID = \'' . $mu->ID . '\' LIMIT 1
+			' ) )
+			{
+				$logger->log( 'UserSession found' );
+				$UserSession = $mus;
+			}	
+			else
+			{
+				//$logger->log( 'UserSession Not Found: ' . $uq );
+			}
+		}
+		else
+		{
+			//$logger->log( 'UserSession Not Found because query failed: ' . $uq );
 		}
 	}
 	// Try with server token
@@ -436,94 +479,26 @@ if( file_exists( 'cfg/cfg.ini' ) )
 		$User->ServerToken = $GLOBALS[ 'args' ]->servertoken;
 		$User->Load();
 	}
-	
-	// Get the sessionid
-	$sidm = mysqli_real_escape_string( $SqlDatabase->_link, 
-		isset( $User->SessionID ) ? $User->SessionID :
-		( isset( $GLOBALS['args']->sessionid ) ? $GLOBALS['args']->sessionid : '' )
-	);
-	
-	//$logger->log( 'Trying to log in: ' . $sidm . ' ' . print_r( $args, 1 ) );
-	
+	// Load by session id
+	else if( isset( $GLOBALS[ 'args' ]->sessionid ) )
+	{
+	    $UserSession->SessionID = $GLOBALS['args']->sessionid;
+	    if( $UserSession->Load() )
+	    {
+	        $User->Load( $UserSession->UserID );
+	    }
+	}
+
 	// Here we need a union because we are looking for sessionid in both the
 	// FUserSession and FUser tables..
 	if( isset( $User->ID ) && $User->ID > 0 )
 	{
 		$GLOBALS[ 'User' ] =& $User;
-	}
-	// Here we're trying to load it
-	else if(
-		$sidm && 
-		( $User = $SqlDatabase->fetchObject( '
-			SELECT u.* FROM FUser u, FUserSession us
-			WHERE
-				us.UserID = u.ID AND
-				( u.SessionID=\'' . $sidm . '\' OR us.SessionID = \'' . $sidm . '\' )
-		' ) )
-	)
-	{
-		// Login success
-		//$logger->log( 'User logged in with sessionid: (' . $GLOBALS[ 'args' ]->sessionid . ') ' . ( $User ? ( $User->ID . ' ' . $User->SessionID ) : '' ) );
-		$GLOBALS[ 'User' ] =& $User;
-	}
-	else if(
-		$sidm && 
-		( $User = $SqlDatabase->fetchObject( '
-			SELECT u.* FROM FUser u
-			WHERE
-				( u.SessionID=\'' . $sidm . '\' )
-		' ) )
-	)
-	{
-		// Login success
-		//$logger->log( 'User logged in with sessionid: (' . $GLOBALS[ 'args' ]->sessionid . ') ' . ( $User ? ( $User->ID . ' ' . $User->SessionID ) : '' ) );
-		$GLOBALS[ 'User' ] =& $User;
-	}
-	else if(
-		isset( $User->SessionID ) && trim( $User->SessionID ) && 
-		( $User = $SqlDatabase->FetchObject( '
-			SELECT u.* FROM FUser u
-			WHERE u.SessionID=\'' . $User->SessionID . '\'
-		' ) ) 
-	)
-	{
-		//$logger->log( 'User logged in using registered User->SessionID..' );
-		$GLOBALS[ 'User' ] =& $User;
+		$GLOBALS[ 'UserSession' ] =& $UserSession;
 	}
 	else
 	{
-		// Ok, did we have auth id?
-		if( isset( $GLOBALS['args']->authid ) )
-		{
-			$asid = mysqli_real_escape_string( $SqlDatabase->_link, $GLOBALS['args']->authid );
-			if( $row = $SqlDatabase->FetchObject( $q = '
-				SELECT * FROM ( 
-					( 
-						SELECT u.ID FROM FUser u, FUserApplication a 
-						WHERE 
-							a.AuthID="' . $asid . '" AND a.UserID = u.ID LIMIT 1 
-					) 
-					UNION 
-					( 
-						SELECT u2.ID FROM FUser u2, Filesystem f 
-						WHERE 
-							f.Config LIKE "%' . $asid . '%" AND u2.ID = f.UserID LIMIT 1 
-					) 
-				) z LIMIT 1
-			' ) )
-			{
-				$User->Load( $row->ID );
-				
-				if( $User->ID > 0 )
-					$GLOBALS[ 'User' ] =& $User;
-			}
-		}
-		
-		//$logger->log( 'ok: ' . ( isset( $User ) ? ' has user' : ' no user' ) );
-		
-		// Failed to authenticate
-		if( !isset( $groupSession ) && isset( $User->ID ) && $User->ID <= 0 )
-			die( '404' );
+	    die( '404' );
 	}
 	
 	register_shutdown_function( function()
