@@ -342,7 +342,7 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 						FConnection *con = CommServiceAddConnection( service, newsock, name, address, NULL, SERVER_CONNECTION_OUTGOING, nodeMaster );
 						if( con != NULL )
 						{
-							SQLLibrary *lsqllib = l->LibrarySQLGet( l );
+							SQLLibrary *lsqllib = l->GetDBConnection( l );
 							if( lsqllib != NULL )
 							{
 								char where[ 1024 ];
@@ -453,7 +453,7 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 									snprintf( dictmsgbuf, sizeof(dictmsgbuf), "ok<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CONNECTION_REUSED] , DICT_CONNECTION_REUSED );
 								}
 								
-								SLIB->LibrarySQLDrop( SLIB, lsqllib );
+								SLIB->DropDBConnection( SLIB, lsqllib );
 							}
 							else
 							{
@@ -679,14 +679,14 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 							selcon->fc_ConnectionApproved = approved;
 						}
 
-						SQLLibrary *lsqllib = SLIB->LibrarySQLGet( SLIB );
+						SQLLibrary *lsqllib = SLIB->GetDBConnection( SLIB );
 						if( lsqllib != NULL )
 						{
 							int err = lsqllib->Update( lsqllib, FConnectionDesc, selcon );
 							
 							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"success\", \"code\":\"0\" }" );
 							
-							SLIB->LibrarySQLDrop( SLIB, lsqllib );
+							SLIB->DropDBConnection( SLIB, lsqllib );
 						}
 						else
 						{
@@ -796,7 +796,7 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 				{
 					DEBUG("[ConnectionWeb] connection found, will be removed\n" );
 					
-					SQLLibrary *lsqllib = SLIB->LibrarySQLGet( SLIB );
+					SQLLibrary *lsqllib = SLIB->GetDBConnection( SLIB );
 					if( lsqllib != NULL )
 					{
 						lsqllib->Delete( lsqllib, FConnectionDesc, con );
@@ -817,7 +817,7 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 							DEBUG("[ConnectionWeb] Connection not deleted, error: %d\n", err );
 						}
 						
-						SLIB->LibrarySQLDrop( SLIB, lsqllib );
+						SLIB->DropDBConnection( SLIB, lsqllib );
 					}
 					else
 					{

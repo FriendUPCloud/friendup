@@ -51,7 +51,7 @@ typedef struct UsrGrEntry
  */
 int generateConnectedUsers( SystemBase *l, FULONG groupID, BufString *retString, BufString *extServiceString )
 {
-	SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+	SQLLibrary *sqlLib = l->GetDBConnection( l );
 	if( sqlLib != NULL )
 	{
 		char tmpQuery[ 712 ];
@@ -166,7 +166,7 @@ int generateConnectedUsers( SystemBase *l, FULONG groupID, BufString *retString,
 			
 			sqlLib->FreeResult( sqlLib, result );
 		}
-		l->LibrarySQLDrop( l, sqlLib );
+		l->DropDBConnection( l, sqlLib );
 	}
 	return 0;
 }
@@ -182,7 +182,7 @@ int generateConnectedUsers( SystemBase *l, FULONG groupID, BufString *retString,
  */
 int generateConnectedUsersID( SystemBase *l, FULONG groupID, BufString *retString, BufString *extServiceString )
 {
-	SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+	SQLLibrary *sqlLib = l->GetDBConnection( l );
 	if( sqlLib != NULL )
 	{
 		char tmpQuery[ 712 ];
@@ -285,7 +285,7 @@ int generateConnectedUsersID( SystemBase *l, FULONG groupID, BufString *retStrin
 			
 			sqlLib->FreeResult( sqlLib, result );
 		}
-		l->LibrarySQLDrop( l, sqlLib );
+		l->DropDBConnection( l, sqlLib );
 	}
 	return 0;
 }
@@ -302,7 +302,7 @@ int generateConnectedUsersID( SystemBase *l, FULONG groupID, BufString *retStrin
  */
 int generateConnectedUsersIDByID( SystemBase *l, FULONG groupID, BufString *retString, BufString *extServiceString, char *userIDs )
 {
-	SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+	SQLLibrary *sqlLib = l->GetDBConnection( l );
 	if( sqlLib != NULL )
 	{
 		int tmpQuerySize = 712;
@@ -424,7 +424,7 @@ int generateConnectedUsersIDByID( SystemBase *l, FULONG groupID, BufString *retS
 		}
 		
 		FFree( tmpQuery );
-		l->LibrarySQLDrop( l, sqlLib );
+		l->DropDBConnection( l, sqlLib );
 	}
 	return 0;
 }
@@ -648,7 +648,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						
 						if( error == 0 )
 						{
-							SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+							SQLLibrary *sqlLib = l->GetDBConnection( l );
 							int val = 0;
 							if( sqlLib != NULL )
 							{
@@ -664,7 +664,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 									val = sqlLib->Save( sqlLib, UserGroupDesc, ug );
 								}
 								
-								l->LibrarySQLDrop( l, sqlLib );
+								l->DropDBConnection( l, sqlLib );
 							}
 							groupID = ug->ug_ID;
 							
@@ -836,7 +836,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				// group not found in memory, checking DB
 				if( fg == NULL )
 				{
-					SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+					SQLLibrary *sqllib  = l->GetDBConnection( l );
 					if( sqllib != NULL )
 					{
 						char where[ 512 ];
@@ -845,7 +845,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 					
 						fg = sqllib->Load( sqllib, UserGroupDesc, where, &entries );
 
-						l->LibrarySQLDrop( l, sqllib );
+						l->DropDBConnection( l, sqllib );
 					}
 				}
 			
@@ -870,7 +870,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 					{
 						if( strcmp( fg->ug_Type, "Level" ) != 0 )	//you can only remove entries which dont have "Level" type
 						{
-							SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+							SQLLibrary *sqllib  = l->GetDBConnection( l );
 							if( sqllib != NULL )
 							{
 								//fg->ug_Status = USER_GROUP_STATUS_DISABLED;
@@ -884,7 +884,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						
 								HttpAddTextContent( response, "ok<!--separate-->{\"Result\":\"success\"}" );
 
-								l->LibrarySQLDrop( l, sqllib );
+								l->DropDBConnection( l, sqllib );
 							}
 							else
 							{
@@ -1068,13 +1068,13 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 					
 					fg->ug_UserID = loggedSession->us_UserID;
 					
-					SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+					SQLLibrary *sqlLib = l->GetDBConnection( l );
 
 					if( sqlLib != NULL )
 					{
 						sqlLib->Update( sqlLib, UserGroupDesc, fg );
 
-						l->LibrarySQLDrop( l, sqlLib );
+						l->DropDBConnection( l, sqlLib );
 					}
 					
 					char msg[ 512 ];
@@ -1087,7 +1087,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						UsrGrEntry *diffListRoot = NULL;
 						// removeing users
 						
-						SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+						SQLLibrary *sqlLib = l->GetDBConnection( l );
 						if( sqlLib != NULL )
 						{
 							int userslen = strlen( users );
@@ -1135,7 +1135,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 								sqlLib->FreeResult( sqlLib, result );
 							}
 							
-							l->LibrarySQLDrop( l, sqlLib );
+							l->DropDBConnection( l, sqlLib );
 							FFree( tmpQuery );
 						}
 						
@@ -1491,7 +1491,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			{
 				// get required information for external servers
 			
-				SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+				SQLLibrary *sqlLib = l->GetDBConnection( l );
 				if( sqlLib != NULL )
 				{
 					char tmpQuery[ 768 ];
@@ -1519,7 +1519,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 						sqlLib->FreeResult( sqlLib, result );
 					}
 
-					l->LibrarySQLDrop( l, sqlLib );
+					l->DropDBConnection( l, sqlLib );
 				}
 			}
 
@@ -1701,7 +1701,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 						// if user is in memory we must mount group drives for him + send notification
 						if( isInMemory == TRUE )
 						{
-							SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+							SQLLibrary *sqlLib = l->GetDBConnection( l );
 							if( sqlLib != NULL )
 							{
 								char *errorStr = NULL;
@@ -1716,7 +1716,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 								// Tell user!
 								UserNotifyFSEvent2( l->sl_DeviceManager, usr, "refresh", "Mountlist:" );
 
-								l->LibrarySQLDrop( l, sqlLib );
+								l->DropDBConnection( l, sqlLib );
 							}
 						}
 						FFree( rmEntry );
@@ -1838,7 +1838,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 				
 				// get required information for external servers
 			
-				SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+				SQLLibrary *sqlLib = l->GetDBConnection( l );
 				if( sqlLib != NULL )
 				{
 					char tmpQuery[ 512 ];
@@ -1878,7 +1878,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 						sqlLib->FreeResult( sqlLib, result );
 					}
 
-					l->LibrarySQLDrop( l, sqlLib );
+					l->DropDBConnection( l, sqlLib );
 				}
 				
 				//
@@ -2041,9 +2041,9 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 					// if users parameter is passed then we must remove current users from group
 					//if( users != NULL )
 					{
-						// removeing users
+						// remove users
 						
-						SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+						SQLLibrary *sqlLib = l->GetDBConnection( l );
 						if( sqlLib != NULL )
 						{
 							DEBUG("Remove users from group\n");
@@ -2074,7 +2074,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 							snprintf( tmpQuery, sizeof(tmpQuery), "delete FROM FUserToGroup WHERE UserGroupID=%lu", groupID );
 							sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
 							
-							l->LibrarySQLDrop( l, sqlLib );
+							l->DropDBConnection( l, sqlLib );
 						}
 						
 						// group was created, its time to add users to it

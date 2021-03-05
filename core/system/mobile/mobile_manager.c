@@ -41,13 +41,13 @@ MobileManager *MobileManagerNew( void *sb )
 		
 		SystemBase *lsb = (SystemBase *)mm->mm_SB;
 	
-		SQLLibrary *lsqllib = lsb->LibrarySQLGet( lsb );
+		SQLLibrary *lsqllib = lsb->GetDBConnection( lsb );
 		if( lsqllib != NULL )
 		{
 			int entries;
 			mm->mm_UMApps = lsqllib->Load( lsqllib, UserMobileAppDesc, NULL, &entries );
 		
-			lsb->LibrarySQLDrop( lsb, lsqllib );
+			lsb->DropDBConnection( lsb, lsqllib );
 			
 			UserMobileApp *lma = mm->mm_UMApps;
 			while( lma != NULL )
@@ -134,7 +134,7 @@ UserMobileApp *MobleManagerGetByTokenDB( MobileManager *mmgr, char *id )
 		uma = (UserMobileApp *)uma->node.mln_Succ;
 	}
 	
-	SQLLibrary *lsqllib = sb->LibrarySQLGet( SLIB );
+	SQLLibrary *lsqllib = sb->GetDBConnection( SLIB );
 	if( lsqllib != NULL )
 	{
 		char where[ 1024 ];
@@ -155,7 +155,7 @@ UserMobileApp *MobleManagerGetByTokenDB( MobileManager *mmgr, char *id )
 			}
 		}
 		
-		sb->LibrarySQLDrop( sb, lsqllib );
+		sb->DropDBConnection( sb, lsqllib );
 	}
 	return uma;
 }
@@ -182,7 +182,7 @@ UserMobileApp *MobleManagerGetByIDDB( MobileManager *mmgr, FULONG id )
 		uma = (UserMobileApp *)uma->node.mln_Succ;
 	}
 	
-	SQLLibrary *lsqllib = sb->LibrarySQLGet( SLIB );
+	SQLLibrary *lsqllib = sb->GetDBConnection( SLIB );
 	if( lsqllib != NULL )
 	{
 		char where[ 256 ];
@@ -202,7 +202,7 @@ UserMobileApp *MobleManagerGetByIDDB( MobileManager *mmgr, FULONG id )
 			}
 		}
 		
-		sb->LibrarySQLDrop( sb, lsqllib );
+		sb->DropDBConnection( sb, lsqllib );
 	}
 	return uma;
 }
@@ -239,7 +239,7 @@ MobileListEntry *MobleManagerGetByUserIDDB( MobileManager *mmgr, FULONG user_id 
 		FRIEND_MUTEX_UNLOCK( &(mmgr->mm_Mutex) );
 	}
 
-	SQLLibrary *lsqllib = sb->LibrarySQLGet( SLIB );
+	SQLLibrary *lsqllib = sb->GetDBConnection( SLIB );
 	if( lsqllib != NULL )
 	{
 		char where[ 256 ];
@@ -321,7 +321,7 @@ MobileListEntry *MobleManagerGetByUserIDDB( MobileManager *mmgr, FULONG user_id 
 			FRIEND_MUTEX_UNLOCK( &(mmgr->mm_Mutex) );
 		}
 
-		sb->LibrarySQLDrop( sb, lsqllib );
+		sb->DropDBConnection( sb, lsqllib );
 	}
 	return root;
 }
@@ -513,7 +513,7 @@ MobileListEntry *MobleManagerGetByUserNameDBPlatform( MobileManager *mmgr, FULON
 		FRIEND_MUTEX_UNLOCK( &(mmgr->mm_Mutex) );
 	}
 
-	SQLLibrary *lsqllib = sb->LibrarySQLGet( SLIB );
+	SQLLibrary *lsqllib = sb->GetDBConnection( SLIB );
 	if( lsqllib != NULL )
 	{
 
@@ -597,7 +597,7 @@ MobileListEntry *MobleManagerGetByUserNameDBPlatform( MobileManager *mmgr, FULON
 		
 			FRIEND_MUTEX_UNLOCK( &(mmgr->mm_Mutex) );
 		}
-		sb->LibrarySQLDrop( sb, lsqllib );
+		sb->DropDBConnection( sb, lsqllib );
 	}
 	return root;
 }
@@ -641,7 +641,7 @@ MobileListEntry *MobleManagerGetByUserIDDBPlatform( MobileManager *mmgr, FULONG 
 	}
 	FRIEND_MUTEX_UNLOCK( &(mmgr->mm_Mutex) );
 
-	SQLLibrary *lsqllib = sb->LibrarySQLGet( SLIB );
+	SQLLibrary *lsqllib = sb->GetDBConnection( SLIB );
 	if( lsqllib != NULL )
 	{
 		// 1   3  apptoken1  appversion1   IOS   version1  215.148.12.6  1536761135   0
@@ -724,7 +724,7 @@ MobileListEntry *MobleManagerGetByUserIDDBPlatform( MobileManager *mmgr, FULONG 
 		
 		FRIEND_MUTEX_UNLOCK( &(mmgr->mm_Mutex) );
 
-		sb->LibrarySQLDrop( sb, lsqllib );
+		sb->DropDBConnection( sb, lsqllib );
 	}
 	return root;
 }
@@ -739,7 +739,7 @@ void MobileManagerRefreshCache( MobileManager *mmgr )
 {
 	UserMobileApp *uma = NULL;
 	SystemBase *sb = (SystemBase *)mmgr->mm_SB;
-	SQLLibrary *lsqllib = sb->LibrarySQLGet( SLIB );
+	SQLLibrary *lsqllib = sb->GetDBConnection( SLIB );
 	if( lsqllib != NULL )
 	{
 
@@ -755,7 +755,7 @@ void MobileManagerRefreshCache( MobileManager *mmgr )
 			
 			FRIEND_MUTEX_UNLOCK( &(mmgr->mm_Mutex) );
 		}
-		sb->LibrarySQLDrop( sb, lsqllib );
+		sb->DropDBConnection( sb, lsqllib );
 	}
 }
 
@@ -814,7 +814,7 @@ char *MobleManagerGetIOSAppTokensDBm( MobileManager *mmgr, FULONG userID )
 	BufString *bs = NULL;
 	SystemBase *sb = (SystemBase *)mmgr->mm_SB;
 
-	SQLLibrary *lsqllib = sb->LibrarySQLGet( SLIB );
+	SQLLibrary *lsqllib = sb->GetDBConnection( SLIB );
 	if( lsqllib != NULL )
 	{
 		char *query = FMalloc( 1048 );
@@ -848,7 +848,7 @@ char *MobleManagerGetIOSAppTokensDBm( MobileManager *mmgr, FULONG userID )
 		}
 		
 		FFree( query );
-		sb->LibrarySQLDrop( sb, lsqllib );
+		sb->DropDBConnection( sb, lsqllib );
 	}
 	
 	if( bs != NULL )
@@ -885,7 +885,7 @@ UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, F
 	UserMobileApp *uma = NULL;
 	SystemBase *sb = (SystemBase *)mmgr->mm_SB;
 
-	SQLLibrary *lsqllib = sb->LibrarySQLGet( SLIB );
+	SQLLibrary *lsqllib = sb->GetDBConnection( SLIB );
 	if( lsqllib != NULL )
 	{
 		// if we want entries where user is logged in we must also connect his mobiledevice with usersession
@@ -945,7 +945,7 @@ UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, F
 			uma = lsqllib->Load( lsqllib, UserMobileAppDesc, where, &entries );
 		}
 		
-		sb->LibrarySQLDrop( sb, lsqllib );
+		sb->DropDBConnection( sb, lsqllib );
 	}
 	return uma;
 }
@@ -982,7 +982,7 @@ BufString *MobleManagerAppTokensByUserPlatformDB( MobileManager *mmgr, FULONG us
 	BufString *bs = NULL;
 	SystemBase *sb = (SystemBase *)mmgr->mm_SB;
 
-	SQLLibrary *lsqllib = sb->LibrarySQLGet( sb );
+	SQLLibrary *lsqllib = sb->GetDBConnection( sb );
 	if( lsqllib != NULL )
 	{
 		
@@ -1075,7 +1075,7 @@ BufString *MobleManagerAppTokensByUserPlatformDB( MobileManager *mmgr, FULONG us
 		{
 			FFree( temp2 );
 		}
-		sb->LibrarySQLDrop( sb, lsqllib );
+		sb->DropDBConnection( sb, lsqllib );
 	}
 	return bs;
 }
@@ -1102,7 +1102,7 @@ UserMobileApp *MobleManagerGetMobileAppByUserPlatformAndNotInDBm( MobileManager 
 	UserMobileApp *uma = NULL;
 	SystemBase *sb = (SystemBase *)mmgr->mm_SB;
 
-	SQLLibrary *lsqllib = sb->LibrarySQLGet( SLIB );
+	SQLLibrary *lsqllib = sb->GetDBConnection( SLIB );
 	if( lsqllib != NULL )
 	{
 		int size = 512 + strlen( ids );
@@ -1120,7 +1120,7 @@ UserMobileApp *MobleManagerGetMobileAppByUserPlatformAndNotInDBm( MobileManager 
 		uma = lsqllib->Load( lsqllib, UserMobileAppDesc, where, &entries );
 		FFree( where );
 
-		sb->LibrarySQLDrop( sb, lsqllib );
+		sb->DropDBConnection( sb, lsqllib );
 	}
 	return uma;
 }

@@ -751,13 +751,8 @@ if( isset( $args->command ) )
 						) 
 						LEFT JOIN `FUserApplication` u ON 
 						( 
-<<<<<<< HEAD
 								u.ApplicationID = k.ApplicationID 
 							AND u.UserID = \'' . $UserSession->UserID . '\' 
-=======
-							u.ApplicationID = k.ApplicationID 
-							AND u.UserID = \'' . $User->ID . '\' 
->>>>>>> feature/server_token
 						)
 						LEFT JOIN `FAppSession` as ON
 						(
@@ -1339,16 +1334,10 @@ if( isset( $args->command ) )
 							`FApplication` a
 						       	`FAppSession` as	
 						WHERE 
-<<<<<<< HEAD
-								u.UserID = \'' . $UserSession->UserID . '\' 
-							AND u.AuthID = \'' . $args->args->authId . '\' 
-							AND a.ID = u.ApplicationID 
-=======
-							u.UserID = \'' . $User->ID . '\' 
+							u.UserID = \'' . $UserSession->UserID . '\' 
 							AND as.AuthID = \'' . $args->args->authId . '\' 
 							AND a.ID = u.ApplicationID
 							AND as.UserApplicationID = u.ID 
->>>>>>> feature/server_token
 						ORDER BY 
 							a.ID ASC 
 						LIMIT 1 

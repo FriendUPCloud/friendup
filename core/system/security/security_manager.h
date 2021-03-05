@@ -26,6 +26,7 @@
 #include <system/user/usersession_manager.h>
 #include <system/user/user.h>
 #include <util/hashmap_long.h>
+#include "refresh_token.h"
 
 //
 // Security Manager structure
@@ -67,6 +68,20 @@ void SecurityManagerRemoteOldBadSessionCalls( SecurityManager *sm );
 //
 //
 //
+
+RefreshToken *SecurityManagerGetRefreshTokenAndRecreateDB( SecurityManager* sm, const char*token, const char *deviceID, char **newToken );
+
+//
+//
+//
+
+RefreshToken *SecurityManagerCreateRefreshTokenDB( SecurityManager* sm, const char *deviceID, FQUAD userID );
+
+//
+//
+//
+
+RefreshToken *SecurityManagerCreateRefreshTokenByUserNameDB( SecurityManager* sm, const char *deviceID, char *userName );
 
 #endif //__SYSTEM_SECURITY_SECURITY_MANAGER_H__
 

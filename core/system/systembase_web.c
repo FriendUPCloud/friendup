@@ -61,6 +61,7 @@
 #include <system/service/service_manager_web.h>
 #include <system/security/security_web.h>
 #include <strings.h>
+#include <util/session_id.h>
 
 #define LIB_NAME "system.library"
 #define LIB_VERSION 		1
@@ -501,6 +502,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	FBOOL userAdded = FALSE;
 	FBOOL detachTask = FALSE;
 	int loginLogoutCalled = LL_NONE;
+	char *newRefreshToken = NULL;
 	
 	Log( FLOG_INFO, "\t\t\tWEB REQUEST FUNCTION func: %s\n", urlpath[ 0 ] );
 	
@@ -549,12 +551,15 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	{
 		//HashmapElement *sessIDElement = HashmapGet( (*request)->http_ParsedPostContent, "sessionid" );
 		//HashmapElement *authIDElement = HashmapGet( (*request)->http_ParsedPostContent, "authid" );
-		//HashmapElement *serverTokenElement = HashmapGet( (*request)->http_ParsedPostContent, "servertoken" ); 
+		//HashmapElement *serverTokenElement = HashmapGet( (*request)->http_ParsedPostContent, "servertoken" );
+		//HashmapElement *refreshTokenElement = HashmapGet( (*request)->http_ParsedPostContent, "refreshtoken" ); 
+		
 		HashmapElement *sessIDElement = GetHEReq( *request, "sessionid" );
 		HashmapElement *authIDElement = GetHEReq( *request, "authid" );
-		HashmapElement *serverTokenElement = GetHEReq( *request, "servertoken" ); // TODO: Only allow this on localhost!
+		HashmapElement *serverTokenElement = GetHEReq( *request, "servertoken" ); 
+		HashmapElement *refreshTokenElement = GetHEReq( *request, "refreshtoken" ); 
 		
-		if( sessIDElement == NULL && authIDElement == NULL && serverTokenElement == NULL )
+		if( sessIDElement == NULL && authIDElement == NULL && serverTokenElement == NULL && refreshTokenElement == NULL )
 		{
 			struct TagItem tags[] = {
 				{ HTTP_HEADER_CONTENT_TYPE,(FULONG)StringDuplicate( "text/html" ) },
@@ -684,7 +689,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				char *host = HttpGetHeaderFromTable( *request, HTTP_HEADER_X_FORWARDED_FOR );
 				if( host != NULL )
 				{
-					SQLLibrary *sqllib = l->LibrarySQLGet( l );
+					SQLLibrary *sqllib = l->GetDBConnection( l );
 
 					// Get authid from mysql
 					if( sqllib != NULL )
@@ -711,9 +716,28 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							}
 							sqllib->FreeResult( sqllib, res );
 						}
-						l->LibrarySQLDrop( l, sqllib );
 					}
-				}	// HTTP_HEADER_X_FORWARDED_FOR is missing
+					l->DropDBConnection( l, sqllib );
+				}
+			}
+		}
+		else if( refreshTokenElement != NULL && refreshTokenElement->hme_Data != NULL )
+		{
+			char *deviceid = NULL;
+			
+			DEBUG("REFRESH TOKEN!!!\n");
+			
+			HashmapElement *el = HashmapGet( (*request)->http_ParsedPostContent, "deviceid" );
+			if( el != NULL )
+			{
+				deviceid = UrlDecodeToMem( ( char *)el->hme_Data );
+			}
+			
+			if( deviceid != NULL )
+			{
+				RefreshToken *rt = SecurityManagerGetRefreshTokenAndRecreateDB( l->sl_SecurityManager, refreshTokenElement->hme_Data, deviceid, &newRefreshToken );
+				
+				FFree( deviceid );
 			}
 		}
 		
@@ -943,7 +967,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				loggedSession->us_User->u_LoggedTime = timestamp;
 			}
 			
-			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+			SQLLibrary *sqllib  = l->GetDBConnection( l );
 			if( sqllib != NULL )
 			{
 				char *tmpQuery = FCalloc( 1025, sizeof( char ) );
@@ -965,7 +989,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				
 					FFree( tmpQuery );
 				}
-				l->LibrarySQLDrop( l, sqllib );
+				l->DropDBConnection( l, sqllib );
 			}
 		}
 	}
@@ -1958,26 +1982,62 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				locsessionid = ( char *)el->hme_Data;
 			}
 			
-			// security check
-			/*
-			if( strcmp( sessionid, "webdav" ) == 0 || strcmp( d, "api" ) )
-			{
-				struct TagItem tags[] = {
-					{ HTTP_HEADER_CONTENT_TYPE,(FULONG)StringDuplicate( "text/html" ) },
-					{ HTTP_HEADER_CONNECTION,(FULONG)StringDuplicate( "close" ) },
-					{ TAG_DONE, TAG_DONE }
-				};
-
-				response = HttpNewSimple( HTTP_200_OK, tags );
+			//
+			// If login is done by using RefreshToken
+			//
 			
-				char buffer[ 256 ];
-				snprintf( buffer, sizeof( buffer ), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SESSIONID_AUTH_MISSING] , DICT_SESSIONID_AUTH_MISSING );
-				HttpAddTextContent( response, buffer );
-				FERROR( "[SystembaseWeb] It is not allowed to use webdav session\n" );
-				FFree( sessionid );
-				return response;
+			el = HttpGetPOSTParameter( *request, "refreshtoken" );
+			if( el != NULL )
+			{
+				RefreshToken *rt = SecurityManagerGetRefreshTokenAndRecreateDB( l->sl_SecurityManager, el->hme_Data, deviceid, &newRefreshToken );
+				if( rt != NULL )
+				{
+					loggedSession = UserSessionNew( l, NULL, deviceid );
+					if( loggedSession != NULL )
+					{
+						loggedSession->us_UserID = rt->rt_UserID;
+						if( ( loggedSession = USMUserSessionAdd( l->sl_USM, loggedSession ) ) != NULL )
+						{
+							if( loggedSession->us_User == NULL )
+							{
+								DEBUG("User is not attached to session %lu\n", loggedSession->us_UserID );
+								User *lusr = UMGetUserByID( l->sl_UM, loggedSession->us_UserID );
+								if( lusr != NULL )
+								{
+									UserAddSession( lusr, loggedSession );
+								}
+							}
+							USMSessionSaveDB( l->sl_USM, loggedSession );
+						}
+						else
+						{
+							
+						}
+						
+						if( loggedSession->us_User != NULL )
+						{
+							char tmp[ 1024 ];
+							User *loggedUser = loggedSession->us_User;
+							
+							snprintf( tmp, sizeof(tmp) ,
+								"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"username\":\"%s\",\"refreshtoken\":\"%s\"}",
+								loggedUser->u_Error, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedUser->u_ID, loggedUser->u_FullName,  loggedSession->us_SessionID, loggedSession->us_User->u_Name, newRefreshToken );
+							
+							HttpAddTextContent( response, tmp );
+						}
+						else
+						{
+							char buffer[ 256 ];
+							snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ACCOUNT_BLOCKED] , DICT_ACCOUNT_BLOCKED );
+							HttpAddTextContent( response, buffer );
+						}
+					}
+				}
 			}
-			*/
+			else
+			//
+			// Normal login procedure
+			//
 			
 			if( locsessionid != NULL && deviceid != NULL )
 			{
@@ -2031,7 +2091,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						
 							char tmpQuery[ 512 ];
 						
-							SQLLibrary *sqlLib =  l->LibrarySQLGet( l );
+							SQLLibrary *sqlLib =  l->GetDBConnection( l );
 							if( sqlLib != NULL )
 							{
 								DEBUG("[SysWebRequest] Try to get mobileappid from DeviceID: %s\n", deviceid );
@@ -2075,8 +2135,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								{ 
 								
 								}
-									
-								l->LibrarySQLDrop( l, sqlLib );
+								l->DropDBConnection( l, sqlLib );
 							
 								UMAddUser( l->sl_UM, loggedSession->us_User );
 							
@@ -2118,8 +2177,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					else
 					{
 						snprintf( tmp, sizeof(tmp),
-						"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\"}",
-						0, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedSession->us_User->u_ID, loggedSession->us_User->u_FullName,  loggedSession->us_SessionID
+						"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"refreshtoken\":\"%s\"}",
+						0, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedSession->us_User->u_ID, loggedSession->us_User->u_FullName,  loggedSession->us_SessionID, newRefreshToken
 						);
 					}
 				}
@@ -2166,7 +2225,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				}
 				
 				//
-				// first we must find user
+				// First we are checking if user is already in global user list
 				// if sessionid is not provided we must create new session
 				//
 				
@@ -2187,6 +2246,20 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							{
 								dstusrsess = tusers;
 								DEBUG("Found user session  id %s\n", tusers->us_SessionID );
+								
+								// this is first login, we must create RefreshToken
+							
+								RefreshToken *tok = SecurityManagerCreateRefreshTokenByUserNameDB( l->sl_SecurityManager, deviceid, usrname );
+								if( tok != NULL )
+								{
+									if( newRefreshToken != NULL )
+									{
+										FFree( newRefreshToken );
+									}
+									newRefreshToken = tok->rt_Token;
+									tok->rt_Token = NULL;
+									RefreshTokenDelete( tok );
+								}
 							}
 						}
 					}
@@ -2206,11 +2279,27 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 									{
 										DEBUG("[SysWebRequest] Found user session  id %s\n", tusers->us_SessionID );
 									}
+									
+									// this is first login, we must create RefreshToken
+							
+									RefreshToken *tok = SecurityManagerCreateRefreshTokenByUserNameDB( l->sl_SecurityManager, deviceid, usrname );
+									if( tok != NULL )
+									{
+										if( newRefreshToken != NULL )
+										{
+											FFree( newRefreshToken );
+										}
+										newRefreshToken = tok->rt_Token;
+										tok->rt_Token = NULL;
+										RefreshTokenDelete( tok );
+									}
 								}
 							}
 						}
 					}
 					
+					// if user do not exist in memory, we must create it and add to global list
+
 					if( dstusrsess == NULL )
 					{
 						Sentinel *sent = l->GetSentinelUser( l );
@@ -2240,10 +2329,20 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						}
 						else
 						{
-							DEBUG("[SysWebRequest] Login: pointer to active authmodule: %p authenticate pointer: %p\n", l->sl_ActiveAuthModule, l->sl_ActiveAuthModule->Authenticate );
-							if( l->sl_ActiveAuthModule != NULL )
+							loggedSession = l->sl_ActiveAuthModule->Authenticate( l->sl_ActiveAuthModule, *request, NULL, usrname, pass, deviceid, NULL, &blockedTime );
+							
+							// this is first login, we must create RefreshToken
+							
+							RefreshToken *tok = SecurityManagerCreateRefreshTokenByUserNameDB( l->sl_SecurityManager, deviceid, usrname );
+							if( tok != NULL )
 							{
-								loggedSession = l->sl_ActiveAuthModule->Authenticate( l->sl_ActiveAuthModule, *request, NULL, usrname, pass, deviceid, NULL, &blockedTime );
+								if( newRefreshToken != NULL )
+								{
+									FFree( newRefreshToken );
+								}
+								newRefreshToken = tok->rt_Token;
+								tok->rt_Token = NULL;
+								RefreshTokenDelete( tok );
 							}
 						}
 						
@@ -2260,7 +2359,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						{
 							FERROR( "[SysWebRequest] Failed to login user and authenticate.\n" );
 						}
-					}
+					}	// END if user do not exist in memory, we must create it and add to global list
 					
 					//
 					// session found, there is no need to load user
@@ -2283,6 +2382,18 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							else
 							{
 								loggedSession = l->sl_ActiveAuthModule->Authenticate( l->sl_ActiveAuthModule, *request, dstusrsess, usrname, pass, deviceid, "remote", &blockedTime );
+							}
+							
+							RefreshToken *tok = SecurityManagerCreateRefreshTokenByUserNameDB( l->sl_SecurityManager, deviceid, usrname );
+							if( tok != NULL )
+							{
+								if( newRefreshToken != NULL )
+								{
+									FFree( newRefreshToken );
+								}
+								newRefreshToken = tok->rt_Token;
+								tok->rt_Token = NULL;
+								RefreshTokenDelete( tok );
 							}
 						}
 					}
@@ -2317,7 +2428,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							char tmpQuery[ 512 ];
 							int lpos = 0;
 							
-							SQLLibrary *sqlLib =  l->LibrarySQLGet( l );
+							SQLLibrary *sqlLib =  l->GetDBConnection( l );
 							if( sqlLib != NULL )
 							{
 								//
@@ -2368,7 +2479,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 									}
 								}
 								
-								l->LibrarySQLDrop( l, sqlLib );
+								l->DropDBConnection( l, sqlLib );
 								
 								DEBUG("[SystembaseWeb] user login\n");
 
@@ -2391,7 +2502,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							FERROR("[SysWebRequest] Cannot  add session\n");
 						}
 
-						char tmp[ 768 ];
+						char tmp[ 1024 ];
 						int tmpset = 0;
 						User *loggedUser = NULL;
 						if( loggedSession != NULL )
@@ -2415,14 +2526,14 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								else
 								{
 									snprintf( tmp, sizeof(tmp) ,
-										"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"username\":\"%s\"}",
-										loggedUser->u_Error, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedUser->u_ID, loggedUser->u_FullName,  loggedSession->us_SessionID, loggedSession->us_User->u_Name );	// check user.library to display errors
+										"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"username\":\"%s\",\"refreshtoken\":\"%s\"}",
+										loggedUser->u_Error, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedUser->u_ID, loggedUser->u_FullName,  loggedSession->us_SessionID, loggedSession->us_User->u_Name, newRefreshToken );	// check user.library to display errors
 									tmpset++;
 								}
 							}
 							else
 							{
-								SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+								SQLLibrary *sqllib  = l->GetDBConnection( l );
 
 								// Get authid from mysql
 								if( sqllib != NULL )
@@ -2444,7 +2555,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 										sqllib->FreeResult( sqllib, res );
 									}
 
-									l->LibrarySQLDrop( l, sqllib );
+									l->DropDBConnection( l, sqllib );
 
 									snprintf( tmp, sizeof(tmp), "{\"response\":\"%d\",\"sessionid\":\"%s\",\"authid\":\"%s\"}",
 									loggedUser->u_Error, loggedSession->us_SessionID, authid
@@ -2591,6 +2702,10 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	
 	DEBUG( "[SysWebRequest] Systembase web request completed: %dms\n", GetUnixTime() - requestStart );
 	
+	if( newRefreshToken != NULL )
+	{
+		FFree( newRefreshToken );
+	}
 	FFree( sessionid );
 	return response;
 	

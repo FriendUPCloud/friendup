@@ -195,7 +195,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 				int err = 0;
 				FULONG umaID = 0;
 				
-				SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+				SQLLibrary *sqllib  = l->GetDBConnection( l );
 				if( sqllib != NULL )
 				{
 					// if entry with token already exist there is no need to create new one
@@ -275,7 +275,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 						}
 						UserMobileAppDelete( ma );
 					}
-					l->LibrarySQLDrop( l, sqllib );
+					l->DropDBConnection( l, sqllib );
 				}
 
 			} // missing parameters
@@ -356,7 +356,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 		
 		if( id > 0 || deviceID != NULL )
 		{
-			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+			SQLLibrary *sqllib  = l->GetDBConnection( l );
 			if( sqllib != NULL )
 			{
 				FBOOL idFoundByDeviceID = FALSE;
@@ -414,7 +414,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_UMA_ENTRY_NOT_FOUND] , DICT_UMA_ENTRY_NOT_FOUND );
 					HttpAddTextContent( response, buffer );
 				}
-				l->LibrarySQLDrop( l, sqllib );
+				l->DropDBConnection( l, sqllib );
 			}
 			else
 			{
@@ -571,12 +571,12 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 					
 					apptoken = appversion = platform = version = NULL;
 					
-					SQLLibrary *lsqllib = l->LibrarySQLGet( l );
+					SQLLibrary *lsqllib = l->GetDBConnection( l );
 					if( lsqllib != NULL )
 					{
 						err = lsqllib->Update( lsqllib, UserMobileAppDesc, ma );
 		
-						l->LibrarySQLDrop( l, lsqllib );
+						l->DropDBConnection( l, lsqllib );
 					}
 					else
 					{

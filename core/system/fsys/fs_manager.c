@@ -93,7 +93,7 @@ FBOOL FSManagerCheckAccess( FSManager *fm, const char *path, FULONG devid, User 
 	}
 	
 	SystemBase *sb = (SystemBase  *) fm->fm_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	if( sqlLib != NULL )
 	{
 		if( fm != NULL && perm != NULL && newPath != NULL )
@@ -239,11 +239,11 @@ OR \
 			{
 				FERROR("Cannot allocate memory for query!\n");
 				FFree( newPath );
-				sb->LibrarySQLDrop( sb, sqlLib );
+				sb->DropDBConnection( sb, sqlLib );
 				return result;
 			}
 		}
-		sb->LibrarySQLDrop( sb, sqlLib );
+		sb->DropDBConnection( sb, sqlLib );
 	}
 	FFree( newPath );
 	
@@ -291,7 +291,7 @@ BufString *FSManagerGetAccess( FSManager *fm, const char *path, FULONG devid, Us
 		if( ( tmpQuery = FCalloc( querysize, sizeof(char) ) ) != NULL )
 		{
 			SystemBase *sb = (SystemBase  *) fm->fm_SB;
-			SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+			SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 			
 			if( sqlLib == NULL )
 			{
@@ -483,7 +483,7 @@ OR \
 				BufStringAdd( bs, "[{\"access\":\"-RWED\",\"objectid\":\"0\",\"type\":\"user\",\"permissionid\":\"0\"},{\"access\":\"-RWED\",\"objectid\":\"0\",\"type\":\"group\",\"permissionid\":\"0\"},{\"access\":\"-RWED\",\"objectid\":\"0\",\"type\":\"others\",\"permissionid\":\"0\"}]" );
 			}
 	
-			sb->LibrarySQLDrop( sb, sqlLib );		
+			sb->DropDBConnection( sb, sqlLib );		
 			FFree( tmpQuery );
 		}
 		else
@@ -532,7 +532,7 @@ int FSManagerProtect3( FSManager *fm, User *usr, char *path, FULONG devid, char 
 {
 	SystemBase *sb = (SystemBase *)fm->fm_SB;
 	
-	SQLLibrary *sqllib  = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqllib  = sb->GetDBConnection( sb );
 	if( sqllib != NULL )
 	{
 		char usercOld[ 6 ];
@@ -715,7 +715,7 @@ OR \
 			sqllib->QueryWithoutResults( sqllib, insertQuery );
 		}
 
-		sb->LibrarySQLDrop( sb, sqllib );
+		sb->DropDBConnection( sb, sqllib );
 	}
 	return 0;
 }
@@ -805,7 +805,7 @@ int FSManagerProtect( FSManager *fm, const char *path, FULONG devid, char *accgr
 
 	SystemBase *sb = (SystemBase *)fm->fm_SB;
 
-	SQLLibrary *sqllib  = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqllib  = sb->GetDBConnection( sb );
 	if( sqllib != NULL )
 	{
 		//
@@ -885,7 +885,7 @@ int FSManagerProtect( FSManager *fm, const char *path, FULONG devid, char *accgr
 				FFree( rem );
 			}
 		}
-		sb->LibrarySQLDrop( sb, sqllib );
+		sb->DropDBConnection( sb, sqllib );
 	}
 	return 0;
 }
@@ -910,7 +910,7 @@ BufString *FSManagerAddPermissionsToDir( FSManager *fm, BufString *recv, FULONG 
 	}
 	
 	SystemBase *sb = (SystemBase  *) fm->fm_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	if( sqlLib == NULL )
 	{
 		FERROR("Cannot get sql.library slot!\n");
@@ -1146,7 +1146,7 @@ OR \
 				{
 					FERROR("Cannot allocate memory for query!\n");
 					FFree( newPath );
-					sb->LibrarySQLDrop( sb, sqlLib );
+					sb->DropDBConnection( sb, sqlLib );
 					return NULL;
 				}
 			}
@@ -1164,7 +1164,7 @@ OR \
 		}
 	}
 	
-	sb->LibrarySQLDrop( sb, sqlLib );
+	sb->DropDBConnection( sb, sqlLib );
 	
 	BufStringAddSize( bsres, permPtrLast, ( &recv->bs_Buffer[ recv->bs_Size ] )-permPtrLast );
 	

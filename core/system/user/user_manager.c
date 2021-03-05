@@ -139,13 +139,13 @@ int UMUserUpdateDB( UserManager *um, User *usr )
 	if( usr != NULL )
 	{
 		usr->u_ModifyTime = time( NULL );
-		SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+		SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	
 		if( sqlLib != NULL )
 		{
 			sqlLib->Update( sqlLib, UserDesc, usr );
 	
-			sb->LibrarySQLDrop( sb, sqlLib );
+			sb->DropDBConnection( sb, sqlLib );
 		}
 		else
 		{
@@ -175,7 +175,7 @@ int UMAssignApplicationsToUser( UserManager *smgr, User *usr )
 	char tmpQuery[ 255 ];
 
 	SystemBase *sb = (SystemBase *)smgr->um_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	int actapp = 0;
 	
 	if( sqlLib != NULL )
@@ -185,7 +185,7 @@ int UMAssignApplicationsToUser( UserManager *smgr, User *usr )
 		void *result = sqlLib->Query( sqlLib, tmpQuery );
 		if( result == NULL )
 		{
-			sb->LibrarySQLDrop( sb, sqlLib );
+			sb->DropDBConnection( sb, sqlLib );
 			return 2;
 		}
 
@@ -231,7 +231,7 @@ int UMAssignApplicationsToUser( UserManager *smgr, User *usr )
 		DEBUG( "[UMAssignApplicationsToUser] %d applications added.\n", actapp );
 	
 		// Return with amount of application
-		sb->LibrarySQLDrop( sb, sqlLib );
+		sb->DropDBConnection( sb, sqlLib );
 	}
 	return actapp;
 }
@@ -246,7 +246,7 @@ int UMAssignApplicationsToUser( UserManager *smgr, User *usr )
 User *UMUserGetByName( UserManager *um, const char *name )
 {
 	SystemBase *sb = (SystemBase *)um->um_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	
 	if( sqlLib == NULL )
 	{
@@ -264,7 +264,7 @@ User *UMUserGetByName( UserManager *um, const char *name )
 		user = (User *)user->node.mln_Succ;
 	}
 	
-	sb->LibrarySQLDrop( sb, sqlLib );
+	sb->DropDBConnection( sb, sqlLib );
 	
 	return user;
 }
@@ -279,7 +279,7 @@ User *UMUserGetByName( UserManager *um, const char *name )
 User * UMUserGetByNameDB( UserManager *um, const char *name )
 {
 	SystemBase *sb = (SystemBase *)um->um_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	
 	if( sqlLib == NULL )
 	{
@@ -295,7 +295,7 @@ User * UMUserGetByNameDB( UserManager *um, const char *name )
 	user = sqlLib->Load( sqlLib, UserDesc, tmpQuery, &entries );
 	
 	// No need for sql lib anymore here
-	sb->LibrarySQLDrop( sb, sqlLib );
+	sb->DropDBConnection( sb, sqlLib );
 
 	if( user != NULL )
 	{
@@ -322,7 +322,7 @@ User * UMUserGetByNameDB( UserManager *um, const char *name )
 User * UMUserGetByIDDB( UserManager *um, FULONG id )
 {
 	SystemBase *sb = (SystemBase *)um->um_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	
 	if( sqlLib == NULL )
 	{
@@ -340,7 +340,7 @@ User * UMUserGetByIDDB( UserManager *um, FULONG id )
 	
 	DEBUG("[UMUserGetByIDDB] User poitner %p  number of entries %d\n", user, entries );
 	// No need for sql lib anymore here
-	sb->LibrarySQLDrop( sb, sqlLib );
+	sb->DropDBConnection( sb, sqlLib );
 
 	if( user != NULL )
 	{
@@ -426,12 +426,12 @@ int UMUserCreate( UserManager *smgr, Http *r __attribute__((unused)), User *usr 
 	
 	GenerateUUID( &( usr->u_UUID ) );
 
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	int val = 0;
 	if( sqlLib != NULL )
 	{
 		val = sqlLib->Save( sqlLib, UserDesc, usr );
-		sb->LibrarySQLDrop( sb, sqlLib );
+		sb->DropDBConnection( sb, sqlLib );
 	}
 	else
 	{
@@ -452,7 +452,7 @@ int UMUserCreate( UserManager *smgr, Http *r __attribute__((unused)), User *usr 
 FBOOL UMUserIsAdminByAuthID( UserManager *smgr, Http *r __attribute__((unused)), char *auth )
 {
 	SystemBase *sb = (SystemBase *)smgr->um_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	
 	if( sqlLib == NULL )
 	{
@@ -473,13 +473,13 @@ FBOOL UMUserIsAdminByAuthID( UserManager *smgr, Http *r __attribute__((unused)),
 		if( sqlLib->NumberOfRows( sqlLib, res ) > 0 )
 		{
 			sqlLib->FreeResult( sqlLib, res );
-			sb->LibrarySQLDrop( sb, sqlLib );
+			sb->DropDBConnection( sb, sqlLib );
 			return TRUE;
 		}
 		sqlLib->FreeResult( sqlLib, res );
 	}
 	
-	sb->LibrarySQLDrop( sb, sqlLib );
+	sb->DropDBConnection( sb, sqlLib );
 	
 	return FALSE;
 }
@@ -525,17 +525,17 @@ FBOOL UMUserExistByNameDB( UserManager *smgr, const char *name )
 	char query[ 1024 ];
 	sprintf( query, " FUser where `Name` = '%s'" , name );
 	
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	if( sqlLib != NULL )
 	{
 		int res = sqlLib->NumberOfRecords( sqlLib, UserDesc,  query );
 		if( res <= 0 )
 		{
-			sb->LibrarySQLDrop( sb, sqlLib );
+			sb->DropDBConnection( sb, sqlLib );
 			return FALSE;
 		}
 	
-		sb->LibrarySQLDrop( sb, sqlLib );
+		sb->DropDBConnection( sb, sqlLib );
 		return TRUE;
 	}
 	return FALSE;
@@ -643,7 +643,7 @@ User *UMGetUserByID( UserManager *um, FULONG id )
 User *UMGetUserByNameDB( UserManager *um, const char *name )
 {
 	SystemBase *sb = (SystemBase *)um->um_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	User *user = NULL;
 	
 	if( sqlLib != NULL )
@@ -658,7 +658,7 @@ User *UMGetUserByNameDB( UserManager *um, const char *name )
 		int entries;
 	
 		user = ( struct User *)sqlLib->Load( sqlLib, UserDesc, where, &entries );
-		sb->LibrarySQLDrop( sb, sqlLib );
+		sb->DropDBConnection( sb, sqlLib );
 
 		User *tmp = user;
 		while( tmp != NULL )
@@ -690,7 +690,7 @@ User *UMGetUserByUUIDDB( UserManager *um, const char *uuid, FBOOL loadAndAssign 
 		return NULL;
 	}
 	SystemBase *sb = (SystemBase *)um->um_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	User *user = NULL;
 	
 	if( sqlLib != NULL )
@@ -705,7 +705,7 @@ User *UMGetUserByUUIDDB( UserManager *um, const char *uuid, FBOOL loadAndAssign 
 		int entries;
 	
 		user = ( struct User *)sqlLib->Load( sqlLib, UserDesc, where, &entries );
-		sb->LibrarySQLDrop( sb, sqlLib );
+		sb->DropDBConnection( sb, sqlLib );
 
 		if( loadAndAssign == TRUE )
 		{
@@ -740,7 +740,7 @@ User *UMGetOnlyUserByUUIDDB( UserManager *um, const char *uuid )
 		return NULL;
 	}
 	SystemBase *sb = (SystemBase *)um->um_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	User *user = NULL;
 	
 	if( sqlLib != NULL )
@@ -755,7 +755,7 @@ User *UMGetOnlyUserByUUIDDB( UserManager *um, const char *uuid )
 		int entries;
 	
 		user = ( struct User *)sqlLib->Load( sqlLib, UserDesc, where, &entries );
-		sb->LibrarySQLDrop( sb, sqlLib );
+		sb->DropDBConnection( sb, sqlLib );
 
 		FFree( where );
 	}
@@ -818,7 +818,7 @@ FULONG UMGetUserIDByName( UserManager *um, const char *name )
 	if( usr == NULL )
 	{
 		SystemBase *sb = (SystemBase *)um->um_SB;
-		SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+		SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	
 		if( sqlLib != NULL )
 		{
@@ -840,13 +840,13 @@ FULONG UMGetUserIDByName( UserManager *um, const char *name )
 						id = strtol( (char *)row[ 0 ], &end, 0 );
 						
 						sqlLib->FreeResult( sqlLib, result );
-						sb->LibrarySQLDrop( sb, sqlLib );
+						sb->DropDBConnection( sb, sqlLib );
 						return id;
 					}
 				}
 				sqlLib->FreeResult( sqlLib, result );
 			}
-			sb->LibrarySQLDrop( sb, sqlLib );
+			sb->DropDBConnection( sb, sqlLib );
 		}
 	}
 
@@ -872,7 +872,7 @@ User *UMGetUserByIDDB( UserManager *um, FULONG id )
 	
 	DEBUG("[UMGetUserByNameDB] start\n");
 	
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	if( sqlLib == NULL )
 	{
 		FERROR("Cannot get user, mysql.library was not open\n");
@@ -885,7 +885,7 @@ User *UMGetUserByIDDB( UserManager *um, FULONG id )
 	int entries;
 	
 	user = ( struct User *)sqlLib->Load( sqlLib, UserDesc, where, &entries );
-	sb->LibrarySQLDrop( sb, sqlLib );
+	sb->DropDBConnection( sb, sqlLib );
 	
 	User *tmp = user;
 	while( tmp != NULL )
@@ -910,7 +910,7 @@ User *UMGetUserByIDDB( UserManager *um, FULONG id )
 void *UMUserGetByAuthIDDB( UserManager *um, const char *authId )
 {
 	SystemBase *sb = (SystemBase *)um->um_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	
 	if( sqlLib != NULL )
 	{
@@ -934,7 +934,7 @@ void *UMUserGetByAuthIDDB( UserManager *um, const char *authId )
 				if( user != NULL )
 				{
 					sqlLib->FreeResult( sqlLib, result );
-					sb->LibrarySQLDrop( sb, sqlLib );
+					sb->DropDBConnection( sb, sqlLib );
 
 					UGMAssignGroupToUser( sb->sl_UGM, user );
 					UMAssignApplicationsToUser( um, user );
@@ -945,7 +945,7 @@ void *UMUserGetByAuthIDDB( UserManager *um, const char *authId )
 			}
 			sqlLib->FreeResult( sqlLib, result );
 		}
-		sb->LibrarySQLDrop( sb, sqlLib );
+		sb->DropDBConnection( sb, sqlLib );
 	}
 	
 	return NULL;
@@ -960,7 +960,7 @@ void *UMUserGetByAuthIDDB( UserManager *um, const char *authId )
 User *UMGetAllUsersDB( UserManager *um )
 {
 	SystemBase *sb = (SystemBase *)um->um_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	
 	DEBUG("[UMGetAllUsersDB] start\n");
 	
@@ -974,7 +974,7 @@ User *UMGetAllUsersDB( UserManager *um )
 	int entries;
 	
 	user = ( struct User *)sqlLib->Load( sqlLib, UserDesc, NULL, &entries );
-	sb->LibrarySQLDrop( sb, sqlLib );
+	sb->DropDBConnection( sb, sqlLib );
 	
 	User *tmp = user;
 	while( tmp != NULL )
@@ -1118,7 +1118,7 @@ FULONG UMGetAllowedLoginTime( UserManager *um, const char *name )
 	FULONG tm = 0;
 	
 	SystemBase *sb = (SystemBase *)um->um_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	
 	if( sqlLib != NULL )
 	{
@@ -1137,7 +1137,7 @@ FULONG UMGetAllowedLoginTime( UserManager *um, const char *name )
 			sqlLib->FreeResult( sqlLib, result );
 		}
 		
-		sb->LibrarySQLDrop( sb, sqlLib );
+		sb->DropDBConnection( sb, sqlLib );
 	}
 	return tm;
 }
@@ -1159,7 +1159,7 @@ int UMStoreLoginAttempt( UserManager *um, const char *name, const char *info, co
 	
 	DEBUG("[UMStoreLoginAttempt] start\n");
 	
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	if( sqlLib != NULL )
 	{
 		ul.ul_Login = (char *)name;
@@ -1177,7 +1177,7 @@ int UMStoreLoginAttempt( UserManager *um, const char *name, const char *info, co
 		
 		sqlLib->Save( sqlLib, UserLoginDesc, &ul );
 		
-		sb->LibrarySQLDrop( sb, sqlLib );
+		sb->DropDBConnection( sb, sqlLib );
 	}
 	
 	if( usr != NULL )
@@ -1201,7 +1201,7 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, int nu
 {
 	FBOOL canILogin = FALSE;
 	SystemBase *sb = (SystemBase *)um->um_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	
 	if( sqlLib != NULL )
 	{
@@ -1260,7 +1260,7 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, int nu
 		
 		FFree( query );
 		
-		sb->LibrarySQLDrop( sb, sqlLib );
+		sb->DropDBConnection( sb, sqlLib );
 	}
 	return canILogin;
 }
@@ -1288,11 +1288,11 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 		}
 		tuser = (User *)tuser->node.mln_Succ;
 	}
-	
+
 	// We have to create user
 	if( tuser == NULL )
 	{
-		SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+		SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	
 		if( sqlLib != NULL )
 		{
@@ -1303,7 +1303,7 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 
 			if( user != NULL )
 			{
-				sb->LibrarySQLDrop( sb, sqlLib );
+				sb->DropDBConnection( sb, sqlLib );
 			
 				DEBUG("[UMCheckAndLoadAPIUser] User found %s  id %ld\n", user->u_Name, user->u_ID );
 				UGMAssignGroupToUser( sb->sl_UGM, user );
@@ -1335,9 +1335,14 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 			}
 			else
 			{
-				sb->LibrarySQLDrop( sb, sqlLib );
+				sb->DropDBConnection( sb, sqlLib );
 				result = 1;
 			}
+			return 0;
+		}
+		else
+		{
+			
 		}
 	}	// tuser != NULL
 	
@@ -1355,7 +1360,7 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname )
 {
 	SystemBase *l = (SystemBase *)um->um_SB;
-	SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+	SQLLibrary *sqlLib = l->GetDBConnection( l );
 	if( sqlLib != NULL )
 	{
 		char tmpQuery[ 512 ];
@@ -1410,7 +1415,7 @@ int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname )
 			}
 			sqlLib->FreeResult( sqlLib, result );
 		}
-		l->LibrarySQLDrop( l, sqlLib );
+		l->DropDBConnection( l, sqlLib );
 		
 		BufStringAddSize( bs, "]", 1 );
 	}
@@ -1547,7 +1552,7 @@ int UMInitUsers( UserManager *um )
 	Log( FLOG_INFO, "---------Mount user devices-------------------------\n");
 	Log( FLOG_INFO, "----------------------------------------------------\n");
 	
-	SQLLibrary *sqllib  = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqllib = sb->GetDBConnection( sb );
 	if( sqllib != NULL )
 	{
 		User *tmpUser = sb->sl_UM->um_Users;
@@ -1573,8 +1578,7 @@ int UMInitUsers( UserManager *um )
 			DEBUG( "[UMInitUsers] DONE FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
 			tmpUser = (User *)tmpUser->node.mln_Succ;
 		}
-		
-		sb->LibrarySQLDrop( sb, sqllib );
+		sb->DropDBConnection( sb, sqllib );
 	}
 	
 	Log( FLOG_INFO, "----------------------------------------------------\n");

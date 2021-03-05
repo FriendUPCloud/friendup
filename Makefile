@@ -115,7 +115,7 @@ setup:
 	@echo "Setup in progress."
 	mkdir -p $(FRIEND_PATH)/docs/internal/webcalls
 	mkdir -p $(FRIEND_PATH)/docs/internal/core
-	mkdir -p $(FRIEND_HOME) $(FRIEND_PATH)/autostart $(FRIEND_PATH)/resources $(FRIEND_PATH)/resources/webclient $(FRIEND_PATH)/resources/repository $(FRIEND_PATH)/sqlupdatescripts $(FRIEND_PATH)/repository $(FRIEND_PATH)/cfg/crt
+	mkdir -p $(FRIEND_HOME) $(FRIEND_PATH)/autostart $(FRIEND_PATH)/resources $(FRIEND_PATH)/resources/webclient $(FRIEND_PATH)/resources/repository $(FRIEND_PATH)/sqlupdatescripts $(FRIEND_PATH)/sqlinternalupdatescripts $(FRIEND_PATH)/repository $(FRIEND_PATH)/cfg/crt
 	make -C libs-ext setup CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
 	make -C libs-ext install CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
 	make -C core setup WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
@@ -127,7 +127,7 @@ setupdeb:
 	@echo "Setup (debug) in progress."
 	mkdir -p $(FRIEND_PATH)/docs/internal/webcalls
 	mkdir -p $(FRIEND_PATH)/docs/internal/core
-	mkdir -p $(FRIEND_HOME) $(FRIEND_PATH)/autostart $(FRIEND_PATH)/resources $(FRIEND_PATH)/resources/webclient $(FRIEND_PATH)/resources/repository $(FRIEND_PATH)/sqlupdatescripts
+	mkdir -p $(FRIEND_HOME) $(FRIEND_PATH)/autostart $(FRIEND_PATH)/resources $(FRIEND_PATH)/resources/webclient $(FRIEND_PATH)/resources/repository $(FRIEND_PATH)/sqlupdatescripts $(FRIEND_PATH)/sqlupdatescripts
 	make -C libs-ext setupdeb DEBUG=1 CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
 	make -C libs-ext DEBUG=1 install CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
 	make -C core setup WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
@@ -180,6 +180,7 @@ install:
 	rsync -ravl modules $(FRIEND_PATH)/
 	rsync -ravl storage $(FRIEND_PATH)/
 	rsync -ravl db/sqlupdatescripts $(FRIEND_PATH)/
+	rsync -ravl db/sqlinternalupdatescripts $(FRIEND_PATH)/
 	rsync -ravl devices/* $(FRIEND_PATH)/devices/
 	rsync -ravl services/* $(FRIEND_PATH)/services/
 

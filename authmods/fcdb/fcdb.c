@@ -251,7 +251,7 @@ int UpdatePassword( struct AuthMod *l, Http *r __attribute__((unused)), User *us
 		usr->u_Password = StringDuplicate( pass );
 		
 		SystemBase *sb = (SystemBase *)l->sb;
-		SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+		SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 		if( sqlLib != NULL )
 		{
 			char temptext[ 2048 ];
@@ -264,7 +264,7 @@ int UpdatePassword( struct AuthMod *l, Http *r __attribute__((unused)), User *us
 				sqlLib->FreeResult( sqlLib, res );
 			}
 			
-			sb->LibrarySQLDrop( sb, sqlLib );
+			sb->DropDBConnection( sb, sqlLib );
 		}
 	}
 	
@@ -568,7 +568,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 		SystemBase *sb = (SystemBase *)l->sb;
 		
 		DEBUG("[FCDB] SB %p\n", sb );
-		SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+		SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 		if( sqlLib != NULL )
 		{
 			if( createNewSession == TRUE )
@@ -624,7 +624,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 				DEBUG("[FCDB] Update filesystems\n");
 				uses->us_LoggedTime = timestamp;
 
-				sb->LibrarySQLDrop( sb, sqlLib );
+				sb->DropDBConnection( sb, sqlLib );
 				// TODO: Generate sessionid the first time if it is empty!!
 				INFO("Auth return user %s with sessionid %s\n", tmpusr->u_Name,  uses->us_SessionID );
 				if(  tmpusr != NULL && userFromDB == TRUE ){ UserDelete( tmpusr );	tmpusr =  NULL; }
@@ -655,13 +655,13 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 						}
 						uses->us_SessionID = hashBase;
 					}
-					sb->LibrarySQLDrop( sb, sqlLib );
+					sb->DropDBConnection( sb, sqlLib );
 					DEBUG( "[FCDB] AUTHENTICATE: We found an API user! sessionid=%s\n", uses->us_SessionID );
 					if(  tmpusr != NULL && userFromDB == TRUE ){ UserDelete( tmpusr );	tmpusr =  NULL; }
 					goto loginok;
 				}
 			}
-			sb->LibrarySQLDrop( sb, sqlLib );
+			sb->DropDBConnection( sb, sqlLib );
 		}
 		if(  tmpusr != NULL && userFromDB == TRUE ){ UserDelete( tmpusr );	tmpusr =  NULL; }
 		goto loginfail;
@@ -699,7 +699,7 @@ void Logout( struct AuthMod *l, Http *r __attribute__((unused)), char *sessionid
 	//UserSession *users = sb->sl_UserSessionManagerInterface.USMGetSessionBySessionID( sb->sl_USM, sessionid );
 	
 	DEBUG("Logout get\n");
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	if( sqlLib != NULL )
 	{
 		char tmpQuery[ 1024 ];
@@ -718,8 +718,9 @@ void Logout( struct AuthMod *l, Http *r __attribute__((unused)), char *sessionid
 		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "DELETE FROM FUserSession WHERE SessionID='%s'", sessionid );
 		DEBUG("Logout sql: %s\n", tmpQuery );
 		sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
+
+		sb->DropDBConnection( sb, sqlLib );
 #endif
-		sb->LibrarySQLDrop( sb, sqlLib );
 	}
 	DEBUG("Logout get end\n");
 }
@@ -739,7 +740,7 @@ UserSession *IsSessionValid( struct AuthMod *l, Http *r __attribute__((unused)),
 	UserSession *users = sb->sl_UserSessionManagerInterface.USMGetSessionBySessionID( sb->sl_USM, sessionId );
 	time_t timestamp = time ( NULL );
 	
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	SQLLibrary *sqlLib = sb->GetDBConnection( sb );
 	if( sqlLib == NULL )
 	{
 		FERROR("Cannot get mysql.library slot!\n");
@@ -748,7 +749,7 @@ UserSession *IsSessionValid( struct AuthMod *l, Http *r __attribute__((unused)),
 
 	if( users == NULL )
 	{
-		sb->LibrarySQLDrop( sb, sqlLib );
+		sb->DropDBConnection( sb, sqlLib );
 		//FUP_AUTHERR_USRNOTFOUND
 		return NULL;
 	}
@@ -779,7 +780,7 @@ UserSession *IsSessionValid( struct AuthMod *l, Http *r __attribute__((unused)),
 			sqlLib->QueryWithoutResults( sqlLib, tmpQuery );
 #endif
 			
-			sb->LibrarySQLDrop( sb, sqlLib );
+			sb->DropDBConnection( sb, sqlLib );
 
 			return users;
 		}
@@ -789,7 +790,7 @@ UserSession *IsSessionValid( struct AuthMod *l, Http *r __attribute__((unused)),
 			
 			// same session, update loggedtime
 			//user->u_Error = FUP_AUTHERR_WRONGSESID;
-			sb->LibrarySQLDrop( sb, sqlLib );
+			sb->DropDBConnection( sb, sqlLib );
 			return users;
 		}
 	}
@@ -797,10 +798,10 @@ UserSession *IsSessionValid( struct AuthMod *l, Http *r __attribute__((unused)),
 	{
 		DEBUG( "[FCDB] IsSessionValid: Session has timed out! %s\n", sessionId );
 		//user->u_Error = FUP_AUTHERR_TIMEOUT;
-		sb->LibrarySQLDrop( sb, sqlLib );
+		sb->DropDBConnection( sb, sqlLib );
 		return users;
 	}
-	sb->LibrarySQLDrop( sb, sqlLib );
+	sb->DropDBConnection( sb, sqlLib );
 	return users;
 }
 

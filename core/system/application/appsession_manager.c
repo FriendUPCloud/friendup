@@ -132,18 +132,18 @@ int AppSessionManagerSessionsDeleteDB( AppSessionManager *asmgr, const char *aut
 	SystemBase *sb = (SystemBase *)asmgr->asm_SB;
 	char tmpQuery[ 1024 ];
 	
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
-	if( sqlLib == NULL )
+	SQLLibrary *sqllib = sb->GetDBConnection( sb );
+	if( sqllib == NULL )
 	{
 		FERROR("Cannot get user, mysql.library was not open\n");
 		return -1;
 	}
 
-	sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "DELETE from FAppSession WHERE AuthID='%s'", authid );
+	sqllib->SNPrintF( sqllib, tmpQuery, sizeof(tmpQuery), "DELETE from FAppSession WHERE AuthID='%s'", authid );
 
-	sqlLib->QueryWithoutResults( sqlLib, tmpQuery );
+	sqllib->QueryWithoutResults( sqllib, tmpQuery );
 
-	sb->LibrarySQLDrop( sb, sqlLib );
+	sb->DropDBConnection( sb, sqllib );
 
 	DEBUG("[AppSessionManagerSessionsDeleteDB] end\n");
 	return 0;
@@ -239,8 +239,8 @@ AppSession *AppSessionManagerGetSessionByAuthIDFromDB( AppSessionManager *asmgr,
 	AppSession *appsession = NULL;
 	char tmpQuery[ 1024 ];
 	
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
-	if( sqlLib != NULL )
+	SQLLibrary *sqllib = sb->GetDBConnection( sb );
+	if( sqllib != NULL )
 	{
 		int entries = 0;
 		
@@ -248,16 +248,16 @@ AppSession *AppSessionManagerGetSessionByAuthIDFromDB( AppSessionManager *asmgr,
 		char *tmpSessionID = sb->sl_UtilInterface.DatabaseEncodeString( authid );
 		if( tmpSessionID != NULL )
 		{
-			sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery)," AuthID='%s'", tmpSessionID );
+			sqllib->SNPrintF( sqllib, tmpQuery, sizeof(tmpQuery)," AuthID='%s'", tmpSessionID );
 			FFree( tmpSessionID );
 		}
 #else
-		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery)," AuthID='%s'", authid );
+		sqllib->SNPrintF( sqllib, tmpQuery, sizeof(tmpQuery)," AuthID='%s'", authid );
 #endif
 		DEBUG( "[AppSessionManagerGetSessionByAuthIDFromDB] Sending query: %s...\n", tmpQuery );
 
-		appsession = ( AppSession *)sqlLib->Load( sqlLib, AppSessionDesc, tmpQuery, &entries );
-		sb->LibrarySQLDrop( sb, sqlLib );
+		appsession = ( AppSession *)sqllib->Load( sqllib, AppSessionDesc, tmpQuery, &entries );
+		sb->DropDBConnection( sb, sqllib );
 	}
 	else
 	{

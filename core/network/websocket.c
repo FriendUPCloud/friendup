@@ -530,7 +530,7 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
 	
 	if( authid != NULL )
 	{
-		SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+		SQLLibrary *sqllib  = l->GetDBConnection( l );
 
 		// Get authid from mysql
 		if( sqllib != NULL )
@@ -556,7 +556,7 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
 				}
 				sqllib->FreeResult( sqllib, res );
 			}
-			l->LibrarySQLDrop( l, sqllib );
+			l->DropDBConnection( l, sqllib );
 		}
 		DEBUG("[WS] Ok, SQL phase complete\n" );
 	}

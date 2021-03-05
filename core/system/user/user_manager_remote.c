@@ -518,7 +518,7 @@ int UMAddRemoteDriveToUser( UserManager *um, FConnection *con, const char *locun
 		{
 			locremdri->rd_RemoteID = remoteid;
 			
-			SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
+			SQLLibrary *sqllib = sb->GetDBConnection( sb );
 			if( sqllib != NULL )
 			{
 				char tmp[ 1024 ];
@@ -540,7 +540,7 @@ int UMAddRemoteDriveToUser( UserManager *um, FConnection *con, const char *locun
 					}
 					sqllib->FreeResult( sqllib, result );
 				}
-				sb->LibrarySQLDrop( sb, sqllib );
+				sb->DropDBConnection( sb, sqllib );
 			}
 			
 			locremdri->node.mln_Succ = (MinNode *)remusr->ru_RemoteDrives;

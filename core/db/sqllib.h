@@ -85,6 +85,7 @@ typedef struct SQLLibrary
 	void 					(*FreeResult)( struct SQLLibrary *l, void *res );
 	int						(*NumberOfRows)( struct SQLLibrary *l, void *res );
 	int						(*QueryWithoutResults)( struct SQLLibrary *l, const char *sel );
+	const char				*(*GetLastError)( struct SQLLibrary *l );
 	int						(*SNPrintF)( struct SQLLibrary *l, char *str, size_t stringSize, const char *fmt, ... );
 	int						(*SetOption)( struct SQLLibrary *l, char *params );
 	char					*(*MakeEscapedString)( struct SQLLibrary *l, char *str );

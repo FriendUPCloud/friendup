@@ -59,6 +59,7 @@
 #include <network/websocket_client.h>
 #include <network/protocol_websocket.h>
 #include <util/session_id.h>
+#include <db/autoupdate.h>
 
 #define LIB_NAME "system.library"
 #define LIB_VERSION 		1
@@ -239,7 +240,7 @@ SystemBase *SystemInit( void )
 	// init libraries
 	
 	l->UserLibCounter = 0;
-	l->MsqLlibCounter = 0;
+	l->sqlConnectionIndex = l->sqlInternalConnectionIndex = 0;
 	l->AppLibCounter = 0;
 	l->PropLibCounter = 0;
 	l->ZLibCounter = 0;
@@ -270,8 +271,10 @@ SystemBase *SystemInit( void )
 
 	l->AuthModuleGet = AuthModuleGet;
 	l->AuthModuleDrop = AuthModuleDrop;
-	l->LibrarySQLGet = LibrarySQLGet;
-	l->LibrarySQLDrop = LibrarySQLDrop;
+	l->GetDBConnection = GetDBConnection;
+	l->DropDBConnection = DropDBConnection;
+	l->GetInternalDBConnection = GetInternalDBConnection;
+	l->DropInternalDBConnection = DropInternalDBConnection;
 	l->LibraryApplicationGet = LibraryApplicationGet;
 	l->LibraryApplicationDrop = LibraryApplicationDrop;
 	l->LibraryZGet = LibraryZGet;
@@ -302,8 +305,16 @@ SystemBase *SystemInit( void )
 	char *pass = "root";
 	char *dbname = "FriendMaster";
 	int port = 3306;
+	
+	char *hostSec = "localhost";
+	char *loginSec = "root";
+	char *passSec = "root";
+	char *dbnameSec = "FriendSecurity";
+	int portSec = 3306;
+	
 	char *options = NULL;
 	l->sqlpoolConnections = DEFAULT_SQLLIB_POOL_NUMBER;
+	l->sqlpoolInternalConnections = DEFAULT_SQLLIB_POOL_NUMBER;
 	Props *prop = NULL;
 
 	// Get a copy of the properties.library
@@ -366,7 +377,7 @@ SystemBase *SystemInit( void )
 				l->sl_DefaultDBLib = StringDuplicate( tmp );
 			}
 			
-			DEBUG("[SystemBase] reading login\n");
+			DEBUG("[SystemBase] read login\n");
 			login = plib->ReadStringNCS( prop, "databaseuser:login", "root" );
 			DEBUG("[SystemBase] user %s\n", login );
 			pass = plib->ReadStringNCS( prop, "databaseuser:password", "root" );
@@ -379,6 +390,21 @@ SystemBase *SystemInit( void )
 			DEBUG("[SystemBase] port read %d\n", port );
 			l->sqlpoolConnections = plib->ReadIntNCS( prop, "databaseuser:connections", DEFAULT_SQLLIB_POOL_NUMBER );
 			DEBUG("[SystemBase] connections read %d\n", l->sqlpoolConnections );
+			
+			DEBUG("[SystemBase] read login for internaldb\n");
+			loginSec = plib->ReadStringNCS( prop, "internaldb:login", "root" );
+			DEBUG("[SystemBase] user %s for internaldb\n", loginSec );
+			passSec = plib->ReadStringNCS( prop, "internaldb:password", "root" );
+			DEBUG("[SystemBase] password %s for internaldb\n", passSec );
+			hostSec = plib->ReadStringNCS( prop, "internaldb:host", "localhost" );
+			DEBUG("[SystemBase] host %s for internaldb\n", hostSec );
+			dbnameSec = plib->ReadStringNCS( prop, "internaldb:dbname", "FriendMaster" );
+			DEBUG("[SystemBase] dbname %s for internaldb\n",dbnameSec );
+			portSec = plib->ReadIntNCS( prop, "internaldb:port", 3306 );
+			DEBUG("[SystemBase] port read %d for internaldb\n", portSec );
+			l->sqlpoolInternalConnections = plib->ReadIntNCS( prop, "internaldb:internalconnections", DEFAULT_SQLLIB_POOL_NUMBER );
+			DEBUG("[SystemBase] internaldb connections read %d\n", l->sqlpoolInternalConnections );
+			
 			options = plib->ReadStringNCS( prop, "databaseuser:options", NULL );
 			DEBUG("[SystemBase] options %s\n",options );
 			
@@ -529,9 +555,50 @@ SystemBase *SystemInit( void )
 				}
 			}
 		}
+		
+		// Internal
+		
+		Log( FLOG_INFO, "----------------------------------------\n");
+		Log( FLOG_INFO, "-----Internal Database configuration-------------\n");
+		Log( FLOG_INFO, "-----Internal Host: %s\n", hostSec );
+		Log( FLOG_INFO, "-----Internal Port: %d\n", portSec );
+		Log( FLOG_INFO, "-----Internal DBName: %s\n", dbnameSec );
+		Log( FLOG_INFO, "-----Internal User: %s\n", loginSec );
+		Log( FLOG_INFO, "----------------------------------------\n");
+
+		l->sqlpoolInternal = FCalloc( l->sqlpoolInternalConnections, sizeof( SQLConPool) );
+		if( l->sqlpoolInternal != NULL )
+		{
+			unsigned int i = 0;
+			int error = 0;
+
+			for( ; i < (unsigned int)l->sqlpoolInternalConnections; i++ )
+			{
+				l->sqlpoolInternal[ i ].sqll_Sqllib = (struct SQLLibrary *)LibraryOpen( l, l->sl_DefaultDBLib, 0 );
+				if( l->sqlpoolInternal[ i ].sqll_Sqllib != NULL )
+				{
+					l->sqlpoolInternal[ i ].sql_ID = i;
+					error = l->sqlpoolInternal[i ].sqll_Sqllib->SetOption( l->sqlpoolInternal[ i ].sqll_Sqllib, options );
+					error = l->sqlpoolInternal[i ].sqll_Sqllib->Connect( l->sqlpoolInternal[ i ].sqll_Sqllib, hostSec, dbnameSec, loginSec, passSec, portSec );
+					if( error != 0 )
+					{
+						break;
+					}
+				}
+			}
+			
+			if( error != 0 )
+			{
+				i = 0;
+				for( ; i < (unsigned int)l->sqlpoolInternalConnections; i++ )
+				{
+					LibraryClose( l->sqlpoolInternal[ i ].sqll_Sqllib );
+					l->sqlpoolInternal[i ].sqll_Sqllib = NULL;
+				}
+			}
+		}
+		
 		if( prop ) plib->Close( prop );
-	
-		//l->LibraryPropertiesDrop( l, plib );
 	}
 	
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
@@ -550,7 +617,9 @@ SystemBase *SystemInit( void )
 	
 	if( skipDBUpdate == FALSE )
 	{
-		CheckAndUpdateDB( l );
+		CheckAndUpdateDB( l, UPDATE_DB_TYPE_GLOBAL );
+		
+		CheckAndUpdateDB( l, UPDATE_DB_TYPE_INTERNAL );
 	}
 	else
 	{
@@ -559,7 +628,7 @@ SystemBase *SystemInit( void )
 		Log( FLOG_INFO, "----------------------------------------------------\n");
 	}
 	
-	SQLLibrary *lsqllib  = l->LibrarySQLGet( l );
+	SQLLibrary *lsqllib  = l->GetDBConnection( l );
 	if( lsqllib != NULL )
 	{
 		// session timeout
@@ -615,7 +684,7 @@ SystemBase *SystemInit( void )
 		// dictionary
 		
 		l->sl_Dictionary = DictionaryNew( lsqllib );
-		l->LibrarySQLDrop( l, lsqllib );
+		l->DropDBConnection( l, lsqllib );
 	}
 	else
 	{
@@ -1386,8 +1455,20 @@ void SystemClose( SystemBase *l )
 			DEBUG( "[SystemBase] Closed mysql library slot %d\n", i );
 			LibraryClose( l->sqlpool[ i ].sqll_Sqllib );
 		}
-		
 		FFree( l->sqlpool );
+	}
+	
+	// Close mysql library for Security DB
+	DEBUG( "[SystemBase] Closing and looking into mysql security pool\n" );
+	if( l->sqlpoolInternal != NULL )
+	{
+		unsigned int i = 0;
+		for( ; i < (unsigned int)l->sqlpoolConnections; i++ )
+		{
+			DEBUG( "[SystemBase] Closed mysql library slot %d for security db\n", i );
+			LibraryClose( l->sqlpoolInternal[ i ].sqll_Sqllib );
+		}
+		FFree( l->sqlpoolInternal );
 	}
 
 	// release them all strings ;)
@@ -1782,258 +1863,6 @@ int SystemInitExternal( SystemBase *l )
 	return 0;
 }
 
-//
-// we need structure which will hold name of scripts and their numbers
-//
-
-typedef struct DBUpdateEntry
-{
-	int number;
-	char name[ 512 ];
-}DBUpdateEntry;
-
-/**
- * Check and Update FC database
- *
- * @param l pointer to SystemBase
- */
-
-void CheckAndUpdateDB( struct SystemBase *l )
-{
-	Log( FLOG_INFO, "----------------------------------------------------\n");
-	Log( FLOG_INFO, "---------Autoupdatedatabase process start-----------\n");
-	Log( FLOG_INFO, "----------------------------------------------------\n");
-	
-	SQLLibrary *sqllib  = l->LibrarySQLGet( l );
-	if( sqllib != NULL )
-	{
-		int startUpdatePosition = 0;
-		int orgStartUpdateposition = -1;
-		
-		char query[ 1024 ];
-		snprintf( query, sizeof(query), "SELECT * FROM `FGlobalVariables` WHERE `Key`='DB_VERSION'" );
-		
-		void *res = sqllib->Query( sqllib, query );
-		if( res != NULL )
-		{
-			char **row;
-			while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
-			{
-				// Id, Key, Value, Comment, date
-			
-				DEBUG("[SystemBase] \tFound database entry-> ID '%s' Key '%s', Value '%s', Comment '%s', Date '%s'\n", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ] );
-			
-				orgStartUpdateposition = startUpdatePosition = atoi( row[ 2 ] );
-			}
-			sqllib->FreeResult( sqllib, res );
-		}
-		
-		DEBUG("[SystemBase] CheckAndUpdateDB: %d\n", startUpdatePosition );
-		
-		DIR *dp = NULL;
-		struct dirent *dptr;
-		int numberOfFiles = 0;
-		
-		DEBUG("[SystemBase] UpdateDB found directory\n");
-		
-		if( ( dp = opendir( "sqlupdatescripts" ) ) != NULL )
-		{
-			while( ( dptr = readdir( dp ) ) != NULL )
-			{
-				if( strcmp( dptr->d_name, "." ) == 0 || strcmp( dptr->d_name, ".." ) == 0 )
-				{
-					continue;
-				}
-				
-				numberOfFiles++;
-			}
-			closedir( dp );
-		}
-		
-		DBUpdateEntry *dbentries;
-		
-		if( ( dbentries = FCalloc( numberOfFiles, sizeof(DBUpdateEntry) ) ) != NULL )
-		{
-			int position = 0;
-			
-			if( ( dp = opendir( "sqlupdatescripts" ) ) != NULL )
-			{
-				DEBUG("[SystemBase] UpdateDB found directory 1\n");
-				while( ( dptr = readdir( dp ) ) != NULL )
-				{
-					char number[ 512 ];
-					unsigned int i;
-				
-					if( strcmp( dptr->d_name, "." ) == 0 || strcmp( dptr->d_name, ".." ) == 0 )
-					{
-						continue;
-					}
-				
-					DEBUG("[SystemBase] get number from name\n");
-					// we must extract number from filename
-					strcpy( number, dptr->d_name );
-					for( i=0 ; i < strlen( number ) ; i++ )
-					{
-						if( number[ i ] == '_' )
-						{
-							number[ i ] = 0;
-							break;
-						}
-					}
-					
-					DEBUG("[SystemBase] number found: '%s'\n", number );
-					
-					dbentries[ position ].number = atoi( number );
-					if( dbentries[ position ].number > startUpdatePosition )
-					{
-						DEBUG("[SystemBase] Found script with number %d, script added: %s\n", dbentries[ position ].number, dptr->d_name );
-						strcpy( dbentries[ position ].name, dptr->d_name );
-						position++;
-					}
-					else
-					{
-						DEBUG("[SystemBase] !!!! dbentries[ position ].number <= startUpdatePosition\n");
-					}
-				}
-				closedir( dp );
-			}
-			
-			DEBUG("[SystemBase] Directories parsed startUpdatePosition: %d position %d\n", startUpdatePosition, position );
-			
-			// we must run script which holds changes
-			startUpdatePosition++;
-			char *lastSQLname = NULL;
-			int error = 0;
-			// now FC will update DB script after script
-			int i;
-			for( i=0 ; i < position ; i++ )
-			{
-				int j;
-				for( j=0; j < position ; j++ )
-				{
-					DEBUG("[SystemBase] Checking numbers, start: %d actual: %d\n", startUpdatePosition, dbentries[j].number );
-					if( startUpdatePosition == dbentries[j].number )
-					{
-						FILE *fp;
-						char scriptfname[ 712 ];
-						snprintf( scriptfname, sizeof( scriptfname ), "sqlupdatescripts/%s", dbentries[j].name );
-						DEBUG("[SystemBase] Found script with ID %d\n", startUpdatePosition );
-						
-						if( ( fp = fopen( scriptfname, "rb" ) ) != NULL )
-						{
-							fseek( fp, 0, SEEK_END );
-							long fsize = ftell( fp );
-							fseek( fp, 0, SEEK_SET );
-							
-							char *script;
-							if( ( script = FCalloc( fsize+1, sizeof(char) ) ) != NULL )
-							{
-								int readbytes = 0;
-								if( ( readbytes = fread( script, fsize, 1, fp ) ) > 0 )
-								{
-									char *command = script;
-									int i;
-
-									for( i=1 ; i < fsize ; i++ )
-									{
-										if( strncmp( &(script[ i ]), "----script----" , 14 ) == 0 )
-										{
-											char *start = &(script[ i ]);
-											char *end = strstr( start, "----script-end----" );
-											int len = (end - start)-1;
-											i += len;
-											
-											start += 14;
-											*end = 0;
-											
-											DEBUG("[SystemBase] Running script1 : %s from file: %s on database\n", start, scriptfname );
-											
-											if( sqllib->QueryWithoutResults( sqllib, start ) != 0 )
-											{
-												error = 1;
-											}
-											else
-											{
-												lastSQLname = dbentries[ j ].name;
-											}
-											
-											command = &script[ i+1 ];
-										}
-										else
-										{
-											if( script[ i ] == ';' )
-											{
-												script[ i ] = 0;
-												DEBUG("[SystemBase] Running script: %s from file: %s on database\n", command, scriptfname ); 
-												if( strlen( command) > 10 )
-												{
-													if( sqllib->QueryWithoutResults( sqllib, command ) != 0 )
-													{
-														error = 1;
-													}
-													else
-													{
-														lastSQLname = dbentries[j].name;
-													}
-												}
-												command = &script[ i+1 ];
-											}
-										}
-									}
-									// error: Duplicate column name
-									DEBUG("[SystemBase] Running script : %s from file: %s on database\n", command, scriptfname ); 
-									if( strlen( command ) > 10 )
-									{
-										if( sqllib->QueryWithoutResults( sqllib, command ) != 0 )
-										{
-											error = 1;
-										}
-										else
-										{
-											lastSQLname = dbentries[j].name;
-										}
-									}
-								}
-								FFree( script );
-							}
-							fclose( fp );
-						}
-						break;
-					}
-					
-					if( error == 1 )
-					{
-						break;
-					}
-				}
-				
-				if( error == 1 )
-				{
-					break;
-				}
-				startUpdatePosition++;
-			}
-			
-			// we must update which update was last
-			startUpdatePosition--;
-			
-			if( orgStartUpdateposition != startUpdatePosition && lastSQLname != NULL )
-			{
-				DEBUG("[SystemBase] Last script will be updated in DB\n");
-				snprintf( query, sizeof(query), "UPDATE `FGlobalVariables` SET `Value`='%d', `Date`='%lu', `Comment`='%s' WHERE `Key`='DB_VERSION'", startUpdatePosition, time(NULL), lastSQLname );
-				sqllib->QueryWithoutResults( sqllib, query );
-			}
-			FFree( dbentries );
-		}
-		l->LibrarySQLDrop( l, sqllib );
-	}
-	
-	Log( FLOG_INFO, "----------------------------------------------------\n");
-	Log( FLOG_INFO, "---------Autoupdatedatabase process END-------------\n");
-	Log( FLOG_INFO, "----------------------------------------------------\n");
-}
-
-
 typedef struct DevNode
 {
 	char				*dn_Table[ 10 ];
@@ -2071,7 +1900,7 @@ int UserDeviceMount( SystemBase *l, User *u, UserSession *usrses, int force, FBO
 		return 0;
 	}
 	
-	sqllib = l->LibrarySQLGet( l );
+	sqllib = l->GetDBConnection( l );
 	if( sqllib == NULL )
 	{
 		DEBUG("[UserDeviceMount] SQLlib = NULL\n");
@@ -2105,7 +1934,7 @@ usr->u_ID , usr->u_ID, usr->u_ID
 		if( res == NULL )
 		{
 			Log( FLOG_ERROR,  "[UserDeviceMount] UserDeviceMount fail: database results = NULL\n");
-			l->LibrarySQLDrop( l, sqllib );
+			l->DropDBConnection( l, sqllib );
 			FRIEND_MUTEX_UNLOCK( &l->sl_DeviceManager->dm_Mutex );
 			return 0;
 		}
@@ -2137,7 +1966,7 @@ usr->u_ID , usr->u_ID, usr->u_ID
 		DEBUG( "[UserDeviceMount] Device mounted for user %s\n\n", usr->u_Name );
 
 		sqllib->FreeResult( sqllib, res );
-		l->LibrarySQLDrop( l, sqllib );
+		l->DropDBConnection( l, sqllib );
 		FRIEND_MUTEX_UNLOCK( &l->sl_DeviceManager->dm_Mutex );
 		
 		// mount all devices
@@ -2173,7 +2002,7 @@ usr->u_ID , usr->u_ID, usr->u_ID
 			
 			int err = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &device, usr, mountError, usrses, notify );
 
-			sqllib = l->LibrarySQLGet( l );
+			sqllib = l->GetDBConnection( l );
 			// if there is error but error is not "device is already mounted"
 			if( err != 0 && err != FSys_Error_DeviceAlreadyMounted )
 			{
@@ -2206,7 +2035,7 @@ usr->u_ID , usr->u_ID, usr->u_ID
 			{
 				Log( FLOG_ERROR, "[UserDeviceMount] \tCannot set device mounted state. Device = NULL (%s).\n", remDev->dn_Table[ 0 ] );
 			}
-			l->LibrarySQLDrop( l, sqllib );
+			l->DropDBConnection( l, sqllib );
 			
 			if( remDev->dn_Table[ 0 ] != NULL ){ FFree( remDev->dn_Table[ 0 ] ); }
 			if( remDev->dn_Table[ 1 ] != NULL ){ FFree( remDev->dn_Table[ 1 ] ); }
@@ -2353,7 +2182,7 @@ void AuthModuleDrop( SystemBase *l __attribute__((unused)), AuthMod *uclose __at
  * @return pointer to mysql.library
  */
 
-SQLLibrary *LibrarySQLGet( SystemBase *l )
+SQLLibrary *GetDBConnection( SystemBase *l )
 {
 	SQLLibrary *retlib = NULL;
 	int i ;
@@ -2363,35 +2192,35 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
 	{
 		if( FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex ) == 0 )
 		{
-			if( l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib->l_InUse == FALSE )
+			if( l->sqlpool[ l->sqlConnectionIndex ].sqll_Sqllib->l_InUse == FALSE )
 			{
-				retlib = l->sqlpool[l->MsqLlibCounter ].sqll_Sqllib;
-				DEBUG("retlibptr %p pool %p\n", retlib, l->sqlpool[l->MsqLlibCounter ].sqll_Sqllib );
-				int status = retlib->GetStatus( (void *)l->sqlpool[l->MsqLlibCounter ].sqll_Sqllib );
+				retlib = l->sqlpool[l->sqlConnectionIndex ].sqll_Sqllib;
+				DEBUG("retlibptr %p pool %p\n", retlib, l->sqlpool[l->sqlConnectionIndex ].sqll_Sqllib );
+				int status = retlib->GetStatus( (void *)l->sqlpool[l->sqlConnectionIndex ].sqll_Sqllib );
 				if( retlib == NULL || status != SQL_STATUS_READY ) //retlib->con.sql_Con->status != MYSQL_STATUS_READY )
 				{
-					FERROR( "[LibraryMYSQLGet] We found a NULL pointer on slot %d retlib %p status %d!\n", l->MsqLlibCounter, retlib, status );
+					FERROR( "[LibraryMYSQLGet] We found a NULL pointer on slot %d retlib %p status %d!\n", l->sqlConnectionIndex, retlib, status );
 					// Increment and check
-					if( ++l->MsqLlibCounter >= l->sqlpoolConnections ) l->MsqLlibCounter = 0;
+					if( ++l->sqlConnectionIndex >= l->sqlpoolConnections ) l->sqlConnectionIndex = 0;
 					FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
 					// Give some grace time..
 					usleep( 0 );
 					continue;
 				}
 				
-				l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib->l_InUse = TRUE;
-				if( l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib->con.sql_Recconect == TRUE )
+				l->sqlpool[ l->sqlConnectionIndex ].sqll_Sqllib->l_InUse = TRUE;
+				if( l->sqlpool[ l->sqlConnectionIndex ].sqll_Sqllib->con.sql_Recconect == TRUE )
 				{
-					l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib->Reconnect(  l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib );
-					l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib->con.sql_Recconect = FALSE;
+					l->sqlpool[ l->sqlConnectionIndex ].sqll_Sqllib->Reconnect(  l->sqlpool[ l->sqlConnectionIndex ].sqll_Sqllib );
+					l->sqlpool[ l->sqlConnectionIndex ].sqll_Sqllib->con.sql_Recconect = FALSE;
 				}
 			
-				INFO( "[LibraryMYSQLGet] We found mysql library on slot %d (library %p).\n", l->MsqLlibCounter, l->sqlpool[ l->MsqLlibCounter ].sqll_Sqllib );
+				INFO( "[LibraryMYSQLGet] We found mysql library on slot %d (library %p).\n", l->sqlConnectionIndex, l->sqlpool[ l->sqlConnectionIndex ].sqll_Sqllib );
 			
 				// Increment and check
-				if( ++l->MsqLlibCounter >= l->sqlpoolConnections )
+				if( ++l->sqlConnectionIndex >= l->sqlpoolConnections )
 				{
-					l->MsqLlibCounter = 0;
+					l->sqlConnectionIndex = 0;
 				}
 				FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
 				break;
@@ -2410,10 +2239,10 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
 			usleep( 0 );
 		}
 		
-		l->MsqLlibCounter++;
-		if( l->MsqLlibCounter >= l->sqlpoolConnections )
+		l->sqlConnectionIndex++;
+		if( l->sqlConnectionIndex >= l->sqlpoolConnections )
 		{
-			l->MsqLlibCounter = 0;
+			l->sqlConnectionIndex = 0;
 		}
 		
 		/*
@@ -2440,7 +2269,114 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
  * @param mclose pointer to mysql.library which will be returned to pool
  */
 
-void LibrarySQLDrop( SystemBase *l, SQLLibrary *mclose )
+void DropDBConnection( SystemBase *l, SQLLibrary *mclose )
+{
+	int i = 0;
+	int closed = -1;
+	
+	if( mclose->l_InUse == TRUE )
+	{
+		if( FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex ) == 0 )
+		{
+			mclose->l_InUse = FALSE;
+			FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
+		}
+		closed = i;
+	}
+		
+	if( mclose->l_InUse != FALSE )
+	{
+		DEBUG( "[SystemBase] Mysql library %p is still in use\n", mclose );
+	}
+	
+	if( closed != -1 )
+	{
+		INFO( "[SystemBase] MYSQL library %p was closed properly.\n", mclose );
+	}
+}
+
+/**
+ * Get mysql.library from pool
+ *
+ * @param l pointer to SystemBase
+ * @return pointer to mysql.library
+ */
+
+SQLLibrary *GetInternalDBConnection( SystemBase *l )
+{
+	SQLLibrary *retlib = NULL;
+	int i ;
+	int timer = 0;
+	
+	while( TRUE )
+	{
+		if( FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex ) == 0 )
+		{
+			if( l->sqlpoolInternal[ l->sqlInternalConnectionIndex ].sqll_Sqllib->l_InUse == FALSE )
+			{
+				retlib = l->sqlpoolInternal[l->sqlInternalConnectionIndex ].sqll_Sqllib;
+				DEBUG("retlibptr %p pool %p\n", retlib, l->sqlpoolInternal[l->sqlInternalConnectionIndex ].sqll_Sqllib );
+				int status = retlib->GetStatus( (void *)l->sqlpoolInternal[l->sqlInternalConnectionIndex ].sqll_Sqllib );
+				if( retlib == NULL || status != SQL_STATUS_READY ) //retlib->con.sql_Con->status != MYSQL_STATUS_READY )
+				{
+					FERROR( "[LibraryMYSQLGet] We found a NULL pointer on slot %d retlib %p status %d!\n", l->sqlInternalConnectionIndex, retlib, status );
+					// Increment and check
+					if( ++l->sqlInternalConnectionIndex >= l->sqlpoolInternalConnections ) l->sqlInternalConnectionIndex = 0;
+					FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
+					// Give some grace time..
+					usleep( 0 );
+					continue;
+				}
+				
+				l->sqlpoolInternal[ l->sqlInternalConnectionIndex ].sqll_Sqllib->l_InUse = TRUE;
+				if( l->sqlpoolInternal[ l->sqlInternalConnectionIndex ].sqll_Sqllib->con.sql_Recconect == TRUE )
+				{
+					l->sqlpoolInternal[ l->sqlInternalConnectionIndex ].sqll_Sqllib->Reconnect(  l->sqlpoolInternal[ l->sqlInternalConnectionIndex ].sqll_Sqllib );
+					l->sqlpoolInternal[ l->sqlInternalConnectionIndex ].sqll_Sqllib->con.sql_Recconect = FALSE;
+				}
+			
+				INFO( "[LibraryMYSQLGet] We found mysql library on slot %d (library %p).\n", l->sqlInternalConnectionIndex, l->sqlpoolInternal[ l->sqlInternalConnectionIndex ].sqll_Sqllib );
+			
+				// Increment and check
+				if( ++l->sqlInternalConnectionIndex >= l->sqlpoolInternalConnections )
+				{
+					l->sqlInternalConnectionIndex = 0;
+				}
+				FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
+				break;
+			}
+			else
+			{
+				FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
+			}
+		}
+		
+		timer++;
+		// We got too many connections, give grace time
+		if( timer >= l->sqlpoolInternalConnections )
+		{
+			timer = 0;
+			usleep( 0 );
+		}
+		
+		l->sqlInternalConnectionIndex++;
+		if( l->sqlInternalConnectionIndex >= l->sqlpoolInternalConnections )
+		{
+			l->sqlInternalConnectionIndex = 0;
+		}
+	}
+	
+	return retlib;
+}
+
+/**
+ * Drop mysql.library to pool
+ *
+ * @param l pointer to SystemBase
+ * @param mclose pointer to mysql.library which will be returned to pool
+ */
+
+void DropInternalDBConnection( SystemBase *l, SQLLibrary *mclose )
 {
 	int i = 0;
 	int closed = -1;

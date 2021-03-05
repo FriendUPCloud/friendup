@@ -888,7 +888,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 						Log( FLOG_DEBUG, "[ProtocolHttp] Shared file hash %s name %s\n", path->p_Parts[ 1 ], path->p_Parts[ 2 ] );
 
-						SQLLibrary *sqllib = SLIB->LibrarySQLGet( SLIB );
+						SQLLibrary *sqllib = SLIB->GetDBConnection( SLIB );
 
 						if( sqllib != NULL )
 						{
@@ -939,7 +939,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							}
 							
 							// Immediately drop here..
-							SLIB->LibrarySQLDrop( SLIB, sqllib );
+							SLIB->DropDBConnection( SLIB, sqllib );
 							sqllib = NULL;
 							
 							UserSession *session = USMCreateTemporarySession( SLIB->sl_USM, sqllib, fs_IDUser, 0 );
@@ -1764,7 +1764,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 										{
 											// First try to get tinyurl
 											char *hash = path->p_Parts[0];
-											SQLLibrary *sqllib  = SLIB->LibrarySQLGet( SLIB );
+											SQLLibrary *sqllib  = SLIB->GetDBConnection( SLIB );
 
 											char *url = FCalloc( 2048, sizeof(char) );
 											
@@ -1794,7 +1794,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 													}
 													sqllib->FreeResult( sqllib, res );
 												}
-												SLIB->LibrarySQLDrop( SLIB, sqllib );
+												SLIB->DropDBConnection( SLIB, sqllib );
 												
 												FFree( qery );
 											}

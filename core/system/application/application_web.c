@@ -247,7 +247,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		if( appID > 0 && permissions != NULL )
 		{
 			char tmp[ 1024 ];
-			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+			SQLLibrary *sqllib  = l->GetDBConnection( l );
 			if( sqllib != NULL )
 			{
 				if( data == NULL )
@@ -343,7 +343,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		
 		if( qauthid != NULL )
 		{
-			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+			SQLLibrary *sqllib  = l->GetDBConnection( l );
 			if( sqllib != NULL )
 			{
 				char q[ 1024 ];
@@ -351,7 +351,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 
 				sqllib->QueryWithoutResults( sqllib, q );
 			
-				l->LibrarySQLDrop( l, sqllib );
+				l->DropDBConnection( l, sqllib );
 				
 				int size = sprintf( q, "{\"response\":\"success\"}" );
 				HttpAddTextContent( response, q );
@@ -431,7 +431,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 				uid = loggedSession->us_UserID;
 			}
 			
-			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+			SQLLibrary *sqllib = l->GetDBConnection( l );
 			
 			if( sqllib != NULL )
 			{
@@ -477,7 +477,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 							AppSessionDelete( las );
 						}
 					}
-					l->LibrarySQLDrop( l, sqllib );
+					l->DropDBConnection( l, sqllib );
 
 					HttpAddTextContent( response, respMsg );
 				}
@@ -547,7 +547,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		
 		if( appname != NULL && oldid != NULL )
 		{
-			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+			SQLLibrary *sqllib = l->GetDBConnection( l );
 			
 			if( sqllib != NULL )
 			{
@@ -623,7 +623,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 					HttpAddTextContent( response, respMsg );
 				}
 				
-				l->LibrarySQLDrop( l, sqllib );
+				l->DropDBConnection( l, sqllib );
 			}
 			else
 			{

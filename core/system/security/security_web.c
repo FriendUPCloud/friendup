@@ -129,7 +129,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 			char *tmpses = SessionIDGenerate();
 			if( tmpses != NULL )
 			{
-				SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+				SQLLibrary *sqllib = l->GetDBConnection( l );
 				if( sqllib != NULL )
 				{
 					char insertQuery[ 1024 ];
@@ -142,7 +142,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 					snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"token\":\"%s\"}", tmpses );
 					HttpAddTextContent( response, insertQuery );
 					
-					l->LibrarySQLDrop( l, sqllib );
+					l->DropDBConnection( l, sqllib );
 				}
 				FFree( tmpses );
 			}
@@ -202,7 +202,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 		
 		if( allowed == TRUE )
 		{
-			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+			SQLLibrary *sqllib = l->GetDBConnection( l );
 			if( sqllib != NULL )
 			{
 				char insertQuery[ 1024 ];
@@ -215,7 +215,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 				snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\"}" );
 				HttpAddTextContent( response, insertQuery );
 				
-				l->LibrarySQLDrop( l, sqllib );
+				l->DropDBConnection( l, sqllib );
 			}
 		}
 		else
@@ -298,7 +298,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 		
 		if( allowed == TRUE )
 		{
-			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+			SQLLibrary *sqllib = l->GetDBConnection( l );
 			if( sqllib != NULL )
 			{
 				char insertQuery[ 1024 ];
@@ -315,7 +315,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 				sqllib->QueryWithoutResults( sqllib, insertQuery );
 			
 				DEBUG("[SecurityWeb/createhost] sl query %s\n", insertQuery );
-				l->LibrarySQLDrop( l, sqllib );
+				l->DropDBConnection( l, sqllib );
 				
 				snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":\"%s\",\"status\":%lu}", host, status );
 
@@ -400,7 +400,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 		
 		if( allowed == TRUE )
 		{
-			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+			SQLLibrary *sqllib = l->GetDBConnection( l );
 			if( sqllib != NULL )
 			{
 				char insertQuery[ 1024 ];
@@ -409,7 +409,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 				sqllib->QueryWithoutResults( sqllib, insertQuery );
 			
 				DEBUG("[SecurityWeb/createhost] sl query %s\n", insertQuery );
-				l->LibrarySQLDrop( l, sqllib );
+				l->DropDBConnection( l, sqllib );
 				
 				snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":\"%s\"}", host );
 
@@ -484,7 +484,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 
 		if( allowed == TRUE )
 		{
-			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+			SQLLibrary *sqllib = l->GetDBConnection( l );
 			if( sqllib != NULL )
 			{
 				char insertQuery[ 1024 ];
@@ -502,7 +502,7 @@ Http* SecurityWebRequest( SystemBase *l, char **urlpath, Http* request, UserSess
 				sqllib->QueryWithoutResults( sqllib, insertQuery );
 
 				DEBUG("[SecurityWeb/deletehost] sl query %s\n", insertQuery );
-				l->LibrarySQLDrop( l, sqllib );
+				l->DropDBConnection( l, sqllib );
 				
 				snprintf( insertQuery, sizeof(insertQuery), "{\"result\":\"success\",\"host\":\"%s\"}", host );
 

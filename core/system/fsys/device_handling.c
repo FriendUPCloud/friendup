@@ -287,7 +287,7 @@ int UserGroupMountWorkgroupDrives( DeviceManager *dm, User *usr, UserSession *se
 	int error = 0;
 	SystemBase *l = (SystemBase *)dm->dm_SB;
 	// New way of finding type of device
-	SQLLibrary *sqllib = l->LibrarySQLGet( l );
+	SQLLibrary *sqllib = l->GetDBConnection( l );
 	
 	DEBUG("[UserGroupMountWorkgroupDrives] mount--------------------------------------\n");
 	
@@ -445,7 +445,7 @@ int UserGroupMountWorkgroupDrives( DeviceManager *dm, User *usr, UserSession *se
 		}
 		
 		DEBUG("[UserGroupMountWorkgroupDrives] Before dropping sql\n");
-		l->LibrarySQLDrop( l, sqllib );
+		l->DropDBConnection( l, sqllib );
 		
 		if( path != NULL ){ FFree( path ); }
 		if( name != NULL ){ FFree( name ); }
@@ -580,7 +580,7 @@ static inline int MountFSNoSubMount( DeviceManager *dm, struct TagItem *tl, File
 		int usingSentinel = 0;
 		
 		// New way of finding type of device
-		SQLLibrary *sqllib = l->LibrarySQLGet( l );
+		SQLLibrary *sqllib = l->GetDBConnection( l );
 		if( sqllib != NULL )
 		{
 			char temptext[ 612 ]; memset( temptext, 0, sizeof(temptext) );
@@ -672,7 +672,7 @@ AND f.Name = '%s'",
 						//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 						if( type != NULL ){ FFree( type );}
 						l->sl_Error = FSys_Error_SelectFail;
-						l->LibrarySQLDrop( l, sqllib );
+						l->DropDBConnection( l, sqllib );
 						return FSys_Error_SelectFail;
 					}
 					usingSentinel = 1;
@@ -683,7 +683,7 @@ AND f.Name = '%s'",
 					//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 					if( type != NULL ){ FFree( type );}
 					l->sl_Error = FSys_Error_SelectFail;
-					l->LibrarySQLDrop( l, sqllib );
+					l->DropDBConnection( l, sqllib );
 				
 					return FSys_Error_SelectFail;
 				}
@@ -763,7 +763,7 @@ AND f.Name = '%s'",
 			
 			sqllib->FreeResult( sqllib, res );
 
-			l->LibrarySQLDrop( l, sqllib );
+			l->DropDBConnection( l, sqllib );
 		}
 		
 		//
@@ -1247,7 +1247,7 @@ int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, cha
 		int usingSentinel = 0;
 		
 		// New way of finding type of device
-		SQLLibrary *sqllib = l->LibrarySQLGet( l );
+		SQLLibrary *sqllib = l->GetDBConnection( l );
 		if( sqllib != NULL )
 		{
 			char temptext[ 612 ]; memset( temptext, 0, sizeof(temptext) );
@@ -1339,7 +1339,7 @@ AND f.Name = '%s'",
 						//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 						if( type != NULL ){ FFree( type );}
 						l->sl_Error = FSys_Error_SelectFail;
-						l->LibrarySQLDrop( l, sqllib );
+						l->DropDBConnection( l, sqllib );
 						return FSys_Error_SelectFail;
 					}
 					usingSentinel = 1;
@@ -1350,7 +1350,7 @@ AND f.Name = '%s'",
 					//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 					if( type != NULL ){ FFree( type );}
 					l->sl_Error = FSys_Error_SelectFail;
-					l->LibrarySQLDrop( l, sqllib );
+					l->DropDBConnection( l, sqllib );
 				
 					return FSys_Error_SelectFail;
 				}
@@ -1431,7 +1431,7 @@ AND f.Name = '%s'",
 			
 			sqllib->FreeResult( sqllib, res );
 
-			l->LibrarySQLDrop( l, sqllib );
+			l->DropDBConnection( l, sqllib );
 		}
 		
 		//
@@ -2209,7 +2209,7 @@ ug.UserID = '%ld' \
 				int unmID = 0;
 				char *unmType = NULL;
 				
-				SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+				SQLLibrary *sqllib  = l->GetDBConnection( l );
 				if( sqllib != NULL )
 				{
 					void *res = sqllib->Query( sqllib, tmp );
@@ -2228,7 +2228,7 @@ ug.UserID = '%ld' \
 						}
 						sqllib->FreeResult( sqllib, res );
 					}
-					l->LibrarySQLDrop( l, sqllib );
+					l->DropDBConnection( l, sqllib );
 				}
 				
 				DEBUG("UNMID: %d Type: %s user ID %lu usrparID %lu isAdmin %d\n", unmID,unmType,usr->u_ID, userID, loggedSession->us_User->u_IsAdmin );
@@ -2408,7 +2408,7 @@ int DeviceMountDB( DeviceManager *dm, File *rootDev, FBOOL mount )
 	SystemBase *l = (SystemBase *)dm->dm_SB;
 	if( FRIEND_MUTEX_LOCK( &dm->dm_Mutex ) == 0 )
 	{
-		SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+		SQLLibrary *sqllib  = l->GetDBConnection( l );
 		
 		if( sqllib == NULL )
 		{
@@ -2507,7 +2507,7 @@ ug.UserID = '%ld' \
 		}
 		sqllib->FreeResult( sqllib, res );
 
-		l->LibrarySQLDrop( l, sqllib );
+		l->DropDBConnection( l, sqllib );
 	}
 	return 0;
 }
@@ -2535,7 +2535,7 @@ File *GetUserDeviceByFSysUserIDDevName( DeviceManager *dm, SQLLibrary *sqllib, F
 	if( sqllib == NULL )
 	{
 		gotGlobalSQL = FALSE;
-		sqllib = l->LibrarySQLGet( l );
+		sqllib = l->GetDBConnection( l );
 	}
 	
 	DEBUG("[GetUserDeviceByFSysUserIDDevName] start\n");
@@ -2596,7 +2596,7 @@ WHERE (`UserID`=%ld OR `GroupID` in( select GroupID from FUserToGroup where User
 		// if library came as parameter do not release it
 		if( gotGlobalSQL == FALSE )
 		{
-			l->LibrarySQLDrop( l, sqllib );
+			l->DropDBConnection( l, sqllib );
 		}
 		
 		if( tuser != NULL )
@@ -2942,7 +2942,7 @@ int RefreshUserDrives( DeviceManager *dm, UserSession *us, BufString *bs, char *
 	char *query = FCalloc( 1024, sizeof(char) );
 	if( query != NULL )
 	{
-		SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+		SQLLibrary *sqllib  = l->GetDBConnection( l );
 		if( sqllib != NULL )
 		{
 			sqllib->SNPrintF( sqllib, query, 1024, "\
@@ -3122,7 +3122,7 @@ ug.UserID = '%lu' \
 				BufStringAdd( bs, "]}" );
 			}
 			
-			l->LibrarySQLDrop( l, sqllib );
+			l->DropDBConnection( l, sqllib );
 		}
 		
 		DEBUG("[RefreshUserDrives] query released\n");
@@ -3190,7 +3190,7 @@ int DeviceRelease( DeviceManager *dm, File *rootDev )
 	SystemBase *l = (SystemBase *)dm->dm_SB;
 	int errRet = 0;
 	
-	SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+	SQLLibrary *sqllib  = l->GetDBConnection( l );
 	if( sqllib != NULL )
 	{
 		char temptext[ 256 ];
@@ -3210,7 +3210,7 @@ int DeviceRelease( DeviceManager *dm, File *rootDev )
 		{
 			errRet = 1;
 		}
-		l->LibrarySQLDrop( l, sqllib );
+		l->DropDBConnection( l, sqllib );
 	}
 	else
 	{
@@ -3234,7 +3234,7 @@ int DeviceUnMount( DeviceManager *dm, File *rootDev, User *usr, UserSession *ses
 	SystemBase *l = (SystemBase *)dm->dm_SB;
 	int errRet = 0;
 	
-	SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+	SQLLibrary *sqllib  = l->GetDBConnection( l );
 	if( sqllib != NULL )
 	{
 		char temptext[ 256 ];
@@ -3259,7 +3259,7 @@ int DeviceUnMount( DeviceManager *dm, File *rootDev, User *usr, UserSession *ses
 		{
 			errRet = 1;
 		}
-		l->LibrarySQLDrop( l, sqllib );
+		l->DropDBConnection( l, sqllib );
 	}
 	else
 	{

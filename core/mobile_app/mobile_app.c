@@ -29,7 +29,6 @@
 
 #define WEBSOCKET_SEND_QUEUE
 
-
 /**
  * Notify user
  *
