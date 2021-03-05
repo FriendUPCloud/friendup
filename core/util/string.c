@@ -265,6 +265,14 @@ void AddEscapeChars( char *str )
 
 FULONG UrlDecode( char* dst, const char* src )
 {
+	// Do not touch non-encoded strings
+	if( strstr( src, "%" ) == NULL )
+	{
+		int len = strlen( src );
+		memcpy( dst, src, len + 1 );
+		return len;
+	}
+	
 	char* org_dst = dst;
 	char ch, a, b;
 	do 
@@ -302,7 +310,16 @@ char *UrlDecodeToMem( const char* src )
 	{
 		return NULL;
 	}
+
+	// Do not touch non-encoded strings
+	if( strstr( src, "%" ) == NULL )
+	{
+		return StringDuplicate( src );
+	}
+
 	int size = strlen( src );
+	
+	
 	//char *dst = FMallocAlign( size + 1);
 	char *dst = FCallocAlign( size + 1, 1 );
 	if( dst == NULL )
@@ -936,7 +953,7 @@ char *EscapeStringToJSON( char *str )
 	if( strstr( str, "\\" ) != NULL )
 	{
 		int size = strlen( str );
-		char *ret = FMalloc( (size*2)+1 );
+		char *ret = FMalloc( (size<<1)+1 ); // * 2 == <<1
 		if( ret != NULL )
 		{
 			char *dst = ret;

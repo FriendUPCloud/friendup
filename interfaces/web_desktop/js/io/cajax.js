@@ -506,6 +506,8 @@ cAjax.prototype.setRequestHeader = function( type, data )
 // Just generate a random unique number
 cAjax.prototype.getRandNumbers = function()
 {
+    if( window.UniqueHash )
+    	return UniqueHash();
 	let i = '';
 	for( let a = 0; a < 2; a++ )
 		i += Math.floor( Math.random() * 1000 ) + '';
@@ -688,11 +690,10 @@ cAjax.prototype.send = function( data, callback )
 						reject( 'error' );
 						if( self.onload )
 						{
-							//console.log( 'Error...' );
+							console.log( 'Error...' );
 							self.onload( false, false );
 							self.destroy();
 						}
-
 						Friend.User.CheckServerConnection();
 					}
 				} ).catch( function( err )
@@ -701,7 +702,7 @@ cAjax.prototype.send = function( data, callback )
 					{
 						if( callback )
 						{
-							//console.log( 'Other error' );
+							console.log( 'Other error' );
 							callback( false, false );
 						}
 					}

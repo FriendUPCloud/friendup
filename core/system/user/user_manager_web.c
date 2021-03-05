@@ -558,6 +558,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	* @param password - (required) password
 	* @param fullname  - full user name
 	* @param email - user email
+	* @param timezone - timezone
 	* @param level - (required) groups to which user will be assigned, separated by comma
 	* @param workgroups - groups to which user will be assigned. Groups are passed as string, ID's separated by comma
 	* @return ok<!--separate-->{ "create": "sucess","id":"ID","uuid":"UUID" } when success, otherwise error with code
@@ -580,6 +581,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		char *email = NULL;
 		char *level = NULL;
 		char *workgroups = NULL;
+		char *timezone = NULL;
 		FBOOL userCreated = FALSE;
 		
 		DEBUG( "[UMWebRequest] Create user!!\n" );
@@ -654,6 +656,13 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						DEBUG( "[UMWebRequest] Update email %s!!\n", email );
 					}
 					
+					el = HttpGetPOSTParameter( request, "timezone" );
+					if( el != NULL )
+					{
+						timezone = UrlDecodeToMem( (char *)el->hme_Data );
+						DEBUG( "[UMWebRequest] Update timezone %s!!\n", timezone );
+					}
+					
 					User *locusr = UserNew();
 					if( locusr != NULL )
 					{
@@ -665,6 +674,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						locusr->u_Email = email;
 						email = NULL;
 						locusr->u_Password = usrpass;
+						locusr->u_Timezone = timezone;
 						usrpass = NULL;
 						userCreated = TRUE;
 						
@@ -1178,6 +1188,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	* @param password - new password
 	* @param fullname - new full user name
 	* @param email - new user email
+	* @param timezone - timezone
 	* @param level - new groups to which user will be assigned. Groups must be separated by comma sign
 	* @param workgroups - groups to which user will be assigned. Groups are passed as string, ID's separated by comma
 	* @param status - user status
@@ -1200,6 +1211,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		char *email = NULL;
 		char *level = NULL;
 		char *workgroups = NULL;
+		char *timezone = NULL;
 		FULONG id = 0;
 		FLONG status = -1;
 		FBOOL userFromSession = FALSE;
@@ -1352,6 +1364,18 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							FFree( logusr->u_Email );
 						}
 						logusr->u_Email = email;
+					}
+					
+					el = HttpGetPOSTParameter( request, "timezone" );
+					if( el != NULL )
+					{
+						timezone = UrlDecodeToMem( (char *)el->hme_Data );
+						DEBUG( "[UMWebRequest] Update timezone %s!!\n", timezone );
+						if( logusr->u_Timezone != NULL )
+						{
+							FFree( logusr->u_Timezone );
+						}
+						logusr->u_Timezone = timezone;
 					}
 			
 					el = HttpGetPOSTParameter( request, "level" );

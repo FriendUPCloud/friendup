@@ -245,7 +245,19 @@ if( isset( $argv ) && isset( $argv[1] ) )
 					}
 					if( strstr( $value, '%' ) || strstr( $value, '&' ) ) 
 					{
-						$value = rawurldecode( $value );
+						if( strstr( $value, '%2B' ) )
+						{
+							$value = explode( '%2B', $value );
+							foreach( $value as $k=>$v )
+							{
+								$value[ $k ] = rawurldecode( $v );
+							}
+							$value = implode( '%2B', $value );
+						}
+						else
+						{
+							$value = rawurldecode( $value );
+						}
 					}
 					if( $value && ( $value[0] == '{' || $value[0] == '[' ) )
 					{

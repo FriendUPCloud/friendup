@@ -513,6 +513,10 @@ Sections.accounts_users = function( cmd, extra )
 									{
 										ge( 'usEmail'    ).innerHTML = userInfo.Email;
 									}
+									if( ge( 'usMobile'    ) && userInfo.Mobile )
+									{
+										ge( 'usMobile'    ).innerHTML = userInfo.Mobile;
+									}
 									
 									if( Application.userId != userInfo.ID )
 									{
@@ -679,7 +683,7 @@ Sections.accounts_users = function( cmd, extra )
 									{
 										for( var a = 0; a < inps.length; a++ )
 										{
-											if( inps[ a ].id && [ 'usFullname', 'usUsername', 'usEmail', 'usLevel', 'usLanguage', 'usSetup' ].indexOf( inps[ a ].id ) >= 0 )
+											if( inps[ a ].id && [ 'usFullname', 'usUsername', 'usEmail', 'usMobile', 'usLevel', 'usLanguage', 'usSetup' ].indexOf( inps[ a ].id ) >= 0 )
 											{
 												( function( i ) {
 													i.onclick = function( e )
@@ -4734,6 +4738,7 @@ Sections.accounts_users = function( cmd, extra )
 							user_fullname        : ( userInfo.FullName ? userInfo.FullName : ( userInfo.ID ? 'n/a' : '' ) ),
 							user_username        : ( userInfo.Name ? userInfo.Name : ( userInfo.ID ? 'n/a' : '' ) ),
 							user_email           : ( userInfo.Email ? userInfo.Email : '' ),
+							user_mobile          : ( userInfo.Mobile ? userInfo.Mobile : '' ),
 							user_language        : ( languages ? languages : '' ),
 							user_setup           : ( setup ? setup : '' ),
 							user_locked_toggle   : ( ulocked   ? 'fa-toggle-on' : 'fa-toggle-off' ),
@@ -5375,6 +5380,7 @@ Sections.accounts_users = function( cmd, extra )
 						user_fullname        : '',
 						user_username        : '',
 						user_email           : '',
+						user_mobile          : '',
 						user_language        : languages,
 						user_setup           : setup,
 						user_locked_toggle   : 'fa-toggle-off',
@@ -5490,7 +5496,7 @@ Sections.accounts_users = function( cmd, extra )
 							{
 								for( var a = 0; a < inps.length; a++ )
 								{
-									if( inps[ a ].id && [ 'usFullname', 'usUsername', 'usEmail' ].indexOf( inps[ a ].id ) >= 0 )
+									if( inps[ a ].id && [ 'usFullname', 'usUsername', 'usEmail', 'usMobile' ].indexOf( inps[ a ].id ) >= 0 )
 									{
 										( function( i ) {
 											i.onclick = function( e )
@@ -9772,6 +9778,60 @@ function addUser( callback, username )
 	m.execute( 'useradd', args );
 }
 
+// Update additional fields stored for a Friend User, TODO: this should move to FriendCore user/update
+function updateUser( uid )
+{
+	//
+	
+	if( uid )
+	{
+		var args = { 
+			authid : Application.authId,
+			id     : uid,
+			fields : {}
+		};
+		
+		var mapping = {
+			usMobile : 'Mobile'
+		};
+		
+		for( var a in mapping )
+		{
+			var k = mapping[ a ];
+			
+			args[ 'fields' ][ k ] = Trim( ge( a ).value );
+		}
+		
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( ShowLog ) console.log( 'userupdate', { e:e, d:d, args:args } );
+		}
+		m.execute( 'userupdate', args );
+	}
+}
+
+// Delete additional fields stored for a Friend User, TODO: this should move to FriendCore user/delete
+function deleteUser( uid )
+{
+	//
+	
+	if( uid )
+	{
+		var args = { 
+			authid : Application.authId,
+			id     : uid
+		};
+		
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( ShowLog ) console.log( 'userdelete', { e:e, d:d, args:args } );
+		}
+		m.execute( 'userdelete', args );
+	}
+}
+
 // Save a user
 function saveUser( uid, cb, newuser )
 {	
@@ -9780,6 +9840,7 @@ function saveUser( uid, cb, newuser )
 	var mapping = {
 		usFullname : 'fullname',
 		usEmail    : 'email',
+		usMobile   : 'mobile',
 		usUsername : 'username',
 		usPassword : 'password',
 		usSetup    : 'setup'
@@ -10073,7 +10134,10 @@ function saveUser( uid, cb, newuser )
 						{
 							Notify( { title: i18n( 'i18n_user_updated' ), text: i18n( 'i18n_user_updated_succ' ) } );
 						}
-					
+						
+						// Update additional fields, TODO: temporary until FriendCore supports it ...
+						updateUser( uid );
+						
 						if( cb )
 						{
 							return cb( uid );
@@ -10175,6 +10239,9 @@ function removeUser( id, callback )
 			if( e == 'ok' )
 			{
 			    Notify( { title: i18n( 'i18n_user_delete' ), text: i18n( 'i18n_user_delete_succ' ) } );
+			    
+			    // Delete additional fields, TODO: temporary until FriendCore supports it ...
+			    deleteUser( id );
 			    
 			    // Refresh users list ...
 			    

@@ -119,5 +119,6 @@ i18n_no_workgroups                    : Du er ikke medlem av noen arbeidsgruppe.
 # Misc
 
 i18n_weekly_events                    : Ukens hendelser
+i18n_monthly_events                   : Månedens hendelser
 i18n_expired_events                   : Utgåtte hendelser
 i18n_you                              : Deg

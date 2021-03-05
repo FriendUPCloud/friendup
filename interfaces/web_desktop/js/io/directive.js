@@ -12,6 +12,11 @@ var _appNum = 1;
 
 var _executionQueue = {};
 
+// TODO: Both ExecuteApplication and ExecuteJSXByPath are using a terribly
+//       messy implementation of flags, args etc. This must be refactored
+//       with a function that parses flags and adds args to flags list!
+//       Mucho importante!
+
 function RemoveFromExecutionQueue( app )
 {
 	try
@@ -32,7 +37,7 @@ function RemoveFromExecutionQueue( app )
 }
 
 // Load a javascript application into a sandbox
-function ExecuteApplication( app, args, callback, retries )
+function ExecuteApplication( app, args, callback, retries, flags )
 {
 	// Just nothing.
 	if( !app ) return;
@@ -43,7 +48,7 @@ function ExecuteApplication( app, args, callback, retries )
 		if( retries == 3 ) return console.log( 'Could not execute app: ' + app );
 		loadApplicationBasics( function()
 		{
-			ExecuteApplication( app, args, callback, !retries ? 1 : retries++ );
+			ExecuteApplication( app, args, callback, !retries ? 3 : retries++, flags );
 		} );
 	}
 	var appName = app;
@@ -52,6 +57,21 @@ function ExecuteApplication( app, args, callback, retries )
 		if( app.indexOf( '/' ) > 0 )
 			appName = app.split( '/' ).pop();
 		else appName = app.split( ':' ).pop();
+	}
+	
+	// Match silent
+	if( !flags ) flags = {};
+	if( flags.openSilent !== true )
+    	flags.openSilent = false;
+	
+	if( args )
+	{
+		if( args.indexOf( 'silent ' ) > 0 || args.indexOf( ' silent' ) > 0 || args == 'silent' )
+		{
+			args = args.split( 'silent' ).join( '' );
+			args = args.split( '  ' ).join( ' ' );
+			flags.openSilent = true;
+		}
 	}
 	
 	// You need to wait with opening apps until they are loaded by app name
@@ -169,6 +189,9 @@ function ExecuteApplication( app, args, callback, retries )
 			{
 				case 'workspace':
 					workspace = parseInt( pair[1] );
+					if( !flags ) flags = {};
+					if( !flags.workspace )
+						flags.workspace = workspace;
 					if( !workspace ) workspace = 0;
 					break;
 				default:
@@ -185,7 +208,7 @@ function ExecuteApplication( app, args, callback, retries )
 	{
 		// Remove from execution queue
 		RemoveFromExecutionQueue( appName );
-		return ExecuteJSXByPath( app, args, callback, undefined );
+		return ExecuteJSXByPath( app, args, callback, undefined, flags );
 	}
 	else if( app.indexOf( ':' ) > 0 )
 	{
@@ -338,21 +361,21 @@ function ExecuteApplication( app, args, callback, retries )
 			}
 
 			// Correct filepath can be a resource file (i.e. in a repository) or a local file
-			var filepath = '/system.library/module/?module=system&command=resource&authid=' + conf.AuthID + '&file=' + app + '/';
+			let filepath = '/system.library/module/?module=system&command=resource&authid=' + conf.AuthID + '&file=' + app + '/';
 			// Here's the local file..
 			if( conf && conf.ConfFilename && conf.ConfFilename.indexOf( 'resources/webclient/apps' ) >= 0 )
 				filepath = '/webclient/apps/' + app + '/';
 
 			// Security domain
-			var applicationId = md5( app + '-' + ( new Date() ).getTime() );
+			let applicationId = ( flags && flags.uniqueId ) ? flags.uniqueId : UniqueHash();
 			SubSubDomains.reserveSubSubDomain( applicationId );
-			var sdomain = GetDomainFromConf( conf, applicationId );
+			let sdomain = GetDomainFromConf( conf, applicationId );
 			
 			// Open the Dormant drive of the application
 			var drive = null;
 			if( conf.DormantDisc )
 			{
-				var options =
+				let options =
 				{
 					name: conf.DormantDisc.name ? conf.DormantDisc.name : app,
 					type: 'applicationDisc',
@@ -367,7 +390,7 @@ function ExecuteApplication( app, args, callback, retries )
 			}
 			
 			// Load application into a sandboxed iframe
-			var ifr = document.createElement( 'iframe' );
+			let ifr = document.createElement( 'iframe' );
 			// Only sandbox when it's on another domain
 			if( document.location.href.indexOf( sdomain ) != 0 )
 				ifr.setAttribute( 'sandbox', DEFAULT_SANDBOX_ATTRIBUTES );
@@ -392,12 +415,12 @@ function ExecuteApplication( app, args, callback, retries )
 				{
 					// Remove blocker
 					RemoveFromExecutionQueue( appName );
-					return ExecuteJSXByPath( conf.Init, args, callback, conf );
+					return ExecuteJSXByPath( conf.Init, args, callback, conf, flags );
 				}
 				// TODO: Check privileges of one app to launch another!
 				else
 				{
-					var sid = Workspace.sessionId && Workspace.sessionId != 'undefined' ?
+					let sid = Workspace.sessionId && Workspace.sessionId != 'undefined' ?
 						Workspace.sessionId : ( Workspace.conf && Workspace.conf.authid ? Workspace.conf.authId : '');
 					
 					// Quicker ajax implementation
@@ -425,6 +448,7 @@ function ExecuteApplication( app, args, callback, retries )
 			ifr.username = Workspace.loginUsername;
 			ifr.userLevel = Workspace.userLevel;
 			ifr.workspace = workspace;
+			ifr.opensilent = flags && flags.openSilent ? true : false;
 			ifr.applicationId = applicationId;
 			ifr.workspaceMode = Workspace.workspacemode;
 			ifr.id = 'sandbox_' + ifr.applicationId;
@@ -637,6 +661,12 @@ function ExecuteApplication( app, args, callback, retries )
 					o.alternateLanguage = conf.language.spokenAlternate;
 				}
 				this.contentWindow.postMessage( JSON.stringify( o ), '*' );
+			}
+
+			// Attach flags to iframe if they exist
+			if( flags )
+			{
+				ifr.flags = flags;
 			}
 
 			// Add application iframe to body
@@ -1062,15 +1092,80 @@ function ExecuteApplicationActivation( app, win, permissions, reactivation )
 }
 
 // Do it by path!
-function ExecuteJSXByPath( path, args, callback, conf )
+function ExecuteJSXByPath( path, args, callback, conf, flags )
 {
 	if( !path ) return;
+	
+	// Strip arguments
+	let ind = path.indexOf( '.jsx' );
+	path = path.substr( 0, ind + 4 );
+	
+	// Get app
 	var app = path.split( ':' )[1];
 	if( app.indexOf( '/' ) > 0 )
 	{
 		app = app.split( '/' );
 		app = app[app.length-1];
 	}
+	
+	// Strip arguments and place in args
+	if( app.indexOf( ' ' ) > 0 )
+	{
+		app = app.split( ' ' );
+		if( !args )
+		{
+			args = app;
+			let out = [];
+			for( let i = 1; i < args.length; i++ )
+				out.push( args[i] );
+			args = out.join( ' ' );
+		}
+		app = app[0];
+	}
+	
+	// Filter arguments
+	if( args )
+	{
+		args = args.split( ' ' );
+		let aout = [];
+		for( var a = 0; a < args.length; a++ )
+		{
+			var pair = args[a].split( '=' );
+			if( pair.length > 1 )
+			{
+				switch( pair[0] )
+				{
+					case 'workspace':
+						flags.workspace = parseInt( pair[1] ) - 1;
+						if( flags.workspace < 0 ) 
+							flags.workspace = false;
+						break;
+					default:
+						aout.push( args[a] );
+						break;
+				}
+			}
+			else aout.push( args[a] );
+		}
+		args = aout.join( ' ' );
+	}
+	
+	// Match silent
+	if( args )
+	{
+		if( args.indexOf( 'silent ' ) > 0 || args.indexOf( ' silent' ) > 0 || args == 'silent' )
+		{
+			args = args.split( 'silent' ).join( '' );
+			args = args.split( '  ' ).join( ' ' );
+			if( !flags ) flags = {};
+			flags.openSilent = true;
+		}
+	}
+	else if( flags && !flags.openSilent )
+	{
+		flags.openSilent = false;
+	}
+	
 	var f = new File( path );
 	f.onLoad = function( data )
 	{
@@ -1085,7 +1180,7 @@ function ExecuteJSXByPath( path, args, callback, conf )
 						callback();
 					// Clean blocker
 					RemoveFromExecutionQueue( app );
-				}, conf ? conf.ConfFilename : false );
+				}, conf ? conf.ConfFilename : false, flags );
 				// Uncommented running callback, it is already running in executeJSX!
 				// Perhaps 'r' should tell us if it was run, and then run it if not?
 				//if( callback ) callback( true );
@@ -1103,7 +1198,7 @@ function ExecuteJSXByPath( path, args, callback, conf )
 	f.load();
 }
 
-function ExecuteJSX( data, app, args, path, callback, conf )
+function ExecuteJSX( data, app, args, path, callback, conf, flags )
 {
 	if( data.indexOf( '{' ) < 0 ) return;
 
@@ -1149,7 +1244,7 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 			// Special case, we have a conf
 			var sid = false;
 			var confObject = false;
-			var applicationId = app + '-' + ( new Date() ).getTime();
+			var applicationId = ( flags && flags.uniqueId ) ? flags.uniqueId : UniqueHash();
 			if( conf )
 			{
 				var dom = GetDomainFromConf( conf, applicationId );
@@ -1198,12 +1293,15 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 			// Register name and ID
 			ifr.applicationName = app;
 			ifr.applicationNumber = _appNum++;
-			ifr.applicationId = app + '-' + (new Date()).getTime();
+			ifr.applicationId = applicationId;
 			ifr.workspaceMode = Workspace.workspacemode;
 			ifr.userId = Workspace.userId;
 			ifr.userLevel = Workspace.userLevel;
 			ifr.username = Workspace.loginUsername;
+			ifr.workspace = flags && flags.workspace ? flags.workspace : 0;
+			ifr.opensilent = flags && flags.openSilent == true ? true : false;
 			ifr.applicationType = 'jsx';
+			
 			if( sid ) 
 				ifr.sessionId = Workspace.sessionId; // JSX has sessionid
 			else 

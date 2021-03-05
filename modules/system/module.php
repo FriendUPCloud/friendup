@@ -234,7 +234,7 @@ if( isset( $args->command ) )
 				'setfilepublic', 'setfileprivate', 'zip', 'unzip', 'volumeinfo',
 				'securitydomains', 'systemmail', 'removebookmark', 'addbookmark',
 				'getbookmarks', 'listapplicationdocs', 'finddocumentation', 'userinfoget',
-				'userinfoset',  'useradd', 'checkuserbyname', 'userbetamail', 'listbetausers', 'listconnectedusers',
+				'userinfoset',  'useradd', 'userupdate', 'userdelete', 'checkuserbyname', 'userbetamail', 'listbetausers', 'listconnectedusers',
 				'usersetup', 'usersetupadd', 'usersetupapply', 'usersetupsave', 'usersetupdelete',
 				'usersetupget', 'userwallpaperset', 'workgroups', 'workgroupadd', 'workgroupupdate', 'workgroupdelete',
 				'workgroupget', 'setsetting', 'getsetting', 'getavatar', 'listlibraries', 'listmodules',
@@ -499,6 +499,31 @@ if( isset( $args->command ) )
 			require( 'modules/system/include/savefile.php' );
 			break;
 
+		// Get timeszones in a json format
+		case 'gettimezones':
+			require( 'modules/system/include/gettimezones.php' );
+			break;
+		
+		// Save contact information
+		case 'setcontact':
+			require( 'modules/system/include/setcontact.php' );
+			break;
+		
+		// Delete a contact by contact id
+		case 'deletecontact':
+			require( 'modules/system/include/deletecontact.php' );
+			break;
+		
+		// Get single contact information
+		case 'getcontact':
+			require( 'modules/system/include/getcontact.php' );
+			break;
+
+		// Get contacts
+		case 'getcontacts':
+			require( 'modules/system/include/getcontacts.php' );
+			break;
+
 		// Likes
 		case 'like':
 			require( 'modules/system/include/like.php' );
@@ -666,6 +691,10 @@ if( isset( $args->command ) )
 		case 'setup':
 			//include( 'modules/system/include/dbchecker.php' );
 			die( 'ok' );
+			break;
+		// Get localized geographical information
+		case 'geoinfo':
+			include( 'modules/system/include/geoinfo.php' );
 			break;
 		case 'languages':
 			include( 'modules/system/include/languages.php' );
@@ -1528,6 +1557,12 @@ if( isset( $args->command ) )
 		// TODO: Permissions! ONly admin can do this!
 		case 'useradd':
 			require( 'modules/system/include/useradd.php' );
+			break;
+		case 'userupdate':
+			require( 'modules/system/include/userupdate.php' );
+			break;
+		case 'userdelete':
+			require( 'modules/system/include/userdelete.php' );
 			break;
 		//
 		case 'checkuserbyname':

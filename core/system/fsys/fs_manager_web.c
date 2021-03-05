@@ -648,6 +648,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					char *paths = NULL;
 					el = HttpGetPOSTParameter( request, "paths" );
 					if( el == NULL ) el = HashmapGet( request->http_Query, "paths" );
+					
 					if( el != NULL ) 
 					{
 						paths = (char *)el->hme_Data;
@@ -656,10 +657,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						
 						// Get JSON structure
 						JSONData *j = JSONParse( decoded, strlen( decoded ) );
-						
-						free( decoded );
 					
-						if( j->type && j->type == (JSON_TYPE_ARRAY|JSON_TYPE_ARRAY_LIST) )
+						if( j->type && ( j->type == JSON_TYPE_ARRAY || j->type == JSON_TYPE_ARRAY_LIST ) )
 						{
 							// Build SQL query
 							BufString *sql = BufStringNew();
@@ -761,7 +760,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							{
 								// TODO: Add error code
 								char dictmsgbuf[ 256 ];
-								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"No shared files in directory\", \"code\":\"-1\" }" );
+								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"No shared files in directory\",\"instance\":\"1\",\"code\":\"-1\"}" );
 								HttpAddTextContent( response, dictmsgbuf );
 							}
 							BufStringDelete( result );
@@ -770,18 +769,19 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						{
 							// TODO: Add error code
 							char dictmsgbuf[ 256 ];
-							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"Paths not given in array format\", \"code\":\"-1\" }" );
+							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"Paths not given in array format\",\"instance\":\"2\",\"code\":\"-1\"}" );
 							HttpAddTextContent( response, dictmsgbuf );
 						}
 					
 						JSONFree( j );
+						free( decoded );
 					}
 					// Fail
 					else
 					{
 						// TODO: Add error code
 						char dictmsgbuf[ 256 ];
-						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"Args not found\", \"code\":\"-1\" }" );
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{\"response\":\"Args not found\",\"code\":\"-1\"}" );
 						HttpAddTextContent( response, dictmsgbuf );
 					}
 				}

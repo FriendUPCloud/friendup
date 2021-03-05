@@ -42,10 +42,13 @@ if( !$mimeFound )
 
 // Fetch installed applications
 $installed = $SqlDatabase->fetchObjects( 'SELECT * FROM FApplication WHERE UserID=\'' . $User->ID . '\'' );
-$byName = [];
-foreach( $installed as $inst )
+if( $installed )
 {
-	$byName[ $inst->Name ] = $inst;
+    $byName = [];
+    foreach( $installed as $inst )
+    {
+	    $byName[ $inst->Name ] = $inst;
+    }
 }
 unset( $installed );
 
