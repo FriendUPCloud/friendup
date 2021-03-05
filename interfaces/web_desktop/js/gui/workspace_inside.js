@@ -10168,8 +10168,12 @@ function loadApplicationBasics( callback )
 		else _applicationBasics.css = data;
 	}
 	sb_.load();
+	
 	// Preload basic scripts
-	let c_ = new File( '/system.library/module/?module=system&command=theme&args=%7B%22theme%22%3A%22friendup12%22%7D&sessionid=' + Workspace.sessionId );
+	let c_ = new File( '/system.library/module/' );
+	c_.addVar( 'command', 'theme' );
+	c_.addVar( 'module', 'system' );
+	c_.addVar( 'args', '%7B%22theme%22%3A%22friendup12%22%7D' );
 	c_.onLoad = function( data )
 	{
 		if( _applicationBasics.css )

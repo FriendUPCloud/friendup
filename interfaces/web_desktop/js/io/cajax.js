@@ -437,7 +437,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		this.openFunc = function() { 
 			if( window.Workspace )
 				self.addVar( 'sessionid', Workspace.sessionId );
-			self.proxy.open( self.lastOptions.method, self.lastOptions.url, self.lastOptions.syncing ); 
+			self.proxy.open( self.lastOptions.method ? self.lastOptions.method : 'POST', self.lastOptions.url, self.lastOptions.syncing ); 
 		};
 	}
 	else
