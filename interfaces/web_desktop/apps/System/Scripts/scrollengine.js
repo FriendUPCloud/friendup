@@ -218,7 +218,7 @@ scrollengine = {
 		console.log( 'pageAbove init ... ' );
 		
 		// Page above
-		this.aTop = Math.floor( ( this.scrollTop - this.viewHeight ) / this.config.rowHeight ) * this.config.rowHeight;
+		this.aTop = Math.floor( ( this.scrollTop - this.viewHeight ) / this.config.rowHeight ) * ( this.config.rowHeight - 1 );
         let aa = document.createElement( 'div' );
         aa.id = 'pageAbove';
         this.counted = 0;
@@ -260,7 +260,7 @@ scrollengine = {
         //aa.style.position = 'absolute';
         //aa.style.width = '100%';
         aa.style.top = this.aTop + 'px';
-        aa.style.height = ( counted ) * this.config.rowHeight + 'px';
+        aa.style.height = ( counted + 1 ) * this.config.rowHeight + 'px';
         this.list.replaceChild( aa, this.elements.pageAbove );
         this.elements.pageAbove = aa;
 		
