@@ -5186,7 +5186,10 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								
 								let obj = { start: ret.start, limit: ret.limit };
 								
-								console.log( obj );
+								//console.log( obj );
+								
+								// TODO: Reset count based on search ...
+								// TODO: Once input field is empty for search list back to default ...
 								
 								// Only run the request when server is ready, one job at a time ... 
 								
@@ -6984,7 +6987,7 @@ function getUserlist( callback, obj, limit )
 		return;
 	}
 	
-	console.log( 'getUserlist( callback, obj, '+limit+' )' );
+	//console.log( 'getUserlist( callback, obj, '+limit+' )' );
 	
 	// Get the user list
 	var m = new Module( 'system' );

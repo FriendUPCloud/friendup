@@ -249,8 +249,8 @@ scrollengine = {
             if( b < 0 ) continue;
             let row = this.createDiv( false, aa, 'RowElement Line ' + b, 'Line ' + b );
             row.style.top = c + 'px';
-            row.style.background = 'grey';
-			row.style.borderBottom = '1px solid black';
+            //row.style.background = 'grey';
+			//row.style.borderBottom = '1px solid black';
             
             lines.push( b );
             
@@ -285,7 +285,7 @@ scrollengine = {
 	
 	pageMiddle : function (  )
 	{
-		console.log( this.config.rowHeight );
+		//console.log( this.config.rowHeight );
 		
 		// Page middle
 		this.dTop = ( Math.floor( this.scrollTop / this.config.rowHeight ) * this.config.rowHeight );
@@ -365,8 +365,8 @@ scrollengine = {
 			if( b >= this.length( this.myArray ) ) break;
 			let row = this.createDiv( false, bb, 'RowElement Line ' + b, 'Line ' + b );
 			row.style.top = c + 'px';
-			row.style.background = 'green';
-			row.style.borderBottom = '1px solid black';
+			//row.style.background = 'green';
+			//row.style.borderBottom = '1px solid black';
             
 			lines.push( b );
 			
@@ -556,13 +556,16 @@ scrollengine = {
 			redraw = true;
 		}
 		
-		console.log( "\r\n" );
-		console.log( '[1] '+scrollTop+' > '+pm.offsetTop+' + '+pm.offsetHeight+' | scrollTop > pm.offsetTop + pm.offsetHeight '+(scrollTop>pm.offsetTop+pm.offsetHeight?'(true)':'(false)') );
-		console.log( '[2] '+scrollTop+' + '+viewHeight+' < '+pm.offsetTop+' | scrollTop + viewHeight < pm.offsetTop '+(scrollTop+viewHeight<pm.offsetTop?'(true)':'(false)') );
-		console.log( '[3] '+scrollTop+' < '+viewHeight+' | scrollTop < viewHeight '+(scrollTop<viewHeight?'(true)':'(false)') );
-		//console.log( '[3] '+scrollTop+' > '+viewHeight+' | scrollTop > viewHeight '+(scrollTop>viewHeight?'(true)':'(false)') );
-		console.log( '[4] '+(force?true:false)+' === '+true+' | force === true '+(force===true?'(true)':'(false)') );
-		console.log( "\r\n" );
+		if( this.debug )
+		{
+			console.log( "\r\n" );
+			console.log( '[1] '+scrollTop+' > '+pm.offsetTop+' + '+pm.offsetHeight+' | scrollTop > pm.offsetTop + pm.offsetHeight '+(scrollTop>pm.offsetTop+pm.offsetHeight?'(true)':'(false)') );
+			console.log( '[2] '+scrollTop+' + '+viewHeight+' < '+pm.offsetTop+' | scrollTop + viewHeight < pm.offsetTop '+(scrollTop+viewHeight<pm.offsetTop?'(true)':'(false)') );
+			console.log( '[3] '+scrollTop+' < '+viewHeight+' | scrollTop < viewHeight '+(scrollTop<viewHeight?'(true)':'(false)') );
+			//console.log( '[3] '+scrollTop+' > '+viewHeight+' | scrollTop > viewHeight '+(scrollTop>viewHeight?'(true)':'(false)') );
+			console.log( '[4] '+(force?true:false)+' === '+true+' | force === true '+(force===true?'(true)':'(false)') );
+			console.log( "\r\n" );
+		}
 		
 		if( redraw )
 		{
@@ -590,8 +593,11 @@ scrollengine = {
 		    
 		    this.dataStart = this.rowPosition;
 		    
-		    console.log( '[5] '+scrollTop+' > '+viewHeight+' | scrollTop > viewHeight '+(scrollTop>viewHeight?'(true)':'(false)') );
-	    	console.log( "\r\n" );
+		    if( this.debug )
+		    {
+		    	console.log( '[5] '+scrollTop+' > '+viewHeight+' | scrollTop > viewHeight '+(scrollTop>viewHeight?'(true)':'(false)') );
+	    		console.log( "\r\n" );
+	    	}
 		    
 		    // Page above
 		    if( scrollTop > viewHeight )
@@ -609,18 +615,23 @@ scrollengine = {
 		    // Page below
 		    let bbb = this.pageBelow();
 		    
-		    console.log( '[4] refresh', {
-		    	dataStart    : { a: this.dataStart, b: this.dataPrevStart },
-		    	dataLimit    : { a: this.dataLimit, b: this.dataPrevLimit },
-		    	rowCount     : this.rowCount,
-		    	leftToScroll : leftToScroll,
-		    	counted      : this.counted,
-		    	total        : this.total
-		    } );
+		    if( 1==1 || this.debug )
+		    {
+				console.log( '[4] refresh', {
+					dataStart    : { a: this.dataStart, b: this.dataPrevStart },
+					dataLimit    : { a: this.dataLimit, b: this.dataPrevLimit },
+					rowCount     : this.rowCount,
+					leftToScroll : leftToScroll,
+					counted      : this.counted,
+					total        : this.total
+				} );
+		    }
+		    
+		    // TODO: Find out why 1 is missing when scrolling between page above, middle, below ...
 		    
 		    if( /*this.total > this.counted && */( this.dataStart != this.dataPrevStart || this.dataLimit != this.dataPrevLimit ) )
 		    {
-		    	console.log( 'FETCH!!!! ' );
+		    	if( this.debug ) console.log( 'FETCH!!!! ' );
 		    	
 		    	if( this.callback )
 		    	{
@@ -636,10 +647,10 @@ scrollengine = {
 		    	//return;
 		    	
 		    }
-		    console.log( { ddd:(ddd?ddd:false), bbb:(bbb?bbb:false) } );
+		    if( this.debug ) console.log( { ddd:(ddd?ddd:false), bbb:(bbb?bbb:false) } );
 		}
 		// TODO: What happened to dd and bb here???
-		console.log( this.counted+' >= '+this.length( this.myArray ), { ddd:(ddd?ddd:false), bbb:(bbb?bb:false) } );
+		if( this.debug ) console.log( this.counted+' >= '+this.length( this.myArray ), { ddd:(ddd?ddd:false), bbb:(bbb?bb:false) } );
 		// If we counted the whole list, then
 		if( this.counted >= this.length( this.myArray ) && ddd && bbb )
 		{
