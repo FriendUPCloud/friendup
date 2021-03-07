@@ -5176,6 +5176,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							
 							//scrollengine.set( false );
 							
+							UsersSettings( 'reset', 'all' );
+							
 							scrollengine.init( ge( 'ListUsersInner' ), userList, userList['Count'], function( ret ) 
 							{
 								
