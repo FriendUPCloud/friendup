@@ -217,8 +217,12 @@ scrollengine = {
 		
 		console.log( 'pageAbove init ... ' );
 		
+		let d = this.elements.pageMiddle;
+		
+		// TODO: Put this one offsetheight just like pageBelow ...
+		
 		// Page above
-		this.aTop = Math.floor( ( this.scrollTop - this.viewHeight ) / this.config.rowHeight ) * this.config.rowHeight;
+		this.aTop = ( Math.floor( ( this.scrollTop - this.viewHeight ) / this.config.rowHeight ) * this.config.rowHeight ) - this.config.rowHeight;
         let aa = document.createElement( 'div' );
         aa.id = 'pageAbove';
         this.counted = 0;
@@ -284,7 +288,7 @@ scrollengine = {
 		console.log( this.config.rowHeight );
 		
 		// Page middle
-		this.dTop = Math.floor( this.scrollTop / this.config.rowHeight ) * this.config.rowHeight;
+		this.dTop = ( Math.floor( this.scrollTop / this.config.rowHeight ) * this.config.rowHeight );
 		let d = document.createElement( 'div' );
 		d.id = 'pageMiddle';
 		this.ex += this.rowPosition + ' pos ' + this.rowCount + ' count ' + "\r\n<br>";
