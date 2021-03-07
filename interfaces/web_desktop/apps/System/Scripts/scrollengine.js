@@ -260,7 +260,7 @@ scrollengine = {
         //aa.style.position = 'absolute';
         //aa.style.width = '100%';
         aa.style.top = this.aTop + 'px';
-        aa.style.height = ( counted + 1 ) * this.config.rowHeight + 'px';
+        aa.style.height = ( counted ) * this.config.rowHeight + 'px';
         this.list.replaceChild( aa, this.elements.pageAbove );
         this.elements.pageAbove = aa;
 		
@@ -602,8 +602,6 @@ scrollengine = {
 			
 		    // Page below
 		    let bbb = this.pageBelow();
-		    
-		    
 		    
 		    console.log( '[4] refresh', {
 		    	dataStart    : { a: this.dataStart, b: this.dataPrevStart },
