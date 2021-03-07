@@ -21,7 +21,7 @@ var UsersSettings = function ( setting, set )
 	var listed      = ( 0                            );
 	var total       = ( 0                            );
 	var startlimit  = ( 0                            );
-	var maxlimit    = ( 30                           );
+	var maxlimit    = ( /*30*/9999                   );
 	var minlength   = ( 1							 );
 	var intervals   = ( 50                           );
 	var limit       = ( startlimit + ', ' + maxlimit );
@@ -5216,7 +5216,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							
 						}
 					
-					}, false, '0, ' + UsersSettings( 'maxlimit' ) );
+					}, false, '0, 60'/* + UsersSettings( 'maxlimit' )*/ );
 					
 					return;
 					
