@@ -43,23 +43,10 @@ scrollengine = {
 	rowPosition : 0,
     rowCount    : 0,
 	
-	startPosition : 0,
-	
 	dataStart   : null,
 	dataLimit   : null,
 	dataPrevStart : null,
 	dataPrevLimit : null,
-	
-	rowPrevPosition : null,
-	
-	newStart : null,
-	newLimit : null,
-	
-	pageMiddleDataStart : null,
-	pageMiddleDataLimit : null,
-	
-	pageMiddleFirstLine : null,
-	pageMiddleLastLine : null,
 	
 	counted : 0,
 	
@@ -223,8 +210,6 @@ scrollengine = {
         this.counted = 0;
         let counted = 0;
         
-        // TODO: Look at this with more data in the db ...
-        
         // Adjust database fetch calculator
         this.dataStart = this.rowPosition - this.rowCount;
         this.dataLimit = this.rowCount;
@@ -322,16 +307,11 @@ scrollengine = {
 		this.list.replaceChild( d, this.elements.pageMiddle );
 		this.elements.pageMiddle = d;
 		
-		this.startPosition = this.rowPosition;
-		
-		this.dataStart = this.rowPosition;
-		
 		console.log( '[2] pageMiddle', { 
 			startline     : (startline?startline:0), 
 			lastline      : (lastline?lastline:0), 
 			lines         : lines, 
 			rowPosition   : this.rowPosition,
-			startPosition : this.startPosition,
 			counted       : (counted?(counted+1):0), 
 			dataStart     : this.dataStart, 
 			dataLimit     : this.dataLimit, 
@@ -408,8 +388,6 @@ scrollengine = {
 	distribute: function( data, start, total )
 	{
 		// TODO: Update myArray if the limit has changed ...
-		
-		//console.log( 'this.myArray.length = ' + this.myArray.length );
 		
 		// Update scroll list array with new data from JSON array
 		for( let a = 0; a < this.length( data ); a++ )
@@ -491,9 +469,7 @@ scrollengine = {
 		// Store previous values for comparison
 		this.dataPrevStart = this.dataStart;
 		this.dataPrevLimit = this.dataLimit;
-		
-		//this.rowPrevPosition = ( this.rowPosition == this.rowPrevPosition ? this.rowPrevPosition : this.rowPosition );
-		
+				
 		// Reset database fetch calculator
 		this.dataStart = 0;
         this.dataLimit = 0;
@@ -592,6 +568,8 @@ scrollengine = {
 		    this.rowPosition = Math.floor( scrollTop / this.config.rowHeight );
 		    this.rowCount    = Math.floor( viewHeight / this.config.rowHeight ) + 1;
 		    
+		    this.dataStart = this.rowPosition;
+		    
 		    console.log( '[5] '+scrollTop+' > '+viewHeight+' | scrollTop > viewHeight '+(scrollTop>viewHeight?'(true)':'(false)') );
 	    	console.log( "\r\n" );
 		    
@@ -609,8 +587,6 @@ scrollengine = {
 		    
 		    
 		    
-		    // TODO: GET PAGE MIDDLE DATA ... IF UNDER OR OVER FETCH ...
-		    
 		    console.log( '[4] refresh', {
 		    	dataStart    : { a: this.dataStart, b: this.dataPrevStart },
 		    	dataLimit    : { a: this.dataLimit, b: this.dataPrevLimit },
@@ -620,77 +596,16 @@ scrollengine = {
 		    	total        : this.total
 		    } );
 		    
-		    // TODO: If we reached limit don't fetch ...
-		    
-		    //console.log( 'this.dataPrevStart: '+this.dataPrevStart+' != this.dataStart: '+this.dataStart+'('+(this.dataPrevStart-this.dataStart)+')' );
-			//console.log( 'this.dataPrevLimit: '+this.dataPrevLimit+' != this.dataLimit: '+this.dataLimit+'('+(this.dataPrevLimit-this.dataLimit)+')' );	    
-		    //if( ( this.dataPrevStart != this.dataStart && (this.dataPrevStart-this.dataStart) >= this.rowCount || (this.dataStart-this.dataPrevStart) >= this.rowCount ) 
-		    //||  ( this.dataPrevLimit != this.dataLimit && (this.dataPrevLimit-this.dataLimit) >= this.rowCount || (this.dataLimit-this.dataPrevLimit) >= this.rowCount ) )
-		    //if( this.dataPrevStart != this.dataStart || this.dataPrevLimit != this.dataLimit )
-		    //if( this.pageMiddleDataStart != this.pageMiddleFirstLine || this.pageMiddleDataLimit != this.pageMiddleLastLine )
-		    //if(  ( this.pageMiddleDataStart == null && this.pageMiddleDataLimit ) 
-		    //|| ( ( this.pageMiddleFirstLine - this.pageMiddleDataStart ) >= ( this.rowCount / 2 ) || ( this.pageMiddleDataStart - this.pageMiddleFirstLine ) >= ( this.rowCount / 2 ) ) 
-		    //|| ( ( this.pageMiddleLastLine - this.pageMiddleDataLimit ) >= ( this.rowCount / 2 ) || (  this.pageMiddleDataLimit - this.pageMiddleLastLine ) >= ( this.rowCount / 2 ) ) 
-		    //)
 		    if( /*this.total > this.counted && */( this.dataStart != this.dataPrevStart || this.dataLimit != this.dataPrevLimit ) )
 		    {
-		    	console.log( 'FETCH!!!! '/*, { 
-		    		pageMiddleDataStart : this.pageMiddleDataStart, 
-		    		pageMiddleFirstLine : this.pageMiddleFirstLine, 
-		    		pageMiddleDataLimit : this.pageMiddleDataLimit, 
-		    		pageMiddleLastLine  : this.pageMiddleLastLine 
-		    	}*/ );
-		    	
-		    	// TODO: Find out when it needs to populate ...
-		    	
-		    	// Fetch new data
-		    	// Distribute data rows from pageAbove, Middle, Below
-		    	
-		    	// TODO: return correct data to fetch next ... start and limit data ...
-		    	
-		    	// TODO: scrollTop minus means start in minus ...
-		    	// TODO: scrollTop pluss means start in pluss ...
-		    	
-		    	//this.dataStart = ( this.rowPosition > this.rowCount && !this.dataStart ? this.rowPrevPosition : this.dataStart );
-		    	
-		    	/*console.log( 
-		    	{ 
-		    		start        : ( this.rowPosition > this.rowCount ? ( this.dataPrevStart + this.rowCount ) : this.dataStart ), 
-		    		limit        : this.rowPosition, 
-		    		prevstart    : this.dataPrevStart, 
-		    		prevlimit    : this.dataPrevLimit, 
-		    		rowPosition  : this.rowPosition, 
-		    		rowCount     : this.rowCount, 
-		    		leftToScroll : leftToScroll, 
-		    		scrollTop    : scrollTop, 
-		    		viewHeight   : viewHeight, 
-		    		scrollHeight : scrollHeight 
-		    	} );*/
-		    	
-		    	//this.setToPageAbove( this.myArray );
-		    	//this.setToPageMiddle( this.myArray );
-		    	//this.setToPageBellow( this.myArray );
-		    	
-		    	//this.pageMiddleDataStart = this.pageMiddleFirstLine;
-		    	//this.pageMiddleDataLimit = this.pageMiddleLastLine;
-		    	
-		    	//this.dataPrevStart = ( this.dataStart == this.dataPrevStart ? this.dataPrevStart : this.dataStart );
-				//this.dataPrevLimit = ( this.dataLimit == this.dataPrevLimit ? this.dataPrevLimit : this.dataLimit );
-		    	
+		    	console.log( 'FETCH!!!! ' );
 		    	
 		    	if( this.callback )
 		    	{
-		    		/*this.callback( 
-		    		{ 
-		    			start   : ( this.rowPosition > this.rowCount && !this.dataStart ? this.rowPrevPosition : this.dataStart ), 
-		    			limit   : this.rowPosition, 
-		    			myArray : this.myArray, 
-		    			total   : this.total 
-		    		} );*/
 		    		this.callback( 
 		    		{ 
-		    			start   : /*this.pageMiddleDataStart*/this.dataStart, 
-		    			limit   : /*this.pageMiddleDataLimit*/this.dataLimit, 
+		    			start   : this.dataStart, 
+		    			limit   : this.dataLimit, 
 		    			myArray : this.myArray, 
 		    			total   : this.total 
 		    		} );
