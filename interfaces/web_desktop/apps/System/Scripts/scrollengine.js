@@ -198,6 +198,20 @@ scrollengine = {
 		
 	},
 	
+	emptyDiv : function ( id )
+	{
+		if( id )
+		{
+			var ele = document.getElementById( id );
+			
+			if( ele && ele.innerHTML )
+			{
+				ele.innerHTML = '';
+			}
+		}
+		
+	},
+	
 	pageAbove : function (  )
 	{
 		
@@ -481,7 +495,7 @@ scrollengine = {
 		this.scrollHeight = ( this.config.rowHeight * this.length( this.myArray ) );
 		
 		// Make elements if they do not exist
-		if( !this.elements.pageAbove )
+		if( !this.elements.pageMiddle )
 		{
 			this.list.innerHTML = '';
 			
@@ -577,6 +591,10 @@ scrollengine = {
 		    if( scrollTop > viewHeight )
 		    {
 		    	let aaa = this.pageAbove();
+		    }
+		    else
+		    {
+		    	this.emptyDiv( 'pageAbove' );
 		    }
 		    
 		    // Page middle
