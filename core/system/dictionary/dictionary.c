@@ -99,6 +99,8 @@ static const char *DefaultDictionaryMessages[] =
 "File uncompress problem: %d",
 "Application not found: %s",
 "Application Session not found"
+"USB Remote device cannot be created",
+"USB Remote device cannot be removed"
 };
 
 /**

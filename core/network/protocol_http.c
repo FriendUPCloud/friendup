@@ -88,7 +88,7 @@ static inline ListString *RunPHPScript( const char *command )
 #ifdef USE_NPOPEN_POLL
 
 	//DEBUG("[RunPHPScript] command launched: %s\n", command);
-	DEBUG("[RunPHPScript] command launched.\n", command);
+	DEBUG("[RunPHPScript] command launched: %s\n", command);
 
 	int size = 0;
 	int errCounter = 0;
@@ -713,6 +713,18 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							snprintf( buf, 128, "%s-%s", APPVERSION, APPGITVERSION );
 							HttpAddTextContent( response, buf );
 						}
+
+						HttpWrite( response, sock );
+						result = 200;
+					}
+					
+					//
+					// Monitoring
+					//
+					
+					else if( strcmp( path->p_Parts[ 0 ], "monitor" ) == 0 )
+					{
+						response = SystemMonitorManagerWEB( SLIB->fcm->fcm_SystemMonitorManager, path->p_Parts[ 1 ], request );
 
 						HttpWrite( response, sock );
 						result = 200;

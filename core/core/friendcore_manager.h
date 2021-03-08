@@ -33,7 +33,7 @@
 #include <core/friendcore_info.h>
 #include <core/event_manager.h>
 #include <communication/cluster_node.h>
-
+#include <monitoring/system_monitor_manager.h>
 
 #ifndef FRIEND_CORE_PORT
 #define FRIEND_CORE_PORT	6502
@@ -139,6 +139,8 @@ typedef struct FriendCoreManager
 	FBOOL						fcm_DisableMobileWS;
 	FBOOL						fcm_DisableExternalWS;
 	FBOOL						fcm_WSExtendedDebug;
+	
+	SystemMonitorManager		*fcm_SystemMonitorManager;						// system monitor manager
 }FriendCoreManager;
 
 //
