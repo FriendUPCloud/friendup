@@ -303,16 +303,18 @@ die( 'fail<!--separate-->{"response": "file does not exist"}' );
 
 function getNewAuthId( $appName, $userId, $sessionId )
 {
+	global $Logger;
 	if( $result = FriendCoreQuery( '/system.library/app/authidgen', [
 		'appname' => $appName,
 		'userid' => $userId,
 		'sessionid' => $sessionId
 	] ) )
 	{
-		list( $ret, $data ) = explode( '<!--separate-->', $result );
-		if( $ret == 'ok' )
+		$js = json_decode( $result );
+		if( $js->result == 'success' )
 		{
-			return $data;
+			$Logger->log( 'Success..' );
+			return $js->authid;
 		}
 	}
 	return false;
