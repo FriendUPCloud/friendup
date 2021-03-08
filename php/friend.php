@@ -292,7 +292,7 @@ if( !$UserAccount )
 {
     if( !isset( $groupSession ) )
     {
-        if( !isset( $GLOBALS[ 'args' ]->sessionid ) && !isset( $GLOBALS[ 'args' ]->servertoken ) )
+        if( !isset( $GLOBALS[ 'args' ]->sessionid ) && !isset( $GLOBALS[ 'args' ]->servertoken ) && !isset( $GLOBALS[ 'args' ]->authid ) )
 	    {
 		    die( 'fail<!--separate-->{"response":"-1","message":"No session given to system."}' );
 	    }
@@ -441,6 +441,17 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	// Get user information, trying first on FUserSession SessionID ------------
 	$User = new dbIO( 'FUser' );
 	$UserSession = new dbIO( 'FUserSession' );
+
+	// Match sessionid by authid
+	if( isset( $args->authid ) && !isset( $args->sessionid ) && !isset( $args->args->sessionid ) )
+	{
+		$authid = mysqli_real_escape_string( $SqlDatabase->_link, $args->authid );
+		$sess = $SqlDatabase->fetchObject( 'SELECT us.SessionID FROM FUserSession us, FAppSession a1 WHERE a1.AuthID=\'' . $authid . '\' AND us.UserID = a1.UserID LIMIT 1' );
+		if( $sess )
+		{
+			$args->sessionid = $sess->SessionID;
+		}
+	}
 
 	$sudm = false;
 	

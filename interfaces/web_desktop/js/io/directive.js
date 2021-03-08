@@ -1266,9 +1266,7 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 					conf = encodeURIComponent( path.split( ':' )[0] + ':' );
 
 				var extra = '';
-				if( stype == 'authid')
-					extra = '&theme=borderless';
-
+				
 				// Quicker ajax implementation
 				var j = new cAjax();
 				j.open( 'POST', '/system.library/module/?module=system&command=sandbox' +
