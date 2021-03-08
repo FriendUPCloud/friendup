@@ -105,7 +105,7 @@ FBOOL FSManagerCheckAccess( FSManager *fm, const char *path, FULONG devid, User 
 		
 			DEBUG("[FSManagerCheckAccess] User ptr %p alloc size %d\n", usr, querysize );
 		
-			if( ( tmpQuery = FCalloc( querysize, sizeof(char) ) ) != NULL )
+			if( ( tmpQuery = FMalloc( querysize ) ) != NULL )
 			{
 				if( perm[ 2 ] == 'W' )	// if we are checking write permission, we must check also parent folder permissions
 				{
@@ -161,7 +161,7 @@ OR \
 				void *res = sqlLib->Query( sqlLib, tmpQuery );
 				FBOOL access = FALSE;
 			
-				char defaultAccessRights[] = "-RWED";
+				//char defaultAccessRights[] = "-RWED";
 
 				if( res != NULL )
 				{
@@ -618,7 +618,6 @@ OR \
 			{
 				DEBUG("[FSManagerProtect3] Found permission, remove old entries\n");
 				sqllib->SNPrintF( sqllib, tmpQuery, querysize, "DELETE FROM `FPermLink` WHERE PermissionID in( SELECT ID FROM `FFilePermission` WHERE Path='%s'  AND DeviceID=%lu)", path, devid );
-				//sprintf( tmpQuery, "DELETE `FPermLink` WHERE PermissionID in( SELECT * FROM `FFilePermission` WHERE Path='%s'  ) AND DeviceID=%lu", path, devid );
 			
 				sqllib->QueryWithoutResults( sqllib, tmpQuery );
 			}
@@ -745,7 +744,6 @@ int FSManagerProtect( FSManager *fm, const char *path, FULONG devid, char *accgr
 	}
 	unsigned int i;
 	int entries = 1;		// number
-	char *users = accgroups;
 
 	//
 	// counting how many entries we have
@@ -873,6 +871,17 @@ int FSManagerProtect( FSManager *fm, const char *path, FULONG devid, char *accgr
 					sqllib->QueryWithoutResults( sqllib, insertQuery );
 				}
 		
+				FFree( rem );
+			} // while( prev != NULL )
+		}
+		else
+		{
+			prev = root;
+			AGroup *rem = prev;
+			while( prev != NULL )
+			{
+				rem = prev;
+				prev = prev->next;
 				FFree( rem );
 			}
 		}
@@ -1136,7 +1145,6 @@ OR \
 				else
 				{
 					FERROR("Cannot allocate memory for query!\n");
-					//BufStringDelete( bs );
 					FFree( newPath );
 					sb->LibrarySQLDrop( sb, sqlLib );
 					return NULL;

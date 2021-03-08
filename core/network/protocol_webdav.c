@@ -507,12 +507,33 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 	int pathSize = strlen( req->http_RawRequestPath );
 
 	path = UrlDecodeToMem( req->http_RawRequestPath );
-	
+	if( path == NULL )
+	{
+		return NULL;
+	}
 	fpath = FCalloc( pathSize+10, sizeof(char) );
+	if( fpath == NULL )
+	{
+		FFree( path );
+		return NULL;
+	}
 	memcpy( fpath, req->http_RawRequestPath, pathSize );
 	
 	devname = FCalloc( pathSize+10, sizeof(char) );
+	if( devname == NULL )
+	{
+		FFree( fpath );
+		FFree( path );
+		return NULL;
+	}
 	filePath = FCalloc( pathSize+10, sizeof(char) );
+	if( filePath == NULL )
+	{
+		FFree( devname );
+		FFree( fpath );
+		FFree( path );
+		return NULL;
+	}
 	
 	int i;
 	int pos = 0;
@@ -938,7 +959,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 			{
 				struct TagItem tagsauth[] = {
 					{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/xml" ) },
-					{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+					{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 					{TAG_DONE, TAG_DONE}
 				};
 

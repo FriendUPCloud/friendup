@@ -119,15 +119,22 @@ List* ListNew()
 
 List* ListAdd( List** list, void* data )
 {
+	if( list == NULL )
+	{
+		return NULL;
+	}
 	if( !(*list)->l_Data )
 	{
 		(*list)->l_Data = data;
 		return (*list);
 	}
 	List *l = ListNew();
-	l->next = (*list);
-	(*list) = l;
-	l->l_Data = data;
+	if( l != NULL )
+	{
+		l->next = (*list);
+		(*list) = l;
+		l->l_Data = data;
+	}
 	return l;
 }
 

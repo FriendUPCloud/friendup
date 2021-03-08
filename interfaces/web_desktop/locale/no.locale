@@ -470,6 +470,7 @@ i18n_volume_information                 : Enhetsinformasjon
 i18n_volume_permissions                 : Enhetsrettigheter
 i18n_drag_to_download_file              : Clikk eller dra og slipp på din desktop.
 i18n_drag_files_to_download             : Slipp filer for nedlastning.
+i18n_add_calendar_event                 : Ny kalenderhendelse.
 
 i18n_creating_directory                 : Lager mappe
 i18n_building_file_index                : Lager filindex...
@@ -603,8 +604,24 @@ i18n_cal_btn_edit                       : Lagre hendelse
 i18n_from                               : Fra
 i18n_to                                 : Til
 
-i18n_cal_evt_type                       : Velg kalender
+i18n_cal_evt_type                       : Kalender
 i18n_cal_private_calendar               : Din private kalender
+
+i18n_cal_evt_typec                      : Type
+i18n_cal_evt_type_event                 : Hendelse
+i18n_cal_evt_type_meeting               : Møte
+i18n_cal_evt_type_todo                  : Gjøremål
+i18n_cal_evt_type_note                  : Notat
+
+i18n_cal_evt_timezone                   : Tidssone
+i18n_cal_evt_participants               : Deltakere
+i18n_cal_evt_link                       : Web lenke
+i18n_cal_evt_location                   : Sted
+i18n_find_contacts                      : Finn kontakter
+i18n_no_participants_here               : Ingen deltakere.
+
+i18n_to_not_in_past                     : Feil til-dato
+i18n_to_not_in_past_desc                : Møtet er satt til å slutte før det begynner.
 
 i18n_evt_added                          : Kalender oppdatert
 i18n_evt_addeddesc                      : Hendelsen ble lagt til din kalender.

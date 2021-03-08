@@ -66,10 +66,9 @@ Service *ServiceNew( void *sysbase, char *command )
 			}
 		}
 		
-		ApacheService *hs = calloc( 1, sizeof( ApacheService ) );
-		if( hs != NULL )
+		if( ( service->s_SpecialData = FCalloc( 1, sizeof( ApacheService ) ) ) != NULL )
 		{
-			service->s_SpecialData = hs;
+			ApacheService *hs = (ApacheService *)service->s_SpecialData;
 			hs->hs_SB = sysbase;
 		}
 		
@@ -226,21 +225,22 @@ char *ServiceGetStatus( Service *service, int *len )
 	}
 	
 	char *status = FCalloc( 256, sizeof( char ) );
-	
-	switch( service->s_State )
+	if( status != NULL )
 	{
-		case SERVICE_STOPPED:
-			strcpy( status, "stopped" );
-			break;
-		case SERVICE_STARTED:
-			strcpy( status, "started" );
-			break;
-		case SERVICE_PAUSED:
-			strcpy( status, "paused" );
-			break;
+		switch( service->s_State )
+		{
+			case SERVICE_STOPPED:
+				strcpy( status, "stopped" );
+				break;
+			case SERVICE_STARTED:
+				strcpy( status, "started" );
+				break;
+			case SERVICE_PAUSED:
+				strcpy( status, "paused" );
+				break;
+		}
+		*len = strlen( status );
 	}
-	*len = strlen( status );
-    
 	return status;
 }
 

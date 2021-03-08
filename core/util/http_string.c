@@ -37,9 +37,9 @@ HttpString *HttpStringNew( int bufsize )
 		
 		if( ( str->ht_Buffer = FCalloc( str->ht_Bufsize + 1, sizeof( char ) ) ) != NULL )
 		{
-			return str;
+			
 		}
-		FFree( str );
+		return str;
 	}
 	
 	return NULL;

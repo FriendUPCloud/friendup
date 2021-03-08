@@ -48,7 +48,7 @@ function getWrapperCallback( uniqueId )
 	{
 		var func = apiWrapperCallbacks[uniqueId];
 		var o = [];
-		for( var a in apiWrapperCallbacks )
+		for( let a in apiWrapperCallbacks )
 		{
 			if( a != uniqueId )
 				o[a] = apiWrapperCallbacks[a];
@@ -66,7 +66,7 @@ function runWrapperCallback( uniqueId, data )
 	{
 		apiWrapperCallbacks[uniqueId]( data );
 		var o = [];
-		for( var a in apiWrapperCallbacks )
+		for( let a in apiWrapperCallbacks )
 		{
 			if( a != uniqueId )
 				o[a] = apiWrapperCallbacks[a];
@@ -81,7 +81,7 @@ function makeAppCallbackFunction( app, data, source )
 	if( !app || !data ) return false;
 	
 	var nmsg = {};
-	for( var a in data ) nmsg[ a ] = data[ a ];
+	for( let a in data ) nmsg[ a ] = data[ a ];
 	nmsg.type = 'callback';
 	
 	// Our destination
@@ -134,7 +134,7 @@ function apiWrapper( event, force )
 	}
 	
 	// Check attributes for special types
-	for( var prop in msg )
+	for( let prop in msg )
 	{
 		if( prop.indexOf( '_format' ) < 0 ) continue;
 		var propName = prop.substring( 0, prop.length - 7 );
@@ -233,7 +233,7 @@ function apiWrapper( event, force )
 						if( msg.callback )
 						{
 							var out = [];
-							for( var a = 0; a < Workspace.applications.length; a++ )
+							for( let a = 0; a < Workspace.applications.length; a++ )
 							{
 								var app = Workspace.applications[a];
 								if( app.applicationId == msg.applicationId ) continue;
@@ -266,7 +266,7 @@ function apiWrapper( event, force )
 							sourceHash = ApplicationMessagingNexus.ports[ msg.applicationId ].hash;
 						}
 						
-						for( var a = 0; a < Workspace.applications.length; a++ )
+						for( let a = 0; a < Workspace.applications.length; a++ )
 						{
 							var app = Workspace.applications[a];
 							if( app.applicationId == msg.applicationId ) continue;
@@ -285,7 +285,7 @@ function apiWrapper( event, force )
 						// Check on hash
 						if( !out.length )
 						{
-							for( var a in ApplicationMessagingNexus.ports )
+							for( let a in ApplicationMessagingNexus.ports )
 							{
 								if( ApplicationMessagingNexus.ports[ a ].app.applicationId == msg.applicationId ) continue;
 								if( ApplicationMessagingNexus.ports[ a ].hash == msg.filter )
@@ -301,7 +301,7 @@ function apiWrapper( event, force )
 						
 						if( out.length )
 						{
-							for( var a = 0; a < out.length; a++ )
+							for( let a = 0; a < out.length; a++ )
 							{
 								// Don't send to self
 								if( out[ a ].app.applicationId == msg.applicationId )
@@ -1629,7 +1629,7 @@ function apiWrapper( event, force )
 							if( win )
 							{
 								var out = [];
-								for( var c in app.windows )
+								for( let c in app.windows )
 								{
 									if( c != msg.viewId )
 									{
@@ -1819,6 +1819,11 @@ function apiWrapper( event, force )
 							}
 							break;
 						case 'activate':
+							// Silent apps don't activate until clicked!
+							if( app.opensilent )
+							{
+								return;
+							}
 							// Don't touch moving windows!
 							if( window.isMobile )
 							{
@@ -1853,6 +1858,7 @@ function apiWrapper( event, force )
 					
 					// Add preferred workspace
 					if( app.workspace ) msg.data.workspace = app.workspace;
+					if( app.opensilent ) msg.data.openSilent = app.opensilent;
 
 					// Redirect to the real screen
 					if( msg.data.screen && app && app.screens[ msg.data.screen ] )
@@ -2005,7 +2011,7 @@ function apiWrapper( event, force )
 								
 								// Remove widget from list
 								var w = [];
-								for( var a in app.widgets )
+								for( let a in app.widgets )
 									if( app.widgets[ a ] != wid )
 										w.push( app.widgets[a] );
 								app.widgets = w;
@@ -2128,7 +2134,7 @@ function apiWrapper( event, force )
 				// Add variables
 				if( msg.vars )
 				{
-					for( var a in msg.vars )
+					for( let a in msg.vars )
 					{
 						f.addVar( a, msg.vars[a] );
 					}
@@ -2436,7 +2442,7 @@ function apiWrapper( event, force )
 				// Add variables
 				if( msg.vars )
 				{
-					for( var a in msg.vars )
+					for( let a in msg.vars )
 						f.addVar( a, msg.vars[a] );
 				}
 
@@ -2559,7 +2565,7 @@ function apiWrapper( event, force )
 									
 									var nmsg = {};
 									
-									for( var b in msg )
+									for( let b in msg )
 									{
 										nmsg[b] = msg[b];
 									}
@@ -2591,7 +2597,7 @@ function apiWrapper( event, force )
 									
 									var nmsg = {};
 
-									for( var b in msg )
+									for( let b in msg )
 									{
 										nmsg[b] = msg[b];
 									}
@@ -2623,7 +2629,7 @@ function apiWrapper( event, force )
 									
 									var nmsg = {};
 									
-									for( var b in msg )
+									for( let b in msg )
 									{
 										nmsg[b] = msg[b];
 									}
@@ -2660,7 +2666,7 @@ function apiWrapper( event, force )
 							
 							var nmsg = {};
 							
-							for( var b in msg )
+							for( let b in msg )
 							{
 								nmsg[b] = msg[b];
 							}
@@ -2698,7 +2704,7 @@ function apiWrapper( event, force )
 							
 							var nmsg = {};
 
-							for( var b in msg )
+							for( let b in msg )
 							{
 								nmsg[b] = msg[b];
 							}
@@ -2736,7 +2742,7 @@ function apiWrapper( event, force )
 						
 						var nmsg = {};
 						
-						for( var b in msg )
+						for( let b in msg )
 						{
 							nmsg[b] = msg[b];
 						}
@@ -2914,6 +2920,38 @@ function apiWrapper( event, force )
 							return df( msg.data ? msg.data : ( msg.error ? msg.error : null ) );
 						}
 						return false;
+					// Application is asking for Friend credentials
+					case 'friendcredentials':
+						let response = false;
+						let message = 'Could not retrieve Friend credentials.';
+						// TODO: Investigate different credential types
+						if( msg.credentialType == 'friend' )
+						{
+							// TODO: Filter application to get access to this!
+							if( msg.callback )
+							{
+								if( Workspace.storedCredentials )
+								{
+									let enc = Workspace.encryption;
+									let user = enc.decrypt( Workspace.storedCredentials.username, enc.getKeys().privatekey );
+									let pass = enc.decrypt( Workspace.storedCredentials.password, enc.getKeys().privatekey );
+									if( user && pass )
+									{
+										response = {
+											username: user,
+											password: pass
+										};
+										message = 'Friend credentials successfully delivered.';
+									}
+								}
+								let nmsg = {}; for( let xz in msg ) nmsg[ xz ] = msg[ xz ];
+								nmsg.type = 'callback';
+								nmsg.response = response;
+								nmsg.message = message;
+								app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+							}
+						}
+						break;
 					case 'addfilesystemevent':
 						if( msg.event && msg.path )
 						{
@@ -2937,7 +2975,7 @@ function apiWrapper( event, force )
 								{
 									var outEvents = [];
 									var evList = Workspace.appFilesystemEvents[ msg.event ];
-									for( var a = 0; a < evList.length; a++ )
+									for( let a = 0; a < evList.length; a++ )
 									{
 										var found = false;
 										if( evList[a].applicationId == msg.applicationId )
@@ -3014,7 +3052,7 @@ function apiWrapper( event, force )
 							if( e != 'ok' )
 							{
 								var opts = ge( 'UserMode' ).getElementsByTagName( 'option' );
-								for( var b = 0; b < opts.length; b++ )
+								for( let b = 0; b < opts.length; b++ )
 								{
 									if( opts[b].value == 'normal' )
 									{
@@ -3056,7 +3094,7 @@ function apiWrapper( event, force )
 						else if( app && msg.value == false )
 						{
 							var out = [];
-							for( var a in Friend.singleInstanceApps )
+							for( let a in Friend.singleInstanceApps )
 							{
 								if( a != app.applicationName )
 									out[a] = Friend.singleInstanceApps[a];
@@ -3071,7 +3109,7 @@ function apiWrapper( event, force )
 						if( app )
 						{
 							app.applicationDisplayName = msg.applicationname;
-							for( var a = 0; a < Workspace.applications.length; a++ )
+							for( let a = 0; a < Workspace.applications.length; a++ )
 							{
 								if( app.applicationId == Workspace.applications[a].applicationId )
 								{
@@ -3080,7 +3118,7 @@ function apiWrapper( event, force )
 								}
 							}
 							var eles = ge( 'Tasks' ).getElementsByClassName( 'AppSandbox' );
-							for( var a = 0; a < eles.length; a++ )
+							for( let a = 0; a < eles.length; a++ )
 							{
 								if( eles[a].ifr.applicationId == app.applicationId )
 								{
@@ -3104,7 +3142,7 @@ function apiWrapper( event, force )
 							
 							var nmsg = {};
 							
-							for( var a in msg ) nmsg[a] = msg[a];
+							for( let a in msg ) nmsg[a] = msg[a];
 							
 							var m = new Module( 'system' );
 							m.onExecuted = function( e, d )
@@ -3119,7 +3157,7 @@ function apiWrapper( event, force )
 									
 										if( data && typeof data[0] != 'undefined' )
 										{
-											for( var k in data )
+											for( let k in data )
 											{
 												// If found data and there is a publickey connected to it, try to decrypt with users privatekey
 											
@@ -3234,7 +3272,7 @@ function apiWrapper( event, force )
 							
 							var nmsg = {};
 							
-							for( var a in msg ) nmsg[a] = msg[a];
+							for( let a in msg ) nmsg[a] = msg[a];
 							
 							var m = new Module( 'system' );
 							m.onExecuted = function( e, d )
@@ -3268,7 +3306,7 @@ function apiWrapper( event, force )
 						break;
 					case 'notification':
 						var nmsg = {};
-						for( var a in msg ) nmsg[a] = msg[a];
+						for( let a in msg ) nmsg[a] = msg[a];
 						nmsg.locale = Workspace.locale;
 						var cw = GetContentWindowByAppMessage( app, msg );
 						if( cw )
@@ -3278,7 +3316,7 @@ function apiWrapper( event, force )
 							if( nmsg.clickcallback )
 							{
 								var vmsg = {};
-								for( var a in nmsg ) vmsg[a] = nmsg[a];
+								for( let a in nmsg ) vmsg[a] = nmsg[a];
 								vmsg.method = 'notification';
 								vmsg.callback = nmsg.clickcallback;
 								vmsg.data = 'clicked';
@@ -3311,7 +3349,7 @@ function apiWrapper( event, force )
 						break;
 					case 'getlocale':
 						var nmsg = {};
-						for( var a in msg ) nmsg[ a ] = msg[ a ];
+						for( let a in msg ) nmsg[ a ] = msg[ a ];
 						nmsg.locale = Workspace.locale;
 						var cw = GetContentWindowByAppMessage( app, msg );
 						if( cw )
@@ -3382,7 +3420,7 @@ function apiWrapper( event, force )
 					// Update login and tell apps
 					case 'updatelogin':
 						Workspace.login( msg.username, msg.password, true );
-						for( var a = 0; a < Workspace.applications.length; a++ )
+						for( let a = 0; a < Workspace.applications.length; a++ )
 						{
 							var nmsg = {
 								command: 'userupdate',
@@ -3400,14 +3438,14 @@ function apiWrapper( event, force )
 							var screens = [];
 							var s = ge( 'Screens' );
 							var sl = s.getElementsByTagName( 'div' );
-							for( var a = 0; a < sl.length; a++ )
+							for( let a = 0; a < sl.length; a++ )
 							{
 								if( sl[a].parentNode != s ) continue;
 								if( !sl[a].className || sl[a].className.indexOf( 'Screen' ) < 0 )
 									continue;
 								screens.push( { id: sl[a].id, title: sl[a].screenObject._flags['title'] } );
 							}
-							var nmsg = {}; for( var a in msg ) nmsg[a] = msg[a];
+							var nmsg = {}; for( let a in msg ) nmsg[a] = msg[a];
 							nmsg.screens = screens;
 							app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
 						}
@@ -3419,7 +3457,7 @@ function apiWrapper( event, force )
 						if( app && msg.viewId )
 						{
 							// Prepare response
-							var nmsg = {}; for( var a in msg ) nmsg[a] = msg[a];
+							var nmsg = {}; for( let a in msg ) nmsg[a] = msg[a];
 							nmsg.command = 'nativewindowresponse';
 
 							switch( msg.action )
@@ -3439,7 +3477,7 @@ function apiWrapper( event, force )
 										nativeWindows[msg.viewId].close();
 										// Clean house
 										var nw = [];
-										for( var a in nativeWindows )
+										for( let a in nativeWindows )
 										{
 											if( a != msg.viewId )
 												nw[a] = nativeWindows[a];
@@ -3527,7 +3565,7 @@ function apiWrapper( event, force )
 							// TODO: Make this happen on num
 							if( msg.appNum )
 							{
-								for( var a = 0; a < Workspace.applications.length; a++ )
+								for( let a = 0; a < Workspace.applications.length; a++ )
 								{
 									var theApp = Workspace.applications[a];
 									if( theApp.applicationNumber == msg.appNum )
@@ -3554,7 +3592,7 @@ function apiWrapper( event, force )
 							if( d.length )
 							{
 								list = '';
-								for( var a = 0; a < d.length; a++ )
+								for( let a = 0; a < d.length; a++ )
 								{
 									list += d[a].applicationNumber + '. ' + d[a].name + '<br/>';
 								}
@@ -3625,7 +3663,7 @@ function apiWrapper( event, force )
 								}
 								else if( typeof( msg.args ) == 'object' )
 								{
-									for( var a in msg.args )
+									for( let a in msg.args )
 									{
 										if( a == 'command' )
 											ex += msg.args[a];
@@ -3643,7 +3681,7 @@ function apiWrapper( event, force )
 							// Optional vars
 							if( msg.vars )
 							{
-								for( var a in msg.vars )
+								for( let a in msg.vars )
 									j.addVar( a, msg.vars[a] );
 							}
 						}
@@ -3719,7 +3757,7 @@ function apiWrapper( event, force )
 						else if( msg.method == 'activate' )
 						{
 							var found = false;
-							for( var a = 0; a < Friend.GUI.ColorPickers.length; a++ )
+							for( let a = 0; a < Friend.GUI.ColorPickers.length; a++ )
 							{
 								if( Friend.GUI.ColorPickers[ a ].uniqueId != msg.uniqueId )
 								{
@@ -3747,7 +3785,7 @@ function apiWrapper( event, force )
 						else if( msg.method == 'close' )
 						{
 							var found = false;
-							for( var a = 0; a < Friend.GUI.ColorPickers.length; a++ )
+							for( let a = 0; a < Friend.GUI.ColorPickers.length; a++ )
 							{
 								if( Friend.GUI.ColorPickers[ a ].uniqueId != msg.uniqueId )
 								{
@@ -3863,7 +3901,7 @@ function apiWrapper( event, force )
 		if( msg && msg.callback )
 		{
 			var nmsg = {};
-			for( var b in msg )
+			for( let b in msg )
 				nmsg[b] = msg[b];
 			nmsg.type = 'callback';
 			app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
@@ -3967,7 +4005,7 @@ function ClipboardSet( text, updatesystem )
 	Friend.prevClipboard = Friend.clipboard;
 	Friend.clipboard = text;
 
-	for( var a = 0; a < Workspace.applications.length; a++ )
+	for( let a = 0; a < Workspace.applications.length; a++ )
 	{
 		var app = Workspace.applications[a];
 		app.contentWindow.postMessage( JSON.stringify( {
@@ -3976,7 +4014,7 @@ function ClipboardSet( text, updatesystem )
 			value: Friend.clipboard
 		} ), '*' );
 	}
-	for( var a in movableWindows )
+	for( let a in movableWindows )
 	{
 		var ifr = movableWindows[a].getElementsByTagName( 'iframe' )[0];
 		if( !ifr ) continue;
@@ -4106,7 +4144,7 @@ function ClipboardPasteIn( ele, text )
 // Find application storage object
 function findApplication( applicationId )
 {
-	for( var a = 0; a < Workspace.applications.length; a++ )
+	for( let a = 0; a < Workspace.applications.length; a++ )
 	{
 		if( Workspace.applications[a].applicationId == applicationId )
 			return Workspace.applications[a];
@@ -4227,7 +4265,7 @@ function _globalScreenSwap( id )
 function checkAppPermission( authid, permission, value )
 {
 	var eles = ge( 'Tasks' ).getElementsByTagName( 'iframe' );
-	for( var a = 0; a < eles.length; a++ )
+	for( let a = 0; a < eles.length; a++ )
 	{
 		if( eles[a].authId == authid )
 		{
@@ -4236,7 +4274,7 @@ function checkAppPermission( authid, permission, value )
 			if( eles[a].applicationType && eles[a].applicationType == 'jsx' )
 				return true;
 
-			for( var b = 0; b < eles[a].permissions.length; b++ )
+			for( let b = 0; b < eles[a].permissions.length; b++ )
 			{
 				if( eles[a].permissions[b][0] == permission )
 				{
@@ -4302,7 +4340,7 @@ function GetContentWindowById( app, id )
 function _getAppByAppId( appid )
 {
 	var t = ge( 'Tasks' );
-	for( var a = 0; a < t.childNodes.length; a++ )
+	for( let a = 0; a < t.childNodes.length; a++ )
 	{
 		if( !t.childNodes[a].ifr ) continue;
 		if( t.childNodes[a].ifr.applicationId == appid )
@@ -4321,7 +4359,7 @@ function AddCSSByUrl( csspath, callback )
 		var pn = window.cssStyles[csspath].parentNode;
 		if( pn ) pn.removeChild( window.cssStyles[csspath] );
 		var o = [];
-		for( var a in window.cssStyles )
+		for( let a in window.cssStyles )
 		{
 			if( a != csspath )
 			{

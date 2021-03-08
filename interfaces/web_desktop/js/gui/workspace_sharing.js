@@ -25,7 +25,7 @@ Workspace.viewSharingOptions = function( path )
 		height: 380
 	} );
 	
-	let uniqueId = Math.round( Math.random() * 9999 ) + ( new Date() ).getTime();
+	let uniqueId = UniqueHash();
 	this.sharingDialogs[ uniqueId ] = v;
 	v.uniqueId = uniqueId;
 	v.path = path;
@@ -131,6 +131,10 @@ Workspace.saveFileShareInfo = function( uniqueId, noclose )
 		{
 			if( !noclose )
 				d.close();
+			// Tell Friend Core something changed
+	        let l = new Library( 'system.library' );
+	        l.execute( 'file/notifychanges', { path: d.path } );
+			Workspace.refreshWindowByPath( d.path );
 		}
 		else
 		{
@@ -418,6 +422,9 @@ Workspace.refreshShareInformation = function( viewObject, callback )
 						let m = new Module( 'system' );
 						m.onExecuted = function( me, md )
 						{
+						    let l = new Library( 'system.library' );
+                	        l.execute( 'file/notifychanges', { path: viewObject.path } );
+							Workspace.refreshWindowByPath( viewObject.path );
 							Workspace.refreshShareInformation( viewObject );
 						}
 						if( n = this.parentNode.getAttribute( 'uid' ) )

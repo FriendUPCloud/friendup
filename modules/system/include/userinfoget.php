@@ -294,7 +294,30 @@ if( 1==1/* || $rolePermission || $level == 'Admin' || $uid == $User->ID*/ )
 		{
 			$userinfo->Keys = $keys;
 		}
-
+		
+		// Add additional fields
+		if( $uid > 0 && ( $fields = $SqlDatabase->FetchObjects( $q = '
+			SELECT 
+				fm.* 
+			FROM 
+				FMetaData fm 
+			WHERE 
+					fm.Key       IN ("' . implode( '","', [ 'Mobile' ] ) . '") 
+				AND fm.DataID    = \'' . $uid . '\' 
+				AND fm.DataTable = "FUser" 
+			ORDER BY 
+				fm.ID ASC 
+		' ) ) )
+		{
+			foreach( $fields as $field )
+			{
+				if( $field->Key && !isset( $userinfo->{ $field->Key } ) )
+				{
+					$userinfo->{ $field->Key } = $field->ValueString;
+				}
+			}
+		}
+		
 		die( 'ok<!--separate-->' . json_encode( $userinfo ) );
 	}
 }

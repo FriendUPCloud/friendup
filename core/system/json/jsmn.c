@@ -423,7 +423,10 @@ char* json_escape_string(const char *string_to_escape){
 	if (characters_to_escape == 0){ //nothing to do
 
 		char *string_to_return = FCalloc(string_length+1, 1);
-		memcpy(string_to_return, string_to_escape, string_length+1);
+		if( string_to_return != NULL )
+		{
+			memcpy(string_to_return, string_to_escape, string_length+1);
+		}
 		return string_to_return;
 	}
 

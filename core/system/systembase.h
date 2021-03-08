@@ -73,6 +73,7 @@
 #include <system/security/security_manager.h>
 #include <system/sas/sas_manager.h>
 #include <system/application/application_manager.h>
+#include <system/support/support_manager.h>
 
 #include <interface/socket_interface.h>
 #include <interface/string_interface.h>
@@ -105,7 +106,7 @@
 #define MODULE_FILE_CALL_STRING "friendrequestparameters=%s"
 #define MODULE_FILE_CALL_STRING_LEN 24
 
-#define MODULE_PATH_LENGTH	512
+#define MODULE_PATH_LENGTH	768
 
 //
 // Exit code list
@@ -274,6 +275,7 @@ typedef struct SystemBase
 	RoleManager						*sl_RoleManager;	// Role Manager
 	SecurityManager					*sl_SecurityManager;	// Security Manager
 	SASManager						*sl_SASManager;			// SAS Manager
+	SupportManager					*sl_SupportManager;		// Support Manager
 
 	pthread_mutex_t 				sl_ResourceMutex;	// resource mutex
 	pthread_mutex_t					sl_InternalMutex;		// internal slib mutex

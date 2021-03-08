@@ -1,5 +1,10 @@
 /* Dark --------------------------------------------------------------------- */
 
+*
+{
+    scrollbar-color: #34495E #030507 !important;
+}
+
 html > body.Dark,
 html > body.Dark.Inside,
 html > body.Dark .Content .Scroller:after

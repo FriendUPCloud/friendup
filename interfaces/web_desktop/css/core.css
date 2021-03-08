@@ -22,6 +22,11 @@ body *
 	display:none!important
 }
 
+input:focus, textarea:focus, select:focus
+{
+    outline: none;
+}
+
 /* TEMPORARY TESThtml body.ViewStateActive:after,
 html body:not(.ViewStateActive):after 
 {
@@ -872,7 +877,12 @@ p.Layout
 }
 
 .PadBorder {
-    border : 0.2em solid $ColorBackground;
+    border : 3px solid $ColorBackground;
+}
+
+.PadBackground {
+	background-color : $ColorBackground;
+	padding          : 3px;
 }
 
 /*                                                                            */
@@ -1780,6 +1790,17 @@ a.Negative:hover, a.Negative:active, a.Negative:visited
 {
 	height: 0px !important;
 }
+body #CalendarWidget
+{
+	border-radius: 0 0 0 3px;
+}
+
+
+#calendarEventsToday
+{
+	max-height: 400px;
+	overflow: auto;
+}
 
 .Calendar.MonthName
 {
@@ -2570,6 +2591,12 @@ html #Tray.Size16
 	text-align: center;
 }
 
+.MobileNotification .Title > .DateStamp,
+.BubbleInfo .DateStamp
+{
+	font-size: 11px;
+}
+
 .BubbleInfo, .PopInfo
 {
 	position: absolute;
@@ -2736,6 +2763,22 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 }
 
 /* Various built-in icons */
+
+.TrayElement.Calendar:before
+{
+	font-family: fontawesome;
+	margin: 0px 0 0 2px;
+	content: "\f271";
+	font-size: 106%;
+	text-align: center;
+	line-height: 24px;
+}
+
+#Tray.Size16 .TrayElement.Calendar:before
+{
+    font-size: 93%;
+    line-height: 18px;
+}
 
 .TrayElement.Download:before
 {
@@ -2938,62 +2981,84 @@ body:not([tablet]):not([mobile]) .Desklet .Launcher.Startmenu:hover
 	overflow: auto;
 }
 
+/* non running */
+.Desklet .Launcher:after
+{
+    position: absolute;
+	content: ' ';
+    transition: opacity 0.75s;
+    opacity: 0;
+    pointer-events: none;
+    border-radius: 5px;
+}
 
 /* running apps */
+.Desklet[position=bottom_left] .Launcher:after,
+.Desklet[position=bottom_center] .Launcher:after,
+.Desklet[position=bottom_right] .Launcher:after
+{
+    width: 40%;
+	left: 30%;
+	top: 100%;
+	height: 3px;
+}
 .Desklet[position=bottom_left] .Launcher.Running:after,
 .Desklet[position=bottom_center] .Launcher.Running:after,
 .Desklet[position=bottom_right] .Launcher.Running:after
 {
-	position: absolute;
-	content: ' ';
-	width: 40%;
-	left: 30%;
-	top: 100%;
-	height: 3px;
-	border-radius: 5px;
 	background: rgba(255,255,255,0.8);
+	opacity: 1;
 	box-shadow: 0px 1px 2px rgba(0,0,0,0.5);
+}
+.Desklet[position=top_left] .Launcher:after,
+.Desklet[position=top_center] .Launcher:after,
+.Desklet[position=top_right] .Launcher:after
+{
+    height: 80%;
+	top: 0%;
+	right: -4px;
+	width: 3px;
 }
 .Desklet[position=top_left] .Launcher.Running:after,
 .Desklet[position=top_center] .Launcher.Running:after,
 .Desklet[position=top_right] .Launcher.Running:after
 {
-	position: absolute;
-	content: ' ';
-	height: 80%;
-	top: 0%;
+	background: rgba(255,255,255,0.8);
+	opacity: 1;
+	box-shadow: 0px 1px 2px rgba(0,0,0,0.5);
+}
+.Desklet[position=left_top] .Launcher:after,
+.Desklet[position=left_center] .Launcher:after,
+.Desklet[position=left_bottom] .Launcher:after
+{
+    height: 40%;
+	top: 30%;
 	right: -4px;
 	width: 3px;
-	border-radius: 5px;
-	background: rgba(255,255,255,0.8);
-	box-shadow: 0px 1px 2px rgba(0,0,0,0.5);
 }
 .Desklet[position=left_top] .Launcher.Running:after,
 .Desklet[position=left_center] .Launcher.Running:after,
 .Desklet[position=left_bottom] .Launcher.Running:after
 {
-	position: absolute;
-	content: ' ';
-	height: 40%;
-	top: 30%;
-	right: -4px;
-	width: 3px;
-	border-radius: 5px;
 	background: rgba(255,255,255,0.8);
+	opacity: 1;
 	box-shadow: 0px 1px 2px rgba(0,0,0,0.5);
+}
+.Desklet[position=right_top] .Launcher:after,
+.Desklet[position=right_center] .Launcher:after,
+.Desklet[position=right_bottom] .Launcher:after
+{
+    height: 40%;
+	top: 30%;
+	left: -4px;
+	width: 3px;
 }
 .Desklet[position=right_top] .Launcher.Running:after,
 .Desklet[position=right_center] .Launcher.Running:after,
 .Desklet[position=right_bottom] .Launcher.Running:after
 {
-	position: absolute;
-	content: ' ';
-	height: 40%;
-	top: 30%;
-	left: -4px;
-	width: 3px;
-	border-radius: 5px;
 	background: rgba(255,255,255,0.8);
+	opacity: 1;
 	box-shadow: 0px 1px 2px rgba(0,0,0,0.5);
 }
 
@@ -3175,6 +3240,14 @@ body:not([mobile]).ShowTasks #TaskSwitcher .Current .Close
 {
 	opacity: 1;
 }
+
+.DesktopIconsHidden #DoorsScreen > .ScreenContent > .Scroller 
+{
+	opacity: 0;
+	pointer-events: none;
+	visibility: hidden;
+}
+
 
 /* Different solution for drives */
 #DoorsScreen > .ScreenContent.DrivePanel > .Scroller 
@@ -5481,6 +5554,7 @@ div.Orange, button.Orange
 	background-color: #444444;
 	background-position: center;
 	background-repeat: no-repeat;
+>>>>>>> master-incoming
 }
 
 .ShareDialog .ShareItem.Selected

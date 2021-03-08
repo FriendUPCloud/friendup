@@ -253,13 +253,9 @@ ListString *PHPCall( const char *command )
 		}
 		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
 
-		//DEBUG( "[PHPFsys] Adding %d of data\n", size );
 		if( size > 0 )
 		{
-			//DEBUG( "[PHPFsys] before adding to list\n");
 			ListStringAdd( ls, buf, size );
-			//DEBUG( "[PHPFsys] after adding to list\n");
-			//res += size;
 		}
 		else
 		{
@@ -426,11 +422,7 @@ BufStringDisk *PHPCallDisk( const char *command )
 		DEBUG( "[PHPCallDisk] Adding %d of data\n", size );
 		if( size > 0 )
 		{
-			//DEBUG( "[PHPCallDisk] before adding to list\n");
 			BufStringDiskAddSize( ls, buf, size );
-			
-			//DEBUG( "[PHPCallDisk] after adding to list: %s\n", buf );
-			//res += size;
 		}
 		else
 		{
@@ -525,10 +517,8 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 	char *name = NULL;
 	char *module = NULL;
 	char *type = NULL;
-	char *authid = NULL;
 	char *userSession = NULL;
 	char *empty = "";
-//	FULONG id = 0; //not used
 	
 	SystemBase *sb = NULL;
 	
@@ -918,69 +908,75 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		// Using newpopen
 		
 		NPOpenFD *pofd = FMalloc( sizeof( NPOpenFD ) );
-		int err = newpopen( command, pofd );
-		if( err != 0 )
+		if( pofd != NULL )
 		{
-			FERROR("[PHPCallDisk] cannot open pipe: %s\n", strerror( errno ) );
-			return NULL;
-		}
-	
-		int errCounter = 0;
-		int size = 0;
-		
-		File *locfil = NULL;
-		if( ( locfil = FCalloc( 1, sizeof( File ) ) ) != NULL )
-		{
-			locfil->f_Stream = TRUE;
-			locfil->f_Path = StringDup( path );
-	
-			if( ( locfil->f_SpecialData = FCalloc( 1, sizeof( SpecialData ) ) ) != NULL )
+			int err = newpopen( command, pofd );
+			if( err != 0 )
 			{
-				sd->fp = pipe; 
-				SpecialData *locsd = (SpecialData *)locfil->f_SpecialData;
-				locsd->sb = sd->sb;
-				locsd->fp = -1;
-				locsd->pofd = pofd;
-				
-				locsd->pollfd1 = FCalloc( 1, sizeof( struct pollfd ) );
-				locsd->pollfd2 = FCalloc( 1, sizeof( struct pollfd ) );
-				// watch stdin for input 
-				locsd->pollfd1->fd = locsd->pofd->np_FD[ NPOPEN_CONSOLE ];// STDIN_FILENO;
-				locsd->pollfd1->events = POLLIN;
-				// watch stdout for ability to write
-				locsd->pollfd2->fd = STDOUT_FILENO;
-				locsd->pollfd2->events = POLLOUT;
-				
-				locsd->mode = MODE_READ;
-				//locsd->fname = StringDup( tmpfilename );
-				locsd->path = StringDup( path );
-				//locfil->f_SessionID = StringDup( s->f_SessionID );
-				locfil->f_SessionIDPTR = s->f_SessionIDPTR;
-		
-				DEBUG("[fsysphp] FileOpened, memory allocated for reading.\n" );
-				FFree( command );
-				FFree( encodedcomm );
-				return locfil;
+				FERROR("[PHPCallDisk] cannot open pipe: %s\n", strerror( errno ) );
+				return NULL;
 			}
 	
-			// Free this one
-			FFree( locfil->f_Path );
-			locfil->f_Path = NULL;
-			FFree( locfil );
+			File *locfil = NULL;
+			if( ( locfil = FCalloc( 1, sizeof( File ) ) ) != NULL )
+			{
+				locfil->f_Stream = TRUE;
+				locfil->f_Path = StringDup( path );
+	
+				if( ( locfil->f_SpecialData = FCalloc( 1, sizeof( SpecialData ) ) ) != NULL )
+				{
+					sd->fp = (FILE *) pipe; 
+					SpecialData *locsd = (SpecialData *)locfil->f_SpecialData;
+					locsd->sb = sd->sb;
+					locsd->fp = NULL;
+					locsd->pofd = pofd;
+				
+					locsd->pollfd1 = FCalloc( 1, sizeof( struct pollfd ) );
+					locsd->pollfd2 = FCalloc( 1, sizeof( struct pollfd ) );
+					// watch stdin for input
+					if( locsd->pollfd1 != NULL )
+					{
+						locsd->pollfd1->fd = pofd->np_FD[ NPOPEN_CONSOLE ];// STDIN_FILENO;
+						locsd->pollfd1->events = POLLIN;
+					}
+					// watch stdout for ability to write
+					if( locsd->pollfd2 != NULL )
+					{
+						locsd->pollfd2->fd = STDOUT_FILENO;
+						locsd->pollfd2->events = POLLOUT;
+					}
+					
+					locsd->mode = MODE_READ;
+					//locsd->fname = StringDup( tmpfilename );
+					locsd->path = StringDup( path );
+					//locfil->f_SessionID = StringDup( s->f_SessionID );
+					locfil->f_SessionIDPTR = s->f_SessionIDPTR;
+		
+					DEBUG("[fsysphp] FileOpened, memory allocated for reading.\n" );
+					FFree( command );
+					FFree( encodedcomm );
+					return locfil;
+				}
+	
+				// Free this one
+				FFree( locfil->f_Path );
+				locfil->f_Path = NULL;
+				FFree( locfil );
 			
-			newpclose( pofd );
-			FFree( pofd );
-		}
-		else
-		{
-			newpclose( pofd );
-			FFree( pofd );
+				newpclose( pofd );
+				FFree( pofd );
+			}
+			else
+			{
+				newpclose( pofd );
+				FFree( pofd );
 			
-			FFree( command );
-			FFree( encodedcomm );
-			FERROR("[PHPFsys] cannot alloc memory\n");
-			return NULL;
-		}
+				FFree( command );
+				FFree( encodedcomm );
+				FERROR("[PHPFsys] cannot alloc memory\n");
+				return NULL;
+			}
+		}	// pofd
 	}
 	
 	//
@@ -990,45 +986,14 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 	else if( mode[0] == 'r' || strcmp( mode, "rb" ) == 0 )
 	{
 		char tmpfilename[ 712 ];
-		int lockf = -1;
 		struct timeval  tv;
 		gettimeofday(&tv, NULL);
 
-		double timeInMill = 
-         (tv.tv_sec) * 1000 + (tv.tv_usec) / 1000 ; // convert tv_sec & tv_usec to millisecond
+		double timeInMill = (tv.tv_sec) * 1000 + (tv.tv_usec) / 1000 ; // convert tv_sec & tv_usec to millisecond
+		SystemBase *locsb = (SystemBase *)sd->sb;
 
-		// Make sure we can make the tmp file unique with lock!
-		int retries = 100;
-		do
-		{
-			//snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/%s_read_%d%d%d%d", s->f_SessionIDPTR, rand()%9999, rand()%9999, rand()%9999, rand()%9999 );
-			snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/Friendup/%s_read_%f%d%d", s->f_SessionIDPTR, timeInMill, rand()%9999, rand()%9999 );
-			//DEBUG( "[fsysphp] Trying to lock %s\n", tmpfilename );
-			if( ( lockf = open( tmpfilename, O_CREAT|O_EXCL|O_RDWR ) ) >= 0 )
-			{
-				break;
-			}
-			unlink( tmpfilename );
-			// Failed.. bailing
-			if( retries-- <= 0 )
-			{
-				FERROR( "[fsysphp] [FileOpen] Failed to get exclusive lock on lockfile.\n" );
-				FFree( command );
-				FFree( encodedcomm );
-				close( lockf );
-				return NULL;
-			}
-		}
-		while( TRUE );
-
-		if( lockf == -1 )
-		{
-			FERROR( "[fsysphp] [FileOpen] Failed to get exclusive lock on lockfile (2).\n" );
-			FFree( command );
-			FFree( encodedcomm );
-			return NULL;
-		}
-		
+		// when pointer is used there is no way that something will write to same file
+		snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/Friendup/%s_read_%f%p%d", s->f_SessionIDPTR, timeInMill, sd, rand()%999 );
 		
 		DEBUG( "[fsysphp] Success in locking %s\n", tmpfilename );
 
@@ -1041,7 +1006,6 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		DEBUG( "[fsysphp] %s\n", command );
 		
 		BufStringDisk *result = PHPCallDisk( command );
-		//ListString *result = PHPCall( command );
 
 		// Open a file pointer
 		if( result )
@@ -1056,8 +1020,6 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 					FFree( command );
 					FFree( encodedcomm );
 					BufStringDiskDelete( result );
-					//ListStringDelete( result );
-					close( lockf );
 					unlink( tmpfilename );
 					return NULL;
 				}
@@ -1073,28 +1035,25 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 				}
 				
 				int rbytes = 0;
-				while( toWrite > 0 )
+				FILE *tempFileStoreFP;
+				if( ( tempFileStoreFP = fopen( tmpfilename, "wb" ) ) != NULL )
 				{
-					rbytes = write( lockf, ( void *)dataptr, store );
-					dataptr += rbytes;
-					toWrite -= rbytes;
-					
-					if( ((FQUAD)store) > toWrite )
+					while( toWrite > 0 )
 					{
-						store = (int)toWrite;
+						rbytes = fwrite( ( void *)dataptr, 1, store, tempFileStoreFP );
+						dataptr += rbytes;
+						toWrite -= rbytes;
+					
+						if( ((FQUAD)store) > toWrite )
+						{
+							store = (int)toWrite;
+						}
 					}
+					fclose( tempFileStoreFP );
 				}
 	
 				// Clean out result
 				BufStringDiskDelete( result ); result = NULL;
-				//ListStringDelete( result ); result = NULL;
-
-				// Remove lock!
-				//fcntl( lockf, F_SETLKW ); // TODO: Why the hell was this here? :-D
-				fcntl( lockf, F_UNLCK );
-				fchmod( lockf, 0755 );
-				close( lockf );
-				lockf = -1;
 				
 				FILE *locfp = NULL;
 				if( ( locfp = fopen( tmpfilename, mode ) ) != NULL )
@@ -1149,12 +1108,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		{
 			FERROR("[fsysphp] Cannot create temporary file %s\n", tmpfilename );
 		}
-		// Close lock
-		if( lockf != -1 )
-		{
-			DEBUG( "[fsysphp] Closing lock..\n" );
-			close( lockf );
-		}
+
 		unlink( tmpfilename );
 	}
 	else if( mode[0] == 'w' )

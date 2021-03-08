@@ -1,0 +1,145 @@
+<link rel="stylesheet" href="Progdir:Templates/gui.css"/>
+<div id="Form" class="ScrollArea SmoothScrolling">
+	<input type="hidden" id="ID" value="{inpID}"/>
+	<div class="">
+		<div class="HRow sw2">
+			<div class="HContent30 FloatLeft Padding">
+				<label for="Firstname">{i18n_firstname}</label>
+			</div>
+			<div class="HContent70 FloatLeft Padding">
+				<input type="text" id="Firstname" value="{inpFirstname}" class="FullWidth"/>
+			</div>
+		</div>
+		<div class="HRow sw1">
+			<div class="HContent30 FloatLeft Padding">
+				<label for="Lastname">{i18n_lastname}</label>
+			</div>
+			<div class="HContent70 FloatLeft Padding">
+				<input type="text" id="Lastname" value="{inpLastname}" class="FullWidth"/>
+			</div>
+		</div>
+		<div class="HRow sw2">
+			<div class="HContent30 FloatLeft Padding">
+				<label for="Email">{i18n_email}</label>
+			</div>
+			<div class="HContent70 FloatLeft Padding">
+				<input type="text" id="Email" value="{inpEmail}" class="FullWidth"/>
+			</div>
+		</div>
+		<div class="HRow sw1">
+			<div class="HContent30 FloatLeft Padding">
+				<label for="Company">{i18n_company}</label>
+			</div>
+			<div class="HContent70 FloatLeft Padding">
+				<input type="text" id="Company" value="{inpCompany}" class="FullWidth"/>
+			</div>
+		</div>
+		<div class="HRow sw2">
+			<div class="HContent30 FloatLeft Padding">
+				<label for="Mobile">{i18n_mobile}</label>
+			</div>
+			<div class="HContent70 FloatLeft Padding">
+				<input type="text" id="Mobile" value="{inpMobile}" size="20"/>
+			</div>
+		</div>
+		<div class="HRow sw1">
+			<div class="HContent30 FloatLeft Padding">
+				<label for="Address1">{i18n_address1}</label>
+			</div>
+			<div class="HContent70 FloatLeft Padding">
+				<input type="text" id="Address1" value="{inpAddress1}" class="FullWidth"/>
+			</div>
+		</div>
+		<div class="HRow sw2">
+			<div class="HContent30 FloatLeft Padding">
+				<label for="Address2">{i18n_address2}</label>
+			</div>
+			<div class="HContent70 FloatLeft Padding">
+				<input type="text" id="Address2" value="{inpAddress2}" class="FullWidth"/>
+			</div>
+		</div>
+		<div class="HRow sw1">
+			<div class="HContent30 FloatLeft Padding">
+				<label for="Postcode">{i18n_postcode}</label>
+			</div>
+			<div class="HContent70 FloatLeft Padding">
+				<input type="text" id="Postcode" value="{inpPostcode}" size="8"/>
+			</div>
+		</div>
+		<div class="HRow sw2">
+			<div class="HContent30 FloatLeft Padding">
+				<label for="City">{i18n_city}</label>
+			</div>
+			<div class="HContent70 FloatLeft Padding">
+				<input type="text" id="City" value="{inpCity}" class="FullWidth"/>
+			</div>
+		</div>
+		<div class="HRow sw1">
+			<div class="HContent30 FloatLeft Padding">
+				<label for="County">{i18n_county}</label>
+			</div>
+			<div class="HContent70 FloatLeft Padding">
+				<input type="text" id="County" value="{inpCounty}" class="FullWidth"/>
+			</div>
+		</div>
+		<div class="HRow sw2">
+			<div class="HContent30 FloatLeft Padding">
+				<label for="Country">{i18n_country}</label>
+			</div>
+			<div class="HContent70 FloatLeft Padding">
+				<select id="CountrySelector" onchange="ge('Country').value=this.value"></select>
+				<input type="hidden" id="Country" value="{inpCountry}"/>
+			</div>
+		</div>
+		<div class="HRow sw1">
+			<div class="HContent30 FloatLeft Padding">
+				<label for="County">{i18n_sex}</label>
+			</div>
+			<div class="HContent70 FloatLeft Padding">
+				<form>
+					<input type="radio" name="Sex" key="male" value="male"/> {i18n_male}
+					<input type="radio" name="Sex" key="female" value="female"/> {i18n_female}
+					<input type="radio" name="Sex" key="unknown" value="undefined"/> {i18n_unknown}
+				</form>
+			</div>
+		</div>
+		<!--<div class="HRow sw1">
+			<div class="HContent30 FloatLeft Padding">
+				<label for="Phone">{i18n_phone}</label>
+			</div>
+			<div class="HContent70 FloatLeft Padding">
+				<input type="text" id="Phone" value="{inpPhone}" size="20"/>
+			</div>
+		</div>-->
+		<div class="HRow sw2">
+			<div class="HContent30 FloatLeft Padding">
+				<label for="Avatar">{i18n_avatar}</label>
+			</div>
+			<div class="HContent70 FloatLeft Padding">
+				<div id="AvatarImage"></div>
+				<textarea style="visibility: hidden; pointer-events: none; height: 0px; overflow: hidden" id="Avatar"></textarea>
+				<button type="button" class="ImageButton IconSmall fa-image"> {i18n_select_avatar}</button>
+			</div>
+		</div>
+		<div class="HRow sw1">
+			<div class="HContent30 FloatLeft Padding">
+				<label for="Comment">{i18n_comment}</label>
+			</div>
+			<div class="HContent70 FloatLeft Padding">
+				<textarea id="Comment" class="FullWidth" rows="8">{inpComment}</textarea>
+			</div>
+		</div>
+	</div>
+</div>
+<div id="BottomBar" class="Padding">
+	<button type="button" class="Alert IconSmall fa-save FloatLeft" style="{deletevisibility}" onclick="DeleteContact({inpID})">
+		{i18n_delete}
+	</button>
+	<button type="button" class="IconSmall fa-save FloatRight MarginLeft" onclick="SaveForm()">
+		{i18n_save}
+	</button>
+	<button type="button" class="IconSmall fa-remove FloatRight" onclick="CloseView();">
+		{i18n_cancel}
+	</button>
+</div>
+<script type="text/javascript" src="Progdir:Scripts/contact.js"></script>

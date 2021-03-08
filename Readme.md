@@ -25,32 +25,11 @@ In the Future, Friend OS will be to the cloud users what Linux is for machines.
 Getting started
 ===============
 
-Prior to installation, check that 'bash', or a compatible shell is installed on your machine.
-
-After you cloned this repository, install the dependencies and do a manual install. Post to the [Developer Community](https://discord.gg/GREj9Gv) if you run into any problems here.
-
-The current distribution of choice is Ubuntu 18.
+Please follow this guide to install Friend OS:
 
 ```
-git clone https://github.com/FriendSoftwareLabs/friendup
-apt install make cmake dialog
-cd friendup/
-```
-
-After this, manually compile and install. You might need to install MySQL or MariaDB first.
-
-Dependencies
-------------
-
-Before compiling, check the dependencies equivalent to these packages (e.g. Ubuntu)
-
-```
-sudo apt install -y libsmbclient-dev libssh2-1-dev libssh-dev libssl-dev \
-libaio-dev mysql-server php7.2-cli php7.2-gd php7.2-imap \
-php7.2-mysql php7.2-curl libmysqlclient-dev build-essential \
-libmatheval-dev libmagic-dev libgd-dev libwebsockets-dev \
-rsync valgrind-dbg libxml2-dev php7.2-readline \
-cmake ssh make libssh-dev php7.2-zip libsqlite3-dev apache2
+For Ubuntu 18: https://docs.friendos.com/docs/administrator-guide/installation/
+For Ubuntu 20: https://docs.friendos.com/docs/administrator-guide/installation-ubuntu-20/
 ```
 
 Running the serving kernel manually
