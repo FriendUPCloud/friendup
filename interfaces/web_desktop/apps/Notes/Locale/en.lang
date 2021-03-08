@@ -3,7 +3,7 @@ i18n_bookmarks                      : Bookmarks
 i18n_file_menu                      : File menu
 i18n_create_folder                  : Create folder
 
-menu_new                          : New document
+menu_new                          : New note
 menu_save                         : Save
 i18n_save                         : Save
 menu_save_as                      : Save as
@@ -40,6 +40,7 @@ i18n_status_loading               : Loading...
 i18n_status_saving                : Saving...
 
 i18n_find                         : Find
+i18n_find_keywords                : Find notes...
 i18n_select                       : Select
 i18n_search                       : Search
 

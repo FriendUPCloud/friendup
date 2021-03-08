@@ -18,6 +18,10 @@
 var _protocol = document.location.href.split( '://' )[0];
 
 Workspace = {
+	receivePush: function()
+	{
+		return false;
+	},
 	icons: [],
 	menuMode: 'pear', // 'miga', 'fensters' (alternatives) -> other menu behaviours
 	mode: 'default',
@@ -319,6 +323,7 @@ Workspace = {
 
 				// Realign workspaces
 				Workspace.nudgeWorkspacesWidget();
+				Workspace.refreshExtraWidgetContents(); // < Screenbar icons
 			}
 			this.clockInterval = setInterval( clock, 1000 );
 		}
@@ -885,6 +890,7 @@ Workspace = {
 				'webclient/js/gui/desklet.js;' +
 				'webclient/js/gui/calendar.js;' +
 				'webclient/js/gui/colorpicker.js;' +
+				'webclient/js/gui/workspace_calendar.js;' +
 				'webclient/js/gui/workspace_tray.js;' +
 				'webclient/js/gui/workspace_sharing.js;' +
 				'webclient/js/gui/tutorial.js;' +
@@ -900,7 +906,7 @@ Workspace = {
 				'webclient/js/api/friendAPIv1_2.js';
 			s.onload = function()
 			{
-				// Start with expanding the workspace object
+			    // Start with expanding the workspace object
 				// TODO: If we have sessionid - verify it through ajax.
 				// TODO: This block is only for already initialized workspace
 				if( _this.sessionId && _this.postInitialized )
@@ -915,6 +921,9 @@ Workspace = {
 					// console.log( 'Test2: Got in sessionid error.', json );
 					return false;
 				}
+
+                // Just get it done!
+				InitWorkspaceNetwork();
 
 				// Reset some options
 				if( ev && ev.shiftKey )
@@ -1002,7 +1011,7 @@ Workspace = {
 				// Set up a shell instance for the workspace
 				var uid = FriendDOS.addSession( _this );
 				_this.shell = FriendDOS.getSession( uid );
-
+				
 				// We're getting the theme set in an url var
 				var th = '';
 				if( ( th = GetUrlVar( 'theme' ) ) )

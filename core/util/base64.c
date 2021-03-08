@@ -128,15 +128,18 @@ char *Base64EncodeString( const unsigned char *chr )
 char *MarkAndBase64EncodeString( const char *chr )
 {
 	char *str = Base64EncodeString( (const unsigned char *)chr );
-	// 13 length <!--base64-->, +1 for terminator
-	char *fin = FCalloc( strlen( str ) + 14, sizeof( char ) );
-	if( fin != NULL )
+	if( str != NULL )
 	{
-		sprintf( fin, "%s%s", "<!--base64-->", str );
+		// 13 length <!--base64-->, +1 for terminator
+		char *fin = FCalloc( strlen( str ) + 14, sizeof( char ) );
+		if( fin != NULL )
+		{
+			sprintf( fin, "%s%s", "<!--base64-->", str );
+			FFree( str );
+			return fin;
+		}
 		FFree( str );
-		return fin;
 	}
-	FFree( str );
 	return NULL;
 }
 
@@ -169,34 +172,36 @@ char *Base64Decode( const unsigned char* data, unsigned int length, int *finalLe
 
 	unsigned char *decoded_data = FCalloc( output_length + 1, sizeof( char ) );
     
-	if( decoded_data == NULL )
+	if( decoded_data != NULL )
 	{
-		FERROR("Decoded data is equal to NULL\n");
-		return NULL;
-	}
+		unsigned int i, j;
+		for( i = 0, j = 0; i < length; )
+		{
+			//DEBUG(" i : %d dataptr %p\n", i, data );
+			unsigned long long sextet_a = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
+			unsigned long long sextet_b = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
+			unsigned long long sextet_c = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
+			unsigned long long sextet_d = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
 
-	unsigned int i, j;
-	for( i = 0, j = 0; i < length; )
-	{
-		//DEBUG(" i : %d dataptr %p\n", i, data );
-		unsigned long long sextet_a = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
-		unsigned long long sextet_b = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
-		unsigned long long sextet_c = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
-		unsigned long long sextet_d = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
-
-		unsigned long long triple =   ( sextet_a << 18 )  // 3 * 6
+			unsigned long long triple =   ( sextet_a << 18 )  // 3 * 6
 									+ ( sextet_b << 12 )  // 2 * 6
 									+ ( sextet_c << 6  )  // 1 * 6
 									+ ( sextet_d       ); // 0 * 6
 
-		int x = j;
-		if( j < output_length) decoded_data[j++] = (triple >> 16 ) & 0xFF; // 2 * 8
-		if( j < output_length) decoded_data[j++] = (triple >> 8  ) & 0xFF; // 1 * 8
-		if( j < output_length) decoded_data[j++] = (triple       ) & 0xFF; // 0 * 8
-		//printf(" %c %c %c", decoded_data[x], decoded_data[x+1], decoded_data[x+2] );
-	}
+			int x = j;
+			if( j < output_length) decoded_data[j++] = (triple >> 16 ) & 0xFF; // 2 * 8
+			if( j < output_length) decoded_data[j++] = (triple >> 8  ) & 0xFF; // 1 * 8
+			if( j < output_length) decoded_data[j++] = (triple       ) & 0xFF; // 0 * 8
+			//printf(" %c %c %c", decoded_data[x], decoded_data[x+1], decoded_data[x+2] );
+		}
 	
-	*finalLength = output_length;
+		*finalLength = output_length;
+	}
+	else
+	{
+		FERROR("Decoded data is equal to NULL\n");
+		return NULL;
+	}
 
 	// Clean up and return
 	//base64_cleanup();

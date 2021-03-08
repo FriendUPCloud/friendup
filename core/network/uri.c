@@ -162,7 +162,10 @@ Authority *UriParseAuthority( char* str )
 	unsigned int userLen = 0;
 
 	Authority *authority = (Authority*) FCalloc( 1, sizeof( Authority ) );
-
+	if( authority == NULL )
+	{
+		return NULL;
+	}
 	// Get user (Ignore empty strings)
 	char* userEnd = memchr( str, '@', strLen );
 	if( userEnd )
@@ -564,6 +567,10 @@ Uri* UriParse( char* str )
 		return NULL;
 	}
 	Uri* uri = UriNew();
+	if( uri == NULL )
+	{
+		return NULL;
+	}
 	unsigned int strLen = strlen( str );
 	unsigned int remainingLen = strLen;
 	char* end = str + strLen;
@@ -612,6 +619,7 @@ Uri* UriParse( char* str )
 
 	// Get query --------------------------------------------------------------
 	char* query = UriGetQuery( next, remainingLen, &next );
+	//DEBUG( "Testing UriGetQuery: %s\n", query );
 	remainingLen = strLen - ( next - str );
 	if( query != NULL )
 	{

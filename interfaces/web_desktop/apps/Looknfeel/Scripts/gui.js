@@ -299,6 +299,7 @@ function refreshThemes()
 				ge( 'hiddenSystem' ).checked = 'checked';
 			ge( 'workspaceCount' ).value = dd.workspacecount > 0 ? dd.workspacecount : 1;
 			ge( 'scrollDesktopIcons' ).checked = dd.scrolldesktopicons == '1' ? 'checked' : '';
+			ge( 'hideDesktopIcons' ).checked = dd.hidedesktopicons == '1' ? 'checked' : '';
 			ge( 'ThemeConfigData' ).value = JSON.stringify( dd[ 'themedata_' + Application.theme.toLowerCase() ] );
 			Application.labelChoices = dd.workspace_labels ? dd.workspace_labels : [];
 			refreshLabels();
@@ -310,6 +311,7 @@ function refreshThemes()
 		setWindowListMode( 'separate' );
 		ge( 'workspaceCount' ).value = '1';
 		ge( 'scrollDesktopIcons' ).checked = '';
+		ge( 'hideDesktopIcons' ).checked = '';
 		ge( 'ThemeConfigData' ).value = '';
 		Application.labelChoices = [];
 		refreshLabels();
@@ -317,7 +319,8 @@ function refreshThemes()
 	m.execute( 'getsetting', { settings: [ 
 		'menumode', 'navigationmode', 'focusmode', 
 		'windowlist', 'hiddensystem', 'workspacecount',
-		'scrolldesktopicons', 'themedata_' + Application.theme.toLowerCase(),
+		'hidedesktopicons', 'scrolldesktopicons', 
+		'themedata_' + Application.theme.toLowerCase(),
 		'workspace_labels'
 	] } );
 	
@@ -369,21 +372,27 @@ function applyTheme()
 										var m9 = new Module( 'system' );
 										m9.onExecuted = function()
 										{
-											if( e == 'ok' )
+											// check for extra config
+											var m12 = new Module( 'system' );
+											m12.onExecuted = function()
 											{
-												var dt = {
-													type: 'system',
-													command: 'refreshtheme',
-													theme: currTheme
-												};
-												if( ge( 'ThemeConfigData' ) )
-													dt.themeConfig = ge( 'ThemeConfigData' ).value;
-												Application.sendMessage( dt );
+												if( e == 'ok' )
+												{
+													var dt = {
+														type: 'system',
+														command: 'refreshtheme',
+														theme: currTheme
+													};
+													if( ge( 'ThemeConfigData' ) )
+														dt.themeConfig = ge( 'ThemeConfigData' ).value;
+													Application.sendMessage( dt );
+												}
+												else
+												{
+													console.log( 'Could not set system theme!' );
+												}
 											}
-											else
-											{
-												console.log( 'Could not set system theme!' );
-											}
+											m12.execute( 'setsetting', { setting: 'hidedesktopicons', data: ge( 'hideDesktopIcons' ).checked ? '1': '0' } );
 										}
 										m9.execute( 'setsetting', { setting: 'themedata_' + currTheme.toLowerCase(), data: ge( 'ThemeConfigData' ).value } );
 									}

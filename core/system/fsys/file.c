@@ -1158,10 +1158,10 @@ int FileOrDirectoryDeleteRec( Http *request, File *srcdev, const char *src, int 
 			{
 				BufStringDelete( bsdir );
 			}
-			if( newsrc != NULL )
-			{
-				FFree( newsrc );
-			}
+		}
+		if( newsrc != NULL )
+		{
+			FFree( newsrc );
 		}
 	}
 	

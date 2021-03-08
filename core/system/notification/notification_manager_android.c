@@ -217,7 +217,7 @@ int NotificationManagerNotificationSendAndroidQueue( NotificationManager *nm, No
 	if( notif->n_Extra != NULL ){ msgSize += strlen( notif->n_Extra ); }
 	if( notif->n_Application != NULL ){ msgSize += strlen( notif->n_Application ); }
 	
-	char *msg = FMalloc( msgSize );
+	char *msg = (char *)FMalloc( msgSize );
 	if( msg != NULL )
 	{
 		int len = snprintf( msg, msgSize, "{\"registration_ids\":[%s],\"notification\": {},\"data\":{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"%s\",\"id\":%lu,\"notifid\":%lu,\"source\":\"notification\",\"createtime\":%lu},\"android\":{\"priority\":\"high\"}}", tokens, notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, action, ID , notif->n_ID, notif->n_OriginalCreateT );
@@ -237,6 +237,10 @@ int NotificationManagerNotificationSendAndroidQueue( NotificationManager *nm, No
 				DEBUG("[NotificationManagerNotificationSendAndroidQueue] signal triggered\n");
 				pthread_cond_signal( &(nm->nm_AndroidSendCond) );
 				FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
+			}
+			else
+			{
+				FFree( en );
 			}
 		}
 		else

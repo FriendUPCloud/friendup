@@ -32,19 +32,37 @@
 
 typedef struct SupportManager
 {
-	FUQUAD			cm_CacheSize;
-	FUQUAD 			cm_CacheMax;
+	void				*cm_SB;
+	
+	FUQUAD				cm_CacheSize;
+	FUQUAD 				cm_CacheMax;
 
+	pthread_mutex_t		cm_Mutex;
+	FQUAD				cm_TempFileID;		// function used to get file ID
 }SupportManager;
 
 //
 //
 //
 
-SupportManager *SupportManagerNew( );
+SupportManager *SupportManagerNew( void *sb );
+
+//
+//
+//
 
 void SupportManagerDelete( SupportManager *sm );
 
+//
+//
+//
+
 void SupportManagerThread( SupportManager *sm );
+
+//
+//
+//
+
+FQUAD SupportManagerGetTempFileID( SupportManager *sm );
 
 #endif //__SUPPORT_SUPPORT_MANAGER_H__

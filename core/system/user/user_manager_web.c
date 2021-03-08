@@ -73,6 +73,10 @@ int killUserSession( SystemBase *l, UserSession *ses )
 	return error;
 }
 
+//
+// Kill user session by user
+//
+
 inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid )
 {
 	int error = 0;
@@ -175,6 +179,10 @@ inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid 
 	return error;
 }
 
+//
+// Send messages to 3rd party services
+//
+
 inline static void NotifyExtServices( SystemBase *l, Http *request, User *usr, char *action )
 {
 	BufString *bs = BufStringNew();
@@ -227,7 +235,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -251,7 +259,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			struct TagItem tags[] = {
 				{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
 				{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-				{TAG_DONE, TAG_DONE}
+				{ TAG_DONE, TAG_DONE }
 			};
 		
 			response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -315,18 +323,21 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				if( sessionid != NULL )
 				{
 					User *usr = loggedSession->us_User;
-					FRIEND_MUTEX_LOCK( &usr->u_Mutex );
-					UserSessListEntry *ses = usr->u_SessionsList;
-					while( ses != NULL )
+					if( usr != NULL )
 					{
-						UserSession *uses = (UserSession *) ses->us;
-						if( strcmp( sessionid, uses->us_SessionID ) == 0 )
+						FRIEND_MUTEX_LOCK( &usr->u_Mutex );
+						UserSessListEntry *ses = usr->u_SessionsList;
+						while( ses != NULL )
 						{
-							nameSet = TRUE;
+							UserSession *uses = (UserSession *) ses->us;
+							if( strcmp( sessionid, uses->us_SessionID ) == 0 )
+							{
+								nameSet = TRUE;
+							}
+							ses = (UserSessListEntry *)ses->node.mln_Succ;
 						}
-						ses = (UserSessListEntry *)ses->node.mln_Succ;
+						FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
 					}
-					FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
 				}
 				else
 				{
@@ -335,11 +346,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				
 				if( nameSet == TRUE )
 				{
-					HttpAddTextContent( response, "ok<!--separate-->{ \"setname\": \"success\"}" );
+					HttpAddTextContent( response, "ok<!--separate-->{\"setname\":\"success\"}" );
 				}
 				else
 				{
-					HttpAddTextContent( response, "fail<!--separate-->{ \"setname\": \"fail, please check FC logs\"}" );
+					HttpAddTextContent( response, "fail<!--separate-->{\"setname\":\"fail, please check FC logs\"}" );
 				}
 				
 				FFree( name );
@@ -347,10 +358,10 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			else
 			{
 				FERROR("name parameter is missing\n");
-				char buffer[ 256 ];
+				char buffer[ 512 ];
 				char buffer1[ 256 ];
 				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "name" );
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
 			
@@ -483,11 +494,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						
 							if( appname != NULL )
 							{
-								lenmsg = snprintf( tmpmsg, msgsize, "{\"type\":\"msg\",\"data\":{\"type\":\"server-msg\",\"session\": {\"message\":%s, \"appname\":\"%s\" }}}", msg, appname );
+								lenmsg = snprintf( tmpmsg, msgsize, "{\"type\":\"msg\",\"data\":{\"type\":\"server-msg\",\"session\":{\"message\":%s,\"appname\":\"%s\"}}}", msg, appname );
 							}
 							else
 							{
-								lenmsg = snprintf( tmpmsg, msgsize, "{\"type\":\"msg\",\"data\":{\"type\":\"server-msg\",\"session\": {\"message\":%s}}}", msg );
+								lenmsg = snprintf( tmpmsg, msgsize, "{\"type\":\"msg\",\"data\":{\"type\":\"server-msg\",\"session\":{\"message\":%s}}}", msg );
 							}
 			
 							msgsndsize += WebSocketSendMessageInt( uses, tmpmsg, lenmsg );
@@ -501,21 +512,21 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 
 				if( msgsndsize >= 0 )
 				{
-					HttpAddTextContent( response, "ok<!--separate-->{ \"sendmsg\": \"success\"}" );
+					HttpAddTextContent( response, "ok<!--separate-->{\"sendmsg\":\"success\"}" );
 				}
 				else
 				{
-					HttpAddTextContent( response, "fail<!--separate-->{ \"sendmsg\": \"fail, please check FC logs\"}" );
+					HttpAddTextContent( response, "fail<!--separate-->{\"sendmsg\":\"fail, please check FC logs\"}" );
 				}
 				FFree( msg );
 			}
 			else
 			{
 				FERROR("msg parameter is missing\n");
-				char buffer[ 256 ];
+				char buffer[ 512 ];
 				char buffer1[ 256 ];
 				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "msg" );
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\": \"%s\",\"code\":\"%d\"}", buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
 		
@@ -547,6 +558,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	* @param password - (required) password
 	* @param fullname  - full user name
 	* @param email - user email
+	* @param timezone - timezone
 	* @param level - (required) groups to which user will be assigned, separated by comma
 	* @param workgroups - groups to which user will be assigned. Groups are passed as string, ID's separated by comma
 	* @return ok<!--separate-->{ "create": "sucess","id":"ID","uuid":"UUID" } when success, otherwise error with code
@@ -558,7 +570,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -569,6 +581,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		char *email = NULL;
 		char *level = NULL;
 		char *workgroups = NULL;
+		char *timezone = NULL;
 		FBOOL userCreated = FALSE;
 		
 		DEBUG( "[UMWebRequest] Create user!!\n" );
@@ -624,7 +637,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				if( tusr != NULL )
 				{
 					char buffer[ 256 ];
-					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_ALREADY_EXIST] , DICT_USER_ALREADY_EXIST );
+					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_USER_ALREADY_EXIST] , DICT_USER_ALREADY_EXIST );
 					HttpAddTextContent( response, buffer );
 				}
 				else
@@ -643,13 +656,26 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						DEBUG( "[UMWebRequest] Update email %s!!\n", email );
 					}
 					
+					el = HttpGetPOSTParameter( request, "timezone" );
+					if( el != NULL )
+					{
+						timezone = UrlDecodeToMem( (char *)el->hme_Data );
+						DEBUG( "[UMWebRequest] Update timezone %s!!\n", timezone );
+					}
+					
 					User *locusr = UserNew();
 					if( locusr != NULL )
 					{
-						locusr->u_Name = usrname;
+						locusr->u_Name = usrname;	// we assign pointer to user structure
+						usrname = NULL;				// so we must prevent from releasing it on the end of the function
+													// memory was allocated by UrlDecodeToMem
 						locusr->u_FullName = fullname;
+						fullname = NULL;
 						locusr->u_Email = email;
+						email = NULL;
 						locusr->u_Password = usrpass;
+						locusr->u_Timezone = timezone;
+						usrpass = NULL;
 						userCreated = TRUE;
 						
 						int error = UMUserCreate( l->sl_UM, request, locusr );
@@ -664,10 +690,10 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						}
 						else
 						{
-							char buffer[ 256 ];
+							char buffer[ 512 ];
 							char buffer1[ 256 ];
 							snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "UMUserCreate", error );
-							snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_FUNCTION_RETURNED );
+							snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", buffer1 , DICT_FUNCTION_RETURNED );
 							HttpAddTextContent( response, buffer );
 						}
 						
@@ -680,17 +706,17 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					else
 					{
 						char buffer[ 256 ];
-						snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
+						snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
 						HttpAddTextContent( response, buffer );
 					}
 				} // user found in db
 			} // missing parameters
 			else
 			{
-				char buffer[ 256 ];
+				char buffer[ 512 ];
 				char buffer1[ 256 ];
 				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "username, password, level" );
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\":\"%s\",\"code\":\"%d\"}", buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
 		}
@@ -704,27 +730,24 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		{
 			FFree( workgroups );
 		}
-		/*
-		if( userCreated == TRUE )
+
+		if( usrname != NULL )
 		{
-			if( usrname != NULL )
-			{
-				FFree( usrname );
-			}
-			if( usrpass != NULL )
-			{
-				FFree( usrpass );
-			}
-			if( fullname != NULL )
-			{
-				FFree( fullname );
-			}
-			if( email != NULL )
-			{
-				FFree( email );
-			}
+			FFree( usrname );
 		}
-		*/
+		if( usrpass != NULL )
+		{
+			FFree( usrpass );
+		}
+		if( fullname != NULL )
+		{
+			FFree( fullname );
+		}
+		if( email != NULL )
+		{
+			FFree( email );
+		}
+
 		*result = 200;
 	}
 	
@@ -743,7 +766,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -829,7 +852,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			}
 			else
 			{
-				char buffer[ 256 ];
+				char buffer[ 512 ];
 				char buffer1[ 256 ];
 				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "id" );
 				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
@@ -860,7 +883,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -880,7 +903,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		if( el != NULL )
 		{
 			args = el->hme_Data;
-			//args = UrlDecodeToMem( el->data );
 		}
 		
 		DEBUG( "[UMWebRequest] Update user status!!\n" );
@@ -1004,7 +1026,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			}
 			else
 			{
-				char buffer[ 256 ];
+				char buffer[ 512 ];
 				char buffer1[ 256 ];
 				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "id, status" );
 				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
@@ -1017,11 +1039,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
 			HttpAddTextContent( response, buffer );
 		}
-		
-		//if( args != NULL )
-		//{
-		//	FFree( args );
-		//}
 	}
 	
 	/// @cond WEB_CALL_DOCUMENTATION
@@ -1040,7 +1057,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -1112,7 +1129,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					}
 					else
 					{
-						char buffer[ 256 ];
+						char buffer[ 512 ];
 						char buffer1[ 256 ];
 						snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_CANNOT_CHANGE_PASS], err );
 						snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_USER_NOT_FOUND );
@@ -1142,7 +1159,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		else
 		{
 			FERROR("[ERROR] username or password parameters missing\n" );
-			char buffer[ 256 ];
+			char buffer[ 512 ];
 			char buffer1[ 256 ];
 			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "username, password" );
 			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
@@ -1171,6 +1188,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	* @param password - new password
 	* @param fullname - new full user name
 	* @param email - new user email
+	* @param timezone - timezone
 	* @param level - new groups to which user will be assigned. Groups must be separated by comma sign
 	* @param workgroups - groups to which user will be assigned. Groups are passed as string, ID's separated by comma
 	* @param status - user status
@@ -1182,7 +1200,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -1193,6 +1211,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		char *email = NULL;
 		char *level = NULL;
 		char *workgroups = NULL;
+		char *timezone = NULL;
 		FULONG id = 0;
 		FLONG status = -1;
 		FBOOL userFromSession = FALSE;
@@ -1346,6 +1365,18 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						}
 						logusr->u_Email = email;
 					}
+					
+					el = HttpGetPOSTParameter( request, "timezone" );
+					if( el != NULL )
+					{
+						timezone = UrlDecodeToMem( (char *)el->hme_Data );
+						DEBUG( "[UMWebRequest] Update timezone %s!!\n", timezone );
+						if( logusr->u_Timezone != NULL )
+						{
+							FFree( logusr->u_Timezone );
+						}
+						logusr->u_Timezone = timezone;
+					}
 			
 					el = HttpGetPOSTParameter( request, "level" );
 					if( el != NULL )
@@ -1373,21 +1404,18 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					
 						if( status >= 0 )
 						{
+							char msg[ 512 ];
 							logusr->u_Status = status;
-						
+
+							if( status == USER_STATUS_DISABLED )
 							{
-								char msg[ 512 ];
-								if( status == USER_STATUS_DISABLED )
-								{
-									snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\",\"true\"}", logusr->u_UUID );
-								}
-								else
-								{
-									snprintf( msg, sizeof(msg), "{\"userid\":\"%s\"}", logusr->u_UUID );
-								}
-								//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
-								NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "update", msg );
+								snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\",\"true\"}", logusr->u_UUID );
 							}
+							else
+							{
+								snprintf( msg, sizeof(msg), "{\"userid\":\"%s\"}", logusr->u_UUID );
+							}
+							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "update", msg );
 						}
 						UMUserUpdateDB( l->sl_UM, logusr );
 					
@@ -1437,10 +1465,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		{
 			FFree( level );
 		}
-		//if( args != NULL )
-		//{
-		//	FFree( args );
-		//}
 		if( workgroups != NULL )
 		{
 			FFree( workgroups );
@@ -1464,7 +1488,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -1500,7 +1524,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			if( el != NULL )
 			{
 				args = el->hme_Data;
-				//args = UrlDecodeToMem( el->hme_Data );
 			}
 				
 			if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
@@ -1540,7 +1563,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		{
 			FERROR("[ERROR] User not found\n" );
 			char buffer[ 256 ];
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
 			HttpAddTextContent( response, buffer );
 		}
 		else
@@ -1548,7 +1571,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			if( entries != 0 )
 			{
 				char buffer[ 256 ];
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_ALREADY_EXIST] , DICT_USER_ALREADY_EXIST );
+				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\":\"%s\",\"code\":\"%d\"}", l->sl_Dictionary->d_Msg[DICT_USER_ALREADY_EXIST] , DICT_USER_ALREADY_EXIST );
 				HttpAddTextContent( response, buffer );
 			}
 			else
@@ -1590,12 +1613,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					RefreshUserDrives( l->sl_DeviceManager, logusr, NULL, &error );
 					
 					NotifyExtServices( l, request, logusr, "update" );
-					
-					// we must notify user
-					//if( logusr != loggedSession->us_User )
-					//{
-					//	UserNotifyFSEvent2( l->sl_DeviceManager, logusr, "refresh", "Mountlist:" );
-					//}
 					
 					if( error != NULL )
 					{
@@ -1642,7 +1659,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		//if( response != NULL ) FERROR("RESPONSE \n");
@@ -1716,18 +1733,16 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				//
 				// we found user which must be removed
 				//
+				// !!! logout cannot send message via Websockets!!!!
+				// in this case return error < 0
+				HttpAddTextContent( response, "ok<!--separate-->{\"logout\":\"success\"}" );
+				if( request->http_RequestSource == HTTP_SOURCE_WS )
 				{
-					// !!! logout cannot send message via Websockets!!!!
-					// in this case return error < 0
-					HttpAddTextContent( response, "ok<!--separate-->{ \"logout\": \"success\"}" );
-					if( request->http_RequestSource == HTTP_SOURCE_WS )
-					{
-						*result = -666;
-					}
-					else
-					{
-						*result = 200;
-					}
+					*result = -666;
+				}
+				else
+				{
+					*result = 200;
 				}
 			}
 			if( l->sl_ActiveAuthModule != NULL )
@@ -1759,7 +1774,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -1904,7 +1919,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -2007,7 +2022,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -2114,8 +2129,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -2235,8 +2250,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -2257,10 +2272,9 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		// we are going through users and their sessions
 		// if session is active then its returned
 		
-		time_t  timestamp = time( NULL );
+		time_t timestamp = time( NULL );
 		
 		int msgsndsize = 0; 
-		int pos = 0;
 		int msgsize = 1024;
 		
 		if( msg != NULL )
@@ -2288,7 +2302,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							char tmp[ 512 ];
 							int tmpsize = 0;
 						
-							tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\", \"deviceidentity\":\"%s\"}", usr->u_Name, ls->us_DeviceIdentity );
+							tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\",\"deviceidentity\":\"%s\"}", usr->u_Name, ls->us_DeviceIdentity );
 						
 							int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":{\"username\":\"%s\",\"message\":\"%s\"}}}", 
 							loggedSession->us_User->u_Name , msg );
@@ -2306,10 +2320,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				}
 			}
 			BufStringAdd( bs, "]}");
-		}
-		else	//message is empty
-		{
-			
 		}
 		
 		HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
@@ -2340,8 +2350,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );

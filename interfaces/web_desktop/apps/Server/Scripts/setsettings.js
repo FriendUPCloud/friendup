@@ -35,7 +35,11 @@ Application.refreshSettings = function()
 	{
 		for( var key in settings )
 		{
-			ml += '<p class="Layout"><label class="MarginBottom" for="#'+ key +'">Key: '+ key +'</label><br /><textarea id="'+ key +'" class="FullWidth serverinput">' + settings[key].replace(/\\\\/g,'\\')  + '</textarea></p>';
+			let settingData = '';
+			if( typeof( settings[ key ] ) == 'string' )
+				settingData = settings[key].replace(/\\\\/g,'\\');
+			else settingData = settings[key] + '';
+			ml += '<p class="Layout"><label class="MarginBottom" for="#'+ key +'">Key: '+ key +'</label><br /><textarea id="'+ key +'" class="FullWidth serverinput">' + settings[key] + '</textarea></p>';
 			this.propertycount++;
 		}
 	}
