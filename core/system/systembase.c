@@ -764,6 +764,13 @@ SystemBase *SystemInit( void )
 		Log( FLOG_ERROR, "[ERROR]: CANNOT OPEN z.library!\n");
 	}
 	
+	l->usblib = (USBLibrary *)LibraryOpen( l, "usb.library", 0 );
+	if( l->usblib == NULL )
+	{
+		Log( FLOG_ERROR, "[ERROR]: CANNOT OPEN usb.library!\n");
+        FERROR("Cannot open usb.library!\n");
+	}
+	
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	Log( FLOG_INFO, "[SystemBase] Create modules\n");
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
@@ -926,6 +933,12 @@ SystemBase *SystemInit( void )
 		Log( FLOG_ERROR, "Cannot initialize SecurityManager\n");
 	}
 	
+	l->sl_SupportManager = SupportManagerNew( l );
+	if( l->sl_SupportManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize sl_SupportManager\n");
+	}
+	
 	l->sl_UM = UMNew( l );
 	if( l->sl_UM == NULL )
 	{
@@ -1032,10 +1045,10 @@ SystemBase *SystemInit( void )
 		Log( FLOG_ERROR, "Cannot initialize FSManagerNew\n");
 	}
 	
-	l->sl_USB = USBManagerNew( l );
-	if( l->sl_USB == NULL )
+	l->sl_USBRemoteManager = USBRemoteManagerNew( l );
+	if( l->sl_USBRemoteManager == NULL )
 	{
-		Log( FLOG_ERROR, "Cannot initialize USBManagerNew\n");
+		Log( FLOG_ERROR, "Cannot initialize USBRemoteManagerNew\n");
 	}
 	
 	l->sl_USM = USMNew( l );
@@ -1116,6 +1129,12 @@ SystemBase *SystemInit( void )
 	if( l->sl_CalendarManager == NULL )
 	{
 		Log( FLOG_ERROR, "Cannot initialize sl_MobileManager\n");
+	}
+	
+	l->sl_MitraManager = MitraManagerNew( l );
+	if( l->sl_MitraManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize Mitra Manager\n");
 	}
 	
 	FriendCoreManagerInitServices( l->fcm );
@@ -1315,9 +1334,9 @@ void SystemClose( SystemBase *l )
 	{
 		FSManagerDelete(  l->sl_FSM );
 	}
-	if( l->sl_USB != NULL )
+	if( l->sl_USBRemoteManager != NULL )
 	{
-		USBManagerDelete( l->sl_USB );
+		USBRemoteManagerDelete( l->sl_USBRemoteManager );
 	}
 	if( l->sl_PrinterM != NULL )
 	{
@@ -1363,13 +1382,20 @@ void SystemClose( SystemBase *l )
 	{
 		SecurityManagerDelete( l->sl_SecurityManager );
 	}
+
+	if( l->sl_SupportManager != NULL )
+	{
+		SupportManagerDelete( l->sl_SupportManager );
+	}
+
 	if( l->sl_SASManager != NULL )
 	{
 		SASManagerDelete( l->sl_SASManager );
 	}
-	if( l->sl_SupportManager != NULL )
+	
+	if( l->sl_MitraManager != NULL )
 	{
-		SupportManagerDelete( l->sl_SupportManager );
+		MitraManagerDelete( l->sl_MitraManager );
 	}
 	
 	// Remove sentinel from active memory
@@ -1454,6 +1480,11 @@ void SystemClose( SystemBase *l )
 	if( l->zlib != NULL )
 	{
 		LibraryClose( (struct Library *)l->zlib );
+	}
+	
+	if( l->usblib != NULL )
+	{
+		LibraryClose( (struct Library *)l->usblib );
 	}
 	
 	// Close mysql library
