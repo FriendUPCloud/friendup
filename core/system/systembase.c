@@ -392,13 +392,13 @@ SystemBase *SystemInit( void )
 			DEBUG("[SystemBase] connections read %d\n", l->sqlpoolConnections );
 			
 			DEBUG("[SystemBase] read login for internaldb\n");
-			loginSec = plib->ReadStringNCS( prop, "internaldb:login", "root" );
+			loginSec = plib->ReadStringNCS( prop, "internaldb:login", "internalroot" );
 			DEBUG("[SystemBase] user %s for internaldb\n", loginSec );
-			passSec = plib->ReadStringNCS( prop, "internaldb:password", "root" );
+			passSec = plib->ReadStringNCS( prop, "internaldb:password", "internalroot" );
 			DEBUG("[SystemBase] password %s for internaldb\n", passSec );
 			hostSec = plib->ReadStringNCS( prop, "internaldb:host", "localhost" );
 			DEBUG("[SystemBase] host %s for internaldb\n", hostSec );
-			dbnameSec = plib->ReadStringNCS( prop, "internaldb:dbname", "FriendMaster" );
+			dbnameSec = plib->ReadStringNCS( prop, "internaldb:dbname", "FriendInternalMaster" );
 			DEBUG("[SystemBase] dbname %s for internaldb\n",dbnameSec );
 			portSec = plib->ReadIntNCS( prop, "internaldb:port", 3306 );
 			DEBUG("[SystemBase] port read %d for internaldb\n", portSec );
@@ -607,8 +607,19 @@ SystemBase *SystemInit( void )
 	
 	if( l->sqlpool == NULL || l->sqlpool[ 0 ].sqll_Sqllib == NULL )
 	{
-		Log( FLOG_ERROR, "Cannot open 'mysql.library' in first slot\n");
+		Log( FLOG_ERROR, "ERROR: Cannot open database connection!!\n");
 		FFree( tempString );
+		FFree( l->sqlpool );
+		FFree( l );
+		//LogDelete();
+		return NULL;
+	}
+	
+	if( l->sqlpoolInternal == NULL || l->sqlpoolInternal[ 0 ].sqll_Sqllib == NULL )
+	{
+		Log( FLOG_ERROR, "ERROR: Cannot open internal database connection!!\n");
+		FFree( tempString );
+		FFree( l->sqlpoolInternal );
 		FFree( l->sqlpool );
 		FFree( l );
 		//LogDelete();
