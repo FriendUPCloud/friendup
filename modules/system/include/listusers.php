@@ -270,7 +270,32 @@ switch( $args->args->mode )
 	
 			if( isset( $args->args->count ) && $args->args->count )
 			{
-				$count = $SqlDatabase->FetchObject( 'SELECT COUNT( DISTINCT( u.ID ) ) AS Num FROM FUser u, FUserToGroup tg WHERE u.ID = tg.UserID ' );
+				//$count = $SqlDatabase->FetchObject( 'SELECT COUNT( DISTINCT( u.ID ) ) AS Num FROM FUser u, FUserToGroup tg WHERE u.ID = tg.UserID ' );
+				$count = $SqlDatabase->FetchObject( '
+					SELECT 
+						COUNT( DISTINCT( u.ID ) ) AS Num 
+					FROM 
+						FUser u, FUserToGroup tg 
+					WHERE u.ID = tg.UserID 
+					' . ( isset( $args->args->query ) && $args->args->query ? '
+					AND 
+					(
+						' . ( !isset( $args->args->searchby ) || $args->args->searchby == 'FullName' ? '
+						( 
+							u.Fullname LIKE "' . trim( $args->args->query ) . '%" 
+						) 
+						' . ( !isset( $args->args->searchby ) ? 'OR ' : '' ) : '' )
+						 .  ( !isset( $args->args->searchby ) || $args->args->searchby == 'Name' ? '
+						( 
+							u.Name LIKE "' . trim( $args->args->query ) . '%" 
+						) 
+						' . ( !isset( $args->args->searchby ) ? 'OR ' : '' ) : '' )
+						 .  ( !isset( $args->args->searchby ) || $args->args->searchby == 'Email' ? '
+						( 
+							u.Email LIKE "' . trim( $args->args->query ) . '%" 
+						) ' : '' ) . '
+					)' : '' ) . '
+				' );
 				$out['Count'] = ( $count ? $count->Num : 0 );
 			}
 			

@@ -58,8 +58,6 @@ scrollengine = {
 	
 	refreshTimeout : 0,
 	
-	// TODO: Set custom layout from callback function ...
-	
 	set : function ( layout )
 	{
 		this.layout = layout;
@@ -150,11 +148,9 @@ scrollengine = {
 				window.focus();
 				document.body.focus();
 			} );
-					
-			this.refresh();
 			
 			if( data && total )
-			{
+			{				
 				this.distribute( data, 0, total );
 			}
 			
@@ -285,8 +281,6 @@ scrollengine = {
 	
 	pageMiddle : function (  )
 	{
-		//console.log( this.config.rowHeight );
-		
 		// Page middle
 		this.dTop = ( Math.floor( this.scrollTop / this.config.rowHeight ) * this.config.rowHeight );
 		let d = document.createElement( 'div' );
@@ -407,21 +401,56 @@ scrollengine = {
 	
 	distribute: function( data, start, total )
 	{
-		// TODO: Update myArray if the limit has changed ...
+		
+		//console.log( { data: data, start: start, total: total } );
+		
+		if( total != null && this.total != total )
+		{
+			console.log( 'making new total ... ', { a: total, b: this.total } );
+			
+			// Data
+			let myArray = [];
+			
+			if( total > 0 )
+			{
+				for( let a = 0; a < total; a++ )
+				{
+					if( this.myArray[ a ] )
+					{
+						myArray.push( this.myArray[ a ] );
+					}
+					else
+					{
+						myArray.push( {
+							initialized: null,
+						} );
+					}
+				}
+			}
+			
+			this.total = total;
+			
+			this.myArray = myArray;
+		}
+		
+		this.refresh();
 		
 		// Update scroll list array with new data from JSON array
 		for( let a = 0; a < this.length( data ); a++ )
 		{
-			let cacheImage = this.myArray[ start + a ].imageObj;
-			this.myArray[ start + a ] = data[ a ];
-			if( !cacheImage || !cacheImage.src )
+			if( this.myArray[ start + a ] )
 			{
-				this.myArray[ start + a ].imageObj = null;
-				//console.log( 'We have no cache image!' );
-			}
-			else
-			{
-				this.myArray[ start + a ].imageObj = cacheImage;
+				let cacheImage = ( this.myArray[ start + a ].imageObj ? this.myArray[ start + a ].imageObj : false );
+				this.myArray[ start + a ] = data[ a ];
+				if( !cacheImage || !cacheImage.src )
+				{
+					this.myArray[ start + a ].imageObj = null;
+					//console.log( 'We have no cache image!' );
+				}
+				else
+				{
+					this.myArray[ start + a ].imageObj = cacheImage;
+				}
 			}
 		}
 		
@@ -445,9 +474,13 @@ scrollengine = {
 			}
 		}
 		
+		//console.log( { start: start, allNodes: allNodes, myArray: this.myArray } );
+		
 		// Distribute
 		if( this.layout )
 		{
+			let self = this;
+			
 			return this.layout( start, allNodes, this.myArray );
 		}
 		else
@@ -475,6 +508,16 @@ scrollengine = {
 		        	}
 		        	
 		        	allNodes[ a ].title = 'Line ' + s;
+		        	
+		        }
+		        else
+		        {
+		        	
+		        	let test = allNodes[ a ];
+		        	if( test )
+		        	{
+		        		allNodes[ a ].parentNode.removeChild( test );
+		        	}
 		        	
 		        }
 			}
@@ -538,13 +581,9 @@ scrollengine = {
 			redraw = true;
 		}
 		
-		// [3] If the content within the scroll view is inside and visible then redraw
-		// [3] If the content within the scroll view is outside and not visible then redraw
-		
-		// TODO: Look at this why there is redraw at every refresh and scroll change ? ...
+		// [3] At every refresh where content is within the scroll view redraw
 		
 		if( scrollTop < viewHeight )
-		//if( scrollTop > viewHeight )
 		{
 			redraw = true;
 		}
@@ -615,7 +654,7 @@ scrollengine = {
 		    // Page below
 		    let bbb = this.pageBelow();
 		    
-		    if( 1==1 || this.debug )
+		    if( this.debug || 1==1 )
 		    {
 				console.log( '[4] refresh', {
 					dataStart    : { a: this.dataStart, b: this.dataPrevStart },
@@ -623,13 +662,14 @@ scrollengine = {
 					rowCount     : this.rowCount,
 					leftToScroll : leftToScroll,
 					counted      : this.counted,
+					myArray      : this.myArray,
 					total        : this.total
 				} );
 		    }
 		    
 		    // TODO: Find out why 1 is missing when scrolling between page above, middle, below ...
 		    
-		    if( /*this.total > this.counted && */( this.dataStart != this.dataPrevStart || this.dataLimit != this.dataPrevLimit ) )
+		    if( ( this.dataPrevStart != null && this.dataStart != this.dataPrevStart ) || ( this.dataPrevLimit != null && this.dataLimit != this.dataPrevLimit ) )
 		    {
 		    	if( this.debug ) console.log( 'FETCH!!!! ' );
 		    	
@@ -664,7 +704,7 @@ scrollengine = {
 		}
 		
 		// Add debug
-		if( this.debug ) this.debugInfo( scrollTop + ' scroll ' + "\r\n<br>" + viewHeight + ' height ' + "\r\n<br>" + this.ex );
+		if( this.debug && 1!=1 ) this.debugInfo( scrollTop + ' scroll ' + "\r\n<br>" + viewHeight + ' height ' + "\r\n<br>" + this.ex );
 		
 		this.list.focus();
 		

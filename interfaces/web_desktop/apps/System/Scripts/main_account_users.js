@@ -21,7 +21,7 @@ var UsersSettings = function ( setting, set )
 	var listed      = ( 0                            );
 	var total       = ( 0                            );
 	var startlimit  = ( 0                            );
-	var maxlimit    = ( /*30*/9999                   );
+	var maxlimit    = ( 60                           );
 	var minlength   = ( 1							 );
 	var intervals   = ( 50                           );
 	var limit       = ( startlimit + ', ' + maxlimit );
@@ -5014,8 +5014,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							
 							if( UsersSettings( 'debug' ) )
 							{
-								ge( 'UserList' ).innerHTML += '<div id="Debug"></div>';
-								scrollengine.debug = ge( 'Debug' );
+								//ge( 'UserList' ).innerHTML += '<div id="Debug"></div>';
+								//scrollengine.debug = ge( 'Debug' );
 							}
 							
 							scrollengine.set( function( start, allNodes, myArray )
@@ -5117,8 +5117,18 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											
 											uids.push( obj.ID );
 										}
+										else
+										{
+											let test = allNodes[ a ];
+											if( test )
+											{
+												allNodes[ a ].parentNode.removeChild( test );
+											}
+										}
+										
 									}
-		
+									
+									
 									
 									
 									// Temporary get lastlogin time separate to speed up the sql query ...
@@ -7061,10 +7071,12 @@ function getLastLoginlist( callback, users )
 function searchServer( filter, force )
 {
 	
-	if( !force )
-	{
-		if( filter.length < UsersSettings( 'minlength' ).length || filter.length < UsersSettings( 'searchquery' ).length || filter == UsersSettings( 'searchquery' ) ) return;
-	}
+	//if( !force )
+	//{
+	//	if( filter.length < UsersSettings( 'minlength' ).length || filter.length < UsersSettings( 'searchquery' ).length || filter == UsersSettings( 'searchquery' ) ) return;
+	//}
+	
+	//console.log( 'searchServer( '+filter+', '+force+' )' );
 	
 	if( filter != null )
 	{
@@ -7089,11 +7101,17 @@ function searchServer( filter, force )
 			
 			if( callback ) callback( key );
 			
-			//console.log( userList );
+			//console.log( '[1] searchServer ', userList );
 			
 			if( userList )
 			{
-				scrollengine.distribute( userList, 0, userList['Count'] );
+				
+				if( ge( 'AdminUsersCount' ) )
+				{
+					ge( 'AdminUsersCount' ).innerHTML = ( userList['Count'] ? '(' + userList['Count'] + ')' : '(0)' );
+				}
+				
+				scrollengine.distribute( ( userList && !userList.response ? userList : [] ), 0, ( userList['Count'] ? userList['Count'] : 0 ) );
 				
 				//scrollengine.refresh( true );
 			}
