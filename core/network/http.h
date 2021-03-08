@@ -72,9 +72,12 @@ enum {
 	HTTP_HEADER_DEPTH,
 	HTTP_HEADER_EXPECTED_CONTENT_LENGTH,
 	HTTP_HEADER_RANGE,
-	HTTP_HEADER_X_FRAME_OPTIONS,
 	HTTP_HEADER_UPGRADE,
 	HTTP_HEADER_X_FORWARDED_FOR,
+
+	// entries below this cannot be released
+	HTTP_HEADER_X_FRAME_OPTIONS,
+	HTTP_HEADER_STRICT_TRANSPORT_SECURITY,
 	HTTP_HEADER_END
 };
 
@@ -106,9 +109,13 @@ static const char *HEADERS[] = {
 	"x-expected-entity-length",
 	"depth",
 	"range",
-	"x-frame-options",
 	"upgrade",
-	"x-forwarded-for"
+	"x-forwarded-for",
+	
+	// entries below this cannot be released
+
+	"x-frame-options",
+	"strict-transport-security"
 };
 
 //
