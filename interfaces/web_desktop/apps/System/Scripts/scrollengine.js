@@ -12,7 +12,8 @@ scrollengine = {
 	
 	callback : false,
 	
-	myArray : [],
+	myArray  : [],
+	allNodes : [],
 	
 	// Visible elements
 	
@@ -23,7 +24,7 @@ scrollengine = {
 		wholeHeight : null
 	},
 	
-	// TODO: Make sure to update current height based on css data ...
+	// TODO: Make sure to update current height based on div size auto ...
 	
 	config : {
 		rowHeight  : 27,
@@ -45,6 +46,7 @@ scrollengine = {
 	
 	dataStart   : null,
 	dataLimit   : null,
+	
 	dataPrevStart : null,
 	dataPrevLimit : null,
 	
@@ -122,21 +124,27 @@ scrollengine = {
 				
 				switch( e.which )
 				{
+					// Page Up
 					case 33:
 						self.list.scrollTop -= self.list.offsetHeight;
 						break;
+					// Page Down
 					case 34:
 						self.list.scrollTop += self.list.offsetHeight;
 						break;
+					// Home	
 					case 36:
 						self.list.scrollTop = 0;
 						break;
+					// End
 					case 35:
 						self.list.scrollTop = self.elements.wholeHeight.offsetHeight;
 						break;
+					// Arrow Up
 					case 38:
 						self.list.scrollTop -= self.config.rowHeight;
 						break;
+					// Arrow Down
 					case 40:
 						self.list.scrollTop += self.config.rowHeight;
 						break;
@@ -179,7 +187,7 @@ scrollengine = {
 		}
 	},
 	
-	createDiv : function ( id, target, classN, title )
+	createDiv : function ( id, target, line, classN, title )
 	{
 		
 		let d = document.createElement( 'div' );
@@ -189,6 +197,15 @@ scrollengine = {
 		if( classN ) d.className = classN;
 		if( title ) d.title = title;
 		target = ( target ? target : this.list );
+		if( line != null && this.allNodes[ line ] )
+		{
+			// TODO: Fix this out of sync stuff ...
+			//if( line == 1 || line == 2 || line == 3 || line == 4 )
+			//{
+			//	console.log( 'this.rowPosition: ' + [ this.rowPosition, line, this.myArray[ line ].Name, this.allNodes[ line ].style.cssText, d.style.cssText ] );
+			//}
+			d.innerHTML = this.allNodes[ line ].innerHTML;
+		}
 		target.appendChild( d );
 		return d;
 		
@@ -243,7 +260,7 @@ scrollengine = {
             if( b >= this.length( this.myArray ) ) break;
             counted = a;
             if( b < 0 ) continue;
-            let row = this.createDiv( false, aa, 'RowElement Line ' + b, 'Line ' + b );
+            let row = this.createDiv( false, aa, b, 'RowElement Line ' + b, 'Line ' + b );
             row.style.top = c + 'px';
             //row.style.background = 'grey';
 			//row.style.borderBottom = '1px solid black';
@@ -296,8 +313,13 @@ scrollengine = {
 		for( let a = 0, b = this.rowPosition, c = 0; a < this.rowCount; a++, b++, c += this.config.rowHeight )
 		{
 			if( b >= this.length( this.myArray ) ) break;
-			let row = this.createDiv( false, d, 'RowElement Line ' + b, 'Line ' + b );
+			let row = this.createDiv( false, d, b, 'RowElement Line ' + b, 'Line ' + b );
 			row.style.top = c + 'px';
+			
+			//if( b == 1 || b == 2 || b == 3 || b == 4 )
+			//{
+			//	console.log( 'Line ' + b + ' = ' + c + 'px' );
+			//}
 			
 			lines.push( b );
 			
@@ -318,6 +340,9 @@ scrollengine = {
 		//d.style.width = '100%';
 		d.style.top = this.dTop + 'px';
 		d.style.height = ( counted + 1 ) * this.config.rowHeight + 'px';
+		
+		//console.log( [ d.style.cssText, this.elements.pageMiddle.style.cssText ] );
+		
 		this.list.replaceChild( d, this.elements.pageMiddle );
 		this.elements.pageMiddle = d;
 		
@@ -357,7 +382,7 @@ scrollengine = {
 		for( let a = 0, b = this.rowPosition, c = 0; a < this.rowCount; a++, b++, c += this.config.rowHeight )
 		{
 			if( b >= this.length( this.myArray ) ) break;
-			let row = this.createDiv( false, bb, 'RowElement Line ' + b, 'Line ' + b );
+			let row = this.createDiv( false, bb, b, 'RowElement Line ' + b, 'Line ' + b );
 			row.style.top = c + 'px';
 			//row.style.background = 'green';
 			//row.style.borderBottom = '1px solid black';
@@ -473,6 +498,8 @@ scrollengine = {
 				}
 			}
 		}
+		
+		this.allNodes = allNodes;
 		
 		//console.log( { start: start, allNodes: allNodes, myArray: this.myArray } );
 		

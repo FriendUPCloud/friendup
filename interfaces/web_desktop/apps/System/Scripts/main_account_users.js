@@ -17,6 +17,7 @@ var UsersSettings = function ( setting, set )
 	var sortby      = ( 'FullName'                   );
 	var orderby     = ( 'ASC'                        ); 
 	var customsort  = ( ''                           );
+	var sortstatus  = ( '0,2'                        );
 	var divh        = ( 29                           );
 	var listed      = ( 0                            );
 	var total       = ( 0                            );
@@ -32,6 +33,7 @@ var UsersSettings = function ( setting, set )
 		sortby      : sortby,
 		orderby     : orderby,
 		customsort  : customsort,
+		sortstatus  : sortstatus,
 		divh        : divh,
 		listed      : listed,
 		total       : total,
@@ -70,6 +72,31 @@ var UsersSettings = function ( setting, set )
 					break;
 				case 'customsort'          :
 					this.vars.customsort   = set;
+					break;
+				case 'sortstatus'          :
+					if( set )
+					{
+						let out = [];
+						var arr = this.vars.sortstatus ? this.vars.sortstatus.split( ',' ) : [];
+						if( arr.length )
+						{
+							for( let i in arr )
+							{
+								if( set && set[0] == arr[i] && !set[1] )
+								{
+									continue;
+								}
+							
+								out.push( arr[i] );
+							}
+						
+						}
+						if( set && set[0] && set[1] )
+						{
+							out.push( set[0] );
+						}
+						this.vars.sortstatus = out.join( ',' );
+					}
 					break;
 				case 'divh'                :
 					this.vars.divh         = set;
@@ -5015,7 +5042,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							if( UsersSettings( 'debug' ) )
 							{
 								//ge( 'UserList' ).innerHTML += '<div id="Debug"></div>';
-								//scrollengine.debug = ge( 'Debug' );
+								scrollengine.debug = ge( 'Debug' );
 							}
 							
 							scrollengine.set( function( start, allNodes, myArray )
@@ -5196,11 +5223,6 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								
 								let obj = { start: ret.start, limit: ret.limit };
 								
-								//console.log( obj );
-								
-								// TODO: Reset count based on search ...
-								// TODO: Once input field is empty for search list back to default ...
-								
 								// Only run the request when server is ready, one job at a time ... 
 								
 								RequestQueue.Set( function( callback, key )
@@ -5218,8 +5240,10 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										
 										if( res == 'ok' && dat )
 										{
-										
-											scrollengine.distribute( dat, obj.start/*ret.start*/, dat['Count'] );
+											// TODO: Check why it refreshes twice on Arrow Down ...
+											//alert( 'blinky blinky? ...' );
+											//return;
+											scrollengine.distribute( dat, obj.start, dat['Count'] );
 										
 										}
 									
@@ -6985,6 +7009,7 @@ function getUserlist( callback, obj, limit )
 		sortby     : UsersSettings( 'sortby'                ), 
 		orderby    : UsersSettings( 'orderby'               ), 
 		customsort : UsersSettings( 'customsort'            ), 
+		sortstatus : UsersSettings( 'sortstatus'            ), 
 		limit      : limit ? limit : UsersSettings( 'limit' ),
 		/*notids   : UsersSettings( 'uids'        ).join( ',' ),*/
 		count      : true, 
@@ -9268,31 +9293,48 @@ function hideStatus( status, show, pnt )
 {
 	//console.log( "hideStatus( '"+status+"', "+show+", "+pnt+" )" );
 	
-	if( status && ge( 'ListUsersInner' ) )
+	if( UsersSettings( 'experiment' ) )
 	{
-		var list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
+		let s = { Active: 0, Disabled: 1, Locked: 2 };
+	
+		UsersSettings( 'sortstatus', { 0: s[ status ], 1: show } );
+	
+		//console.log( UsersSettings( 'sortstatus' ) );
+	
+		searchServer( false );
+	
+		return;
+	}
+	else
+	{
+		// Old client side handling Code ...
 		
-		if( list.length > 0 )
+		if( status && ge( 'ListUsersInner' ) )
 		{
-			for( var a = 0; a < list.length; a++ )
+			var list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
+		
+			if( list.length > 0 )
 			{
-				if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
-				
-				var span = list[a].getElementsByTagName( 'span' )[0];
-				
-				if( span )
+				for( var a = 0; a < list.length; a++ )
 				{
-					if( span.getAttribute( 'status' ).toLowerCase() == status.toLowerCase() )
+					if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+				
+					var span = list[a].getElementsByTagName( 'span' )[0];
+				
+					if( span )
 					{
-						let obj = ( pnt ? span.parentNode.parentNode : list[a] );
+						if( span.getAttribute( 'status' ).toLowerCase() == status.toLowerCase() )
+						{
+							let obj = ( pnt ? span.parentNode.parentNode : list[a] );
 						
-						if( show )
-						{
-							obj.style.display = '';
-						}
-						else
-						{
-							obj.style.display = 'none';
+							if( show )
+							{
+								obj.style.display = '';
+							}
+							else
+							{
+								obj.style.display = 'none';
+							}
 						}
 					}
 				}

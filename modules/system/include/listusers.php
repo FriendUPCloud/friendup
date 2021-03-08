@@ -194,7 +194,35 @@ switch( $args->args->mode )
 		{
 			$out = [];
 			
-			$count = $SqlDatabase->FetchObject( 'SELECT COUNT( DISTINCT( u.ID ) ) AS Num FROM FUser u, FUserToGroup tg WHERE u.ID = tg.UserID ' );
+			//$count = $SqlDatabase->FetchObject( 'SELECT COUNT( DISTINCT( u.ID ) ) AS Num FROM FUser u, FUserToGroup tg WHERE u.ID = tg.UserID ' );
+			$count = $SqlDatabase->FetchObject( '
+				SELECT 
+					COUNT( DISTINCT( u.ID ) ) AS Num 
+				FROM 
+					FUser u, FUserToGroup tg 
+				WHERE u.ID = tg.UserID 
+				' . ( isset( $args->args->sortstatus ) ? '
+				AND u.Status IN (' . $args->args->sortstatus . ') 
+				' : '' ) . '
+				' . ( isset( $args->args->query ) && $args->args->query ? '
+				AND 
+				(
+					' . ( !isset( $args->args->searchby ) || $args->args->searchby == 'FullName' ? '
+					( 
+						u.Fullname LIKE "' . trim( $args->args->query ) . '%" 
+					) 
+					' . ( !isset( $args->args->searchby ) ? 'OR ' : '' ) : '' )
+					 .  ( !isset( $args->args->searchby ) || $args->args->searchby == 'Name' ? '
+					( 
+						u.Name LIKE "' . trim( $args->args->query ) . '%" 
+					) 
+					' . ( !isset( $args->args->searchby ) ? 'OR ' : '' ) : '' )
+					 .  ( !isset( $args->args->searchby ) || $args->args->searchby == 'Email' ? '
+					( 
+						u.Email LIKE "' . trim( $args->args->query ) . '%" 
+					) ' : '' ) . '
+				)' : '' ) . '
+			' );
 			$out['Count'] = ( $count ? $count->Num : 0 );
 			
 			$micro_end = microseconds( true );
@@ -227,6 +255,9 @@ switch( $args->args->mode )
 				' : '' ) . '
 				' . ( isset( $args->args->notids ) && $args->args->notids ? '
 				AND u.ID NOT IN (' . $args->args->notids . ') 
+				' : '' ) . '
+				' . ( isset( $args->args->sortstatus ) ? '
+				AND u.Status IN (' . $args->args->sortstatus . ') 
 				' : '' ) . '
 				' . ( isset( $args->args->query ) && $args->args->query ? '
 				AND 
@@ -277,6 +308,9 @@ switch( $args->args->mode )
 					FROM 
 						FUser u, FUserToGroup tg 
 					WHERE u.ID = tg.UserID 
+					' . ( isset( $args->args->sortstatus ) ? '
+					AND u.Status IN (' . $args->args->sortstatus . ') 
+					' : '' ) . '
 					' . ( isset( $args->args->query ) && $args->args->query ? '
 					AND 
 					(
