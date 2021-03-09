@@ -128,11 +128,21 @@ else
 
 
 
+// LEFT JOIN ( SELECT MAX( ID ) AS ID, UserID, LoginTime FROM `FUserLogin` WHERE Information = "Login success" LIMIT 1 ) l ON u.ID = l.UserID
+
 // TODO: Make support for custom sorting ...
 // TODO: This involves Status and LoginTime, find out how to handle it perhaps in a sql query instead of PHP ...
 if( isset( $args->args->customsort ) && $args->args->customsort )
 {
 	//die( print_r( $args->args->customsort,1 ) . ' -- ' );
+	
+	//var custom = { 
+	//	'Status' : { 
+	//		'ASC'  : { 'locked' : 0, 'active' : 1, 'disabled' : 2 }, 
+	//		'DESC' : { 'locked' : 0, 'disabled' : 1, 'active' : 2 } 
+	//	},
+	//	'LoginTime' : 'timestamp' 
+	//};
 	
 	$custom  = $args->args->customsort;
 	$sortby  = ( isset( $args->args->sortby  ) ? $args->args->sortby  : 'FullName' );
@@ -238,12 +248,22 @@ switch( $args->args->mode )
 		
 		$out = [];
 		
+		// TODO: Add support for LoginTime listing and sorting on various parameteres using left join, not in use by default.
+		
 		if( $users = $SqlDatabase->FetchObjects( $q = '
 			SELECT 
-				u.ID, u.Name, u.Password, u.FullName, u.Email, u.CreatedTime, u.Image, u.UniqueID, u.Status,
-				g.Name AS `Level`, "0" AS `LoginTime` 
+				u.ID, u.Name AS `Name`, u.Password, u.FullName AS `FullName`, u.Email, u.CreatedTime, u.Image, u.UniqueID, u.Status AS `Status`,
+				g.Name AS `Level`, 
+				' . ( isset( $args->args->logintime ) && $args->args->logintime ? '
+				l.LoginTime AS `LoginTime`
+				' : '
+				"0" AS `LoginTime`
+				' ) . ' 
 			FROM 
-				`FUser` u, 
+				`FUser` u
+				' . ( isset( $args->args->logintime ) && $args->args->logintime ? '
+					LEFT JOIN ( SELECT MAX( `ID` ), MAX( `LoginTime` ) AS `LoginTime`, `UserID` FROM `FUserLogin` WHERE `Information` = "Login success" GROUP BY `UserID` ) AS l ON l.UserID = u.ID
+				' : '' ) . ', 
 				`FUserGroup` g, 
 				`FUserToGroup` ug 
 			WHERE 
@@ -277,10 +297,8 @@ switch( $args->args->mode )
 						u.Email LIKE "' . trim( $args->args->query ) . '%" 
 					) ' : '' ) . '
 				)' : '' ) . '
-			GROUP 
-				BY u.ID, g.Name 
 			ORDER BY 
-				u.' . ( isset( $args->args->sortby ) ? $args->args->sortby : 'FullName' ) . ' 
+				`' . ( isset( $args->args->sortby ) ? $args->args->sortby : 'FullName' ) . '` 
 				' . ( isset( $args->args->orderby ) ? $args->args->orderby : 'ASC' ) . ' 
 			' . ( isset( $args->args->limit ) && $args->args->limit ? '
 			LIMIT ' . $args->args->limit . ' 

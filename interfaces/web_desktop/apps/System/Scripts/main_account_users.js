@@ -5023,6 +5023,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 			else
 			{
 				
+				console.log( "UsersSettings( 'logintime', false ); to list users without lastlogin ..." );
 				console.log( "UsersSettings( 'experiment', true ); to show latest grid method ..." );
 				
 				// Experimental ...
@@ -5157,8 +5158,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									
 									
 									
-									
-									// Temporary get lastlogin time separate to speed up the sql query ...
+									/*// Temporary get lastlogin time separate to speed up the sql query ...
 		
 									if( uids.length > 0 )
 									{
@@ -5203,10 +5203,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											}
 			
 										}, ( uids ? uids.join(',') : false ) );
-									}
-		
-									// TODO: look at this later ...
-									//hideStatus( 'Disabled', false );
+									}*/
+									
 								}
 								
 							} );
@@ -5267,7 +5265,6 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 				
 				console.log( "UsersSettings( 'listall', true ); to list all users ..." );
 				console.log( "UsersSettings( 'avatars', false ); to list users without avatar ..." );
-				console.log( "UsersSettings( 'logintime', false ); to list users without lastlogin ..." );
 				console.log( "UsersSettings(  ); for current Users Settings ..." );
 				
 				// Temporary ...
@@ -7010,6 +7007,7 @@ function getUserlist( callback, obj, limit )
 		orderby    : UsersSettings( 'orderby'               ), 
 		customsort : UsersSettings( 'customsort'            ), 
 		sortstatus : UsersSettings( 'sortstatus'            ), 
+		logintime  : UsersSettings( 'logintime'             ),
 		limit      : limit ? limit : UsersSettings( 'limit' ),
 		/*notids   : UsersSettings( 'uids'        ).join( ',' ),*/
 		count      : true, 
@@ -7189,14 +7187,14 @@ function sortUsers( sortby, orderby, callback )
 		
 		var override = false;
 		
-		if( custom[ sortby ] && sortby == 'LoginTime' )
+		/*if( custom[ sortby ] && sortby == 'LoginTime' )
 		{
 			sortby = custom[ sortby ];
 			orderby = ( orderby == 'ASC' ? 'DESC' : 'ASC' ); 
 			
 			// TODO: Find out how to specifically sort by the custom sortorder of Status ...
 		}
-		else if( custom[ sortby ] && custom[ sortby ][ orderby ] && sortby == 'Status' )
+		else */if( custom[ sortby ] && custom[ sortby ][ orderby ] && sortby == 'Status' )
 		{
 			cb = ( function ( a, b ) { return ( custom[ sortby ][ orderby ][ a.sortby ] - custom[ sortby ][ orderby ][ b.sortby ] ); } );
 			
@@ -7253,9 +7251,9 @@ function sortUsers( sortby, orderby, callback )
 				
 				if( UsersSettings( 'sortby') != sortby || UsersSettings( 'orderby' ) != orderby )
 				{
-					UsersSettings( 'startlimit', 0 );
+					//UsersSettings( 'startlimit', 0 );
 				
-					if( [ 'FullName', 'Name' ].indexOf( sortby ) >= 0 )
+					if( [ 'FullName', 'Name', 'LoginTime' ].indexOf( sortby ) >= 0 )
 					{
 						UsersSettings( 'sortby', sortby );
 						UsersSettings( 'orderby', orderby );
@@ -9300,7 +9298,9 @@ function hideStatus( status, show, pnt )
 		UsersSettings( 'sortstatus', { 0: s[ status ], 1: show } );
 	
 		//console.log( UsersSettings( 'sortstatus' ) );
-	
+		
+		// TODO: Don't reset search query with this ...
+		
 		searchServer( false );
 	
 		return;
