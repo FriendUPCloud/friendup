@@ -7153,6 +7153,18 @@ function sortUsers( sortby, orderby, callback )
 	{
 		var output = [];
 		
+		// ASC
+		
+		// 0 => 'locked'   (2)
+		// 1 => 'active'   (0)
+		// 2 => 'disabled' (1)
+		
+		// DESC
+		
+		// 0 => 'locked'   (2)
+		// 1 => 'disabled' (1)
+		// 2 => 'active'   (0)
+		
 		var custom = { 
 			'Status' : { 
 				'ASC'  : { 'locked' : 0, 'active' : 1, 'disabled' : 2 }, 
@@ -7160,8 +7172,6 @@ function sortUsers( sortby, orderby, callback )
 			},
 			'LoginTime' : 'timestamp' 
 		};
-		
-		UsersSettings( 'customsort', custom );
 		
 		if( !orderby )
 		{
@@ -7187,23 +7197,24 @@ function sortUsers( sortby, orderby, callback )
 		
 		var override = false;
 		
-		/*if( custom[ sortby ] && sortby == 'LoginTime' )
+		if( !experiment )
 		{
-			sortby = custom[ sortby ];
-			orderby = ( orderby == 'ASC' ? 'DESC' : 'ASC' ); 
+			if( custom[ sortby ] && sortby == 'LoginTime' )
+			{
+				sortby = custom[ sortby ];
+				orderby = ( orderby == 'ASC' ? 'DESC' : 'ASC' ); 
 			
-			// TODO: Find out how to specifically sort by the custom sortorder of Status ...
+				// TODO: Find out how to specifically sort by the custom sortorder of Status ...
+			}
+			else if( custom[ sortby ] && custom[ sortby ][ orderby ] && sortby == 'Status' )
+			{
+				cb = ( function ( a, b ) { return ( custom[ sortby ][ orderby ][ a.sortby ] - custom[ sortby ][ orderby ][ b.sortby ] ); } );
+			
+				//console.log( custom[ sortby ][ orderby ] );
+			
+				override = true;
+			}
 		}
-		else */if( custom[ sortby ] && custom[ sortby ][ orderby ] && sortby == 'Status' )
-		{
-			cb = ( function ( a, b ) { return ( custom[ sortby ][ orderby ][ a.sortby ] - custom[ sortby ][ orderby ][ b.sortby ] ); } );
-			
-			//console.log( custom[ sortby ][ orderby ] );
-			
-			override = true;
-		}
-		
-		
 		
 		var list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
 		
@@ -7249,11 +7260,20 @@ function sortUsers( sortby, orderby, callback )
 				
 				// TODO: Make support for sortby Status and Timestamp on the server levels aswell ...
 				
+				if( sortby == 'Status' )
+				{
+					UsersSettings( 'customsort', orderby == 'DESC' ? '2,1,0' : '2,0,1' );
+				}
+				else
+				{
+					UsersSettings( 'customsort', false );
+				}
+				
 				if( UsersSettings( 'sortby') != sortby || UsersSettings( 'orderby' ) != orderby )
 				{
 					//UsersSettings( 'startlimit', 0 );
-				
-					if( [ 'FullName', 'Name', 'LoginTime' ].indexOf( sortby ) >= 0 )
+					
+					if( [ 'FullName', 'Name', 'Status', 'LoginTime' ].indexOf( sortby ) >= 0 )
 					{
 						UsersSettings( 'sortby', sortby );
 						UsersSettings( 'orderby', orderby );

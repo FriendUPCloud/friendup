@@ -128,34 +128,6 @@ else
 
 
 
-// LEFT JOIN ( SELECT MAX( ID ) AS ID, UserID, LoginTime FROM `FUserLogin` WHERE Information = "Login success" LIMIT 1 ) l ON u.ID = l.UserID
-
-// TODO: Make support for custom sorting ...
-// TODO: This involves Status and LoginTime, find out how to handle it perhaps in a sql query instead of PHP ...
-if( isset( $args->args->customsort ) && $args->args->customsort )
-{
-	//die( print_r( $args->args->customsort,1 ) . ' -- ' );
-	
-	//var custom = { 
-	//	'Status' : { 
-	//		'ASC'  : { 'locked' : 0, 'active' : 1, 'disabled' : 2 }, 
-	//		'DESC' : { 'locked' : 0, 'disabled' : 1, 'active' : 2 } 
-	//	},
-	//	'LoginTime' : 'timestamp' 
-	//};
-	
-	$custom  = $args->args->customsort;
-	$sortby  = ( isset( $args->args->sortby  ) ? $args->args->sortby  : 'FullName' );
-	$orderby = ( isset( $args->args->orderby ) ? $args->args->orderby : 'ASC'      );
-	//die( print_r( $custom,1 ) . ' || ' . $sortby . ' || ' . $orderby );
-	$cb1 = ( function ( $a, $b ) { return ( $a->sortby > $b->sortby ) ? 1 : -1; } );
-	//die( $cb1 );
-	$cb2 = ( function ( $a, $b ) { return ( $custom[ $sortby ][ $orderby ][ $a->sortby ] - $custom[ $sortby ][ $orderby ][ $b->sortby ] ); } );
-	
-	//die( $custom[ $sortby ][ $orderby ] . ' -- ' . print_r( $args->args->customsort,1 ) );
-	
-}
-
 // TODO: Create searchby komma separated so one can specify what to search by ...
 
 // TODO: Divide into 3 calls to see if it can speed up the process ...
@@ -252,7 +224,7 @@ switch( $args->args->mode )
 		
 		if( $users = $SqlDatabase->FetchObjects( $q = '
 			SELECT 
-				u.ID, u.Name AS `Name`, u.Password, u.FullName AS `FullName`, u.Email, u.CreatedTime, u.Image, u.UniqueID, u.Status AS `Status`,
+				u.ID, u.Name AS `Name`, u.Password, u.FullName AS `FullName`, u.Email, u.CreatedTime, u.Image, u.UniqueID, u.Status,
 				g.Name AS `Level`, 
 				' . ( isset( $args->args->logintime ) && $args->args->logintime ? '
 				l.LoginTime AS `LoginTime`
@@ -297,9 +269,12 @@ switch( $args->args->mode )
 						u.Email LIKE "' . trim( $args->args->query ) . '%" 
 					) ' : '' ) . '
 				)' : '' ) . '
-			ORDER BY 
+			ORDER BY
+				' . ( isset( $args->args->customsort ) && $args->args->customsort && isset( $args->args->sortby ) && $args->args->sortby == 'Status' ? '
+				FIELD ( u.Status, ' . $args->args->customsort . ' ) 
+				' : '
 				`' . ( isset( $args->args->sortby ) ? $args->args->sortby : 'FullName' ) . '` 
-				' . ( isset( $args->args->orderby ) ? $args->args->orderby : 'ASC' ) . ' 
+				' . ( isset( $args->args->orderby ) ? $args->args->orderby : 'ASC' ) ) . ' 
 			' . ( isset( $args->args->limit ) && $args->args->limit ? '
 			LIMIT ' . $args->args->limit . ' 
 			' : '' ) . '
@@ -357,7 +332,7 @@ switch( $args->args->mode )
 			
 			die( 'ok<!--separate-->' . json_encode( $out ) );
 		}
-		
+		die( $q );
 		/*if( isset( $args->args->count ) && $args->args->count )
 		{
 			$count = $SqlDatabase->FetchObject( 'SELECT COUNT( DISTINCT( u.ID ) ) AS Num FROM FUser u, FUserToGroup tg WHERE u.ID = tg.UserID ' );
