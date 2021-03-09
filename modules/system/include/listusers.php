@@ -332,7 +332,7 @@ switch( $args->args->mode )
 			
 			die( 'ok<!--separate-->' . json_encode( $out ) );
 		}
-		die( $q );
+		
 		/*if( isset( $args->args->count ) && $args->args->count )
 		{
 			$count = $SqlDatabase->FetchObject( 'SELECT COUNT( DISTINCT( u.ID ) ) AS Num FROM FUser u, FUserToGroup tg WHERE u.ID = tg.UserID ' );

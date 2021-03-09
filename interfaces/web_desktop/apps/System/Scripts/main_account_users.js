@@ -5073,8 +5073,13 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											{
 												src = '/system.library/module/?module=system&command=getavatar&userid=' + myArray[s].ID + ( myArray[s].image ? '&image=' + myArray[s].image : '' ) + '&width=16&height=16&authid=' + Application.authId;
 												let iii = new Image();
+												iii.myArray = myArray[ s ];
+												iii.onload = function() 
+												{
+													this.myArray.imageObj = this;
+												};
 												iii.src = src;
-												myArray[ s ].imageObj = iii;
+												//myArray[ s ].imageObj = iii;
 											}
 											// From cache
 											else
@@ -5086,10 +5091,12 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												else
 												{
 													let canvas = document.createElement( 'canvas' );
+													var ctx = canvas.getContext( '2d' );
 													canvas.width = 16;
 													canvas.height = 16;
-													canvas.getContext('2d').drawImage( myArray[ s ].imageObj, 0, 0 );
-													src = canvas.toDataURL('image/png');
+													//ctx.drawImage( myArray[ s ].imageObj, 0, 0 );
+													ctx.drawImage( myArray[ s ].imageObj, 0, 0, 16, 16 );
+													src = canvas.toDataURL( 'image/png' );
 													myArray[ s ].imageObj.blob = src;
 												}
 											}
@@ -5103,7 +5110,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												Logintime : ( myArray[s][ 'LoginTime' ] != 0 && myArray[s][ 'LoginTime' ] != null ? CustomDateTime( myArray[s][ 'LoginTime' ] ) : login[ 0 ] )
 											};
 											
-											var bg = 'background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;';
+											var bg = 'background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;background-image: url(\'' + src + '\')';
 											
 											str += '<div class="TextCenter HContent10 FloatLeft PaddingSmall Ellipsis edit">';
 											str += '	<span id="UserAvatar_'+obj.ID+'" fullname="'+obj.FullName+'" status="'+obj.Status+'" logintime="'+obj.Logintime+'" timestamp="'+obj.Timestamp+'" class="IconSmall fa-user-circle-o avatar" style="position: relative;">';
@@ -5132,6 +5139,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												allNodes[ a ].innerHTML = '';
 												allNodes[ a ].appendChild( div );
 											}
+											
+											// TODO: Set the image once it's ready ...
 											
 											let spa = allNodes[a].getElementsByTagName( 'span' )[0].getElementsByTagName( 'div' )[0];
 											spa.style.backgroundImage = 'url(' + src + ')';
@@ -6911,16 +6920,26 @@ function refreshUserList( userInfo )
 					{
 						src = '/system.library/module/?module=system&command=getavatar&userid=' + userInfo.ID + ( userInfo.Image ? '&image=' + userInfo.Image : '' ) + '&width=16&height=16&authid=' + Application.authId;
 						
+						//var bg = 'background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;background-image: url(\'' + src + '\')';
+										
+						//str += '	<span id="UserAvatar_'+obj.ID+'" fullname="'+obj.FullName+'" status="'+obj.Status+'" logintime="'+obj.Logintime+'" timestamp="'+obj.Timestamp+'" class="IconSmall fa-user-circle-o avatar" style="position: relative;">';
+						//str += '		<div style="' + bg + '"></div>';
+						//str += '	</span>';
+
+						//let spa = allNodes[a].getElementsByTagName( 'span' )[0].getElementsByTagName( 'div' )[0];
+						
 						// TODO: maybe remove this from memory?
-						let iii = new Image();
+						/*let iii = new Image();
 			    		iii.src = src;
 			    		iii.div = div[i];
 						iii.onload = function()
 		        		{
+		        			// Temp fix, just comment out ....
+		        			
 							let spa = this.div.getElementsByTagName( 'span' )[0].getElementsByTagName( 'div' )[0];
-            				spa.style.backgroundImage = 'url(' + this.src + ')';
+            				//spa.style.backgroundImage = 'url(' + this.src + ')';
             				//console.log( 'image loaded ' + src );
-            			}
+            			}*/
 						
 					}
 					
