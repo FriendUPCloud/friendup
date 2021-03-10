@@ -737,6 +737,7 @@ Workspace = {
 		// Use authmodule login
 		if( Workspace.authModuleLogin )
 		{
+			console.log( 'Using our existing auth module.' );
 			return Workspace.authModuleLogin( callback, window );
 		}
 		// Wrap to user object
