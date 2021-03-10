@@ -1544,7 +1544,6 @@ function apiWrapper( event, force )
 					switch( msg.method )
 					{
 						case 'opencamera':
-							console.log( 'Trying to open camera on window: ', win );
 							if( win )
 							{
 								var cbk = null;
@@ -1566,7 +1565,6 @@ function apiWrapper( event, force )
 									}
 									msg.callback = null;
 								}
-								console.log( 'Executing open camera.' );
 								win.openCamera( msg.flags, cbk );
 							}
 							break;
