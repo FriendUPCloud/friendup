@@ -165,29 +165,29 @@ scrollengine = {
 		}
 	},
 	
-	length : function ( myArray )
+	length : function ( object )
 	{
-		if( typeof myArray.length !== "undefined" )
+		if( typeof object.length !== "undefined" )
 		{
-			return myArray.length;
+			return object.length;
 		}
 		else
 		{
-			let iii = 0;
+			let i = 0;
 			
-			for ( let aaa in myArray )
+			for ( let a in object )
 			{
-				if( myArray[aaa] && myArray[aaa].ID )
+				if ( object[a] && typeof object[a] === 'object' && object[a] !== null )
 				{
-					iii++;
+					i++;
 				}
 			}
 			
-			return iii;
+			return i;
 		}
 	},
 	
-	createDiv : function ( id, target, line, classN, title )
+	createDiv : function ( id, target, line, top, classN, title )
 	{
 		
 		let d = document.createElement( 'div' );
@@ -196,14 +196,14 @@ scrollengine = {
 		d.style.width = '100%';
 		if( classN ) d.className = classN;
 		if( title ) d.title = title;
+		if( line != null ) d.line = line;
 		target = ( target ? target : this.list );
 		if( line != null && this.allNodes[ line ] )
 		{
-			// TODO: Fix this out of sync stuff ...
-			//if( line == 1 || line == 2 || line == 3 || line == 4 )
-			//{
-			//	console.log( 'this.rowPosition: ' + [ this.rowPosition, line, this.myArray[ line ].Name, this.allNodes[ line ].style.cssText, d.style.cssText ] );
-			//}
+			if( top != null )
+			{
+				this.allNodes[ line ].style.top = top + 'px';
+			}
 			d.innerHTML = this.allNodes[ line ].innerHTML;
 		}
 		target.appendChild( d );
@@ -260,10 +260,9 @@ scrollengine = {
             if( b >= this.length( this.myArray ) ) break;
             counted = a;
             if( b < 0 ) continue;
-            let row = this.createDiv( false, aa, b, 'RowElement Line ' + b, 'Line ' + b );
+            let row = this.createDiv( false, aa, b, c, 'RowElement Line ' + b, 'Line ' + b );
             row.style.top = c + 'px';
-            //row.style.background = 'grey';
-			//row.style.borderBottom = '1px solid black';
+            //row.style.background = 'yellow';
             
             lines.push( b );
             
@@ -313,13 +312,9 @@ scrollengine = {
 		for( let a = 0, b = this.rowPosition, c = 0; a < this.rowCount; a++, b++, c += this.config.rowHeight )
 		{
 			if( b >= this.length( this.myArray ) ) break;
-			let row = this.createDiv( false, d, b, 'RowElement Line ' + b, 'Line ' + b );
+			let row = this.createDiv( false, d, b, c, 'RowElement Line ' + b, 'Line ' + b );
 			row.style.top = c + 'px';
-			
-			//if( b == 1 || b == 2 || b == 3 || b == 4 )
-			//{
-			//	console.log( 'Line ' + b + ' = ' + c + 'px' );
-			//}
+			//row.style.background = 'grey';
 			
 			lines.push( b );
 			
@@ -340,8 +335,6 @@ scrollengine = {
 		//d.style.width = '100%';
 		d.style.top = this.dTop + 'px';
 		d.style.height = ( counted + 1 ) * this.config.rowHeight + 'px';
-		
-		//console.log( [ d.style.cssText, this.elements.pageMiddle.style.cssText ] );
 		
 		this.list.replaceChild( d, this.elements.pageMiddle );
 		this.elements.pageMiddle = d;
@@ -365,8 +358,7 @@ scrollengine = {
 	},
 	
 	pageBelow : function (  )
-	{
-		
+	{		
 		let d = this.elements.pageMiddle;
 		
 		// Page below
@@ -382,10 +374,9 @@ scrollengine = {
 		for( let a = 0, b = this.rowPosition, c = 0; a < this.rowCount; a++, b++, c += this.config.rowHeight )
 		{
 			if( b >= this.length( this.myArray ) ) break;
-			let row = this.createDiv( false, bb, b, 'RowElement Line ' + b, 'Line ' + b );
+			let row = this.createDiv( false, bb, b, c, 'RowElement Line ' + b, 'Line ' + b );
 			row.style.top = c + 'px';
 			//row.style.background = 'green';
-			//row.style.borderBottom = '1px solid black';
             
 			lines.push( b );
 			
@@ -458,23 +449,29 @@ scrollengine = {
 			this.myArray = myArray;
 		}
 		
-		this.refresh();
-		
-		// Update scroll list array with new data from JSON array
-		for( let a = 0; a < this.length( data ); a++ )
+		if( !this.elements.pageMiddle )
 		{
-			if( this.myArray[ start + a ] )
+			this.refresh();
+		}
+		
+		if( data )
+		{
+			// Update scroll list array with new data from JSON array
+			for( let a = 0; a < this.length( data ); a++ )
 			{
-				let cacheImage = ( this.myArray[ start + a ].imageObj ? this.myArray[ start + a ].imageObj : false );
-				this.myArray[ start + a ] = data[ a ];
-				if( !cacheImage || !cacheImage.src )
+				if( this.myArray[ start + a ] )
 				{
-					this.myArray[ start + a ].imageObj = null;
-					//console.log( 'We have no cache image!' );
-				}
-				else
-				{
-					this.myArray[ start + a ].imageObj = cacheImage;
+					let cacheImage = ( this.myArray[ start + a ].imageObj ? this.myArray[ start + a ].imageObj : false );
+					this.myArray[ start + a ] = data[ a ];
+					if( !cacheImage || !cacheImage.src )
+					{
+						this.myArray[ start + a ].imageObj = null;
+						//console.log( 'We have no cache image!' );
+					}
+					else
+					{
+						this.myArray[ start + a ].imageObj = cacheImage;
+					}
 				}
 			}
 		}
@@ -487,21 +484,30 @@ scrollengine = {
 		];
 		
 		// Aggregate list
-		let allNodes = [];
+		let allNodes = {}; let i = 0;
 		for( let a = 0; a < elements.length; a++ )
 		{
 			for( let b = 0; b < elements[a].length; b++ )
 			{
 				if( elements[a][b].tagName.toLowerCase() == 'div' )
 				{
-					allNodes.push( elements[a][b] );
+					i++;
+					
+					if( elements[a][b].line != null )
+					{
+						allNodes[ elements[a][b].line ] = elements[a][b];
+					}
+					else
+					{
+						allNodes[ i ] = elements[a][b];
+					}
 				}
 			}
 		}
 		
 		this.allNodes = allNodes;
 		
-		//console.log( { start: start, allNodes: allNodes, myArray: this.myArray } );
+		console.log( { start: start, allNodes: allNodes, myArray: this.myArray } );
 		
 		// Distribute
 		if( this.layout )
@@ -512,41 +518,49 @@ scrollengine = {
 		}
 		else
 		{
-			let s = start;
-			for( let a = 0; a < allNodes.length; a++, s++ )
+			if( allNodes )
 			{
-				// Set content
-				if( this.myArray[ s ] )
-		        {
-		        	
-		        	let div = document.createElement( 'div' );
-		        	div.className = 'Line ' + s;
-		        	div.innerHTML = 'Line ' + s;
-		        	
-		        	let test = allNodes[ a ].getElementsByTagName( 'div' );
-		        	if( test.length )
-		        	{
-		        		allNodes[ a ].replaceChild( div, test[0] );
-		        	}
-		        	else
-		        	{
-		        		allNodes[ a ].innerHTML = '';
-		        		allNodes[ a ].appendChild( div );
-		        	}
-		        	
-		        	allNodes[ a ].title = 'Line ' + s;
-		        	
-		        }
-		        else
-		        {
-		        	
-		        	let test = allNodes[ a ];
-		        	if( test )
-		        	{
-		        		allNodes[ a ].parentNode.removeChild( test );
-		        	}
-		        	
-		        }
+				let s = start;
+				for( let a = 0; a < this.length( allNodes ); a++, s++ )
+				{
+					// Set content
+					if( this.myArray[ s ] && allNodes[ s ] )
+				    {
+				    	
+				    	let div = document.createElement( 'div' );
+				    	div.className = 'Line ' + s;
+				    	div.innerHTML = 'Line ' + s;
+				    	
+				    	let test = allNodes[ s ];
+				    	if( test )
+						{
+							test = test.getElementsByTagName( 'div' );
+							
+							if( test.length )
+							{
+								allNodes[ s ].replaceChild( div, test[0] );
+							}
+							else
+							{
+								allNodes[ s ].innerHTML = '';
+								allNodes[ s ].appendChild( div );
+							}
+							
+							allNodes[ s ].title = 'Line ' + s;
+				    	}
+				    	
+				    }
+				    else
+				    {
+				    	
+				    	let test = allNodes[ s ];
+				    	if( test )
+				    	{
+				    		allNodes[ s ].parentNode.removeChild( test );
+				    	}
+				    	
+				    }
+				}
 			}
 		}
 				
@@ -628,7 +642,6 @@ scrollengine = {
 			console.log( '[1] '+scrollTop+' > '+pm.offsetTop+' + '+pm.offsetHeight+' | scrollTop > pm.offsetTop + pm.offsetHeight '+(scrollTop>pm.offsetTop+pm.offsetHeight?'(true)':'(false)') );
 			console.log( '[2] '+scrollTop+' + '+viewHeight+' < '+pm.offsetTop+' | scrollTop + viewHeight < pm.offsetTop '+(scrollTop+viewHeight<pm.offsetTop?'(true)':'(false)') );
 			console.log( '[3] '+scrollTop+' < '+viewHeight+' | scrollTop < viewHeight '+(scrollTop<viewHeight?'(true)':'(false)') );
-			//console.log( '[3] '+scrollTop+' > '+viewHeight+' | scrollTop > viewHeight '+(scrollTop>viewHeight?'(true)':'(false)') );
 			console.log( '[4] '+(force?true:false)+' === '+true+' | force === true '+(force===true?'(true)':'(false)') );
 			console.log( "\r\n" );
 		}

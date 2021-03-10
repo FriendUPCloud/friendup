@@ -5059,11 +5059,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									let login = [ 'Never' ];
 									
 									let s = start;
-									for( let a = 0; a < allNodes.length; a++, s++ )
+									for( let a = 0; a < this.length( allNodes ); a++, s++ )
 									{
 										
 										// Set content
-										if( myArray[ s ] && myArray[ s ].ID && myArray[ s ].Name )
+										if( myArray[ s ] && myArray[ s ].ID && myArray[ s ].Name && allNodes[ s ] )
 										{
 											let str = '';
 											
@@ -5129,37 +5129,44 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											div.id = 'UserListID_' + obj.ID;
 											div.innerHTML = str;
 											
-											let test = allNodes[ a ].getElementsByTagName( 'div' );
-											if( test.length )
+											let test = allNodes[ s ];
+											if( test )
 											{
-												allNodes[ a ].replaceChild( div, test[0] );
+												test = test.getElementsByTagName( 'div' );
+												
+												if( test.length )
+												{
+													allNodes[ s ].replaceChild( div, test[0] );
+												}
+												else
+												{
+													allNodes[ s ].innerHTML = '';
+													allNodes[ s ].appendChild( div );
+												}
+											
+												// TODO: Set the image once it's ready ...
+											
+												let spa = allNodes[ s ].getElementsByTagName( 'span' )[0].getElementsByTagName( 'div' )[0];
+												spa.style.backgroundImage = 'url(' + src + ')';
+												allNodes[ s ].title = 'Line ' + s;
+											
+												allNodes[ s ].myArrayID = obj.ID;
+												allNodes[ s ].onclick = function(  )
+												{
+													Sections.accounts_users( 'edit', this.myArrayID );
+												}
+											
+												uids.push( obj.ID );
 											}
-											else
-											{
-												allNodes[ a ].innerHTML = '';
-												allNodes[ a ].appendChild( div );
-											}
-											
-											// TODO: Set the image once it's ready ...
-											
-											let spa = allNodes[a].getElementsByTagName( 'span' )[0].getElementsByTagName( 'div' )[0];
-											spa.style.backgroundImage = 'url(' + src + ')';
-											allNodes[ a ].title = 'Line ' + s;
-											
-											allNodes[ a ].myArrayID = obj.ID;
-											allNodes[ a ].onclick = function(  )
-											{
-												Sections.accounts_users( 'edit', this.myArrayID );
-											}
-											
-											uids.push( obj.ID );
 										}
 										else
 										{
-											let test = allNodes[ a ];
+											// TODO: Look at this and see if we need to remove or not ...
+											
+											let test = allNodes[ s ];
 											if( test )
 											{
-												allNodes[ a ].parentNode.removeChild( test );
+												allNodes[ s ].parentNode.removeChild( test );
 											}
 										}
 										
