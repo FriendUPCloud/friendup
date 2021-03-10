@@ -4655,6 +4655,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// paste from virtual clipboard
 	pasteFiles: function( e )
 	{
+		if( !e ) e = window.event;
+		
 		if( window.currentMovable && Friend.workspaceClipBoard && Friend.workspaceClipBoard.length > 0 && typeof window.currentMovable.drop == 'function' )
 		{
 			var e = {};
@@ -4663,9 +4665,31 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			var clip = Friend.workspaceClipBoard;
 			
 			// Make sure we don't overwrite existing files!
-			var destPath = currentMovable.content.fileInfo.Path;
+			let destPath = currentMovable.content.fileInfo.Path;
+			let destFinf = currentMovable.content.fileInfo;
+			let doCopy = false;
+			
+			// Use menu context for file info path (folder icon etc)
+			if( Workspace.menuContext )
+			{
+				let fi = null;
+				let mc = Workspace.menuContext;
+				while( mc != document.body )
+				{
+					if( mc.fileInfo )
+						break;
+					mc = mc.parentNode;
+				}
+				if( mc.fileInfo )
+				{
+					destPath = mc.fileInfo.Path;
+					destFinf = mc.fileInfo;
+					doCopy = true;
+				}
+			}
+			
 			var d = new Door( destPath );
-			d.getIcons( currentMovable.content.fileInfo, function( items )
+			d.getIcons( destFinf, function( items )
 			{
 				for( var a = 0; a < items.length; a++ )
 				{
@@ -4718,8 +4742,19 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 				}
 				if( !e ) e = {};
-				e.paste = true;
-				window.currentMovable.drop( Friend.workspaceClipBoard, e );
+				if( doCopy )
+				{
+					for( let b = 0; b < clip.length; b++ )
+					{
+						let spath = clip[b].fileInfo.Path;
+						d.dosAction( 'copy', { from: spath, to: destPath + clip[b].fileInfo.Filename } );
+					}
+				}
+				else
+				{
+					e.paste = true;
+					window.currentMovable.drop( Friend.workspaceClipBoard, e );
+				}
 			} );
 		}
 	},
@@ -6688,7 +6723,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					},
 					{
 						name:	i18n( 'menu_paste' ),
-						command: function() { Workspace.pasteFiles(); },
+						command: function( e ) { Workspace.pasteFiles( e ); },
 						disabled: sharedVolume || !iconsInClipboard || systemDrive || cannotWrite
 					},
 					{
@@ -7087,6 +7122,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 		if( tr == window )
 			tr = document.body;
+		
+		this.menuContext = tr;
 		
 		// Check if we need to activate
 		var iconWindow = false;
