@@ -734,6 +734,11 @@ Workspace = {
 	},
 	login: function( u, p, r, callback, ev )
 	{
+		// Use authmodule login
+		if( Workspace.authModuleLogin )
+		{
+			return Workspace.authModuleLogin( callback );
+		}
 		// Wrap to user object
 		return Friend.User.Login( u, p, r, callback, ev );
 	},
