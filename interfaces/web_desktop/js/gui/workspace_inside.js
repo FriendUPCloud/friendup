@@ -4742,18 +4742,18 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 				}
 				if( !e ) e = {};
-				if( doCopy )
+				let cliplen = clip.length;
+				for( let b = 0; b < clip.length; b++ )
 				{
-					for( let b = 0; b < clip.length; b++ )
+					let spath = clip[b].fileInfo.Path;
+					let ex = clip[b].fileInfo.Type == 'File' ? clip[b].fileInfo.Filename : '';
+					Workspace.shell.parseScript( 'copy ' + spath + ' to ' + destPath+ex, function()
 					{
-						let spath = clip[b].fileInfo.Path;
-						d.dosAction( 'copy', { from: spath, to: destPath + clip[b].fileInfo.Filename } );
-					}
-				}
-				else
-				{
-					e.paste = true;
-					window.currentMovable.drop( Friend.workspaceClipBoard, e );
+						if( cliplen-- == 0 )
+						{
+							Notify( { title: i18n( 'i18n_copy_operation' ), text: i18n( 'i18n_copying_files_complete' ) } );
+						}
+					}  );
 				}
 			} );
 		}
