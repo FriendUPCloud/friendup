@@ -737,7 +737,7 @@ Workspace = {
 		// Use authmodule login
 		if( Workspace.authModuleLogin )
 		{
-			return Workspace.authModuleLogin( callback );
+			return Workspace.authModuleLogin( callback, window );
 		}
 		// Wrap to user object
 		return Friend.User.Login( u, p, r, callback, ev );
