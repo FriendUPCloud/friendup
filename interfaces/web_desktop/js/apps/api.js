@@ -2379,7 +2379,6 @@ function View( flags )
 			callback: cid
 		};
 		Application.sendMessage( o );
-		console.log( 'Wanting to open camera: ', o );
 	}
 	
 	// Show the mobile back button

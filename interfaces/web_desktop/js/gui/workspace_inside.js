@@ -6843,7 +6843,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							// Find icon for download
 							if( currentMovable )
 							{
-								var selPath = false;
+								var selPath = [];
 								var dv = currentMovable.content;
 								if( dv )
 								{
@@ -6852,15 +6852,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										var ic = dv.icons[a];
 										if( ic.domNode && ic.domNode.fileInfo && ic.domNode.fileInfo.Type == 'File' && ic.selected )
 										{
-											selPath = ic.domNode.fileInfo.Path;
-											console.log( ic.domNode.fileInfo, ' domnode: ' + ic.domNode.selected + ' ic: ' + ic.selected );
-											break;
+											selPath.push( ic.domNode.fileInfo.Path );
 										}
 									}
 								}
-								if( selPath )
+								if( selPath.length >= 1 )
 								{
-									Workspace.download( selPath ); 
+									for( let a = 0; a < selPath.length; a++ )
+									{
+										Workspace.download( selPath[a] ); 
+									}
 								}
 								else
 								{
