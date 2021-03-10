@@ -1,9 +1,4 @@
 
-
-console.log( 'scrollengine.js init ...' );
-
-// TODO: get max count from server ...
-
 // TODO: Hogne sin fade-in ...
 
 scrollengine = {
@@ -70,8 +65,6 @@ scrollengine = {
 		let self = this;
 		
 		this.reset();
-		
-		console.log( 'INIT RUN !!!' );
 		
 		if( list )
 		{
@@ -187,7 +180,7 @@ scrollengine = {
 		}
 	},
 	
-	createDiv : function ( id, target, line, top, classN, title )
+	createDiv : function ( id, target, line, classN, title )
 	{
 		
 		let d = document.createElement( 'div' );
@@ -200,10 +193,6 @@ scrollengine = {
 		target = ( target ? target : this.list );
 		if( line != null && this.allNodes[ line ] )
 		{
-			if( top != null )
-			{
-				this.allNodes[ line ].style.top = top + 'px';
-			}
 			d.innerHTML = this.allNodes[ line ].innerHTML;
 		}
 		target.appendChild( d );
@@ -227,8 +216,6 @@ scrollengine = {
 	
 	pageAbove : function (  )
 	{
-		
-		console.log( 'pageAbove init ... ' );
 		
 		let d = this.elements.pageMiddle;
 		
@@ -260,8 +247,8 @@ scrollengine = {
             if( b >= this.length( this.myArray ) ) break;
             counted = a;
             if( b < 0 ) continue;
-            let row = this.createDiv( false, aa, b, c, 'RowElement Line ' + b, 'Line ' + b );
-            row.style.top = c + 'px';
+            let row = this.createDiv( false, aa, b, 'RowElement Line ' + b, 'Line ' + b );
+            //row.style.top = c + 'px';
             //row.style.background = 'yellow';
             
             lines.push( b );
@@ -280,7 +267,7 @@ scrollengine = {
         this.list.replaceChild( aa, this.elements.pageAbove );
         this.elements.pageAbove = aa;
 		
-		console.log( '[1] pageAbove', { 
+		console.log( '[1] pageAbove top: ' + aa.style.top, { 
 			startline   : (startline?startline:0), 
 			lastline    : (lastline?lastline:0), 
 			lines       : lines, 
@@ -312,8 +299,8 @@ scrollengine = {
 		for( let a = 0, b = this.rowPosition, c = 0; a < this.rowCount; a++, b++, c += this.config.rowHeight )
 		{
 			if( b >= this.length( this.myArray ) ) break;
-			let row = this.createDiv( false, d, b, c, 'RowElement Line ' + b, 'Line ' + b );
-			row.style.top = c + 'px';
+			let row = this.createDiv( false, d, b, 'RowElement Line ' + b, 'Line ' + b );
+			//row.style.top = c + 'px';
 			//row.style.background = 'grey';
 			
 			lines.push( b );
@@ -339,7 +326,7 @@ scrollengine = {
 		this.list.replaceChild( d, this.elements.pageMiddle );
 		this.elements.pageMiddle = d;
 		
-		console.log( '[2] pageMiddle', { 
+		console.log( '[2] pageMiddle top: ' + d.style.top, { 
 			startline     : (startline?startline:0), 
 			lastline      : (lastline?lastline:0), 
 			lines         : lines, 
@@ -374,8 +361,8 @@ scrollengine = {
 		for( let a = 0, b = this.rowPosition, c = 0; a < this.rowCount; a++, b++, c += this.config.rowHeight )
 		{
 			if( b >= this.length( this.myArray ) ) break;
-			let row = this.createDiv( false, bb, b, c, 'RowElement Line ' + b, 'Line ' + b );
-			row.style.top = c + 'px';
+			let row = this.createDiv( false, bb, b, 'RowElement Line ' + b, 'Line ' + b );
+			//row.style.top = c + 'px';
 			//row.style.background = 'green';
             
 			lines.push( b );
@@ -400,7 +387,7 @@ scrollengine = {
 		this.list.replaceChild( bb, this.elements.pageBelow );
 		this.elements.pageBelow = bb;
 		
-		console.log( '[3] pageBelow', { 
+		console.log( '[3] pageBelow top: ' + bb.style.top, { 
 			startline   : (startline?startline:0), 
 			lastline    : (lastline?lastline:0), 
 			lines       : lines, 
@@ -422,7 +409,7 @@ scrollengine = {
 		
 		if( total != null && this.total != total )
 		{
-			console.log( 'making new total ... ', { a: total, b: this.total } );
+			//console.log( 'making new total ... ', { a: total, b: this.total } );
 			
 			// Data
 			let myArray = [];
@@ -507,7 +494,7 @@ scrollengine = {
 		
 		this.allNodes = allNodes;
 		
-		console.log( { start: start, allNodes: allNodes, myArray: this.myArray } );
+		//console.log( { start: start, allNodes: allNodes, myArray: this.myArray } );
 		
 		// Distribute
 		if( this.layout )
@@ -580,13 +567,17 @@ scrollengine = {
 		
 		this.counted = 0;
 		
-		this.scrollTop    = this.list.scrollTop;
-		this.viewHeight   = this.list.clientHeight/*window.innerHeight*/;
-		this.scrollHeight = ( this.config.rowHeight * this.length( this.myArray ) );
-		
 		// Make elements if they do not exist
 		if( !this.elements.pageMiddle )
 		{
+			// Correct rowHeight based on css data
+			this.createDiv( 'TestRow', false, false, 'RowElement' );
+			
+			if( document.getElementById( 'TestRow' ) && document.getElementById( 'TestRow' ).clientHeight != this.config.rowHeight )
+			{
+				this.config.rowHeight = document.getElementById( 'TestRow' ).clientHeight;
+			}
+			
 			this.list.innerHTML = '';
 			
 		    this.elements.pageAbove   = this.createDiv( 'pageAbove' );
@@ -594,6 +585,10 @@ scrollengine = {
 		    this.elements.pageBelow   = this.createDiv( 'pageBelow' );
 		    this.elements.wholeHeight = this.createDiv( 'wholeHeight' );
 		}
+		
+		this.scrollTop    = this.list.scrollTop;
+		this.viewHeight   = this.list.clientHeight/*window.innerHeight*/;
+		this.scrollHeight = ( this.config.rowHeight * this.length( this.myArray ) );
 		
 		// Some vars
 		let list = this.list;

@@ -7205,7 +7205,7 @@ function sortUsers( sortby, orderby, callback )
 			{
 				orderby = 'DESC';
 			
-				ge( 'ListUsersInner' ).className = ( 'List ' + sortby + ' ' + orderby );
+				ge( 'ListUsersInner' ).className = ( 'List ' + sortby + ' ' + orderby ) + ( experiment ? ' experiment' : '' );
 				ge( 'ListUsersInner' ).setAttribute( 'sortby', sortby );
 				ge( 'ListUsersInner' ).setAttribute( 'orderby', orderby );
 			}
@@ -7213,11 +7213,43 @@ function sortUsers( sortby, orderby, callback )
 			{
 				orderby = 'ASC';
 			
-				ge( 'ListUsersInner' ).className = ( 'List ' + sortby + ' ' + orderby );
+				ge( 'ListUsersInner' ).className = ( 'List ' + sortby + ' ' + orderby ) + ( experiment ? ' experiment' : '' );
 				ge( 'ListUsersInner' ).setAttribute( 'sortby', sortby );
 				ge( 'ListUsersInner' ).setAttribute( 'orderby', orderby );
 			}
 		}
+		
+		// TODO: Make support for sortby Status and Timestamp on the server levels aswell ...
+				
+		if( sortby == 'Status' )
+		{
+			UsersSettings( 'customsort', orderby == 'DESC' ? '2,1,0' : '2,0,1' );
+		}
+		else
+		{
+			UsersSettings( 'customsort', false );
+		}
+		
+		if( UsersSettings( 'sortby') != sortby || UsersSettings( 'orderby' ) != orderby )
+		{
+			if( [ 'FullName', 'Name', 'Status', 'LoginTime' ].indexOf( sortby ) >= 0 )
+			{
+				UsersSettings( 'sortby', sortby );
+				UsersSettings( 'orderby', orderby );
+			}
+			else
+			{
+				UsersSettings( 'sortby', 'FullName' );
+				UsersSettings( 'orderby', orderby );
+			}
+		}
+		
+		if( experiment )
+		{
+			searchServer( null, true );
+		}
+		
+		return;
 		
 		var cb = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
 		
@@ -7284,32 +7316,7 @@ function sortUsers( sortby, orderby, callback )
 					//console.log( 'sortUsers('+sortby+'): ', { output: output, sortby: sortby, orderby: orderby } );
 				}
 				
-				// TODO: Make support for sortby Status and Timestamp on the server levels aswell ...
 				
-				if( sortby == 'Status' )
-				{
-					UsersSettings( 'customsort', orderby == 'DESC' ? '2,1,0' : '2,0,1' );
-				}
-				else
-				{
-					UsersSettings( 'customsort', false );
-				}
-				
-				if( UsersSettings( 'sortby') != sortby || UsersSettings( 'orderby' ) != orderby )
-				{
-					//UsersSettings( 'startlimit', 0 );
-					
-					if( [ 'FullName', 'Name', 'Status', 'LoginTime' ].indexOf( sortby ) >= 0 )
-					{
-						UsersSettings( 'sortby', sortby );
-						UsersSettings( 'orderby', orderby );
-					}
-					else
-					{
-						UsersSettings( 'sortby', 'FullName' );
-						UsersSettings( 'orderby', orderby );
-					}
-				}
 				
 				if( !experiment )
 				{
@@ -7323,11 +7330,6 @@ function sortUsers( sortby, orderby, callback )
 							ge( 'ListUsersInner' ).appendChild( output[key].content );
 						}
 					}
-				}
-				
-				if( experiment )
-				{
-					searchServer( null, true );
 				}
 				
 			}
