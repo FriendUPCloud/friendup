@@ -5469,7 +5469,6 @@ var View = function( args )
 		// https://github.com/blueimp/JavaScript-Load-Image/blob/master/js/load-image.all.min.js
 		if( !self.cameraIncludesLoaded )
 		{
-			console.log( 'Include and get available.' );
 			Include( '/webclient/3rdparty/load-image.all.min.js', function()
 			{
 				// Execute async operation
@@ -5479,7 +5478,6 @@ var View = function( args )
 		}
 		else
 		{
-			console.log( 'Get available devices.' );
 			getAvailableDevices( function( e ){ setCameraMode( e.data ) } );				
 		}
 	}
