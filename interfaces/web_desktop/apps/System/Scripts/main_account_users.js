@@ -815,7 +815,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								var bg2  = ge( 'UserCancelBtn' );
 								if( bg2 ) bg2.onclick = function( e )
 								{
-									cancelUser(  );
+									cancelUser( userInfo.ID );
 									//Sections.accounts_users( 'edit', userInfo.ID );
 								}
 								var bg3  = ge( 'UserBackBtn' );
@@ -5927,6 +5927,7 @@ function NewUser( _this )
 			user_name            : i18n( 'i18n_new_user' ),
 			user_fullname        : '',
 			user_username        : '',
+			user_email           : '',
 			user_mobile          : '',
 			user_language        : languages,
 			user_setup           : setup,
@@ -9400,12 +9401,19 @@ function hideStatus( status, show, pnt )
 	}
 }
 
-function cancelUser(  )
+function cancelUser( userid )
 {
 	if( ge( 'UserDetails' ) )
 	{
 		ge( 'UserDetails' ).innerHTML = '';
 		
+		// Remove selected for this user
+		if( userid && ge( 'UserListID_' + userid ) )
+		{
+			ge( 'UserListID_' + userid ).className = ge( 'UserListID_' + userid ).className.split( 'Selected' ).join( '' );
+		}
+		
+		// TODO: Look at this since we changed the user list, onclick doesn't go to the correct one.
 		if( ge( 'ListUsersInner' ) && ge( 'ListUsersInner' ).innerHTML )
 		{
 			var div = ge( 'ListUsersInner' ).getElementsByTagName( 'div' )[0];
