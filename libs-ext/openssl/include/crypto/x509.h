@@ -1,7 +1,7 @@
 /*
  * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -71,9 +71,6 @@ struct X509_req_st {
     ASN1_BIT_STRING *signature; /* signature */
     CRYPTO_REF_COUNT references;
     CRYPTO_RWLOCK *lock;
-# ifndef OPENSSL_NO_SM2
-    ASN1_OCTET_STRING *sm2_id;
-# endif
 };
 
 struct X509_crl_info_st {
@@ -178,7 +175,7 @@ struct x509_st {
     STACK_OF(DIST_POINT) *crldp;
     STACK_OF(GENERAL_NAME) *altname;
     NAME_CONSTRAINTS *nc;
-# ifndef OPENSSL_NO_RFC3779
+#ifndef OPENSSL_NO_RFC3779
     STACK_OF(IPAddressFamily) *rfc3779_addr;
     struct ASIdentifiers_st *rfc3779_asid;
 # endif
@@ -186,9 +183,6 @@ struct x509_st {
     X509_CERT_AUX *aux;
     CRYPTO_RWLOCK *lock;
     volatile int ex_cached;
-# ifndef OPENSSL_NO_SM2
-    ASN1_OCTET_STRING *sm2_id;
-# endif
 } /* X509 */ ;
 
 /*
@@ -197,7 +191,7 @@ struct x509_st {
  * kept and passed around.
  */
 struct x509_store_ctx_st {      /* X509_STORE_CTX */
-    X509_STORE *store;
+    X509_STORE *ctx;
     /* The following are set by the caller */
     /* The cert to check */
     X509 *cert;

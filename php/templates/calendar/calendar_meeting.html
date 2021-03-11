@@ -1,0 +1,139 @@
+
+
+	<div class="Dialog">
+		<h1>
+			Please respond to meeting request
+		</h1>
+		<h2>
+			{meeting request}
+		</h2>
+		<form method="get" action="{action}" id="MeetingForm">
+			<div id="OriginalTime" class="Showing">
+				<p>
+					<label>Date:</label><span>{date}</span>
+				</p>
+				<p>
+					<label>Time:</label><span>{time}</span>
+				</p>
+			</div>
+			<div id="NewTime">
+				<p>
+					<label>Date:</label><span><input id="dateNew" name="newdate" type="date" value="{date}"/></span>
+				</p>
+				<p>
+					<label>Time:</label><span><input id="timeNew" name="newtime" type="time" value="{time}"/></span>
+				</p>
+			</div>
+			<p>
+				Optional message:
+			</p>
+			<p>
+				<textarea id="Message" id="optionalmessage"></textarea>
+			</p>
+			<hr/>
+			<p id="Buttons">
+				<button type="button" class="Back" onclick="GoBack()">
+					Back
+				</button>
+				<button type="button" class="Accept" onclick="AcceptMeeting()">
+					Accept
+				</button>
+				<button type="button" class="Reject" onclick="RejectMeeting()">
+					Reject
+				</button>
+				<button type="button" class="Newtime" onclick="NewTime()" id="NewTimeButton" style="display: none">
+					<span>Suggest new time</span><span>Send new time proposal</span>
+				</button>
+				<button type="button" class="Tentative" onclick="Tentative()">
+					Tentative
+				</button>
+			</p>
+		</form>
+	</div>
+	<script type="text/javascript">
+		function AcceptMeeting()
+		{
+			document.location.href = document.location.href + '/accept';
+		}
+		function RejectMeeting()
+		{
+			document.location.href = document.location.href + '/reject';
+		}
+		function GoBack()
+		{
+			document.getElementById( 'Buttons' ).className = '';
+			document.getElementById( 'NewTimeButton' ).classList.remove( 'Active' );
+			document.getElementById( 'NewTime' ).classList.remove( 'Showing' );
+			document.getElementById( 'OriginalTime' ).className = 'Showing';
+		}
+		function NewTime()
+		{
+			if( document.getElementById( 'OriginalTime' ).className == 'Showing' )
+			{
+				document.getElementById( 'Buttons' ).className = 'NewTime';
+				document.getElementById( 'OriginalTime' ).classList.remove( 'Showing' );
+				document.getElementById( 'NewTime' ).className = 'Showing';
+				document.getElementById( 'NewTimeButton' ).classList.add( 'Active' );
+			}
+			else
+			{
+				var dt = document.getElementById( 'dateNew' ).value;
+				var tm = document.getElementById( 'timeNew' ).value;
+				if( !dt || !tm )
+				{
+					if( !dt ) document.getElementById( 'dateNew' ).focus();
+					else if( !tm ) document.getElementById( 'timeNew' ).focus();
+					return;
+				}
+				document.getElementById( 'MeetingForm' ).submit();
+			}
+			return;
+		}
+		function Tentative()
+		{
+			document.location.href = document.location.href + '/tentative';
+		}
+	</script>
+	<style>
+		#OriginalTime,
+		#NewTime
+		{
+			transition: opacity 0.25s;
+			opacity: 0;
+			height: 0;
+			overflow: hidden;
+		}
+		#OriginalTime.Showing,
+		#NewTime.Showing
+		{
+			opacity: 1;
+			height: auto;
+		}
+		#NewTimeButton.Active
+		{
+			font-weight: bold;
+			margin-left: 0;
+		}
+		button.Accept
+		{
+			margin-left: 0;
+		}
+		#Buttons button.Back
+		{
+			margin-right: 10px;
+			display: none;
+		}
+		#Buttons.NewTime button.Accept,
+		#Buttons.NewTime button.Reject,
+		#Buttons.NewTime button.Tentative,
+		#Buttons.NewTime button.Newtime span:first-child,
+		#Buttons:not(.NewTime) button.Newtime span + span
+		{
+			display: none;
+		}
+		#Buttons.NewTime button.Back
+		{
+			display: inline-block;
+		}
+	</style>
+

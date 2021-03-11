@@ -18,6 +18,8 @@ var _cajax_http_max_connections = 6;            // Max
 var _cajax_http_last_time = 0;                  // Time since last
 var _cajax_mutex = 0;
 
+let _cajax_origin = document.location.origin;
+
 // For debug
 var _c_count = 0;
 var _c_destroyed = 0;
@@ -464,7 +466,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 			let u = self.url;
 			if( u.substr( 0, 1 ) == '/' )
 			{
-				let urlbase = document.location.origin;
+				let urlbase = _cajax_origin;
 				u = urlbase + u;
 			}
 			self.proxy.open( self.method, u, syncing ); 
@@ -506,6 +508,8 @@ cAjax.prototype.setRequestHeader = function( type, data )
 // Just generate a random unique number
 cAjax.prototype.getRandNumbers = function()
 {
+    if( window.UniqueHash )
+    	return UniqueHash();
 	let i = '';
 	for( let a = 0; a < 2; a++ )
 		i += Math.floor( Math.random() * 1000 ) + '';
@@ -688,11 +692,10 @@ cAjax.prototype.send = function( data, callback )
 						reject( 'error' );
 						if( self.onload )
 						{
-							//console.log( 'Error...' );
+							console.log( 'Error...' );
 							self.onload( false, false );
 							self.destroy();
 						}
-
 						Friend.User.CheckServerConnection();
 					}
 				} ).catch( function( err )
@@ -701,7 +704,7 @@ cAjax.prototype.send = function( data, callback )
 					{
 						if( callback )
 						{
-							//console.log( 'Other error' );
+							console.log( 'Other error' );
 							callback( false, false );
 						}
 					}

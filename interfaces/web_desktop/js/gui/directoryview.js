@@ -3214,7 +3214,7 @@ FileIcon.prototype.getCache = function( path, directoryview, date )
 // Remove an image from cache
 FileIcon.prototype.delCache = function( dir )
 {
-	let path = '/system.library/module/?module=system&command=thumbnail&sessionid=' + Workspace.sessionId + '&path=' + dir;
+	let path = '/system.library/module/?module=system&command=thumbnail&sessionid=' + Workspace.sessionId + '&path=' + encodeURIComponent( dir );
 	
 	// remove filename from subpath
 	if( dir.indexOf( '/' ) > 0 )
@@ -3396,7 +3396,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			
 			let w = fileInfo.directoryview.listMode == 'imageview' ? 240 : 56;
 			let h = fileInfo.directoryview.listMode == 'imageview' ? 140 : 48;
-			let ur = '/system.library/module/?module=system&command=thumbnail&width=' + w + '&height=' + h + '&sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '&date=' + r;
+			let ur = '/system.library/module/?module=system&command=thumbnail&width=' + w + '&height=' + h + '&sessionid=' + Workspace.sessionId + '&path=' + encodeURIComponent( fileInfo.Path ) + '&date=' + r;
 			
 			// Get from cache
 			let tmp = false;

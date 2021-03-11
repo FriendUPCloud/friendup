@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
-# Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2005-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the Apache License 2.0 (the "License").  You may not use
+# Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -62,10 +62,8 @@
 # key length, more for longer keys] on USI&II cores and 30-80% - on
 # USIII&IV.
 
-# $output is the last argument if it looks like a file (it has an extension)
-$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
-
-$output and open STDOUT,">$output";
+$output = pop;
+open STDOUT,">$output";
 
 $fname="bn_mul_mont_fpu";
 
@@ -886,4 +884,4 @@ $code =~ s/fzeros\s+%f([0-9]+)/
 
 print $code;
 # flush
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";

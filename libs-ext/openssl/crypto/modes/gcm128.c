@@ -1,16 +1,21 @@
 /*
- * Copyright 2010-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2010-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
 
-#include <string.h>
 #include <openssl/crypto.h>
-#include "internal/cryptlib.h"
-#include "crypto/modes.h"
+#include "modes_local.h"
+#include <string.h>
+
+#if defined(__GNUC__) && !defined(STRICT_ALIGNMENT)
+typedef size_t size_t_aX __attribute((__aligned__(1)));
+#else
+typedef size_t size_t_aX;
+#endif
 
 #if defined(BSWAP4) && defined(STRICT_ALIGNMENT)
 /* redefine, because alignment is ensured */
@@ -636,6 +641,7 @@ static void gcm_gmult_1bit(u64 Xi[2], const u64 H[2])
          defined(_M_IX86)       || defined(_M_AMD64)    || defined(_M_X64))
 #  define GHASH_ASM_X86_OR_64
 #  define GCM_FUNCREF_4BIT
+extern unsigned int OPENSSL_ia32cap_P[];
 
 void gcm_init_clmul(u128 Htable[16], const u64 Xi[2]);
 void gcm_gmult_clmul(u64 Xi[2], const u128 Htable[16]);
@@ -1080,8 +1086,8 @@ int CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
                 size_t j = GHASH_CHUNK;
 
                 while (j) {
-                    size_t *out_t = (size_t *)out;
-                    const size_t *in_t = (const size_t *)in;
+                    size_t_aX *out_t = (size_t_aX *)out;
+                    const size_t_aX *in_t = (const size_t_aX *)in;
 
                     (*block) (ctx->Yi.c, ctx->EKi.c, key);
                     ++ctr;
@@ -1107,8 +1113,8 @@ int CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
                 size_t j = i;
 
                 while (len >= 16) {
-                    size_t *out_t = (size_t *)out;
-                    const size_t *in_t = (const size_t *)in;
+                    size_t_aX *out_t = (size_t_aX *)out;
+                    const size_t_aX *in_t = (const size_t_aX *)in;
 
                     (*block) (ctx->Yi.c, ctx->EKi.c, key);
                     ++ctr;
@@ -1318,8 +1324,8 @@ int CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 
                 GHASH(ctx, in, GHASH_CHUNK);
                 while (j) {
-                    size_t *out_t = (size_t *)out;
-                    const size_t *in_t = (const size_t *)in;
+                    size_t_aX *out_t = (size_t_aX *)out;
+                    const size_t_aX *in_t = (const size_t_aX *)in;
 
                     (*block) (ctx->Yi.c, ctx->EKi.c, key);
                     ++ctr;
@@ -1343,8 +1349,8 @@ int CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
             if ((i = (len & (size_t)-16))) {
                 GHASH(ctx, in, i);
                 while (len >= 16) {
-                    size_t *out_t = (size_t *)out;
-                    const size_t *in_t = (const size_t *)in;
+                    size_t_aX *out_t = (size_t_aX *)out;
+                    const size_t_aX *in_t = (const size_t_aX *)in;
 
                     (*block) (ctx->Yi.c, ctx->EKi.c, key);
                     ++ctr;

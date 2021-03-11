@@ -1,8 +1,8 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -94,7 +94,7 @@ SSL_SESSION *SSL_SESSION_new(void)
     return ss;
 }
 
-SSL_SESSION *SSL_SESSION_dup(const SSL_SESSION *src)
+SSL_SESSION *SSL_SESSION_dup(SSL_SESSION *src)
 {
     return ssl_session_dup(src, 1);
 }
@@ -103,11 +103,11 @@ SSL_SESSION *SSL_SESSION_dup(const SSL_SESSION *src)
  * Create a new SSL_SESSION and duplicate the contents of |src| into it. If
  * ticket == 0 then no ticket information is duplicated, otherwise it is.
  */
-SSL_SESSION *ssl_session_dup(const SSL_SESSION *src, int ticket)
+SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
 {
     SSL_SESSION *dest;
 
-    dest = OPENSSL_malloc(sizeof(*src));
+    dest = OPENSSL_malloc(sizeof(*dest));
     if (dest == NULL) {
         goto err;
     }
@@ -410,7 +410,7 @@ int ssl_get_new_session(SSL *s, int session)
     ss->verify_result = X509_V_OK;
 
     /* If client supports extended master secret set it in session */
-    if (s->s3.flags & TLS1_FLAGS_RECEIVED_EXTMS)
+    if (s->s3->flags & TLS1_FLAGS_RECEIVED_EXTMS)
         ss->flags |= SSL_SESS_FLAG_EXTMS;
 
     return 1;
@@ -592,13 +592,13 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
     /* Check extended master secret extension consistency */
     if (ret->flags & SSL_SESS_FLAG_EXTMS) {
         /* If old session includes extms, but new does not: abort handshake */
-        if (!(s->s3.flags & TLS1_FLAGS_RECEIVED_EXTMS)) {
+        if (!(s->s3->flags & TLS1_FLAGS_RECEIVED_EXTMS)) {
             SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_SSL_GET_PREV_SESSION,
                      SSL_R_INCONSISTENT_EXTMS);
             fatal = 1;
             goto err;
         }
-    } else if (s->s3.flags & TLS1_FLAGS_RECEIVED_EXTMS) {
+    } else if (s->s3->flags & TLS1_FLAGS_RECEIVED_EXTMS) {
         /* If new session includes extms, but old does not: do not resume */
         goto err;
     }

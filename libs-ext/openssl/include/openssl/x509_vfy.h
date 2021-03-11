@@ -1,25 +1,19 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OPENSSL_X509_VFY_H
-# define OPENSSL_X509_VFY_H
-# pragma once
-
-# include <openssl/macros.h>
-# if !OPENSSL_API_3
-#  define HEADER_X509_VFY_H
-# endif
+#ifndef HEADER_X509_VFY_H
+# define HEADER_X509_VFY_H
 
 /*
  * Protect against recursion, x509.h and x509_vfy.h each include the other.
  */
-# ifndef OPENSSL_X509_H
+# ifndef HEADER_X509_H
 #  include <openssl/x509.h>
 # endif
 
@@ -55,7 +49,7 @@ typedef enum {
     X509_LU_X509, X509_LU_CRL
 } X509_LOOKUP_TYPE;
 
-#if !OPENSSL_API_1_1_0
+#if OPENSSL_API_COMPAT < 0x10100000L
 #define X509_LU_RETRY   -1
 #define X509_LU_FAIL    0
 #endif
@@ -190,14 +184,14 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 # define         X509_V_ERR_OCSP_VERIFY_NEEDED                   73  /* Need OCSP verification */
 # define         X509_V_ERR_OCSP_VERIFY_FAILED                   74  /* Couldn't verify cert through OCSP */
 # define         X509_V_ERR_OCSP_CERT_UNKNOWN                    75  /* Certificate wasn't recognized by the OCSP responder */
-
 # define         X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH         76
 # define         X509_V_ERR_NO_ISSUER_PUBLIC_KEY                 77
-
+# define         X509_V_ERR_UNSUPPORTED_SIGNATURE_ALGORITHM      78
+# define         X509_V_ERR_EC_KEY_EXPLICIT_PARAMS               79
 
 /* Certificate verify flags */
 
-# if !OPENSSL_API_1_1_0
+# if OPENSSL_API_COMPAT < 0x10100000L
 #  define X509_V_FLAG_CB_ISSUER_CHECK             0x0   /* Deprecated */
 # endif
 /* Use check time instead of current time */
@@ -367,7 +361,7 @@ X509_STORE_CTX_lookup_certs_fn X509_STORE_CTX_get_lookup_certs(X509_STORE_CTX *c
 X509_STORE_CTX_lookup_crls_fn X509_STORE_CTX_get_lookup_crls(X509_STORE_CTX *ctx);
 X509_STORE_CTX_cleanup_fn X509_STORE_CTX_get_cleanup(X509_STORE_CTX *ctx);
 
-#if !OPENSSL_API_1_1_0
+#if OPENSSL_API_COMPAT < 0x10100000L
 # define X509_STORE_CTX_get_chain X509_STORE_CTX_get0_chain
 # define X509_STORE_CTX_set_chain X509_STORE_CTX_set0_untrusted
 # define X509_STORE_CTX_trusted_stack X509_STORE_CTX_set0_trusted_stack

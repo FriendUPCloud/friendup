@@ -59,7 +59,7 @@ void *LibraryOpen( void *sb, const char *name, long version )
 		
 	FBOOL loaded = FALSE;
 	char currentDirectory[ PATH_MAX ];
-	char loadLibraryPath[ PATH_MAX ];
+	char loadLibraryPath[ PATH_MAX+16 ];
 	memset( &currentDirectory, 0, sizeof(currentDirectory) );
 	memset( &loadLibraryPath, 0, sizeof(loadLibraryPath) );
 
@@ -85,7 +85,7 @@ void *LibraryOpen( void *sb, const char *name, long version )
 
 	// we should check and get lib from current dirrectory first (compatybility)
 	
-	sprintf ( loadLibraryPath, "%s/%s", currentDirectory, name );
+	snprintf( loadLibraryPath, sizeof(loadLibraryPath), "%s/%s", currentDirectory, name );
 	DEBUG("[LibraryOpen] Open library %s\n", loadLibraryPath );
 
 	if( ( handle = dlopen ( loadLibraryPath, RTLD_NOW|RTLD_GLOBAL ) ) != NULL )

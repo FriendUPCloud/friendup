@@ -518,6 +518,10 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 	
 	// Url encoded device name
 	char *comm = FCalloc( strlen( s->f_Name ) + strlen( path ) + 2, sizeof( char ) );
+	if( comm == NULL )
+	{
+		return NULL;
+	}
 	sprintf( comm, "%s:%s", s->f_Name, path );
 	char *encodedcomm = MarkAndBase64EncodeString( comm );
 	FFree( comm );
@@ -578,13 +582,16 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 			if( ( locfil->f_SpecialData = FCalloc( 1, sizeof( SpecialData ) ) ) != NULL )
 			{
 				sd->fp = pipe; 
-				SpecialData *locsd = (SpecialData *)locfil->f_SpecialData;
-				locsd->sb = sd->sb;
-				locsd->fp = pipe;
-				locsd->mode = MODE_READ;
-				//locsd->fname = StringDup( tmpfilename );
-				locsd->path = StringDup( path );
-				//locfil->f_SessionID = StringDup( s->f_SessionID );
+
+				if( locfil->f_SpecialData != NULL )
+				{
+					((SpecialData *)locfil->f_SpecialData)->sb = sd->sb;
+					((SpecialData *)locfil->f_SpecialData)->fp = pipe;
+					((SpecialData *)locfil->f_SpecialData)->mode = MODE_READ;
+					//locsd->fname = StringDup( tmpfilename );
+					((SpecialData *)locfil->f_SpecialData)->path = StringDup( path );
+					//locfil->f_SessionID = StringDup( s->f_SessionID );
+				}
 				locfil->f_SessionIDPTR = s->f_SessionIDPTR;
 		
 				DEBUG("[fsysnode] FileOpened, memory allocated for reading.\n" );
@@ -664,8 +671,8 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 
 				// Remove lock!
 				FILE *locfp = NULL;
-				fcntl( lockf, F_SETLKW, F_UNLCK );
-				fchmod( lockf, 0755 );
+				//fcntl( lockf, F_SETLKW, F_UNLCK );
+				//fchmod( lockf, 0755 );
 				close( lockf );
 				lockf = -1;
 	

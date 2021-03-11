@@ -109,7 +109,8 @@ Friend.User = {
     // Send the actual login call
     SendLoginCall: function( info, callback )
     {
-    	this.State = 'Login';
+    	// Already logging in
+    	this.State = 'login';
     	
     	if( this.lastLogin && this.lastLogin.currentRequest )
     	{
@@ -146,12 +147,15 @@ Friend.User = {
 		else
 		{
 			this.State = 'offline'; 
+			this.lastLogin = null;
 			return false;
 		}
 		
 		m.addVar( 'deviceid', GetDeviceId() );
 		m.onExecuted = function( json, serveranswer )
 		{
+			Friend.User.lastLogin = null;
+			
 			// We got a real error
 			if( json == null )
 			{
@@ -161,10 +165,11 @@ Friend.User = {
 			{
 				let enc = Workspace.encryption;
 				
-				if( json.username )
+				if( json.username || json.loginid )
 				{
 					Workspace.sessionId = json.sessionid;
-					Workspace.loginUsername = json.username;
+					if( json.username )
+						Workspace.loginUsername = json.username;
 					Workspace.loginUserId = json.userid;
 					Workspace.loginid = json.loginid;
 					Workspace.userLevel = json.level;
@@ -175,6 +180,7 @@ Friend.User = {
 					
 					if( !Workspace.userWorkspaceInitialized )
 					{
+                		// Init workspace
 						Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), event );
 					}
 					else
@@ -212,7 +218,10 @@ Friend.User = {
 	// When session times out, use log in again...
 	ReLogin: function( callback )
 	{
+    	if( this.lastLogin ) return;
+    	
     	this.State = 'login';
+    	
     	
     	if( !event ) event = window.event;
     	
@@ -247,7 +256,7 @@ Friend.User = {
 		
 		if( info.username || info.sessionid )
 		{
-			this.SendLoginCall( info, callback );
+			this.SendLoginCall( info, callback, 'relogin' );
 		}
 		else
 		{
@@ -386,9 +395,16 @@ Friend.User = {
 			Friend.User.serverCheck = null;
 			if( Friend.User.State != 'offline' )
 			{
+				let checkTimeo = setTimeout( function()
+				{
+					Friend.User.SetUserConnectionState( 'offline' );
+				}, 1500 );
 				let serverCheck = new Library( 'system' );
 				serverCheck.onExecuted = function( q, s )
 				{
+					// Dont need this now
+					clearTimeout( checkTimeo );
+					
 					// Check missing session
 					let missSess = ( s && s.indexOf( 'sessionid or authid parameter is missing' ) > 0 );
 					if( !missSess && ( s && s.indexOf( 'User session not found' ) > 0 ) )
@@ -408,7 +424,7 @@ Friend.User = {
 					{
 						if( !Friend.User.ServerIsThere )
 						{
-							Friend.User.SetUserConnectionState( 'online' );
+							Friend.User.SetUserConnectionState( 'online', true );
 						}
 						Friend.User.ConnectionAttempts = 0;
 					}
@@ -442,7 +458,7 @@ Friend.User = {
 		exf();
 	},
 	// Set the user state (offline / online etc)
-	SetUserConnectionState: function( mode )
+	SetUserConnectionState: function( mode, force )
 	{
 		if( mode == 'offline' )
 		{
@@ -478,7 +494,7 @@ Friend.User = {
 				this.checkInterval = setInterval( 'Friend.User.CheckServerConnection()', 2500 );
 			}
 		}
-		else
+		else if( mode == 'online' )
 		{
 			// We're online again
 			if( this.checkInterval )
@@ -487,7 +503,7 @@ Friend.User = {
 				this.checkInterval = null;
 			}
 			
-			if( this.State != 'online' )
+			if( this.State != 'online' || force || !Workspace.conn )
 			{
 				this.ServerIsThere = true;
 				this.State = 'online';
@@ -510,6 +526,10 @@ Friend.User = {
 				// Clear execution queue
 				_executionQueue = {};
 			}
+		}
+		else
+		{
+			this.State = mode;
 		}
 	}
 };

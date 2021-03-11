@@ -116,18 +116,18 @@ unsigned dictionary_hash(const char * key)
 /*--------------------------------------------------------------------------*/
 dictionary * dictionary_new(int size)
 {
-    dictionary  *   d ;
+    dictionary  *d = NULL;
 
     /* If no size was specified, allocate space for DICTMINSZ */
     if (size<DICTMINSZ) size=DICTMINSZ ;
 
-    if (!(d = (dictionary *)calloc(1, sizeof(dictionary)))) {
-        return NULL;
-    }
-    d->size = size ;
-    d->val  = (char **)calloc(size, sizeof(char*));
-    d->key  = (char **)calloc(size, sizeof(char*));
-    d->hash = (unsigned int *)calloc(size, sizeof(unsigned));
+    if( (d = (dictionary *)calloc(1, sizeof(dictionary) ) ) != NULL )
+	{
+		d->size = size ;
+		d->val  = (char **)calloc(size, sizeof(char*));
+		d->key  = (char **)calloc(size, sizeof(char*));
+		d->hash = (unsigned int *)calloc(size, sizeof(unsigned));
+	}
     return d ;
 }
 
@@ -147,9 +147,15 @@ void dictionary_del(dictionary * d)
     if (d==NULL) return ;
     for (i=0 ; i<d->size ; i++) {
         if (d->key[i]!=NULL)
-            free(d->key[i]);
+		{
+			free(d->key[i]);
+			d->key[i] = NULL;
+		}
         if (d->val[i]!=NULL)
+		{
             free(d->val[i]);
+			d->val[i] = NULL;
+		}
     }
     free(d->val);
     free(d->key);

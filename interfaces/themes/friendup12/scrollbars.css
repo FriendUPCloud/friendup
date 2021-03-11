@@ -1,5 +1,12 @@
 /* For scrollbars ----------------------------------------------------------- */
 
+/* For firefox */
+*
+{
+    scrollbar-width: thin;
+    scrollbar-color:  #c8c8c8 #ffffff;
+}
+
 /* addresses the background of the bar itself. It is usually covered by the other elements */
 ::-webkit-scrollbar,
 html body ::-webkit-scrollbar-track,

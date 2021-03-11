@@ -1,26 +1,20 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef  OPENSSL_CONF_H
-# define OPENSSL_CONF_H
-# pragma once
-
-# include <openssl/macros.h>
-# if !OPENSSL_API_3
-#  define HEADER_CONF_H
-# endif
+#ifndef  HEADER_CONF_H
+# define HEADER_CONF_H
 
 # include <openssl/bio.h>
 # include <openssl/lhash.h>
 # include <openssl/safestack.h>
 # include <openssl/e_os2.h>
-# include <openssl/types.h>
+# include <openssl/ossl_typ.h>
 # include <openssl/conferr.h>
 
 #ifdef  __cplusplus
@@ -96,7 +90,7 @@ int CONF_dump_bio(LHASH_OF(CONF_VALUE) *conf, BIO *out);
 
 DEPRECATEDIN_1_1_0(void OPENSSL_config(const char *config_name))
 
-#if !OPENSSL_API_1_1_0
+#if OPENSSL_API_COMPAT < 0x10100000L
 # define OPENSSL_no_config() \
     OPENSSL_init_crypto(OPENSSL_INIT_NO_LOAD_CONFIG, NULL)
 #endif
@@ -114,7 +108,7 @@ struct conf_st {
 
 CONF *NCONF_new(CONF_METHOD *meth);
 CONF_METHOD *NCONF_default(void);
-DEPRECATEDIN_3(CONF_METHOD *NCONF_WIN32(void))
+CONF_METHOD *NCONF_WIN32(void);
 void NCONF_free(CONF *conf);
 void NCONF_free_data(CONF *conf);
 
@@ -143,7 +137,7 @@ int CONF_modules_load_file(const char *filename, const char *appname,
                            unsigned long flags);
 void CONF_modules_unload(int all);
 void CONF_modules_finish(void);
-#if !OPENSSL_API_1_1_0
+#if OPENSSL_API_COMPAT < 0x10100000L
 # define CONF_modules_free() while(0) continue
 #endif
 int CONF_module_add(const char *name, conf_init_func *ifunc,

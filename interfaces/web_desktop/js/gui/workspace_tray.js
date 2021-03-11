@@ -118,6 +118,19 @@ function PollTray()
 			return false;
 		}
 		tray.appendChild( da );
+		
+		/*
+		//TODO: Reenable when ready
+		var ca = tray.calendarApplet = document.createElement( 'div' );
+		ca.className = 'Calendar TrayElement IconSmall';
+		ca.onclick = function()
+		{
+			Workspace.newCalendarEvent();
+		}
+		ca.poll = function()
+		{
+		}
+		tray.appendChild( ca );*/
 	}
 	
 	// Check for notifications in history
@@ -140,10 +153,20 @@ function PollTray()
 					d.className = 'NotificationPopupElement BorderBottom';
 					d.notification = notties[a];
 					notties[ a ].seen = true;
+					
+					// Get timestring
+					let tim = new Date( notties[ a ].time );
+					let tdy = tim.getFullYear();
+					let tdm = StrPad( tim.getMonth() + 1, 2, '0' );
+					let tdd = StrPad( tim.getDate(), 2, '0' );
+					let tdh = StrPad( tim.getHours(), 2, '0' );
+					let tdi = StrPad( tim.getMinutes(), 2, '0' );
+					let timStr = tdy + '/' + tdm + '/' + tdd + ', ' + tdh + ':' + tdi;
+					
 					d.innerHTML = '\
 						<div>\
 							<div class="NotificationClose FloatRight fa-remove IconSmall"></div>\
-							<p class="Layout"><strong>' + notties[a].title + '</strong></p>\
+							<p class="Layout"><strong>' + notties[a].title + '<br><span class="DateStamp">' + timStr + '</span></strong></p>\
 							<p class="Layout">' + notties[a].text + '</p>\
 						</div>';
 					d.onmousedown = function( ev )
@@ -324,9 +347,18 @@ function PollTray()
 					{
 						event.seen = true;
 					
+						// Get timestring
+						let tim = new Date( event.time );
+						let tdy = tim.getFullYear();
+						let tdm = StrPad( tim.getMonth() + 1, 2, '0' );
+						let tdd = StrPad( tim.getDate(), 2, '0' );
+						let tdh = StrPad( tim.getHours(), 2, '0' );
+						let tdi = StrPad( tim.getMinutes(), 2, '0' );
+						let timStr = tdy + '/' + tdm + '/' + tdd + ', ' + tdh + ':' + tdi;
+					
 						var d = document.createElement( 'div' );
 						d.className = 'BubbleInfo';
-						d.innerHTML = '<div><p class="Layout"><strong>' + event.title + '</strong></p><p class="Layout">' + event.text + '</p></div>';
+						d.innerHTML = '<div><p class="Layout"><strong>' + event.title + '<br><span class="DateStamp">' + timStr + '</span></strong></p><p class="Layout">' + event.text + '</p></div>';
 						tray.notifications.appendChild( d );
 						d.onmousedown = function( e )
 						{
@@ -340,7 +372,7 @@ function PollTray()
 							PollTray();
 							return cancelBubble( e );
 						}
-						if( event.showCallback )
+						if( event.showCallback && typeof( event.showCallback ) == 'function' )
 						{
 							event.showCallback();
 						}
@@ -628,8 +660,18 @@ function Notify( message, callback, clickcallback )
 		}
 		if( ic.length )
 			ic = '<div class="Application">' + ic + '</div>';
-			
-		n.innerHTML = ic + '<div class="Title">' + message.title + '</div><div class="Text">' + message.text + '</div>';
+		
+		// Get timestring
+		let tim = new Date( nev.time );
+		let tdy = tim.getFullYear();
+		let tdm = StrPad( tim.getMonth() + 1, 2, '0' );
+		let tdd = StrPad( tim.getDate(), 2, '0' );
+		let tdh = StrPad( tim.getHours(), 2, '0' );
+		let tdi = StrPad( tim.getMinutes(), 2, '0' );
+		let timStr = tdy + '/' + tdm + '/' + tdd + ', ' + tdh + ':' + tdi;
+		
+		
+		n.innerHTML = ic + '<div class="Title">' + message.title + '<br><span class="DateStamp">' + timStr + '</span></div><div class="Text">' + message.text + '</div>';
 		
 		// Check duplicate
 		var found = false;
@@ -776,22 +818,25 @@ function Notify( message, callback, clickcallback )
 }
 function CloseNotification( notification )
 {
-	var d = notification.childNodes[ 0 ];
-	notification.removeChild( d ); 
-	if( notification.getAttribute( 'label' ) )
-	{
-		notification.classList.remove( 'PopNotification' );
-	}
-	if( !notification.getElementsByTagName( 'div' ).length )
-	{
-		ge( 'Tray' ).removeChild( notification );
-	}
-	// Standard notifications can reply to notification origin
-	// that the bubble did close
-	if( d.struct && d.struct.onCloseBubble )
-	{
-		d.struct.onCloseBubble();
-	}
+    if( notification && notification.childNodes )
+    {
+	    var d = notification.childNodes[ 0 ];
+	    notification.removeChild( d ); 
+	    if( notification.getAttribute( 'label' ) )
+	    {
+		    notification.classList.remove( 'PopNotification' );
+	    }
+	    if( !notification.getElementsByTagName( 'div' ).length )
+	    {
+		    ge( 'Tray' ).removeChild( notification );
+	    }
+	    // Standard notifications can reply to notification origin
+	    // that the bubble did close
+	    if( d.struct && d.struct.onCloseBubble )
+	    {
+		    d.struct.onCloseBubble();
+	    }
+    }
 }
 
 // Buffer for click callbacks

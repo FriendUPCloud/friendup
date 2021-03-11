@@ -1,7 +1,7 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -12,7 +12,6 @@
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
-#include <openssl/core_names.h>
 
 #define TLS13_MAX_LABEL_LEN     249
 
@@ -36,11 +35,7 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
 #else
     static const unsigned char label_prefix[] = "tls13 ";
 #endif
-    EVP_KDF *kdf = EVP_KDF_fetch(NULL, OSSL_KDF_NAME_HKDF, NULL);
-    EVP_KDF_CTX *kctx;
-    OSSL_PARAM params[5], *p = params;
-    int mode = EVP_PKEY_HKDEF_MODE_EXPAND_ONLY;
-    const char *mdname = EVP_MD_name(md);
+    EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL);
     int ret;
     size_t hkdflabellen;
     size_t hashlen;
@@ -49,14 +44,12 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
      * prefix and label + bytes for the label itself + 1 byte length of hash
      * + bytes for the hash itself
      */
-    unsigned char hkdflabel[sizeof(uint16_t) + sizeof(uint8_t) +
+    unsigned char hkdflabel[sizeof(uint16_t) + sizeof(uint8_t)
                             + (sizeof(label_prefix) - 1) + TLS13_MAX_LABEL_LEN
                             + 1 + EVP_MAX_MD_SIZE];
     WPACKET pkt;
 
-    kctx = EVP_KDF_CTX_new(kdf);
-    EVP_KDF_free(kdf);
-    if (kctx == NULL)
+    if (pctx == NULL)
         return 0;
 
     if (labellen > TLS13_MAX_LABEL_LEN) {
@@ -70,7 +63,7 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
              */
             SSLerr(SSL_F_TLS13_HKDF_EXPAND, SSL_R_TLS_ILLEGAL_EXPORTER_LABEL);
         }
-        EVP_KDF_CTX_free(kctx);
+        EVP_PKEY_CTX_free(pctx);
         return 0;
     }
 
@@ -85,7 +78,7 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
             || !WPACKET_sub_memcpy_u8(&pkt, data, (data == NULL) ? 0 : datalen)
             || !WPACKET_get_total_written(&pkt, &hkdflabellen)
             || !WPACKET_finish(&pkt)) {
-        EVP_KDF_CTX_free(kctx);
+        EVP_PKEY_CTX_free(pctx);
         WPACKET_cleanup(&pkt);
         if (fatal)
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_HKDF_EXPAND,
@@ -95,19 +88,15 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
         return 0;
     }
 
-    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                            (char *)mdname, strlen(mdname) + 1);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
-                                             (unsigned char *)secret, hashlen);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
-                                             hkdflabel, hkdflabellen);
-    *p++ = OSSL_PARAM_construct_end();
+    ret = EVP_PKEY_derive_init(pctx) <= 0
+            || EVP_PKEY_CTX_hkdf_mode(pctx, EVP_PKEY_HKDEF_MODE_EXPAND_ONLY)
+               <= 0
+            || EVP_PKEY_CTX_set_hkdf_md(pctx, md) <= 0
+            || EVP_PKEY_CTX_set1_hkdf_key(pctx, secret, hashlen) <= 0
+            || EVP_PKEY_CTX_add1_hkdf_info(pctx, hkdflabel, hkdflabellen) <= 0
+            || EVP_PKEY_derive(pctx, out, &outlen) <= 0;
 
-    ret = EVP_KDF_CTX_set_params(kctx, params) <= 0
-        || EVP_KDF_derive(kctx, out, outlen) <= 0;
-
-    EVP_KDF_CTX_free(kctx);
+    EVP_PKEY_CTX_free(pctx);
 
     if (ret != 0) {
         if (fatal)
@@ -182,11 +171,7 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
     size_t mdlen, prevsecretlen;
     int mdleni;
     int ret;
-    EVP_KDF *kdf;
-    EVP_KDF_CTX *kctx;
-    OSSL_PARAM params[5], *p = params;
-    int mode = EVP_PKEY_HKDEF_MODE_EXTRACT_ONLY;
-    const char *mdname = EVP_MD_name(md);
+    EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL);
 #ifdef CHARSET_EBCDIC
     static const char derived_secret_label[] = { 0x64, 0x65, 0x72, 0x69, 0x76, 0x65, 0x64, 0x00 };
 #else
@@ -194,10 +179,7 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
 #endif
     unsigned char preextractsec[EVP_MAX_MD_SIZE];
 
-    kdf = EVP_KDF_fetch(NULL, OSSL_KDF_NAME_HKDF, NULL);
-    kctx = EVP_KDF_CTX_new(kdf);
-    EVP_KDF_free(kdf);
-    if (kctx == NULL) {
+    if (pctx == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_GENERATE_SECRET,
                  ERR_R_INTERNAL_ERROR);
         return 0;
@@ -208,7 +190,6 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
     if (!ossl_assert(mdleni >= 0)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_GENERATE_SECRET,
                  ERR_R_INTERNAL_ERROR);
-        EVP_KDF_CTX_free(kctx);
         return 0;
     }
     mdlen = (size_t)mdleni;
@@ -231,7 +212,7 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_GENERATE_SECRET,
                      ERR_R_INTERNAL_ERROR);
             EVP_MD_CTX_free(mctx);
-            EVP_KDF_CTX_free(kctx);
+            EVP_PKEY_CTX_free(pctx);
             return 0;
         }
         EVP_MD_CTX_free(mctx);
@@ -242,7 +223,7 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
                                sizeof(derived_secret_label) - 1, hash, mdlen,
                                preextractsec, mdlen, 1)) {
             /* SSLfatal() already called */
-            EVP_KDF_CTX_free(kctx);
+            EVP_PKEY_CTX_free(pctx);
             return 0;
         }
 
@@ -250,25 +231,21 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
         prevsecretlen = mdlen;
     }
 
-    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                            (char *)mdname, strlen(mdname) + 1);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
-                                             (unsigned char *)insecret,
-                                             insecretlen);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
-                                             (unsigned char *)prevsecret,
-                                             prevsecretlen);
-    *p++ = OSSL_PARAM_construct_end();
-
-    ret = EVP_KDF_CTX_set_params(kctx, params) <= 0
-        || EVP_KDF_derive(kctx, outsecret, mdlen) <= 0;
+    ret = EVP_PKEY_derive_init(pctx) <= 0
+            || EVP_PKEY_CTX_hkdf_mode(pctx, EVP_PKEY_HKDEF_MODE_EXTRACT_ONLY)
+               <= 0
+            || EVP_PKEY_CTX_set_hkdf_md(pctx, md) <= 0
+            || EVP_PKEY_CTX_set1_hkdf_key(pctx, insecret, insecretlen) <= 0
+            || EVP_PKEY_CTX_set1_hkdf_salt(pctx, prevsecret, prevsecretlen)
+               <= 0
+            || EVP_PKEY_derive(pctx, outsecret, &mdlen)
+               <= 0;
 
     if (ret != 0)
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_GENERATE_SECRET,
                  ERR_R_INTERNAL_ERROR);
 
-    EVP_KDF_CTX_free(kctx);
+    EVP_PKEY_CTX_free(pctx);
     if (prevsecret == preextractsec)
         OPENSSL_cleanse(preextractsec, mdlen);
     return ret == 0;
@@ -367,15 +344,15 @@ int tls13_setup_key_block(SSL *s)
     const EVP_CIPHER *c;
     const EVP_MD *hash;
 
-    s->session->cipher = s->s3.tmp.new_cipher;
+    s->session->cipher = s->s3->tmp.new_cipher;
     if (!ssl_cipher_get_evp(s->session, &c, &hash, NULL, NULL, NULL, 0)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_SETUP_KEY_BLOCK,
                  SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
         return 0;
     }
 
-    s->s3.tmp.new_sym_enc = c;
-    s->s3.tmp.new_hash = hash;
+    s->s3->tmp.new_sym_enc = c;
+    s->s3->tmp.new_hash = hash;
 
     return 1;
 }
@@ -413,11 +390,18 @@ static int derive_secret_key_and_iv(SSL *s, int sending, const EVP_MD *md,
         uint32_t algenc;
 
         ivlen = EVP_CCM_TLS_IV_LEN;
-        if (s->s3.tmp.new_cipher == NULL) {
+        if (s->s3->tmp.new_cipher != NULL) {
+            algenc = s->s3->tmp.new_cipher->algorithm_enc;
+        } else if (s->session->cipher != NULL) {
             /* We've not selected a cipher yet - we must be doing early data */
             algenc = s->session->cipher->algorithm_enc;
+        } else if (s->psksession != NULL && s->psksession->cipher != NULL) {
+            /* We must be doing early data with out-of-band PSK */
+            algenc = s->psksession->cipher->algorithm_enc;
         } else {
-            algenc = s->s3.tmp.new_cipher->algorithm_enc;
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DERIVE_SECRET_KEY_AND_IV,
+                     ERR_R_EVP_LIB);
+            goto err;
         }
         if (algenc & (SSL_AES128CCM8 | SSL_AES256CCM8))
             taglen = EVP_CCM8_TLS_TAG_LEN;
@@ -533,7 +517,7 @@ int tls13_change_cipher_state(SSL *s, int which)
             labellen = sizeof(client_early_traffic) - 1;
             log_label = CLIENT_EARLY_LABEL;
 
-            handlen = BIO_get_mem_data(s->s3.handshake_buffer, &hdata);
+            handlen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
             if (handlen <= 0) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                          SSL_F_TLS13_CHANGE_CIPHER_STATE,
@@ -654,7 +638,7 @@ int tls13_change_cipher_state(SSL *s, int which)
 
     if (!(which & SSL3_CC_EARLY)) {
         md = ssl_handshake_md(s);
-        cipher = s->s3.tmp.new_sym_enc;
+        cipher = s->s3->tmp.new_sym_enc;
         if (!ssl3_digest_cached_records(s, 1)
                 || !ssl_handshake_hash(s, hashval, sizeof(hashval), &hashlen)) {
             /* SSLfatal() already called */;
@@ -767,7 +751,7 @@ int tls13_update_key(SSL *s, int sending)
     }
 
     if (!derive_secret_key_and_iv(s, sending, ssl_handshake_md(s),
-                                  s->s3.tmp.new_sym_enc, insecret, NULL,
+                                  s->s3->tmp.new_sym_enc, insecret, NULL,
                                   application_traffic,
                                   sizeof(application_traffic) - 1, secret, iv,
                                   ciph_ctx)) {

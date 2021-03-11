@@ -148,7 +148,7 @@ BufString *HttpClientCall( HttpClient *c, char *host, int port, FBOOL secured )
 		DEBUG("Connection will be secured: %d\n", secured );
 		if( secured == TRUE )
 		{
-			BIO_METHOD *biofile = BIO_s_file();
+			const BIO_METHOD *biofile = BIO_s_file();
 			certbio = BIO_new( biofile );
 			outbio  = BIO_new_fp( stdout, BIO_NOCLOSE );
 			

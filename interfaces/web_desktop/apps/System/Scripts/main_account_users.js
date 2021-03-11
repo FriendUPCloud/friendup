@@ -5149,7 +5149,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												let spa = allNodes[ s ].getElementsByTagName( 'span' )[0].getElementsByTagName( 'div' )[0];
 												spa.style.backgroundImage = 'url(' + src + ')';
 												allNodes[ s ].title = 'Line ' + s;
-												
+											
 												allNodes[ s ].myArrayID = obj.ID;
 												allNodes[ s ].onclick = function(  )
 												{
@@ -7220,7 +7220,7 @@ function sortUsers( sortby, orderby, callback )
 		}
 		
 		// TODO: Make support for sortby Status and Timestamp on the server levels aswell ...
-		
+				
 		if( sortby == 'Status' )
 		{
 			UsersSettings( 'customsort', orderby == 'DESC' ? '2,1,0' : '2,0,1' );

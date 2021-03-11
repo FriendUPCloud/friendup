@@ -104,7 +104,7 @@ typedef struct Service
 //
 //
 
-Service* ServiceOpen( void *sysbase, char* name, long version, void *sm, void (*sendMessage)(void *a, void *b) );
+Service* ServiceOpen( void *sysbase, char* name, long version, void *sm, void *(*sendMessage)(void *a, void *b) );
 
 //
 //

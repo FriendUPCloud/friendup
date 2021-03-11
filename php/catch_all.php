@@ -9,6 +9,7 @@
 *                                                                              *
 *****************************************************************************©*/
 
+
 // Set it to empty
 $path = '';
 
@@ -62,7 +63,12 @@ if( isset( $argv ) && isset( $argv[1] ) )
 			
 			die( '<script>document.location.href=\'' . $host . '/webclient/index.html\';</script>' );
 		}
-		// Check for quest accounts
+		// User is requesting an operation on calendarevent
+		else if( preg_match( '/^\/calendarevent[\/]{0,1}/i', $argv[ 1 ], $m ) )
+		{
+			require( 'calendarevent.php' );
+		}
+		// Check for guest accounts
 		else if( preg_match( '/^\/guests[\/]{0,1}/i', $argv[1], $m ) )
 		{
 			$groupSession = true;
@@ -128,7 +134,8 @@ if( isset( $argv ) && isset( $argv[1] ) )
 				}
 				
 				$path = implode( '/', $path );
-				$devname = reset( explode( ':', $base ) );
+				$devname = explode( ':', $base );
+				$devname = reset( $devname );
 								
 				if( $base && ( $auth || $session ) && $path )
 				{

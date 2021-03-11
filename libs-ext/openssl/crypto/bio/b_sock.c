@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -24,7 +24,7 @@
 static int wsa_init_done = 0;
 # endif
 
-# if !OPENSSL_API_1_1_0
+# if OPENSSL_API_COMPAT < 0x10100000L
 int BIO_get_host_ip(const char *str, unsigned char *ip)
 {
     BIO_ADDRINFO *res = NULL;
@@ -103,7 +103,7 @@ int BIO_sock_error(int sock)
         return j;
 }
 
-# if !OPENSSL_API_1_1_0
+# if OPENSSL_API_COMPAT < 0x10100000L
 struct hostent *BIO_gethostbyname(const char *name)
 {
     /*
@@ -120,6 +120,8 @@ int BIO_sock_init(void)
     static struct WSAData wsa_state;
 
     if (!wsa_init_done) {
+        int err;
+
         wsa_init_done = 1;
         memset(&wsa_state, 0, sizeof(wsa_state));
         /*
@@ -129,8 +131,8 @@ int BIO_sock_init(void)
          * probed at run-time with DSO_global_lookup.
          */
         if (WSAStartup(0x0202, &wsa_state) != 0) {
-            ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
-                           "calling wsastartup()");
+            err = WSAGetLastError();
+            SYSerr(SYS_F_WSASTARTUP, err);
             BIOerr(BIO_F_BIO_SOCK_INIT, BIO_R_WSASTARTUP);
             return -1;
         }
@@ -190,12 +192,11 @@ int BIO_socket_ioctl(int fd, long type, void *arg)
     i = ioctlsocket(fd, type, ARG);
 #  endif                        /* __DJGPP__ */
     if (i < 0)
-        ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
-                       "calling ioctlsocket()");
+        SYSerr(SYS_F_IOCTLSOCKET, get_last_socket_error());
     return i;
 }
 
-# if !OPENSSL_API_1_1_0
+# if OPENSSL_API_COMPAT < 0x10100000L
 int BIO_get_accept_socket(char *host, int bind_mode)
 {
     int s = INVALID_SOCKET;
@@ -242,8 +243,7 @@ int BIO_accept(int sock, char **ip_port)
             ret = -2;
             goto end;
         }
-        ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
-                       "calling accept()");
+        SYSerr(SYS_F_ACCEPT, get_last_socket_error());
         BIOerr(BIO_F_BIO_ACCEPT, BIO_R_ACCEPT_ERROR);
         goto end;
     }
@@ -308,8 +308,7 @@ int BIO_socket_nbio(int s, int mode)
 
     l = fcntl(s, F_GETFL, 0);
     if (l == -1) {
-        ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
-                       "calling fcntl()");
+        SYSerr(SYS_F_FCNTL, get_last_sys_error());
         ret = -1;
     } else {
 #  if defined(O_NONBLOCK)
@@ -327,8 +326,7 @@ int BIO_socket_nbio(int s, int mode)
         ret = fcntl(s, F_SETFL, l);
 
         if (ret < 0) {
-            ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
-                           "calling fcntl()");
+            SYSerr(SYS_F_FCNTL, get_last_sys_error());
         }
     }
 # else
@@ -351,8 +349,7 @@ int BIO_sock_info(int sock,
             ret = getsockname(sock, BIO_ADDR_sockaddr_noconst(info->addr),
                               &addr_len);
             if (ret == -1) {
-                ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
-                               "calling getsockname()");
+                SYSerr(SYS_F_GETSOCKNAME, get_last_socket_error());
                 BIOerr(BIO_F_BIO_SOCK_INFO, BIO_R_GETSOCKNAME_ERROR);
                 return 0;
             }
