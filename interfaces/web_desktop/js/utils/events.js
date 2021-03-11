@@ -15,7 +15,7 @@ to listeners registered through this interface
 
 */
 
-EventEmitter = function( eventSink ) {
+function EventEmitter( eventSink ) {
 	if ( !( this instanceof EventEmitter ))
 		return new EventEmitter();
 	
@@ -192,7 +192,7 @@ onsend - callback, replaces conn in some usecases
 	
 inherits from EventEmitter
 */
-EventNode = function(
+function EventNode(
 	type,
 	conn,
 	eventSink,
