@@ -5064,8 +5064,9 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 		
 									let login = [ 'Never' ];
 									
+									let self = this;
 									let s = start;
-									for( let a = 0; a < this.length( allNodes ); a++, s++ )
+									for( let a = 0; a < self.length( allNodes ); a++, s++ )
 									{
 										
 										// Set content
@@ -5159,6 +5160,20 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												allNodes[ s ].myArrayID = obj.ID;
 												allNodes[ s ].onclick = function(  )
 												{
+													if( this.line != null && allNodes )
+													{
+														for( let i in allNodes )
+														{
+															if( allNodes[i] && allNodes[i].className && allNodes[i].className.indexOf( ' Selected' ) >= 0 )
+															{
+																allNodes[i].className = ( allNodes[i].className.split( ' Selected' ).join( '' ) );
+															}
+														}
+									
+														this.className = this.className.split( ' Selected' ).join( '' ) + ' Selected';
+														self.selectedLine = this.line;
+													}
+													
 													Sections.accounts_users( 'edit', this.myArrayID );
 												}
 											
@@ -5177,55 +5192,6 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										}
 										
 									}
-									
-									
-									
-									/*// Temporary get lastlogin time separate to speed up the sql query ...
-		
-									if( uids.length > 0 )
-									{
-										getLastLoginlist( function ( res, dat )
-										{				
-											if( res == 'ok' && dat )
-											{
-												for ( var i in dat )
-												{
-													if( dat[i] && dat[i]['UserID'] )
-													{
-														if( ge( 'UserListID_' + dat[i]['UserID'] ) )
-														{
-															var elems = ge( 'UserListID_' + dat[i]['UserID'] ).getElementsByTagName( '*' );
-								
-															if( elems.length > 0 )
-															{
-																for ( var div in elems )
-																{
-																	if( elems[div] && elems[div].className )
-																	{
-																		let timestamp = ( dat[i]['LoginTime'] );
-																		let logintime = ( dat[i]['LoginTime'] != 0 && dat[i]['LoginTime'] != null ? CustomDateTime( dat[i]['LoginTime'] ) : login[ 0 ] );
-											
-																		if( elems[div].className.indexOf( 'avatar' ) >= 0 )
-																		{
-																			elems[div].setAttribute( 'timestamp', timestamp );
-																			elems[div].setAttribute( 'logintime', logintime );
-																		}
-																		if( elems[div].className.indexOf( 'logintime' ) >= 0 )
-																		{
-																			elems[div].innerHTML = logintime;
-																		}
-																	}
-																}
-															}
-							
-							
-														}
-													}
-												}
-											}
-			
-										}, ( uids ? uids.join(',') : false ) );
-									}*/
 									
 								}
 								
@@ -6836,6 +6802,8 @@ function NewUser( _this )
 	} );
 	
 	SubMenu( _this.parentNode.parentNode );
+	
+	scrollengine.unselectLine();
 }
 
 // Temp function until it's merged into one main function for users list ...
@@ -6860,23 +6828,26 @@ function refreshUserList( userInfo )
 		div.innerHTML = str;
 		div.onclick = function()
 		{
-			if( ge( 'ListUsersInner' ) )
+			if( !UsersSettings( 'experiment' ) )
 			{
-				var list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
-		
-				if( list.length > 0 )
+				if( ge( 'ListUsersInner' ) )
 				{
-					for( var a = 0; a < list.length; a++ )
+					var list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
+		
+					if( list.length > 0 )
 					{
-						if( list[a] && list[a].className && list[a].className.indexOf( ' Selected' ) >= 0 )
+						for( var a = 0; a < list.length; a++ )
 						{
-							list[a].className = ( list[a].className.split( ' Selected' ).join( '' ) );
+							if( list[a] && list[a].className && list[a].className.indexOf( ' Selected' ) >= 0 )
+							{
+								list[a].className = ( list[a].className.split( ' Selected' ).join( '' ) );
+							}
 						}
 					}
 				}
-			}
 			
-			this.className = ( this.className.split( ' Selected' ).join( '' ) + ' Selected' );
+				this.className = ( this.className.split( ' Selected' ).join( '' ) + ' Selected' );
+			}
 			
 			Sections.accounts_users( 'edit', userInfo.ID );
 		}
@@ -6907,23 +6878,26 @@ function refreshUserList( userInfo )
 			
 			r.className = r.className.split( 'Active' ).join( status ).split( 'Disabled' ).join( status ).split( 'Locked' ).join( status );
 			
-			if( ge( 'ListUsersInner' ) )
+			if( !UsersSettings( 'experiment' ) )
 			{
-				var list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
-		
-				if( list.length > 0 )
+				if( ge( 'ListUsersInner' ) )
 				{
-					for( var a = 0; a < list.length; a++ )
+					var list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
+		
+					if( list.length > 0 )
 					{
-						if( list[a] && list[a].className && list[a].className.indexOf( ' Selected' ) >= 0 )
+						for( var a = 0; a < list.length; a++ )
 						{
-							list[a].className = ( list[a].className.split( ' Selected' ).join( '' ) );
+							if( list[a] && list[a].className && list[a].className.indexOf( ' Selected' ) >= 0 )
+							{
+								list[a].className = ( list[a].className.split( ' Selected' ).join( '' ) );
+							}
 						}
 					}
 				}
-			}
 			
-			r.className = ( r.className.split( ' Selected' ).join( '' ) + ' Selected' );
+				r.className = ( r.className.split( ' Selected' ).join( '' ) + ' Selected' );
+			}
 			
 			for ( var i in div )
 			{
@@ -6983,49 +6957,54 @@ function refreshUserList( userInfo )
 				}
 			}
 			
-			// Temporary get lastlogin time separate to speed up the sql query ...
-			
-			getLastLoginlist( function ( res, dat )
+			if( !UsersSettings( 'experiment' ) )
 			{
-				if( res == 'ok' && dat )
-				{
-					for ( var i in dat )
-					{
-						if( dat[i] && dat[i]['UserID'] )
-						{
-							if( ge( 'UserListID_' + dat[i]['UserID'] ) )
-							{
-								var elems = ge( 'UserListID_' + dat[i]['UserID'] ).getElementsByTagName( '*' );
+				
+				// Temporary get lastlogin time separate to speed up the sql query ...
 			
-								if( elems.length > 0 )
+				getLastLoginlist( function ( res, dat )
+				{
+					if( res == 'ok' && dat )
+					{
+						for ( var i in dat )
+						{
+							if( dat[i] && dat[i]['UserID'] )
+							{
+								if( ge( 'UserListID_' + dat[i]['UserID'] ) )
 								{
-									for ( var div in elems )
+									var elems = ge( 'UserListID_' + dat[i]['UserID'] ).getElementsByTagName( '*' );
+			
+									if( elems.length > 0 )
 									{
-										if( elems[div] && elems[div].className )
+										for ( var div in elems )
 										{
-											var timestamp = ( dat[i]['LoginTime'] );
-											var logintime = ( dat[i]['LoginTime'] != 0 && dat[i]['LoginTime'] != null ? CustomDateTime( dat[i]['LoginTime'] ) : login[ 0 ] );
+											if( elems[div] && elems[div].className )
+											{
+												var timestamp = ( dat[i]['LoginTime'] );
+												var logintime = ( dat[i]['LoginTime'] != 0 && dat[i]['LoginTime'] != null ? CustomDateTime( dat[i]['LoginTime'] ) : login[ 0 ] );
 						
-											if( elems[div].className.indexOf( 'avatar' ) >= 0 )
-											{
-												elems[div].setAttribute( 'timestamp', timestamp );
-												elems[div].setAttribute( 'logintime', logintime );
-											}
-											if( elems[div].className.indexOf( 'logintime' ) >= 0 )
-											{
-												elems[div].innerHTML = logintime;
+												if( elems[div].className.indexOf( 'avatar' ) >= 0 )
+												{
+													elems[div].setAttribute( 'timestamp', timestamp );
+													elems[div].setAttribute( 'logintime', logintime );
+												}
+												if( elems[div].className.indexOf( 'logintime' ) >= 0 )
+												{
+													elems[div].innerHTML = logintime;
+												}
 											}
 										}
 									}
+			
+			
 								}
-			
-			
 							}
 						}
 					}
-				}
 
-			}, userInfo.ID );
+				}, userInfo.ID );
+			
+			}
 		}
 		
 		UsersSettings( 'uids', userInfo.ID );
@@ -9407,20 +9386,25 @@ function cancelUser( userid )
 	{
 		ge( 'UserDetails' ).innerHTML = '';
 		
-		// Remove selected for this user
-		if( userid && ge( 'UserListID_' + userid ) )
-		{
-			ge( 'UserListID_' + userid ).className = ge( 'UserListID_' + userid ).className.split( 'Selected' ).join( '' );
-		}
+		scrollengine.unselectLine();
 		
-		// TODO: Look at this since we changed the user list, onclick doesn't go to the correct one.
-		if( ge( 'ListUsersInner' ) && ge( 'ListUsersInner' ).innerHTML )
+		if( !UsersSettings( 'experiment' ) )
 		{
-			var div = ge( 'ListUsersInner' ).getElementsByTagName( 'div' )[0];
-			
-			if( div )
+			// Remove selected for this user
+			if( userid && ge( 'UserListID_' + userid ) )
 			{
-				div.click();
+				ge( 'UserListID_' + userid ).className = ge( 'UserListID_' + userid ).className.split( 'Selected' ).join( '' );
+			}
+		
+			// TODO: Look at this since we changed the user list, onclick doesn't go to the correct one.
+			if( ge( 'ListUsersInner' ) && ge( 'ListUsersInner' ).innerHTML )
+			{
+				var div = ge( 'ListUsersInner' ).getElementsByTagName( 'div' )[0];
+			
+				if( div )
+				{
+					div.click();
+				}
 			}
 		}
 	}

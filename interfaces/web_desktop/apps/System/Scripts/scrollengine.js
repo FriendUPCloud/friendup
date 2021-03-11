@@ -55,6 +55,8 @@ scrollengine = {
 	
 	refreshTimeout : 0,
 	
+	selectedLine : null,
+	
 	set : function ( layout )
 	{
 		this.layout = layout;
@@ -180,6 +182,16 @@ scrollengine = {
 		}
 	},
 	
+	unselectLine : function ()
+	{
+		if( this.selectedLine != null && this.allNodes[ this.selectedLine ] )
+		{
+			this.allNodes[ this.selectedLine ].className = this.allNodes[ this.selectedLine ].className.split( ' Selected' ).join( '' );
+		}
+		
+		this.selectedLine = null;
+	},
+	
 	createDiv : function ( id, target, line, classN, title )
 	{
 		
@@ -189,7 +201,15 @@ scrollengine = {
 		d.style.width = '100%';
 		if( classN ) d.className = classN;
 		if( title ) d.title = title;
-		if( line != null ) d.line = line;
+		if( line != null )
+		{
+			d.line = line;
+			if( line == this.selectedLine )
+			{
+				console.log( '['+line+'] ' + this.selectedLine );
+				d.className = d.className.split( ' Selected' ).join( '' ) + ' Selected';
+			}
+		}
 		target = ( target ? target : this.list );
 		if( line != null && this.allNodes[ line ] )
 		{
@@ -507,6 +527,7 @@ scrollengine = {
 		{
 			if( allNodes )
 			{
+				let self = this;
 				let s = start;
 				for( let a = 0; a < this.length( allNodes ); a++, s++ )
 				{
@@ -534,6 +555,23 @@ scrollengine = {
 							}
 							
 							allNodes[ s ].title = 'Line ' + s;
+							
+							allNodes[ s ].onclick = function(  )
+							{
+								if( this.line != null && allNodes )
+								{
+									for( let i in allNodes )
+									{
+										if( allNodes[i] && allNodes[i].className && allNodes[i].className.indexOf( ' Selected' ) >= 0 )
+										{
+											allNodes[i].className = ( allNodes[i].className.split( ' Selected' ).join( '' ) );
+										}
+									}
+									
+									this.className = this.className.split( ' Selected' ).join( '' ) + ' Selected';
+									self.selectedLine = this.line;
+								}
+							};
 				    	}
 				    	
 				    }

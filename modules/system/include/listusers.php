@@ -269,6 +269,8 @@ switch( $args->args->mode )
 						u.Email LIKE "' . trim( $args->args->query ) . '%" 
 					) ' : '' ) . '
 				)' : '' ) . '
+			GROUP BY
+				u.ID, g.Name 
 			ORDER BY
 				' . ( isset( $args->args->customsort ) && $args->args->customsort && isset( $args->args->sortby ) && $args->args->sortby == 'Status' ? '
 				FIELD ( u.Status, ' . $args->args->customsort . ' ) 
