@@ -1189,7 +1189,7 @@ function _saveAvatar( $userid, $base64 )
 		$o->Type = 'system';
 		$o->Key = 'avatar';
 		$o->Load();
-		$o->Data = trim( $base64 );
+		$o->Data = urldecode( trim( $base64 ) );
 		$o->Save();
 		
 		// Save image blob as filename hash on user

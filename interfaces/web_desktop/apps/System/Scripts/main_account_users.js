@@ -588,6 +588,10 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									{
 										ge( 'usEmail'    ).innerHTML = userInfo.Email;
 									}
+									if( ge( 'usMobile'    ) && userInfo.Mobile )
+									{
+										ge( 'usMobile'    ).innerHTML = userInfo.Mobile;
+									}
 									
 									if( Application.userId != userInfo.ID )
 									{
@@ -755,7 +759,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									{
 										for( var a = 0; a < inps.length; a++ )
 										{
-											if( inps[ a ].id && [ 'usFullname', 'usUsername', 'usEmail', 'usLevel', 'usLanguage', 'usSetup' ].indexOf( inps[ a ].id ) >= 0 )
+											if( inps[ a ].id && [ 'usFullname', 'usUsername', 'usEmail', 'usMobile', 'usLevel', 'usLanguage', 'usSetup' ].indexOf( inps[ a ].id ) >= 0 )
 											{
 												( function( i ) {
 													i.onclick = function( e )
@@ -811,7 +815,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								var bg2  = ge( 'UserCancelBtn' );
 								if( bg2 ) bg2.onclick = function( e )
 								{
-									Sections.accounts_users( 'edit', userInfo.ID );
+									cancelUser(  );
+									//Sections.accounts_users( 'edit', userInfo.ID );
 								}
 								var bg3  = ge( 'UserBackBtn' );
 								if( !isMobile ) 
@@ -4632,6 +4637,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							user_fullname        : ( userInfo.FullName ? userInfo.FullName : ( userInfo.ID ? 'n/a' : '' ) ),
 							user_username        : ( userInfo.Name ? userInfo.Name : ( userInfo.ID ? 'n/a' : '' ) ),
 							user_email           : ( userInfo.Email ? userInfo.Email : '' ),
+							user_mobile          : ( userInfo.Mobile ? userInfo.Mobile : '' ),
 							user_language        : ( languages ? languages : '' ),
 							user_setup           : ( setup ? setup : '' ),
 							user_locked_toggle   : ( ulocked   ? 'fa-toggle-on' : 'fa-toggle-off' ),
@@ -5921,7 +5927,7 @@ function NewUser( _this )
 			user_name            : i18n( 'i18n_new_user' ),
 			user_fullname        : '',
 			user_username        : '',
-			user_email           : '',
+			user_mobile          : '',
 			user_language        : languages,
 			user_setup           : setup,
 			user_locked_toggle   : 'fa-toggle-off',
@@ -6040,7 +6046,7 @@ function NewUser( _this )
 				{
 					for( var a = 0; a < inps.length; a++ )
 					{
-						if( inps[ a ].id && [ 'usFullname', 'usUsername', 'usEmail' ].indexOf( inps[ a ].id ) >= 0 )
+						if( inps[ a ].id && [ 'usFullname', 'usUsername', 'usEmail', 'usMobile' ].indexOf( inps[ a ].id ) >= 0 )
 						{
 							( function( i ) {
 								i.onclick = function( e )
@@ -6927,8 +6933,11 @@ function refreshUserList( userInfo )
 					{
 						src = '/system.library/module/?module=system&command=getavatar&userid=' + userInfo.ID + ( userInfo.Image ? '&image=' + userInfo.Image : '' ) + '&width=16&height=16&authid=' + Application.authId;
 						
+						let spa = div[i].getElementsByTagName( 'span' )[0].getElementsByTagName( 'div' )[0];
+        				spa.style.backgroundImage = 'url(' + src + ')';
+						
 						//var bg = 'background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;background-image: url(\'' + src + '\')';
-										
+									
 						//str += '	<span id="UserAvatar_'+obj.ID+'" fullname="'+obj.FullName+'" status="'+obj.Status+'" logintime="'+obj.Logintime+'" timestamp="'+obj.Timestamp+'" class="IconSmall fa-user-circle-o avatar" style="position: relative;">';
 						//str += '		<div style="' + bg + '"></div>';
 						//str += '	</span>';
