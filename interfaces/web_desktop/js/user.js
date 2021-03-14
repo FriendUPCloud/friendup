@@ -165,10 +165,11 @@ Friend.User = {
 			{
 				let enc = Workspace.encryption;
 				
-				if( json.username )
+				if( json.username || json.loginid )
 				{
 					Workspace.sessionId = json.sessionid;
-					Workspace.loginUsername = json.username;
+					if( json.username )
+						Workspace.loginUsername = json.username;
 					Workspace.loginUserId = json.userid;
 					Workspace.loginid = json.loginid;
 					Workspace.userLevel = json.level;

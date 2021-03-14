@@ -1714,6 +1714,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							ScreenOverlay.hide();
 							PollTray();
 							PollTaskbar();
+							// Tell app we can show ourselves!
+							if( window.friendApp && window.friendApp.reveal )
+							{
+								friendApp.reveal();
+							}
 							return;
 						}
 						
@@ -1802,6 +1807,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										}
 										// Hide overlay
 										ScreenOverlay.hide();
+										
 										PollTray();
 										PollTaskbar();
 										l.func = function()
@@ -1810,6 +1816,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										}
 										// We are done. Empty startup apps!
 										Friend.startupApps = {};
+										
+										// Tell app we can show ourselves!
+										if( window.friendApp && window.friendApp.reveal )
+										{
+											friendApp.reveal();
+										}
 									}
 								}
 								l.func();
@@ -1829,6 +1841,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 					Workspace.windowWallpaperImage = '';
 					document.body.classList.add( 'DefaultWallpaper' );
+					// Tell app we can show ourselves!
+					if( window.friendApp && window.friendApp.reveal )
+					{
+						friendApp.reveal();
+					}
 				}
 				if( callback && typeof( callback ) == 'function' ) callback();
 			}
@@ -3453,7 +3470,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		var self = this;
 		
 		this.getMountlist( function( data )
-		{
+		{	
 			// Something went wrong - don't show an empty workspace
 			// We always have one entry, the system disk
 			if( data.length <= 1 )
@@ -3747,6 +3764,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	getMountlist: function( callback, forceRefresh, addDormant )
 	{
 		var t = this; // Reference to workspace
+		
+		// Just in case
+		if( window.friendApp )
+			window.friendApp.reveal();
 		
 		if( !Friend.dosDrivers )
 		{
@@ -4634,6 +4655,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// paste from virtual clipboard
 	pasteFiles: function( e )
 	{
+		if( !e ) e = window.event;
+		
 		if( window.currentMovable && Friend.workspaceClipBoard && Friend.workspaceClipBoard.length > 0 && typeof window.currentMovable.drop == 'function' )
 		{
 			var e = {};
@@ -4642,9 +4665,31 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			var clip = Friend.workspaceClipBoard;
 			
 			// Make sure we don't overwrite existing files!
-			var destPath = currentMovable.content.fileInfo.Path;
+			let destPath = currentMovable.content.fileInfo.Path;
+			let destFinf = currentMovable.content.fileInfo;
+			let doCopy = false;
+			
+			// Use menu context for file info path (folder icon etc)
+			if( Workspace.menuContext )
+			{
+				let fi = null;
+				let mc = Workspace.menuContext;
+				while( mc != document.body )
+				{
+					if( mc.fileInfo )
+						break;
+					mc = mc.parentNode;
+				}
+				if( mc.fileInfo )
+				{
+					destPath = mc.fileInfo.Path;
+					destFinf = mc.fileInfo;
+					doCopy = true;
+				}
+			}
+			
 			var d = new Door( destPath );
-			d.getIcons( currentMovable.content.fileInfo, function( items )
+			d.getIcons( destFinf, function( items )
 			{
 				for( var a = 0; a < items.length; a++ )
 				{
@@ -4697,8 +4742,21 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 				}
 				if( !e ) e = {};
-				e.paste = true;
-				window.currentMovable.drop( Friend.workspaceClipBoard, e );
+				let cliplen = clip.length;
+				for( let b = 0; b < clip.length; b++ )
+				{
+					let spath = clip[b].fileInfo.Path;
+					let ex = clip[b].fileInfo.Type == 'File' ? clip[b].fileInfo.Filename : '';
+					let sh = new Shell( 0 );
+					sh.parseScript( 'copy ' + spath + ' to ' + destPath+ex, function()
+					{
+						if( cliplen-- == 0 )
+						{
+							Notify( { title: i18n( 'i18n_copy_operation' ), text: i18n( 'i18n_copying_files_complete' ) } );
+						}
+						delete sh;
+					}  );
+				}
 			} );
 		}
 	},
@@ -6667,7 +6725,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					},
 					{
 						name:	i18n( 'menu_paste' ),
-						command: function() { Workspace.pasteFiles(); },
+						command: function( e ) { Workspace.pasteFiles( e ); },
 						disabled: sharedVolume || !iconsInClipboard || systemDrive || cannotWrite
 					},
 					{
@@ -6822,7 +6880,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							// Find icon for download
 							if( currentMovable )
 							{
-								var selPath = false;
+								var selPath = [];
 								var dv = currentMovable.content;
 								if( dv )
 								{
@@ -6831,15 +6889,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										var ic = dv.icons[a];
 										if( ic.domNode && ic.domNode.fileInfo && ic.domNode.fileInfo.Type == 'File' && ic.selected )
 										{
-											selPath = ic.domNode.fileInfo.Path;
-											console.log( ic.domNode.fileInfo, ' domnode: ' + ic.domNode.selected + ' ic: ' + ic.selected );
-											break;
+											selPath.push( ic.domNode.fileInfo.Path );
 										}
 									}
 								}
-								if( selPath )
+								if( selPath.length >= 1 )
 								{
-									Workspace.download( selPath ); 
+									for( let a = 0; a < selPath.length; a++ )
+									{
+										Workspace.download( selPath[a] ); 
+									}
 								}
 								else
 								{
@@ -7065,6 +7124,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 		if( tr == window )
 			tr = document.body;
+		
+		this.menuContext = tr;
 		
 		// Check if we need to activate
 		var iconWindow = false;

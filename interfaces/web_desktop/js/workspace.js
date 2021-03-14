@@ -18,6 +18,10 @@
 var _protocol = document.location.href.split( '://' )[0];
 
 Workspace = {
+	receivePush: function()
+	{
+		return false;
+	},
 	icons: [],
 	menuMode: 'pear', // 'miga', 'fensters' (alternatives) -> other menu behaviours
 	mode: 'default',
@@ -730,6 +734,12 @@ Workspace = {
 	},
 	login: function( u, p, r, callback, ev )
 	{
+		// Use authmodule login
+		if( Workspace.authModuleLogin )
+		{
+			console.log( 'Using our existing auth module.' );
+			return Workspace.authModuleLogin( callback, window );
+		}
 		// Wrap to user object
 		return Friend.User.Login( u, p, r, callback, ev );
 	},
@@ -1007,7 +1017,7 @@ Workspace = {
 				// Set up a shell instance for the workspace
 				var uid = FriendDOS.addSession( _this );
 				_this.shell = FriendDOS.getSession( uid );
-
+				
 				// We're getting the theme set in an url var
 				var th = '';
 				if( ( th = GetUrlVar( 'theme' ) ) )

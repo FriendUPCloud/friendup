@@ -5490,11 +5490,19 @@ var View = function( args )
 
 		// prepare for us to use to external libs. // good quality resize + EXIF data reader
 		// https://github.com/blueimp/JavaScript-Load-Image/blob/master/js/load-image.all.min.js
-		Include( '/webclient/3rdparty/load-image.all.min.js', function()
+		if( !self.cameraIncludesLoaded )
 		{
-			// Execute async operation
+			Include( '/webclient/3rdparty/load-image.all.min.js', function()
+			{
+				// Execute async operation
+				self.cameraIncludesLoaded = true;
+				getAvailableDevices( function( e ){ setCameraMode( e.data ) } );				
+			});
+		}
+		else
+		{
 			getAvailableDevices( function( e ){ setCameraMode( e.data ) } );				
-		});
+		}
 	}
 	
 	// Add a child window to this window
