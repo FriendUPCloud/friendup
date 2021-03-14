@@ -10,6 +10,14 @@
 *                                                                              *
 *****************************************************************************©*/
 
+/*
+    This module call sets an announcement which are relevant for a user, be it
+    directly or through a workgroup.
+    
+    This module call will be deprecated in the future by Friend Core using a 
+    websocket call once an announcement has been designated.
+*/
+
 die( 'fail' );
 
 ?>
