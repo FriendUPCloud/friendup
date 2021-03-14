@@ -243,7 +243,7 @@ Application.refreshFilePane = function( method, force, callback )
 			// Make an "add new note" button
 			fBar.add = document.createElement( 'div' );
 			fBar.add.className = 'NewItem';
-			fBar.add.innerHTML = '<div class="Button IconButton IconSmall fa-page-text">&nbsp;' + i18n( 'i18n_add_note' ) + '</div>';
+			fBar.add.innerHTML = '<div class="Button IconButton IconSmall fa-file-text">&nbsp;' + i18n( 'i18n_add_note' ) + '</div>';
 			fBar.add.onclick = Application.addNote;
 			fBar.appendChild( fBar.add );
 		}
