@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS `FAnnouncement` (
   `ID` bigint(32) NOT NULL AUTO_INCREMENT,
+  `OwnerUserID` bigint(32) NOT NULL,
   `UserID` bigint(32) NOT NULL,
   `GroupID` bigint(20) NOT NULL,
   `Type` varchar(32) NOT NULL default "",
