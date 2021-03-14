@@ -18,6 +18,41 @@
     websocket call once an announcement has been designated.
 */
 
+// 1. Remove announcements older than one day?
+
+$groupList = '0';
+
+// 2. Get own workgroups
+if( $groups = $SqlDatabase->fetchObjectRows( '
+    SELECT ug.* FROM FUserGroup ug, FUserToGroup ugg
+    WHERE
+        ugg.UserID = \'' . $User->ID . '\' AND
+        ugg.GroupID = ug.ID
+' ) )
+{
+    $groupList = [];
+    foreach( $groups as $g )
+    {
+        $groupList[] = $g->ID;
+    }
+    $groupList = implode( ', ', $groupList );
+}
+
+
+// 3. Get new relevant announcements with no status
+if( $rows = $SqlDatabase->fetchObjectRows( '
+    SELECT 
+        st.ID AS AnnouncementStatus, fa.* FROM 
+        `FAnnouncement` fa RIGHT JOIN `FAnnouncementStatus` st ON ( st.AnnouncementID = fa.ID )
+    WHERE
+        AnnouncementStatus IS NULL AND
+        ( fa.UserID = \'' . $User->ID . '\' OR fa.GroupID IN ( ' . $groupList . ' ) )
+    ORDER BY fa.ID DESC
+' ) )
+{
+    die( 'ok<!--separate-->' . json_encode( $rows ) );
+}
+
 die( 'fail' );
 
 ?>

@@ -9,3 +9,10 @@ CREATE TABLE IF NOT EXISTS `FAnnouncement` (
   PRIMARY KEY (`ID`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1;
 
+CREATE TABLE IF NOT EXISTS `FAnnouncementStatus` (
+  `ID` bigint(32) NOT NULL AUTO_INCREMENT,
+  `UserID` bigint(32) NOT NULL,
+  `AnnouncementID` bigint(32) NOT NULL,
+  `Status` int(11) NOT NULL,
+  PRIMARY KEY (`ID`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1;

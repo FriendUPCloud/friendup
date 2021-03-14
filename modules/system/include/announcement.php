@@ -18,6 +18,32 @@
     websocket call once an announcement has been designated.
 */
 
+// We got a method!
+if( isset( $args->args->method ) && isset( $args->args->announcementid ) )
+{
+    // We want to set a status on this announcement
+    if( $args->args->method == 'status' )
+    {
+        $an = new dbIO( 'FAnnouncement' );
+        if( $an->load( $args->args->announcementid ) )
+        {
+            $st = new dbIO( 'FAnnouncementStatus' );
+            $st->AnnouncementID = $an->ID;
+            $st->UserID = $User->ID;
+            $st->Status = $args->args->status;
+            // Only 'read' status is available now
+            if( $st->Status == 'read' )
+            {
+                if( $st->Save() )
+                {
+                    die( 'ok' );
+                }
+            }
+        }
+    }
+    die( 'fail' );
+}
+
 if( isset( $args->args->payload ) && isset( $args->args->type ) )
 {
     $i = new dbIO( 'FAnnouncement' );
