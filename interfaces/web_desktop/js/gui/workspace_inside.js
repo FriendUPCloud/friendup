@@ -3167,14 +3167,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						// Flush theme info
 						themeInfo.loaded = false;
 					
-						// Reload the docks
-						Workspace.reloadDocks();
-					
 						// Refresh them
 						Workspace.initWorkspaces();
 					
 						// Redraw icons if they are delayed
 						Workspace.redrawIcons();
+						
+						// Reload the docks
+						Workspace.reloadDocks();
 					}
 
 					if( themeName && themeName != 'default' )
