@@ -1210,10 +1210,13 @@ var WorkspaceInside = {
 		if( !Workspace.cachedSessionList || cand - this.refreshEWCTime > 30 )
 		{
 		    this.refreshEWCTime = cand;
-		    var mo = new Library( 'system.library' );
+		    
+		    Workspace.getAnnouncements();
+		    
+		    let mo = new Library( 'system.library' );
 		    mo.onExecuted = function( rc, sessionList )
 		    {
-			    var m = Workspace.widget ? Workspace.widget.target : ge( 'DoorsScreen' );
+			    let m = Workspace.widget ? Workspace.widget.target : ge( 'DoorsScreen' );
 			    if( m == ge( 'DoorsScreen' ) )
 				    m = ge( 'DoorsScreen' ).screenTitle.getElementsByClassName( 'Extra' )[0];
 			    if( !m )
@@ -1365,6 +1368,32 @@ var WorkspaceInside = {
 			}
 		}
 	},
+	// Server announcements
+	getAnnouncements: function()
+	{
+	    let ann = new Module( 'system' );
+		ann.onExecuted = function( e, d )
+		{
+		    if( e == 'ok' )
+		    {
+		        console.log( 'We have an announcement!', d );
+		        try
+		        {
+		            let annList = JSON.parse( d );
+		            console.log( 'List: ', annList );
+		        }
+		        catch( e )
+		        {
+		            console.log( 'Could not read announcements.' );
+		        }
+		    }
+		    else
+		    {
+		        console.log( 'No new announcements.' );
+		    }
+		}
+		ann.execute( 'getannouncements' );
+    },
 	zapMobileAppMenu: function()
 	{
 		// Turn on openlock
