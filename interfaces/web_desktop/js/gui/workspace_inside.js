@@ -1701,6 +1701,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{	
 						Workspace.startupSequenceRegistered = true;
 						
+						// Reload the docks
+						Workspace.reloadDocks();
+						
 						// In single tasking mode, we just skip
 						if( Workspace.isSingleTask )
 						{
@@ -3172,9 +3175,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					
 						// Redraw icons if they are delayed
 						Workspace.redrawIcons();
-						
-						// Reload the docks
-						Workspace.reloadDocks();
 					}
 
 					if( themeName && themeName != 'default' )
