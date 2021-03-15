@@ -5901,8 +5901,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				m.onExecuted = function()
 				{
 					Workspace.refreshDesktop( false, true );
+					CloseWindow( ele );
 				}
 				m.execute( 'device/refresh', { devname: args.Filename } );
+			}
+			else
+			{
+			    CloseWindow( ele );
 			}
 			
 		}
