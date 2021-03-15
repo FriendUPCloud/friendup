@@ -156,6 +156,8 @@ enum {
 	DICT_NO_PERMISSION,
 	DICT_UMA_ENTRY_NOT_FOUND,
 	DICT_FILE_UNCOMPRESS_PROBLEM,
+	DICT_CANNOT_REMOVE_GROUP_WITH_LEVEL_TYPE,
+	DICT_CANNOT_EDIT_OR_REMOVE_USER_GROUP_LOCKED,
 	DICT_MAX
 };
 /*
@@ -252,6 +254,9 @@ INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) 
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'User Mobile App entry not found', 'ENG', '72');
 
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'File uncompress problem: %d', 'ENG', '73');
+
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Cannot remove group with Level type', 'ENG', '74');
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Cannot edit or remove UserGroup because its locked', 'ENG', '75');
 */
 
 // User status

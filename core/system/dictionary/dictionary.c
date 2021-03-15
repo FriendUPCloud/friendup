@@ -96,7 +96,9 @@ static const char *DefaultDictionaryMessages[] =
 "Bad chars used",
 "No access, special rights required",
 "User Mobile App entry not found",
-"File uncompress problem: %d"
+"File uncompress problem: %d",
+"Cannot remove group with 'Level' type",
+"Cannot edit or remove UserGroup because its locked"
 };
 
 /**
