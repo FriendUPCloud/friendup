@@ -815,8 +815,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								var bg2  = ge( 'UserCancelBtn' );
 								if( bg2 ) bg2.onclick = function( e )
 								{
-									cancelUser( userInfo.ID );
-									//Sections.accounts_users( 'edit', userInfo.ID );
+									//cancelUser( userInfo.ID );
+									Sections.accounts_users( 'edit', userInfo.ID );
 								}
 								var bg3  = ge( 'UserBackBtn' );
 								if( !isMobile ) 

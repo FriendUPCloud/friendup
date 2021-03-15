@@ -145,7 +145,49 @@ Sections.accounts_workgroups = function( cmd, extra )
 				var f = new Library( 'system.library' );
 				f.onExecuted = function( e, d )
 				{
-					if( ShowLog ) console.log( { e:e , d:d, args: args } );
+					
+					var wgroups = null; var workgroups = null;
+					
+					try
+					{
+						wgroups = JSON.parse( d );
+					}
+					catch( e )
+					{
+						wgroups = null;
+					}
+					
+					if( ShowLog || 1==1 ) console.log( 'workgroups ', { e:e , d:(wgroups?wgroups:d), args: args } );
+					
+					if( wgroups.groups )
+					{
+						workgroups = wgroups.groups;
+					}
+					else if( wgroups.data && wgroups.data.details && wgroups.data.details.groups )
+					{
+						workgroups = wgroups.data.details.groups;
+					}
+					
+					if( wgroups && workgroups )
+					{
+						var out = [];
+						
+						for( var a in workgroups )
+						{
+							if( workgroups[a] && workgroups[a].ID )
+							{
+								out.push( { ID: workgroups[a].ID, Name: workgroups[a].name, ParentID: workgroups[a].parentid } );
+							}
+						}
+						
+						if( callback ) return callback( out );
+					}
+					
+					if( callback ) return callback( [] );
+					
+					// OLD code ...
+					
+					/*if( ShowLog ) console.log( { e:e , d:d, args: args } );
 				
 					if( e == 'ok' && d )
 					{
@@ -170,7 +212,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 						catch( e ){ } 
 					}
 				
-					return callback( false, false );
+					return callback( false, false );*/
+					
 				}
 				f.execute( 'group/list', { authid: Application.authId, args: args } );
 			}
@@ -406,7 +449,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 		{
 			// TODO: remove all other Selected in the list first ...
 			
-			var pnt = _this.parentNode.getElementsByTagName( 'div' );
+			var pnt = _this.parentNode.parentNode.getElementsByTagName( 'div' );
 			
 			if( pnt )
 			{
@@ -1554,19 +1597,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 				function()
 				{
 								
-					list( function( e, d )
+					list( function( groups )
 					{
-					
-						info.workgroups = null;
-					
-						if( e && d )
-						{
-							info.workgroups = d;
-							
-							loadingList[ ++loadingSlot ]( info );
-						}
-						else return;
-					
+						
+						info.workgroups = ( groups ? groups : null );
+						
+						loadingList[ ++loadingSlot ]( info );
+						
 					} );
 				
 				},
@@ -1643,19 +1680,13 @@ Sections.accounts_workgroups = function( cmd, extra )
 		{
 			var info = {};
 			
-			list( function( e, d )
+			list( function( groups )
 			{
-			
-				info.workgroups = null;
-			
-				if( e && d )
-				{
-					info.workgroups = d;
-					
-					initDetails( info );
-				}
-				else return;
-			
+				
+				info.workgroups = ( groups ? groups : null );
+				
+				initDetails( info );
+				
 			} );
 			
 		}
@@ -1671,7 +1702,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 		var users      = ( workgroup.users ? workgroup.users : [] );
 		var list       = ( info.users      ? info.users      : [] );
 		
-		if( ShowLog ) console.log( 'initDetails() ', info );
+		if( ShowLog || 1==1 ) console.log( 'initDetails() ', info );
 		
 		// Workgroups
 		var pstr = '';
@@ -1682,14 +1713,14 @@ Sections.accounts_workgroups = function( cmd, extra )
 			
 			for( var w in workgroups )
 			{
-				if( workgroups[w] && workgroups[w].ID && workgroups[w].name )
+				if( workgroups[w] && workgroups[w].ID && workgroups[w].Name )
 				{
-					if( workgroup && ( workgroups[w].ID == workgroup.groupid || workgroups[w].parentid == workgroup.groupid ) )
+					if( workgroup && ( workgroups[w].ID == workgroup.groupid || workgroups[w].ParentID == workgroup.groupid ) )
 					{
 						continue;
 					}
 					
-					pstr += '<option value="' + workgroups[w].ID + '"' + ( workgroup && workgroup.parentid == workgroups[w].ID ? ' selected="selected"' : '' ) + '>' + workgroups[w].name + '</option>';
+					pstr += '<option value="' + workgroups[w].ID + '"' + ( workgroup && workgroup.parentid == workgroups[w].ID ? ' selected="selected"' : '' ) + '>' + workgroups[w].Name + '</option>';
 				}
 			}
 			
@@ -4159,28 +4190,631 @@ Sections.accounts_workgroups = function( cmd, extra )
 		{
 			
 			// Get the user list
-			list( function( e, d )
+			list( function( workgroups )
 			{
-				if( ShowLog ) console.log( 'initMain() ', { e:e, d:d } );
+				if( ShowLog ) console.log( 'initMain() ', workgroups );
 				
-				//if( e != 'ok' ) return;
-				var userList = null;
-				try
+				groups = {};
+				
+				if( workgroups )
 				{
-					userList = d;
+					
+					var adminlevel = Application.checkAppPermission( [ 'PERM_WORKGROUP_READ_GLOBAL', 'PERM_USER_READ_GLOBAL', 'PERM_WORKGROUP_GLOBAL', 'PERM_USER_GLOBAL' ] );
+					var userlevel  = Application.checkAppPermission( [ 'PERM_WORKGROUP_READ_IN_WORKGROUP', 'PERM_USER_READ_IN_WORKGROUP', 'PERM_WORKGROUP_WORKGROUP', 'PERM_USER_WORKGROUP' ] );
+					
+					var wgroups = false;
+					
+					if( ShowLog || 1==1 ) console.log( 'userlevel ', { adminlevel: adminlevel, userlevel: userlevel } );
+					
+					if( !adminlevel && userlevel )
+					{
+						var wgroups = {};
+						
+						//console.log( 'userlevel ', userlevel );
+						
+						for( var a in userlevel )
+						{
+							if( userlevel[a] && userlevel[a].GroupID )
+							{
+								wgroups[ userlevel[a].GroupID ] = userlevel[a];
+							}
+						}
+						
+					}
+					
+					var unsorted = {};
+		
+					for( var i in workgroups )
+					{
+						if( workgroups[i] && workgroups[i].ID )
+						{
+							if( wgroups && !wgroups[workgroups[i].ID] )
+							{
+								continue;
+							}
+							
+							workgroups[i].groups = [];
+				
+							unsorted[workgroups[i].ID] = workgroups[i];
+						}
+					}
+				
+					
+				
+					for( var k in unsorted )
+					{
+						if( unsorted[k] && unsorted[k].ID )
+						{
+							if( unsorted[k].ParentID > 0 && unsorted[ unsorted[k].ParentID ] )
+							{
+								if( !groups[ unsorted[k].ParentID ] )
+								{
+									groups[ unsorted[k].ParentID ] = unsorted[ unsorted[k].ParentID ];
+								}
+							
+								if( groups[ unsorted[k].ParentID ] )
+								{
+									groups[ unsorted[k].ParentID ].groups.push( unsorted[k] );
+								}
+							}
+							else if( !groups[ unsorted[k].ID ] )
+							{
+								groups[ unsorted[k].ID ] = unsorted[k];
+							}
+						}	
+					}
+				
+					console.log( groups );
 				}
-				catch( e )
+				
+				var str = '';
+				
+				if( groups )
 				{
+				
+					for( var a in groups )
+					{
+						var found = false;
+						
+						str += '<div>';
+						
+						str += '<div class="HRow" id="WorkgroupID_' + groups[a].ID + '">\
+							<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
+								<span name="' + groups[a].Name + '" class="IconSmall NegativeAlt ' + ( groups[a].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;' + groups[a].Name + '</span>\
+							</div>\
+							<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
+								<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
+							</div>\
+						</div>';
+					
+						if( groups[a].groups.length > 0 )
+						{
+							str += '<div class="Closed">';
+						
+							for( var aa in groups[a].groups )
+							{
+								var found = false;
+								
+								str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].ID + '">\
+									<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
+										<span name="' + groups[a].groups[aa].Name + '" class="IconSmall NegativeAlt ' + ( groups[a].groups[aa].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>\
+									</div>\
+									<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
+										<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
+									</div>\
+								</div>';
+								
+								if( groups[a].groups[aa].groups.length > 0 )
+								{
+									str += '<div class="Closed">';
+									
+									for( var aaa in groups[a].groups[aa].groups )
+									{
+										var found = false;
+										
+										str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].groups[aaa].ID + '">\
+											<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
+												<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconSmall NegativeAlt">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>\
+											</div>\
+											<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
+												<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
+											</div>\
+										</div>';
+									
+									}
+								
+									str += '</div>';
+								}
+								
+							}
+						
+							str += '</div>';
+						}
+					
+						str += '</div>';
+					
+					}
+					
+				}
+				
+				var o = ge( 'WorkgroupList' ); if( o ) o.innerHTML = '';
+				
+				var divs = appendChild( [ 
+					{
+						'element' : function() 
+						{
+							var d = document.createElement( 'div' );
+							d.id = 'AdminWorkgroupContainer';
+							return d;
+						}(),
+						'child' : 
+						[ 
+							{ 
+								'element' : function(  ) 
+								{
+									var d = document.createElement( 'div' );
+									d.className = 'HRow BackgroundNegative Negative Padding';
+									return d;
+								}(), 
+								'child' : 
+								[ 
+									{
+										'element' : function(  ) 
+										{
+											var d = document.createElement( 'div' );
+											d.className = 'HContent40 FloatLeft';
+											return d;
+										}(),
+										'child' : 
+										[ 
+											{
+												'element' : function(  ) 
+												{
+													var b = document.createElement( 'button' );
+													b.id = 'WorkgroupEditBack';
+													b.className = 'IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed';
+													return b;
+												}()
+											},
+											{
+												'element' : function(  ) 
+												{
+													var h = document.createElement( 'h3' );
+													h.className = 'NoMargin FloatLeft';
+													h.innerHTML = '<strong>' + i18n( 'i18n_workgroups' ) + '</strong>';
+													return h;
+												}()
+											}
+										]
+									},
+									{
+										'element' : function(  ) 
+										{
+											var d = document.createElement( 'div' );
+											d.className = 'PaddingSmall HContent45 FloatLeft Relative';
+											return d;
+										}(),
+										'child' : 
+										[ 
+											{
+												'element' : function(  ) 
+												{
+													var b = document.createElement( 'button' );
+													b.id = 'WorkgroupSearchCancelBtn';
+													b.className = 'IconButton IconSmall ButtonSmall fa-times-circle Closed';
+													b.style = 'position:absolute;right:0;margin-top:-2px;margin-right:-2px;';
+													b.onclick = function(  )
+													{
+														searchgroups( false );
+														var inp = ge( 'AdminWorkgroupContainer' ).getElementsByTagName( 'input' )[0];
+														inp.value = '';
+													}
+													return b;
+												}()
+											},
+											{
+												'element' : function(  ) 
+												{
+													var i = document.createElement( 'input' );
+													i.type = 'text';
+													i.className = 'FullWidth';
+													i.placeholder = i18n( 'i18n_search' );
+													i.style = 'padding-right:21px';
+													i.onkeyup = function(  )
+													{
+														searchgroups( this.value );
+													}
+													return i;
+												}()
+											}
+										]
+									},
+									{
+										'element' : function(  ) 
+										{
+											var d = document.createElement( 'div' );
+											d.className = 'HContent15 FloatLeft Relative';
+											return d;
+										}(),
+										'child' : 
+										[ 
+											{
+												'element' : function(  ) 
+												{
+													if( Application.checkAppPermission( [ 
+														'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+														'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
+													] ) )
+													{
+														var b = document.createElement( 'button' );
+														b.id = 'WorkgroupEdit';
+														b.className = 'IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle Open';
+														b.onclick = function()
+														{
+															edit(  );
+														};
+														return b;
+													}
+												}()
+											}
+										]
+									}
+								]
+							},
+							{
+								'element' : function(  ) 
+								{
+									var d = document.createElement( 'div' );
+									d.id = 'WorkgroupGui';
+									return d;
+								}(),
+								'child' : 
+								[
+									{ 
+										'element' : function() 
+										{
+											var d = document.createElement( 'div' );
+											d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
+											return d;
+										}(),
+										'child' : 
+										[ 
+											{ 
+												'element' : function(  ) 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmall HContent40 FloatLeft';
+													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+													d.onclick = function(  )
+													{
+														sortgroups( 'Name' );
+													};
+													return d;
+												}(  ) 
+											}, 
+											{ 
+												'element' : function( _this ) 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmall HContent45 FloatLeft Relative';
+													d.innerHTML = '<strong></strong>';
+													return d;
+												}( this )
+											},
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmall HContent15 FloatLeft Relative';
+													return d;
+												}()
+											}
+										]
+									},
+									{
+										'element' : function() 
+										{
+											var d = document.createElement( 'div' );
+											d.className = 'HRow Box Padding';
+											d.id = 'WorkgroupInner';
+											return d;
+										}()
+									}
+								]
+							}
+						]
+					}
+				] );
+
+				if( divs )
+				{
+					for( var i in divs )
+					{
+						if( divs[i] && o )
+						{
+							o.appendChild( divs[i] );
+						}
+					}
+				}
+				
+				ge( 'WorkgroupInner' ).innerHTML = str;
+				
+				// Toggle arrow function, put into function that can be reused some time ...
+				
+				var workArr = ge( 'WorkgroupInner' ).getElementsByTagName( 'span' );
+				
+				if( workArr )
+				{
+					for( var a = 0; a < workArr.length; a++ )
+					{
+						
+						if( workArr[ a ].classList.contains( 'fa-caret-right' ) || workArr[ a ].classList.contains( 'fa-caret-down' ) )
+						{
+							
+							( function( b ) {
+								b.onclick = function( e )
+								{
+									var pnt = this.parentNode.parentNode.parentNode;
+									
+									if( this.classList.contains( 'fa-caret-right' ) )
+									{
+										// Toggle open ...
+										
+										//console.log( '// Toggle open ...' );
+										
+										this.classList.remove( 'fa-caret-right' );
+										this.classList.add( 'fa-caret-down' );
+										
+										var divs = pnt.getElementsByTagName( 'div' );
+										
+										if( divs )
+										{
+											for( var c = 0; c < divs.length; c++ )
+											{
+												if( divs[c].classList.contains( 'Closed' ) || divs[c].classList.contains( 'Open' ) )
+												{
+													divs[c].classList.remove( 'Closed' );
+													divs[c].classList.add( 'Open' );
+													
+													break;
+												}
+											}
+										}
+									}
+									else
+									{
+										// Toggle close ...
+										
+										//console.log( '// Toggle close ...' );
+										
+										this.classList.remove( 'fa-caret-down' );
+										this.classList.add( 'fa-caret-right' );
+										
+										var divs = pnt.getElementsByTagName( 'div' );
+										
+										if( divs )
+										{
+											for( var c = 0; c < divs.length; c++ )
+											{
+												if( divs[c].classList.contains( 'Closed' ) || divs[c].classList.contains( 'Open' ) )
+												{
+													divs[c].classList.remove( 'Open' );
+													divs[c].classList.add( 'Closed' );
+													
+													break;
+												}
+											}
+										}
+									}
+									
+								}
+							} )( workArr[ a ] );
+							
+						}
+						
+					}
+				}
+				
+				var workBtns = ge( 'WorkgroupInner' ).getElementsByTagName( 'button' );
+				
+				if( workBtns )
+				{
+					for( var a = 0; a < workBtns.length; a++ )
+					{
+						// Toggle user relation to workgroup
+						( function( b ) {
+							b.onclick = function( e )
+							{
+								if( this.getAttribute( 'wid' ) )
+								{
+									edit( this.getAttribute( 'wid' ), this.parentNode.parentNode );
+								}
+							}
+						} )( workBtns[ a ] );
+					}
+				}
+				
+				// Search ...............
+				
+				var searchgroups = function ( filter, server )
+				{
+					
+					if( ge( 'WorkgroupInner' ) )
+					{
+						var list = ge( 'WorkgroupInner' ).getElementsByTagName( 'div' );
+						
+						if( list.length > 0 )
+						{
+							for( var a = 0; a < list.length; a++ )
+							{
+								if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+								
+								var strong = list[a].getElementsByTagName( 'strong' )[0];
+								var span = list[a].getElementsByTagName( 'span' )[0];
+								
+								if( strong || span )
+								{
+									if( !filter || filter == '' 
+									|| strong && strong.innerHTML.toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+									|| span && span.innerHTML.toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+									)
+									{
+										list[a].style.display = '';
+										
+										if( list[a].parentNode.parentNode && list[a].parentNode.parentNode.parentNode && list[a].parentNode.parentNode.parentNode.className.indexOf( 'HRow' ) >= 0 )
+										{
+											if( list[a].parentNode.classList.contains( 'Closed' ) )
+											{
+												list[a].parentNode.classList.remove( 'Closed' );
+												list[a].parentNode.classList.add( 'Open' );
+											}
+											
+											list[a].parentNode.style.display = '';
+											list[a].parentNode.parentNode.style.display = '';
+										}
+									}
+									else if( list[a].parentNode && list[a].parentNode.className )
+									{
+										list[a].style.display = 'none';
+									}
+								}
+							}
+
+						}
+						
+						if( ge( 'WorkgroupSearchCancelBtn' ) )
+						{
+							if( !filter && ( ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+							{
+								ge( 'WorkgroupSearchCancelBtn' ).classList.remove( 'Open' );
+								ge( 'WorkgroupSearchCancelBtn' ).classList.add( 'Closed' );
+								
+								if( list.length > 0 )
+								{
+									for( var a = 0; a < list.length; a++ )
+									{
+										if( list[a].classList.contains( 'Open' ) )
+										{
+											list[a].classList.remove( 'Open' );
+											list[a].classList.add( 'Closed' );
+										}
+									}
+								}
+							}
+							
+							else if( filter != '' && ( ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Open' ) || ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Closed' ) ) )
+							{
+								ge( 'WorkgroupSearchCancelBtn' ).classList.remove( 'Closed' );
+								ge( 'WorkgroupSearchCancelBtn' ).classList.add( 'Open' );
+							}
+						}
+					}
+					
+				};
+				
+
+				
+				// Sort .............
+				
+				var sortgroups = function ( sortby )
+				{
+					
+					//
+					
+					var _this = ge( 'WorkgroupInner' );
+					
+					if( _this )
+					{
+						var orderby = ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' );
+						
+						var list = _this.getElementsByTagName( 'div' );
+						
+						if( list.length > 0 )
+						{
+							var output = [];
+							
+							var callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
+							
+							for( var a = 0; a < list.length; a++ )
+							{
+								if( !list[a].className || ( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) ) continue;
+								
+								var span = list[a].getElementsByTagName( 'span' )[0];
+								
+								if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' && span.getAttribute( sortby.toLowerCase() ) )
+								{
+									if( !list[a].parentNode.className )
+									{
+										var obj = { 
+											sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
+											content : list[a].parentNode
+										};
+									
+										output.push( obj );
+									}
+								}
+							}
+							
+							if( output.length > 0 )
+							{
+								// Sort ASC default
+								
+								output.sort( callback );
+								
+								// Sort DESC
+								
+								if( orderby == 'DESC' ) 
+								{ 
+									output.reverse();  
+								}
+								
+								_this.innerHTML = '';
+								
+								_this.setAttribute( 'orderby', orderby );
+								
+								for( var key in output )
+								{
+									if( output[key] && output[key].content )
+									{
+										// Add row
+										_this.appendChild( output[key].content );
+									}
+								}
+							}
+						}
+					}
+					
+				};
+				
+				// .................
+				
+				Friend.responsive.pageActive = ge( 'WorkgroupList' );
+				Friend.responsive.reinit();
+				
+				if( callback ) callback( true );
+				
+				return;
+				
+				
+				
+				/*//if( e != 'ok' ) return;
+				//var userList = null;
+				//try
+				//{
+				//	userList = d;
+				//}
+				//catch( e )
+				//{
 					//return;
-				}
+				//}
 				
-				var o = ge( 'WorkgroupList' );
-				o.innerHTML = '';
-			
+				//var o = ge( 'WorkgroupList' );
+				//o.innerHTML = '';
+				
 				// Types of listed fields
 				var types = {
 					edit: '10',
-					name: '90'
+					Name: '90'
 				};
 			
 			
@@ -4258,8 +4892,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 				var list = document.createElement( 'div' );
 				list.className = 'List PaddingSmallTop PaddingSmallBottom';
 				var sw = 2;
-				for( var b = 0; b < levels.length; b++ )
-				{
+				//for( var b = 0; b < levels.length; b++ )
+				//{
 					if( userList )
 					{
 						for( var a = 0; a < userList.length; a++ )
@@ -4317,14 +4951,14 @@ Sections.accounts_workgroups = function( cmd, extra )
 							list.appendChild( r );
 						}
 					}
-				}
+				//}
 			
 				o.appendChild( list );
 			
 				Friend.responsive.pageActive = ge( 'WorkgroupList' );
 				Friend.responsive.reinit();
 				
-				if( callback ) callback( true );
+				if( callback ) callback( true );*/
 				
 			} );
 			
