@@ -9136,6 +9136,19 @@ Friend.announceToWorkgroups = function( workgroups, type, payload, callback )
     } );
 }
 
+Friend.announce = function( data, callback )
+{
+     Application.sendMessage( {
+        type: 'announcement',
+        command: 'announcement',
+        users: data.users,
+        workgroups: data.workgroups,
+        announcementType: data.type,
+        payload: data.payload,
+        callback: callback ? addCallback( callback ) : false
+    } );
+}
+
 // Responsive layout
 
 Friend.responsive = {

@@ -453,11 +453,81 @@ function doShare()
 function AnnounceCalendarChanges()
 {
     // Who are we sharing with?
-    
-        // Sift through users
-        // Sift through workgroups
+    // Get connected users
+	let m = new Module( 'system' );
+	m.onExecuted = function( e, d )
+	{
+		if( e == 'ok' )
+		{
+			let usl = null;
+			try
+			{
+				usl = JSON.parse( d );
+			}
+			catch( e ){};
+			if( usl.length )
+			{
+				return checkWorkgroups( usl );
+			}
+		}
+		checkWorkgroups( false );
+	}
+	m.execute( 'listconnectedusers' );
+	
+	function checkWorkgroups( userList )
+	{
+	    // Get connected workgroups
+	    let g = new Module( 'system' );
+	    g.onExecuted = function( e, d )
+	    {
+		    if( e == 'ok' )
+		    {
+			    let wl = null;
+			    try
+			    {
+				    wl = JSON.parse( d );
+			    }
+			    catch( e ){};
+			    if( wl.length )
+			    {
+				   return dataSift( userList, wl );
+			    }
+		    }
+		    return dataSift( userList, false );
+	    }
+	    g.execute( 'workgroups', { connected: true } );
+	}
+	
+    // Sift through users and workgroups
+	function sataSift( userList, workgroups )
+	{
+	    let outU = [];
+	    let outW = [];
+	    if( userList )
+	    {
+	        for( let a = 0; a < userList.length; a++ )
+	        {
+	            outU.push( userList[ a ].ID );
+	        }
+	    }
+	    if( workgroups )
+	    {
+	        for( let a = 0; a < workgroups.length; a++ )
+	        {
+	            outW.push( workgroups[ a ].ID );
+	        }
+	    }
         // Place announcement
-
+	    Friend.announce( {
+	        type: 'calendar-event',
+	        users: outU.length ? outU : false,
+	        workgroups: outW.length ? outW : false,
+	        payload: '{"content":"new calendar event"}'
+	    }, function( response )
+	    {
+	        console.log( 'Response from announcement: ', response );
+	    } );
+	}
 }
 
 
