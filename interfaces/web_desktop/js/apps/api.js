@@ -9082,6 +9082,56 @@ Friend.GUI.checkInputFocus = function()
 	}
 }
 
+// Announcements
+
+Friend.announceToUser = function( user, type, payload )
+{
+    Application.sendMessage( {
+        type: 'announcement',
+        method: 'announcement',
+        users: [ user ],
+        workgroups: false,
+        type: type,
+        payload: payload
+    } );
+}
+
+Friend.announceToUsers = function( users, type, payload )
+{
+    Application.sendMessage( {
+        type: 'announcement',
+        method: 'announcement',
+        users: users,
+        workgroups: false,
+        type: type,
+        payload: payload
+    } );
+}
+
+Friend.announceToWorkgroup = function( workgroup, type, payload )
+{
+    Application.sendMessage( {
+        type: 'announcement',
+        method: 'announcement',
+        users: false,
+        workgroups: [ workgroup ],
+        type: type,
+        payload: payload
+    } );
+}
+
+Friend.announceToWorkgroups = function( workgroups, type, payload )
+{
+    Application.sendMessage( {
+        type: 'announcement',
+        method: 'announcement',
+        users: false,
+        workgroups: workgroups,
+        type: type,
+        payload: payload
+    } );
+}
+
 // Responsive layout
 
 Friend.responsive = {
