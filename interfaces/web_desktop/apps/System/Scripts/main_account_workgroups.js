@@ -176,7 +176,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 						{
 							if( workgroups[a] && workgroups[a].ID )
 							{
-								out.push( { ID: workgroups[a].ID, Name: workgroups[a].name, ParentID: workgroups[a].parentid } );
+								out.push( { ID: workgroups[a].ID, UUID: workgroups[a].uuid, Name: workgroups[a].name, ParentID: workgroups[a].parentid, Status: workgroups[a].status } );
 							}
 						}
 						
@@ -727,6 +727,46 @@ Sections.accounts_workgroups = function( cmd, extra )
 				args      : ( args                                                                     )
 			} );
 			
+		}
+	}
+	
+	function updateStatus( id, status )
+	{
+		if( id > 0 )
+		{
+			// Specific for Pawel's code ... He just wants to forward json ...
+			
+			var args = JSON.stringify( {
+				'type'    : 'write', 
+				'context' : 'application', 
+				'authid'  : Application.authId, 
+				'data'    : { 
+					'permission' : [ 
+						'PERM_WORKGROUP_CREATE_GLOBAL', 
+						'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
+						'PERM_WORKGROUP_UPDATE_GLOBAL', 
+						'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+						'PERM_WORKGROUP_GLOBAL', 
+						'PERM_WORKGROUP_WORKGROUP' 
+					]
+				}, 
+				'object'   : 'workgroup', 
+				'objectid' : id
+			} );
+			
+			var f = new Library( 'system.library' );
+			f.onExecuted = function( e, d )
+			{
+				
+				console.log( 'updateStatus( '+id+', '+status+' )', { e:e, d:d } );
+				
+			}
+			f.execute( 'group/updatestatus', {
+				id     : ( id                 ), 
+				status : ( status             )/*, 
+				authid : ( Application.authId ),
+				args   : ( args               )*/
+			} );
 		}
 	}
 	
@@ -1890,24 +1930,44 @@ Sections.accounts_workgroups = function( cmd, extra )
 					'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
 				] ) )
 				{
-					bg4.onclick = function( e )
+					if( workgroup && workgroup.status != 2 )
 					{
-				
-						// Delete workgroup ...
-				
-						if( info.ID )
+						bg4.onclick = function( e )
 						{
-							if( ShowLog ) console.log( '// delete workgroup' );
-					
-							removeBtn( this, { id: info.ID, button_text: 'i18n_delete_workgroup', }, function ( args )
+			
+							// Delete workgroup ...
+						
+							if( info.ID )
 							{
-						
-								remove( args.id );
-						
-							} );
-					
-						}
+								if( ShowLog ) console.log( '// delete workgroup' );
 				
+								removeBtn( this, { id: info.ID, button_text: 'i18n_delete_workgroup', }, function ( args )
+								{
+					
+									remove( args.id );
+					
+								} );
+							}
+						
+						};
+					}
+					else
+					{
+						
+						bg4.className = bg4.className.split( 'fa-trash' ).join( 'fa-lock' );
+						
+						bg4.onclick = function(  )
+						{
+							
+							// Unlock workgroup ...
+							
+							if( info.ID )
+							{
+								updateStatus( info.ID, 0 );
+							}
+							
+						};
+						
 					}
 				}
 				else
@@ -4204,7 +4264,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					
 					var wgroups = false;
 					
-					if( ShowLog || 1==1 ) console.log( 'userlevel ', { adminlevel: adminlevel, userlevel: userlevel } );
+					if( ShowLog ) console.log( 'userlevel ', { adminlevel: adminlevel, userlevel: userlevel } );
 					
 					if( !adminlevel && userlevel )
 					{
