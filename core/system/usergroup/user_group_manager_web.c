@@ -1344,20 +1344,20 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 		
 		if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
 		{
-			el = HttpGetPOSTParameter( request, "id" );
+			el = GetHEReq( request, "id" );
 			if( el != NULL )
 			{
 				char *end;
 				groupID = strtol( (char *)el->hme_Data, &end, 0 );
 			}
 			
-			el = HttpGetPOSTParameter( request, "status" );
+			el = GetHEReq( request, "status" );
 			if( el != NULL )
 			{
 				status = atoi( (char *)el->hme_Data );
 			}
 			
-			if( groupID > 0 )
+			if( groupID > 0 && status >= 0 )
 			{
 				// get information from DB if group already exist
 				
@@ -1405,7 +1405,7 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			{
 				char buffer[ 512 ];
 				char buffer1[ 256 ];
-				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "id" );
+				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "id, status" );
 				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{\"response\": \"%s\",\"code\":\"%d\"}", buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
