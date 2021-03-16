@@ -45,9 +45,9 @@ if( $groups = $SqlDatabase->fetchObjects( '
 if( $rows = $SqlDatabase->fetchObjects( '
     SELECT 
         st.ID AS AnnouncementStatus, fa.* FROM 
-        `FAnnouncement` fa RIGHT JOIN `FAnnouncementStatus` st ON ( st.AnnouncementID = fa.ID )
+        `FAnnouncement` fa LEFT JOIN `FAnnouncementStatus` st ON ( st.AnnouncementID = fa.ID )
     WHERE
-        AnnouncementStatus IS NULL AND
+        st.ID IS NULL AND
         ( fa.UserID = \'' . $User->ID . '\' OR fa.GroupID IN ( ' . $groupList . ' ) )
     ORDER BY fa.ID DESC
 ' ) )
