@@ -328,9 +328,14 @@ Application.receiveMessage = function( msg )
 			var m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{
-				self.sendMessage( {
-					command: 'refresh_calendar'
-				} );
+				if( e == 'ok' )
+				{
+				    self.sendMessage( {
+					    command: 'refresh_calendar'
+				    } );
+				    
+				    AnnounceCalendarChanges();
+				}
 			}
 			m.execute(
 				ed.id > 0 ? 'savecalendarevent' : 'addcalendarevent',
@@ -442,4 +447,17 @@ function doShare()
 		Application.sharing = null;
 	}
 }
+
+// Server announcements --------------------------------------------------------
+
+function AnnounceCalendarChanges()
+{
+    // Who are we sharing with?
+    
+        // Sift through users
+        // Sift through workgroups
+        // Place announcement
+
+}
+
 
