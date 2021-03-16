@@ -18,6 +18,58 @@
     websocket call once an announcement has been designated.
 */
 
+global $SqlDatabase, $User;
+
+function saveAnnouncement( $o, $type, $id )
+{
+    global $User;
+    
+    $i = new dbIO( 'FAnnouncement' );
+    $i->OwnerUserID = $User->ID;
+    $i->CreatedTime = date( 'Y-m-d H:i:s' );
+    $i->Payload = $o->args->payload;
+
+    if( $type == 'user' )
+    {
+        $us = new dbIO( 'FUser' );
+        if( !$us->load( $id ) )
+        {
+            return 'fail<!--separate-->{"message":-1,"response":"Failed to load user."}';
+        }
+        $i->UserID = $us->ID;
+    }
+    
+    // Add to workgroup
+    if( $ryow == 'workgroup' )
+    {
+        $wg = new dbIO( 'FUserGroup' );
+        if( !$wg->load( $id ) )
+        {
+           return 'fail<!--separate-->{"message":-1,"response":"Failed to load workgroup."}';
+        }
+        $i->GroupID = $wg->ID;
+    }
+    
+    // Filter by known announcement types
+    switch( $o->args->type )
+    {
+        case 'calendar-event':
+        case 'notification':
+        case 'text-message':
+            break;
+        default:
+            return 'fail';
+    }
+    
+    $i->Type = $o->args->type;
+    
+    if( $i->Save() )
+    {
+        return 'ok';
+    }
+    return 'fail';
+}
+
 // We got a method!
 if( isset( $args->args->method ) && isset( $args->args->announcementid ) )
 {
@@ -76,56 +128,6 @@ if( isset( $args->args->payload ) && isset( $args->args->type ) )
             else $oks++;
         }
         die( 'ok<!--separate-->{"message":1,"response":"Successfully stored announcements.","failures":"' . $fails . '","successful":"' . $oks . '"}' );
-    }
-
-    function saveAnnouncement( $o, $type, $id )
-    {
-        global $User;
-        
-        $i = new dbIO( 'FAnnouncement' );
-        $i->OwnerUserID = $User->ID;
-        $i->CreatedTime = date( 'Y-m-d H:i:s' );
-        $i->Payload = $o->args->payload;
-
-        if( $type == 'user' )
-        {
-            $us = new dbIO( 'FUser' );
-            if( !$us->load( $id ) )
-            {
-                return 'fail<!--separate-->{"message":-1,"response":"Failed to load user."}';
-            }
-            $i->UserID = $us->ID;
-        }
-        
-        // Add to workgroup
-        if( $ryow == 'workgroup' )
-        {
-            $wg = new dbIO( 'FUserGroup' );
-            if( !$wg->load( $id ) )
-            {
-               return 'fail<!--separate-->{"message":-1,"response":"Failed to load workgroup."}';
-            }
-            $i->GroupID = $wg->ID;
-        }
-        
-        // Filter by known announcement types
-        switch( $o->args->type )
-        {
-            case 'calendar-event':
-            case 'notification':
-            case 'text-message':
-                break;
-            default:
-                return 'fail';
-        }
-        
-        $i->Type = $o->args->type;
-        
-        if( $i->Save() )
-        {
-            return 'ok';
-        }
-        return 'fail';
     }
 }
 

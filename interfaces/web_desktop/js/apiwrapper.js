@@ -2911,7 +2911,7 @@ function apiWrapper( event, force )
 			    if( msg.callback )
 			    {
 			        cbak = msg.callback;
-			        msg.callback = false;
+			        msg.callback = null;
 			    }
 				switch( msg.command )
 				{
@@ -2938,7 +2938,8 @@ function apiWrapper( event, force )
 								    {
 								        if( z != 'payload' && z != 'users' && z != 'workgroups' && 
 								            z != 'theme' && z != 'userLevel' && z != 'username' && 
-								            z != 'workgroups' && z != 'users' )
+								            z != 'workgroups' && z != 'users' && z != 'type' &&
+								            z != 'callback' )
 								        {
 								            ms[ z ] = msg[ z ];
 								        }
@@ -2956,12 +2957,13 @@ function apiWrapper( event, force )
 								    {
 								        if( z != 'payload' && z != 'users' && z != 'workgroups' && 
 								            z != 'theme' && z != 'userLevel' && z != 'username' && 
-								            z != 'workgroups' && z != 'users' )
+								            z != 'workgroups' && z != 'users' && z != 'type' &&
+								            z != 'callback' )
 								        {
 								            ms[ z ] = msg[ z ];
 								        }
 								    }
-								    msg.callback = null;
+								    console.log( 'Failed because: ', e, d );
 								    app.contentWindow.postMessage( ms, '*' );
 				                }
 				            }

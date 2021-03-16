@@ -20,6 +20,8 @@
 
 // 1. Remove announcements older than one day?
 
+global $SqlDatabase, $User;
+
 $groupList = '0';
 
 // 2. Get own workgroups
