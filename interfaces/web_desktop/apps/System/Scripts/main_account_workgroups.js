@@ -157,7 +157,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 						wgroups = null;
 					}
 					
-					if( ShowLog || 1==1 ) console.log( 'workgroups ', { e:e , d:(wgroups?wgroups:d), args: args } );
+					if( ShowLog ) console.log( 'workgroups ', { e:e , d:(wgroups?wgroups:d), args: args } );
 					
 					if( wgroups.groups )
 					{
@@ -4420,7 +4420,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 						}	
 					}
 				
-					console.log( groups );
+					if( ShowLog ) console.log( groups );
 				}
 				
 				var str = '';
