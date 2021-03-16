@@ -25,7 +25,7 @@ global $SqlDatabase, $User;
 $groupList = '0';
 
 // 2. Get own workgroups
-if( $groups = $SqlDatabase->fetchObjectRows( '
+if( $groups = $SqlDatabase->fetchObjects( '
     SELECT ug.* FROM FUserGroup ug, FUserToGroup ugg
     WHERE
         ugg.UserID = \'' . $User->ID . '\' AND
@@ -42,7 +42,7 @@ if( $groups = $SqlDatabase->fetchObjectRows( '
 
 
 // 3. Get new relevant announcements with no status
-if( $rows = $SqlDatabase->fetchObjectRows( '
+if( $rows = $SqlDatabase->fetchObjects( '
     SELECT 
         st.ID AS AnnouncementStatus, fa.* FROM 
         `FAnnouncement` fa RIGHT JOIN `FAnnouncementStatus` st ON ( st.AnnouncementID = fa.ID )

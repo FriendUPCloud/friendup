@@ -518,11 +518,13 @@ function AnnounceCalendarChanges()
 	        }
 	    }
         // Place announcement
+        // Payload is important with signifying which application it is. The
+        // event will be sent there
 	    Friend.announce( {
 	        type: 'calendar-event',
 	        users: outU.length ? outU : false,
 	        workgroups: outW.length ? outW : false,
-	        payload: '{"content":"new calendar event"}'
+	        payload: '{"event":"new-calendar-event","application":"FriendCalendar"}'
 	    }, function( response )
 	    {
 	        console.log( 'Response from announcement: ', response );

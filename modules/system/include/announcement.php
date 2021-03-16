@@ -22,7 +22,7 @@ global $SqlDatabase, $User;
 
 function saveAnnouncement( $o, $type, $id )
 {
-    global $User;
+    global $User, $SqlDatabase;
     
     $i = new dbIO( 'FAnnouncement' );
     $i->OwnerUserID = $User->ID;
@@ -40,7 +40,7 @@ function saveAnnouncement( $o, $type, $id )
     }
     
     // Add to workgroup
-    if( $ryow == 'workgroup' )
+    if( $type == 'workgroup' )
     {
         $wg = new dbIO( 'FUserGroup' );
         if( !$wg->load( $id ) )
@@ -62,6 +62,7 @@ function saveAnnouncement( $o, $type, $id )
     }
     
     $i->Type = $o->args->type;
+    $i->CreateTime = date( 'Y-m-d H:i:s' );
     
     if( $i->Save() )
     {
@@ -104,14 +105,14 @@ if( isset( $args->args->payload ) && isset( $args->args->type ) )
     {
         foreach( $args->args->users as $user )
         {
-            $retArray[] = saveAnnouncement( $args, 'user', $user );
+            $retArray[] = saveAnnouncement( $args, 'user', (int)$user );
         }
     }
     if( $args->args->workgroups )
     {
         foreach( $args->args->workgroups as $workgroup )
         {
-            $retArray[] = saveAnnouncement( $args, 'workgroup', $workgroup );
+            $retArray[] = saveAnnouncement( $args, 'workgroup', (int)$workgroup );
         }
     }
     if( !count( $retArray ) )
