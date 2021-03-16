@@ -499,7 +499,7 @@ function AnnounceCalendarChanges()
 	}
 	
     // Sift through users and workgroups
-	function sataSift( userList, workgroups )
+	function dataSift( userList, workgroups )
 	{
 	    let outU = [];
 	    let outW = [];

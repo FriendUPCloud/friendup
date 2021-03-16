@@ -2907,6 +2907,12 @@ function apiWrapper( event, force )
 			    var app = false;
 				if( msg.applicationId )
 					app = findApplication( msg.applicationId );
+				let cbak = null;
+			    if( msg.callback )
+			    {
+			        cbak = msg.callback;
+			        msg.callback = false;
+			    }
 				switch( msg.command )
 				{
 				    case 'announcement':
@@ -2919,50 +2925,44 @@ function apiWrapper( event, force )
 				        let m = new Module( 'system' );
 				        m.onExecuted = function( e, d )
 				        {
-				            if( e == 'ok' )
+				            if( cbak )
 				            {
-				                if( msg.callback )
+				                if( e == 'ok' )
 				                {
-									let ms = {
-									    type: 'callback',
-									    resp: 'ok'
-									};
-									
-									for( let z in msg ) 
-									{
-									    if( z != 'payload' && z != 'users' && z != 'workgroups' )
-									    {
-									        ms[ z ] = msg[ z ];
-									    }
-									}
-									
-									nmsg.type = 'callback';
-									nmsg.resp = 'ok';
-									
-									app.contentWindow.postMessage( nmsg, '*' );
+								    let ms = {
+								        type: 'callback',
+								        resp: 'ok',
+								        callback: cbak
+								    };
+								    for( let z in msg ) 
+								    {
+								        if( z != 'payload' && z != 'users' && z != 'workgroups' && 
+								            z != 'theme' && z != 'userLevel' && z != 'username' && 
+								            z != 'workgroups' && z != 'users' )
+								        {
+								            ms[ z ] = msg[ z ];
+								        }
+								    }
+								    app.contentWindow.postMessage( ms, '*' );
 				                }
-				            }
-				            else
-				            {
-				                if( msg.callback )
+				                else
 				                {
-									let ms = {
-									    type: 'callback',
-									    resp: 'ok'
-									};
-									
-									for( let z in msg ) 
-									{
-									    if( z != 'payload' && z != 'users' && z != 'workgroups' )
-									    {
-									        ms[ z ] = msg[ z ];
-									    }
-									}
-									
-									nmsg.type = 'callback';
-									nmsg.resp = 'fail';
-									
-									app.contentWindow.postMessage( nmsg, '*' );
+				                   let ms = {
+								        type: 'callback',
+								        resp: 'fail',
+								        callback: cbak
+								    };
+								    for( let z in msg ) 
+								    {
+								        if( z != 'payload' && z != 'users' && z != 'workgroups' && 
+								            z != 'theme' && z != 'userLevel' && z != 'username' && 
+								            z != 'workgroups' && z != 'users' )
+								        {
+								            ms[ z ] = msg[ z ];
+								        }
+								    }
+								    msg.callback = null;
+								    app.contentWindow.postMessage( ms, '*' );
 				                }
 				            }
 				        }
