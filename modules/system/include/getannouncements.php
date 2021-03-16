@@ -42,11 +42,12 @@ if( $groups = $SqlDatabase->fetchObjects( '
 
 
 // 3. Get new relevant announcements with no status
+$did = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->deviceid );
 if( $rows = $SqlDatabase->fetchObjects( '
     SELECT 
         fa.* 
     FROM 
-        `FAnnouncement` fa LEFT JOIN `FAnnouncementStatus` st ON ( st.AnnouncementID = fa.ID AND st.UserID = \'' . $User->ID . '\' )
+        `FAnnouncement` fa LEFT JOIN `FAnnouncementStatus` st ON ( st.AnnouncementID = fa.ID AND st.UserID = \'' . $User->ID . '\' AND st.DeviceID = \'' . $did . '\' )
     WHERE
         st.ID IS NULL AND
         fa.OwnerUserID != \'' . $User->ID . '\' AND
@@ -60,6 +61,7 @@ if( $rows = $SqlDatabase->fetchObjects( '
         $status = new dbIO( 'FAnnouncementStatus' );
         $status->AnnouncementID = $row->ID;
         $status->UserID = $User->ID;
+        $status->DeviceID = $args->args->deviceid;
         $status->Save();
     }
     // Return rows

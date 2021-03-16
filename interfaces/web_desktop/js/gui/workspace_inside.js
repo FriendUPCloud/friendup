@@ -1392,7 +1392,7 @@ var WorkspaceInside = {
 		        console.log( 'No new announcements.' );
 		    }
 		}
-		ann.execute( 'getannouncements' );
+		ann.execute( 'getannouncements', { deviceid: Workspace.deviceid } );
     },
 	zapMobileAppMenu: function()
 	{
