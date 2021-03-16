@@ -48,6 +48,7 @@ if( $rows = $SqlDatabase->fetchObjects( '
         `FAnnouncement` fa LEFT JOIN `FAnnouncementStatus` st ON ( st.AnnouncementID = fa.ID )
     WHERE
         st.ID IS NULL AND
+        fa.OwnerUserID != \'' . $User->ID . '\' AND
         ( fa.UserID = \'' . $User->ID . '\' OR fa.GroupID IN ( ' . $groupList . ' ) )
     ORDER BY fa.ID DESC
 ' ) )
