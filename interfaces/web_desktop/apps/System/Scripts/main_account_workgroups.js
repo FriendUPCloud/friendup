@@ -447,7 +447,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 		
 		if( _this )
 		{
-			// TODO: remove all other Selected in the list first ...
+			/*// TODO: remove all other Selected in the list first ...
 			
 			var pnt = _this.parentNode.parentNode.getElementsByTagName( 'div' );
 			
@@ -460,8 +460,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 						pnt[i].classList.remove( 'Selected' );
 					}
 				}
-			}
+			}*/
 			
+			cancel();
+						
 			_this.classList.add( 'Selected' );
 		}
 		else if( id && ge( 'WorkgroupID_' + id ) )
@@ -730,7 +732,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 		}
 	}
 	
-	function updateStatus( id, status )
+	function updateStatus( id, status, callback )
 	{
 		if( id > 0 )
 		{
@@ -760,12 +762,19 @@ Sections.accounts_workgroups = function( cmd, extra )
 				
 				console.log( 'updateStatus( '+id+', '+status+' )', { e:e, d:d } );
 				
+				if( e == 'ok' )
+				{
+					if( callback ) return callback( d );
+				}
+				
+				if( callback ) return callback( false );
+				
 			}
 			f.execute( 'group/updatestatus', {
 				id     : ( id                 ), 
-				status : ( status             )/*, 
+				status : ( status             ), 
 				authid : ( Application.authId ),
-				args   : ( args               )*/
+				args   : ( args               )
 			} );
 		}
 	}
@@ -1925,12 +1934,12 @@ Sections.accounts_workgroups = function( cmd, extra )
 			var bg4  = ge( 'GroupDeleteBtn' );
 			if( bg4 )
 			{
-				if( Application.checkAppPermission( [ 
+				if( workgroup && workgroup.status != 2 && Application.checkAppPermission( [ 
 					'PERM_WORKGROUP_DELETE_GLOBAL', 'PERM_WORKGROUP_DELETE_IN_WORKGROUP', 
 					'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
 				] ) )
 				{
-					if( workgroup && workgroup.status != 2 )
+					if( 1==1/* || workgroup && workgroup.status != 2*/ )
 					{
 						bg4.onclick = function( e )
 						{
@@ -1951,7 +1960,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 						
 						};
 					}
-					else
+					/*else
 					{
 						
 						bg4.className = bg4.className.split( 'fa-trash' ).join( 'fa-lock' );
@@ -1963,12 +1972,39 @@ Sections.accounts_workgroups = function( cmd, extra )
 							
 							if( info.ID )
 							{
-								updateStatus( info.ID, 0 );
+								updateStatus( info.ID, 0, function( res )
+								{
+									
+									if( res )
+									{
+										bg4.className = bg4.className.split( 'fa-lock' ).join( 'fa-trash' );
+										
+										bg4.onclick = function(  )
+										{
+											
+											// Delete workgroup ...
+											
+											if( info.ID )
+											{
+												if( ShowLog ) console.log( '// delete workgroup' );
+				
+												removeBtn( this, { id: info.ID, button_text: 'i18n_delete_workgroup', }, function ( args )
+												{
+					
+													remove( args.id );
+					
+												} );
+											}
+											
+										};
+									}
+									
+								} );
 							}
 							
 						};
 						
-					}
+					}*/
 				}
 				else
 				{
@@ -1976,7 +2012,67 @@ Sections.accounts_workgroups = function( cmd, extra )
 				}
 			}
 			
-			
+			var bg5  = ge( 'GroupLockBtn' );
+			if( bg5 )
+			{
+				if( Application.checkAppPermission( [ 
+					'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP',
+					'PERM_WORKGROUP_UPDATE_GLOBAL', 'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
+					'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
+				] ) )
+				{
+					if( workgroup && workgroup.status == 2 )
+					{
+						bg5.className = bg5.className.split( 'fa-unlock-alt' ).join( 'fa-lock' );
+					}
+					
+					bg5.onclick = function(  )
+					{
+						let self = this;
+						
+						if( self.className.indexOf( 'fa-lock' ) >= 0 )
+						{
+							// Unlock workgroup ...
+							
+							if( info.ID )
+							{
+								updateStatus( info.ID, 0, function( res )
+								{
+									
+									if( res )
+									{
+										self.className = self.className.split( 'fa-lock' ).join( 'fa-unlock-alt' );
+										bg4.style.display = null;
+									}
+									
+								} );
+							}
+						}
+						else
+						{
+							// Lock workgroup ...
+							
+							if( info.ID )
+							{
+								updateStatus( info.ID, 2, function( res )
+								{
+									
+									if( res )
+									{
+										self.className = self.className.split( 'fa-unlock-alt' ).join( 'fa-lock' );
+										bg4.style.display = 'none';
+									}
+									
+								} );
+							}
+						}
+					}
+				}
+				else
+				{
+					bg5.style.display = 'none';
+				}
+			}
 			
 			
 			
@@ -4855,7 +4951,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				
 				return;
 				
-				
+				// Old code below, if nothing important is missed remove it ...
 				
 				/*//if( e != 'ok' ) return;
 				//var userList = null;
