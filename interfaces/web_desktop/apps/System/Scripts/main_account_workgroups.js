@@ -1843,6 +1843,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			if( !info.ID )
 			{
 				ge( 'GroupDeleteBtn' ).style.display = 'none';
+				ge( 'GroupLockBtn'   ).style.display = 'none';
 				
 				ge( 'AdminUsersContainer'   ).style.display = 'none';
 				ge( 'AdminStorageContainer' ).style.display = 'none';
