@@ -44,8 +44,9 @@ if( $groups = $SqlDatabase->fetchObjects( '
 // 3. Get new relevant announcements with no status
 if( $rows = $SqlDatabase->fetchObjects( '
     SELECT 
-        st.ID AS AnnouncementStatus, fa.* FROM 
-        `FAnnouncement` fa LEFT JOIN `FAnnouncementStatus` st ON ( st.AnnouncementID = fa.ID )
+        fa.* 
+    FROM 
+        `FAnnouncement` fa LEFT JOIN `FAnnouncementStatus` st ON ( st.AnnouncementID = fa.ID AND st.UserID = \'' . $User->ID . '\' )
     WHERE
         st.ID IS NULL AND
         fa.OwnerUserID != \'' . $User->ID . '\' AND
@@ -53,6 +54,15 @@ if( $rows = $SqlDatabase->fetchObjects( '
     ORDER BY fa.ID DESC
 ' ) )
 {
+    // Update the rows
+    foreach( $rows as $row )
+    {
+        $status = new dbIO( 'FAnnouncementStatus' );
+        $status->AnnouncementID = $row->ID;
+        $status->UserID = $User->ID;
+        $status->Save();
+    }
+    // Return rows
     die( 'ok<!--separate-->' . json_encode( $rows ) );
 }
 
