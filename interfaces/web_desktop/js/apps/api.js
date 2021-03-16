@@ -9084,51 +9084,55 @@ Friend.GUI.checkInputFocus = function()
 
 // Announcements
 
-Friend.announceToUser = function( user, type, payload )
+Friend.announceToUser = function( user, type, payload, callback )
 {
     Application.sendMessage( {
         type: 'announcement',
-        method: 'announcement',
+        command: 'announcement',
         users: [ user ],
         workgroups: false,
-        type: type,
-        payload: payload
+        announcementType: type,
+        payload: payload,
+        callback: callback ? addCallback( callback ) : false
     } );
 }
 
-Friend.announceToUsers = function( users, type, payload )
+Friend.announceToUsers = function( users, type, payload, callback )
 {
     Application.sendMessage( {
         type: 'announcement',
-        method: 'announcement',
+        command: 'announcement',
         users: users,
         workgroups: false,
-        type: type,
-        payload: payload
+        announcementType: type,
+        payload: payload,
+        callback: callback ? addCallback( callback ) : false
     } );
 }
 
-Friend.announceToWorkgroup = function( workgroup, type, payload )
+Friend.announceToWorkgroup = function( workgroup, type, payload, callback )
 {
     Application.sendMessage( {
         type: 'announcement',
-        method: 'announcement',
+        command: 'announcement',
         users: false,
         workgroups: [ workgroup ],
-        type: type,
-        payload: payload
+        announcementType: type,
+        payload: payload,
+        callback: callback ? addCallback( callback ) : false
     } );
 }
 
-Friend.announceToWorkgroups = function( workgroups, type, payload )
+Friend.announceToWorkgroups = function( workgroups, type, payload, callback )
 {
     Application.sendMessage( {
         type: 'announcement',
-        method: 'announcement',
+        command: 'announcement',
         users: false,
         workgroups: workgroups,
-        type: type,
-        payload: payload
+        announcementType: type,
+        payload: payload,
+        callback: callback ? addCallback( callback ) : false
     } );
 }
 

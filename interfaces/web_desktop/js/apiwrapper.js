@@ -2902,6 +2902,75 @@ function apiWrapper( event, force )
 						app.contentWindow.postMessage( msg, '*' );
 				}
 				break;
+			// Announcement calls
+			case 'announcement':
+			    var app = false;
+				if( msg.applicationId )
+					app = findApplication( msg.applicationId );
+				switch( msg.command )
+				{
+				    case 'announcement':
+				        let o = {
+				            type: msg.announcementType,
+				            users: msg.users,
+				            workgroups: msg.workgroups,
+				            payload: msg.payload
+				        };
+				        let m = new Module( 'system' );
+				        m.onExecuted = function( e, d )
+				        {
+				            if( e == 'ok' )
+				            {
+				                if( msg.callback )
+				                {
+									let ms = {
+									    type: 'callback',
+									    resp: 'ok'
+									};
+									
+									for( let z in msg ) 
+									{
+									    if( z != 'payload' && z != 'users' && z != 'workgroups' )
+									    {
+									        ms[ z ] = msg[ z ];
+									    }
+									}
+									
+									nmsg.type = 'callback';
+									nmsg.resp = 'ok';
+									
+									app.contentWindow.postMessage( nmsg, '*' );
+				                }
+				            }
+				            else
+				            {
+				                if( msg.callback )
+				                {
+									let ms = {
+									    type: 'callback',
+									    resp: 'ok'
+									};
+									
+									for( let z in msg ) 
+									{
+									    if( z != 'payload' && z != 'users' && z != 'workgroups' )
+									    {
+									        ms[ z ] = msg[ z ];
+									    }
+									}
+									
+									nmsg.type = 'callback';
+									nmsg.resp = 'fail';
+									
+									app.contentWindow.postMessage( nmsg, '*' );
+				                }
+				            }
+				        }
+				        m.execute( 'announcement', o );
+				        break;
+				}
+			    break;
+			
 			// System calls!
 			// TODO: Permissions, not all should be able to do this!
 			case 'system':
