@@ -4575,7 +4575,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 										'element' : function() 
 										{
 											var d = document.createElement( 'div' );
-											d.className = 'HRow Box Padding';
+											d.className = 'HRow'/* Box Padding'*/;
 											d.id = 'WorkgroupInner';
 											return d;
 										}()
