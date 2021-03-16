@@ -213,6 +213,7 @@ scrollengine = {
 		target = ( target ? target : this.list );
 		if( line != null && this.allNodes[ line ] )
 		{
+			// TODO: Look at this ...
 			d.innerHTML = this.allNodes[ line ].innerHTML;
 		}
 		target.appendChild( d );
@@ -422,14 +423,14 @@ scrollengine = {
 		
 	},
 	
-	distribute: function( data, start, total )
+	distribute: function( data, start, total, force )
 	{
 		
 		//console.log( { data: data, start: start, total: total } );
 		
 		if( total != null && this.total != total )
 		{
-			//console.log( 'making new total ... ', { a: total, b: this.total } );
+			console.log( 'making new total ... ', { a: total, b: this.total } );
 			
 			// Data
 			let myArray = [];
@@ -454,10 +455,15 @@ scrollengine = {
 			this.total = total;
 			
 			this.myArray = myArray;
+			
+			// TODO: Look at this ...
+			
+			//this.dataPrevStart = start;
 		}
 		
-		if( !this.elements.pageMiddle )
+		if( !this.elements.pageMiddle || force )
 		{
+			// TODO: look at why it updates the same twice if refresh is run ...
 			this.refresh();
 		}
 		
@@ -743,8 +749,11 @@ scrollengine = {
 		    // TODO: Find out why 1 is missing when scrolling between page above, middle, below ...
 		    
 		    if( ( this.dataPrevStart != null && this.dataStart != this.dataPrevStart ) || ( this.dataPrevLimit != null && this.dataLimit != this.dataPrevLimit ) )
+		    //if( ( this.dataPrevStart != null && this.dataStart != this.dataPrevStart ) && ( this.dataPrevLimit != null && this.dataLimit != this.dataPrevLimit ) )
 		    {
-		    	if( this.debug ) console.log( 'FETCH!!!! ' );
+		    	if( this.debug/* || 1==1*/ ) console.log( 'FETCH!!!! ' );
+		    	
+		    	
 		    	
 		    	if( this.callback )
 		    	{
@@ -763,16 +772,18 @@ scrollengine = {
 		    if( this.debug ) console.log( { ddd:(ddd?ddd:false), bbb:(bbb?bbb:false) } );
 		}
 		// TODO: What happened to dd and bb here???
-		if( this.debug ) console.log( this.counted+' >= '+this.length( this.myArray ), { ddd:(ddd?ddd:false), bbb:(bbb?bb:false) } );
+		if( this.debug/* || 1==1*/ ) console.log( this.counted+' >= '+this.length( this.myArray ), { ddd:(ddd?ddd:false), bbb:(bbb?bb:false) } );
 		// If we counted the whole list, then
 		if( this.counted >= this.length( this.myArray ) && ddd && bbb )
 		{
+			//console.log( '[1]' );
 	    	let hh = Math.max( ddd.offsetTop + ddd.offsetHeight, bbb.offsetTop + bbb.offsetHeight );
 	    	this.elements.wholeHeight.style.height = hh + 'px';
 		}
 		// Else, use scrollHeight
 		else
 		{
+			//console.log( '[2]' );
 		    this.elements.wholeHeight.style.height = scrollHeight + 'px';
 		}
 		
@@ -814,6 +825,8 @@ scrollengine = {
 		this.counted = 0;
 		
 		this.ex = '';
+		
+		this.selectedLine = null;
 		
 	},
 	

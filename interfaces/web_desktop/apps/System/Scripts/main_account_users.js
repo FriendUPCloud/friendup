@@ -5044,6 +5044,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						if( res == 'ok' )
 						{
 							
+							
+							
 							initUserlist( userList );
 							
 							if( UsersSettings( 'debug' ) )
@@ -5238,6 +5240,13 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								} );
 								
 							} );
+							
+							
+							
+							if( accounts_users_callback )
+							{
+								accounts_users_callback( true );
+							}
 							
 						}
 					
@@ -5957,13 +5966,20 @@ function NewUser( _this )
 									Sections.accounts_users( 'init', false, function( ok )
 									{
 										
-										console.log( "Sections.accounts_users( 'init', false, function( ok )" );
+										//console.log( "Sections.accounts_users( 'init', false, function( ok )" );
 										
 										if( ok )
 										{
 											// Go to edit mode for the new user ...
 											
-											Sections.accounts_users( 'edit', uid );
+											if( ge( 'UserListID_' + uid ) && ge( 'UserListID_' + uid ).parentNode.onclick )
+											{
+												ge( 'UserListID_' + uid ).parentNode.onclick();
+											}
+											else
+											{
+												Sections.accounts_users( 'edit', uid );
+											}
 										}
 										
 									} );
@@ -6855,6 +6871,8 @@ function refreshUserList( userInfo )
 		ge( 'ListUsersInner' ).appendChild( div );
 	}
 	
+	//console.log( 'refreshUserList( userInfo )', ge( 'UserListID_'+userInfo.ID ) );
+	
 	if( ge( 'UserListID_'+userInfo.ID ) )
 	{
 		
@@ -7114,7 +7132,7 @@ function searchServer( filter, force )
 	//	if( filter.length < UsersSettings( 'minlength' ).length || filter.length < UsersSettings( 'searchquery' ).length || filter == UsersSettings( 'searchquery' ) ) return;
 	//}
 	
-	//console.log( 'searchServer( '+filter+', '+force+' )' );
+	console.log( 'searchServer( '+filter+', '+force+' )' );
 	
 	if( filter != null )
 	{
@@ -7149,7 +7167,9 @@ function searchServer( filter, force )
 					ge( 'AdminUsersCount' ).innerHTML = ( userList['Count'] ? '(' + userList['Count'] + ')' : '(0)' );
 				}
 				
-				scrollengine.distribute( ( userList && !userList.response ? userList : [] ), 0, ( userList['Count'] ? userList['Count'] : 0 ) );
+				//console.log( 'scrollengine.distribute', ( userList && !userList.response ? userList : [] ), 0, ( userList['Count'] ? userList['Count'] : 0 ), true );
+				
+				scrollengine.distribute( ( userList && !userList.response ? userList : [] ), 0, ( userList['Count'] ? userList['Count'] : 0 ), true );
 				
 				//scrollengine.refresh( true );
 			}
@@ -9338,7 +9358,7 @@ function hideStatus( status, show, pnt )
 		
 		// TODO: Don't reset search query with this ...
 		
-		searchServer( false );
+		searchServer( null, true );
 	
 		return;
 	}
