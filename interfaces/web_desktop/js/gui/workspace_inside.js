@@ -1579,6 +1579,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					Workspace.applyThemeConfig();
 					Workspace.loadSystemInfo();
+					Workspace.reloadDocks();
 				
 					// Fallback
 					if( !isMobile )
@@ -3168,9 +3169,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					
 						// Flush theme info
 						themeInfo.loaded = false;
-					
-						// Reload the docks
-						Workspace.reloadDocks();
 					
 						// Refresh them
 						Workspace.initWorkspaces();
