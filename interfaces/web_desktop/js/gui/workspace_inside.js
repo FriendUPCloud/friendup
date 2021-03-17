@@ -1207,9 +1207,8 @@ var WorkspaceInside = {
 		    }
 		}
 		
-		if( !Workspace.cachedSessionList || cand - this.refreshEWCTime > 30 )
+		if( !Workspace.cachedSessionList || cand - this.refreshEWCTime > 30 || !Workspace.sessionsRefreshed )
 		{
-			console.log( 'Refreshing sessino list.' );
 		    this.refreshEWCTime = cand;
 		    var mo = new Library( 'system.library' );
 		    mo.onExecuted = function( rc, sessionList )
@@ -1232,7 +1231,6 @@ var WorkspaceInside = {
 				    if( sessionList )
 				    {
 				    	Workspace.cachedSessionList = sessionList;
-				    	console.log( 'Setting new session list: ', sessionList );
 					    try
 					    {
 						    var exists = [];
@@ -1274,8 +1272,8 @@ var WorkspaceInside = {
 							    if( found ) svn += ' ' + (num+1) + '.';
 							    sessions.push( '<p class="Relative FullWidth Ellipsis IconSmall fa-close MousePointer" onmousedown="Workspace.terminateSession(\'' +
 								    sessionList[b].sessionid + '\', \'' + sessionList[b].deviceidentity + '\');">&nbsp;' + svn + '</p>' );
-								console.log( 'A session was added ' + b );
 						    }
+						    Workspace.sessionsRefreshed = true;
 					    }
 					    catch( e )
 					    {
