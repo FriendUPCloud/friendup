@@ -2309,6 +2309,16 @@ function View( flags )
 	{
 		msg.parentViewId = Application.viewId;
 	}
+	
+	// Pop out!
+	this.popout = function()
+	{
+		Application.sendMessage( {
+			type:    'view',
+			method:  'popout',
+			viewId: viewId
+		} );
+	}
 
 	// Bring a window to front
 	this.toFront = function()

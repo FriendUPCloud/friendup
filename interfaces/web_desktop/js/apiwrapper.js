@@ -1806,6 +1806,12 @@ function apiWrapper( event, force )
 
 							CheckScreenTitle();
 							break;
+						case 'popout':
+							if( win )
+							{
+								PopoutWindow( win._window.parentNode );
+							}
+							break;
 						case 'toFront':
 							if( win )
 							{
