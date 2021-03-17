@@ -2568,9 +2568,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	refreshDocks: function()
 	{
+		let elements = Workspace.cachedDockElements;
+		if( !elements || !elements.length ) return;
+		
 		Workspace.mainDock.clear();
 		
-		let elements = Workspace.cachedDockElements;
 		
 		function getOnClickFn( appName )
 		{
