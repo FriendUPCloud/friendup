@@ -1578,6 +1578,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						Workspace.themeData = false;
 					}
 					Workspace.applyThemeConfig();
+					Workspace.loadSystemInfo();
 				
 					// Fallback
 					if( !isMobile )
