@@ -4873,7 +4873,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				
 				// Sort .............
 				
-				var sortgroups = function ( sortby )
+				var sortgroups = function ( sortby, orderby )
 				{
 					
 					//
@@ -4882,7 +4882,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					
 					if( _this )
 					{
-						var orderby = ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' );
+						orderby = ( orderby ? orderby : ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' ) );
 						
 						var list = _this.getElementsByTagName( 'div' );
 						
@@ -4942,6 +4942,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 					}
 					
 				};
+				
+				sortgroups( 'Name', 'ASC' );
 				
 				// .................
 				

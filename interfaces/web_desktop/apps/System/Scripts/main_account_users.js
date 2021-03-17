@@ -811,6 +811,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										{
 											if( ge( 'usUsername' ).value )
 											{
+												this.innerHTML = '<i class="fa fa-spinner" aria-hidden="true"></i>';
+												
 												//_saveUser( userInfo.ID );
 										
 												//editMode( true );
@@ -1508,7 +1510,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											}
 										}
 							
-
+										sortgroups( 'Name', 'ASC' );
 	
 										var wgc = ge( 'WorkgroupEditBack' );
 										wgc.wge = this;
@@ -1756,6 +1758,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											//console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
 											Sections.user_disk_cancel( userInfo.ID );
 											
+											sortgroups( 'Name', 'ASC' );
+											
 										}
 										
 										
@@ -1845,7 +1849,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								
 								// Sort .............
 								
-								var sortgroups = function ( sortby )
+								var sortgroups = function ( sortby, orderby )
 								{
 									
 									//
@@ -1854,7 +1858,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									
 									if( _this )
 									{
-										var orderby = ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' );
+										orderby = ( orderby ? orderby : ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' ) );
 										
 										var list = _this.getElementsByTagName( 'div' );
 										
@@ -1914,6 +1918,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									}
 									
 								};
+								
+								sortgroups( 'Name', 'ASC' );
 								
 								// .................
 								
@@ -6118,6 +6124,7 @@ function NewUser( _this )
 						
 						if( ge( 'usUsername' ).value )
 						{
+							this.innerHTML = '<i class="fa fa-spinner" aria-hidden="true"></i>';
 							
 							_saveUser( false, function( uid )
 							{
@@ -6889,7 +6896,7 @@ function NewUser( _this )
 				
 				// Sort .............
 				
-				var sortgroups = function ( sortby )
+				var sortgroups = function ( sortby, orderby )
 				{
 					
 					//
@@ -6898,7 +6905,7 @@ function NewUser( _this )
 					
 					if( _this )
 					{
-						var orderby = ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' );
+						orderby = ( orderby ? orderby : ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' ) );
 						
 						var list = _this.getElementsByTagName( 'div' );
 						
@@ -6958,6 +6965,8 @@ function NewUser( _this )
 					}
 					
 				};
+				
+				sortgroups( 'Name', 'ASC' );
 				
 				// .................
 				
