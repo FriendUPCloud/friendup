@@ -1207,32 +1207,20 @@ var WorkspaceInside = {
 		    }
 		}
 		
-		if( !Workspace.cachedSessionList || cand - this.refreshEWCTime > 30 || !Workspace.sessionsRefreshed )
+		if( !Workspace.cachedSessionList || cand - this.refreshEWCTime > 30 )
 		{
 		    this.refreshEWCTime = cand;
 		    var mo = new Library( 'system.library' );
 		    mo.onExecuted = function( rc, sessionList )
 		    {
-		    	console.log( 'What is it?', rc, sessionList );
-			    var m = Workspace.widget ? Workspace.widget.target : ge( 'DoorsScreen' );
-			    if( m == ge( 'DoorsScreen' ) )
-				    m = ge( 'DoorsScreen' ).screenTitle.getElementsByClassName( 'Extra' )[0];
-			    if( !m )
-			    {
-				    //console.log( 'Can not find widget!' );
-				    return;
-			    }
-		    
 			    var sessions = [];
 			    if( rc == 'ok' )
 			    {
 				    if( typeof( sessionList ) == 'string' )
 					    sessionList = JSON.parse( sessionList );
 
-					console.log( 'Listing sessions: ', sessionList );
 				    if( sessionList )
 				    {
-				    	Workspace.cachedSessionList = sessionList;
 					    try
 					    {
 						    var exists = [];
@@ -1275,7 +1263,7 @@ var WorkspaceInside = {
 							    sessions.push( '<p class="Relative FullWidth Ellipsis IconSmall fa-close MousePointer" onmousedown="Workspace.terminateSession(\'' +
 								    sessionList[b].sessionid + '\', \'' + sessionList[b].deviceidentity + '\');">&nbsp;' + svn + '</p>' );
 						    }
-						    Workspace.sessionsRefreshed = true;
+						    Workspace.cachedSessionList = sessions;
 					    }
 					    catch( e )
 					    {
