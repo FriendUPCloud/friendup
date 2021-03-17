@@ -2569,7 +2569,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	refreshDocks: function()
 	{
 		let elements = Workspace.cachedDockElements;
-		if( !elements || !elements.length ) return;
 		
 		Workspace.mainDock.clear();
 		
@@ -2620,6 +2619,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			Workspace.mainDock.addLauncher( ob );
 		}
 		
+		if( !elements || !elements.length ) return;
 		for( let a = 0; a < elements.length; a++ )
 		{
 			let ele = elements[a];
