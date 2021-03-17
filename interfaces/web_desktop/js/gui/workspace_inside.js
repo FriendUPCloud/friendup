@@ -1404,6 +1404,7 @@ var WorkspaceInside = {
 			var str = JSON.stringify(e);
 			Workspace.systemInfo = e;
 		}
+		f.forceHTTP = true;
 		f.execute( 'admin', {command:'info'} );
 	},
 	// If we have stored a theme config for the current theme, use its setup
