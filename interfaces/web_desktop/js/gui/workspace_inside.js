@@ -1213,6 +1213,7 @@ var WorkspaceInside = {
 		    var mo = new Library( 'system.library' );
 		    mo.onExecuted = function( rc, sessionList )
 		    {
+		    	console.log( 'What is it?', rc, sessionList );
 			    var m = Workspace.widget ? Workspace.widget.target : ge( 'DoorsScreen' );
 			    if( m == ge( 'DoorsScreen' ) )
 				    m = ge( 'DoorsScreen' ).screenTitle.getElementsByClassName( 'Extra' )[0];
