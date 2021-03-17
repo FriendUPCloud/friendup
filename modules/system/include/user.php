@@ -17,6 +17,8 @@ require_once( 'php/include/permissions.php' );
 
 
 
+// For some reason $args->args are now urlencoded so they have to be run through urldecode();
+
 $data = []; $extr = [];
 
 if( isset( $args->sessionid ) )
@@ -29,34 +31,34 @@ if( isset( $args->servertoken ) )
 }
 if( isset( $args->args->id ) )
 {
-	$data['id'] = trim( $args->args->id );
+	$data['id'] = urldecode( trim( $args->args->id ) );
 	
 	// TODO: Add check if it's correct format if not return back ...
 }
 if( isset( $args->args->fullname ) )
 {
-	$data['fullname'] = trim( $args->args->fullname );
+	$data['fullname'] = urldecode( trim( $args->args->fullname ) );
 }
 if( isset( $args->args->username ) )
 {
-	$data['username'] = trim( $args->args->username );
+	$data['username'] = urldecode( trim( $args->args->username ) );
 }
 if( isset( $args->args->password ) )
 {
-	$data['password'] = trim( $args->args->password );
+	$data['password'] = urldecode( trim( $args->args->password ) );
 	
 	// TODO: Add check if it's correct format if not return back ...
 }
 if( isset( $args->args->email ) )
 {
-	$data['email'] = trim( $args->args->email );
+	$data['email'] = urldecode( trim( $args->args->email ) );
 	
 	// TODO: Add check if it's correct format if not return back ...
 }
 
 if( isset( $args->args->level ) )
 {
-	$data['level'] = trim( $args->args->level );
+	$data['level'] = urldecode( trim( $args->args->level ) );
 	
 	// TODO: Add check if it's correct format if not return back ...
 	// TODO: Make it so only global / system admin can set level admin
@@ -64,25 +66,25 @@ if( isset( $args->args->level ) )
 
 if( isset( $args->args->mobile ) )
 {
-	$extr['mobile'] = trim( $args->args->mobile );
+	$extr['mobile'] = urldecode( trim( $args->args->mobile ) );
 	
 	// TODO: Add check if it's correct format if not return back ...
 }
 if( isset( $args->args->language ) )
 {
-	$extr['language'] = trim( $args->args->language );
+	$extr['language'] = urldecode( trim( $args->args->language ) );
 	
 	// TODO: Add check if it's correct format if not return back ...
 }
 if( isset( $args->args->avatar ) )
 {
-	$extr['avatar'] = trim( $args->args->avatar );
+	$extr['avatar'] = urldecode( trim( $args->args->avatar ) );
 	
 	// TODO: Add check if it's correct format if not return back ...
 }
 if( isset( $args->args->workgroups ) )
 {
-	$extr['workgroups'] = trim( $args->args->workgroups );
+	$extr['workgroups'] = urldecode( trim( $args->args->workgroups ) );
 	
 	// TODO: Add check if it's correct format if not return back ...
 }
@@ -90,8 +92,8 @@ if( isset( $args->args->setup ) )
 {
 	// TODO: Look into why we need to add this to Friend Core ..
 	
-	$data['setup'] = trim( $args->args->setup );
-	$extr['setup'] = trim( $args->args->setup );
+	$data['setup'] = urldecode( trim( $args->args->setup ) );
+	$extr['setup'] = urldecode( trim( $args->args->setup ) );
 	
 	// TODO: Add check if it's correct format if not return back ...
 }
@@ -1189,7 +1191,7 @@ function _saveAvatar( $userid, $base64 )
 		$o->Type = 'system';
 		$o->Key = 'avatar';
 		$o->Load();
-		$o->Data = urldecode( trim( $base64 ) );
+		$o->Data = /*urldecode(*/ trim( $base64 )/* )*/;
 		$o->Save();
 		
 		// Save image blob as filename hash on user

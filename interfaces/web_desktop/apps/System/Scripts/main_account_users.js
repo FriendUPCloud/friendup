@@ -26,6 +26,8 @@ var UsersSettings = function ( setting, set )
 	var minlength   = ( 1							 );
 	var intervals   = ( 50                           );
 	var limit       = ( startlimit + ', ' + maxlimit );
+	var busy        = ( false                        );
+	var abort       = ( false                        );
 	
 	this.vars = ( this.vars ? this.vars : {
 		searchquery : searchquery,
@@ -48,6 +50,8 @@ var UsersSettings = function ( setting, set )
 		listall     : false,
 		reset       : true,
 		debug       : false,
+		busy        : busy,
+		abort       : abort
 	} );
 	
 	function Update ( setting, set )
@@ -167,9 +171,17 @@ var UsersSettings = function ( setting, set )
 					}
 					this.vars.intervals    = ( intervals                                              );
 					this.vars.uids         = ( []                                                     );
+					this.vars.busy         = ( busy                                                   );
+					this.vars.abort        = ( abort                                                  );
 					break;
-				case 'debug'             :
+				case 'debug'               :
 					this.vars.debug        = ( set                                                    );
+					break;
+				case 'busy'                :
+					this.vars.busy         = ( set                                                    );
+					break;
+				case 'abort'               :
+					this.vars.abort        = ( set                                                    );
 					break;
 			}
 		}
@@ -202,6 +214,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 			// Show the form
 			function initUsersDetails( info, show, first )
 			{
+				// TODO: implement abort function ...
+				
 				// Some shortcuts
 				var userInfo          = ( info.userInfo ? info.userInfo : {} );
 				var settings          = ( info.settings ? info.settings : {} );
@@ -797,9 +811,34 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										{
 											if( ge( 'usUsername' ).value )
 											{
-												_saveUser( userInfo.ID );
+												//_saveUser( userInfo.ID );
 										
-												editMode( true );
+												//editMode( true );
+												
+												_saveUser( userInfo.ID, function( uid )
+												{
+													
+													// Refresh user list ... TODO: Make a refresh function.
+													
+													searchServer( null, true, function(  )
+													{
+														
+														// Go to edit mode for the new user ...
+														
+														if( ge( 'UserListID_' + userInfo.ID ) && ge( 'UserListID_' + userInfo.ID ).parentNode.onclick )
+														{
+															ge( 'UserListID_' + userInfo.ID ).parentNode.skip = true;
+															ge( 'UserListID_' + userInfo.ID ).parentNode.onclick(  );
+														}
+														else
+														{
+															Sections.accounts_users( 'edit', userInfo.ID );
+														}
+														
+													} );
+													
+												} );
+												
 											}
 											else
 											{
@@ -4360,12 +4399,15 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																{
 																	// Resizes the image
 																	var canvas = ge( 'AdminWallpaper' );
-																	var context = canvas.getContext( '2d' );
-																	context.drawImage( image, 0, 0, 256, 256 );
-																
-																	if( data )
+																	if( canvas )
 																	{
-																		Notify( { title: 'success', text: data.message } );
+																		var context = canvas.getContext( '2d' );
+																		context.drawImage( image, 0, 0, 256, 256 );
+																
+																		if( data )
+																		{
+																			Notify( { title: 'success', text: data.message } );
+																		}
 																	}
 																
 																}
@@ -4418,8 +4460,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										avSrc.src = ( workspaceSettings.wallpaperdoors ? img : '/webclient/gfx/theme/default_login_screen.jpg' );
 										avSrc.onload = function()
 										{
-											var ctx = ge( 'AdminWallpaper' ).getContext( '2d' );
-											ctx.drawImage( avSrc, 0, 0, 256, 256 );
+											if( ge( 'AdminWallpaper' ) )
+											{
+												var ctx = ge( 'AdminWallpaper' ).getContext( '2d' );
+												ctx.drawImage( avSrc, 0, 0, 256, 256 );
+											}
 										}
 									}
 									
@@ -4460,7 +4505,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							{
 								// Check Permissions
 								
-								if( ShowLog || 1==1 ) console.log( '// Check Permissions ', show );
+								if( ShowLog ) console.log( '// Check Permissions ', show );
 								
 								if( show )
 								{
@@ -4575,6 +4620,9 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						func.dock();
 						func.theme();
 						func.permissions( show );
+						
+						// Everything is loaded ...
+						UsersSettings( 'busy', false );
 						
 					}
 					
@@ -4696,6 +4744,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 				// 0 | Load userinfo
 				function(  )
 				{
+					// Set busy ...
+					UsersSettings( 'busy', true );
+					
+					// TODO: perhaps set a loading spinning wheel ...
+					
 					if( ge( 'UserDetails' ) )
 					{
 						ge( 'UserDetails' ).innerHTML = '';
@@ -4724,7 +4777,17 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						
 						loadingInfo.userInfo = userInfo;
 						
-						if( ShowLog ) console.log( '// 0 | Load userinfo' );
+						if( ShowLog ) console.log( '// 0 | Load userinfo', userInfo );
+						
+						// If abort request is set stop loading this user ...
+						if( UsersSettings( 'abort' ) )
+						{
+							if( ge( 'UserDetails' ) )
+							{
+								ge( 'UserDetails' ).innerHTML = '';
+							}
+							UsersSettings( 'abort', false ); return;
+						}
 						
 						initUsersDetails( loadingInfo, [ '*' ], true );
 						
@@ -4737,6 +4800,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 				// 3 | Get user's workgroups
 				function(  )
 				{
+					
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
@@ -4756,6 +4820,16 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						
 						if( ShowLog ) console.log( '// 3 | Get user\'s workgroups' );
 						
+						// If abort request is set stop loading this user ...
+						if( UsersSettings( 'abort' ) )
+						{
+							if( ge( 'UserDetails' ) )
+							{
+								ge( 'UserDetails' ).innerHTML = '';
+							}
+							UsersSettings( 'abort', false ); return;
+						}
+						
 						initUsersDetails( loadingInfo, [ 'workgroup' ] );
 					}
 					u.execute( 'workgroups', { userid: extra, authid: Application.authId } );
@@ -4767,6 +4841,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 				// 4 | Get user's roles
 				function(  )
 				{
+					
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
@@ -4789,6 +4864,16 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						
 						if( ShowLog ) console.log( '// 4 | Get user\'s roles' );
 						
+						// If abort request is set stop loading this user ...
+						if( UsersSettings( 'abort' ) )
+						{
+							if( ge( 'UserDetails' ) )
+							{
+								ge( 'UserDetails' ).innerHTML = '';
+							}
+							UsersSettings( 'abort', false ); return;
+						}
+						
 						initUsersDetails( loadingInfo, [ 'role' ] );
 					}
 					u.execute( 'userroleget', { userid: extra, authid: Application.authId } );
@@ -4800,7 +4885,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 				// 5 | Get storage
 				function(  )
 				{
-						
+					
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
@@ -4819,9 +4904,17 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						
 						if( ShowLog ) console.log( '// 5 | Get storage' );
 						
+						// If abort request is set stop loading this user ...
+						if( UsersSettings( 'abort' ) )
+						{
+							if( ge( 'UserDetails' ) )
+							{
+								ge( 'UserDetails' ).innerHTML = '';
+							}
+							UsersSettings( 'abort', false ); return;
+						}
+						
 						initUsersDetails( loadingInfo, [ 'storage' ] );
-						
-						
 						
 					}
 					u.execute( 'mountlist', { userid: extra, authid: Application.authId } );
@@ -4833,6 +4926,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 				// 6 | Get user applications
 				function(  )
 				{
+					
 					applications( function ( res, dat )
 					{
 						
@@ -4849,6 +4943,16 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						
 						loadingInfo.software = dat;
 						
+						// If abort request is set stop loading this user ...
+						if( UsersSettings( 'abort' ) )
+						{
+							if( ge( 'UserDetails' ) )
+							{
+								ge( 'UserDetails' ).innerHTML = '';
+							}
+							UsersSettings( 'abort', false ); return;
+						}
+						
 					}, extra );
 					
 					// Go to next in line ...
@@ -4858,6 +4962,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 				// 6 | Get all applications
 				function(  )
 				{
+					
 					applications( function ( res, dat )
 					{
 						
@@ -4876,6 +4981,16 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						
 						if( ShowLog ) console.log( '// 6 | Get all applications' );
 						
+						// If abort request is set stop loading this user ...
+						if( UsersSettings( 'abort' ) )
+						{
+							if( ge( 'UserDetails' ) )
+							{
+								ge( 'UserDetails' ).innerHTML = '';
+							}
+							UsersSettings( 'abort', false ); return;
+						}
+						
 						initUsersDetails( loadingInfo, [ 'application', 'looknfeel' ] );
 						
 					} );
@@ -4887,6 +5002,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 				// 7 | Get user dock
 				function(  )
 				{
+					
 					getDockItems( function ( res, dat )
 					{
 						
@@ -4905,6 +5021,16 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						
 						if( ShowLog ) console.log( '// 7 | Get user dock' );
 						
+						// If abort request is set stop loading this user ...
+						if( UsersSettings( 'abort' ) )
+						{
+							if( ge( 'UserDetails' ) )
+							{
+								ge( 'UserDetails' ).innerHTML = '';
+							}
+							UsersSettings( 'abort', false ); return;
+						}
+						
 						initUsersDetails( loadingInfo, [ 'dock' ] );
 						
 					}, extra );
@@ -4916,6 +5042,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 				// 8 | Load user settings
 				function(  )
 				{
+					
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
@@ -4935,6 +5062,16 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						
 						if( ShowLog ) console.log( '// 8 | Load user settings' );
 						
+						// If abort request is set stop loading this user ...
+						if( UsersSettings( 'abort' ) )
+						{
+							if( ge( 'UserDetails' ) )
+							{
+								ge( 'UserDetails' ).innerHTML = '';
+							}
+							UsersSettings( 'abort', false ); return;
+						}
+						
 						initUsersDetails( loadingInfo, [ '*' ] );
 						
 						// Go to next in line ...
@@ -4949,6 +5086,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 				{
 					if( loadingInfo.settings && loadingInfo.settings.Theme )
 					{
+						
 						var u = new Module( 'system' );
 						u.onExecuted = function( e, d )
 						{
@@ -4969,6 +5107,16 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							
 							if( ShowLog ) console.log( '// 9 | Get more user setting' );
 							
+							// If abort request is set stop loading this user ...
+							if( UsersSettings( 'abort' ) )
+							{
+								if( ge( 'UserDetails' ) )
+								{
+									ge( 'UserDetails' ).innerHTML = '';
+								}
+								UsersSettings( 'abort', false ); return;
+							}
+							
 							initUsersDetails( loadingInfo, [ '*' ] );
 						}
 						u.execute( 'getsetting', { settings: [ 
@@ -4988,6 +5136,16 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 				function(  )
 				{
 					if( ShowLog ) console.log( '// 10 | init' );
+					
+					// If abort request is set stop loading this user ...
+					if( UsersSettings( 'abort' ) )
+					{
+						if( ge( 'UserDetails' ) )
+						{
+							ge( 'UserDetails' ).innerHTML = '';
+						}
+						UsersSettings( 'abort', false ); return;
+					}
 					
 					initUsersDetails( loadingInfo, [ 'workgroup', 'role', 'storage', 'dock', 'application', 'looknfeel' ] );
 				}
@@ -5160,8 +5318,16 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												allNodes[ s ].title = 'Line ' + s;
 											
 												allNodes[ s ].myArrayID = obj.ID;
-												allNodes[ s ].onclick = function(  )
+												allNodes[ s ].onclick = ( function(  )
 												{
+													
+													// If former operation is still loading, abort it.
+													if( UsersSettings( 'busy' ) )
+													{
+														console.log( '[1] aborting ... ', UsersSettings( 'busy' ) );
+														UsersSettings( 'abort', true );
+													}
+													
 													if( this.line != null && allNodes )
 													{
 														for( let i in allNodes )
@@ -5177,8 +5343,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													}
 													
 													Sections.accounts_users( 'edit', this.myArrayID );
-												}
-											
+												} );
+												
 												uids.push( obj.ID );
 											}
 										}
@@ -5961,29 +6127,34 @@ function NewUser( _this )
 									
 									// Refresh whole users list ...
 									
-									// TODO: look at a better way to handle this with the scrollengine for new users and refresh of the list ...
-									
-									Sections.accounts_users( 'init', false, function( ok )
+									searchServer( null, true, function(  )
 									{
 										
-										//console.log( "Sections.accounts_users( 'init', false, function( ok )" );
-										
-										if( ok )
+										/*// TODO: look at a better way to handle this with the scrollengine for new users and refresh of the list ...
+									
+										Sections.accounts_users( 'init', false, function( ok )
 										{
-											// Go to edit mode for the new user ...
+										
+											//console.log( "Sections.accounts_users( 'init', false, function( ok )" );
+										
+											if( ok )
+											{*/
+												// Go to edit mode for the new user ...
 											
-											if( ge( 'UserListID_' + uid ) && ge( 'UserListID_' + uid ).parentNode.onclick )
-											{
-												ge( 'UserListID_' + uid ).parentNode.onclick();
-											}
-											else
-											{
-												Sections.accounts_users( 'edit', uid );
-											}
-										}
+												if( ge( 'UserListID_' + uid ) && ge( 'UserListID_' + uid ).parentNode.onclick )
+												{
+													ge( 'UserListID_' + uid ).parentNode.skip = true;
+													ge( 'UserListID_' + uid ).parentNode.onclick(  );
+												}
+												else
+												{
+													Sections.accounts_users( 'edit', uid );
+												}
+											/*}
+										
+										} );*/
 										
 									} );
-						
 								}
 				
 							} );
@@ -6828,7 +6999,7 @@ function refreshUserList( userInfo )
 {
 	
 	
-	if( !ge( 'UserListID_'+userInfo.ID ) && ge( 'ListUsersInner' ) )
+	if( !ge( 'UserListID_'+userInfo.ID ) && ge( 'ListUsersInner' ) && !UsersSettings( 'experiment' ) )
 	{
 		var str = '';
 		
@@ -6926,8 +7097,11 @@ function refreshUserList( userInfo )
 					{
 						src = '/system.library/module/?module=system&command=getavatar&userid=' + userInfo.ID + ( userInfo.Image ? '&image=' + userInfo.Image : '' ) + '&width=16&height=16&authid=' + Application.authId;
 						
-						let spa = div[i].getElementsByTagName( 'span' )[0].getElementsByTagName( 'div' )[0];
-        				spa.style.backgroundImage = 'url(' + src + ')';
+						if( div[i].getElementsByTagName( 'span' )[0] )
+						{
+							let spa = div[i].getElementsByTagName( 'span' )[0].getElementsByTagName( 'div' )[0];
+        					spa.style.backgroundImage = 'url(' + src + ')';
+						}
 						
 						//var bg = 'background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;background-image: url(\'' + src + '\')';
 									
@@ -7124,7 +7298,7 @@ function getLastLoginlist( callback, users )
 	}
 }
 
-function searchServer( filter, force )
+function searchServer( filter, force, search_server_callback )
 {
 	
 	//if( !force )
@@ -7172,6 +7346,12 @@ function searchServer( filter, force )
 				scrollengine.distribute( ( userList && !userList.response ? userList : [] ), 0, ( userList['Count'] ? userList['Count'] : 0 ), true );
 				
 				//scrollengine.refresh( true );
+				
+				if( search_server_callback )
+				{
+					search_server_callback( true );
+				}
+				
 			}
 			
 		}, key );
@@ -7913,7 +8093,7 @@ Sections.user_volumeinfo_refresh = function( mountlist, userid )
 						
 						// Show errors if there is any ...
 						
-						if( args.Errors ) console.log( args.Errors.text, args.Errors.content );
+						if( ShowLog && args.Errors ) console.log( args.Errors.text, args.Errors.content );
 						
 					}
 					
@@ -8205,13 +8385,18 @@ function updateUserStatus( userid, status )
 		Sections.user_status_update( userid, status, function()
 		{
 			
-			// Refresh whole users list ...
+			searchServer( null, true, function(  )
+			{
+				
+				// Refresh whole users list ...
+				
+				//Sections.accounts_users(  );
+				
+				// Go to edit mode for the new user ...
+				
+				//Sections.accounts_users( 'edit', userid );
 			
-			Sections.accounts_users(  );
-			
-			// Go to edit mode for the new user ...
-			
-			Sections.accounts_users( 'edit', userid );
+			} );
 			
 		} );
 		
@@ -9423,7 +9608,8 @@ function cancelUser( userid )
 			
 				if( div )
 				{
-					div.click();
+					div.skip = true;
+					div.click(  );
 				}
 			}
 		}

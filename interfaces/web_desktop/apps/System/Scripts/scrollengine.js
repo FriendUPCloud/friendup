@@ -206,7 +206,8 @@ scrollengine = {
 			d.line = line;
 			if( line == this.selectedLine )
 			{
-				console.log( '['+line+'] ' + this.selectedLine );
+				// TODO: Check this based on what's in MyArray not lines ...
+				//console.log( '['+line+'] ' + this.selectedLine );
 				d.className = d.className.split( ' Selected' ).join( '' ) + ' Selected';
 			}
 		}
