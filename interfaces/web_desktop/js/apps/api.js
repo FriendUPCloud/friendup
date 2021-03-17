@@ -9092,6 +9092,73 @@ Friend.GUI.checkInputFocus = function()
 	}
 }
 
+// Announcements
+
+Friend.announceToUser = function( user, type, payload, callback )
+{
+    Application.sendMessage( {
+        type: 'announcement',
+        command: 'announcement',
+        users: [ user ],
+        workgroups: false,
+        announcementType: type,
+        payload: payload,
+        callback: callback ? addCallback( callback ) : false
+    } );
+}
+
+Friend.announceToUsers = function( users, type, payload, callback )
+{
+    Application.sendMessage( {
+        type: 'announcement',
+        command: 'announcement',
+        users: users,
+        workgroups: false,
+        announcementType: type,
+        payload: payload,
+        callback: callback ? addCallback( callback ) : false
+    } );
+}
+
+Friend.announceToWorkgroup = function( workgroup, type, payload, callback )
+{
+    Application.sendMessage( {
+        type: 'announcement',
+        command: 'announcement',
+        users: false,
+        workgroups: [ workgroup ],
+        announcementType: type,
+        payload: payload,
+        callback: callback ? addCallback( callback ) : false
+    } );
+}
+
+Friend.announceToWorkgroups = function( workgroups, type, payload, callback )
+{
+    Application.sendMessage( {
+        type: 'announcement',
+        command: 'announcement',
+        users: false,
+        workgroups: workgroups,
+        announcementType: type,
+        payload: payload,
+        callback: callback ? addCallback( callback ) : false
+    } );
+}
+
+Friend.announce = function( data, callback )
+{
+     Application.sendMessage( {
+        type: 'announcement',
+        command: 'announcement',
+        users: data.users,
+        workgroups: data.workgroups,
+        announcementType: data.type,
+        payload: data.payload,
+        callback: callback ? addCallback( callback ) : false
+    } );
+}
+
 // Responsive layout
 
 Friend.responsive = {
