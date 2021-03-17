@@ -1228,6 +1228,7 @@ var WorkspaceInside = {
 				    if( typeof( sessionList ) == 'string' )
 					    sessionList = JSON.parse( sessionList );
 
+					console.log( 'Listing sessions: ', sessionList );
 				    if( sessionList )
 				    {
 				    	Workspace.cachedSessionList = sessionList;
