@@ -1278,7 +1278,7 @@ var WorkspaceInside = {
 		}
 		else
 		{
-			doItCal( [] );
+			doItCal( Workspace.cachedSessionList ? Workspace.cachedSessionList : [] );
 		}
 		
 		// For mobiles, we have a Friend icon at the top of the screen
