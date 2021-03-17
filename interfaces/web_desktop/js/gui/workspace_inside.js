@@ -2517,11 +2517,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					try
 					{
 						Workspace.mainDock.readConfig( JSON.parse( conf ) );
-						Workspace.mainDock.clear();
 					}
 					catch( e )
 					{
-						Workspace.mainDock.clear();
 					}
 					
 					let elements = JSON.parse( dat );
@@ -2570,6 +2568,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	refreshDocks: function()
 	{
+		Workspace.mainDock.clear();
+		
 		let elements = Workspace.cachedDockElements;
 		
 		function getOnClickFn( appName )
@@ -3105,6 +3105,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								
 									// Refresh widgets
 									Workspace.refreshExtraWidgetContents();
+								
+									// Refresh docks
+									Workspace.refreshDocks();
 								
 									// Redraw now
 									if( !isMobile )
