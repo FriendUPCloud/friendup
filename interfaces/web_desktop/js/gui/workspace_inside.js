@@ -2707,6 +2707,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			title: i18n( 'i18n_files' ),
 		};
 		Workspace.mainDock.addLauncher( fmenu );
+		
+		// Make sure the tray position is there
+		PollTrayPosition();
 	},
 	connectFilesystem: function( execute )
 	{
@@ -3107,9 +3110,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								
 									// Refresh widgets
 									Workspace.refreshExtraWidgetContents();
-								
-									// Refresh docks
-									Workspace.refreshDocks();
 								
 									// Redraw now
 									if( !isMobile )
