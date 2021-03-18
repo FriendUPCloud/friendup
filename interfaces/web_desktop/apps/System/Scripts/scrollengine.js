@@ -314,7 +314,7 @@ scrollengine = {
 		let lastline = null;
 		let startline = null;
 		
-		for( let a = 0, b = this.rowPosition, c = 0; a < this.rowCount + this.rowPosition; a++, b++, c += this.config.rowHeight )
+		for( let a = 0, b = this.rowPosition, c = 0; a < this.rowCount; a++, b++, c += this.config.rowHeight )
 		{
 			if( b >= this.length( this.myArray ) ) break;
 			let row = this.createDiv( false, d, b, 'RowElement Line ' + b, 'Line ' + b );
@@ -357,7 +357,7 @@ scrollengine = {
 		let lastline = null;
 		let startline = null;
 		
-		for( let a = 0, b = this.rowPosition, c = 0; a < this.rowCount + this.rowPosition; a++, b++, c += this.config.rowHeight )
+		for( let a = 0, b = this.rowPosition, c = 0; a < this.rowCount; a++, b++, c += this.config.rowHeight )
 		{
 			if( b >= this.length( this.myArray ) ) break;
 			let row = this.createDiv( false, bb, b, 'RowElement Line ' + b, 'Line ' + b );
