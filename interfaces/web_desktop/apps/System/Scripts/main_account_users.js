@@ -7220,7 +7220,7 @@ function getUserlist( callback, obj, limit )
 		return;
 	}
 	
-	//console.log( 'getUserlist( callback, obj, '+limit+' )' );
+	console.log( 'getUserlist( callback, obj, '+limit+' )' );
 	
 	// Get the user list
 	let m = new Module( 'system' );
@@ -7228,6 +7228,8 @@ function getUserlist( callback, obj, limit )
 	{
 		
 		let userList = null;
+		
+		console.log( 'Responded getUserList' );
 		
 		try
 		{
