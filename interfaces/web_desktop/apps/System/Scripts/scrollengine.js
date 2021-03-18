@@ -289,8 +289,6 @@ scrollengine = {
         this.counted = counted;
         this.dataLimit += counted;
         
-        console.log( '1: Will load ' + this.dataLimit + ' rows' );
-        
         let t = this.dTop = ( Math.floor( this.scrollTop / this.config.rowHeight ) * this.config.rowHeight );
         let h = counted * this.config.rowHeight;
         aa.style.top = ( t - h ) + 'px';
@@ -361,8 +359,15 @@ scrollengine = {
 		let lines = [];
 		let lastline = null;
 		let startline = null;
+		let rowCount = this.rowCount;
 		
-		for( let a = 0, b = this.rowPosition, c = 0; a < this.rowCount; a++, b++, c += this.config.rowHeight )
+		// No pageaboves? Load twice the amount
+		if( ge( 'pageAbove' ).offsetHeight <= 0 )
+		{
+			rowCount = rowCount << 1;
+		}
+		
+		for( let a = 0, b = this.rowPosition, c = 0; a < rowCount; a++, b++, c += this.config.rowHeight )
 		{
 			if( b >= this.length( this.myArray ) ) break;
 			let row = this.createDiv( false, bb, b, 'RowElement Line ' + b, 'Line ' + b );
@@ -378,8 +383,6 @@ scrollengine = {
 		// Add to limit
 		this.dataLimit += counted;
 		this.counted += counted;
-		
-		console.log( '3: Will load ' + this.dataLimit + ' rows' );
 
 		bb.style.top = d.offsetTop + d.offsetHeight + 'px';
 		bb.style.height = counted * this.config.rowHeight + 'px';
