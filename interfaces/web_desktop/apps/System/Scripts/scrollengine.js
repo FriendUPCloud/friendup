@@ -603,6 +603,8 @@ scrollengine = {
 			redraw = true;
 		}
 		
+		if( 
+		
 		// [4] If scrollarea is resized or just argument force is passed as true then redraw
 		if( force === true )
 		{
@@ -642,14 +644,7 @@ scrollengine = {
 		    //console.log( 'New data start is: ' + this.dataStart );
 		    
 		    // Page above
-		    if( scrollTop > viewHeight )
-		    {
-		    	aaa = this.pageAbove();
-		    }
-		    else
-		    {
-		    	this.emptyDiv( 'pageAbove' );
-		    }
+		    aaa = this.pageAbove();
 		    
 		    // Page middle
 		    ddd = this.pageMiddle();
