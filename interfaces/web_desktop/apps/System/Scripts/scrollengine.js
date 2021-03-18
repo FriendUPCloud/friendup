@@ -246,7 +246,6 @@ scrollengine = {
 		// TODO: Put this one offsetheight just like pageBelow ...
 		
 		// Page above
-		this.aTop = ( Math.floor( ( this.scrollTop - this.viewHeight ) / this.config.rowHeight ) * this.config.rowHeight ) - this.config.rowHeight;
         let aa = document.createElement( 'div' );
         aa.id = 'pageAbove';
         this.counted = 0;
@@ -283,8 +282,10 @@ scrollengine = {
         
         this.counted = counted;
         
-        aa.style.top = this.aTop + 'px';
-        aa.style.height = counted * this.config.rowHeight + 'px';
+        let t = this.dTop = ( Math.floor( this.scrollTop / this.config.rowHeight ) * this.config.rowHeight );
+        let h = counted * this.config.rowHeight;
+        aa.style.top = ( t - h ) + 'px';
+        aa.style.height = h + 'px';
         
         this.list.replaceChild( aa, this.elements.pageAbove );
         
@@ -623,6 +624,7 @@ scrollengine = {
 		let leftToScroll = scrollHeight;
 		
 		let aaa = 0, ddd = 0, bbb = 0;
+		let pageMarginMultiplier = 1.5;
 		
 		if( this.config.mustRedraw )
 		{
@@ -630,7 +632,7 @@ scrollengine = {
 		    
 		    // Visible row position and row count based on scroll and view height
 		    this.rowPosition = Math.floor( scrollTop / this.config.rowHeight );
-		    this.rowCount    = Math.floor( ( viewHeight * 1.5 ) / this.config.rowHeight ) + 1;
+		    this.rowCount    = Math.floor( ( viewHeight * pageMarginMultiplier ) / this.config.rowHeight ) + 1;
 		    
 		    // Set new datastart
 		    this.prevDataStart = this.dataStart;
