@@ -259,7 +259,7 @@ scrollengine = {
         
         // Adjust database fetch calculator
         this.dataStart = this.rowPosition - this.rowCount;
-        this.dataLimit = this.rowCount;
+        this.dataLimit = 0;
         if( this.dataStart < 0 )
         {
         	this.dataLimit += this.dataStart; // decrement with adding  negative value
@@ -287,6 +287,7 @@ scrollengine = {
         }
         
         this.counted = counted;
+        this.dataLimit += counted;
         
         let t = this.dTop = ( Math.floor( this.scrollTop / this.config.rowHeight ) * this.config.rowHeight );
         let h = counted * this.config.rowHeight;
