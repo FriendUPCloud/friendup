@@ -284,7 +284,7 @@ scrollengine = {
         this.counted = counted;
         
         aa.style.top = this.aTop + 'px';
-        aa.style.height = ( counted + 1 ) * this.config.rowHeight + 'px';
+        aa.style.height = counted * this.config.rowHeight + 'px';
         
         this.list.replaceChild( aa, this.elements.pageAbove );
         
@@ -325,7 +325,7 @@ scrollengine = {
 		this.counted += counted;
 		
 		d.style.top = this.dTop + 'px';
-		d.style.height = ( counted + 1 ) * this.config.rowHeight + 'px';
+		d.style.height = counted * this.config.rowHeight + 'px';
 		
 		this.list.replaceChild( d, this.elements.pageMiddle );
 		this.elements.pageMiddle = d;
