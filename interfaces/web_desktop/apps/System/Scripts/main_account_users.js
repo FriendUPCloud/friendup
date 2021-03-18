@@ -5242,7 +5242,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											
 											let src = '';
 											
-											/*if( myArray[ s ].imageObj == null )
+											if( myArray[ s ].imageObj == null )
 											{
 												src = '/system.library/module/?module=system&command=getavatar&userid=' + myArray[s].ID + ( myArray[s].image ? '&image=' + myArray[s].image : '' ) + '&width=16&height=16&authid=' + Application.authId;
 												let iii = new Image();
@@ -5262,12 +5262,18 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												}
 												else
 												{
-													ctx.clearRect(0,0,16,16);
-													ctx.drawImage( myArray[ s ].imageObj, 0, 0, 16, 16 );
-													src = canvas.toDataURL( 'image/png' );
-													myArray[ s ].imageObj.blob = src;
+													( function( im )
+													{
+														setTimeout( function()
+														{
+															ctx.clearRect(0,0,16,16);
+															ctx.drawImage( myArray[ s ].imageObj, 0, 0, 16, 16 );
+															src = canvas.toDataURL( 'image/png' );
+															im.blob = src;
+														}, 2 );
+													}( myArray[ s ].imageObj );
 												}
-											}*/
+											}
 											
 											let obj = {
 												ID        : ( myArray[s][ 'ID' ] ),
