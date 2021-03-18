@@ -5225,6 +5225,13 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									let self = this;
 									let s = start;
 									let len = self.length( allNodes );
+									
+									// Used to draw stuff
+									let canvas = document.createElement( 'canvas' );
+									let ctx = canvas.getContext( '2d' );
+									canvas.width = 16;
+									canvas.height = 16;
+									
 									for( let a = 0; a < len; a++, s++ )
 									{
 										
@@ -5255,16 +5262,9 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												}
 												else
 												{
-													setTimeout( function()
-													{
-														let canvas = document.createElement( 'canvas' );
-														let ctx = canvas.getContext( '2d' );
-														canvas.width = 16;
-														canvas.height = 16;
-														ctx.drawImage( myArray[ s ].imageObj, 0, 0, 16, 16 );
-														src = canvas.toDataURL( 'image/png' );
-														myArray[ s ].imageObj.blob = src;
-													}, 5 );
+													ctx.drawImage( myArray[ s ].imageObj, 0, 0, 16, 16 );
+													src = canvas.toDataURL( 'image/png' );
+													myArray[ s ].imageObj.blob = src;
 												}
 											}
 											
