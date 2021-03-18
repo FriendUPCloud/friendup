@@ -671,9 +671,9 @@ scrollengine = {
 		    		let dlimit = this.dataLimit;
 		    		if( dstart < 0 )
 		    		{
-		    			dlimit -= dstart;
 		    			dstart = 0;
 		    		}
+		    		console.log( 'We will call back: ' + dstart + ',' + dlimit );
 		    		this.callback( 
 		    		{ 
 		    			start   : dstart,
