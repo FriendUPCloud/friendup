@@ -378,7 +378,6 @@ scrollengine = {
 	// Distribute all data
 	distribute: function( data, start, total, force )
 	{
-		console.log( 'Distributing data start: ' + start + ' total ' + total );
 		if( total != null && this.total != total )
 		{
 			console.log( 'making new total ... ', { a: total, b: this.total } );
@@ -430,7 +429,6 @@ scrollengine = {
 					if( !cacheImage || !cacheImage.src )
 					{
 						this.myArray[ start + a ].imageObj = null;
-						//console.log( 'We have no cache image!' );
 					}
 					else
 					{
@@ -457,13 +455,13 @@ scrollengine = {
 				{
 					i++;
 					
-					if( elements[a][b].line != null )
+					if( elements[ a ][ b ].line != null )
 					{
-						allNodes[ elements[a][b].line ] = elements[a][b];
+						allNodes[ elements[a][b].line ] = elements[ a ][ b ];
 					}
 					else
 					{
-						allNodes[ i ] = elements[a][b];
+						allNodes[ i ] = elements[ a ][ b ];
 					}
 				}
 			}
@@ -540,7 +538,6 @@ scrollengine = {
 				    	{
 				    		allNodes[ s ].parentNode.removeChild( test );
 				    	}
-				    	
 				    }
 				}
 			}
@@ -633,7 +630,7 @@ scrollengine = {
 		    
 		    // Visible row position and row count based on scroll and view height
 		    this.rowPosition = Math.floor( scrollTop / this.config.rowHeight );
-		    this.rowCount    = Math.floor( viewHeight / this.config.rowHeight ) + 1;
+		    this.rowCount    = Math.floor( ( viewHeight * 1.25 ) / this.config.rowHeight ) + 1;
 		    
 		    // Set new datastart
 		    this.prevDataStart = this.dataStart;
