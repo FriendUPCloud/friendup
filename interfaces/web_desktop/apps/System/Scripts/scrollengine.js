@@ -375,8 +375,10 @@ scrollengine = {
 		return bb;
 	},
 	
+	// Distribute all data
 	distribute: function( data, start, total, force )
 	{
+		console.log( 'Distributing data start: ' + start + ' total ' + total );
 		if( total != null && this.total != total )
 		{
 			console.log( 'making new total ... ', { a: total, b: this.total } );
@@ -637,8 +639,8 @@ scrollengine = {
 		    this.prevDataStart = this.dataStart;
 		    this.dataStart = this.rowPosition;
 		    
-		    console.log( 'Prev data start is: ' + this.prevDataStart );
-		    console.log( 'New data start is: ' + this.dataStart );
+		    //console.log( 'Prev data start is: ' + this.prevDataStart );
+		    //console.log( 'New data start is: ' + this.dataStart );
 		    
 		    // Page above
 		    if( scrollTop > viewHeight )
