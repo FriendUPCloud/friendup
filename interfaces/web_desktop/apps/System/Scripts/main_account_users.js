@@ -5240,9 +5240,9 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										{
 											let str = '';
 											
-											let src;
+											let src = '';
 											
-											if( myArray[ s ].imageObj == null )
+											/*if( myArray[ s ].imageObj == null )
 											{
 												src = '/system.library/module/?module=system&command=getavatar&userid=' + myArray[s].ID + ( myArray[s].image ? '&image=' + myArray[s].image : '' ) + '&width=16&height=16&authid=' + Application.authId;
 												let iii = new Image();
@@ -5267,7 +5267,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													src = canvas.toDataURL( 'image/png' );
 													myArray[ s ].imageObj.blob = src;
 												}
-											}
+											}*/
 											
 											let obj = {
 												ID        : ( myArray[s][ 'ID' ] ),
