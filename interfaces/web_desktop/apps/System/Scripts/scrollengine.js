@@ -363,7 +363,7 @@ scrollengine = {
 		if( ge( 'pageAbove' ).offsetHeight <= 0 )
 		{
 			rowCount = rowCount << 1;
-			console.log( 'Doubled rowheight: ' + rowCount
+			console.log( 'Doubled rowheight: ' + rowCount );
 		}
 		
 		for( let a = 0, b = this.rowPosition, c = 0; a < rowCount; a++, b++, c += this.config.rowHeight )
