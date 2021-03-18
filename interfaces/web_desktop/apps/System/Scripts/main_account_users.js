@@ -235,7 +235,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						refreshUserList( userInfo );
 					},
 					
-					user:function()
+					user: function()
 					{
 						// User
 						let ulocked = false;
@@ -898,9 +898,6 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														
 														if( UsersSettings( 'experiment' ) )
 														{
-															// TODO: Fix refresh it doesn't work properly ...
-															//scrollengine.refresh(  );
-															
 															Sections.accounts_users( 'init' );
 														}
 														
@@ -5172,7 +5169,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 	let checkedWorkgr = Application.checkAppPermission( [ 'PERM_USER_READ_IN_WORKGROUP', 'PERM_USER_WORKGROUP' ] );
 	
 	
-	
+	// After permission checks, initialize the userlist
 	if( checkedGlobal || checkedWorkgr )
 	{
 		
@@ -5198,7 +5195,6 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 				// Experimental ...
 				if( UsersSettings( 'experiment' ) )
 				{
-					
 					console.log( "UsersSettings( 'debug', true ); to show debug info ..." );
 					
 					getUserlist( function( res, userList )
@@ -5206,17 +5202,14 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							
 						if( res == 'ok' )
 						{
-							
-							
-							
 							initUserlist( userList );
 							
 							if( UsersSettings( 'debug' ) )
 							{
-								//ge( 'UserList' ).innerHTML += '<div id="Debug"></div>';
 								scrollengine.debug = ge( 'Debug' );
 							}
 							
+							// Set layout function
 							scrollengine.set( function( start, allNodes, myArray )
 							{
 								//console.log( { start: start, allNodes: allNodes, myArray: myArray } );
@@ -5282,15 +5275,16 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											
 											let bg = 'background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;background-image: url(\'' + src + '\')';
 											
-											str += '<div class="TextCenter HContent10 FloatLeft PaddingSmall Ellipsis edit">';
-											str += '	<span id="UserAvatar_'+obj.ID+'" fullname="'+obj.FullName+'" status="'+obj.Status+'" logintime="'+obj.Logintime+'" timestamp="'+obj.Timestamp+'" class="IconSmall fa-user-circle-o avatar" style="position: relative;">';
-											str += '		<div style="' + bg + '"></div>';
-											str += '	</span>';
-											str += '</div>';
-											str += '<div class=" HContent30 FloatLeft PaddingSmall Ellipsis fullname">' + obj.FullName + '</div>';
-											str += '<div class=" HContent25 FloatLeft PaddingSmall Ellipsis name">' + obj.Name + '</div>';
-											str += '<div class=" HContent15 FloatLeft PaddingSmall Ellipsis status">' + obj.Status + '</div>';
-											str += '<div class=" HContent20 FloatLeft PaddingSmall Ellipsis logintime">' + obj.Logintime + '</div>';
+											str += '\
+				<div class="TextCenter HContent10 FloatLeft PaddingSmall Ellipsis edit">\
+					<span id="UserAvatar_'+obj.ID+'" fullname="'+obj.FullName+'" status="'+obj.Status+'" logintime="'+obj.Logintime+'" timestamp="'+obj.Timestamp+'" class="IconSmall fa-user-circle-o avatar" style="position: relative;">\
+						<div style="' + bg + '"></div>\
+					</span>\
+				</div>\
+				<div class=" HContent30 FloatLeft PaddingSmall Ellipsis fullname">' + obj.FullName + '</div>\
+				<div class=" HContent25 FloatLeft PaddingSmall Ellipsis name">' + obj.Name + '</div>\
+				<div class=" HContent15 FloatLeft PaddingSmall Ellipsis status">' + obj.Status + '</div>\
+				<div class=" HContent20 FloatLeft PaddingSmall Ellipsis logintime">' + obj.Logintime + '</div>';
 											
 											let selected = ( ge( 'UserListID_' + obj.ID ) && ge( 'UserListID_' + obj.ID ).className.indexOf( 'Selected' ) >= 0 ? ' Selected' : '' );
 											
@@ -5368,14 +5362,10 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								
 							} );
 							
-							//scrollengine.set( false );
-							
 							UsersSettings( 'reset', 'all' );
 							
-							scrollengine.init( ge( 'ListUsersInner' ), userList, userList['Count'], function( ret ) 
+							scrollengine.init( ge( 'ListUsersInner' ), userList, userList[ 'Count' ], function( ret ) 
 							{
-								
-								
 								//console.log( '[1] ListUsersInner ', ret );
 								
 								let obj = { start: ret.start, limit: ret.limit };
@@ -5421,11 +5411,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 					
 					}, false, '0, 60'/* + UsersSettings( 'maxlimit' )*/ );
 					
-					return;
-					
+					return;	
 				}
-				
-				
 				
 				// This is the old init, and can be removed once the new one is working PROPERLY, not before.
 				
@@ -9733,12 +9720,13 @@ Application.closeAllEditModes = function( act )
 	
 }
 
+// Manage server requests
 var RequestQueue = {
 	
 	ServerBusy : false, 
 	ServerRequestQueue : [],  
 	
-	Set : function ( func, obj, ready )
+	Set: function( func, obj, ready )
 	{
 		
 		// If ready check is requested and server is busy return false
@@ -9761,11 +9749,11 @@ var RequestQueue = {
 		
 	},
 	
-	Run : function (  )
+	Run: function()
 	{
 		if( this.ServerRequestQueue )
 		{
-			for( var key in this.ServerRequestQueue )
+			for( let key in this.ServerRequestQueue )
 			{
 				if( this.ServerRequestQueue[key] && this.ServerRequestQueue[key].func )
 				{
@@ -9797,13 +9785,13 @@ var RequestQueue = {
 		}
 	},
 	
-	Delete : function ( key )
+	Delete: function( key )
 	{
 		let out = [];
 		
 		if( this.ServerRequestQueue )
 		{
-			for( var i in this.ServerRequestQueue )
+			for( let i in this.ServerRequestQueue )
 			{
 				if( this.ServerRequestQueue[i] && ( !key || key != i ) )
 				{

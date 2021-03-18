@@ -57,15 +57,18 @@ scrollengine = {
 	
 	selectedLine: null,
 	
+	// Set the layout function
 	set: function( layout )
 	{
 		this.layout = layout;
 	},
 	
+	// Initialize scroll engine
 	init: function( list, data, total, callback )
 	{
 		let self = this;
 		
+		// Reset scroll engine
 		this.reset();
 		
 		if( list )
@@ -107,14 +110,14 @@ scrollengine = {
 			
 			this.total = total;
 			
-			this.myArray = ( myArray ? myArray : [] );
+			this.myArray = myArray ? myArray : [];
 			
-			this.list.addEventListener( 'scroll', function(  ){ scrollengine.refresh(  ); } );
-			window.addEventListener( 'resize', function(  ){ scrollengine.refresh( true ); } );
+			this.list.addEventListener( 'scroll', function(){ scrollengine.refresh(); } );
+			window.addEventListener( 'resize', function(){ scrollengine.refresh( true ); } );
 			
+			// Manage keystrokes
 			window.addEventListener( 'keydown', function( e )
 			{ 
-				
 				//console.log( e.which, e.target ); 
 				
 				switch( e.which )
@@ -158,13 +161,15 @@ scrollengine = {
 			}
 		}
 	},
-	
+	// Check length of object
 	length: function( object )
 	{
+		// Normal array
 		if( typeof object.length !== "undefined" )
 		{
 			return object.length;
 		}
+		// This is an object of unknown length
 		else
 		{
 			let i = 0;
@@ -591,10 +596,9 @@ scrollengine = {
 		}		
 	},
 	
-	// Refresh funksjon
+	// Refresh function
 	refresh: function( force )
 	{
-		
 		// Store previous values for comparison
 		this.dataPrevStart = this.dataStart;
 		this.dataPrevLimit = this.dataLimit;
@@ -645,6 +649,7 @@ scrollengine = {
 		
 		if( scrollTop > pm.offsetTop + pm.offsetHeight )
 		{
+			console.log( 'Redrawing because pagemiddle is above' );
 			redraw = true;
 		}
 		
@@ -652,13 +657,7 @@ scrollengine = {
 		
 		if( scrollTop + viewHeight < pm.offsetTop )
 		{
-			redraw = true;
-		}
-		
-		// [3] At every refresh where content is within the scroll view redraw
-		
-		if( scrollTop < viewHeight )
-		{
+			console.log( 'Redrawing because pagemiddle is below' );
 			redraw = true;
 		}
 		
@@ -666,6 +665,7 @@ scrollengine = {
 		
 		if( force === true )
 		{
+			console.log( 'Forced redraw' );
 			redraw = true;
 		}
 		
