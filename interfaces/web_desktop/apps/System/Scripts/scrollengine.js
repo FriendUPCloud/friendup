@@ -124,11 +124,11 @@ scrollengine = {
 				{
 					// Page Up
 					case 33:
-						self.list.scrollTop -= self.list.offsetHeight;
+						self.list.scrollTop -= self.list.offsetHeight >> 1;
 						break;
 					// Page Down
 					case 34:
-						self.list.scrollTop += self.list.offsetHeight;
+						self.list.scrollTop += self.list.offsetHeight >> 1;
 						break;
 					// Home	
 					case 36:
