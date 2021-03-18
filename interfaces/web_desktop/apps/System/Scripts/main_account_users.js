@@ -5271,7 +5271,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 															src = canvas.toDataURL( 'image/png' );
 															im.blob = src;
 														}, 2 );
-													}( myArray[ s ].imageObj );
+													} )( myArray[ s ].imageObj );
 												}
 											}
 											
