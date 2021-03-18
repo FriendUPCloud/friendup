@@ -630,7 +630,7 @@ scrollengine = {
 		    
 		    // Visible row position and row count based on scroll and view height
 		    this.rowPosition = Math.floor( scrollTop / this.config.rowHeight );
-		    this.rowCount    = Math.floor( ( viewHeight * 1.25 ) / this.config.rowHeight ) + 1;
+		    this.rowCount    = Math.floor( ( viewHeight * 1.5 ) / this.config.rowHeight ) + 1;
 		    
 		    // Set new datastart
 		    this.prevDataStart = this.dataStart;
