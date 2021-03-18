@@ -7239,7 +7239,7 @@ function getUserlist( callback, obj, limit )
 			console.log( { e:e, d:d, args:args } );
 		}
 		
-		console.log( 'getUserlist( callback, obj ): ', { e:e, d:(userList?userList:d), args: args, usersettings: UsersSettings() } );
+		//console.log( 'getUserlist( callback, obj ): ', { e:e, d:(userList?userList:d), args: args, usersettings: UsersSettings() } );
 		
 		if( callback )
 		{
