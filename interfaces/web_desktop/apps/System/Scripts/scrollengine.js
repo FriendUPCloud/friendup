@@ -667,17 +667,10 @@ scrollengine = {
 		    {
 		    	if( this.callback )
 		    	{
-		    		let dstart = this.dataStart;
-		    		let dlimit = this.dataLimit;
-		    		if( dstart < 0 )
-		    		{
-		    			dstart = 0;
-		    		}
-		    		console.log( 'We will call back: ' + dstart + ',' + dlimit );
 		    		this.callback( 
 		    		{ 
-		    			start   : dstart,
-		    			limit   : dlimit, 
+		    			start   : this.dataStart, 
+		    			limit   : this.dataLimit, 
 		    			myArray : this.myArray, 
 		    			total   : this.total 
 		    		} );

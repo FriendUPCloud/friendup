@@ -5407,7 +5407,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							
 						}
 					
-					}, false, '0, 60'/* + UsersSettings( 'maxlimit' )*/ );
+					}, false, '0, 150'/* + UsersSettings( 'maxlimit' )*/ );
 					
 					return;	
 				}
