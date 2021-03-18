@@ -5250,28 +5250,22 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												iii.onload = function() 
 												{
 													this.myArray.imageObj = this;
+													( function( im, ct, canv )
+													{
+														setTimeout( function()
+														{
+															ct.clearRect( 0, 0, 16, 16);
+															ct.drawImage( myArray[ s ].imageObj, 0, 0, 16, 16 );
+															im.blob = canv.toDataURL( 'image/png' );
+														}, 5 );
+													} )( this.myArray.imageObj, ctx, canvas );
 												};
 												iii.src = src;
 											}
 											// From cache
 											else
 											{
-												if( myArray[ s ].imageObj.blob )
-												{
-													src = myArray[ s ].imageObj.blob;
-												}
-												else
-												{
-													( function( im, ct, canv )
-													{
-														setTimeout( function()
-														{
-															ct.clearRect(0,0,16,16);
-															ct.drawImage( myArray[ s ].imageObj, 0, 0, 16, 16 );
-															im.blob = canv.toDataURL( 'image/png' );
-														}, 2 );
-													} )( myArray[ s ].imageObj, ctx, canvas );
-												}
+												src = myArray[ s ].imageObj.blob;
 											}
 											
 											let obj = {
