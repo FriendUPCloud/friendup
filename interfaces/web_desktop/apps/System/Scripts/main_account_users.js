@@ -8,26 +8,25 @@
 *                                                                              *
 *****************************************************************************©*/
 
-// TODO: Clean up this whole code file .... when there is time ... , plix .... Now It's a MESS !!!
-
+// Main User Settings function to set up the whole user "module"
 var UsersSettings = function ( setting, set )
 {
-	var searchquery = ( ''                           );  
-	var searchby    = ( ''                           );
-	var sortby      = ( 'FullName'                   );
-	var orderby     = ( 'ASC'                        ); 
-	var customsort  = ( ''                           );
-	var sortstatus  = ( '0,2'                        );
-	var divh        = ( 29                           );
-	var listed      = ( 0                            );
-	var total       = ( 0                            );
-	var startlimit  = ( 0                            );
-	var maxlimit    = ( 60                           );
-	var minlength   = ( 1							 );
-	var intervals   = ( 50                           );
-	var limit       = ( startlimit + ', ' + maxlimit );
-	var busy        = ( false                        );
-	var abort       = ( false                        );
+	let searchquery = ( ''                           );  
+	let searchby    = ( ''                           );
+	let sortby      = ( 'FullName'                   );
+	let orderby     = ( 'ASC'                        ); 
+	let customsort  = ( ''                           );
+	let sortstatus  = ( '0,2'                        );
+	let divh        = ( 29                           );
+	let listed      = ( 0                            );
+	let total       = ( 0                            );
+	let startlimit  = ( 0                            );
+	let maxlimit    = ( 60                           );
+	let minlength   = ( 1							 );
+	let intervals   = ( 50                           );
+	let limit       = ( startlimit + ', ' + maxlimit );
+	let busy        = ( false                        );
+	let abort       = ( false                        );
 	
 	this.vars = ( this.vars ? this.vars : {
 		searchquery : searchquery,
@@ -81,7 +80,7 @@ var UsersSettings = function ( setting, set )
 					if( set )
 					{
 						let out = [];
-						var arr = this.vars.sortstatus ? this.vars.sortstatus.split( ',' ) : [];
+						let arr = this.vars.sortstatus ? this.vars.sortstatus.split( ',' ) : [];
 						if( arr.length )
 						{
 							for( let i in arr )
@@ -217,30 +216,30 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 				// TODO: implement abort function ...
 				
 				// Some shortcuts
-				var userInfo          = ( info.userInfo ? info.userInfo : {} );
-				var settings          = ( info.settings ? info.settings : {} );
-				var workspaceSettings = ( info.workspaceSettings ? info.workspaceSettings : {} );
-				var wgroups           = typeof( userInfo.Workgroup ) == 'object' ? userInfo.Workgroup : ( userInfo.Workgroup ? [ userInfo.Workgroup ] : [] );
-				var uroles            = ( info.roles ? info.roles : {} );
-				var mountlist         = ( info.mountlist ? info.mountlist : {} );
-				var soft              = ( info.software ? info.software : {} );
-				var apps              = ( info.applications ? info.applications : {} );
-				var dock              = ( info.dock ? info.dock : {} );
+				let userInfo          = ( info.userInfo ? info.userInfo : {} );
+				let settings          = ( info.settings ? info.settings : {} );
+				let workspaceSettings = ( info.workspaceSettings ? info.workspaceSettings : {} );
+				let wgroups           = typeof( userInfo.Workgroup ) == 'object' ? userInfo.Workgroup : ( userInfo.Workgroup ? [ userInfo.Workgroup ] : [] );
+				let uroles            = ( info.roles ? info.roles : {} );
+				let mountlist         = ( info.mountlist ? info.mountlist : {} );
+				let soft              = ( info.software ? info.software : {} );
+				let apps              = ( info.applications ? info.applications : {} );
+				let dock              = ( info.dock ? info.dock : {} );
 				
 				if( ShowLog ) console.log( 'initUsersDetails( info ) ', info );		
 				
-				var func = {
+				let func = {
 					
-					init : function (  )
+					init: function()
 					{
 						refreshUserList( userInfo );
 					},
 					
-					user : function (  )
+					user:function()
 					{
 						// User
-						var ulocked = false;
-						var udisabled = false;
+						let ulocked = false;
+						let udisabled = false;
 				
 						if( userInfo.Status )
 						{
@@ -262,44 +261,44 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						};
 					},
 					
-					level : function (  )
+					level: function()
 					{					
 						return ( userInfo.Level ? userInfo.Level : false );
 					},
 					
-					language : function (  )
+					language: function()
 					{
 						// Language
-						var availLangs = {
+						let availLangs = {
 							'en' : 'English',
 							'fr' : 'French',
 							'no' : 'Norwegian',
 							'fi' : 'Finnish',
 							'pl' : 'Polish'
 						};
-						var languages = '';
+						let languages = '';
 				
-						var locale = ( workspaceSettings.language && workspaceSettings.language.spokenLanguage ? workspaceSettings.language.spokenLanguage.substr( 0, 2 ) : workspaceSettings.locale );
+						let locale = ( workspaceSettings.language && workspaceSettings.language.spokenLanguage ? workspaceSettings.language.spokenLanguage.substr( 0, 2 ) : workspaceSettings.locale );
 						for( var a in availLangs )
 						{
-							var sel = ( locale == a ? ' selected="selected"' : '' );
+							let sel = ( locale == a ? ' selected="selected"' : '' );
 							languages += '<option value="' + a + '"' + sel + '>' + availLangs[ a ] + '</option>';
 						}
 					
 						return languages;
 					},
 					
-					setup : function (  )
+					setup: function()
 					{
 						// Setup / Template
-						var setup = '<option value="0">None</option>';
+						let setup = '<option value="0">None</option>';
 						if( userInfo.Setup )
 						{
 							for( var s in userInfo.Setup )
 							{
 								if( userInfo.Setup[s] && userInfo.Setup[s].ID )
 								{
-									var sel = ( userInfo.Setup[s].UserID && userInfo.Setup[s].UserID == userInfo.ID ? ' selected="selected"' : '' );
+									let sel = ( userInfo.Setup[s].UserID && userInfo.Setup[s].UserID == userInfo.ID ? ' selected="selected"' : '' );
 									setup += '<option value="' + userInfo.Setup[s].ID + '"' + sel + '>' + userInfo.Setup[s].Name + '</option>';
 								}
 							}
@@ -308,10 +307,10 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						return setup;
 					},
 					
-					themes : function (  )
+					themes: function()
 					{
 						// Themes
-						var themeData = workspaceSettings[ 'themedata_' + settings.Theme ];
+						let themeData = workspaceSettings[ 'themedata_' + settings.Theme ];
 						if( !themeData )
 						{
 							themeData = { colorSchemeText: 'light', buttonSchemeText: 'windows' };
@@ -320,13 +319,13 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						return themeData;
 					},
 					
-					workgroups : function (  )
+					workgroups: function()
 					{
 						// Workgroups
-						var wstr = '';
+						let wstr = '';
 						if( wgroups.length )
 						{
-							var wids = {};
+							let wids = {};
 							
 							for( var a in wgroups )
 							{
@@ -369,11 +368,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						return wstr;
 					},
 					
-					roles : function (  )
+					roles: function()
 					{
 								
 						// Roles
-						var rstr = '';
+						let rstr = '';
 				
 						// Roles and role adherence
 						if( uroles && uroles == '404' )
@@ -395,11 +394,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									continue;
 								}
 								
-								var title = '';
+								let title = '';
 						
 								if( uroles[a].Permissions.length )
 								{
-									var wgrs = [];
+									let wgrs = [];
 							
 									for( var b in uroles[a].Permissions )
 									{
@@ -447,7 +446,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						return rstr;
 					},
 					
-					storage : function (  )
+					storage: function()
 					{
 						if( !Application.checkAppPermission( [ 
 							'PERM_STORAGE_CREATE_GLOBAL', 'PERM_STORAGE_CREATE_IN_WORKGROUP', 
@@ -461,21 +460,21 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						}
 						
 						// Storage / disks
-						var mlst = Sections.user_disk_refresh( mountlist, userInfo.ID, Sections.user_volumeinfo_refresh( mountlist, userInfo.ID ) );
+						let mlst = Sections.user_disk_refresh( mountlist, userInfo.ID, Sections.user_volumeinfo_refresh( mountlist, userInfo.ID ) );
 						
 						return mlst;
 					},
 					
-					applications : function (  )
+					applications: function()
 					{
 						// Applications
-						var apl = '';
-						var types = [ '', i18n( 'i18n_name' ), i18n( 'i18n_category' ), i18n( 'i18n_dock' ) ];
-						var keyz  = [ 'Icon', 'Name', 'Category', 'Dock' ];
+						let apl = '';
+						let types = [ '', i18n( 'i18n_name' ), i18n( 'i18n_category' ), i18n( 'i18n_dock' ) ];
+						let keyz  = [ 'Icon', 'Name', 'Category', 'Dock' ];
 						apl += '<div class="HRow">';
 						for( var a = 0; a < types.length; a++ )
 						{
-							var ex = ''; var st = '';
+							let ex = ''; var st = '';
 							if( keyz[ a ] == 'Icon' )
 							{
 								st = ' style="width:10%"';
@@ -489,7 +488,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						apl += '</div>';
 				
 						apl += '<div>';
-						var sw = 2;
+						let sw = 2;
 						if( apps && apps == '404' )
 						{
 							apl += i18n( 'i18n_applications_available_access_denied' );
@@ -502,16 +501,16 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								apl += '<div class="HRow">';
 								for( var k = 0; k < keyz.length; k++ )
 								{
-									var ex = ''; var st = '';
+									let ex = ''; var st = '';
 									if( keyz[ k ] == 'Icon' )
 									{
 										st = ' style="width:10%"';
-										var img = ( !apps[ a ].Preview ? '/iconthemes/friendup15/File_Binary.svg' : '/system.library/module/?module=system&command=getapplicationpreview&application=' + apps[ a ].Name + '&authid=' + Application.authId );
-										var value = '<div style="background-image:url(' + img + ');background-size:contain;width:24px;height:24px;"></div>';
+										let img = ( !apps[ a ].Preview ? '/iconthemes/friendup15/File_Binary.svg' : '/system.library/module/?module=system&command=getapplicationpreview&application=' + apps[ a ].Name + '&authid=' + Application.authId );
+										let value = '<div style="background-image:url(' + img + ');background-size:contain;width:24px;height:24px;"></div>';
 									}
 									else
 									{
-										var value = apps[ a ][ keyz[ k ] ];
+										let value = apps[ a ][ keyz[ k ] ];
 									}
 									if( keyz[ k ] == 'Name' )
 									{
@@ -549,25 +548,25 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 				{
 					
 					
-					var user = func.user();
+					let user = func.user();
 					
-					var udisabled = user.udisabled; 
-					var ulocked   = user.ulocked; 
+					let udisabled = user.udisabled; 
+					let ulocked   = user.ulocked; 
 					
-					var level     = func.level();
-					var languages = func.language();
-					var setup     = func.setup();
-					var wstr      = func.workgroups();
-					var rstr      = func.roles();
-					var mlst      = func.storage();
-					var themeData = func.themes();
+					let level     = func.level();
+					let languages = func.language();
+					let setup     = func.setup();
+					let wstr      = func.workgroups();
+					let rstr      = func.roles();
+					let mlst      = func.storage();
+					let themeData = func.themes();
 					
 					
 					
 					function onLoad ( data )
 					{
 						
-						var func = {
+						let func = {
 							
 							init : function (  )
 							{
@@ -658,7 +657,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										'PERM_USER_GLOBAL',        'PERM_WORKGROUP_GLOBAL' 
 									] ) )
 									{
-										var res = ge( 'passToggle' );
+										let res = ge( 'passToggle' );
 										if( res ) res.onclick = function( e )
 										{
 											toggleChangePass();
@@ -677,7 +676,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								
 								if( ge( 'usLevel' ) && level )
 								{
-									var opt = ge( 'usLevel' ).getElementsByTagName( 'option' );
+									let opt = ge( 'usLevel' ).getElementsByTagName( 'option' );
 									
 									if( opt.length > 0 )
 									{
@@ -728,20 +727,20 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									// Set the url to get this avatar instead and cache it in the browser ...
 									
 									// Only update the avatar if it exists..
-									var avSrc = new Image();
+									let avSrc = new Image();
 									avSrc.src = userInfo.avatar;
 									avSrc.onload = function()
 									{
 										//console.log( 'image have loaded ... ' + this.src );
 										if( ge( 'AdminAvatar' ) )
 										{
-											var ctx = ge( 'AdminAvatar' ).getContext( '2d' );
+											let ctx = ge( 'AdminAvatar' ).getContext( '2d' );
 											ctx.drawImage( avSrc, 0, 0, 256, 256 );
 										}
 									}
 								} 
 								
-								var ae = ge( 'AdminAvatarEdit' );
+								let ae = ge( 'AdminAvatarEdit' );
 								if( ae ) 
 								{
 									if( Application.checkAppPermission( [ 
@@ -768,7 +767,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								
 								if( ge( 'UserBasicDetails' ) )
 								{
-									var inps = ge( 'UserBasicDetails' ).getElementsByTagName( '*' );
+									let inps = ge( 'UserBasicDetails' ).getElementsByTagName( '*' );
 									if( inps.length > 0 )
 									{
 										for( var a = 0; a < inps.length; a++ )
@@ -799,7 +798,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									}
 								}
 								
-								var bg1  = ge( 'UserSaveBtn' );
+								let bg1  = ge( 'UserSaveBtn' );
 								if( bg1 )
 								{
 									if( Application.checkAppPermission( [ 
@@ -853,13 +852,13 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										bg1.style.display = 'none';
 									}
 								}
-								var bg2  = ge( 'UserCancelBtn' );
+								let bg2  = ge( 'UserCancelBtn' );
 								if( bg2 ) bg2.onclick = function( e )
 								{
 									//cancelUser( userInfo.ID );
 									Sections.accounts_users( 'edit', userInfo.ID );
 								}
-								var bg3  = ge( 'UserBackBtn' );
+								let bg3  = ge( 'UserBackBtn' );
 								if( !isMobile ) 
 								{
 									if( bg3 ) bg3.style.display = 'none';
@@ -872,7 +871,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									}
 								}
 								
-								var bg4  = ge( 'UserDeleteBtn' );
+								let bg4  = ge( 'UserDeleteBtn' );
 								if( bg4 ) 
 								{
 									if( Application.checkAppPermission( [ 
@@ -930,13 +929,13 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								
 								// Heading ...
 								
-								var o = ge( 'WorkgroupGui' ); if( o ) o.innerHTML = '';
+								let o = ge( 'WorkgroupGui' ); if( o ) o.innerHTML = '';
 								
-								var divs = appendChild( [ 
+								let divs = appendChild( [ 
 									{ 
 										'element' : function() 
 										{
-											var d = document.createElement( 'div' );
+											let d = document.createElement( 'div' );
 											d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
 											return d;
 										}(),
@@ -945,7 +944,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											{ 
 												'element' : function(  ) 
 												{
-													var d = document.createElement( 'div' );
+													let d = document.createElement( 'div' );
 													d.className = 'PaddingSmall HContent40 FloatLeft';
 													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
 													d.ele = this;
@@ -959,7 +958,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											{ 
 												'element' : function( _this ) 
 												{
-													var d = document.createElement( 'div' );
+													let d = document.createElement( 'div' );
 													d.className = 'PaddingSmall HContent45 FloatLeft Relative';
 													d.innerHTML = '<strong></strong>';
 													return d;
@@ -968,7 +967,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											{ 
 												'element' : function() 
 												{
-													var d = document.createElement( 'div' );
+													let d = document.createElement( 'div' );
 													d.className = 'PaddingSmall HContent15 FloatLeft Relative';
 													return d;
 												}()
@@ -978,7 +977,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									{
 										'element' : function() 
 										{
-											var d = document.createElement( 'div' );
+											let d = document.createElement( 'div' );
 											d.className = 'HRow Box Padding';
 											d.id = 'WorkgroupInner';
 											return d;
@@ -1001,7 +1000,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								
 								// Editing workgroups
 								
-								var wge = ge( 'WorkgroupEdit' );
+								let wge = ge( 'WorkgroupEdit' );
 								
 								if( !Application.checkAppPermission( [ 
 									'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
@@ -1029,7 +1028,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									
 									if( ge( 'WorkgroupInner' ).innerHTML )
 									{
-										var workBtns = ge( 'WorkgroupInner' ).getElementsByTagName( 'button' );
+										let workBtns = ge( 'WorkgroupInner' ).getElementsByTagName( 'button' );
 										
 										if( workBtns )
 										{
@@ -1047,7 +1046,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												( function( b, wids ) {
 													b.onclick = function( e )
 													{
-														var args = { 
+														let args = { 
 															id     : this.getAttribute( 'wid' ), 
 															users  : userInfo.ID, 
 															authid : Application.authId 
@@ -1077,7 +1076,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														
 															if( args && args.id && args.users )
 															{
-																var f = new Library( 'system.library' );
+																let f = new Library( 'system.library' );
 																f.btn = this;
 																f.wids = wids;
 																f.onExecuted = function( e, d )
@@ -1089,7 +1088,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																
 																	this.wids[ this.btn.getAttribute( 'wid' ) ] = false;
 																
-																	var pnt = this.btn.parentNode.parentNode;
+																	let pnt = this.btn.parentNode.parentNode;
 																
 																	if( pnt )
 																	{
@@ -1125,7 +1124,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									
 									if( info.workgroups )
 									{
-										var unsorted = {};
+										let unsorted = {};
 								
 										for( var i in info.workgroups )
 										{
@@ -1167,8 +1166,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									
 									if( ge( 'AdminWorkgroupContainer' ) )
 									{
-										var inp = ge( 'AdminWorkgroupContainer' ).getElementsByTagName( 'input' )[0];
-										inp.value = '';
+										let inpu = ge( 'AdminWorkgroupContainer' ).getElementsByTagName( 'input' )[0];
+										inpu.value = '';
 									
 										if( ge( 'WorkgroupSearchCancelBtn' ) && ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Open' ) )
 										{
@@ -1181,7 +1180,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									
 										this.activated = true;
 							
-										var str = '';
+										let str = '';
 										
 										if( groups && groups == '404' )
 										{
@@ -1193,7 +1192,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											
 											for( var a in groups )
 											{
-												var found = false;
+												let found = false;
 												if( this.wids[ groups[a].ID ] )
 												{
 													found = true;
@@ -1240,7 +1239,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													
 													for( var aa in groups[a].groups )
 													{
-														var found = false;
+														let found = false;
 														if( this.wids[ groups[a].groups[aa].ID ] )
 														{
 															found = true;
@@ -1281,7 +1280,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 															
 															for( var aaa in groups[a].groups[aa].groups )
 															{
-																var found = false;
+																let found = false;
 																if( this.wids[ groups[a].groups[aa].groups[aaa].ID ] )
 																{
 																	found = true;
@@ -1351,7 +1350,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										
 										// Toggle arrow function, put into function that can be reused some time ...
 										
-										var workArr = ge( 'WorkgroupInner' ).getElementsByTagName( 'span' );
+										let workArr = ge( 'WorkgroupInner' ).getElementsByTagName( 'span' );
 										
 										if( workArr )
 										{
@@ -1364,7 +1363,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													( function( b ) {
 														b.onclick = function( e )
 														{
-															var pnt = this.parentNode.parentNode.parentNode;
+															let pnt = this.parentNode.parentNode.parentNode;
 															
 															if( this.classList.contains( 'fa-caret-right' ) )
 															{
@@ -1373,7 +1372,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																this.classList.remove( 'fa-caret-right' );
 																this.classList.add( 'fa-caret-down' );
 																
-																var divs = pnt.getElementsByTagName( 'div' );
+																let divs = pnt.getElementsByTagName( 'div' );
 																
 																if( divs )
 																{
@@ -1396,7 +1395,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																this.classList.remove( 'fa-caret-down' );
 																this.classList.add( 'fa-caret-right' );
 																
-																var divs = pnt.getElementsByTagName( 'div' );
+																let divs = pnt.getElementsByTagName( 'div' );
 																
 																if( divs )
 																{
@@ -1421,7 +1420,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											}
 										}
 										
-										var workBtns = ge( 'WorkgroupInner' ).getElementsByTagName( 'button' );
+										let workBtns = ge( 'WorkgroupInner' ).getElementsByTagName( 'button' );
 							
 										if( workBtns )
 										{
@@ -1431,7 +1430,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												( function( b ) {
 													b.onclick = function( e )
 													{
-														var args = { 
+														let args = { 
 															id     : this.getAttribute( 'wid' ), 
 															users  : userInfo.ID, 
 															authid : Application.authId 
@@ -1461,7 +1460,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 															
 															if( args && args.id && args.users )
 															{
-																var f = new Library( 'system.library' );
+																let f = new Library( 'system.library' );
 																f.btn = this;
 																f.onExecuted = function( e, d )
 																{
@@ -1485,7 +1484,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 															
 															if( args && args.id && args.users )
 															{
-																var f = new Library( 'system.library' );
+																let f = new Library( 'system.library' );
 																f.btn = this;
 																f.onExecuted = function( e, d )
 																{
@@ -1512,7 +1511,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							
 										sortgroups( 'Name', 'ASC' );
 	
-										var wgc = ge( 'WorkgroupEditBack' );
+										let wgc = ge( 'WorkgroupEditBack' );
 										wgc.wge = this;
 										
 										if( wgc.classList.contains( 'Open' ) || wgc.classList.contains( 'Closed' ) )
@@ -1525,8 +1524,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										{
 											
 											
-											var inp = ge( 'AdminWorkgroupContainer' ).getElementsByTagName( 'input' )[0];
-											inp.value = '';
+											let inpu = ge( 'AdminWorkgroupContainer' ).getElementsByTagName( 'input' )[0];
+											inpu.value = '';
 									
 											if( ge( 'WorkgroupSearchCancelBtn' ) && ge( 'WorkgroupSearchCancelBtn' ).classList.contains( 'Open' ) )
 											{
@@ -1541,7 +1540,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										
 											if( ge( 'WorkgroupInner' ) && ge( 'WorkgroupInner' ).innerHTML )
 											{
-												var workBtns = ge( 'WorkgroupInner' ).getElementsByTagName( 'button' );
+												let workBtns = ge( 'WorkgroupInner' ).getElementsByTagName( 'button' );
 									
 												if( workBtns )
 												{
@@ -1555,7 +1554,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												}
 											}
 										
-											var wstr = '';
+											let wstr = '';
 										
 											if( groups )
 											{
@@ -1663,7 +1662,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											this.wge.activated = false;
 											ge( 'WorkgroupInner' ).innerHTML = wstr;
 										
-											var workBtns = ge( 'WorkgroupInner' ).getElementsByTagName( 'button' );
+											let workBtns = ge( 'WorkgroupInner' ).getElementsByTagName( 'button' );
 							
 											if( workBtns )
 											{
@@ -1673,7 +1672,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													( function( b, wids ) {
 														b.onclick = function( e )
 														{
-															var args = { 
+															let args = { 
 																id     : this.getAttribute( 'wid' ), 
 																users  : userInfo.ID, 
 																authid : Application.authId 
@@ -1703,7 +1702,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																
 																if( args && args.id && args.users )
 																{
-																	var f = new Library( 'system.library' );
+																	let f = new Library( 'system.library' );
 																	f.btn = this;
 																	f.wids = wids;
 																	f.onExecuted = function( e, d )
@@ -1713,7 +1712,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																	
 																		this.wids[ this.btn.getAttribute( 'wid' ) ] = false;
 																	
-																		var pnt = this.btn.parentNode.parentNode;
+																		let pnt = this.btn.parentNode.parentNode;
 																	
 																		if( pnt )
 																		{
@@ -1771,12 +1770,12 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								
 								// Search ...............
 								
-								var searchgroups = function ( filter, server )
+								let searchgroups = function ( filter, server )
 								{
 									
 									if( ge( 'WorkgroupInner' ) )
 									{
-										var list = ge( 'WorkgroupInner' ).getElementsByTagName( 'div' );
+										let list = ge( 'WorkgroupInner' ).getElementsByTagName( 'div' );
 										
 										if( list.length > 0 )
 										{
@@ -1784,8 +1783,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											{
 												if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
 												
-												var strong = list[a].getElementsByTagName( 'strong' )[0];
-												var span = list[a].getElementsByTagName( 'span' )[0];
+												let strong = list[a].getElementsByTagName( 'strong' )[0];
+												let span = list[a].getElementsByTagName( 'span' )[0];
 												
 												if( strong || span )
 												{
@@ -1849,36 +1848,36 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								
 								// Sort .............
 								
-								var sortgroups = function ( sortby, orderby )
+								let sortgroups = function ( sortby, orderby )
 								{
 									
 									//
 									
-									var _this = ge( 'WorkgroupInner' );
+									let _this = ge( 'WorkgroupInner' );
 									
 									if( _this )
 									{
 										orderby = ( orderby ? orderby : ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' ) );
 										
-										var list = _this.getElementsByTagName( 'div' );
+										let list = _this.getElementsByTagName( 'div' );
 										
 										if( list.length > 0 )
 										{
-											var output = [];
+											let output = [];
 											
-											var callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
+											let callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
 											
 											for( var a = 0; a < list.length; a++ )
 											{
 												if( !list[a].className || ( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) ) continue;
 												
-												var span = list[a].getElementsByTagName( 'span' )[0];
+												let span = list[a].getElementsByTagName( 'span' )[0];
 												
 												if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' && span.getAttribute( sortby.toLowerCase() ) )
 												{
 													if( !list[a].parentNode.className )
 													{
-														var obj = { 
+														let obj = { 
 															sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
 															content : list[a].parentNode
 														};
@@ -1925,15 +1924,15 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								
 								if( ge( 'AdminWorkgroupContainer' ) )
 								{
-									var inp = ge( 'AdminWorkgroupContainer' ).getElementsByTagName( 'input' )[0];
-									inp.onkeyup = function( e )
+									let inpu = ge( 'AdminWorkgroupContainer' ).getElementsByTagName( 'input' )[0];
+									inpu.onkeyup = function( e )
 									{
 										searchgroups( this.value );
 									}
 									ge( 'WorkgroupSearchCancelBtn' ).onclick = function( e )
 									{
 										searchgroups( false );
-										inp.value = '';
+										inpu.value = '';
 									}
 								}
 								
@@ -1946,13 +1945,13 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								{
 									
 									
-									var o = ge( 'RolesGui' ); if( o ) o.innerHTML = '';
+									let o = ge( 'RolesGui' ); if( o ) o.innerHTML = '';
 									
-									var divs = appendChild( [ 
+									let divs = appendChild( [ 
 										{ 
 											'element' : function() 
 											{
-												var d = document.createElement( 'div' );
+												let d = document.createElement( 'div' );
 												d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
 												return d;
 											}(),
@@ -1961,7 +1960,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{ 
 													'element' : function(  ) 
 													{
-														var d = document.createElement( 'div' );
+														let d = document.createElement( 'div' );
 														d.className = 'PaddingSmall HContent40 FloatLeft';
 														d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
 														d.onclick = function(  )
@@ -1974,7 +1973,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{ 
 													'element' : function( _this ) 
 													{
-														var d = document.createElement( 'div' );
+														let d = document.createElement( 'div' );
 														d.className = 'PaddingSmall HContent45 FloatLeft Relative';
 														d.innerHTML = '<strong>' + i18n( 'i18n_workgroups' ) + '</strong>';
 														d.onclick = function(  )
@@ -1987,7 +1986,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{ 
 													'element' : function() 
 													{
-														var d = document.createElement( 'div' );
+														let d = document.createElement( 'div' );
 														d.className = 'PaddingSmall HContent15 FloatLeft Relative';
 														return d;
 													}()
@@ -1997,7 +1996,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										{
 											'element' : function() 
 											{
-												var d = document.createElement( 'div' );
+												let d = document.createElement( 'div' );
 												d.className = 'HRow Box Padding';
 												d.id = 'RolesInner';
 												return d;
@@ -2020,8 +2019,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									
 									ge( 'RolesInner' ).innerHTML = rstr;
 									
-									var inp = ge( 'AdminRoleContainer' ).getElementsByTagName( 'input' )[0];
-									inp.value = '';
+									let inpi = ge( 'AdminRoleContainer' ).getElementsByTagName( 'input' )[0];
+									inpi.value = '';
 									
 									if( ge( 'RolesSearchCancelBtn' ) && ge( 'RolesSearchCancelBtn' ).classList.contains( 'Open' ) )
 									{
@@ -2031,12 +2030,12 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									
 									// Search ...............
 									
-									var searchroles = function ( filter, server )
+									let searchroles = function ( filter, server )
 									{
 									
 										if( ge( 'RolesInner' ) )
 										{
-											var list = ge( 'RolesInner' ).getElementsByTagName( 'div' );
+											let list = ge( 'RolesInner' ).getElementsByTagName( 'div' );
 										
 											if( list.length > 0 )
 											{
@@ -2044,8 +2043,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
 												
-													var strong = list[a].getElementsByTagName( 'strong' )[0];
-													var span = list[a].getElementsByTagName( 'span' )[0];
+													let strong = list[a].getElementsByTagName( 'strong' )[0];
+													let span = list[a].getElementsByTagName( 'span' )[0];
 												
 													if( strong || span )
 													{
@@ -2085,34 +2084,34 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								
 									// Sort .............
 								
-									var sortroles = function ( sortby )
+									let sortroles = function ( sortby )
 									{
 									
 										//
 									
-										var _this = ge( 'RolesInner' );
+										let _this = ge( 'RolesInner' );
 									
 										if( _this )
 										{
-											var orderby = ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' );
+											let orderby = ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' );
 										
-											var list = _this.getElementsByTagName( 'div' );
+											let list = _this.getElementsByTagName( 'div' );
 										
 											if( list.length > 0 )
 											{
-												var output = [];
+												let output = [];
 											
-												var callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
+												let callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
 											
 												for( var a = 0; a < list.length; a++ )
 												{
 													if( !list[a].className || ( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) ) continue;
 												
-													var span = list[a].getElementsByTagName( 'span' )[0];
+													let span = list[a].getElementsByTagName( 'span' )[0];
 													
 													if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' )
 													{
-														var obj = { 
+														let obj = { 
 															sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
 															content : list[a]
 														};
@@ -2154,15 +2153,15 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									
 									// .................
 									
-									var inp = ge( 'AdminRoleContainer' ).getElementsByTagName( 'input' )[0];
-									inp.onkeyup = function( e )
+									let inpu = ge( 'AdminRoleContainer' ).getElementsByTagName( 'input' )[0];
+									inpu.onkeyup = function( e )
 									{
 										searchroles( this.value );
 									}
 									ge( 'RolesSearchCancelBtn' ).onclick = function( e )
 									{
 										searchroles( false );
-										inp.value = '';
+										inpu.value = '';
 									}
 									
 								}
@@ -2181,11 +2180,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							
 							appids : function ( soft )
 							{
-								var output = []; var ids = {};
+								let output = []; var ids = {};
 								
 								if( soft )
 								{
-									var i = 0;
+									let i = 0;
 									
 									for( var a in soft )
 									{
@@ -2211,11 +2210,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							
 							dockids : function ( dock )
 							{
-								var output = []; var ids = {};
+								let output = []; var ids = {};
 								
 								if( dock )
 								{
-									var i = 0;
+									let i = 0;
 									
 									for( var a in dock )
 									{
@@ -2256,7 +2255,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										
 										if( this.appids )
 										{
-											var arr = []; var i = 0; var found = false;
+											let arr = []; var i = 0; var found = false;
 											
 											for( var a in this.appids )
 											{
@@ -2266,7 +2265,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													{
 														if( value[0] )
 														{
-															var obj = { Name: value[0], DockStatus: value[1] };
+															let obj = { Name: value[0], DockStatus: value[1] };
 														}
 														
 														this.appids[a] = ( value ? obj : false ); found = true;
@@ -2287,7 +2286,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													arr.push( value[0] + '_' + value[1] );
 													
-													var obj = { Name: value[0], DockStatus: value[1] };
+													let obj = { Name: value[0], DockStatus: value[1] };
 													
 													this.appids[ i++ ] = obj; 
 												}
@@ -2302,7 +2301,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										{
 											if( value[0] )
 											{
-												var obj = { Name: value[0], DockStatus: value[1] };
+												let obj = { Name: value[0], DockStatus: value[1] };
 												
 												this.appids[0] = obj;
 											}
@@ -2319,7 +2318,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										
 										if( this.dockids )
 										{
-											var arr = []; var i = 0; var found = false;
+											let arr = []; var i = 0; var found = false;
 											
 											for( var a in this.dockids )
 											{
@@ -2369,7 +2368,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						
 								// Editing applications
 						
-								var init =
+								let init =
 								{
 							
 									func : this,
@@ -2381,8 +2380,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										
 										if( ge( 'AdminApplicationContainer' ) )
 										{
-											var inp = ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0];
-											inp.value = '';
+											let inpu = ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0];
+											inpu.value = '';
 										
 											if( ge( 'ApplicationSearchCancelBtn' ) && ge( 'ApplicationSearchCancelBtn' ).classList.contains( 'Open' ) )
 											{
@@ -2391,15 +2390,15 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											}
 										}
 										
-										var o = ge( 'ApplicationGui' ); if( o ) o.innerHTML = '<input type="hidden" id="TempApplications">';
+										let o = ge( 'ApplicationGui' ); if( o ) o.innerHTML = '<input type="hidden" id="TempApplications">';
 										
 										this.func.updateids( 'applications' );
 								
-										var divs = appendChild( [ 
+										let divs = appendChild( [ 
 											{ 
 												'element' : function() 
 												{
-													var d = document.createElement( 'div' );
+													let d = document.createElement( 'div' );
 													//d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
 													d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
 													return d;
@@ -2409,7 +2408,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													{ 
 														'element' : function( _this ) 
 														{
-															var d = document.createElement( 'div' );
+															let d = document.createElement( 'div' );
 															d.className = 'PaddingSmall HContent40 FloatLeft';
 															d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
 															d.ele = this;
@@ -2423,7 +2422,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													{ 
 														'element' : function( _this ) 
 														{
-															var d = document.createElement( 'div' );
+															let d = document.createElement( 'div' );
 															d.className = 'PaddingSmall HContent45 FloatLeft Relative';
 															d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
 															d.ele = this;
@@ -2437,7 +2436,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													{ 
 														'element' : function() 
 														{
-															var d = document.createElement( 'div' );
+															let d = document.createElement( 'div' );
 															d.className = 'PaddingSmall HContent15 FloatLeft Relative';
 															return d;
 														}()
@@ -2447,7 +2446,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											{
 												'element' : function() 
 												{
-													var d = document.createElement( 'div' );
+													let d = document.createElement( 'div' );
 													d.className = 'HRow Box Padding';
 													d.id = 'ApplicationInner';
 													return d;
@@ -2477,7 +2476,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										{
 											this.head();
 									
-											var o = ge( 'ApplicationInner' ); if( o ) o.innerHTML = '';
+											let o = ge( 'ApplicationInner' ); if( o ) o.innerHTML = '';
 									
 											if( this.ids )
 											{
@@ -2485,7 +2484,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													if( this.ids[a] && this.ids[a].Name )
 													{
-														var found = false;
+														let found = false;
 												
 														for( var k in apps )
 														{
@@ -2499,11 +2498,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														
 														if( !found ) continue;
 											
-														var divs = appendChild( [
+														let divs = appendChild( [
 															{ 
 																'element' : function() 
 																{
-																	var d = document.createElement( 'div' );
+																	let d = document.createElement( 'div' );
 																	d.className = 'HRow';
 																	return d;
 																}(),
@@ -2512,7 +2511,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																	{ 
 																		'element' : function() 
 																		{
-																			var d = document.createElement( 'div' );
+																			let d = document.createElement( 'div' );
 																			d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
 																			return d;
 																		}(),
@@ -2521,7 +2520,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																			{ 
 																				'element' : function() 
 																				{
-																					var d = document.createElement( 'span' );
+																					let d = document.createElement( 'span' );
 																					d.setAttribute( 'Name', apps[k].Name );
 																					d.setAttribute( 'Category', apps[k].Category );
 																					d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
@@ -2536,7 +2535,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																					{
 																						'element' : function() 
 																						{
-																							var d = document.createElement( 'div' );
+																							let d = document.createElement( 'div' );
 																							if( apps[k].Preview )
 																							{
 																								d.style.backgroundImage = 'url(\'' + apps[k].Preview + '\')';
@@ -2554,7 +2553,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																	{ 
 																		'element' : function() 
 																		{
-																			var d = document.createElement( 'div' );
+																			let d = document.createElement( 'div' );
 																			d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis name';
 																			d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
 																			return d;
@@ -2563,7 +2562,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																	{ 
 																		'element' : function() 
 																		{
-																			var d = document.createElement( 'div' );
+																			let d = document.createElement( 'div' );
 																			d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis category';
 																			d.innerHTML = '<span>' + apps[k].Category + '</span>';
 																			return d;
@@ -2572,7 +2571,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																	{ 
 																		'element' : function() 
 																		{
-																			var d = document.createElement( 'div' );
+																			let d = document.createElement( 'div' );
 																			d.className = 'PaddingSmall HContent15 FloatLeft';
 																			return d;
 																		}(),
@@ -2587,12 +2586,12 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																						'PERM_APPLICATION_GLOBAL',        'PERM_APPLICATION_GLOBAL' 
 																					] ) )
 																					{
-																						var b = document.createElement( 'button' );
+																						let b = document.createElement( 'button' );
 																						b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
 																						b.onclick = function(  )
 																						{
 																			
-																							var pnt = this.parentNode.parentNode;
+																							let pnt = this.parentNode.parentNode;
 																			
 																							removeBtn( this, { ids: ids, name: name, func: func, pnt: pnt }, function ( args )
 																							{
@@ -2670,13 +2669,13 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										{
 											this.head();
 									
-											var o = ge( 'ApplicationInner' ); if( o ) o.innerHTML = '';
+											let o = ge( 'ApplicationInner' ); if( o ) o.innerHTML = '';
 									
 											for( var k in apps )
 											{
 												if( apps[k] && apps[k].Name )
 												{
-													var found = false;
+													let found = false;
 													
 													if( this.ids )
 													{
@@ -2689,11 +2688,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														}
 													}
 											
-													var divs = appendChild( [
+													let divs = appendChild( [
 														{ 
 															'element' : function() 
 															{
-																var d = document.createElement( 'div' );
+																let d = document.createElement( 'div' );
 																d.className = 'HRow';
 																return d;
 															}(),
@@ -2702,7 +2701,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																{ 
 																	'element' : function() 
 																	{
-																		var d = document.createElement( 'div' );
+																		let d = document.createElement( 'div' );
 																		d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
 																		return d;;
 																	}(),
@@ -2711,7 +2710,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																		{ 
 																			'element' : function() 
 																			{
-																				var d = document.createElement( 'span' );
+																				let d = document.createElement( 'span' );
 																				d.setAttribute( 'Name', apps[k].Name );
 																				d.setAttribute( 'Category', apps[k].Category );
 																				d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
@@ -2726,7 +2725,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																				{
 																					'element' : function() 
 																					{
-																						var d = document.createElement( 'div' );
+																						let d = document.createElement( 'div' );
 																						if( apps[k].Preview )
 																						{
 																							d.style.backgroundImage = 'url(\'' + apps[k].Preview + '\')';
@@ -2744,7 +2743,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																{ 
 																	'element' : function() 
 																	{
-																		var d = document.createElement( 'div' );
+																		let d = document.createElement( 'div' );
 																		d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis name';
 																		d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
 																		return d;
@@ -2753,7 +2752,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																{ 
 																	'element' : function() 
 																	{
-																		var d = document.createElement( 'div' );
+																		let d = document.createElement( 'div' );
 																		d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis category';
 																		d.innerHTML = '<span>' + apps[k].Category + '</span>';
 																		return d;
@@ -2762,7 +2761,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																{ 
 																	'element' : function() 
 																	{
-																		var d = document.createElement( 'div' );
+																		let d = document.createElement( 'div' );
 																		d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
 																		return d;
 																	}(),
@@ -2777,7 +2776,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																					'PERM_APPLICATION_GLOBAL',        'PERM_APPLICATION_GLOBAL' 
 																				] ) )
 																				{
-																					var b = document.createElement( 'button' );
+																					let b = document.createElement( 'button' );
 																					b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' );
 																					b.onclick = function(  )
 																					{
@@ -2875,7 +2874,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										
 										if( ge( 'ApplicationInner' ) )
 										{
-											var list = ge( 'ApplicationInner' ).getElementsByTagName( 'div' );
+											let list = ge( 'ApplicationInner' ).getElementsByTagName( 'div' );
 	
 											if( list.length > 0 )
 											{
@@ -2883,11 +2882,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
 				
-													var span = list[a].getElementsByTagName( 'span' )[0];
+													let span = list[a].getElementsByTagName( 'span' )[0];
 				
 													if( span )
 													{
-														var param = [
+														let param = [
 															( " " + span.getAttribute( 'name' ).toLowerCase() + " " ), 
 															( " " + span.getAttribute( 'category' ).toLowerCase() + " " )
 														];
@@ -2899,7 +2898,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														{
 															list[a].style.display = '';
 						
-															var div = list[a].getElementsByTagName( 'div' );
+															let div = list[a].getElementsByTagName( 'div' );
 						
 															if( div.length )
 															{
@@ -2944,29 +2943,29 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 		
 										//
 		
-										var _this = ge( 'ApplicationInner' );
+										let _this = ge( 'ApplicationInner' );
 		
 										if( _this )
 										{
 											orderby = ( orderby ? orderby : ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' ) );
 											
-											var list = _this.getElementsByTagName( 'div' );
+											let list = _this.getElementsByTagName( 'div' );
 			
 											if( list.length > 0 )
 											{
-												var output = [];
+												let output = [];
 				
-												var callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
+												let callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
 				
 												for( var a = 0; a < list.length; a++ )
 												{
 													if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
 					
-													var span = list[a].getElementsByTagName( 'span' )[0];
+													let span = list[a].getElementsByTagName( 'span' )[0];
 					
 													if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' )
 													{
-														var obj = { 
+														let obj = { 
 															sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
 															content : list[a]
 														};
@@ -3059,7 +3058,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									
 									default:
 								
-										var etn = ge( 'ApplicationEdit' );
+										let etn = ge( 'ApplicationEdit' );
 										if( etn )
 										{
 											
@@ -3101,7 +3100,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											
 										}
 						
-										var btn = ge( 'ApplicationEditBack' );
+										let btn = ge( 'ApplicationEditBack' );
 										if( btn )
 										{
 											btn.onclick = function( e )
@@ -3130,15 +3129,15 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										
 										if( ge( 'AdminApplicationContainer' ) )
 										{
-											var inp = ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0];
-											inp.onkeyup = function( e )
+											let inpu = ge( 'AdminApplicationContainer' ).getElementsByTagName( 'input' )[0];
+											inpu.onkeyup = function( e )
 											{
 												init.searchapps( this.value );
 											}
 											ge( 'ApplicationSearchCancelBtn' ).onclick = function( e )
 											{
 												init.searchapps( false );
-												inp.value = '';
+												inpu.value = '';
 											}
 										}
 										
@@ -3159,7 +3158,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						
 								// Editing Dock
 						
-								var init =
+								let init =
 								{
 							
 									func : this,
@@ -3171,8 +3170,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										
 										if( ge( 'AdminDockContainer' ) )
 										{
-											var inp = ge( 'AdminDockContainer' ).getElementsByTagName( 'input' )[0];
-											inp.value = '';
+											let inpu = ge( 'AdminDockContainer' ).getElementsByTagName( 'input' )[0];
+											inpu.value = '';
 										
 											if( ge( 'DockSearchCancelBtn' ) && ge( 'DockSearchCancelBtn' ).classList.contains( 'Open' ) )
 											{
@@ -3181,15 +3180,15 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											}
 										}
 										
-										var o = ge( 'DockGui' ); if( o ) o.innerHTML = '';
+										let o = ge( 'DockGui' ); if( o ) o.innerHTML = '';
 								
 										this.func.updateids( 'dock' );
 										
-										var divs = appendChild( [ 
+										let divs = appendChild( [ 
 											{ 
 												'element' : function() 
 												{
-													var d = document.createElement( 'div' );
+													let d = document.createElement( 'div' );
 													//d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
 													d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
 													return d;
@@ -3199,7 +3198,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													{ 
 														'element' : function( _this ) 
 														{
-															var d = document.createElement( 'div' );
+															let d = document.createElement( 'div' );
 															d.className = 'PaddingSmall HContent40 FloatLeft';
 															d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
 															d.ele = this;
@@ -3213,7 +3212,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													{ 
 														'element' : function( _this ) 
 														{
-															var d = document.createElement( 'div' );
+															let d = document.createElement( 'div' );
 															d.className = 'PaddingSmall HContent25 FloatLeft Relative';
 															d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
 															d.ele = this;
@@ -3227,7 +3226,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													{ 
 														'element' : function() 
 														{
-															var d = document.createElement( 'div' );
+															let d = document.createElement( 'div' );
 															d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
 															d.innerHTML = '<strong>' + i18n( 'i18n_order' ) + '</strong>';
 															return d;
@@ -3236,7 +3235,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													{ 
 														'element' : function() 
 														{
-															var d = document.createElement( 'div' );
+															let d = document.createElement( 'div' );
 															d.className = 'PaddingSmall HContent10 FloatLeft Relative';
 															return d;
 														}()
@@ -3246,7 +3245,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											{
 												'element' : function() 
 												{
-													var d = document.createElement( 'div' );
+													let d = document.createElement( 'div' );
 													d.className = 'HRow Box Padding';
 													d.id = 'DockInner';
 													return d;
@@ -3280,7 +3279,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												'PERM_APPLICATION_GLOBAL',        'PERM_APPLICATION_GLOBAL' 
 											] ) );
 											
-											var o = ge( 'DockInner' ); if( o ) o.innerHTML = '';
+											let o = ge( 'DockInner' ); if( o ) o.innerHTML = '';
 											
 											if( this.ids )
 											{
@@ -3288,7 +3287,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													if( this.ids[a] && this.ids[a].Name )
 													{
-														var found = false;
+														let found = false;
 											
 														for( var k in apps )
 														{
@@ -3302,11 +3301,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														
 														if( !found ) continue;
 											
-														var divs = appendChild( [
+														let divs = appendChild( [
 															{ 
 																'element' : function() 
 																{
-																	var d = document.createElement( 'div' );
+																	let d = document.createElement( 'div' );
 																	d.className = 'HRow';
 																	return d;
 																}(),
@@ -3315,7 +3314,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																	{ 
 																		'element' : function() 
 																		{
-																			var d = document.createElement( 'div' );
+																			let d = document.createElement( 'div' );
 																			d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
 																			return d;
 																		}(),
@@ -3324,7 +3323,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																			{ 
 																				'element' : function() 
 																				{
-																					var d = document.createElement( 'span' );
+																					let d = document.createElement( 'span' );
 																					d.setAttribute( 'Name', apps[k].Name );
 																					d.setAttribute( 'Category', apps[k].Category );
 																					d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
@@ -3339,7 +3338,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																					{
 																						'element' : function() 
 																						{
-																							var d = document.createElement( 'div' );
+																							let d = document.createElement( 'div' );
 																							if( apps[k].Preview )
 																							{
 																								d.style.backgroundImage = 'url(\'' + apps[k].Preview + '\')';
@@ -3357,7 +3356,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																	{ 
 																		'element' : function() 
 																		{
-																			var d = document.createElement( 'div' );
+																			let d = document.createElement( 'div' );
 																			d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis name';
 																			d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
 																			return d;
@@ -3366,7 +3365,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																	{ 
 																		'element' : function() 
 																		{
-																			var d = document.createElement( 'div' );
+																			let d = document.createElement( 'div' );
 																			d.className = 'PaddingSmall HContent25 FloatLeft Ellipsis category';
 																			d.innerHTML = '<span>' + apps[k].Category + '</span>';
 																			return d;
@@ -3375,7 +3374,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																	{ 
 																		'element' : function() 
 																		{
-																			var d = document.createElement( 'div' );
+																			let d = document.createElement( 'div' );
 																			d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Ellipsis';
 																			return d;
 																		}(),
@@ -3390,7 +3389,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																						'PERM_APPLICATION_GLOBAL',        'PERM_APPLICATION_GLOBAL' 
 																					] ) )
 																					{
-																						var b = document.createElement( 'button' );
+																						let b = document.createElement( 'button' );
 																						b.className = 'IconButton IconSmall IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-down';
 																						b.onclick = function(  )
 																						{
@@ -3421,7 +3420,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																						'PERM_APPLICATION_GLOBAL',        'PERM_APPLICATION_GLOBAL' 
 																					] ) )
 																					{
-																						var b = document.createElement( 'button' );
+																						let b = document.createElement( 'button' );
 																						b.className = 'IconButton IconSmall IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-up';
 																						b.onclick = function()
 																						{
@@ -3448,7 +3447,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																	{ 
 																		'element' : function() 
 																		{
-																			var d = document.createElement( 'div' );
+																			let d = document.createElement( 'div' );
 																			d.className = 'PaddingSmall HContent10 FloatLeft';
 																			return d;
 																
@@ -3464,12 +3463,12 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																						'PERM_APPLICATION_GLOBAL',        'PERM_APPLICATION_GLOBAL' 
 																					] ) )
 																					{
-																						var b = document.createElement( 'button' );
+																						let b = document.createElement( 'button' );
 																						b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
 																						b.onclick = function(  )
 																						{
 																			
-																							var pnt = this.parentNode.parentNode;
+																							let pnt = this.parentNode.parentNode;
 																			
 																							removeBtn( this, { name: name, itemId: itemId, func: func, pnt: pnt }, function ( args )
 																							{
@@ -3532,7 +3531,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										{
 											this.head( true );
 									
-											var o = ge( 'DockInner' ); if( o ) o.innerHTML = '';
+											let o = ge( 'DockInner' ); if( o ) o.innerHTML = '';
 									
 											if( this.func.appids )
 											{
@@ -3540,7 +3539,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													if( this.func.appids[a] && this.func.appids[a].Name )
 													{
-														var found = false; var toggle = false;
+														let found = false; var toggle = false;
 												
 														for( var k in apps )
 														{
@@ -3567,11 +3566,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														
 														if( !found ) continue;
 											
-														var divs = appendChild( [
+														let divs = appendChild( [
 															{ 
 																'element' : function() 
 																{
-																	var d = document.createElement( 'div' );
+																	let d = document.createElement( 'div' );
 																	d.className = 'HRow';
 																	return d;
 																}(),
@@ -3580,7 +3579,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																	{ 
 																		'element' : function() 
 																		{
-																			var d = document.createElement( 'div' );
+																			let d = document.createElement( 'div' );
 																			d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
 																			return d;;
 																		}(),
@@ -3589,7 +3588,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																			{ 
 																				'element' : function() 
 																				{
-																					var d = document.createElement( 'span' );
+																					let d = document.createElement( 'span' );
 																					d.setAttribute( 'Name', apps[k].Name );
 																					d.setAttribute( 'Category', apps[k].Category );
 																					d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
@@ -3604,7 +3603,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																					{
 																						'element' : function() 
 																						{
-																							var d = document.createElement( 'div' );
+																							let d = document.createElement( 'div' );
 																							if( apps[k].Preview )
 																							{
 																								d.style.backgroundImage = 'url(\'' + apps[k].Preview + '\')';
@@ -3622,7 +3621,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																	{ 
 																		'element' : function() 
 																		{
-																			var d = document.createElement( 'div' );
+																			let d = document.createElement( 'div' );
 																			d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis name';
 																			d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
 																			return d;
@@ -3631,7 +3630,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																	{ 
 																		'element' : function() 
 																		{
-																			var d = document.createElement( 'div' );
+																			let d = document.createElement( 'div' );
 																			d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis category';
 																			d.innerHTML = '<span>' + apps[k].Category + '</span>';
 																			return d;
@@ -3640,7 +3639,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																	{ 
 																		'element' : function() 
 																		{
-																			var d = document.createElement( 'div' );
+																			let d = document.createElement( 'div' );
 																			d.className = 'PaddingSmall HContent15 FloatLeft Ellipsis';
 																			return d;
 																		}(),
@@ -3655,7 +3654,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																						'PERM_APPLICATION_GLOBAL',        'PERM_APPLICATION_GLOBAL' 
 																					] ) )
 																					{
-																						var b = document.createElement( 'button' );
+																						let b = document.createElement( 'button' );
 																						b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( toggle ? 'on' : 'off' );
 																						b.onclick = function(  )
 																						{
@@ -3735,7 +3734,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										
 										if( ge( 'DockInner' ) )
 										{
-											var list = ge( 'DockInner' ).getElementsByTagName( 'div' );
+											let list = ge( 'DockInner' ).getElementsByTagName( 'div' );
 	
 											if( list.length > 0 )
 											{
@@ -3743,11 +3742,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
 				
-													var span = list[a].getElementsByTagName( 'span' )[0];
+													let span = list[a].getElementsByTagName( 'span' )[0];
 				
 													if( span )
 													{
-														var param = [
+														let param = [
 															( " " + span.getAttribute( 'name' ).toLowerCase() + " " ), 
 															( " " + span.getAttribute( 'category' ).toLowerCase() + " " )
 														];
@@ -3759,7 +3758,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														{
 															list[a].style.display = '';
 						
-															var div = list[a].getElementsByTagName( 'div' );
+															let div = list[a].getElementsByTagName( 'div' );
 						
 															if( div.length )
 															{
@@ -3804,29 +3803,29 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 		
 										//
 		
-										var _this = ge( 'DockInner' );
+										let _this = ge( 'DockInner' );
 		
 										if( _this )
 										{
 											orderby = ( orderby ? orderby : ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' ) );
 											
-											var list = _this.getElementsByTagName( 'div' );
+											let list = _this.getElementsByTagName( 'div' );
 			
 											if( list.length > 0 )
 											{
-												var output = [];
+												let output = [];
 				
-												var callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
+												let callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
 				
 												for( var a = 0; a < list.length; a++ )
 												{
 													if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
 					
-													var span = list[a].getElementsByTagName( 'span' )[0];
+													let span = list[a].getElementsByTagName( 'span' )[0];
 					
 													if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' )
 													{
-														var obj = { 
+														let obj = { 
 															sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
 															content : list[a]
 														};
@@ -3893,9 +3892,9 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									sortup : function ( order, callback, vars )
 									{
 										
-										var num = 0; var array = []; var found = null;
+										let num = 0; var array = []; var found = null;
 										
-										var current = false; var past = false;
+										let current = false; var past = false;
 										
 										if( this.ids && typeof order !== "undefined" )
 										{
@@ -3927,8 +3926,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											
 													if( typeof this.ids[ array[ found ] ] !== "undefined" && typeof this.ids[ array[ found-1 ] ] !== "undefined" )
 													{
-														var current = this.ids[ array[ found   ] ];
-														var past    = this.ids[ array[ found-1 ] ];
+														let current = this.ids[ array[ found   ] ];
+														let past    = this.ids[ array[ found-1 ] ];
 												
 														if( current && past )
 														{
@@ -3960,9 +3959,9 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									sortdown : function ( order, callback, vars )
 									{
 																		
-										var num = 0; var array = []; var found = null;
+										let num = 0; var array = []; var found = null;
 										
-										var current = false; var past = false;
+										let current = false; var past = false;
 										
 										if( this.ids && typeof order !== "undefined" )
 										{
@@ -3992,8 +3991,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											
 													if( typeof this.ids[ array[ found ] ] !== "undefined" && typeof this.ids[ array[ found+1 ] ] !== "undefined" )
 													{
-														var current = this.ids[ array[ found   ] ];
-														var past    = this.ids[ array[ found+1 ] ];
+														let current = this.ids[ array[ found   ] ];
+														let past    = this.ids[ array[ found+1 ] ];
 														
 														if( current && past )
 														{
@@ -4053,7 +4052,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							
 									default:
 								
-										var etn = ge( 'DockEdit' );
+										let etn = ge( 'DockEdit' );
 										if( etn )
 										{
 											
@@ -4095,7 +4094,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											
 										}
 						
-										var btn = ge( 'DockEditBack' );
+										let btn = ge( 'DockEditBack' );
 										if( btn )
 										{
 											btn.onclick = function( e )
@@ -4124,15 +4123,15 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										
 										if( ge( 'AdminDockContainer' ) )
 										{
-											var inp = ge( 'AdminDockContainer' ).getElementsByTagName( 'input' )[0];
-											inp.onkeyup = function( e )
+											let inpu = ge( 'AdminDockContainer' ).getElementsByTagName( 'input' )[0];
+											inpu.onkeyup = function( e )
 											{
 												init.searchdock( this.value );
 											}
 											ge( 'DockSearchCancelBtn' ).onclick = function( e )
 											{
 												init.searchdock( false );
-												inp.value = '';
+												inpu.value = '';
 											}
 										}
 										
@@ -4150,19 +4149,19 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							{
 								// Theme ---------------------------------------------------
 								
-								var currTheme = ( settings.Theme ? settings.Theme : 'friendup12' );
+								let currTheme = ( settings.Theme ? settings.Theme : 'friendup12' );
 								
 								themeConfig = {  };
 								
 								if( ge( 'theme_style_select' ) )
 								{
-									var s = ge( 'theme_style_select' );
+									let s = ge( 'theme_style_select' );
 									
 									if( themeData.buttonSchemeText )
 									{
-										var opt = { 'mac' : 'Mac style', 'windows' : 'Windows style' };
+										let opt = { 'mac' : 'Mac style', 'windows' : 'Windows style' };
 										
-										var str = '';
+										let str = '';
 										
 										for( var k in opt )
 										{
@@ -4188,7 +4187,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											
 											themeConfig.buttonSchemeText = this.value;
 										
-											var m = new Module( 'system' );
+											let m = new Module( 'system' );
 											m.s = this;
 											m.onExecuted = function( e, d )
 											{
@@ -4221,7 +4220,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								
 								if( ge( 'theme_dark_button' ) )
 								{
-									var b = ge( 'theme_dark_button' );
+									let b = ge( 'theme_dark_button' );
 									
 									if( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' )
 									{
@@ -4257,7 +4256,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												themeConfig.colorSchemeText = 'light';
 											}
 										
-											var m = new Module( 'system' );
+											let m = new Module( 'system' );
 											m.b = this;
 											m.onExecuted = function( e, d )
 											{
@@ -4307,7 +4306,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								
 								if( ge( 'workspace_count_input' ) )
 								{
-									var i = ge( 'workspace_count_input' );
+									let i = ge( 'workspace_count_input' );
 									i.value = ( workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1' );
 									i.current = i.value;
 									
@@ -4322,7 +4321,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										{
 											if( this.value >= 1 )
 											{
-												var m = new Module( 'system' );
+												let m = new Module( 'system' );
 												m.i = this;
 												m.onExecuted = function( e, d )
 												{
@@ -4338,7 +4337,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												
 												}
 											
-												var setData = { 
+												let setData = { 
 													setting : 'workspacecount', 
 													data    : this.value, 
 													userid  : userInfo.ID, 
@@ -4371,11 +4370,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									] ) )
 									{
 										
-										var b = ge( 'wallpaper_button_inner' );
+										let b = ge( 'wallpaper_button_inner' );
 										b.onclick = function(  )
 										{
 										
-											var flags = {
+											let flags = {
 												type: 'load',
 												path: 'Home:',
 												suffix: [ 'jpg', 'jpeg', 'png', 'gif' ],
@@ -4384,11 +4383,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													if( item && item.length && item[ 0 ].Path )
 													{
 														
-														var m = new Module( 'system' );
+														let m = new Module( 'system' );
 														m.onExecuted = function( e, d )
 														{
 															
-															var data = false;
+															let data = false;
 														
 															try
 															{
@@ -4400,14 +4399,14 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 															{
 															
 																// Load the image
-																var image = new Image();
+																let image = new Image();
 																image.onload = function()
 																{
 																	// Resizes the image
-																	var canvas = ge( 'AdminWallpaper' );
+																	let canvas = ge( 'AdminWallpaper' );
 																	if( canvas )
 																	{
-																		var context = canvas.getContext( '2d' );
+																		let context = canvas.getContext( '2d' );
 																		context.drawImage( image, 0, 0, 256, 256 );
 																
 																		if( data )
@@ -4459,16 +4458,16 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									
 									if( workspaceSettings.wallpaperdoors )
 									{
-										var img = ( workspaceSettings.wallpaperdoors ? '/system.library/module/?module=system&command=thumbnail&width=568&height=320&mode=resize&userid='+userInfo.ID+'&authid='+Application.authId+'&path='+workspaceSettings.wallpaperdoors : '' );
+										let img = ( workspaceSettings.wallpaperdoors ? '/system.library/module/?module=system&command=thumbnail&width=568&height=320&mode=resize&userid='+userInfo.ID+'&authid='+Application.authId+'&path='+workspaceSettings.wallpaperdoors : '' );
 										
 										// Only update the wallaper if it exists..
-										var avSrc = new Image();
+										let avSrc = new Image();
 										avSrc.src = ( workspaceSettings.wallpaperdoors ? img : '/webclient/gfx/theme/default_login_screen.jpg' );
 										avSrc.onload = function()
 										{
 											if( ge( 'AdminWallpaper' ) )
 											{
-												var ctx = ge( 'AdminWallpaper' ).getContext( '2d' );
+												let ctx = ge( 'AdminWallpaper' ).getContext( '2d' );
 												ctx.drawImage( avSrc, 0, 0, 256, 256 );
 											}
 										}
@@ -4478,7 +4477,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									{
 										if( !ge( 'AdminWallpaperDeleteBtn' ) )
 										{
-											var del = document.createElement( 'button' );
+											let del = document.createElement( 'button' );
 											del.id = 'AdminWallpaperDeleteBtn';
 											del.className = 'IconButton IconSmall ButtonSmall Negative FloatRight fa-remove';
 											del.onclick = function( e )
@@ -4638,7 +4637,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 					{
 						func.init();
 						
-						var theme = {
+						let theme = {
 							
 							dark : function ()
 							{
@@ -4650,9 +4649,9 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							controls : function ()
 							{
 								
-								var opt = { 'mac' : 'Mac style', 'windows' : 'Windows style' };
+								let opt = { 'mac' : 'Mac style', 'windows' : 'Windows style' };
 								
-								var str = '<select class="InputHeight FullWidth" id="theme_style_select">';
+								let str = '<select class="InputHeight FullWidth" id="theme_style_select">';
 								
 								for( var k in opt )
 								{
@@ -4682,7 +4681,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						
 						
 						// Get the user details template
-						var d = new File( 'Progdir:Templates/account_users_details.html' );
+						let d = new File( 'Progdir:Templates/account_users_details.html' );
 						
 						// Add all data for the template
 						d.replacements = {
@@ -4742,10 +4741,10 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 			// Run it all in the same time, except the first ...
 			
 			// Go through all data gathering until stop
-			var loadingSlot = 0;
-			var loadingInfo = {};
-			var loadingBoxs = [ 'workgroup', 'role', 'storage', 'dock', 'application', 'looknfeel' ];
-			var loadingList = [
+			let loadingSlot = 0;
+			let loadingInfo = {};
+			let loadingBoxs = [ 'workgroup', 'role', 'storage', 'dock', 'application', 'looknfeel' ];
+			let loadingList = [
 				
 				// 0 | Load userinfo
 				function(  )
@@ -4760,12 +4759,12 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 						ge( 'UserDetails' ).innerHTML = '';
 					}
 					
-					var u = new Module( 'system' );
+					let u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
 						
 						if( e != 'ok' ) return;
-						var userInfo = null;
+						let userInfo = null;
 						try
 						{
 							userInfo = JSON.parse( d );
@@ -4807,11 +4806,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 				function(  )
 				{
 					
-					var u = new Module( 'system' );
+					let u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
 						
-						var wgroups = null;
+						let wgroups = null;
 						try
 						{
 							wgroups = JSON.parse( d );
@@ -4848,10 +4847,10 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 				function(  )
 				{
 					
-					var u = new Module( 'system' );
+					let u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
-						var uroles = null;
+						let uroles = null;
 						
 						if( e == 'ok' )
 						{
@@ -4892,10 +4891,10 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 				function(  )
 				{
 					
-					var u = new Module( 'system' );
+					let u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
-						var rows = null;
+						let rows = null;
 						try
 						{
 							rows = JSON.parse( d );
@@ -5049,11 +5048,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 				function(  )
 				{
 					
-					var u = new Module( 'system' );
+					let u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
 						
-						var settings = null;
+						let settings = null;
 						try
 						{
 							settings = JSON.parse( d );
@@ -5093,11 +5092,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 					if( loadingInfo.settings && loadingInfo.settings.Theme )
 					{
 						
-						var u = new Module( 'system' );
+						let u = new Module( 'system' );
 						u.onExecuted = function( e, d )
 						{
 							
-							var workspacesettings = null;
+							let workspacesettings = null;
 						
 							try
 							{
@@ -5169,8 +5168,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 		}
 	}
 	
-	var checkedGlobal = Application.checkAppPermission( [ 'PERM_USER_READ_GLOBAL', 'PERM_USER_GLOBAL' ] );
-	var checkedWorkgr = Application.checkAppPermission( [ 'PERM_USER_READ_IN_WORKGROUP', 'PERM_USER_WORKGROUP' ] );
+	let checkedGlobal = Application.checkAppPermission( [ 'PERM_USER_READ_GLOBAL', 'PERM_USER_GLOBAL' ] );
+	let checkedWorkgr = Application.checkAppPermission( [ 'PERM_USER_READ_IN_WORKGROUP', 'PERM_USER_WORKGROUP' ] );
 	
 	
 	
@@ -5252,7 +5251,6 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 													this.myArray.imageObj = this;
 												};
 												iii.src = src;
-												//myArray[ s ].imageObj = iii;
 											}
 											// From cache
 											else
@@ -5264,10 +5262,9 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												else
 												{
 													let canvas = document.createElement( 'canvas' );
-													var ctx = canvas.getContext( '2d' );
+													let ctx = canvas.getContext( '2d' );
 													canvas.width = 16;
 													canvas.height = 16;
-													//ctx.drawImage( myArray[ s ].imageObj, 0, 0 );
 													ctx.drawImage( myArray[ s ].imageObj, 0, 0, 16, 16 );
 													src = canvas.toDataURL( 'image/png' );
 													myArray[ s ].imageObj.blob = src;
@@ -5283,7 +5280,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												Logintime : ( myArray[s][ 'LoginTime' ] != 0 && myArray[s][ 'LoginTime' ] != null ? CustomDateTime( myArray[s][ 'LoginTime' ] ) : login[ 0 ] )
 											};
 											
-											var bg = 'background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;background-image: url(\'' + src + '\')';
+											let bg = 'background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;background-image: url(\'' + src + '\')';
 											
 											str += '<div class="TextCenter HContent10 FloatLeft PaddingSmall Ellipsis edit">';
 											str += '	<span id="UserAvatar_'+obj.ID+'" fullname="'+obj.FullName+'" status="'+obj.Status+'" logintime="'+obj.Logintime+'" timestamp="'+obj.Timestamp+'" class="IconSmall fa-user-circle-o avatar" style="position: relative;">';
@@ -5469,10 +5466,10 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 	}
 	else
 	{
-		var o = ge( 'UserList' );
+		let o = ge( 'UserList' );
 		if( o ) o.innerHTML = '';
 		
-		var h3 = document.createElement( 'h3' );
+		let h3 = document.createElement( 'h3' );
 		h3.innerHTML = '<strong>{i18n_permission_denied}</strong>';
 		o.appendChild( h3 );
 	}
@@ -5493,7 +5490,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 function initUserlist( userList  )
 {
 	
-	var o = ge( 'UserList' );
+	let o = ge( 'UserList' );
 					
 	if( !ge( 'ListUsersInner' ) )
 	{
@@ -5502,15 +5499,15 @@ function initUserlist( userList  )
 	
 	if( !ge( 'ListUsersInner' ) )
 	{								
-		var str = '';
+		let str = '';
 		
 		// Temporary ...
 		
-		var divs = appendChild( [ 
+		let divs = appendChild( [ 
 			{ 
 				'element' : function() 
 				{
-					var d = document.createElement( 'div' );
+					let d = document.createElement( 'div' );
 					d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingTop PaddingRight';
 					return d;
 				}(),
@@ -5519,7 +5516,7 @@ function initUserlist( userList  )
 					{ 
 						'element' : function() 
 						{
-							var d = document.createElement( 'div' );
+							let d = document.createElement( 'div' );
 							d.className = 'HContent20 FloatLeft';
 							d.innerHTML = '<h3><strong>Users </strong><span id="AdminUsersCount">(' + userList['Count'] + ')</span></h3>';
 							return d;
@@ -5528,7 +5525,7 @@ function initUserlist( userList  )
 					{ 
 						'element' : function() 
 						{
-							var d = document.createElement( 'div' );
+							let d = document.createElement( 'div' );
 							d.className = 'HContent70 FloatLeft Relative';
 							return d;
 						}(),
@@ -5537,14 +5534,14 @@ function initUserlist( userList  )
 							{ 
 								'element' : function() 
 								{
-									var inp = document.createElement( 'input' );
-									inp.className = 'FullWidth';
-									inp.type = 'text';
-									inp.onkeyup = function(  )
+									let inpu = document.createElement( 'input' );
+									inpu.className = 'FullWidth';
+									inpu.type = 'text';
+									inpu.onkeyup = function(  )
 									{
 										searchServer( this.value );
 									};
-									return inp;
+									return inpu;
 								}()
 							}
 						]
@@ -5552,7 +5549,7 @@ function initUserlist( userList  )
 					{ 
 						'element' : function() 
 						{
-							var d = document.createElement( 'div' );
+							let d = document.createElement( 'div' );
 							d.className = 'HContent10 FloatLeft TextRight InActive';
 							return d;
 						}(),
@@ -5561,7 +5558,7 @@ function initUserlist( userList  )
 							{
 								'element' : function() 
 								{
-									var btn = document.createElement( 'button' );
+									let btn = document.createElement( 'button' );
 									btn.className = 'IconButton IconSmall Negative fa-bars';
 									btn.id = 'AdminUsersBtn';
 									btn.onclick = function(  )
@@ -5574,7 +5571,7 @@ function initUserlist( userList  )
 							{
 								'element' : function() 
 								{
-									var d = document.createElement( 'div' );
+									let d = document.createElement( 'div' );
 									d.className = 'submenu_wrapper';
 									return d;
 								}(),
@@ -5583,7 +5580,7 @@ function initUserlist( userList  )
 									{
 										'element' : function() 
 										{
-											var ul = document.createElement( 'ul' );
+											let ul = document.createElement( 'ul' );
 											ul.className = 'Positive';
 											ul.id = 'AdminUsersSubMenu';
 											return ul;
@@ -5593,7 +5590,7 @@ function initUserlist( userList  )
 											{
 												'element' : function() 
 												{
-													var li = document.createElement( 'li' );
+													let li = document.createElement( 'li' );
 													li.innerHTML = i18n( 'i18n_new_user' );
 													li.onclick = function(  )
 													{
@@ -5605,7 +5602,7 @@ function initUserlist( userList  )
 											{
 												'element' : function() 
 												{
-													var li = document.createElement( 'li' );
+													let li = document.createElement( 'li' );
 													li.className = 'show';
 													li.innerHTML = i18n( 'i18n_show_disabled_users' );
 													li.onclick = function(  )
@@ -5631,7 +5628,7 @@ function initUserlist( userList  )
 											{
 												'element' : function() 
 												{
-													var li = document.createElement( 'li' );
+													let li = document.createElement( 'li' );
 													li.className = 'hide';
 													li.innerHTML = i18n( 'i18n_hide_locked_users' );
 													li.onclick = function(  )
@@ -5665,7 +5662,7 @@ function initUserlist( userList  )
 			{
 				'element' : function() 
 				{
-					var d = document.createElement( 'div' );
+					let d = document.createElement( 'div' );
 					d.className = 'List';
 					return d;
 				}(),
@@ -5674,7 +5671,7 @@ function initUserlist( userList  )
 					{
 						'element' : function() 
 						{
-							var d = document.createElement( 'div' );
+							let d = document.createElement( 'div' );
 							d.className = 'HRow BackgroundNegative Negative PaddingTop PaddingBottom';
 							return d;
 						}(),
@@ -5683,7 +5680,7 @@ function initUserlist( userList  )
 							{
 								'element' : function() 
 								{
-									var d = document.createElement( 'div' );
+									let d = document.createElement( 'div' );
 									d.className = 'PaddingSmallLeft PaddingSmallRight HContent10 FloatLeft Ellipsis';
 									d.innerHTML = '<strong>&nbsp;</strong>';
 									return d;
@@ -5692,7 +5689,7 @@ function initUserlist( userList  )
 							{
 								'element' : function() 
 								{
-									var d = document.createElement( 'div' );
+									let d = document.createElement( 'div' );
 									d.className = 'PaddingSmallLeft PaddingSmallRight HContent30 FloatLeft Ellipsis';
 									return d;
 								}(),
@@ -5701,7 +5698,7 @@ function initUserlist( userList  )
 									{
 										'element' : function() 
 										{
-											var b = document.createElement( 'strong' );
+											let b = document.createElement( 'strong' );
 											b.innerHTML = i18n( 'i18n_header_FullName' );
 											b.onclick = function()
 											{
@@ -5715,7 +5712,7 @@ function initUserlist( userList  )
 							{
 								'element' : function() 
 								{
-									var d = document.createElement( 'div' );
+									let d = document.createElement( 'div' );
 									d.className = 'PaddingSmallLeft PaddingSmallRight HContent25 FloatLeft Ellipsis';
 									return d;
 								}(),
@@ -5724,7 +5721,7 @@ function initUserlist( userList  )
 									{
 										'element' : function() 
 										{
-											var b = document.createElement( 'strong' );
+											let b = document.createElement( 'strong' );
 											b.innerHTML = i18n( 'i18n_header_Name' );
 											b.onclick = function()
 											{
@@ -5738,7 +5735,7 @@ function initUserlist( userList  )
 							{
 								'element' : function() 
 								{
-									var d = document.createElement( 'div' );
+									let d = document.createElement( 'div' );
 									d.className = 'PaddingSmallLeft PaddingSmallRight HContent15 FloatLeft Ellipsis';
 									return d;
 								}(),
@@ -5747,7 +5744,7 @@ function initUserlist( userList  )
 									{
 										'element' : function() 
 										{
-											var b = document.createElement( 'strong' );
+											let b = document.createElement( 'strong' );
 											b.innerHTML = i18n( 'i18n_header_Status' );
 											b.onclick = function()
 											{
@@ -5761,7 +5758,7 @@ function initUserlist( userList  )
 							{
 								'element' : function() 
 								{
-									var d = document.createElement( 'div' );
+									let d = document.createElement( 'div' );
 									d.className = 'PaddingSmallLeft PaddingSmallRight HContent20 FloatLeft Ellipsis';
 									return d;
 								}(),
@@ -5770,7 +5767,7 @@ function initUserlist( userList  )
 									{
 										'element' : function() 
 										{
-											var b = document.createElement( 'strong' );
+											let b = document.createElement( 'strong' );
 											b.innerHTML = i18n( 'i18n_header_LoginTime' );
 											b.onclick = function()
 											{
@@ -5788,7 +5785,7 @@ function initUserlist( userList  )
 			{
 				'element' : function() 
 				{
-					var d = document.createElement( 'div' );
+					let d = document.createElement( 'div' );
 					d.style = 'position:relative;height:calc(100% - 77px);';
 					d.id = 'ListUsersWrapper';
 					return d;
@@ -5798,7 +5795,7 @@ function initUserlist( userList  )
 					{
 						'element' : function() 
 						{
-							var d = document.createElement( 'div' );
+							let d = document.createElement( 'div' );
 							d.className = 'ScrollArea HContentLeft VContent100 HContent100';
 							return d;
 						}(),
@@ -5807,7 +5804,7 @@ function initUserlist( userList  )
 							{
 								'element' : function() 
 								{
-									var d = document.createElement( 'div' );
+									let d = document.createElement( 'div' );
 									d.className = 'List FullName ASC';
 									d.id = 'ListUsersInner';
 									d.setAttribute( 'sortby', 'FullName' );
@@ -5847,16 +5844,16 @@ function getStorageInfo( path, id, args, callback )
 
 	if( path && id && callback )
 	{
-		var m = new Module( 'system' );
+		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			var json = null;
+			let json = null;
 		
 			if( d )
 			{
 				try
 				{
-					var json = JSON.parse( d );
+					let json = JSON.parse( d );
 				} 
 				catch( e ){ }
 			}
@@ -5899,14 +5896,14 @@ function applications( callback, id )
 	{
 		if( id )
 		{
-			var m = new Module( 'system' );
+			let m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{
 				if( e == 'ok' && d )
 				{
 					try
 					{
-						var json = JSON.parse( d );
+						let json = JSON.parse( d );
 				
 						if( json )
 						{
@@ -5926,14 +5923,14 @@ function applications( callback, id )
 		}
 		else
 		{
-			var m = new Module( 'system' );
+			let m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{
 				if( e == 'ok' && d )
 				{
 					try
 					{
-						var json = JSON.parse( d );
+						let json = JSON.parse( d );
 				
 						if( json )
 						{
@@ -5961,10 +5958,10 @@ function applications( callback, id )
 
 function getDockItems( callback, userId )
 {
-	var m = new Module( 'dock' );
+	let m = new Module( 'dock' );
 	m.onExecuted = function( e, d )
 	{
-		var data = false;
+		let data = false;
 											
 		try
 		{
@@ -5990,14 +5987,14 @@ function getDockItems( callback, userId )
 
 function getSetupList( callback )
 {
-	var m = new Module( 'system' );
+	let m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
 		if( e != 'ok' )
 		{
 			if( callback ) return callback( false );
 		}
-		var rows = '';
+		let rows = '';
 		try
 		{
 			rows = JSON.parse( d );
@@ -6013,10 +6010,10 @@ function randomAvatar( fullname, callback )
 {
 	if( fullname )
 	{
-		var u = new Module( 'system' );
+		let u = new Module( 'system' );
 		u.onExecuted = function( e, d )
 		{
-			var out = null;
+			let out = null;
 			try
 			{
 				out = JSON.parse( d );
@@ -6035,7 +6032,7 @@ function randomAvatar( fullname, callback )
 function NewUser( _this )
 {
 	// Language
-	var availLangs = {
+	let availLangs = {
 		'en' : 'English',
 		'fr' : 'French',
 		'no' : 'Norwegian',
@@ -6043,7 +6040,7 @@ function NewUser( _this )
 		'pl' : 'Polish'
 	};
 	
-	var languages = '';
+	let languages = '';
 	
 	for( var a in availLangs )
 	{
@@ -6055,7 +6052,7 @@ function NewUser( _this )
 	getSetupList( function( e, data )
 	{
 		
-		var setup = '<option value="0">None</option>';
+		let setup = '<option value="0">None</option>';
 		
 		if( e && data )
 		{
@@ -6068,7 +6065,7 @@ function NewUser( _this )
 			}
 		}
 		
-		var d = new File( 'Progdir:Templates/account_users_details.html' );
+		let d = new File( 'Progdir:Templates/account_users_details.html' );
 		// Add all data for the template
 		d.replacements = {
 			user_name            : i18n( 'i18n_new_user' ),
@@ -6111,7 +6108,7 @@ function NewUser( _this )
 			
 			// User
 			
-			var bg1  = ge( 'UserSaveBtn' );
+			let bg1  = ge( 'UserSaveBtn' );
 			if( bg1 )
 			{
 				if( Application.checkAppPermission( [ 
@@ -6177,12 +6174,12 @@ function NewUser( _this )
 					bg1.style.display = 'none';
 				}
 			}
-			var bg2  = ge( 'UserCancelBtn' );
+			let bg2  = ge( 'UserCancelBtn' );
 			if( bg2 ) bg2.onclick = function( e )
 			{
 				cancelUser(  );
 			}
-			var bg3  = ge( 'UserBackBtn' );
+			let bg3  = ge( 'UserBackBtn' );
 			if( !isMobile ) 
 			{
 				if( bg3 ) bg3.style.display = 'none';
@@ -6202,7 +6199,7 @@ function NewUser( _this )
 			
 			if( ge( 'UserBasicDetails' ) )
 			{
-				var inps = ge( 'UserBasicDetails' ).getElementsByTagName( 'input' );
+				let inps = ge( 'UserBasicDetails' ).getElementsByTagName( 'input' );
 				if( inps.length > 0 )
 				{
 					for( var a = 0; a < inps.length; a++ )
@@ -6246,7 +6243,7 @@ function NewUser( _this )
 			
 			// Avatar 
 		
-			var ae = ge( 'AdminAvatarEdit' );
+			let ae = ge( 'AdminAvatarEdit' );
 			if( ae )
 			{
 				if( Application.checkAppPermission( [ 
@@ -6266,7 +6263,7 @@ function NewUser( _this )
 				}
 			}
 		
-			var au = ge( 'usFullname' );
+			let au = ge( 'usFullname' );
 			if( au ) au.onblur = function( e )
 			{
 				if( this.value && this.value != this.fullname )
@@ -6274,7 +6271,7 @@ function NewUser( _this )
 				
 					randomAvatar( this.value, function( avatar ) 
 					{
-						var canvas = 0;
+						let canvas = 0;
 						
 						try
 						{
@@ -6285,13 +6282,13 @@ function NewUser( _this )
 						if( ge( 'AdminAvatar' ) && avatar && ( ( canvas && canvas.length <= 15000 ) || !canvas ) )
 						{
 							// Only update the avatar if it exists..
-							var avSrc = new Image();
+							let avSrc = new Image();
 							avSrc.src = avatar;
 							avSrc.onload = function()
 							{
 								if( ge( 'AdminAvatar' ) )
 								{
-									var ctx = ge( 'AdminAvatar' ).getContext( '2d' );
+									let ctx = ge( 'AdminAvatar' ).getContext( '2d' );
 									ctx.drawImage( avSrc, 0, 0, 256, 256 );
 								}
 							}
@@ -6317,7 +6314,7 @@ function NewUser( _this )
 					
 					// Specific for Pawel's code ... He just wants to forward json ...
 					
-					var args = JSON.stringify( {
+					let args = JSON.stringify( {
 						'type'    : 'read', 
 						'context' : 'application', 
 						'authid'  : Application.authId, 
@@ -6332,11 +6329,11 @@ function NewUser( _this )
 						'listdetails' : 'workgroup' 
 					} );
 					
-					var f = new Library( 'system.library' );
+					let f = new Library( 'system.library' );
 					f.onExecuted = function( e, d )
 					{
 						
-						var wgroups = null; var workgroups = null;
+						let wgroups = null; var workgroups = null;
 						
 						try
 						{
@@ -6360,7 +6357,7 @@ function NewUser( _this )
 						
 						if( wgroups && workgroups )
 						{
-							var out = [];
+							let out = [];
 							
 							for( var a in workgroups )
 							{
@@ -6382,11 +6379,11 @@ function NewUser( _this )
 				else
 				{
 					
-					var u = new Module( 'system' );
+					let u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
 				
-						var userInfo = null;
+						let userInfo = null;
 				
 						try
 						{
@@ -6397,7 +6394,7 @@ function NewUser( _this )
 							userInfo = null;
 						}
 						
-						var workgroups = userInfo.Workgroup;
+						let workgroups = userInfo.Workgroup;
 						
 						if( ShowLog ) console.log( 'userinfo ', { e:e, d:(userInfo?userInfo:d) } );
 						
@@ -6427,16 +6424,16 @@ function NewUser( _this )
 				if( workgroups )
 				{
 					
-					var adminlevel = Application.checkAppPermission( [ 'PERM_WORKGROUP_READ_GLOBAL', 'PERM_USER_READ_GLOBAL', 'PERM_WORKGROUP_GLOBAL', 'PERM_USER_GLOBAL' ] );
-					var userlevel  = Application.checkAppPermission( [ 'PERM_WORKGROUP_READ_IN_WORKGROUP', 'PERM_USER_READ_IN_WORKGROUP', 'PERM_WORKGROUP_WORKGROUP', 'PERM_USER_WORKGROUP' ] );
+					let adminlevel = Application.checkAppPermission( [ 'PERM_WORKGROUP_READ_GLOBAL', 'PERM_USER_READ_GLOBAL', 'PERM_WORKGROUP_GLOBAL', 'PERM_USER_GLOBAL' ] );
+					let userlevel  = Application.checkAppPermission( [ 'PERM_WORKGROUP_READ_IN_WORKGROUP', 'PERM_USER_READ_IN_WORKGROUP', 'PERM_WORKGROUP_WORKGROUP', 'PERM_USER_WORKGROUP' ] );
 					
-					var wgroups = false;
+					let wgroups = false;
 					
 					if( ShowLog ) console.log( 'userlevel ', { adminlevel: adminlevel, userlevel: userlevel } );
 					
 					if( !adminlevel && userlevel )
 					{
-						var wgroups = {};
+						let wgroups = {};
 						
 						//console.log( 'userlevel ', userlevel );
 						
@@ -6450,7 +6447,7 @@ function NewUser( _this )
 						
 					}
 					
-					var unsorted = {};
+					let unsorted = {};
 		
 					for( var i in workgroups )
 					{
@@ -6495,14 +6492,14 @@ function NewUser( _this )
 					//console.log( groups );
 				}
 				
-				var str = '';
+				let str = '';
 				
 				if( groups )
 				{
 				
 					for( var a in groups )
 					{
-						var found = false;
+						let found = false;
 						
 						str += '<div>';
 						
@@ -6521,7 +6518,7 @@ function NewUser( _this )
 						
 							for( var aa in groups[a].groups )
 							{
-								var found = false;
+								let found = false;
 								
 								str += '<div class="HRow">\
 									<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
@@ -6538,7 +6535,7 @@ function NewUser( _this )
 								
 									for( var aaa in groups[a].groups[aa].groups )
 									{
-										var found = false;
+										let found = false;
 										
 										str += '<div class="HRow">\
 											<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
@@ -6572,13 +6569,13 @@ function NewUser( _this )
 				
 				
 				
-				var o = ge( 'WorkgroupGui' ); if( o ) o.innerHTML = '';
+				let o = ge( 'WorkgroupGui' ); if( o ) o.innerHTML = '';
 				
-				var divs = appendChild( [ 
+				let divs = appendChild( [ 
 					{ 
 						'element' : function() 
 						{
-							var d = document.createElement( 'div' );
+							let d = document.createElement( 'div' );
 							d.className = 'HRow BackgroundNegative Negative PaddingLeft PaddingBottom PaddingRight';
 							return d;
 						}(),
@@ -6587,7 +6584,7 @@ function NewUser( _this )
 							{ 
 								'element' : function(  ) 
 								{
-									var d = document.createElement( 'div' );
+									let d = document.createElement( 'div' );
 									d.className = 'PaddingSmall HContent40 FloatLeft';
 									d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
 									d.ele = this;
@@ -6601,7 +6598,7 @@ function NewUser( _this )
 							{ 
 								'element' : function( _this ) 
 								{
-									var d = document.createElement( 'div' );
+									let d = document.createElement( 'div' );
 									d.className = 'PaddingSmall HContent45 FloatLeft Relative';
 									d.innerHTML = '<strong></strong>';
 									return d;
@@ -6610,7 +6607,7 @@ function NewUser( _this )
 							{ 
 								'element' : function() 
 								{
-									var d = document.createElement( 'div' );
+									let d = document.createElement( 'div' );
 									d.className = 'PaddingSmall HContent15 FloatLeft Relative';
 									return d;
 								}()
@@ -6620,7 +6617,7 @@ function NewUser( _this )
 					{
 						'element' : function() 
 						{
-							var d = document.createElement( 'div' );
+							let d = document.createElement( 'div' );
 							d.className = 'HRow Box Padding';
 							d.id = 'WorkgroupInner';
 							return d;
@@ -6645,7 +6642,7 @@ function NewUser( _this )
 				
 				// Toggle arrow function, put into function that can be reused some time ...
 						
-				var workArr = ge( 'WorkgroupInner' ).getElementsByTagName( 'span' );
+				let workArr = ge( 'WorkgroupInner' ).getElementsByTagName( 'span' );
 				
 				if( workArr )
 				{
@@ -6658,7 +6655,7 @@ function NewUser( _this )
 							( function( b ) {
 								b.onclick = function( e )
 								{
-									var pnt = this.parentNode.parentNode.parentNode;
+									let pnt = this.parentNode.parentNode.parentNode;
 									
 									if( this.classList.contains( 'fa-caret-right' ) )
 									{
@@ -6669,7 +6666,7 @@ function NewUser( _this )
 										this.classList.remove( 'fa-caret-right' );
 										this.classList.add( 'fa-caret-down' );
 										
-										var divs = pnt.getElementsByTagName( 'div' );
+										let divs = pnt.getElementsByTagName( 'div' );
 										
 										if( divs )
 										{
@@ -6694,7 +6691,7 @@ function NewUser( _this )
 										this.classList.remove( 'fa-caret-down' );
 										this.classList.add( 'fa-caret-right' );
 										
-										var divs = pnt.getElementsByTagName( 'div' );
+										let divs = pnt.getElementsByTagName( 'div' );
 										
 										if( divs )
 										{
@@ -6719,7 +6716,7 @@ function NewUser( _this )
 					}
 				}
 				
-				var workBtns = ge( 'WorkgroupInner' ).getElementsByTagName( 'button' );
+				let workBtns = ge( 'WorkgroupInner' ).getElementsByTagName( 'button' );
 				
 				if( workBtns )
 				{
@@ -6733,7 +6730,7 @@ function NewUser( _this )
 								if( ge( 'usWorkgroups' ) )
 								{
 									
-									var wids = [];
+									let wids = [];
 										
 									if( ge( 'usWorkgroups' ).value )
 									{
@@ -6774,7 +6771,7 @@ function NewUser( _this )
 										
 										if( this.getAttribute( 'wid' ) )
 										{
-											var nwid = [];
+											let nwid = [];
 											
 											if( wids )
 											{
@@ -6816,12 +6813,12 @@ function NewUser( _this )
 				
 				// Search ...............
 				
-				var searchgroups = function ( filter, server )
+				let searchgroups = function ( filter, server )
 				{
 					
 					if( ge( 'WorkgroupInner' ) )
 					{
-						var list = ge( 'WorkgroupInner' ).getElementsByTagName( 'div' );
+						let list = ge( 'WorkgroupInner' ).getElementsByTagName( 'div' );
 						
 						if( list.length > 0 )
 						{
@@ -6829,8 +6826,8 @@ function NewUser( _this )
 							{
 								if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
 								
-								var strong = list[a].getElementsByTagName( 'strong' )[0];
-								var span = list[a].getElementsByTagName( 'span' )[0];
+								let strong = list[a].getElementsByTagName( 'strong' )[0];
+								let span = list[a].getElementsByTagName( 'span' )[0];
 								
 								if( strong || span )
 								{
@@ -6896,36 +6893,36 @@ function NewUser( _this )
 				
 				// Sort .............
 				
-				var sortgroups = function ( sortby, orderby )
+				let sortgroups = function ( sortby, orderby )
 				{
 					
 					//
 					
-					var _this = ge( 'WorkgroupInner' );
+					let _this = ge( 'WorkgroupInner' );
 					
 					if( _this )
 					{
 						orderby = ( orderby ? orderby : ( _this.getAttribute( 'orderby' ) && _this.getAttribute( 'orderby' ) == 'ASC' ? 'DESC' : 'ASC' ) );
 						
-						var list = _this.getElementsByTagName( 'div' );
+						let list = _this.getElementsByTagName( 'div' );
 						
 						if( list.length > 0 )
 						{
-							var output = [];
+							let output = [];
 							
-							var callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
+							let callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
 							
 							for( var a = 0; a < list.length; a++ )
 							{
 								if( !list[a].className || ( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) ) continue;
 								
-								var span = list[a].getElementsByTagName( 'span' )[0];
+								let span = list[a].getElementsByTagName( 'span' )[0];
 								
 								if( span && typeof span.getAttribute( sortby.toLowerCase() ) != 'undefined' && span.getAttribute( sortby.toLowerCase() ) )
 								{
 									if( !list[a].parentNode.className )
 									{
-										var obj = { 
+										let obj = { 
 											sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
 											content : list[a].parentNode
 										};
@@ -6972,15 +6969,15 @@ function NewUser( _this )
 				
 				if( ge( 'AdminWorkgroupContainer' ) )
 				{
-					var inp = ge( 'AdminWorkgroupContainer' ).getElementsByTagName( 'input' )[0];
-					inp.onkeyup = function( e )
+					let inpu = ge( 'AdminWorkgroupContainer' ).getElementsByTagName( 'input' )[0];
+					inpu.onkeyup = function( e )
 					{
 						searchgroups( this.value );
 					}
 					ge( 'WorkgroupSearchCancelBtn' ).onclick = function( e )
 					{
 						searchgroups( false );
-						inp.value = '';
+						inpu.value = '';
 					}
 				}		
 				
@@ -7010,7 +7007,7 @@ function refreshUserList( userInfo )
 	
 	if( !ge( 'UserListID_'+userInfo.ID ) && ge( 'ListUsersInner' ) && !UsersSettings( 'experiment' ) )
 	{
-		var str = '';
+		let str = '';
 		
 		str += '<div class="TextCenter HContent10 FloatLeft PaddingSmall Ellipsis edit"></div>';
 		str += '<div class=" HContent30 FloatLeft PaddingSmall Ellipsis fullname"></div>';
@@ -7018,7 +7015,7 @@ function refreshUserList( userInfo )
 		str += '<div class=" HContent15 FloatLeft PaddingSmall Ellipsis status"></div>';
 		str += '<div class=" HContent20 FloatLeft PaddingSmall Ellipsis logintime"></div>';
 		
-		var div = document.createElement( 'div' );
+		let div = document.createElement( 'div' );
 		div.id = 'UserListID_' + userInfo.ID;
 		div.className = 'HRow Active';
 		div.innerHTML = str;
@@ -7028,7 +7025,7 @@ function refreshUserList( userInfo )
 			{
 				if( ge( 'ListUsersInner' ) )
 				{
-					var list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
+					let list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
 		
 					if( list.length > 0 )
 					{
@@ -7056,19 +7053,19 @@ function refreshUserList( userInfo )
 	if( ge( 'UserListID_'+userInfo.ID ) )
 	{
 		
-		var r = ge( 'UserListID_'+userInfo.ID );
+		let r = ge( 'UserListID_'+userInfo.ID );
 		
-		var div = r.getElementsByTagName( 'div' );
+		let div = r.getElementsByTagName( 'div' );
 		
 		if( div.length > 0 )
 		{
-			var status = [ 'Active', 'Disabled', 'Locked' ];
+			let status = [ 'Active', 'Disabled', 'Locked' ];
 			
-			var login = [ 'Never' ];
+			let login = [ 'Never' ];
 			
-			var timestamp = ( userInfo[ 'LoginTime' ] ? userInfo[ 'LoginTime' ] : 0 );
-			var logintime = ( userInfo[ 'LoginTime' ] != 0 && userInfo[ 'LoginTime' ] != null ? CustomDateTime( userInfo[ 'LoginTime' ] ) : login[ 0 ] );
-			var status    = status[ ( userInfo[ 'Status' ] ? userInfo[ 'Status' ] : 0 ) ];
+			let timestamp = ( userInfo[ 'LoginTime' ] ? userInfo[ 'LoginTime' ] : 0 );
+			let logintime = ( userInfo[ 'LoginTime' ] != 0 && userInfo[ 'LoginTime' ] != null ? CustomDateTime( userInfo[ 'LoginTime' ] ) : login[ 0 ] );
+			status        = status[ ( userInfo[ 'Status' ] ? userInfo[ 'Status' ] : 0 ) ];
 			
 			userInfo[ 'Name' ]     = ( userInfo[ 'Name' ]     ? userInfo[ 'Name' ]     : 'n/a' );
 			userInfo[ 'FullName' ] = ( userInfo[ 'FullName' ] ? userInfo[ 'FullName' ] : 'n/a' );
@@ -7080,7 +7077,7 @@ function refreshUserList( userInfo )
 			{
 				if( ge( 'ListUsersInner' ) )
 				{
-					var list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
+					let list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
 		
 					if( list.length > 0 )
 					{
@@ -7173,7 +7170,7 @@ function refreshUserList( userInfo )
 							{
 								if( ge( 'UserListID_' + dat[i]['UserID'] ) )
 								{
-									var elems = ge( 'UserListID_' + dat[i]['UserID'] ).getElementsByTagName( '*' );
+									let elems = ge( 'UserListID_' + dat[i]['UserID'] ).getElementsByTagName( '*' );
 			
 									if( elems.length > 0 )
 									{
@@ -7181,8 +7178,8 @@ function refreshUserList( userInfo )
 										{
 											if( elems[div] && elems[div].className )
 											{
-												var timestamp = ( dat[i]['LoginTime'] );
-												var logintime = ( dat[i]['LoginTime'] != 0 && dat[i]['LoginTime'] != null ? CustomDateTime( dat[i]['LoginTime'] ) : login[ 0 ] );
+												let timestamp = ( dat[i]['LoginTime'] );
+												let logintime = ( dat[i]['LoginTime'] != 0 && dat[i]['LoginTime'] != null ? CustomDateTime( dat[i]['LoginTime'] ) : login[ 0 ] );
 						
 												if( elems[div].className.indexOf( 'avatar' ) >= 0 )
 												{
@@ -7217,7 +7214,7 @@ function getUserlist( callback, obj, limit )
 {
 	// TODO: Check why notids is buggy ... 	
 	
-	var args = { 
+	let args = { 
 		query      : UsersSettings( 'searchquery'           ), 
 		sortby     : UsersSettings( 'sortby'                ), 
 		orderby    : UsersSettings( 'orderby'               ), 
@@ -7239,11 +7236,11 @@ function getUserlist( callback, obj, limit )
 	//console.log( 'getUserlist( callback, obj, '+limit+' )' );
 	
 	// Get the user list
-	var m = new Module( 'system' );
+	let m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
 		
-		var userList = null;
+		let userList = null;
 		
 		try
 		{
@@ -7272,19 +7269,19 @@ function getLastLoginlist( callback, users )
 	
 	if( users && UsersSettings( 'logintime' ) )
 	{
-		var args = { 
+		let args = { 
 			mode    : 'logintime',
 			userid  : users,
 			authid  : Application.authId 
 		};
 	
 		// Get the user list
-		var m = new Module( 'system' );
+		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
 			//console.log( { e:e, d:d } );
 		
-			var loginTime = null;
+			let loginTime = null;
 			
 			try
 			{
@@ -7375,7 +7372,7 @@ function sortUsers( sortby, orderby, callback )
 	
 	if( sortby && ge( 'ListUsersInner' ) )
 	{
-		var output = [];
+		let output = [];
 		
 		// ASC
 		
@@ -7389,7 +7386,7 @@ function sortUsers( sortby, orderby, callback )
 		// 1 => 'disabled' (1)
 		// 2 => 'active'   (0)
 		
-		var custom = { 
+		let custom = { 
 			'Status' : { 
 				'ASC'  : { 'locked' : 0, 'active' : 1, 'disabled' : 2 }, 
 				'DESC' : { 'locked' : 0, 'disabled' : 1, 'active' : 2 } 
@@ -7449,9 +7446,9 @@ function sortUsers( sortby, orderby, callback )
 		
 		return;
 		
-		var cb = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
+		let cb = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
 		
-		var override = false;
+		let override = false;
 		
 		if( !experiment )
 		{
@@ -7472,7 +7469,7 @@ function sortUsers( sortby, orderby, callback )
 			}
 		}
 		
-		var list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
+		let list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
 		
 		if( experiment || list.length > 0 )
 		{
@@ -7482,11 +7479,11 @@ function sortUsers( sortby, orderby, callback )
 				{
 					if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
 				
-					var span = list[a].getElementsByTagName( 'span' )[0];
+					let span = list[a].getElementsByTagName( 'span' )[0];
 				
 					if( span && span.getAttribute( sortby.toLowerCase() ) )
 					{
-						var obj = { 
+						let obj = { 
 							sortby  : span.getAttribute( sortby.toLowerCase() ).toLowerCase(), 
 							content : list[a]
 						};
@@ -7539,10 +7536,10 @@ Sections.user_disk_cancel = function( userid )
 {
 	//console.log( 'Sections.user_disk_cancel ' + userid );
 	
-	var u = new Module( 'system' );
+	let u = new Module( 'system' );
 	u.onExecuted = function( e, d )
 	{
-		var ul = null;
+		let ul = null;
 		try
 		{
 			ul = JSON.parse( d );
@@ -7574,36 +7571,36 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 	
 	if( user && userid )
 	{
-		var n = new Module( 'system' );
+		let n = new Module( 'system' );
 		n.onExecuted = function( ee, dat )
 		{
 			//console.log( { e:ee, d:dat } );
 			
 			try
 			{
-				var da = JSON.parse( dat );
+				let da = JSON.parse( dat );
 			}
 			catch( e )
 			{
-				var da = {};
+				let da = {};
 			}
 			
 			if( !da.length ) return;
 			
-			var m = new Module( 'system' );
+			let m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{
 				//console.log( 'user_disk_update ', { e:e, d:d } );
 				
-				var storage = { id : '', name : '', type : '', csize : 500, cunit : 'MB', user : user };
+				let storage = { id : '', name : '', type : '', csize : 500, cunit : 'MB', user : user };
 				
-				var units = [ 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB' ];
+				let units = [ 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB' ];
 		
 				if( e == 'ok' )
 				{
 					try
 					{
-						var js = JSON.parse( d );
+						let js = JSON.parse( d );
 					}
 					catch( e )
 					{
@@ -7622,14 +7619,14 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 						}
 				
 						// Calculate disk usage
-						var size = ( js.Config.DiskSize ? js.Config.DiskSize : 0 );
-						var mode = ( size && size.length && size != 'undefined' ? size.match( /[a-z]+/i ) : [ '' ] );
+						let size = ( js.Config.DiskSize ? js.Config.DiskSize : 0 );
+						let mode = ( size && size.length && size != 'undefined' ? size.match( /[a-z]+/i ) : [ '' ] );
 						size = parseInt( size );
 						
-						var csize = size;
-						var cunit = ( mode[0] ? mode[0] : 'MB' );
+						let csize = size;
+						let cunit = ( mode[0] ? mode[0] : 'MB' );
 						
-						var type = mode[0].toLowerCase();
+						let type = mode[0].toLowerCase();
 						if( type == 'kb' )
 						{
 							size = size * 1000;
@@ -7646,7 +7643,7 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 						{
 							size = size * 1000 * 1000 * 1000 * 1000;
 						}
-						var used = parseInt( js.StoredBytes );
+						let used = parseInt( js.StoredBytes );
 						if( isNaN( size ) ) size = 500 * 1000; // < Normally the default size
 						if( !used && !size ) used = 0, size = 0;
 						if( !size ) size = 500000000;
@@ -7689,7 +7686,7 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 				StorageForm( storage, function( storage )
 				{
 				
-					var str = '';
+					let str = '';
 				
 					str += '<div class="HRow">';
 					str += '<div class="Col1 FloatLeft">';
@@ -7718,7 +7715,7 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 					
 					if( da )
 					{
-						var found = false;
+						let found = false;
 						
 						for( var i in da )
 						{
@@ -7832,10 +7829,10 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 Sections.user_disk_refresh = function( mountlist, userid, func )
 {
 	// Mountlist
-	var mlst = '';
+	let mlst = '';
 	if( mountlist && mountlist.length )
 	{
-		var sorted = { 
+		let sorted = { 
 			'personal_drives' : 
 			{ 
 				'heading' : 'personal_drives', 
@@ -7877,8 +7874,8 @@ Sections.user_disk_refresh = function( mountlist, userid, func )
 		mlst += '<div class="HRow">';
 		for( var a in mountlist )
 		{
-			var heading = mountlist[a]['heading'];
-			var rows    = mountlist[a]['rows'];
+			let heading = mountlist[a]['heading'];
+			let rows    = mountlist[a]['rows'];
 			
 			if( rows )
 			{
@@ -7893,7 +7890,7 @@ Sections.user_disk_refresh = function( mountlist, userid, func )
 					{
 						if( typeof rows[b].Config != "object" )
 						{
-							var conf = JSON.parse( rows[b].Config );
+							let conf = JSON.parse( rows[b].Config );
 						
 							if( conf )
 							{
@@ -7923,14 +7920,14 @@ Sections.user_disk_refresh = function( mountlist, userid, func )
 					// TODO: Add support decimals ...
 					
 					// Calculate disk usage
-					var size = ( rows[b].Config.DiskSize ? rows[b].Config.DiskSize : 0 );
-					var mode = ( size && size.length && size != 'undefined' ? size.match( /[a-z]+/i ) : [ '' ] );
+					let size = ( rows[b].Config.DiskSize ? rows[b].Config.DiskSize : 0 );
+					let mode = ( size && size.length && size != 'undefined' ? size.match( /[a-z]+/i ) : [ '' ] );
 					size = parseInt( size );
 					
-					var csize = size;
-					var cunit = ( mode[0] ? mode[0] : 'MB' );
+					let csize = size;
+					let cunit = ( mode[0] ? mode[0] : 'MB' );
 					
-					var type = mode[0].toLowerCase();
+					let type = mode[0].toLowerCase();
 					if( type == 'kb' )
 					{
 						size = size * 1000;
@@ -7947,7 +7944,7 @@ Sections.user_disk_refresh = function( mountlist, userid, func )
 					{
 						size = size * 1000 * 1000 * 1000 * 1000;
 					}
-					var used = parseInt( rows[b].StoredBytes );
+					let used = parseInt( rows[b].StoredBytes );
 					if( isNaN( size ) ) size = 500 * 1000; // < Normally the default size
 					if( !used && !size ) used = 0, size = 0;
 					if( !size ) size = 500000000;
@@ -7956,7 +7953,7 @@ Sections.user_disk_refresh = function( mountlist, userid, func )
 					
 					csize = ( !csize ? 500 : csize );
 					
-					var storage = {
+					let storage = {
 						id    : rows[b].ID,
 						user  : rows[b].UserID,
 						name  : rows[b].Name,
@@ -8059,8 +8056,8 @@ Sections.user_volumeinfo_refresh = function( mountlist, userid )
 					if( ge( 'StorageInfo_' + args.ID ) && ge( 'StorageInfo_' + args.ID ).className.indexOf( 'Updated' ) < 0 )
 					{
 						
-						var size = 0;
-						var used = 0;
+						let size = 0;
+						let used = 0;
 						
 						try
 						{
@@ -8074,7 +8071,7 @@ Sections.user_volumeinfo_refresh = function( mountlist, userid )
 						
 						
 						
-						var storage = {
+						let storage = {
 							id    : args.ID,
 							user  : args.UserID,
 							name  : args.Name,
@@ -8087,7 +8084,7 @@ Sections.user_volumeinfo_refresh = function( mountlist, userid )
 						
 						if( ShowLog ) console.log( storage );
 						
-						var mlst = '';
+						let mlst = '';
 						
 						mlst += '<div class="name Ellipsis" title="' + storage.name + '">' + storage.name + ':</div>';
 						mlst += '<div class="type Ellipsis" title="' + i18n( 'i18n_' + storage.type ) + '">' + i18n( 'i18n_' + storage.type ) + '</div>';
@@ -8116,34 +8113,34 @@ Sections.user_volumeinfo_refresh = function( mountlist, userid )
 function StorageForm( storage, callback )
 {
 	
-	var ft = new Module( 'system' );
+	let ft = new Module( 'system' );
 	ft.onExecuted = function( e, d )
 	{
 		if( e == 'ok' )
 		{
 			i18nAddTranslations( d )
 		}
-		var m = new Module( 'system' );
+		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
 			// return info that this is loaded.
 			if( callback ) callback( storage );
 			
-			var scripts = [];
+			let scripts = [];
 			
 			if( e == 'ok' )
 			{
 				// collect scripts
 				
-				var scr;
+				let scr;
 				while ( scr = d.match ( /\<script[^>]*?\>([\w\W]*?)\<\/script\>/i ) )
 				{
 					d = d.split( scr[0] ).join( '' );
 					scripts.push( scr[1] );
 				}
 				
-				var mch;
-				var i = 0;
+				let mch;
+				let i = 0;
 				while( ( mch = d.match( /\{([^}]*?)\}/ ) ) )
 				{
 					d = d.split( mch[0] ).join( i18n( mch[1] ) );
@@ -8165,14 +8162,14 @@ function StorageForm( storage, callback )
 				
 				if( ge( 'StorageGui' ) )
 				{
-					var data = ( storage.data ? storage.data : false );
+					let data = ( storage.data ? storage.data : false );
 					
 					// We are in edit mode..
 					if( data )
 					{
-						var elems = {};
+						let elems = {};
 						
-						var inputs = ge( 'StorageGui' ).getElementsByTagName( 'input' );
+						let inputs = ge( 'StorageGui' ).getElementsByTagName( 'input' );
 					
 						if( inputs.length > 0 )
 						{
@@ -8185,7 +8182,7 @@ function StorageForm( storage, callback )
 							}
 						}
 						
-						var selects = ge( 'StorageGui' ).getElementsByTagName( 'select' );
+						let selects = ge( 'StorageGui' ).getElementsByTagName( 'select' );
 						
 						if( selects.length > 0 )
 						{
@@ -8200,7 +8197,7 @@ function StorageForm( storage, callback )
 						
 						//console.log( elems );
 						
-						var fields = [
+						let fields = [
 							'Name', 'Server', 'ShortDescription', 'Port', 'Username', 
 							'Password', 'Path', 'Type', 'Workgroup', 'PrivateKey'
 						];
@@ -8284,11 +8281,11 @@ function StorageForm( storage, callback )
 
 function LoadDOSDriverGUI( _this )
 {
-	var type = ( _this ? _this.value : false );
+	let type = ( _this ? _this.value : false );
 	
 	if( type )
 	{
-		var ft = new Module( 'system' );
+		let ft = new Module( 'system' );
 		ft.onExecuted = function( e, d )
 		{
 			if( e == 'ok' )
@@ -8296,24 +8293,24 @@ function LoadDOSDriverGUI( _this )
 				i18nAddTranslations( d )
 			}
 			
-			var m = new Module( 'system' );
+			let m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{
-				var scripts = [];
+				let scripts = [];
 			
 				if( e == 'ok' )
 				{
 					// collect scripts
 				
-					var scr;
+					let scr;
 					while ( scr = d.match ( /\<script[^>]*?\>([\w\W]*?)\<\/script\>/i ) )
 					{
 						d = d.split( scr[0] ).join( '' );
 						scripts.push( scr[1] );
 					}
 				
-					var mch;
-					var i = 0;
+					let mch;
+					let i = 0;
 					while( ( mch = d.match( /\{([^}]*?)\}/ ) ) )
 					{
 						d = d.split( mch[0] ).join( i18n( mch[1] ) );
@@ -8327,7 +8324,7 @@ function LoadDOSDriverGUI( _this )
 					
 					
 					i18nAddTranslations( d );
-					var f = new File();
+					let f = new File();
 					f.i18n();
 					for( var a in f.replacements )
 					{
@@ -8368,7 +8365,7 @@ function LoadDOSDriverGUI( _this )
 
 function addApplication( appName, userId, callback, vars )
 {
-	var m = new Module( 'system' );
+	let m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
 		if( ShowLog ) console.log( 'adduserapplication ', { e:e, d:d } );
@@ -8417,7 +8414,7 @@ function addDockItem( appName, userId, callback, vars )
 {
 	//console.log( 'addDockItem( appName, userId, callback ) ', { appName:appName, userId:userId, callback:callback } );
 	
-	var m = new Module( 'dock' );
+	let m = new Module( 'dock' );
 	m.onExecuted = function( e, d )
 	{
 		//console.log( { e:e, d:d } );
@@ -8446,7 +8443,7 @@ function sortDockItem( direction, itemId, userId, callback )
 	
 	// TODO: Update the current sorting to support sortinging another users dock ...
 	
-	var m = new Module( 'dock' );
+	let m = new Module( 'dock' );
 	m.onExecuted = function( e, d )
 	{
 		//console.log( { e:e, d:d } );
@@ -8465,21 +8462,21 @@ function sortDockItem( direction, itemId, userId, callback )
 
 function changeAvatar()
 {
-	var self = this;
-	var description =
+	let self = this;
+	let description =
 	{
 		triggerFunction: function( item )
 		{
 			if ( item )
 			{
 				// Load the image
-				var image = new Image();
+				let image = new Image();
 				image.onload = function()
 				{
 					//console.log( 'loaded image ... ', item );
 					// Resizes the image
-					var canvas = ge( 'AdminAvatar' );
-					var context = canvas.getContext( '2d' );
+					let canvas = ge( 'AdminAvatar' );
+					let context = canvas.getContext( '2d' );
 					context.drawImage( image, 0, 0, 256, 256 );
 					
 					// Activate edit mode.
@@ -8493,7 +8490,7 @@ function changeAvatar()
 		title: i18n( 'i18n_fileselectoravatar' ),
 		filename: ""
 	}
-	var d = new Filedialog( description );
+	let d = new Filedialog( description );
 }
 
 Sections.user_status_update = function( userid, status, callback )
@@ -8503,20 +8500,20 @@ Sections.user_status_update = function( userid, status, callback )
 	{
 		// 0 = Active, 1 = Disabled, 2 = Locked
 		
-		var on = false;
+		let on = false;
 		
 		switch( status )
 		{
 			// false = Active, true = Disabled
 			
 			case 1:
-				
+			{
 				if( ge( 'usDisabled' ).className.indexOf( 'fa-toggle-off' ) >= 0 )
 				{
 					on = true;
 				}
 				
-				var args = JSON.stringify( {
+				let argsi = JSON.stringify( {
 					'type'    : 'write', 
 					'context' : 'application', 
 					'authid'  : Application.authId, 
@@ -8532,7 +8529,7 @@ Sections.user_status_update = function( userid, status, callback )
 					'objectid' : userid 
 				} );
 				
-				var f = new Library( 'system.library' );
+				let f = new Library( 'system.library' );
 				f.onExecuted = function( e, d )
 				{
 					//console.log( 'Sections.user_status_update( '+userid+', '+status+' ) ', { e:e, d:d, args: args } );
@@ -8545,20 +8542,20 @@ Sections.user_status_update = function( userid, status, callback )
 					
 					if( callback ) return callback();
 				}
-				f.execute( 'user/updatestatus', { id: userid, status: ( on ? 1 : 0 ), authid: Application.authId, args: args } );
-				
-				break;
+				f.execute( 'user/updatestatus', { id: userid, status: ( on ? 1 : 0 ), authid: Application.authId, args: argsi } );	
+			}
+			break;
 			
 			// false = Active, true = Locked
 			
 			case 2:
-				
+			{	
 				if( ge( 'usLocked' ).className.indexOf( 'fa-toggle-off' ) >= 0 )
 				{
 					on = true;
 				}
 				
-				var args = JSON.stringify( {
+				let argsi = JSON.stringify( {
 					'type'    : 'write', 
 					'context' : 'application', 
 					'authid'  : Application.authId, 
@@ -8574,7 +8571,7 @@ Sections.user_status_update = function( userid, status, callback )
 					'objectid' : userid 
 				} );
 				
-				var f = new Library( 'system.library' );
+				let f = new Library( 'system.library' );
 				f.onExecuted = function( e, d )
 				{
 					//console.log( 'Sections.user_status_update( '+userid+', '+status+' ) ', { e:e, d:d, args: args } );
@@ -8587,9 +8584,10 @@ Sections.user_status_update = function( userid, status, callback )
 					
 					if( callback ) return callback();
 				}
-				f.execute( 'user/updatestatus', { id: userid, status: ( on ? 2 : 0 ), authid: Application.authId, args: args } );
+				f.execute( 'user/updatestatus', { id: userid, status: ( on ? 2 : 0 ), authid: Application.authId, args: argsi } );
 				
-				break;
+			}
+			break;
 			
 		}
 	}
@@ -8598,7 +8596,7 @@ Sections.user_status_update = function( userid, status, callback )
 
 Sections.userrole_update = function( rid, userid, _this )
 {
-	var data = '';
+	let data = '';
 	
 	if( _this )
 	{
@@ -8610,7 +8608,7 @@ Sections.userrole_update = function( rid, userid, _this )
 	
 	if( rid && userid )
 	{
-		var m = new Module( 'system' );
+		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
 			//console.log( { e:e, d:d } );
@@ -8623,9 +8621,9 @@ Sections.user_disk_save = function( userid, did )
 {
 	//console.log( 'Sections.user_disk_save ', { did : did, userid : userid } );
 	
-	var elems = {};
+	let elems = {};
 			
-	var inputs = ge( 'StorageGui' ).getElementsByTagName( 'input' );
+	let inputs = ge( 'StorageGui' ).getElementsByTagName( 'input' );
 	
 	if( inputs.length > 0 )
 	{
@@ -8638,7 +8636,7 @@ Sections.user_disk_save = function( userid, did )
 		}
 	}
 	
-	var texts = ge( 'StorageGui' ).getElementsByTagName( 'textarea' );
+	let texts = ge( 'StorageGui' ).getElementsByTagName( 'textarea' );
 	
 	if( texts.length > 0 )
 	{
@@ -8651,7 +8649,7 @@ Sections.user_disk_save = function( userid, did )
 		}
 	}
 	
-	var selects = ge( 'StorageGui' ).getElementsByTagName( 'select' );
+	let selects = ge( 'StorageGui' ).getElementsByTagName( 'select' );
 	
 	if( selects.length > 0 )
 	{
@@ -8676,7 +8674,7 @@ Sections.user_disk_save = function( userid, did )
 			elems[ 'conf.DiskSize' ] = { id: 'conf.DiskSize', value: ( elems[ 'DiskSizeA' ].value + elems[ 'DiskSizeB' ].value ) };
 		}
 		
-		var req = { 'Name' : i18n( 'i18n_disk_name_missing' ), 'Type' : i18n( 'i18n_disk_type_missing' ) };
+		let req = { 'Name' : i18n( 'i18n_disk_name_missing' ), 'Type' : i18n( 'i18n_disk_type_missing' ) };
 		
 		for( var r in req )
 		{
@@ -8692,7 +8690,7 @@ Sections.user_disk_save = function( userid, did )
 		
 		
 		
-		var data = { Name: elems[ 'Name' ].value };
+		let data = { Name: elems[ 'Name' ].value };
 		
 		if( elems[ 'Server'           ] ) data.Server           = elems[ 'Server'           ].value;
 		if( elems[ 'ShortDescription' ] ) data.ShortDescription = elems[ 'ShortDescription' ].value;
@@ -8754,7 +8752,7 @@ Sections.user_disk_save = function( userid, did )
 		
 		//return;
 		
-		var m = new Module( 'system' );
+		let m = new Module( 'system' );
 		m.onExecuted = function( e, dat )
 		{
 			//console.log( 'Sections.user_disk_save ', { e:e, d:dat, args:data } );
@@ -8771,10 +8769,10 @@ Sections.user_disk_save = function( userid, did )
 			remountDrive( ( elems[ 'Name' ] && elems[ 'Name' ].current ? elems[ 'Name' ].current : data.Name ), data.Name, data.userid, function()
 			{
 				
-				var u = new Module( 'system' );
+				let u = new Module( 'system' );
 				u.onExecuted = function( ee, dd )
 				{
-					var ul = null;
+					let ul = null;
 					try
 					{
 						ul = JSON.parse( dd );
@@ -8830,12 +8828,12 @@ Sections.user_disk_mount = function( devname, userid, _this )
 					
 					Notify( { title: i18n( 'i18n_unmounting' ) + ' ' + devname + ':', text: i18n( 'i18n_successfully_unmounted' ) } );
 					
-					var u = new Module( 'system' );
+					let u = new Module( 'system' );
 					u.onExecuted = function( ee, dd )
 					{
 						//console.log( 'mountlist ', { e:ee, d:dd } );
 						
-						var ul = null;
+						let ul = null;
 						try
 						{
 							ul = JSON.parse( dd );
@@ -8873,12 +8871,12 @@ Sections.user_disk_mount = function( devname, userid, _this )
 					
 					Notify( { title: i18n( 'i18n_mounting' ) + ' ' + devname + ':', text: i18n( 'i18n_successfully_mounted' ) } );
 					
-					var u = new Module( 'system' );
+					let u = new Module( 'system' );
 					u.onExecuted = function( ee, dd )
 					{
 						//console.log( 'mountlist ', { e:ee, d:dd } );
 						
-						var ul = null;
+						let ul = null;
 						try
 						{
 							ul = JSON.parse( dd );
@@ -8910,7 +8908,7 @@ function mountDrive( devname, userid, callback )
 {
 	if( devname )
 	{
-		var vars = { devname: devname };
+		let vars = { devname: devname };
 		
 		// Specific for Pawel's code ... He just wants to forward json ...
 		
@@ -8936,7 +8934,7 @@ function mountDrive( devname, userid, callback )
 			} );
 		}
 		
-		var f = new Library( 'system.library' );
+		let f = new Library( 'system.library' );
 		
 		f.onExecuted = function( e, d )
 		{
@@ -8953,7 +8951,7 @@ function unmountDrive( devname, userid, callback )
 {
 	if( devname )
 	{
-		var vars = { devname: devname };
+		let vars = { devname: devname };
 		
 		// Specific for Pawel's code ... He just wants to forward json ...
 		
@@ -8979,7 +8977,7 @@ function unmountDrive( devname, userid, callback )
 			} );
 		}
 		
-		var f = new Library( 'system.library' );
+		let f = new Library( 'system.library' );
 		
 		f.onExecuted = function( e, d )
 		{
@@ -9012,9 +9010,9 @@ function remountDrive( oldname, newname, userid, callback )
 
 function _saveUser( uid, callback )
 {
-	var args = {  };
+	let args = {  };
 	
-	var mapping = {
+	let mapping = {
 		usFullname : 'fullname',
 		usEmail    : 'email',
 		usMobile   : 'mobile',
@@ -9032,7 +9030,7 @@ function _saveUser( uid, callback )
 	
 	for( var a in mapping )
 	{
-		var k = mapping[ a ];
+		let k = mapping[ a ];
 		
 		// Skip nonchanged passwords
 		if( a == 'usPassword' )
@@ -9096,10 +9094,10 @@ function _saveUser( uid, callback )
 	
 	// 1: First Wallpaper update ...
 	
-	var canvas = ge( 'AdminAvatar' );
+	let canvas = ge( 'AdminAvatar' );
 	if( canvas )
 	{
-		var base64 = 0;
+		let base64 = 0;
 		
 		try
 		{
@@ -9134,7 +9132,7 @@ function _saveUser( uid, callback )
 		args.id = uid;
 	}
 	
-	var m = new Module( 'system' );
+	let m = new Module( 'system' );
 	m.forceHTTP = true;
 	m.onExecuted = function( server )
 	{
@@ -9145,8 +9143,8 @@ function _saveUser( uid, callback )
 		}
 		catch( e ) {  }
 		
-		var e = ( server && server.result ? server.result : {} );
-		var d = ( server && server.data   ? server.data   : {} );
+		let e = ( server && server.result ? server.result : {} );
+		let d = ( server && server.data   ? server.data   : {} );
 		
 		if( ShowLog ) console.log( '_saveUser( uid, callback, newuser ) ', { e:e, d:d, args: args, server: server } );
 				
@@ -9211,7 +9209,7 @@ function _saveUser( uid, callback )
 
 function removeApplication( appName, userId, callback, vars )
 {
-	var m = new Module( 'system' );
+	let m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
 		if( ShowLog ) console.log( 'removeApplication ', { e:e, d:d } );
@@ -9240,7 +9238,7 @@ function removeDockItem( appName, userId, callback, vars )
 {
 	//console.log( 'removeDockItem( appName, userId, callback ) ', { appName:appName, userId:userId, callback:callback } );
 	
-	var m = new Module( 'dock' );
+	let m = new Module( 'dock' );
 	m.onExecuted = function( e, d )
 	{
 		//console.log( { e:e, d:d } );
@@ -9273,7 +9271,7 @@ Sections.user_disk_remove = function( devname, did, userid )
 				{
 					Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 					
-					var m = new Module( 'system' );
+					let m = new Module( 'system' );
 					m.onExecuted = function( e, d )
 					{
 						//console.log( 'deletedoor', { id:did, e:e, d:d } );
@@ -9281,10 +9279,10 @@ Sections.user_disk_remove = function( devname, did, userid )
 						if( e == 'ok' )
 						{
 						
-							var u = new Module( 'system' );
+							let u = new Module( 'system' );
 							u.onExecuted = function( ee, dd )
 							{
-								var ul = null;
+								let ul = null;
 								try
 								{
 									ul = JSON.parse( dd );
@@ -9302,7 +9300,7 @@ Sections.user_disk_remove = function( devname, did, userid )
 						}
 						try
 						{
-							var r = JSON.parse( d );						
+							let r = JSON.parse( d );						
 							Notify( { title: 'An error occured', text: r.message } );
 						}
 						catch( e )
@@ -9325,7 +9323,7 @@ function _removeUser( id, callback )
 {
 	if( id )
 	{
-		var m = new Module( 'system' );
+		let m = new Module( 'system' );
 		//m.forceHTTP = true;
 		m.onExecuted = function( server )
 		{
@@ -9336,8 +9334,8 @@ function _removeUser( id, callback )
 			}
 			catch( e ) {  }
 			
-			var e = ( server && server.result ? server.result : {} );
-			var d = ( server && server.data   ? server.data   : {} );
+			let e = ( server && server.result ? server.result : {} );
+			let d = ( server && server.data   ? server.data   : {} );
 			
 			if( ShowLog ) console.log( '_removeUser( id, callback ) ', { e:e, d:d, id:id, server: server } );
 			
@@ -9358,11 +9356,11 @@ function _removeUser( id, callback )
 				{
 					if( ge( 'AdminUsersCount' ).innerHTML )
 					{
-						var count = ge( 'AdminUsersCount' ).innerHTML.split( '(' ).join( '' ).split( ')' ).join( '' );
+						let count = ge( 'AdminUsersCount' ).innerHTML.split( '(' ).join( '' ).split( ')' ).join( '' );
 					
 						if( count && count > 0 )
 						{
-							var result = ( count - 1 );
+							let result = ( count - 1 );
 						
 							if( result >= 0 )
 							{
@@ -9401,7 +9399,7 @@ function appendChild( child )
 {
 	if( child )
 	{
-		var out = [];
+		let out = [];
 		
 		for( var k in child )
 		{
@@ -9409,11 +9407,11 @@ function appendChild( child )
 			{
 				if( child[k]['element'] )
 				{
-					var div = child[k]['element'];
+					let div = child[k]['element'];
 					
 					if( child[k]['child'] )
 					{
-						var elem = appendChild( child[k]['child'] );
+						let elem = appendChild( child[k]['child'] );
 						
 						if( elem )
 						{
@@ -9562,7 +9560,7 @@ function hideStatus( status, show, pnt )
 		
 		if( status && ge( 'ListUsersInner' ) )
 		{
-			var list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
+			let list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
 		
 			if( list.length > 0 )
 			{
@@ -9570,7 +9568,7 @@ function hideStatus( status, show, pnt )
 				{
 					if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
 				
-					var span = list[a].getElementsByTagName( 'span' )[0];
+					let span = list[a].getElementsByTagName( 'span' )[0];
 				
 					if( span )
 					{
@@ -9613,7 +9611,7 @@ function cancelUser( userid )
 			// TODO: Look at this since we changed the user list, onclick doesn't go to the correct one.
 			if( ge( 'ListUsersInner' ) && ge( 'ListUsersInner' ).innerHTML )
 			{
-				var div = ge( 'ListUsersInner' ).getElementsByTagName( 'div' )[0];
+				let div = ge( 'ListUsersInner' ).getElementsByTagName( 'div' )[0];
 			
 				if( div )
 				{
@@ -9696,11 +9694,11 @@ Application.closeAllEditModes = function( act )
 			{
 				found = false;
 				
-				var pnt = ge( 'AdminUsersBtn' ).parentNode;
+				let pnt = ge( 'AdminUsersBtn' ).parentNode;
 				
 				if( pnt )
 				{
-					var ele = pnt.getElementsByTagName( '*' );
+					let ele = pnt.getElementsByTagName( '*' );
 					
 					if( ele.length > 0 )
 					{
@@ -9774,7 +9772,7 @@ var RequestQueue = {
 					// Let the function know the server is now busy with a request
 					this.ServerBusy = true;
 					
-					var _this = this;
+					let _this = this;
 					
 					this.ServerRequestQueue[key].key = key;
 					
@@ -9801,7 +9799,7 @@ var RequestQueue = {
 	
 	Delete : function ( key )
 	{
-		var out = [];
+		let out = [];
 		
 		if( this.ServerRequestQueue )
 		{

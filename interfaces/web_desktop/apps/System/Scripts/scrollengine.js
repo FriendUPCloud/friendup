@@ -3,16 +3,16 @@
 
 scrollengine = {
 	
-	layout : false,
+	layout: false,
 	
-	callback : false,
+	callback: false,
 	
-	myArray  : [],
-	allNodes : [],
+	myArray: [],
+	allNodes: [],
 	
 	// Visible elements
 	
-	elements : {
+	elements: {
 		pageAbove   : null,
 		pageMiddle  : null,
 		pageBelow   : null,
@@ -21,48 +21,48 @@ scrollengine = {
 	
 	// TODO: Make sure to update current height based on div size auto ...
 	
-	config : {
+	config: {
 		rowHeight  : 27,
 		mustRedraw : true
 	},
 	
 	// Some vars
 	
-	list         : null,
-	scrollTop    : 0,
-	viewHeight   : 0,
-	scrollHeight : 0,
+	list: null,
+	scrollTop: 0,
+	viewHeight: 0,
+	scrollHeight: 0,
 	
-	aTop : 0,
-	dTop : 0,
+	aTop: 0,
+	dTop: 0,
 	
-	rowPosition : 0,
-    rowCount    : 0,
+	rowPosition: 0,
+    rowCount: 0,
 	
-	dataStart   : null,
-	dataLimit   : null,
+	dataStart: null,
+	dataLimit: null,
 	
-	dataPrevStart : null,
-	dataPrevLimit : null,
+	dataPrevStart: null,
+	dataPrevLimit: null,
 	
-	counted : 0,
+	counted: 0,
 	
-	total   : 0,
+	total: 0,
 	
-	debug : false,
+	debug: false,
 	
-	ex : '',
+	ex: '',
 	
-	refreshTimeout : 0,
+	refreshTimeout: 0,
 	
-	selectedLine : null,
+	selectedLine: null,
 	
-	set : function ( layout )
+	set: function( layout )
 	{
 		this.layout = layout;
 	},
 	
-	init : function ( list, data, total, callback )
+	init: function( list, data, total, callback )
 	{
 		let self = this;
 		
@@ -156,11 +156,10 @@ scrollengine = {
 			{				
 				this.distribute( data, 0, total );
 			}
-			
 		}
 	},
 	
-	length : function ( object )
+	length: function( object )
 	{
 		if( typeof object.length !== "undefined" )
 		{
@@ -182,7 +181,7 @@ scrollengine = {
 		}
 	},
 	
-	unselectLine : function ()
+	unselectLine: function ()
 	{
 		if( this.selectedLine != null && this.allNodes[ this.selectedLine ] )
 		{
@@ -192,7 +191,7 @@ scrollengine = {
 		this.selectedLine = null;
 	},
 	
-	createDiv : function ( id, target, line, classN, title )
+	createDiv: function ( id, target, line, classN, title )
 	{
 		
 		let d = document.createElement( 'div' );
@@ -219,10 +218,9 @@ scrollengine = {
 		}
 		target.appendChild( d );
 		return d;
-		
 	},
 	
-	emptyDiv : function ( id )
+	emptyDiv: function( id )
 	{
 		if( id )
 		{
@@ -233,10 +231,9 @@ scrollengine = {
 				ele.innerHTML = '';
 			}
 		}
-		
 	},
 	
-	pageAbove : function (  )
+	pageAbove: function()
 	{
 		
 		let d = this.elements.pageMiddle;
@@ -301,10 +298,9 @@ scrollengine = {
 		} );
 		
 		return aa;
-		
 	},
 	
-	pageMiddle : function (  )
+	pageMiddle: function()
 	{
 		// Page middle
 		this.dTop = ( Math.floor( this.scrollTop / this.config.rowHeight ) * this.config.rowHeight );
@@ -363,10 +359,9 @@ scrollengine = {
 		this.rowPosition += this.rowCount;
 		
 		return d;
-		
 	},
 	
-	pageBelow : function (  )
+	pageBelow: function()
 	{		
 		let d = this.elements.pageMiddle;
 		
@@ -421,7 +416,6 @@ scrollengine = {
 		} );
 		
 		return bb;
-		
 	},
 	
 	distribute: function( data, start, total, force )
@@ -594,12 +588,11 @@ scrollengine = {
 				    }
 				}
 			}
-		}
-				
+		}		
 	},
 	
 	// Refresh funksjon
-	refresh : function ( force )
+	refresh: function( force )
 	{
 		
 		// Store previous values for comparison
@@ -792,10 +785,9 @@ scrollengine = {
 		if( this.debug && 1!=1 ) this.debugInfo( scrollTop + ' scroll ' + "\r\n<br>" + viewHeight + ' height ' + "\r\n<br>" + this.ex );
 		
 		this.list.focus();
-		
 	},
 	
-	reset : function (  )
+	reset: function ()
 	{
 		
 		this.elements = {
@@ -828,10 +820,9 @@ scrollengine = {
 		this.ex = '';
 		
 		this.selectedLine = null;
-		
 	},
-	
-	debugInfo : function( str )
+
+	debugInfo: function( str )
 	{
 		
 		if( this.list )
@@ -841,7 +832,6 @@ scrollengine = {
 		}
 		
 		this.ex = '';
-		
 	}
 	
 };
