@@ -374,6 +374,8 @@ scrollengine = {
 		// Add to limit
 		this.dataLimit += counted;
 		this.counted += counted;
+		
+		console.log( 'Will load ' + this.dataLimit + ' rows' );
 
 		bb.style.top = d.offsetTop + d.offsetHeight + 'px';
 		bb.style.height = counted * this.config.rowHeight + 'px';
