@@ -377,8 +377,6 @@ scrollengine = {
 	
 	distribute: function( data, start, total, force )
 	{
-		//console.log( { data: data, start: start, total: total } );
-		
 		if( total != null && this.total != total )
 		{
 			console.log( 'making new total ... ', { a: total, b: this.total } );
@@ -636,7 +634,9 @@ scrollengine = {
 		    this.rowCount    = Math.floor( viewHeight / this.config.rowHeight ) + 1;
 		    
 		    // Set new datastart
+		    this.prevDataStart = this.dataStart;
 		    this.dataStart = this.rowPosition;
+		    
 		    console.log( 'Prev data start is: ' + this.prevDataStart );
 		    console.log( 'New data start is: ' + this.dataStart );
 		    
