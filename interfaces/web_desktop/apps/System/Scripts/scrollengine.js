@@ -598,6 +598,12 @@ scrollengine = {
 		// Must redraw if pageMiddle is out of scroll view
 		let redraw = false;
 		
+		// Page above is in full view!
+		if( this.elements.pageAbove.offsetTop + this.elements.pageAbove.offsetHeight > scrollTop + scrollHeight )
+		{
+			redraw = true;
+		}
+		
 		// [1] If pageMiddle is not visible within the scroll view then redraw
 		if( scrollTop > pm.offsetTop + pm.offsetHeight )
 		{
