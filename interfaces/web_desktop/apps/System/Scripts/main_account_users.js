@@ -5262,6 +5262,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												}
 												else
 												{
+													ctx.clearRect(0,0,16,16);
 													ctx.drawImage( myArray[ s ].imageObj, 0, 0, 16, 16 );
 													src = canvas.toDataURL( 'image/png' );
 													myArray[ s ].imageObj.blob = src;
