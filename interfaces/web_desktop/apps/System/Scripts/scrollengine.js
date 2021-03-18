@@ -695,14 +695,8 @@ scrollengine = {
 		    
 		    this.dataStart = this.rowPosition;
 		    
-		    if( this.debug )
-		    {
-		    	console.log( '[5] '+scrollTop+' > '+viewHeight+' | scrollTop > viewHeight '+(scrollTop>viewHeight?'(true)':'(false)') );
-	    		console.log( "\r\n" );
-	    	}
-		    
 		    // Page above
-		    let aaa;
+		    let aaa = 0;
 		    if( scrollTop > viewHeight )
 		    {
 		    	aaa = this.pageAbove();
@@ -718,15 +712,10 @@ scrollengine = {
 		    // Page below
 		    let bbb = this.pageBelow();
 		    
-		    // TODO: Find out why 1 is missing when scrolling between page above, middle, below ...
-		    
+		    // 
 		    if( ( this.dataPrevStart != null && this.dataStart != this.dataPrevStart ) || ( this.dataPrevLimit != null && this.dataLimit != this.dataPrevLimit ) )
-		    //if( ( this.dataPrevStart != null && this.dataStart != this.dataPrevStart ) && ( this.dataPrevLimit != null && this.dataLimit != this.dataPrevLimit ) )
 		    {
-		    	if( this.debug/* || 1==1*/ ) console.log( 'FETCH!!!! ' );
-		    	
-		    	
-		    	
+		    	console.log( 'Callback!' );
 		    	if( this.callback )
 		    	{
 		    		this.callback( 
