@@ -602,9 +602,7 @@ scrollengine = {
 			console.log( 'Redrawing because pagemiddle is below' );
 			redraw = true;
 		}
-		
-		if( 
-		
+				
 		// [4] If scrollarea is resized or just argument force is passed as true then redraw
 		if( force === true )
 		{
