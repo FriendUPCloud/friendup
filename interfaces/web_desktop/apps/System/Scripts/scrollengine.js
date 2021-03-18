@@ -602,10 +602,6 @@ scrollengine = {
 		// Store previous values for comparison
 		this.dataPrevStart = this.dataStart;
 		this.dataPrevLimit = this.dataLimit;
-				
-		// Reset database fetch calculator
-		this.dataStart = 0;
-        this.dataLimit = 0;
 		
 		this.counted = 0;
 		
@@ -642,11 +638,9 @@ scrollengine = {
 		let pm = this.elements.pageMiddle;
 		
 		// Must redraw if pageMiddle is out of scroll view
-		
 		let redraw = false;
 		
 		// [1] If pageMiddle is not visible within the scroll view then redraw
-		
 		if( scrollTop > pm.offsetTop + pm.offsetHeight )
 		{
 			console.log( 'Redrawing because pagemiddle is above' );
@@ -654,7 +648,6 @@ scrollengine = {
 		}
 		
 		// [2] If pageMiddle is not visible within the scroll view then redraw
-		
 		if( scrollTop + viewHeight < pm.offsetTop )
 		{
 			console.log( 'Redrawing because pagemiddle is below' );
@@ -662,7 +655,6 @@ scrollengine = {
 		}
 		
 		// [4] If scrollarea is resized or just argument force is passed as true then redraw
-		
 		if( force === true )
 		{
 			console.log( 'Forced redraw' );
@@ -682,21 +674,22 @@ scrollengine = {
 		// What's left to scroll after pages
 		let leftToScroll = scrollHeight;
 		
-		let aaa, ddd, bbb = null;
+		let aaa = 0, ddd = 0, bbb = 0;
 		
 		if( this.config.mustRedraw )
 		{
-		    // TODO: Get latest database rows into myArray
-		    
 		    this.config.mustRedraw = false;
 		    
+		    // Visible row position and row count based on scroll and view height
 		    this.rowPosition = Math.floor( scrollTop / this.config.rowHeight );
 		    this.rowCount    = Math.floor( viewHeight / this.config.rowHeight ) + 1;
 		    
+		    // Set new datastart
 		    this.dataStart = this.rowPosition;
+		    console.log( 'Prev data start is: ' + this.prevDataStart );
+		    console.log( 'New data start is: ' + this.dataStart );
 		    
 		    // Page above
-		    let aaa = 0;
 		    if( scrollTop > viewHeight )
 		    {
 		    	aaa = this.pageAbove();
@@ -707,15 +700,17 @@ scrollengine = {
 		    }
 		    
 		    // Page middle
-		    let ddd = this.pageMiddle();
+		    ddd = this.pageMiddle();
 			
 		    // Page below
-		    let bbb = this.pageBelow();
+		    bbb = this.pageBelow();
 		    
-		    // 
-		    if( ( this.dataPrevStart != null && this.dataStart != this.dataPrevStart ) || ( this.dataPrevLimit != null && this.dataLimit != this.dataPrevLimit ) )
+		    // When to load more data;
+		    // We have new start data location, or we have increased limit (resize window)
+		    if( 
+		    	( this.dataPrevStart != null && this.dataStart != this.dataPrevStart ) || 
+		    	( this.dataPrevLimit != null && this.dataLimit != this.dataPrevLimit ) )
 		    {
-		    	console.log( 'Callback!' );
 		    	if( this.callback )
 		    	{
 		    		this.callback( 
@@ -725,31 +720,21 @@ scrollengine = {
 		    			myArray : this.myArray, 
 		    			total   : this.total 
 		    		} );
-		    	}
-		    	
-		    	//return;
-		    	
+		    	}		    	
 		    }
-		    if( this.debug ) console.log( { ddd:(ddd?ddd:false), bbb:(bbb?bbb:false) } );
 		}
-		// TODO: What happened to dd and bb here???
-		if( this.debug/* || 1==1*/ ) console.log( this.counted+' >= '+this.length( this.myArray ), { ddd:(ddd?ddd:false), bbb:(bbb?bb:false) } );
+		
 		// If we counted the whole list, then
 		if( this.counted >= this.length( this.myArray ) && ddd && bbb )
 		{
-			//console.log( '[1]' );
 	    	let hh = Math.max( ddd.offsetTop + ddd.offsetHeight, bbb.offsetTop + bbb.offsetHeight );
 	    	this.elements.wholeHeight.style.height = hh + 'px';
 		}
 		// Else, use scrollHeight
 		else
 		{
-			//console.log( '[2]' );
 		    this.elements.wholeHeight.style.height = scrollHeight + 'px';
 		}
-		
-		// Add debug
-		if( this.debug && 1!=1 ) this.debugInfo( scrollTop + ' scroll ' + "\r\n<br>" + viewHeight + ' height ' + "\r\n<br>" + this.ex );
 		
 		this.list.focus();
 	},
