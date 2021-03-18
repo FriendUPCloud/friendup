@@ -5262,16 +5262,15 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												}
 												else
 												{
-													( function( im )
+													( function( im, ct, canv )
 													{
 														setTimeout( function()
 														{
-															ctx.clearRect(0,0,16,16);
-															ctx.drawImage( myArray[ s ].imageObj, 0, 0, 16, 16 );
-															src = canvas.toDataURL( 'image/png' );
-															im.blob = src;
+															ct.clearRect(0,0,16,16);
+															ct.drawImage( myArray[ s ].imageObj, 0, 0, 16, 16 );
+															im.blob = canv.toDataURL( 'image/png' );
 														}, 2 );
-													} )( myArray[ s ].imageObj );
+													} )( myArray[ s ].imageObj, ctx, canvas );
 												}
 											}
 											
