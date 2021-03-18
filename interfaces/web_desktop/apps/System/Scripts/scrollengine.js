@@ -479,13 +479,13 @@ scrollengine = {
 		//console.log( { start: start, allNodes: allNodes, myArray: this.myArray } );
 		
 		// Distribute
-		/*if( this.layout )
+		if( this.layout )
 		{
 			let self = this;
 			
 			return this.layout( start, allNodes, this.myArray );
 		}
-		else*/
+		else
 		{
 			if( allNodes )
 			{

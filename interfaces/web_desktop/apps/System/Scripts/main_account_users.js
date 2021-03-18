@@ -5224,7 +5224,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									
 									let self = this;
 									let s = start;
-									for( let a = 0; a < self.length( allNodes ); a++, s++ )
+									let len = self.length( allNodes );
+									for( let a = 0; a < len; a++, s++ )
 									{
 										
 										// Set content
@@ -5254,13 +5255,16 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												}
 												else
 												{
-													let canvas = document.createElement( 'canvas' );
-													let ctx = canvas.getContext( '2d' );
-													canvas.width = 16;
-													canvas.height = 16;
-													ctx.drawImage( myArray[ s ].imageObj, 0, 0, 16, 16 );
-													src = canvas.toDataURL( 'image/png' );
-													myArray[ s ].imageObj.blob = src;
+													setTimeout( function()
+													{
+														let canvas = document.createElement( 'canvas' );
+														let ctx = canvas.getContext( '2d' );
+														canvas.width = 16;
+														canvas.height = 16;
+														ctx.drawImage( myArray[ s ].imageObj, 0, 0, 16, 16 );
+														src = canvas.toDataURL( 'image/png' );
+														myArray[ s ].imageObj.blob = src;
+													}, 5 );
 												}
 											}
 											
