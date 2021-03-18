@@ -124,27 +124,33 @@ scrollengine = {
 				{
 					// Page Up
 					case 33:
-						self.list.scrollTop -= self.list.offsetHeight >> 1;
+						self.list.scrollTop -= self.list.offsetHeight;
+						cancelBubble( e );
 						break;
 					// Page Down
 					case 34:
-						self.list.scrollTop += self.list.offsetHeight >> 1;
+						self.list.scrollTop += self.list.offsetHeight;
+						cancelBubble( e );
 						break;
 					// Home	
 					case 36:
 						self.list.scrollTop = 0;
+						cancelBubble( e );
 						break;
 					// End
 					case 35:
 						self.list.scrollTop = self.elements.wholeHeight.offsetHeight;
+						cancelBubble( e );
 						break;
 					// Arrow Up
 					case 38:
 						self.list.scrollTop -= self.config.rowHeight;
+						cancelBubble( e );
 						break;
 					// Arrow Down
 					case 40:
 						self.list.scrollTop += self.config.rowHeight;
+						cancelBubble( e );
 						break;
 				}
 			} );
