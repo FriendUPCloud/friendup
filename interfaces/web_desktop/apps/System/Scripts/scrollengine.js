@@ -289,6 +289,8 @@ scrollengine = {
         this.counted = counted;
         this.dataLimit += counted;
         
+        console.log( '1: Will load ' + this.dataLimit + ' rows' );
+        
         let t = this.dTop = ( Math.floor( this.scrollTop / this.config.rowHeight ) * this.config.rowHeight );
         let h = counted * this.config.rowHeight;
         aa.style.top = ( t - h ) + 'px';
@@ -331,6 +333,8 @@ scrollengine = {
 		// Add to limit
 		this.dataLimit += counted;
 		this.counted += counted;
+		
+		console.log( '2: Will load ' + this.dataLimit + ' rows' );
 		
 		d.style.top = this.dTop + 'px';
 		d.style.height = counted * this.config.rowHeight + 'px';
@@ -375,7 +379,7 @@ scrollengine = {
 		this.dataLimit += counted;
 		this.counted += counted;
 		
-		console.log( 'Will load ' + this.dataLimit + ' rows' );
+		console.log( '3: Will load ' + this.dataLimit + ' rows' );
 
 		bb.style.top = d.offsetTop + d.offsetHeight + 'px';
 		bb.style.height = counted * this.config.rowHeight + 'px';
