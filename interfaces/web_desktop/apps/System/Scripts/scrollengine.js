@@ -262,7 +262,7 @@ scrollengine = {
         this.dataLimit = 0;
         if( this.dataStart < 0 )
         {
-        	this.dataLimit += this.dataStart; // decrement with adding  negative value
+        	//this.dataLimit += this.dataStart; // decrement with adding  negative value
         	this.dataStart = 0;
         }
         
