@@ -5250,15 +5250,9 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												iii.onload = function() 
 												{
 													this.myArray.imageObj = this;
-													( function( im, ct, canv )
-													{
-														setTimeout( function()
-														{
-															ct.clearRect( 0, 0, 16, 16);
-															ct.drawImage( im, 0, 0, 16, 16 );
-															im.blob = canv.toDataURL( 'image/png' );
-														}, 5 );
-													} )( this.myArray.imageObj, ctx, canvas );
+													ctx.clearRect( 0, 0, 16, 16);
+													ctx.drawImage( this.myArray.imageObj, 0, 0, 16, 16 );
+													this.myArray.imageObj.blob = canvas.toDataURL( 'image/png' );
 												};
 												iii.src = src;
 											}
