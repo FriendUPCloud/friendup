@@ -629,7 +629,7 @@ scrollengine = {
 		}
 		
 		this.scrollTop    = this.list.scrollTop;
-		this.viewHeight   = this.list.clientHeight/*window.innerHeight*/;
+		this.viewHeight   = this.list.clientHeight; // window.innerHeight
 		this.scrollHeight = ( this.config.rowHeight * this.length( this.myArray ) );
 		
 		// Some vars
@@ -669,16 +669,6 @@ scrollengine = {
 			redraw = true;
 		}
 		
-		if( this.debug )
-		{
-			console.log( "\r\n" );
-			console.log( '[1] '+scrollTop+' > '+pm.offsetTop+' + '+pm.offsetHeight+' | scrollTop > pm.offsetTop + pm.offsetHeight '+(scrollTop>pm.offsetTop+pm.offsetHeight?'(true)':'(false)') );
-			console.log( '[2] '+scrollTop+' + '+viewHeight+' < '+pm.offsetTop+' | scrollTop + viewHeight < pm.offsetTop '+(scrollTop+viewHeight<pm.offsetTop?'(true)':'(false)') );
-			console.log( '[3] '+scrollTop+' < '+viewHeight+' | scrollTop < viewHeight '+(scrollTop<viewHeight?'(true)':'(false)') );
-			console.log( '[4] '+(force?true:false)+' === '+true+' | force === true '+(force===true?'(true)':'(false)') );
-			console.log( "\r\n" );
-		}
-		
 		if( redraw )
 		{
 		    this.ex += 'Must redraw ' + "\r\n<br>";
@@ -712,9 +702,10 @@ scrollengine = {
 	    	}
 		    
 		    // Page above
+		    let aaa;
 		    if( scrollTop > viewHeight )
 		    {
-		    	let aaa = this.pageAbove();
+		    	aaa = this.pageAbove();
 		    }
 		    else
 		    {
@@ -726,19 +717,6 @@ scrollengine = {
 			
 		    // Page below
 		    let bbb = this.pageBelow();
-		    
-		    if( this.debug || 1==1 )
-		    {
-				console.log( '[4] refresh', {
-					dataStart    : { a: this.dataStart, b: this.dataPrevStart },
-					dataLimit    : { a: this.dataLimit, b: this.dataPrevLimit },
-					rowCount     : this.rowCount,
-					leftToScroll : leftToScroll,
-					counted      : this.counted,
-					myArray      : this.myArray,
-					total        : this.total
-				} );
-		    }
 		    
 		    // TODO: Find out why 1 is missing when scrolling between page above, middle, below ...
 		    
