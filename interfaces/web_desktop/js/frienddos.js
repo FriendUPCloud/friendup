@@ -1743,6 +1743,7 @@ window.Shell = function( appObject )
 				break;
 		}
 
+		// Make a parsed object
 		let parsedObject = this.parseInput( cmd );
 		cmd = parsedObject.args; // Just the fin_args
 		this.parsedObj = parsedObject;
