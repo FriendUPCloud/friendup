@@ -125,8 +125,6 @@ Workspace = {
 		// Do the init!
 		window.addEventListener( 'beforeunload', Workspace.leave, true );
 
-		this.loadSystemInfo();
-
 		InitWindowEvents();
 		InitWorkspaceEvents();
 		InitGuibaseEvents();
