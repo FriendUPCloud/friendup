@@ -4822,9 +4822,7 @@ function CheckDoorsKeys( e )
 		window.regionWindow.windowObject : window.regionWindow.parentNode.windowObject ) : false;
 	let dirMode = wobject && window.regionWindow && wobject._window.directoryview &&
 		( !wobject.flags || !wobject.flags.editing );
-	
-	console.log( 'Do we have dirMode?', dirMode );
-	
+
 	if( !Workspace.editing )
 	{
 		switch( k )
