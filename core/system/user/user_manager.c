@@ -1286,7 +1286,7 @@ void UMRemoveOldUserLoginEntries( UserManager *um )
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	if( sqlLib != NULL )
 	{
-		DEBUG("[UMRemoveOldUserLoginEntries] username %s\n", name );
+		DEBUG("[UMRemoveOldUserLoginEntries] start\n" );
 		char *query = FCalloc( 1, 2048 );
 		if( query != NULL )
 		{
