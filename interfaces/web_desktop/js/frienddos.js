@@ -358,7 +358,7 @@ window.Shell = function( appObject )
 		let t = this;
 		this.execute( array[index++], function( result, data )
 		{
-			console.log( 'this.queueCommand = function( array, index, buffer, callback ) ', { array: array, index: index, buffer: buffer } );
+			//console.log( 'this.queueCommand = function( array, index, buffer, callback ) ', { array: array, index: index, buffer: buffer } );
 			if( result )
 			{
 				buffer += typeof( result ) == 'object' ? result.response : result;
