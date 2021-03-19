@@ -4794,6 +4794,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					let source = spath.split( ' ' ).join( '\\ ' );
 					let destin = ( destPath+ex ).split( ' ' ).join( '\\ ' );
 					let copyStr = 'copy ' + source + ' to ' + destin;
+					console.log( 'Copying: ' + copyStr ); 
 					sh.parseScript( copyStr, function()
 					{
 						if( cliplen-- == 0 )
