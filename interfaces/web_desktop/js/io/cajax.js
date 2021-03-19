@@ -18,6 +18,8 @@ var _cajax_http_max_connections = 6;            // Max
 var _cajax_http_last_time = 0;                  // Time since last
 var _cajax_mutex = 0;
 
+let _cajax_origin = document.location.origin;
+
 // For debug
 var _c_count = 0;
 var _c_destroyed = 0;
@@ -464,7 +466,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 			let u = self.url;
 			if( u.substr( 0, 1 ) == '/' )
 			{
-				let urlbase = document.location.origin;
+				let urlbase = _cajax_origin;
 				u = urlbase + u;
 			}
 			self.proxy.open( self.method, u, syncing ); 

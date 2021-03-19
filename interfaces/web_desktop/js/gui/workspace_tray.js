@@ -372,7 +372,7 @@ function PollTray()
 							PollTray();
 							return cancelBubble( e );
 						}
-						if( event.showCallback )
+						if( event.showCallback && typeof( event.showCallback ) == 'function' )
 						{
 							event.showCallback();
 						}

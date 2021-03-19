@@ -1213,15 +1213,6 @@ var WorkspaceInside = {
 		    var mo = new Library( 'system.library' );
 		    mo.onExecuted = function( rc, sessionList )
 		    {
-			    var m = Workspace.widget ? Workspace.widget.target : ge( 'DoorsScreen' );
-			    if( m == ge( 'DoorsScreen' ) )
-				    m = ge( 'DoorsScreen' ).screenTitle.getElementsByClassName( 'Extra' )[0];
-			    if( !m )
-			    {
-				    //console.log( 'Can not find widget!' );
-				    return;
-			    }
-		    
 			    var sessions = [];
 			    if( rc == 'ok' )
 			    {
@@ -1230,7 +1221,6 @@ var WorkspaceInside = {
 
 				    if( sessionList )
 				    {
-				    	Workspace.cachedSessionList = sessionList;
 					    try
 					    {
 						    var exists = [];
@@ -1273,6 +1263,7 @@ var WorkspaceInside = {
 							    sessions.push( '<p class="Relative FullWidth Ellipsis IconSmall fa-close MousePointer" onmousedown="Workspace.terminateSession(\'' +
 								    sessionList[b].sessionid + '\', \'' + sessionList[b].deviceidentity + '\');">&nbsp;' + svn + '</p>' );
 						    }
+						    Workspace.cachedSessionList = sessions;
 					    }
 					    catch( e )
 					    {
@@ -1287,7 +1278,7 @@ var WorkspaceInside = {
 		}
 		else
 		{
-			doItCal( [] );
+			doItCal( Workspace.cachedSessionList ? Workspace.cachedSessionList : [] );
 		}
 		
 		// For mobiles, we have a Friend icon at the top of the screen
@@ -1404,6 +1395,7 @@ var WorkspaceInside = {
 			var str = JSON.stringify(e);
 			Workspace.systemInfo = e;
 		}
+		f.forceHTTP = true;
 		f.execute( 'admin', {command:'info'} );
 	},
 	// If we have stored a theme config for the current theme, use its setup
@@ -1577,6 +1569,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						Workspace.themeData = false;
 					}
 					Workspace.applyThemeConfig();
+					Workspace.loadSystemInfo();
 				
 					// Fallback
 					if( !isMobile )
@@ -2515,147 +2508,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					try
 					{
 						Workspace.mainDock.readConfig( JSON.parse( conf ) );
-						Workspace.mainDock.clear();
 					}
 					catch( e )
 					{
-						Workspace.mainDock.clear();
-					}
-
-					function getOnClickFn( appName )
-					{
-						return function()
-						{
-							ExecuteApplication( appName );
-						}
-					}
-
-					function genFunc( fod )
-					{
-						return function()
-						{
-							Workspace.launchNativeApp( fod );
-						}
-					}
-
-					// Clear tasks
-					ge( 'Taskbar' ).innerHTML = '';
-					ge( 'Taskbar' ).tasks = [];
-
-					// Add start menu
-					if( !isMobile && globalConfig.viewList == 'dockedlist' )
-					{
-						var img = 'startmenu.png';
-						if( Workspace.mainDock.conf )
-						{
-							if( Workspace.mainDock.conf.size == '32' )
-							{
-								img = 'startmenu_32.png';
-							}
-							else if( Workspace.mainDock.conf.size == '16' )
-							{
-								img = 'startmenu_16.png';
-							}
-						}
-						var ob = {
-							type: 'startmenu',
-							src: '/webclient/gfx/system/' + img,
-							title: 'Start',
-							className: 'Startmenu',
-							click: function( e ){ Workspace.toggleStartMenu(); },
-							noContextMenu: true
-						}
-						Workspace.mainDock.addLauncher( ob );
-					}
-
-					let elements = JSON.parse( dat );
-					for( let a = 0; a < elements.length; a++ )
-					{
-						let ele = elements[a];
-						let icon = 'apps/' + ele.Name + '/icon.png';
-						if( ele.Name.indexOf( ':' ) > 0 )
-						{
-							ext = ele.Name.split( ':' )[1];
-							if( ext.indexOf( '/' ) > 0 )
-							{
-								ext = ext.split( '/' )[1];
-							}
-							ext = ext.split( '.' )[1];
-							icon = '.' + ( ext ? ext : 'txt' );
-						}
-						
-						if( ele.Icon )
-						{
-							ele.Icon = ele.Icon.split( /sessionid\=[^&]+/i ).join( 'sessionid=' + Workspace.sessionId );
-							if( ele.Icon.indexOf( ':' ) > 0 )
-								icon = getImageUrl( ele.Icon );
-							else icon = ele.Icon;
-						}
-						
-						let ob = {
-							exe         : ele.Name,
-							type        : ele.Type,
-							src         : icon,
-							workspace   : ele.Workspace - 1,
-							opensilent  : ele.OpenSilent,
-							displayname : ele.DisplayName,
-							'title'     : ele.Title ? ele.Title : ele.Name
-						};
-						
-						// For Linux apps..
-						if( ele.Name.substr( 0, 7 ) == 'native:' )
-						{
-							let tmp = ob.exe.split( 'native:' )[1];
-							ob.click = genFunc( tmp );
-						}
-
-						Workspace.mainDock.addLauncher( ob );
 					}
 					
-					// Add desktop shortcuts too for mobile
-					if( window.isMobile )
-					{
-						for( var a = 0; a < Workspace.icons.length; a++ )
-						{
-							if( Workspace.icons[a].Type == 'Executable' && Workspace.icons[a].MetaType == 'ExecutableShortcut' )
-							{
-								var el = Workspace.icons[a];
-								var ob = {
-									exe:  el.Filename,
-									type: 'Executable',
-									src:  el.IconFile,
-									displayname: el.Title,
-									title: el.Title
-								};
-								Workspace.mainDock.addLauncher( ob );
-							}
-						}
-					}
-					// File browser
-					var fmenu = {
-						click: function( e )
-						{
-							var u = CryptoJS.SHA1( ( new Date() ).getTime() + ( Math.random() * 999 ) + ( Math.random() * 999 ) + "" ).toString();
-							if( isMobile )
-							{
-								OpenWindowByFileinfo( { Title: 'Mountlist', Path: 'Mountlist:', Type: 'Directory', MetaType: 'Directory' }, false, false, u );
-							}
-							else
-							{
-								OpenWindowByFileinfo( 
-									{ Title: 'Home', Path: 'Home:', Type: 'Directory', MetaType: 'Directory' },
-									false, false, u
-								);
-							}
-							if( !Workspace.isSingleTask )
-								Workspace.mainDock.closeDesklet();
-						},
-						type: 'Executable',
-						displayname: i18n( 'i18n_files' ),
-						src: isMobile ? '/iconthemes/friendup15/Folder_Smaller.svg' : '/iconthemes/friendup15/Folder.svg',
-						title: i18n( 'i18n_files' ),
-					};
-					Workspace.mainDock.addLauncher( fmenu );
+					let elements = JSON.parse( dat );
+					Workspace.cachedDockElements = elements;
+					Workspace.refreshDocks();
 					
 					Workspace.mainDock.initialized();
 					
@@ -2696,6 +2556,151 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 		}
 		c.execute( 'items', { sessionid: false } );
+	},
+	refreshDocks: function()
+	{
+		let elements = Workspace.cachedDockElements;
+		
+		Workspace.mainDock.clear();
+		
+		
+		function getOnClickFn( appName )
+		{
+			return function()
+			{
+				ExecuteApplication( appName );
+			}
+		}
+
+		function genFunc( fod )
+		{
+			return function()
+			{
+				Workspace.launchNativeApp( fod );
+			}
+		}
+
+		// Clear tasks
+		ge( 'Taskbar' ).innerHTML = '';
+		ge( 'Taskbar' ).tasks = [];
+
+		// Add start menu
+		if( !isMobile && globalConfig.viewList == 'dockedlist' )
+		{
+			var img = 'startmenu.png';
+			if( Workspace.mainDock.conf )
+			{
+				if( Workspace.mainDock.conf.size == '32' )
+				{
+					img = 'startmenu_32.png';
+				}
+				else if( Workspace.mainDock.conf.size == '16' )
+				{
+					img = 'startmenu_16.png';
+				}
+			}
+			var ob = {
+				type: 'startmenu',
+				src: '/webclient/gfx/system/' + img,
+				title: 'Start',
+				className: 'Startmenu',
+				click: function( e ){ Workspace.toggleStartMenu(); },
+				noContextMenu: true
+			}
+			Workspace.mainDock.addLauncher( ob );
+		}
+		
+		if( !elements || !elements.length ) return;
+		for( let a = 0; a < elements.length; a++ )
+		{
+			let ele = elements[a];
+			let icon = 'apps/' + ele.Name + '/icon.png';
+			if( ele.Name.indexOf( ':' ) > 0 )
+			{
+				ext = ele.Name.split( ':' )[1];
+				if( ext.indexOf( '/' ) > 0 )
+				{
+					ext = ext.split( '/' )[1];
+				}
+				ext = ext.split( '.' )[1];
+				icon = '.' + ( ext ? ext : 'txt' );
+			}
+			
+			if( ele.Icon )
+			{
+				ele.Icon = ele.Icon.split( /sessionid\=[^&]+/i ).join( 'sessionid=' + Workspace.sessionId );
+				if( ele.Icon.indexOf( ':' ) > 0 )
+					icon = getImageUrl( ele.Icon );
+				else icon = ele.Icon;
+			}
+			
+			let ob = {
+				exe         : ele.Name,
+				type        : ele.Type,
+				src         : icon,
+				workspace   : ele.Workspace - 1,
+				opensilent  : ele.OpenSilent,
+				displayname : ele.DisplayName,
+				'title'     : ele.Title ? ele.Title : ele.Name
+			};
+			
+			// For Linux apps..
+			if( ele.Name.substr( 0, 7 ) == 'native:' )
+			{
+				let tmp = ob.exe.split( 'native:' )[1];
+				ob.click = genFunc( tmp );
+			}
+
+			Workspace.mainDock.addLauncher( ob );
+		}
+		
+		// Add desktop shortcuts too for mobile
+		if( window.isMobile )
+		{
+			for( var a = 0; a < Workspace.icons.length; a++ )
+			{
+				if( Workspace.icons[a].Type == 'Executable' && Workspace.icons[a].MetaType == 'ExecutableShortcut' )
+				{
+					var el = Workspace.icons[a];
+					var ob = {
+						exe:  el.Filename,
+						type: 'Executable',
+						src:  el.IconFile,
+						displayname: el.Title,
+						title: el.Title
+					};
+					Workspace.mainDock.addLauncher( ob );
+				}
+			}
+		}
+		// File browser
+		var fmenu = {
+			click: function( e )
+			{
+				var u = CryptoJS.SHA1( ( new Date() ).getTime() + ( Math.random() * 999 ) + ( Math.random() * 999 ) + "" ).toString();
+				if( isMobile )
+				{
+					OpenWindowByFileinfo( { Title: 'Mountlist', Path: 'Mountlist:', Type: 'Directory', MetaType: 'Directory' }, false, false, u );
+				}
+				else
+				{
+					OpenWindowByFileinfo( 
+						{ Title: 'Home', Path: 'Home:', Type: 'Directory', MetaType: 'Directory' },
+						false, false, u
+					);
+				}
+				if( !Workspace.isSingleTask )
+					Workspace.mainDock.closeDesklet();
+			},
+			type: 'Executable',
+			displayname: i18n( 'i18n_files' ),
+			src: isMobile ? '/iconthemes/friendup15/Folder_Smaller.svg' : '/iconthemes/friendup15/Folder.svg',
+			title: i18n( 'i18n_files' ),
+		};
+		Workspace.mainDock.addLauncher( fmenu );
+		
+		// Make sure the tray position is there
+		PollTrayPosition();
 	},
 	connectFilesystem: function( execute )
 	{
@@ -4655,6 +4660,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// paste from virtual clipboard
 	pasteFiles: function( e )
 	{
+		if( !e ) e = window.event;
+		
 		if( window.currentMovable && Friend.workspaceClipBoard && Friend.workspaceClipBoard.length > 0 && typeof window.currentMovable.drop == 'function' )
 		{
 			var e = {};
@@ -4663,9 +4670,31 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			var clip = Friend.workspaceClipBoard;
 			
 			// Make sure we don't overwrite existing files!
-			var destPath = currentMovable.content.fileInfo.Path;
+			let destPath = currentMovable.content.fileInfo.Path;
+			let destFinf = currentMovable.content.fileInfo;
+			let doCopy = false;
+			
+			// Use menu context for file info path (folder icon etc)
+			if( Workspace.menuContext )
+			{
+				let fi = null;
+				let mc = Workspace.menuContext;
+				while( mc != document.body )
+				{
+					if( mc.fileInfo )
+						break;
+					mc = mc.parentNode;
+				}
+				if( mc.fileInfo )
+				{
+					destPath = mc.fileInfo.Path;
+					destFinf = mc.fileInfo;
+					doCopy = true;
+				}
+			}
+			
 			var d = new Door( destPath );
-			d.getIcons( currentMovable.content.fileInfo, function( items )
+			d.getIcons( destFinf, function( items )
 			{
 				for( var a = 0; a < items.length; a++ )
 				{
@@ -4718,8 +4747,21 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 				}
 				if( !e ) e = {};
-				e.paste = true;
-				window.currentMovable.drop( Friend.workspaceClipBoard, e );
+				let cliplen = clip.length;
+				for( let b = 0; b < clip.length; b++ )
+				{
+					let spath = clip[b].fileInfo.Path;
+					let ex = clip[b].fileInfo.Type == 'File' ? clip[b].fileInfo.Filename : '';
+					let sh = new Shell( 0 );
+					sh.parseScript( 'copy ' + spath + ' to ' + destPath+ex, function()
+					{
+						if( cliplen-- == 0 )
+						{
+							Notify( { title: i18n( 'i18n_copy_operation' ), text: i18n( 'i18n_copying_files_complete' ) } );
+						}
+						delete sh;
+					}  );
+				}
 			} );
 		}
 	},
@@ -6688,7 +6730,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					},
 					{
 						name:	i18n( 'menu_paste' ),
-						command: function() { Workspace.pasteFiles(); },
+						command: function( e ) { Workspace.pasteFiles( e ); },
 						disabled: sharedVolume || !iconsInClipboard || systemDrive || cannotWrite
 					},
 					{
@@ -6843,7 +6885,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							// Find icon for download
 							if( currentMovable )
 							{
-								var selPath = false;
+								var selPath = [];
 								var dv = currentMovable.content;
 								if( dv )
 								{
@@ -6852,15 +6894,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										var ic = dv.icons[a];
 										if( ic.domNode && ic.domNode.fileInfo && ic.domNode.fileInfo.Type == 'File' && ic.selected )
 										{
-											selPath = ic.domNode.fileInfo.Path;
-											console.log( ic.domNode.fileInfo, ' domnode: ' + ic.domNode.selected + ' ic: ' + ic.selected );
-											break;
+											selPath.push( ic.domNode.fileInfo.Path );
 										}
 									}
 								}
-								if( selPath )
+								if( selPath.length >= 1 )
 								{
-									Workspace.download( selPath ); 
+									for( let a = 0; a < selPath.length; a++ )
+									{
+										Workspace.download( selPath[a] ); 
+									}
 								}
 								else
 								{
@@ -7086,6 +7129,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 		if( tr == window )
 			tr = document.body;
+		
+		this.menuContext = tr;
 		
 		// Check if we need to activate
 		var iconWindow = false;

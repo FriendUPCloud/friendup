@@ -125,8 +125,6 @@ Workspace = {
 		// Do the init!
 		window.addEventListener( 'beforeunload', Workspace.leave, true );
 
-		this.loadSystemInfo();
-
 		InitWindowEvents();
 		InitWorkspaceEvents();
 		InitGuibaseEvents();
@@ -734,6 +732,12 @@ Workspace = {
 	},
 	login: function( u, p, r, callback, ev )
 	{
+		// Use authmodule login
+		if( Workspace.authModuleLogin )
+		{
+			console.log( 'Using our existing auth module.' );
+			return Workspace.authModuleLogin( callback, window );
+		}
 		// Wrap to user object
 		return Friend.User.Login( u, p, r, callback, ev );
 	},
