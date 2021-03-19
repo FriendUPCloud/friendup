@@ -72,6 +72,18 @@ if( !class_exists( 'DoorSQLDrive' ) )
 			}
 		}
 		
+		// Remove unwanted characters
+		private function safeFilename( $filename, $mode = 'normal' )
+		{
+			if( $mode == 'simple' )
+			{
+				$filename = str_replace( array( "\n", "\t", "\r" ), '', $filename );
+				return $filename;
+			}
+			$filename = str_replace( array( "\n", "\t", "\r", "/" ), '', $filename );
+			return $filename;
+		}
+		
 		// Public functions --------------------------------------------
 		
 		/**
@@ -778,6 +790,9 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						die( 'ok' );
 					case 'rename':
 						ob_clean();
+						
+						$args->newname = $this->safeFilename( $args->newname );
+						
 						// Is it a folder?
 						if( substr( $path, -1, 1 ) == '/' )
 						{
@@ -857,6 +872,8 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							
 						if( $path )
 						{
+							$path= $this->safeFilename( $path, 'simple' );
+							
 							$f = new DbIO( 'FSFolder' );
 		
 							// Get by path (subfolder)
@@ -968,6 +985,9 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					case 'copy':
 						$from = isset( $args->from ) ? $args->from : ( isset( $args->args->from ) ? $args->args->from : false );
 						$to   = isset( $args->to )   ? $args->to   : ( isset( $args->args->to )   ? $args->args->to   : false );
+						
+						$to = $this->safeFilename( $to, 'simple' );
+						
 						if( isset( $from ) && isset( $to ) )
 						{
 							//$Logger->log( 'Trying from ' . $from . ' to ' . $to );

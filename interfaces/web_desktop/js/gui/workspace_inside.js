@@ -4730,7 +4730,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					doCopy = true;
 				}
 			}
-			
+			console.log( 'Pasting from: ' + clip[0].fileInfo.Path + ' to ' + destPath );
 			var d = new Door( destPath );
 			d.getIcons( destFinf, function( items )
 			{
@@ -4791,7 +4791,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					let spath = clip[b].fileInfo.Path;
 					let ex = clip[b].fileInfo.Type == 'File' ? clip[b].fileInfo.Filename : '';
 					let sh = new Shell( 0 );
-					sh.parseScript( 'copy ' + spath + ' to ' + destPath+ex, function()
+					let source = spath.split( ' ' ).join( '\\ ' );
+					let destin = ( destPath+ex ).split( ' ' ).join( '\\ ' );
+					let copyStr = 'copy ' + source + ' to ' + destin;
+					sh.parseScript( copyStr, function()
 					{
 						if( cliplen-- == 0 )
 						{
