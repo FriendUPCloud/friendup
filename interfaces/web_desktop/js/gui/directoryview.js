@@ -4864,12 +4864,15 @@ function CheckDoorsKeys( e )
 					if( dirMode )
 					{
 						// Find active
-						for( var a = 0; a < window.regionWindow.icons.length; a++ )
+						if( window.regionWindow.icons )
 						{
-							if( window.regionWindow.icons[a].selected )
+							for( var a = 0; a < window.regionWindow.icons.length; a++ )
 							{
-								Workspace.copyFiles( e );
-								return cancelBubble( e );
+								if( window.regionWindow.icons[a].selected )
+								{
+									Workspace.copyFiles( e );
+									return cancelBubble( e );
+								}
 							}
 						}
 					
