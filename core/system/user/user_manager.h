@@ -232,4 +232,10 @@ int UMCheckAndLoadAPIUser( UserManager *um );
 
 int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname );
 
+//
+//
+//
+
+void UMRemoveOldUserLoginEntries( UserManager *um );
+
 #endif //__SYSTEM_USER_USER_MANAGER_H__

@@ -1276,6 +1276,35 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, int nu
 }
 
 /**
+ * Function remove old entries from database (FUserLogin entries)
+ *
+ * @param um pointer to UserManager
+ */
+void UMRemoveOldUserLoginEntries( UserManager *um )
+{
+	SystemBase *sb = (SystemBase *)um->um_SB;
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	if( sqlLib != NULL )
+	{
+		DEBUG("[UMRemoveOldUserLoginEntries] username %s\n", name );
+		char *query = FCalloc( 1, 2048 );
+		if( query != NULL )
+		{
+			// 30 days in seconds 2 592 000
+			time_t tm = time( NULL ) - 2592000;
+		
+			// we are checking failed logins in last hour
+			sqlLib->SNPrintF( sqlLib, query, 2048, "DELETE FROM `FUserLogin` WHERE LoginTime < %ld", tm );
+		
+			sqlLib->QueryWithoutResults( sqlLib, query );
+			
+			FFree( query );
+		}
+		sb->LibrarySQLDrop( sb, sqlLib );
+	}
+}
+
+/**
  * Check and set API user if thats neccessary
  *
  * @param um pointer to UserManager
