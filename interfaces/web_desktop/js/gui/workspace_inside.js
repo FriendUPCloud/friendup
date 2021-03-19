@@ -4789,7 +4789,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				for( let b = 0; b < clip.length; b++ )
 				{
 					let spath = clip[b].fileInfo.Path;
-					let ex = clip[b].fileInfo.Type == 'File' ? clip[b].fileInfo.Filename : '';
+					let lastChar = spath.substr( -1, 1 );
+					let ex = '';
+					
+					// Shouldn't happen...
+					if( lastChar == '/' || lastChar == ':' )
+						ex = clip[b].fileInfo.Type == 'File' ? clip[b].fileInfo.Filename : '';
+					
 					let sh = new Shell( 0 );
 					let source = spath.split( ' ' ).join( '\\ ' );
 					let destin = ( destPath+ex ).split( ' ' ).join( '\\ ' );

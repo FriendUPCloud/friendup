@@ -694,6 +694,10 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						friendHeader( 'Content-Length: ' . ( filesize( $fname ) + strlen( $okRet ) ) );
 						return $okRet . trim( file_get_contents( $fname ) );
 					}
+					else
+					{
+						return 'fail<!--separate-->{"response":"could not read file, file does not exist"}';
+					}
 				}
 				return 'fail<!--separate-->{"response":"could not read file"}'; //Could not read file: ' . $Config->FCUpload . $fn . '<!--separate-->' . print_r( $f, 1 );
 			}
