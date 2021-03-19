@@ -4730,46 +4730,46 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					doCopy = true;
 				}
 			}
-			console.log( 'Pasting from: ' + clip[0].fileInfo.Path + ' to ' + destPath );
 			var d = new Door( destPath );
 			d.getIcons( destFinf, function( items )
 			{
-				for( var a = 0; a < items.length; a++ )
+				for( let a = 0; a < items.length; a++ )
 				{
-					for( var b = 0; b < clip.length; b++ )
+					for( let b = 0; b < clip.length; b++ )
 					{
-						var copy = 0;
+						let copy = 0;
 						if( items[ a ].Filename == clip[ b ].fileInfo.Filename )
 						{
-							var found = false;
+							let found = false;
 							do
 							{
 								found = false;
-								var str = 'Copy ' + ( copy > 0 ? ( copy + ' ' ) : '' );
-								str += 'of ' + items[a].Filename;
+								let str = 'Copy ' + ( copy > 0 ? ( copy + ' ' ) : '' );
+								str += 'of ' + items[ a ].Filename;
 							
-								var f = clip[ b ].fileInfo.Filename;
-								var p = clip[ b ].fileInfo.Path;
+								let p = clip[ b ].fileInfo.Path;
+								let f = clip[ b ].fileInfo.Filename;
 							
 								// Files
 								if( clip[ b ].fileInfo.MetaType == 'File' )
 								{
-									var dn = f;
+									let dn = f;
 									p = p.substr( 0, p.length - dn.length ) + str;
 									clip[ b ].fileInfo.NewPath = p;
 								}
 								// Directory
 								else
 								{
-									var dn = f + '/';
+									let dn = f + '/';
 									p = p.substr( 0, p.length - dn.length ) + str + '/';
 									clip[ b ].fileInfo.NewPath = p;
 								}
-							
-								clip[ b ].fileInfo.NewFilename = str;
 								
+								// Set the safe new filename
+								clip[ b ].fileInfo.NewFilename = str;
+							
 								// Still found?
-								for( var c = 0; c < items.length; c++ )
+								for( let c = 0; c < items.length; c++ )
 								{
 									if( items[ c ].Filename == str )
 									{
@@ -4778,7 +4778,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										break;
 									}
 								}
-								
 							}
 							while( found );
 						}
@@ -4790,17 +4789,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				{
 					let spath = clip[b].fileInfo.Path;
 					let lastChar = spath.substr( -1, 1 );
-					let ex = '';
-					
-					// Shouldn't happen...
-					if( lastChar == '/' || lastChar == ':' )
-						ex = clip[b].fileInfo.Type == 'File' ? clip[b].fileInfo.Filename : '';
-					
 					let sh = new Shell( 0 );
 					let source = spath.split( ' ' ).join( '\\ ' );
-					let destin = ( destPath+ex ).split( ' ' ).join( '\\ ' );
-					let copyStr = 'copy ' + source + ' to ' + destin;
-					console.log( 'Copying: ' + copyStr ); 
+					let destin = ( destPath ).split( ' ' ).join( '\\ ' );
+					let fn = ( clip[b].fileInfo.NewFilename ? clip[b].fileInfo.NewFilename : clip[b].fileInfo.Filename );
+					fn = fn.split( ' ' ).join( '\\ ' );
+					let copyStr = 'copy ' + source + ' to ' + destin + fn;
 					sh.parseScript( copyStr, function()
 					{
 						if( cliplen-- == 0 )
