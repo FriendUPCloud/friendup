@@ -2564,16 +2564,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					
 					ConstrainWindows();
 					
-					// Make sure taskbar is polled
-					if( !isMobile )
-					{
-						PollTaskbar();
-					
-						// Reload start menu
-						// TODO: Remove the need for this hack
-						Workspace.pollStartMenu( true );
-					}
-					
 					// Open the main dock first
 					if( !Workspace.insideInitialized )
 					{
@@ -2739,6 +2729,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			title: i18n( 'i18n_files' ),
 		};
 		Workspace.mainDock.addLauncher( fmenu );
+		
+		// Make sure taskbar is polled
+		if( !isMobile )
+		{
+			PollTaskbar();
+		
+			// Reload start menu
+			// TODO: Remove the need for this hack
+			Workspace.pollStartMenu( true );
+		}
 		
 		// Make sure the tray position is there
 		PollTrayPosition();
