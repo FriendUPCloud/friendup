@@ -28,6 +28,7 @@ Sections.accounts_roles = function( cmd, extra )
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
+						console.log( 'userroleget', { e:e, d:d } );
 						info.role = null;
 						if( e != 'ok' ) return;
 						
@@ -51,6 +52,7 @@ Sections.accounts_roles = function( cmd, extra )
 					var m = new Module( 'system' );
 					m.onExecuted = function( e, d )
 					{
+						console.log( 'getsystempermissions', { e:e, d:d } );
 						info.permission = null;
 						if( e != 'ok' ) return;
 						
@@ -73,6 +75,7 @@ Sections.accounts_roles = function( cmd, extra )
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
+						console.log( 'workgroups', { e:e, d:d } );
 						info.workgroups = null;
 						//if( e != 'ok' ) return;
 						
@@ -110,16 +113,15 @@ Sections.accounts_roles = function( cmd, extra )
 	
 	// Get the user list -------------------------------------------------------
 	
-	var checkedGlobal = Application.checkAppPermission( [ 'PERM_ROLE_READ_GLOBAL', 'PERM_ROLE_GLOBAL' ] );
-	var checkedWorkgr = Application.checkAppPermission( [ 'PERM_ROLE_READ_IN_WORKGROUP', 'PERM_ROLE_WORKGROUP' ] );
+	var checkedWorkgr = Application.checkAppPermission( [ 'ROLE_READ' ] );
 	
-	if( checkedGlobal || checkedWorkgr )
+	if( checkedWorkgr )
 	{
 		
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			//console.log( { e:e, d:d } );
+			console.log( { e:e, d:d } );
 		
 			//if( e != 'ok' ) return;
 			var roleList = null;
@@ -188,14 +190,10 @@ Sections.accounts_roles = function( cmd, extra )
 		
 			header.appendChild( headRow );
 			o.appendChild( header );
-		
+			
 			function setROnclick( r, uid )
 			{
-				if( Application.checkAppPermission( [ 
-					'PERM_ROLE_CREATE_GLOBAL', 'PERM_ROLE_CREATE_IN_WORKGROUP', 
-					'PERM_ROLE_UPDATE_GLOBAL', 'PERM_ROLE_UPDATE_IN_WORKGROUP', 
-					'PERM_ROLE_GLOBAL',        'PERM_ROLE_WORKGROUP' 
-				] ) )
+				if( Application.checkAppPermission( [ 'ROLE_CREATE', 'ROLE_UPDATE' ] ) )
 				{
 					r.onclick = function()
 					{

@@ -20,6 +20,8 @@ function initRoleDetails( info )
 	var data = info.permission;
 	var wgroups = info.workgroups;
 	
+	console.log( [ data, wgroups, info.role ] );
+	
 	if( data )
 	{
 		var perm = data;
@@ -123,11 +125,11 @@ function initRoleDetails( info )
 		}
 	}
 	
-	if( ShowLog ) console.log( perm );
+	if( ShowLog || 1==1 ) console.log( perm );
 	
 	apl = '';
 	
-	if( perm )
+	if( 1!=1 && perm )
 	{
 		for( var a in perm )
 		{
@@ -192,7 +194,7 @@ function initRoleDetails( info )
 	
 	apl = '';
 	
-	if( perm )
+	if( 1!=1 && perm )
 	{
 		for( var a in perm )
 		{
@@ -413,6 +415,67 @@ function initRoleDetails( info )
 		}
 	}
 	
+	// Another NEW NEW method :) ...
+	
+	apl = '';
+	
+	if( perm )
+	{
+		for( var a in perm )
+		{
+			if( perm[a].AppPermissions && perm[a].Name )
+			{
+				var sw = 2;
+				
+				apl += '<div class="Wrapper collapse">';
+				
+				apl += '	<div class="HRow">';
+				apl += '		<div class="PaddingSmall HContent100 FloatLeft Ellipsis"><strong>' + perm[a].Name + '</strong></div>';
+				//apl += '		<div class="PaddingSmall HContent10 FloatLeft Ellipsis"></div>';
+				apl += '	</div>';
+				
+				apl += '	<div class="">';
+							
+				for( var k in perm[a].AppPermissions )
+				{
+					
+					sw = sw == 2 ? 1 : 2;
+					
+					apl += '	<div class="HRow">';
+					apl += '		<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
+					apl += '			<span>' + i18n( /*'i18n_' + */perm[a].AppPermissions[k].Name ) + '</span>';
+					apl += '		</div>';
+					
+					if( perm[a].AppPermissions[k].Permissions )
+					{
+						for( var c in perm[a].AppPermissions[k].Permissions )
+						{
+							if( perm[a].AppPermissions[k].Permissions[c] )
+							{
+								apl += '	<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
+								apl += '		<input type="checkbox" checked="true" name="' + perm[a].AppPermissions[k].Permissions[c] + '"/>';
+								apl += '		<span>' + i18n( 'i18n_' + perm[a].AppPermissions[k].Permissions[c] ) + '</span>';
+								apl += '	</div>';
+							}
+						}
+					}
+					
+					//apl += '		<div class="PaddingSmall HContent10 TextCenter FloatLeft Ellipsis">';
+					//apl += '			<button class="IconButton IconSmall ButtonSmall FloatRight fa-plus-circle" onclick="Sections.addpermission('+null+',\''+null+'\',this)"></button>';
+					//apl += '		</div>';
+					apl += '	</div>';
+					
+				}
+				
+				apl += '		<div class="HRow"></div>';
+				
+				apl += '	</div>';
+			
+				apl += '</div>';
+				
+			}
+		}
+	}
 	
 	
 	// Get the user details template

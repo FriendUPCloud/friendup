@@ -173,6 +173,43 @@ i18n_PERM_TEMPLATE_DELETE_IN_WORKGROUP    : Delete templates in workgroup
 i18n_deleting_permission                  : Deleting permission
 i18n_deleting_permission_verify           : Please confirm that you want to delete this permission.
 
+#permissions related
+
+i18n_USER_CREATE           : Create
+i18n_USER_READ             : Read
+i18n_USER_UPDATE           : Update
+i18n_USER_DELETE           : Delete
+
+i18n_WORKGROUP_CREATE      : Create
+i18n_WORKGROUP_READ        : Read
+i18n_WORKGROUP_UPDATE      : Update
+i18n_WORKGROUP_DELETE      : Delete
+
+i18n_ROLE_CREATE           : Create
+i18n_ROLE_READ             : Read
+i18n_ROLE_UPDATE           : Update
+i18n_ROLE_DELETE           : Delete
+
+i18n_STORAGE_CREATE        : Create
+i18n_STORAGE_READ          : Read
+i18n_STORAGE_UPDATE        : Update
+i18n_STORAGE_DELETE        : Delete
+
+i18n_APPLICATION_CREATE    : Create
+i18n_APPLICATION_READ      : Read
+i18n_APPLICATION_UPDATE    : Update
+i18n_APPLICATION_DELETE    : Delete
+
+i18n_LOOKNFEEL_CREATE      : Create
+i18n_LOOKNFEEL_READ        : Read
+i18n_LOOKNFEEL_UPDATE      : Update
+i18n_LOOKNFEEL_DELETE      : Delete
+
+i18n_TEMPLATE_CREATE       : Create
+i18n_TEMPLATE_READ         : Read
+i18n_TEMPLATE_UPDATE       : Update
+i18n_TEMPLATE_DELETE       : Delete
+
 #printers related
 
 i18n_file                              : File
