@@ -726,7 +726,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				{
 					_ActivateWindow( ap.windows[w]._window );
 					_WindowToFront( ap.windows[w]._window );
-					ele.classList.remove( 'Minimized' );
+					if( ele.classList.contains( 'Minimized' ) )
+    					ele.classList.remove( 'Minimized' );
 					Workspace.switchWorkspace( ws );
 					ap.windows[w].setFlag( 'hidden', false );
 					ap.windows[w].flags.minimized = false;
@@ -734,7 +735,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				}
 				else
 				{
-					ele.classList.add( 'Minimized' );
+					if( !ele.classList.contains( 'Minimized' ) )
+    					ele.classList.add( 'Minimized' );
 					ap.windows[w].setFlag( 'hidden', true );
 				}
 			}
