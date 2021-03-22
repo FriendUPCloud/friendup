@@ -703,37 +703,48 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		
 		for( var a = 0; a < Workspace.applications.length; a++ )
 		{
-			var ap = Workspace.applications[a];
+			let ap = Workspace.applications[a];
 			if( ap.applicationId != ele.uniqueId )
 				continue;
 			if( !ap.windows ) continue;
 			
 			// TODO: Animation before hiding!
-			var st = 'idle';
+			let st = 'idle';
+			let wsSet = false;
 			for( var w in ap.windows )
 			{
-				var s = ap.windows[w].getFlag( 'screen' );
+				var s = ap.windows[ w ].getFlag( 'screen' );
 				if( s.div.id != 'DoorsScreen' ) continue;
 				
 				elementCount++; // Count app windows
 				
-				if( st == 'idle' )
-					st = ap.windows[w].getFlag( 'hidden' );
-				if( ap.windows[w].getFlag( 'invisible' ) ) continue;
+				st = ap.windows[ w ].flags.hidden;
+				if( ap.windows[ w ].getFlag( 'invisible' ) ) continue;
 				// Just minimize
-				var ws = ap.windows[w].workspace;
-				if( st || ws != globalConfig.workspaceCurrent )
+				var ws = ap.windows[ w ].workspace;
+				
+				if( !wsSet && ws != globalConfig.workspaceCurrent )
 				{
-					_ActivateWindow( ap.windows[w]._window );
-					_WindowToFront( ap.windows[w]._window );
+			        Workspace.switchWorkspace( ws );
+			        wsSet = true;
+			    }
+				
+				if( st || wsSet )
+				{
+				    
 					if( ele.classList.contains( 'Minimized' ) )
 					{
     					ele.classList.remove( 'Minimized' );
-					    Workspace.switchWorkspace( ws );
 					}
-				    ap.windows[w].setFlag( 'hidden', false );
-				    ap.windows[w].flags.minimized = false;
-				    ap.windows[w].activate();
+					if( ws != globalConfig.workspaceCurrent )
+					{
+				        Workspace.switchWorkspace( ws );
+				    }
+				    ap.windows[ w ].setFlag( 'hidden', false );
+				    ap.windows[ w ].flags.minimized = false;
+				    ap.windows[ w ].activate();
+				    
+				    _WindowToFront( ap.windows[ w ]._window );
 				}
 				else
 				{
@@ -741,7 +752,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					{
     					ele.classList.add( 'Minimized' );
     			    }
-					ap.windows[w].setFlag( 'hidden', true );
+					ap.windows[ w ].setFlag( 'hidden', true );
+					console.log( 'We set this as hidden: ', ap.windows[ w ] );
 				}
 			}
 			if( !ele.elementCount )
