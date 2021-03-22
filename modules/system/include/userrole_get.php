@@ -26,10 +26,7 @@ else
 {
 	require_once( 'php/include/permissions.php' );
 	
-	if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), [ 
-		'PERM_ROLE_READ_GLOBAL', 'PERM_ROLE_READ_IN_WORKGROUP', 
-		'PERM_ROLE_GLOBAL',      'PERM_ROLE_WORKGROUP' 
-	] ) )
+	if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), [ 'ROLE_READ' ] ) )
 	{
 		if( is_object( $perm ) )
 		{
@@ -84,16 +81,26 @@ function getPermissionsForRole( $role )
 	' ) )
 	{
 		// Create clean permission objects without database crap
-		$permissions = array();
+		$permissions = [];
 		$keys = array( 'ID', 'Permission', 'Key', 'Data', 'GroupType', 'GroupName' );
 		foreach( $perms as $perm )
 		{
-			$co = new stdClass();
-			foreach( $keys as $kk )
+			// TODO: check if there is more then one Permission with the same name on an app ...
+			
+			if( !isset( $perm->Key ) )
 			{
-				$co->$kk = $perm->$kk;
+				$permissions[$perm->Key] = [];
 			}
-			$permissions[] = $co;
+			
+			if( $perm->Permission )
+			{
+				$co = new stdClass();
+				foreach( $keys as $kk )
+				{
+					$co->$kk = $perm->$kk;
+				}
+				$permissions[$perm->Key][$perm->Permission] = $co;
+			}
 		}
 		return $permissions;
 	}

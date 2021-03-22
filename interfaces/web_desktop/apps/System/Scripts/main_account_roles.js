@@ -28,7 +28,7 @@ Sections.accounts_roles = function( cmd, extra )
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
-						console.log( 'userroleget', { e:e, d:d } );
+						//console.log( 'userroleget', { e:e, d:d } );
 						info.role = null;
 						if( e != 'ok' ) return;
 						
@@ -52,7 +52,7 @@ Sections.accounts_roles = function( cmd, extra )
 					var m = new Module( 'system' );
 					m.onExecuted = function( e, d )
 					{
-						console.log( 'getsystempermissions', { e:e, d:d } );
+						//console.log( 'getsystempermissions', { e:e, d:d } );
 						info.permission = null;
 						if( e != 'ok' ) return;
 						
@@ -75,7 +75,7 @@ Sections.accounts_roles = function( cmd, extra )
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
-						console.log( 'workgroups', { e:e, d:d } );
+						//console.log( 'workgroups', { e:e, d:d } );
 						info.workgroups = null;
 						//if( e != 'ok' ) return;
 						
@@ -121,7 +121,7 @@ Sections.accounts_roles = function( cmd, extra )
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( { e:e, d:d } );
+			//console.log( { e:e, d:d } );
 		
 			//if( e != 'ok' ) return;
 			var roleList = null;
@@ -315,7 +315,7 @@ Sections.userroleadd = function( input )
 		m.onExecuted = function( e, d )
 		{
 			//console.log( { e:e, d:d } );
-		
+			
 			// refresh
 			Sections.accounts_roles();
 		}
@@ -327,15 +327,24 @@ Sections.userroledelete = function( rid )
 {
 	if( rid )
 	{
-		var m = new Module( 'system' );
-		m.onExecuted = function( e, d )
+		Confirm( i18n( 'i18n_deleting_role' ), i18n( 'i18n_deleting_role_verify' ), function( result )
 		{
-			//console.log( { e:e, d:d } );
-		
-			// refresh
-			Sections.accounts_roles();
-		}
-		m.execute( 'userroledelete', { id: rid, authid: Application.authId } );
+			// Confirmed!
+			if( result && result.data && result.data == true )
+			{
+				var m = new Module( 'system' );
+				m.onExecuted = function( e, d )
+				{
+					console.log( { e:e, d:d, args: { id: rid, authid: Application.authId } } );
+			
+					ge( 'RoleDetails' ).innerHTML = '';
+			
+					// refresh
+					Sections.accounts_roles();
+				}
+				m.execute( 'userroledelete', { id: rid, authid: Application.authId } );
+			}
+		} );
 	}
 };
 
@@ -413,6 +422,33 @@ Sections.updatepermission = function( rid, pem, key, data, _this )
 	if( rid && pem && key )
 	{
 		var perms = [ { name : pem, key : key, data : data } ];
+		
+		Sections.userroleupdate( rid, null, perms );
+	}
+};
+
+Sections.togglepermission = function( rid, pem, key, _this )
+{
+	//if( _this )
+	//{
+	//	Toggle( _this, function( on )
+	//	{
+	//		data = ( on ? 'Activated' : '' );
+	//	} );
+	//}
+	
+	if( rid && pem && key && _this )
+	{
+		if( !_this.checked )
+		{
+			var perms = [ { command: 'delete', name: pem, key: key } ];
+		}
+		else
+		{
+			var perms = [ { name: pem, key: key } ];
+		}
+		
+		console.log( 'Sections.togglepermission', { rid: rid, perms: perms, _this: _this } );
 		
 		Sections.userroleupdate( rid, null, perms );
 	}

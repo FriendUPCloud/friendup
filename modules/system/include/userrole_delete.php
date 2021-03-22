@@ -26,10 +26,7 @@ else
 {
 	require_once( 'php/include/permissions.php' );
 
-	if( $perm = Permissions( 'delete', 'application', ( 'AUTHID'.$args->authid ), [ 
-		'PERM_ROLE_DELETE_GLOBAL', 'PERM_ROLE_DELETE_IN_WORKGROUP', 
-		'PERM_ROLE_GLOBAL',        'PERM_ROLE_WORKGROUP' 
-	] ) )
+	if( $perm = Permissions( 'delete', 'application', ( 'AUTHID'.$args->authid ), [ 'ROLE_DELETE' ] ) )
 	{
 		if( is_object( $perm ) )
 		{
@@ -52,24 +49,34 @@ if( !isset( $args->args->name ) && !isset( $args->args->id ) )
 {
 	die( 'fail<!--separate-->{"message":"Please specify the name or id of your role.","response":-1}' );
 }
-	
+
 $d = new dbIO( 'FUserGroup' );
 
 if( isset( $args->args->id ) )
 {
-	$d->Load( $args->args->id );
+	if( $d->Load( $args->args->id ) )
+	{
+		// Delete all rolepermissions connected to the Role ...
+		
+		$SqlDatabase->query( 'DELETE FROM FUserRolePermission WHERE RoleID=\'' . $d->ID . '\'' );
+	}
 }
 else
 {
 	$d->Type = 'Role';
 	$d->Name = trim( $args->args->name );
-	$d->Load();
+	if( $d->Load() )
+	{
+		// Delete all rolepermissions connected to the Role ...
+		
+		$SqlDatabase->query( 'DELETE FROM FUserRolePermission WHERE RoleID=\'' . $d->ID . '\'' );				
+	}
 }
 
 if( $d->ID > 0 )
 {
 	$d->delete();
-	die( 'ok<!--separate-->' . json_encode( $d ) );
+	//die( 'ok<!--separate-->' . json_encode( $d ) );
 	die( 'ok<!--separate-->{"message":"Role deleted.","response":1}' );
 }
 

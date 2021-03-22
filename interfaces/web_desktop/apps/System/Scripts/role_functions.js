@@ -20,7 +20,7 @@ function initRoleDetails( info )
 	var data = info.permission;
 	var wgroups = info.workgroups;
 	
-	console.log( [ data, wgroups, info.role ] );
+	console.log( [ data, info.role ] );
 	
 	if( data )
 	{
@@ -125,7 +125,7 @@ function initRoleDetails( info )
 		}
 	}
 	
-	if( ShowLog || 1==1 ) console.log( perm );
+	if( ShowLog ) console.log( perm );
 	
 	apl = '';
 	
@@ -415,7 +415,9 @@ function initRoleDetails( info )
 		}
 	}
 	
-	// Another NEW NEW method :) ...
+	
+	
+	// Another NEW NEW method :) .......................................................................................
 	
 	apl = '';
 	
@@ -452,9 +454,15 @@ function initRoleDetails( info )
 						{
 							if( perm[a].AppPermissions[k].Permissions[c] )
 							{
+								let pem = {
+									nam : ( perm[a].AppPermissions[k].Permissions[c] ), 
+									key : ( perm[a].Name ), 
+									act : ( info.role.Permissions[perm[a].Name] && info.role.Permissions[perm[a].Name][perm[a].AppPermissions[k].Permissions[c]] ? true : false ) 
+								};
+								
 								apl += '	<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
-								apl += '		<input type="checkbox" checked="true" name="' + perm[a].AppPermissions[k].Permissions[c] + '"/>';
-								apl += '		<span>' + i18n( 'i18n_' + perm[a].AppPermissions[k].Permissions[c] ) + '</span>';
+								apl += '		<input type="checkbox"'+( pem.act ? ' checked="checked"' : '' )+' name="'+pem.nam+'" onclick="Sections.togglepermission('+info.role.ID+',\''+pem.nam+'\',\''+pem.key+'\',this )"/>';
+								apl += '		<span>' + i18n( 'i18n_' + pem.nam ) + '</span>';
 								apl += '	</div>';
 							}
 						}

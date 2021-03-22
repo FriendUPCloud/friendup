@@ -27,10 +27,7 @@ else
 {
 	require_once( 'php/include/permissions.php' );
 
-	if( $perm = Permissions( 'write', 'application', ( 'AUTHID'.$args->authid ), [ 
-		'PERM_ROLE_UPDATE_GLOBAL', 'PERM_ROLE_UPDATE_IN_WORKGROUP', 
-		'PERM_ROLE_GLOBAL',        'PERM_ROLE_WORKGROUP' 
-	] ) )
+	if( $perm = Permissions( 'write', 'application', ( 'AUTHID'.$args->authid ), [ 'ROLE_CREATE', 'ROLE_UPDATE' ] ) )
 	{
 		if( is_object( $perm ) )
 		{
@@ -47,7 +44,7 @@ else
 	}
 }
 
-
+// TODO: All this should be simplified once there is gonna be a cleanup ...
 
 // Need one or the other
 if( !isset( $args->args->name ) && !isset( $args->args->id ) )
@@ -99,7 +96,10 @@ if( $d->ID > 0 )
 						$p->Permission = $perm->name;
 						$p->Key        = $perm->key;
 						$p->RoleID     = $d->ID;
-						$p->Data       = ( $perm->data && !is_string( $perm->data ) ? json_encode( $perm->data ) : ( !$perm->data ? '0' : $perm->data ) );
+						if( isset( $perm->data ) )
+						{
+							$p->Data = ( $perm->data && !is_string( $perm->data ) ? json_encode( $perm->data ) : ( !$perm->data ? '0' : $perm->data ) );
+						}
 						if( $p->Load() )
 						{
 							$p->Delete();
@@ -111,7 +111,10 @@ if( $d->ID > 0 )
 						$p->Permission = $perm->name;
 						$p->Key        = $perm->key;
 						$p->RoleID     = $d->ID;
-						$p->Data       = ( $perm->data && !is_string( $perm->data ) ? json_encode( $perm->data ) : ( !$perm->data ? '0' : $perm->data ) );
+						if( isset( $perm->data ) )
+						{
+							$p->Data = ( $perm->data && !is_string( $perm->data ) ? json_encode( $perm->data ) : ( !$perm->data ? '0' : $perm->data ) );
+						}
 						$p->Load();
 						$p->Save();
 					}
