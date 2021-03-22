@@ -708,6 +708,11 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				continue;
 			if( !ap.windows ) continue;
 			
+			if( ap.workspace != globalConfig.workspaceCurrent )
+			{
+				return Workspace.switchWorkspace( ap.workspace );
+			}
+			
 			// TODO: Animation before hiding!
 			var st = 'idle';
 			for( var w in ap.windows )
