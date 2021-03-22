@@ -701,21 +701,12 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		var found = false;
 		var elementCount = 0;
 		
-		console.log( 'Toggling!' );
-		
 		for( var a = 0; a < Workspace.applications.length; a++ )
 		{
 			var ap = Workspace.applications[a];
 			if( ap.applicationId != ele.uniqueId )
 				continue;
 			if( !ap.windows ) continue;
-			
-			if( ap.workspace != globalConfig.workspaceCurrent )
-			{
-				console.log( 'What is this?', ap.applicationName );
-				return Workspace.switchWorkspace( ap.workspace );
-			}
-			console.log( 'We got it!', ap.applicationName );
 			
 			// TODO: Animation before hiding!
 			var st = 'idle';
@@ -881,7 +872,11 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				// We got views? Just manage them
 				if( !isMobile )
 				{
-					if( dk.toggleViewVisibility( this ) ) return;
+					if( dk.toggleViewVisibility( this ) ) 
+					{
+						console.log( 'Toggling visibility!' );
+						return;
+					}
 				}
 
 				var rememberCurrent = false;
