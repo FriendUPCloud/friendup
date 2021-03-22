@@ -701,6 +701,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		var found = false;
 		var elementCount = 0;
 		
+		console.log( 'Toggling!' );
+		
 		for( var a = 0; a < Workspace.applications.length; a++ )
 		{
 			var ap = Workspace.applications[a];
@@ -710,8 +712,10 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			
 			if( ap.workspace != globalConfig.workspaceCurrent )
 			{
+				console.log( 'What is this?', ap.applicationName );
 				return Workspace.switchWorkspace( ap.workspace );
 			}
+			console.log( 'We got it!', ap.applicationName );
 			
 			// TODO: Animation before hiding!
 			var st = 'idle';
