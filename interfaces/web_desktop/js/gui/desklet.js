@@ -727,16 +727,20 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					_ActivateWindow( ap.windows[w]._window );
 					_WindowToFront( ap.windows[w]._window );
 					if( ele.classList.contains( 'Minimized' ) )
+					{
     					ele.classList.remove( 'Minimized' );
-					Workspace.switchWorkspace( ws );
-					ap.windows[w].setFlag( 'hidden', false );
-					ap.windows[w].flags.minimized = false;
-					ap.windows[w].activate();
+					    Workspace.switchWorkspace( ws );
+					}
+				    ap.windows[w].setFlag( 'hidden', false );
+				    ap.windows[w].flags.minimized = false;
+				    ap.windows[w].activate();
 				}
 				else
 				{
 					if( !ele.classList.contains( 'Minimized' ) )
+					{
     					ele.classList.add( 'Minimized' );
+    			    }
 					ap.windows[w].setFlag( 'hidden', true );
 				}
 			}
@@ -876,7 +880,6 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				{
 					if( dk.toggleViewVisibility( this ) ) 
 					{
-						console.log( 'Toggling visibility!' );
 						return;
 					}
 				}
