@@ -6295,7 +6295,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 											return callback( false );
 										}
 									}
-									mm.execute( 'getapppermissions', { applicationName: ( Application.applicationName ? Application.applicationName : nn ) } );
+									mm.execute( 'getapppermissions', { authid: Application.authId } );
 								}
 							};
 							
@@ -6310,7 +6310,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							
 							runNow();
 						}
-						m.execute( 'getapppermissions', { applicationName: ( Application.applicationName ? Application.applicationName : n ) } );
+						m.execute( 'getapppermissions', { authid: Application.authId } );
 					}
 					else
 					{

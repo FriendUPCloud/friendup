@@ -36,7 +36,7 @@ function GetAppPermissions( $appName, $UserID = false )
 	global $SqlDatabase, $User;
 	
 	if( !$appName ) return false;
-
+	
 	// Specific or session based userid?
 	$UserID = ( $UserID ? $UserID : $User->ID );
 	
@@ -52,6 +52,33 @@ function GetAppPermissions( $appName, $UserID = false )
 		$level = $level->Name;
 	}
 	else $level = 'User';
+	
+	// authid method of getting the Application Name and checking if the user has access to it.
+	 
+	if( $appName && strstr( $appName, 'AUTHID' ) )
+	{
+		
+		if( $app = $SqlDatabase->FetchObject( $q = '
+			SELECT 
+				a.*, u.UserID, u.Permissions, u.AuthID 
+			FROM 
+				FUserApplication u, FApplication a 
+			WHERE 
+				u.AuthID = "' . str_replace( 'AUTHID', '', $appName ) . '" AND u.UserID = ' . $UserID . ' AND a.ID = u.ApplicationID 
+			ORDER BY a.ID DESC 
+		' ) )
+		{
+			//
+			
+			$appName = '';
+			
+			if( $app->Name )
+			{
+				$appName = $app->Name;
+			}
+		}
+		
+	}
 	
 	if( $level == 'Admin' )
 	{
@@ -167,7 +194,7 @@ function GetAppPermissions( $appName, $UserID = false )
 			return $pem;
 		}
 	}
-	
+	die( $q );
 	return false;
 }
 

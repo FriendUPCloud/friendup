@@ -12,11 +12,16 @@
 
 global $SqlDatabase, $User;
 
+if( isset( $args->args->authid ) && !isset( $args->authid ) )
+{
+	$args->authid = $args->args->authid;
+}
+
 require_once( 'php/include/permissions.php' );
 
-if( $User->ID > 0 && isset( $args->args->applicationName ) && $args->args->applicationName )
+if( $User->ID > 0 && ( isset( $args->args->applicationName ) && $args->args->applicationName || $args->authid ) )
 {
-	if( $pem = GetAppPermissions( $args->args->applicationName ) )
+	if( $pem = GetAppPermissions( $args->args->applicationName ? $args->args->applicationName : ( 'AUTHID'.$args->authid ) ) )
 	{
 		die( 'ok<!--separate-->' . json_encode( $pem ) );
 	}

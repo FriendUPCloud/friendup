@@ -129,74 +129,26 @@ function refreshSidebar( show )
 				icon: 'fa-user-circle-o',
 				showing: isAdmin,
 				display: true,
-				permissions: [ 
-					
-					// Old
-					
-					'PERM_USER_GLOBAL', 
-					'PERM_USER_WORKGROUP', 
-					
-					// New
-					
-					'PERM_USER_READ_GLOBAL', 
-					'PERM_USER_READ_IN_WORKGROUP' 
-					 
-				],
+				permissions: [ 'USER_READ' ],
 				init: true
 			},
 			'Workgroups': {
 				icon: 'fa-users',
 				showing: isAdmin,
 				display: true,
-				permissions: [ 
-					
-					// Old
-					
-					'PERM_WORKGROUP_GLOBAL', 
-					'PERM_WORKGROUP_WORKGROUP', 
-					
-					// New
-					
-					'PERM_WORKGROUP_READ_GLOBAL', 
-					'PERM_WORKGROUP_READ_IN_WORKGROUP' 
-					
-				]
+				permissions: [ 'WORKGROUP_READ' ]
 			},
 			'Roles': {
 				icon: 'fa-user-secret',
 				showing: isAdmin,
 				display: true,
-				permissions: [ 
-					
-					// Old
-					
-					'PERM_ROLE_GLOBAL', 
-					'PERM_ROLE_WORKGROUP', 
-					
-					// New
-					
-					'PERM_ROLE_READ_GLOBAL', 
-					'PERM_ROLE_READ_IN_WORKGROUP' 
-					
-				]
+				permissions: [ 'ROLE_READ' ]
 			},
 			'Templates': {
 				icon: 'fa-file-text',
 				showing: isAdmin,
 				display: true,
-				permissions: [ 
-					
-					// Old
-					
-					'PERM_TEMPLATE_GLOBAL', 
-					'PERM_TEMPLATE_WORKGROUP', 
-					
-					// New
-					
-					'PERM_TEMPLATE_READ_GLOBAL', 
-					'PERM_TEMPLATE_READ_IN_WORKGROUP' 
-					
-				]
+				permissions: [ 'TEMPLATE_READ' ]
 			}
 		}
 	};
