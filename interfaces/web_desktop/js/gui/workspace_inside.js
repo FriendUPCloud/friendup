@@ -1371,6 +1371,8 @@ var WorkspaceInside = {
 	// Server announcements
 	getAnnouncements: function()
 	{
+		// TODO: Re-enable later
+	    return;
 	    let ann = new Module( 'system' );
 		ann.onExecuted = function( e, d )
 		{
