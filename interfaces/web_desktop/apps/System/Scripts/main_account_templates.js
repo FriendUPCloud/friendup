@@ -89,6 +89,7 @@ Sections.accounts_templates = function( cmd, extra )
 				var m = new Module( 'system' );
 				m.onExecuted = function( e, d )
 				{
+					//console.log( { e:e, d:d, args: { id: id, authid: Application.authId } } );
 					if( e == 'ok' && d )
 					{
 						try
@@ -121,6 +122,7 @@ Sections.accounts_templates = function( cmd, extra )
 				var m = new Module( 'system' );
 				m.onExecuted = function( e, d )
 				{
+					//console.log( { e:e, d:d, args: { authid: Application.authId } } );
 					if( e == 'ok' && d )
 					{
 						try
@@ -472,7 +474,7 @@ Sections.accounts_templates = function( cmd, extra )
 		}
 		
 	}
-		
+	
 	function updateApplications( tid, callback, vars )
 	{
 		
@@ -4474,7 +4476,7 @@ Sections.accounts_templates = function( cmd, extra )
 						
 						if( !show || show.indexOf( 'application' ) >= 0 )
 						{
-							if( Application.checkAppPermission( 'PERM_APPLICATION_GLOBAL' ) || Application.checkAppPermission( 'PERM_APPLICATION_WORKGROUP' ) )
+							if( Application.checkAppPermission( 'APPLICATION_READ' ) )
 							{
 								if( ge( 'AdminApplicationContainer' ) ) ge( 'AdminApplicationContainer' ).className = 'Open';
 							}
@@ -4482,7 +4484,7 @@ Sections.accounts_templates = function( cmd, extra )
 						
 						if( !show || show.indexOf( 'dock' ) >= 0 )
 						{
-							if( Application.checkAppPermission( 'PERM_APPLICATION_GLOBAL' ) || Application.checkAppPermission( 'PERM_APPLICATION_WORKGROUP' ) )
+							if( Application.checkAppPermission( 'APPLICATION_READ' ) )
 							{
 								if( ge( 'AdminDockContainer' ) ) ge( 'AdminDockContainer' ).className = 'Open';
 							}
@@ -4490,7 +4492,7 @@ Sections.accounts_templates = function( cmd, extra )
 						
 						if( !show || show.indexOf( 'startup' ) >= 0 )
 						{
-							if( Application.checkAppPermission( 'PERM_APPLICATION_GLOBAL' ) || Application.checkAppPermission( 'PERM_APPLICATION_WORKGROUP' ) )
+							if( Application.checkAppPermission( 'APPLICATION_READ' ) )
 							{
 								if( ge( 'AdminStartupContainer' ) ) ge( 'AdminStartupContainer' ).className = 'Open';
 							}
@@ -4498,7 +4500,7 @@ Sections.accounts_templates = function( cmd, extra )
 						
 						if( !show || show.indexOf( 'looknfeel' ) >= 0 )
 						{
-							if( Application.checkAppPermission( 'PERM_LOOKNFEEL_GLOBAL' ) || Application.checkAppPermission( 'PERM_LOOKNFEEL_WORKGROUP' ) )
+							if( Application.checkAppPermission( 'LOOKNFEEL_READ' ) )
 							{
 								if( ge( 'AdminLooknfeelContainer' ) ) ge( 'AdminLooknfeelContainer' ).className = 'Open';
 							}
@@ -4541,10 +4543,7 @@ Sections.accounts_templates = function( cmd, extra )
 	{
 		if( ShowLog ) console.log( 'initMain()' );
 		
-		var checkedGlobal = Application.checkAppPermission( 'PERM_TEMPLATE_GLOBAL' );
-		var checkedWorkgr = Application.checkAppPermission( 'PERM_TEMPLATE_WORKGROUP' );
-		
-		if( checkedGlobal || checkedWorkgr )
+		if( Application.checkAppPermission( 'TEMPLATE_READ' ) )
 		{
 			
 			// Get the user list
