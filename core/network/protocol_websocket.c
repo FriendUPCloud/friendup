@@ -811,6 +811,7 @@ void *ParseAndCall( WSThreadData *wstd )
 	{
 		if( orig->us_WSD == NULL )
 		{
+			// This error is happening pretty random!
 			FERROR("[ParseAndCall] There is no WS connection attached to mutex!\n");
 			// Decrease use for external call
 			if( FRIEND_MUTEX_LOCK( &(orig->us_Mutex) ) == 0 )
