@@ -13,7 +13,7 @@ Workspace.deleteFile = function( mode )
 {
 	var self = this;
 	
-	var w = window.regionWindow;
+	var w = window.currentMovable.content;
 	if( !window.currentMovable || ( window.currentMovable && !window.currentMovable.content.refresh ) )
 		return;
 

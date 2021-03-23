@@ -3493,7 +3493,9 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			if( this.window.classList.contains( 'ScreenContent' ) )
 			{
 				if( currentMovable )
+				{
 					_DeactivateWindow( currentMovable );
+				}
 				currentMovable = null;
 			}
 
@@ -4815,16 +4817,18 @@ function CheckDoorsKeys( e )
 	let k = e.which | e.keyCode;
 	let cycle = false;
 	
+	// No normal dirmode when editing a filename
+	let wobject = window.regionWindow ? ( window.regionWindow.windowObject ?
+		window.regionWindow.windowObject : window.regionWindow.parentNode.windowObject ) : false;
+	let dirMode = wobject && window.regionWindow && wobject._window.directoryview &&
+		( !wobject.flags || !wobject.flags.editing );
+
 	if( !Workspace.editing )
 	{
-		// No normal dirmode when editing a filename
-		let dirMode = window.regionWindow && window.regionWindow.directoryview && window.regionWindow.windowObject &&
-			( !window.regionWindow.windowObject.flags || !window.regionWindow.windowObject.flags.editing );
-		
 		switch( k )
 		{
 			case 46:
-				if( window.regionWindow && window.regionWindow.windowObject && !window.regionWindow.windowObject.flags.editing )
+				if( wobject && !wobject.flags.editing )
 				{
 					Workspace.deleteFile();
 				}
@@ -4858,12 +4862,15 @@ function CheckDoorsKeys( e )
 					if( dirMode )
 					{
 						// Find active
-						for( var a = 0; a < window.regionWindow.icons.length; a++ )
+						if( window.regionWindow.icons )
 						{
-							if( window.regionWindow.icons[a].selected )
+							for( var a = 0; a < window.regionWindow.icons.length; a++ )
 							{
-								Workspace.copyFiles( e );
-								return cancelBubble( e );
+								if( window.regionWindow.icons[a].selected )
+								{
+									Workspace.copyFiles( e );
+									return cancelBubble( e );
+								}
 							}
 						}
 					
@@ -4881,9 +4888,9 @@ function CheckDoorsKeys( e )
 	// Do the thing! Keyboard navigation
 	if( 
 		!Workspace.editing &&
-		window.regionWindow && window.regionWindow.directoryview && 
-		( window.regionWindow.windowObject && ( !window.regionWindow.windowObject.flags || !window.regionWindow.windowObject.flags.editing ) ) &&
-		window.regionWindow.directoryview.keyboardNavigation &&
+		window.regionWindow && wobject._window.directoryview && 
+		( wobject && ( !wobject.flags || !wobject.flags.editing ) ) &&
+		wobject._window.directoryview.keyboardNavigation &&
 		!e.ctrlKey
 	)
 	{
@@ -4920,7 +4927,7 @@ function CheckDoorsKeys( e )
 				}
 				if( scroll )
 				{
-					window.regionWindow.directoryview.scroller.scrollTop = scroll;
+					wobject._window.directoryview.scroller.scrollTop = scroll;
 				}
 				return cancelBubble( e );
 			}

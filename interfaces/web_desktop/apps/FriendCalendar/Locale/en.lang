@@ -1,5 +1,6 @@
 
 menu_file                             : File
+menu_popout_window                    : Open in new browser
 menu_quit                             : Quit
 menu_settings                         : Settings
 menu_sources                          : Calendar sources
