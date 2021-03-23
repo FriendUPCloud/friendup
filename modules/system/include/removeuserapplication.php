@@ -27,10 +27,7 @@ else
 	
 	$userid = ( !isset( $args->args->userid ) ? $User->ID : 0 );
 	
-	if( $perm = Permissions( 'delete', 'application', ( 'AUTHID'.$args->authid ), [ 
-		'PERM_APPLICATION_DELETE_GLOBAL', 'PERM_APPLICATION_DELETE_IN_WORKGROUP', 
-		'PERM_APPLICATION_GLOBAL',        'PERM_APPLICATION_WORKGROUP' 
-	] ) )
+	if( $perm = Permissions( 'delete', 'application', ( 'AUTHID'.$args->authid ), 'APPLICATION_DELETE' ) )
 	{
 		if( is_object( $perm ) )
 		{

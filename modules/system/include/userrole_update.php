@@ -27,7 +27,7 @@ else
 {
 	require_once( 'php/include/permissions.php' );
 
-	if( $perm = Permissions( 'write', 'application', ( 'AUTHID'.$args->authid ), [ 'ROLE_CREATE', 'ROLE_UPDATE' ] ) )
+	if( $perm = Permissions( 'write', 'application', ( 'AUTHID'.$args->authid ), 'ROLE_UPDATE' ) )
 	{
 		if( is_object( $perm ) )
 		{

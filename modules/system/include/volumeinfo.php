@@ -34,10 +34,7 @@ else
 {
 	require_once( 'php/include/permissions.php' );
 
-	if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), [ 
-		'PERM_STORAGE_READ_GLOBAL', 'PERM_STORAGE_READ_IN_WORKGROUP', 
-		'PERM_STORAGE_GLOBAL',      'PERM_STORAGE_WORKGROUP' 
-	] ) )
+	if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), 'STORAGE_READ' ) )
 	{
 		if( is_object( $perm ) )
 		{

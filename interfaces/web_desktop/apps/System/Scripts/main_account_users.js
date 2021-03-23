@@ -226,7 +226,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 				let apps              = ( info.applications ? info.applications : {} );
 				let dock              = ( info.dock ? info.dock : {} );
 				
-				if( ShowLog ) console.log( 'initUsersDetails( info ) ', info );		
+				if( ShowLog || 1==1 ) console.log( 'initUsersDetails( info ) ', info );		
 				
 				let func = {
 					
@@ -590,7 +590,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										ge( 'usMobile'    ).innerHTML = userInfo.Mobile;
 									}
 									
-									if( Application.userId != userInfo.ID )
+									if( Application.userId != userInfo.ID && Application.checkAppPermission( 'USER_UPDATE' ) )
 									{
 										
 										if( ge( 'usLocked'   ) )
@@ -669,7 +669,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								
 								// TODO: look at different ways of checking level access ...
 								
-								if( ge( 'AdminLevelContainer' ) && Application.checkAppPermission( [ 'PERM_USER_READ_GLOBAL', 'PERM_USER_GLOBAL' ] ) )
+								if( ge( 'AdminLevelContainer' ) && Application.getUserLevel() == 'admin' )
 								{
 									if( ge( 'AdminLevelContainer' ).classList.contains( 'Closed' ) )
 									{
@@ -971,7 +971,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								
 								let wge = ge( 'WorkgroupEdit' );
 								
-								if( !Application.checkAppPermission( [ 'WORKGROUP_CREATE', 'WORKGROUP_UPDATE' ] ) )
+								if( !Application.checkAppPermission( 'WORKGROUP_UPDATE' ) )
 								{
 									wge.style.display = 'none';
 									wge = false;
@@ -1022,14 +1022,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 															'context' : 'application', 
 															'authid'  : Application.authId, 
 															'data'    : { 
-																'permission' : [ 
-																	'PERM_WORKGROUP_CREATE_GLOBAL', 
-																	'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
-																	'PERM_WORKGROUP_UPDATE_GLOBAL', 
-																	'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
-																	'PERM_WORKGROUP_GLOBAL', 
-																	'PERM_WORKGROUP_WORKGROUP' 
-																]
+																'permission' : 'WORKGROUP_UPDATE'
 															}, 
 															'object'   : 'workgroup', 
 															'objectid' : this.getAttribute( 'wid' ) 
@@ -1038,7 +1031,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														if( this.classList.contains( 'fa-toggle-on' ) )
 														{
 															// Toggle off ...
-														
+															
 															if( args && args.id && args.users )
 															{
 																let f = new Library( 'system.library' );
@@ -1184,7 +1177,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												str += '	</div>';
 												str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 												
-												if( Application.checkAppPermission( [ 'WORKGROUP_CREATE', 'WORKGROUP_UPDATE' ] ) )
+												if( Application.checkAppPermission( 'WORKGROUP_UPDATE' ) )
 												{
 													str += '	<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
 												}
@@ -1223,7 +1216,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														str += '	</div>';
 														str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 														
-														if( Application.checkAppPermission( [ 'WORKGROUP_CREATE', 'WORKGROUP_UPDATE' ] ) )
+														if( Application.checkAppPermission( 'WORKGROUP_UPDATE' ) )
 														{
 															str += '	<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
 														}
@@ -1260,7 +1253,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																str += '	</div>';
 																str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 																
-																if( Application.checkAppPermission( [ 'WORKGROUP_CREATE', 'WORKGROUP_UPDATE' ] ) )
+																if( Application.checkAppPermission( 'WORKGROUP_UPDATE' ) )
 																{
 																	str += '	<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
 																}
@@ -1394,14 +1387,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 															'context' : 'application', 
 															'authid'  : Application.authId, 
 															'data'    : { 
-																'permission' : [ 
-																	'PERM_WORKGROUP_CREATE_GLOBAL', 
-																	'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
-																	'PERM_WORKGROUP_UPDATE_GLOBAL', 
-																	'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
-																	'PERM_WORKGROUP_GLOBAL', 
-																	'PERM_WORKGROUP_WORKGROUP' 
-																]
+																'permission' : 'WORKGROUP_UPDATE'
 															}, 
 															'object'   : 'workgroup', 
 															'objectid' : this.getAttribute( 'wid' ) 
@@ -1525,7 +1511,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 														wstr += '	</div>';
 														wstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 														
-														if( Application.checkAppPermission( [ 'WORKGROUP_CREATE', 'WORKGROUP_UPDATE' ] ) )
+														if( Application.checkAppPermission( 'WORKGROUP_UPDATE' ) )
 														{
 															wstr += '		<button wid="' + groups[b].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
 														}
@@ -1551,7 +1537,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																	wstr += '	</div>';
 																	wstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 																	
-																	if( Application.checkAppPermission( [ 'WORKGROUP_CREATE', 'WORKGROUP_UPDATE' ] ) )
+																	if( Application.checkAppPermission( 'WORKGROUP_UPDATE' ) )
 																	{
 																		wstr += '		<button wid="' + groups[b].groups[k].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
 																	}
@@ -1577,7 +1563,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																				wstr += '	</div>';
 																				wstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
 																				
-																				if( Application.checkAppPermission( [ 'WORKGROUP_CREATE', 'WORKGROUP_UPDATE' ] ) )
+																				if( Application.checkAppPermission( 'WORKGROUP_UPDATE' ) )
 																				{
 																					wstr += '		<button wid="' + groups[b].groups[k].groups[i].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
 																				}
@@ -1624,14 +1610,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																'context' : 'application', 
 																'authid'  : Application.authId, 
 																'data'    : { 
-																	'permission' : [ 
-																		'PERM_WORKGROUP_CREATE_GLOBAL', 
-																		'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
-																		'PERM_WORKGROUP_UPDATE_GLOBAL', 
-																		'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
-																		'PERM_WORKGROUP_GLOBAL', 
-																		'PERM_WORKGROUP_WORKGROUP' 
-																	]
+																	'permission' : 'WORKGROUP_UPDATE'
 																}, 
 																'object'   : 'workgroup', 
 																'objectid' : this.getAttribute( 'wid' ) 
@@ -2521,7 +2500,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																			{ 
 																				'element' : function( ids, name, func ) 
 																				{
-																					if( Application.checkAppPermission( [ 'APPLICATION_CREATE', 'APPLICATION_UPDATE' ] ) )
+																					if( Application.checkAppPermission( 'APPLICATION_UPDATE' ) )
 																					{
 																						let b = document.createElement( 'button' );
 																						b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
@@ -2707,7 +2686,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																		{ 
 																			'element' : function( ids, name, func ) 
 																			{
-																				if( Application.checkAppPermission( [ 'APPLICATION_CREATE', 'APPLICATION_UPDATE' ] ) )
+																				if( Application.checkAppPermission( 'APPLICATION_UPDATE' ) )
 																				{
 																					let b = document.createElement( 'button' );
 																					b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' );
@@ -2995,7 +2974,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										if( etn )
 										{
 											
-											if( Application.checkAppPermission( [ 'APPLICATION_CREATE', 'APPLICATION_UPDATE' ] ) )
+											if( Application.checkAppPermission( 'APPLICATION_UPDATE' ) )
 											{
 												
 												etn.onclick = function( e )
@@ -3202,7 +3181,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										
 										if( apps )
 										{
-											this.head( !Application.checkAppPermission( [ 'APPLICATION_CREATE', 'APPLICATION_UPDATE' ] ) );
+											this.head( !Application.checkAppPermission( 'APPLICATION_UPDATE' ) );
 											
 											let o = ge( 'DockInner' ); if( o ) o.innerHTML = '';
 											
@@ -3308,7 +3287,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																			{ 
 																				'element' : function( order, itemId, _this ) 
 																				{
-																					if( Application.checkAppPermission( [ 'APPLICATION_CREATE', 'APPLICATION_UPDATE' ] ) )
+																					if( Application.checkAppPermission( 'APPLICATION_UPDATE' ) )
 																					{
 																						let b = document.createElement( 'button' );
 																						b.className = 'IconButton IconSmall IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-down';
@@ -3335,7 +3314,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																			{ 
 																				'element' : function( order, itemId, _this ) 
 																				{
-																					if( Application.checkAppPermission( [ 'APPLICATION_CREATE', 'APPLICATION_UPDATE' ] ) )
+																					if( Application.checkAppPermission( 'APPLICATION_UPDATE' ) )
 																					{
 																						let b = document.createElement( 'button' );
 																						b.className = 'IconButton IconSmall IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-up';
@@ -3374,7 +3353,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																			{ 
 																				'element' : function( name, itemId, func ) 
 																				{
-																					if( Application.checkAppPermission( [ 'APPLICATION_CREATE', 'APPLICATION_UPDATE' ] ) )
+																					if( Application.checkAppPermission( 'APPLICATION_UPDATE' ) )
 																					{
 																						let b = document.createElement( 'button' );
 																						b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
@@ -3561,7 +3540,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 																			{ 
 																				'element' : function( name, func ) 
 																				{
-																					if( Application.checkAppPermission( [ 'APPLICATION_CREATE', 'APPLICATION_UPDATE' ] ) )
+																					if( Application.checkAppPermission( 'APPLICATION_UPDATE' ) )
 																					{
 																						let b = document.createElement( 'button' );
 																						b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( toggle ? 'on' : 'off' );
@@ -3965,7 +3944,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										if( etn )
 										{
 											
-											if( Application.checkAppPermission( [ 'APPLICATION_CREATE', 'APPLICATION_UPDATE' ] ) )
+											if( Application.checkAppPermission( 'APPLICATION_UPDATE' ) )
 											{
 												
 												etn.onclick = function( e )
@@ -4080,7 +4059,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									
 									themeConfig.buttonSchemeText = s.current;
 									
-									if( Application.checkAppPermission( [ 'LOOKNFEEL_CREATE', 'LOOKNFEEL_UPDATE' ] ) )
+									if( Application.checkAppPermission( 'LOOKNFEEL_UPDATE' ) )
 									{
 										
 										s.onchange = function(  )
@@ -4138,7 +4117,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										themeConfig.colorSchemeText = 'light';
 									}
 									
-									if( Application.checkAppPermission( [ 'LOOKNFEEL_CREATE', 'LOOKNFEEL_UPDATE' ] ) )
+									if( Application.checkAppPermission( 'LOOKNFEEL_UPDATE' ) )
 									{
 										
 										b.onclick = function(  )
@@ -4207,7 +4186,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									i.value = ( workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1' );
 									i.current = i.value;
 									
-									if( Application.checkAppPermission( [ 'LOOKNFEEL_CREATE', 'LOOKNFEEL_UPDATE' ] ) )
+									if( Application.checkAppPermission( 'LOOKNFEEL_UPDATE' ) )
 									{
 										
 										i.onchange = function(  )
@@ -4256,7 +4235,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								if( ge( 'wallpaper_button_inner' ) )
 								{
 									
-									if( Application.checkAppPermission( [ 'LOOKNFEEL_CREATE', 'LOOKNFEEL_UPDATE' ] ) )
+									if( Application.checkAppPermission( 'LOOKNFEEL_UPDATE' ) )
 									{
 										
 										let b = ge( 'wallpaper_button_inner' );
@@ -4406,7 +4385,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 									
 									if( /*!show || */show.indexOf( 'workgroup' ) >= 0 || show.indexOf( '*' ) >= 0 )
 									{
-										if( Application.checkAppPermission( [ 'WORKGROUP_READ' ] ) )
+										if( Application.checkAppPermission( 'WORKGROUP_READ' ) )
 										{
 											if( ge( 'AdminWorkgroupContainer' ) ) ge( 'AdminWorkgroupContainer' ).className = 'Open';
 										}
@@ -4418,7 +4397,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								
 									if( /*!show || */show.indexOf( 'role' ) >= 0 || show.indexOf( '*' ) >= 0 )
 									{
-										if( Application.checkAppPermission( [ 'ROLE_READ' ] ) )
+										if( Application.checkAppPermission( 'ROLE_READ' ) )
 										{
 											if( ge( 'AdminRoleContainer' ) ) ge( 'AdminRoleContainer' ).className = 'Open';
 										}
@@ -4430,7 +4409,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								
 									if( /*!show || */show.indexOf( 'storage' ) >= 0 || show.indexOf( '*' ) >= 0 )
 									{
-										if( Application.checkAppPermission( [ 'STORAGE_READ' ] ) )
+										if( Application.checkAppPermission( 'STORAGE_READ' ) )
 										{
 											if( ge( 'AdminStorageContainer' ) ) ge( 'AdminStorageContainer' ).className = 'Open';
 										}
@@ -4442,7 +4421,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								
 									if( /*!show || */show.indexOf( 'application' ) >= 0 || show.indexOf( '*' ) >= 0 )
 									{
-										if( Application.checkAppPermission( [ 'APPLICATION_READ' ] ) )
+										if( Application.checkAppPermission( 'APPLICATION_READ' ) )
 										{
 											if( ge( 'AdminApplicationContainer' ) ) ge( 'AdminApplicationContainer' ).className = 'Open';
 										}
@@ -4454,7 +4433,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								
 									if( /*!show || */show.indexOf( 'dock' ) >= 0 || show.indexOf( '*' ) >= 0 )
 									{
-										if( Application.checkAppPermission( [ 'APPLICATION_READ' ] ) )
+										if( Application.checkAppPermission( 'APPLICATION_READ' ) )
 										{
 											if( ge( 'AdminDockContainer' ) ) ge( 'AdminDockContainer' ).className = 'Open';
 										}
@@ -4466,7 +4445,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 								
 									if( /*!show || */show.indexOf( 'looknfeel' ) >= 0 || show.indexOf( '*' ) >= 0 )
 									{
-										if( Application.checkAppPermission( [ 'LOOKNFEEL_READ' ] ) )
+										if( Application.checkAppPermission( 'LOOKNFEEL_READ' ) )
 										{
 											if( ge( 'AdminLooknfeelContainer' ) ) ge( 'AdminLooknfeelContainer' ).className = 'Open';
 										}
@@ -4765,6 +4744,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 					let u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
+						console.log( { e:e, d:d } );
 						let rows = null;
 						try
 						{
@@ -5040,11 +5020,11 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 	}
 	
 	
-	let checkedWorkgr = Application.checkAppPermission( 'USER_READ' );
+	
 	
 	
 	// After permission checks, initialize the userlist
-	if( checkedWorkgr )
+	if( Application.checkAppPermission( 'USER_READ' ) )
 	{
 		
 		if( !cmd || cmd == 'init' )
@@ -5712,7 +5692,7 @@ function getStorageInfo( path, id, args, callback )
 			{
 				try
 				{
-					let json = JSON.parse( d );
+					json = JSON.parse( d );
 				} 
 				catch( e ){ }
 			}
@@ -5846,6 +5826,8 @@ function getDockItems( callback, userId )
 
 function getSetupList( callback )
 {
+	// TODO: Look at implementing permission here and what type of permission.
+	
 	let m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
@@ -6078,9 +6060,7 @@ function NewUser( _this )
 					ge( 'usLevel' ).current = ge( 'usLevel' ).value;
 				}
 				
-				// TODO Check if level is Admin to set Level ...
-				
-				if( ge( 'AdminLevelContainer' ) && Application.checkAppPermission( [ 'PERM_USER_READ_GLOBAL', 'PERM_USER_GLOBAL' ] ) )
+				if( ge( 'AdminLevelContainer' ) && Application.getUserLevel() == 'admin' )
 				{
 					if( ge( 'AdminLevelContainer' ).classList.contains( 'Closed' ) )
 					{
@@ -6170,12 +6150,7 @@ function NewUser( _this )
 						'context' : 'application', 
 						'authid'  : Application.authId, 
 						'data'    : { 
-							'permission' : [ 
-								'PERM_WORKGROUP_READ_GLOBAL',
-								'PERM_WORKGROUP_READ_IN_WORKGROUP',
-								'PERM_WORKGROUP_GLOBAL', 
-								'PERM_WORKGROUP_WORKGROUP' 
-							]
+							'permission' : 'WORKGROUP_READ'
 						}, 
 						'listdetails' : 'workgroup' 
 					} );
@@ -6275,7 +6250,7 @@ function NewUser( _this )
 				if( workgroups )
 				{
 					
-					let adminlevel = Application.checkAppPermission( [ 'PERM_WORKGROUP_READ_GLOBAL', 'PERM_USER_READ_GLOBAL', 'PERM_WORKGROUP_GLOBAL', 'PERM_USER_GLOBAL' ] );
+					let adminlevel = ( Application.getUserLevel() == 'admin' ? true : false );
 					let userlevel  = Application.checkAppPermission( 'WORKGROUP_READ' );
 					
 					let wgroups = false;
@@ -7425,14 +7400,13 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 		{
 			//console.log( { e:ee, d:dat } );
 			
+			let da = false;
+			
 			try
 			{
-				let da = JSON.parse( dat );
+				da = JSON.parse( dat );
 			}
-			catch( e )
-			{
-				let da = {};
-			}
+			catch( e ) {  }
 			
 			if( !da.length ) return;
 			
@@ -7447,15 +7421,14 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 		
 				if( e == 'ok' )
 				{
+					let js = {};
+					
 					try
 					{
-						let js = JSON.parse( d );
+						js = JSON.parse( d );
 					}
-					catch( e )
-					{
-						js = {};
-					}
-			
+					catch( e ) {  }
+					
 					if( js )
 					{
 						try
@@ -8352,12 +8325,7 @@ Sections.user_status_update = function( userid, status, callback )
 					'context' : 'application', 
 					'authid'  : Application.authId, 
 					'data'    : { 
-						'permission' : [ 
-							'PERM_USER_UPDATE_GLOBAL', 
-							'PERM_USER_UPDATE_IN_WORKGROUP', 
-							'PERM_USER_GLOBAL', 
-							'PERM_USER_WORKGROUP' 
-						]
+						'permission' : 'USER_UPDATE'
 					}, 
 					'object'   : 'user', 
 					'objectid' : userid 
@@ -8394,12 +8362,7 @@ Sections.user_status_update = function( userid, status, callback )
 					'context' : 'application', 
 					'authid'  : Application.authId, 
 					'data'    : { 
-						'permission' : [ 
-							'PERM_USER_UPDATE_GLOBAL', 
-							'PERM_USER_UPDATE_IN_WORKGROUP', 
-							'PERM_USER_GLOBAL', 
-							'PERM_USER_WORKGROUP' 
-						]
+						'permission' : 'USER_UPDATE'
 					}, 
 					'object'   : 'user', 
 					'objectid' : userid 
@@ -8756,12 +8719,7 @@ function mountDrive( devname, userid, callback )
 				'context' : 'application', 
 				'authid'  : Application.authId, 
 				'data'    : { 
-					'permission' : [ 
-						'PERM_STORAGE_UPDATE_GLOBAL', 
-						'PERM_STORAGE_UPDATE_IN_WORKGROUP', 
-						'PERM_STORAGE_GLOBAL', 
-						'PERM_STORAGE_WORKGROUP' 
-					]
+					'permission' : 'STORAGE_UPDATE'
 				}, 
 				'object'   : 'user', 
 				'objectid' : userid 
@@ -8799,12 +8757,7 @@ function unmountDrive( devname, userid, callback )
 				'context' : 'application', 
 				'authid'  : Application.authId, 
 				'data'    : { 
-					'permission' : [ 
-						'PERM_STORAGE_UPDATE_GLOBAL', 
-						'PERM_STORAGE_UPDATE_IN_WORKGROUP', 
-						'PERM_STORAGE_GLOBAL', 
-						'PERM_STORAGE_WORKGROUP' 
-					]
+					'permission' : 'STORAGE_UPDATE'
 				}, 
 				'object'   : 'user', 
 				'objectid' : userid 
@@ -8856,10 +8809,7 @@ function _saveUser( uid, callback )
 	
 	// TODO: Check for level ...
 	
-	if( Application.checkAppPermission( [ 
-		'PERM_USER_READ_GLOBAL', 
-		'PERM_USER_GLOBAL' 
-	] ) )
+	if( Application.getUserLevel() == 'admin' )
 	{
 		mapping[ 'usLevel' ] = 'level';
 	}
@@ -8919,10 +8869,7 @@ function _saveUser( uid, callback )
 		{
 			args.workgroups = ge( 'usWorkgroups' ).value;
 		}
-		else if( !Application.checkAppPermission( [ 
-			'PERM_USER_READ_GLOBAL', 
-			'PERM_USER_GLOBAL' 
-		] ) )
+		else if( Application.getUserLevel() == 'user' )
 		{
 			Notify( { title: i18n( 'i18n_user_workgroup_missing' ), text: i18n( 'i18n_Adding a User to a Workgroup is required.' ) } );
 			

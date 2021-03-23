@@ -36,10 +36,7 @@ if( isset( $args->args->groupid ) )
 	{
 		require_once( 'php/include/permissions.php' );
 		
-		if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), [ 
-			'PERM_WORKGROUP_READ_GLOBAL', 'PERM_WORKGROUP_READ_IN_WORKGROUP', 
-			'PERM_WORKGROUP_GLOBAL',      'PERM_WORKGROUP_WORKGROUP' 
-		] ) )
+		if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), 'WORKGROUP_READ' ) )
 		{
 			if( is_object( $perm ) )
 			{
@@ -107,11 +104,8 @@ else
 	else
 	{
 		require_once( 'php/include/permissions.php' );
-	
-		if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), [ 
-			'PERM_STORAGE_READ_GLOBAL', 'PERM_STORAGE_READ_IN_WORKGROUP', 
-			'PERM_STORAGE_GLOBAL',      'PERM_STORAGE_WORKGROUP' 
-		] ) )
+		
+		if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), 'STORAGE_READ', 'user', ( isset( $args->args->userid ) ? $args->args->userid : $User->ID ) ) )
 		{
 			if( is_object( $perm ) )
 			{
@@ -119,11 +113,11 @@ else
 		
 				if( $perm->response == -1 )
 				{
-					//die( 'fail<!--separate-->no filesystems available<!--separate-->' . mysql_error() );
+					die( 'fail<!--separate-->no filesystems available<!--separate-->' );
 				}
 				
 				// Permission granted. GLOBAL or WORKGROUP specific ...
-		
+				//die( print_r( $perm,1 ) . ' -- ' );
 				if( $perm->response == 1 && isset( $perm->data->users ) && isset( $args->args->userid ) )
 				{
 			
@@ -141,7 +135,7 @@ else
 
 
 
-	if( $rows = $SqlDatabase->FetchObjects( '
+	if( $rows = $SqlDatabase->FetchObjects( $q = '
 		SELECT f.* FROM Filesystem f
 		WHERE
 			(
@@ -162,6 +156,7 @@ else
 			f.Name ASC
 	' ) )
 	{
+		//die( $q );
 		// Let's censor some data..
 		foreach( $rows as $k=>$v )
 		{

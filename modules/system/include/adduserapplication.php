@@ -27,11 +27,7 @@ else
 	
 	$userid = ( !isset( $args->args->userid ) ? $User->ID : 0 );
 	
-	if( $perm = Permissions( 'write', 'application', ( 'AUTHID'.$args->authid ), [ 
-		'PERM_APPLICATION_CREATE_GLOBAL', 'PERM_APPLICATION_CREATE_IN_WORKGROUP', 
-		'PERM_APPLICATION_UPDATE_GLOBAL', 'PERM_APPLICATION_UPDATE_IN_WORKGROUP', 
-		'PERM_APPLICATION_GLOBAL',        'PERM_APPLICATION_WORKGROUP' 
-	] ) )
+	if( $perm = Permissions( 'write', 'application', ( 'AUTHID'.$args->authid ), 'APPLICATION_CREATE' ) )
 	{
 		if( is_object( $perm ) )
 		{

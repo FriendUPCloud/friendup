@@ -31,14 +31,11 @@ else
 	require_once( 'php/include/permissions.php' );
 	
 	$userid = $User->ID;	
-		
+	
 	// Only check permissions if userid is defined ...
 	if( isset( $args->args->userid ) )
 	{
-		if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), [ 
-			'PERM_USER_READ_GLOBAL', 'PERM_USER_READ_IN_WORKGROUP', 
-			'PERM_USER_GLOBAL',      'PERM_USER_WORKGROUP' 
-		], 'user', $userid ) )
+		if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), 'USER_READ', 'user', $userid ) )
 		{
 			if( is_object( $perm ) )
 			{

@@ -94,7 +94,7 @@ else
 {
 	require_once( 'php/include/permissions.php' );
 	
-	if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), [ 'USER_READ' ] ) )
+	if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), 'USER_READ' ) )
 	{
 		if( is_object( $perm ) )
 		{

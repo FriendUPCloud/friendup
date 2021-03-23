@@ -15,6 +15,8 @@ global $args, $SqlDatabase, $User, $Logger;
 // Include API
 require( 'php/friend.php' );
 
+// TODO: Implement support for rolepermissions ...
+
 // TODO: Only run this the first time ------------------------------------------
 
 // Check database!

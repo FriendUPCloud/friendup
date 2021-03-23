@@ -113,10 +113,7 @@ if( $args->command )
 			if( isset( $data['fullname'] ) && $data['fullname'] && isset( $data['username'] ) && $data['username'] && isset( $data['password'] ) && $data['password'] )
 			{
 				
-				if( $perm = Permissions( 'write', 'application', "'System','Admin'", [ 
-					'PERM_USER_CREATE_GLOBAL', 'PERM_USER_CREATE_IN_WORKGROUP', 
-					'PERM_USER_GLOBAL',        'PERM_USER_WORKGROUP' 
-				] ) )
+				if( $perm = Permissions( 'write', 'application', 'System', 'USER_CREATE' ) )
 				{
 					if( is_object( $perm ) )
 					{
@@ -139,14 +136,9 @@ if( $args->command )
 				$data['args'] = '{
 					"type"    : "write", 
 					"context" : "application", 
-					"name"    : "\'System\',\'Admin\'",
+					"name"    : "System",
 					"data"    : { 
-						"permission" : [ 
-							"PERM_USER_CREATE_GLOBAL", 
-							"PERM_USER_CREATE_IN_WORKGROUP", 
-							"PERM_USER_GLOBAL", 
-							"PERM_USER_WORKGROUP" 
-						]
+						"permission" : "USER_CREATE"
 					} 
 				}';
 				
@@ -216,12 +208,7 @@ if( $args->command )
 									
 									if( isset( $extr['workgroups'] ) && $extr['workgroups'] )
 									{
-										if( $ret = _addToWorkgroups( $res->data->id, $extr['workgroups'], $data, '[ 
-											"PERM_USER_CREATE_GLOBAL", 
-											"PERM_USER_CREATE_IN_WORKGROUP", 
-											"PERM_USER_GLOBAL", 
-											"PERM_USER_WORKGROUP" 
-										]' ) )
+										if( $ret = _addToWorkgroups( $res->data->id, $extr['workgroups'], $data, '"WORKGROUP_UPDATE"' ) )
 										{
 											if( isset( $ret->result ) && $ret->result == 'fail' )
 											{
@@ -391,10 +378,7 @@ if( $args->command )
 			if( isset( $data['id'] ) && $data['id'] )
 			{
 				
-				if( $perm = Permissions( 'write', 'application', "'System','Admin'", [ 
-					'PERM_USER_UPDATE_GLOBAL', 'PERM_USER_UPDATE_IN_WORKGROUP', 
-					'PERM_USER_GLOBAL',        'PERM_USER_WORKGROUP' 
-				], 'user', $data['id'] ) )
+				if( $perm = Permissions( 'write', 'application', 'System', 'USER_UPDATE', 'user', $data['id'] ) )
 				{
 					if( is_object( $perm ) )
 					{
@@ -439,14 +423,9 @@ if( $args->command )
 				$data['args'] = '{
 					"type"    : "write", 
 					"context" : "application", 
-					"name"    : "\'System\',\'Admin\'", 
+					"name"    : "System", 
 					"data"    : { 
-						"permission" : [ 
-							"PERM_USER_UPDATE_GLOBAL", 
-							"PERM_USER_UPDATE_IN_WORKGROUP", 
-							"PERM_USER_GLOBAL", 
-							"PERM_USER_WORKGROUP" 
-						]
+						"permission" : "USER_UPDATE"
 					}, 
 					"object"   : "user", 
 					"objectid" : ' . $data['id'] . ' 
@@ -465,12 +444,7 @@ if( $args->command )
 								
 								if( isset( $extr['workgroups'] ) && $extr['workgroups'] )
 								{
-									if( $ret = _addToWorkgroups( $data['id'], $extr['workgroups'], $data, '[ 
-										"PERM_USER_UPDATE_GLOBAL", 
-										"PERM_USER_UPDATE_IN_WORKGROUP", 
-										"PERM_USER_GLOBAL", 
-										"PERM_USER_WORKGROUP" 
-									]' ) )
+									if( $ret = _addToWorkgroups( $data['id'], $extr['workgroups'], $data, '"WORKGROUP_UPDATE"' ) )
 									{
 										if( isset( $ret->result ) && $ret->result == 'fail' )
 										{
@@ -601,10 +575,7 @@ if( $args->command )
 			if( isset( $data['id'] ) && $data['id'] )
 			{
 				
-				if( $perm = Permissions( 'delete', 'application', "'System','Admin'", [ 
-					'PERM_USER_DELETE_GLOBAL', 'PERM_USER_DELETE_IN_WORKGROUP', 
-					'PERM_USER_GLOBAL',        'PERM_USER_WORKGROUP' 
-				], 'user', $data['id'] ) )
+				if( $perm = Permissions( 'delete', 'application', 'System', 'USER_DELETE', 'user', $data['id'] ) )
 				{
 					if( is_object( $perm ) )
 					{
@@ -627,14 +598,9 @@ if( $args->command )
 				$data['args'] = '{
 					"type"    : "delete", 
 					"context" : "application", 
-					"name"    : "\'System\',\'Admin\'", 
+					"name"    : "System", 
 					"data"    : { 
-						"permission" : [ 
-							"PERM_USER_DELETE_GLOBAL", 
-							"PERM_USER_DELETE_IN_WORKGROUP", 
-							"PERM_USER_GLOBAL", 
-							"PERM_USER_WORKGROUP" 
-						]
+						"permission" : "USER_DELETE"
 					}, 
 					"object"   : "user", 
 					"objectid" : ' . $data['id'] . ' 
@@ -848,7 +814,7 @@ function _addToWorkgroups( $userid, $workgroups, $token, $perms )
 					$data['args'] = '{
 						"type"    : "write", 
 						"context" : "application", 
-						"name"    : "\'System\',\'Admin\'", 
+						"name"    : "System", 
 						"data"    : { 
 							"permission" : ' . $perms . '
 						}, 
