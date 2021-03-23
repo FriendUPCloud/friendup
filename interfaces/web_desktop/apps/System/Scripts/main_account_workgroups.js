@@ -79,12 +79,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					'context' : 'application', 
 					'authid'  : Application.authId, 
 					'data'    : { 
-						'permission' : [ 
-							'PERM_WORKGROUP_READ_GLOBAL', 
-							'PERM_WORKGROUP_READ_IN_WORKGROUP', 
-							'PERM_WORKGROUP_GLOBAL', 
-							'PERM_WORKGROUP_WORKGROUP' 
-						]
+						'permission' : 'WORKGROUP_READ'
 					}, 
 					'object'      : 'workgroup', 
 					'objectid'    : id,
@@ -132,12 +127,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					'context' : 'application', 
 					'authid'  : Application.authId, 
 					'data'    : { 
-						'permission' : [ 
-							'PERM_WORKGROUP_READ_GLOBAL', 
-							'PERM_WORKGROUP_READ_IN_WORKGROUP', 
-							'PERM_WORKGROUP_GLOBAL', 
-							'PERM_WORKGROUP_WORKGROUP' 
-						]
+						'permission' : 'WORKGROUP_READ'
 					}, 
 					'listdetails' : 'workgroup' 
 				} );
@@ -513,12 +503,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			'context' : 'application', 
 			'authid'  : Application.authId, 
 			'data'    : { 
-				'permission' : [ 
-					'PERM_WORKGROUP_CREATE_GLOBAL', 
-					'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
-					'PERM_WORKGROUP_GLOBAL', 
-					'PERM_WORKGROUP_WORKGROUP' 
-				]
+				'permission' : 'USER_CREATE'
 			}
 		} );
 		
@@ -622,14 +607,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				'context' : 'application', 
 				'authid'  : Application.authId, 
 				'data'    : { 
-					'permission' : [ 
-						'PERM_WORKGROUP_CREATE_GLOBAL', 
-						'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
-						'PERM_WORKGROUP_UPDATE_GLOBAL', 
-						'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
-						'PERM_WORKGROUP_GLOBAL', 
-						'PERM_WORKGROUP_WORKGROUP' 
-					]
+					'permission' : 'USER_UPDATE'
 				}, 
 				'object'   : 'workgroup', 
 				'objectid' : id
@@ -743,14 +721,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				'context' : 'application', 
 				'authid'  : Application.authId, 
 				'data'    : { 
-					'permission' : [ 
-						'PERM_WORKGROUP_CREATE_GLOBAL', 
-						'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
-						'PERM_WORKGROUP_UPDATE_GLOBAL', 
-						'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
-						'PERM_WORKGROUP_GLOBAL', 
-						'PERM_WORKGROUP_WORKGROUP' 
-					]
+					'permission' : 'USER_UPDATE'
 				}, 
 				'object'   : 'workgroup', 
 				'objectid' : id
@@ -792,14 +763,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				'context' : 'application', 
 				'authid'  : Application.authId, 
 				'data'    : { 
-					'permission' : [ 
-						'PERM_WORKGROUP_CREATE_GLOBAL', 
-						'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
-						'PERM_WORKGROUP_UPDATE_GLOBAL', 
-						'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
-						'PERM_WORKGROUP_GLOBAL', 
-						'PERM_WORKGROUP_WORKGROUP' 
-					]
+					'permission' : 'WORKGROUP_UPDATE'
 				}, 
 				'object'   : 'workgroup', 
 				'objectid' : wid 
@@ -837,12 +801,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				'context' : 'application', 
 				'authid'  : Application.authId, 
 				'data'    : { 
-					'permission' : [ 
-						'PERM_WORKGROUP_DELETE_GLOBAL', 
-						'PERM_WORKGROUP_DELETE_IN_WORKGROUP', 
-						'PERM_WORKGROUP_GLOBAL', 
-						'PERM_WORKGROUP_WORKGROUP' 
-					]
+					'permission' : 'WORKGROUP_UPDATE'
 				}, 
 				'object'   : 'workgroup', 
 				'objectid' : wid 
@@ -1145,14 +1104,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					'context' : 'application', 
 					'authid'  : Application.authId, 
 					'data'    : { 
-						'permission' : [ 
-							'PERM_STORAGE_CREATE_GLOBAL', 
-							'PERM_STORAGE_CREATE_IN_WORKGROUP', 
-							'PERM_STORAGE_UPDATE_GLOBAL', 
-							'PERM_STORAGE_UPDATE_IN_WORKGROUP', 
-							'PERM_STORAGE_GLOBAL', 
-							'PERM_STORAGE_WORKGROUP' 
-						]
+						'permission' : 'STORAGE_UPDATE'
 					}, 
 					'object'   : 'user', 
 					'objectid' : ( userid ? userid : '0' ) 
@@ -1196,14 +1148,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					'context' : 'application', 
 					'authid'  : Application.authId, 
 					'data'    : { 
-						'permission' : [ 
-							'PERM_STORAGE_CREATE_GLOBAL', 
-							'PERM_STORAGE_CREATE_IN_WORKGROUP', 
-							'PERM_STORAGE_UPDATE_GLOBAL', 
-							'PERM_STORAGE_UPDATE_IN_WORKGROUP', 
-							'PERM_STORAGE_GLOBAL', 
-							'PERM_STORAGE_WORKGROUP' 
-						]
+						'permission' : 'STORAGE_UPDATE'
 					}, 
 					'object'   : 'user', 
 					'objectid' : ( userid ? userid : '0' ) 
@@ -1287,12 +1232,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 						'context' : 'application', 
 						'authid'  : Application.authId, 
 						'data'    : { 
-							'permission' : [ 
-								'PERM_WORKGROUP_DELETE_GLOBAL', 
-								'PERM_WORKGROUP_DELETE_IN_WORKGROUP', 
-								'PERM_WORKGROUP_GLOBAL', 
-								'PERM_WORKGROUP_WORKGROUP' 
-							]
+							'permission' : 'WORKGROUP_DELETE'
 						}, 
 						'object'   : 'workgroup', 
 						'objectid' : id
@@ -1786,12 +1726,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			for( var a in roles )
 			{
 				
-				if( !roles[a].WorkgroupID && !Application.checkAppPermission( [ 
-					'PERM_ROLE_CREATE_GLOBAL', 'PERM_ROLE_CREATE_IN_WORKGROUP', 
-					'PERM_ROLE_READ_GLOBAL',   'PERM_ROLE_READ_IN_WORKGROUP', 
-					'PERM_ROLE_UPDATE_GLOBAL', 'PERM_ROLE_UPDATE_IN_WORKGROUP', 
-					'PERM_ROLE_GLOBAL',        'PERM_ROLE_WORKGROUP' 
-				] ) )
+				if( !roles[a].WorkgroupID && !Application.checkAppPermission( [ 'ROLE_READ', 'ROLE_UPDATE' ] ) )
 				{
 					continue;
 				}
@@ -1803,11 +1738,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				rstr += '	</div>';
 				rstr += '	<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
 				
-				if( Application.checkAppPermission( [ 
-					'PERM_ROLE_CREATE_GLOBAL', 'PERM_ROLE_CREATE_IN_WORKGROUP', 
-					'PERM_ROLE_UPDATE_GLOBAL', 'PERM_ROLE_UPDATE_IN_WORKGROUP', 
-					'PERM_ROLE_GLOBAL',        'PERM_ROLE_WORKGROUP' 
-				] ) )
+				if( Application.checkAppPermission( 'ROLE_UPDATE' ) )
 				{
 					rstr += '<button onclick="Sections.accounts_workgroups(\'update_role\',{rid:'+roles[a].ID+',groupid:'+workgroup.groupid+',_this:this})" class="IconButton IconSmall ButtonSmall FloatRight' + ( roles[a].WorkgroupID ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
 				}
@@ -1880,15 +1811,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 			if( bg1 ) 
 			{
 				if( 
-				( info.ID && Application.checkAppPermission( [ 
-					'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
-					'PERM_WORKGROUP_UPDATE_GLOBAL', 'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
-					'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
-				] ) ) || 
-				( !info.ID && Application.checkAppPermission( [ 
-					'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
-					'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
-				] ) ) 
+				( info.ID && Application.checkAppPermission( 'WORKGROUP_UPDATE' ) ) || 
+				( !info.ID && Application.checkAppPermission( 'WORKGROUP_CREATE' ) ) 
 				)
 				{
 					bg1.onclick = function( e )
@@ -1935,10 +1859,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			var bg4  = ge( 'GroupDeleteBtn' );
 			if( bg4 )
 			{
-				if( workgroup && workgroup.status != 2 && Application.checkAppPermission( [ 
-					'PERM_WORKGROUP_DELETE_GLOBAL', 'PERM_WORKGROUP_DELETE_IN_WORKGROUP', 
-					'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
-				] ) )
+				if( workgroup && workgroup.status != 2 && Application.checkAppPermission( 'WORKGROUP_DELETE' ) )
 				{
 					if( 1==1/* || workgroup && workgroup.status != 2*/ )
 					{
@@ -2016,11 +1937,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			var bg5  = ge( 'GroupLockBtn' );
 			if( bg5 )
 			{
-				if( Application.checkAppPermission( [ 
-					'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP',
-					'PERM_WORKGROUP_UPDATE_GLOBAL', 'PERM_WORKGROUP_UPDATE_IN_WORKGROUP', 
-					'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
-				] ) )
+				if( Application.checkAppPermission( 'WORKGROUP_UPDATE' ) )
 				{
 					if( workgroup && workgroup.status == 2 )
 					{
@@ -2393,11 +2310,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 																{ 
 																	'element' : function( ids, id, func ) 
 																	{
-																		if( Application.checkAppPermission( [ 
-																			'PERM_USER_CREATE_GLOBAL', 'PERM_USER_CREATE_IN_WORKGROUP', 
-																			'PERM_USER_UPDATE_GLOBAL', 'PERM_USER_UPDATE_IN_WORKGROUP', 
-																			'PERM_USER_GLOBAL',        'PERM_USER_WORKGROUP' 
-																		] ) )
+																		if( Application.checkAppPermission( 'WORKGROUP_UPDATE' ) )
 																		{
 																			var b = document.createElement( 'button' );
 																			b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
@@ -3010,11 +2923,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								var etn = ge( 'UsersEdit' );
 								if( etn )
 								{
-									if( Application.checkAppPermission( [ 
-										'PERM_USER_CREATE_GLOBAL', 'PERM_USER_CREATE_IN_WORKGROUP', 
-										'PERM_USER_UPDATE_GLOBAL', 'PERM_USER_UPDATE_IN_WORKGROUP', 
-										'PERM_USER_GLOBAL',        'PERM_USER_WORKGROUP' 
-									] ) )
+									if( Application.checkAppPermission( 'WORKGROUP_UPDATE' ) )
 									{
 										etn.onclick = function( e )
 										{
@@ -3220,11 +3129,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 															var d = document.createElement( 'div' );
 															d.className = 'PaddingSmall Ellipsis';
 															
-															if( Application.checkAppPermission( [ 
-																'PERM_STORAGE_CREATE_GLOBAL', 'PERM_STORAGE_CREATE_IN_WORKGROUP', 
-																'PERM_STORAGE_UPDATE_GLOBAL', 'PERM_STORAGE_UPDATE_IN_WORKGROUP', 
-																'PERM_STORAGE_GLOBAL',        'PERM_STORAGE_WORKGROUP' 
-															] ) )
+															if( Application.checkAppPermission( 'STORAGE_UPDATE' ) )
 															{
 																d.onclick = function (  )
 																{
@@ -3786,11 +3691,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 															
 															'element' : function( groupid, storage, init ) 
 															{
-																if( Application.checkAppPermission( [ 
-																	'PERM_STORAGE_CREATE_GLOBAL', 'PERM_STORAGE_CREATE_IN_WORKGROUP', 
-																	'PERM_STORAGE_UPDATE_GLOBAL', 'PERM_STORAGE_UPDATE_IN_WORKGROUP', 
-																	'PERM_STORAGE_GLOBAL',        'PERM_STORAGE_WORKGROUP' 
-																] ) )
+																if( Application.checkAppPermission( 'STORAGE_UPDATE' ) )
 																{
 																	var d = document.createElement( 'button' );
 																	d.className = 'IconSmall FloatRight MarginLeft';
@@ -3854,10 +3755,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 															
 															'element' : function( groupid, storage, init ) 
 															{
-																if( storage.id && Application.checkAppPermission( [ 
-																	'PERM_STORAGE_DELETE_GLOBAL', 'PERM_STORAGE_DELETE_IN_WORKGROUP', 
-																	'PERM_STORAGE_GLOBAL',        'PERM_STORAGE_WORKGROUP' 
-																] ) )
+																if( storage.id && Application.checkAppPermission( 'STORAGE_DELETE' ) )
 																{
 																	var d = document.createElement( 'button' );
 																	d.className = 'IconSmall Danger FloatRight MarginLeft';
@@ -3893,11 +3791,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 															
 															'element' : function( groupid, storage, init ) 
 															{
-																if( storage.id && Application.checkAppPermission( [ 
-																	'PERM_STORAGE_CREATE_GLOBAL', 'PERM_STORAGE_CREATE_IN_WORKGROUP', 
-																	'PERM_STORAGE_UPDATE_GLOBAL', 'PERM_STORAGE_UPDATE_IN_WORKGROUP', 
-																	'PERM_STORAGE_GLOBAL',        'PERM_STORAGE_WORKGROUP' 
-																] ) )
+																if( storage.id && Application.checkAppPermission( 'STORAGE_UPDATE' ) )
 																{
 																	var d = document.createElement( 'button' );
 																	d.className = 'IconSmall FloatLeft MarginRight';
@@ -4018,10 +3912,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								var etn = ge( 'StorageEdit' );
 								if( etn )
 								{
-									if( Application.checkAppPermission( [ 
-										'PERM_STORAGE_CREATE_GLOBAL', 'PERM_STORAGE_CREATE_IN_WORKGROUP', 
-										'PERM_STORAGE_GLOBAL',        'PERM_STORAGE_WORKGROUP' 
-									] ) )
+									if( Application.checkAppPermission( 'STORAGE_CREATE' ) )
 									{
 										etn.onclick = function( e )
 										{
@@ -4274,10 +4165,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 						
 						if( !show || show.indexOf( 'user' ) >= 0 )
 						{
-							if( Application.checkAppPermission( [ 
-								'PERM_USER_READ_GLOBAL', 'PERM_USER_READ_IN_WORKGROUP', 
-								'PERM_USER_GLOBAL',      'PERM_USER_WORKGROUP' 
-							] ) )
+							if( Application.checkAppPermission( 'USER_READ' ) )
 							{
 								if( ge( 'AdminUsersContainer' ) ) ge( 'AdminUsersContainer' ).className = 'Open';
 							}
@@ -4285,10 +4173,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 						
 						if( !show || show.indexOf( 'storage' ) >= 0 )
 						{
-							if( Application.checkAppPermission( [ 
-								'PERM_STORAGE_READ_GLOBAL', 'PERM_STORAGE_READ_IN_WORKGROUP', 
-								'PERM_STORAGE_GLOBAL',      'PERM_STORAGE_WORKGROUP' 
-							] ) )
+							if( Application.checkAppPermission( 'STORAGE_READ' ) )
 							{
 								if( ge( 'AdminStorageContainer' ) ) ge( 'AdminStorageContainer' ).className = 'Open';
 							}
@@ -4296,10 +4181,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 						
 						if( !show || show.indexOf( 'role' ) >= 0 )
 						{
-							if( Application.checkAppPermission( [ 
-								'PERM_ROLE_READ_GLOBAL', 'PERM_ROLE_READ_IN_WORKGROUP', 
-								'PERM_ROLE_GLOBAL',      'PERM_ROLE_WORKGROUP' 
-							] ) )
+							if( Application.checkAppPermission( 'ROLE_READ' ) )
 							{
 								if( ge( 'AdminRolesContainer' ) ) ge( 'AdminRolesContainer' ).className = 'Open';
 							}
@@ -4340,10 +4222,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 	
 	function initMain( callback )
 	{
-		var checkedGlobal = Application.checkAppPermission( [ 'PERM_WORKGROUP_READ_GLOBAL', 'PERM_WORKGROUP_GLOBAL' ] );
-		var checkedWorkgr = Application.checkAppPermission( [ 'PERM_WORKGROUP_READ_IN_WORKGROUP', 'PERM_WORKGROUP_WORKGROUP' ] );
 		
-		if( checkedGlobal || checkedWorkgr )
+		if( Application.checkAppPermission( 'WORKGROUP_READ' ) )
 		{
 			
 			// Get the user list
@@ -4356,8 +4236,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 				if( workgroups )
 				{
 					
-					var adminlevel = Application.checkAppPermission( [ 'PERM_WORKGROUP_READ_GLOBAL', 'PERM_USER_READ_GLOBAL', 'PERM_WORKGROUP_GLOBAL', 'PERM_USER_GLOBAL' ] );
-					var userlevel  = Application.checkAppPermission( [ 'PERM_WORKGROUP_READ_IN_WORKGROUP', 'PERM_USER_READ_IN_WORKGROUP', 'PERM_WORKGROUP_WORKGROUP', 'PERM_USER_WORKGROUP' ] );
+					var adminlevel = ( Application.getUserLevel() == 'admin' ? true : false );
+					var userlevel  = Application.checkAppPermission( 'WORKGROUP_READ' );
 					
 					var wgroups = false;
 					
@@ -4598,10 +4478,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 											{
 												'element' : function(  ) 
 												{
-													if( Application.checkAppPermission( [ 
-														'PERM_WORKGROUP_CREATE_GLOBAL', 'PERM_WORKGROUP_CREATE_IN_WORKGROUP', 
-														'PERM_WORKGROUP_GLOBAL',        'PERM_WORKGROUP_WORKGROUP' 
-													] ) )
+													if( Application.checkAppPermission( 'WORKGROUP_CREATE' ) )
 													{
 														var b = document.createElement( 'button' );
 														b.id = 'WorkgroupEdit';

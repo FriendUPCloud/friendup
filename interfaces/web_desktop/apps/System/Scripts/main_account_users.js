@@ -226,7 +226,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 				let apps              = ( info.applications ? info.applications : {} );
 				let dock              = ( info.dock ? info.dock : {} );
 				
-				if( ShowLog || 1==1 ) console.log( 'initUsersDetails( info ) ', info );		
+				if( ShowLog/* || 1==1*/ ) console.log( 'initUsersDetails( info ) ', info );		
 				
 				let func = {
 					
@@ -4744,7 +4744,7 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 					let u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
-						console.log( { e:e, d:d } );
+						//console.log( { e:e, d:d } );
 						let rows = null;
 						try
 						{

@@ -117,7 +117,7 @@ else
 				}
 				
 				// Permission granted. GLOBAL or WORKGROUP specific ...
-				//die( print_r( $perm,1 ) . ' -- ' );
+				
 				if( $perm->response == 1 && isset( $perm->data->users ) && isset( $args->args->userid ) )
 				{
 			
@@ -156,7 +156,7 @@ else
 			f.Name ASC
 	' ) )
 	{
-		//die( $q );
+		
 		// Let's censor some data..
 		foreach( $rows as $k=>$v )
 		{

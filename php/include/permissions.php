@@ -490,9 +490,10 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 							
 							// Workgroups that this User has access to ...
 							
-							if( strstr( $v->Permission, '_WORKGROUP' ) && $v->Data )
+							//if( strstr( $v->Permission, '_WORKGROUP' ) && $v->Data )
+							if( $v->GroupType == 'Workgroup' && $v->GroupID )
 							{
-								$workgroups[$v->Data] = $v->Data;
+								$workgroups[$v->GroupID] = $v->GroupID;
 							}
 							
 							// If we find a global sett wildcard
@@ -516,6 +517,8 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 					{
 						
 						// TODO: Connect user or users to groups or group ...
+						
+						// TODO: Perhaps there needs to be more sub levels of groups ...
 						
 						if( $rows = $SqlDatabase->FetchObjects( '
 							SELECT g.* 
@@ -740,7 +743,7 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 						switch( $object )
 						{
 							case 'workgroup':
-								
+								// TODO: Fix this first ...
 								if( isset( $workgroups[$objectid] ) || $workgroups == '*' )
 								{
 									$out = new stdClass();
