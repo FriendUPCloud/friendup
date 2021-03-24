@@ -83,7 +83,7 @@ inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid 
 	int nrSessions = 0;
 	int i;
 	
-	UserSession **toBeRemoved = NULL;
+	//UserSession **toBeRemoved = NULL;
 	
 	DEBUG("[killUserSessionByUser] start\n");
 	
@@ -136,6 +136,7 @@ inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid 
 			}
 		}
 	
+		/*
 		// assign UserSessions to temporary table
 		if( nrSessions > 0 )
 		{
@@ -148,9 +149,11 @@ inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid 
 				i++;
 			}
 		}
+		*/
 		FRIEND_MUTEX_UNLOCK( &u->u_Mutex );
 	}
 	
+	/*
 	// remove sessions
 	for( i=0 ; i < nrSessions; i++ )
 	{
@@ -182,6 +185,7 @@ inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid 
 	{
 		FFree( toBeRemoved );
 	}
+	*/
 	
 	DEBUG("[killUserSessionByUser] end\n");
 	
