@@ -4675,6 +4675,79 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 			
 						};
 						
+						let mobile = {
+							
+							codes : [ 47, 45 ],
+							
+							parts : function ( num )
+							{
+								let obj = { 0 : '', 1 : '' };
+								
+								if( userInfo && userInfo.Mobile )
+								{
+									if( userInfo.Mobile.indexOf( '+' ) >= 0 )
+									{
+										if( userInfo.Mobile.indexOf( ' ' ) >= 0 )
+										{
+											obj[0] = userInfo.Mobile.split( ' ' )[0];
+											obj[1] = userInfo.Mobile.split( obj[0] ).join( '' ).split( ' ' ).join( '' );
+										}
+										else
+										{
+											if( this.codes )
+											{
+												for( let i in this.codes )
+												{
+													if( this.codes[i] )
+													{
+														if( userInfo.Mobile.indexOf( '+' + this.codes[i] ) >= 0 )
+														{
+															obj[0] = ( '+' + this.codes[i] );
+															obj[1] = userInfo.Mobile.split( '+' + this.codes[i] ).join( '' ).split( ' ' ).join( '' );
+															break;
+														}
+													}
+												}
+											}
+										}
+									}
+									else
+									{
+										obj[1] = userInfo.Mobile.split( ' ' ).join( '' );
+									}
+								}
+								
+								return obj[num];
+							},
+							
+							select : function (  )
+							{
+								let opt = '';
+								
+								let code = this.parts( 0 );
+								
+								if( this.codes )
+								{
+									for( let i in this.codes )
+									{
+										if( this.codes[i] )
+										{
+											var sel = ( code == ( '+' + this.codes[i] ) ? ' selected="selected"' : '' );
+											opt += '<option value="+'+this.codes[i]+'"'+sel+'>+'+this.codes[i]+'</option>';
+										}
+									}
+								}
+								
+								return opt;
+							},
+							
+							number : function (  )
+							{
+								return this.parts( 1 );
+							}
+							
+						};
+						
 						
 						
 						// Get the user details template
@@ -4687,7 +4760,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 							user_fullname        : ( userInfo.FullName ? userInfo.FullName : ( userInfo.ID ? 'n/a' : '' ) ),
 							user_username        : ( userInfo.Name ? userInfo.Name : ( userInfo.ID ? 'n/a' : '' ) ),
 							user_email           : ( userInfo.Email ? userInfo.Email : '' ),
-							user_mobile          : ( userInfo.Mobile ? userInfo.Mobile : '' ),
+							user_mobile_code     : ( mobile.select() ),
+							user_mobile          : ( mobile.number() ),
 							user_language        : ( languages ? languages : '' ),
 							user_setup           : ( setup ? setup : '' ),
 							user_locked_toggle   : ( ulocked   ? 'fa-toggle-on' : 'fa-toggle-off' ),
@@ -6050,6 +6124,30 @@ function NewUser( _this )
 			}
 		}
 		
+		let mobile = {
+			
+			codes : [ 47, 45 ],
+						
+			select : function (  )
+			{
+				let opt = '';
+				
+				if( this.codes )
+				{
+					for( let i in this.codes )
+					{
+						if( this.codes[i] )
+						{
+							opt += '<option value="+'+this.codes[i]+'">+'+this.codes[i]+'</option>';
+						}
+					}
+				}
+				
+				return opt;
+			}
+			
+		};
+		
 		let d = new File( 'Progdir:Templates/account_users_details.html' );
 		// Add all data for the template
 		d.replacements = {
@@ -6057,6 +6155,7 @@ function NewUser( _this )
 			user_fullname        : '',
 			user_username        : '',
 			user_email           : '',
+			user_mobile_code     : mobile.select(),
 			user_mobile          : '',
 			user_language        : languages,
 			user_setup           : setup,
@@ -9040,6 +9139,14 @@ function _saveUser( uid, callback )
 		if( ge( a ) )
 		{
 			args[ k ] = Trim( ge( a ).value );
+		}
+		
+		if( a == 'usMobile' )
+		{
+			if( ge( 'usMobileCode' ) && ge( 'usMobileCode' ).value )
+			{
+				args[ k ] = ( ge( 'usMobileCode' ).value + ' ' + args[ k ] );
+			}
 		}
 		
 		// Special case, hashed password

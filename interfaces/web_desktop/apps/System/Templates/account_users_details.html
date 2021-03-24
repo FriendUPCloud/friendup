@@ -40,35 +40,38 @@
 		</div>
 		
 		<div class="HRow MarginBottom">
-			<div class="HContent30 FloatLeft Ellipsis">
+			<div class="HContent30 FloatLeft InputHeight Ellipsis">
 				<strong>{i18n_user_fullname}</strong>
 			</div>
 			<div class="HContent70 FloatLeft Ellipsis">
-				<input type="text" class="FullWidth" id="usFullname" value="{user_fullname}"/>
+				<input type="text" class="FullWidth InputHeight" id="usFullname" value="{user_fullname}"/>
 			</div>
 		</div>
 		<div class="HRow MarginBottom">
-			<div class="HContent30 FloatLeft Ellipsis">
+			<div class="HContent30 FloatLeft InputHeight Ellipsis">
 				<strong>{i18n_user_username}</strong>
 			</div>
 			<div class="HContent70 FloatLeft Ellipsis">
-				<input type="text" class="FullWidth" id="usUsername" value="{user_username}"/>
+				<input type="text" class="FullWidth InputHeight" id="usUsername" value="{user_username}"/>
 			</div>
 		</div>
 		<div class="HRow MarginBottom">
-			<div class="HContent30 FloatLeft Ellipsis">
+			<div class="HContent30 FloatLeft InputHeight Ellipsis">
 				<strong>{i18n_user_email}</strong>
 			</div>
 			<div class="HContent70 FloatLeft Ellipsis">
-				<input type="text" class="FullWidth" id="usEmail" value="{user_email}"/>
+				<input type="text" class="FullWidth InputHeight" id="usEmail" value="{user_email}"/>
 			</div>
 		</div>
 		<div class="HRow MarginBottom">
-			<div class="HContent30 FloatLeft Ellipsis">
+			<div class="HContent30 FloatLeft InputHeight Ellipsis">
 				<strong>{i18n_user_mobile}</strong>
 			</div>
-			<div class="HContent70 FloatLeft Ellipsis">
-				<input type="text" class="FullWidth" id="usMobile" value="{user_mobile}"/>
+			<div class="HContent15 FloatLeft PaddingRight Ellipsis">
+				<select class="FullWidth InputHeight" id="usMobileCode">{user_mobile_code}</select>
+			</div>
+			<div class="HContent55 FloatLeft Ellipsis">
+				<input type="number" class="FullWidth InputHeight" id="usMobile" value="{user_mobile}"/>
 			</div>
 		</div>
 		
@@ -89,25 +92,25 @@
 		<div id="ChangePassContainer">
 			<div id="PassError"></div>
 			<div class="HRow MarginBottom">
-				<div class="HContent30 FloatLeft Ellipsis">
+				<div class="HContent30 FloatLeft InputHeight Ellipsis">
 					<strong>{i18n_new_password}</strong>
 				</div>
 				<div class="HContent70 FloatLeft Ellipsis">
-					<input class="FullWidth" type="password" autocomplete="new-password" value="" placeholder="********" id="usPassword"/>
+					<input class="FullWidth InputHeight" type="password" autocomplete="new-password" value="" placeholder="********" id="usPassword"/>
 				</div>
 			</div>
 			<div class="HRow MarginBottom">
-				<div class="HContent30 FloatLeft Ellipsis">
+				<div class="HContent30 FloatLeft InputHeight Ellipsis">
 					<strong>{i18n_confirm_password}</strong>
 				</div>
 				<div class="HContent70 FloatLeft Ellipsis">
-					<input class="FullWidth" type="password" autocomplete="new-password" value="" placeholder="********" id="usPasswordConfirm"/>
+					<input class="FullWidth InputHeight" type="password" autocomplete="new-password" value="" placeholder="********" id="usPasswordConfirm"/>
 				</div>
 			</div>
 		</div>
 		
 		<div class="HRow MarginBottom Closed" id="AdminLevelContainer">
-			<div class="HContent30 FloatLeft">
+			<div class="HContent30 FloatLeft InputHeight">
 				<strong>{i18n_level}</strong>
 			</div>
 			<div class="HContent70 FloatLeft">
@@ -121,7 +124,7 @@
 		</div>
 		
 		<div class="HRow MarginBottom">
-			<div class="HContent30 FloatLeft Ellipsis">
+			<div class="HContent30 FloatLeft InputHeight Ellipsis">
 				<strong>{i18n_language}</strong>
 			</div>
 			<div class="HContent70 FloatLeft Ellipsis">
@@ -132,7 +135,7 @@
 		</div>
 		
 		<div class="HRow MarginBottom" id="AdminSetupContainer">
-			<div class="HContent30 FloatLeft Ellipsis">
+			<div class="HContent30 FloatLeft InputHeight Ellipsis">
 				<strong>{i18n_setup}</strong>
 			</div>
 			<div class="HContent70 FloatLeft Ellipsis">
