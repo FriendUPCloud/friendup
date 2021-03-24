@@ -976,6 +976,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 										{
 											let d = document.createElement( 'div' );
 											d.className = 'HRow Box Padding';
+											d.style.overflow = 'auto';
+											d.style.maxHeight = '369px';
 											d.id = 'WorkgroupInner';
 											return d;
 										}()
@@ -1995,6 +1997,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 											{
 												let d = document.createElement( 'div' );
 												d.className = 'HRow Box Padding';
+												d.style.overflow = 'auto';
+												d.style.maxHeight = '369px';
 												d.id = 'RolesInner';
 												return d;
 											}()
@@ -2445,6 +2449,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													let d = document.createElement( 'div' );
 													d.className = 'HRow Box Padding';
+													d.style.overflow = 'auto';
+													d.style.maxHeight = '366px';
 													d.id = 'ApplicationInner';
 													return d;
 												}()
@@ -3244,6 +3250,8 @@ Sections.accounts_users = function( cmd, extra, accounts_users_callback )
 												{
 													let d = document.createElement( 'div' );
 													d.className = 'HRow Box Padding';
+													d.style.overflow = 'auto';
+													d.style.maxHeight = '366px';
 													d.id = 'DockInner';
 													return d;
 												}()

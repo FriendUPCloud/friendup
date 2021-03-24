@@ -1628,6 +1628,8 @@ Sections.accounts_templates = function( cmd, extra )
 										{
 											var d = document.createElement( 'div' );
 											d.className = 'HRow Box Padding';
+											d.style.overflow = 'auto';
+											d.style.maxHeight = '366px';
 											d.id = 'ApplicationInner';
 											return d;
 										}()
@@ -2404,6 +2406,8 @@ Sections.accounts_templates = function( cmd, extra )
 										{
 											var d = document.createElement( 'div' );
 											d.className = 'HRow Box Padding';
+											d.style.overflow = 'auto';
+											d.style.maxHeight = '366px';
 											d.id = 'DockInner';
 											return d;
 										}()
@@ -3347,6 +3351,8 @@ Sections.accounts_templates = function( cmd, extra )
 										{
 											var d = document.createElement( 'div' );
 											d.className = 'HRow Box Padding';
+											d.style.overflow = 'auto';
+											d.style.maxHeight = '366px';
 											d.id = 'StartupInner';
 											return d;
 										}()
