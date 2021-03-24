@@ -28,7 +28,7 @@ Sections.accounts_roles = function( cmd, extra )
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
-						//console.log( 'userroleget', { e:e, d:d } );
+						console.log( 'userroleget', { e:e, d:d } );
 						info.role = null;
 						if( e != 'ok' ) return;
 						
@@ -52,7 +52,7 @@ Sections.accounts_roles = function( cmd, extra )
 					var m = new Module( 'system' );
 					m.onExecuted = function( e, d )
 					{
-						//console.log( 'getsystempermissions', { e:e, d:d } );
+						console.log( 'getsystempermissions', { e:e, d:d } );
 						info.permission = null;
 						if( e != 'ok' ) return;
 						
@@ -69,13 +69,13 @@ Sections.accounts_roles = function( cmd, extra )
 					m.execute( 'getsystempermissions', { authid: Application.authId } );
 				},
 				
-				// Load workgroups
+				/*// Load workgroups
 				function()
 				{
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
-						//console.log( 'workgroups', { e:e, d:d } );
+						console.log( 'workgroups', { e:e, d:d } );
 						info.workgroups = null;
 						//if( e != 'ok' ) return;
 						
@@ -90,12 +90,12 @@ Sections.accounts_roles = function( cmd, extra )
 						loadingList[ ++loadingSlot ]( info );
 					}
 					u.execute( 'workgroups', { authid: Application.authId } );
-				},
+				},*/
 				
 				// Then, finally, show role details
 				function( info )
 				{
-					if( typeof info.role == 'undefined' && typeof info.permission == 'undefined' && typeof info.workgroups == 'undefined' ) return;
+					if( typeof info.role == 'undefined' && typeof info.permission == 'undefined'/* && typeof info.workgroups == 'undefined'*/ ) return;
 					
 					initRoleDetails( info );
 				}
@@ -112,16 +112,14 @@ Sections.accounts_roles = function( cmd, extra )
 	
 	
 	// Get the user list -------------------------------------------------------
-	
-	var checkedWorkgr = Application.checkAppPermission( [ 'ROLE_READ' ] );
-	
-	if( checkedWorkgr )
+		
+	if( Application.checkAppPermission( 'ROLE_READ' ) )
 	{
 		
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			//console.log( { e:e, d:d } );
+			console.log( { e:e, d:d } );
 		
 			//if( e != 'ok' ) return;
 			var roleList = null;
@@ -172,10 +170,7 @@ Sections.accounts_roles = function( cmd, extra )
 				headRow.appendChild( d );
 			}
 		
-			if( Application.checkAppPermission( [ 
-				'PERM_ROLE_CREATE_GLOBAL', 'PERM_ROLE_CREATE_IN_WORKGROUP', 
-				'PERM_ROLE_GLOBAL',        'PERM_ROLE_WORKGROUP' 
-			] ) )
+			if( Application.checkAppPermission( 'ROLE_CREATE' ) )
 			{
 				var d = document.createElement( 'div' );
 				d.className = 'PaddingSmall HContent' + '10' + ' TextCenter FloatLeft Ellipsis';
@@ -193,7 +188,7 @@ Sections.accounts_roles = function( cmd, extra )
 			
 			function setROnclick( r, uid )
 			{
-				if( Application.checkAppPermission( [ 'ROLE_CREATE', 'ROLE_UPDATE' ] ) )
+				if( Application.checkAppPermission( 'ROLE_READ' ) )
 				{
 					r.onclick = function()
 					{
@@ -295,6 +290,11 @@ Sections.role_edit = function( id, _this )
 	
 	for( var i in buttons )
 	{
+		if( ( i == 0 && !Application.checkAppPermission( 'ROLE_UPDATE' ) ) || ( i == 1 && !Application.checkAppPermission( 'ROLE_DELETE' ) ) )
+		{
+			continue;
+		}
+		
 		var b = document.createElement( 'button' );
 		b.className = 'IconSmall FloatRight';
 		b.innerHTML = buttons[i].name;

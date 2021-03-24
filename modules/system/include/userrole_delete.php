@@ -26,7 +26,7 @@ else
 {
 	require_once( 'php/include/permissions.php' );
 
-	if( $perm = Permissions( 'delete', 'application', ( 'AUTHID'.$args->authid ), [ 'ROLE_DELETE' ] ) )
+	if( $perm = Permissions( 'delete', 'application', ( 'AUTHID'.$args->authid ), 'ROLE_DELETE' ) )
 	{
 		if( is_object( $perm ) )
 		{

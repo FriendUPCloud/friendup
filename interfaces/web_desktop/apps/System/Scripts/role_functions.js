@@ -433,7 +433,6 @@ function initRoleDetails( info )
 				
 				apl += '	<div class="HRow">';
 				apl += '		<div class="PaddingSmall HContent100 FloatLeft Ellipsis"><strong>' + perm[a].Name + '</strong></div>';
-				//apl += '		<div class="PaddingSmall HContent10 FloatLeft Ellipsis"></div>';
 				apl += '	</div>';
 				
 				apl += '	<div class="">';
@@ -461,16 +460,22 @@ function initRoleDetails( info )
 								};
 								
 								apl += '	<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
-								apl += '		<input type="checkbox"'+( pem.act ? ' checked="checked"' : '' )+' name="'+pem.nam+'" onclick="Sections.togglepermission('+info.role.ID+',\''+pem.nam+'\',\''+pem.key+'\',this )"/>';
+								
+								if( Application.checkAppPermission( 'ROLE_UPDATE' ) )
+								{
+									apl += '	<input type="checkbox"'+( pem.act ? ' checked="checked"' : '' )+' name="'+pem.nam+'" onclick="Sections.togglepermission('+info.role.ID+',\''+pem.nam+'\',\''+pem.key+'\',this )"/>';
+								}
+								else
+								{
+									apl += '	<input type="checkbox"'+( pem.act ? ' checked="checked"' : '' )+' name="'+pem.nam+'" disabled="disabled"/>';
+								}
+								
 								apl += '		<span>' + i18n( 'i18n_' + pem.nam ) + '</span>';
 								apl += '	</div>';
 							}
 						}
 					}
 					
-					//apl += '		<div class="PaddingSmall HContent10 TextCenter FloatLeft Ellipsis">';
-					//apl += '			<button class="IconButton IconSmall ButtonSmall FloatRight fa-plus-circle" onclick="Sections.addpermission('+null+',\''+null+'\',this)"></button>';
-					//apl += '		</div>';
 					apl += '	</div>';
 					
 				}

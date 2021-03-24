@@ -786,7 +786,7 @@ function _fcquery( $command = '', $args = false, $method = 'POST', $headers = fa
 				return json_decode( '{"result":"fail","data":' . trim( $output ) . '}' );
 			}
 		}
-		die( print_r( $args,1 ) . ' -- ' . $output . ' [] ' . $url );
+		
 		return json_decode( '{"result":"fail","data":{"response":"Unexpected error!","curl_code":"' . $httpCode . '"}}' );
 		
 	}

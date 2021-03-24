@@ -1247,21 +1247,34 @@ Sections.accounts_templates = function( cmd, extra )
 			}
 			
 			var bg1  = ge( 'TempSaveBtn' );
-			if( bg1 ) bg1.onclick = function( e )
+			if( bg1 )
 			{
-				// Save template ...
-				
-				if( details.ID )
+				if( 
+				( details.ID && Application.checkAppPermission( 'TEMPLATE_UPDATE' ) ) || 
+				( !details.ID && Application.checkAppPermission( 'TEMPLATE_CREATE' ) ) 
+				)
 				{
-					if( ShowLog ) console.log( '// save template' );
+					bg1.onclick = function( e )
+					{
+						// Save template ...
+				
+						if( details.ID )
+						{
+							if( ShowLog ) console.log( '// save template' );
 					
-					update( details.ID );
+							update( details.ID );
+						}
+						else
+						{
+							if( ShowLog ) console.log( '// create template' );
+					
+							create();
+						}
+					};
 				}
 				else
 				{
-					if( ShowLog ) console.log( '// create template' );
-					
-					create();
+					bg1.style.display = 'none';
 				}
 			}
 			var bg2  = ge( 'TempCancelBtn' );
@@ -1283,29 +1296,40 @@ Sections.accounts_templates = function( cmd, extra )
 			}
 			
 			var bg4  = ge( 'TempDeleteBtn' );
-			if( bg4 ) bg4.onclick = function( e )
+			if( bg4 ) 
 			{
-				
-				// Delete template ...
-				
-				if( details.ID )
+				if( Application.checkAppPermission( 'TEMPLATE_DELETE' ) )
 				{
-					if( ShowLog ) console.log( '// delete template' );
-					
-					removeBtn( this, { id: details.ID, button_text: 'i18n_delete_template', }, function ( args )
+					bg4.onclick = function( e )
 					{
 						
-						remove( args.id );
+						// Delete template ...
+				
+						if( details.ID )
+						{
+							if( ShowLog ) console.log( '// delete template' );
+					
+							removeBtn( this, { id: details.ID, button_text: 'i18n_delete_template', }, function ( args )
+							{
 						
-					} );
+								remove( args.id );
+						
+							} );
 					
-					//Confirm( i18n( 'i18n_deleting_template' ), i18n( 'i18n_deleting_template_verify' ), function( result )
-					//{
+							//Confirm( i18n( 'i18n_deleting_template' ), i18n( 'i18n_deleting_template_verify' ), function( result )
+							//{
 					
 						
 					
-					//} );
+							//} );
 					
+						}
+				
+					};
+				}
+				else
+				{
+					bg4.style.display = 'none';
 				}
 				
 			}
@@ -1703,8 +1727,8 @@ Sections.accounts_templates = function( cmd, extra )
 																		'element' : function() 
 																		{
 																			var d = document.createElement( 'span' );
-																			d.setAttribute( 'Name', apps[k].Name );
-																			d.setAttribute( 'Category', apps[k].Category );
+																			d.setAttribute( 'Name', apps[k].Name ? apps[k].Name : 'n/a' );
+																			d.setAttribute( 'Category', apps[k].Category ? apps[k].Category : 'n/a' );
 																			d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																			d.style.backgroundSize = 'contain';
 																			d.style.width = '24px';
@@ -1737,7 +1761,7 @@ Sections.accounts_templates = function( cmd, extra )
 																{
 																	var d = document.createElement( 'div' );
 																	d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
-																	d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																	d.innerHTML = '<strong>' + ( apps[k].Name ? apps[k].Name : 'n/a' ) + '</strong>';
 																	return d;
 																}() 
 															},
@@ -1746,7 +1770,7 @@ Sections.accounts_templates = function( cmd, extra )
 																{
 																	var d = document.createElement( 'div' );
 																	d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
-																	d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																	d.innerHTML = '<span>' + ( apps[k].Category ? apps[k].Category : 'n/a' ) + '</span>';
 																	return d;
 																}() 
 															}, 
@@ -1889,8 +1913,8 @@ Sections.accounts_templates = function( cmd, extra )
 																	'element' : function() 
 																	{
 																		var d = document.createElement( 'span' );
-																		d.setAttribute( 'Name', apps[k].Name );
-																		d.setAttribute( 'Category', apps[k].Category );
+																		d.setAttribute( 'Name', apps[k].Name ? apps[k].Name : 'n/a' );
+																		d.setAttribute( 'Category', apps[k].Category ? apps[k].Category : 'n/a' );
 																		d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																		d.style.backgroundSize = 'contain';
 																		d.style.width = '24px';
@@ -1923,7 +1947,7 @@ Sections.accounts_templates = function( cmd, extra )
 															{
 																var d = document.createElement( 'div' );
 																d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
-																d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																d.innerHTML = '<strong>' + ( apps[k].Name ? apps[k].Name : 'n/a' ) + '</strong>';
 																return d;
 															}() 
 														}, 
@@ -1932,7 +1956,7 @@ Sections.accounts_templates = function( cmd, extra )
 															{
 																var d = document.createElement( 'div' );
 																d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
-																d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																d.innerHTML = '<span>' + ( apps[k].Category ? apps[k].Category : 'n/a' ) + '</span>';
 																return d;
 															}() 
 														},
@@ -2479,8 +2503,8 @@ Sections.accounts_templates = function( cmd, extra )
 																		'element' : function() 
 																		{
 																			var d = document.createElement( 'span' );
-																			d.setAttribute( 'Name', apps[k].Name );
-																			d.setAttribute( 'Category', apps[k].Category );
+																			d.setAttribute( 'Name', apps[k].Name ? apps[k].Name : 'n/a' );
+																			d.setAttribute( 'Category', apps[k].Category ? apps[k].Category : 'n/a' );
 																			d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																			d.style.backgroundSize = 'contain';
 																			d.style.width = '24px';
@@ -2513,7 +2537,7 @@ Sections.accounts_templates = function( cmd, extra )
 																{
 																	var d = document.createElement( 'div' );
 																	d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
-																	d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																	d.innerHTML = '<strong>' + ( apps[k].Name ? apps[k].Name : 'n/a' ) + '</strong>';
 																	return d;
 																}() 
 															},
@@ -2522,7 +2546,7 @@ Sections.accounts_templates = function( cmd, extra )
 																{
 																	var d = document.createElement( 'div' );
 																	d.className = 'PaddingSmall HContent25 FloatLeft Ellipsis';
-																	d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																	d.innerHTML = '<span>' + ( apps[k].Category ? apps[k].Category : 'n/a' ) + '</span>';
 																	return d;
 																}() 
 															}, 
@@ -2713,8 +2737,8 @@ Sections.accounts_templates = function( cmd, extra )
 																		'element' : function() 
 																		{
 																			var d = document.createElement( 'span' );
-																			d.setAttribute( 'Name', apps[k].Name );
-																			d.setAttribute( 'Category', apps[k].Category );
+																			d.setAttribute( 'Name', apps[k].Name ? apps[k].Name : 'n/a' );
+																			d.setAttribute( 'Category', apps[k].Category ? apps[k].Category : 'n/a' );
 																			d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																			d.style.backgroundSize = 'contain';
 																			d.style.width = '24px';
@@ -2747,7 +2771,7 @@ Sections.accounts_templates = function( cmd, extra )
 																{
 																	var d = document.createElement( 'div' );
 																	d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
-																	d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																	d.innerHTML = '<strong>' + ( apps[k].Name ? apps[k].Name : 'n/a' ) + '</strong>';
 																	return d;
 																}() 
 															}, 
@@ -2756,7 +2780,7 @@ Sections.accounts_templates = function( cmd, extra )
 																{
 																	var d = document.createElement( 'div' );
 																	d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
-																	d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																	d.innerHTML = '<span>' + ( apps[k].Category ? apps[k].Category : 'n/a' ) + '</span>';
 																	return d;
 																}() 
 															},
@@ -3437,8 +3461,8 @@ Sections.accounts_templates = function( cmd, extra )
 																		'element' : function() 
 																		{
 																			var d = document.createElement( 'span' );
-																			d.setAttribute( 'Name', apps[k].Name );
-																			d.setAttribute( 'Category', apps[k].Category );
+																			d.setAttribute( 'Name', apps[k] && apps[k].Name ? apps[k].Name : 'n/a' );
+																			d.setAttribute( 'Category', apps[k] && apps[k].Category ? apps[k].Category : 'n/a' );
 																			d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																			d.style.backgroundSize = 'contain';
 																			d.style.width = '24px';
@@ -3452,7 +3476,7 @@ Sections.accounts_templates = function( cmd, extra )
 																				'element' : function() 
 																				{
 																					var d = document.createElement( 'div' );
-																					if( apps[k].Preview )
+																					if( apps[k] && apps[k].Preview )
 																					{
 																						d.style.backgroundImage = 'url(\'' + apps[k].Preview + '\')';
 																						d.style.backgroundSize = 'contain';
@@ -3471,7 +3495,7 @@ Sections.accounts_templates = function( cmd, extra )
 																{
 																	var d = document.createElement( 'div' );
 																	d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
-																	d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																	d.innerHTML = '<strong>' + ( apps[k] && apps[k].Name ? apps[k].Name : 'n/a' ) + '</strong>';
 																	return d;
 																}() 
 															},
@@ -3480,7 +3504,7 @@ Sections.accounts_templates = function( cmd, extra )
 																{
 																	var d = document.createElement( 'div' );
 																	d.className = 'PaddingSmall HContent25 FloatLeft Ellipsis';
-																	d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																	d.innerHTML = '<span>' + ( apps[k] && apps[k].Category ? apps[k].Category : 'n/a' ) + '</span>';
 																	return d;
 																}() 
 															}, 
@@ -3589,7 +3613,7 @@ Sections.accounts_templates = function( cmd, extra )
 																			
 																			};
 																			return b;
-																		}( this.ids, apps[k].Name, this.func ) 
+																		}( this.ids, ( apps[k] && apps[k].Name ? apps[k].Name : 'n/a' ), this.func ) 
 																	}
 																]
 															}
@@ -3683,8 +3707,8 @@ Sections.accounts_templates = function( cmd, extra )
 																		'element' : function() 
 																		{
 																			var d = document.createElement( 'span' );
-																			d.setAttribute( 'Name', apps[k].Name );
-																			d.setAttribute( 'Category', apps[k].Category );
+																			d.setAttribute( 'Name', apps[k].Name ? apps[k].Name : 'n/a' );
+																			d.setAttribute( 'Category', apps[k].Category ? apps[k].Category : 'n/a' );
 																			d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
 																			d.style.backgroundSize = 'contain';
 																			d.style.width = '24px';
@@ -3717,7 +3741,7 @@ Sections.accounts_templates = function( cmd, extra )
 																{
 																	var d = document.createElement( 'div' );
 																	d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
-																	d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																	d.innerHTML = '<strong>' + ( apps[k].Name ? apps[k].Name : 'n/a' ) + '</strong>';
 																	return d;
 																}() 
 															}, 
@@ -3726,7 +3750,7 @@ Sections.accounts_templates = function( cmd, extra )
 																{
 																	var d = document.createElement( 'div' );
 																	d.className = 'PaddingSmall HContent45 FloatLeft Ellipsis';
-																	d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																	d.innerHTML = '<span>' + ( apps[k].Category ? apps[k].Category : 'n/a' ) + '</span>';
 																	return d;
 																}() 
 															},
@@ -4655,10 +4679,13 @@ Sections.accounts_templates = function( cmd, extra )
 											{
 												'element' : function() 
 												{
-													var b = document.createElement( 'button' );
-													b.className = 'IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle';
-													b.onclick = function () { edit(); };
-													return b;
+													if( Application.checkAppPermission( 'TEMPLATE_CREATE' ) )
+													{
+														var b = document.createElement( 'button' );
+														b.className = 'IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle';
+														b.onclick = function () { edit(); };
+														return b;
+													}
 												}()
 											}
 										]
