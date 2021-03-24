@@ -2240,6 +2240,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 										{
 											var d = document.createElement( 'div' );
 											d.className = 'HRow Box Padding';
+											d.style.overflow = 'auto';
+											d.style.maxHeight = '369px';
 											d.id = 'UsersInner';
 											return d;
 										}()
@@ -4094,6 +4096,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 									{
 										var d = document.createElement( 'div' );
 										d.className = 'HRow Box Padding';
+										d.style.overflow = 'auto';
+										d.style.maxHeight = '369px';
 										d.id = 'RolesInner';
 										return d;
 									}()
