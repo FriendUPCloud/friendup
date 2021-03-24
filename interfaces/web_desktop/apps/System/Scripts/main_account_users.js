@@ -5959,8 +5959,7 @@ function NewUser( _this )
 						
 						if( ge( 'usUsername' ).value )
 						{
-							this.innerHTML = '<i class="fa fa-spinner" aria-hidden="true"></i>';
-							
+														
 							_saveUser( false, function( uid )
 							{
 								
@@ -6325,7 +6324,7 @@ function NewUser( _this )
 				
 					for( var a in groups )
 					{
-						let found = false;
+						var found = false;
 						
 						str += '<div>';
 						
@@ -6344,7 +6343,7 @@ function NewUser( _this )
 						
 							for( var aa in groups[a].groups )
 							{
-								let found = false;
+								var found = false;
 								
 								str += '<div class="HRow">\
 									<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
@@ -6361,7 +6360,7 @@ function NewUser( _this )
 								
 									for( var aaa in groups[a].groups[aa].groups )
 									{
-										let found = false;
+										var found = false;
 										
 										str += '<div class="HRow">\
 											<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
@@ -6395,7 +6394,7 @@ function NewUser( _this )
 				
 				
 				
-				let o = ge( 'WorkgroupGui' ); if( o ) o.innerHTML = '';
+				let o = ge( 'WorkgroupGui' ); if( o ) o.innerHTML = '<input type="hidden" id="usWorkgroups">';
 				
 				let divs = appendChild( [ 
 					{ 
@@ -6464,10 +6463,10 @@ function NewUser( _this )
 				
 				
 				
-				ge( 'WorkgroupInner' ).innerHTML = '<input type="hidden" id="usWorkgroups">' + str;
+				ge( 'WorkgroupInner' ).innerHTML = str;
 				
 				// Toggle arrow function, put into function that can be reused some time ...
-						
+				
 				let workArr = ge( 'WorkgroupInner' ).getElementsByTagName( 'span' );
 				
 				if( workArr )
@@ -6552,7 +6551,6 @@ function NewUser( _this )
 						( function( b ) {
 							b.onclick = function( e )
 							{
-								
 								if( ge( 'usWorkgroups' ) )
 								{
 									
@@ -6634,6 +6632,7 @@ function NewUser( _this )
 								
 							}
 						} )( workBtns[ a ] );
+						
 					}
 				}
 				
@@ -8918,6 +8917,12 @@ function _saveUser( uid, callback )
 		args.id = uid;
 	}
 	
+	if( ge( 'UserSaveBtn' ) )
+	{
+		ge( 'UserSaveBtn' ).restore = ge( 'UserSaveBtn' ).innerHTML;
+		ge( 'UserSaveBtn' ).innerHTML = '<i class="fa fa-spinner" aria-hidden="true"></i>';
+	}
+	
 	let m = new Module( 'system' );
 	m.forceHTTP = true;
 	m.onExecuted = function( server )
@@ -8972,6 +8977,13 @@ function _saveUser( uid, callback )
 		else
 		{
 			Notify( { title: i18n( 'i18n_user_update_fail' ), text: i18n( 'i18n_user_update_failed' ) } );
+		}
+		
+		
+		
+		if( ge( 'UserSaveBtn' ) && ge( 'UserSaveBtn' ).restore )
+		{
+			ge( 'UserSaveBtn' ).innerHTML = ge( 'UserSaveBtn' ).restore;
 		}
 		
 	}

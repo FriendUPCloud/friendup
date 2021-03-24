@@ -31,34 +31,34 @@ if( isset( $args->servertoken ) )
 }
 if( isset( $args->args->id ) )
 {
-	$data['id'] = urldecode( trim( $args->args->id ) );
+	$data['id'] = /*urldecode( */trim( $args->args->id )/* )*/;
 	
 	// TODO: Add check if it's correct format if not return back ...
 }
 if( isset( $args->args->fullname ) )
 {
-	$data['fullname'] = urldecode( trim( $args->args->fullname ) );
+	$data['fullname'] = /*urldecode( */trim( $args->args->fullname )/* )*/;
 }
 if( isset( $args->args->username ) )
 {
-	$data['username'] = urldecode( trim( $args->args->username ) );
+	$data['username'] = /*urldecode( */trim( $args->args->username )/* )*/;
 }
 if( isset( $args->args->password ) )
 {
-	$data['password'] = urldecode( trim( $args->args->password ) );
+	$data['password'] = /*urldecode( */trim( $args->args->password )/* )*/;
 	
 	// TODO: Add check if it's correct format if not return back ...
 }
 if( isset( $args->args->email ) )
 {
-	$data['email'] = urldecode( trim( $args->args->email ) );
+	$data['email'] = /*urldecode( */trim( $args->args->email )/* )*/;
 	
 	// TODO: Add check if it's correct format if not return back ...
 }
 
 if( isset( $args->args->level ) )
 {
-	$data['level'] = urldecode( trim( $args->args->level ) );
+	$data['level'] = /*urldecode( */trim( $args->args->level )/* )*/;
 	
 	// TODO: Add check if it's correct format if not return back ...
 	// TODO: Make it so only global / system admin can set level admin
@@ -66,25 +66,25 @@ if( isset( $args->args->level ) )
 
 if( isset( $args->args->mobile ) )
 {
-	$extr['mobile'] = urldecode( trim( $args->args->mobile ) );
+	$extr['mobile'] = /*urldecode( */trim( $args->args->mobile )/* )*/;
 	
 	// TODO: Add check if it's correct format if not return back ...
 }
 if( isset( $args->args->language ) )
 {
-	$extr['language'] = urldecode( trim( $args->args->language ) );
+	$extr['language'] = /*urldecode( */trim( $args->args->language )/* )*/;
 	
 	// TODO: Add check if it's correct format if not return back ...
 }
 if( isset( $args->args->avatar ) )
 {
-	$extr['avatar'] = urldecode( trim( $args->args->avatar ) );
+	$extr['avatar'] = /*urldecode( */trim( $args->args->avatar )/* )*/;
 	
 	// TODO: Add check if it's correct format if not return back ...
 }
 if( isset( $args->args->workgroups ) )
 {
-	$extr['workgroups'] = urldecode( trim( $args->args->workgroups ) );
+	$extr['workgroups'] = /*urldecode( */trim( $args->args->workgroups )/* )*/;
 	
 	// TODO: Add check if it's correct format if not return back ...
 }
@@ -92,8 +92,8 @@ if( isset( $args->args->setup ) )
 {
 	// TODO: Look into why we need to add this to Friend Core ..
 	
-	$data['setup'] = urldecode( trim( $args->args->setup ) );
-	$extr['setup'] = urldecode( trim( $args->args->setup ) );
+	$data['setup'] = /*urldecode( */trim( $args->args->setup )/* )*/;
+	$extr['setup'] = /*urldecode( */trim( $args->args->setup )/* )*/;
 	
 	// TODO: Add check if it's correct format if not return back ...
 }
@@ -786,7 +786,7 @@ function _fcquery( $command = '', $args = false, $method = 'POST', $headers = fa
 				return json_decode( '{"result":"fail","data":' . trim( $output ) . '}' );
 			}
 		}
-		
+		die( print_r( $args,1 ) . ' -- ' . $output . ' [] ' . $url );
 		return json_decode( '{"result":"fail","data":{"response":"Unexpected error!","curl_code":"' . $httpCode . '"}}' );
 		
 	}
