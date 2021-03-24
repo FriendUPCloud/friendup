@@ -872,11 +872,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				// We got views? Just manage them
 				if( !isMobile )
 				{
-					if( dk.toggleViewVisibility( this ) ) 
-					{
-						console.log( 'Toggling visibility!' );
-						return;
-					}
+					if( dk.toggleViewVisibility( this ) ) return;
 				}
 
 				var rememberCurrent = false;
