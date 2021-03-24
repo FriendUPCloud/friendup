@@ -85,6 +85,8 @@ inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid 
 	
 	UserSession **toBeRemoved = NULL;
 	
+	DEBUG("[killUserSessionByUser] start\n");
+	
 	if( FRIEND_MUTEX_LOCK( &u->u_Mutex ) == 0 )
 	{
 		UserSessListEntry *usl = u->u_SessionsList;
@@ -93,16 +95,21 @@ inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid 
 			while( usl != NULL )
 			{
 				UserSession *s = (UserSession *) usl->us;
+				
+				DEBUG("[killUserSessionByUser] remove session\n");
+				
 				if( s != NULL && s->us_DeviceIdentity != NULL && strcmp( s->us_DeviceIdentity, deviceid ) == 0 )
 				{
+					DEBUG("[killUserSessionByUser] fc will send message via WS\n");
+					
 					char tmpmsg[ 2048 ];
 					int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
 				
 					int msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
 
-					DEBUG("Bytes send: %d\n", msgsndsize );
+					DEBUG("[killUserSessionByUser] Bytes send: %d\n", msgsndsize );
 			
-					break;
+					//break;
 				}
 				usl = (UserSessListEntry *)usl->node.mln_Succ;
 				nrSessions++;
@@ -175,6 +182,8 @@ inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid 
 	{
 		FFree( toBeRemoved );
 	}
+	
+	DEBUG("[killUserSessionByUser] end\n");
 	
 	return error;
 }
@@ -939,6 +948,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						// update status and modify timestamp
 						sprintf( tmpQuery, "UPDATE `FUser` set Status=%lu,ModifyTime=%lu where ID=%lu", status, updateTime, id );
 						
+						DEBUG( "[UMWebRequest] status updated\n");
+						
 						sqllib->QueryWithoutResults( sqllib, tmpQuery );
 						
 						User *usr = UMGetUserByID( l->sl_UM, id );
@@ -980,6 +991,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 								User *u = UMGetUserByID( l->sl_UM, id );
 								if( u != NULL )
 								{
+									DEBUG("[UMWebRequest] user sessions will be removed\n");
 									killUserSessionByUser( l, u, NULL );
 								}
 								msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
