@@ -92,6 +92,7 @@ inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid 
 		UserSessListEntry *usl = u->u_SessionsList;
 		if( deviceid != NULL )
 		{
+			DEBUG("[killUserSessionByUser] remove session with deviceid: %s\n", deviceid );
 			while( usl != NULL )
 			{
 				UserSession *s = (UserSession *) usl->us;
@@ -117,6 +118,7 @@ inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid 
 		}
 		else
 		{
+			DEBUG("[killUserSessionByUser] remove sessions\n");
 			while( usl != NULL )
 			{
 				UserSession *s = (UserSession *) usl->us;
@@ -127,9 +129,7 @@ inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid 
 				
 					int msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
 
-					DEBUG("Bytes send: %d\n", msgsndsize );
-			
-					break;
+					DEBUG("[killUserSessionByUser] Bytes send: %d\n", msgsndsize );
 				}
 				usl = (UserSessListEntry *)usl->node.mln_Succ;
 				nrSessions++;
