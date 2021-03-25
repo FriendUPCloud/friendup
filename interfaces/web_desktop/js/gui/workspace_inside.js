@@ -611,10 +611,10 @@ var WorkspaceInside = {
 	getWebSocketsState: function()
 	{
 		if( Workspace.readyToRun ) return Workspace.websocketState;
-		return "false";
+		return 'false';
 	},
 	initWebSocket: function( callback )
-	{	
+	{
 		let self = this;
 		function closeConn()
 		{
@@ -654,9 +654,19 @@ var WorkspaceInside = {
 		// Not ready
 		if( !Workspace.sessionId )
 		{
-			return setTimeout( function(){ Workspace.initWebSocket( callback ); }, 1000 );
+			if( this.initWSTimeout )
+				clearTimeout( this.initWSTimeout );
+			this.initWSTimeout = setTimeout( function(){ Workspace.initWebSocket( callback ); }, 1000 );
+			return this.initWSTimeout;
 		}
-
+		
+		// Not needed here
+		if( this.initWSTimeout )
+		{
+			clearTimeout( this.initWSTimeout );
+			this.initWSTimeout = null;
+		}
+		
 		// Force connecting ws state (we will close it!)
 		Workspace.websocketState = 'connecting';
 
@@ -717,6 +727,7 @@ var WorkspaceInside = {
 				if( Workspace.websocketState != 'open' )
 				{
 					// Refresh mountlist
+					Workspace.websocketState = 'open';
 					Workspace.refreshDesktop( false, true );
 				}
 
@@ -738,7 +749,6 @@ var WorkspaceInside = {
 						callback();
 						callback = null;
 					}
-					Workspace.websocketState = 'open';
 				}
 				else if( e.type == 'connecting' )
 				{
@@ -1143,213 +1153,145 @@ var WorkspaceInside = {
 	refreshExtraWidgetContents: function()
 	{
 		if( this.mode == 'vr' ) return;
+
+		var self = this;
+
 		if( Workspace.isSingleTask ) return;
 		
-		var mo = new Library( 'system.library' );
-		mo.onExecuted = function( rc, sessionList )
+		if( !this.refreshEWCTime )
+		    this.refreshEWCTime = 0;
+		let cand = ( new Date() ).getTime() / 1000;
+		
+		function doItCal( sessions )
 		{
 			var m = Workspace.widget ? Workspace.widget.target : ge( 'DoorsScreen' );
-			if( m == ge( 'DoorsScreen' ) )
-				m = ge( 'DoorsScreen' ).screenTitle.getElementsByClassName( 'Extra' )[0];
-			if( !m )
-			{
-				//console.log( 'Can not find widget!' );
-				return;
-			}
-		
-			var sessions = [];
-			if( rc == 'ok' )
-			{
-				if( typeof( sessionList ) == 'string' )
-					sessionList = JSON.parse( sessionList );
-
-				if( sessionList )
-				{
-					try
-					{
-						var exists = [];
-						for( var b = 0; b < sessionList.length; b++ )
-						{
-							if( sessionList[b].sessionid == Workspace.sessionId ) continue;
-							var sn = sessionList[b].deviceidentity.split( '_' );
-							var svn = sn[2] + ' ';
-
-							switch( sn[0] )
-							{
-								case 'touch':
-									svn += 'touch device';
-									break;
-								case 'wimp':
-									svn += 'computer';
-									break;
-							}
-							switch( sn[1] )
-							{
-								case 'iphone':
-									svn += '(iPhone)';
-									break;
-								case 'android':
-									svn += '(Android device)';
-									break;
-							}
-							var num = 0;
-							var found = false;
-							for( var c = 0; c < exists.length; c++ )
-							{
-								if( exists[c] == svn )
-								{
-									num++;
-									found = true;
-								}
-							}
-							exists.push( svn );
-							if( found ) svn += ' ' + (num+1) + '.';
-							sessions.push( '<p class="Relative FullWidth Ellipsis IconSmall fa-close MousePointer" onmousedown="Workspace.terminateSession(\'' +
-								sessionList[b].sessionid + '\', \'' + sessionList[b].deviceidentity + '\');">&nbsp;' + svn + '</p>' );
-						}
-					}
-					catch( e )
-					{
-					}
-				}
-			}
-
+		    if( m == ge( 'DoorsScreen' ) )
+			    m = ge( 'DoorsScreen' ).screenTitle.getElementsByClassName( 'Extra' )[0];
+		    if( !m )
+		    {
+			    //console.log( 'Can not find widget!' );
+			    return;
+		    }
+		    
 			var closeBtn = '<div class="HRow"><p class="Layout"><button type="button" class="FloatRight Button fa-close IconSmall">' + i18n( 'i18n_close' ) + '</button></p></div>';
 
-			var d = '<hr class="Divider"/>\
-			<div class="Padding"><p class="Layout"><strong>' + i18n( 'i18n_active_session_list' ) + ':</strong></p>\
-			' + ( sessions.length > 0 ? sessions.join( '' ) : '<ul><li>' + i18n( 'i18n_no_other_sessions_available' ) + '.</li></ul>' ) + '\
-			</div>\
-			';
+		    // Mobile launches calendar in a different way, so this 
+		    // functionality is only for desktops
+		    if( !isMobile && !Workspace.isSingleTask )
+		    {
+			    var wid = Workspace.widget ? Workspace.widget : m.widget;
+			    if( wid )
+			    {
+				    wid.shown = true;
+			    }
 
-			// Mobile launches calendar in a different way, so this 
-			// functionality is only for desktops
-			if( !isMobile && !Workspace.isSingleTask )
-			{
-				var wid = Workspace.widget ? Workspace.widget : m.widget;
-				if( wid )
-				{
-					wid.shown = true;
-				}
-
-				if( wid && !wid.initialized )
-				{
-					wid.initialized = true;
-
-					var calendar = new Calendar( wid.dom );
-					wid.dom.id = 'CalendarWidget';
-				
-					Workspace.calendarWidget = wid;
-
-					var newBtn = calendar.createButton( 'fa-calendar-plus-o' );
-					newBtn.onclick = function()
-					{
-						if( calendar.eventWin ) return;
-					
-						var date = calendar.date.getFullYear() + '-' + ( calendar.date.getMonth() + 1 ) + '-' + calendar.date.getDate();
-						var dateForm = date.split( '-' );
-						dateForm = dateForm[0] + '-' + StrPad( dateForm[1], 2, '0' ) + '-' + StrPad( dateForm[2], 2, '0' );
-					
-						calendar.eventWin = new View( {
-							title: i18n( 'i18n_event_overview' ) + ' ' + dateForm,
-							width: 500,
-							height: 445
-						} );
-					
-						calendar.eventWin.onClose = function()
-						{
-							calendar.eventWin = false;
-						}
-
-						var f1 = new File( 'System:templates/calendar_event_add.html' );
-						f1.replacements = { date: dateForm };
-						f1.i18n();
-						f1.onLoad = function( data1 )
-						{
-							calendar.eventWin.setContent( data1 );
-						}
-						f1.load();
-
-						// Just close the widget
-						if( m && wid )
-							wid.hide();
-					}
-					calendar.addButton( newBtn );
-
-					/*
-						TODO: Re-enable the wrench when we have a working calendar
-					var geBtn = calendar.createButton( 'fa-wrench' );
-					geBtn.onclick = function()
-					{
-						ExecuteApplication( 'FriendCalendar' );
-					}
-					calendar.addButton( geBtn );*/
-
-					// Add events to calendar!
-					calendar.eventWin = false;
-					calendar.onSelectDay = function( date )
-					{
-						calendar.date.setDate( parseInt( date.split( '-' )[2] ) );
-						calendar.date.setMonth( parseInt( date.split( '-' )[1] ) - 1 );
-						calendar.date.setFullYear( parseInt( date.split( '-' )[0] ) );
-						calendar.render();
-					}
-
-					calendar.setDate( new Date() );
-					calendar.onRender = function( callback )
-					{
-						var md = new Module( 'system' );
-						md.onExecuted = function( e, d )
-						{
-							try
-							{
-								// Update events
-								var eles = JSON.parse( d );
-								calendar.events = [];
-								for( var a in eles )
-								{
-									if( !calendar.events[eles[a].Date] )
-										calendar.events[eles[a].Date] = [];
-									calendar.events[eles[a].Date].push( eles[a] );
-								}
-							}
-							catch( e )
-							{
-							}
-							calendar.render( true );
-							wid.autosize();
-							ge( 'DoorsScreen' ).screenObject.resize();
-						}
-						md.execute( 'getcalendarevents', { date: calendar.date.getFullYear() + '-' + ( calendar.date.getMonth() + 1 ) } );
-					}
-					calendar.render();
-					Workspace.calendar = calendar;
-
-					m.calendar = calendar;
-
-					var sess = document.createElement( 'div' );
-					sess.className = 'ActiveSessions';
-					sess.innerHTML = d;
-					wid.dom.appendChild( sess );
-					m.sessions = sess;
-				}
-				else
-				{
-					if( m.calendar )
-					{
-						m.calendar.render();
-						m.sessions.innerHTML = d;
-					}
-				}
-				if( wid )
-				{
-					wid.autosize();
-				}
-				PollTrayPosition();
-			}
+			    if( wid && !wid.initialized )
+			    {
+				    wid.initialized = true;
+				    
+				    self.createCalendar( wid, sessions );
+			    }
+			    else
+			    {
+				    if( m.calendar )
+				    {
+					    m.calendar.render();
+					    m.sessions.innerHTML = d;
+				    }
+			    }
+			    if( wid )
+			    {
+				    wid.autosize();
+			    }
+			    PollTrayPosition();
+		    }
 		}
-		// FRANCOIS: get unique device IDs...
-		mo.execute( 'user/sessionlist', { username: Workspace.loginUsername } );
+		
+		if( !Workspace.cachedSessionList || cand - this.refreshEWCTime > 30 )
+		{
+		    this.refreshEWCTime = cand;
+		    
+		    Workspace.getAnnouncements();
+		    
+		    let mo = new Library( 'system.library' );
+		    mo.onExecuted = function( rc, sessionList )
+		    {
+			    let m = Workspace.widget ? Workspace.widget.target : ge( 'DoorsScreen' );
+			    if( m == ge( 'DoorsScreen' ) )
+				    m = ge( 'DoorsScreen' ).screenTitle.getElementsByClassName( 'Extra' )[0];
+			    if( !m )
+			    {
+				    //console.log( 'Can not find widget!' );
+				    return;
+			    }
+		    
+			    var sessions = [];
+			    if( rc == 'ok' )
+			    {
+				    if( typeof( sessionList ) == 'string' )
+					    sessionList = JSON.parse( sessionList );
+
+				    if( sessionList )
+				    {
+					    try
+					    {
+						    var exists = [];
+						    for( var b = 0; b < sessionList.length; b++ )
+						    {
+							    if( sessionList[b].sessionid == Workspace.sessionId ) continue;
+							    var sn = sessionList[b].deviceidentity.split( '_' );
+							    var svn = sn[2] + ' ';
+
+							    switch( sn[0] )
+							    {
+								    case 'touch':
+									    svn += 'touch device';
+									    break;
+								    case 'wimp':
+									    svn += 'computer';
+									    break;
+							    }
+							    switch( sn[1] )
+							    {
+								    case 'iphone':
+									    svn += '(iPhone)';
+									    break;
+								    case 'android':
+									    svn += '(Android device)';
+									    break;
+							    }
+							    var num = 0;
+							    var found = false;
+							    for( var c = 0; c < exists.length; c++ )
+							    {
+								    if( exists[c] == svn )
+								    {
+									    num++;
+									    found = true;
+								    }
+							    }
+							    exists.push( svn );
+							    if( found ) svn += ' ' + (num+1) + '.';
+							    sessions.push( '<p class="Relative FullWidth Ellipsis IconSmall fa-close MousePointer" onmousedown="Workspace.terminateSession(\'' +
+								    sessionList[b].sessionid + '\', \'' + sessionList[b].deviceidentity + '\');">&nbsp;' + svn + '</p>' );
+						    }
+						    Workspace.cachedSessionList = sessions;
+					    }
+					    catch( e )
+					    {
+					    }
+				    }
+			    }
+
+			    doItCal( sessions );
+		    }
+		    // FRANCOIS: get unique device IDs...
+		    mo.execute( 'user/sessionlist', { username: Workspace.loginUsername } );
+		}
+		else
+		{
+			doItCal( Workspace.cachedSessionList ? Workspace.cachedSessionList : [] );
+		}
 		
 		// For mobiles, we have a Friend icon at the top of the screen
 		// Also add the app menu
@@ -1426,6 +1368,34 @@ var WorkspaceInside = {
 			}
 		}
 	},
+	// Server announcements
+	getAnnouncements: function()
+	{
+		// TODO: Re-enable later
+	    return;
+	    let ann = new Module( 'system' );
+		ann.onExecuted = function( e, d )
+		{
+		    if( e == 'ok' )
+		    {
+		        console.log( 'We have an announcement!', d );
+		        try
+		        {
+		            let annList = JSON.parse( d );
+		            console.log( 'List: ', annList );
+		        }
+		        catch( e )
+		        {
+		            console.log( 'Could not read announcements.' );
+		        }
+		    }
+		    else
+		    {
+		        console.log( 'No new announcements.' );
+		    }
+		}
+		ann.execute( 'getannouncements', { deviceid: Workspace.deviceid } );
+    },
 	zapMobileAppMenu: function()
 	{
 		// Turn on openlock
@@ -1454,134 +1424,6 @@ var WorkspaceInside = {
 			Workspace.mainDock.closeDesklet();
 		this.exitMobileMenu();
 	},
-	removeCalendarEvent: function( id )
-	{
-		Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_evt_delete_desc' ), function( ok )
-		{
-			if( ok )
-			{
-				var m = new Module( 'system' );
-				m.onExecuted = function( e )
-				{
-					if( e == 'ok' )
-					{
-						// Refresh
-						if( Workspace.calendar ) Workspace.calendar.render();
-						return;
-					}
-					Notify( { title: i18n( 'i18n_evt_delete_failed' ), text: i18n( 'i18n_evt_delete_failed_desc' ) } );
-				}
-				m.execute( 'deletecalendarevent', { id: id } );
-			}
-		} );
-	},
-	addCalendarEvent: function()
-	{
-		var evt = {
-			Title: ge( 'calTitle' ).value,
-			Description: ge( 'calDescription' ).value,
-			TimeFrom: ge( 'calTimeFrom' ).value,
-			TimeTo: ge( 'calTimeTo' ).value,
-			Date: ge( 'calDateField' ).value
-		};
-
-		var m = new Module( 'system' );
-		m.onExecuted = function( e, d )
-		{
-			if( Workspace.calendar && Workspace.calendar.eventWin )
-				Workspace.calendar.eventWin.close();
-			Workspace.calendar.render();
-			Notify( { title: i18n( 'i18n_evt_added' ), text: i18n( 'i18n_evt_addeddesc' ) } );
-		}
-		m.execute( 'addcalendarevent', { event: evt } );
-	},
-	// Edit a calendar event
-	editCalendarEvent: function( id )
-	{
-		var calendar = Workspace.calendar;
-		
-		if( calendar.editWin ) return;
-		
-		var m = new Module( 'system' );
-		m.onExecuted = function( e, d )
-		{
-			if( e == 'ok' )
-			{
-				var row = JSON.parse( d );
-				
-				var date = row.Date;
-				
-				calendar.editWin = new View( {
-					title: i18n( 'i18n_event_overview' ) + ' ' + date,
-					width: 500,
-					height: 445
-				} );
-	
-				calendar.editWin.onClose = function()
-				{
-					calendar.editWin = false;
-				}
-
-				var f1 = new File( 'System:templates/calendar_event_edit.html' );
-				f1.replacements = { 
-					date:         date,
-					timefrom:     row.TimeFrom,
-					timeto:       row.TimeTo,
-					timedisabled: row.TimeFrom == '00:00' && time.TimeTo == '00:00' ? ' disabled="disabled"' : '',
-					title:        row.Title,
-					type:         row.Type,
-					description:  row.Description,
-					id:           id
-				};
-				f1.i18n();
-				f1.onLoad = function( data1 )
-				{
-					calendar.editWin.setContent( data1 );
-				}
-				f1.load();
-			}
-		}
-		m.execute( 'getcalendarevent', { cid: id } );
-	},
-	saveCalendarEvent: function( id )
-	{
-		if( !Workspace.calendar.editWin ) return;
-		var w = Workspace.calendar.editWin;
-		var fields = {};
-		var inps = w.content.getElementsByTagName( 'input' );
-		for( var a = 0; a < inps.length; a++ )
-			fields[ inps[ a ].id ] = inps[ a ].value;
-		var txts = w.content.getElementsByTagName( 'textarea' );
-		for( var a = 0; a < txts.length; a++ )
-			fields[ txts[ a ].id ] = txts[ a ].value;
-		var sels = w.content.getElementsByTagName( 'select' );
-		for( var a = 0; a < txts.length; a++ )
-			fields[ sels[ a ].id ] = sels[ a ].value;
-		
-		var evt = {
-			Title: fields.calTitle,
-			TimeFrom: fields.calTimeFrom,
-			TimeTo: fields.calTimeTo,
-			Description: fields.calDescription,
-			Date: fields.calDateField
-		};
-		
-		var m = new Module( 'system' );
-		m.onExecuted = function( e, d )
-		{
-			if( e == 'ok' )
-			{
-				// Refresh
-				if( Workspace.calendar ) Workspace.calendar.render();
-				if( Workspace.calendar.editWin )
-				{
-					Workspace.calendar.editWin.close();
-				}
-				return;
-			}
-		}
-		m.execute( 'savecalendarevent', { cid: id, event: evt } );
-	},
 	loadSystemInfo: function()
 	{
 		var f = new window.Library( 'system.library' );
@@ -1593,6 +1435,7 @@ var WorkspaceInside = {
 			var str = JSON.stringify(e);
 			Workspace.systemInfo = e;
 		}
+		f.forceHTTP = true;
 		f.execute( 'admin', {command:'info'} );
 	},
 	// If we have stored a theme config for the current theme, use its setup
@@ -1766,6 +1609,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						Workspace.themeData = false;
 					}
 					Workspace.applyThemeConfig();
+					Workspace.loadSystemInfo();
 				
 					// Fallback
 					if( !isMobile )
@@ -1890,6 +1734,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{	
 						Workspace.startupSequenceRegistered = true;
 						
+						// Reload the docks
+						Workspace.reloadDocks();
+						
 						// In single tasking mode, we just skip
 						if( Workspace.isSingleTask )
 						{
@@ -1903,6 +1750,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							ScreenOverlay.hide();
 							PollTray();
 							PollTaskbar();
+							// Tell app we can show ourselves!
+							if( window.friendApp && window.friendApp.reveal )
+							{
+								friendApp.reveal();
+							}
 							return;
 						}
 						
@@ -1991,6 +1843,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										}
 										// Hide overlay
 										ScreenOverlay.hide();
+										
 										PollTray();
 										PollTaskbar();
 										l.func = function()
@@ -1999,6 +1852,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										}
 										// We are done. Empty startup apps!
 										Friend.startupApps = {};
+										
+										// Tell app we can show ourselves!
+										if( window.friendApp && window.friendApp.reveal )
+										{
+											friendApp.reveal();
+										}
 									}
 								}
 								l.func();
@@ -2018,6 +1877,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 					Workspace.windowWallpaperImage = '';
 					document.body.classList.add( 'DefaultWallpaper' );
+					// Tell app we can show ourselves!
+					if( window.friendApp && window.friendApp.reveal )
+					{
+						friendApp.reveal();
+					}
 				}
 				if( callback && typeof( callback ) == 'function' ) callback();
 			}
@@ -2027,6 +1891,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				initFriendWorkspace()
 			);
 		}
+		m.forceHTTP = true;
 		m.execute( 'getsetting', { settings: [ 
 			'avatar', 'workspacemode', 'wallpaperdoors', 'wallpaperwindows', 'language', 
 			'menumode', 'startupsequence', 'navigationmode', 'windowlist', 
@@ -2686,163 +2551,20 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					try
 					{
 						Workspace.mainDock.readConfig( JSON.parse( conf ) );
-						Workspace.mainDock.clear();
 					}
 					catch( e )
 					{
-						Workspace.mainDock.clear();
-					}
-
-					function getOnClickFn( appName )
-					{
-						return function()
-						{
-							ExecuteApplication( appName );
-						}
-					}
-
-					function genFunc( fod )
-					{
-						return function()
-						{
-							Workspace.launchNativeApp( fod );
-						}
-					}
-
-					// Clear tasks
-					ge( 'Taskbar' ).innerHTML = '';
-					ge( 'Taskbar' ).tasks = [];
-
-					// Add start menu
-					if( !isMobile && globalConfig.viewList == 'dockedlist' )
-					{
-						var img = 'startmenu.png';
-						if( Workspace.mainDock.conf )
-						{
-							if( Workspace.mainDock.conf.size == '32' )
-							{
-								img = 'startmenu_32.png';
-							}
-							else if( Workspace.mainDock.conf.size == '16' )
-							{
-								img = 'startmenu_16.png';
-							}
-						}
-						var ob = {
-							type: 'startmenu',
-							src: '/webclient/gfx/system/' + img,
-							title: 'Start',
-							className: 'Startmenu',
-							click: function( e ){ Workspace.toggleStartMenu(); },
-							noContextMenu: true
-						}
-						Workspace.mainDock.addLauncher( ob );
-					}
-
-					var elements = JSON.parse( dat );
-					for( var a = 0; a < elements.length; a++ )
-					{
-						var ele = elements[a];
-						var icon = 'apps/' + ele.Name + '/icon.png';
-						if( ele.Name.indexOf( ':' ) > 0 )
-						{
-							ext = ele.Name.split( ':' )[1];
-							if( ext.indexOf( '/' ) > 0 )
-							{
-								ext = ext.split( '/' )[1];
-							}
-							ext = ext.split( '.' )[1];
-							icon = '.' + ( ext ? ext : 'txt' );
-						}
-						
-						if( ele.Icon )
-						{
-							ele.Icon = ele.Icon.split( /sessionid\=[^&]+/i ).join( 'sessionid=' + Workspace.sessionId );
-							if( ele.Icon.indexOf( ':' ) > 0 )
-								icon = getImageUrl( ele.Icon );
-							else icon = ele.Icon;
-						}
-						
-						var ob = {
-							exe         : ele.Name,
-							type        : ele.Type,
-							src         : icon,
-							workspace   : ele.Workspace - 1,
-							opensilent  : ele.OpenSilent,
-							displayname : ele.DisplayName,
-							'title'     : ele.Title ? ele.Title : ele.Name
-						};
-						
-						// For Linux apps..
-						if( ele.Name.substr( 0, 7 ) == 'native:' )
-						{
-							var tmp = ob.exe.split( 'native:' )[1];
-							ob.click = genFunc( tmp );
-						}
-
-						Workspace.mainDock.addLauncher( ob );
 					}
 					
-					// Add desktop shortcuts too for mobile
-					if( window.isMobile )
-					{
-						for( var a = 0; a < Workspace.icons.length; a++ )
-						{
-							if( Workspace.icons[a].Type == 'Executable' && Workspace.icons[a].MetaType == 'ExecutableShortcut' )
-							{
-								var el = Workspace.icons[a];
-								var ob = {
-									exe:  el.Filename,
-									type: 'Executable',
-									src:  el.IconFile,
-									displayname: el.Title,
-									title: el.Title
-								};
-								Workspace.mainDock.addLauncher( ob );
-							}
-						}
-					}
-					// File browser
-					var fmenu = {
-						click: function( e )
-						{
-							var u = CryptoJS.SHA1( ( new Date() ).getTime() + ( Math.random() * 999 ) + ( Math.random() * 999 ) + "" ).toString();
-							if( isMobile )
-							{
-								OpenWindowByFileinfo( { Title: 'Mountlist', Path: 'Mountlist:', Type: 'Directory', MetaType: 'Directory' }, false, false, u );
-							}
-							else
-							{
-								OpenWindowByFileinfo( 
-									{ Title: 'Home', Path: 'Home:', Type: 'Directory', MetaType: 'Directory' },
-									false, false, u
-								);
-							}
-							if( !Workspace.isSingleTask )
-								Workspace.mainDock.closeDesklet();
-						},
-						type: 'Executable',
-						displayname: i18n( 'i18n_files' ),
-						src: isMobile ? '/iconthemes/friendup15/Folder_Smaller.svg' : '/iconthemes/friendup15/Folder.svg',
-						title: i18n( 'i18n_files' ),
-					};
-					Workspace.mainDock.addLauncher( fmenu );
+					let elements = JSON.parse( dat );
+					Workspace.cachedDockElements = elements;
+					Workspace.refreshDocks();
 					
 					Workspace.mainDock.initialized();
 					
 					Workspace.docksReloading = null;
 					
 					ConstrainWindows();
-					
-					// Make sure taskbar is polled
-					if( !isMobile )
-					{
-						PollTaskbar();
-					
-						// Reload start menu
-						// TODO: Remove the need for this hack
-						Workspace.pollStartMenu( true );
-					}
 					
 					// Open the main dock first
 					if( !Workspace.insideInitialized )
@@ -2867,6 +2589,161 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 		}
 		c.execute( 'items', { sessionid: false } );
+	},
+	refreshDocks: function()
+	{
+		let elements = Workspace.cachedDockElements;
+		
+		Workspace.mainDock.clear();
+		
+		
+		function getOnClickFn( appName )
+		{
+			return function()
+			{
+				ExecuteApplication( appName );
+			}
+		}
+
+		function genFunc( fod )
+		{
+			return function()
+			{
+				Workspace.launchNativeApp( fod );
+			}
+		}
+
+		// Clear tasks
+		ge( 'Taskbar' ).innerHTML = '';
+		ge( 'Taskbar' ).tasks = [];
+
+		// Add start menu
+		if( !isMobile && globalConfig.viewList == 'dockedlist' )
+		{
+			var img = 'startmenu.png';
+			if( Workspace.mainDock.conf )
+			{
+				if( Workspace.mainDock.conf.size == '32' )
+				{
+					img = 'startmenu_32.png';
+				}
+				else if( Workspace.mainDock.conf.size == '16' )
+				{
+					img = 'startmenu_16.png';
+				}
+			}
+			var ob = {
+				type: 'startmenu',
+				src: '/webclient/gfx/system/' + img,
+				title: 'Start',
+				className: 'Startmenu',
+				click: function( e ){ Workspace.toggleStartMenu(); },
+				noContextMenu: true
+			}
+			Workspace.mainDock.addLauncher( ob );
+		}
+		
+		if( !elements || !elements.length ) return;
+		for( let a = 0; a < elements.length; a++ )
+		{
+			let ele = elements[a];
+			let icon = 'apps/' + ele.Name + '/icon.png';
+			if( ele.Name.indexOf( ':' ) > 0 )
+			{
+				ext = ele.Name.split( ':' )[1];
+				if( ext.indexOf( '/' ) > 0 )
+				{
+					ext = ext.split( '/' )[1];
+				}
+				ext = ext.split( '.' )[1];
+				icon = '.' + ( ext ? ext : 'txt' );
+			}
+			
+			if( ele.Icon )
+			{
+				ele.Icon = ele.Icon.split( /sessionid\=[^&]+/i ).join( 'sessionid=' + Workspace.sessionId );
+				if( ele.Icon.indexOf( ':' ) > 0 )
+					icon = getImageUrl( ele.Icon );
+				else icon = ele.Icon;
+			}
+			
+			let ob = {
+				exe         : ele.Name,
+				type        : ele.Type,
+				src         : icon,
+				workspace   : ele.Workspace - 1,
+				opensilent  : ele.OpenSilent,
+				displayname : ele.DisplayName,
+				'title'     : ele.Title ? ele.Title : ele.Name
+			};
+			
+			// For Linux apps..
+			if( ele.Name.substr( 0, 7 ) == 'native:' )
+			{
+				let tmp = ob.exe.split( 'native:' )[1];
+				ob.click = genFunc( tmp );
+			}
+
+			Workspace.mainDock.addLauncher( ob );
+		}
+		
+		// Add desktop shortcuts too for mobile
+		if( window.isMobile )
+		{
+			for( var a = 0; a < Workspace.icons.length; a++ )
+			{
+				if( Workspace.icons[a].Type == 'Executable' && Workspace.icons[a].MetaType == 'ExecutableShortcut' )
+				{
+					var el = Workspace.icons[a];
+					var ob = {
+						exe:  el.Filename,
+						type: 'Executable',
+						src:  el.IconFile,
+						displayname: el.Title,
+						title: el.Title
+					};
+					Workspace.mainDock.addLauncher( ob );
+				}
+			}
+		}
+		// File browser
+		var fmenu = {
+			click: function( e )
+			{
+				var u = CryptoJS.SHA1( ( new Date() ).getTime() + ( Math.random() * 999 ) + ( Math.random() * 999 ) + "" ).toString();
+				if( isMobile )
+				{
+					OpenWindowByFileinfo( { Title: 'Mountlist', Path: 'Mountlist:', Type: 'Directory', MetaType: 'Directory' }, false, false, u );
+				}
+				else
+				{
+					OpenWindowByFileinfo( 
+						{ Title: 'Home', Path: 'Home:', Type: 'Directory', MetaType: 'Directory' },
+						false, false, u
+					);
+				}
+				if( !Workspace.isSingleTask )
+					Workspace.mainDock.closeDesklet();
+			},
+			type: 'Executable',
+			displayname: i18n( 'i18n_files' ),
+			src: isMobile ? '/iconthemes/friendup15/Folder_Smaller.svg' : '/iconthemes/friendup15/Folder.svg',
+			title: i18n( 'i18n_files' ),
+		};
+		Workspace.mainDock.addLauncher( fmenu );
+		
+		// Make sure taskbar is polled
+		if( !isMobile )
+		{
+			PollTaskbar();
+		
+			// Reload start menu
+			// TODO: Remove the need for this hack
+			Workspace.pollStartMenu( true );
+		}
+		
+		// Make sure the tray position is there
+		PollTrayPosition();
 	},
 	connectFilesystem: function( execute )
 	{
@@ -3258,13 +3135,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									document.body.classList.add( 'Loaded' );
 									document.body.classList.remove( 'Login' );
 									document.body.classList.remove( 'Loading' );
-								
-									// Init the websocket etc
-									InitWorkspaceNetwork();
-									
-									// Generate avatar
-									var sm = new Module( 'system' );
-									sm.execute( 'getsetting', { setting: 'avatar' } );
 									
 									document.title = Friend.windowBaseString;
 									
@@ -3295,6 +3165,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									if( ge( 'Tray' ) && ge( 'Tray' ).downloadApplet )
 									{
 										ge( 'Tray' ).downloadApplet.innerHTML = '<div class="BubbleInfo"><div>' + i18n( 'i18n_drag_files_to_download' ) + '.</div></div>';
+									}
+									// And the calendar applet
+									if( ge( 'Tray' ) && ge( 'Tray' ).calendarApplet )
+									{
+										ge( 'Tray' ).calendarApplet.innerHTML = '<div class="BubbleInfo"><div>' + i18n( 'i18n_add_calendar_event' ) + '.</div></div>';
 									}
 									
 									// New version of Friend?
@@ -3339,9 +3214,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					
 						// Flush theme info
 						themeInfo.loaded = false;
-					
-						// Reload the docks
-						Workspace.reloadDocks();
 					
 						// Refresh them
 						Workspace.initWorkspaces();
@@ -3643,12 +3515,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		var self = this;
 		
 		this.getMountlist( function( data )
-		{
+		{	
 			// Something went wrong - don't show an empty workspace
 			// We always have one entry, the system disk
 			if( data.length <= 1 )
 			{
-				console.log( 'No stuff!' );
 				return;
 			}
 			
@@ -3678,13 +3549,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Recall wallpaper
 			if( Workspace.mode != 'vr' && self.wallpaperImage != 'color' )
 			{
-				var eles = self.screen.div.getElementsByClassName( 'ScreenContent' );
+			    if( self.wallpaperImage == undefined )
+			    {
+			        return setTimeout( function(){ Workspace.refreshDesktop( callback, forceRefresh ) }, 25 );
+			    }
+				let eles = self.screen.div.getElementsByClassName( 'ScreenContent' );
 				if( eles.length )
 				{
 					// Check if we have a loadable image!
-					var p = self.wallpaperImage.split( ':' )[0];
-					var found = false;
-					for( var a = 0; a < self.icons.length; a++ )
+					let p = self.wallpaperImage.split( ':' )[0];
+					let found = false;
+					for( let a = 0; a < self.icons.length; a++ )
 					{
 						if( self.icons[a].Title == p )
 						{
@@ -3693,7 +3568,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					
 					// Load image
-					var ext = false;
+					let ext = false;
 					if( self.wallpaperImage.indexOf( '.' ) > 0 )
 					{
 						ext = self.wallpaperImage.split( '.' );
@@ -3701,8 +3576,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 
 					// Remove prev
-					var v = eles[0].parentNode.getElementsByTagName( 'video' );
-					for( var z = 0; z < v.length; z++ ) 
+					let v = eles[0].parentNode.getElementsByTagName( 'video' );
+					for( let z = 0; z < v.length; z++ ) 
 					{
 						v[ z ].parentNode.removeChild( v[ z ] );
 					}
@@ -3723,8 +3598,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								o.className = 'VideoBackground';
 								o.src = getImageUrl( self.wallpaperImage );
 							}
-							var m = document.createElement( 'video' ); setTheThing( m );
-							var c = document.createElement( 'video' ); setTheThing( c );
+							let m = document.createElement( 'video' ); setTheThing( m );
+							let c = document.createElement( 'video' ); setTheThing( c );
 							m.autoplay = true;
 							c.autoplay = false;
 							c.style.visibility = 'hidden';
@@ -3749,14 +3624,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							break;
 						default:
 							Workspace.wallpaperLoaded = false;
-							var workspaceBackgroundImage = new Image();
+							let workspaceBackgroundImage = new Image();
 							workspaceBackgroundImage.onload = function()
 							{
 								// Let's not fill up memory with new wallpaper images
 								if( Workspace.prevWallpaper )
 								{
-									var o = [];
-									for( var c = 0; c < Workspace.imgPreload.length; c++ )
+									let o = [];
+									for( let c = 0; c < Workspace.imgPreload.length; c++ )
 									{
 										if( Workspace.imgPreload[c].src != Workspace.prevWallpaper )
 											o.push( Workspace.imgPreload[c] );
@@ -3827,7 +3702,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// We have no wallpaper...
 			else if( Workspace.mode == 'standard' )
 			{
-				var eles = self.screen.div.getElementsByClassName( 'ScreenContent' );
+				let eles = self.screen.div.getElementsByClassName( 'ScreenContent' );
 				if( eles.length )
 				{
 					eles[0].style.backgroundImage = '';
@@ -3934,6 +3809,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	getMountlist: function( callback, forceRefresh, addDormant )
 	{
 		var t = this; // Reference to workspace
+		
+		// Just in case
+		if( window.friendApp )
+			window.friendApp.reveal();
 		
 		if( !Friend.dosDrivers )
 		{
@@ -4821,6 +4700,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// paste from virtual clipboard
 	pasteFiles: function( e )
 	{
+		if( !e ) e = window.event;
+		
 		if( window.currentMovable && Friend.workspaceClipBoard && Friend.workspaceClipBoard.length > 0 && typeof window.currentMovable.drop == 'function' )
 		{
 			var e = {};
@@ -4829,46 +4710,68 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			var clip = Friend.workspaceClipBoard;
 			
 			// Make sure we don't overwrite existing files!
-			var destPath = currentMovable.content.fileInfo.Path;
-			var d = new Door( destPath );
-			d.getIcons( currentMovable.content.fileInfo, function( items )
+			let destPath = currentMovable.content.fileInfo.Path;
+			let destFinf = currentMovable.content.fileInfo;
+			let doCopy = false;
+			
+			// Use menu context for file info path (folder icon etc)
+			if( Workspace.menuContext )
 			{
-				for( var a = 0; a < items.length; a++ )
+				let fi = null;
+				let mc = Workspace.menuContext;
+				while( mc != document.body )
 				{
-					for( var b = 0; b < clip.length; b++ )
+					if( mc.fileInfo )
+						break;
+					mc = mc.parentNode;
+				}
+				if( mc.fileInfo )
+				{
+					destPath = mc.fileInfo.Path;
+					destFinf = mc.fileInfo;
+					doCopy = true;
+				}
+			}
+			var d = new Door( destPath );
+			d.getIcons( destFinf, function( items )
+			{
+				for( let a = 0; a < items.length; a++ )
+				{
+					for( let b = 0; b < clip.length; b++ )
 					{
-						var copy = 0;
+						let copy = 0;
 						if( items[ a ].Filename == clip[ b ].fileInfo.Filename )
 						{
-							var found = false;
+							let found = false;
 							do
 							{
 								found = false;
-								var str = 'Copy ' + ( copy > 0 ? ( copy + ' ' ) : '' );
-								str += 'of ' + items[a].Filename;
+								let str = 'Copy ' + ( copy > 0 ? ( copy + ' ' ) : '' );
+								str += 'of ' + items[ a ].Filename;
 							
-								var f = clip[ b ].fileInfo.Filename;
-								var p = clip[ b ].fileInfo.Path;
+								let p = clip[ b ].fileInfo.Path;
+								let f = clip[ b ].fileInfo.Filename;
 							
 								// Files
 								if( clip[ b ].fileInfo.MetaType == 'File' )
 								{
-									var dn = f;
+									let dn = f;
 									p = p.substr( 0, p.length - dn.length ) + str;
 									clip[ b ].fileInfo.NewPath = p;
 								}
 								// Directory
 								else
 								{
-									var dn = f + '/';
+									let dn = f + '/';
 									p = p.substr( 0, p.length - dn.length ) + str + '/';
 									clip[ b ].fileInfo.NewPath = p;
 								}
-							
-								clip[ b ].fileInfo.NewFilename = str;
 								
+								// Set the safe new filename
+								clip[ b ].fileInfo.NewFilename = str;
+							
 								// Still found?
-								for( var c = 0; c < items.length; c++ )
+								for( let c = 0; c < items.length; c++ )
 								{
 									if( items[ c ].Filename == str )
 									{
@@ -4877,15 +4780,32 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										break;
 									}
 								}
-								
 							}
 							while( found );
 						}
 					}
 				}
 				if( !e ) e = {};
-				e.paste = true;
-				window.currentMovable.drop( Friend.workspaceClipBoard, e );
+				let cliplen = clip.length;
+				for( let b = 0; b < clip.length; b++ )
+				{
+					let spath = clip[b].fileInfo.Path;
+					let lastChar = spath.substr( -1, 1 );
+					let sh = new Shell( 0 );
+					let source = spath.split( ' ' ).join( '\\ ' );
+					let destin = ( destPath ).split( ' ' ).join( '\\ ' );
+					let fn = ( clip[b].fileInfo.NewFilename ? clip[b].fileInfo.NewFilename : clip[b].fileInfo.Filename );
+					fn = fn.split( ' ' ).join( '\\ ' );
+					let copyStr = 'copy ' + source + ' to ' + destin + fn;
+					sh.parseScript( copyStr, function()
+					{
+						if( cliplen-- == 0 )
+						{
+							Notify( { title: i18n( 'i18n_copy_operation' ), text: i18n( 'i18n_copying_files_complete' ) } );
+						}
+						delete sh;
+					}  );
+				}
 			} );
 		}
 	},
@@ -5619,12 +5539,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										var m = new Library( 'system.library' );
 										m.onExecuted = function( e, d )
 										{
-											var ele = ( new Door().get( p ) );
+											let ele = ( new Door().get( p ) );
 											ele.getIcons( false, function( icons, path, test )
 											{
 												// Update link
-												var ic = false;
-												for( var b = 0; b < icons.length; b++ )
+												let ic = false;
+												for( let b = 0; b < icons.length; b++ )
 												{
 													if( icons[b].Type != 'File' ) continue;
 													if( icons[b].Path == icon.Path )
@@ -5633,8 +5553,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 														break;
 													}
 												}
-												if( !ic ) return;
-												for( var b = 0; b < eles.length; b++ )
+												if( !ic ) return Workspace.refreshWindowByPath( path );;
+												for( let b = 0; b < eles.length; b++ )
 												{
 													if( eles[b].getAttribute( 'name' ) == 'PublicLink' )
 													{
@@ -5658,19 +5578,19 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									// Set file private
 									else
 									{
-										var m = new Library( 'system.library' );
+										let m = new Library( 'system.library' );
 										m.onExecuted = function( e )
 										{
 											if( e != 'ok' )
 											{
 												this.checked = true;
 											}
-											var ele = ( new Door().get( p ) );
+											let ele = ( new Door().get( p ) );
 											ele.getIcons( false, function( icons, path, test )
 											{
 												// Update link
-												var ic = false;
-												for( var b = 0; b < icons.length; b++ )
+												let ic = false;
+												for( let b = 0; b < icons.length; b++ )
 												{
 													if( icons[b].Type != 'File' ) continue;
 													if( icons[b].Path == icon.Path )
@@ -5679,8 +5599,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 														break;
 													}
 												}
-												if( !ic ) return;
-												for( var b = 0; b < eles.length; b++ )
+												if( !ic ) return Workspace.refreshWindowByPath( path );;
+												for( let b = 0; b < eles.length; b++ )
 												{
 													if( eles[b].getAttribute( 'name' ) == 'PublicLink' )
 													{
@@ -6001,8 +5921,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				m.onExecuted = function()
 				{
 					Workspace.refreshDesktop( false, true );
+					CloseWindow( ele );
 				}
 				m.execute( 'device/refresh', { devname: args.Filename } );
+			}
+			else
+			{
+			    CloseWindow( ele );
 			}
 			
 		}
@@ -6698,10 +6623,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 						}
 						
-						if( ics[ a ].Path.indexOf( 'Shared:' ) == 0 )
+						if( ics[ a ].Path )
 						{
-							sharableFile = false;
-							sharedVolume = true;
+							if( ics[ a ].Path.indexOf( 'Shared:' ) == 0 )
+							{
+								sharableFile = false;
+								sharedVolume = true;
+							}
 						}
 						
 						if( ics[a].Volume == 'System:' )
@@ -6851,7 +6779,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					},
 					{
 						name:	i18n( 'menu_paste' ),
-						command: function() { Workspace.pasteFiles(); },
+						command: function( e ) { Workspace.pasteFiles( e ); },
 						disabled: sharedVolume || !iconsInClipboard || systemDrive || cannotWrite
 					},
 					{
@@ -7006,7 +6934,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							// Find icon for download
 							if( currentMovable )
 							{
-								var selPath = false;
+								var selPath = [];
 								var dv = currentMovable.content;
 								if( dv )
 								{
@@ -7015,15 +6943,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										var ic = dv.icons[a];
 										if( ic.domNode && ic.domNode.fileInfo && ic.domNode.fileInfo.Type == 'File' && ic.selected )
 										{
-											selPath = ic.domNode.fileInfo.Path;
-											console.log( ic.domNode.fileInfo, ' domnode: ' + ic.domNode.selected + ' ic: ' + ic.selected );
-											break;
+											selPath.push( ic.domNode.fileInfo.Path );
 										}
 									}
 								}
-								if( selPath )
+								if( selPath.length >= 1 )
 								{
-									Workspace.download( selPath ); 
+									for( let a = 0; a < selPath.length; a++ )
+									{
+										Workspace.download( selPath[a] ); 
+									}
 								}
 								else
 								{
@@ -7249,6 +7178,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 		if( tr == window )
 			tr = document.body;
+		
+		this.menuContext = tr;
 		
 		// Check if we need to activate
 		var iconWindow = false;
@@ -10367,3 +10298,4 @@ function loadApplicationBasics( callback )
 	}
 	j_.load();
 };
+

@@ -15,8 +15,18 @@ global $User;
 include_once( 'php/classes/door.php' );
 
 $obj = new stdClass();
-$obj->permissions = $args->args->Permissions;
-$obj->domain = $args->args->Domains;
+if( $args->args && $args->args->Permissions )
+{
+    $obj->permissions = $args->args->Permissions;
+}
+else $obj->permissions = '';
+
+if( $args->args && $args->args->Domains )
+{
+    $obj->domain = $args->args->Domains;
+}
+else $obj->domain = '';
+
 // TODO: Perhaps an admin or device owner should be able to set this invisible
 $obj->visibility = 'visible'; // Always set as visible
 

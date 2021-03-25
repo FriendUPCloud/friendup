@@ -150,7 +150,7 @@
 .ZebraList.Interactive > tr:hover .PadBackground,
 .ZebraList.Interactive > div:hover .PadBackground
 {
-	border-color : $ColorBgListSwHover;
+	background-color : $ColorBgListSwHover;
 }
 
 .ZebraList > div, .BackgroundLists > div
@@ -222,5 +222,19 @@ ul.Negative.List > li:nth-child(even)
 {
 	background: $ColorBgNegativeListSw2;
 	color: $ColorNegativeListSw2;
+}
+
+/* Plain lists */
+
+.ListItemPlain
+{
+	transition: background-color 0.25s;
+	background-color: rgba(255,255,255,0);
+	border-radius: 2px;
+}
+
+.ListItemPlain:hover
+{
+	background-color: rgba(180,180,180,0.15);
 }
 

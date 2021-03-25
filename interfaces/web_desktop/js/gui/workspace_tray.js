@@ -118,6 +118,19 @@ function PollTray()
 			return false;
 		}
 		tray.appendChild( da );
+		
+		/*
+		//TODO: Reenable when ready
+		var ca = tray.calendarApplet = document.createElement( 'div' );
+		ca.className = 'Calendar TrayElement IconSmall';
+		ca.onclick = function()
+		{
+			Workspace.newCalendarEvent();
+		}
+		ca.poll = function()
+		{
+		}
+		tray.appendChild( ca );*/
 	}
 	
 	// Check for notifications in history
@@ -359,7 +372,7 @@ function PollTray()
 							PollTray();
 							return cancelBubble( e );
 						}
-						if( event.showCallback )
+						if( event.showCallback && typeof( event.showCallback ) == 'function' )
 						{
 							event.showCallback();
 						}
@@ -805,22 +818,25 @@ function Notify( message, callback, clickcallback )
 }
 function CloseNotification( notification )
 {
-	var d = notification.childNodes[ 0 ];
-	notification.removeChild( d ); 
-	if( notification.getAttribute( 'label' ) )
-	{
-		notification.classList.remove( 'PopNotification' );
-	}
-	if( !notification.getElementsByTagName( 'div' ).length )
-	{
-		ge( 'Tray' ).removeChild( notification );
-	}
-	// Standard notifications can reply to notification origin
-	// that the bubble did close
-	if( d.struct && d.struct.onCloseBubble )
-	{
-		d.struct.onCloseBubble();
-	}
+    if( notification && notification.childNodes )
+    {
+	    var d = notification.childNodes[ 0 ];
+	    notification.removeChild( d ); 
+	    if( notification.getAttribute( 'label' ) )
+	    {
+		    notification.classList.remove( 'PopNotification' );
+	    }
+	    if( !notification.getElementsByTagName( 'div' ).length )
+	    {
+		    ge( 'Tray' ).removeChild( notification );
+	    }
+	    // Standard notifications can reply to notification origin
+	    // that the bubble did close
+	    if( d.struct && d.struct.onCloseBubble )
+	    {
+		    d.struct.onCloseBubble();
+	    }
+    }
 }
 
 // Buffer for click callbacks

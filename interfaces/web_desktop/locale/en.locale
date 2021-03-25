@@ -267,6 +267,9 @@ i18n_remove_from_dock                   : Remove from dock
 i18n_object_not_supported               : Dropped object not supported
 i18n_only_executables_can_drop          : Only executables can be dropped on the dock
 
+i18n_copy_operation                     : File copy operation
+i18n_copying_files_complete             : Copying files complete.
+
 i18n_choose_file_to_upload              : Choose file to upload
 i18n_upload_target                      : Upload target
 i18n_browse                             : Browse
@@ -473,6 +476,7 @@ i18n_volume_information                 : Disk information
 i18n_volume_permissions                 : Disk permissions
 i18n_drag_to_download_file              : Click or drag to desktop to download.
 i18n_drag_files_to_download             : Drop files to download.
+i18n_add_calendar_event                 : Add calendar event.
 
 i18n_creating_directory                 : Creating directory
 i18n_building_file_index                : Building file index...
@@ -624,8 +628,24 @@ i18n_cal_btn_edit                       : Save event
 i18n_from                               : From
 i18n_to                                 : To
 
-i18n_cal_evt_type                       : Choose calendar
+i18n_cal_evt_type                       : Calendar
 i18n_cal_private_calendar               : Your private calendar
+
+i18n_cal_evt_typec                      : Type
+i18n_cal_evt_type_event                 : Event
+i18n_cal_evt_type_meeting               : Meeting
+i18n_cal_evt_type_todo                  : Todo
+i18n_cal_evt_type_note                  : Note
+
+i18n_cal_evt_timezone                   : Timezone
+i18n_cal_evt_participants               : Participants
+i18n_cal_evt_link                       : Link URL
+i18n_cal_evt_location                   : Location
+i18n_find_contacts                      : Find contacts
+i18n_no_participants_here               : No participants here.
+
+i18n_to_not_in_past                     : Wrong to-date
+i18n_to_not_in_past_desc                : The meeting end time is before the start time.
 
 i18n_evt_added                          : Calendar updated
 i18n_evt_addeddesc                      : The event was added to your calendar.

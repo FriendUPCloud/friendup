@@ -76,7 +76,7 @@ html body.Synthwave[mobile] #WorkspaceMenu.Open ul
 
 html body.Synthwave .Screen > .TitleBar .ScreenList
 {
-	color: white;
+	color: #b3b0f3;
 }
 
 html body.Synthwave #DoorScreen:after,
@@ -435,7 +435,7 @@ html body.Synthwave .Screen > .TitleBar
 
 html body.Synthwave div #Tray > div
 {
-	color: white;
+	color: #b3b0f3;
 }
 
 html body.Synthwave #WorkspaceMenu > ul > li,

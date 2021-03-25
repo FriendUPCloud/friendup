@@ -533,6 +533,29 @@ function GetStatusbarHeight( screen )
 	return 0;
 }
 
+// Pop a window up!
+function PopoutWindow( wind, e )
+{
+    let windowObject = wind.windowObject;
+    let ifr = wind.getElementsByTagName( 'iframe' )[0];
+    let v = window.open( '', '', 'width=900,height=900,status=no,topbar=no' );
+    let styl = document.createElement( 'style' );
+    styl.innerHTML = 'iframe{position:absolute;top:0;left:0;width:100%;height:100%;margin:0;border:0}';
+    v.document.body.appendChild( ifr );
+    v.document.body.appendChild( styl );
+    wind.parentNode.parentNode.removeChild( wind.parentNode );
+    windowObject.setFlag( 'invisible', true );
+    v.document.title = windowObject.flags.title;
+    setTimeout( function()
+    {
+        let ifr = v.document.getElementsByTagName( 'iframe' )[0];
+        ifr.contentWindow.document.body.setAttribute( 'style', '' );
+        ifr.contentWindow.document.body.classList.remove( 'Loading' );
+        ifr.contentWindow.Application.run();
+    }, 250 );
+}
+
+
 // Make sure we're not overlapping all of the time
 var _cascadeValue = 0;
 function CascadeWindowPosition( obj )
@@ -964,7 +987,7 @@ function _ActivateWindowOnly( div )
 			m.classList.add( 'Active' );
 			m.viewContainer.classList.add( 'Active' );
 
-			var app = _getAppByAppId( div.applicationId );
+			let app = _getAppByAppId( div.applicationId );
 
 			// Extra force!
 			if( isMobile )
@@ -977,8 +1000,6 @@ function _ActivateWindowOnly( div )
 				
 				if( window._getAppByAppId )
 				{
-					let app = _getAppByAppId( div.applicationId );
-
 					if( app )
 					{
 						if( m.windowObject != app.mainView )
@@ -4257,6 +4278,10 @@ var View = function( args )
 		{
 			ifr.contentWindow.document.body.innerHTML = content;
 		}
+		if( this.flags.requireDoneLoading )
+		{
+			ifr.className = 'Loading';	
+		}
 		ifr.onload();
 
 		this.isRich = true;
@@ -4385,6 +4410,11 @@ var View = function( args )
 		ifr.style.position = 'absolute';
 		ifr.style.top = '0'; ifr.style.left = '0';
 		ifr.style.width = '100%'; ifr.style.height = '100%';
+		
+		if( this.flags.requireDoneLoading )
+		{
+			ifr.className = 'Loading';	
+		}
 
 		// Find our friend
 		// TODO: Only send postmessage to friend targets (from our known origin list (security app))
@@ -5460,11 +5490,19 @@ var View = function( args )
 
 		// prepare for us to use to external libs. // good quality resize + EXIF data reader
 		// https://github.com/blueimp/JavaScript-Load-Image/blob/master/js/load-image.all.min.js
-		Include( '/webclient/3rdparty/load-image.all.min.js', function()
+		if( !self.cameraIncludesLoaded )
 		{
-			// Execute async operation
+			Include( '/webclient/3rdparty/load-image.all.min.js', function()
+			{
+				// Execute async operation
+				self.cameraIncludesLoaded = true;
+				getAvailableDevices( function( e ){ setCameraMode( e.data ) } );				
+			});
+		}
+		else
+		{
 			getAvailableDevices( function( e ){ setCameraMode( e.data ) } );				
-		});
+		}
 	}
 	
 	// Add a child window to this window

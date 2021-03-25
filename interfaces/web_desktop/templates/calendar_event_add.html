@@ -1,4 +1,4 @@
-<div class="ContentFull Padding ScrollArea">
+<div class="ContentFull Padding ScrollArea" style="height: calc(100% - 50px">
 	<div class="HRow MarginBottom">
 		<div class="HContent30 FloatLeft">
 			<p class="InputHeight"><strong>{i18n_cal_evt_title}:</strong></p>
@@ -7,6 +7,21 @@
 			<input class="FullWidth InputHeight" value="" placeholder="{i18n_cal_evt_title_what}..." id="calTitle"/>
 		</div>
 	</div>
+	<div class="HRow MarginBottom">
+		<div class="HContent30 FloatLeft">
+			<p class="InputHeight"><strong>{i18n_cal_evt_typec}:</strong></p>
+		</div>
+		<div class="HContent70 FloatLeft">
+			<select id="calTypeSelect" onchange="ge('calType' ).value = this.value; Workspace.pollCalendarEventGui();">
+				<option value="event">{i18n_cal_evt_type_event}</option>
+				<option value="meeting">{i18n_cal_evt_type_meeting}</option>
+				<!--<option value="todo">{i18n_cal_evt_type_todo}</option>
+				<option value="note">{i18n_cal_evt_type_note}</option>-->
+			</select>
+			<input type="hidden" id="calType" value="event"/>
+		</div>
+	</div>
+	<div id="calTypeGui"></div>
 	<div class="HRow MarginBottom">
 		<div class="HContent30 FloatLeft">
 			<p class="InputHeight"><strong>{i18n_cal_evt_time_from}:</strong></p>
@@ -48,9 +63,11 @@
 	</div>
 	<div class="HRow">
 		<div class="HContent100 FloatLeft">
-			<textarea class="FullWidth" style="height: 160px" id="calDescription"></textarea>
+			<textarea class="FullWidth" style="height: 120px" id="calDescription"></textarea>
 		</div>
 	</div>
+</div>
+<div class="Padding BorderTop BackgroundDefault" style="height: 50px; top: calc(100% - 50px); width: 100%; left: 0; position: absolute;">
 	<div class="HRow">
 		<div class="HContent100 FloatLeft">
 			<p class="InputHeight FloatRight"><button type="button" class="Button IconSmall fa-remove" onclick="CloseView()"> {i18n_cancel}</button></p>

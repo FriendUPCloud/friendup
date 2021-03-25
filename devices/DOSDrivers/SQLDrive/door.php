@@ -72,6 +72,18 @@ if( !class_exists( 'DoorSQLDrive' ) )
 			}
 		}
 		
+		// Remove unwanted characters
+		private function safeFilename( $filename, $mode = 'normal' )
+		{
+			if( $mode == 'simple' )
+			{
+				$filename = str_replace( array( "\n", "\t", "\r" ), '', $filename );
+				return $filename;
+			}
+			$filename = str_replace( array( "\n", "\t", "\r", "/" ), '', $filename );
+			return $filename;
+		}
+		
 		// Public functions --------------------------------------------
 		
 		/**
@@ -553,16 +565,16 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						// Sanitize username
 						$uname = str_replace( array( '..', '/', ' ' ), '_', $User->Name );
 					
-						$Logger->log( '[SQLDRIVE] WRITING ' . $uname . '/' . $fn . ' -> ' . $f->Filename . ' in ' . $subPath );
+						//$Logger->log( '[SQLDRIVE] WRITING ' . $uname . '/' . $fn . ' -> ' . $f->Filename . ' in ' . $subPath );
 					
 						$f->DiskFilename = $uname . '/' . $fn;
 						$f->Filesize = filesize( $wname. $fn );
-						$Logger->log( '[SQLDRIVE] WRITING done, size: ' . $f->Filesize );
+						//$Logger->log( '[SQLDRIVE] WRITING done, size: ' . $f->Filesize );
 						if( !$f->DateCreated ) $f->DateCreated = date( 'Y-m-d H:i:s' );
 						$f->DateModified = date( 'Y-m-d H:i:s' );
-						$Logger->log( '[SQLDRIVE] WRITING store in DB' );
+						//$Logger->log( '[SQLDRIVE] WRITING store in DB' );
 						$f->Save();
-						$Logger->log( '[SQLDRIVE] WRITING stored in db - recordID is ' . $f->ID . ' (Err: ' . $f->_lastError . ')' . ' -> ' . $f->_lastQuery );
+						//$Logger->log( '[SQLDRIVE] WRITING stored in db - recordID is ' . $f->ID . ' (Err: ' . $f->_lastError . ')' . ' -> ' . $f->_lastQuery );
 						
 						// Update latest StoredBytes for this Filesystem
 						if( $this->ID > 0 && $User->ID > 0 )
@@ -682,6 +694,10 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						friendHeader( 'Content-Length: ' . ( filesize( $fname ) + strlen( $okRet ) ) );
 						return $okRet . trim( file_get_contents( $fname ) );
 					}
+					else
+					{
+						return 'fail<!--separate-->{"response":"could not read file, file does not exist"}';
+					}
 				}
 				return 'fail<!--separate-->{"response":"could not read file"}'; //Could not read file: ' . $Config->FCUpload . $fn . '<!--separate-->' . print_r( $f, 1 );
 			}
@@ -778,6 +794,9 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						die( 'ok' );
 					case 'rename':
 						ob_clean();
+						
+						$args->newname = $this->safeFilename( $args->newname );
+						
 						// Is it a folder?
 						if( substr( $path, -1, 1 ) == '/' )
 						{
@@ -857,6 +876,8 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							
 						if( $path )
 						{
+							$path= $this->safeFilename( $path, 'simple' );
+							
 							$f = new DbIO( 'FSFolder' );
 		
 							// Get by path (subfolder)
@@ -896,14 +917,18 @@ if( !class_exists( 'DoorSQLDrive' ) )
 								if( substr( $name, -1, 1 ) == '/' )
 									$name = substr( $name, 0, strlen( $name ) - 1 );
 								if( strstr( $name, '/' ) )
-									$name = end( explode( '/', $name ) );
+								{
+								    $name = explode( '/', $name );
+								    $name = end( $name );
+								}
 						
 								if( trim( $name ) )
 								{
 									$name = trim( $name );
 									if( substr( $name, -1, 1 ) == '/' )
 										$name = substr( $name, 0, strlen( $name ) - 1 );
-									$newFolder = end( explode( '/', $name ) );
+									$newFolder = explode( '/', $name );
+									$newFolder = end( $newFolder );
 									$f->FilesystemID = $this->ID;
 									$f->Name = $newFolder;
 									$f->UserID = $User->ID;
@@ -964,6 +989,9 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					case 'copy':
 						$from = isset( $args->from ) ? $args->from : ( isset( $args->args->from ) ? $args->args->from : false );
 						$to   = isset( $args->to )   ? $args->to   : ( isset( $args->args->to )   ? $args->args->to   : false );
+						
+						$to = $this->safeFilename( $to, 'simple' );
+						
 						if( isset( $from ) && isset( $to ) )
 						{
 							//$Logger->log( 'Trying from ' . $from . ' to ' . $to );
@@ -1375,7 +1403,10 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				$fi->FilesystemID = $this->ID;
 				$fi->FolderID = $fo ? $fo->ID : '0';
 				if( strstr( $path, '/' ) )
-					$fi->Filename = end( explode( '/', $path ) );
+				{
+				    $fi->Filename = explode( '/', $path );
+				    $fi->Filename = end( $fi->Filename );
+				}
 				else $fi->Filename = end( explode( ':', $path ) );
 				$fi->Filename = str_replace( "'", "\\'", $fi->Filename );
 				$fi->Load();

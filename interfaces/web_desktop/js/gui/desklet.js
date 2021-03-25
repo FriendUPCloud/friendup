@@ -703,39 +703,57 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		
 		for( var a = 0; a < Workspace.applications.length; a++ )
 		{
-			var ap = Workspace.applications[a];
+			let ap = Workspace.applications[a];
 			if( ap.applicationId != ele.uniqueId )
 				continue;
 			if( !ap.windows ) continue;
 			
 			// TODO: Animation before hiding!
-			var st = 'idle';
+			let st = 'idle';
+			let wsSet = false;
 			for( var w in ap.windows )
 			{
-				var s = ap.windows[w].getFlag( 'screen' );
+				var s = ap.windows[ w ].getFlag( 'screen' );
 				if( s.div.id != 'DoorsScreen' ) continue;
 				
 				elementCount++; // Count app windows
 				
-				if( st == 'idle' )
-					st = ap.windows[w].getFlag( 'hidden' );
-				if( ap.windows[w].getFlag( 'invisible' ) ) continue;
+				st = ap.windows[ w ].flags.hidden;
+				if( ap.windows[ w ].getFlag( 'invisible' ) ) continue;
 				// Just minimize
-				var ws = ap.windows[w].workspace;
-				if( st || ws != globalConfig.workspaceCurrent )
+				var ws = ap.windows[ w ].workspace;
+				
+				if( !wsSet && ws != globalConfig.workspaceCurrent )
 				{
-					_ActivateWindow( ap.windows[w]._window );
-					_WindowToFront( ap.windows[w]._window );
-					ele.classList.remove( 'Minimized' );
-					Workspace.switchWorkspace( ws );
-					ap.windows[w].setFlag( 'hidden', false );
-					ap.windows[w].flags.minimized = false;
-					ap.windows[w].activate();
+			        Workspace.switchWorkspace( ws );
+			        wsSet = true;
+			    }
+				
+				if( st || wsSet )
+				{
+				    
+					if( ele.classList.contains( 'Minimized' ) )
+					{
+    					ele.classList.remove( 'Minimized' );
+					}
+					if( ws != globalConfig.workspaceCurrent )
+					{
+				        Workspace.switchWorkspace( ws );
+				    }
+				    ap.windows[ w ].setFlag( 'hidden', false );
+				    ap.windows[ w ].flags.minimized = false;
+				    ap.windows[ w ].activate();
+				    
+				    _WindowToFront( ap.windows[ w ]._window );
 				}
 				else
 				{
-					ele.classList.add( 'Minimized' );
-					ap.windows[w].setFlag( 'hidden', true );
+					if( !ele.classList.contains( 'Minimized' ) )
+					{
+    					ele.classList.add( 'Minimized' );
+    			    }
+					ap.windows[ w ].setFlag( 'hidden', true );
+					console.log( 'We set this as hidden: ', ap.windows[ w ] );
 				}
 			}
 			if( !ele.elementCount )
@@ -791,7 +809,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				o.src = getImageUrl( o.src );
 			}
 			
-			o.opensilent = o.opensilent === '1' ? true : false;
+			o.opensilent = o.opensilent == '1' ? true : false;
 			
 			// This is web bookmarks
 			if( o.src == '.url' )
@@ -864,16 +882,24 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				if( e.button != 0 && e.type != 'touchend' ) return;
 				if( div.helpBubble ) div.helpBubble.close();
 				
+				// Http url
+				if( o.exe.substr( 0, 7 ) == 'http://' || o.exe.substr( 0, 8 ) == 'https://' )
+				{
+					return window.open( o.exe, '', '' );
+				}
 				// We got views? Just manage them
 				if( !isMobile )
 				{
-					if( dk.toggleViewVisibility( this ) ) return;
+					if( dk.toggleViewVisibility( this ) ) 
+					{
+						return;
+					}
 				}
 
 				var rememberCurrent = false;
 				
 				// If we have a non silent launch, and a current movable, deactivate current
-				if( currentMovable && !o.opensilent )
+				if( currentMovable && o.opensilent === false )
 				{
 					rememberCurrent = currentMovable;
 					_DeactivateWindow( currentMovable );

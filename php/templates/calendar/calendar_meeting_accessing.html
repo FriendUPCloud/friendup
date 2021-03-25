@@ -1,0 +1,104 @@
+
+
+	<div class="Dialog">
+		<h1>
+			Accessing link
+		</h1>
+		<h2>
+			{meeting request}
+		</h2>
+		<div id="Upcoming">
+			<p>
+				<label>Date:</label><span id="UpcomingDate">{date}</span>
+			</p>
+			<p>
+				<label>Time:</label><span id="UpcomingTime">{time}</span>
+			</p>
+			<div id="CurrentTime"></div>
+		</div>
+		<div id="Held">
+		</div>
+	</div>
+	<script type="text/javascript">
+		// Just check the time
+		function CheckTimeForEvent()
+		{
+			if( !window.Intl )
+			{
+				document.getElementById( 'Held' ).innerHTML = '<p style="font-weight: bold">You do not have a supported browser. Please download for example <a href="https://www.google.com/chrome">Google Chrome</a> or <a href="https://www.mozilla.org/firefox">Mozilla Firefox</a>.</p>';
+				return;
+			}
+			
+			let shortTz = new Date().toLocaleString( 'en', { timeZoneName: 'short', timeZone: '{timezone}' } ).split( ' ' ).pop();
+			let tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+			let tf = new Date( '{dateLiteral} {timefrom}:00 ' + shortTz ).toLocaleString( 'en-US', { timeZone: tz } );
+			let tt = new Date( '{dateLiteral} {timeto}:00 ' + shortTz ).toLocaleString( 'en-US', { timeZone: tz } );
+			let timestampthen = new Date( tt ).getTime();
+			let timestampupcoming = new Date( tf ).getTime();
+			let timestampnow  = new Date().getTime();
+			let diff = timestampthen - timestampnow;
+			
+			// Time in the past!
+			if( diff < 0 )
+			{
+				let h = document.getElementById( 'Held' );
+				h.className = 'Showing';
+				let hstr = '<p><strong>The meeting has now closed.</strong></p>';
+				hstr += '<p>This meeting was held: ' + tf + ' ' + tz + ' time.</p>';
+				h.innerHTML = hstr;
+				document.getElementById( 'Upcoming' ).className = '';
+			}
+			// Time now
+			else
+			{
+				let currdiff = timestampupcoming - timestampnow;
+				if( currdiff < 0 )
+				{
+					let transpiredTime = timestampnow - timestampupcoming;
+					let str = '<p>The meeting started ' + Math.floor( transpiredTime / 1000 / 60 ) + ' minutes ago.</p>';
+					str += '<p><button type="button" class="Accept" onclick="document.location.href=\'{link}\'">Join meeting</button></p>';
+					document.getElementById( 'CurrentTime' ).innerHTML = str;
+				}
+				else
+				{
+					let timeToDo = timestampupcoming - timestampnow;
+					let minutes = Math.floor( timeToDo / 1000 / 60 );
+					let seconds = Math.floor( timeToDo / 1000 );
+					let str = '';
+					if( seconds < 60 )
+					{
+						str = '<p><strong>Meeting starts in ' + seconds + ' seconds.</strong></p>';
+					}
+					else if( seconds <= 0 )
+					{
+						document.location.href = '{link}';
+					}
+					else
+					{
+						str = '<p>Meeting starts in ' + minutes + ' minutes.</p>';
+					}
+					document.getElementById( 'CurrentTime' ).innerHTML = str;
+				}
+				document.getElementById( 'UpcomingDate' ).innerHTML = tf;
+				document.getElementById( 'Held' ).className = '';
+				document.getElementById( 'Upcoming' ).className = 'Showing';
+			}
+		}
+		
+		// Let's go!
+		CheckTimeForEvent();
+		setInterval( function(){ CheckTimeForEvent(); }, 1000 );
+	</script>
+	<style type="text/css">
+		#Held, #Upcoming
+		{
+			opacity: 0;
+			transition: opacity 0.25s;
+			height: 0; overflow: hidden;
+		}
+		#Held.Showing, #Upcoming.Showing
+		{
+			opacity: 1;
+			height: auto;
+		}
+	</style>

@@ -22,9 +22,9 @@ Friend.fastUrlArgs = document.location.href.split( '?' );
 if( Friend.fastUrlArgs.length > 1 )
 {
 	Friend.fastUrlArgs = Friend.fastUrlArgs[1].split( '&' );
-	for( var a = 0; a < Friend.fastUrlArgs.length; a++ )
+	for( let a = 0; a < Friend.fastUrlArgs.length; a++ )
 	{
-		var pair = Friend.fastUrlArgs[a].split( '=' );
+		let pair = Friend.fastUrlArgs[a].split( '=' );
 		if( pair[0] == 'noevents' )
 			Friend.noevents = true;
 	}
@@ -34,7 +34,7 @@ if( Friend.fastUrlArgs.length > 1 )
 window.frameInitialized = false;
 window.loaded = false;
 window.applicationStarted = false;
-var __timeout = 200;
+__timeout = 200;
 
 if( this.apijsHasExecuted )
 	throw new Error( 'api.js has already run, aborting' );
@@ -221,7 +221,7 @@ var Application =
 	loadTranslations: function( path, callback )
 	{
 		if( this.language == false ) this.language = Friend.globalConfig.language.split( '-' )[0];
-		var f = new File( path + this.language + '.lang' );
+		let f = new File( path + this.language + '.lang' );
 		f.onLoad = function( data )
 		{
 			// no locale file for this language found?
@@ -233,11 +233,11 @@ var Application =
 			}
 
 			if( !window.translations ) window.translations = [];
-			var expl = data.split( "\n" );
-			for( var a = 0; a < expl.length; a++ )
+			let expl = data.split( "\n" );
+			for( let a = 0; a < expl.length; a++ )
 			{
 				if( expl[a].substr( 0, 1 ) == '#' ) continue;
-				var words = expl[a].split( ':' );
+				let words = expl[a].split( ':' );
 				if( Trim( words[0] ).length )
 				{
 					window.translations[Trim(words[0])] = Trim(words[1]);
@@ -350,7 +350,7 @@ var Application =
 	{
 		if( sessionObject.charAt && sessionObject.charAt(0) ) sessionObject = JSON.parse( sessionObject );
 		if( !this.sessionObject ) this.sessionObject = {};
-		for( var a in sessionObject )
+		for( let a in sessionObject )
 		{
 			this.sessionObject[a] = sessionObject[a];
 		}
@@ -368,8 +368,8 @@ var Application =
 			return false;
 		}
 
-		var el = ele ? ele : ( document.documentElement ? document.documentElement : document.body );
-		var toggle = el.fullscreenEnabled;
+		let el = ele ? ele : ( document.documentElement ? document.documentElement : document.body );
+		let toggle = el.fullscreenEnabled;
 		if( !toggle )
 		{
 			if( el.requestFullscreen )
@@ -402,7 +402,7 @@ var Application =
 	// Application messaging ---------------------------------------------------
 	sendApplicationMessage: function( appFilter, msg, cbk )
 	{
-		var msg = {
+		msg = {
 			type: 'applicationmessaging',
 			method: 'sendtoapp',
 			filter: appFilter,
@@ -416,7 +416,7 @@ var Application =
 	},
 	getApplicationsByName: function( appName, cbk )
 	{
-		var msg = {
+		let msg = {
 			type: 'applicationmessaging',
 			method: 'getapplications',
 			application: appName
@@ -430,7 +430,7 @@ var Application =
 	// Opens
 	openMessagePort: function( cbk )
 	{
-		var msg = {
+		let msg = {
 			type: 'applicationmessaging',
 			method: 'open'
 		};
@@ -443,7 +443,7 @@ var Application =
 	// Close the port!
 	closeMessagePort: function( cbk )
 	{
-		var msg = {
+		let msg = {
 			type: 'applicationmessaging',
 			method: 'close'
 		};
@@ -472,14 +472,14 @@ var Application =
 		// Close all dormant doors
 		if( DormantMaster.doors )
 		{
-			for( var a in DormantMaster.doors )
+			for( let a in DormantMaster.doors )
 				DormantMaster.delAppDoor( DormantMaster.doors[a] );
 		}
 
 		// Close all windows
 		if( Application.windows )
 		{
-			for( var a in Application.windows )
+			for( let a in Application.windows )
 			{
 				Application.windows[a].close();
 			}
@@ -488,7 +488,7 @@ var Application =
 		// Close all widgets
 		if( Application.widgets )
 		{
-			for (var a in Application.widgets )
+			for (let a in Application.widgets )
 			{
 				Application.widgets[a].close();
 			}
@@ -496,14 +496,14 @@ var Application =
 
 		if( Application.screens )
 		{
-			for( var a in Application.screens )
+			for( let a in Application.screens )
 			{
 				Application.screens[a].close();
 			}
 		}
 
 		// Try to save the session
-		var s = this.sessionStateGet();
+		let s = this.sessionStateGet();
 		if( s && s.length )
 		{
 			Application.sendMessage( {
@@ -516,7 +516,7 @@ var Application =
 		// Flush dormant events
 		if( Application.applicationId )
 		{
-			var n = Application.applicationId.split( '-' )[0]; // TODO: app must have applicationName
+			let n = Application.applicationId.split( '-' )[0]; // TODO: app must have applicationName
 			DormantMaster.delApplicationEvents( n );
 		}
 
@@ -543,8 +543,8 @@ if( !Friend.clipboard )
 
 document.addEventListener( 'keydown', function( e )
 {
-	var wh = e.which ? e.which : e.keyCode;
-	var t = e.target ? e.target : e.srcElement;
+	let wh = e.which ? e.which : e.keyCode;
+	let t = e.target ? e.target : e.srcElement;
 
 	if( wh == 91 )
 	{
@@ -580,7 +580,7 @@ document.addEventListener( 'keydown', function( e )
 
 document.addEventListener( 'keyup', function( e )
 {
-	var wh = e.which ? e.which : e.keyCode;
+	let wh = e.which ? e.which : e.keyCode;
 	Friend.macCommand = false;
 } );
 
@@ -589,8 +589,8 @@ document.addEventListener( 'keyup', function( e )
 */
 Friend.pasteClipboard = function( evt )
 {
-	var mimetype = '';
-	var cpd = '';
+	let mimetype = '';
+	let cpd = '';
 
 	if( evt.clipboardData.types.indexOf('text/plain') > -1 )
 	{
@@ -628,7 +628,7 @@ Friend.pasteClipboard = function( evt )
 // Copy from select area to clipboard
 Friend.ClipboardGetSelectedIn = function( ele )
 {
-    var text = '';
+    let text = '';
     if( window.getSelection )
     {
         text = window.getSelection().toString();
@@ -648,15 +648,15 @@ Friend.ClipboardPasteIn = function( ele, text )
 		if( document.selection )
 		{
 			ele.focus();
-			var sel = document.selection.createRange();
+			let sel = document.selection.createRange();
 			sel.text = text;
 			ele.focus();
 		}
 		else if( ele.selectionStart || ele.selectionStart === 0 )
 		{
-			var startPos = ele.selectionStart;
-			var endPos = ele.selectionEnd;
-			var scrollTop = ele.scrollTop;
+			let startPos = ele.selectionStart;
+			let endPos = ele.selectionEnd;
+			let scrollTop = ele.scrollTop;
 			ele.value = ele.value.substring( 0, startPos ) +
 				text + ele.value.substring( endPos, ele.value.length );
 			ele.focus();
@@ -685,7 +685,7 @@ Friend.ClipboardPasteIn = function( ele, text )
 Friend.generateUniqueId = function( arrayBuffer, postfix )
 {
 	if( !postfix ) postfix = '';
-	var uid = false;
+	let uid = false;
 	do
 	{
 		uid = Friend.uniqueIdString();
@@ -707,11 +707,11 @@ uniqueIdString = Friend.uniqueIdString;
 // Extract a callback element and return it
 function extractCallback( id, keep )
 {
-	var f = false;
+	let f = false;
 
-	var out = []; // Only use this if we're not keeping callback
+	let out = []; // Only use this if we're not keeping callback
 
-	for( var a in Application.callbacks )
+	for( let a in Application.callbacks )
 	{
 		if( a == id )
 		{
@@ -725,7 +725,7 @@ function extractCallback( id, keep )
 	if( keep != true )
 		Application.callbacks = out;
 
-	for( var a in Application.permanentCallbacks )
+	for( let a in Application.permanentCallbacks )
 	{
 		if( a == id )
 		{
@@ -749,7 +749,7 @@ function addCallback( cb, forceId )
 	}
 	else
 	{
-		var id = generateUniqueId( Application.callbacks );
+		let id = generateUniqueId( Application.callbacks );
 		if( !id ) return false;
 		Application.callbacks[id] = cb;
 		return id;
@@ -760,7 +760,7 @@ function addCallback( cb, forceId )
 function addPermanentCallback( cb )
 {
 	if( !cb ) return false;
-	var id = generateUniqueId( Application.permanentCallbacks, '_permanent' );
+	let id = generateUniqueId( Application.permanentCallbacks, '_permanent' );
 	if( !id ) return false;
 	Application.permanentCallbacks[id] = cb;
 	return id;
@@ -769,8 +769,8 @@ function addPermanentCallback( cb )
 // Remove a permanent callback by force
 function removePermanentCallback( cb )
 {
-	var out = [];
-	for( var a in Application.permanentCallbacks )
+	let out = [];
+	for( let a in Application.permanentCallbacks )
 	{
 		if( a != cb ) out[a] = Application.permanentCallbacks[a];
 	}
@@ -781,14 +781,14 @@ function removePermanentCallback( cb )
 
 function getUrlVar( vari )
 {
-	var url = document.location.href.split( '?' );
+	let url = document.location.href.split( '?' );
 	if( url.length > 1 )
 	{
 		url = url[1];
-		var vars = url.split( '&' );
-		for( v = 0; v < vars.length; v++ )
+		let vars = url.split( '&' );
+		for( let v = 0; v < vars.length; v++ )
 		{
-			var va = vars[v].split( '=' );
+			let va = vars[v].split( '=' );
 			if( va[0] == vari ) return va[1];
 		}
 	}
@@ -800,15 +800,15 @@ function queuedEventTimer()
 {
 	if( window.Application.applicationId && window.loaded && window.eventQueue.length )
 	{
-		var recvList = [];
-		for( var a = 0; a < window.eventQueue.length; a++ )
+		let recvList = [];
+		for( let a = 0; a < window.eventQueue.length; a++ )
 		{
 			recvList.push( window.eventQueue[a] );
 		}
 		window.eventQueue = [];
 
 		// Check if we can run
-		for( var a = 0; a < recvList.length; a++ )
+		for( let a = 0; a < recvList.length; a++ )
 		{
 			receiveEvent( recvList[a] );
 		}
@@ -832,7 +832,7 @@ function receiveEvent( event, queued )
 	if( !window.eventQueue )
 		window.eventQueue = [];
 
-	var dataPacket;
+	let dataPacket;
 	
 	// TODO: Stop overwriting origin (security)
 	if( event.origin )
@@ -864,7 +864,7 @@ function receiveEvent( event, queued )
 
 	// If we have a response, the app has no custom receiveMessage()
 	// This in many cases means that the Application object was not loaded
-	var hasDefaultMethod = Application.receiveMessage( { checkDefaultMethod: 1 } ) == 'yes';
+	let hasDefaultMethod = Application.receiveMessage( { checkDefaultMethod: 1 } ) == 'yes';
 
 	// Queue events until ready
 	if( dataPacket.command != 'register' &&
@@ -904,21 +904,26 @@ function receiveEvent( event, queued )
 
 		// Update theme
 		case 'refreshtheme':
-			var themeName = dataPacket.theme;
+			let themeName = dataPacket.theme;
 
-			var h = document.getElementsByTagName( 'head' );
+			let h = document.getElementsByTagName( 'head' );
 			if( h )
 			{
 				h = h[0];
 				document.body.classList.add( 'Loading' );
 				
 				// New css!
-				var styles = document.createElement( 'link' );
+				let styles = document.createElement( 'link' );
 				styles.rel = 'stylesheet';
 				styles.type = 'text/css';
 				styles.onload = function()
 				{
 					document.body.classList.remove( 'Loading' );
+					document.body.classList.add( 'Loaded' );
+				}
+				styles.onerror = function( e, d )
+				{   
+                    document.body.classList.remove( 'Loading' );
 					document.body.classList.add( 'Loaded' );
 				}
 				
@@ -936,16 +941,16 @@ function receiveEvent( event, queued )
 				}
 				
 				// Remove old one
-				var l = h.getElementsByTagName( 'link' );
-				for( var b = 0; b < l.length; b++ )
+				let l = h.getElementsByTagName( 'link' );
+				for( let b = 0; b < l.length; b++ )
 				{
 					if( l[b].parentNode != h ) continue;
 					l[b].href = '';
 					l[b].parentNode.removeChild( l[b] );
 				}
 				// Remove scrollbars
-				var l = document.body.getElementsByTagName( 'link' );
-				for( var b = 0; b < l.length; b++ )
+				l = document.body.getElementsByTagName( 'link' );
+				for( let b = 0; b < l.length; b++ )
 				{
 					if( l[b].href.indexOf( '/scrollbars.css' ) > 0 )
 					{
@@ -967,9 +972,9 @@ function receiveEvent( event, queued )
 			// Refresh subviews
 			if( Application.windows )
 			{
-				for( var a in Application.windows )
+				for( let a in Application.windows )
 				{
-					var msg = {
+					let msg = {
 						type: 'system',
 						command: 'refreshtheme',
 						theme: themeName,
@@ -987,7 +992,7 @@ function receiveEvent( event, queued )
 			{
 				if( Friend.resizeTabs )
 				{
-					for( var i = 0; i < Friend.resizeTabs.length; i++ )
+					for( let i = 0; i < Friend.resizeTabs.length; i++ )
 					{
 						Friend.resizeTabs[ i ].resize();
 					}
@@ -996,40 +1001,44 @@ function receiveEvent( event, queued )
 			break;
 		// Blur all elements!
 		case 'blur':
-			var eles = document.getElementsByTagName( '*' );
-			for( var a = 0; a < eles.length; a++ )
-				eles[a].blur();
+		{
+			let elems = document.getElementsByTagName( '*' );
+			for( let a = 0; a < elems.length; a++ )
+				elems[a].blur();
 			break;
+		}
 		// Executing an event that is coming in
 		case 'dispatchevent':
+		{
 			// For now, we test on window and body..
 			// TODO: Be precise! Find the right element! (need to reg ids etc)
 			//console.log( 'api.js - dispatchevent', dataPacket );
-			var eles = [ window, document.body ];
-			var ev = typeof( dataPacket.eventData ) == 'string' ? JSON.parse( dataPacket.eventData ) : dataPacket.eventData;
+			let elems = [ window, document.body ];
+			let ev = typeof( dataPacket.eventData ) == 'string' ? JSON.parse( dataPacket.eventData ) : dataPacket.eventData;
 			
-			for( var a = 0; a < eles.length; a++ )
+			for( let a = 0; a < elems.length; a++ )
 			{
-				if( eles[a].trappedEvents && eles[a].trappedEvents[ dataPacket.eventType ] )
+				if( elems[a].trappedEvents && elems[a].trappedEvents[ dataPacket.eventType ] )
 				{
 					// Execute found events!
 					//console.log( 'We got it: ' + dataPacket.eventType );
-					var tes = eles[a].trappedEvents[ dataPacket.eventType ];
-					for( var b = 0; b < tes.length; b++ )
+					let tes = elems[a].trappedEvents[ dataPacket.eventType ];
+					for( let b = 0; b < tes.length; b++ )
 					{
 						tes[b]( ev );
 					}
 				}
 			}
 			break;
+		}
 		// Aha, we received an event from a sub view! Handle it
 		case 'captureevent':
 			// If we're the host, we need to execute the event on all app views
-			for( var a in Friend.sasidRequests )
+			for( let a in Friend.sasidRequests )
 			{
 				if( Friend.sasidRequests[a].applicationId == dataPacket.sasid )
 				{
-					var arq = Friend.sasidRequests[a];
+					let arq = Friend.sasidRequests[a];
 
 					// If we don't use eventOwner flag or we're an invitee, execute input events!
 					if( !arq.flags.eventOwner || ( arq.flags.eventOwner == 'owner' && arq.isHost ) )
@@ -1039,9 +1048,9 @@ function receiveEvent( event, queued )
 					// If we're invitee, send to owner, owner sends only if no eventOwner flag
 					if( !arq.flags.eventOwner || ( arq.flags.eventOwner == 'owner' && !arq.isHost ) )
 					{
-						var owner = ( arq.isHost ? '' : 'owner' );
+						let owner = ( arq.isHost ? '' : 'owner' );
 						// Send to others
-						var msg = {
+						let msg = {
 							path : 'system.library/sas/send' + owner + '/',
 							data : {
 								sasid : dataPacket.sasid,
@@ -1064,7 +1073,7 @@ function receiveEvent( event, queued )
 		case 'handlekeys':
 			if( Application.handleKeys )
 			{
-				var ev = { shiftKey: dataPacket.shiftKey, ctrlKey: dataPacket.ctrlKey, which: dataPacket.key };
+				let ev = { shiftKey: dataPacket.shiftKey, ctrlKey: dataPacket.ctrlKey, which: dataPacket.key };
 				Application.handleKeys( dataPacket.key, ev );
 			}
 			break;
@@ -1091,26 +1100,26 @@ function receiveEvent( event, queued )
 			}
 			
 			// Get flags
-			var view = Application.windows[ dataPacket.viewId ];
+			let view = Application.windows[ dataPacket.viewId ];
 			if( view && view._flags )
 			{
-				var flags = view._flags;
+				let flags = view._flags;
 			
 				// We have frameworks
 				if( flags.frameworks )
 				{
-					for( var a in flags.frameworks )
+					for( let a in flags.frameworks )
 					{
 						switch( a )
 						{
 							case 'tree':
 								if( flags.frameworks.tree.javascript && flags.frameworks.tree.data )
 								{
-									var f = new File( 'System:sandboxed.html' );
+									let f = new File( 'System:sandboxed.html' );
 									f.onLoad = function( data )
 									{
-										var javascript = flags.frameworks.tree.javascript;
-										var treeProperties = flags.frameworks.tree.treeInitialisation;
+										let javascript = flags.frameworks.tree.javascript;
+										let treeProperties = flags.frameworks.tree.treeInitialisation;
 										view.setContent( 
 `<script src="/webclient/js/tree/tree.js"></script>
 <script src="${javascript}"></script>
@@ -1126,10 +1135,10 @@ function receiveEvent( event, queued )
 							case 'fui':
 								if( flags.frameworks.fui.javascript && flags.frameworks.fui.data )
 								{
-									var f = new File( 'System:sandboxed.html' );
+									let f = new File( 'System:sandboxed.html' );
 									f.onLoad = function( data )
 									{
-										var javascript = flags.frameworks.fui.javascript;
+										let javascript = flags.frameworks.fui.javascript;
 										view.setContent( 
 `<script src="/webclient/js/fui/fui.js"></script>
 <script src="${javascript}"></script>
@@ -1169,7 +1178,7 @@ function receiveEvent( event, queued )
 					case 'setviewflag':
 						if( dataPacket.viewId && Application.windows && Application.windows[dataPacket.viewId] )
 						{
-							var w = Application.windows[dataPacket.viewId];
+							let w = Application.windows[dataPacket.viewId];
 							w._flags[dataPacket.flag] = dataPacket.value;
 							if( dataPacket.flag == 'scrollable' )
 							{
@@ -1203,12 +1212,12 @@ function receiveEvent( event, queued )
 						// Close an exact window
 						if( dataPacket.viewId && Application.windows && Application.windows[dataPacket.viewId] )
 						{
-							var w = Application.windows[dataPacket.viewId];
+							let w = Application.windows[dataPacket.viewId];
 							if( w.onClose )
 							{
-								var onc = w.onClose;
+								let onc = w.onClose;
 								w.onClose = null;
-								var res = onc( function( flag )
+								let res = onc( function( flag )
 								{
 									if( ( flag || !flag ) && flag !== false )
 									{
@@ -1232,15 +1241,15 @@ function receiveEvent( event, queued )
 						else if( dataPacket.viewId )
 						{
 							// Try view windows
-							for( var a in Application.windows )
+							for( let a in Application.windows )
 							{
-								var w = Application.windows[a];
+								let w = Application.windows[a];
 								w.sendMessage( dataPacket );
 							}
 							// Try screens
-							for( var a in Application.screens )
+							for( let a in Application.screens )
 							{
-								var w = Application.screens[a];
+								let w = Application.screens[a];
 								w.sendMessage( dataPacket );
 							}
 						}
@@ -1248,9 +1257,9 @@ function receiveEvent( event, queued )
 						// FIXME: Might not be what we want
 						else if( Application.windows.length )
 						{
-							for( var a in Application.windows )
+							for( let a in Application.windows )
 							{
-								var w = Application.windows[a];
+								let w = Application.windows[a];
 								w.close();
 							}
 						}
@@ -1357,7 +1366,7 @@ function receiveEvent( event, queued )
 
 			break;
 		case 'setcontentbyid':
-			var el = document.getElementById( dataPacket.elementId );
+			let el = document.getElementById( dataPacket.elementId );
 			if( el ) el.innerHTML = dataPacket.data;
 
 			// Just call back
@@ -1382,7 +1391,8 @@ function receiveEvent( event, queued )
 			break;
 		// Set a property by id
 		case 'setattributebyid':
-			var el = document.getElementById( dataPacket.elementId );
+		{
+			let el = document.getElementById( dataPacket.elementId );
 			if( el )
 			{
 				el.setAttribute( dataPacket.attribute, dataPacket.data );
@@ -1403,6 +1413,7 @@ function receiveEvent( event, queued )
 				} ), event.origin );
 			}
 			break;
+		}
 		case 'register':
 			window.origin = event.origin;
 			// A function to send a message
@@ -1429,20 +1440,20 @@ function receiveEvent( event, queued )
 			else
 			{
 				// Shall we keep the callback so we can continue to pass info on it?
-				var kcb = dataPacket.returnMessage;
-				var keep = kcb ? ( kcb.keepCallback ? true : false ) : false;
+				let kcb = dataPacket.returnMessage;
+				let keep = kcb ? ( kcb.keepCallback ? true : false ) : false;
 
 				// Shell object
 				if( dataPacket.shellId )
 				{
-					var f = extractCallback( dataPacket.shellId, keep );
+					let f = extractCallback( dataPacket.shellId, keep );
 					if( f && f.onBeforeReady ) f.onBeforeReady( dataPacket );
 					if( f && f.onReady ) f.onReady( dataPacket );
 				}
 				// Normal callback by callback id
 				else if( dataPacket.callbackId )
 				{
-					var f = extractCallback( dataPacket.callbackId, keep );
+					let f = extractCallback( dataPacket.callbackId, keep );
 					if( f )
 					{
 						f( dataPacket );
@@ -1451,7 +1462,7 @@ function receiveEvent( event, queued )
 				// Use the pipe if its there
 				if( dataPacket.pipe )
 				{
-					var f = extractCallback( dataPacket.pipe );
+					let f = extractCallback( dataPacket.pipe );
 					if( f )
 					{
 						f( dataPacket );
@@ -1480,8 +1491,8 @@ function receiveEvent( event, queued )
 					//dataPacket.data = ( new Uint8Array( dataPacket.data ) ).buffer;
 					dataPacket.data = ConvertStringToArrayBuffer( dataPacket.data, 'base64' );
 				}
-				var out = [];
-				var f = extractCallback( dataPacket.fileId );
+				let out = [];
+				let f = extractCallback( dataPacket.fileId );
 				if( f )
 				{
 					f.data = dataPacket.data;
@@ -1492,9 +1503,9 @@ function receiveEvent( event, queued )
 					{
 						if( f.replacements )
 						{
-							for( var a in f.replacements )
+							for( let a in f.replacements )
 							{
-								f.data = f.data.split( '{' + a + '}' ).join ( f.replacements[a] );
+								f.data = f.data.split( '{' + a + '}' ).join( f.replacements[a] );
 							}
 						}
 						// For jsx files and others
@@ -1551,7 +1562,7 @@ function receiveEvent( event, queued )
 			}
 			else
 			{
-				var f = extractCallback( dataPacket.fileId );
+				let f = extractCallback( dataPacket.fileId );
 				if( f )
 				{
 					if( f.onPost )
@@ -1583,7 +1594,7 @@ function receiveEvent( event, queued )
 			}
 			else
 			{
-				var f = extractCallback( dataPacket.fileId );
+				let f = extractCallback( dataPacket.fileId );
 				if( f )
 				{
 					if( f.onSave )
@@ -1611,7 +1622,7 @@ function receiveEvent( event, queued )
 					// Execute and give callback
 					if( DormantMaster.doors[ dataPacket.doorId ] )
 					{
-						var items = DormantMaster.doors[ dataPacket.doorId ].getDirectory( dataPacket.path, function( items )
+						let items = DormantMaster.doors[ dataPacket.doorId ].getDirectory( dataPacket.path, function( items )
 						{
 							Application.sendMessage( {
 								type: 'dormantmaster',
@@ -1639,7 +1650,7 @@ function receiveEvent( event, queued )
 					// Execute and give callback
 					if( DormantMaster.doors[ dataPacket.doorId ] )
 					{
-						var items = DormantMaster.doors[ dataPacket.doorId ].getFileInformation( dataPacket.path, function( data )
+						let items = DormantMaster.doors[ dataPacket.doorId ].getFileInformation( dataPacket.path, function( data )
 						{
 							Application.sendMessage( {
 								type: 'dormantmaster',
@@ -1657,7 +1668,7 @@ function receiveEvent( event, queued )
 					// Execute and give callback
 					if( DormantMaster.doors[ dataPacket.doorId ] )
 					{
-						var items = DormantMaster.doors[ dataPacket.doorId ].setFileInformation( dataPacket.perm, function( data )
+						let items = DormantMaster.doors[ dataPacket.doorId ].setFileInformation( dataPacket.perm, function( data )
 						{
 							Application.sendMessage( {
 								type: 'dormantmaster',
@@ -1675,7 +1686,7 @@ function receiveEvent( event, queued )
 					// Execute and give callback
 					if( DormantMaster.doors[ dataPacket.doorId ] )
 					{
-						var items = DormantMaster.doors[ dataPacket.doorId ].read( dataPacket.path, dataPacket.mode, function( data )
+						let items = DormantMaster.doors[ dataPacket.doorId ].read( dataPacket.path, dataPacket.mode, function( data )
 						{
 							Application.sendMessage( {
 								type: 'dormantmaster',
@@ -1693,7 +1704,7 @@ function receiveEvent( event, queued )
 					// Execute and give callback
 					if( DormantMaster.doors[ dataPacket.doorId ] )
 					{
-						var items = DormantMaster.doors[ dataPacket.doorId ].write( dataPacket.path, dataPacket.data, function( data )
+						let items = DormantMaster.doors[ dataPacket.doorId ].write( dataPacket.path, dataPacket.data, function( data )
 						{
 							Application.sendMessage( {
 								type: 'dormantmaster',
@@ -1711,7 +1722,7 @@ function receiveEvent( event, queued )
 					// Execute and give callback
 					if( DormantMaster.doors[ dataPacket.doorId ] )
 					{
-						var items = DormantMaster.doors[ dataPacket.doorId ].dosAction( dataPacket.func, dataPacket.args, function( data )
+						let items = DormantMaster.doors[ dataPacket.doorId ].dosAction( dataPacket.func, dataPacket.args, function( data )
 						{
 							Application.sendMessage( {
 								type: 'dormantmaster',
@@ -1726,7 +1737,7 @@ function receiveEvent( event, queued )
 				// On success, we will update the title to the actual name
 				else if( dataPacket.method == 'updatetitle' )
 				{
-					for( var a in DormantMaster.doors )
+					for( let a in DormantMaster.doors )
 					{
 						if( DormantMaster.doors[a].title == dataPacket.title )
 						{
@@ -1759,7 +1770,7 @@ function receiveEvent( event, queued )
 					}
 					else
 					{
-						var f = extractCallback( dataPacket.callbackId );
+						let f = extractCallback( dataPacket.callbackId );
 						if( f )
 						{
 							f( dataPacket.data );
@@ -1775,14 +1786,14 @@ function receiveEvent( event, queued )
 		case 'applicationstorage':
 			if ( dataPacket && typeof dataPacket.callbackId !== "undefined" )
 			{
-				var callback = extractCallback( dataPacket.callbackId );
+				let callback = extractCallback( dataPacket.callbackId );
 				callback( dataPacket.data );
 			}
 			break;
 		case 'authenticate':
 			if ( dataPacket && typeof dataPacket.callbackId !== "undefined" )
 			{
-				var callback = extractCallback( dataPacket.callbackId );
+				let callback = extractCallback( dataPacket.callbackId );
 				callback( dataPacket.data );
 			}
 			break;
@@ -1794,7 +1805,7 @@ function receiveEvent( event, queued )
 		case 'getapplicationkey':
 			if ( dataPacket && typeof dataPacket.callbackId !== "undefined" )
 			{
-				var callback = extractCallback( dataPacket.callbackId );
+				let callback = extractCallback( dataPacket.callbackId );
 				callback( dataPacket.data );
 			}
 			break;
@@ -1813,13 +1824,13 @@ function receiveEvent( event, queued )
 			}
 			else
 			{
-				var f = extractCallback( dataPacket.callbackId );
+				let f = extractCallback( dataPacket.callbackId );
 				if( f && f.onExecuted )
 				{
 					if( dataPacket & !dataPacket.returnData && dataPacket.returnCode )
 					{
 						// Try if we get these weird responses
-						var j = false;
+						let j = false;
 						try
 						{
 							j = JSON.parse( dataPacket.returnCode );
@@ -1837,7 +1848,7 @@ function receiveEvent( event, queued )
 			// Handle the callback
 			if( dataPacket.callbackId && typeof( Application.callbacks[dataPacket.callbackId] ) != 'undefined' )
 			{
-				var f = extractCallback( dataPacket.callbackId );
+				let f = extractCallback( dataPacket.callbackId );
 				if( f )
 				{
 					try
@@ -1861,7 +1872,7 @@ function receiveEvent( event, queued )
 			// Handle the callback
 			if( dataPacket.callbackId && typeof( Application.callbacks[dataPacket.callbackId] ) != 'undefined' )
 			{
-				var f = extractCallback( dataPacket.callbackId );
+				let f = extractCallback( dataPacket.callbackId );
 				if( f )
 				{
 					try
@@ -1920,7 +1931,7 @@ function receiveEvent( event, queued )
 		if( dataPacket.callback )
 		{
 			// Ok, we will try to execute the callback we found here!
-			var f;
+			let f;
 			if( dataPacket.resp && ( f = extractCallback( dataPacket.callback ) ) )
 			{
 				if( dataPacket.data )
@@ -1978,7 +1989,7 @@ function receiveEvent( event, queued )
 				// Search for our callback!
 				if( Application.windows )
 				{
-					for( var a in Application.windows )
+					for( let a in Application.windows )
 					{
 						if( a == dataPacket.viewId )
 						{
@@ -1994,8 +2005,8 @@ function receiveEvent( event, queued )
 		// Clean up callbacks unless they are to be kept
 		else if( !dataPacket.keepCallback && !( dataPacket.returnMessage && dataPacket.returnMessage.keepCallback ) )
 		{
-			var n = [];
-			for( var b in Application.callbacks )
+			let n = [];
+			for( let b in Application.callbacks )
 			{
 				if( dataPacket.callbackId == b )
 				{
@@ -2024,26 +2035,7 @@ function FriendWebSocket( config )
 	this.active = false;
 
 	// Find a unique ID for the websocket
-	var id = ( Math.random() * 999 ) + ( Math.random() * 999 ) + ( new Date().getTime() );
-	var found = false;
-	do
-	{
-		found = false;
-		if( Application.websockets.length )
-		{
-			for( var a in Application.websockets )
-			{
-				if( a == id )
-				{
-					id = ( Math.random() * 999 ) + ( Math.random() * 999 ) + ( new Date().getTime() );
-					found = true;
-					break;
-				}
-			}
-		}
-	}
-	while( found );
-	Application.websockets[id] = this;
+	Application.websockets[UniqueHash()] = this;
 
 	// Connect to server
 	// TODO: Add callback on which to communicate
@@ -2063,7 +2055,7 @@ function AddFilesystemEvent( path, event, callback )
 {
 	if( path && event && callback )
 	{
-		var msg = {
+		let msg = {
 			type: 'system',
 			command: 'addfilesystemevent',
 			path: path,
@@ -2071,7 +2063,7 @@ function AddFilesystemEvent( path, event, callback )
 		};
 		if( callback )
 		{
-			var cid = addPermanentCallback( callback );
+			let cid = addPermanentCallback( callback );
 			msg.callback = cid;
 		}
 		Application.sendMessage( msg );
@@ -2084,7 +2076,7 @@ function RemoveFilesystemEvent( path, event, callback )
 {
 	if( path && event )
 	{
-		var msg = {
+		let msg = {
 			type: 'system',
 			command: 'removefilesystemevent',
 			path: path,
@@ -2092,7 +2084,7 @@ function RemoveFilesystemEvent( path, event, callback )
 		};
 		if( callback )
 		{
-			var cid = addCallback( callback );
+			let cid = addCallback( callback );
 			msg.callback = cid;
 		}
 		Application.sendMessage( msg );
@@ -2103,8 +2095,8 @@ function RemoveFilesystemEvent( path, event, callback )
 // Color picker ----------------------------------------------------------------
 var ColorPicker = function( succcbk, failcbk )
 {
-	var self = this;
-	var amsg = {
+	let self = this;
+	let amsg = {
 		type: 'system',
 		command: 'colorpicker',
 		method: 'new',
@@ -2126,7 +2118,7 @@ var ColorPicker = function( succcbk, failcbk )
 // Activate the colorpicker window
 ColorPicker.prototype.activate = function()
 {
-	var self = this;
+	let self = this;
 	if( this.uniqueId )
 	{
 		Application.sendMessage( {
@@ -2148,7 +2140,7 @@ ColorPicker.prototype.activate = function()
 // Activate the colorpicker window
 ColorPicker.prototype.close = function()
 {
-	var self = this;
+	let self = this;
 	if( this.uniqueId )
 	{
 		Application.sendMessage( {
@@ -2170,11 +2162,11 @@ ColorPicker.prototype.close = function()
 // Open a new widget -----------------------------------------------------------
 function Widget( flags )
 {
-	var widgetId = 'widget_' + ( new Date() ).getTime() + '.' + Math.random();
+	let widgetId = 'widget_' + ( new Date() ).getTime() + '.' + Math.random();
 
 	this._flags = flags ? flags : {};
 
-	var msg = {
+	let msg = {
 		type:    'widget',
 		data:    flags,
 		widgetId:widgetId
@@ -2204,10 +2196,10 @@ function Widget( flags )
 	this.setContent = function( data, callback )
 	{
 		// Add callback
-		var cid = false;
+		let cid = false;
 		if( callback )
 			cid = addCallback( callback );
-		var o = {
+		let o = {
 			type:     'widget',
 			method:   'setContent',
 			widgetId: widgetId,
@@ -2278,8 +2270,8 @@ function Widget( flags )
 			widgetId: widgetId
 		} );
 		// Remove widget from list
-		var w = [];
-		var a;
+		let w = [];
+		let a;
 		for (a in Application.widgets)
 			if (Application.widgets[a] != this)
 				w.push(Application.widgets[a]);
@@ -2316,6 +2308,16 @@ function View( flags )
 	if( Application.viewId )
 	{
 		msg.parentViewId = Application.viewId;
+	}
+	
+	// Pop out!
+	this.popout = function()
+	{
+		Application.sendMessage( {
+			type:    'view',
+			method:  'popout',
+			viewId: viewId
+		} );
 	}
 
 	// Bring a window to front
@@ -2360,7 +2362,7 @@ function View( flags )
 	{
 		if( callback )
 			cid = addCallback( callback );
-		var o = {
+		let o = {
 			type:     'view',
 			method:   'getWindowElement',
 			viewId:   viewId,
@@ -2373,11 +2375,11 @@ function View( flags )
 	// Show the camera
 	this.openCamera = function( flags, callback )
 	{
-		var cid = addCallback( function( msg )
+		let cid = addCallback( function( msg )
 		{
 			callback( msg.data );
 		} );
-		var o = {
+		let o = {
 			type: 'view',
 			method: 'opencamera',
 			viewId: viewId,
@@ -2393,8 +2395,8 @@ function View( flags )
 	this.showBackButton = function( visible, callback )
 	{
 		if( !isMobile ) return;
-		var cid = addCallback( callback );
-		var o = {
+		let cid = addCallback( callback );
+		let o = {
 			type: 'view',
 			method: 'showbackbutton',
 			viewId: viewId,
@@ -2410,10 +2412,10 @@ function View( flags )
 	this.setContent = function( data, callback )
 	{
 		// Add callback
-		var cid = false;
+		let cid = false;
 		if( callback )
 			cid = addCallback( callback );
-		var o = {
+		let o = {
 			type:     'view',
 			method:   'setContent',
 			viewId: viewId,
@@ -2440,7 +2442,7 @@ function View( flags )
 	this.setAttributeById = function( id, property, value, callback )
 	{
 		// Add callback
-		var cid = false;
+		let cid = false;
 		if( callback ) cid = addCallback( callback );
 		Application.sendMessage( {
 			type:      'view',
@@ -2455,7 +2457,7 @@ function View( flags )
 	}
 	this.getAttributeById = function( id, property, callback )
 	{
-		var cid = false;
+		let cid = false;
 		if( callback ) cid = addCallback( callback );
 		Application.sendMessage( {
 			type:      'view',
@@ -2470,7 +2472,7 @@ function View( flags )
 	this.setContentById = function( id, data, callback )
 	{
 		// Add callback
-		var cid = false;
+		let cid = false;
 		if( callback ) cid = addCallback( callback );
 		Application.sendMessage( {
 			type:      'view',
@@ -2574,7 +2576,7 @@ function View( flags )
 	}
 	this.activate = function()
 	{
-		for( var a in Application.windows )
+		for( let a in Application.windows )
 		{
 			if( Application.windows[a] != this )
 				Application.windows[a].activated = false;
@@ -2612,7 +2614,7 @@ function View( flags )
 		// Recursive translator
 		function applyi18n( object )
 		{
-			for( var a = 0; a < object.length; a++ )
+			for( let a = 0; a < object.length; a++ )
 			{
 				object[a].name = i18n( object[a].name );
 				if( object[a].items && typeof( object[a].items ) == 'array' )
@@ -2654,8 +2656,8 @@ function View( flags )
 		this.closed = true;
 
 		// Kill slot
-		var w = [];
-		for( var a in Application.windows )
+		let w = [];
+		for( let a in Application.windows )
 		{
 			if( a == viewId ) continue;
 			else
@@ -2730,8 +2732,8 @@ function CloseView( id )
 // Make a new popupview --------------------------------------------------------
 function PopupView( parentWindow, flags )
 {
-	var popupViewId = 'popupwindow_' + ( new Date() ).getTime() + '.' + Math.random();
-	var msg = {
+	let popupViewId = 'popupwindow_' + ( new Date() ).getTime() + '.' + Math.random();
+	let msg = {
 		type:    'popupview',
 		data:    flags,
 		popupViewId: popupViewId
@@ -2741,8 +2743,8 @@ function PopupView( parentWindow, flags )
 // Screen object abstraction ---------------------------------------------------
 function Screen( flags )
 {
-	var screenId = 'screen_' + ( new Date() ).getTime() + '.' + Math.random();
-	var msg = {
+	let screenId = 'screen_' + ( new Date() ).getTime() + '.' + Math.random();
+	let msg = {
 		type:    'screen',
 		data:    flags,
 		screenId: screenId
@@ -2756,10 +2758,10 @@ function Screen( flags )
 	this.setContent = function( data, callback )
 	{
 		// Add callback
-		var cid = false;
+		let cid = false;
 		if( callback ) cid = addCallback( callback );
 
-		var o = {
+		let o = {
 			type:     'screen',
 			method:   'setContent',
 			screenId: screenId,
@@ -2812,7 +2814,7 @@ function Screen( flags )
 		// Recursive translator
 		function applyi18n( object )
 		{
-			for( var a = 0; a < object.length; a++ )
+			for( let a = 0; a < object.length; a++ )
 			{
 				object[a].name = i18n( object[a].name );
 				if( object[a].items && typeof( object[a].items ) == 'array' )
@@ -2841,9 +2843,9 @@ function Screen( flags )
 		if ( this.onClose ) this.onClose();
 
 		// Kill slot
-		var w = [];
-		var count = 0;
-		for( var a in Application.screens )
+		let w = [];
+		let count = 0;
+		for( let a in Application.screens )
 		{
 			if( a == screenId ) continue;
 			else
@@ -2892,13 +2894,13 @@ function Screen( flags )
 
 Shell = function()
 {
-	var cid = addCallback( this );
+	let cid = addCallback( this );
 
-	var shellObject = this;
+	let shellObject = this;
 
 	this.output = false;
 
-	var appObject = {
+	let appObject = {
 		applicationId: Application.applicationId,
 		authId:        Application.authId,
 		sessionId:     Application.sessionId
@@ -2956,7 +2958,7 @@ Shell = function()
 	// Adds an event
 	this.addEvent = function( eventName, persistent, callback )
 	{
-		var allowedEvents = [
+		let allowedEvents = [
 			'mount', 'unmount', 'openscreen', 'closescreen',
 			'openview', 'closeview' /* More to come... */
 		];
@@ -2966,8 +2968,8 @@ Shell = function()
 	{
 		if( !this.shellSession ) return;
 		if( this.output == 'console' ) console.log( 'Shell instance executing command line:', commandLine );
-		var cb = false;
-		var t = this;
+		let cb = false;
+		let t = this;
 
 		// Special extra callbacks in addition to pipe activity
 		if( callback )
@@ -3005,8 +3007,8 @@ Shell = function()
 	{
 		if( !this.shellSession ) return;
 		if( this.output == 'console' ) console.log( 'Shell instance executing evaluate');
-		var cb = false;
-		var t = this;
+		let cb = false;
+		let t = this;
 
 		// Special extra callbacks in addition to pipe activity
 		if( callback )
@@ -3036,8 +3038,8 @@ Shell = function()
 		if( !eventName ) this.events = [];
 		else
 		{
-			var nlist = [];
-			for( var a = 0; a < this.events.length; a++ )
+			let nlist = [];
+			for( let a = 0; a < this.events.length; a++ )
 			{
 				if( this.events[a][0] != eventName )
 					nlist.push( this.events[a] );
@@ -3058,7 +3060,7 @@ WebAudioLoader = function( filePath, callback )
 {
 	if( !__audioContext )
 	{
-		var au = window.AudioContext || window.webkitAudioContext;
+		let au = window.AudioContext || window.webkitAudioContext;
 		__audioContext = new au();
 	}           
 
@@ -3108,7 +3110,7 @@ WebAudioLoader = function( filePath, callback )
 				
 				while( this.bufferArrayIndex < this.bufferArray.length )
 				{
-					var schBuf = this.context.createBufferSource();
+					let schBuf = this.context.createBufferSource();
 					schBuf.buffer = this.bufferArray[ this.bufferArrayIndex++ ];
 					
 					// Add onended to the last piece
@@ -3218,7 +3220,7 @@ WebAudioLoader = function( filePath, callback )
 	// Create a gain node.
 	this.audioGraph.gainNode = this.audioGraph.context.createGain();
 
-	var t = this;
+	let t = this;
 
 	// Do the loading
 	(function()
@@ -3227,16 +3229,16 @@ WebAudioLoader = function( filePath, callback )
 		{
 			try
 			{
-				var url = filePath;
+				let url = filePath;
 				if( !( filePath.substr( 0, 5 ) == 'http:' || filePath.substr( 0, 6 ) == 'https:' ) && filePath.indexOf( '/system.library' ) != 0 )
 					url = getWebUrl( filePath );
 			
-				var bytes = 0;
-				var minBuffer = 262144;
+				let bytes = 0;
+				let minBuffer = 262144;
 			
 				fetch( url ).then( function( response )
 				{
-					var reader = response.body.getReader();
+					let reader = response.body.getReader();
 				
 					function read()
 					{
@@ -3278,8 +3280,8 @@ WebAudioLoader = function( filePath, callback )
 				// Extend the buffer asyncronously
 				function scheduleBuffers( buffer )
 				{
-					var ctx = t.audioGraph.context;
-					var grp = t.audioGraph;
+					let ctx = t.audioGraph.context;
+					let grp = t.audioGraph;
 				
 					bytes += buffer.length;
 				
@@ -3304,11 +3306,11 @@ WebAudioLoader = function( filePath, callback )
 		// Non streaming
 		else
 		{
-			var request = new XMLHttpRequest();
+			let request = new XMLHttpRequest();
 			request.responseType = 'arraybuffer';
 			request.onload = function( evt, a1, c1, b1, d1, e1, f1, g1 )
 			{
-				var theData = request.response;
+				let theData = request.response;
 			
 				// Try to get ID3 information
 				try
@@ -3322,9 +3324,9 @@ WebAudioLoader = function( filePath, callback )
 							return (this.getUint8(a)<<21)|(this.getUint8(a+1)<<14)|
 							(this.getUint8(a+2)<<7)|this.getUint8(a+3)
 						}
-						var frID3={
+						let frID3={
 							'APIC':function(x,y,z,q){
-								var b=0,c=['',0,''],d=1,e,b64;
+								let b=0,c=['',0,''],d=1,e,b64;
 								while(b<3)e=x.getUint8(y+z+d++),c[b]+=String.fromCharCode(e),
 								e!=0||(b+=b==0?(c[1]=x.getUint8(y+z+d),2):1);
 								b64='data:'+c[0]+';base64,'+
@@ -3348,7 +3350,7 @@ WebAudioLoader = function( filePath, callback )
 						return readID3( a, b, c, d, e, f, g, h );
 					}
 					
-					var info = parseID3( theData, a1, b1, c1, d1, e1, f1, g1 );
+					let info = parseID3( theData, a1, b1, c1, d1, e1, f1, g1 );
 										
 					if( info && info.TIT2 )
 					{
@@ -3425,7 +3427,7 @@ function AudioObject( sample, callback )
 	this.loaded = false;
 	this.loadSample = function( path )
 	{
-		var t = this;
+		let t = this;
 		if( !( path.substr( 0, 5 ) == 'http:' || path.substr( 0, 6 ) == 'https:' ) )
 			path = getImageUrl( path );
 		this.loader = new WebAudioLoader( path, function( result ){
@@ -3471,17 +3473,17 @@ function AudioObject( sample, callback )
 		if( !this.paused )
 		{
 			// Reboot the counter!
-			var t = this;
+			let t = this;
 			if( this.interval ) clearInterval( this.interval );
 			this.interval = setInterval( function()
 			{
 				if( t.loader && t.loader.audioGraph.started && t.onplaying && !t.loader.audioGraph.paused )
 				{
-					var ct = t.getContext().currentTime;
-					var pt = t.loader.audioGraph.playTime;
+					let ct = t.getContext().currentTime;
+					let pt = t.loader.audioGraph.playTime;
 					try
 					{
-						var dr = t.loader.audioGraph.source.buffer.duration;
+						let dr = t.loader.audioGraph.source.buffer.duration;
 						t.onplaying( ( ct - pt ) / dr, ct, pt, dr );
 					}
 					catch( e )
@@ -3539,17 +3541,17 @@ function AudioObject( sample, callback )
 	this.play = function()
 	{
 		this.stopped = false;
-		var t = this;
+		let t = this;
 		if( this.interval ) clearInterval( this.interval );
 		this.interval = setInterval( function()
 		{
 			if( t.loader && t.loader.audioGraph.started && t.onplaying && !t.loader.audioGraph.paused )
 			{
-				var ct = t.getContext().currentTime;
-				var pt = t.loader.audioGraph.playTime;
+				let ct = t.getContext().currentTime;
+				let pt = t.loader.audioGraph.playTime;
 				try
 				{
-					var dr = t.loader.audioGraph.source.buffer.duration;
+					let dr = t.loader.audioGraph.source.buffer.duration;
 					t.onplaying( ( ct - pt ) / dr, ct, pt, dr );
 				}
 				catch( e )
@@ -3562,7 +3564,7 @@ function AudioObject( sample, callback )
 		// Handle ending
 		if( !t.loader )
 			return;
-		var ag = t.loader.audioGraph;
+		let ag = t.loader.audioGraph;
 	
 		function ended()
 		{
@@ -3603,7 +3605,7 @@ function getImageUrl( path, mode )
 	if( !mode ) mode = 'rs';
 	
 	// TODO: Determine from Doors!
-	var apath = Application.appPath ? Application.appPath : Application.filePath;
+	let apath = Application.appPath ? Application.appPath : Application.filePath;
 
 	if( path.toLowerCase().substr( 0, 8 ) == 'progdir:' )
 	{
@@ -3627,9 +3629,9 @@ function getImageUrl( path, mode )
 		path = encodeURIComponent( path );
 	}
 
-	var prt = 'authid=' + ( Application.authId ? Application.authId : '' );
+	let prt = 'authid=' + ( Application.authId ? Application.authId : '' );
 	if( Application.sessionId ) prt = 'sessionid=' + Application.sessionId;
-	var u = '/system.library/file/read?' + prt + '&path=' + path + '&mode=rs';
+	let u = '/system.library/file/read?' + prt + '&path=' + path + '&mode=rs';
 	return u;
 }
 // Alias
@@ -3642,7 +3644,7 @@ function File( path )
 {
 	this.path = path;
 	this.vars = {};
-	var apath = Application.appPath ? Application.appPath : Application.filePath;
+	let apath = Application.appPath ? Application.appPath : Application.filePath;
 
 	// Adds translations to file replacements
 	this.i18n = function()
@@ -3650,7 +3652,7 @@ function File( path )
 		if( !this.replacements ) this.replacements = {};
 		if( window.translations )
 		{
-			for( var a in window.translations )
+			for( let a in window.translations )
 			{
 				this.replacements[a] = window.translations[a];
 			}
@@ -3660,9 +3662,9 @@ function File( path )
 	// Execute replacements
 	this.doReplacements = function( data )
 	{
-		var str = data ? data : this.data;
+		let str = data ? data : this.data;
 		if( !str ) return '';
-		for( var a in this.replacements )
+		for( let a in this.replacements )
 		{
 			str = str.split( '{' + a + '}' ).join( this.replacements[a] );
 		}
@@ -3675,13 +3677,13 @@ function File( path )
 	{
 		if( arguments )
 		{
-			for( var a in arguments )
+			for( let a in arguments )
 				this.vars[a] = arguments[a];
 		}
 		if( command )
 			this.vars['query'] = command;
 
-		var fid = addCallback( this );
+		let fid = addCallback( this );
 		Application.sendMessage( {
 			type:    'file',
 			data:    { path: this.path },
@@ -3695,7 +3697,7 @@ function File( path )
 	// Load the file
 	this.load = function( mode )
 	{
-		var fid = addCallback( this );
+		let fid = addCallback( this );
 		if( !mode ) mode = 'r'; else mode = mode.toLowerCase();
 		if( mode=='r' || mode=='rb' ) this.vars.mode = mode;
 		
@@ -3714,7 +3716,7 @@ function File( path )
 	{
 		if( !filename ) filename = this.path;
 
-		var fid = addCallback( this );
+		let fid = addCallback( this );
 		Application.sendMessage( {
 			type:    'file',
 			data:    { filename: filename, data: Base64.encode( content ) },
@@ -3727,9 +3729,9 @@ function File( path )
 	{
 		if( !filename ) filename = this.path;
 
-		var fid = addCallback( this );
+		let fid = addCallback( this );
 
-		var dataMode = 'raw';
+		let dataMode = 'raw';
 		if( ( mode && mode == 'wb' ) || ( this.vars && this.vars.mode == 'wb' ) )
 		{
 			dataMode = 'string';
@@ -3756,13 +3758,13 @@ function File( path )
 
 function Module( module )
 {
-	var fid = addCallback( this );
+	let fid = addCallback( this );
 	this.vars = [];
 	this.execute = function( method, args )
 	{
-		var fid = addCallback( this );
+		let fid = addCallback( this );
 		
-		var ms = {
+		let ms = {
 			type:    'module',
 			module:  module,
 			method:  method,
@@ -3787,11 +3789,11 @@ function Module( module )
 GetClass = function( source )
 {
 	// Assign the functions of the class
-	var start = 0;
-	var end = source.indexOf( '.' );
+	let start = 0;
+	let end = source.indexOf( '.' );
 	if( end < 0 )
 		end = 10000;
-	var klass = window[ source.substring( start, end ) ];
+	let klass = window[ source.substring( start, end ) ];
 	if( typeof klass == 'undefined' )
 		return null;
 	while( end < source.length )
@@ -3814,7 +3816,7 @@ FriendNetwork =
 {
 	isReady: function( callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'friendnet',
 			method: 'isReady',
@@ -3826,7 +3828,7 @@ FriendNetwork =
 	},
 	list: function( callback, extra )
     {
-    	var message =
+    	let message =
 		{
 			type:   'friendnet',
 			method: 'list',
@@ -3838,7 +3840,7 @@ FriendNetwork =
 	},
 	subscribeToHostListUpdates: function( callback, extra )
     {
-    	var message =
+    	let message =
 		{
 			type:   'friendnet',
 			method: 'subscribeToHostListUpdates',
@@ -3850,7 +3852,7 @@ FriendNetwork =
 	},
 	unsubscribeFromHostListUpdates: function( identifier, callback, extra )
     {
-    	var message =
+    	let message =
 		{
 			type:   'friendnet',
 			method: 'unsubscribeFromHostListUpdates',
@@ -3863,7 +3865,7 @@ FriendNetwork =
 	},
 	subscribeToHostUpdates: function( callback, extra )
     {
-    	var message =
+    	let message =
 		{
 			type:   'friendnet',
 			method: 'subscribeToHostUpdates',
@@ -3875,7 +3877,7 @@ FriendNetwork =
 	},
 	unsubscribeFromHostListUpdates: function( key, callback, extra )
     {
-    	var message =
+    	let message =
 		{
 			type:   'friendnet',
 			method: 'unsubscribeFromHostUpdates',
@@ -3888,7 +3890,7 @@ FriendNetwork =
 	},
 	connect: function( url, hostType, flags, callback, extra )
     {
-		var message =
+		let message =
 		{
 			type: 'friendnet',
 			method: 'connect',
@@ -3903,7 +3905,7 @@ FriendNetwork =
 	},
 	sendFile: function( key, file, infos, callback, extra )
     {
-		var message =
+		let message =
 		{
 			type: 'friendnet',
 			method: 'sendFile',
@@ -3918,7 +3920,7 @@ FriendNetwork =
 	},
 	disconnect: function ( key, callback, extra )
 	{
-		var message =
+		let message =
 		{
 			type: 'friendnet',
 			method: 'disconnect',
@@ -3931,7 +3933,7 @@ FriendNetwork =
 	},
 	disconnectByName: function ( hostName, callback, extra )
 	{
-		var message =
+		let message =
 		{
 			type: 'friendnet',
 			method: 'disconnectByName',
@@ -3944,7 +3946,7 @@ FriendNetwork =
 	},
 	host: function( name, type, applicationName, password, description, data, callback, extra )
     {
-    	var message =
+    	let message =
 		{
 			type: 'friendnet',
 			method: 'host',
@@ -3962,7 +3964,7 @@ FriendNetwork =
 	},
 	dispose: function( key, callback, extra )
     {
-		var message =
+		let message =
 		{
 			type: 'friendnet',
 			method: 'dispose',
@@ -3975,7 +3977,7 @@ FriendNetwork =
 	},
 	sendCredentials: function( key, password, encrypted, callback, extra )
 	{
-		var message =
+		let message =
 		{
 			type: 'friendnet',
 			method: 'sendCredentials',
@@ -3990,7 +3992,7 @@ FriendNetwork =
 	},
 	setHostPassword: function( key, password, callback, extra )
 	{
-		var message =
+		let message =
 		{
 			type: 'friendnet',
 			method: 'setHostPassword',
@@ -4004,7 +4006,7 @@ FriendNetwork =
 	},
 	send: function( key, data, callback, extra )
     {
-		var message =
+		let message =
 		{
 			type: 'friendnet',
 			method: 'send',
@@ -4018,7 +4020,7 @@ FriendNetwork =
     },
 	updateHostPassword: function( key, password, callback, extra )
     {
-		var message =
+		let message =
 		{
 			type: 'friendnet',
 			method: 'updateHostPassword',
@@ -4032,7 +4034,7 @@ FriendNetwork =
     },
 	closeSession: function( key, callback, extra )
     {
-		var message =
+		let message =
 		{
 			type: 'friendnet',
 			method: 'closeSession',
@@ -4052,7 +4054,7 @@ FriendNetwork =
   	},
 	status: function( callback, extra )
 	{
-		var message =
+		let message =
 		{
 			type: 'friendnet',
 			method: 'status',
@@ -4064,7 +4066,7 @@ FriendNetwork =
 	},
 	getUserInformation: function( callback, extra )
 	{
-		var message =
+		let message =
 		{
 			type: 'friendnet',
 			method: 'getUserInformation',
@@ -4083,14 +4085,14 @@ FriendNetwork =
 		if( dataPacket.callback )
 		{
 			console.log( 'FriendNetwork callback execute: ' + dataPacket.callback );
-			var f = extractCallback( dataPacket.callback );
+			let f = extractCallback( dataPacket.callback );
 			if ( f )
 				f( dataPacket );
 		}
 	},
 	listToConsole: function( callback, extra )
 	{
-		var message =
+		let message =
 		{
 			type: 'friendnet',
 			method: 'listToConsole',
@@ -4105,7 +4107,7 @@ FriendNetworkDrive =
 {
 	activate: function( activate, callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'friendNetworkShare',
 			method: 'activate',
@@ -4116,7 +4118,7 @@ FriendNetworkDrive =
 	},
 	changeFriendNetworkSettings: function( settings, callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'friendNetworkDrive',
 			method: 'changeFriendNetworkSettings',
@@ -4133,7 +4135,7 @@ FriendNetworkShare =
 {
 	activate: function( activate, callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'friendNetworkShare',
 			method: 'activate',
@@ -4144,7 +4146,7 @@ FriendNetworkShare =
 	},
 	changeWorkgroupPassword: function( password, callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'friendNetworkShare',
 			method: 'changeWorkgroupPassword',
@@ -4157,7 +4159,7 @@ FriendNetworkShare =
 	},
 	changeFriendNetworkSettings: function( settings, callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'friendNetworkShare',
 			method: 'changeFriendNetworkSettings',
@@ -4170,7 +4172,7 @@ FriendNetworkShare =
 	},
 	relocateHTML: function( html, sourceDrive, linkReplacement, linkFunction, callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'friendNetworkShare',
 			method: 'relocateHTML',
@@ -4188,7 +4190,7 @@ FriendNetworkFriends =
 {
 	listCommunities: function( url, callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'friendNetworkFriends',
 			method: 'listCommunities',
@@ -4201,7 +4203,7 @@ FriendNetworkFriends =
 	},
 	changeFriendNetworkSettings: function( settings, callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'friendNetworkFriends',
 			method: 'changeFriendNetworkSettings',
@@ -4214,7 +4216,7 @@ FriendNetworkFriends =
 	},
 	getUniqueDeviceIdentifier: function( callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'friendNetworkFriends',
 			method: 'getUniqueDeviceIdentifier',
@@ -4226,7 +4228,7 @@ FriendNetworkFriends =
 	},
 	getDeviceInformation: function( flags, callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'friendNetworkFriends',
 			method: 'getDeviceInformation',
@@ -4242,7 +4244,7 @@ FriendNetworkDoor =
 {
 	activate: function( activate, callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'friendNetworkDoor',
 			method: 'activate',
@@ -4253,7 +4255,7 @@ FriendNetworkDoor =
 	},
 	relocateHTML: function( html, sourceDrive, linkReplacement, linkFunction, callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'friendNetworkDoor',
 			method: 'relocateHTML',
@@ -4268,7 +4270,7 @@ FriendNetworkDoor =
 	},
 	shareDoor: function( door, parameters, callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'friendNetworkDoor',
 			method: 'shareDoor',
@@ -4282,7 +4284,7 @@ FriendNetworkDoor =
 	},
 	closeSharedDoor: function( hostName, shareName, callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'friendNetworkDoor',
 			method: 'shareDoor',
@@ -4296,7 +4298,7 @@ FriendNetworkDoor =
 	},
 	connectToDoor: function( hostName, appName, callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'friendNetworkDoor',
 			method: 'connectToDoor',
@@ -4310,7 +4312,7 @@ FriendNetworkDoor =
 	},
 	disconnectFromDoor: function( hostName, appName, callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'friendNetworkDoor',
 			method: 'disconnectFromDoor',
@@ -4324,7 +4326,7 @@ FriendNetworkDoor =
 	},
 	changeFriendNetworkSettings: function( settings, callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'friendNetworkDoor',
 			method: 'changeFriendNetworkSettings',
@@ -4340,7 +4342,7 @@ FriendNetworkApps =
 {
 	registerApplication: function( appInformation, userInformation, password, callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'friendNetworkApps',
 			method: 'registerApplication',
@@ -4355,7 +4357,7 @@ FriendNetworkApps =
 	},
 	closeApplication: function( appIdentifier, callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'friendNetworkApps',
 			method: 'closeApplication',
@@ -4368,7 +4370,7 @@ FriendNetworkApps =
 	},
 	closeConnections: function( appIdentifier, callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'friendNetworkApps',
 			method: 'closeConnections',
@@ -4381,7 +4383,7 @@ FriendNetworkApps =
 	},
 	closeRunningConnections: function( appIdentifier, callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'friendNetworkApps',
 			method: 'closeRunningConnections',
@@ -4394,7 +4396,7 @@ FriendNetworkApps =
 	},
 	openHost: function( appIdentifier, callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'friendNetworkApps',
 			method: 'openHost',
@@ -4406,7 +4408,7 @@ FriendNetworkApps =
 	},
 	closeHost: function( appIdentifier, callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'friendNetworkApps',
 			method: 'closeHost',
@@ -4418,7 +4420,7 @@ FriendNetworkApps =
 	},
 	connectToUser: function( appIdentifier, nameHost, callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'friendNetworkApps',
 			method: 'connectToUser',
@@ -4432,7 +4434,7 @@ FriendNetworkApps =
 	},
 	getHosts: function( appIdentifier, filters, registerToUpdates, callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'friendNetworkApps',
 			method: 'getHosts',
@@ -4452,7 +4454,7 @@ FriendNetworkApps =
 	},
 	closeUser: function( appIdentifier, playerIdentifier, callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'friendNetworkApps',
 			method: 'closeUser',
@@ -4466,7 +4468,7 @@ FriendNetworkApps =
 	},
 	establishConnections: function( appIdentifier, callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'friendNetworkApps',
 			method: 'establishConnections',
@@ -4479,7 +4481,7 @@ FriendNetworkApps =
 	},
 	sendMessageToAll: function( appIdentifier, userIdentifier, message, callback, extra )
 	{
-    	var message =
+    	message =
 		{
 			type:   'friendNetworkApps',
 			method: 'sendMessageToAll',
@@ -4494,7 +4496,7 @@ FriendNetworkApps =
 	},
 	startApplication: function( appIdentifier, callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'friendNetworkApps',
 			method: 'startApplication',
@@ -4514,7 +4516,7 @@ DormantMaster = {
 	// Adds a doormant appdoor
 	addAppDoor: function( dormantDoorObject )
 	{
-		var uniqueId = generateUniqueId( this.doors );
+		let uniqueId = generateUniqueId( this.doors );
 		this.doors[ uniqueId ] = dormantDoorObject;
 		dormantDoorObject.uniqueId = uniqueId;
 		Application.sendMessage( {
@@ -4530,7 +4532,7 @@ DormantMaster = {
 		info.Dormant = new Object();
 		info.Dormant.getDirectory = function( path, callback )
 		{
-			var cid = addCallback( callback );
+			let cid = addCallback( callback );
 
 			console.log( 'Api.js - proxydoor - asking for folders.' );
 
@@ -4545,9 +4547,9 @@ DormantMaster = {
 	// Get a list of all doors
 	getDoors: function( callback )
 	{
-		var t = this;
-		var fid = addCallback( function( msg ){
-			for( var a in msg )
+		let t = this;
+		let fid = addCallback( function( msg ){
+			for( let a in msg )
 				t.setupProxyDoor( msg[a] );
 			if( callback )
 				callback( msg );
@@ -4572,30 +4574,30 @@ DormantMaster = {
 	},
 	addEvent: function( eventObject )
 	{
-		var mesg = {};
-		for( var a in eventObject ) mesg[a] = eventObject[a];
+		let mesg = {};
+		for( let a in eventObject ) mesg[a] = eventObject[a];
 		mesg.type = 'dormantmaster';
 		mesg.method = 'addevent';
 		Application.sendMessage( mesg );
 	},
 	pollEvent: function( eventObject )
 	{
-		var mesg = {};
-		for( var a in eventObject ) mesg[a] = eventObject[a];
+		let mesg = {};
+		for( let a in eventObject ) mesg[a] = eventObject[a];
 		mesg.type = 'dormantmaster';
 		mesg.method = 'pollevent';
 		Application.sendMessage( mesg );
 	},
 	delApplicationEvents: function( appname )
 	{
-		var mesg = { applicationName: appname };
+		let mesg = { applicationName: appname };
 		mesg.type = 'dormantmaster';
 		mesg.method = 'delappevents';
 		Application.sendMessage( mesg );
 	},
 	createDrive: function( options, callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'dormantmaster',
 			method: 'createDrive',
@@ -4608,7 +4610,7 @@ DormantMaster = {
 	},
 	destroyDrive: function( driveId, options, callback, extra )
 	{
-    	var message =
+    	let message =
 		{
 			type:   'dormantmaster',
 			method: 'destroyDrive',
@@ -4630,11 +4632,11 @@ ApplicationStorage = {
 
 	set : function( id, data, callback )
 	{
-		var bundle = {
+		let bundle = {
 			id : id,
 			data : data,
 		};
-		var msg = {
+		let msg = {
 			method : 'set',
 			data : bundle,
 		};
@@ -4643,7 +4645,7 @@ ApplicationStorage = {
 
 	get : function( id, callback )
 	{
-		var msg = {
+		let msg = {
 			method : 'get',
 			data : {
 				id : id,
@@ -4654,7 +4656,7 @@ ApplicationStorage = {
 
 	remove : function( id, callback )
 	{
-		var msg = {
+		let msg = {
 			method : 'remove',
 			data : {
 				id : id,
@@ -4669,7 +4671,7 @@ ApplicationStorage = {
 	{
 		console.log( 'api.ApplicationStorage.send', msg );
 		if ( callback ) {
-			var callbackId = addCallback( callback );
+			let callbackId = addCallback( callback );
 			msg.callbackId = callbackId;
 		}
 
@@ -4686,7 +4688,7 @@ Authenticate = {
 
 	load : function( id, callback )
 	{
-		var msg = {
+		let msg = {
 			method : 'load',
 			data : {
 				id : ( id ? id : false )
@@ -4697,7 +4699,7 @@ Authenticate = {
 
 	uniqueId : function( item, callback )
 	{
-		var msg = {
+		let msg = {
 			method : 'uniqueid',
 			data : {
 				destinationViewId : item.destinationViewId,
@@ -4710,7 +4712,7 @@ Authenticate = {
 
 	encryptKey : function( item, callback )
 	{
-		var msg = {
+		let msg = {
 			method : 'encryptkey',
 			data : {
 				destinationViewId : item.destinationViewId,
@@ -4722,7 +4724,7 @@ Authenticate = {
 
 	decryptKey : function( item, callback )
 	{
-		var msg = {
+		let msg = {
 			method : 'decryptkey',
 			data : {
 				destinationViewId : item.destinationViewId,
@@ -4734,7 +4736,7 @@ Authenticate = {
 
 	encrypt : function( item, callback )
 	{
-		var msg = {
+		let msg = {
 			method : 'encrypt',
 			data : {
 				destinationViewId : item.destinationViewId,
@@ -4746,7 +4748,7 @@ Authenticate = {
 
 	decrypt : function( item, callback )
 	{
-		var msg = {
+		let msg = {
 			method : 'decrypt',
 			data : {
 				destinationViewId : item.destinationViewId,
@@ -4761,7 +4763,7 @@ Authenticate = {
 	send : function( msg, callback )
 	{
 		if ( callback ) {
-			var callbackId = addCallback( callback );
+			let callbackId = addCallback( callback );
 			msg.callbackId = callbackId;
 		}
 
@@ -4778,7 +4780,7 @@ Authenticate = {
 {
 	ns.PouchDB = function( conf, readyCallback )
 	{
-		var self = this;
+		let self = this;
 		self.dbName = conf.dbName;
 		self.replicationTargets = conf.replicationTargets || [];
 		self.readyCallback = readyCallback || null;
@@ -4793,9 +4795,9 @@ Authenticate = {
 
 	ns.PouchDB.prototype.create = function( item, callback )
 	{
-		var self = this;
+		let self = this;
 		console.log( 'PouchDB.create', item );
-		var msg = {
+		let msg = {
 			type : 'create',
 			data : item,
 		};
@@ -4804,10 +4806,10 @@ Authenticate = {
 
 	ns.PouchDB.prototype.read = function( id, callback )
 	{
-		var self = this;
+		let self = this;
 		console.log( 'PouchDB.read', id );
 		id = id || null;
-		var msg = {
+		let msg = {
 			type : 'read',
 			data : [ id ]
 		};
@@ -4818,16 +4820,16 @@ Authenticate = {
 
 	ns.PouchDB.prototype.init = function()
 	{
-		var self = this;
+		let self = this;
 		if ( !self.dbName )
 			throw new Error( 'PouchDB - no name set for database' );
 
-		var cid = addCallback( onready );
-		var options = {
+		let cid = addCallback( onready );
+		let options = {
 			dbName             : self.dbName,
 			replicationTargets : self.replicationTargets,
 		};
-		var initMsg = {
+		let initMsg = {
 			type : 'init',
 			data   : {
 				cid     : cid,
@@ -4849,7 +4851,7 @@ Authenticate = {
 
 	ns.PouchDB.prototype.setReady = function()
 	{
-		var self = this;
+		let self = this;
 		self.ready = true;
 		if ( self.sendQueue.length )
 			self.executeSendQueue();
@@ -4857,7 +4859,7 @@ Authenticate = {
 
 	ns.PouchDB.prototype.executeSendQueue = function()
 	{
-		var self = this;
+		let self = this;
 		self.sendQueue.forEach( send );
 		self.sendQueue = [];
 
@@ -4868,9 +4870,9 @@ Authenticate = {
 
 	ns.PouchDB.prototype.sendOp = function( msg, callback )
 	{
-		var self = this;
-		var cid = addCallback( opBack );
-		var wrap = {
+		let self = this;
+		let cid = addCallback( opBack );
+		let wrap = {
 			type : 'crud',
 			data : {
 				dbName : self.dbName,
@@ -4888,14 +4890,14 @@ Authenticate = {
 
 	ns.PouchDB.prototype.send = function( msg, force )
 	{
-		var self = this;
+		let self = this;
 		if ( !self.ready && !force )
 		{
 			self.sendQueue.push( msg );
 			return;
 		}
 
-		var wrap = {
+		let wrap = {
 			type : 'pouchdb',
 			data : msg,
 		}
@@ -4913,7 +4915,7 @@ Authenticate = {
 		if( !( this instanceof window.FConn ) )
 			return new window.FConn();
 
-		var self = this;
+		let self = this;
 		if ( Friend.conn  ) {
 			if (Friend.conn instanceof ns.FConn) {
 				return Friend.conn;
@@ -4930,12 +4932,12 @@ Authenticate = {
 	// Public
 	ns.FConn.prototype.request = function( msg, callback )
 	{
-		var self = this;
+		let self = this;
 		if( !callback || !( 'function' === typeof callback ) )
 			throw new Error( 'FConn.request - no callback' );
 
-		var cId = addCallback( callWrap );
-		var wrap = {
+		let cId = addCallback( callWrap );
+		let wrap = {
 			method : 'request',
 			callbackId : cId,
 			data : msg,
@@ -4950,8 +4952,8 @@ Authenticate = {
 
 	ns.FConn.prototype.send = function( msg )
 	{
-		var self = this;
-		var wrap = {
+		let self = this;
+		let wrap = {
 			method : 'send',
 			data : msg
 		};
@@ -4960,7 +4962,7 @@ Authenticate = {
 
 	ns.FConn.prototype.on = function( event, handler )
 	{
-		var self = this;
+		let self = this;
 		if ( self.listeners[ event ]) {
 			//console.log( { event : event, listeners : self.listeners });
 			throw new Error( 'FConn.on - event already registered' );
@@ -4971,21 +4973,21 @@ Authenticate = {
 
 	ns.FConn.prototype.off = function( event )
 	{
-		var self = this;
+		let self = this;
 		if ( self.listeners[ event ])
 			delete self.listeners[ event ];
 	}
 
 	ns.FConn.prototype.whenReady = function( callback )
 	{
-		var self = this;
+		let self = this;
 		self.onReadyArr.push( callback );
 	}
 
 	ns.FConn.prototype.close = function()
 	{
-		var self = this;
-		var msg = {
+		let self = this;
+		let msg = {
 			method : 'remove',
 		}
 		self.s( msg );
@@ -4997,9 +4999,9 @@ Authenticate = {
 
 	ns.FConn.prototype.init = function()
 	{
-		var self = this;
-		var cId = addCallback( fconnReady );
-		var initMsg = {
+		let self = this;
+		let cId = addCallback( fconnReady );
+		let initMsg = {
 			method : 'register',
 			callbackId : cId,
 		};
@@ -5017,9 +5019,9 @@ Authenticate = {
 	{
 
 
-		var self = this;
-		var event = msg.data;
-		var handler = self.listeners[ event.type ];
+		let self = this;
+		let event = msg.data;
+		let handler = self.listeners[ event.type ];
 		if( handler )
 		{
 			handler( event.data );
@@ -5031,8 +5033,8 @@ Authenticate = {
 
 	ns.FConn.prototype.executeSendQueue = function()
 	{
-		var self = this;
-		var queue = self.sendQueue;
+		let self = this;
+		let queue = self.sendQueue;
 		self.sendQueue = [];
 		queue.forEach( send );
 		function send( msg ) {
@@ -5042,7 +5044,7 @@ Authenticate = {
 
 	ns.FConn.prototype.s = function( msg, force )
 	{
-		var self = this;
+		let self = this;
 		if ( !force && !self.ready ) {
 			self.sendQueue.push( msg );
 			return;
@@ -5060,14 +5062,14 @@ Authenticate = {
 {
 	ns.Calendar = function()
 	{
-		var self = this;
+		let self = this;
 		self.init();
 	}
 
 	ns.Calendar.prototype.addEvent = function( data, messageToUser, callback )
 	{
-		var self = this;
-		var event = {
+		let self = this;
+		let event = {
 			Date        : data.Date,
 			Title       : data.Title,
 			Description : data.Description,
@@ -5075,11 +5077,11 @@ Authenticate = {
 			TimeTo      : data.TimeTo,
 		};
 
-		var cid = undefined;
+		let cid = undefined;
 		if ( callback )
 			cid = addCallback( callback );
 
-		var wrap = {
+		let wrap = {
 			type : 'add',
 			data : {
 				cid   : cid,
@@ -5094,13 +5096,13 @@ Authenticate = {
 
 	ns.Calendar.prototype.init = function()
 	{
-		var self = this;
+		let self = this;
 	}
 
 	ns.Calendar.prototype.send = function( msg )
 	{
-		var self = this;
-		var wrap = {
+		let self = this;
+		let wrap = {
 			type : 'calendar',
 			data : msg,
 		}
@@ -5114,7 +5116,7 @@ Locale = {
 	// Get language 'en' or 'no' etc
 	getLocale: function( callback )
 	{
-		var cid = addCallback( callback );
+		let cid = addCallback( callback );
 		Application.sendMessage( {
 			type: 'system',
 			command: 'getlocale',
@@ -5125,11 +5127,11 @@ Locale = {
 	importTranslations: function( d )
 	{
 		// Add translations
-		var tr = d.split( "\n" );
-		for( var a = 0; a < tr.length; a++ )
+		let tr = d.split( "\n" );
+		for( let a = 0; a < tr.length; a++ )
 		{
-			var pair = tr[a].split( ':' );
-			var key = Trim( pair[0] );
+			let pair = tr[a].split( ':' );
+			let key = Trim( pair[0] );
 			if( !key ) continue;
 			if( !window.translations[key] )
 				window.translations[key] = Trim( pair[1] );
@@ -5141,8 +5143,8 @@ Locale = {
 
 function Notify( msg, callback, clickcallback )
 {
-	var cid = addCallback( callback );
-	var ccid = clickcallback ? addCallback( clickcallback ) : false;
+	let cid = addCallback( callback );
+	let ccid = clickcallback ? addCallback( clickcallback ) : false;
 	Application.sendMessage( {
 		type: 'system',
 		command: 'notification',
@@ -5164,7 +5166,7 @@ function NotifyMessage( title, text, callback, clickcallback )
 Doors = {
 	getScreens: function( callback )
 	{
-		var cid = addCallback( callback );
+		let cid = addCallback( callback );
 		Application.sendMessage( {
 			type: 'system',
 			command: 'getopenscreens',
@@ -5178,7 +5180,7 @@ DOS =
 {
 	getDirectory: function( path, flags, callback, extra )
 	{
-		var message =
+		let message =
 		{
 			type: 'dos',
 			method: 'getDirectory',
@@ -5192,7 +5194,7 @@ DOS =
 	},
 	getDisks: function( flags, callback, extra )
 	{
-		var message = 
+		let message = 
 		{
 			type: 'dos',
 			method: 'getDisks',
@@ -5205,7 +5207,7 @@ DOS =
 	},
 	executeJSX: function( path, args, callback, extra )
 	{
-		var message =
+		let message =
 		{
 			type: 'dos',
 			method: 'executeJSX',
@@ -5221,7 +5223,7 @@ DOS =
 			extra.iframe.src = '/webclient/app.html?authid=' + Application.authId;
 			extra.iframe.onload = function()
 			{
-				var i = extra.iframe;
+				let i = extra.iframe;
 				delete message.extra.iframe;
 				message.viewId = null;
 				message.applicationId = null;
@@ -5233,7 +5235,7 @@ DOS =
 	},
 	loadHTML: function( path, callback, extra )
 	{
-		var message =
+		let message =
 		{
 			type: 'dos',
 			method: 'loadHTML',
@@ -5245,7 +5247,7 @@ DOS =
 	},
 	fileExist: function( path, callback, extra )
 	{
-		var message =
+		let message =
 		{
 			type: 'dos',
 			method: 'fileAccess',
@@ -5261,7 +5263,7 @@ DOS =
 	},
 	getDriveInfo: function( path, callback, extra )
 	{
-		var message =
+		let message =
 		{
 			type: 'dos',
 			method: 'getDriveInfo',
@@ -5273,7 +5275,7 @@ DOS =
 	},
 	getFileInfo: function( path, callback, extra )
 	{
-		var message =
+		let message =
 		{
 			type: 'dos',
 			method: 'getFileInfo',
@@ -5285,7 +5287,7 @@ DOS =
 	},
 	openWindowByFilename: function( fileInfo, ext )
 	{
-		var message =
+		let message =
 		{
 			type: 'dos', 
 			method: 'openWindowByFilename', 
@@ -5302,7 +5304,7 @@ function Door( path )
 {
 	this.path = path;
 	this.handler = 'void';
-	var door = this;
+	let door = this;
 	this.initialized = false;
 	// Initialize door object
 	this.init = function()
@@ -5371,11 +5373,11 @@ function Door( path )
 			{
 				if( callback )
 				{
-					var objects = JSON.parse( data.data );
+					let objects = JSON.parse( data.data );
 					if( typeof( objects ) == 'object' )
 					{
-						var o = [];
-						for( var a in objects )
+						let o = [];
+						for( let a in objects )
 							o.push( objects[a] );
 						callback( o );
 					}
@@ -5394,7 +5396,7 @@ function Door( path )
 
 function Printdialog( flags, triggerfunction )
 {
-	var cid = triggerfunction ? addCallback( triggerfunction ) : false;
+	let cid = triggerfunction ? addCallback( triggerfunction ) : false;
 	
 	if( flags && flags.triggerFunction )
 	{
@@ -5414,12 +5416,12 @@ function Printdialog( flags, triggerfunction )
 
 function Filedialog( object, triggerFunction, path, type, filename, title )
 {
-	var mainview = false;
-	var targetview = false;
-	var suffix = false;
-	var multiSelect = true; // Select multiple files
-	var keyboardNavigation = false;
-	var rememberPath = false;
+	let mainview = false;
+	let targetview = false;
+	let suffix = false;
+	let multiSelect = true; // Select multiple files
+	let keyboardNavigation = false;
+	let rememberPath = false;
 	
 	// We have a view
 	if( object && object.getViewId )
@@ -5429,7 +5431,7 @@ function Filedialog( object, triggerFunction, path, type, filename, title )
 	// We have flags
 	if( object )
 	{
-		for( var a in object )
+		for( let a in object )
 		{
 			switch( a )
 			{
@@ -5474,9 +5476,9 @@ function Filedialog( object, triggerFunction, path, type, filename, title )
 	
 	if ( !type ) type = 'open';
 
-	var dialog = this;
+	let dialog = this;
 
-	var cid = addCallback( triggerFunction );
+	let cid = addCallback( triggerFunction );
 
 	if( typeof( mainview ) != 'string' )
 	{
@@ -5510,7 +5512,7 @@ function Filedialog( object, triggerFunction, path, type, filename, title )
 // Get a path from fileinfo and return it
 function FiledialogPath( fileinfo )
 {
-	var path = fileinfo.Path ? fileinfo.Path : fileinfo.Title;
+	let path = fileinfo.Path ? fileinfo.Path : fileinfo.Title;
 	path = path.split( '/' );
 	path.pop();
 	path = path.join( '/' );
@@ -5521,7 +5523,7 @@ function FiledialogPath( fileinfo )
 function Library( libraryName )
 {
 	this.vars = [];
-	var t = this;
+	let t = this;
 
 	this.addVar = function( varname, data )
 	{
@@ -5531,18 +5533,18 @@ function Library( libraryName )
 	// Execute the library!
 	this.execute = function( func, args )
 	{
-		var cid = addCallback( this );
+		let cid = addCallback( this );
 
 		// Execute a library with full path
 		if( libraryName.indexOf( ':' ) >= 0 )
 		{
-			var sesspart = Application.sessionId ? 'sessionid' : 'authid';
+			let sesspart = Application.sessionId ? 'sessionid' : 'authid';
 			sesspart += '=' + ( Application.sessionId ? Application.sessionId : Application.authId );
-			var url = libraryName.split( ':' )[1];
+			let url = libraryName.split( ':' )[1];
 			url = Application.appPath.split( ':' )[0] + ':' + url;
 
-			var query = '/system.library/file/call/?' + sesspart + '&path=' + url;
-			var j = new cAjax();
+			let query = '/system.library/file/call/?' + sesspart + '&path=' + url;
+			let j = new cAjax();
 			if( args ) j.addVar( 'args', JSON.stringify( args ) );
 			if( func ) j.addVar( 'query', func );
 			j.open( 'post', query, true, true )
@@ -5581,10 +5583,10 @@ function AddCSSByData( name, data, callback )
 	if( typeof( window.cssStyles[ name ] ) != 'undefined' )
 	{
 		// Remove existing and clean up
-		var pn = window.cssStyles[ name ].parentNode;
+		let pn = window.cssStyles[ name ].parentNode;
 		if( pn ) pn.removeChild( window.cssStyles[ name ] );
-		var o = [];
-		for( var a in window.cssStyles )
+		let o = [];
+		for( let a in window.cssStyles )
 		{
 			if( a != name )
 			{
@@ -5594,7 +5596,7 @@ function AddCSSByData( name, data, callback )
 		window.cssStyles = o;
 	}
 	// Add and register
-	var s = document.createElement( 'style' );
+	let s = document.createElement( 'style' );
 	s.innerHTML = data;
 	if( callback ) callback();
 	document.body.appendChild( s );
@@ -5608,10 +5610,10 @@ function AddCSSByUrl( csspath, callback )
 	if( typeof( window.cssStyles[csspath] ) != 'undefined' )
 	{
 		// Remove existing and clean up
-		var pn = window.cssStyles[csspath].parentNode;
+		let pn = window.cssStyles[csspath].parentNode;
 		if( pn ) pn.removeChild( window.cssStyles[csspath] );
-		var o = [];
-		for( var a in window.cssStyles )
+		let o = [];
+		for( let a in window.cssStyles )
 		{
 			if( a != csspath )
 			{
@@ -5621,7 +5623,7 @@ function AddCSSByUrl( csspath, callback )
 		window.cssStyles = o;
 	}
 	// Add and register
-	var s = document.createElement( 'link' );
+	let s = document.createElement( 'link' );
 	s.rel = 'stylesheet';
 	s.href = csspath;
 	if( callback ){ s.onload = function() { callback(); } }
@@ -5644,13 +5646,10 @@ function setupMessageFunction( dataPacket, origin )
 	function _sendMessage( msg, callback )
 	{
 		// Convert some data formats in a JSON complient structure
-		for( var a in msg )
+		for( let a in msg )
 		{
 			if( msg[ a ] instanceof ArrayBuffer || toString.call( msg[ a ] ) === '[object ArrayBuffer]' )
 			{
-				//var v = new Uint8Array( msg[ a ] );
-				//msg[ a ] = Array.prototype.join.call( v, ',' );
-				//msg[ a + '_format' ] = 'binaryString';
 				msg[ a ] = ConvertArrayBufferToString( msg[ a ], 'base64' );
 				msg[ a + '_format' ] = 'base64';
 			}
@@ -5705,13 +5704,13 @@ function setupMessageFunction( dataPacket, origin )
 		// Support callback function
 		if( callback )
 		{
-			var uid = generateUniqueId( Application.callbacks );
+			let uid = generateUniqueId( Application.callbacks );
 			Application.callbacks[uid] = callback;
 			msg.callback = uid;
 		}
 
 		// Post the message
-		var po = dataPacket.origin ? dataPacket.origin : '*';
+		let po = dataPacket.origin ? dataPacket.origin : '*';
 		try
 		{
 			parent.postMessage( JSON.stringify( msg ), origin ? origin : po );
@@ -5731,26 +5730,26 @@ function setupMessageFunction( dataPacket, origin )
 function OpenLibrary( path, id, div )
 {
 	// Anchor point
-	var lib = new Object ();
+	let lib = new Object ();
 	lib.loaded = false;
 
 	if( !div && id ) div = ge( id );
 
 	// Load the library and get code back
-	var m = new cAjax ();
+	let m = new cAjax ();
 	m.open ( 'post', path.split( /progdir\:/i ).join( Application.appPath ? Application.appPath : Application.filePath ), true, true );
 	m.addVar ( 'fileInfo', JSON.stringify ( { 'Path' : path, 'Mode' : 'raw' } ) );
 	m.app = this;
 	m.onload = function ()
 	{
 		// Connect on an iframe
-		var ifr = document.createElement ( 'iframe' );
+		let ifr = document.createElement ( 'iframe' );
 		ifr.setAttribute( 'sandbox', 'allow-same-origin allow-forms allow-scripts' );
-		var r = this;
+		let r = this;
 		ifr.src = 'http://' + Application.filePath.split( 'http://' )[1].split( '/' )[0] + '/webclient/sandboxed.html';
 		ifr.onload = function ()
 		{
-			var d = this.document ? this.document.documentElement : this.contentWindow.document;
+			let d = this.document ? this.document.documentElement : this.contentWindow.document;
 			d.write ( '<html><head></head><body><script>' + this.responseText() + '</script></body></html>' );
 
 			// Tell that library is loaded
@@ -5802,7 +5801,7 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 	document.body.style.opacity = '0';
 	document.body.style.pointerEvents = 'none';
 	window.frameInitialized = true;
-	var pbase = document.getElementsByTagName( 'base' );
+	let pbase = document.getElementsByTagName( 'base' );
 	if( pbase && pbase.length )
 	{
 		Application.baseDir = pbase[0].href;
@@ -5839,7 +5838,7 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 		// We need a path
 		if( !path ) return callback();
 
-		var language = 'en';
+		let language = 'en';
 		if( packet.loadedLocaleFallback ) return;
 		if( packet.locale && !packet.localeLoaded )
 			language = packet.locale;
@@ -5850,8 +5849,8 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 
 		packet.localeLoaded = true;
 
-		var url = path + 'Locale/' + language + '.lang';
-		var j = new cAjax();
+		let url = path + 'Locale/' + language + '.lang';
+		let j = new cAjax();
 		j.open( 'get', url, true );
 		j.onload = function()
 		{
@@ -5861,21 +5860,21 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 				return;
 			}
 
-			var ar = this.responseText().split( "\n" );
-			var out = [];
-			for( var a = 0; a < ar.length; a++ )
+			let ar = this.responseText().split( "\n" );
+			let out = [];
+			for( let a = 0; a < ar.length; a++ )
 			{
 				if( ar[a].split( /\s/ ).join( '' ).length <= 0 )
 					continue;
-				var d = ar[a].split( ":" );
-				var k = Trim( d[0] );
-				var v = Trim( d[1] );
+				let d = ar[a].split( ":" );
+				let k = Trim( d[0] );
+				let v = Trim( d[1] );
 				if( k.length && v.length )
 					out[k] = v;
 			}
 			if( window.translations )
 			{
-				for( var b in out )
+				for( let b in out )
 				{
 					if( !window.translations[b] )
 						window.translations[b] = out[b];
@@ -5916,10 +5915,10 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 			document.getElementsByTagName( 'head' )[0].appendChild( Friend.themeStyleElement );
 		}
 		
-		var shades = [ 'dark', 'charcoal', 'synthwave' ];
-		for( var c in shades )
+		let shades = [ 'dark', 'charcoal', 'synthwave' ];
+		for( let c in shades )
 		{
-			var uf = shades[c].charAt( 0 ).toUpperCase() + shades[c].substr( 1, shades[c].length - 1 );
+			let uf = shades[c].charAt( 0 ).toUpperCase() + shades[c].substr( 1, shades[c].length - 1 );
 			if( themeData[ 'colorSchemeText' ] == shades[c] )
 				document.body.classList.add( uf );
 			else document.body.classList.remove( uf );
@@ -5929,11 +5928,11 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 			document.body.classList.add( 'MSW' );
 		else document.body.classList.remove( 'MSW' );
 		
-		var str = '';
-		for( var a in themeData )
+		let str = '';
+		for( let a in themeData )
 		{
 			if( !themeData[a] ) continue;
-			var v = themeData[a];
+			let v = themeData[a];
 			switch( a )
 			{
 				case 'colorWindowActive':
@@ -6032,13 +6031,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			return setTimeout( onLoaded, 5 );
 		}
 
-		var loadedResources = 0;
-		var totalLoadingResources = 0;
+		let loadedResources = 0;
+		let totalLoadingResources = 0;
 		
 		// No cached app data
 		if( !packet.cachedAppData )
 		{
-			var tpath = '/themes/friendup12/theme.css';
+			let tpath = '/themes/friendup12/theme.css';
 			if( packet && packet.theme )
 			{
 				tpath = '/themes/' + packet.theme + '/theme.css';
@@ -6047,7 +6046,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				totalLoadingResources++;
 			
-				var s = document.createElement( 'link' );
+				let s = document.createElement( 'link' );
 				document.themeCss = s;
 				s.rel = 'stylesheet';
 				s.href = tpath.split( '.css' ).join( '_compiled.css' );
@@ -6065,24 +6064,24 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			Application.applyThemeConfig( packet.themeData );
 		}
 
-		var activat = [];
+		let activat = [];
 
 		// For templates
 		if( packet.appPath ) Application.appPath = packet.appPath;
 
 		// Delayed script loading (with src)
-		var scripts = document.getElementsByTagName( 'friendscript' );
+		let scripts = document.getElementsByTagName( 'friendscript' );
 		if( scripts.length )
 		{
-			var removes = [];
-			for( var a = 0; a < scripts.length; a++ )
+			let removes = [];
+			for( let a = 0; a < scripts.length; a++ )
 			{
-				var src = scripts[a].getAttribute( 'src' )
+				let src = scripts[a].getAttribute( 'src' )
 				if( src )
 				{
 					
 					totalLoadingResources++;
-					var d = document.createElement( 'script' );
+					let d = document.createElement( 'script' );
 					d.src = src;
 					d.async = false;
 					d.onload = doneLoading;
@@ -6093,7 +6092,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 			}
 			// Clear friendscripts
-			for( var a = 0; a < removes.length; a++ )
+			for( let a = 0; a < removes.length; a++ )
 			{
 				removes[a].parentNode.removeChild( removes[a] );
 			}
@@ -6157,13 +6156,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Async is a bitch!
 		function waitToStart()
 		{
-			var scripts = document.getElementsByTagName( 'friendscript' );
+			let scripts = document.getElementsByTagName( 'friendscript' );
 			if( scripts.length )
 			{
-				var removes = [];
-				for( var a = 0; a < scripts.length; a++ )
+				let removes = [];
+				for( let a = 0; a < scripts.length; a++ )
 				{
-					var src = scripts[a].getAttribute( 'src' )
+					let src = scripts[a].getAttribute( 'src' )
 					if( !src )
 					{
 						activat.push( scripts[a].textContent );
@@ -6172,7 +6171,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 
 				// Clear friendscripts
-				for( var a = 0; a < removes.length; a++ )
+				for( let a = 0; a < removes.length; a++ )
 				{
 					removes[a].parentNode.removeChild( removes[a] );
 				}
@@ -6193,13 +6192,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					// Fetch application permissions
 					if( !Application.checkAppPermission )
 					{
-						var n = Application.applicationId ? Application.applicationId.split( '-' )[0] : false; // TODO: app must have applicationName
+						let n = Application.applicationId ? Application.applicationId.split( '-' )[0] : false; // TODO: app must have applicationName
 						if( !n ) n = Application.applicationName ? Application.applicationName : 'Unnamed';
 						
-						var m = new Module( 'system' );
+						let m = new Module( 'system' );
 						m.onExecuted = function( e, d )
 						{
-							var permissions = {};
+							let permissions = {};
 							
 							Application.checkAppPermission = function( key, callback )
 							{
@@ -6217,15 +6216,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								{
 									if( Array.isArray( key ) )
 									{
-										var out = [];
+										let out = [];
 										
-										for( var i in key )
+										for( let i in key )
 										{
 											if( key[i] && permissions[ key[i] ] )
 											{
 												if( Array.isArray( permissions[ key[i] ] ) )
 												{
-													for( var ii in permissions[ key[i] ] )
+													for( let ii in permissions[ key[i] ] )
 													{
 														if( permissions[ key[i] ][ ii ] )
 														{
@@ -6253,9 +6252,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								}
 								else
 								{
-									var nn = Application.applicationId.split( '-' )[0]; // TODO: app must have applicationName
+									let nn = Application.applicationId.split( '-' )[0]; // TODO: app must have applicationName
 									
-									var mm = new Module( 'system' );
+									let mm = new Module( 'system' );
 									mm.onExecuted = function( ee, dd )
 									{
 										if( ee == 'ok' )
@@ -6271,15 +6270,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										{
 											if( key && Array.isArray( key ) )
 											{
-												var out = [];
+												let out = [];
 												
-												for( var i in key )
+												for( let i in key )
 												{
 													if( key[i] && permissions[ key[i] ] )
 													{
 														if( Array.isArray( permissions[ key[i] ] ) )
 														{
-															for( var ii in permissions[ key[i] ] )
+															for( let ii in permissions[ key[i] ] )
 															{
 																if( permissions[ key[i] ][ ii ] )
 																{
@@ -6343,7 +6342,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					if( window.applicationStarted ) return;
 					window.applicationStarted = true;
 					if( packet.state ) Application.sessionStateSet( packet.state );
-					for( var a = 0; a < activat.length; a++ )
+					for( let a = 0; a < activat.length; a++ )
 						ExecuteScript( activat[a] );
 					activat = [];
 					if( Application.run )
@@ -6388,9 +6387,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Make sure we don't show gui until the scrollbars have changed
 	// The scrollbars takes some milliseconds to load and init..
 	// TODO: Figure out why we can't load scrollbars immediately
-	var head = document.getElementsByTagName( 'head' )[0];
+	let head = document.getElementsByTagName( 'head' )[0];
 
-	var js = [
+	let js = [
 		'js/oo.js',
 		'js/api/friendappapi.js',
 		'js/utils/engine.js',
@@ -6402,8 +6401,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		'js/gui/treeview.js'
 	];
 	
-	var elez = [];
-	for ( var a = 0; a < js.length; a++ )
+	let elez = [];
+	for ( let a = 0; a < js.length; a++ )
 	{
 		// Set src with some rules whether it's an app or a Workspace component
 		elez.push( js[ a ] );
@@ -6439,7 +6438,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Slow way for new session
 		else
 		{
-			var js = [
+			let js = [
 				[
 					'js/oo.js',
 					'js/api/friendappapi.js',
@@ -6453,12 +6452,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				]
 			];
 
-			var elez = [];
-			for ( var a = 0; a < js.length; a++ )
+			let elez = [];
+			for ( let a = 0; a < js.length; a++ )
 			{
-				var s = document.createElement( 'script' );
+				let s = document.createElement( 'script' );
 				// Set src with some rules whether it's an app or a Workspace component
-				var path = js[ a ].join( ';/webclient/' );
+				let path = js[ a ].join( ';/webclient/' );
 				s.src = '/webclient/' + path;
 				s.async = false;
 				elez.push( s );
@@ -6470,8 +6469,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					function fl()
 					{
 						if( this ) this.isLoaded = true;
-						var allLoaded = true;
-						for( var b = 0; b < elez.length; b++ )
+						let allLoaded = true;
+						for( let b = 0; b < elez.length; b++ )
 						{
 							if( !elez[b].isLoaded ) allLoaded = false;
 						}
@@ -6505,11 +6504,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Used cached data
 	else if( packet.cachedAppData && packet.cachedAppData.js )
 	{
-		var style = document.createElement( 'style' );
+		let style = document.createElement( 'style' );
 		style.innerHTML = packet.cachedAppData.css;
 		head.appendChild( style );
 		
-		var js = document.createElement( 'script' );
+		let js = document.createElement( 'script' );
 		js.innerHTML = packet.cachedAppData.js;
 		head.appendChild( js );
 		
@@ -6541,24 +6540,24 @@ function clickToActivate()
 Friend.currentSliderElement = false;
 function CreateSlider( inputField, flags )
 {
-	var self = this;
+	let self = this;
 	
 	if( typeof( inputField ) == 'string' )
 		inputField = ge( inputField );
 	if( !inputField ) return;
 	
-	var d = document.createElement( 'div' );
+	let d = document.createElement( 'div' );
 	d.className = 'SliderElement';
 	if( flags && flags.vertical )
 		d.className += ' SliderVertical';
-	var g = document.createElement( 'div' );
+	let g = document.createElement( 'div' );
 	g.className = 'SliderGroove';
-	var b = document.createElement( 'div' );
+	let b = document.createElement( 'div' );
 	b.className = 'SliderButton';
 	g.appendChild( b );
 	d.appendChild( g );
 	
-	var gauge = null;
+	let gauge = null;
 	
 	if( !flags ) flags = {};
 	if( !flags.min  ) flags.min = 0;
@@ -6581,7 +6580,7 @@ function CreateSlider( inputField, flags )
 	// Add the slider
 	inputField.parentNode.appendChild( d );
 	
-	var def = inputField.value ? parseInt( inputField.value ) : 0;
+	let def = inputField.value ? parseInt( inputField.value ) : 0;
 	
 	if( def > flags.max ) def = flags.max;
 	if( def < flags.min ) def = flags.min;
@@ -6612,7 +6611,7 @@ function CreateSlider( inputField, flags )
 		}
 		if( inputField.getAttribute( 'onchange' ) )
 		{
-			var str = inputField.getAttribute( 'onchange' );
+			let str = inputField.getAttribute( 'onchange' );
 			inputField.eval = function( s )
 			{
 				eval( s );
@@ -6628,7 +6627,7 @@ function CreateSlider( inputField, flags )
 	{
 		if( !flags || !flags.vertical )
 		{
-			var x = val;
+			let x = val;
 			if( x < 0 ) x = 0;
 			else if( x + b.offsetWidth >= GetElementWidth( g ) )
 				x = GetElementWidth( g ) - b.offsetWidth;
@@ -6641,7 +6640,7 @@ function CreateSlider( inputField, flags )
 		}
 		else
 		{
-			var y = val;
+			let y = val;
 			if( y < 0 ) y = 0;
 			if( y + b.offsetHeight > GetElementHeight( g ) )
 				y = GetElementHeight( g ) - b.offsetHeight;
@@ -6654,7 +6653,7 @@ function CreateSlider( inputField, flags )
 		}
 		if( inputField.getAttribute( 'onchange' ) )
 		{
-			var str = inputField.getAttribute( 'onchange' );
+			let str = inputField.getAttribute( 'onchange' );
 			inputField.eval = function( s )
 			{
 				eval( s );
@@ -6695,11 +6694,11 @@ function CreateSlider( inputField, flags )
 			ge( flags.displayElementId ).value = def;
 			ge( flags.displayElementId ).onchange = function( e )
 			{
-				var val = setSliderValue( this.value );
+				let val = setSliderValue( this.value );
 			}
 			ge( flags.displayElementId ).onkeyup = function( e )
 			{
-				var val = setSliderValue( this.value );
+				let val = setSliderValue( this.value );
 			}
 		}
 	}
@@ -6712,11 +6711,11 @@ function InitTabs ( pdiv )
 	if( typeof( pdiv ) == 'string' )
 		pdiv = ge( pdiv );
 
-	var divs = pdiv.getElementsByTagName ( 'div' );
-	var tabs = new Array ();
-	var pages = new Array ();
-	var active = 0;
-	for ( var a = 0; a < divs.length; a++ )
+	let divs = pdiv.getElementsByTagName ( 'div' );
+	let tabs = new Array ();
+	let pages = new Array ();
+	let active = 0;
+	for ( let a = 0; a < divs.length; a++ )
 	{
 		if ( divs[a].parentNode != pdiv ) continue;
 		if ( divs[a].className == 'Tab' )
@@ -6730,14 +6729,14 @@ function InitTabs ( pdiv )
 			{
 				SetCookie ( 'Tabs'+this.pdiv.id, this.index );
 				this.className = 'TabActive';
-				var ind;
-				for ( var b = 0; b < this.tabs.length; b++ )
+				let ind;
+				for ( let b = 0; b < this.tabs.length; b++ )
 				{
 					if ( this.tabs[b] != this )
 						this.tabs[b].className = 'Tab';
 					else ind = b;
 				}
-				for ( var b = 0; b < this.pages.length; b++ )
+				for ( let b = 0; b < this.pages.length; b++ )
 				{
 					if ( b != ind )
 					{
@@ -6749,23 +6748,23 @@ function InitTabs ( pdiv )
 						if ( navigator.userAgent.indexOf ( 'MSIE' ) > 0 )
 						{
 							this.pages[b].style.display = 'none';
-							var idz = 1;
+							let idz = 1;
 							if ( !this.pages[b].id )
 							{
-								var bs = 'page';
+								let bs = 'page';
 								idz++;
 								while ( ge ( bs ) )
 									bs = [ bs, idz ].join ( '' );
 								this.pages[b].id = bs;
 							}
-							var bid = this.pages[b].id;
+							let bid = this.pages[b].id;
 							setTimeout ( 'ge(\'' + bid + '\').style.display = \'\'', 50 );
 						}
 					}
 				}
 				if ( typeof ( AutoResizeWindow ) != 'undefined' )
 				{
-					var pdiv = this.pdiv;
+					let pdiv = this.pdiv;
 					while ( pdiv.className.indexOf ( ' View' ) < 0 && pdiv != document.body )
 						pdiv = pdiv.parentNode;
 					if ( pdiv != document.body && pdiv.autoResize == true )
@@ -6792,12 +6791,12 @@ if( typeof( Say ) == 'undefined' )
 {
 	function Say( string, language )
 	{
-		var v = speechSynthesis.getVoices();
-		var u = new SpeechSynthesisUtterance( string );
+		let v = speechSynthesis.getVoices();
+		let u = new SpeechSynthesisUtterance( string );
 		u.lang = language ? language : globalConfig.language;
 		try
 		{
-			for( var a = 0; a < v.length; a++ )
+			for( let a = 0; a < v.length; a++ )
 			{
 				if( v[a].name == 'Google US English' && u.lang == 'en-US' )
 				{
@@ -6854,18 +6853,18 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 		Friend.GUI.checkInputFocus();
 		
 		// Let's report to Workspace what we're doing - to catch global keyboard shortcuts
-		var params = [ 'shiftKey', 'ctrlKey', 'metaKey', 'altKey', 'which', 'keyCode' ];
+		let params = [ 'shiftKey', 'ctrlKey', 'metaKey', 'altKey', 'which', 'keyCode' ];
 		if( e.shiftKey || e.ctrlKey || e.metaKey || e.altKey )
 		{
-			var clone = {}; for( var a in params )
+			let clone = {}; for( let a in params )
 			{
 				if( e[params[a]] ) clone[params[a]] = e[params[a]];
 			}
 			Application.sendMessage( { type: 'system', command: 'keydown', data: clone } );
 		}
 		
-		var win = false;
-		for( var a in Application.windows )
+		let win = false;
+		for( let a in Application.windows )
 		{
 			if( Application.windows[a].activated )
 			{
@@ -6874,7 +6873,8 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 			}
 		}
 
-		var k = e.which ? e.which : e.keyCode;
+		let k = e.which ? e.which : e.keyCode;
+		let abort = false;
 
 		// Window keys
 		if( win && win.handleKeys )
@@ -6883,7 +6883,6 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 			win.shiftKey = false;
 			if( e.ctrlKey ) win.ctrlKey = true;
 			if( e.shiftKey ) win.shiftKey = true;
-			var abort = false;
 			if( e.ctrlKey )
 			{
 				switch ( k )
@@ -6928,8 +6927,8 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 	}
 	function _kresponseup( e )
 	{
-		var win = false;
-		for( var a in Application.windows )
+		let win = false;
+		for( let a in Application.windows )
 		{
 			if( Application.windows[a].activated )
 			{
@@ -6992,8 +6991,8 @@ if( typeof( windowMouseX ) == 'undefined' )
 		function mouseEvt( e )
 		{
 			if( !e ) e = window.event;
-			var mx = e.clientX ? e.clientX : e.pageXOffset;
-			var my = e.clientY ? e.clientY : e.pageYOffset;
+			let mx = e.clientX ? e.clientX : e.pageXOffset;
+			let my = e.clientY ? e.clientY : e.pageYOffset;
 			// We will only allow numbers
 			if( typeof( mx ) == 'undefined' ) mx = -1;
 			if( typeof( my ) == 'undefined' ) my = -1;
@@ -7014,8 +7013,8 @@ if( typeof( windowMouseX ) == 'undefined' )
 
 function Confirm( title, string, callb, confirmOKText, confirmCancelText, thirdButtonText, thirdButtonReturn )
 {
-	var cb = addCallback( callb );
-	var msg = {
+	let cb = addCallback( callb );
+	let msg = {
 		type: 'system',
 		command: 'confirm',
 		callback: cb,
@@ -7069,18 +7068,18 @@ function ShareElementEvents( ele, recursive )
 	if( !window.shared )
 	{
 		window.shared = true;
-		var mod = document.addEventListener ? 'addEventListener' : 'attachEvent';
-		var on = mod == 'addEventListener' ? '' : 'on';
+		let mod = document.addEventListener ? 'addEventListener' : 'attachEvent';
+		let on = mod == 'addEventListener' ? '' : 'on';
 		window[mod]( on + 'keydown', function( e )
 		{
-			var sEvent = {
+			let sEvent = {
 				uid: uid,
 				charCode: e.which ? e.which : e.keyCode
 			};
 		}, false );
 		window[mod]( on + 'keyup', function( e )
 		{
-			var sEvent = {
+			let sEvent = {
 				uid: uid,
 				charCode: e.which ? e.which : e.keyCode
 			};
@@ -7090,7 +7089,7 @@ function ShareElementEvents( ele, recursive )
 	// Set a unique element id
 	if( !ele.id )
 	{
-		var id = '';
+		let id = '';
 		do
 		{
 			id = 'shared_' + ( new Date() ).getTime() + ( Math.random() * 9999 ) + ( Math.random() * 9999 );
@@ -7100,17 +7099,17 @@ function ShareElementEvents( ele, recursive )
 	}
 	ele.shareId = ele.id;
 
-	var events = [
+	let events = [
 		'mouseup', 'mousedown', 'mousemove', 'mouseleave', 'mouseover',
 		'click', 'touchstart', 'touchend', 'keydown', 'keyup', 'keypress'
 	];
 
-	var uid = Sha256.hash( ( ( new Date() ).getTime() + ( Math.random() * 999999 ) ) + "" );
-	for( var a = 0; a < events.length; a++ )
+	let uid = UniqueHash();
+	for( let a = 0; a < events.length; a++ )
 	{
-		var evt = events[a];
-		var add = ele.addEventListener ? 'addEventListener' : 'attachEvent';
-		var lit = ( ele.addEventListener ? '' : 'on' ) + evt;
+		let evt = events[a];
+		let add = ele.addEventListener ? 'addEventListener' : 'attachEvent';
+		let lit = ( ele.addEventListener ? '' : 'on' ) + evt;
 
 		// Create func
 		switch( evt )
@@ -7120,7 +7119,7 @@ function ShareElementEvents( ele, recursive )
 			case 'mousedown':
 				ele[add]( lit, function( e )
 				{
-					var sEvent = {
+					let sEvent = {
 						uid: uid,
 						mousex: e.clientX,
 						mousey: e.clientY,
@@ -7132,7 +7131,7 @@ function ShareElementEvents( ele, recursive )
 			case 'mouseleave':
 				ele[add]( lit, function( e )
 				{
-					var sEvent = {
+					let sEvent = {
 						uid: uid,
 						mousex: e.clientX,
 						mousey: e.clientY
@@ -7144,7 +7143,7 @@ function ShareElementEvents( ele, recursive )
 			case 'keypress':
 				ele[add]( lit, function( e )
 				{
-					var sEvent = {
+					let sEvent = {
 						uid: uid,
 						charCode: e.which ? e.which : e.keyCode
 					};
@@ -7156,7 +7155,7 @@ function ShareElementEvents( ele, recursive )
 	// If we want to do this recursively
 	if( recursive )
 	{
-		for( var a = 0; a < ele.childNodes.length; a++ )
+		for( let a = 0; a < ele.childNodes.length; a++ )
 		{
 			if( ele.childNodes[a].nodeName )
 				ShareElementEvents( ele.childNodes[a], recursive );
@@ -7171,14 +7170,14 @@ Friend.convertFriendPaths = function( string )
 	{
 		return string;
 	}
-	var apath = Application.appPath ? Application.appPath : Application.filePath;
+	let apath = Application.appPath ? Application.appPath : Application.filePath;
 	if( !apath )
 	{
 		return string;
 	}
 
 	// Convert links with double and single quotes
-	var m = '';
+	let m = '';
 	while( m = string.match( /href\=\"(^[\/]{0,1}^http\:[^:"]*?)\"/i ) )
 		string = string.split( m[0] ).join( 'src="Progdir:' + m[1] + '"' );
 	while( m = string.match( /src\=\"([\/]{0,1}^http\:[^:"]*?)\"/i ) )
@@ -7188,9 +7187,9 @@ Friend.convertFriendPaths = function( string )
 	while( m = string.match( /src\=\'([\/]{0,1}^http\:[^:']*?)\'/i ) )
 		string = string.split( m[0] ).join( "src='Progdir:" + m[1] + "'" );
 
-	var prt = 'authid=' + ( Application.authId ? Application.authId : '' );
+	let prt = 'authid=' + ( Application.authId ? Application.authId : '' );
 	if( Application.sessionId ) prt = 'sessionid=' + Application.sessionId;
-	var base = '/system.library/file/read?' + prt + '&mode=rs&path=';
+	let base = '/system.library/file/read?' + prt + '&mode=rs&path=';
 	if( string )
 	{
 		string = string.split( /progdir\:/i ).join ( base + apath  );
@@ -7217,7 +7216,7 @@ Friend.convertFriendPaths = function( string )
  *
  * @namespace
  */
-var Sha256 = {};
+let Sha256 = {};
 
 
 /**
@@ -7231,7 +7230,7 @@ Sha256.hash = function(msg) {
     msg = msg.utf8Encode();
 
     // constants [§4.2.2]
-    var K = [
+    let K = [
         0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
         0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
         0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
@@ -7241,7 +7240,7 @@ Sha256.hash = function(msg) {
         0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
         0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2 ];
     // initial hash value [§5.3.1]
-    var H = [
+    let H = [
         0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19 ];
 
     // PREPROCESSING
@@ -7249,13 +7248,13 @@ Sha256.hash = function(msg) {
     msg += String.fromCharCode(0x80);  // add trailing '1' bit (+ 0's padding) to string [§5.1.1]
 
     // convert string msg into 512-bit/16-integer blocks arrays of ints [§5.2.1]
-    var l = msg.length/4 + 2; // length (in 32-bit integers) of msg + ‘1’ + appended length
-    var N = Math.ceil(l/16);  // number of 16-integer-blocks required to hold 'l' ints
-    var M = new Array(N);
+    let l = msg.length/4 + 2; // length (in 32-bit integers) of msg + ‘1’ + appended length
+    let N = Math.ceil(l/16);  // number of 16-integer-blocks required to hold 'l' ints
+    let M = new Array(N);
 
-    for (var i=0; i<N; i++) {
+    for (let i=0; i<N; i++) {
         M[i] = new Array(16);
-        for (var j=0; j<16; j++) {  // encode 4 chars per integer, big-endian encoding
+        for (let j=0; j<16; j++) {  // encode 4 chars per integer, big-endian encoding
             M[i][j] = (msg.charCodeAt(i*64+j*4)<<24) | (msg.charCodeAt(i*64+j*4+1)<<16) |
                       (msg.charCodeAt(i*64+j*4+2)<<8) | (msg.charCodeAt(i*64+j*4+3));
         } // note running off the end of msg is ok 'cos bitwise ops on NaN return 0
@@ -7269,20 +7268,20 @@ Sha256.hash = function(msg) {
 
     // HASH COMPUTATION [§6.1.2]
 
-    var W = new Array(64); var a, b, c, d, e, f, g, h;
-    for (var i=0; i<N; i++) {
+    let W = new Array(64); let a, b, c, d, e, f, g, h;
+    for (let i=0; i<N; i++) {
 
         // 1 - prepare message schedule 'W'
-        for (var t=0;  t<16; t++) W[t] = M[i][t];
-        for (var t=16; t<64; t++) W[t] = (Sha256.OO1(W[t-2]) + W[t-7] + Sha256.OO0(W[t-15]) + W[t-16]) & 0xffffffff;
+        for (let t=0;  t<16; t++) W[t] = M[i][t];
+        for (let t=16; t<64; t++) W[t] = (Sha256.OO1(W[t-2]) + W[t-7] + Sha256.OO0(W[t-15]) + W[t-16]) & 0xffffffff;
 
         // 2 - initialise working variables a, b, c, d, e, f, g, h with previous hash value
         a = H[0]; b = H[1]; c = H[2]; d = H[3]; e = H[4]; f = H[5]; g = H[6]; h = H[7];
 
         // 3 - main loop (note 'addition modulo 2^32')
-        for (var t=0; t<64; t++) {
-            var T1 = h + Sha256.EE1(e) + Sha256.Ch(e, f, g) + K[t] + W[t];
-            var T2 =     Sha256.EE0(a) + Sha256.Maj(a, b, c);
+        for (let t=0; t<64; t++) {
+            let T1 = h + Sha256.EE1(e) + Sha256.Ch(e, f, g) + K[t] + W[t];
+            let T2 =     Sha256.EE0(a) + Sha256.Maj(a, b, c);
             h = g;
             g = f;
             f = e;
@@ -7335,8 +7334,8 @@ Sha256.Maj = function(x, y, z) { return (x & y) ^ (x & z) ^ (y & z); };
 Sha256.toHexStr = function(n) {
     // note can't use toString(16) as it is implementation-dependant,
     // and in IE returns signed numbers when used on full words
-    var s="", v;
-    for (var i=7; i>=0; i--) { v = (n>>>(i*4)) & 0xf; s += v.toString(16); }
+    let s="", v;
+    for (let i=7; i>=0; i--) { v = (n>>>(i*4)) & 0xf; s += v.toString(16); }
     return s;
 };
 
@@ -7345,14 +7344,14 @@ Sha256.toHexStr = function(n) {
 
 function md5( str )
 {
-	var xl;
-	var rotateLeft = function( lValue, iShiftBits )
+	let xl;
+	let rotateLeft = function( lValue, iShiftBits )
 	{
 		return ( lValue << iShiftBits ) | ( lValue >>> ( 32 - iShiftBits ) );
 	};
-	var addUnsigned = function( lX, lY )
+	let addUnsigned = function( lX, lY )
 	{
-		var lX4, lY4, lX8, lY8, lResult;
+		let lX4, lY4, lX8, lY8, lResult;
 		lX8 = ( lX & 0x80000000 );
 		lY8 = ( lY & 0x80000000 );
 		lX4 = ( lX & 0x40000000 );
@@ -7378,52 +7377,52 @@ function md5( str )
 			return ( lResult ^ lX8 ^ lY8 );
 		}
 	};
-	var _F = function( x, y, z )
+	let _F = function( x, y, z )
 	{
 		return ( x & y ) | ( ( ~x ) & z );
 	};
-	var _G = function( x, y, z )
+	let _G = function( x, y, z )
 	{
 		return ( x & z ) | ( y & ( ~z ) );
 	};
-	var _H = function( x, y, z )
+	let _H = function( x, y, z )
 	{
 		return ( x ^ y ^ z );
 	};
-	var _I = function( x, y, z )
+	let _I = function( x, y, z )
 	{
 		return ( y ^ ( x | ( ~z ) ) );
 	};
-	var _FF = function( a, b, c, d, x, s, ac )
+	let _FF = function( a, b, c, d, x, s, ac )
 	{
 		a = addUnsigned( a, addUnsigned( addUnsigned( _F( b, c, d ), x ), ac ) );
 		return addUnsigned( rotateLeft( a, s ), b );
 	};
-	var _GG = function( a, b, c, d, x, s, ac )
+	let _GG = function( a, b, c, d, x, s, ac )
 	{
 		a = addUnsigned( a, addUnsigned( addUnsigned( _G( b, c, d ), x ), ac ) );
 		return addUnsigned( rotateLeft( a, s ), b );
 	};
-	var _HH = function( a, b, c, d, x, s, ac )
+	let _HH = function( a, b, c, d, x, s, ac )
 	{
 		a = addUnsigned( a, addUnsigned( addUnsigned( _H( b, c, d ), x ), ac ) );
 		return addUnsigned( rotateLeft( a, s ), b );
 	};
-	var _II = function( a, b, c, d, x, s, ac )
+	let _II = function( a, b, c, d, x, s, ac )
 	{
 		a = addUnsigned( a, addUnsigned( addUnsigned( _I( b, c, d ), x ), ac ) );
 		return addUnsigned( rotateLeft( a, s ), b );
 	};
-	var convertToWordArray = function( str )
+	let convertToWordArray = function( str )
 	{
-		var lWordCount;
-		var lMessageLength = str.length;
-		var lNumberOfWords_temp1 = lMessageLength + 8;
-		var lNumberOfWords_temp2 = ( lNumberOfWords_temp1 - ( lNumberOfWords_temp1 % 64 ) ) / 64;
-		var lNumberOfWords = ( lNumberOfWords_temp2 + 1 ) * 16;
-		var lWordArray = new Array( lNumberOfWords - 1 );
-		var lBytePosition = 0;
-		var lByteCount = 0;
+		let lWordCount;
+		let lMessageLength = str.length;
+		let lNumberOfWords_temp1 = lMessageLength + 8;
+		let lNumberOfWords_temp2 = ( lNumberOfWords_temp1 - ( lNumberOfWords_temp1 % 64 ) ) / 64;
+		let lNumberOfWords = ( lNumberOfWords_temp2 + 1 ) * 16;
+		let lWordArray = new Array( lNumberOfWords - 1 );
+		let lBytePosition = 0;
+		let lByteCount = 0;
 		while ( lByteCount < lMessageLength )
 		{
 			lWordCount = ( lByteCount - ( lByteCount % 4 ) ) / 4;
@@ -7438,9 +7437,9 @@ function md5( str )
 		lWordArray[lNumberOfWords - 1] = lMessageLength >>> 29;
 		return lWordArray;
 	};
-	var wordToHex = function( lValue )
+	let wordToHex = function( lValue )
 	{
-		var wordToHexValue = '',
+		let wordToHexValue = '',
 		wordToHexValue_temp = '',
 		lByte, lCount;
 		for ( lCount = 0; lCount <= 3; lCount++ )
@@ -7451,7 +7450,7 @@ function md5( str )
 		}
 		return wordToHexValue;
 	};
-	var x = [],
+	let x = [],
 	k, AA, BB, CC, DD, a, b, c, d, S11 = 7,
 	S12 = 12,
 	S13 = 17,
@@ -7550,7 +7549,7 @@ function md5( str )
 		c = addUnsigned( c, CC );
 		d = addUnsigned( d, DD );
 	}
-	var temp = wordToHex(a) + wordToHex(b) + wordToHex(c) + wordToHex(d);
+	let temp = wordToHex(a) + wordToHex(b) + wordToHex(c) + wordToHex(d);
 	return temp.toLowerCase();
 }
 
@@ -7573,7 +7572,7 @@ if (typeof String.prototype.utf8Decode == 'undefined') {
     };
 }
 
-var Utf8 = {};
+let Utf8 = {};
 
 Utf8.encode = function( argString )
 {
@@ -7607,12 +7606,12 @@ function get_html_translation_table( table, quote_style )
 	// example 1: get_html_translation_table('HTML_SPECIALCHARS');
 	// returns 1: {'"': '&quot;', '&': '&amp;', '<': '&lt;', '>': '&gt;'}
 
-	var entities = {},
+	let entities = {},
 	hash_map = {},
 	decimal;
-	var constMappingTable = {},
+	let constMappingTable = {},
 	constMappingQuoteStyle = {};
-	var useTable = {},
+	let useTable = {},
 	useQuoteStyle = {};
 
 	// Translate arguments
@@ -7775,7 +7774,7 @@ function htmlentities( string, quote_style, charset, double_encode )
 	// example 2: htmlentities("foo'bar","ENT_QUOTES");
 	// returns 2: 'foo&#039;bar'
 
-	var hash_map = this.get_html_translation_table( 'HTML_ENTITIES', quote_style ),
+	let hash_map = this.get_html_translation_table( 'HTML_ENTITIES', quote_style ),
 	symbol = '';
 	string = string == null ? '' : string + '';
 
@@ -7820,7 +7819,7 @@ function htmlentities( string, quote_style, charset, double_encode )
 
 function html_entity_decode( html )
 {
-    var txt = document.createElement( 'textarea' );
+    let txt = document.createElement( 'textarea' );
     txt.innerHTML = html;
     return txt.value;
 }
@@ -7846,7 +7845,7 @@ AssidRequest = function( flags )
 // Share the application
 AssidRequest.prototype.share = function( handler, callback )
 {
-	var sas = this; // !
+	let sas = this; // !
 	//if ( !Friend.conn ) Friend.conn = new FAPConn();
 	if ( !Friend.conn ) Friend.conn = new FConn();
 
@@ -7854,7 +7853,7 @@ AssidRequest.prototype.share = function( handler, callback )
 	if( sas.applicationState == null )
 	{
 		sas.applicationState = 'pending';
-		var reg = {
+		let reg = {
 			path : 'system.library/sas/register/',
 			data : {
 				authid : Application.authId,
@@ -7901,13 +7900,13 @@ AssidRequest.prototype.share = function( handler, callback )
 // Share events with a host
 AssidRequest.prototype.shareEvents = function( args, handler, callback )
 {
-	var sas = this;
+	let sas = this;
 
 	// Use this on events
 	function dispatcher( e ){ sas.eventDispatcher( e ); }
 
 	// Add other events
-	var c = document.createElement( 'div' );
+	let c = document.createElement( 'div' );
 	Friend.cover = c;
 	c.style.zIndex = 999999999;
 	c.style.position = 'absolute';
@@ -7915,8 +7914,8 @@ AssidRequest.prototype.shareEvents = function( args, handler, callback )
 	c.style.height = '100%';
 	c.style.top = '0'; c.style.left = '0';
 	document.body.appendChild( c );
-	var evts = this.flags.events ? this.flags.events : [ 'mousemove', 'mousedown', 'mouseup', 'touchstart', 'touchend', 'mousewheel' ];
-	for( var a in evts ) c.addEventListener( evts[a], dispatcher );
+	let evts = this.flags.events ? this.flags.events : [ 'mousemove', 'mousedown', 'mouseup', 'touchstart', 'touchend', 'mousewheel' ];
+	for( let a in evts ) c.addEventListener( evts[a], dispatcher );
 
 	// Handles invite coming from game owner
 	if( 'string' === typeof( args ) )
@@ -7926,7 +7925,7 @@ AssidRequest.prototype.shareEvents = function( args, handler, callback )
 	if( Application.windows )
 	{
 		//console.log( 'Attempting to reroute!' );
-		for( var a in Application.windows )
+		for( let a in Application.windows )
 		{
 			Application.windows[a].sendMessage( {
 				command: 'rerouteeventstoroot',
@@ -7947,7 +7946,7 @@ AssidRequest.prototype.shareEvents = function( args, handler, callback )
 		if ( !Friend.conn ) Friend.conn = new FConn();
 
 		Friend.conn.on( args.sasid, handler );
-		var accept = {
+		let accept = {
 			path : 'system.library/sas/accept/',
 			data : {
 				authid : Application.authId,
@@ -7959,7 +7958,7 @@ AssidRequest.prototype.shareEvents = function( args, handler, callback )
 		{
 			Application.receiveMessage( { command: 'sasidaccept', data: e } );
 			if ( callback ) {
-				var res = e;
+				let res = e;
 				callback( res );
 			}
 		}
@@ -7969,7 +7968,7 @@ AssidRequest.prototype.shareEvents = function( args, handler, callback )
 // Stop sharing application
 AssidRequest.prototype.unshare = function( callback )
 {
-	var sas = this;
+	let sas = this;
 	if( this.applicationState == null )
 	{
 		if( callback ) callback( false );
@@ -7977,7 +7976,7 @@ AssidRequest.prototype.unshare = function( callback )
 	else
 	{
 		Friend.conn.off( this.applicationId );
-		var unReg = {
+		let unReg = {
 			path : 'system.library/sas/unregister',
 			data : {
 				sasid: this.applicationId
@@ -7999,7 +7998,7 @@ AssidRequest.prototype.unshare = function( callback )
 
 AssidRequest.prototype.sendInvite = function( userlist, inviteMessage, callback )
 {
-	var sas = this;
+	let sas = this;
 
 	if ( !sas.applicationState )
 	{
@@ -8009,13 +8008,13 @@ AssidRequest.prototype.sendInvite = function( userlist, inviteMessage, callback 
 	}
 
 	if ( 'string' === typeof( userlist )) {
-		var users = userlist.split( ',' );
+		let users = userlist.split( ',' );
 		userlist = users.map( function( user ) {
 			return user.trim();
 		});
 	}
 
-	var inv = {
+	let inv = {
 		path : 'system.library/sas/share',
 		data : {
 			sasid : sas.applicationId,
@@ -8042,14 +8041,14 @@ AssidRequest.prototype.eventDispatcher = function( e )
 
 	console.log( 'eventDispatcher', e );
 	// Send the event through the network!
-	var hostEndpoint = 'send/'; // broadcast to all clients
-	var clientEndpoint = 'sendowner/'; // send to session owner
-	var path = 'system.library/sas/';
+	let hostEndpoint = 'send/'; // broadcast to all clients
+	let clientEndpoint = 'sendowner/'; // send to session owner
+	let path = 'system.library/sas/';
 	if ( this.isHost )
 		path += hostEndpoint;
 	else path += clientEndpoint;
 
-	var msg = {
+	let msg = {
 		path: path,
 		data: {
 			sasid: this.applicationId,
@@ -8066,14 +8065,14 @@ AssidRequest.prototype.sendEvent = function( e )
 {
 	// Send the event through the network!
 	//console.log( 'sendEVent', e );
-	var hostEndpoint = 'send/'; // broadcast to all clients
-	var clientEndpoint = 'sendowner/'; // send to session owner
-	var path = 'system.library/sas/';
+	let hostEndpoint = 'send/'; // broadcast to all clients
+	let clientEndpoint = 'sendowner/'; // send to session owner
+	let path = 'system.library/sas/';
 	if ( this.isHost )
 		path += hostEndpoint;
 	else path += clientEndpoint;
 
-	var msg = {
+	let msg = {
 		path: path,
 		data: {
 			sasid: this.applicationId,
@@ -8093,7 +8092,7 @@ Friend.rerouteAssidEventsToRoot = function( sasid )
 {
 	//console.log( 'rerouteAssidEventsToRoot', sasid );
 	// Filter out some event data
-	var illegalKeys = [
+	let illegalKeys = [
 		'location', 'repeat', 'keyIdentifier', 'code',
 		'DOM_KEY_LOCATION_STANDARD', 'DOM_KEY_LOCATION_LEFT',
 		'DOM_KEY_LOCATION_RIGHT', 'DOM_KEY_LOCATION_NUMPAD', 'detail',
@@ -8103,7 +8102,7 @@ Friend.rerouteAssidEventsToRoot = function( sasid )
 		'DRAGDROP', 'FOCUS', 'BLUR', 'SELECT', 'CHANGE', 'isTruster',
 		'eventPhase', 'timeStamp', 'defaultPrevented'
 	];
-	var illFound = false;
+	let illFound = false;
 
 	// Set new events that will capture existing ones!
 	function setEvent( event )
@@ -8112,12 +8111,12 @@ Friend.rerouteAssidEventsToRoot = function( sasid )
 		{
 			//console.log( 'Foookk', e );
 			// Generate a limited set of event data to send further
-			var o = {};
+			let o = {};
 
 			// Support touch
 			if( e.changedTouches )
 			{
-				var touch = e.changedTouches[0];
+				let touch = e.changedTouches[0];
 				o.touchPageX = touch.pageX;
 				o.touchPageY = touch.pageY;
 			}
@@ -8126,11 +8125,11 @@ Friend.rerouteAssidEventsToRoot = function( sasid )
 			if( e.target && e.target.id )
 				o.targetId = e.target.id;
 
-			for( var a in e )
+			for( let a in e )
 			{
 				if( typeof( e[a] ) == 'object' ) continue;
 				illFound = false;
-				for( var b = 0; b < illegalKeys.length; b++ )
+				for( let b = 0; b < illegalKeys.length; b++ )
 				{
 					if( a == illegalKeys[b] )
 					{
@@ -8150,8 +8149,8 @@ Friend.rerouteAssidEventsToRoot = function( sasid )
 			return cancelBubble( e );
 		};
 	}
-	var events = [ 'keydown', 'keyup', 'touchstart', 'touchend' ]; //, 'mousemove', 'mousedown', 'mouseup', 'touchstart', 'touchend' ];
-	for( var a = 0; a < events.length; a++ )
+	let events = [ 'keydown', 'keyup', 'touchstart', 'touchend' ]; //, 'mousemove', 'mousedown', 'mouseup', 'touchstart', 'touchend' ];
+	for( let a = 0; a < events.length; a++ )
 	{
 		setEvent( events[a] );
 	}
@@ -8160,7 +8159,7 @@ Friend.rerouteAssidEventsToRoot = function( sasid )
 	document.createElementOld = document.createElement;
 	document.createElement = function( type, options )
 	{
-		var o = this.createElementOld( type, options );
+		let o = this.createElementOld( type, options );
 		o.oldListener = o.addEventListener;
 		o.addEventListener = function( type, listener )
 		{
@@ -8168,12 +8167,12 @@ Friend.rerouteAssidEventsToRoot = function( sasid )
 			{
 				if( !this.id ) this.id = this.nodeName + Friend.orphanElementSeed++;
 				// Generate a limited set of event data to send further
-				var o = {};
+				let o = {};
 
 				// Support touch
 				if( e.changedTouches )
 				{
-					var touch = e.changedTouches[0]
+					let touch = e.changedTouches[0]
 					o.touchPageX = touch.pageX;
 					o.touchPageY = touch.pageY;
 				}
@@ -8182,11 +8181,11 @@ Friend.rerouteAssidEventsToRoot = function( sasid )
 				if( e.target && e.target.id )
 					o.targetId = e.target.id;
 
-				for( var a in e )
+				for( let a in e )
 				{
 					if( typeof( e[a] ) == 'object' ) continue;
 					illFound = false;
-					for( var b = 0; b < illegalKeys.length; b++ )
+					for( let b = 0; b < illegalKeys.length; b++ )
 					{
 						if( a == illegalKeys[b] )
 						{
@@ -8214,8 +8213,8 @@ Friend.rerouteAssidEventsToRoot = function( sasid )
 		}
 		return o;
 	}
-	var eles = document.getElementsByTagName( '*' );
-	for( var a = 0; a < eles.length; a++ )
+	let eles = document.getElementsByTagName( '*' );
+	for( let a = 0; a < eles.length; a++ )
 	{
 		// Instead of adding event listeners, the events are trapped!
 		eles[a].addEventListener = function( t, c )
@@ -8234,7 +8233,7 @@ AssidRequest.prototype.distributeSharedEvent = function( type, edata )
 	// Send it to all windows (we don't know what is what.. :( ..)
 	if( typeof( type ) == 'undefined' ) return;
 	//console.log( 'distributeSharedEvent', type );
-	for( var a in Application.windows )
+	for( let a in Application.windows )
 	{
 		Application.windows[a].sendMessage( {
 			command: 'dispatchevent',
@@ -8272,7 +8271,7 @@ GuiDesklet = function()
 		if ( !( this instanceof ns.SAS ))
 			return new ns.SAS( conf );
 
-		var self = this;
+		let self = this;
 		self.id = conf.sasid || null;
 		self.sessiontype = conf.sessiontype || null;
 		self.forceid = conf.forceid ? conf.forceid : false;
@@ -8304,14 +8303,14 @@ GuiDesklet = function()
 	 */
 	ns.SAS.prototype.invite = function( users, inviteMessage, callback )
 	{
-		var self = this;
+		let self = this;
 		if ( !self.isHost ) {
 			if ( callback )
 				callback( false );
 			return;
 		}
 
-		var inv = {
+		let inv = {
 			path : self.invitePath,
 			data : {
 				sasid     : self.id,
@@ -8340,7 +8339,7 @@ GuiDesklet = function()
 	 */
 	ns.SAS.prototype.remove = function( users, removeMessage, callback )
 	{
-		var self = this;
+		let self = this;
 		if ( !self.isHost ) {
 			if ( callback )
 				callback( false );
@@ -8348,11 +8347,11 @@ GuiDesklet = function()
 		}
 
 		if ( 'string' === typeof users ) {
-			var parts = users.split( ',' );
+			let parts = users.split( ',' );
 			users = parts.map( trimp );
 		}
 
-		var rem = {
+		let rem = {
 			path : self.removePath,
 			data : {
 				sasid   : self.id,
@@ -8381,8 +8380,8 @@ GuiDesklet = function()
 	 * @return void return value
 	 */
 	ns.SAS.prototype.getUsers = function( callback ) {
-		var self = this;
-		var req = {
+		let self = this;
+		let req = {
 			path : self.userlistPath,
 			data : {
 			},
@@ -8409,7 +8408,7 @@ GuiDesklet = function()
 	 */
 	ns.SAS.prototype.send = function( event, usernames )
 	{
-		var self = this;
+		let self = this;
 		if ( !self.isHost )
 			username = undefined;
 
@@ -8422,13 +8421,13 @@ GuiDesklet = function()
 			usernames = undefined;
 		}
 
-		var path = null;
+		let path = null;
 		if ( self.isHost )
 			path = self.toClientsPath;
 		else
 			path = self.toHostPath;
 
-		var msg = {
+		let msg = {
 			path : path,
 			data : {
 				sasid     : self.id,
@@ -8455,7 +8454,7 @@ GuiDesklet = function()
 	 */
 	ns.SAS.prototype.on = function( event, handler )
 	{
-		var self = this;
+		let self = this;
 		if ( self.subs[ event ]) {
 			console.log( 'SAS.on - event already registred', {
 				event      : event,
@@ -8478,7 +8477,7 @@ GuiDesklet = function()
 	 */
 	ns.SAS.prototype.off = function( event )
 	{
-		var self = this;
+		let self = this;
 		delete self.subs[ event ];
 	}
 
@@ -8493,8 +8492,8 @@ GuiDesklet = function()
 	 */
 	ns.SAS.prototype.close = function()
 	{
-		var self = this;
-		var close = {
+		let self = this;
+		let close = {
 			path : self.closePath,
 			data : {
 				sasid : self.id,
@@ -8521,7 +8520,7 @@ GuiDesklet = function()
 	ns.SAS.prototype.userlistPath = 'system.library/sas/userlist';
 
 	ns.SAS.prototype.init =function() {
-		var self = this;
+		let self = this;
 		if ( !window.Application )
 			throw new Error( 'SAS - window.Application is not defined' );
 
@@ -8540,8 +8539,8 @@ GuiDesklet = function()
 
 	ns.SAS.prototype.registerHost = function( callback )
 	{
-		var self = this;
-		var reg = {
+		let self = this;
+		let reg = {
 			path : self.regPath,
 			sasid : self.id,
 			force : self.forceid,
@@ -8574,14 +8573,14 @@ GuiDesklet = function()
 
 	ns.SAS.prototype.registerClient = function( callback )
 	{
-		var self = this;
+		let self = this;
 		if ( !self.id ) {
 			callback( false );
 			throw new Error( 'SAS.registerClient - missing SAS ID' );
 			return;
 		}
 
-		var accept = {
+		let accept = {
 			path : self.acceptPath,
 			data : {
 				authid : Application.authId,
@@ -8599,7 +8598,7 @@ GuiDesklet = function()
 		
 		self.conn.request( accept, accBack );
 		function accBack( res ) {
-			var host = res.identity;
+			let host = res.identity;
 			res.host = host;
 			callback( res );
 			self.conn.on( self.id, hostEvents );
@@ -8610,10 +8609,10 @@ GuiDesklet = function()
 
 	ns.SAS.prototype.handleEvent = function( e )
 	{
-		var self = this;
-		var event = e.data;
-		var identity = e.identity;
-		var handler = self.subs[ event.type ];
+		let self = this;
+		let event = e.data;
+		let identity = e.identity;
+		let handler = self.subs[ event.type ];
 		if ( handler ) {
 			handler( event.data, identity );
 			return;
@@ -8641,14 +8640,14 @@ GuiDesklet = function()
 	// Initiate paste handler
 	ns.PasteHandler.prototype.paste = function( evt, callback )
 	{
-		var self = this;
+		let self = this;
 		
 		function DirectoryContainsFile( filename, directoryContents )
 		{
 			if( !filename ) return false;
 			if( !directoryContents || directoryContents.length == 0 ) return false;
 	
-			for(var i = 0; i < directoryContents.length; i++ )
+			for(let i = 0; i < directoryContents.length; i++ )
 			{
 				if( directoryContents[i].Filename == filename ) return true;
 			}
@@ -8658,20 +8657,20 @@ GuiDesklet = function()
 		function uploadPastedFile( file )
 		{
 			//get directory listing for Home:Downloads - create folder if it does not exist...
-			var j = new cAjax ();
+			let j = new cAjax ();
 		
-			var updateurl = '/system.library/file/dir?wr=1'
+			let updateurl = '/system.library/file/dir?wr=1'
 			updateurl += '&path=' + encodeURIComponent( 'Home:Downloads' );
 			updateurl += '&authid=' + encodeURIComponent( Application.authId );
 			updateurl += '&cachekiller=' + ( new Date() ).getTime();
 			
-			var wholePath = 'Home:Downloads/';
+			let wholePath = 'Home:Downloads/';
 			
 			j.open( 'get', updateurl, true, true );
 			j.onload = function ()
 			{
 				console.log( 'The response was: ' + this.returnCode, this.returnData );
-				var content;
+				let content;
 				// New mode
 				if ( this.returnCode == 'ok' )
 				{
@@ -8694,17 +8693,17 @@ GuiDesklet = function()
 		
 				if( content )
 				{
-					var newfilename = file.name;
-					var i = 0;
+					let newfilename = file.name;
+					let i = 0;
 					while( DirectoryContainsFile( newfilename, content ) )
 					{
 						i++;
 						//find a new name
-						var tmp = file.name.split('.');
-						var newfilename = file.name;
+						let tmp = file.name.split('.');
+						let newfilename = file.name;
 						if( tmp.length > 1 )
 						{
-							var suffix = tmp.pop();				
+							let suffix = tmp.pop();				
 							newfilename = tmp.join('.');
 							newfilename += '_' + i + '.' + suffix;
 						}
@@ -8734,25 +8733,25 @@ GuiDesklet = function()
 		function uploadFileToDownloadsFolder( file, filename, path )
 		{
 			// Setup a file copying worker
-			var url = document.location.protocol + '//' + document.location.host + '/webclient/';
-			var uworker = new Worker( url + 'js/io/filetransfer.js' );
+			let url = document.location.protocol + '//' + document.location.host + '/webclient/';
+			let uworker = new Worker( url + 'js/io/filetransfer.js' );
 
 			// Open window
-			var w = new View( {
+			let w = new View( {
 				title:  i18n( 'i18n_pasting_files' ),
 				width:  320,
 				height: 100,
 				id:     'fileops'
 			} );
 
-			var uprogress = new File( 'System:templates/file_operation_apilevel.html' );
+			let uprogress = new File( 'System:templates/file_operation_apilevel.html' );
 
 			uprogress.connectedworker = uworker;
 
 			//upload dialog...
 			uprogress.onLoad = function( data )
 			{
-				var self = this;
+				let self = this;
 				data = data.split( '{cancel}' ).join( i18n( 'i18n_cancel' ) );
 				w.setContent( data );
 
@@ -8844,7 +8843,7 @@ GuiDesklet = function()
 			uprogress.load();
 
 			//hardcoded pathes here!! TODO!
-			var fileMessage = {
+			let fileMessage = {
 				'authid': Application.authId,
 				'targetPath': 'Home:Downloads/',
 				'targetVolume': 'Home',
@@ -8855,18 +8854,18 @@ GuiDesklet = function()
 			uworker.postMessage( fileMessage );		
 		}
 		
-		var pastedItems = ( evt.clipboardData || evt.originalEvent.clipboardData ).items;
+		let pastedItems = ( evt.clipboardData || evt.originalEvent.clipboardData ).items;
 		for( i in pastedItems )
 		{
-			var item = pastedItems[i];
+			let item = pastedItems[i];
 			if( item.kind === 'file' )
 			{
-				var blob = item.getAsFile();
+				let blob = item.getAsFile();
 				filetype = ( blob.type == '' ? 'application/octet-stream' : blob.type );
 				
 				self.uploadBlob = blob;
 				
-				var m = new Library( 'system.library' );
+				let m = new Library( 'system.library' );
 				m.onExecuted = function( e, d )
 				{
 					//we have a downloads dir in home
@@ -8877,20 +8876,20 @@ GuiDesklet = function()
 					else
 					{
 						//no downloads dir - try to make one
-						var m2 = new Library( 'system.library' );
+						let m2 = new Library( 'system.library' );
 						m2.onExecuted = function( e, d )
 						{
 							//home drive found. create directory
 							if( e == 'ok' )
 							{
-								var shell = new Shell();
+								let shell = new Shell();
 								shell.onReady = function()
 								{
 									shell.execute( 'makedir Home:Downloads/', function( result )
 									{
 										shell.close();
 										
-										var res = result.split( '<!--separate-->' );
+										let res = result.split( '<!--separate-->' );
 										if( res[0] == 'ok' )
 										{
 											uploadPastedFile( self.uploadBlob );
@@ -8940,11 +8939,11 @@ Friend.ERROR = 'error';
 
 GetClass = function( source, root )
 {
-	var start = 0;
-	var end = source.indexOf( '.' );
+	let start = 0;
+	let end = source.indexOf( '.' );
 	if ( end < 0 ) 
 		end = source.length;
-	var klass = window[ source.substring( start, end ) ];
+	let klass = window[ source.substring( start, end ) ];
 	if ( typeof klass == 'undefined' )
 		return null;
 	while( end < source.length )
@@ -8961,7 +8960,7 @@ GetClass = function( source, root )
 };
 CallLowLevelAPI = function( args, functionPath, argumentNames, flags )
 {
-	var message =
+	let message =
 	{
 		type: 'Friend',
 		method: functionPath,
@@ -8971,7 +8970,7 @@ CallLowLevelAPI = function( args, functionPath, argumentNames, flags )
 	}
 
 	// Copy the arguments
-	for ( var a = 0; a < argumentNames.length; a++ )
+	for ( let a = 0; a < argumentNames.length; a++ )
 	{
 		if ( argumentNames[ a ] != 'callback' )
 		{
@@ -9003,7 +9002,7 @@ if( Friend )
 	// To be called at first pass of Javascript
 	Friend.addToAPI = function( functionPath, argumentNames, properties, parentClass )
 	{
-		var definition = {};
+		let definition = {};
 
 		definition.functionName = functionPath.substring( functionPath.lastIndexOf( '.' ) + 1 );
 		definition.functionPath = functionPath;
@@ -9014,7 +9013,7 @@ if( Friend )
 
 		// Find the position of the callback
 		definition.callbackPosition = -1;
-		for ( var n = 0; n < argumentNames.length; n++ )
+		for ( let n = 0; n < argumentNames.length; n++ )
 		{
 			if ( argumentNames[ n ] == 'callback' )
 			{
@@ -9027,7 +9026,7 @@ if( Friend )
 		definition.isCallback = ( properties.tags.indexOf( '#callback' ) >= 0 );
 
 		// Find the function
-		var functionClass;
+		let functionClass;
 		if ( properties.redirection )
 		{
 			functionClass = GetClass( properties.redirection.functionPath, parentClass );
@@ -9063,17 +9062,17 @@ if( Friend )
 // Check if Friend has focus on input field
 Friend.GUI.checkInputFocus = function()
 {
-	var focused = document.activeElement;
+	let focused = document.activeElement;
 	if( !focused || focused == document.body )
 	{
 		focused = false;
 	}
 	if( document.querySelector )
 	{
-		var cand = document.querySelector( ':focus' );
+		let cand = document.querySelector( ':focus' );
 		if( cand && cand != focused ) focused = cand;
 	}
-	var response = false;
+	let response = false;
 	if( focused )
 	{
 		if( focused.tagName == 'INPUT' || focused.tagName == 'TEXTAREA' || focused.getAttribute( 'contenteditable' ) )
@@ -9093,6 +9092,73 @@ Friend.GUI.checkInputFocus = function()
 	}
 }
 
+// Announcements
+
+Friend.announceToUser = function( user, type, payload, callback )
+{
+    Application.sendMessage( {
+        type: 'announcement',
+        command: 'announcement',
+        users: [ user ],
+        workgroups: false,
+        announcementType: type,
+        payload: payload,
+        callback: callback ? addCallback( callback ) : false
+    } );
+}
+
+Friend.announceToUsers = function( users, type, payload, callback )
+{
+    Application.sendMessage( {
+        type: 'announcement',
+        command: 'announcement',
+        users: users,
+        workgroups: false,
+        announcementType: type,
+        payload: payload,
+        callback: callback ? addCallback( callback ) : false
+    } );
+}
+
+Friend.announceToWorkgroup = function( workgroup, type, payload, callback )
+{
+    Application.sendMessage( {
+        type: 'announcement',
+        command: 'announcement',
+        users: false,
+        workgroups: [ workgroup ],
+        announcementType: type,
+        payload: payload,
+        callback: callback ? addCallback( callback ) : false
+    } );
+}
+
+Friend.announceToWorkgroups = function( workgroups, type, payload, callback )
+{
+    Application.sendMessage( {
+        type: 'announcement',
+        command: 'announcement',
+        users: false,
+        workgroups: workgroups,
+        announcementType: type,
+        payload: payload,
+        callback: callback ? addCallback( callback ) : false
+    } );
+}
+
+Friend.announce = function( data, callback )
+{
+     Application.sendMessage( {
+        type: 'announcement',
+        command: 'announcement',
+        users: data.users,
+        workgroups: data.workgroups,
+        announcementType: data.type,
+        payload: data.payload,
+        callback: callback ? addCallback( callback ) : false
+    } );
+}
+
 // Responsive layout
 
 Friend.responsive = {
@@ -9103,10 +9169,10 @@ Friend.responsive = {
 	init()
 	{
 		if( !window.isMobile ) return;
-		var self = this;
-		var initial = null;
-		var d = document.getElementsByTagName( '*' );
-		for( var a = 0; a < d.length; a++ )
+		let self = this;
+		let initial = null;
+		let d = document.getElementsByTagName( '*' );
+		for( let a = 0; a < d.length; a++ )
 		{
 			// Page!
 			if( d[a].classList && d[a].classList.contains( 'Responsive-Page' ) )
@@ -9118,8 +9184,8 @@ Friend.responsive = {
 				Friend.responsive.pages.push( d[a] );
 				if( !d[a].id )
 				{
-					var id = 'Responsive-Page-';
-					var idnum = 1;
+					let id = 'Responsive-Page-';
+					let idnum = 1;
 					while( ge( id + idnum ) )
 					{
 						idnum++;
@@ -9156,22 +9222,22 @@ Friend.responsive = {
 	reinit()
 	{
 		if( !window.isMobile ) return;
-		var self = this;
+		let self = this;
 		return self.init();
 	},
 	previousPage()
 	{
 		if( !window.isMobile ) return;
-		var self = this;
-		var out = [];
-		for( var a = 0; a < self.history.length - 1; a++ )
+		let self = this;
+		let out = [];
+		for( let a = 0; a < self.history.length - 1; a++ )
 		{
 			out.push( self.history[ a ] );
 		}
 		self.history = out;
 		if( out.length )
 		{
-			var pa = self.history[ self.history.length - 1 ];
+			let pa = self.history[ self.history.length - 1 ];
 			self.setPage( pa );
 			self.reinit();
 		}
@@ -9180,7 +9246,7 @@ Friend.responsive = {
 	setPage( element )
 	{
 		if( !window.isMobile ) return;
-		var self = this;
+		let self = this;
 		
 		// We really do need an element to do anything
 		if( !element )
@@ -9194,9 +9260,9 @@ Friend.responsive = {
 			if( !element ) return;
 		}
 		
-		var before = true;
+		let before = true;
 		
-		for( var a = 0; a < self.pages.length; a++ )
+		for( let a = 0; a < self.pages.length; a++ )
 		{
 			if( self.pages[ a ] == self.pageActive )
 			{
@@ -9204,7 +9270,7 @@ Friend.responsive = {
 			}
 			if( self.pages[ a ].backButton )
 			{
-				var b = self.pages[ a ].backButton;
+				let b = self.pages[ a ].backButton;
 				if( b.parentNode )
 				{
 					( function( ele ){
@@ -9244,7 +9310,7 @@ Friend.responsive = {
 		// If we can go back, give button
 		if( self.history.length > 1 )
 		{
-			var backButton = document.createElement( 'div' );
+			let backButton = document.createElement( 'div' );
 			backButton.className = 'Responsive-Button-Back MousePointer BorderBottom BackgroundHeavier';
 			backButton.innerHTML = 'Back';
 			document.body.appendChild( backButton );

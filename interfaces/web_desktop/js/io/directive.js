@@ -48,7 +48,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 		if( retries == 3 ) return console.log( 'Could not execute app: ' + app );
 		loadApplicationBasics( function()
 		{
-			ExecuteApplication( app, args, callback, !retries ? 1 : retries++, flags );
+			ExecuteApplication( app, args, callback, !retries ? 3 : retries++, flags );
 		} );
 	}
 	var appName = app;
@@ -61,7 +61,8 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	
 	// Match silent
 	if( !flags ) flags = {};
-	flags.openSilent = false;
+	if( flags.openSilent !== true )
+    	flags.openSilent = false;
 	
 	if( args )
 	{
@@ -1308,6 +1309,7 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 			ifr.workspace = flags && flags.workspace ? flags.workspace : 0;
 			ifr.opensilent = flags && flags.openSilent == true ? true : false;
 			ifr.applicationType = 'jsx';
+			
 			if( sid ) 
 				ifr.sessionId = Workspace.sessionId; // JSX has sessionid
 			else 

@@ -499,6 +499,31 @@ if( isset( $args->command ) )
 			require( 'modules/system/include/savefile.php' );
 			break;
 
+		// Get timeszones in a json format
+		case 'gettimezones':
+			require( 'modules/system/include/gettimezones.php' );
+			break;
+		
+		// Save contact information
+		case 'setcontact':
+			require( 'modules/system/include/setcontact.php' );
+			break;
+		
+		// Delete a contact by contact id
+		case 'deletecontact':
+			require( 'modules/system/include/deletecontact.php' );
+			break;
+		
+		// Get single contact information
+		case 'getcontact':
+			require( 'modules/system/include/getcontact.php' );
+			break;
+
+		// Get contacts
+		case 'getcontacts':
+			require( 'modules/system/include/getcontacts.php' );
+			break;
+
 		// Likes
 		case 'like':
 			require( 'modules/system/include/like.php' );
@@ -541,6 +566,17 @@ if( isset( $args->command ) )
 			}
 			die( 'fail<!--separate-->{"response":"user level failed"}'  );
 			break;
+			
+		// Post an announcement to workgroups and known users
+		case 'announcement':
+    		require( 'modules/system/include/announcement.php' );
+		    break;
+		    
+		// Get user/workgroup relevant announcements
+		case 'getannouncements':
+		    require( 'modules/system/include/getannouncements.php' );
+		    break;
+			
 		case 'convertfile':
 			require( 'modules/system/include/convertfile.php' );
 			break;
@@ -666,6 +702,10 @@ if( isset( $args->command ) )
 		case 'setup':
 			//include( 'modules/system/include/dbchecker.php' );
 			die( 'ok' );
+			break;
+		// Get localized geographical information
+		case 'geoinfo':
+			include( 'modules/system/include/geoinfo.php' );
 			break;
 		case 'languages':
 			include( 'modules/system/include/languages.php' );

@@ -1,0 +1,90 @@
+@font-face
+{
+	font-family: 'assistant';
+	src: url(/themes/friendup12/fonts/Assistant-Regular.ttf);
+}
+body
+{
+	background: #334449;;
+	color: black;
+	font-family: assistant;
+	font-size: 15px;
+}
+
+h1
+{
+	margin: 0;
+	font-weight: normal;
+}
+
+.Dialog
+{
+	max-width: 600px;
+	margin: 60px auto;
+	background: white;
+	border-radius: 5px;
+	padding: 40px;
+	box-sizing: border-box;
+	box-shadow: 0px 2px 20px rgba(0,0,0,0.2);
+}
+
+.Dialog label
+{
+	display: inline-block;
+	min-width: 90px;
+	margin: 0 10px 0 0;
+}
+
+.Dialog textarea
+{
+	width: 100%;
+	box-sizing: border-box;
+	background: #efefef;
+	border-radius: 3px;
+	border: 0;
+	color: #222222;
+	height: 200px;
+	font-family: assistant;
+	font-size: 14px;
+	padding: 10px;
+}
+
+button
+{
+	border-radius: 3px;
+	padding: 5px 8px;
+	border: 0;
+	background: #cccccc;
+	margin: 0 0 0 0;
+	text-shadow: 0px 1px 1px rgba(0,0,0,0.1);
+}
+
+button + button
+{
+	margin: 0 0 0 10px;
+}
+
+button.Accept
+{
+	background: #116600;
+	color: white;
+}
+
+button.Newtime
+{
+	background: #eecc88;
+	color: #223344;
+}
+
+button.Tentative
+{
+	background: #ff8800;
+	color: #000022;
+}
+
+button.Reject
+{
+	background: #aa0022;
+	color: white;
+}
+
