@@ -4439,48 +4439,72 @@ Sections.accounts_workgroups = function( cmd, extra )
 						
 						str += '<div>';
 						
-						str += '<div class="HRow" id="WorkgroupID_' + groups[a].ID + '">\
-							<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
-								<span name="' + groups[a].Name + '" class="IconSmall NegativeAlt ' + ( groups[a].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;' + groups[a].Name + '</span>\
-							</div>\
-							<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
-								<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
-							</div>\
-						</div>';
-					
+						str += '<div class="HRow" id="WorkgroupID_' + groups[a].ID + '" onclick="Sections.accounts_workgroups( \'edit\', {id:'+groups[a].ID+',_this:this} )">';
+						//str += '<div class="HRow" id="WorkgroupID_' + groups[a].ID + '" onclick="edit( '+groups[a].ID+', this )">';
+						//str += '	<div class="PaddingSmall HContent100 FloatLeft Ellipsis">';
+						//str += '		<span name="' + groups[a].Name + '" class="IconSmall NegativeAlt ' + ( groups[a].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;' + groups[a].Name + '</span>';
+						
+						str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
+						str += '		<span name="' + groups[a].Name + '" class="IconSmall fa-users"></span>';
+						str += '	</div>';
+						str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent94 FloatLeft Ellipsis">' + groups[a].Name+ '</div>';
+						
+						//str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
+						//str += '		<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
+						//str += '	</div>';
+						str += '</div>';
+						
 						if( groups[a].groups.length > 0 )
 						{
-							str += '<div class="Closed">';
-						
+							//str += '<div class="Closed">';
+							str += '<div class="SubGroups">';
+							
 							for( var aa in groups[a].groups )
 							{
 								var found = false;
 								
-								str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].ID + '">\
-									<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
-										<span name="' + groups[a].groups[aa].Name + '" class="IconSmall NegativeAlt ' + ( groups[a].groups[aa].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>\
-									</div>\
-									<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
-										<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
-									</div>\
-								</div>';
+								str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].ID + '" onclick="Sections.accounts_workgroups( \'edit\', {id:'+groups[a].groups[aa].ID+',_this:this} )">';
+								//str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].ID + '" onclick="edit( '+groups[a].groups[aa].ID+', this )">';
+								//str += '	<div class="PaddingSmall HContent100 FloatLeft Ellipsis">';
+								//str += '		<span name="' + groups[a].groups[aa].Name + '" class="IconSmall NegativeAlt">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>';
+								//str += '	</div>';
+								
+								str += '	<div class="TextCenter HContent4 FloatLeft PaddingSmall" style="min-width:18px"></div>';
+								str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
+								str += '		<span name="' + groups[a].groups[aa].Name + '" class="IconSmall fa-users"></span>';
+								str += '	</div>';
+								str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent88 FloatLeft Ellipsis">' + groups[a].groups[aa].Name + '</div>';
+								
+								//str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
+								//str += '		<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
+								//str += '	</div>';
+								str += '</div>';
 								
 								if( groups[a].groups[aa].groups.length > 0 )
 								{
-									str += '<div class="Closed">';
+									//str += '<div class="Closed">';
+									str += '<div class="SubGroups">';
 									
 									for( var aaa in groups[a].groups[aa].groups )
 									{
 										var found = false;
 										
-										str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].groups[aaa].ID + '">\
-											<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
-												<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconSmall NegativeAlt">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>\
-											</div>\
-											<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
-												<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
-											</div>\
-										</div>';
+										str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].groups[aaa].ID + '" onclick="Sections.accounts_workgroups( \'edit\', {id:'+groups[a].groups[aa].groups[aaa].ID+',_this:this} )">';
+										//str += '<div class="HRow" id="WorkgroupID_' + groups[a].groups[aa].groups[aaa].ID + '" onclick="edit( '+groups[a].groups[aa].groups[aaa].ID+', this )">';
+										//str += '	<div class="PaddingSmall HContent100 FloatLeft Ellipsis">';
+										//str += '		<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconSmall NegativeAlt">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>';
+										//str += '	</div>';
+										
+										str += '	<div class="TextCenter HContent8 FloatLeft PaddingSmall" style="min-width:38px"></div>';
+										str += '	<div class="TextCenter HContent6 FloatLeft PaddingSmall Ellipsis edit">';
+										str += '		<span name="' + groups[a].groups[aa].groups[aaa].Name + '" class="IconSmall fa-users"></span>';
+										str += '	</div>';
+										str += '	<div class="PaddingSmallTop PaddingSmallRight PaddingSmallBottom HContent82 FloatLeft Ellipsis">' + groups[a].groups[aa].groups[aaa].Name + '</div>';
+										
+										//str += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
+										//str += '		<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>';
+										//str += '	</div>';
+										str += '</div>';
 									
 									}
 								
@@ -4815,20 +4839,22 @@ Sections.accounts_workgroups = function( cmd, extra )
 								
 								if( strong || span )
 								{
+									
 									if( !filter || filter == '' 
 									|| strong && strong.innerHTML.toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
 									|| span && span.innerHTML.toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
+									|| span && span.getAttribute( 'name' ).toLowerCase().indexOf( filter.toLowerCase() ) >= 0 
 									)
 									{
 										list[a].style.display = '';
 										
 										if( list[a].parentNode.parentNode && list[a].parentNode.parentNode.parentNode && list[a].parentNode.parentNode.parentNode.className.indexOf( 'HRow' ) >= 0 )
 										{
-											if( list[a].parentNode.classList.contains( 'Closed' ) )
-											{
-												list[a].parentNode.classList.remove( 'Closed' );
-												list[a].parentNode.classList.add( 'Open' );
-											}
+											//if( list[a].parentNode.classList.contains( 'Closed' ) )
+											//{
+											//	list[a].parentNode.classList.remove( 'Closed' );
+											//	list[a].parentNode.classList.add( 'Open' );
+											//}
 											
 											list[a].parentNode.style.display = '';
 											list[a].parentNode.parentNode.style.display = '';
